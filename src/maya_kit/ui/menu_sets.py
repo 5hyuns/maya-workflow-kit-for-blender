@@ -259,6 +259,7 @@ class MAYAKIT_MT_ui_elements(bpy.types.Menu):
         prefs = preferences.get(context)
         layout = self.layout
         layout.prop(prefs, "maya_top_bar")
+        layout.prop(prefs, "maya_panel_menus")
         layout.prop(prefs, "show_status_line")
         from .shelf import strip_area
         layout.operator("maya_kit.shelf_strip_toggle", text="Shelf",

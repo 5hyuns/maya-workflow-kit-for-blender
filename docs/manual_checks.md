@@ -246,3 +246,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 36) World X 를 회전한 오브젝트 / 원점이 월드 면 위에 없는 오브젝트에서 켰을 때 경고 문구가 이해되는지, 결과가 Maya 와 어떻게 다른지.
 - [ ] (step 36) 대칭을 켠 채 다른 메시를 편집 모드로 열면 그대로 켜져 있는지 (Maya 처럼 전역), Blender 헤더의 X/Y/Z 미러 버튼을 눌렀을 때 Status Line 글자가 따라 바뀌는지.
 - [ ] (step 36) W/E/R 홀드 → N Symmetry ▸ 하위 메뉴의 체크 상자 (Symmetry / World / Object / Topology / X·Y·Z Axis) 가 Maya 와 같은 자리·같은 동작인지. Topology 는 Blender 가 축 + 토폴로지로 짝을 찾는 것 (Maya 의 seam 엣지 고르기 없음).
+
+### Step 37 — 뷰 패널 메뉴 바
+
+- [ ] (step 37) 3D 뷰 헤더 View / Shading / Lighting / Show / Renderer / Panels 를 Maya 2022 패널 메뉴와 나란히 열어 보고 순서·이름·회색 항목이 낯설지 않은지. 헤더 메뉴 사이를 마우스로 옮겨 다닐 때 (메뉴 열린 채 옆 메뉴로) 자연스러운지.
+- [ ] (step 37) Shading > Wireframe / Smooth Shade All, Lighting > Use All Lights (Material Preview + 씬 라이트) / Flat, Renderer > 엔진 이름 (Rendered) 이 Maya 사용자의 기대와 맞는지. 4분할 뷰에서 각 뷰 헤더 메뉴가 그 뷰에만 적용되는지 (Blender 4분할은 헤더가 하나 → 사용자 뷰에 적용).
+- [ ] (step 37) Show > 종류 체크 (Polygons, Lights, Cameras, Joints, Locators …) 와 All / None, Isolate Select > View Selected (Ctrl+1 과 같음) 가 Maya 처럼 동작하는지.
+- [ ] (step 37) Panels > Perspective / Orthographic 의 카메라 목록, Look Through Selected, Panel ▸ (편집기 바꾸기), Layouts ▸ 4분할, Tear Off… (새 창) 이 Maya 와 비슷한지. 헤더 메뉴를 접었을 때 (헤더 우클릭 > Show Menus 끔) 아이콘 하나로 모이는지.
+- [ ] (step 37) Blender ▸ 아래 View / Select / Add / Object (편집 모드면 Mesh / Vertex / Edge / Face …) 가 Blender 사용자가 찾기에 충분한지. 환경설정 Panel Menus 를 끄면 Blender 메뉴로 돌아오는지.

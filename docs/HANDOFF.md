@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 37 (뷰 패널 메뉴 바) 완료 — `docs/steps/step_37.md`. 3D 뷰 헤더 메뉴 = Maya View/Shading/Lighting/Show/Renderer/Panels
+  (`ui/panel_menus.py`, `VIEW3D_MT_editor_menus.draw_collapsible` 덮어쓰기, Blender 메뉴는 「Blender ▸」, 환경설정 Panel Menus).
+  매핑 67 / 회색 51. 헤드리스 322/322, GUI 272/272, dogfood 47/47. 재점검 3차 backlog 7개 중 1–5 처리.
 - Step 36 (대칭 Symmetry) 완료 — `docs/steps/step_36.md`. 전역 Maya 대칭 상태 `Scene.maya_kit_symmetry` → 메시 `use_mirror_*`
   (`operators/symmetry.py`, 편집 모드 진입 시 적용 + 헤더 미러 버튼 역반영), Status Line 대칭 그룹 (토글 + ▾ Off/Object/World/Topology),
   Tool Settings 「Symmetry Settings」, W/E/R 홀드 N Symmetry ▸. 헤드리스 312/312, GUI 267/267, dogfood 47/47.
@@ -77,6 +80,6 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 3개: Step 37 뷰 패널 메뉴 바 (View/Shading/Lighting/Show/Renderer/Panels), 38 Channel Box 다중 선택·상대값
-  + AE 재질 라벨, 39 컴포넌트 픽워크 + Alt+Shift 축 고정. 대칭 남은 것 (클릭 시 반대쪽 하이라이트, HUD) 은 step_36.md 「남은 것」.
+- 재점검 3차 backlog 남은 2개: Step 38 Channel Box 다중 선택·상대값 + AE 재질 라벨, 39 컴포넌트 픽워크 + Alt+Shift 축 고정.
+  대칭 남은 것은 step_36.md, 패널 메뉴 남은 것 (아이콘 바, 템플릿 헤더 잘림, Shift+M) 은 step_37.md 「남은 것」.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.
