@@ -2,16 +2,14 @@
 
 ## 현재 작업
 
-- Step 7 (M2-c 메뉴바·메뉴셋, Status Line, 커맨드 라인, Help Line) 완료 — `docs/steps/step_7.md`. 헤드리스 99/99, GUI 67/67.
-- 메뉴바: `src/maya_kit/ui/menu_sets.py` (메뉴 클래스 `MAYAKIT_MT_<maya 메뉴 이름>`, `menu_idname()`), 데이터 `ui/menu_data.py` (`tools/gen_menu_data.py` 생성), 매핑 `ui/menu_map.py`. 상단 바 교체·Status Line: `ui/status_line.py` (TOPBAR `draw_left/right` 교체, Status Line 은 가장 큰 3D 뷰 툴 헤더 첫머리).
-- 커맨드 라인: `src/maya_kit/command_line/` (`runner.py` 실행·MEL 힌트, `cmds_shim.py` maya.cmds 흉내, 상태바 prepend + Help Line, `import maya.cmds`).
-- Step 1–6 은 이전 커밋들 (Step 6 = `0acc961`).
+- Step 8 (M3-a 마킹메뉴 1차, 파이) 완료 — `docs/steps/step_8.md`. 헤드리스 110/110, GUI 74/74.
+- 정의 `src/maya_kit/marking/menus.py` (Maya 방사 위치 데이터, Blender UI 와 무관), 파이 클래스·디스패치·Q/W/E/R 바인딩 `src/maya_kit/marking/__init__.py` (`maya_kit.marking_menu(trigger)`, `resolve()`, `idname()`), 키맵 `keymap/maya_patches.patch_marking_menus`.
+- Step 7 (메뉴바·Status Line·커맨드 라인) = `dc31143`. 그 이전 단계는 git log.
 
 ## 바로 다음 할 일
 
-- **Step 8 — M3-a 마킹메뉴 1차** (사용자 번호; `docs/PLAN.md` 표의 #9): 파이메뉴(8방향)로 RMB 컨텍스트(객체: Vertex/Edge/Face/Object Mode/UV, 컴포넌트에서 반대), Shift+RMB 모델링 툴, Ctrl+RMB 변환, QWER+LMB 홀드 툴 옵션.
-  - 근거: `research/maya/marking_menus.json`, `research/maya/hotkeys_and_menus.md`, `research/blender/api_limits.md` #5.
-  - 재사용: 메뉴 항목 → Blender 동작 매핑 방식(`ui/menu_map.py` 의 op / v3d / tool 종류, `maya_kit.menu_run` / `maya_kit.menu_tool`), 홀드 키는 `operators/taphold.TapHoldBinding`.
-  - 9 핫박스는 `menu_sets.menus_for_set()` + `menu_idname()` 으로 메뉴 행을 그린다.
-- 미뤄진 것: Range Slider·타임라인 모양·`.` `,` 키 (PLAN 「Ordering after step 7」), Status Line 입력 라인/Symmetry/History 토글.
-
+- **Step 9 — M3-b 핫박스 + 커스텀 마킹메뉴 엔진** (사용자 번호; PLAN 표 #10): Space 홀드 = 풀스크린 핫박스(GPU 모달: 메뉴 행, 클릭 시 메뉴 열기, 중앙/4 영역 마킹메뉴), Space 탭 = 뷰 전환(이미 `taphold.SpaceBinding.tap`). 마킹메뉴 엔진: 드래그 방향 선택, 빠른 플릭, 그 자리 중첩, 옵션 박스.
+  - 근거: `research/maya/hotkeys_and_menus.md` §4 (핫박스 구조), `research/maya/marking_menus.json` `hotbox`, `research/blender/api_limits.md` #4–#5.
+  - 재사용: 메뉴 행 = `ui/menu_sets.menus_for_set()` + `menu_idname()`, 마킹메뉴 데이터 = `marking/menus.py` (`MENUS`, `walk`, `Sub`), 항목 실행 = `menu_map.normalize` 의 op/v3d/tool/menu.
+  - 복잡 설계(모달 + GPU) → step_9.md 「계획」 먼저.
+- 미뤄진 것: Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인 등 (PLAN 「Ordering after step 7」).

@@ -7,8 +7,8 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 38 |
-| IC 일치 | 12 |
+| 구현 | 42 |
+| IC 일치 | 8 |
 | 계획 | 30 |
 | 해당 없음 | 9 |
 | 미검토 | 311 |
@@ -118,7 +118,7 @@
 | Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
 | Ctrl+y | Ctrl+Y | global | Redo | — | 미검토 |  | hotkeySetup.mel:223 |
 | Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | Affect Only Origins 토글 (오브젝트 모드) | hotkeySetup.mel:225 |
-| a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴는 Step 9) | hotkeySetup.mel:228 |
+| a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
 | Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 미검토 |  | hotkeySetup.mel:230 |
 | f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 선택만 프레이밍 (자식은 선택 안 되면 제외) | hotkeySetup.mel:231 |
@@ -165,7 +165,7 @@
 | Shift+C | Shift+C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:280 |
 | v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:281 |
 | Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:282 |
-| q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:285 |
+| q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_select'); Mesh: `maya_kit.tap_hold` (binding='tool_select') | 구현 | 누름=툴 전환, 누른 채 LMB=Select 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:285 |
 | Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:286 |
 | Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:287 |
 | Alt+m | Alt+M | global | FullHotboxDisplay | — | 미검토 |  | hotkeySetup.mel:288 |
@@ -179,9 +179,9 @@
 | Cmd+F11 | Oskey+F11 | global | ConvertSelectionToFaces | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:300 |
 | Cmd+F12 | Oskey+F12 | global | ConvertSelectionToUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:301 |
 | Cmd+Shift+H | Shift+Oskey+H | global | ShowLastHidden | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:303 |
-| w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.move', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:307 |
-| e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:309 |
-| r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.scale', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:311 |
+| w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_move'); Mesh: `maya_kit.tap_hold` (binding='tool_move') | 구현 | 누름=툴 전환, 누른 채 LMB=Move 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:307 |
+| e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_rotate'); Mesh: `maya_kit.tap_hold` (binding='tool_rotate') | 구현 | 누름=툴 전환, 누른 채 LMB=Rotate 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:309 |
+| r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_scale'); Mesh: `maya_kit.tap_hold` (binding='tool_scale') | 구현 | 누름=툴 전환, 누른 채 LMB=Scale 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:311 |
 | Ctrl+t | Ctrl+T | global | UniversalManip | — | 미검토 |  | hotkeySetup.mel:313 |
 | t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:315 |
 | y | Y | global | NonSacredTool | — | 미검토 |  | hotkeySetup.mel:316 |

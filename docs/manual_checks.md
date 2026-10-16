@@ -80,3 +80,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 7) Status Line: 스냅 버튼 클릭/홀드 X·C·V 중 표시, 마스크로 메시 선택 막기, Component 버튼 → 편집 모드에서 정점/엣지/면 토글, Render 버튼, Channel Box 버튼 → 사이드바, Tool Settings 팝업.
 - [ ] (step 7) 커맨드 라인: `cmds.polyCube(w=200, h=200, d=200)` Enter → 2 m 큐브, Ctrl+Z 한 번에 사라짐; `polyCube -w 2;` → 붉은 힌트; 최근 명령 메뉴에서 다시 실행; Script Editor 버튼 → 콘솔 창.
 - [ ] (step 7) Help Line: Move/Rotate/Scale 툴 전환 시 문구, 결과가 길 때 상태바에서 잘리는 정도.
+
+### Step 8 — 마킹메뉴 (파이)
+
+- [ ] (step 8) 오브젝트 모드, 큐브 위 RMB 누른 채 위/왼쪽/아래로 끌어 놓기 → 엣지/정점/면 모드; 짧게 클릭하면 파이가 남고 클릭으로 고름. Maya 와 손맛 비교 (`pie_tap_timeout` 200 ms, 문턱 12 px).
+- [ ] (step 8) 두 객체 중 선택 안 된 쪽 위에서 RMB → Vertex: 그 객체만 컴포넌트 모드. RMB 후 ESC: 선택 그대로.
+- [ ] (step 8) 편집 모드에서 Shift+RMB (정점/엣지/면 선택 모드마다 다른 메뉴), Ctrl+RMB 변환, NE Object Mode 로 나가기.
+- [ ] (step 8) W/E/R/Q 누른 채 LMB → 옵션 파이, 끌어 놓기로 World/Object/Component; 그냥 W 탭 = 툴 전환만.
+- [ ] (step 8) Ctrl+Shift+RMB = 현재 툴 옵션 파이; 페인트/스컬프트 모드 RMB 는 Blender 그대로.
