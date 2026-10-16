@@ -2,14 +2,14 @@
 
 ## 현재 작업
 
-- Step 8 (M3-a 마킹메뉴 1차, 파이) 완료 — `docs/steps/step_8.md`. 헤드리스 110/110, GUI 74/74.
-- 정의 `src/maya_kit/marking/menus.py` (Maya 방사 위치 데이터, Blender UI 와 무관), 파이 클래스·디스패치·Q/W/E/R 바인딩 `src/maya_kit/marking/__init__.py` (`maya_kit.marking_menu(trigger)`, `resolve()`, `idname()`), 키맵 `keymap/maya_patches.patch_marking_menus`.
-- Step 7 (메뉴바·Status Line·커맨드 라인) = `dc31143`. 그 이전 단계는 git log.
+- Step 9 (M3-b 핫박스 + 마킹메뉴 엔진) 완료 — `docs/steps/step_9.md`. 헤드리스 130/130, GUI 90/90.
+- 엔진 로직 `src/maya_kit/marking/engine.py` (bpy 없음), 그리기 `marking/draw.py`, 모달·핫박스·존 연산자 `marking/modal.py`, 정의 `marking/menus.py` (마킹메뉴 13 + 핫박스 존 5). 환경설정 Marking Menus(엔진/파이), Hotbox Style, Show All Menu Sets. Space = `maya_kit.hotbox` (6개 에디터).
+- Step 8 = `078a6f9` (파이), Step 7 = `dc31143`.
 
 ## 바로 다음 할 일
 
-- **Step 9 — M3-b 핫박스 + 커스텀 마킹메뉴 엔진** (사용자 번호; PLAN 표 #10): Space 홀드 = 풀스크린 핫박스(GPU 모달: 메뉴 행, 클릭 시 메뉴 열기, 중앙/4 영역 마킹메뉴), Space 탭 = 뷰 전환(이미 `taphold.SpaceBinding.tap`). 마킹메뉴 엔진: 드래그 방향 선택, 빠른 플릭, 그 자리 중첩, 옵션 박스.
-  - 근거: `research/maya/hotkeys_and_menus.md` §4 (핫박스 구조), `research/maya/marking_menus.json` `hotbox`, `research/blender/api_limits.md` #4–#5.
-  - 재사용: 메뉴 행 = `ui/menu_sets.menus_for_set()` + `menu_idname()`, 마킹메뉴 데이터 = `marking/menus.py` (`MENUS`, `walk`, `Sub`), 항목 실행 = `menu_map.normalize` 의 op/v3d/tool/menu.
-  - 복잡 설계(모달 + GPU) → step_9.md 「계획」 먼저.
-- 미뤄진 것: Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인 등 (PLAN 「Ordering after step 7」).
+- **Step 10 — M4-a 개념 레이어 (연산자)** (사용자 번호; PLAN 표 #11): Freeze Transformations(Maya 의미: 피벗 위치 보존, 변환을 메시에 굽고 Channel Box 0/1), Center Pivot, Delete History(모디파이어 적용+정리, By Type), Reset Transformations, 생성 시 Maya 명명 등.
+  - 근거: `research/maya/concepts.md` §4–§5, §13–§14, `research/blender/concepts.md`, decision 2 (부모 지정 Maya 방식).
+  - 메뉴 연결: Step 7 `ui/menu_map.py` 의 Modify/Edit 회색 항목(Freeze/Reset/Delete by Type…)과 Step 8 마킹메뉴(A 홀드 메뉴: Delete History, Freeze 등 `buildSelectAllMM`)에 새 연산자를 연결. Modify 의 Pivot 섹션(Center Pivot)은 메뉴 데이터에 없음(동적 라벨) → `menu_map` 에 추가 항목 방식 필요.
+  - 행렬 수학 → step_10.md 「계획」 먼저.
+- 미뤄진 것: Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인, 마킹메뉴 편집기 (PLAN 참고).

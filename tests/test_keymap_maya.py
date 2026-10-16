@@ -116,10 +116,11 @@ def test_group_keys():
 
 def test_space_is_free_for_hotbox():
     for km in ("Window", "Screen", "Frames", "3D View Generic", "Object Mode",
-               "Object Non-modal", "Mesh", "Graph Editor", "Dopesheet", "Outliner"):
+               "Object Non-modal", "Mesh"):
         assert _any_event(km, "SPACE") == [], (km, _any_event(km, "SPACE"))
-    # 3D View: Space goes to the tap/hold modal (tap = four views, hold = hotbox later).
-    assert [k.properties.binding for k in _kmis("3D View", "maya_kit.tap_hold", "SPACE")] == ["space"]
+    # Step 9: Space = hotbox (tap = four views / maximize) in 3D View and the panel editors.
+    for km in ("3D View", "Outliner", "Graph Editor", "Dopesheet", "Node Editor", "Image"):
+        assert _any_event(km, "SPACE") == ["maya_kit.hotbox"], (km, _any_event(km, "SPACE"))
     assert _one("Frames", "screen.animation_play", "V", alt=True)
     assert not _one("Frames", "screen.frame_jump", "V", alt=True, shift=True).properties.end
 
@@ -160,6 +161,9 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Screen": None,
            **{km: (km,) for km in maya_patches.SLIDER_TOOL_KEYMAPS},
            "Outliner": ("Window", "Screen", "Outliner", "View2D", "View2D Buttons List"),
+           # Step 9 hotbox editors (Space): the editor keymap plus the global ones.
+           **{km: ("Window", "Screen", "Frames", km, "View2D")
+              for km in ("Graph Editor", "Dopesheet", "Node Editor", "Image")},
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

@@ -7,9 +7,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 42 |
+| 구현 | 43 |
 | IC 일치 | 8 |
-| 계획 | 30 |
+| 계획 | 29 |
 | 해당 없음 | 9 |
 | 미검토 | 311 |
 | macOS 전용 | 68 |
@@ -213,7 +213,7 @@
 | Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | Mesh: `mesh.select_mode` (use_expand=True, type='VERT') | 계획 Step 8 |  | hotkeySetup.mel:346 |
 | Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
 | Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | 미검토 |  | hotkeySetup.mel:351 |
-| Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.tap_hold` (binding='space') | 계획 Step 10 | 탭=4분할↔단일 뷰 구현 (maya_kit.tap_hold space), 홀드 핫박스는 Step 10. 재생은 Alt+V | hotkeySetup.mel:352 |
+| Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | 3D View: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
 | d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `wm.tool_set_by_id` (name='builtin.annotate', cycle=True) | 구현 | 누르는 동안 Affect Only Origins (오브젝트 모드) | hotkeySetup.mel:355 |
