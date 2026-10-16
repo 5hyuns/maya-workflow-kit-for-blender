@@ -224,10 +224,10 @@
 | Alt+. | Alt+PERIOD | global | NextFrame | Frames: `screen.frame_offset` (delta=1) | 구현 | 누르고 있으면 반복 | hotkeySetup.mel:361 |
 | g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
 | Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
-| Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `mesh.select_more` | 구현 | 오브젝트 모드만 (컴포넌트는 미구현) | hotkeySetup.mel:364 |
-| Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `maya_kit.pick_walk` (direction='DOWN'); Mesh: `mesh.select_less` | 구현 | 오브젝트 모드만 | hotkeySetup.mel:365 |
-| Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `maya_kit.pick_walk` (direction='LEFT') | 구현 | 오브젝트 모드만, 이름순 형제 순환 | hotkeySetup.mel:366 |
-| Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `maya_kit.pick_walk` (direction='RIGHT') | 구현 | 오브젝트 모드만, 이름순 형제 순환 | hotkeySetup.mel:367 |
+| Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `maya_kit.pick_walk_component` (direction='UP') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 위쪽 이웃 (step 39) | hotkeySetup.mel:364 |
+| Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `maya_kit.pick_walk` (direction='DOWN'); Mesh: `maya_kit.pick_walk_component` (direction='DOWN') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 아래쪽 이웃 (step 39) | hotkeySetup.mel:365 |
+| Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `maya_kit.pick_walk` (direction='LEFT'); Mesh: `maya_kit.pick_walk_component` (direction='LEFT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 왼쪽 이웃 (step 39) | hotkeySetup.mel:366 |
+| Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `maya_kit.pick_walk` (direction='RIGHT'); Mesh: `maya_kit.pick_walk_component` (direction='RIGHT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39) | hotkeySetup.mel:367 |
 | Ctrl+Page_Up | Ctrl+PAGE_UP | global | PickWalkIn | Screen: `screen.workspace_cycle` (direction='PREV') | 미검토 |  | hotkeySetup.mel:368 |
 | Ctrl+Page_Down | Ctrl+PAGE_DOWN | global | PickWalkOut | Screen: `screen.workspace_cycle` (direction='NEXT') | 미검토 |  | hotkeySetup.mel:369 |
 | Alt+Up | Alt+UP_ARROW | global | MoveUp | — | 미검토 |  | hotkeySetup.mel:370 |

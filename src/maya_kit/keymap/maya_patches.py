@@ -552,6 +552,29 @@ def patch_key_batch(kd):
              shadows=MENU_SET_SHADOWS)
 
 
+# --- 28. Component pick-walk, Alt+Shift axis-locked navigation (docs/steps/step_39.md 「계획」) ------
+# Arrows in edit mode walk vertices / edges / faces (HK:364-367, Maya pickWalk*.mel); IC's Up/Down
+# grow/shrink go (Maya: Shift+> / <, step 18). Alt+Shift+LMB / MMB = tumble / track on one axis
+# (interaction.md:46); IC's Alt+Shift+LMB click-select toggle goes (a PRESS item would hide it anyway).
+
+AXIS_LOCK_SHADOWS = ("Weight Paint", "Paint Face Mask (Weight, Vertex, Texture)",
+                     "Paint Vertex Selection (Weight, Vertex)")
+
+
+def patch_component_pick_walk(kd):
+    kd.remove("Mesh", "mesh.select_more", type="UP_ARROW")
+    kd.remove("Mesh", "mesh.select_less", type="DOWN_ARROW")
+    for key, direction in PICK_WALK_KEYS:
+        _add(kd, "Mesh", "maya_kit.pick_walk_component", make_event(key, repeat=True),
+             {"direction": direction})
+    kd.remove("3D View", "view3d.select", type="LEFTMOUSE", value="CLICK", shift=True, alt=True)
+    # Paint modes keep their own Alt+Shift+LMB select (they run before 3D View).
+    _add(kd, "3D View", "maya_kit.view_axis_lock", make_event("LEFTMOUSE", shift=True, alt=True),
+         {"mode": "TUMBLE"}, shadows=AXIS_LOCK_SHADOWS)
+    _add(kd, "3D View", "maya_kit.view_axis_lock", make_event("MIDDLEMOUSE", shift=True, alt=True),
+         {"mode": "TRACK"})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -559,7 +582,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
-           patch_select_through, patch_key_batch)
+           patch_select_through, patch_key_batch, patch_component_pick_walk)
 
 
 def apply(data):

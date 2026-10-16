@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 39 (컴포넌트 픽워크 + Alt+Shift 축 고정) 완료 — `docs/steps/step_39.md`. 편집 모드 화살표 = `maya_kit.pick_walk_component`
+  (엣지 루프/링, 정점·면은 화면 방향), Alt+Shift+LMB/MMB = `maya_kit.view_axis_lock` (처음 우세한 축으로 텀블/트랙).
+  헤드리스 339/339, GUI 281/281, dogfood 47/47. **재점검 3차 backlog 7개 모두 처리 (step 33–39).**
 - Step 38 (Channel Box 다중 선택·상대값, AE 재질 라벨) 완료 — `docs/steps/step_38.md`. CB 값 필드 = 텍스트 (Maya 숫자 표시,
   `+=5`/`*=2`, 모든 선택·고른 채널 모두), 사용자 속성/SHAPES/INPUTS 도 같은 이름 채널에 적용 (`Scene.maya_kit_cb.rows`),
   재질 `maya_kit_type` → AE `lambert: lambert1` + lambert/blinn/phong/surfaceShader 섹션. 헤드리스 333/333, GUI 277/277, dogfood 47/47.
@@ -84,7 +87,8 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 1개: Step 39 컴포넌트 픽워크 + Alt+Shift 축 고정.
-  대칭 남은 것은 step_36.md, 패널 메뉴 남은 것 (아이콘 바, 템플릿 헤더 잘림, Shift+M) 은 step_37.md, CB 남은 것 (언두 수동 확인,
-  잘못된 입력 알림) 은 step_38.md 「남은 것」.
+- 재점검 3차 backlog 는 모두 끝났다. 다음은 재점검 4차 (step 32 처럼: 전체 테스트·dogfood --session 탐색, research 대응표 다시 세기,
+  blindspot grep) 로 새 backlog 를 만드는 것.
+- 남은 항목 모음: step_36.md (대칭: 클릭 시 반대쪽 하이라이트, HUD), step_37.md (아이콘 바, 템플릿 헤더 잘림, Shift+M),
+  step_38.md (CB 언두 수동 확인, 잘못된 입력 알림), step_39.md (PickWalkIn/Out, UV 화살표), PLAN 「재점검 3차」 8–9 (Medium/Low).
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

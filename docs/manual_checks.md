@@ -262,3 +262,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 38) 필드 숫자가 단위 없이 보이는 것 (Maya 처럼 "1.5"), 필드 Ctrl+휠·드래그가 없어진 것 (값 끌기는 뷰포트 MMB 가상 슬라이더) 이 Maya 사용자에게 자연스러운지; Blender 사용자는 불편할 수 있음.
 - [ ] (step 38) 여러 오브젝트에 같은 Bevel/Subdivision 모디파이어가 있을 때 INPUTS 값 입력이 모두에 적용되는지, 카메라 여러 개 선택 후 SHAPES Focal Length, 사용자 속성. 그 뒤 Ctrl+Z 한 번에 모두 되돌아가는지.
 - [ ] (step 38) Lighting/Shading > Assign New Material > Lambert / Blinn / Phong → AE 탭 라벨 "lambert: lambert1" 과 Common Material Attributes / Specular Shading 섹션이 Maya 와 비슷한지.
+
+### Step 39 — 컴포넌트 픽워크, Alt+Shift 축 고정
+
+- [ ] (step 39) 편집 모드 정점/면에서 화살표 → 화면의 그 방향 이웃으로 옮겨 가는지 (원근 뷰에서 비스듬히 볼 때도), 갈 곳이 없으면 그대로인지. 키를 누르고 있으면 반복되는지.
+- [ ] (step 39) 엣지에서 ←/→ = 엣지 루프를 따라, ↑/↓ = 엣지 링으로 (Maya 2022 와 같은지), 극점 (정점에 엣지 3·5개) 에서 멈추는지.
+- [ ] (step 39) 여러 요소 선택 후 화살표 → 각자 걸음; Ctrl+Z 로 되돌아가는지. Maya 처럼 정점 인덱스 순서가 아니라 화면 방향인 것 (delegated) 이 Maya 사용자에게 괜찮은지.
+- [ ] (step 39) Alt+Shift+LMB 드래그: 처음 움직인 방향 (가로/세로) 으로만 텀블되는지, 도중에 방향을 바꿔도 고정되는지. Alt+Shift+MMB 트랙도. ESC/RMB 취소로 원래 뷰. Maya 2022 와 감도 비교.
+- [ ] (step 39) Alt+Shift+클릭 (드래그 없이) 이 이제 아무것도 선택하지 않는 것 (IC 의 토글 선택 제거) 이 불편하지 않은지.
