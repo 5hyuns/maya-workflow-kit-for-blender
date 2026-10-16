@@ -133,3 +133,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 13) 실제 사용자 설정(새 프로필)에서 zip 을 끌어다 놓아 설치: Maya 키맵·내비게이션 적용, Quick Setup 창에서 Continue 를 눌렀을 때 키맵이 Blender 로 바뀌는지 (바뀌면 Activate Maya Keymap).
 - [ ] (step 13) Install Maya Layout → File > New > MayaKit → Blender 재시작 뒤에도 레이아웃·키맵 유지, Remove Maya Layout 후 템플릿 목록에서 사라짐.
 - [ ] (step 13) 비활성화 → 키맵·내비게이션·Image Editor 헤더가 원래대로, 다시 활성화.
+
+### Step 14 — 재점검 1차
+
+`python tools/dogfood.py` 가 같은 순서를 시뮬레이션 이벤트로 재생한다 (체크 + `tmp/dogfood/shots/`). 아래는 실제 손으로.
+
+- [ ] (step 14) 깨끗한 프로필에서 첫 세션: Create Cube → F → Alt 마우스 → W/E/R → 4/5/3/1 → Ctrl+D → Ctrl+G → P → RMB Vertex → F8 → Space 탭/홀드 → Channel Box MMB → Ctrl+A. 각 단계가 Maya 와 같은 결과·속도인지, 콘솔(Window > Toggle System Console) 오류가 없는지.
+- [ ] (step 14) F 프레이밍 여백을 Maya 2022 의 같은 장면(1 단위 큐브, persp 35 mm)과 나란히 비교.

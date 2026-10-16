@@ -44,6 +44,7 @@ python tools/make_theme.py       # regenerate theme/maya.xml from its colour tab
 python tools/gen_menu_data.py    # regenerate ui/menu_data.py (Maya menu structure) from research/maya/menus.json
 python tools/gen_shelf_data.py   # regenerate ui/shelf_data.py (Maya factory shelves) from research/maya/shelves.json
 python tools/release_check.py    # build, extension validate, clean-config install + enable, docs/screenshots/
+python tools/dogfood.py          # clean-config install + scripted Maya-user session: checks, tmp/dogfood/shots/, console errors (expected-behaviour checks may FAIL)
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.

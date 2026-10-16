@@ -51,3 +51,61 @@ are C-only". Decision 5: work around without forking; list what can't be done.
 - Keymap strategy: a full "Maya" keyconfig generated from IC data for global behaviour,
   plus `keymap.add_item` overlays in the add-on keyconfig for feature-owned bindings, so
   that disabling the extension removes them (`tests/test_enable_disable.py`).
+
+## 재점검 1차 (step 14, 2026-10-16)
+
+Evidence: `docs/steps/step_14.md` (dogfood checks, screenshots, blindspot cards). All verdicts below are
+delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 8 | 4 — selection modifiers outside the 3D View, 1/2/3 (faceted look, PgUp/PgDn), D/Insert (no edit-mode D, no pivot handle), pick-walk (no component walk) | 1 — Shift+drag manipulator = duplicate / extrude | 0 |
+| UI (9) | 5 | 3 — layout (no Range Slider, timeline 0–250, narrow Outliner), Maya Outliner (no drag reparent), menu sets (no F2–F6) | 1 — timeline look + Range Slider | 0 (MMB on fields is C, the Channel Box row itself is done) |
+| 개념 (11) | 8 | 1 — Maya naming (Ctrl+D / Shift+D copies get `.001`) | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **21 (64 %)** | **8 (24 %)** | **2 (6 %)** | **2 (6 %)** |
+
+Keymap rows (`docs/keymap_mapping.md`, 468 Maya 2022 factory hotkeys): implemented 51, IC match 8,
+planned 26, not applicable 9, macOS-only 68, **unreviewed 306**. The 25 `STEP` rows of `keymap/mapping.py`
+(step 8 = PLAN row 8 "Remaining M1 keys", steps 7/13) were never built: the renumbering at user step 8
+skipped PLAN row 8 (only P / Shift+P landed, in step 10).
+
+### Remaining work, by priority
+
+Priority = how often a Maya user hits it in the first hour × how wrong it feels. Sources: dogfood (D),
+blindspot scout (B, cards in step_14.md), step docs (S).
+
+1. **Data-loss bug — Delete History bakes the smooth-preview Subsurf** (B1): 3 then Alt+Shift+D
+   subdivides the real mesh; 1 hides the first Subsurf even if it is the user's own.
+2. **Daily Maya keys that do the wrong thing** (D, B3, B13): `z` = undo (now zoom border), Shift+Z /
+   Ctrl+Y = redo, `h` toggle visibility, Shift+H / Alt+H (IC does the opposite), Ctrl+1 isolate,
+   `+` `-` manipulator size, Shift+> / Shift+< grow / shrink, Ctrl+F9–F11 convert, PgUp/PgDn, `0`,
+   Home, Ctrl+Shift+F, Ctrl+Shift+I; edit mode: D = annotate tool, Ctrl+Shift+A = deselect, Alt+D
+   unbound; Ctrl+E / Ctrl+B only switch tools (B5).
+3. **Framing and look** (D): F / A fit with Maya's margin (object overfills the view), smooth preview
+   on flat-shaded meshes looks faceted, hotbox rows clipped under the sidebar.
+4. **Units consistency** (B2): Create/shelf cube = 1 BU (shows 100 cm), `cmds.polyCube()` = 1 cm.
+   One rule for all creation paths.
+5. **Maya naming of copies** (D): Ctrl+D / Shift+D → `pCube2` (now `pCube1.001`).
+6. **Timeline** (S, D): playback-range view (1–120, now 0–250), `.` `,` Alt+`.` Alt+`,` stepping (now `.`
+   opens the pivot pie), Range Slider, Maya key ticks (W).
+7. **Shift+drag manipulator duplicate / extrude** (B4, research row "높음", never planned) — complex
+   design, plan first.
+8. **Selection feel** (B6–B8): component marquee select-through (Maya `selectPrefUseDepth false`),
+   pre-selection highlight (research), undo depth (32 steps vs Maya infinite) via `prefs_preset`.
+9. **Menu correctness** (B11, B12): Increment and Save, Export Selection, Return in 3D View.
+10. **Layout polish** (D): left Outliner width / Maya DAG rows in the main Outliner slot, quad → single
+    header name.
+11. Menu-set F2–F6 keys (replace IC F1–F4 view keys: keep ortho views reachable), Status Line input
+    line, marking menu editor, shelf drag ordering, Outliner drag reparent, AE shading-group /
+    texture tabs (S).
+12. Review the 306 unreviewed keymap rows context by context as features are touched.
+13. Hand checks: `docs/manual_checks.md` (84 open, need a person with real input devices).
+14. Not possible / out of scope (kept documented): Y-up, separate pivots, MMB on fields, MEL,
+    construction history nodes, Extensions platform listing (no remote).
+
+Landmines for the key work (B9, B10): `tests/test_keymap_maya.py` pins IC idnames (`object.duplicate_move`,
+`object.hide_view_set`) and raises KeyError for keymaps missing from `_STACKS`; `Frames`/`Screen` rows
+check every keymap, so a global `Z` / `.` meets many conflicts; runtime changes to `prefs.view.gizmo_size`
+or `prefs.edit.undo_steps` must go through `prefs_preset` and `tests/kit.py` must snapshot `prefs.edit`.
