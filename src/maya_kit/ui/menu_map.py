@@ -14,19 +14,32 @@ Modeling, Rigging and Animation share map once. Value:
   mode first when ``edit``;
 - ``("menu", "MENU_ID")``: a Blender menu as the submenu.
 
-Items not listed are drawn greyed out. Freeze/Reset/Center Pivot/Delete
-History wait for the Maya-semantics operators of the concepts step.
+Items not listed are drawn greyed out. ``EXTRA`` adds items Maya builds at run
+time (not in the static menu data), e.g. Modify's Pivot section.
 """
 
-_PRIMS = {
-    "Sphere": "mesh.primitive_uv_sphere_add", "Cube": "mesh.primitive_cube_add",
-    "Cylinder": "mesh.primitive_cylinder_add", "Cone": "mesh.primitive_cone_add",
-    "Torus": "mesh.primitive_torus_add", "Plane": "mesh.primitive_plane_add",
-    "Disc": ("mesh.primitive_circle_add", {"fill_type": 'NGON'}),
-    "Platonic Solid": ("mesh.primitive_ico_sphere_add", {"subdivisions": 1}),
-    "Pyramid": ("mesh.primitive_cone_add", {"vertices": 4}),
-    "Prism": ("mesh.primitive_cylinder_add", {"vertices": 3}),
-}
+def _create(kind):
+    # Maya default size at the origin, Maya names (operators/create.py, ).
+    return ("maya_kit.create", {"kind": kind})
+
+
+_PRIMS = {label: _create(kind) for label, kind in (
+    ("Sphere", 'SPHERE'), ("Cube", 'CUBE'), ("Cylinder", 'CYLINDER'), ("Cone", 'CONE'),
+    ("Torus", 'TORUS'), ("Plane", 'PLANE'), ("Disc", 'DISC'), ("Platonic Solid", 'PLATONIC'),
+    ("Pyramid", 'PYRAMID'), ("Prism", 'PRISM'))}
+
+
+def _del(kind, all_=False):
+    return ("maya_kit.delete_by_type", {"type": kind, "all": all_})
+
+
+_DELETE_BY_TYPE = {"History": 'HISTORY', "Non-Deformer History": 'NON_DEFORMER_HISTORY',
+                   "Channels": 'CHANNELS', "Static Channels": 'STATIC_CHANNELS',
+                   "Constraints": 'CONSTRAINTS', "Motion Paths": 'MOTION_PATHS',
+                   "Rigid Bodies": 'RIGID_BODIES'}
+_DELETE_ALL_ONLY = {"Joints": 'JOINTS', "Lattices": 'LATTICES', "Cameras": 'CAMERAS',
+                    "Lights": 'LIGHTS', "Image Planes": 'IMAGE_PLANES', "Clusters": 'CLUSTERS',
+                    "Nonlinears": 'NONLINEARS', "Particles": 'PARTICLES'}
 
 
 def _mod(kind):
@@ -62,31 +75,38 @@ MAP = {
     "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
     "Edit/Keys/Bake Simulation": "nla.bake",
     "Edit/Delete": "object.delete",
+    "Edit/Delete by Type/History": "maya_kit.delete_history",
+    "Edit/Delete by Type/Non-Deformer History": ("maya_kit.delete_history", {"non_deformer": True}),
+    **{f"Edit/Delete by Type/{k}": _del(v) for k, v in _DELETE_BY_TYPE.items()
+       if v not in ('HISTORY', 'NON_DEFORMER_HISTORY')},
+    **{f"Edit/Delete All by Type/{k}": _del(v, True)
+       for k, v in {**_DELETE_BY_TYPE, **_DELETE_ALL_ONLY}.items()},
     "Edit/Duplicate": ("v3d", "object.duplicate_move", {}),
-    "Edit/Duplicate Special": ("v3d", "object.duplicate_move_linked", {}),
+    "Edit/Duplicate Special": "maya_kit.duplicate_special",
+    "Edit/Duplicate with Transform": "maya_kit.duplicate_with_transform",
     "Edit/Group": "maya_kit.group",
-    "Edit/Parent": ("object.parent_set", {"type": 'OBJECT', "keep_transform": True}),
-    "Edit/Unparent": ("object.parent_clear", {"type": 'CLEAR_KEEP_TRANSFORM'}),
+    "Edit/Parent": "maya_kit.parent",
+    "Edit/Unparent": "maya_kit.unparent",
     # --- Create ---
     **{f"Create/Polygon Primitives/{k}": v for k, v in _PRIMS.items()},
-    "Create/NURBS Primitives/Sphere": "surface.primitive_nurbs_surface_sphere_add",
-    "Create/NURBS Primitives/Cylinder": "surface.primitive_nurbs_surface_cylinder_add",
-    "Create/NURBS Primitives/Plane": "surface.primitive_nurbs_surface_surface_add",
-    "Create/NURBS Primitives/Torus": "surface.primitive_nurbs_surface_torus_add",
-    "Create/NURBS Primitives/Circle": "curve.primitive_nurbs_circle_add",
-    "Create/Lights/Directional Light": ("object.light_add", {"type": 'SUN'}),
-    "Create/Lights/Point Light": ("object.light_add", {"type": 'POINT'}),
-    "Create/Lights/Spot Light": ("object.light_add", {"type": 'SPOT'}),
-    "Create/Lights/Area Light": ("object.light_add", {"type": 'AREA'}),
-    "Create/Cameras": "object.camera_add",
+    "Create/NURBS Primitives/Sphere": _create('NURBS_SPHERE'),
+    "Create/NURBS Primitives/Cylinder": _create('NURBS_CYLINDER'),
+    "Create/NURBS Primitives/Plane": _create('NURBS_PLANE'),
+    "Create/NURBS Primitives/Torus": _create('NURBS_TORUS'),
+    "Create/NURBS Primitives/Circle": _create('NURBS_CIRCLE'),
+    "Create/Lights/Directional Light": _create('DIRECTIONAL_LIGHT'),
+    "Create/Lights/Point Light": _create('POINT_LIGHT'),
+    "Create/Lights/Spot Light": _create('SPOT_LIGHT'),
+    "Create/Lights/Area Light": _create('AREA_LIGHT'),
+    "Create/Cameras": _create('CAMERA'),
     "Create/Curve Tools/CV Curve Tool": "curve.primitive_nurbs_curve_add",
     "Create/Curve Tools/Bezier Curve Tool": "curve.primitive_bezier_curve_add",
     "Create/Type": "object.text_add",
     "Create/Free Image Plane": "object.empty_image_add",
-    "Create/Locator": ("object.empty_add", {"type": 'PLAIN_AXES'}),
+    "Create/Locator": _create('LOCATOR'),
     "Create/Annotation...": ("tool", "builtin.annotate", False),
     "Create/Measure Tools/Distance Tool": ("tool", "builtin.measure", False),
-    "Create/Empty Group": ("object.empty_add", {"type": 'PLAIN_AXES'}),
+    "Create/Empty Group": _create('EMPTY_GROUP'),
     "Create/Sets/Set": "collection.create",
     # --- Select ---
     "Select/All": ("object.select_all", {"action": 'SELECT'}),
@@ -125,6 +145,9 @@ MAP = {
     "Modify/Transformation Tools/Scale Tool": ("tool", "builtin.scale", False),
     "Modify/Transformation Tools/Universal Manipulator": ("tool", "builtin.transform", False),
     "Modify/Transformation Tools/Move/Rotate/Scale Tool": ("tool", "builtin.transform", False),
+    "Modify/Reset Transformations": "maya_kit.reset_transform",
+    "Modify/Freeze Transformations": "maya_kit.freeze_transform",
+    "Modify/Center Pivot": "maya_kit.center_pivot",
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
@@ -280,6 +303,14 @@ MAP = {
     # --- Rendering ---
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
     "Render/Render Settings...": "maya_kit.render_settings",
+}
+
+# Items Maya adds at run time, inserted after a data path: {after path: [item]} with
+# items like menu_data's ((label,) or ("-", section label)). Modify's Pivot section
+# (Center Pivot) is built by Maya at run time and missing from
+# 
+EXTRA = {
+    "Modify/Snap Together Tool": [("-", "Pivot"), ("Center Pivot",)],
 }
 
 # Blender's own menu kept at the end of the Maya menu with the same role.

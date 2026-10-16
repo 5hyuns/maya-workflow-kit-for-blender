@@ -405,6 +405,23 @@ OPT_SELECT = MarkingMenu(
         "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),          # :54
     })
 
+# --- A hold + LMB: Maya (interaction.md:194; marking_menus.json) -------------
+# Inputs/outputs = history in Maya; the Blender history equivalent (modifiers) has no
+# up/downstream selection, so W/E/N/S stay greyed.
+
+SELECT_ALL = MarkingMenu(
+    "buildSelectAllMM", "Select All / History", " buildSelectAllMM",
+    radial={
+        "W": ("Select All Inputs", None),                                  # :40
+        "E": ("Select All Outputs", None),                                 # :42
+        "N": ("Enable All Outputs", None),                                 # :45
+        "S": ("Disable All Outputs", None),                                # :47
+        "NW": ("Delete History", "maya_kit.delete_history"),               # :50
+        "NE": ("Delete Non-Deformer History", ("maya_kit.delete_history", {"non_deformer": True})),  # :52
+        "SE": ("Freeze Transforms", "maya_kit.freeze_transform"),          # :55, option box :58
+    },
+    options={"Freeze Transforms"})
+
 # --- Hotbox zones (hotkeys_and_menus.md :207-214; marking_menus.json hotbox.zones) ------
 
 def _pane(ui_type):
@@ -505,7 +522,7 @@ HOTBOX_ZONES = {"N": HB_NORTH, "S": HB_SOUTH, "E": HB_EAST, "W": HB_WEST, "C": H
 
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
-                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT,
+                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER)}
 
 # Active tool -> its options marking menu (Maya-49).

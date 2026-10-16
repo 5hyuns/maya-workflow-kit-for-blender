@@ -57,14 +57,17 @@ def iter_items(items=None, prefix=""):
 def children(items, prefix):
     """(path, item) per direct entry; path None for dividers. A label repeated
     among siblings gets "#2", "#3" (Select > Components for polygons, curves,
-    surfaces)."""
+    surfaces). ``menu_map.EXTRA`` items follow the entry they are attached to."""
     seen = {}
     for it in items:
         if it[0] == "-":
             yield None, it
             continue
         n = seen[it[0]] = seen.get(it[0], 0) + 1
-        yield f"{prefix}/{it[0]}" + (f"#{n}" if n > 1 else ""), it
+        path = f"{prefix}/{it[0]}" + (f"#{n}" if n > 1 else "")
+        yield path, it
+        for extra in menu_map.EXTRA.get(path, ()):
+            yield (None if extra[0] == "-" else f"{prefix}/{extra[0]}"), extra
 
 
 def current_set(context=None):

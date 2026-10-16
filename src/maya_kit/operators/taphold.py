@@ -180,23 +180,18 @@ class SoftSelectBinding(TapHoldBinding):
 
 
 class SelectAllBinding(TapHoldBinding):
-    """A: tap = frame all; hold + click = selection menu (Maya marking menu in step 9)."""
+    """A: tap = frame all; hold + LMB = the Maya marking menu buildSelectAllMM
+    (delete history, freeze; , )."""
     name = "select_all"
-    label = "Frame All / Select"
+    label = "Frame All / History Menu"
 
     def tap(self, context):
         bpy.ops.view3d.view_all(center=False)
 
     def click(self, context, event):
-        # Open the menu on LMB *release*: opened on press, the release would
-        # land on the item under the cursor and run it at once.
-        return 'DRAG'
-
-    def drag_end(self, context):
-        menu = {"OBJECT": "VIEW3D_MT_select_object",
-                "EDIT_MESH": "VIEW3D_MT_select_edit_mesh"}.get(context.mode)
-        if menu:
-            bpy.ops.wm.call_menu(name=menu)
+        # Opened on the LMB press like Q/W/E/R: dragging and releasing LMB picks.
+        from ..marking import modal
+        modal.open_menu("buildSelectAllMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
 class SpaceBinding(TapHoldBinding):
