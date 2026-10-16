@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya camera/view feel: ortho tumble lock, framing in all views,
+"""Maya camera/view feel: ortho tumble lock, Alt+Shift axis-locked tumble/track, framing in all views,
 view-change undo (``[`` / ``]``), Space-tap four-view toggle.
 
 Design:  「계획」 2-5. Evidence:
@@ -35,6 +35,93 @@ class MAYAKIT_OT_tumble(bpy.types.Operator):
             return {'FINISHED'}
         bpy.ops.view3d.rotate('INVOKE_DEFAULT')
         return {'FINISHED'}
+
+
+# --- Alt+Shift drag: tumble / track locked to one axis (step 39) ---------------------
+#  (): the first dominant drag direction (horizontal or
+# vertical) is kept for the whole drag.  「계획」 2.
+
+AXIS_THRESHOLD = 4   # px of movement before the axis is chosen
+
+
+def choose_axis(dx, dy, threshold=AXIS_THRESHOLD):
+    """'H', 'V' or None (not moved far enough yet)."""
+    if max(abs(dx), abs(dy)) < threshold:
+        return None
+    return 'H' if abs(dx) >= abs(dy) else 'V'
+
+
+def locked_offset(axis, dx, dy):
+    """The drag offset kept for ``axis``."""
+    return (dx, 0) if axis == 'H' else (0, dy)
+
+
+def tumble_rotation(axis, dx, dy, rotation0, sensitivity):
+    """Blender turntable rotation (view3d_navigate_rotate: Z by x, view right axis by y),
+    one axis only. Returns the new ``view_rotation``."""
+    from mathutils import Quaternion
+    if axis == 'H':
+        return Quaternion((0.0, 0.0, 1.0), -sensitivity * dx) @ rotation0
+    right = rotation0 @ Vector((1.0, 0.0, 0.0))
+    return Quaternion(right, sensitivity * dy) @ rotation0
+
+
+class MAYAKIT_OT_view_axis_lock(bpy.types.Operator):
+    """Tumble or track the view along one axis only (Maya Alt+Shift+drag)"""
+    bl_idname = "maya_kit.view_axis_lock"
+    bl_label = "Axis-Locked Tumble/Track"
+    bl_options = {'BLOCKING'}
+
+    mode: bpy.props.EnumProperty(items=(("TUMBLE", "Tumble", ""), ("TRACK", "Track", "")))
+
+    @classmethod
+    def poll(cls, context):
+        return context.region_data is not None and context.area is not None and context.area.type == 'VIEW_3D'
+
+    def invoke(self, context, event):
+        from .. import preferences
+        rv3d = context.region_data
+        if self.mode == "TUMBLE" and tumble_locked(rv3d, preferences.get(context).lock_ortho_tumble):
+            return {'FINISHED'}
+        self._button = event.type
+        self._start = (event.mouse_region_x, event.mouse_region_y)
+        self._rot0 = rv3d.view_rotation.copy()
+        self._loc0 = rv3d.view_location.copy()
+        self._axis = None
+        inputs = context.preferences.inputs
+        self._sens = inputs.view_rotate_sensitivity_turntable / max(context.preferences.system.ui_scale, 0.1)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _apply(self, context, x, y):
+        rv3d = context.region_data
+        dx, dy = x - self._start[0], y - self._start[1]
+        if self._axis is None:
+            self._axis = choose_axis(dx, dy)
+            if self._axis is None:
+                return
+        ox, oy = locked_offset(self._axis, dx, dy)
+        if self.mode == "TUMBLE":
+            rv3d.view_rotation = tumble_rotation(self._axis, ox, oy, self._rot0, self._sens)
+            return
+        from bpy_extras.view3d_utils import region_2d_to_location_3d
+        sx, sy = self._start
+        a = region_2d_to_location_3d(context.region, rv3d, (sx, sy), self._loc0)
+        b = region_2d_to_location_3d(context.region, rv3d, (sx + ox, sy + oy), self._loc0)
+        rv3d.view_location = self._loc0 - (b - a)
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            self._apply(context, event.mouse_region_x, event.mouse_region_y)
+            context.area.tag_redraw()
+        elif event.type == self._button and event.value == 'RELEASE':
+            return {'FINISHED'}
+        elif event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            rv3d = context.region_data
+            rv3d.view_rotation, rv3d.view_location = self._rot0, self._loc0
+            context.area.tag_redraw()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
 
 
 # --- framing ------------------------------------------------------------------
@@ -387,7 +474,7 @@ class MAYAKIT_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_tumble, MAYAKIT_OT_frame, MAYAKIT_OT_frame_all_views, MAYAKIT_OT_view_history,
+classes = (MAYAKIT_OT_tumble, MAYAKIT_OT_view_axis_lock, MAYAKIT_OT_frame, MAYAKIT_OT_frame_all_views, MAYAKIT_OT_view_history,
            MAYAKIT_OT_toggle_quad_view, MAYAKIT_OT_view_home)
 
 
