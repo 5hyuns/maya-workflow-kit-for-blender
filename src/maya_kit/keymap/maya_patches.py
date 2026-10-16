@@ -4,7 +4,7 @@
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale:  (1-4),  (5-8),
  (9-13),  (16),  (17),
- (18),  (19).
+ (18),  (19),  (20).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and  is cross-checked against it.
@@ -409,12 +409,28 @@ def patch_mesh_components(kd):
         _add(kd, "Mesh", "maya_kit.convert_selection", make_event(key, ctrl=True), {"type": comp})
 
 
+# --- 20. Key / frame stepping: . , Alt+. Alt+, -----------------
+# Maya-361 (NextKey, PreviousKey, NextFrame, PreviousFrame) via .
+# "Frames" is in nearly every editor; the 3D View / Image pies on . , go (pivot and orientation stay
+# in the headers). The Outliner (show active) and Clip Editor (pivot pie) keep their own . first.
+
+def patch_key_stepping(kd):
+    kd.remove("3D View", "wm.call_menu_pie", type="PERIOD")      # pivot pie
+    kd.remove("3D View", "wm.call_menu_pie", type="COMMA")       # orientation pie
+    kd.remove("Image", "wm.call_menu_pie", type="PERIOD")        # UV pivot pie
+    keep = ("Outliner", "Clip Editor")
+    _add(kd, "Frames", "screen.keyframe_jump", make_event("PERIOD"), {"next": True}, shadows=keep)
+    _add(kd, "Frames", "screen.keyframe_jump", make_event("COMMA"), {"next": False}, shadows=keep)
+    _add(kd, "Frames", "screen.frame_offset", make_event("PERIOD", alt=True, repeat=True), {"delta": 1})
+    _add(kd, "Frames", "screen.frame_offset", make_event("COMMA", alt=True, repeat=True), {"delta": -1})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
-           patch_mesh_components)
+           patch_mesh_components, patch_key_stepping)
 
 
 def apply(data):

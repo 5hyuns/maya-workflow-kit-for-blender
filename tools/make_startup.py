@@ -18,7 +18,8 @@ OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
 
 OUTLINER_FACTOR = 0.16    # Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%, wider for Blender rows
 MAYA_LENS = 35.0          # persp focal length 35 (concepts.md)
-MAYA_FRAME_END = 120      # playback 1-120 (concepts.md, PREF:469-472)
+MAYA_FRAME_END = 120      # playback 1-120 (concepts.md, PREF:469-470)
+MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
 STRIP_FACTOR = 0.91       # top 9% of the factory 3D View ~ 67 px at 1600x900 = header + tool header
                           # (checked,  「계획」 1)
 STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER
@@ -119,7 +120,10 @@ def setup_scene():
     us.system = 'METRIC'
     us.length_unit = 'CENTIMETERS'         # : display cm, keep 1 BU = 1 m
     us.scale_length = 1.0
-    scene.frame_start, scene.frame_end = 1, MAYA_FRAME_END
+    # Maya animation range = frame range, playback range = preview range.
+    scene.frame_start, scene.frame_end = 1, MAYA_RANGE_END
+    scene.use_preview_range = True
+    scene.frame_preview_start, scene.frame_preview_end = 1, MAYA_FRAME_END
     scene.render.fps, scene.render.fps_base = 24, 1.0
     # Maya's new scene is empty (concepts.md).
     for ob in list(bpy.data.objects):

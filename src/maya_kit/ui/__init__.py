@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya-style UI: Channel Box, Layer Editor, Attribute Editor, Outliner (3D View
-sidebar), menu bar + menu sets, Status Line (top bar), Shelf (strip under it).
+sidebar), menu bar + menu sets, Status Line (top bar), Shelf (strip under it), Time
+Slider + Range Slider (Timeline header).
 
 See  for what is P/W/C in Blender's Python UI.
 """
 
-from . import attribute_editor, channel_box, layer_editor, menu_sets, outliner, shelf, status_line
+from . import (attribute_editor, channel_box, layer_editor, menu_sets, outliner, shelf, status_line,
+               time_slider)
 
-_modules = (channel_box, layer_editor, attribute_editor, outliner, menu_sets, status_line, shelf)
+_modules = (channel_box, layer_editor, attribute_editor, outliner, menu_sets, status_line, shelf,
+            time_slider)
 
 
 def register():

@@ -1,0 +1,57 @@
+"""Step 20: Maya . , Alt+. Alt+, key / frame stepping, Time + Range Slider in the Timeline
+header, timeline view following the playback range. """
+
+from importlib import import_module
+
+import bpy
+from bl_ui import space_time
+
+import kit
+
+time_slider = import_module(kit.MODULE + ".ui.time_slider")
+
+
+def _kmis(km, type, **mods):
+    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km]
+    want = {"shift": False, "ctrl": False, "alt": False, **mods}
+    return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
+            and all(getattr(k, m) == v for m, v in want.items()) and not k.oskey]
+
+
+def test_stepping_keys():
+    for key, nxt in (("PERIOD", True), ("COMMA", False)):
+        k = _kmis("Frames", key)
+        assert [i.idname for i in k] == ["screen.keyframe_jump"] and k[0].properties.next is nxt, key
+        k = _kmis("Frames", key, alt=True)
+        assert [i.idname for i in k] == ["screen.frame_offset"], key
+        assert k[0].properties.delta == (1 if nxt else -1) and k[0].repeat, key
+    # the pies that took . and , before the Frames keymap is reached are gone
+    assert _kmis("3D View", "PERIOD") == [] and _kmis("3D View", "COMMA") == []
+    assert _kmis("Image", "PERIOD") == []
+    assert [k.idname for k in _kmis("Outliner", "PERIOD")] == ["outliner.show_active"], "kept"
+
+
+def test_header_swapped_and_restored():
+    assert space_time.TIME_HT_editor_buttons.draw_header is time_slider.draw_header
+    original = time_slider._ORIGINAL["draw_header"]
+    kit.disable()
+    try:
+        assert space_time.TIME_HT_editor_buttons.draw_header is original
+    finally:
+        kit.enable()
+    assert space_time.TIME_HT_editor_buttons.draw_header is time_slider.draw_header
+
+
+def test_load_handler_and_fit_without_windows():
+    assert time_slider._on_load in bpy.app.handlers.load_post
+    # -b still has the startup window with its Timeline: fitting runs there without error.
+    assert time_slider.fit_timelines() >= 1
+
+
+def test_range_change_schedules_fit():
+    scene = bpy.context.scene
+    time_slider._schedule()
+    assert bpy.app.timers.is_registered(time_slider._deferred_fit)
+    bpy.app.timers.unregister(time_slider._deferred_fit)
+    scene.frame_preview_end = 77   # msgbus notify runs on the next event loop; just must not raise
+    scene.frame_preview_end = 120
