@@ -447,6 +447,23 @@ class MAYAKIT_OT_ae_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class MAYAKIT_OT_dock_show(bpy.types.Operator):
+    """Show the Attribute Editor or the Channel Box / Layer Editor in the sidebar dock
+    (Maya Windows > General Editors)"""
+    bl_idname = "maya_kit.dock_show"
+    bl_label = "Show Dock Editor"
+
+    dock: EnumProperty(items=DOCK_ITEMS, name="Editor")
+
+    def execute(self, context):
+        context.window_manager.maya_kit_dock = self.dock
+        space = context.space_data
+        if space is not None and space.type == 'VIEW_3D' and not space.show_region_ui:
+            _show_sidebar_later(space)
+        _redraw(context)
+        return {'FINISHED'}
+
+
 def _redraw(context):
     screen = context.screen
     for area in (screen.areas if screen else ()):
@@ -488,7 +505,7 @@ class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
 
 
 classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKIT_OT_ae_add_limit,
-           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_PT_dock_tabs,
+           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show, MAYAKIT_PT_dock_tabs,
            MAYAKIT_PT_attribute_editor)
 
 

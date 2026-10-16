@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 34 (메뉴 막다른 길) 완료 — `docs/steps/step_34.md`. `menu_map.CHILDREN` (Maya 가 실행 중에 만드는 하위 메뉴: Windows > ... Editors,
+  HUD), 편집기는 새 창 (`maya_kit.open_editor`), Edit > Ungroup, UV Editor/Planar/Normal-Based, HUD Poly Count, Increment and Save
+  (Maya 번호 규칙), Export Selection (선택만). 헤드리스 294/294, GUI 251/251, dogfood 47/47.
 - Step 33 (메뉴가 화면 안에) 완료 — `docs/steps/step_33.md`. `engine.fit_ring`: 마킹 메뉴 중심(누른 점)은 그대로, 방사 상자는 안으로,
   목록은 링 아래/위/옆으로; 핫박스 행이 위로 넘치면 가운데 상자 아래로. 헤드리스 287/287, GUI 246/246, dogfood 47/47.
 - Step 32 (재점검 3차) 완료 — `docs/steps/step_32.md`, `docs/PLAN.md` 「재점검 3차」. 코드(`src/`) 변경 없음. 헤드리스 281/281, dogfood 47/47,
@@ -68,7 +71,6 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 6개 (PLAN 「재점검 3차」 2–7): Step 34 메뉴 막다른 길 (Windows 편집기, UV Editor/Planar, Ungroup, HUD Poly Count,
-  Increment and Save, Export Selection), 키 묶음 (박스 줌·Ctrl+T·Y·Multi-Cut·Quad Draw·Return·F2–F6), 대칭, 뷰 패널 메뉴,
+- 재점검 3차 backlog 남은 5개: Step 35 키 묶음 (Ctrl+Alt+LMB 박스 줌·Ctrl+T·Y·Ctrl+Shift+X/Q·Return·F2–F6), 대칭, 뷰 패널 메뉴,
   Channel Box 다중 선택·상대값 + AE 재질 라벨, 컴포넌트 픽워크 + Alt+Shift 축 고정.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Ctrl+G group.
+"""Maya Ctrl+G group and Edit > Ungroup.
 
 research/maya/concepts.md:89-91: ``doGroup(world=0, preserve=1, zeroPivot=1)``
 creates the group under the common parent with its pivot at the origin; with
@@ -69,6 +69,60 @@ def make_group(context, objects):
     return grp
 
 
+def ungroup(context, groups):
+    """Maya Edit > Ungroup with its default options (performUngroup: ungroupPreserve true,
+    not -world): each group's children move under the group's parent (the world when it
+    has none) keeping their world transform, then the group goes. A selected object that
+    has data of its own (a mesh with children) only loses its children (delegated,
+    docs/steps/step_34.md). Returns the moved children."""
+    moved = []
+    for grp in groups:
+        kids = list(grp.children)
+        for child in kids:
+            if grp.parent is not None:
+                set_parent_keep_world(child, grp.parent)
+            else:
+                world = child.matrix_world.copy()
+                child.parent = None
+                child.matrix_world = world
+        moved.extend(kids)
+        if grp.type == 'EMPTY':
+            bpy.data.objects.remove(grp)
+    return moved
+
+
+class MAYAKIT_OT_ungroup(bpy.types.Operator):
+    """Move the children of the selected groups up one level and delete the groups (Maya Ungroup)"""
+    bl_idname = "maya_kit.ungroup"
+    bl_label = "Ungroup"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and any(ob.children for ob in context.selected_objects)
+
+    def execute(self, context):
+        groups = [ob for ob in context.selected_objects if ob.children]
+        # Innermost first, so nested selected groups hand their children up step by step.
+        groups.sort(key=_depth, reverse=True)
+        moved = ungroup(context, groups)
+        context.view_layer.update()
+        for ob in moved:
+            if ob.name in context.view_layer.objects:
+                ob.select_set(True)
+        if moved:
+            context.view_layer.objects.active = moved[0]
+        self.report({'INFO'}, f"Ungrouped {len(groups)} group(s)")
+        return {'FINISHED'}
+
+
+def _depth(ob):
+    n = 0
+    while ob.parent is not None:
+        ob, n = ob.parent, n + 1
+    return n
+
+
 class MAYAKIT_OT_group(bpy.types.Operator):
     """Group the selected objects under a new transform (Maya Ctrl+G)"""
     bl_idname = "maya_kit.group"
@@ -90,4 +144,4 @@ class MAYAKIT_OT_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_group,)
+classes = (MAYAKIT_OT_group, MAYAKIT_OT_ungroup)

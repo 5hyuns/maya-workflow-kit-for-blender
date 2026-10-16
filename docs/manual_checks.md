@@ -224,3 +224,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 33) 뷰 아래쪽·위쪽·좌우 가장자리·모서리의 오브젝트에서 RMB / Shift+RMB / Ctrl+RMB / W 홀드 → 모든 항목이 보이고, 목록이 링 위·옆으로 옮겨져도 드래그·플릭·클릭이 어색하지 않은지. Maya 2022 의 가장자리 동작과 비교.
 - [ ] (step 33) 화면 위쪽에서 Space 홀드 → 메뉴 행이 가운데 상자 아래로 내려온 핫박스가 쓸 만한지 (Maya 비교).
+
+### Step 34 — 메뉴 막다른 길
+
+- [ ] (step 34) Windows > Animation Editors > Graph Editor 등이 떠 있는 창으로 열리는 것이 Maya 사용자에게 자연스러운지 (Maya 도 별도 창). 창 크기·위치, 닫은 뒤 다시 열기.
+- [ ] (step 34) Edit > Ungroup: 중첩 그룹·여러 그룹 선택·애니메이션 있는 자식에서 Maya 2022 결과와 비교 (월드 위치 유지, 선택 결과).
+- [ ] (step 34) File > Increment and Save 를 여러 번 → shot.0001, 0002 …; 저장 안 한 씬에서는 Save As 창.
+- [ ] (step 34) UV > Planar / Normal-Based 결과를 Maya 의 Planar (Best Plane 아님) 와 비교 (회전·비율).
