@@ -318,6 +318,10 @@ def patch_concepts(kd):
     for km in ("Object Mode", "Outliner"):
         _add(kd, km, "maya_kit.parent", make_event("P"))
         _add(kd, km, "maya_kit.unparent", make_event("P", shift=True))
+    # Ctrl+D: Maya Duplicate = in place, subtree, Maya names (docs/steps/step_19.md); IC
+    # duplicate_move would name the copy pCube1.001 and start a move.
+    kd.remove("Object Mode", "object.duplicate_move", type="D", ctrl=True)
+    _add(kd, "Object Mode", "maya_kit.duplicate", make_event("D", ctrl=True))
     _add(kd, "Object Mode", "maya_kit.duplicate_with_transform", make_event("D", shift=True))
     _add(kd, "Object Mode", "maya_kit.duplicate_special", make_event("D", shift=True, ctrl=True))
     _add(kd, "Object Mode", "maya_kit.delete_history", make_event("D", shift=True, alt=True))

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Duplicate Special (Ctrl+Shift+D) and Duplicate with Transform (Shift+D).
+"""Maya Duplicate (Ctrl+D), Duplicate Special (Ctrl+Shift+D) and Duplicate with
+Transform (Shift+D).
 
 research/maya/interaction.md:204-206; defaults.json ``duplicateSpecial`` (copy,
 count 1, group under Parent, T/R = 0, S = 1) and ``shiftD``
@@ -7,7 +8,7 @@ count 1, group under Parent, T/R = 0, S = 1) and ``shiftD``
 (runtime_commands.json DuplicateSpecial, defaultRunTimeCommands.mel:1921): the saved
 options, no dialog; Blender's Adjust Last Operation edits them afterwards.
 Maya duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
-Plan: docs/steps/step_10.md 「계획」 5.
+Plan: docs/steps/step_10.md 「계획」 5; Ctrl+D: docs/steps/step_19.md.
 """
 
 import bpy
@@ -72,6 +73,39 @@ def _select(context, objects):
         ob.select_set(True)
     if objects:
         context.view_layer.objects.active = objects[-1]
+
+
+def duplicate(context, instance=False):
+    """Copy every selected root with its subtree in place, Maya names; returns the copies.
+    Records source pairs so a following Shift+D repeats the move between them."""
+    roots = selected_roots(context.selected_objects)
+    made, pairs = [], {}
+    for root in roots:
+        new = copy_subtree(root, instance)
+        made.append(new)
+        pairs[new.name] = root.name
+    PAIRS.clear()
+    PAIRS.update(pairs)
+    _select(context, made)
+    return made
+
+
+class MAYAKIT_OT_duplicate(bpy.types.Operator):
+    """Duplicate the selection in place with its children; copies are named the Maya way
+    (pCube1 -> pCube2, pCubeShape2) and selected (Maya Edit > Duplicate, Ctrl+D)"""
+    bl_idname = "maya_kit.duplicate"
+    bl_label = "Duplicate"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT'
+
+    def execute(self, context):
+        if not duplicate(context):
+            self.report({'WARNING'}, "Nothing selected")
+            return {'CANCELLED'}
+        return {'FINISHED'}
 
 
 class MAYAKIT_OT_duplicate_special(bpy.types.Operator):
@@ -157,4 +191,4 @@ class MAYAKIT_OT_duplicate_with_transform(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_duplicate_special, MAYAKIT_OT_duplicate_with_transform)
+classes = (MAYAKIT_OT_duplicate, MAYAKIT_OT_duplicate_special, MAYAKIT_OT_duplicate_with_transform)

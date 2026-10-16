@@ -92,7 +92,8 @@ ENTRIES = {
                      note="홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V"),
 
     # --- IC already matches (research/blender/industry_compatible_vs_maya.md §1) ---
-    "Duplicate": _e("IC", (OBJ, "object.duplicate_move", {})),
+    "Duplicate": _e("KIT", (OBJ, "maya_kit.duplicate", {}),
+                    note="제자리, 자식 포함, pCube2/pCubeShape2 (편집 모드는 IC duplicate_move)"),
     "FrameSelectedWithoutChildren": _e("KIT", (V3D, "maya_kit.frame", {"selected": True}),
                                        note="Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "maya_kit.tap_hold", {"binding": "select_all"}),

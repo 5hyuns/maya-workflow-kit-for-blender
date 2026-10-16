@@ -160,3 +160,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 18) 편집 모드에서 D 를 누른 채 클릭/드래그로 피벗(3D 커서) 배치 → D 놓고 W 로 이동·회전 시 그 점 기준; D 탭으로 원래 피벗. V 홀드와 함께 정점에 피벗 스냅.
 - [ ] (step 18) Ctrl+E (면/엣지/정점), Ctrl+B (정점 모드 = 정점 베벨) 드래그 감각을 Maya 와 비교. Shift+> / Shift+< 반복, Ctrl+F9–F11 변환 결과를 Maya 와 비교.
+
+### Step 19 — 복제
+
+- [ ] (step 19) 애니메이션이 있는 객체를 Ctrl+D: 사본도 같은 액션을 공유하는지(Blender) / Maya 2022 는 사본에 애니메이션이 없는지 비교해 규칙 확정. 그룹 Ctrl+D 후 Outliner 이름 (group2, pCube2 …).
