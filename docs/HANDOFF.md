@@ -2,6 +2,8 @@
 
 ## 현재 작업
 
+- Step 33 (메뉴가 화면 안에) 완료 — `docs/steps/step_33.md`. `engine.fit_ring`: 마킹 메뉴 중심(누른 점)은 그대로, 방사 상자는 안으로,
+  목록은 링 아래/위/옆으로; 핫박스 행이 위로 넘치면 가운데 상자 아래로. 헤드리스 287/287, GUI 246/246, dogfood 47/47.
 - Step 32 (재점검 3차) 완료 — `docs/steps/step_32.md`, `docs/PLAN.md` 「재점검 3차」. 코드(`src/`) 변경 없음. 헤드리스 281/281, dogfood 47/47,
   탐색 세션 15 중 13 (실패: 세션 bmesh 선택 탓 1, 박스 줌 미구현 1). 대응표 33행: 완료 25, 부분 6, 불가 2. 새 발견: RMB 루트 목록이 뷰 아래로 잘림,
   AE 재질 라벨이 모두 standardSurface, 메뉴 막다른 길 (Windows 편집기, UV, Ungroup, HUD, Increment and Save), 대칭 없음.
@@ -66,7 +68,7 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 7개; PLAN 「재점검 3차」 우선순위 1–7):
-  마킹 메뉴 화면 안, 메뉴 막다른 길, 키 묶음 (박스 줌·Ctrl+T·Y·Multi-Cut·Quad Draw·Return·F2–F6), 대칭, 뷰 패널 메뉴,
+- 재점검 3차 backlog 남은 6개 (PLAN 「재점검 3차」 2–7): Step 34 메뉴 막다른 길 (Windows 편집기, UV Editor/Planar, Ungroup, HUD Poly Count,
+  Increment and Save, Export Selection), 키 묶음 (박스 줌·Ctrl+T·Y·Multi-Cut·Quad Draw·Return·F2–F6), 대칭, 뷰 패널 메뉴,
   Channel Box 다중 선택·상대값 + AE 재질 라벨, 컴포넌트 픽워크 + Alt+Shift 축 고정.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

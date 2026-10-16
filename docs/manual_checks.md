@@ -219,3 +219,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 31) Space 탭 4분할 → top/front/side 위에서 다시 Space 탭 → 헤더가 "Top/Front/Right Orthographic" 으로 남는지.
 - [ ] (step 31) W/E/R 홀드 메뉴 체크 상자 켜짐/꺼짐이 한눈에 구분되는지 (엔진, 환경설정 Blender Pies 둘 다).
 - [ ] (step 31) 타임라인 현재 프레임 상자가 옆 눈금 숫자를 가리는 것 (Blender C 그리기, 고치지 못함) 이 Maya 사용자에게 거슬리는지.
+
+### Step 33 — 메뉴가 화면 안에
+
+- [ ] (step 33) 뷰 아래쪽·위쪽·좌우 가장자리·모서리의 오브젝트에서 RMB / Shift+RMB / Ctrl+RMB / W 홀드 → 모든 항목이 보이고, 목록이 링 위·옆으로 옮겨져도 드래그·플릭·클릭이 어색하지 않은지. Maya 2022 의 가장자리 동작과 비교.
+- [ ] (step 33) 화면 위쪽에서 Space 홀드 → 메뉴 행이 가운데 상자 아래로 내려온 핫박스가 쓸 만한지 (Maya 비교).

@@ -159,6 +159,70 @@ class Layout:
         return None, False
 
 
+def _move(item, dx, dy):
+    r = item.rect
+    item.rect = (r[0] + dx, r[1] + dy, r[2] + dx, r[3] + dy)
+    if item.opt_rect:
+        o = item.opt_rect
+        item.opt_rect = (o[0] + dx, o[1] + dy, o[2] + dx, o[3] + dy)
+
+
+def _bbox(items):
+    return (min(i.rect[0] for i in items), min(i.rect[1] for i in items),
+            max(i.rect[2] for i in items), max(i.rect[3] for i in items))
+
+
+def _slide(lo, hi, low, high):
+    """Offset that moves [lo, hi] inside [low, high] (towards ``low`` if it can't fit)."""
+    if hi - lo > high - low:
+        return low - lo
+    return max(low - lo, min(0.0, high - hi))
+
+
+def fit_ring(layout, center, bounds):
+    """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1) without moving its
+    centre, the press point the gesture directions are measured from (step 33 「계획」).
+
+    Radial boxes slide inside; the list goes under the ring (Maya), else above it, else
+    beside it (right, then left), else is pushed up from under the ring."""
+    cx, cy = center
+    x0, y0, x1, y1 = bounds[0] - cx, bounds[1] - cy, bounds[2] - cx, bounds[3] - cy  # centre-relative
+    for it in layout.radial.values():
+        _move(it, _slide(it.rect[0], it.rect[2], x0, x1), _slide(it.rect[1], it.rect[3], y0, y1))
+    rows = [it for it in layout.items if it.kind == "list"]
+    if not rows:
+        return
+    lx0, ly0, lx1, ly1 = _bbox(rows)
+    if not layout.radial:
+        dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
+    else:
+        gap = layout.params.list_gap
+        r = layout.params.radius
+        rx0, ry0, rx1, ry1 = _bbox(list(layout.radial.values()))
+        rx0, ry0, rx1, ry1 = min(rx0, -r), min(ry0, -r), max(rx1, r), max(ry1, r)
+        h, w = ly1 - ly0, lx1 - lx0
+        below = (0.0, 0.0)                                    # as laid out (under the ring)
+        above = (0.0, ry1 + gap - ly0)
+        right = (rx1 + gap - lx0, -h / 2 - ly0)
+        left = (rx0 - gap - lx1, -h / 2 - ly0)
+        dx = dy = None
+        for cdx, cdy in (below, above):
+            if ly0 + cdy >= y0 and ly1 + cdy <= y1:
+                dx, dy = cdx + _slide(lx0 + cdx, lx1 + cdx, x0, x1), cdy
+                break
+        else:
+            for cdx, cdy in (right, left):
+                if lx0 + cdx >= x0 and lx1 + cdx <= x1 and h <= y1 - y0:
+                    dx, dy = cdx, cdy + _slide(ly0 + cdy, ly1 + cdy, y0, y1)
+                    break
+            else:
+                dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
+        if w > x1 - x0:
+            dx = x0 - lx0
+    for it in rows:
+        _move(it, dx, dy)
+
+
 class Session:
     """One marking-menu interaction.
 
@@ -172,10 +236,13 @@ class Session:
         submenus that would cross it are moved inside (step 29)."""
         self.params = params or Params()
         self.bounds = bounds
+        root = Layout(menu, measure, self.params, enabled)
+        if bounds is not None:
+            fit_ring(root, origin, bounds)
         self.measure = measure
         self.enabled = enabled
         self.t0 = t0
-        self.stack = [(Layout(menu, measure, self.params, enabled), origin)]
+        self.stack = [(root, origin)]
         self.mode = "PRESS"           # "PRESS" (button held) | "CLICK" (menu stays open)
         self.pos = origin
         self.trail = [origin]
@@ -203,6 +270,8 @@ class Session:
         layout = Layout(item.sub, self.measure, self.params, self.enabled)
         if self.bounds is not None and layout.items and not layout.radial:
             at = self._inside_bounds(layout, at)
+        elif self.bounds is not None and layout.items:
+            fit_ring(layout, at, self.bounds)   # in-place radial submenu: centre = pointer
         self.stack.append((layout, at))
         self.hover = (None, False)
 
@@ -316,6 +385,21 @@ class HotboxLayout:
             for (key, label), w in zip(row, widths):
                 self.labels.append(((x, y, x + w, y + h), key, label))
                 x += w + gap
+        if bounds is not None and self.labels:
+            self._fit_rows(bounds, cy - ch / 2 - gap, cy + ch / 2 + gap)
+
+    def _fit_rows(self, bounds, below_top, above_bottom):
+        """Rows that go over the top edge move under the centre box (same order), or down
+        as far as needed when there is no room there either (step 33 「계획」 5)."""
+        top = max(r[3] for r, _k, _l in self.labels)
+        if top <= bounds[3]:
+            return
+        height = top - above_bottom
+        if below_top - height >= bounds[1]:
+            dy = below_top - top
+        else:
+            dy = bounds[3] - top
+        self.labels = [((r[0], r[1] + dy, r[2], r[3] + dy), k, l) for r, k, l in self.labels]
 
     @staticmethod
     def _wrap(rows, measure, pad, gap, width):
