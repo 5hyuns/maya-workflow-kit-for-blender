@@ -62,6 +62,23 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         name="Help Line", description="Maya-style help for the active tool in the status bar",
         default=True)
 
+    # Marking menus and hotbox.
+    marking_menu_style: bpy.props.EnumProperty(
+        name="Marking Menus",
+        description="How Maya marking menus are shown",
+        items=(('ENGINE', "Maya Engine", "Maya-style marking menus: drag, flick, in-place submenus, "
+                                          "option boxes"),
+               ('PIE', "Blender Pies", "Blender pie menus (8 slots, submenus open new pies)")),
+        default='ENGINE')
+    hotbox_style: bpy.props.EnumProperty(
+        name="Hotbox Style",
+        items=(('ALL', "Zones and Menu Rows", ""), ('ZONES', "Zones Only", ""),
+               ('CENTER', "Center Zone Only", "")),
+        default='ALL')
+    hotbox_all_sets: bpy.props.BoolProperty(
+        name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
+                                               "the current one")
+
     def draw(self, context):
         from . import keymap
         layout = self.layout
@@ -80,6 +97,10 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "maya_top_bar")
         row.prop(self, "menu_set", text="")
+        row = box.row()
+        row.prop(self, "marking_menu_style")
+        row.prop(self, "hotbox_style", text="")
+        row.prop(self, "hotbox_all_sets")
         row = box.row()
         row.prop(self, "show_status_line")
         row.prop(self, "show_command_line")

@@ -18,16 +18,21 @@ DIVIDER = "-"
 
 
 class Sub:
-    """A submenu: ``radial`` {pos: (label, action)}, ``items`` [(label, action) | "-"]."""
+    """A submenu: ``radial`` {pos: (label, action)}, ``items`` [(label, action) | "-"].
 
-    def __init__(self, radial=None, items=()):
+    ``options``: labels whose Maya item has an option box ``[]``
+    (``option_box_command`` in ).
+    """
+
+    def __init__(self, radial=None, items=(), options=()):
         self.radial = dict(radial or {})
         self.items = list(items)
+        self.options = frozenset(options)
 
 
 class MarkingMenu(Sub):
-    def __init__(self, name, label, source, radial=None, items=()):
-        super().__init__(radial, items)
+    def __init__(self, name, label, source, radial=None, items=(), options=()):
+        super().__init__(radial, items, options)
         self.name = name        # id, also the research JSON proc for checks
         self.label = label
         self.source = source    # research citation
@@ -101,7 +106,7 @@ SOFT_HARD = Sub(radial={  # Maya-169 / Maya-109
     "SE": ("Harden Edge", "mesh.mark_sharp"),
     "E": ("Soften/Harden", None),
     "NE": ("Soften Edge", ("mesh.mark_sharp", {"clear": True})),
-})
+}, options={"Soften/Harden"})
 
 SHIFT_OBJECT = MarkingMenu(
     "contextPolyToolsObjectMM", "Object Tools", " contextPolyToolsObjectMM",
@@ -118,7 +123,7 @@ SHIFT_OBJECT = MarkingMenu(
             "SE": ("Harden Edge", "object.shade_flat"),
             "E": ("Soften/Harden", "object.shade_auto_smooth"),
             "NE": ("Soften Edge", "object.shade_smooth"),
-        })),
+        }, options={"Soften/Harden"})),
     },
     items=[
         ("Smooth", _mod('SUBSURF')),                                       # :207
@@ -133,10 +138,12 @@ SHIFT_OBJECT = MarkingMenu(
         DIVIDER,
         ("Separate", ("mesh.separate", {"type": 'LOOSE'})),                # :380
         ("Combine", "object.join"),                                        # :387
-        ("Booleans", Sub(items=[("Union", None), ("Difference", None), ("Intersection", None)])),
+        ("Booleans", Sub(items=[("Union", None), ("Difference", None), ("Intersection", None)],
+                         options={"Union", "Difference", "Intersection"})),
         DIVIDER,
         ("Quad Draw Tool", ("tool", "builtin.poly_build", True)),          # :480
-    ])
+    ],
+    options=['Append to Polygon Tool', 'Combine', 'Crease Tool', 'Insert Edge Loop Tool', 'Mirror', 'Multi-Cut', 'Quad Draw Tool', 'Quadrangulate', 'Reduce', 'Sculpt Tool', 'Smooth', 'Subdiv Proxy', 'Target Weld Tool'])
 
 SHIFT_VERTEX = MarkingMenu(
     "contextPolyToolsVertexMM", "Vertex Tools", " contextPolyToolsVertexMM",
@@ -149,12 +156,12 @@ SHIFT_VERTEX = MarkingMenu(
             "NE": ("Average Normals", "mesh.average_normals"),
             "E": ("Vertex Normal Edit Tool", None),
             "SE": ("Set Normals to Face", "mesh.set_normals_from_faces"),
-        })),
+        }, options={"Average Normals", "Set Normals to Face"})),
         "N": ("Merge Vertices", Sub(radial={                               # :127
             "NE": ("Merge Vertices", "mesh.remove_doubles"),
             "N": ("Merge Vertices To Center", MERGE_CENTER),
             "S": ("Target Weld Tool", None),
-        })),
+        }, options={"Merge Vertices", "Target Weld Tool"})),
         "NE": ("Average Vertices", "mesh.vertices_smooth"),                # :176
         "W": ("Multi-Cut", MULTI_CUT),                                     # :184
         "NW": ("Paint Select Vertices", None),                             # :202
@@ -167,7 +174,8 @@ SHIFT_VERTEX = MarkingMenu(
         DIVIDER,
         ("Circularize Vertices", None),
         ("Reorder Vertices", None),
-    ])
+    ],
+    options=['Chamfer Vertex', 'Circularize Vertices', 'Connect Components', 'Connect Tool', 'Crease Tool', 'Extrude Vertex', 'Multi-Cut'])
 
 SHIFT_EDGE = MarkingMenu(
     "contextPolyToolsEdgeMM", "Edge Tools", " contextPolyToolsEdgeMM",
@@ -182,7 +190,7 @@ SHIFT_EDGE = MarkingMenu(
             "NW": ("Merge Edge Tool", None),
             "E": ("Collapse Edge", "mesh.edge_collapse"),
             "N": ("Merge Edges To Center", MERGE_CENTER),
-        })),
+        }, options={"Merge Border Edges", "Target Weld Tool", "Merge Edge Tool"})),
         "NE": ("Flip/Spin Edge", Sub(radial={                              # :199
             "N": ("Flip Triangle Edge", "mesh.edge_rotate"),
             "E": ("Spin Forward", ("mesh.edge_rotate", {"use_ccw": False})),
@@ -204,7 +212,8 @@ SHIFT_EDGE = MarkingMenu(
         DIVIDER,
         ("Connect Components", "mesh.subdivide_edgering"),                 # :403
         ("Detach Components", "mesh.edge_split"),                          # :419
-    ])
+    ],
+    options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut', 'Slide Edge Tool'])
 
 SHIFT_FACE = MarkingMenu(
     "contextPolyToolsFaceMM", "Face Tools", " contextPolyToolsFaceMM",
@@ -219,7 +228,7 @@ SHIFT_FACE = MarkingMenu(
             "NE": ("Reverse Propagate", None),
             "SE": ("Conform Normals", "mesh.normals_make_consistent"),
             "E": ("Reverse Normals", "mesh.flip_normals"),
-        })),
+        }, options={"Reverse Normals"})),
         "W": ("Multi-Cut", MULTI_CUT),                                     # :150
         "NW": ("Paint Select Faces", None),                                # :168
     },
@@ -235,7 +244,8 @@ SHIFT_FACE = MarkingMenu(
         DIVIDER,
         ("Extract Faces", ("mesh.separate", {"type": 'SELECTED'})),        # :339
         ("Duplicate Face", ("v3d", "mesh.duplicate_move", {})),            # :353
-    ])
+    ],
+    options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces', 'Circularize Components', 'Duplicate Face', 'Extract Faces', 'Extrude Face', 'Multi-Cut', 'Poke Face', 'Smooth Faces', 'Wedge Face'])
 
 SHIFT_DEFAULT = MarkingMenu(
     "contextPolyToolsDefaultMM", "Create", " contextPolyToolsDefaultMM",
@@ -257,7 +267,8 @@ SHIFT_DEFAULT = MarkingMenu(
         DIVIDER,
         ("Type", "object.text_add"),                                       # :308
         ("Quad Draw Tool", None),
-    ])
+    ],
+    options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane', 'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Sphere', 'Torus'])
 
 # --- Ctrl+RMB: polyConvertMM (, :267-269) -------------------------------------------
 
@@ -269,7 +280,7 @@ CTRL_CONVERT = MarkingMenu(
             "S": ("To Contained Edges", ("mesh.select_mode", {"type": 'EDGE'})),
             "NW": ("To Contiguous Edges", ("mesh.loop_multi_select", {"ring": False})),
             "NE": ("To Edge Perimeter", "mesh.region_to_loop"),
-        })),
+        }, options={"To Contiguous Edges"})),
         "NW": ("Shrink Selection", Sub(radial={                            # :88
             "NW": ("Shrink", "mesh.select_less"),
             "N": ("Shrink Selection Along Loop", None),
@@ -394,9 +405,108 @@ OPT_SELECT = MarkingMenu(
         "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),          # :54
     })
 
+# --- Hotbox zones (hotkeys_and_menus.md :207-214; marking_menus.json hotbox.zones) ------
+
+def _pane(ui_type):
+    return ("maya_kit.hb_pane", {"ui_type": ui_type})
+
+
+def _ui(element):
+    return ("maya_kit.hb_ui", {"element": element})
+
+
+def _mask(preset):
+    return ("maya_kit.hb_mask", {"preset": preset})
+
+
+def _view(view):
+    return ("maya_kit.hb_view", {"view": view})
+
+
+SHADING_WS = ("maya_kit.hb_workspace", {"name": "Shading"})
+ANIMATION_WS = ("maya_kit.hb_workspace", {"name": "Animation"})
+
+HB_NORTH = MarkingMenu(
+    "HotboxNorthMenu", "Panel Layouts", " hotbox.zones.N",
+    radial={
+        "N": ("Single Perspective", ("maya_kit.hb_single", {})),          # Maya
+        "NE": ("Hypershade/Render/Persp", SHADING_WS),                     # :39
+        "SE": ("Hypershade/Outliner/Persp", SHADING_WS),                   # :42
+        "E": ("Hypershade/Persp", SHADING_WS),                             # :45
+        "S": ("Toggle Outliner", None),                                    # :47
+        "SW": ("Persp/Graph/Outliner", ANIMATION_WS),                      # :49
+        "W": ("Persp/Graph", ANIMATION_WS),                                # :52
+        "NW": ("Persp/Relationship Editor", None),                         # :55
+    })
+
+HB_SOUTH = MarkingMenu(
+    "HotboxSouthMenu", "Panel Types", " hotbox.zones.S",
+    radial={
+        "N": ("Outliner", _pane('OUTLINER')),                              # Maya
+        "E": ("Graph Editor", _pane('FCURVES')),                           # :137
+        "SE": ("Dope Sheet", _pane('DOPESHEET')),                          # :140
+        "S": ("Hypergraph", None),                                         # :143
+        "SW": ("Node Editor", _pane('ShaderNodeTree')),                    # :146
+        "W": ("Hypershade", _pane('ShaderNodeTree')),                      # :149
+        "NW": ("Render View", _pane('IMAGE_EDITOR')),                      # :152
+        "NE": ("Set Editor", None),                                        # :155
+    })
+
+HB_EAST = MarkingMenu(
+    "HotboxEastMenu", "UI Elements", " hotbox.zones.E",
+    radial={
+        "N": ("Help Line", _ui('HELP_LINE')),                              # Maya
+        "NE": ("Status Line", _ui('STATUS_LINE')),                         # :44
+        "E": ("Attributes", Sub(radial={                                   # :48
+            "E": ("Channel Box", _ui('CHANNEL_BOX')),
+            "S": ("Layer Editor", _ui('CHANNEL_BOX')),
+            "W": ("Attribute Editor", _ui('ATTRIBUTE')),
+            "N": ("Tool Settings", _ui('TOOL_SETTINGS')),
+        })),
+        "SE": ("Tool Box", _ui('TOOLBOX')),
+        "S": ("Time Slider", None),
+        "SW": ("Range Slider", None),
+        "W": ("Shelf", None),
+        "NW": ("Command Line", _ui('COMMAND_LINE')),
+    })
+
+HB_WEST = MarkingMenu(
+    "HotboxWestMenu", "Selection Masks", " hotbox.zones.W",
+    radial={
+        "N": ("NURBS Mask", _mask('NURBS')),
+        "NE": ("Hierarchy", None),
+        "E": ("Animation Mask", _mask('ANIMATION')),
+        "SE": ("Deformations Mask", _mask('DEFORMATIONS')),
+        "S": ("Dynamics Mask", None),
+        "SW": ("Polygons Mask", _mask('POLYGONS')),
+        "W": ("Rendering Mask", _mask('RENDERING')),
+        "NW": ("Object/Components", "object.editmode_toggle"),
+    },
+    items=[("All Objects", _mask('ALL'))])
+
+HB_CENTER = MarkingMenu(
+    "HotboxCenterMenu", "Views", " hotbox.zones.C",
+    radial={
+        "N": ("Perspective View", _view('PERSP')),                         # Maya
+        "E": ("Side View", _view('RIGHT')),                                # :146
+        "S": ("Front View", _view('FRONT')),                               # :149
+        "W": ("Top View", _view('TOP')),                                   # :152
+        "NW": ("Left View", _view('LEFT')),                                # :155
+        "SW": ("Back View", _view('BACK')),                                # :159
+        "SE": ("Bottom View", _view('BOTTOM')),                            # :163
+    },
+    items=[("Hotbox Style", Sub(items=[                                    # :168
+        ("Zones and Menu Rows", ("maya_kit.hb_style", {"style": 'ALL'})),
+        ("Zones Only", ("maya_kit.hb_style", {"style": 'ZONES'})),
+        ("Center Zone Only", ("maya_kit.hb_style", {"style": 'CENTER'})),
+    ]))])
+
+HOTBOX_ZONES = {"N": HB_NORTH, "S": HB_SOUTH, "E": HB_EAST, "W": HB_WEST, "C": HB_CENTER}
+
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
-                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT)}
+                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT,
+                             HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER)}
 
 # Active tool -> its options marking menu (Maya-49).
 TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",

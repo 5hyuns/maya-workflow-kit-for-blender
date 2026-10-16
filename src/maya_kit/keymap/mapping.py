@@ -88,8 +88,8 @@ ENTRIES = {
     "GoToMinFrame": _e("KIT", ("Frames", "screen.frame_jump", {"end": False})),
     "SelectToggleMode": _e("KIT", (OBJ_NM, "object.editmode_toggle", {}),
                            note="오브젝트 ↔ 마지막 컴포넌트 모드"),
-    "ShowHotbox": _e("STEP", step=10, note="탭=4분할↔단일 뷰 구현 (maya_kit.tap_hold space), "
-                     "홀드 핫박스는 Step 10. 재생은 Alt+V"),
+    "ShowHotbox": _e("KIT", (V3D, "maya_kit.hotbox", {}),
+                     note="홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V"),
 
     # --- IC already matches () ---
     "Duplicate": _e("IC", (OBJ, "object.duplicate_move", {})),

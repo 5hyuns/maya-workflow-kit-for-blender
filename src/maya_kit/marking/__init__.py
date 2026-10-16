@@ -5,6 +5,9 @@
 api_limits.md #5 (pies: 8 slots, press-drag-release via pie_tap_timeout).
 
 - ``menus.py``: the menus as data (Maya radial positions).
+- ``engine.py`` / ``draw.py`` / ``modal.py``: the step-9 marking menu engine
+  (GPU, gestures, in-place submenus, option boxes) and the hotbox; the
+  "Marking Menu Style" preference picks the engine (default) or the pies.
 - Here: one pie ``Menu`` class per marking menu and radial submenu (plain
   ``Menu`` for list submenus), ``maya_kit.marking_menu`` (picks the menu for a
   trigger and the context, like Maya's builders), helper operators, and the
@@ -16,6 +19,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
+from . import draw, modal
 from . import menus as mm
 
 # Blender fills a pie in this order (UILayout.menu_pie).
@@ -97,6 +101,7 @@ def _make(sub, name, label, path, is_pie):
 
 for _m in mm.MENUS.values():
     _make(_m, idname(_m.name), _m.label, _m.label, is_pie=True)
+_NAME_BY_ID = {idname(name): name for name in mm.MENUS}
 
 
 # --- choosing the menu (Maya builders,  「계획」 2) -----------------------------
@@ -172,7 +177,8 @@ class MAYAKIT_OT_marking_menu(bpy.types.Operator):
             return {'PASS_THROUGH'}
         kind, name = found
         if kind == "pie":
-            bpy.ops.wm.call_menu_pie(name=name)
+            modal.open_menu(_NAME_BY_ID[name], event.type if event.type in modal.MOUSE_BUTTONS
+                            else 'RIGHTMOUSE', (event.mouse_region_x, event.mouse_region_y))
         else:
             bpy.ops.wm.call_menu(name=name)
         return {'FINISHED'}
@@ -255,8 +261,8 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
 
     def click(self, context, event):
         self._set_tool()
-        # Opened on the LMB press: the pie confirms on LMB release (drag to an item).
-        bpy.ops.wm.call_menu_pie(name=idname(self.menu))
+        # Opened on the LMB press: dragging and releasing LMB picks (engine or pie).
+        modal.open_menu(self.menu, 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
 def _binding(name, label, tool, menu):
@@ -274,7 +280,7 @@ TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R
 
 
 classes = (MAYAKIT_OT_marking_menu, MAYAKIT_OT_mm_component, MAYAKIT_OT_mm_clear_selection,
-           *_classes)
+           *modal.classes, *_classes)
 
 
 def register():
@@ -285,9 +291,11 @@ def register():
         options={'SKIP_SAVE'})
     for cls in TOOL_BINDINGS:
         taphold.register_binding(cls())
+    draw.register()
 
 
 def unregister():
+    draw.unregister()
     for cls in TOOL_BINDINGS:
         taphold.unregister_binding(cls.name)
     del bpy.types.WindowManager.maya_kit_mm_target

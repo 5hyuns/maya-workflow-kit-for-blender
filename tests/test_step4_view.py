@@ -199,7 +199,8 @@ def test_view_history_keys():
 
 
 def test_space_ctrl_space_keys():
-    assert [k.properties.binding for k in _kmis("3D View", "maya_kit.tap_hold", "SPACE")] == ["space"]
+    # Step 9: the Space tap (four views) now lives in the hotbox operator.
+    assert len(_kmis("3D View", "maya_kit.hotbox", "SPACE")) == 1
     assert _kmis("Screen", "screen.screen_full_area", "SPACE", ctrl=True)[0].properties.use_hide_panels
 
 
