@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya component-mode keys that need more than one Blender operator: Alt+D select none
-(back to object mode), Ctrl+B bevel (vertices or edges by the select mode) and
-Ctrl+F9-F11 convert selection.
+(back to object mode), Ctrl+B bevel (vertices or edges by the select mode),
+Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
  (SelectNone: ``changeSelectMode -object; select -cl``),
 :79 (Ctrl+F9-F12 convert), Maya via  (Ctrl+B BevelPolygon).
- 「계획」 2-3, 5.
+ 「계획」 2-3, 5; Delete:  「계획」.
 """
 
 import bmesh
@@ -125,4 +125,67 @@ class MAYAKIT_OT_convert_selection(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_select_none, MAYAKIT_OT_bevel, MAYAKIT_OT_convert_selection)
+def delete_components(bm, mode):
+    """Maya Delete on one mesh's selection; ``mode`` = 'FACE' / 'EDGE' / 'VERT'.
+
+    Returns (deleted, skipped): elements removed and border edges left alone.
+     DeleteEdge (polyDelEdge -cv true: non-border
+    edges, vertices cleaned up) and DeleteVertex (vertices and their attached edges).
+    """
+    if mode == 'FACE':
+        faces = [f for f in bm.faces if f.select]
+        bmesh.ops.delete(bm, geom=faces, context='FACES')
+        return len(faces), 0
+    if mode == 'EDGE':
+        sel = [e for e in bm.edges if e.select]
+        inner = [e for e in sel if len(e.link_faces) == 2]
+        if inner:
+            bmesh.ops.dissolve_edges(bm, edges=inner, use_verts=True, use_face_split=False)
+        return len(inner), len(sel) - len(inner)
+    verts = [v for v in bm.verts if v.select]
+    if verts:
+        bmesh.ops.dissolve_verts(bm, verts=verts, use_face_split=False, use_boundary_tear=False)
+    return len(verts), 0
+
+
+def select_mode_kind(ts):
+    vert, edge, face = ts.mesh_select_mode
+    return 'FACE' if face else 'EDGE' if edge else 'VERT'
+
+
+class MAYAKIT_OT_delete_components(bpy.types.Operator):
+    """Delete the selected faces, edges (non-border, cleaning up their vertices) or vertices
+    right away, by the select mode (Maya Delete on components)"""
+    bl_idname = "maya_kit.delete_components"
+    bl_label = "Delete Components"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        mode = select_mode_kind(context.tool_settings)
+        deleted = skipped = 0
+        for ob in context.objects_in_mode_unique_data:
+            if ob.type != 'MESH':
+                continue
+            bm = bmesh.from_edit_mesh(ob.data)
+            d, s = delete_components(bm, mode)
+            for seq in (bm.verts, bm.edges, bm.faces):
+                for el in seq:
+                    el.select = False
+            bm.select_flush(False)
+            bmesh.update_edit_mesh(ob.data)
+            deleted, skipped = deleted + d, skipped + s
+        if skipped:
+            self.report({'WARNING'}, f"{skipped} border edge(s) kept (Maya Delete Edge skips borders)")
+        if not deleted:
+            if not skipped:
+                self.report({'INFO'}, "Nothing selected")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+classes = (MAYAKIT_OT_select_none, MAYAKIT_OT_bevel, MAYAKIT_OT_convert_selection,
+           MAYAKIT_OT_delete_components)

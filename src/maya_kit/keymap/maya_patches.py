@@ -5,7 +5,7 @@
 Plan and rationale:  (1-4),  (5-8),
  (9-13),  (16),  (17),
  (18),  (19),  (20),
- (21).
+ (21),  (22).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and  is cross-checked against it.
@@ -441,12 +441,24 @@ def patch_manip_duplicate(kd):
              first=True)
 
 
+# --- 22. Delete / Backspace on components ------------------------
+# Maya deletes the selected faces / edges / vertices right away (runtime_commands.json Delete,
+# DeleteEdge, DeleteVertex); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace
+# keep IC's mesh.dissolve_mode = Maya DeletePolyElements (Maya-376).
+
+def patch_component_delete(kd):
+    for key in ("DEL", "BACK_SPACE"):
+        kd.remove("Mesh", "wm.call_menu", type=key)
+        _add(kd, "Mesh", "maya_kit.delete_components", make_event(key))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
-           patch_mesh_components, patch_key_stepping, patch_manip_duplicate)
+           patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
+           patch_component_delete)
 
 
 def apply(data):
