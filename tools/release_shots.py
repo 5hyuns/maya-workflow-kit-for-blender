@@ -8,6 +8,7 @@ from tests/gui/sim.py). Each screenshot is taken one tick after the UI change
 
 import os
 import sys
+from importlib import import_module
 from pathlib import Path
 
 import bpy
@@ -72,11 +73,12 @@ def s_scene():
     check("Maya keymap still active after loading the layout", kc is not None and kc.name == "Maya")
     check("layout has the Maya strip (Status Line + Shelf)",
           bpy.data.masks.get(".MayaKitStrip") is not None)
+    k = import_module(MODULE + ".operators.units").maya_unit()  # Maya lengths ()
     with v3d_override():
         bpy.ops.maya_kit.create(kind='SPHERE')
-        bpy.context.active_object.location = (3.5, 0, 1)
+        bpy.context.active_object.location = (3.5 * k, 0, k)
         bpy.ops.maya_kit.create(kind='CYLINDER')
-        bpy.context.active_object.location = (-3.5, 0, 1)
+        bpy.context.active_object.location = (-3.5 * k, 0, k)
         bpy.data.objects["pSphere1"].select_set(True)
         bpy.ops.maya_kit.group()
         bpy.ops.maya_kit.create(kind='CUBE')

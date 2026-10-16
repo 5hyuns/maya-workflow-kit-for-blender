@@ -30,8 +30,8 @@ _CONSTRAINTS = {
 BY_COMMAND = {
     # --- Curves / Surfaces ---
     "CreateNURBSCircle": (_create('NURBS_CIRCLE'), 'CURVE_NCIRCLE'),
-    "EPCurveTool": ("curve.primitive_nurbs_curve_add", 'CURVE_NCURVE'),
-    "CreateBezierCurveTool": ("curve.primitive_bezier_curve_add", 'CURVE_BEZCURVE'),
+    "EPCurveTool": (_create('CV_CURVE'), 'CURVE_NCURVE'),
+    "CreateBezierCurveTool": (_create('BEZIER_CURVE'), 'CURVE_BEZCURVE'),
     "InsertKnot": ("curve.subdivide", 'CURVE_PATH'),
     "CreateNURBSSphere": (_create('NURBS_SPHERE'), 'SURFACE_NSPHERE'),
     "CreateNURBSCylinder": (_create('NURBS_CYLINDER'), 'SURFACE_NCYLINDER'),

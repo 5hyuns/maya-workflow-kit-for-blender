@@ -18,9 +18,7 @@ import bmesh
 import bpy
 from mathutils import Vector
 
-_LENGTH_M = {'ADAPTIVE': 1.0, 'KILOMETERS': 1000.0, 'METERS': 1.0, 'CENTIMETERS': 0.01,
-             'MILLIMETERS': 0.001, 'MICROMETERS': 1e-6, 'MILES': 1609.344, 'FEET': 0.3048,
-             'INCHES': 0.0254, 'THOU': 2.54e-5}
+from ..operators import units as _units
 
 __all__ = ["ls", "select", "move", "rotate", "scale", "setAttr", "getAttr", "xform",
            "polyCube", "polySphere", "polyCylinder", "polyPlane", "delete", "rename",
@@ -36,11 +34,8 @@ def __getattr__(name):
 # --- units, flags, objects ----------------------------------------------------------
 
 def linear_factor(scene=None):
-    """Blender units per Maya linear unit (= one scene display unit)."""
-    us = (scene or bpy.context.scene).unit_settings
-    if us.system == 'NONE':
-        return 1.0
-    return _LENGTH_M.get(us.length_unit, 1.0) / (us.scale_length or 1.0)
+    """Blender units per Maya linear unit (= one scene display unit, )."""
+    return _units.maya_unit(scene)
 
 
 def _to_bu(v):

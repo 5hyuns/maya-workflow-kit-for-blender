@@ -10,7 +10,7 @@ Design:  「계획」 2-5. Evidence:
 import bpy
 from mathutils import Vector
 
-from . import framing
+from . import framing, units
 
 # --- tumble -------------------------------------------------------------------
 
@@ -130,7 +130,8 @@ def frame_region(context, area, region, selected=True, children=False):
     rect = visible_bounds(area, region)
     loc, dist = framing.fit(points, rv3d.view_rotation, rv3d.window_matrix.copy(),
                             rv3d.view_distance, rv3d.view_perspective == 'ORTHO',
-                            (region.width, region.height), rect)
+                            (region.width, region.height), rect,
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
     rv3d.view_location = loc
     rv3d.view_distance = dist
     region.tag_redraw()

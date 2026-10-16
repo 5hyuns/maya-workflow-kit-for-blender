@@ -125,7 +125,7 @@ def s_layout_shot():
 
 @step
 def s_frame():
-    check(f"F frames the selection (distance {C['dist0']:.1f} -> {rv3d().view_distance:.1f})",
+    check(f"F frames the selection (distance {C['dist0']:.3f} -> {rv3d().view_distance:.3f})",
           rv3d().view_distance != C["dist0"])
     C["rot"] = rv3d().view_rotation.copy()
     drag('LEFTMOUSE', 80, 40, alt=True)
@@ -147,7 +147,7 @@ def s_track():
 
 @step
 def s_dolly():
-    check(f"Alt+RMB drag dollies ({C['dist']:.2f} -> {rv3d().view_distance:.2f})",
+    check(f"Alt+RMB drag dollies ({C['dist']:.4f} -> {rv3d().view_distance:.4f})",
           abs(rv3d().view_distance - C["dist"]) > 1e-3)
     tap('F')
 

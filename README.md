@@ -46,6 +46,22 @@ Blender 익스텐션입니다. *English below.*
 <img src="docs/screenshots/05_attribute_editor.png" width="49%"> <img src="docs/screenshots/07_outliner_rigging_shelf.png" width="49%">
 </p>
 
+### 단위
+
+Maya 길이 1 = 씬 표시 길이 단위 1 (Maya 의 working unit 과 같은 규칙, [결정 8]()).
+Create 메뉴·셸프·마킹 메뉴·핫박스·Ctrl+G·커맨드 라인 `cmds.polyCube()` 가 모두 같은 크기를 만들고, Maya FBX(cm)를 가져온 크기와도 같다.
+
+| 씬 | Blender 단위 (BU) | pCube1 | Channel Box `cmds.move(5, 0, 0)` |
+|---|---|---|---|
+| MayaKit 레이아웃 (기본: m 유지 + cm 표시) | 1 BU = 1 m | 0.01 BU = **1 cm** | 5 cm |
+| 환경설정 켬 (`scale_length` 0.01) | 1 BU = 1 cm | 1 BU = **1 cm** | 5 cm |
+| 팩토리 레이아웃 (m 표시) | 1 BU = 1 m | 1 BU = 1 m | 5 m |
+
+- 기본값은 물리·라이트 감쇠가 실제 크기(1 cm)로 계산된다. Maya 에서 가져온 장면과 같은 조건이다.
+- MayaKit 레이아웃의 3D 뷰는 Maya 새 씬 persp 카메라(28, 21, 28 cm)와 클립 0.1 / 10000 cm 로 시작한다.
+- Maya Units 는 이미 저장된 파일을 바꾸지 않는다. 켤 때 열려 있는 파일과 새 파일에만 적용된다.
+  BU 값은 그대로이고 표시만 100배 바뀐다 (1 BU 물체가 "1 cm" 로 보인다).
+
 ### Maya ↔ Blender 대응표
 
 | Maya | Blender (이 킷에서) | 비고 |
@@ -140,6 +156,23 @@ the hotkeys but the interaction feel, UI layout and scene concepts.
   options, user shelves of Python script buttons.
 - **Concepts**: Freeze Transformations keeping the pivot, Reset, Center Pivot, Delete History / by Type, Maya-style
   parenting, Duplicate Special / with Transform, Maya names (pCube1/pCubeShape1) and creation defaults, optional Maya units.
+
+### Units
+
+A Maya length of 1 is one scene display length unit, like Maya's working unit ([]()).
+The Create menu, shelf, marking menus, hotbox, Ctrl+G and `cmds.polyCube()` all make the same size, which is also the size a
+Maya (cm) FBX imports at.
+
+| Scene | Blender unit (BU) | pCube1 | Channel Box after `cmds.move(5, 0, 0)` |
+|---|---|---|---|
+| MayaKit layout (default: metres kept, cm shown) | 1 BU = 1 m | 0.01 BU = **1 cm** | 5 cm |
+| "Maya Units" preference on (`scale_length` 0.01) | 1 BU = 1 cm | 1 BU = **1 cm** | 5 cm |
+| Factory layout (m shown) | 1 BU = 1 m | 1 BU = 1 m | 5 m |
+
+- With the default, physics and light falloff work on the real size (1 cm), the same as a scene imported from Maya.
+- The MayaKit layout's 3D views start at Maya's new-scene persp camera (28, 21, 28 cm) with 0.1 / 10000 cm clipping.
+- Maya Units never changes a saved file: it applies to the open file when turned on and to new files. BU values stay
+  as they are and only the display changes by 100x (a 1 BU object then reads "1 cm").
 
 ### Maya ↔ Blender
 

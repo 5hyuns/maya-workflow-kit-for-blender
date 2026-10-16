@@ -16,7 +16,7 @@ orthographic: its extent scales with the distance).
 from mathutils import Matrix, Vector
 
 FIT = 0.95       #  (PREF:576)
-MIN_HALF = 0.5   # half size used around a single point (locator, light) [delegated]
+MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units [delegated]
 
 
 def view_matrix(loc, rot, dist):
@@ -40,13 +40,13 @@ def project(persp, p, size):
     return Vector(((v.x / v.w * 0.5 + 0.5) * size[0], (v.y / v.w * 0.5 + 0.5) * size[1]))
 
 
-def box_corners(points):
+def box_corners(points, min_half=MIN_HALF):
     """8 corners of the axis-aligned box around ``points`` (padded if it is a point)."""
     lo = Vector((min(p[0] for p in points), min(p[1] for p in points), min(p[2] for p in points)))
     hi = Vector((max(p[0] for p in points), max(p[1] for p in points), max(p[2] for p in points)))
     if max(hi - lo) < 1e-6:
-        lo -= Vector((MIN_HALF,) * 3)
-        hi += Vector((MIN_HALF,) * 3)
+        lo -= Vector((min_half,) * 3)
+        hi += Vector((min_half,) * 3)
     return [Vector((x, y, z)) for x in (lo.x, hi.x) for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
 
 
@@ -58,13 +58,13 @@ def _bounds(persp, corners, size):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT):
+def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HALF):
     """(view_location, view_distance) that fit ``points`` into ``rect`` (region pixels).
 
     ``rect`` = (x0, y0, x1, y1), the visible part of the region; the box fills ``factor``
     of it on its tighter axis and is centred in it. ``size`` = region (width, height).
     """
-    corners = box_corners(points)
+    corners = box_corners(points, min_half)
     centre = sum(corners, Vector()) / 8.0
     radius = max((c - centre).length for c in corners)
     tx, ty = (rect[0] + rect[2]) / 2.0, (rect[1] + rect[3]) / 2.0

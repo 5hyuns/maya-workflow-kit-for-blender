@@ -23,6 +23,10 @@ MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range 
 STRIP_FACTOR = 0.91       # top 9% of the factory 3D View ~ 67 px at 1600x900 = header + tool header
                           # (checked,  「계획」 1)
 STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER
+# Maya lengths are cm (): 1 Maya unit = 0.01 BU with 's m + cm display.
+MAYA_UNIT = 0.01
+MAYA_CLIP = (0.1, 10000.0)        # cm,  (= operators/units.py CLIP)
+MAYA_PERSP_EYE = (28.0, -28.0, 21.0)  # cm, Maya persp (28, 21, 28) Y-up  (= units.PERSP_EYE)
 
 
 def run_outside_blender():
@@ -107,10 +111,29 @@ def build_layout():
     v3d.show_region_tool_header = True     # row for the Maya Status Line (step 7)
     v3d.lens = MAYA_LENS
     v3d.region_3d.view_perspective = 'PERSP'
+    maya_views()
 
     ws.name = "General"                    # Maya workspace name (ui_layout.md:78)
     return {"outliner": outliner, "view3d": view3d, "strip": strip, "attribute_editor": attribute_editor,
             "layer_editor": layer_editor}
+
+
+def maya_views():
+    """Every 3D view of every workspace sees Maya's new-scene persp view in cm: a default
+    pCube1 (1 cm, ) looks the size it does in Maya."""
+    import bpy
+    from mathutils import Vector
+    eye = Vector(MAYA_PERSP_EYE) * MAYA_UNIT
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            for space in area.spaces:
+                if space.type != 'VIEW_3D':
+                    continue
+                space.clip_start, space.clip_end = (c * MAYA_UNIT for c in MAYA_CLIP)
+                rv3d = space.region_3d
+                rv3d.view_location = (0.0, 0.0, 0.0)
+                rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')
+                rv3d.view_distance = eye.length
 
 
 def setup_scene():
