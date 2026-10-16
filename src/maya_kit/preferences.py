@@ -79,6 +79,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
                                                "the current one")
 
+    # Shelf (docs/steps/step_12.md): current tab (factory file name or "USER:<name>").
+    shelf_current: bpy.props.StringProperty(options={'HIDDEN'})
+
     # Scene concepts (docs/steps/step_10.md; docs/user_decisions.md #1, #2).
     parent_mode: bpy.props.EnumProperty(
         name="Parent Mode", description="What P (Parent) does to the child's values",

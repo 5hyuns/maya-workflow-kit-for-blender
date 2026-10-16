@@ -42,6 +42,7 @@ python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (
 python tools/make_startup.py     # regenerate app_template/MayaKit/startup.blend (headless)
 python tools/make_theme.py       # regenerate theme/maya.xml from its colour table
 python tools/gen_menu_data.py    # regenerate ui/menu_data.py (Maya menu structure) from research/maya/menus.json
+python tools/gen_shelf_data.py   # regenerate ui/shelf_data.py (Maya factory shelves) from research/maya/shelves.json
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
@@ -63,4 +64,5 @@ python tools/gen_menu_data.py    # regenerate ui/menu_data.py (Maya menu structu
 - Marking menu engine/hotbox: logic in `marking/engine.py` (no bpy, test it headless), GPU drawing in `marking/draw.py` (one handler per editor, draws only the region in `draw.ACTIVE`), modals in `marking/modal.py`. Pass the press position as `origin` when invoking `maya_kit.mm_engine` from another operator: a nested invoke's event is the window's latest state.
 - Concepts (step 10): the Maya pivot is the object origin and `delta_location` holds the Maya pivot offset (Freeze → channels 0/0/1, pivot kept). Setting `matrix_basis`/`matrix_world` keeps deltas. Parent the Maya way with `operators/parenting.set_parent_maya` (parent inverse identity unless shear). Menu items Maya builds at run time go in `menu_map.EXTRA`.
 - Sidebar dock (step 11): CB/LE and AE share the "Channel Box" sidebar tab; `WindowManager.maya_kit_dock` picks which panels poll. Outliner rows are a WM collection rebuilt from handlers (never write ID data in `draw`). To test "is this object in the view layer", use `select_set`'s RuntimeError — `view_layer.objects.get` misses objects linked since the last sync.
+- Shelf (step 12): Status Line + Shelf live in the "Maya strip", an Image Editor whose `space.mask` is the Mask `.MayaKitStrip`; `ui/shelf.py` swaps `IMAGE_HT_header/tool_header.draw` (restored on unregister, snapshotted by `tests/kit.py`). Layout changes go in `tools/make_startup.py` (rerun it). A HORIZONTAL `area_split` gives the new area the top part.
 - GUI traps (step 9): `screen.screenshot` shows the previous frame (take shots one tick later); setting `SpaceView3D.show_region_toolbar` inside an operator doesn't stick — set it from a `bpy.app.timers` callback.

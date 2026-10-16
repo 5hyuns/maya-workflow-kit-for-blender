@@ -2,16 +2,14 @@
 
 ## 현재 작업
 
-- Step 11 (M4-b Outliner·Attribute Editor) 완료 — `docs/steps/step_11.md`. 헤드리스 175/175, GUI 107/107.
-- `ui/attribute_editor.py` + `ui/ae_layout.py`: 사이드바 "Channel Box" 탭의 도크 모드(CB/LE ↔ AE, Ctrl+A), 노드 탭 transform/shape/history(모디파이어)/재질,
-  Maya 템플릿 섹션(collapse 플래그 그대로). `ui/outliner.py`: 사이드바 "Outliner" 탭 UIList (DAG, Shapes 토글, 더블클릭 이름 변경, Parent/Unparent 버튼).
-- 키: Object Mode Ctrl+A = AE 전환, Ctrl+Shift+A 전체 선택, Alt+D 선택 해제.
-- Step 10 = `86f3c29` (개념 연산자), Step 9 = `fdab64b`.
+- Step 12 (M5 셸프) 완료 — `docs/steps/step_12.md`. 헤드리스 185/185, GUI 115/115.
+- Maya 띠: 표식 있는 얇은 Image Editor (헤더 = Status Line, 툴 헤더 = Shelf), App Template 에 포함, 다른 레이아웃은 Windows > UI Elements > Shelf.
+- `ui/shelf.py` (버튼·탭·사용자 셸프 `shelves.json`·띠), `ui/shelf_data.py` (생성: `tools/gen_shelf_data.py`), `ui/shelf_map.py` (동작·내장 아이콘).
+- Step 11 = `4f2ac87` (Outliner/AE), Step 10 = `86f3c29`.
 
 ## 바로 다음 할 일
 
-- **Step 12 — M5 셸프** (사용자 번호; PLAN 표 #13): `research/maya/shelves.json` 팩토리 셸프(Poly Modeling 등)를 Blender 연산자 버튼으로
-  (아이콘은 Blender 내장, Maya 아이콘 복사 금지), 셸프 탭 전환, 사용자 셸프(버튼 = Python 스크립트), 메뉴셋 F2–F6.
-  - 근거: `research/maya/shelves.md`, `shelves.json`, `research/blender/api_limits.md` #11. 버튼 동작은 Step 7 `menu_map` 값 형식과
-    Step 10 연산자(`maya_kit.create`, freeze, delete_history…) 재사용.
-- 미뤄진 것: Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인, 마킹메뉴 편집기, Step 10/11 「남은 것」 (PLAN 참고).
+- **Step 13 — 통합·배포** (사용자 번호): 전체 헤드리스 테스트, 익스텐션 zip 빌드 + `blender --command extension validate`, 깨끗한 샌드박스 설정에
+  설치 → 활성화 → App Template 설치 → GUI 스크린샷 세트(`docs/screenshots/`), README.md (한국어+영어: 설치, 기능, 한계).
+  - 재료: 각 step 문서 「결정」「남은 것」, `docs/keymap_mapping.md`, `docs/manual_checks.md`, GUI 테스트 `--shots`.
+- 미뤄진 것: 메뉴셋 F2–F6 키, Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인, 마킹메뉴 편집기, Step 10–12 「남은 것」.

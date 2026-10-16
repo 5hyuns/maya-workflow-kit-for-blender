@@ -254,6 +254,9 @@ class MAYAKIT_MT_ui_elements(bpy.types.Menu):
         layout = self.layout
         layout.prop(prefs, "maya_top_bar")
         layout.prop(prefs, "show_status_line")
+        from .shelf import strip_area
+        layout.operator("maya_kit.shelf_strip_toggle", text="Shelf",
+                        icon='CHECKBOX_HLT' if strip_area(context.screen) else 'CHECKBOX_DEHLT')
         layout.prop(prefs, "show_command_line")
         layout.prop(prefs, "show_help_line")
 
