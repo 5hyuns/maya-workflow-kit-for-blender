@@ -165,6 +165,32 @@ STANDARD_SURFACE = [
       ("socket", "Thin Film IOR", "IOR")),
     S("Geometry", False, ("socket", "Alpha", "Opacity"), ("socket", "Normal", "Normal")),
 ]
+# --- lambert (AElambertTemplate.mel:27 -> AElambertCommon.mel:63; attribute_editor.md:137-140) ---
+# Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
+# Normal, diffuse -> Weight, translucence -> Subsurface; refractions -> Transmission.
+_LAMBERT_COMMON = S("Common Material Attributes", True,
+                    ("socket", "Base Color", "Color"), ("socket", "Alpha", "Opacity"),
+                    ("socket", "Emission Color", "Incandescence"), ("socket", "Normal", "Bump Mapping"),
+                    ("socket", "Weight", "Diffuse"), ("socket", "Subsurface Weight", "Translucence"))
+_RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refractions"),
+              ("socket", "IOR", "Refractive Index"))
+LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
+# blinn / phong = lambert common + Specular Shading, open (Maya 2022 AEblinnTemplate.mel:30-39,
+# AEphongTemplate.mel:30-33; not in the research templates).
+BLINN = [_LAMBERT_COMMON,
+         S("Specular Shading", True, ("socket", "Roughness", "Eccentricity"),
+           ("socket", "Specular IOR Level", "Specular Roll Off"),
+           ("socket", "Specular Tint", "Specular Color")),
+         _RAYTRACE]
+PHONG = [_LAMBERT_COMMON,
+         S("Specular Shading", True, ("socket", "Roughness", "Roughness (Cosine Power)"),
+           ("socket", "Specular Tint", "Specular Color")),
+         _RAYTRACE]
+# surfaceShader (AEsurfaceShaderTemplate.mel:30-34): out color = emission.
+SURFACE_SHADER = [
+    S("Surface Shader Attributes", True, ("socket", "Emission Color", "Out Color"),
+      ("socket", "Alpha", "Out Opacity")),
+]
 # Material without nodes: Blender viewport values (no Maya template).
 PLAIN_MATERIAL = [
     S("Common Material Attributes", True,
@@ -183,6 +209,10 @@ BY_KIND = {
     "SPOT": (SPOT_LIGHT, None),
     "AREA": (AREA_LIGHT, None),
     "standardSurface": (STANDARD_SURFACE, "standardSurface"),
+    "lambert": (LAMBERT, "lambert"),
+    "blinn": (BLINN, None),
+    "phong": (PHONG, None),
+    "surfaceShader": (SURFACE_SHADER, None),
     "material": (PLAIN_MATERIAL, None),
 }
 

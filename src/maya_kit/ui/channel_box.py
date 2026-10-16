@@ -8,16 +8,24 @@ research/maya/channel_box.md; design: docs/steps/step_6.md 「계획」.
 - Channel names are buttons that select channels; selected channels drive
   the MMB virtual slider in the viewport (channel_box.md §2.3) and the
   Channels menu (§2.4).
-- Custom properties, SHAPES (object data) and INPUTS (modifiers =
-  construction history, §4) draw the lead object's real properties.
+- Value fields are text (step 38): Maya numbers in display units and relative entry
+  (``+=5``, ``*=2``; ui/cb_entry.py), applied to every selected object that has the
+  channel and to every selected channel when the edited row is one of them.
+- Custom properties, SHAPES (object data) and INPUTS (modifiers = construction history,
+  §4) are rows in ``Scene.maya_kit_cb.rows`` (rebuilt from handlers), so their edits reach
+  the same-named channel of the other selected objects too; stale rows fall back to the
+  lead object's real properties.
 """
 
 import math
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
+from bpy.app.handlers import persistent
+from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProperty, IntProperty,
+                       StringProperty)
 
 from ..operators import display
+from . import cb_entry
 
 CATEGORY = "Channel Box"
 
@@ -249,6 +257,158 @@ def _proxy_set(key):
     return set_
 
 
+# --- text entry (step 38) ------------------------------------------------------------------
+
+_KIND_ENTRY = {"LOC": "LENGTH", "ROT": "ROTATION", "SCALE": "NONE", "VIS": "BOOL"}
+
+
+def entry_kind(ob, key):
+    if key.startswith(CUSTOM_PREFIX):
+        return cb_entry.kind_of_value(ob.get(key[len(CUSTOM_PREFIX):]))
+    return _KIND_ENTRY[MAIN_BY_KEY[key][4]]
+
+
+def entry_keys(key, context=None):
+    """The edited channel, or every selected channel when it is one of them (channel_box.md:136)."""
+    sel = selected_channels(context)
+    return sel if key in sel else [key]
+
+
+def apply_entry(key, text, context=None):
+    """Typed text on channel ``key``: absolute or relative (``+=``...) per object, on every
+    selected object that has the channel; returns how many values changed."""
+    context = context or bpy.context
+    scene = context.scene
+    autokey = scene.tool_settings.use_keyframe_insert_auto
+    count = 0
+    for k in entry_keys(key, context):
+        for ob in targets(context):
+            if not has_channel(ob, k) or is_locked(ob, k):
+                continue
+            kind = entry_kind(ob, k)
+            if kind is None:
+                continue
+            try:
+                value = cb_entry.parse_entry(text, get_value(ob, k), kind, scene)
+            except (ValueError, TypeError, SyntaxError):
+                return count
+            set_value(ob, k, value)
+            count += 1
+            if autokey and is_keyable(ob, k):
+                keyframe(ob, k)
+    return count
+
+
+def _text_get(key):
+    def get(_self):
+        ob = lead()
+        if ob is None or not has_channel(ob, key):
+            return ""
+        return cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
+    return get
+
+
+def _text_set(key):
+    def set_(_self, text):
+        apply_entry(key, text)
+    return set_
+
+
+# --- rows for custom attributes, SHAPES and INPUTS (step 38) --------------------------------
+
+def _inputs(ob):
+    return [m for m in ob.modifiers if not display.is_preview(m)]
+
+
+def _nth_of_type(ob, mod):
+    return [m for m in _inputs(ob) if m.type == mod.type].index(mod)
+
+
+def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
+    """The struct holding row ``name`` on ``ob`` (None: ob has no such channel).
+
+    Same-named channel (docs/steps/step_38.md 「계획」 3): custom = same property name,
+    SHAPE = same object type and data property, INPUT = same modifier type at the same
+    position among that type."""
+    if kind == "CUSTOM":
+        return ob if name in ob.keys() else None
+    if kind == "SHAPE":
+        data = ob.data
+        if data is None or (lead_ob is not None and ob.type != lead_ob.type):
+            return None
+        return data if name in data.bl_rna.properties else None
+    if kind == "INPUT":
+        mods = [m for m in _inputs(ob) if m.type == mod_type]
+        if nth < len(mods) and name in mods[nth].bl_rna.properties:
+            return mods[nth]
+    return None
+
+
+def _row_kind(owner, kind, name):
+    if kind == "CUSTOM":
+        return cb_entry.kind_of_value(owner.get(name))
+    return cb_entry.kind_of_rna(owner.bl_rna.properties[name])
+
+
+def _row_read(owner, kind, name):
+    return owner[name] if kind == "CUSTOM" else getattr(owner, name)
+
+
+def _row_write(owner, kind, name, value):
+    if kind == "CUSTOM":
+        owner[name] = type(owner[name])(value)
+    else:
+        setattr(owner, name, value)
+
+
+def _row_get(self):
+    ob = lead()
+    if ob is None:
+        return ""
+    owner = row_owner(ob, self.kind, self.name, self.mod_type, self.nth)
+    if owner is None:
+        return ""
+    entry = _row_kind(owner, self.kind, self.name)
+    return cb_entry.format_value(_row_read(owner, self.kind, self.name), entry, bpy.context.scene)
+
+
+def apply_row_entry(row, text, context=None):
+    """Typed text on a custom / SHAPES / INPUTS row: every selected object with that channel."""
+    context = context or bpy.context
+    if row.kind == "CUSTOM":
+        return apply_entry(CUSTOM_PREFIX + row.name, text, context)
+    ld = lead(context)
+    count = 0
+    for ob in targets(context):
+        owner = row_owner(ob, row.kind, row.name, row.mod_type, row.nth, ld)
+        if owner is None:
+            continue
+        entry = _row_kind(owner, row.kind, row.name)
+        try:
+            value = cb_entry.parse_entry(text, _row_read(owner, row.kind, row.name), entry,
+                                         context.scene)
+        except (ValueError, TypeError, SyntaxError):
+            return count
+        try:
+            _row_write(owner, row.kind, row.name, value)
+        except (TypeError, ValueError, AttributeError):
+            continue
+        count += 1
+    return count
+
+
+def _row_set(self, text):
+    apply_row_entry(self, text)
+
+
+class MAYAKIT_PG_cb_row(bpy.types.PropertyGroup):
+    kind: StringProperty()        # CUSTOM / SHAPE / INPUT
+    name: StringProperty()        # property name
+    mod_type: StringProperty()    # INPUT: modifier type
+    nth: IntProperty()            # INPUT: position among the lead's modifiers of that type
+    text: StringProperty(get=_row_get, set=_row_set)
+
+
 def _make_proxy_annotations():
     ann = {}
     for key, label, _path, _idx, kind in MAIN:
@@ -263,6 +423,9 @@ def _make_proxy_annotations():
         else:
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
+        ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
+    ann["rows"] = CollectionProperty(type=MAYAKIT_PG_cb_row)
+    ann["rows_sig"] = StringProperty(options={'HIDDEN'})
     return ann
 
 
@@ -604,6 +767,94 @@ SHAPE_PROPS = {
 }
 
 
+def wanted_rows(ob):
+    """(kind, name, mod_type, nth) for every text row of the lead object."""
+    out = [("CUSTOM", name, "", 0) for name in custom_keys(ob)]
+    data = ob.data
+    if data is not None:
+        for prop in SHAPE_PROPS.get(ob.type, ()):
+            rna = data.bl_rna.properties.get(prop)
+            if rna is not None and cb_entry.kind_of_rna(rna):
+                out.append(("SHAPE", prop, "", 0))
+    for mod in _inputs(ob):
+        if mod.show_expanded:
+            for prop in _modifier_props(mod):
+                out.append(("INPUT", prop, mod.type, _nth_of_type(ob, mod)))
+    return out
+
+
+def rows_signature(ob):
+    if ob is None:
+        return ""
+    mods = [(m.name, m.type, m.show_expanded) for m in _inputs(ob)]
+    return repr((ob.name, ob.type, custom_keys(ob), mods))
+
+
+_rows_state = {"busy": False}
+
+
+def rebuild_rows(context=None):
+    """Make ``Scene.maya_kit_cb.rows`` match the lead object (only when it changed)."""
+    context = context or bpy.context
+    scene = getattr(context, "scene", None)
+    cb = getattr(scene, "maya_kit_cb", None) if scene is not None else None
+    view_layer = getattr(context, "view_layer", None)
+    if cb is None or view_layer is None or _rows_state["busy"]:
+        return False
+    ob = view_layer.objects.active
+    sig = rows_signature(ob)
+    if cb.rows_sig == sig:
+        return False
+    _rows_state["busy"] = True
+    try:
+        cb.rows.clear()
+        if ob is not None:
+            for kind, name, mod_type, nth in wanted_rows(ob):
+                r = cb.rows.add()
+                r.kind, r.name, r.mod_type, r.nth = kind, name, mod_type, nth
+        cb.rows_sig = sig
+    finally:
+        _rows_state["busy"] = False
+    return True
+
+
+def row_for(context, ob, kind, name, mod_type="", nth=0):
+    """The text row to draw, or None when the rows are stale (then draw the real property)."""
+    cb = context.scene.maya_kit_cb
+    if cb.rows_sig != rows_signature(ob):
+        return None
+    for r in cb.rows:
+        if r.kind == kind and r.name == name and r.mod_type == mod_type and r.nth == nth:
+            return r
+    return None
+
+
+@persistent
+def _on_depsgraph(_scene, _depsgraph):
+    rebuild_rows()
+
+
+@persistent
+def _on_load(_dummy):
+    rebuild_rows()
+
+
+def _first_rebuild():
+    rebuild_rows()
+    return None
+
+
+def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0):
+    """A SHAPES / INPUTS row: label + text field applied to all selected (else the real prop)."""
+    row = row_for(context, ob, kind, prop, mod_type, nth)
+    if row is None:
+        layout.prop(owner, prop)
+        return
+    split = layout.row(align=True).split(factor=0.5, align=True)
+    split.label(text=owner.bl_rna.properties[prop].name)
+    split.prop(row, "text", text="")
+
+
 class MAYAKIT_PT_channel_box(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -641,7 +892,7 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 continue
             if kind == "ROT" and not has_channel(ob, key):
                 continue
-            draw_channel_row(col, ob, key, cb, key, key in sel)
+            draw_channel_row(col, ob, key, cb, key + "_text", key in sel)
         if not has_channel(ob, "rx"):
             col.label(text=f"Rotation mode {ob.rotation_mode}")
             col.prop(ob, "rotation_quaternion" if ob.rotation_mode == 'QUATERNION' else "rotation_axis_angle",
@@ -649,7 +900,11 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         for name in custom_keys(ob):
             key = CUSTOM_PREFIX + name
             if not is_hidden(ob, key):
-                draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
+                row = row_for(context, ob, "CUSTOM", name)
+                if row is not None:
+                    draw_channel_row(col, ob, key, row, "text", key in sel)
+                else:
+                    draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
 
         data = ob.data
         if data is not None:
@@ -658,7 +913,7 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
             box.prop(data, "name", text="", icon='OBJECT_DATA')
             for prop in SHAPE_PROPS.get(ob.type, ()):
                 if hasattr(data, prop):
-                    box.prop(data, prop)
+                    _draw_text_row(box, context, ob, data, prop, "SHAPE")
 
         # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
         inputs = [mod for mod in ob.modifiers if not display.is_preview(mod)]
@@ -674,10 +929,11 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 if mod.show_expanded:
                     sub = box.column(align=True)
                     for prop in _modifier_props(mod):
-                        sub.prop(mod, prop)
+                        _draw_text_row(sub, context, ob, mod, prop, "INPUT", mod.type,
+                                       _nth_of_type(ob, mod))
 
 
-classes = (MAYAKIT_PG_channel_box, MAYAKIT_OT_cb_virtual_slider, MAYAKIT_OT_cb_select_channel,
+classes = (MAYAKIT_PG_cb_row, MAYAKIT_PG_channel_box, MAYAKIT_OT_cb_virtual_slider, MAYAKIT_OT_cb_select_channel,
            MAYAKIT_OT_cb_deselect_channels, *CHANNEL_OPS, MAYAKIT_OT_cb_show_all,
            MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_PT_channel_box)
 
@@ -688,9 +944,16 @@ def register():
     bpy.types.Scene.maya_kit_cb = bpy.props.PointerProperty(type=MAYAKIT_PG_channel_box)
     bpy.types.WindowManager.maya_kit_cb_selected = StringProperty(
         name="Selected Channels", options={'SKIP_SAVE'})
+    bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
+    bpy.app.handlers.load_post.append(_on_load)
+    bpy.app.timers.register(_first_rebuild, first_interval=0.0)
 
 
 def unregister():
+    if bpy.app.timers.is_registered(_first_rebuild):
+        bpy.app.timers.unregister(_first_rebuild)
+    bpy.app.handlers.load_post.remove(_on_load)
+    bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
     del bpy.types.WindowManager.maya_kit_cb_selected
     del bpy.types.Scene.maya_kit_cb
     for cls in reversed(classes):

@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 38 (Channel Box 다중 선택·상대값, AE 재질 라벨) 완료 — `docs/steps/step_38.md`. CB 값 필드 = 텍스트 (Maya 숫자 표시,
+  `+=5`/`*=2`, 모든 선택·고른 채널 모두), 사용자 속성/SHAPES/INPUTS 도 같은 이름 채널에 적용 (`Scene.maya_kit_cb.rows`),
+  재질 `maya_kit_type` → AE `lambert: lambert1` + lambert/blinn/phong/surfaceShader 섹션. 헤드리스 333/333, GUI 277/277, dogfood 47/47.
+  재점검 3차 backlog 7개 중 1–6 처리.
 - Step 37 (뷰 패널 메뉴 바) 완료 — `docs/steps/step_37.md`. 3D 뷰 헤더 메뉴 = Maya View/Shading/Lighting/Show/Renderer/Panels
   (`ui/panel_menus.py`, `VIEW3D_MT_editor_menus.draw_collapsible` 덮어쓰기, Blender 메뉴는 「Blender ▸」, 환경설정 Panel Menus).
   매핑 67 / 회색 51. 헤드리스 322/322, GUI 272/272, dogfood 47/47. 재점검 3차 backlog 7개 중 1–5 처리.
@@ -80,6 +84,7 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 2개: Step 38 Channel Box 다중 선택·상대값 + AE 재질 라벨, 39 컴포넌트 픽워크 + Alt+Shift 축 고정.
-  대칭 남은 것은 step_36.md, 패널 메뉴 남은 것 (아이콘 바, 템플릿 헤더 잘림, Shift+M) 은 step_37.md 「남은 것」.
+- 재점검 3차 backlog 남은 1개: Step 39 컴포넌트 픽워크 + Alt+Shift 축 고정.
+  대칭 남은 것은 step_36.md, 패널 메뉴 남은 것 (아이콘 바, 템플릿 헤더 잘림, Shift+M) 은 step_37.md, CB 남은 것 (언두 수동 확인,
+  잘못된 입력 알림) 은 step_38.md 「남은 것」.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

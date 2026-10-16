@@ -254,3 +254,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 37) Show > 종류 체크 (Polygons, Lights, Cameras, Joints, Locators …) 와 All / None, Isolate Select > View Selected (Ctrl+1 과 같음) 가 Maya 처럼 동작하는지.
 - [ ] (step 37) Panels > Perspective / Orthographic 의 카메라 목록, Look Through Selected, Panel ▸ (편집기 바꾸기), Layouts ▸ 4분할, Tear Off… (새 창) 이 Maya 와 비슷한지. 헤더 메뉴를 접었을 때 (헤더 우클릭 > Show Menus 끔) 아이콘 하나로 모이는지.
 - [ ] (step 37) Blender ▸ 아래 View / Select / Add / Object (편집 모드면 Mesh / Vertex / Edge / Face …) 가 Blender 사용자가 찾기에 충분한지. 환경설정 Panel Menus 를 끄면 Blender 메뉴로 돌아오는지.
+
+### Step 38 — Channel Box 다중 선택·상대값, AE 재질 라벨
+
+- [ ] (step 38) Channel Box 값 필드를 클릭해 숫자 입력 → Enter: Maya 처럼 바로 적용되는지. `+=5`, `-=2`, `*=2`, `/=2` 가 여러 오브젝트에서 오브젝트마다 자기 값 기준으로 적용되는지. 단위 없는 숫자 = cm (MayaKit 템플릿), `5 m` 도 되는지.
+- [ ] (step 38) 채널 이름 여러 개 (Rotate X/Y/Z) 를 고르고 하나에 입력 → 고른 채널 모두에 적용; 고르지 않은 채널에 입력하면 그 채널만.
+- [ ] (step 38) 필드 숫자가 단위 없이 보이는 것 (Maya 처럼 "1.5"), 필드 Ctrl+휠·드래그가 없어진 것 (값 끌기는 뷰포트 MMB 가상 슬라이더) 이 Maya 사용자에게 자연스러운지; Blender 사용자는 불편할 수 있음.
+- [ ] (step 38) 여러 오브젝트에 같은 Bevel/Subdivision 모디파이어가 있을 때 INPUTS 값 입력이 모두에 적용되는지, 카메라 여러 개 선택 후 SHAPES Focal Length, 사용자 속성. 그 뒤 Ctrl+Z 한 번에 모두 되돌아가는지.
+- [ ] (step 38) Lighting/Shading > Assign New Material > Lambert / Blinn / Phong → AE 탭 라벨 "lambert: lambert1" 과 Common Material Attributes / Specular Shading 섹션이 Maya 와 비슷한지.
