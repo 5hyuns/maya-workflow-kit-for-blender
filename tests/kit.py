@@ -73,6 +73,9 @@ def snapshot():
                           (topbar.draw_left, topbar.draw_right,
                            bpy.types.IMAGE_HT_header.draw, bpy.types.IMAGE_HT_tool_header.draw,
                            space_time.TIME_HT_editor_buttons.draw_header)]
+    # step 37: Maya panel menus replace the 3D View header menus (a class attribute while enabled).
+    snap["ui_methods"].append("VIEW3D_MT_editor_menus.draw_collapsible overridden: "
+                              f"{'draw_collapsible' in bpy.types.VIEW3D_MT_editor_menus.__dict__}")
     snap["sys_modules"] = sorted(m for m in sys.modules if m == "maya" or m.startswith("maya."))
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())

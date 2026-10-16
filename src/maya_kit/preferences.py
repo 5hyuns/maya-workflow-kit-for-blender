@@ -80,6 +80,11 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         description="Top bar shows the Maya menus, menu sets and Status Line instead of "
                     "Blender's menus and workspace tabs (Blender menus stay as submenus)",
         default=True)
+    maya_panel_menus: bpy.props.BoolProperty(
+        name="Panel Menus",
+        description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
+                    "Panels) instead of Blender's (Blender menus stay as a submenu)",
+        default=True)
     menu_set: bpy.props.EnumProperty(
         name="Menu Set", description="Maya menu set: which menus follow the common ones",
         items=lambda self, context: _menu_set_items(), default=0)
@@ -178,6 +183,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         box.label(text="UI Elements")
         row = box.row()
         row.prop(self, "maya_top_bar")
+        row.prop(self, "maya_panel_menus")
         row.prop(self, "menu_set", text="")
         row = box.row()
         row.prop(self, "marking_menu_style")
