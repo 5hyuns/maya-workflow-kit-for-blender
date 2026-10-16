@@ -1,0 +1,180 @@
+"""Step 18 in a real UI: mesh component keys — Shift+> / Shift+<,
+Ctrl+F9 / Ctrl+F11, Ctrl+E, Ctrl+B, D component pivot hold / tap, Alt+D."""
+
+import os
+import sys
+
+import bmesh
+import bpy
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from sim import check, ev, run, setup, step, tap, view3d, win  # noqa: E402
+
+C = {}
+
+
+def ob():
+    return bpy.data.objects["Cube"]
+
+
+def bm():
+    return bmesh.from_edit_mesh(ob().data)
+
+
+def n_sel(kind):
+    return sum(e.select for e in getattr(bm(), kind))
+
+
+def select_face(i=0):
+    b = bm()
+    for f in b.faces:
+        f.select_set(False)
+    b.faces.ensure_lookup_table()
+    b.faces[i].select_set(True)
+    b.select_flush_mode()
+    bmesh.update_edit_mesh(ob().data)
+
+
+def centre():
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+def combo(key, **mods):
+    ev(key, 'PRESS', **mods)
+    ev(key, 'RELEASE', **mods)
+
+
+def ts():
+    return bpy.context.scene.tool_settings
+
+
+def tool_id():
+    area, region = view3d()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        t = bpy.context.workspace.tools.from_space_view3d_mode(bpy.context.mode, create=False)
+    return t.idname if t else None
+
+
+@step
+def s_setup():
+    C["x"], C["y"] = setup()
+    for o in bpy.context.view_layer.objects:
+        o.select_set(o.name == "Cube")
+    bpy.context.view_layer.objects.active = ob()
+    centre()
+    tap('F11')
+
+
+@step
+def s_face_mode():
+    check("F11: face mode", bpy.context.mode == 'EDIT_MESH' and tuple(ts().mesh_select_mode) == (False, False, True))
+    select_face()
+    centre()
+    combo('PERIOD', shift=True)
+
+
+@step
+def s_grow():
+    C["grown"] = n_sel("faces")
+    check(f"Shift+> grows one face to its neighbours ({C['grown']} faces)", C["grown"] == 5)
+    combo('COMMA', shift=True)
+
+
+@step
+def s_shrink():
+    check(f"Shift+< shrinks back ({n_sel('faces')} face)", n_sel("faces") == 1)
+    combo('F9', ctrl=True)
+
+
+@step
+def s_to_verts():
+    check(f"Ctrl+F9: vertex mode with the face's 4 vertices ({n_sel('verts')})",
+          tuple(ts().mesh_select_mode) == (True, False, False) and n_sel("verts") == 4)
+    combo('F11', ctrl=True)
+
+
+@step
+def s_to_faces():
+    check(f"Ctrl+F11: back to faces, all faces touching those vertices ({n_sel('faces')})",
+          tuple(ts().mesh_select_mode) == (False, False, True) and n_sel("faces") == 5)
+    select_face()
+    C["faces"] = len(bm().faces)
+    centre()
+    combo('E', ctrl=True)
+
+
+@step
+def s_extrude_modal():
+    mods = [op.bl_idname for op in win().modal_operators]
+    check(f"Ctrl+E: extrude + move modal right away ({mods})", any("extrude" in m.lower() for m in mods))
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 30, y=C["y"] + 40)
+    ev('LEFTMOUSE', 'PRESS', x=C["x"] + 30, y=C["y"] + 40)
+    ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 30, y=C["y"] + 40)
+
+
+@step
+def s_extruded():
+    check(f"Ctrl+E adds faces ({C['faces']} -> {len(bm().faces)})", len(bm().faces) == C["faces"] + 4)
+    C["faces"] = len(bm().faces)
+    centre()
+    combo('B', ctrl=True)
+
+
+@step
+def s_bevel_modal():
+    mods = [op.bl_idname for op in win().modal_operators]
+    check(f"Ctrl+B: bevel modal right away ({mods})", any("bevel" in m.lower() for m in mods))
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 60, y=C["y"])
+    ev('LEFTMOUSE', 'PRESS', x=C["x"] + 60, y=C["y"])
+    ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 60, y=C["y"])
+
+
+@step
+def s_beveled():
+    check(f"Ctrl+B adds faces ({C['faces']} -> {len(bm().faces)})", len(bm().faces) > C["faces"])
+    ts().transform_pivot_point = 'MEDIAN_POINT'
+    C["tool"] = tool_id()
+    C["cursor"] = bpy.context.scene.cursor.location.copy()
+    centre()
+    ev('D', 'PRESS')
+
+
+@step
+def s_d_held():
+    check(f"D held in edit mode: cursor tool ({tool_id()}) and cursor pivot",
+          tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
+    x, y = C["x"] - 120, C["y"] - 80
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+@step
+def s_d_release():
+    moved = (bpy.context.scene.cursor.location - C["cursor"]).length > 1e-6
+    check("LMB with D held places the pivot (3D cursor moved)", moved)
+    centre()
+    ev('D', 'RELEASE')
+
+
+@step
+def s_d_released():
+    check(f"D released: previous tool back ({tool_id()}), placed pivot kept",
+          tool_id() == C["tool"] and ts().transform_pivot_point == 'CURSOR')
+    tap('D')
+
+
+@step
+def s_d_tap():
+    check(f"D tap clears the custom pivot ({ts().transform_pivot_point})",
+          ts().transform_pivot_point == 'MEDIAN_POINT' and tool_id() == C["tool"])
+    combo('D', alt=True)
+
+
+@step
+def s_select_none():
+    check("Alt+D: nothing selected, back in object mode",
+          bpy.context.mode == 'OBJECT' and not bpy.context.selected_objects)
+
+
+run()

@@ -545,9 +545,9 @@ def s_grow_check():
 
 @step
 def s_extrude():
-    check(f"Ctrl+E extrudes (Maya PolyExtrude; tool {tool_id()}, modal "
-          f"{[op.bl_idname for op in win().modal_operators]})", len(bpy.data.objects["pCube1"].data.polygons) > 6
-          or "extrude" in tool_id())
+    mods = [op.bl_idname for op in win().modal_operators]
+    check(f"Ctrl+E extrudes right away and drags it (Maya PolyExtrude; modal {mods})",
+          any("extrude" in m.lower() for m in mods))
     tap('ESC')
     tap('F8')
 
