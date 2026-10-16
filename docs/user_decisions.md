@@ -1,0 +1,12 @@
+# 사용자 결정 (위임 — Hermes가 사용자 대신 결정, 2026-10-16)
+
+사용자는 모든 결정을 위임했다. 아래는 research/README.md 「팀이 결정해야 할 것」에 대한 결정이다.
+
+1. **cm 단위**: 기본값은 **m 유지 + 표시 단위 cm** (`unit_settings.length_unit='CENTIMETERS'`, `scale_length=1.0`). 물리·클립·임포트 부작용을 피한다.
+   추가로 애드온 환경설정에 **「Maya 단위 (1 BU = 1 cm, scale_length=0.01)」 옵션**을 두고 기본은 꺼둔다. 켜면 클립 거리·그리드 스케일도 함께 맞춘다. 부작용은 docs에 적는다.
+2. **부모 지정**: **Maya 방식이 기본.** P(부모 지정)는 월드 변환을 유지하면서 로컬 값을 다시 계산하고 parent inverse는 identity로 둔다. 그래서 Channel Box 수치가 Maya와 같다. Blender 방식(parent inverse 유지)은 환경설정 옵션으로 남긴다.
+3. **배포 형태**: **Blender 4.2+ Extension 하나**(키컨피그, 오퍼레이터, UI, 테마)로 배포한다. App Template(레이아웃 `startup.blend`)은 익스텐션 안에 넣어두고, 환경설정의 「Maya 레이아웃 설치」 버튼으로 사용자 `scripts/startup/bl_app_templates_user/`에 복사한다. 제거 버튼도 둔다. 레거시 애드온 zip도 같은 소스에서 빌드한다.
+4. **대상 버전**: Blender 4.5 LTS (설치본 `C:/Program Files/Blender Foundation/Blender 4.5/blender.exe`). Maya 기준은 2022 팩토리 기본값.
+5. **불가능한 것**(Y-up, rotate/scale 피벗 분리, 필드 위 MMB 드래그, MEL 실행)은 C++ 수정 없이 우회하고, 안 되는 것은 문서에 적는다. Blender 소스는 포크하지 않는다.
+6. **Maya 자료 사용**: Maya의 MEL·아이콘·리소스 파일을 저장소에 복사해 배포하지 않는다. 동작과 배치만 참고해 다시 구현한다. `research/`의 추출 JSON은 내부 참고용이다.
+7. **사용자 설정 보호**: 테스트할 때 사용자의 실제 Blender 설정(`%APPDATA%/Blender Foundation`)을 건드리지 않는다. `--factory-startup`이나 저장소 안의 임시 `BLENDER_USER_CONFIG`/`BLENDER_USER_SCRIPTS`를 쓴다.

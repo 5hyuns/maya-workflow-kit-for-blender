@@ -1,0 +1,22 @@
+schema_version = "1.0.0"
+
+# Template: <Blender 4.5>/4.5/scripts/templates_toml/blender_manifest.toml
+id = "maya_kit"
+version = "0.1.0"
+name = "Maya Kit"
+tagline = "Maya-style keymap, interaction, UI and concepts for Maya users"
+maintainer = "ohnsk <555hyuns@gmail.com>"
+type = "add-on"
+
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "/.git/",
+  "/*.zip",
+]
