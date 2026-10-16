@@ -94,6 +94,11 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         name="Maya Naming", description="Create menu names objects pCube1 / pCubeShape1 "
                                         "(otherwise Blender names)",
         default=True)
+    # Maya manipSmartDuplicate 1 (research/maya/interaction.md:107, PREF:371-374).
+    smart_duplicate: bpy.props.BoolProperty(
+        name="Smart Duplicate", description="Shift+drag a Move/Rotate/Scale manipulator "
+                                            "duplicates the selection and transforms the copy",
+        default=True)
 
     def _update_units(self, context):
         from .operators import units
@@ -127,7 +132,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "parent_mode")
         row.prop(self, "maya_naming")
-        box.prop(self, "maya_units")
+        row = box.row()
+        row.prop(self, "maya_units")
+        row.prop(self, "smart_duplicate")
 
         box = layout.box()
         box.label(text="UI Elements")

@@ -164,6 +164,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            # Step 9 hotbox editors (Space): the editor keymap plus the global ones.
            **{km: ("Window", "Screen", "Frames", km, "View2D")
               for km in ("Graph Editor", "Dopesheet", "Node Editor", "Image")},
+           # Step 22: gizmo keymaps run from the gizmo map handler, ahead of the region keymaps.
+           **{km: (km,) for km in maya_patches.GIZMO_KEYMAPS},
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

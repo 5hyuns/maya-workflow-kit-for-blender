@@ -4,7 +4,8 @@
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
 docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
-docs/steps/step_16.md (18), docs/steps/step_18.md (19), docs/steps/step_20.md (20).
+docs/steps/step_16.md (18), docs/steps/step_18.md (19), docs/steps/step_20.md (20),
+docs/steps/step_22.md (21).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -20,7 +21,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider",)
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -425,12 +426,27 @@ def patch_key_stepping(kd):
     _add(kd, "Frames", "screen.frame_offset", make_event("COMMA", alt=True, repeat=True), {"delta": -1})
 
 
+# --- 21. Shift+drag a manipulator = Smart Duplicate (docs/steps/step_22.md 「계획」) ----------------
+# research/maya/interaction.md:107 (PREF:371-374). The C transform gizmo runs gizmogroup.gizmo_tweak
+# from these keymaps for any Shift/Ctrl (IC:3703-3721); our item goes first, duplicates the selection
+# and passes the same event on, so the gizmo moves the copies. Shift held during a transform was
+# Blender's precision (IC:3611-3612): Maya has none, so precision moves to Alt (delegated).
+
+GIZMO_KEYMAPS = ("Generic Gizmo Maybe Drag", "Generic Gizmo Drag")
+
+
+def patch_manip_duplicate(kd):
+    for km in GIZMO_KEYMAPS:
+        _add(kd, km, "maya_kit.manip_duplicate", make_event("LEFTMOUSE", "PRESS", shift=True),
+             first=True)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
-           patch_mesh_components, patch_key_stepping)
+           patch_mesh_components, patch_key_stepping, patch_manip_duplicate)
 
 
 def apply(data):

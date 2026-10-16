@@ -92,8 +92,8 @@ blindspot scout (B, cards in step_14.md), step docs (S).
 5. **Maya naming of copies** (D) — done in step 19: Ctrl+D = `maya_kit.duplicate` (pCube2 / pCubeShape2, subtree, in place).
 6. **Timeline** (S, D) — done in step 20: `.` `,` Alt+`.` Alt+`,`, timeline view = playback range, Range Slider
    fields in the Timeline header (animation 1–200, playback 1–120). Still open: Maya key ticks (W), range drag bar.
-7. **Shift+drag manipulator duplicate / extrude** (B4, research row "높음", never planned) — complex
-   design, plan first.
+7. **Shift+drag manipulator duplicate / extrude** (B4, research row "높음") — object duplicate done in step 22
+   (`maya_kit.manip_duplicate` in front of the gizmo tweak); Smart Extrude on faces/edges next.
 8. **Selection feel** (B6–B8): component marquee select-through (Maya `selectPrefUseDepth false`),
    pre-selection highlight (research), undo depth (32 steps vs Maya infinite) via `prefs_preset`.
 9. **Menu correctness** (B11, B12): Increment and Save, Export Selection, Return in 3D View.

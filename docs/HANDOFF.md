@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 22 (매니퓰레이터 Shift+드래그 = Smart Duplicate) 완료 — `docs/steps/step_22.md`. Maya 키컨피그의 기즈모 키맵
+  (`Generic Gizmo Maybe Drag` / `Drag`) 맨 앞 Shift+LMB PRESS → `maya_kit.manip_duplicate` (복제 후 PASS_THROUGH → 기즈모가 사본 변환).
+  Shift 정밀은 그대로 (실측: 누른 채 시작한 드래그는 정밀 아님). W/E/R 홀드 메뉴 Smart Duplicate = 환경설정 토글.
+  헤드리스 239/239, GUI 172/172, dogfood 47 중 46 (남은 실패: `=`).
 - Step 21 (생성 경로 단위 통일) 완료 — `docs/steps/step_21.md`, 결정 8 (`docs/user_decisions.md`). Maya 길이 1 = 씬 표시 단위 1
   (`operators/units.maya_unit()`): Create/셸프/메뉴/마킹 메뉴/핫박스/Ctrl+G/`cmds` 가 같은 크기, Maya FBX 임포트 크기와도 같음.
   MayaKit 템플릿 pCube1 = 0.01 BU = "1 cm", 템플릿 3D 뷰 = Maya persp (28, 21, 28 cm) + 클립 0.1 / 10000 cm; Maya Units 켬 = 1 BU = "1 cm".
@@ -33,7 +37,7 @@
 
 ## 바로 다음 할 일
 
-- Step 22: backlog 8 — 매니퓰레이터 Shift+드래그 복제(오브젝트) / 압출(컴포넌트) (research/README.md:75 '높음', B4). 복잡한 설계라
-  `docs/steps/step_22.md` 「계획」 먼저. 복제 이름은 `maya_kit.duplicate` (step 19), 크기·오프셋 값은 Maya 단위(`units.maya_unit()`, 결정 8).
+- Step 23: Smart Extrude — 편집 모드 면/엣지에서 기즈모 Shift+드래그 = 압출 후 변환 (`manip.py` 의 같은 키맵 항목에 편집 모드 분기,
+  `mesh.extrude_region` 후 PASS_THROUGH). 홀드 메뉴 "Smart Extrude" 연결. step_22 「남은 것」의 Shift+클릭·취소 시 사본 처리도 검토.
 - 그다음 PLAN 「재점검 1차」 남은 것: `=`/`-` 매니퓰레이터 크기, PgUp/PgDn, `0`, Home, Alt+5, 메뉴셋 F2–F6, 선택 감각(B6–B8), 메뉴(B11–B12).
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.

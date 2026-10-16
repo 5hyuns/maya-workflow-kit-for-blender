@@ -173,3 +173,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 21) MayaKit 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
 - [ ] (step 21) Maya 에서 내보낸 FBX(cm)를 File > Import 로 가져와 Create 큐브와 같은 크기인지, Maya Units 켬/끔 둘 다.
+
+### Step 22 — 매니퓰레이터 Shift+드래그 복제
+
+- [ ] (step 22) W/E/R 툴에서 기즈모 화살표·평면·중앙·회전 링·스케일 핸들을 Shift+드래그 → 사본이 변환되고 원본 제자리. Shift 를 끝까지 누른 채 끌어도 느려지지 않는지, 드래그 도중 Shift 를 떼었다 다시 누르면 Blender 정밀 모드가 되는지. Maya 2022 의 같은 동작과 손 감각 비교.
+- [ ] (step 22) Shift+클릭(드래그 없음), 드래그 중 RMB/Esc 취소 때 사본이 남는지 Maya 와 비교. Ctrl+Z 한 번에 사본까지 사라지는지.
+- [ ] (step 22) 라이트(스포트 크기 등) 기즈모를 Shift+드래그 했을 때 복제가 일어나지 않아야 함.

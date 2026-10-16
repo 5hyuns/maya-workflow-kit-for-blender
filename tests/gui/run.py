@@ -47,7 +47,7 @@ def main(argv=None):
     for path in files:
         out = headless.SANDBOX / "results" / f"{path.stem}.json"
         log = headless.SANDBOX / "logs" / f"{path.stem}.log"
-        cmd = [args.blender, "--factory-startup", "--enable-event-simulate",
+        cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("MAYA_KIT_GUI_ARGS", "").split(),
                "--window-geometry", "0", "0", "1600", "900",
                "--python", str(path), "--", str(out)]
         with open(log, "w", encoding="utf-8", errors="replace") as fh:
