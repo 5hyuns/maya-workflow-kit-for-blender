@@ -169,6 +169,41 @@ class MAYAKIT_OT_smooth_preview(bpy.types.Operator):
         return {'FINISHED'}
 
 
+SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range [delegated]
+
+
+def change_smoothing_level(ob, delta):
+    """Maya PgUp / PgDn (changeSmoothingLevel, Maya-679): the smooth preview's
+    division level. An object without a preview gets a hidden one that keeps the level
+    (Maya's smoothLevel shows only in 3 mode too). Returns the new level."""
+    mod = preview_modifier(ob, create=False)
+    if mod is None:
+        mod = preview_modifier(ob, create=True)
+        set_smooth_preview(ob, 1)      # hidden until 3
+    lo, hi = SMOOTH_LEVELS
+    mod.levels = max(lo, min(hi, mod.levels + delta))
+    return mod.levels
+
+
+class MAYAKIT_OT_smooth_level(bpy.types.Operator):
+    """Raise or lower the smooth preview level of the selection (Maya PgUp / PgDn)"""
+    bl_idname = "maya_kit.smooth_level"
+    bl_label = "Smoothing Level"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    delta: bpy.props.IntProperty(name="Delta", default=1, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return MAYAKIT_OT_smooth_preview.poll(context)
+
+    def execute(self, context):
+        levels = [change_smoothing_level(ob, self.delta)
+                  for ob in MAYAKIT_OT_smooth_preview._targets(context) if ob.type == 'MESH']
+        self.report({'INFO'}, f"Smooth preview level {', '.join(map(str, sorted(set(levels))))}")
+        return {'FINISHED'}
+
+
 # --- F7/F9/F10/F11 component modes ----------------------------------------------
 #  (F9 vertex, F10 edge, F11 face, F7 multi).
 
@@ -202,4 +237,5 @@ class MAYAKIT_OT_component_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_display_mode, MAYAKIT_OT_smooth_preview, MAYAKIT_OT_component_mode)
+classes = (MAYAKIT_OT_display_mode, MAYAKIT_OT_smooth_preview, MAYAKIT_OT_smooth_level,
+           MAYAKIT_OT_component_mode)
