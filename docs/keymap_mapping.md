@@ -1,0 +1,486 @@
+# Maya 기본 단축키 → Blender 대응표
+
+자동 생성: `python tools/gen_keymap_mapping.py` (손으로 고치지 말 것).
+입력: `research/maya/hotkeys_default.json` (Maya 2022 팩토리 핫키 468개; 근거 열 = Maya `scripts/startup/hotkeySetup.mel` 줄). Blender 쪽: 이 킷의 "Maya" 키컨피그 (`src/maya_kit/keymap/`), 상태 = `keymap/mapping.py`.
+
+현재 바인딩 = Maya 컨텍스트에 대응하는 Blender 키맵들(`mapping.CONTEXT_KEYMAPS`)에서 같은 키에 걸린 항목. 근사 조회라 모드에 따라 실제로 먼저 잡히는 항목은 다를 수 있다.
+
+| 상태 | 개수 |
+|---|---|
+| 구현 | 8 |
+| IC 일치 | 13 |
+| 계획 | 59 |
+| 해당 없음 | 7 |
+| 미검토 | 313 |
+| macOS 전용 | 68 |
+
+| Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
+|---|---|---|---|---|---|---|---|
+| Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `mesh.select_all` (action='DESELECT') | 미검토 |  | hotkeySetup.mel:59 |
+| Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | — | 미검토 |  | hotkeySetup.mel:60 |
+| Alt+d | Alt+D | global | SelectNone | — | 미검토 |  | hotkeySetup.mel:62 |
+| Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `object.duplicate_move`; Mesh: `mesh.duplicate_move` | IC 일치 |  | hotkeySetup.mel:64 |
+| Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | — | 미검토 |  | hotkeySetup.mel:65 |
+| z | Z | global | Undo | 3D View: `view3d.zoom_border` | 미검토 |  | hotkeySetup.mel:67 |
+| Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 미검토 |  | hotkeySetup.mel:68 |
+| Shift+Z | Shift+Z | global | Redo | — | 미검토 |  | hotkeySetup.mel:69 |
+| Ctrl+q | Ctrl+Q | global | Quit | Window: `wm.quit_blender` | 미검토 |  | hotkeySetup.mel:71 |
+| Ctrl+o | Ctrl+O | global | OpenScene | Window: `wm.open_mainfile` | 미검토 |  | hotkeySetup.mel:73 |
+| Ctrl+n | Ctrl+N | global | NewScene | Window: `wm.read_homefile` | 미검토 |  | hotkeySetup.mel:74 |
+| Ctrl+s | Ctrl+S | global | SaveScene | Window: `wm.save_mainfile` | 미검토 |  | hotkeySetup.mel:75 |
+| Ctrl+Shift+S | Ctrl+Shift+S | global | SaveSceneAs | Window: `wm.save_as_mainfile` | 미검토 |  | hotkeySetup.mel:76 |
+| Ctrl+Alt+s | Ctrl+Alt+S | global | IncrementAndSave | Window: `wm.save_mainfile` (incremental=True) | 미검토 |  | hotkeySetup.mel:77 |
+| Ctrl+r | Ctrl+R | global | CreateReference | — | 미검토 |  | hotkeySetup.mel:78 |
+| Ctrl+g | Ctrl+G | global | Group | Object Mode: `maya_kit.group` | 구현 | Empty 그룹, 피벗 원점, group1 명명 (Outliner 도) | hotkeySetup.mel:79 |
+| Ctrl+Shift+I | Ctrl+Shift+I | global | InvertSelection | — | 미검토 |  | hotkeySetup.mel:81 |
+| Ctrl+x | Ctrl+X | global | CutSelected | — | 미검토 |  | hotkeySetup.mel:84 |
+| Ctrl+c | Ctrl+C | global | CopySelected | 3D View: `view3d.copybuffer` | 미검토 |  | hotkeySetup.mel:85 |
+| Ctrl+v | Ctrl+V | global | PasteSelected | 3D View: `view3d.pastebuffer` | 미검토 |  | hotkeySetup.mel:86 |
+| Ctrl+Up | Ctrl+UP_ARROW | global | IncreaseCheckerDensity | — | 미검토 |  | hotkeySetup.mel:88 |
+| Ctrl+Down | Ctrl+DOWN_ARROW | global | DecreaseCheckerDensity | — | 미검토 |  | hotkeySetup.mel:89 |
+| q | Q | timeEditorPanel | TimeEditorSceneAuthoringToggle | NLA Editor: `nla.select_box` (axis_range=False) | 미검토 |  | hotkeySetup.mel:92 |
+| w | W | timeEditorPanel | TimeEditorClipRazor | NLA Editor: `transform.transform` (mode='TRANSLATION') | 미검토 |  | hotkeySetup.mel:93 |
+| e | E | timeEditorPanel | TimeEditorClipTrimToggle | NLA Editor: `transform.transform` (mode='TIME_EXTEND') | 미검토 |  | hotkeySetup.mel:94 |
+| r | R | timeEditorPanel | TimeEditorClipScaleToggle | NLA Editor: `transform.transform` (mode='TIME_SCALE') | 미검토 |  | hotkeySetup.mel:95 |
+| t | T | timeEditorPanel | TimeEditorClipLoopToggle | — | 미검토 |  | hotkeySetup.mel:96 |
+| y | Y | timeEditorPanel | TimeEditorClipHoldToggle | — | 미검토 |  | hotkeySetup.mel:97 |
+| s | S | timeEditorPanel | TimeEditorSetKey | — | 미검토 |  | hotkeySetup.mel:98 |
+| d | D | timeEditorPanel | TimeEditorSetZeroKey | — | 미검토 |  | hotkeySetup.mel:99 |
+| m | M | timeEditorPanel | TimeEditorToggleMuteSelectedTracks | NLA Editor: `nla.mute_toggle`; NLA Editor: `marker.add` | 미검토 |  | hotkeySetup.mel:101 |
+| n | N | timeEditorPanel | TimeEditorToggleSoloSelectedTracks | — | 미검토 |  | hotkeySetup.mel:102 |
+| Alt+n | Alt+N | timeEditorPanel | TimeEditorAddToSoloSelectedTracks | — | 미검토 |  | hotkeySetup.mel:103 |
+| b | B | timeEditorPanel | TimeEditorGhostTrackToggle | — | 미검토 |  | hotkeySetup.mel:104 |
+| k | K | timeEditorPanel | TimeEditorToggleTimeCursorPress / TimeEditorToggleTimeCursorRelease (release) | — | 미검토 |  | hotkeySetup.mel:106 |
+| Ctrl+g | Ctrl+G | timeEditorPanel | TimeEditorCreateGroupFromSelection | NLA Editor: `nla.meta_add` | 미검토 |  | hotkeySetup.mel:108 |
+| Ctrl+Shift+G | Ctrl+Shift+G | timeEditorPanel | TimeEditorExplodeGroup | — | 미검토 |  | hotkeySetup.mel:109 |
+| Ctrl+e | Ctrl+E | timeEditorPanel | TimeEditorExportSelection | — | 미검토 |  | hotkeySetup.mel:111 |
+| Shift+I | Shift+I | timeEditorPanel | TimeEditorCreateAudioClip | — | 미검토 |  | hotkeySetup.mel:112 |
+| i | I | timeEditorPanel | TimeEditorImportAnimation | — | 미검토 |  | hotkeySetup.mel:114 |
+| o | O | timeEditorPanel | TimeEditorCreateClip | — | 미검토 |  | hotkeySetup.mel:115 |
+| p | P | timeEditorPanel | TimeEditorCreatePoseClip | — | 미검토 |  | hotkeySetup.mel:116 |
+| u | U | timeEditorPanel | TimeEditorRippleEditTogglePress / TimeEditorRippleEditToggleRelease (release) | NLA Editor: `nla.make_single_user` | 미검토 |  | hotkeySetup.mel:117 |
+| g | G | timeEditorPanel | TimeEditorClipTrimStart | Screen: `screen.repeat_last` | 미검토 |  | hotkeySetup.mel:118 |
+| h | H | timeEditorPanel | TimeEditorClipTrimEnd | — | 미검토 |  | hotkeySetup.mel:119 |
+| Shift+G | Shift+G | timeEditorPanel | TimeEditorClipScaleStart | — | 미검토 |  | hotkeySetup.mel:120 |
+| Shift+H | Shift+H | timeEditorPanel | TimeEditorClipScaleEnd | — | 미검토 |  | hotkeySetup.mel:121 |
+| l | L | timeEditorPanel | TimeEditorCreateAdditiveLayer | — | 미검토 |  | hotkeySetup.mel:122 |
+| Shift+L | Shift+L | timeEditorPanel | TimeEditorCreateOverrideLayer | — | 미검토 |  | hotkeySetup.mel:123 |
+| Ctrl+c | Ctrl+C | timeEditorPanel | TimeEditorCopyClips | — | 미검토 |  | hotkeySetup.mel:126 |
+| Ctrl+x | Ctrl+X | timeEditorPanel | TimeEditorCutClips | — | 미검토 |  | hotkeySetup.mel:127 |
+| Delete | DEL | timeEditorPanel | TimeEditorDeleteClips | NLA Editor: `nla.delete` | 미검토 |  | hotkeySetup.mel:128 |
+| Ctrl+v | Ctrl+V | timeEditorPanel | TimeEditorPasteClips | — | 미검토 |  | hotkeySetup.mel:129 |
+| a | A | timeEditorPanel | TimeEditorFrameAll | NLA Editor: `nla.view_all` | 미검토 |  | hotkeySetup.mel:134 |
+| f | F | timeEditorPanel | TimeEditorFrameSelected | NLA Editor: `nla.view_selected` | 미검토 |  | hotkeySetup.mel:135 |
+| g | G | timeEditorPanel | TimeEditorFramePlaybackRange | Screen: `screen.repeat_last` | 미검토 |  | hotkeySetup.mel:136 |
+| y | Y | timeEditorPanel | TimeEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:137 |
+| x | X | timeEditorPanel | TimeEditorToggleSnapToClipPress / TimeEditorToggleSnapToClipRelease (release) | — | 미검토 |  | hotkeySetup.mel:138 |
+| a | A | graphEditor | GraphEditorFrameAll | Graph Editor: `graph.view_all` | 미검토 |  | hotkeySetup.mel:144 |
+| f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | 미검토 |  | hotkeySetup.mel:145 |
+| g | G | graphEditor | GraphEditorFramePlaybackRange | Screen: `screen.repeat_last` | 미검토 |  | hotkeySetup.mel:146 |
+| t | T | graphEditor | GraphEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:147 |
+| 1 | ONE | graphEditor | GraphEditorAbsoluteView | — | 미검토 |  | hotkeySetup.mel:148 |
+| 2 | TWO | graphEditor | GraphEditorStackedView | — | 미검토 |  | hotkeySetup.mel:149 |
+| 3 | THREE | graphEditor | GraphEditorNormalizedView | — | 미검토 |  | hotkeySetup.mel:150 |
+| d | D | graphEditor | TangentAuto | — | 미검토 |  | hotkeySetup.mel:151 |
+| h | H | graphEditor | GraphEditorLockChannel | — | 미검토 |  | hotkeySetup.mel:152 |
+| j | J | graphEditor | GraphEditorUnlockChannel | — | 미검토 |  | hotkeySetup.mel:153 |
+| l | L | graphEditor | GraphEditorValueLinesToggle | — | 미검토 |  | hotkeySetup.mel:154 |
+| Cmd+Shift+A | Shift+Oskey+A | global | SelectAll | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:166 |
+| Cmd+Shift+C | Shift+Oskey+C | global | CreateCameraFromView | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:167 |
+| Cmd+d | Oskey+D | global | Duplicate | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:169 |
+| Cmd+Shift+D | Shift+Oskey+D | global | DuplicateSpecial | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:170 |
+| Cmd+z | Oskey+Z | global | Undo | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:172 |
+| Cmd+Shift+Z | Shift+Oskey+Z | global | Redo | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:173 |
+| Cmd+q | Oskey+Q | global | Quit | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:175 |
+| Cmd+w | Oskey+W | global | CloseFrontWindow | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:177 |
+| Cmd+i | Oskey+I | global | Import | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:179 |
+| Home | HOME | global | EnterEditMode | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:181 |
+| Cmd+o | Oskey+O | global | OpenScene | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:183 |
+| Cmd+n | Oskey+N | global | NewScene | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:184 |
+| Cmd+s | Oskey+S | global | SaveScene | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:185 |
+| Cmd+Shift+S | Shift+Oskey+S | global | SaveSceneAs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:186 |
+| Alt+Cmd+s | Alt+Oskey+S | global | IncrementAndSave | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:187 |
+| Cmd+r | Oskey+R | global | CreateReference | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:188 |
+| Cmd+g | Oskey+G | global | Group | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:189 |
+| Cmd+y | Oskey+Y | global | RepeatLast | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:191 |
+| Cmd+Shift+I | Shift+Oskey+I | global | InvertSelection | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:193 |
+| Cmd+Shift+? | Shift+Oskey+SLASH | global | Help | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:195 |
+| Cmd+x | Oskey+X | global | CutSelected | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:198 |
+| Cmd+c | Oskey+C | global | CopySelected | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:199 |
+| Cmd+v | Oskey+V | global | PasteSelected | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:200 |
+| Cmd+Up | Oskey+UP_ARROW | global | IncreaseCheckerDensity | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:202 |
+| Cmd+Down | Oskey+DOWN_ARROW | global | DecreaseCheckerDensity | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:203 |
+| Cmd+g | Oskey+G | timeEditorPanel | TimeEditorCreateGroupFromSelection | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:206 |
+| Cmd+Shift+G | Shift+Oskey+G | timeEditorPanel | TimeEditorExplodeGroup | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:207 |
+| Cmd+e | Oskey+E | timeEditorPanel | TimeEditorExportSelection | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:209 |
+| Cmd+c | Oskey+C | timeEditorPanel | TimeEditorCopyClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:211 |
+| Cmd+x | Oskey+X | timeEditorPanel | TimeEditorCutClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:212 |
+| Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
+| Ctrl+y | Ctrl+Y | global | Redo | — | 미검토 |  | hotkeySetup.mel:223 |
+| Insert | INSERT | global | EnterEditMode | — | 계획 Step 6 | Insert 피벗 편집 토글 | hotkeySetup.mel:225 |
+| a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `view3d.view_all` (center=False) | IC 일치 | 탭=Frame All. 홀드 마킹메뉴는 Step 3/10 | hotkeySetup.mel:228 |
+| Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `view3d.view_all` (use_all_regions=True, center=False) | 계획 Step 4 |  | hotkeySetup.mel:229 |
+| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 미검토 |  | hotkeySetup.mel:230 |
+| f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 자식 제외 여부는 Step 4 | hotkeySetup.mel:231 |
+| Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `view3d.view_center_pick` | 계획 Step 4 |  | hotkeySetup.mel:232 |
+| Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | — | 계획 Step 4 |  | hotkeySetup.mel:233 |
+| [ | LEFT_BRACKET | global | UndoViewChange | Object Mode: `object.select_hierarchy` (direction='PARENT', extend=False) | 계획 Step 4 |  | hotkeySetup.mel:234 |
+| ] | RIGHT_BRACKET | global | RedoViewChange | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=False) | 계획 Step 4 |  | hotkeySetup.mel:235 |
+| Alt+z | Alt+Z | global | UndoViewChange | — | 계획 Step 4 |  | hotkeySetup.mel:236 |
+| Alt+y | Alt+Y | global | RedoViewChange | — | 계획 Step 4 |  | hotkeySetup.mel:237 |
+| Home | HOME | global | GoToDefaultView | — | 계획 Step 4 |  | hotkeySetup.mel:238 |
+| Shift+{ | Shift+LEFT_BRACKET | global | PreviousViewArrangement | Object Mode: `object.select_hierarchy` (direction='PARENT', extend=True) | 미검토 |  | hotkeySetup.mel:239 |
+| Shift+} | Shift+RIGHT_BRACKET | global | NextViewArrangement | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=True) | 미검토 |  | hotkeySetup.mel:240 |
+| Alt+p | Alt+P | global | CameraModeToggle | — | 미검토 |  | hotkeySetup.mel:241 |
+| Alt+Home | Alt+HOME | global | AppHome | — | 미검토 |  | hotkeySetup.mel:243 |
+| Shift+D | Shift+D | global | DuplicateWithTransform | — | 미검토 |  | hotkeySetup.mel:245 |
+| Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | — | 계획 Step 12 |  | hotkeySetup.mel:247 |
+| p | P | global | Parent | Object Mode: `object.parent_set` | 계획 Step 6 | IC P=parent_set 이지만 Maya식(로컬 재계산)으로 교체 예정 | hotkeySetup.mel:249 |
+| Shift+P | Shift+P | global | Unparent | Object Mode: `object.parent_clear` | 계획 Step 6 |  | hotkeySetup.mel:250 |
+| F8 | F8 | global | SelectToggleMode | Object Non-modal: `object.editmode_toggle` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
+| F9 | F9 | global | SelectVertexMask | — | 계획 Step 5 |  | hotkeySetup.mel:253 |
+| F10 | F10 | global | SelectEdgeMask | — | 계획 Step 5 |  | hotkeySetup.mel:254 |
+| F11 | F11 | global | SelectFacetMask | — | 계획 Step 5 |  | hotkeySetup.mel:255 |
+| F12 | F12 | global | SelectUVMask | — | 계획 Step 5 |  | hotkeySetup.mel:256 |
+| Alt+F9 | Alt+F9 | global | SelectVertexFaceMask | — | 계획 Step 5 |  | hotkeySetup.mel:257 |
+| Alt+F12 | Alt+F12 | global | SelectMeshUVShell | — | 미검토 |  | hotkeySetup.mel:258 |
+| F7 | F7 | global | SelectMultiComponentMask | — | 계획 Step 5 |  | hotkeySetup.mel:259 |
+| Ctrl+F9 | Ctrl+F9 | global | ConvertSelectionToVertices | — | 계획 Step 5 |  | hotkeySetup.mel:262 |
+| Ctrl+F10 | Ctrl+F10 | global | ConvertSelectionToEdges | — | 계획 Step 5 |  | hotkeySetup.mel:263 |
+| Ctrl+F11 | Ctrl+F11 | global | ConvertSelectionToFaces | — | 계획 Step 5 |  | hotkeySetup.mel:264 |
+| Ctrl+F12 | Ctrl+F12 | global | ConvertSelectionToUVs | — | 계획 Step 5 |  | hotkeySetup.mel:265 |
+| Shift+> | Shift+PERIOD | global | GrowPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:266 |
+| Ctrl+Shift+> | Ctrl+Shift+PERIOD | global | GrowLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:267 |
+| Shift+< | Shift+COMMA | global | ShrinkPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:268 |
+| Ctrl+Shift+< | Ctrl+Shift+COMMA | global | ShrinkLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:269 |
+| h | H | global | ToggleVisibilityAndKeepSelection | — | 계획 Step 5 |  | hotkeySetup.mel:271 |
+| x | X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `wm.context_toggle` (data_path='tool_settings.use_snap') | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:272 |
+| Shift+X | Shift+X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_snap_pie') | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:273 |
+| Ctrl+h | Ctrl+H | global | HideSelectedObjects | Object Mode: `object.hide_view_set` (unselected=False); Mesh: `mesh.hide` (unselected=False) | IC 일치 |  | hotkeySetup.mel:274 |
+| Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `object.hide_view_set` (unselected=True); Mesh: `mesh.hide` (unselected=True) | 계획 Step 5 |  | hotkeySetup.mel:275 |
+| Ctrl+Shift+H | Ctrl+Shift+H | global | ShowLastHidden | — | 미검토 |  | hotkeySetup.mel:276 |
+| Alt+h | Alt+H | global | HideUnselectedObjects | Object Mode: `object.hide_view_clear`; Mesh: `mesh.reveal` | 계획 Step 5 |  | hotkeySetup.mel:277 |
+| Ctrl+Alt+h | Ctrl+Alt+H | global | ShowAllPolyComponents | — | 미검토 |  | hotkeySetup.mel:278 |
+| c | C | global | SnapToCurvePress / SnapToCurveRelease (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.cursor', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.cursor', cycle=True) | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:279 |
+| Shift+C | Shift+C | global | SnapToCurvePress / SnapToCurveRelease (release) | — | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:280 |
+| v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_view_pie') | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:281 |
+| Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | — | 계획 Step 3 | 홀드 스냅 | hotkeySetup.mel:282 |
+| q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:285 |
+| Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:286 |
+| Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:287 |
+| Alt+m | Alt+M | global | FullHotboxDisplay | — | 미검토 |  | hotkeySetup.mel:288 |
+| Ctrl+m | Ctrl+M | global | ToggleMainMenubar | — | 미검토 |  | hotkeySetup.mel:289 |
+| Shift+M | Shift+M | global | TogglePanelMenubar | — | 미검토 |  | hotkeySetup.mel:290 |
+| Ctrl+Shift+M | Ctrl+Shift+M | global | ToggleModelEditorBars | — | 미검토 |  | hotkeySetup.mel:291 |
+| Shift+J | Shift+J | global | MoveRotateScaleToolToggleSnapRelativeMode / MoveRotateScaleToolToggleSnapRelativeMode (release) | — | 미검토 |  | hotkeySetup.mel:294 |
+| j | J | global | MoveRotateScaleToolToggleSnapMode / MoveRotateScaleToolToggleSnapMode (release) | — | 계획 Step 3 | 홀드 스텝 스냅 | hotkeySetup.mel:295 |
+| Cmd+F9 | Oskey+F9 | global | ConvertSelectionToVertices | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:298 |
+| Cmd+F10 | Oskey+F10 | global | ConvertSelectionToEdges | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:299 |
+| Cmd+F11 | Oskey+F11 | global | ConvertSelectionToFaces | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:300 |
+| Cmd+F12 | Oskey+F12 | global | ConvertSelectionToUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:301 |
+| Cmd+Shift+H | Shift+Oskey+H | global | ShowLastHidden | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:303 |
+| w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.move', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:307 |
+| e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:309 |
+| r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.scale', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:311 |
+| Ctrl+t | Ctrl+T | global | UniversalManip | — | 미검토 |  | hotkeySetup.mel:313 |
+| t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:315 |
+| y | Y | global | NonSacredTool | — | 미검토 |  | hotkeySetup.mel:316 |
+| Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | — | 미검토 |  | hotkeySetup.mel:319 |
+| Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | — | 미검토 |  | hotkeySetup.mel:320 |
+| F2 | F2 | global | ShowModelingUI | 3D View: `view3d.view_axis` (type='RIGHT') | 계획 Step 14 |  | hotkeySetup.mel:322 |
+| F3 | F3 | global | ShowRiggingUI | 3D View: `view3d.view_axis` (type='TOP') | 계획 Step 14 |  | hotkeySetup.mel:323 |
+| F4 | F4 | global | ShowAnimationUI | 3D View: `view3d.view_camera` | 계획 Step 14 |  | hotkeySetup.mel:324 |
+| F5 | F5 | global | ShowDynamicsUI | 3D View: `view3d.view_orbit` (angle=3.1415927, type='ORBITRIGHT') | 계획 Step 14 |  | hotkeySetup.mel:326 |
+| F6 | F6 | global | ShowRenderingUI | — | 계획 Step 14 |  | hotkeySetup.mel:327 |
+| s | S | global | SetKey | Object Mode: `anim.keyframe_insert_by_name` (type='LocRotScale') | IC 일치 | Maya 는 키 가능한 모든 채널, IC 는 LocRotScale | hotkeySetup.mel:328 |
+| Alt+e | Alt+E | global | HIKPinRotate | Object Mode: `object.rotation_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:329 |
+| Alt+w | Alt+W | global | HIKPinTranslate | Object Mode: `object.location_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:330 |
+| Alt+s | Alt+S | global | HIKSetFullBodyKey | Object Mode: `anim.keyframe_delete_v3d` | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:331 |
+| Alt+v | Alt+V | global | PlaybackToggle | Frames: `screen.animation_play` | 구현 |  | hotkeySetup.mel:332 |
+| Alt+Shift+V | Alt+Shift+V | global | GoToMinFrame | Frames: `screen.frame_jump` (end=False) | 구현 |  | hotkeySetup.mel:333 |
+| k | K | global | TimeDraggerToolActivate / TimeDraggerToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.knife', cycle=True) | 미검토 |  | hotkeySetup.mel:334 |
+| i | I | global | InsertKeyToolActivate / InsertKeyToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.inset_faces', cycle=True) | 미검토 |  | hotkeySetup.mel:335 |
+| 0 | ZERO | global | DefaultQualityDisplay | — | 계획 Step 5 |  | hotkeySetup.mel:336 |
+| 1 | ONE | global | LowQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'VERT'}); Mesh: `mesh.select_mode` (type='VERT') | 계획 Step 5 |  | hotkeySetup.mel:337 |
+| 2 | TWO | global | MediumQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'EDGE'}); Mesh: `mesh.select_mode` (type='EDGE') | 계획 Step 5 |  | hotkeySetup.mel:338 |
+| 3 | THREE | global | HighQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'FACE'}); Mesh: `mesh.select_mode` (type='FACE') | 계획 Step 5 |  | hotkeySetup.mel:339 |
+| Alt+3 | Alt+THREE | global | ToggleDisplacement | — | 미검토 |  | hotkeySetup.mel:340 |
+| 4 | FOUR | global | DisplayWireframe | 3D View: `maya_kit.display_mode` (mode='WIREFRAME') | 구현 |  | hotkeySetup.mel:341 |
+| 5 | FIVE | global | DisplayShaded | 3D View: `maya_kit.display_mode` (mode='SHADED') | 구현 |  | hotkeySetup.mel:342 |
+| 6 | SIX | global | DisplayShadedAndTextured | 3D View: `maya_kit.display_mode` (mode='TEXTURED') | 구현 |  | hotkeySetup.mel:343 |
+| 7 | SEVEN | global | DisplayLight | 3D View: `maya_kit.display_mode` (mode='LIGHTS') | 구현 | Material Preview + 씬 라이트 (근사) | hotkeySetup.mel:344 |
+| Ctrl+Shift+% | Ctrl+Shift+FIVE | global | ToggleUseDefaultMaterial | — | 미검토 |  | hotkeySetup.mel:345 |
+| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | Mesh: `mesh.select_mode` (use_expand=True, type='VERT') | 계획 Step 5 |  | hotkeySetup.mel:346 |
+| Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
+| Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | 미검토 |  | hotkeySetup.mel:351 |
+| Space | SPACE | global | ShowHotbox / HideHotbox (release) | — | 계획 Step 11 | Space 는 핫박스 자리로 비워 둠 (재생은 Alt+V) | hotkeySetup.mel:352 |
+| Return | RET | global | CompleteCurrentTool | 3D View: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:353 |
+| Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
+| d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.annotate', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.annotate', cycle=True) | 계획 Step 6 | D 홀드 피벗 편집 | hotkeySetup.mel:355 |
+| Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
+| Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
+| , | COMMA | global | PreviousKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_orientations_pie') | 계획 Step 9 |  | hotkeySetup.mel:358 |
+| Alt+, | Alt+COMMA | global | PreviousFrame | — | 계획 Step 9 |  | hotkeySetup.mel:359 |
+| . | PERIOD | global | NextKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_pivot_pie') | 계획 Step 9 |  | hotkeySetup.mel:360 |
+| Alt+. | Alt+PERIOD | global | NextFrame | — | 계획 Step 9 |  | hotkeySetup.mel:361 |
+| g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
+| Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
+| Up | UP_ARROW | global | PickWalkUp | Object Mode: `object.select_more`; Mesh: `mesh.select_more` | 계획 Step 6 |  | hotkeySetup.mel:364 |
+| Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `object.select_less`; Mesh: `mesh.select_less` | 계획 Step 6 |  | hotkeySetup.mel:365 |
+| Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `screen.frame_offset` (delta=-1) | 계획 Step 6 |  | hotkeySetup.mel:366 |
+| Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `screen.frame_offset` (delta=1) | 계획 Step 6 |  | hotkeySetup.mel:367 |
+| Ctrl+Page_Up | Ctrl+PAGE_UP | global | PickWalkIn | Screen: `screen.workspace_cycle` (direction='PREV') | 미검토 |  | hotkeySetup.mel:368 |
+| Ctrl+Page_Down | Ctrl+PAGE_DOWN | global | PickWalkOut | Screen: `screen.workspace_cycle` (direction='NEXT') | 미검토 |  | hotkeySetup.mel:369 |
+| Alt+Up | Alt+UP_ARROW | global | MoveUp | — | 미검토 |  | hotkeySetup.mel:370 |
+| Alt+Down | Alt+DOWN_ARROW | global | MoveDown | — | 미검토 |  | hotkeySetup.mel:371 |
+| Alt+Left | Alt+LEFT_ARROW | global | MoveLeft | — | 미검토 |  | hotkeySetup.mel:372 |
+| Alt+Right | Alt+RIGHT_ARROW | global | MoveRight | — | 미검토 |  | hotkeySetup.mel:373 |
+| Ctrl+Backspace | Ctrl+BACK_SPACE | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | 미검토 |  | hotkeySetup.mel:375 |
+| Ctrl+Delete | Ctrl+DEL | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | 미검토 |  | hotkeySetup.mel:376 |
+| Ctrl+Alt+Left | Ctrl+Alt+LEFT_ARROW | global | PolySpinEdgeBackward | — | 미검토 |  | hotkeySetup.mel:378 |
+| Ctrl+Alt+Right | Ctrl+Alt+RIGHT_ARROW | global | PolySpinEdgeForward | — | 미검토 |  | hotkeySetup.mel:379 |
+| Ctrl+Left | Ctrl+LEFT_ARROW | global | RenderViewNextImage | Object Mode: `screen.frame_jump` (end=False) | 미검토 |  | hotkeySetup.mel:381 |
+| Ctrl+Right | Ctrl+RIGHT_ARROW | global | RenderViewPrevImage | Object Mode: `screen.frame_jump` (end=True) | 미검토 |  | hotkeySetup.mel:382 |
+| Ctrl+e | Ctrl+E | global | PolyExtrude | Mesh: `wm.tool_set_by_id` (name='builtin.extrude_region', cycle=True) | 미검토 |  | hotkeySetup.mel:384 |
+| Ctrl+b | Ctrl+B | global | BevelPolygon | Mesh: `wm.tool_set_by_id` (name='builtin.bevel', cycle=True) | 미검토 |  | hotkeySetup.mel:385 |
+| - | MINUS | global | DecreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:387 |
+| = | EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:388 |
+| Shift++ | Shift+EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:389 |
+| Alt+Shift+Y | Alt+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:391 |
+| Ctrl+Shift+Y | Ctrl+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:392 |
+| Ctrl+Alt+Shift+Y | Ctrl+Alt+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:393 |
+| Shift+W | Shift+W | global | SetKeyTranslate | Object Mode: `anim.keyframe_insert_by_name` (type='Location') | IC 일치 |  | hotkeySetup.mel:394 |
+| Shift+E | Shift+E | global | SetKeyRotate | Object Mode: `anim.keyframe_insert_by_name` (type='Rotation') | IC 일치 |  | hotkeySetup.mel:395 |
+| Shift+R | Shift+R | global | SetKeyScale | Object Mode: `anim.keyframe_insert_by_name` (type='Scaling') | IC 일치 |  | hotkeySetup.mel:396 |
+| Ctrl+i | Ctrl+I | global | SelectNextIntermediatObject | Object Mode: `object.select_all` (action='INVERT'); Mesh: `mesh.select_all` (action='INVERT') | 미검토 |  | hotkeySetup.mel:398 |
+| F1 | F1 | global | Help | 3D View: `view3d.view_axis` (type='FRONT') | 미검토 |  | hotkeySetup.mel:400 |
+| Cmd+Shift+X | Shift+Oskey+X | global | MultiCutToolNameCommand | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:403 |
+| Cmd+1 | Oskey+ONE | global | ToggleIsolateSelect | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:405 |
+| Cmd+Backspace | Oskey+BACK_SPACE | global | DeletePolyElements | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:407 |
+| Cmd+Delete | Oskey+DEL | global | DeletePolyElements | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:408 |
+| Alt+Cmd+Left | Alt+Oskey+LEFT_ARROW | global | PolySpinEdgeBackward | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:410 |
+| Alt+Cmd+Right | Alt+Oskey+RIGHT_ARROW | global | PolySpinEdgeForward | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:411 |
+| Cmd+e | Oskey+E | global | PolyExtrude | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:413 |
+| Shift+S | Shift+S | global | KeyframeTangentMarkingMenu / KeyframeTangentMarkingMenuPopDown (release) | Object Mode: `anim.keyframe_insert` | 미검토 |  | hotkeySetup.mel:418 |
+| n | N | global | TraversalMarkingMenu / TraversalMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:424 |
+| Alt+Shift+< | Alt+Shift+COMMA | global | PreviousGreasePencilFrame | — | 미검토 |  | hotkeySetup.mel:429 |
+| Alt+Shift+> | Alt+Shift+PERIOD | global | NextGreasePencilFrame | — | 미검토 |  | hotkeySetup.mel:430 |
+| u | U | global | PaintOperationMarkingMenuPress / PaintOperationMarkingMenuRelease (release) | — | 미검토 |  | hotkeySetup.mel:433 |
+| b | B | global | ModifyUpperRadiusPress / ModifyUpperRadiusRelease (release) | Object Mode: `wm.context_toggle` (data_path='tool_settings.use_proportional_edit_objects'); Mesh: `wm.context_toggle` (data_path='tool_settings.use_proportional_edit') | 계획 Step 3 | B 홀드 소프트 셀렉트 반경 | hotkeySetup.mel:436 |
+| Shift+B | Shift+B | global | ModifyLowerRadiusPress / ModifyLowerRadiusRelease (release) | — | 미검토 |  | hotkeySetup.mel:439 |
+| / | SLASH | global | PickColorActivate / PickColorDeactivate (release) | — | 미검토 |  | hotkeySetup.mel:442 |
+| n | N | global | ModifyPaintValuePress / ModifyPaintValueRelease (release) | — | 미검토 |  | hotkeySetup.mel:445 |
+| Shift+U | Shift+U | global | ModifyUVVectorPress / ModifyUVVectorRelease (release) | — | 미검토 |  | hotkeySetup.mel:448 |
+| Alt+f | Alt+F | global | FloodSurfaces | — | 미검토 |  | hotkeySetup.mel:451 |
+| Alt+c | Alt+C | global | ToggleColorFeedback | Mesh: `wm.tool_set_by_id` (name='builtin.loop_cut', cycle=True) | 미검토 |  | hotkeySetup.mel:452 |
+| Alt+j | Alt+J | global | ToggleMultiColorFeedback | — | 미검토 |  | hotkeySetup.mel:453 |
+| Ctrl+Alt+c | Ctrl+Alt+C | global | CopyVertexSkinWeights | — | 미검토 |  | hotkeySetup.mel:454 |
+| Ctrl+Alt+v | Ctrl+Alt+V | global | PasteVertexSkinWeights | — | 미검토 |  | hotkeySetup.mel:455 |
+| Ctrl+. | Ctrl+PERIOD | global | NextSkinPaintMode | — | 미검토 |  | hotkeySetup.mel:456 |
+| Ctrl+, | Ctrl+COMMA | global | PrevSkinPaintMode | Screen: `screen.userpref_show` | 미검토 |  | hotkeySetup.mel:457 |
+| o | O | global | PolyBrushMarkingMenu / PolyBrushMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:458 |
+| m | M | global | ModifyDisplacementPress / ModifyDisplacementRelease (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.measure', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.measure', cycle=True) | 미검토 |  | hotkeySetup.mel:463 |
+| Return | RET | outlinerPanel | OutlinerRenameSelectedItem | Outliner: `outliner.item_rename` (use_active=True); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:467 |
+| f | F | outlinerPanel | OutlinerRevealSelected | Outliner: `outliner.show_active` | 미검토 |  | hotkeySetup.mel:468 |
+| 1 | ONE | nodeEditorPanel | NodeEditorHideAttributes | — | 미검토 |  | hotkeySetup.mel:471 |
+| 2 | TWO | nodeEditorPanel | NodeEditorShowConnectedAttrs | — | 미검토 |  | hotkeySetup.mel:472 |
+| 3 | THREE | nodeEditorPanel | NodeEditorShowAllAttrs | — | 미검토 |  | hotkeySetup.mel:473 |
+| 4 | FOUR | nodeEditorPanel | NodeEditorShowCustomAttrs | — | 미검토 |  | hotkeySetup.mel:474 |
+| 5 | FIVE | nodeEditorPanel | NodeEditorToggleNodeTitleMode | — | 미검토 |  | hotkeySetup.mel:475 |
+| p | P | nodeEditorPanel | NodeEditorToggleNodeSelectedPins | Node Editor: `node.parent_set` | 미검토 |  | hotkeySetup.mel:476 |
+| v | V | nodeEditorPanel | NodeEditorToggleNodeSwatchSize | — | 미검토 |  | hotkeySetup.mel:477 |
+| = | EQUAL | nodeEditorPanel | NodeEditorToggleZoomIn | — | 미검토 |  | hotkeySetup.mel:478 |
+| - | MINUS | nodeEditorPanel | NodeEditorToggleZoomOut | — | 미검토 |  | hotkeySetup.mel:479 |
+| Shift+C | Shift+C | nodeEditorPanel | NodeEditorToggleSyncedSelection | — | 미검토 |  | hotkeySetup.mel:480 |
+| s | S | nodeEditorPanel | NodeEditorToggleAttrFilter | — | 미검토 |  | hotkeySetup.mel:481 |
+| x | X | nodeEditorPanel | NodeEditorGridToggleSnap / NodeEditorGridToggleSnap (release) | Node Editor: `wm.context_toggle` (data_path='tool_settings.use_snap_node') | 미검토 |  | hotkeySetup.mel:482 |
+| l | L | nodeEditorPanel | NodeEditorLayout | Node Editor: `node.link_make` (replace=False) | 미검토 |  | hotkeySetup.mel:483 |
+| / | SLASH | nodeEditorPanel | NodeEditorSelectConnected | — | 미검토 |  | hotkeySetup.mel:484 |
+| , | COMMA | nodeEditorPanel | NodeEditorSelectUpStream | — | 미검토 |  | hotkeySetup.mel:485 |
+| w | W | nodeEditorPanel | NodeEditorConnectNodeOnCreation | Node Editor: `node.translate_attach`; Node Editor: `transform.translate` | 미검토 |  | hotkeySetup.mel:486 |
+| c | C | nodeEditorPanel | NodeEditorConnectSelectedNodes | — | 미검토 |  | hotkeySetup.mel:487 |
+| Ctrl+g | Ctrl+G | nodeEditorPanel | NodeEditorCreateCompound | Node Editor: `node.group_make` | 미검토 |  | hotkeySetup.mel:488 |
+| . | PERIOD | nodeEditorPanel | NodeEditorSelectDownStream | — | 미검토 |  | hotkeySetup.mel:489 |
+| Shift+? | Shift+SLASH | nodeEditorPanel | NodeEditorGraphUpDownstream | — | 미검토 |  | hotkeySetup.mel:490 |
+| Shift+< | Shift+COMMA | nodeEditorPanel | NodeEditorGraphUpstream | — | 미검토 |  | hotkeySetup.mel:491 |
+| Shift+> | Shift+PERIOD | nodeEditorPanel | NodeEditorGraphDownstream | — | 미검토 |  | hotkeySetup.mel:492 |
+| Ctrl+l | Ctrl+L | nodeEditorPanel | NodeEditorGraphRemoveSelected | — | 미검토 |  | hotkeySetup.mel:493 |
+| Ctrl+/ | Ctrl+SLASH | nodeEditorPanel | NodeEditorGraphRemoveUnselected | — | 미검토 |  | hotkeySetup.mel:494 |
+| Ctrl+, | Ctrl+COMMA | nodeEditorPanel | NodeEditorGraphRemoveUpstream | Screen: `screen.userpref_show` | 미검토 |  | hotkeySetup.mel:495 |
+| Ctrl+. | Ctrl+PERIOD | nodeEditorPanel | NodeEditorGraphRemoveDownstream | — | 미검토 |  | hotkeySetup.mel:496 |
+| Up | UP_ARROW | nodeEditorPanel | NodeEditorPickWalkUp | — | 미검토 |  | hotkeySetup.mel:497 |
+| Down | DOWN_ARROW | nodeEditorPanel | NodeEditorPickWalkDown | — | 미검토 |  | hotkeySetup.mel:498 |
+| Right | RIGHT_ARROW | nodeEditorPanel | NodeEditorPickWalkRight | — | 미검토 |  | hotkeySetup.mel:499 |
+| Left | LEFT_ARROW | nodeEditorPanel | NodeEditorPickWalkLeft | — | 미검토 |  | hotkeySetup.mel:500 |
+| Ctrl+c | Ctrl+C | nodeEditorPanel | NodeEditorCopy | Node Editor: `node.clipboard_copy` | 미검토 |  | hotkeySetup.mel:501 |
+| Ctrl+x | Ctrl+X | nodeEditorPanel | NodeEditorCut | — | 미검토 |  | hotkeySetup.mel:502 |
+| Ctrl+v | Ctrl+V | nodeEditorPanel | NodeEditorPaste | Node Editor: `node.clipboard_paste` | 미검토 |  | hotkeySetup.mel:503 |
+| Cmd+c | Oskey+C | nodeEditorPanel | NodeEditorCopy | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:506 |
+| Cmd+x | Oskey+X | nodeEditorPanel | NodeEditorCut | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:507 |
+| Cmd+v | Oskey+V | nodeEditorPanel | NodeEditorPaste | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:508 |
+| Cmd+g | Oskey+G | nodeEditorPanel | NodeEditorCreateCompound | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:509 |
+| i | I | nodeEditorPanel | NodeEditorDiveIntoCompound | — | 미검토 |  | hotkeySetup.mel:511 |
+| u | U | nodeEditorPanel | NodeEditorBackToParent | — | 미검토 |  | hotkeySetup.mel:512 |
+| Return | RET | nodeEditorPanel | NodeEditorDiveIntoCompound | Node Generic: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:513 |
+| Delete | DEL | polyTexturePlacementPanel | DeleteUVs | — | 미검토 |  | hotkeySetup.mel:516 |
+| Ctrl+c | Ctrl+C | polyTexturePlacementPanel | CopyUVs | UV Editor: `uv.copy` | 미검토 |  | hotkeySetup.mel:517 |
+| Ctrl+v | Ctrl+V | polyTexturePlacementPanel | PasteUVs | UV Editor: `uv.paste` | 미검토 |  | hotkeySetup.mel:518 |
+| Ctrl+l | Ctrl+L | polyTexturePlacementPanel | LayoutUV | UV Editor: `uv.select_linked` | 미검토 |  | hotkeySetup.mel:519 |
+| Ctrl+u | Ctrl+U | polyTexturePlacementPanel | UnfoldUV | — | 미검토 |  | hotkeySetup.mel:520 |
+| Shift+x | Shift+X | polyTexturePlacementPanel | CutUVs | UV Editor: `wm.call_menu_pie` (name='IMAGE_MT_uvs_snap_pie') | 미검토 |  | hotkeySetup.mel:521 |
+| Shift+s | Shift+S | polyTexturePlacementPanel | SewUVs | — | 미검토 |  | hotkeySetup.mel:522 |
+| Ctrl+Shift+x | Ctrl+Shift+X | polyTexturePlacementPanel | CreateUVShellAlongBorder | — | 미검토 |  | hotkeySetup.mel:523 |
+| 4 | FOUR | polyTexturePlacementPanel | DisplayUVWireframe | UV Editor: `uv.select_mode` (type='ISLAND') | 미검토 |  | hotkeySetup.mel:524 |
+| 5 | FIVE | polyTexturePlacementPanel | DisplayUVShaded | — | 미검토 |  | hotkeySetup.mel:525 |
+| 7 | SEVEN | polyTexturePlacementPanel | ToggleUVDistortion | — | 미검토 |  | hotkeySetup.mel:526 |
+| 8 | EIGHT | polyTexturePlacementPanel | ToggleUVShellBorder | — | 미검토 |  | hotkeySetup.mel:527 |
+| 9 | NINE | polyTexturePlacementPanel | UVEditorToggleTextureBorderDisplay | — | 미검토 |  | hotkeySetup.mel:528 |
+| 6 | SIX | polyTexturePlacementPanel | ToggleUVTextureImage | — | 미검토 |  | hotkeySetup.mel:529 |
+| Ctrl+1 | Ctrl+ONE | polyTexturePlacementPanel | ToggleUVIsolateViewSelected | UV Editor: `mesh.select_mode` (use_expand=True, type='VERT') | 미검토 |  | hotkeySetup.mel:530 |
+| f | F | polyTexturePlacementPanel | UVEditorFrameSelected | Image: `image.view_selected` | 미검토 |  | hotkeySetup.mel:531 |
+| a | A | polyTexturePlacementPanel | UVEditorFrameAll | Image: `image.view_all` | 미검토 |  | hotkeySetup.mel:532 |
+| q | Q | polyTexturePlacementPanel | SelectUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | 미검토 |  | hotkeySetup.mel:533 |
+| w | W | polyTexturePlacementPanel | MoveUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:534 |
+| e | E | polyTexturePlacementPanel | RotateUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:535 |
+| r | R | polyTexturePlacementPanel | ScaleUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:536 |
+| x | X | polyCutUV | CutUVs3D | — | 미검토 |  | hotkeySetup.mel:539 |
+| s | S | polyCutUV | SewUVs3D | — | 미검토 |  | hotkeySetup.mel:540 |
+| d | D | polyCutUV | UnfoldPackUVs3DInCurrentTile | — | 미검토 |  | hotkeySetup.mel:541 |
+| Shift+d | Shift+D | polyCutUV | UnfoldPackUVs3DInEmptyTile | — | 미검토 |  | hotkeySetup.mel:542 |
+| Cmd+c | Oskey+C | polyTexturePlacementPanel | CopyUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:545 |
+| Cmd+v | Oskey+V | polyTexturePlacementPanel | PasteUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:546 |
+| Cmd+l | Oskey+L | polyTexturePlacementPanel | LayoutUV | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:547 |
+| Cmd+u | Oskey+U | polyTexturePlacementPanel | UnfoldUV | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:548 |
+| Cmd+Shift+x | Shift+Oskey+X | polyTexturePlacementPanel | CreateUVShellAlongBorder | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:550 |
+| Cmd+1 | Oskey+ONE | polyTexturePlacementPanel | ToggleUVIsolateViewSelected | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:551 |
+| Ctrl+g | Ctrl+G | shapePanel | ShapeEditorNewGroup | — | 미검토 |  | hotkeySetup.mel:555 |
+| Ctrl+d | Ctrl+D | shapePanel | ShapeEditorDuplicateTarget | — | 미검토 |  | hotkeySetup.mel:556 |
+| Alt+d | Alt+D | shapePanel | ShapeEditorSelectNone | — | 미검토 |  | hotkeySetup.mel:557 |
+| Ctrl+g | Ctrl+G | posePanel | PoseInterpolatorNewGroup | — | 미검토 |  | hotkeySetup.mel:560 |
+| 1 | ONE | hyperShadePanel | HypershadeHideAttributes | — | 미검토 |  | hotkeySetup.mel:563 |
+| 2 | TWO | hyperShadePanel | HypershadeShowConnectedAttrs | — | 미검토 |  | hotkeySetup.mel:564 |
+| 3 | THREE | hyperShadePanel | HypershadeShowAllAttrs | — | 미검토 |  | hotkeySetup.mel:565 |
+| 4 | FOUR | hyperShadePanel | HypershadeShowCustomAttrs | — | 미검토 |  | hotkeySetup.mel:566 |
+| 5 | FIVE | hyperShadePanel | HypershadeToggleNodeTitleMode | — | 미검토 |  | hotkeySetup.mel:567 |
+| p | P | hyperShadePanel | HypershadePinSelected | Node Editor: `node.parent_set` | 미검토 |  | hotkeySetup.mel:568 |
+| = | EQUAL | hyperShadePanel | HypershadeToggleZoomIn | — | 미검토 |  | hotkeySetup.mel:569 |
+| - | MINUS | hyperShadePanel | HypershadeToggleZoomOut | — | 미검토 |  | hotkeySetup.mel:570 |
+| / | SLASH | hyperShadePanel | HypershadeSelectConnected | — | 미검토 |  | hotkeySetup.mel:571 |
+| , | COMMA | hyperShadePanel | HypershadeSelectUpStream | — | 미검토 |  | hotkeySetup.mel:572 |
+| . | PERIOD | hyperShadePanel | HypershadeSelectDownStream | — | 미검토 |  | hotkeySetup.mel:573 |
+| Shift+? | Shift+SLASH | hyperShadePanel | HypershadeGraphUpDownstream | — | 미검토 |  | hotkeySetup.mel:574 |
+| Shift+< | Shift+COMMA | hyperShadePanel | HypershadeGraphUpstream | — | 미검토 |  | hotkeySetup.mel:575 |
+| Shift+> | Shift+PERIOD | hyperShadePanel | HypershadeGraphDownstream | — | 미검토 |  | hotkeySetup.mel:576 |
+| Ctrl+l | Ctrl+L | hyperShadePanel | HypershadeGraphRemoveSelected | — | 미검토 |  | hotkeySetup.mel:577 |
+| Ctrl+/ | Ctrl+SLASH | hyperShadePanel | HypershadeGraphRemoveUnselected | — | 미검토 |  | hotkeySetup.mel:578 |
+| Ctrl+, | Ctrl+COMMA | hyperShadePanel | HypershadeGraphRemoveUpstream | Screen: `screen.userpref_show` | 미검토 |  | hotkeySetup.mel:579 |
+| Ctrl+. | Ctrl+PERIOD | hyperShadePanel | HypershadeGraphRemoveDownstream | — | 미검토 |  | hotkeySetup.mel:580 |
+| Up | UP_ARROW | hyperShadePanel | HypershadePickWalkUp | — | 미검토 |  | hotkeySetup.mel:581 |
+| Down | DOWN_ARROW | hyperShadePanel | HypershadePickWalkDown | — | 미검토 |  | hotkeySetup.mel:582 |
+| Right | RIGHT_ARROW | hyperShadePanel | HypershadePickWalkRight | — | 미검토 |  | hotkeySetup.mel:583 |
+| Left | LEFT_ARROW | hyperShadePanel | HypershadePickWalkLeft | — | 미검토 |  | hotkeySetup.mel:584 |
+| Shift+! | Shift+ONE | hyperShadePanel | SoloLastOutput | — | 미검토 |  | hotkeySetup.mel:585 |
+| Shift+@ | Shift+TWO | hyperShadePanel | SoloMaterial | — | 미검토 |  | hotkeySetup.mel:586 |
+| Shift+# | Shift+THREE | hyperShadePanel | RemoveMaterialSoloing | — | 미검토 |  | hotkeySetup.mel:587 |
+| Ctrl+0 | Ctrl+ZERO | xgmIGBrush | XgmSetFreezeBrushTool | — | 미검토 |  | hotkeySetup.mel:590 |
+| Ctrl+1 | Ctrl+ONE | xgmIGBrush | XgmSetDensityBrushTool | — | 미검토 |  | hotkeySetup.mel:591 |
+| Ctrl+2 | Ctrl+TWO | xgmIGBrush | XgmSetCombBrushTool | — | 미검토 |  | hotkeySetup.mel:592 |
+| Ctrl+3 | Ctrl+THREE | xgmIGBrush | XgmSetGrabBrushTool | — | 미검토 |  | hotkeySetup.mel:593 |
+| Ctrl+5 | Ctrl+FIVE | xgmIGBrush | XgmSetDirectionBrushTool | — | 미검토 |  | hotkeySetup.mel:595 |
+| Ctrl+6 | Ctrl+SIX | xgmIGBrush | XgmSetSmoothBrushTool | — | 미검토 |  | hotkeySetup.mel:596 |
+| Ctrl+7 | Ctrl+SEVEN | xgmIGBrush | XgmSetNoiseBrushTool | — | 미검토 |  | hotkeySetup.mel:597 |
+| Ctrl+8 | Ctrl+EIGHT | xgmIGBrush | XgmSetClumpBrushTool | — | 미검토 |  | hotkeySetup.mel:598 |
+| Ctrl+9 | Ctrl+NINE | xgmIGBrush | XgmSetPartBrushTool | — | 미검토 |  | hotkeySetup.mel:599 |
+| Alt+r | Alt+R | global | ToggleReflection | Object Mode: `object.scale_clear` (clear_delta=False) | 미검토 |  | hotkeySetup.mel:602 |
+| Shift+U | Shift+U | sculptMeshCache | SculptMeshUnfreezeAll | — | 미검토 |  | hotkeySetup.mel:604 |
+| Ctrl+Shift+I | Ctrl+Shift+I | sculptMeshCache | SculptMeshInvertFreeze | — | 미검토 |  | hotkeySetup.mel:605 |
+| Ctrl+0 | Ctrl+ZERO | sculptMeshCache | SetMeshFreezeTool | — | 미검토 |  | hotkeySetup.mel:607 |
+| Ctrl+1 | Ctrl+ONE | sculptMeshCache | SetMeshSculptTool | — | 미검토 |  | hotkeySetup.mel:608 |
+| Ctrl+2 | Ctrl+TWO | sculptMeshCache | SetMeshSmoothTool | — | 미검토 |  | hotkeySetup.mel:609 |
+| Ctrl+3 | Ctrl+THREE | sculptMeshCache | SetMeshRelaxTool | — | 미검토 |  | hotkeySetup.mel:610 |
+| Ctrl+4 | Ctrl+FOUR | sculptMeshCache | SetMeshGrabTool | — | 미검토 |  | hotkeySetup.mel:611 |
+| Ctrl+5 | Ctrl+FIVE | sculptMeshCache | SetMeshPinchTool | — | 미검토 |  | hotkeySetup.mel:612 |
+| Ctrl+6 | Ctrl+SIX | sculptMeshCache | SetMeshFlattenTool | — | 미검토 |  | hotkeySetup.mel:613 |
+| Ctrl+7 | Ctrl+SEVEN | sculptMeshCache | SetMeshFoamyTool | — | 미검토 |  | hotkeySetup.mel:614 |
+| Ctrl+8 | Ctrl+EIGHT | sculptMeshCache | SetMeshSprayTool | — | 미검토 |  | hotkeySetup.mel:615 |
+| Ctrl+9 | Ctrl+NINE | sculptMeshCache | SetMeshRepeatTool | — | 미검토 |  | hotkeySetup.mel:616 |
+| f | F | sculptMeshCache | SculptMeshFrame | — | 미검토 |  | hotkeySetup.mel:618 |
+| b | B | sculptMeshCache | SculptMeshActivateBrushSize / SculptMeshDeactivateBrushSize (release) | — | 미검토 |  | hotkeySetup.mel:620 |
+| m | M | sculptMeshCache | SculptMeshActivateBrushStrength / SculptMeshDeactivateBrushStrength (release) | — | 미검토 |  | hotkeySetup.mel:621 |
+| b | B | texSculptCacheContext | TexSculptActivateBrushSize / TexSculptDeactivateBrushSize (release) | — | 미검토 |  | hotkeySetup.mel:623 |
+| m | M | texSculptCacheContext | TexSculptActivateBrushStrength / TexSculptDeactivateBrushStrength (release) | — | 미검토 |  | hotkeySetup.mel:624 |
+| b | B | Unfold3DBrush | U3DBrushSizeOn / U3DBrushSizeOff (release) | — | 미검토 |  | hotkeySetup.mel:626 |
+| m | M | Unfold3DBrush | U3DBrushPressureOn / U3DBrushPressureOff (release) | — | 미검토 |  | hotkeySetup.mel:627 |
+| b | B | SymmetrizeUVBrush | SymmetrizeUVBrushSizeOn / SymmetrizeUVBrushSizeOff (release) | — | 미검토 |  | hotkeySetup.mel:629 |
+| b | B | texCutContext | TexSewActivateBrushSize / TexSewDeactivateBrushSize (release) | — | 미검토 |  | hotkeySetup.mel:631 |
+| Cmd+g | Oskey+G | shapePanel | ShapeEditorNewGroup | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:635 |
+| Cmd+d | Oskey+D | shapePanel | ShapeEditorDuplicateTarget | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:636 |
+| Cmd+g | Oskey+G | posePanel | PoseInterpolatorNewGroup | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:639 |
+| Cmd+Shift+I | Shift+Oskey+I | sculptMeshCache | SculptMeshInvertFreeze | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:641 |
+| Cmd+0 | Oskey+ZERO | sculptMeshCache | SetMeshFreezeTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:642 |
+| Cmd+1 | Oskey+ONE | sculptMeshCache | SetMeshSculptTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:643 |
+| Cmd+2 | Oskey+TWO | sculptMeshCache | SetMeshSmoothTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:644 |
+| Cmd+3 | Oskey+THREE | sculptMeshCache | SetMeshRelaxTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:645 |
+| Cmd+4 | Oskey+FOUR | sculptMeshCache | SetMeshGrabTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:646 |
+| Cmd+5 | Oskey+FIVE | sculptMeshCache | SetMeshPinchTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:647 |
+| Cmd+6 | Oskey+SIX | sculptMeshCache | SetMeshFlattenTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:648 |
+| Cmd+7 | Oskey+SEVEN | sculptMeshCache | SetMeshFoamyTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:649 |
+| Cmd+8 | Oskey+EIGHT | sculptMeshCache | SetMeshSprayTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:650 |
+| Cmd+9 | Oskey+NINE | sculptMeshCache | SetMeshRepeatTool | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:651 |
+| Ctrl+Up | Ctrl+UP_ARROW | global | CoarserSubdivLevel | — | 해당 없음 | Maya subdiv surface 노드 없음 | hotkeySetup.mel:655 |
+| Ctrl+Down | Ctrl+DOWN_ARROW | global | CreateSubdivRegion | — | 해당 없음 | Maya subdiv surface 노드 없음 | hotkeySetup.mel:656 |
+| Alt+Shift+A | Alt+Shift+A | global | DecrementFluidCenter | — | 해당 없음 | Maya Fluids 없음 | hotkeySetup.mel:660 |
+| Alt+Shift+S | Alt+Shift+S | global | IncrementFluidCenter | — | 해당 없음 | Maya Fluids 없음 | hotkeySetup.mel:661 |
+| Ctrl+Space | Ctrl+SPACE | global | ToggleFullScreenMode | — | 미검토 |  | hotkeySetup.mel:664 |
+| Shift+Space | Shift+SPACE | global | ToggleZoomInMode | 3D View Generic: `wm.context_toggle` (data_path='space_data.show_region_asset_shelf') | 미검토 |  | hotkeySetup.mel:666 |
+| Alt+b | Alt+B | global | CycleBackgroundColor | — | 미검토 |  | hotkeySetup.mel:669 |
+| Ctrl+` | Ctrl+ACCENT_GRAVE | global | SmoothingDisplayToggle | — | 미검토 |  | hotkeySetup.mel:673 |
+| Shift+~ | Shift+ACCENT_GRAVE | global | SmoothingDisplayShowBoth | — | 미검토 |  | hotkeySetup.mel:674 |
+| Ctrl+Shift+~ | Ctrl+Shift+ACCENT_GRAVE | global | SmoothProxy | — | 미검토 |  | hotkeySetup.mel:675 |
+| Alt+` | Alt+ACCENT_GRAVE | global | CreateSubdivSurface | — | 미검토 |  | hotkeySetup.mel:676 |
+| Alt+Shift+~ | Alt+Shift+ACCENT_GRAVE | global | CreateSubdivSurfaceOptions | — | 미검토 |  | hotkeySetup.mel:677 |
+| Page_Up | PAGE_UP | global | SmoothingLevelIncrease | — | 계획 Step 5 |  | hotkeySetup.mel:678 |
+| Page_Down | PAGE_DOWN | global | SmoothingLevelDecrease | — | 계획 Step 5 |  | hotkeySetup.mel:679 |
+| ` | ACCENT_GRAVE | global | STRSTweakModeOn / STRSTweakModeOff (release) | Object Non-modal: `object.transfer_mode` | 미검토 |  | hotkeySetup.mel:682 |
+| l | L | global | LockCurveLength / UnlockCurveLength (release) | — | 미검토 |  | hotkeySetup.mel:686 |
+| Alt+g | Alt+G | hyperGraphPanel | HypergraphIncreaseDepth | — | 미검토 |  | hotkeySetup.mel:689 |
+| Alt+t | Alt+T | hyperGraphPanel | HypergraphDecreaseDepth | — | 미검토 |  | hotkeySetup.mel:690 |
+| Ctrl+Shift+W | Ctrl+Shift+W | global | ToggleSteeringWheel | — | 미검토 |  | hotkeySetup.mel:694 |
+| \ | BACK_SLASH | global | TogglePanZoomPress | — | 미검토 |  | hotkeySetup.mel:697 |
+| \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | — | 미검토 |  | hotkeySetup.mel:698 |
+| Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.toggle_xray` | 미검토 |  | hotkeySetup.mel:701 |
+| Shift+T | Shift+T | global | AssignNewMaterial | — | 미검토 |  | hotkeySetup.mel:705 |
+| Ctrl+= | Ctrl+EQUAL | global | IncreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:708 |
+| Ctrl+- | Ctrl+MINUS | global | DecreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:709 |
+| Ctrl+' | Ctrl+QUOTE | global | IncreaseGammaFine | — | 미검토 |  | hotkeySetup.mel:710 |
+| Ctrl+; | Ctrl+SEMI_COLON | global | DecreaseGammaFine | — | 미검토 |  | hotkeySetup.mel:711 |
+| Ctrl+Alt+= | Ctrl+Alt+EQUAL | global | IncreaseExposureCoarse | — | 미검토 |  | hotkeySetup.mel:712 |
+| Ctrl+Alt+- | Ctrl+Alt+MINUS | global | DecreaseExposureCoarse | — | 미검토 |  | hotkeySetup.mel:713 |
+| Ctrl+Alt+' | Ctrl+Alt+QUOTE | global | IncreaseGammaCoarse | — | 미검토 |  | hotkeySetup.mel:714 |
+| Ctrl+Alt+; | Ctrl+Alt+SEMI_COLON | global | DecreaseGammaCoarse | — | 미검토 |  | hotkeySetup.mel:715 |
+| Ctrl+p | Ctrl+P | global | ColorPickerNameCommand | — | 미검토 |  | hotkeySetup.mel:716 |
+| Ctrl+r | Ctrl+R | profilerPanel | ProfilerToolToggleRecording | — | 미검토 |  | hotkeySetup.mel:719 |
+| 1 | ONE | profilerPanel | ProfilerToolCategoryView | — | 미검토 |  | hotkeySetup.mel:720 |
+| 2 | TWO | profilerPanel | ProfilerToolCpuView | — | 미검토 |  | hotkeySetup.mel:721 |
+| 3 | THREE | profilerPanel | ProfilerToolThreadView | — | 미검토 |  | hotkeySetup.mel:722 |
+| Ctrl+f | Ctrl+F | global | SearchEngine | — | 미검토 |  | hotkeySetup.mel:724 |
+| Cmd+f | Oskey+F | global | SearchEngine | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:727 |
+| Ctrl+Shift+E | Ctrl+Shift+E | global | InsertKeyRotate | — | 미검토 |  | hotkeySetup.mel:729 |
+| Ctrl+Shift+W | Ctrl+Shift+W | global | InsertKeyTranslate | — | 미검토 |  | hotkeySetup.mel:730 |
+| Ctrl+Shift+R | Ctrl+Shift+R | global | InsertKeyScale | — | 미검토 |  | hotkeySetup.mel:731 |
+| Alt+i | Alt+I | global | InsertKey | — | 미검토 |  | hotkeySetup.mel:732 |
+| Alt+/ | Alt+SLASH | graphEditor | SnapTimeToSelection | — | 미검토 |  | hotkeySetup.mel:734 |
+| Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | — | 미검토 |  | hotkeySetup.mel:735 |
+| Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | — | 미검토 |  | hotkeySetup.mel:736 |
+| Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | — | 미검토 |  | hotkeySetup.mel:737 |
+| Alt+5 | Alt+FIVE | global | ToggleWireframeOnShadedCmd | — | 계획 Step 5 |  | hotkeySetup.mel:738 |
+| Shift+) | Shift+ZERO | global | NudgeSelectedKeysForward | — | 미검토 |  | hotkeySetup.mel:739 |
+| Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | — | 미검토 |  | hotkeySetup.mel:740 |
+| Alt+t | Alt+T | global | CreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:742 |
+| Alt+Shift+T | Alt+Shift+T | global | QuickCreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:743 |
+| Shift+\| | Shift+BACK_SLASH | global | FrameTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:744 |
+| Shift+" | Shift+QUOTE | global | FrameNextTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:745 |
+| Shift+: | Shift+SEMI_COLON | global | FramePreviousTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:746 |
+| Alt+\ | Alt+BACK_SLASH | global | PlaybackRangeAnimStartEnd | — | 미검토 |  | hotkeySetup.mel:747 |
+| ' | QUOTE | global | NextTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:748 |
+| ; | SEMI_COLON | global | PreviousTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:749 |

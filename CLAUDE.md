@@ -37,10 +37,13 @@ python tests/run.py              # build + install into tmp/test_env + run all t
 python tests/run.py -k enable    # only matching test files
 python tests/run.py --no-build   # reuse dist/ zip
 python tools/build.py            # build only
+python tools/gen_keymap_mapping.py  # regenerate docs/keymap_mapping.md (exit 1 if an IC/KIT row is unbound)
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
 - A test is a top-level `test_*` function that raises on failure. Shared helpers in `tests/kit.py` (`enable`, `disable`, `snapshot`, `diff`).
 - Logs: `tmp/test_env/logs/<test>.log`. Results: `tmp/test_env/results/<test>.json`.
+- Keymap work: patches go in `src/maya_kit/keymap/maya_patches.py` (record new bindings via `_add` so the shadowing test sees them); update the row status in `keymap/mapping.py`, then regenerate the mapping doc.
+- Git Bash gotcha: `$PWD` is `/c/...`, which Blender's Python can't resolve — pass Windows paths (`cygpath -w`) in `BLENDER_USER_*` when launching Blender by hand.
 - Headless gotcha: in `-b` the default keyconfig is not populated (research/blender/industry_compatible_vs_maya.md:14); build keyconfigs from data, don't read `keyconfigs.default`.
 - UI: verify with a GUI screenshot. Interaction feel: add to `docs/manual_checks.md`.
