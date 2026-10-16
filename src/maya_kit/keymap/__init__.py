@@ -87,7 +87,11 @@ def register():
     build_keyconfig()
     if not prefs.keymap_auto_activated or last_choice == KEYCONFIG_NAME:
         activate()
-        prefs.keymap_auto_activated = True
+        # Not in background sessions: `blender --command extension install-file --enable`
+        # saves this flag but not the active keyconfig, so the first GUI start stayed on
+        # the Blender keymap (found by tools/release_check.py, ).
+        if not bpy.app.background:
+            prefs.keymap_auto_activated = True
 
 
 def unregister():
