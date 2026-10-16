@@ -242,9 +242,22 @@ ENTRIES = {
                                  note="직전 복제의 변환을 반복"),
     "AssignNewMaterial": _e("KIT", (OBJ, "maya_kit.assign_new_material", {}),
                             note="재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만, step 29)"),
-    "ShowModelingUI": _e("STEP", step=13), "ShowRiggingUI": _e("STEP", step=13),
-    "ShowAnimationUI": _e("STEP", step=13), "ShowDynamicsUI": _e("STEP", step=13),
-    "ShowRenderingUI": _e("STEP", step=13),
+    # --- step 35 ---
+    **{rtc: _e("KIT", ("Screen", "maya_kit.menu_set", {"set": sid}),
+               note="메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3)")
+       for rtc, sid in (("ShowModelingUI", "modelingMenuSet"), ("ShowRiggingUI", "riggingMenuSet"),
+                        ("ShowAnimationUI", "animationMenuSet"), ("ShowDynamicsUI", "dynamicsMenuSet"),
+                        ("ShowRenderingUI", "renderingMenuSet"))},
+    "UniversalManip": _e("KIT", (OBJ, "wm.tool_set_by_id", {"name": "builtin.transform"})),
+    "ShowManipulators": _e("IC", (OBJ, "wm.tool_set_by_id", {"name": "builtin.transform"}),
+                           note="Blender 에 Show Manipulator 툴 없음: Transform 툴"),
+    "NonSacredTool": _e("KIT", (OBJ, "maya_kit.last_tool", {}),
+                        note="Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억)"),
+    "MultiCutToolNameCommand": _e("KIT", (OBJ, "maya_kit.menu_tool", {"tool": "builtin.knife"}),
+                                  note="Knife, 오브젝트 모드면 편집 모드로"),
+    "QuadDrawToolNameCommand": _e("KIT", (OBJ, "maya_kit.menu_tool", {"tool": "builtin.poly_build"}),
+                                  note="Poly Build, 오브젝트 모드면 편집 모드로"),
+    "CompleteCurrentTool": _e("NO", note="Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거"),
 
     # --- Not applicable ---
     "HIKPinRotate": _e("NO", note="HumanIK 없음"), "HIKPinTranslate": _e("NO", note="HumanIK 없음"),

@@ -522,6 +522,36 @@ def patch_select_through(kd):
                  shadows=(km,))   # in front of the select item on purpose (PASS_THROUGH)
 
 
+# --- 27. Maya key batch -------------------------------------------
+# Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator (HK:313), Y last non-sacred
+# tool (HK:316), Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw (HK:319-320), F2-F6 menu sets
+# (HK:322-327; IC's 3D View F2 right / F3 top / F4 camera / F5 orbit go, F1 and Ctrl+F1-F3 stay),
+# Return (HK:353): IC's 3D View rename popover goes (Blender modal tools confirm with their own Return).
+
+# Editors whose own F2-F6 keys stay (they run before Screen): Image / UV zoom ratios, File Browser rename.
+MENU_SET_SHADOWS = ("Image", "File Browser")
+
+
+def patch_key_batch(kd):
+    _add(kd, "3D View", "maya_kit.box_zoom", make_event("LEFTMOUSE", ctrl=True, alt=True))
+    for km in ("Object Mode", "Mesh"):
+        _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": "builtin.transform"})
+        _add(kd, km, "maya_kit.last_tool", make_event("Y"))
+        _add(kd, km, "maya_kit.menu_tool", make_event("X", shift=True, ctrl=True),
+             {"tool": "builtin.knife", "edit": True})
+        _add(kd, km, "maya_kit.menu_tool", make_event("Q", shift=True, ctrl=True),
+             {"tool": "builtin.poly_build", "edit": True})
+    kd.remove("3D View", "view3d.view_axis", type="F2")
+    kd.remove("3D View", "view3d.view_axis", type="F3")
+    kd.remove("3D View", "view3d.view_camera", type="F4")
+    kd.remove("3D View", "view3d.view_orbit", type="F5")
+    kd.remove("3D View", "wm.call_panel", type="RET")
+    for key, set_id in (('F2', 'modelingMenuSet'), ('F3', 'riggingMenuSet'), ('F4', 'animationMenuSet'),
+                        ('F5', 'dynamicsMenuSet'), ('F6', 'renderingMenuSet')):
+        _add(kd, "Screen", "maya_kit.menu_set", make_event(key), {"set": set_id},
+             shadows=MENU_SET_SHADOWS)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -529,7 +559,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
-           patch_select_through)
+           patch_select_through, patch_key_batch)
 
 
 def apply(data):
