@@ -1,0 +1,308 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya menu item -> Blender action (docs/steps/step_7.md 「계획」 2).
+
+Key = label path in ``menu_data.MENUS`` ("Create/Polygon Primitives/Cube"),
+starting with the menu *label*, so the Deform and Constrain menus that
+Modeling, Rigging and Animation share map once. Value:
+
+- ``"op.id"`` or ``("op.id", {props})``: drawn as that operator (its poll
+  greys the item out where Blender can't run it, e.g. edit-mode commands in
+  object mode);
+- ``("v3d", "op.id", {props})``: needs a 3D View region; run through
+  ``maya_kit.menu_run`` in the largest 3D View;
+- ``("tool", "builtin.id", edit)``: switch the active tool, entering mesh edit
+  mode first when ``edit``;
+- ``("menu", "MENU_ID")``: a Blender menu as the submenu.
+
+Items not listed are drawn greyed out. Freeze/Reset/Center Pivot/Delete
+History wait for the Maya-semantics operators of the concepts step.
+"""
+
+_PRIMS = {
+    "Sphere": "mesh.primitive_uv_sphere_add", "Cube": "mesh.primitive_cube_add",
+    "Cylinder": "mesh.primitive_cylinder_add", "Cone": "mesh.primitive_cone_add",
+    "Torus": "mesh.primitive_torus_add", "Plane": "mesh.primitive_plane_add",
+    "Disc": ("mesh.primitive_circle_add", {"fill_type": 'NGON'}),
+    "Platonic Solid": ("mesh.primitive_ico_sphere_add", {"subdivisions": 1}),
+    "Pyramid": ("mesh.primitive_cone_add", {"vertices": 4}),
+    "Prism": ("mesh.primitive_cylinder_add", {"vertices": 3}),
+}
+
+
+def _mod(kind):
+    return ("object.modifier_add", {"type": kind})
+
+
+def _con(kind):
+    return ("object.constraint_add_with_targets", {"type": kind})
+
+
+MAP = {
+    # --- File (research/maya/menus.md "File") ---
+    "File/New Scene": "wm.read_homefile",
+    "File/Open Scene...": "wm.open_mainfile",
+    "File/Save Scene": "wm.save_mainfile",
+    "File/Save Scene As...": "wm.save_as_mainfile",
+    "File/Increment and Save": ("wm.save_as_mainfile", {"copy": False}),
+    "File/Save Preferences": "wm.save_userpref",
+    "File/Optimize Scene Size": "outliner.orphans_purge",
+    "File/Import...": ("menu", "TOPBAR_MT_file_import"),
+    "File/Export All...": ("menu", "TOPBAR_MT_file_export"),
+    "File/Export Selection...": ("menu", "TOPBAR_MT_file_export"),
+    "File/Create Reference...": "wm.link",
+    "File/Recent Files": ("menu", "TOPBAR_MT_file_open_recent"),
+    "File/Exit": "wm.quit_blender",
+    # --- Edit ---
+    "Edit/Undo": "ed.undo",
+    "Edit/Redo": "ed.redo",
+    "Edit/Repeat": "screen.repeat_last",
+    "Edit/Recent Commands List": "screen.repeat_history",
+    "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
+    "Edit/Paste": ("v3d", "view3d.pastebuffer", {}),
+    "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
+    "Edit/Keys/Bake Simulation": "nla.bake",
+    "Edit/Delete": "object.delete",
+    "Edit/Duplicate": ("v3d", "object.duplicate_move", {}),
+    "Edit/Duplicate Special": ("v3d", "object.duplicate_move_linked", {}),
+    "Edit/Group": "maya_kit.group",
+    "Edit/Parent": ("object.parent_set", {"type": 'OBJECT', "keep_transform": True}),
+    "Edit/Unparent": ("object.parent_clear", {"type": 'CLEAR_KEEP_TRANSFORM'}),
+    # --- Create ---
+    **{f"Create/Polygon Primitives/{k}": v for k, v in _PRIMS.items()},
+    "Create/NURBS Primitives/Sphere": "surface.primitive_nurbs_surface_sphere_add",
+    "Create/NURBS Primitives/Cylinder": "surface.primitive_nurbs_surface_cylinder_add",
+    "Create/NURBS Primitives/Plane": "surface.primitive_nurbs_surface_surface_add",
+    "Create/NURBS Primitives/Torus": "surface.primitive_nurbs_surface_torus_add",
+    "Create/NURBS Primitives/Circle": "curve.primitive_nurbs_circle_add",
+    "Create/Lights/Directional Light": ("object.light_add", {"type": 'SUN'}),
+    "Create/Lights/Point Light": ("object.light_add", {"type": 'POINT'}),
+    "Create/Lights/Spot Light": ("object.light_add", {"type": 'SPOT'}),
+    "Create/Lights/Area Light": ("object.light_add", {"type": 'AREA'}),
+    "Create/Cameras": "object.camera_add",
+    "Create/Curve Tools/CV Curve Tool": "curve.primitive_nurbs_curve_add",
+    "Create/Curve Tools/Bezier Curve Tool": "curve.primitive_bezier_curve_add",
+    "Create/Type": "object.text_add",
+    "Create/Free Image Plane": "object.empty_image_add",
+    "Create/Locator": ("object.empty_add", {"type": 'PLAIN_AXES'}),
+    "Create/Annotation...": ("tool", "builtin.annotate", False),
+    "Create/Measure Tools/Distance Tool": ("tool", "builtin.measure", False),
+    "Create/Empty Group": ("object.empty_add", {"type": 'PLAIN_AXES'}),
+    "Create/Sets/Set": "collection.create",
+    # --- Select ---
+    "Select/All": ("object.select_all", {"action": 'SELECT'}),
+    "Select/All by Type/Joints": ("object.select_by_type", {"type": 'ARMATURE'}),
+    "Select/All by Type/Lattices": ("object.select_by_type", {"type": 'LATTICE'}),
+    "Select/All by Type/Transforms": ("object.select_by_type", {"type": 'EMPTY'}),
+    "Select/All by Type/Geometry": ("object.select_by_type", {"type": 'MESH'}),
+    "Select/All by Type/NURBS Curves": ("object.select_by_type", {"type": 'CURVE'}),
+    "Select/All by Type/NURBS Surfaces": ("object.select_by_type", {"type": 'SURFACE'}),
+    "Select/All by Type/Polygon Geometry": ("object.select_by_type", {"type": 'MESH'}),
+    "Select/All by Type/Cameras": ("object.select_by_type", {"type": 'CAMERA'}),
+    "Select/All by Type/Lights": ("object.select_by_type", {"type": 'LIGHT'}),
+    "Select/Deselect All": ("object.select_all", {"action": 'DESELECT'}),
+    "Select/Hierarchy": ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True}),
+    "Select/Inverse": ("object.select_all", {"action": 'INVERT'}),
+    "Select/Similar": ("object.select_grouped", {"type": 'TYPE'}),
+    "Select/Grow": "mesh.select_more",
+    "Select/Shrink": "mesh.select_less",
+    "Select/Object/Component": "object.editmode_toggle",
+    "Select/Components/Multi-Component": ("maya_kit.component_mode", {"type": 'MULTI'}),
+    "Select/Components/Vertex": ("maya_kit.component_mode", {"type": 'VERT'}),
+    "Select/Components/Edge": ("maya_kit.component_mode", {"type": 'EDGE'}),
+    "Select/Components/Face": ("maya_kit.component_mode", {"type": 'FACE'}),
+    "Select/Contiguous Edges": ("mesh.loop_multi_select", {"ring": False}),
+    "Select/Convert Selection/To Vertices": ("mesh.select_mode", {"type": 'VERT'}),
+    "Select/Convert Selection/To Edges": ("mesh.select_mode", {"type": 'EDGE', "use_expand": True}),
+    "Select/Convert Selection/To Edge Loop": ("mesh.loop_multi_select", {"ring": False}),
+    "Select/Convert Selection/To Edge Ring": ("mesh.loop_multi_select", {"ring": True}),
+    "Select/Convert Selection/To Edge Perimeter": "mesh.region_to_loop",
+    "Select/Convert Selection/To Faces": ("mesh.select_mode", {"type": 'FACE', "use_expand": True}),
+    "Select/Convert Selection/To Face Perimeter": "mesh.region_to_loop",
+    "Select/Convert Selection/To Shell": "mesh.select_linked",
+    # --- Modify ---
+    "Modify/Transformation Tools/Move Tool": ("tool", "builtin.move", False),
+    "Modify/Transformation Tools/Rotate Tool": ("tool", "builtin.rotate", False),
+    "Modify/Transformation Tools/Scale Tool": ("tool", "builtin.scale", False),
+    "Modify/Transformation Tools/Universal Manipulator": ("tool", "builtin.transform", False),
+    "Modify/Transformation Tools/Move/Rotate/Scale Tool": ("tool", "builtin.transform", False),
+    "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
+    "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
+    "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
+    "Modify/Convert/Type to Curves": ("object.convert", {"target": 'CURVE'}),
+    "Modify/Convert/Instance to Object": "object.duplicates_make_real",
+    # --- Display ---
+    "Display/Grid": ("v3d", "wm.context_toggle", {"data_path": "space_data.overlay.show_floor"}),
+    "Display/Hide": ("object.hide_view_set", {"unselected": False}),
+    "Display/Show": "object.hide_view_clear",
+    "Display/Transform Display/Local Rotation Axes": ("wm.context_toggle", {"data_path": "object.show_axis"}),
+    "Display/Frame All in All Views": ("maya_kit.frame_all_views", {"selected": False}),
+    "Display/Frame Selection in All Views": ("maya_kit.frame_all_views", {"selected": True}),
+    "Display/Frame Selection with Children in All Views": ("maya_kit.frame_all_views", {"selected": True}),
+    # --- Windows ---
+    "Windows/Workspaces": ("menu", "TOPBAR_MT_workspace_menu"),
+    "Windows/UI Elements": ("menu", "MAYAKIT_MT_ui_elements"),
+    "Windows/Settings/Preferences": "screen.userpref_show",
+    "Windows/Playblast": ("v3d", "render.opengl", {"animation": True}),
+    "Windows/Output Window": "wm.console_toggle",
+    # --- Mesh (Modeling) ---
+    "Mesh/Combine": "object.join",
+    "Mesh/Separate": ("mesh.separate", {"type": 'LOOSE'}),
+    "Mesh/Fill Hole": "mesh.fill_holes",
+    "Mesh/Reduce": _mod('DECIMATE'),
+    "Mesh/Remesh": _mod('REMESH'),
+    "Mesh/Smooth": _mod('SUBSURF'),
+    "Mesh/Triangulate": _mod('TRIANGULATE'),
+    "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
+    "Mesh/Mirror": _mod('MIRROR'),
+    "Mesh/Transfer Attributes": _mod('DATA_TRANSFER'),
+    "Mesh/Smooth Proxy/Subdiv Proxy": _mod('SUBSURF'),
+    # --- Edit Mesh ---
+    "Edit Mesh/Add Divisions": "mesh.subdivide",
+    "Edit Mesh/Bevel": ("v3d", "mesh.bevel", {}),
+    "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
+    "Edit Mesh/Collapse": "mesh.edge_collapse",
+    "Edit Mesh/Connect": "mesh.vert_connect_path",
+    "Edit Mesh/Extrude": ("v3d", "view3d.edit_mesh_extrude_move_normal", {}),
+    "Edit Mesh/Merge": "mesh.remove_doubles",
+    "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
+    "Edit Mesh/Symmetrize": "mesh.symmetrize",
+    "Edit Mesh/Average Vertices": "mesh.vertices_smooth",
+    "Edit Mesh/Chamfer Vertices": ("v3d", "mesh.bevel", {"affect": 'VERTICES'}),
+    "Edit Mesh/Delete Edge/Vertex": "mesh.dissolve_mode",
+    "Edit Mesh/Flip Triangle Edge": "mesh.edge_rotate",
+    "Edit Mesh/Spin Edge Backward": ("mesh.edge_rotate", {"use_ccw": True}),
+    "Edit Mesh/Spin Edge Forward": ("mesh.edge_rotate", {"use_ccw": False}),
+    "Edit Mesh/Duplicate": ("v3d", "mesh.duplicate_move", {}),
+    "Edit Mesh/Extract": ("mesh.separate", {"type": 'SELECTED'}),
+    "Edit Mesh/Poke": "mesh.poke",
+    # --- Mesh Tools ---
+    "Mesh Tools/Create Polygon": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Insert Edge Loop": ("tool", "builtin.loop_cut", True),
+    "Mesh Tools/Multi-Cut": ("tool", "builtin.knife", True),
+    "Mesh Tools/Offset Edge Loop": ("v3d", "mesh.offset_edge_loops_slide", {}),
+    "Mesh Tools/Quad Draw": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Slide Edge": ("tool", "builtin.edge_slide", True),
+    # --- Mesh Display ---
+    "Mesh Display/Average": "mesh.average_normals",
+    "Mesh Display/Conform": "mesh.normals_make_consistent",
+    "Mesh Display/Reverse": "mesh.flip_normals",
+    "Mesh Display/Set to Face": "mesh.set_normals_from_faces",
+    "Mesh Display/Harden Edge": "mesh.mark_sharp",
+    "Mesh Display/Soften Edge": ("mesh.mark_sharp", {"clear": True}),
+    "Mesh Display/Paint Vertex Color Tool": "paint.vertex_paint_toggle",
+    # --- Curves ---
+    "Curves/Open/Close": "curve.cyclic_toggle",
+    "Curves/Insert Knot": "curve.subdivide",
+    "Curves/Smooth": "curve.smooth",
+    "Curves/Reverse Direction": "curve.switch_direction",
+    # --- Deform (Modeling, Rigging, Animation share it) ---
+    "Deform/Blend Shape": ("object.shape_key_add", {"from_mix": False}),
+    "Deform/Delta Mush": _mod('CORRECTIVE_SMOOTH'),
+    "Deform/Solidify": _mod('SOLIDIFY'),
+    "Deform/Lattice": _mod('LATTICE'),
+    "Deform/Wrap": _mod('SURFACE_DEFORM'),
+    "Deform/ShrinkWrap": _mod('SHRINKWRAP'),
+    "Deform/Nonlinear/Twist": _mod('SIMPLE_DEFORM'),
+    "Deform/Nonlinear/Wave": _mod('WAVE'),
+    "Deform/Texture": _mod('DISPLACE'),
+    "Deform/Paint Weights/Set Membership": "paint.weight_paint_toggle",
+    # --- UV ---
+    "UV/Automatic": "uv.smart_project",
+    "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
+    "UV/Cylindrical": ("v3d", "uv.cylinder_project", {}),
+    "UV/Spherical": ("v3d", "uv.sphere_project", {}),
+    "UV/Cut UV Edges": "mesh.mark_seam",
+    "UV/Sew UV Edges": ("mesh.mark_seam", {"clear": True}),
+    # --- Skeleton (Rigging) ---
+    "Skeleton/Create Joints": "object.armature_add",
+    "Skeleton/Mirror Joints": "armature.symmetrize",
+    "Skeleton/Orient Joint": "armature.calculate_roll",
+    "Skeleton/Remove Joints": "armature.delete",
+    "Skeleton/Disconnect Joint": ("armature.parent_clear", {"type": 'DISCONNECT'}),
+    "Skeleton/Create IK Handle": "pose.ik_add",
+    # --- Skin ---
+    "Skin/Bind Skin": ("object.parent_set", {"type": 'ARMATURE_AUTO'}),
+    "Skin/Go to Bind Pose": "pose.transforms_clear",
+    "Skin/Paint Skin Weights": "paint.weight_paint_toggle",
+    "Skin/Mirror Skin Weights": "object.vertex_group_mirror",
+    "Skin/Smooth Skin Weights": "object.vertex_group_smooth",
+    "Skin/Prune Small Weights": "object.vertex_group_clean",
+    "Skin/Normalize Weights/Normalize Weights": "object.vertex_group_normalize_all",
+    # --- Constrain (Rigging, Animation): Maya selects targets first, the
+    # constrained object last = Blender's active object.
+    "Constrain/Parent": _con('CHILD_OF'),
+    "Constrain/Point": _con('COPY_LOCATION'),
+    "Constrain/Orient": _con('COPY_ROTATION'),
+    "Constrain/Scale": _con('COPY_SCALE'),
+    "Constrain/Aim": _con('TRACK_TO'),
+    "Constrain/Motion Paths/Attach to Motion Path": _con('FOLLOW_PATH'),
+    "Constrain/Geometry": _con('SHRINKWRAP'),
+    # --- Key (Animation) ---
+    "Key/Set Key": "anim.keyframe_insert",
+    "Key/Set Key on Translate": ("anim.keyframe_insert_by_name", {"type": "Location"}),
+    "Key/Set Key on Rotate": ("anim.keyframe_insert_by_name", {"type": "Rotation"}),
+    "Key/Set Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
+    "Key/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
+    "Key/Bake Simulation": "nla.bake",
+    # --- Playback ---
+    "Playback/Playblast": ("v3d", "render.opengl", {"animation": True}),
+    "Playback/Play": "screen.animation_play",
+    "Playback/Backward": ("screen.animation_play", {"reverse": True}),
+    "Playback/Stop": ("screen.animation_cancel", {"restore_frame": False}),
+    "Playback/Next Key": ("screen.keyframe_jump", {"next": True}),
+    "Playback/Prev Key": ("screen.keyframe_jump", {"next": False}),
+    "Playback/Next Frame": ("screen.frame_offset", {"delta": 1}),
+    "Playback/Prev Frame": ("screen.frame_offset", {"delta": -1}),
+    "Playback/Play Range Start": ("screen.frame_jump", {"end": False}),
+    "Playback/Play Range End": ("screen.frame_jump", {"end": True}),
+    "Playback/Render Current Frame": "render.render",
+    "Playback/Render Settings": "maya_kit.render_settings",
+    # --- Visualize ---
+    "Visualize/Create Editable Motion Trail": "object.paths_calculate",
+    # --- FX ---
+    "nCloth/Create nCloth": _mod('CLOTH'),
+    "nCloth/Create Passive Collider": _mod('COLLISION'),
+    "nHair/Create Hair": "object.curves_empty_hair_add",
+    "Fluids/3D Container": "object.quick_smoke",
+    "Fluids/Ocean": _mod('OCEAN'),
+    "Fields/Solvers/Air": ("object.effector_add", {"type": 'WIND'}),
+    "Fields/Solvers/Drag": ("object.effector_add", {"type": 'DRAG'}),
+    "Fields/Solvers/Newton": ("object.effector_add", {"type": 'FORCE'}),
+    "Fields/Solvers/Turbulence": ("object.effector_add", {"type": 'TURBULENCE'}),
+    "Fields/Solvers/Vortex": ("object.effector_add", {"type": 'VORTEX'}),
+    "Fields/Solvers/Create Active Rigid Body": ("rigidbody.object_add", {"type": 'ACTIVE'}),
+    "Fields/Solvers/Create Passive Rigid Body": ("rigidbody.object_add", {"type": 'PASSIVE'}),
+    "Fields/Solvers/Create Pin Constraint": ("rigidbody.connect", {"con_type": 'POINT'}),
+    "Fields/Solvers/Create Hinge Constraint": ("rigidbody.connect", {"con_type": 'HINGE'}),
+    "Fields/Solvers/Create Spring Constraint": ("rigidbody.connect", {"con_type": 'GENERIC_SPRING'}),
+    "Effects/Fire": ("object.quick_smoke", {"style": 'FIRE'}),
+    "Effects/Smoke": "object.quick_smoke",
+    # --- Rendering ---
+    "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
+    "Render/Render Settings...": "maya_kit.render_settings",
+}
+
+# Blender's own menu kept at the end of the Maya menu with the same role.
+BLENDER_MENU = {
+    "File": ("TOPBAR_MT_file", "Blender File"),
+    "Edit": ("TOPBAR_MT_edit", "Blender Edit"),
+    "Windows": ("TOPBAR_MT_window", "Blender Window"),
+    "Render": ("TOPBAR_MT_render", "Blender Render"),
+    "Help": ("TOPBAR_MT_help", "Blender Help"),
+}
+
+
+def spec(path):
+    """Normalised (kind, target, props) for a label path, or None if unmapped."""
+    value = MAP.get(path)
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return ("op", value, {})
+    if value[0] == "v3d":
+        return ("v3d", value[1], dict(value[2]))
+    if value[0] == "tool":
+        return ("tool", value[1], {"edit": value[2]})
+    if value[0] == "menu":
+        return ("menu", value[1], {})
+    return ("op", value[0], dict(value[1]))

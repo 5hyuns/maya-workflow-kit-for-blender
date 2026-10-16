@@ -16,14 +16,22 @@ Verification: **H** headless test in `tests/` · **G** GUI simulated-event test 
 | 4 | M1-c | Camera, view, display keys | Maya navigation prefs preset (`prefs_preset.py`, backup/restore); Alt+LMB tumble with ortho lock; Shift+F / Shift+A frame in all views; view undo `[` `]` Alt+Z/Y (polled view-history stack); Space tap four views ↔ single, Ctrl+Space full screen; 1/2/3 smooth preview (Subsurf viewport); F7/F9/F10/F11 component modes | P/W | H, G, S | `maya/interaction.md` §1, §2, §7, §8, §10, §12 |
 | 5 | M2-a | Layout, theme, units | App template `MayaKit` (`tools/make_startup.py` → startup.blend: Outliner left, persp viewport + sidebar, Layer Editor + Properties right, timeline; cm display, 1–120, empty scene), install/remove/open buttons; Maya theme (`tools/make_theme.py` → `theme/maya.xml`, apply/restore). "1 BU = 1 cm" opt-in units option still open | P | H, G, S | `maya/ui_layout.md` §2, `maya/workspaces.json`, `blender/ui_architecture.md` §2, decisions 1 & 3 |
 | 6 | M2-b | Channel Box, Layer Editor | Sidebar "Channel Box": TRS/visibility proxies editing all selected, custom attrs, SHAPES, INPUTS (modifiers), channel selection, MMB virtual slider in front of tool MMB, Channels menu (key/breakdown/mute/delete/break/lock/hide/keyable/duplicate), state colours; Layer Editor = display layers on collections (V/P/T/R) | P (panel, viewport MMB) / W (multi-select rows) / C (MMB on field) | H (values, slider math), G, S, M | `maya/channel_box.md`, api_limits #1 |
-| 7 | M2-c | Status line, command line, time/range | TOPBAR status line (menu sets, selection mask, snap toggles, render); Python command line (MEL not supported notice, Maya command aliases); range slider; timeline look; `.` `,` Alt+`.` Alt+`,` key/frame stepping | P / W | H, G, S | `maya/ui_layout.md` §4.2, §4.10–4.12, api_limits #10, #12–#14 |
+| 7 | M2-c | Menu bar + menu sets, Status Line, command line, Help Line | Maya menu bar in TOPBAR (`draw_left/right` swapped, restored on disable): common menus + menu set dropdown (Modeling/Rigging/Animation/FX/Rendering) + set menus from `menus.json` (`tools/gen_menu_data.py`), mapped items run Blender operators, others greyed; Status Line in the main 3D View tool header (file, selection mode/masks, snap toggles shared with hold keys, render, editor toggles); Python command line + `cmds_shim` (maya.cmds subset, `import maya.cmds`), MEL notice; Help Line (tool help). Range slider, timeline look, `.` `,` keys → moved (see notes) | P / W | H, G, S, M | `maya/ui_layout.md` §4.1–4.2, §4.12–4.13, `maya/menus.json`, api_limits #10, #14 |
 | 8 | M1-d | Remaining M1 keys and hierarchy | Isolate (Ctrl+1, Shift+I), H / Shift+H / Alt+H visibility, Alt+5 wire-on-shaded, PgUp/PgDn smooth level, 0, Ctrl+Shift+F, Home, +/- gizmo size, Ctrl+F9–F11 convert selection; P parent **Maya mode** (parent inverse = identity, decision 2), Shift+P; component pick-walk; edit-mode pivot (cursor); exact Outliner/Graph Ctrl-deselect | P / W (pivot) | H, G, M | `maya/interaction.md` §2, §4, §7, §11; `maya/concepts.md` §7 |
 | 9 | M3-a | Marking menus (pie) | RMB / Shift+RMB / Ctrl+RMB pies per mode from `marking_menus.json`; W/E/R/A hold menus via `TapHoldBinding` | W | H, G, S, M | `maya/marking_menus.json`, api_limits #5 |
 | 10 | M3-b | Custom marking menu engine + hotbox | Modal + GPU radial (flick, nested, linear list); Space hold hotbox (`space` binding's hold part) | W+ | H (hit-test math), G, S, M | `maya/hotkeys_and_menus.md`, api_limits #4–#5 |
 | 11 | M4-a | Concept operators | Freeze Transforms (keep pivot), Reset, Center Pivot, Delete History (apply modifiers), Maya naming on create | P/W | H (matrices, names) | `maya/concepts.md` §4–§5, §13–§14 |
 | 12 | M4-b | Outliner, Attribute Editor, Layer Editor | UIList DAG outliner with shape toggle; AE node tabs (sidebar + `prop_tabs_enum`); display layers over collections | W | H, S | `maya/attribute_editor.md`, `maya/channel_box.md` §3, api_limits #2–#3 |
-| 13 | M5 | Shelf and menu sets | Shelf (header/panel/Asset Shelf), menu set switching of top menus (F2–F6) | W | H, S | `maya/shelves.json`, `maya/menus.json`, api_limits #11 |
+| 13 | M5 | Shelf and menu sets | Shelf (header/panel/Asset Shelf), menu set hotkeys F2–F6 (switching itself done in step 7) | W | H, S | `maya/shelves.json`, `maya/menus.json`, api_limits #11 |
 | 14 | — | Release | Legacy zip check, user docs, limitations page | P | H | decision 3 |
+
+## Ordering after step 7 (delegated)
+
+- The user's step prompts number the next steps 8 = marking menus (row 9), 9 = hotbox
+  (row 10), 10 = concepts (row 11). Rows keep their numbers here; step docs use the
+  user's numbers.
+- Step 7 leftovers (Range Slider, timeline look, `.` `,` Alt+`.` Alt+`,` key/frame
+  stepping) join row 8 (remaining M1) in whichever step comes after the concepts step.
 
 ## Not possible (C) — documented, not implemented
 

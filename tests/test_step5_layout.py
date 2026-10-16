@@ -108,7 +108,8 @@ def test_template_layout():
     assert len(main) == 1 and not main[0].use_filter_object_content, "DAG-only Outliner"
     assert len(layers) == 1, "Layer Editor = collections-only Outliner"
     v3d = next(a.spaces.active for a in scr.areas if a.type == 'VIEW_3D')
-    assert v3d.show_region_ui and v3d.show_region_toolbar and not v3d.show_region_tool_header
+    # tool header shown since step 7: it holds the Maya Status Line
+    assert v3d.show_region_ui and v3d.show_region_toolbar and v3d.show_region_tool_header
     assert abs(v3d.lens - 35.0) < 1e-6
     props = next(a.spaces.active for a in scr.areas if a.type == 'PROPERTIES')
     assert props.context in {'OBJECT', 'SCENE'}, props.context  # no object yet -> Scene

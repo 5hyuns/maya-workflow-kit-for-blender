@@ -1,0 +1,211 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya Command Line and Help Line in Blender's status bar.
+
+research/maya/ui_layout.md §4.12 (:290-293: language toggle, input/result
+field, Script Editor button), §4.13 (:295-298: Help Line);
+research/blender/api_limits.md #14 (:93-94). Design: docs/steps/step_7.md
+「계획」 4. Python only: MEL is not supported (decision 5). ``maya.cmds`` is a
+small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds``.
+"""
+
+import sys
+import types
+
+import bpy
+from bpy.props import StringProperty
+
+from . import cmds_shim, runner
+
+# --- state shown in the status bar --------------------------------------------------
+
+_result = {"text": "", "error": False}
+
+
+def submit(text):
+    """Run a command and keep its result for the result field."""
+    res = runner.run(text)
+    _result["text"], _result["error"] = res.text, res.error
+    return res
+
+
+def _on_command(self, context):
+    text = self.maya_kit_cmd
+    if not text.strip():
+        return
+    self.maya_kit_cmd = ""  # re-enters this callback with "" -> returns above
+    submit(text)  # an error shows red in the result field
+    # An operator called from a property update doesn't push an undo step
+    # (measured in the GUI test), so push one: one command = one Ctrl+Z.
+    bpy.ops.ed.undo_push(message=f"Command: {text[:40]}")
+
+
+class MAYAKIT_OT_command_line_exec(bpy.types.Operator):
+    """Run a Python command (one undo step), like Maya's command line"""
+    bl_idname = "maya_kit.command_line_exec"
+    bl_label = "Run Command"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    command: StringProperty(name="Command", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        res = submit(self.command)
+        if res.error:
+            self.report({'ERROR'}, res.text)
+        elif res.text:
+            self.report({'INFO'}, res.text)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_command_line_language(bpy.types.Operator):
+    """Command language: Python. MEL is not supported in Blender"""
+    bl_idname = "maya_kit.command_line_language"
+    bl_label = "Python"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        self.report({'WARNING'}, "MEL is not supported: the command line runs Python "
+                                 "(cmds = a small maya.cmds subset; bpy, C, D as in the Python Console)")
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_script_editor(bpy.types.Operator):
+    """Open a Python Console window (Maya Script Editor)"""
+    bl_idname = "maya_kit.script_editor"
+    bl_label = "Script Editor"
+
+    def execute(self, context):
+        window = context.window
+        area = max((a for a in window.screen.areas), key=lambda a: a.width * a.height, default=None)
+        if area is None:
+            return {'CANCELLED'}
+        before = set(context.window_manager.windows[:])
+        with context.temp_override(window=window, area=area):
+            bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
+        new = [w for w in context.window_manager.windows if w not in before]
+        if not new:
+            self.report({'ERROR'}, "Could not open a new window")
+            return {'CANCELLED'}
+        new[0].screen.areas[0].type = 'CONSOLE'
+        return {'FINISHED'}
+
+
+class MAYAKIT_MT_command_history(bpy.types.Menu):
+    """Recent commands: click to run again"""
+    bl_idname = "MAYAKIT_MT_command_history"
+    bl_label = "Recent Commands"
+
+    def draw(self, context):
+        layout = self.layout
+        if not runner.history:
+            layout.label(text="No commands yet")
+        for cmd in reversed(runner.history):
+            text = cmd if len(cmd) <= 60 else cmd[:57] + "..."
+            layout.operator(MAYAKIT_OT_command_line_exec.bl_idname, text=text).command = cmd
+
+
+# --- Help Line ---------------------------------------------------------------------------
+
+# Maya shows the tool's help in the Help Line when a tool is active (ui_layout.md:295-298).
+TOOL_HELP = {
+    "builtin.select": "Select Tool: click or drag to select. Shift toggles, Ctrl deselects, Ctrl+Shift adds",
+    "builtin.move": "Move Tool: drag the manipulator. Hold X/C/V to snap to grid/curve/point, D to move the pivot",
+    "builtin.rotate": "Rotate Tool: drag a ring to rotate. Hold J to snap rotation, D to move the pivot",
+    "builtin.scale": "Scale Tool: drag a handle to scale, the centre scales uniformly",
+    "builtin.transform": "Universal Manipulator: move, rotate and scale with one manipulator",
+    "builtin.knife": "Multi-Cut: click on edges to cut, Enter to complete",
+    "builtin.loop_cut": "Insert Edge Loop: click an edge to insert a loop, drag to slide it",
+    "builtin.poly_build": "Quad Draw: click to place points, Ctrl+click to delete",
+}
+
+
+def help_for_tool(idname):
+    if idname.startswith("builtin.select"):  # select_box, select_lasso, ...
+        return TOOL_HELP["builtin.select"]
+    return TOOL_HELP.get(idname, "")
+
+
+def help_text(context):
+    try:
+        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+    except (AttributeError, TypeError):
+        tool = None
+    return help_for_tool(tool.idname) if tool else ""
+
+
+# --- status bar --------------------------------------------------------------------------
+
+def draw_status_bar(self, context):
+    from .. import preferences
+    try:
+        prefs = preferences.get(context)
+    except KeyError:
+        return
+    layout = self.layout
+    if prefs.show_command_line:
+        wm = context.window_manager
+        row = layout.row(align=True)
+        row.operator(MAYAKIT_OT_command_line_language.bl_idname, text="Python")
+        sub = row.row(align=True)
+        sub.ui_units_x = 16
+        sub.prop(wm, "maya_kit_cmd", text="", placeholder="Python  (cmds.polyCube(), C.object ...)")
+        sub = row.box().row()
+        sub.ui_units_x = 14
+        sub.alert = _result["error"]
+        sub.label(text=_result["text"] or " ")
+        row.menu(MAYAKIT_MT_command_history.bl_idname, text="", icon='RECOVER_LAST')
+        row.operator(MAYAKIT_OT_script_editor.bl_idname, text="", icon='CONSOLE')
+        layout.separator()
+    if prefs.show_help_line:
+        text = help_text(context)
+        if text:
+            layout.label(text=text, icon='INFO')
+
+
+# --- `import maya.cmds` --------------------------------------------------------------------
+
+_installed = []
+
+
+def install_maya_module():
+    """Make ``import maya.cmds`` give the shim, unless a real ``maya`` package exists."""
+    if "maya" in sys.modules:
+        return
+    import importlib.util
+    if importlib.util.find_spec("maya") is not None:
+        return
+    pkg = types.ModuleType("maya", "Maya Kit stand-in package: only maya.cmds (cmds_shim)")
+    pkg.__path__ = []
+    pkg.cmds = cmds_shim
+    sys.modules["maya"] = pkg
+    sys.modules["maya.cmds"] = cmds_shim
+    _installed.extend(("maya", "maya.cmds"))
+
+
+def uninstall_maya_module():
+    while _installed:
+        sys.modules.pop(_installed.pop(), None)
+
+
+classes = (MAYAKIT_OT_command_line_exec, MAYAKIT_OT_command_line_language,
+           MAYAKIT_OT_script_editor, MAYAKIT_MT_command_history)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.WindowManager.maya_kit_cmd = StringProperty(
+        name="Command Line", description="Python command (Enter to run). MEL is not supported",
+        options={'SKIP_SAVE'}, update=_on_command)
+    bpy.types.STATUSBAR_HT_header.prepend(draw_status_bar)
+    install_maya_module()
+
+
+def unregister():
+    uninstall_maya_module()
+    bpy.types.STATUSBAR_HT_header.remove(draw_status_bar)
+    del bpy.types.WindowManager.maya_kit_cmd
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    runner.reset()
+    _result.update(text="", error=False)
+

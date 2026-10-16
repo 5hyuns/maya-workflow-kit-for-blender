@@ -1,6 +1,7 @@
 """Helpers shared by tests (runs inside Blender)."""
 
 import os
+import sys
 
 import addon_utils
 import bpy
@@ -57,12 +58,18 @@ def snapshot():
         if isinstance(getattr(bpy.app.handlers, name), list)}
 
     # UI classes extended with .append()/.prepend() keep their callbacks in draw._draw_funcs.
+    # The class's own draw stays as the first entry after append()+remove(); like
+    # bpy_types._GenericUI.is_extended, a list holding only that is not an extension.
     snap["ui_extensions"] = {}
     for name in dir(bpy.types):
         draw = getattr(getattr(bpy.types, name), "draw", None)
         funcs = getattr(draw, "_draw_funcs", None)
-        if funcs:
+        if funcs and len(funcs) > 1:
             snap["ui_extensions"][name] = [getattr(f, "__qualname__", repr(f)) for f in funcs]
+    # Methods the add-on swaps on Blender UI classes (step 7: Maya top bar).
+    topbar = bpy.types.TOPBAR_HT_upper_bar
+    snap["ui_methods"] = [f"{f.__module__}.{f.__qualname__}" for f in (topbar.draw_left, topbar.draw_right)]
+    snap["sys_modules"] = sorted(m for m in sys.modules if m == "maya" or m.startswith("maya."))
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())
     # Blender preferences the add-on may change (navigation preset, step 4).

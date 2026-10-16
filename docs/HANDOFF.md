@@ -2,13 +2,16 @@
 
 ## 현재 작업
 
-- Step 6 (M2-b Channel Box + Layer Editor) 완료 — `docs/steps/step_6.md`. 헤드리스 79/79, GUI 52/52.
-- Channel Box: `src/maya_kit/ui/channel_box.py` (프록시 `Scene.maya_kit_cb`, 채널 선택 `WindowManager.maya_kit_cb_selected`, MMB 슬라이더). Layer Editor: `src/maya_kit/ui/layer_editor.py` (`Collection.maya_kit_layer`, "Display Layers" 루트).
+- Step 7 (M2-c 메뉴바·메뉴셋, Status Line, 커맨드 라인, Help Line) 완료 — `docs/steps/step_7.md`. 헤드리스 99/99, GUI 67/67.
+- 메뉴바: `src/maya_kit/ui/menu_sets.py` (메뉴 클래스 `MAYAKIT_MT_<maya 메뉴 이름>`, `menu_idname()`), 데이터 `ui/menu_data.py` (`tools/gen_menu_data.py` 생성), 매핑 `ui/menu_map.py`. 상단 바 교체·Status Line: `ui/status_line.py` (TOPBAR `draw_left/right` 교체, Status Line 은 가장 큰 3D 뷰 툴 헤더 첫머리).
+- 커맨드 라인: `src/maya_kit/command_line/` (`runner.py` 실행·MEL 힌트, `cmds_shim.py` maya.cmds 흉내, 상태바 prepend + Help Line, `import maya.cmds`).
+- Step 1–6 은 이전 커밋들 (Step 6 = `0acc961`).
 
 ## 바로 다음 할 일
 
-- **Step 7 — M2-c 상단 UI** (`docs/PLAN.md` #7): Status Line(메뉴셋 드롭다운, 선택 마스크, 스냅 토글 버튼, 렌더 버튼 — TOPBAR/헤더 확장), 커맨드 라인(Python 입력 → exec, 결과/오류 표시, 'MEL은 지원 안 함' 안내, 자주 쓰는 Maya 명령 Python 별칭), Range Slider, 타임라인 모양, `.` `,` Alt+`.` Alt+`,` 키/프레임 이동.
-  - 근거: `research/maya/ui_layout.md` §4.1–4.2 (메뉴셋·Status Line 그룹 :193-235), §4.10–4.13 (Time/Range Slider, Command Line, Help Line), `research/blender/api_limits.md` #10 #12 #13 #14, `research/maya/hotkeys_default.json` (`.`/`,` NextKey/PreviousKey, Alt+`.`/Alt+`,` NextFrame/PreviousFrame — 대응표 "계획 Step 7" 행).
-  - TOPBAR/STATUSBAR `.append()` 는 unregister 에서 `.remove()` (스냅샷의 `ui_extensions` 가 검사). 커맨드 라인 exec 는 사용자 입력 실행이므로 결과/예외를 캡처해 표시.
-  - 스냅 토글 버튼은 Step 3 홀드 상태(`operators/hold.py`)와 같은 tool_settings 를 쓰므로 홀드 중 표시가 바뀌는 점 확인.
-  - GUI 스크린샷으로 상단 바·커맨드 라인 직접 확인 (`tests/gui/gui_step7_*.py`).
+- **Step 8 — M3-a 마킹메뉴 1차** (사용자 번호; `docs/PLAN.md` 표의 #9): 파이메뉴(8방향)로 RMB 컨텍스트(객체: Vertex/Edge/Face/Object Mode/UV, 컴포넌트에서 반대), Shift+RMB 모델링 툴, Ctrl+RMB 변환, QWER+LMB 홀드 툴 옵션.
+  - 근거: `research/maya/marking_menus.json`, `research/maya/hotkeys_and_menus.md`, `research/blender/api_limits.md` #5.
+  - 재사용: 메뉴 항목 → Blender 동작 매핑 방식(`ui/menu_map.py` 의 op / v3d / tool 종류, `maya_kit.menu_run` / `maya_kit.menu_tool`), 홀드 키는 `operators/taphold.TapHoldBinding`.
+  - 9 핫박스는 `menu_sets.menus_for_set()` + `menu_idname()` 으로 메뉴 행을 그린다.
+- 미뤄진 것: Range Slider·타임라인 모양·`.` `,` 키 (PLAN 「Ordering after step 7」), Status Line 입력 라인/Symmetry/History 토글.
+

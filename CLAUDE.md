@@ -41,6 +41,7 @@ python tools/gen_keymap_mapping.py  # regenerate docs/keymap_mapping.md (exit 1 
 python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (a Blender window opens briefly)
 python tools/make_startup.py     # regenerate app_template/MayaKit/startup.blend (headless)
 python tools/make_theme.py       # regenerate theme/maya.xml from its colour table
+python tools/gen_menu_data.py    # regenerate ui/menu_data.py (Maya menu structure) from research/maya/menus.json
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
@@ -56,3 +57,5 @@ python tools/make_theme.py       # regenerate theme/maya.xml from its colour tab
 - Git Bash gotcha: `$PWD` is `/c/...`, which Blender's Python can't resolve — pass Windows paths (`cygpath -w`) in `BLENDER_USER_*` when launching Blender by hand.
 - Headless gotcha: in `-b` the default keyconfig is not populated (research/blender/industry_compatible_vs_maya.md:14); build keyconfigs from data, don't read `keyconfigs.default`.
 - UI: verify with a GUI screenshot. Interaction feel: add to `docs/manual_checks.md`.
+- Maya menu items: map them in `ui/menu_map.py` (label path → operator / v3d / tool / menu); unmapped items draw greyed. `TOPBAR_HT_upper_bar.draw_left/right` are swapped by `ui/status_line.py` and must be restored on unregister (`tests/kit.py` snapshots them).
+- GUI typing: hover the field (MOUSEMOVE) before clicking, then `ev('TEXTINPUT', 'PRESS', unicode=ch)`. The top bar/status bar are global areas (not in `screen.areas`): hover them to redraw. With `--factory-startup`, loading the MayaKit template reloads factory prefs, so re-activate the Maya keymap in GUI tests.
