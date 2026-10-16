@@ -1,6 +1,6 @@
 """Dogfood run: clean-config install, then a scripted Maya user session in a GUI Blender.
 
-    python tools/dogfood.py [--blender PATH]
+    python tools/dogfood.py [--blender PATH] [--session SCRIPT]
 
 Builds and installs the extension into a fresh sandbox exactly like
 tools/release_check.py (tmp/release_env; the user's real Blender settings are
@@ -31,7 +31,11 @@ ERROR_RE = re.compile(r"Traceback|Error|error:|WARN|Warning", re.I)
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
+    ap.add_argument("--session", default=str(ROOT / "tools" / "dogfood_session.py"),
+                    help="session script (other scripts write to tmp/dogfood/<script name>/)")
     args = ap.parse_args(argv)
+    session = Path(args.session).resolve()
+    out_dir = OUT if session.name == "dogfood_session.py" else OUT / session.stem
 
     zip_path = build.main(["--blender", args.blender])
     env = rc.sandbox_env()
@@ -40,15 +44,15 @@ def main(argv=None):
     if code != 0:
         print(out[-3000:])
         return 1
-    shots = OUT / "shots"
+    shots = out_dir / "shots"
     shots.mkdir(parents=True, exist_ok=True)
     for p in shots.glob("*.png"):
         p.unlink()
-    result, log = OUT / "dogfood.json", OUT / "dogfood.log"
+    result, log = out_dir / "dogfood.json", out_dir / "dogfood.log"
     result.unlink(missing_ok=True)
     env["MAYA_KIT_DOGFOOD_SHOTS"] = str(shots)
     cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
-           "--python", str(ROOT / "tools" / "dogfood_session.py"), "--", str(result)]
+           "--python", str(session), "--", str(result)]
     with open(log, "w", encoding="utf-8", errors="replace") as fh:
         proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
                                 stderr=subprocess.STDOUT)

@@ -111,3 +111,66 @@ Landmines for the key work (B9, B10): `tests/test_keymap_maya.py` pins IC idname
 `object.hide_view_set`) and raises KeyError for keymaps missing from `_STACKS`; `Frames`/`Screen` rows
 check every keymap, so a global `Z` / `.` meets many conflicts; runtime changes to `prefs.view.gizmo_size`
 or `prefs.edit.undo_steps` must go through `prefs_preset` and `tests/kit.py` must snapshot `prefs.edit`.
+
+## 재점검 2차 (step 23, 2026-10-17)
+
+Evidence: `docs/steps/step_23.md` (tests, dogfood, audit session screenshots), collection of every step's 「남은 것」,
+`docs/manual_checks.md` and a blindspot pass against research/maya/*. Verdicts are delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 9 (+1/2/3 fixed in step 15) | 4 — selection modifiers outside the 3D View (Outliner/Graph Ctrl = toggle), D/Insert (no edit-mode Insert, pivot orientation), pick-walk (objects only), Shift+drag manipulator (objects done step 22, Smart Extrude not) | 0 | 0 |
+| UI (9) | 5 | 4 — layout (narrow Blender Outliner on the left, names cut; quad→single header), Maya Outliner (no drag reparent / sets / keyboard nav), timeline (Range fields done step 20; no key ticks / drag bar), menu sets (no F2–F6) | 0 | 0 |
+| 개념 (11) | 9 (+naming step 19, cm step 21) | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **23 (70 %)** | **8 (24 %)** | **0** | **2 (6 %)** |
+
+Audit 1 → 2: 21/8/2/2 → 23/8/0/2. Keymap rows (`docs/keymap_mapping.md`, 468): implemented 51 → **79**, IC 8 → 6,
+planned 26 → **13** (Home, 0, Alt+5, PgUp/PgDn, + = -, F2–F6), not applicable 10, macOS-only 68, unreviewed 306 → **292**.
+Manual checks: 99 open, none ticked (needs a person with real input devices).
+
+### New findings (audit session, step_23.md)
+
+- Delete in component mode opens Blender's Delete menu (Maya deletes the selected components).
+- MayaKit layout (cm): no grid lines visible, and X-hold grid snap moved a copy from 10.44 cm to 0 cm.
+- Left Outliner too narrow (names cut); hold-menu toggles show no state; timeline current-frame box covers a number.
+
+### Blindspots (not in any doc before; checked missing in code)
+
+1. MMB drag = last-picked manipulator handle (`manipsRememberActiveHandle`, research/maya/interaction.md:104, :27). High.
+2. Material assignment: Lighting/Shading > Assign New / Existing Material greyed (no `menu_map` entry), RMB menu has no
+   material items (research/maya/hotkeys_and_menus.md:252). Only the shelf works. Medium-high.
+3. Ctrl+Alt+LMB box zoom (interaction.md:43) unbound. Medium.
+4. Per-viewport panel menu bar (View/Shading/Lighting/Show/Renderer/Panels, ui_layout.md:243-245). Medium.
+5. Wireframe on shaded for the selection on by default in Maya (interaction.md:179, defaults.json:139). Medium.
+6. File > Set Project / Project Window greyed, no substitute documented (menus.md:41-42). Medium.
+7. T = Show Manipulator, Y = last tool (interaction.md:95-96). Low-medium.
+8. Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw unbound (keymap_mapping). Low-medium.
+
+### Remaining work, by priority
+
+Priority = how often a Maya user hits it in the first hour × how wrong it feels.
+
+1. **Component Delete** (new): Delete/Backspace in edit mode deletes by component type without a menu.
+2. **cm grid and grid snap** (new): visible Maya grid (1 cm lines, 5 cm major) and X-snap to whole grid units in the
+   MayaKit layout; check Maya Units too.
+3. **Smart Extrude** + Shift+drag side effects (Shift+click without drag, cancelled drag leaves a copy, light gizmos).
+4. **Manipulator size and view keys**: `=` / `-` (dogfood's only failure), PgUp/PgDn, `0`, Home, Alt+5 — runtime
+   pref changes via `prefs_preset`.
+5. **MMB = last handle** on the Move/Rotate/Scale tools (blindspot 1).
+6. **Material assignment** (blindspot 2): Assign New/Existing Material menus + RMB items.
+7. **Selection feel** (B6–B8): component marquee select-through, pre-selection highlight, undo steps (needs
+   `tests/kit.py` to snapshot `prefs.edit`).
+8. **Layout polish**: Outliner width / Maya DAG rows, quad→single header, hold-menu toggle state.
+9. Medium: menu correctness (Increment and Save, Export Selection, Return in 3D View), menu-set F2–F6, component
+   pick-walk, Outliner drag reparent, Status Line input line, Channel Box multi-object SHAPES/INPUTS, box zoom, viewport
+   panel menus, wireframe-on-shaded default, Set Project, T/Y tools, timeline key ticks.
+10. Low: see the step docs' 「남은 것」 (marking menu editor, shelf reorder, AE extra templates, text size, light
+    intensity, lens FOV, AE "2 c", names unique only per sibling in Maya, ...), 292 unreviewed keymap rows.
+11. Not possible / out of scope (kept documented): Y-up, separate pivots, MMB on fields, MEL, history nodes,
+    menu option boxes / tear-off, Extensions platform listing.
+
+Risks the manual checks guard (most likely real bugs, not feel): real OS key paths (X released mid-drag, Alt+Tab with a
+key held — GUI tests replace `keystate.is_down`), keymap persistence with saved prefs (all tests use
+`--factory-startup`), global `z` in text fields, stray copies from Shift+drag, Outliner rebuild speed with many objects.

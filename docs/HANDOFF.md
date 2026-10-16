@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 23 (재점검 2차) 완료 — `docs/steps/step_23.md`, `docs/PLAN.md` 「재점검 2차」. 코드(`src/`) 변경 없음; `tools/dogfood.py --session`.
+  헤드리스 239/239, GUI 172/172, dogfood 46/47, 탐색 세션 13 중 12 (면 Delete 가 메뉴), 콘솔 오류 0.
+  대응표 33행: 완료 23, 부분 8, 미착수 0, 불가 2 (1차 21/8/2/2). 키맵 468행: 구현 79 + IC 6, 계획 13, 미검토 292.
+  새 발견: 컴포넌트 Delete, cm 템플릿 그리드 안 보임 + X 스냅 0 cm, Outliner 이름 잘림; blindspot 8건 (MMB 마지막 핸들, 재질 지정 등).
 - Step 22 (매니퓰레이터 Shift+드래그 = Smart Duplicate) 완료 — `docs/steps/step_22.md`. Maya 키컨피그의 기즈모 키맵
   (`Generic Gizmo Maybe Drag` / `Drag`) 맨 앞 Shift+LMB PRESS → `maya_kit.manip_duplicate` (복제 후 PASS_THROUGH → 기즈모가 사본 변환).
   Shift 정밀은 그대로 (실측: 누른 채 시작한 드래그는 정밀 아님). W/E/R 홀드 메뉴 Smart Duplicate = 환경설정 토글.
@@ -37,7 +41,6 @@
 
 ## 바로 다음 할 일
 
-- Step 23: Smart Extrude — 편집 모드 면/엣지에서 기즈모 Shift+드래그 = 압출 후 변환 (`manip.py` 의 같은 키맵 항목에 편집 모드 분기,
-  `mesh.extrude_region` 후 PASS_THROUGH). 홀드 메뉴 "Smart Extrude" 연결. step_22 「남은 것」의 Shift+클릭·취소 시 사본 처리도 검토.
-- 그다음 PLAN 「재점검 1차」 남은 것: `=`/`-` 매니퓰레이터 크기, PgUp/PgDn, `0`, Home, Alt+5, 메뉴셋 F2–F6, 선택 감각(B6–B8), 메뉴(B11–B12).
-- 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.
+- backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 8개) 순서대로: 컴포넌트 Delete → cm 그리드·스냅 →
+  Smart Extrude → 매니퓰레이터 크기·뷰 키 → MMB 마지막 핸들 → 재질 지정 → 선택 감각 → Outliner 레이아웃. 우선순위 근거: PLAN 「재점검 2차」.
+- 각 수정 후 `python tools/dogfood.py` (와 필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.
