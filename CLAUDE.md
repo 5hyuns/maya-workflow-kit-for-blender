@@ -38,12 +38,15 @@ python tests/run.py -k enable    # only matching test files
 python tests/run.py --no-build   # reuse dist/ zip
 python tools/build.py            # build only
 python tools/gen_keymap_mapping.py  # regenerate docs/keymap_mapping.md (exit 1 if an IC/KIT row is unbound)
+python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (a Blender window opens briefly)
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
 - A test is a top-level `test_*` function that raises on failure. Shared helpers in `tests/kit.py` (`enable`, `disable`, `snapshot`, `diff`).
 - Logs: `tmp/test_env/logs/<test>.log`. Results: `tmp/test_env/results/<test>.json`.
 - Keymap work: patches go in `src/maya_kit/keymap/maya_patches.py` (record new bindings via `_add` so the shadowing test sees them); update the row status in `keymap/mapping.py`, then regenerate the mapping doc.
+- GUI event tests (`tests/gui/gui_*.py`, helpers in `tests/gui/sim.py`): Blender runs with `--enable-event-simulate`; key events need a position (default 0,0 hits the status bar), the factory splash eats events until ESC, and simulated keys never reach the OS so `keystate.is_down` is replaced by the simulated state.
+- Modal keys: Maya hold keys use a PRESS → modal (`operators/hold.py`), not PRESS/RELEASE keymap pairs, because the transform modal swallows RELEASE; new tap/hold keys subclass `taphold.TapHoldBinding`.
 - Git Bash gotcha: `$PWD` is `/c/...`, which Blender's Python can't resolve — pass Windows paths (`cygpath -w`) in `BLENDER_USER_*` when launching Blender by hand.
 - Headless gotcha: in `-b` the default keyconfig is not populated (research/blender/industry_compatible_vs_maya.md:14); build keyconfigs from data, don't read `keyconfigs.default`.
 - UI: verify with a GUI screenshot. Interaction feel: add to `docs/manual_checks.md`.

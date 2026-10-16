@@ -4,7 +4,7 @@ Source: `research/README.md` (table "Maya → Blender 대응표", milestones M1�
 `research/blender/api_limits.md` (P/W/C matrix). Decisions: `docs/user_decisions.md`.
 
 Verdicts: **P** possible with the Python API · **W** workaround / compromise · **C** needs C++ (not done; documented).
-Verification: **H** headless test in `tests/` · **S** GUI screenshot checked by eye · **M** `docs/manual_checks.md` item.
+Verification: **H** headless test in `tests/` · **G** GUI simulated-event test in `tests/gui/` · **S** GUI screenshot checked by eye · **M** `docs/manual_checks.md` item.
 
 ## Steps
 
@@ -12,10 +12,10 @@ Verification: **H** headless test in `tests/` · **S** GUI screenshot checked by
 |---|---|---|---|---|---|---|
 | 1 | — | Project skeleton | git, docs, extension skeleton, build script, headless harness, enable/disable clean test | P | H | `blender/ui_architecture.md` §12 |
 | 2 | M1-a | Maya keyconfig generator | Patch IC data → "Maya" keyconfig via `keyconfig_init_from_data`; selection modifiers (click and marquee; viewport, Outliner, UV, Graph); 4/5/6/7 shading (`maya_kit.display_mode`) + F8; Ctrl+G (`maya_kit.group`); Space freed, playback Alt+V; `docs/keymap_mapping.md` generator (468 Maya hotkeys). Shift+H/Alt+H, +/- → step 5; arrows → step 6; `.`/`,` → step 9 | P (Outliner/Graph Ctrl-deselect, non-3D marquee toggle: W) | H (bindings, conflicts, shadowing, mapping rows), S (keymap prefs) | `blender/industry_compatible_vs_maya.md` §0–§2, api_limits #16, `maya/hotkeys_default.json` |
-| 3 | M1-b | Hold / tap framework | Hold-only: X grid, C curve, V point, J step snap, B soft select (+ radius drag); tap-vs-hold (A tap = frame all) as PRESS/RELEASE pairs + modal | P/W | H (keymap pairs, state toggles), M (feel) | `maya/interaction.md` §0, §5, §6; README 핵심 발견 1 |
+| 3 | M1-b | Hold / tap framework | Hold modal (`maya_kit.hold`): X grid, C curve(edge), V point, J step snap, D pivot (Affect Only Origins), Insert toggle; tap/hold modal API (`maya_kit.tap_hold`, `TapHoldBinding`): A tap = frame all / hold+click = select menu, B tap = soft select / hold+LMB drag = radius; object-mode arrow pick-walk | P/W | H (state logic, keymaps), G (`tests/gui/` simulated key events), M (feel) | `maya/interaction.md` §0, §5, §6; README 핵심 발견 1 |
 | 4 | M1-c | Camera and view feel | Alt+LMB/MMB/RMB details (COI tumble, zoom direction, no zoom-to-mouse, ortho tumble lock), F/A/Shift+F/Shift+A framing, view undo `[` `]` stack | P/W | H (prefs values, view stack), M (feel) | `maya/interaction.md` §1, §8; IC-vs-Maya §2 |
 | 5 | M1-d | Display and component toggles | 4/5/6/7 operators, 1/2/3 smooth preview (Subsurf viewport levels), F8–F12 mode ops, isolate/hide variants | P | H, S | `maya/interaction.md` §7, §11 |
-| 6 | M1-e | Hierarchy and pivot | Ctrl+G group = Empty at origin, pick-walk ops, P parent **Maya mode** (keep world, parent inverse = identity; Blender mode as option), D/Insert pivot edit (Affect Only Origins / cursor) | P (group, walk, parent) / W (pivot) | H (matrices), M (pivot feel) | `maya/concepts.md` §6–§7, api_limits #7, decision 2 |
+| 6 | M1-e | Hierarchy and pivot | P parent **Maya mode** (keep world, parent inverse = identity; Blender mode as option), Shift+P unparent, component pick-walk, edit-mode pivot (cursor workaround). (Ctrl+G done in step 2; object pick-walk and D/Insert done in step 3) | P (parent) / W (pivot) | H (matrices), M (pivot feel) | `maya/concepts.md` §6–§7, api_limits #7, decision 2 |
 | 7 | M2-a | Layout, theme, units | App template `startup.blend` stored in `app_template/`, install/remove buttons; Maya grey theme preset; units option (cm display default; "1 BU = 1 cm" opt-in) | P | H (files copied/removed, unit settings), S | `maya/ui_layout.md` §2, `maya/workspaces.json`, `blender/ui_architecture.md` §2, decisions 1 & 3 |
 | 8 | M2-b | Channel Box | Panel (TRS, visibility, custom props, shapes/inputs), channel selection rows, viewport MMB virtual slider, key/lock menu | P (panel, viewport MMB) / W (multi-select rows) / C (MMB on field) | H (values, slider math), S, M | `maya/channel_box.md`, api_limits #1 |
 | 9 | M2-c | Status line, command line, time/range | TOPBAR append status line; Python command line; range slider fields; timeline theme/overdraw | P / W | H, S | `maya/ui_layout.md` §4.2, §4.10–4.12, api_limits #10, #12–#14 |

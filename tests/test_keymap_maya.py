@@ -144,7 +144,10 @@ _VIEW3D_STACK = ("Window", "Screen", "Frames", "3D View", "3D View Generic", "Ob
                  "Object Non-modal", "Mesh", "Curve", "Curves", "Armature", "Pose", "Metaball",
                  "Lattice", "Particle", "Font", "Sculpt", "Weight Paint", "Vertex Paint",
                  "Image Paint", "Grease Pencil")
-_STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _VIEW3D_STACK,
+# Object Mode items only run in object mode, where other mode keymaps are inactive.
+_OBJECT_MODE_STACK = ("Window", "Screen", "Frames", "3D View", "3D View Generic",
+                      "Object Mode", "Object Non-modal")
+_STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Object Non-modal": _VIEW3D_STACK,
            "Outliner": ("Window", "Screen", "Outliner", "View2D", "View2D Buttons List"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
@@ -154,11 +157,13 @@ def test_added_bindings_not_shadowed():
     data = maya_patches.apply(ic_data.generate())
     assert maya_patches.ADDED, "no added bindings recorded"
     problems = []
-    for km, idname, ev, _props in maya_patches.ADDED:
+    for km, idname, ev, _props, shadows in maya_patches.ADDED:
         stack = _STACKS[km]
         k = patch.event_key(ev)
         for km_name, args, content in data:
             if args.get("modal") or (stack is not None and km_name not in stack):
+                continue
+            if km_name in shadows:  # declared intentional (maya_patches._add)
                 continue
             for it in content["items"]:
                 if patch.event_key(it[1]) == k and not (km_name == km and it[0] == idname):
