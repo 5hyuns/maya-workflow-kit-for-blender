@@ -64,6 +64,23 @@ TOOL_SETTINGS = ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})
 SMART_DUPLICATE = ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'})  # step 22
 SMART_EXTRUDE = ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'})      # step 26
 
+
+def _sym(mode):
+    return ("maya_kit.symmetry", {"mode": mode})
+
+
+# commonReflectionOptionsPopup (marking_menus.json :35-77), called by the Move / Rotate / Scale
+# option menus at N; every item is a check box (operators/symmetry.py, step 36).
+SYMMETRY = ("Symmetry", Sub(radial={
+    "N": ("Symmetry", _sym('ON')),
+    "W": ("World", _sym('ABOUT_WORLD')),
+    "E": ("Object", _sym('ABOUT_OBJECT')),
+    "NE": ("Topology", _sym('TOPOLOGY')),
+    "SW": ("X Axis", _sym('AXIS_X')),
+    "S": ("Y Axis", _sym('AXIS_Y')),
+    "SE": ("Z Axis", _sym('AXIS_Z')),
+}))
+
 # Material items at the end of the RMB object list (Maya-2764 -> buildShaderMenus,
 # ; ). ``rmb``: with nothing selected
 # they act on the object the menu was opened on, like Maya.
@@ -357,6 +374,7 @@ OPT_MOVE = MarkingMenu(
         "W": ("World", _orient('GLOBAL')),                                 # :27
         "NW": ("Object", _orient('LOCAL')),                                # :35
         "SE": ("Keep Spacing", None),                                      # :43
+        "N": SYMMETRY,                                                     # :104
         "E": ("Snap", Sub(radial={                                         # :116
             "E": ("Discrete Move", ("maya_kit.snap_toggle", {"snap": 'GRID'})),
             "SE": ("Vertex", ("maya_kit.snap_toggle", {"snap": 'POINT'})),
@@ -388,6 +406,7 @@ OPT_ROTATE = MarkingMenu(
         "SE": ("Discrete Rotate", None),                                   # :66
         "NE": ("Component", _orient('NORMAL')),                            # :71
         "E": ("Gimbal", _orient('GIMBAL')),                                # :77
+        "N": SYMMETRY,                                                     # :86
     },
     items=[
         ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
@@ -412,6 +431,7 @@ OPT_SCALE = MarkingMenu(
         })),
         "E": ("Snap Scale", None),                                         # :101
         "SE": ("Relative", None),                                          # :107
+        "N": SYMMETRY,                                                     # :117
     },
     items=[
         ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),

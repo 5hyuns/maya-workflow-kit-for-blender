@@ -69,7 +69,7 @@ def _inside(rect, x, y):
     return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
 
 
-TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option")
+TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option", "maya_kit.symmetry")
 
 
 def is_toggle(action):

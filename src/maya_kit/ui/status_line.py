@@ -163,6 +163,54 @@ class MAYAKIT_OT_snap_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- symmetry (ui_layout.md:207 group 8; operators/symmetry.py, ) ------
+
+class MAYAKIT_MT_symmetry(bpy.types.Menu):
+    """Maya symmetry modes (Status Line ▾ list)"""
+    bl_idname = "MAYAKIT_MT_symmetry"
+    bl_label = "Symmetry"
+
+    def draw(self, context):
+        from ..operators import symmetry
+        current = symmetry.mode_of(symmetry.state(context.scene))
+        layout = self.layout
+        for mode, text in symmetry.MODES:
+            layout.operator("maya_kit.symmetry", text=text,
+                            icon='RADIOBUT_ON' if mode == current else 'RADIOBUT_OFF').mode = mode
+
+
+def draw_symmetry(layout, context):
+    """▾ list with the mode text + a toggle that is blue (pressed) while symmetry is on.
+
+    Maya: LMB ▾ = list, MMB = toggle, the text box turns blue when on (Maya-1925,
+    2941-2986). A Blender menu button has no MMB action, so the toggle is its own button.
+    """
+    from ..operators import symmetry
+    sym = symmetry.state(context.scene)
+    row = layout.row(align=True)
+    row.operator("maya_kit.symmetry", text="", icon='MOD_MIRROR', depress=sym.on).mode = "TOGGLE"
+    sub = row.row(align=True)
+    sub.ui_units_x = 6
+    sub.menu(MAYAKIT_MT_symmetry.bl_idname, text=symmetry.label(sym), icon='DOWNARROW_HLT')
+
+
+TRANSFORM_TOOLS = ("builtin.move", "builtin.rotate", "builtin.scale", "builtin.transform",
+                   "builtin.select", "builtin.select_box", "builtin.select_circle", "builtin.select_lasso")
+
+
+def draw_tool_symmetry(self, context):
+    """Maya Move/Rotate/Scale Tool Settings (edit mesh only)."""
+    if context.mode != 'EDIT_MESH':
+        return
+    tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+    if tool is None or tool.idname not in TRANSFORM_TOOLS:
+        return
+    layout = self.layout
+    layout.separator()
+    layout.label(text="Symmetry Settings")
+    draw_symmetry(layout, context)
+
+
 # --- render (ui_layout.md:210) -----------------------------------------------------------
 
 def _properties_area(screen):
@@ -322,6 +370,9 @@ def draw_status_line(layout, context):
                          depress=snap_on(ts, name)).snap = name
     layout.separator()
 
+    draw_symmetry(layout, context)
+    layout.separator()
+
     row = layout.row(align=True)
     row.operator("render.view_show", text="", icon='RENDER_RESULT')
     row.operator("render.render", text="", icon='RENDER_STILL')
@@ -414,7 +465,7 @@ def unpatch_topbar():
         cls.draw_right = _orig.pop("draw_right")
 
 
-classes = (MAYAKIT_OT_select_mask, MAYAKIT_OT_select_mode, MAYAKIT_OT_snap_toggle,
+classes = (MAYAKIT_OT_select_mask, MAYAKIT_OT_select_mode, MAYAKIT_OT_snap_toggle, MAYAKIT_MT_symmetry,
            MAYAKIT_OT_render_settings, MAYAKIT_OT_ipr_toggle, MAYAKIT_OT_hypershade,
            MAYAKIT_OT_editor_toggle)
 
@@ -424,9 +475,11 @@ def register():
         bpy.utils.register_class(cls)
     patch_topbar()
     bpy.types.VIEW3D_HT_tool_header.prepend(draw_tool_header)
+    bpy.types.VIEW3D_PT_active_tool.append(draw_tool_symmetry)
 
 
 def unregister():
+    bpy.types.VIEW3D_PT_active_tool.remove(draw_tool_symmetry)
     bpy.types.VIEW3D_HT_tool_header.remove(draw_tool_header)
     unpatch_topbar()
     for cls in reversed(classes):

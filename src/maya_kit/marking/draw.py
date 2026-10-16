@@ -113,6 +113,9 @@ def checked(action):
     try:
         if op == "wm.context_toggle":
             return bool(bpy.context.path_resolve(props["data_path"]))
+        if op == "maya_kit.symmetry":
+            from ..operators import symmetry
+            return symmetry.item_state(props["mode"])
         from ..operators import manip
         return manip.option_state(props["option"])
     except (ValueError, KeyError, AttributeError):
