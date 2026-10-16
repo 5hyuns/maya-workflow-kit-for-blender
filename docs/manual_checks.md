@@ -110,3 +110,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 10) Alt+Shift+D / A 홀드+LMB 마킹메뉴(NW Delete History, NE Non-Deformer, SE Freeze): Subsurf·Bevel 굽기, Armature 는 Non-Deformer 에서 남음. Edit > Delete by Type / Delete All by Type 항목들.
 - [ ] (step 10) Create 메뉴: pCube1/pSphere1… 원점·Maya 크기(큐브 = 그리드 한 칸), 데이터 이름 pCubeShape1. 라이트·카메라는 수평 방향.
 - [ ] (step 10) 환경설정 Maya Units 켜기: 1 cm 큐브가 그리드 한 칸, 확대·축소 시 클리핑 없음(0.1–10000), 물리/라이트 감쇠 차이 확인. 끄면 원래 값. 저장한 파일을 다시 열면 바뀌지 않음, File > New 는 Maya 단위.
+
+### Step 11 — Outliner, Attribute Editor
+
+- [ ] (step 11) 뷰포트에서 Ctrl+A: 사이드바가 열리고 Channel Box 탭에서 Attribute Editor 가 보임, 다시 Ctrl+A 로 Channel Box. 다른 사이드바 탭(Item 등)이 열려 있으면 탭은 그대로라 Channel Box 탭으로 직접 가야 함 — 거슬리는지.
+- [ ] (step 11) AE 탭 클릭(transform / shape / 모디파이어 / 재질), 섹션 열고 닫기가 노드 종류마다 기억됨, 이름 필드에서 바로 이름 변경, 모디파이어 탭 ◀ ▶ 로 스택 이동, Delete History 버튼.
+- [ ] (step 11) 선택을 바꿔도 같은 종류의 탭(예: 재질)이 유지되는지 — Maya 와 비교.
+- [ ] (step 11) Outliner 탭: 행 더블클릭 = 이름 변경 (객체, Shapes 켜면 데이터 이름도), 화살표 / Shift+화살표 펼치기, 행 클릭 선택, 아이콘 Ctrl+클릭 토글 / Shift+클릭 범위, 숨긴 객체 흐림.
+- [ ] (step 11) 객체 추가·삭제·부모 변경(P) 직후 Outliner 행이 바로 갱신되는지, 객체 수백 개에서 느려지지 않는지.
+- [ ] (step 11) Ctrl+Shift+A 전체 선택, Alt+D 선택 해제 (Maya), 편집 모드 Ctrl+A 는 Blender 그대로.

@@ -1,0 +1,507 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya Attribute Editor in the 3D View sidebar, sharing the Channel Box dock.
+
+research/maya/attribute_editor.md; design: docs/steps/step_11.md 「계획」 1, 3.
+- Dock mode (``WindowManager.maya_kit_dock``): the sidebar "Channel Box" tab shows
+  either Channel Box + Layer Editor or the Attribute Editor, like the two tabs of
+  Maya's right dock (research/maya/ui_layout.md:121); Ctrl+A toggles
+  (``ShowAttributeEditorOrChannelBox``).
+- Node tabs (attribute_editor.md:42-61): transform = object, shape = object
+  data, one tab per modifier (construction history inputs) and per material.
+- Sections and their rows: ``ae_layout`` (Maya template sections, collapse flags
+  from research/maya/ae_templates.json), drawn as ``layout.panel`` sections.
+"""
+
+import bpy
+from bpy.props import EnumProperty, StringProperty
+
+from . import ae_layout
+from .channel_box import CATEGORY
+
+DOCK_ITEMS = (('CHANNEL_BOX', "Channel Box / Layer Editor", "Maya Channel Box and Layer Editor"),
+              ('ATTRIBUTE_EDITOR', "Attribute Editor", "Maya Attribute Editor"))
+
+
+def dock_mode(context):
+    return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX')
+
+
+# --- tabs ---------------------------------------------------------------------------------
+
+def principled(material):
+    if material is None or not material.use_nodes or material.node_tree is None:
+        return None
+    return next((n for n in material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+
+
+def node_type(ob):
+    if ob.type == 'LIGHT':
+        return ae_layout.LIGHT_TYPE.get(ob.data.type, "light")
+    return ae_layout.NODE_TYPE.get(ob.type, ob.type.lower())
+
+
+def tabs(ob):
+    """[(key, label, Maya node type)] in Maya's order: transform, shape, history, materials."""
+    out = [("T", ob.name, "transform")]
+    if ob.data is not None:
+        out.append(("S", ob.data.name, node_type(ob)))
+    for md in ob.modifiers:
+        out.append((f"M:{md.name}", md.name, md.type.lower()))
+    for i, slot in enumerate(ob.material_slots):
+        if slot.material is not None:
+            kind = "standardSurface" if principled(slot.material) else "material"
+            out.append((f"MAT:{i}", slot.material.name, kind))
+    return out
+
+
+def _kind(key):
+    return key.split(":", 1)[0]
+
+
+def current_tab(context, ob):
+    """The selected tab key: the stored one, else the first of the stored kind, else
+    the shape (Maya's preferred node, attribute_editor.md:43-53), else the transform."""
+    wm = context.window_manager
+    keys = [t[0] for t in tabs(ob)]
+    if wm.maya_kit_ae_tab in keys:
+        return wm.maya_kit_ae_tab
+    for k in keys:
+        if _kind(k) == wm.maya_kit_ae_kind:
+            return k
+    return "S" if "S" in keys else "T"
+
+
+def tab_target(ob, key):
+    """The datablock or modifier a tab shows."""
+    kind = _kind(key)
+    if kind == "T":
+        return ob
+    if kind == "S":
+        return ob.data
+    if kind == "M":
+        return ob.modifiers.get(key[2:])
+    if kind == "MAT":
+        i = int(key[4:])
+        return ob.material_slots[i].material if i < len(ob.material_slots) else None
+    return None
+
+
+def sections_for(ob, key):
+    """(sections, layout id) for a tab; empty for history tabs (drawn generically)."""
+    kind = _kind(key)
+    if kind == "T":
+        return ae_layout.BY_KIND["transform"][0], "transform"
+    if kind == "S":
+        sub = ob.data.type if ob.type == 'LIGHT' else ob.type
+        return ae_layout.BY_KIND.get(sub, ([], None))[0], sub.lower()
+    if kind == "MAT":
+        mat = tab_target(ob, key)
+        name = "standardSurface" if principled(mat) else "material"
+        return ae_layout.BY_KIND[name][0], name
+    return [], None
+
+
+# --- drawing --------------------------------------------------------------------------------
+
+def resolve(owner, path):
+    """(object, attribute) for a dotted path such as ``overlay.show_face_normals``."""
+    *head, attr = path.split(".")
+    for part in head:
+        owner = getattr(owner, part, None)
+        if owner is None:
+            return None, attr
+    return owner, attr
+
+
+def _owner(context, ob, target, name):
+    if name == "ob":
+        return ob
+    if name == "data":
+        return target
+    if name == "view":
+        space = context.space_data
+        return space if space is not None and space.type == 'VIEW_3D' else None
+    return None
+
+
+def _length(context, value):
+    us = context.scene.unit_settings
+    return bpy.utils.units.to_string(us.system, 'LENGTH', value * us.scale_length, precision=3)
+
+
+def _vector_row(layout, owner, attr, label):
+    """Maya AE float3 row: label, then the three fields side by side."""
+    split = layout.split(factor=0.3, align=True)
+    split.label(text=label)
+    split.row(align=True).prop(owner, attr, text="")
+
+
+def draw_transform_channels(layout, context, ob):
+    col = layout.column(align=True)
+    _vector_row(col, ob, "location", "Translate")
+    if ob.rotation_mode == 'QUATERNION':
+        _vector_row(col, ob, "rotation_quaternion", "Rotate")
+    elif ob.rotation_mode == 'AXIS_ANGLE':
+        _vector_row(col, ob, "rotation_axis_angle", "Rotate")
+    else:
+        _vector_row(col, ob, "rotation_euler", "Rotate")
+    _vector_row(col, ob, "scale", "Scale")
+
+
+def draw_world_pivot(layout, context, ob):
+    col = layout.column(align=True)
+    for axis, value in zip("XYZ", ob.matrix_world.translation):
+        col.label(text=f"World Rotate Pivot {axis}: {_length(context, value)}")
+
+
+LIMIT_PROPS = {
+    'LIMIT_LOCATION': ("use_min_{a}", "min_{a}", "use_max_{a}", "max_{a}"),
+    'LIMIT_SCALE': ("use_min_{a}", "min_{a}", "use_max_{a}", "max_{a}"),
+    'LIMIT_ROTATION': ("use_limit_{a}", "min_{a}", "max_{a}"),
+}
+
+
+def draw_limit(layout, context, ob, kind):
+    con = next((c for c in ob.constraints if c.type == kind), None)
+    if con is None:
+        layout.operator("maya_kit.ae_add_limit", text=f"Add {kind.replace('_', ' ').title()}").type = kind
+        return
+    for a in "xyz":
+        row = layout.row(align=True)
+        for pattern in LIMIT_PROPS[kind]:
+            row.prop(con, pattern.format(a=a))
+
+
+def draw_visibility(layout, context, ob):
+    layout.prop(ob, "hide_viewport", text="Visibility", invert_checkbox=True)
+
+
+def draw_shading(layout, context, ob):
+    row = layout.row(align=True)
+    row.operator("object.shade_smooth", text="Soften (Smooth)")
+    row.operator("object.shade_flat", text="Harden (Flat)")
+    layout.operator("object.shade_auto_smooth", text="Soften by Angle")
+
+
+def draw_smooth_mesh(layout, context, ob):
+    row = layout.row(align=True)
+    for level, label in ((1, "1 Off"), (2, "2 Cage"), (3, "3 Smooth")):
+        row.operator("maya_kit.smooth_preview", text=label).level = level
+    sub = next((m for m in ob.modifiers if m.type == 'SUBSURF'), None)
+    if sub is not None:
+        layout.prop(sub, "levels", text="Division Levels")
+        layout.prop(sub, "render_levels", text="Render Levels")
+
+
+DRAWERS = {"transform_channels": draw_transform_channels, "world_pivot": draw_world_pivot,
+           "visibility": draw_visibility, "shading": draw_shading, "smooth_mesh": draw_smooth_mesh}
+
+
+def draw_row(layout, context, ob, target, row):
+    kind = row[0]
+    if kind == "prop":
+        _k, owner_name, path, label = row
+        owner, attr = resolve(_owner(context, ob, target, owner_name), path)
+        if owner is not None and hasattr(owner, attr):
+            layout.prop(owner, attr, text=label)
+    elif kind == "draw":
+        name = row[1]
+        if name.startswith("limit:"):
+            draw_limit(layout, context, ob, name[6:])
+        else:
+            DRAWERS[name](layout, context, ob)
+    elif kind == "socket":
+        _k, socket, label = row
+        node = principled(target)
+        inp = node.inputs.get(socket) if node is not None else None
+        if inp is None:
+            return
+        if inp.is_linked:
+            layout.label(text=f"{label}: connected ({inp.links[0].from_node.name})")
+        elif hasattr(inp, "default_value"):
+            layout.prop(inp, "default_value", text=label)
+
+
+def draw_sections(layout, context, ob, target, sections, layout_id, prefix=""):
+    for sec in sections:
+        header, body = layout.panel(f"maya_kit_ae_{layout_id}_{prefix}{sec.name}",
+                                    default_closed=not sec.open)
+        header.label(text=sec.name)
+        if body is None:
+            continue
+        col = body.column()
+        for row in sec.rows:
+            draw_row(col, context, ob, target, row)
+        if sec.subs:
+            draw_sections(col, context, ob, target, sec.subs, layout_id, f"{prefix}{sec.name}/")
+
+
+# RNA properties of every modifier that are not the node's own attributes.
+_MOD_SKIP = {"rna_type", "name", "type", "show_viewport", "show_render", "show_in_editmode",
+             "show_on_cage", "show_expanded", "is_active", "is_override_data_editable",
+             "use_apply_on_spline", "use_pin_to_last", "persistent_uid", "execution_time"}
+
+
+def modifier_props(md):
+    out = []
+    for p in md.bl_rna.properties:
+        ident = p.identifier
+        if ident in _MOD_SKIP or p.is_readonly or p.type == 'COLLECTION' or ident.startswith("open_"):
+            continue
+        out.append(ident)
+    return out
+
+
+def draw_history(layout, context, ob, md):
+    header, body = layout.panel(f"maya_kit_ae_history_{md.type}", default_closed=False)
+    header.label(text=f"{md.type.replace('_', ' ').title()} History")
+    if body is not None:
+        col = body.column()
+        col.prop(md, "show_viewport", text="Enabled (Node State)")
+        for ident in modifier_props(md):
+            col.prop(md, ident)
+    row = layout.row(align=True)
+    op = row.operator("maya_kit.ae_modifier", text="Delete History")
+    op.modifier, op.action = md.name, 'APPLY'
+    op = row.operator("maya_kit.ae_modifier", text="Delete", icon='X')
+    op.modifier, op.action = md.name, 'REMOVE'
+
+
+def draw_extra(layout, owner, layout_id):
+    keys = [k for k in owner.keys() if not k.startswith(("_", "maya_kit_", "cycles"))]
+    header, body = layout.panel(f"maya_kit_ae_{layout_id}_extra", default_closed=True)
+    header.label(text="Extra Attributes")
+    if body is None:
+        return
+    if not keys:
+        body.label(text="(none)")
+    for k in sorted(keys):
+        body.prop(owner, f'["{k}"]', text=k)
+
+
+def draw_tab_strip(layout, context, ob, current):
+    row = layout.row(align=True)
+    for key, label, _type in tabs(ob):
+        op = row.operator("maya_kit.ae_tab", text=label, depress=(key == current))
+        op.key = key
+
+
+def draw(layout, context, ob):
+    """The whole Attribute Editor for ``ob`` (also used by tests with a fake layout)."""
+    key = current_tab(context, ob)
+    draw_tab_strip(layout, context, ob, key)
+    target = tab_target(ob, key)
+    if target is None:
+        return
+    label = next(t[2] for t in tabs(ob) if t[0] == key)
+    head = layout.row(align=True)
+    head.label(text=f"{label}:")
+    head.prop(target, "name", text="")
+    if _kind(key) == "M":
+        sub = head.row(align=True)
+        sub.operator("maya_kit.ae_step", text="", icon='TRIA_LEFT').forward = False
+        sub.operator("maya_kit.ae_step", text="", icon='TRIA_RIGHT').forward = True
+        draw_history(layout, context, ob, target)
+        return
+    sections, layout_id = sections_for(ob, key)
+    draw_sections(layout, context, ob, target, sections, layout_id or "data")
+    if isinstance(target, bpy.types.ID):
+        draw_extra(layout, target, layout_id or "data")
+    if _kind(key) == "T":
+        layout.operator("maya_kit.ae_select", text="Select")
+
+
+# --- operators -----------------------------------------------------------------------------
+
+def set_tab(context, key):
+    wm = context.window_manager
+    wm.maya_kit_ae_tab = key
+    wm.maya_kit_ae_kind = _kind(key)
+
+
+class MAYAKIT_OT_ae_tab(bpy.types.Operator):
+    """Show this node in the Attribute Editor"""
+    bl_idname = "maya_kit.ae_tab"
+    bl_label = "Attribute Editor Tab"
+    bl_options = {'INTERNAL'}
+
+    key: StringProperty()
+
+    def execute(self, context):
+        set_tab(context, self.key)
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_ae_step(bpy.types.Operator):
+    """Go to the next input (left) or output (right) node in the history (Maya in/out arrows)"""
+    bl_idname = "maya_kit.ae_step"
+    bl_label = "Input / Output Node"
+    bl_options = {'INTERNAL'}
+
+    forward: bpy.props.BoolProperty()
+
+    def execute(self, context):
+        ob = context.active_object
+        if ob is None:
+            return {'CANCELLED'}
+        keys = [t[0] for t in tabs(ob) if _kind(t[0]) == "M"]
+        cur = current_tab(context, ob)
+        if cur not in keys:
+            return {'CANCELLED'}
+        i = keys.index(cur) + (1 if self.forward else -1)
+        if 0 <= i < len(keys):
+            set_tab(context, keys[i])
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_ae_modifier(bpy.types.Operator):
+    """Delete History: apply this modifier (keep its effect, drop the node); Delete: remove it"""
+    bl_idname = "maya_kit.ae_modifier"
+    bl_label = "History Node"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    modifier: StringProperty()
+    action: EnumProperty(items=(('APPLY', "Apply", ""), ('REMOVE', "Remove", "")))
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None
+
+    def execute(self, context):
+        ob = context.active_object
+        md = ob.modifiers.get(self.modifier)
+        if md is None:
+            return {'CANCELLED'}
+        if self.action == 'REMOVE':
+            ob.modifiers.remove(md)
+            return {'FINISHED'}
+        with context.temp_override(object=ob, active_object=ob):
+            return bpy.ops.object.modifier_apply(modifier=self.modifier)
+
+
+class MAYAKIT_OT_ae_add_limit(bpy.types.Operator):
+    """Add a limit constraint (Maya Limit Information)"""
+    bl_idname = "maya_kit.ae_add_limit"
+    bl_label = "Add Limit"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    type: EnumProperty(items=[(k, k.replace('_', ' ').title(), "") for k in LIMIT_PROPS])
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        con = context.active_object.constraints.new(self.type)
+        con.owner_space = 'LOCAL'   # Maya limits act on the channel values
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_ae_select(bpy.types.Operator):
+    """Select only the node shown in the Attribute Editor"""
+    bl_idname = "maya_kit.ae_select"
+    bl_label = "Select"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None
+
+    def execute(self, context):
+        ob = context.active_object
+        for o in context.selected_objects:
+            o.select_set(False)
+        ob.select_set(True)
+        return {'FINISHED'}
+
+
+def _show_sidebar_later(space):
+    # Setting a region flag inside an operator doesn't stick (step 9): use a timer.
+    def later():
+        try:
+            space.show_region_ui = True
+        except ReferenceError:
+            pass
+        return None
+    bpy.app.timers.register(later, first_interval=0.0)
+
+
+class MAYAKIT_OT_ae_toggle(bpy.types.Operator):
+    """Switch the dock between Channel Box / Layer Editor and Attribute Editor
+    (Maya Ctrl+A)"""
+    bl_idname = "maya_kit.ae_toggle"
+    bl_label = "Attribute Editor / Channel Box"
+
+    def execute(self, context):
+        wm = context.window_manager
+        wm.maya_kit_dock = 'CHANNEL_BOX' if wm.maya_kit_dock == 'ATTRIBUTE_EDITOR' else 'ATTRIBUTE_EDITOR'
+        space = context.space_data
+        if space is not None and space.type == 'VIEW_3D' and not space.show_region_ui:
+            _show_sidebar_later(space)
+        _redraw(context)
+        return {'FINISHED'}
+
+
+def _redraw(context):
+    screen = context.screen
+    for area in (screen.areas if screen else ()):
+        if area.type == 'VIEW_3D':
+            area.tag_redraw()
+
+
+# --- panels ----------------------------------------------------------------------------------
+
+class MAYAKIT_PT_dock_tabs(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = CATEGORY
+    bl_label = "Dock"
+    bl_options = {'HIDE_HEADER'}
+    bl_order = -1
+
+    def draw(self, context):
+        self.layout.prop(context.window_manager, "maya_kit_dock", expand=True)
+
+
+class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = CATEGORY
+    bl_label = "Attribute Editor"
+    bl_order = 0
+
+    @classmethod
+    def poll(cls, context):
+        return dock_mode(context) == 'ATTRIBUTE_EDITOR'
+
+    def draw(self, context):
+        ob = context.active_object
+        if ob is None:
+            self.layout.label(text="make a selection")
+            return
+        draw(self.layout, context, ob)
+
+
+classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKIT_OT_ae_add_limit,
+           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_PT_dock_tabs,
+           MAYAKIT_PT_attribute_editor)
+
+
+def register():
+    wm = bpy.types.WindowManager
+    wm.maya_kit_dock = EnumProperty(name="Dock", items=DOCK_ITEMS, options={'SKIP_SAVE'})
+    wm.maya_kit_ae_tab = StringProperty(options={'SKIP_SAVE'})
+    wm.maya_kit_ae_kind = StringProperty(default="S", options={'SKIP_SAVE'})
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    wm = bpy.types.WindowManager
+    del wm.maya_kit_ae_kind
+    del wm.maya_kit_ae_tab
+    del wm.maya_kit_dock

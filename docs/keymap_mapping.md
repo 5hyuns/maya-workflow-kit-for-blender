@@ -7,18 +7,18 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 48 |
+| 구현 | 51 |
 | IC 일치 | 8 |
 | 계획 | 26 |
 | 해당 없음 | 9 |
-| 미검토 | 309 |
+| 미검토 | 306 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
 |---|---|---|---|---|---|---|---|
-| Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `mesh.select_all` (action='DESELECT') | 미검토 |  | hotkeySetup.mel:59 |
+| Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='DESELECT') | 구현 |  | hotkeySetup.mel:59 |
 | Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | — | 미검토 |  | hotkeySetup.mel:60 |
-| Alt+d | Alt+D | global | SelectNone | — | 미검토 |  | hotkeySetup.mel:62 |
+| Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT') | 구현 |  | hotkeySetup.mel:62 |
 | Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `object.duplicate_move`; Mesh: `mesh.duplicate_move` | IC 일치 |  | hotkeySetup.mel:64 |
 | Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `maya_kit.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
 | z | Z | global | Undo | 3D View: `view3d.zoom_border` | 미검토 |  | hotkeySetup.mel:67 |
@@ -120,7 +120,7 @@
 | Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | Affect Only Origins 토글 (오브젝트 모드) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
-| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 미검토 |  | hotkeySetup.mel:230 |
+| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `maya_kit.ae_toggle`; Mesh: `mesh.select_all` (action='SELECT') | 구현 | 사이드바 Channel Box 탭 안에서 CB/LE ↔ AE 전환 | hotkeySetup.mel:230 |
 | f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 선택만 프레이밍 (자식은 선택 안 되면 제외) | hotkeySetup.mel:231 |
 | Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `maya_kit.frame_all_views` (selected=True) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:232 |
 | Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | — | 계획 Step 8 | 자식 포함 프레이밍 | hotkeySetup.mel:233 |
