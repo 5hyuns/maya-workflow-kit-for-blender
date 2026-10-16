@@ -240,6 +240,8 @@ ENTRIES = {
                      note="편집 모드: maya_kit.select_none (해제 + 오브젝트 모드)"),
     "DuplicateWithTransform": _e("KIT", (OBJ, "maya_kit.duplicate_with_transform", {}),
                                  note="직전 복제의 변환을 반복"),
+    "AssignNewMaterial": _e("KIT", (OBJ, "maya_kit.assign_new_material", {}),
+                            note="재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만, step 29)"),
     "ShowModelingUI": _e("STEP", step=13), "ShowRiggingUI": _e("STEP", step=13),
     "ShowAnimationUI": _e("STEP", step=13), "ShowDynamicsUI": _e("STEP", step=13),
     "ShowRenderingUI": _e("STEP", step=13),

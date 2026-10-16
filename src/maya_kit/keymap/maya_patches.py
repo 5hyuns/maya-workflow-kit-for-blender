@@ -496,13 +496,22 @@ def patch_active_handle(kd):
         ADDED.append((km, "maya_kit.manip_mmb", make_event("MIDDLEMOUSE"), {"mode": mode}, (km,)))
 
 
+# --- 25. Shift+T Assign New Material -------------------------------------
+# Maya via  IC binds Shift+T only in the
+# Dope Sheet.
+
+def patch_materials(kd):
+    for km in ("Object Mode", "Mesh"):
+        _add(kd, km, "maya_kit.assign_new_material", make_event("T", shift=True))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
-           patch_component_delete, patch_view_keys, patch_active_handle)
+           patch_component_delete, patch_view_keys, patch_active_handle, patch_materials)
 
 
 def apply(data):

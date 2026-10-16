@@ -64,6 +64,26 @@ TOOL_SETTINGS = ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})
 SMART_DUPLICATE = ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'})  # step 22
 SMART_EXTRUDE = ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'})      # step 26
 
+# Material items at the end of the RMB object list (Maya-2764 -> buildShaderMenus,
+# ; ). ``rmb``: with nothing selected
+# they act on the object the menu was opened on, like Maya.
+_FAVORITES = (("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'),
+              ("Standard Surface", 'STANDARD_SURFACE'))
+
+
+def _material_items():
+    """A fresh list per menu, so each menu gets its own submenu class."""
+    favorites = [(label, ("maya_kit.shelf_material", {"kind": kind, "rmb": True})) for label, kind in _FAVORITES]
+    return [
+        DIVIDER,
+        ("Material Attributes...", ("maya_kit.material_attributes", {"rmb": True})),
+        DIVIDER,
+        ("Assign New Material...", ("maya_kit.assign_new_material", {"rmb": True})),
+        ("Assign Favorite Material", Sub(items=favorites)),
+        ("Assign Existing Material", ("menu", "MAYAKIT_MT_assign_existing_material_rmb")),
+    ]
+
+
 # --- RMB: Maya (hotkeys_and_menus.md, :246-252) --------------------------
 # Mesh radials come from createSelectMenuItems' order (Maya-892) and
 # objectSelectMasks (:503-509); NE "Object Mode" (:1286-1289).  resolved by hand.
@@ -85,6 +105,7 @@ RMB_MESH = MarkingMenu(
         DIVIDER,
         ("Inputs", None),
         ("Paint Skin Weights", ("paint.weight_paint_toggle", {})),
+        *_material_items(),
     ])
 
 # Curve: N curve point, W CV, S edit point, E hull (Maya-501). Blender
@@ -98,7 +119,7 @@ RMB_CURVE = MarkingMenu(
         "E": ("Hull", None),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
     },
-    items=[("Select", ("maya_kit.mm_component", {"type": 'NONE'}))])
+    items=[("Select", ("maya_kit.mm_component", {"type": 'NONE'})), *_material_items()])
 
 # Nothing under the cursor: Select All / Complete Tool (Maya-150).
 RMB_EMPTY = MarkingMenu(
