@@ -166,6 +166,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
               for km in ("Graph Editor", "Dopesheet", "Node Editor", "Image")},
            # Step 22: gizmo keymaps run from the gizmo map handler, ahead of the region keymaps.
            **{km: (km,) for km in maya_patches.GIZMO_KEYMAPS},
+           # Step 30: select tool keymaps (only active with that tool, ahead of the editor keymaps).
+           **{km: (km,) for km in maya_patches.SELECT_DRAG_KEYMAPS},
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

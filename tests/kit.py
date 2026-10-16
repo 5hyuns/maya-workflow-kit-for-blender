@@ -80,6 +80,7 @@ def snapshot():
     prefs = bpy.context.preferences
     snap["prefs_inputs"] = _rna_values(prefs.inputs)
     snap["prefs_view"] = _rna_values(prefs.view)
+    snap["prefs_edit"] = _rna_values(prefs.edit)   # step 30: undo steps
     return snap
 
 
