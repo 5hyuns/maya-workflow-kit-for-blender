@@ -39,6 +39,8 @@ python tests/run.py --no-build   # reuse dist/ zip
 python tools/build.py            # build only
 python tools/gen_keymap_mapping.py  # regenerate docs/keymap_mapping.md (exit 1 if an IC/KIT row is unbound)
 python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (a Blender window opens briefly)
+python tools/make_startup.py     # regenerate app_template/MayaKit/startup.blend (headless)
+python tools/make_theme.py       # regenerate theme/maya.xml from its colour table
 ```
 
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.maya_kit`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
@@ -48,6 +50,7 @@ python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (
 - GUI event tests (`tests/gui/gui_*.py`, helpers in `tests/gui/sim.py`): Blender runs with `--enable-event-simulate`; key events need a position (default 0,0 hits the status bar), the factory splash eats events until ESC, and simulated keys never reach the OS so `keystate.is_down` is replaced by the simulated state.
 - Modal keys: Maya hold keys use a PRESS → modal (`operators/hold.py`), not PRESS/RELEASE keymap pairs, because the transform modal swallows RELEASE; new tap/hold keys subclass `taphold.TapHoldBinding`.
 - Blender preferences (not scene data) the kit changes go through `prefs_preset.py` (backup in add-on prefs, restore on disable); `tests/kit.py` snapshots `preferences.inputs`/`view`, so a leak fails `test_enable_disable`.
+- Generated binaries (`startup.blend`, `maya.xml`) are never edited by hand: change the generator and rerun it. Headless screen editing: `screen.area_split` works under a window/screen override (sizes appear after loading in a UI), but `screen.area_close` hangs and `screen.area_move` has no effect in `-b`.
 - Git Bash gotcha: `$PWD` is `/c/...`, which Blender's Python can't resolve — pass Windows paths (`cygpath -w`) in `BLENDER_USER_*` when launching Blender by hand.
 - Headless gotcha: in `-b` the default keyconfig is not populated (research/blender/industry_compatible_vs_maya.md:14); build keyconfigs from data, don't read `keyconfigs.default`.
 - UI: verify with a GUI screenshot. Interaction feel: add to `docs/manual_checks.md`.

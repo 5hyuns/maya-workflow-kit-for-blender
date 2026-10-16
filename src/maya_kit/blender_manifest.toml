@@ -14,9 +14,13 @@ license = [
   "SPDX:GPL-3.0-or-later",
 ]
 
+[permissions]
+files = "Install the Maya layout template and back up the theme"
+
 [build]
 paths_exclude_pattern = [
   "__pycache__/",
   "/.git/",
   "/*.zip",
+  "*.blend1",
 ]

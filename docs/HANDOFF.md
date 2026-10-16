@@ -2,14 +2,14 @@
 
 ## 현재 작업
 
-- Step 4 (M1-c 카메라·뷰, 1/2/3, F7–F11, 환경설정 프리셋) 완료 — `docs/steps/step_4.md`. 헤드리스 55/55, GUI 36/36.
-- `docs/PLAN.md` 재번호: 5 레이아웃(App Template) / 6 Channel Box / 7 상단 UI(Status Line·커맨드 라인·타임/레인지) / 8 남은 M1 키·계층 / 9 마킹메뉴 / 10 핫박스 / 11 개념 / 12 Outliner·AE / 13 셸프 / 14 릴리스.
-- 구조 요약: 키맵 `keymap/maya_patches.py`, 홀드 `operators/hold.py`, 탭/홀드 `operators/taphold.py`, 뷰 `operators/view.py`, 환경설정 프리셋 `prefs_preset.py`.
+- Step 5 (M2-a 레이아웃 App Template + Maya 테마) 완료 — `docs/steps/step_5.md`. 헤드리스 61/61, GUI 47/47.
+- 레이아웃: `tools/make_startup.py` → `src/maya_kit/app_template/MayaKit/startup.blend` (워크스페이스 "General"). 테마: `tools/make_theme.py` → `src/maya_kit/theme/maya.xml`. 둘 다 생성기로만 수정.
+- Channel Box 자리는 General 화면 3D 뷰의 **사이드바**(N 패널, 이미 표시됨).
 
 ## 바로 다음 할 일
 
-- **Step 5 — M2-a 레이아웃 App Template** (`docs/PLAN.md` #5).
-  - 근거: `research/maya/ui_layout.md` §2 (General 레이아웃 ASCII), §4 요소별, `research/maya/workspaces.json`, `research/blender/ui_architecture.md` §1–2 (app template 경로 `bl_app_templates_user`, `AppOverrideState`, startup.blend 권장), decisions 1 (cm 표시) · 3 (템플릿을 익스텐션에 넣고 설치/제거 버튼).
-  - 좌 Outliner, 중앙 Persp 뷰포트, 우측 Channel Box/Layer Editor·AE 자리(패널은 Step 6 — 이번엔 자리/사이드바), 아래 타임/레인지 슬라이더 자리, 테마(Maya 회색) 프리셋, 단위 옵션.
-  - startup.blend 는 헤드리스 스크립트로 생성(재현 가능하게 `tools/` 에 생성기) → `src/maya_kit/app_template/` 에 저장. 설치/제거 오퍼레이터는 사용자 scripts 경로에 쓰므로 manifest `[permissions] files` 필요.
-  - 검증: 헤드리스(설치/제거 파일, 템플릿 로드 후 영역 구성), GUI 스크린샷(레이아웃이 Maya General 과 닮았는지 직접 보기).
+- **Step 6 — M2-b Channel Box** (`docs/PLAN.md` #6).
+  - 근거: `research/maya/channel_box.md` (구성 §1, 표시 4개 섹션 §2.1, 채널 선택 §2.2, MMB 가상 슬라이더 §2.3, Channels 메뉴 §2.4, Edit 메뉴 §2.5, 필드 편집 §2.6, Layer Editor §3, Blender 대응 §4), `research/blender/api_limits.md` #1/1a/1b/1c.
+  - 3D 뷰 사이드바 카테고리 "Channel Box": 선택 객체의 Translate/Rotate/Scale XYZ + Visibility (+ 커스텀 속성), SHAPES(데이터), INPUTS(모디파이어 = history) 섹션; 다중 선택 일괄 편집 (Maya 는 선택 전체에 적용); 채널 이름 클릭 선택 → 뷰포트 MMB 드래그 가상 슬라이더 (MMB 는 IC 툴 키맵의 MMB 이동과 충돌 — 우선순위 확인, `industry_compatible_vs_maya.md` §1 "MMB-drag anywhere").
+  - 템플릿의 사이드바가 Channel Box 탭을 열도록 make_startup 갱신 고려 (영역의 활성 카테고리 설정 가능 여부 확인).
+  - MMB 모달·다중 편집 설계 → 먼저 `docs/steps/step_6.md` 「계획」. GUI 검증은 `tests/gui/gui_step6_*.py`.

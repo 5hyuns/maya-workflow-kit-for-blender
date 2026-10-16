@@ -50,6 +50,23 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
 
+        from . import app_template
+        box = layout.box()
+        box.label(text="Maya Layout (application template)")
+        row = box.row()
+        if app_template.is_installed():
+            row.operator("maya_kit.layout_open", icon='FILE_NEW')
+            row.operator("maya_kit.layout_install", text="Reinstall")
+            row.operator("maya_kit.layout_remove", icon='TRASH')
+        else:
+            row.operator("maya_kit.layout_install", icon='IMPORT')
+
+        box = layout.box()
+        box.label(text="Maya Theme")
+        row = box.row()
+        row.operator("maya_kit.theme_apply", icon='COLOR')
+        row.operator("maya_kit.theme_restore", icon='LOOP_BACK')
+
 
 classes = (MAYAKIT_AddonPreferences,)
 

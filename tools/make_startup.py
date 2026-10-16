@@ -1,0 +1,137 @@
+"""Generate the Maya layout app template's startup.blend (headless).
+
+    python tools/make_startup.py          # re-runs itself in `blender -b --factory-startup`
+
+Writes src/maya_kit/app_template/MayaKit/startup.blend. Layout and reasons:
+docs/steps/step_5.md 「계획」 (research/maya/ui_layout.md §2 General layout).
+Areas are split with screen operators under a window/screen override; in
+background mode new areas report width 0 until the file is loaded in a UI,
+where Blender lays them out from the saved split proportions.
+"""
+
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+
+OUTLINER_FACTOR = 0.16    # Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%, wider for Blender rows
+MAYA_LENS = 35.0          # persp focal length 35 (concepts.md §15)
+MAYA_FRAME_END = 120      # playback 1-120 (concepts.md §12, PREF:469-472)
+
+
+def run_outside_blender():
+    import subprocess
+    sys.path.insert(0, str(ROOT / "tools"))
+    import build
+    r = subprocess.run([os.environ.get("BLENDER", build.DEFAULT_BLENDER), "-b", "--factory-startup",
+                        "--python-exit-code", "1", "--python", __file__],
+                       env=build.sandbox_env(), stdin=subprocess.DEVNULL,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    for line in r.stdout.splitlines():
+        if line.startswith("make_startup"):
+            print(line)
+    if r.returncode:
+        sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
+    return r.returncode
+
+
+def build_layout():
+    import bpy
+
+    ctx = bpy.context
+    win = ctx.window_manager.windows[0]
+    ws = bpy.data.workspaces["Layout"]
+    scr = ws.screens[0]
+    assert win.screen == scr, "factory startup should open the Layout workspace"
+
+    def window_region(area):
+        return next(r for r in area.regions if r.type == 'WINDOW')
+
+    def split(area, direction, factor):
+        before = {a.as_pointer() for a in scr.areas}
+        with ctx.temp_override(window=win, screen=scr, area=area, region=window_region(area)):
+            assert bpy.ops.screen.area_split(direction=direction, factor=factor) == {'FINISHED'}
+        return next(a for a in scr.areas if a.as_pointer() not in before)
+
+    def only(area_type):
+        found = [a for a in scr.areas if a.type == area_type]
+        assert len(found) == 1, (area_type, len(found))
+        return found[0]
+
+    view3d = only('VIEW_3D')
+    # Right column = factory split: Outliner on top (~32%), Properties below (~68%).
+    # Top becomes the Layer Editor, bottom stays Properties (Attribute Editor,
+    # Object tab). Rearranging it is not possible headless: screen.area_close
+    # hangs in background mode, area_move has no effect there, and a
+    # Properties space converted from another editor has no tab list.
+    layer_editor = only('OUTLINER')
+    attribute_editor = only('PROPERTIES')
+    attribute_editor.spaces.active.context = 'OBJECT'
+
+    # Left: Outliner next to the viewport (the new area takes the left part).
+    outliner = split(view3d, 'VERTICAL', OUTLINER_FACTOR)
+    outliner.type = 'OUTLINER'
+
+    # --- editor settings ---
+    so = outliner.spaces.active
+    so.display_mode = 'VIEW_LAYER'
+    so.use_filter_object_content = False   # Maya: DAG only, no shapes (ui_layout.md:259-262)
+    so.use_filter_children = True
+
+    le = layer_editor.spaces.active
+    le.display_mode = 'VIEW_LAYER'
+    le.use_filter_object = False           # collections only = display layers
+
+    v3d = view3d.spaces.active
+    v3d.show_region_ui = True              # sidebar = Channel Box host (step 6)
+    v3d.show_region_toolbar = True         # = Maya Toolbox
+    v3d.show_region_tool_header = False    # Maya has no tool header
+    v3d.lens = MAYA_LENS
+    v3d.region_3d.view_perspective = 'PERSP'
+
+    ws.name = "General"                    # Maya workspace name (ui_layout.md:78)
+    return {"outliner": outliner, "view3d": view3d, "attribute_editor": attribute_editor,
+            "layer_editor": layer_editor}
+
+
+def setup_scene():
+    import bpy
+    scene = bpy.context.scene
+    us = scene.unit_settings
+    us.system = 'METRIC'
+    us.length_unit = 'CENTIMETERS'         # decision 1: display cm, keep 1 BU = 1 m
+    us.scale_length = 1.0
+    scene.frame_start, scene.frame_end = 1, MAYA_FRAME_END
+    scene.render.fps, scene.render.fps_base = 24, 1.0
+    # Maya's new scene is empty (concepts.md §15).
+    for ob in list(bpy.data.objects):
+        data = ob.data
+        bpy.data.objects.remove(ob)
+        if data is not None and data.users == 0:
+            for coll in (bpy.data.meshes, bpy.data.cameras, bpy.data.lights):
+                if data.name in coll and coll[data.name] == data:
+                    coll.remove(data)
+                    break
+    for mat in list(bpy.data.materials):
+        if mat.users == 0:
+            bpy.data.materials.remove(mat)
+
+
+def main():
+    import bpy
+    build_layout()
+    setup_scene()
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT), compress=True, check_existing=False)
+    OUT.with_suffix(".blend1").unlink(missing_ok=True)  # Blender's backup of the previous file
+    print(f"make_startup: wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
+
+
+if __name__ == "__main__":
+    try:
+        import bpy  # noqa: F401
+    except ImportError:
+        sys.exit(run_outside_blender())
+    main()
