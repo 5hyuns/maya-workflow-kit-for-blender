@@ -5,7 +5,7 @@
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
 docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
 docs/steps/step_16.md (18), docs/steps/step_18.md (19), docs/steps/step_20.md (20),
-docs/steps/step_22.md (21), docs/steps/step_24.md (22), docs/steps/step_27.md (23).
+docs/steps/step_22.md (21), docs/steps/step_24.md (22), docs/steps/step_27.md (23), docs/steps/step_28.md (24).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -21,7 +21,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate")
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -470,13 +470,39 @@ def patch_view_keys(kd):
         _add(kd, km, "maya_kit.smooth_preview", make_event("ZERO"), {"level": 1})
 
 
+# --- 24. MMB drag = the last picked manipulator handle (docs/steps/step_28.md 「계획」) ------------
+# research/maya/interaction.md:103 (manipsRememberActiveHandle). A plain LMB press on the gizmo
+# remembers the handle (after the drag); the tool keymaps' MMB press (IC: free transform) uses it.
+# The Channel Box MMB slider (patch 14) stays in front.
+
+MMB_TOOLS = (("3D View Tool: Move", "transform.translate", 'TRANSLATE'),
+             ("3D View Tool: Rotate", "transform.rotate", 'ROTATE'),
+             ("3D View Tool: Scale", "transform.resize", 'RESIZE'))
+
+
+def patch_active_handle(kd):
+    for km in GIZMO_KEYMAPS:
+        _add(kd, km, "maya_kit.manip_press", make_event("LEFTMOUSE", "PRESS"), first=True)
+    for km, idname, mode in MMB_TOOLS:
+        items = kd.items(km)
+        old = kd.find(km, idname, type="MIDDLEMOUSE")
+        if not old:
+            raise LookupError(f"{km}: no MMB {idname}")
+        at = next(i for i, it in enumerate(items) if it is old[0])
+        kd.remove(km, idname, type="MIDDLEMOUSE")
+        item = kd.add(km, "maya_kit.manip_mmb", make_event("MIDDLEMOUSE"), {"mode": mode})
+        items.remove(item)
+        items.insert(at, item)      # same place: after the Channel Box slider
+        ADDED.append((km, "maya_kit.manip_mmb", make_event("MIDDLEMOUSE"), {"mode": mode}, (km,)))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
-           patch_component_delete, patch_view_keys)
+           patch_component_delete, patch_view_keys, patch_active_handle)
 
 
 def apply(data):

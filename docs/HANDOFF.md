@@ -2,6 +2,8 @@
 
 ## 현재 작업
 
+- Step 28 (MMB = 마지막 핸들) 완료 — `docs/steps/step_28.md`. 기즈모 LMB 누름 감시 → 등록된 transform 의 제약을 툴별로 기억,
+  Tool 키맵 MMB = `maya_kit.manip_mmb` (CB 슬라이더 우선), 같은 툴 키 재탭 = 리셋. 헤드리스 264/264, GUI 206/206, dogfood 47/47.
 - Step 27 (매니퓰레이터 크기·뷰 키) 완료 — `docs/steps/step_27.md`. = / Shift+= / - gizmo_size (`prefs_preset.set_runtime`, disable 시 복원),
   PgUp/PgDn 스무스 단계, 0, Home (Maya persp), Alt+5 와이어프레임. 키맵 대응표 구현 87 / 계획 5 (F2–F6). 헤드리스 260/260, GUI 202/202,
   dogfood **47/47**.
@@ -51,7 +53,7 @@
 
 ## 바로 다음 할 일
 
-- Step 28: MMB 드래그 = 마지막으로 잡은 핸들 (backlog 5) — Move/Rotate/Scale 툴에서 MMB 드래그가 마지막 클릭 핸들 축/평면을 따르고 W 재입력 시
-  중앙 (research/maya/interaction.md:104, :27). 기즈모 키맵 PASS_THROUGH 항목(step 22 방식)으로 핸들 기억 + Tool 키맵 MMB. 계획 먼저.
-  그다음 재질 지정, 선택 감각, Outliner 레이아웃 (backlog 6–8).
+- Step 29: Maya 식 재질 지정 (backlog 6) — Lighting/Shading > Assign New / Existing / Favorite Material (지금 회색, `ui/menu_map.py` 에 없음),
+  RMB 마킹 메뉴 목록의 재질 항목 (research/maya/hotkeys_and_menus.md:252), 면 선택이면 면에만. 셸프 `maya_kit.shelf_material` 재사용.
+  그다음 선택 감각, Outliner 레이아웃 (backlog 7–8).
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.
