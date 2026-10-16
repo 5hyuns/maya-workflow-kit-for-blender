@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 30 (선택 감각) 완료 — `docs/steps/step_30.md`. 편집 모드 박스/라쏘 = 가려진 요소까지 (드래그 동안만 X-Ray 플래그, `operators/marquee.py`),
+  정점 모드 + 셀렉트 툴 프리셀렉트 하이라이트 (`operators/preselect.py`, C 기즈모 `GIZMO_GT_mesh_preselect_elem_3d`), 언두 256 단계
+  (`prefs_preset.GROUPS["undo"]`, disable 시 복원, `tests/kit.py` 가 prefs.edit 스냅샷). 헤드리스 279/279, GUI 232/232, dogfood 47/47.
 - Step 29 (Maya 식 재질 지정) 완료 — `docs/steps/step_29.md`. `operators/material.py`: Lighting/Shading Material Attributes /
   Assign New (검색 팝업, Shift+T) / Favorite ▸ / Existing ▸, RMB 목록 끝 같은 항목 (선택 없으면 커서 아래 오브젝트), 면 선택 모드 = 면에만,
   아니면 오브젝트 전체 (슬롯 1개). 엔진: 목록 하위 메뉴 영역 안으로, 클릭 모드 항목은 버튼을 뗄 때 실행. 헤드리스 274/274, GUI 218/218,
@@ -57,7 +60,7 @@
 
 ## 바로 다음 할 일
 
-- Step 30: 선택 감각 (backlog 7) — 컴포넌트 마키 관통 (Maya selectPrefUseDepth false), 프리셀렉트 하이라이트, 무한 언두
-  (`prefs_preset`; 먼저 `tests/kit.py` 가 `preferences.edit` 스냅샷). PLAN 재점검 1차 B6–B8, research/maya/interaction.md·defaults.json.
-- Step 31: Outliner 레이아웃 (MayaKit 템플릿 왼쪽 Outliner 좁아 이름 잘림) + 홀드 메뉴/타임라인 표시 다듬기 (backlog 8).
+- Step 31: Outliner 레이아웃 (MayaKit 템플릿 왼쪽 Outliner 좁아 이름 잘림, step_23 스크린샷; research/maya/ui_layout.md:121, 259-262) +
+  홀드 메뉴 토글 상태 / 타임라인 현재 프레임 상자 다듬기 (backlog 8).
+- 그 뒤: PLAN 「재점검 2차」 남은 중간 항목 (메뉴 정확성, F2–F6 메뉴 세트, 박스 줌, 뷰 패널 메뉴 등).
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

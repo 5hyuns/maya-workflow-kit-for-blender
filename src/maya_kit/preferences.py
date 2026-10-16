@@ -32,6 +32,33 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_navigation)
     # JSON of the user's values before the Maya preset (docs/steps/step_4.md).
     prefs_backup: bpy.props.StringProperty(options={'HIDDEN'})
+
+    def _update_undo(self, context):
+        from . import prefs_preset
+        if self.use_maya_undo:
+            prefs_preset.apply(context.preferences, self, "undo")
+        else:
+            prefs_preset.restore(context.preferences, self, "undo")
+
+    use_maya_undo: bpy.props.BoolProperty(
+        name="Maya Undo Queue",
+        description="Keep as many undo steps as Blender allows (256; Maya's queue is infinite). "
+                    "Turning it off restores your previous value",
+        default=True, update=_update_undo)
+    undo_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    # Edit-mode marquee/lasso also selects occluded components (Maya selectPrefUseDepth false).
+    select_through: bpy.props.BoolProperty(
+        name="Marquee Selects Hidden Components",
+        description="In mesh edit mode, box and lasso selection also pick vertices, edges and faces "
+                    "behind the surface, like Maya (Camera based selection off). X-ray is switched "
+                    "on only while dragging",
+        default=True)
+    # Maya preSelectHilite true (research/maya/interaction.md:73).
+    preselect_highlight: bpy.props.BoolProperty(
+        name="Pre-selection Highlight",
+        description="In mesh edit mode with a select tool, highlight the vertex, edge or face "
+                    "under the mouse before clicking (Maya)",
+        default=True)
     # JSON of Blender preferences changed by Maya keys (= / - gizmo size), restored on disable.
     runtime_backup: bpy.props.StringProperty(options={'HIDDEN'})
     lock_ortho_tumble: bpy.props.BoolProperty(
@@ -133,6 +160,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col = layout.column()
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
+        col.prop(self, "use_maya_undo")
+        col.prop(self, "select_through")
+        col.prop(self, "preselect_highlight")
 
         box = layout.box()
         box.label(text="Scene Concepts")

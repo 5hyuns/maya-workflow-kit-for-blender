@@ -21,7 +21,8 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press")
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press",
+                      "maya_kit.select_through")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -505,13 +506,30 @@ def patch_materials(kd):
         _add(kd, km, "maya_kit.assign_new_material", make_event("T", shift=True))
 
 
+# --- 26. Marquee selects occluded components (docs/steps/step_30.md 「계획」 1) -----------------
+# Maya selectPrefUseDepth false (research/maya/interaction.md:68). In front of every LMB drag
+# box / lasso item of the select tools (and their fallbacks under Move/Rotate/Scale): sets the
+# view's X-ray flag for the drag, then PASS_THROUGH to view3d.select_box / select_lasso.
+SELECT_DRAG_KEYMAPS = ("3D View Tool: Select Box", "3D View Tool: Select Box (fallback)",
+                       "3D View Tool: Select Lasso", "3D View Tool: Select Lasso (fallback)")
+
+
+def patch_select_through(kd):
+    for km in SELECT_DRAG_KEYMAPS:
+        for shift, ctrl in ((False, False), (True, False), (False, True), (True, True)):
+            _add(kd, km, "maya_kit.select_through",
+                 make_event("LEFTMOUSE", "CLICK_DRAG", shift=shift, ctrl=ctrl), first=True,
+                 shadows=(km,))   # in front of the select item on purpose (PASS_THROUGH)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
-           patch_component_delete, patch_view_keys, patch_active_handle, patch_materials)
+           patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
+           patch_select_through)
 
 
 def apply(data):
