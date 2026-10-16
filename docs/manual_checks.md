@@ -127,3 +127,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 12) 탭 드롭다운 / ◀ ▶ 로 Rigging·Animation·Rendering 전환, 다시 시작해도 마지막 탭 유지 (환경설정 저장 시).
 - [ ] (step 12) 톱니 > New Shelf → Add Button(스크립트 한 줄, 아이콘 이름) → 클릭 실행, Edit/Delete Button, Add Last Command (커맨드 라인 실행 후), 다시 시작해도 사용자 셸프가 남음.
 - [ ] (step 12) 팩토리 레이아웃에서 Windows > UI Elements > Shelf 로 띠 추가/제거, 다른 Image Editor 는 평소처럼 보임.
+
+### Step 13 — 배포
+
+- [ ] (step 13) 실제 사용자 설정(새 프로필)에서 zip 을 끌어다 놓아 설치: Maya 키맵·내비게이션 적용, Quick Setup 창에서 Continue 를 눌렀을 때 키맵이 Blender 로 바뀌는지 (바뀌면 Activate Maya Keymap).
+- [ ] (step 13) Install Maya Layout → File > New > MayaKit → Blender 재시작 뒤에도 레이아웃·키맵 유지, Remove Maya Layout 후 템플릿 목록에서 사라짐.
+- [ ] (step 13) 비활성화 → 키맵·내비게이션·Image Editor 헤더가 원래대로, 다시 활성화.

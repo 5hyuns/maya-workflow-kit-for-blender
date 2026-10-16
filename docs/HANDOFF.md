@@ -2,14 +2,12 @@
 
 ## 현재 작업
 
-- Step 12 (M5 셸프) 완료 — `docs/steps/step_12.md`. 헤드리스 185/185, GUI 115/115.
-- Maya 띠: 표식 있는 얇은 Image Editor (헤더 = Status Line, 툴 헤더 = Shelf), App Template 에 포함, 다른 레이아웃은 Windows > UI Elements > Shelf.
-- `ui/shelf.py` (버튼·탭·사용자 셸프 `shelves.json`·띠), `ui/shelf_data.py` (생성: `tools/gen_shelf_data.py`), `ui/shelf_map.py` (동작·내장 아이콘).
-- Step 11 = `4f2ac87` (Outliner/AE), Step 10 = `86f3c29`.
+- Step 13 (통합·배포) 완료 — `docs/steps/step_13.md`. 헤드리스 188/188, GUI 115/115, `extension validate` 통과, `tools/release_check.py` 10/10.
+- 배포물: `dist/maya_kit-0.1.0.zip` (익스텐션), `dist/maya_kit-0.1.0-legacy.zip`; 문서 README.md (한/영), CHANGELOG.md, LICENSE, `docs/screenshots/` 7장.
+- 깨끗한 설치 점검이 찾은 결함 2건(명령줄 설치 후 첫 시작 키맵, 새 설정에서 템플릿 스크립트 import) 수정.
+- 단계 1–12 커밋: 마지막 `97cf1b0` (셸프).
 
 ## 바로 다음 할 일
 
-- **Step 13 — 통합·배포** (사용자 번호): 전체 헤드리스 테스트, 익스텐션 zip 빌드 + `blender --command extension validate`, 깨끗한 샌드박스 설정에
-  설치 → 활성화 → App Template 설치 → GUI 스크린샷 세트(`docs/screenshots/`), README.md (한국어+영어: 설치, 기능, 한계).
-  - 재료: 각 step 문서 「결정」「남은 것」, `docs/keymap_mapping.md`, `docs/manual_checks.md`, GUI 테스트 `--shots`.
-- 미뤄진 것: 메뉴셋 F2–F6 키, Range Slider·타임라인·`.` `,` 키, Status Line 입력 라인, 마킹메뉴 편집기, Step 10–12 「남은 것」.
+- 계획된 단계는 모두 끝. 남은 일 후보 (사용자 지시 대기): `docs/manual_checks.md` 손 확인, 메뉴셋 F2–F6 키, Range Slider·타임라인 모양,
+  Status Line 입력 라인, 마킹메뉴 편집기, 셸프 드래그 정렬, Blender Extensions 플랫폼 등록 정보 (각 step 문서 「남은 것」).

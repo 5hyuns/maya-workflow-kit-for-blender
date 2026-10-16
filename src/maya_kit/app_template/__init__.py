@@ -8,6 +8,7 @@ is copied to the user's ``scripts/startup/bl_app_templates_user/``
 Layout: docs/steps/step_5.md; generator: tools/make_startup.py.
 """
 
+import importlib
 import os
 import shutil
 
@@ -39,6 +40,11 @@ def install():
                     ignore=shutil.ignore_patterns("__pycache__", "*.blend1"))
     with open(os.path.join(dst, MARKER), "w", encoding="utf-8") as fh:
         fh.write("Installed by the Maya Kit extension. Removed by its 'Remove Maya Layout' button.\n")
+    # A clean config has no scripts/startup at launch, so it is not on sys.path and the
+    # template's __init__ (enables the add-on, re-activates the Maya keymap) would not
+    # import until a restart (found by tools/release_check.py, docs/steps/step_13.md).
+    bpy.utils.refresh_script_paths()
+    importlib.invalidate_caches()
     return dst
 
 

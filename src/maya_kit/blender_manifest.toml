@@ -15,7 +15,7 @@ license = [
 ]
 
 [permissions]
-files = "Install the Maya layout template and back up the theme"
+files = "Install the layout template, back up the theme, save shelves"
 
 [build]
 paths_exclude_pattern = [

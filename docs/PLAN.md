@@ -23,7 +23,7 @@ Verification: **H** headless test in `tests/` · **G** GUI simulated-event test 
 | 11 | M4-a | Concept operators | Freeze Transforms (keep pivot), Reset, Center Pivot, Delete History (apply modifiers), Maya naming on create; P / Shift+P Maya parenting (from row 8), Duplicate Special / with Transform, Maya Units option | P/W (done in user step 10: `operators/freeze.py`, `parenting.py`, `duplicate.py`, `history.py`, `create.py`, `units.py`) | H (matrices, names), G, S, M | `maya/concepts.md` §4–§5, §13–§14 |
 | 12 | M4-b | Outliner, Attribute Editor, Layer Editor | UIList DAG outliner with shape toggle; AE node tabs (sidebar + `prop_tabs_enum`); display layers over collections | W (done in user step 11: `ui/outliner.py`, `ui/attribute_editor.py`, `ui/ae_layout.py`; layer editor in step 6) | H, G, S, M | `maya/attribute_editor.md`, `maya/channel_box.md` §3, api_limits #2–#3 |
 | 13 | M5 | Shelf and menu sets | Shelf (header/panel/Asset Shelf), menu set hotkeys F2–F6 (switching itself done in step 7) | W (shelf done in user step 12: `ui/shelf.py` strip, `shelf_data`/`shelf_map`; F2–F6 keys open) | H, S | `maya/shelves.json`, `maya/menus.json`, api_limits #11 |
-| 14 | — | Release | Legacy zip check, user docs, limitations page | P | H | decision 3 |
+| 14 | — | Release | Legacy zip check, user docs, limitations page | P (done in user step 13: README, CHANGELOG, LICENSE, `tools/release_check.py`) | H, G, S | decision 3 |
 
 ## Ordering after step 7 (delegated)
 
