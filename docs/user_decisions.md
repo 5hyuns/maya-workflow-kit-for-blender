@@ -10,3 +10,13 @@
 5. **불가능한 것**(Y-up, rotate/scale 피벗 분리, 필드 위 MMB 드래그, MEL 실행)은 C++ 수정 없이 우회하고, 안 되는 것은 문서에 적는다. Blender 소스는 포크하지 않는다.
 6. **Maya 자료 사용**: Maya의 MEL·아이콘·리소스 파일을 저장소에 복사해 배포하지 않는다. 동작과 배치만 참고해 다시 구현한다. `research/`의 추출 JSON은 내부 참고용이다.
 7. **사용자 설정 보호**: 테스트할 때 사용자의 실제 Blender 설정(`%APPDATA%/Blender Foundation`)을 건드리지 않는다. `--factory-startup`이나 저장소 안의 임시 `BLENDER_USER_CONFIG`/`BLENDER_USER_SCRIPTS`를 쓴다.
+8. **Maya 길이 규칙 (delegated, step 21, 2026-10-17)**: **Maya 길이 1 = 씬 표시 길이 단위 1** (Maya 의 current linear unit 과 같은 뜻,
+   research/maya/defaults.json:10). Create 메뉴·셸프·마킹 메뉴·핫박스(`maya_kit.create`), Ctrl+G 그룹, `cmds.polyCube()` 등 모든
+   생성 경로가 `operators/units.maya_unit()` 을 곱한다. 그래서 Channel Box 의 1 은 Maya 처럼 1 cm 이고, Maya FBX(cm)를 가져온 크기와
+   같다 (Blender FBX 임포터 `global_scale = UnitScaleFactor / (100·scale_length)`, `$S\addons_core\io_scene_fbx\import_fbx.py:3133-3135`).
+   - MayaKit 템플릿(결정 1: m + cm 표시): pCube1 = 0.01 BU = "1 cm". 템플릿의 3D 뷰는 Maya 새 씬 persp(28, 21, 28 cm)와 클립
+     0.1 / 10000 cm 로 맞춘다.
+   - Maya Units 옵션(scale_length 0.01): pCube1 = 1 BU = "1 cm". 새 파일에서는 뷰도 같은 cm 장면을 보도록 함께 스케일된다.
+   - 팩토리 씬(m 표시): pCube1 = 1 BU = "1 m" (Maya 의 working unit 을 m 로 둔 것과 같음).
+   - 결정 1 은 그대로다 (m 유지 → 물리·라이트 감쇠는 실제 크기 1 cm 물체로 계산된다. Maya 에서 가져온 장면과 같은 조건).
+     step 10 「계획」 7 의 "1 Maya 단위 = 1 BU" 를 대체한다.

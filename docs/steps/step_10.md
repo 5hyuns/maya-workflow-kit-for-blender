@@ -111,7 +111,8 @@ Maya `xform -cpc`: 피벗을 바운딩 박스 중심으로, **정점·translate 
 
 ### 7. 단위 (decision 1)
 
-- 크기 규칙 (delegated): **Maya 1 단위 = Blender 1 BU**. 기본(decision 1: m 유지 + cm 표시)에서는 1×1×1
+- (step 21 에서 대체됨: Maya 길이 1 = 표시 단위 1, docs/user_decisions.md 결정 8.)
+  크기 규칙 (delegated): **Maya 1 단위 = Blender 1 BU**. 기본(decision 1: m 유지 + cm 표시)에서는 1×1×1
   큐브가 그리드 한 칸이고 "100 cm" 로 표시된다 (api_limits.md:78 의 100배 표시 차이 그대로). **Maya Units**
   옵션을 켜면 1 BU = 1 cm 이라 표시 값도 Maya 와 같다 ("1 cm").
 - 환경설정 **Maya Units (1 BU = 1 cm)** (기본 끔): 켜면 현재 파일의 모든 씬 `length_unit = CENTIMETERS`,

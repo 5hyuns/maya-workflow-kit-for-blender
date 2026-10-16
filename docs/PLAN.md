@@ -87,8 +87,8 @@ blindspot scout (B, cards in step_14.md), step docs (S).
    unbound; Ctrl+E / Ctrl+B only switch tools (B5).
 3. **Framing and look** (D) — done: Maya fit for F / A / Shift+F / Shift+A / Ctrl+Shift+F (step 17),
    smooth shading of the preview (step 15), hotbox rows kept visible (step 17).
-4. **Units consistency** (B2): Create/shelf cube = 1 BU (shows 100 cm), `cmds.polyCube()` = 1 cm.
-   One rule for all creation paths.
+4. **Units consistency** (B2) — done in step 21: a Maya length of 1 = one scene display unit for every creation
+   path (`units.maya_unit()`, decision 8); MayaKit template views at Maya's persp / clip in cm.
 5. **Maya naming of copies** (D) — done in step 19: Ctrl+D = `maya_kit.duplicate` (pCube2 / pCubeShape2, subtree, in place).
 6. **Timeline** (S, D) — done in step 20: `.` `,` Alt+`.` Alt+`,`, timeline view = playback range, Range Slider
    fields in the Timeline header (animation 1–200, playback 1–120). Still open: Maya key ticks (W), range drag bar.

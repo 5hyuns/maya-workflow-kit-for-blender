@@ -42,6 +42,11 @@ def _mod(kind):
     return ("object.modifier_add", {"type": kind})
 
 
+def _create(kind):
+    # Maya name and size in Maya units (operators/create.py, docs/steps/step_21.md).
+    return ("maya_kit.create", {"kind": kind})
+
+
 def _orient(kind):
     # Not transform.select_orientation: invoked from a menu it opens its own enum popup (GUI test).
     return ("wm.context_set_enum", {"data_path": "scene.transform_orientation_slots[0].type", "value": kind})
@@ -251,18 +256,18 @@ SHIFT_DEFAULT = MarkingMenu(
     "contextPolyToolsDefaultMM", "Create", "research/maya/marking_menus.json contextPolyToolsDefaultMM",
     radial={
         "N": ("Create Polygon Tool", None),                                # :56
-        "NE": ("Disc", ("mesh.primitive_circle_add", {"fill_type": 'NGON'})),  # :72
-        "E": ("Sphere", "mesh.primitive_uv_sphere_add"),                   # :89
-        "SE": ("Torus", "mesh.primitive_torus_add"),                       # :105
-        "S": ("Cube", "mesh.primitive_cube_add"),                          # :121
-        "SW": ("Cone", "mesh.primitive_cone_add"),                         # :137
-        "W": ("Cylinder", "mesh.primitive_cylinder_add"),                  # :153
-        "NW": ("Plane", "mesh.primitive_plane_add"),                       # :169
+        "NE": ("Disc", _create('DISC')),  # :72
+        "E": ("Sphere", _create('SPHERE')),                   # :89
+        "SE": ("Torus", _create('TORUS')),                       # :105
+        "S": ("Cube", _create('CUBE')),                          # :121
+        "SW": ("Cone", _create('CONE')),                         # :137
+        "W": ("Cylinder", _create('CYLINDER')),                  # :153
+        "NW": ("Plane", _create('PLANE')),                       # :169
     },
     items=[
-        ("Platonic Solid", ("mesh.primitive_ico_sphere_add", {"subdivisions": 1})),  # :185
-        ("Pyramid", ("mesh.primitive_cone_add", {"vertices": 4})),         # :198
-        ("Prism", ("mesh.primitive_cylinder_add", {"vertices": 3})),       # :212
+        ("Platonic Solid", _create('PLATONIC')),  # :185
+        ("Pyramid", _create('PYRAMID')),         # :198
+        ("Prism", _create('PRISM')),       # :212
         ("Pipe", None), ("Helix", None), ("Gear", None),
         DIVIDER,
         ("Type", "object.text_add"),                                       # :308

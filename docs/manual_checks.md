@@ -168,3 +168,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 20 — 타임라인
 
 - [ ] (step 20) 키가 있는 객체에서 `.` / `,` / Alt+`.` / Alt+`,` 를 3D 뷰·타임라인·그래프 에디터 위에서. Range Slider 네 필드를 바꾸면 재생 범위·타임라인 뷰가 Maya 처럼 따라가는지, 재생 범위 토글을 끄면 애니메이션 범위 전체가 재생되는지.
+
+### Step 21 — 단위
+
+- [ ] (step 21) MayaKit 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
+- [ ] (step 21) Maya 에서 내보낸 FBX(cm)를 File > Import 로 가져와 Create 큐브와 같은 크기인지, Maya Units 켬/끔 둘 다.

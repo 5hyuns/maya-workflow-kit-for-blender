@@ -7,9 +7,10 @@ r=1, polyPlane 1x1 with 10x10); names ``pCube1`` / ``pCubeShape1``
 (concepts.md:150-154). Other default values are Maya behaviour knowledge [K]
 and two are unverified [U] (docs/steps/step_10.md 「계획」 6).
 
-Size rule (docs/steps/step_10.md 「계획」 7, delegated): 1 Maya unit = 1 BU, so a
-cube fills one grid cell; with the "Maya Units" preference 1 BU = 1 cm and the
-numbers read like Maya's too.
+Size rule (decision 8, docs/steps/step_21.md 「계획」, delegated): a Maya length of 1
+is one scene display unit (``units.maya_unit``), like ``cmds.polyCube()`` and a
+Maya FBX import: pCube1 shows 1 cm in the MayaKit template (0.01 BU) and with
+the "Maya Units" preference (1 BU). Lengths below are in Maya units.
 """
 
 import math
@@ -17,7 +18,7 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
-from . import naming
+from . import naming, units
 
 HALF_PI = math.pi / 2
 # Maya's Y-up "front" (looking down -Z) is Blender's front (+Y): directional lights,
@@ -59,15 +60,38 @@ KINDS = {
                     {"radius": 1.0}, None),
     'NURBS_CIRCLE': ("NURBS Circle", "nurbsCircle", "curve.primitive_nurbs_circle_add",
                      {"radius": 1.0}, None),
+    # Maya's curve tools draw a curve; Blender adds one to edit (names "curve1" / "bezier1" [K]).
+    'CV_CURVE': ("CV Curve", "curve", "curve.primitive_nurbs_curve_add", {"radius": 1.0}, None),
+    'BEZIER_CURVE': ("Bezier Curve", "bezier", "curve.primitive_bezier_curve_add",
+                     {"radius": 1.0}, None),
     'DIRECTIONAL_LIGHT': ("Directional Light", "directionalLight", "object.light_add",
                           {"type": 'SUN'}, LEVEL),
     'POINT_LIGHT': ("Point Light", "pointLight", "object.light_add", {"type": 'POINT'}, None),
     'SPOT_LIGHT': ("Spot Light", "spotLight", "object.light_add", {"type": 'SPOT'}, LEVEL),
     'AREA_LIGHT': ("Area Light", "areaLight", "object.light_add", {"type": 'AREA'}, LEVEL),
     'CAMERA': ("Camera", "camera", "object.camera_add", {}, LEVEL),
-    'LOCATOR': ("Locator", "locator", "object.empty_add", {"type": 'PLAIN_AXES'}, None),
-    'EMPTY_GROUP': ("Empty Group", "null", "object.empty_add", {"type": 'PLAIN_AXES'}, None),
+    'LOCATOR': ("Locator", "locator", "object.empty_add",
+                {"type": 'PLAIN_AXES', "radius": 1.0}, None),
+    'EMPTY_GROUP': ("Empty Group", "null", "object.empty_add",
+                    {"type": 'PLAIN_AXES', "radius": 1.0}, None),
 }
+
+# Operator properties that are lengths (scaled by units.maya_unit).
+LENGTHS = {"size", "radius", "depth", "radius1", "radius2", "major_radius", "minor_radius"}
+
+
+def _scale_data(ob, k):
+    """Lengths the add operators don't take: camera (Maya clip 0.1 / 10000,
+    defaults.json:45-46), Blender's light sizes, kept in proportion to the Maya unit."""
+    data = ob.data
+    if ob.type == 'CAMERA':
+        data.display_size *= k
+        data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
+    elif ob.type == 'LIGHT':
+        data.shadow_soft_size *= k
+        if data.type == 'AREA':
+            data.size *= k
+            data.size_y *= k
 
 
 def _maya_naming(context):
@@ -84,9 +108,12 @@ def create(context, kind, maya_naming=True):
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     mod, name = op.split(".")
-    kw = dict(props, location=(0.0, 0.0, 0.0), rotation=rot or (0.0, 0.0, 0.0), align='WORLD')
+    k = units.maya_unit(context.scene)
+    kw = {key: v * k if key in LENGTHS else v for key, v in props.items()}
+    kw.update(location=(0.0, 0.0, 0.0), rotation=rot or (0.0, 0.0, 0.0), align='WORLD')
     getattr(getattr(bpy.ops, mod), name)(**kw)
     ob = context.view_layer.objects.active
+    _scale_data(ob, k)
     if maya_naming:
         naming.apply_maya_name(ob, base)
     return ob

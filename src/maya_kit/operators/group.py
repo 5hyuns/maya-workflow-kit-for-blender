@@ -15,6 +15,8 @@ import re
 import bpy
 from mathutils import Matrix
 
+from . import units
+
 _GROUP_RE = re.compile(r"^group(\d+)$")
 
 
@@ -51,6 +53,8 @@ def make_group(context, objects):
 
     grp = bpy.data.objects.new(next_group_name(o.name for o in bpy.data.objects), None)
     grp.empty_display_type = 'PLAIN_AXES'
+    # 1 Maya unit, like a Create locator (decision 8, docs/steps/step_21.md)
+    grp.empty_display_size = units.maya_unit(context.scene)
     collection.objects.link(grp)
     if parent is not None:
         # Under the common parent with an identity local transform, so the

@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 21 (생성 경로 단위 통일) 완료 — `docs/steps/step_21.md`, 결정 8 (`docs/user_decisions.md`). Maya 길이 1 = 씬 표시 단위 1
+  (`operators/units.maya_unit()`): Create/셸프/메뉴/마킹 메뉴/핫박스/Ctrl+G/`cmds` 가 같은 크기, Maya FBX 임포트 크기와도 같음.
+  MayaKit 템플릿 pCube1 = 0.01 BU = "1 cm", 템플릿 3D 뷰 = Maya persp (28, 21, 28 cm) + 클립 0.1 / 10000 cm; Maya Units 켬 = 1 BU = "1 cm".
+  헤드리스 235/235, GUI 162/162, dogfood 47 중 46 (남은 실패: `=`).
 - Step 20 (타임라인) 완료 — `docs/steps/step_20.md`. `.` `,` = 다음/이전 키, Alt+`.` Alt+`,` = 프레임 (Frames 키맵, 3D View 피벗/방향 파이 제거),
   타임라인 헤더 = Maya Time Slider 버튼 + Range Slider 4 필드, 타임라인 뷰가 재생 범위를 따라감, MayaKit 템플릿 애니메이션 1–200 / 재생 1–120.
   헤드리스 227/227, GUI 156/156, dogfood 47 중 46 (남은 실패: `=`).
@@ -29,6 +33,7 @@
 
 ## 바로 다음 할 일
 
-- Step 21: backlog 7 — 생성 경로 단위 통일 (Create/셸프 1 BU vs `cmds.polyCube()` 1 cm, `command_line/cmds_shim.py:424-429`), 결정은
-  `docs/user_decisions.md` 에 덧붙여 기록. 이후 backlog 8 (Shift+매니퓰레이터 복제 계획).
+- Step 22: backlog 8 — 매니퓰레이터 Shift+드래그 복제(오브젝트) / 압출(컴포넌트) (research/README.md:75 '높음', B4). 복잡한 설계라
+  `docs/steps/step_22.md` 「계획」 먼저. 복제 이름은 `maya_kit.duplicate` (step 19), 크기·오프셋 값은 Maya 단위(`units.maya_unit()`, 결정 8).
+- 그다음 PLAN 「재점검 1차」 남은 것: `=`/`-` 매니퓰레이터 크기, PgUp/PgDn, `0`, Home, Alt+5, 메뉴셋 F2–F6, 선택 감각(B6–B8), 메뉴(B11–B12).
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.
