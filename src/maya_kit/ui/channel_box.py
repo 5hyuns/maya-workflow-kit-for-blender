@@ -17,6 +17,8 @@ import math
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 
+from ..operators import display
+
 CATEGORY = "Channel Box"
 
 # key, label, data path, index, kind
@@ -658,10 +660,12 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 if hasattr(data, prop):
                     box.prop(data, prop)
 
-        if len(ob.modifiers):
+        # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
+        inputs = [mod for mod in ob.modifiers if not display.is_preview(mod)]
+        if inputs:
             box = layout.box()
             box.label(text="INPUTS")
-            for mod in ob.modifiers:
+            for mod in inputs:
                 row = box.row(align=True)
                 row.prop(mod, "show_expanded", text="", emboss=False,
                          icon='DISCLOSURE_TRI_DOWN' if mod.show_expanded else 'DISCLOSURE_TRI_RIGHT')

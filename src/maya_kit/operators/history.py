@@ -11,6 +11,8 @@ History (``delete -ch``, Alt+Shift+D) bakes them; Non-Deformer History
 import bpy
 from bpy.props import BoolProperty, EnumProperty
 
+from .display import is_preview
+
 # Modifiers that play the part of Maya deformers (skinCluster, ffd, cluster, wrap,
 # nonlinear, deltaMush, shrinkWrap, textureDeformer, wire, ...): kept by
 # Delete Non-Deformer History.
@@ -50,17 +52,21 @@ def delete_history(context, objects, non_deformer=False):
     """Bake history on mesh ``objects``. Returns (baked, notes)."""
     baked, notes = 0, []
     for ob in objects:
-        if not ob.modifiers and not (ob.type == 'MESH' and ob.data.shape_keys):
+        # Smooth Mesh Preview (1/2/3) is a display attribute in Maya, not history
+        # (): never baked, always kept (step 15).
+        preview = {md.name for md in ob.modifiers if is_preview(md)}
+        history = [md for md in ob.modifiers if md.name not in preview]
+        if not history and not (ob.type == 'MESH' and ob.data.shape_keys):
             continue
         if ob.type != 'MESH':
             notes.append(f"{ob.name}: not a mesh, modifiers kept")
             continue
         if not non_deformer:
-            _bake(context, ob, keep=set())
+            _bake(context, ob, keep=preview)
             baked += 1
             continue
         prefix = []
-        for md in ob.modifiers:
+        for md in history:
             if md.type in DEFORMERS:
                 break
             prefix.append(md.name)
@@ -69,10 +75,10 @@ def delete_history(context, objects, non_deformer=False):
         if ob.data.shape_keys:
             notes.append(f"{ob.name}: has shape keys, modelling modifiers kept")
             continue
-        rest = [md.name for md in ob.modifiers if md.name not in prefix]
+        rest = [md.name for md in history if md.name not in prefix]
         if any(ob.modifiers[n].type not in DEFORMERS for n in rest):
             notes.append(f"{ob.name}: modifiers after a deformer kept")
-        _bake(context, ob, keep=set(rest))
+        _bake(context, ob, keep=set(rest) | preview)
         baked += 1
     return baked, notes
 
