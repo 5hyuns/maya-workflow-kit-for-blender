@@ -19,6 +19,9 @@ OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
 OUTLINER_FACTOR = 0.16    # Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%, wider for Blender rows
 MAYA_LENS = 35.0          # persp focal length 35 (concepts.md)
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md, PREF:469-472)
+STRIP_FACTOR = 0.91       # top 9% of the factory 3D View ~ 67 px at 1600x900 = header + tool header
+                          # (checked,  「계획」 1)
+STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER
 
 
 def run_outside_blender():
@@ -61,6 +64,10 @@ def build_layout():
         return found[0]
 
     view3d = only('VIEW_3D')
+    # Maya strip (step 12): Status Line + Shelf under the menu bar, over Outliner and
+    # viewport. Split before the Outliner so it spans both; the new area is the top part.
+    strip = split(view3d, 'HORIZONTAL', STRIP_FACTOR)
+    strip.type = 'IMAGE_EDITOR'
     # Right column = factory split: Outliner on top (~32%), Properties below (~68%).
     # Top becomes the Layer Editor, bottom stays Properties (Attribute Editor,
     # Object tab). Rearranging it is not possible headless: screen.area_close
@@ -84,6 +91,15 @@ def build_layout():
     le.display_mode = 'VIEW_LAYER'
     le.use_filter_object = False           # collections only = display layers
 
+    sp = strip.spaces.active               # = ui/shelf.py make_strip
+    marker = bpy.data.masks.new(STRIP_MARKER)
+    marker.use_fake_user = True
+    sp.mask = marker
+    sp.mode = 'VIEW'
+    sp.show_region_tool_header = True
+    sp.show_region_ui = False
+    sp.show_region_toolbar = False
+
     v3d = view3d.spaces.active
     v3d.show_region_ui = True              # sidebar = Channel Box host (step 6)
     v3d.show_region_toolbar = True         # = Maya Toolbox
@@ -92,7 +108,7 @@ def build_layout():
     v3d.region_3d.view_perspective = 'PERSP'
 
     ws.name = "General"                    # Maya workspace name (ui_layout.md:78)
-    return {"outliner": outliner, "view3d": view3d, "attribute_editor": attribute_editor,
+    return {"outliner": outliner, "view3d": view3d, "strip": strip, "attribute_editor": attribute_editor,
             "layer_editor": layer_editor}
 
 

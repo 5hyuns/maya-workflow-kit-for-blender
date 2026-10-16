@@ -101,7 +101,8 @@ def test_template_layout():
     ws = bpy.data.workspaces["General"]
     scr = ws.screens[0]
     types = sorted(a.type for a in scr.areas)
-    assert types == ['DOPESHEET_EDITOR', 'OUTLINER', 'OUTLINER', 'PROPERTIES', 'VIEW_3D'], types
+    # + the Maya strip (Status Line + Shelf, step 12): a marked Image Editor.
+    assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'OUTLINER', 'PROPERTIES', 'VIEW_3D'], types
     outliners = [a.spaces.active for a in scr.areas if a.type == 'OUTLINER']
     main = [s for s in outliners if s.use_filter_object]
     layers = [s for s in outliners if not s.use_filter_object]

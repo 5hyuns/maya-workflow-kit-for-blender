@@ -391,6 +391,9 @@ def draw_tool_header(self, context):
     area, _r = main_view3d(context.screen)
     if area is None or context.area != area:  # one Status Line, not one per 3D View
         return
+    from .shelf import strip_area
+    if strip_area(context.screen) is not None:  # drawn in the Maya strip (step 12)
+        return
     draw_status_line(self.layout, context)
     self.layout.separator(type='LINE')
 
