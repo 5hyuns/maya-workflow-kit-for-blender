@@ -117,7 +117,9 @@ def test_radial_positions_match_research():
     for name, menu in mm.MENUS.items():
         if name in HAND_RESOLVED:
             continue
-        compare(menu, data[name]["items"], name)
+        # Items a menu gets from the procs it calls (e.g. commonReflectionOptionsPopup = Symmetry ▸).
+        called = [it for c in data[name].get("calls", ()) for it in data.get(c["call"], {}).get("items", ())]
+        compare(menu, data[name]["items"] + called, name)
     print("radial items checked against research:", checked)
     assert not bad, bad
     assert checked >= 80, checked

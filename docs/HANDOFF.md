@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 36 (대칭 Symmetry) 완료 — `docs/steps/step_36.md`. 전역 Maya 대칭 상태 `Scene.maya_kit_symmetry` → 메시 `use_mirror_*`
+  (`operators/symmetry.py`, 편집 모드 진입 시 적용 + 헤더 미러 버튼 역반영), Status Line 대칭 그룹 (토글 + ▾ Off/Object/World/Topology),
+  Tool Settings 「Symmetry Settings」, W/E/R 홀드 N Symmetry ▸. 헤드리스 312/312, GUI 267/267, dogfood 47/47.
+  재점검 3차 backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_33.json`) 7개 중 1–4 처리.
 - Step 35 (Maya 키 묶음) 완료 — `docs/steps/step_35.md`. Ctrl+Alt+LMB 박스 줌, Ctrl+T, Y (마지막 비 QWERT 툴), Ctrl+Shift+X/Q,
   F2–F6 메뉴 세트 (IC 3D 뷰 F2–F5 제거), 3D 뷰 Return 팝오버 제거. 키맵 대응표 구현 95 / 계획 0. 헤드리스 300/300, GUI 261/261, dogfood 47/47.
 - Step 34 (메뉴 막다른 길) 완료 — `docs/steps/step_34.md`. `menu_map.CHILDREN` (Maya 가 실행 중에 만드는 하위 메뉴: Windows > ... Editors,
@@ -73,6 +77,6 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 4개: Step 36 대칭 (Symmetry) 모델링, 뷰 패널 메뉴 바, Channel Box 다중 선택·상대값 + AE 재질 라벨,
-  컴포넌트 픽워크 + Alt+Shift 축 고정.
+- 재점검 3차 backlog 남은 3개: Step 37 뷰 패널 메뉴 바 (View/Shading/Lighting/Show/Renderer/Panels), 38 Channel Box 다중 선택·상대값
+  + AE 재질 라벨, 39 컴포넌트 픽워크 + Alt+Shift 축 고정. 대칭 남은 것 (클릭 시 반대쪽 하이라이트, HUD) 은 step_36.md 「남은 것」.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

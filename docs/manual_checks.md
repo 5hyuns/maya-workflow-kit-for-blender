@@ -238,3 +238,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 35) F2–F6 메뉴 세트 전환이 3D 뷰 밖(Outliner, Graph Editor)에서도 되는지; 직교 뷰가 F 키에서 빠진 것이 불편하지 않은지 (핫박스·Space·Ctrl+F1–F3).
 - [ ] (step 35) Y 가 Maya 처럼 마지막 툴(Multi-Cut, Quad Draw, Extrude 등)로 돌아가는지, 모드를 바꿨을 때 기억이 자연스러운지.
 - [ ] (step 35) 3D 뷰에서 Enter 를 눌러도 아무 창이 뜨지 않는지, Knife / Poly Build 안에서는 Enter 가 확정인지.
+
+### Step 36 — 대칭 (Symmetry)
+
+- [ ] (step 36) Status Line ▾ → Object X 를 켠 뒤 정점·엣지·면을 Move/Rotate/Scale 기즈모로, 그리고 MMB 드래그로 옮기면 반대쪽이 Maya 2022 처럼 따라오는지 (가운데 seam 정점 포함). 소프트 선택(B)과 함께도.
+- [ ] (step 36) 대칭을 켤 때 반대쪽 선택이 더해지는 것 (Maya SymmetrizeSelection) 이 자연스러운지; 켠 뒤 한쪽만 클릭해 고를 때 Maya 는 반대쪽도 하이라이트하지만 여기서는 안 함 (옮기면 같이 움직임) — 거슬리는지.
+- [ ] (step 36) World X 를 회전한 오브젝트 / 원점이 월드 면 위에 없는 오브젝트에서 켰을 때 경고 문구가 이해되는지, 결과가 Maya 와 어떻게 다른지.
+- [ ] (step 36) 대칭을 켠 채 다른 메시를 편집 모드로 열면 그대로 켜져 있는지 (Maya 처럼 전역), Blender 헤더의 X/Y/Z 미러 버튼을 눌렀을 때 Status Line 글자가 따라 바뀌는지.
+- [ ] (step 36) W/E/R 홀드 → N Symmetry ▸ 하위 메뉴의 체크 상자 (Symmetry / World / Object / Topology / X·Y·Z Axis) 가 Maya 와 같은 자리·같은 동작인지. Topology 는 Blender 가 축 + 토폴로지로 짝을 찾는 것 (Maya 의 seam 엣지 고르기 없음).
