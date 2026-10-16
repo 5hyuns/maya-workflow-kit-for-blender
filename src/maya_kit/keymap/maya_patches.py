@@ -5,7 +5,7 @@
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
 docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
 docs/steps/step_16.md (18), docs/steps/step_18.md (19), docs/steps/step_20.md (20),
-docs/steps/step_22.md (21), docs/steps/step_24.md (22).
+docs/steps/step_22.md (21), docs/steps/step_24.md (22), docs/steps/step_27.md (23).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -452,13 +452,31 @@ def patch_component_delete(kd):
         _add(kd, "Mesh", "maya_kit.delete_components", make_event(key))
 
 
+# --- 23. Manipulator size, smoothing level, default view, wireframe on shaded -------------------
+# hotkeySetup.mel:387-389 (= Shift++ -), :678-679 (PgUp/PgDn), :336 (0), :238 (Home), :738 (Alt+5)
+# via docs/keymap_mapping.md; docs/steps/step_27.md 「계획」.
+
+def patch_view_keys(kd):
+    for ev, factor in ((make_event("EQUAL"), 1.25), (make_event("EQUAL", shift=True), 1.25),
+                       (make_event("MINUS"), 0.8)):
+        _add(kd, "3D View", "maya_kit.manip_size", ev, {"factor": factor})
+    # Text edit mode keeps Home = line start (Font keymap runs first).
+    _add(kd, "3D View", "maya_kit.view_home", make_event("HOME"), shadows=("Font",))
+    _add(kd, "3D View", "wm.context_toggle", make_event("FIVE", alt=True),
+         {"data_path": "space_data.overlay.show_wireframes"})
+    for km in ("Object Mode", "Mesh"):
+        _add(kd, km, "maya_kit.smooth_level", make_event("PAGE_UP", repeat=True), {"delta": 1})
+        _add(kd, km, "maya_kit.smooth_level", make_event("PAGE_DOWN", repeat=True), {"delta": -1})
+        _add(kd, km, "maya_kit.smooth_preview", make_event("ZERO"), {"level": 1})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
-           patch_component_delete)
+           patch_component_delete, patch_view_keys)
 
 
 def apply(data):

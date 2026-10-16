@@ -32,6 +32,8 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_navigation)
     # JSON of the user's values before the Maya preset (docs/steps/step_4.md).
     prefs_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    # JSON of Blender preferences changed by Maya keys (= / - gizmo size), restored on disable.
+    runtime_backup: bpy.props.StringProperty(options={'HIDDEN'})
     lock_ortho_tumble: bpy.props.BoolProperty(
         name="Lock Tumble in Ortho Views",
         description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",

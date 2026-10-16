@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 27 (매니퓰레이터 크기·뷰 키) 완료 — `docs/steps/step_27.md`. = / Shift+= / - gizmo_size (`prefs_preset.set_runtime`, disable 시 복원),
+  PgUp/PgDn 스무스 단계, 0, Home (Maya persp), Alt+5 와이어프레임. 키맵 대응표 구현 87 / 계획 5 (F2–F6). 헤드리스 260/260, GUI 202/202,
+  dogfood **47/47**.
 - Step 26 (Smart Extrude) 완료 — `docs/steps/step_26.md`. 면/엣지 Shift+기즈모 드래그 = 압출 후 변환, 안 움직이면 (Shift+클릭·취소)
   사본/압출을 되돌림, xform 기즈모만 (`context.gizmo_group`), 홀드 메뉴 체크 상자. 헤드리스 256/256, GUI 195/195, dogfood 46/47.
 - Step 25 (cm 그리드와 그리드 스냅) 완료 — `docs/steps/step_25.md`. 원인: Blender 원근 뷰는 1 m 아래 그리드 단계를 건너뜀 →
@@ -48,6 +51,7 @@
 
 ## 바로 다음 할 일
 
-- Step 27: 매니퓰레이터 크기·뷰 키 (backlog 4) — `=`/`+` `-` (preferences.view.gizmo_size, dogfood 의 유일한 실패), PgUp/PgDn, `0`, Home,
-  Alt+5 (keymap/mapping.py 계획 행), 런타임 환경설정은 `prefs_preset` 경유. 그다음 MMB 마지막 핸들, 재질 지정, 선택 감각, Outliner 레이아웃.
-- 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.
+- Step 28: MMB 드래그 = 마지막으로 잡은 핸들 (backlog 5) — Move/Rotate/Scale 툴에서 MMB 드래그가 마지막 클릭 핸들 축/평면을 따르고 W 재입력 시
+  중앙 (research/maya/interaction.md:104, :27). 기즈모 키맵 PASS_THROUGH 항목(step 22 방식)으로 핸들 기억 + Tool 키맵 MMB. 계획 먼저.
+  그다음 재질 지정, 선택 감각, Outliner 레이아웃 (backlog 6–8).
+- 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

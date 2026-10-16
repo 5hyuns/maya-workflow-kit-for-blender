@@ -61,6 +61,30 @@ def restore(prefs, addon_prefs):
         addon_prefs.prefs_backup = ""
 
 
+def set_runtime(path, value, prefs=None, addon_prefs=None):
+    """Change a Blender preference from a Maya key (e.g. ``view.gizmo_size`` by = / -).
+
+    The user's value from before the first change is kept in ``runtime_backup``
+    (JSON) and comes back when the add-on is turned off (docs/steps/step_27.md).
+    """
+    from . import preferences
+    prefs = prefs or bpy.context.preferences
+    addon_prefs = addon_prefs or preferences.get()
+    backup = json.loads(addon_prefs.runtime_backup or "{}")
+    owner, attr = _resolve(prefs, path)
+    if path not in backup:
+        backup[path] = getattr(owner, attr)
+        addon_prefs.runtime_backup = json.dumps(backup)
+    setattr(owner, attr, value)
+    return getattr(owner, attr)
+
+
+def restore_runtime(prefs, addon_prefs):
+    if addon_prefs.runtime_backup:
+        write(prefs, json.loads(addon_prefs.runtime_backup))
+        addon_prefs.runtime_backup = ""
+
+
 def register():
     from . import preferences
     addon_prefs = preferences.get()
@@ -76,3 +100,4 @@ def unregister():
     except KeyError:
         return
     restore(bpy.context.preferences, addon_prefs)
+    restore_runtime(bpy.context.preferences, addon_prefs)

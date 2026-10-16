@@ -355,8 +355,35 @@ class MAYAKIT_OT_toggle_quad_view(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def home_view(rv3d, k):
+    """Maya Home (viewSet -home, interaction.md:50): the default camera place, no animation.
+    Perspective = Maya's new-scene persp (units.PERSP_EYE, Maya units); orthographic keeps
+    its direction and goes back to the origin at the same distance."""
+    eye = Vector(units.PERSP_EYE) * k
+    rv3d.view_location = (0.0, 0.0, 0.0)
+    rv3d.view_distance = eye.length
+    if rv3d.view_perspective == 'PERSP':
+        rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')
+
+
+class MAYAKIT_OT_view_home(bpy.types.Operator):
+    """Go to the default view (Maya Home)"""
+    bl_idname = "maya_kit.view_home"
+    bl_label = "Default View"
+
+    @classmethod
+    def poll(cls, context):
+        rv3d = context.region_data
+        return rv3d is not None and context.area is not None and context.area.type == 'VIEW_3D'             and rv3d.view_perspective != 'CAMERA'
+
+    def execute(self, context):
+        home_view(context.region_data, units.maya_unit(context.scene))
+        context.region.tag_redraw()
+        return {'FINISHED'}
+
+
 classes = (MAYAKIT_OT_tumble, MAYAKIT_OT_frame, MAYAKIT_OT_frame_all_views, MAYAKIT_OT_view_history,
-           MAYAKIT_OT_toggle_quad_view)
+           MAYAKIT_OT_toggle_quad_view, MAYAKIT_OT_view_home)
 
 
 def register_timer():
