@@ -2,7 +2,7 @@
 """Patches that turn Industry Compatible data into the "Maya" keyconfig.
 
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
-Plan and rationale: 
+Plan and rationale:  (1-4),  (5-8).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and  is cross-checked against it.
@@ -10,13 +10,15 @@ shadowing check and  is cross-checked against it.
 
 from .patch import KeyconfigData, make_event
 
-# (km_name, idname, event, props) for every binding added below.
+# (km_name, idname, event, props, shadows) for every binding added below.
+# ``shadows``: keymaps allowed to bind the same event in the same editor
+# (intentional: e.g. paint modes keep their own X/B).
 ADDED = []
 
 
-def _add(kd, km_name, idname, event, props=None):
+def _add(kd, km_name, idname, event, props=None, shadows=()):
     kd.add(km_name, idname, event, props)
-    ADDED.append((km_name, idname, event, dict(props or {})))
+    ADDED.append((km_name, idname, event, dict(props or {}), tuple(shadows)))
 
 
 # --- 1. Selection modifiers ----------------------------------------------
@@ -116,7 +118,72 @@ def patch_space(kd):
     _add(kd, "Frames", "screen.frame_jump", make_event("V", alt=True, shift=True), {"end": False})
 
 
-PATCHES = (patch_selection, patch_display, patch_group, patch_space)
+# --- 5. Hold keys: X/C/V/J snapping ------------------------------------------
+# Maya: snapping only while the key is held, Shift variants identical
+# (; hotkeys_default.json x/X, c/C, v/V, j).
+# Paint/sculpt modes keep their own X (brush color flip): they are checked
+# before "3D View", so the hold never runs there.
+_PAINT_MODES = ("Sculpt", "Vertex Paint", "Image Paint", "Weight Paint")
+
+HOLD_KEYS = (("X", "grid"), ("C", "curve"), ("V", "point"), ("J", "step"))
+
+
+def patch_hold_snap(kd):
+    kd.remove("3D View", "wm.context_toggle", type="X")                 # IC:780 snap toggle
+    kd.remove("3D View", "wm.call_menu_pie", type="X", shift=True)      # snap pie
+    kd.remove("3D View", "wm.call_menu_pie", type="V")                  # view pie
+    for km in ("Object Mode", "Mesh", "Curve", "Curves", "Armature", "Metaball"):
+        kd.remove(km, "wm.tool_set_by_id", type="C")                     # cursor tool
+    for key, name in HOLD_KEYS:
+        for shift in (False, True):
+            _add(kd, "3D View", "maya_kit.hold", make_event(key, shift=shift), {"name": name},
+                 shadows=_PAINT_MODES)
+
+
+# --- 6. B soft select (tap toggle, hold + LMB drag radius) ------------------
+# 
+
+def patch_soft_select(kd):
+    for km in ("Object Mode", "Mesh", "Curve", "Curves", "Metaball", "Lattice", "Particle"):
+        kd.remove(km, "wm.context_toggle", type="B")                     # IC:2517, IC:3066
+    _add(kd, "3D View", "maya_kit.tap_hold", make_event("B"), {"binding": "soft_select"},
+         shadows=_PAINT_MODES)
+
+
+# --- 7. A tap / hold, D hold pivot, Insert pivot toggle ---------------------
+# A:  (tap = FrameAll, hold = marking menu).
+# D / Insert: interaction.md:124-125 (pivot edit while held / toggle).
+
+def patch_tap_hold_and_pivot(kd):
+    kd.remove("3D View", "view3d.view_all", type="A")
+    _add(kd, "3D View", "maya_kit.tap_hold", make_event("A"), {"binding": "select_all"},
+         shadows=("Sculpt",))
+    kd.remove("Object Mode", "wm.tool_set_by_id", type="D")              # IC:121 annotate
+    _add(kd, "Object Mode", "maya_kit.hold", make_event("D"), {"name": "pivot"})
+    _add(kd, "Object Mode", "maya_kit.pivot_toggle", make_event("INSERT"))
+
+
+# --- 8. Arrow-key pick-walk (object mode) -----------------------------------
+#  (HK:364-369). IC puts Left/Right frame
+# stepping into each mode keymap (IC:93-97 _template_items_animation); only
+# Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 9).
+
+PICK_WALK_KEYS = (("UP_ARROW", "UP"), ("DOWN_ARROW", "DOWN"),
+                  ("LEFT_ARROW", "LEFT"), ("RIGHT_ARROW", "RIGHT"))
+
+
+def patch_pick_walk(kd):
+    kd.remove("Object Mode", "object.select_more", type="UP_ARROW")
+    kd.remove("Object Mode", "object.select_less", type="DOWN_ARROW")
+    kd.remove("Object Mode", "screen.frame_offset", type="LEFT_ARROW")
+    kd.remove("Object Mode", "screen.frame_offset", type="RIGHT_ARROW")
+    for key, direction in PICK_WALK_KEYS:
+        _add(kd, "Object Mode", "maya_kit.pick_walk", make_event(key, repeat=True),
+             {"direction": direction})
+
+
+PATCHES = (patch_selection, patch_display, patch_group, patch_space,
+           patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk)
 
 
 def apply(data):

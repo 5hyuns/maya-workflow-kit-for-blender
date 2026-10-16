@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Ask the OS whether a key is physically held.
+
+Fallback for hold modals whose RELEASE event was eaten by another modal
+(e.g. the transform modal while dragging).  「계획」 1.
+Windows only; elsewhere ``is_down`` returns None ("unknown").
+"""
+
+import sys
+
+# Blender event type -> Windows virtual-key code.
+_VK = {chr(c): c for c in range(ord("A"), ord("Z") + 1)}
+_VK.update({
+    "INSERT": 0x2D, "DEL": 0x2E, "HOME": 0x24, "END": 0x23,
+    "PAGE_UP": 0x21, "PAGE_DOWN": 0x22,
+    "LEFT_ARROW": 0x25, "UP_ARROW": 0x26, "RIGHT_ARROW": 0x27, "DOWN_ARROW": 0x28,
+    "SPACE": 0x20, "TAB": 0x09, "ACCENT_GRAVE": 0xC0,
+    "LEFTMOUSE": 0x01, "RIGHTMOUSE": 0x02, "MIDDLEMOUSE": 0x04,
+})
+
+_user32 = None
+if sys.platform == "win32":
+    try:
+        import ctypes
+        _user32 = ctypes.windll.user32
+    except (ImportError, AttributeError, OSError):
+        _user32 = None
+
+
+def vk_code(event_type):
+    return _VK.get(event_type)
+
+
+def is_down(event_type):
+    """True/False if the OS can tell, None if unknown (other OS or key)."""
+    vk = _VK.get(event_type)
+    if _user32 is None or vk is None:
+        return None
+    return bool(_user32.GetAsyncKeyState(vk) & 0x8000)
