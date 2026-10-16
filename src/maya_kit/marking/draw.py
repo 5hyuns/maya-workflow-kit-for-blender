@@ -149,10 +149,19 @@ def draw_hotbox(state, region):
     # Faint zone names at the region edges (discoverability; Maya draws none).
     faint = (1, 1, 1, 0.35)
     # Inset past the 3D View's overlapping header/toolbar regions.
+    x0, _y0, x1, _y1 = lay.bounds or (0, 0, region.width, region.height)
+    c0, _c1, c2, _c3 = lay.center_rect
+    gap = 10 * ui_scale()
     for key, (x, y) in {"N": (cx, region.height - 4 * p.item_h), "S": (cx, 2 * p.item_h),
-                        "E": (region.width - 140 * ui_scale(), cy), "W": (90 * ui_scale(), cy)}.items():
+                        "E": (max(x1 - 140 * ui_scale(), c2 + gap), cy),
+                        "W": (x0 + 90 * ui_scale(), cy)}.items():
         name = ZONE_NAMES[key]
-        _text(x - (measure(name) / 2 if key in "NS" else 0), y, name, faint)
+        w = measure(name)
+        if key == "W":
+            x = min(x, c0 - gap - w)
+        if key in "EW" and (x < x0 or x + w > x1):
+            continue   # no room beside the centre box (cursor near an edge)
+        _text(x - (w / 2 if key in "NS" else 0), y, name, faint)
 
 
 # --- handler -----------------------------------------------------------------------------

@@ -212,8 +212,13 @@ class MAYAKIT_OT_hotbox(bpy.types.Operator):
         self._clicked = False
         self._region = region
         center = (event.mouse_region_x, event.mouse_region_y)
+        bounds = None
+        if context.area is not None:
+            from ..operators import view   # visible part of the region (step 17)
+            bounds = view.visible_bounds(context.area, region)
         self._layout = engine.HotboxLayout(hotbox_rows(context), center, draw.measure,
-                                           style=prefs.hotbox_style, scale=draw.ui_scale())
+                                           style=prefs.hotbox_style, scale=draw.ui_scale(),
+                                           bounds=bounds)
         label = {sid: lab for sid, lab, _d in menu_sets.SET_ITEMS}.get(prefs.menu_set, "")
         draw.ACTIVE.update(region=region.as_pointer(), hotbox=self._layout, hover=None,
                            title=f"Maya Kit  ·  {label}")

@@ -150,3 +150,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 16) 실제 키보드로 z / Shift+Z / Ctrl+Y: 3D 뷰, Outliner, Graph Editor 위에서 각각 언두·리두. 텍스트 에디터·Python 콘솔·커맨드 라인 필드에서는 z 가 글자로 입력됨.
 - [ ] (step 16) h 두 번 (숨김 → 보임+선택), Ctrl+H → Ctrl+Shift+H, Alt+H → Shift+H, Outliner 에서 숨긴 객체 클릭 후 Shift+H. Maya 2022 와 선택 상태 비교.
 - [ ] (step 16) Ctrl+1 아이솔레이트 중 카메라가 움직이지 않음, 다시 Ctrl+1 로 원래 뷰.
+
+### Step 17 — 프레이밍·핫박스
+
+- [ ] (step 17) 큐브·구·여러 객체에서 F / A / Shift+F / Ctrl+Shift+F 여백을 Maya 2022 의 같은 장면과 비교 (사이드바 열고/닫고). 편집 모드 면 몇 개 선택 후 F.
+- [ ] (step 17) 사이드바 가까이에서 Space 홀드: 메뉴 행이 모두 보이고 이름 클릭이 동작. 좁은 창(1280 px)에서 긴 행 줄바꿈.

@@ -7,9 +7,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 63 |
-| IC 일치 | 8 |
-| 계획 | 22 |
+| 구현 | 65 |
+| IC 일치 | 7 |
+| 계획 | 21 |
 | 해당 없음 | 9 |
 | 미검토 | 298 |
 | macOS 전용 | 68 |
@@ -121,9 +121,9 @@
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
 | Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `maya_kit.ae_toggle`; Mesh: `mesh.select_all` (action='SELECT') | 구현 | 사이드바 Channel Box 탭 안에서 CB/LE ↔ AE 전환 | hotkeySetup.mel:230 |
-| f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 선택만 프레이밍 (자식은 선택 안 되면 제외) | hotkeySetup.mel:231 |
+| f | F | global | FrameSelectedWithoutChildren | 3D View: `maya_kit.frame` (selected=True) | 구현 | Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17) | hotkeySetup.mel:231 |
 | Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `maya_kit.frame_all_views` (selected=True) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:232 |
-| Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | — | 계획 Step 8 | 자식 포함 프레이밍 | hotkeySetup.mel:233 |
+| Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | 3D View: `maya_kit.frame_all_views` (selected=True, children=True) | 구현 | 자식 포함, 창의 모든 3D 뷰 | hotkeySetup.mel:233 |
 | [ | LEFT_BRACKET | global | UndoViewChange | 3D View: `maya_kit.view_history` (direction='UNDO') | 구현 | 뷰 전용 스택 (씬 언두와 별개) | hotkeySetup.mel:234 |
 | ] | RIGHT_BRACKET | global | RedoViewChange | 3D View: `maya_kit.view_history` (direction='REDO') | 구현 |  | hotkeySetup.mel:235 |
 | Alt+z | Alt+Z | global | UndoViewChange | 3D View: `maya_kit.view_history` (direction='UNDO') | 구현 | 뷰 전용 스택 (씬 언두와 별개) | hotkeySetup.mel:236 |

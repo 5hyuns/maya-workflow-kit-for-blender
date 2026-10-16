@@ -197,6 +197,12 @@ def patch_camera(kd):
     _add(kd, "3D View", "maya_kit.tumble", make_event("LEFTMOUSE", alt=True))
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "maya_kit.frame_all_views", make_event("F", shift=True), {"selected": True})
+    # Step 17: Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);
+    # A tap goes through taphold.SelectAllBinding (research/maya/interaction.md:191-196).
+    kd.remove("3D View", "view3d.view_selected", type="F")                  # IC:681
+    _add(kd, "3D View", "maya_kit.frame", make_event("F"), {"selected": True})
+    _add(kd, "3D View", "maya_kit.frame_all_views", make_event("F", shift=True, ctrl=True),
+         {"selected": True, "children": True})
     kd.remove("3D View", "view3d.view_all", type="A", shift=True)
     _add(kd, "3D View", "maya_kit.frame_all_views", make_event("A", shift=True), {"selected": False},
          shadows=("Sculpt",))

@@ -84,8 +84,8 @@ blindspot scout (B, cards in step_14.md), step docs (S).
    `+` `-` manipulator size, Shift+> / Shift+< grow / shrink, Ctrl+F9–F11 convert, PgUp/PgDn, `0`,
    Home, Ctrl+Shift+F, Ctrl+Shift+I; edit mode: D = annotate tool, Ctrl+Shift+A = deselect, Alt+D
    unbound; Ctrl+E / Ctrl+B only switch tools (B5).
-3. **Framing and look** (D): F / A fit with Maya's margin (object overfills the view), smooth preview
-   on flat-shaded meshes looks faceted, hotbox rows clipped under the sidebar.
+3. **Framing and look** (D) — done: Maya fit for F / A / Shift+F / Shift+A / Ctrl+Shift+F (step 17),
+   smooth shading of the preview (step 15), hotbox rows kept visible (step 17).
 4. **Units consistency** (B2): Create/shelf cube = 1 BU (shows 100 cm), `cmds.polyCube()` = 1 cm.
    One rule for all creation paths.
 5. **Maya naming of copies** (D): Ctrl+D / Shift+D → `pCube2` (now `pCube1.001`).

@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 17 (Maya 프레이밍 여백 + 핫박스 잘림) 완료 — `docs/steps/step_17.md`. F/A/Shift+F/Shift+A/Ctrl+Shift+F 가 보이는 영역(사이드바·툴바·
+  투명 헤더 제외)의 0.95 에 경계 상자를 맞춤 (`operators/framing.py`, `maya_kit.frame`); 핫박스 행은 보이는 영역 안으로 밀고 긴 행은 줄바꿈.
+  헤드리스 211/211, GUI 133/133, dogfood 45 중 41 (남은 실패: Ctrl+D 이름, `.`, `=`, Shift+>).
 - Step 16 (언두·가시성·아이솔레이트 키) 완료 — `docs/steps/step_16.md`. z/Shift+Z/Ctrl+Y (Screen, border 4개 제거), h·Ctrl+H·Alt+H·
   Shift+H·Ctrl+Shift+H (`maya_kit.visibility`, 오브젝트 모드; Mesh 는 hide/reveal), Ctrl+1 아이솔레이트(카메라 고정), Ctrl+Shift+I 반전.
   헤드리스 203/203, GUI 127/127, dogfood 45 중 41 (남은 실패: Ctrl+D 이름, `.`, `=`, Shift+>). 키맵 대응표 구현 51→63.
@@ -18,6 +21,6 @@
 
 ## 바로 다음 할 일
 
-- Step 17: backlog 3 — F/A 프레이밍 여백(Maya fit, 사이드바 겹침 제외)과 핫박스 행 잘림 (`marking/draw.py:133`).
-  이후 backlog 4–8 (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
+- Step 18: backlog 4 — 편집 모드 키 충돌(D=Annotate, Ctrl+Shift+A, Alt+D)과 즉시 Extrude/Bevel, Shift+> 선택 확장, Ctrl+F9–F11 변환.
+  이후 backlog 5–8 (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.
