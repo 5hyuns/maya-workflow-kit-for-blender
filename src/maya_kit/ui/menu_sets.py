@@ -50,8 +50,14 @@ def iter_items(items=None, prefix=""):
         if path is None:
             continue
         yield path, it
-        if len(it) > 1:
-            yield from iter_items(it[1], path)
+        kids = sub_items(path, it)
+        if kids:
+            yield from iter_items(kids, path)
+
+
+def sub_items(path, it):
+    """Children of a menu entry: Maya's run-time ones (``menu_map.CHILDREN``), else the data's."""
+    return menu_map.CHILDREN.get(path) or (it[1] if len(it) > 1 else None)
 
 
 def children(items, prefix):
@@ -117,7 +123,7 @@ def _draw_items(layout, items, prefix, submenus):
             if it[1]:
                 layout.label(text=it[1])
             continue
-        if len(it) > 1 and path not in menu_map.MAP:
+        if sub_items(path, it) and path not in menu_map.MAP:
             layout.menu(submenus[path], text=it[0])
         else:
             draw_item(layout, path, it[0])
@@ -127,12 +133,12 @@ def _make_menu(idname, label, prefix, items, top_label=None):
     submenus = {}
     classes = []
     for path, it in iter_items(items, prefix):
-        if len(it) > 1 and path not in submenus and path not in menu_map.MAP:
+        if sub_items(path, it) and path not in submenus and path not in menu_map.MAP:
             submenus[path] = f"{idname}_{len(submenus)}"
     # Build the submenu classes (each draws its own children).
     for path, sub_id in submenus.items():
         node = _find(items, prefix, path)
-        classes.append(_menu_class(sub_id, node[0], path, node[1], submenus))
+        classes.append(_menu_class(sub_id, node[0], path, sub_items(path, node), submenus))
     classes.insert(0, _menu_class(idname, label, prefix, items, submenus, top_label))
     return classes
 

@@ -50,18 +50,58 @@ def _con(kind):
     return ("object.constraint_add_with_targets", {"type": kind})
 
 
+def _editor(ui_type):
+    # A Blender editor in a new window, like a Maya editor window (operators/menu_extras.py).
+    return ("maya_kit.open_editor", {"ui_type": ui_type})
+
+
+def _dock(dock):
+    return ("v3d", "maya_kit.dock_show", {"dock": dock})
+
+
+def _hud(data_path):
+    return ("v3d", "wm.context_toggle", {"data_path": data_path})
+
+
+# Windows > ... Editors: Maya fills these submenus at run time (startup/Maya
+# Maya / Maya / Maya / buildRenderingEdMenu /
+# Maya; labels from ). Items listed in
+# CHILDREN without an action here draw greyed. 
+_WINDOW_EDITORS = {
+    "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
+    "General Editors/Channel Box / Layer Editor": _dock('CHANNEL_BOX'),
+    "General Editors/Channel Box": _dock('CHANNEL_BOX'),
+    "General Editors/Layer Editor": _dock('CHANNEL_BOX'),
+    "General Editors/Tool Settings": ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'}),
+    "General Editors/Attribute Spread Sheet": _editor('SPREADSHEET'),
+    "General Editors/Display Layer Editor": _dock('CHANNEL_BOX'),
+    "General Editors/Script Editor": "maya_kit.script_editor",
+    "Modeling Editors/UV Editor": _editor('UV'),
+    "Animation Editors/Graph Editor": _editor('FCURVES'),
+    "Animation Editors/Time Editor": _editor('NLA_EDITOR'),
+    "Animation Editors/Trax Editor": _editor('NLA_EDITOR'),
+    "Animation Editors/Camera Sequencer": _editor('SEQUENCE_EDITOR'),
+    "Animation Editors/Dope Sheet": _editor('DOPESHEET'),
+    "Animation Editors/Expression Editor": _editor('DRIVERS'),
+    "Rendering Editors/Hypershade": _editor('ShaderNodeTree'),
+    "Rendering Editors/Render View": "render.view_show",
+    "Rendering Editors/Render Settings": "maya_kit.render_settings",
+    "Rendering Editors/Shading Group Attributes": ("v3d", "maya_kit.material_attributes", {}),
+    "Relationship Editors/Display Layers": _dock('CHANNEL_BOX'),
+}
+
 MAP = {
     # --- File ( "File") ---
     "File/New Scene": "wm.read_homefile",
     "File/Open Scene...": "wm.open_mainfile",
     "File/Save Scene": "wm.save_mainfile",
     "File/Save Scene As...": "wm.save_as_mainfile",
-    "File/Increment and Save": ("wm.save_as_mainfile", {"copy": False}),
+    "File/Increment and Save": "maya_kit.increment_save",          # step 34
     "File/Save Preferences": "wm.save_userpref",
     "File/Optimize Scene Size": "outliner.orphans_purge",
     "File/Import...": ("menu", "TOPBAR_MT_file_import"),
     "File/Export All...": ("menu", "TOPBAR_MT_file_export"),
-    "File/Export Selection...": ("menu", "TOPBAR_MT_file_export"),
+    "File/Export Selection...": ("menu", "MAYAKIT_MT_export_selection"),   # step 34
     "File/Create Reference...": "wm.link",
     "File/Recent Files": ("menu", "TOPBAR_MT_file_open_recent"),
     "File/Exit": "wm.quit_blender",
@@ -75,6 +115,7 @@ MAP = {
     "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
     "Edit/Keys/Bake Simulation": "nla.bake",
     "Edit/Delete": "object.delete",
+    "Edit/Ungroup": "maya_kit.ungroup",                            # step 34
     "Edit/Delete by Type/History": "maya_kit.delete_history",
     "Edit/Delete by Type/Non-Deformer History": ("maya_kit.delete_history", {"non_deformer": True}),
     **{f"Edit/Delete by Type/{k}": _del(v) for k, v in _DELETE_BY_TYPE.items()
@@ -164,6 +205,9 @@ MAP = {
                                                            {"selected": True, "children": True}),
     # --- Windows ---
     "Windows/Workspaces": ("menu", "TOPBAR_MT_workspace_menu"),
+    "Windows/Outliner": _editor('OUTLINER'),
+    "Windows/Node Editor": _editor('ShaderNodeTree'),
+    **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "MAYAKIT_MT_ui_elements"),
     "Windows/Settings/Preferences": "screen.userpref_show",
     "Windows/Playblast": ("v3d", "render.opengl", {"animation": True}),
@@ -231,6 +275,9 @@ MAP = {
     "Deform/Texture": _mod('DISPLACE'),
     "Deform/Paint Weights/Set Membership": "paint.weight_paint_toggle",
     # --- UV ---
+    "UV/UV Editor": _editor('UV'),
+    "UV/Planar": "maya_kit.uv_planar",
+    "UV/Normal-Based": "maya_kit.uv_planar",
     "UV/Automatic": "uv.smart_project",
     "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
     "UV/Cylindrical": ("v3d", "uv.cylinder_project", {}),
@@ -318,6 +365,42 @@ MAP = {
 EXTRA = {
     "Modify/Snap Together Tool": [("-", "Pivot"), ("Center Pivot",)],
 }
+
+# Submenus Maya builds at run time, so  has them as leaves (or with a
+# placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
+CHILDREN = {
+    "Windows/General Editors": [
+        ("Attribute Editor",), ("Channel Box / Layer Editor",), ("Channel Box",), ("Layer Editor",),
+        ("Tool Settings",), ("-", ""), ("Hypergraph: Hierarchy",), ("Hypergraph: Connections",),
+        ("Asset Editor",), ("Attribute Spread Sheet",), ("Component Editor",), ("Connection Editor",),
+        ("Channel Control",), ("Display Layer Editor",), ("File Path Editor",), ("Namespace Editor",),
+        ("-", ""), ("Script Editor",), ("Command Shell",), ("Profiler",), ("Evaluation Toolkit",)],
+    "Windows/Modeling Editors": [
+        ("Modeling Toolkit",), ("Paint Effects",), ("UV Editor",), ("XGen Editor",), ("Crease Sets",)],
+    "Windows/Animation Editors": [
+        ("Graph Editor",), ("Time Editor",), ("Trax Editor",), ("Camera Sequencer",), ("Dope Sheet",),
+        ("Quick Rig",), ("HumanIK",), ("Shape Editor",), ("Pose Editor",), ("Expression Editor",),
+        ("Motion Library",)],
+    # Hypershade / Render View / Render Settings head Maya's list (added by the renderer menus) .
+    "Windows/Rendering Editors": [
+        ("Hypershade",), ("Render View",), ("Render Settings",), ("-", ""), ("Render Layer Editor",),
+        ("Light Editor",), ("Rendering Flags",), ("Shading Group Attributes",),
+        ("Hardware Render Buffer",)],
+    "Windows/Relationship Editors": [
+        ("Animation Layers",), ("Camera Sets",), ("Character Sets",), ("Deformer Sets",),
+        ("Display Layers",), ("Dynamic Relationships",), ("Light Linking",), ("Partitions",),
+        ("Render Layers",), ("Render Pass Sets",), ("Sets",), ("UV Linking",)],
+    # Display > Heads Up Display: Maya lists every HUD item at run time ; the ones Blender's
+    # viewport overlay can show are mapped (Poly Count = scene statistics).
+    "Display/Heads Up Display": [
+        ("Animation Details",), ("Bounding Box",), ("Camera Names",), ("Frame Rate",),
+        ("Object Details",), ("Poly Count",), ("Selection Details",), ("View Axis",)],
+}
+MAP.update({
+    "Display/Heads Up Display/Poly Count": _hud("space_data.overlay.show_stats"),
+    "Display/Heads Up Display/Camera Names": _hud("space_data.overlay.show_text"),
+    "Display/Heads Up Display/View Axis": _hud("space_data.show_gizmo_navigate"),
+})
 
 # Blender's own menu kept at the end of the Maya menu with the same role.
 BLENDER_MENU = {

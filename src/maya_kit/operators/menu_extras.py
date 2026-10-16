@@ -1,0 +1,207 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Operators behind Maya menu items that had no Blender action.
+
+- ``maya_kit.open_editor``: Windows > ... Editors open a floating editor window, like
+  Maya's panels torn off into windows ().
+- ``maya_kit.increment_save``: File > Increment and Save (Maya ``incrementAndSaveScene``
+  numbering, re-implemented in ``increment_path``).
+- ``MAYAKIT_MT_export_selection``: File > Export Selection... = the exporters with
+  "selected only" set.
+- ``maya_kit.uv_planar``: UV > Planar / Normal-Based = project the selected faces on the
+  plane of their average normal.
+"""
+
+import os
+import re
+
+import bmesh
+import bpy
+from bpy.props import EnumProperty
+from mathutils import Vector
+
+# --- editor windows ----------------------------------------------------------------------------
+
+EDITOR_TYPES = (
+    ('OUTLINER', "Outliner", ""), ('FCURVES', "Graph Editor", ""), ('DOPESHEET', "Dope Sheet", ""),
+    ('NLA_EDITOR', "Nonlinear Animation", ""), ('DRIVERS', "Drivers", ""),
+    ('SEQUENCE_EDITOR', "Video Sequencer", ""), ('ShaderNodeTree', "Shader Editor", ""),
+    ('UV', "UV Editor", ""), ('SPREADSHEET', "Spreadsheet", ""), ('TEXT_EDITOR', "Text Editor", ""),
+)
+
+
+def _maya_outliner(space):
+    # Same filters as the MayaKit layout's Outliner (Maya DAG, ).
+    space.display_mode = 'VIEW_LAYER'
+    space.use_filter_object_content = False
+    space.use_filter_collection = False
+
+
+class MAYAKIT_OT_open_editor(bpy.types.Operator):
+    """Open this editor in a new window (Maya Windows menu)"""
+    bl_idname = "maya_kit.open_editor"
+    bl_label = "Open Editor"
+
+    ui_type: EnumProperty(items=EDITOR_TYPES, name="Editor")
+
+    def execute(self, context):
+        window = context.window
+        if window is None:
+            return {'CANCELLED'}
+        area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
+        if area is None:
+            return {'CANCELLED'}
+        before = set(context.window_manager.windows[:])
+        with context.temp_override(window=window, area=area):
+            bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
+        new = [w for w in context.window_manager.windows if w not in before]
+        if not new:
+            self.report({'ERROR'}, "Could not open a new window")
+            return {'CANCELLED'}
+        target = new[0].screen.areas[0]
+        target.ui_type = self.ui_type
+        if self.ui_type == 'OUTLINER':
+            _maya_outliner(target.spaces.active)
+        return {'FINISHED'}
+
+
+# --- Increment and Save --------------------------------------------------------------------------
+
+_VERSION = re.compile(r"^(.*)\.(\d+)$")
+
+
+def increment_path(path):
+    """Next file of Maya's Increment and Save: the digits after the last '.' of the root name
+    go up by one with their width kept, else '.0001' is appended (MyFile.blend ->
+    MyFile.0001.blend, MyFile.0043 -> 0044, MyFile.99 -> MyFile.100, MyFile01 -> MyFile01.0001;
+    Maya Maya, behaviour only)."""
+    folder, name = os.path.split(path)
+    root, ext = os.path.splitext(name)
+    m = _VERSION.match(root)
+    if m:
+        number = str(int(m.group(2)) + 1).zfill(len(m.group(2)))
+        root = f"{m.group(1)}.{number}"
+    else:
+        root = f"{root}.0001"
+    return os.path.join(folder, root + ext)
+
+
+class MAYAKIT_OT_increment_save(bpy.types.Operator):
+    """Save under the next version number and keep working in it (Maya Increment and Save)"""
+    bl_idname = "maya_kit.increment_save"
+    bl_label = "Increment and Save"
+
+    def invoke(self, context, event):
+        if not bpy.data.filepath:
+            # Never saved: Maya opens Save As.
+            return bpy.ops.wm.save_as_mainfile('INVOKE_DEFAULT')
+        return self.execute(context)
+
+    def execute(self, context):
+        if not bpy.data.filepath:
+            self.report({'WARNING'}, "Save the scene once first")
+            return {'CANCELLED'}
+        new = increment_path(bpy.data.filepath)
+        # Maya asks before replacing an existing file; never overwrite, take the next free
+        # number instead (delegated).
+        while os.path.exists(new):
+            new = increment_path(new)
+        bpy.ops.wm.save_as_mainfile(filepath=new, copy=False)
+        self.report({'INFO'}, f"Saved {os.path.basename(new)}")
+        return {'FINISHED'}
+
+
+# --- Export Selection ------------------------------------------------------------------------------
+
+# (operator, "selected only" property, label); each opens its file browser.
+EXPORTERS = (
+    ("export_scene.fbx", "use_selection", "FBX (.fbx)"),
+    ("wm.obj_export", "export_selected_objects", "OBJ (.obj)"),
+    ("export_scene.gltf", "use_selection", "glTF 2.0 (.glb/.gltf)"),
+    ("wm.usd_export", "selected_objects_only", "USD (.usd*)"),
+    ("wm.alembic_export", "selected", "Alembic (.abc)"),
+)
+
+
+def available_exporters():
+    out = []
+    for idname, prop, label in EXPORTERS:
+        mod, name = idname.split(".")
+        try:
+            getattr(getattr(bpy.ops, mod), name).get_rna_type()
+        except (AttributeError, KeyError):
+            continue
+        out.append((idname, prop, label))
+    return out
+
+
+class MAYAKIT_MT_export_selection(bpy.types.Menu):
+    """Export only the selected objects (Maya File > Export Selection)"""
+    bl_idname = "MAYAKIT_MT_export_selection"
+    bl_label = "Export Selection"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_DEFAULT'
+        for idname, prop, label in available_exporters():
+            op = layout.operator(idname, text=label)
+            setattr(op, prop, True)
+
+
+# --- UV planar --------------------------------------------------------------------------------------
+
+def planar_uvs(points, normal):
+    """UVs of ``points`` projected on the plane of ``normal``, fitted in 0-1 keeping the
+    aspect ratio (Maya's planar projection with "keep image width/height ratio")."""
+    n = Vector(normal).normalized() if Vector(normal).length > 1e-9 else Vector((0, 0, 1))
+    # u = the world axis most perpendicular to the normal, flattened onto the plane, so a
+    # face looking along Z gets U = X and V = Y (not a diagonal).
+    axis = min((Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1))), key=lambda a: abs(a.dot(n)))
+    u = (axis - n * axis.dot(n)).normalized()
+    v = n.cross(u).normalized()
+    flat = [(p.dot(u), p.dot(v)) for p in points]
+    if not flat:
+        return []
+    x0, y0 = min(f[0] for f in flat), min(f[1] for f in flat)
+    size = max(max(f[0] for f in flat) - x0, max(f[1] for f in flat) - y0) or 1.0
+    return [((x - x0) / size, (y - y0) / size) for x, y in flat]
+
+
+class MAYAKIT_OT_uv_planar(bpy.types.Operator):
+    """Project UVs on the plane of the faces' average normal (Maya Planar / Normal-Based)"""
+    bl_idname = "maya_kit.uv_planar"
+    bl_label = "Planar Projection"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob is not None and ob.type == 'MESH' and context.mode in {'EDIT_MESH', 'OBJECT'}
+
+    def execute(self, context):
+        obs = [o for o in (context.objects_in_mode if context.mode == 'EDIT_MESH' else context.selected_objects)
+               if o.type == 'MESH']
+        for ob in obs:
+            edit = ob.mode == 'EDIT'
+            bm = bmesh.from_edit_mesh(ob.data) if edit else bmesh.new()
+            if not edit:
+                bm.from_mesh(ob.data)
+            faces = [f for f in bm.faces if f.select] if edit else list(bm.faces)
+            if not faces:
+                if not edit:
+                    bm.free()
+                continue
+            layer = bm.loops.layers.uv.active or bm.loops.layers.uv.new("UVMap")
+            normal = sum((f.normal * f.calc_area() for f in faces), Vector())
+            loops = [lp for f in faces for lp in f.loops]
+            for lp, uv in zip(loops, planar_uvs([lp.vert.co for lp in loops], normal)):
+                lp[layer].uv = uv
+            if edit:
+                bmesh.update_edit_mesh(ob.data)
+            else:
+                bm.to_mesh(ob.data)
+                bm.free()
+        return {'FINISHED'}
+
+
+classes = (MAYAKIT_OT_open_editor, MAYAKIT_OT_increment_save, MAYAKIT_MT_export_selection,
+           MAYAKIT_OT_uv_planar)
