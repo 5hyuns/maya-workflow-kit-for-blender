@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 18 (편집 모드 키) 완료 — `docs/steps/step_18.md`. Mesh: D = 컴포넌트 피벗 홀드(3D 커서, 놓으면 유지 / 탭 = 리셋),
+  Ctrl+Shift+A 전체 선택, Alt+D 해제 + 오브젝트 모드, Ctrl+E 즉시 압출, Ctrl+B 즉시 베벨(정점 모드 = 정점), Shift+> / < 확장·축소,
+  Ctrl+F9–F11 닿는 요소로 변환 (`maya_kit.convert_selection`). 헤드리스 218/218, GUI 147/147, dogfood 45 중 42 (남은 실패: Ctrl+D 이름, `.`, `=`).
 - Step 17 (Maya 프레이밍 여백 + 핫박스 잘림) 완료 — `docs/steps/step_17.md`. F/A/Shift+F/Shift+A/Ctrl+Shift+F 가 보이는 영역(사이드바·툴바·
   투명 헤더 제외)의 0.95 에 경계 상자를 맞춤 (`operators/framing.py`, `maya_kit.frame`); 핫박스 행은 보이는 영역 안으로 밀고 긴 행은 줄바꿈.
   헤드리스 211/211, GUI 133/133, dogfood 45 중 41 (남은 실패: Ctrl+D 이름, `.`, `=`, Shift+>).
@@ -21,6 +24,6 @@
 
 ## 바로 다음 할 일
 
-- Step 18: backlog 4 — 편집 모드 키 충돌(D=Annotate, Ctrl+Shift+A, Alt+D)과 즉시 Extrude/Bevel, Shift+> 선택 확장, Ctrl+F9–F11 변환.
-  이후 backlog 5–8 (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
+- Step 19: backlog 5 — 복제 이름 Maya 규칙 (Ctrl+D / Shift+D / Duplicate Special → pCube2 / pCubeShape2, 그룹 복제 시 자식 이름).
+  주의: mapping.py 의 Duplicate 행이 IC `object.duplicate_move` 를 고정 (step_14 B9). 이후 backlog 6–8.
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.

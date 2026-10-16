@@ -4,7 +4,7 @@
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
 docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
-docs/steps/step_16.md (18).
+docs/steps/step_16.md (18), docs/steps/step_18.md (19).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -380,11 +380,37 @@ def patch_undo_visibility(kd):
     _add(kd, "Mesh", "mesh.select_all", make_event("I", ctrl=True, shift=True), {"action": 'INVERT'})
 
 
+# --- 19. Mesh component keys (docs/steps/step_18.md 「계획」) -------------------------------
+# research/maya/interaction.md:75 (Ctrl+Shift+A / Alt+D), :79 (Ctrl+F9-F11 convert), :82 (> <,
+# Ctrl: along loop), :124-129 (D component pivot); HK:384-385 (Ctrl+E extrude, Ctrl+B bevel).
+
+CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
+
+
+def patch_mesh_components(kd):
+    kd.remove("Mesh", "wm.tool_set_by_id", type="D")                       # annotate tool
+    _add(kd, "Mesh", "maya_kit.hold", make_event("D"), {"name": "component_pivot"})
+    kd.remove("Mesh", "mesh.select_all", type="A", ctrl=True, shift=True)   # IC: deselect
+    _add(kd, "Mesh", "mesh.select_all", make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
+    _add(kd, "Mesh", "maya_kit.select_none", make_event("D", alt=True))
+    kd.remove("Mesh", "wm.tool_set_by_id", type="E", ctrl=True)            # extrude tool
+    _add(kd, "Mesh", "view3d.edit_mesh_extrude_move_normal", make_event("E", ctrl=True))
+    kd.remove("Mesh", "wm.tool_set_by_id", type="B", ctrl=True)            # bevel tool
+    _add(kd, "Mesh", "maya_kit.bevel", make_event("B", ctrl=True))
+    _add(kd, "Mesh", "mesh.select_more", make_event("PERIOD", shift=True, repeat=True))
+    _add(kd, "Mesh", "mesh.select_less", make_event("COMMA", shift=True, repeat=True))
+    _add(kd, "Mesh", "mesh.select_next_item", make_event("PERIOD", shift=True, ctrl=True, repeat=True))
+    _add(kd, "Mesh", "mesh.select_prev_item", make_event("COMMA", shift=True, ctrl=True, repeat=True))
+    for key, comp in CONVERT_KEYS:
+        _add(kd, "Mesh", "maya_kit.convert_selection", make_event(key, ctrl=True), {"type": comp})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
-           patch_attribute_editor, patch_undo_visibility)
+           patch_attribute_editor, patch_undo_visibility,
+           patch_mesh_components)
 
 
 def apply(data):
