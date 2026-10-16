@@ -78,7 +78,8 @@ blindspot scout (B, cards in step_14.md), step docs (S).
 
 1. **Data-loss bug — Delete History bakes the smooth-preview Subsurf** (B1): 3 then Alt+Shift+D
    subdivides the real mesh; 1 hides the first Subsurf even if it is the user's own.
-2. **Daily Maya keys that do the wrong thing** (D, B3, B13): `z` = undo (now zoom border), Shift+Z /
+2. **Daily Maya keys that do the wrong thing** (D, B3, B13) — step 16 did z / Shift+Z / Ctrl+Y, h-family,
+   Ctrl+1, Ctrl+Shift+I; still open: `z` = undo (now zoom border), Shift+Z /
    Ctrl+Y = redo, `h` toggle visibility, Shift+H / Alt+H (IC does the opposite), Ctrl+1 isolate,
    `+` `-` manipulator size, Shift+> / Shift+< grow / shrink, Ctrl+F9–F11 convert, PgUp/PgDn, `0`,
    Home, Ctrl+Shift+F, Ctrl+Shift+I; edit mode: D = annotate tool, Ctrl+Shift+A = deselect, Alt+D

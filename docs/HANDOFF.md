@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 16 (언두·가시성·아이솔레이트 키) 완료 — `docs/steps/step_16.md`. z/Shift+Z/Ctrl+Y (Screen, border 4개 제거), h·Ctrl+H·Alt+H·
+  Shift+H·Ctrl+Shift+H (`maya_kit.visibility`, 오브젝트 모드; Mesh 는 hide/reveal), Ctrl+1 아이솔레이트(카메라 고정), Ctrl+Shift+I 반전.
+  헤드리스 203/203, GUI 127/127, dogfood 45 중 41 (남은 실패: Ctrl+D 이름, `.`, `=`, Shift+>). 키맵 대응표 구현 51→63.
 - Step 15 (스무스 프리뷰 = 표시 전용) 완료 — `docs/steps/step_15.md`. 3 이 Set Shade Smooth 노드 모디파이어 + 프리뷰 Subsurf(마지막)로
   매끈하게 보이고 메시 데이터는 그대로; Delete History 는 프리뷰를 굽지 않음; 1/2/3 은 사용자 Subsurf 를 건드리지 않음; INPUTS/AE 탭에서 숨김.
   헤드리스 196/196, GUI 115/115, dogfood 45 중 37 통과 (실패 8 = backlog 2·5 의 키·이름).
@@ -15,7 +18,6 @@
 
 ## 바로 다음 할 일
 
-- Step 16: backlog 2 — Maya 언두/가시성/아이솔레이트 기본 키 (z, Shift+Z, Ctrl+Y, h, Shift+H/Alt+H/Ctrl+Shift+H, Ctrl+1, Ctrl+Shift+I).
-  주의: `tests/test_keymap_maya.py` 의 IC idname 고정·`_STACKS` (step_14 B9). 이후 backlog 3–8 순서
-  (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
+- Step 17: backlog 3 — F/A 프레이밍 여백(Maya fit, 사이드바 겹침 제외)과 핫박스 행 잘림 (`marking/draw.py:133`).
+  이후 backlog 4–8 (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.

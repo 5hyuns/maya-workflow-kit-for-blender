@@ -144,3 +144,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 15 — 스무스 프리뷰
 
 - [ ] (step 15) 큐브에 3 → 매끈한 셰이딩, 빠르게 회전해도 끊김 없음 (Preferences > Viewport > GPU Subdivision 켠 상태에서 Subsurf 가 GPU 로 도는지: 고해상도 메시로 1 ↔ 3 체감 비교). 3 → Alt+Shift+D → 메시 그대로·프리뷰 유지, 1 → 원래 각진 큐브.
+
+### Step 16 — 언두·가시성·아이솔레이트
+
+- [ ] (step 16) 실제 키보드로 z / Shift+Z / Ctrl+Y: 3D 뷰, Outliner, Graph Editor 위에서 각각 언두·리두. 텍스트 에디터·Python 콘솔·커맨드 라인 필드에서는 z 가 글자로 입력됨.
+- [ ] (step 16) h 두 번 (숨김 → 보임+선택), Ctrl+H → Ctrl+Shift+H, Alt+H → Shift+H, Outliner 에서 숨긴 객체 클릭 후 Shift+H. Maya 2022 와 선택 상태 비교.
+- [ ] (step 16) Ctrl+1 아이솔레이트 중 카메라가 움직이지 않음, 다시 Ctrl+1 로 원래 뷰.

@@ -7,11 +7,11 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 51 |
+| 구현 | 63 |
 | IC 일치 | 8 |
-| 계획 | 26 |
+| 계획 | 22 |
 | 해당 없음 | 9 |
-| 미검토 | 306 |
+| 미검토 | 298 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -21,9 +21,9 @@
 | Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT') | 구현 |  | hotkeySetup.mel:62 |
 | Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `object.duplicate_move`; Mesh: `mesh.duplicate_move` | IC 일치 |  | hotkeySetup.mel:64 |
 | Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `maya_kit.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
-| z | Z | global | Undo | 3D View: `view3d.zoom_border` | 미검토 |  | hotkeySetup.mel:67 |
-| Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 미검토 |  | hotkeySetup.mel:68 |
-| Shift+Z | Shift+Z | global | Redo | — | 미검토 |  | hotkeySetup.mel:69 |
+| z | Z | global | Undo | Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:67 |
+| Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:68 |
+| Shift+Z | Shift+Z | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:69 |
 | Ctrl+q | Ctrl+Q | global | Quit | Window: `wm.quit_blender` | 미검토 |  | hotkeySetup.mel:71 |
 | Ctrl+o | Ctrl+O | global | OpenScene | Window: `wm.open_mainfile` | 미검토 |  | hotkeySetup.mel:73 |
 | Ctrl+n | Ctrl+N | global | NewScene | Window: `wm.read_homefile` | 미검토 |  | hotkeySetup.mel:74 |
@@ -32,7 +32,7 @@
 | Ctrl+Alt+s | Ctrl+Alt+S | global | IncrementAndSave | Window: `wm.save_mainfile` (incremental=True) | 미검토 |  | hotkeySetup.mel:77 |
 | Ctrl+r | Ctrl+R | global | CreateReference | — | 미검토 |  | hotkeySetup.mel:78 |
 | Ctrl+g | Ctrl+G | global | Group | Object Mode: `maya_kit.group` | 구현 | Empty 그룹, 피벗 원점, group1 명명 (Outliner 도) | hotkeySetup.mel:79 |
-| Ctrl+Shift+I | Ctrl+Shift+I | global | InvertSelection | — | 미검토 |  | hotkeySetup.mel:81 |
+| Ctrl+Shift+I | Ctrl+Shift+I | global | InvertSelection | Object Mode: `object.select_all` (action='INVERT'); Mesh: `mesh.select_all` (action='INVERT') | 구현 | 편집 모드: mesh.select_all(INVERT) | hotkeySetup.mel:81 |
 | Ctrl+x | Ctrl+X | global | CutSelected | — | 미검토 |  | hotkeySetup.mel:84 |
 | Ctrl+c | Ctrl+C | global | CopySelected | 3D View: `view3d.copybuffer` | 미검토 |  | hotkeySetup.mel:85 |
 | Ctrl+v | Ctrl+V | global | PasteSelected | 3D View: `view3d.pastebuffer` | 미검토 |  | hotkeySetup.mel:86 |
@@ -116,7 +116,7 @@
 | Cmd+c | Oskey+C | timeEditorPanel | TimeEditorCopyClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:211 |
 | Cmd+x | Oskey+X | timeEditorPanel | TimeEditorCutClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:212 |
 | Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
-| Ctrl+y | Ctrl+Y | global | Redo | — | 미검토 |  | hotkeySetup.mel:223 |
+| Ctrl+y | Ctrl+Y | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:223 |
 | Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | Affect Only Origins 토글 (오브젝트 모드) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
@@ -153,14 +153,14 @@
 | Ctrl+Shift+> | Ctrl+Shift+PERIOD | global | GrowLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:267 |
 | Shift+< | Shift+COMMA | global | ShrinkPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:268 |
 | Ctrl+Shift+< | Ctrl+Shift+COMMA | global | ShrinkLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:269 |
-| h | H | global | ToggleVisibilityAndKeepSelection | — | 계획 Step 8 |  | hotkeySetup.mel:271 |
+| h | H | global | ToggleVisibilityAndKeepSelection | Object Mode: `maya_kit.visibility` (action='TOGGLE') | 구현 | 숨긴 객체를 '선택 유지' 표시로 기억, 다시 h = 보이고 선택 (오브젝트 모드) | hotkeySetup.mel:271 |
 | x | X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:272 |
 | Shift+X | Shift+X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:273 |
-| Ctrl+h | Ctrl+H | global | HideSelectedObjects | Object Mode: `object.hide_view_set` (unselected=False); Mesh: `mesh.hide` (unselected=False) | IC 일치 |  | hotkeySetup.mel:274 |
-| Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `object.hide_view_set` (unselected=True); Mesh: `mesh.hide` (unselected=True) | 계획 Step 8 |  | hotkeySetup.mel:275 |
-| Ctrl+Shift+H | Ctrl+Shift+H | global | ShowLastHidden | — | 미검토 |  | hotkeySetup.mel:276 |
-| Alt+h | Alt+H | global | HideUnselectedObjects | Object Mode: `object.hide_view_clear`; Mesh: `mesh.reveal` | 계획 Step 8 |  | hotkeySetup.mel:277 |
-| Ctrl+Alt+h | Ctrl+Alt+H | global | ShowAllPolyComponents | — | 미검토 |  | hotkeySetup.mel:278 |
+| Ctrl+h | Ctrl+H | global | HideSelectedObjects | Object Mode: `maya_kit.visibility` (action='HIDE'); Mesh: `mesh.hide` (unselected=False) | 구현 | 컴포넌트: Mesh mesh.hide (IC) | hotkeySetup.mel:274 |
+| Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `maya_kit.visibility` (action='SHOW_SELECTED'); Mesh: `mesh.reveal` | 구현 | h 로 숨긴 선택 + 숨겨진 활성 객체; 컴포넌트: mesh.reveal | hotkeySetup.mel:275 |
+| Ctrl+Shift+H | Ctrl+Shift+H | global | ShowLastHidden | Object Mode: `maya_kit.visibility` (action='SHOW_LAST'); Mesh: `mesh.reveal` | 구현 | 킷 숨김 동작(h/Ctrl+H/Alt+H)의 마지막 대상; 컴포넌트: mesh.reveal | hotkeySetup.mel:276 |
+| Alt+h | Alt+H | global | HideUnselectedObjects | Object Mode: `maya_kit.visibility` (action='HIDE_UNSELECTED'); Mesh: `mesh.hide` (unselected=True) | 구현 | 컴포넌트: mesh.hide(unselected) | hotkeySetup.mel:277 |
+| Ctrl+Alt+h | Ctrl+Alt+H | global | ShowAllPolyComponents | Mesh: `mesh.reveal` | 구현 |  | hotkeySetup.mel:278 |
 | c | C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:279 |
 | Shift+C | Shift+C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:280 |
 | v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:281 |
@@ -210,9 +210,9 @@
 | 6 | SIX | global | DisplayShadedAndTextured | 3D View: `maya_kit.display_mode` (mode='TEXTURED') | 구현 |  | hotkeySetup.mel:343 |
 | 7 | SEVEN | global | DisplayLight | 3D View: `maya_kit.display_mode` (mode='LIGHTS') | 구현 | Material Preview + 씬 라이트 (근사) | hotkeySetup.mel:344 |
 | Ctrl+Shift+% | Ctrl+Shift+FIVE | global | ToggleUseDefaultMaterial | — | 미검토 |  | hotkeySetup.mel:345 |
-| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | Mesh: `mesh.select_mode` (use_expand=True, type='VERT') | 계획 Step 8 |  | hotkeySetup.mel:346 |
+| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | 3D View: `view3d.localview` (frame_selected=False) | 구현 | 로컬 뷰 (카메라 그대로), 다시 누르면 해제 | hotkeySetup.mel:346 |
 | Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
-| Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | 미검토 |  | hotkeySetup.mel:351 |
+| Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | IC 일치 | 로컬 뷰 토글 (프레이밍 포함) | hotkeySetup.mel:351 |
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | 3D View: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |

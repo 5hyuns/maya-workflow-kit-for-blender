@@ -3,7 +3,8 @@
 
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
-docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17).
+docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
+docs/steps/step_16.md (18).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -329,11 +330,55 @@ def patch_attribute_editor(kd):
     _add(kd, "Object Mode", "object.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
 
 
+# --- 18. Undo / redo, visibility, isolate, invert (docs/steps/step_16.md 「계획」) ------------
+# research/maya/interaction.md:220-221 (z / Shift+Z / Ctrl+Y), :233-240 (h, Ctrl+H, Alt+H,
+# Shift+H, Ctrl+Shift+H, Ctrl+Alt+H, Ctrl+1), :76 (Ctrl+Shift+I).
+
+# Editor keymaps run before "Screen": their z = zoom/viewer border would hide the undo.
+_Z_BORDERS = (("3D View", "view3d.zoom_border"), ("View2D", "view2d.zoom_border"),
+              ("Image", "image.view_zoom_border"), ("Node Editor", "node.viewer_border"))
+
+VISIBILITY_KEYS = (("H", {}, "TOGGLE"), ("H", {"ctrl": True}, "HIDE"),
+                   ("H", {"alt": True}, "HIDE_UNSELECTED"), ("H", {"shift": True}, "SHOW_SELECTED"),
+                   ("H", {"ctrl": True, "shift": True}, "SHOW_LAST"))
+
+
+def patch_undo_visibility(kd):
+    for km, idname in _Z_BORDERS:
+        kd.remove(km, idname, type="Z")
+    _add(kd, "Screen", "ed.undo", make_event("Z"))
+    _add(kd, "Screen", "ed.redo", make_event("Z", shift=True))
+    _add(kd, "Screen", "ed.redo", make_event("Y", ctrl=True))
+
+    # Object Mode: IC Ctrl+H hide, Shift+H hide unselected, Alt+H reveal (IC Object Mode).
+    kd.remove("Object Mode", "object.hide_view_set", type="H", ctrl=True)
+    kd.remove("Object Mode", "object.hide_view_set", type="H", shift=True)
+    kd.remove("Object Mode", "object.hide_view_clear", type="H", alt=True)
+    for key, mods, action in VISIBILITY_KEYS:
+        _add(kd, "Object Mode", "maya_kit.visibility", make_event(key, **mods), {"action": action})
+    # Mesh components: hidden components can't be selected in Blender, so the "show"
+    # keys reveal everything (and select it). IC Shift+H / Alt+H = hide unselected / reveal.
+    kd.remove("Mesh", "mesh.hide", type="H", shift=True)
+    kd.remove("Mesh", "mesh.reveal", type="H", alt=True)
+    _add(kd, "Mesh", "mesh.hide", make_event("H", alt=True), {"unselected": True})
+    for mods in ({"shift": True}, {"ctrl": True, "shift": True}, {"ctrl": True, "alt": True}):
+        _add(kd, "Mesh", "mesh.reveal", make_event("H", **mods))
+
+    # Ctrl+1 isolate select: local view without moving the camera; again = back.
+    kd.remove("Mesh", "mesh.select_mode", type="ONE", ctrl=True)
+    _add(kd, "3D View", "view3d.localview", make_event("ONE", ctrl=True), {"frame_selected": False},
+         shadows=("Sculpt",))
+
+    _add(kd, "Object Mode", "object.select_all", make_event("I", ctrl=True, shift=True),
+         {"action": 'INVERT'})
+    _add(kd, "Mesh", "mesh.select_all", make_event("I", ctrl=True, shift=True), {"action": 'INVERT'})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
-           patch_attribute_editor)
+           patch_attribute_editor, patch_undo_visibility)
 
 
 def apply(data):
