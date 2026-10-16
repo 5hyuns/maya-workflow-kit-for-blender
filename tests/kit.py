@@ -29,7 +29,7 @@ def is_enabled():
 
 
 # RNA types an add-on typically extends with properties.
-_PROP_OWNERS = ("Scene", "Object", "WindowManager", "ViewLayer", "Mesh",
+_PROP_OWNERS = ("Scene", "Object", "WindowManager", "ViewLayer", "Mesh", "Collection",
                 "SpaceView3D", "ToolSettings", "Preferences")
 
 

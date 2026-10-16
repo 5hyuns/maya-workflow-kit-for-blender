@@ -87,9 +87,13 @@ class KeyconfigData:
         items[:] = [it for it in items if not any(it is f for f in found)]
         return found
 
-    def add(self, km_name, idname, event, props=None):
+    def add(self, km_name, idname, event, props=None, first=False):
         item = (idname, event, make_props(props or {}))
-        self.items(km_name).append(item)
+        items = self.items(km_name)
+        if first:
+            items.insert(0, item)  # wins over later items with the same event
+        else:
+            items.append(item)
         return item
 
     def rewrite_modifier_set(self, idname, value, variants, keep_props=(), type="LEFTMOUSE"):

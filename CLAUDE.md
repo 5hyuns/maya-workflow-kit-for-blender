@@ -51,6 +51,8 @@ python tools/make_theme.py       # regenerate theme/maya.xml from its colour tab
 - Modal keys: Maya hold keys use a PRESS → modal (`operators/hold.py`), not PRESS/RELEASE keymap pairs, because the transform modal swallows RELEASE; new tap/hold keys subclass `taphold.TapHoldBinding`.
 - Blender preferences (not scene data) the kit changes go through `prefs_preset.py` (backup in add-on prefs, restore on disable); `tests/kit.py` snapshots `preferences.inputs`/`view`, so a leak fails `test_enable_disable`.
 - Generated binaries (`startup.blend`, `maya.xml`) are never edited by hand: change the generator and rerun it. Headless screen editing: `screen.area_split` works under a window/screen override (sizes appear after loading in a UI), but `screen.area_close` hangs and `screen.area_move` has no effect in `-b`.
+- Simulated events don't update `event.mouse_prev_x`: modal operators track the previous mouse position themselves. `Region.active_panel_category` is read-only (headless and GUI), so a sidebar tab can't be preselected; GUI tests switch tabs with Ctrl+wheel over the tab strip.
+- Keymap items that must win over a same-event item in the same keymap go in front (`_add(..., first=True)`) and must return PASS_THROUGH when they don't apply; list them in `maya_patches.PASS_THROUGH_FIRST`.
 - Git Bash gotcha: `$PWD` is `/c/...`, which Blender's Python can't resolve — pass Windows paths (`cygpath -w`) in `BLENDER_USER_*` when launching Blender by hand.
 - Headless gotcha: in `-b` the default keyconfig is not populated (research/blender/industry_compatible_vs_maya.md:14); build keyconfigs from data, don't read `keyconfigs.default`.
 - UI: verify with a GUI screenshot. Interaction feel: add to `docs/manual_checks.md`.

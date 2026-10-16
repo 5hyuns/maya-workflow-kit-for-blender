@@ -17,8 +17,13 @@ from .patch import KeyconfigData, make_event
 ADDED = []
 
 
-def _add(kd, km_name, idname, event, props=None, shadows=()):
-    kd.add(km_name, idname, event, props)
+# Operators that return PASS_THROUGH when they don't apply, so they may sit in
+# front of another item with the same event in the same keymap.
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider",)
+
+
+def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
+    kd.add(km_name, idname, event, props, first=first)
     ADDED.append((km_name, idname, event, dict(props or {}), tuple(shadows)))
 
 
@@ -245,10 +250,26 @@ def patch_component_keys(kd):
         _add(kd, "Object Non-modal", "maya_kit.component_mode", make_event(key), {"type": comp})
 
 
+# --- 14. Channel Box MMB virtual slider ---------------------------------------
+# research/maya/channel_box.md:73-78. Tool keymaps run before "3D View" and IC
+# gives Move/Rotate/Scale/Transform an MMB drag (IC:3823-3858), so the slider
+# goes first in those; it passes through when no channel is selected.
+
+SLIDER_TOOL_KEYMAPS = ("3D View Tool: Move", "3D View Tool: Rotate", "3D View Tool: Scale",
+                       "3D View Tool: Transform")
+
+
+def patch_cb_slider(kd):
+    for km in SLIDER_TOOL_KEYMAPS:
+        _add(kd, km, "maya_kit.cb_virtual_slider", make_event("MIDDLEMOUSE"), first=True,
+             shadows=(km,))
+    _add(kd, "Object Mode", "maya_kit.cb_virtual_slider", make_event("MIDDLEMOUSE"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys)
+           patch_component_keys, patch_cb_slider)
 
 
 def apply(data):

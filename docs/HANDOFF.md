@@ -2,14 +2,13 @@
 
 ## 현재 작업
 
-- Step 5 (M2-a 레이아웃 App Template + Maya 테마) 완료 — `docs/steps/step_5.md`. 헤드리스 61/61, GUI 47/47.
-- 레이아웃: `tools/make_startup.py` → `src/maya_kit/app_template/MayaKit/startup.blend` (워크스페이스 "General"). 테마: `tools/make_theme.py` → `src/maya_kit/theme/maya.xml`. 둘 다 생성기로만 수정.
-- Channel Box 자리는 General 화면 3D 뷰의 **사이드바**(N 패널, 이미 표시됨).
+- Step 6 (M2-b Channel Box + Layer Editor) 완료 — `docs/steps/step_6.md`. 헤드리스 79/79, GUI 52/52.
+- Channel Box: `src/maya_kit/ui/channel_box.py` (프록시 `Scene.maya_kit_cb`, 채널 선택 `WindowManager.maya_kit_cb_selected`, MMB 슬라이더). Layer Editor: `src/maya_kit/ui/layer_editor.py` (`Collection.maya_kit_layer`, "Display Layers" 루트).
 
 ## 바로 다음 할 일
 
-- **Step 6 — M2-b Channel Box** (`docs/PLAN.md` #6).
-  - 근거: `research/maya/channel_box.md` (구성 §1, 표시 4개 섹션 §2.1, 채널 선택 §2.2, MMB 가상 슬라이더 §2.3, Channels 메뉴 §2.4, Edit 메뉴 §2.5, 필드 편집 §2.6, Layer Editor §3, Blender 대응 §4), `research/blender/api_limits.md` #1/1a/1b/1c.
-  - 3D 뷰 사이드바 카테고리 "Channel Box": 선택 객체의 Translate/Rotate/Scale XYZ + Visibility (+ 커스텀 속성), SHAPES(데이터), INPUTS(모디파이어 = history) 섹션; 다중 선택 일괄 편집 (Maya 는 선택 전체에 적용); 채널 이름 클릭 선택 → 뷰포트 MMB 드래그 가상 슬라이더 (MMB 는 IC 툴 키맵의 MMB 이동과 충돌 — 우선순위 확인, `industry_compatible_vs_maya.md` §1 "MMB-drag anywhere").
-  - 템플릿의 사이드바가 Channel Box 탭을 열도록 make_startup 갱신 고려 (영역의 활성 카테고리 설정 가능 여부 확인).
-  - MMB 모달·다중 편집 설계 → 먼저 `docs/steps/step_6.md` 「계획」. GUI 검증은 `tests/gui/gui_step6_*.py`.
+- **Step 7 — M2-c 상단 UI** (`docs/PLAN.md` #7): Status Line(메뉴셋 드롭다운, 선택 마스크, 스냅 토글 버튼, 렌더 버튼 — TOPBAR/헤더 확장), 커맨드 라인(Python 입력 → exec, 결과/오류 표시, 'MEL은 지원 안 함' 안내, 자주 쓰는 Maya 명령 Python 별칭), Range Slider, 타임라인 모양, `.` `,` Alt+`.` Alt+`,` 키/프레임 이동.
+  - 근거: `research/maya/ui_layout.md` §4.1–4.2 (메뉴셋·Status Line 그룹 :193-235), §4.10–4.13 (Time/Range Slider, Command Line, Help Line), `research/blender/api_limits.md` #10 #12 #13 #14, `research/maya/hotkeys_default.json` (`.`/`,` NextKey/PreviousKey, Alt+`.`/Alt+`,` NextFrame/PreviousFrame — 대응표 "계획 Step 7" 행).
+  - TOPBAR/STATUSBAR `.append()` 는 unregister 에서 `.remove()` (스냅샷의 `ui_extensions` 가 검사). 커맨드 라인 exec 는 사용자 입력 실행이므로 결과/예외를 캡처해 표시.
+  - 스냅 토글 버튼은 Step 3 홀드 상태(`operators/hold.py`)와 같은 tool_settings 를 쓰므로 홀드 중 표시가 바뀌는 점 확인.
+  - GUI 스크린샷으로 상단 바·커맨드 라인 직접 확인 (`tests/gui/gui_step7_*.py`).

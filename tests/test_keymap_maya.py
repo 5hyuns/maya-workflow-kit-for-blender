@@ -136,7 +136,9 @@ def _conflicts(data):
 
 def test_no_new_conflicts_within_keymaps():
     base = _conflicts(ic_data.generate())
-    maya = _conflicts(maya_patches.apply(ic_data.generate()))
+    # Declared pass-through items placed in front on purpose (maya_patches.PASS_THROUGH_FIRST).
+    maya = {c for c in _conflicts(maya_patches.apply(ic_data.generate()))
+            if c[2] not in maya_patches.PASS_THROUGH_FIRST}
     new = sorted(maya - base, key=str)
     assert not new, "new conflicts:\n" + "\n".join(map(str, new))
 
@@ -154,6 +156,7 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Mesh": ("Window", "Screen", "Frames", "3D View", "3D View Generic", "Mesh",
                     "Object Non-modal"),
            "Screen": None,
+           **{km: (km,) for km in maya_patches.SLIDER_TOOL_KEYMAPS},
            "Outliner": ("Window", "Screen", "Outliner", "View2D", "View2D Buttons List"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
