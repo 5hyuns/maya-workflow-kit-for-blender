@@ -223,6 +223,18 @@ def s_three():
 @step
 def s_three_shot():
     shot("04_smooth_preview.png")
+    cube = bpy.data.objects["pCube1"]
+    me = cube.evaluated_get(bpy.context.evaluated_depsgraph_get()).data
+    check("3 -> preview shades smooth", all(p.use_smooth for p in me.polygons))
+    ev('D', 'PRESS', alt=True, shift=True)
+    ev('D', 'RELEASE', alt=True, shift=True)
+
+
+@step
+def s_delete_history():
+    cube = bpy.data.objects["pCube1"]
+    check(f"Alt+Shift+D (Delete History) keeps the preview display-only (verts {len(cube.data.vertices)})",
+          len(cube.data.vertices) == 8 and any(m.type == 'SUBSURF' for m in cube.modifiers))
     tap('ONE')
 
 
@@ -474,8 +486,9 @@ def s_isolate():
     if view3d()[0].spaces.active.local_view is not None:
         with v3d_override():
             bpy.ops.view3d.localview()
-    mods = [m.type for m in bpy.data.objects["pCube1"].modifiers]
-    check(f"Ctrl+1 changes nothing else (pCube1 modifiers {mods})", mods == ['SUBSURF'])
+    mods = [m.name for m in bpy.data.objects["pCube1"].modifiers]
+    check(f"Ctrl+1 changes nothing else (pCube1 modifiers {mods})",
+          mods == ["Maya Smooth Preview Shading", "Maya Smooth Preview"])
     C["frame"] = bpy.context.scene.frame_current
     tap('PERIOD')
 

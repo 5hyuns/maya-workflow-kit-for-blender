@@ -151,19 +151,24 @@ def test_smooth_preview_levels():
     bpy.ops.maya_kit.smooth_preview(level=1)
     assert not m.show_viewport and not ob.show_wire
     bpy.ops.maya_kit.smooth_preview(level=3)
-    assert len(ob.modifiers) == 1, "re-uses the existing modifier"
+    assert len(ob.modifiers) == 2, "re-uses the preview (+ its shading) modifier"
 
 
-def test_smooth_preview_reuses_user_subsurf_and_keeps_user_wire():
+def test_smooth_preview_leaves_user_subsurf_and_user_wire():
+    # Step 15 reversed step 4's "re-use the first Subsurf": 1/2/3 only touch the kit's
+    # preview modifier (a user Subsurf is history in Maya terms, research/maya/concepts.md:64-74).
     ob = _mesh("sp_b")
     user = ob.modifiers.new("Mine", 'SUBSURF')
     user.levels = 3
     ob.show_wire = True
     _select(ob)
     bpy.ops.maya_kit.smooth_preview(level=1)
-    assert not user.show_viewport and len(ob.modifiers) == 1
+    assert user.show_viewport and len(ob.modifiers) == 1
     bpy.ops.maya_kit.smooth_preview(level=3)
     assert user.show_viewport and user.levels == 3
+    assert ob.modifiers[-1].name == display.PREVIEW_MOD_NAME
+    bpy.ops.maya_kit.smooth_preview(level=1)
+    assert user.show_viewport, "1 does not hide the user's own Subsurf"
     assert ob.show_wire, "a wire display the user set is not cleared"
 
 

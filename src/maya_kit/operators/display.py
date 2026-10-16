@@ -56,18 +56,66 @@ class MAYAKIT_OT_display_mode(bpy.types.Operator):
 
 # --- 1/2/3 smooth mesh preview ------------------------------------------------
 # research/maya/interaction.md:166-172: 1 = no smoothing, 2 = cage + smooth,
-# 3 = smooth mesh preview; per selected shape, geometry unchanged.
-# Blender form: a Subsurf modifier's viewport visibility (docs/steps/step_4.md 6).
+# 3 = smooth mesh preview; per selected shape, geometry unchanged. Blender form:
+# the kit's own preview Subsurf (never the user's Subsurf, step 15) plus a
+# "Set Shade Smooth" geometry-nodes modifier right before it, so the preview looks
+# smooth without touching the mesh's sharp_face data. The Subsurf stays last in the
+# stack, which keeps Blender's GPU subdivision. Both are display only: not history
+# (operators/history.py keeps them), hidden from INPUTS. Plan: docs/steps/step_15.md.
 
 PREVIEW_MOD_NAME = "Maya Smooth Preview"
+PREVIEW_SHADE_NAME = "Maya Smooth Preview Shading"
+SHADE_GROUP_NAME = ".MayaKit Smooth Preview Shading"  # leading dot: hidden in node menus
+PREVIEW_NAMES = (PREVIEW_MOD_NAME, PREVIEW_SHADE_NAME)
 _WIRE_FLAG = "maya_kit_preview_wire"  # object custom prop: we turned show_wire on
 
 
+def is_preview(mod):
+    """True for the kit's smooth-preview modifiers (display only, not Maya history)."""
+    return mod.name in PREVIEW_NAMES
+
+
+def _shade_group():
+    ng = bpy.data.node_groups.get(SHADE_GROUP_NAME)
+    if ng is not None and ng.bl_idname == 'GeometryNodeTree':
+        return ng
+    ng = bpy.data.node_groups.new(SHADE_GROUP_NAME, 'GeometryNodeTree')
+    ng.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket("Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    gin, gout = ng.nodes.new("NodeGroupInput"), ng.nodes.new("NodeGroupOutput")
+    smooth = ng.nodes.new("GeometryNodeSetShadeSmooth")   # domain FACE, Shade Smooth = True
+    smooth.inputs["Shade Smooth"].default_value = True
+    gin.location, smooth.location, gout.location = (-250, 0), (0, 0), (250, 0)
+    ng.links.new(gin.outputs[0], smooth.inputs["Geometry"])
+    ng.links.new(smooth.outputs[0], gout.inputs[0])
+    return ng
+
+
+def _ensure_shade_modifier(ob, sub):
+    """The shading modifier, placed directly before the preview Subsurf ``sub``."""
+    shade = ob.modifiers.get(PREVIEW_SHADE_NAME)
+    if shade is None:
+        shade = ob.modifiers.new(PREVIEW_SHADE_NAME, 'NODES')
+        shade.node_group = _shade_group()
+        shade.show_render = False
+        shade.show_in_editmode = True
+        shade.show_on_cage = False
+        shade.show_expanded = False
+    want = list(ob.modifiers).index(sub)
+    if list(ob.modifiers).index(shade) != want - 1:
+        # ObjectModifiers has no move() in 4.5; the operator only needs the object.
+        with bpy.context.temp_override(object=ob):
+            bpy.ops.object.modifier_move_to_index(modifier=shade.name, index=want)
+    return shade
+
+
 def preview_modifier(ob, create):
-    """The object's first Subsurf modifier, or a new preview one if ``create``."""
-    for mod in ob.modifiers:
-        if mod.type == 'SUBSURF':
-            return mod
+    """The object's preview Subsurf (never a user Subsurf), or a new one if ``create``."""
+    mod = ob.modifiers.get(PREVIEW_MOD_NAME)
+    if mod is not None and mod.type == 'SUBSURF':
+        if create:
+            _ensure_shade_modifier(ob, mod)
+        return mod
     if not create:
         return None
     mod = ob.modifiers.new(PREVIEW_MOD_NAME, 'SUBSURF')
@@ -76,6 +124,7 @@ def preview_modifier(ob, create):
     mod.show_render = False  # preview only: renders unchanged
     mod.show_in_editmode = True
     mod.show_on_cage = False
+    _ensure_shade_modifier(ob, mod)
     return mod
 
 
@@ -83,6 +132,9 @@ def set_smooth_preview(ob, level):
     mod = preview_modifier(ob, create=level > 1)
     if mod is not None:
         mod.show_viewport = level > 1
+        shade = ob.modifiers.get(PREVIEW_SHADE_NAME)
+        if shade is not None:
+            shade.show_viewport = level > 1
     if level == 2:
         if not ob.show_wire:
             ob.show_wire = True

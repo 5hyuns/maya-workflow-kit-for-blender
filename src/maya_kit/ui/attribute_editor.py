@@ -15,6 +15,7 @@ research/maya/attribute_editor.md; design: docs/steps/step_11.md 「계획」 1,
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from ..operators import display
 from . import ae_layout
 from .channel_box import CATEGORY
 
@@ -46,6 +47,8 @@ def tabs(ob):
     if ob.data is not None:
         out.append(("S", ob.data.name, node_type(ob)))
     for md in ob.modifiers:
+        if display.is_preview(md):   # shape display attribute, drawn in "Smooth Mesh" (step 15)
+            continue
         out.append((f"M:{md.name}", md.name, md.type.lower()))
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
@@ -187,7 +190,7 @@ def draw_smooth_mesh(layout, context, ob):
     row = layout.row(align=True)
     for level, label in ((1, "1 Off"), (2, "2 Cage"), (3, "3 Smooth")):
         row.operator("maya_kit.smooth_preview", text=label).level = level
-    sub = next((m for m in ob.modifiers if m.type == 'SUBSURF'), None)
+    sub = display.preview_modifier(ob, create=False)
     if sub is not None:
         layout.prop(sub, "levels", text="Division Levels")
         layout.prop(sub, "render_levels", text="Render Levels")

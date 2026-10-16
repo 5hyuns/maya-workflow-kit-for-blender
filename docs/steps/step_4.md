@@ -50,7 +50,7 @@ Maya 값 (헤드리스로 4.5 팩토리 값 확인 후 선택):
 
 ### 6. 1/2/3 스무스 프리뷰 `maya_kit.smooth_preview(level)`
 
-- 선택(편집 모드면 편집 중) 메시마다: 첫 Subsurf 모디파이어를 쓰고, 없으면 "Maya Smooth Preview" (levels 2 = Maya 기본 divisions, `show_render=False` — 렌더에는 영향 없음) 추가.
+- (Step 15 에서 바뀜: 사용자 Subsurf 는 쓰지 않고 프리뷰 모디파이어만, 셰이딩 모디파이어 추가 — `docs/steps/step_15.md`.) 선택(편집 모드면 편집 중) 메시마다: 첫 Subsurf 모디파이어를 쓰고, 없으면 "Maya Smooth Preview" (levels 2 = Maya 기본 divisions, `show_render=False` — 렌더에는 영향 없음) 추가.
 - 1 = 모디파이어 viewport 끔, 2 = 켬 + 오브젝트 와이어 표시(Maya 케이지+스무스 근사, **W**), 3 = 켬 + 와이어는 우리가 켠 경우만 끔.
 - IC Object Mode 1/2/3 (컴포넌트 진입, IC:2558-2563), Mesh 1/2/3 (select_mode, IC:164-177) 대체 → 컴포넌트는 F9–F11.
 
