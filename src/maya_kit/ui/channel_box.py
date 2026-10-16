@@ -609,6 +609,11 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
     bl_label = "Channel Box"
     bl_order = 0
 
+    @classmethod
+    def poll(cls, context):
+        # Hidden while the dock shows the Attribute Editor.
+        return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX') == 'CHANNEL_BOX'
+
     def draw_header_preset(self, context):
         row = self.layout.row(align=True)
         row.menu("MAYAKIT_MT_cb_channels", text="Channels")

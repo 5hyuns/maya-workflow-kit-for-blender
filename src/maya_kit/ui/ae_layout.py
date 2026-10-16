@@ -1,0 +1,201 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Attribute Editor sections: Maya template sections -> Blender properties (data only).
+
+Section names and open/closed state follow 
+(``collapse`` flag of each ``editorTemplate -beginLayout``; Maya frameLayouts
+without a flag start collapsed ); rows are the Blender properties that play
+the part of the Maya attributes. Maya
+attributes with no Blender counterpart (shear, rotateAxis, tessellation, depth
+map shadows, Node Behavior, UUID, ...) are left out.
+
+Row forms:
+  ("prop", owner, attr, label)   owner: "ob" | "data" | "view" (3D View space)
+  ("draw", name)                 custom drawer in ui/attribute_editor.py
+  ("socket", input name, label)  Principled BSDF input (material tabs)
+
+``TEMPLATE`` names the research template a section list is checked against
+(tests/test_step11_outliner_ae.py); ``None`` = no Maya template in the research.
+"""
+
+
+class Section:
+    __slots__ = ("name", "open", "rows", "subs")
+
+    def __init__(self, name, open_, rows=(), subs=()):
+        self.name = name
+        self.open = open_
+        self.rows = list(rows)
+        self.subs = list(subs)
+
+
+def S(name, open_, *rows, subs=()):
+    return Section(name, open_, rows, subs)
+
+
+# --- transform (Maya, Maya-800) ---------------------
+TRANSFORM = [
+    S("Transform Attributes", True,                                          # collapse=0
+      ("draw", "transform_channels"),
+      ("prop", "ob", "rotation_mode", "Rotate Order")),
+    S("Pivots", False, subs=[
+        S("Local Space", False, ("prop", "ob", "delta_location", "Pivot Offset")),
+        S("World Space", True, ("draw", "world_pivot")),                    # collapse=0
+    ]),
+    S("Limit Information", False, subs=[
+        S("Translate", False, ("draw", "limit:LIMIT_LOCATION")),
+        S("Rotate", True, ("draw", "limit:LIMIT_ROTATION")),                # collapse=0
+        S("Scale", False, ("draw", "limit:LIMIT_SCALE")),
+    ]),
+    S("Display", False,
+      ("draw", "visibility"),
+      ("prop", "ob", "show_axis", "Display Local Axis"),
+      ("prop", "ob", "hide_select", "Template (unselectable)"),
+      ("prop", "ob", "show_in_front", "Always Draw On Top"),
+      ("prop", "ob", "show_name", "Display Name"),
+      subs=[
+          S("Bounding Box Information", False,
+            ("prop", "ob", "show_bounds", "Display Bounding Box"),
+            ("prop", "ob", "display_bounds_type", "Bounds Type")),
+          S("Drawing Overrides", False,                                     # collapse=1
+            ("prop", "ob", "display_type", "Display Type"),
+            ("prop", "ob", "color", "Color")),
+      ]),
+]
+
+# --- mesh shape (Maya-1119, :874; Maya) ------
+MESH = [
+    S("Mesh Component Display", False,
+      ("prop", "ob", "show_wire", "Wireframe on Shaded"),
+      ("prop", "ob", "show_all_edges", "Display All Edges"),
+      ("prop", "view", "overlay.show_face_normals", "Display Normals (Face)"),
+      ("prop", "view", "overlay.show_vertex_normals", "Display Normals (Vertex)"),
+      ("prop", "view", "overlay.normals_length", "Normal Size")),
+    S("Mesh Controls", False, ("draw", "shading")),
+    S("Smooth Mesh", False, ("draw", "smooth_mesh")),
+    S("Render Stats", False,
+      ("prop", "ob", "visible_camera", "Primary Visibility"),
+      ("prop", "ob", "visible_shadow", "Casts Shadows"),
+      ("prop", "ob", "visible_diffuse", "Visible in Diffuse"),
+      ("prop", "ob", "visible_glossy", "Visible in Reflections"),
+      ("prop", "ob", "visible_transmission", "Visible in Refractions"),
+      ("prop", "ob", "visible_volume_scatter", "Visible in Volume"),
+      ("prop", "ob", "hide_render", "Hide in Render")),
+    S("Object Display", False,
+      ("prop", "ob", "display_type", "Display Type")),
+]
+
+# --- camera (Maya-756) ---------------------------------------------
+CAMERA = [
+    S("Camera Attributes", True,
+      ("prop", "data", "lens", "Focal Length"),
+      ("prop", "data", "clip_start", "Near Clip Plane"),
+      ("prop", "data", "clip_end", "Far Clip Plane")),
+    S("Film Back", True,
+      ("prop", "data", "sensor_width", "Horizontal Film Aperture"),
+      ("prop", "data", "sensor_height", "Vertical Film Aperture"),
+      ("prop", "data", "sensor_fit", "Fit Resolution Gate"),
+      ("prop", "data", "shift_x", "Film Offset X"),
+      ("prop", "data", "shift_y", "Film Offset Y")),
+    S("Depth of Field", False,
+      ("prop", "data", "dof.use_dof", "Depth of Field"),
+      ("prop", "data", "dof.focus_distance", "Focus Distance"),
+      ("prop", "data", "dof.aperture_fstop", "F Stop")),
+    S("Display Options", False,
+      ("prop", "data", "show_limits", "Display Near/Far Clip"),
+      ("prop", "data", "show_passepartout", "Display Film Gate Mask"),
+      ("prop", "data", "passepartout_alpha", "Gate Mask Opacity"),
+      ("prop", "data", "display_size", "Locator Scale")),
+    S("Orthographic Views", False,
+      ("prop", "data", "type", "Projection"),
+      ("prop", "data", "ortho_scale", "Orthographic Width")),
+]
+
+# --- lights (Maya-124, Maya-43) -----------
+_LIGHT_MAIN = (("prop", "data", "type", "Type"),
+               ("prop", "data", "color", "Color"),
+               ("prop", "data", "energy", "Intensity"),
+               ("prop", "data", "diffuse_factor", "Emit Diffuse"),
+               ("prop", "data", "specular_factor", "Emit Specular"))
+POINT_LIGHT = [
+    S("Point Light Attributes", True, *_LIGHT_MAIN),
+    S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
+        S("Raytrace Shadow Attributes", True, ("prop", "data", "shadow_soft_size", "Light Radius")),
+    ]),
+]
+DIRECTIONAL_LIGHT = [
+    S("Directional Light Attributes", True, *_LIGHT_MAIN),
+    S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
+        S("Raytrace Shadow Attributes", True, ("prop", "data", "angle", "Light Angle")),
+    ]),
+]
+# Spot and area lights: no template in the research; Maya's layout is the point light's .
+SPOT_LIGHT = [
+    S("Spot Light Attributes", True, *_LIGHT_MAIN,
+      ("prop", "data", "spot_size", "Cone Angle"),
+      ("prop", "data", "spot_blend", "Penumbra")),
+    S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"),
+      ("prop", "data", "shadow_soft_size", "Light Radius")),
+]
+AREA_LIGHT = [
+    S("Area Light Attributes", True, *_LIGHT_MAIN,
+      ("prop", "data", "shape", "Shape"),
+      ("prop", "data", "size", "Size")),
+    S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
+]
+
+# --- material: standardSurface (Maya-512) on Principled BSDF ----
+STANDARD_SURFACE = [
+    S("Base", True, ("socket", "Weight", "Weight"), ("socket", "Base Color", "Color"),
+      ("socket", "Diffuse Roughness", "Diffuse Roughness"), ("socket", "Metallic", "Metalness")),
+    S("Specular", True, ("socket", "Specular IOR Level", "Weight"),
+      ("socket", "Specular Tint", "Color"), ("socket", "Roughness", "Roughness"),
+      ("socket", "IOR", "IOR"), ("socket", "Anisotropic", "Anisotropy"),
+      ("socket", "Anisotropic Rotation", "Rotation")),
+    S("Transmission", False, ("socket", "Transmission Weight", "Weight")),
+    S("Subsurface", False, ("socket", "Subsurface Weight", "Weight"),
+      ("socket", "Subsurface Radius", "Radius"), ("socket", "Subsurface Scale", "Scale"),
+      ("socket", "Subsurface Anisotropy", "Anisotropy")),
+    S("Coat", False, ("socket", "Coat Weight", "Weight"), ("socket", "Coat Tint", "Color"),
+      ("socket", "Coat Roughness", "Roughness"), ("socket", "Coat IOR", "IOR")),
+    S("Sheen", False, ("socket", "Sheen Weight", "Weight"), ("socket", "Sheen Tint", "Color"),
+      ("socket", "Sheen Roughness", "Roughness")),
+    S("Emission", False, ("socket", "Emission Strength", "Weight"),
+      ("socket", "Emission Color", "Color")),
+    S("Thin Film", False, ("socket", "Thin Film Thickness", "Thickness"),
+      ("socket", "Thin Film IOR", "IOR")),
+    S("Geometry", False, ("socket", "Alpha", "Opacity"), ("socket", "Normal", "Normal")),
+]
+# Material without nodes: Blender viewport values (no Maya template).
+PLAIN_MATERIAL = [
+    S("Common Material Attributes", True,
+      ("prop", "data", "diffuse_color", "Color"),
+      ("prop", "data", "metallic", "Metalness"),
+      ("prop", "data", "roughness", "Roughness")),
+]
+
+# (sections, research template name or None)
+BY_KIND = {
+    "transform": (TRANSFORM, "transform"),
+    "MESH": (MESH, "mesh"),
+    "CAMERA": (CAMERA, "camera"),
+    "POINT": (POINT_LIGHT, "pointLight"),
+    "SUN": (DIRECTIONAL_LIGHT, "directionalLight"),
+    "SPOT": (SPOT_LIGHT, None),
+    "AREA": (AREA_LIGHT, None),
+    "standardSurface": (STANDARD_SURFACE, "standardSurface"),
+    "material": (PLAIN_MATERIAL, None),
+}
+
+# Maya node type shown in the tab header ("transform: [pCube1]").
+NODE_TYPE = {"MESH": "mesh", "CURVE": "nurbsCurve", "SURFACE": "nurbsSurface", "CAMERA": "camera",
+             "LIGHT": "light", "LATTICE": "lattice", "ARMATURE": "joint", "FONT": "type",
+             "META": "metaball", "EMPTY": "locator"}
+LIGHT_TYPE = {"POINT": "pointLight", "SUN": "directionalLight", "SPOT": "spotLight",
+              "AREA": "areaLight"}
+
+
+def walk(sections, depth=0):
+    """Yield (depth, section) depth first."""
+    for sec in sections:
+        yield depth, sec
+        yield from walk(sec.subs, depth + 1)

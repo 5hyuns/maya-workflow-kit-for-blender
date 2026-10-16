@@ -266,6 +266,10 @@ class MAYAKIT_PT_layer_editor(bpy.types.Panel):
     bl_label = "Layer Editor"
     bl_order = 1
 
+    @classmethod
+    def poll(cls, context):
+        return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX') == 'CHANNEL_BOX'
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene

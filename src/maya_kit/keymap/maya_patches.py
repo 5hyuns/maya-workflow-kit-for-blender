@@ -3,7 +3,7 @@
 
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale:  (1-4),  (5-8),
- (9-13),  (16).
+ (9-13),  (16),  (17).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and  is cross-checked against it.
@@ -316,10 +316,24 @@ def patch_concepts(kd):
     _add(kd, "Object Mode", "maya_kit.delete_history", make_event("D", shift=True, alt=True))
 
 
+# --- 17. Ctrl+A Attribute Editor / Channel Box, Ctrl+Shift+A / Alt+D ----
+#  Ctrl+a ShowAttributeEditorOrChannelBox, Ctrl+A (capital)
+# SelectAll, Alt+d SelectNone. IC Object Mode Ctrl+A / Ctrl+Shift+A = select all / none.
+
+def patch_attribute_editor(kd):
+    kd.remove("Object Mode", "object.select_all", type="A", ctrl=True)
+    kd.remove("Object Mode", "object.select_all", type="A", ctrl=True, shift=True)
+    _add(kd, "Object Mode", "maya_kit.ae_toggle", make_event("A", ctrl=True))
+    _add(kd, "Object Mode", "object.select_all", make_event("A", ctrl=True, shift=True),
+         {"action": 'SELECT'})
+    _add(kd, "Object Mode", "object.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts)
+           patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
+           patch_attribute_editor)
 
 
 def apply(data):
