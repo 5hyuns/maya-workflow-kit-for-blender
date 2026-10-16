@@ -16,7 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
 
-OUTLINER_FACTOR = 0.16    # Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%, wider for Blender rows
+# Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%; Blender rows need more (icons, larger font):
+# 0.16 cut "pCube1" to "pCube" (step 23 audit), 0.2 ~ 264 px at 1600x900 (step 31, delegated).
+OUTLINER_FACTOR = 0.2
 MAYA_LENS = 35.0          # persp focal length 35 (concepts.md §15)
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md §12, PREF:469-470)
 MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
@@ -91,6 +93,10 @@ def build_layout():
     so.display_mode = 'VIEW_LAYER'
     so.use_filter_object_content = False   # Maya: DAG only, no shapes (ui_layout.md:259-262)
     so.use_filter_children = True
+    # Maya's Outliner lists the DAG from the world: no collection rows (they are the Layer
+    # Editor's display layers here) and no per-row render toggle (step 31, delegated).
+    so.use_filter_collection = False
+    so.show_restrict_column_render = False
 
     le = layer_editor.spaces.active
     le.display_mode = 'VIEW_LAYER'

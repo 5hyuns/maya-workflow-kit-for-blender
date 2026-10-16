@@ -345,12 +345,17 @@ class MAYAKIT_OT_toggle_quad_view(bpy.types.Operator):
         area = context.area
         leaving = bool(space.region_quadviews)
         hovered = capture(context.region_data) if leaving and context.region_data else None
+        # Copying the rotation leaves an axis view (Top/Front/...) as "User Orthographic";
+        # Maya keeps the panel's camera (top, front, ...). Step 31.
+        side = leaving and context.region_data is not None and context.region_data.is_orthographic_side_view
         region = context.region if context.region and context.region.type == 'WINDOW' else \
             next(r for r in area.regions if r.type == 'WINDOW')
         with context.temp_override(area=area, region=region):
             bpy.ops.screen.region_quadview()
         if hovered is not None:
             restore(space.region_3d, hovered)
+            if side:
+                space.region_3d.is_orthographic_side_view = True
         area.tag_redraw()
         return {'FINISHED'}
 

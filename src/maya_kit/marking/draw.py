@@ -100,7 +100,9 @@ def _circle(cx, cy, r, color, segments=24):
 
 # --- marking menu -------------------------------------------------------------------
 
-CHECK = (0.32, 0.52, 0.65, 1.0)   # selection blue #5285A6 (step 5 palette)
+# On = filled light blue: the step-26 selection blue (0.32, 0.52, 0.65) hardly differed from the
+# empty box in the step-31 screenshot.
+CHECK = (0.45, 0.72, 0.95, 1.0)
 
 
 def checked(action):
@@ -143,7 +145,7 @@ def draw_session(s, now):
             box = (x1 - size, y0, x1, y0 + size)
             _outline(box, TEXT if it.enabled else TEXT_OFF, cx, cy)
             if state:
-                _rect((box[0] + 2, box[1] + 2, box[2] - 2, box[3] - 2), CHECK, cx, cy)
+                _rect((box[0] + 1, box[1] + 1, box[2] - 1, box[3] - 1), CHECK, cx, cy)
         if it.opt_rect:
             if on and hover_opt:
                 _rect(it.opt_rect, BG_HOVER, cx, cy)

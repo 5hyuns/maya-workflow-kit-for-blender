@@ -212,3 +212,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 30) 편집 모드에서 Maya 처럼 뒤쪽 정점까지 마키로 잡히는지 (Select 툴, Move 툴 빈 곳 드래그, 라쏘). 드래그 중 숨은 엣지가 비쳐 보이는 것이 거슬리지 않는지, 놓은 뒤 X-Ray 버튼이 원래대로인지. Maya 2022 와 비교.
 - [ ] (step 30) 정점 모드에서 마우스 아래 정점 하이라이트(작은 점)가 Maya 프리셀렉트처럼 도움이 되는지, 큰 메시에서 호버가 느려지지 않는지. 엣지/면 모드는 하이라이트 없음.
 - [ ] (step 30) 긴 모델링 세션에서 언두가 256 단계까지 되는지, 메모리 사용이 괜찮은지. 애드온을 끄면 Undo Steps 가 원래 값.
+
+### Step 31 — 레이아웃 다듬기
+
+- [ ] (step 31) MayaKit 레이아웃 왼쪽 Outliner 에서 긴 이름(pCylinder12, group3 아래 3 단계)이 잘리지 않는지, 컬렉션 행 없이 오브젝트만 보이는 것이 Maya Outliner 처럼 느껴지는지. 새 컬렉션을 만든 경우 Layer Editor 쪽에서만 보이는 것이 혼란스럽지 않은지.
+- [ ] (step 31) Space 탭 4분할 → top/front/side 위에서 다시 Space 탭 → 헤더가 "Top/Front/Right Orthographic" 으로 남는지.
+- [ ] (step 31) W/E/R 홀드 메뉴 체크 상자 켜짐/꺼짐이 한눈에 구분되는지 (엔진, 환경설정 Blender Pies 둘 다).
+- [ ] (step 31) 타임라인 현재 프레임 상자가 옆 눈금 숫자를 가리는 것 (Blender C 그리기, 고치지 못함) 이 Maya 사용자에게 거슬리는지.

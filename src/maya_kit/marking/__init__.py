@@ -49,7 +49,10 @@ def _entry_spec(action):
 
 
 def draw_entry(layout, label, action, path):
-    menu_sets.draw_spec(layout, label, _entry_spec(action), f"Marking menu {path}")
+    # Toggles show their state like the engine's check boxes (step 31: pie fallback had none).
+    state = draw.checked(action) if not isinstance(action, mm.Sub) else None
+    icon = 'NONE' if state is None else ('CHECKBOX_HLT' if state else 'CHECKBOX_DEHLT')
+    menu_sets.draw_spec(layout, label, _entry_spec(action), f"Marking menu {path}", icon=icon)
 
 
 def _draw_list(layout, sub, path):

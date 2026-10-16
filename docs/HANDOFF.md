@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 31 (레이아웃 다듬기) 완료 — `docs/steps/step_31.md`. MayaKit 템플릿 왼쪽 Outliner 폭 0.2 + 컬렉션 행·렌더 열 숨김 (Maya DAG),
+  쿼드 → 단일 때 축 뷰 이름 유지 (`is_orthographic_side_view`), 홀드 메뉴 체크 켜짐 색 강조 + 파이 폴백 체크 아이콘, release 스크린샷 재생성.
+  타임라인 프레임 상자 겹침은 C 그리기라 미해결. 헤드리스 281/281, GUI 239/239, dogfood 47/47. backlog.json 8 항목 모두 처리.
 - Step 30 (선택 감각) 완료 — `docs/steps/step_30.md`. 편집 모드 박스/라쏘 = 가려진 요소까지 (드래그 동안만 X-Ray 플래그, `operators/marquee.py`),
   정점 모드 + 셀렉트 툴 프리셀렉트 하이라이트 (`operators/preselect.py`, C 기즈모 `GIZMO_GT_mesh_preselect_elem_3d`), 언두 256 단계
   (`prefs_preset.GROUPS["undo"]`, disable 시 복원, `tests/kit.py` 가 prefs.edit 스냅샷). 헤드리스 279/279, GUI 232/232, dogfood 47/47.
@@ -60,7 +63,8 @@
 
 ## 바로 다음 할 일
 
-- Step 31: Outliner 레이아웃 (MayaKit 템플릿 왼쪽 Outliner 좁아 이름 잘림, step_23 스크린샷; research/maya/ui_layout.md:121, 259-262) +
-  홀드 메뉴 토글 상태 / 타임라인 현재 프레임 상자 다듬기 (backlog 8).
-- 그 뒤: PLAN 「재점검 2차」 남은 중간 항목 (메뉴 정확성, F2–F6 메뉴 세트, 박스 줌, 뷰 패널 메뉴 등).
+- 재점검 2차 backlog 1–8 처리 완료 (step 24–31). 다음은 PLAN 「재점검 2차」 남은 중간 항목 (docs/PLAN.md:166-168): 메뉴 정확성
+  (Increment and Save, Export Selection, Return in 3D View), 메뉴 세트 F2–F6, 컴포넌트 픽워크, Outliner 드래그 재부모, Channel Box 다중 선택
+  SHAPES/INPUTS, Ctrl+Alt+LMB 박스 줌, 뷰 패널 메뉴, wireframe-on-shaded 기본값, Set Project, T/Y 툴, 타임라인 키 눈금.
+  또는 재점검 3차 (`tools/dogfood.py --session` 탐색 세션 + blindspot) 로 새 backlog 를 만든다.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.
