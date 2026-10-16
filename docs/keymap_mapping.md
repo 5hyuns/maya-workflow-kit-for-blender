@@ -7,11 +7,11 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 24 |
+| 구현 | 38 |
 | IC 일치 | 12 |
-| 계획 | 45 |
-| 해당 없음 | 7 |
-| 미검토 | 312 |
+| 계획 | 30 |
+| 해당 없음 | 9 |
+| 미검토 | 311 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -118,54 +118,54 @@
 | Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
 | Ctrl+y | Ctrl+Y | global | Redo | — | 미검토 |  | hotkeySetup.mel:223 |
 | Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | Affect Only Origins 토글 (오브젝트 모드) | hotkeySetup.mel:225 |
-| a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴는 Step 10) | hotkeySetup.mel:228 |
-| Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `view3d.view_all` (use_all_regions=True, center=False) | 계획 Step 4 |  | hotkeySetup.mel:229 |
+| a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴는 Step 9) | hotkeySetup.mel:228 |
+| Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
 | Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 미검토 |  | hotkeySetup.mel:230 |
-| f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 자식 제외 여부는 Step 4 | hotkeySetup.mel:231 |
-| Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `view3d.view_center_pick` | 계획 Step 4 |  | hotkeySetup.mel:232 |
-| Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | — | 계획 Step 4 |  | hotkeySetup.mel:233 |
-| [ | LEFT_BRACKET | global | UndoViewChange | Object Mode: `object.select_hierarchy` (direction='PARENT', extend=False) | 계획 Step 4 |  | hotkeySetup.mel:234 |
-| ] | RIGHT_BRACKET | global | RedoViewChange | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=False) | 계획 Step 4 |  | hotkeySetup.mel:235 |
-| Alt+z | Alt+Z | global | UndoViewChange | — | 계획 Step 4 |  | hotkeySetup.mel:236 |
-| Alt+y | Alt+Y | global | RedoViewChange | — | 계획 Step 4 |  | hotkeySetup.mel:237 |
-| Home | HOME | global | GoToDefaultView | — | 계획 Step 4 |  | hotkeySetup.mel:238 |
+| f | F | global | FrameSelectedWithoutChildren | 3D View: `view3d.view_selected` (use_all_regions=False) | IC 일치 | 선택만 프레이밍 (자식은 선택 안 되면 제외) | hotkeySetup.mel:231 |
+| Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `maya_kit.frame_all_views` (selected=True) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:232 |
+| Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | — | 계획 Step 8 | 자식 포함 프레이밍 | hotkeySetup.mel:233 |
+| [ | LEFT_BRACKET | global | UndoViewChange | 3D View: `maya_kit.view_history` (direction='UNDO') | 구현 | 뷰 전용 스택 (씬 언두와 별개) | hotkeySetup.mel:234 |
+| ] | RIGHT_BRACKET | global | RedoViewChange | 3D View: `maya_kit.view_history` (direction='REDO') | 구현 |  | hotkeySetup.mel:235 |
+| Alt+z | Alt+Z | global | UndoViewChange | 3D View: `maya_kit.view_history` (direction='UNDO') | 구현 | 뷰 전용 스택 (씬 언두와 별개) | hotkeySetup.mel:236 |
+| Alt+y | Alt+Y | global | RedoViewChange | 3D View: `maya_kit.view_history` (direction='REDO') | 구현 |  | hotkeySetup.mel:237 |
+| Home | HOME | global | GoToDefaultView | — | 계획 Step 8 |  | hotkeySetup.mel:238 |
 | Shift+{ | Shift+LEFT_BRACKET | global | PreviousViewArrangement | Object Mode: `object.select_hierarchy` (direction='PARENT', extend=True) | 미검토 |  | hotkeySetup.mel:239 |
 | Shift+} | Shift+RIGHT_BRACKET | global | NextViewArrangement | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=True) | 미검토 |  | hotkeySetup.mel:240 |
 | Alt+p | Alt+P | global | CameraModeToggle | — | 미검토 |  | hotkeySetup.mel:241 |
 | Alt+Home | Alt+HOME | global | AppHome | — | 미검토 |  | hotkeySetup.mel:243 |
 | Shift+D | Shift+D | global | DuplicateWithTransform | — | 미검토 |  | hotkeySetup.mel:245 |
-| Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | — | 계획 Step 12 |  | hotkeySetup.mel:247 |
-| p | P | global | Parent | Object Mode: `object.parent_set` | 계획 Step 6 | IC P=parent_set 이지만 Maya식(로컬 재계산)으로 교체 예정 | hotkeySetup.mel:249 |
-| Shift+P | Shift+P | global | Unparent | Object Mode: `object.parent_clear` | 계획 Step 6 |  | hotkeySetup.mel:250 |
+| Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | — | 계획 Step 11 |  | hotkeySetup.mel:247 |
+| p | P | global | Parent | Object Mode: `object.parent_set` | 계획 Step 8 | IC P=parent_set 이지만 Maya식(로컬 재계산)으로 교체 예정 | hotkeySetup.mel:249 |
+| Shift+P | Shift+P | global | Unparent | Object Mode: `object.parent_clear` | 계획 Step 8 |  | hotkeySetup.mel:250 |
 | F8 | F8 | global | SelectToggleMode | Object Non-modal: `object.editmode_toggle` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
-| F9 | F9 | global | SelectVertexMask | — | 계획 Step 5 |  | hotkeySetup.mel:253 |
-| F10 | F10 | global | SelectEdgeMask | — | 계획 Step 5 |  | hotkeySetup.mel:254 |
-| F11 | F11 | global | SelectFacetMask | — | 계획 Step 5 |  | hotkeySetup.mel:255 |
-| F12 | F12 | global | SelectUVMask | — | 계획 Step 5 |  | hotkeySetup.mel:256 |
-| Alt+F9 | Alt+F9 | global | SelectVertexFaceMask | — | 계획 Step 5 |  | hotkeySetup.mel:257 |
+| F9 | F9 | global | SelectVertexMask | Object Non-modal: `maya_kit.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
+| F10 | F10 | global | SelectEdgeMask | Object Non-modal: `maya_kit.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |
+| F11 | F11 | global | SelectFacetMask | Object Non-modal: `maya_kit.component_mode` (type='FACE') | 구현 |  | hotkeySetup.mel:255 |
+| F12 | F12 | global | SelectUVMask | — | 해당 없음 | 3D 뷰 UV 컴포넌트 선택 없음 (UV Editor 사용) | hotkeySetup.mel:256 |
+| Alt+F9 | Alt+F9 | global | SelectVertexFaceMask | — | 해당 없음 | Blender 에 vertex-face 컴포넌트 없음 | hotkeySetup.mel:257 |
 | Alt+F12 | Alt+F12 | global | SelectMeshUVShell | — | 미검토 |  | hotkeySetup.mel:258 |
-| F7 | F7 | global | SelectMultiComponentMask | — | 계획 Step 5 |  | hotkeySetup.mel:259 |
-| Ctrl+F9 | Ctrl+F9 | global | ConvertSelectionToVertices | — | 계획 Step 5 |  | hotkeySetup.mel:262 |
-| Ctrl+F10 | Ctrl+F10 | global | ConvertSelectionToEdges | — | 계획 Step 5 |  | hotkeySetup.mel:263 |
-| Ctrl+F11 | Ctrl+F11 | global | ConvertSelectionToFaces | — | 계획 Step 5 |  | hotkeySetup.mel:264 |
-| Ctrl+F12 | Ctrl+F12 | global | ConvertSelectionToUVs | — | 계획 Step 5 |  | hotkeySetup.mel:265 |
+| F7 | F7 | global | SelectMultiComponentMask | Object Non-modal: `maya_kit.component_mode` (type='MULTI') | 구현 | 정점·엣지·면 동시 선택 모드 | hotkeySetup.mel:259 |
+| Ctrl+F9 | Ctrl+F9 | global | ConvertSelectionToVertices | — | 계획 Step 8 |  | hotkeySetup.mel:262 |
+| Ctrl+F10 | Ctrl+F10 | global | ConvertSelectionToEdges | — | 계획 Step 8 |  | hotkeySetup.mel:263 |
+| Ctrl+F11 | Ctrl+F11 | global | ConvertSelectionToFaces | — | 계획 Step 8 |  | hotkeySetup.mel:264 |
+| Ctrl+F12 | Ctrl+F12 | global | ConvertSelectionToUVs | — | 계획 Step 8 |  | hotkeySetup.mel:265 |
 | Shift+> | Shift+PERIOD | global | GrowPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:266 |
 | Ctrl+Shift+> | Ctrl+Shift+PERIOD | global | GrowLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:267 |
 | Shift+< | Shift+COMMA | global | ShrinkPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:268 |
 | Ctrl+Shift+< | Ctrl+Shift+COMMA | global | ShrinkLoopPolygonSelectionRegion | — | 미검토 |  | hotkeySetup.mel:269 |
-| h | H | global | ToggleVisibilityAndKeepSelection | — | 계획 Step 5 |  | hotkeySetup.mel:271 |
+| h | H | global | ToggleVisibilityAndKeepSelection | — | 계획 Step 8 |  | hotkeySetup.mel:271 |
 | x | X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:272 |
 | Shift+X | Shift+X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:273 |
 | Ctrl+h | Ctrl+H | global | HideSelectedObjects | Object Mode: `object.hide_view_set` (unselected=False); Mesh: `mesh.hide` (unselected=False) | IC 일치 |  | hotkeySetup.mel:274 |
-| Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `object.hide_view_set` (unselected=True); Mesh: `mesh.hide` (unselected=True) | 계획 Step 5 |  | hotkeySetup.mel:275 |
+| Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `object.hide_view_set` (unselected=True); Mesh: `mesh.hide` (unselected=True) | 계획 Step 8 |  | hotkeySetup.mel:275 |
 | Ctrl+Shift+H | Ctrl+Shift+H | global | ShowLastHidden | — | 미검토 |  | hotkeySetup.mel:276 |
-| Alt+h | Alt+H | global | HideUnselectedObjects | Object Mode: `object.hide_view_clear`; Mesh: `mesh.reveal` | 계획 Step 5 |  | hotkeySetup.mel:277 |
+| Alt+h | Alt+H | global | HideUnselectedObjects | Object Mode: `object.hide_view_clear`; Mesh: `mesh.reveal` | 계획 Step 8 |  | hotkeySetup.mel:277 |
 | Ctrl+Alt+h | Ctrl+Alt+H | global | ShowAllPolyComponents | — | 미검토 |  | hotkeySetup.mel:278 |
 | c | C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:279 |
 | Shift+C | Shift+C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:280 |
 | v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:281 |
 | Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:282 |
-| q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:285 |
+| q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:285 |
 | Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:286 |
 | Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:287 |
 | Alt+m | Alt+M | global | FullHotboxDisplay | — | 미검토 |  | hotkeySetup.mel:288 |
@@ -179,19 +179,19 @@
 | Cmd+F11 | Oskey+F11 | global | ConvertSelectionToFaces | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:300 |
 | Cmd+F12 | Oskey+F12 | global | ConvertSelectionToUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:301 |
 | Cmd+Shift+H | Shift+Oskey+H | global | ShowLastHidden | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:303 |
-| w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.move', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:307 |
-| e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:309 |
-| r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.scale', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 10 | hotkeySetup.mel:311 |
+| w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.move', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:307 |
+| e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:309 |
+| r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.scale', cycle=True) | IC 일치 | 툴 전환만. 홀드 마킹메뉴는 Step 9 | hotkeySetup.mel:311 |
 | Ctrl+t | Ctrl+T | global | UniversalManip | — | 미검토 |  | hotkeySetup.mel:313 |
 | t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:315 |
 | y | Y | global | NonSacredTool | — | 미검토 |  | hotkeySetup.mel:316 |
 | Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | — | 미검토 |  | hotkeySetup.mel:319 |
 | Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | — | 미검토 |  | hotkeySetup.mel:320 |
-| F2 | F2 | global | ShowModelingUI | 3D View: `view3d.view_axis` (type='RIGHT') | 계획 Step 14 |  | hotkeySetup.mel:322 |
-| F3 | F3 | global | ShowRiggingUI | 3D View: `view3d.view_axis` (type='TOP') | 계획 Step 14 |  | hotkeySetup.mel:323 |
-| F4 | F4 | global | ShowAnimationUI | 3D View: `view3d.view_camera` | 계획 Step 14 |  | hotkeySetup.mel:324 |
-| F5 | F5 | global | ShowDynamicsUI | 3D View: `view3d.view_orbit` (angle=3.1415927, type='ORBITRIGHT') | 계획 Step 14 |  | hotkeySetup.mel:326 |
-| F6 | F6 | global | ShowRenderingUI | — | 계획 Step 14 |  | hotkeySetup.mel:327 |
+| F2 | F2 | global | ShowModelingUI | 3D View: `view3d.view_axis` (type='RIGHT') | 계획 Step 13 |  | hotkeySetup.mel:322 |
+| F3 | F3 | global | ShowRiggingUI | 3D View: `view3d.view_axis` (type='TOP') | 계획 Step 13 |  | hotkeySetup.mel:323 |
+| F4 | F4 | global | ShowAnimationUI | 3D View: `view3d.view_camera` | 계획 Step 13 |  | hotkeySetup.mel:324 |
+| F5 | F5 | global | ShowDynamicsUI | 3D View: `view3d.view_orbit` (angle=3.1415927, type='ORBITRIGHT') | 계획 Step 13 |  | hotkeySetup.mel:326 |
+| F6 | F6 | global | ShowRenderingUI | — | 계획 Step 13 |  | hotkeySetup.mel:327 |
 | s | S | global | SetKey | Object Mode: `anim.keyframe_insert_by_name` (type='LocRotScale') | IC 일치 | Maya 는 키 가능한 모든 채널, IC 는 LocRotScale | hotkeySetup.mel:328 |
 | Alt+e | Alt+E | global | HIKPinRotate | Object Mode: `object.rotation_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:329 |
 | Alt+w | Alt+W | global | HIKPinTranslate | Object Mode: `object.location_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:330 |
@@ -200,29 +200,29 @@
 | Alt+Shift+V | Alt+Shift+V | global | GoToMinFrame | Frames: `screen.frame_jump` (end=False) | 구현 |  | hotkeySetup.mel:333 |
 | k | K | global | TimeDraggerToolActivate / TimeDraggerToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.knife', cycle=True) | 미검토 |  | hotkeySetup.mel:334 |
 | i | I | global | InsertKeyToolActivate / InsertKeyToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.inset_faces', cycle=True) | 미검토 |  | hotkeySetup.mel:335 |
-| 0 | ZERO | global | DefaultQualityDisplay | — | 계획 Step 5 |  | hotkeySetup.mel:336 |
-| 1 | ONE | global | LowQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'VERT'}); Mesh: `mesh.select_mode` (type='VERT') | 계획 Step 5 |  | hotkeySetup.mel:337 |
-| 2 | TWO | global | MediumQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'EDGE'}); Mesh: `mesh.select_mode` (type='EDGE') | 계획 Step 5 |  | hotkeySetup.mel:338 |
-| 3 | THREE | global | HighQualityDisplay | Object Mode: `object.mode_set_with_submode` (mode='EDIT', mesh_select_mode={'FACE'}); Mesh: `mesh.select_mode` (type='FACE') | 계획 Step 5 |  | hotkeySetup.mel:339 |
+| 0 | ZERO | global | DefaultQualityDisplay | — | 계획 Step 8 |  | hotkeySetup.mel:336 |
+| 1 | ONE | global | LowQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=1); Mesh: `maya_kit.smooth_preview` (level=1) | 구현 | Subsurf 뷰포트 끔 | hotkeySetup.mel:337 |
+| 2 | TWO | global | MediumQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=2); Mesh: `maya_kit.smooth_preview` (level=2) | 구현 | Subsurf + 와이어 (케이지 근사) | hotkeySetup.mel:338 |
+| 3 | THREE | global | HighQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=3); Mesh: `maya_kit.smooth_preview` (level=3) | 구현 | Subsurf 뷰포트 켬 (없으면 추가, 렌더 영향 없음) | hotkeySetup.mel:339 |
 | Alt+3 | Alt+THREE | global | ToggleDisplacement | — | 미검토 |  | hotkeySetup.mel:340 |
 | 4 | FOUR | global | DisplayWireframe | 3D View: `maya_kit.display_mode` (mode='WIREFRAME') | 구현 |  | hotkeySetup.mel:341 |
 | 5 | FIVE | global | DisplayShaded | 3D View: `maya_kit.display_mode` (mode='SHADED') | 구현 |  | hotkeySetup.mel:342 |
 | 6 | SIX | global | DisplayShadedAndTextured | 3D View: `maya_kit.display_mode` (mode='TEXTURED') | 구현 |  | hotkeySetup.mel:343 |
 | 7 | SEVEN | global | DisplayLight | 3D View: `maya_kit.display_mode` (mode='LIGHTS') | 구현 | Material Preview + 씬 라이트 (근사) | hotkeySetup.mel:344 |
 | Ctrl+Shift+% | Ctrl+Shift+FIVE | global | ToggleUseDefaultMaterial | — | 미검토 |  | hotkeySetup.mel:345 |
-| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | Mesh: `mesh.select_mode` (use_expand=True, type='VERT') | 계획 Step 5 |  | hotkeySetup.mel:346 |
+| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | Mesh: `mesh.select_mode` (use_expand=True, type='VERT') | 계획 Step 8 |  | hotkeySetup.mel:346 |
 | Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
 | Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | 미검토 |  | hotkeySetup.mel:351 |
-| Space | SPACE | global | ShowHotbox / HideHotbox (release) | — | 계획 Step 11 | Space 는 핫박스 자리로 비워 둠 (재생은 Alt+V) | hotkeySetup.mel:352 |
+| Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.tap_hold` (binding='space') | 계획 Step 10 | 탭=4분할↔단일 뷰 구현 (maya_kit.tap_hold space), 홀드 핫박스는 Step 10. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | 3D View: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
 | d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `wm.tool_set_by_id` (name='builtin.annotate', cycle=True) | 구현 | 누르는 동안 Affect Only Origins (오브젝트 모드) | hotkeySetup.mel:355 |
 | Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
 | Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
-| , | COMMA | global | PreviousKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_orientations_pie') | 계획 Step 9 |  | hotkeySetup.mel:358 |
-| Alt+, | Alt+COMMA | global | PreviousFrame | — | 계획 Step 9 |  | hotkeySetup.mel:359 |
-| . | PERIOD | global | NextKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_pivot_pie') | 계획 Step 9 |  | hotkeySetup.mel:360 |
-| Alt+. | Alt+PERIOD | global | NextFrame | — | 계획 Step 9 |  | hotkeySetup.mel:361 |
+| , | COMMA | global | PreviousKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_orientations_pie') | 계획 Step 7 |  | hotkeySetup.mel:358 |
+| Alt+, | Alt+COMMA | global | PreviousFrame | — | 계획 Step 7 |  | hotkeySetup.mel:359 |
+| . | PERIOD | global | NextKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_pivot_pie') | 계획 Step 7 |  | hotkeySetup.mel:360 |
+| Alt+. | Alt+PERIOD | global | NextFrame | — | 계획 Step 7 |  | hotkeySetup.mel:361 |
 | g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
 | Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
 | Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `mesh.select_more` | 구현 | 오브젝트 모드만 (컴포넌트는 미구현) | hotkeySetup.mel:364 |
@@ -243,9 +243,9 @@
 | Ctrl+Right | Ctrl+RIGHT_ARROW | global | RenderViewPrevImage | Object Mode: `screen.frame_jump` (end=True) | 미검토 |  | hotkeySetup.mel:382 |
 | Ctrl+e | Ctrl+E | global | PolyExtrude | Mesh: `wm.tool_set_by_id` (name='builtin.extrude_region', cycle=True) | 미검토 |  | hotkeySetup.mel:384 |
 | Ctrl+b | Ctrl+B | global | BevelPolygon | Mesh: `wm.tool_set_by_id` (name='builtin.bevel', cycle=True) | 미검토 |  | hotkeySetup.mel:385 |
-| - | MINUS | global | DecreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:387 |
-| = | EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:388 |
-| Shift++ | Shift+EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 5 |  | hotkeySetup.mel:389 |
+| - | MINUS | global | DecreaseManipulatorSize | — | 계획 Step 8 |  | hotkeySetup.mel:387 |
+| = | EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 8 |  | hotkeySetup.mel:388 |
+| Shift++ | Shift+EQUAL | global | IncreaseManipulatorSize | — | 계획 Step 8 |  | hotkeySetup.mel:389 |
 | Alt+Shift+Y | Alt+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:391 |
 | Ctrl+Shift+Y | Ctrl+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:392 |
 | Ctrl+Alt+Shift+Y | Ctrl+Alt+Shift+Y | global | — | — | 미검토 |  | hotkeySetup.mel:393 |
@@ -431,7 +431,7 @@
 | Ctrl+Down | Ctrl+DOWN_ARROW | global | CreateSubdivRegion | — | 해당 없음 | Maya subdiv surface 노드 없음 | hotkeySetup.mel:656 |
 | Alt+Shift+A | Alt+Shift+A | global | DecrementFluidCenter | — | 해당 없음 | Maya Fluids 없음 | hotkeySetup.mel:660 |
 | Alt+Shift+S | Alt+Shift+S | global | IncrementFluidCenter | — | 해당 없음 | Maya Fluids 없음 | hotkeySetup.mel:661 |
-| Ctrl+Space | Ctrl+SPACE | global | ToggleFullScreenMode | — | 미검토 |  | hotkeySetup.mel:664 |
+| Ctrl+Space | Ctrl+SPACE | global | ToggleFullScreenMode | Screen: `screen.screen_full_area` (use_hide_panels=True) | 구현 | UI 숨긴 전체 화면 | hotkeySetup.mel:664 |
 | Shift+Space | Shift+SPACE | global | ToggleZoomInMode | 3D View Generic: `wm.context_toggle` (data_path='space_data.show_region_asset_shelf') | 미검토 |  | hotkeySetup.mel:666 |
 | Alt+b | Alt+B | global | CycleBackgroundColor | — | 미검토 |  | hotkeySetup.mel:669 |
 | Ctrl+` | Ctrl+ACCENT_GRAVE | global | SmoothingDisplayToggle | — | 미검토 |  | hotkeySetup.mel:673 |
@@ -439,8 +439,8 @@
 | Ctrl+Shift+~ | Ctrl+Shift+ACCENT_GRAVE | global | SmoothProxy | — | 미검토 |  | hotkeySetup.mel:675 |
 | Alt+` | Alt+ACCENT_GRAVE | global | CreateSubdivSurface | — | 미검토 |  | hotkeySetup.mel:676 |
 | Alt+Shift+~ | Alt+Shift+ACCENT_GRAVE | global | CreateSubdivSurfaceOptions | — | 미검토 |  | hotkeySetup.mel:677 |
-| Page_Up | PAGE_UP | global | SmoothingLevelIncrease | — | 계획 Step 5 |  | hotkeySetup.mel:678 |
-| Page_Down | PAGE_DOWN | global | SmoothingLevelDecrease | — | 계획 Step 5 |  | hotkeySetup.mel:679 |
+| Page_Up | PAGE_UP | global | SmoothingLevelIncrease | — | 계획 Step 8 |  | hotkeySetup.mel:678 |
+| Page_Down | PAGE_DOWN | global | SmoothingLevelDecrease | — | 계획 Step 8 |  | hotkeySetup.mel:679 |
 | ` | ACCENT_GRAVE | global | STRSTweakModeOn / STRSTweakModeOff (release) | Object Non-modal: `object.transfer_mode` | 미검토 |  | hotkeySetup.mel:682 |
 | l | L | global | LockCurveLength / UnlockCurveLength (release) | — | 미검토 |  | hotkeySetup.mel:686 |
 | Alt+g | Alt+G | hyperGraphPanel | HypergraphIncreaseDepth | — | 미검토 |  | hotkeySetup.mel:689 |
@@ -473,7 +473,7 @@
 | Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | — | 미검토 |  | hotkeySetup.mel:735 |
 | Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | — | 미검토 |  | hotkeySetup.mel:736 |
 | Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | — | 미검토 |  | hotkeySetup.mel:737 |
-| Alt+5 | Alt+FIVE | global | ToggleWireframeOnShadedCmd | — | 계획 Step 5 |  | hotkeySetup.mel:738 |
+| Alt+5 | Alt+FIVE | global | ToggleWireframeOnShadedCmd | — | 계획 Step 8 |  | hotkeySetup.mel:738 |
 | Shift+) | Shift+ZERO | global | NudgeSelectedKeysForward | — | 미검토 |  | hotkeySetup.mel:739 |
 | Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | — | 미검토 |  | hotkeySetup.mel:740 |
 | Alt+t | Alt+T | global | CreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:742 |

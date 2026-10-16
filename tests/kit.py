@@ -65,7 +65,23 @@ def snapshot():
             snap["ui_extensions"][name] = [getattr(f, "__qualname__", repr(f)) for f in funcs]
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())
+    # Blender preferences the add-on may change (navigation preset, step 4).
+    prefs = bpy.context.preferences
+    snap["prefs_inputs"] = _rna_values(prefs.inputs)
+    snap["prefs_view"] = _rna_values(prefs.view)
     return snap
+
+
+def _rna_values(struct):
+    out = {}
+    for prop in struct.bl_rna.properties:
+        if prop.identifier == "rna_type" or prop.type in {'POINTER', 'COLLECTION'}:
+            continue
+        value = getattr(struct, prop.identifier)
+        if not isinstance(value, (str, int, float, bool)):
+            value = tuple(value) if hasattr(value, "__iter__") else value
+        out[prop.identifier] = [repr(value)]
+    return out
 
 
 def diff(a, b):

@@ -115,9 +115,11 @@ def test_group_keys():
 # --- Space free, playback on Alt+V ------------------------------------------
 
 def test_space_is_free_for_hotbox():
-    for km in ("Window", "Screen", "Frames", "3D View", "3D View Generic", "Object Mode",
+    for km in ("Window", "Screen", "Frames", "3D View Generic", "Object Mode",
                "Object Non-modal", "Mesh", "Graph Editor", "Dopesheet", "Outliner"):
         assert _any_event(km, "SPACE") == [], (km, _any_event(km, "SPACE"))
+    # 3D View: Space goes to the tap/hold modal (tap = four views, hold = hotbox later).
+    assert [k.properties.binding for k in _kmis("3D View", "maya_kit.tap_hold", "SPACE")] == ["space"]
     assert _one("Frames", "screen.animation_play", "V", alt=True)
     assert not _one("Frames", "screen.frame_jump", "V", alt=True, shift=True).properties.end
 
@@ -149,6 +151,9 @@ _OBJECT_MODE_STACK = ("Window", "Screen", "Frames", "3D View", "3D View Generic"
                       "Object Mode", "Object Non-modal")
 _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Object Non-modal": _VIEW3D_STACK,
+           "Mesh": ("Window", "Screen", "Frames", "3D View", "3D View Generic", "Mesh",
+                    "Object Non-modal"),
+           "Screen": None,
            "Outliner": ("Window", "Screen", "Outliner", "View2D", "View2D Buttons List"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
