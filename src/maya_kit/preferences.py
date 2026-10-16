@@ -37,6 +37,14 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",
         default=True)
 
+    # Channel Box virtual slider ().
+    cb_speed: bpy.props.EnumProperty(
+        name="Slider Speed", default='MEDIUM',
+        items=(('SLOWEST', "Slowest", "x0.01"), ('SLOW', "Slow", "x0.1"),
+               ('MEDIUM', "Medium", "x1"), ('FAST', "Fast", "x10")))
+    cb_hyperbolic: bpy.props.BoolProperty(
+        name="Hyperbolic", description="Value change accelerates with drag distance")
+
     def draw(self, context):
         from . import keymap
         layout = self.layout
