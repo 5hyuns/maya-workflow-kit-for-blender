@@ -7,11 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 88 |
-| IC 일치 | 8 |
-| 계획 | 5 |
-| 해당 없음 | 10 |
-| 미검토 | 289 |
+| 구현 | 95 |
+| IC 일치 | 9 |
+| 해당 없음 | 11 |
+| 미검토 | 285 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -182,16 +181,16 @@
 | w | W | global | TranslateToolWithSnapMarkingMenu / TranslateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_move'); Mesh: `maya_kit.tap_hold` (binding='tool_move') | 구현 | 누름=툴 전환, 누른 채 LMB=Move 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:307 |
 | e | E | global | RotateToolWithSnapMarkingMenu / RotateToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_rotate'); Mesh: `maya_kit.tap_hold` (binding='tool_rotate') | 구현 | 누름=툴 전환, 누른 채 LMB=Rotate 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:309 |
 | r | R | global | ScaleToolWithSnapMarkingMenu / ScaleToolWithSnapMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_scale'); Mesh: `maya_kit.tap_hold` (binding='tool_scale') | 구현 | 누름=툴 전환, 누른 채 LMB=Scale 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:311 |
-| Ctrl+t | Ctrl+T | global | UniversalManip | — | 미검토 |  | hotkeySetup.mel:313 |
-| t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:315 |
-| y | Y | global | NonSacredTool | — | 미검토 |  | hotkeySetup.mel:316 |
-| Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | — | 미검토 |  | hotkeySetup.mel:319 |
-| Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | — | 미검토 |  | hotkeySetup.mel:320 |
-| F2 | F2 | global | ShowModelingUI | 3D View: `view3d.view_axis` (type='RIGHT') | 계획 Step 13 |  | hotkeySetup.mel:322 |
-| F3 | F3 | global | ShowRiggingUI | 3D View: `view3d.view_axis` (type='TOP') | 계획 Step 13 |  | hotkeySetup.mel:323 |
-| F4 | F4 | global | ShowAnimationUI | 3D View: `view3d.view_camera` | 계획 Step 13 |  | hotkeySetup.mel:324 |
-| F5 | F5 | global | ShowDynamicsUI | 3D View: `view3d.view_orbit` (angle=3.1415927, type='ORBITRIGHT') | 계획 Step 13 |  | hotkeySetup.mel:326 |
-| F6 | F6 | global | ShowRenderingUI | — | 계획 Step 13 |  | hotkeySetup.mel:327 |
+| Ctrl+t | Ctrl+T | global | UniversalManip | Object Mode: `wm.tool_set_by_id` (name='builtin.transform'); Mesh: `wm.tool_set_by_id` (name='builtin.transform') | 구현 |  | hotkeySetup.mel:313 |
+| t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | IC 일치 | Blender 에 Show Manipulator 툴 없음: Transform 툴 | hotkeySetup.mel:315 |
+| y | Y | global | NonSacredTool | Object Mode: `maya_kit.last_tool`; Mesh: `maya_kit.last_tool` | 구현 | Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억) | hotkeySetup.mel:316 |
+| Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True) | 미검토 |  | hotkeySetup.mel:319 |
+| Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.knife', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.knife', edit=True) | 미검토 |  | hotkeySetup.mel:320 |
+| F2 | F2 | global | ShowModelingUI | Screen: `maya_kit.menu_set` (set='modelingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:322 |
+| F3 | F3 | global | ShowRiggingUI | Screen: `maya_kit.menu_set` (set='riggingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:323 |
+| F4 | F4 | global | ShowAnimationUI | Screen: `maya_kit.menu_set` (set='animationMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:324 |
+| F5 | F5 | global | ShowDynamicsUI | Screen: `maya_kit.menu_set` (set='dynamicsMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:326 |
+| F6 | F6 | global | ShowRenderingUI | Screen: `maya_kit.menu_set` (set='renderingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:327 |
 | s | S | global | SetKey | Object Mode: `anim.keyframe_insert_by_name` (type='LocRotScale') | IC 일치 | Maya 는 키 가능한 모든 채널, IC 는 LocRotScale | hotkeySetup.mel:328 |
 | Alt+e | Alt+E | global | HIKPinRotate | Object Mode: `object.rotation_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:329 |
 | Alt+w | Alt+W | global | HIKPinTranslate | Object Mode: `object.location_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:330 |
@@ -214,7 +213,7 @@
 | Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
 | Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | IC 일치 | 로컬 뷰 토글 (프레이밍 포함) | hotkeySetup.mel:351 |
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
-| Return | RET | global | CompleteCurrentTool | 3D View: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:353 |
+| Return | RET | global | CompleteCurrentTool | Screen: `file.execute` | 해당 없음 | Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거 | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
 | d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 Affect Only Origins; 편집 모드: 3D 커서 피벗 배치 (step 18) | hotkeySetup.mel:355 |
 | Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |

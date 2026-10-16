@@ -2,6 +2,8 @@
 
 ## 현재 작업
 
+- Step 35 (Maya 키 묶음) 완료 — `docs/steps/step_35.md`. Ctrl+Alt+LMB 박스 줌, Ctrl+T, Y (마지막 비 QWERT 툴), Ctrl+Shift+X/Q,
+  F2–F6 메뉴 세트 (IC 3D 뷰 F2–F5 제거), 3D 뷰 Return 팝오버 제거. 키맵 대응표 구현 95 / 계획 0. 헤드리스 300/300, GUI 261/261, dogfood 47/47.
 - Step 34 (메뉴 막다른 길) 완료 — `docs/steps/step_34.md`. `menu_map.CHILDREN` (Maya 가 실행 중에 만드는 하위 메뉴: Windows > ... Editors,
   HUD), 편집기는 새 창 (`maya_kit.open_editor`), Edit > Ungroup, UV Editor/Planar/Normal-Based, HUD Poly Count, Increment and Save
   (Maya 번호 규칙), Export Selection (선택만). 헤드리스 294/294, GUI 251/251, dogfood 47/47.
@@ -71,6 +73,6 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 남은 5개: Step 35 키 묶음 (Ctrl+Alt+LMB 박스 줌·Ctrl+T·Y·Ctrl+Shift+X/Q·Return·F2–F6), 대칭, 뷰 패널 메뉴,
-  Channel Box 다중 선택·상대값 + AE 재질 라벨, 컴포넌트 픽워크 + Alt+Shift 축 고정.
+- 재점검 3차 backlog 남은 4개: Step 36 대칭 (Symmetry) 모델링, 뷰 패널 메뉴 바, Channel Box 다중 선택·상대값 + AE 재질 라벨,
+  컴포넌트 픽워크 + Alt+Shift 축 고정.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

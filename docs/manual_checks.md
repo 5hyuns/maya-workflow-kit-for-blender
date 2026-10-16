@@ -231,3 +231,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 34) Edit > Ungroup: 중첩 그룹·여러 그룹 선택·애니메이션 있는 자식에서 Maya 2022 결과와 비교 (월드 위치 유지, 선택 결과).
 - [ ] (step 34) File > Increment and Save 를 여러 번 → shot.0001, 0002 …; 저장 안 한 씬에서는 Save As 창.
 - [ ] (step 34) UV > Planar / Normal-Based 결과를 Maya 의 Planar (Best Plane 아님) 와 비교 (회전·비율).
+
+### Step 35 — Maya 키 묶음
+
+- [ ] (step 35) Ctrl+Alt+LMB 박스 줌: 왼→오 확대 / 오→왼 축소 비율이 Maya 2022 와 비슷한지, 직교 뷰·카메라 뷰에서도.
+- [ ] (step 35) F2–F6 메뉴 세트 전환이 3D 뷰 밖(Outliner, Graph Editor)에서도 되는지; 직교 뷰가 F 키에서 빠진 것이 불편하지 않은지 (핫박스·Space·Ctrl+F1–F3).
+- [ ] (step 35) Y 가 Maya 처럼 마지막 툴(Multi-Cut, Quad Draw, Extrude 등)로 돌아가는지, 모드를 바꿨을 때 기억이 자연스러운지.
+- [ ] (step 35) 3D 뷰에서 Enter 를 눌러도 아무 창이 뜨지 않는지, Knife / Poly Build 안에서는 Enter 가 확정인지.
