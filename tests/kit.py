@@ -43,7 +43,10 @@ def snapshot():
     snap["type_attrs"] = {t: sorted(dir(getattr(bpy.types, t))) for t in _PROP_OWNERS}
     snap["ops"] = sorted(dir(bpy.ops))
 
-    kc = bpy.context.window_manager.keyconfigs.addon
+    kcs = bpy.context.window_manager.keyconfigs
+    snap["keyconfigs"] = sorted(k.name for k in kcs)
+    snap["active_keyconfig"] = [kcs.active.name if kcs.active else None]
+    kc = kcs.addon
     snap["addon_keymaps"] = sorted(
         (km.name, kmi.idname, kmi.type, kmi.value, kmi.shift, kmi.ctrl, kmi.alt)
         for km in (kc.keymaps if kc else ()) for kmi in km.keymap_items)
