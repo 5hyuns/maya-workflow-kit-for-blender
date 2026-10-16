@@ -130,6 +130,9 @@ def maya_views():
                 if space.type != 'VIEW_3D':
                     continue
                 space.clip_start, space.clip_end = (c * MAYA_UNIT for c in MAYA_CLIP)
+                # Finest perspective grid step = 1 cm (= units.grid_scale; docs/steps/step_25.md):
+                # Maya grid lines every 1 cm (research/maya/defaults.json:29-31).
+                space.overlay.grid_scale = MAYA_UNIT
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

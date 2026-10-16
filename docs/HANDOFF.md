@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 25 (cm 그리드와 그리드 스냅) 완료 — `docs/steps/step_25.md`. 원인: Blender 원근 뷰는 1 m 아래 그리드 단계를 건너뜀 →
+  `overlay.grid_scale` = 표시 단위의 미터 값 (`units.grid_scale`, 템플릿 0.01, Maya Units 적용/복원). X 스냅 템플릿 9 cm / Maya Units 9 cm /
+  팩토리 3 m. 헤드리스 249/249, GUI 187/187, dogfood 46/47.
 - Step 24 (컴포넌트 Delete) 완료 — `docs/steps/step_24.md`. 편집 모드 Delete / Backspace = `maya_kit.delete_components` (면 삭제,
   경계 아닌 엣지 dissolve + 정점 정리, 정점 dissolve, 메뉴 없음). Ctrl+Delete = IC dissolve. 헤드리스 246/246, GUI 179/179, dogfood 46/47.
 - Step 23 (재점검 2차) 완료 — `docs/steps/step_23.md`, `docs/PLAN.md` 「재점검 2차」. 코드(`src/`) 변경 없음; `tools/dogfood.py --session`.
@@ -43,7 +46,7 @@
 
 ## 바로 다음 할 일
 
-- Step 25: cm 그리드와 그리드 스냅 (backlog 2) — MayaKit 템플릿에서 그리드 선이 안 보이고 X 홀드 스냅이 10.44 cm → 0 cm (step_23).
-  원인 측정 후 `tools/make_startup.py` overlay 와 스냅. 그다음 Smart Extrude, 매니퓰레이터 크기·뷰 키, MMB 마지막 핸들, 재질 지정,
-  선택 감각, Outliner 레이아웃 (backlog 3–8, PLAN 「재점검 2차」).
+- Step 26: Smart Extrude (backlog 3) — 편집 모드 면/엣지 Shift+기즈모 드래그 = 압출 후 변환 (`operators/manip.py` 확장, 키맵은 step 22 의
+  기즈모 PRESS 항목), 홀드 메뉴 "Smart Extrude" 토글, Shift+클릭·취소 시 남는 사본/압출 처리. 계획 먼저.
+  그다음 매니퓰레이터 크기·뷰 키, MMB 마지막 핸들, 재질 지정, 선택 감각, Outliner 레이아웃 (backlog 4–8).
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.
