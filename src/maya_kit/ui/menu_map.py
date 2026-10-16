@@ -81,7 +81,7 @@ MAP = {
        if v not in ('HISTORY', 'NON_DEFORMER_HISTORY')},
     **{f"Edit/Delete All by Type/{k}": _del(v, True)
        for k, v in {**_DELETE_BY_TYPE, **_DELETE_ALL_ONLY}.items()},
-    "Edit/Duplicate": ("v3d", "object.duplicate_move", {}),
+    "Edit/Duplicate": "maya_kit.duplicate",                     # step 19: Maya names, in place
     "Edit/Duplicate Special": "maya_kit.duplicate_special",
     "Edit/Duplicate with Transform": "maya_kit.duplicate_with_transform",
     "Edit/Group": "maya_kit.group",
