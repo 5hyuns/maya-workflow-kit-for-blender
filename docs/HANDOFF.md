@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 20 (타임라인) 완료 — `docs/steps/step_20.md`. `.` `,` = 다음/이전 키, Alt+`.` Alt+`,` = 프레임 (Frames 키맵, 3D View 피벗/방향 파이 제거),
+  타임라인 헤더 = Maya Time Slider 버튼 + Range Slider 4 필드, 타임라인 뷰가 재생 범위를 따라감, MayaKit 템플릿 애니메이션 1–200 / 재생 1–120.
+  헤드리스 227/227, GUI 156/156, dogfood 47 중 46 (남은 실패: `=`).
 - Step 19 (복제 이름) 완료 — `docs/steps/step_19.md`. Ctrl+D = `maya_kit.duplicate` (제자리, 하위 계층, pCube2 / pCubeShape2, group1 → group2,
   Shift+D 스마트 반복과 연결); 메뉴 Edit > Duplicate 도 같음. 헤드리스 223/223, GUI 147/147, dogfood 45 중 43 (남은 실패: `.`, `=`).
 - Step 18 (편집 모드 키) 완료 — `docs/steps/step_18.md`. Mesh: D = 컴포넌트 피벗 홀드(3D 커서, 놓으면 유지 / 탭 = 리셋),
@@ -26,6 +29,6 @@
 
 ## 바로 다음 할 일
 
-- Step 20: backlog 6 — 타임라인: 재생 범위(1–120)에 맞춘 뷰, `.` `,` Alt+`.` Alt+`,` 키/프레임 이동 (지금 `.` = 피벗 파이), Range Slider.
-  이후 backlog 7–8 (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, PLAN 「재점검 1차」).
+- Step 21: backlog 7 — 생성 경로 단위 통일 (Create/셸프 1 BU vs `cmds.polyCube()` 1 cm, `command_line/cmds_shim.py:424-429`), 결정은
+  `docs/user_decisions.md` 에 덧붙여 기록. 이후 backlog 8 (Shift+매니퓰레이터 복제 계획).
 - 각 수정 후 `python tools/dogfood.py` 의 해당 체크가 PASS 로 바뀌는지 확인.

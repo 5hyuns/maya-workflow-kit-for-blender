@@ -7,9 +7,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 75 |
+| 구현 | 79 |
 | IC 일치 | 6 |
-| 계획 | 17 |
+| 계획 | 13 |
 | 해당 없음 | 10 |
 | 미검토 | 292 |
 | macOS 전용 | 68 |
@@ -219,10 +219,10 @@
 | d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 Affect Only Origins; 편집 모드: 3D 커서 피벗 배치 (step 18) | hotkeySetup.mel:355 |
 | Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
 | Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
-| , | COMMA | global | PreviousKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_orientations_pie') | 계획 Step 7 |  | hotkeySetup.mel:358 |
-| Alt+, | Alt+COMMA | global | PreviousFrame | — | 계획 Step 7 |  | hotkeySetup.mel:359 |
-| . | PERIOD | global | NextKey | 3D View: `wm.call_menu_pie` (name='VIEW3D_MT_pivot_pie') | 계획 Step 7 |  | hotkeySetup.mel:360 |
-| Alt+. | Alt+PERIOD | global | NextFrame | — | 계획 Step 7 |  | hotkeySetup.mel:361 |
+| , | COMMA | global | PreviousKey | Frames: `screen.keyframe_jump` (next=False) | 구현 | 3D View 방향 파이는 헤더로 | hotkeySetup.mel:358 |
+| Alt+, | Alt+COMMA | global | PreviousFrame | Frames: `screen.frame_offset` (delta=-1) | 구현 |  | hotkeySetup.mel:359 |
+| . | PERIOD | global | NextKey | Frames: `screen.keyframe_jump` (next=True) | 구현 | Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로 | hotkeySetup.mel:360 |
+| Alt+. | Alt+PERIOD | global | NextFrame | Frames: `screen.frame_offset` (delta=1) | 구현 | 누르고 있으면 반복 | hotkeySetup.mel:361 |
 | g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
 | Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
 | Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `mesh.select_more` | 구현 | 오브젝트 모드만 (컴포넌트는 미구현) | hotkeySetup.mel:364 |

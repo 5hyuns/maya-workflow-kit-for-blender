@@ -489,15 +489,36 @@ def s_isolate():
     mods = [m.name for m in bpy.data.objects["pCube1"].modifiers]
     check(f"Ctrl+1 changes nothing else (pCube1 modifiers {mods})",
           mods == ["Maya Smooth Preview Shading", "Maya Smooth Preview"])
-    C["frame"] = bpy.context.scene.frame_current
+    sc, cube = bpy.context.scene, bpy.data.objects["pCube1"]
+    for f in (1, 10):   # Maya . / , jump between keys: give it two
+        sc.frame_set(f)
+        cube.keyframe_insert("location")
+    sc.frame_set(1)
+    centre()
     tap('PERIOD')
 
 
 @step
 def s_next_key():
-    check(f"'.' steps to the next key/frame (frame {C['frame']} -> {bpy.context.scene.frame_current})",
-          bpy.context.scene.frame_current != C["frame"])
-    tap('ESC')   # IC '.' opens the pivot pie
+    sc = bpy.context.scene
+    check(f"'.' steps to the next key (frame 1 -> {sc.frame_current})", sc.frame_current == 10)
+    ev('PERIOD', 'PRESS', alt=True)
+    ev('PERIOD', 'RELEASE', alt=True)
+
+
+@step
+def s_next_frame():
+    sc = bpy.context.scene
+    check(f"Alt+. steps one frame (10 -> {sc.frame_current})", sc.frame_current == 11)
+    tap('COMMA')
+
+
+@step
+def s_prev_key():
+    sc = bpy.context.scene
+    check(f"',' steps to the previous key (11 -> {sc.frame_current})", sc.frame_current == 10)
+    sc.frame_set(1)
+    tap('ESC')   # in case a pie opened (Blender's . / , before step 20)
     C["gizmo"] = bpy.context.preferences.view.gizmo_size
     tap('EQUAL')
 

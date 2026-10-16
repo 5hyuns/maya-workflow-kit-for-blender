@@ -117,6 +117,8 @@ def test_template_layout():
 
     scene = bpy.context.scene
     assert scene.unit_settings.length_unit == 'CENTIMETERS' and scene.unit_settings.scale_length == 1.0
-    assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 120, 24)
+    # step 20: Maya animation range 1-200 = frame range, playback 1-120 = preview range
+    assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 200, 24)
+    assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (1, 120)
     assert len(bpy.data.objects) == 0, [o.name for o in bpy.data.objects]
     bpy.ops.maya_kit.layout_remove()

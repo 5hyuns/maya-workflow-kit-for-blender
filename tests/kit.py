@@ -68,9 +68,11 @@ def snapshot():
             snap["ui_extensions"][name] = [getattr(f, "__qualname__", repr(f)) for f in funcs]
     # Methods the add-on swaps on Blender UI classes (step 7: Maya top bar).
     topbar = bpy.types.TOPBAR_HT_upper_bar
+    from bl_ui import space_time   # step 20: Time / Range Slider in the Timeline header
     snap["ui_methods"] = [f"{f.__module__}.{f.__qualname__}" for f in
                           (topbar.draw_left, topbar.draw_right,
-                           bpy.types.IMAGE_HT_header.draw, bpy.types.IMAGE_HT_tool_header.draw)]
+                           bpy.types.IMAGE_HT_header.draw, bpy.types.IMAGE_HT_tool_header.draw,
+                           space_time.TIME_HT_editor_buttons.draw_header)]
     snap["sys_modules"] = sorted(m for m in sys.modules if m == "maya" or m.startswith("maya."))
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())

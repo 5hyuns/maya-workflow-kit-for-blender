@@ -90,8 +90,8 @@ blindspot scout (B, cards in step_14.md), step docs (S).
 4. **Units consistency** (B2): Create/shelf cube = 1 BU (shows 100 cm), `cmds.polyCube()` = 1 cm.
    One rule for all creation paths.
 5. **Maya naming of copies** (D) — done in step 19: Ctrl+D = `maya_kit.duplicate` (pCube2 / pCubeShape2, subtree, in place).
-6. **Timeline** (S, D): playback-range view (1–120, now 0–250), `.` `,` Alt+`.` Alt+`,` stepping (now `.`
-   opens the pivot pie), Range Slider, Maya key ticks (W).
+6. **Timeline** (S, D) — done in step 20: `.` `,` Alt+`.` Alt+`,`, timeline view = playback range, Range Slider
+   fields in the Timeline header (animation 1–200, playback 1–120). Still open: Maya key ticks (W), range drag bar.
 7. **Shift+drag manipulator duplicate / extrude** (B4, research row "높음", never planned) — complex
    design, plan first.
 8. **Selection feel** (B6–B8): component marquee select-through (Maya `selectPrefUseDepth false`),
