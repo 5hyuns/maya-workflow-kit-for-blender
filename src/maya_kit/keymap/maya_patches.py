@@ -5,7 +5,7 @@
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
 docs/steps/step_4.md (9-13), docs/steps/step_10.md (16), docs/steps/step_11.md (17),
 docs/steps/step_16.md (18), docs/steps/step_18.md (19), docs/steps/step_20.md (20),
-docs/steps/step_22.md (21).
+docs/steps/step_22.md (21), docs/steps/step_24.md (22).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -441,12 +441,24 @@ def patch_manip_duplicate(kd):
              first=True)
 
 
+# --- 22. Delete / Backspace on components (docs/steps/step_24.md 「계획」) ------------------------
+# Maya deletes the selected faces / edges / vertices right away (runtime_commands.json Delete,
+# DeleteEdge, DeleteVertex); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace
+# keep IC's mesh.dissolve_mode = Maya DeletePolyElements (hotkeySetup.mel:375-376).
+
+def patch_component_delete(kd):
+    for key in ("DEL", "BACK_SPACE"):
+        kd.remove("Mesh", "wm.call_menu", type=key)
+        _add(kd, "Mesh", "maya_kit.delete_components", make_event(key))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
            patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts,
            patch_attribute_editor, patch_undo_visibility,
-           patch_mesh_components, patch_key_stepping, patch_manip_duplicate)
+           patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
+           patch_component_delete)
 
 
 def apply(data):

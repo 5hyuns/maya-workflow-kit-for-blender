@@ -2,6 +2,8 @@
 
 ## 현재 작업
 
+- Step 24 (컴포넌트 Delete) 완료 — `docs/steps/step_24.md`. 편집 모드 Delete / Backspace = `maya_kit.delete_components` (면 삭제,
+  경계 아닌 엣지 dissolve + 정점 정리, 정점 dissolve, 메뉴 없음). Ctrl+Delete = IC dissolve. 헤드리스 246/246, GUI 179/179, dogfood 46/47.
 - Step 23 (재점검 2차) 완료 — `docs/steps/step_23.md`, `docs/PLAN.md` 「재점검 2차」. 코드(`src/`) 변경 없음; `tools/dogfood.py --session`.
   헤드리스 239/239, GUI 172/172, dogfood 46/47, 탐색 세션 13 중 12 (면 Delete 가 메뉴), 콘솔 오류 0.
   대응표 33행: 완료 23, 부분 8, 미착수 0, 불가 2 (1차 21/8/2/2). 키맵 468행: 구현 79 + IC 6, 계획 13, 미검토 292.
@@ -41,6 +43,7 @@
 
 ## 바로 다음 할 일
 
-- backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 8개) 순서대로: 컴포넌트 Delete → cm 그리드·스냅 →
-  Smart Extrude → 매니퓰레이터 크기·뷰 키 → MMB 마지막 핸들 → 재질 지정 → 선택 감각 → Outliner 레이아웃. 우선순위 근거: PLAN 「재점검 2차」.
-- 각 수정 후 `python tools/dogfood.py` (와 필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.
+- Step 25: cm 그리드와 그리드 스냅 (backlog 2) — MayaKit 템플릿에서 그리드 선이 안 보이고 X 홀드 스냅이 10.44 cm → 0 cm (step_23).
+  원인 측정 후 `tools/make_startup.py` overlay 와 스냅. 그다음 Smart Extrude, 매니퓰레이터 크기·뷰 키, MMB 마지막 핸들, 재질 지정,
+  선택 감각, Outliner 레이아웃 (backlog 3–8, PLAN 「재점검 2차」).
+- 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.

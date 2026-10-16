@@ -8,10 +8,10 @@
 | 상태 | 개수 |
 |---|---|
 | 구현 | 79 |
-| IC 일치 | 6 |
+| IC 일치 | 8 |
 | 계획 | 13 |
 | 해당 없음 | 10 |
-| 미검토 | 292 |
+| 미검토 | 290 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -235,8 +235,8 @@
 | Alt+Down | Alt+DOWN_ARROW | global | MoveDown | — | 미검토 |  | hotkeySetup.mel:371 |
 | Alt+Left | Alt+LEFT_ARROW | global | MoveLeft | — | 미검토 |  | hotkeySetup.mel:372 |
 | Alt+Right | Alt+RIGHT_ARROW | global | MoveRight | — | 미검토 |  | hotkeySetup.mel:373 |
-| Ctrl+Backspace | Ctrl+BACK_SPACE | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | 미검토 |  | hotkeySetup.mel:375 |
-| Ctrl+Delete | Ctrl+DEL | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | 미검토 |  | hotkeySetup.mel:376 |
+| Ctrl+Backspace | Ctrl+BACK_SPACE | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:375 |
+| Ctrl+Delete | Ctrl+DEL | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:376 |
 | Ctrl+Alt+Left | Ctrl+Alt+LEFT_ARROW | global | PolySpinEdgeBackward | — | 미검토 |  | hotkeySetup.mel:378 |
 | Ctrl+Alt+Right | Ctrl+Alt+RIGHT_ARROW | global | PolySpinEdgeForward | — | 미검토 |  | hotkeySetup.mel:379 |
 | Ctrl+Left | Ctrl+LEFT_ARROW | global | RenderViewNextImage | Object Mode: `screen.frame_jump` (end=False) | 미검토 |  | hotkeySetup.mel:381 |

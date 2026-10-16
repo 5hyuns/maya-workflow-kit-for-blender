@@ -171,6 +171,10 @@ ENTRIES = {
                       note="압출 후 바로 법선 방향 이동 모달"),
     "BevelPolygon": _e("KIT", ("Mesh", "maya_kit.bevel", {}),
                        note="정점 모드 = 정점 베벨, 그 외 엣지; 드래그로 폭"),
+    # --- step 24: component Delete (docs/steps/step_24.md); plain Delete/Backspace is
+    # Maya's doDelete (not a hotkeySetup row): Mesh "maya_kit.delete_components" ---
+    "DeletePolyElements": _e("IC", ("Mesh", "mesh.dissolve_mode", {}),
+                             note="엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24)"),
     # --- step 16: undo / visibility / isolate (docs/steps/step_16.md) ---
     "Undo": _e("KIT", ("Screen", "ed.undo", {}),
                note="Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음)"),
