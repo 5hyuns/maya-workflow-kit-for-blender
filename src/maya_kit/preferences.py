@@ -99,6 +99,11 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         name="Smart Duplicate", description="Shift+drag a Move/Rotate/Scale manipulator "
                                             "duplicates the selection and transforms the copy",
         default=True)
+    # Maya manipSmartExtrude 1 (research/maya/interaction.md:107, PREF:371-374).
+    smart_extrude: bpy.props.BoolProperty(
+        name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
+                                          "or edges extrudes them and transforms the new ones",
+        default=True)
 
     def _update_units(self, context):
         from .operators import units
@@ -135,6 +140,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.prop(self, "maya_units")
         row.prop(self, "smart_duplicate")
+        row.prop(self, "smart_extrude")
 
         box = layout.box()
         box.label(text="UI Elements")

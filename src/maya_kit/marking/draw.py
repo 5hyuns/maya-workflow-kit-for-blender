@@ -100,6 +100,22 @@ def _circle(cx, cy, r, color, segments=24):
 
 # --- marking menu -------------------------------------------------------------------
 
+CHECK = (0.32, 0.52, 0.65, 1.0)   # selection blue #5285A6 (step 5 palette)
+
+
+def checked(action):
+    """On/off state of a toggle item (None for other items); step 26."""
+    if not engine.is_toggle(action):
+        return None
+    op, props = action
+    try:
+        if op == "wm.context_toggle":
+            return bool(bpy.context.path_resolve(props["data_path"]))
+        from ..operators import manip
+        return manip.option_state(props["option"])
+    except (ValueError, KeyError, AttributeError):
+        return None
+
 def draw_session(s, now):
     if not s.visible(now):
         _line(s.trail, LINE, 2.0)  # a quick mark: only the stroke
@@ -118,6 +134,16 @@ def draw_session(s, now):
         text = engine.Layout._text(it.label, it.action)
         _text(cx + it.rect[0] + pad, cy + it.rect[1] + (it.rect[3] - it.rect[1]) * 0.3, text,
               TEXT if it.enabled else TEXT_OFF)
+        state = checked(it.action)
+        if state is not None:
+            right = it.opt_rect[0] if it.opt_rect else it.rect[2]
+            size = (it.rect[3] - it.rect[1]) * 0.42
+            x1 = right - pad
+            y0 = it.rect[1] + (it.rect[3] - it.rect[1] - size) / 2
+            box = (x1 - size, y0, x1, y0 + size)
+            _outline(box, TEXT if it.enabled else TEXT_OFF, cx, cy)
+            if state:
+                _rect((box[0] + 2, box[1] + 2, box[2] - 2, box[3] - 2), CHECK, cx, cy)
         if it.opt_rect:
             if on and hover_opt:
                 _rect(it.opt_rect, BG_HOVER, cx, cy)

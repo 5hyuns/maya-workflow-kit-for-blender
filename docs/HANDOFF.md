@@ -2,6 +2,8 @@
 
 ## 현재 작업
 
+- Step 26 (Smart Extrude) 완료 — `docs/steps/step_26.md`. 면/엣지 Shift+기즈모 드래그 = 압출 후 변환, 안 움직이면 (Shift+클릭·취소)
+  사본/압출을 되돌림, xform 기즈모만 (`context.gizmo_group`), 홀드 메뉴 체크 상자. 헤드리스 256/256, GUI 195/195, dogfood 46/47.
 - Step 25 (cm 그리드와 그리드 스냅) 완료 — `docs/steps/step_25.md`. 원인: Blender 원근 뷰는 1 m 아래 그리드 단계를 건너뜀 →
   `overlay.grid_scale` = 표시 단위의 미터 값 (`units.grid_scale`, 템플릿 0.01, Maya Units 적용/복원). X 스냅 템플릿 9 cm / Maya Units 9 cm /
   팩토리 3 m. 헤드리스 249/249, GUI 187/187, dogfood 46/47.
@@ -46,7 +48,6 @@
 
 ## 바로 다음 할 일
 
-- Step 26: Smart Extrude (backlog 3) — 편집 모드 면/엣지 Shift+기즈모 드래그 = 압출 후 변환 (`operators/manip.py` 확장, 키맵은 step 22 의
-  기즈모 PRESS 항목), 홀드 메뉴 "Smart Extrude" 토글, Shift+클릭·취소 시 남는 사본/압출 처리. 계획 먼저.
-  그다음 매니퓰레이터 크기·뷰 키, MMB 마지막 핸들, 재질 지정, 선택 감각, Outliner 레이아웃 (backlog 4–8).
+- Step 27: 매니퓰레이터 크기·뷰 키 (backlog 4) — `=`/`+` `-` (preferences.view.gizmo_size, dogfood 의 유일한 실패), PgUp/PgDn, `0`, Home,
+  Alt+5 (keymap/mapping.py 계획 행), 런타임 환경설정은 `prefs_preset` 경유. 그다음 MMB 마지막 핸들, 재질 지정, 선택 감각, Outliner 레이아웃.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 의 해당 체크가 PASS 로 바뀌는지 확인.

@@ -69,6 +69,14 @@ def _inside(rect, x, y):
     return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
 
 
+TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option")
+
+
+def is_toggle(action):
+    """An on/off item (Maya check box menu item): shows its state in the menu."""
+    return isinstance(action, tuple) and len(action) == 2 and action[0] in TOGGLE_OPS
+
+
 class Layout:
     """Item rectangles of one (sub)menu around its centre (Maya placement)."""
 
@@ -122,7 +130,8 @@ class Layout:
 
     @staticmethod
     def _text(label, action):
-        return label + (" ▸" if isinstance(action, mm.Sub) else "")
+        # Toggles keep room on the right for their check box (draw.py, step 26).
+        return label + (" ▸" if isinstance(action, mm.Sub) else "    " if is_toggle(action) else "")
 
     def _opt(self, rect, on):
         if not on:

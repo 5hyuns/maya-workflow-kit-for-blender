@@ -187,3 +187,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 25 — cm 그리드·스냅
 
 - [ ] (step 25) MayaKit 레이아웃에서 확대/축소하며 그리드 단계(1 cm → 10 cm → 1 m)가 바뀔 때 X 홀드 스냅 간격이 따라 바뀌는지, Maya 2022 그리드 스냅 감각과 비교.
+
+### Step 26 — Smart Extrude
+
+- [ ] (step 26) 면·엣지 선택에서 이동/회전/스케일 기즈모 Shift+드래그 → 압출 후 변환; Shift+클릭, RMB/Esc 취소 → 아무것도 남지 않음; 그 뒤 Ctrl+Z / Ctrl+Shift+Z 가 앞 작업을 망가뜨리지 않는지. Maya 2022 와 손 감각 비교.
+- [ ] (step 26) 스포트 라이트 선택 + 라이트 기즈모(크기·블렌드) Shift+드래그 → 복제 안 됨.

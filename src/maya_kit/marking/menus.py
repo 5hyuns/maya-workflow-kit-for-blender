@@ -62,6 +62,7 @@ PRESERVE_UVS = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_tran
 PRESERVE_CHILDREN = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_skip_children"})
 TOOL_SETTINGS = ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})
 SMART_DUPLICATE = ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'})  # step 22
+SMART_EXTRUDE = ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'})      # step 26
 
 # --- RMB: dagMenuProc (hotkeys_and_menus.md §5.2, :246-252) --------------------------
 # Mesh radials come from createSelectMenuItems' order (dagMenuProc.mel:885-892) and
@@ -349,7 +350,7 @@ OPT_MOVE = MarkingMenu(
         })),
     },
     items=[
-        ("Smart Extrude", None), ("Smart Duplicate", SMART_DUPLICATE),
+        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
         DIVIDER,
         ("Preserve UVs", PRESERVE_UVS),                                    # :71
         ("Preserve Children", PRESERVE_CHILDREN),                          # :77
@@ -368,7 +369,7 @@ OPT_ROTATE = MarkingMenu(
         "E": ("Gimbal", _orient('GIMBAL')),                                # :77
     },
     items=[
-        ("Smart Extrude", None), ("Smart Duplicate", SMART_DUPLICATE),
+        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
         DIVIDER,
         ("Preserve UVs", PRESERVE_UVS),                                    # :124
         ("Preserve Children", PRESERVE_CHILDREN),                          # :130
@@ -392,7 +393,7 @@ OPT_SCALE = MarkingMenu(
         "SE": ("Relative", None),                                          # :107
     },
     items=[
-        ("Smart Extrude", None), ("Smart Duplicate", SMART_DUPLICATE),
+        ("Smart Extrude", SMART_EXTRUDE), ("Smart Duplicate", SMART_DUPLICATE),
         DIVIDER,
         ("Preserve UVs", PRESERVE_UVS),                                    # :156
         ("Preserve Children", PRESERVE_CHILDREN),                          # :162

@@ -54,8 +54,8 @@ def _run():
 
 
 def test_duplicates_only_when_it_applies():
-    shown = manip.gizmo_shown
-    manip.gizmo_shown = lambda _context: True
+    shown = manip.from_xform_gizmo
+    manip.from_xform_gizmo = lambda _context: True
     prefs = preferences.get()
     try:
         ob = _fresh()
@@ -74,20 +74,21 @@ def test_duplicates_only_when_it_applies():
 
         copy.select_set(True)
         bpy.ops.object.mode_set(mode='EDIT')
-        assert _run() == 0, "edit mode: extrude is a later step"
+        assert _run() == 0, "edit mode: Smart Extrude, no new object (step 26)"
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        manip.gizmo_shown = lambda _context: False
-        assert _run() == 0, "no transform gizmo (e.g. select tool)"
+        manip.from_xform_gizmo = lambda _context: False
+        assert _run() == 0, "not the transform manipulator (light gizmo, ...)"
     finally:
-        manip.gizmo_shown = shown
+        manip.from_xform_gizmo = shown
         prefs.smart_duplicate = True
 
 
 def test_hold_menus_toggle_smart_duplicate():
     for menu in (mm.OPT_MOVE, mm.OPT_ROTATE, mm.OPT_SCALE):
-        item = dict(i for i in menu.items if i != mm.DIVIDER)["Smart Duplicate"]
-        assert item == ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'}), menu
+        items = dict(i for i in menu.items if i != mm.DIVIDER)
+        assert items["Smart Duplicate"] == ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'}), menu
+        assert items["Smart Extrude"] == ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'}), menu
     prefs = preferences.get()
     assert prefs.smart_duplicate is True, "Maya default on (PREF:371-374)"
     bpy.ops.maya_kit.manip_option(option='SMART_DUPLICATE')
