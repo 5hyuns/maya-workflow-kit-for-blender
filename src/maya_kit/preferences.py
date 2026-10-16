@@ -45,6 +45,23 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     cb_hyperbolic: bpy.props.BoolProperty(
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
+    # Top UI.
+    maya_top_bar: bpy.props.BoolProperty(
+        name="Maya Menu Bar",
+        description="Top bar shows the Maya menus, menu sets and Status Line instead of "
+                    "Blender's menus and workspace tabs (Blender menus stay as submenus)",
+        default=True)
+    menu_set: bpy.props.EnumProperty(
+        name="Menu Set", description="Maya menu set: which menus follow the common ones",
+        items=lambda self, context: _menu_set_items(), default=0)
+    show_status_line: bpy.props.BoolProperty(
+        name="Status Line", description="Maya Status Line icons in the top bar", default=True)
+    show_command_line: bpy.props.BoolProperty(
+        name="Command Line", description="Python command line in the status bar", default=True)
+    show_help_line: bpy.props.BoolProperty(
+        name="Help Line", description="Maya-style help for the active tool in the status bar",
+        default=True)
+
     def draw(self, context):
         from . import keymap
         layout = self.layout
@@ -57,6 +74,16 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col = layout.column()
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
+
+        box = layout.box()
+        box.label(text="UI Elements")
+        row = box.row()
+        row.prop(self, "maya_top_bar")
+        row.prop(self, "menu_set", text="")
+        row = box.row()
+        row.prop(self, "show_status_line")
+        row.prop(self, "show_command_line")
+        row.prop(self, "show_help_line")
 
         from . import app_template
         box = layout.box()
@@ -74,6 +101,17 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row = box.row()
         row.operator("maya_kit.theme_apply", icon='COLOR')
         row.operator("maya_kit.theme_restore", icon='LOOP_BACK')
+
+
+_SET_ITEMS = []
+
+
+def _menu_set_items():
+    # Kept in a module list: Blender needs the enum item strings to stay referenced.
+    if not _SET_ITEMS:
+        from .ui import menu_sets
+        _SET_ITEMS.extend(menu_sets.SET_ITEMS)
+    return _SET_ITEMS
 
 
 classes = (MAYAKIT_AddonPreferences,)

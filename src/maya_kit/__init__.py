@@ -21,9 +21,9 @@ bl_info = {
     "category": "Interface",
 }
 
-from . import preferences, prefs_preset, operators, ui, theme, app_template, keymap
+from . import preferences, prefs_preset, operators, ui, command_line, theme, app_template, keymap
 
-_modules = (preferences, prefs_preset, operators, ui, theme, app_template, keymap)
+_modules = (preferences, prefs_preset, operators, ui, command_line, theme, app_template, keymap)
 
 
 def register():

@@ -87,7 +87,7 @@ def build_layout():
     v3d = view3d.spaces.active
     v3d.show_region_ui = True              # sidebar = Channel Box host (step 6)
     v3d.show_region_toolbar = True         # = Maya Toolbox
-    v3d.show_region_tool_header = False    # Maya has no tool header
+    v3d.show_region_tool_header = True     # row for the Maya Status Line (step 7)
     v3d.lens = MAYA_LENS
     v3d.region_3d.view_perspective = 'PERSP'
 
