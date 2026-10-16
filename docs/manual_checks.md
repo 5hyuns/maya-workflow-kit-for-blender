@@ -200,3 +200,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 28 — MMB 활성 핸들
 
 - [ ] (step 28) W/E/R 에서 축·평면·중앙 핸들을 한 번 끈 뒤 뷰 아무 곳 MMB 드래그 → 그 핸들로 변환; 툴을 바꿨다 돌아와도 유지; 같은 툴 키 다시 탭 → 자유. Maya 2022 와 손 감각 비교 (회전 MMB 드래그 방향 포함). Channel Box 채널 선택 시 MMB = 슬라이더가 우선.
+
+### Step 29 — 재질 지정
+
+- [ ] (step 29) 아무것도 선택하지 않고 오브젝트 위 RMB → Assign Favorite Material ▸ / Assign Existing Material ▸ / Assign New Material... → 커서 아래 오브젝트에 지정; 선택이 있으면 선택에 지정. 뷰 아래쪽 오브젝트에서 RMB 했을 때 목록·하위 메뉴가 잘리지 않는지. Maya 2022 와 비교.
+- [ ] (step 29) 클릭 모드(RMB 짧게 클릭)에서 항목을 클릭했을 때 손을 뗄 때 실행되는 감각이 어색하지 않은지 (모든 클릭 모드 항목이 버튼을 뗄 때 실행).
+- [ ] (step 29) 편집 모드 면 선택 → Shift+T → 종류 검색 → Enter: 그 면만 바뀜; 정점/엣지 모드는 오브젝트 전체. Maya 의 컴포넌트 재질 지정과 비교. 렌더/Material Preview 에서 색 차이 확인.

@@ -7,11 +7,11 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 87 |
+| 구현 | 88 |
 | IC 일치 | 8 |
 | 계획 | 5 |
 | 해당 없음 | 10 |
-| 미검토 | 290 |
+| 미검토 | 289 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -449,7 +449,7 @@
 | \ | BACK_SLASH | global | TogglePanZoomPress | — | 미검토 |  | hotkeySetup.mel:697 |
 | \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | — | 미검토 |  | hotkeySetup.mel:698 |
 | Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.toggle_xray` | 미검토 |  | hotkeySetup.mel:701 |
-| Shift+T | Shift+T | global | AssignNewMaterial | — | 미검토 |  | hotkeySetup.mel:705 |
+| Shift+T | Shift+T | global | AssignNewMaterial | Object Mode: `maya_kit.assign_new_material`; Mesh: `maya_kit.assign_new_material` | 구현 | 재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만, step 29) | hotkeySetup.mel:705 |
 | Ctrl+= | Ctrl+EQUAL | global | IncreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:708 |
 | Ctrl+- | Ctrl+MINUS | global | DecreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:709 |
 | Ctrl+' | Ctrl+QUOTE | global | IncreaseGammaFine | — | 미검토 |  | hotkeySetup.mel:710 |

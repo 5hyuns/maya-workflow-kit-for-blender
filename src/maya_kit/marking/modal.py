@@ -98,11 +98,16 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
         if draw.ACTIVE:  # another menu/hotbox is up: never stack two
             return {'CANCELLED'}
         origin = tuple(self.origin) if self.origin[0] >= 0 else (event.mouse_region_x, event.mouse_region_y)
+        bounds = None
+        if context.area is not None:
+            from ..operators import view   # visible part of the region (step 17)
+            bounds = view.visible_bounds(context.area, region)
         self._session = engine.Session(
             mm.MENUS[self.menu], origin, time.monotonic(),
-            draw.measure, _params(), poll_action)
+            draw.measure, _params(), poll_action, bounds)
         self._region = region
         self._shown = False
+        self._pending = None   # (button, result): click-mode pick waiting for the release
         draw.ACTIVE.update(region=region.as_pointer(), session=self._session)
         self._timer = context.window_manager.event_timer_add(_TIMER, window=context.window)
         context.window_manager.modal_handler_add(self)
@@ -132,6 +137,17 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
         try:
             x, y, now = event.mouse_region_x, event.mouse_region_y, time.monotonic()
             res = None
+            pending = self._pending
+            if pending is not None:
+                # Click mode picked on a press: run on that button's release, so a popup the
+                # item opens (Assign Existing Material) doesn't get the release and pick its
+                # first row (GUI step 29). Maya menu items also run on release.
+                button, picked = pending
+                released = event.type == button and event.value == 'RELEASE'
+                if released or (event.type == 'TIMER' and keystate.is_down(button) is False):
+                    self._pending = None
+                    return self._finish(context, picked)
+                return {'RUNNING_MODAL'}
             if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
                 s.move(x, y, now)
                 self._region.tag_redraw()
@@ -140,6 +156,9 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
                 self._region.tag_redraw()
             elif event.type in MOUSE_BUTTONS and event.value == 'PRESS' and s.mode == "CLICK":
                 res = s.click(x, y, now)
+                if res is not None and res[0] == "RUN":
+                    self._pending, res = (event.type, res), None
+                    draw.ACTIVE.clear()   # the menu goes away now; the item runs on release
                 self._region.tag_redraw()
             elif event.type == 'ESC' and event.value == 'PRESS':
                 res = s.cancel()

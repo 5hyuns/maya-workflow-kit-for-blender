@@ -22,7 +22,7 @@ import os
 import traceback
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, IntProperty, StringProperty
 
 from . import shelf_data, shelf_map
 
@@ -380,43 +380,7 @@ class MAYAKIT_OT_shelf_add_last_command(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Maya createAndAssignShader kinds on Principled BSDF (research/maya/shelves.md:60-62).
-MATERIALS = {
-    'STANDARD_SURFACE': ("standardSurface", {}),
-    'LAMBERT': ("lambert", {"Roughness": 1.0, "Specular IOR Level": 0.0}),
-    'BLINN': ("blinn", {"Roughness": 0.3}),
-    'PHONG': ("phong", {"Roughness": 0.15}),
-    'SURFACE': ("surfaceShader", {"Emission Strength": 1.0}),
-}
-
-
-class MAYAKIT_OT_shelf_material(bpy.types.Operator):
-    """Create a material and assign it to the selected objects (Maya shelf material buttons)"""
-    bl_idname = "maya_kit.shelf_material"
-    bl_label = "Assign New Material"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    kind: EnumProperty(items=[(k, v[0], "") for k, v in MATERIALS.items()])
-
-    @classmethod
-    def poll(cls, context):
-        return any(o.type in {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'} for o in context.selected_objects)
-
-    def execute(self, context):
-        from ..operators import naming
-        base, values = MATERIALS[self.kind]
-        n = naming.next_number(base, {m.name for m in bpy.data.materials})
-        mat = bpy.data.materials.new(f"{base}{n}")
-        mat.use_nodes = True
-        node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
-        for socket, value in values.items():
-            node.inputs[socket].default_value = value
-        if self.kind == 'SURFACE':
-            node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
-        for ob in context.selected_objects:
-            if ob.type in {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}:
-                ob.active_material = mat
-        return {'FINISHED'}
+# Material buttons run maya_kit.shelf_material (operators/material.py, docs/steps/step_29.md).
 
 
 # --- the strip area ----------------------------------------------------------------------------------
@@ -589,7 +553,7 @@ def unpatch_image_headers():
 classes = (MAYAKIT_OT_shelf_button, MAYAKIT_OT_shelf_select, MAYAKIT_OT_shelf_step,
            MAYAKIT_OT_shelf_new, MAYAKIT_OT_shelf_delete, MAYAKIT_OT_shelf_add_button,
            MAYAKIT_OT_shelf_edit_button, MAYAKIT_OT_shelf_remove_button,
-           MAYAKIT_OT_shelf_add_last_command, MAYAKIT_OT_shelf_material,
+           MAYAKIT_OT_shelf_add_last_command,
            MAYAKIT_OT_shelf_strip_toggle, MAYAKIT_MT_shelf_tabs, MAYAKIT_MT_shelf_settings)
 
 

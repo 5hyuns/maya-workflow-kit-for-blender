@@ -131,7 +131,9 @@ class Layout:
     @staticmethod
     def _text(label, action):
         # Toggles keep room on the right for their check box (draw.py, step 26).
-        return label + (" ▸" if isinstance(action, mm.Sub) else "    " if is_toggle(action) else "")
+        # A Blender menu ("menu", id) opens as a submenu too (e.g. Assign Existing Material).
+        sub = isinstance(action, mm.Sub) or (isinstance(action, tuple) and action[0] == "menu")
+        return label + (" ▸" if sub else "    " if is_toggle(action) else "")
 
     def _opt(self, rect, on):
         if not on:
@@ -165,8 +167,11 @@ class Session:
     ``("RUN", item, option)`` or ``("CANCEL", None, False)``; ``None`` while open.
     """
 
-    def __init__(self, menu, origin, t0, measure, params=None, enabled=None):
+    def __init__(self, menu, origin, t0, measure, params=None, enabled=None, bounds=None):
+        """``bounds`` = (x0, y0, x1, y1): the visible part of the region; list
+        submenus that would cross it are moved inside (step 29)."""
         self.params = params or Params()
+        self.bounds = bounds
         self.measure = measure
         self.enabled = enabled
         self.t0 = t0
@@ -195,8 +200,23 @@ class Session:
         return x - self.center[0], y - self.center[1]
 
     def _push(self, item, at):
-        self.stack.append((Layout(item.sub, self.measure, self.params, self.enabled), at))
+        layout = Layout(item.sub, self.measure, self.params, self.enabled)
+        if self.bounds is not None and layout.items and not layout.radial:
+            at = self._inside_bounds(layout, at)
+        self.stack.append((layout, at))
         self.hover = (None, False)
+
+    def _inside_bounds(self, layout, at):
+        """Shift a list submenu up / left so all its rows are inside ``bounds``."""
+        x0, y0, x1, y1 = self.bounds
+        lx0 = min(it.rect[0] for it in layout.items)
+        ly0 = min(it.rect[1] for it in layout.items)
+        lx1 = max(it.rect[2] for it in layout.items)
+        ly1 = max(it.rect[3] for it in layout.items)
+        x, y = at
+        x = max(x0 - lx0, min(x, x1 - lx1))
+        y = min(y1 - ly1, max(y, y0 - ly0))
+        return (x, y)
 
     # -- input ----------------------------------------------------------------
     def move(self, x, y, t):

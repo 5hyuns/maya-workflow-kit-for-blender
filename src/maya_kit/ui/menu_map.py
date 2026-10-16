@@ -302,6 +302,11 @@ MAP = {
     "Effects/Fire": ("object.quick_smoke", {"style": 'FIRE'}),
     "Effects/Smoke": "object.quick_smoke",
     # --- Rendering ---
+    # Materials (research/maya/menus.md:1652-1657; operators/material.py, docs/steps/step_29.md).
+    "Lighting/Shading/Material Attributes": ("v3d", "maya_kit.material_attributes", {}),
+    "Lighting/Shading/Assign New Material...": "maya_kit.assign_new_material",
+    "Lighting/Shading/Assign Favorite Material": ("menu", "MAYAKIT_MT_assign_favorite_material"),
+    "Lighting/Shading/Assign Existing Material": ("menu", "MAYAKIT_MT_assign_existing_material"),
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
     "Render/Render Settings...": "maya_kit.render_settings",
 }

@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 29 (Maya 식 재질 지정) 완료 — `docs/steps/step_29.md`. `operators/material.py`: Lighting/Shading Material Attributes /
+  Assign New (검색 팝업, Shift+T) / Favorite ▸ / Existing ▸, RMB 목록 끝 같은 항목 (선택 없으면 커서 아래 오브젝트), 면 선택 모드 = 면에만,
+  아니면 오브젝트 전체 (슬롯 1개). 엔진: 목록 하위 메뉴 영역 안으로, 클릭 모드 항목은 버튼을 뗄 때 실행. 헤드리스 274/274, GUI 218/218,
+  dogfood 47/47.
 - Step 28 (MMB = 마지막 핸들) 완료 — `docs/steps/step_28.md`. 기즈모 LMB 누름 감시 → 등록된 transform 의 제약을 툴별로 기억,
   Tool 키맵 MMB = `maya_kit.manip_mmb` (CB 슬라이더 우선), 같은 툴 키 재탭 = 리셋. 헤드리스 264/264, GUI 206/206, dogfood 47/47.
 - Step 27 (매니퓰레이터 크기·뷰 키) 완료 — `docs/steps/step_27.md`. = / Shift+= / - gizmo_size (`prefs_preset.set_runtime`, disable 시 복원),
@@ -53,7 +57,7 @@
 
 ## 바로 다음 할 일
 
-- Step 29: Maya 식 재질 지정 (backlog 6) — Lighting/Shading > Assign New / Existing / Favorite Material (지금 회색, `ui/menu_map.py` 에 없음),
-  RMB 마킹 메뉴 목록의 재질 항목 (research/maya/hotkeys_and_menus.md:252), 면 선택이면 면에만. 셸프 `maya_kit.shelf_material` 재사용.
-  그다음 선택 감각, Outliner 레이아웃 (backlog 7–8).
+- Step 30: 선택 감각 (backlog 7) — 컴포넌트 마키 관통 (Maya selectPrefUseDepth false), 프리셀렉트 하이라이트, 무한 언두
+  (`prefs_preset`; 먼저 `tests/kit.py` 가 `preferences.edit` 스냅샷). PLAN 재점검 1차 B6–B8, research/maya/interaction.md·defaults.json.
+- Step 31: Outliner 레이아웃 (MayaKit 템플릿 왼쪽 Outliner 좁아 이름 잘림) + 홀드 메뉴/타임라인 표시 다듬기 (backlog 8).
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.
