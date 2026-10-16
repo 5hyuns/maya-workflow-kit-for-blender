@@ -35,6 +35,19 @@ def principled(material):
     return next((n for n in material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
 
 
+def material_type(material):
+    """Maya node type of a material: the type a kit-made material recorded (lambert, blinn,
+    phong, standardSurface, surfaceShader; operators/material.py), else standardSurface for a
+    Principled material, else "material"."""
+    if material is None:
+        return "material"
+    from ..operators.material import TYPE_PROP
+    recorded = material.get(TYPE_PROP)
+    if isinstance(recorded, str) and recorded in ae_layout.BY_KIND and principled(material):
+        return recorded
+    return "standardSurface" if principled(material) else "material"
+
+
 def node_type(ob):
     if ob.type == 'LIGHT':
         return ae_layout.LIGHT_TYPE.get(ob.data.type, "light")
@@ -52,8 +65,7 @@ def tabs(ob):
         out.append((f"M:{md.name}", md.name, md.type.lower()))
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
-            kind = "standardSurface" if principled(slot.material) else "material"
-            out.append((f"MAT:{i}", slot.material.name, kind))
+            out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
     return out
 
 
@@ -99,7 +111,7 @@ def sections_for(ob, key):
         return ae_layout.BY_KIND.get(sub, ([], None))[0], sub.lower()
     if kind == "MAT":
         mat = tab_target(ob, key)
-        name = "standardSurface" if principled(mat) else "material"
+        name = material_type(mat)
         return ae_layout.BY_KIND[name][0], name
     return [], None
 

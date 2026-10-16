@@ -32,6 +32,8 @@ MATERIALS = {
 KIND_ITEMS = [(k, v[1], f"Maya {v[0]} (Principled BSDF)") for k, v in MATERIALS.items()]
 # The Assign Favorite Material submenu (Maya's surface-shader favourites).
 FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
+# ID property naming the Maya node type of a kit-made material (AE tab label/sections, step 38).
+TYPE_PROP = "maya_kit_type"
 
 
 # --- data ------------------------------------------------------------------------------------
@@ -42,6 +44,7 @@ def new_material(kind):
     base, _label, values = MATERIALS[kind]
     n = naming.next_number(base, {m.name for m in bpy.data.materials})
     mat = bpy.data.materials.new(f"{base}{n}")
+    mat[TYPE_PROP] = base
     mat.use_nodes = True
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in values.items():
