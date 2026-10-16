@@ -17,6 +17,26 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     # starts respect a different keymap the user picked.
     keymap_auto_activated: bpy.props.BoolProperty(options={'HIDDEN'})
 
+    def _update_navigation(self, context):
+        from . import prefs_preset
+        if self.use_maya_navigation:
+            prefs_preset.apply(context.preferences, self)
+        else:
+            prefs_preset.restore(context.preferences, self)
+
+    use_maya_navigation: bpy.props.BoolProperty(
+        name="Maya Navigation Preferences",
+        description="Set Blender's view navigation preferences to Maya behaviour "
+                    "(turntable, no zoom to mouse, horizontal dolly, ...). "
+                    "Turning it off restores your previous values",
+        default=True, update=_update_navigation)
+    # JSON of the user's values before the Maya preset.
+    prefs_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    lock_ortho_tumble: bpy.props.BoolProperty(
+        name="Lock Tumble in Ortho Views",
+        description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",
+        default=True)
+
     def draw(self, context):
         from . import keymap
         layout = self.layout
@@ -26,6 +46,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.label(text=f"Active keymap: {active}")
         if active != keymap.KEYCONFIG_NAME:
             row.operator("maya_kit.keymap_activate")
+        col = layout.column()
+        col.prop(self, "use_maya_navigation")
+        col.prop(self, "lock_ortho_tumble")
 
 
 classes = (MAYAKIT_AddonPreferences,)

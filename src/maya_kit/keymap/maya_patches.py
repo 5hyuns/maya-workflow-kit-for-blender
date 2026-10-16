@@ -2,7 +2,8 @@
 """Patches that turn Industry Compatible data into the "Maya" keyconfig.
 
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
-Plan and rationale:  (1-4),  (5-8).
+Plan and rationale:  (1-4),  (5-8),
+ (9-13).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and  is cross-checked against it.
@@ -109,7 +110,7 @@ def patch_group(kd):
 
 # --- 4. Space reserved for the hotbox ---------------------------------------
 # Maya Space = hotbox ( "Space" ShowHotbox),
-# implemented in step 11; until then Space does nothing in editors.
+# implemented in step 10; until then Space does nothing in other editors.
 # Playback moves to Maya's Alt+V (PlaybackToggle) and Alt+Shift+V (GoToMinFrame).
 
 def patch_space(kd):
@@ -166,7 +167,7 @@ def patch_tap_hold_and_pivot(kd):
 # --- 8. Arrow-key pick-walk (object mode) -----------------------------------
 #  (HK:364-369). IC puts Left/Right frame
 # stepping into each mode keymap (IC:93-97 _template_items_animation); only
-# Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 9).
+# Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 7).
 
 PICK_WALK_KEYS = (("UP_ARROW", "UP"), ("DOWN_ARROW", "DOWN"),
                   ("LEFT_ARROW", "LEFT"), ("RIGHT_ARROW", "RIGHT"))
@@ -182,8 +183,72 @@ def patch_pick_walk(kd):
              {"direction": direction})
 
 
+# --- 9. Camera: ortho tumble lock, framing in all views ----------------------
+#  (Alt+LMB tumble), :192-195 (Shift+F / Shift+A).
+
+def patch_camera(kd):
+    kd.remove("3D View", "view3d.rotate", type="LEFTMOUSE", alt=True)       # IC:674
+    _add(kd, "3D View", "maya_kit.tumble", make_event("LEFTMOUSE", alt=True))
+    kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
+    _add(kd, "3D View", "maya_kit.frame_all_views", make_event("F", shift=True), {"selected": True})
+    kd.remove("3D View", "view3d.view_all", type="A", shift=True)
+    _add(kd, "3D View", "maya_kit.frame_all_views", make_event("A", shift=True), {"selected": False},
+         shadows=("Sculpt",))
+
+
+# --- 10. View-change undo: [ ] and Alt+Z / Alt+Y ----------------------------
+#  (HK:234-237). IC [ ] = select_hierarchy
+# (IC:2506-2512), replaced by the arrow pick-walk in step 3. Paint modes keep
+# [ ] for brush size.
+
+def patch_view_history(kd):
+    kd.remove("Object Mode", "object.select_hierarchy", type="LEFT_BRACKET")
+    kd.remove("Object Mode", "object.select_hierarchy", type="RIGHT_BRACKET")
+    for ev, direction in ((make_event("LEFT_BRACKET"), "UNDO"), (make_event("RIGHT_BRACKET"), "REDO"),
+                          (make_event("Z", alt=True), "UNDO"), (make_event("Y", alt=True), "REDO")):
+        _add(kd, "3D View", "maya_kit.view_history", ev, {"direction": direction},
+             shadows=_PAINT_MODES + ("Armature",))
+
+
+# --- 11. Space tap = four views, Ctrl+Space = full screen -------------------
+#  Space hold = hotbox (step 10).
+
+def patch_space_tap(kd):
+    _add(kd, "3D View", "maya_kit.tap_hold", make_event("SPACE"), {"binding": "space"})
+    _add(kd, "Screen", "screen.screen_full_area", make_event("SPACE", ctrl=True),
+         {"use_hide_panels": True})
+
+
+# --- 12. 1/2/3 smooth mesh preview -------------------------------------------
+#  IC 1/2/3 = component modes
+# (IC:2558-2563 Object Mode, IC:164-177 Mesh), now on F9-F11.
+
+SMOOTH_KEYS = (("ONE", 1), ("TWO", 2), ("THREE", 3))
+
+
+def patch_smooth_preview(kd):
+    for key, level in SMOOTH_KEYS:
+        kd.remove("Object Mode", "object.mode_set_with_submode", type=key)
+        kd.remove("Mesh", "mesh.select_mode", type=key)
+        for km in ("Object Mode", "Mesh"):
+            _add(kd, km, "maya_kit.smooth_preview", make_event(key), {"level": level})
+
+
+# --- 13. F7/F9/F10/F11 component modes ---------------------------------------
+#  F8 = editmode_toggle (patch 2).
+
+COMPONENT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"), ("F7", "MULTI"))
+
+
+def patch_component_keys(kd):
+    for key, comp in COMPONENT_KEYS:
+        _add(kd, "Object Non-modal", "maya_kit.component_mode", make_event(key), {"type": comp})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
-           patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk)
+           patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
+           patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
+           patch_component_keys)
 
 
 def apply(data):

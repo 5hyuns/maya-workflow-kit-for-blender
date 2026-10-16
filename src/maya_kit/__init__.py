@@ -7,7 +7,8 @@ extensions read ``blender_manifest.toml`` instead and ignore it.
 
 Each feature area is a sub-package with its own ``register()`` /
 ``unregister()``. Order matters: preferences first (others may read them),
-keymap last (keymap items reference operators registered before it).
+then the Blender-preferences preset, keymap last (keymap items reference
+operators registered before it).
 """
 
 bl_info = {
@@ -20,9 +21,9 @@ bl_info = {
     "category": "Interface",
 }
 
-from . import preferences, operators, ui, theme, app_template, keymap
+from . import preferences, prefs_preset, operators, ui, theme, app_template, keymap
 
-_modules = (preferences, operators, ui, theme, app_template, keymap)
+_modules = (preferences, prefs_preset, operators, ui, theme, app_template, keymap)
 
 
 def register():

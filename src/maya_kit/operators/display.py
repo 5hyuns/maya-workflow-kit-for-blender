@@ -54,4 +54,100 @@ class MAYAKIT_OT_display_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_display_mode,)
+# --- 1/2/3 smooth mesh preview ------------------------------------------------
+#  1 = no smoothing, 2 = cage + smooth,
+# 3 = smooth mesh preview; per selected shape, geometry unchanged.
+# Blender form: a Subsurf modifier's viewport visibility.
+
+PREVIEW_MOD_NAME = "Maya Smooth Preview"
+_WIRE_FLAG = "maya_kit_preview_wire"  # object custom prop: we turned show_wire on
+
+
+def preview_modifier(ob, create):
+    """The object's first Subsurf modifier, or a new preview one if ``create``."""
+    for mod in ob.modifiers:
+        if mod.type == 'SUBSURF':
+            return mod
+    if not create:
+        return None
+    mod = ob.modifiers.new(PREVIEW_MOD_NAME, 'SUBSURF')
+    mod.levels = 2          # Maya smooth preview divisions default 
+    mod.render_levels = 2
+    mod.show_render = False  # preview only: renders unchanged
+    mod.show_in_editmode = True
+    mod.show_on_cage = False
+    return mod
+
+
+def set_smooth_preview(ob, level):
+    mod = preview_modifier(ob, create=level > 1)
+    if mod is not None:
+        mod.show_viewport = level > 1
+    if level == 2:
+        if not ob.show_wire:
+            ob.show_wire = True
+            ob[_WIRE_FLAG] = True
+    elif ob.get(_WIRE_FLAG):
+        ob.show_wire = False
+        del ob[_WIRE_FLAG]
+
+
+class MAYAKIT_OT_smooth_preview(bpy.types.Operator):
+    """Maya 1/2/3: smooth mesh preview off / cage + smooth / smooth"""
+    bl_idname = "maya_kit.smooth_preview"
+    bl_label = "Smooth Mesh Preview"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    level: bpy.props.IntProperty(name="Level", min=1, max=3, default=3)
+
+    @classmethod
+    def poll(cls, context):
+        return any(ob.type == 'MESH' for ob in cls._targets(context))
+
+    @staticmethod
+    def _targets(context):
+        if context.mode == 'EDIT_MESH':
+            return list(context.objects_in_mode)
+        return list(context.selected_objects)
+
+    def execute(self, context):
+        for ob in self._targets(context):
+            if ob.type == 'MESH':
+                set_smooth_preview(ob, self.level)
+        return {'FINISHED'}
+
+
+# --- F7/F9/F10/F11 component modes ----------------------------------------------
+#  (F9 vertex, F10 edge, F11 face, F7 multi).
+
+COMPONENTS = (
+    ("VERT", "Vertex", "Maya F9"),
+    ("EDGE", "Edge", "Maya F10"),
+    ("FACE", "Face", "Maya F11"),
+    ("MULTI", "Multi-Component", "Maya F7: vertices, edges and faces together"),
+)
+_SELECT_MODE = {"VERT": (True, False, False), "EDGE": (False, True, False),
+                "FACE": (False, False, True), "MULTI": (True, True, True)}
+
+
+class MAYAKIT_OT_component_mode(bpy.types.Operator):
+    """Enter a mesh component mode (Maya F7/F9/F10/F11)"""
+    bl_idname = "maya_kit.component_mode"
+    bl_label = "Component Mode"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    type: bpy.props.EnumProperty(items=COMPONENTS, name="Component")
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob is not None and ob.type == 'MESH'
+
+    def execute(self, context):
+        if context.mode != 'EDIT_MESH':
+            bpy.ops.object.mode_set(mode='EDIT')
+        context.scene.tool_settings.mesh_select_mode = _SELECT_MODE[self.type]
+        return {'FINISHED'}
+
+
+classes = (MAYAKIT_OT_display_mode, MAYAKIT_OT_smooth_preview, MAYAKIT_OT_component_mode)

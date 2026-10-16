@@ -180,7 +180,7 @@ class SoftSelectBinding(TapHoldBinding):
 
 
 class SelectAllBinding(TapHoldBinding):
-    """A: tap = frame all; hold + click = selection menu (Maya marking menu in step 10)."""
+    """A: tap = frame all; hold + click = selection menu (Maya marking menu in step 9)."""
     name = "select_all"
     label = "Frame All / Select"
 
@@ -199,8 +199,19 @@ class SelectAllBinding(TapHoldBinding):
             bpy.ops.wm.call_menu(name=menu)
 
 
+class SpaceBinding(TapHoldBinding):
+    """Space: tap = four views <-> single view (Maya pane maximize, interaction.md:248).
+    Hold = hotbox (step 10)."""
+    name = "space"
+    label = "Four Views / Hotbox"
+
+    def tap(self, context):
+        if context.space_data is not None and context.space_data.type == 'VIEW_3D':
+            bpy.ops.maya_kit.toggle_quad_view()
+
+
 classes = (MAYAKIT_OT_tap_hold,)
-_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding)
+_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding, SpaceBinding)
 
 
 def register_bindings():
