@@ -45,6 +45,20 @@ def maya_unit(scene=None):
     return _LENGTH_M.get(us.length_unit, 1.0) / (us.scale_length or 1.0)
 
 
+def grid_scale(scene=None):
+    """Viewport grid scale that puts the finest perspective grid step on one Maya unit.
+
+    Blender skips grid steps below the base unit (1 m) in user perspective views and
+    divides the steps by ``scale_length`` (checked, ), so with cm
+    shown the grid (and X-hold grid snap) was 1 m. The step is ``grid_scale /
+    scale_length`` BU = ``grid_scale`` m, so grid_scale = metres per display unit.
+    """
+    us = (scene or bpy.context.scene).unit_settings
+    if us.system == 'NONE':
+        return 1.0
+    return _LENGTH_M.get(us.length_unit, 1.0)
+
+
 def clip(scene=None):
     """Maya camera clipping in BU for ``scene``."""
     k = maya_unit(scene)
@@ -83,6 +97,7 @@ def apply_file(rescale_views=False):
     """
     views = list(_views())
     view_before = {k: getattr(views[0], k) for k in CLIP} if views else dict(CLIP)
+    view_before["grid_scale"] = views[0].overlay.grid_scale if views else 1.0
     scene0 = bpy.context.scene
     k_before = maya_unit(scene0)
     for scene in bpy.data.scenes:
@@ -95,6 +110,7 @@ def apply_file(rescale_views=False):
     for space in views:
         for key, value in clip(scene0).items():
             setattr(space, key, value)
+        space.overlay.grid_scale = grid_scale(scene0)
     ratio = maya_unit(scene0) / k_before
     if rescale_views and ratio != 1.0 and BACKUP in scene0:
         _scale_views(views, ratio)
@@ -118,9 +134,12 @@ def restore_file():
             view, view_scale = data["view"], data.get("view_scale", 1.0)
         del scene[BACKUP]
     if view:
+        grid = view.pop("grid_scale", None)
         for space in _views():
             for key, value in view.items():
                 setattr(space, key, value)
+            if grid is not None:
+                space.overlay.grid_scale = grid
         if view_scale != 1.0:
             _scale_views(list(_views()), 1.0 / view_scale)
 
