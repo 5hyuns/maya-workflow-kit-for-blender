@@ -189,7 +189,17 @@ def draw_hotbox(state, region):
             x = min(x, c0 - gap - w)
         if key in "EW" and (x < x0 or x + w > x1):
             continue   # no room beside the centre box (cursor near an edge)
-        _text(x - (w / 2 if key in "NS" else 0), y, name, faint)
+        left = x - (w / 2 if key in "NS" else 0)
+        box = (left, y - 2, left + w, y + p.item_h * 0.7)
+        # Near the top/bottom edge the centre box or the moved rows (step 33) sit where the
+        # N/S name goes: leave the name out rather than draw over them.
+        if any(_overlaps(r, box) for r in [lay.center_rect] + [r for r, _k, _l in lay.labels]):
+            continue
+        _text(left, y, name, faint)
+
+
+def _overlaps(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
 # --- handler -----------------------------------------------------------------------------

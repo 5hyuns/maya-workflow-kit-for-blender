@@ -233,5 +233,6 @@ def test_list_submenu_kept_inside_region():
         assert bounds[0] <= cx + it.rect[0] and cx + it.rect[2] <= bounds[2], (it.label, cx, it.rect)
     # Without bounds (headless callers) the submenu stays at the row's corner.
     s = engine.Session(mm.RMB_MESH, (400.0, 120.0), 0.0, measure)
+    fav = next(it for it in s.layout.items if it.label == "Assign Favorite Material")  # unmoved root (step 33)
     s.move(400 + fav.rect[0] + 5, 120 + (fav.rect[1] + fav.rect[3]) / 2, 0.3)
     assert s.center == (400 + fav.rect[2], 120 + fav.rect[3])
