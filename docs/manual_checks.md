@@ -99,3 +99,14 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 9) S 존으로 3D 뷰를 Outliner/Graph 로 바꾼 뒤 거기서 Space → 가운데 Perspective 로 3D 뷰 복귀.
 - [ ] (step 9) 환경설정 Marking Menus = Blender Pies 로 바꾸면 Step 8 파이로 돌아감.
 - [ ] (step 9) 4K/HiDPI(UI 배율 2)에서 크기·글자, 빠르게 움직일 때 끊김 없음, 창 밖으로 끌고 나가 놓아도 메뉴가 남지 않음.
+
+### Step 10 — 개념 연산자
+
+- [ ] (step 10) 회전·비균일 스케일한 큐브에 Modify > Freeze Transformations: 모양·위치 그대로, Channel Box 0/0/1, Move 툴 기즈모(피벗)가 제자리. 이어서 이동·회전 후 Modify > Reset Transformations → 동결 직후 상태.
+- [ ] (step 10) 그룹(Ctrl+G) 위에서 Freeze: 자식까지 0/0/1, 모양 그대로. Freeze 옵션은 Adjust Last Operation(마킹메뉴 `[]`)에서 Translate/Rotate/Scale 끄고 켜기.
+- [ ] (step 10) 정점을 한쪽으로 옮긴 객체에 Modify > Center Pivot: 메시 그대로, 피벗이 가운데로, Translate 값 그대로. N 패널 Delta Transform 에 피벗 오프셋이 보이는 것이 거슬리지 않는지.
+- [ ] (step 10) P: 자식들 → 부모 순서로 선택 후 P, Outliner 에서도 P. Channel Box 값이 부모 기준(Maya 와 같은 숫자). Shift+P 로 월드로. 환경설정 Parent Mode = Blender 로 바꾸면 Blender 방식.
+- [ ] (step 10) Shift+D: 복제 → 옮기기/회전 → Shift+D 반복 = 같은 간격 배열 (Maya smart duplicate). Ctrl+Shift+D: Adjust Last Operation 에서 사본 수·오프셋·Instance·Group Under 조절.
+- [ ] (step 10) Alt+Shift+D / A 홀드+LMB 마킹메뉴(NW Delete History, NE Non-Deformer, SE Freeze): Subsurf·Bevel 굽기, Armature 는 Non-Deformer 에서 남음. Edit > Delete by Type / Delete All by Type 항목들.
+- [ ] (step 10) Create 메뉴: pCube1/pSphere1… 원점·Maya 크기(큐브 = 그리드 한 칸), 데이터 이름 pCubeShape1. 라이트·카메라는 수평 방향.
+- [ ] (step 10) 환경설정 Maya Units 켜기: 1 cm 큐브가 그리드 한 칸, 확대·축소 시 클리핑 없음(0.1–10000), 물리/라이트 감쇠 차이 확인. 끄면 원래 값. 저장한 파일을 다시 열면 바뀌지 않음, File > New 는 Maya 단위.

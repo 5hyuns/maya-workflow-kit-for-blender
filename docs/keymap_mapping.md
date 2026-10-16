@@ -7,11 +7,11 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 43 |
+| 구현 | 48 |
 | IC 일치 | 8 |
-| 계획 | 29 |
+| 계획 | 26 |
 | 해당 없음 | 9 |
-| 미검토 | 311 |
+| 미검토 | 309 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -20,7 +20,7 @@
 | Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | — | 미검토 |  | hotkeySetup.mel:60 |
 | Alt+d | Alt+D | global | SelectNone | — | 미검토 |  | hotkeySetup.mel:62 |
 | Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `object.duplicate_move`; Mesh: `mesh.duplicate_move` | IC 일치 |  | hotkeySetup.mel:64 |
-| Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | — | 미검토 |  | hotkeySetup.mel:65 |
+| Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `maya_kit.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
 | z | Z | global | Undo | 3D View: `view3d.zoom_border` | 미검토 |  | hotkeySetup.mel:67 |
 | Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 미검토 |  | hotkeySetup.mel:68 |
 | Shift+Z | Shift+Z | global | Redo | — | 미검토 |  | hotkeySetup.mel:69 |
@@ -133,10 +133,10 @@
 | Shift+} | Shift+RIGHT_BRACKET | global | NextViewArrangement | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=True) | 미검토 |  | hotkeySetup.mel:240 |
 | Alt+p | Alt+P | global | CameraModeToggle | — | 미검토 |  | hotkeySetup.mel:241 |
 | Alt+Home | Alt+HOME | global | AppHome | — | 미검토 |  | hotkeySetup.mel:243 |
-| Shift+D | Shift+D | global | DuplicateWithTransform | — | 미검토 |  | hotkeySetup.mel:245 |
-| Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | — | 계획 Step 11 |  | hotkeySetup.mel:247 |
-| p | P | global | Parent | Object Mode: `object.parent_set` | 계획 Step 8 | IC P=parent_set 이지만 Maya식(로컬 재계산)으로 교체 예정 | hotkeySetup.mel:249 |
-| Shift+P | Shift+P | global | Unparent | Object Mode: `object.parent_clear` | 계획 Step 8 |  | hotkeySetup.mel:250 |
+| Shift+D | Shift+D | global | DuplicateWithTransform | Object Mode: `maya_kit.duplicate_with_transform` | 구현 | 직전 복제의 변환을 반복 | hotkeySetup.mel:245 |
+| Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | Object Mode: `maya_kit.delete_history` | 구현 | 모디파이어 + 셰이프 키를 메시에 굽기 | hotkeySetup.mel:247 |
+| p | P | global | Parent | Object Mode: `maya_kit.parent` | 구현 | 월드 유지, parent inverse 단위행렬 (환경설정 Parent Mode=Blender 로 IC 방식) | hotkeySetup.mel:249 |
+| Shift+P | Shift+P | global | Unparent | Object Mode: `maya_kit.unparent` | 구현 | 월드로, 월드 유지 | hotkeySetup.mel:250 |
 | F8 | F8 | global | SelectToggleMode | Object Non-modal: `object.editmode_toggle` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
 | F9 | F9 | global | SelectVertexMask | Object Non-modal: `maya_kit.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
 | F10 | F10 | global | SelectEdgeMask | Object Non-modal: `maya_kit.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |

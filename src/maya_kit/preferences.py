@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Add-on preferences (Preferences > Add-ons > Maya Kit).
 
-Options backed by docs/user_decisions.md (Maya units, parent mode, layout
-install buttons) are added by the steps that implement them.
+Options backed by docs/user_decisions.md: Maya units (#1) and parent mode (#2)
+from step 10, layout install buttons (#3) from step 5.
 """
 
 import bpy
@@ -79,6 +79,33 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
                                                "the current one")
 
+    # Scene concepts (docs/steps/step_10.md; docs/user_decisions.md #1, #2).
+    parent_mode: bpy.props.EnumProperty(
+        name="Parent Mode", description="What P (Parent) does to the child's values",
+        items=(('MAYA', "Maya", "Keep the world position and recompute the local values "
+                                "relative to the parent (parent inverse = identity)"),
+               ('BLENDER', "Blender", "Keep the local values; Blender stores a hidden parent "
+                                      "inverse matrix")),
+        default='MAYA')
+    maya_naming: bpy.props.BoolProperty(
+        name="Maya Naming", description="Create menu names objects pCube1 / pCubeShape1 "
+                                        "(otherwise Blender names)",
+        default=True)
+
+    def _update_units(self, context):
+        from .operators import units
+        if self.maya_units:
+            units.apply_file()
+        else:
+            units.restore_file()
+
+    maya_units: bpy.props.BoolProperty(
+        name="Maya Units (1 BU = 1 cm)",
+        description="Scene unit scale 0.01 with centimetres and Maya camera clipping "
+                    "(0.1 - 10000) for this file and new files. Physics, light falloff and "
+                    "importers assume 1 BU = 1 m. Turning it off restores the previous values",
+        default=False, update=_update_units)
+
     def draw(self, context):
         from . import keymap
         layout = self.layout
@@ -91,6 +118,13 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col = layout.column()
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
+
+        box = layout.box()
+        box.label(text="Scene Concepts")
+        row = box.row()
+        row.prop(self, "parent_mode")
+        row.prop(self, "maya_naming")
+        box.prop(self, "maya_units")
 
         box = layout.box()
         box.label(text="UI Elements")

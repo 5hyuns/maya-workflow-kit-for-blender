@@ -3,7 +3,7 @@
 
 ``IC:<line>`` = ``$S\\presets\\keyconfig\\keymap_data\\industry_compatible_data.py``.
 Plan and rationale: docs/steps/step_2.md (1-4), docs/steps/step_3.md (5-8),
-docs/steps/step_4.md (9-13).
+docs/steps/step_4.md (9-13), docs/steps/step_10.md (16).
 
 ``ADDED`` lists every binding this module adds; tests use it for the
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
@@ -300,10 +300,26 @@ def patch_marking_menus(kd):
             _add(kd, km, "maya_kit.tap_hold", make_event(key), {"binding": binding})
 
 
+# --- 16. Scene concepts: P / Shift+P, Shift+D, Ctrl+Shift+D, Alt+Shift+D (docs/steps/step_10.md) ----
+# research/maya/hotkeys_default.json: p Parent, P Unparent, D DuplicateWithTransform,
+# Ctrl+D (capital) DuplicateSpecial, Alt+D (capital) DeleteHistory (concepts.md:68, :98).
+# IC Object Mode P / Shift+P = object.parent_set / parent_clear.
+
+def patch_concepts(kd):
+    kd.remove("Object Mode", "object.parent_set", type="P")
+    kd.remove("Object Mode", "object.parent_clear", type="P", shift=True)
+    for km in ("Object Mode", "Outliner"):
+        _add(kd, km, "maya_kit.parent", make_event("P"))
+        _add(kd, km, "maya_kit.unparent", make_event("P", shift=True))
+    _add(kd, "Object Mode", "maya_kit.duplicate_with_transform", make_event("D", shift=True))
+    _add(kd, "Object Mode", "maya_kit.duplicate_special", make_event("D", shift=True, ctrl=True))
+    _add(kd, "Object Mode", "maya_kit.delete_history", make_event("D", shift=True, alt=True))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_cb_slider, patch_marking_menus)
+           patch_component_keys, patch_cb_slider, patch_marking_menus, patch_concepts)
 
 
 def apply(data):

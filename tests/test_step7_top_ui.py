@@ -188,8 +188,9 @@ def test_menu_items_active_or_grey():
     sub = next(e[1] for e in create if e[0] == "menu" and e[2] == "Polygon Primitives")
     items = _draw_menu(sub)
     ops = {e[2]: e for e in items if e[0] == "op"}
-    assert ops["Cube"][1] == "mesh.primitive_cube_add", ops["Cube"]
-    assert ops["Pyramid"][1] == "mesh.primitive_cone_add" and ops["Pyramid"][3].vertices == 4
+    # Step 10: Maya creation (origin, Maya size and names).
+    assert ops["Cube"][1] == "maya_kit.create" and ops["Cube"][3].kind == 'CUBE', ops["Cube"]
+    assert ops["Pyramid"][1] == "maya_kit.create" and ops["Pyramid"][3].kind == 'PYRAMID'
     assert ops["Pipe"][1] == "maya_kit.menu_unavailable", ops["Pipe"]
     assert ops["Pipe"][3].item == "Create/Polygon Primitives/Pipe"
     assert not menu_sets.MAYAKIT_OT_menu_unavailable.poll(bpy.context)
