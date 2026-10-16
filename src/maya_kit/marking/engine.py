@@ -257,10 +257,13 @@ class HotboxLayout:
 
     CENTER_W, CENTER_H, ROW_GAP = 130.0, 44.0, 6.0
 
-    def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0):
+    def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0, bounds=None):
+        """``bounds`` = (x0, y0, x1, y1): the visible part of the region (not under the
+        sidebar/toolbar); menu rows are shifted to stay inside it (step 17)."""
         self.params = p = (params or Params()).scaled(scale) if scale != 1.0 else (params or Params())
         self.center = center
         self.style = style
+        self.bounds = bounds
         cw, ch = self.CENTER_W * scale, self.CENTER_H * scale
         cx, cy = center
         self.center_rect = (cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2)
@@ -268,16 +271,39 @@ class HotboxLayout:
         if style != "ALL":
             return
         h, gap = p.item_h, self.ROW_GAP * scale
+        if bounds is not None:
+            rows = self._wrap(rows, measure, p.pad, gap, bounds[2] - bounds[0])
         # rows[0] is drawn top-most; the last row sits just above the centre box.
         y = cy + ch / 2 + gap + len(rows) * (h + gap)
         for row in rows:
             widths = [measure(label) + 2 * p.pad for _key, label in row]
             total = sum(widths) + gap * max(0, len(row) - 1)
             x = cx - total / 2
+            if bounds is not None:
+                # Centred on the cursor like Maya, slid sideways to stay visible; a row
+                # wider than the visible part starts at its left edge.
+                x = max(bounds[0], min(x, bounds[2] - total))
             y -= h + gap
             for (key, label), w in zip(row, widths):
                 self.labels.append(((x, y, x + w, y + h), key, label))
                 x += w + gap
+
+    @staticmethod
+    def _wrap(rows, measure, pad, gap, width):
+        """Split rows wider than ``width`` into several (order kept, step 17)."""
+        out = []
+        for row in rows:
+            line, used = [], 0.0
+            for key, label in row:
+                w = measure(label) + 2 * pad
+                if line and used + gap + w > width:
+                    out.append(line)
+                    line, used = [], 0.0
+                used += (gap if line else 0.0) + w
+                line.append((key, label))
+            if line:
+                out.append(line)
+        return out
 
     def label_at(self, x, y):
         for rect, key, label in self.labels:

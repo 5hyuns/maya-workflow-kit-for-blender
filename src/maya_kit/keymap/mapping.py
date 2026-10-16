@@ -93,8 +93,8 @@ ENTRIES = {
 
     # --- IC already matches () ---
     "Duplicate": _e("IC", (OBJ, "object.duplicate_move", {})),
-    "FrameSelectedWithoutChildren": _e("IC", (V3D, "view3d.view_selected", {}),
-                                       note="선택만 프레이밍 (자식은 선택 안 되면 제외)"),
+    "FrameSelectedWithoutChildren": _e("KIT", (V3D, "maya_kit.frame", {"selected": True}),
+                                       note="Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "maya_kit.tap_hold", {"binding": "select_all"}),
                                note="탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9)"),
     "RepeatLast": _e("IC", ("Screen", "screen.repeat_last", {})),
@@ -133,7 +133,9 @@ ENTRIES = {
     "FrameSelectedWithoutChildrenInAllViews": _e("KIT", (V3D, "maya_kit.frame_all_views",
                                                          {"selected": True}),
                                                  note="창의 모든 3D 뷰(쿼드 포함)"),
-    "FrameSelectedInAllViews": _e("STEP", step=8, note="자식 포함 프레이밍"),
+    "FrameSelectedInAllViews": _e("KIT", (V3D, "maya_kit.frame_all_views",
+                                          {"selected": True, "children": True}),
+                                  note="자식 포함, 창의 모든 3D 뷰"),
     "GoToDefaultView": _e("STEP", step=8),
     "LowQualityDisplay": _e("KIT", (OBJ, "maya_kit.smooth_preview", {"level": 1}),
                             note="Subsurf 뷰포트 끔"),

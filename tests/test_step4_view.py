@@ -191,8 +191,8 @@ def test_camera_keys():
     assert not _kmis("3D View", "view3d.rotate", "LEFTMOUSE", alt=True)
     assert _kmis("3D View", "maya_kit.frame_all_views", "F", shift=True)[0].properties.selected
     assert not _kmis("3D View", "maya_kit.frame_all_views", "A", shift=True)[0].properties.selected
-    # Plain F stays IC view_selected (Maya F = frame selected without children).
-    assert _kmis("3D View", "view3d.view_selected", "F")
+    # Step 17: plain F = the kit's Maya-fit framing instead of IC view_selected.
+    assert _kmis("3D View", "maya_kit.frame", "F") and not _kmis("3D View", "view3d.view_selected", "F")
 
 
 def test_view_history_keys():

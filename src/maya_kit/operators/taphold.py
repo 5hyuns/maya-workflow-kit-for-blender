@@ -186,7 +186,12 @@ class SelectAllBinding(TapHoldBinding):
     label = "Frame All / History Menu"
 
     def tap(self, context):
-        bpy.ops.view3d.view_all(center=False)
+        from . import view   # Maya fit (fit factor 0.95, sidebar excluded), step 17
+        area, region = context.area, context.region
+        if area is not None and area.type == 'VIEW_3D' and region is not None and region.type == 'WINDOW':
+            view.frame_region(context, area, region, selected=False)
+        else:
+            bpy.ops.view3d.view_all(center=False)
 
     def click(self, context, event):
         # Opened on the LMB press like Q/W/E/R: dragging and releasing LMB picks.

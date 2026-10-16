@@ -160,7 +160,8 @@ MAP = {
     "Display/Transform Display/Local Rotation Axes": ("wm.context_toggle", {"data_path": "object.show_axis"}),
     "Display/Frame All in All Views": ("maya_kit.frame_all_views", {"selected": False}),
     "Display/Frame Selection in All Views": ("maya_kit.frame_all_views", {"selected": True}),
-    "Display/Frame Selection with Children in All Views": ("maya_kit.frame_all_views", {"selected": True}),
+    "Display/Frame Selection with Children in All Views": ("maya_kit.frame_all_views",
+                                                           {"selected": True, "children": True}),
     # --- Windows ---
     "Windows/Workspaces": ("menu", "TOPBAR_MT_workspace_menu"),
     "Windows/UI Elements": ("menu", "MAYAKIT_MT_ui_elements"),
