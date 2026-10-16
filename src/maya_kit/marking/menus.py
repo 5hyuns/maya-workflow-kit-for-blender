@@ -1,0 +1,421 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya marking menus as plain data.
+
+Positions and labels follow  ``menus[<proc>]``
+(Maya's shipped MEL; line numbers in the comments are that proc's file) and
+ Re-implemented: only labels, radial
+positions and the Blender action (same value forms as ``ui/menu_map.py``:
+``"op.id"``, ``("op.id", {props})``, ``("v3d", ...)``, ``("tool", id, edit)``,
+``("menu", id)``; ``None`` = greyed out). A radial ``Sub`` is a nested marking
+menu, a list ``Sub`` a plain submenu.
+
+Kept free of Blender UI so the step-9 marking-menu engine can draw the same
+definitions.
+"""
+
+RADIALS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+DIVIDER = "-"
+
+
+class Sub:
+    """A submenu: ``radial`` {pos: (label, action)}, ``items`` [(label, action) | "-"]."""
+
+    def __init__(self, radial=None, items=()):
+        self.radial = dict(radial or {})
+        self.items = list(items)
+
+
+class MarkingMenu(Sub):
+    def __init__(self, name, label, source, radial=None, items=()):
+        super().__init__(radial, items)
+        self.name = name        # id, also the research JSON proc for checks
+        self.label = label
+        self.source = source    # research citation
+
+
+def _mod(kind):
+    return ("object.modifier_add", {"type": kind})
+
+
+def _orient(kind):
+    # Not transform.select_orientation: invoked from a menu it opens its own enum popup (GUI test).
+    return ("wm.context_set_enum", {"data_path": "scene.transform_orientation_slots[0].type", "value": kind})
+
+
+def _comp(kind):
+    return ("maya_kit.mm_component", {"type": kind})
+
+
+MULTI_CUT = ("tool", "builtin.knife", True)
+MERGE_CENTER = ("mesh.merge", {"type": 'CENTER'})
+PRESERVE_UVS = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_correct_face_attributes"})
+PRESERVE_CHILDREN = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_skip_children"})
+TOOL_SETTINGS = ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})
+
+# --- RMB: Maya (hotkeys_and_menus.md, :246-252) --------------------------
+# Mesh radials come from createSelectMenuItems' order (Maya-892) and
+# objectSelectMasks (:503-509); NE "Object Mode" (:1286-1289).  resolved by hand.
+
+RMB_MESH = MarkingMenu(
+    "dagMenuProc", "Object", "",
+    radial={
+        "N": ("Edge", _comp('EDGE')),
+        "W": ("Vertex", _comp('VERT')),
+        "S": ("Face", _comp('FACE')),
+        "E": ("UV", None),
+        "SW": ("Vertex Face", None),
+        "SE": ("Multi", _comp('MULTI')),
+        "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
+    },
+    items=[
+        ("Select", ("maya_kit.mm_component", {"type": 'NONE'})),
+        ("Select Hierarchy", ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True})),
+        DIVIDER,
+        ("Inputs", None),
+        ("Paint Skin Weights", ("paint.weight_paint_toggle", {})),
+    ])
+
+# Curve: N curve point, W CV, S edit point, E hull (Maya-501). Blender
+# curves edit control points only.
+RMB_CURVE = MarkingMenu(
+    "dagMenuProc_curve", "Curve", "",
+    radial={
+        "N": ("Curve Point", None),
+        "W": ("Control Vertex", _comp('CV')),
+        "S": ("Edit Point", None),
+        "E": ("Hull", None),
+        "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
+    },
+    items=[("Select", ("maya_kit.mm_component", {"type": 'NONE'}))])
+
+# Nothing under the cursor: Select All / Complete Tool (Maya-150).
+RMB_EMPTY = MarkingMenu(
+    "buildObjectMenuItemsNow", "Select", "",
+    items=[("Select All", ("object.select_all", {"action": 'SELECT'})),
+           ("Complete Tool", None)])
+
+# --- Shift+RMB: Maya*MM (, :254-265) ---------------------------------
+
+SOFT_HARD = Sub(radial={  # Maya-169 / Maya-109
+    "S": ("Toggle Soft Edge Display", None),
+    "SE": ("Harden Edge", "mesh.mark_sharp"),
+    "E": ("Soften/Harden", None),
+    "NE": ("Soften Edge", ("mesh.mark_sharp", {"clear": True})),
+})
+
+SHIFT_OBJECT = MarkingMenu(
+    "contextPolyToolsObjectMM", "Object Tools", " contextPolyToolsObjectMM",
+    radial={
+        "S": ("Extrude", None),                                            # :26
+        "SW": ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),  # :34
+        "E": ("Append to Polygon Tool", None),                             # :50
+        "NE": ("Fill Holes", None),                                        # :66
+        "N": ("Target Weld Tool", None),                                   # :74
+        "W": ("Multi-Cut", MULTI_CUT),                                     # :89
+        "NW": ("Sculpt Tool", ("object.mode_set", {"mode": 'SCULPT'})),    # :111
+        "SE": ("Soften/Harden Edges", Sub(radial={                         # :127 (object level)
+            "S": ("Toggle Soft Edge Display", None),
+            "SE": ("Harden Edge", "object.shade_flat"),
+            "E": ("Soften/Harden", "object.shade_auto_smooth"),
+            "NE": ("Soften Edge", "object.shade_smooth"),
+        })),
+    },
+    items=[
+        ("Smooth", _mod('SUBSURF')),                                       # :207
+        ("Subdiv Proxy", _mod('SUBSURF')),                                 # :221
+        ("Crease Tool", None),
+        DIVIDER,
+        ("Mirror", _mod('MIRROR')),                                        # :280
+        DIVIDER,
+        ("Triangulate", _mod('TRIANGULATE')),                              # :303
+        ("Quadrangulate", None),
+        ("Reduce", _mod('DECIMATE')),                                      # :324
+        DIVIDER,
+        ("Separate", ("mesh.separate", {"type": 'LOOSE'})),                # :380
+        ("Combine", "object.join"),                                        # :387
+        ("Booleans", Sub(items=[("Union", None), ("Difference", None), ("Intersection", None)])),
+        DIVIDER,
+        ("Quad Draw Tool", ("tool", "builtin.poly_build", True)),          # :480
+    ])
+
+SHIFT_VERTEX = MarkingMenu(
+    "contextPolyToolsVertexMM", "Vertex Tools", " contextPolyToolsVertexMM",
+    radial={
+        "S": ("Extrude Vertex", ("v3d", "mesh.extrude_vertices_move", {})),   # :27
+        "E": ("Chamfer Vertex", ("v3d", "mesh.bevel", {"affect": 'VERTICES'})),  # :43
+        "SW": ("Delete Vertex", "mesh.dissolve_verts"),                    # :59
+        "SE": ("Vertex Normals", Sub(radial={                              # :68
+            "S": ("Toggle Vertex Normal Display", None),
+            "NE": ("Average Normals", "mesh.average_normals"),
+            "E": ("Vertex Normal Edit Tool", None),
+            "SE": ("Set Normals to Face", "mesh.set_normals_from_faces"),
+        })),
+        "N": ("Merge Vertices", Sub(radial={                               # :127
+            "NE": ("Merge Vertices", "mesh.remove_doubles"),
+            "N": ("Merge Vertices To Center", MERGE_CENTER),
+            "S": ("Target Weld Tool", None),
+        })),
+        "NE": ("Average Vertices", "mesh.vertices_smooth"),                # :176
+        "W": ("Multi-Cut", MULTI_CUT),                                     # :184
+        "NW": ("Paint Select Vertices", None),                             # :202
+    },
+    items=[
+        ("Crease Tool", None),
+        ("Connect Components", "mesh.vert_connect_path"),                  # :225
+        ("Detach Components", None),
+        ("Connect Tool", MULTI_CUT),
+        DIVIDER,
+        ("Circularize Vertices", None),
+        ("Reorder Vertices", None),
+    ])
+
+SHIFT_EDGE = MarkingMenu(
+    "contextPolyToolsEdgeMM", "Edge Tools", " contextPolyToolsEdgeMM",
+    radial={
+        "S": ("Extrude Edge", ("v3d", "mesh.extrude_edges_move", {})),       # :27
+        "SW": ("Delete Edge", "mesh.dissolve_edges"),                      # :43
+        "E": ("Bevel Edge", ("v3d", "mesh.bevel", {})),                    # :51
+        "SE": ("Soften/Harden Edges", SOFT_HARD),                          # :67
+        "N": ("Merge/Collapse Edges", Sub(radial={                         # :119
+            "NE": ("Merge Border Edges", "mesh.remove_doubles"),
+            "S": ("Target Weld Tool", None),
+            "NW": ("Merge Edge Tool", None),
+            "E": ("Collapse Edge", "mesh.edge_collapse"),
+            "N": ("Merge Edges To Center", MERGE_CENTER),
+        })),
+        "NE": ("Flip/Spin Edge", Sub(radial={                              # :199
+            "N": ("Flip Triangle Edge", "mesh.edge_rotate"),
+            "E": ("Spin Forward", ("mesh.edge_rotate", {"use_ccw": False})),
+            "W": ("Spin Backward", ("mesh.edge_rotate", {"use_ccw": True})),
+        })),
+        "W": ("Multi-Cut", MULTI_CUT),                                     # :232
+        "NW": ("Paint Select Edges", None),                                # :251
+    },
+    items=[
+        ("Crease Tool", None),
+        ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),     # :302
+        ("Slide Edge Tool", ("tool", "builtin.edge_slide", True)),         # :316
+        ("Circularize Components", None),
+        ("Edit Edge Flow", None),
+        DIVIDER,
+        ("Add Divisions To Edge", "mesh.subdivide"),                       # :366
+        ("Bridge", "mesh.bridge_edge_loops"),                              # :379
+        ("Fill Hole", "mesh.fill_holes"),                                  # :392
+        DIVIDER,
+        ("Connect Components", "mesh.subdivide_edgering"),                 # :403
+        ("Detach Components", "mesh.edge_split"),                          # :419
+    ])
+
+SHIFT_FACE = MarkingMenu(
+    "contextPolyToolsFaceMM", "Face Tools", " contextPolyToolsFaceMM",
+    radial={
+        "N": ("Merge Faces To Center", MERGE_CENTER),                      # :27
+        "S": ("Extrude Face", ("v3d", "view3d.edit_mesh_extrude_move_normal", {})),  # :35
+        "SW": ("Wedge Face", None),                                        # :51
+        "NE": ("Poke Face", "mesh.poke"),                                  # :68
+        "E": ("Bevel Face", ("v3d", "mesh.bevel", {})),                    # :84
+        "SE": ("Face Normals", Sub(radial={                                # :100
+            "S": ("Toggle Face Normal Display", None),
+            "NE": ("Reverse Propagate", None),
+            "SE": ("Conform Normals", "mesh.normals_make_consistent"),
+            "E": ("Reverse Normals", "mesh.flip_normals"),
+        })),
+        "W": ("Multi-Cut", MULTI_CUT),                                     # :150
+        "NW": ("Paint Select Faces", None),                                # :168
+    },
+    items=[
+        ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),         # :181
+        ("Assign Invisible Faces", None),
+        ("Add Divisions To Faces", "mesh.subdivide"),                      # :210
+        ("Circularize Components", None),
+        ("Triangulate Faces", "mesh.quads_convert_to_tris"),               # :263
+        ("Quadrangulate Faces", "mesh.tris_convert_to_quads"),             # :270
+        DIVIDER,
+        ("Bridge Faces", "mesh.bridge_edge_loops"),                        # :309
+        DIVIDER,
+        ("Extract Faces", ("mesh.separate", {"type": 'SELECTED'})),        # :339
+        ("Duplicate Face", ("v3d", "mesh.duplicate_move", {})),            # :353
+    ])
+
+SHIFT_DEFAULT = MarkingMenu(
+    "contextPolyToolsDefaultMM", "Create", " contextPolyToolsDefaultMM",
+    radial={
+        "N": ("Create Polygon Tool", None),                                # :56
+        "NE": ("Disc", ("mesh.primitive_circle_add", {"fill_type": 'NGON'})),  # :72
+        "E": ("Sphere", "mesh.primitive_uv_sphere_add"),                   # :89
+        "SE": ("Torus", "mesh.primitive_torus_add"),                       # :105
+        "S": ("Cube", "mesh.primitive_cube_add"),                          # :121
+        "SW": ("Cone", "mesh.primitive_cone_add"),                         # :137
+        "W": ("Cylinder", "mesh.primitive_cylinder_add"),                  # :153
+        "NW": ("Plane", "mesh.primitive_plane_add"),                       # :169
+    },
+    items=[
+        ("Platonic Solid", ("mesh.primitive_ico_sphere_add", {"subdivisions": 1})),  # :185
+        ("Pyramid", ("mesh.primitive_cone_add", {"vertices": 4})),         # :198
+        ("Prism", ("mesh.primitive_cylinder_add", {"vertices": 3})),       # :212
+        ("Pipe", None), ("Helix", None), ("Gear", None),
+        DIVIDER,
+        ("Type", "object.text_add"),                                       # :308
+        ("Quad Draw Tool", None),
+    ])
+
+# --- Ctrl+RMB: polyConvertMM (, :267-269) -------------------------------------------
+
+CTRL_CONVERT = MarkingMenu(
+    "polyConvertMM", "Convert Selection", " polyConvertMM",
+    radial={
+        "N": ("To Edges", Sub(radial={                                     # :43
+            "N": ("To Edges", ("mesh.select_mode", {"type": 'EDGE', "use_expand": True})),
+            "S": ("To Contained Edges", ("mesh.select_mode", {"type": 'EDGE'})),
+            "NW": ("To Contiguous Edges", ("mesh.loop_multi_select", {"ring": False})),
+            "NE": ("To Edge Perimeter", "mesh.region_to_loop"),
+        })),
+        "NW": ("Shrink Selection", Sub(radial={                            # :88
+            "NW": ("Shrink", "mesh.select_less"),
+            "N": ("Shrink Selection Along Loop", None),
+        })),
+        "E": ("To UVs", Sub(radial={"E": ("To UVs", None), "NE": ("To UV Perimeter", None)})),  # :109
+        "SE": ("Edge Loop Utilities", Sub(radial={                         # :134
+            "SE": ("To Edge Loop", ("mesh.loop_multi_select", {"ring": False})),
+            "NE": ("To Edge Loop and Delete", None),
+            "SW": ("To Edge Loop and Duplicate", None),
+        })),
+        "SW": ("Edge Ring Utilities", Sub(radial={                         # :165
+            "SW": ("To Edge Ring", ("mesh.loop_multi_select", {"ring": True})),
+            "SE": ("To Edge Ring and Split", None),
+            "NW": ("To Edge Ring and Collapse", None),
+        })),
+        "S": ("To Faces", Sub(radial={                                     # :198
+            "S": ("To Faces", ("mesh.select_mode", {"type": 'FACE', "use_expand": True})),
+            "N": ("To Contained Faces", ("mesh.select_mode", {"type": 'FACE'})),
+            "SE": ("To Face Perimeter", "mesh.region_to_loop"),
+        })),
+        "W": ("To Vertices", Sub(radial={                                  # :229
+            "W": ("To Vertices", ("mesh.select_mode", {"type": 'VERT'})),
+            "NW": ("To Vertex Perimeter", None),
+        })),
+        "NE": ("Grow Selection", Sub(radial={                              # :254
+            "NE": ("Grow", "mesh.select_more"),
+            "N": ("Grow Along Loop", None),
+        })),
+    },
+    items=[
+        ("To Face Path", None),                                            # :276
+        ("To UV Shell", None),
+        ("To Shell", "mesh.select_linked"),                                # :288
+        ("To Shell Border", None),
+        DIVIDER,
+        ("Selection Boundary", "mesh.region_to_loop"),                     # :310
+    ])
+
+# --- Tool options: q/w/e/r hold + LMB, Ctrl+Shift+RMB (, :271-276) -------------------
+# Maya manip modes -> Blender transform orientations (Object = Local, Component = Normal).
+
+OPT_MOVE = MarkingMenu(
+    "translateMarkingMenuImpl", "Move Options", " translateMarkingMenuImpl",
+    radial={
+        "NE": ("Component", _orient('NORMAL')),                            # :19
+        "W": ("World", _orient('GLOBAL')),                                 # :27
+        "NW": ("Object", _orient('LOCAL')),                                # :35
+        "SE": ("Keep Spacing", None),                                      # :43
+        "E": ("Snap", Sub(radial={                                         # :116
+            "E": ("Discrete Move", ("maya_kit.snap_toggle", {"snap": 'GRID'})),
+            "SE": ("Vertex", ("maya_kit.snap_toggle", {"snap": 'POINT'})),
+            "SW": ("Face Center", None),
+        })),
+        "SW": ("Axis", Sub(radial={                                        # :152
+            "NW": ("Normal", _orient('NORMAL')),
+            "W": ("Parent", _orient('PARENT')),
+            "NE": ("Along Rotation Axis", _orient('GIMBAL')),
+            "N": ("Live Object Axis", None),
+            "SW": ("Custom", None),
+        })),
+    },
+    items=[
+        ("Smart Extrude", None), ("Smart Duplicate", None),
+        DIVIDER,
+        ("Preserve UVs", PRESERVE_UVS),                                    # :71
+        ("Preserve Children", PRESERVE_CHILDREN),                          # :77
+        DIVIDER,
+        ("Move Options", TOOL_SETTINGS),                                   # :96
+    ])
+
+OPT_ROTATE = MarkingMenu(
+    "rotateMarkingMenuImpl", "Rotate Options", " rotateMarkingMenuImpl",
+    radial={
+        "NW": ("Object", _orient('LOCAL')),                                # :19
+        "W": ("World", _orient('GLOBAL')),                                 # :24
+        "SW": ("Custom", Sub(radial={"E": ("Custom", None), "NW": ("Reset", None)})),  # :29
+        "SE": ("Discrete Rotate", None),                                   # :66
+        "NE": ("Component", _orient('NORMAL')),                            # :71
+        "E": ("Gimbal", _orient('GIMBAL')),                                # :77
+    },
+    items=[
+        ("Smart Extrude", None), ("Smart Duplicate", None),
+        DIVIDER,
+        ("Preserve UVs", PRESERVE_UVS),                                    # :124
+        ("Preserve Children", PRESERVE_CHILDREN),                          # :130
+        DIVIDER,
+        ("Rotate Options", TOOL_SETTINGS),                                 # :148
+    ])
+
+OPT_SCALE = MarkingMenu(
+    "scaleMarkingMenuImpl", "Scale Options", " scaleMarkingMenuImpl",
+    radial={
+        "W": ("World", _orient('GLOBAL')),                                 # :18
+        "NW": ("Object", _orient('LOCAL')),                                # :24
+        "NE": ("Component", _orient('NORMAL')),                            # :30
+        "SW": ("Axis", Sub(radial={                                        # :36
+            "W": ("Parent", _orient('PARENT')),
+            "NW": ("Normal", _orient('NORMAL')),
+            "N": ("Live Object Axis", None),
+            "NE": ("Along Rotation Axis", _orient('GIMBAL')),
+        })),
+        "E": ("Snap Scale", None),                                         # :101
+        "SE": ("Relative", None),                                          # :107
+    },
+    items=[
+        ("Smart Extrude", None), ("Smart Duplicate", None),
+        DIVIDER,
+        ("Preserve UVs", PRESERVE_UVS),                                    # :156
+        ("Preserve Children", PRESERVE_CHILDREN),                          # :162
+        DIVIDER,
+        ("Scale Options", TOOL_SETTINGS),                                  # :175
+    ])
+
+OPT_SELECT = MarkingMenu(
+    "selectMarkingMenuImpl", "Select Options", " selectMarkingMenuImpl",
+    radial={
+        "NW": ("Marquee", ("tool", "builtin.select_box", False)),         # :31
+        "NE": ("Drag", ("tool", "builtin.select", False)),                # :36
+        "E": ("Camera-Based Selection", None),                             # :41
+        "SE": ("Clear Selection", "maya_kit.mm_clear_selection"),          # :46
+        "W": ("Paint Select", ("tool", "builtin.select_circle", False)),   # :50
+        "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),          # :54
+    })
+
+MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT_VERTEX,
+                             SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
+                             OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT)}
+
+# Active tool -> its options marking menu (Maya-49).
+TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",
+                "builtin.scale": "scaleMarkingMenuImpl", "builtin.transform": "translateMarkingMenuImpl"}
+SELECT_OPTIONS = "selectMarkingMenuImpl"
+
+
+def walk(sub, path):
+    """Yield (path, label, action) for every entry, depth first; Sub actions included."""
+    for pos in RADIALS:
+        if pos in sub.radial:
+            label, action = sub.radial[pos]
+            yield f"{path}/{pos}", label, action
+            if isinstance(action, Sub):
+                yield from walk(action, f"{path}/{pos}")
+    for i, entry in enumerate(sub.items):
+        if entry == DIVIDER:
+            continue
+        label, action = entry
+        yield f"{path}/{i}", label, action
+        if isinstance(action, Sub):
+            yield from walk(action, f"{path}/{i}")

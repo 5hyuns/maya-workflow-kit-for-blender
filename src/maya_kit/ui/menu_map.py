@@ -294,7 +294,12 @@ BLENDER_MENU = {
 
 def spec(path):
     """Normalised (kind, target, props) for a label path, or None if unmapped."""
-    value = MAP.get(path)
+    return normalize(MAP.get(path))
+
+
+def normalize(value):
+    """(kind, target, props) for a mapping value (also used by marking menus,
+    which add ``("pie", MENU_ID)``); None stays None (greyed out)."""
     if value is None:
         return None
     if isinstance(value, str):
@@ -303,6 +308,6 @@ def spec(path):
         return ("v3d", value[1], dict(value[2]))
     if value[0] == "tool":
         return ("tool", value[1], {"edit": value[2]})
-    if value[0] == "menu":
-        return ("menu", value[1], {})
+    if value[0] in ("menu", "pie"):
+        return (value[0], value[1], {})
     return ("op", value[0], dict(value[1]))

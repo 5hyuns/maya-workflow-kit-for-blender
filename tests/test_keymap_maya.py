@@ -153,8 +153,10 @@ _OBJECT_MODE_STACK = ("Window", "Screen", "Frames", "3D View", "3D View Generic"
                       "Object Mode", "Object Non-modal")
 _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Object Non-modal": _VIEW3D_STACK,
-           "Mesh": ("Window", "Screen", "Frames", "3D View", "3D View Generic", "Mesh",
-                    "Object Non-modal"),
+           # 3D View edit/pose modes: the mode keymap on top of the 3D View ones (step 8 adds
+           # RMB marking menus and Q/W/E/R to them).
+           **{km: ("Window", "Screen", "Frames", "3D View", "3D View Generic", km, "Object Non-modal")
+              for km in ("Mesh", "Curve", "Curves", "Armature", "Pose", "Metaball", "Lattice")},
            "Screen": None,
            **{km: (km,) for km in maya_patches.SLIDER_TOOL_KEYMAPS},
            "Outliner": ("Window", "Screen", "Outliner", "View2D", "View2D Buttons List"),

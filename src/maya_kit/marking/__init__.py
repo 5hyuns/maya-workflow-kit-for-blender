@@ -1,0 +1,295 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya marking menus, first version: Blender pie menus.
+
+ (triggers and menus); 
+api_limits.md #5 (pies: 8 slots, press-drag-release via pie_tap_timeout).
+
+- ``menus.py``: the menus as data (Maya radial positions).
+- Here: one pie ``Menu`` class per marking menu and radial submenu (plain
+  ``Menu`` for list submenus), ``maya_kit.marking_menu`` (picks the menu for a
+  trigger and the context, like Maya's builders), helper operators, and the
+  Q/W/E/R "hold + LMB" bindings on the step-3 tap/hold framework.
+"""
+
+import bpy
+from bpy.props import EnumProperty, StringProperty
+
+from ..operators import taphold
+from ..ui import menu_map, menu_sets
+from . import menus as mm
+
+# Blender fills a pie in this order (UILayout.menu_pie).
+PIE_ORDER = ("W", "E", "S", "N", "NW", "NE", "SW", "SE")
+TRIGGERS = (("RMB", "RMB", "Object / component marking menu (Maya RMB)"),
+            ("SHIFT_RMB", "Shift+RMB", "Context tools (Maya Shift+RMB)"),
+            ("CTRL_RMB", "Ctrl+RMB", "Convert selection (Maya Ctrl+RMB)"),
+            ("TOOL_OPTIONS", "Ctrl+Shift+RMB", "Options of the active tool (Maya Ctrl+Shift+RMB)"))
+
+
+# --- classes from the data ------------------------------------------------------------
+
+def idname(menu_name, sub_path=""):
+    suffix = sub_path.replace("/", "_")
+    return f"MAYAKIT_MT_mm_{menu_name}{'_' + suffix if suffix else ''}"
+
+
+_classes = []
+_sub_ids = {}  # id(Sub) -> (idname, is_pie)
+
+
+def _entry_spec(action):
+    if isinstance(action, mm.Sub):
+        name, is_pie = _sub_ids[id(action)]
+        return ("pie" if is_pie else "menu", name, {})
+    return menu_map.normalize(action)
+
+
+def draw_entry(layout, label, action, path):
+    menu_sets.draw_spec(layout, label, _entry_spec(action), f"Marking menu {path}")
+
+
+def _draw_list(layout, sub, path):
+    for i, entry in enumerate(sub.items):
+        if entry == mm.DIVIDER:
+            layout.separator()
+        else:
+            draw_entry(layout, entry[0], entry[1], f"{path}/{entry[0]}")
+
+
+def draw_pie(pie, sub, path):
+    """Maya radial slots in Blender pie order; the linear list goes under S."""
+    for pos in PIE_ORDER:
+        entry = sub.radial.get(pos)
+        if pos == "S" and sub.items:
+            col = pie.column()
+            if entry:
+                draw_entry(col, entry[0], entry[1], f"{path}/{entry[0]}")
+                col.separator()
+            _draw_list(col.box().column(), sub, path)
+        elif entry:
+            draw_entry(pie, entry[0], entry[1], f"{path}/{entry[0]}")
+        else:
+            pie.separator()
+
+
+def _make(sub, name, label, path, is_pie):
+    _sub_ids[id(sub)] = (name, is_pie)
+    # Children first so their ids exist when the parent draws.
+    for pos, (child_label, action) in sub.radial.items():
+        if isinstance(action, mm.Sub):
+            _make(action, f"{name}_{pos}", child_label, f"{path}/{child_label}", is_pie=True)
+    for i, entry in enumerate(sub.items):
+        if entry != mm.DIVIDER and isinstance(entry[1], mm.Sub):
+            _make(entry[1], f"{name}_{i}", entry[0], f"{path}/{entry[0]}", is_pie=False)
+
+    if is_pie:
+        def draw(self, context):
+            draw_pie(self.layout.menu_pie(), sub, path)
+    else:
+        def draw(self, context):
+            for pos in mm.RADIALS:  # a list submenu shows radial entries first
+                if pos in sub.radial:
+                    draw_entry(self.layout, sub.radial[pos][0], sub.radial[pos][1], path)
+            _draw_list(self.layout, sub, path)
+    _classes.append(type(name, (bpy.types.Menu,), {
+        "bl_idname": name, "bl_label": label, "draw": draw, "__doc__": f"Maya marking menu: {path}"}))
+
+
+for _m in mm.MENUS.values():
+    _make(_m, idname(_m.name), _m.label, _m.label, is_pie=True)
+
+
+# --- choosing the menu (Maya builders,  「계획」 2) -----------------------------
+
+def resolve(trigger, context, picked=None):
+    """("pie" | "menu", Menu idname) for a trigger in this context, or None."""
+    mode = context.mode
+    ob = picked or context.active_object
+    if trigger == "TOOL_OPTIONS":
+        tool = context.workspace.tools.from_space_view3d_mode(mode, create=False)
+        tid = tool.idname if tool else ""
+        name = mm.SELECT_OPTIONS if tid.startswith("builtin.select") else mm.TOOL_OPTIONS.get(tid)
+        return ("pie", idname(name)) if name else None
+    if trigger == "CTRL_RMB":
+        if mode == 'EDIT_MESH':
+            return ("pie", idname("polyConvertMM"))
+        trigger = "RMB"  # Maya-106: not a mesh -> object menu
+    if trigger == "SHIFT_RMB":
+        if mode == 'EDIT_MESH':
+            vert, edge, face = context.scene.tool_settings.mesh_select_mode
+            name = ("contextPolyToolsFaceMM" if face else "contextPolyToolsEdgeMM" if edge
+                    else "contextPolyToolsVertexMM")
+            return ("pie", idname(name))
+        meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        return ("pie", idname("contextPolyToolsObjectMM" if meshes else "contextPolyToolsDefaultMM"))
+    # RMB
+    if mode == 'EDIT_MESH':
+        return ("pie", idname("dagMenuProc"))
+    if mode in {'EDIT_CURVE', 'EDIT_SURFACE'}:
+        return ("pie", idname("dagMenuProc_curve"))
+    if mode == 'OBJECT':
+        if ob is None:
+            return ("pie", idname("buildObjectMenuItemsNow"))
+        if ob.type == 'MESH':
+            return ("pie", idname("dagMenuProc"))
+        if ob.type in {'CURVE', 'SURFACE'}:
+            return ("pie", idname("dagMenuProc_curve"))
+        return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type (delegated)
+    return None
+
+
+def pick_object(context, event):
+    """Object under the mouse in the 3D View (ray cast), or None."""
+    from bpy_extras import view3d_utils
+    region, rv3d = context.region, context.region_data
+    if region is None or rv3d is None or region.type != 'WINDOW':
+        return None
+    coord = (event.mouse_region_x, event.mouse_region_y)
+    origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    direction = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
+    hit, _loc, _nor, _idx, ob, _mat = context.scene.ray_cast(
+        context.evaluated_depsgraph_get(), origin, direction)
+    if not hit or ob is None:
+        return None
+    return bpy.data.objects.get(ob.name)
+
+
+class MAYAKIT_OT_marking_menu(bpy.types.Operator):
+    """Open the Maya marking menu for this trigger and context"""
+    bl_idname = "maya_kit.marking_menu"
+    bl_label = "Marking Menu"
+    bl_options = {'INTERNAL'}
+
+    trigger: EnumProperty(items=TRIGGERS)
+
+    def invoke(self, context, event):
+        picked = None
+        if self.trigger in {"RMB", "CTRL_RMB"} and context.mode == 'OBJECT':
+            picked = pick_object(context, event)
+        context.window_manager.maya_kit_mm_target = picked.name if picked else ""
+        found = resolve(self.trigger, context, picked)
+        if found is None:
+            return {'PASS_THROUGH'}
+        kind, name = found
+        if kind == "pie":
+            bpy.ops.wm.call_menu_pie(name=name)
+        else:
+            bpy.ops.wm.call_menu(name=name)
+        return {'FINISHED'}
+
+
+# --- helper operators used by the menus -----------------------------------------------
+
+COMPONENTS = (("VERT", "Vertex", ""), ("EDGE", "Edge", ""), ("FACE", "Face", ""),
+              ("MULTI", "Multi", ""), ("CV", "Control Vertex", "Curve edit mode"),
+              ("NONE", "Select", "Only select the object"))
+
+
+class MAYAKIT_OT_mm_component(bpy.types.Operator):
+    """Select the object under the marking menu and enter this component mode (Maya RMB menu)"""
+    bl_idname = "maya_kit.mm_component"
+    bl_label = "Component Mode"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    type: EnumProperty(items=COMPONENTS)
+
+    @classmethod
+    def poll(cls, context):
+        wm = context.window_manager
+        return bool(getattr(wm, "maya_kit_mm_target", "")) or context.active_object is not None
+
+    def execute(self, context):
+        target = bpy.data.objects.get(context.window_manager.maya_kit_mm_target)
+        if target is not None and context.mode == 'OBJECT':
+            vl = context.view_layer
+            if target not in context.selected_objects or self.type == "NONE":
+                for o in context.selected_objects:
+                    o.select_set(False)
+            target.select_set(True)
+            vl.objects.active = target
+        ob = context.view_layer.objects.active
+        if self.type == "NONE" or ob is None:
+            return {'FINISHED'}
+        if self.type == "CV":
+            if ob.type in {'CURVE', 'SURFACE'} and context.mode == 'OBJECT':
+                bpy.ops.object.mode_set(mode='EDIT')
+            return {'FINISHED'}
+        if ob.type != 'MESH':
+            return {'CANCELLED'}
+        bpy.ops.maya_kit.component_mode(type=self.type)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_mm_clear_selection(bpy.types.Operator):
+    """Clear the selection (objects or components)"""
+    bl_idname = "maya_kit.mm_clear_selection"
+    bl_label = "Clear Selection"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if context.mode == 'EDIT_MESH':
+            bpy.ops.mesh.select_all(action='DESELECT')
+        elif context.mode == 'OBJECT':
+            bpy.ops.object.select_all(action='DESELECT')
+        else:
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+# --- Q/W/E/R hold + LMB (step-3 tap/hold framework) -------------------------------------
+
+class ToolOptionsBinding(taphold.TapHoldBinding):
+    """Key press = this tool (Maya activates it on press); hold + LMB = its options
+    marking menu (Maya-51 via hotkeys_and_menus.md)."""
+    tool = ""
+    menu = ""
+
+    def _set_tool(self):
+        try:
+            bpy.ops.wm.tool_set_by_id(name=self.tool, space_type='VIEW_3D')
+        except RuntimeError:  # e.g. the tool doesn't exist in this mode
+            pass
+
+    def tap(self, context):
+        self._set_tool()
+
+    def click(self, context, event):
+        self._set_tool()
+        # Opened on the LMB press: the pie confirms on LMB release (drag to an item).
+        bpy.ops.wm.call_menu_pie(name=idname(self.menu))
+
+
+def _binding(name, label, tool, menu):
+    return type(f"Binding_{name}", (ToolOptionsBinding,),
+                {"name": name, "label": label, "tool": tool, "menu": menu})
+
+
+TOOL_BINDINGS = (
+    _binding("tool_select", "Select Tool / Options", "builtin.select_box", "selectMarkingMenuImpl"),
+    _binding("tool_move", "Move Tool / Options", "builtin.move", "translateMarkingMenuImpl"),
+    _binding("tool_rotate", "Rotate Tool / Options", "builtin.rotate", "rotateMarkingMenuImpl"),
+    _binding("tool_scale", "Scale Tool / Options", "builtin.scale", "scaleMarkingMenuImpl"),
+)
+TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R", "tool_scale"))
+
+
+classes = (MAYAKIT_OT_marking_menu, MAYAKIT_OT_mm_component, MAYAKIT_OT_mm_clear_selection,
+           *_classes)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.WindowManager.maya_kit_mm_target = StringProperty(
+        name="Marking Menu Target", description="Object under the mouse when the RMB menu opened",
+        options={'SKIP_SAVE'})
+    for cls in TOOL_BINDINGS:
+        taphold.register_binding(cls())
+
+
+def unregister():
+    for cls in TOOL_BINDINGS:
+        taphold.unregister_binding(cls.name)
+    del bpy.types.WindowManager.maya_kit_mm_target
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

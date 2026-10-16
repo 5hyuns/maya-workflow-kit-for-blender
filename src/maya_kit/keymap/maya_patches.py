@@ -266,10 +266,37 @@ def patch_cb_slider(kd):
     _add(kd, "Object Mode", "maya_kit.cb_virtual_slider", make_event("MIDDLEMOUSE"))
 
 
+# --- 15. Marking menus (pies) and Q/W/E/R hold + LMB ----
+#  (:227-243). IC's RMB context menus in these
+# modes give way to the Maya marking menus; Shift+RMB 3D cursor goes (no 3D cursor in Maya).
+
+MM_KEYMAPS = (("Object Mode", "VIEW3D_MT_object_context_menu"),
+              ("Mesh", "VIEW3D_MT_edit_mesh_context_menu"),
+              ("Curve", "VIEW3D_MT_edit_curve_context_menu"))
+MM_EVENTS = (("RMB", {}), ("SHIFT_RMB", {"shift": True}), ("CTRL_RMB", {"ctrl": True}),
+             ("TOOL_OPTIONS", {"shift": True, "ctrl": True}))
+# Modes whose IC keymap sets the Q/W/E/R tools (IC _template_items_tool_select etc.).
+TOOL_KEY_KEYMAPS = ("Object Mode", "Mesh", "Curve", "Armature", "Pose", "Metaball", "Lattice", "Curves")
+TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R", "tool_scale"))
+
+
+def patch_marking_menus(kd):
+    for km, menu in MM_KEYMAPS:
+        kd.remove(km, "wm.call_menu", type="RIGHTMOUSE")
+        for trigger, mods in MM_EVENTS:
+            _add(kd, km, "maya_kit.marking_menu", make_event("RIGHTMOUSE", **mods), {"trigger": trigger})
+    kd.remove("3D View", "view3d.cursor3d", type="RIGHTMOUSE", shift=True)
+    kd.remove("3D View", "transform.translate", type="RIGHTMOUSE", value="CLICK_DRAG", shift=True)
+    for km in TOOL_KEY_KEYMAPS:
+        for key, binding in TOOL_KEYS:
+            kd.remove(km, "wm.tool_set_by_id", type=key)
+            _add(kd, km, "maya_kit.tap_hold", make_event(key), {"binding": binding})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
-           patch_component_keys, patch_cb_slider)
+           patch_component_keys, patch_cb_slider, patch_marking_menus)
 
 
 def apply(data):

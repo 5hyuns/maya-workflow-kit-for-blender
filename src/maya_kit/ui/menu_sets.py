@@ -79,23 +79,30 @@ def current_set(context=None):
 
 def draw_item(layout, path, label):
     """Draw one Maya menu item: its Blender action, or greyed out."""
-    s = menu_map.spec(path)
+    draw_spec(layout, label, menu_map.spec(path), path)
+
+
+def draw_spec(layout, label, s, path, icon='NONE'):
+    """Draw a normalised action (``menu_map.normalize``); None = greyed out with
+    ``path`` (the Maya menu path) in the tooltip."""
     if s is None:
-        layout.operator(MAYAKIT_OT_menu_unavailable.bl_idname, text=label).item = path
+        layout.operator(MAYAKIT_OT_menu_unavailable.bl_idname, text=label, icon=icon).item = path
         return
     kind, target, props = s
     if kind == "menu":
-        layout.menu(target, text=label)
+        layout.menu(target, text=label, icon=icon)
+    elif kind == "pie":
+        layout.operator("wm.call_menu_pie", text=label + " ▸", icon=icon).name = target
     elif kind == "tool":
-        op = layout.operator(MAYAKIT_OT_menu_tool.bl_idname, text=label)
+        op = layout.operator(MAYAKIT_OT_menu_tool.bl_idname, text=label, icon=icon)
         op.tool = target
         op.edit = props["edit"]
     elif kind == "v3d":
-        op = layout.operator(MAYAKIT_OT_menu_run.bl_idname, text=label)
+        op = layout.operator(MAYAKIT_OT_menu_run.bl_idname, text=label, icon=icon)
         op.op = target
         op.props = json.dumps(props)
     else:
-        op = layout.operator(target, text=label)
+        op = layout.operator(target, text=label, icon=icon)
         for key, value in props.items():
             setattr(op, key, value)
 
