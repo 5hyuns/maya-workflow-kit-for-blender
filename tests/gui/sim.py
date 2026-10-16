@@ -99,4 +99,5 @@ def run(interval=0.4, first=2.0):
             return interval
         _finish()
         return None
-    bpy.app.timers.register(tick, first_interval=first)
+    # persistent: survive wm.read_homefile (loading the app template)
+    bpy.app.timers.register(tick, first_interval=first, persistent=True)
