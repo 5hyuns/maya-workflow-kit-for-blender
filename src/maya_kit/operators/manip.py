@@ -146,16 +146,57 @@ def _transform_running(window):
     return any(op.bl_idname.startswith("TRANSFORM_OT_") for op in window.modal_operators)
 
 
+# --- the active handle (Maya MMB drag anywhere), step 28 -------------------------------
+
+# Last handle per transform kind:  (manipsRememberActiveHandle,
+# ...AfterToolSwitch true, defaults.json:63-65). Session only; a re-tap of the tool key resets.
+HANDLES = {}
+OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTATE',
+            "TRANSFORM_OT_resize": 'RESIZE'}
+
+
+def handle_from_op(bl_idname, props):
+    """(kind, handle) for a transform the manipulator ran; handle None = free (centre)."""
+    kind = OP_KINDS.get(bl_idname)
+    if kind is None:
+        return None, None
+    axes = tuple(bool(a) for a in props.constraint_axis)
+    if kind == 'ROTATE':
+        if props.orient_axis == 'VIEW' and not any(axes):
+            return kind, None
+        return kind, {"constraint_axis": axes, "orient_type": props.orient_type,
+                      "orient_axis": props.orient_axis}
+    if not any(axes):
+        return kind, None
+    return kind, {"constraint_axis": axes, "orient_type": props.orient_type}
+
+
+def remember_last_op(since):
+    """Remember the handle of a transform registered after ``since`` (an op pointer)."""
+    ops = bpy.context.window_manager.operators
+    if not len(ops) or ops[-1].as_pointer() == since:
+        return
+    kind, handle = handle_from_op(ops[-1].bl_idname, ops[-1].properties)
+    if kind is not None:
+        HANDLES[kind] = handle
+
+
+def reset_handle(kind):
+    HANDLES.pop(kind, None)
+
+
 def finish(state, window, area, region):
-    """After the transform: keep a moved copy / extrusion, take back one that didn't move."""
-    if not moved(state):
-        if _last_op() != state["last_op"]:
-            # Confirmed without moving (Shift+click): the transform pushed the only undo
-            # step (the duplicate/extrude was a nested call), so one undo is the state before.
-            with bpy.context.temp_override(window=window, area=area, region=region):
-                bpy.ops.ed.undo()
-        else:
-            revert(state)    # cancelled: no undo step, take it back by hand
+    """After the transform: remember its handle; keep a moved copy / extrusion, take back
+    one that didn't move."""
+    if state["kind"] == 'PRESS' or moved(state):
+        remember_last_op(state["last_op"])
+    elif _last_op() != state["last_op"]:
+        # Confirmed without moving (Shift+click): the transform pushed the only undo
+        # step (the duplicate/extrude was a nested call), so one undo is the state before.
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            bpy.ops.ed.undo()
+    else:
+        revert(state)    # cancelled: no undo step, take it back by hand
     cleanup(state)
 
 
@@ -199,6 +240,47 @@ class MAYAKIT_OT_manip_duplicate(bpy.types.Operator):
                 cleanup(state)
         # Always pass the event on: the gizmo's own tweak transforms the selection.
         return {'PASS_THROUGH'}
+
+
+class MAYAKIT_OT_manip_press(bpy.types.Operator):
+    """LMB on the manipulator: remember which handle the drag used (Maya active handle)"""
+    bl_idname = "maya_kit.manip_press"
+    bl_label = "Manipulator Press"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, _event):
+        if from_xform_gizmo(context) and context.window is not None:
+            watch({"kind": 'PRESS'}, context.window, context.area, context.region)
+        return {'PASS_THROUGH'}
+
+
+TRANSFORM_OPS = {'TRANSLATE': "translate", 'ROTATE': "rotate", 'RESIZE': "resize"}
+
+
+class MAYAKIT_OT_manip_mmb(bpy.types.Operator):
+    """MMB drag anywhere: move/rotate/scale along the last picked manipulator handle
+    (free when none, Maya)"""
+    bl_idname = "maya_kit.manip_mmb"
+    bl_label = "Drag Active Handle"
+    bl_options = {'INTERNAL'}
+
+    mode: bpy.props.EnumProperty(items=[(k, k.title(), "") for k in TRANSFORM_OPS])
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'VIEW_3D'
+
+    def invoke(self, context, _event):
+        kwargs = {"release_confirm": True}
+        handle = HANDLES.get(self.mode)
+        if handle:
+            kwargs.update(handle)
+        op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
+        try:
+            res = op('INVOKE_DEFAULT', **kwargs)
+        except RuntimeError:     # nothing to transform (poll failed)
+            return {'PASS_THROUGH'}
+        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
 
 OPTIONS = {'SMART_DUPLICATE': "smart_duplicate", 'SMART_EXTRUDE': "smart_extrude"}
@@ -253,4 +335,5 @@ def option_state(option):
     return bool(_pref(bpy.context, OPTIONS[option]))
 
 
-classes = (MAYAKIT_OT_manip_duplicate, MAYAKIT_OT_manip_option, MAYAKIT_OT_manip_size)
+classes = (MAYAKIT_OT_manip_duplicate, MAYAKIT_OT_manip_option, MAYAKIT_OT_manip_size,
+           MAYAKIT_OT_manip_press, MAYAKIT_OT_manip_mmb)

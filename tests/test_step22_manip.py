@@ -31,11 +31,12 @@ def test_gizmo_keymaps_run_smart_duplicate_first():
     kc = bpy.context.window_manager.keyconfigs["Maya"]
     for name in patches.GIZMO_KEYMAPS:
         items = [k for k in kc.keymaps[name].keymap_items if k.active]
-        first = items[0]
-        assert first.idname == "maya_kit.manip_duplicate", (name, first.idname)
-        assert (first.type, first.value, first.shift, first.ctrl, first.alt) == \
+        ids = [k.idname for k in items]
+        dup = items[ids.index("maya_kit.manip_duplicate")]
+        assert (dup.type, dup.value, dup.shift, dup.ctrl, dup.alt) == \
             ('LEFTMOUSE', 'PRESS', True, False, False), name
-        assert any(k.idname == "gizmogroup.gizmo_tweak" for k in items[1:]), name
+        # step 28 puts manip_press (plain LMB) in front too; both before the gizmo's tweak
+        assert ids.index("maya_kit.manip_duplicate") < ids.index("gizmogroup.gizmo_tweak"), (name, ids)
     assert "maya_kit.manip_duplicate" in patches.PASS_THROUGH_FIRST
 
 

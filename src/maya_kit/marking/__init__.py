@@ -244,6 +244,9 @@ class MAYAKIT_OT_mm_clear_selection(bpy.types.Operator):
 
 # --- Q/W/E/R hold + LMB (step-3 tap/hold framework) -------------------------------------
 
+HANDLE_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
+
+
 class ToolOptionsBinding(taphold.TapHoldBinding):
     """Key press = this tool (Maya activates it on press); hold + LMB = its options
     marking menu (Maya-51 via hotkeys_and_menus.md)."""
@@ -257,6 +260,13 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
             pass
 
     def tap(self, context):
+        # Tapping the key of the active tool again goes back to the centre handle (free MMB
+        # drag), Maya ; 
+        kind = HANDLE_KINDS.get(self.tool)
+        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+        if kind and tool is not None and tool.idname == self.tool:
+            from ..operators import manip
+            manip.reset_handle(kind)
         self._set_tool()
 
     def click(self, context, event):
