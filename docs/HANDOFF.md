@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 32 (재점검 3차) 완료 — `docs/steps/step_32.md`, `docs/PLAN.md` 「재점검 3차」. 코드(`src/`) 변경 없음. 헤드리스 281/281, dogfood 47/47,
+  탐색 세션 15 중 13 (실패: 세션 bmesh 선택 탓 1, 박스 줌 미구현 1). 대응표 33행: 완료 25, 부분 6, 불가 2. 새 발견: RMB 루트 목록이 뷰 아래로 잘림,
+  AE 재질 라벨이 모두 standardSurface, 메뉴 막다른 길 (Windows 편집기, UV, Ungroup, HUD, Increment and Save), 대칭 없음.
 - Step 31 (레이아웃 다듬기) 완료 — `docs/steps/step_31.md`. MayaKit 템플릿 왼쪽 Outliner 폭 0.2 + 컬렉션 행·렌더 열 숨김 (Maya DAG),
   쿼드 → 단일 때 축 뷰 이름 유지 (`is_orthographic_side_view`), 홀드 메뉴 체크 켜짐 색 강조 + 파이 폴백 체크 아이콘, release 스크린샷 재생성.
   타임라인 프레임 상자 겹침은 C 그리기라 미해결. 헤드리스 281/281, GUI 239/239, dogfood 47/47. backlog.json 8 항목 모두 처리.
@@ -63,8 +66,7 @@
 
 ## 바로 다음 할 일
 
-- 재점검 2차 backlog 1–8 처리 완료 (step 24–31). 다음은 PLAN 「재점검 2차」 남은 중간 항목 (docs/PLAN.md:166-168): 메뉴 정확성
-  (Increment and Save, Export Selection, Return in 3D View), 메뉴 세트 F2–F6, 컴포넌트 픽워크, Outliner 드래그 재부모, Channel Box 다중 선택
-  SHAPES/INPUTS, Ctrl+Alt+LMB 박스 줌, 뷰 패널 메뉴, wireframe-on-shaded 기본값, Set Project, T/Y 툴, 타임라인 키 눈금.
-  또는 재점검 3차 (`tools/dogfood.py --session` 탐색 세션 + blindspot) 로 새 backlog 를 만든다.
+- 재점검 3차 backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 7개; PLAN 「재점검 3차」 우선순위 1–7):
+  마킹 메뉴 화면 안, 메뉴 막다른 길, 키 묶음 (박스 줌·Ctrl+T·Y·Multi-Cut·Quad Draw·Return·F2–F6), 대칭, 뷰 패널 메뉴,
+  Channel Box 다중 선택·상대값 + AE 재질 라벨, 컴포넌트 픽워크 + Alt+Shift 축 고정.
 - 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.

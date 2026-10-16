@@ -174,3 +174,69 @@ Priority = how often a Maya user hits it in the first hour × how wrong it feels
 Risks the manual checks guard (most likely real bugs, not feel): real OS key paths (X released mid-drag, Alt+Tab with a
 key held — GUI tests replace `keystate.is_down`), keymap persistence with saved prefs (all tests use
 `--factory-startup`), global `z` in text fields, stray copies from Shift+drag, Outliner rebuild speed with many objects.
+
+## 재점검 3차 (step 32, 2026-10-17)
+
+Evidence: `docs/steps/step_32.md` (tests, dogfood, audit-3 session screenshots). Collected every step's 「남은 것」,
+`docs/manual_checks.md`, and ran a blindspot pass against research/maya/*. A read-only subagent did the collection; the
+"missing" claims were re-checked by grep. Verdicts are delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 10 (+Shift+drag manipulator: Smart Extrude step 26) | 3 — selection modifiers outside the 3D View (Outliner/Graph Ctrl = toggle, no marquee XOR), D/Insert (no edit-mode Insert, no pivot orientation), pick-walk (objects only) | 0 | 0 |
+| UI (9) | 6 (+layout step 31) | 3 — Maya Outliner (no drag reparent / sets / keyboard nav), timeline (no key ticks / range drag bar), menu sets (no F2–F6) | 0 | 0 |
+| 개념 (11) | 9 | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **25 (76 %)** | **6 (18 %)** | **0** | **2 (6 %)** |
+
+Audits 1 → 2 → 3: 21/8/2/2 → 23/8/0/2 → 25/6/0/2. Keymap rows (`docs/keymap_mapping.md`, 468): implemented 79 → **88**, IC 6 → 8,
+planned 13 → **5** (F2–F6), not applicable 10, macOS-only 68, unreviewed 292 → **289**. Manual checks: 115 open, none ticked.
+
+### New findings (audit-3 session, step_32.md)
+
+- RMB marking menu: the root list (now with the material items) goes below the viewport even when the menu opens on a centred
+  object. Step 29 only keeps submenus inside the region.
+- The AE material tab labels every Principled material "standardSurface" (Lambert/Blinn/Phong made by the kit too).
+- Ctrl+Alt+LMB drag box-selects instead of box-zooming (audit-2 blindspot 3, still open).
+- `invoke_search_popup` (Shift+T) leaks 5 memory blocks at exit. This is Blender's problem (reproduced without the kit); kept.
+
+### Blindspots (re-checked by grep in src/maya_kit)
+
+1. **Menu dead ends** (High–Medium):
+   - Windows > General / Modeling / Animation / Rendering / Relationship Editors have no children: Maya builds them at run time, and
+     `menu_map` maps only Workspaces / UI Elements / Preferences / Playblast / Output Window.
+   - UV > UV Editor, Planar, Best Plane and Normal-Based are greyed.
+   - Edit > Ungroup has no operator.
+   - Display > Heads Up Display > Poly Count is missing (no `show_stats` anywhere).
+   - File > Increment and Save is a plain Save As (`menu_map.py:59`), and Export Selection opens the whole export menu (`:64`).
+2. **Symmetry** (Medium-high for modellers): no Status Line symmetry or Move tool option. The only grep hit is the menu item
+   `Edit Mesh/Symmetrize`.
+3. **Alt+Shift drag locks tumble/track to one axis** (interaction.md:46): not implemented, not in any doc. Low-medium.
+4. **K hold = scrub time in the viewport, Ctrl+T = Universal Manipulator key, Graph Editor 1/2/3 view keys**: unreviewed keymap rows
+   that animators and modellers use. Low-medium.
+5. **No in-view messages** on mode or soft-select toggles (interaction.md:30). Low.
+
+### Remaining work, by priority
+
+1. **Marking menu stays on screen**: keep the RMB / Shift+RMB root list inside the visible region; check the hotbox near the
+   top edge (step_17.md:67).
+2. **Menu dead ends** (blindspot 1): Windows editors, UV Editor / Planar, Ungroup, HUD Poly Count, Increment and Save,
+   Export Selection.
+3. **Key batch**: Ctrl+Alt+LMB box zoom, Ctrl+T, Y (last tool), Ctrl+Shift+X Multi-Cut, Ctrl+Shift+Q Quad Draw, Return in the
+   3D View, and F2–F6 menu sets (decide the IC F1–F4 view-key clash).
+4. **Symmetry** (blindspot 2).
+5. **Per-viewport panel menu bar** (View / Shading / Lighting / Show / Renderer / Panels, ui_layout.md:243-245).
+6. **Channel Box**: SHAPES/INPUTS for a multi-object selection, `+=`/`-=`/`*=` relative entry; AE material type label.
+7. **Component pick-walk** (arrow keys in edit mode) and Alt+Shift axis-locked navigation.
+8. Medium: Outliner drag reparent / sets, edit-mode Insert + pivot orientation, pre-selection for edges/faces/objects and
+   under Move/Rotate/Scale, Status Line input line, timeline key ticks, K scrub, Graph Editor keys, Shift+Q / Alt+Q menus,
+   AE "2 c" length fields.
+9. Low: marking menu editor, shelf reorder, AE extra templates, in-view messages, curve/armature edit-mode keys, Ctrl+5,
+   289 unreviewed keymap rows.
+10. Not possible / out of scope (kept documented): Y-up, separate pivots, MMB on fields, MEL, history nodes, option boxes /
+    tear-off, timeline frame box over numbers, 5 cm major grid lines, Extensions platform listing.
+
+Risks the manual checks guard: real OS key paths (keys released mid-drag, Alt+Tab with a key held), keymap persistence with
+saved prefs, select-through X-ray flag left on after an aborted drag, Outliner rebuild speed with many objects. A hand
+pass over the 115 manual checks is still the biggest unverified area.
