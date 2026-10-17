@@ -123,6 +123,18 @@ def resolve(trigger, context, picked=None):
         tid = tool.idname if tool else ""
         name = mm.SELECT_OPTIONS if tid.startswith("builtin.select") else mm.TOOL_OPTIONS.get(tid)
         return ("pie", idname(name)) if name else None
+    space = getattr(context, "space_data", None)
+    if space is not None and space.type == 'IMAGE_EDITOR':
+        # UV Editor (step 66): Maya RMB radial, Shift+RMB = UV / UV Shell tools
+        if mode != 'EDIT_MESH' or space.mode != 'UV':
+            return None
+        if trigger == "RMB":
+            return ("pie", idname("textureWindowCreatePopupRadialMenu"))
+        if trigger == "SHIFT_RMB":
+            ts = context.scene.tool_settings
+            shell = not ts.use_uv_select_sync and ts.uv_select_mode == 'ISLAND'
+            return ("pie", idname("contextPolyToolsUVShellMM" if shell else "contextPolyToolsUVMM"))
+        return None
     if trigger == "CTRL_RMB":
         if mode == 'EDIT_MESH':
             return ("pie", idname("polyConvertMM"))

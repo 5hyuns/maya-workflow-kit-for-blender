@@ -74,6 +74,12 @@ NOTICES = {
         "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
     "File/Project Window": (
         "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
+    # UV (step 66): Blender cuts / sews UVs in the UV Editor only
+    "UV/3D Cut and Sew UV Tool": (
+        "Cut / Sew", "Blender has no 3D cut-and-sew tool (not in Maya Kit yet): select edges in the 3D View, then Cut (Shift+X) / "
+        "Sew (Shift+S) in the UV Editor."),
+    "UV/Auto Seams": (
+        "Smart UV Project", "Blender has no automatic seams: UV > Automatic (Smart UV Project) cuts by angle."),
     # Modeling (step 64): the Crease Tool works, with Blender's 0-1 crease underneath
     "Mesh Tools/Crease Tool": (
         "Edge crease", "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that "

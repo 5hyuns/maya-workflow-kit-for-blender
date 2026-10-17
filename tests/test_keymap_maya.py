@@ -170,6 +170,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            **{km: (km,) for km in maya_patches.SELECT_DRAG_KEYMAPS},
            # Step 64: the Multi-Cut (knife) tool keymap; the knife modal map (modal maps aren't checked).
            maya_patches.KNIFE_TOOL: (maya_patches.KNIFE_TOOL,), "Knife Tool Modal Map": ("Knife Tool Modal Map",),
+           # Step 66: the UV Editor (an Image Editor in UV mode).
+           maya_patches.UV_KM: ("Window", "Screen", "Frames", maya_patches.UV_KM, "Image", "Image Generic", "View2D"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

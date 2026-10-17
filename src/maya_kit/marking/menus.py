@@ -162,7 +162,7 @@ RMB_MESH = MarkingMenu(
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        "E": ("UV", None),
+        "E": ("UV", ("maya_kit.uv_component", {"mode": 'UV'})),   # opens the UV Editor (step 66)
         "SW": ("Vertex Face", None),
         "SE": ("Multi", _comp('MULTI')),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
@@ -624,10 +624,78 @@ HB_CENTER = MarkingMenu(
 
 HOTBOX_ZONES = {"N": HB_NORTH, "S": HB_SOUTH, "E": HB_EAST, "W": HB_WEST, "C": HB_CENTER}
 
+# --- UV Editor ---------------------------------------------------
+
+def _uvc(mode):
+    return ("maya_kit.uv_component", {"mode": mode})
+
+
+UV_OPS = [("Cut UV Edges", "maya_kit.uv_cut"), ("Sew UV Edges", "maya_kit.uv_sew"),
+          ("Unfold", "maya_kit.uv_unfold"), ("Layout", "maya_kit.uv_layout")]
+
+# RMB in the UV Editor: Maya textureWindowCreatePopupRadialMenu (polygon version, :53-77, directions
+# :34-42; , recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
+# the kit lists the commands of this step instead.
+UV_EDITOR_RMB = MarkingMenu(
+    "textureWindowCreatePopupRadialMenu", "UV Editor", " textureWindowCreatePopupRadialMenu",
+    radial={
+        "S": ("Face", _uvc('FACE')),                                       # :53
+        "N": ("Edge", _uvc('EDGE')),                                       # :58
+        "E": ("UV", _uvc('UV')),                                           # :63
+        "W": ("Vertex", _uvc('VERTEX')),                                   # :68
+        "NW": ("UV Shell", _uvc('SHELL')),                                 # :73
+    },
+    items=[*UV_OPS, DIVIDER, ("Select All", ("uv.select_all", {"action": 'SELECT'})),
+           ("Pin", "uv.pin"), ("Unpin", ("uv.pin", {"clear": True}))])
+
+# Shift+RMB in the UV Editor: Maya's UV / UV Shell tool menus (Maya / Maya),
+# Mapping = contextPolyToolsUVMappingMM.
+UV_MAPPING = Sub(radial={
+    "N": ("Planar", "maya_kit.uv_planar"),
+    "NE": ("Normal-Based", "maya_kit.uv_planar"),
+    "E": ("Camera-Based", ("v3d", "uv.project_from_view", {})),
+    "SE": ("Cylindrical", ("v3d", "uv.cylinder_project", {})),
+    "S": ("Best Plane", None),
+    "SW": ("Spherical", ("v3d", "uv.sphere_project", {})),
+    "W": ("Contour Stretch", None),
+    "NW": ("Automatic", "uv.smart_project"),
+})
+_UV_TAIL = [("Texture Borders", None), DIVIDER, ("UV Editor", ("maya_kit.uv_component", {"mode": 'OPEN'})),
+            ("UV Set Editor", None)]
+
+SHIFT_UV = MarkingMenu(
+    "contextPolyToolsUVMM", "UV Tools", " contextPolyToolsUVMM",
+    radial={
+        "N": ("Mapping", UV_MAPPING),                                      # :25
+        "NE": ("3D Grab UV Tool", None),                                   # :38
+        "E": ("Sew UVs", "maya_kit.uv_sew"),                               # :54
+        "SE": ("Create UV Shell", None),                                   # :64
+        "S": ("Merge UVs", "uv.weld"),                                     # :74
+        "SW": ("Delete UVs", None),                                        # :89
+        "W": ("Cut UVs", "maya_kit.uv_cut"),                               # :99
+        "NW": ("3D Cut and Sew UV Tool", None),                            # :108
+    },
+    items=[("Auto Seams", None), *_UV_TAIL])
+
+SHIFT_UV_SHELL = MarkingMenu(
+    "contextPolyToolsUVShellMM", "UV Shell Tools", " contextPolyToolsUVShellMM",
+    radial={
+        "N": ("Mapping", UV_MAPPING),                                      # :25
+        "NE": ("3D Grab UV Tool", None),                                   # :38
+        "E": ("Optimize", "uv.minimize_stretch"),                          # :54
+        "SE": ("Flip", ("transform.mirror", {"constraint_axis": (True, False, False)})),   # :69 (Flip U)
+        "S": ("Auto Seams", None),                                         # :81
+        "SW": ("Layout", "maya_kit.uv_layout"),                            # :97
+        "W": ("Unfold", "maya_kit.uv_unfold"),                             # :112
+        "NW": ("3D Cut and Sew UV Tool", None),                            # :126
+    },
+    items=list(_UV_TAIL))
+
 MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
-                             HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER)}
+                             HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
+                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL)}
 
 # Active tool -> its options marking menu (Maya-49).
 TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",

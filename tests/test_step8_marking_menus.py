@@ -76,7 +76,7 @@ def _fresh():
 # --- definitions ------------------------------------------------------------------
 
 def test_definitions_well_formed():
-    assert len(mm.MENUS) == 19, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10)
+    assert len(mm.MENUS) == 22, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10) + 3 UV Editor (step 66)
     for name, menu in mm.MENUS.items():
         for path, label, action in mm.walk(menu, name):
             assert label and isinstance(label, str), path

@@ -48,6 +48,12 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
         window = context.window
         if window is None:
             return {'CANCELLED'}
+        if self.ui_type == 'UV':
+            # Maya UV > UV Editor shows the object's UVs at once: edit mode + UV Sync Selection, one editor (step 66)
+            from . import uv_tools
+            uv_tools.prepare(context)
+            if uv_tools.find_uv_editor(context)[1] is not None:
+                return {'FINISHED'}
         area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
         if area is None:
             return {'CANCELLED'}
