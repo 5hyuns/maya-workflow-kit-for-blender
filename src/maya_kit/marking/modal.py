@@ -66,7 +66,11 @@ def run_action(context, action, option=False):
     if kind == "v3d" and (context.area is None or context.area.type != 'VIEW_3D'):
         return bpy.ops.maya_kit.menu_run(op=target, props=json.dumps(props))
     mod, name = target.split(".")
-    res = getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT', **props)
+    op = getattr(getattr(bpy.ops, mod), name)
+    if option and "option_box" in op.get_rna_type().properties:
+        # the operator has its own Maya options window (invoke_props_dialog, step 63)
+        return op('INVOKE_DEFAULT', option_box=True, **props)
+    res = op('INVOKE_DEFAULT', **props)
     if option and res == {'FINISHED'}:
         # Maya's option box opens the command's settings: Blender's Adjust Last Operation.
         try:

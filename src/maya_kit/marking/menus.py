@@ -228,14 +228,14 @@ SHIFT_OBJECT = MarkingMenu(
         ("Subdiv Proxy", _mod('SUBSURF')),                                 # :221
         ("Crease Tool", None),
         DIVIDER,
-        ("Mirror", _mod('MIRROR')),                                        # :280
+        ("Mirror", "maya_kit.mirror"),                                        # :280
         DIVIDER,
         ("Triangulate", _mod('TRIANGULATE')),                              # :303
         ("Quadrangulate", None),
         ("Reduce", _mod('DECIMATE')),                                      # :324
         DIVIDER,
-        ("Separate", ("mesh.separate", {"type": 'LOOSE'})),                # :380
-        ("Combine", "object.join"),                                        # :387
+        ("Separate", "maya_kit.separate"),                # :380
+        ("Combine", "maya_kit.combine"),                                        # :387
         ("Booleans", Sub(items=[("Union", None), ("Difference", None), ("Intersection", None)],
                          options={"Union", "Difference", "Intersection"})),
         DIVIDER,

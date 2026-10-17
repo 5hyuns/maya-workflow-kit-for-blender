@@ -426,3 +426,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 62) Modify > Add Attribute... (Attributes 절) / CB Edit > Add Attribute: 이름·Float/Integer/Boolean·Min/Max/Default → CB 에 Maya nice name 행 (fingerCurl → Finger Curl), 범위 밖 입력이 잘림. Edit Attribute (이름 바꾸기 → 키가 따라감), Delete Attributes (선택 채널).
 - [ ] (step 62) 머리 복제 → 수정 → 타깃·베이스 순서 선택 → Deform > Blend Shape: 베이스에 Basis + 타깃 이름 셰이프 키 (값 0), CB SHAPES. 정점 수가 다르면 오류 문구.
 - [ ] (step 62) Skeleton > Quick Rig: Rigify 가 꺼져 있으면 확인 대화상자 → 켜고 사람 메타 리그 추가; 툴팁·Help Line 의 Rigify 안내. HumanIK 는 회색 + 같은 안내.
+
+### Step 63 — Modeling Toolkit · 소프트 선택 Maya 단위 · Combine / Separate / Mirror / Boolean
+
+- [ ] (step 63) Status Line 오른쪽 편집기 토글 맨 앞 (MTK) 아이콘 / Windows > Modeling Editors > Modeling Toolkit / Mesh Tools > Show/Hide Modeling Toolkit → 사이드바 도크가 Modeling Toolkit; 다시 누르면 Channel Box. modeling_03.png 와 순서·묶음이 같은지 (선택 모드 아이콘, "N faces selected", Pick/Marquee · Drag · Tweak/Marquee, Symmetry, ▸Soft Selection, ▾Mesh, ▾Components, ▾Tools).
+- [ ] (step 63) MTK 버튼: Extrude (면 선택 → 바로 압출 + Move 매니퓰레이터, 드래그해서 뺌), Bevel, Bridge, Add Divisions, Multi-Cut, Connect, Quad Draw, Combine, Separate, Smooth, Boolean. 회색 (Highlight Backfaces, Selection/Transform Constraint, UV, Target Weld) 은 툴팁·Help Line 에 안내.
+- [ ] (step 63) Camera Based Selection 을 켜면 편집 모드 마키가 보이는 것만 선택, 끄면 뒤쪽까지 (Maya 기본 꺼짐). Highlight Nearest Component 끄면 호버 강조 없음.
+- [ ] (step 63) B 탭으로 소프트 선택 켤 때 반경이 Maya 기본 5 (cm 템플릿 = 5 cm), B+드래그 머리글이 Maya 단위, MTK Soft Selection 의 Falloff radius 가 같은 숫자; Volume / Surface; Reset.
+- [ ] (step 63) pCube1 + pSphere1 선택 → Mesh > Combine → pCube2 하나, Channel Box Translate 0, 피벗이 둘을 합친 상자 중심. Mesh > Separate (오브젝트 모드) → pCube2 그룹 아래 polySurface1 / polySurface2 (Translate 0). 편집 모드 Separate = Blender 그대로.
+- [ ] (step 63) Mesh > Mirror (클릭 = 지난 설정), 메뉴를 누른 채 □ = Mirror Options 창 (Cut / World·Object·Bounding Box / Offset / X·Y·Z / + − / Combine / Merge / Threshold). 원점이 아닌 곳의 큐브에 World X − → 오른쪽 반을 잘라 왼쪽으로, 경계 병합. Mesh > Booleans 세 가지 (먼저 선택한 것 − 나중 것).

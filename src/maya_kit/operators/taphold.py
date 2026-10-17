@@ -134,6 +134,20 @@ def proportional_prop(context):
     return "use_proportional_edit_objects" if context.mode == 'OBJECT' else "use_proportional_edit"
 
 
+# Maya's factory soft select radius: softSelect -q -softSelectDistance = 5.0 (Maya units; mayapy, factory
+# prefs, docs/steps/step_63.md). Blender's own default proportional_size is 1.0 BU.
+MAYA_SOFT_RADIUS = 5.0
+BLENDER_SOFT_RADIUS = 1.0
+
+
+def maya_soft_radius(context):
+    """Turning soft select on with Blender's untouched default radius: use Maya's (x maya_unit, decision 8)."""
+    from . import units
+    ts = context.scene.tool_settings
+    if abs(ts.proportional_size - BLENDER_SOFT_RADIUS) < 1e-9:
+        ts.proportional_size = MAYA_SOFT_RADIUS * units.maya_unit(context.scene)
+
+
 def radius_from_drag(start_size, dx):
     """B + LMB drag: doubles the radius every 100 px to the right."""
     return max(1e-4, start_size * 2.0 ** (dx / 100.0))
@@ -148,9 +162,12 @@ class SoftSelectBinding(TapHoldBinding):
         ts = context.scene.tool_settings
         prop = proportional_prop(context)
         setattr(ts, prop, not getattr(ts, prop))
+        if getattr(ts, prop):
+            maya_soft_radius(context)
 
     def click(self, context, event):
         ts = context.scene.tool_settings
+        maya_soft_radius(context)
         self._start_size = ts.proportional_size
         self._prop = proportional_prop(context)
         self._was_on = getattr(ts, self._prop)
@@ -176,7 +193,9 @@ class SoftSelectBinding(TapHoldBinding):
     def _header(context, size):
         area = context.area
         if area is not None:
-            area.header_text_set(None if size is None else f"Soft Select radius: {size:.3f}")
+            from . import units
+            area.header_text_set(None if size is None else
+                                 f"Soft Select radius: {size / units.maya_unit(context.scene):.3f} (Maya units)")
 
 
 class SelectAllBinding(TapHoldBinding):

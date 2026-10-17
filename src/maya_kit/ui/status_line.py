@@ -273,6 +273,8 @@ class MAYAKIT_OT_hypershade(bpy.types.Operator):
 # --- editor toggles (ui_layout.md:213-216) -----------------------------------------------
 
 EDITORS = (
+    # Maya order: Modeling Toolkit first (research/maya/ui_layout.md:212-216, step 63)
+    ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit (sidebar dock)", 'EDITMODE_HLT'),
     ("ATTRIBUTE", "Show the Attribute Editor (the dock's AE, or a Properties editor's Object tab)", 'PROPERTIES'),
     ("TOOL_SETTINGS", "Show the Tool Settings of the active tool", 'TOOL_SETTINGS'),
     ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor (3D View sidebar)", 'MENU_PANEL'),
@@ -281,6 +283,9 @@ EDITORS = (
 
 def editor_shown(screen, editor):
     area, _r = main_view3d(screen)
+    if editor == "MODELING_TOOLKIT":
+        return (area is not None and area.spaces.active.show_region_ui
+                and getattr(bpy.context.window_manager, "maya_kit_dock", "") == 'MODELING_TOOLKIT')
     if editor == "ATTRIBUTE":
         props = _properties_area(screen)
         if props is None:   # the dock's Attribute Editor (step 49: no Properties column)
@@ -320,6 +325,11 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
         area, region = main_view3d(screen)
         if area is None:
             return {'CANCELLED'}
+        if self.editor == "MODELING_TOOLKIT":
+            # Maya hides the MTK tab (the Channel Box stays) or shows it in the dock
+            dock = 'CHANNEL_BOX' if editor_shown(screen, "MODELING_TOOLKIT") else 'MODELING_TOOLKIT'
+            with context.temp_override(window=context.window, area=area, region=region):
+                return bpy.ops.maya_kit.dock_show(dock=dock)
         if self.editor == "TOOL_SETTINGS":
             # The sidebar Tool tab's panel as a popup (needs a 3D View context).
             with context.temp_override(window=context.window, area=area, region=region):

@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 63 (Modeling Toolkit 도크·소프트 선택 Maya 단위·Combine/Separate/Mirror/Boolean) 완료 — `docs/steps/step_63.md`. MTK = dock 세 번째 항목
+  (modeling_03 순서, 버튼 = 메뉴 동작, Status Line 토글 맨 앞), Maya 실측 (mayapy): 소프트 선택 반경 5, Combine = pCube2 + bbox 중심 피벗, Separate =
+  그룹 아래 polySurfaceN. Mirror = bmesh 적용 + □ Mirror Options (`run_action` 이 `option_box` 속성 연산자에 넘김). 헤드리스 505/505, GUI 0.8 426/427
+  (step 3 B 드래그 기대값 갱신 후 17/17), gui_step63 8/8, dogfood 47/47.
+  **바로 다음 할 일**: step 64 Target Weld·Crease 툴·Multi-Cut 감각 (근거 `research/maya/workflows/modeling.md` 갭 표; MTK Tools 의 Target Weld 회색을 연결).
+
 - Step 62 (Set Driven Key·포즈 모드 제약·Add Attribute·Blend Shape·Quick Rig) 완료 — `docs/steps/step_62.md`. SDK 창 = dock 의 CB 아래
   (Driver/Driven 스크롤 목록, Key · Load Driver · Load Driven · Close; 결과 = 드라이버 F-커브 키 = Maya animCurveUU), 창이 열린 동안 CB 로 바꾼 피동 값은
   드라이버 mute 로 유지 → Key/Close 가 풂; Constrain 이 포즈 모드면 본에; Modify/CB Edit > Add·Edit·Delete Attribute (CB 라벨 = Maya nice name);

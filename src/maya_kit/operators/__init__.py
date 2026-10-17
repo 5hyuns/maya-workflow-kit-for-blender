@@ -9,7 +9,7 @@ Operator ids use the ``maya_kit.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (component, create, display, driven_key, duplicate, freeze, group, history, hold, joints, manip, marquee,
-               material, menu_extras, parenting, pickwalk, pivot, preselect, rig_tools, skin, snap_align, symmetry, taphold,
+               material, menu_extras, mesh_maya, parenting, pickwalk, pivot, preselect, rig_tools, skin, snap_align, symmetry, taphold,
                time_keys, tool_keys, units, view, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -18,7 +18,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *component.classes, *manip.classes, *material.classes,
            *marquee.classes, *preselect.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
-           *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes)
+           *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
