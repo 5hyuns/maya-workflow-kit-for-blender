@@ -211,6 +211,6 @@ def test_mtk_extrude_adds_faces():
     bpy.ops.object.mode_set(mode='OBJECT')
     cube.data.polygons[0].select = True
     bpy.ops.object.mode_set(mode='EDIT')
-    assert bpy.ops.maya_kit.mtk_extrude() == {'FINISHED'}
+    assert bpy.ops.maya_kit.extrude() == {'FINISHED'}   # the MTK button = polyExtrudeFace since step 65
     bpy.ops.object.mode_set(mode='OBJECT')
     assert len(cube.data.polygons) == 10, len(cube.data.polygons)

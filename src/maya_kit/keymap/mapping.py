@@ -173,8 +173,8 @@ ENTRIES = {
                                          note="선택 순서 따라 한 칸 (루프 확장 근사)"),
     "ShrinkLoopPolygonSelectionRegion": _e("KIT", ("Mesh", "mesh.select_prev_item", {}),
                                            note="선택 순서 따라 한 칸 되돌림 (근사)"),
-    "PolyExtrude": _e("KIT", ("Mesh", "view3d.edit_mesh_extrude_move_normal", {}),
-                      note="압출 후 바로 법선 방향 이동 모달"),
+    "PolyExtrude": _e("KIT", ("Mesh", "maya_kit.extrude", {}),
+                      note="polyExtrudeFace: 길이 0 압출 + 매니퓰레이터·In-View Editor·INPUTS (step 65); 엣지/정점은 압출 + 법선 드래그"),
     "BevelPolygon": _e("KIT", ("Mesh", "maya_kit.bevel", {}),
                        note="정점 모드 = 정점 베벨, 그 외 엣지; 드래그로 폭"),
     # --- step 24: component Delete; plain Delete/Backspace is

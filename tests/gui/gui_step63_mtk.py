@@ -126,8 +126,10 @@ def s_check_extrude():
     ob.update_from_editmode()
     n = len(ob.data.polygons)
     check(f"MTK Extrude: one face extruded, 6 -> {n} faces", n == 10)
-    check(f"... and the Move manipulator is on (tool {bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH').idname})",
-          bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH').idname == "builtin.move")
+    ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
+    _o, rec = ex.active(bpy.context)
+    check(f"... as Maya's polyExtrudeFace1 with its manipulator (step 65; got {rec and rec.name})",
+          rec is not None and rec.name == "polyExtrudeFace1")
 
 
 def s_check_object_mode():

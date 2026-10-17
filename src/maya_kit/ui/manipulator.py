@@ -400,7 +400,10 @@ class MAYAKIT_GGT_xform(GizmoGroup):
         space = context.space_data
         if space is None or space.type != 'VIEW_3D' or not space.show_gizmo or not space.show_gizmo_tool:
             return False
-        return tool_kind(context) is not None and _has_selection(context)
+        if tool_kind(context) is None or not _has_selection(context):
+            return False
+        from . import in_view
+        return not in_view.manip_visible(context)   # Maya: the extrude manipulator replaces it (step 65)
 
     def setup(self, context):
         self.handles = []      # (gizmo, role, data)

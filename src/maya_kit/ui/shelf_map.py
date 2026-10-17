@@ -58,7 +58,7 @@ BY_COMMAND = {
     "SmoothPolygon": (_mod('SUBSURF'), 'MOD_SUBSURF'),
     "ReducePolygon": (_mod('DECIMATE'), 'MOD_DECIM'),
     "PolyRemesh": (_mod('REMESH'), 'MOD_REMESH'),
-    "PolyExtrude": (("v3d", "view3d.edit_mesh_extrude_move_normal", {}), 'FACESEL'),
+    "PolyExtrude": (("v3d", "maya_kit.extrude", {}), 'FACESEL'),     # polyExtrudeFace (step 65)
     "performBridgeOrFill": ("mesh.bridge_edge_loops", 'MOD_LATTICE'),
     "performBevelOrChamfer": (("v3d", "mesh.bevel", {}), 'MOD_BEVEL'),
     "PolyMerge": ("mesh.remove_doubles", 'AUTOMERGE_OFF'),

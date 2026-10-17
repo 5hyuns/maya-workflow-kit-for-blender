@@ -266,7 +266,7 @@ MAP = {
     "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "mesh.vert_connect_path",
-    "Edit Mesh/Extrude": ("v3d", "view3d.edit_mesh_extrude_move_normal", {}),
+    "Edit Mesh/Extrude": ("v3d", "maya_kit.extrude", {}),       # polyExtrudeFace (step 65)
     "Edit Mesh/Merge": "mesh.remove_doubles",
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
     "Edit Mesh/Symmetrize": "mesh.symmetrize",

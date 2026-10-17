@@ -339,24 +339,4 @@ class MAYAKIT_OT_boolean(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MAYAKIT_OT_mtk_extrude(bpy.types.Operator):
-    """Maya Extrude from the Modeling Toolkit: extrude the selected faces / edges / vertices now, then move them
-    with the manipulator (no drag needed)"""
-    bl_idname = "maya_kit.mtk_extrude"
-    bl_label = "Extrude"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == 'EDIT_MESH'
-
-    def execute(self, context):
-        bpy.ops.mesh.extrude_context()
-        try:
-            bpy.ops.wm.tool_set_by_id(name="builtin.move")
-        except RuntimeError:
-            pass
-        return {'FINISHED'}
-
-
-classes = (MAYAKIT_OT_mirror, MAYAKIT_OT_combine, MAYAKIT_OT_separate, MAYAKIT_OT_boolean, MAYAKIT_OT_mtk_extrude)
+classes = (MAYAKIT_OT_mirror, MAYAKIT_OT_combine, MAYAKIT_OT_separate, MAYAKIT_OT_boolean)

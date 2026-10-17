@@ -319,7 +319,7 @@ SHIFT_FACE = MarkingMenu(
     "contextPolyToolsFaceMM", "Face Tools", " contextPolyToolsFaceMM",
     radial={
         "N": ("Merge Faces To Center", MERGE_CENTER),                      # :27
-        "S": ("Extrude Face", ("v3d", "view3d.edit_mesh_extrude_move_normal", {})),  # :35
+        "S": ("Extrude Face", ("v3d", "maya_kit.extrude", {})),            # :35 (step 65)
         "SW": ("Wedge Face", None),                                        # :51
         "NE": ("Poke Face", "mesh.poke"),                                  # :68
         "E": ("Bevel Face", ("v3d", "mesh.bevel", {})),                    # :84
