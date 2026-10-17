@@ -146,6 +146,10 @@ def maya_views():
                 # (src/maya_kit/ui/maya_grid.py: show_floor / show_ortho_grid off, grid_lines 0; step 45).
                 space.overlay.show_floor = space.overlay.show_ortho_grid = False
                 space.overlay.grid_lines = 0
+                # Maya view furniture (ViewCube, axis triad, camera name; ui/view_furniture.py, step 46)
+                # replaces Blender's navigation gizmo and text info.
+                space.show_gizmo_navigate = False
+                space.overlay.show_text = False
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

@@ -148,6 +148,15 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         description="Top bar shows the Maya menus, menu sets and Status Line instead of "
                     "Blender's menus and workspace tabs (Blender menus stay as submenus)",
         default=True)
+    # Maya view furniture, in views whose Blender navigation gizmo is off.
+    maya_viewcube: bpy.props.BoolProperty(
+        name="ViewCube", description="Maya ViewCube in the top right of the view (click a face to look "
+                                     "along it)", default=True)
+    maya_camera_names: bpy.props.BoolProperty(
+        name="Camera Names", description="Maya camera name (persp, top -Z, ...) at the bottom of the view",
+        default=True)
+    maya_view_axis: bpy.props.BoolProperty(
+        name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
     maya_panel_menus: bpy.props.BoolProperty(
         name="Panel Menus",
         description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
@@ -277,6 +286,10 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "show_status_line")
         row.prop(self, "show_command_line")
         row.prop(self, "show_help_line")
+        row = box.row()
+        row.prop(self, "maya_viewcube")
+        row.prop(self, "maya_camera_names")
+        row.prop(self, "maya_view_axis")
 
         from . import app_template
         box = layout.box()
