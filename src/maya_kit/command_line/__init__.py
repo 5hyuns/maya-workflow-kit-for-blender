@@ -134,31 +134,63 @@ def help_text(context):
 
 # --- status bar --------------------------------------------------------------------------
 
+# Maya 2022 puts the Help Line and the Command Line on one row, Help Line left (
+# 128-131, :290-298); widths from the factory window (_maya_ui_dump.json HelpLine 675 px, CommandLine 915 px
+# at 1600 px) in UI units (20 px at effective scale 1.0).
+HELP_UNITS = 33.75
+COMMAND_UNITS = 45.75
+_blender_draw = []
+
+
+def draw_help_line(layout, context):
+    """Tool help, else Blender's mouse/key hints; reports and job progress after it (Maya's Help Line
+    shows progress too)."""
+    text = help_text(context)
+    if text:
+        layout.label(text=text, icon='INFO')
+    else:
+        layout.template_input_status()
+    layout.template_reports_banner()
+    layout.template_running_jobs()
+
+
+def draw_command_line(layout, context):
+    wm = context.window_manager
+    row = layout.row(align=True)
+    row.operator(MAYAKIT_OT_command_line_language.bl_idname, text="Python")
+    sub = row.row(align=True)
+    sub.ui_units_x = 16
+    sub.prop(wm, "maya_kit_cmd", text="", placeholder="Python  (cmds.polyCube(), C.object ...)")
+    sub = row.box().row()
+    sub.alert = _result["error"]
+    sub.label(text=_result["text"] or " ")
+    row.menu(MAYAKIT_MT_command_history.bl_idname, text="", icon='RECOVER_LAST')
+    row.operator(MAYAKIT_OT_script_editor.bl_idname, text="", icon='CONSOLE')
+
+
 def draw_status_bar(self, context):
+    """STATUSBAR_HT_header.draw while the kit is on: Help Line | Command Line, then Blender's
+    scene statistics if there is room; Blender's own draw when both are off."""
     from .. import preferences
     try:
         prefs = preferences.get(context)
     except KeyError:
-        return
+        prefs = None
+    if prefs is None or not (prefs.show_help_line or prefs.show_command_line):
+        return _blender_draw[0](self, context)
     layout = self.layout
-    if prefs.show_command_line:
-        wm = context.window_manager
-        row = layout.row(align=True)
-        row.operator(MAYAKIT_OT_command_line_language.bl_idname, text="Python")
-        sub = row.row(align=True)
-        sub.ui_units_x = 16
-        sub.prop(wm, "maya_kit_cmd", text="", placeholder="Python  (cmds.polyCube(), C.object ...)")
-        sub = row.box().row()
-        sub.ui_units_x = 14
-        sub.alert = _result["error"]
-        sub.label(text=_result["text"] or " ")
-        row.menu(MAYAKIT_MT_command_history.bl_idname, text="", icon='RECOVER_LAST')
-        row.operator(MAYAKIT_OT_script_editor.bl_idname, text="", icon='CONSOLE')
-        layout.separator()
     if prefs.show_help_line:
-        text = help_text(context)
-        if text:
-            layout.label(text=text, icon='INFO')
+        row = layout.row()
+        row.ui_units_x = HELP_UNITS
+        draw_help_line(row, context)
+    if prefs.show_command_line:
+        row = layout.row()
+        row.ui_units_x = COMMAND_UNITS
+        draw_command_line(row, context)
+    for func in getattr(_blender_draw[0], "_draw_funcs", ())[1:]:   # other add-ons' .append()ed items
+        func(self, context)
+    layout.separator_spacer()
+    layout.template_status_info()
 
 
 # --- `import maya.cmds` --------------------------------------------------------------------
@@ -196,13 +228,14 @@ def register():
     bpy.types.WindowManager.maya_kit_cmd = StringProperty(
         name="Command Line", description="Python command (Enter to run). MEL is not supported",
         options={'SKIP_SAVE'}, update=_on_command)
-    bpy.types.STATUSBAR_HT_header.prepend(draw_status_bar)
+    _blender_draw.append(bpy.types.STATUSBAR_HT_header.draw)
+    bpy.types.STATUSBAR_HT_header.draw = draw_status_bar
     install_maya_module()
 
 
 def unregister():
     uninstall_maya_module()
-    bpy.types.STATUSBAR_HT_header.remove(draw_status_bar)
+    bpy.types.STATUSBAR_HT_header.draw = _blender_draw.pop()
     del bpy.types.WindowManager.maya_kit_cmd
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

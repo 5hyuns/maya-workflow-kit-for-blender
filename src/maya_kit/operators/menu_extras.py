@@ -16,7 +16,7 @@ import re
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, StringProperty
 from mathutils import Vector
 
 # --- editor windows ----------------------------------------------------------------------------
@@ -26,6 +26,7 @@ EDITOR_TYPES = (
     ('NLA_EDITOR', "Nonlinear Animation", ""), ('DRIVERS', "Drivers", ""),
     ('SEQUENCE_EDITOR', "Video Sequencer", ""), ('ShaderNodeTree', "Shader Editor", ""),
     ('UV', "UV Editor", ""), ('SPREADSHEET', "Spreadsheet", ""), ('TEXT_EDITOR', "Text Editor", ""),
+    ('PROPERTIES', "Properties", ""),
 )
 
 
@@ -42,6 +43,7 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
     bl_label = "Open Editor"
 
     ui_type: EnumProperty(items=EDITOR_TYPES, name="Editor")
+    tab: StringProperty(name="Properties Tab", options={'SKIP_SAVE'})
 
     def execute(self, context):
         window = context.window
@@ -61,6 +63,11 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
         target.ui_type = self.ui_type
         if self.ui_type == 'OUTLINER':
             _maya_outliner(target.spaces.active)
+        if self.ui_type == 'PROPERTIES' and self.tab:
+            try:
+                target.spaces.active.context = self.tab
+            except TypeError:   # tab not available (no active object etc.)
+                pass
         return {'FINISHED'}
 
 

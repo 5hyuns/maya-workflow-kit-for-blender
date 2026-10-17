@@ -236,8 +236,9 @@ class MAYAKIT_OT_render_settings(bpy.types.Operator):
 
     def execute(self, context):
         if not show_properties(context.screen, 'RENDER'):
-            self.report({'WARNING'}, "No Properties editor in this layout")
-            return {'CANCELLED'}
+            # Maya's Render Settings is a window of its own; the MayaKit layout has no Properties
+            # editor (step 49), so open one in a new window.
+            return bpy.ops.maya_kit.open_editor(ui_type='PROPERTIES', tab='RENDER')
         return {'FINISHED'}
 
 
@@ -272,7 +273,7 @@ class MAYAKIT_OT_hypershade(bpy.types.Operator):
 # --- editor toggles (ui_layout.md:213-216) -----------------------------------------------
 
 EDITORS = (
-    ("ATTRIBUTE", "Show the Attribute Editor (Properties, Object tab)", 'PROPERTIES'),
+    ("ATTRIBUTE", "Show the Attribute Editor (the dock's AE, or a Properties editor's Object tab)", 'PROPERTIES'),
     ("TOOL_SETTINGS", "Show the Tool Settings of the active tool", 'TOOL_SETTINGS'),
     ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor (3D View sidebar)", 'MENU_PANEL'),
 )
@@ -282,7 +283,10 @@ def editor_shown(screen, editor):
     area, _r = main_view3d(screen)
     if editor == "ATTRIBUTE":
         props = _properties_area(screen)
-        return props is not None and props.spaces.active.context == 'OBJECT'
+        if props is None:   # the dock's Attribute Editor (step 49: no Properties column)
+            return (area is not None and area.spaces.active.show_region_ui
+                    and getattr(bpy.context.window_manager, "maya_kit_dock", "") == 'ATTRIBUTE_EDITOR')
+        return props.spaces.active.context == 'OBJECT'
     if area is None or editor == "TOOL_SETTINGS":  # a popup, never "shown"
         return False
     return area.spaces.active.show_region_ui
@@ -302,6 +306,12 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
 
     def execute(self, context):
         screen = context.screen
+        if self.editor == "ATTRIBUTE" and _properties_area(screen) is None:
+            area, region = main_view3d(screen)
+            if area is None:
+                return {'CANCELLED'}
+            with context.temp_override(window=context.window, area=area, region=region):
+                return bpy.ops.maya_kit.ae_toggle()
         if self.editor == "ATTRIBUTE":
             if not show_properties(screen, 'OBJECT'):
                 self.report({'WARNING'}, "No Properties editor (or no active object)")

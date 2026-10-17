@@ -268,6 +268,16 @@ class MAYAKIT_PT_outliner(bpy.types.Panel):
     bl_category = CATEGORY
     bl_label = "Outliner"
 
+    @classmethod
+    def poll(cls, context):
+        # The Maya dock has no Outliner tab: with "Channel Box Dock Only" the Outliner is the
+        # layout's own Outliner editor (ui/dock_tabs.py, ).
+        from .. import preferences
+        try:
+            return not preferences.get(context).maya_dock_only
+        except KeyError:
+            return True
+
     def draw_header_preset(self, context):
         row = self.layout.row(align=True)
         row.prop(context.window_manager, "maya_kit_outliner_shapes", text="Shapes", toggle=True)

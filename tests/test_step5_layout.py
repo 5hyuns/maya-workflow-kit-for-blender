@@ -102,19 +102,15 @@ def test_template_layout():
     ws = bpy.data.workspaces["General"]
     scr = ws.screens[0]
     types = sorted(a.type for a in scr.areas)
-    # + the Maya strip (Status Line + Shelf, step 12): a marked Image Editor.
-    assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'OUTLINER', 'PROPERTIES', 'VIEW_3D'], types
+    # Maya General (step 49): Status Line row, Shelf row, Tool Box (narrow 3D View), Outliner, view,
+    # Time + Range Slider (timeline); CB/LE and AE are the view's sidebar dock, no Properties column.
+    assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'VIEW_3D', 'VIEW_3D'], types
     outliners = [a.spaces.active for a in scr.areas if a.type == 'OUTLINER']
-    main = [s for s in outliners if s.use_filter_object]
-    layers = [s for s in outliners if not s.use_filter_object]
-    assert len(main) == 1 and not main[0].use_filter_object_content, "DAG-only Outliner"
-    assert len(layers) == 1, "Layer Editor = collections-only Outliner"
-    v3d = next(a.spaces.active for a in scr.areas if a.type == 'VIEW_3D')
-    # tool header shown since step 7: it holds the Maya Status Line
-    assert v3d.show_region_ui and v3d.show_region_toolbar and v3d.show_region_tool_header
+    assert outliners[0].use_filter_object and not outliners[0].use_filter_object_content, "DAG-only Outliner"
+    v3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height).spaces.active
+    # sidebar = Channel Box dock; the Tool Box column replaces the toolbar; no tool settings row (step 49)
+    assert v3d.show_region_ui and not v3d.show_region_toolbar and not v3d.show_region_tool_header
     assert abs(v3d.lens - 35.0) < 1e-6
-    props = next(a.spaces.active for a in scr.areas if a.type == 'PROPERTIES')
-    assert props.context in {'OBJECT', 'SCENE'}, props.context  # no object yet -> Scene
 
     scene = bpy.context.scene
     assert scene.unit_settings.length_unit == 'CENTIMETERS' and scene.unit_settings.scale_length == 1.0

@@ -197,11 +197,16 @@ def s_ae_hist_shot():
     redraw()
 
 
-def _after_outliner():
+@step
+def s_outliner():
+    # step 49: the Outliner is the layout's own column left of the view (the sidebar is the dock only)
+    outl = [a for a in win().screen.areas if a.type == 'OUTLINER']
+    check("layout has the Outliner column", len(outl) == 1)
+    if outl:
+        with bpy.context.temp_override(window=win(), area=outl[0],
+                                       region=next(r for r in outl[0].regions if r.type == 'WINDOW')):
+            bpy.ops.outliner.expanded_toggle()
     redraw()
-
-
-step(goto_tab("Outliner", _after_outliner))
 
 
 @step

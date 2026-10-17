@@ -53,7 +53,8 @@ def s_topbar():
     cls = bpy.types.TOPBAR_HT_upper_bar
     check("top bar draws the Maya menu bar", cls.draw_left is C["sl"].draw_left)
     area, _r = view3d()
-    check("main 3D View shows the tool header row (Status Line)", area.spaces.active.show_region_tool_header)
+    # step 49: Maya has no tool settings row; the Status Line lives in the Maya strip (step 12)
+    check("main 3D View has no tool header row", not area.spaces.active.show_region_tool_header)
     shot("gui_step7_topbar_modeling.png")
     prefs().menu_set = 'riggingMenuSet'
     # The top bar is a global area (not in screen.areas): hovering it redraws it.
@@ -78,11 +79,15 @@ def s_rigging():
 def s_menu_open():
     shot("gui_step7_mesh_menu.png")
     tap('ESC')
-    # Type into the command line: click the field in the status bar (bottom row).
+    # Type into the command line: click the field in the status bar (bottom row). Step 49: the Command
+    # Line is right of the Help Line (command_line.HELP_UNITS), its field after the language button.
     C["n0"] = len(bpy.data.objects)
-    ev('MOUSEMOVE', 'NOTHING', x=200, y=12)  # hover first, so the field is the active button
-    ev('LEFTMOUSE', 'PRESS', x=200, y=12)
-    ev('LEFTMOUSE', 'RELEASE', x=200, y=12)
+    cl = import_module(MODULE + ".command_line")
+    s = bpy.context.preferences.system.ui_scale
+    x = round(cl.HELP_UNITS * 20 * s + 200 * s)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=12)  # hover first, so the field is the active button
+    ev('LEFTMOUSE', 'PRESS', x=x, y=12)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=12)
 
 
 @step

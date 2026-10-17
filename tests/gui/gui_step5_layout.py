@@ -30,19 +30,17 @@ def s_wait():
 
 @step
 def s_layout():
+    # Maya General (step 49): Tool Box | Outliner | view (+ sidebar dock), full-width strip and timeline
     check("workspace General", win().workspace.name == "General")
-    v3d = areas('VIEW_3D')[0]
-    outl = sorted(areas('OUTLINER'), key=lambda a: a.x)
-    props = areas('PROPERTIES')[0]
+    views = sorted(areas('VIEW_3D'), key=lambda a: -a.width * a.height)
+    v3d, column = views[0], views[-1]
+    outl = areas('OUTLINER')[0]
     time = areas('DOPESHEET_EDITOR')[0]
-    left, layer = outl[0], outl[-1]
-    check("Outliner left of the viewport", left.x + left.width <= v3d.x + 2)
-    check("Properties (AE) right of the viewport", props.x >= v3d.x + v3d.width - 2)
-    check("Layer Editor above Properties, same column",
-          abs(layer.x - props.x) <= 2 and layer.y > props.y)
-    check("Layer Editor shows collections only", not layer.spaces.active.use_filter_object)
-    check("timeline across the bottom", time.y < v3d.y and time.width >= v3d.width)
-    check("Outliner about 16% of the width", 0.10 < left.width / win().width < 0.22)
+    check("Tool Box column, then Outliner, left of the viewport",
+          len(views) == 2 and column.x < outl.x and outl.x + outl.width <= v3d.x + 2)
+    check("no Properties column (AE = the sidebar dock)", not areas('PROPERTIES'))
+    check("timeline across the bottom", time.y < v3d.y and time.width == win().width)
+    check("Outliner about 16% of the width", 0.10 < outl.width / win().width < 0.22)
     check("viewport sidebar shown (Channel Box host)", v3d.spaces.active.show_region_ui)
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_layout.png"))
@@ -51,8 +49,9 @@ def s_layout():
 
 @step
 def s_object():
-    props = areas('PROPERTIES')[0]
-    check("Properties switches to the Object tab with an object", props.spaces.active.context == 'OBJECT')
+    v3d = max(areas('VIEW_3D'), key=lambda a: a.width * a.height)
+    ui = next(r for r in v3d.regions if r.type == 'UI')
+    check("sidebar dock on the Channel Box tab with an object", ui.active_panel_category == "Channel Box")
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
     bpy.ops.maya_kit.theme_restore()

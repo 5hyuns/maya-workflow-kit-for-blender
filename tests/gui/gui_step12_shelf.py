@@ -53,9 +53,11 @@ def s_strip():
     rg = regions(strip)
     check(f"strip sits above the 3D View (strip y {strip.y}, 3D View top {area3d.y + area3d.height})",
           strip.y >= area3d.y + area3d.height - 2)
-    check(f"strip header (Status Line) and tool header (Shelf) both shown "
-          f"({rg['HEADER'].height}, {rg['TOOL_HEADER'].height})",
-          rg['HEADER'].height > 20 and rg['TOOL_HEADER'].height > 20)
+    # step 49: the template's Shelf is its own header-only row under the Status Line
+    row = C["shelf"].shelf_row_area(scr)
+    shelf_h = regions(row)['HEADER'].height if row else 0
+    check(f"Status Line row and Shelf row both shown ({rg['HEADER'].height}, {shelf_h})",
+          rg['HEADER'].height > 20 and shelf_h > 20 and row.y < strip.y)
     outliner = next(a for a in scr.areas if a.type == 'OUTLINER' and a.x < area3d.x)
     check("strip spans the Outliner and the viewport", strip.x <= outliner.x + 2
           and strip.x + strip.width >= area3d.x + area3d.width - 2)

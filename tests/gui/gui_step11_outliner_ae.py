@@ -7,7 +7,7 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -141,6 +141,13 @@ def _after_outliner_tab():
     i = rows.index(('OBJECT', "Cube", 1)) if ('OBJECT', "Cube", 1) in rows else -1
     check(f"Outliner: Cube under group1, its shape row next ({rows})",
           i > 0 and rows[i - 1][1] == "group1" and rows[i + 1] == ('SHAPE', "Cube", 2))
+    redraw()
+
+
+@step
+def s_outliner_tab_on():
+    # step 49: the kit's sidebar Outliner tab shows only with "Channel Box Dock Only" off
+    bpy.context.preferences.addons[MODULE].preferences.maya_dock_only = False
     redraw()
 
 
