@@ -7,7 +7,7 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
 C = {}
@@ -34,7 +34,7 @@ def s_setup():
     h = header()
     C["hy"] = h.y + h.height // 2
     C["hx"] = h.x
-    ev('MOUSEMOVE', 'NOTHING', x=h.x + 200, y=C["hy"])
+    ev('MOUSEMOVE', 'NOTHING', x=h.x + px(200), y=C["hy"])
     redraw()
 
 
@@ -46,7 +46,7 @@ def s_header_shot():
 
 
 def click(x, y=None):
-    x, y = C["hx"] + x, C["hy"] if y is None else y
+    x, y = C["hx"] + px(x), C["hy"] if y is None else y
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     ev('LEFTMOUSE', 'PRESS', x=x, y=y)
     ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
@@ -60,7 +60,7 @@ def s_shading_wait():
 @step
 def s_shading_shot():
     shot("gui_step37_shading_menu.png")
-    click(326, C["hy"] - 29)  # "Wireframe", first row under the header
+    click(326, C["hy"] - px(29))  # "Wireframe", first row under the header
 
 
 @step

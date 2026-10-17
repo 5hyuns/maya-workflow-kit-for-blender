@@ -42,6 +42,9 @@ def ui_scale():
 
 
 def font_size():
+    # Maya menus: Segoe UI 11 px at Qt dpr 1.0 ( metrics.font) = Blender's 11 pt
+    # widget text at an effective scale of 1.0 (the Maya density preset, ).
+    # blf font 0 is the interface font, so it is Segoe UI when view.font_path_ui points there.
     return max(8, round(11 * ui_scale()))
 
 

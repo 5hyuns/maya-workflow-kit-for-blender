@@ -9,6 +9,8 @@ override values the user changed afterwards.
 """
 
 import json
+import os
+import sys
 
 import bpy
 
@@ -40,12 +42,61 @@ SPLASH_PRESET = (
     ("view.show_splash", False),
 )
 
-# group -> (preset, backup property, option property) on the add-on preferences.
+
+# Maya density: Maya 2022 draws its Qt UI at device pixel ratio 1.0 even on a
+# 125 % Windows display ( metrics: Segoe UI 11 px, menu items 20 px, menu bar
+# 27 px), while Blender multiplies its UI by the OS scale (system.ui_scale 1.25 at view.ui_scale 1.0,
+# checked). Blender at an effective scale of 1.0 gives 11 px text, 20 px rows and a 26 px top bar,
+# so the Maya value is 1 / (OS scale): 0.8 at 125 %, 1.0 at 100 %.
+def os_scale(prefs=None):
+    prefs = prefs or bpy.context.preferences
+    if prefs.system.ui_scale <= 0.0:   # background: no window, system.ui_scale is 0
+        return 1.0
+    return prefs.system.ui_scale / max(prefs.view.ui_scale, 0.01)
+
+
+def maya_ui_scale(prefs=None):
+    return round(min(max(1.0 / os_scale(prefs), 0.5), 2.0), 3)
+
+
+def _density_preset():
+    return (("view.ui_scale", maya_ui_scale()),)
+
+
+# Maya's UI font is Segoe UI (metrics.font). Used from the installed Windows font, never shipped
+# ( D3); nothing to apply on other systems or when the file is missing.
+SEGOE_UI = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "segoeui.ttf")
+
+
+def font_available():
+    return sys.platform == "win32" and os.path.isfile(SEGOE_UI)
+
+
+def _font_preset():
+    return (("view.font_path_ui", SEGOE_UI),) if font_available() else ()
+
+
+# Maya's viewport wires are aliased 1 px lines (step 43 viewport.md: dormant wire #000460 vs Blender's
+# smoothed #151d5e).
+WIRE_PRESET = (
+    ("system.use_overlay_smooth_wire", False),
+    ("system.use_edit_mode_smooth_wire", False),
+)
+
+# group -> (preset or function returning one, backup property, option property) on the add-on preferences.
 GROUPS = {
     "navigation": (PRESET, "prefs_backup", "use_maya_navigation"),
     "undo": (UNDO_PRESET, "undo_backup", "use_maya_undo"),
     "splash": (SPLASH_PRESET, "splash_backup", "maya_hide_splash"),
+    "density": (_density_preset, "density_backup", "maya_density"),
+    "font": (_font_preset, "font_backup", "maya_font"),
+    "wire": (WIRE_PRESET, "wire_backup", "maya_wire"),
 }
+
+
+def preset_of(group):
+    preset = GROUPS[group][0]
+    return preset() if callable(preset) else preset
 
 
 def _resolve(prefs, path):
@@ -69,7 +120,9 @@ def write(prefs, values):
 
 def apply(prefs, addon_prefs, group="navigation"):
     """Back up the current values (once) and apply the Maya preset of ``group``."""
-    preset, backup, _option = GROUPS[group]
+    preset, backup = preset_of(group), GROUPS[group][1]
+    if not preset:
+        return
     if not getattr(addon_prefs, backup):
         setattr(addon_prefs, backup, json.dumps(read(prefs, preset)))
     write(prefs, dict(preset))
@@ -107,13 +160,34 @@ def restore_runtime(prefs, addon_prefs):
         addon_prefs.runtime_backup = ""
 
 
+# Applied from a timer: while add-ons register at start-up the window (and so the OS scale in
+# system.ui_scale) may not exist yet.
+LATE = ("density",)
+
+
+def _apply_late():
+    from . import preferences
+    try:
+        addon_prefs = preferences.get()
+    except KeyError:
+        return None
+    for group in LATE:
+        _preset, backup, option = GROUPS[group]
+        if getattr(addon_prefs, option) and not getattr(addon_prefs, backup):
+            apply(bpy.context.preferences, addon_prefs, group)
+    return None
+
+
 def register():
     from . import preferences
     addon_prefs = preferences.get()
     # First enable (no backup yet): apply. Later starts: values already stored.
     for group, (_preset, backup, option) in GROUPS.items():
+        if group in LATE:
+            continue
         if getattr(addon_prefs, option) and not getattr(addon_prefs, backup):
             apply(bpy.context.preferences, addon_prefs, group)
+    bpy.app.timers.register(_apply_late, first_interval=0.0)
 
 
 def unregister():
@@ -122,6 +196,8 @@ def unregister():
         addon_prefs = preferences.get()
     except KeyError:
         return
+    if bpy.app.timers.is_registered(_apply_late):
+        bpy.app.timers.unregister(_apply_late)
     for group in GROUPS:
         restore(bpy.context.preferences, addon_prefs, group)
     restore_runtime(bpy.context.preferences, addon_prefs)

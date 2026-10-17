@@ -92,14 +92,16 @@ VALUES = (
     # (25 % of the pixels) -> the same average colour as a uniform fill of effective alpha 0.25.
     # checked in look_compare (viewport.md, face mode): face_select alone draws ~0.19 whatever its
     # alpha (0.25 and 0.33 both gave 0.19-0.20) and face_mode_select is painted on top (0.25 -> 0.41
-    # total) -> face_mode_select 0.07 for an effective 0.25.
+    # total) -> face_mode_select 0.07 for an effective 0.25. Step 44: that base (02)
+    # had the Move manipulator over the sample; against 03 (same view, no manipulator) 0.07 gives an
+    # effective 0.07, and the fill rises ~0.86 per unit of alpha (probe) -> 0.28.
     ("view_3d.wire_edit", rgb("#64dcff")),
     ("view_3d.vertex", rgb("#c800c8")),
     ("view_3d.vertex_select", rgb("#fdff88")),       # drawn pale yellow, not colorIndex 17 (08 shot)
     ("view_3d.edge_select", rgb("#e4ac79")),
     ("view_3d.edge_mode_select", rgb("#e4ac79")),
     ("view_3d.face_select", (*rgb("#e4ac79"), 0.25)),
-    ("view_3d.face_mode_select", (*rgb("#e4ac79"), 0.07)),
+    ("view_3d.face_mode_select", (*rgb("#e4ac79"), 0.28)),
     # Manipulator: transformX/Y (0.9 red / green); Z as drawn = pure blue (Move/Scale axis pixels
     # in 02/06; displayRGBColor transformZ 0.29/0.57/1 is not what VP2 draws). Active/hovered
     # handle = manipCurrent 17 (yellow) . Blender's axis colours also paint the grid axis
@@ -127,6 +129,17 @@ VALUES = (
     ("outliner.active", SELECT),                     #  the lead row is the same blue (step 41 pixels)
     ("outliner.selected_object", SEL_TEXT),          #  selected names are white, not orange
     ("outliner.active_object", SEL_TEXT),
+)
+
+# Widget shape: Maya 2022's Qt style is "adskdarkflatui" (
+# ui_style; screens/11b_channel_box_crop.png, 12_create_menu.png): square, flat, no bevel, no emboss line,
+# no menu drop shadow. Blender's default is rounded (0.2-0.4) with a 15 % emboss and a 50 % menu shadow.
+ROUNDNESS = 0.0
+SHAPE = (
+    ("user_interface.widget_emboss", (0.0, 0.0, 0.0, 0.0)),
+    ("user_interface.menu_shadow_fac", 0.0),
+    ("user_interface.menu_shadow_width", 0),
+    ("user_interface.panel_roundness", 0.0),
 )
 
 # Editors whose generic space colours get the Maya panel grey.
@@ -170,6 +183,13 @@ def apply_table(theme):
         _set(w, "inner_sel", inner_sel)
         _set(w, "text", text)
         _set(w, "text_sel", text_sel)
+    for prop in ui.bl_rna.properties:
+        if prop.identifier.startswith("wcol_") and prop.identifier != "wcol_state":
+            w = getattr(ui, prop.identifier)
+            w.roundness = ROUNDNESS
+            w.show_shaded = False
+    for path, value in SHAPE:
+        _set(theme, path, value)
     for editor in EDITORS:
         space = getattr(theme, editor).space
         for attr in ("back", "header", "button"):

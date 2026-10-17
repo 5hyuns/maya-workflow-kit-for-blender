@@ -88,6 +88,39 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
                     "your previous setting",
         default=False, update=_update_splash)
     splash_backup: bpy.props.StringProperty(options={'HIDDEN'})
+
+    # Widget feel: Maya density, Maya font, aliased wires. Global Blender
+    # preferences: backed up, restored when turned off or the add-on is disabled (prefs_preset).
+    def _update_group(group, option):
+        def update(self, context):
+            from . import prefs_preset
+            if getattr(self, option):
+                prefs_preset.apply(context.preferences, self, group)
+            else:
+                prefs_preset.restore(context.preferences, self, group)
+        return update
+
+    maya_density: bpy.props.BoolProperty(
+        name="Maya Density",
+        description="Interface scale that gives Maya 2022's pixel sizes on this display (11 px text, "
+                    "20 px rows: Maya ignores the Windows display scale). Turning it off restores "
+                    "your previous Resolution Scale",
+        default=False, update=_update_group("density", "maya_density"))
+    density_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    maya_font: bpy.props.BoolProperty(
+        name="Maya Font (Segoe UI)",
+        description="Use the Windows Segoe UI font for the interface, like Maya (Windows only, the "
+                    "installed system font). Turning it off restores your previous font",
+        default=False, update=_update_group("font", "maya_font"))
+    font_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    maya_wire: bpy.props.BoolProperty(
+        name="Aliased Wireframes",
+        description="Draw viewport wireframes as hard 1 px lines like Maya (no line smoothing). "
+                    "Turning it off restores your previous setting",
+        default=False, update=_update_group("wire", "maya_wire"))
+    wire_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    del _update_group
+
     start_in_maya_layout: bpy.props.BoolProperty(
         name="Start in Maya Layout",
         description="When Blender starts without a file, open a new file with the Maya layout "
@@ -200,6 +233,13 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_theme")
         row.prop(self, "maya_hide_splash")
         row.prop(self, "start_in_maya_layout")
+        row = box.row()
+        row.prop(self, "maya_density")
+        from . import prefs_preset
+        sub = row.row()
+        sub.enabled = prefs_preset.font_available() or self.maya_font
+        sub.prop(self, "maya_font")
+        row.prop(self, "maya_wire")
         kcs = context.window_manager.keyconfigs
         row = layout.row()
         active = kcs.active.name if kcs.active else "-"
