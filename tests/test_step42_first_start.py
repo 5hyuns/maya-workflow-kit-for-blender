@@ -41,7 +41,8 @@ def test_theme_option_comes_back_on_disable():
     assert grad.background_type == 'SINGLE_COLOR'
     kit.disable()
     assert _theme_hash() == h0, "disabling the add-on restores the user's theme"
-    assert not theme.has_backup()
+    # step 60: the backup file stays (Blender also unregisters add-ons when it quits); a later apply
+    # sees it is stale (the current theme is not the Maya one) and takes a fresh one.
     kit.enable()
     assert _theme_hash() == h0
 

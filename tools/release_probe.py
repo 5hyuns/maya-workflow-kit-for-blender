@@ -103,6 +103,19 @@ def main():
     mode, out = sys.argv[sys.argv.index("--") + 1:][:2]
     if mode == "seed":
         seed()
+    elif mode == "make":
+        # Make Blender Maya (theme, splash, density ...), saved like a user would leave it (step 60)
+        from importlib import import_module
+        kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".maya_kit"))
+        import_module(kit + ".first_start").make(bpy.context, open_layout=False)
+        bpy.ops.wm.save_userpref()
+    elif mode == "remove":
+        # Preferences > Extensions > Remove in a running session (the add-on's code runs: disable,
+        # then the files go). `blender --command extension remove` never loads add-ons (step 60).
+        prefs = bpy.context.preferences
+        repo_index = next(i for i, r in enumerate(prefs.extensions.repos) if r.module == "user_default")
+        bpy.ops.extensions.package_uninstall(repo_index=repo_index, pkg_id="maya_kit")
+        bpy.ops.wm.save_userpref()
     elif mode == "disable":
         kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".maya_kit"))
         addon_utils.disable(kit, default_set=True)
