@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 41 (비교 기준 정확화) 완료 — `docs/steps/step_41.md`. `tools/look_shots.py` 가 Maya 와 같은 카메라 (Maya f_px 973 px, pCube1 화면
+  높이를 Maya 샷에 맞춘 거리)·같은 선택 상태·메뉴바에서 연 Create 메뉴로 찍고, `tools/look_compare.py` 가 `pixels.md` (렌더 픽셀 ΔE,
+  kit 지점 = `tools/look_data.py` 앵커 표), `rects.md` (영역 ±10 px), `scene.md` (큐브 크기 ±10 %), `crop_*.png` 6장을 만든다.
+  결과: 큐브 3/3 (−1.3 %), 픽셀 29 중 ΔE>5 9 + kit 에 없음 9, 사각형 12 중 1. 헤드리스 344/344.
 - Step 40 (Maya 동일화 조사·계획) 완료 — `docs/steps/step_40.md`, `docs/PLAN.md` 「Maya 동일화 계획」. Maya 2022.4 를 팩토리 prefs 로 띄워
   스크린샷 22장 + 실측 색·크기 (`research/maya/colors.json`), kit 비교 도구 `tools/look_compare.py` (+ `look_shots.py`: 나란히 이미지,
   테마 ΔE00), 경쟁 제품 22개 (`research/competitors.md`), blindspot 18건, self-review 반영. 버그 수정: 리드(연두)/다른 선택(흰색)
@@ -91,9 +95,8 @@
 
 ## 바로 다음 할 일
 
-- backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`) 12개를 `docs/PLAN.md` 「Maya 동일화 계획」 순서로:
-  1 비교 기준 정확화 (look_shots 카메라·상태를 Maya 와 같게, 렌더 픽셀 ΔE, 영역 사각형) → 2 첫 시작 경로 → 3 테마 v2 색 →
-  4 평면 위젯·밀도·폰트 → 5 Maya 그리드 → 6 ViewCube·라벨 → 7 선택 와이어 → 8 레이아웃 → 9 CB/Outliner/Time Slider 크롬 →
-  10 메뉴·셸프 아이콘 → 11 핫박스·RMB → 12 Blender 5.x 호환.
+- backlog 2 = step 42 (첫 시작 경로) 부터 `docs/PLAN.md` 「Maya 동일화 계획」 순서. 각 외형 단계는 `python tools/look_compare.py` 의
+  `pixels.md` / `rects.md` / `delta_e.md` / 크롭으로 전후를 비교한다. step_41.md 「발견」 표 (템플릿 렌즈 50 = 광각, 투명 헤더에 비치는
+  그라디언트, Outliner 활성 행 색, 경계선, 툴바 바탕) 를 해당 단계에서 처리.
 - 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).
 - 이전 남은 항목: step_36–39 「남은 것」, PLAN 「재점검 3차」 8–9.

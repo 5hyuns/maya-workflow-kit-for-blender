@@ -10,10 +10,17 @@ research/scripts/maya_colors.py (docs/steps/step_40.md).
 1. Builds the extension and installs it into a clean sandbox (tmp/look_env), like
    tools/release_check.py, then runs tools/look_shots.py in a 1600x900 GUI Blender
    (same size as the Maya shots) -> tmp/look_env/shots/<name>.png.
-2. Re-runs itself in `blender -b`: for every shot name present on both sides writes
-   research/maya/screens/compare/<name>.png (Maya left, Blender right) and computes CIEDE2000
-   between each Maya reference colour and the theme value the kit sets for it (theme/maya.xml
-   applied over the factory theme) -> research/maya/screens/compare/delta_e.md.
+2. Re-runs itself in `blender -b` and writes into research/maya/screens/compare/:
+   - <name>.png: Maya left, Blender right, for every shot name present on both sides;
+   - delta_e.md: CIEDE2000 between each Maya reference colour and the theme value the kit sets
+     for it (theme/maya.xml applied over the factory theme);
+   - pixels.md: CIEDE2000 between the Maya screenshot samples (colors.json "ui_samples") and the
+     rendered kit pixels at the matching kit points (look_data.KIT_POINTS);
+   - rects.md: Maya widget rectangles (_maya_ui_dump.json) vs kit areas/regions (look_data.RECTS,
+     ±10 px), plus the kit-only areas;
+   - scene.md: pCube1's on-screen box in the kit vs Maya (camera parity, ±10 %);
+   - crop_<name>.png: the same UI element cut from both shots (look_data.CROPS).
+   Kit geometry comes from tmp/look_env/shots/geometry.json (written by look_shots.py).
 """
 
 import json
@@ -24,8 +31,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MAYA = ROOT / "research" / "maya"
-COMPARE = MAYA / "screens" / "compare"
+sys.path.insert(0, str(ROOT / "tools"))
+import look_data as L  # noqa: E402
+
+MAYA = L.MAYA
+COMPARE = L.COMPARE
 SANDBOX = ROOT / "tmp" / "look_env"
 TIMEOUT = 300
 
@@ -84,8 +94,13 @@ def lab(rgb):
 
 def de2000(c1, c2):
     """CIEDE2000 between two sRGB colours (0..1)."""
-    L1, a1, b1 = lab(c1)
-    L2, a2, b2 = lab(c2)
+    return de2000_lab(lab(c1), lab(c2))
+
+
+def de2000_lab(lab1, lab2):
+    """CIEDE2000 between two CIELAB colours (Sharma, Wu, Dalal 2005)."""
+    L1, a1, b1 = lab1
+    L2, a2, b2 = lab2
     C1, C2 = math.hypot(a1, b1), math.hypot(a2, b2)
     Cm = (C1 + C2) / 2
     G = 0.5 * (1 - math.sqrt(Cm ** 7 / (Cm ** 7 + 25 ** 7)))
@@ -140,7 +155,6 @@ def maya_colour(colors, key):
 # ---------------------------------------------------------------- in Blender
 def in_blender():
     import bpy
-    import numpy as np
 
     bpy.ops.preferences.reset_default_theme()
     bpy.ops.script.execute_preset(filepath=str(ROOT / "src" / "maya_kit" / "theme" / "maya.xml"),
@@ -182,34 +196,170 @@ def in_blender():
         mpath = MAYA / "screens" / bpath.name
         if bpath.stem == "00_first_start":
             mpath = MAYA / "screens" / "02_cube_selected_move.png"
-        if not mpath.exists():
-            continue
-        imgs = []
-        for p in (mpath, bpath):
-            im = bpy.data.images.load(str(p))
-            w, h = im.size
-            a = np.empty(w * h * 4, dtype=np.float32)
-            im.pixels.foreach_get(a)
-            imgs.append(a.reshape(h, w, 4))
-            bpy.data.images.remove(im)
-        H = max(i.shape[0] for i in imgs)
-        padded = []
-        for i in imgs:
-            if i.shape[0] < H:
-                pad = np.zeros((H - i.shape[0], i.shape[1], 4), np.float32)
-                pad[..., 3] = 1
-                i = np.concatenate([pad, i], axis=0)
-            padded.append(i)
-        gap = np.ones((H, 8, 4), np.float32)
-        out = np.concatenate([padded[0], gap, padded[1]], axis=1)
-        im = bpy.data.images.new("cmp", out.shape[1], out.shape[0], alpha=False)
-        im.pixels.foreach_set(out.ravel())
-        im.filepath_raw = str(COMPARE / bpath.name)
-        im.file_format = 'PNG'
-        im.save()
-        bpy.data.images.remove(im)
-        made += 1
+        if mpath.exists():
+            save_png(join(L.load_rgb(mpath), L.load_rgb(bpath), "side"), COMPARE / bpath.name)
+            made += 1
     print("look_compare:", made, "side-by-side images in", COMPARE.relative_to(ROOT))
+    gpath = shots / "geometry.json"
+    if not gpath.exists():
+        print("look_compare: no geometry.json, skipped pixels/rects/scene/crops")
+        return
+    geom = json.loads(gpath.read_text(encoding="utf-8"))
+    imgs = {}
+
+    def kit_img(shot):
+        if shot not in imgs:
+            imgs[shot] = L.load_rgb(shots / f"{shot}.png")
+        return imgs[shot]
+
+    pixel_table(colors, geom, kit_img)
+    rect_table(geom)
+    scene_table(geom)
+    crops(geom, kit_img)
+
+
+def join(a, b, how):
+    """Two images side by side (gap 8 px) or one over the other (gap 6 px), padded with black."""
+    import numpy as np
+    if how == "side":
+        H = max(a.shape[0], b.shape[0])
+        a, b = (np.pad(i, ((0, H - i.shape[0]), (0, 0), (0, 0))) for i in (a, b))
+        return np.concatenate([a, np.ones((H, 8, 3), np.float32), b], axis=1)
+    W = max(a.shape[1], b.shape[1])
+    a, b = (np.pad(i, ((0, 0), (0, W - i.shape[1]), (0, 0))) for i in (a, b))
+    return np.concatenate([a, np.ones((6, W, 3), np.float32), b], axis=0)
+
+
+def save_png(rgb, path):
+    import bpy
+    import numpy as np
+    h, w, _ = rgb.shape
+    rgba = np.concatenate([rgb[::-1], np.ones((h, w, 1), np.float32)], axis=2)
+    im = bpy.data.images.new("look_compare", w, h, alpha=False)
+    im.pixels.foreach_set(rgba.astype(np.float32).ravel())
+    im.filepath_raw = str(path)
+    im.file_format = 'PNG'
+    im.save()
+    bpy.data.images.remove(im)
+
+
+def mark(de, close=2, far=5):
+    return f"{de:.1f}" + (" ✗" if de > far else " ~" if de > close else "")
+
+
+def pixel_table(colors, geom, kit_img):
+    samples = colors["ui_samples"]
+    lines = ["# Rendered pixels: Maya 2022 screenshots vs kit (CIEDE2000)", "",
+             "Generated by `python tools/look_compare.py`. Maya: research/maya/colors.json `ui_samples` "
+             "(median 5x5); kit: the matching point in the kit shot (`tools/look_data.py` KIT_POINTS, median of "
+             "the given radius).",
+             "ΔE00 < 2 same · 2–5 close · > 5 visibly different · — the kit has no such element.", "",
+             "| sample | Maya shot (x, y) | Maya | kit shot (x, y) | kit | ΔE00 | kit point |",
+             "|---|---|---|---|---|---|---|"]
+    n = bad = missing = 0
+    for name, ref in samples.items():
+        spec = L.KIT_POINTS.get(name)
+        mshot = f"{ref['shot']} ({ref['xy'][0]}, {ref['xy'][1]})"
+        if spec is None or spec[0] is None:
+            missing += 1
+            note = spec[1] if spec else "not mapped"
+            lines.append(f"| {name} | {mshot} | {ref['hex']} | — | — | — | {note} |")
+            continue
+        shot, anchor, dx, dy, r, note = spec
+        rects = geom["rects"].get(shot, {})
+        if anchor not in rects:
+            missing += 1
+            lines.append(f"| {name} | {mshot} | {ref['hex']} | {shot} | ? | ? | anchor `{anchor}` not found |")
+            continue
+        x, y = (int(round(v)) for v in L.resolve(rects, anchor, dx, dy))
+        kit = L.sample(kit_img(shot), x, y, r)
+        de = de2000(kit, hex2rgb(ref["hex"]))
+        n += 1
+        bad += de > 5
+        lines.append(f"| {name} | {mshot} | {ref['hex']} | {shot} ({x}, {y}) | {rgb2hex(kit)} | {mark(de)} | "
+                     f"{note} |")
+    lines += ["", f"{n} compared, {bad} visibly different (ΔE00 > 5), {missing} with no kit element."]
+    (COMPARE / "pixels.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("look_compare:", f"pixels {bad}/{n} with ΔE00 > 5, {missing} missing in the kit")
+
+
+def rect_table(geom, shot="11_channel_box"):
+    widgets = L.maya_dump()["widgets"]
+    rects = geom["rects"][shot]
+    lines = ["# Layout rectangles: Maya 2022 widgets vs kit areas/regions", "",
+             f"Generated by `python tools/look_compare.py` from shot `{shot}`. Maya: `_maya_ui_dump.json` "
+             "widgets; kit: `geometry.json` anchors (screenshot pixels, origin top-left), [x, y, w, h].",
+             f"Δ = kit − Maya; ✓ when every |Δ| ≤ {L.RECT_TOL} px.", "",
+             "| element | Maya | kit anchor | kit | Δx | Δy | Δw | Δh | |", "|---|---|---|---|---|---|---|---|---|"]
+    ok = total = 0
+    for widget, anchor, label in L.RECTS:
+        m, k = widgets.get(widget), rects.get(anchor)
+        total += 1
+        if m is None or k is None:
+            lines.append(f"| {label} | {m} | `{anchor}` | {k} | | | | | missing |")
+            continue
+        d = [round(k[i] - m[i]) for i in range(4)]
+        good = all(abs(v) <= L.RECT_TOL for v in d)
+        ok += good
+        lines.append(f"| {label} | {m} | `{anchor}` | {[round(v) for v in k]} | {d[0]} | {d[1]} | {d[2]} | "
+                     f"{d[3]} | {'✓' if good else '✗'} |")
+    for anchor in L.KIT_ONLY:
+        if anchor in rects:
+            lines.append(f"| (kit only) | none | `{anchor}` | {[round(v) for v in rects[anchor]]} "
+                         "| | | | | ✗ extra |")
+    lines += ["", f"{ok} of {total} Maya elements within ±{L.RECT_TOL} px."]
+    (COMPARE / "rects.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("look_compare:", f"rects {ok}/{total} within ±{L.RECT_TOL} px")
+
+
+def scene_table(geom):
+    lines = ["# Scene parity: pCube1 on screen, Maya 2022 vs kit", "",
+             "Generated by `python tools/look_compare.py`. Maya box: pixels of the wire colour in the Maya "
+             "shot (`look_data.CUBE_FITS`); kit box: pCube1's projected bound box (`geometry.json`). "
+             "Pass: width and height within ±10 %.", "",
+             f"Maya pixel focal length {L.maya_f_px():.1f} px (35 mm lens, 36 mm aperture, "
+             f"{L.MAYA_VIEW_RECT[2]} px wide view).", "",
+             "| shot | Maya w×h (centre) | kit w×h (centre) | Δw | Δh | kit f_px / lens | |",
+             "|---|---|---|---|---|---|---|"]
+    ok = 0
+    for shot in L.CUBE_FITS:
+        m = L.maya_cube_bbox(shot)
+        k = geom["cubes"].get(shot)
+        if m is None or k is None:
+            lines.append(f"| {shot} | {m} | {k} | | | | missing |")
+            continue
+        kb = k["bbox"]
+        mw, mh = m[2] - m[0], m[3] - m[1]
+        kw, kh = kb[2] - kb[0], kb[3] - kb[1]
+        dw, dh = (kw - mw) / mw * 100, (kh - mh) / mh * 100
+        good = abs(dw) <= 10 and abs(dh) <= 10
+        ok += good
+        lines.append(f"| {shot} | {mw}×{mh} ({(m[0] + m[2]) / 2:.0f}, {(m[1] + m[3]) / 2:.0f}) | "
+                     f"{kw:.0f}×{kh:.0f} ({(kb[0] + kb[2]) / 2:.0f}, {(kb[1] + kb[3]) / 2:.0f}) | {dw:+.1f} % | "
+                     f"{dh:+.1f} % | {k['f_px']:.1f} / {k['lens']:.1f} mm | {'✓' if good else '✗'} |")
+    lines += ["", f"{ok} of {len(L.CUBE_FITS)} shots within ±10 %. Centres differ by the view position "
+              "(the kit view is centred in its own region)."]
+    (COMPARE / "scene.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("look_compare:", f"scene {ok}/{len(L.CUBE_FITS)} cube boxes within ±10 %")
+
+
+def crops(geom, kit_img):
+    widgets = L.maya_dump()["widgets"]
+    made = 0
+
+    def cut(img, r):
+        x, y, w, h = (int(round(v)) for v in r)
+        return img[max(0, y):y + h, max(0, x):x + w]
+
+    for name, shot, widget, anchor, how in L.CROPS:
+        m = widgets.get(widget)
+        k = geom["rects"].get(shot, {}).get(anchor)
+        mpath = MAYA / "screens" / f"{shot}.png"
+        if m is None or k is None or not mpath.exists():
+            continue
+        save_png(join(cut(L.load_rgb(mpath), m), cut(kit_img(shot), k), how), COMPARE / f"crop_{name}.png")
+        made += 1
+    print("look_compare:", made, "crop images")
 
 
 # ---------------------------------------------------------------- outside

@@ -1,29 +1,147 @@
 """In-Blender part of tools/look_compare.py: Blender shots of the states research/maya/screens/ shows.
 
 Runs in a GUI Blender (1600x900, --enable-event-simulate) on a clean sandbox config with the
-extension installed and enabled. Shot names match the Maya shots (tmp/maya_shots/shots.py,
-research/maya/screens/) so look_compare.py can pair them. ``00_first_start`` is the layout
-before the Maya theme is applied (what a new user sees); every later shot has the theme on.
+extension installed and enabled. Shot names match the Maya shots (research/scripts/maya_shots/
+shots.py) so look_compare.py can pair them. ``00_first_start`` is the layout before the Maya theme
+is applied (what a new user sees); every later shot has the theme on.
+
+Same scene as Maya (docs/steps/step_41.md): pCube1 1 cm at the origin (decision 8), pCube2/3 at
+x = +-2 cm, Maya's persp view direction, Maya's focal length in screen pixels and the distance that
+gives pCube1 the height it has in the Maya shot (look_data.CUBE_FITS). ``01_layout_empty`` keeps
+the template's own view (what the user gets).
+
+Besides the PNGs it writes ``geometry.json``: per shot the kit anchor rectangles (areas, regions,
+top bar, status bar) and, for the fitted shots, pCube1's projected bounding box and the view's
+pixel focal length.
 """
 
+import json
+import math
 import os
 import sys
 from importlib import import_module
 from pathlib import Path
 
 import bpy
+from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests" / "gui"))
+sys.path.insert(0, str(ROOT / "tools"))
+import look_data as L  # noqa: E402
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ["MAYA_KIT_LOOK_SHOTS"]
 C = {}
+GEOM = {"rects": {}, "cubes": {}}
+
+
+# ---------------------------------------------------------------- geometry
+def _img_rect(x, y, w, h):
+    return [x, win().height - (y + h), w, h]
+
+
+def anchor_rects():
+    """Kit anchors in screenshot coordinates (origin top-left), see look_data."""
+    rects = {}
+    areas = list(win().screen.areas)
+    outliners = sorted((a for a in areas if a.type == 'OUTLINER'), key=lambda a: a.x)
+    names = {}
+    for a in areas:
+        if a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".MayaKitStrip":
+            names[a] = "strip"
+        elif a.type == 'VIEW_3D':
+            names.setdefault(a, "view3d")
+        elif a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE':
+            names[a] = "timeline"
+        elif a.type == 'PROPERTIES':
+            names[a] = "properties"
+    if outliners:
+        names[outliners[0]] = "outliner"
+        for i, a in enumerate(outliners[1:]):
+            names[a] = "outliner_right" if i == 0 else f"outliner_{i + 1}"
+    for a, name in names.items():
+        if name in rects:
+            continue
+        rects[name] = _img_rect(a.x, a.y, a.width, a.height)
+        for r in a.regions:
+            key = f"{name}.{r.type}"
+            if r.width > 1 and r.height > 1 and key not in rects:
+                rects[key] = _img_rect(r.x, r.y, r.width, r.height)
+    tops = [_img_rect(a.x, a.y, a.width, a.height) for a in areas]
+    top = min(r[1] for r in tops)
+    bottom = max(r[1] + r[3] for r in tops)
+    rects["topbar"] = [0, 0, win().width, top]
+    rects["statusbar"] = [0, bottom, win().width, win().height - bottom]
+    rects["window"] = [0, 0, win().width, win().height]
+    return rects
 
 
 def shot(name):
     sim.screenshot(os.path.join(SHOTS, name + ".png"))
+    GEOM["rects"][name] = anchor_rects()
+
+
+def record_press(name, x, y):
+    """Anchor ``press`` = where the menu key/button went down (window coords -> screenshot)."""
+    GEOM["rects"][name]["press"] = [x, win().height - y, 0, 0]
+
+
+def record_cube(name, cube="pCube1"):
+    """pCube1's projected bbox + the view's pixel focal length, from the last drawn matrices."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    area, region = view3d()
+    rv3d = area.spaces.active.region_3d
+    ob = bpy.data.objects[cube]
+    pts = [location_3d_to_region_2d(region, rv3d, ob.matrix_world @ Vector(c)) for c in ob.bound_box]
+    xs = [region.x + p.x for p in pts]
+    ys = [win().height - (region.y + p.y) for p in pts]
+    GEOM["cubes"][name] = {"bbox": [min(xs), min(ys), max(xs), max(ys)],
+                           "f_px": rv3d.window_matrix[0][0] * region.width / 2,
+                           "lens": area.spaces.active.lens}
+
+
+def save_geometry():
+    with open(os.path.join(SHOTS, "geometry.json"), "w", encoding="utf-8") as fh:
+        json.dump(GEOM, fh, indent=1)
+
+
+# ---------------------------------------------------------------- Maya camera
+def maya_camera(shot_name, cube="pCube1"):
+    """Maya persp direction + Maya pixel focal length; distance so ``cube`` is as tall on screen
+    as in the Maya shot; view centred on the cube (Maya viewFit centres the fitted box)."""
+    area, region = view3d()
+    space = area.spaces.active
+    rv3d = space.region_3d
+    x0, y0, x1, y1 = L.maya_cube_bbox(shot_name)
+    target_h = y1 - y0
+    f_px = L.maya_f_px()
+    # Blender viewport: tan(fov_h / 2) = 36 / lens on the wider side ($S-independent: C
+    # BKE_camera_params_compute_viewplane, sensor 36 mm x zoom 2) -> f_px = width * lens / 72.
+    space.lens = 72.0 * f_px / region.width
+    rot = Vector(L.MAYA_EYE_BLENDER).normalized().to_track_quat('Z', 'Y')
+    ob = bpy.data.objects[cube]
+    corners = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+    centre = sum(corners, Vector()) / 8
+    inv = rot.inverted()
+
+    def height(d):
+        cam = centre + rot @ Vector((0.0, 0.0, d))
+        ys = []
+        for p in corners:
+            c = inv @ (p - cam)
+            ys.append(f_px * c.y / -c.z)
+        return max(ys) - min(ys)
+
+    lo, hi = 1e-4, 1e3
+    for _ in range(80):
+        mid = math.sqrt(lo * hi)
+        lo, hi = (mid, hi) if height(mid) > target_h else (lo, mid)
+    rv3d.view_perspective = 'PERSP'
+    rv3d.view_rotation = rot
+    rv3d.view_location = centre
+    rv3d.view_distance = lo
 
 
 def redraw():
@@ -41,6 +159,14 @@ def centre():
     return region.x + region.width // 2, region.y + region.height // 2
 
 
+def select_only(*names, active=None):
+    bpy.ops.object.select_all(action='DESELECT')
+    for n in names:
+        bpy.data.objects[n].select_set(True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[active or names[-1]]
+
+
+# ---------------------------------------------------------------- steps
 @step
 def s_start():
     setup()
@@ -68,12 +194,10 @@ def s_wait2():
 @step
 def s_layout():
     shot("01_layout_empty")
-    k = import_module(MODULE + ".operators.units").maya_unit()
-    C["k"] = k
     with v3d_override():
         bpy.ops.maya_kit.create(kind='CUBE')
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
-        bpy.ops.view3d.view_selected()
+    maya_camera("02_cube_selected_move")
     redraw()
 
 
@@ -85,25 +209,29 @@ def s_wait3():
 @step
 def s_cube_sel():
     shot("02_cube_selected_move")
+    record_cube("02_cube_selected_move")
     bpy.ops.object.select_all(action='DESELECT')
+    redraw()
+
+
+@step
+def s_wait3b():
     redraw()
 
 
 @step
 def s_cube_unsel():
     shot("03_cube_unselected")
-    k = C["k"]
+    k = import_module(MODULE + ".operators.units").maya_unit()
     with v3d_override():
-        for x in (2, -2):
+        for name, x in (("pCube2", 2), ("pCube3", -2)):
             bpy.ops.maya_kit.create(kind='CUBE')
-            bpy.context.active_object.location.x = x * k
-        bpy.ops.object.select_all(action='DESELECT')
-        bpy.data.objects["pCube2"].select_set(True)
-        cube = bpy.data.objects["pCube1"]
-        cube.select_set(True)
-        bpy.context.view_layer.objects.active = cube
-        bpy.ops.view3d.view_all(center=False)
+            ob = bpy.context.active_object
+            ob.location.x = x * k
+            check(f"{name} named like Maya", ob.name == name)
+    select_only("pCube2", "pCube1")          # Maya: select pCube2 pCube1 -> pCube1 lead
     view3d()[0].spaces.active.shading.type = 'WIREFRAME'
+    maya_camera("04_wire_selected_lead")
     redraw()
 
 
@@ -115,11 +243,9 @@ def s_wait4():
 @step
 def s_wire():
     shot("04_wire_selected_lead")
+    record_cube("04_wire_selected_lead")
     view3d()[0].spaces.active.shading.type = 'SOLID'
-    bpy.ops.object.select_all(action='DESELECT')
-    cube = bpy.data.objects["pCube1"]
-    cube.select_set(True)
-    bpy.context.view_layer.objects.active = cube
+    select_only("pCube1")
     bpy.ops.wm.tool_set_by_id(name="builtin.rotate")
     redraw()
 
@@ -141,19 +267,22 @@ def s_wait6():
     redraw()
 
 
+def edit_select(mode, verts=(), edges=(), faces=()):
+    bpy.ops.object.mode_set(mode='OBJECT')
+    me = bpy.data.objects["pCube1"].data
+    for seq, keep in ((me.vertices, verts), (me.edges, edges), (me.polygons, faces)):
+        for el in seq:
+            el.select = el.index in keep
+    bpy.ops.object.mode_set(mode='EDIT')
+    with v3d_override():
+        bpy.ops.mesh.select_mode(type=mode)
+
+
 @step
 def s_scale():
     shot("06_scale_manip")
     bpy.ops.wm.tool_set_by_id(name="builtin.move")
-    with v3d_override():
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_mode(type='FACE')
-        bpy.ops.mesh.select_all(action='DESELECT')
-    me = bpy.data.objects["pCube1"].data
-    bpy.ops.object.mode_set(mode='OBJECT')
-    for i in (1, 4):
-        me.polygons[i].select = True
-    bpy.ops.object.mode_set(mode='EDIT')
+    edit_select('FACE', faces=(1, 4))        # Maya: pCube1.f[1], f[4]
     redraw()
 
 
@@ -165,17 +294,8 @@ def s_wait7():
 @step
 def s_faces():
     shot("07_faces_selected")
-    bpy.ops.object.mode_set(mode='OBJECT')
-    me = bpy.data.objects["pCube1"].data
-    for p in me.polygons:
-        p.select = False
-    for e in me.edges:
-        e.select = False
-    for v in me.vertices:
-        v.select = v.index in (0, 1, 2)
-    bpy.ops.object.mode_set(mode='EDIT')
-    with v3d_override():
-        bpy.ops.mesh.select_mode(type='VERT')
+    record_cube("07_faces_selected")
+    edit_select('VERT', verts=(0, 1, 2))     # Maya: pCube1.vtx[0:2]
     redraw()
 
 
@@ -187,15 +307,7 @@ def s_wait8():
 @step
 def s_verts():
     shot("08_verts_selected")
-    bpy.ops.object.mode_set(mode='OBJECT')
-    me = bpy.data.objects["pCube1"].data
-    for v in me.vertices:
-        v.select = False
-    for e in me.edges:
-        e.select = e.index in (0, 5)
-    bpy.ops.object.mode_set(mode='EDIT')
-    with v3d_override():
-        bpy.ops.mesh.select_mode(type='EDGE')
+    edit_select('EDGE', edges=(0, 5))        # Maya: pCube1.e[0], e[5]
     redraw()
 
 
@@ -208,6 +320,7 @@ def s_wait9():
 def s_edges():
     shot("09_edges_selected")
     bpy.ops.object.mode_set(mode='OBJECT')
+    select_only("pCube1")
     redraw()
 
 
@@ -219,8 +332,18 @@ def s_wait10():
 @step
 def s_cb():
     shot("11_channel_box")
-    with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_mainCreateMenu")
+    # Maya opens Create from the menu bar: click the top bar's Create (global area: hover first)
+    tb = GEOM["rects"]["11_channel_box"]["topbar"]
+    x, y = 150, tb[1] + tb[3] // 2
+    C["menu_xy"] = (x, win().height - y)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=win().height - y)
+
+
+@step
+def s_menu_click():
+    x, y = C["menu_xy"]
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
 
 
 @step
@@ -246,15 +369,9 @@ def s_wait12():
 @step
 def s_hotbox():
     shot("13_hotbox")
+    record_press("13_hotbox", *centre())
     ev('SPACE', 'RELEASE')
-    x, y = centre()
-    cube = bpy.data.objects["pCube1"]
-    # RMB over the selected cube (screen position of its origin)
-    from bpy_extras.view3d_utils import location_3d_to_region_2d
-    area, region = view3d()
-    p = location_3d_to_region_2d(region, area.spaces.active.region_3d, cube.matrix_world.translation)
-    if p is not None:
-        x, y = region.x + int(p.x), region.y + int(p.y)
+    x, y = centre()                          # view centred on pCube1 (Maya: RMB over the cube)
     C["rmb"] = (x, y)
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     ev('RIGHTMOUSE', 'PRESS', x=x, y=y)
@@ -269,6 +386,7 @@ def s_wait13():
 def s_mm():
     shot("14_marking_menu_object")
     x, y = C["rmb"]
+    record_press("14_marking_menu_object", x, y)
     ev('RIGHTMOUSE', 'RELEASE', x=x, y=y)
     ev('ESC', 'PRESS')
     ev('ESC', 'RELEASE')
@@ -287,6 +405,7 @@ def s_four():
     shot("16_four_view")
     with v3d_override():
         bpy.ops.screen.region_quadview()
+    save_geometry()
 
 
 run(interval=0.6, first=3.0)
