@@ -26,7 +26,7 @@ def paragraph(layout, context, text, alignment='LEFT'):
     """``text`` wrapped to the region width (about 7 px per character at UI scale 1), greyed (step 67)."""
     import textwrap
     region = context.region
-    scale = context.preferences.system.ui_scale
+    scale = context.preferences.system.ui_scale or 1.0     # 0 in background
     width = region.width if region is not None else 300
     col = layout.column()
     col.active = False

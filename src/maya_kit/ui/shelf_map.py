@@ -102,14 +102,16 @@ BY_COMMAND = {
     "RenderSequence": (("render.render", {"animation": True}), 'RENDER_RESULT'),
     "Art3dPaintTool": ("paint.texture_paint_toggle", 'TPAINT_HLT'),
     # --- FX ---
-    "NCreateEmitter": ("object.particle_system_add", 'PARTICLES'),
-    "makeCollideNCloth": (_mod('COLLISION'), 'MOD_PHYSICS'),
+    # step 68: operators/fx.py (the old Emitter = particle_system_add was Emit from Object, fx.md:54-57)
+    "NCreateEmitter": ("maya_kit.fx_emitter", 'PARTICLES'),
+    "NEmitFromObject": ("maya_kit.fx_emit_from_object", 'PARTICLE_DATA'),
+    "makeCollideNCloth": ("maya_kit.fx_passive", 'MOD_PHYSICS'),
     "CreateHairOptions": ("object.curves_empty_hair_add", 'CURVES_DATA'),
     "InteractivePlayback": ("screen.animation_play", 'PLAY'),
     # --- FX Caching (Blender point caches) ---
-    "CreateFluidCache": (("ptcache.bake_all", {"bake": True}), 'FILE_CACHE'),
-    "fluidDeleteCache": ("ptcache.free_bake_all", 'TRASH'),
-    "deleteNclothCache": ("ptcache.free_bake_all", 'TRASH'),
+    "CreateFluidCache": (("maya_kit.ncache", {"action": 'CREATE', "kind": 'FLUID'}), 'FILE_CACHE'),
+    "fluidDeleteCache": (("maya_kit.ncache", {"action": 'DELETE', "kind": 'FLUID'}), 'TRASH'),
+    "deleteNclothCache": (("maya_kit.ncache", {"action": 'DELETE', "kind": 'NOBJECT'}), 'TRASH'),
 }
 
 BY_LABEL = {
@@ -122,8 +124,9 @@ BY_LABEL = {
     "Rendering/Blinn Material": (_shader('BLINN'), 'SHADING_RENDERED'),
     "Rendering/Phong Material": (_shader('PHONG'), 'SHADING_TEXTURE'),
     "Rendering/Surface Material": (_shader('SURFACE'), 'LIGHT'),
-    "FX/Create nCloth": (_mod('CLOTH'), 'MOD_CLOTH'),
-    "FXCaching/Create New Cache": (("ptcache.bake_all", {"bake": True}), 'FILE_CACHE'),
+    "FX/Create nCloth": ("maya_kit.fx_ncloth", 'MOD_CLOTH'),
+    "FX/Remove nCloth": ("maya_kit.fx_remove_ncloth", 'X'),
+    "FXCaching/Create New Cache": (("maya_kit.ncache", {"action": 'CREATE', "kind": 'NOBJECT'}), 'FILE_CACHE'),
 }
 
 

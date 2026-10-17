@@ -64,6 +64,16 @@ NOTICES = {
         "(or Render Sequence here).") for item in ("Batch Render", "Cancel Batch Render", "Show Batch Render")},
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
+    # FX (step 68, , )
+    **{path: ("one-point mesh emitter", "Blender particles come from a mesh: Maya Kit makes a one-point mesh emitter1 "
+              "with the particles, sized in Maya units.")
+       for path in ("nParticles/Create Emitter", "nParticles/Create Emitter#2")},
+    "nCloth/Create nCloth": (
+        "Cloth modifier", "Blender cloth simulates real sizes: Maya Kit scales collision distances, stiffness and gravity "
+        "so one unit moves like Maya's (nucleus Space Scale in the Attribute Editor)."),
+    **{f"nCache/{item}": (
+        "Baked caches", "Blender always plays a baked cache: Delete Cache to simulate again.")
+       for item in ("Enable All Caches on Selected", "Disable All Caches on Selected")},
     # Lights (PLAN W5, )
     **{f"Create/Lights/{kind} Light": (
         f"{kind} light", "Blender lights always get darker with the square of the distance (no No Decay); "
