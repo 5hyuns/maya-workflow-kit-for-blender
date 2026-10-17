@@ -235,11 +235,19 @@ class MAYAKIT_OT_render_settings(bpy.types.Operator):
     bl_label = "Render Settings"
 
     def execute(self, context):
-        if not show_properties(context.screen, 'RENDER'):
-            # Maya's Render Settings is a window of its own; the MayaKit layout has no Properties
-            # editor (step 49), so open one in a new window.
-            return bpy.ops.maya_kit.open_editor(ui_type='PROPERTIES', tab='RENDER')
-        return {'FINISHED'}
+        # Maya's Render Settings is a window of its own (render_04_win1): a new Properties window on the
+        # Render tab, so a Properties editor used as the Attribute Editor keeps its tab
+        # (, step 67). Without a window (background) switch a
+        # Properties editor of the screen instead.
+        before = len(context.window_manager.windows)
+        if context.window is not None:
+            try:
+                bpy.ops.maya_kit.open_editor(ui_type='PROPERTIES', tab='RENDER')
+            except RuntimeError:   # no new window (background): the error report raises here
+                pass
+        if len(context.window_manager.windows) > before:
+            return {'FINISHED'}
+        return {'FINISHED'} if show_properties(context.screen, 'RENDER') else {'CANCELLED'}
 
 
 class MAYAKIT_OT_ipr_toggle(bpy.types.Operator):

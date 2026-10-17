@@ -80,6 +80,31 @@ def sidebar_tab_later(window, category, tries=100):
     bpy.app.timers.register(tick, first_interval=0.01)
 
 
+def properties_tab_later(window, tab, tries=40):
+    """Put the new window's Properties editor on ``tab``: a Properties space made in this operator has no tab
+    list until it has drawn, so the assignment is retried from a timer (step 67, checked: it stayed OBJECT)."""
+    state = {"n": tries}
+
+    def tick():
+        try:
+            space = window.screen.areas[0].spaces.active
+            try:
+                space.context = tab
+            except TypeError:   # tab not available yet (or ever: no active object etc.)
+                pass
+            if space.context == tab:
+                window.screen.areas[0].tag_redraw()
+                return None
+        except (ReferenceError, AttributeError, IndexError):   # window closed meanwhile
+            return None
+        state["n"] -= 1
+        return 0.05 if state["n"] > 0 else None
+
+    tick()
+    if window.screen.areas[0].spaces.active.context != tab:
+        bpy.app.timers.register(tick, first_interval=0.05)
+
+
 class MAYAKIT_OT_open_editor(bpy.types.Operator):
     """Open this editor in a new window (Maya Windows menu)"""
     bl_idname = "maya_kit.open_editor"
@@ -110,10 +135,7 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
         if self.ui_type == 'OUTLINER':
             _maya_outliner(target.spaces.active)
         if self.ui_type == 'PROPERTIES' and self.tab:
-            try:
-                target.spaces.active.context = self.tab
-            except TypeError:   # tab not available (no active object etc.)
-                pass
+            properties_tab_later(new, self.tab)
         return {'FINISHED'}
 
 
