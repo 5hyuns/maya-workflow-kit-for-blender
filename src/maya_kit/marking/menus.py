@@ -357,7 +357,7 @@ SHIFT_DEFAULT = MarkingMenu(
         ("Prism", _create('PRISM')),       # :212
         ("Pipe", None), ("Helix", None), ("Gear", None),
         DIVIDER,
-        ("Type", "object.text_add"),                                       # :308
+        ("Type", _create('TEXT')),                                       # :308
         ("Quad Draw Tool", None),
     ],
     options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane', 'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Sphere', 'Torus'])

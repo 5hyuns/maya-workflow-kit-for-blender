@@ -2,6 +2,9 @@
 
 ## 현재 작업
 
+- Step 54 (워크플로우 기반: 단위 생성 경로·조명·안내) 완료 — `docs/steps/step_54.md`. Create Joints / Type / Free Image Plane /
+  필드 8 개 / 3D Container·Fire·Smoke 가 Maya 단위 (`create.KINDS`, `maya_kit.quick_smoke`), 조명 × maya_unit², 「Blender 에 없음」 안내 체계
+  `ui/notices.py` (26 경로, 툴팁 + Help Line). 헤드리스 420/420, GUI 342/342 · 341/341, dogfood 47/47.
 - Step 53 (Blender 5.x 호환·안전한 설치) 완료 — `docs/steps/step_53.md`. 대상 4.5 그대로, 매니페스트 `blender_version_max = "5.3.0"`.
   5.2.2 에서 처음엔 켜기 실패 (Timeline = Dope Sheet 모드) → 얇은 버전 분기 (time_slider, theme `_rna_xml` + MOVED, keymap STRICT/DRIFT,
   select_loops, 5.x 타임라인 버튼 위치). 헤드리스 4.5 / 5.0.1 / 5.1.2 / 5.2.2 모두 414/414, GUI 4.5 337/337 · 336/336, 5.2 337/337,
@@ -156,7 +159,7 @@
 
 ## 바로 다음 할 일
 
-- 드라이버 큐 순서: backlog.json 의 Maya 워크플로우 54–67 (PLAN 「Maya 워크플로우 계획」 표: 54 기반 (단위·안내),
+- 드라이버 큐 순서: backlog.json 의 Maya 워크플로우 55–67 (PLAN 「Maya 워크플로우 계획」 표: 54 기반 (단위·안내),
   55 포즈 본 CB, 56 Time Slider·키, 57 Joint Tool, 58 IK·스킨, 59 SDK·제약, 60 MTK, 61 Target Weld, 62 Extrude/In-View, 63 UV, 64 Hypershade,
   65 FX, 66 씬 관리, 67 Graph Editor). 각 단계 근거 = `research/maya/workflows/<분야>.md` (research/ 는 추적 안 함 — 지우지 말 것).
 - Maya 를 다시 띄울 때: `research/scripts/maya_workflows/launch.ps1` (스크린샷은 Maya 위젯만; 화면 영역 캡처 금지 — step 48 사고).

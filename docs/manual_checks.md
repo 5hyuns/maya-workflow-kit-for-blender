@@ -347,3 +347,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 53) Blender 5.0–5.2 에서 kit 을 켜고 Maya 레이아웃: Status Line·셸프·툴박스·Channel Box·핫박스가 4.5 와 같게 보이는지, Range Slider 줄의 재생 버튼, Maya 테마 색 (일부 5.x 전용 색은 Blender 기본).
 - [ ] (step 53) kit 을 켠 채 Graph Editor (Alt+MMB/Alt+RMB, A/F, 키 클릭), Node Editor, Text Editor (z/h/Space 입력) 가 평소대로인지.
 - [ ] (step 53) Blender 5.3 이상에 설치하면 확장 관리자가 「호환 안 됨」 을 분명히 보여 주는지.
+
+### Step 54 — 단위 생성 경로·조명 세기·「Blender 에 없음」 안내
+
+- [ ] (step 54) MayaKit 템플릿에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
+- [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 m 장면의 같은 배치와 비슷한지 (역제곱 미터 보정). 상태 표시줄 보고에 감쇠 안내.
+- [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Animation Layers / Character Sets, Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
+- [ ] (step 54) Fluids > 3D Container / Effects > Smoke 를 메시 선택 후: 도메인이 메시 둘레에 Maya 단위로 알맞게 (cm 템플릿에서 2 m 상자가 아님).

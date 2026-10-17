@@ -48,7 +48,7 @@ BY_COMMAND = {
     "CreatePolygonPlane": (_create('PLANE'), 'MESH_GRID'),
     "CreatePolygonDisc": (_create('DISC'), 'MESH_CIRCLE'),
     "CreatePolygonPlatonic": (_create('PLATONIC'), 'MESH_ICOSPHERE'),
-    "CreatePolygonType": ("object.text_add", 'OUTLINER_OB_FONT'),
+    "CreatePolygonType": (_create('TEXT'), 'OUTLINER_OB_FONT'),
     "CenterPivot": ("maya_kit.center_pivot", 'PIVOT_BOUNDBOX'),
     "DeleteHistory": ("maya_kit.delete_history", 'MODIFIER_OFF'),
     "FreezeTransformations": ("maya_kit.freeze_transform", 'FREEZE'),
@@ -73,7 +73,7 @@ BY_COMMAND = {
     "SetMeshSculptTool": (("object.mode_set", {"mode": 'SCULPT'}), 'SCULPTMODE_HLT'),
     # --- Rigging ---
     "CreateLocator": (_create('LOCATOR'), 'EMPTY_AXIS'),
-    "JointTool": ("object.armature_add", 'OUTLINER_OB_ARMATURE'),
+    "JointTool": (_create('JOINT'), 'OUTLINER_OB_ARMATURE'),
     "IKHandleTool": ("pose.ik_add", 'CON_KINEMATIC'),
     "SmoothBindSkin": (("object.parent_set", {"type": 'ARMATURE_AUTO'}), 'MOD_ARMATURE'),
     "ArtPaintSkinWeightsTool": ("paint.weight_paint_toggle", 'WPAINT_HLT'),

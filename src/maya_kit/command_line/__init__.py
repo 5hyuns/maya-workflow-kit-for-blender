@@ -145,9 +145,12 @@ _blender_draw = []
 def draw_help_line(layout, context):
     """Tool help, else Blender's mouse/key hints; reports and job progress after it (Maya's Help Line
     shows progress too)."""
-    text = help_text(context)
+    from ..ui import notices
+    notices.remember_status_area(context.area)
+    note = notices.current()   # a 「not in Blender」 notice of the menu item under the mouse (step 54)
+    text = note or help_text(context)
     if text:
-        layout.label(text=text, icon='INFO')
+        layout.label(text=text, icon='ERROR' if note else 'INFO')
     else:
         layout.template_input_status()
     layout.template_reports_banner()

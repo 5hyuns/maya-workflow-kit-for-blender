@@ -16,7 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
-from . import menu_data, menu_map
+from . import menu_data, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -87,8 +87,13 @@ def current_set(context=None):
 # --- items ---------------------------------------------------------------------
 
 def draw_item(layout, path, label):
-    """Draw one Maya menu item: its Blender action, or greyed out."""
-    draw_spec(layout, label, menu_map.spec(path), path)
+    """Draw one Maya menu item: its Blender action, or greyed out. An item with a 「not in Blender」 notice and an
+    operator substitute runs through ``maya_kit.menu_item``, whose tooltip carries the notice (step 54)."""
+    s = menu_map.spec(path)
+    if s is not None and s[0] in ("op", "v3d", "tool") and notices.notice(path):
+        layout.operator(MAYAKIT_OT_menu_item.bl_idname, text=label).item = path
+        return
+    draw_spec(layout, label, s, path)
 
 
 def draw_spec(layout, label, s, path, icon='NONE'):
@@ -196,7 +201,7 @@ class MAYAKIT_OT_menu_unavailable(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
+        return notices.tooltip(props.item, mapped=False) or f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
 
     def execute(self, context):
         return {'CANCELLED'}
@@ -217,8 +222,12 @@ class MAYAKIT_OT_menu_item(bpy.types.Operator):
     @classmethod
     def description(cls, context, props):
         if props.item not in menu_map.MAP:
-            return f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
-        return f"{props.item.rsplit('/', 1)[-1]}\nPress and hold: Option Box (settings)"
+            return notices.tooltip(props.item, mapped=False) or \
+                f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
+        text = notices.tooltip(props.item, mapped=True) or props.item.rsplit('/', 1)[-1]
+        if props.item in menu_data.OPTION_BOXES:
+            text += "\nPress and hold: Option Box (settings)"
+        return text
 
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
