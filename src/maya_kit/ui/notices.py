@@ -92,9 +92,14 @@ def notice(path):
     return NOTICES.get(path)
 
 
+# Notices of kit panel rows that are not Maya menu items (e.g. Modeling Toolkit options, step 63),
+# filled by the panels' register(); same (substitute, line) form.
+PANEL_NOTICES = {}
+
+
 def tooltip(path, mapped):
     """Tooltip text for a Maya menu item with a notice (also shows it in the Help Line)."""
-    n = NOTICES.get(path)
+    n = NOTICES.get(path) or PANEL_NOTICES.get(path)
     if n is None:
         return None
     substitute, line = n

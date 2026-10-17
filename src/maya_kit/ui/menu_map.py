@@ -84,6 +84,7 @@ _WINDOW_EDITORS = {
     "General Editors/Display Layer Editor": _dock('CHANNEL_BOX'),
     "General Editors/Script Editor": "maya_kit.script_editor",
     "Modeling Editors/UV Editor": _editor('UV'),
+    "Modeling Editors/Modeling Toolkit": _dock('MODELING_TOOLKIT'),          # step 63
     "Animation Editors/Graph Editor": _editor('FCURVES'),
     "Animation Editors/Time Editor": _editor('NLA_EDITOR'),
     "Animation Editors/Trax Editor": _editor('NLA_EDITOR'),
@@ -245,15 +246,18 @@ MAP = {
     "Windows/Playblast": ("v3d", "render.opengl", {"animation": True}),
     "Windows/Output Window": "wm.console_toggle",
     # --- Mesh (Modeling) ---
-    "Mesh/Combine": "object.join",
-    "Mesh/Separate": ("mesh.separate", {"type": 'LOOSE'}),
+    "Mesh/Combine": "maya_kit.combine",                     # Maya: new pCube2, centre pivot (step 63)
+    "Mesh/Separate": "maya_kit.separate",                   # object mode: polySurfaceN under a group
+    "Mesh/Booleans/Union": ("maya_kit.boolean", {"operation": 'UNION'}),
+    "Mesh/Booleans/Difference": ("maya_kit.boolean", {"operation": 'DIFFERENCE'}),
+    "Mesh/Booleans/Intersection": ("maya_kit.boolean", {"operation": 'INTERSECT'}),
     "Mesh/Fill Hole": "mesh.fill_holes",
     "Mesh/Reduce": _mod('DECIMATE'),
     "Mesh/Remesh": _mod('REMESH'),
     "Mesh/Smooth": _mod('SUBSURF'),
     "Mesh/Triangulate": _mod('TRIANGULATE'),
     "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
-    "Mesh/Mirror": _mod('MIRROR'),
+    "Mesh/Mirror": "maya_kit.mirror",                       # applied, world plane; □ = Mirror Options
     "Mesh/Transfer Attributes": _mod('DATA_TRANSFER'),
     "Mesh/Smooth Proxy/Subdiv Proxy": _mod('SUBSURF'),
     # --- Edit Mesh ---
@@ -276,6 +280,7 @@ MAP = {
     "Edit Mesh/Extract": ("mesh.separate", {"type": 'SELECTED'}),
     "Edit Mesh/Poke": "mesh.poke",
     # --- Mesh Tools ---
+    "Mesh Tools/Show/Hide Modeling Toolkit": ("maya_kit.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
     "Mesh Tools/Create Polygon": ("tool", "builtin.poly_build", True),
     "Mesh Tools/Insert Edge Loop": ("tool", "builtin.loop_cut", True),
     "Mesh Tools/Multi-Cut": ("tool", "builtin.knife", True),

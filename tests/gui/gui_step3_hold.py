@@ -31,7 +31,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     ts().use_snap, ts().snap_elements = False, {'INCREMENT'}
     ts().use_transform_data_origin = False
-    ts().use_proportional_edit_objects, ts().proportional_size = False, 1.0
+    ts().use_proportional_edit_objects, ts().proportional_size = False, 2.0   # a user radius (1.0 = Blender default becomes Maya 5, step 63)
     check("keymap active = Maya", bpy.context.window_manager.keyconfigs.active.name == "Maya")
     ev('X', 'PRESS')
 
@@ -93,7 +93,7 @@ def s_b_drag():
 
 @step
 def s_b_drag_check():
-    check("B + LMB drag 100 px -> radius x2", abs(ts().proportional_size - 2.0) < 1e-3)
+    check("B + LMB drag 100 px -> radius x2 (2 -> 4)", abs(ts().proportional_size - 4.0) < 1e-3)
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step3_bdrag.png"))
     ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 100, y=C["y"])
