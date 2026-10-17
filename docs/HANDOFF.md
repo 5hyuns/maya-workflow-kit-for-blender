@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 40 (Maya 동일화 조사·계획) 완료 — `docs/steps/step_40.md`, `docs/PLAN.md` 「Maya 동일화 계획」. Maya 2022.4 를 팩토리 prefs 로 띄워
+  스크린샷 22장 + 실측 색·크기 (`research/maya/colors.json`), kit 비교 도구 `tools/look_compare.py` (+ `look_shots.py`: 나란히 이미지,
+  테마 ΔE00), 경쟁 제품 22개 (`research/competitors.md`), blindspot 18건, self-review 반영. 버그 수정: 리드(연두)/다른 선택(흰색)
+  색이 반대였음 → ΔE 28.5 → 0. 테마 ΔE00>5 13/31 → 11/31. 헤드리스 339/339. backlog 12개 (`autodrive_bmk/backlog.json`).
 - Step 39 (컴포넌트 픽워크 + Alt+Shift 축 고정) 완료 — `docs/steps/step_39.md`. 편집 모드 화살표 = `maya_kit.pick_walk_component`
   (엣지 루프/링, 정점·면은 화면 방향), Alt+Shift+LMB/MMB = `maya_kit.view_axis_lock` (처음 우세한 축으로 텀블/트랙).
   헤드리스 339/339, GUI 281/281, dogfood 47/47. **재점검 3차 backlog 7개 모두 처리 (step 33–39).**
@@ -87,8 +91,9 @@
 
 ## 바로 다음 할 일
 
-- 재점검 3차 backlog 는 모두 끝났다. 다음은 재점검 4차 (step 32 처럼: 전체 테스트·dogfood --session 탐색, research 대응표 다시 세기,
-  blindspot grep) 로 새 backlog 를 만드는 것.
-- 남은 항목 모음: step_36.md (대칭: 클릭 시 반대쪽 하이라이트, HUD), step_37.md (아이콘 바, 템플릿 헤더 잘림, Shift+M),
-  step_38.md (CB 언두 수동 확인, 잘못된 입력 알림), step_39.md (PickWalkIn/Out, UV 화살표), PLAN 「재점검 3차」 8–9 (Medium/Low).
-- 각 수정 후 `python tools/dogfood.py` (필요하면 `--session`) 로 회귀 확인.
+- backlog (`C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`) 12개를 `docs/PLAN.md` 「Maya 동일화 계획」 순서로:
+  1 비교 기준 정확화 (look_shots 카메라·상태를 Maya 와 같게, 렌더 픽셀 ΔE, 영역 사각형) → 2 첫 시작 경로 → 3 테마 v2 색 →
+  4 평면 위젯·밀도·폰트 → 5 Maya 그리드 → 6 ViewCube·라벨 → 7 선택 와이어 → 8 레이아웃 → 9 CB/Outliner/Time Slider 크롬 →
+  10 메뉴·셸프 아이콘 → 11 핫박스·RMB → 12 Blender 5.x 호환.
+- 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).
+- 이전 남은 항목: step_36–39 「남은 것」, PLAN 「재점검 3차」 8–9.

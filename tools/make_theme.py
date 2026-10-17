@@ -75,8 +75,10 @@ VALUES = (
     ("view_3d.space.gradients.gradient", (0.052, 0.052, 0.052)),        # backgroundBottom
     ("view_3d.grid", (0.36, 0.36, 0.36, 1.0)),       # [K] grey grid (flat bg default 0.36 [O-mel])
     ("view_3d.wire", (0.0, 0.016, 0.376)),           # [K] dormant mesh wire: dark blue
-    ("view_3d.object_selected", (0.263, 1.0, 0.639)),  # [K] selected: light green
-    ("view_3d.object_active", (1.0, 1.0, 1.0)),      # [K] lead (last) selected: white
+    # Maya lead (last selected = Blender active) is light green, other selected white: displayColor
+    # lead 19 / active 16 (research/maya/colors.json "viewport", screens/04_wire_selected_lead.png) [O]
+    ("view_3d.object_selected", (1.0, 1.0, 1.0)),
+    ("view_3d.object_active", (0.263, 1.0, 0.639)),
     ("view_3d.wire_edit", (0.0, 0.016, 0.376)),      # [K] component-mode wire
     # Timeline / Dope Sheet: time slider colours [O-pref]
     ("dopesheet_editor.space.back", (0.168627, 0.168627, 0.168627)),    # timeSliderBackground

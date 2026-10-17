@@ -240,3 +240,69 @@ planned 13 → **5** (F2–F6), not applicable 10, macOS-only 68, unreviewed 292
 Risks the manual checks guard: real OS key paths (keys released mid-drag, Alt+Tab with a key held), keymap persistence with
 saved prefs, select-through X-ray flag left on after an aborted drag, Outliner rebuild speed with many objects. A hand
 pass over the 115 manual checks is still the biggest unverified area.
+
+## Maya 동일화 계획 (step 40, 2026-10-17)
+
+Request: "켜면 누가 봐도 Maya" — colours, layout, feel; better than paid add-ons. Evidence: `docs/steps/step_40.md`;
+Maya 2022.4 factory screenshots and values measured in a running Maya (`research/maya/screens/`, `research/maya/colors.json`);
+side-by-side shots and the theme ΔE00 table (`python tools/look_compare.py` → `research/maya/screens/compare/`);
+rival add-ons (`research/competitors.md`); blindspot pass (18 findings, step_40.md 「blindspot」). Verdicts are delegated.
+
+### What a Maya user sees first (compare/00–16, measured)
+
+| Area | Maya 2022 factory [O] | Kit now | Gap |
+|---|---|---|---|
+| First start | Maya UI at once | keymap only; layout = 2 buttons, theme = 1 more button (opt-in); Blender splash | High |
+| Viewport background | flat #5c5c5c, gradient off | theme gradient #889db3→#0d0d0d (from the user's own Maya prefs) | ΔE 27 |
+| Grid | finite 12 units, line every 5 / 5 divisions, #404040, axes same grey, thicker | infinite fading floor, red/green axis lines | High |
+| Selection | lead green #43ffa3 / others white, wire drawn over shaded objects | colours fixed this step; Blender outline only, no wire | High |
+| Components | object wire #64dcff, vertices #c800c8 / selected yellow, edges & faces #e4ac79 + translucent face fill | Blender black / orange (+ `*_mode_select` yellow) | ΔE 12–77 |
+| Manipulator | X #e60000 Y #00e600 Z #4a92ff, yellow active, centre square + plane squares | Blender axis colours, thin arrows; axis colours also tint grid lines | ΔE 3–15 |
+| Viewport furniture | ViewCube top right, axis triad bottom left, "persp" bottom centre | navigate gizmo + zoom/pan buttons, "User Perspective (1) Collection" text | High |
+| Density / font | Segoe UI 11 px, CB rows 16 px, menu items 20 px, flat square widgets | Inter ~14 px, rows 25 px, rounded (0.4) embossed widgets | High |
+| Layout | Toolbox 40 px · Outliner 260 · view · right dock tabs CB/LE 260 / AE 460 / MTK; Time Slider, Range Slider, Help+Command rows | extra right column (Blender Outliner + Properties), Blender toolbar inside the view, tool header row, Range fields inside the timeline header | High |
+| Shelf / Status Line | 32 px coloured icons, tab row #373737 | Blender monochrome 20 px icons | Medium-high |
+| Hotbox / RMB menu | all menu-set rows, "Maya" centre, zone lines; RMB list "pCube1..." under the ring | current set only, squeezed by the sidebar; list beside the ring, other items | Medium |
+
+Theme ΔE00 after the lead/selected fix: 11 of 31 pairs > 5 (`delta_e.md`). Colours are cheap; the furniture, density and
+first-start path are what make it read as Blender.
+
+### Rivals (research/competitors.md)
+
+- Everyone has: Alt navigation, QWER, Blender pies called marking menus, a Maya theme, a button shelf, quad view.
+- Nobody has (the kit already does most): Channel Box, AE, Maya Outliner, real flick marking menus, Space hotbox, menu sets,
+  Status Line, hold X/C/V/D, Maya-exact Freeze/Delete History/cm units, Smart Duplicate, pick-walk, maya.cmds line.
+- Top complaints: breaks on every Blender update, keymap conflicts, breaks other editors, destructive install (deletes add-ons),
+  online licence checks. → The kit's edge is depth + safety; it still loses on **first impression** (a rival's theme pack
+  looks more Maya at first glance than the kit with its theme off).
+
+### Next steps, by priority (backlog.json, step 41+)
+
+Order (dependencies in brackets):
+1. Comparison fidelity — same camera/state in `look_shots.py`, rendered-pixel ΔE at the colors.json sample points, region
+   rectangles vs `_maya_ui_dump.json`, crop comparisons. Every later item is verified with it.
+2. First-start path — decide template `userpref.blend` vs one-click "Make Blender Maya" (+ revert all), kit-made splash.
+   Changing decision 3 is recorded as a delegated amendment in `docs/user_decisions.md`.
+3. Theme v2 colours (viewport, components incl. `*_mode_select`, manipulator, Outliner, tabs, current frame, preselect).
+4. Widget feel — flat widgets, density (`ui_scale` preset), Segoe UI on Windows (system font, not shipped).
+5. Maya grid (own GPU grid, X-snap parity) [after 3]. 6. ViewCube / axis triad / camera labels, Blender overlays hidden.
+7. Selected-object wireframe [after 3]. 8. Layout parity (dock columns, mode-independent toolbox, sidebar tabs, bottom rows).
+9. Editor chrome: Channel Box / Layer Editor, Outliner, Time Slider. 10. Menus (option boxes, open under the menu bar),
+   shelf / Status Line icons (kit-made). 11. Hotbox / RMB fidelity (②: seen only when invoked).
+12. Rivals (③): Blender 5.x compatibility check (target stays 4.5, decision 4) + safe-install assertions.
+
+Later candidates (not in this backlog): W/E/R tool kept across modes and manipulator centre/plane handles (②),
+HUD / in-view messages / Alt+B background cycle (②), import from the user's Maya prefs — parse only, never execute MEL
+(③, decisions 5–6).
+
+Done criteria for ①: theme rows and rendered-pixel samples ΔE00 < 2 (viewport elements < 5), region rectangles ±10 px of
+the Maya widget geometry, per-crop checks (row pitch ±1 px, menu/label text and order equal), all tests at ui_scale 1.0
+(and 0.8 once item 4 lands). A green ΔE table alone does not prove the screen reads as Maya: chrome and layout (8–10) do.
+
+Delegated decisions (step 40):
+- D1 Maya reference = factory prefs (clean `MAYA_APP_DIR`), not the user's customised prefs; the theme's gradient was from
+  the latter and is replaced.
+- D2 Global preference changes (ui_scale, font, mini axis) stay opt-in presets with backup/restore (CLAUDE.md prefs_preset
+  rule); the automatic path is the MayaKit template's own `userpref.blend` only if the item-2 prototype shows it keeps the
+  user's add-ons; either way decision 3 gets a delegated amendment.
+- D3 No Maya icons/images/fonts are shipped; shelf/toolbox icons are kit-made, Segoe UI is used only as an installed system font.
