@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 99 |
+| 구현 | 105 |
 | IC 일치 | 8 |
-| 해당 없음 | 11 |
-| 미검토 | 282 |
+| 해당 없음 | 10 |
+| 미검토 | 277 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -140,9 +140,9 @@
 | F9 | F9 | global | SelectVertexMask | Object Non-modal: `maya_kit.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
 | F10 | F10 | global | SelectEdgeMask | Object Non-modal: `maya_kit.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |
 | F11 | F11 | global | SelectFacetMask | Object Non-modal: `maya_kit.component_mode` (type='FACE') | 구현 |  | hotkeySetup.mel:255 |
-| F12 | F12 | global | SelectUVMask | — | 해당 없음 | 3D 뷰 UV 컴포넌트 선택 없음 (UV Editor 사용) | hotkeySetup.mel:256 |
+| F12 | F12 | global | SelectUVMask | Object Mode: `maya_kit.uv_component` (mode='UV'); Mesh: `maya_kit.uv_component` (mode='UV') | 구현 | UV Editor 를 열고 (편집 모드) UV 선택 = UV Sync 끔 + UV 정점 (step 66) | hotkeySetup.mel:256 |
 | Alt+F9 | Alt+F9 | global | SelectVertexFaceMask | — | 해당 없음 | Blender 에 vertex-face 컴포넌트 없음 | hotkeySetup.mel:257 |
-| Alt+F12 | Alt+F12 | global | SelectMeshUVShell | — | 미검토 |  | hotkeySetup.mel:258 |
+| Alt+F12 | Alt+F12 | global | SelectMeshUVShell | Object Mode: `maya_kit.uv_component` (mode='SHELL'); Mesh: `maya_kit.uv_component` (mode='SHELL') | 구현 | UV Editor 를 열고 UV Shell = Blender UV 섬 모드 (step 66) | hotkeySetup.mel:258 |
 | F7 | F7 | global | SelectMultiComponentMask | Object Non-modal: `maya_kit.component_mode` (type='MULTI') | 구현 | 정점·엣지·면 동시 선택 모드 | hotkeySetup.mel:259 |
 | Ctrl+F9 | Ctrl+F9 | global | ConvertSelectionToVertices | Mesh: `maya_kit.convert_selection` (type='VERT') | 구현 |  | hotkeySetup.mel:262 |
 | Ctrl+F10 | Ctrl+F10 | global | ConvertSelectionToEdges | Mesh: `maya_kit.convert_selection` (type='EDGE') | 구현 | 닿는 엣지 (면 -> 테두리 엣지) | hotkeySetup.mel:263 |
@@ -324,10 +324,10 @@
 | Delete | DEL | polyTexturePlacementPanel | DeleteUVs | — | 미검토 |  | hotkeySetup.mel:516 |
 | Ctrl+c | Ctrl+C | polyTexturePlacementPanel | CopyUVs | UV Editor: `uv.copy` | 미검토 |  | hotkeySetup.mel:517 |
 | Ctrl+v | Ctrl+V | polyTexturePlacementPanel | PasteUVs | UV Editor: `uv.paste` | 미검토 |  | hotkeySetup.mel:518 |
-| Ctrl+l | Ctrl+L | polyTexturePlacementPanel | LayoutUV | UV Editor: `uv.select_linked` | 미검토 |  | hotkeySetup.mel:519 |
-| Ctrl+u | Ctrl+U | polyTexturePlacementPanel | UnfoldUV | — | 미검토 |  | hotkeySetup.mel:520 |
-| Shift+x | Shift+X | polyTexturePlacementPanel | CutUVs | UV Editor: `wm.call_menu_pie` (name='IMAGE_MT_uvs_snap_pie') | 미검토 |  | hotkeySetup.mel:521 |
-| Shift+s | Shift+S | polyTexturePlacementPanel | SewUVs | — | 미검토 |  | hotkeySetup.mel:522 |
+| Ctrl+l | Ctrl+L | polyTexturePlacementPanel | LayoutUV | UV Editor: `maya_kit.uv_layout` | 구현 | Pack Islands, 셸 패딩 px / 맵 크기 (IC select_linked 제거) | hotkeySetup.mel:519 |
+| Ctrl+u | Ctrl+U | polyTexturePlacementPanel | UnfoldUV | UV Editor: `maya_kit.uv_unfold` | 구현 | Blender Unwrap (Minimum Stretch), 셸 경계·자리 유지 (Unfold3D 아님) | hotkeySetup.mel:520 |
+| Shift+x | Shift+X | polyTexturePlacementPanel | CutUVs | UV Editor: `maya_kit.uv_cut` | 구현 | 솔기 + 작은 쪽 셸을 0.2 px 떼어 그 자리에서 분리 (IC 스냅 파이 제거) | hotkeySetup.mel:521 |
+| Shift+s | Shift+S | polyTexturePlacementPanel | SewUVs | UV Editor: `maya_kit.uv_sew` | 구현 | 솔기 지움 + 작은 셸을 엣지에 맞춰 옮김 | hotkeySetup.mel:522 |
 | Ctrl+Shift+x | Ctrl+Shift+X | polyTexturePlacementPanel | CreateUVShellAlongBorder | — | 미검토 |  | hotkeySetup.mel:523 |
 | 4 | FOUR | polyTexturePlacementPanel | DisplayUVWireframe | UV Editor: `uv.select_mode` (type='ISLAND') | 미검토 |  | hotkeySetup.mel:524 |
 | 5 | FIVE | polyTexturePlacementPanel | DisplayUVShaded | — | 미검토 |  | hotkeySetup.mel:525 |

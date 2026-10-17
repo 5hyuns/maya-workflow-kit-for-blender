@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 66 (UV 워크플로우) 완료 — `docs/steps/step_66.md`. UV Editor 열기 = 편집 모드 + UV Sync (창 하나만), `maya_kit.uv_component`
+  (F12 UV / Alt+F12 UV Shell / 3D RMB E UV), UV Editor RMB 마킹 메뉴 (Maya texturePanelMenus.mel 방향) + Shift+RMB UV / UV Shell 도구,
+  Cut (솔기 + 2e-4 분리 — Blender 섬 계산은 솔기를 무시, 측정) / Sew (작은 셸 닮음 변환) / Unfold (Unwrap Minimum Stretch, 셸 자리 유지) /
+  Layout (pack, 패딩 px) / Texel Density, 키 Shift+X · Shift+S · Ctrl+U · Ctrl+L, UV Toolkit 사이드바 탭. 헤드리스 539/539, GUI 0.8 452/452,
+  gui_step66 6/6, dogfood 47/47.
+  **바로 다음 할 일**: step 67 — Hypershade 창·Light Editor·Render 메뉴·Render View Keep Image·AE 맵 버튼 (근거 `research/maya/workflows/render.md`).
+  계획 먼저.
+
 - Step 65 (Extrude 매니퓰레이터·In-View Editor·마지막 연산 INPUTS) 완료 — `docs/steps/step_65.md`. `maya_kit.extrude` = Maya polyExtrudeFace
   (mayapy 8 경우와 좌표 일치: Thickness shell · Local Translate Z · Offset · Divisions · Keep Faces Together), Ctrl+E/메뉴/마킹 메뉴/셸프/MTK.
   마지막 압출 = `Record` (압출 전 BMesh, 상태 서명; 언두/리두 따라감) → `maya_kit.extrude_edit` 로 다시 만들기 (언두 한 단계, F9 = Maya 이름).

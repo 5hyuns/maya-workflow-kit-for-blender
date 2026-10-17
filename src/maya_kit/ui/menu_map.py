@@ -322,8 +322,9 @@ MAP = {
     "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
     "UV/Cylindrical": ("v3d", "uv.cylinder_project", {}),
     "UV/Spherical": ("v3d", "uv.sphere_project", {}),
-    "UV/Cut UV Edges": "mesh.mark_seam",
-    "UV/Sew UV Edges": ("mesh.mark_seam", {"clear": True}),
+    "UV/Cut UV Edges": "maya_kit.uv_cut",          # seam + shells apart in place (step 66)
+    "UV/Sew UV Edges": "maya_kit.uv_sew",          # seam cleared + the smaller shell moved onto the edge
+    "UV/Merge UVs": "uv.weld",
     # --- Skeleton (Rigging) ---
     "Control/Create Character Set": "anim.keying_set_add",   # step 54: Keying Set + notice (ui/notices.py)
     # step 57: Joint Tool (click, click, Enter), option-box dialogs (docs/steps/step_57.md)

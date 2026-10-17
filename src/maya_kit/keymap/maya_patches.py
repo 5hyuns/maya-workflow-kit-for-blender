@@ -678,6 +678,28 @@ def patch_multi_cut(kd):
             _add(kd, "Knife Tool Modal Map", mode, make_event(key, value, any=True))
 
 
+# --- 34. UV workflow (docs/steps/step_66.md 「계획」 1-3) -------------------------------------------
+# research/maya/workflows/uv.md §1-2; Maya UV Editor keys hotkeySetup.mel:519-522 (docs/keymap_mapping.md
+# polyTexturePlacementPanel rows), F12 / Alt+F12 hotkeySetup.mel:256-258. IC's UV Editor: Shift+X = snap pie (IC:613),
+# Ctrl+L = select_linked (IC:599), RMB = context menu (IC:614); Maya has no shell-select key there.
+UV_KM = "UV Editor"
+
+
+def patch_uv(kd):
+    kd.remove(UV_KM, "wm.call_menu", type="RIGHTMOUSE")
+    for trigger, mods in (("RMB", {}), ("SHIFT_RMB", {"shift": True})):
+        _add(kd, UV_KM, "maya_kit.marking_menu", make_event("RIGHTMOUSE", **mods), {"trigger": trigger})
+    kd.remove(UV_KM, "wm.call_menu_pie", type="X", shift=True)
+    kd.remove(UV_KM, "uv.select_linked", type="L", ctrl=True)
+    _add(kd, UV_KM, "maya_kit.uv_cut", make_event("X", shift=True))
+    _add(kd, UV_KM, "maya_kit.uv_sew", make_event("S", shift=True))
+    _add(kd, UV_KM, "maya_kit.uv_unfold", make_event("U", ctrl=True))
+    _add(kd, UV_KM, "maya_kit.uv_layout", make_event("L", ctrl=True))
+    for km in ("Object Mode", "Mesh"):
+        _add(kd, km, "maya_kit.uv_component", make_event("F12"), {"mode": 'UV'})
+        _add(kd, km, "maya_kit.uv_component", make_event("F12", alt=True), {"mode": 'SHELL'})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -686,7 +708,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut)
+           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv)
 
 
 def apply(data):

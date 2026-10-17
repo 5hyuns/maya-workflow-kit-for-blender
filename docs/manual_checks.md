@@ -451,3 +451,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 65) In-View 행을 옆으로 끌기 = 값 (Ctrl 미세, Shift 크게), 끌지 않고 클릭 = 값 입력 창, Keep Faces Together 클릭 = 토글 (두 면 압출에서 차이). 호버 / 마지막 행 이름이 노랑.
 - [ ] (step 65) Channel Box INPUTS 맨 위 polyExtrudeFace1 + 다섯 행 (`0.5`, `+=0.25` 입력), 아래 회색 안내 「Blender keeps no edit-mode history」. Divisions 2 → 옆면 고리 2 개 (modeling_04.png). Ctrl+Z / Ctrl+Shift+Z 에 행 값이 따라감. 정점을 손으로 옮기거나 다른 연산을 하면 행이 사라짐 (마지막 하나만).
 - [ ] (step 65) 다른 면을 선택하면 화살표·In-View 가 사라지고 Move 매니퓰레이터가 돌아옴 (INPUTS 행은 남음). F9 (Adjust Last Operation) 에 같은 Maya 이름 속성. 엣지/정점 선택에서 Ctrl+E = 예전처럼 압출 + 법선 드래그.
+
+### Step 66 — UV 워크플로우
+
+- [ ] (step 66) 큐브 선택 → UV > UV Editor (또는 Windows > Modeling Editors > UV Editor / F12 / 3D RMB E 「UV」): UV Editor 창이 하나 열리고 (다시 해도 새 창 안 생김) 큐브가 편집 모드, UV 가 바로 보임. F12 = UV (Sync 끔, 정점), Alt+F12 = UV Shell (섬) — 이때 3D 뷰에는 면이 모두 선택돼 보임 (안내대로인지).
+- [ ] (step 66) UV Editor RMB 길게 = 마킹 메뉴 (N Edge, S Face, W Vertex, E UV, NW UV Shell + 아래 Cut/Sew/Unfold/Layout 목록), Shift+RMB = UV 도구 (UV 모드) / UV Shell 도구 (섬 모드) — Maya 와 위치 비교.
+- [ ] (step 66) 3D 뷰에서 에지 고리 선택 → UV Editor 에서 Shift+X: 빨간 솔기 + 셸이 그 자리에서 나뉨 (섬 선택으로 한쪽만 잡히는지), Shift+S: 작은 셸이 엣지에 붙어 하나로. Ctrl+U: 셸 자리 그대로 펴짐 (Unfold3D 와 모양 차이 안내), Ctrl+L: 0–1 안에 겹침 없이, 셸끼리 같은 텍셀 밀도.
+- [ ] (step 66) UV Editor 사이드바 「UV Toolkit」 탭 (Ctrl+휠): uv_01_win1 순서, 컴포넌트 아이콘·Pick/Drag/Tweak·All/Clear/Inverse·접는 절. Transform > Texel Density: 큐브 Get → 값 (px/cm, 맵 1024), 다른 크기 큐브에서 Set → 같은 밀도. 회색 항목 툴팁 안내.

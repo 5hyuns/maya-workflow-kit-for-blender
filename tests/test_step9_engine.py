@@ -147,8 +147,8 @@ def test_option_box_and_list_hits():
 
 def test_disabled_items_do_not_run():
     s = _session(mm.RMB_MESH, enabled=lambda a: a is not None)
-    assert not s.layout.radial["E"].enabled  # UV
-    assert s.release(*_at("E", 60), 0.5)[0] == "CANCEL"
+    assert not s.layout.radial["SW"].enabled  # Vertex Face (UV in E works since step 66)
+    assert s.release(*_at("SW", 60), 0.5)[0] == "CANCEL"
 
 
 def test_list_submenu_opens_on_hover():
