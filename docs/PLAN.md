@@ -307,3 +307,96 @@ Delegated decisions (step 40):
   rule); the automatic path is the MayaKit template's own `userpref.blend` only if the item-2 prototype shows it keeps the
   user's add-ons; either way decision 3 gets a delegated amendment.
 - D3 No Maya icons/images/fonts are shipped; shelf/toolbox icons are kit-made, Segoe UI is used only as an installed system font.
+
+## Maya 워크플로우 계획 (step 48, 2026-10-17)
+
+Request (user, verbatim): 「모델링, 애니메이션, 리깅, FX 등등 Maya의 고유한 워크플로우를 분석하고 그 워크플로우가 들어가게 해줘.」
+Evidence: a real Maya 2022 run walking 47 workflow steps with the commands Maya's menus run (`research/scripts/maya_workflows/wf.py`,
+log `research/maya/workflows/_maya_run.json`, shots `research/maya/workflows/shots/`, captured from Maya's own widgets only); per
+discipline `research/maya/workflows/{modeling,uv,animation,rigging,fx,render,scene}.md` (hand order, kit now with file:line, gap table
+with frequency × break scores, concept decisions, GUI follow-along scenarios); a blindspot pass and a brainstorm (`docs/steps/step_48.md`).
+Verdicts are delegated.
+
+### Where the flow breaks today (top rows, score = daily frequency 1–5 × break 1–5)
+
+| Discipline | Gap (kit now) | Score |
+|---|---|---|
+| Rigging / animation | Channel Box, Outliner, AE only see objects: on a rig in pose mode they show the armature (`ui/channel_box.py:62-73`), bones fall into "Rotation mode QUATERNION" | 25 |
+| Rigging | Joint Tool = `object.armature_add` (one 1 BU bone, not click-to-place, no `maya_unit()`, `ui/menu_map.py:294`); Paint Skin Weights / Bind Skin / IK are bare Blender ops with Maya selection order wrong | 20 |
+| Modeling | construction history edited later in Channel Box INPUTS / In-View Editor (only modifiers are INPUTS; edit-mode ops = one Adjust Last Operation) | 20 |
+| Modeling | Target Weld missing, Modeling Toolkit greyed (`menu_map.py:385`) | 20 / 16 |
+| UV | no UV Toolkit, no UV component (F12), Cut/Sew/Unfold/Layout keys missing, 3D Cut and Sew greyed (`shelf_data.py:94`) | 20 |
+| Render | Hypershade = a bare Shader Editor window (`menu_map.py:92`), no material browser; Light Editor greyed; Render menu lost its items (`menu_data.py:49`) | 20 / 16 / 15 |
+| FX | simulation defaults in metres on 1 cm objects (cloth collision 0.015 m > a 1 cm plane, rigid margin 0.04 m, field empty 1 m); nParticles Create Emitter greyed, shelf Emitter = Emit from Object | 20 / 15 |
+| Animation | no K time drag (K = knife), timeline body LMB doesn't scrub, Graph Editor has no tangent buttons, RMB Key Selected / Time Slider menu are Blender's | 16 / 15 / 15 / 12 |
+| Scene | no Set Project / Project Window, Ctrl+Alt+S names files differently from the menu's Maya Increment and Save, Create Reference = `wm.link` (no namespace), sets invisible in the Outliner | 16 / 12 / 12 / 8 |
+
+Already right (don't redo): Playblast uses the playback range (measured), Channel Box keying/breakdown/mute/lock/hide and driven
+state, smooth preview 1/2/3, Smart Duplicate/Extrude, symmetry, Maya parenting, X/C/V snaps, Delete History / Freeze / Center Pivot,
+materials assignment (step 29), Increment and Save menu with Maya's rule (step 34).
+
+### Concept decisions (delegated, step 48)
+
+- W1 **Maya joint = a bone** in one armature per skeleton (`skeleton1`, bones `joint1…`, rotation mode XYZ); pose mode counts as
+  "joints selected": Channel Box / Outliner / AE work on the active and selected pose bones. Bone Y (not Maya X) points down the bone:
+  told in the UI, not converted.
+- W2 **Construction history**: modifiers stay the lasting history; the kit's own last modeling op shows as one INPUTS row editable
+  afterwards (undo + run again with new values). Notice: "Edit-mode operations have no history in Blender: only the last one can be
+  changed." (PLAN 「Not possible」 history nodes stays.)
+- W3 **Not in Blender → near substitute + notice** (one shared mechanism, step 54): Animation Layers → NLA, Character Sets → Keying
+  Sets, Quick Select Sets → collections, ghosting → animation snapshot, buffer curves → ghost curves, Time Editor/Trax → NLA, Node Editor
+  (DG) → none (drivers / Shader Editor), Hypergraph → Outliner, Light Editor → kit light list, HumanIK / Quick Rig → Rigify (shipped
+  in `addons_core`), Texel Density → kit operator, Namespace → `ns:` name prefix, Reference → link + library override, Set Project →
+  kit project root in add-on prefs (+ `//` relative paths), nucleus → kit nucleus settings on the Scene.
+- W4 **Simulation scale** (amends decision 8 for simulations, recorded as decision 10): Maya's nucleus defaults are `spaceScale` 1.0
+  with gravity 9.8 in a cm scene (measured with mayapy, step 48): Maya simulates one scene unit as one metre, so a 1 cm cube falls
+  like a 1 m one. The kit reproduces what the Maya user sees: kit FX create paths scale gravity and sim lengths by `maya_unit()`
+  (gravity 9.8 × maya_unit / Space Scale m/s², collision distances, particle sizes and domains in Maya units); a kit
+  "Space Scale" (default 1, Maya's) keeps the same meaning. The "one unit = one metre" reading of Space Scale 1 is Maya documentation [K];
+  the values were measured.
+- W5 **Create paths outside `maya_kit.create`** (armature, empties/fields, text, image, quick effects, lights) go through `maya_unit()`;
+  light power × `maya_unit()²` for point/spot/area (inverse-square in metres) with a "no No-Decay in Blender" notice.
+- W6 **Maya workspaces** (Animation, Rigging, UV Editing, Rendering) are generated by `tools/make_startup.py` once step 49 (layout
+  parity) has the dock columns; hotbox workspace switches use them instead of Blender's own (left out of 54–67: own step later).
+
+### Implementation steps (backlog.json → steps 54–67, after the queued look steps 49–53)
+
+Priority = score × dependency. Each step: one session; plan first in `step_<n>.md` when modal / keymap / matrix; evidence =
+`research/maya/workflows/<discipline>.md` sections; verification = headless tests + a GUI test that repeats the Maya hand order of the
+discipline file with the expected result (`tests/gui/`, ui_scale 1.0 and 0.8) + `docs/manual_checks.md` + dogfood 47/47.
+
+| # | Step | Depends on |
+|---|---|---|
+| 54 | Workflow foundation: Maya-unit create paths incl. fields/effectors (W5), light power, the shared "not in Blender" notice (W3) | — |
+| 55 | Joints selected = pose bones in Channel Box / Outliner / AE (W1) + constraint weight rows | 54 (notices) |
+| 56 | Time Slider and key feel: LMB scrub, K time drag, Maya Time Slider RMB menu, S (all keyable) / Key Selected, Delete / Breakdown / Copy-Paste keys, MMB time-drag notice | 50 |
+| 57 | Joint Tool (click to place), Orient / Mirror Joint, pose pick-walk, P in pose mode | 55 |
+| 58 | IK Handle + Pole Vector, Bind Skin in Maya selection order, Paint Skin Weights setup + influence list, Copy / Mirror weights | 57 |
+| 59 | Set Driven Key window, pose-mode Constrain menu, Add Attribute, Blend Shape (join_shapes), Quick Rig / HumanIK notice (Rigify) | 55, 58 |
+| 60 | Modeling Toolkit dock (third dock), soft select radius in Maya units, Separate / Combine / Mirror with Maya meaning | 49 |
+| 61 | Target Weld tool, Crease tool, Multi-Cut feel (Ctrl edge loop, snap step) | — |
+| 62 | Extrude manipulator (Python GizmoGroup) + In-View Editor + last-op INPUTS row (W2) | — |
+| 63 | UV workflow: UV Editor entry (edit + sync), UV Toolkit panel, UV marking menu, Cut / Sew / Unfold / Layout keys, Texel Density | 49, 52 |
+| 64 | Hypershade window (material browser + Shader Editor + AE), kit Light Editor, Render menu restored, Render View Keep Image, AE map button | 54 |
+| 65 | FX: Maya simulation scale (W4), kit nucleus section, nParticles emitter / Emit from Object, nCloth on all selected, nCache | 54 |
+| 66 | Scene management: Set Project / Project Window, Ctrl+Alt+S = Maya increment, Create Reference + namespace prefix + Reference Editor | 54, 50 |
+| 67 | Graph Editor tangent toolbar + Shift+S tangent menu, G, Auto Key semantics, Playblast player + options | 56, 52 |
+
+Order (delegated, after the step 48 review): score × dependency — rigging / animation core first (25, 20), then modeling (20),
+UV (20), render (20), FX scale (20), scene (16), Graph Editor (15). Option boxes (□) in these steps are `invoke_props_dialog`
+popups (the 「Not possible」 option boxes stay); new manipulators are Python GizmoGroups (the C transform gizmo can't be extended).
+Every key binding goes through `maya_patches._add` (shadows recorded) + `keymap/mapping.py` row status + `tools/gen_keymap_mapping.py`;
+new marking menus get their Maya positions in research JSON and a `test_step8`-style check.
+
+### Left out of steps 54–67 (score, reason) — later candidates
+
+- UV: 3D Cut and Sew modal tool (20, own modal step after 63), UV checker (12), Optimize / Straighten (9), UV display keys (9).
+- Modeling: Quad Draw Make Live (12), Bevel immediate options (8), Insert pivot in edit mode (8), Delete History in edit mode (5),
+  Match Transformations (6).
+- Animation: buffer curves (4), Maya Animation / Rigging / UV workspaces (W6, after 49 — own step), ghosting (snapshot substitute, 9),
+  Time Editor / Trax (NLA notice only, via 54).
+- Rigging: Spline IK (8), Component Editor weight table (12), Shape Editor (9), Node Editor (impossible, notice via 54).
+- FX: 3D fluid container (10), Bifrost → quick_liquid (10), MASH network (15: no MASH in `menus.json`, needs menu data + generator
+  first), nConstraint (8).
+- Render: Render Settings window and 960×540 template resolution (8), Light Linking (6), Tab node add in the Shader Editor (8).
+- Scene: Outliner Sets (8), Hypergraph Hierarchy (6).

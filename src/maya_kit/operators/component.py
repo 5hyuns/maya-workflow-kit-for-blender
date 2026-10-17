@@ -54,8 +54,10 @@ class MAYAKIT_OT_bevel(bpy.types.Operator):
         return {'FINISHED'}
 
     def execute(self, context):
+        # 0.1 Maya units (decision 8): 0.1 BU was 10 Maya units in the cm template (found in step 48)
+        from . import units
         bpy.ops.mesh.bevel(affect=bevel_affect(context.scene.tool_settings.mesh_select_mode),
-                           offset=0.1)
+                           offset=0.1 * units.maya_unit(context.scene))
         return {'FINISHED'}
 
 

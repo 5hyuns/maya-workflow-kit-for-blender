@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 48 (Maya 고유 워크플로우 분석·계획) 완료 — `docs/steps/step_48.md`, `docs/PLAN.md` 「Maya 워크플로우 계획」, 결정 10
+  (`docs/user_decisions.md`: 시뮬레이션 스케일 = Maya nucleus spaceScale 1 처럼). Maya 2022 를 실제로 띄워 7 분야 47 단계 기록
+  (`research/scripts/maya_workflows/wf.py`, `research/maya/workflows/*.md` + shots, Maya 위젯만 찍음), 분야별 분석 7 개, blindspot 12 건,
+  brainstorm (결정 8 개 delegated), 독립 검토 반영 (v2). backlog 14 개 → 단계 54–67 (큐의 49–53 뒤). 버그 수정: bevel exec 너비 Maya 단위.
+  헤드리스 375/375, GUI step 18 14/14 (1.0·0.8), dogfood 47/47.
 - Step 47 (선택 와이어) 완료 — `docs/steps/step_47.md`. `ui/selection_wire.py`: 선택 오브젝트의 평가된 엣지를 kit 이 직접 그림 (POST_VIEW,
   사용자 셰이더 + 깊이 바이어스, 오브젝트별 numpy 배치 캐시, 테마 리드/선택 색을 선형으로). Blender `show_wire` 는 선택 색을 테마 wire 쪽으로
   최대 19 % 섞어 (실측) 버림 — 그래서 ID 데이터에 아무것도 안 씀 (저장·언두 잔존 0). 템플릿 선택 외곽선 끔. viewport 10/12 (리드 0.2, 흰색 0.0),
@@ -124,8 +129,11 @@
 
 ## 바로 다음 할 일
 
-- backlog 8 = step 48 (레이아웃 동등화: 도크 열·툴박스·사이드바 탭·하단 줄, `_maya_ui_dump.json` widgets; rects.md 1/12 → 목표 ±10 px;
-  뷰 크기가 맞으면 ViewCube 65 px). 그 뒤 49 에디터 크롬, 50 메뉴·셸프·Status Line … step_44–47 「남은 것」.
+- 드라이버 큐 순서: 49 레이아웃 동등화 (도크 열·툴박스·사이드바 탭·하단 줄), 50 에디터 크롬, 51 메뉴·셸프·Status Line 모양, 52 핫박스·RMB
+  충실도, 53 Blender 5.x·안전 설치 → 그다음 backlog.json 의 Maya 워크플로우 54–67 (PLAN 「Maya 워크플로우 계획」 표: 54 기반 (단위·안내),
+  55 포즈 본 CB, 56 Time Slider·키, 57 Joint Tool, 58 IK·스킨, 59 SDK·제약, 60 MTK, 61 Target Weld, 62 Extrude/In-View, 63 UV, 64 Hypershade,
+  65 FX, 66 씬 관리, 67 Graph Editor). 각 단계 근거 = `research/maya/workflows/<분야>.md` (research/ 는 추적 안 함 — 지우지 말 것).
+- Maya 를 다시 띄울 때: `research/scripts/maya_workflows/launch.ps1` (스크린샷은 Maya 위젯만; 화면 영역 캡처 금지 — step 48 사고).
 - 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`, `density.md`, `grid.md`, `furniture.md`); 샷은 Maya 밀도 (실효 배율 1.0)
   로 찍힌다. GUI 테스트는 두 배율로: `python tests/gui/run.py` 와 `--ui-scale 0.8` (새 고정 픽셀 좌표는 `sim.px()`).
 - Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).
