@@ -306,12 +306,13 @@ def viewport_table(geom, kit_img):
     ok = n = 0
     for label, shot, colour, key, r, mode, region in L.VIEW_SAMPLES:
         mpath = MAYA / "screens" / f"{shot}.png"
-        pts = geom.get("points", {}).get(shot, {}).get(key)
+        kshot = region if mode == "best" and isinstance(region, str) else shot
+        pts = geom.get("points", {}).get(kshot, {}).get(key)
         if not mpath.exists() or not pts:
             lines.append(f"| {label} | {shot} | {colour} | ? | kit points `{key}` missing | ✗ |")
             n += 1
             continue
-        mimg, kimg = L.load_rgb(mpath), kit_img(shot)
+        mimg, kimg = L.load_rgb(mpath), kit_img(kshot)
         if mode == "tint":
             # Selection colour only: the kit's fill (kit 07 vs the same point in kit 02, same view)
             # laid over Maya's base shading, against Maya 07. Base shading (Blender studio light vs

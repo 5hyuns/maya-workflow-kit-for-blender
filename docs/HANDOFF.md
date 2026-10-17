@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 47 (선택 와이어) 완료 — `docs/steps/step_47.md`. `ui/selection_wire.py`: 선택 오브젝트의 평가된 엣지를 kit 이 직접 그림 (POST_VIEW,
+  사용자 셰이더 + 깊이 바이어스, 오브젝트별 numpy 배치 캐시, 테마 리드/선택 색을 선형으로). Blender `show_wire` 는 선택 색을 테마 wire 쪽으로
+  최대 19 % 섞어 (실측) 버림 — 그래서 ID 데이터에 아무것도 안 씀 (저장·언두 잔존 0). 템플릿 선택 외곽선 끔. viewport 10/12 (리드 0.2, 흰색 0.0),
+  10 만 폴리 프레임 +3–14 %. 헤드리스 374/374, GUI 293/293 (1.0·0.8), dogfood 47/47.
 - Step 46 (뷰 가구) 완료 — `docs/steps/step_46.md`. `ui/view_furniture.py`: ViewCube (Python 기즈모, 면 클릭 → view_axis, 평소 0.5,
   4 분할은 마우스가 있던 패널에만), 카메라 라벨 (persp / top −Z / front +Y / side −X, 카메라 이름), 축 삼각 (Blender 축) — Blender 내비 기즈모가
   꺼진 뷰에서; 템플릿은 내비 기즈모·텍스트 정보 끔. HUD 메뉴 Camera Names / View Axis / View Cube = 애드온 환경설정. look_compare
@@ -120,8 +124,8 @@
 
 ## 바로 다음 할 일
 
-- backlog 7 = step 47 (선택 와이어: 셰이딩 위 선택 오브젝트 와이어 리드 연두 / 나머지 흰색 — `maya_grid` 의 POST_VIEW 배치 방식 재사용
-  가능, 비선택 와이어 ΔE 5.8 도 함께). 그 뒤 48 레이아웃 (뷰 크기가 맞으면 ViewCube 65 px), 49 에디터 크롬 … step_44–46 「남은 것」.
+- backlog 8 = step 48 (레이아웃 동등화: 도크 열·툴박스·사이드바 탭·하단 줄, `_maya_ui_dump.json` widgets; rects.md 1/12 → 목표 ±10 px;
+  뷰 크기가 맞으면 ViewCube 65 px). 그 뒤 49 에디터 크롬, 50 메뉴·셸프·Status Line … step_44–47 「남은 것」.
 - 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`, `density.md`, `grid.md`, `furniture.md`); 샷은 Maya 밀도 (실효 배율 1.0)
   로 찍힌다. GUI 테스트는 두 배율로: `python tests/gui/run.py` 와 `--ui-scale 0.8` (새 고정 픽셀 좌표는 `sim.px()`).
 - Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).

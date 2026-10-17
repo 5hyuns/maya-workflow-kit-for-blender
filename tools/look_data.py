@@ -97,13 +97,19 @@ KIT_POINTS = {
 #   mode "tint": selected-face fill only. Maya stipples selected faces; the kit's fill alpha is
 #                measured (kit shot vs the base shot, same view, (2r+1)x(r+1) box at the kit point),
 #                laid over Maya's base shading of the region and compared with Maya's mean there.
-#                Region = (Maya base shot, Maya [x, y, w, h], kit base shot). The kit base is 03 (same
+#                Region = (Maya base shot, Maya [x, y, w, h], kit base shot).
+#   mode "best" with a shot name as region: the kit pixels come from that kit shot (step 47: Maya has no
+#                shaded shot with two objects selected; its white wire pixel is taken from 04). The kit base is 03 (same
 #                view, no manipulator): at the Maya density the Move arrow's tip covers the box in 02
 #                (step 44).
 VIEW_SAMPLES = (
     ("lead wire (pCube1, green)", "04_wire_selected_lead", "#43ffa3", "pCube1.edges", 3, "best", None),
     ("other selected wire (pCube2, white)", "04_wire_selected_lead", "#ffffff", "pCube2.edges", 3, "best", None),
     ("dormant wire (pCube3, dark blue)", "04_wire_selected_lead", "#000460", "pCube3.edges", 3, "best", None),
+    # step 47: selection wire over shading. "best" + a kit shot name in the last field = kit pixels from that shot.
+    ("lead wire over shading (pCube1)", "02_cube_selected_move", "#43ffa3", "pCube1.edges", 3, "best", None),
+    ("other selected wire over shading (pCube2)", "04_wire_selected_lead", "#ffffff", "pCube2.edges", 3, "best",
+     "02b_two_selected_shaded"),
     ("component-mode wire (light blue)", "07_faces_selected", "#64dcff", "pCube1.edges", 3, "best", None),
     ("selected face, top (fill)", "07_faces_selected", None, "pCube1.top_face", 6, "tint",
      ("02_cube_selected_move", (830, 400, 20, 12), "03_cube_unselected")),

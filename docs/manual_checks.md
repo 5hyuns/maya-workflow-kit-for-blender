@@ -301,3 +301,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 46) 4 분할: ViewCube 가 마우스가 있는 패널로 옮겨 가는지; 라벨 top -Z / persp / front +Y / side -X 가 각 패널 아래 가운데. Maya 의 "top -Y / front -Z" 와 축 글자가 다른 것 (kit 은 Blender Z-up 축, Channel Box 와 같음, delegated) 이 헷갈리지 않는지.
 - [ ] (step 46) 축 삼각이 텀블에 따라 돌고 x/y/z 글자가 Channel Box 축과 맞는지. 카메라 뷰 (Numpad 0) 에서 라벨이 카메라 이름인지.
 - [ ] (step 46) Display > Heads Up Display > Camera Names / View Axis / View Cube 가 모든 뷰에서 켜고 끄는지.
+
+### Step 47 — 선택 와이어
+
+- [ ] (step 47) 오브젝트를 고르면 셰이딩 위에 모든 엣지가 연두 (리드) / 흰색 (나머지), 외곽선 없음. 해제하면 사라짐. Maya 와 선 굵기·밝기 비교.
+- [ ] (step 47) 와이어가 면에 가려지는 뒤쪽 엣지는 안 보이고 앞쪽 엣지는 끊김 없이 보이는지 (아주 멀리 / 아주 가까이 확대해서도, cm 장면·m 장면).
+- [ ] (step 47) 큰 메시 (수십만 폴리) 를 고를 때 잠깐 멈춤 (배치 만들기, 10 만 폴리 약 30 ms) 이 거슬리지 않는지; 편집 모드에서 나올 때도.
+- [ ] (step 47) 스무스 프리뷰 3 에서 와이어가 케이지 엣지 (매끈한 면 밖에 뜸) 인 것이 Maya 와 비교해 괜찮은지.

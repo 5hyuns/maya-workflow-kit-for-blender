@@ -303,6 +303,21 @@ def s_wire():
     record_cube("04_wire_selected_lead")
     record_points("04_wire_selected_lead")
     view3d()[0].spaces.active.shading.type = 'SOLID'
+    # kit-only shot (step 47): the same view shaded, pCube1 lead + pCube2 selected -> selection wires
+    # over shading (lead green, other white); Maya has no shaded shot with two selected.
+    select_only("pCube2", "pCube1", active="pCube1")
+    redraw()
+
+
+@step
+def s_wait4b():
+    redraw()
+
+
+@step
+def s_two_selected():
+    shot("02b_two_selected_shaded")
+    record_points("02b_two_selected_shaded")
     select_only("pCube1")
     bpy.ops.wm.tool_set_by_id(name="builtin.rotate")
     redraw()
