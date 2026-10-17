@@ -25,7 +25,7 @@ NEW_PATHS = {
     "Windows/General Editors/Attribute Editor": "maya_kit.dock_show",
     "Windows/General Editors/Script Editor": "maya_kit.script_editor",
     "Windows/Animation Editors/Graph Editor": "maya_kit.open_editor",
-    "Windows/Rendering Editors/Hypershade": "maya_kit.open_editor",
+    "Windows/Rendering Editors/Hypershade": "maya_kit.hypershade",   # step 67: own window
     "UV/UV Editor": "maya_kit.open_editor",
     "UV/Planar": "maya_kit.uv_planar",
     "UV/Normal-Based": "maya_kit.uv_planar",

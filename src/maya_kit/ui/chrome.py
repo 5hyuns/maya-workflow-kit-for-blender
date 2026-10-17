@@ -22,6 +22,17 @@ def grey(layout, text):
     row.label(text=text)
 
 
+def paragraph(layout, context, text, alignment='LEFT'):
+    """``text`` wrapped to the region width (about 7 px per character at UI scale 1), greyed (step 67)."""
+    import textwrap
+    region = context.region
+    scale = context.preferences.system.ui_scale
+    width = region.width if region is not None else 300
+    col = layout.column()
+    col.active = False
+    return wrapped(col, textwrap.wrap(text, max(16, int(width / (7 * scale))) - 2), alignment)
+
+
 def wrapped(layout, lines, alignment='CENTER'):
     """Several short label lines (Blender labels don't wrap)."""
     col = layout.column(align=True)

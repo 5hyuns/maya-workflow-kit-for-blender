@@ -458,3 +458,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 66) UV Editor RMB 길게 = 마킹 메뉴 (N Edge, S Face, W Vertex, E UV, NW UV Shell + 아래 Cut/Sew/Unfold/Layout 목록), Shift+RMB = UV 도구 (UV 모드) / UV Shell 도구 (섬 모드) — Maya 와 위치 비교.
 - [ ] (step 66) 3D 뷰에서 에지 고리 선택 → UV Editor 에서 Shift+X: 빨간 솔기 + 셸이 그 자리에서 나뉨 (섬 선택으로 한쪽만 잡히는지), Shift+S: 작은 셸이 엣지에 붙어 하나로. Ctrl+U: 셸 자리 그대로 펴짐 (Unfold3D 와 모양 차이 안내), Ctrl+L: 0–1 안에 겹침 없이, 셸끼리 같은 텍셀 밀도.
 - [ ] (step 66) UV Editor 사이드바 「UV Toolkit」 탭 (Ctrl+휠): uv_01_win1 순서, 컴포넌트 아이콘·Pick/Drag/Tweak·All/Clear/Inverse·접는 절. Transform > Texel Density: 큐브 Get → 값 (px/cm, 맵 1024), 다른 크기 큐브에서 Set → 같은 밀도. 회색 항목 툴팁 안내.
+
+### Step 67 — Hypershade · Light Editor · Render 메뉴 · Keep Image · AE 맵 버튼
+
+- [ ] (step 67) Windows > Rendering Editors > Hypershade, Status Line 재질 아이콘, 핫박스 Windows 메뉴 셋 다 같은 새 창 (Shader Editor + 사이드바 「Hypershade」 탭 활성) — render_01_win1 과 구성 비교 (Browser 위, Create, Property Editor). 핫박스 N 존 Hypershade 레이아웃은 여전히 Shading 워크스페이스.
+- [ ] (step 67) Browser 격자 미리보기가 렌더된 뒤 보이는지, 클릭 = 그래프 + Property Editor 가 그 재질 (오브젝트에 없는 재질이면 핀 아이콘 켜짐). Create 버튼 = 할당 없이 새 재질 (저장 후 다시 열어도 남음). Assign Material To Selection = 선택에, 면 선택 모드면 그 면에.
+- [ ] (step 67) AE (독 / Hypershade Property Editor) 재질 행 오른쪽 체커 버튼 → 팝업 Create Render Node: File / Ramp / Noise / Checker → 노드가 그래프 왼쪽에 생기고 연결, 행이 「connected (…)」 + File 이면 이미지 New/Open. 연결된 행 버튼 = Break Connection (노드는 남음). 툴팁에 Maya 속성 이름 (baseColor 등). Normal 은 Bump 노드 경유.
+- [ ] (step 67) Rendering 메뉴셋 (F6) Render 메뉴: Render Settings… / Render Using (엔진 목록) / … / Render Current Frame / Redo Previous Render / IPR … / Render Sequence / Batch Render (회색, 툴팁 「blender -b」). Render Current Frame → Render Result 창, 헤더 왼쪽 Render · Keep Image · Remove Image · 「Slot N · k kept」.
+- [ ] (step 67) Keep Image → 다시 렌더 → 새 슬롯에 그려짐, J / Alt+J 로 이전 이미지와 비교 (Maya Render View 아래 스크롤바 대신). Remove Image = 지금 슬롯 비움.
+- [ ] (step 67) Windows > Rendering Editors > Light Editor: 3D View 창, 사이드바 「Light Editor」 탭 활성, 표 (이름 · 색 · Intensity · 켜기 · Solo), 위 라이트 만들기 아이콘 — render_03_win1 비교. 이름 클릭 = 선택 (Shift 추가), Solo = 나머지 꺼짐 (뷰포트 Rendered 에서 확인), 다시 = 복구. 아래 Property Editor = 선두 라이트 AE 섹션 + Translate/Rotate/Scale.

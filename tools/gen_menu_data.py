@@ -18,6 +18,10 @@ SRC = ROOT / "research" / "maya" / "menus.json"
 OUT = ROOT / "src" / "maya_kit" / "ui" / "menu_data.py"
 
 DYNAMIC = {"$QuitLabel": "Exit", "$kIncrementAndSaveLabel": "Increment and Save"}
+# Placeholder items the static parse made parents of their following siblings: their label, and
+# the swallowed siblings come back after them (the only one in menus.json: Render > Render Using,
+# research/maya/menus.md:1686-1704; docs/steps/step_67.md 「계획」 3).
+PLACEHOLDERS = {'("renMenuRenderUsingItemMenuItem")': "Render Using"}
 _CLEAN = re.compile(r"^[A-Za-z0-9][\w ./&+()'\-]*$")
 
 
@@ -44,6 +48,13 @@ def convert(items):
                 out[-1] = entry
             elif out:
                 out.append(entry)
+            continue
+        raw = (it.get("label") or "").strip()
+        if raw in PLACEHOLDERS:
+            entry = (PLACEHOLDERS[raw],)
+            _OPTION[id(entry)] = False
+            out.append(entry)
+            out.extend(convert(it.get("children") or []))
             continue
         label = label_of(it)
         if not label:

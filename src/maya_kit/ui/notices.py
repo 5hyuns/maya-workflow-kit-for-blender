@@ -52,10 +52,18 @@ NOTICES = {
         "Drivers", "Blender has no connection graph: attribute links are drivers (Expression Editor)."),
     "Windows/General Editors/Namespace Editor": (
         "ns: name prefix", "Blender has no namespaces: Maya Kit keeps them as a \"ns:\" prefix in names."),
-    # Rendering (W3: Light Editor -> kit light list, step 64)
+    # Rendering (W3: Light Editor -> kit light list, step 67)
     "Windows/Rendering Editors/Light Editor": (
-        "Outliner + Properties", "Blender has no Light Editor yet in Maya Kit: select lights in the Outliner, "
-        "Power and Color are in the Attribute Editor."),
+        "kit Light Editor", "Blender has no Light Editor: Maya Kit lists the scene lights in a 3D View sidebar tab "
+        "(Exposure is part of Power)."),
+    "Windows/Rendering Editors/Hypershade": (
+        "Shader Editor + kit list", "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar "
+        "tab the browser (add nodes with Shift+A)."),
+    **{f"Render/{item}": (
+        "Command line", "Blender has no batch render queue: render frames with blender -b file.blend -a "
+        "(or Render Sequence here).") for item in ("Batch Render", "Cancel Batch Render", "Show Batch Render")},
+    "Render/IPR Render Current Frame": (
+        "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
     # Lights (PLAN W5, research/maya/workflows/render.md:185-187)
     **{f"Create/Lights/{kind} Light": (
         f"{kind} light", "Blender lights always get darker with the square of the distance (no No Decay); "

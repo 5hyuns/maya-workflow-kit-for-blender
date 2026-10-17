@@ -13,7 +13,8 @@ Row forms:
                                  "ob" = the pose bone, "bone" = its Bone, "arm" = the Armature data,
                                  "armob" = the armature object
   ("draw", name)                 custom drawer in ui/attribute_editor.py
-  ("socket", input name, label)  Principled BSDF input (material tabs)
+  ("socket", input name, label)  Principled BSDF input (material tabs), with the Maya map button
+  ("missing", label, note)       Maya attribute Blender doesn't have: a greyed row with the note (step 67)
 
 ``TEMPLATE`` names the research template a section list is checked against
 (tests/test_step11_outliner_ae.py); ``None`` = no Maya template in the research.
@@ -165,8 +166,29 @@ STANDARD_SURFACE = [
       ("socket", "Emission Color", "Color")),
     S("Thin Film", False, ("socket", "Thin Film Thickness", "Thickness"),
       ("socket", "Thin Film IOR", "IOR")),
-    S("Geometry", False, ("socket", "Alpha", "Opacity"), ("socket", "Normal", "Normal")),
+    S("Geometry", False, ("socket", "Alpha", "Opacity"), ("socket", "Normal", "Normal"),
+      ("missing", "Thin Walled", "Blender's Principled BSDF has no thin-walled mode")),
 ]
+
+# standardSurface / aiStandardSurface attribute -> Principled BSDF 4.5 input (research/maya/workflows/render.md
+# §4.4, names from the public Autodesk Standard Surface spec [K]; Arnold's aiStandardSurface uses the same names).
+# None = no Principled input. Map button tooltips name the Maya attribute (attribute_editor, step 67).
+STANDARD_SURFACE_ATTRS = (
+    ("base", "Weight"), ("baseColor", "Base Color"), ("diffuseRoughness", "Diffuse Roughness"),
+    ("metalness", "Metallic"), ("specular", "Specular IOR Level"), ("specularColor", "Specular Tint"),
+    ("specularRoughness", "Roughness"), ("specularIOR", "IOR"), ("specularAnisotropy", "Anisotropic"),
+    ("specularRotation", "Anisotropic Rotation"), ("transmission", "Transmission Weight"),
+    ("transmissionColor", None), ("transmissionDepth", None),
+    ("subsurface", "Subsurface Weight"), ("subsurfaceColor", None), ("subsurfaceRadius", "Subsurface Radius"),
+    ("subsurfaceScale", "Subsurface Scale"), ("subsurfaceAnisotropy", "Subsurface Anisotropy"),
+    ("coat", "Coat Weight"), ("coatColor", "Coat Tint"), ("coatRoughness", "Coat Roughness"),
+    ("coatIOR", "Coat IOR"), ("coatNormal", "Coat Normal"),
+    ("sheen", "Sheen Weight"), ("sheenColor", "Sheen Tint"), ("sheenRoughness", "Sheen Roughness"),
+    ("emission", "Emission Strength"), ("emissionColor", "Emission Color"),
+    ("thinFilmThickness", "Thin Film Thickness"), ("thinFilmIOR", "Thin Film IOR"),
+    ("opacity", "Alpha"), ("normalCamera", "Normal"), ("thinWalled", None),
+)
+MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
 # --- lambert (AElambertTemplate.mel:27 -> AElambertCommon.mel:63; attribute_editor.md:137-140) ---
 # Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
 # Normal, diffuse -> Weight, translucence -> Subsurface; refractions -> Transmission.
@@ -235,6 +257,7 @@ BY_KIND = {
     "SPOT": (SPOT_LIGHT, None),
     "AREA": (AREA_LIGHT, None),
     "standardSurface": (STANDARD_SURFACE, "standardSurface"),
+    "aiStandardSurface": (STANDARD_SURFACE, None),      # Arnold's, same attribute names (step 67)
     "lambert": (LAMBERT, "lambert"),
     "blinn": (BLINN, None),
     "phong": (PHONG, None),

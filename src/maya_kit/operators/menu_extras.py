@@ -36,6 +36,50 @@ def _maya_outliner(space):
     maya_outliner.setup(space)
 
 
+def open_window(context, area):
+    """Duplicate ``area`` into a new window (Maya's floating editor windows); the new window or None."""
+    window = context.window
+    before = set(context.window_manager.windows[:])
+    with context.temp_override(window=window, area=area):
+        bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
+    new = [w for w in context.window_manager.windows if w not in before]
+    return new[0] if new else None
+
+
+def sidebar_tab_later(window, category, tries=100):
+    """Show the sidebar of ``window``'s only area and make ``category`` its active tab.
+
+    ``Region.active_panel_category`` can be set once the region has drawn its tabs (before that it raises
+    "read-only"; step 67, measured:
+    a new window's sidebar starts on the first tab, Node / Item, whatever ``bl_order`` says), and
+    ``show_region_ui`` set inside an operator doesn't stick (step 9): both run from a timer."""
+    state = {"n": tries}
+
+    def tick():
+        try:
+            area = window.screen.areas[0]
+            space = area.spaces.active
+            if not space.show_region_ui:
+                space.show_region_ui = True
+            region = next(r for r in area.regions if r.type == 'UI')
+            if region.width > 1:
+                try:
+                    region.active_panel_category = category
+                except (TypeError, AttributeError):
+                    # "read-only" until the region has drawn its tabs (a copied region at first): next tick
+                    pass
+                if region.active_panel_category == category:
+                    area.tag_redraw()
+                    return None
+            area.tag_redraw()
+        except (ReferenceError, StopIteration, AttributeError, IndexError):   # window closed meanwhile
+            return None
+        state["n"] -= 1
+        return 0.05 if state["n"] > 0 else None
+
+    bpy.app.timers.register(tick, first_interval=0.01)
+
+
 class MAYAKIT_OT_open_editor(bpy.types.Operator):
     """Open this editor in a new window (Maya Windows menu)"""
     bl_idname = "maya_kit.open_editor"
@@ -57,14 +101,11 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
         area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
         if area is None:
             return {'CANCELLED'}
-        before = set(context.window_manager.windows[:])
-        with context.temp_override(window=window, area=area):
-            bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
-        new = [w for w in context.window_manager.windows if w not in before]
-        if not new:
+        new = open_window(context, area)
+        if new is None:
             self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
-        target = new[0].screen.areas[0]
+        target = new.screen.areas[0]
         target.ui_type = self.ui_type
         if self.ui_type == 'OUTLINER':
             _maya_outliner(target.spaces.active)

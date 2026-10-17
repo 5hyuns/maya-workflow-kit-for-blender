@@ -744,6 +744,8 @@ def _draw_image_header(self, context):
         return draw_status_line(self.layout, context)
     if is_shelf_row(context.space_data):
         return draw_shelf_tabs(self.layout, context)
+    from .render_view import draw_header   # Render View Keep / Remove Image (step 67): first, like Maya's
+    draw_header(self.layout, context)       # toolbar, so a small render window doesn't clip them
     return _orig["header"](self, context)
 
 

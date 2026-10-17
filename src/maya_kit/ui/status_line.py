@@ -256,20 +256,6 @@ class MAYAKIT_OT_ipr_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class MAYAKIT_OT_hypershade(bpy.types.Operator):
-    """Hypershade: switch to the Shading workspace"""
-    bl_idname = "maya_kit.hypershade"
-    bl_label = "Hypershade"
-
-    def execute(self, context):
-        ws = bpy.data.workspaces.get("Shading")
-        if ws is None:
-            self.report({'WARNING'}, "No 'Shading' workspace in this file")
-            return {'CANCELLED'}
-        context.window.workspace = ws
-        return {'FINISHED'}
-
-
 # --- editor toggles (ui_layout.md:213-216) -----------------------------------------------
 
 EDITORS = (
@@ -453,7 +439,7 @@ def draw_status_line(layout, context):
         row.operator(MAYAKIT_OT_ipr_toggle.bl_idname, text="", icon='SHADING_RENDERED',
                      depress=bool(space) and space.shading.type == 'RENDERED')
         row.operator(MAYAKIT_OT_render_settings.bl_idname, text="", icon='OPTIONS')
-        row.operator(MAYAKIT_OT_hypershade.bl_idname, text="", icon='NODE_MATERIAL')
+        row.operator("maya_kit.hypershade", text="", icon='NODE_MATERIAL')   # ui/hypershade.py (step 67)
 
     if _group(layout, "EDITORS"):
         row = layout.row(align=True)
@@ -540,7 +526,7 @@ def unpatch_topbar():
 
 
 classes = (MAYAKIT_OT_select_mask, MAYAKIT_OT_select_mode, MAYAKIT_OT_snap_toggle, MAYAKIT_MT_symmetry,
-           MAYAKIT_OT_render_settings, MAYAKIT_OT_ipr_toggle, MAYAKIT_OT_hypershade,
+           MAYAKIT_OT_render_settings, MAYAKIT_OT_ipr_toggle,
            MAYAKIT_OT_editor_toggle, MAYAKIT_OT_status_group)
 
 

@@ -95,7 +95,8 @@ _WINDOW_EDITORS = {
     "Relationship Editors/Animation Layers": _editor('NLA_EDITOR'),
     "General Editors/Hypergraph: Hierarchy": _editor('OUTLINER'),
     "General Editors/Hypergraph: Connections": _editor('DRIVERS'),
-    "Rendering Editors/Hypershade": _editor('ShaderNodeTree'),
+    "Rendering Editors/Hypershade": "maya_kit.hypershade",                 # step 67: browser + graph + AE
+    "Rendering Editors/Light Editor": "maya_kit.light_editor",             # step 67: kit light list
     "Rendering Editors/Render View": "render.view_show",
     "Rendering Editors/Render Settings": "maya_kit.render_settings",
     "Rendering Editors/Shading Group Attributes": ("v3d", "maya_kit.material_attributes", {}),
@@ -429,6 +430,14 @@ MAP = {
     "Lighting/Shading/Assign Existing Material": ("menu", "MAYAKIT_MT_assign_existing_material"),
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
     "Render/Render Settings...": "maya_kit.render_settings",
+    # Render menu (research/maya/menus.md:1686-1704, restored by tools/gen_menu_data.py PLACEHOLDERS; step 67).
+    # Maya renders into the Render View window: render.render INVOKE opens Blender's (Render Result).
+    "Render/Render Using": ("menu", "MAYAKIT_MT_render_using"),
+    "Render/Render Current Frame": "render.render",
+    "Render/Redo Previous Render": "render.render",
+    "Render/IPR Render Current Frame": "maya_kit.ipr_toggle",
+    "Render/Redo Previous IPR Render": "maya_kit.ipr_toggle",
+    "Render/Render Sequence": ("render.render", {"animation": True}),
 }
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with

@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 67 (Hypershade · Light Editor · Render 메뉴 · Keep Image · AE 맵 버튼) 완료 — `docs/steps/step_67.md`. `maya_kit.hypershade` = Shader Editor 새 창 +
+  사이드바 「Hypershade」 탭 (Browser 미리보기 · Create · Assign Material To Selection · Property Editor; 메뉴·Status Line·핫박스 Windows 메뉴 공통),
+  `maya_kit.light_editor` = 3D View 새 창 + 「Light Editor」 탭 (이름·색·Intensity·켜기·Solo, AE 라이트 섹션), Render 메뉴 17 항목 복원 (gen_menu_data
+  `PLACEHOLDERS`), Render Result 헤더 Keep / Remove Image (render slots), AE 소켓 행 맵 버튼 (File/Ramp/Noise/Checker, Bump, Break Connection),
+  standardSurface 이름 표 + aiStandardSurface. 측정: `Region.active_panel_category` 는 탭이 그려진 뒤 설정 가능 (전엔 read-only 오류).
+  헤드리스 549/549, GUI 0.8 461/461, gui_step67 9/9 (ui 1.0), dogfood 47/47.
+  **바로 다음 할 일**: step 68 — FX: Maya 시뮬레이션 스케일 · nucleus · nParticles 이미터 · nCloth · nCache (근거 `research/maya/workflows/fx.md`,
+  결정 10). `docs/steps/step_68.md` 「계획」 먼저. 그다음 69 씬 관리, 70 Graph Editor.
+
 - Step 66 (UV 워크플로우) 완료 — `docs/steps/step_66.md`. UV Editor 열기 = 편집 모드 + UV Sync (창 하나만), `maya_kit.uv_component`
   (F12 UV / Alt+F12 UV Shell / 3D RMB E UV), UV Editor RMB 마킹 메뉴 (Maya texturePanelMenus.mel 방향) + Shift+RMB UV / UV Shell 도구,
   Cut (솔기 + 2e-4 분리 — Blender 섬 계산은 솔기를 무시, 측정) / Sew (작은 셸 닮음 변환) / Unfold (Unwrap Minimum Stretch, 셸 자리 유지) /
