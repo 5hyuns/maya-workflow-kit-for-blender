@@ -416,3 +416,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 61) `python tools/build_repo.py` 로 만든 `dist/repo/index.html` 을 브라우저로 열고, 링크를 Blender 창에 끌어 놓기 → 설치 + 저장소 등록, 이후 Get Extensions 에 업데이트가 보이는지 (테스트용 Blender 설정에서).
 - [ ] (step 61) Preferences > Get Extensions > Repositories > + > Add Remote Repository 에 `file:///…/dist/repo/index.json` → 검색 → Install → 「Check for Updates on Startup」 켜고 다음 시작에 상태 표시줄 알림.
 - [ ] (step 61) (exe 를 만들기로 하면) Inno Setup 으로 `tools/installer/maya_kit.iss` 컴파일 → 서명 없는 exe 의 SmartScreen 화면, Blender 버전 선택 페이지, 제어판 제거 뒤 원래 설정.
+
+### Step 62 — Set Driven Key · 포즈 모드 제약 · Add Attribute · Blend Shape · Quick Rig
+
+- [ ] (step 62) Key > Set Driven Key > Set... → 사이드바 Channel Box 아래에 Driver / Driven 목록 + Key · Load Driver · Load Driven · Close. Maya 처럼 드라이버 선택 → CB 채널 클릭 → Load Driver, 피동 선택 → CB 채널 → Load Driven → Key → 드라이버 값·피동 값 CB 입력 → Key → 드라이버를 움직이면 피동이 따라옴 (CB 피동 행 = 드라이버 표시).
+- [ ] (step 62) SDK 창이 열려 있을 때 피동 채널을 CB 로 바꾸면 값이 남고 (Key 전까지), 창을 닫으면 Key 하지 않은 포즈는 커브 값으로 돌아감. 매니퓰레이터로 피동 채널을 돌리면 Blender 가 드라이버로 되돌림 (CB 로 입력 — 안내대로인지).
+- [ ] (step 62) Key > Set Driven Key > Go to Previous / Go to Next 가 드라이버 값을 이웃 키로 옮기는지. Graph Editor (Drivers) 에서 커브 모양 (Maya 의 SDK 커브와 같은 매끈한 S 자, 끝은 평평).
+- [ ] (step 62) 컨트롤 선택 → 아마추어 Shift 선택 → Ctrl+Tab (포즈 모드) → 조인트 선택 → Constrain > Orient: 제약이 본에 붙고 (Bone Constraints 탭) 아마추어 오브젝트에는 없음. 대상이 없으면 Help Line 에 「Select the control first, then the joint last」.
+- [ ] (step 62) Modify > Add Attribute... (Attributes 절) / CB Edit > Add Attribute: 이름·Float/Integer/Boolean·Min/Max/Default → CB 에 Maya nice name 행 (fingerCurl → Finger Curl), 범위 밖 입력이 잘림. Edit Attribute (이름 바꾸기 → 키가 따라감), Delete Attributes (선택 채널).
+- [ ] (step 62) 머리 복제 → 수정 → 타깃·베이스 순서 선택 → Deform > Blend Shape: 베이스에 Basis + 타깃 이름 셰이프 키 (값 0), CB SHAPES. 정점 수가 다르면 오류 문구.
+- [ ] (step 62) Skeleton > Quick Rig: Rigify 가 꺼져 있으면 확인 대화상자 → 켜고 사람 메타 리그 추가; 툴팁·Help Line 의 Rigify 안내. HumanIK 는 회색 + 같은 안내.

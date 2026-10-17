@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 62 (Set Driven Key·포즈 모드 제약·Add Attribute·Blend Shape·Quick Rig) 완료 — `docs/steps/step_62.md`. SDK 창 = dock 의 CB 아래
+  (Driver/Driven 스크롤 목록, Key · Load Driver · Load Driven · Close; 결과 = 드라이버 F-커브 키 = Maya animCurveUU), 창이 열린 동안 CB 로 바꾼 피동 값은
+  드라이버 mute 로 유지 → Key/Close 가 풂; Constrain 이 포즈 모드면 본에; Modify/CB Edit > Add·Edit·Delete Attribute (CB 라벨 = Maya nice name);
+  Blend Shape = join_shapes; Quick Rig = Rigify 켜기 + 메타 리그. CB 커스텀 속성 쓰기가 이제 depsgraph 를 태그 (드라이버 갱신). 헤드리스 495/495,
+  GUI 0.8 417/419 (step 26 간헐, 재실행 통과), gui_step62 9/9 (tx 0.5 → ry 45), dogfood 47/47.
+  **바로 다음 할 일**: step 63 Modeling Toolkit 도크·소프트 선택 Maya 단위·Separate/Combine/Mirror Maya 의미 (근거 `research/maya/workflows/modeling.md`).
+
 - Step 61 (배포 방식 조사·결정, 공개 안 함, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_61.md`, 비교·추천 `docs/DISTRIBUTION.md`,
   결정 `docs/user_decisions.md` 11. 추천 (delegated): 무료 GPL 핵심판 = 자체 정적 저장소 먼저 (`tools/build_repo.py` → `dist/repo/index.json`)
   → extensions.blender.org 제출; exe 선택 (초안 `tools/installer/`, 컴파일·서명 안 함); 유료는 별도 상품; 포터블 묶음 안 함. 사용자 결정 대기:

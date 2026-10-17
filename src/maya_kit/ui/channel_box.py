@@ -192,9 +192,17 @@ def channel_path(key):
     return c[2], c[3], c[4]
 
 
+def nice_name(name):
+    """Maya's nice attribute name (Channel Names > Nice, the default; channel_box.md:131):
+    ``fingerCurl`` -> "Finger Curl", ``curl`` -> "Curl", ``ik_blend2`` -> "Ik Blend 2"."""
+    import re
+    words = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Za-z])(?=[0-9])", " ", name.replace("_", " ")).split()
+    return " ".join(w[:1].upper() + w[1:] for w in words) or name
+
+
 def channel_label(key):
     if key.startswith(CUSTOM_PREFIX):
-        return key[len(CUSTOM_PREFIX):]
+        return nice_name(key[len(CUSTOM_PREFIX):])
     return MAIN_BY_KEY[key][1]
 
 
@@ -214,10 +222,18 @@ def get_value(ob, key):
     return getattr(ob, path)[idx]
 
 
+# Called before the Channel Box writes a channel: (node, key). The Set Driven Key window keeps a
+# typed value on a driven channel this way (operators/driven_key.hold_driven, step 62).
+WRITE_HOOKS = []
+
+
 def set_value(ob, key, value):
+    for hook in WRITE_HOOKS:
+        hook(ob, key)
     path, idx, kind = channel_path(key)
     if kind == "CUSTOM":
         ob[key[len(CUSTOM_PREFIX):]] = type(ob[key[len(CUSTOM_PREFIX):]])(value)
+        ob.id_data.update_tag()   # an ID property write tags nothing: drivers reading it would not update
     elif kind == "VIS":
         if is_bone(ob):
             ob.bone.hide = not value
@@ -902,15 +918,17 @@ class MAYAKIT_MT_cb_edit(bpy.types.Menu):
     def draw(self, context):
         lay = self.layout
         chrome.grey(lay, "Expressions...")
-        chrome.grey(lay, "Set Driven Key...")
+        lay.operator("maya_kit.sdk_window", text="Set Driven Key...")
         lay.operator("maya_kit.open_editor", text="Graph Editor").ui_type = 'FCURVES'
         chrome.grey(lay, "Channel Control...")
         chrome.grey(lay, "Connection Editor")
         lay.operator("maya_kit.dock_show", text="Attribute Editor").dock = 'ATTRIBUTE_EDITOR'
         lay.operator("maya_kit.material_attributes", text="Material Attributes...")
         lay.separator()
-        for label in ("Add Attribute...", "Edit Attribute...", "Duplicate Attribute", "Delete Attributes"):
-            chrome.grey(lay, label)
+        lay.operator("maya_kit.add_attribute", text="Add Attribute...")
+        lay.operator("maya_kit.edit_attribute", text="Edit Attribute...")
+        chrome.grey(lay, "Duplicate Attribute")
+        lay.operator("maya_kit.delete_attribute", text="Delete Attributes")
         lay.separator()
         lay.operator(MAYAKIT_OT_cb_make_lead.bl_idname, text="Select Node").only = True
         lay.operator("object.delete", text="Delete Node").use_global = False

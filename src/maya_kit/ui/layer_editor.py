@@ -318,6 +318,11 @@ class MAYAKIT_PT_layer_editor(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         wm = context.window_manager
+        sdk = getattr(wm, "maya_kit_sdk", None)
+        if sdk is not None and sdk.open:
+            from . import set_driven_key   # the Set Driven Key window takes the Layer Editor's place (step 62)
+            set_driven_key.draw(layout, context)
+            return
         layout.separator(type='LINE')   # Maya's splitter between Channel Box and Layer Editor
         layout.row(align=True).prop(wm, "maya_kit_le_tab", expand=True)
         chrome.menu_bar(layout, MENU_BAR)
