@@ -94,7 +94,7 @@ class MAYAKIT_OT_layout_open(bpy.types.Operator):
     """Start a new file with the Maya layout (unsaved changes are lost)"""
     bl_idname = "maya_kit.layout_open"
     bl_label = "New File with Maya Layout"
-    bl_options = {'REGISTER', 'INTERNAL'}
+    bl_options = {'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
@@ -104,7 +104,10 @@ class MAYAKIT_OT_layout_open(bpy.types.Operator):
         return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        bpy.ops.wm.read_homefile(app_template=TEMPLATE_ID)
+        # From a timer: switching templates re-registers the add-on, this operator included
+        #.
+        from .. import first_start
+        first_start.open_layout_later()
         return {'FINISHED'}
 
 

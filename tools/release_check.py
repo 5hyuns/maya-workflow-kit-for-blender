@@ -82,6 +82,7 @@ def main(argv=None):
     result = SANDBOX / "shots.json"
     log = SANDBOX / "shots.log"
     env["MAYA_KIT_SHOTS"] = str(SHOTS)
+    env["MAYA_KIT_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
     cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
            "--python", str(ROOT / "tools" / "release_shots.py"), "--", str(result)]
     with open(log, "w", encoding="utf-8", errors="replace") as fh:

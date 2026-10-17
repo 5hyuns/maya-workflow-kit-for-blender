@@ -69,11 +69,15 @@ WIDGETS = (
 
 # Single values: (path from the Theme, value)
 VALUES = (
-    # 3D viewport background: gradient on, Maya defaults [O-pref]
-    ("view_3d.space.gradients.background_type", 'LINEAR'),
-    ("view_3d.space.gradients.high_gradient", (0.535, 0.617, 0.702)),   # backgroundTop
-    ("view_3d.space.gradients.gradient", (0.052, 0.052, 0.052)),        # backgroundBottom
-    ("view_3d.grid", (0.36, 0.36, 0.36, 1.0)),       #  grey grid (flat bg default 0.36 [O-mel])
+    # 3D viewport background: Maya 2022 factory = flat 0.36 grey, gradient off (displayPref
+    # -displayGradient false, displayRGBColor background 0.36;  "viewport",
+    # ). The earlier gradient came from the user's own Maya prefs [O-pref].
+    ("view_3d.space.gradients.background_type", 'SINGLE_COLOR'),
+    ("view_3d.space.gradients.high_gradient", (0.36, 0.36, 0.36)),     # background (flat)
+    ("view_3d.space.gradients.gradient", (0.052, 0.052, 0.052)),        # backgroundBottom (Alt+B)
+    # Grid: displayColor grid = colorIndex 2 (0.25 grey), changed with the flat background or the
+    # grid (was 0.36) would vanish into it ( blindspot 3).
+    ("view_3d.grid", (0.25, 0.25, 0.25, 1.0)),
     ("view_3d.wire", (0.0, 0.016, 0.376)),           #  dormant mesh wire: dark blue
     # Maya lead (last selected = Blender active) is light green, other selected white: displayColor
     # lead 19 / active 16 ( "viewport", screens/04_wire_selected_lead.png) 

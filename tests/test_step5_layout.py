@@ -58,7 +58,7 @@ def test_remove_and_refuse_foreign_folder():
 def test_bundled_template_files():
     src = app_template.SOURCE_DIR
     assert sorted(f for f in os.listdir(src) if not f.startswith("__pycache__")) == \
-        ["__init__.py", "startup.blend"]
+        ["__init__.py", "splash.png", "splash_2x.png", "startup.blend"]
 
 
 # --- theme --------------------------------------------------------------------------------
@@ -70,8 +70,9 @@ def test_theme_apply_and_restore():
     assert not theme.has_backup()
     assert bpy.ops.maya_kit.theme_apply() == {'FINISHED'}
     assert theme.has_backup()
-    assert grad.background_type == 'LINEAR'
-    assert _close(grad.high_gradient, (0.535, 0.617, 0.702))           # Maya backgroundTop
+    # Maya 2022 factory: flat 0.36 grey, gradient off (, step 42)
+    assert grad.background_type == 'SINGLE_COLOR'
+    assert _close(grad.high_gradient, (0.36, 0.36, 0.36))
     assert _close(_theme().dopesheet_editor.keyframe[:3], (1.0, 0.0, 0.0))  # timeSliderKey
     assert _close(_theme().user_interface.wcol_regular.inner[:3], (0x5d / 255,) * 3)
     path = theme.backup_path()

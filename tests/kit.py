@@ -84,7 +84,40 @@ def snapshot():
     snap["prefs_inputs"] = _rna_values(prefs.inputs)
     snap["prefs_view"] = _rna_values(prefs.view)
     snap["prefs_edit"] = _rna_values(prefs.edit)   # step 30: undo steps
+    # step 42: the Maya theme is restored on disable; fonts/styles must not leak either.
+    snap["theme"] = [_struct_hash(prefs.themes[0])]
+    snap["ui_styles"] = {k: [v] for k, v in _walk(prefs.ui_styles[0]).items()}
     return snap
+
+
+def _walk(struct, prefix="", out=None, depth=0):
+    """All non-pointer RNA values under ``struct`` (nested pointers/collections followed)."""
+    out = {} if out is None else out
+    for prop in struct.bl_rna.properties:
+        ident = prop.identifier
+        if ident == "rna_type" or depth > 6:
+            continue
+        value = getattr(struct, ident)
+        key = f"{prefix}{ident}"
+        if prop.type == 'POINTER':
+            if value is not None:
+                _walk(value, key + ".", out, depth + 1)
+        elif prop.type == 'COLLECTION':
+            for i, item in enumerate(value):
+                _walk(item, f"{key}[{i}].", out, depth + 1)
+        else:
+            if not isinstance(value, (str, int, float, bool)):
+                value = tuple(round(v, 5) if isinstance(v, float) else v for v in value)
+            elif isinstance(value, float):
+                value = round(value, 5)
+            out[key] = repr(value)
+    return out
+
+
+def _struct_hash(struct):
+    import hashlib
+    items = sorted(_walk(struct).items())
+    return hashlib.sha1(repr(items).encode()).hexdigest()
 
 
 def _rna_values(struct):

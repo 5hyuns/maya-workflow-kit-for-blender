@@ -59,6 +59,41 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         description="In mesh edit mode with a select tool, highlight the vertex, edge or face "
                     "under the mouse before clicking (Maya)",
         default=True)
+    # First start: welcome dialog shown once; Maya look options.
+    welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
+
+    def _update_theme(self, context):
+        from . import theme
+        if self.maya_theme:
+            theme.apply()
+        else:
+            theme.restore()
+
+    maya_theme: bpy.props.BoolProperty(
+        name="Maya Theme",
+        description="Maya 2022 colours for the whole interface. Your theme is backed up and comes "
+                    "back when this is turned off or the add-on is disabled",
+        default=False, update=_update_theme)
+
+    def _update_splash(self, context):
+        from . import prefs_preset
+        if self.maya_hide_splash:
+            prefs_preset.apply(context.preferences, self, "splash")
+        else:
+            prefs_preset.restore(context.preferences, self, "splash")
+
+    maya_hide_splash: bpy.props.BoolProperty(
+        name="No Splash Screen",
+        description="Start without Blender's splash screen, like Maya. Turning it off restores "
+                    "your previous setting",
+        default=False, update=_update_splash)
+    splash_backup: bpy.props.StringProperty(options={'HIDDEN'})
+    start_in_maya_layout: bpy.props.BoolProperty(
+        name="Start in Maya Layout",
+        description="When Blender starts without a file, open a new file with the Maya layout "
+                    "(needs the Maya layout installed)",
+        default=False)
+
     # JSON of Blender preferences changed by Maya keys (= / - gizmo size), restored on disable.
     runtime_backup: bpy.props.StringProperty(options={'HIDDEN'})
     lock_ortho_tumble: bpy.props.BoolProperty(
@@ -156,6 +191,15 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     def draw(self, context):
         from . import keymap
         layout = self.layout
+        box = layout.box()
+        row = box.row()
+        row.scale_y = 1.4
+        row.operator("maya_kit.make_maya", icon='CHECKMARK')
+        row.operator("maya_kit.revert_maya", icon='LOOP_BACK')
+        row = box.row()
+        row.prop(self, "maya_theme")
+        row.prop(self, "maya_hide_splash")
+        row.prop(self, "start_in_maya_layout")
         kcs = context.window_manager.keyconfigs
         row = layout.row()
         active = kcs.active.name if kcs.active else "-"
@@ -205,11 +249,6 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         else:
             row.operator("maya_kit.layout_install", icon='IMPORT')
 
-        box = layout.box()
-        box.label(text="Maya Theme")
-        row = box.row()
-        row.operator("maya_kit.theme_apply", icon='COLOR')
-        row.operator("maya_kit.theme_restore", icon='LOOP_BACK')
 
 
 _SET_ITEMS = []

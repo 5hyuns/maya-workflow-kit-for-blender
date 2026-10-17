@@ -37,6 +37,7 @@ def main(argv=None):
     else:
         zip_path = headless.build.main(["--blender", args.blender, "--no-legacy"])
     env = headless.make_sandbox()
+    env["MAYA_KIT_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
     headless.install(args.blender, zip_path, env)
     if args.shots:
         Path(args.shots).mkdir(parents=True, exist_ok=True)
