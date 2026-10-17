@@ -209,7 +209,8 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         default='ALL')
     hotbox_all_sets: bpy.props.BoolProperty(
         name="Show All Menu Sets", description="Hotbox shows the menus of every menu set, not only "
-                                               "the current one")
+                                               "the current one (Maya's default, step 52)",
+        default=True)
 
     # Shelf: current tab (factory file name or "USER:<name>").
     shelf_current: bpy.props.StringProperty(options={'HIDDEN'})

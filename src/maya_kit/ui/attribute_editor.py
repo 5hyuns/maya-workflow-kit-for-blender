@@ -476,6 +476,40 @@ class MAYAKIT_OT_dock_show(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class MAYAKIT_OT_object_attributes(bpy.types.Operator):
+    """Show this object in the Attribute Editor (Maya RMB menu "<object>...", showEditor:
+    Maya)"""
+    bl_idname = "maya_kit.object_attributes"
+    bl_label = "Object Attributes"
+
+    rmb: bpy.props.BoolProperty(options={'HIDDEN', 'SKIP_SAVE'},
+                                description="The object the RMB menu was opened on")
+
+    @staticmethod
+    def _object(context, rmb):
+        if rmb:
+            ob = bpy.data.objects.get(getattr(context.window_manager, "maya_kit_mm_target", ""))
+            if ob is not None:
+                return ob
+        return context.active_object
+
+    @classmethod
+    def poll(cls, context):
+        return cls._object(context, True) is not None
+
+    def execute(self, context):
+        ob = self._object(context, self.rmb)
+        if ob is None:
+            return {'CANCELLED'}
+        if context.active_object is not ob:
+            try:   # Maya shows the node without changing the selection; the AE here shows the active object
+                ob.select_get(view_layer=context.view_layer)
+                context.view_layer.objects.active = ob
+            except RuntimeError:
+                return {'CANCELLED'}
+        return bpy.ops.maya_kit.dock_show(dock='ATTRIBUTE_EDITOR')
+
+
 def _redraw(context):
     screen = context.screen
     for area in (screen.areas if screen else ()):
@@ -512,7 +546,7 @@ class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
 
 
 classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKIT_OT_ae_add_limit,
-           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show,
+           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show, MAYAKIT_OT_object_attributes,
            MAYAKIT_PT_attribute_editor)
 
 

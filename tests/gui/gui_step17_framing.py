@@ -1,5 +1,5 @@
 """Step 17 in a real UI: F / A / Ctrl+Shift+F / Shift+F fit 0.95 of the part of the view
-not under the sidebar; hotbox rows stay left of the sidebar."""
+not under the sidebar; hotbox rows stay inside the window."""
 
 import os
 import sys
@@ -170,10 +170,11 @@ def s_hotbox_wait():
 def s_hotbox_check():
     draw = import_module(MODULE + ".marking.draw")
     area, region = view3d()
-    rect = view_mod().visible_bounds(area, region)
+    # step 52: Maya's hotbox floats over the whole window, sidebar included: rows stay in the window
+    rect = draw.window_bounds(win(), region)
     lay = draw.ACTIVE.get("hotbox")
     xs = [r[2] for r, _k, _l in lay.labels] if lay else []
-    check(f"hotbox rows end left of the sidebar (max x {max(xs) if xs else None:.0f} <= {rect[2]:.0f})",
+    check(f"hotbox rows end inside the window (max x {max(xs) if xs else None:.0f} <= {rect[2]:.0f})",
           bool(xs) and max(xs) <= rect[2] + 1)
     shot("step17_hotbox.png")
     ev('SPACE', 'RELEASE')
