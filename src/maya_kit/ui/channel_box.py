@@ -57,20 +57,82 @@ SPEEDS = (("SLOWEST", "Slowest", "x0.01", 0.01), ("SLOW", "Slow", "x0.1", 0.1),
 SPEED_FACTOR = {s[0]: s[3] for s in SPEEDS}
 
 
-# --- objects, channels --------------------------------------------------------------
+# --- nodes: objects or pose bones (docs/steps/step_55.md 「계획」 1) -------------------------
+# A Maya joint is a pose bone (research/maya/workflows/rigging.md:134-136). Pose bones carry the
+# same RNA names as objects (location / rotation_euler / scale / lock_* / rotation_mode / ID
+# properties); only their animation lives on the armature object (``pose.bones["n"].<path>``).
+
+def is_bone(node):
+    return isinstance(node, bpy.types.PoseBone)
+
+
+def bone_selected(pb):
+    sel = getattr(pb, "select", None)   # 4.5: Bone.select; newer versions may keep it on the pose bone
+    return pb.bone.select if sel is None else sel
+
+
+def set_bone_selected(pb, state):
+    if hasattr(pb, "select"):
+        pb.select = state
+    else:
+        pb.bone.select = state
+
+
+def pose_armature(context=None):
+    """The active armature when it is in pose mode (= Maya: joints are being picked)."""
+    ob = (context or bpy.context).active_object
+    return ob if ob is not None and ob.type == 'ARMATURE' and ob.mode == 'POSE' else None
+
+
+def placing_joints(context=None):
+    ob = (context or bpy.context).active_object
+    return ob is not None and ob.type == 'ARMATURE' and ob.mode == 'EDIT'
+
+
+def pose_objects(context=None):
+    context = context or bpy.context
+    arm = pose_armature(context)
+    if arm is None:
+        return []
+    others = [o for o in context.view_layer.objects
+              if o is not arm and o.type == 'ARMATURE' and o.mode == 'POSE']
+    return [arm] + others
+
+
+def selected_bones(context=None):
+    return [pb for arm in pose_objects(context) for pb in arm.pose.bones
+            if bone_selected(pb) and not pb.bone.hide]
+
 
 def lead(context=None):
-    return (context or bpy.context).active_object
+    """The Maya lead: the active object, or in pose mode the active (selected) pose bone."""
+    context = context or bpy.context
+    arm = pose_armature(context)
+    if arm is None:
+        return context.active_object
+    act = arm.data.bones.active
+    pb = arm.pose.bones.get(act.name) if act is not None else None
+    if pb is not None and bone_selected(pb) and not pb.bone.hide:
+        return pb
+    sel = selected_bones(context)
+    return sel[0] if sel else None
 
 
 def targets(context=None):
-    """Lead + selected objects (lead first), like Maya's selection list."""
+    """Lead + selected objects / pose bones (lead first), like Maya's selection list."""
     context = context or bpy.context
-    obs = list(context.selected_objects)
+    nodes = selected_bones(context) if pose_armature(context) else list(context.selected_objects)
     ld = lead(context)
     if ld is not None:
-        obs = [ld] + [o for o in obs if o != ld]
-    return obs
+        nodes = [ld] + [n for n in nodes if n != ld]
+    return nodes
+
+
+def full_path(node, path):
+    """Animation data path of ``path`` on the node's ID (the armature object for a bone)."""
+    if not is_bone(node):
+        return path
+    return None if path == "hide_viewport" else node.path_from_id(path)   # bone visibility: Bone.hide
 
 
 def _flag_list(ob, prop):
@@ -90,6 +152,8 @@ def is_hidden(ob, key):
 
 
 def is_keyable(ob, key):
+    if key == "v" and is_bone(ob):
+        return False   # Bone.hide lives on the armature data, not in the object's action
     return key not in _flag_list(ob, NONKEYABLE_PROP)
 
 
@@ -146,7 +210,7 @@ def get_value(ob, key):
     if kind == "CUSTOM":
         return ob[key[len(CUSTOM_PREFIX):]]
     if kind == "VIS":
-        return not ob.hide_viewport
+        return not (ob.bone.hide if is_bone(ob) else ob.hide_viewport)
     return getattr(ob, path)[idx]
 
 
@@ -155,20 +219,25 @@ def set_value(ob, key, value):
     if kind == "CUSTOM":
         ob[key[len(CUSTOM_PREFIX):]] = type(ob[key[len(CUSTOM_PREFIX):]])(value)
     elif kind == "VIS":
-        ob.hide_viewport = not value
+        if is_bone(ob):
+            ob.bone.hide = not value
+        else:
+            ob.hide_viewport = not value
     else:
         getattr(ob, path)[idx] = value
 
 
 def keyframe(ob, key, keytype='KEYFRAME'):
     path, idx, kind = channel_path(key)
+    if kind == "VIS" and is_bone(ob):
+        return False
     return ob.keyframe_insert(path, index=idx, keytype=keytype)
 
 
 # --- animation state ---------------------------------------------------------------------
 
 def _fcurves(ob):
-    ad = ob.animation_data
+    ad = ob.id_data.animation_data
     if ad is None or ad.action is None:
         return None
     try:
@@ -184,15 +253,17 @@ def fcurve(ob, key):
     if fcs is None:
         return None
     path, idx, _kind = channel_path(key)
-    return fcs.find(path, index=max(idx, 0))
+    path = full_path(ob, path)
+    return None if path is None else fcs.find(path, index=max(idx, 0))
 
 
 def driver(ob, key):
-    ad = ob.animation_data
+    ad = ob.id_data.animation_data
     if ad is None:
         return None
     path, idx, _kind = channel_path(key)
-    return ad.drivers.find(path, index=max(idx, 0))
+    path = full_path(ob, path)
+    return None if path is None else ad.drivers.find(path, index=max(idx, 0))
 
 
 def channel_state(ob, key, frame=None):
@@ -317,7 +388,76 @@ def _text_set(key):
 # --- rows for custom attributes, SHAPES and INPUTS (step 38) --------------------------------
 
 def _inputs(ob):
-    return [m for m in ob.modifiers if not display.is_preview(m)]
+    return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m)]
+
+
+# --- constraints = Maya constraint nodes (docs/steps/step_55.md 「계획」 3) ------------------------
+# research/maya/workflows/animation.md:42 (pCube1_parentConstraint1, weight locator1W0), :126.
+
+MAYA_CONSTRAINT = {'CHILD_OF': "parentConstraint", 'COPY_TRANSFORMS': "parentConstraint",
+                   'COPY_LOCATION': "pointConstraint", 'COPY_ROTATION': "orientConstraint",
+                   'COPY_SCALE': "scaleConstraint", 'TRACK_TO': "aimConstraint",
+                   'DAMPED_TRACK': "aimConstraint", 'LOCKED_TRACK': "aimConstraint"}
+_AIM = ('TRACK_TO', 'DAMPED_TRACK', 'LOCKED_TRACK')
+
+
+def constraints(node):
+    """Constraints shown as INPUTS nodes (Limit constraints are Maya transform limits: AE only)."""
+    return [c for c in getattr(node, "constraints", ()) if not c.type.startswith("LIMIT_")]
+
+
+def constraint_enabled(con):
+    en = getattr(con, "enabled", None)
+    return (not con.mute) if en is None else bool(en)
+
+
+def _nth_constraint(node, con):
+    return [c for c in constraints(node) if c.type == con.type].index(con)
+
+
+def constraint_node_name(node, con):
+    """Maya's name for the constraint node: ``<node>_<type><n>`` (pCube1_parentConstraint1)."""
+    mtype = MAYA_CONSTRAINT.get(con.type)
+    if mtype is None:
+        return con.name
+    same = [c for c in constraints(node) if MAYA_CONSTRAINT.get(c.type) == mtype]
+    return f"{node.name}_{mtype}{same.index(con) + 1}"
+
+
+def weight_name(con):
+    """Maya target weight attribute: ``<target>W0`` (one target per Blender constraint)."""
+    target = getattr(con, "target", None)
+    if target is None:
+        return "W0"
+    sub = getattr(con, "subtarget", "")
+    return f"{sub if target.type == 'ARMATURE' and sub else target.name}W0"
+
+
+def _axes(con, pattern):
+    return [a for a in "xyz" if getattr(con, pattern.format(a), True)]
+
+
+def constrained_keys(node):
+    """Channel keys an enabled constraint drives (Maya draws them blue, channel_box.md:138-139)."""
+    out = set()
+    for con in constraints(node):
+        if not constraint_enabled(con):
+            continue
+        t = con.type
+        if t == 'CHILD_OF':
+            for k, pattern in (("t", "use_location_{}"), ("r", "use_rotation_{}"), ("s", "use_scale_{}")):
+                out.update(k + a for a in _axes(con, pattern))
+        elif t in ('COPY_TRANSFORMS', 'ARMATURE'):
+            out.update(k for k in MAIN_BY_KEY if k != "v")
+        elif t == 'COPY_LOCATION':
+            out.update("t" + a for a in _axes(con, "use_{}"))
+        elif t == 'COPY_ROTATION':
+            out.update("r" + a for a in _axes(con, "use_{}"))
+        elif t == 'COPY_SCALE':
+            out.update("s" + a for a in _axes(con, "use_{}"))
+        elif t in _AIM:
+            out.update(("rx", "ry", "rz"))
+    return out
 
 
 def _nth_of_type(ob, mod):
@@ -333,7 +473,7 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
     if kind == "CUSTOM":
         return ob if name in ob.keys() else None
     if kind == "SHAPE":
-        data = ob.data
+        data = getattr(ob, "data", None)
         if data is None or (lead_ob is not None and ob.type != lead_ob.type):
             return None
         return data if name in data.bl_rna.properties else None
@@ -341,6 +481,10 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
         mods = [m for m in _inputs(ob) if m.type == mod_type]
         if nth < len(mods) and name in mods[nth].bl_rna.properties:
             return mods[nth]
+    if kind == "CONSTRAINT":
+        cons = [c for c in constraints(ob) if c.type == mod_type]
+        if nth < len(cons) and name in cons[nth].bl_rna.properties:
+            return cons[nth]
     return None
 
 
@@ -402,10 +546,10 @@ def _row_set(self, text):
 
 
 class MAYAKIT_PG_cb_row(bpy.types.PropertyGroup):
-    kind: StringProperty()        # CUSTOM / SHAPE / INPUT
+    kind: StringProperty()        # CUSTOM / SHAPE / INPUT / CONSTRAINT
     name: StringProperty()        # property name
-    mod_type: StringProperty()    # INPUT: modifier type
-    nth: IntProperty()            # INPUT: position among the lead's modifiers of that type
+    mod_type: StringProperty()    # INPUT: modifier type, CONSTRAINT: constraint type
+    nth: IntProperty()            # position among the lead's modifiers / constraints of that type
     text: StringProperty(get=_row_get, set=_row_set)
 
 
@@ -471,7 +615,7 @@ class MAYAKIT_OT_cb_virtual_slider(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'GRAB_CURSOR_X', 'BLOCKING'}
 
     def invoke(self, context, event):
-        if context.mode != 'OBJECT':
+        if context.mode not in {'OBJECT', 'POSE'}:
             return {'PASS_THROUGH'}
         pairs = slider_targets(context)
         if not pairs:
@@ -609,7 +753,7 @@ def _act_break(self, context, ob, key):
     done = _act_delete(self, context, ob, key)
     dr = driver(ob, key)
     if dr is not None:
-        ob.animation_data.drivers.remove(dr)
+        ob.id_data.animation_data.drivers.remove(dr)
         done = True
     return done
 
@@ -752,6 +896,8 @@ class MAYAKIT_OT_cb_make_lead(bpy.types.Operator):
     only: BoolProperty(name="Only", description="Select only this object", options={'SKIP_SAVE'})
 
     def execute(self, context):
+        if pose_armature(context):
+            return self._bone(context)
         ob = context.scene.objects.get(self.name) if self.name else context.active_object
         if ob is None:
             return {'CANCELLED'}
@@ -762,10 +908,41 @@ class MAYAKIT_OT_cb_make_lead(bpy.types.Operator):
         context.view_layer.objects.active = ob
         return {'FINISHED'}
 
+    def _bone(self, context):
+        bones = [pb for arm in pose_objects(context) for pb in arm.pose.bones]
+        pb = next((b for b in bones if b.name == self.name), None) if self.name else lead(context)
+        if pb is None:
+            return {'CANCELLED'}
+        if self.only:
+            for other in bones:
+                set_bone_selected(other, False)
+        set_bone_selected(pb, True)
+        pb.id_data.data.bones.active = pb.bone
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_cb_rotate_order(bpy.types.Operator):
+    """Set the rotate order (Blender converts the rotation, the pose stays): Maya channels need Euler"""
+    bl_idname = "maya_kit.cb_rotate_order"
+    bl_label = "Rotate Order"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    order: EnumProperty(name="Rotate Order", items=[(m, m, "") for m in
+                                                    ('XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX')])
+
+    @classmethod
+    def poll(cls, context):
+        return lead(context) is not None
+
+    def execute(self, context):
+        for node in targets(context):
+            node.rotation_mode = self.order
+        return {'FINISHED'}
+
 
 class MAYAKIT_MT_cb_object(bpy.types.Menu):
-    """Maya Channel Box Object menu: the selected objects, picking one makes it the lead
-    (research/maya/channel_box.md:29)"""
+    """Maya Channel Box Object menu: the selected objects (joints in pose mode), picking one makes it
+    the lead (research/maya/channel_box.md:29)"""
     bl_label = "Object"
 
     def draw(self, context):
@@ -773,9 +950,10 @@ class MAYAKIT_MT_cb_object(bpy.types.Menu):
         obs = targets(context)
         if not obs:
             chrome.grey(lay, "Nothing selected")
+        ld = lead(context)
         for ob in obs[:10]:
             lay.operator(MAYAKIT_OT_cb_make_lead.bl_idname, text=ob.name,
-                         icon='LAYER_ACTIVE' if ob == context.active_object else 'BLANK1').name = ob.name
+                         icon='LAYER_ACTIVE' if ob == ld else 'BLANK1').name = ob.name
 
 
 class MAYAKIT_MT_cb_show(bpy.types.Menu):
@@ -795,6 +973,10 @@ MENU_BAR = (("Channels", "MAYAKIT_MT_cb_channels"), ("Edit", "MAYAKIT_MT_cb_edit
             ("Object", "MAYAKIT_MT_cb_object"), ("Show", "MAYAKIT_MT_cb_show"))
 # Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).
 EMPTY_TEXT = ("Select objects in the scene to view,", "edit and set keyframes on channels", "(attributes)")
+
+
+PLACING_TEXT = ("Placing joints:", "channels are in pose mode")
+POSE_HINT = "Joint channels: Ctrl+Tab (pose mode)"
 
 
 def draw_empty(layout):
@@ -818,14 +1000,21 @@ def _row_label(row, key, selected):
 ROW_SCALE = 0.8
 
 
-def draw_channel_row(layout, ob, key, value_owner, value_prop, selected):
+def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constrained=False):
     row = layout.row(align=True)
     split = row.split(factor=0.5, align=True)
     _row_label(split, key, selected)
     right = split.row(align=True)
     state = channel_state(ob, key)
-    right.alert = state is not None
     right.enabled = not is_locked(ob, key)
+    if constrained:
+        # Maya draws constrained channels blue (channel_box.md:138-139): a pressed button is the
+        # theme's selection blue (wcol_tool inner_sel #5285a6); UILayout has no other colour.
+        text = cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
+        right.operator("maya_kit.cb_select_channel", text=text, depress=True).key = key
+        row.label(text="", icon='CONSTRAINT')
+        return row
+    right.alert = state is not None
     right.prop(value_owner, value_prop, text="")
     # Proxy fields get no automatic keyframe colouring: show the lead object's state.
     row.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
@@ -859,7 +1048,7 @@ SHAPE_PROPS = {
 def wanted_rows(ob):
     """(kind, name, mod_type, nth) for every text row of the lead object."""
     out = [("CUSTOM", name, "", 0) for name in custom_keys(ob)]
-    data = ob.data
+    data = getattr(ob, "data", None)
     if data is not None:
         for prop in SHAPE_PROPS.get(ob.type, ()):
             rna = data.bl_rna.properties.get(prop)
@@ -869,14 +1058,19 @@ def wanted_rows(ob):
         if mod.show_expanded:
             for prop in _modifier_props(mod):
                 out.append(("INPUT", prop, mod.type, _nth_of_type(ob, mod)))
+    for con in constraints(ob):
+        out.append(("CONSTRAINT", "influence", con.type, _nth_constraint(ob, con)))
     return out
 
 
 def rows_signature(ob):
     if ob is None:
         return ""
+    cons = [(c.name, c.type, weight_name(c)) for c in constraints(ob)]
+    if is_bone(ob):
+        return repr(("BONE", ob.id_data.name, ob.name, custom_keys(ob), cons))
     mods = [(m.name, m.type, m.show_expanded) for m in _inputs(ob)]
-    return repr((ob.name, ob.type, custom_keys(ob), mods))
+    return repr((ob.name, ob.type, custom_keys(ob), mods, cons))
 
 
 _rows_state = {"busy": False}
@@ -890,7 +1084,7 @@ def rebuild_rows(context=None):
     view_layer = getattr(context, "view_layer", None)
     if cb is None or view_layer is None or _rows_state["busy"]:
         return False
-    ob = view_layer.objects.active
+    ob = lead(context)
     sig = rows_signature(ob)
     if cb.rows_sig == sig:
         return False
@@ -933,14 +1127,15 @@ def _first_rebuild():
     return None
 
 
-def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0):
+def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, label=None):
     """A SHAPES / INPUTS row: label + text field applied to all selected (else the real prop)."""
+    label = owner.bl_rna.properties[prop].name if label is None else label
     row = row_for(context, ob, kind, prop, mod_type, nth)
     if row is None:
-        layout.prop(owner, prop)
+        layout.prop(owner, prop, text=label)
         return
     split = layout.row(align=True).split(factor=0.5, align=True)
-    split.label(text=owner.bl_rna.properties[prop].name)
+    split.label(text=label)
     split.prop(row, "text", text="")
 
 
@@ -962,6 +1157,10 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         from .attribute_editor import draw_dock_switch
         draw_dock_switch(layout, context)
         chrome.menu_bar(layout, MENU_BAR)
+        if placing_joints(context):
+            layout.separator(factor=2)
+            chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)
+            return
         ob = lead(context)
         if ob is None:
             draw_empty(layout)
@@ -970,9 +1169,14 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         sel = set(selected_channels(context))
         head = layout.row(align=True)
         head.prop(ob, "name", text="", emboss=False)   # Maya: the lead's name as plain text
-        n = len(context.selected_objects)
+        n = len(targets(context))
         if n > 1:
             head.label(text=f"+{n - 1}")
+        if not is_bone(ob) and ob.type == 'ARMATURE' and ob.mode == 'OBJECT':
+            hint = layout.row()
+            hint.active = False
+            hint.label(text=POSE_HINT)
+        blue = constrained_keys(ob)
 
         col = layout.column(align=True)
         # Maya channel rows are 16 px with 11 px text (research/maya/colors.json metrics,
@@ -983,11 +1187,13 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 continue
             if kind == "ROT" and not has_channel(ob, key):
                 continue
-            draw_channel_row(col, ob, key, cb, key + "_text", key in sel)
+            draw_channel_row(col, ob, key, cb, key + "_text", key in sel, key in blue)
         if not has_channel(ob, "rx"):
             col.label(text=f"Rotation mode {ob.rotation_mode}")
             col.prop(ob, "rotation_quaternion" if ob.rotation_mode == 'QUATERNION' else "rotation_axis_angle",
                      text="")
+            col.operator(MAYAKIT_OT_cb_rotate_order.bl_idname, text="Rotate Order XYZ").order = 'XYZ'
+
         for name in custom_keys(ob):
             key = CUSTOM_PREFIX + name
             if not is_hidden(ob, key):
@@ -998,7 +1204,7 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                     draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
 
         # SHAPES / INPUTS: a section title and indented node names, no boxes (11b_channel_box_crop).
-        data = ob.data
+        data = getattr(ob, "data", None)
         if data is not None:
             box = layout.column(align=True)
             box.label(text="SHAPES")
@@ -1010,8 +1216,9 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                     _draw_text_row(box, context, ob, data, prop, "SHAPE")
 
         # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
-        inputs = [mod for mod in ob.modifiers if not display.is_preview(mod)]
-        if inputs:
+        inputs = _inputs(ob)
+        cons = constraints(ob)
+        if inputs or cons:
             box = layout.column(align=True)
             box.label(text="INPUTS")
             for mod in inputs:
@@ -1025,11 +1232,24 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                     for prop in _modifier_props(mod):
                         _draw_text_row(sub, context, ob, mod, prop, "INPUT", mod.type,
                                        _nth_of_type(ob, mod))
+            for con in cons:
+                # Maya constraint node + its target weight (animation.md:42, :126)
+                row = box.row(align=True)
+                name = row.row()
+                name.active = constraint_enabled(con)
+                name.separator(factor=1.5)
+                name.label(text=constraint_node_name(ob, con))
+                if hasattr(con, "enabled"):
+                    row.prop(con, "enabled", text="")
+                sub = box.column(align=True)
+                _draw_text_row(sub, context, ob, con, "influence", "CONSTRAINT", con.type,
+                               _nth_constraint(ob, con), label=weight_name(con))
 
 
 classes = (MAYAKIT_PG_cb_row, MAYAKIT_PG_channel_box, MAYAKIT_OT_cb_virtual_slider, MAYAKIT_OT_cb_select_channel,
            MAYAKIT_OT_cb_deselect_channels, *CHANNEL_OPS, MAYAKIT_OT_cb_show_all,
-           MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_OT_cb_make_lead, MAYAKIT_MT_cb_edit,
+           MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_OT_cb_make_lead,
+           MAYAKIT_OT_cb_rotate_order, MAYAKIT_MT_cb_edit,
            MAYAKIT_MT_cb_object, MAYAKIT_MT_cb_show, MAYAKIT_PT_channel_box)
 
 

@@ -281,6 +281,9 @@ def test_ae_sections_match_maya_templates():
 
 
 def _rna_owner(owner_name, kind):
+    if kind == "joint":   # step 55: a joint is a pose bone
+        return {"ob": bpy.types.PoseBone, "bone": bpy.types.Bone, "arm": bpy.types.Armature,
+                "armob": bpy.types.Object}[owner_name]
     if owner_name == "ob":
         return bpy.types.Object
     if owner_name == "view":

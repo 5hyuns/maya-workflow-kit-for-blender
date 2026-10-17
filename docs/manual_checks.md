@@ -354,3 +354,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 m 장면의 같은 배치와 비슷한지 (역제곱 미터 보정). 상태 표시줄 보고에 감쇠 안내.
 - [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Animation Layers / Character Sets, Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
 - [ ] (step 54) Fluids > 3D Container / Effects > Smoke 를 메시 선택 후: 도메인이 메시 둘레에 Maya 단위로 알맞게 (cm 템플릿에서 2 m 상자가 아님).
+
+### Step 55 — 포즈 본 = Maya 조인트 (CB·Outliner·AE·제약 가중치)
+
+- [ ] (step 55) Skeleton > Create Joints 후 오브젝트 모드에서 아마추어를 고르면 CB 머리 아래 「Joint channels: Ctrl+Tab (pose mode)」; Ctrl+Tab → 포즈 모드, 뷰에서 조인트 클릭 = CB 머리가 조인트 이름, Translate/Rotate/Scale/Visibility 행. 아무 조인트도 안 고르면 빈 CB 문구.
+- [ ] (step 55) 조인트 두 개를 고르고 Rotate Z 칸에 `+=10` = 둘 다 각자 값에서 10° 더. 채널 이름 Shift+클릭으로 Rotate X–Z 를 고르고 Channels > Lock Selected → 뷰에서 E 로 돌려도 안 돌고, Key Selected 키가 Graph Editor 에 `joint2` 그룹으로 보이는지. MMB 드래그 (가상 슬라이더) 가 고른 조인트 채널을 바꾸는지.
+- [ ] (step 55) Blender 로 만든 본 (쿼터니언) 을 고르면 「Rotation mode QUATERNION」 + 「Rotate Order XYZ」 버튼; 누르면 자세 그대로 Rotate X/Y/Z 행이 나오는지.
+- [ ] (step 55) 조인트에 Copy Location (대상 locator1) 제약: CB INPUTS 에 `joint2_pointConstraint1` 과 `locator1W0`, Translate 칸이 파랑 (눌린 버튼 색) 으로 Maya 의 제약 채널처럼 읽히는지; W0 에 0.5 → 조인트가 반만 따라감. 제약 체크를 끄면 파랑이 사라지는지.
+- [ ] (step 55) 사이드바 Outliner (Dock Only 끔): skeleton1 ▸ 를 펼치면 joint1 ▸ joint2 ▸ joint3 계층, 조인트 행 클릭 = 포즈 모드 + 그 조인트, 오브젝트 행 클릭 = 오브젝트 모드로 돌아가 선택. 레이아웃의 Outliner (Blender 트리) 는 Display > Shapes 를 켜야 본이 보임.
+- [ ] (step 55) AE (Ctrl+A) 에서 조인트: joint 탭 + 제약 노드 탭, Transform Attributes / Joint (Joint Orient 읽기 전용, 축 안내) / Limit Information (Add Limit Rotation 이 조인트에 붙음) / Display (Display as Control Shape). 아마추어 편집 모드에서는 CB·AE 에 「Placing joints」 한 줄.

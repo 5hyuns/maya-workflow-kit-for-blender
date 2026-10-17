@@ -594,6 +594,17 @@ def patch_component_pick_walk(kd):
          {"mode": "TRACK"})
 
 
+# --- 30. Joints = pose bones (docs/steps/step_55.md 「계획」 2) ---------------------------------
+# Maya has no pose mode: picking a joint selects it (research/maya/workflows/rigging.md:136). Ctrl+Tab =
+# pose mode toggle (Blender's default key for it; posemode_toggle returns PASS_THROUGH unless an
+# armature is active, tmp/probe55, so Screen's Ctrl+Tab still gets the event); the Channel Box MMB
+# slider works on joints.
+
+def patch_pose_joints(kd):
+    _add(kd, "Object Non-modal", "object.posemode_toggle", make_event("TAB", ctrl=True), shadows=("Screen",))
+    _add(kd, "Pose", "maya_kit.cb_virtual_slider", make_event("MIDDLEMOUSE"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -602,7 +613,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard)
+           patch_toolbox_guard, patch_pose_joints)
 
 
 def apply(data):

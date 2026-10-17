@@ -9,7 +9,9 @@ attributes with no Blender counterpart (shear, rotateAxis, tessellation, depth
 map shadows, Node Behavior, UUID, ...) are left out.
 
 Row forms:
-  ("prop", owner, attr, label)   owner: "ob" | "data" | "view" (3D View space)
+  ("prop", owner, attr, label)   owner: "ob" | "data" | "view" (3D View space); joints (pose bones):
+                                 "ob" = the pose bone, "bone" = its Bone, "arm" = the Armature data,
+                                 "armob" = the armature object
   ("draw", name)                 custom drawer in ui/attribute_editor.py
   ("socket", input name, label)  Principled BSDF input (material tabs)
 
@@ -192,6 +194,29 @@ SURFACE_SHADER = [
       ("socket", "Alpha", "Out Opacity")),
 ]
 # Material without nodes: Blender viewport values (no Maya template).
+# --- joint = pose bone (AEjointTemplate.mel:25-54, research/maya/workflows/rigging.md:134-136) ----
+# Joint Labelling (side / type) and Preferred Angle have no Blender counterpart.
+JOINT = [
+    S("Transform Attributes", True,                                          # collapse=0
+      ("draw", "transform_channels"),
+      ("prop", "ob", "rotation_mode", "Rotate Order")),
+    S("Joint", True,                                                         # collapse=0
+      ("prop", "arm", "display_type", "Draw Style"),
+      ("draw", "joint_stiffness"),
+      ("draw", "joint_orient"),
+      ("prop", "bone", "inherit_scale", "Segment Scale Compensate")),
+    S("Limit Information", False, subs=[
+        S("Translate", False, ("draw", "limit:LIMIT_LOCATION")),
+        S("Rotate", True, ("draw", "limit:LIMIT_ROTATION")),                # collapse=0
+        S("Scale", False, ("draw", "limit:LIMIT_SCALE")),
+    ]),
+    S("Display", False,
+      ("draw", "visibility"),
+      ("prop", "arm", "show_axes", "Display Local Axis"),
+      ("prop", "armob", "show_in_front", "Always Draw On Top"),
+      ("prop", "ob", "custom_shape", "Display as Control Shape")),
+]
+
 PLAIN_MATERIAL = [
     S("Common Material Attributes", True,
       ("prop", "data", "diffuse_color", "Color"),
@@ -202,6 +227,7 @@ PLAIN_MATERIAL = [
 # (sections, research template name or None)
 BY_KIND = {
     "transform": (TRANSFORM, "transform"),
+    "joint": (JOINT, "joint"),
     "MESH": (MESH, "mesh"),
     "CAMERA": (CAMERA, "camera"),
     "POINT": (POINT_LIGHT, "pointLight"),

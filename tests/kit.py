@@ -31,7 +31,7 @@ def is_enabled():
 
 # RNA types an add-on typically extends with properties.
 _PROP_OWNERS = ("Scene", "Object", "WindowManager", "ViewLayer", "Mesh", "Collection",
-                "SpaceView3D", "ToolSettings", "Preferences")
+                "SpaceView3D", "ToolSettings", "Preferences", "Bone", "PoseBone")
 
 
 def _timeline_classes():
