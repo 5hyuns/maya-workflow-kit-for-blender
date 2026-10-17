@@ -84,7 +84,21 @@ def user_setup_check(blender, zip_path):
         return [("install + enable over a user setup", False)]
     run(probe + ["check", str(snaps["after"])], env)
     run(probe + ["disable", str(snaps["disabled"])], env)
-    return user_setup_checks(snaps["before"], snaps["after"], snaps["disabled"])
+    checks = user_setup_checks(snaps["before"], snaps["after"], snaps["disabled"])
+    # step 60: enable again, Make Blender Maya, then Remove the extension in Maya mode
+    removed = USER_SANDBOX / "removed.json"
+    run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
+    run(probe + ["make", str(USER_SANDBOX / "made.json")], env)
+    rc, out = run(probe + ["remove", str(USER_SANDBOX / "removing.json")], env)
+    run(probe + ["check", str(removed)], env)
+    if rc != 0 or not removed.exists():
+        print(out[-3000:])
+        return checks + [("Remove in Maya mode (Preferences > Extensions > Remove)", False)]
+    before, gone = (json.loads(p.read_text(encoding="utf-8")) for p in (snaps["before"], removed))
+    same = {k: gone[k] == before[k] for k in ("active_keyconfig", "inputs", "undo_steps", "view", "theme")}
+    return checks + [(f"Remove after Make Blender Maya restores everything "
+                      f"({[k for k, v in same.items() if not v] or 'all'})",
+                      all(same.values()) and set(before["addons"]) == set(gone["addons"]))]
 
 
 def user_setup_checks(before_path, after_path, disabled_path):

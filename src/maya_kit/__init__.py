@@ -8,7 +8,8 @@ extensions read ``blender_manifest.toml`` instead and ignore it.
 Each feature area is a sub-package with its own ``register()`` /
 ``unregister()``. Order matters: preferences first (others may read them),
 then the Blender-preferences preset, keymap last (keymap items reference
-operators registered before it).
+operators registered before it). ``CORE`` stays registered; ``MODE`` is
+Maya mode, switched on and off at run time by ``switch`` (step 60).
 """
 
 bl_info = {
@@ -21,18 +22,36 @@ bl_info = {
     "category": "Interface",
 }
 
-from . import (preferences, prefs_preset, operators, ui, command_line, marking, theme,
+from . import (preferences, switch, prefs_preset, operators, ui, command_line, marking, theme,
                app_template, first_start, keymap)
 
-_modules = (preferences, prefs_preset, operators, ui, command_line, marking, theme, app_template,
-            first_start, keymap)
+# Always registered: the preferences and the Maya / Blender switch (docs/steps/step_60.md).
+CORE = (preferences, switch)
+# "Maya mode": registered while the add-on preference ``maya_mode`` is on; switching to
+# Blender unregisters them, which puts back everything they changed.
+MODE = (prefs_preset, operators, ui, command_line, marking, theme, app_template, first_start, keymap)
 
 
 def register():
-    for mod in _modules:
+    for mod in CORE:
         mod.register()
+    if switch.is_on():
+        if switch.has_snapshot() and not switch.maya_state_saved():
+            switch.forget_snapshot()    # stale: kept from before a disable, the user may have changed things
+        if not switch.has_snapshot():
+            switch.take_snapshot()      # the user's values before Maya mode (complete revert)
+        switch.register_mode()
+        switch._registered[0] = True
+    elif switch.has_snapshot():
+        switch.finish_interrupted()     # a switch to Blender was interrupted (crash): finish it
 
 
 def unregister():
-    for mod in reversed(_modules):
+    if switch._registered[0]:
+        switch.unregister_mode()
+        switch._registered[0] = False
+        # Disable / Remove gives the user's settings back. The snapshot file stays: Blender also
+        # unregisters add-ons when it quits, and the next start in Maya mode still needs it.
+        switch.restore_snapshot(delete=False)
+    for mod in reversed(CORE):
         mod.unregister()

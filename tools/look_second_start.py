@@ -22,7 +22,7 @@ def _check():
         {"name": "second start opens the Maya layout (app template MayaKit)",
          "ok": prefs.app_template == "MayaKit"},
         {"name": "Maya theme still on", "ok": bool(addon and addon.maya_theme)
-         and os.path.basename(prefs.themes[0].filepath) == "maya.xml"},
+         and prefs.themes[0].name == "Maya"},
         {"name": "Blender splash off", "ok": not prefs.view.show_splash},
         {"name": "no welcome dialog again", "ok": bool(addon and addon.welcome_done)},
     ]

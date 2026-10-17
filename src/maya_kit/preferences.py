@@ -17,6 +17,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     # starts respect a different keymap the user picked (docs/steps/step_2.md).
     keymap_auto_activated: bpy.props.BoolProperty(options={'HIDDEN'})
 
+    # Maya mode on/off (switch.py, docs/steps/step_60.md): on after install, kept across restarts.
+    maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=True, options={'HIDDEN'})
+
     def _update_navigation(self, context):
         from . import prefs_preset
         if self.use_maya_navigation:
@@ -253,8 +256,23 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         default=False, update=_update_units)
 
     def draw(self, context):
-        from . import keymap
         layout = self.layout
+        from . import switch
+        box = layout.box()
+        row = box.row()
+        row.scale_y = 1.6
+        if self.maya_mode:
+            row.operator("maya_kit.switch_mode", text="Switch to Blender", icon='BLENDER').mode = 'BLENDER'
+        else:
+            row.operator("maya_kit.switch_mode", text="Switch to Maya", icon='EVENT_M').mode = 'MAYA'
+        row.operator("maya_kit.restore_blender", icon='LOOP_BACK')
+        box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches "
+                       "at any time. Blender mode restores your keymap, theme and preferences.", icon='INFO')
+        if switch.has_snapshot():
+            box.label(text=f"Your settings from before Maya mode are kept in {switch.snapshot_path()}")
+        if not self.maya_mode:
+            return
+        from . import keymap
         box = layout.box()
         row = box.row()
         row.scale_y = 1.4

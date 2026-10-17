@@ -16,6 +16,11 @@ import os
 import bpy
 
 THEME_FILE = os.path.join(os.path.dirname(__file__), "maya.xml")
+# The applied Maya theme is marked by the theme's name (saved with the preferences, not in the
+# XML), not by ``filepath``: Blender's extension removal remembers ``themes[0].filepath`` and
+# resets to the default theme when that file is gone afterwards, which would undo the restore
+# the add-on's unregister just did ($S\addons_core\bl_pkg\bl_extension_ops.py:1233-1270, step 60).
+THEME_NAME = "Maya"
 _ADDON = __package__.rpartition(".")[0]
 
 
@@ -55,9 +60,10 @@ def save_backup():
     rna_xml = _rna_xml()
     path = backup_path(create=True)
     rna_xml.xml_file_write(_prefs(), path, _MAP)
-    # The theme's "filepath" (last preset loaded, shown in the theme UI) is not in the XML.
+    # The theme's "filepath" (last preset loaded, shown in the theme UI) and name are not in the
+    # XML: one line each.
     with open(path + ".filepath", "w", encoding="utf-8") as fh:
-        fh.write(_prefs().themes[0].filepath)
+        fh.write(_prefs().themes[0].filepath + "\n" + _prefs().themes[0].name)
     return path
 
 
@@ -68,12 +74,16 @@ def _load(filepath):
 
 
 def apply():
-    """Back up the user's theme (once) and apply the Maya theme."""
+    """Back up the user's theme (once) and apply the Maya theme. A backup next to a theme that is
+    not the Maya one is stale (left by a disable; the user may have changed the theme since)."""
+    if has_backup() and not is_applied():
+        forget_backup()
     if not has_backup():
         save_backup()
     _load(THEME_FILE)
     _apply_moved(_prefs().themes[0])
-    _prefs().themes[0].filepath = THEME_FILE
+    _prefs().themes[0].filepath = ""
+    _prefs().themes[0].name = THEME_NAME
     _prefs().is_dirty = True
 
 
@@ -147,21 +157,39 @@ def _apply_moved(theme):
             w.show_shaded = False
 
 
-def restore():
-    """Put the backed-up theme back and forget the backup. False if there was none."""
+def is_applied():
+    """The Maya theme is the current one (apply() names the theme ``THEME_NAME``; loading a theme
+    preset or resetting to the default theme does not keep the name)."""
+    return _prefs().themes[0].name == THEME_NAME
+
+
+def restore(forget=True):
+    """Put the backed-up theme back; ``forget`` deletes the backup. False if there was none.
+
+    The add-on's unregister keeps the backup (``forget=False``): Blender also unregisters add-ons
+    when it quits, after the preferences (with the Maya theme) were saved, and the next start
+    must still find the user's theme (docs/steps/step_60.md)."""
     path = backup_path()
     if not os.path.isfile(path):
         return False
     _load(path)
-    os.remove(path)
-    filepath = ""
+    filepath, name = "", "Default"
     if os.path.isfile(path + ".filepath"):
         with open(path + ".filepath", encoding="utf-8") as fh:
-            filepath = fh.read()
-        os.remove(path + ".filepath")
+            filepath, _, name = fh.read().partition("\n")
+    if forget:
+        forget_backup()
     _prefs().themes[0].filepath = filepath
+    _prefs().themes[0].name = name if name and name != THEME_NAME else "Default"
     _prefs().is_dirty = True
     return True
+
+
+def forget_backup():
+    path = backup_path()
+    for leftover in (path, path + ".filepath"):
+        if os.path.isfile(leftover):
+            os.remove(leftover)
 
 
 class MAYAKIT_OT_theme_apply(bpy.types.Operator):
@@ -210,13 +238,14 @@ def register():
         bpy.utils.register_class(cls)
     from .. import preferences
     # Option on from an earlier session but restored on disable (or by a preferences reload,
-    # which unregisters and registers again): apply again.
-    if preferences.get().maya_theme and not has_backup():
+    # which unregisters and registers again): apply again. After Blender quit in Maya mode the
+    # Maya theme was saved and the backup holds the user's theme: apply() keeps it.
+    if preferences.get().maya_theme:
         apply()
 
 
 def unregister():
     # Disabling the add-on gives the user's theme back (the option stays on for the next enable).
-    restore()
+    restore(forget=False)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -216,6 +216,7 @@ MAP = {
     "Modify/Snap Align Objects/Align Objects": "maya_kit.align_objects",
     "Modify/Snap Together Tool": "maya_kit.snap_together",
     "Modify/Make Live": "maya_kit.make_live",
+    "Windows/Switch to Blender": ("maya_kit.switch_mode", {"mode": 'BLENDER'}),
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
@@ -419,6 +420,8 @@ MAP = {
 # Transformations, before the Align section ($M\startup\ModObjectsMenu.mel:356-376, step 59).
 EXTRA = {
     "Modify/Match Transformations": [("-", "Pivot"), ("Center Pivot",), ("Bake Pivot",)],
+    # Maya Kit's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
+    "Windows/Settings/Preferences": [("Switch to Blender",)],
 }
 
 # Submenus Maya builds at run time, so research/maya/menus.json has them as leaves (or with a

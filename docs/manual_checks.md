@@ -401,3 +401,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 59) 여러 오브젝트 선택: 매니퓰레이터가 마지막 선택 (lead) 피벗에, 컴포넌트 선택: 선택의 바운딩 박스 중심에 (편집 모드로 들어가면 Pivot 이 Bounding Box Center 로 바뀜).
 - [ ] (step 59) Status Line / W 메뉴 「Move Options」 Tool Settings: Move Settings (Axis Orientation, Pivot, Step Snap Off/Relative/Absolute, Retain Component Spacing, Edit Pivot/Reset/Bake). W 메뉴 World/Object/Component 가 Move 축만, E 메뉴가 Rotate 축만 바꾸는지; E 메뉴 Discrete Rotate = 15° 스텝.
 - [ ] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 면 스냅이 켜지고 Status Line 칸에 이름, 빈 선택으로 다시 = 해제.
+
+### Step 60 — Maya ⇄ Blender 스위치 · 완전 되돌리기
+
+- [ ] (step 60) 상단 바 오른쪽 「Maya | Blender」 스위치가 두 모드 모두에서 보이고, 클릭 한 번에 재시작 없이 바뀌는지 (키맵·메뉴·Status Line·Shelf·Channel Box·테마). 바뀌는 데 걸리는 시간이 거슬리지 않는지.
+- [ ] (step 60) Ctrl+Alt+Shift+M 로 같은 전환 (어느 에디터 위에서든). Blender 모드에서 F3 (메뉴 검색) 「Switch to Maya」, Maya 모드에서 Windows > Switch to Blender.
+- [ ] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지.
+- [ ] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로.
+- [ ] (step 60) Maya 모드인 채 Blender 를 닫고 다시 열기 → Maya 모드 그대로, 그다음 Blender 로 → 원래 설정. Maya 모드에서 작업 관리자로 강제 종료 → 다시 열어서 Blender 로 전환 → 원래 설정.
+- [ ] (step 60) Preferences > Extensions 에서 Maya Kit 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Maya Kit 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.

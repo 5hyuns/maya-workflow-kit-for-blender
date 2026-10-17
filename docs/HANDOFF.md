@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 60 (Maya ⇄ Blender 스위치·완전 되돌리기, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_60.md`. 확장은 켜진 채 「Maya 모드」 =
+  MODE 하위 패키지 register/unregister (`switch.py`, 재시작 없음). 전환: 상단 바 오른쪽 「Maya | Blender」 (두 모드), 환경설정 맨 위 스위치·
+  「Restore Blender Settings」, Edit 「Switch to Maya Mode」 / Windows 「Switch to Blender」 (F3), Ctrl+Alt+Shift+M. 켜기 = 스냅숏
+  (`switch_snapshot.json`) + 템플릿 레이아웃을 "Maya" 워크스페이스로, 끄기 = 이전 워크스페이스·스냅숏 복원 (아직 Maya 값인 것만).
+  Maya 테마 표시 = 테마 이름 "Maya" (filepath 아님: 확장 Remove 가 filepath 파일이 사라지면 테마를 리셋, `bl_extension_ops.py:1233-1270`).
+  헤드리스 482/482, GUI 0.8 410/410, release_check 전부 PASS, dogfood 47/47. 남은 것: 명령줄 `extension remove` 는 복원 불가 (안내 필요).
+  **바로 다음 할 일**: step 61 배포 방식 조사 (공개는 안 함; 명령줄 Remove 안내 포함), 그다음 62 Set Driven Key …
+
 - Step 59 (피벗 개념·스냅 전부·Maya 모양 매니퓰레이터, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_59.md`, Maya 실측
   `research/maya/workflows/pivot_snap.md`. D / Insert = 피벗만 (Translate·형상·자식 불변, 피벗 회전 = 「Maya Pivot」 방향), Reset / Bake /
   Match Pivots, 오브젝트 = lead 피벗·컴포넌트 = bbox 중심, X/C/V/J = 매니퓰레이터 중심 스냅 (X 절대 그리드), Step Snap, Snap Align Objects,
