@@ -106,6 +106,7 @@ class MAYAKIT_OT_toolbox_guard(bpy.types.Operator):
 # screen.area_move run (its poll fails while the mouse is over a region, checked); until then the
 # toolbar would be cut off, so the main view of that screen shows its own toolbar meanwhile.
 TOOLBAR_PX = 56
+SHELF_PX = 64        # = tools/make_startup.py SHELF_PX
 _FIT_TICK = 0.5
 _fallback = set()   # screens whose main view shows its toolbar because the column is too narrow
 
@@ -122,12 +123,20 @@ def _move_edge(window, area, x, y, delta):
 
 
 def fit_columns():
-    """Tool Box column = one toolbar column at the current UI scale (or the main view's toolbar)."""
+    """Tool Box column = one toolbar column at the current UI scale (or the main view's toolbar); the
+    shelf row = 64 px times the UI scale (best effort: screen.area_move only runs when its poll lets it)."""
     from .status_line import main_view3d
     context = bpy.context
     want = column_width(context)
+    from .shelf import shelf_row_area
     for window in context.window_manager.windows:
         screen = window.screen
+        # the Maya shelf row (tab row + icon row, 64 px at scale 1, step 51): grow it downwards
+        row = shelf_row_area(screen)
+        if row is not None:
+            d = round(SHELF_PX * context.preferences.system.ui_scale) - row.height
+            if abs(d) > 2:
+                _move_edge(window, row, row.x + row.width // 2, row.y, -d)
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
             continue

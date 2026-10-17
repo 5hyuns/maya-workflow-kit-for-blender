@@ -30,6 +30,8 @@ DOCK_CATEGORY = "Channel Box"
 # (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
 TIME_CONTROLS_PX = 300   # = ui/channel_box.py CATEGORY
 TIME_SLIDER_PX = 36
+# Maya shelf: tab row + 32 px icon row = 64 (ui_layout.md:219-222; step 51: header = tabs, WINDOW = icons)
+SHELF_PX = 64
 WINDOW_SIZE = (1600, 900)
 EDGE = 3                  # px the area edges take from a split (checked)
 MAYA_LENS = 35.0          # persp focal length 35 (concepts.md)
@@ -143,12 +145,14 @@ class Builder:
         assert [a.type for a in self.scr.areas] == ['VIEW_3D'], [a.type for a in self.scr.areas]
         view = self.scr.areas[0]
         hdr = _region(view, 'HEADER').height
-        # 2. Maya strip (step 12): Status Line row, then the Shelf row, over everything, full width. Two
-        #    header-only areas: Blender keeps each at least one header high, so they follow the UI scale.
-        strip = yield from self.split(view, 'HORIZONTAL', 2 * hdr + 2 + EDGE, 'TOP')
+        # 2. Maya strip (step 12): Status Line row, then the Shelf row, over everything, full width. The Status
+        #    Line is a header-only area (Blender keeps it one header high at any UI scale, step 49); the
+        #    Shelf area = tab row (header) + icon row (WINDOW, ui/shelf.py gizmos, step 51).
+        strip = yield from self.split(view, 'HORIZONTAL', hdr + 3 + SHELF_PX + EDGE, 'TOP')
         strip.type = 'IMAGE_EDITOR'
         yield
-        shelf = yield from self.split(strip, 'HORIZONTAL', hdr + 1, 'BOTTOM')
+        shelf = yield from self.split(strip, 'HORIZONTAL', SHELF_PX + 2, 'BOTTOM')
+        strip = max((a for a in self.scr.areas if a.type == 'IMAGE_EDITOR'), key=lambda a: a.y)  # the top part
         yield
         # 3. Time Slider (timeline WINDOW) + Range Slider (its header, flipped under it), full width.
         timeline = yield from self.split(self.biggest_view(), 'HORIZONTAL', TIME_SLIDER_PX + hdr + EDGE, 'BOTTOM')
