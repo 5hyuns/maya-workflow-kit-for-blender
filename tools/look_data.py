@@ -89,6 +89,57 @@ KIT_POINTS = {
     "hotbox_row_bg": ("13_hotbox", "press", -257, -124, 1, "hotbox box File, padding"),
 }
 
+# ---------------------------------------------------------------- viewport pixels (step 43)
+# Rendered viewport elements. (label, shot, Maya colour or None, kit point key, radius, mode, Maya region)
+#   mode "best": the pixel closest to the Maya colour, in the Maya view and in a box of +-radius
+#                around each kit point (geometry.json "points": edge midpoints, vertices, origin);
+#                robust to 1 px line offsets and anti-aliasing.
+#   mode "tint": selected-face fill only. Maya stipples selected faces; the kit's fill alpha is
+#                measured (kit shot vs the base shot, same view, (2r+1)x(r+1) box at the kit point),
+#                laid over Maya's base shading of the region and compared with Maya's mean there.
+#                Region = (base shot, Maya [x, y, w, h]).
+VIEW_SAMPLES = (
+    ("lead wire (pCube1, green)", "04_wire_selected_lead", "#43ffa3", "pCube1.edges", 3, "best", None),
+    ("other selected wire (pCube2, white)", "04_wire_selected_lead", "#ffffff", "pCube2.edges", 3, "best", None),
+    ("dormant wire (pCube3, dark blue)", "04_wire_selected_lead", "#000460", "pCube3.edges", 3, "best", None),
+    ("component-mode wire (light blue)", "07_faces_selected", "#64dcff", "pCube1.edges", 3, "best", None),
+    ("selected face, top (fill)", "07_faces_selected", None, "pCube1.top_face", 6, "tint",
+     ("02_cube_selected_move", (830, 400, 20, 12))),
+    ("selected vertex (pale yellow)", "08_verts_selected", "#fdff88", "pCube1.sel_verts", 4, "best", None),
+    ("unselected vertex (purple)", "08_verts_selected", "#c800c8", "pCube1.verts", 4, "best", None),
+    ("manipulator X (red)", "02_cube_selected_move", "#e60000", "pCube1.origin", 120, "best", None),
+    ("manipulator Y (green)", "02_cube_selected_move", "#00e600", "pCube1.origin", 120, "best", None),
+    ("manipulator Z (blue)", "02_cube_selected_move", "#0000ff", "pCube1.origin", 120, "best", None),
+)
+
+
+def best_pixel(img, hex_colour, rect, keep=1):
+    """(x, y, rgb) of the pixel in rect [x, y, w, h] closest (RGB distance) to the colour; with
+    keep > 1 a list of the ``keep`` closest (callers pick by CIEDE2000)."""
+    import numpy as np
+    h = hex_colour.lstrip("#")
+    ref = np.array([int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)], np.float32)
+    H, W, _ = img.shape
+    x0, y0 = max(0, int(rect[0])), max(0, int(rect[1]))
+    x1, y1 = min(W, int(rect[0] + rect[2])), min(H, int(rect[1] + rect[3]))
+    sub = img[y0:y1, x0:x1]
+    if sub.size == 0:
+        return None
+    d = np.sum((sub - ref) ** 2, axis=2)
+    order = np.argsort(d, axis=None)[:keep]
+    out = []
+    for flat in order:
+        yy, xx = np.unravel_index(flat, d.shape)
+        out.append((x0 + int(xx), y0 + int(yy), tuple(float(v) for v in sub[yy, xx])))
+    return out[0] if keep == 1 else out
+
+
+def mean_colour(img, rect):
+    import numpy as np
+    x, y, w, h = (int(round(v)) for v in rect)
+    return tuple(float(v) for v in img[y:y + h, x:x + w].reshape(-1, 3).mean(axis=0))
+
+
 # ---------------------------------------------------------------- rectangles
 # Maya widget (dump "widgets") -> kit anchor. Kit-only anchors are listed in KIT_ONLY.
 RECTS = (

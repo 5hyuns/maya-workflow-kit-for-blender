@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 43 (Maya 테마 v2 색) 완료 — `docs/steps/step_43.md`. 컴포넌트 (하늘색 와이어, 보라/연노랑 정점, 살구색 엣지·면 — 면은 Maya 점묘
+  평균에 맞춘 알파), 매니퓰레이터 (Z = 실제로 그려지는 순파랑), Outliner (#373737, 리드 행 파랑, 이름 흰색), 탭, 현재 프레임 회색,
+  3D 뷰 헤더·툴바·사이드바 불투명, 템플릿 빨강/초록 그리드 축선 끔, 프리셀렉트 빨강. 새 `viewport.md` (렌더 픽셀 10 요소).
+  theme ΔE00 38/38 < 2, viewport 9/10 < 5, 헤드리스 349/349, GUI 281/281, dogfood 47/47.
 - Step 42 (켜자마자 Maya) 완료 — `docs/steps/step_42.md`. 템플릿 `userpref.blend` 는 실측 후 기각 (템플릿 안에서 사용자 add-on 목록·테마·
   ui_scale 을 통째로 바꿈). 대신 첫 GUI 시작의 환영 대화상자 → 「Make Blender Maya」 1 번 = 레이아웃 설치·Maya 테마·스플래시 끔·
   다음부터 Maya 레이아웃으로 시작, 「Revert Maya Look」 으로 모두 되돌림 (`first_start.py`, 결정 3 개정 = user_decisions 9). 테마는 옵션 +
@@ -101,8 +105,9 @@
 
 ## 바로 다음 할 일
 
-- backlog 3 = step 43 (Maya 테마 v2 색: 컴포넌트·매니퓰레이터·Outliner·탭·타임라인·헤더 투명 문제) 부터 `docs/PLAN.md` 「Maya 동일화 계획」 순서.
-  뷰 배경·그리드는 step 42 에서 끝남. 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`).
+- backlog 4 = step 44 (평면 위젯·밀도·Segoe UI) — step_43.md 「남은 것」의 와이어 안티에일리어싱 (`system.use_overlay_smooth_wire`) 도 같은
+  prefs_preset 그룹에서. 그 뒤 PLAN 「Maya 동일화 계획」 순서 (45 그리드 — 회색 축선 포함, 46 뷰 가구 …).
+- 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`).
 - Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).
 - 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).
 - 이전 남은 항목: step_36–39 「남은 것」, PLAN 「재점검 3차」 8–9.

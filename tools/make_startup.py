@@ -139,6 +139,9 @@ def maya_views():
                 # Finest perspective grid step = 1 cm (= units.grid_scale; docs/steps/step_25.md):
                 # Maya grid lines every 1 cm (research/maya/defaults.json:29-31).
                 space.overlay.grid_scale = MAYA_UNIT
+                # Maya's grid axes are grey (displayColor gridAxis = grid); Blender colours them with
+                # the theme axis colours, which now are Maya's manipulator red/green (step 43).
+                space.overlay.show_axis_x = space.overlay.show_axis_y = False
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

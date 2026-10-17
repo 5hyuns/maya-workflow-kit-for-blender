@@ -154,6 +154,12 @@ def v3d_override():
     return bpy.context.temp_override(window=win(), screen=win().screen, area=area, region=region)
 
 
+def park_mouse():
+    """Mouse to an empty corner of the view: no tooltip, no gizmo highlight in the shots."""
+    area, region = view3d()
+    ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 3, y=region.y + 30)
+
+
 def centre():
     area, region = view3d()
     return region.x + region.width // 2, region.y + region.height // 2
@@ -183,6 +189,7 @@ def s_first_start():
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     ev('RET', 'PRESS')
     ev('RET', 'RELEASE')
+    park_mouse()
 
 
 @step
@@ -222,6 +229,7 @@ def s_wait3():
 def s_cube_sel():
     shot("02_cube_selected_move")
     record_cube("02_cube_selected_move")
+    record_points("02_cube_selected_move")
     bpy.ops.object.select_all(action='DESELECT')
     redraw()
 
@@ -256,6 +264,7 @@ def s_wait4():
 def s_wire():
     shot("04_wire_selected_lead")
     record_cube("04_wire_selected_lead")
+    record_points("04_wire_selected_lead")
     view3d()[0].spaces.active.shading.type = 'SOLID'
     select_only("pCube1")
     bpy.ops.wm.tool_set_by_id(name="builtin.rotate")
@@ -279,15 +288,81 @@ def s_wait6():
     redraw()
 
 
+# Maya polyCube numbering (Y-up): vertex signs, edges as vertex pairs, faces by normal. Blender
+# position of a Maya point (x, y, z) = (x, -z, y). Used to select the same components as the
+# Maya shots (research/scripts/maya_shots/shots.py) whatever order the kit's mesh has.
+MAYA_VTX = ((-1, -1, 1), (1, -1, 1), (-1, 1, 1), (1, 1, 1), (-1, 1, -1), (1, 1, -1), (-1, -1, -1), (1, -1, -1))
+MAYA_EDGES = ((0, 1), (2, 3), (4, 5), (6, 7), (0, 2), (1, 3), (2, 4), (3, 5), (4, 6), (5, 7), (6, 0), (7, 1))
+MAYA_FACE_NORMALS = ((0, 0, 1), (0, 1, 0), (0, 0, -1), (0, -1, 0), (1, 0, 0), (-1, 0, 0))
+
+
+def _to_blender(v):
+    x, y, z = v
+    return (x, -z, y)
+
+
+def _sign(v):
+    return tuple((c > 0) - (c < 0) for c in v)
+
+
+def maya_vertex(me, i):
+    want = _to_blender(MAYA_VTX[i])
+    return next(v for v in me.vertices if _sign(v.co) == want)
+
+
+def maya_edge(me, i):
+    pair = {maya_vertex(me, j).index for j in MAYA_EDGES[i]}
+    return next(e for e in me.edges if set(e.vertices) == pair)
+
+
+def maya_face(me, i):
+    want = _to_blender(MAYA_FACE_NORMALS[i])
+    return next(f for f in me.polygons if _sign(f.normal) == want)
+
+
 def edit_select(mode, verts=(), edges=(), faces=()):
+    """Select Maya's pCube1.vtx[..] / e[..] / f[..] (Maya numbers) in edit mode."""
     bpy.ops.object.mode_set(mode='OBJECT')
     me = bpy.data.objects["pCube1"].data
-    for seq, keep in ((me.vertices, verts), (me.edges, edges), (me.polygons, faces)):
+    keep_v = {maya_vertex(me, i).index for i in verts}
+    keep_e = {maya_edge(me, i).index for i in edges}
+    keep_f = {maya_face(me, i).index for i in faces}
+    for seq, keep in ((me.vertices, keep_v), (me.edges, keep_e), (me.polygons, keep_f)):
         for el in seq:
             el.select = el.index in keep
     bpy.ops.object.mode_set(mode='EDIT')
     with v3d_override():
         bpy.ops.mesh.select_mode(type=mode)
+
+
+def record_points(name, sel_verts=()):
+    """Projected points the viewport pixel table samples around (look_data.VIEW_SAMPLES)."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    area, region = view3d()
+    rv3d = area.spaces.active.region_3d
+
+    def img(p):
+        q = location_3d_to_region_2d(region, rv3d, p)
+        return None if q is None else [region.x + q.x, win().height - (region.y + q.y)]
+
+    pts = {}
+    for ob in bpy.data.objects:
+        if ob.type != 'MESH' or not ob.name.startswith("pCube"):
+            continue
+        mw, me = ob.matrix_world, ob.data
+        pts[f"{ob.name}.edges"] = [img(mw @ ((me.vertices[e.vertices[0]].co + me.vertices[e.vertices[1]].co) / 2))
+                                   for e in me.edges]
+        pts[f"{ob.name}.verts"] = [img(mw @ v.co) for v in me.vertices]
+        pts[f"{ob.name}.origin"] = [img(mw.translation)]
+    me, mw = bpy.data.objects["pCube1"].data, bpy.data.objects["pCube1"].matrix_world
+    # Halfway between the top face centre and its back-left corner: the manipulator's Z line
+    # crosses the centre on screen (step 43).
+    top = maya_face(me, 1)
+    corner = next(me.vertices[i].co for i in top.vertices
+                  if me.vertices[i].co.x < 0 and me.vertices[i].co.y > 0)
+    pts["pCube1.top_face"] = [img(mw @ ((top.center + corner) / 2))]
+    pts["pCube1.sel_verts"] = [img(mw @ maya_vertex(me, i).co) for i in sel_verts]
+    GEOM.setdefault("points", {})[name] = {k: [p for p in v if p] for k, v in pts.items()}
 
 
 @step
@@ -307,6 +382,7 @@ def s_wait7():
 def s_faces():
     shot("07_faces_selected")
     record_cube("07_faces_selected")
+    record_points("07_faces_selected")
     edit_select('VERT', verts=(0, 1, 2))     # Maya: pCube1.vtx[0:2]
     redraw()
 
@@ -319,6 +395,7 @@ def s_wait8():
 @step
 def s_verts():
     shot("08_verts_selected")
+    record_points("08_verts_selected", sel_verts=(0, 1, 2))
     edit_select('EDGE', edges=(0, 5))        # Maya: pCube1.e[0], e[5]
     redraw()
 
@@ -402,6 +479,7 @@ def s_mm():
     ev('RIGHTMOUSE', 'RELEASE', x=x, y=y)
     ev('ESC', 'PRESS')
     ev('ESC', 'RELEASE')
+    park_mouse()
     with v3d_override():
         bpy.ops.screen.region_quadview()
     redraw()

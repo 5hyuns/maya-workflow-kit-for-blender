@@ -60,6 +60,9 @@ class MAYAKIT_GGT_preselect(bpy.types.GizmoGroup):
 
     def setup(self, context):
         self.gz = self.gizmos.new(GIZMO)
+        # Maya preSelectHilite = red (research/maya/colors.json viewport.preselect_hilite_component)
+        self.gz.color = self.gz.color_highlight = (1.0, 0.0, 0.0)
+        self.gz.alpha = self.gz.alpha_highlight = 1.0
         _last[:] = [self]
 
 
