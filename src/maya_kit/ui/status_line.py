@@ -2,7 +2,7 @@
 """Maya top bar (menu bar) and Status Line.
 
 -4.2 (menu bar, Status Line groups, :170-217);
- #10 (:80-81); $S\startup\bl_ui\space_topbar.py:14-62.
+ #10 (:80-81); $S\\startup\\bl_ui\\space_topbar.py:14-62.
 Design:  「계획」 1 and 3.
 
 ``TOPBAR_HT_upper_bar.draw_left`` / ``draw_right`` are swapped for Maya

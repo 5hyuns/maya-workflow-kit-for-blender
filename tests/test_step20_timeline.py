@@ -31,15 +31,25 @@ def test_stepping_keys():
     assert [k.idname for k in _kmis("Outliner", "PERIOD")] == ["outliner.show_active"], "kept"
 
 
+def _buttons():
+    return time_slider.header_classes()[0]   # Blender 5.x: the Dope Sheet's (step 53)
+
+
+def _header_is_kit():
+    if time_slider.LEGACY_TIMELINE:
+        return _buttons().draw_header is time_slider.draw_header
+    return _buttons().draw_header.__func__.__name__ == "_header_5"
+
+
 def test_header_swapped_and_restored():
-    assert space_time.TIME_HT_editor_buttons.draw_header is time_slider.draw_header
+    assert _header_is_kit()
     original = time_slider._ORIGINAL["draw_header"]
     kit.disable()
     try:
-        assert space_time.TIME_HT_editor_buttons.draw_header is original
+        assert _buttons().__dict__["draw_header"] is original or _buttons().draw_header is original
     finally:
         kit.enable()
-    assert space_time.TIME_HT_editor_buttons.draw_header is time_slider.draw_header
+    assert _header_is_kit()
 
 
 def test_load_handler_and_fit_without_windows():

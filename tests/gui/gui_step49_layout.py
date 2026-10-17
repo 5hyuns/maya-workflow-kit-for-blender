@@ -75,7 +75,7 @@ def s_layout():
     fits = abs(tb.width - want) <= 1
     check(f"Tool Box column = one toolbar column at this scale ({tb.width} px, want {want}), or the main "
           f"view shows its toolbar meanwhile", fits or main_view().spaces.active.show_region_toolbar)
-    check("Tool Box column on the left", tb is not None and tb.x == 0)
+    check("Tool Box column on the left", tb is not None and tb.x <= 2)   # Blender 5.x keeps areas 2 px in
     outl = next(a for a in win().screen.areas if a.type == 'OUTLINER')
     view = main_view()
     check("Tool Box | Outliner | view, left to right", tb.x < outl.x < view.x)
@@ -86,7 +86,7 @@ def s_layout():
     tl = next(a for a in win().screen.areas if a.ui_type == 'TIMELINE')
     regions = {r.type: r for r in tl.regions}
     check("Range Slider row under the Time Slider", regions['HEADER'].y < regions['WINDOW'].y)
-    check("timeline spans the window", tl.x == 0 and tl.width == win().width)
+    check("timeline spans the window", tl.x <= 2 and tl.width >= win().width - 4)
     # Rotate = 5th Tool Box button (Select, Lasso, Paint Select, Move, Rotate, Scale)
     r = tools_region()
     ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=tool_y(4))

@@ -43,8 +43,16 @@ def _prefs():
     return bpy.context.preferences
 
 
+def _rna_xml():
+    try:
+        import rna_xml
+    except ImportError:   # Blender 5.x renamed the module (step 53)
+        import _rna_xml as rna_xml
+    return rna_xml
+
+
 def save_backup():
-    import rna_xml
+    rna_xml = _rna_xml()
     path = backup_path(create=True)
     rna_xml.xml_file_write(_prefs(), path, _MAP)
     # The theme's "filepath" (last preset loaded, shown in the theme UI) is not in the XML.
@@ -54,7 +62,7 @@ def save_backup():
 
 
 def _load(filepath):
-    import rna_xml
+    rna_xml = _rna_xml()
     from bl_ui.space_userpref import USERPREF_MT_interface_theme_presets as presets
     rna_xml.xml_file_run(_prefs(), filepath, _MAP, secure_types=presets.preset_xml_secure_types)
 
@@ -64,8 +72,79 @@ def apply():
     if not has_backup():
         save_backup()
     _load(THEME_FILE)
+    _apply_moved(_prefs().themes[0])
     _prefs().themes[0].filepath = THEME_FILE
     _prefs().is_dirty = True
+
+
+# maya.xml is written for Blender 4.5 (tools/make_theme.py); the XML loader skips attributes a later
+# Blender doesn't have. Blender 5.x keeps some of them elsewhere: the animation
+# editors' colours in theme.common.anim, region backgrounds in theme.regions. Those are copied from the
+# same maya.xml values here (5.x path, 4.5 path in the XML).
+_ANIM = ("preview_range", "channels", "channels_sub", "channel_group", "channel_group_active", "channel",
+         "channel_selected", "keyframe", "keyframe_selected", "keyframe_extreme", "keyframe_extreme_selected",
+         "keyframe_breakdown", "keyframe_breakdown_selected", "keyframe_jitter", "keyframe_jitter_selected",
+         "keyframe_moving_hold", "keyframe_moving_hold_selected", "keyframe_generated",
+         "keyframe_generated_selected", "long_key", "long_key_selected")
+MOVED = (
+    ("common.anim.playhead", "dopesheet_editor.frame_current"),
+    *((f"common.anim.{n}", f"dopesheet_editor.{n}") for n in _ANIM),
+    ("regions.sidebars.back", "view_3d.space.button"),
+    ("regions.sidebars.tab_back", "view_3d.space.tab_back"),
+    ("regions.channels.back", "dopesheet_editor.space_list.list"),
+    ("regions.scrubbing.back", "dopesheet_editor.time_scrub_background"),
+    ("regions.scrubbing.time_marker", "dopesheet_editor.time_marker_line"),
+    ("regions.scrubbing.time_marker_selected", "dopesheet_editor.time_marker_line_selected"),
+)
+
+
+def _xml_value(root, path):
+    """Hex colour of ``path`` (property elements, then the attribute) in a theme XML, or None."""
+    *parts, attr = path.split(".")
+    node = root
+    for part in parts:
+        prop = next((c for c in node.childNodes if c.nodeType == c.ELEMENT_NODE and c.tagName == part), None)
+        if prop is None:
+            return None
+        node = next((c for c in prop.childNodes if c.nodeType == c.ELEMENT_NODE), None)
+        if node is None:
+            return None
+    return node.getAttribute(attr) or None
+
+
+def _resolve(theme, path):
+    *parents, name = path.split(".")
+    obj = theme
+    for part in parents:
+        obj = getattr(obj, part, None)
+        if obj is None:
+            return None, name
+    return (obj if hasattr(obj, name) else None), name
+
+
+def _apply_moved(theme):
+    if not any(_resolve(theme, new)[0] is not None for new, _old in MOVED):
+        return   # Blender 4.5: everything came from the XML
+    import xml.dom.minidom
+    root = xml.dom.minidom.parse(THEME_FILE).getElementsByTagName("Theme")[0]
+    for new, old in MOVED:
+        obj, name = _resolve(theme, new)
+        value = _xml_value(root, old)
+        if obj is None or not value:
+            continue
+        h = value.lstrip("#")
+        rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        current = getattr(obj, name)
+        if len(current) == 4:
+            rgb.append(int(h[6:8], 16) / 255 if len(h) >= 8 else current[3])
+        setattr(obj, name, rgb)
+    # widget colour sets a later Blender added (wcol_curve ...): square and flat like the rest (step 44)
+    ui = theme.user_interface
+    for prop in ui.bl_rna.properties:
+        if prop.identifier.startswith("wcol_") and prop.identifier != "wcol_state":
+            w = getattr(ui, prop.identifier)
+            w.roundness = 0.0
+            w.show_shaded = False
 
 
 def restore():

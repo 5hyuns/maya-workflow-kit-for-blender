@@ -24,6 +24,26 @@ import bpy
 from bl_ui import space_time
 from bpy.app.handlers import persistent
 
+# Blender 5.x: the Timeline is a Dope Sheet mode and bl_ui.space_time has no
+# TIME_HT_editor_buttons / TIME_MT_editor_menus; the timeline header is DOPESHEET_HT_editor_buttons.draw_header
+# and DOPESHEET_MT_editor_menus with ``mode == 'TIMELINE'`` ($S52\startupl_ui\space_dopesheet.py:198-230,
+# :395-412). There the kit wraps the Dope Sheet ones and keeps other modes untouched.
+LEGACY_TIMELINE = hasattr(space_time, "TIME_HT_editor_buttons")
+
+
+def header_classes():
+    """(class whose ``draw_header`` draws the timeline buttons, class whose ``draw_collapsible`` draws
+    the timeline menus) of this Blender."""
+    if LEGACY_TIMELINE:
+        return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
+    from bl_ui import space_dopesheet
+    return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
+
+
+def _is_timeline(context):
+    space = getattr(context, "space_data", None)
+    return space is not None and getattr(space, "mode", None) == 'TIMELINE'
+
 _ORIGINAL = {}
 _OWNER = object()
 _RANGE_PROPS = ("frame_start", "frame_end", "frame_preview_start", "frame_preview_end",
@@ -52,9 +72,16 @@ def draw_transport(layout, context):
     row.operator("screen.frame_jump", text="", icon='FF').end = True
 
 
-def has_slider_panel(space):
-    """The timeline shows the Time Slider buttons in its sidebar (the MayaKit layout)."""
-    return space is not None and space.type == 'DOPESHEET_EDITOR' and space.show_region_ui
+def has_slider_panel(space, area=None):
+    """The timeline shows the Time Slider buttons in its sidebar (the MayaKit layout). With ``area``, the
+    sidebar must also have room: Blender 5.x loads the 4.5 template's timeline sidebar 1 px wide
+, and then the buttons stay in the header."""
+    if space is None or space.type != 'DOPESHEET_EDITOR' or not space.show_region_ui:
+        return False
+    if area is None:
+        return True
+    ui = next((r for r in area.regions if r.type == 'UI'), None)
+    return ui is not None and ui.width > 20
 
 
 # Range Slider row, Maya order (Maya-332, :366-596; ui_layout.md:284-288).
@@ -63,7 +90,7 @@ RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto 
 
 
 def draw_header(context, layout):
-    if not has_slider_panel(context.space_data):
+    if not has_slider_panel(context.space_data, context.area):
         layout.separator_spacer()
         draw_transport(layout, context)
         layout.separator_spacer()
@@ -209,9 +236,25 @@ classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider)
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    space_time.TIME_MT_editor_menus.draw_collapsible = classmethod(_no_editor_menus)
-    _ORIGINAL["draw_header"] = space_time.TIME_HT_editor_buttons.draw_header
-    space_time.TIME_HT_editor_buttons.draw_header = staticmethod(draw_header)
+    buttons, menus = header_classes()
+    if LEGACY_TIMELINE:
+        menus.draw_collapsible = classmethod(_no_editor_menus)
+        _ORIGINAL["draw_header"] = buttons.draw_header
+        buttons.draw_header = staticmethod(draw_header)
+    else:
+        orig_menus, orig_header = menus.draw_collapsible, buttons.draw_header   # bound class methods
+        _ORIGINAL["draw_header"] = buttons.__dict__["draw_header"]
+
+        def _menus_5(cls, context, layout):
+            if not _is_timeline(context):
+                return orig_menus(context, layout)
+
+        def _header_5(cls, context, layout):
+            if _is_timeline(context):
+                return draw_header(context, layout)
+            return orig_header(context, layout)
+        menus.draw_collapsible = classmethod(_menus_5)
+        buttons.draw_header = classmethod(_header_5)
     _subscribe()
     bpy.app.handlers.load_post.append(_on_load)
 
@@ -222,9 +265,11 @@ def unregister():
     bpy.msgbus.clear_by_owner(_OWNER)
     if bpy.app.timers.is_registered(_deferred_fit):
         bpy.app.timers.unregister(_deferred_fit)
+    buttons, menus = header_classes()
     if "draw_header" in _ORIGINAL:
-        space_time.TIME_HT_editor_buttons.draw_header = staticmethod(_ORIGINAL.pop("draw_header"))
-    if "draw_collapsible" in space_time.TIME_MT_editor_menus.__dict__:
-        del space_time.TIME_MT_editor_menus.draw_collapsible
+        orig = _ORIGINAL.pop("draw_header")
+        buttons.draw_header = orig if not LEGACY_TIMELINE else staticmethod(orig)
+    if "draw_collapsible" in menus.__dict__:
+        del menus.draw_collapsible
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

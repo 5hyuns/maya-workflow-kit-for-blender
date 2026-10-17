@@ -39,7 +39,7 @@ def s_layout():
     check("Tool Box column, then Outliner, left of the viewport",
           len(views) == 2 and column.x < outl.x and outl.x + outl.width <= v3d.x + 2)
     check("no Properties column (AE = the sidebar dock)", not areas('PROPERTIES'))
-    check("timeline across the bottom", time.y < v3d.y and time.width == win().width)
+    check("timeline across the bottom", time.y < v3d.y and time.width >= win().width - 4)   # 5.x: 2 px edge
     check("Outliner about 16% of the width", 0.10 < outl.width / win().width < 0.22)
     check("viewport sidebar shown (Channel Box host)", v3d.spaces.active.show_region_ui)
     if SHOTS:
