@@ -435,3 +435,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 63) B 탭으로 소프트 선택 켤 때 반경이 Maya 기본 5 (cm 템플릿 = 5 cm), B+드래그 머리글이 Maya 단위, MTK Soft Selection 의 Falloff radius 가 같은 숫자; Volume / Surface; Reset.
 - [ ] (step 63) pCube1 + pSphere1 선택 → Mesh > Combine → pCube2 하나, Channel Box Translate 0, 피벗이 둘을 합친 상자 중심. Mesh > Separate (오브젝트 모드) → pCube2 그룹 아래 polySurface1 / polySurface2 (Translate 0). 편집 모드 Separate = Blender 그대로.
 - [ ] (step 63) Mesh > Mirror (클릭 = 지난 설정), 메뉴를 누른 채 □ = Mirror Options 창 (Cut / World·Object·Bounding Box / Offset / X·Y·Z / + − / Combine / Merge / Threshold). 원점이 아닌 곳의 큐브에 World X − → 오른쪽 반을 잘라 왼쪽으로, 경계 병합. Mesh > Booleans 세 가지 (먼저 선택한 것 − 나중 것).
+
+### Step 64 — Target Weld · Crease Tool · Multi-Cut 감각
+
+- [ ] (step 64) Mesh Tools > Target Weld (또는 Shift+RMB N / 정점 Merge▸S / 엣지 Merge▸S / 셸프 Polygons / MTK Tools) → 편집 모드 + Target Weld 툴, Help Line 안내. 정점 위에서 LMB 누르고 끄는 동안 노란 고무줄 선 + 목표 정점 빨간 점, 놓으면 그 정점으로 병합. 정점 근처가 아닌 곳의 드래그 = 마키 선택 (fallback). ESC/RMB = 취소.
+- [ ] (step 64) 정점 모드에서 이 툴이면 마우스 아래 정점이 빨갛게 강조 (pre-selection). 정점 둘을 선택하고 그중 하나를 끌면 둘 다 목표로 병합 (Maya 설명문), 선택 안 된 정점을 끌면 그것만.
+- [ ] (step 64) Tool Settings (툴 헤더 / Status Line Tool Settings): Merge To Target / Center, Preserve UVs. Center = 중간에서 병합. 엣지 모드: 엣지를 다른 엣지에 끌면 두 끝이 짝지어 병합 (이웃 엣지면 공유 정점은 그대로). Adjust Last Operation 에서 Merge To 바꾸기.
+- [ ] (step 64) Mesh Tools > Crease Tool: 엣지 선택 → MMB 를 오른쪽으로 끌면 머리글 "Crease Mode: Absolute   Crease Value: n.nn (Blender b)" 가 오르고 왼쪽은 내려감, 3 (스무스 프리뷰) 에서 각이 살아남. 놓기 = 확정 (Ctrl+Z 한 번), ESC = 원래 값. Relative 모드는 엣지마다 더함. 정점 모드면 정점 crease. 메뉴 툴팁 / Help Line 의 0–1 안내. 감도 (50 px = Maya 1) 가 Maya 와 비슷한지.
+- [ ] (step 64) Multi-Cut (Ctrl+Shift+X): Ctrl+클릭 = 클릭한 자리 비율로 엣지 루프 (삼각형/경계에서 멈춤), Ctrl+MMB = 가운데, Ctrl+Shift+클릭 = Snap Step 자리. Adjust Last Operation 의 Position 으로 옮기기. Shift+클릭 = 커서가 가장 가까운 Snap Step % 점으로 옮겨지며 거기서 자르기 시작; 자르는 중 Shift = 엣지 중점 스냅 (Maya 의 10 % 단계 대신 50 % 만). Tool Settings 에 Snap Step % + 회색 Maya 항목 (Smoothing Angle · Edge Flow · Subdivisions · Slice Tool, 툴팁 안내).

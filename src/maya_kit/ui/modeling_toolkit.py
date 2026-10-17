@@ -39,12 +39,9 @@ GREY = {
     "Modeling Toolkit/Soft Selection/Global": (
         "Volume / Surface", "Blender's proportional editing works on the selected mesh only (no Global / Object falloff)."),
 }
-# A real Maya menu item: its notice also shows in the Mesh Tools menu (ui/notices.NOTICES)
-MENU_NOTICES = {
-    "Mesh Tools/Target Weld": (
-        "Merge", "Blender has no Target Weld tool yet in Maya Kit: select the two vertices, Edit Mesh > Merge "
-                 "(At Last), or snap with V and Auto Merge."),
-}
+# Real Maya menu items: their notices also show in the menus (ui/notices.NOTICES). Target Weld got its tool
+# in step 64.
+MENU_NOTICES = {}
 NOTE = "Maya's colour falloff on the vertices: Blender shows the radius as a circle"
 
 

@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 97 |
+| 구현 | 99 |
 | IC 일치 | 8 |
 | 해당 없음 | 11 |
-| 미검토 | 284 |
+| 미검토 | 282 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -184,8 +184,8 @@
 | Ctrl+t | Ctrl+T | global | UniversalManip | Object Mode: `wm.tool_set_by_id` (name='builtin.transform'); Mesh: `wm.tool_set_by_id` (name='builtin.transform') | 구현 |  | hotkeySetup.mel:313 |
 | t | T | global | ShowManipulators | Object Mode: `wm.tool_set_by_id` (name='builtin.transform', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | IC 일치 | Blender 에 Show Manipulator 툴 없음: Transform 툴 | hotkeySetup.mel:315 |
 | y | Y | global | NonSacredTool | Object Mode: `maya_kit.last_tool`; Mesh: `maya_kit.last_tool` | 구현 | Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억) | hotkeySetup.mel:316 |
-| Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True) | 미검토 |  | hotkeySetup.mel:319 |
-| Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.knife', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.knife', edit=True) | 미검토 |  | hotkeySetup.mel:320 |
+| Ctrl+Shift+Q | Ctrl+Shift+Q | global | QuadDrawToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.poly_build', edit=True) | 구현 | Poly Build, 오브젝트 모드면 편집 모드로 | hotkeySetup.mel:319 |
+| Ctrl+Shift+X | Ctrl+Shift+X | global | MultiCutToolNameCommand | Object Mode: `maya_kit.menu_tool` (tool='builtin.knife', edit=True); Mesh: `maya_kit.menu_tool` (tool='builtin.knife', edit=True) | 구현 | Knife, 오브젝트 모드면 편집 모드로; 툴 안 Ctrl+클릭 = 엣지 루프 (Ctrl+MMB 가운데), Shift = Snap Step % (step 64) | hotkeySetup.mel:320 |
 | F2 | F2 | global | ShowModelingUI | Screen: `maya_kit.menu_set` (set='modelingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:322 |
 | F3 | F3 | global | ShowRiggingUI | Screen: `maya_kit.menu_set` (set='riggingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:323 |
 | F4 | F4 | global | ShowAnimationUI | Screen: `maya_kit.menu_set` (set='animationMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:324 |

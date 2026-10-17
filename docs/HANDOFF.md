@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 64 (Target Weld · Crease Tool · Multi-Cut 감각) 완료 — `docs/steps/step_64.md`. Target Weld = 킷 툴 (`register_tool`, LMB 드래그 모달,
+  선택된 정점도 함께, Target/Center, 엣지 짝 병합), Crease Tool = 킷 툴 (MMB 좌우 드래그, Maya 값 ↔ Blender √(c/10), 실측 sharpness 10·b²),
+  Multi-Cut (knife) Ctrl+클릭 = 클릭 자리 엣지 루프 / Ctrl+MMB 가운데 / Shift+클릭 = Snap Step % 시작점 + Tool Settings Maya 항목. 메뉴·마킹 메뉴·
+  셸프·MTK 연결. 키맵 매핑 nameCommand 조회 고침 (Ctrl+Shift+X/Q 구현). 헤드리스 516/516 (+1), GUI 0.8 439/439, gui_step64 12/12, dogfood 47/47.
+  **바로 다음 할 일**: step 65 — Extrude 매니퓰레이터 (Python GizmoGroup) + In-View Editor + 마지막 연산 INPUTS 행 (근거
+  `research/maya/workflows/modeling.md` A3·A4, 히스토리 사후 수정 20 / Ctrl+E 15). 계획 먼저 (GPU·모달).
+
 - Step 63 (Modeling Toolkit 도크·소프트 선택 Maya 단위·Combine/Separate/Mirror/Boolean) 완료 — `docs/steps/step_63.md`. MTK = dock 세 번째 항목
   (modeling_03 순서, 버튼 = 메뉴 동작, Status Line 토글 맨 앞), Maya 실측 (mayapy): 소프트 선택 반경 5, Combine = pCube2 + bbox 중심 피벗, Separate =
   그룹 아래 polySurfaceN. Mirror = bmesh 적용 + □ Mirror Options (`run_action` 이 `option_box` 속성 연산자에 넘김). 헤드리스 505/505, GUI 0.8 426/427

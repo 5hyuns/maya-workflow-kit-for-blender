@@ -64,6 +64,8 @@ def _comp(kind):
 
 MULTI_CUT = ("tool", "builtin.knife", True)
 MERGE_CENTER = ("mesh.merge", {"type": 'CENTER'})
+TARGET_WELD = ("tool", "maya_kit.target_weld_tool", True)   # step 64
+CREASE = ("tool", "maya_kit.crease_tool", True)
 PRESERVE_UVS = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_correct_face_attributes"})
 PRESERVE_CHILDREN = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_skip_children"})
 TOOL_SETTINGS = ("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})
@@ -213,7 +215,7 @@ SHIFT_OBJECT = MarkingMenu(
         "SW": ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),  # :34
         "E": ("Append to Polygon Tool", None),                             # :50
         "NE": ("Fill Holes", None),                                        # :66
-        "N": ("Target Weld Tool", None),                                   # :74
+        "N": ("Target Weld Tool", TARGET_WELD),                            # :74
         "W": ("Multi-Cut", MULTI_CUT),                                     # :89
         "NW": ("Sculpt Tool", ("object.mode_set", {"mode": 'SCULPT'})),    # :111
         "SE": ("Soften/Harden Edges", Sub(radial={                         # :127 (object level)
@@ -226,7 +228,7 @@ SHIFT_OBJECT = MarkingMenu(
     items=[
         ("Smooth", _mod('SUBSURF')),                                       # :207
         ("Subdiv Proxy", _mod('SUBSURF')),                                 # :221
-        ("Crease Tool", None),
+        ("Crease Tool", CREASE),
         DIVIDER,
         ("Mirror", "maya_kit.mirror"),                                        # :280
         DIVIDER,
@@ -258,14 +260,14 @@ SHIFT_VERTEX = MarkingMenu(
         "N": ("Merge Vertices", Sub(radial={                               # :127
             "NE": ("Merge Vertices", "mesh.remove_doubles"),
             "N": ("Merge Vertices To Center", MERGE_CENTER),
-            "S": ("Target Weld Tool", None),
+            "S": ("Target Weld Tool", TARGET_WELD),
         }, options={"Merge Vertices", "Target Weld Tool"})),
         "NE": ("Average Vertices", "mesh.vertices_smooth"),                # :176
         "W": ("Multi-Cut", MULTI_CUT),                                     # :184
         "NW": ("Paint Select Vertices", None),                             # :202
     },
     items=[
-        ("Crease Tool", None),
+        ("Crease Tool", CREASE),
         ("Connect Components", "mesh.vert_connect_path"),                  # :225
         ("Detach Components", None),
         ("Connect Tool", MULTI_CUT),
@@ -284,7 +286,7 @@ SHIFT_EDGE = MarkingMenu(
         "SE": ("Soften/Harden Edges", SOFT_HARD),                          # :67
         "N": ("Merge/Collapse Edges", Sub(radial={                         # :119
             "NE": ("Merge Border Edges", "mesh.remove_doubles"),
-            "S": ("Target Weld Tool", None),
+            "S": ("Target Weld Tool", TARGET_WELD),
             "NW": ("Merge Edge Tool", None),
             "E": ("Collapse Edge", "mesh.edge_collapse"),
             "N": ("Merge Edges To Center", MERGE_CENTER),
@@ -298,7 +300,7 @@ SHIFT_EDGE = MarkingMenu(
         "NW": ("Paint Select Edges", None),                                # :251
     },
     items=[
-        ("Crease Tool", None),
+        ("Crease Tool", CREASE),
         ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),     # :302
         ("Slide Edge Tool", ("tool", "builtin.edge_slide", True)),         # :316
         ("Circularize Components", None),
@@ -342,8 +344,9 @@ SHIFT_FACE = MarkingMenu(
         DIVIDER,
         ("Extract Faces", ("mesh.separate", {"type": 'SELECTED'})),        # :339
         ("Duplicate Face", ("v3d", "mesh.duplicate_move", {})),            # :353
+        ("Target Weld Tool", TARGET_WELD),                                 # :396 (step 64)
     ],
-    options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces', 'Circularize Components', 'Duplicate Face', 'Extract Faces', 'Extrude Face', 'Multi-Cut', 'Poke Face', 'Smooth Faces', 'Wedge Face'])
+    options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces', 'Circularize Components', 'Duplicate Face', 'Extract Faces', 'Extrude Face', 'Multi-Cut', 'Poke Face', 'Smooth Faces', 'Target Weld Tool', 'Wedge Face'])
 
 SHIFT_DEFAULT = MarkingMenu(
     "contextPolyToolsDefaultMM", "Create", "research/maya/marking_menus.json contextPolyToolsDefaultMM",

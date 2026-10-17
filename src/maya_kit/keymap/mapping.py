@@ -260,7 +260,8 @@ ENTRIES = {
     "NonSacredTool": _e("KIT", (OBJ, "maya_kit.last_tool", {}),
                         note="Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억)"),
     "MultiCutToolNameCommand": _e("KIT", (OBJ, "maya_kit.menu_tool", {"tool": "builtin.knife"}),
-                                  note="Knife, 오브젝트 모드면 편집 모드로"),
+                                  note="Knife, 오브젝트 모드면 편집 모드로; 툴 안 Ctrl+클릭 = 엣지 루프 (Ctrl+MMB 가운데), "
+                                       "Shift = Snap Step % (step 64)"),
     "QuadDrawToolNameCommand": _e("KIT", (OBJ, "maya_kit.menu_tool", {"tool": "builtin.poly_build"}),
                                   note="Poly Build, 오브젝트 모드면 편집 모드로"),
     "CompleteCurrentTool": _e("NO", note="Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거"),
@@ -277,7 +278,9 @@ ENTRIES = {
 
 def entry_for(hotkey):
     """Mapping entry for a hotkeys_default.json item (None = unreviewed)."""
-    rtc = (hotkey.get("press") or {}).get("runTimeCommand")
+    press = hotkey.get("press") or {}
+    # MTK keys (Ctrl+Shift+X / Q) only have a nameCommand (research/maya/hotkeys_and_menus.md:281)
+    rtc = press.get("runTimeCommand") or press.get("nameCommand")
     if hotkey.get("context", "global") != "global":
         return ENTRIES.get(f"{hotkey['context']}:{rtc}")
     return ENTRIES.get(rtc)

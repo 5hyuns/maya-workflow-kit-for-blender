@@ -64,10 +64,9 @@ def test_dock_and_status_line_toggle():
 
 def test_mtk_buttons_are_menu_actions():
     for label, path, _icon in mtk.MESH + mtk.COMPONENTS + mtk.TOOLS:
-        if label in ("Extrude", "Target Weld"):
+        if label == "Extrude":
             continue
-        assert path in menu_map.MAP, (label, path)
-    assert "Mesh Tools/Target Weld" in mtk.MENU_NOTICES, "greyed with a notice"
+        assert path in menu_map.MAP, (label, path)   # Target Weld: a kit tool since step 64
 
 
 def test_combine_maya_name_and_centre_pivot():

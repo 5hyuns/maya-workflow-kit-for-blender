@@ -655,6 +655,27 @@ def patch_joints(kd):
         _add(kd, km, "maya_kit.unparent_joint", make_event("P", shift=True))
 
 
+# --- 33. Multi-Cut feel (docs/steps/step_64.md 「계획」 3) ------------------------------------------
+# research/maya/workflows/modeling.md:33, 98-100: in Maya's Multi-Cut Ctrl+click on an edge inserts an edge loop
+# there (Ctrl+MMB: in the middle) and Shift snaps the cut along the edge to the Snap Step %. Multi-Cut is Blender's
+# knife: its tool keymap only has a plain LMB press (blender_default.py:7424-7433), so these don't share its event;
+# each passes through when no edge is under the mouse. Inside the knife modal Shift = IGNORE_SNAP (IC:3490-3493)
+# becomes midpoint snap (Snap Step 50 %, the only step the knife has); Ctrl keeps Blender's midpoint snap.
+KNIFE_TOOL = "3D View Tool: Edit Mesh, Knife"
+
+
+def patch_multi_cut(kd):
+    _add(kd, KNIFE_TOOL, "maya_kit.multicut_loop", make_event("LEFTMOUSE", ctrl=True))
+    _add(kd, KNIFE_TOOL, "maya_kit.multicut_loop", make_event("LEFTMOUSE", ctrl=True, shift=True), {"snap": True})
+    _add(kd, KNIFE_TOOL, "maya_kit.multicut_loop", make_event("MIDDLEMOUSE", ctrl=True), {"center": True})
+    _add(kd, KNIFE_TOOL, "maya_kit.multicut_snap", make_event("LEFTMOUSE", shift=True))
+    for key in ("LEFT_SHIFT", "RIGHT_SHIFT"):
+        for value, mode in (("PRESS", "SNAP_MIDPOINTS_ON"), ("RELEASE", "SNAP_MIDPOINTS_OFF")):
+            old = "IGNORE_SNAP_ON" if value == "PRESS" else "IGNORE_SNAP_OFF"
+            kd.remove("Knife Tool Modal Map", old, type=key, value=value, any=True)
+            _add(kd, "Knife Tool Modal Map", mode, make_event(key, value, any=True))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -663,7 +684,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints)
+           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut)
 
 
 def apply(data):

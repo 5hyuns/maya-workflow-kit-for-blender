@@ -168,6 +168,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            **{km: (km,) for km in maya_patches.GIZMO_KEYMAPS},
            # Step 30: select tool keymaps (only active with that tool, ahead of the editor keymaps).
            **{km: (km,) for km in maya_patches.SELECT_DRAG_KEYMAPS},
+           # Step 64: the Multi-Cut (knife) tool keymap; the knife modal map (modal maps aren't checked).
+           maya_patches.KNIFE_TOOL: (maya_patches.KNIFE_TOOL,), "Knife Tool Modal Map": ("Knife Tool Modal Map",),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

@@ -36,7 +36,8 @@ def _enabled(context):
     if context.mode not in MODES or tuple(context.tool_settings.mesh_select_mode) != (True, False, False):
         return False
     tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
-    return tool is not None and tool.idname.startswith("builtin.select")
+    # Target Weld (step 64): Maya lights the vertex you are about to drag
+    return tool is not None and (tool.idname.startswith("builtin.select") or tool.idname == "maya_kit.target_weld_tool")
 
 
 def gizmo():

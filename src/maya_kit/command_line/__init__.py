@@ -112,9 +112,11 @@ TOOL_HELP = {
     "builtin.rotate": "Rotate Tool: drag a ring to rotate. Hold J to snap rotation, D to move the pivot",
     "builtin.scale": "Scale Tool: drag a handle to scale, the centre scales uniformly",
     "builtin.transform": "Universal Manipulator: move, rotate and scale with one manipulator",
-    "builtin.knife": "Multi-Cut: click on edges to cut, Enter to complete",
+    "builtin.knife": "Multi-Cut: click on edges to cut, Enter to complete. Ctrl+click: edge loop, Shift: snap step",
     "builtin.loop_cut": "Insert Edge Loop: click an edge to insert a loop, drag to slide it",
     "builtin.poly_build": "Quad Draw: click to place points, Ctrl+click to delete",
+    "maya_kit.target_weld_tool": "Target Weld: drag a vertex or edge onto the target. Selected vertices are merged too",
+    "maya_kit.crease_tool": "Crease Tool: select edges or vertices, then middle-drag left to crease less, right for more",
 }
 
 
