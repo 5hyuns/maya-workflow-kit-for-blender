@@ -293,3 +293,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 45) 4 분할: top 에만 그리드, front / side 에는 그리드 없음 (Maya 와 같음). 사용자 정사영 (Numpad 5 로 바꾼 비스듬한 뷰) 에서는 바닥 그리드.
 - [ ] (step 45) X 홀드 + 이동: 그리드 안에서 사본이 그리드선에 붙는지; 멀리 축소하면 Blender 가 10 cm 단계로 붙는데 (Blender 그리드 단계) 그것도 그리드선 (10 의 배수) 인지. 정사영에서 아주 크게 확대하면 1 cm 보다 잘게 붙을 수 있음 — Maya 사용자에게 괜찮은지.
 - [ ] (step 45) Show > Grid / Display > Grid: 끄면 그리드 없음, 다시 켜면 Maya 그리드. 오버레이 팝오버에서 Blender Floor 를 켜면 Blender 그리드로 바뀌는 것 (delegated) 이 헷갈리지 않는지.
+
+### Step 46 — 뷰 가구 (ViewCube·축 삼각·카메라 라벨)
+
+- [ ] (step 46) ViewCube: 마우스를 올리면 진해지고 가리킨 면이 하늘색, 면 클릭 → 그 방향 정사영 뷰 (부드러운 전환). 모서리·꼭짓점 클릭은 아직 없음 (Maya 는 있음) — 아쉬운지.
+- [ ] (step 46) ViewCube 를 드래그해도 뷰가 돌지 않음 (Maya 는 큐브 드래그 = 텀블) — Alt+LMB 로 충분한지.
+- [ ] (step 46) 4 분할: ViewCube 가 마우스가 있는 패널로 옮겨 가는지; 라벨 top -Z / persp / front +Y / side -X 가 각 패널 아래 가운데. Maya 의 "top -Y / front -Z" 와 축 글자가 다른 것 (kit 은 Blender Z-up 축, Channel Box 와 같음, delegated) 이 헷갈리지 않는지.
+- [ ] (step 46) 축 삼각이 텀블에 따라 돌고 x/y/z 글자가 Channel Box 축과 맞는지. 카메라 뷰 (Numpad 0) 에서 라벨이 카메라 이름인지.
+- [ ] (step 46) Display > Heads Up Display > Camera Names / View Axis / View Cube 가 모든 뷰에서 켜고 끄는지.

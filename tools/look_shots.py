@@ -69,6 +69,12 @@ def anchor_rects():
             key = f"{name}.{r.type}"
             if r.width > 1 and r.height > 1 and key not in rects:
                 rects[key] = _img_rect(r.x, r.y, r.width, r.height)
+    # visible part of the main 3D view (sidebar / toolbar / headers excluded), for the view furniture (step 46)
+    v3 = max((a for a in areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height, default=None)
+    if v3 is not None:
+        reg = next(r for r in v3.regions if r.type == 'WINDOW')
+        x0, y0, x1, y1 = import_module(MODULE + ".operators.view").visible_bounds(v3, reg)
+        rects["view3d.visible"] = _img_rect(reg.x + x0, reg.y + y0, x1 - x0, y1 - y0)
     tops = [_img_rect(a.x, a.y, a.width, a.height) for a in areas]
     top = min(r[1] for r in tops)
     bottom = max(r[1] + r[3] for r in tops)

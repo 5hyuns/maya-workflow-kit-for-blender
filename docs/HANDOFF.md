@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 46 (뷰 가구) 완료 — `docs/steps/step_46.md`. `ui/view_furniture.py`: ViewCube (Python 기즈모, 면 클릭 → view_axis, 평소 0.5,
+  4 분할은 마우스가 있던 패널에만), 카메라 라벨 (persp / top −Z / front +Y / side −X, 카메라 이름), 축 삼각 (Blender 축) — Blender 내비 기즈모가
+  꺼진 뷰에서; 템플릿은 내비 기즈모·텍스트 정보 끔. HUD 메뉴 Camera Names / View Axis / View Cube = 애드온 환경설정. look_compare
+  `furniture.md` 3/3 ±10 px, 텍스트 오버레이 픽셀 0. 헤드리스 369/369, GUI 289/289 (1.0·0.8), dogfood 47/47.
 - Step 45 (Maya 그리드) 완료 — `docs/steps/step_45.md`. 자체 GPU 그리드 `ui/maya_grid.py`: ±12 단위, 1 단위마다 1 px, 5 마다 2 px,
   축 2 px, 모두 테마 그리드 회색, 계단선, 깊이 검사. 바닥에만 (4 분할 front/side 는 그리드 없음 = Maya). 뷰별 상태 = Blender 바닥·정사영
   그리드 끔 + `overlay.grid_lines == 0` (delegated). Show > Grid / Display > Grid = `maya_kit.toggle_grid`. 템플릿 뷰 모두 켬.
@@ -116,9 +120,9 @@
 
 ## 바로 다음 할 일
 
-- backlog 6 = step 46 (뷰 가구: ViewCube·축 삼각·persp 라벨, Blender 오버레이 숨김 — 템플릿 `maya_views` 와 `maya_grid` 의 POST_VIEW
-  방식 재사용 가능). 그 뒤 47 선택 와이어 (비선택 와이어 ΔE 5.8 도 함께), 48 레이아웃 … step_44/45 「남은 것」.
-- 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`, `density.md`, `grid.md`); 샷은 Maya 밀도 (실효 배율 1.0)
+- backlog 7 = step 47 (선택 와이어: 셰이딩 위 선택 오브젝트 와이어 리드 연두 / 나머지 흰색 — `maya_grid` 의 POST_VIEW 배치 방식 재사용
+  가능, 비선택 와이어 ΔE 5.8 도 함께). 그 뒤 48 레이아웃 (뷰 크기가 맞으면 ViewCube 65 px), 49 에디터 크롬 … step_44–46 「남은 것」.
+- 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`, `density.md`, `grid.md`, `furniture.md`); 샷은 Maya 밀도 (실효 배율 1.0)
   로 찍힌다. GUI 테스트는 두 배율로: `python tests/gui/run.py` 와 `--ui-scale 0.8` (새 고정 픽셀 좌표는 `sim.px()`).
 - Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).
 - 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).

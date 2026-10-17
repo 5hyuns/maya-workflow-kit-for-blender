@@ -63,6 +63,12 @@ def _hud(data_path):
     return ("v3d", "wm.context_toggle", {"data_path": data_path})
 
 
+def _kit_pref(prop):
+    """Toggle one of this add-on's preferences (Maya HUD options are global)."""
+    pkg = __package__.rpartition(".")[0]
+    return ("wm.context_toggle", {"data_path": f'preferences.addons["{pkg}"].preferences.{prop}'})
+
+
 # Windows > ... Editors: Maya fills these submenus at run time (startup/WindowMenu.mel
 # buildObjectEdMenu / buildModelingEdMenu / buildAnimationEdMenu / buildRenderingEdMenu /
 # buildRelationshipEdMenu; labels from research/maya/runtime_commands.json). Items listed in
@@ -394,12 +400,14 @@ CHILDREN = {
     # viewport overlay can show are mapped (Poly Count = scene statistics).
     "Display/Heads Up Display": [
         ("Animation Details",), ("Bounding Box",), ("Camera Names",), ("Frame Rate",),
-        ("Object Details",), ("Poly Count",), ("Selection Details",), ("View Axis",)],
+        ("Object Details",), ("Poly Count",), ("Selection Details",), ("View Axis",), ("View Cube",)],
 }
 MAP.update({
     "Display/Heads Up Display/Poly Count": _hud("space_data.overlay.show_stats"),
-    "Display/Heads Up Display/Camera Names": _hud("space_data.overlay.show_text"),
-    "Display/Heads Up Display/View Axis": _hud("space_data.show_gizmo_navigate"),
+    # Maya furniture (ui/view_furniture.py, step 46): global like Maya's HUD.
+    "Display/Heads Up Display/Camera Names": _kit_pref("maya_camera_names"),
+    "Display/Heads Up Display/View Axis": _kit_pref("maya_view_axis"),
+    "Display/Heads Up Display/View Cube": _kit_pref("maya_viewcube"),
 })
 
 # Blender's own menu kept at the end of the Maya menu with the same role.

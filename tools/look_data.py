@@ -286,3 +286,75 @@ def line_pitch(img, rect, contrast=0.15):
     pitch = max(counts, key=lambda d: (counts[d], -d))
     near = [v for v in diffs if abs(v - pitch) <= 1]
     return round(sum(near) / len(near), 1), len(centres), counts[pitch]
+
+
+# ---------------------------------------------------------------- view furniture (step 46)
+# Found the same way in both shots inside search boxes at the view's corners (offsets from the view rect:
+# Maya MAYA_VIEW_RECT, kit "view3d.visible"): ViewCube = pixels brighter than 130 (white faces at 0.5),
+# label = brighter than 180, triad = saturated (max - min channel > 80).
+# (name, corner, search box [dx, dy, w, h] from that corner, test)
+FURNITURE = (
+    ("ViewCube", "top-right", (-160, 0, 160, 130), "bright130"),
+    ("camera label", "bottom-centre", (-120, -30, 240, 30), "bright180"),
+    ("axis triad", "bottom-left", (0, -90, 90, 90), "saturated"),
+)
+FURNITURE_TOL = 10
+TEXT_INFO_BOX = (5, 5, 320, 50)    # top-left of the view, where Blender's text info draws
+
+
+def _test(img, name):
+    lum = img.mean(axis=2) * 255
+    if name == "bright130":
+        return lum > 130
+    if name == "bright180":
+        return lum > 180
+    return (img.max(axis=2) - img.min(axis=2)) * 255 > 80
+
+
+def furniture_box(img, view, corner, box, test):
+    """Bounding box [x, y, w, h] (screenshot px) of the furniture element, or None."""
+    import numpy as np
+    vx, vy, vw, vh = view
+    ox = {"top-right": vx + vw, "bottom-centre": vx + vw / 2, "bottom-left": vx}[corner]
+    oy = vy if corner == "top-right" else vy + vh
+    x, y = int(round(ox + box[0])), int(round(oy + box[1]))
+    sub = img[max(0, y):y + box[3], max(0, x):x + box[2]]
+    ys, xs = np.nonzero(_test(sub, test))
+    if len(xs) == 0:
+        return None
+    return [int(xs.min()) + x, int(ys.min()) + y, int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)]
+
+
+def corner_offsets(rect, view, corner):
+    """Element rect relative to the view corner it belongs to: (dx, dy) of its outer edges, (w, h)."""
+    x, y, w, h = rect
+    vx, vy, vw, vh = view
+    if corner == "top-right":
+        return (vx + vw) - (x + w), y - vy, w, h
+    if corner == "bottom-centre":
+        return (x + w / 2) - (vx + vw / 2), (vy + vh) - (y + h), w, h
+    return x - vx, (vy + vh) - (y + h), w, h
+
+
+def triad_origin(img, rect):
+    """Pixel where the red, green and blue axis lines meet inside ``rect`` [x, y, w, h] (both shots: the
+    point whose farthest nearest-colour pixel is closest), or None."""
+    import numpy as np
+    x, y, w, h = (int(round(v)) for v in rect)
+    sub = img[y:y + h, x:x + w] * 255
+    groups = []
+    for c in range(3):
+        others = [o for o in range(3) if o != c]
+        m = (sub[:, :, c] > 150) & (sub[:, :, others[0]] < 110) & (sub[:, :, others[1]] < 110)
+        ys, xs = np.nonzero(m)
+        if len(xs) == 0:
+            return None
+        groups.append(np.stack([xs, ys], axis=1).astype(float))
+    gy, gx = np.mgrid[0:h, 0:w]
+    grid = np.stack([gx.ravel(), gy.ravel()], axis=1).astype(float)
+    worst = np.zeros(len(grid))
+    for g in groups:
+        d = np.sqrt(((grid[:, None, :] - g[None, :, :]) ** 2).sum(axis=2)).min(axis=1)
+        worst = np.maximum(worst, d)
+    i = int(worst.argmin())
+    return [x + grid[i][0], y + grid[i][1]]
