@@ -331,71 +331,119 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
 
 # --- drawing --------------------------------------------------------------------
 
+# Maya Status Line groups each start with an "openBar" collapse handle that hides the group
+# (, Maya toggleFileIcons ... toggleInputField). Kept for the
+# session only (Maya keeps them in setting; delegated).
+GROUPS = (
+    ("FILE", "File: New, Open, Save, Undo, Redo"),
+    ("SELECT_MODE", "Selection mode: hierarchy, object, component"),
+    ("MASKS", "Selection masks"),
+    ("SNAP", "Snap toggles"),
+    ("SYMMETRY", "Symmetry"),
+    ("RENDER", "Render"),
+    ("EDITORS", "Editor toggles"),
+)
+_collapsed = set()
+
+
+class MAYAKIT_OT_status_group(bpy.types.Operator):
+    """Show or hide this Status Line group (Maya collapse handle)"""
+    bl_idname = "maya_kit.status_group"
+    bl_label = "Status Line Group"
+    bl_options = {'INTERNAL'}
+
+    group: EnumProperty(items=[(g, g.replace("_", " ").title(), d) for g, d in GROUPS])
+
+    @classmethod
+    def description(cls, context, props):
+        desc = next(d for g, d in GROUPS if g == props.group)
+        return f"{'Show' if props.group in _collapsed else 'Hide'}: {desc}"
+
+    def execute(self, context):
+        _collapsed.symmetric_difference_update({self.group})
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                area.tag_redraw()
+        return {'FINISHED'}
+
+
+def _group(layout, group):
+    """The collapse handle of ``group``; True when the group's buttons should be drawn."""
+    open_ = group not in _collapsed
+    sub = layout.row(align=True)
+    sub.ui_units_x = 0.6
+    sub.operator(MAYAKIT_OT_status_group.bl_idname, text="", emboss=False,
+                 icon='GRIP_V' if open_ else 'TRIA_RIGHT').group = group
+    return open_
+
+
 def draw_status_line(layout, context):
-    """The Maya Status Line groups, left to right (ui_layout.md:196-217)."""
+    """The Maya Status Line groups, left to right (ui_layout.md:196-217), each after its collapse handle."""
     screen = context.screen
     ts = context.scene.tool_settings
     area, _r = main_view3d(screen)
     space = area.spaces.active if area else None
 
-    row = layout.row(align=True)
-    row.operator("wm.read_homefile", text="", icon='FILE_NEW')
-    row.operator("wm.open_mainfile", text="", icon='FILE_FOLDER')
-    row.operator("wm.save_mainfile", text="", icon='FILE_TICK')
-    row = layout.row(align=True)
-    row.operator("ed.undo", text="", icon='LOOP_BACK')
-    row.operator("ed.redo", text="", icon='LOOP_FORWARDS')
-    layout.separator()
+    if _group(layout, "FILE"):
+        row = layout.row(align=True)
+        row.operator("wm.read_homefile", text="", icon='FILE_NEW')
+        row.operator("wm.open_mainfile", text="", icon='FILE_FOLDER')
+        row.operator("wm.save_mainfile", text="", icon='FILE_TICK')
+        row = layout.row(align=True)
+        row.operator("ed.undo", text="", icon='LOOP_BACK')
+        row.operator("ed.redo", text="", icon='LOOP_FORWARDS')
 
-    editing = context.mode != 'OBJECT' and context.mode.startswith('EDIT')
-    row = layout.row(align=True)
-    row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
-                 icon='OUTLINER_OB_GROUP_INSTANCE').item = "Status Line/Select by hierarchy"
-    row.operator(MAYAKIT_OT_select_mode.bl_idname, text="", icon='OBJECT_DATAMODE',
-                 depress=not editing).mode = "OBJECT"
-    row.operator(MAYAKIT_OT_select_mode.bl_idname, text="", icon='EDITMODE_HLT',
-                 depress=editing).mode = "COMPONENT"
+    if _group(layout, "SELECT_MODE"):
+        editing = context.mode != 'OBJECT' and context.mode.startswith('EDIT')
+        row = layout.row(align=True)
+        row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
+                     icon='OUTLINER_OB_GROUP_INSTANCE').item = "Status Line/Select by hierarchy"
+        row.operator(MAYAKIT_OT_select_mode.bl_idname, text="", icon='OBJECT_DATAMODE',
+                     depress=not editing).mode = "OBJECT"
+        row.operator(MAYAKIT_OT_select_mode.bl_idname, text="", icon='EDITMODE_HLT',
+                     depress=editing).mode = "COMPONENT"
 
-    row = layout.row(align=True)
-    if context.mode == 'EDIT_MESH':
-        for i, icon in enumerate(('VERTEXSEL', 'EDGESEL', 'FACESEL')):
-            row.prop(ts, "mesh_select_mode", index=i, text="", icon=icon)
-    else:
-        for group, _desc, icon, types in OBJECT_MASKS:
-            if types is None:
-                row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
-                             icon=icon).item = f"Status Line/{_desc}"
-            else:
-                row.operator(MAYAKIT_OT_select_mask.bl_idname, text="", icon=icon,
-                             depress=bool(space) and mask_on(space, group)).group = group
-    layout.separator()
-
-    row = layout.row(align=True)
-    for name, desc, icon, elements in SNAPS:
-        if elements is None:
-            row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
-                         icon=icon).item = f"Status Line/{desc}"
+    if _group(layout, "MASKS"):
+        row = layout.row(align=True)
+        if context.mode == 'EDIT_MESH':
+            for i, icon in enumerate(('VERTEXSEL', 'EDGESEL', 'FACESEL')):
+                row.prop(ts, "mesh_select_mode", index=i, text="", icon=icon)
         else:
-            row.operator(MAYAKIT_OT_snap_toggle.bl_idname, text="", icon=icon,
-                         depress=snap_on(ts, name)).snap = name
-    layout.separator()
+            for group, _desc, icon, types in OBJECT_MASKS:
+                if types is None:
+                    row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
+                                 icon=icon).item = f"Status Line/{_desc}"
+                else:
+                    row.operator(MAYAKIT_OT_select_mask.bl_idname, text="", icon=icon,
+                                 depress=bool(space) and mask_on(space, group)).group = group
 
-    draw_symmetry(layout, context)
-    layout.separator()
+    if _group(layout, "SNAP"):
+        row = layout.row(align=True)
+        for name, desc, icon, elements in SNAPS:
+            if elements is None:
+                row.operator(menu_sets.MAYAKIT_OT_menu_unavailable.bl_idname, text="",
+                             icon=icon).item = f"Status Line/{desc}"
+            else:
+                row.operator(MAYAKIT_OT_snap_toggle.bl_idname, text="", icon=icon,
+                             depress=snap_on(ts, name)).snap = name
 
-    row = layout.row(align=True)
-    row.operator("render.view_show", text="", icon='RENDER_RESULT')
-    row.operator("render.render", text="", icon='RENDER_STILL')
-    row.operator(MAYAKIT_OT_ipr_toggle.bl_idname, text="", icon='SHADING_RENDERED',
-                 depress=bool(space) and space.shading.type == 'RENDERED')
-    row.operator(MAYAKIT_OT_render_settings.bl_idname, text="", icon='OPTIONS')
-    row.operator(MAYAKIT_OT_hypershade.bl_idname, text="", icon='NODE_MATERIAL')
-    layout.separator()
+    if _group(layout, "SYMMETRY"):
+        draw_symmetry(layout, context)
 
-    row = layout.row(align=True)
-    for editor, _desc, icon in EDITORS:
-        row.operator(MAYAKIT_OT_editor_toggle.bl_idname, text="", icon=icon,
-                     depress=editor_shown(screen, editor)).editor = editor
+    if _group(layout, "RENDER"):
+        row = layout.row(align=True)
+        row.operator("render.view_show", text="", icon='RENDER_RESULT')
+        row.operator("render.render", text="", icon='RENDER_STILL')
+        row.operator(MAYAKIT_OT_ipr_toggle.bl_idname, text="", icon='SHADING_RENDERED',
+                     depress=bool(space) and space.shading.type == 'RENDERED')
+        row.operator(MAYAKIT_OT_render_settings.bl_idname, text="", icon='OPTIONS')
+        row.operator(MAYAKIT_OT_hypershade.bl_idname, text="", icon='NODE_MATERIAL')
+
+    if _group(layout, "EDITORS"):
+        row = layout.row(align=True)
+        for editor, _desc, icon in EDITORS:
+            row.operator(MAYAKIT_OT_editor_toggle.bl_idname, text="", icon=icon,
+                         depress=editor_shown(screen, editor)).editor = editor
 
 
 _orig = {}
@@ -477,7 +525,7 @@ def unpatch_topbar():
 
 classes = (MAYAKIT_OT_select_mask, MAYAKIT_OT_select_mode, MAYAKIT_OT_snap_toggle, MAYAKIT_MT_symmetry,
            MAYAKIT_OT_render_settings, MAYAKIT_OT_ipr_toggle, MAYAKIT_OT_hypershade,
-           MAYAKIT_OT_editor_toggle)
+           MAYAKIT_OT_editor_toggle, MAYAKIT_OT_status_group)
 
 
 def register():
@@ -492,5 +540,6 @@ def unregister():
     bpy.types.VIEW3D_PT_active_tool.remove(draw_tool_symmetry)
     bpy.types.VIEW3D_HT_tool_header.remove(draw_tool_header)
     unpatch_topbar()
+    _collapsed.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
