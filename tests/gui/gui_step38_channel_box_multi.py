@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -79,8 +79,9 @@ def s_cb_shot():
     C["ui"] = (r.x, r.y, r.width, r.height)
     print("GUI UI region", C["ui"])
     check("Channel Box drawn with two objects selected (screenshot)", True)
-    # Translate X value field: 1185, 229 in gui_step38_cb_before.png (1600 x 900 window).
-    C["field"] = (1185, 900 - 229)
+    # Translate X value field: 1185, 229 in gui_step38_cb_before.png (1600 x 900 window, scale 1.25,
+    # UI region (971, 94, 350, 709)) = 136 px left of the region's right edge, 132 px below its top.
+    C["field"] = (r.x + r.width - px(136), r.y + r.height - px(132))
     ev('MOUSEMOVE', 'NOTHING', x=C["field"][0], y=C["field"][1])
 
 

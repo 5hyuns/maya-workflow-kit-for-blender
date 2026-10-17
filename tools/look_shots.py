@@ -423,7 +423,7 @@ def s_cb():
     shot("11_channel_box")
     # Maya opens Create from the menu bar: click the top bar's Create (global area: hover first)
     tb = GEOM["rects"]["11_channel_box"]["topbar"]
-    x, y = 150, tb[1] + tb[3] // 2
+    x, y = sim.px(150), tb[1] + tb[3] // 2   # "Create" (x measured at scale 1.25; Maya density = 1.0)
     C["menu_xy"] = (x, win().height - y)
     ev('MOUSEMOVE', 'NOTHING', x=x, y=win().height - y)
 

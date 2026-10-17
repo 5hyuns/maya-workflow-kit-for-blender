@@ -278,3 +278,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 42) Blender 를 껐다 켜면 (파일 없이) Maya 레이아웃으로 열리는지; .blend 를 더블클릭해 열면 그 파일이 그대로 열리는지; 세션 중 File > New > General 은 General 인지.
 - [ ] (step 42) Revert Maya Look → 원래 테마·스플래시 설정이 돌아오고 File > New 목록에서 MayaKit 이 사라지는지. Maya Kit 을 끄면 원래 테마로, 다시 켜면 Maya 테마로 돌아오는지.
 - [ ] (step 42) 다른 애드온 (예: Node Wrangler) 이 Make Blender Maya 전후로 그대로 켜져 있는지.
+
+### Step 44 — Maya 위젯 감각 (평면 위젯·밀도·Segoe UI)
+
+- [ ] (step 44) Make Blender Maya 뒤 글자·행 크기가 같은 모니터의 Maya 2022 와 같아 보이는지 (125 % 화면: Resolution Scale 0.8). 100 %·150 % 모니터에서도 (0.8 이 아니라 1.0 / 0.667 이 되는지).
+- [ ] (step 44) 실제 모니터 배율을 Blender 실행 중에 바꾸면 (노트북 ↔ 외부 모니터) 밀도는 처음 계산한 값 그대로 (delegated: 다시 켜면 새로 계산). 작아서 불편한지.
+- [ ] (step 44) Segoe UI: 한글·특수문자 (°, ×) 가 빠지지 않고 보이는지 (Blender 가 빠진 글자는 기본 글꼴로 채우는지), 마킹 메뉴·핫박스 글자도 Segoe UI 인지.
+- [ ] (step 44) 각진 평면 위젯이 Maya 처럼 읽히는지; 버튼·필드 경계가 너무 안 보이지 않는지 (엠보스 없음). 메뉴 그림자 없음이 어색하지 않은지.
+- [ ] (step 44) Revert Maya Look / Maya Kit 끄기 → Resolution Scale·글꼴·와이어 부드럽게가 원래대로 돌아오는지.

@@ -43,7 +43,7 @@ def test_maya_theme_v2_values():
     bad = {k: got for k, (got, want) in expect.items() if got != want}
     assert not bad, bad
     # face fill alphas measured against Maya's stipple (docs/steps/step_43.md)
-    assert abs(v.face_select[3] - 0.25) < 0.01 and abs(v.face_mode_select[3] - 0.07) < 0.01
+    assert abs(v.face_select[3] - 0.25) < 0.01 and abs(v.face_mode_select[3] - 0.28) < 0.01  # re-measured in step 44
     # opaque 3D View header and regions (Maya panel bars / dock)
     assert v.space.header[3] == 1.0 and v.space.button[3] == 1.0
     preferences.get().maya_theme = False

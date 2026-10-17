@@ -84,6 +84,8 @@ def snapshot():
     snap["prefs_inputs"] = _rna_values(prefs.inputs)
     snap["prefs_view"] = _rna_values(prefs.view)
     snap["prefs_edit"] = _rna_values(prefs.edit)   # step 30: undo steps
+    # step 44: aliased wires (use_overlay_smooth_wire / use_edit_mode_smooth_wire)
+    snap["prefs_system_wire"] = [prefs.system.use_overlay_smooth_wire, prefs.system.use_edit_mode_smooth_wire]
     # step 42: the Maya theme is restored on disable; fonts/styles must not leak either.
     snap["theme"] = [_struct_hash(prefs.themes[0])]
     snap["ui_styles"] = {k: [v] for k, v in _walk(prefs.ui_styles[0]).items()}

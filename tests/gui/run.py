@@ -1,12 +1,15 @@
 """GUI event-simulation tests.
 
-    python tests/gui/run.py [-k PATTERN] [--no-build] [--shots DIR]
+    python tests/gui/run.py [-k PATTERN] [--no-build] [--shots DIR] [--ui-scale 0.8]
 
 Builds and installs the extension into the same sandbox as tests/run.py,
 then runs each tests/gui/gui_*.py in a GUI Blender started with
 ``--factory-startup --enable-event-simulate`` (real mouse/keyboard input is
 ignored, a window appears briefly). Only the Blender process started here is
 terminated on timeout. Prints PASS/FAIL per check; exit 1 on any failure.
+``--ui-scale`` sets Preferences > Interface > Resolution Scale for every test (also after
+a template switch, which reloads factory preferences); 0.8 = the Maya density preset on a
+125 % display (docs/steps/step_44.md).
 """
 
 import argparse
@@ -29,6 +32,7 @@ def main(argv=None):
     ap.add_argument("-k", default="")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--shots", default="", help="directory for screenshots")
+    ap.add_argument("--ui-scale", type=float, default=0.0, help="view.ui_scale for all tests")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER))
     args = ap.parse_args(argv)
 
@@ -39,6 +43,8 @@ def main(argv=None):
     env = headless.make_sandbox()
     env["MAYA_KIT_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
     headless.install(args.blender, zip_path, env)
+    if args.ui_scale:
+        env["MAYA_KIT_GUI_UI_SCALE"] = str(args.ui_scale)
     if args.shots:
         Path(args.shots).mkdir(parents=True, exist_ok=True)
         env["MAYA_KIT_GUI_SHOTS"] = str(Path(args.shots).resolve())

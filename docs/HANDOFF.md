@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 44 (Maya 위젯 감각) 완료 — `docs/steps/step_44.md`. 테마: 모든 위젯 각지고 평평 (roundness 0, shade·엠보스·메뉴 그림자 없음,
+  panel_roundness 0). 환경설정 그룹 「Maya Density」 (`view.ui_scale` = 1 / OS 배율, 125 % 화면 → 0.8 = Maya 와 같은 픽셀), 「Maya Font」
+  (Windows Segoe UI, 동봉 안 함), 「Aliased Wireframes」 — 백업/복원, Make Blender Maya 가 켬. CB 행 scale_y 0.8 (16 px). GUI 테스트
+  `--ui-scale 0.8` + `sim.px()`. look_compare `density.md` 3/3 (메뉴바 26, 메뉴 항목 19.4, CB 행 16.0 px). 면 채움 α 재보정 0.28
+  (step 43 기준 샷에 매니퓰레이터가 걸려 있었음). 헤드리스 356/356, GUI 1.0 281/281 · 0.8 281/281, dogfood 47/47.
+  미해결 확인 (step 42): 사용자 실제 설정에서 node_wrangler 가 켜진 채 남음 (사용자 확인 필요).
 - Step 43 (Maya 테마 v2 색) 완료 — `docs/steps/step_43.md`. 컴포넌트 (하늘색 와이어, 보라/연노랑 정점, 살구색 엣지·면 — 면은 Maya 점묘
   평균에 맞춘 알파), 매니퓰레이터 (Z = 실제로 그려지는 순파랑), Outliner (#373737, 리드 행 파랑, 이름 흰색), 탭, 현재 프레임 회색,
   3D 뷰 헤더·툴바·사이드바 불투명, 템플릿 빨강/초록 그리드 축선 끔, 프리셀렉트 빨강. 새 `viewport.md` (렌더 픽셀 10 요소).
@@ -105,9 +111,10 @@
 
 ## 바로 다음 할 일
 
-- backlog 4 = step 44 (평면 위젯·밀도·Segoe UI) — step_43.md 「남은 것」의 와이어 안티에일리어싱 (`system.use_overlay_smooth_wire`) 도 같은
-  prefs_preset 그룹에서. 그 뒤 PLAN 「Maya 동일화 계획」 순서 (45 그리드 — 회색 축선 포함, 46 뷰 가구 …).
-- 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`).
+- backlog 5 = step 45 (Maya 그리드: 유한 12 칸, 5 칸마다 굵은 선, 회색 축선, X 스냅 일치). 그 뒤 46 뷰 가구, 47 선택 와이어 (비선택 와이어
+  ΔE 5.8 도 함께), … step_44.md 「남은 것」 (매니퓰레이터 Z 선 굵기).
+- 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`, `viewport.md`, `rects.md`, `density.md`); 샷은 Maya 밀도 (실효 배율 1.0)
+  로 찍힌다. GUI 테스트는 두 배율로: `python tests/gui/run.py` 와 `--ui-scale 0.8` (새 고정 픽셀 좌표는 `sim.px()`).
 - Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).
 - 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).
 - 이전 남은 항목: step_36–39 「남은 것」, PLAN 「재점검 3차」 8–9.

@@ -20,6 +20,8 @@ import bpy
 MODULE = os.environ.get("MAYA_KIT_MODULE", "bl_ext.user_default.maya_kit")
 RESULT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else None
 
+UI_SCALE = float(os.environ.get("MAYA_KIT_GUI_UI_SCALE", "0") or 0)
+
 _pos = [0, 0]
 _down = set()
 _steps = []
@@ -68,9 +70,36 @@ def step(fn):
     return fn
 
 
+@bpy.app.handlers.persistent
+def _keep_ui_scale(*_args):
+    # Loading a template with --factory-startup reloads factory preferences (ui_scale 1.0).
+    if UI_SCALE and bpy.context.preferences.view.ui_scale != UI_SCALE:
+        bpy.context.preferences.view.ui_scale = UI_SCALE
+
+
+if UI_SCALE:
+    bpy.app.handlers.load_post.append(_keep_ui_scale)
+    _keep_ui_scale()
+
+
+def scale():
+    """Effective UI scale (OS scale x Resolution Scale): pixel sizes measured at 1.25 scale with it."""
+    return bpy.context.preferences.system.ui_scale
+
+
+# Pixel offsets in the tests were measured in screenshots at effective scale 1.25 (125 % display,
+# Resolution Scale 1.0); px() converts one to the running scale (e.g. --ui-scale 0.8, step 44).
+MEASURED_SCALE = 1.25
+
+
+def px(v):
+    return round(v * scale() / MEASURED_SCALE)
+
+
 def setup():
     """Close the splash, enable the add-on, fake key state, park the mouse mid-viewport."""
     tap('ESC')
+    _keep_ui_scale()
     addon_utils.enable(MODULE, default_set=True)
     import_module(MODULE + ".operators.keystate").is_down = lambda t: t in _down
     _area, r = view3d()

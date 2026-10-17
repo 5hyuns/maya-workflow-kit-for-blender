@@ -97,14 +97,16 @@ KIT_POINTS = {
 #   mode "tint": selected-face fill only. Maya stipples selected faces; the kit's fill alpha is
 #                measured (kit shot vs the base shot, same view, (2r+1)x(r+1) box at the kit point),
 #                laid over Maya's base shading of the region and compared with Maya's mean there.
-#                Region = (base shot, Maya [x, y, w, h]).
+#                Region = (Maya base shot, Maya [x, y, w, h], kit base shot). The kit base is 03 (same
+#                view, no manipulator): at the Maya density the Move arrow's tip covers the box in 02
+#                (step 44).
 VIEW_SAMPLES = (
     ("lead wire (pCube1, green)", "04_wire_selected_lead", "#43ffa3", "pCube1.edges", 3, "best", None),
     ("other selected wire (pCube2, white)", "04_wire_selected_lead", "#ffffff", "pCube2.edges", 3, "best", None),
     ("dormant wire (pCube3, dark blue)", "04_wire_selected_lead", "#000460", "pCube3.edges", 3, "best", None),
     ("component-mode wire (light blue)", "07_faces_selected", "#64dcff", "pCube1.edges", 3, "best", None),
     ("selected face, top (fill)", "07_faces_selected", None, "pCube1.top_face", 6, "tint",
-     ("02_cube_selected_move", (830, 400, 20, 12))),
+     ("02_cube_selected_move", (830, 400, 20, 12), "03_cube_unselected")),
     ("selected vertex (pale yellow)", "08_verts_selected", "#fdff88", "pCube1.sel_verts", 4, "best", None),
     ("unselected vertex (purple)", "08_verts_selected", "#c800c8", "pCube1.verts", 4, "best", None),
     ("manipulator X (red)", "02_cube_selected_move", "#e60000", "pCube1.origin", 120, "best", None),
@@ -226,3 +228,61 @@ def colour_bbox(img, hex_colour, rect, tol=30):
 def maya_cube_bbox(shot):
     colour, _note = CUBE_FITS[shot]
     return colour_bbox(load_rgb(SCREENS / f"{shot}.png"), colour, MAYA_VIEW_RECT)
+
+
+# ---------------------------------------------------------------- density (step 44)
+# Maya 2022 at Qt dpr 1.0 (research/maya/colors.json metrics): menu bar 27 px, menu items 20 px,
+# Channel Box rows 16 px. (name, target px, tolerance px)
+DENSITY = (
+    ("menu bar height", 27, 2),
+    ("menu item pitch", 20, 1),
+    ("Channel Box row pitch", 16, 1),
+)
+# Menu popup background: Maya #525252 (colors.json ui notes), kit theme wcol_menu_back #535353.
+MENU_BG = {"maya": "#525252", "kit": "#535353"}
+MENU_SEARCH = (0, 20, 700, 680)   # where the Create menu opens under the menu bar, [x, y, w, h]
+
+
+def colour_area(img, hex_colour, rect, tol=2, min_run=60):
+    """[x, y, w, h] spanned by rows and columns holding at least ``min_run`` pixels of a flat colour."""
+    import numpy as np
+    h = hex_colour.lstrip("#")
+    ref = np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)], np.float32)
+    x, y, w, hh = rect
+    mask = np.all(np.abs(img[y:y + hh, x:x + w] * 255.0 - ref) <= tol, axis=2)
+    cols = np.nonzero(mask.sum(axis=0) >= min_run)[0]
+    rows = np.nonzero(mask.sum(axis=1) >= min_run // 2)[0]
+    if len(cols) < 2 or len(rows) < 2:
+        return None
+    return [int(cols.min()) + x, int(rows.min()) + y, int(cols.max() - cols.min() + 1),
+            int(rows.max() - rows.min() + 1)]
+
+
+def line_pitch(img, rect, contrast=0.15):
+    """Most common distance (px) between the centres of consecutive text lines inside ``rect``.
+
+    A row is a text row when at least 2 of its pixels are ``contrast`` brighter than the rect's median
+    (light text on Maya's and the kit's dark greys). Returns (pitch, lines, rows at that pitch ±1).
+    """
+    import numpy as np
+    x, y, w, h = (int(round(v)) for v in rect)
+    sub = img[max(0, y):y + h, max(0, x):x + w]
+    lum = sub.mean(axis=2)
+    bright = (lum > np.median(lum) + contrast).sum(axis=1) >= 2
+    centres, start = [], None
+    for i, b in enumerate(list(bright) + [False]):
+        if b and start is None:
+            start = i
+        elif not b and start is not None:
+            if i - start >= 3:             # ignore 1-2 px lines (separators, field edges)
+                centres.append((start + i - 1) / 2)
+            start = None
+    diffs = [round(b - a) for a, b in zip(centres, centres[1:])]
+    if not diffs:
+        return None, len(centres), 0
+    counts = {d: sum(abs(v - d) <= 1 for v in diffs) for d in set(diffs) if d >= 8}
+    if not counts:
+        return None, len(centres), 0
+    pitch = max(counts, key=lambda d: (counts[d], -d))
+    near = [v for v in diffs if abs(v - pitch) <= 1]
+    return round(sum(near) / len(near), 1), len(centres), counts[pitch]

@@ -729,6 +729,9 @@ def _row_label(row, key, selected):
     op.key = key
 
 
+ROW_SCALE = 0.8
+
+
 def draw_channel_row(layout, ob, key, value_owner, value_prop, selected):
     row = layout.row(align=True)
     split = row.split(factor=0.5, align=True)
@@ -887,6 +890,9 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
             head.label(text=f"+{n - 1}")
 
         col = layout.column(align=True)
+        # Maya channel rows are 16 px with 11 px text (research/maya/colors.json metrics,
+        # screens/11b_channel_box_crop.png); Blender rows are 20 px at scale 1.0 (step 44).
+        col.scale_y = ROW_SCALE
         for key, _label, _path, _idx, kind in MAIN:
             if is_hidden(ob, key):
                 continue

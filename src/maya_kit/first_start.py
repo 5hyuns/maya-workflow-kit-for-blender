@@ -3,6 +3,7 @@
 starting Blender in the Maya layout (docs/steps/step_42.md).
 
 - ``maya_kit.make_maya``: install the layout template, Maya theme on, Blender splash off,
+  Maya density / font / aliased wires on (step 44),
   start-in-Maya-layout on, save the preferences, open a new file with the Maya layout.
 - ``maya_kit.revert_maya``: all of it off again (theme and splash setting restored), the
   template removed; the open file is left alone.
@@ -26,7 +27,7 @@ import os
 import bpy
 from bpy.app.handlers import persistent
 
-from . import app_template, preferences
+from . import app_template, preferences, prefs_preset
 
 # Square art made by tools/make_splash.py (icons are square; the 2:1 splash would letterbox).
 WELCOME_IMAGE = os.path.join(os.path.dirname(__file__), "welcome.png")
@@ -52,6 +53,10 @@ def make(context, open_layout=True):
     dst = app_template.install()
     prefs.maya_theme = True
     prefs.maya_hide_splash = True
+    # Widget feel (step 44): Maya pixel density, Segoe UI where installed, aliased wires.
+    prefs.maya_density = True
+    prefs.maya_font = prefs_preset.font_available()
+    prefs.maya_wire = True
     prefs.start_in_maya_layout = True
     prefs.welcome_done = True
     # Loading a template reloads the saved preferences: keep these choices.
@@ -72,6 +77,9 @@ def revert(context):
     prefs = preferences.get(context)
     prefs.maya_theme = False
     prefs.maya_hide_splash = False
+    prefs.maya_density = False
+    prefs.maya_font = False
+    prefs.maya_wire = False
     prefs.start_in_maya_layout = False
     removed = app_template.remove() if app_template.is_installed() else False
     context.preferences.is_dirty = True
@@ -79,7 +87,7 @@ def revert(context):
 
 
 class MAYAKIT_OT_make_maya(bpy.types.Operator):
-    """Maya layout, Maya theme, no splash screen and start Blender in the Maya layout.
+    """Maya layout, Maya theme and density, no splash screen and start Blender in the Maya layout.
     Opens a new file with the Maya layout"""
     bl_idname = "maya_kit.make_maya"
     bl_label = "Make Blender Maya"
