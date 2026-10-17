@@ -178,6 +178,16 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         items=lambda self, context: _menu_set_items(), default=0)
     show_status_line: bpy.props.BoolProperty(
         name="Status Line", description="Maya Status Line icons in the top bar", default=True)
+    # Maya layout parity (docs/steps/step_49.md).
+    maya_toolbox: bpy.props.BoolProperty(
+        name="Maya Tool Box", description="3D View toolbars show Maya's Tool Box in every mode: Select, Lasso, "
+                                          "Paint Select, Move, Rotate, Scale, the last other tool and quick layout "
+                                          "buttons (other tools stay on keys, menus and the shelf)",
+        default=True, update=_update_selection_wire)
+    maya_dock_only: bpy.props.BoolProperty(
+        name="Channel Box Dock Only", description="3D View sidebars show only the Maya dock (Channel Box / "
+                                                  "Layer Editor, Attribute Editor), not Item / Tool / View tabs",
+        default=True, update=_update_selection_wire)
     show_command_line: bpy.props.BoolProperty(
         name="Command Line", description="Python command line in the status bar", default=True)
     show_help_line: bpy.props.BoolProperty(
@@ -297,6 +307,9 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "show_status_line")
         row.prop(self, "show_command_line")
         row.prop(self, "show_help_line")
+        row = box.row()
+        row.prop(self, "maya_toolbox")
+        row.prop(self, "maya_dock_only")
         row = box.row()
         row.prop(self, "maya_viewcube")
         row.prop(self, "maya_camera_names")

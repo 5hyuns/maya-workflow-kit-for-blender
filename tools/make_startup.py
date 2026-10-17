@@ -1,12 +1,14 @@
-"""Generate the Maya layout app template's startup.blend (headless).
+"""Generate the Maya layout app template's startup.blend (in a GUI Blender).
 
-    python tools/make_startup.py          # re-runs itself in `blender -b --factory-startup`
+    python tools/make_startup.py          # re-runs itself in `blender --factory-startup` (a window opens briefly)
 
-Writes src/maya_kit/app_template/MayaKit/startup.blend. Layout and reasons:
-docs/steps/step_5.md 「계획」 (research/maya/ui_layout.md §2 General layout).
-Areas are split with screen operators under a window/screen override; in
-background mode new areas report width 0 until the file is loaded in a UI,
-where Blender lays them out from the saved split proportions.
+Writes src/maya_kit/app_template/MayaKit/startup.blend. Layout and reasons: docs/steps/step_5.md,
+docs/steps/step_49.md 「계획」 (research/maya/ui_layout.md §2 General layout, widget sizes from
+research/maya/screens/_maya_ui_dump.json). It runs in a GUI Blender because the factory right column
+(Outliner + Properties) can only be removed there: in `-b` screen.area_close hangs and area_join crashes
+or adds empty areas (measured, step 49). The window is 1600x900 at the Maya density (effective UI scale
+1.0, like the look_compare shots), so area sizes are Maya pixels; the sidebar width is set by dragging
+its edge with simulated events (no API). User dirs point into tmp/build_env (tools/build.sandbox_env).
 """
 
 import os
@@ -16,15 +18,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
 
-# Maya Outliner 259 px of 2556 (ui_layout.md:121) ~ 10%; Blender rows need more (icons, larger font):
-# 0.16 cut "pCube1" to "pCube" (step 23 audit), 0.2 ~ 264 px at 1600x900 (step 31, delegated).
-OUTLINER_FACTOR = 0.2
+# Maya widget sizes at effective scale 1.0 (research/maya/screens/_maya_ui_dump.json, ui_layout.md:122-127):
+# Outliner 260, Channel Box / Layer Editor dock 260 (+ tab strip), Time Slider 36 (the timeline WINDOW region); the
+# Range Slider is the timeline header, flipped under it.
+OUTLINER_PX = 260
+# Sidebar = Maya's dock column: Channel Box / Layer Editor 260 + the vertical dock tab strip right of it
+# (Maya: dock [1323, 260] then tabs to 1598). Blender draws its tab strip inside the sidebar.
+DOCK_PX = 260 + 17
+DOCK_CATEGORY = "Channel Box"   # = ui/channel_box.py CATEGORY
+TIME_SLIDER_PX = 36
+WINDOW_SIZE = (1600, 900)
+EDGE = 3                  # px the area edges take from a split (measured)
 MAYA_LENS = 35.0          # persp focal length 35 (concepts.md §15)
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md §12, PREF:469-470)
 MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
-STRIP_FACTOR = 0.91       # top 9% of the factory 3D View ~ 67 px at 1600x900 = header + tool header
-                          # (measured, docs/steps/step_12.md 「계획」 1)
-STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER
+STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER (Status Line row)
+SHELF_MARKER = ".MayaKitShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 # Maya lengths are cm (decision 8): 1 Maya unit = 0.01 BU with decision 1's m + cm display.
 MAYA_UNIT = 0.01
 MAYA_CLIP = (0.1, 10000.0)        # cm, research/maya/defaults.json:45-46 (= operators/units.py CLIP)
@@ -35,93 +44,242 @@ def run_outside_blender():
     import subprocess
     sys.path.insert(0, str(ROOT / "tools"))
     import build
-    r = subprocess.run([os.environ.get("BLENDER", build.DEFAULT_BLENDER), "-b", "--factory-startup",
+    w, h = WINDOW_SIZE
+    r = subprocess.run([os.environ.get("BLENDER", build.DEFAULT_BLENDER), "--factory-startup",
+                        "--enable-event-simulate", "--window-geometry", "0", "0", str(w), str(h),
                         "--python-exit-code", "1", "--python", __file__],
                        env=build.sandbox_env(), stdin=subprocess.DEVNULL,
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
+    ok = False
     for line in r.stdout.splitlines():
         if line.startswith("make_startup"):
             print(line)
-    if r.returncode:
-        sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
-    return r.returncode
+            ok = ok or line.startswith("make_startup: wrote")
+    if r.returncode or not ok:
+        sys.stderr.write(r.stdout[-4000:] + r.stderr[-3000:])
+        return r.returncode or 1
+    return 0
 
 
-def build_layout():
-    import bpy
+def log(*args):
+    print("make_startup:", *args)
+    sys.stdout.flush()
 
-    ctx = bpy.context
-    win = ctx.window_manager.windows[0]
-    ws = bpy.data.workspaces["Layout"]
-    scr = ws.screens[0]
-    assert win.screen == scr, "factory startup should open the Layout workspace"
 
-    def window_region(area):
-        return next(r for r in area.regions if r.type == 'WINDOW')
+def _region(area, kind):
+    return next((r for r in area.regions if r.type == kind), None)
 
-    def split(area, direction, factor):
-        before = {a.as_pointer() for a in scr.areas}
-        with ctx.temp_override(window=win, screen=scr, area=area, region=window_region(area)):
-            assert bpy.ops.screen.area_split(direction=direction, factor=factor) == {'FINISHED'}
-        return next(a for a in scr.areas if a.as_pointer() not in before)
 
-    def only(area_type):
-        found = [a for a in scr.areas if a.type == area_type]
+def is_toolbox_space(space):
+    """= src/maya_kit/ui/toolbox.py is_toolbox (kept in sync by tests/test_step49_layout.py)."""
+    return (space.type == 'VIEW_3D' and space.show_region_toolbar and not space.show_region_header
+            and not space.show_region_ui and not space.overlay.show_overlays)
+
+
+class Builder:
+    """Layout edits, one per timer tick (screen operators and simulated events need a redraw in between)."""
+
+    def __init__(self):
+        import bpy
+        self.bpy = bpy
+        self.win = bpy.context.window_manager.windows[0]
+        self.areas = {}
+
+    @property
+    def scr(self):
+        return self.win.screen
+
+    def ov(self, area, region_type='WINDOW'):
+        return self.bpy.context.temp_override(window=self.win, screen=self.scr, area=area,
+                                              region=_region(area, region_type))
+
+    def only(self, area_type):
+        found = [a for a in self.scr.areas if a.type == area_type]
         assert len(found) == 1, (area_type, len(found))
         return found[0]
 
-    view3d = only('VIEW_3D')
-    # Maya strip (step 12): Status Line + Shelf under the menu bar, over Outliner and
-    # viewport. Split before the Outliner so it spans both; the new area is the top part.
-    strip = split(view3d, 'HORIZONTAL', STRIP_FACTOR)
-    strip.type = 'IMAGE_EDITOR'
-    # Right column = factory split: Outliner on top (~32%), Properties below (~68%).
-    # Top becomes the Layer Editor, bottom stays Properties (Attribute Editor,
-    # Object tab). Rearranging it is not possible headless: screen.area_close
-    # hangs in background mode, area_move has no effect there, and a
-    # Properties space converted from another editor has no tab list.
-    layer_editor = only('OUTLINER')
-    attribute_editor = only('PROPERTIES')
-    attribute_editor.spaces.active.context = 'OBJECT'
+    def biggest_view(self):
+        return max((a for a in self.scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)
 
-    # Left: Outliner next to the viewport (the new area takes the left part).
-    outliner = split(view3d, 'VERTICAL', OUTLINER_FACTOR)
-    outliner.type = 'OUTLINER'
+    def split(self, area, direction, px, side):
+        """Split ``area`` so the part on ``side`` ('TOP'/'BOTTOM'/'LEFT'/'RIGHT') is ``px`` pixels; return it
+        (a generator: ``part = yield from self.split(...)``)."""
+        bpy = self.bpy
+        size = area.height if direction == 'HORIZONTAL' else area.width
+        frac = px / size
+        factor = {'TOP': 1 - frac, 'BOTTOM': frac, 'LEFT': frac, 'RIGHT': 1 - frac}[side]
+        before = {a.as_pointer() for a in self.scr.areas}
+        with self.ov(area):
+            assert bpy.ops.screen.area_split(direction=direction, factor=factor) == {'FINISHED'}
+        new = next((a for a in self.scr.areas if a.as_pointer() not in before), None)
+        assert new is not None, ("split made no area", direction, px, side, size, factor,
+                                 [(a.type, a.x, a.y, a.width, a.height) for a in self.scr.areas])
+        pair = (new, area)
+        yield   # area rectangles update on the next redraw
+        if direction == 'HORIZONTAL':
+            top, bottom = sorted(pair, key=lambda a: -a.y)
+            return top if side == 'TOP' else bottom
+        left, right = sorted(pair, key=lambda a: a.x)
+        return left if side == 'LEFT' else right
 
-    # --- editor settings ---
-    so = outliner.spaces.active
-    so.display_mode = 'VIEW_LAYER'
-    so.use_filter_object_content = False   # Maya: DAG only, no shapes (ui_layout.md:259-262)
-    so.use_filter_children = True
-    # Maya's Outliner lists the DAG from the world: no collection rows (they are the Layer
-    # Editor's display layers here) and no per-row render toggle (step 31, delegated).
-    so.use_filter_collection = False
-    so.show_restrict_column_render = False
+    def steps(self):
+        bpy = self.bpy
+        prefs = bpy.context.preferences
+        # Maya density: effective scale 1.0 (= tests/gui --ui-scale 0.8 on a 125 % display)
+        prefs.view.ui_scale = prefs.view.ui_scale / prefs.system.ui_scale
+        for value in ('PRESS', 'RELEASE'):  # close the splash (it eats simulated events)
+            self.win.event_simulate(type='ESC', value=value, x=800, y=450)
+        yield
+        ws = bpy.data.workspaces["Layout"]
+        assert self.win.workspace == ws, "factory startup should open the Layout workspace"
+        # 1. Remove the factory timeline and the right column: one 3D View is left.
+        for kind in ('DOPESHEET_EDITOR', 'OUTLINER', 'PROPERTIES'):
+            with self.ov(self.only(kind)):
+                assert bpy.ops.screen.area_close() == {'FINISHED'}, kind
+            yield
+        assert [a.type for a in self.scr.areas] == ['VIEW_3D'], [a.type for a in self.scr.areas]
+        view = self.scr.areas[0]
+        hdr = _region(view, 'HEADER').height
+        # 2. Maya strip (step 12): Status Line row, then the Shelf row, over everything, full width. Two
+        #    header-only areas: Blender keeps each at least one header high, so they follow the UI scale.
+        strip = yield from self.split(view, 'HORIZONTAL', 2 * hdr + 2 + EDGE, 'TOP')
+        strip.type = 'IMAGE_EDITOR'
+        yield
+        shelf = yield from self.split(strip, 'HORIZONTAL', hdr + 1, 'BOTTOM')
+        yield
+        # 3. Time Slider (timeline WINDOW) + Range Slider (its header, flipped under it), full width.
+        timeline = yield from self.split(self.biggest_view(), 'HORIZONTAL', TIME_SLIDER_PX + hdr + EDGE, 'BOTTOM')
+        timeline.type = 'DOPESHEET_EDITOR'
+        timeline.ui_type = 'TIMELINE'
+        yield
+        with self.ov(timeline, 'HEADER'):
+            assert bpy.ops.screen.region_flip() == {'FINISHED'}
+        yield
+        # 4. Tool Box column (a 3D View showing only its toolbar, ui/toolbox.py), then the Outliner.
+        view = self.biggest_view()
+        toolbox = yield from self.split(view, 'VERTICAL', _region(view, 'TOOLS').width + 1, 'LEFT')
+        yield
+        outliner = yield from self.split(self.biggest_view(), 'VERTICAL', OUTLINER_PX + EDGE, 'LEFT')
+        outliner.type = 'OUTLINER'
+        yield
+        view = self.biggest_view()
+        self.areas = {"strip": strip, "shelf": shelf, "timeline": timeline, "toolbox": toolbox, "outliner": outliner, "view3d": view}
+        self.configure()
+        yield
+        # 5. Sidebar = Channel Box dock, 260 px: drag its left edge (region size has no API).
+        ui = _region(view, 'UI')
+        x0, y = ui.x, ui.y + ui.height // 2
+        target = view.x + view.width - DOCK_PX
+        self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1, y=y)
+        yield
+        self.win.event_simulate(type='LEFTMOUSE', value='PRESS', x=x0 + 1, y=y)
+        yield
+        for i in range(1, 6):
+            self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1 + (target - x0) * i // 5, y=y)
+            yield
+        self.win.event_simulate(type='LEFTMOUSE', value='RELEASE', x=target + 1, y=y)
+        yield
+        yield
+        # 6. The sidebar opens on the Channel Box tab: the region saves its active category, but there is
+        #    no API to set it and the kit is not installed here, so a stand-in panel gives the category and
+        #    Ctrl+wheel over the tab strip selects it. Blender's Item tab (C panels, step 49) stays possible.
+        yield from self.select_dock_tab(view)
+        self.report()
+        shot = os.environ.get("MAKE_STARTUP_SHOT")
+        if shot:
+            with bpy.context.temp_override(window=self.win):
+                bpy.ops.screen.screenshot(filepath=shot)
+        self.save()
 
-    le = layer_editor.spaces.active
-    le.display_mode = 'VIEW_LAYER'
-    le.use_filter_object = False           # collections only = display layers
+    def select_dock_tab(self, view):
+        bpy = self.bpy
 
-    sp = strip.spaces.active               # = ui/shelf.py make_strip
-    marker = bpy.data.masks.new(STRIP_MARKER)
-    marker.use_fake_user = True
-    sp.mask = marker
-    sp.mode = 'VIEW'
-    sp.show_region_tool_header = True
-    sp.show_region_ui = False
-    sp.show_region_toolbar = False
+        class MAYAKIT_PT_dock_stand_in(bpy.types.Panel):
+            bl_space_type = 'VIEW_3D'
+            bl_region_type = 'UI'
+            bl_category = DOCK_CATEGORY
+            bl_label = "Channel Box"
 
-    v3d = view3d.spaces.active
-    v3d.show_region_ui = True              # sidebar = Channel Box host (step 6)
-    v3d.show_region_toolbar = True         # = Maya Toolbox
-    v3d.show_region_tool_header = True     # row for the Maya Status Line (step 7)
-    v3d.lens = MAYA_LENS
-    v3d.region_3d.view_perspective = 'PERSP'
-    maya_views()
+            def draw(self, context):
+                self.layout.label(text="Channel Box")
 
-    ws.name = "General"                    # Maya workspace name (ui_layout.md:78)
-    return {"outliner": outliner, "view3d": view3d, "strip": strip, "attribute_editor": attribute_editor,
-            "layer_editor": layer_editor}
+        bpy.utils.register_class(MAYAKIT_PT_dock_stand_in)
+        ui = _region(view, 'UI')
+        for _i in range(12):
+            view.tag_redraw()
+            yield
+            if ui.active_panel_category == DOCK_CATEGORY:
+                break
+            self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=ui.x + ui.width - 8, y=ui.y + ui.height - 60)
+            self.win.event_simulate(type='WHEELDOWNMOUSE', value='PRESS', x=ui.x + ui.width - 8,
+                                    y=ui.y + ui.height - 60, ctrl=True)
+        log("sidebar tab", ui.active_panel_category)
+        assert ui.active_panel_category == DOCK_CATEGORY, ui.active_panel_category
+        bpy.utils.unregister_class(MAYAKIT_PT_dock_stand_in)
+
+    def configure(self):
+        a = self.areas
+        so = a["outliner"].spaces.active
+        so.display_mode = 'VIEW_LAYER'
+        so.use_filter_object_content = False   # Maya: DAG only, no shapes (ui_layout.md:259-262)
+        so.use_filter_children = True
+        # Maya's Outliner lists the DAG from the world: no collection rows (display layers are the
+        # Layer Editor's) and no per-row render toggle (step 31, delegated).
+        so.use_filter_collection = False
+        so.show_restrict_column_render = False
+
+        st = a["timeline"].spaces.active       # Time Slider: no channel list, no sidebar
+        st.show_region_channels = False
+        st.show_region_ui = False
+
+        for key, name in (("strip", STRIP_MARKER), ("shelf", SHELF_MARKER)):   # = ui/shelf.py markers
+            sp = a[key].spaces.active
+            marker = self.bpy.data.masks.new(name)
+            marker.use_fake_user = True
+            sp.mask = marker
+            sp.mode = 'VIEW'
+            sp.show_region_header = True
+            sp.show_region_tool_header = False
+            sp.show_region_ui = False
+            sp.show_region_toolbar = False
+
+        v3d = a["view3d"].spaces.active
+        v3d.show_region_ui = True              # sidebar = Channel Box dock (step 6, 11)
+        v3d.show_region_toolbar = False        # the Tool Box column replaces it (step 49)
+        v3d.show_region_tool_header = False    # Maya has no tool settings row (step 49)
+        v3d.show_region_header = True          # Maya panel menu bar (step 37)
+        v3d.lens = MAYA_LENS
+        v3d.region_3d.view_perspective = 'PERSP'
+
+        tb = a["toolbox"].spaces.active        # = ui/toolbox.py is_toolbox
+        tb.show_region_toolbar = True
+        tb.show_region_header = False
+        tb.show_region_tool_header = False
+        tb.show_region_ui = False
+        tb.show_gizmo = False
+        tb.overlay.show_overlays = False       # no kit grid / furniture / wire either (they check it)
+        # No object type is visible in this view: nothing is drawn behind the tools, and a click under
+        # them (it reaches the WINDOW region) selects or deselects nothing (BKE_base_is_visible checks
+        # object_type_exclude_viewport). An empty local view would do the same but Blender drops it on load.
+        for name in dir(tb):
+            if name.startswith("show_object_viewport_"):
+                setattr(tb, name, False)
+        assert is_toolbox_space(tb)
+        maya_views()
+        self.bpy.data.workspaces["Layout"].name = "General"   # Maya workspace name (ui_layout.md:78)
+
+    def report(self):
+        for a in self.scr.areas:
+            regions = {r.type: (r.x, r.y, r.width, r.height) for r in a.regions if r.width > 1 and r.height > 1}
+            log("area", a.ui_type, (a.x, a.y, a.width, a.height), regions)
+
+    def save(self):
+        import bpy
+        setup_scene()
+        OUT.parent.mkdir(parents=True, exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=str(OUT), compress=True, check_existing=False)
+        OUT.with_suffix(".blend1").unlink(missing_ok=True)  # Blender's backup of the previous file
+        log(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
 
 
 def maya_views():
@@ -186,12 +344,22 @@ def setup_scene():
 
 def main():
     import bpy
-    build_layout()
-    setup_scene()
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(OUT), compress=True, check_existing=False)
-    OUT.with_suffix(".blend1").unlink(missing_ok=True)  # Blender's backup of the previous file
-    print(f"make_startup: wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
+    gen = Builder().steps()
+
+    def tick():
+        try:
+            next(gen)
+        except StopIteration:
+            bpy.ops.wm.quit_blender()
+            return None
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            sys.stdout.flush()
+            os._exit(1)
+        return 0.3
+
+    bpy.app.timers.register(tick, first_interval=1.5)
 
 
 if __name__ == "__main__":
@@ -199,4 +367,6 @@ if __name__ == "__main__":
         import bpy  # noqa: F401
     except ImportError:
         sys.exit(run_outside_blender())
+    if bpy.app.background:
+        sys.exit("make_startup: needs a GUI Blender (see the module docstring)")
     main()

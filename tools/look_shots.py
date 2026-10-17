@@ -48,11 +48,17 @@ def anchor_rects():
     areas = list(win().screen.areas)
     outliners = sorted((a for a in areas if a.type == 'OUTLINER'), key=lambda a: a.x)
     names = {}
+    toolbox = import_module(MODULE + ".ui.toolbox")
+    views = sorted((a for a in areas if a.type == 'VIEW_3D'), key=lambda a: -a.width * a.height)
     for a in areas:
         if a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".MayaKitStrip":
             names[a] = "strip"
-        elif a.type == 'VIEW_3D':
-            names.setdefault(a, "view3d")
+        elif a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".MayaKitShelf":
+            names[a] = "shelf"              # the Shelf row (step 49)
+        elif a.type == 'VIEW_3D' and toolbox.is_toolbox(a.spaces.active):
+            names[a] = "toolbox"            # the Tool Box column (step 49)
+        elif a.type == 'VIEW_3D' and a == views[0]:
+            names[a] = "view3d"
         elif a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE':
             names[a] = "timeline"
         elif a.type == 'PROPERTIES':
@@ -75,11 +81,20 @@ def anchor_rects():
         reg = next(r for r in v3.regions if r.type == 'WINDOW')
         x0, y0, x1, y1 = import_module(MODULE + ".operators.view").visible_bounds(v3, reg)
         rects["view3d.visible"] = _img_rect(reg.x + x0, reg.y + y0, x1 - x0, y1 - y0)
+        # the viewport pane without the sidebar dock (= Maya MainPane; the dock is its own column there)
+        ui = next((r for r in v3.regions if r.type == 'UI' and r.width > 1), None)
+        rects["view3d.pane"] = _img_rect(v3.x, v3.y, v3.width - (ui.width if ui else 0), v3.height)
     tops = [_img_rect(a.x, a.y, a.width, a.height) for a in areas]
     top = min(r[1] for r in tops)
     bottom = max(r[1] + r[3] for r in tops)
     rects["topbar"] = [0, 0, win().width, top]
     rects["statusbar"] = [0, bottom, win().width, win().height - bottom]
+    # Help Line | Command Line: fixed-width rows of the status bar (command_line.draw_status_bar, step 49)
+    cl = import_module(MODULE + ".command_line")
+    unit = 20 * bpy.context.preferences.system.ui_scale
+    help_w, cmd_w = cl.HELP_UNITS * unit, cl.COMMAND_UNITS * unit
+    rects["statusbar.help"] = [0, bottom, help_w, win().height - bottom]
+    rects["statusbar.command"] = [help_w, bottom, cmd_w, win().height - bottom]
     rects["window"] = [0, 0, win().width, win().height]
     return rects
 

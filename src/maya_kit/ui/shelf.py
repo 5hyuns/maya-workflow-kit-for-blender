@@ -7,7 +7,10 @@ research/blender/api_limits.md #11. Design: docs/steps/step_12.md 「계획」.
 
 - The strip is an Image Editor area marked by the hidden Mask ``.MayaKitStrip``
   (``space.mask``): its header row draws the Status Line, its tool header row the
-  shelf. ``IMAGE_HT_header.draw`` / ``IMAGE_HT_tool_header.draw`` are swapped while
+  shelf. The MayaKit template (step 49) uses two header-only areas instead, the strip
+  without its tool header and a shelf row marked ``.MayaKitShelf`` whose header draws
+  the shelf: Blender keeps every area at least one header high, so both rows follow
+  the UI scale (a two-row area of fixed height lost its tool header at scale 1.25). ``IMAGE_HT_header.draw`` / ``IMAGE_HT_tool_header.draw`` are swapped while
   the add-on is enabled and restored on unregister; unmarked Image Editors draw as
   usual.
 - Factory buttons: ``shelf_data`` (generated) + ``shelf_map`` (Blender action, icon),
@@ -27,6 +30,7 @@ from bpy.props import BoolProperty, IntProperty, StringProperty
 from . import shelf_data, shelf_map
 
 MARKER = ".MayaKitStrip"
+SHELF_MARKER = ".MayaKitShelf"   # the template's shelf row (step 49)
 USER_PREFIX = "USER:"
 DEFAULT_USER = {"shelves": [{"name": "Custom", "buttons": []}]}
 STRIP_PX = 68          # header + tool header rows at UI scale 1 (measured, step_12.md 「계획」 1)
@@ -390,9 +394,21 @@ def is_strip(space):
     return space is not None and space.type == 'IMAGE_EDITOR' and mask is not None and mask.name == MARKER
 
 
+def is_shelf_row(space):
+    mask = getattr(space, "mask", None)
+    return space is not None and space.type == 'IMAGE_EDITOR' and mask is not None and mask.name == SHELF_MARKER
+
+
 def strip_area(screen):
     for area in (screen.areas if screen else ()):
         if area.type == 'IMAGE_EDITOR' and is_strip(area.spaces.active):
+            return area
+    return None
+
+
+def shelf_row_area(screen):
+    for area in (screen.areas if screen else ()):
+        if area.type == 'IMAGE_EDITOR' and is_shelf_row(area.spaces.active):
             return area
     return None
 
@@ -425,9 +441,12 @@ class MAYAKIT_OT_shelf_strip_toggle(bpy.types.Operator):
         win = context.window
         area = strip_area(screen)
         if area is not None:
-            region = next(r for r in area.regions if r.type == 'WINDOW')
-            with context.temp_override(window=win, screen=screen, area=area, region=region):
-                bpy.ops.screen.area_close()
+            for area in (area, shelf_row_area(screen)):
+                if area is None:
+                    continue
+                region = next(r for r in area.regions if r.type == 'WINDOW')
+                with context.temp_override(window=win, screen=screen, area=area, region=region):
+                    bpy.ops.screen.area_close()
             return {'FINISHED'}
         view3d, region = main_view3d(screen)
         if view3d is None:
@@ -527,6 +546,8 @@ def _draw_image_header(self, context):
     if is_strip(context.space_data):
         from .status_line import draw_status_line
         return draw_status_line(self.layout, context)
+    if is_shelf_row(context.space_data):
+        return draw_shelf(self.layout, context)
     return _orig["header"](self, context)
 
 

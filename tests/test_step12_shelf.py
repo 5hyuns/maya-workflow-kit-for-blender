@@ -233,5 +233,9 @@ def test_template_has_marked_strip():
     strip = shelf.strip_area(scr)
     assert strip is not None, [a.type for a in scr.areas]
     sp = strip.spaces.active
-    assert sp.show_region_tool_header and not sp.show_region_ui and sp.mask.name == shelf.MARKER
-    assert sum(1 for a in scr.areas if a.type == 'IMAGE_EDITOR') == 1
+    assert not sp.show_region_ui and sp.mask.name == shelf.MARKER
+    # step 49: Status Line and Shelf are two header-only rows (they follow the UI scale)
+    row = shelf.shelf_row_area(scr)
+    assert row is not None and row.y < strip.y and not sp.show_region_tool_header
+    assert row.spaces.active.mask.name == shelf.SHELF_MARKER
+    assert sum(1 for a in scr.areas if a.type == 'IMAGE_EDITOR') == 2

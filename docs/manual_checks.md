@@ -308,3 +308,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 47) 와이어가 면에 가려지는 뒤쪽 엣지는 안 보이고 앞쪽 엣지는 끊김 없이 보이는지 (아주 멀리 / 아주 가까이 확대해서도, cm 장면·m 장면).
 - [ ] (step 47) 큰 메시 (수십만 폴리) 를 고를 때 잠깐 멈춤 (배치 만들기, 10 만 폴리 약 30 ms) 이 거슬리지 않는지; 편집 모드에서 나올 때도.
 - [ ] (step 47) 스무스 프리뷰 3 에서 와이어가 케이지 엣지 (매끈한 면 밖에 뜸) 인 것이 Maya 와 비교해 괜찮은지.
+
+### Step 49 — 레이아웃 동등화
+
+- [ ] (step 49) MayaKit 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
+- [ ] (step 49) 툴박스: Select·Lasso·Paint Select·Move·Rotate·Scale 가 오브젝트·편집·포즈 모드에서 같은 자리에 있고, 다른 툴 (Multi-Cut 등) 을 쓴 뒤 그 툴이 구분선 아래 마지막 칸에 나오는지. 툴 버튼 더블클릭·길게 누르기가 이상하지 않은지.
+- [ ] (step 49) 툴박스 아래 빈 곳 클릭·드래그 → 선택이 그대로인지. 빠른 레이아웃 Single / Four 버튼, Outliner 버튼 (새 창), Front/Persp 는 회색.
+- [ ] (step 49) Resolution Scale 을 1.0 보다 크게 (Maya Density 끔) 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
+- [ ] (step 49) 사이드바: Channel Box 탭으로 열리고 Tool / View 탭이 없음. 오브젝트를 고르면 Blender 의 Item 탭 (C 패널, 숨길 수 없음) 이 생김 — 거슬리는지. 환경설정 「Channel Box Dock Only」 를 끄면 Item / Tool / View / Outliner 탭이 돌아오는지.
+- [ ] (step 49) Status Line 의 Attribute Editor 버튼 = 도크 AE 전환, Render Settings = Properties 새 창 (Render 탭).
+- [ ] (step 49) 하단 줄: 왼쪽 Help Line (툴 도움말, 없으면 Blender 마우스 힌트·보고·진행), 오른쪽 Command Line. 오류 보고가 Help Line 칸에 보이는지.

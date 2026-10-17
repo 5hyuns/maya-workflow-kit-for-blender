@@ -50,7 +50,7 @@ def test_tables_shape():
             shot, anchor, dx, dy, r, note = spec
             assert shot[:2].isdigit() and isinstance(anchor, str) and r in (0, 1, 2), (name, spec)
     anchors = {a for _w, a, _l in L.RECTS}
-    assert {"topbar", "statusbar", "view3d.UI", "outliner"} <= anchors
+    assert {"topbar", "statusbar.help", "statusbar.command", "view3d.UI", "outliner", "toolbox"} <= anchors
     assert all(how in ("side", "over") for *_x, how in L.CROPS)
     assert set(L.CUBE_FITS) == {"02_cube_selected_move", "04_wire_selected_lead", "07_faces_selected"}
 

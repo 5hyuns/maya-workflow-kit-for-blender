@@ -76,6 +76,15 @@ def snapshot():
     # step 37: Maya panel menus replace the 3D View header menus (a class attribute while enabled).
     snap["ui_methods"].append("VIEW3D_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in bpy.types.VIEW3D_MT_editor_menus.__dict__}")
+    # step 49: Tool Box (toolbar draw filter), status bar row, dock-only sidebar polls.
+    from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active
+    snap["ui_methods"] += [f"VIEW3D_PT_tools_active.{n} own: {VIEW3D_PT_tools_active.__dict__.get(n)!r}"
+                           for n in ("draw", "tools_from_context")]
+    snap["ui_methods"].append(f"STATUSBAR_HT_header.draw: {bpy.types.STATUSBAR_HT_header.draw!r}")
+    snap["panel_polls"] = sorted(
+        f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
+        for c in _all_panels() if getattr(c, "bl_space_type", None) == 'VIEW_3D'
+        and not c.__name__.startswith("MAYAKIT_"))
     snap["sys_modules"] = sorted(m for m in sys.modules if m == "maya" or m.startswith("maya."))
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())
@@ -90,6 +99,12 @@ def snapshot():
     snap["theme"] = [_struct_hash(prefs.themes[0])]
     snap["ui_styles"] = {k: [v] for k, v in _walk(prefs.ui_styles[0]).items()}
     return snap
+
+
+def _all_panels(cls=None):
+    for sub in (cls or bpy.types.Panel).__subclasses__():
+        yield sub
+        yield from _all_panels(sub)
 
 
 def _walk(struct, prefix="", out=None, depth=0):

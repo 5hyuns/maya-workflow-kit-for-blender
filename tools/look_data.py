@@ -53,9 +53,9 @@ KIT_POINTS = {
     "shelf_tab_bar_bg": (None, "no shelf tab row (shelf set = dropdown)"),
     "shelf_tab_active": (None, "no shelf tabs"),
     "shelf_tab_inactive": (None, "no shelf tabs"),
-    "shelf_icon_row_bg": ("02_cube_selected_move", "strip.TOOL_HEADER", -20, 16, 2, "shelf row, right end"),
-    "toolbox_bg": ("02_cube_selected_move", "view3d.TOOLS", 35, -40, 2, "toolbar column (drawn over the view)"),
-    "toolbox_active_tool": ("02_cube_selected_move", "view3d.TOOLS", 16, 108, 1, "Move tool button padding"),
+    "shelf_icon_row_bg": ("02_cube_selected_move", "shelf.HEADER", -20, 14, 2, "shelf row, right end"),
+    "toolbox_bg": ("02_cube_selected_move", "toolbox.TOOLS", 28, -40, 2, "Tool Box column, bottom"),
+    "toolbox_active_tool": ("02_cube_selected_move", "toolbox.TOOLS", 16, 108, 1, "Move tool button padding"),
     "outliner_header_bg": (None, "no Outliner dock title"),
     "outliner_menu_bg": ("02_cube_selected_move", "outliner.HEADER", 3, 16, 1, "Outliner header padding"),
     "outliner_search_field": ("02_cube_selected_move", "outliner.HEADER", 210, 16, 2, "Outliner search field"),
@@ -64,7 +64,7 @@ KIT_POINTS = {
     "outliner_row_selected_component_mode": ("08_verts_selected", "outliner.WINDOW", 200, 14, 2,
                                              "pCube1 row in edit mode"),
     "panel_menu_bar_bg": ("02_cube_selected_move", "view3d.HEADER", 4, 16, 1, "3D View header padding"),
-    "panel_toolbar_bg": ("02_cube_selected_move", "view3d.TOOL_HEADER", -200, 16, 2, "tool header row"),
+    "panel_toolbar_bg": (None, "no panel icon bar (the tool settings row is hidden, step 49)"),
     "viewport_bg": ("02_cube_selected_move", "view3d.WINDOW", 380, 90, 2, "persp background, upper area"),
     "viewport_border": ("02_cube_selected_move", "window", 264, 500, 0, "editor border Outliner | view"),
     "cb_bg": ("11_channel_box", "view3d.UI", 24, 213, 2, "Channel Box panel background"),
@@ -80,9 +80,9 @@ KIT_POINTS = {
     "range_slider_bar": (None, "no range bar"),
     "range_slider_handle": (None, "no range bar"),
     "bottom_bars_bg": ("11_channel_box", "timeline.HEADER", 850, 16, 2, "timeline header background"),
-    "command_line_field": ("11_channel_box", "statusbar", 300, 14, 2, "Python command field"),
+    "command_line_field": ("11_channel_box", "statusbar.command", 160, 14, 2, "Python command field"),
     "command_result_field": (None, "no result field"),
-    "help_line_bg": ("11_channel_box", "statusbar", 800, 14, 2, "status bar background"),
+    "help_line_bg": ("11_channel_box", "statusbar.help", 600, 14, 2, "Help Line background"),
     "menu_popup_bg": ("12_create_menu", "topbar", 390, 330, 2, "Create menu body, right margin"),
     "marking_menu_box": ("14_marking_menu_object", "press", -24, -99, 1, "radial box Edge, padding"),
     "marking_menu_list_bg": ("14_marking_menu_object", "press", -198, -77, 1, "list row Select Hierarchy"),
@@ -153,25 +153,25 @@ def mean_colour(img, rect):
 RECTS = (
     ("menuBar", "topbar", "main menu bar"),
     ("StatusLine", "strip.HEADER", "Status Line"),
-    ("Shelf", "strip.TOOL_HEADER", "Shelf"),
-    ("ToolBox", "view3d.TOOLS", "Tool Box"),
+    ("Shelf", "shelf.HEADER", "Shelf (kit: its own header row)"),
+    ("ToolBox", "toolbox", "Tool Box"),
     ("Outliner", "outliner", "Outliner"),
-    ("MainPane", "view3d", "viewport pane"),
-    ("modelPanel4", "view3d.WINDOW", "persp panel (Maya: incl. panel menu + icon bar)"),
+    ("MainPane", "view3d.pane", "viewport pane (kit: 3D View without the sidebar dock)"),
+    ("modelPanel4", "view3d.pane", "persp panel (Maya: incl. panel menu + icon bar; kit: incl. header)"),
     ("ChannelBoxLayerEditor", "view3d.UI", "Channel Box / Layer Editor dock"),
     ("TimeSlider", "timeline.WINDOW", "Time Slider"),
-    ("RangeSlider", "timeline.HEADER", "Range Slider (kit: timeline header)"),
-    ("HelpLine", "statusbar", "Help Line (kit: status bar)"),
-    ("CommandLine", "statusbar", "Command Line (kit: status bar)"),
+    ("RangeSlider", "timeline.HEADER", "Range Slider (kit: timeline header, under the Time Slider)"),
+    ("HelpLine", "statusbar.help", "Help Line (kit: status bar row, left)"),
+    ("CommandLine", "statusbar.command", "Command Line (kit: status bar row, right)"),
 )
-KIT_ONLY = ("outliner_right", "properties")
+KIT_ONLY = ("outliner_right", "properties", "view3d.TOOLS", "view3d.TOOL_HEADER")
 RECT_TOL = 10
 
 # ---------------------------------------------------------------- crops
 # name -> (shot, Maya widget in the dump, kit anchor, stack): side = side by side, over = Maya above kit
 CROPS = (
     ("status_line", "11_channel_box", "StatusLine", "strip.HEADER", "over"),
-    ("shelf", "11_channel_box", "Shelf", "strip.TOOL_HEADER", "over"),
+    ("shelf", "11_channel_box", "Shelf", "shelf.HEADER", "over"),
     ("channel_box", "11_channel_box", "ChannelBoxLayerEditor", "view3d.UI", "side"),
     ("outliner", "11_channel_box", "Outliner", "outliner", "side"),
     ("time_slider", "11_channel_box", "TimeSlider", "timeline.WINDOW", "over"),

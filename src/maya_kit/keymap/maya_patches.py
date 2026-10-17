@@ -22,7 +22,7 @@ ADDED = []
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press",
-                      "maya_kit.select_through")
+                      "maya_kit.select_through", "maya_kit.toolbox_guard")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -522,6 +522,15 @@ def patch_select_through(kd):
                  shadows=(km,))   # in front of the select item on purpose (PASS_THROUGH)
 
 
+# Step 49: a click under the Tool Box column's tools reaches that narrow 3D View's WINDOW region,
+# where view3d.select would deselect everything (it deselects hidden object types too). The guard
+# swallows the click there and passes it through everywhere else (ui/toolbox.py).
+def patch_toolbox_guard(kd):
+    for shift, ctrl in ((False, False), (True, False), (False, True), (True, True)):
+        _add(kd, "3D View", "maya_kit.toolbox_guard", make_event("LEFTMOUSE", "CLICK", shift=shift, ctrl=ctrl),
+             first=True, shadows=("3D View",))   # in front of view3d.select on purpose (PASS_THROUGH)
+
+
 # --- 27. Maya key batch (docs/steps/step_35.md 「계획」) -------------------------------------------
 # Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator (HK:313), Y last non-sacred
 # tool (HK:316), Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw (HK:319-320), F2-F6 menu sets
@@ -582,7 +591,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
-           patch_select_through, patch_key_batch, patch_component_pick_walk)
+           patch_select_through, patch_key_batch, patch_component_pick_walk,
+           patch_toolbox_guard)
 
 
 def apply(data):
