@@ -1,0 +1,315 @@
+"""Step 67: Hypershade window, kit Light Editor, Render menu, Render View Keep Image, AE map buttons, standardSurface
+names. ; GUI: tests/gui/gui_step67_render.py."""
+
+import types
+from importlib import import_module
+
+import bpy
+
+import kit
+
+menu_data = import_module(kit.MODULE + ".ui.menu_data")
+menu_map = import_module(kit.MODULE + ".ui.menu_map")
+menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
+notices = import_module(kit.MODULE + ".ui.notices")
+ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
+ae = import_module(kit.MODULE + ".ui.attribute_editor")
+hs = import_module(kit.MODULE + ".ui.hypershade")
+le = import_module(kit.MODULE + ".ui.light_editor")
+rv = import_module(kit.MODULE + ".ui.render_view")
+maps = import_module(kit.MODULE + ".operators.shading_maps")
+material = import_module(kit.MODULE + ".operators.material")
+status_line = import_module(kit.MODULE + ".ui.status_line")
+
+
+class Rec:
+    """Records every layout call (any method), returns itself so nested layouts record too."""
+
+    def __init__(self, log=None):
+        self.log = [] if log is None else log
+
+    def __getattr__(self, name):
+        def call(*args, **kw):
+            self.log.append((name, args, kw))
+            if name == "panel":
+                return Rec(self.log), Rec(self.log)
+            if name in ("operator", "operator_menu_enum"):
+                props = types.SimpleNamespace()
+                self.log[-1] = (name, args, kw, props)
+                return props
+            return Rec(self.log)
+        return call
+
+    def __setattr__(self, name, value):
+        if name == "log":
+            object.__setattr__(self, name, value)
+
+    def ops(self):
+        return [(e[1][0], e[3]) for e in self.log if e[0] == "operator"]
+
+
+def _clear():
+    if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    for mat in list(bpy.data.materials):
+        bpy.data.materials.remove(mat)
+
+
+def _sphere():
+    bpy.ops.mesh.primitive_uv_sphere_add()
+    return bpy.context.active_object
+
+
+# --- Render menu -------------------------------------------------------------------------------
+
+def test_render_menu_restored():
+    items = [i[0] for i in menu_data.MENUS["mainRenderMenu"][3]]
+    want = ["Render Settings...", "Render Using", "Render Current Frame", "Redo Previous Render",
+            "IPR Render Current Frame", "Render Sequence", "Batch Render"]
+    pos = [items.index(w) for w in want]
+    assert pos == sorted(pos), items
+    assert len(items) > 15, items
+    assert menu_map.MAP["Render/Render Current Frame"] == "render.render"
+    assert menu_map.MAP["Render/Render Sequence"] == ("render.render", {"animation": True})
+    assert menu_map.MAP["Render/IPR Render Current Frame"] == "maya_kit.ipr_toggle"
+    assert menu_map.MAP["Render/Render Using"] == ("menu", "MAYAKIT_MT_render_using")
+    paths = {p for p, _it in menu_sets.iter_items()}
+    for path in ("Render/Render Current Frame", "Render/Batch Render", "Render/Render Using"):
+        assert path in paths, path
+    assert "blender -b" in notices.NOTICES["Render/Batch Render"][1]
+    assert "Render/Batch Render" not in menu_map.MAP
+    # the Render Using menu lists the engines
+    rec = Rec()
+    rv.MAYAKIT_MT_render_using.draw(types.SimpleNamespace(layout=rec), bpy.context)
+    assert rec.log[0][0] == "props_enum" and rec.log[0][1][1] == "engine"
+
+
+def test_windows_menu_and_status_line_share_operators():
+    assert menu_map.MAP["Windows/Rendering Editors/Hypershade"] == "maya_kit.hypershade"
+    assert menu_map.MAP["Windows/Rendering Editors/Light Editor"] == "maya_kit.light_editor"
+    assert not hasattr(status_line, "MAYAKIT_OT_hypershade"), "one Hypershade operator (ui/hypershade.py)"
+    for op in (bpy.ops.maya_kit.hypershade, bpy.ops.maya_kit.light_editor):
+        op.get_rna_type()
+    assert "Light Editor" in notices.NOTICES["Windows/Rendering Editors/Light Editor"][0]
+
+
+# --- names / aiStandardSurface ----------------------------------------------------------------------
+
+def test_standard_surface_name_table():
+    probe = bpy.data.materials.new("probe")
+    probe.use_nodes = True
+    sockets = {s.name for s in ae.principled(probe).inputs}
+    bpy.data.materials.remove(probe)
+    table = dict(ae_layout.STANDARD_SURFACE_ATTRS)
+    assert len(table) >= 30
+    missing = [(a, s) for a, s in table.items() if s and s not in sockets]
+    assert not missing, missing
+    assert table["baseColor"] == "Base Color" and table["specularRoughness"] == "Roughness"
+    assert table["thinWalled"] is None
+    used = {row[1] for _d, sec in ae_layout.walk(ae_layout.STANDARD_SURFACE) for row in sec.rows if row[0] == "socket"}
+    assert used <= set(ae_layout.MAYA_ATTR), used - set(ae_layout.MAYA_ATTR)
+    rows = [row for _d, sec in ae_layout.walk(ae_layout.STANDARD_SURFACE) for row in sec.rows]
+    assert ("missing", "Thin Walled") == rows[-1][:2]
+
+
+def test_ai_standard_surface_kind():
+    _clear()
+    mat = material.new_material('AI_STANDARD_SURFACE')
+    assert mat.name == "aiStandardSurface1", mat.name
+    assert ae.material_type(mat) == "aiStandardSurface"
+    assert ae_layout.BY_KIND["aiStandardSurface"][0] is ae_layout.STANDARD_SURFACE
+
+
+# --- AE map buttons -----------------------------------------------------------------------------------
+
+def test_map_button_drawn_on_socket_rows():
+    _clear()
+    ob = _sphere()
+    mat = material.new_material('STANDARD_SURFACE')
+    material.assign_object(ob, mat)
+    rec = Rec()
+    ae.draw_sections(rec, bpy.context, ob, mat, ae_layout.STANDARD_SURFACE, "t")
+    maps_ = [p for idname, p in rec.ops() if idname == "maya_kit.ae_map"]
+    sockets = [p.socket for p in maps_]
+    assert "Base Color" in sockets and "Roughness" in sockets, sockets
+    assert all(p.material == mat.name for p in maps_)
+    labels = [e[2].get("text", "") for e in rec.log if e[0] == "label"]
+    assert any(t.startswith("Thin Walled:") for t in labels), labels
+    tip = maps.MAYAKIT_OT_ae_map.description(bpy.context, types.SimpleNamespace(socket="Base Color"))
+    assert tip.startswith("baseColor"), tip
+
+
+def test_map_connect_each_kind():
+    _clear()
+    mat = material.new_material('STANDARD_SURFACE')
+    node = maps.principled(mat)
+    for kind, socket, want in (('FILE', "Base Color", 'TEX_IMAGE'), ('RAMP', "Specular Tint", 'VALTORGB'),
+                               ('NOISE', "Roughness", 'TEX_NOISE'), ('CHECKER', "Coat Tint", 'TEX_CHECKER'),
+                               ('NOISE', "Normal", 'BUMP')):
+        assert bpy.ops.maya_kit.ae_map_connect(material=mat.name, socket=socket, kind=kind) == {'FINISHED'}
+        inp = node.inputs[socket]
+        assert inp.is_linked and inp.links[0].from_node.type == want, (kind, socket, inp.links[0].from_node.type)
+    ramp = node.inputs["Specular Tint"].links[0].from_node
+    assert [tuple(round(c, 3) for c in e.color[:3]) for e in ramp.color_ramp.elements] == [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
+    assert ramp.inputs["Fac"].links[0].from_socket.name == "Y", "Maya ramp runs along V"
+    bump = node.inputs["Normal"].links[0].from_node
+    assert bump.inputs["Height"].links[0].from_node.type == 'TEX_NOISE', "Maya bump2d"
+    count = len(mat.node_tree.nodes)
+    assert bpy.ops.maya_kit.ae_map_break(material=mat.name, socket="Base Color") == {'FINISHED'}
+    assert not node.inputs["Base Color"].is_linked and len(mat.node_tree.nodes) == count, "Maya keeps the nodes"
+    # the connected row shows the node and, for a file texture, the image picker
+    material.assign_object(_sphere(), mat)
+    bpy.ops.maya_kit.ae_map_connect(material=mat.name, socket="Base Color", kind='FILE')
+    rec = Rec()
+    ae.draw_sections(rec, bpy.context, bpy.context.active_object, mat, ae_layout.STANDARD_SURFACE, "t")
+    labels = [e[2].get("text", "") for e in rec.log if e[0] == "label"]
+    assert any(t.startswith("Color: connected (") for t in labels), labels
+    assert any(e[0] == "template_ID" and e[1][1] == "image" for e in rec.log)
+
+
+# --- Hypershade -----------------------------------------------------------------------------------------
+
+def _node_space():
+    area = bpy.context.window_manager.windows[0].screen.areas[0]
+    old = area.ui_type
+    area.ui_type = 'ShaderNodeTree'
+    return area, old
+
+
+def test_hypershade_browser_create_assign():
+    _clear()
+    ob = _sphere()
+    wm = bpy.context.window_manager
+    wm.maya_kit_hs_material = ""
+    area, old = _node_space()
+    space = area.spaces.active
+    try:
+        # Create = a material, unassigned, kept on save (fake user), current in the Hypershade
+        with bpy.context.temp_override(area=area, space_data=space):
+            assert bpy.ops.maya_kit.hs_create(kind='STANDARD_SURFACE') == {'FINISHED'}
+        mat = bpy.data.materials["standardSurface1"]
+        assert mat.use_fake_user and mat.users == 1 and not ob.material_slots
+        assert hs.current(bpy.context) == mat and wm.maya_kit_hs_material == mat.name
+        assert space.pin and space.node_tree == mat.node_tree, "not on the object: the graph is pinned to it"
+        # Assign Material To Selection
+        assert bpy.ops.maya_kit.assign_material(material=mat.name) == {'FINISHED'}
+        assert ob.material_slots[0].material == mat
+        # picking a material the object has = its slot, the graph follows the object again
+        other = material.new_material('LAMBERT')
+        with bpy.context.temp_override(area=area, space_data=space):
+            bpy.ops.maya_kit.hs_pick(material=other.name)
+        assert space.pin and space.node_tree == other.node_tree
+        with bpy.context.temp_override(area=area, space_data=space):
+            bpy.ops.maya_kit.hs_pick(material=mat.name)
+        assert not space.pin and ob.active_material == mat
+        # panels draw: browser buttons for every material, Create kinds, Property Editor = AE material sections
+        rec = Rec()
+        hs.draw_browser(rec, bpy.context)
+        assert {p.material for i, p in rec.ops() if i == "maya_kit.hs_pick"} == {mat.name, other.name}
+        rec = Rec()
+        hs.draw_create(rec, bpy.context)
+        assert [p.kind for i, p in rec.ops()] == list(hs.CREATE)
+        rec = Rec()
+        hs.draw_property_editor(rec, bpy.context)
+        assert any(i == "maya_kit.ae_map" for i, _p in rec.ops())
+    finally:
+        area.ui_type = old
+
+
+# --- Light Editor -------------------------------------------------------------------------------------
+
+def _light(kind, name):
+    data = bpy.data.lights.new(name, kind)
+    ob = bpy.data.objects.new(name, data)
+    bpy.context.collection.objects.link(ob)
+    return ob
+
+
+def test_light_editor_isolate_enable():
+    _clear()
+    sc = bpy.context.scene
+    a, b, c = _light('SUN', "directionalLight1"), _light('POINT', "pointLight1"), _light('SPOT', "spotLight1")
+    c.hide_render = True                       # off before isolating: stays off after
+    assert [o.name for o in le.lights(bpy.context)] == ["directionalLight1", "pointLight1", "spotLight1"]
+    assert bpy.ops.maya_kit.light_isolate(light="pointLight1") == {'FINISHED'}
+    assert le.isolated(sc) == "pointLight1"
+    assert not le.enabled(a) and le.enabled(b) and not le.enabled(c)
+    # isolating another light moves the solo
+    bpy.ops.maya_kit.light_isolate(light="directionalLight1")
+    assert le.enabled(a) and not le.enabled(b)
+    # pressed again: everything back
+    bpy.ops.maya_kit.light_isolate(light="directionalLight1")
+    assert le.isolated(sc) == "" and le.ISOLATE_PROP not in sc
+    assert le.enabled(a) and le.enabled(b) and c.hide_render and not c.hide_viewport
+    # Enable toggles render + viewport together
+    bpy.ops.maya_kit.light_enable(light="pointLight1")
+    assert b.hide_render and b.hide_viewport
+    bpy.ops.maya_kit.light_enable(light="pointLight1")
+    assert not b.hide_render and not b.hide_viewport
+    # a light deleted while isolated is skipped on restore
+    bpy.ops.maya_kit.light_isolate(light="pointLight1")
+    bpy.data.objects.remove(a)
+    bpy.ops.maya_kit.light_isolate(light="pointLight1")
+    assert le.isolated(sc) == ""
+    # select from the list
+    bpy.ops.maya_kit.light_select(light="pointLight1")
+    assert bpy.context.active_object == b and b.select_get()
+
+
+def test_light_editor_panels():
+    _clear()
+    _light('POINT', "pointLight1")
+    rec = Rec()
+    le.draw_list(rec, bpy.context)
+    ops = rec.ops()
+    assert [p.kind for i, p in ops if i == "maya_kit.create"] == [k for k, _i in le.CREATE]
+    for idname in ("maya_kit.light_select", "maya_kit.light_enable", "maya_kit.light_isolate"):
+        assert any(i == idname and p.light == "pointLight1" for i, p in ops), idname
+    props = [e[1][1] for e in rec.log if e[0] == "prop"]
+    assert "color" in props and "energy" in props
+    bpy.context.view_layer.objects.active = bpy.data.objects["pointLight1"]
+    rec = Rec()
+    le.draw_property_editor(rec, bpy.context)
+    labels = [e[2].get("text", "") for e in rec.log if e[0] == "label"]
+    assert "pointLight:" in labels and "Point Light Attributes" in labels, labels
+    # the tab polls only in a marked Light Editor window (one area)
+    ctx = types.SimpleNamespace(space_data=bpy.context.window.screen.areas[0].spaces.active, window=bpy.context.window)
+    assert not le.is_light_editor(ctx)
+
+
+# --- Render View Keep Image -----------------------------------------------------------------------------
+
+def test_keep_image_render_slots():
+    sc = bpy.context.scene
+    if sc.camera is None:
+        cam = bpy.data.objects.new("camera1", bpy.data.cameras.new("camera1"))
+        sc.collection.objects.link(cam)
+        sc.camera = cam
+    sc.render.engine = 'BLENDER_WORKBENCH'
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 32, 18, 100
+    bpy.ops.render.render()
+    image = rv.render_result()
+    assert image is not None
+    slots = image.render_slots
+    slots.active_index = 0
+    image[rv.KEPT_PROP] = []
+    assert bpy.ops.maya_kit.render_keep_image() == {'FINISHED'}
+    assert rv.kept(image) == {0} and slots.active_index == 1, "next render goes to slot 2"
+    bpy.ops.render.render()
+    assert slots.active_index == 1
+    # all slots kept -> a new one
+    for _ in range(len(slots) - 1):
+        rv.keep(image)
+    assert len(slots) == 9 and slots.active_index == 8
+    # Remove Image forgets the shown slot
+    slots.active_index = 3
+    assert rv.remove(image) == 3 and 3 not in rv.kept(image)
+    # header buttons only for Render Result
+    rec = Rec()
+    rv.draw_header(rec, types.SimpleNamespace(space_data=types.SimpleNamespace(image=image)))
+    assert [i for i, _p in rec.ops()] == ["render.render", "maya_kit.render_keep_image", "maya_kit.render_remove_image"]
+    rec = Rec()
+    rv.draw_header(rec, types.SimpleNamespace(space_data=types.SimpleNamespace(image=None)))
+    assert not rec.log

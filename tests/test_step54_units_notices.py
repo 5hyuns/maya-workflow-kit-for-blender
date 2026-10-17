@@ -159,11 +159,11 @@ def test_notice_in_tooltip_and_help_line():
     assert "NLA" in notices.current(), "the Help Line shows the notice while the tooltip is up"
     # a greyed item keeps maya_kit.menu_unavailable, tooltip with the notice
     rec = _Rec()
-    menu_sets.draw_item(rec, "Windows/Rendering Editors/Light Editor", "Light Editor")
+    menu_sets.draw_item(rec, "Render/Batch Render", "Batch Render")     # step 67 (Light Editor is mapped now)
     assert rec.log[0][0] == "maya_kit.menu_unavailable"
     tip = menu_sets.MAYAKIT_OT_menu_unavailable.description(
-        bpy.context, types.SimpleNamespace(item="Windows/Rendering Editors/Light Editor"))
-    assert "Light Editor" in tip and "Outliner" in tip, tip
+        bpy.context, types.SimpleNamespace(item="Render/Batch Render"))
+    assert "Batch Render" in tip and "blender -b" in tip, tip
     # items without a notice are unchanged
     rec = _Rec()
     menu_sets.draw_item(rec, "Create/Polygon Primitives/Cube", "Cube")

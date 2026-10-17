@@ -288,10 +288,25 @@ def draw_row(layout, context, ob, target, row):
         inp = node.inputs.get(socket) if node is not None else None
         if inp is None:
             return
+        row = layout.row(align=True)
         if inp.is_linked:
-            layout.label(text=f"{label}: connected ({inp.links[0].from_node.name})")
+            source = inp.links[0].from_node
+            row.label(text=f"{label}: connected ({source.name})")
         elif hasattr(inp, "default_value"):
-            layout.prop(inp, "default_value", text=label)
+            row.prop(inp, "default_value", text=label)
+        else:
+            row.label(text=label)
+        # Maya's map (checker) button: Create Render Node / Break Connection (operators/shading_maps.py, step 67)
+        op = row.operator("maya_kit.ae_map", text="", icon='TEXTURE')
+        op.material, op.socket = target.name, socket
+        if inp.is_linked and source.type == 'TEX_IMAGE':
+            # Maya file node's Image Name with its folder button
+            layout.template_ID(source, "image", new="image.new", open="image.open")
+    elif kind == "missing":
+        _k, label, note = row
+        sub = layout.row()
+        sub.enabled = False
+        sub.label(text=f"{label}: {note}")
 
 
 def draw_sections(layout, context, ob, target, sections, layout_id, prefix=""):

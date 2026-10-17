@@ -24,6 +24,8 @@ SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 # kind -> (Maya node name, UI label, Principled inputs).
 MATERIALS = {
     'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {}),
+    # Arnold's default material (Maya with mtoa); same Principled stand-in (render.md, step 67)
+    'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
     'LAMBERT': ("lambert", "Lambert", {"Roughness": 1.0, "Specular IOR Level": 0.0}),
     'BLINN': ("blinn", "Blinn", {"Roughness": 0.3}),
     'PHONG': ("phong", "Phong", {"Roughness": 0.15}),
