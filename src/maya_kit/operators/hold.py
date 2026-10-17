@@ -33,30 +33,44 @@ class SnapGroup(HoldGroup):
     ELEMENTS = {"grid": {'GRID'}, "curve": {'EDGE'}, "point": {'VERTEX'}, "step": {'INCREMENT'}}
 
     def capture(self, ts):
-        return (ts.use_snap, set(ts.snap_elements))
+        return (ts.use_snap, set(ts.snap_elements), ts.snap_target)
 
     def apply(self, ts, names):
         elements = set().union(*(self.ELEMENTS[n] for n in names))
         ts.snap_elements = elements
         ts.use_snap = True
+        # Maya snaps the manipulator centre (the pivot / the component bbox centre), not the
+        # object's closest point ( S2, S4, S5).
+        ts.snap_target = 'CENTER'
 
     def restore(self, ts, state):
-        use_snap, elements = state
+        use_snap, elements, target = state
         ts.snap_elements = elements
         ts.use_snap = use_snap
+        ts.snap_target = target
 
 
 class PivotGroup(HoldGroup):
-    """D hold: transform affects only object origins ()."""
+    """D hold: transform affects only object origins () and
+    not the children; ``pivot.watch`` rewrites each such transform the Maya way (channels
+    stay,  「계획」 1)."""
 
     def capture(self, ts):
-        return ts.use_transform_data_origin
+        return (ts.use_transform_data_origin, ts.use_transform_skip_children)
 
     def apply(self, ts, names):
-        ts.use_transform_data_origin = True
+        set_pivot_mode(ts, True)
 
     def restore(self, ts, state):
-        ts.use_transform_data_origin = state
+        ts.use_transform_data_origin, ts.use_transform_skip_children = state
+
+
+def set_pivot_mode(ts, on):
+    ts.use_transform_data_origin = on
+    ts.use_transform_skip_children = on
+    if on:
+        from . import pivot
+        pivot.watch()
 
 
 class ComponentPivotGroup(HoldGroup):
@@ -103,6 +117,15 @@ def begin(ts, name):
     if name not in st["active"]:
         st["active"].append(name)
     group.apply(ts, st["active"])
+    _redraw()
+
+
+def _redraw():
+    """Status Line snap buttons and the manipulator show the held state at once (pivot_snap.md S6)."""
+    wm = getattr(bpy.context, "window_manager", None)
+    for window in wm.windows if wm is not None else ():
+        for area in window.screen.areas:
+            area.tag_redraw()
 
 
 def end(ts, name):
@@ -118,6 +141,7 @@ def end(ts, name):
     else:
         group.restore(ts, st["saved"])
         del _state[group_name]
+    _redraw()
 
 
 def end_all(ts):
@@ -187,7 +211,13 @@ class MAYAKIT_OT_hold(bpy.types.Operator):
                 return self._finish(context)
             return {'RUNNING_MODAL'}  # key repeat
         if event.type == 'TIMER' and keystate.is_down(self._key) is False:
-            # RELEASE was consumed by another modal (e.g. a transform drag).
+            # RELEASE was consumed by another modal (e.g. a transform drag). Wait for that
+            # transform to end: it writes its snap state back to the tool settings when it
+            # finishes, which would undo a restore made during the drag (step 59).
+            window = context.window
+            if window is not None and any(op.bl_idname.startswith("TRANSFORM_OT_")
+                                          for op in window.modal_operators):
+                return {'PASS_THROUGH'}
             return self._finish(context)
         return {'PASS_THROUGH'}
 
@@ -200,7 +230,8 @@ class MAYAKIT_OT_pivot_toggle(bpy.types.Operator):
 
     def execute(self, context):
         ts = context.scene.tool_settings
-        ts.use_transform_data_origin = not ts.use_transform_data_origin
+        set_pivot_mode(ts, not ts.use_transform_data_origin)
+        _redraw()
         self.report({'INFO'}, "Pivot edit " + ("on" if ts.use_transform_data_origin else "off"))
         return {'FINISHED'}
 

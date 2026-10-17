@@ -14,6 +14,13 @@ import bpy
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
+    # Pivot / snapping (step 59, )
+    "Modify/Make Live": (
+        "Face snapping", "Blender snaps onto every surface, not only the live one: Make Live turns face "
+        "snapping on and names the surface in the Status Line."),
+    "Modify/Bake Pivot": (
+        "Pivot orientation", "Blender has one pivot (the origin), so only the pivot orientation is baked into "
+        "Rotate; the position already is the object's pivot."),
     # Animation (W3: Animation Layers -> NLA, Character Sets -> Keying Sets, Time Editor / Trax -> NLA)
     "Windows/Relationship Editors/Animation Layers": (
         "NLA Editor", "Blender has no animation layers: stack actions as NLA tracks (blend mode per strip)."),

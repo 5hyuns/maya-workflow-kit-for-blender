@@ -426,6 +426,12 @@ def draw_status_line(layout, context):
             else:
                 row.operator(MAYAKIT_OT_snap_toggle.bl_idname, text="", icon=icon,
                              depress=snap_on(ts, name)).snap = name
+        # Maya's live surface field ( S13, step 59)
+        live = getattr(context.scene, "maya_kit_live", None)
+        sub = layout.row(align=True)
+        sub.ui_units_x = 6
+        sub.operator("maya_kit.make_live", text=live.name if live else "No Live Surface",
+                     icon='SNAP_FACE' if live else 'NONE', depress=live is not None)
 
     if _group(layout, "SYMMETRY"):
         draw_symmetry(layout, context)

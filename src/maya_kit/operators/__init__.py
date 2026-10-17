@@ -9,29 +9,33 @@ Operator ids use the ``maya_kit.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (component, create, display, duplicate, freeze, group, history, hold, joints, manip, marquee,
-               material, menu_extras, parenting, pickwalk, preselect, skin, symmetry, taphold, time_keys, tool_keys,
-               units, view, visibility)
+               material, menu_extras, parenting, pickwalk, pivot, preselect, skin, snap_align, symmetry, taphold,
+               time_keys, tool_keys, units, view, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
            *duplicate.classes, *history.classes, *create.classes, *visibility.classes,
            *component.classes, *manip.classes, *material.classes,
            *marquee.classes, *preselect.classes, *menu_extras.classes,
-           *tool_keys.classes, *symmetry.classes, *time_keys.classes, *joints.classes, *skin.classes)
+           *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
+           *joints.classes, *skin.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
 def register():
     _register_classes()
+    snap_align.register_props()
     taphold.register_bindings()
     view.register_timer()
     units.register_handler()
     tool_keys.register_timer()
     symmetry.register_handler()
+    pivot.register_handler()
 
 
 def unregister():
+    pivot.unregister_handler()
     symmetry.unregister_handler()
     tool_keys.unregister_timer()
     marquee.restore_all()
@@ -41,4 +45,5 @@ def unregister():
     view.unregister_timer()
     hold.unregister_cleanup()
     taphold.unregister_bindings()
+    snap_align.unregister_props()
     _unregister_classes()

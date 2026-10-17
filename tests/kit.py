@@ -89,6 +89,13 @@ def snapshot():
     from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active
     snap["ui_methods"] += [f"VIEW3D_PT_tools_active.{n} own: {VIEW3D_PT_tools_active.__dict__.get(n)!r}"
                            for n in ("draw", "tools_from_context")]
+    # step 59: Move/Rotate/Scale ToolDefs carry the Maya manipulator's gizmo group while enabled.
+    from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
+    for mode in ("OBJECT", "EDIT_MESH"):
+        snap["ui_methods"] += sorted(
+            f"tool {mode} {it.idname}: {it.widget}"
+            for it, _i in ToolSelectPanelHelper._tools_flatten_with_tool_index(VIEW3D_PT_tools_active._tools[mode])
+            if it is not None and not callable(it) and it.idname in ("builtin.move", "builtin.rotate", "builtin.scale"))
     snap["ui_methods"].append(f"STATUSBAR_HT_header.draw: {bpy.types.STATUSBAR_HT_header.draw!r}")
     # step 50: Maya Outliner header, timeline menus moved into the Range Slider's preferences menu
     snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")

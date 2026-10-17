@@ -47,9 +47,15 @@ def _create(kind):
     return ("maya_kit.create", {"kind": kind})
 
 
-def _orient(kind):
+def _orient(kind, slot=0):
     # Not transform.select_orientation: invoked from a menu it opens its own enum popup (GUI test).
-    return ("wm.context_set_enum", {"data_path": "scene.transform_orientation_slots[0].type", "value": kind})
+    # W/E/R menus set their own tool's slot (1 move, 2 rotate, 3 scale): Maya keeps one axis mode
+    # per tool, Move = World and Rotate/Scale = Object by default (pivot_snap.md P12, step 59).
+    return ("wm.context_set_enum", {"data_path": f"scene.transform_orientation_slots[{slot}].type", "value": kind})
+
+
+def _step(kind, mode='TOGGLE'):
+    return ("maya_kit.step_snap", {"kind": kind, "mode": mode})
 
 
 def _comp(kind):
@@ -417,20 +423,20 @@ CTRL_CONVERT = MarkingMenu(
 OPT_MOVE = MarkingMenu(
     "translateMarkingMenuImpl", "Move Options", " translateMarkingMenuImpl",
     radial={
-        "NE": ("Component", _orient('NORMAL')),                            # :19
-        "W": ("World", _orient('GLOBAL')),                                 # :27
-        "NW": ("Object", _orient('LOCAL')),                                # :35
+        "NE": ("Component", _orient('NORMAL', 1)),                         # :19
+        "W": ("World", _orient('GLOBAL', 1)),                              # :27
+        "NW": ("Object", _orient('LOCAL', 1)),                             # :35
         "SE": ("Keep Spacing", None),                                      # :43
         "N": SYMMETRY,                                                     # :104
         "E": ("Snap", Sub(radial={                                         # :116
-            "E": ("Discrete Move", ("maya_kit.snap_toggle", {"snap": 'GRID'})),
+            "E": ("Discrete Move", _step('TRANSLATE')),
             "SE": ("Vertex", ("maya_kit.snap_toggle", {"snap": 'POINT'})),
             "SW": ("Face Center", None),
         })),
         "SW": ("Axis", Sub(radial={                                        # :152
-            "NW": ("Normal", _orient('NORMAL')),
-            "W": ("Parent", _orient('PARENT')),
-            "NE": ("Along Rotation Axis", _orient('GIMBAL')),
+            "NW": ("Normal", _orient('NORMAL', 1)),
+            "W": ("Parent", _orient('PARENT', 1)),
+            "NE": ("Along Rotation Axis", _orient('GIMBAL', 1)),
             "N": ("Live Object Axis", None),
             "SW": ("Custom", None),
         })),
@@ -447,12 +453,12 @@ OPT_MOVE = MarkingMenu(
 OPT_ROTATE = MarkingMenu(
     "rotateMarkingMenuImpl", "Rotate Options", " rotateMarkingMenuImpl",
     radial={
-        "NW": ("Object", _orient('LOCAL')),                                # :19
-        "W": ("World", _orient('GLOBAL')),                                 # :24
+        "NW": ("Object", _orient('LOCAL', 2)),                             # :19
+        "W": ("World", _orient('GLOBAL', 2)),                              # :24
         "SW": ("Custom", Sub(radial={"E": ("Custom", None), "NW": ("Reset", None)})),  # :29
-        "SE": ("Discrete Rotate", None),                                   # :66
-        "NE": ("Component", _orient('NORMAL')),                            # :71
-        "E": ("Gimbal", _orient('GIMBAL')),                                # :77
+        "SE": ("Discrete Rotate", _step('ROTATE')),                        # :66 (15 degrees, S3)
+        "NE": ("Component", _orient('NORMAL', 2)),                         # :71
+        "E": ("Gimbal", _orient('GIMBAL', 2)),                             # :77
         "N": SYMMETRY,                                                     # :86
     },
     items=[
@@ -467,17 +473,17 @@ OPT_ROTATE = MarkingMenu(
 OPT_SCALE = MarkingMenu(
     "scaleMarkingMenuImpl", "Scale Options", " scaleMarkingMenuImpl",
     radial={
-        "W": ("World", _orient('GLOBAL')),                                 # :18
-        "NW": ("Object", _orient('LOCAL')),                                # :24
-        "NE": ("Component", _orient('NORMAL')),                            # :30
+        "W": ("World", _orient('GLOBAL', 3)),                              # :18
+        "NW": ("Object", _orient('LOCAL', 3)),                             # :24
+        "NE": ("Component", _orient('NORMAL', 3)),                         # :30
         "SW": ("Axis", Sub(radial={                                        # :36
-            "W": ("Parent", _orient('PARENT')),
-            "NW": ("Normal", _orient('NORMAL')),
+            "W": ("Parent", _orient('PARENT', 3)),
+            "NW": ("Normal", _orient('NORMAL', 3)),
             "N": ("Live Object Axis", None),
-            "NE": ("Along Rotation Axis", _orient('GIMBAL')),
+            "NE": ("Along Rotation Axis", _orient('GIMBAL', 3)),
         })),
-        "E": ("Snap Scale", None),                                         # :101
-        "SE": ("Relative", None),                                          # :107
+        "E": ("Snap Scale", _step('RESIZE')),                              # :101
+        "SE": ("Relative", _step('RESIZE', 'RELATIVE')),                   # :107
         "N": SYMMETRY,                                                     # :117
     },
     items=[

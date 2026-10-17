@@ -129,7 +129,7 @@ drag("fallback")
 
 @step
 def s_fallback():
-    check("Move tool: marquee in empty space (fallback select box) selects 8", C["fallback"] == 8)
+    check(f"Move tool: marquee in empty space (fallback select box) selects 8 ({C['fallback']})", C["fallback"] == 8)
     check("X-ray restored after the fallback drag", not shading().show_xray)
     set_tool("builtin.select_box")
     deselect()
