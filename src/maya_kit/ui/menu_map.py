@@ -401,8 +401,18 @@ MAP = {
     # --- Visualize ---
     "Visualize/Create Editable Motion Trail": "object.paths_calculate",
     # --- FX ---
-    "nCloth/Create nCloth": _mod('CLOTH'),
-    "nCloth/Create Passive Collider": _mod('COLLISION'),
+    # step 68 (operators/fx.py, research/maya/workflows/fx.md §4): Maya units + nucleus, every selected mesh
+    "nParticles/Create Emitter": "maya_kit.fx_emitter",
+    "nParticles/Create Emitter#2": "maya_kit.fx_emitter",               # Legacy Particles section
+    "nParticles/Emit from Object": "maya_kit.fx_emit_from_object",
+    "nParticles/Emit from Object#2": "maya_kit.fx_emit_from_object",
+    "nCloth/Create nCloth": "maya_kit.fx_ncloth",
+    "nCloth/Create Passive Collider": "maya_kit.fx_passive",
+    "nCloth/Remove nCloth": "maya_kit.fx_remove_ncloth",
+    "nCache/Create New Cache/nObject": ("maya_kit.ncache", {"action": 'CREATE', "kind": 'NOBJECT'}),
+    "nCache/Create New Cache/Maya Fluid": ("maya_kit.ncache", {"action": 'CREATE', "kind": 'FLUID'}),
+    "nCache/Delete Cache": ("maya_kit.ncache", {"action": 'DELETE', "kind": 'ALL'}),
+    "Fields/Solvers/Interactive Playback": "screen.animation_play",
     "nHair/Create Hair": "object.curves_empty_hair_add",
     "Fluids/3D Container": "maya_kit.quick_smoke",
     "Fluids/Ocean": _mod('OCEAN'),
@@ -415,8 +425,8 @@ MAP = {
     "Fields/Solvers/Turbulence": _create('FIELD_TURBULENCE'),
     "Fields/Solvers/Uniform": _create('FIELD_UNIFORM'),
     "Fields/Solvers/Vortex": _create('FIELD_VORTEX'),
-    "Fields/Solvers/Create Active Rigid Body": ("rigidbody.object_add", {"type": 'ACTIVE'}),
-    "Fields/Solvers/Create Passive Rigid Body": ("rigidbody.object_add", {"type": 'PASSIVE'}),
+    "Fields/Solvers/Create Active Rigid Body": ("maya_kit.fx_rigid", {"type": 'ACTIVE'}),
+    "Fields/Solvers/Create Passive Rigid Body": ("maya_kit.fx_rigid", {"type": 'PASSIVE'}),
     "Fields/Solvers/Create Pin Constraint": ("rigidbody.connect", {"con_type": 'POINT'}),
     "Fields/Solvers/Create Hinge Constraint": ("rigidbody.connect", {"con_type": 'HINGE'}),
     "Fields/Solvers/Create Spring Constraint": ("rigidbody.connect", {"con_type": 'GENERIC_SPRING'}),

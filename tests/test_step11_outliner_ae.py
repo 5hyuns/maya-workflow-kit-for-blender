@@ -290,7 +290,8 @@ def _rna_owner(owner_name, kind):
         return bpy.types.SpaceView3D
     return {"MESH": bpy.types.Mesh, "CAMERA": bpy.types.Camera, "POINT": bpy.types.PointLight,
             "SUN": bpy.types.SunLight, "SPOT": bpy.types.SpotLight, "AREA": bpy.types.AreaLight,
-            "material": bpy.types.Material}.get(kind)
+            "material": bpy.types.Material,
+            "nucleus": bpy.types.Scene.bl_rna.properties["maya_kit_nucleus"].fixed_type}.get(kind)   # step 68
 
 
 def test_ae_rows_exist_in_blender():

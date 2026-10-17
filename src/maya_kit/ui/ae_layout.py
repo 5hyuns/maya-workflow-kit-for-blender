@@ -242,6 +242,23 @@ JOINT = [
       ("prop", "ob", "custom_shape", "Display as Control Shape")),
 ]
 
+# --- nucleus (step 68): Maya's nucleus1 attributes on Scene.maya_kit_nucleus (operators/fx.py). Section names from
+# Maya's nucleus Attribute Editor [K] (no template in the research); Ground Plane / Wind / Time Scale are not kept.
+NUCLEUS = [
+    S("Gravity and Wind", True,
+      ("prop", "data", "gravity", "Gravity"),
+      ("prop", "data", "gravity_direction", "Gravity Direction"),
+      ("missing", "Air Density / Wind", "Blender wind is a force field (Fields/Solvers > Air)")),
+    S("Ground Plane", False,
+      ("missing", "Use Plane", "make a ground mesh a Passive Collider (nCloth > Create Passive Collider)")),
+    S("Solver Attributes", True,
+      ("prop", "data", "substeps", "Substeps")),
+    S("Scale Attributes", True,
+      ("prop", "data", "space_scale", "Space Scale")),
+]
+NUCLEUS_NOTE = ("Blender has no nucleus node: Maya Kit writes these values to the scene gravity, the rigid body world "
+                "and every cloth.")
+
 PLAIN_MATERIAL = [
     S("Common Material Attributes", True,
       ("prop", "data", "diffuse_color", "Color"),
@@ -266,6 +283,7 @@ BY_KIND = {
     "phong": (PHONG, None),
     "surfaceShader": (SURFACE_SHADER, None),
     "material": (PLAIN_MATERIAL, None),
+    "nucleus": (NUCLEUS, None),
 }
 
 # Maya node type shown in the tab header ("transform: [pCube1]").

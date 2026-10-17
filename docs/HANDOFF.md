@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 68 (FX: 시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache) 완료 — `docs/steps/step_68.md`. `operators/fx.py`: g = maya_unit / Space Scale
+  (중력 9.8·g, 길이 × maya_unit, 천 강성·감쇠 × g — 측정), `Scene.maya_kit_nucleus` + AE 「nucleus1」 탭, Create Emitter (`emitter1` + `nParticle1`),
+  Emit from Object, nCloth / Passive / Remove / 강체를 선택 전부에, `maya_kit.ncache` (포인트 캐시 · 강체 · GN · Mantaflow). 측정: 파티클·강체는 1 m 장면과
+  정확히 같음, Blender 하한 0.001 m (충돌 거리·두께·파티클 크기 = 0.1 유닛). 헤드리스 560/560, GUI 0.8 470/470, gui_step68 8/8, dogfood 47/47.
+  **바로 다음 할 일**: step 69 — 씬 관리: Set Project · Ctrl+Alt+S 증분 · Create Reference + 네임스페이스 · Reference Editor (근거
+  `research/maya/workflows/scene.md`). `docs/steps/step_69.md` 「계획」 먼저. 그다음 70 Graph Editor.
+
 - Step 67 (Hypershade · Light Editor · Render 메뉴 · Keep Image · AE 맵 버튼) 완료 — `docs/steps/step_67.md`. `maya_kit.hypershade` = Shader Editor 새 창 +
   사이드바 「Hypershade」 탭 (Browser 미리보기 · Create · Assign Material To Selection · Property Editor; 메뉴·Status Line·핫박스 Windows 메뉴 공통),
   `maya_kit.light_editor` = 3D View 새 창 + 「Light Editor」 탭 (이름·색·Intensity·켜기·Solo, AE 라이트 섹션), Render 메뉴 17 항목 복원 (gen_menu_data

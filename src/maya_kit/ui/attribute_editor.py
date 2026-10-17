@@ -82,7 +82,19 @@ def tabs(ob):
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
             out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
+    if has_nucleus(ob):
+        out.append(("NUC", "nucleus1", "nucleus"))     # Maya's shared solver node (operators/fx.py, step 68)
     return out + _constraint_tabs(ob)
+
+
+def has_nucleus(ob):
+    """The kit nucleus exists and ``ob`` is simulated by it (cloth, particles, collider, rigid body)."""
+    scene = bpy.context.scene
+    nuc = getattr(scene, "maya_kit_nucleus", None)
+    if nuc is None or not nuc.exists:
+        return False
+    return (ob.rigid_body is not None or any(md.type in {'CLOTH', 'COLLISION', 'PARTICLE_SYSTEM', 'SOFT_BODY'}
+                                             for md in ob.modifiers))
 
 
 def _kind(key):
@@ -118,6 +130,8 @@ def tab_target(ob, key):
     if kind == "MAT":
         i = int(key[4:])
         return ob.material_slots[i].material if i < len(ob.material_slots) else None
+    if kind == "NUC":
+        return bpy.context.scene.maya_kit_nucleus
     return None
 
 
@@ -135,6 +149,8 @@ def sections_for(ob, key):
         mat = tab_target(ob, key)
         name = material_type(mat)
         return ae_layout.BY_KIND[name][0], name
+    if kind == "NUC":
+        return ae_layout.BY_KIND["nucleus"][0], "nucleus"
     return [], None
 
 
@@ -406,6 +422,12 @@ def draw(layout, context, ob):
     label = next(t[2] for t in tabs(ob) if t[0] == key)
     head = layout.row(align=True)
     head.label(text=f"{label}:")
+    if _kind(key) == "NUC":
+        head.label(text="nucleus1")
+        from . import chrome
+        chrome.paragraph(layout, context, ae_layout.NUCLEUS_NOTE)
+        draw_sections(layout, context, ob, target, ae_layout.NUCLEUS, "nucleus")
+        return
     head.prop(target, "name", text="")
     if _kind(key) == "C":
         draw_constraint(layout, context, ob, target)

@@ -468,3 +468,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 67) Keep Image → 다시 렌더 → 새 슬롯에 그려짐, J / Alt+J 로 이전 이미지와 비교 (Maya Render View 아래 스크롤바 대신). Remove Image = 지금 슬롯 비움.
 - [ ] (step 67) Windows > Rendering Editors > Light Editor: 3D View 창, 사이드바 「Light Editor」 탭 활성, 표 (이름 · 색 · Intensity · 켜기 · Solo), 위 라이트 만들기 아이콘 — render_03_win1 비교. 이름 클릭 = 선택 (Shift 추가), Solo = 나머지 꺼짐 (뷰포트 Rendered 에서 확인), 다시 = 복구. 아래 Property Editor = 선두 라이트 AE 섹션 + Translate/Rotate/Scale.
 - [ ] (step 67) Render > Render Settings… / Status Line 톱니 / Windows > Rendering Editors > Render Settings: 새 Properties 창이 Render 탭으로 열리고 (render_04_win1 비교), 원래 화면의 AE (독 또는 Properties) 는 그대로. AE 라이트 (Point/Spot/Area) 에 회색 Decay Rate: Quadratic 행.
+
+### Step 68 — FX (시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache)
+
+- [ ] (step 68) MayaKit 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
+- [ ] (step 68) 메시 둘 선택 → Emit from Object: 둘 다 정점에서 방출. Shelf FX 「Emitter」 = Create Emitter, 「Add Emitter」 = Emit from Object.
+- [ ] (step 68) Create > Plane (위로 올림) → nCloth > Create nCloth → 처음 프레임부터 재생: Maya fx_02→03 처럼 1 m 천 같은 빠르기로 떨어지고 주름. 바닥 평면 Create Passive Collider 위에서 0.2 유닛 정도 위에 멈춤 (1.5 유닛 위에 뜨지 않음). 두 평면을 같이 선택하면 둘 다 천.
+- [ ] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글.
+- [ ] (step 68) nCache > Create New Cache > nObject → 타임라인에 구운 캐시 (주황 → 확정), 선택 없으면 장면 전체; Delete Cache → 다시 시뮬레이션. Enable/Disable All Caches 는 회색 + 안내.
+- [ ] (step 68) Fields/Solvers > Create Active Rigid Body (여러 개 선택) → 모두 강체, 바닥 Passive 위에 Maya 처럼 떨어져 멈춤.
