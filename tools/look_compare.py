@@ -363,6 +363,25 @@ def crops(geom, kit_img):
 
 
 # ---------------------------------------------------------------- outside
+def gui_run(blender, env, script, name, args):
+    """One GUI Blender (1600x900) in the sandbox running tools/<script>; returns its checks."""
+    result = SANDBOX / f"{name}.json"
+    if result.exists():
+        result.unlink()
+    cmd = [blender, *args, "--window-geometry", "0", "0", "1600", "900",
+           "--python", str(ROOT / "tools" / script), "--", str(result)]
+    with open(SANDBOX / f"{name}.log", "w", encoding="utf-8", errors="replace") as fh:
+        proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
+                                stderr=subprocess.STDOUT)
+        try:
+            proc.wait(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()  # only the Blender started here
+    if not result.exists():
+        return [{"name": f"{script} wrote no results (see tmp/look_env/{name}.log)", "ok": False}]
+    return json.loads(result.read_text(encoding="utf-8"))
+
+
 def main(argv):
     sys.path.insert(0, str(ROOT / "tools"))
     import build
@@ -381,16 +400,12 @@ def main(argv):
             return 1
         shots.mkdir(parents=True, exist_ok=True)
         env["MAYA_KIT_LOOK_SHOTS"] = str(shots)
-        cmd = [blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
-               "--python", str(ROOT / "tools" / "look_shots.py"), "--", str(SANDBOX / "shots.json")]
-        with open(SANDBOX / "shots.log", "w", encoding="utf-8", errors="replace") as fh:
-            proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
-                                    stderr=subprocess.STDOUT)
-            try:
-                proc.wait(timeout=TIMEOUT)
-            except subprocess.TimeoutExpired:
-                proc.kill()  # only the Blender started here
+        checks = gui_run(blender, env, "look_shots.py", "shots", ["--enable-event-simulate"])
         print("shots:", ", ".join(sorted(p.stem for p in shots.glob("*.png"))))
+        # Second start in the same config: Maya layout without a file (docs/steps/step_42.md)
+        checks += gui_run(blender, env, "look_second_start.py", "second_start", [])
+        for c in checks:
+            print("look_compare:", "PASS" if c["ok"] else "FAIL", c["name"])
     env["MAYA_KIT_LOOK_SHOTS"] = str(shots)
     r = subprocess.run([blender, "-b", "--factory-startup", "--python-exit-code", "1",
                         "--python", __file__], env=env, stdin=subprocess.DEVNULL,

@@ -35,10 +35,16 @@ UNDO_PRESET = (
     ("edit.undo_steps", 256),
 )
 
+# Maya starts without a splash popup (docs/steps/step_42.md); option off by default.
+SPLASH_PRESET = (
+    ("view.show_splash", False),
+)
+
 # group -> (preset, backup property, option property) on the add-on preferences.
 GROUPS = {
     "navigation": (PRESET, "prefs_backup", "use_maya_navigation"),
     "undo": (UNDO_PRESET, "undo_backup", "use_maya_undo"),
+    "splash": (SPLASH_PRESET, "splash_backup", "maya_hide_splash"),
 }
 
 

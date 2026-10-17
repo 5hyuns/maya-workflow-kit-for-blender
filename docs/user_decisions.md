@@ -20,3 +20,9 @@
    - 팩토리 씬(m 표시): pCube1 = 1 BU = "1 m" (Maya 의 working unit 을 m 로 둔 것과 같음).
    - 결정 1 은 그대로다 (m 유지 → 물리·라이트 감쇠는 실제 크기 1 cm 물체로 계산된다. Maya 에서 가져온 장면과 같은 조건).
      step 10 「계획」 7 의 "1 Maya 단위 = 1 BU" 를 대체한다.
+9. **결정 3 개정 — 첫 시작 경로 (delegated, step 42, 2026-10-17)**: 레이아웃 템플릿은 여전히 사용자 동작으로만 설치된다 —
+   확장을 켠 뒤 첫 GUI 시작에 한 번 뜨는 환영 대화상자의 「Make Blender Maya」, 환경설정의 같은 버튼, 또는 기존 「Install Maya
+   Layout」. Make Blender Maya 는 템플릿 설치 + Maya 테마 + 스플래시 끔 + 「Start in Maya Layout」 (파일 없이 시작하면 MayaKit
+   템플릿으로 연다) 를 한 번에 켜고 환경설정을 저장한다. 「Revert Maya Look」 은 모두 끄고 (테마·스플래시 복원) 템플릿을 지운다.
+   테마는 이제 옵션이며 확장을 끄면 원래 테마로 돌아온다. 템플릿에 `userpref.blend` 는 넣지 않는다: 템플릿 안에서 사용자의
+   애드온 목록·테마·ui_scale 을 통째로 바꾼다는 것을 실측했다 (docs/steps/step_42.md).

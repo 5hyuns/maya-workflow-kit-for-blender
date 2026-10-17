@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 42 (켜자마자 Maya) 완료 — `docs/steps/step_42.md`. 템플릿 `userpref.blend` 는 실측 후 기각 (템플릿 안에서 사용자 add-on 목록·테마·
+  ui_scale 을 통째로 바꿈). 대신 첫 GUI 시작의 환영 대화상자 → 「Make Blender Maya」 1 번 = 레이아웃 설치·Maya 테마·스플래시 끔·
+  다음부터 Maya 레이아웃으로 시작, 「Revert Maya Look」 으로 모두 되돌림 (`first_start.py`, 결정 3 개정 = user_decisions 9). 테마는 옵션 +
+  끄면 복원. 버그 수정: 오퍼레이터 안 템플릿 전환이 Blender 를 죽이던 것 (layout_open 포함). kit 시작 화면 그림 `tools/make_splash.py`.
+  뷰 배경 단색 #5c5c5c. 헤드리스 348/348, GUI 281/281, dogfood 47/47, look_compare 체크 9/9 (메뉴바·패널·뷰 배경 ΔE 0.0).
+  **주의: 실험 중 사용자 실제 userpref.blend 를 덮어쓴 사고 — 3 값은 되돌렸고 node_wrangler 는 켜진 채 (step_42.md 「실측」).**
 - Step 41 (비교 기준 정확화) 완료 — `docs/steps/step_41.md`. `tools/look_shots.py` 가 Maya 와 같은 카메라 (Maya f_px 973 px, pCube1 화면
   높이를 Maya 샷에 맞춘 거리)·같은 선택 상태·메뉴바에서 연 Create 메뉴로 찍고, `tools/look_compare.py` 가 `pixels.md` (렌더 픽셀 ΔE,
   kit 지점 = `tools/look_data.py` 앵커 표), `rects.md` (영역 ±10 px), `scene.md` (큐브 크기 ±10 %), `crop_*.png` 6장을 만든다.
@@ -95,8 +101,8 @@
 
 ## 바로 다음 할 일
 
-- backlog 2 = step 42 (첫 시작 경로) 부터 `docs/PLAN.md` 「Maya 동일화 계획」 순서. 각 외형 단계는 `python tools/look_compare.py` 의
-  `pixels.md` / `rects.md` / `delta_e.md` / 크롭으로 전후를 비교한다. step_41.md 「발견」 표 (템플릿 렌즈 50 = 광각, 투명 헤더에 비치는
-  그라디언트, Outliner 활성 행 색, 경계선, 툴바 바탕) 를 해당 단계에서 처리.
+- backlog 3 = step 43 (Maya 테마 v2 색: 컴포넌트·매니퓰레이터·Outliner·탭·타임라인·헤더 투명 문제) 부터 `docs/PLAN.md` 「Maya 동일화 계획」 순서.
+  뷰 배경·그리드는 step 42 에서 끝남. 검증은 `python tools/look_compare.py` (`delta_e.md`, `pixels.md`).
+- Blender 를 손으로 띄울 때는 `BLENDER_USER_*` 폴더를 먼저 만들 것 (CLAUDE.md, step 42 사고).
 - 외형 검증: `python tools/look_compare.py` (Maya 자료 다시 찍기: `research/scripts/maya_shots/launch.ps1` → `mayapy research/scripts/maya_colors.py`).
 - 이전 남은 항목: step_36–39 「남은 것」, PLAN 「재점검 3차」 8–9.

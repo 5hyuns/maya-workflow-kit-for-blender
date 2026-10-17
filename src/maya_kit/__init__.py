@@ -22,10 +22,10 @@ bl_info = {
 }
 
 from . import (preferences, prefs_preset, operators, ui, command_line, marking, theme,
-               app_template, keymap)
+               app_template, first_start, keymap)
 
 _modules = (preferences, prefs_preset, operators, ui, command_line, marking, theme, app_template,
-            keymap)
+            first_start, keymap)
 
 
 def register():

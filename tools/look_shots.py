@@ -169,9 +169,20 @@ def select_only(*names, active=None):
 # ---------------------------------------------------------------- steps
 @step
 def s_start():
-    setup()
-    check("install the Maya layout template", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    # First GUI start after a clean `install-file --enable` (docs/steps/step_42.md): the
+    # welcome dialog is up (over Blender's splash). Shot, then one action: Return = its
+    # "Make Blender Maya" button.
+    import_module(MODULE + ".operators.keystate").is_down = lambda t: t in sim._down
+    redraw()
+
+
+@step
+def s_first_start():
+    shot("00_first_start")
+    x, y = win().width // 2, win().height // 2
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('RET', 'PRESS')
+    ev('RET', 'RELEASE')
 
 
 @step
@@ -180,14 +191,15 @@ def s_wait():
 
 
 @step
-def s_first_start():
-    shot("00_first_start")
-    bpy.ops.maya_kit.theme_apply()
-    redraw()
-
-
-@step
 def s_wait2():
+    prefs = bpy.context.preferences
+    addon = prefs.addons[MODULE].preferences
+    check("one Return in the welcome dialog opens the Maya layout",
+          prefs.app_template == "MayaKit")
+    check("... with the Maya theme on and the splash off",
+          addon.maya_theme and not prefs.view.show_splash)
+    kc = bpy.context.window_manager.keyconfigs.active
+    check(f"Maya keymap active (got {kc.name if kc else None})", kc is not None and kc.name == "Maya")
     redraw()
 
 

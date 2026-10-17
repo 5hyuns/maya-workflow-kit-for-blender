@@ -270,3 +270,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 39) 여러 요소 선택 후 화살표 → 각자 걸음; Ctrl+Z 로 되돌아가는지. Maya 처럼 정점 인덱스 순서가 아니라 화면 방향인 것 (delegated) 이 Maya 사용자에게 괜찮은지.
 - [ ] (step 39) Alt+Shift+LMB 드래그: 처음 움직인 방향 (가로/세로) 으로만 텀블되는지, 도중에 방향을 바꿔도 고정되는지. Alt+Shift+MMB 트랙도. ESC/RMB 취소로 원래 뷰. Maya 2022 와 감도 비교.
 - [ ] (step 39) Alt+Shift+클릭 (드래그 없이) 이 이제 아무것도 선택하지 않는 것 (IC 의 토글 선택 제거) 이 불편하지 않은지.
+
+### Step 42 — 켜자마자 Maya (환영 대화상자, Make Blender Maya)
+
+- [ ] (step 42) 실제 설치 (환경설정 > Get Extensions > Install from Disk 로 zip) 직후 환영 대화상자가 커서 근처에 뜨는지, Blender 스플래시와 겹쳐도 "Make Blender Maya" 를 누를 수 있는지. 누르면 Maya 레이아웃 + 테마, 스플래시 없음.
+- [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Maya Kit 맨 위 버튼으로 할 수 있는지.
+- [ ] (step 42) Blender 를 껐다 켜면 (파일 없이) Maya 레이아웃으로 열리는지; .blend 를 더블클릭해 열면 그 파일이 그대로 열리는지; 세션 중 File > New > General 은 General 인지.
+- [ ] (step 42) Revert Maya Look → 원래 테마·스플래시 설정이 돌아오고 File > New 목록에서 MayaKit 이 사라지는지. Maya Kit 을 끄면 원래 테마로, 다시 켜면 Maya 테마로 돌아오는지.
+- [ ] (step 42) 다른 애드온 (예: Node Wrangler) 이 Make Blender Maya 전후로 그대로 켜져 있는지.
