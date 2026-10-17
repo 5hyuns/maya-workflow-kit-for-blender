@@ -410,3 +410,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로.
 - [ ] (step 60) Maya 모드인 채 Blender 를 닫고 다시 열기 → Maya 모드 그대로, 그다음 Blender 로 → 원래 설정. Maya 모드에서 작업 관리자로 강제 종료 → 다시 열어서 Blender 로 전환 → 원래 설정.
 - [ ] (step 60) Preferences > Extensions 에서 Maya Kit 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Maya Kit 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.
+
+### Step 61 — 배포 경로 (공개 전, 실제 Blender 창에서)
+
+- [ ] (step 61) `python tools/build_repo.py` 로 만든 `dist/repo/index.html` 을 브라우저로 열고, 링크를 Blender 창에 끌어 놓기 → 설치 + 저장소 등록, 이후 Get Extensions 에 업데이트가 보이는지 (테스트용 Blender 설정에서).
+- [ ] (step 61) Preferences > Get Extensions > Repositories > + > Add Remote Repository 에 `file:///…/dist/repo/index.json` → 검색 → Install → 「Check for Updates on Startup」 켜고 다음 시작에 상태 표시줄 알림.
+- [ ] (step 61) (exe 를 만들기로 하면) Inno Setup 으로 `tools/installer/maya_kit.iss` 컴파일 → 서명 없는 exe 의 SmartScreen 화면, Blender 버전 선택 페이지, 제어판 제거 뒤 원래 설정.

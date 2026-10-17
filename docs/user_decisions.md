@@ -34,3 +34,14 @@
     탭으로 직접 만든 시뮬레이션도 줄어든 중력을 받지만 길이 기본값은 미터 그대로다 (안내). 기하 크기 (결정 8) 와 조명 감쇠 계산은 그대로
     (조명 세기는 × `maya_unit()²`, 태양광 제외, step 54). Bullet 의 절대 임계값과 1 cm 안정성, Y-up → Z-up 중력 방향은 step 68 에서 잰다.
     결정 8 의 "물리·라이트 감쇠는 실제 크기 1 cm" 는 시뮬레이션에 한해 이 결정으로 바뀐다.
+11. **배포 방식 (delegated, step 61, 2026-10-18 — 공개는 아직 안 함)**: 조사·비교는 `docs/DISTRIBUTION.md`. 기본 방침:
+    무료 GPL 핵심판을 **자체 저장소 (정적 `index.json`, `tools/build_repo.py`) 로 먼저**, 정리 후 **extensions.blender.org** 에 제출;
+    Windows .exe 설치기는 선택 (초안 `tools/installer/` 만, 컴파일·서명 안 함); 유료는 하더라도 「무료 킷 + 별도 유료 상품」; 포터블
+    Blender 묶음은 하지 않음. 공개 전에 **사용자가 정할 것** (아래 「기본값」 은 정하지 않으면 따르는 delegated 값):
+    - a. **제품 이름과 `id`** — Autodesk 상표 지침은 "Maya" 를 제품 이름에 넣지 말라고 한다 (자기 이름 + "for Maya users").
+      `id` 는 업데이트의 정체성이라 첫 공개 전에 한 번만. 기본값: 공개 전까지 "Maya Kit" / `maya_kit` 유지, 공개 직전에 새 이름으로.
+    - b. **무료 / 유료** — 기본값: 무료 (GPL, 플랫폼 조건). 유료라면 Superhive (구매 후 12개월 업데이트 정책) 에 별도 상품.
+    - c. **계정·공개 정보** — Blender ID (플랫폼), 정적 호스팅 계정 (예: GitHub Pages), 판매 시 Superhive/Gumroad. manifest
+      `maintainer` 의 이메일은 공개 목록에 보인다 — 공개용 주소로 바꿀지.
+    - d. **킷 바이너리의 CC0 선언** (`startup.blend`, `splash*.png`, `welcome.png`: 모두 킷 스크립트가 만든 것) — 플랫폼 ToS 1.2 조건.
+    - e. **exe 를 만든다면 코드 서명** (OV 인증서 약 $215–400/년, 한국 개인은 Azure Artifact Signing 불가) — 기본값: exe 안 만듦.

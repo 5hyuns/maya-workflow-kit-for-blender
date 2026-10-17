@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 61 (배포 방식 조사·결정, 공개 안 함, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_61.md`, 비교·추천 `docs/DISTRIBUTION.md`,
+  결정 `docs/user_decisions.md` 11. 추천 (delegated): 무료 GPL 핵심판 = 자체 정적 저장소 먼저 (`tools/build_repo.py` → `dist/repo/index.json`)
+  → extensions.blender.org 제출; exe 선택 (초안 `tools/installer/`, 컴파일·서명 안 함); 유료는 별도 상품; 포터블 묶음 안 함. 사용자 결정 대기:
+  이름·id (Autodesk 지침상 제품 이름에 "Maya" 금지), 무료/유료, 계정·공개 이메일, 바이너리 CC0, exe 서명. 왕복 검증: release_check 11 PASS,
+  `tools/repo_check.py` 10/10 (설치·업데이트 0.1.0→0.1.1·Remove), `tools/installer_check.py` 9/9, 헤드리스 486/486.
+  **바로 다음 할 일**: step 62 Set Driven Key·포즈 모드 제약·Add Attribute·Blend Shape (근거 `research/maya/workflows/rigging.md` 후보 D).
+
 - Step 60 (Maya ⇄ Blender 스위치·완전 되돌리기, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_60.md`. 확장은 켜진 채 「Maya 모드」 =
   MODE 하위 패키지 register/unregister (`switch.py`, 재시작 없음). 전환: 상단 바 오른쪽 「Maya | Blender」 (두 모드), 환경설정 맨 위 스위치·
   「Restore Blender Settings」, Edit 「Switch to Maya Mode」 / Windows 「Switch to Blender」 (F3), Ctrl+Alt+Shift+M. 켜기 = 스냅숏
