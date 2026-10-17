@@ -207,6 +207,24 @@ def s_light_open():
 
 
 @step
+def s_render_settings():
+    C["nwin_rs"] = len(bpy.context.window_manager.windows)
+    C["rs"] = run_menu("Render/Render Settings...")
+
+
+@step
+def s_render_settings_open():
+    w = bpy.context.window_manager.windows[-1]
+    a = w.screen.areas[0]
+    check(f"Render > Render Settings...: its own Properties window on the Render tab "
+          f"(got {C['rs']}, windows {C['nwin_rs']} -> {len(bpy.context.window_manager.windows)}, {a.type}, "
+          f"{getattr(a.spaces.active, 'context', None)})",
+          len(bpy.context.window_manager.windows) == C["nwin_rs"] + 1 and a.type == 'PROPERTIES'
+          and a.spaces.active.context == 'RENDER')
+    shot("gui_step67_render_settings.png", w)
+
+
+@step
 def s_end():
     shot("gui_step67_light_editor.png", C["lew"])
     with bpy.context.temp_override(window=C["lew"]):

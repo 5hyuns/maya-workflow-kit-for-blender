@@ -80,6 +80,25 @@ File → Render > Render Current Frame → Keep Image → 다시 렌더 → 슬�
 - Maya Hypershade 의 Textures / Utilities / Lights 탭, 스와치 MMB 드래그 할당, Material Viewer: 없음 (Browser 는 재질만).
 - Light Editor 창은 파일을 다시 열면 일반 3D View 로 돌아감 (포인터 표시, 저장 안 됨). Maya Exposure 열 없음. Light Editor 창의 사이드바에도
   Channel Box / Item 탭이 같이 있음 (C 패널 Item 은 숨길 수 없음).
-- Render Settings 새 창 (지금은 Properties 가 있으면 그 탭 전환) · 960×540 템플릿 해상도, Light Linking, AE 라이트 Decay Rate 행, Shader Editor Tab 노드 생성,
+- 960×540 템플릿 해상도, Light Linking, Shader Editor Tab 노드 생성,
   AE 재질 스와치: render.md §3 의 8점 이하 후보 — 이번 범위 밖.
 - Maya checker 의 반복 수, ramp 기본 색은 [K/U] (Maya 에서 측정 안 함).
+
+## 이어서 한 것 (같은 단계, 두 번째 세션)
+
+- **Render Settings = 자기 창** (render.md §4.5, delegated): `maya_kit.render_settings` 가 언제나 새 Properties 창 (Render 탭) 을 연다 —
+  화면의 Properties 가 AE 역할일 때 그 탭을 빼앗지 않게. 창을 못 열면 (백그라운드) 예전처럼 화면의 Properties 탭 전환.
+  측정: 연산자 안에서 막 만든 Properties 공간은 탭 목록이 없어 `context = 'RENDER'` 가 조용히 OBJECT 로 남음 →
+  `menu_extras.properties_tab_later` 가 타이머로 다시 설정 (`open_editor(tab=...)` 전부에 적용).
+- **AE 라이트 Decay Rate 행** (render.md §3 C4, attribute_editor.md:132-135): Point / Spot / Area 라이트 섹션에 회색 「Decay Rate: Quadratic …」
+  (`missing` 행). Directional 은 없음.
+- 검증: 헤드리스 `test_step67_render` 11/11 (+ Decay Rate), GUI `gui_step67_render` 10/10 (+ Render > Render Settings… = 새 창, 탭 RENDER;
+  스크린샷 `gui_step67_render_settings.png` 확인). 전체 숫자는 아래 「검증 (최종)」.
+
+## 검증 (최종)
+
+- 헤드리스 550/550 (step 66 의 539 + step 67 11).
+- GUI ui 0.8 전체 460/462: 실패 2 = `gui_step26_smart_extrude` RMB 취소 두 항목 — 이 단계와 무관한 코드, 혼자 다시 돌리면 3 번 모두 8/8
+  (첫 세션 전체 실행에서도 통과) → 전체 실행 때만 가끔 나는 타이밍 실패로 기록. `gui_step67_render` 10/10 (ui 1.0).
+- dogfood 47/47, 콘솔 오류 0.
+

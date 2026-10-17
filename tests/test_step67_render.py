@@ -313,3 +313,12 @@ def test_keep_image_render_slots():
     rec = Rec()
     rv.draw_header(rec, types.SimpleNamespace(space_data=types.SimpleNamespace(image=None)))
     assert not rec.log
+
+
+def test_light_decay_rate_row():
+    for kind in ("POINT", "SPOT", "AREA"):
+        rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND[kind][0]) for row in sec.rows]
+        assert any(r[0] == "missing" and r[1] == "Decay Rate" and "Quadratic" in r[2] for r in rows), kind
+    rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND["SUN"][0]) for row in sec.rows]
+    assert not any(r[0] == "missing" for r in rows), "directional lights have no decay"
+

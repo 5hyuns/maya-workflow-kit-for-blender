@@ -7,7 +7,8 @@
   `maya_kit.light_editor` = 3D View 새 창 + 「Light Editor」 탭 (이름·색·Intensity·켜기·Solo, AE 라이트 섹션), Render 메뉴 17 항목 복원 (gen_menu_data
   `PLACEHOLDERS`), Render Result 헤더 Keep / Remove Image (render slots), AE 소켓 행 맵 버튼 (File/Ramp/Noise/Checker, Bump, Break Connection),
   standardSurface 이름 표 + aiStandardSurface. 측정: `Region.active_panel_category` 는 탭이 그려진 뒤 설정 가능 (전엔 read-only 오류).
-  헤드리스 549/549, GUI 0.8 461/461, gui_step67 9/9 (ui 1.0), dogfood 47/47.
+  이어서: Render Settings = 언제나 새 Properties 창 (Render 탭, 타이머로 탭 설정), AE 라이트 Decay Rate 회색 행.
+  헤드리스 550/550, GUI 0.8 460/462 (gui_step26 RMB 취소 2 항목 — 혼자 3/3 통과, 전체 실행 때만 나는 간헐 실패), gui_step67 10/10, dogfood 47/47.
   **바로 다음 할 일**: step 68 — FX: Maya 시뮬레이션 스케일 · nucleus · nParticles 이미터 · nCloth · nCache (근거 `research/maya/workflows/fx.md`,
   결정 10). `docs/steps/step_68.md` 「계획」 먼저. 그다음 69 씬 관리, 70 Graph Editor.
 

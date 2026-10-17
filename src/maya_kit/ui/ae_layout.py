@@ -119,8 +119,11 @@ _LIGHT_MAIN = (("prop", "data", "type", "Type"),
                ("prop", "data", "energy", "Intensity"),
                ("prop", "data", "diffuse_factor", "Emit Diffuse"),
                ("prop", "data", "specular_factor", "Emit Specular"))
+# Maya Decay Rate (research/maya/attribute_editor.md:132-135): Blender lights are always quadratic, no No Decay
+# (research/maya/workflows/render.md §4.6, step 67).
+_DECAY = ("missing", "Decay Rate", "Quadratic (Blender lights always fall off with distance squared)")
 POINT_LIGHT = [
-    S("Point Light Attributes", True, *_LIGHT_MAIN),
+    S("Point Light Attributes", True, *_LIGHT_MAIN, _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
         S("Raytrace Shadow Attributes", True, ("prop", "data", "shadow_soft_size", "Light Radius")),
     ]),
@@ -135,14 +138,14 @@ DIRECTIONAL_LIGHT = [
 SPOT_LIGHT = [
     S("Spot Light Attributes", True, *_LIGHT_MAIN,
       ("prop", "data", "spot_size", "Cone Angle"),
-      ("prop", "data", "spot_blend", "Penumbra")),
+      ("prop", "data", "spot_blend", "Penumbra"), _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"),
       ("prop", "data", "shadow_soft_size", "Light Radius")),
 ]
 AREA_LIGHT = [
     S("Area Light Attributes", True, *_LIGHT_MAIN,
       ("prop", "data", "shape", "Shape"),
-      ("prop", "data", "size", "Size")),
+      ("prop", "data", "size", "Size"), _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
 ]
 
