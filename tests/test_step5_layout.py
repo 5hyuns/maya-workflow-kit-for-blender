@@ -73,7 +73,9 @@ def test_theme_apply_and_restore():
     # Maya 2022 factory: flat 0.36 grey, gradient off (research/maya/colors.json, step 42)
     assert grad.background_type == 'SINGLE_COLOR'
     assert _close(grad.high_gradient, (0.36, 0.36, 0.36))
-    assert _close(_theme().dopesheet_editor.keyframe[:3], (1.0, 0.0, 0.0))  # timeSliderKey
+    ds = _theme().dopesheet_editor
+    keyframe = ds.keyframe if hasattr(ds, "keyframe") else _theme().common.anim.keyframe   # 5.x: moved (step 53)
+    assert _close(keyframe[:3], (1.0, 0.0, 0.0))  # timeSliderKey
     assert _close(_theme().user_interface.wcol_regular.inner[:3], (0x5d / 255,) * 3)
     path = theme.backup_path()
     assert os.path.normcase(path).startswith(

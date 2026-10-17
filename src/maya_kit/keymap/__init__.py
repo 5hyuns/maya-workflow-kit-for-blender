@@ -34,10 +34,20 @@ def add_item(km_name, idname, type, value, space_type="EMPTY", region_type="WIND
     return kmi
 
 
+TARGET_VERSION = (4, 5)   # docs/user_decisions.md decision 4
+
+
 def generate_data():
-    """IC data with the Maya patches applied (fresh list each call)."""
-    from . import ic_data, maya_patches
-    return maya_patches.apply(ic_data.generate())
+    """IC data with the Maya patches applied (fresh list each call). Strict on Blender 4.5 (decision 4);
+    elsewhere IC differences are collected in ``patch.DRIFT`` (docs/steps/step_53.md)."""
+    from . import ic_data, maya_patches, patch
+    patch.STRICT = tuple(bpy.app.version[:2]) == TARGET_VERSION
+    patch.DRIFT.clear()
+    data = maya_patches.apply(ic_data.generate())
+    if patch.DRIFT:
+        print(f"Maya Kit: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
+              "(made for 4.5):", *patch.DRIFT[:20], sep="\n  ")
+    return data
 
 
 def build_keyconfig():

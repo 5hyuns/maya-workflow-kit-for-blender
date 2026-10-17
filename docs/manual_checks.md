@@ -340,3 +340,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
 - [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록이 아래로 넘치면 오른쪽 열로 이어지고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
 - [ ] (step 52) Maya Font (Segoe UI) 를 켠 상태에서 마킹 메뉴 하위 메뉴 화살표 (삼각형) 가 글자 옆에 맞게 보이는지.
+
+### Step 53 — Blender 5.x 와 안전한 설치
+
+- [ ] (step 53) 쓰던 Blender (애드온 몇 개, 바꾼 키·탐색 설정) 에 kit 을 설치: 기존 애드온이 그대로 켜져 있고, kit 을 끄면 키맵·탐색·undo 설정이 설치 전과 같은지.
+- [ ] (step 53) Blender 5.0–5.2 에서 kit 을 켜고 Maya 레이아웃: Status Line·셸프·툴박스·Channel Box·핫박스가 4.5 와 같게 보이는지, Range Slider 줄의 재생 버튼, Maya 테마 색 (일부 5.x 전용 색은 Blender 기본).
+- [ ] (step 53) kit 을 켠 채 Graph Editor (Alt+MMB/Alt+RMB, A/F, 키 클릭), Node Editor, Text Editor (z/h/Space 입력) 가 평소대로인지.
+- [ ] (step 53) Blender 5.3 이상에 설치하면 확장 관리자가 「호환 안 됨」 을 분명히 보여 주는지.

@@ -34,6 +34,14 @@ _PROP_OWNERS = ("Scene", "Object", "WindowManager", "ViewLayer", "Mesh", "Collec
                 "SpaceView3D", "ToolSettings", "Preferences")
 
 
+def _timeline_classes():
+    from bl_ui import space_time
+    if hasattr(space_time, "TIME_HT_editor_buttons"):
+        return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
+    from bl_ui import space_dopesheet   # Blender 5.x: the Timeline is a Dope Sheet mode
+    return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
+
+
 def snapshot():
     """Global state an add-on can leak after unregister."""
     snap = {}
@@ -68,11 +76,12 @@ def snapshot():
             snap["ui_extensions"][name] = [getattr(f, "__qualname__", repr(f)) for f in funcs]
     # Methods the add-on swaps on Blender UI classes (step 7: Maya top bar).
     topbar = bpy.types.TOPBAR_HT_upper_bar
-    from bl_ui import space_time   # step 20: Time / Range Slider in the Timeline header
+    # step 20: Time / Range Slider in the Timeline header (Blender 5.x: the Dope Sheet's, step 53)
+    time_buttons, time_menus = _timeline_classes()
     snap["ui_methods"] = [f"{f.__module__}.{f.__qualname__}" for f in
                           (topbar.draw_left, topbar.draw_right,
                            bpy.types.IMAGE_HT_header.draw, bpy.types.IMAGE_HT_tool_header.draw,
-                           space_time.TIME_HT_editor_buttons.draw_header)]
+                           time_buttons.draw_header)]
     # step 37: Maya panel menus replace the 3D View header menus (a class attribute while enabled).
     snap["ui_methods"].append("VIEW3D_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in bpy.types.VIEW3D_MT_editor_menus.__dict__}")
@@ -84,7 +93,7 @@ def snapshot():
     # step 50: Maya Outliner header, timeline menus moved into the Range Slider's preferences menu
     snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")
     snap["ui_methods"].append("TIME_MT_editor_menus.draw_collapsible overridden: "
-                              f"{'draw_collapsible' in space_time.TIME_MT_editor_menus.__dict__}")
+                              f"{'draw_collapsible' in time_menus.__dict__}")
     snap["panel_polls"] = sorted(
         f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
         for c in _all_panels() if getattr(c, "bl_space_type", None) == 'VIEW_3D'

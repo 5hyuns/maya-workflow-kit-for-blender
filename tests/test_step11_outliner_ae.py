@@ -91,7 +91,8 @@ def _rows():
 
 def _select(objs, active=None):
     for o in bpy.context.view_layer.objects:
-        o.select_set(False)
+        if o is not None:   # Blender 5.x yields None for objects removed before the view layer syncs
+            o.select_set(False)
     for o in objs:
         o.select_set(True)
     bpy.context.view_layer.objects.active = active or (objs[-1] if objs else None)
@@ -352,7 +353,11 @@ def test_ae_draws_every_tab():
     bpy.ops.maya_kit.ae_tab(key="MAT:1")
     lay = FakeLayout()
     ae.draw(lay, bpy.context, ob)
-    assert ("prop", plain, "diffuse_color", "Color") in lay.log
+    if plain.node_tree is not None and any(n.type == 'BSDF_PRINCIPLED' for n in plain.node_tree.nodes):
+        # Blender 5.x: every new material has a Principled tree, shown as standardSurface (step 53)
+        assert "Color" in [e[3] for e in lay.log if e[0] == "prop" and e[2] == "default_value"]
+    else:
+        assert ("prop", plain, "diffuse_color", "Color") in lay.log
 
 
 def test_ae_modifier_apply_and_remove():

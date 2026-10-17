@@ -370,7 +370,7 @@ CTRL_CONVERT = MarkingMenu(
         "N": ("To Edges", Sub(radial={                                     # :43
             "N": ("To Edges", ("mesh.select_mode", {"type": 'EDGE', "use_expand": True})),
             "S": ("To Contained Edges", ("mesh.select_mode", {"type": 'EDGE'})),
-            "NW": ("To Contiguous Edges", ("mesh.loop_multi_select", {"ring": False})),
+            "NW": ("To Contiguous Edges", ("maya_kit.select_loops", {"ring": False})),
             "NE": ("To Edge Perimeter", "mesh.region_to_loop"),
         }, options={"To Contiguous Edges"})),
         "NW": ("Shrink Selection", Sub(radial={                            # :88
@@ -379,12 +379,12 @@ CTRL_CONVERT = MarkingMenu(
         })),
         "E": ("To UVs", Sub(radial={"E": ("To UVs", None), "NE": ("To UV Perimeter", None)})),  # :109
         "SE": ("Edge Loop Utilities", Sub(radial={                         # :134
-            "SE": ("To Edge Loop", ("mesh.loop_multi_select", {"ring": False})),
+            "SE": ("To Edge Loop", ("maya_kit.select_loops", {"ring": False})),
             "NE": ("To Edge Loop and Delete", None),
             "SW": ("To Edge Loop and Duplicate", None),
         })),
         "SW": ("Edge Ring Utilities", Sub(radial={                         # :165
-            "SW": ("To Edge Ring", ("mesh.loop_multi_select", {"ring": True})),
+            "SW": ("To Edge Ring", ("maya_kit.select_loops", {"ring": True})),
             "SE": ("To Edge Ring and Split", None),
             "NW": ("To Edge Ring and Collapse", None),
         })),

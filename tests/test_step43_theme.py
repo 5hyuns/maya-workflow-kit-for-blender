@@ -38,12 +38,14 @@ def test_maya_theme_v2_values():
         "Outliner selected name": (_hex(t.outliner.selected_object), "#ffffff"),
         "tab inactive": (_hex(ui.wcol_tab.inner), "#373737"),
         "tab active": (_hex(ui.wcol_tab.inner_sel), "#444444"),
-        "current frame": (_hex(t.dopesheet_editor.frame_current), "#c7c7c7"),
+        "current frame": (_hex(t.dopesheet_editor.frame_current if hasattr(t.dopesheet_editor, "frame_current")
+                               else t.common.anim.playhead), "#c7c7c7"),   # Blender 5.x: moved (step 53)
     }
     bad = {k: got for k, (got, want) in expect.items() if got != want}
     assert not bad, bad
     # face fill alphas measured against Maya's stipple (docs/steps/step_43.md)
     assert abs(v.face_select[3] - 0.25) < 0.01 and abs(v.face_mode_select[3] - 0.28) < 0.01  # re-measured in step 44
     # opaque 3D View header and regions (Maya panel bars / dock)
-    assert v.space.header[3] == 1.0 and v.space.button[3] == 1.0
+    region_back = v.space.button if hasattr(v.space, "button") else t.regions.sidebars.back   # 5.x: step 53
+    assert v.space.header[3] == 1.0 and region_back[3] == 1.0
     preferences.get().maya_theme = False

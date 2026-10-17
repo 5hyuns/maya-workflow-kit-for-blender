@@ -189,5 +189,36 @@ class MAYAKIT_OT_delete_components(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class MAYAKIT_OT_select_loops(bpy.types.Operator):
+    """Select the edge loops (or rings) of the selected edges (Maya Select > Contiguous Edges, Convert
+    Selection > To Edge Loop / Ring)"""
+    bl_idname = "maya_kit.select_loops"
+    bl_label = "Select Edge Loops"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    ring: bpy.props.BoolProperty(name="Ring", description="Edge rings instead of edge loops")
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    def execute(self, context):
+        # Blender 4.5: mesh.loop_multi_select(ring); 5.x: mesh.select_edge_loop_multi /
+        # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops, docs/steps/step_53.md).
+        if _has_op(bpy.ops.mesh, "loop_multi_select"):
+            return bpy.ops.mesh.loop_multi_select(ring=self.ring)
+        op = bpy.ops.mesh.select_edge_ring_multi if self.ring else bpy.ops.mesh.select_edge_loop_multi
+        return op()
+
+
+def _has_op(module, name):
+    """Does this Blender have the operator? (bpy.ops returns a wrapper for any name.)"""
+    try:
+        getattr(module, name).get_rna_type()
+        return True
+    except (AttributeError, KeyError):
+        return False
+
+
 classes = (MAYAKIT_OT_select_none, MAYAKIT_OT_bevel, MAYAKIT_OT_convert_selection,
-           MAYAKIT_OT_delete_components)
+           MAYAKIT_OT_delete_components, MAYAKIT_OT_select_loops)

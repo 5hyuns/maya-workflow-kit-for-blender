@@ -11,6 +11,7 @@ docs/steps/step_22.md (21), docs/steps/step_24.md (22), docs/steps/step_27.md (2
 shadowing check and docs/keymap_mapping.md is cross-checked against it.
 """
 
+from . import patch
 from .patch import KeyconfigData, make_event
 
 # (km_name, idname, event, props, shadows) for every binding added below.
@@ -82,6 +83,9 @@ def patch_selection(kd):
     for idname, value, variants, keep in SELECT_RULES:
         kms = kd.rewrite_modifier_set(idname, value, variants, keep_props=keep)
         if not kms:
+            if not patch.STRICT:   # another Blender's IC data (step 53)
+                patch.DRIFT.append(f"selection patch: {idname} {value} not found")
+                continue
             raise LookupError(f"selection patch: {idname} {value} not found in IC data")
         touched[(idname, value)] = kms
     return touched
@@ -108,11 +112,12 @@ def patch_display(kd):
 
 # --- 3. Ctrl+G group --------------------------------------------------------
 # Maya Ctrl+G = group under common parent, pivot at origin
-# (research/maya/concepts.md:89-91). IC Ctrl+G = move to collection (IC:2547).
+# (research/maya/concepts.md:89-91). IC Ctrl+G = move to collection (IC:2547; Blender 5.x: the same as a
+# wm.call_menu of OBJECT_MT_move_to_collection, step 53), so the item is removed whatever its operator.
 
 def patch_group(kd):
     for km in ("Object Mode", "Outliner"):
-        kd.remove(km, "object.move_to_collection", type="G", ctrl=True)
+        kd.remove(km, None, type="G", ctrl=True)
         _add(kd, km, "maya_kit.group", make_event("G", ctrl=True))
 
 
@@ -488,6 +493,9 @@ def patch_active_handle(kd):
         items = kd.items(km)
         old = kd.find(km, idname, type="MIDDLEMOUSE")
         if not old:
+            if not patch.STRICT:
+                patch.DRIFT.append(f"{km}: no MMB {idname}")
+                continue
             raise LookupError(f"{km}: no MMB {idname}")
         at = next(i for i, it in enumerate(items) if it is old[0])
         kd.remove(km, idname, type="MIDDLEMOUSE")
@@ -542,7 +550,9 @@ MENU_SET_SHADOWS = ("Image", "File Browser")
 
 
 def patch_key_batch(kd):
-    _add(kd, "3D View", "maya_kit.box_zoom", make_event("LEFTMOUSE", ctrl=True, alt=True))
+    # Blender 5.x IC binds Ctrl+Alt+LMB in Sculpt mode too: there the sculpt stroke wins (Maya has no such
+    # mode; step 53).
+    _add(kd, "3D View", "maya_kit.box_zoom", make_event("LEFTMOUSE", ctrl=True, alt=True), shadows=("Sculpt",))
     for km in ("Object Mode", "Mesh"):
         _add(kd, km, "wm.tool_set_by_id", make_event("T", ctrl=True), {"name": "builtin.transform"})
         _add(kd, km, "maya_kit.last_tool", make_event("Y"))

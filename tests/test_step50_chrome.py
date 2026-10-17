@@ -81,11 +81,21 @@ def test_outliner_header_is_maya():
     assert rec.texts("menu") == ["Display", "Show", "Help"]
 
 
+def _timeline_ctx():
+    """A Timeline area of the startup screen (the 5.x wrapper checks ``space_data.mode``)."""
+    for area in bpy.data.screens["Layout"].areas:
+        if area.type == 'DOPESHEET_EDITOR' and area.spaces.active.mode == 'TIMELINE':
+            return {"area": area, "space_data": area.spaces.active}
+    return {}
+
+
 def test_range_slider_order_and_menus_moved():
-    assert space_time.TIME_HT_editor_buttons.draw_header.__name__ == "draw_header"
-    assert "draw_collapsible" in space_time.TIME_MT_editor_menus.__dict__
+    buttons, menus = time_slider.header_classes()   # Blender 5.x: the Dope Sheet's (step 53)
+    assert buttons.draw_header.__name__ in ("draw_header", "_header_5")
+    assert "draw_collapsible" in menus.__dict__
     rec = Recorder()
-    space_time.TIME_MT_editor_menus.draw_collapsible(bpy.context, rec)
+    with bpy.context.temp_override(**_timeline_ctx()):
+        menus.draw_collapsible(bpy.context, rec)
     assert rec.log == [], "Playback / Keying / View / Marker are not in the Range Slider row"
     assert time_slider.RANGE_ITEMS[:5] == ("start", "playback start", "range", "playback end", "end")
     rec = Recorder()
