@@ -1,0 +1,103 @@
+"""Step 50: Maya editor chrome — Channel Box / Layer Editor / Outliner menu bars, empty Channel Box text,
+Time Slider buttons in the timeline sidebar, Range Slider order. ;
+GUI: tests/gui/gui_step50_chrome.py."""
+
+from importlib import import_module
+from pathlib import Path
+
+import bpy
+from bl_ui import space_time
+
+import kit
+
+ROOT = Path(__file__).resolve().parent.parent
+channel_box = import_module(kit.MODULE + ".ui.channel_box")
+layer_editor = import_module(kit.MODULE + ".ui.layer_editor")
+maya_outliner = import_module(kit.MODULE + ".ui.maya_outliner")
+time_slider = import_module(kit.MODULE + ".ui.time_slider")
+chrome = import_module(kit.MODULE + ".ui.chrome")
+
+
+class Recorder:
+    """A stand-in UILayout that records what a draw function puts in it."""
+
+    def __init__(self, log=None):
+        self.log = [] if log is None else log
+
+    def __getattr__(self, name):
+        if name in ("row", "column", "split", "box", "column_flow", "grid_flow"):
+            return lambda *a, **k: Recorder(self.log)
+        if name in ("menu", "operator", "prop", "label", "popover", "menu_contents"):
+            def add(*args, **kw):
+                self.log.append((name, kw.get("text", args[0] if args else "")))
+                return type("Props", (), {})()
+            return add
+        return lambda *a, **k: None
+
+    def __setattr__(self, name, value):
+        if name == "log":
+            object.__setattr__(self, name, value)
+
+    def texts(self, kind):
+        return [t for k, t in self.log if k == kind]
+
+
+def test_channel_box_menu_bar():
+    rec = Recorder()
+    chrome.menu_bar(rec, channel_box.MENU_BAR)
+    assert rec.texts("menu") == ["Channels", "Edit", "Object", "Show"]     # channel_box.md:27-30
+    for _label, idname in channel_box.MENU_BAR:
+        assert hasattr(bpy.types, idname), idname
+
+
+def test_channel_box_panel_chrome():
+    assert 'HIDE_HEADER' in channel_box.MAYAKIT_PT_channel_box.bl_options
+    assert 'HIDE_HEADER' in layer_editor.MAYAKIT_PT_layer_editor.bl_options
+    assert not hasattr(channel_box.MAYAKIT_PT_channel_box, "draw_header_preset"), "no gear in a panel title"
+
+
+def test_channel_box_empty_text():
+    for ob in list(bpy.context.selected_objects):
+        ob.select_set(False)
+    bpy.context.view_layer.objects.active = None
+    rec = Recorder()
+    channel_box.MAYAKIT_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
+    assert " ".join(rec.texts("label")) == \
+        "Select objects in the scene to view, edit and set keyframes on channels (attributes)"
+
+
+def test_layer_editor_tabs_and_menus():
+    assert [t[1] for t in layer_editor.TABS] == ["Display", "Anim"]
+    rec = Recorder()
+    chrome.menu_bar(rec, layer_editor.MENU_BAR)
+    assert rec.texts("menu") == ["Layers", "Options", "Help"]
+    assert bpy.context.window_manager.maya_kit_le_tab == 'DISPLAY'
+
+
+def test_outliner_header_is_maya():
+    assert bpy.types.OUTLINER_HT_header.draw is maya_outliner._draw
+    rec = Recorder()
+    chrome.menu_bar(rec, maya_outliner.MENU_BAR)
+    assert rec.texts("menu") == ["Display", "Show", "Help"]
+
+
+def test_range_slider_order_and_menus_moved():
+    assert space_time.TIME_HT_editor_buttons.draw_header.__name__ == "draw_header"
+    assert "draw_collapsible" in space_time.TIME_MT_editor_menus.__dict__
+    rec = Recorder()
+    space_time.TIME_MT_editor_menus.draw_collapsible(bpy.context, rec)
+    assert rec.log == [], "Playback / Keying / View / Marker are not in the Range Slider row"
+    assert time_slider.RANGE_ITEMS[:5] == ("start", "playback start", "range", "playback end", "end")
+    rec = Recorder()
+    time_slider.MAYAKIT_MT_anim_preferences.draw(type("M", (), {"layout": rec})(), bpy.context)
+    assert rec.texts("popover") + rec.texts("menu") == ["Playback", "Keying", "View", "Marker"]
+
+
+def test_template_timeline_sidebar_and_outliner():
+    path = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+    bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
+    areas = bpy.data.workspaces["General"].screens[0].areas
+    tl = next(a for a in areas if a.ui_type == 'TIMELINE')
+    assert time_slider.has_slider_panel(tl.spaces.active), "Time Slider buttons in the timeline sidebar"
+    outl = next(a for a in areas if a.type == 'OUTLINER').spaces.active
+    assert maya_outliner.is_maya_outliner(outl) and not outl.show_restrict_column_hide

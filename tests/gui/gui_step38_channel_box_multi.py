@@ -80,8 +80,9 @@ def s_cb_shot():
     print("GUI UI region", C["ui"])
     check("Channel Box drawn with two objects selected (screenshot)", True)
     # Translate X value field: 1185, 229 in gui_step38_cb_before.png (1600 x 900 window, scale 1.25,
-    # UI region (971, 94, 350, 709)) = 136 px left of the region's right edge, 132 px below its top.
-    C["field"] = (r.x + r.width - px(136), r.y + r.height - px(132))
+    # UI region (971, 94, 350, 709)) = 136 px left of the region's right edge, 114 px below its top
+    # (step 50: dock switch + menu bar rows instead of a panel title; 132 before).
+    C["field"] = (r.x + r.width - px(136), r.y + r.height - px(114))
     ev('MOUSEMOVE', 'NOTHING', x=C["field"][0], y=C["field"][1])
 
 

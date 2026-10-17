@@ -81,6 +81,10 @@ def snapshot():
     snap["ui_methods"] += [f"VIEW3D_PT_tools_active.{n} own: {VIEW3D_PT_tools_active.__dict__.get(n)!r}"
                            for n in ("draw", "tools_from_context")]
     snap["ui_methods"].append(f"STATUSBAR_HT_header.draw: {bpy.types.STATUSBAR_HT_header.draw!r}")
+    # step 50: Maya Outliner header, timeline menus moved into the Range Slider's preferences menu
+    snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")
+    snap["ui_methods"].append("TIME_MT_editor_menus.draw_collapsible overridden: "
+                              f"{'draw_collapsible' in space_time.TIME_MT_editor_menus.__dict__}")
     snap["panel_polls"] = sorted(
         f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
         for c in _all_panels() if getattr(c, "bl_space_type", None) == 'VIEW_3D'

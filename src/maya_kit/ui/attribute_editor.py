@@ -485,16 +485,10 @@ def _redraw(context):
 
 # --- panels ----------------------------------------------------------------------------------
 
-class MAYAKIT_PT_dock_tabs(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = CATEGORY
-    bl_label = "Dock"
-    bl_options = {'HIDE_HEADER'}
-    bl_order = -1
-
-    def draw(self, context):
-        self.layout.prop(context.window_manager, "maya_kit_dock", expand=True)
+def draw_dock_switch(layout, context):
+    """CB/LE | AE switch at the top of the dock (Maya: the dock's tabs; drawn inside the first panel so it
+    stays on top: header-less panels don't keep bl_order against the region's saved panel order, step 50)."""
+    layout.prop(context.window_manager, "maya_kit_dock", expand=True)
 
 
 class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
@@ -509,6 +503,7 @@ class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
         return dock_mode(context) == 'ATTRIBUTE_EDITOR'
 
     def draw(self, context):
+        draw_dock_switch(self.layout, context)
         ob = context.active_object
         if ob is None:
             self.layout.label(text="make a selection")
@@ -517,7 +512,7 @@ class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
 
 
 classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKIT_OT_ae_add_limit,
-           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show, MAYAKIT_PT_dock_tabs,
+           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show,
            MAYAKIT_PT_attribute_editor)
 
 

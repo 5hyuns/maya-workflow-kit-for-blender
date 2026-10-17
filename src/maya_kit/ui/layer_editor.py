@@ -18,6 +18,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 
+from . import chrome
+
 ROOT_NAME = "Display Layers"
 TYPES = (("NORMAL", "Normal", "Selectable, normal display"),
          ("TEMPLATE", "Template", "Unselectable, wireframe (Maya T)"),
@@ -259,12 +261,54 @@ class MAYAKIT_UL_layers(bpy.types.UIList):
         row.label(text=str(len(item.objects)))
 
 
+class MAYAKIT_MT_le_layers(bpy.types.Menu):
+    """Maya Layer Editor Layers menu (layerEditorBuildDisplayLayerMenu, )"""
+    bl_label = "Layers"
+
+    def draw(self, context):
+        lay = self.layout
+        lay.operator("maya_kit.layer_new", text="Create Empty Layer").selected = False
+        lay.operator("maya_kit.layer_new", text="Create Layer from Selected").selected = True
+        lay.separator()
+        lay.operator("maya_kit.layer_assign", text="Add Selected Objects").remove = False
+        lay.operator("maya_kit.layer_assign", text="Remove Selected Objects").remove = True
+        lay.operator("maya_kit.layer_select", text="Select Objects")
+        lay.separator()
+        lay.operator("maya_kit.layer_delete", text="Delete Layer")
+
+
+class MAYAKIT_MT_le_options(bpy.types.Menu):
+    """Maya Layer Editor Options menu (layerEditorBuildDisplayOptionMenu)"""
+    bl_label = "Options"
+
+    def draw(self, context):
+        for label in ("Make New Layers Current", "Add New Objects to Current Layer", "Auto Overwrite",
+                      "Show Namespace"):
+            chrome.grey(self.layout, label)
+
+
+class MAYAKIT_MT_le_help(bpy.types.Menu):
+    bl_label = "Help"
+
+    def draw(self, context):
+        self.layout.operator("wm.url_open", text="Help on Display Layers (Blender collections)").url = HELP_URL
+
+
+HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/collections.html"
+# Maya Layer Editor: tabs Display / Anim (Maya-5135), menu bar Layers / Options / Help
+# (:5082-5098), toolbar on the right (:5100-5111); 
+TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
+MENU_BAR = (("Layers", "MAYAKIT_MT_le_layers"), ("Options", "MAYAKIT_MT_le_options"), ("Help", "MAYAKIT_MT_le_help"))
+ANIM_TEXT = ("Blender has no animation layers:", "layer actions in the Nonlinear Animation editor.")
+
+
 class MAYAKIT_PT_layer_editor(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Channel Box"
     bl_label = "Layer Editor"
     bl_order = 1
+    bl_options = {'HIDE_HEADER'}   # Maya: tabs + menu bar, no collapsible panel title (step 50)
 
     @classmethod
     def poll(cls, context):
@@ -273,7 +317,16 @@ class MAYAKIT_PT_layer_editor(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
+        wm = context.window_manager
+        layout.separator(type='LINE')   # Maya's splitter between Channel Box and Layer Editor
+        layout.row(align=True).prop(wm, "maya_kit_le_tab", expand=True)
+        chrome.menu_bar(layout, MENU_BAR)
+        if wm.maya_kit_le_tab == 'ANIM':
+            chrome.wrapped(layout, ANIM_TEXT, alignment='LEFT')
+            layout.operator("maya_kit.open_editor", text="Nonlinear Animation").ui_type = 'NLA_EDITOR'
+            return
         row = layout.row(align=True)
+        row.alignment = 'RIGHT'
         row.operator("maya_kit.layer_new", text="", icon='ADD').selected = False
         row.operator("maya_kit.layer_new", text="", icon='COLLECTION_NEW').selected = True
         row.separator()
@@ -281,17 +334,17 @@ class MAYAKIT_PT_layer_editor(bpy.types.Panel):
         row.operator("maya_kit.layer_assign", text="", icon='ZOOM_OUT').remove = True
         row.operator("maya_kit.layer_select", text="", icon='RESTRICT_SELECT_OFF')
         row.operator("maya_kit.layer_delete", text="", icon='TRASH')
+        # Maya shows the (empty) layer list area even with no layers (11b_channel_box_crop.png): an empty
+        # list over the scene collection's children (the filter keeps display layers only).
         r = root(scene)
-        if r is None:
-            layout.label(text="No display layers")
-            return
-        layout.template_list("MAYAKIT_UL_layers", "", r, "children", scene, "maya_kit_layer_index",
-                             rows=4)
+        owner = r if r is not None else scene.collection
+        layout.template_list("MAYAKIT_UL_layers", "", owner, "children", scene, "maya_kit_layer_index",
+                             rows=8)
 
 
 classes = (MAYAKIT_PG_layer, MAYAKIT_OT_layer_new, MAYAKIT_OT_layer_assign, MAYAKIT_OT_layer_select,
            MAYAKIT_OT_layer_delete, MAYAKIT_OT_layer_cycle_type, MAYAKIT_UL_layers,
-           MAYAKIT_PT_layer_editor)
+           MAYAKIT_MT_le_layers, MAYAKIT_MT_le_options, MAYAKIT_MT_le_help, MAYAKIT_PT_layer_editor)
 
 
 def register():
@@ -299,6 +352,8 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.Collection.maya_kit_layer = PointerProperty(type=MAYAKIT_PG_layer)
     bpy.types.Scene.maya_kit_layer_index = IntProperty(options={'HIDDEN'})
+    bpy.types.WindowManager.maya_kit_le_tab = EnumProperty(name="Layer Editor Tab", items=TABS,
+                                                           options={'SKIP_SAVE'})
     bpy.app.handlers.animation_playback_pre.append(on_playback_pre)
     bpy.app.handlers.animation_playback_post.append(on_playback_post)
 
@@ -306,6 +361,7 @@ def register():
 def unregister():
     bpy.app.handlers.animation_playback_post.remove(on_playback_post)
     bpy.app.handlers.animation_playback_pre.remove(on_playback_pre)
+    del bpy.types.WindowManager.maya_kit_le_tab
     del bpy.types.Scene.maya_kit_layer_index
     del bpy.types.Collection.maya_kit_layer
     for cls in reversed(classes):
