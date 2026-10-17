@@ -235,7 +235,8 @@ planned 13 → **5** (F2–F6), not applicable 10, macOS-only 68, unreviewed 292
 9. Low: marking menu editor, shelf reorder, AE extra templates, in-view messages, curve/armature edit-mode keys, Ctrl+5,
    289 unreviewed keymap rows.
 10. Not possible / out of scope (kept documented): Y-up, separate pivots, MMB on fields, MEL, history nodes, option boxes /
-    tear-off, timeline frame box over numbers, 5 cm major grid lines, Extensions platform listing.
+    tear-off, timeline frame box over numbers, Extensions platform listing. (5 cm major grid lines: done by the kit's own
+    grid in step 45, `ui/maya_grid.py`.)
 
 Risks the manual checks guard: real OS key paths (keys released mid-drag, Alt+Tab with a key held), keymap persistence with
 saved prefs, select-through X-ray flag left on after an aborted drag, Outliner rebuild speed with many objects. A hand

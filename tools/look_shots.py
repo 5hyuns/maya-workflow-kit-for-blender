@@ -102,6 +102,36 @@ def record_cube(name, cube="pCube1"):
                            "lens": area.spaces.active.lens}
 
 
+def record_grid(name):
+    """Projected Maya grid points (step 45): points on minor / major / axis lines between crossings
+    and the four corners (ui/maya_grid.py maths, the view's own matrices)."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    grid = import_module(MODULE + ".ui.maya_grid")
+    unit = import_module(MODULE + ".operators.units").maya_unit()
+    area, region = view3d()
+    rv3d = area.spaces.active.region_3d
+
+    def img(p):
+        q = location_3d_to_region_2d(region, rv3d, Vector(p))
+        return None if q is None else [region.x + q.x, win().height - (region.y + q.y)]
+
+    pts = {}
+    for kind, lines in grid.segments().items():
+        out = []
+        for (u0, v0), (u1, v1) in lines:
+            for f in (0.104, 0.354, 0.604, 0.854):     # between the unit crossings
+                u, v = u0 + (u1 - u0) * f, v0 + (v1 - v0) * f
+                out.append(img(grid.PLANES["FLOOR"](u * unit, v * unit)))
+        pts[f"grid.{kind}"] = out
+    pts["grid.corners"] = [img(c) for c in grid.corners("FLOOR", unit)]
+    pts["grid.centre"] = [img((0.0, 0.0, 0.0))]
+    GEOM["grid_ms"] = grid.frame_ms()
+    pts["grid.matrix"] = [[list(r) for r in rv3d.perspective_matrix], [region.x, region.y, region.width,
+                                                                        region.height]]
+    GEOM.setdefault("points", {})[name] = {k: ([p for p in v if p] if k != "grid.matrix" else v)
+                                           for k, v in pts.items()}
+
+
 def save_geometry():
     with open(os.path.join(SHOTS, "geometry.json"), "w", encoding="utf-8") as fh:
         json.dump(GEOM, fh, indent=1)
@@ -213,6 +243,7 @@ def s_wait2():
 @step
 def s_layout():
     shot("01_layout_empty")
+    record_grid("01_layout_empty")
     with v3d_override():
         bpy.ops.maya_kit.create(kind='CUBE')
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
