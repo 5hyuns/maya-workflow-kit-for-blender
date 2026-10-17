@@ -634,6 +634,27 @@ def patch_time_slider(kd):
         _add(kd, km, "maya_kit.set_key", make_event("S"))
 
 
+# --- 32. Joints: pose-mode pick-walk, P / Shift+P ----------------------
+# Maya arrows walk joints like objects (pickWalk, ); IC Pose
+# arrows = select_hierarchy (IC:2453-2459) and frame_offset Left/Right (frames are Alt+, / Alt+., step 20).
+# Maya P parents joints keeping their place: IC Pose P = object.parent_set (IC:2434), Armature
+# P / Shift+P = armature.parent_set / parent_clear menus (IC:3099-3100).
+
+def patch_joints(kd):
+    kd.remove("Pose", "pose.select_hierarchy", type="UP_ARROW")
+    kd.remove("Pose", "pose.select_hierarchy", type="DOWN_ARROW")
+    kd.remove("Pose", "screen.frame_offset", type="LEFT_ARROW")     # frames: Alt+, / Alt+. (step 20)
+    kd.remove("Pose", "screen.frame_offset", type="RIGHT_ARROW")
+    for key, direction in PICK_WALK_KEYS:
+        _add(kd, "Pose", "maya_kit.pick_walk_joint", make_event(key, repeat=True), {"direction": direction})
+    kd.remove("Pose", "object.parent_set", type="P")
+    kd.remove("Armature", "armature.parent_set", type="P")
+    kd.remove("Armature", "armature.parent_clear", type="P", shift=True)
+    for km in ("Pose", "Armature"):
+        _add(kd, km, "maya_kit.parent_joint", make_event("P"))
+        _add(kd, km, "maya_kit.unparent_joint", make_event("P", shift=True))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -642,7 +663,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints, patch_time_slider)
+           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints)
 
 
 def apply(data):

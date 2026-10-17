@@ -238,8 +238,8 @@ def test_pivot_and_pick_walk_keys():
         items = _kmis("Object Mode", key)
         assert [(k.idname, k.properties.direction) for k in items] == \
             [("maya_kit.pick_walk", direction)], key
-    # Other modes keep IC's arrow frame stepping.
-    assert [k.idname for k in _kmis("Pose", "LEFT_ARROW")] == ["screen.frame_offset"]
+    # Pose mode arrows walk joints since step 57 (frames: Alt+, / Alt+.); other modes keep IC's.
+    assert [k.idname for k in _kmis("Pose", "LEFT_ARROW")] == ["maya_kit.pick_walk_joint"]
 
 
 def test_hold_operator_refuses_non_press():
