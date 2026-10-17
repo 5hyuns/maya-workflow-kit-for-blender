@@ -218,6 +218,13 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     # Shelf (docs/steps/step_12.md): current tab (factory file name or "USER:<name>").
     shelf_current: bpy.props.StringProperty(options={'HIDDEN'})
 
+    # Maya project (operators/project.py, docs/steps/step_69.md): Blender has no projects, so the current
+    # project folder and the Recent Projects list live here, like Maya keeps the workspace in its prefs.
+    project_root: bpy.props.StringProperty(name="Current Project", subtype='DIR_PATH',
+                                           description="Maya Kit project folder: file dialogs open in its scenes "
+                                                       "folder, renders go to its images folder")
+    recent_projects: bpy.props.StringProperty(options={'HIDDEN'})   # newline-separated, newest first
+
     # Scene concepts (docs/steps/step_10.md; docs/user_decisions.md #1, #2).
     parent_mode: bpy.props.EnumProperty(
         name="Parent Mode", description="What P (Parent) does to the child's values",
@@ -311,6 +318,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_units")
         row.prop(self, "smart_duplicate")
         row.prop(self, "smart_extrude")
+        box.prop(self, "project_root")
 
         box = layout.box()
         box.label(text="UI Elements")

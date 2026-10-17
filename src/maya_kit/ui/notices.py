@@ -84,14 +84,19 @@ NOTICES = {
        for path in ("Skeleton/HumanIK", "Skeleton/Quick Rig", "Windows/Animation Editors/HumanIK",
                     "Windows/Animation Editors/Quick Rig")},
     # Scene / files (W3: Reference -> link + library override, Set Project -> relative paths)
+    # Scene management (step 69, operators/project.py, research/maya/workflows/scene.md §4)
     "File/Create Reference...": (
-        "Link", "Blender references are linked data: Link the file's collection, then Library Override to pose it."),
+        "Link + Library Override", "Blender references are linked .blend files: Maya Kit makes them editable "
+        "(library override) and prefixes the names with the namespace (ns:name)."),
     "File/Reference Editor": (
-        "Outliner: Blender File", "Linked files are listed in the Outliner's Blender File view (relocate / reload there)."),
+        "Outliner: Blender File", "Linked files are listed in the Outliner's Blender File view (right-click: "
+        "Reload / Relocate)."),
     "File/Set Project...": (
-        "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
+        "Maya Kit project", "Blender has no projects: Maya Kit keeps this folder, opens file dialogs in its scenes "
+        "folder and renders to its images folder."),
     "File/Project Window": (
-        "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
+        "Maya Kit project", "Blender has no projects: Maya Kit makes Maya's project folders and keeps the folder "
+        "as your project."),
     # UV (step 66): Blender cuts / sews UVs in the UV Editor only
     "UV/3D Cut and Sew UV Tool": (
         "Cut / Sew", "Blender has no 3D cut-and-sew tool (not in Maya Kit yet): select edges in the 3D View, then Cut (Shift+X) / "

@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 69 (씬 관리: 프로젝트 · 증분 저장 · 레퍼런스) 완료 — `docs/steps/step_69.md`. `operators/project.py`: Project Window / Set Project / Recent Projects
+  (루트 + Maya 폴더 + 표시 파일, add-on 환경설정), 파일 창이 `<root>/scenes` 에서 (Ctrl+O/S/Shift+S, 메뉴, Status Line), 프로젝트 안 저장 → 렌더 `//../images/`,
+  Ctrl+Alt+S = Maya 증분 (`shot_v001.0001`), Ctrl+R Create Reference = 링크 + library override + `ns:` 이름, Reference Editor = Outliner Blender File 창.
+  헤드리스 566/566, GUI 0.8 477/477, gui_step69 7/7, dogfood 47/47.
+  **바로 다음 할 일**: step 70 — Graph Editor 탄젠트 툴바 · Shift+S · G · Auto Key · Playblast 플레이어 (근거 `research/maya/workflows/animation.md`;
+  `operators/time_keys.TANGENTS` 표). `docs/steps/step_70.md` 「계획」 먼저 (키맵 충돌). 70 이 PLAN 의 마지막 워크플로우 단계.
+
 - Step 68 (FX: 시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache) 완료 — `docs/steps/step_68.md`. `operators/fx.py`: g = maya_unit / Space Scale
   (중력 9.8·g, 길이 × maya_unit, 천 강성·감쇠 × g — 측정), `Scene.maya_kit_nucleus` + AE 「nucleus1」 탭, Create Emitter (`emitter1` + `nParticle1`),
   Emit from Object, nCloth / Passive / Remove / 강체를 선택 전부에, `maya_kit.ncache` (포인트 캐시 · 강체 · GN · Mantaflow). 측정: 파티클·강체는 1 m 장면과

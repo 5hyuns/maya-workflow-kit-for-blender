@@ -129,7 +129,7 @@ def test_notices_are_real_menu_paths_with_a_line():
             "Control/Create Character Set": "Keying Set", "Windows/Node Editor": "drivers",
             "Windows/General Editors/Hypergraph: Hierarchy": "Outliner", "Skeleton/HumanIK": "Rigify",
             "Windows/General Editors/Namespace Editor": "ns:", "File/Create Reference...": "Library Override",
-            "File/Set Project...": "relative", "Modify/Evaluate Nodes/nucleuses": "nucleus",
+            "File/Set Project...": "projects", "Modify/Evaluate Nodes/nucleuses": "nucleus",
             "Windows/Rendering Editors/Light Editor": "Light Editor", "Create/Lights/Point Light": "square"}
     for path, word in want.items():
         assert word in " ".join(notices.NOTICES[path]), (path, word)

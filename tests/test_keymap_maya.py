@@ -172,6 +172,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            maya_patches.KNIFE_TOOL: (maya_patches.KNIFE_TOOL,), "Knife Tool Modal Map": ("Knife Tool Modal Map",),
            # Step 66: the UV Editor (an Image Editor in UV mode).
            maya_patches.UV_KM: ("Window", "Screen", "Frames", maya_patches.UV_KM, "Image", "Image Generic", "View2D"),
+           # Step 69: Window items (file keys) run after every editor keymap.
+           "Window": None,
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

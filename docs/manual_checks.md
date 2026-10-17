@@ -477,3 +477,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글.
 - [ ] (step 68) nCache > Create New Cache > nObject → 타임라인에 구운 캐시 (주황 → 확정), 선택 없으면 장면 전체; Delete Cache → 다시 시뮬레이션. Enable/Disable All Caches 는 회색 + 안내.
 - [ ] (step 68) Fields/Solvers > Create Active Rigid Body (여러 개 선택) → 모두 강체, 바닥 Passive 위에 Maya 처럼 떨어져 멈춤.
+
+### Step 69 — 씬 관리 (프로젝트 · 증분 저장 · 레퍼런스)
+
+- [ ] (step 69) File > Project Window: 대화상자 (안내 글, 이름, 위치, 폴더 12 개) — scene_01_win1 과 비교. Accept → 폴더 생김, 환경설정 Scene Concepts 의 Current Project 에 표시. File > Set Project… = 폴더 고르기 (Create Default Folders 옵션), File > Recent Projects 목록.
+- [ ] (step 69) 프로젝트가 있을 때 Ctrl+O / Ctrl+Shift+S / 처음 Ctrl+S / Status Line 열기·저장 아이콘 / File 메뉴: 파일 창이 `<프로젝트>/scenes` 에서 열림. 프로젝트 안에 저장하면 Render 출력 = `//../images/` (사용자가 바꾼 경로는 그대로). 다른 컴퓨터로 옮긴 프로젝트의 scenes 안 파일을 열면 그 프로젝트가 현재 프로젝트가 됨.
+- [ ] (step 69) Ctrl+Alt+S (= File > Increment and Save): `shot_v001.blend` → `shot_v001.0001.blend` 로 저장하고 그 파일에서 계속 (원본 유지, 상태 표시줄 "Saved …").
+- [ ] (step 69) Ctrl+R (= File > Create Reference…): 파일 창 (scenes 에서 시작, 오른쪽 옵션 Namespace / Editable) → `prop:pCube1` 등이 `prop` 컬렉션 아래에, 옮기기·키 가능 (원본 파일 그대로), 같은 파일 다시 = `prop1:`. 파일 브라우저·이미지 에디터·시퀀서에서는 Ctrl+R 이 원래 새로고침.
+- [ ] (step 69) File > Reference Editor: Outliner 새 창 Blender File 보기, 레퍼런스 파일 행 우클릭 Reload / Relocate.

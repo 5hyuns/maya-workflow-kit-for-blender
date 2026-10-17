@@ -106,16 +106,21 @@ _WINDOW_EDITORS = {
 MAP = {
     # --- File (research/maya/menus.md "File") ---
     "File/New Scene": "wm.read_homefile",
-    "File/Open Scene...": "wm.open_mainfile",
-    "File/Save Scene": "wm.save_mainfile",
-    "File/Save Scene As...": "wm.save_as_mainfile",
+    # step 69: file dialogs start in the project's scenes folder (operators/project.py)
+    "File/Open Scene...": "maya_kit.open_scene",
+    "File/Save Scene": "maya_kit.save_scene",
+    "File/Save Scene As...": "maya_kit.save_scene_as",
     "File/Increment and Save": "maya_kit.increment_save",          # step 34
     "File/Save Preferences": "wm.save_userpref",
     "File/Optimize Scene Size": "outliner.orphans_purge",
     "File/Import...": ("menu", "TOPBAR_MT_file_import"),
     "File/Export All...": ("menu", "TOPBAR_MT_file_export"),
     "File/Export Selection...": ("menu", "MAYAKIT_MT_export_selection"),   # step 34
-    "File/Create Reference...": "wm.link",
+    "File/Create Reference...": "maya_kit.create_reference",           # step 69 (link + override + ns:)
+    "File/Reference Editor": ("maya_kit.open_editor", {"ui_type": 'OUTLINER', "display_mode": 'LIBRARIES'}),
+    "File/Project Window": "maya_kit.project_window",
+    "File/Set Project...": "maya_kit.set_project",
+    "File/Recent Projects": ("menu", "MAYAKIT_MT_recent_projects"),
     "File/Recent Files": ("menu", "TOPBAR_MT_file_open_recent"),
     "File/Exit": "wm.quit_blender",
     # --- Edit ---

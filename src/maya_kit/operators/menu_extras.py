@@ -112,6 +112,8 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
 
     ui_type: EnumProperty(items=EDITOR_TYPES, name="Editor")
     tab: StringProperty(name="Properties Tab", options={'SKIP_SAVE'})
+    display_mode: StringProperty(name="Outliner Display Mode", options={'SKIP_SAVE'},
+                                 description="e.g. LIBRARIES = Blender File (Maya Reference Editor, step 69)")
 
     def execute(self, context):
         window = context.window
@@ -133,7 +135,10 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
         target = new.screen.areas[0]
         target.ui_type = self.ui_type
         if self.ui_type == 'OUTLINER':
-            _maya_outliner(target.spaces.active)
+            if self.display_mode:
+                target.spaces.active.display_mode = self.display_mode
+            else:
+                _maya_outliner(target.spaces.active)
         if self.ui_type == 'PROPERTIES' and self.tab:
             properties_tab_later(new, self.tab)
         return {'FINISHED'}
