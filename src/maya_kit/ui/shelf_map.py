@@ -67,6 +67,7 @@ BY_COMMAND = {
     "DuplicateFace": (("v3d", "mesh.duplicate_move", {}), 'DUPLICATE'),
     "PolygonCollapse": ("mesh.edge_collapse", 'FULLSCREEN_EXIT'),
     "dR_multiCutTool": (("tool", "builtin.knife", True), 'SCULPTMODE_HLT'),
+    "MergeVertexTool": (("tool", "maya_kit.target_weld_tool", True), 'AUTOMERGE_OFF'),   # Target Weld (step 64)
     "dR_quadDrawTool": (("tool", "builtin.poly_build", True), 'MESH_DATA'),
     "TextureViewWindow": (("maya_kit.hb_pane", {"ui_type": 'UV'}), 'UV'),
     # --- Sculpting ---

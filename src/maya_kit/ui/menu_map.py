@@ -287,6 +287,8 @@ MAP = {
     "Mesh Tools/Offset Edge Loop": ("v3d", "mesh.offset_edge_loops_slide", {}),
     "Mesh Tools/Quad Draw": ("tool", "builtin.poly_build", True),
     "Mesh Tools/Slide Edge": ("tool", "builtin.edge_slide", True),
+    "Mesh Tools/Target Weld": ("tool", "maya_kit.target_weld_tool", True),     # step 64
+    "Mesh Tools/Crease Tool": ("tool", "maya_kit.crease_tool", True),
     # --- Mesh Display ---
     "Mesh Display/Average": "mesh.average_normals",
     "Mesh Display/Conform": "mesh.normals_make_consistent",

@@ -74,6 +74,10 @@ NOTICES = {
         "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
     "File/Project Window": (
         "Relative paths", "Blender has no projects: save the file, then textures and caches use paths relative to it (//)."),
+    # Modeling (step 64): the Crease Tool works, with Blender's 0-1 crease underneath
+    "Mesh Tools/Crease Tool": (
+        "Edge crease", "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that "
+        "many smooth levels) and stores sqrt(value / 10); see it with 3 (smooth mesh preview)."),
     # FX (W3: nucleus -> scene gravity + per-object settings; Gravity field)
     "Modify/Evaluate Nodes/nucleuses": (
         "Scene gravity", "Blender has no nucleus node: gravity is in Scene properties, solver settings are per object."),
