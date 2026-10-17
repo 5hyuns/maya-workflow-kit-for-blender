@@ -10,13 +10,19 @@
   data, one tab per modifier (construction history inputs) and per material.
 - Sections and their rows: ``ae_layout`` (Maya template sections, collapse flags
   from ), drawn as ``layout.panel`` sections.
+- Joints (step 55): in pose mode the node is the lead pose bone (``channel_box.lead``): a
+  ``joint`` tab (ae_layout.JOINT) plus one tab per constraint node, like Maya's
+  ``pCube1_parentConstraint1``.
 """
+
+import math
 
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from ..operators import display
 from . import ae_layout
+from . import cb_entry, channel_box
 from .channel_box import CATEGORY
 
 DOCK_ITEMS = (('CHANNEL_BOX', "Channel Box / Layer Editor", "Maya Channel Box and Layer Editor"),
@@ -54,8 +60,17 @@ def node_type(ob):
     return ae_layout.NODE_TYPE.get(ob.type, ob.type.lower())
 
 
+def _constraint_tabs(node):
+    return [(f"C:{con.name}", channel_box.constraint_node_name(node, con),
+             channel_box.MAYA_CONSTRAINT.get(con.type, con.type.lower()))
+            for con in channel_box.constraints(node)]
+
+
 def tabs(ob):
-    """[(key, label, Maya node type)] in Maya's order: transform, shape, history, materials."""
+    """[(key, label, Maya node type)] in Maya's order: transform, shape, history, materials,
+    constraints; a joint (pose bone): joint, constraints."""
+    if channel_box.is_bone(ob):
+        return [("J", ob.name, "joint")] + _constraint_tabs(ob)
     out = [("T", ob.name, "transform")]
     if ob.data is not None:
         out.append(("S", ob.data.name, node_type(ob)))
@@ -66,7 +81,7 @@ def tabs(ob):
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
             out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
-    return out
+    return out + _constraint_tabs(ob)
 
 
 def _kind(key):
@@ -83,14 +98,18 @@ def current_tab(context, ob):
     for k in keys:
         if _kind(k) == wm.maya_kit_ae_kind:
             return k
+    if "J" in keys:
+        return "J"
     return "S" if "S" in keys else "T"
 
 
 def tab_target(ob, key):
     """The datablock or modifier a tab shows."""
     kind = _kind(key)
-    if kind == "T":
+    if kind in ("T", "J"):
         return ob
+    if kind == "C":
+        return ob.constraints.get(key[2:])
     if kind == "S":
         return ob.data
     if kind == "M":
@@ -106,6 +125,8 @@ def sections_for(ob, key):
     kind = _kind(key)
     if kind == "T":
         return ae_layout.BY_KIND["transform"][0], "transform"
+    if kind == "J":
+        return ae_layout.BY_KIND["joint"][0], "joint"
     if kind == "S":
         sub = ob.data.type if ob.type == 'LIGHT' else ob.type
         return ae_layout.BY_KIND.get(sub, ([], None))[0], sub.lower()
@@ -136,6 +157,8 @@ def _owner(context, ob, target, name):
     if name == "view":
         space = context.space_data
         return space if space is not None and space.type == 'VIEW_3D' else None
+    if channel_box.is_bone(ob):
+        return {"bone": ob.bone, "arm": ob.id_data.data, "armob": ob.id_data}.get(name)
     return None
 
 
@@ -188,7 +211,39 @@ def draw_limit(layout, context, ob, kind):
 
 
 def draw_visibility(layout, context, ob):
-    layout.prop(ob, "hide_viewport", text="Visibility", invert_checkbox=True)
+    if channel_box.is_bone(ob):
+        layout.prop(ob.bone, "hide", text="Visibility", invert_checkbox=True)
+    else:
+        layout.prop(ob, "hide_viewport", text="Visibility", invert_checkbox=True)
+
+
+JOINT_AXIS_NOTE = "Bone Y points to the child joint (Maya Primary Axis X)"
+
+
+def joint_orient(pb):
+    """Maya jointOrient ~ the bone's rest rotation relative to its parent's rest (Euler XYZ)."""
+    bone = pb.bone
+    rest = bone.matrix_local if bone.parent is None else bone.parent.matrix_local.inverted() @ bone.matrix_local
+    return rest.to_euler('XYZ')
+
+
+def draw_joint_orient(layout, context, pb):
+    split = layout.split(factor=0.3, align=True)
+    split.label(text="Joint Orient")
+    row = split.row(align=True)
+    for v in joint_orient(pb):
+        row.label(text=cb_entry.fmt_number(math.degrees(v)))   # Maya numbers: no "-0"
+    note = layout.row()
+    note.active = False
+    note.label(text=JOINT_AXIS_NOTE)
+
+
+def draw_joint_stiffness(layout, context, pb):
+    split = layout.split(factor=0.3, align=True)
+    split.label(text="Stiffness")
+    row = split.row(align=True)
+    for a in "xyz":
+        row.prop(pb, f"ik_stiffness_{a}", text="")
 
 
 def draw_shading(layout, context, ob):
@@ -209,7 +264,8 @@ def draw_smooth_mesh(layout, context, ob):
 
 
 DRAWERS = {"transform_channels": draw_transform_channels, "world_pivot": draw_world_pivot,
-           "visibility": draw_visibility, "shading": draw_shading, "smooth_mesh": draw_smooth_mesh}
+           "visibility": draw_visibility, "shading": draw_shading, "smooth_mesh": draw_smooth_mesh,
+           "joint_orient": draw_joint_orient, "joint_stiffness": draw_joint_stiffness}
 
 
 def draw_row(layout, context, ob, target, row):
@@ -282,6 +338,29 @@ def draw_history(layout, context, ob, md):
     op.modifier, op.action = md.name, 'REMOVE'
 
 
+# Constraint properties that are not the Maya constraint node's own attributes.
+_CON_SKIP = {"rna_type", "name", "type", "show_expanded", "is_valid", "active", "is_override_data_editable",
+             "is_override_data_local", "mute", "enabled", "influence", "error_location", "error_rotation"}
+
+
+def constraint_props(con):
+    return [p.identifier for p in con.bl_rna.properties
+            if p.identifier not in _CON_SKIP and not p.is_readonly and p.type != 'COLLECTION']
+
+
+def draw_constraint(layout, context, node, con):
+    """A Maya constraint node tab: target weight (= influence), then the constraint's settings."""
+    header, body = layout.panel(f"maya_kit_ae_constraint_{con.type}", default_closed=False)
+    header.label(text=f"{channel_box.MAYA_CONSTRAINT.get(con.type, con.type.title())} Attributes")
+    if body is not None:
+        col = body.column()
+        if hasattr(con, "enabled"):
+            col.prop(con, "enabled", text="Enabled (Node State)")
+        col.prop(con, "influence", text=channel_box.weight_name(con))
+        for ident in constraint_props(con):
+            col.prop(con, ident)
+
+
 def draw_extra(layout, owner, layout_id):
     keys = [k for k in owner.keys() if not k.startswith(("_", "maya_kit_", "cycles"))]
     header, body = layout.panel(f"maya_kit_ae_{layout_id}_extra", default_closed=True)
@@ -312,6 +391,9 @@ def draw(layout, context, ob):
     head = layout.row(align=True)
     head.label(text=f"{label}:")
     head.prop(target, "name", text="")
+    if _kind(key) == "C":
+        draw_constraint(layout, context, ob, target)
+        return
     if _kind(key) == "M":
         sub = head.row(align=True)
         sub.operator("maya_kit.ae_step", text="", icon='TRIA_LEFT').forward = False
@@ -320,7 +402,7 @@ def draw(layout, context, ob):
         return
     sections, layout_id = sections_for(ob, key)
     draw_sections(layout, context, ob, target, sections, layout_id or "data")
-    if isinstance(target, bpy.types.ID):
+    if isinstance(target, (bpy.types.ID, bpy.types.PoseBone)):
         draw_extra(layout, target, layout_id or "data")
     if _kind(key) == "T":
         layout.operator("maya_kit.ae_select", text="Select")
@@ -406,10 +488,10 @@ class MAYAKIT_OT_ae_add_limit(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        return channel_box.lead(context) is not None
 
     def execute(self, context):
-        con = context.active_object.constraints.new(self.type)
+        con = channel_box.lead(context).constraints.new(self.type)   # a joint: the pose bone
         con.owner_space = 'LOCAL'   # Maya limits act on the channel values
         return {'FINISHED'}
 
@@ -538,7 +620,11 @@ class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
 
     def draw(self, context):
         draw_dock_switch(self.layout, context)
-        ob = context.active_object
+        if channel_box.placing_joints(context):
+            from . import chrome
+            chrome.wrapped(self.layout, channel_box.PLACING_TEXT)
+            return
+        ob = channel_box.lead(context)
         if ob is None:
             self.layout.label(text="make a selection")
             return

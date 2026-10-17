@@ -9,6 +9,10 @@ way to a custom tree, without drag and drop). Design:  「계획」 2.
 Rows (``WindowManager.maya_kit_outliner_rows``) are rebuilt outside drawing
 (ID data can't be written while drawing): from the depsgraph / load handlers
 and from this module's operators, skipped when nothing they show changed.
+
+Joints (step 55): a Maya joint is a bone (), so an
+expanded armature lists its bones as JOINT rows in bone hierarchy order; clicking one enters
+pose mode and selects that bone.
 """
 
 import bpy
@@ -23,10 +27,19 @@ def _target(row):
     return bpy.data.objects.get(row.object)
 
 
+def _bone(row):
+    ob = _target(row)
+    if ob is None or ob.type != 'ARMATURE':
+        return None
+    return ob.data.bones.get(row.bone)
+
+
 def _get_label(self):
     ob = _target(self)
     if ob is None:
         return self.object
+    if self.kind == 'JOINT':
+        return self.bone
     if self.kind == 'SHAPE':
         return ob.data.name if ob.data is not None else ""
     return ob.name
@@ -36,6 +49,12 @@ def _set_label(self, value):
     ob = _target(self)
     if ob is None or not value:
         return
+    if self.kind == 'JOINT':
+        bone = _bone(self)
+        if bone is not None:
+            bone.name = value
+            self.bone = bone.name
+        return
     if self.kind == 'SHAPE' and ob.data is not None:
         ob.data.name = value
     else:
@@ -44,8 +63,9 @@ def _set_label(self, value):
 
 
 class MAYAKIT_PG_outliner_row(bpy.types.PropertyGroup):
-    kind: EnumProperty(items=(('OBJECT', "Object", ""), ('SHAPE', "Shape", "")))
+    kind: EnumProperty(items=(('OBJECT', "Object", ""), ('SHAPE', "Shape", ""), ('JOINT', "Joint", "")))
     object: StringProperty()
+    bone: StringProperty()       # JOINT: bone name
     depth: IntProperty()
     has_children: BoolProperty()
     label: StringProperty(name="Name", get=_get_label, set=_set_label)
@@ -54,18 +74,28 @@ class MAYAKIT_PG_outliner_row(bpy.types.PropertyGroup):
 # --- rows ------------------------------------------------------------------------------------
 
 def dag_rows(scene, shapes):
-    """[(kind, object name, depth, has children)] in Maya DAG order: roots in scene
-    order, children depth first; collapsed objects hide their children."""
+    """[(kind, object name, depth, has children, bone name)] in Maya DAG order: roots in scene
+    order, children depth first; collapsed objects (and joints) hide their children. An
+    armature's bones come first under it, like the joints under a Maya skeleton group."""
     order = {ob: i for i, ob in enumerate(scene.objects)}
     rows = []
+
+    def visit_bone(ob, bone, depth):
+        rows.append(('JOINT', ob.name, depth, bool(bone.children), bone.name))
+        if bone.maya_kit_expanded:
+            for child in bone.children:
+                visit_bone(ob, child, depth + 1)
 
     def visit(ob, depth):
         kids = sorted((c for c in ob.children if c in order), key=order.get)
         shape = shapes and ob.data is not None
-        rows.append(('OBJECT', ob.name, depth, bool(kids) or shape))
+        roots = [b for b in ob.data.bones if b.parent is None] if ob.type == 'ARMATURE' else []
+        rows.append(('OBJECT', ob.name, depth, bool(kids) or shape or bool(roots), ""))
         if ob.maya_kit_expanded:
             if shape:
-                rows.append(('SHAPE', ob.name, depth + 1, False))
+                rows.append(('SHAPE', ob.name, depth + 1, False, ""))
+            for bone in roots:
+                visit_bone(ob, bone, depth + 1)
             for c in kids:
                 visit(c, depth + 1)
 
@@ -87,9 +117,9 @@ def rebuild(context=None, force=False):
     try:
         coll = wm.maya_kit_outliner_rows
         coll.clear()
-        for kind, name, depth, has in rows:
+        for kind, name, depth, has, bone in rows:
             it = coll.add()
-            it.kind, it.object, it.depth, it.has_children = kind, name, depth, has
+            it.kind, it.object, it.depth, it.has_children, it.bone = kind, name, depth, has, bone
         _state["sig"] = sig
     finally:
         _state["busy"] = False
@@ -111,8 +141,13 @@ def _on_load(_dummy):
 
 def _get_index(self):
     ob = bpy.context.view_layer.objects.active
+    bone = None
+    if ob is not None and ob.type == 'ARMATURE' and ob.mode == 'POSE' and ob.data.bones.active:
+        bone = ob.data.bones.active.name
     for i, row in enumerate(self.maya_kit_outliner_rows):
-        if row.kind == 'OBJECT' and ob is not None and row.object == ob.name:
+        if ob is None or row.object != ob.name:
+            continue
+        if (row.kind == 'JOINT' and row.bone == bone) or (row.kind == 'OBJECT' and bone is None):
             return i
     return -1
 
@@ -134,13 +169,65 @@ def _select(ob, state=True):
         return False
 
 
+def _pose_bone(row):
+    ob = _target(row)
+    return ob.pose.bones.get(row.bone) if ob is not None and ob.pose is not None else None
+
+
+def _enter_pose(context, ob):
+    """Make ``ob`` the active armature in pose mode (Maya: picking a joint just selects it)."""
+    vl = context.view_layer
+    if ob.mode == 'POSE' and vl.objects.active == ob:
+        return True
+    if context.mode != 'OBJECT' and context.active_object is not None:
+        bpy.ops.object.mode_set(mode='OBJECT')
+    for o in context.selected_objects:
+        o.select_set(False)
+    if not _select(ob):
+        return False
+    vl.objects.active = ob
+    bpy.ops.object.mode_set(mode='POSE')
+    return ob.mode == 'POSE'
+
+
+def select_joint_rows(context, rows, index, mode, anchor=None):
+    """A JOINT row: pose mode on its armature, then select the bone (Ctrl toggle, Shift range
+    among the same armature's joint rows)."""
+    from .channel_box import bone_selected, set_bone_selected
+    row = rows[index]
+    ob, pb = _target(row), _pose_bone(row)
+    if ob is None or pb is None or not _enter_pose(context, ob):
+        return
+    if mode == 'TOGGLE':
+        set_bone_selected(pb, not bone_selected(pb))
+        if bone_selected(pb):
+            ob.data.bones.active = pb.bone
+        return
+    picked = [pb]
+    if mode == 'RANGE' and anchor is not None and 0 <= anchor < len(rows):
+        lo, hi = sorted((anchor, index))
+        picked = [_pose_bone(r) for r in list(rows)[lo:hi + 1]
+                  if r.kind == 'JOINT' and r.object == row.object]
+    else:
+        for other in ob.pose.bones:
+            set_bone_selected(other, False)
+    for b in picked:
+        if b is not None:
+            set_bone_selected(b, True)
+    ob.data.bones.active = pb.bone
+
+
 def select_rows(context, rows, index, mode, anchor=None):
     """Maya Outliner selection: REPLACE (click), TOGGLE (Ctrl), RANGE (Shift, from
     ``anchor`` = the active row)."""
     vl = context.view_layer
+    if rows[index].kind == 'JOINT':
+        return select_joint_rows(context, rows, index, mode, anchor)
     ob = bpy.data.objects.get(rows[index].object)
     if ob is None:
         return
+    if context.mode == 'POSE':
+        bpy.ops.object.mode_set(mode='OBJECT')   # an object row: back to picking objects
     if mode == 'TOGGLE':
         if _select(ob, not ob.select_get()) and ob.select_get():
             vl.objects.active = ob
@@ -171,7 +258,7 @@ class MAYAKIT_OT_outliner_select(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        return context.mode in {'OBJECT', 'POSE'}
 
     def invoke(self, context, event):
         self.mode = 'TOGGLE' if event.ctrl else 'RANGE' if event.shift else 'REPLACE'
@@ -193,6 +280,7 @@ class MAYAKIT_OT_outliner_expand(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     name: StringProperty()
+    bone: StringProperty()
     recursive: BoolProperty()
 
     def invoke(self, context, event):
@@ -203,6 +291,15 @@ class MAYAKIT_OT_outliner_expand(bpy.types.Operator):
         ob = bpy.data.objects.get(self.name)
         if ob is None:
             return {'CANCELLED'}
+        if self.bone:
+            bone = ob.data.bones.get(self.bone) if ob.type == 'ARMATURE' else None
+            if bone is None:
+                return {'CANCELLED'}
+            state = not bone.maya_kit_expanded
+            for b in ([bone, *bone.children_recursive] if self.recursive else [bone]):
+                b.maya_kit_expanded = state
+            rebuild(context)
+            return {'FINISHED'}
         state = not ob.maya_kit_expanded
         for o in ([ob, *ob.children_recursive] if self.recursive else [ob]):
             o.maya_kit_expanded = state
@@ -227,6 +324,8 @@ _ICONS = set()
 
 
 def icon_for(row, ob):
+    if row.kind == 'JOINT':
+        return 'BONE_DATA'
     if not _ICONS:
         _ICONS.update(bpy.types.UILayout.bl_rna.functions["label"].parameters["icon"].enum_items.keys())
     name = f"OUTLINER_DATA_{ob.type}" if row.kind == 'SHAPE' else f"OUTLINER_OB_{ob.type}"
@@ -242,17 +341,30 @@ class MAYAKIT_UL_outliner(bpy.types.UIList):
             return
         for _ in range(item.depth):
             row.label(text="", icon='BLANK1')
+        bone = _bone(item) if item.kind == 'JOINT' else None
+        if item.kind == 'JOINT' and bone is None:
+            row.label(text=item.bone)
+            return
         if item.has_children:
+            expanded = (bone or ob).maya_kit_expanded
             op = row.operator(MAYAKIT_OT_outliner_expand.bl_idname, text="", emboss=False,
-                              icon='DISCLOSURE_TRI_DOWN' if ob.maya_kit_expanded else 'DISCLOSURE_TRI_RIGHT')
+                              icon='DISCLOSURE_TRI_DOWN' if expanded else 'DISCLOSURE_TRI_RIGHT')
             op.name = ob.name
+            op.bone = item.bone
         else:
             row.label(text="", icon='BLANK1')
+        if bone is not None:
+            from .channel_box import bone_selected
+            pb = ob.pose.bones.get(bone.name)
+            selected = ob.mode == 'POSE' and pb is not None and bone_selected(pb)
+            visible = ob.visible_get() and not bone.hide
+        else:
+            selected, visible = ob.select_get(), ob.visible_get()
         op = row.operator(MAYAKIT_OT_outliner_select.bl_idname, text="", icon=icon_for(item, ob),
-                          emboss=False, depress=ob.select_get())
+                          emboss=False, depress=selected)
         op.index = index
         sub = row.row()
-        sub.active = ob.visible_get()   # hidden = grey text (Maya)
+        sub.active = visible   # hidden = grey text (Maya)
         sub.prop(item, "label", text="", emboss=False)
 
     def filter_items(self, context, data, propname):
@@ -317,6 +429,8 @@ def register():
                                    "Display > Shapes)", update=_shapes_changed, options={'SKIP_SAVE'})
     bpy.types.Object.maya_kit_expanded = BoolProperty(
         name="Expanded", description="Expanded in the Maya Outliner", options={'HIDDEN'})
+    bpy.types.Bone.maya_kit_expanded = BoolProperty(
+        name="Expanded", description="Joint expanded in the Maya Outliner", options={'HIDDEN'})
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
     bpy.app.handlers.load_post.append(_on_load)
     _state["sig"] = None
@@ -328,6 +442,7 @@ def unregister():
         bpy.app.timers.unregister(_first_rebuild)
     bpy.app.handlers.load_post.remove(_on_load)
     bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
+    del bpy.types.Bone.maya_kit_expanded
     del bpy.types.Object.maya_kit_expanded
     wm = bpy.types.WindowManager
     del wm.maya_kit_outliner_shapes
