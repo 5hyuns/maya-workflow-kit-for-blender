@@ -258,6 +258,28 @@ def s_wait2():
           addon.maya_theme and not prefs.view.show_splash)
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap active (got {kc.name if kc else None})", kc is not None and kc.name == "Maya")
+    # The template opened under the factory scale and the shot scale came after it: the header-only
+    # Status Line row shrank and gave its pixels to the middle row. toolbox.fit_columns (0.5 s timer)
+    # puts the shelf row back to 64 px, but screen.area_move polls False while the mouse is over a
+    # region: hold the mouse on the shelf row's bottom edge (step 51).
+    row = import_module(MODULE + ".ui.shelf").shelf_row_area(win().screen)
+    if row is not None:
+        ev('MOUSEMOVE', 'NOTHING', x=row.x + row.width // 2, y=row.y - 1)
+    redraw()
+
+
+@step
+def s_wait2b():
+    redraw()
+
+
+@step
+def s_shelf_fit():
+    row = import_module(MODULE + ".ui.shelf").shelf_row_area(win().screen)
+    want = round(64 * bpy.context.preferences.system.ui_scale)
+    check(f"shelf row {want} px after the fit (got {row.height if row else None})",
+          row is not None and abs(row.height - want) <= 2)
+    park_mouse()
     redraw()
 
 

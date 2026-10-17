@@ -428,6 +428,17 @@ def density_table(geom, kit_img):
     got["menu item pitch"] = (menus["maya_pitch"][0], menus["kit_pitch"][0],
                               f"Create menu at {menus['maya']} / {menus['kit']}; lines {menus['maya_pitch'][1]} / "
                               f"{menus['kit_pitch'][1]}, at the pitch {menus['maya_pitch'][2]} / {menus['kit_pitch'][2]}")
+    bar_h = rects.get("topbar", [0, 0, 0, 0])[3]
+    menu_rects = geom["rects"].get("12_create_menu", {})
+    got["menu top - menu bar bottom"] = (
+        menus["maya"][1] - widgets["menuBar"][3] if menus["maya"] else None,
+        menus["kit"][1] - menu_rects.get("topbar", [0, 0, 0, bar_h])[3] if menus["kit"] else None,
+        "Create menu opened from the menu bar")
+    shelf = rects.get("shelf")
+    shelf_win = rects.get("shelf.WINDOW")
+    got["shelf height"] = (widgets["Shelf"][3], shelf[3] if shelf else None, "tab row + icon row")
+    got["shelf icon"] = (32, min(32, shelf_win[3] - 4) if shelf_win else None,
+                         "ui/shelf.py icon_rect at the shot's scale 1.0 (Maya 32x32 icons in 35x34 buttons)")
     m = widgets["ChannelBoxLayerEditor"]
     mp = L.line_pitch(maya_cb, [m[0], m[1], m[2] * 0.68, m[3] * 0.5])
     k = rects.get("view3d.UI")

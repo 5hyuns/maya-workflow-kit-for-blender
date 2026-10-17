@@ -45,6 +45,11 @@ class FakeLayout:
         self.log.append(("op", idname, text, props, kw))
         return props
 
+    def operator_menu_hold(self, idname, text=None, **kw):   # step 51: items with a Maya option box
+        props = types.SimpleNamespace()
+        self.log.append(("hold", idname, text, props, kw))
+        return props
+
     def prop(self, data, attr, **kw):
         self.log.append(("prop", attr, kw.get("text")))
 
@@ -72,6 +77,19 @@ def _ctx(**extra):
              window_manager=c.window_manager, workspace=win.workspace)
     d.update(extra)
     return types.SimpleNamespace(**d)
+
+
+def _action(entry):
+    """(kind, target, props) a drawn Maya menu item runs."""
+    if entry[0] == "hold":
+        assert entry[1] == "maya_kit.menu_item"
+        return menu_map.spec(entry[3].item)
+    props = dict(vars(entry[3]))
+    if entry[1] == "maya_kit.menu_tool":
+        return ("tool", props["tool"], {"edit": props["edit"]})
+    if entry[1] == "maya_kit.menu_run":
+        return ("v3d", props["op"], props)
+    return ("op", entry[1], props)
 
 
 def _draw_menu(idname, context=None):
@@ -187,10 +205,11 @@ def test_menu_items_active_or_grey():
     create = _draw_menu(menu_sets.menu_idname("mainCreateMenu"))
     sub = next(e[1] for e in create if e[0] == "menu" and e[2] == "Polygon Primitives")
     items = _draw_menu(sub)
-    ops = {e[2]: e for e in items if e[0] == "op"}
-    # Step 10: Maya creation (origin, Maya size and names).
-    assert ops["Cube"][1] == "maya_kit.create" and ops["Cube"][3].kind == 'CUBE', ops["Cube"]
-    assert ops["Pyramid"][1] == "maya_kit.create" and ops["Pyramid"][3].kind == 'PYRAMID'
+    ops = {e[2]: e for e in items if e[0] in ("op", "hold")}
+    # Step 10: Maya creation (origin, Maya size and names). Step 51: option-box items are one
+    # maya_kit.menu_item button (press and hold = option box) running the item's mapped action.
+    assert _action(ops["Cube"]) == ("op", "maya_kit.create", {"kind": 'CUBE'}), ops["Cube"]
+    assert _action(ops["Pyramid"]) == ("op", "maya_kit.create", {"kind": 'PYRAMID'})
     assert ops["Pipe"][1] == "maya_kit.menu_unavailable", ops["Pipe"]
     assert ops["Pipe"][3].item == "Create/Polygon Primitives/Pipe"
     assert not menu_sets.MAYAKIT_OT_menu_unavailable.poll(bpy.context)
@@ -199,11 +218,11 @@ def test_menu_items_active_or_grey():
     assert file_log[-1] == ("menu", "TOPBAR_MT_file", "Blender File"), file_log[-1]
     assert ("menu", "TOPBAR_MT_file_import", "Import...") in file_log
     tools = _draw_menu(menu_sets.menu_idname("mainMeshToolsMenu"))
-    cut = next(e for e in tools if e[0] == "op" and e[2] == "Multi-Cut")
-    assert cut[1] == "maya_kit.menu_tool" and cut[3].tool == "builtin.knife" and cut[3].edit
+    cut = next(e for e in tools if e[0] in ("op", "hold") and e[2] == "Multi-Cut")
+    assert _action(cut) == ("tool", "builtin.knife", {"edit": True}), _action(cut)
     edit_mesh = _draw_menu(menu_sets.menu_idname("mainEditMeshMenu"))
-    bevel = next(e for e in edit_mesh if e[0] == "op" and e[2] == "Bevel")
-    assert bevel[1] == "maya_kit.menu_run" and bevel[3].op == "mesh.bevel"
+    bevel = next(e for e in edit_mesh if e[0] in ("op", "hold") and e[2] == "Bevel")
+    assert _action(bevel)[:2] == ("v3d", "mesh.bevel"), _action(bevel)
     # Section labels from Maya dividers.
     assert ("label", "Pivot") not in file_log
     select = _draw_menu(menu_sets.menu_idname("mainSelectMenu"))

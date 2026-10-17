@@ -10,7 +10,12 @@ research/blender/api_limits.md #11. Design: docs/steps/step_12.md 「계획」.
   shelf. The MayaKit template (step 49) uses two header-only areas instead, the strip
   without its tool header and a shelf row marked ``.MayaKitShelf`` whose header draws
   the shelf: Blender keeps every area at least one header high, so both rows follow
-  the UI scale (a two-row area of fixed height lost its tool header at scale 1.25). ``IMAGE_HT_header.draw`` / ``IMAGE_HT_tool_header.draw`` are swapped while
+  the UI scale (a two-row area of fixed height lost its tool header at scale 1.25).
+- Step 51 (docs/steps/step_51.md 「계획」 1-2): the shelf row is Maya's 64 px shelf: its header = the shelf
+  tabs, its WINDOW region = 32 px kit-made colour icons (``shelf_icons``) drawn and clicked as gizmos
+  (``MAYAKIT_GGT_shelf``: a gizmo map runs before the image editor's tool keymap, gives hover and the
+  operator's tooltip). Click = command; a second click within the double-click time or Ctrl+click =
+  options (Adjust Last Operation), like Maya's doubleClickCommand. ``IMAGE_HT_header.draw`` / ``IMAGE_HT_tool_header.draw`` are swapped while
   the add-on is enabled and restored on unregister; unmarked Image Editors draw as
   usual.
 - Factory buttons: ``shelf_data`` (generated) + ``shelf_map`` (Blender action, icon),
@@ -22,12 +27,13 @@ research/blender/api_limits.md #11. Design: docs/steps/step_12.md 「계획」.
 
 import json
 import os
+import time
 import traceback
 
 import bpy
 from bpy.props import BoolProperty, IntProperty, StringProperty
 
-from . import shelf_data, shelf_map
+from . import shelf_data, shelf_icons, shelf_map
 
 MARKER = ".MayaKitStrip"
 SHELF_MARKER = ".MayaKitShelf"   # the template's shelf row (step 49)
@@ -133,6 +139,10 @@ def run_script(context, label, script):
 
 # --- operators -------------------------------------------------------------------------------------
 
+DOUBLE_CLICK_S = 0.35     # Blender's default double-click time (Preferences > Input)
+_last_click = {}
+
+
 class MAYAKIT_OT_shelf_button(bpy.types.Operator):
     """Run this shelf button (double-click or Ctrl+click: its options)"""
     bl_idname = "maya_kit.shelf_button"
@@ -156,6 +166,18 @@ class MAYAKIT_OT_shelf_button(bpy.types.Operator):
         return "Shelf button"
 
     def invoke(self, context, event):
+        key = (self.shelf, self.index)
+        now = time.monotonic()
+        last = _last_click.get("key"), _last_click.get("time", -1.0)
+        _last_click.update(key=key, time=now)
+        if last[0] == key and now - last[1] <= DOUBLE_CLICK_S and event.value != 'DOUBLE_CLICK':
+            # Second click on the same icon (the gizmo sees two presses, not a double click):
+            # the first one ran the command, open its options.
+            _last_click.clear()
+            try:
+                return bpy.ops.screen.redo_last('INVOKE_DEFAULT')
+            except RuntimeError:
+                return {'CANCELLED'}
         if event.value == 'DOUBLE_CLICK' or event.ctrl:
             # The first click already ran the command: open its options (Maya
             # doubleClickCommand = "...Options", shelves.md:14-16).
@@ -539,6 +561,180 @@ def draw_shelf(layout, context):
         op.shelf, op.index = cur, i
 
 
+def draw_shelf_tabs(layout, context):
+    """Maya shelf tab row (research/maya/screens/19_shelf_crop.png): settings, then one flat tab per shelf,
+    the current one raised."""
+    cur = current(context)
+    layout.menu(MAYAKIT_MT_shelf_settings.bl_idname, text="", icon='PREFERENCES')
+    row = layout.row(align=True)
+    for shelf_id, label in shelves():
+        row.operator(MAYAKIT_OT_shelf_select.bl_idname, text=label, emboss=shelf_id == cur).shelf = shelf_id
+
+
+_factory_cache = {}
+
+
+def icon_buttons(context):
+    """(shelf id, [(button index, label, shelf colour key)]) of the current shelf, in order."""
+    cur = current(context)
+    if cur.startswith(USER_PREFIX):
+        s = user_shelf(cur[len(USER_PREFIX):]) or {"buttons": []}
+        return cur, [(i, b["label"], None) for i, b in enumerate(s["buttons"])]
+    if cur not in _factory_cache:
+        _factory_cache[cur] = [(i, label, cur) for i, label, _a, _icon in factory_buttons(cur)]
+    return cur, _factory_cache[cur]
+
+
+def slot_button(context, slot):
+    cur, buttons = icon_buttons(context)
+    return (cur, buttons[slot]) if 0 <= slot < len(buttons) else (cur, None)
+
+
+class MAYAKIT_OT_shelf_slot(bpy.types.Operator):
+    """Shelf icon"""
+    bl_idname = "maya_kit.shelf_slot"
+    bl_label = "Shelf Button"
+    bl_options = {'INTERNAL'}
+
+    slot: IntProperty()
+
+    @classmethod
+    def description(cls, context, props):
+        _cur, b = slot_button(context, props.slot)
+        return f"{b[1]} (Maya shelf). Double-click or Ctrl+click: options" if b else ""
+
+    def invoke(self, context, event):
+        cur, b = slot_button(context, self.slot)
+        if b is None:
+            return {'CANCELLED'}
+        return bpy.ops.maya_kit.shelf_button('INVOKE_DEFAULT', shelf=cur, index=b[0])
+
+
+# Maya shelf buttons are 35x34 with 32 px icons (colors.json widget_size_histogram QPushButton 35x34).
+ICON_PX = 32
+PITCH_PX = 35
+LEFT_PX = 6
+
+
+def icon_rect(region, slot, scale):
+    size = min(ICON_PX * scale, region.height - 4)
+    x = LEFT_PX * scale + slot * PITCH_PX * scale
+    return x, (region.height - size) / 2, size
+
+
+def _draw_rect(x, y, w, h, colour, texture=None):
+    """A rectangle in region pixels (POST_PIXEL draw handler)."""
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    coords = ((x, y), (x + w, y), (x + w, y + h), (x, y + h))
+    gpu.state.blend_set('ALPHA')
+    if texture is None:
+        sh = gpu.shader.from_builtin('UNIFORM_COLOR')
+        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords})
+        sh.uniform_float("color", colour)
+    else:
+        sh = gpu.shader.from_builtin('IMAGE')
+        batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
+        sh.uniform_sampler("image", texture)
+    batch.draw(sh)
+    gpu.state.blend_set('NONE')
+
+
+def _theme_colour(context):
+    c = context.preferences.themes[0].image_editor.space.header
+    return (c[0], c[1], c[2], 1.0)
+
+
+# Maya's shelf tab row is darker than the icon row and the Status Line (colors.json ui_samples:
+# shelf_tab_bar_bg / shelf_tab_inactive #373737, shelf_tab_active and shelf_icon_row_bg #444444), but
+# both rows share the Image Editor header colour. The tab row's header is dimmed by this black overlay
+# (#444444 -> #373737); the raised current tab (wcol_tool inner) comes out close to Maya's #444444.
+TAB_DIM = 1.0 - 0x37 / 0x44
+
+
+def draw_tab_row():
+    """POST_PIXEL of image editor headers: dim the shelf tab row (``TAB_DIM``)."""
+    context = bpy.context
+    if not is_shelf_row(context.space_data):
+        return
+    region = context.region
+    _draw_rect(0, 0, region.width, region.height, (0.0, 0.0, 0.0, TAB_DIM))
+
+
+_hover = {}   # region pointer -> slot under the mouse (set by the gizmos' test_select)
+
+
+def draw_row():
+    """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons). The gizmos only
+    pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor did not, measured)."""
+    context = bpy.context
+    if not is_shelf_row(context.space_data):
+        return
+    region = context.region
+    s = context.preferences.system.ui_scale
+    _draw_rect(0, 0, region.width, region.height, _theme_colour(context))
+    _cur, buttons = icon_buttons(context)
+    hover = _hover.get(region.as_pointer())
+    for slot, (_index, label, colour_key) in enumerate(buttons[:SLOTS]):
+        x, y, size = icon_rect(region, slot, s)
+        if x > region.width:
+            break
+        if slot == hover:
+            _draw_rect(x - 2, y - 2, size + 4, size + 4, (1, 1, 1, 0.18))
+        _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key))
+
+
+class MAYAKIT_GT_shelf_icon(bpy.types.Gizmo):
+    """Shelf slot ``slot`` (the current shelf's button there): picking only, drawn by ``draw_row``;
+    clicking runs maya_kit.shelf_slot (its target operator). A fixed pool, so switching shelves needs
+    no rebuild."""
+    bl_idname = "MAYAKIT_GT_shelf_icon"
+    __slots__ = ("slot",)
+
+    def setup(self):
+        self.slot = 0
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        key = context.region.as_pointer()
+        hit = slot_button(context, self.slot)[1] is not None
+        if hit:
+            x, y, size = icon_rect(context.region, self.slot, context.preferences.system.ui_scale)
+            hit = x <= location[0] <= x + size and y <= location[1] <= y + size
+        if hit:
+            if _hover.get(key) != self.slot:
+                _hover[key] = self.slot
+                context.region.tag_redraw()
+            return 0
+        if _hover.get(key) == self.slot:
+            _hover.pop(key, None)
+            context.region.tag_redraw()
+        return -1
+
+
+SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 43)
+
+
+class MAYAKIT_GGT_shelf(bpy.types.GizmoGroup):
+    bl_idname = "MAYAKIT_GGT_shelf"
+    bl_label = "Maya Shelf"
+    bl_space_type = 'IMAGE_EDITOR'
+    bl_region_type = 'WINDOW'
+    bl_options = {'PERSISTENT'}
+
+    @classmethod
+    def poll(cls, context):
+        return is_shelf_row(context.space_data)
+
+    def setup(self, context):
+        for slot in range(SLOTS):
+            gz = self.gizmos.new(MAYAKIT_GT_shelf_icon.bl_idname)
+            gz.slot = slot
+            gz.target_set_operator(MAYAKIT_OT_shelf_slot.bl_idname).slot = slot
+
+
 _orig = {}
 
 
@@ -547,7 +743,7 @@ def _draw_image_header(self, context):
         from .status_line import draw_status_line
         return draw_status_line(self.layout, context)
     if is_shelf_row(context.space_data):
-        return draw_shelf(self.layout, context)
+        return draw_shelf_tabs(self.layout, context)
     return _orig["header"](self, context)
 
 
@@ -575,16 +771,29 @@ classes = (MAYAKIT_OT_shelf_button, MAYAKIT_OT_shelf_select, MAYAKIT_OT_shelf_st
            MAYAKIT_OT_shelf_new, MAYAKIT_OT_shelf_delete, MAYAKIT_OT_shelf_add_button,
            MAYAKIT_OT_shelf_edit_button, MAYAKIT_OT_shelf_remove_button,
            MAYAKIT_OT_shelf_add_last_command,
-           MAYAKIT_OT_shelf_strip_toggle, MAYAKIT_MT_shelf_tabs, MAYAKIT_MT_shelf_settings)
+           MAYAKIT_OT_shelf_strip_toggle, MAYAKIT_MT_shelf_tabs, MAYAKIT_MT_shelf_settings,
+           MAYAKIT_OT_shelf_slot, MAYAKIT_GT_shelf_icon, MAYAKIT_GGT_shelf)
+
+
+_handle = []
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     patch_image_headers()
+    _handle.append((bpy.types.SpaceImageEditor.draw_handler_add(draw_row, (), 'WINDOW', 'POST_PIXEL'), 'WINDOW'))
+    _handle.append((bpy.types.SpaceImageEditor.draw_handler_add(draw_tab_row, (), 'HEADER', 'POST_PIXEL'),
+                    'HEADER'))
 
 
 def unregister():
+    while _handle:
+        bpy.types.SpaceImageEditor.draw_handler_remove(*_handle.pop())
+    shelf_icons.clear()
+    _factory_cache.clear()
+    _hover.clear()
+    _last_click.clear()
     unpatch_image_headers()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

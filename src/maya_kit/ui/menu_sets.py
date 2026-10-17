@@ -116,6 +116,13 @@ def draw_spec(layout, label, s, path, icon='NONE'):
             setattr(op, key, value)
 
 
+# Maya's option box (research/maya/menus.json "optionBox", docs/steps/step_51.md 「계획」 3): a second button on
+# the item's line breaks Blender's menu layout into a staircase (measured: row, split and two columns), so
+# such items are one "menu hold" button: click = the command, press and hold = a one-entry menu
+# "Option Box" (= run, then Adjust Last Operation). The box icon at the left marks them.
+OPTION_BOX_ICON = 'WINDOW'
+
+
 def _draw_items(layout, items, prefix, submenus):
     for path, it in children(items, prefix):
         if path is None:
@@ -123,8 +130,16 @@ def _draw_items(layout, items, prefix, submenus):
             if it[1]:
                 layout.label(text=it[1])
             continue
+        boxed = path in menu_data.OPTION_BOXES
         if sub_items(path, it) and path not in menu_map.MAP:
-            layout.menu(submenus[path], text=it[0])
+            layout.menu(submenus[path], text=it[0], icon=OPTION_BOX_ICON if boxed else 'NONE')
+        elif boxed and (path not in menu_map.MAP or menu_map.spec(path)[0] in ("menu", "pie")):
+            # greyed like other unmapped items / a Blender submenu: the box marks Maya's option box
+            draw_spec(layout, it[0], menu_map.spec(path), path, icon=OPTION_BOX_ICON)
+        elif boxed:
+            op = layout.operator_menu_hold(MAYAKIT_OT_menu_item.bl_idname, text=it[0], icon=OPTION_BOX_ICON,
+                                           menu=MAYAKIT_MT_option_box.bl_idname)
+            op.item = path
         else:
             draw_item(layout, path, it[0])
 
@@ -185,6 +200,78 @@ class MAYAKIT_OT_menu_unavailable(bpy.types.Operator):
 
     def execute(self, context):
         return {'CANCELLED'}
+
+
+class MAYAKIT_OT_menu_item(bpy.types.Operator):
+    """Maya menu item with an option box (press and hold: Option Box)"""
+    bl_idname = "maya_kit.menu_item"
+    bl_label = "Menu Item"
+    bl_options = {'INTERNAL'}
+
+    item: StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    @classmethod
+    def description(cls, context, props):
+        if props.item not in menu_map.MAP:
+            return f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
+        return f"{props.item.rsplit('/', 1)[-1]}\nPress and hold: Option Box (settings)"
+
+    def execute(self, context):
+        action = menu_map.MAP.get(self.item)
+        if action is None:
+            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Kit yet")
+            return {'CANCELLED'}
+        from ..marking.modal import run_action
+        try:
+            run_action(context, action)
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class MAYAKIT_MT_option_box(bpy.types.Menu):
+    """The option box of a Maya menu item (the item that was held)"""
+    bl_idname = "MAYAKIT_MT_option_box"
+    bl_label = "Option Box"
+
+    def draw(self, context):
+        props = getattr(context, "button_operator", None)
+        item = getattr(props, "item", "")
+        self.layout.operator(MAYAKIT_OT_menu_option_box.bl_idname, text="Option Box",
+                             icon=OPTION_BOX_ICON).item = item
+
+
+class MAYAKIT_OT_menu_option_box(bpy.types.Operator):
+    """Maya option box: run the item, then adjust its settings (Adjust Last Operation)"""
+    bl_idname = "maya_kit.menu_option_box"
+    bl_label = "Option Box"
+    bl_options = {'INTERNAL'}
+
+    item: StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, props):
+        if props.item not in menu_map.MAP:
+            return f"Maya: {props.item} option box\nNo Blender equivalent in Maya Kit yet"
+        return f"{props.item.rsplit('/', 1)[-1]}: run, then adjust its settings (Maya option box)"
+
+    def execute(self, context):
+        action = menu_map.MAP.get(self.item)
+        if action is None:
+            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Kit yet")
+            return {'CANCELLED'}
+        from ..marking.modal import run_action
+        try:
+            run_action(context, action, option=True)
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            return {'CANCELLED'}
+        return {'FINISHED'}
 
 
 def _call(op_id, props):
@@ -303,7 +390,7 @@ _menu_classes = []
 for _name, (_label, _set, _src, _items) in menu_data.MENUS.items():
     _menu_classes.extend(_make_menu(menu_idname(_name), _label, _label, _items, top_label=_label))
 
-classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
+classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_item, MAYAKIT_MT_option_box, MAYAKIT_OT_menu_option_box, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
            MAYAKIT_MT_ui_elements, MAYAKIT_MT_menu_bar, *_menu_classes)
 
 

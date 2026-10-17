@@ -325,3 +325,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 50) Layer Editor: Display / Anim 탭, Layers 메뉴로 레이어 만들기·추가·삭제, 아이콘 버튼이 오른쪽. Anim 탭 안내가 헷갈리지 않는지.
 - [ ] (step 50) Outliner 머리 Display / Show / Help: Show 의 종류 필터, Display > Shapes 를 켜면 Blender Outliner 머리로 돌아오는 것 (delegated) 이 괜찮은지. 눈 열이 없는 것 (H 로 숨김) 이 불편하지 않은지.
 - [ ] (step 50) Time Slider 오른쪽 현재 프레임 칸 + 재생 버튼 8 개, Range Slider 줄 순서가 Maya 와 같게 읽히는지; 범위 막대를 누르면 타임라인이 재생 범위에 맞춰지는지; 오른쪽 끝 톱니 = Playback / Keying / View / Marker.
+
+### Step 51 — 메뉴 옵션 박스·셸프 줄
+
+- [ ] (step 51) Maya 메뉴 (Create, Edit Mesh 등) 에서 옵션 박스가 있는 항목 오른쪽의 창 아이콘: 클릭 = 명령, 길게 누르기 = 「Option Box」 → 실행 뒤 Adjust Last Operation 이 열리는지. Maya 의 □ 클릭 습관과 비교해 길게 누르기가 불편하지 않은지 (같은 줄 버튼 두 개는 메뉴가 계단처럼 깨져 못 씀).
+- [ ] (step 51) 셸프 줄 = 탭 줄 (어두운 #373737, 고른 탭 밝게) + 32 px 컬러 아이콘 줄. 아이콘에 마우스 = 칸 강조 + 툴팁, 클릭 = 명령, 0.35 s 안 두 번째 클릭·Ctrl+클릭 = 옵션. 탭 바꾸기, 톱니 = 셸프 설정 (새 셸프·버튼 추가·마지막 명령 추가).
+- [ ] (step 51) kit 아이콘이 무엇인지 읽히는지 (기본 도형·도구 기호, 기호 없는 버튼은 셸프 색 + 글자 두 개). Maya 아이콘과 헷갈릴 만큼 비슷하지 않은지 (결정 6).
+- [ ] (step 51) Resolution Scale 을 바꾼 뒤 마우스가 셸프 줄 아래 경계를 지나면 셸프 줄이 64 px × 배율로 돌아오는지.

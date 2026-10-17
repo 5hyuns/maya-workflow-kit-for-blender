@@ -3,7 +3,7 @@
     python tools/gen_menu_data.py
 
 Keeps only the menu structure (menu sets, menu labels, item labels, dividers,
-submenus) — no MEL command strings (docs/user_decisions.md #6). Cleans the
+submenus, which items have an option box) — no MEL command strings (docs/user_decisions.md #6). Cleans the
 heuristic static parse (docs/steps/step_7.md 「계획」 2): unknown
 ``<dynamic:...>`` labels and parse leftovers are dropped, repeated labels in a
 row collapse to one.
@@ -31,6 +31,9 @@ def label_of(item):
     return label
 
 
+_OPTION = {}   # id(converted entry) -> the Maya item has an option box (menus.json "optionBox")
+
+
 def convert(items):
     out = []
     for it in items:
@@ -53,10 +56,27 @@ def convert(items):
             # own siblings; the real submenu is the first child, the rest follow it.
             out.extend(children)
             continue
-        out.append((label, children) if children else (label,))
+        entry = (label, children) if children else (label,)
+        _OPTION[id(entry)] = bool(it.get("optionBox"))
+        out.append(entry)
     while out and out[-1][0] == "-":
         out.pop()
     return out
+
+
+def option_paths(items, prefix):
+    """Label paths (ui/menu_sets.children rules: a label repeated among siblings gets "#2", ...)
+    of the entries whose Maya item has an option box."""
+    seen = {}
+    for it in items:
+        if it[0] == "-":
+            continue
+        n = seen[it[0]] = seen.get(it[0], 0) + 1
+        path = f"{prefix}/{it[0]}" + (f"#{n}" if n > 1 else "")
+        if _OPTION.get(id(it)):
+            yield path
+        if len(it) > 1:
+            yield from option_paths(it[1], path)
 
 
 def main():
@@ -83,9 +103,14 @@ def main():
     for name, value in menus.items():
         lines.append(f'    {name!r}: {value!r},')
     lines.append('}')
+    boxes = sorted({p for m in menus.values() for p in option_paths(m[3], m[0])})
+    lines += ['', '# Label paths of the items with a Maya option box (menus.json "optionBox", step 51).',
+              'OPTION_BOXES = frozenset({']
+    lines += [f'    {p!r},' for p in boxes]
+    lines.append('})')
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     total = sum(1 for _ in _walk(m[3] for m in menus.values()))
-    print(f"wrote {OUT.relative_to(ROOT)}: {len(menus)} menus, {total} items")
+    print(f"wrote {OUT.relative_to(ROOT)}: {len(menus)} menus, {total} items, {len(boxes)} option boxes")
 
 
 def _walk(lists):

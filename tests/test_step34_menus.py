@@ -68,6 +68,8 @@ def test_runtime_submenus_are_menus():
         def operator(self, *a, **k):
             return type("P", (), {})()
 
+        operator_menu_hold = operator
+
         def separator(self):
             pass
 

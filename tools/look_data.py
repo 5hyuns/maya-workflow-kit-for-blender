@@ -50,10 +50,10 @@ CUBE_FITS = {
 KIT_POINTS = {
     "menu_bar_bg": ("02_cube_selected_move", "topbar", -200, 16, 2, "top bar, left of the workspace menu"),
     "status_line_bg": ("02_cube_selected_move", "strip.HEADER", -20, 16, 2, "Status Line row, right end"),
-    "shelf_tab_bar_bg": (None, "no shelf tab row (shelf set = dropdown)"),
-    "shelf_tab_active": (None, "no shelf tabs"),
-    "shelf_tab_inactive": (None, "no shelf tabs"),
-    "shelf_icon_row_bg": ("02_cube_selected_move", "shelf.HEADER", -20, 14, 2, "shelf row, right end"),
+    "shelf_tab_bar_bg": ("02_cube_selected_move", "shelf.HEADER", -20, 13, 2, "shelf tab row, right end"),
+    "shelf_tab_active": ("02_cube_selected_move", "shelf.HEADER", 152, 7, 1, "current tab (Poly Modeling), left padding"),
+    "shelf_tab_inactive": ("02_cube_selected_move", "shelf.HEADER", 395, 5, 1, "Rigging tab, above the text"),
+    "shelf_icon_row_bg": ("02_cube_selected_move", "shelf.WINDOW", -20, 19, 2, "shelf icon row, right end"),
     "toolbox_bg": ("02_cube_selected_move", "toolbox.TOOLS", 28, -40, 2, "Tool Box column, bottom"),
     "toolbox_active_tool": ("02_cube_selected_move", "toolbox.TOOLS", 16, 108, 1, "Move tool button padding"),
     "outliner_header_bg": (None, "no Outliner dock title"),
@@ -153,7 +153,7 @@ def mean_colour(img, rect):
 RECTS = (
     ("menuBar", "topbar", "main menu bar"),
     ("StatusLine", "strip.HEADER", "Status Line"),
-    ("Shelf", "shelf.HEADER", "Shelf (kit: its own header row)"),
+    ("Shelf", "shelf", "Shelf (kit: tab row = header, icon row = WINDOW)"),
     ("ToolBox", "toolbox", "Tool Box"),
     ("Outliner", "outliner", "Outliner"),
     ("MainPane", "view3d.pane", "viewport pane (kit: 3D View without the sidebar dock)"),
@@ -171,7 +171,7 @@ RECT_TOL = 10
 # name -> (shot, Maya widget in the dump, kit anchor, stack): side = side by side, over = Maya above kit
 CROPS = (
     ("status_line", "11_channel_box", "StatusLine", "strip.HEADER", "over"),
-    ("shelf", "11_channel_box", "Shelf", "shelf.HEADER", "over"),
+    ("shelf", "11_channel_box", "Shelf", "shelf", "over"),
     ("channel_box", "11_channel_box", "ChannelBoxLayerEditor", "view3d.UI", "side"),
     ("outliner", "11_channel_box", "Outliner", "outliner", "side"),
     ("time_slider", "11_channel_box", "TimeSlider", "timeline.WINDOW", "over"),
@@ -243,6 +243,10 @@ DENSITY = (
     ("menu bar height", 27, 2),
     ("menu item pitch", 20, 1),
     ("Channel Box row pitch", 16, 1),
+    # step 51: the Create menu opens right under the menu bar; Maya's 64 px shelf with 32 px icons
+    ("menu top - menu bar bottom", 0, 4),
+    ("shelf height", 64, 2),
+    ("shelf icon", 32, 2),
 )
 # Menu popup background: Maya #525252 (colors.json ui notes), kit theme wcol_menu_back #535353.
 MENU_BG = {"maya": "#525252", "kit": "#535353"}
