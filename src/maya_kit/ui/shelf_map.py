@@ -73,7 +73,7 @@ BY_COMMAND = {
     "SetMeshSculptTool": (("object.mode_set", {"mode": 'SCULPT'}), 'SCULPTMODE_HLT'),
     # --- Rigging ---
     "CreateLocator": (_create('LOCATOR'), 'EMPTY_AXIS'),
-    "JointTool": (_create('JOINT'), 'OUTLINER_OB_ARMATURE'),
+    "JointTool": ("maya_kit.joint_tool", 'OUTLINER_OB_ARMATURE'),
     "IKHandleTool": ("pose.ik_add", 'CON_KINEMATIC'),
     "SmoothBindSkin": (("object.parent_set", {"type": 'ARMATURE_AUTO'}), 'MOD_ARMATURE'),
     "ArtPaintSkinWeightsTool": ("paint.weight_paint_toggle", 'WPAINT_HLT'),

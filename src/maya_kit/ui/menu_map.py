@@ -300,9 +300,10 @@ MAP = {
     "UV/Sew UV Edges": ("mesh.mark_seam", {"clear": True}),
     # --- Skeleton (Rigging) ---
     "Control/Create Character Set": "anim.keying_set_add",   # step 54: Keying Set + notice (ui/notices.py)
-    "Skeleton/Create Joints": _create('JOINT'),     # step 54 (W1/W5); the Joint Tool itself is step 57
-    "Skeleton/Mirror Joints": "armature.symmetrize",
-    "Skeleton/Orient Joint": "armature.calculate_roll",
+    # step 57: Joint Tool (click, click, Enter), option-box dialogs (docs/steps/step_57.md)
+    "Skeleton/Create Joints": "maya_kit.joint_tool",
+    "Skeleton/Mirror Joints": "maya_kit.mirror_joints",
+    "Skeleton/Orient Joint": "maya_kit.orient_joint",
     "Skeleton/Remove Joints": "armature.delete",
     "Skeleton/Disconnect Joint": ("armature.parent_clear", {"type": 'DISCONNECT'}),
     "Skeleton/Create IK Handle": "pose.ik_add",

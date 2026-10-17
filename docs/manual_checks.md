@@ -373,3 +373,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 56) S = 가시성·커스텀 속성까지 키 (Graph Editor 채널 목록), Channel Box 에서 숨긴/Nonkeyable 채널은 안 찍힘. Key > Set Breakdown Key = 초록 (breakdown) 키. Key > Delete Keys = 선택의 모든 키.
 - [ ] (step 56) Channel Box 채널 이름·값 칸 RMB = 메뉴 맨 위에 Key Selected … Make Selected Nonkeyable (아래는 Blender 버튼 메뉴).
 - [ ] (step 56) 타임라인 MMB = 시간 이동 + Help Line 안내 문구 (Maya MMB 시간 드래그는 Blender 에 없음).
+
+### Step 57 — Joint Tool·Orient/Mirror Joint·포즈 픽워크
+
+- [ ] (step 57) F3 → Skeleton > Create Joints → front 뷰 (정사영) 에서 세 번 클릭 → Enter: 클릭한 자리에 joint1 > joint2 > joint3, 포즈 모드, CB joint3. persp 뷰 클릭은 바닥에 놓임. 놓는 동안 Alt+드래그 텀블·휠 줌이 되는지, 상태 표시줄 안내.
+- [ ] (step 57) 놓는 중 기존 조인트에서 가지 치기: 편집 모드에서 조인트 하나 고른 뒤 Create Joints → 그 조인트 아래로 이어짐.
+- [ ] (step 57) Skeleton > Orient Joint (옵션 창): Secondary World Orientation Y+ / Z+ 로 바꿔 보고 로컬 축 (Display > Local Rotation Axes 또는 아마추어 Axes) 이 기대대로 도는지; 창의 Y 축 안내 문구가 이해되는지.
+- [ ] (step 57) Skeleton > Mirror Joints (옵션 창) YZ + Search `l_` Replace `r_`: 반대편에 `r_…` 조인트, Behavior 로 미러한 팔을 반대로 돌렸을 때 Maya 처럼 대칭으로 움직이는지.
+- [ ] (step 57) 포즈 모드 ↑↓←→ = 부모 / 자식 / 형제 조인트 (프레임은 Alt+, / Alt+.), P = 고른 조인트들을 마지막에 고른 조인트 아래로 (제자리), Shift+P = 부모 끊기.

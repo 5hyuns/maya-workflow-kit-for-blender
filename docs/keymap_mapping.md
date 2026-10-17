@@ -134,8 +134,8 @@
 | Alt+Home | Alt+HOME | global | AppHome | — | 미검토 |  | hotkeySetup.mel:243 |
 | Shift+D | Shift+D | global | DuplicateWithTransform | Object Mode: `maya_kit.duplicate_with_transform` | 구현 | 직전 복제의 변환을 반복 | hotkeySetup.mel:245 |
 | Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | Object Mode: `maya_kit.delete_history` | 구현 | 모디파이어 + 셰이프 키를 메시에 굽기 | hotkeySetup.mel:247 |
-| p | P | global | Parent | Object Mode: `maya_kit.parent` | 구현 | 월드 유지, parent inverse 단위행렬 (환경설정 Parent Mode=Blender 로 IC 방식) | hotkeySetup.mel:249 |
-| Shift+P | Shift+P | global | Unparent | Object Mode: `maya_kit.unparent` | 구현 | 월드로, 월드 유지 | hotkeySetup.mel:250 |
+| p | P | global | Parent | Object Mode: `maya_kit.parent` | 구현 | 월드 유지, parent inverse 단위행렬 (환경설정 Parent Mode=Blender 로 IC 방식); 포즈·아마추어 편집 모드 = `maya_kit.parent_joint` (조인트, 제자리) — step 57 | hotkeySetup.mel:249 |
+| Shift+P | Shift+P | global | Unparent | Object Mode: `maya_kit.unparent` | 구현 | 월드로, 월드 유지; 포즈·아마추어 편집 모드 = `maya_kit.unparent_joint` (step 57) | hotkeySetup.mel:250 |
 | F8 | F8 | global | SelectToggleMode | Object Non-modal: `object.editmode_toggle` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
 | F9 | F9 | global | SelectVertexMask | Object Non-modal: `maya_kit.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
 | F10 | F10 | global | SelectEdgeMask | Object Non-modal: `maya_kit.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |
@@ -224,10 +224,10 @@
 | Alt+. | Alt+PERIOD | global | NextFrame | Frames: `screen.frame_offset` (delta=1) | 구현 | 누르고 있으면 반복 | hotkeySetup.mel:361 |
 | g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
 | Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
-| Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `maya_kit.pick_walk_component` (direction='UP') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 위쪽 이웃 (step 39) | hotkeySetup.mel:364 |
-| Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `maya_kit.pick_walk` (direction='DOWN'); Mesh: `maya_kit.pick_walk_component` (direction='DOWN') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 아래쪽 이웃 (step 39) | hotkeySetup.mel:365 |
-| Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `maya_kit.pick_walk` (direction='LEFT'); Mesh: `maya_kit.pick_walk_component` (direction='LEFT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 왼쪽 이웃 (step 39) | hotkeySetup.mel:366 |
-| Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `maya_kit.pick_walk` (direction='RIGHT'); Mesh: `maya_kit.pick_walk_component` (direction='RIGHT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39) | hotkeySetup.mel:367 |
+| Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `maya_kit.pick_walk_component` (direction='UP') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 위쪽 이웃 (step 39); 포즈 모드: 부모 조인트 (step 57) | hotkeySetup.mel:364 |
+| Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `maya_kit.pick_walk` (direction='DOWN'); Mesh: `maya_kit.pick_walk_component` (direction='DOWN') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 아래쪽 이웃 (step 39); 포즈 모드: 첫 자식 조인트 (step 57) | hotkeySetup.mel:365 |
+| Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `maya_kit.pick_walk` (direction='LEFT'); Mesh: `maya_kit.pick_walk_component` (direction='LEFT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 왼쪽 이웃 (step 39); 포즈 모드: 형제 조인트 | hotkeySetup.mel:366 |
+| Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `maya_kit.pick_walk` (direction='RIGHT'); Mesh: `maya_kit.pick_walk_component` (direction='RIGHT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39); 포즈 모드: 형제 조인트 | hotkeySetup.mel:367 |
 | Ctrl+Page_Up | Ctrl+PAGE_UP | global | PickWalkIn | Screen: `screen.workspace_cycle` (direction='PREV') | 미검토 |  | hotkeySetup.mel:368 |
 | Ctrl+Page_Down | Ctrl+PAGE_DOWN | global | PickWalkOut | Screen: `screen.workspace_cycle` (direction='NEXT') | 미검토 |  | hotkeySetup.mel:369 |
 | Alt+Up | Alt+UP_ARROW | global | MoveUp | — | 미검토 |  | hotkeySetup.mel:370 |
