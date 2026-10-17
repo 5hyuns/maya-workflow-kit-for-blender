@@ -1273,9 +1273,13 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
         inputs = _inputs(ob)
         cons = constraints(ob)
-        if inputs or cons:
+        from . import in_view
+        last = in_view.cb_record(context, ob)    # the last kit extrusion = Maya's newest history node (step 65)
+        if inputs or cons or last is not None:
             box = layout.column(align=True)
             box.label(text="INPUTS")
+            if last is not None:
+                in_view.draw_cb_node(box, context, last)
             for mod in inputs:
                 row = box.row(align=True)
                 row.prop(mod, "show_expanded", text="", emboss=False,

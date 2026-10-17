@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 65 (Extrude 매니퓰레이터·In-View Editor·마지막 연산 INPUTS) 완료 — `docs/steps/step_65.md`. `maya_kit.extrude` = Maya polyExtrudeFace
+  (mayapy 8 경우와 좌표 일치: Thickness shell · Local Translate Z · Offset · Divisions · Keep Faces Together), Ctrl+E/메뉴/마킹 메뉴/셸프/MTK.
+  마지막 압출 = `Record` (압출 전 BMesh, 상태 서명; 언두/리두 따라감) → `maya_kit.extrude_edit` 로 다시 만들기 (언두 한 단계, F9 = Maya 이름).
+  파란 화살표 기즈모 (Local Translate Z), In-View Editor 상자 (행 드래그/클릭 입력/토글), Channel Box INPUTS 맨 위 polyExtrudeFace1 + 안내.
+  발견: 파이썬 `bpy.ops` 호출은 `undo=True` 없이는 언두를 쌓지 않음. 헤드리스 529/529, GUI 0.8 445/446 (step 18 Ctrl+E 기대 갱신 후 14/14),
+  gui_step65 7/7, dogfood 47/47.
+  **바로 다음 할 일**: step 66 — UV 워크플로우 (UV Editor 진입·UV Toolkit·UV 마킹 메뉴·Cut/Sew/Unfold/Layout·Texel Density; 근거
+  `research/maya/workflows/uv.md`). 계획 먼저.
+
 - Step 64 (Target Weld · Crease Tool · Multi-Cut 감각) 완료 — `docs/steps/step_64.md`. Target Weld = 킷 툴 (`register_tool`, LMB 드래그 모달,
   선택된 정점도 함께, Target/Center, 엣지 짝 병합), Crease Tool = 킷 툴 (MMB 좌우 드래그, Maya 값 ↔ Blender √(c/10), 실측 sharpness 10·b²),
   Multi-Cut (knife) Ctrl+클릭 = 클릭 자리 엣지 루프 / Ctrl+MMB 가운데 / Shift+클릭 = Snap Step % 시작점 + Tool Settings Maya 항목. 메뉴·마킹 메뉴·

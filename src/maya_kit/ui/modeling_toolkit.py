@@ -176,7 +176,7 @@ def _grid(layout, items, context):
     grid = layout.grid_flow(row_major=True, columns=2, even_columns=True, align=True)
     for label, path, icon in items:
         if label == "Extrude":
-            grid.operator("maya_kit.mtk_extrude", text=label, icon=icon)
+            grid.operator("maya_kit.extrude", text=label, icon=icon)   # polyExtrudeFace (step 65)
         else:
             _button(grid, label, path, icon)
 

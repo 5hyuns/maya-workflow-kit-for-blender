@@ -566,10 +566,13 @@ def s_grow_check():
 
 @step
 def s_extrude():
-    mods = [op.bl_idname for op in win().modal_operators]
-    check(f"Ctrl+E extrudes right away and drags it (Maya PolyExtrude; modal {mods})",
-          any("extrude" in m.lower() for m in mods))
-    tap('ESC')
+    # Maya Ctrl+E = polyExtrudeFace: a zero-length extrusion + the extrude manipulator / In-View Editor (step 65)
+    import bmesh
+    bm = bmesh.from_edit_mesh(bpy.data.objects["pCube1"].data)
+    extrude = sys.modules[MODULE + ".operators.extrude"]
+    rec = extrude.RECORDS.get("pCube1")
+    check(f"Ctrl+E extrudes right away as polyExtrudeFace1 (Maya PolyExtrude; faces {len(bm.faces)}, "
+          f"node {rec and rec.name})", rec is not None and rec.name.startswith("polyExtrudeFace") and len(bm.faces) > 6)
     tap('F8')
 
 

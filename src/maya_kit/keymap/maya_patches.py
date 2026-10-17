@@ -406,7 +406,9 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "mesh.select_all", make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
     _add(kd, "Mesh", "maya_kit.select_none", make_event("D", alt=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="E", ctrl=True)            # extrude tool
-    _add(kd, "Mesh", "view3d.edit_mesh_extrude_move_normal", make_event("E", ctrl=True))
+    # Maya polyExtrudeFace: zero-length extrusion + manipulator / In-View Editor (step 65); edges and
+    # vertices fall back to Blender's extrude + normal drag inside maya_kit.extrude.
+    _add(kd, "Mesh", "maya_kit.extrude", make_event("E", ctrl=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="B", ctrl=True)            # bevel tool
     _add(kd, "Mesh", "maya_kit.bevel", make_event("B", ctrl=True))
     _add(kd, "Mesh", "mesh.select_more", make_event("PERIOD", shift=True, repeat=True))

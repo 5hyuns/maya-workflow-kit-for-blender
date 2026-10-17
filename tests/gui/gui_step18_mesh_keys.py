@@ -105,11 +105,11 @@ def s_to_faces():
 
 @step
 def s_extrude_modal():
-    mods = [op.bl_idname for op in win().modal_operators]
-    check(f"Ctrl+E: extrude + move modal right away ({mods})", any("extrude" in m.lower() for m in mods))
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 30, y=C["y"] + 40)
-    ev('LEFTMOUSE', 'PRESS', x=C["x"] + 30, y=C["y"] + 40)
-    ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 30, y=C["y"] + 40)
+    # Maya polyExtrudeFace since step 65: extruded right away (zero length) + manipulator, no modal
+    ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
+    _o, rec = ex.active(bpy.context)
+    check(f"Ctrl+E: polyExtrudeFace right away, no drag modal ({rec and rec.name}, {list(win().modal_operators)})",
+          rec is not None and not list(win().modal_operators))
 
 
 @step

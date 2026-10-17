@@ -28,7 +28,7 @@ def test_mesh_bindings():
     sa = _kmis("Mesh", "A", ctrl=True, shift=True)
     assert [k.idname for k in sa] == ["mesh.select_all"] and sa[0].properties.action == 'SELECT'
     assert _ids("Mesh", "D", alt=True) == ["maya_kit.select_none"]
-    assert _ids("Mesh", "E", ctrl=True) == ["view3d.edit_mesh_extrude_move_normal"]
+    assert _ids("Mesh", "E", ctrl=True) == ["maya_kit.extrude"]   # polyExtrudeFace since step 65
     assert _ids("Mesh", "B", ctrl=True) == ["maya_kit.bevel"]
     assert _ids("Mesh", "PERIOD", shift=True) == ["mesh.select_more"]
     assert _ids("Mesh", "COMMA", shift=True) == ["mesh.select_less"]

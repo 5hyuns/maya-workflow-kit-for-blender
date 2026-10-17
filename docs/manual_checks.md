@@ -443,3 +443,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 64) Tool Settings (툴 헤더 / Status Line Tool Settings): Merge To Target / Center, Preserve UVs. Center = 중간에서 병합. 엣지 모드: 엣지를 다른 엣지에 끌면 두 끝이 짝지어 병합 (이웃 엣지면 공유 정점은 그대로). Adjust Last Operation 에서 Merge To 바꾸기.
 - [ ] (step 64) Mesh Tools > Crease Tool: 엣지 선택 → MMB 를 오른쪽으로 끌면 머리글 "Crease Mode: Absolute   Crease Value: n.nn (Blender b)" 가 오르고 왼쪽은 내려감, 3 (스무스 프리뷰) 에서 각이 살아남. 놓기 = 확정 (Ctrl+Z 한 번), ESC = 원래 값. Relative 모드는 엣지마다 더함. 정점 모드면 정점 crease. 메뉴 툴팁 / Help Line 의 0–1 안내. 감도 (50 px = Maya 1) 가 Maya 와 비슷한지.
 - [ ] (step 64) Multi-Cut (Ctrl+Shift+X): Ctrl+클릭 = 클릭한 자리 비율로 엣지 루프 (삼각형/경계에서 멈춤), Ctrl+MMB = 가운데, Ctrl+Shift+클릭 = Snap Step 자리. Adjust Last Operation 의 Position 으로 옮기기. Shift+클릭 = 커서가 가장 가까운 Snap Step % 점으로 옮겨지며 거기서 자르기 시작; 자르는 중 Shift = 엣지 중점 스냅 (Maya 의 10 % 단계 대신 50 % 만). Tool Settings 에 Snap Step % + 회색 Maya 항목 (Smoothing Angle · Edge Flow · Subdivisions · Slice Tool, 툴팁 안내).
+
+### Step 65 — Extrude 매니퓰레이터 · In-View Editor · 마지막 연산 INPUTS
+
+- [ ] (step 65) 면 선택 → Ctrl+E (또는 Edit Mesh > Extrude / Shift+RMB Extrude Face / 셸프 / MTK Extrude): 모양은 그대로 (길이 0 압출), 면 가운데에 파란 화살표 + 오른쪽에 In-View Editor 상자 (제목 polyExtrudeFace1, Thickness · Local Translate Z · Offset · Divisions · Keep Faces Together) — modeling_03.png 와 비교. Move 툴의 매니퓰레이터는 그동안 숨음.
+- [ ] (step 65) 화살표를 끌면 면이 법선 방향으로 따라오고 In-View / Channel Box 의 Local Translate Z 가 같이 바뀜; 놓으면 Ctrl+Z 한 번으로 되돌아감, ESC/RMB = 취소.
+- [ ] (step 65) In-View 행을 옆으로 끌기 = 값 (Ctrl 미세, Shift 크게), 끌지 않고 클릭 = 값 입력 창, Keep Faces Together 클릭 = 토글 (두 면 압출에서 차이). 호버 / 마지막 행 이름이 노랑.
+- [ ] (step 65) Channel Box INPUTS 맨 위 polyExtrudeFace1 + 다섯 행 (`0.5`, `+=0.25` 입력), 아래 회색 안내 「Blender keeps no edit-mode history」. Divisions 2 → 옆면 고리 2 개 (modeling_04.png). Ctrl+Z / Ctrl+Shift+Z 에 행 값이 따라감. 정점을 손으로 옮기거나 다른 연산을 하면 행이 사라짐 (마지막 하나만).
+- [ ] (step 65) 다른 면을 선택하면 화살표·In-View 가 사라지고 Move 매니퓰레이터가 돌아옴 (INPUTS 행은 남음). F9 (Adjust Last Operation) 에 같은 Maya 이름 속성. 엣지/정점 선택에서 Ctrl+E = 예전처럼 압출 + 법선 드래그.

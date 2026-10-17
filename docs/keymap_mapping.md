@@ -240,7 +240,7 @@
 | Ctrl+Alt+Right | Ctrl+Alt+RIGHT_ARROW | global | PolySpinEdgeForward | — | 미검토 |  | hotkeySetup.mel:379 |
 | Ctrl+Left | Ctrl+LEFT_ARROW | global | RenderViewNextImage | Object Mode: `screen.frame_jump` (end=False) | 미검토 |  | hotkeySetup.mel:381 |
 | Ctrl+Right | Ctrl+RIGHT_ARROW | global | RenderViewPrevImage | Object Mode: `screen.frame_jump` (end=True) | 미검토 |  | hotkeySetup.mel:382 |
-| Ctrl+e | Ctrl+E | global | PolyExtrude | Mesh: `view3d.edit_mesh_extrude_move_normal` | 구현 | 압출 후 바로 법선 방향 이동 모달 | hotkeySetup.mel:384 |
+| Ctrl+e | Ctrl+E | global | PolyExtrude | Mesh: `maya_kit.extrude` | 구현 | polyExtrudeFace: 길이 0 압출 + 매니퓰레이터·In-View Editor·INPUTS (step 65); 엣지/정점은 압출 + 법선 드래그 | hotkeySetup.mel:384 |
 | Ctrl+b | Ctrl+B | global | BevelPolygon | Mesh: `maya_kit.bevel` | 구현 | 정점 모드 = 정점 베벨, 그 외 엣지; 드래그로 폭 | hotkeySetup.mel:385 |
 | - | MINUS | global | DecreaseManipulatorSize | 3D View: `maya_kit.manip_size` (factor=0.8) | 구현 |  | hotkeySetup.mel:387 |
 | = | EQUAL | global | IncreaseManipulatorSize | 3D View: `maya_kit.manip_size` (factor=1.25) | 구현 | gizmo_size ×1.25 (Maya ×2), 끄면 원래 값 — step 27 | hotkeySetup.mel:388 |
