@@ -83,7 +83,7 @@ class Layout:
     def __init__(self, sub, measure, params, enabled=None):
         self.sub = sub
         self.params = p = params
-        enabled = enabled or (lambda action: action is not None)
+        enabled = enabled or (lambda action: action is not None and not mm.is_unavailable(action))
         self.radial = {}
         self.items = []
         h = p.item_h
@@ -179,6 +179,27 @@ def _slide(lo, hi, low, high):
     return max(low - lo, min(0.0, high - hi))
 
 
+MIN_COLUMN_ROWS = 4
+
+
+def _columns(rows, top, floor, w):
+    """Re-flow list rows (in order, divider gaps kept) into columns of width ``w`` from ``top`` down to
+    ``floor``; the first column stays where it is."""
+    x_first = rows[0].rect[0]
+    col, y, prev_bottom = 0, top, None
+    for it in rows:
+        r = it.rect
+        height = r[3] - r[1]
+        gap = (prev_bottom - r[3]) if prev_bottom is not None else 0.0
+        prev_bottom = r[1]
+        row_top = y - gap
+        if row_top - height < floor and y != top:
+            col += 1
+            row_top = top
+        _move(it, x_first + col * w - r[0], row_top - r[3])
+        y = row_top - height
+
+
 def fit_ring(layout, center, bounds):
     """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1) without moving its
     centre, the press point the gesture directions are measured from (step 33 「계획」).
@@ -201,6 +222,16 @@ def fit_ring(layout, center, bounds):
         rx0, ry0, rx1, ry1 = _bbox(list(layout.radial.values()))
         rx0, ry0, rx1, ry1 = min(rx0, -r), min(ry0, -r), max(rx1, r), max(ry1, r)
         h, w = ly1 - ly0, lx1 - lx0
+        if ly0 < y0 and ly1 <= y1 and ly1 - y0 >= MIN_COLUMN_ROWS * layout.params.item_h:
+            # Maya keeps the list under the ring (14_marking_menu_object.png, where it runs off the screen);
+            # here the rows that don't fit continue in more columns, still under the ring (step 52).
+            _columns(rows, ly1, y0, w)
+            bx0, _by0, bx1, _by1 = _bbox(rows)
+            dx = -(bx0 + bx1) / 2
+            dx += _slide(bx0 + dx, bx1 + dx, x0, x1)
+            for it in rows:
+                _move(it, dx, 0.0)
+            return
         below = (0.0, 0.0)                                    # as laid out (under the ring)
         above = (0.0, ry1 + gap - ly0)
         right = (rx1 + gap - lx0, -h / 2 - ly0)
@@ -351,68 +382,127 @@ class Session:
 # --- hotbox ---------------------------------------------------------------------------
 
 class HotboxLayout:
-    """Menu rows above the cursor, centre box, N/S/E/W zones (HotboxMenus.mel:57, 187-237)."""
+    """Maya hotbox (HotboxMenus.mel:57, 187-237; docs/steps/step_52.md 「계획」 2): menu rows above the cursor
+    (``rows``, top first), the cursor row (``side`` = left / right boxes beside the centre box), rows under it
+    (``below``, top first), zone lines on the diagonals. Sizes are Maya's at scale 1 (13_hotbox.png: row pitch
+    35 = box 26 + gap 9; the centre box is the title with padding)."""
 
-    CENTER_W, CENTER_H, ROW_GAP = 130.0, 44.0, 6.0
+    ROW_H, ROW_GAP, SIDE_GAP = 26.0, 9.0, 88.0
+    LINE_GAP, LINE_LEN = 20.0, 28.0     # zone lines: start past the rows, length per axis [measured, step 52]
 
-    def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0, bounds=None):
-        """``bounds`` = (x0, y0, x1, y1): the visible part of the region (not under the
-        sidebar/toolbar); menu rows are shifted to stay inside it (step 17)."""
+    def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0, bounds=None,
+                 below=(), side=None, title="Maya"):
+        """``bounds`` = (x0, y0, x1, y1): where the hotbox may draw (step 52: the window's screen areas,
+        in region pixels); rows are wrapped / moved to stay inside it (steps 17, 33)."""
         self.params = p = (params or Params()).scaled(scale) if scale != 1.0 else (params or Params())
         self.center = center
         self.style = style
         self.bounds = bounds
-        cw, ch = self.CENTER_W * scale, self.CENTER_H * scale
+        self.title = title
+        h, gap = self.ROW_H * scale, self.ROW_GAP * scale
+        self.row_h = h
         cx, cy = center
-        self.center_rect = (cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2)
+        cw = max(measure(title) + 4 * p.pad, 2 * h)
+        self.center_rect = (cx - cw / 2, cy - h / 2, cx + cw / 2, cy + h / 2)
         self.labels = []   # (rect, key, label)
+        self.bands = []    # row backgrounds (Maya draws each row as one strip)
+        self.zone_lines = []
         if style != "ALL":
             return
-        h, gap = p.item_h, self.ROW_GAP * scale
+        width = bounds[2] - bounds[0] if bounds is not None else None
+        above = self._wrap(rows, measure, p.pad, width) if width else [list(r) for r in rows]
+        under = self._wrap(below, measure, p.pad, width) if width else [list(r) for r in below]
+        pitch = h + gap
+        blocks = []
+        y = cy + h / 2 + gap + (len(above) - 1) * pitch      # bottom of the top-most row
+        for row in above:
+            blocks.append(("above", self._row(row, measure, p.pad, cx, y, h, bounds)))
+            y -= pitch
+        y = cy - h / 2 - gap - h
+        for row in under:
+            blocks.append(("below", self._row(row, measure, p.pad, cx, y, h, bounds)))
+            y -= pitch
+        if side:
+            left, right = side
+            if left:
+                w = measure(left[1]) + 2 * p.pad
+                x1 = self.center_rect[0] - self.SIDE_GAP * scale
+                blocks.append(("side", [((x1 - w, cy - h / 2, x1, cy + h / 2), left[0], left[1])]))
+            if right:
+                w = measure(right[1]) + 2 * p.pad
+                x0 = self.center_rect[2] + self.SIDE_GAP * scale
+                blocks.append(("side", [((x0, cy - h / 2, x0 + w, cy + h / 2), right[0], right[1])]))
         if bounds is not None:
-            rows = self._wrap(rows, measure, p.pad, gap, bounds[2] - bounds[0])
-        # rows[0] is drawn top-most; the last row sits just above the centre box.
-        y = cy + ch / 2 + gap + len(rows) * (h + gap)
-        for row in rows:
-            widths = [measure(label) + 2 * p.pad for _key, label in row]
-            total = sum(widths) + gap * max(0, len(row) - 1)
-            x = cx - total / 2
-            if bounds is not None:
-                # Centred on the cursor like Maya, slid sideways to stay visible; a row
-                # wider than the visible part starts at its left edge.
-                x = max(bounds[0], min(x, bounds[2] - total))
-            y -= h + gap
-            for (key, label), w in zip(row, widths):
-                self.labels.append(((x, y, x + w, y + h), key, label))
-                x += w + gap
-        if bounds is not None and self.labels:
-            self._fit_rows(bounds, cy - ch / 2 - gap, cy + ch / 2 + gap)
-
-    def _fit_rows(self, bounds, below_top, above_bottom):
-        """Rows that go over the top edge move under the centre box (same order), or down
-        as far as needed when there is no room there either (step 33 「계획」 5)."""
-        top = max(r[3] for r, _k, _l in self.labels)
-        if top <= bounds[3]:
-            return
-        height = top - above_bottom
-        if below_top - height >= bounds[1]:
-            dy = below_top - top
-        else:
-            dy = bounds[3] - top
-        self.labels = [((r[0], r[1] + dy, r[2], r[3] + dy), k, l) for r, k, l in self.labels]
+            blocks = self._fit_blocks(blocks, bounds, gap)
+        for _kind, row in blocks:
+            if row:
+                self.labels.extend(row)
+                self.bands.append((min(r[0] for r, _k, _l in row), min(r[1] for r, _k, _l in row),
+                                   max(r[2] for r, _k, _l in row), max(r[3] for r, _k, _l in row)))
+        self._zone_lines(scale)
 
     @staticmethod
-    def _wrap(rows, measure, pad, gap, width):
+    def _row(row, measure, pad, cx, y, h, bounds):
+        widths = [measure(label) + 2 * pad for _key, label in row]
+        total = sum(widths)
+        x = cx - total / 2
+        if bounds is not None:
+            # centred on the cursor like Maya, slid sideways to stay visible (step 17)
+            x = max(bounds[0], min(x, bounds[2] - total))
+        out = []
+        for (key, label), w in zip(row, widths):
+            out.append(((x, y, x + w, y + h), key, label))
+            x += w
+        return out
+
+    def _fit_blocks(self, blocks, bounds, gap):
+        """Rows over the top edge go under the lower rows; rows under the bottom edge go over the upper
+        rows (order kept); what still doesn't fit is pushed inside (steps 17, 33)."""
+        def span(kind):
+            rs = [r for k, row in blocks if k == kind for r, _k, _l in row]
+            return (min(r[1] for r in rs), max(r[3] for r in rs)) if rs else None
+
+        def shift(kind, dy):
+            return [(k, [((r[0], r[1] + dy, r[2], r[3] + dy), kk, ll) for r, kk, ll in row]) if k == kind else (k, row)
+                    for k, row in blocks]
+        up, down = span("above"), span("below")
+        floor = min(self.center_rect[1], down[0] if down else self.center_rect[1])
+        ceil = max(self.center_rect[3], up[1] if up else self.center_rect[3])
+        if up and up[1] > bounds[3]:
+            dy = floor - gap - up[1]                       # under everything
+            if up[0] + dy < bounds[1]:
+                dy = bounds[3] - up[1]
+            blocks = shift("above", dy)
+        elif down and down[0] < bounds[1]:
+            dy = ceil + gap - down[0]                      # over everything
+            if down[1] + dy > bounds[3]:
+                dy = bounds[1] - down[0]
+            blocks = shift("below", dy)
+        return blocks
+
+    def _zone_lines(self, scale):
+        """Maya's four short diagonal lines between the zones (13_hotbox.png), just outside the rows."""
+        cx, cy = self.center
+        top = max([r[3] for r in self.bands] + [self.center_rect[3]]) - cy
+        bottom = cy - min([r[1] for r in self.bands] + [self.center_rect[1]])
+        g, n = self.LINE_GAP * scale, self.LINE_LEN * scale
+        for sy, ext in ((1, top), (-1, bottom)):
+            t0 = ext + g
+            for sx in (-1, 1):
+                self.zone_lines.append(((cx + sx * t0, cy + sy * t0), (cx + sx * (t0 + n), cy + sy * (t0 + n))))
+
+    @staticmethod
+    def _wrap(rows, measure, pad, width):
         """Split rows wider than ``width`` into several (order kept, step 17)."""
         out = []
         for row in rows:
             line, used = [], 0.0
             for key, label in row:
                 w = measure(label) + 2 * pad
-                if line and used + gap + w > width:
+                if line and used + w > width:
                     out.append(line)
                     line, used = [], 0.0
-                used += (gap if line else 0.0) + w
+                used += w
                 line.append((key, label))
             if line:
                 out.append(line)

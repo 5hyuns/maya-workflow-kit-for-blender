@@ -84,9 +84,9 @@ KIT_POINTS = {
     "command_result_field": (None, "no result field"),
     "help_line_bg": ("11_channel_box", "statusbar.help", 600, 14, 2, "Help Line background"),
     "menu_popup_bg": ("12_create_menu", "topbar", 390, 330, 2, "Create menu body, right margin"),
-    "marking_menu_box": ("14_marking_menu_object", "press", -24, -99, 1, "radial box Edge, padding"),
-    "marking_menu_list_bg": ("14_marking_menu_object", "press", -198, -77, 1, "list row Select Hierarchy"),
-    "hotbox_row_bg": ("13_hotbox", "press", -257, -124, 1, "hotbox box File, padding"),
+    "marking_menu_box": ("14_marking_menu_object", "press", -16, -81, 1, "radial box Edge, padding"),
+    "marking_menu_list_bg": ("14_marking_menu_object", "press", -31, 205, 1, "list body right of Select Hierarchy"),
+    "hotbox_row_bg": ("13_hotbox", "press", -253, 36, 1, "hotbox row Mesh, left padding (over the view background)"),
 }
 
 # ---------------------------------------------------------------- viewport pixels (step 43)

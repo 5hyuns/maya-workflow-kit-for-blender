@@ -190,14 +190,15 @@ def test_tap_timing():
 
 def test_hotbox_rows_follow_menu_set():
     prefs = bpy.context.preferences.addons[kit.MODULE].preferences
-    rows = modal.hotbox_rows(bpy.context)
-    assert rows[0][0][0] == "RECENT" and [l for _k, l in rows[1]][:3] == ["File", "Edit", "Create"]
-    assert "Mesh" in [l for _k, l in rows[2]] and len(rows) == 3
+    assert prefs.hotbox_all_sets, "Maya default: Show All Menu Sets (step 52)"
+    above, sides, below = modal.hotbox_rows(bpy.context)
+    assert sides[0][0] == "RECENT" and [l for _k, l in above[0]][:3] == ["File", "Edit", "Create"]
+    assert "Mesh" in [l for _k, l in below[0]] and len(below) == 5
     try:
-        prefs.hotbox_all_sets = True
-        assert len(modal.hotbox_rows(bpy.context)) == 2 + 5
-    finally:
         prefs.hotbox_all_sets = False
+        assert len(modal.hotbox_rows(bpy.context)[2]) == 1
+    finally:
+        prefs.hotbox_all_sets = True
 
 
 # --- zone menus ----------------------------------------------------------------------
@@ -331,7 +332,7 @@ def test_engine_is_default_and_pie_fallback():
 
 
 def test_draw_handlers_removed_on_disable():
-    assert len(draw._handles) == len(draw.SPACES)
+    assert len(draw._handles) >= len(draw.COVER_SPACES) * 2   # editors x region types (step 52)
     kit.disable()
     try:
         assert not draw._handles and not draw.ACTIVE

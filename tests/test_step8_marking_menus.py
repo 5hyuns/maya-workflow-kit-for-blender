@@ -156,7 +156,8 @@ def test_pie_classes_and_slot_order():
     getattr(bpy.types, marking.idname("dagMenuProc")).draw(fake, bpy.context)
     texts = [e[2] for e in fake.layout.log if e[0] in ("op", "menu")]
     assert texts[:2] == ["Vertex", "Edge"][:0] + ["Vertex", "UV"], texts  # W, E
-    assert texts[2] == "Face" and texts[3] == "Select", texts  # S, then the list under S
+    # S, then the list under S: the object's name row (step 52), then Select
+    assert texts[2] == "Face" and texts[3].endswith("...") and texts[4] == "Select", texts
     assert "Edge" in texts and "Object Mode" in texts and texts.index("Edge") > texts.index("Face")
     # Radial submenu = another pie; empty slots = separators.
     fake = types.SimpleNamespace(layout=FakeLayout())

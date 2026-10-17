@@ -49,6 +49,11 @@ def _entry_spec(action):
 
 
 def draw_entry(layout, label, action, path):
+    if label == mm.OBJECT_TITLE:   # step 52: the RMB list's first row is the object's name
+        ob = bpy.context.active_object
+        label = f"{getattr(bpy.context.window_manager, 'maya_kit_mm_target', '') or (ob.name if ob else 'Object')}..."
+    if mm.is_unavailable(action):  # greyed submenu (step 52)
+        return menu_sets.draw_spec(layout, label + " ▸", None, f"Marking menu {path}")
     # Toggles show their state like the engine's check boxes (step 31: pie fallback had none).
     state = draw.checked(action) if not isinstance(action, mm.Sub) else None
     icon = 'NONE' if state is None else ('CHECKBOX_HLT' if state else 'CHECKBOX_DEHLT')

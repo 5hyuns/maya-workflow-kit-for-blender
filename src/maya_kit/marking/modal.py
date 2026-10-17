@@ -40,7 +40,7 @@ def poll_action(action):
     if action is None:
         return False
     if isinstance(action, mm.Sub):
-        return True
+        return not mm.is_unavailable(action)
     kind, target, _props = menu_map.normalize(action)
     if kind not in ("op", "v3d"):
         return True
@@ -98,28 +98,28 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
         if draw.ACTIVE:  # another menu/hotbox is up: never stack two
             return {'CANCELLED'}
         origin = tuple(self.origin) if self.origin[0] >= 0 else (event.mouse_region_x, event.mouse_region_y)
-        bounds = None
-        if context.area is not None:
-            from ..operators import view   # visible part of the region (step 17)
-            bounds = view.visible_bounds(context.area, region)
-        self._session = engine.Session(
-            mm.MENUS[self.menu], origin, time.monotonic(),
-            draw.measure, _params(), poll_action, bounds)
+        menu = mm.MENUS[self.menu]
+        target = getattr(context.window_manager, "maya_kit_mm_target", "") or             (context.active_object.name if context.active_object else "")
+        menu = mm.with_object_name(menu, target)
+        # Drawn over the whole window like Maya's menus (step 52): bounds = the window's editors.
+        bounds = draw.window_bounds(context.window, region)
+        self._session = engine.Session(menu, origin, time.monotonic(),
+                                       draw.measure, _params(), poll_action, bounds)
         self._region = region
         self._shown = False
         self._pending = None   # (button, result): click-mode pick waiting for the release
-        draw.ACTIVE.update(region=region.as_pointer(), session=self._session)
+        draw.activate(context.window, region, session=self._session)
         self._timer = context.window_manager.event_timer_add(_TIMER, window=context.window)
         context.window_manager.modal_handler_add(self)
-        region.tag_redraw()
+        draw.redraw()
         return {'RUNNING_MODAL'}
 
     def _cleanup(self, context):
         if getattr(self, "_timer", None) is not None:
             context.window_manager.event_timer_remove(self._timer)
             self._timer = None
+        draw.redraw()
         draw.ACTIVE.clear()
-        self._region.tag_redraw()
 
     def _finish(self, context, result):
         self._cleanup(context)
@@ -150,16 +150,17 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
                 return {'RUNNING_MODAL'}
             if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
                 s.move(x, y, now)
-                self._region.tag_redraw()
+                draw.redraw()
             elif event.type == self.button and event.value == 'RELEASE':
                 res = s.release(x, y, now)
-                self._region.tag_redraw()
+                draw.redraw()
             elif event.type in MOUSE_BUTTONS and event.value == 'PRESS' and s.mode == "CLICK":
                 res = s.click(x, y, now)
                 if res is not None and res[0] == "RUN":
                     self._pending, res = (event.type, res), None
+                    draw.redraw()
                     draw.ACTIVE.clear()   # the menu goes away now; the item runs on release
-                self._region.tag_redraw()
+                draw.redraw()
             elif event.type == 'ESC' and event.value == 'PRESS':
                 res = s.cancel()
             elif event.type == 'WINDOW_DEACTIVATE':
@@ -169,9 +170,7 @@ class MAYAKIT_OT_mm_engine(bpy.types.Operator):
                     res = s.release(*s.pos, now)  # the release went to someone else
                 elif not self._shown and s.visible(now):
                     self._shown = True
-                    self._region.tag_redraw()  # show after the delay without a mouse move
-                    if context.area is not None:
-                        context.area.tag_redraw()
+                    draw.redraw()  # show after the delay without a mouse move
             if res is not None:
                 return self._finish(context, res)
             return {'RUNNING_MODAL'}
@@ -192,18 +191,22 @@ def open_menu(menu_name, button, origin=None):
 
 # --- hotbox ---------------------------------------------------------------------------
 
-def hotbox_rows(context):
-    """Menu rows: utility row, common menus, then menu set rows (HotboxMenus.mel:187-237)."""
+def hotbox_rows(context, area_type=None):
+    """(rows above, cursor row sides, rows below) like Maya's hotbox (13_hotbox.png; HotboxMenus.mel:187-237):
+    common menus (+ Cache, Help), the 3D View's panel menus, then the menu set rows (every set when
+    Hotbox Controls > Show All Menu Sets is on, Maya's default; else the current one)."""
     prefs = _prefs(context)
 
     def row(names):
         return [(menu_sets.menu_idname(n), menu_data.MENUS[n][0]) for n in names if n in menu_data.MENUS]
-    rows = [[("RECENT", "Recent Commands"), ("CONTROLS", "Hotbox Controls")],
-            row(menu_sets._SET_MENUS[menu_sets.COMMON_SET])]
+    above = [row(menu_sets._SET_MENUS[menu_sets.COMMON_SET] + menu_sets._ALWAYS_MENUS)]
+    if (area_type or (context.area.type if context.area else None)) == 'VIEW_3D':
+        from ..ui import panel_menus
+        above.append([(idname, label) for label, idname in panel_menus.BAR])
+    sides = (("RECENT", "Recent Commands"), ("CONTROLS", "Hotbox Controls"))
     sets = [sid for sid, _l, _d in menu_sets.SET_ITEMS] if prefs.hotbox_all_sets else [prefs.menu_set]
-    for sid in sets:
-        rows.append(row(menu_sets._SET_MENUS.get(sid, ())))
-    return rows
+    below = [r for r in (row(menu_sets._SET_MENUS.get(sid, ())) for sid in sets) if r]
+    return above, sides, below
 
 
 def pane_tap(context):
@@ -231,27 +234,22 @@ class MAYAKIT_OT_hotbox(bpy.types.Operator):
         self._clicked = False
         self._region = region
         center = (event.mouse_region_x, event.mouse_region_y)
-        bounds = None
-        if context.area is not None:
-            from ..operators import view   # visible part of the region (step 17)
-            bounds = view.visible_bounds(context.area, region)
-        self._layout = engine.HotboxLayout(hotbox_rows(context), center, draw.measure,
-                                           style=prefs.hotbox_style, scale=draw.ui_scale(),
-                                           bounds=bounds)
-        label = {sid: lab for sid, lab, _d in menu_sets.SET_ITEMS}.get(prefs.menu_set, "")
-        draw.ACTIVE.update(region=region.as_pointer(), hotbox=self._layout, hover=None,
-                           title=f"Maya Kit  ·  {label}")
+        above, sides, below = hotbox_rows(context)
+        self._layout = engine.HotboxLayout(above, center, draw.measure, style=prefs.hotbox_style,
+                                           scale=draw.ui_scale(), bounds=draw.window_bounds(context.window, region),
+                                           below=below, side=sides, title="Maya")
+        draw.activate(context.window, region, hotbox=self._layout, hover=None)
         self._timer = context.window_manager.event_timer_add(_TIMER, window=context.window)
         context.window_manager.modal_handler_add(self)
-        region.tag_redraw()
+        draw.redraw()
         return {'RUNNING_MODAL'}
 
     def _cleanup(self, context):
         if self._timer is not None:
             context.window_manager.event_timer_remove(self._timer)
             self._timer = None
+        draw.redraw()
         draw.ACTIVE.clear()
-        self._region.tag_redraw()
 
     def _release(self, context):
         self._cleanup(context)
@@ -270,7 +268,7 @@ class MAYAKIT_OT_hotbox(bpy.types.Operator):
                 hover = self._layout.label_at(x, y)
                 if hover != draw.ACTIVE.get("hover"):
                     draw.ACTIVE["hover"] = hover
-                    self._region.tag_redraw()
+                    draw.redraw()
                 return {'RUNNING_MODAL'}
             if event.type in MOUSE_BUTTONS and event.value == 'PRESS':
                 self._clicked = True

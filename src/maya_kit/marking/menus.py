@@ -105,6 +105,49 @@ def _material_items():
 # Mesh radials come from createSelectMenuItems' order (dagMenuProc.mel:885-892) and
 # objectSelectMasks (:503-509); NE "Object Mode" (:1286-1289). [I] resolved by hand.
 
+# The list under the ring, Maya 2022 order (dagMenuProc.mel:2582-2764 in research/maya/marking_menus.json
+# menus.dagMenuProc; 14_marking_menu_object.png, docs/steps/step_52.md). The first row is the object's name
+# (``OBJECT_TITLE`` is replaced by it when the menu opens). An empty ``Sub`` is a greyed submenu: Maya's
+# dependency-graph / metadata / set editors have no Blender counterpart here.
+OBJECT_TITLE = "<object>..."
+
+
+def unavailable():
+    """A greyed submenu (▸) whose Maya contents Blender doesn't have."""
+    return Sub()
+
+
+def is_unavailable(action):
+    return isinstance(action, Sub) and not action.radial and not action.items
+
+
+def _object_items():
+    return [
+        (OBJECT_TITLE, ("maya_kit.object_attributes", {"rmb": True})),
+        DIVIDER,
+        ("Select", ("maya_kit.mm_component", {"type": 'NONE'})),
+        ("Select All", ("object.select_all", {"action": 'SELECT'})),
+        ("Deselect All", ("object.select_all", {"action": 'DESELECT'})),
+        ("Select Hierarchy", ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True})),
+        ("Invert Selection", ("object.select_all", {"action": 'INVERT'})),
+        DIVIDER,
+        ("Select Similar", ("object.select_grouped", {"type": 'TYPE', "extend": True})),
+        DIVIDER,
+        ("Make Live", None),
+        DIVIDER,
+        ("DG Traversal", unavailable()),
+        ("Inputs", unavailable()),
+        ("Outputs", unavailable()),
+        ("Paint", Sub(items=[("Paint Skin Weights", ("paint.weight_paint_toggle", {}))])),
+        ("Metadata", unavailable()),
+        ("Actions", unavailable()),
+        ("UV Sets", unavailable()),
+        ("Color Sets", unavailable()),
+        ("Time Editor", unavailable()),
+        *_material_items(),
+    ]
+
+
 RMB_MESH = MarkingMenu(
     "dagMenuProc", "Object", "research/maya/hotkeys_and_menus.md:248-250",
     radial={
@@ -116,14 +159,8 @@ RMB_MESH = MarkingMenu(
         "SE": ("Multi", _comp('MULTI')),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
     },
-    items=[
-        ("Select", ("maya_kit.mm_component", {"type": 'NONE'})),
-        ("Select Hierarchy", ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True})),
-        DIVIDER,
-        ("Inputs", None),
-        ("Paint Skin Weights", ("paint.weight_paint_toggle", {})),
-        *_material_items(),
-    ])
+    items=_object_items(),
+    options=("Select Similar",))
 
 # Curve: N curve point, W CV, S edit point, E hull (dagMenuProc.mel:485-501). Blender
 # curves edit control points only.
@@ -136,7 +173,17 @@ RMB_CURVE = MarkingMenu(
         "E": ("Hull", None),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
     },
-    items=[("Select", ("maya_kit.mm_component", {"type": 'NONE'})), *_material_items()])
+    items=_object_items(),
+    options=("Select Similar",))
+
+
+def with_object_name(menu, name):
+    """A copy of ``menu`` whose ``OBJECT_TITLE`` row shows ``name`` (Maya: "pCube1...")."""
+    items = [(f"{name}...", e[1]) if e != DIVIDER and e[0] == OBJECT_TITLE else e for e in menu.items]
+    if items == menu.items:
+        return menu
+    return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
+
 
 # Nothing under the cursor: Select All / Complete Tool (buildObjectMenuItemsNow.mel:126-150).
 RMB_EMPTY = MarkingMenu(

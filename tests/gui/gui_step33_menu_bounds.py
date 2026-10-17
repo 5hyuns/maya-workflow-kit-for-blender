@@ -26,9 +26,10 @@ def draw():
 
 
 def bounds():
+    # step 52: menus draw over the whole window (its editors), like Maya's
+    from sim import win
     area, region = view3d()
-    view = import_module(MODULE + ".operators.view")
-    return view.visible_bounds(area, region)
+    return draw().window_bounds(win(), region)
 
 
 def all_inside(rects):
@@ -69,7 +70,7 @@ def s_rmb_open():
     rects = [(it.rect[0] + cx, it.rect[1] + cy, it.rect[2] + cx, it.rect[3] + cy) for it in s.layout.items]
     labels = [it.label for it in s.layout.items]
     check("menu has the material rows", "Assign Existing Material" in labels)
-    check("every radial box and list row is inside the visible view", all_inside(rects))
+    check("every radial box and list row is inside the window", all_inside(rects))
     last = next(it for it in s.layout.items if it.label == "Assign New Material...")
     _area, region = view3d()
     C["new"] = (region.x + int(cx + (last.rect[0] + last.rect[2]) / 2),
@@ -101,7 +102,8 @@ def s_search_shot():
     ev('ESC', 'PRESS')
     ev('ESC', 'RELEASE')
     area, region = view3d()
-    b = bounds()
+    view = import_module(MODULE + ".operators.view")
+    b = view.visible_bounds(area, region)
     C["top"] = (region.x + region.width // 2, region.y + int(b[3]) - 30)
     x, y = C["top"]
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
@@ -118,9 +120,10 @@ def s_hotbox():
     hb = draw().ACTIVE.get("hotbox")
     check("Space hold near the top edge opens the hotbox", hb is not None)
     if hb is not None:
-        check("hotbox menu rows inside the visible view", all_inside([r for r, _k, _l in hb.labels]))
-        check("rows moved under the centre box",
-              max(r[3] for r, _k, _l in hb.labels) < hb.center_rect[1])
+        check("hotbox menu rows inside the window", all_inside([r for r, _k, _l in hb.labels]))
+        c = hb.center_rect
+        check("rows clear of the centre box",
+              not any(r[0] < c[2] and c[0] < r[2] and r[1] < c[3] and c[1] < r[3] for r, _k, _l in hb.labels))
 
 
 @step

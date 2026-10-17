@@ -333,3 +333,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 51) kit 아이콘이 무엇인지 읽히는지 (기본 도형·도구 기호, 기호 없는 버튼은 셸프 색 + 글자 두 개). Maya 아이콘과 헷갈릴 만큼 비슷하지 않은지 (결정 6).
 - [ ] (step 51) Resolution Scale 을 바꾼 뒤 마우스가 셸프 줄 아래 경계를 지나면 셸프 줄이 64 px × 배율로 돌아오는지.
 - [ ] (step 51) Status Line 그룹 앞 세로 그립 (Maya openBar) 을 누르면 그 그룹이 접혀 ▸ 만 남고, 다시 누르면 펼쳐지는지. 그립이 너무 작거나 눈에 안 띄지 않는지.
+
+### Step 52 — 핫박스·RMB 마킹 메뉴
+
+- [ ] (step 52) Space 길게: 위 2 줄 (공통 + Cache/Help, View … Panels), 커서 줄 Recent Commands | Maya | Hotbox Controls, 아래 5 줄 (메뉴 세트 모두), 대각선 4 개. 커서가 사이드바 근처여도 줄이 접히지 않고 Channel Box 위에 그려지는지, 그 위의 메뉴 이름을 눌러 열리는지.
+- [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
+- [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록이 아래로 넘치면 오른쪽 열로 이어지고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
+- [ ] (step 52) Maya Font (Segoe UI) 를 켠 상태에서 마킹 메뉴 하위 메뉴 화살표 (삼각형) 가 글자 옆에 맞게 보이는지.
