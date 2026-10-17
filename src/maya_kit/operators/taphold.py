@@ -210,8 +210,63 @@ class SpaceBinding(TapHoldBinding):
             bpy.ops.maya_kit.toggle_quad_view()
 
 
+def playback_range(scene):
+    if scene.use_preview_range:
+        return scene.frame_preview_start, scene.frame_preview_end
+    return scene.frame_start, scene.frame_end
+
+
+def frames_per_pixel(scene, width):
+    """K drag speed: the editor's width spans the playback range once (Maya's speed is not checked,
+     「계획」 3), never slower than 1 frame per 50 px."""
+    a, b = playback_range(scene)
+    return max((b - a + 1) / max(width, 1), 0.02)
+
+
+def time_from_drag(start_frame, dx, fpp):
+    return int(round(start_frame + dx * fpp))
+
+
+class TimeDragBinding(TapHoldBinding):
+    """K: hold + LMB drag anywhere = move the current time (Maya Time Dragger, TimeDraggerToolActivate,
+    Maya, ). LMB is used up, so the selection
+    stays; a tap does nothing."""
+    name = "time_drag"
+    label = "Time Dragger"
+
+    def click(self, context, event):
+        scene = context.scene
+        self._start = scene.frame_current
+        width = context.area.width if context.area is not None else context.window.width
+        self._fpp = frames_per_pixel(scene, width)
+        self._area = context.area
+        self._header(scene.frame_current)
+        return 'DRAG'
+
+    def drag(self, context, event, start):
+        frame = time_from_drag(self._start, event.mouse_x - start[0], self._fpp)
+        if frame != context.scene.frame_current:
+            context.scene.frame_current = frame
+        self._header(frame)
+
+    def drag_end(self, context):
+        self._header(None)
+
+    def drag_cancel(self, context):
+        context.scene.frame_current = self._start
+        self._header(None)
+
+    def _header(self, frame):
+        area = getattr(self, "_area", None)
+        if area is not None:
+            try:
+                area.header_text_set(None if frame is None else f"Time: {frame}  (K + drag, Esc cancel)")
+            except ReferenceError:
+                self._area = None
+
+
 classes = (MAYAKIT_OT_tap_hold,)
-_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding, SpaceBinding)
+_STEP_BINDINGS = (SoftSelectBinding, SelectAllBinding, SpaceBinding, TimeDragBinding)
 
 
 def register_bindings():

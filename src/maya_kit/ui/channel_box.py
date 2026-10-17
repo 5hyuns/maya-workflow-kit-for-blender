@@ -849,6 +849,40 @@ class MAYAKIT_MT_cb_channels(bpy.types.Menu):
         lay.operator("maya_kit.cb_deselect_channels")
 
 
+def is_cb_button(context):
+    """The button under the mouse is a Channel Box channel name or value (for its RMB menu)."""
+    op = getattr(context, "button_operator", None)
+    if op is not None and op.bl_rna.identifier == MAYAKIT_OT_cb_select_channel.__name__:
+        return True
+    ptr = getattr(context, "button_pointer", None)
+    return isinstance(ptr, (MAYAKIT_PG_channel_box, MAYAKIT_PG_cb_row))
+
+
+# Maya's Channel Box RMB menu = the Channels menu (). RMB on a UI button
+# opens Blender's button context menu from C (not a keymap item), so the Channels items go on top of it.
+RMB_ITEMS = (("maya_kit.cb_key_selected", "Key Selected", {}),
+             ("maya_kit.cb_breakdown_selected", "Breakdown Selected", {}),
+             ("maya_kit.cb_mute", "Mute Selected", {"mute": True}),
+             ("maya_kit.cb_mute", "Unmute Selected", {"mute": False}),
+             ("maya_kit.cb_delete_keys", "Delete Selected", {}),
+             ("maya_kit.cb_break_connections", "Break Connections", {}),
+             ("maya_kit.cb_lock", "Lock Selected", {"lock": True}),
+             ("maya_kit.cb_lock", "Unlock Selected", {"lock": False}),
+             ("maya_kit.cb_hide", "Hide Selected", {"lock": False}),
+             ("maya_kit.cb_keyable", "Make Selected Nonkeyable", {"keyable": False}))
+
+
+def draw_button_menu(self, context):
+    if not is_cb_button(context):
+        return
+    lay = self.layout
+    for idname, text, props in RMB_ITEMS:
+        op = lay.operator(idname, text=text)
+        for k, v in props.items():
+            setattr(op, k, v)
+    lay.separator()
+
+
 class MAYAKIT_MT_cb_settings(bpy.types.Menu):
     bl_label = "Settings"
 
@@ -1262,9 +1296,11 @@ def register():
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
     bpy.app.handlers.load_post.append(_on_load)
     bpy.app.timers.register(_first_rebuild, first_interval=0.0)
+    bpy.types.UI_MT_button_context_menu.prepend(draw_button_menu)
 
 
 def unregister():
+    bpy.types.UI_MT_button_context_menu.remove(draw_button_menu)
     if bpy.app.timers.is_registered(_first_rebuild):
         bpy.app.timers.unregister(_first_rebuild)
     bpy.app.handlers.load_post.remove(_on_load)

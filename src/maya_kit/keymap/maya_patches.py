@@ -23,7 +23,8 @@ ADDED = []
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press",
-                      "maya_kit.select_through", "maya_kit.toolbox_guard")
+                      "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
+                      "maya_kit.time_slider_menu")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -605,6 +606,34 @@ def patch_pose_joints(kd):
     _add(kd, "Pose", "maya_kit.cb_virtual_slider", make_event("MIDDLEMOUSE"))
 
 
+# --- 31. Time Slider and keys ---------------------------------
+#  The timeline is a Dope Sheet mode: the Maya Time Slider
+# mouse (LMB time, Shift+LMB range, MMB time + notice, RMB menu) goes first in "Dopesheet" and passes
+# through in the Dope Sheet. K (Time Dragger, Maya) is global ("Screen"); editor keymaps
+# run first, so their plain K goes: Mesh knife tool cycle (IC:3074; Multi-Cut = Ctrl+Shift+X) and
+# Dope Sheet select_column (IC:1435). "User Interface" / Outliner K only act over a button / row.
+# S (Maya) = every keyable channel, not IC's LocRotScale (IC:2463, :2536).
+
+TIME_SLIDER_SHADOWS = ("Dopesheet", "View2D")
+
+
+def patch_time_slider(kd):
+    for shift in (False, True):
+        _add(kd, "Dopesheet", "maya_kit.time_scrub", make_event("LEFTMOUSE", shift=shift), {"range": shift},
+             first=True, shadows=TIME_SLIDER_SHADOWS)
+    _add(kd, "Dopesheet", "maya_kit.time_scrub", make_event("MIDDLEMOUSE"), {"notice": True}, first=True,
+         shadows=TIME_SLIDER_SHADOWS)
+    _add(kd, "Dopesheet", "maya_kit.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
+         shadows=TIME_SLIDER_SHADOWS)
+    kd.remove("Mesh", "wm.tool_set_by_id", type="K")
+    kd.remove("Dopesheet", "action.select_column", type="K")
+    _add(kd, "Screen", "maya_kit.tap_hold", make_event("K"), {"binding": "time_drag"},
+         shadows=("User Interface", "Outliner"))
+    for km in ("Object Mode", "Pose"):
+        kd.remove(km, "anim.keyframe_insert_by_name", type="S")
+        _add(kd, km, "maya_kit.set_key", make_event("S"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -613,7 +642,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints)
+           patch_toolbox_guard, patch_pose_joints, patch_time_slider)
 
 
 def apply(data):

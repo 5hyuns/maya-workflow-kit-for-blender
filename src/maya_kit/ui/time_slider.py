@@ -12,6 +12,8 @@ animation end). Blender form:
 - Maya's time slider always shows the playback range: after a file load and whenever the
   range changes, every Timeline runs ``anim.scene_range_frame`` (a msgbus subscription and
   a load_post handler defer it to a timer).
+- Step 56: LMB on the timeline = time (Shift = red range), RMB = Maya's
+  Time Slider menu, MMB = time + a notice (no Maya MMB time drag in Blender).
 - Step 50: the
   header is the Range Slider row in Maya's order; Blender's Playback / Keying / View / Marker menus move
   into the animation preferences menu at its right end (``TIME_MT_editor_menus.draw_collapsible`` is
@@ -181,6 +183,258 @@ def _no_editor_menus(cls, context, layout):
     MAYAKIT_MT_anim_preferences (Maya has no menus in the Range Slider)."""
 
 
+# --- Time Slider hand feel ---------------------------------
+# Maya: LMB anywhere on the Time Slider moves the time, Shift+LMB drag highlights a range, RMB = the
+# Time Slider menu (others/Maya-1170, labels ).
+# Blender's timeline is a Dope Sheet mode, so these sit first in the "Dopesheet" keymap and pass
+# through in the Dope Sheet itself (keys are clicked there in Maya too).
+
+RANGE_COLOR = (0.78, 0.16, 0.16, 0.35)   # Maya's red range highlight 
+MMB_NOTICE = ("Blender always updates the scene when the time changes (no Maya MMB time drag): "
+              "copy keys instead (RMB > Copy, move, RMB > Paste).")
+# Time Slider items with no Blender equivalent: (label, Help Line text)
+TIME_NOTICES = {
+    "Paste Connect": "Blender pastes keys as they were copied: no connect (offset) paste.",
+    "Play Every Frame, Free": "Blender never plays faster than the scene frame rate.",
+    "Once": "Blender playback always loops.",
+    "Oscillate": "Blender playback always loops.",
+    "Enabled Clips": "Blender has no Time Editor clips (NLA strips instead).",
+    "Sound Length": "Use the sound strip's length in the Video Sequencer.",
+}
+
+
+def frame_at(region, x):
+    """Whole frame under window x in a timeline WINDOW region."""
+    return int(round(region.view2d.region_to_view(x - region.x, 0)[0]))
+
+
+def set_range(wm, a, b, on=True):
+    wm.maya_kit_time_range = (int(a), int(b))
+    wm.maya_kit_time_range_on = on
+
+
+class MAYAKIT_OT_time_scrub(bpy.types.Operator):
+    """Maya Time Slider: click or drag to move the time (Shift: highlight a range)"""
+    bl_idname = "maya_kit.time_scrub"
+    bl_label = "Time Slider Scrub"
+    bl_options = {'INTERNAL'}
+
+    range: bpy.props.BoolProperty(name="Range", description="Shift-drag: highlight a time range",
+                                  options={'SKIP_SAVE'})
+    notice: bpy.props.BoolProperty(name="Notice", description="Show the MMB time drag notice",
+                                   options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        region = context.region
+        if not _is_timeline(context) or region is None or region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        self._region = region
+        self._button = event.type
+        wm, scene = context.window_manager, context.scene
+        self._old = (scene.frame_current, tuple(wm.maya_kit_time_range), wm.maya_kit_time_range_on)
+        f = frame_at(region, event.mouse_x)
+        if self.range:
+            self._anchor = f
+            set_range(wm, f, f)
+        else:
+            wm.maya_kit_time_range_on = False   # a plain click drops the highlighted range (Maya)
+            scene.frame_current = f
+        if self.notice:
+            from . import notices
+            notices.show(MMB_NOTICE)
+        _tag(context)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        wm, scene = context.window_manager, context.scene
+        if event.type == 'MOUSEMOVE':
+            f = frame_at(self._region, event.mouse_x)
+            if self.range:
+                set_range(wm, self._anchor, f)
+            elif f != scene.frame_current:
+                scene.frame_current = f
+            _tag(context)
+            return {'RUNNING_MODAL'}
+        if event.type == self._button and event.value == 'RELEASE':
+            return {'FINISHED'}
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            scene.frame_current = self._old[0]
+            set_range(wm, *self._old[1], on=self._old[2])
+            _tag(context)
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
+def _tag(context):
+    for area in context.screen.areas if context.screen else ():
+        if area.type == 'DOPESHEET_EDITOR':
+            area.tag_redraw()
+
+
+class MAYAKIT_OT_time_slider_menu(bpy.types.Operator):
+    """Maya Time Slider menu (RMB on the Time Slider)"""
+    bl_idname = "maya_kit.time_slider_menu"
+    bl_label = "Time Slider Menu"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if not _is_timeline(context):
+            return {'PASS_THROUGH'}
+        bpy.ops.wm.call_menu(name=MAYAKIT_MT_time_slider.__name__)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_time_slider_unavailable(bpy.types.Operator):
+    """Time Slider item with no Blender equivalent (greyed)"""
+    bl_idname = "maya_kit.time_slider_unavailable"
+    bl_label = "Not Available"
+    bl_options = {'INTERNAL'}
+
+    item: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return False
+
+    @classmethod
+    def description(cls, context, props):
+        line = TIME_NOTICES.get(props.item, "")
+        if line:
+            from . import notices
+            notices.show(f"{props.item}: {line}")
+        return f"Maya: Time Slider > {props.item}\n{line}"
+
+    def execute(self, context):
+        return {'CANCELLED'}
+
+
+def _keys(layout, action, text=None, **props):
+    op = layout.operator("maya_kit.time_keys", text=text)
+    op.action = action
+    for k, v in props.items():
+        setattr(op, k, v)
+    return op
+
+
+def _grey(layout, label):
+    layout.operator(MAYAKIT_OT_time_slider_unavailable.bl_idname, text=label).item = label
+
+
+class MAYAKIT_MT_time_slider(bpy.types.Menu):
+    """Maya Time Slider menu, in Maya's order (Maya-1170)"""
+    bl_label = "Time Slider"
+
+    def draw(self, context):
+        lay = self.layout
+        _keys(lay, "CUT", "Cut")
+        _keys(lay, "COPY", "Copy")
+        lay.menu("MAYAKIT_MT_time_slider_paste", text="Paste")
+        _keys(lay, "DELETE", "Delete")
+        _keys(lay, "SNAP", "Snap")
+        lay.menu("MAYAKIT_MT_time_slider_keys", text="Keys")
+        lay.menu("MAYAKIT_MT_time_slider_tangents", text="Tangents")
+        lay.separator()
+        lay.menu("MAYAKIT_MT_time_slider_speed", text="Playback Speed")
+        lay.menu("MAYAKIT_MT_time_slider_looping", text="Playback Looping")
+        lay.menu("MAYAKIT_MT_time_slider_range", text="Set Range to")
+        lay.separator()
+        op = lay.operator("maya_kit.menu_run", text="Playblast...")
+        op.op, op.props = "render.opengl", '{"animation": true}'
+
+
+class MAYAKIT_MT_time_slider_paste(bpy.types.Menu):
+    bl_label = "Paste"
+
+    def draw(self, context):
+        _keys(self.layout, "PASTE", "Paste")
+        _grey(self.layout, "Paste Connect")
+
+
+class MAYAKIT_MT_time_slider_keys(bpy.types.Menu):
+    bl_label = "Keys"
+
+    def draw(self, context):
+        for action, label in (("TO_KEY", "Convert to Key"), ("TO_BREAKDOWN", "Convert to Breakdown"),
+                              ("ADD_INBETWEEN", "Add Inbetween"), ("REMOVE_INBETWEEN", "Remove Inbetween")):
+            _keys(self.layout, action, label)
+
+
+class MAYAKIT_MT_time_slider_tangents(bpy.types.Menu):
+    bl_label = "Tangents"
+
+    def draw(self, context):
+        for kind in ("SPLINE", "LINEAR", "CLAMPED", "STEPPED", "FLAT", "PLATEAU", "AUTO"):
+            _keys(self.layout, "TANGENT", kind.title(), tangent=kind)
+
+
+class MAYAKIT_MT_time_slider_speed(bpy.types.Menu):
+    bl_label = "Playback Speed"
+
+    def draw(self, context):
+        lay = self.layout
+        lay.prop_enum(context.scene, "sync_mode", 'FRAME_DROP', text="Real-time")
+        _grey(lay, "Play Every Frame, Free")
+        lay.prop_enum(context.scene, "sync_mode", 'NONE', text="Play Every Frame, Max Real-time")
+
+
+class MAYAKIT_MT_time_slider_looping(bpy.types.Menu):
+    bl_label = "Playback Looping"
+
+    def draw(self, context):
+        lay = self.layout
+        _grey(lay, "Once")
+        _grey(lay, "Oscillate")
+        lay.label(text="Continuous", icon='CHECKMARK')
+
+
+class MAYAKIT_MT_time_slider_range(bpy.types.Menu):
+    bl_label = "Set Range to"
+
+    def draw(self, context):
+        lay = self.layout
+        for mode, label in (("START_END", "Start/End"), ("MIN_MAX", "Min/Max"), ("SELECTED", "Selected")):
+            lay.operator("maya_kit.time_set_range", text=label).mode = mode
+        _grey(lay, "Enabled Clips")
+        _grey(lay, "Sound Length")
+
+
+TIME_SLIDER_MENUS = (MAYAKIT_MT_time_slider, MAYAKIT_MT_time_slider_paste, MAYAKIT_MT_time_slider_keys,
+                     MAYAKIT_MT_time_slider_tangents, MAYAKIT_MT_time_slider_speed,
+                     MAYAKIT_MT_time_slider_looping, MAYAKIT_MT_time_slider_range)
+
+
+# --- the red range highlight -----------------------------------------------------------------------
+
+_draw_handle = []
+
+
+def range_rect(region, a, b):
+    """Window-region x0, x1 of frames a..b (whole frames: half a frame either side)."""
+    lo, hi = min(a, b) - 0.5, max(a, b) + 0.5
+    x0 = region.view2d.view_to_region(lo, 0, clip=False)[0]
+    x1 = region.view2d.view_to_region(hi, 0, clip=False)[0]
+    return x0, x1
+
+
+def _draw_range():
+    context = bpy.context
+    wm = context.window_manager
+    if not getattr(wm, "maya_kit_time_range_on", False) or not _is_timeline(context):
+        return
+    region = context.region
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    x0, x1 = range_rect(region, *wm.maya_kit_time_range)
+    h = region.height
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    batch = batch_for_shader(shader, 'TRIS', {"pos": ((x0, 0), (x1, 0), (x1, h), (x0, 0), (x1, h), (x0, h))})
+    gpu.state.blend_set('ALPHA')
+    shader.uniform_float("color", RANGE_COLOR)
+    batch.draw(shader)
+    gpu.state.blend_set('NONE')
+
+
 # --- timeline view = playback range -------------------------------------------------------
 
 def timeline_areas(wm):
@@ -230,12 +484,18 @@ def _on_load(_dummy=None):
         _schedule()
 
 
-classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider)
+classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider, MAYAKIT_OT_time_scrub, MAYAKIT_OT_time_slider_menu,
+           MAYAKIT_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    wm = bpy.types.WindowManager
+    wm.maya_kit_time_range_on = bpy.props.BoolProperty(
+        name="Time Range", description="A Shift-dragged Time Slider range is highlighted", options={'SKIP_SAVE'})
+    wm.maya_kit_time_range = bpy.props.IntVectorProperty(name="Time Range", size=2, options={'SKIP_SAVE'})
+    _draw_handle.append(bpy.types.SpaceDopeSheetEditor.draw_handler_add(_draw_range, (), 'WINDOW', 'POST_PIXEL'))
     buttons, menus = header_classes()
     if LEGACY_TIMELINE:
         menus.draw_collapsible = classmethod(_no_editor_menus)
@@ -271,5 +531,10 @@ def unregister():
         buttons.draw_header = orig if not LEGACY_TIMELINE else staticmethod(orig)
     if "draw_collapsible" in menus.__dict__:
         del menus.draw_collapsible
+    while _draw_handle:
+        bpy.types.SpaceDopeSheetEditor.draw_handler_remove(_draw_handle.pop(), 'WINDOW')
+    wm = bpy.types.WindowManager
+    del wm.maya_kit_time_range
+    del wm.maya_kit_time_range_on
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
