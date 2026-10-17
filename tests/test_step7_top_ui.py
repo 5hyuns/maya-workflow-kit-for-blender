@@ -287,7 +287,7 @@ def test_topbar_draw_maya_and_blender():
     fake = types.SimpleNamespace(layout=FakeLayout())
     status_line.draw_tool_header(fake, _ctx(area=area))
     ops = [e[1] for e in fake.layout.log if e[0] == "op"]
-    for op in ("wm.save_mainfile", "maya_kit.select_mode", "maya_kit.select_mask", "maya_kit.snap_toggle",
+    for op in ("maya_kit.save_scene", "maya_kit.select_mode", "maya_kit.select_mask", "maya_kit.snap_toggle",
                "render.render", "maya_kit.render_settings", "maya_kit.editor_toggle"):
         assert op in ops, (op, ops)
     other = types.SimpleNamespace(type='VIEW_3D')

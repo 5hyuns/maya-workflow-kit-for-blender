@@ -700,6 +700,29 @@ def patch_uv(kd):
         _add(kd, km, "maya_kit.uv_component", make_event("F12", alt=True), {"mode": 'SHELL'})
 
 
+# --- 36. Scene files --------------------------------------------------
+# HK:73-78 (Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+Alt+S / Ctrl+R). IC binds the first four in "Window"
+# (IC:194-199): replaced in place by the kit's (file dialogs start in the project's scenes folder; Ctrl+Alt+S =
+# Maya's Increment and Save rule shot_v001 -> shot_v001.0001, not Blender's shot_v002). Ctrl+R = Create Reference;
+# editor keymaps that bind Ctrl+R themselves keep it there (they run first).
+
+SCENE_KEYS = (
+    ("wm.open_mainfile", "maya_kit.open_scene", {"ctrl": True}, "O"),
+    ("wm.save_mainfile", "maya_kit.save_scene", {"ctrl": True}, "S"),
+    ("wm.save_as_mainfile", "maya_kit.save_scene_as", {"ctrl": True, "shift": True}, "S"),
+    ("wm.save_mainfile", "maya_kit.increment_save", {"ctrl": True, "alt": True}, "S"),
+)
+
+
+def patch_scene_files(kd):
+    for ic, kit, mods, key in SCENE_KEYS:
+        kd.remove("Window", ic, type=key, **mods)
+        _add(kd, "Window", kit, make_event(key, **mods))
+    # Ctrl+R stays refresh / reload where an editor binds it (they run before Window items).
+    _add(kd, "Window", "maya_kit.create_reference", make_event("R", ctrl=True),
+         shadows=("Image Generic", "File Browser", "File Browser Main", "Sequencer"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -708,7 +731,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv)
+           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
+           patch_scene_files)
 
 
 def apply(data):

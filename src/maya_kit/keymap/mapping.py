@@ -285,6 +285,14 @@ ENTRIES = {
     "DecrementFluidCenter": _e("NO", note="Maya Fluids 없음"),
     "CoarserSubdivLevel": _e("NO", note="Maya subdiv surface 노드 없음"),
     "CreateSubdivRegion": _e("NO", note="Maya subdiv surface 노드 없음"),
+    # --- step 69: scene files (Window keymap, operators/project.py) ---
+    "OpenScene": _e("KIT", ("Window", "maya_kit.open_scene", {}), note="파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로)"),
+    "SaveScene": _e("KIT", ("Window", "maya_kit.save_scene", {}), note="처음 저장은 프로젝트 scenes 폴더에서 Save As"),
+    "SaveSceneAs": _e("KIT", ("Window", "maya_kit.save_scene_as", {}), note="프로젝트 scenes 폴더에서 시작"),
+    "IncrementAndSave": _e("KIT", ("Window", "maya_kit.increment_save", {}),
+                           note="Maya 규칙 shot_v001 → shot_v001.0001 (메뉴와 같음; IC 의 Blender 규칙 shot_v002 대신)"),
+    "CreateReference": _e("KIT", ("Window", "maya_kit.create_reference", {}),
+                          note=".blend 링크 + library override, 이름 ns:이름 (편집 모드 등 Ctrl+R 이 있는 에디터는 그쪽 우선)"),
 }
 
 

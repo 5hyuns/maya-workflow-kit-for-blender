@@ -391,8 +391,8 @@ def draw_status_line(layout, context):
     if _group(layout, "FILE"):
         row = layout.row(align=True)
         row.operator("wm.read_homefile", text="", icon='FILE_NEW')
-        row.operator("wm.open_mainfile", text="", icon='FILE_FOLDER')
-        row.operator("wm.save_mainfile", text="", icon='FILE_TICK')
+        row.operator("maya_kit.open_scene", text="", icon='FILE_FOLDER')     # project scenes folder (step 69)
+        row.operator("maya_kit.save_scene", text="", icon='FILE_TICK')
         row = layout.row(align=True)
         row.operator("ed.undo", text="", icon='LOOP_BACK')
         row.operator("ed.redo", text="", icon='LOOP_FORWARDS')

@@ -9,7 +9,7 @@ Operator ids use the ``maya_kit.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (component, create, display, driven_key, duplicate, extrude, freeze, fx, group, history, hold, joints, manip, marquee,
-               material, menu_extras, mesh_maya, mesh_tools, parenting, pickwalk, pivot, preselect, rig_tools, shading_maps, skin, snap_align, symmetry, taphold,
+               material, menu_extras, mesh_maya, mesh_tools, parenting, pickwalk, pivot, preselect, project, rig_tools, shading_maps, skin, snap_align, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -19,7 +19,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *marquee.classes, *preselect.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
-           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes)
+           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -38,9 +38,11 @@ def register():
     tool_keys.register_timer()
     symmetry.register_handler()
     pivot.register_handler()
+    project.register_handlers()
 
 
 def unregister():
+    project.unregister_handlers()
     pivot.unregister_handler()
     symmetry.unregister_handler()
     tool_keys.unregister_timer()
