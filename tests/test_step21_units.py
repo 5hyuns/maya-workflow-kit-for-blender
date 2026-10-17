@@ -127,7 +127,7 @@ def test_every_creation_path_uses_maya_kit_create():
     created = {label: action for label, action in actions(mm.SHIFT_DEFAULT)
                if isinstance(action, tuple) and action and str(action[0]).startswith(("mesh.", "maya_kit.create"))}
     assert set(created) == {"Disc", "Sphere", "Torus", "Cube", "Cone", "Cylinder", "Plane",
-                            "Platonic Solid", "Pyramid", "Prism"}, created
+                            "Platonic Solid", "Pyramid", "Prism", "Type"}, created   # Type: step 54
     for label, action in created.items():
         assert action[0] == "maya_kit.create" and action[1]["kind"] in create.KINDS, (label, action)
     for key in ("Create/Curve Tools/CV Curve Tool", "Create/Curve Tools/Bezier Curve Tool"):
