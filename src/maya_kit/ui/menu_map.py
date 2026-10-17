@@ -306,12 +306,18 @@ MAP = {
     "Skeleton/Orient Joint": "maya_kit.orient_joint",
     "Skeleton/Remove Joints": "armature.delete",
     "Skeleton/Disconnect Joint": ("armature.parent_clear", {"type": 'DISCONNECT'}),
-    "Skeleton/Create IK Handle": "pose.ik_add",
+    "Skeleton/Create IK Handle": "maya_kit.ik_handle",       # step 58: click start + end joint
     # --- Skin ---
-    "Skin/Bind Skin": ("object.parent_set", {"type": 'ARMATURE_AUTO'}),
+    # step 58 (docs/steps/step_58.md): any selection order, no parenting, Max Influences
+    "Skin/Bind Skin": "maya_kit.bind_skin",
+    "Skin/Unbind Skin": "maya_kit.unbind_skin",
     "Skin/Go to Bind Pose": "pose.transforms_clear",
-    "Skin/Paint Skin Weights": "paint.weight_paint_toggle",
-    "Skin/Mirror Skin Weights": "object.vertex_group_mirror",
+    "Skin/Paint Skin Weights": "maya_kit.paint_skin_weights",
+    "Skin/Mirror Skin Weights": "maya_kit.mirror_skin_weights",
+    "Skin/Copy Skin Weights": "maya_kit.copy_skin_weights",
+    "Skin/Copy Vertex Weights": "maya_kit.copy_vertex_weights",
+    "Skin/Paste Vertex Weights": "maya_kit.paste_vertex_weights",
+    "Skin/Edit Influences/Set Max Influences...": "object.vertex_group_limit_total",
     "Skin/Smooth Skin Weights": "object.vertex_group_smooth",
     "Skin/Prune Small Weights": "object.vertex_group_clean",
     "Skin/Normalize Weights/Normalize Weights": "object.vertex_group_normalize_all",
@@ -322,6 +328,7 @@ MAP = {
     "Constrain/Orient": _con('COPY_ROTATION'),
     "Constrain/Scale": _con('COPY_SCALE'),
     "Constrain/Aim": _con('TRACK_TO'),
+    "Constrain/Pole Vector": "maya_kit.pole_vector",
     "Constrain/Motion Paths/Attach to Motion Path": _con('FOLLOW_PATH'),
     "Constrain/Geometry": _con('SHRINKWRAP'),
     # --- Key (Animation) ---

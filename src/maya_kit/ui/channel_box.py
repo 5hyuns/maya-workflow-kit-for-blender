@@ -1191,6 +1191,9 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         from .attribute_editor import draw_dock_switch
         draw_dock_switch(layout, context)
         chrome.menu_bar(layout, MENU_BAR)
+        from . import paint_weights
+        if paint_weights.active(context):
+            paint_weights.draw(layout, context)   # Maya Tool Settings of the paint tool (step 58)
         if placing_joints(context):
             layout.separator(factor=2)
             chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)

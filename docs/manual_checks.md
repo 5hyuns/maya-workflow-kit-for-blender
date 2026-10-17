@@ -381,3 +381,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 57) Skeleton > Orient Joint (옵션 창): Secondary World Orientation Y+ / Z+ 로 바꿔 보고 로컬 축 (Display > Local Rotation Axes 또는 아마추어 Axes) 이 기대대로 도는지; 창의 Y 축 안내 문구가 이해되는지.
 - [ ] (step 57) Skeleton > Mirror Joints (옵션 창) YZ + Search `l_` Replace `r_`: 반대편에 `r_…` 조인트, Behavior 로 미러한 팔을 반대로 돌렸을 때 Maya 처럼 대칭으로 움직이는지.
 - [ ] (step 57) 포즈 모드 ↑↓←→ = 부모 / 자식 / 형제 조인트 (프레임은 Alt+, / Alt+.), P = 고른 조인트들을 마지막에 고른 조인트 아래로 (제자리), Shift+P = 부모 끊기.
+
+### Step 58 — IK Handle·Bind Skin·Paint Skin Weights
+
+- [ ] (step 58) Skeleton > Create IK Handle → 시작 조인트 클릭 → 끝 조인트 클릭: ikHandle1 이 끝 조인트에 생기고 선택됨, W 로 끌면 체인이 굽음. 조인트를 잘못 (끝 → 시작) 고르면 경고. 이미 두 조인트를 고른 상태면 바로 만들어짐.
+- [ ] (step 58) 로케이터 → ikHandle1 순서로 고르고 Constrain > Pole Vector: 무릎이 튀지 않고, 로케이터를 옮기면 무릎 방향이 따라감.
+- [ ] (step 58) 조인트 (skeleton1) 클릭 → Shift+메시 클릭 → Skin > Bind Skin: 메시가 Outliner 에서 skeleton1 아래로 들어가지 않음, 조인트를 돌리면 메시가 따라 굽음. 길게 누르기 (Option Box) 로 Max Influences / Selected Joints 를 바꿔 다시 실행.
+- [ ] (step 58) Skin > Paint Skin Weights: 도크 맨 위 Paint Skin Weights Tool (Influences 목록·Replace/Add/Scale/Smooth·Value·Opacity·Flood), 목록 클릭 = 칠할 조인트, Ctrl+LMB 로 뷰의 조인트 고르기, 다시 메뉴 = 도구 끄기. 색은 Blender 웨이트 색 (파랑→빨강, Maya 흑백 아님).
+- [ ] (step 58) Mirror Skin Weights (Mirror Joints 로 만든 반대편 조인트가 있을 때) → 반대편 가중치가 대칭으로; Copy Skin Weights (원본 → 대상), Copy / Paste Vertex Weights (편집 모드).

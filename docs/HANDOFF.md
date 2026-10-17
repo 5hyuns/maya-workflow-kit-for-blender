@@ -2,12 +2,18 @@
 
 ## 현재 작업
 
+- Step 58 (IK Handle·Bind Skin·Paint Skin Weights·가중치 복사/미러) 완료 — `docs/steps/step_58.md`. `maya_kit.ik_handle` (시작·끝 조인트
+  클릭 또는 두 조인트 선택 → 끝 조인트로 들어오는 본에 IK + chain_count, 목표 `ikHandleN`), Pole Vector (자세 유지 각), Bind Skin (순서 무관,
+  메시 부모 안 됨, Max Influences, Selected Joints), Unbind, Paint Skin Weights (웨이트 페인트 + 아마추어 자동 포즈, 도크 맨 위 Influences 목록·
+  Replace/Add/Scale/Smooth·Value·Flood), Copy / Mirror Skin Weights (반사 위치로 조인트 짝), Copy / Paste Vertex Weights.
+  헤드리스 462/462, GUI 384/384 (0.8) · 383/383 (1.25), dogfood 47/47.
+  **바로 다음 할 일**: step 59 「Set Driven Key·포즈 모드 제약·Add Attribute·Blend Shape」 (근거 `research/maya/workflows/rigging.md`
+  후보 D). 그다음 60 … 67.
+
 - Step 57 (Joint Tool·Orient/Mirror Joint·포즈 픽워크) 완료 — `docs/steps/step_57.md`. Skeleton > Create Joints / 셸프 = `maya_kit.joint_tool`
   (클릭마다 조인트, 정사영 = 원점 뷰 평면 / persp = 바닥, Enter → 포즈 모드, `skeleton1` / `jointN`, XYZ, CB lead = 마지막), Orient Joint /
   Mirror Joints = Maya 옵션 창 (`invoke_props_dialog`; Y 축 안내, 평면·Behavior·검색/치환), 포즈 모드 ↑↓←→ = 조인트 pick-walk, 포즈·아마추어
   편집 모드 P / Shift+P = 조인트 부모 지정 (제자리). 헤드리스 451/451, GUI 376/376 (0.8) · 375/375 (1.25), dogfood 47/47.
-  **바로 다음 할 일**: step 58 「IK Handle·Bind Skin·Paint Skin Weights·가중치 복사/미러」 (근거 `research/maya/workflows/rigging.md`
-  후보 C; 조인트 만들기는 `operators/joints.py` 재사용). 그다음 59 … 67.
 
 - Step 56 (Time Slider·키 감각) 완료 — `docs/steps/step_56.md`. 타임라인 LMB = 시간 (Shift = 빨간 범위, MMB = 시간 + 안내), RMB = Maya Time
   Slider 메뉴 (Cut/Copy/Paste/Delete/Snap/Keys/Tangents/Playback Speed/Looping/Set Range to/Playblast), K + 드래그 = 어디서나 시간 (Mesh

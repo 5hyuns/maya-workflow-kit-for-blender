@@ -74,9 +74,9 @@ BY_COMMAND = {
     # --- Rigging ---
     "CreateLocator": (_create('LOCATOR'), 'EMPTY_AXIS'),
     "JointTool": ("maya_kit.joint_tool", 'OUTLINER_OB_ARMATURE'),
-    "IKHandleTool": ("pose.ik_add", 'CON_KINEMATIC'),
-    "SmoothBindSkin": (("object.parent_set", {"type": 'ARMATURE_AUTO'}), 'MOD_ARMATURE'),
-    "ArtPaintSkinWeightsTool": ("paint.weight_paint_toggle", 'WPAINT_HLT'),
+    "IKHandleTool": ("maya_kit.ik_handle", 'CON_KINEMATIC'),
+    "SmoothBindSkin": ("maya_kit.bind_skin", 'MOD_ARMATURE'),
+    "ArtPaintSkinWeightsTool": ("maya_kit.paint_skin_weights", 'WPAINT_HLT'),
     "CreateBlendShape": (("object.shape_key_add", {"from_mix": False}), 'SHAPEKEY_DATA'),
     "CreateLattice": (("object.add", {"type": 'LATTICE'}), 'OUTLINER_OB_LATTICE'),
     **_CONSTRAINTS,
