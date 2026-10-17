@@ -47,7 +47,8 @@ def _mod(kind):
 
 
 def _con(kind):
-    return ("object.constraint_add_with_targets", {"type": kind})
+    # Maya order (targets, then the constrained node); on the active joint in pose mode (step 62)
+    return ("maya_kit.constrain", {"type": kind})
 
 
 def _editor(ui_type):
@@ -216,6 +217,9 @@ MAP = {
     "Modify/Snap Align Objects/Align Objects": "maya_kit.align_objects",
     "Modify/Snap Together Tool": "maya_kit.snap_together",
     "Modify/Make Live": "maya_kit.make_live",
+    "Modify/Add Attribute...": "maya_kit.add_attribute",     # Attributes section (EXTRA), step 62
+    "Modify/Edit Attribute...": "maya_kit.edit_attribute",
+    "Modify/Delete Attribute...": "maya_kit.delete_attribute",
     "Windows/Switch to Blender": ("maya_kit.switch_mode", {"mode": 'BLENDER'}),
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
@@ -292,7 +296,8 @@ MAP = {
     "Curves/Smooth": "curve.smooth",
     "Curves/Reverse Direction": "curve.switch_direction",
     # --- Deform (Modeling, Rigging, Animation share it) ---
-    "Deform/Blend Shape": ("object.shape_key_add", {"from_mix": False}),
+    "Deform/Blend Shape": "maya_kit.blend_shape",          # targets, then the base (join_shapes, step 62)
+    "Deform/Blend Shape#2/Add": "maya_kit.blend_shape",
     "Deform/Delta Mush": _mod('CORRECTIVE_SMOOTH'),
     "Deform/Solidify": _mod('SOLIDIFY'),
     "Deform/Lattice": _mod('LATTICE'),
@@ -316,6 +321,8 @@ MAP = {
     "Control/Create Character Set": "anim.keying_set_add",   # step 54: Keying Set + notice (ui/notices.py)
     # step 57: Joint Tool (click, click, Enter), option-box dialogs
     "Skeleton/Create Joints": "maya_kit.joint_tool",
+    "Skeleton/Quick Rig": "maya_kit.quick_rig",              # Rigify (notice in ui/notices.py), step 62
+    "Windows/Animation Editors/Quick Rig": "maya_kit.quick_rig",
     "Skeleton/Mirror Joints": "maya_kit.mirror_joints",
     "Skeleton/Orient Joint": "maya_kit.orient_joint",
     "Skeleton/Remove Joints": "armature.delete",
@@ -350,6 +357,9 @@ MAP = {
     "Key/Set Key": "maya_kit.set_key",
     "Key/Set Key on Animated": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Set Breakdown Key": ("maya_kit.set_key", {"breakdown": True}),
+    "Key/Set Driven Key/Set...": "maya_kit.sdk_window",      # step 62
+    "Key/Set Driven Key/Go to Previous": ("maya_kit.sdk_go", {"direction": 'PREVIOUS'}),
+    "Key/Set Driven Key/Go to Next": ("maya_kit.sdk_go", {"direction": 'NEXT'}),
     "Key/Insert Key": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Cut Keys": ("maya_kit.time_keys", {"action": "CUT"}),
     "Key/Copy Keys": ("maya_kit.time_keys", {"action": "COPY"}),
@@ -420,6 +430,10 @@ MAP = {
 # Transformations, before the Align section ($M\startup\Maya-376, step 59).
 EXTRA = {
     "Modify/Match Transformations": [("-", "Pivot"), ("Center Pivot",), ("Bake Pivot",)],
+    # Attributes section, built at run time from the AddAttribute / RenameAttribute / DeleteAttribute run time
+    # commands (); Maya puts Naming between them (not mapped yet).
+    "Modify/Evaluate Nodes": [("-", "Attributes"), ("Add Attribute...",), ("Edit Attribute...",),
+                              ("Delete Attribute...",)],
     # Maya Kit's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
     "Windows/Settings/Preferences": [("Switch to Blender",)],
 }
