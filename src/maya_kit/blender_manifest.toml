@@ -7,6 +7,9 @@ name = "Maya Kit"
 tagline = "Maya-style keymap, interaction, UI and concepts for Maya users"
 maintainer = "ohnsk <555hyuns@gmail.com>"
 type = "add-on"
+# Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; , step 61).
+# No `website` until there is a public page; no `platforms`: pure Python, every OS.
+tags = ["User Interface", "3D View", "Modeling", "Animation"]
 
 blender_version_min = "4.2.0"
 # Exclusive. Target 4.5 (); 5.0-5.2 checked in  A newer Blender gets a
@@ -15,6 +18,9 @@ blender_version_max = "5.3.0"
 
 license = [
   "SPDX:GPL-3.0-or-later",
+]
+copyright = [
+  "2026 ohnsk",
 ]
 
 [permissions]
