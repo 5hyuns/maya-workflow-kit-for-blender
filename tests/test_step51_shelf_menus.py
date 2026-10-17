@@ -127,3 +127,44 @@ def test_template_shelf_row():
     regions = {r.type: r for r in row.regions}
     assert row.spaces.active.show_region_header
     assert 60 <= row.height <= 68, row.height       # Maya shelf 64 (ui_layout.md:219)
+
+
+class _Fake:
+    def __init__(self, log):
+        object.__setattr__(self, "log", log)
+
+    def __getattr__(self, name):
+        if name in ("row", "column"):
+            return lambda *a, **k: _Fake(self.log)
+
+        def add(*a, **kw):
+            self.log.append((name, a, kw.get("icon")))
+            return type("P", (), {})()
+        return add
+
+    def __setattr__(self, name, value):
+        pass
+
+
+def test_status_line_collapse_handles():
+    """Every Maya Status Line group has an openBar handle that hides it (ui_layout.md:194-195)."""
+    status_line = import_module(kit.MODULE + ".ui.status_line")
+
+    def draw():
+        log = []
+        status_line.draw_status_line(_Fake(log), bpy.context)
+        return log
+
+    log = draw()
+    handles = [e for e in log if e[1] and e[1][0] == "maya_kit.status_group"]
+    assert len(handles) == len(status_line.GROUPS), handles
+    assert all(e[2] == 'GRIP_V' for e in handles)
+    assert any(e[2] == 'FILE_NEW' for e in log)
+    assert bpy.ops.maya_kit.status_group(group="FILE") == {'FINISHED'}
+    try:
+        log = draw()
+        assert not any(e[2] in ('FILE_NEW', 'LOOP_BACK') for e in log), "File group hidden"
+        assert any(e[2] == 'TRIA_RIGHT' for e in log) and any(e[2] == 'RENDER_STILL' for e in log)
+    finally:
+        bpy.ops.maya_kit.status_group(group="FILE")
+    assert any(e[2] == 'FILE_NEW' for e in draw())

@@ -58,6 +58,11 @@ backlog 10 (`docs/PLAN.md` 「Maya 동일화 계획」). 근거: compare/12_crea
   셸프 탭 3 지점 새로 (전엔 「탭 없음」), 아이콘 줄 지점 = `shelf.WINDOW`; `look_shots` 셸프 높이 맞춤 + 단언.
 - 테스트: 새 `test_step51_shelf_menus` (6), `gui_step51_shelf_menus`; test_step7/34 가짜 layout 갱신.
 
+- 후속 (같은 단계, 커밋 2): Status Line 그룹마다 Maya 「openBar」 접기 손잡이 (`ui/status_line.GROUPS`, `maya_kit.status_group`,
+  research/maya/ui_layout.md:194-195): 펼침 = 세로 그립 (GRIP_V), 접힘 = ▸, 그룹 사이 구분선 대신. 테스트 `test_status_line_collapse_handles`,
+  gui_step51 손잡이 클릭 → 숨김 → 다시 클릭 → 보임. 검증: 헤드리스 **399/399**, GUI **316/316** (0.8) · **315/315** (1.25),
+  release_check PASS, dogfood 47/47 (콘솔 오류 0).
+
 ## 검증
 - 헤드리스 **398/398** (step 50: 392). `test_enable_disable` 누수 0 (머리·WINDOW 핸들러 둘 다 제거).
 - look_compare: density **6/6** (메뉴바 26, 항목 19.4, CB 16.0, 메뉴 위 끝 −3 (Maya 2), 셸프 **64** (Maya 64), 아이콘 **32**);
@@ -71,7 +76,9 @@ backlog 10 (`docs/PLAN.md` 「Maya 동일화 계획」). 근거: compare/12_crea
 - 1.25 등 템플릿 저장 배율과 다른 배율에서 셸프 줄은 마우스가 그 아래 경계를 지날 때까지 낮음 (gui_step51 1.25: 56 px, 아이콘 20;
   release 스크린샷 `docs/screenshots/01_layout.png` 도 그 상태) — `screen.area_move` poll 이 마우스가 영역 위면 False (step 49 툴박스
   열과 같은 한계).
-- Status Line: kit 제작 컬러 아이콘·그룹 접기 손잡이 (Maya 18_status_line_crop) 없음 — Blender 아이콘 그대로.
+- Status Line 아이콘은 Blender 아이콘 그대로 (Maya 18_status_line_crop 도 대부분 회색 기호라 셸프처럼 kit 이 그리지 않음, delegated;
+  머리 레이아웃 버튼은 미리보기 아이콘을 16 px 로만 그림). 접힌 그룹은 세션 동안만 기억 (Maya 는 optionVar).
+- 셸프 줄 높이: 배율이 더 크면 (OS 125 % × `--ui-scale 1.25` = 1.56) 마우스가 경계를 지나기 전 아이콘 줄이 거의 없어짐 (44 px 영역).
 - 메뉴: Maya 끊어내기 (tear-off) 선 없음 (Blender 메뉴는 떼어 낼 수 없음); 옵션 박스는 오른쪽 □ 열이 아니라 왼쪽 아이콘 + 길게 누르기.
   고른 탭 #4b4b4b (Maya #444444, ΔE 2.4), 탭 글자도 어둡게 덮임.
 - 셸프 아이콘 끌어 옮기기·가운데 버튼 끌어 셸프에 넣기 (Maya) 없음; 셸프가 줄보다 길면 Maya 의 위/아래 화살표 대신 잘림.

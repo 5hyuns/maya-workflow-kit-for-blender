@@ -126,4 +126,41 @@ def s_menu_shot():
     ev('ESC', 'RELEASE')
 
 
+status_line = import_module(MODULE + ".ui.status_line")
+
+
+def file_handle():
+    # the Status Line's first collapse handle (File group): left end of the strip header
+    strip = next(a for a in win().screen.areas if a.type == 'IMAGE_EDITOR' and shelf.is_strip(a.spaces.active))
+    hdr = next(r for r in strip.regions if r.type == 'HEADER')
+    return hdr.x + round(15 * scale()), hdr.y + hdr.height // 2
+
+
+@step
+def s_handle_hover():
+    x, y = file_handle()
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y + 40)   # leave the menu bar first
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+
+
+@step
+def s_handle_click():
+    ev('LEFTMOUSE', 'PRESS')
+    ev('LEFTMOUSE', 'RELEASE')
+
+
+@step
+def s_handle_check():
+    check(f"Status Line File handle hides the group ({sorted(status_line._collapsed)})",
+          status_line._collapsed == {"FILE"})
+    shot("gui_step51_status_collapsed.png")
+    ev('LEFTMOUSE', 'PRESS')
+    ev('LEFTMOUSE', 'RELEASE')
+
+
+@step
+def s_handle_again():
+    check("... and the same handle shows it again", not status_line._collapsed)
+
+
 run()
