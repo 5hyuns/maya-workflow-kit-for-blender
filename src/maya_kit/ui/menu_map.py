@@ -195,7 +195,7 @@ MAP = {
     "Modify/Convert/Type to Curves": ("object.convert", {"target": 'CURVE'}),
     "Modify/Convert/Instance to Object": "object.duplicates_make_real",
     # --- Display ---
-    "Display/Grid": ("v3d", "wm.context_toggle", {"data_path": "space_data.overlay.show_floor"}),
+    "Display/Grid": ("v3d", "maya_kit.toggle_grid", {}),     # Maya grid (ui/maya_grid.py, step 45)
     "Display/Hide": ("object.hide_view_set", {"unselected": False}),
     "Display/Show": "object.hide_view_clear",
     "Display/Transform Display/Local Rotation Axes": ("wm.context_toggle", {"data_path": "object.show_axis"}),

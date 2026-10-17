@@ -112,6 +112,16 @@ def s_template_drag():
 @step
 def s_template_done():
     check_snap("MayaKit layout", "cm")
+    # Step 45: the view draws the Maya grid (Blender floor off), its lines are every Maya unit, so the
+    # snapped copy sits on a grid line inside the 12-unit grid; the grid was drawn (draw time > 0).
+    grid = import_module(MODULE + ".ui.maya_grid")
+    space = area3d().spaces.active
+    n = bpy.data.objects[C["ob"]].location.x / C["k"]
+    lines = {round(line[0][0]) for kind in grid.segments().values() for line in kind if line[0][1] == -grid.SIZE}
+    check(f"Maya grid on in the MayaKit view, snapped x = {n:.3f} is one of its lines",
+          grid.is_on(space) and not space.overlay.show_floor and round(n) in lines)
+    check(f"Maya grid drawn ({grid.frame_ms():.3f} ms per draw)", 0.0 < grid.frame_ms() < 5.0)
+    print("GUI grid draw ms", grid.frame_ms())
     shot("gui_step25_snapped_cm.png")
     # Maya Units on: a new file gets cm with scale_length 0.01
     prefs = import_module(MODULE + ".preferences").get()

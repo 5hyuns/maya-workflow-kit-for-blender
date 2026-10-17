@@ -157,12 +157,13 @@ def s_release():
     bpy.ops.object.mode_set(mode='OBJECT')
     # A "v3d" item: runs in the 3D View (Display > Grid).
     v3d = view3d()[0].spaces.active
-    C["floor"] = v3d.overlay.show_floor
+    grid = import_module(MODULE + ".ui.maya_grid")
+    C["grid"] = grid.visible(v3d)
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.menu_run(op="wm.context_toggle",
-                                  props='{"data_path": "space_data.overlay.show_floor"}')
-    check("Display > Grid toggles the viewport grid", v3d.overlay.show_floor != C["floor"])
-    v3d.overlay.show_floor = C["floor"]
+        bpy.ops.maya_kit.menu_run(op="maya_kit.toggle_grid", props='{}')
+    check("Display > Grid toggles the viewport grid (Maya grid, step 45)", grid.visible(v3d) != C["grid"])
+    with bpy.context.temp_override(window=win()):
+        bpy.ops.maya_kit.menu_run(op="maya_kit.toggle_grid", props='{}')
     C["windows"] = len(bpy.context.window_manager.windows)
     with bpy.context.temp_override(window=win()):
         bpy.ops.maya_kit.script_editor()

@@ -154,7 +154,7 @@ SHOW = [
     *[_show_row(label, t) for label, t in SHOW_TYPES],
     _sep(),
     ("prop", "space", "show_gizmo", "Manipulators"),
-    ("prop", "overlay", "show_floor", "Grid"),
+    ("set", "GRID", "Grid"),               # Maya grid (ui/maya_grid.py, step 45)
     ("prop", "overlay", "show_text", "HUD"),
     _grey("Hold-Outs"),
     ("prop", "overlay", "show_outline_selected", "Selection Highlighting"),
@@ -251,6 +251,9 @@ def state(context, key):
         return context.preferences.inputs.use_rotate_around_active
     if key == "TUMBLE_COI":
         return not context.preferences.inputs.use_rotate_around_active
+    if key == "GRID":
+        from . import maya_grid
+        return maya_grid.visible(space)
     if key == "LAYOUT_SINGLE":
         return not space.region_quadviews
     if key == "LAYOUT_FOUR":
@@ -266,7 +269,7 @@ SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
 _COPY_SHADING = ("type", "light", "color_type", "show_xray", "show_backface_culling", "show_shadows",
                  "use_dof", "use_scene_lights", "use_scene_world")
-_COPY_OVERLAY = ("show_wireframes", "show_xray_bone", "show_floor", "show_text",
+_COPY_OVERLAY = ("show_wireframes", "show_xray_bone", "show_floor", "show_ortho_grid", "grid_lines", "show_text",
                  "show_outline_selected", "show_object_origins", "show_motion_paths")
 
 
@@ -312,6 +315,9 @@ def apply(context, key):
         context.preferences.inputs.use_rotate_around_active = True
     elif key == "TUMBLE_COI":
         context.preferences.inputs.use_rotate_around_active = False
+    elif key == "GRID":
+        from . import maya_grid
+        maya_grid.toggle(space)
     elif key in ("SHOW_ALL", "SHOW_NONE"):
         for t in ALL_TYPES:
             setattr(space, f"show_object_viewport_{t}", key == "SHOW_ALL")

@@ -142,6 +142,10 @@ def maya_views():
                 # Maya's grid axes are grey (displayColor gridAxis = grid); Blender colours them with
                 # the theme axis colours, which now are Maya's manipulator red/green (step 43).
                 space.overlay.show_axis_x = space.overlay.show_axis_y = False
+                # Maya's finite 12-unit grid instead of Blender's floor, also in ortho side views
+                # (src/maya_kit/ui/maya_grid.py: show_floor / show_ortho_grid off, grid_lines 0; step 45).
+                space.overlay.show_floor = space.overlay.show_ortho_grid = False
+                space.overlay.grid_lines = 0
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')
