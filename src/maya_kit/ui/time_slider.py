@@ -12,6 +12,12 @@ animation end). Blender form (docs/steps/step_20.md 「계획」 2, 4):
 - Maya's time slider always shows the playback range: after a file load and whenever the
   range changes, every Timeline runs ``anim.scene_range_frame`` (a msgbus subscription and
   a load_post handler defer it to a timer).
+- Step 50 (docs/steps/step_50.md 「계획」 4, screens/20_time_slider_crop.png, 21_range_slider_crop.png): the
+  header is the Range Slider row in Maya's order; Blender's Playback / Keying / View / Marker menus move
+  into the animation preferences menu at its right end (``TIME_MT_editor_menus.draw_collapsible`` is
+  overridden on the class, deleted on unregister). A timeline with its sidebar shown (the MayaKit
+  layout) draws the current frame field and the 8 transport buttons there, at the right end of the
+  Time Slider row like Maya (``MAYAKIT_PT_time_slider``); other timelines keep them in the header.
 """
 
 import bpy
@@ -24,11 +30,12 @@ _RANGE_PROPS = ("frame_start", "frame_end", "frame_preview_start", "frame_previe
                 "use_preview_range")
 
 
-def draw_header(context, layout):
-    scene, ts, screen = context.scene, context.tool_settings, context.screen
-    layout.separator_spacer()
-
-    # Time Slider buttons, Maya order (ui_layout.md:274-276).
+def draw_transport(layout, context):
+    """Current frame field + Maya's 8 transport buttons (ui_layout.md:272-276)."""
+    scene, screen = context.scene, context.screen
+    row = layout.row()
+    row.ui_units_x = 4.5    # Maya timeField width 90 (timeSlider.mel:223-226)
+    row.prop(scene, "frame_current", text="")
     row = layout.row(align=True)
     row.operator("screen.frame_jump", text="", icon='REW').end = False
     row.operator("screen.frame_offset", text="", icon='TRIA_LEFT_BAR').delta = -1
@@ -44,30 +51,107 @@ def draw_header(context, layout):
     row.operator("screen.frame_offset", text="", icon='TRIA_RIGHT_BAR').delta = 1
     row.operator("screen.frame_jump", text="", icon='FF').end = True
 
-    row = layout.row()
-    row.scale_x = 0.95
-    row.prop(scene, "frame_current", text="")
 
-    layout.separator_spacer()
+def has_slider_panel(space):
+    """The timeline shows the Time Slider buttons in its sidebar (the MayaKit layout)."""
+    return space is not None and space.type == 'DOPESHEET_EDITOR' and space.show_region_ui
 
-    # Range Slider (ui_layout.md:285): animation start | playback start [toggle] playback end | animation end.
+
+# Range Slider row, Maya order (playbackRange.mel:288-332, :366-596; ui_layout.md:284-288).
+RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto key", "No Character Set",
+               "No Anim Layer", "fps", "loop", "sound", "animation preferences")
+
+
+def draw_header(context, layout):
+    if not has_slider_panel(context.space_data):
+        layout.separator_spacer()
+        draw_transport(layout, context)
+        layout.separator_spacer()
+    draw_range_slider(layout, context)   # Maya: the range fields start at the left edge
+
+
+def draw_range_slider(layout, context):
+    scene, ts = context.scene, context.tool_settings
+    # animation start | playback start [range bar] playback end | animation end
     row = layout.row(align=True)
-    row.scale_x = 0.8
+    row.ui_units_x = 4.5
     row.prop(scene, "frame_start", text="")
-    inner = row.row(align=True)
-    inner.active = scene.use_preview_range
-    inner.prop(scene, "frame_preview_start", text="")
-    row.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
-    inner = row.row(align=True)
-    inner.active = scene.use_preview_range
-    inner.prop(scene, "frame_preview_end", text="")
+    row = layout.row(align=True)
+    row.ui_units_x = 4.5
+    row.active = scene.use_preview_range
+    row.prop(scene, "frame_preview_start", text="")
+    # Maya's range bar (ui_layout.md:285): Blender has no such widget. The toggle = use the playback range
+    # (off = play the whole animation range), the bar shows the range and frames the time slider on it.
+    bar = layout.row(align=True)
+    bar.ui_units_x = 18
+    a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \
+        (scene.frame_start, scene.frame_end)
+    bar.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
+    bar.operator("anim.scene_range_frame", text=f"{a}" + " " * 40 + f"{b}")
+    row = layout.row(align=True)
+    row.ui_units_x = 4.5
+    row.active = scene.use_preview_range
+    row.prop(scene, "frame_preview_end", text="")
+    row = layout.row(align=True)
+    row.ui_units_x = 4.5
     row.prop(scene, "frame_end", text="")
 
+    layout.separator_spacer()
     row = layout.row(align=True)
-    row.prop(ts, "use_keyframe_insert_auto", text="", toggle=True)   # Maya auto key (:285)
+    row.prop(ts, "use_keyframe_insert_auto", text="", toggle=True)   # Maya auto key (:585)
     sub = row.row(align=True)
     sub.active = ts.use_keyframe_insert_auto
     sub.popover(panel="TIME_PT_auto_keyframing", text="")
+    for text in ("No Character Set", "No Anim Layer"):   # Maya character sets / anim layers: none in Blender
+        sub = layout.row()
+        sub.enabled = False
+        sub.ui_units_x = 6
+        sub.label(text=text, icon='DOWNARROW_HLT')
+    row = layout.row()
+    row.ui_units_x = 5
+    fps = scene.render.fps / scene.render.fps_base
+    row.menu("RENDER_MT_framerate_presets", text=f"{fps:g} fps")
+    row = layout.row(align=True)
+    sub = row.row(align=True)
+    sub.enabled = False   # Maya loop / once / oscillate: Blender always loops
+    sub.label(text="", icon='FILE_REFRESH')
+    row.prop(scene, "use_audio", text="", icon='SPEAKER', invert_checkbox=True)
+    row.menu("MAYAKIT_MT_anim_preferences", text="", icon='PREFERENCES')
+
+
+class MAYAKIT_MT_anim_preferences(bpy.types.Menu):
+    """Animation preferences (Maya's button at the right end of the Range Slider): Blender's
+    timeline Playback, Keying, View and Marker menus"""
+    bl_label = "Animation Preferences"
+
+    def draw(self, context):
+        lay = self.layout
+        lay.popover(panel="TIME_PT_playback", text="Playback")
+        lay.popover(panel="TIME_PT_keyframing_settings", text="Keying")
+        lay.separator()
+        lay.menu("TIME_MT_view", text="View")
+        lay.menu("TIME_MT_marker", text="Marker")
+
+
+class MAYAKIT_PT_time_slider(bpy.types.Panel):
+    """Current time field and transport buttons at the right of Maya's Time Slider (timeSlider.mel:217-281)."""
+    bl_space_type = 'DOPESHEET_EDITOR'
+    bl_region_type = 'UI'
+    bl_label = "Time Slider"
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        space = context.space_data
+        return space is not None and space.mode == 'TIMELINE'
+
+    def draw(self, context):
+        draw_transport(self.layout.row(align=False), context)
+
+
+def _no_editor_menus(cls, context, layout):
+    """TIME_MT_editor_menus.draw_collapsible while the kit is on: the menus live in
+    MAYAKIT_MT_anim_preferences (Maya has no menus in the Range Slider)."""
 
 
 # --- timeline view = playback range -------------------------------------------------------
@@ -119,7 +203,13 @@ def _on_load(_dummy=None):
         _schedule()
 
 
+classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider)
+
+
 def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    space_time.TIME_MT_editor_menus.draw_collapsible = classmethod(_no_editor_menus)
     _ORIGINAL["draw_header"] = space_time.TIME_HT_editor_buttons.draw_header
     space_time.TIME_HT_editor_buttons.draw_header = staticmethod(draw_header)
     _subscribe()
@@ -134,3 +224,7 @@ def unregister():
         bpy.app.timers.unregister(_deferred_fit)
     if "draw_header" in _ORIGINAL:
         space_time.TIME_HT_editor_buttons.draw_header = staticmethod(_ORIGINAL.pop("draw_header"))
+    if "draw_collapsible" in space_time.TIME_MT_editor_menus.__dict__:
+        del space_time.TIME_MT_editor_menus.draw_collapsible
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

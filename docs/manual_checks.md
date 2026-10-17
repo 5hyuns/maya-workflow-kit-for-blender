@@ -318,3 +318,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 49) 사이드바: Channel Box 탭으로 열리고 Tool / View 탭이 없음. 오브젝트를 고르면 Blender 의 Item 탭 (C 패널, 숨길 수 없음) 이 생김 — 거슬리는지. 환경설정 「Channel Box Dock Only」 를 끄면 Item / Tool / View / Outliner 탭이 돌아오는지.
 - [ ] (step 49) Status Line 의 Attribute Editor 버튼 = 도크 AE 전환, Render Settings = Properties 새 창 (Render 탭).
 - [ ] (step 49) 하단 줄: 왼쪽 Help Line (툴 도움말, 없으면 Blender 마우스 힌트·보고·진행), 오른쪽 Command Line. 오류 보고가 Help Line 칸에 보이는지.
+
+### Step 50 — 에디터 크롬
+
+- [ ] (step 50) Channel Box 메뉴 줄 Channels / Edit / Object / Show 가 열리고 항목이 동작하는지 (Edit > Settings ▸ 속도, Object 에서 리드 바꾸기, Show > All). 선택 없음 = Maya 문구.
+- [ ] (step 50) Layer Editor: Display / Anim 탭, Layers 메뉴로 레이어 만들기·추가·삭제, 아이콘 버튼이 오른쪽. Anim 탭 안내가 헷갈리지 않는지.
+- [ ] (step 50) Outliner 머리 Display / Show / Help: Show 의 종류 필터, Display > Shapes 를 켜면 Blender Outliner 머리로 돌아오는 것 (delegated) 이 괜찮은지. 눈 열이 없는 것 (H 로 숨김) 이 불편하지 않은지.
+- [ ] (step 50) Time Slider 오른쪽 현재 프레임 칸 + 재생 버튼 8 개, Range Slider 줄 순서가 Maya 와 같게 읽히는지; 범위 막대를 누르면 타임라인이 재생 범위에 맞춰지는지; 오른쪽 끝 톱니 = Playback / Keying / View / Marker.

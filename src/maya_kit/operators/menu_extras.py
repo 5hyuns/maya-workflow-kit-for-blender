@@ -31,10 +31,9 @@ EDITOR_TYPES = (
 
 
 def _maya_outliner(space):
-    # Same filters as the MayaKit layout's Outliner (Maya DAG, docs/steps/step_31.md).
-    space.display_mode = 'VIEW_LAYER'
-    space.use_filter_object_content = False
-    space.use_filter_collection = False
+    # Same filters as the MayaKit layout's Outliner (Maya DAG, docs/steps/step_31.md, step_50.md).
+    from ..ui import maya_outliner
+    maya_outliner.setup(space)
 
 
 class MAYAKIT_OT_open_editor(bpy.types.Operator):

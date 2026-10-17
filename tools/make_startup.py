@@ -25,7 +25,10 @@ OUTLINER_PX = 260
 # Sidebar = Maya's dock column: Channel Box / Layer Editor 260 + the vertical dock tab strip right of it
 # (Maya: dock [1323, 260] then tabs to 1598). Blender draws its tab strip inside the sidebar.
 DOCK_PX = 260 + 17
-DOCK_CATEGORY = "Channel Box"   # = ui/channel_box.py CATEGORY
+DOCK_CATEGORY = "Channel Box"
+# Maya Time Slider right end: current time field (90) + 8 transport buttons (22 each) and padding
+# (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
+TIME_CONTROLS_PX = 300   # = ui/channel_box.py CATEGORY
 TIME_SLIDER_PX = 36
 WINDOW_SIZE = (1600, 900)
 EDGE = 3                  # px the area edges take from a split (measured)
@@ -166,20 +169,10 @@ class Builder:
         self.areas = {"strip": strip, "shelf": shelf, "timeline": timeline, "toolbox": toolbox, "outliner": outliner, "view3d": view}
         self.configure()
         yield
-        # 5. Sidebar = Channel Box dock, 260 px: drag its left edge (region size has no API).
-        ui = _region(view, 'UI')
-        x0, y = ui.x, ui.y + ui.height // 2
-        target = view.x + view.width - DOCK_PX
-        self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1, y=y)
-        yield
-        self.win.event_simulate(type='LEFTMOUSE', value='PRESS', x=x0 + 1, y=y)
-        yield
-        for i in range(1, 6):
-            self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1 + (target - x0) * i // 5, y=y)
-            yield
-        self.win.event_simulate(type='LEFTMOUSE', value='RELEASE', x=target + 1, y=y)
-        yield
-        yield
+        # 5. Sidebar = Channel Box dock, 277 px; the timeline's sidebar = the Time Slider's current frame field
+        #    and transport buttons (step 50): drag their left edges (region size has no API).
+        yield from self.drag_region_edge(view, DOCK_PX)
+        yield from self.drag_region_edge(timeline, TIME_CONTROLS_PX)
         # 6. The sidebar opens on the Channel Box tab: the region saves its active category, but there is
         #    no API to set it and the kit is not installed here, so a stand-in panel gives the category and
         #    Ctrl+wheel over the tab strip selects it. Blender's Item tab (C panels, step 49) stays possible.
@@ -190,6 +183,22 @@ class Builder:
             with bpy.context.temp_override(window=self.win):
                 bpy.ops.screen.screenshot(filepath=shot)
         self.save()
+
+    def drag_region_edge(self, area, width):
+        ui = _region(area, 'UI')
+        x0, y = ui.x, ui.y + ui.height // 2
+        target = area.x + area.width - width
+        self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1, y=y)
+        yield
+        self.win.event_simulate(type='LEFTMOUSE', value='PRESS', x=x0 + 1, y=y)
+        yield
+        for i in range(1, 6):
+            self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x0 + 1 + (target - x0) * i // 5, y=y)
+            yield
+        self.win.event_simulate(type='LEFTMOUSE', value='RELEASE', x=target + 1, y=y)
+        yield
+        yield
+        log("sidebar", area.ui_type, _region(area, 'UI').width)
 
     def select_dock_tab(self, view):
         bpy = self.bpy
@@ -227,10 +236,11 @@ class Builder:
         # Layer Editor's) and no per-row render toggle (step 31, delegated).
         so.use_filter_collection = False
         so.show_restrict_column_render = False
+        so.show_restrict_column_hide = False   # no eye column: Maya hides with H (= ui/maya_outliner.setup, step 50)
 
-        st = a["timeline"].spaces.active       # Time Slider: no channel list, no sidebar
+        st = a["timeline"].spaces.active       # Time Slider: no channel list; sidebar = its buttons (step 50)
         st.show_region_channels = False
-        st.show_region_ui = False
+        st.show_region_ui = True
 
         for key, name in (("strip", STRIP_MARKER), ("shelf", SHELF_MARKER)):   # = ui/shelf.py markers
             sp = a[key].spaces.active

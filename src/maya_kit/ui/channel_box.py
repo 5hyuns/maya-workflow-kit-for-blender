@@ -25,7 +25,7 @@ from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProp
                        StringProperty)
 
 from ..operators import display
-from . import cb_entry
+from . import cb_entry, chrome
 
 CATEGORY = "Channel Box"
 
@@ -717,6 +717,92 @@ class MAYAKIT_MT_cb_settings(bpy.types.Menu):
         lay.prop(prefs, "cb_hyperbolic")
 
 
+class MAYAKIT_MT_cb_edit(bpy.types.Menu):
+    """Maya Channel Box Edit menu (generateCBEditMenu.mel:72-174, research/maya/channel_box.md:124-133)"""
+    bl_label = "Edit"
+
+    def draw(self, context):
+        lay = self.layout
+        chrome.grey(lay, "Expressions...")
+        chrome.grey(lay, "Set Driven Key...")
+        lay.operator("maya_kit.open_editor", text="Graph Editor").ui_type = 'FCURVES'
+        chrome.grey(lay, "Channel Control...")
+        chrome.grey(lay, "Connection Editor")
+        lay.operator("maya_kit.dock_show", text="Attribute Editor").dock = 'ATTRIBUTE_EDITOR'
+        lay.operator("maya_kit.material_attributes", text="Material Attributes...")
+        lay.separator()
+        for label in ("Add Attribute...", "Edit Attribute...", "Duplicate Attribute", "Delete Attributes"):
+            chrome.grey(lay, label)
+        lay.separator()
+        lay.operator(MAYAKIT_OT_cb_make_lead.bl_idname, text="Select Node").only = True
+        lay.operator("object.delete", text="Delete Node").use_global = False
+        lay.operator("maya_kit.delete_history", text="Delete History")
+        lay.separator()
+        lay.menu("MAYAKIT_MT_cb_settings", text="Settings")
+        chrome.grey(lay, "Channel Names")
+
+
+class MAYAKIT_OT_cb_make_lead(bpy.types.Operator):
+    """Make this object the lead (Maya Channel Box Object menu: select -add)"""
+    bl_idname = "maya_kit.cb_make_lead"
+    bl_label = "Lead Object"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    name: StringProperty(options={'SKIP_SAVE'})
+    only: BoolProperty(name="Only", description="Select only this object", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        ob = context.scene.objects.get(self.name) if self.name else context.active_object
+        if ob is None:
+            return {'CANCELLED'}
+        if self.only:
+            for other in context.selected_objects:
+                other.select_set(False)
+        ob.select_set(True)
+        context.view_layer.objects.active = ob
+        return {'FINISHED'}
+
+
+class MAYAKIT_MT_cb_object(bpy.types.Menu):
+    """Maya Channel Box Object menu: the selected objects, picking one makes it the lead
+    (research/maya/channel_box.md:29)"""
+    bl_label = "Object"
+
+    def draw(self, context):
+        lay = self.layout
+        obs = targets(context)
+        if not obs:
+            chrome.grey(lay, "Nothing selected")
+        for ob in obs[:10]:
+            lay.operator(MAYAKIT_OT_cb_make_lead.bl_idname, text=ob.name,
+                         icon='LAYER_ACTIVE' if ob == context.active_object else 'BLANK1').name = ob.name
+
+
+class MAYAKIT_MT_cb_show(bpy.types.Menu):
+    """Maya Channel Box Show menu (generateChannelShowMenu, research/maya/channel_box.md:30)"""
+    bl_label = "Show"
+
+    def draw(self, context):
+        lay = self.layout
+        lay.operator("maya_kit.cb_show_all", text="All")
+        lay.separator()
+        for label in ("Assets", "Attribute Type Filters"):
+            chrome.grey(lay, label)
+
+
+# Maya Channel Box menu bar, left to right (initChannelsLayers.mel:456-474, channel_box.md:27-30).
+MENU_BAR = (("Channels", "MAYAKIT_MT_cb_channels"), ("Edit", "MAYAKIT_MT_cb_edit"),
+            ("Object", "MAYAKIT_MT_cb_object"), ("Show", "MAYAKIT_MT_cb_show"))
+# Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).
+EMPTY_TEXT = ("Select objects in the scene to view,", "edit and set keyframes on channels", "(attributes)")
+
+
+def draw_empty(layout):
+    layout.separator(factor=6)
+    chrome.wrapped(layout, EMPTY_TEXT)   # empty state, channel_box.md:22-24
+    layout.separator(factor=6)
+
+
 # --- panel ---------------------------------------------------------------------------------------------
 
 _STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DRIVEN': 'DECORATE_DRIVER'}
@@ -864,27 +950,26 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
     bl_category = CATEGORY
     bl_label = "Channel Box"
     bl_order = 0
+    bl_options = {'HIDE_HEADER'}   # Maya: a menu bar, no collapsible panel title (step 50)
 
     @classmethod
     def poll(cls, context):
         # Hidden while the dock shows the Attribute Editor (docs/steps/step_11.md 「계획」 1).
         return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX') == 'CHANNEL_BOX'
 
-    def draw_header_preset(self, context):
-        row = self.layout.row(align=True)
-        row.menu("MAYAKIT_MT_cb_channels", text="Channels")
-        row.menu("MAYAKIT_MT_cb_settings", text="", icon='PREFERENCES')
-
     def draw(self, context):
         layout = self.layout
+        from .attribute_editor import draw_dock_switch
+        draw_dock_switch(layout, context)
+        chrome.menu_bar(layout, MENU_BAR)
         ob = lead(context)
         if ob is None:
-            layout.label(text="make a selection")  # empty state, channel_box.md:22-24
+            draw_empty(layout)
             return
         cb = context.scene.maya_kit_cb
         sel = set(selected_channels(context))
         head = layout.row(align=True)
-        head.prop(ob, "name", text="")
+        head.prop(ob, "name", text="", emboss=False)   # Maya: the lead's name as plain text
         n = len(context.selected_objects)
         if n > 1:
             head.label(text=f"+{n - 1}")
@@ -912,11 +997,14 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 else:
                     draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
 
+        # SHAPES / INPUTS: a section title and indented node names, no boxes (11b_channel_box_crop).
         data = ob.data
         if data is not None:
-            box = layout.box()
+            box = layout.column(align=True)
             box.label(text="SHAPES")
-            box.prop(data, "name", text="", icon='OBJECT_DATA')
+            name = box.row()
+            name.separator(factor=1.5)
+            name.prop(data, "name", text="", emboss=False)
             for prop in SHAPE_PROPS.get(ob.type, ()):
                 if hasattr(data, prop):
                     _draw_text_row(box, context, ob, data, prop, "SHAPE")
@@ -924,13 +1012,13 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
         inputs = [mod for mod in ob.modifiers if not display.is_preview(mod)]
         if inputs:
-            box = layout.box()
+            box = layout.column(align=True)
             box.label(text="INPUTS")
             for mod in inputs:
                 row = box.row(align=True)
                 row.prop(mod, "show_expanded", text="", emboss=False,
                          icon='DISCLOSURE_TRI_DOWN' if mod.show_expanded else 'DISCLOSURE_TRI_RIGHT')
-                row.prop(mod, "name", text="")
+                row.prop(mod, "name", text="", emboss=False)
                 row.prop(mod, "show_viewport", text="")
                 if mod.show_expanded:
                     sub = box.column(align=True)
@@ -941,7 +1029,8 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
 
 classes = (MAYAKIT_PG_cb_row, MAYAKIT_PG_channel_box, MAYAKIT_OT_cb_virtual_slider, MAYAKIT_OT_cb_select_channel,
            MAYAKIT_OT_cb_deselect_channels, *CHANNEL_OPS, MAYAKIT_OT_cb_show_all,
-           MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_PT_channel_box)
+           MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_OT_cb_make_lead, MAYAKIT_MT_cb_edit,
+           MAYAKIT_MT_cb_object, MAYAKIT_MT_cb_show, MAYAKIT_PT_channel_box)
 
 
 def register():

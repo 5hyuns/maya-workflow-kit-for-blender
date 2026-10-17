@@ -288,7 +288,7 @@ Order (dependencies in brackets):
 4. Widget feel — flat widgets, density (`ui_scale` preset), Segoe UI on Windows (system font, not shipped).
 5. Maya grid (own GPU grid, X-snap parity) [after 3]. 6. ViewCube / axis triad / camera labels, Blender overlays hidden.
 7. Selected-object wireframe [after 3]. 8. Layout parity (dock columns, mode-independent toolbox, sidebar tabs, bottom rows) — done step 49.
-9. Editor chrome: Channel Box / Layer Editor, Outliner, Time Slider. 10. Menus (option boxes, open under the menu bar),
+9. Editor chrome: Channel Box / Layer Editor, Outliner, Time Slider — done step 50. 10. Menus (option boxes, open under the menu bar),
    shelf / Status Line icons (kit-made). 11. Hotbox / RMB fidelity (②: seen only when invoked).
 12. Rivals (③): Blender 5.x compatibility check (target stays 4.5, decision 4) + safe-install assertions.
 

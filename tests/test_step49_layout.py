@@ -154,7 +154,7 @@ def test_template_is_maya_general():
     regions = {r.type: r for r in by["TIMELINE"].regions}
     assert regions['HEADER'].y < regions['WINDOW'].y
     st = by["TIMELINE"].spaces.active
-    assert not st.show_region_channels and not st.show_region_ui
+    assert not st.show_region_channels and st.show_region_ui   # sidebar = Time Slider buttons (step 50)
     assert not any(a.type == 'PROPERTIES' for a in areas)
 
 
