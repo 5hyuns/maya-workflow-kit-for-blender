@@ -2,13 +2,18 @@
 
 ## 현재 작업
 
+- Step 56 (Time Slider·키 감각) 완료 — `docs/steps/step_56.md`. 타임라인 LMB = 시간 (Shift = 빨간 범위, MMB = 시간 + 안내), RMB = Maya Time
+  Slider 메뉴 (Cut/Copy/Paste/Delete/Snap/Keys/Tangents/Playback Speed/Looping/Set Range to/Playblast), K + 드래그 = 어디서나 시간 (Mesh
+  knife K 제거), S = 키 가능한 채널 전부 (`maya_kit.set_key`), Set Breakdown Key, Key > Delete Keys = 모든 키 (`keyframe_clear_v3d`),
+  Cut/Copy/Paste Keys, CB 버튼 RMB 메뉴 맨 위 Key Selected 류. 헤드리스 442/442, GUI 365/365 (0.8) · 364/364 (1.25), dogfood 47/47.
+  **바로 다음 할 일**: step 57 「Joint Tool·Orient/Mirror Joint·포즈 픽워크」 (근거 `research/maya/workflows/rigging.md` 후보 A).
+  그다음 58 IK·스킨 … 67 (67 의 Graph Editor 탄젠트는 `operators/time_keys.TANGENTS` 재사용).
+
 - Step 55 (포즈 본 = Maya 조인트: CB·Outliner·AE·제약 가중치) 완료 — `docs/steps/step_55.md`. 포즈 모드에서 CB lead/targets = 활성/선택
   본 (경로 `pose.bones["n"].…`, 키·브레이크다운·뮤트·잠금·숨김·Key Selected·`+=` 입력·MMB 슬라이더가 본에), 쿼터니언 본 「Rotate Order
   XYZ」, 편집 모드 「Placing joints」, Ctrl+Tab 포즈 모드; INPUTS 제약 노드 `joint2_pointConstraint1` + `locator1W0` = influence, 제약
   채널 파랑 (눌린 버튼); kit Outliner JOINT 행 (클릭 = 포즈 모드 + 본); AE joint 탭 + 제약 탭. 헤드리스 430/430, GUI 356/356 (0.8) ·
   355/355 (1.25), dogfood 47/47.
-  **바로 다음 할 일**: step 56 「Time Slider·키 감각」 (근거 `research/maya/workflows/animation.md`, PLAN 표) — CB 키 함수는 이제 본도
-  받으니 (`channel_box.keyframe/fcurve`) Key Selected·S 를 그 위에. 그다음 57 Joint Tool … 67.
 
 - Step 54 (워크플로우 기반: 단위 생성 경로·조명·안내) 완료 — `docs/steps/step_54.md`. Create Joints / Type / Free Image Plane /
   필드 8 개 / 3D Container·Fire·Smoke 가 Maya 단위 (`create.KINDS`, `maya_kit.quick_smoke`), 조명 × maya_unit², 「Blender 에 없음」 안내 체계

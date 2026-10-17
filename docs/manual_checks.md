@@ -363,3 +363,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 55) 조인트에 Copy Location (대상 locator1) 제약: CB INPUTS 에 `joint2_pointConstraint1` 과 `locator1W0`, Translate 칸이 파랑 (눌린 버튼 색) 으로 Maya 의 제약 채널처럼 읽히는지; W0 에 0.5 → 조인트가 반만 따라감. 제약 체크를 끄면 파랑이 사라지는지.
 - [ ] (step 55) 사이드바 Outliner (Dock Only 끔): skeleton1 ▸ 를 펼치면 joint1 ▸ joint2 ▸ joint3 계층, 조인트 행 클릭 = 포즈 모드 + 그 조인트, 오브젝트 행 클릭 = 오브젝트 모드로 돌아가 선택. 레이아웃의 Outliner (Blender 트리) 는 Display > Shapes 를 켜야 본이 보임.
 - [ ] (step 55) AE (Ctrl+A) 에서 조인트: joint 탭 + 제약 노드 탭, Transform Attributes / Joint (Joint Orient 읽기 전용, 축 안내) / Limit Information (Add Limit Rotation 이 조인트에 붙음) / Display (Display as Control Shape). 아마추어 편집 모드에서는 CB·AE 에 「Placing joints」 한 줄.
+
+### Step 56 — Time Slider·키 감각
+
+- [ ] (step 56) MayaKit 레이아웃 Time Slider 아무 곳 LMB 클릭·드래그 = 시간 이동 (키를 집어 옮기지 않음), Dope Sheet 창 본문 LMB 는 여전히 키 선택.
+- [ ] (step 56) Time Slider Shift+LMB 드래그 = 빨간 범위 띠; 그 상태로 RMB > Copy / Delete 가 범위의 키에, 보통 클릭으로 띠가 사라지는지. 범위 띠가 Maya 처럼 읽히는지 (색·투명도).
+- [ ] (step 56) Time Slider RMB 메뉴: Cut/Copy/Paste ▸/Delete/Snap/Keys ▸/Tangents ▸/Playback Speed ▸/Playback Looping ▸/Set Range to ▸/Playblast... 순서, 회색 항목 (Paste Connect, Free, Once/Oscillate) 툴팁 안내. 현재 프레임 Copy → 다른 프레임 Paste.
+- [ ] (step 56) K 누른 채 뷰 (또는 Graph Editor) 에서 LMB 드래그 = 시간 이동, 속도가 너무 빠르거나 느리지 않은지 (영역 폭 = 재생 범위), 놓은 뒤 선택 그대로. 편집 모드 K 가 더 이상 Knife 가 아님 (Multi-Cut = Ctrl+Shift+X).
+- [ ] (step 56) S = 가시성·커스텀 속성까지 키 (Graph Editor 채널 목록), Channel Box 에서 숨긴/Nonkeyable 채널은 안 찍힘. Key > Set Breakdown Key = 초록 (breakdown) 키. Key > Delete Keys = 선택의 모든 키.
+- [ ] (step 56) Channel Box 채널 이름·값 칸 RMB = 메뉴 맨 위에 Key Selected … Make Selected Nonkeyable (아래는 Blender 버튼 메뉴).
+- [ ] (step 56) 타임라인 MMB = 시간 이동 + Help Line 안내 문구 (Maya MMB 시간 드래그는 Blender 에 없음).

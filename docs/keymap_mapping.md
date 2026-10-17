@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 95 |
-| IC 일치 | 9 |
+| 구현 | 97 |
+| IC 일치 | 8 |
 | 해당 없음 | 11 |
-| 미검토 | 285 |
+| 미검토 | 284 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -49,7 +49,7 @@
 | n | N | timeEditorPanel | TimeEditorToggleSoloSelectedTracks | — | 미검토 |  | hotkeySetup.mel:102 |
 | Alt+n | Alt+N | timeEditorPanel | TimeEditorAddToSoloSelectedTracks | — | 미검토 |  | hotkeySetup.mel:103 |
 | b | B | timeEditorPanel | TimeEditorGhostTrackToggle | — | 미검토 |  | hotkeySetup.mel:104 |
-| k | K | timeEditorPanel | TimeEditorToggleTimeCursorPress / TimeEditorToggleTimeCursorRelease (release) | — | 미검토 |  | hotkeySetup.mel:106 |
+| k | K | timeEditorPanel | TimeEditorToggleTimeCursorPress / TimeEditorToggleTimeCursorRelease (release) | Screen: `maya_kit.tap_hold` (binding='time_drag') | 미검토 |  | hotkeySetup.mel:106 |
 | Ctrl+g | Ctrl+G | timeEditorPanel | TimeEditorCreateGroupFromSelection | NLA Editor: `nla.meta_add` | 미검토 |  | hotkeySetup.mel:108 |
 | Ctrl+Shift+G | Ctrl+Shift+G | timeEditorPanel | TimeEditorExplodeGroup | — | 미검토 |  | hotkeySetup.mel:109 |
 | Ctrl+e | Ctrl+E | timeEditorPanel | TimeEditorExportSelection | — | 미검토 |  | hotkeySetup.mel:111 |
@@ -191,13 +191,13 @@
 | F4 | F4 | global | ShowAnimationUI | Screen: `maya_kit.menu_set` (set='animationMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:324 |
 | F5 | F5 | global | ShowDynamicsUI | Screen: `maya_kit.menu_set` (set='dynamicsMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:326 |
 | F6 | F6 | global | ShowRenderingUI | Screen: `maya_kit.menu_set` (set='renderingMenuSet') | 구현 | 메뉴 세트 전환 (IC 3D 뷰 F2–F5 뷰 키 대신; 직교 뷰는 핫박스·Space·Ctrl+F1–F3) | hotkeySetup.mel:327 |
-| s | S | global | SetKey | Object Mode: `anim.keyframe_insert_by_name` (type='LocRotScale') | IC 일치 | Maya 는 키 가능한 모든 채널, IC 는 LocRotScale | hotkeySetup.mel:328 |
+| s | S | global | SetKey | Object Mode: `maya_kit.set_key` | 구현 | 키 가능한 모든 채널 (가시성·커스텀 포함, Hide/Nonkeyable 제외), 포즈 모드 = 선택 본; 활성 Keying Set 이 있으면 그것 (step 56) | hotkeySetup.mel:328 |
 | Alt+e | Alt+E | global | HIKPinRotate | Object Mode: `object.rotation_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:329 |
 | Alt+w | Alt+W | global | HIKPinTranslate | Object Mode: `object.location_clear` (clear_delta=False) | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:330 |
 | Alt+s | Alt+S | global | HIKSetFullBodyKey | Object Mode: `anim.keyframe_delete_v3d` | 해당 없음 | HumanIK 없음 | hotkeySetup.mel:331 |
 | Alt+v | Alt+V | global | PlaybackToggle | Frames: `screen.animation_play` | 구현 |  | hotkeySetup.mel:332 |
 | Alt+Shift+V | Alt+Shift+V | global | GoToMinFrame | Frames: `screen.frame_jump` (end=False) | 구현 |  | hotkeySetup.mel:333 |
-| k | K | global | TimeDraggerToolActivate / TimeDraggerToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.knife', cycle=True) | 미검토 |  | hotkeySetup.mel:334 |
+| k | K | global | TimeDraggerToolActivate / TimeDraggerToolDeactivate (release) | Screen: `maya_kit.tap_hold` (binding='time_drag') | 구현 | K 누른 채 LMB 드래그 = 시간 (어느 에디터든), 선택 그대로; Mesh knife K → Multi-Cut 은 Ctrl+Shift+X (step 56) | hotkeySetup.mel:334 |
 | i | I | global | InsertKeyToolActivate / InsertKeyToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.inset_faces', cycle=True) | 미검토 |  | hotkeySetup.mel:335 |
 | 0 | ZERO | global | DefaultQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=1); Mesh: `maya_kit.smooth_preview` (level=1) | 구현 | 1 과 같음 (거친 표시) — step 27 | hotkeySetup.mel:336 |
 | 1 | ONE | global | LowQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=1); Mesh: `maya_kit.smooth_preview` (level=1) | 구현 | Subsurf 뷰포트 끔 | hotkeySetup.mel:337 |

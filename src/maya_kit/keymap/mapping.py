@@ -99,8 +99,12 @@ ENTRIES = {
     "SelectAllMarkingMenu": _e("KIT", (V3D, "maya_kit.tap_hold", {"binding": "select_all"}),
                                note="탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9)"),
     "RepeatLast": _e("IC", ("Screen", "screen.repeat_last", {})),
-    "SetKey": _e("IC", (OBJ, "anim.keyframe_insert_by_name", {"type": "LocRotScale"}),
-                  note="Maya 는 키 가능한 모든 채널, IC 는 LocRotScale"),
+    "SetKey": _e("KIT", (OBJ, "maya_kit.set_key", {}),
+                  note="키 가능한 모든 채널 (가시성·커스텀 포함, Hide/Nonkeyable 제외), 포즈 모드 = 선택 본; "
+                       "활성 Keying Set 이 있으면 그것 (step 56)"),
+    "TimeDraggerToolActivate": _e("KIT", ("Screen", "maya_kit.tap_hold", {"binding": "time_drag"}),
+                                  note="K 누른 채 LMB 드래그 = 시간 (어느 에디터든), 선택 그대로; Mesh knife K → "
+                                       "Multi-Cut 은 Ctrl+Shift+X (step 56)"),
     "SetKeyTranslate": _e("IC", (OBJ, "anim.keyframe_insert_by_name", {"type": "Location"})),
     "SetKeyRotate": _e("IC", (OBJ, "anim.keyframe_insert_by_name", {"type": "Rotation"})),
     "SetKeyScale": _e("IC", (OBJ, "anim.keyframe_insert_by_name", {"type": "Scaling"})),

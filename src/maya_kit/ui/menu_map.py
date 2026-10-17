@@ -122,7 +122,11 @@ MAP = {
     "Edit/Recent Commands List": "screen.repeat_history",
     "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
     "Edit/Paste": ("v3d", "view3d.pastebuffer", {}),
-    "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
+    # Maya Delete Keys = every key of the selection (step 56; Time Slider RMB Delete = this frame / range)
+    "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
+    "Edit/Keys/Cut Keys": ("maya_kit.time_keys", {"action": "CUT"}),
+    "Edit/Keys/Copy Keys": ("maya_kit.time_keys", {"action": "COPY"}),
+    "Edit/Keys/Paste Keys": ("maya_kit.time_keys", {"action": "PASTE"}),
     "Edit/Keys/Bake Simulation": "nla.bake",
     "Edit/Delete": "object.delete",
     "Edit/Ungroup": "maya_kit.ungroup",                            # step 34
@@ -320,11 +324,20 @@ MAP = {
     "Constrain/Motion Paths/Attach to Motion Path": _con('FOLLOW_PATH'),
     "Constrain/Geometry": _con('SHRINKWRAP'),
     # --- Key (Animation) ---
-    "Key/Set Key": "anim.keyframe_insert",
+    # step 56: S = every keyable channel (docs/steps/step_56.md 「계획」 4)
+    "Key/Set Key": "maya_kit.set_key",
+    "Key/Set Key on Animated": ("anim.keyframe_insert_by_name", {"type": "Available"}),
+    "Key/Set Breakdown Key": ("maya_kit.set_key", {"breakdown": True}),
+    "Key/Insert Key": ("anim.keyframe_insert_by_name", {"type": "Available"}),
+    "Key/Cut Keys": ("maya_kit.time_keys", {"action": "CUT"}),
+    "Key/Copy Keys": ("maya_kit.time_keys", {"action": "COPY"}),
+    "Key/Paste Keys": ("maya_kit.time_keys", {"action": "PASTE"}),
+    "Key/Snap Keys": ("maya_kit.time_keys", {"action": "SNAP"}),
+    "Key/Hold Current Keys": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Set Key on Translate": ("anim.keyframe_insert_by_name", {"type": "Location"}),
     "Key/Set Key on Rotate": ("anim.keyframe_insert_by_name", {"type": "Rotation"}),
     "Key/Set Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
-    "Key/Delete Keys": ("v3d", "anim.keyframe_delete_v3d", {}),
+    "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Key/Bake Simulation": "nla.bake",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "render.opengl", {"animation": True}),
@@ -337,6 +350,11 @@ MAP = {
     "Playback/Prev Frame": ("screen.frame_offset", {"delta": -1}),
     "Playback/Play Range Start": ("screen.frame_jump", {"end": False}),
     "Playback/Play Range End": ("screen.frame_jump", {"end": True}),
+    "Playback/Set Range to/Start/End": ("maya_kit.time_set_range", {"mode": "START_END"}),
+    "Playback/Set Range to/Min/Max": ("maya_kit.time_set_range", {"mode": "MIN_MAX"}),
+    "Playback/Set Range to/Selected": ("maya_kit.time_set_range", {"mode": "SELECTED"}),
+    "Playback/Playback Speed/Real-time": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
+                                                                   "value": "FRAME_DROP"}),
     "Playback/Render Current Frame": "render.render",
     "Playback/Render Settings": "maya_kit.render_settings",
     # --- Visualize ---
