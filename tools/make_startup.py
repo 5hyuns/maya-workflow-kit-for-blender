@@ -150,6 +150,8 @@ def maya_views():
                 # replaces Blender's navigation gizmo and text info.
                 space.show_gizmo_navigate = False
                 space.overlay.show_text = False
+                # Maya highlights a selection with its wireframe (ui/selection_wire.py), no outline (step 47).
+                space.overlay.show_outline_selected = False
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

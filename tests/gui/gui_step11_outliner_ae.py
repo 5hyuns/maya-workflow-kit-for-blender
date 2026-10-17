@@ -67,6 +67,11 @@ def s_setup():
 def s_toggled():
     wm = bpy.context.window_manager
     check("Ctrl+A -> dock shows the Attribute Editor", wm.maya_kit_dock == 'ATTRIBUTE_EDITOR')
+
+
+@step
+def s_sidebar_open():
+    # the sidebar is opened from a timer after the operator (ae_toggle, step 9 trap): one tick later
     check("Ctrl+A opens the sidebar", view3d()[0].spaces.active.show_region_ui)
 
 

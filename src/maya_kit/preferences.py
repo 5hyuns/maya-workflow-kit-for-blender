@@ -155,6 +155,17 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     maya_camera_names: bpy.props.BoolProperty(
         name="Camera Names", description="Maya camera name (persp, top -Z, ...) at the bottom of the view",
         default=True)
+    def _update_selection_wire(self, context):
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'VIEW_3D':
+                    area.tag_redraw()
+
+    # Maya wireframe on selected objects over shading.
+    maya_selection_wire: bpy.props.BoolProperty(
+        name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
+                                                "Maya (lead light green, others white with the Maya theme)",
+        default=True, update=_update_selection_wire)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
     maya_panel_menus: bpy.props.BoolProperty(
@@ -290,6 +301,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_viewcube")
         row.prop(self, "maya_camera_names")
         row.prop(self, "maya_view_axis")
+        row.prop(self, "maya_selection_wire")
 
         from . import app_template
         box = layout.box()
