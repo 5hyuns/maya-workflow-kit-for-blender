@@ -146,3 +146,32 @@ def test_convert_selection_touching():
     bpy.ops.maya_kit.convert_selection(type='FACE')   # 4 verts of one face -> 5 faces touch them
     assert _count(ob)[2] == 5, _count(ob)
     bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_bevel_exec_width_is_in_maya_units():
+    # step 48: exec bevel width = 0.1 Maya units (), not 0.1 BU (10 Maya units in a cm scene)
+    import bmesh
+    units = import_module(kit.MODULE + ".operators.units")
+    us = bpy.context.scene.unit_settings
+    before = (us.system, us.length_unit, us.scale_length)
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
+    try:
+        ob = _cube()
+        ob.scale = (0.005, 0.005, 0.005)             # a 1 cm cube, like the MayaKit pCube1
+        bpy.ops.object.transform_apply(scale=True)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='EDGE')
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bm = bmesh.from_edit_mesh(ob.data)
+        bm.edges.ensure_lookup_table()
+        bm.edges[0].select = True
+        bmesh.update_edit_mesh(ob.data)
+        assert bpy.ops.maya_kit.bevel() == {'FINISHED'}
+        bm = bmesh.from_edit_mesh(ob.data)
+        shortest = min(e.calc_length() for e in bm.edges)
+        assert abs(units.maya_unit() - 0.01) < 1e-9
+        # chamfer edge of a 0.1 cm bevel = 0.1 cm x sqrt(2); 0.1 BU would clamp at the cube's 0.5 cm
+        assert abs(shortest - 0.001 * 2 ** 0.5) < 1e-4, shortest
+    finally:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        us.system, us.length_unit, us.scale_length = before
