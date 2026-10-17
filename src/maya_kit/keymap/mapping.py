@@ -119,11 +119,11 @@ ENTRIES = {
 
     # --- Planned ---
     "SnapToGridPress": _e("KIT", (V3D, "maya_kit.hold", {"name": "grid"}),
-                          note="누르는 동안 GRID 스냅, 놓으면 복원"),
+                          note="누르는 동안 GRID 스냅 (절대 그리드 선, 매니퓰레이터 중심), 놓으면 복원 — step 59"),
     "SnapToCurvePress": _e("KIT", (V3D, "maya_kit.hold", {"name": "curve"}),
                            note="누르는 동안 EDGE 스냅 (커브 전용 없음, 근사)"),
     "SnapToPointPress": _e("KIT", (V3D, "maya_kit.hold", {"name": "point"}),
-                           note="누르는 동안 VERTEX 스냅"),
+                           note="누르는 동안 VERTEX 스냅 (매니퓰레이터 중심이 정점에) — step 59"),
     "MoveRotateScaleToolToggleSnapMode": _e("KIT", (V3D, "maya_kit.hold", {"name": "step"}),
                                             note="누르는 동안 INCREMENT 스냅"),
     "MoveRotateScaleToolToggleSnapRelativeMode": _e("KIT", (V3D, "maya_kit.hold", {"name": "step"}),
@@ -224,9 +224,9 @@ ENTRIES = {
     "PickWalkRight": _e("KIT", (OBJ, "maya_kit.pick_walk", {"direction": "RIGHT"}),
                         note="이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39); 포즈 모드: 형제 조인트"),
     "EnterEditModePress": _e("KIT", (OBJ, "maya_kit.hold", {"name": "pivot"}),
-                             note="오브젝트 모드: 누르는 동안 Affect Only Origins; 편집 모드: 3D 커서 피벗 배치 (step 18)"),
+                             note="오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18)"),
     "EnterEditMode": _e("KIT", (OBJ, "maya_kit.pivot_toggle", {}),
-                        note="Affect Only Origins 토글 (오브젝트 모드)"),
+                        note="피벗 편집 토글 (오브젝트 모드, Translate 불변 — step 59)"),
     # --- step 20: key / frame stepping (docs/steps/step_20.md) ---
     "NextKey": _e("KIT", ("Frames", "screen.keyframe_jump", {"next": True}),
                   note="Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로"),

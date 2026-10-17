@@ -621,11 +621,11 @@ def test_menus_use_concept_operators():
             "Create/Polygon Primitives/Cube": "maya_kit.create"}
     for path, idname in want.items():
         assert menu_map.spec(path)[1] == idname, (path, menu_map.spec(path))
-    # Center Pivot sits in a "Pivot" section after Snap Together Tool (EXTRA).
+    # Center Pivot sits in a "Pivot" section after Match Transformations (EXTRA, Maya order, step 59).
     modify = next(m for m in menu_sets.menu_data.MENUS.values() if m[0] == "Modify")
     entries = list(menu_sets.children(modify[3], "Modify"))
     i = [p for p, _it in entries].index("Modify/Center Pivot")
-    assert entries[i - 1][1] == ("-", "Pivot") and entries[i - 2][0] == "Modify/Snap Together Tool"
+    assert entries[i - 1][1] == ("-", "Pivot") and entries[i - 2][0] == "Modify/Match Transformations"
 
 
 def test_select_all_marking_menu():

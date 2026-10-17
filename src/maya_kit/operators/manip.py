@@ -20,7 +20,8 @@ from . import duplicate
 
 # Gizmo groups of the transform manipulator (tool gizmo and the viewport's object gizmos);
 # light/camera/spot gizmos share the keymap but are left alone (measured, step_26.md).
-XFORM_GROUPS = {"VIEW3D_GGT_xform_gizmo", "VIEW3D_GGT_xform_gizmo_context"}
+XFORM_GROUPS = {"VIEW3D_GGT_xform_gizmo", "VIEW3D_GGT_xform_gizmo_context",
+                "MAYAKIT_GGT_xform"}   # ui/manipulator.py, the Maya-shaped manipulator (step 59)
 POLL = 0.05
 EPS = 1e-6
 

@@ -389,3 +389,15 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 58) 조인트 (skeleton1) 클릭 → Shift+메시 클릭 → Skin > Bind Skin: 메시가 Outliner 에서 skeleton1 아래로 들어가지 않음, 조인트를 돌리면 메시가 따라 굽음. 길게 누르기 (Option Box) 로 Max Influences / Selected Joints 를 바꿔 다시 실행.
 - [ ] (step 58) Skin > Paint Skin Weights: 도크 맨 위 Paint Skin Weights Tool (Influences 목록·Replace/Add/Scale/Smooth·Value·Opacity·Flood), 목록 클릭 = 칠할 조인트, Ctrl+LMB 로 뷰의 조인트 고르기, 다시 메뉴 = 도구 끄기. 색은 Blender 웨이트 색 (파랑→빨강, Maya 흑백 아님).
 - [ ] (step 58) Mirror Skin Weights (Mirror Joints 로 만든 반대편 조인트가 있을 때) → 반대편 가중치가 대칭으로; Copy Skin Weights (원본 → 대상), Copy / Paste Vertex Weights (편집 모드).
+
+### Step 59 — 피벗 · 스냅 · 매니퓰레이터 모양
+
+- [ ] (step 59) Move 툴 매니퓰레이터가 Maya 처럼 읽히는지: 얇은 축 + 원뿔, 가운데 빈 사각, 평면 핸들 (XY 파랑·YZ 빨강·XZ 초록), 크기 (Maya 와 같은 화면 크기, 줌인/아웃 해도 그대로), 축·평면 핸들을 잡기 쉬운지 (선이 얇아도 잡힘).
+- [ ] (step 59) 축을 한 번 끈 뒤 그 축이 노랗게 남는지 (활성 핸들), MMB 아무 데나 드래그 = 그 축; 가운데 사각 드래그 = 화면 평면 자유 이동.
+- [ ] (step 59) Scale 툴: 끝 큐브 + 노란 가운데 큐브 (균일 스케일) + 평면 핸들. Rotate 툴은 Blender 링 (Maya 배치·색) — 차이가 거슬리는지.
+- [ ] (step 59) D 누른 채 매니퓰레이터 끌기 = 피벗만 이동 (Channel Box Translate 그대로, 형상·자식 그대로), 작은 링 = 피벗 방향 (Move 축이 「Maya Pivot」 방향으로), 놓은 뒤 E 회전이 새 피벗 둘레로. Insert 토글도 같은지. Ctrl+Z 한 번 = 피벗 이동 전.
+- [ ] (step 59) D + X / V: 피벗이 그리드 선 / 정점에. Modify > Bake Pivot (방향 → Rotate 채널, 형상 그대로), Tool Settings 의 Reset (피벗 = 오브젝트 원점), Match Transformations > Match Pivots.
+- [ ] (step 59) X 누른 채 드래그 (시작 0.3 cm) → 정수 cm 만, V 누른 채 가운데 핸들 → 다른 오브젝트 정점에 피벗이 붙음, Status Line 의 스냅 버튼이 키를 누른 동안 눌림.
+- [ ] (step 59) 여러 오브젝트 선택: 매니퓰레이터가 마지막 선택 (lead) 피벗에, 컴포넌트 선택: 선택의 바운딩 박스 중심에 (편집 모드로 들어가면 Pivot 이 Bounding Box Center 로 바뀜).
+- [ ] (step 59) Status Line / W 메뉴 「Move Options」 Tool Settings: Move Settings (Axis Orientation, Pivot, Step Snap Off/Relative/Absolute, Retain Component Spacing, Edit Pivot/Reset/Bake). W 메뉴 World/Object/Component 가 Move 축만, E 메뉴가 Rotate 축만 바꾸는지; E 메뉴 Discrete Rotate = 15° 스텝.
+- [ ] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 면 스냅이 켜지고 Status Line 칸에 이름, 빈 선택으로 다시 = 해제.

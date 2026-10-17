@@ -116,7 +116,7 @@
 | Cmd+x | Oskey+X | timeEditorPanel | TimeEditorCutClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:212 |
 | Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
 | Ctrl+y | Ctrl+Y | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:223 |
-| Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | Affect Only Origins 토글 (오브젝트 모드) | hotkeySetup.mel:225 |
+| Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | 피벗 편집 토글 (오브젝트 모드, Translate 불변 — step 59) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
 | Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `maya_kit.ae_toggle`; Mesh: `mesh.select_all` (action='SELECT') | 구현 | 사이드바 Channel Box 탭 안에서 CB/LE ↔ AE 전환 | hotkeySetup.mel:230 |
@@ -153,8 +153,8 @@
 | Shift+< | Shift+COMMA | global | ShrinkPolygonSelectionRegion | Mesh: `mesh.select_less` | 구현 |  | hotkeySetup.mel:268 |
 | Ctrl+Shift+< | Ctrl+Shift+COMMA | global | ShrinkLoopPolygonSelectionRegion | Mesh: `mesh.select_prev_item` | 구현 | 선택 순서 따라 한 칸 되돌림 (근사) | hotkeySetup.mel:269 |
 | h | H | global | ToggleVisibilityAndKeepSelection | Object Mode: `maya_kit.visibility` (action='TOGGLE') | 구현 | 숨긴 객체를 '선택 유지' 표시로 기억, 다시 h = 보이고 선택 (오브젝트 모드) | hotkeySetup.mel:271 |
-| x | X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:272 |
-| Shift+X | Shift+X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅, 놓으면 복원 | hotkeySetup.mel:273 |
+| x | X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅 (절대 그리드 선, 매니퓰레이터 중심), 놓으면 복원 — step 59 | hotkeySetup.mel:272 |
+| Shift+X | Shift+X | global | SnapToGridPress / SnapToGridRelease (release) | 3D View: `maya_kit.hold` (name='grid') | 구현 | 누르는 동안 GRID 스냅 (절대 그리드 선, 매니퓰레이터 중심), 놓으면 복원 — step 59 | hotkeySetup.mel:273 |
 | Ctrl+h | Ctrl+H | global | HideSelectedObjects | Object Mode: `maya_kit.visibility` (action='HIDE'); Mesh: `mesh.hide` (unselected=False) | 구현 | 컴포넌트: Mesh mesh.hide (IC) | hotkeySetup.mel:274 |
 | Shift+H | Shift+H | global | ShowSelectedObjects | Object Mode: `maya_kit.visibility` (action='SHOW_SELECTED'); Mesh: `mesh.reveal` | 구현 | h 로 숨긴 선택 + 숨겨진 활성 객체; 컴포넌트: mesh.reveal | hotkeySetup.mel:275 |
 | Ctrl+Shift+H | Ctrl+Shift+H | global | ShowLastHidden | Object Mode: `maya_kit.visibility` (action='SHOW_LAST'); Mesh: `mesh.reveal` | 구현 | 킷 숨김 동작(h/Ctrl+H/Alt+H)의 마지막 대상; 컴포넌트: mesh.reveal | hotkeySetup.mel:276 |
@@ -162,8 +162,8 @@
 | Ctrl+Alt+h | Ctrl+Alt+H | global | ShowAllPolyComponents | Mesh: `mesh.reveal` | 구현 |  | hotkeySetup.mel:278 |
 | c | C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:279 |
 | Shift+C | Shift+C | global | SnapToCurvePress / SnapToCurveRelease (release) | 3D View: `maya_kit.hold` (name='curve') | 구현 | 누르는 동안 EDGE 스냅 (커브 전용 없음, 근사) | hotkeySetup.mel:280 |
-| v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:281 |
-| Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 | hotkeySetup.mel:282 |
+| v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 (매니퓰레이터 중심이 정점에) — step 59 | hotkeySetup.mel:281 |
+| Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 (매니퓰레이터 중심이 정점에) — step 59 | hotkeySetup.mel:282 |
 | q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_select'); Mesh: `maya_kit.tap_hold` (binding='tool_select') | 구현 | 누름=툴 전환, 누른 채 LMB=Select 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:285 |
 | Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:286 |
 | Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:287 |
@@ -215,7 +215,7 @@
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | Screen: `file.execute` | 해당 없음 | Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거 | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
-| d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 Affect Only Origins; 편집 모드: 3D 커서 피벗 배치 (step 18) | hotkeySetup.mel:355 |
+| d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18) | hotkeySetup.mel:355 |
 | Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
 | Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
 | , | COMMA | global | PreviousKey | Frames: `screen.keyframe_jump` (next=False) | 구현 | 3D View 방향 파이는 헤더로 | hotkeySetup.mel:358 |

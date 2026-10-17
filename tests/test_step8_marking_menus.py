@@ -169,8 +169,9 @@ def test_pie_classes_and_slot_order():
     getattr(bpy.types, marking.idname("rotateMarkingMenuImpl")).draw(fake, bpy.context)
     seps = [e for e in fake.layout.log if e[0] == "sep"]
     assert seps, "N is empty in Maya's rotate options: a separator keeps the slot"
-    grey = [e for e in fake.layout.log if e[0] == "op" and e[1] == "maya_kit.menu_unavailable"]
-    assert any(g[2] == "Discrete Rotate" for g in grey)
+    # step 59: Discrete Rotate (greyed before) is the rotate step snap now
+    ops = [e for e in fake.layout.log if e[0] == "op"]
+    assert any(e[1] == "maya_kit.step_snap" and e[2] == "Discrete Rotate" for e in ops), ops
 
 
 def test_dispatch_by_context():

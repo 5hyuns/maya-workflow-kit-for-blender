@@ -203,6 +203,19 @@ MAP = {
     "Modify/Reset Transformations": "maya_kit.reset_transform",
     "Modify/Freeze Transformations": "maya_kit.freeze_transform",
     "Modify/Center Pivot": "maya_kit.center_pivot",
+    # step 59: pivot / align (research/maya/workflows/pivot_snap.md P7, P8, S8-S13)
+    "Modify/Bake Pivot": "maya_kit.bake_pivot",
+    "Modify/Match Transformations/Match All Transforms": ("maya_kit.match_transform", {"kind": 'ALL'}),
+    "Modify/Match Transformations/Match Translation": ("maya_kit.match_transform", {"kind": 'TRANSLATE'}),
+    "Modify/Match Transformations/Match Rotation": ("maya_kit.match_transform", {"kind": 'ROTATE'}),
+    "Modify/Match Transformations/Match Scaling": ("maya_kit.match_transform", {"kind": 'SCALE'}),
+    "Modify/Match Transformations/Match Pivots": "maya_kit.match_pivots",
+    "Modify/Snap Align Objects/Point to Point": ("maya_kit.snap_points", {"count": 1}),
+    "Modify/Snap Align Objects/2 Points to 2 Points": ("maya_kit.snap_points", {"count": 2}),
+    "Modify/Snap Align Objects/3 Points to 3 Points": ("maya_kit.snap_points", {"count": 3}),
+    "Modify/Snap Align Objects/Align Objects": "maya_kit.align_objects",
+    "Modify/Snap Together Tool": "maya_kit.snap_together",
+    "Modify/Make Live": "maya_kit.make_live",
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
     "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
@@ -401,15 +414,23 @@ MAP = {
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with
 # items like menu_data's ((label,) or ("-", section label)). Modify's Pivot section
-# (Center Pivot) is built by ModObjectsMenu.mel at run time and missing from
-# research/maya/menus.json (docs/steps/step_10.md 「계획」 9).
+# (Center Pivot, Bake Pivot) is built by ModObjectsMenu.mel at run time and missing from
+# research/maya/menus.json (docs/steps/step_10.md 「계획」 9); it sits after Match
+# Transformations, before the Align section ($M\startup\ModObjectsMenu.mel:356-376, step 59).
 EXTRA = {
-    "Modify/Snap Together Tool": [("-", "Pivot"), ("Center Pivot",)],
+    "Modify/Match Transformations": [("-", "Pivot"), ("Center Pivot",), ("Bake Pivot",)],
 }
 
 # Submenus Maya builds at run time, so research/maya/menus.json has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
 CHILDREN = {
+    # Modify > Match Transformations / Snap Align Objects ($M\startup\ModObjectsMenu.mel:290-480, step 59)
+    "Modify/Match Transformations": [
+        ("Match All Transforms",), ("Match Translation",), ("Match Rotation",), ("Match Scaling",),
+        ("-", ""), ("Match Pivots",)],
+    "Modify/Snap Align Objects": [
+        ("Point to Point",), ("2 Points to 2 Points",), ("3 Points to 3 Points",), ("Align Objects",),
+        ("Position Along Curve",)],
     "Windows/General Editors": [
         ("Attribute Editor",), ("Channel Box / Layer Editor",), ("Channel Box",), ("Layer Editor",),
         ("Tool Settings",), ("-", ""), ("Hypergraph: Hierarchy",), ("Hypergraph: Connections",),

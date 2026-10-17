@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 59 (피벗 개념·스냅 전부·Maya 모양 매니퓰레이터, 사용자 요청 2026-10-18) 완료 — `docs/steps/step_59.md`, Maya 실측
+  `research/maya/workflows/pivot_snap.md`. D / Insert = 피벗만 (Translate·형상·자식 불변, 피벗 회전 = 「Maya Pivot」 방향), Reset / Bake /
+  Match Pivots, 오브젝트 = lead 피벗·컴포넌트 = bbox 중심, X/C/V/J = 매니퓰레이터 중심 스냅 (X 절대 그리드), Step Snap, Snap Align Objects,
+  Snap Together Tool, Make Live (+ Status Line 칸), Move/Scale = Maya 모양 Python 기즈모 (Rotate 는 C 링 유지), Tool Settings 「Move Settings」,
+  W/E/R 메뉴 = 툴별 축 슬롯. 헤드리스 478/478, GUI 399/399 (0.8; 1.25 는 step 37/51/9 기존 실패 — step 59 와 무관, 문서 참고), dogfood 47/47.
+  **바로 다음 할 일**: step 60 「켜고 끄는 스위치·완전 되돌리기」 (사용자 요청 2026-10-18: 언제든지 Maya 모드로 / 원래로; 기존
+  `maya_kit.make_maya` / `revert_maya` (`src/maya_kit/first_start.py`) 확인부터. step 59 가 바꾼 것 — 툴 위젯 교체, 템플릿 툴 기본값,
+  pivot 감시자 — 도 되돌리기 대상). 그다음 61 배포 방식 조사 (공개는 안 함), 62 Set Driven Key·포즈 모드 제약·Add Attribute·Blend Shape
+  (근거 `research/maya/workflows/rigging.md` 후보 D), 63 MTK 도크 … 70 Graph Editor (PLAN 표 번호를 3 씩 뒤로 미룸).
+
 - Step 58 (IK Handle·Bind Skin·Paint Skin Weights·가중치 복사/미러) 완료 — `docs/steps/step_58.md`. `maya_kit.ik_handle` (시작·끝 조인트
   클릭 또는 두 조인트 선택 → 끝 조인트로 들어오는 본에 IK + chain_count, 목표 `ikHandleN`), Pole Vector (자세 유지 각), Bind Skin (순서 무관,
   메시 부모 안 됨, Max Influences, Selected Joints), Unbind, Paint Skin Weights (웨이트 페인트 + 아마추어 자동 포즈, 도크 맨 위 Influences 목록·

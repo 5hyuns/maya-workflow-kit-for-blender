@@ -342,6 +342,16 @@ def setup_scene():
     scene.use_preview_range = True
     scene.frame_preview_start, scene.frame_preview_end = 1, MAYA_FRAME_END
     scene.render.fps, scene.render.fps_base = 24, 1.0
+    # Maya tool defaults (research/maya/workflows/pivot_snap.md, docs/steps/step_59.md 「계획」 3):
+    # axis mode per tool (Move World, Rotate/Scale Object, P12), the manipulator at the lead
+    # object's pivot (P11; edit mode switches to the bbox centre, operators/pivot.py), rotate
+    # step 15 degrees (S3).
+    ts = scene.tool_settings
+    slots = scene.transform_orientation_slots
+    slots[0].type = 'GLOBAL'
+    slots[1].type, slots[2].type, slots[3].type = 'GLOBAL', 'LOCAL', 'LOCAL'
+    ts.transform_pivot_point = 'ACTIVE_ELEMENT'
+    ts.snap_angle_increment_3d = 0.2617993877991494
     # Maya's new scene is empty (concepts.md §15).
     for ob in list(bpy.data.objects):
         data = ob.data

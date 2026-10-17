@@ -96,7 +96,7 @@ def s_back_release():
 @step
 def s_object_mode():
     check("RMB in component mode, drag NE = Object Mode", bpy.context.mode == 'OBJECT')
-    slot = bpy.context.scene.transform_orientation_slots[0]
+    slot = bpy.context.scene.transform_orientation_slots[1]   # the Move tool's axis (step 59)
     slot.type = 'LOCAL'
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     ev('W', 'PRESS')
@@ -128,7 +128,7 @@ def s_w_key_release():
 
 @step
 def s_w_done():
-    slot = bpy.context.scene.transform_orientation_slots[0]
+    slot = bpy.context.scene.transform_orientation_slots[1]   # the Move tool's axis (step 59)
     check(f"W + LMB drag west = World orientation (got {slot.type})", slot.type == 'GLOBAL')
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     for o in bpy.context.view_layer.objects:

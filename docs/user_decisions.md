@@ -28,9 +28,9 @@
    애드온 목록·테마·ui_scale 을 통째로 바꾼다는 것을 실측했다 (docs/steps/step_42.md).
 10. **결정 8 개정 — 시뮬레이션 스케일 (delegated, step 48, 2026-10-17)**: Maya 2022 의 nucleus 기본값은 `spaceScale` 1.0, 중력 9.8,
     장면 단위 cm (mayapy 로 측정, docs/steps/step_48.md). Maya 문서대로라면 [K] Space Scale 1 은 장면 한 단위를 1 m 로 시뮬레이션해서
-    1 cm 큐브가 1 m 물체처럼 떨어진다 (떨어지는 시간 √(L/g) 가 같음). kit 의 FX 생성 경로 (step 65) 는 Maya 사용자가 보는 움직임을 따른다:
+    1 cm 큐브가 1 m 물체처럼 떨어진다 (떨어지는 시간 √(L/g) 가 같음). kit 의 FX 생성 경로 (step 68, 처음 계획 번호 65) 는 Maya 사용자가 보는 움직임을 따른다:
     중력 = 9.8 × `maya_unit()` / Space Scale m/s² (kit "Space Scale" 기본 1 = Maya 와 같은 뜻, 0.01 이면 실제 크기), 충돌 거리·마진·
     파티클 크기·속도·Mantaflow 도메인 = Maya 값 × `maya_unit()`; 필드·이펙터 크기는 step 54. 장면 중력은 전역이라 Blender 의 Physics
     탭으로 직접 만든 시뮬레이션도 줄어든 중력을 받지만 길이 기본값은 미터 그대로다 (안내). 기하 크기 (결정 8) 와 조명 감쇠 계산은 그대로
-    (조명 세기는 × `maya_unit()²`, 태양광 제외, step 54). Bullet 의 절대 임계값과 1 cm 안정성, Y-up → Z-up 중력 방향은 step 65 에서 잰다.
+    (조명 세기는 × `maya_unit()²`, 태양광 제외, step 54). Bullet 의 절대 임계값과 1 cm 안정성, Y-up → Z-up 중력 방향은 step 68 에서 잰다.
     결정 8 의 "물리·라이트 감쇠는 실제 크기 1 cm" 는 시뮬레이션에 한해 이 결정으로 바뀐다.

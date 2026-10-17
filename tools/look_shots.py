@@ -356,7 +356,8 @@ def s_two_selected():
     shot("02b_two_selected_shaded")
     record_points("02b_two_selected_shaded")
     select_only("pCube1")
-    bpy.ops.wm.tool_set_by_id(name="builtin.rotate")
+    with v3d_override():     # without a 3D View context the tool didn't change (05/06 showed Move, step 59)
+        bpy.ops.wm.tool_set_by_id(name="builtin.rotate")
     redraw()
 
 
@@ -368,7 +369,8 @@ def s_wait5():
 @step
 def s_rotate():
     shot("05_rotate_manip")
-    bpy.ops.wm.tool_set_by_id(name="builtin.scale")
+    with v3d_override():     # without a 3D View context the tool didn't change (05/06 showed Move, step 59)
+        bpy.ops.wm.tool_set_by_id(name="builtin.scale")
     redraw()
 
 
@@ -457,7 +459,8 @@ def record_points(name, sel_verts=()):
 @step
 def s_scale():
     shot("06_scale_manip")
-    bpy.ops.wm.tool_set_by_id(name="builtin.move")
+    with v3d_override():
+        bpy.ops.wm.tool_set_by_id(name="builtin.move")
     edit_select('FACE', faces=(1, 4))        # Maya: pCube1.f[1], f[4]
     redraw()
 

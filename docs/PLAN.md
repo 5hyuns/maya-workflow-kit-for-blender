@@ -372,15 +372,18 @@ discipline file with the expected result (`tests/gui/`, ui_scale 1.0 and 0.8) + 
 | 56 | Time Slider and key feel: LMB scrub, K time drag, Maya Time Slider RMB menu, S (all keyable) / Key Selected, Delete / Breakdown / Copy-Paste keys, MMB time-drag notice | 50 |
 | 57 | Joint Tool (click to place), Orient / Mirror Joint, pose pick-walk, P in pose mode | 55 |
 | 58 | IK Handle + Pole Vector, Bind Skin in Maya selection order, Paint Skin Weights setup + influence list, Copy / Mirror weights | 57 |
-| 59 | Set Driven Key window, pose-mode Constrain menu, Add Attribute, Blend Shape (join_shapes), Quick Rig / HumanIK notice (Rigify) | 55, 58 |
-| 60 | Modeling Toolkit dock (third dock), soft select radius in Maya units, Separate / Combine / Mirror with Maya meaning | 49 |
-| 61 | Target Weld tool, Crease tool, Multi-Cut feel (Ctrl edge loop, snap step) | — |
-| 62 | Extrude manipulator (Python GizmoGroup) + In-View Editor + last-op INPUTS row (W2) | — |
-| 63 | UV workflow: UV Editor entry (edit + sync), UV Toolkit panel, UV marking menu, Cut / Sew / Unfold / Layout keys, Texel Density | 49, 52 |
-| 64 | Hypershade window (material browser + Shader Editor + AE), kit Light Editor, Render menu restored, Render View Keep Image, AE map button | 54 |
-| 65 | FX: Maya simulation scale (W4), kit nucleus section, nParticles emitter / Emit from Object, nCloth on all selected, nCache | 54 |
-| 66 | Scene management: Set Project / Project Window, Ctrl+Alt+S = Maya increment, Create Reference + namespace prefix + Reference Editor | 54, 50 |
-| 67 | Graph Editor tangent toolbar + Shift+S tangent menu, G, Auto Key semantics, Playblast player + options | 56, 52 |
+| 59 | Pivot concept (D/Insert keep translate, pivot orientation, Bake / Reset / Match Pivots), all snaps (X absolute grid, V pivot, step snap, Snap Align Objects, Snap Together, Make Live), Maya-shaped Move/Scale manipulator (user request 2026-10-18, docs/steps/step_59.md) | 10, 22, 25, 28 |
+| 60 | Switch to / back from the Maya skin at any time, complete revert (user request 2026-10-18) | 42 |
+| 61 | Distribution options research and decision, no publishing (user request 2026-10-18) | 13 |
+| 62 | Set Driven Key window, pose-mode Constrain menu, Add Attribute, Blend Shape (join_shapes), Quick Rig / HumanIK notice (Rigify) | 55, 58 |
+| 63 | Modeling Toolkit dock (third dock), soft select radius in Maya units, Separate / Combine / Mirror with Maya meaning | 49 |
+| 64 | Target Weld tool, Crease tool, Multi-Cut feel (Ctrl edge loop, snap step) | — |
+| 65 | Extrude manipulator (Python GizmoGroup) + In-View Editor + last-op INPUTS row (W2) | — |
+| 66 | UV workflow: UV Editor entry (edit + sync), UV Toolkit panel, UV marking menu, Cut / Sew / Unfold / Layout keys, Texel Density | 49, 52 |
+| 67 | Hypershade window (material browser + Shader Editor + AE), kit Light Editor, Render menu restored, Render View Keep Image, AE map button | 54 |
+| 68 | FX: Maya simulation scale (W4), kit nucleus section, nParticles emitter / Emit from Object, nCloth on all selected, nCache | 54 |
+| 69 | Scene management: Set Project / Project Window, Ctrl+Alt+S = Maya increment, Create Reference + namespace prefix + Reference Editor | 54, 50 |
+| 70 | Graph Editor tangent toolbar + Shift+S tangent menu, G, Auto Key semantics, Playblast player + options | 56, 52 |
 
 Order (delegated, after the step 48 review): score × dependency — rigging / animation core first (25, 20), then modeling (20),
 UV (20), render (20), FX scale (20), scene (16), Graph Editor (15). Option boxes (□) in these steps are `invoke_props_dialog`
