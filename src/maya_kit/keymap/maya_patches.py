@@ -60,6 +60,12 @@ _BOX = _click({"mode": "SET"}, {"mode": "XOR"}, {"mode": "SUB"}, {"mode": "ADD"}
 # instead of toggling (workaround, ).
 _BOX_NO_XOR = _click({"mode": "SET"}, {"mode": "ADD"}, {"mode": "SUB"}, {"mode": "ADD"})
 
+# node.select has a real deselect / toggle (checked 4.5): Maya exactly. Node Ctrl+drag stays Blender's node.link
+# (detach links from a socket): no Ctrl marquee there (step 86, delegated).
+_NODE_CLICK = _click({"deselect_all": True, "select_passthrough": True}, {"toggle": True},
+                     {"deselect": True}, {"extend": True})
+_NODE_BOX = [v for v in _BOX_NO_XOR if v[0] != (False, True)]
+
 SELECT_RULES = (
     # idname, event value, variants, props kept from IC's plain item
     ("view3d.select", "CLICK", _CLICK_EXACT, ()),          # IC "3D View" (dump), viewport
@@ -72,7 +78,18 @@ SELECT_RULES = (
     ("uv.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak",)),
     ("outliner.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak",)),
     ("graph.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range")),
+    # step 86: Dope Sheet, NLA, Node Editor
+    ("action.clickselect", "PRESS", _GRAPH_CLICK, ("column", "channel")),
+    ("nla.click_select", "PRESS", _GRAPH_CLICK, ()),
+    ("node.select", "PRESS", _NODE_CLICK, ()),
+    ("action.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range", "wait_for_input")),
+    ("nla.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range", "wait_for_input")),
+    ("node.select_box", "CLICK_DRAG", _NODE_BOX, ("tweak",)),
 )
+
+
+SELECT_CTRL_SHIFT_REMOVED = (("Dopesheet", "action.select_leftright"), ("NLA Editor", "nla.select_leftright"),
+                             ("Node Editor", "node.select_link_viewer"))
 
 
 def patch_selection(kd):
@@ -80,6 +97,9 @@ def patch_selection(kd):
     # such binding and Ctrl+Shift click must add to the selection.
     kd.remove("Graph Editor", "graph.select_leftright", type="LEFTMOUSE",
               shift=True, ctrl=True)
+    # step 86: the same Ctrl+Shift+LMB in the Dope Sheet / NLA, and Node Editor Ctrl+Shift+click = link to viewer
+    for km, idname in SELECT_CTRL_SHIFT_REMOVED:
+        kd.remove(km, idname, type="LEFTMOUSE", shift=True, ctrl=True)
     touched = {}
     for idname, value, variants, keep in SELECT_RULES:
         kms = kd.rewrite_modifier_set(idname, value, variants, keep_props=keep)
