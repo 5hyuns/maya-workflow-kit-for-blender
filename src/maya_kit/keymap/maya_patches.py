@@ -403,6 +403,8 @@ CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 def patch_mesh_components(kd):
     kd.remove("Mesh", "wm.tool_set_by_id", type="D")                       # annotate tool
     _add(kd, "Mesh", "maya_kit.hold", make_event("D"), {"name": "component_pivot"})
+    # Insert = the same pivot edit as a toggle (, )
+    _add(kd, "Mesh", "maya_kit.pivot_toggle", make_event("INSERT"))
     kd.remove("Mesh", "mesh.select_all", type="A", ctrl=True, shift=True)   # IC: deselect
     _add(kd, "Mesh", "mesh.select_all", make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
     _add(kd, "Mesh", "maya_kit.select_none", make_event("D", alt=True))

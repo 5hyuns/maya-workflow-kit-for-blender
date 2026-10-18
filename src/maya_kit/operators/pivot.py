@@ -179,7 +179,14 @@ def set_custom_orientation(context, axes):
             with context.temp_override(**kw):
                 bpy.ops.transform.create_orientation(name=ORIENT_NAME, use=True, overwrite=True)
         except RuntimeError:
-            return False
+            # edit mode builds it from the selection, which can fail (nothing / a closed shell selected);
+            # the view's axes always work (the matrix is replaced below) — step 77
+            try:
+                with context.temp_override(**kw):
+                    bpy.ops.transform.create_orientation(name=ORIENT_NAME, use=True, use_view=True,
+                                                         overwrite=True)
+            except RuntimeError:
+                return False
         orient = _orientation(scene)
         slots[0].type = prev if prev != ORIENT_NAME else 'GLOBAL'
         if orient is None:

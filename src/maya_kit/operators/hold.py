@@ -89,10 +89,155 @@ class ComponentPivotGroup(HoldGroup):
 def component_pivot_after(saved, moved):
     """Pivot point after releasing D in edit mode: a pivot the user placed (cursor moved)
     stays, like Maya's custom component pivot (); a
-    plain tap resets it (cursor pivot -> median point, otherwise the earlier setting)."""
+    plain tap resets it (cursor pivot -> Maya's component manipulator at the bounding-box
+    centre,  P11; otherwise the earlier setting)."""
     if moved:
         return 'CURSOR'
-    return 'MEDIAN_POINT' if saved == 'CURSOR' else saved
+    return 'BOUNDING_BOX_CENTER' if saved == 'CURSOR' else saved
+
+
+# --- component pivot edit: D hold and Insert toggle in mesh edit mode ----------
+
+CURSOR_TOOL = "builtin.cursor"
+CURSOR_OP = "view3d.cursor3d"
+# Maya Move tool snapPivotOri True (pivot_snap.md P13): a click on a component orients the pivot too =
+# the cursor tool's "Geometry" orientation (axes along the clicked surface).
+PIVOT_CURSOR_ORIENTATION = 'GEOM'
+EDIT_MODE = 'EDIT_MESH'
+
+
+def _active_tool(context):
+    tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
+    return tool.idname if tool is not None else None
+
+
+def _set_cursor_orientation(context, value):
+    """Set the edit-mode cursor tool's orientation option; returns the previous value (None if the cursor
+    tool isn't the active edit-mode tool)."""
+    try:
+        tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
+        if tool is None or tool.idname != CURSOR_TOOL:
+            return None
+        props = tool.operator_properties(CURSOR_OP)
+        old = props.orientation
+        props.orientation = value
+        return old
+    except (AttributeError, RuntimeError, TypeError):
+        return None
+
+
+def turned(before, after, eps=1e-5):
+    """True when the 3D cursor rotation (3x3) changed: the user oriented the pivot."""
+    return any(abs(before[i][j] - after[i][j]) > eps for i in range(3) for j in range(3))
+
+
+class ComponentPivotEdit:
+    """One edit-mode pivot edit: the 3D cursor is the pivot, the cursor tool places it (step 18), a
+    changed cursor rotation becomes the "Maya Pivot" Move orientation (step 59 P8, now in edit mode)."""
+
+    def __init__(self):
+        self.on = False
+        self.toggled = False          # started by Insert: stays on until Insert / D / leaving edit mode
+        self.pending_tool = None      # tool to bring back on the next mesh edit mode entry
+
+    def start(self, context, toggled=False):
+        ts = context.scene.tool_settings
+        tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+        cursor = context.scene.cursor
+        self.area = context.area
+        self.tool = tool.idname if tool and tool.idname != CURSOR_TOOL else "builtin.select_box"
+        self.pivot = ts.transform_pivot_point
+        self.location = cursor.location.copy()
+        self.rotation = cursor.matrix.to_3x3()
+        self.on, self.toggled, self.pending_tool = True, toggled, None
+        ts.transform_pivot_point = 'CURSOR'
+        _tool_set(context, CURSOR_TOOL, self.area)
+        # tool options belong to the tool: set the orientation once the cursor tool is the active one
+        self.orientation = _set_cursor_orientation(context, PIVOT_CURSOR_ORIENTATION)
+        _redraw()
+
+    def finish(self, context):
+        if not self.on:
+            return
+        self.on = self.toggled = False
+        ts = context.scene.tool_settings
+        cursor = context.scene.cursor
+        moved = (cursor.location - self.location).length > 1e-6
+        rot = cursor.matrix.to_3x3()
+        ts.transform_pivot_point = component_pivot_after(self.pivot, moved)
+        if self.orientation is not None and _active_tool(context) == CURSOR_TOOL:
+            _set_cursor_orientation(context, self.orientation)
+        if moved and turned(self.rotation, rot):
+            from . import pivot
+            pivot.set_custom_orientation(context, rot)
+        if context.mode == EDIT_MODE:
+            _tool_set(context, self.tool, self.area)
+        else:
+            self.pending_tool = self.tool     # a tool can only be set in its own mode
+        _redraw()
+
+    def tick(self, context):
+        """Timer: close a toggled session that left edit mode; restore its tool when edit mode is back."""
+        if self.on and context.mode != EDIT_MODE:
+            self.finish(context)
+        elif self.pending_tool and context.mode == EDIT_MODE:
+            tool, self.pending_tool = self.pending_tool, None
+            _tool_set(context, tool, None)
+
+
+def _view3d_area(context):
+    screen = getattr(context, "screen", None)
+    areas = [a for a in screen.areas if a.type == 'VIEW_3D'] if screen is not None else []
+    return max(areas, key=lambda a: a.width * a.height) if areas else None
+
+
+def _alive(area):
+    try:
+        return area is not None and area.type == 'VIEW_3D'
+    except ReferenceError:
+        return False
+
+
+def _tool_set(context, idname, area):
+    area = area if _alive(area) else _view3d_area(context)
+    try:
+        if area is not None:
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+            with context.temp_override(area=area, region=region):
+                bpy.ops.wm.tool_set_by_id(name=idname)
+        else:
+            bpy.ops.wm.tool_set_by_id(name=idname, space_type='VIEW_3D')
+    except (RuntimeError, ReferenceError, TypeError):   # area gone or tool unavailable
+        pass
+
+
+COMPONENT = ComponentPivotEdit()
+_TICK = 0.25
+
+
+def _component_tick():
+    try:
+        COMPONENT.tick(bpy.context)
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
+    return _TICK if (COMPONENT.on or COMPONENT.pending_tool) else None
+
+
+def watch_component():
+    if not bpy.app.timers.is_registered(_component_tick):
+        bpy.app.timers.register(_component_tick, first_interval=_TICK)
+
+
+def unregister_component():
+    if bpy.app.timers.is_registered(_component_tick):
+        bpy.app.timers.unregister(_component_tick)
+    if COMPONENT.on:
+        try:
+            COMPONENT.finish(bpy.context)
+        except (AttributeError, ReferenceError, RuntimeError):
+            pass
+    COMPONENT.on = COMPONENT.toggled = False
+    COMPONENT.pending_tool = None
 
 
 GROUPS = {"snap": SnapGroup(), "pivot": PivotGroup(), "component_pivot": ComponentPivotGroup()}
@@ -149,6 +294,7 @@ def end_all(ts):
     for group_name, st in list(_state.items()):
         GROUPS[group_name].restore(ts, st["saved"])
     _state.clear()
+    unregister_component()
 
 
 _HOLD_ITEMS = (
@@ -159,9 +305,6 @@ _HOLD_ITEMS = (
     ("pivot", "Pivot Edit", "Maya D: affect only origins while held"),
     ("component_pivot", "Component Pivot", "Maya D in edit mode: place the pivot (3D cursor) while held"),
 )
-
-CURSOR_TOOL = "builtin.cursor"
-
 
 class MAYAKIT_OT_hold(bpy.types.Operator):
     """Enable a Maya hold mode while the key is held, restore on release"""
@@ -178,30 +321,22 @@ class MAYAKIT_OT_hold(bpy.types.Operator):
             return {'CANCELLED'}
         self._key = event.type
         self._ts = context.scene.tool_settings
-        self._component = None
         if self.name == "component_pivot":
-            # (area, previous tool, pivot before the hold, cursor position)
-            tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
-            self._component = (context.area, tool.idname if tool else "builtin.select_box",
-                               self._ts.transform_pivot_point,
-                               context.scene.cursor.location.copy())
-            bpy.ops.wm.tool_set_by_id(name=CURSOR_TOOL)
-        begin(self._ts, self.name)
+            if COMPONENT.on:          # D while the Insert pivot edit is on: leave it (Maya D tap toggles )
+                COMPONENT.finish(context)
+                return {'FINISHED'}
+            COMPONENT.start(context)
+        else:
+            begin(self._ts, self.name)
         self._timer = context.window_manager.event_timer_add(self._POLL_INTERVAL, window=context.window)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
     def _finish(self, context):
-        end(self._ts, self.name)
-        if self._component is not None:
-            area, tool, saved, cursor = self._component
-            moved = (context.scene.cursor.location - cursor).length > 1e-6
-            self._ts.transform_pivot_point = component_pivot_after(saved, moved)
-            try:
-                with context.temp_override(area=area):
-                    bpy.ops.wm.tool_set_by_id(name=tool)
-            except (RuntimeError, ReferenceError, TypeError):   # area gone or tool unavailable
-                pass
+        if self.name == "component_pivot":
+            COMPONENT.finish(context)
+        else:
+            end(self._ts, self.name)
         context.window_manager.event_timer_remove(self._timer)
         return {'FINISHED'}
 
@@ -223,12 +358,21 @@ class MAYAKIT_OT_hold(bpy.types.Operator):
 
 
 class MAYAKIT_OT_pivot_toggle(bpy.types.Operator):
-    """Toggle pivot edit mode: transform affects only origins (Maya Insert)"""
+    """Toggle pivot edit mode (Maya Insert): objects = transform affects only origins; mesh edit mode =
+    place the component pivot with the 3D cursor"""
     bl_idname = "maya_kit.pivot_toggle"
     bl_label = "Toggle Pivot Edit"
     bl_options = {'REGISTER'}
 
     def execute(self, context):
+        if context.mode == EDIT_MODE:     # Maya component mode Insert (step 77): the 3D cursor pivot edit
+            if COMPONENT.on:
+                COMPONENT.finish(context)
+            else:
+                COMPONENT.start(context, toggled=True)
+                watch_component()
+            self.report({'INFO'}, "Pivot edit " + ("on" if COMPONENT.on else "off"))
+            return {'FINISHED'}
         ts = context.scene.tool_settings
         set_pivot_mode(ts, not ts.use_transform_data_origin)
         _redraw()
@@ -245,3 +389,4 @@ def unregister_cleanup():
     if scene is not None and _state:
         end_all(scene.tool_settings)
     _state.clear()
+    unregister_component()
