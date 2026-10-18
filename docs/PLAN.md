@@ -403,3 +403,64 @@ new marking menus get their Maya positions in research JSON and a `test_step8`-s
   first), nConstraint (8).
 - Render: Render Settings window and 960×540 template resolution (8), Light Linking (6), Tab node add in the Shader Editor (8).
 - Scene: Outliner Sets (8), Hypergraph Hierarchy (6).
+
+## 재점검 4차 (step 71, 2026-10-18)
+
+Evidence: `docs/steps/step_71.md` (tests, dogfood, audit-4 session screenshots). Collected the mapping table, PLAN, every
+「남은 것」 of steps 33–70, `docs/manual_checks.md` and `docs/keymap_mapping.md`, and ran a blindspot pass against research/maya/*.
+A read-only subagent did the collection; its counts and "missing" claims were re-checked by grep. Verdicts are delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 11 (+pick-walk: components step 39, joints step 57) | 2 — selection modifiers outside the 3D View (Outliner Ctrl = toggle, no marquee XOR; API limit), D/Insert (no edit-mode Insert) | 0 | 0 |
+| UI (9) | 7 (+menu sets F2–F6 step 35) | 2 — Maya Outliner (no drag reparent with Maya parenting, no Sets), timeline (no key ticks, Range Slider bar not draggable, no once/oscillate) | 0 | 0 |
+| 개념 (11) | 9 | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **27 (82 %)** | **4 (12 %)** | **0** | **2 (6 %)** |
+
+Audits 1 → 2 → 3 → 4: 21/8/2/2 → 23/8/0/2 → 25/6/0/2 → 27/4/0/2. Keymap rows (`docs/keymap_mapping.md`, 468): implemented
+88 → **113**, IC 8 → **10**, planned 5 → **0**, not applicable 10, macOS-only 68, unreviewed 289 → **267** (global 98, Time Editor 36,
+Node Editor 36, Hypershade 25, UV 17, sculpt 15, other 40). Manual checks: **287 open, none ticked** (115 at audit 3) — the hand pass
+is the largest unverified area.
+
+Audit-3 backlog: items 1–7 closed (steps 33–39); from item 8 pivot orientation (59), K scrub (56), Graph Editor G/D/tangents (70)
+closed; still open: Outliner drag reparent / Sets, edit-mode Insert, pre-selection beyond vertices + select tools, Status Line input
+line, timeline key ticks, Graph Editor 1/2/3, Shift+Q / Alt+Q. Item 9 (low) mostly open: in-view messages, marking menu editor,
+shelf reorder.
+
+### New findings (audit-4 session, step_71.md)
+
+- **F2–F6 don't repaint the top bar.** F3 sets `riggingMenuSet`, but the Maya menu bar still reads "Modeling" 0.8 s later
+  (`a4_05_menuset_f3.png`): `maya_kit.menu_set` tags only `window.screen.areas`, and the top bar is a global area that isn't in
+  that list. gui_step35 hid this by hovering the top bar before its shot.
+- **No key ticks on the Time Slider**: keys at 1 and 12 show nothing on the ruler (`a4_03_keys_timeline.png`; Maya draws red ticks).
+- Everything else in the session behaved: Ctrl+D / Ctrl+G / z z, S (10 channels, red CB fields), 3 / 1 smooth preview (1 hides the
+  preview modifier and keeps its level, by design), Shift+RMB marking menu, Space hotbox, Ctrl+Alt+LMB box zoom, F11 + Ctrl+E
+  (polyExtrudeFace1 in-view editor + CB INPUTS), face pick-walk, Hypershade window. Console errors 0.
+
+### Blindspots (not implemented and not listed as left out; re-checked by grep in src/maya_kit)
+
+1. **Selection priority** (research/maya/interaction.md:74: handles 10, joints 9, curves 4, meshes 2): no code or doc. Medium
+   (animators/riggers click controls in front of meshes).
+2. **Status Line Input Line + Construction History toggle** (research/maya/ui_layout.md:208-211: absolute/relative transform,
+   rename, select by name). Medium.
+3. Backtick tweak-mode hold (interaction.md:114; IC `object.transfer_mode` answers, `keymap_mapping.md:443`). Low–Medium.
+4. Ctrl+Alt+←/→ Spin Edge: mapped in the menu (`menu_map.py:283-284`), no key. Low–Medium.
+5. Shift+G repeat at mouse position (interaction.md:208; planned in audit 1, then dropped). Low.
+6. Alt+arrow nudge, Ctrl+Shift+C camera from view, `\` 2D pan/zoom, selection masks reset on new scene. Low.
+
+### Remaining work, by priority (backlog.json, step 72+)
+
+1. **Menu bar repaint + in-view messages**: F2–F6 repaint the top bar; Maya in-view messages on mode / soft select / symmetry toggles.
+2. **Time Slider key ticks + Range Slider drag** (step_56.md:26, step_50.md:67).
+3. **Pre-selection highlight** for edges / faces / objects and under Move/Rotate/Scale (step 30 left it vertex + select tools only).
+4. **Status Line Input Line** (blindspot 2).
+5. **Selection priority** (blindspot 1).
+6. **Edit-mode Insert / D pivot** (PLAN 「Left out」, mapping row D/Insert).
+7. **Key batch**: Graph Editor 1/2/3, Shift+Q / Alt+Q menus, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C.
+8. **3D Cut and Sew UV tool** (score 20, the highest Left-out item; x/s/d keys).
+9. Later (Left-out lists + step 33–70 「남은 것」, `docs/steps/step_71.md`): Outliner Sets / drag reparent, Hypershade Textures /
+   Lights tabs, Maya Animation / Rigging / UV workspaces, Spline IK, Component Editor, Shape Editor, MASH / fluids, Reference
+   Unload/Replace, ViewCube edges, shelf reorder, 5.x GUI run, the 287 manual checks.
+10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history nodes beyond the kit extrude record.

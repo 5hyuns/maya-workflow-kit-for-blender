@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 71 (재점검 4차) 완료 — `docs/steps/step_71.md`, `docs/PLAN.md` 「재점검 4차」. 대응표 27/4/0/2 (82 %, 3차 25/6/0/2),
+  키맵 구현 113 · IC 10 · 미검토 267, manual_checks 287 열림. 새 발견: F2–F6 이 상단 메뉴 바를 다시 그리지 않음 (전역 영역),
+  타임 슬라이더 키 틱 없음. 헤드리스 574/574, GUI (기본 배율) 483/483, dogfood 47/47, 탐색 세션 14/15 (실패 1 = 세션 확인 오류).
+  **바로 다음 할 일**: `hermes/autodrive_bmk/backlog.json` 8개 순서대로 (step 72부터) — 1 메뉴 바 다시 그리기 + 인뷰 메시지,
+  2 키 틱 + Range Slider 드래그, 3 프리셀렉트 확대, 4 Status Line 입력 줄, 5 선택 우선순위, 6 편집 모드 Insert, 7 키 묶음,
+  8 3D Cut and Sew. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 70 (Graph Editor 탄젠트 툴바 · Shift+S · G · Auto Key · Playblast) 완료 — `docs/steps/step_70.md`. Graph Editor 헤더 탄젠트 아이콘 줄 + 고스트 커브,
   `maya_kit.set_tangent` / `key_edit` (Graph Editor 선택 키, 그 밖은 현재 시간 키), Shift+S 홀드 = Keys / Tangents 마킹 메뉴, Graph Editor G = 재생 범위 · D = Auto,
   Maya Auto Key (Only Insert Available, 백업·복원), `maya_kit.playblast` (임시 동영상 + 플레이어, □ 옵션 대화상자).
