@@ -294,6 +294,14 @@ ENTRIES = {
                                   note="선택 키 = Bezier + Auto Clamped"),
     "KeyframeTangentMarkingMenu": _e("KIT", (OBJ, "maya_kit.tap_hold", {"binding": "key_tangent"}),
                                      note="홀드 + LMB = Keys / Tangents 마킹 메뉴 (Graph Editor·Dope Sheet·포즈도), 탭 = 없음"),
+    # --- step 79: 3D Cut and Sew UV Tool keys (tool keymap, operators/cut_sew.py) ---
+    "polyCutUV:CutUVs3D": _e("KIT",
+                             note="툴 안에서 x = 선택 엣지 Cut (드래그 = 바로 자르기)"),
+    "polyCutUV:SewUVs3D": _e("KIT",
+                             note="툴 안에서 s = 선택 엣지 Sew (Ctrl+드래그 = 바로 꿰매기)"),
+    "polyCutUV:UnfoldPackUVs3DInCurrentTile": _e("KIT",
+                                                 note="툴 안에서 d = Unfold + Layout (0-1)"),
+    "polyCutUV:UnfoldPackUVs3DInEmptyTile": _e("NO", note="Blender 에 UDIM 빈 타일 배치 없음 (d = 0-1 에 Layout)"),
     # --- step 78: key batch 2 ---
     "graphEditor:GraphEditorAbsoluteView": _e("KIT", ("Graph Editor", "maya_kit.graph_view_mode", {"mode": "ABSOLUTE"}),
                                               note="Normalize 끔"),

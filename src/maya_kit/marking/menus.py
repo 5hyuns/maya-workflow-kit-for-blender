@@ -776,7 +776,7 @@ SHIFT_UV = MarkingMenu(
         "S": ("Merge UVs", "uv.weld"),                                     # :74
         "SW": ("Delete UVs", None),                                        # :89
         "W": ("Cut UVs", "maya_kit.uv_cut"),                               # :99
-        "NW": ("3D Cut and Sew UV Tool", None),                            # :108
+        "NW": ("3D Cut and Sew UV Tool", "maya_kit.cut_sew_tool_set"),     # :108 (step 79)
     },
     items=[("Auto Seams", None), *_UV_TAIL])
 
@@ -790,7 +790,7 @@ SHIFT_UV_SHELL = MarkingMenu(
         "S": ("Auto Seams", None),                                         # :81
         "SW": ("Layout", "maya_kit.uv_layout"),                            # :97
         "W": ("Unfold", "maya_kit.uv_unfold"),                             # :112
-        "NW": ("3D Cut and Sew UV Tool", None),                            # :126
+        "NW": ("3D Cut and Sew UV Tool", "maya_kit.cut_sew_tool_set"),     # :126 (step 79)
     },
     items=list(_UV_TAIL))
 

@@ -32,9 +32,6 @@ GREY = {
         "Seams", "Shell borders are seams in Blender: Select > Select Linked, or mark seams from islands."),
     "UV Toolkit/Cut and Sew/Create UV Shell": (
         "Cut", "Blender can't make a shell from a selection border: select its border edges and Cut."),
-    "UV Toolkit/Cut and Sew/3D Cut and Sew Tool": (
-        "Cut / Sew", "Blender has no 3D cut-and-sew tool (not in Maya Kit yet): select edges in the 3D View, then Cut (Shift+X) / "
-        "Sew (Shift+S) here."),
     "UV Toolkit/Unfold/Straighten": (
         "Follow Active Quads", "Blender straightens a grid of quads from the active one: UV > Follow Active Quads."),
     "UV Toolkit/Arrange and Layout/Distribute": (
@@ -159,7 +156,7 @@ class MAYAKIT_PT_uv_toolkit(bpy.types.Panel):
             row.operator("maya_kit.uv_cut", text="Cut")
             row.operator("maya_kit.uv_sew", text="Sew")
             _grey(body, "UV Toolkit/Cut and Sew/Create UV Shell", "Create UV Shell")
-            _grey(body, "UV Toolkit/Cut and Sew/3D Cut and Sew Tool", "3D Cut and Sew Tool")
+            body.operator("maya_kit.cut_sew_tool_set", text="3D Cut and Sew Tool")
         body = _section(layout, "MAYAKIT_uvtk_unfold", "Unfold", default_closed=False)
         if body:
             row = body.row(align=True)

@@ -13,7 +13,7 @@ Settings live in ``Scene.maya_kit_mesh_tools`` (operators/mesh_tools.py).
 import bpy
 
 from . import notices
-from ..operators import mesh_tools
+from ..operators import cut_sew, mesh_tools
 
 # Greyed Maya settings: (notice key, label) -> (substitute, one line)
 GREY = {
@@ -74,7 +74,39 @@ class MAYAKIT_TL_crease(bpy.types.WorkSpaceTool):
             _grey(layout, "Crease Tool/Extend to creased components", "Extend to creased components")
 
 
-TOOLS = (MAYAKIT_TL_target_weld, MAYAKIT_TL_crease)
+class MAYAKIT_TL_cut_sew(bpy.types.WorkSpaceTool):
+    """Maya 3D Cut and Sew UV Tool: drag = cut, Ctrl+drag = sew, Shift+drag = select;
+    x / s / d = Cut / Sew / Unfold + Layout (Maya-541, tool context polyCutUV)."""
+    bl_space_type = 'VIEW_3D'
+    bl_context_mode = 'EDIT_MESH'
+    bl_idname = cut_sew.TOOL
+    bl_label = "3D Cut and Sew UV Tool"
+    bl_description = ("Drag along edges to cut the UVs there, Ctrl+drag to sew them, Shift+drag to select edges. "
+                      "x = Cut, s = Sew, d = Unfold and Layout (Maya 3D Cut and Sew UV Tool)")
+    bl_icon = "ops.mesh.knife_tool"
+    bl_widget = None
+    bl_options = {'KEYMAP_FALLBACK'}
+    bl_keymap = (
+        ("maya_kit.cut_sew_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS'}, {"properties": [("action", 'CUT')]}),
+        ("maya_kit.cut_sew_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True},
+         {"properties": [("action", 'SEW')]}),
+        ("maya_kit.cut_sew_stroke", {"type": 'LEFTMOUSE', "value": 'PRESS', "shift": True},
+         {"properties": [("action", 'SELECT')]}),
+        ("maya_kit.uv_cut", {"type": 'X', "value": 'PRESS'}, {"properties": [("mesh_select", True)]}),
+        ("maya_kit.uv_sew", {"type": 'S', "value": 'PRESS'}, {"properties": [("mesh_select", True)]}),
+        ("maya_kit.uv_unfold_layout", {"type": 'D', "value": 'PRESS'}, None),
+    )
+
+    @staticmethod
+    def draw_settings(context, layout, tool):
+        layout.label(text="Drag: Cut  ·  Ctrl+drag: Sew  ·  Shift+drag: Select", icon='INFO')
+        row = layout.row(align=True)
+        row.operator("maya_kit.uv_cut", text="Cut (x)").mesh_select = True
+        row.operator("maya_kit.uv_sew", text="Sew (s)").mesh_select = True
+        row.operator("maya_kit.uv_unfold_layout", text="Unfold + Layout (d)")
+
+
+TOOLS = (MAYAKIT_TL_target_weld, MAYAKIT_TL_crease, MAYAKIT_TL_cut_sew)
 
 
 def active_tool_id(context):
