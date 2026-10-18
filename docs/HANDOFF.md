@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- **체크포인트 (2026-10-18, /sc:save) — 지금 단계 = 없음 (step 75 까지 완료, 다음 = step 76)**
+  - HEAD `10e6fd5` = step 75. 작업 트리는 깨끗하다 (research/ 는 원래 추적 안 함).
+  - 이번 세션: step 71 재점검 4차 (8f4b596) → backlog 8개 (step 72–79) 중 72 (90ec5db) · 73 (9936fef) · 74 (46e43c9) · 75 (10e6fd5) 완료, 각 STEP_DONE.
+  - 검증 (HEAD): 헤드리스 604/604, GUI (기본 배율) 516/516, dogfood 47/47.
+  - **바로 다음 할 일**: step 76 선택 우선순위 (클릭 시 핸들 10 > 조인트 9 > 커브 4 > 메시 2, research/maya/interaction.md:74, defaults.json:105).
+    키맵 충돌 설계라 `docs/steps/step_76.md` 「계획」 부터.
+  - 그 뒤 77 편집 모드 Insert, 78 키 묶음 (Graph 1/2/3, Shift+Q / Alt+Q, Spin Edge, Shift+G, Ctrl+Shift+C), 79 3D Cut and Sew.
+    backlog.json = `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`.
+  - 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 75 (Status Line 입력 줄) 완료 — `docs/steps/step_75.md`.
   - Status Line 에 Maya 입력 줄 (Absolute / Relative X Y Z, Rename, Select by Name) 과 회색 Construction History 를 넣었다 (`ui/input_line.py`).
   - 검증: 헤드리스 604/604, GUI 516/516, dogfood 47/47.
