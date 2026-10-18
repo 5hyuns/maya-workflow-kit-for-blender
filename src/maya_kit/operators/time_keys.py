@@ -23,8 +23,29 @@ TANGENTS = {
     "FLAT": ("BEZIER", 'ALIGNED'),
     "PLATEAU": ("BEZIER", 'AUTO_CLAMPED'),
     "AUTO": ("BEZIER", 'AUTO_CLAMPED'),
+    # step 70: Fixed keeps the handles where they are; Blender has no
+    # Stepped Next (animation.md): Stepped. BREAK / UNIFY only change the handle type (free / aligned).
+    "FIXED": ("BEZIER", 'ALIGNED'),
+    "STEPPED_NEXT": ("CONSTANT", None),
+    "BREAK": (None, 'FREE'),
+    "UNIFY": (None, 'ALIGNED'),
 }
-TANGENT_ITEMS = [(k, k.title(), "") for k in TANGENTS]
+# Maya names for the menus / buttons
+TANGENT_LABELS = {"AUTO": "Auto", "SPLINE": "Spline", "CLAMPED": "Clamped", "LINEAR": "Linear", "FLAT": "Flat",
+                  "STEPPED": "Stepped", "STEPPED_NEXT": "Stepped Next", "PLATEAU": "Plateau", "FIXED": "Fixed",
+                  "BREAK": "Break Tangents", "UNIFY": "Unify Tangents"}
+
+
+def apply_tangent(kp, kind):
+    """One key's Maya tangent (in and out)."""
+    interp, handle = TANGENTS[kind]
+    if interp is not None:
+        kp.interpolation = interp
+    if handle is not None:
+        kp.handle_left_type = kp.handle_right_type = handle
+    if kind == "FLAT":
+        kp.handle_left.y = kp.handle_right.y = kp.co.y
+TANGENT_ITEMS = [(k, TANGENT_LABELS.get(k, k.title()), "") for k in TANGENTS]
 
 _CLIPBOARD = {"nodes": [], "span": 0}
 
@@ -220,16 +241,11 @@ def inbetween(context, frame, delta):
 
 
 def set_tangent(context, a, b, kind):
-    interp, handle = TANGENTS[kind]
     n = 0
     for node in nodes(context):
         for fc, pts in keys_in(node, a, b):
             for kp in pts:
-                kp.interpolation = interp
-                if handle is not None:
-                    kp.handle_left_type = kp.handle_right_type = handle
-                if kind == "FLAT":
-                    kp.handle_left.y = kp.handle_right.y = kp.co.y
+                apply_tangent(kp, kind)
                 n += 1
             fc.update()
     return n

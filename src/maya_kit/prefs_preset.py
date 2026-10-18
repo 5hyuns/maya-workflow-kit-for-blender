@@ -37,6 +37,12 @@ UNDO_PRESET = (
     ("edit.undo_steps", 256),
 )
 
+# Maya Auto Key keys only attributes that already have keys (, row 9);
+# Blender's auto keying keys every changed channel unless "Only Insert Available" is on.
+AUTOKEY_PRESET = (
+    ("edit.use_keyframe_insert_available", True),
+)
+
 # Maya starts without a splash popup; option off by default.
 SPLASH_PRESET = (
     ("view.show_splash", False),
@@ -87,6 +93,7 @@ WIRE_PRESET = (
 GROUPS = {
     "navigation": (PRESET, "prefs_backup", "use_maya_navigation"),
     "undo": (UNDO_PRESET, "undo_backup", "use_maya_undo"),
+    "autokey": (AUTOKEY_PRESET, "autokey_backup", "use_maya_auto_key"),
     "splash": (SPLASH_PRESET, "splash_backup", "maya_hide_splash"),
     "density": (_density_preset, "density_backup", "maya_density"),
     "font": (_font_preset, "font_backup", "maya_font"),

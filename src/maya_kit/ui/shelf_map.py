@@ -85,7 +85,7 @@ BY_COMMAND = {
     **_CONSTRAINTS,
     "SetKey": ("anim.keyframe_insert", 'KEY_HLT'),
     # --- Animation ---
-    "PlayblastWindow": (("v3d", "render.opengl", {"animation": True}), 'RENDER_ANIMATION'),
+    "PlayblastWindow": (("v3d", "maya_kit.playblast", {}), 'RENDER_ANIMATION'),
     "CreateMotionTrail": ("object.paths_calculate", 'ANIM_DATA'),
     "BakeSimulation": ("nla.bake", 'ACTION'),
     "SetKeyAnimated": (_key("Available"), 'KEYINGSET'),

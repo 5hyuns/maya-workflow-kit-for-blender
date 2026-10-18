@@ -64,10 +64,20 @@ def test_proxy_skips_locked_and_autokeys():
     assert cb.is_locked(b, "tx") and not cb.is_locked(a, "tx")
     ts = bpy.context.scene.tool_settings
     ts.use_keyframe_insert_auto = True
+    edit = bpy.context.preferences.edit
     try:
+        # Maya Auto Key (step 70): only channels that already have keys
         P().ty = 2.0
-        assert cb.fcurve(a, "ty") is not None, "auto key inserts a key"
+        assert cb.fcurve(a, "ty") is None, "Maya Auto Key doesn't key an unkeyed channel"
+        a.keyframe_insert("location", index=1)
+        P().ty = 3.0
+        assert cb.fcurve(a, "ty") is not None
+        # with Blender's rule (Only Insert Available off) every keyable channel is keyed
+        edit.use_keyframe_insert_available = False
+        P().tz = 2.0
+        assert cb.fcurve(a, "tz") is not None, "auto key inserts a key"
     finally:
+        edit.use_keyframe_insert_available = True
         ts.use_keyframe_insert_auto = False
 
 

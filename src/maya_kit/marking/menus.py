@@ -526,6 +526,43 @@ SELECT_ALL = MarkingMenu(
     },
     options={"Freeze Transforms"})
 
+# --- Shift+S hold + LMB: Maya (marking_menus.json :284-571, Maya) ------------
+# Maya builds the same layout inside and outside the Graph Editor (:284-430 / :449-571); the actions pick the
+# Graph Editor's selected keys or the current-time keys themselves (operators/graph_keys.py, step 70).
+
+def _tan(kind):
+    return ("maya_kit.set_tangent", {"kind": kind})
+
+
+def _key(action):
+    return ("maya_kit.key_edit", {"action": action})
+
+
+KEY_TANGENT = MarkingMenu(
+    "buildKeyframeTangentMM", "Keyframe / Tangents", " buildKeyframeTangentMM",
+    radial={
+        "W": ("Keys", Sub(radial={                                         # :284
+            "N": ("Delete Keys", _key("DELETE")),                          # :291
+            "NE": ("Convert to Key", _key("TO_KEY")),                      # :304
+            "E": ("Paste Keys", _key("PASTE")),                            # :311
+            "NW": ("Convert to Breakdown", _key("TO_BREAKDOWN")),          # :324
+            "S": ("Copy Keys", _key("COPY")),                              # :331
+            "SW": ("Remove Inbetween", _key("REMOVE_INBETWEEN")),          # :344
+            "W": ("Cut Keys", _key("CUT")),                                # :351
+            "SE": ("Add Inbetween", _key("ADD_INBETWEEN")),                # :364
+        })),
+        "E": ("Tangents", Sub(radial={                                     # :373
+            "N": ("Spline", _tan("SPLINE")),                               # :381
+            "E": ("Flat", _tan("FLAT")),                                   # :388
+            "S": ("Linear", _tan("LINEAR")),                               # :395
+            "W": ("Clamped", _tan("CLAMPED")),                             # :402
+            "NW": ("Stepped", _tan("STEPPED")),                            # :409
+            "SW": ("Stepped Next", _tan("STEPPED_NEXT")),                  # :416
+            "SE": ("Plateau", _tan("PLATEAU")),                            # :423
+            "NE": ("Fixed", _tan("FIXED")),                                # :430
+        })),
+    })
+
 # --- Hotbox zones (hotkeys_and_menus.md :207-214; marking_menus.json hotbox.zones) ------
 
 def _pane(ui_type):
@@ -695,7 +732,7 @@ MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
-                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL)}
+                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT)}
 
 # Active tool -> its options marking menu (Maya-49).
 TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",
