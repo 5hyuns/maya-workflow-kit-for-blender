@@ -78,14 +78,24 @@ def set_bone_selected(pb, state):
         pb.bone.select = state
 
 
+def active_object(context=None):
+    """``context.active_object``, else the view layer's: a depsgraph handler running while a File Browser or
+    Preferences window has the context gets no ``active_object`` member (step 98)."""
+    context = context or bpy.context
+    if hasattr(context, "active_object"):
+        return context.active_object
+    view_layer = getattr(context, "view_layer", None)
+    return view_layer.objects.active if view_layer is not None else None
+
+
 def pose_armature(context=None):
     """The active armature when it is in pose mode (= Maya: joints are being picked)."""
-    ob = (context or bpy.context).active_object
+    ob = active_object(context)
     return ob if ob is not None and ob.type == 'ARMATURE' and ob.mode == 'POSE' else None
 
 
 def placing_joints(context=None):
-    ob = (context or bpy.context).active_object
+    ob = active_object(context)
     return ob is not None and ob.type == 'ARMATURE' and ob.mode == 'EDIT'
 
 
@@ -109,7 +119,7 @@ def lead(context=None):
     context = context or bpy.context
     arm = pose_armature(context)
     if arm is None:
-        return context.active_object
+        return active_object(context)
     act = arm.data.bones.active
     pb = arm.pose.bones.get(act.name) if act is not None else None
     if pb is not None and bone_selected(pb) and not pb.bone.hide:

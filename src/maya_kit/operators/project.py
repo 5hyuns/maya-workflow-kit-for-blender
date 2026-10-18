@@ -417,7 +417,7 @@ class MAYAKIT_OT_create_reference(bpy.types.Operator):
     def execute(self, context):
         path = bpy.path.abspath(self.filepath)
         if not path.lower().endswith(".blend") or not os.path.isfile(path):
-            self.report({'ERROR'}, "Blender references .blend files only: use File > Import for .ma / .fbx / .obj")
+            self.report({'ERROR'}, "Blender references .blend files only: use File > Import for .fbx / .obj / .abc / .usd (Maya .ma / .mb can't be read)")
             return {'CANCELLED'}
         if bpy.data.filepath and _norm(path) == _norm(bpy.data.filepath):
             self.report({'ERROR'}, "A scene can't reference itself")
