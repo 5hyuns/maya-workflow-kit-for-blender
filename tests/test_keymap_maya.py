@@ -102,7 +102,7 @@ def test_display_keys():
     for key, mode in maya_patches.DISPLAY_KEYS:
         assert _one("3D View", "maya_kit.display_mode", key).properties.mode == mode
         assert _any_event("Object Non-modal", key) == [], key
-    assert _one("Object Non-modal", "object.editmode_toggle", "F8")
+    assert _one("Object Non-modal", "maya_kit.toggle_sel_mode", "F8")
 
 
 # --- Ctrl+G -----------------------------------------------------------------

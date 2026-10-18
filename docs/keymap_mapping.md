@@ -136,7 +136,7 @@
 | Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | Object Mode: `maya_kit.delete_history` | 구현 | 모디파이어 + 셰이프 키를 메시에 굽기 | hotkeySetup.mel:247 |
 | p | P | global | Parent | Object Mode: `maya_kit.parent` | 구현 | 월드 유지, parent inverse 단위행렬 (환경설정 Parent Mode=Blender 로 IC 방식); 포즈·아마추어 편집 모드 = `maya_kit.parent_joint` (조인트, 제자리) — step 57 | hotkeySetup.mel:249 |
 | Shift+P | Shift+P | global | Unparent | Object Mode: `maya_kit.unparent` | 구현 | 월드로, 월드 유지; 포즈·아마추어 편집 모드 = `maya_kit.unparent_joint` (step 57) | hotkeySetup.mel:250 |
-| F8 | F8 | global | SelectToggleMode | Object Non-modal: `object.editmode_toggle` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
+| F8 | F8 | global | SelectToggleMode | Object Non-modal: `maya_kit.toggle_sel_mode` | 구현 | 오브젝트 ↔ 마지막 컴포넌트 모드 | hotkeySetup.mel:251 |
 | F9 | F9 | global | SelectVertexMask | Object Non-modal: `maya_kit.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
 | F10 | F10 | global | SelectEdgeMask | Object Non-modal: `maya_kit.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |
 | F11 | F11 | global | SelectFacetMask | Object Non-modal: `maya_kit.component_mode` (type='FACE') | 구현 |  | hotkeySetup.mel:255 |

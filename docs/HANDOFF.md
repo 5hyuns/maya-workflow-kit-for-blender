@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 72 (상단 바 다시 그리기 + Maya 인뷰 메시지) 완료 — `docs/steps/step_72.md`.
+  - F2–F6 이 상단 메뉴 바를 바로 다시 그린다 (`status_line.redraw_top_bars`).
+  - Maya 실측대로 인뷰 메시지 (`ui/view_message.py`): F8 (`maya_kit.toggle_sel_mode`), Ctrl+G, Ctrl+H / Alt+H / h, b 소프트 선택 켬, Make Live.
+  - 검증: 헤드리스 581/581, GUI 496/496, dogfood 47/47.
+  - **바로 다음 할 일**: backlog 2 = step 73 타임 슬라이더 키 틱 + Range Slider 드래그 (모달이니 step_73 「계획」 먼저).
+    그 뒤 74 프리셀렉트 확대, 75 Status Line 입력 줄, 76 선택 우선순위, 77 편집 모드 Insert, 78 키 묶음, 79 3D Cut and Sew.
+
 - Step 71 (재점검 4차) 완료 — `docs/steps/step_71.md`, `docs/PLAN.md` 「재점검 4차」. 대응표 27/4/0/2 (82 %, 3차 25/6/0/2),
   키맵 구현 113 · IC 10 · 미검토 267, manual_checks 287 열림. 새 발견: F2–F6 이 상단 메뉴 바를 다시 그리지 않음 (전역 영역),
   타임 슬라이더 키 틱 없음. 헤드리스 574/574, GUI (기본 배율) 483/483, dogfood 47/47, 탐색 세션 14/15 (실패 1 = 세션 확인 오류).

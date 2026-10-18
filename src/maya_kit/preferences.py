@@ -185,6 +185,11 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_selection_wire)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
+    # Maya in-view messages (inViewMessageEnable 1, research/maya/interaction.md:30; docs/steps/step_72.md).
+    in_view_messages: bpy.props.BoolProperty(
+        name="In-View Messages", description="Short fading messages in the view when you group, hide, toggle "
+                                             "object/component selection (F8), soft select or Make Live, like Maya",
+        default=True)
     maya_panel_menus: bpy.props.BoolProperty(
         name="Panel Menus",
         description="3D View headers show Maya's panel menus (View, Shading, Lighting, Show, Renderer, "
@@ -357,6 +362,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_camera_names")
         row.prop(self, "maya_view_axis")
         row.prop(self, "maya_selection_wire")
+        box.prop(self, "in_view_messages")
 
         from . import app_template
         box = layout.box()

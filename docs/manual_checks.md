@@ -493,3 +493,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = Repeat Last 그대로), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체.
 - [ ] (step 70) Auto Key 켬: 키가 있는 채널만 값 바꿀 때 키 (이동 키만 있는 큐브를 회전 → 회전 키 안 생김; Channel Box 입력도 같음). 환경설정 「Maya Auto Key」 끄면 Blender 처럼 모든 채널.
 - [ ] (step 70) Windows > Playblast (Playback > Playblast, 셸프) → 재생 범위 동영상 → Blender 플레이어 창이 열림. □ (길게) = Playblast Options (Time Range / View / Format / Quality / Scale) — animation_08_win1 비교. 끝나면 장면의 렌더 설정 (출력 경로·형식·해상도 %) 은 그대로.
+
+### Step 72 — 상단 바 다시 그리기 · Maya 인뷰 메시지
+
+- [ ] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜.
+- [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
+- [ ] (step 72) MayaKit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지.
+- [ ] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만.

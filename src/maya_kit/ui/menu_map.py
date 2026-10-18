@@ -188,7 +188,7 @@ MAP = {
     "Select/Similar": ("object.select_grouped", {"type": 'TYPE'}),
     "Select/Grow": "mesh.select_more",
     "Select/Shrink": "mesh.select_less",
-    "Select/Object/Component": "object.editmode_toggle",
+    "Select/Object/Component": "maya_kit.toggle_sel_mode",
     "Select/Components/Multi-Component": ("maya_kit.component_mode", {"type": 'MULTI'}),
     "Select/Components/Vertex": ("maya_kit.component_mode", {"type": 'VERT'}),
     "Select/Components/Edge": ("maya_kit.component_mode", {"type": 'EDGE'}),
