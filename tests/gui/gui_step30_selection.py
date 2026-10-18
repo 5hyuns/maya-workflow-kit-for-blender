@@ -244,8 +244,9 @@ def s_pre_face():
     st = gz_state()
     with bpy.context.temp_override(window=bpy.context.window_manager.windows[0], area=view3d()[0]):
         on = C["pre"]._enabled(bpy.context)
-    check("face mode: no pre-selection (Blender's gizmo would still light a vertex)",
-          not on and (st is None or not st[0]))
+    # Step 74: face mode lights the face under the cursor (the kit gizmo follows the select mode).
+    check(f"face mode: the face under the cursor is pre-selected, not a vertex ({st})",
+          on and st is not None and st[0] and st[1] == -1 and st[3] >= 0)
 
 
 @step
@@ -263,8 +264,8 @@ def s_pre_move_tool():
     with bpy.context.temp_override(window=bpy.context.window_manager.windows[0], area=view3d()[0]):
         on = C["pre"]._enabled(bpy.context)
     st = gz_state()
-    check("Move tool: no pre-selection (manipulator handles keep the hover)",
-          not on and (st is None or not st[0]))
+    # Step 74: the Move tool keeps pre-selection (Maya pre_06); nothing is selected, so no manipulator.
+    check(f"Move tool: the vertex is pre-selected ({st})", on and st is not None and st[0] and st[1] == C["v"])
     set_tool("builtin.select_box")
 
 
