@@ -677,3 +677,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 103) Create > Polygon Primitives > Cube ❒ 를 누르고 있기 → 「Option Box」 → Polygon Cube Options 창. Width 3 → Apply: 창이 열린 채 큐브가 생기는지 (Maya Apply). Create: 만들고 닫힘. 다시 메뉴에서 그냥 Cube 클릭 → 3 폭 큐브 (Maya 처럼 저장된 값). Reset Settings → 1 로 돌아가는지.
 - [ ] (step 103) Edit Mesh > Bevel ❒ / Constrain > Parent ❒ 창의 필드 이름·기본값이 Maya 창과 같다고 느껴지는지 (research/maya/screens/step103/ 비교 그림). 회색 「Not in Blender」 목록이 거슬리는지.
 - [ ] (step 103) 메뉴 라벨 끝의 ❒ 표시가 Maya 사용자에게 옵션 상자로 읽히는지, 누르고 있기로 여는 것이 불편한지 (Maya 는 ❒ 를 클릭).
+
+### Step 104 — Graph Editor / Dope Sheet / UV Editor 메뉴·아이콘 줄
+
+- [ ] (step 104) 실제 마우스로 Graph Editor 헤더의 Edit / View / Curves / Tangents … 를 차례로 열고 (시뮬레이션은 헤더 메뉴 클릭이 안 열림, 테스트는 wm.call_menu), 메뉴 사이를 가로로 훑을 때 다음 메뉴로 넘어가는지. 「Blender」 메뉴에 Blender 원래 메뉴가 다 있는지.
+- [ ] (step 104) Graph Editor 왼쪽 Maya 목록: 오브젝트 여러 개 (20 개 이상) 일 때 행이 넘치는지 — kit 목록은 스크롤을 따라가지 않음 (남은 것). 행을 드래그로 여러 개 고르기 (Maya 마키) 가 안 되는 것이 불편한지.
+- [ ] (step 104) 아이콘 줄의 Stats 칸에 키 시간 `+=5` / 값 `10` 을 입력해 선택 키가 움직이고 Ctrl+Z 로 돌아오는지.
+- [ ] (step 104) UV Editor 둘째 줄 아이콘 (Wireframe / Shaded / Distortion / Grid / 체커 / 이미지 칸) 이 Maya 아이콘 줄처럼 읽히는지, 오른쪽 UV Toolkit 의 Options / Help 드롭다운이 Maya 메뉴 막대처럼 보이는지.

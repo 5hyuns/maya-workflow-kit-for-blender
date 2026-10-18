@@ -24,7 +24,8 @@ ADDED = []
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.time_range_drag", "maya_kit.manip_ctrl", "maya_kit.manip_duplicate", "maya_kit.manip_press",
                       "maya_kit.select_priority", "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
-                      "maya_kit.time_slider_menu", "maya_kit.outliner_set_click", "maya_kit.outliner_set_menu")
+                      "maya_kit.time_slider_menu", "maya_kit.outliner_set_click", "maya_kit.outliner_set_menu",
+                      "maya_kit.graph_channel_click")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -948,6 +949,16 @@ def patch_render_slots(kd):
     _add(kd, "Image", "image.cycle_render_slot", make_event("J", alt=True), {"reverse": True})
 
 
+# --- 47. Graph Editor outliner rows (docs/steps/step_104.md 「계획」 5) ---------------------------------------------
+# The kit draws Maya's outliner pane (object + "Translate X" rows) over the Graph Editor's channel region
+# (ui/editor_chrome.py); presses on it go first in "Animation Channels" (Blender's channels_click is a PRESS item, a
+# handled press sends no CLICK) and pass through over Blender's search field.
+
+def patch_graph_outliner(kd):
+    _add(kd, "Animation Channels", "maya_kit.graph_channel_click", make_event("LEFTMOUSE", any=True),
+         first=True, shadows=("Animation Channels",))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -959,7 +970,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
-           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots)
+           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
+           patch_graph_outliner)
 
 
 def apply(data):

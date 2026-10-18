@@ -145,6 +145,9 @@ class MAYAKIT_OT_open_editor(bpy.types.Operator):
                 _maya_outliner(target.spaces.active)
         if self.ui_type == 'PROPERTIES' and self.tab:
             properties_tab_later(new, self.tab)
+        if self.ui_type in {'FCURVES', 'DOPESHEET', 'UV'}:
+            from ..ui import editor_chrome   # Maya editor chrome: framing, folded rows, UV Toolkit (step 104)
+            editor_chrome.prepare_later(new, self.ui_type)
         return {'FINISHED'}
 
 

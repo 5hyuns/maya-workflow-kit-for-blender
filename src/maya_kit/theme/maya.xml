@@ -495,7 +495,7 @@
         dopesheet_subchannel="#0f2c4d"
         channel_group="#1a332d"
         active_channels_group="#216d5b"
-        preview_range="#a14d0066"
+        preview_range="#00000000"
         vertex="#000000"
         vertex_select="#ff8500"
         vertex_active="#ffffff"
@@ -696,7 +696,7 @@
         keyframe_border_selected="#000000ff"
         keyframe_scale_factor="1"
         summary="#4d272766"
-        preview_range="#a14d0066"
+        preview_range="#00000000"
         interpolation_line="#94e575cc"
         simulated_frames="#721e65ff"
         >

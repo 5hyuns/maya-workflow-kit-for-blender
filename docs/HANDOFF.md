@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 104 (편집기 크롬: Graph Editor / Dope Sheet / UV Editor 의 Maya 메뉴 막대·아이콘 줄) 완료 — `docs/steps/step_104.md`.
+  - Maya 2022 GUI 에서 세 창의 메뉴 막대·아이콘 줄을 캡처 (`research/scripts/maya_editors104/`, 메뉴 30, 잎 585, 옵션 상자 120,
+    체크 169) → `ui/editor_menu_data.py` (생성). 매핑 339/585 (`ui/editor_menu_map.py`, 체크 항목 = Blender 속성
+    `("prop", …)`), 회색 246 모두 안내. 새 연산자 `curve_infinity` / `curve_color`, In / Out Tangent, Dope Sheet 키 편집.
+  - `ui/editor_chrome.py`: Graph / Dope 헤더 = 편집기 버튼 + Maya 메뉴 + 「Blender」 + 아이콘 줄 (클래스 자신의 draw 만 교체,
+    복원, kit.py 스냅샷), UV = 메뉴 줄 + tool header 아이콘 줄 + 오른쪽 UV Toolkit (Options / Help). Graph Editor 채널 영역
+    위에 Maya 목록 (pCube1 / Translate X 빨강 / Translate Y 초록, 액션·그룹 행 없음, 클릭 = 그 커브만). Dope Sheet 는 Summary
+    + 접힌 오브젝트. 범위 밖 갈색 음영 0 (테마), 열 때 1 프레임부터, Graph / Dope 사이드바 숨김. Stats 칸 = 선택 키 시간 / 값.
+  - 검증: 헤드리스 769/769, GUI 1041/1041 (step104 10), 나란히 그림 `research/maya/screens/step104/`.
+  - **바로 다음 할 일**: step 105 = backlog 7 「Hypershade, Render Settings, Script Editor look」 (step_98.md #31–#33). 그다음
+    106 Tool Settings · AE, 107 키맵. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 103 (진짜 옵션 창, Maya 모양) 완료 — `docs/steps/step_103.md`.
   - Maya 2022 GUI 에서 옵션 창 26 개를 열어 필드·기본값·버튼을 읽음 (`research/maya/re/option_boxes.md`). kit 옵션 창 26 개
     (`operators/option_windows.py`: 기본형 6, Duplicate Special, Group, Freeze, Reset, Combine, Smooth, Extrude, Bevel, Bridge,

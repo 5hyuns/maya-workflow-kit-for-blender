@@ -123,6 +123,11 @@ VALUES = (
     ("dopesheet_editor.frame_current", (0.78, 0.78, 0.78)),             # timeSliderCurrentFrame [O]
     # Graph Editor grid [O-pref]
     ("graph_editor.grid", (0.325, 0.325, 0.325)),                       # graphEditorGrid
+    # No shading outside the playback range: the kit keeps Maya's playback range in Blender's preview range
+    # (step 20), and Blender shades everything outside it in this colour (brown #a14d0066 by default); Maya's
+    # Graph Editor / Dope Sheet show the frames outside it unshaded (research/maya/screens/editors104, step 104).
+    ("graph_editor.preview_range", (0.0, 0.0, 0.0, 0.0)),
+    ("dopesheet_editor.preview_range", (0.0, 0.0, 0.0, 0.0)),
     # Outliner
     ("outliner.space.back", OUTLINER_BG),
     ("outliner.selected_highlight", SELECT),

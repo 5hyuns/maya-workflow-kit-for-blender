@@ -16,7 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
-from . import menu_data, menu_map, notices
+from . import editor_menu_data, menu_data, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -29,6 +29,8 @@ SET_ITEMS = tuple((sid, label, f"Maya {label} menu set")
 _SET_MENUS = {sid: tuple(m for m in menus if m in menu_data.MENUS)
               for sid, _label, menus in menu_data.MENU_SETS}
 _ALWAYS_MENUS = tuple(n for n, m in menu_data.MENUS.items() if m[1] == ALWAYS)
+# Main menu bar option boxes + the editor menu bars' (step 104)
+OPTION_BOXES = menu_data.OPTION_BOXES | editor_menu_data.OPTION_BOXES
 
 
 def menu_idname(maya_name):
@@ -45,6 +47,9 @@ def iter_items(items=None, prefix=""):
     if items is None:
         for label, _set, _src, its in menu_data.MENUS.values():
             yield from iter_items(its, label)
+        for editor, menus in editor_menu_data.EDITORS.items():
+            for title, its in menus:
+                yield from iter_items(its, f"{editor}/{title}")
         return
     for path, it in children(items, prefix):
         if path is None:
@@ -140,7 +145,9 @@ def draw_spec(layout, label, s, path, icon='NONE'):
         layout.operator(MAYAKIT_OT_menu_unavailable.bl_idname, text=label, icon=icon).item = path
         return
     kind, target, props = s
-    if kind == "menu":
+    if kind == "prop":
+        draw_prop(layout, label, target, props, path)
+    elif kind == "menu":
         layout.menu(target, text=label, icon=icon)
     elif kind == "pie":
         layout.operator("wm.call_menu_pie", text=label + " ▸", icon=icon).name = target
@@ -156,6 +163,68 @@ def draw_spec(layout, label, s, path, icon='NONE'):
         op = layout.operator(target, text=label, icon=icon)
         for key, value in props.items():
             setattr(op, key, value)
+
+
+def prop_owner(context, target):
+    """(owner, attribute) of a ``("prop", target)`` mapping: a path from the context ("space_data.show_handles",
+    "preferences.edit.keyframe_new_handle_type"), "addon_prefs.<name>" = this add-on's preferences."""
+    *parents, attr = target.split(".")
+    if parents and parents[0] == "addon_prefs":
+        from .. import preferences
+        owner, parents = preferences.get(context), parents[1:]
+    else:
+        owner = context
+    for name in parents:
+        owner = getattr(owner, name, None)
+        if owner is None:
+            return None, attr
+    return (owner, attr) if hasattr(owner, attr) else (None, attr)
+
+
+def draw_prop(layout, label, target, props, path=""):
+    """A Maya check item = Blender's check box; a radio choice = ``prop_enum`` for enums, else a radio-marked
+    button that sets the value (``maya_kit.menu_set_value``). Greyed with the notice when the property isn't
+    there in this context (e.g. a Graph Editor setting drawn from another editor)."""
+    owner, attr = prop_owner(bpy.context, target)
+    if owner is None:
+        layout.operator(MAYAKIT_OT_menu_unavailable.bl_idname, text=label).item = path
+        return
+    if "value" not in props:
+        layout.prop(owner, attr, text=label)
+        return
+    value = props["value"]
+    rna = owner.bl_rna.properties.get(attr)
+    if rna is not None and rna.type == 'ENUM':
+        layout.prop_enum(owner, attr, value, text=label)
+        return
+    current = getattr(owner, attr)
+    on = abs(current - value) < 1e-6 if isinstance(value, float) else current == value
+    op = layout.operator(MAYAKIT_OT_menu_set_value.bl_idname, text=label,
+                         icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF')
+    op.target, op.value = target, repr(value)
+
+
+def set_prop(context, target, props):
+    """Run a ``("prop", ...)`` mapping: toggle the check box or set the radio value."""
+    owner, attr = prop_owner(context, target)
+    if owner is None:
+        return {'CANCELLED'}
+    setattr(owner, attr, props["value"] if "value" in props else not getattr(owner, attr))
+    return {'FINISHED'}
+
+
+class MAYAKIT_OT_menu_set_value(bpy.types.Operator):
+    """Maya radio menu item: set this choice"""
+    bl_idname = "maya_kit.menu_set_value"
+    bl_label = "Set"
+    bl_options = {'INTERNAL', 'UNDO'}
+
+    target: StringProperty(options={'SKIP_SAVE'})
+    value: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        import ast
+        return set_prop(context, self.target, {"value": ast.literal_eval(self.value)})
 
 
 # Maya's option box (research/maya/menus.json "optionBox") is a small square at the right end of the item's line.
@@ -184,11 +253,15 @@ def _draw_items(layout, items, prefix, submenus):
                 layout.label(text=it[1])
             continue
         if sub_items(path, it) and path not in menu_map.MAP:
-            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in menu_data.OPTION_BOXES else ""))
-        elif path in menu_data.OPTION_BOXES:
+            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""))
+        elif path in OPTION_BOXES:
             _draw_boxed(layout, path, it[0])
         else:
             draw_item(layout, path, it[0])
+
+
+# Menu class of every Maya submenu path (e.g. "Graph Editor/Tangents/Default In Tangent"), for buttons that open one
+SUBMENU_IDS = {}
 
 
 def _make_menu(idname, label, prefix, items, top_label=None):
@@ -198,6 +271,7 @@ def _make_menu(idname, label, prefix, items, top_label=None):
         if sub_items(path, it) and path not in submenus and path not in menu_map.MAP:
             submenus[path] = f"{idname}_{len(submenus)}"
     # Build the submenu classes (each draws its own children).
+    SUBMENU_IDS.update(submenus)
     for path, sub_id in submenus.items():
         node = _find(items, prefix, path)
         classes.append(_menu_class(sub_id, node[0], path, sub_items(path, node), submenus))
@@ -537,11 +611,19 @@ def draw_menu_bar(layout, context, collapsed=False):
         layout.menu(menu_idname(name))
 
 
+def editor_menu_idname(editor, index):
+    """Menu class of the ``index``-th menu of a Maya editor menu bar (``editor_menu_data.EDITORS``)."""
+    return "MAYAKIT_MT_ed_" + "".join(ch for ch in editor.title() if ch.isalnum()) + f"_{index}"
+
+
 _menu_classes = []
 for _name, (_label, _set, _src, _items) in menu_data.MENUS.items():
     _menu_classes.extend(_make_menu(menu_idname(_name), _label, _label, _items, top_label=_label))
+for _editor, _menus in editor_menu_data.EDITORS.items():
+    for _i, (_title, _items) in enumerate(_menus):
+        _menu_classes.extend(_make_menu(editor_menu_idname(_editor, _i), _title, f"{_editor}/{_title}", _items))
 
-classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_item, MAYAKIT_OT_menu_whole_mesh, MAYAKIT_MT_option_box, MAYAKIT_OT_menu_option_box, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
+classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_set_value, MAYAKIT_OT_menu_item, MAYAKIT_OT_menu_whole_mesh, MAYAKIT_MT_option_box, MAYAKIT_OT_menu_option_box, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
            MAYAKIT_MT_ui_elements, MAYAKIT_MT_menu_bar, *_menu_classes)
 
 

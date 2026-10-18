@@ -178,6 +178,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Time Scrub": ("Window", "Screen", "Frames", "Time Scrub", "Dopesheet", "View2D"),
            # Step 69: Window items (file keys) run after every editor keymap.
            "Window": None,
+           # Step 104: the Graph Editor's channel region (the kit's Maya outliner rows over it).
+           "Animation Channels": ("Window", "Screen", "Frames", "Animation Channels", "View2D", "View2D Buttons List"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

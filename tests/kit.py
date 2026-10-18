@@ -99,6 +99,9 @@ def snapshot():
     snap["ui_methods"].append(f"STATUSBAR_HT_header.draw: {bpy.types.STATUSBAR_HT_header.draw!r}")
     # step 50: Maya Outliner header, timeline menus moved into the Range Slider's preferences menu
     snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")
+    # step 104: Maya menu bars / icon rows in the Graph Editor and Dope Sheet headers
+    snap["ui_methods"] += [f"{c} own draw: {getattr(getattr(bpy.types, c).draw, '_draw_funcs', [getattr(bpy.types, c).draw])[0]!r}"
+                           for c in ("GRAPH_HT_header", "DOPESHEET_HT_header")]
     snap["ui_methods"].append("TIME_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in time_menus.__dict__}")
     snap["panel_polls"] = sorted(
