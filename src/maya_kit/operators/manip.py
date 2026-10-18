@@ -284,6 +284,142 @@ class MAYAKIT_OT_manip_mmb(bpy.types.Operator):
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
 
+# --- Ctrl+LMB axis = plane, Shift+MMB = automatic axis -------------------------
+#  : Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
+# handle (move / scale in the other two), Ctrl+click on the Move centre frees the active handle; Shift+MMB drag moves
+# along the axis closest to the drag direction.
+
+def plane_of(axis):
+    """constraint_axis of the plane perpendicular to ``axis`` ('X' -> (False, True, True))."""
+    return tuple(a != axis for a in 'XYZ')
+
+
+def pick_axis(drag, dirs, min_len=1e-3):
+    """Index of the axis whose screen direction is closest to ``drag`` (largest |cos|), or None. ``dirs`` = screen
+    vectors of the axes (None or ~0 for an axis pointing at the viewer)."""
+    dx, dy = drag
+    dl = (dx * dx + dy * dy) ** 0.5
+    if dl < min_len:
+        return None
+    best, best_cos = None, -1.0
+    for i, d in enumerate(dirs):
+        if d is None:
+            continue
+        ln = (d[0] * d[0] + d[1] * d[1]) ** 0.5
+        if ln < min_len:
+            continue
+        c = abs(d[0] * dx + d[1] * dy) / (ln * dl)
+        if c > best_cos + 1e-9:
+            best, best_cos = i, c
+    return best
+
+
+def _highlighted(context):
+    """The kit manipulator handle under the mouse (gizmo keymap context), or None."""
+    from ..ui import manipulator
+    group = getattr(context, "gizmo_group", None)
+    if group is None or group.bl_idname != manipulator.GROUP:
+        return None
+    return next((gz for gz in group.gizmos if gz.is_highlight and hasattr(gz, "handle_role")), None)
+
+
+class MAYAKIT_OT_manip_ctrl(bpy.types.Operator):
+    """Ctrl+LMB on the manipulator: an axis handle moves / scales in the plane of the other two axes and makes
+    that plane the active handle; the Move centre frees the active handle (Maya)"""
+    bl_idname = "maya_kit.manip_ctrl"
+    bl_label = "Manipulator Ctrl Handle"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, _event):
+        from ..ui import manipulator
+        gz = _highlighted(context)
+        kind = manipulator.tool_kind(context)
+        if gz is None or kind not in TRANSFORM_OPS:
+            return {'PASS_THROUGH'}
+        role, axis = getattr(gz, "handle_role", None), getattr(gz, "handle_axis", None)
+        if role == 'CENTER' and kind == 'TRANSLATE':
+            reset_handle(kind)
+            context.area.tag_redraw()
+            return {'FINISHED'}
+        if role != 'AXIS' or axis not in ('X', 'Y', 'Z'):
+            return {'PASS_THROUGH'}
+        otype = manipulator.slot_type(context.scene, kind)
+        axes = plane_of(axis)
+        HANDLES[kind] = {"constraint_axis": axes, "orient_type": otype}
+        op = getattr(bpy.ops.transform, TRANSFORM_OPS[kind])
+        try:
+            op('INVOKE_DEFAULT', constraint_axis=axes, orient_type=otype, release_confirm=True)
+        except RuntimeError:
+            return {'PASS_THROUGH'}
+        return {'FINISHED'}
+
+
+AUTO_PX = 6          # movement that decides the Shift+MMB axis (x UI scale)
+
+
+def axis_dirs(context, kind):
+    """(screen directions of the manipulator axes, orientation type), or (None, None) when nothing is selected."""
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    from ..ui import manipulator
+    center, frame, otype = manipulator.pivot_frame(context, kind)
+    if center is None:
+        return None, None
+    region, rv3d = context.region, context.region_data
+    p0 = location_3d_to_region_2d(region, rv3d, center)
+    size = max(rv3d.view_distance * 0.1, 1e-6)
+    dirs = []
+    for i in range(3):
+        p1 = location_3d_to_region_2d(region, rv3d, center + frame.col[i].normalized() * size)
+        dirs.append(None if p0 is None or p1 is None else (p1[0] - p0[0], p1[1] - p0[1]))
+    return dirs, otype
+
+
+class MAYAKIT_OT_manip_mmb_auto(bpy.types.Operator):
+    """Shift+MMB drag: move / scale along the manipulator axis closest to the drag direction (Maya)"""
+    bl_idname = "maya_kit.manip_mmb_auto"
+    bl_label = "Drag Along Closest Axis"
+    bl_options = {'INTERNAL'}
+
+    mode: bpy.props.EnumProperty(items=[(k, k.title(), "") for k in TRANSFORM_OPS])
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'VIEW_3D' and context.region_data is not None
+
+    def invoke(self, context, event):
+        dirs, otype = axis_dirs(context, self.mode)
+        if dirs is None:
+            return {'PASS_THROUGH'}
+        self._dirs, self._otype = dirs, otype
+        self._start = (event.mouse_x, event.mouse_y)
+        self._px = AUTO_PX * (context.preferences.system.ui_scale or 1.0)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            drag = (event.mouse_x - self._start[0], event.mouse_y - self._start[1])
+            if (drag[0] ** 2 + drag[1] ** 2) ** 0.5 < self._px:
+                return {'RUNNING_MODAL'}
+            i = pick_axis(drag, self._dirs)
+            if i is None:
+                return {'CANCELLED'}
+            op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
+            try:
+                # launched from this MOUSEMOVE: release_confirm can't see the MMB, so the transform is
+                # confirmed by the MMB release below it (checked, )
+                op('INVOKE_DEFAULT', constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
+                   release_confirm=True)
+            except RuntimeError:
+                return {'CANCELLED'}
+            return {'FINISHED'}
+        if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+            return {'CANCELLED'}
+        if event.type in {'ESC', 'RIGHTMOUSE'}:
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
 OPTIONS = {'SMART_DUPLICATE': "smart_duplicate", 'SMART_EXTRUDE': "smart_extrude"}
 
 
@@ -337,4 +473,4 @@ def option_state(option):
 
 
 classes = (MAYAKIT_OT_manip_duplicate, MAYAKIT_OT_manip_option, MAYAKIT_OT_manip_size,
-           MAYAKIT_OT_manip_press, MAYAKIT_OT_manip_mmb)
+           MAYAKIT_OT_manip_press, MAYAKIT_OT_manip_mmb, MAYAKIT_OT_manip_ctrl, MAYAKIT_OT_manip_mmb_auto)
