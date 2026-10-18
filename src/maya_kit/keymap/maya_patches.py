@@ -25,7 +25,7 @@ ADDED = []
 PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.time_range_drag", "maya_kit.manip_ctrl", "maya_kit.manip_duplicate", "maya_kit.manip_press",
                       "maya_kit.select_priority", "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
                       "maya_kit.time_slider_menu", "maya_kit.outliner_set_click", "maya_kit.outliner_set_menu",
-                      "maya_kit.graph_channel_click")
+                      "maya_kit.graph_channel_click", "maya_kit.script_run")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -959,6 +959,21 @@ def patch_graph_outliner(kd):
          first=True, shadows=("Animation Channels",))
 
 
+# --- 48. Script Editor execute ---------------------------------------------------
+# Maya: Ctrl+Enter executes (input kept), numpad Enter executes the whole tab and clears it. Only in the kit's Script
+# Editor window (ui/script_editor.py); elsewhere the Text Editor's own keys stay (PASS_THROUGH).
+
+def patch_script_editor(kd):
+    # IC renders on Ctrl+Enter from "Screen Editing", a window keymap checked before every editor's (checked with
+    # --debug-handlers: the Script Editor's Ctrl+Enter rendered, "No camera found"). Maya has no Ctrl+Enter render
+    # (Render > Render Current Frame has no default hotkey; Ctrl+Alt+Enter render animation stays IC's).
+    kd.remove("Screen Editing", "render.render", type="RET", ctrl=True, alt=False)
+    _add(kd, "Text", "maya_kit.script_run", make_event("RET", ctrl=True), first=True, shadows=("Text",))
+    # Screen's numpad Enter = file.execute (file browsers only): the Text item runs first in a Text Editor anyway
+    _add(kd, "Text", "maya_kit.script_run", make_event("NUMPAD_ENTER"), {"clear": True}, first=True,
+         shadows=("Text", "Screen"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -971,7 +986,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
-           patch_graph_outliner)
+           patch_graph_outliner, patch_script_editor)
 
 
 def apply(data):

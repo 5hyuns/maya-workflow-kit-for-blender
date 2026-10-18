@@ -285,3 +285,127 @@ MAP = {
     **_help_menu(UV, "editors/uv/index.html"),
     "UV Toolkit/Help/Help on UV Toolkit": _url(_MANUAL + "modeling/meshes/uv/index.html"),
 }
+
+# --- step 105: Hypershade, Render Settings, Script Editor () -----
+HS, RS, SE = "Hypershade", "Render Settings", "Script Editor"
+_HS_MATERIALS = {"Anisotropic": 'ANISOTROPIC', "Blinn": 'BLINN', "Lambert": 'LAMBERT', "Layered Shader": 'LAYERED',
+                 "Phong": 'PHONG', "Phong E": 'PHONG_E', "Ramp Shader": 'RAMP', "Standard Surface": 'STANDARD_SURFACE',
+                 "Surface Shader": 'SURFACE', "Use Background": 'USE_BACKGROUND'}
+_HS_LIGHTS = {"Directional Light": 'DIRECTIONAL_LIGHT', "Point Light": 'POINT_LIGHT', "Spot Light": 'SPOT_LIGHT',
+              "Area Light": 'AREA_LIGHT'}
+
+
+def _hs_edit(action):
+    return ("maya_kit.hs_edit", {"action": action})
+
+
+def _editor(ui_type):
+    return ("maya_kit.open_editor", {"ui_type": ui_type})
+
+
+# Hypershade Create menu node types -> Blender shader nodes (added to the current material's graph)
+HS_NODES = {
+    "2D Textures/Checker": 'ShaderNodeTexChecker', "2D Textures/File": 'ShaderNodeTexImage',
+    "2D Textures/Fractal": 'ShaderNodeTexNoise', "2D Textures/Noise": 'ShaderNodeTexNoise',
+    "2D Textures/Simplex Noise": 'ShaderNodeTexNoise', "2D Textures/Ramp": 'ShaderNodeValToRGB',
+    "2D Textures/Water": 'ShaderNodeTexWave', "2D Textures/Grid": 'ShaderNodeTexBrick',
+    "2D Textures/Movie": 'ShaderNodeTexImage', "2D Textures/PSD File": 'ShaderNodeTexImage',
+    "3D Textures/Brownian": 'ShaderNodeTexNoise', "3D Textures/Cloud": 'ShaderNodeTexNoise',
+    "3D Textures/Solid Fractal": 'ShaderNodeTexNoise', "3D Textures/Volume Noise": 'ShaderNodeTexNoise',
+    "3D Textures/Marble": 'ShaderNodeTexWave', "3D Textures/Wood": 'ShaderNodeTexWave',
+    "3D Textures/Granite": 'ShaderNodeTexVoronoi', "3D Textures/Leather": 'ShaderNodeTexVoronoi',
+    "3D Textures/Rock": 'ShaderNodeTexVoronoi',
+    "Environment Textures/Env Sphere": 'ShaderNodeTexEnvironment',
+    "Layered Texture": 'ShaderNodeMix',
+    "General Utilities/Bump 2d": 'ShaderNodeBump', "General Utilities/Bump 3d": 'ShaderNodeBump',
+    "General Utilities/Multiply Divide": 'ShaderNodeVectorMath',
+    "General Utilities/Plus Minus Average": 'ShaderNodeVectorMath',
+    "General Utilities/Reverse": 'ShaderNodeInvert', "General Utilities/Set Range": 'ShaderNodeMapRange',
+    "General Utilities/2d Placement": 'ShaderNodeMapping', "General Utilities/3d Placement": 'ShaderNodeMapping',
+    "General Utilities/Sampler Info": 'ShaderNodeNewGeometry', "General Utilities/Vector Product": 'ShaderNodeVectorMath',
+    "General Utilities/Distance Between": 'ShaderNodeVectorMath', "General Utilities/Condition": 'ShaderNodeMath',
+    "Scalar Utilities/Add Double Linear": 'ShaderNodeMath', "Scalar Utilities/Mult Double Linear": 'ShaderNodeMath',
+    "Scalar Utilities/Float Constant": 'ShaderNodeValue', "Scalar Utilities/Float Math": 'ShaderNodeMath',
+    "Scalar Utilities/Unit Conversion": 'ShaderNodeMath', "Scalar Utilities/Blend Two Attr": 'ShaderNodeMix',
+    "Color Utilities/Blend Colors": 'ShaderNodeMix', "Color Utilities/Channels": 'ShaderNodeSeparateColor',
+    "Color Utilities/Clamp": 'ShaderNodeClamp', "Color Utilities/Color Constant": 'ShaderNodeRGB',
+    "Color Utilities/Color Math": 'ShaderNodeMix', "Color Utilities/Contrast": 'ShaderNodeBrightContrast',
+    "Color Utilities/Gamma Correct": 'ShaderNodeGamma', "Color Utilities/Hsv To Rgb": 'ShaderNodeCombineColor',
+    "Color Utilities/Rgb To Hsv": 'ShaderNodeSeparateColor', "Color Utilities/Luminance": 'ShaderNodeRGBToBW',
+    "Color Utilities/Remap Value": 'ShaderNodeMapRange', "Color Utilities/Remap Color": 'ShaderNodeRGBCurve',
+    "Color Utilities/Remap Hsv": 'ShaderNodeHueSaturation',
+}
+
+
+def _hs_nodes():
+    return {f"{HS}/Create/{label}": ("maya_kit.hs_node", {"node_type": node, "label": label.rsplit("/", 1)[-1]})
+            for label, node in HS_NODES.items()}
+
+
+MAP.update({
+    f"{HS}/File/Import...": "maya_kit.file_import",
+    f"{HS}/Edit/Delete": _hs_edit("DELETE"),
+    f"{HS}/Edit/Delete Unused Nodes": _hs_edit("DELETE_UNUSED"),
+    f"{HS}/Edit/Delete All by Type/Shading Groups and Materials": _hs_edit("DELETE_MATERIALS"),
+    f"{HS}/Edit/Delete All by Type/Lights": ("maya_kit.delete_by_type", {"type": 'LIGHTS', "all": True}),
+    f"{HS}/Edit/Delete All by Type/Cameras and Image Planes": ("maya_kit.delete_by_type",
+                                                               {"type": 'CAMERAS', "all": True}),
+    f"{HS}/Edit/Select Objects with Materials": _hs_edit("SELECT_OBJECTS"),
+    f"{HS}/Edit/Select Materials from Objects": _hs_edit("FROM_OBJECT"),
+    f"{HS}/Edit/Duplicate/Shading Network": _hs_edit("DUPLICATE"),
+    f"{HS}/Edit/Duplicate/Without Network": _hs_edit("DUPLICATE"),
+    f"{HS}/View/Frame All": "node.view_all",
+    f"{HS}/View/Frame Selected": "node.view_selected",
+    **{f"{HS}/View/{label}": _prop("window_manager.maya_kit_hs_swatch", key)
+       for label, key in (("As Icons", 'ICONS'), ("As List", 'LIST'), ("As Small Swatches", 'SMALL'),
+                          ("As Medium Swatches", 'MEDIUM'), ("As Large Swatches", 'LARGE'),
+                          ("As Extra Large Swatches", 'XLARGE'))},
+    **{f"{HS}/View/{label}": _prop("window_manager.maya_kit_hs_sort", key)
+       for label, key in (("By Name", 'NAME'), ("By Type", 'TYPE'), ("By Time", 'TIME'))},
+    f"{HS}/View/Reverse Order": _prop("window_manager.maya_kit_hs_reverse"),
+    **{f"{HS}/Create/Materials/{label}": ("maya_kit.hs_create", {"kind": kind}) for label, kind in _HS_MATERIALS.items()},
+    **{f"{HS}/Create/Lights/{label}": ("maya_kit.create", {"kind": kind}) for label, kind in _HS_LIGHTS.items()},
+    f"{HS}/Create/Camera": ("maya_kit.create", {"kind": 'CAMERA'}),
+    f"{HS}/Create/Rendering/Render Layer": "scene.view_layer_add",
+    f"{HS}/Create/Create Render Node...": ("wm.call_menu", {"name": "NODE_MT_add"}),
+    f"{HS}/Graph/Graph Materials on Selected Objects": _hs_edit("FROM_OBJECT"),
+    f"{HS}/Graph/Input and Output Connections": "node.view_all",
+    **{f"{HS}/Window/{label}": "maya_kit.hypershade"
+       for label in ("Browser...", "Property Editor...", "Create...")},
+    f"{HS}/Window/Render View...": "render.view_show",
+    f"{HS}/Window/Outliner...": _editor('OUTLINER'),
+    f"{HS}/Window/UV Editor...": _editor('UV'),
+    f"{HS}/Window/Graph Editor...": _editor('FCURVES'),
+    f"{HS}/Window/Attribute Spread Sheet...": _editor('SPREADSHEET'),
+    **_help_menu(HS, "render/shader_nodes/index.html"),
+    f"{HS}/Help/Help on Shader Library": _url(_MANUAL + "render/materials/index.html"),
+
+    f"{RS}/Presets/Import Render Settings/Default Settings": "maya_kit.rs_defaults",
+    **_help_menu(RS, "render/output/properties/index.html"),
+
+    f"{SE}/File/Open Script...": "text.open",
+    f"{SE}/File/Save Script...": "text.save_as",
+    f"{SE}/Edit/Undo": "ed.undo",
+    f"{SE}/Edit/Redo": "ed.redo",
+    f"{SE}/Edit/Cut": "text.cut",
+    f"{SE}/Edit/Copy": "text.copy",
+    f"{SE}/Edit/Paste": "text.paste",
+    f"{SE}/Edit/Select All": "text.select_all",
+    f"{SE}/Edit/Goto line...": "text.jump",
+    f"{SE}/Edit/Search and Replace...": "text.start_find",
+    f"{SE}/Edit/Indent Selection": "text.indent",
+    f"{SE}/Edit/Unindent Selection": "text.unindent",
+    f"{SE}/Edit/Clear History": ("maya_kit.script_clear", {"what": "HISTORY"}),
+    f"{SE}/Edit/Clear Input": ("maya_kit.script_clear", {"what": "INPUT"}),
+    f"{SE}/Edit/Clear All": ("maya_kit.script_clear", {"what": "ALL"}),
+    f"{SE}/Command/Show line numbers": _prop("space_data.show_line_numbers"),
+    f"{SE}/Command/Use tabs for indent": _prop("space_data.text.indentation", 'TABS'),
+    f"{SE}/Command/Command Completion": "text.autocomplete",
+    f"{SE}/Command/Execute": "maya_kit.script_run",
+    f"{SE}/Tabs/New Tab...": ("maya_kit.script_tab", {"new": True}),
+    f"{SE}/Tabs/Delete Tab": "text.unlink",
+    **_help_menu(SE, "editors/text_editor.html"),
+    f"{SE}/Help/Help on MEL": _url(_API),
+    f"{SE}/Help/Help on Python": _url(_API + "info_quickstart.html"),
+})
+MAP.update(_hs_nodes())

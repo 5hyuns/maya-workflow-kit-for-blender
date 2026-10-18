@@ -69,23 +69,17 @@ class MAYAKIT_OT_command_line_language(bpy.types.Operator):
 
 
 class MAYAKIT_OT_script_editor(bpy.types.Operator):
-    """Open a Python Console window (Maya Script Editor)"""
+    """Open the Maya Script Editor: history over input with MEL / Python tabs (ui/script_editor.py, step 105)"""
     bl_idname = "maya_kit.script_editor"
     bl_label = "Script Editor"
 
     def execute(self, context):
-        window = context.window
-        area = max((a for a in window.screen.areas), key=lambda a: a.width * a.height, default=None)
-        if area is None:
+        if context.window is None:
             return {'CANCELLED'}
-        before = set(context.window_manager.windows[:])
-        with context.temp_override(window=window, area=area):
-            bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
-        new = [w for w in context.window_manager.windows if w not in before]
-        if not new:
+        from ..ui import script_editor
+        if script_editor.open_window(context) is None:
             self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
-        new[0].screen.areas[0].type = 'CONSOLE'
         return {'FINISHED'}
 
 

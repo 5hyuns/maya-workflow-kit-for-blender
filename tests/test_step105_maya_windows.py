@@ -1,0 +1,180 @@
+"""Step 105: Hypershade, Render Settings and Script Editor look — Maya menu bars from the Maya 2022 capture, the
+Render Settings Common tab writing scene.render, Maya presets, the new Create shader kinds, the Browser tabs, Script
+Editor run / echo. """
+
+import types
+from importlib import import_module
+
+import bpy
+
+import kit
+
+data = import_module(kit.MODULE + ".ui.editor_menu_data")
+menu_map = import_module(kit.MODULE + ".ui.menu_map")
+menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
+notices = import_module(kit.MODULE + ".ui.notices")
+rs = import_module(kit.MODULE + ".ui.render_settings")
+hs = import_module(kit.MODULE + ".ui.hypershade")
+se = import_module(kit.MODULE + ".ui.script_editor")
+material = import_module(kit.MODULE + ".operators.material")
+attribute_editor = import_module(kit.MODULE + ".ui.attribute_editor")
+ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
+
+# 
+MAYA_BARS = {"Hypershade": ["File", "Edit", "View", "Create", "Tabs", "Graph", "Window", "Options", "Help"],
+             "Render Settings": ["Edit", "Presets", "Help"],
+             "Script Editor": ["File", "Edit", "History", "Command", "Tabs", "Help"]}
+
+
+def _clear():
+    for ob in list(bpy.data.objects):
+        bpy.data.objects.remove(ob)
+    for m in list(bpy.data.materials):
+        bpy.data.materials.remove(m)
+
+
+def test_menu_bars_match_the_capture_and_are_honest():
+    for editor, titles in MAYA_BARS.items():
+        assert [t for t, _ in data.EDITORS[editor]] == titles, editor
+    leaves = {}
+    for path, it in menu_sets.iter_items():
+        if path.split("/", 1)[0] in MAYA_BARS and (not menu_sets.sub_items(path, it) or path in menu_map.MAP):
+            leaves[path] = path in menu_map.MAP
+    print("leaves", len(leaves), "mapped", sum(leaves.values()))
+    assert len(leaves) == 249 + 21 + 59, len(leaves)
+    assert not [p for p, m in leaves.items() if not m and notices.greyed_notice(p) is None]
+    assert sum(leaves.values()) >= 150
+    for name in ("Hypershade", "Script Editor", "Render Settings"):
+        assert hasattr(bpy.types, menu_sets.editor_menu_idname(name, 0))
+
+
+def test_common_tab_writes_scene_render():
+    sc = bpy.context.scene
+    r = sc.render
+    r.filepath = "//../images/"
+    assert sc.maya_kit_rs_dir == "//../images/" and sc.maya_kit_rs_prefix == "" and sc.maya_kit_rs_ext == 'SINGLE'
+    sc.maya_kit_rs_prefix = "shot"
+    assert r.filepath.replace("\\", "/") == "//../images/shot", r.filepath
+    sc.maya_kit_rs_ext = 'DOT'
+    assert r.filepath.endswith("shot.####"), r.filepath      # Maya name.#.ext, padding 4
+    sc.maya_kit_rs_padding = 3
+    assert r.filepath.endswith("shot.###") and sc.maya_kit_rs_padding == 3
+    sc.maya_kit_rs_ext = 'UNDERSCORE'
+    assert r.filepath.endswith("shot_###")
+    sc.maya_kit_rs_dir = "//renders/"
+    assert r.filepath.replace("\\", "/") == "//renders/shot_###", r.filepath
+    sc.maya_kit_rs_size = 'HD_720'
+    assert (r.resolution_x, r.resolution_y, r.resolution_percentage) == (1280, 720, 100)
+    sc.maya_kit_rs_size = 'CCIR_601'
+    assert (r.resolution_x, r.resolution_y) == (720, 486) and abs(r.pixel_aspect_x / r.pixel_aspect_y - 0.9) < 1e-4
+    r.resolution_x = 1000
+    assert sc.maya_kit_rs_size == 'CUSTOM'
+    # Presets > Import Render Settings > Default Settings = Maya factory (captured: 960 x 540, PNG, padding 4, single)
+    r.image_settings.file_format = 'JPEG'
+    assert bpy.ops.maya_kit.rs_defaults() == {'FINISHED'}
+    assert (r.resolution_x, r.resolution_y, r.pixel_aspect_x, r.pixel_aspect_y) == (960, 540, 1.0, 1.0)
+    assert sc.maya_kit_rs_size == 'HD_540'
+    assert r.image_settings.file_format == 'PNG' and sc.maya_kit_rs_ext == 'SINGLE'
+    lines = rs.info_lines(sc)
+    assert lines[2].startswith("Image size: 960 x 540 (13.3 x 7.5 inches 72 pixels/inch)"), lines
+
+
+def test_path_split_round_trip():
+    for path in ("//../images/shot.####", "/tmp/a_##", "C:\\out\\b####", "//x/", "name"):
+        d, p, e, n = rs.split_path(path)
+        assert rs.join_path(d, p, e, n).replace("\\", "/") == path.replace("\\", "/"), (path, d, p, e, n)
+
+
+def test_render_panels_hidden_only_in_the_kit_window():
+    wrapped = [c for c, _raw, _kids in rs._wrapped]
+    names = {c.__name__ for c in wrapped}
+    assert "RENDER_PT_context" in names and any(n.startswith("RENDER_PT_eevee") for n in names), sorted(names)[:10]
+    cls = next(c for c in wrapped if c.__name__ == "RENDER_PT_color_management")
+    assert cls.poll(bpy.context)      # outside the kit window: Blender's own poll
+    win = types.SimpleNamespace(as_pointer=lambda: 12345)
+    rs._WINDOWS.add(12345)
+    try:
+        kctx = types.SimpleNamespace(window=win, space_data=types.SimpleNamespace(type='PROPERTIES'),
+                                     window_manager=bpy.context.window_manager, scene=bpy.context.scene)
+        bpy.context.window_manager.maya_kit_rs_tab = 'COMMON'
+        assert cls.poll(kctx) is False and rs.MAYAKIT_PT_rs_common.poll(kctx)
+        bpy.context.window_manager.maya_kit_rs_tab = 'RENDERER'
+        assert not rs.MAYAKIT_PT_rs_common.poll(kctx)
+        ctx_cls = next(c for c in wrapped if c.__name__ == "RENDER_PT_context")
+        assert ctx_cls.poll(kctx) is False    # the kit's Render Using row replaces it
+    finally:
+        rs._WINDOWS.discard(12345)
+        bpy.context.window_manager.maya_kit_rs_tab = 'COMMON'
+
+
+def test_create_list_maya_shaders():
+    _clear()
+    assert [material.MATERIALS[k][1] for k in hs.CREATE] == [
+        "Anisotropic", "Blinn", "Lambert", "Layered Shader", "Phong", "Phong E", "Ramp Shader", "Standard Surface",
+        "Surface Shader", "Use Background"]
+    for kind in hs.CREATE:
+        mat = material.new_material(kind)
+        name = attribute_editor.material_type(mat)
+        assert name == material.MATERIALS[kind][0] and name in ae_layout.BY_KIND, (kind, name)
+    types_ = {n.type for n in bpy.data.materials["rampShader1"].node_tree.nodes}
+    assert {'LAYER_WEIGHT', 'VALTORGB', 'BSDF_PRINCIPLED'} <= types_
+    out = next(n for n in bpy.data.materials["layeredShader1"].node_tree.nodes if n.type == 'OUTPUT_MATERIAL')
+    assert out.inputs["Surface"].links[0].from_node.type == 'MIX_SHADER'
+    out = next(n for n in bpy.data.materials["useBackground1"].node_tree.nodes if n.type == 'OUTPUT_MATERIAL')
+    assert out.inputs["Surface"].links[0].from_node.type == 'HOLDOUT'
+
+
+def test_browser_tabs_and_edit_commands():
+    _clear()
+    wm = bpy.context.window_manager
+    a = material.new_material('BLINN')
+    a.use_fake_user = True
+    b = material.new_material('PHONG')
+    b.use_fake_user = True
+    wm.maya_kit_hs_material = b.name
+    assert bpy.ops.maya_kit.hs_node(node_type='ShaderNodeTexChecker', label="Checker") == {'FINISHED'}
+    assert bpy.ops.maya_kit.hs_node(node_type='ShaderNodeMapping', label="2d Placement") == {'FINISHED'}
+    ctx = bpy.context
+    wm.maya_kit_hs_sort = 'NAME'
+    names = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
+    assert "blinn1" in names and "phong1" in names
+    assert [it[1] for it in hs.browser_items(ctx, 'TEXTURES')] == ["Checker"]
+    assert [it[1] for it in hs.browser_items(ctx, 'UTILITIES')] == ["2d Placement"]
+    assert {it[1] for it in hs.browser_items(ctx, 'SHADING_GROUPS')} >= {"blinn1SG", "phong1SG"}
+    wm.maya_kit_hs_reverse = True
+    rev = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
+    wm.maya_kit_hs_reverse = False
+    assert rev == sorted(rev, key=str.lower, reverse=True)
+    # Delete Unused Nodes keeps lambert1 (Maya) and used materials
+    lam = material.default_material()
+    me = bpy.data.meshes.new("m")
+    ob = bpy.data.objects.new("o", me)
+    bpy.context.scene.collection.objects.link(ob)
+    me.materials.append(a)
+    assert bpy.ops.maya_kit.hs_edit(action='DELETE_UNUSED') == {'FINISHED'}
+    left = {m.name for m in bpy.data.materials}
+    assert lam.name in left and "blinn1" in left and "phong1" not in left, left
+
+
+def test_script_editor_runs_python_and_refuses_mel():
+    py = se.ensure_texts()
+    assert py.name.startswith("Python") and {t.get(se.LANG_PROP) for t in se.script_texts()} == {"MEL", "Python"}
+    py.clear()
+    py.write("x = 20\nx + 22")
+    _echo, res = se.run_text(py, py.as_string())
+    assert not res.error and "42" in res.text, res
+    mel = next(t for t in se.script_texts() if t.get(se.LANG_PROP) == "MEL")
+    _echo, res = se.run_text(mel, "polyCube;")
+    assert res.error and "MEL" in res.text
+    py.clear()
+    py.write("abc def")
+    py.current_line_index, py.current_character = 0, 0
+    py.select_end_line_index, py.select_end_character = 0, 3
+    assert se.selected_text(py) == "abc"
+
+
+def test_headers_patched():
+    assert "draw_collapsible" in bpy.types.NODE_MT_editor_menus.__dict__
+    for name, fn in (("PROPERTIES_HT_header", rs._header_draw), ("INFO_HT_header", se._info_header),
+                     ("TEXT_HT_header", se._text_header)):
+        assert getattr(bpy.types, name).draw._draw_funcs[0] is fn, name

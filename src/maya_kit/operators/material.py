@@ -34,7 +34,16 @@ MATERIALS = {
     'BLINN': ("blinn", "Blinn", {"Roughness": 0.3}),
     'PHONG': ("phong", "Phong", {"Roughness": 0.15}),
     'SURFACE': ("surfaceShader", "Surface Shader", {"Emission Strength": 1.0}),
+    # Step 105: the rest of Maya's Hypershade Create > Maya > Surface list that Blender can build (Principled stand-ins
+    # plus a node or two; )
+    'PHONG_E': ("phongE", "Phong E", {"Roughness": 0.25}),
+    'ANISOTROPIC': ("anisotropic", "Anisotropic", {"Roughness": 0.3, "Anisotropic": 0.5}),
+    'RAMP': ("rampShader", "Ramp Shader", {"Roughness": 0.5}),
+    'LAYERED': ("layeredShader", "Layered Shader", {}),
+    'USE_BACKGROUND': ("useBackground", "Use Background", {}),
 }
+# Kinds whose look comes from extra nodes around the Principled BSDF (``_build``)
+BUILT = {'RAMP', 'LAYERED', 'USE_BACKGROUND'}
 KIND_ITEMS = [(k, v[1], f"Maya {v[0]} (Principled BSDF)") for k, v in MATERIALS.items()]
 # The Assign Favorite Material submenu (Maya's surface-shader favourites).
 FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
@@ -65,7 +74,41 @@ def new_material(kind):
         node.inputs[socket].default_value = value
     if kind == 'SURFACE':
         node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
+    if kind in BUILT:
+        _build(mat, node, kind)
     return mat
+
+
+def _build(mat, bsdf, kind):
+    """Node set-ups of Maya shaders that aren't one Principled BSDF:
+    rampShader = colour from a ramp over the facing ratio (Layer Weight Facing -> Color Ramp -> Base Color);
+    layeredShader = two layers mixed (Mix Shader; Maya's top layer transparency = the mix factor);
+    useBackground = the surface shows the background (Holdout)."""
+    nodes, links = mat.node_tree.nodes, mat.node_tree.links
+    out = next(n for n in nodes if n.type == 'OUTPUT_MATERIAL')
+    if kind == 'RAMP':
+        facing = nodes.new('ShaderNodeLayerWeight')
+        ramp = nodes.new('ShaderNodeValToRGB')
+        facing.location = (bsdf.location.x - 560, bsdf.location.y)
+        ramp.location = (bsdf.location.x - 300, bsdf.location.y)
+        for el in ramp.color_ramp.elements:      # Maya's default ramp: one 0.5 grey entry
+            el.color = (0.5, 0.5, 0.5, 1.0)
+        links.new(facing.outputs["Facing"], ramp.inputs["Fac"])
+        links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    elif kind == 'LAYERED':
+        second = nodes.new('ShaderNodeBsdfPrincipled')
+        mix = nodes.new('ShaderNodeMixShader')
+        second.location = (bsdf.location.x, bsdf.location.y - 700)
+        mix.location = (out.location.x - 200, out.location.y)
+        out.location.x += 100
+        mix.inputs["Fac"].default_value = 0.0      # top layer (input 1) fully opaque
+        links.new(bsdf.outputs["BSDF"], mix.inputs[1])
+        links.new(second.outputs["BSDF"], mix.inputs[2])
+        links.new(mix.outputs["Shader"], out.inputs["Surface"])
+    elif kind == 'USE_BACKGROUND':
+        hold = nodes.new('ShaderNodeHoldout')
+        hold.location = (bsdf.location.x, bsdf.location.y + 200)
+        links.new(hold.outputs["Holdout"], out.inputs["Surface"])
 
 
 def default_material(create=True):
