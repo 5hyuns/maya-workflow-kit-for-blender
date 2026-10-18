@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 95 (V 스냅 확대) 완료 — `docs/steps/step_95.md`.
+  - step 81 의 「확대하면 V 스냅이 안 걸림」 은 kit · 확대 · 가림 검사 탓이 아니라 Blender 가 스냅 대상을 10 ms 에 한 번만 찾는 것
+    (`transform_snap.cc` transform_snap_mixed_apply) + 시뮬레이션이 이동을 한 틱에 몰아 보낸 것. 확대하면 드래그가 길어 첫 이동이 정점에서 멀었음.
+    `tests/gui/gui_step95_v_snap.py` (기본 / 확대 × X 화살표 → 앞·안쪽 정점, 가운데 핸들) 이동을 틱마다 → 모두 붙음. kit 코드 변경 없음 (delegated),
+    manual check (빠르게 끌어 바로 놓기) 추가, CLAUDE.md 주의 한 줄.
+  - 검증: 헤드리스 704/704, GUI 708/708.
+  - **바로 다음 할 일**: step 96 = Outliner Sets (research/README.md 대응표의 Outliner 행이 Sets 없어서 Partial, step_82.md 「남은 것」).
+    그다음 97 manual checks 정리 2. backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 94 (피벗 편집 RMB 마킹 메뉴) 완료 — `docs/steps/step_94.md`.
   - D / Insert 피벗 편집 중 RMB = Maya buildObjectMenuItemsNow 편집 모드 메뉴 (N Pin ☐ · NW/NE Snap Orientation/Position ☐ · S/SE/SW Reset ·
     E Exit, research 위치). Reset = 오브젝트 delta_location 0 / 컴포넌트 커서 → bbox 중심, Pin 꺼짐 (Maya 기본) = 선택이 바뀌면 사용자 컴포넌트

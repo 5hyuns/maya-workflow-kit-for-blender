@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 364 개 (step 94 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **351 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 365 개 (step 95 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **352 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -561,7 +561,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 81) 새 장면 (MayaKit 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
 - [ ] (step 81) Create > Cameras > Camera = Focal Length 35 (AE / CB), Ctrl+Shift+C 카메라로 Look Through 하면 뷰와 같은 화면.
-- [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 — 시뮬레이션에서는 큰 화면 크기에서 스냅이 안 걸렸음 (step_81.md).
+- [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 → 붙음 (step 95: 시뮬레이션 실패는 확대 탓이 아니라 Blender 의 10 ms 스냅 스로틀 + 한 틱에 몰아 보낸 이동 탓, `gui_step95_v_snap` 은 확대 / 기본 모두 통과).
 
 ### Step 82 — Outliner 드래그 = Maya 부모 지정
 
@@ -637,3 +637,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 94) 오브젝트 모드에서 D 를 누른 채 (또는 Insert 뒤) RMB 홀드 → Pin / Snap / Reset / Exit 메뉴. 피벗을 옮긴 뒤 S 방향 = Reset Pivot (피벗이 오브젝트 원점으로, 지오메트리 그대로), SE = 위치만, SW = 방향만, E = 피벗 편집 끝.
 - [ ] (step 94) 편집 모드에서 면 선택 → D 로 피벗을 다른 곳에 놓기 → 다른 면 선택 = 피벗이 새 선택 가운데로 (Pin 꺼짐). D + RMB 로 Pin Component Pivot 체크 → 선택을 바꿔도 놓은 피벗이 남음.
 - [ ] (step 94) Snap Pivot Orientation 끄기 → D + 면 클릭 = 피벗 위치만 바뀌고 방향은 그대로. Snap Pivot Position 끄기 → 클릭 위치가 면에 붙지 않음 (뷰 깊이).
+
+### Step 95 — V 스냅 (확대)
+
+- [ ] (step 95) W + V 로 X 축 화살표를 빠르게 휙 끌어 다른 큐브 정점 위에서 바로 놓기 (멈추지 않고) → 대부분 붙음. 가끔 놓은 자리가 정점 바로 앞이면 Blender 의 스냅이 10 ms 에 한 번만 다시 계산되는 한계 (`transform_snap.cc` transform_snap_mixed_apply; Blender 기본 스냅도 같음, step_95.md) — 정점 위에서 잠깐 멈추면 붙는지, Maya 사용자에게 거슬리는지.
