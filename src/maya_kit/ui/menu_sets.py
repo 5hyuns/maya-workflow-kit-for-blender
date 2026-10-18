@@ -92,10 +92,17 @@ def draw_item(layout, path, label):
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
     enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``)."""
     s = menu_map.spec(path)
-    if s is not None and s[0] in ("op", "v3d", "tool") and (notices.notice(path) or not runs_directly(path, s)):
+    if s is not None and s[0] in ("op", "v3d", "tool") and (notices.notice(path) or not runs_directly(path, s)
+                                                            or _has_saved_options(path)):
         layout.operator(MAYAKIT_OT_menu_item.bl_idname, text=label).item = path
         return
     draw_spec(layout, label, s, path)
+
+
+def _has_saved_options(path):
+    from ..operators import option_windows
+    w = option_windows.find_path(path)
+    return w is not None and option_windows.saved(w.key) is not None
 
 
 def op_polls(target):
@@ -151,11 +158,22 @@ def draw_spec(layout, label, s, path, icon='NONE'):
             setattr(op, key, value)
 
 
-# Maya's option box ( "optionBox",  「계획」 3): a second button on
-# the item's line breaks Blender's menu layout into a staircase (checked: row, split and two columns), so
-# such items are one "menu hold" button: click = the command, press and hold = a one-entry menu
-# "Option Box" (= run, then Adjust Last Operation). The box icon at the left marks them.
-OPTION_BOX_ICON = 'WINDOW'
+# Maya's option box ( "optionBox") is a small square at the right end of the item's line.
+# A second button on a Blender menu line breaks consecutive lines into a staircase (step 51; checked again in step
+# 103 with row / split / column / grid_flow lines,  「계획」 1), so the item stays one button:
+# its label ends with Maya's box mark, click = the command, press and hold = "Option Box" = the option window
+# (``operators/option_windows.py``) or the command's own settings.
+BOX_MARK = "  ❒"
+
+
+def _draw_boxed(layout, path, label):
+    s = menu_map.spec(path)
+    if s is None or s[0] in ("menu", "pie"):
+        draw_spec(layout, label + BOX_MARK, s, path)
+        return
+    op = layout.operator_menu_hold(MAYAKIT_OT_menu_item.bl_idname, text=label + BOX_MARK,
+                                   menu=MAYAKIT_MT_option_box.bl_idname)
+    op.item = path
 
 
 def _draw_items(layout, items, prefix, submenus):
@@ -165,16 +183,10 @@ def _draw_items(layout, items, prefix, submenus):
             if it[1]:
                 layout.label(text=it[1])
             continue
-        boxed = path in menu_data.OPTION_BOXES
         if sub_items(path, it) and path not in menu_map.MAP:
-            layout.menu(submenus[path], text=it[0], icon=OPTION_BOX_ICON if boxed else 'NONE')
-        elif boxed and (path not in menu_map.MAP or menu_map.spec(path)[0] in ("menu", "pie")):
-            # greyed like other unmapped items / a Blender submenu: the box marks Maya's option box
-            draw_spec(layout, it[0], menu_map.spec(path), path, icon=OPTION_BOX_ICON)
-        elif boxed:
-            op = layout.operator_menu_hold(MAYAKIT_OT_menu_item.bl_idname, text=it[0], icon=OPTION_BOX_ICON,
-                                           menu=MAYAKIT_MT_option_box.bl_idname)
-            op.item = path
+            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in menu_data.OPTION_BOXES else ""))
+        elif path in menu_data.OPTION_BOXES:
+            _draw_boxed(layout, path, it[0])
         else:
             draw_item(layout, path, it[0])
 
@@ -255,8 +267,6 @@ class MAYAKIT_OT_menu_item(bpy.types.Operator):
             return notices.tooltip(props.item, mapped=False) or \
                 f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
         text = notices.tooltip(props.item, mapped=True) or _op_description(props.item)
-        if props.item in menu_data.OPTION_BOXES:
-            text += "\nPress and hold: Option Box (settings)"
         return text
 
     def execute(self, context):
@@ -276,7 +286,7 @@ class MAYAKIT_OT_menu_item(bpy.types.Operator):
             return {'CANCELLED'}
         from ..marking.modal import run_action
         try:
-            run_action(context, action)
+            run_action(context, action, path=self.item)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
@@ -340,19 +350,17 @@ class MAYAKIT_OT_menu_whole_mesh(bpy.types.Operator):
 
 
 class MAYAKIT_MT_option_box(bpy.types.Menu):
-    """The option box of a Maya menu item (the item that was held)"""
+    """The option box of the Maya menu item that was held"""
     bl_idname = "MAYAKIT_MT_option_box"
     bl_label = "Option Box"
 
     def draw(self, context):
         props = getattr(context, "button_operator", None)
-        item = getattr(props, "item", "")
-        self.layout.operator(MAYAKIT_OT_menu_option_box.bl_idname, text="Option Box",
-                             icon=OPTION_BOX_ICON).item = item
+        self.layout.operator(MAYAKIT_OT_menu_option_box.bl_idname, text="Option Box").item = getattr(props, "item", "")
 
 
 class MAYAKIT_OT_menu_option_box(bpy.types.Operator):
-    """Maya option box: run the item, then adjust its settings (Adjust Last Operation)"""
+    """Maya option box: the command's option window"""
     bl_idname = "maya_kit.menu_option_box"
     bl_label = "Option Box"
     bl_options = {'INTERNAL'}
@@ -361,22 +369,58 @@ class MAYAKIT_OT_menu_option_box(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
+        from ..operators import option_windows
+        label = props.item.rsplit('/', 1)[-1]
         if props.item not in menu_map.MAP:
-            return f"Maya: {props.item} option box\nNo Blender equivalent in Maya Kit yet"
-        return f"{props.item.rsplit('/', 1)[-1]}: run, then adjust its settings (Maya option box)"
+            return f"{label} options (greyed: no Blender equivalent in Maya Kit)"
+        w = option_windows.find_path(props.item)
+        if w is not None:
+            return w.title
+        kind = option_kind(props.item)
+        if kind == "tool":
+            return f"{label}: the tool and its Tool Settings"
+        return f"{label} Options: run, then its settings (Adjust Last Operation)"
 
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
         if action is None:
             self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Kit yet")
             return {'CANCELLED'}
+        if option_kind(self.item) == "generic":
+            return bpy.ops.maya_kit.option_generic('INVOKE_DEFAULT', item=self.item)
         from ..marking.modal import run_action
         try:
-            run_action(context, action, option=True)
+            run_action(context, action, option=True, path=self.item)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+def option_kind(path):
+    """What a mapped item's option box opens: "window" (a kit / Maya option window), "dialog" (the operator's own
+    options window or file dialog), "tool" (tool + Tool Settings), "redo" (run + Adjust Last Operation with the
+    operator's settings), "generic" (a window saying Blender has no settings for it), "menu"; "none" = unmapped."""
+    from ..operators import option_windows
+    s = menu_map.spec(path)
+    if s is None:
+        return "none"
+    if option_windows.find_path(path) is not None:
+        return "window"
+    kind, target, _props = s
+    if kind == "tool":
+        return "tool"
+    if kind in ("menu", "pie"):
+        return "menu"
+    mod, name = target.split(".")
+    try:
+        rna = getattr(getattr(bpy.ops, mod), name).get_rna_type()
+    except (AttributeError, KeyError):
+        return "none"
+    if "option_box" in rna.properties or "filepath" in rna.properties:
+        return "dialog"
+    shown = [p for p in rna.properties if p.identifier != "rna_type" and not p.is_hidden]
+    return "redo" if shown else "generic"     # maya_kit.option_generic: a window that says Blender has none
 
 
 def _call(op_id, props):

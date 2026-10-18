@@ -51,8 +51,21 @@ def poll_action(action):
         return False
 
 
-def run_action(context, action, option=False):
-    """Run a menu action like Maya runs the item (or its option box)."""
+def run_action(context, action, option=False, path=None):
+    """Run a menu action like Maya runs the item (or its option box). An action with an option window
+    (``operators/option_windows``) opens it as the option box, and a plain run uses its saved values (Maya runs
+    a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path."""
+    from ..operators import option_windows
+    window = option_windows.find_path(path) if path else option_windows.find(action)
+    if window is not None:
+        if option:
+            mod, name = window.idname.split(".")
+            return getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT')
+        if option_windows.saved(window.key) is not None:
+            res = option_windows.run_saved(window, context)
+            if isinstance(res, str):
+                raise RuntimeError(res)
+            return res
     kind, target, props = menu_map.normalize(action)
     if kind == "menu":
         return bpy.ops.wm.call_menu(name=target)

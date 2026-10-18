@@ -65,12 +65,15 @@ def test_option_box_count_matches_maya():
         gen_menu_data._OPTION.clear()
         expected = gen_menu_data.option_boxes(gen_menu_data.build(data))   # incl. step 101 run-time items
         assert expected == set(menu_data.OPTION_BOXES), len(expected ^ set(menu_data.OPTION_BOXES))
-    boxes = [b for b in _all_menu_buttons() if b["icon"] == menu_sets.OPTION_BOX_ICON]
+    # step 103: the box is Maya's mark at the end of the label (no left window icon)
+    boxes = [b for b in _all_menu_buttons() if b["text"].endswith(menu_sets.BOX_MARK)]
+    assert not [b for b in _all_menu_buttons() if b["icon"] == 'WINDOW']
     drawn = {b["item"] for b in boxes if "item" in b}
     submenus = [b for b in boxes if b["kind"] == "menu"]     # a submenu entry with a Maya option box
     # Every Maya item with an option box is drawn with one (some menus share a label, so some paths
     # are drawn more than once).
-    assert drawn | {p for p in menu_data.OPTION_BOXES if p.rsplit("/", 1)[-1] in {b["text"] for b in submenus}}         == set(menu_data.OPTION_BOXES), sorted(set(menu_data.OPTION_BOXES) - drawn)[:5]
+    assert drawn | {p for p in menu_data.OPTION_BOXES
+                    if p.rsplit("/", 1)[-1] + menu_sets.BOX_MARK in {b["text"] for b in submenus}}         == set(menu_data.OPTION_BOXES), sorted(set(menu_data.OPTION_BOXES) - drawn)[:5]
     assert len(menu_data.OPTION_BOXES) > 400
 
 
