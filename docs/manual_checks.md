@@ -671,3 +671,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 102) File > Export Selection... → 오른쪽 Files of type 을 OBJ → FBX 로 바꾸면 파일 이름 확장자가 따라 바뀌는지, 시작 폴더 (OBJ = data, FBX = scenes) 가 Maya 와 같다고 느껴지는지.
 - [ ] (step 102) 실제 Maya 2022 GUI 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지 (mayapy 로는 확인됨). Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
 - [ ] (step 102) Import 대화상자에 .ma 파일을 고르면 「.ma / .mb can't be read: export FBX from Maya」 오류.
+
+### Step 103 — Maya 옵션 창
+
+- [ ] (step 103) Create > Polygon Primitives > Cube ❒ 를 누르고 있기 → 「Option Box」 → Polygon Cube Options 창. Width 3 → Apply: 창이 열린 채 큐브가 생기는지 (Maya Apply). Create: 만들고 닫힘. 다시 메뉴에서 그냥 Cube 클릭 → 3 폭 큐브 (Maya 처럼 저장된 값). Reset Settings → 1 로 돌아가는지.
+- [ ] (step 103) Edit Mesh > Bevel ❒ / Constrain > Parent ❒ 창의 필드 이름·기본값이 Maya 창과 같다고 느껴지는지 (research/maya/screens/step103/ 비교 그림). 회색 「Not in Blender」 목록이 거슬리는지.
+- [ ] (step 103) 메뉴 라벨 끝의 ❒ 표시가 Maya 사용자에게 옵션 상자로 읽히는지, 누르고 있기로 여는 것이 불편한지 (Maya 는 ❒ 를 클릭).

@@ -255,6 +255,8 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
                                            description="Maya Kit project folder: file dialogs open in its scenes "
                                                        "folder, renders go to its images folder")
     recent_projects: bpy.props.StringProperty(options={'HIDDEN'})   # newline-separated, newest first
+    # Maya option window values (operators/option_windows.py, step 103): Maya keeps them in optionVars.
+    option_settings: bpy.props.StringProperty(options={'HIDDEN'})   # JSON {window key: {field: value}}
 
     # Scene concepts (docs/steps/step_10.md; docs/user_decisions.md #1, #2).
     parent_mode: bpy.props.EnumProperty(

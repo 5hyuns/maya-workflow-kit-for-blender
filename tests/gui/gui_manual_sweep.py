@@ -4293,6 +4293,8 @@ def _m67_4_menu():
         layout = rec
     with override():
         cls.draw(_M(), bpy.context)
+    mark = ms.BOX_MARK          # step 103: option-box items end with Maya's box mark
+    rec.out = [(kind, t.replace(mark, "") if isinstance(t, str) else t, x) for kind, t, x in rec.out]
     texts = [t for kind, t, _x in rec.out if kind in ("op", "menu")]
     want = ["Render Settings...", "Render Using", "Render Current Frame", "Redo Previous Render",
             "IPR Render Current Frame", "Render Sequence", "Batch Render"]

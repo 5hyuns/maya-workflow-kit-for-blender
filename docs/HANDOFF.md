@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 103 (진짜 옵션 창, Maya 모양) 완료 — `docs/steps/step_103.md`.
+  - Maya 2022 GUI 에서 옵션 창 26 개를 열어 필드·기본값·버튼을 읽음 (`research/maya/re/option_boxes.md`). kit 옵션 창 26 개
+    (`operators/option_windows.py`: 기본형 6, Duplicate Special, Group, Freeze, Reset, Combine, Smooth, Extrude, Bevel, Bridge,
+    Merge, Bind Skin, Parent / Point / Orient, Set Key, Bake Simulation, UV Planar / Automatic, New Scene, Save Scene) —
+    Maya 라벨·기본값, 명령 버튼 / Apply (창 유지) / Save · Reset Settings, 값 저장 후 메뉴 클릭도 그 값으로.
+  - 옵션 상자 모양: 오른쪽 따로 누르는 □ 는 연속 메뉴 줄에서 계단 (재측정) → 버튼 하나 + 라벨 끝 ❒, 누르고 있기 = Option Box,
+    왼쪽 창 아이콘 / Blender 말투 제거. 매핑된 옵션 상자 중 빈 것 0 (설정 없는 50 개는 「Blender 에 없음」 창).
+  - 검증: 진짜 옵션 창 38 개, 헤드리스 757/757, GUI 1031/1031, 비교 그림 `research/maya/screens/step103/`.
+  - **바로 다음 할 일**: step 104 = backlog 6 「Editor chrome: Graph Editor, Dope Sheet, UV Editor with Maya menus」
+    (step_98.md #24, #26). 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 102 (Maya 파일 I/O: 대화상자, Files of type, 프리셋, 기본 프로젝트) 완료 — `docs/steps/step_102.md`.
   - File > Import / Export All / Export Selection = 대화상자 하나 (`operators/file_io.py`): 오른쪽 Files of type (Maya Scenes
     .blend, FBX, OBJ, Alembic, USD, glTF, Import 는 Best Guess) + Maya cm / Y-up 프리셋 + Selection Only, 옵션 박스 = 그 패널.

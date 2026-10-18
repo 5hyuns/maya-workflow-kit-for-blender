@@ -136,9 +136,11 @@ def _maya_naming(context):
         return True
 
 
-def create(context, kind, maya_naming=True):
-    """Create ``kind`` at the world origin; returns the new object."""
+def create(context, kind, maya_naming=True, overrides=None):
+    """Create ``kind`` at the world origin; returns the new object. ``overrides``: operator values in Maya units
+    (lengths are scaled like the defaults), e.g. from the primitive's option window (step 103)."""
     _label, base, op, props, rot = KINDS[kind]
+    props = {**props, **(overrides or {})}
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     mod, name = op.split(".")
