@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 73 (타임 슬라이더 키 틱 + Range Slider 드래그) 완료 — `docs/steps/step_73.md`.
+  - 선택 노드의 키가 Maya 처럼 1 px 빨간 선 (브레이크다운 초록).
+  - MayaKit 타임라인 헤더의 Range Slider 바를 끌어 재생 범위를 옮기거나 끝을 바꾼다. 더블클릭 = 전체 범위.
+    바는 `ui/range_bar.py` 가 헤더 한 줄을 읽어 자리를 찾고 직접 그린다.
+  - 검증: 헤드리스 589/589, GUI 504/504, dogfood 47/47.
+  - **바로 다음 할 일**: step 74 프리셀렉트 확대 (엣지·면·오브젝트, Move/Rotate/Scale 툴 중; step 30 기즈모). 그 뒤 75 Status Line 입력 줄,
+    76 선택 우선순위, 77 편집 모드 Insert, 78 키 묶음, 79 3D Cut and Sew.
+
 - Step 72 (상단 바 다시 그리기 + Maya 인뷰 메시지) 완료 — `docs/steps/step_72.md`.
   - F2–F6 이 상단 메뉴 바를 바로 다시 그린다 (`status_line.redraw_top_bars`).
   - Maya 실측대로 인뷰 메시지 (`ui/view_message.py`): F8 (`maya_kit.toggle_sel_mode`), Ctrl+G, Ctrl+H / Alt+H / h, b 소프트 선택 켬, Make Live.

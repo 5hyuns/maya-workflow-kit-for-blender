@@ -500,3 +500,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
 - [ ] (step 72) MayaKit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지.
 - [ ] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만.
+
+### Step 73 — 타임 슬라이더 키 틱 · Range Slider 드래그
+
+- [ ] (step 73) 키가 있는 오브젝트를 선택하면 타임 슬라이더에 그 프레임마다 1 px 빨간 세로선 (Breakdown 키는 초록), 선택을 풀면 사라짐 — research/maya/screens/ts/ts_01_window.png 와 비교. 뼈 (포즈 모드) 는 그 뼈의 키만.
+- [ ] (step 73) Range Slider 바: 회색 구간 가운데를 끌면 재생 범위가 같은 길이로 움직이고 타임 슬라이더가 따라감; 양끝 손잡이를 끌면 그 끝만; 애니메이션 범위 밖으로는 안 나감; ESC / RMB = 취소; Ctrl+Z 로 되돌림.
+- [ ] (step 73) 바 더블클릭 = 전체 애니메이션 범위 ↔ 재생 범위 (GUI 테스트는 더블클릭 이벤트를 만들 수 없어 동작만 확인함).
+- [ ] (step 73) UI 배율 1.0 / 1.5 / 2.0 에서 바가 playback start 필드와 playback end 필드 사이에 정확히 그려지고 숫자가 손잡이 옆에 읽힘.

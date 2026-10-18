@@ -617,7 +617,7 @@ def patch_pose_joints(kd):
 # Dope Sheet select_column (IC:1435). "User Interface" / Outliner K only act over a button / row.
 # S (hotkeySetup.mel:328) = every keyable channel, not IC's LocRotScale (IC:2463, :2536).
 
-TIME_SLIDER_SHADOWS = ("Dopesheet", "View2D")
+TIME_SLIDER_SHADOWS = ("Dopesheet", "View2D", "Screen")   # Screen: the step 73 Range Slider click
 
 
 def patch_time_slider(kd):
@@ -628,6 +628,12 @@ def patch_time_slider(kd):
          shadows=TIME_SLIDER_SHADOWS)
     _add(kd, "Dopesheet", "maya_kit.time_slider_menu", make_event("RIGHTMOUSE"), first=True,
          shadows=TIME_SLIDER_SHADOWS)
+    # Range Slider bar (step 73): a click on the empty label in the timeline header reaches the window
+    # keymaps; the operator passes through anywhere but over the bar ui/range_bar.py drew.
+    # Every editor keymap that uses the click runs first (intended: only unhandled clicks get here).
+    for value in ("PRESS", "DOUBLE_CLICK"):
+        under = tuple(n for n in kd.keymap_names() if n != "Screen" and kd.find(n, type="LEFTMOUSE", value=value))
+        _add(kd, "Screen", "maya_kit.range_bar_drag", make_event("LEFTMOUSE", value=value), shadows=under)
     kd.remove("Mesh", "wm.tool_set_by_id", type="K")
     kd.remove("Dopesheet", "action.select_column", type="K")
     _add(kd, "Screen", "maya_kit.tap_hold", make_event("K"), {"binding": "time_drag"},
