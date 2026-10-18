@@ -109,14 +109,19 @@ def draw_range_slider(layout, context):
     row.ui_units_x = 4.5
     row.active = scene.use_preview_range
     row.prop(scene, "frame_preview_start", text="")
-    # Maya's range bar (ui_layout.md:285): Blender has no such widget. The toggle = use the playback range
-    # (off = play the whole animation range), the bar shows the range and frames the time slider on it.
+    # Maya's range bar (ui_layout.md:285). In the MayaKit layout an empty label holds its place and
+    # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
+    # widget: the toggle = use the playback range (off = the whole animation range), the button frames it.
+    from . import range_bar
     bar = layout.row(align=True)
-    bar.ui_units_x = 18
-    a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \
-        (scene.frame_start, scene.frame_end)
-    bar.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
-    bar.operator("anim.scene_range_frame", text=f"{a}" + " " * 40 + f"{b}")
+    bar.ui_units_x = range_bar.BAR_UNITS
+    if range_bar.active(context):
+        bar.label(text="")
+    else:
+        a, b = (scene.frame_preview_start, scene.frame_preview_end) if scene.use_preview_range else \
+            (scene.frame_start, scene.frame_end)
+        bar.prop(scene, "use_preview_range", text="", toggle=True, icon='PREVIEW_RANGE')
+        bar.operator("anim.scene_range_frame", text=f"{a}" + " " * 40 + f"{b}")
     row = layout.row(align=True)
     row.ui_units_x = 4.5
     row.active = scene.use_preview_range
@@ -420,9 +425,12 @@ def range_rect(region, a, b):
 def _draw_range():
     context = bpy.context
     wm = context.window_manager
-    if not getattr(wm, "maya_kit_time_range_on", False) or not _is_timeline(context):
+    if not _is_timeline(context):
         return
     region = context.region
+    _draw_keys(context, region)
+    if not getattr(wm, "maya_kit_time_range_on", False):
+        return
     import gpu
     from gpu_extras.batch import batch_for_shader
     x0, x1 = range_rect(region, *wm.maya_kit_time_range)
@@ -433,6 +441,51 @@ def _draw_range():
     shader.uniform_float("color", RANGE_COLOR)
     batch.draw(shader)
     gpu.state.blend_set('NONE')
+
+
+# --- key ticks -----------------------------------------------------
+# Maya draws the keys of the selected nodes (timeSliderShowKeys "active", PREF:473) as 1 px lines over the
+# whole Time Slider height: displayRGBColor timeSliderKey red, timeSliderBreakdown green
+# (; checked in ).
+KEY_RGB = (1.0, 0.0, 0.0, 1.0)
+BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
+
+
+def key_frames(nodes):
+    """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key."""
+    from ..operators import time_keys
+    frames = {}
+    for node in nodes:
+        for fc in time_keys.node_fcurves(node):
+            for kp in fc.keyframe_points:
+                f = round(kp.co.x, 3)
+                frames[f] = frames.get(f, True) and kp.type == 'BREAKDOWN'
+    return sorted(frames.items())
+
+
+def _draw_keys(context, region):
+    from . import channel_box
+    keys = key_frames(channel_box.targets(context))
+    if not keys:
+        return
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    w = max(1.0, round(context.preferences.system.ui_scale or 1.0))
+    h = region.height
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    for colour, breakdown in ((KEY_RGB, False), (BREAKDOWN_RGB, True)):
+        tris = []
+        for f, bd in keys:
+            if bd != breakdown:
+                continue
+            x = region.view2d.view_to_region(f, 0, clip=False)[0]
+            if x < -w or x > region.width + w:
+                continue
+            x0 = int(x)
+            tris += [(x0, 0), (x0 + w, 0), (x0 + w, h), (x0, 0), (x0 + w, h), (x0, h)]
+        if tris:
+            shader.uniform_float("color", colour)
+            batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
 
 
 # --- timeline view = playback range -------------------------------------------------------
