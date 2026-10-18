@@ -76,7 +76,7 @@ def run_action(context, action, option=False, path=None):
     if kind == "tool":
         res = bpy.ops.maya_kit.menu_tool(tool=target, edit=props["edit"])
         if option:  # tool + its settings (toolPropertyWindow)
-            bpy.ops.maya_kit.editor_toggle(editor='TOOL_SETTINGS')
+            bpy.ops.maya_kit.editor_toggle(editor='TOOL_SETTINGS', show=True)
         return res
     if kind == "v3d" and (context.area is None or context.area.type != 'VIEW_3D'):
         return bpy.ops.maya_kit.menu_run(op=target, props=json.dumps(props))

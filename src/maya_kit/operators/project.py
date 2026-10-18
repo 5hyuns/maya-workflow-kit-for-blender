@@ -221,7 +221,8 @@ class MAYAKIT_OT_project_window(bpy.types.Operator):
     bl_idname = "maya_kit.project_window"
     bl_label = "Project Window"
 
-    name: StringProperty(name="Current Project", default=DEFAULT_NAME)
+    # The Blender notice is this field's tooltip, not a paragraph in the window (step 106).
+    name: StringProperty(name="Current Project", default=DEFAULT_NAME, description=NOTICE)
     location: StringProperty(name="Location", subtype='DIR_PATH')
 
     def invoke(self, context, event):
@@ -230,9 +231,7 @@ class MAYAKIT_OT_project_window(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self, width=DIALOG_WIDTH, confirm_text="Accept")
 
     def draw(self, context):
-        from ..ui import chrome
         layout = self.layout
-        chrome.paragraph(layout, context, NOTICE, width=DIALOG_WIDTH - 20)
         layout.prop(self, "name")
         layout.prop(self, "location")
         box = layout.box()

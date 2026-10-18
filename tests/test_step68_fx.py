@@ -250,7 +250,10 @@ def test_ae_nucleus_tab():
     for attr in ("gravity", "gravity_direction", "substeps", "space_scale"):
         assert attr in props, (attr, props)
     labels = " ".join(e[2].get("text", "") for e in rec.log if e[0] == "label")
-    assert "nucleus1" in labels and "no nucleus node" in labels, labels
+    assert "nucleus1" in labels and "no nucleus node" not in labels, labels
+    # the Blender notice is a tooltip of the head row (step 106)
+    tips = [e[3].text for e in rec.log if e[0] == "operator" and e[1][:1] == ("maya_kit.tip",)]
+    assert any("no nucleus node" in t for t in tips), tips
 
 
 def test_fx_menu_and_shelf_mapping():

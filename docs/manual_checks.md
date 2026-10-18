@@ -691,3 +691,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 105) Hypershade Create > 2D Textures > Checker / General Utilities > 2d Placement 를 누르면 현재 재질 그래프 왼쪽에 노드가 생기는지 (연결은 안 함 — Maya 처럼).
 - [ ] (step 105) Render Settings Common 탭: File name prefix 를 입력하고 Frame/Animation ext 를 name.#.ext 로 → F12 / 애니메이션 렌더가 그 이름으로 저장되는지; Ctrl+Z 로 필드 편집이 되돌아가는지. EEVEE 탭과 Common 탭을 오갈 때 Blender 렌더 패널이 그 창에서만 숨는지 (다른 Properties 창 Render 탭은 그대로).
 - [ ] (step 105) Script Editor: 실제 키보드로 Ctrl+Enter (입력 유지) / 숫자패드 Enter (입력 지움), MEL 탭에서 실행하면 경고만. 위 기록 창에 명령과 결과가 Maya 처럼 읽히는지 (Blender 연산자 기록도 함께 나옴).
+
+### Step 106 — Tool Settings 도크 / Attribute Editor
+
+- [ ] (step 106) 실제 마우스로 Status Line 의 Tool Settings 버튼을 여러 번 눌러 도크가 열리고 닫히는지 (닫히면 뷰포트 너비가 원래대로). 도크 너비 280 px 가 Maya 처럼 느껴지는지, Outliner 와 뷰포트 사이 자리가 거슬리는지 (Maya 는 창 맨 왼쪽).
+- [ ] (step 106) 도크를 연 채 저장 → 다시 열기: 도크가 남고 토글로 닫히는지. Q/W/E/R 를 바꾸면 절이 바로 바뀌는지, 조각 브러시 등 다른 도구는 Blender 도구 패널이 아래에 보이는지.
+- [ ] (step 106) 회색 줄 (Transform Constraint, Tweak Mode, Bake Pivot Orientation …) 에 마우스를 올리면 툴팁에 Blender 대안이 나오는지; 머리 줄의 도구 아이콘과 "Move Tool" 글자가 겹쳐 보이지 않는지.
+- [ ] (step 106) AE: Focus 를 누르고 다른 물체를 선택해도 AE 가 그 노드에 머무는지, List > Auto Load Selected Attributes 를 켜면 다시 선택을 따르는지; Copy Tab 으로 뜬 창이 그 물체에 고정되는지; Notes 에 입력 → Ctrl+Z.
+- [ ] (step 106) Channel Box INPUTS 의 polyExtrudeFace1 이름에 마우스를 올리면 「Blender keeps no edit-mode history」 툴팁이 나오는지; Project Window 의 Current Project 칸 툴팁.

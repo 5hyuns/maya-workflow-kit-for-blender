@@ -517,11 +517,38 @@ def _expire():
     return 0.5
 
 
+class MAYAKIT_OT_tip(bpy.types.Operator):
+    """A note about the Blender side of a Maya window, shown as a tooltip instead of a sentence in the window
+    (docs/steps/step_106.md 「계획」 4); clicking puts it in the Help Line"""
+    bl_idname = "maya_kit.tip"
+    bl_label = "Note"
+    bl_options = {'INTERNAL'}
+
+    text: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, props):
+        return props.text
+
+    def execute(self, context):
+        if self.text:
+            show(self.text)
+        return {'FINISHED'}
+
+
+def tip(layout, text, label="", icon='INFO'):
+    """A flat button whose tooltip is ``text`` (Maya windows carry no Blender explanation sentences)."""
+    op = layout.operator(MAYAKIT_OT_tip.bl_idname, text=label, icon=icon, emboss=False)
+    op.text = text
+    return op
+
+
 def register():
-    pass
+    bpy.utils.register_class(MAYAKIT_OT_tip)
 
 
 def unregister():
+    bpy.utils.unregister_class(MAYAKIT_OT_tip)
     for fn in (_expire, _redraw_status):
         if bpy.app.timers.is_registered(fn):
             bpy.app.timers.unregister(fn)

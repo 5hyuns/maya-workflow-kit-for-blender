@@ -321,10 +321,17 @@ def test_attribute_editor_joint_tabs():
     wm.maya_kit_ae_tab, wm.maya_kit_ae_kind = "", "S"
     assert ae.current_tab(bpy.context, pb2) == "J"
     rec = Recorder()
-    ae.draw(rec, bpy.context, pb2)
+    notices = import_module(kit.MODULE + ".ui.notices")
+    tips, tip = [], notices.tip
+    notices.tip = lambda layout, text, **kw: tips.append(text)
+    try:
+        ae.draw(rec, bpy.context, pb2)
+    finally:
+        notices.tip = tip
     labels = rec.texts("label")
     assert "joint:" in labels and "Transform Attributes" in labels and "Joint" in labels, labels
-    assert "Joint Orient" in labels and ae.JOINT_AXIS_NOTE in labels
+    # the joint axis note is a tooltip (step 106: no Blender sentences in the AE)
+    assert "Joint Orient" in labels and ae.JOINT_AXIS_NOTE not in labels and ae.JOINT_AXIS_NOTE in tips
     assert "Display as Control Shape" in rec.texts("prop") and "Draw Style" in rec.texts("prop")
     ae.set_tab(bpy.context, f"C:{con.name}")
     rec = Recorder()

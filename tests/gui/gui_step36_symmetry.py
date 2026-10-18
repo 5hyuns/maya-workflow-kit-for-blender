@@ -11,7 +11,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
 C = {}
@@ -170,8 +170,14 @@ def s_tool_settings_wait():
 @step
 def s_tool_settings_shot():
     shot("gui_step36_tool_settings.png")
-    tap('ESC')
-    check("Tool Settings popup drawn (screenshot)", True)
+    # step 106: Tool Settings is a dock left of the viewport; the second toggle closes it
+    from importlib import import_module
+    tool_dock = import_module(MODULE + ".ui.tool_dock")
+    shown = tool_dock.shown(win().screen)
+    with v3d_override():
+        bpy.ops.maya_kit.editor_toggle(editor='TOOL_SETTINGS')
+    check("Tool Settings dock drawn (screenshot), closed by the second toggle",
+          shown and not tool_dock.shown(win().screen))
 
 
 run()
