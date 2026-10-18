@@ -128,8 +128,9 @@ MAP = {
     "Edit/Redo": "ed.redo",
     "Edit/Repeat": "screen.repeat_last",
     "Edit/Recent Commands List": "screen.repeat_history",
+    "Edit/Cut": "maya_kit.cut",                              # copy + delete (step 90)
     "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
-    "Edit/Paste": ("v3d", "view3d.pastebuffer", {}),
+    "Edit/Paste": ("v3d", "maya_kit.paste", {}),
     # Maya Delete Keys = every key of the selection (step 56; Time Slider RMB Delete = this frame / range)
     "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Edit/Keys/Cut Keys": ("maya_kit.time_keys", {"action": "CUT"}),
