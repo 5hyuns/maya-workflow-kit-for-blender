@@ -171,9 +171,11 @@ MAP = {
     "Create/Annotation...": ("tool", "builtin.annotate", False),
     "Create/Measure Tools/Distance Tool": ("tool", "builtin.measure", False),
     "Create/Empty Group": _create('EMPTY_GROUP'),
-    "Create/Sets/Set": "collection.create",
+    "Create/Sets/Set": "maya_kit.create_set",                       # step 96: kit sets (operators/sets.py)
+    "Create/Sets/Quick Select Set...": "maya_kit.create_quick_select_set",
     # --- Select ---
     "Select/All": ("object.select_all", {"action": 'SELECT'}),
+    "Select/Quick Select Sets": ("menu", "MAYAKIT_MT_quick_select_sets"),   # step 96
     "Select/All by Type/Joints": ("object.select_by_type", {"type": 'ARMATURE'}),
     "Select/All by Type/Lattices": ("object.select_by_type", {"type": 'LATTICE'}),
     "Select/All by Type/Transforms": ("object.select_by_type", {"type": 'EMPTY'}),
