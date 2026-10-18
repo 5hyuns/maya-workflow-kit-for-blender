@@ -579,3 +579,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 84) 범위 위를 움직이지 않고 클릭 = 범위 사라지고 시간 이동. 범위 밖 클릭 / 드래그 = 시간 스크럽 (범위 사라짐). Ctrl+Z 한 번 = 드래그 전.
 - [ ] (step 84) Graph Editor / Dope Sheet 의 위쪽 프레임 숫자 줄 클릭은 Blender 그대로 시간 이동.
 
+### Step 85 — 매니퓰레이터 Ctrl+축 / Shift+MMB
+
+- [ ] (step 85) W 툴에서 X 화살표를 Ctrl+LMB 로 끌기 = YZ 평면 이동 (X 그대로), 그 평면 핸들이 노랗게 (활성) 되고 이어서 MMB 드래그도 그 평면. Ctrl 을 누른 채 끌어도 스냅이 켜지지 않음.
+- [ ] (step 85) 가운데 사각형 Ctrl+클릭 = 활성 핸들 해제 (노란 평면 / 축 없어짐, MMB = 화면 평면 자유 이동), 큐브는 안 움직임.
+- [ ] (step 85) 아무 곳에서 Shift+MMB 드래그 = 처음 움직인 방향에 가까운 축으로만 이동 (persp 에서 비스듬한 축도), MMB 를 놓으면 확정. R 툴 Ctrl+X 화살표 = Y·Z 스케일.
+- [ ] (step 85) 편집 모드 (컴포넌트) 에서도 같음. E (Rotate) 툴은 Blender 기즈모 그대로 (Ctrl+링 = Blender 스냅).
+

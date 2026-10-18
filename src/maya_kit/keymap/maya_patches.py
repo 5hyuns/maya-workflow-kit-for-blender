@@ -22,7 +22,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.time_range_drag", "maya_kit.manip_duplicate", "maya_kit.manip_press",
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.time_range_drag", "maya_kit.manip_ctrl", "maya_kit.manip_duplicate", "maya_kit.manip_press",
                       "maya_kit.select_priority", "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
                       "maya_kit.time_slider_menu")
 
@@ -837,6 +837,22 @@ def patch_time_range(kd):
     _add(kd, "Time Scrub", "maya_kit.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=shadows)
 
 
+# --- 41. Manipulator Ctrl+LMB axis = plane, Shift+MMB = closest axis (docs/steps/step_85.md 「계획」 1-3) ----------
+# Ctrl+LMB sits first in the gizmo keymaps (only over a highlighted gizmo; passes through off the kit manipulator's
+# axis / Move centre handles). Shift+MMB goes in the Move / Scale tool keymaps (3D View has no Shift+MMB item; IC
+# pans with Alt+MMB): a short modal reads the first movement, picks the axis and starts the transform (a CLICK_DRAG
+# item never got the simulated MMB drag, step_85.md).
+
+def patch_manip_ctrl(kd):
+    for km in GIZMO_KEYMAPS:
+        _add(kd, km, "maya_kit.manip_ctrl", make_event("LEFTMOUSE", "PRESS", ctrl=True), first=True)
+    for km, _idname, mode in MMB_TOOLS:
+        if mode == 'ROTATE':
+            continue
+        _add(kd, km, "maya_kit.manip_mmb_auto", make_event("MIDDLEMOUSE", "PRESS", shift=True), {"mode": mode},
+             shadows=(km,))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -847,7 +863,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
-           patch_key_insert, patch_time_range)
+           patch_key_insert, patch_time_range, patch_manip_ctrl)
 
 
 def apply(data):

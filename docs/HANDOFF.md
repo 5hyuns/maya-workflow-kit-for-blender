@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 85 (매니퓰레이터 Ctrl+축 / Shift+MMB) 완료 — `docs/steps/step_85.md`.
+  - W / R 매니퓰레이터 축 Ctrl+LMB 드래그 = 나머지 두 축 평면 이동 / 스케일 + 그 평면이 활성 핸들, Move 가운데 Ctrl+클릭 = 활성 핸들 해제,
+    Shift+MMB 드래그 = 첫 움직임에 가까운 축 (`operators/manip.py` manip_ctrl / manip_mmb_auto). Rotate 는 C 기즈모 그대로.
+  - 측정: Ctrl 을 누른 채 시작한 이동은 스냅 반전 안 됨; 시뮬레이션에서 MMB CLICK_DRAG 항목은 불리지 않음 → PRESS + 모달.
+  - 검증: 헤드리스 667/667, GUI 601/601, dogfood 47/47.
+  - **바로 다음 할 일**: step 86 Dope Sheet · NLA · Node Editor 선택 수식 (Shift 토글 / Ctrl 해제 / Ctrl+Shift 추가; keymap/maya_patches.py
+    SELECT_RULES 확장, step 84 의 Dopesheet LMB PRESS 맨 앞 항목 (TIMELINE 만) 고려). 그 뒤 87 뷰 키 묶음 3, 88 manual_checks → GUI.
+    backlog = `hermes/autodrive_bmk/backlog_81.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 84 (타임 슬라이더 Shift 범위 키 이동·늘이기) 완료 — `docs/steps/step_84.md`.
   - Shift 범위 가운데 드래그 = 범위 안 키 이동, 끝 화살표 = 반대 끝 기준 늘이기, 덮어쓰기, 언두 한 단계, 흰 화살표 (`operators/time_range.py`,
     `ui/time_slider.py` `time_range_drag`). 측정: `FCurve.update()` 는 같은 프레임 키를 합침 → 드래그 중엔 sort + handles_recalc 만.

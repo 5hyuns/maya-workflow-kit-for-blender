@@ -41,12 +41,13 @@ def test_reset():
 def test_keymaps():
     kc = bpy.context.window_manager.keyconfigs["Maya"]
     for name in patches.GIZMO_KEYMAPS:
-        items = [k for k in kc.keymaps[name].keymap_items if k.active]
+        # step 85 puts its Ctrl+LMB item in front; the first plain item is still the handle press
+        items = [k for k in kc.keymaps[name].keymap_items if k.active and not k.ctrl]
         first = items[0]
         assert (first.idname, first.type, first.value, first.shift) == \
             ("maya_kit.manip_press", 'LEFTMOUSE', 'PRESS', False), name
     for km, _idname, mode in patches.MMB_TOOLS:
-        mmb = [k for k in kc.keymaps[km].keymap_items if k.active and k.type == 'MIDDLEMOUSE']
+        mmb = [k for k in kc.keymaps[km].keymap_items if k.active and k.type == 'MIDDLEMOUSE' and not k.shift]
         assert [k.idname for k in mmb] == ["maya_kit.cb_virtual_slider", "maya_kit.manip_mmb"], (km, mmb)
         assert mmb[1].properties.mode == mode
     assert "maya_kit.manip_press" in patches.PASS_THROUGH_FIRST

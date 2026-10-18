@@ -225,6 +225,19 @@ def slot_type(scene, kind):
     return slots[0].type if t == 'DEFAULT' else t
 
 
+def pivot_frame(context, kind):
+    """(centre, 3x3 axes, orientation type) of the manipulator of ``kind``: where it draws and how its axes point
+    (step 85: Shift+MMB picks one of these axes). Centre None = nothing selected."""
+    scene = context.scene
+    otype = slot_type(scene, kind)
+    if context.mode == 'EDIT_MESH':
+        pts, act = _edit_points(context)
+    else:
+        pts, act = _object_points(context)
+    center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+    return center, axes_of(context, otype, context.region_data), otype
+
+
 def _edit_normal_axes(context):
     """Approximation of Blender's NORMAL orientation of the selection (docs/steps/step_59.md)."""
     ob = context.edit_object
@@ -353,7 +366,7 @@ class MAYAKIT_GT_maya_handle(Gizmo):
     """One Maya manipulator handle: custom shapes, picked with a fatter invisible shape."""
     bl_idname = GIZMO
 
-    __slots__ = ("draw_shapes", "pick_shape", "handle_kind")
+    __slots__ = ("draw_shapes", "pick_shape", "handle_kind", "handle_role", "handle_axis")
 
     def build(self, kind):
         self.handle_kind = kind
@@ -414,9 +427,10 @@ class MAYAKIT_GGT_xform(GizmoGroup):
             self.gizmos.remove(gz)
         self.handles = []
 
-    def _new(self, kind):
+    def _new(self, kind, role=None, axis=None):
         gz = self.gizmos.new(GIZMO)
         gz.build(kind)
+        gz.handle_role, gz.handle_axis = role, axis       # read by operators/manip.py Ctrl+LMB (step 85)
         gz.use_draw_scale = True
         gz.use_draw_modal = True
         gz.line_width = 1.5
@@ -437,19 +451,19 @@ class MAYAKIT_GGT_xform(GizmoGroup):
         self._clear()
         if kind == 'TRANSLATE':
             for ax in 'XYZ':
-                self.handles.append((self._new('ARROW'), 'AXIS', ax))
+                self.handles.append((self._new('ARROW', 'AXIS', ax), 'AXIS', ax))
             for pl in PLANES:
-                self.handles.append((self._new('PLANE'), 'PLANE', pl))
-            self.handles.append((self._new('PIVOT_CENTER' if pivot else 'CENTER'), 'CENTER', None))
+                self.handles.append((self._new('PLANE', 'PLANE', pl), 'PLANE', pl))
+            self.handles.append((self._new('PIVOT_CENTER' if pivot else 'CENTER', 'CENTER'), 'CENTER', None))
             if pivot:
                 for ax in 'XYZ':
                     self.handles.append((self._dial(), 'PIVOT_RING', ax))
         elif kind == 'RESIZE':
             for ax in 'XYZ':
-                self.handles.append((self._new('SCALE_AXIS'), 'AXIS', ax))
+                self.handles.append((self._new('SCALE_AXIS', 'AXIS', ax), 'AXIS', ax))
             for pl in PLANES:
-                self.handles.append((self._new('PLANE'), 'PLANE', pl))
-            self.handles.append((self._new('CENTER_CUBE'), 'CENTER', None))
+                self.handles.append((self._new('PLANE', 'PLANE', pl), 'PLANE', pl))
+            self.handles.append((self._new('CENTER_CUBE', 'CENTER'), 'CENTER', None))
         self._built_for = (kind, pivot)
         self._ops_for = None
 
