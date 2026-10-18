@@ -88,12 +88,42 @@ def current_set(context=None):
 
 def draw_item(layout, path, label):
     """Draw one Maya menu item: its Blender action, or greyed out. An item with a notice and an
-    operator substitute runs through ``maya_kit.menu_item``, whose tooltip carries the notice (step 54)."""
+    operator substitute runs through ``maya_kit.menu_item``, whose tooltip carries the notice (step 54). So does a
+    mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
+    enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``)."""
     s = menu_map.spec(path)
-    if s is not None and s[0] in ("op", "v3d", "tool") and notices.notice(path):
+    if s is not None and s[0] in ("op", "v3d", "tool") and (notices.notice(path) or not runs_directly(path, s)):
         layout.operator(MAYAKIT_OT_menu_item.bl_idname, text=label).item = path
         return
     draw_spec(layout, label, s, path)
+
+
+def op_polls(target):
+    """Blender's poll of operator ``target`` in the current context (True if it can't be asked)."""
+    mod, name = target.split(".")
+    try:
+        return getattr(getattr(bpy.ops, mod), name).poll()
+    except (AttributeError, KeyError, RuntimeError, TypeError):
+        return True
+
+
+def runs_directly(path, s):
+    """False if the item must go through ``maya_kit.menu_item`` to stay enabled the Maya way."""
+    if path in menu_map.OBJECT_MODE and bpy.context.mode == 'OBJECT':
+        return False
+    return s[0] != "op" or op_polls(s[1])
+
+
+_WHAT = {"mesh": "mesh components (vertices, edges or faces)", "curve": "curve points (CVs)",
+         "armature": "joints (skeleton edit mode)", "pose": "joints (pose mode)", "uv": "UVs (UV Editor)",
+         "object": "objects", "anim": "objects to key", "paint": "a mesh", "sculpt": "a mesh"}
+
+
+def maya_warning(path, target):
+    """Maya-style warning for an item Blender can't run on this selection."""
+    label = path.rsplit("/", 1)[-1]
+    what = _WHAT.get(target.split(".")[0], "what it works on")
+    return f"{label}: select {what} first."
 
 
 def draw_spec(layout, label, s, path, icon='NONE'):
@@ -224,7 +254,7 @@ class MAYAKIT_OT_menu_item(bpy.types.Operator):
         if props.item not in menu_map.MAP:
             return notices.tooltip(props.item, mapped=False) or \
                 f"Maya: {props.item}\nNo Blender equivalent in Maya Kit yet"
-        text = notices.tooltip(props.item, mapped=True) or props.item.rsplit('/', 1)[-1]
+        text = notices.tooltip(props.item, mapped=True) or _op_description(props.item)
         if props.item in menu_data.OPTION_BOXES:
             text += "\nPress and hold: Option Box (settings)"
         return text
@@ -234,12 +264,78 @@ class MAYAKIT_OT_menu_item(bpy.types.Operator):
         if action is None:
             self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Kit yet")
             return {'CANCELLED'}
+        rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
+        if isinstance(rule, str):     # Maya warns and does nothing (Maya, )
+            self.report({'WARNING'}, rule)
+            return {'CANCELLED'}
+        if rule:
+            return bpy.ops.maya_kit.menu_whole_mesh('EXEC_DEFAULT', True, item=self.item)
+        s = menu_map.spec(self.item)
+        if s[0] == "op" and not op_polls(s[1]):
+            self.report({'WARNING'}, maya_warning(self.item, s[1]))
+            return {'CANCELLED'}
         from ..marking.modal import run_action
         try:
             run_action(context, action)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+def _op_description(path):
+    s = menu_map.spec(path)
+    if s is not None and s[0] in ("op", "v3d"):
+        try:
+            mod, name = s[1].split(".")
+            return getattr(getattr(bpy.ops, mod), name).get_rna_type().description or path.rsplit('/', 1)[-1]
+        except (AttributeError, KeyError, ValueError):
+            pass
+    return path.rsplit('/', 1)[-1]
+
+
+# Maya's values for commands it runs on a whole object (Maya, ):
+# Bevel fraction 0.5, Chamfer Vertices 0.25 (Blender: percent of the adjacent edge).
+WHOLE_MESH_PROPS = {
+    "Edit Mesh/Bevel": {"offset_type": 'PERCENT', "offset_pct": 50.0},
+    "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
+    "Edit Mesh/Average Vertices": {"repeat": 10},
+    "Edit Mesh/Circularize": {"value": 1.0},
+}
+
+
+class MAYAKIT_OT_menu_whole_mesh(bpy.types.Operator):
+    """Run a component command on every component of the selected meshes (Maya does that for an object
+    selection) and come back to object mode, as one undo step"""
+    bl_idname = "maya_kit.menu_whole_mesh"
+    bl_label = "Menu Item on Whole Mesh"
+    bl_options = {'INTERNAL', 'REGISTER', 'UNDO'}
+
+    item: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        rule = menu_map.OBJECT_MODE.get(self.item)
+        s = menu_map.spec(self.item)
+        meshes = [ob for ob in context.selected_objects if ob.type == 'MESH']
+        if not isinstance(rule, tuple) or s is None or s[0] not in ("op", "v3d"):
+            return {'CANCELLED'}
+        if not meshes:
+            self.report({'WARNING'}, "Nothing selected.")
+            return {'CANCELLED'}
+        view_layer = context.view_layer
+        if view_layer.objects.active not in meshes:
+            view_layer.objects.active = meshes[0]
+        mod, name = s[1].split(".")
+        props = {**s[2], **WHOLE_MESH_PROPS.get(self.item, {})}
+        bpy.ops.object.mode_set(mode='EDIT')
+        try:
+            bpy.ops.mesh.select_mode(type=rule[1])
+            bpy.ops.mesh.select_all(action='SELECT')
+            getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', **props)
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+        finally:
+            bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
 
 
@@ -315,7 +411,9 @@ class MAYAKIT_OT_menu_run(bpy.types.Operator):
             with context.temp_override(window=context.window, area=area, region=region):
                 _call(self.op, json.loads(self.props))
         except RuntimeError as ex:  # poll failed etc.
-            self.report({'ERROR'}, str(ex).strip())
+            text = str(ex).strip()
+            # a Maya-style line instead of Blender's "poll() failed, context is incorrect" (step 101)
+            self.report({'WARNING'}, maya_warning(self.op, self.op) if "poll()" in text else text)
             return {'CANCELLED'}
         return {'FINISHED'}
 
@@ -399,7 +497,7 @@ _menu_classes = []
 for _name, (_label, _set, _src, _items) in menu_data.MENUS.items():
     _menu_classes.extend(_make_menu(menu_idname(_name), _label, _label, _items, top_label=_label))
 
-classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_item, MAYAKIT_MT_option_box, MAYAKIT_OT_menu_option_box, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
+classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_item, MAYAKIT_OT_menu_whole_mesh, MAYAKIT_MT_option_box, MAYAKIT_OT_menu_option_box, MAYAKIT_OT_menu_run, MAYAKIT_OT_menu_tool,
            MAYAKIT_MT_ui_elements, MAYAKIT_MT_menu_bar, *_menu_classes)
 
 

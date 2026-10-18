@@ -63,10 +63,7 @@ def test_option_box_count_matches_maya():
     if research.exists():   #  is not in git (); the generated set is checked anyway
         data = json.loads(research.read_text(encoding="utf-8"))
         gen_menu_data._OPTION.clear()
-        expected = set()
-        for m in data["menus"]:
-            items = gen_menu_data.convert(m["items"])
-            expected |= set(gen_menu_data.option_paths(items, m["label"].strip()))
+        expected = gen_menu_data.option_boxes(gen_menu_data.build(data))   # incl. step 101 run-time items
         assert expected == set(menu_data.OPTION_BOXES), len(expected ^ set(menu_data.OPTION_BOXES))
     boxes = [b for b in _all_menu_buttons() if b["icon"] == menu_sets.OPTION_BOX_ICON]
     drawn = {b["item"] for b in boxes if "item" in b}

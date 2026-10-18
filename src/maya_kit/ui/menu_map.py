@@ -303,8 +303,9 @@ MAP = {
     "Mesh Display/Conform": "mesh.normals_make_consistent",
     "Mesh Display/Reverse": "mesh.flip_normals",
     "Mesh Display/Set to Face": "mesh.set_normals_from_faces",
-    "Mesh Display/Harden Edge": "mesh.mark_sharp",
-    "Mesh Display/Soften Edge": ("mesh.mark_sharp", {"clear": True}),
+    # Maya polySoftEdge: edges selected = those, object = every edge (step 101, Maya)
+    "Mesh Display/Harden Edge": ("maya_kit.soften_harden", {"angle": 0.0}),
+    "Mesh Display/Soften Edge": ("maya_kit.soften_harden", {"angle": 180.0}),
     "Mesh Display/Paint Vertex Color Tool": "paint.vertex_paint_toggle",
     # --- Curves ---
     "Curves/Open/Close": "curve.cyclic_toggle",
@@ -460,16 +461,9 @@ MAP = {
 }
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with
-# items like menu_data's ((label,) or ("-", section label)). Modify's Pivot section
-# (Center Pivot, Bake Pivot) is built by Maya at run time and missing from
-# ; it sits after Match
-# Transformations, before the Align section ($M\startup\Maya-376, step 59).
+# items like menu_data's ((label,) or ("-", section label)). Modify's Pivot / Naming / Attributes
+# sections now come from tools/gen_menu_data.py RUNTIME_LABELS (step 101).
 EXTRA = {
-    "Modify/Match Transformations": [("-", "Pivot"), ("Center Pivot",), ("Bake Pivot",)],
-    # Attributes section, built at run time from the AddAttribute / RenameAttribute / DeleteAttribute run time
-    # commands (); Maya puts Naming between them (not mapped yet).
-    "Modify/Evaluate Nodes": [("-", "Attributes"), ("Add Attribute...",), ("Edit Attribute...",),
-                              ("Delete Attribute...",)],
     # Maya Kit's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
     "Windows/Settings/Preferences": [("Switch to Blender",)],
 }
@@ -518,6 +512,259 @@ MAP.update({
     "Display/Heads Up Display/View Axis": _kit_pref("maya_view_axis"),
     "Display/Heads Up Display/View Cube": _kit_pref("maya_viewcube"),
 })
+
+
+def _props(tab):
+    # A Properties window on one tab (Maya editors whose Blender counterpart is a Properties panel).
+    return ("maya_kit.open_editor", {"ui_type": 'PROPERTIES', "tab": tab})
+
+
+def _url(url):
+    return ("wm.url_open", {"url": url})
+
+
+def _sculpt(brush):
+    return ("maya_kit.sculpt_tool", {"brush": brush})
+
+
+_PROPORTIONAL = ("wm.context_toggle", {"data_path": "tool_settings.use_proportional_edit"})
+_MANUAL = "https://docs.blender.org/manual/en/4.5/"
+_API = "https://docs.blender.org/api/4.5/"
+_NOTES = "https://developer.blender.org/docs/release_notes/4.5/"
+_TUTORIALS = "https://www.blender.org/support/tutorials/"
+
+# step 101: what Blender does cheaply. Items whose meaning differs carry a
+# notice (ui/notices.py NOTICES);  has the Maya behaviour checked .
+MAP.update({
+    # File
+    "File/Archive Scene": "file.pack_all",
+    "File/View Image...": _editor('IMAGE_EDITOR'),
+    "File/View Sequence...": "render.play_rendered_anim",
+    "File/Recent Increments": ("menu", "TOPBAR_MT_file_open_recent"),
+    "File/Game Exporter": "export_scene.fbx",
+    "File/Send To Unity": "export_scene.fbx",
+    "File/Send To Unreal": "export_scene.fbx",
+    # Edit
+    "Edit/Keys/Snap Keys": ("maya_kit.time_keys", {"action": "SNAP"}),
+    "Edit/Delete All by Type/Shading Groups and Materials": "outliner.orphans_purge",
+    # Create
+    "Create/SVG": "import_curve.svg",
+    "Create/Universal Scene Description (USD)": "wm.usd_import",
+    # Select
+    "Select/Shortest Edge Path Tool": "mesh.shortest_path_select",
+    "Select/Convert Selection/To Contained Edges": ("mesh.select_mode", {"type": 'EDGE'}),
+    "Select/Convert Selection/To Contained Faces": ("mesh.select_mode", {"type": 'FACE'}),
+    "Select/Convert Selection/To UV Shell": ("mesh.select_linked", {"delimit": {'UV'}}),
+    "Select/All CVs": ("curve.select_all", {"action": 'SELECT'}),
+    "Select/First CV": "curve.de_select_first",
+    "Select/Last CV": "curve.de_select_last",
+    "Select/All by Type/Image Planes": ("object.select_by_type", {"type": 'EMPTY'}),
+    # Modify
+    "Modify/Transformation Tools/Proportional Modification Tool": _PROPORTIONAL,
+    "Modify/Transformation Tools/Soft Modification Tool": _PROPORTIONAL,
+    "Modify/Transformation Tools/Move Normal Tool": ("v3d", "transform.shrink_fatten", {}),
+    "Modify/Prefix Hierarchy Names...": "maya_kit.prefix_hierarchy",
+    "Modify/Search and Replace Names...": "maya_kit.search_replace_names",
+    "Modify/Replace Objects": ("object.make_links_data", {"type": 'OBDATA'}),
+    "Modify/Convert/NURBS Curve to Bezier": ("curve.spline_type_set", {"type": 'BEZIER'}),
+    "Modify/Convert/Bezier Curve to NURBS": ("curve.spline_type_set", {"type": 'NURBS'}),
+    "Modify/Evaluate Nodes/Evaluate All": ("maya_kit.menu_note", {"item": "Modify/Evaluate Nodes/Evaluate All"}),
+    # Display
+    "Display/Heads Up Display/Frame Rate": ("wm.context_toggle",
+                                            {"data_path": "preferences.view.show_playback_fps"}),
+    "Display/Heads Up Display/Object Details": _hud("space_data.overlay.show_stats"),
+    "Display/Heads Up Display/Selection Details": _hud("space_data.overlay.show_stats"),
+    "Display/Toggle Show/Hide": ("maya_kit.visibility", {"action": 'TOGGLE'}),
+    "Display/Object Display/Template": ("maya_kit.object_display", {"kind": 'TEMPLATE'}),
+    "Display/Object Display/Untemplate": ("maya_kit.object_display", {"kind": 'UNTEMPLATE'}),
+    "Display/Object Display/Bounding Box": ("maya_kit.object_display", {"kind": 'BBOX'}),
+    "Display/Object Display/No Bounding Box": ("maya_kit.object_display", {"kind": 'NO_BBOX'}),
+    "Display/Polygons": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh", "keep_open": True}),
+    "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
+    "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
+    "Display/Wireframe Color...": _props('OBJECT'),
+    # Windows
+    "Windows/General Editors/Component Editor": _editor('SPREADSHEET'),
+    "Windows/General Editors/Connection Editor": _editor('DRIVERS'),
+    "Windows/General Editors/File Path Editor": ("maya_kit.open_editor", {"ui_type": 'OUTLINER',
+                                                                          "display_mode": 'LIBRARIES'}),
+    "Windows/General Editors/Command Shell": _editor('CONSOLE'),
+    "Windows/Animation Editors/Shape Editor": _props('DATA'),
+    "Windows/Rendering Editors/Render Layer Editor": _props('VIEW_LAYER'),
+    "Windows/Relationship Editors/Render Layers": _props('VIEW_LAYER'),
+    "Windows/Relationship Editors/Light Linking": _props('OBJECT'),
+    "Windows/Relationship Editors/Sets": _editor('OUTLINER'),
+    "Windows/Content Browser": _editor('ASSETS'),
+    # Mesh
+    "Mesh/Conform": _mod('SHRINKWRAP'),
+    "Mesh/Retopologize": "object.quadriflow_remesh",
+    "Mesh/Transfer Shading Sets": ("object.make_links_data", {"type": 'MATERIAL'}),
+    "Mesh/Cleanup...": ("menu", "VIEW3D_MT_edit_mesh_clean"),
+    "Mesh/Smooth Proxy/Crease Tool": ("tool", "maya_kit.crease_tool", True),
+    "Mesh/Smooth Proxy/Toggle Proxy Display": ("maya_kit.smooth_proxy", {"action": 'TOGGLE'}),
+    "Mesh/Smooth Proxy/Both Proxy and Subdiv Display": ("maya_kit.smooth_proxy", {"action": 'BOTH'}),
+    # Edit Mesh
+    "Edit Mesh/Circularize": ("v3d", "transform.tosphere", {}),
+    "Edit Mesh/Detach": "maya_kit.detach",
+    "Edit Mesh/Transform": ("tool", "builtin.transform", True),
+    "Edit Mesh/Flip": ("v3d", "transform.mirror", {"orient_type": 'LOCAL', "constraint_axis": (True, False, False)}),
+    "Edit Mesh/Edit Edge Flow": "maya_kit.edge_flow",
+    "Edit Mesh/Wedge": "maya_kit.wedge",
+    "Edit Mesh/Split Mesh with Projected Curve": ("v3d", "mesh.knife_project", {}),
+    # Mesh Tools (Sculpting Tools -> the essentials brushes, )
+    "Mesh Tools/Append to Polygon": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Connect": "mesh.vert_connect_path",
+    **{f"Mesh Tools/Sculpting Tools/{maya} Tool": _sculpt(brush) for maya, brush in (
+        ("Sculpt", "Draw"), ("Smooth", "Smooth"), ("Relax", "Relax Slide"), ("Grab", "Grab"),
+        ("Pinch", "Pinch/Magnify"), ("Flatten", "Flatten/Contrast"), ("Foamy", "Clay"), ("Wax", "Clay Strips"),
+        ("Scrape", "Scrape/Fill"), ("Fill", "Fill/Deepen"), ("Knife", "Crease Sharp"), ("Smear", "Smear"),
+        ("Bulge", "Inflate/Deflate"), ("Amplify", "Sharpen"), ("Freeze", "Mask"))},
+    # Mesh Display
+    "Mesh Display/Soften/Harden Edges": "maya_kit.soften_harden",
+    "Mesh Display/Lock Normals": "mesh.customdata_custom_splitnormals_add",
+    "Mesh Display/Unlock Normals": "mesh.customdata_custom_splitnormals_clear",
+    "Mesh Display/Vertex Normal Edit Tool": ("v3d", "transform.rotate_normal", {}),
+    "Mesh Display/Create Empty Set": "geometry.color_attribute_add",
+    "Mesh Display/Delete Current Set": "geometry.color_attribute_remove",
+    "Mesh Display/Color Set Editor": _props('DATA'),
+    "Mesh Display/Toggle Display Colors Attribute": ("v3d", "wm.context_set_enum",
+                                                     {"data_path": "space_data.shading.color_type",
+                                                      "value": 'VERTEX'}),
+    # Curves
+    "Curves/Attach": "curve.make_segment",
+    "Curves/Detach": "curve.split",
+    "Curves/Extend/Extend Curve": ("v3d", "curve.extrude_move", {}),
+    "Curves/Smooth#2": "curve.smooth",
+    "Curves/Bezier Curves/Anchor Presets/Bezier": ("curve.handle_type_set", {"type": 'ALIGNED'}),
+    "Curves/Bezier Curves/Anchor Presets/Bezier Corner": ("curve.handle_type_set", {"type": 'FREE_ALIGN'}),
+    "Curves/Bezier Curves/Anchor Presets/Corner": ("curve.handle_type_set", {"type": 'VECTOR'}),
+    "Curves/Bezier Curves/Tangent Options/Smooth Anchor Tangents": ("curve.handle_type_set", {"type": 'ALIGNED'}),
+    "Curves/Bezier Curves/Tangent Options/Break Anchor Tangents": ("curve.handle_type_set", {"type": 'FREE_ALIGN'}),
+    "Curves/Bezier Curves/Tangent Options/Even Anchor Tangents": ("curve.handle_type_set", {"type": 'AUTOMATIC'}),
+    # Surfaces
+    "Surfaces/Revolve": _mod('SCREW'),
+    "Surfaces/Open/Close": "curve.cyclic_toggle",
+    "Surfaces/Reverse Direction": "curve.switch_direction",
+    "Surfaces/Insert Isoparms": "curve.subdivide",
+    # Deform
+    "Deform/Curve Warp": _mod('CURVE'),
+    "Deform/Cluster": "object.hook_add_newob",
+    "Deform/Proximity Wrap": _mod('SURFACE_DEFORM'),
+    "Deform/Nonlinear/Bend": ("maya_kit.nonlinear", {"method": 'BEND'}),
+    "Deform/Nonlinear/Flare": ("maya_kit.nonlinear", {"method": 'TAPER'}),
+    "Deform/Nonlinear/Squash": ("maya_kit.nonlinear", {"method": 'STRETCH'}),
+    "Deform/Nonlinear/Sine": _mod('WAVE'),
+    "Deform/Soft Modification Tool": _PROPORTIONAL,
+    "Deform/Blend Shape#2/Remove": "object.shape_key_remove",
+    **{f"Deform/Paint Weights/{kind}": "paint.weight_paint_toggle" for kind in (
+        "Blend Shape", "Cluster", "Delta Mush", "Tension", "Proximity Wrap", "Lattice", "ShrinkWrap", "Wire",
+        "Nonlinear", "Jiggle", "Texture Deformer")},
+    "Deform/Mirror Deformer Weights": "object.vertex_group_mirror",
+    # UV
+    "UV/UV Set Editor": _props('DATA'),
+    "UV/Assign Checker Shader": "maya_kit.checker_shader",
+    "UV/Best Plane": "maya_kit.uv_planar",
+    "UV/Contour Stretch": "uv.follow_active_quads",
+    "UV/Split UVs": "maya_kit.uv_cut",
+    # Generate (XGen -> hair curves)
+    "Generate/Create Description...": "object.curves_empty_hair_add",
+    "Generate/Create Interactive Groom Splines": "object.curves_empty_hair_add",
+    # Skeleton / Skin / Constrain
+    "Skeleton/Insert Joints": "armature.subdivide",
+    "Skeleton/Connect Joint": ("armature.parent_set", {"type": 'CONNECTED'}),
+    "Skin/Normalize Weights/Enable Weight Normalization":
+        ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": True}),
+    "Skin/Normalize Weights/Disable Weight Normalization":
+        ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": False}),
+    "Skin/Edit Influences/Remove Influence": "object.vertex_group_remove",
+    "Constrain/Rivet": "object.vertex_parent_set",
+    "Constrain/Closest Point": _con('SHRINKWRAP'),
+    "Constrain/Point On Poly": _con('SHRINKWRAP'),
+    # Key / Playback / Visualize
+    "Key/Insert Key on Translate": ("anim.keyframe_insert_by_name", {"type": "Location"}),
+    "Key/Insert Key on Rotate": ("anim.keyframe_insert_by_name", {"type": "Rotation"}),
+    "Key/Insert Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
+    "Playback/Select Next Key": ("screen.keyframe_jump", {"next": True}),
+    "Playback/Select Previous Key": ("screen.keyframe_jump", {"next": False}),
+    "Playback/Playback Looping/Continuous": ("maya_kit.menu_note", {"item": "Playback/Playback Looping/Continuous"}),
+    "Visualize/Time Slider Bookmarks": "marker.add",
+    # Audio (): sounds are Video Sequencer sound strips
+    "Audio/Import Audio...": "maya_kit.import_audio",
+    "Audio/Import Audio Clip to Time Editor...": "maya_kit.import_audio",
+    "Audio/Mute": ("wm.context_toggle", {"data_path": "scene.use_audio"}),
+    "Audio/Adjust Volume": _props('SCENE'),
+    "Audio/Delete Sounds": "maya_kit.delete_sounds",
+    # FX
+    "nParticles/Soft Body": _mod('SOFT_BODY'),
+    "nParticles/Soft Body#2": _mod('SOFT_BODY'),
+    "nParticles/Make Collide": "maya_kit.fx_passive",
+    # Rendering
+    "Lighting/Shading/Light Linking Editor": _props('OBJECT'),
+    "Toon/Assign Outline": ("v3d", "object.grease_pencil_add", {"type": 'LINEART_OBJECT'}),
+    "Stereo/Create/Stereo Camera": "maya_kit.stereo_camera",
+    # Cache (Alembic / GPU cache = Alembic files; Geometry Cache = Alembic too, with a notice)
+    "Cache/Alembic Cache/Open Alembic...": "wm.alembic_import",
+    "Cache/Alembic Cache/Reference Alembic...": "wm.alembic_import",
+    "Cache/Alembic Cache/Import Alembic...": "wm.alembic_import",
+    "Cache/Alembic Cache/Export All to Alembic...": ("wm.alembic_export", {"selected": False}),
+    "Cache/Alembic Cache/Export Selection to Alembic...": ("wm.alembic_export", {"selected": True}),
+    "Cache/Geometry Cache/Create New Cache": ("wm.alembic_export", {"selected": True}),
+    "Cache/Geometry Cache/Import Cache...": "wm.alembic_import",
+    "Cache/Geometry Cache/Export Cache": ("wm.alembic_export", {"selected": True}),
+    "Cache/GPU Cache/Import...": "wm.alembic_import",
+    "Cache/GPU Cache/Export All...": ("wm.alembic_export", {"selected": False}),
+    "Cache/GPU Cache/Export Selection...": ("wm.alembic_export", {"selected": True}),
+    # Help -> Blender's documentation and community
+    "Help/Search": _url(_MANUAL),
+    "Help/Find Menu": "wm.search_menu",
+    "Help/Maya Help": _url(_MANUAL),
+    "Help/What's New/List of What's New": _url(_NOTES),
+    "Help/Quick Tour": _url(_MANUAL + "getting_started/index.html"),
+    "Help/Interactive Tutorials/Basic Skills": _url(_TUTORIALS),
+    "Help/Interactive Tutorials/View All Interactive Tutorials...": _url(_TUTORIALS),
+    "Help/YouTube Learning Channel": _url("https://www.youtube.com/@BlenderOfficial"),
+    "Help/Scripting Reference/MEL Command Reference": _url(_API),
+    "Help/Scripting Reference/Python Command Reference": _url(_API),
+    "Help/Scripting Reference/Node and Attribute Reference": _url(_API + "bpy.types.html"),
+    "Help/MEL Command Reference": _url(_API),
+    "Help/Python Command Reference": _url(_API),
+    "Help/Node and Attribute Reference": _url(_API + "bpy.types.html"),
+    "Help/Services and Support/Patch Release Notes": _url(_NOTES),
+    "Help/Services and Support/Release Notes Updates": _url(_NOTES),
+    "Help/Services and Support/Support Center": _url("https://www.blender.org/support/"),
+    "Help/Feedback/Report a Problem...": _url("https://projects.blender.org/blender/blender/issues"),
+    "Help/Autodesk App Store": _url("https://extensions.blender.org/"),
+    "Help/About Maya": "wm.splash_about",
+})
+
+# Mapped items whose Blender operator needs component (edit) mode run the Maya way from object mode
+# (step 101 「계획」 4, , checked):
+# ('ALL', select mode) = Maya acts on every component of the selected meshes; a string = Maya's warning.
+OBJECT_MODE = {
+    "Edit Mesh/Add Divisions": ('ALL', 'FACE'),
+    "Edit Mesh/Collapse": ('ALL', 'FACE'),
+    "Edit Mesh/Merge": ('ALL', 'VERT'),
+    "Edit Mesh/Merge to Center": "polyMergeVert1 (Poly Merge Vert): No vertices were merged. Tolerance too large - "
+                                 "no geometry left after merge",
+    "Edit Mesh/Average Vertices": ('ALL', 'VERT'),
+    "Edit Mesh/Poke": ('ALL', 'FACE'),
+    "Edit Mesh/Circularize": ('ALL', 'VERT'),
+    "Edit Mesh/Edit Edge Flow": ('ALL', 'EDGE'),
+    "Edit Mesh/Bevel": ('ALL', 'EDGE'),
+    "Edit Mesh/Chamfer Vertices": ('ALL', 'VERT'),
+    "Edit Mesh/Bridge": "Invalid selection : polyBridgeEdge requires equal number of border edges to be selected "
+                        "for source and target selection.",
+    "Edit Mesh/Delete Edge/Vertex": "No Vertices / Edges have been selected for Delete!",
+    "Edit Mesh/Extract": "polyChipOff works only on polygonal faces.",
+    "Edit Mesh/Duplicate": "polyChipOff works only on polygonal faces.",
+    "Edit Mesh/Detach": "No vertices or edges selected to detach.",
+    "Edit Mesh/Wedge": "No faces selected to wedge. Select faces and one or more edges from the selected faces "
+                       "to wedge about.",
+    "Edit Mesh/Connect": "Can't perform polyConnectComponents1 on selection",
+    "Edit Mesh/Flip Triangle Edge": "Select edges to flip.",
+    "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
+    "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
+}
 
 # Blender's own menu kept at the end of the Maya menu with the same role.
 BLENDER_MENU = {

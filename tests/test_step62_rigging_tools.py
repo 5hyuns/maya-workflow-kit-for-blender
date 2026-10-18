@@ -14,6 +14,7 @@ rig = import_module(kit.MODULE + ".operators.rig_tools")
 joints = import_module(kit.MODULE + ".operators.joints")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
+menu_data = import_module(kit.MODULE + ".ui.menu_data")
 shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
@@ -281,7 +282,8 @@ def test_menus_shelf_and_notices():
     for path in ("Constrain/Parent", "Constrain/Orient", "Constrain/Point", "Constrain/Aim"):
         assert m[path][0] == "maya_kit.constrain", path
     for label in ("Add Attribute...", "Edit Attribute...", "Delete Attribute..."):
-        assert (label,) in menu_map.EXTRA["Modify/Evaluate Nodes"] and m["Modify/" + label].startswith("maya_kit.")
+        # step 101: the Attributes section comes from menu_data (tools/gen_menu_data.py RUNTIME_LABELS)
+        assert (label,) in menu_data.MENUS["mainModifyMenu"][3] and m["Modify/" + label].startswith("maya_kit.")
     assert m["Skeleton/Quick Rig"] == "maya_kit.quick_rig"
     assert "Skeleton/Quick Rig" in notices.NOTICES and "Skeleton/HumanIK" in notices.NOTICES
     by = shelf_map.BY_COMMAND

@@ -27,6 +27,8 @@ EDITOR_TYPES = (
     ('SEQUENCE_EDITOR', "Video Sequencer", ""), ('ShaderNodeTree', "Shader Editor", ""),
     ('UV', "UV Editor", ""), ('SPREADSHEET', "Spreadsheet", ""), ('TEXT_EDITOR', "Text Editor", ""),
     ('PROPERTIES', "Properties", ""),
+    # step 101: Windows > Command Shell / Content Browser, File > View Image
+    ('CONSOLE', "Python Console", ""), ('ASSETS', "Asset Browser", ""), ('IMAGE_EDITOR', "Image Editor", ""),
 )
 
 
