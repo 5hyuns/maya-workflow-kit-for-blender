@@ -116,7 +116,7 @@
 | Cmd+x | Oskey+X | timeEditorPanel | TimeEditorCutClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:212 |
 | Cmd+v | Oskey+V | timeEditorPanel | TimeEditorPasteClips | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:213 |
 | Ctrl+y | Ctrl+Y | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:223 |
-| Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle` | 구현 | 피벗 편집 토글 (오브젝트 모드, Translate 불변 — step 59) | hotkeySetup.mel:225 |
+| Insert | INSERT | global | EnterEditMode | Object Mode: `maya_kit.pivot_toggle`; Mesh: `maya_kit.pivot_toggle` | 구현 | 피벗 편집 토글: 오브젝트 모드 = Translate 불변 (step 59); 편집 모드 = 3D 커서 피벗 + 커서 툴, 면 클릭 방향 = Maya Pivot (step 77) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `maya_kit.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `maya_kit.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
 | Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `maya_kit.ae_toggle`; Mesh: `mesh.select_all` (action='SELECT') | 구현 | 사이드바 Channel Box 탭 안에서 CB/LE ↔ AE 전환 | hotkeySetup.mel:230 |
@@ -215,7 +215,7 @@
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | Screen: `file.execute` | 해당 없음 | Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거 | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
-| d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18) | hotkeySetup.mel:355 |
+| d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18), 피벗 방향 = Maya Pivot (step 77) | hotkeySetup.mel:355 |
 | Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
 | Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
 | , | COMMA | global | PreviousKey | Frames: `screen.keyframe_jump` (next=False) | 구현 | 3D View 방향 파이는 헤더로 | hotkeySetup.mel:358 |

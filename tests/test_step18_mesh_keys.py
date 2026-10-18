@@ -46,7 +46,7 @@ def test_component_pivot_release_rule():
     after = hold.component_pivot_after
     assert after('MEDIAN_POINT', True) == 'CURSOR', "a placed pivot stays"
     assert after('BOUNDING_BOX_CENTER', False) == 'BOUNDING_BOX_CENTER', "tap restores"
-    assert after('CURSOR', False) == 'MEDIAN_POINT', "tap clears a custom pivot"
+    assert after('CURSOR', False) == 'BOUNDING_BOX_CENTER', "tap clears a custom pivot (Maya P11 bbox, step 77)"
     assert after('CURSOR', True) == 'CURSOR'
 
 

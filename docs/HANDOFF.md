@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 77 (편집 모드 Insert / D 피벗) 완료 — `docs/steps/step_77.md`.
+  - 메시 편집 모드 Insert = D 와 같은 피벗 편집 (커서 툴 + 3D 커서 피벗) 토글. 면을 클릭하면 피벗 방향도 맞고, 끝나면 Move 축 "Maya Pivot".
+    탭 = 사용자 피벗 지움 (bbox 중심). 대응표 D/Insert → Done (85 %).
+  - 검증: 헤드리스 619/619, GUI 539/539, dogfood 47/47.
+  - **바로 다음 할 일**: step 78 키 묶음 (Graph Editor 1/2/3, Shift+Q / Alt+Q, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C;
+    `docs/keymap_mapping.md` 미검토 행). 그 뒤 79 3D Cut and Sew. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 76 (선택 우선순위) 완료 — `docs/steps/step_76.md`.
   - 오브젝트 모드 클릭이 Maya 처럼 IK 핸들 (10) > 조인트 = 아마추어 (9) > 커브 (4) > 메시 (2) 순으로 겹친 것 중 고른다 (가려져도).
     `operators/select_priority.py`, "3D View" CLICK / Tweak PRESS 앞 PASS_THROUGH_FIRST, 환경설정 「Selection Priority」.

@@ -167,7 +167,7 @@ def s_d_released():
 @step
 def s_d_tap():
     check(f"D tap clears the custom pivot ({ts().transform_pivot_point})",
-          ts().transform_pivot_point == 'MEDIAN_POINT' and tool_id() == C["tool"])
+          ts().transform_pivot_point == 'BOUNDING_BOX_CENTER' and tool_id() == C["tool"])
     combo('D', alt=True)
 
 

@@ -528,3 +528,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 76) 리그: 메시 몸통 앞/안의 본 (팔면체 두꺼운 쪽 포함) 클릭 → 아마추어, IK 핸들 (`ikHandleN` 엠프티 축) 클릭 → 핸들 (본·커브보다 먼저).
 - [ ] (step 76) Shift = 토글, Ctrl = 해제, Ctrl+Shift = 추가가 커브·본에서도 그대로. Tweak 툴에서 커브를 눌러 바로 드래그 = 커브가 잡혀 움직임.
 - [ ] (step 76) 환경설정 「Selection Priority」 끄기 → Blender 깊이 픽 (가려진 커브는 메시에 짐). 메시끼리 겹친 곳의 반복 클릭 순환은 켜져 있어도 그대로.
+
+### Step 77 — 편집 모드 Insert / D 피벗
+
+- [ ] (step 77) F9 + Insert: 툴바가 커서 툴, Help Line 「Pivot edit on」. 면 위 클릭 = 그 자리에 커서, 축이 면에 맞음; 드래그 = 커서가 따라 움직임. Insert 다시 = 이전 툴 (Move) + 매니퓰레이터가 그 피벗에서 면 방향 축으로.
+- [ ] (step 77) Insert 를 켠 채 D 를 누르면 피벗 편집이 꺼짐. 커서를 옮기지 않고 Insert 두 번 = 사용자 피벗 지움 (매니퓰레이터가 선택 bbox 중심).
+- [ ] (step 77) Insert 켠 채 F8 / Tab 으로 오브젝트 모드 → 피벗 편집 꺼짐; 다시 편집 모드 → 원래 툴. Maya 처럼 W 메뉴로 축을 World 로 돌릴 수 있음.

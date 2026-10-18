@@ -457,7 +457,9 @@ shelf reorder.
 3. **Pre-selection highlight** for edges / faces / objects and under Move/Rotate/Scale (step 30 left it vertex + select tools only).
 4. **Status Line Input Line** (blindspot 2).
 5. **Selection priority** (blindspot 1). Done in step 76.
-6. **Edit-mode Insert / D pivot** (PLAN 「Left out」, mapping row D/Insert).
+6. **Edit-mode Insert / D pivot** (PLAN 「Left out」, mapping row D/Insert). Done in step 77: mesh Insert toggles the
+   D cursor pivot edit, a turned pivot becomes the "Maya Pivot" Move axis; mapping row D/Insert Partial → **Done**
+   (조작 / 단축키 12 / 1 / 0 / 0; total 28 / 3 / 0 / 2 = 85 %, with the step 73 timeline still counted Partial).
 7. **Key batch**: Graph Editor 1/2/3, Shift+Q / Alt+Q menus, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C.
 8. **3D Cut and Sew UV tool** (score 20, the highest Left-out item; x/s/d keys).
 9. Later (Left-out lists + step 33–70 「남은 것」, `docs/steps/step_71.md`): Outliner Sets / drag reparent, Hypershade Textures /

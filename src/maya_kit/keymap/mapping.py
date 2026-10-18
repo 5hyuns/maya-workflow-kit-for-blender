@@ -236,9 +236,9 @@ ENTRIES = {
     "PickWalkRight": _e("KIT", (OBJ, "maya_kit.pick_walk", {"direction": "RIGHT"}),
                         note="이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39); 포즈 모드: 형제 조인트"),
     "EnterEditModePress": _e("KIT", (OBJ, "maya_kit.hold", {"name": "pivot"}),
-                             note="오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18)"),
+                             note="오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18), 피벗 방향 = Maya Pivot (step 77)"),
     "EnterEditMode": _e("KIT", (OBJ, "maya_kit.pivot_toggle", {}),
-                        note="피벗 편집 토글 (오브젝트 모드, Translate 불변 — step 59)"),
+                        note="피벗 편집 토글: 오브젝트 모드 = Translate 불변 (step 59); 편집 모드 = 3D 커서 피벗 + 커서 툴, 면 클릭 방향 = Maya Pivot (step 77)"),
     # --- step 20: key / frame stepping (docs/steps/step_20.md) ---
     "NextKey": _e("KIT", ("Frames", "screen.keyframe_jump", {"next": True}),
                   note="Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로"),
