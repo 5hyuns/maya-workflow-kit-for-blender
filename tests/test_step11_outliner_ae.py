@@ -389,13 +389,16 @@ def test_ae_add_limit_and_select():
 def test_dock_mode_switches_panels():
     wm = bpy.context.window_manager
     wm.maya_kit_dock = 'CHANNEL_BOX'
-    cb = bpy.types.MAYAKIT_PT_channel_box      # the one dock panel: always there, draws CB / AE / MTK (step 91)
-    le = bpy.types.MAYAKIT_PT_layer_editor
-    assert not hasattr(cb, "poll") and le.poll(bpy.context)
-    assert not hasattr(bpy.types, "MAYAKIT_PT_attribute_editor")
+    # step 99: the dock = three sidebar tabs named like Maya's, one panel each, none with a poll (all exist from
+    # the first draw, so Blender puts them before the C "Item" tab)
+    tabs = {bpy.types.MAYAKIT_PT_channel_box: "Channel Box / Layer Editor",
+            bpy.types.MAYAKIT_PT_layer_editor: "Channel Box / Layer Editor",
+            bpy.types.MAYAKIT_PT_dock_attribute_editor: "Attribute Editor",
+            bpy.types.MAYAKIT_PT_dock_modeling_toolkit: "Modeling Toolkit"}
+    for panel, category in tabs.items():
+        assert panel.bl_category == category and not hasattr(panel, "poll"), panel
     bpy.ops.maya_kit.ae_toggle()
     assert wm.maya_kit_dock == 'ATTRIBUTE_EDITOR'
-    assert not le.poll(bpy.context)
     bpy.ops.maya_kit.ae_toggle()
     assert wm.maya_kit_dock == 'CHANNEL_BOX'
 

@@ -163,7 +163,7 @@ def _after_cb():
     redraw()
 
 
-step(goto_tab("Channel Box", _after_cb))
+step(goto_tab("Channel Box / Layer Editor", _after_cb))
 
 
 @step

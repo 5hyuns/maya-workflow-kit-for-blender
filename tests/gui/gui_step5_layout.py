@@ -51,7 +51,7 @@ def s_layout():
 def s_object():
     v3d = max(areas('VIEW_3D'), key=lambda a: a.width * a.height)
     ui = next(r for r in v3d.regions if r.type == 'UI')
-    check("sidebar dock on the Channel Box tab with an object", ui.active_panel_category == "Channel Box")
+    check("sidebar dock on the Channel Box tab with an object", ui.active_panel_category == "Channel Box / Layer Editor")
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
     bpy.ops.maya_kit.theme_restore()

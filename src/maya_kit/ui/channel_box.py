@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Channel Box in the 3D View sidebar (category "Channel Box").
+"""Maya Channel Box in the 3D View sidebar (category "Channel Box / Layer Editor", step 99).
 
 ; design:  「계획」.
 - Translate/Rotate/Scale/Visibility rows are getter/setter proxies on
@@ -27,7 +27,15 @@ from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProp
 from ..operators import display
 from . import cb_entry, chrome
 
-CATEGORY = "Channel Box"
+# Maya's dock is one tab stack with vertical tabs on its right edge (): the
+# kit's sidebar categories carry Maya's tab names (step 99)
+CATEGORY = "Channel Box / Layer Editor"
+AE_CATEGORY = "Attribute Editor"
+MTK_CATEGORY = "Modeling Toolkit"
+# Channel Box pane share of the dock, Layer Editor below: Maya asks for 70 % (
+# ui_layout.md:252), but the factory Maya 2022 screen puts the Display / Anim tabs at y 473 of a 132-785 dock
+# () = about half of the kit's sidebar below its header
+CB_SHARE = 0.50
 
 # key, label, data path, index, kind
 MAIN = (
@@ -1226,36 +1234,33 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
     bl_order = 0
     bl_options = {'HIDE_HEADER'}   # Maya: a menu bar, no collapsible panel title (step 50)
 
-    # The one dock panel: it always polls and draws the Channel Box, the Attribute Editor or the Modeling Toolkit
-    # (WindowManager.maya_kit_dock, step 11 / 63). A separate panel per dock mode made Blender create the AE panel
-    # when the user first switched, after the C "Item" panel, so the "Channel Box" tab moved under "Item"
-    #.
+    # The dock = three sidebar tabs named like Maya's (CATEGORY / AE_CATEGORY / MTK_CATEGORY, step 99), one panel
+    # each, all polling from the first draw so Blender creates them before the C "Item" panel (step 91: a panel made
+    # on first use landed after "Item"). WindowManager.maya_kit_dock follows the active tab (attribute_editor).
 
     def draw(self, context):
-        layout = self.layout
-        from .attribute_editor import dock_mode, draw_dock_switch
-        draw_dock_switch(layout, context)
-        mode = dock_mode(context)
-        if mode == 'ATTRIBUTE_EDITOR':
-            from . import attribute_editor
-            attribute_editor.draw_panel(layout, context)
-            return
-        if mode == 'MODELING_TOOLKIT':
-            from . import modeling_toolkit
-            modeling_toolkit.draw(layout, context)
-            return
+        units = MAYAKIT_PT_channel_box.body(self.layout, context)
+        fill_pane(self.layout, context, units)
+
+    @staticmethod
+    def body(layout, context):
+        """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane)."""
+        dock_title_row(layout)
         chrome.menu_bar(layout, MENU_BAR)
+        units = 2.0
         from . import paint_weights
         if paint_weights.active(context):
             paint_weights.draw(layout, context)   # Maya Tool Settings of the paint tool (step 58)
+            return None
         if placing_joints(context):
             layout.separator(factor=2)
             chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)
-            return
+            return units + 0.5 + len(PLACING_TEXT)
         ob = lead(context)
         if ob is None:
             draw_empty(layout)
-            return
+            return units + 4.2 + len(EMPTY_TEXT)
+        units += 1.0
         cb = context.scene.maya_kit_cb
         sel = set(selected_channels(context))
         head = layout.row(align=True)
@@ -1267,7 +1272,9 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
             hint = layout.row()
             hint.active = False
             hint.label(text=POSE_HINT)
+            units += 1.0
         blue = constrained_keys(ob)
+        rows = 0
 
         col = layout.column(align=True)
         # Maya channel rows are 16 px with 11 px text ( metrics,
@@ -1279,7 +1286,9 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
             if kind == "ROT" and not has_channel(ob, key):
                 continue
             draw_channel_row(col, ob, key, cb, key + "_text", key in sel, key in blue)
+            rows += 1
         if not has_channel(ob, "rx"):
+            rows += 3
             col.label(text=f"Rotation mode {ob.rotation_mode}")
             col.prop(ob, "rotation_quaternion" if ob.rotation_mode == 'QUATERNION' else "rotation_axis_angle",
                      text="")
@@ -1293,6 +1302,8 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                     draw_channel_row(col, ob, key, row, "text", key in sel)
                 else:
                     draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
+                rows += 1
+        units += rows * ROW_SCALE + 0.3
 
         # SHAPES / INPUTS: a section title and indented node names, no boxes (11b_channel_box_crop).
         data = getattr(ob, "data", None)
@@ -1302,9 +1313,11 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
             name = box.row()
             name.separator(factor=1.5)
             name.prop(data, "name", text="", emboss=False)
+            units += 2.3
             for prop in SHAPE_PROPS.get(ob.type, ()):
                 if hasattr(data, prop):
                     _draw_text_row(box, context, ob, data, prop, "SHAPE")
+                    units += 1.0
 
         # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
         inputs = _inputs(ob)
@@ -1314,6 +1327,8 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
         if inputs or cons or last is not None:
             box = layout.column(align=True)
             box.label(text="INPUTS")
+            # INPUTS can be long (expanded nodes): no pane estimate, the Layer Editor just follows
+            units = None
             if last is not None:
                 in_view.draw_cb_node(box, context, last)
             for mod in inputs:
@@ -1339,13 +1354,74 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
                 sub = box.column(align=True)
                 _draw_text_row(sub, context, ob, con, "influence", "CONSTRAINT", con.type,
                                _nth_constraint(ob, con), label=weight_name(con))
+        return units
+
+
+def dock_title_row(layout):
+    """Maya's dock has a title row (with a few icons at its right) above each editor's menu bar
+    (, y 141 above "Channels Edit Object Show" at 163): an
+    empty row of the same height where the kit's CB / AE / MTK switch was (step 99)."""
+    layout.label(text="")
+
+
+def fill_pane(layout, context, units):
+    """Empty space under the Channel Box so the Layer Editor starts at CB_SHARE of the dock height, like Maya's
+    fixed split; nothing when the Channel Box is taller (Blender panels can't scroll on their own)."""
+    region = context.region
+    if units is None or region is None or region.type != 'UI':
+        return
+    sdk = getattr(context.window_manager, "maya_kit_sdk", None)
+    if sdk is not None and sdk.open:   # the Set Driven Key window takes the Layer Editor's place (step 62): no split
+        return
+    u = round(18.0 * context.preferences.system.ui_scale) + 2 * context.preferences.system.pixel_size
+    if u <= 0:
+        return
+    gap = CB_SHARE * region.height / u - units - PANE_TOP
+    if gap > 0.25:
+        col = layout.column()
+        col.scale_y = gap
+        col.label(text="")
+
+
+PANE_TOP = 2.2   # panel margins, row spacing and the Layer Editor's splitter, in UI units (screenshots, step 99)
+
+
+class MAYAKIT_PT_dock_attribute_editor(bpy.types.Panel):
+    """Maya Attribute Editor tab of the dock (step 99)"""
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = AE_CATEGORY
+    bl_label = "Attribute Editor"
+    bl_order = 0
+    bl_options = {'HIDE_HEADER'}
+
+    def draw(self, context):
+        from . import attribute_editor
+        dock_title_row(self.layout)
+        attribute_editor.draw_panel(self.layout, context)
+
+
+class MAYAKIT_PT_dock_modeling_toolkit(bpy.types.Panel):
+    """Maya Modeling Toolkit tab of the dock (step 99)"""
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = MTK_CATEGORY
+    bl_label = "Modeling Toolkit"
+    bl_order = 0
+    bl_options = {'HIDE_HEADER'}
+
+    def draw(self, context):
+        from . import modeling_toolkit
+        dock_title_row(self.layout)
+        modeling_toolkit.draw(self.layout, context)
 
 
 classes = (MAYAKIT_PG_cb_row, MAYAKIT_PG_channel_box, MAYAKIT_OT_cb_virtual_slider, MAYAKIT_OT_cb_select_channel,
            MAYAKIT_OT_cb_deselect_channels, *CHANNEL_OPS, MAYAKIT_OT_cb_show_all,
            MAYAKIT_MT_cb_channels, MAYAKIT_MT_cb_settings, MAYAKIT_OT_cb_make_lead,
            MAYAKIT_OT_cb_rotate_order, MAYAKIT_MT_cb_edit,
-           MAYAKIT_MT_cb_object, MAYAKIT_MT_cb_show, MAYAKIT_PT_channel_box)
+           MAYAKIT_MT_cb_object, MAYAKIT_MT_cb_show, MAYAKIT_PT_channel_box, MAYAKIT_PT_dock_attribute_editor,
+           MAYAKIT_PT_dock_modeling_toolkit)
 
 
 def register():

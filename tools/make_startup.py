@@ -25,7 +25,7 @@ OUTLINER_PX = 260
 # Sidebar = Maya's dock column: Channel Box / Layer Editor 260 + the vertical dock tab strip right of it
 # (Maya: dock [1323, 260] then tabs to 1598). Blender draws its tab strip inside the sidebar.
 DOCK_PX = 260 + 17
-DOCK_CATEGORY = "Channel Box"
+DOCK_CATEGORY = "Channel Box / Layer Editor"   # = ui/channel_box.py CATEGORY (step 99)
 # Maya Time Slider right end: current time field (90) + 8 transport buttons (22 each) and padding
 # (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
 TIME_CONTROLS_PX = 300   # = ui/channel_box.py CATEGORY

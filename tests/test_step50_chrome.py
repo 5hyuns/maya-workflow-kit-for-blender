@@ -62,7 +62,7 @@ def test_channel_box_empty_text():
     bpy.context.view_layer.objects.active = None
     rec = Recorder()
     channel_box.MAYAKIT_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
-    assert " ".join(rec.texts("label")) == \
+    assert " ".join(t for t in rec.texts("label") if t) == \
         "Select objects in the scene to view, edit and set keyframes on channels (attributes)"
 
 

@@ -81,12 +81,12 @@ def s_pass_through():
 @step
 def s_tab():
     r = ui_region()
-    if r.active_panel_category != "Channel Box" and C["tries"] < 8:
+    if r.active_panel_category != "Channel Box / Layer Editor" and C["tries"] < 8:
         C["tries"] += 1
         ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
         sys.modules["sim"]._steps.insert(0, s_tab)  # retry next tick
         return
-    check("sidebar shows the Channel Box tab", r.active_panel_category == "Channel Box")
+    check("sidebar shows the Channel Box tab", r.active_panel_category == "Channel Box / Layer Editor")
     ob = cube()
     ob.keyframe_insert("location", index=0)
     ob.lock_location[1] = True

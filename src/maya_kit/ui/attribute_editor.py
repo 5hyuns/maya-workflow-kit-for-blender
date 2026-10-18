@@ -2,9 +2,9 @@
 """Maya Attribute Editor in the 3D View sidebar, sharing the Channel Box dock.
 
 ; design:  「계획」 1, 3.
-- Dock mode (``WindowManager.maya_kit_dock``): the sidebar "Channel Box" tab shows
-  either Channel Box + Layer Editor or the Attribute Editor, like the two tabs of
-  Maya's right dock (); Ctrl+A toggles
+- Dock mode (``WindowManager.maya_kit_dock``): the sidebar tabs "Channel Box / Layer
+  Editor", "Attribute Editor", "Modeling Toolkit" = the tabs of Maya's right dock
+  (, step 99); Ctrl+A toggles
   (``ShowAttributeEditorOrChannelBox``).
 - Node tabs (attribute_editor.md:42-61): transform = object, shape = object
   data, one tab per modifier (construction history inputs) and per material.
@@ -639,15 +639,81 @@ def _redraw(context):
 
 # --- panels ----------------------------------------------------------------------------------
 
-def draw_dock_switch(layout, context):
-    """CB/LE | AE | MTK switch at the top of the dock (Maya: the dock's tabs; drawn inside the dock panel so it
-    stays on top: header-less panels don't keep bl_order against the region's saved panel order, step 50)."""
-    layout.prop(context.window_manager, "maya_kit_dock", expand=True)
+# --- dock tabs (step 99) ----------------------------------------------------------------------
+# Maya's dock tabs are the sidebar's own vertical category tabs (Blender draws them on the region's outer edge,
+# like Maya's tab stack, ). WindowManager.maya_kit_dock stays the dock state
+# the rest of the kit reads and sets (Ctrl+A, Windows menu, RMB "<object>..."): setting it switches the tabs
+# (update), and a timer makes it follow a tab the user clicked.
+
+DOCK_CATEGORIES = {'CHANNEL_BOX': channel_box.CATEGORY, 'ATTRIBUTE_EDITOR': channel_box.AE_CATEGORY,
+                   'MODELING_TOOLKIT': channel_box.MTK_CATEGORY}
+_CATEGORY_DOCK = {v: k for k, v in DOCK_CATEGORIES.items()}
+_seen = {}          # UI region pointer -> category at the last sync tick
+SYNC_TICK = 0.2
+
+
+def _dock_regions(context):
+    """Sidebars that show the dock (or nothing / Item yet): not the Light Editor's or other kit tabs."""
+    for window in context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type != 'VIEW_3D' or not area.spaces.active.show_region_ui:
+                continue
+            for region in area.regions:
+                if region.type == 'UI' and region.width > 1:
+                    cat = region.active_panel_category
+                    if cat in _CATEGORY_DOCK or cat in ("", "Item"):
+                        yield area, region
+
+
+def show_dock_category(context, dock):
+    category = DOCK_CATEGORIES.get(dock, channel_box.CATEGORY)
+    for area, region in _dock_regions(context):
+        try:
+            region.active_panel_category = category
+        except (TypeError, AttributeError):   # "read-only" until the region has drawn its tabs: the timer retries
+            pass
+        _seen[region.as_pointer()] = region.active_panel_category
+        area.tag_redraw()
+
+
+def _dock_update(self, context):
+    show_dock_category(context, self.maya_kit_dock)
+
+
+def _sync_tick():
+    """A tab the user clicked becomes maya_kit_dock; a sidebar that missed a switch (no tabs yet) gets it."""
+    try:
+        context = bpy.context
+        wm = context.window_manager
+        want = DOCK_CATEGORIES.get(wm.maya_kit_dock, channel_box.CATEGORY)
+        for area, region in list(_dock_regions(context)):
+            key = region.as_pointer()
+            cat = region.active_panel_category
+            if cat == want:
+                _seen[key] = cat
+                continue
+            prev = _seen.get(key)
+            if prev is not None and cat != prev:   # changed since the last tick: the user clicked a tab
+                _seen[key] = cat
+                if cat in _CATEGORY_DOCK:
+                    wm.maya_kit_dock = _CATEGORY_DOCK[cat]
+                    return SYNC_TICK
+                continue   # Blender's Item tab (a C panel the kit can't hide): leave it open
+            if cat == "Item" and prev == "Item":
+                continue
+            try:
+                region.active_panel_category = want
+                area.tag_redraw()
+            except (TypeError, AttributeError):
+                pass
+            _seen[key] = region.active_panel_category
+    except Exception:   # a timer that raises is dropped: keep it running
+        pass
+    return SYNC_TICK
 
 
 def draw_panel(layout, context):
-    """The Attribute Editor body of the dock panel (``channel_box.MAYAKIT_PT_channel_box`` draws it when the dock
-    shows the AE; one panel for every dock mode keeps the "Channel Box" sidebar tab first, step 91)."""
+    """The Attribute Editor body of the dock (``channel_box.MAYAKIT_PT_dock_attribute_editor``)."""
     if channel_box.placing_joints(context):
         from . import chrome
         chrome.wrapped(layout, channel_box.PLACING_TEXT)
@@ -665,14 +731,19 @@ classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKI
 
 def register():
     wm = bpy.types.WindowManager
-    wm.maya_kit_dock = EnumProperty(name="Dock", items=DOCK_ITEMS, options={'SKIP_SAVE'})
+    wm.maya_kit_dock = EnumProperty(name="Dock", items=DOCK_ITEMS, options={'SKIP_SAVE'}, update=_dock_update)
     wm.maya_kit_ae_tab = StringProperty(options={'SKIP_SAVE'})
     wm.maya_kit_ae_kind = StringProperty(default="S", options={'SKIP_SAVE'})
     for cls in classes:
         bpy.utils.register_class(cls)
+    if not bpy.app.background and not bpy.app.timers.is_registered(_sync_tick):
+        bpy.app.timers.register(_sync_tick, first_interval=SYNC_TICK, persistent=True)
 
 
 def unregister():
+    if bpy.app.timers.is_registered(_sync_tick):
+        bpy.app.timers.unregister(_sync_tick)
+    _seen.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     wm = bpy.types.WindowManager

@@ -111,7 +111,7 @@ def s_setup():
     redraw()
 
 
-step(goto_tab("Channel Box", redraw))
+step(goto_tab("Channel Box / Layer Editor", redraw))
 
 
 @step

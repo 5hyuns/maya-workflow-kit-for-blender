@@ -79,7 +79,7 @@ def _after_cb_tab():
     redraw()
 
 
-step(goto_tab("Channel Box", _after_cb_tab))
+step(goto_tab("Attribute Editor", _after_cb_tab))   # step 99: the AE is its own dock tab
 
 
 @step
