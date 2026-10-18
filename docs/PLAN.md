@@ -519,7 +519,7 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
 1. **Maya persp field of view** (new finding): template lens 70, camera from view, look_compare.
 2. **Outliner drag = Maya parenting** (mapping row 90). — done step 82 (MMB drag onto / between / empty, LMB drop redone the Maya way; Sets still open).
 3. **Insert / nudge key batch** (blindspots 2–3). — done step 83 (Alt+I, Ctrl+Shift+W/E/R shape-keeping insert, Shift+( / ) nudge, Ctrl+Alt+, / . select key).
-4. **Time Slider Shift-range key drag / scale** (mapping row 92; step_56.md:113, step_73.md:121).
+4. **Time Slider Shift-range key drag / scale** (mapping row 92; step_56.md:113, step_73.md:121). — done step 84 (middle = move, end arrows = scale, overwrite, one undo step).
 5. **Manipulator Ctrl+LMB plane / Shift+MMB auto axis** (blindspot 4).
 6. **Dope Sheet / NLA / Node Editor selection modifiers** (blindspot 1; mapping row 72).
 7. **View key batch**: Alt+A, Alt+P, Alt+arrow nudge, backtick tweak, `\` pan/zoom + the `Shift+\` table row.

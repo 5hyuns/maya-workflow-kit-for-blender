@@ -216,8 +216,9 @@ def test_keymap_patches():
     data = maya_patches.apply(ic_data.generate())
     kd = patch.KeyconfigData(data)
     dope = kd.items("Dopesheet")
-    first = [(it[0], patch.event_key(it[1])) for it in dope[:4]]
-    assert {f[0] for f in first} == {"maya_kit.time_scrub", "maya_kit.time_slider_menu"}, first
+    first = [(it[0], patch.event_key(it[1])) for it in dope[:5]]
+    # step 84 puts the range drag (passes through off the range) in front of time_scrub
+    assert {f[0] for f in first} == {"maya_kit.time_range_drag", "maya_kit.time_scrub", "maya_kit.time_slider_menu"}, first
     assert kd.find("Dopesheet", "maya_kit.time_scrub", type="LEFTMOUSE", shift=True)
     assert kd.find("Dopesheet", "maya_kit.time_scrub", type="MIDDLEMOUSE")
     assert not kd.find("Dopesheet", "action.select_column", type="K")

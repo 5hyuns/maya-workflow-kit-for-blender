@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 84 (타임 슬라이더 Shift 범위 키 이동·늘이기) 완료 — `docs/steps/step_84.md`.
+  - Shift 범위 가운데 드래그 = 범위 안 키 이동, 끝 화살표 = 반대 끝 기준 늘이기, 덮어쓰기, 언두 한 단계, 흰 화살표 (`operators/time_range.py`,
+    `ui/time_slider.py` `time_range_drag`). 측정: `FCurve.update()` 는 같은 프레임 키를 합침 → 드래그 중엔 sort + handles_recalc 만.
+  - 측정: 템플릿 Time Slider 줄은 전부 Blender 스크럽 띠 ("Time Scrub" 키맵이 Dopesheet 보다 먼저, IC 엔 없어 Blender 기본 것이 쓰였음) →
+    Maya 키컨피그에 "Time Scrub" 을 만들고 kit 항목을 앞에 (step 56 의 범위 밖 클릭 = 해제도 이제 템플릿에서 동작).
+  - 검증: 헤드리스 662/662, GUI 594/594, dogfood 47/47. 대응표 타임라인 행 → Done (Once / Oscillate 는 Blender 한계).
+  - **바로 다음 할 일**: step 85 매니퓰레이터 Ctrl+축 = 평면 이동, Shift+MMB 자동 축 (`ui/manipulator.py`; 기즈모 키맵이라 「계획」 먼저).
+    그 뒤 86 Dope Sheet·NLA·Node 수식, 87 뷰 키 묶음 3, 88 manual_checks → GUI. backlog = `hermes/autodrive_bmk/backlog_81.json`.
+    배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 83 (키 삽입·이동 묶음) 완료 — `docs/steps/step_83.md`.
   - Alt+I / Ctrl+Shift+W/E/R = 곡선 모양 그대로 키 삽입 (Blender insert 는 auto 구간만 지킴 → 그 밖은 de Casteljau 분할), Shift+( / ) = 키 1 프레임
     이동 (키 에디터 = 선택 키, 그 밖 = 현재 시간 키 + 시간), Ctrl+Alt+, / . = 이전 / 다음 키 선택 + 이동 (`operators/key_insert.py`). 키맵 구현 133.
