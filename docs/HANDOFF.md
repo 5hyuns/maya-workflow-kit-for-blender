@@ -13,6 +13,8 @@
     Import/Export 하위 메뉴, UV / Graph / Hypershade 창이 Blender 모양.
   - 고친 버그 2: Channel Box 핸들러 AttributeError (File Browser / Preferences 창 컨텍스트, `tests/test_step98_audit_fixes.py`),
     Create Reference 의 「.ma 를 Import」 안내 문구.
+  - 이어서 끝낸 것: Joint Tool 메뉴 실행은 정상 (첫 세션의 클릭 순서 탓), Properties 창 rna enum WARN 고침 (`menu_extras.properties_tab_later`),
+    속도 측정 (create 1.6 ms · extrude 2.5 ms · Hypershade 창 58 ms · Render Settings 창 65 ms).
   - 검증: 헤드리스 719/719, kit 세션 PASS (콘솔 traceback 0), Maya 촬영 146 장.
   - **바로 다음 할 일**: step 99 = backlog 1 「First screen: Maya Outliner rows, Tool Box at 125 %, dock tabs」. backlog 12 개 =
     `hermes/autodrive_bmk/backlog.json` (사본 `backlog_98.json`), PLAN 「재점검 7차」 우선순위 1–12 와 같음. 배포 결정 (decision 11) 은 사용자 대기.

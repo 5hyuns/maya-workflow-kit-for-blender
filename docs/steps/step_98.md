@@ -39,12 +39,14 @@
   Time Slider Bookmarks, Create 의 Sweep Mesh / USD, Select 의 USD Selection Mode, Playback 의 Cached Playback, Generate 의 XGen 17,
   nCloth / nConstraint 의 Convert Texture↔Vertex Map, Help 3 (`tmp/audit7/live_vs_kit.txt`; 섹션 중첩 때문에 자동 비교가 틀리게 센 항목
   — Modify Center/Bake Pivot, Add/Edit/Delete Attribute — 은 화면으로 확인해 뺐다).
-- **고친 kit 버그 2**:
+- **고친 kit 버그 3**:
   1. Channel Box depsgraph 핸들러가 File Browser / Preferences 창 컨텍스트에서 `AttributeError: 'Context' object has no attribute
      'active_object'` (첫 세션 콘솔 4 traceback, `channel_box.pose_armature`). `channel_box.active_object()` (없으면 view layer 의 active)
      로 바꿈. 헤드리스 회귀 `tests/test_step98_audit_fixes.py`. 수정 후 세션 콘솔 traceback 0.
   2. Create Reference 에 .blend 아닌 파일을 주면 「use File > Import for .ma」 라고 안내 — kit 은 .ma 를 못 읽음. 문구를
      「.fbx / .obj / .abc / .usd (Maya .ma / .mb can't be read)」 로 (`operators/project.py:420`).
+  3. (이어서) Render Settings 등 Properties 창을 열 때 rna enum WARN 2 줄 — `operators/menu_extras.properties_tab_later` 가 탭 목록이
+     생기기 전에 `space.context` 를 읽음. 대입이 성공했을 때만 읽도록 고침 (probe 세션 콘솔 0 줄).
 
 ## 발견 (차이만, 등급 · 빈도 F · 심각도 S · 점수 = F×S)
 
@@ -108,7 +110,7 @@
 |---|---|---|---|---|---|
 | 28 | Skeleton 13 % · Skin 43 % · Deform 15 % 작동 (Insert Joints, Reroot, Preferred Angle, IK Spline, Joint Labelling 39, Add/Remove Influence, Hammer, Cluster, Wire, Nonlinear, Soft Mod, Paint Weights 11 회색) | 기능 | 3 | 4 | 12 |
 | 29 | FX: Outliner 에 nucleus1 / nCloth1 노드 행이 없다 (AE 탭에는 있음). nHair 2 % · Fluids 8 % · nConstraint 0 % | 외형/기능 | 2 | 3 | 6 |
-| 30 | (미확인) 세션에서 메뉴로 띄운 Joint Tool 에 클릭 3 번 → 조인트 0. GUI 테스트 `gui_step57_joints` 는 통과하므로 세션의 이벤트 순서 탓일 가능성 — 다음 단계에서 손으로 확인 | 조작 | – | – | – |
+| 30 | ~~(미확인) 메뉴로 띄운 Joint Tool 에 조인트 0~~ → **차이 아님** (이어서 한 확인, `tmp/audit7_probe2.py`): Skeleton > Create Joints 로 띄운 Joint Tool 에 틱마다 클릭 3 번 + Enter = skeleton1 본 3 개 (kit 규칙: N 클릭 = N 본, 끝 조인트는 짧은 tail). 첫 세션은 한 틱에 두 번 클릭해 모달이 놓친 것 | – | – | – | – |
 
 ### 렌더 / 기타 창 (`h01`–`h06`)
 
@@ -128,10 +130,10 @@
 
 ### 콘솔 · 속도
 
-- 첫 세션 콘솔: Channel Box 핸들러 AttributeError 4 (고침, 위). 수정 후: `WARN pyrna_enum_to_py: current value '3' matches no enum in
-  'SpaceProperties' … 'context'` 2 줄 — Render Settings 를 열 때 (Properties 창 컨텍스트 값 3; 원인 미조사), 종료 시 Blender 의
+- 첫 세션 콘솔: Channel Box 핸들러 AttributeError 4 (고침, 위). 그다음 `WARN pyrna_enum_to_py: current value '3' matches no enum in
+  'SpaceProperties' … 'context'` 2 줄 — 원인: `menu_extras.properties_tab_later` 가 새 Properties 창이 그려지기 전 (탭 목록 없음) `space.context` 를 읽음 (대입 시도 뒤 1 번 + 타이머 등록 판단 1 번). **고침**: 대입이 성공했을 때만 다시 읽음 → probe 세션 콘솔 0 줄. 종료 시 Blender 의
   「Not freed memory blocks: 26」.
-- 느린 동작: 세션 단계 간격 0.6 s 안에서 멈춤은 없었다. 시간 측정은 하지 않음 (다음 단계 몫).
+- 속도 (`tmp/audit7_probe2.py`, effective 1.0, 큐브 1 개): create 1.6 ms, 6 면 extrude 2.5 ms, Mesh > Smooth 0.7 ms, Hypershade 창 57.7 ms, Render Settings 창 65.3 ms — 체감 지연 없음. 세션 단계 간격 0.6 s 안에서 멈춤도 없었다.
 
 ## 검증
 
@@ -140,10 +142,11 @@
 - 나란히 비교 113 쌍 생성 (`A7PAIRS 113`). 그림은 직접 열어 보고 위 표를 적었다 (첫 화면, File 메뉴, Mesh / Edit Mesh / Modify 메뉴, Open
   대화상자, Export Selection, Project Window, Tool Settings, AE, UV, Graph Editor, Dope Sheet, Hypershade, Render Settings, Script
   Editor, 리깅, FX).
-- 헤드리스: `python tests/run.py` **719/719** (88 파일; `-k step98` 1/1 — 수정 전 코드로는 AttributeError).
+- 헤드리스: `python tests/run.py` **719/719** (88 파일; `-k step98` 1/1 — 수정 전 코드로는 AttributeError). 버그 3 수정 뒤 다시 719/719.
+- 이어서 한 probe 세션 `tmp/audit7_probe2.py`: Render Settings 창 RENDER 탭 PASS, Joint Tool 모달 PASS, 본 3 개 (기대값을 2 로 잘못 적은 검사만 FAIL — kit 규칙은 N 클릭 = N 본), 콘솔 0 줄.
 
 ## 남은 것
 
 - `docs/PLAN.md` 「재점검 7차(정밀 비판)」 우선순위 1–12 (= backlog.json).
-- 표 #30 (Joint Tool 메뉴 실행) 손 확인, Render Settings 의 SpaceProperties WARN 원인, 동작 속도 측정.
+- (이어서 끝냄) 표 #30 확인, SpaceProperties WARN 고침, 속도 측정 — 위 「콘솔 · 속도」.
 - 하위 메뉴 그림 비교는 최상위 메뉴만 찍었다 (하위 메뉴는 부록의 수치 비교로 대신).
