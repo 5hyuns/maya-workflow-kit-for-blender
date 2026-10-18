@@ -190,7 +190,7 @@ def test_hypershade_browser_create_assign():
         with bpy.context.temp_override(area=area, space_data=space):
             assert bpy.ops.maya_kit.hs_create(kind='STANDARD_SURFACE') == {'FINISHED'}
         mat = bpy.data.materials["standardSurface1"]
-        assert mat.use_fake_user and mat.users == 1 and not ob.material_slots
+        assert mat.use_fake_user and mat.users == 1 and ob.active_material is not mat   # (ob has lambert1, step 100)
         assert hs.current(bpy.context) == mat and wm.maya_kit_hs_material == mat.name
         assert space.pin and space.node_tree == mat.node_tree, "not on the object: the graph is pinned to it"
         # Assign Material To Selection
@@ -207,7 +207,7 @@ def test_hypershade_browser_create_assign():
         # panels draw: browser buttons for every material, Create kinds, Property Editor = AE material sections
         rec = Rec()
         hs.draw_browser(rec, bpy.context)
-        assert {p.material for i, p in rec.ops() if i == "maya_kit.hs_pick"} == {mat.name, other.name}
+        assert {p.material for i, p in rec.ops() if i == "maya_kit.hs_pick"} == {mat.name, other.name, "lambert1"}
         rec = Rec()
         hs.draw_create(rec, bpy.context)
         assert [p.kind for i, p in rec.ops()] == list(hs.CREATE)

@@ -47,9 +47,11 @@ def register():
     preselect.register_handlers()
     cut_sew.register_handlers()
     outliner_drag.register_handlers()
+    material.register_handlers()
 
 
 def unregister():
+    material.unregister_handlers()
     outliner_drag.unregister_handlers()
     cut_sew.unregister_handlers()
     project.unregister_handlers()

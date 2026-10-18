@@ -89,9 +89,10 @@ def s_hypershade_open():
         bpy.ops.maya_kit.hs_create(kind='STANDARD_SURFACE')
     mat = bpy.data.materials.get("standardSurface1")
     sphere = bpy.data.objects[C["sphere"]]
+    # step 100: the new sphere already has default lambert1
     check(f"Create > Standard Surface: standardSurface1, not assigned yet, graph pinned to it "
-          f"({mat is not None}, {len(sphere.material_slots)}, {a.spaces.active.pin})",
-          mat is not None and not sphere.material_slots and a.spaces.active.pin
+          f"({mat is not None}, {sphere.active_material and sphere.active_material.name}, {a.spaces.active.pin})",
+          mat is not None and sphere.active_material is not mat and a.spaces.active.pin
           and a.spaces.active.node_tree == mat.node_tree)
     with bpy.context.temp_override(window=w, area=a, region=ui):
         bpy.ops.maya_kit.assign_material(material="standardSurface1")

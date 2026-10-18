@@ -152,6 +152,9 @@ def create(context, kind, maya_naming=True):
         naming.apply_maya_name(ob, base, rename_data=kind not in NO_SHAPE_NAME)
     if kind == 'JOINT':
         _first_joint(ob, maya_naming)
+    if maya_naming:
+        from . import material
+        material.give_default(ob)   # Maya: a new shape joins initialShadingGroup = lambert1 (step 100)
     return ob
 
 
