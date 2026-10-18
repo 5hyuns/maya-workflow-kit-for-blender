@@ -328,6 +328,9 @@ def maya_views():
                 space.overlay.show_text = False
                 # Maya highlights a selection with its wireframe (ui/selection_wire.py), no outline (step 47).
                 space.overlay.show_outline_selected = False
+                # Maya draws no line from a child to its parent (factory Maya 2022 shots:
+                # *.png, step 91); Blender's dashed relationship lines go.
+                space.overlay.show_relationship_lines = False
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')

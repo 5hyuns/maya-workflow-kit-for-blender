@@ -389,13 +389,13 @@ def test_ae_add_limit_and_select():
 def test_dock_mode_switches_panels():
     wm = bpy.context.window_manager
     wm.maya_kit_dock = 'CHANNEL_BOX'
-    cb = bpy.types.MAYAKIT_PT_channel_box
+    cb = bpy.types.MAYAKIT_PT_channel_box      # the one dock panel: always there, draws CB / AE / MTK (step 91)
     le = bpy.types.MAYAKIT_PT_layer_editor
-    pt = bpy.types.MAYAKIT_PT_attribute_editor
-    assert cb.poll(bpy.context) and le.poll(bpy.context) and not pt.poll(bpy.context)
+    assert not hasattr(cb, "poll") and le.poll(bpy.context)
+    assert not hasattr(bpy.types, "MAYAKIT_PT_attribute_editor")
     bpy.ops.maya_kit.ae_toggle()
     assert wm.maya_kit_dock == 'ATTRIBUTE_EDITOR'
-    assert not cb.poll(bpy.context) and not le.poll(bpy.context) and pt.poll(bpy.context)
+    assert not le.poll(bpy.context)
     bpy.ops.maya_kit.ae_toggle()
     assert wm.maya_kit_dock == 'CHANNEL_BOX'
 

@@ -32,7 +32,8 @@ COVER_SPACES = SPACES + tuple(getattr(bpy.types, n) for n in (
     "SpaceProperties", "SpaceNLA", "SpaceSequenceEditor", "SpaceClipEditor", "SpaceTextEditor",
     "SpaceConsole", "SpaceInfo", "SpaceFileBrowser", "SpaceSpreadsheet", "SpacePreferences")
     if hasattr(bpy.types, n))
-REGION_TYPES = ('WINDOW', 'UI', 'TOOLS', 'HEADER', 'TOOL_HEADER', 'CHANNELS', 'FOOTER')
+# 'HUD' = the Adjust Last Operation panel, drawn over the view: without it the RMB list went under it (step 91).
+REGION_TYPES = ('WINDOW', 'UI', 'TOOLS', 'HEADER', 'TOOL_HEADER', 'CHANNELS', 'FOOTER', 'HUD')
 
 # Maya greys and selection blue #5285A6. Menu boxes and the list body: #525252
 # ( ui_samples marking_menu_box / marking_menu_list_bg, step 52).
