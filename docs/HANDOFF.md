@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 100 (기본 재질 lambert1 / initialShadingGroup) 완료 — `docs/steps/step_100.md`.
+  - mayapy 측정: 새 shape → initialShadingGroup → lambert1 (color 0.5, incandescence 0, diffuse 0.8), Delete Unused 뒤에도 남음, 새
+    Lambert = lambert2. kit: `operators/material.default_material` (표시 ID 속성 + fake user), 새 오브젝트 핸들러 + `create` 가
+    MESH / SURFACE 에 넣음 (기존 오브젝트·사용자 파일은 그대로), 새 장면에 미리 생성, AE 에 shading group 탭 (initialShadingGroup /
+    `<재질>SG`). Diffuse 0.8 은 Principled 입력이 없어 표현 못 함.
+  - 검증: 헤드리스 725/725, GUI 1015/1015, dogfood 47/47, look_compare 그대로, 비교 그림 `research/maya/screens/step100/`.
+  - **바로 다음 할 일**: step 101 = backlog 3 「Menu honesty: no unexplained greyed item, map the cheap ones」. backlog =
+    `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 99 (첫 화면: Maya Outliner 기본 행, 125 % Tool Box, 도크 탭) 완료 — `docs/steps/step_99.md`.
   - Outliner: 새 장면에 persp / top / front / side (회색) + defaultLightSet / defaultObjectSet 를 그린 행으로 (`ui/outliner_sets.py`;
     진짜 카메라는 안 만듦, delegated), 줄무늬 없음. 오브젝트가 있으면 카메라 행이 DAG 행 뒤 (Blender C 행을 못 밂).

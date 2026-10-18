@@ -79,8 +79,12 @@ def tabs(ob):
         if display.is_preview(md):   # shape display attribute, drawn in "Smooth Mesh" (step 15)
             continue
         out.append((f"M:{md.name}", md.name, md.type.lower()))
+    from ..operators import material as material_ops
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
+            # Maya: the shape's shading group, then its surface shader (pCubeShape1 | polyCube1 |
+            # initialShadingGroup | lambert1; mayapy listConnections, step 100)
+            out.append((f"SG:{i}", material_ops.shading_group_name(slot.material), "shadingEngine"))
             out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
     if has_nucleus(ob):
         out.append(("NUC", "nucleus1", "nucleus"))     # Maya's shared solver node (operators/fx.py, step 68)
@@ -127,8 +131,8 @@ def tab_target(ob, key):
         return ob.data
     if kind == "M":
         return ob.modifiers.get(key[2:])
-    if kind == "MAT":
-        i = int(key[4:])
+    if kind in ("MAT", "SG"):
+        i = int(key.split(":", 1)[1])
         return ob.material_slots[i].material if i < len(ob.material_slots) else None
     if kind == "NUC":
         return bpy.context.scene.maya_kit_nucleus
@@ -428,6 +432,10 @@ def draw(layout, context, ob):
         chrome.paragraph(layout, context, ae_layout.NUCLEUS_NOTE)
         draw_sections(layout, context, ob, target, ae_layout.NUCLEUS, "nucleus")
         return
+    if _kind(key) == "SG":
+        draw_shading_group(layout, key, target)
+        head.label(text=next(t[1] for t in tabs(ob) if t[0] == key))
+        return
     head.prop(target, "name", text="")
     if _kind(key) == "C":
         draw_constraint(layout, context, ob, target)
@@ -444,6 +452,23 @@ def draw(layout, context, ob):
         draw_extra(layout, target, layout_id or "data")
     if _kind(key) == "T":
         layout.operator("maya_kit.ae_select", text="Select")
+
+
+def draw_shading_group(layout, key, mat):
+    """Maya's shading group tab (AEshadingEngineTemplate: Shading Group Attributes): the surface material opens
+    its own tab; Blender has no volume / displacement slots of their own on a shading group."""
+    header, box = layout.panel("ae_shading_group", default_closed=False)
+    header.label(text="Shading Group Attributes")
+    if box is None:
+        return
+    row = box.row(align=True)
+    row.label(text="Surface Material")
+    row.operator("maya_kit.ae_tab", text=mat.name, icon='MATERIAL').key = "MAT:" + key.split(":", 1)[1]
+    for label in ("Volume Material", "Displacement Mat."):
+        row = box.row(align=True)
+        row.active = False
+        row.label(text=label)
+        row.label(text="")
 
 
 # --- operators -----------------------------------------------------------------------------

@@ -139,7 +139,7 @@ def test_poly_cube_button_creates_maya_cube():
     assert ob.name == "pCube1" and tuple(ob.dimensions) == (1.0, 1.0, 1.0)
     bpy.ops.maya_kit.shelf_button(shelf="Polygons", index=_index("Polygons", "Freeze Transformations"))
     bpy.ops.maya_kit.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
-    assert ob.active_material.name == "lambert1"
+    assert ob.active_material.name == "lambert2"   # lambert1 = Maya's default material (step 100)
     node = next(n for n in ob.active_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     assert node.inputs["Roughness"].default_value == 1.0
 

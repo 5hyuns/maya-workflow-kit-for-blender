@@ -215,6 +215,7 @@ def test_ae_tabs_in_maya_order():
     assert ae.tabs(ob) == [("T", "pCube1", "transform"), ("S", "pCube1Shape", "mesh"),
                            ("M:polySmooth1", "polySmooth1", "subsurf"),
                            ("M:polyBevel1", "polyBevel1", "bevel"),
+                           ("SG:0", "standardSurface1SG", "shadingEngine"),   # Maya's shading group (step 100)
                            ("MAT:0", "standardSurface1", "standardSurface")]
     assert ae.current_tab(bpy.context, ob) == "S"      # default: shape (preferred node)
 

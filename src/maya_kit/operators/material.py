@@ -26,7 +26,11 @@ MATERIALS = {
     'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {}),
     # Arnold's default material (Maya with mtoa); same Principled stand-in (render.md §4.4, step 67)
     'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
-    'LAMBERT': ("lambert", "Lambert", {"Roughness": 1.0, "Specular IOR Level": 0.0}),
+    # Maya lambert defaults (mayapy, docs/steps/step_100.md): color 0.5 grey; diffuse 0.8 has no Principled input
+    # (its "Weight" socket is disabled), so the colour is Maya's attribute value, not color x diffuse
+    # incandescence 0 = black Emission Color (Principled's default is white at strength 0: the AE showed white)
+    'LAMBERT': ("lambert", "Lambert", {"Base Color": (0.5, 0.5, 0.5, 1.0), "Roughness": 1.0,
+                                       "Specular IOR Level": 0.0, "Emission Color": (0.0, 0.0, 0.0, 1.0)}),
     'BLINN': ("blinn", "Blinn", {"Roughness": 0.3}),
     'PHONG': ("phong", "Phong", {"Roughness": 0.15}),
     'SURFACE': ("surfaceShader", "Surface Shader", {"Emission Strength": 1.0}),
@@ -36,6 +40,12 @@ KIND_ITEMS = [(k, v[1], f"Maya {v[0]} (Principled BSDF)") for k, v in MATERIALS.
 FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
 # ID property naming the Maya node type of a kit-made material (AE tab label/sections, step 38).
 TYPE_PROP = "maya_kit_type"
+# Maya's default material (step 100, measured with mayapy): every new shape joins initialShadingGroup, whose surface
+# shader is lambert1 (lambert, color 0.5, diffuse 0.8); Delete Unused Nodes keeps it, a new Lambert is lambert2.
+DEFAULT_PROP = "maya_kit_default"
+DEFAULT_NAME = "lambert1"
+DEFAULT_GROUP = "initialShadingGroup"
+DEFAULT_TYPES = {'MESH', 'SURFACE'}   # Maya polygon and NURBS surface shapes (curves have no shading group)
 
 
 # --- data ------------------------------------------------------------------------------------
@@ -44,6 +54,8 @@ def new_material(kind):
     """A Maya-named (lambert1, blinn2, ...) Principled material of this kind."""
     from . import naming
     base, _label, values = MATERIALS[kind]
+    if _maya_scene():
+        default_material()   # Maya's scene always has lambert1, so a new Lambert is lambert2 (mayapy, step 100)
     n = naming.next_number(base, {m.name for m in bpy.data.materials})
     mat = bpy.data.materials.new(f"{base}{n}")
     mat[TYPE_PROP] = base
@@ -54,6 +66,122 @@ def new_material(kind):
     if kind == 'SURFACE':
         node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
     return mat
+
+
+def default_material(create=True):
+    """The scene's lambert1 (marked by DEFAULT_PROP, so a rename keeps it); made on first use with a fake user so
+    File > Optimize Scene Size / purges keep it like Maya's Delete Unused Nodes."""
+    mat = next((m for m in bpy.data.materials if m.get(DEFAULT_PROP)), None)
+    if mat is not None or not create:
+        return mat
+    old = bpy.data.materials.get(DEFAULT_NAME)
+    if old is not None and old.get(TYPE_PROP) == "lambert" and old.library is None:
+        # a kit "lambert1" from before step 100 (Assign New Material > Lambert): it becomes the default
+        old[DEFAULT_PROP] = True
+        old.use_fake_user = True
+        return old
+    mat = bpy.data.materials.new(DEFAULT_NAME)   # another material owns the name: Blender's suffix, names untouched
+    mat[TYPE_PROP] = "lambert"
+    mat[DEFAULT_PROP] = True
+    mat.use_fake_user = True
+    mat.use_nodes = True
+    node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
+    for socket, value in MATERIALS['LAMBERT'][2].items():
+        node.inputs[socket].default_value = value
+    return mat
+
+
+def is_default(mat):
+    return mat is not None and bool(mat.get(DEFAULT_PROP))
+
+
+def shading_group_name(mat):
+    """Maya's shading group of a material: initialShadingGroup for lambert1, else <material>SG."""
+    return DEFAULT_GROUP if is_default(mat) else f"{mat.name}SG"
+
+
+def give_default(ob):
+    """A new shape without a material joins lambert1 (Maya: initialShadingGroup); True when assigned."""
+    if ob is None or ob.type not in DEFAULT_TYPES or ob.data is None or ob.library is not None:
+        return False
+    if any(m is not None for m in ob.data.materials) or any(s.material is not None for s in ob.material_slots):
+        return False
+    mat = default_material()
+    ob.data.materials.clear()
+    ob.data.materials.append(mat)
+    return True
+
+
+def _maya_scene(context=None):
+    from .. import preferences
+    try:
+        return preferences.get(context or bpy.context).maya_naming
+    except KeyError:
+        return True
+
+
+# New objects (any path: kit create, Blender's Add menu, duplicate, separate, import) are found by comparing the
+# scene's objects with the last known set; file load, undo and redo only re-baseline (their objects aren't new).
+_known = {}
+_busy = [False]
+
+
+def _baseline(*_args):
+    _known.clear()
+    for scene in bpy.data.scenes:
+        _known[scene.as_pointer()] = {o.as_pointer() for o in scene.objects}
+
+
+@bpy.app.handlers.persistent
+def _on_load(*_args):
+    _baseline()
+    if not bpy.data.filepath and _maya_scene():   # File > New: Maya's new scene already has lambert1
+        default_material()
+
+
+@bpy.app.handlers.persistent
+def _on_undo(*_args):
+    _baseline()
+
+
+@bpy.app.handlers.persistent
+def _on_depsgraph(scene, depsgraph):
+    if _busy[0] or not depsgraph.id_type_updated('OBJECT'):
+        return
+    key = scene.as_pointer()
+    now = {o.as_pointer() for o in scene.objects}
+    known = _known.get(key)
+    _known[key] = now
+    if known is None or not (now - known) or not _maya_scene():
+        return
+    _busy[0] = True
+    try:
+        for ob in scene.objects:
+            if ob.as_pointer() not in known:
+                give_default(ob)
+    finally:
+        _busy[0] = False
+
+
+HANDLERS = ((bpy.app.handlers.load_post, _on_load), (bpy.app.handlers.undo_post, _on_undo),
+            (bpy.app.handlers.redo_post, _on_undo), (bpy.app.handlers.depsgraph_update_post, _on_depsgraph))
+
+
+def register_handlers():
+    for lst, fn in HANDLERS:
+        if fn not in lst:
+            lst.append(fn)
+    try:
+        _baseline()
+    except AttributeError:   # register runs with restricted bpy.data at startup: the first update baselines
+        pass
+
+
+def unregister_handlers():
+    for lst, fn in HANDLERS:
+        if fn in lst:
+            lst.remove(fn)
+    _known.clear()
 
 
 def targets(context, rmb=False):
@@ -110,8 +238,8 @@ def assign_faces(ob, mat):
     slots = ob.material_slots
     index = next((i for i, s in enumerate(slots) if s.material == mat), None)
     if index is None:
-        if not slots:
-            ob.data.materials.append(None)  # the rest of the mesh keeps the default
+        if not slots:   # the rest of the mesh keeps the default: Maya's lambert1 (step 100), else no material
+            ob.data.materials.append(default_material() if _maya_scene() else None)
         ob.data.materials.append(mat)
         index = len(ob.material_slots) - 1
         bm = bmesh.from_edit_mesh(ob.data)
