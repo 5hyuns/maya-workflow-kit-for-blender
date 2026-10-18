@@ -744,6 +744,9 @@ def _draw_image_header(self, context):
         return draw_status_line(self.layout, context)
     if is_shelf_row(context.space_data):
         return draw_shelf_tabs(self.layout, context)
+    from .editor_chrome import draw_uv_header   # Maya UV Editor menu bar (step 104)
+    if draw_uv_header(self, context):
+        return None
     from .render_view import draw_header   # Render View Keep / Remove Image (step 67): first, like Maya's
     draw_header(self.layout, context)       # toolbar, so a small render window doesn't clip them
     return _orig["header"](self, context)
@@ -752,6 +755,9 @@ def _draw_image_header(self, context):
 def _draw_image_tool_header(self, context):
     if is_strip(context.space_data):
         return draw_shelf(self.layout, context)
+    from .editor_chrome import draw_uv_tool_header   # Maya UV Editor icon row (step 104)
+    if draw_uv_tool_header(self, context):
+        return None
     return _orig["tool_header"](self, context)
 
 

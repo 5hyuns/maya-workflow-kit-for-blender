@@ -8,7 +8,7 @@ Shared menus are counted per set (the audit's per-set table, 1417 leaves at step
 (the headline 1251). Runs without Blender: ``bpy`` is stubbed, ``ui/menu_data``, ``menu_map`` and ``notices`` are imported from
 src/. A leaf = a drawn item that is not a submenu (a mapped submenu entry counts once). Shared menus
 (Deform, Constrain) count once per set that shows them, like the audit. Step 101 target: working >= 40 %,
-greyed without a notice = 0.
+greyed without a notice = 0. The Graph Editor / Dope Sheet / UV Editor menu bars (step 104) are listed after the totals.
 """
 
 import collections
@@ -47,7 +47,9 @@ def _load():
     ui.__path__ = [str(ROOT / "src" / "maya_kit" / "ui")]
     sys.modules["mk.ui"] = ui
     try:
-        return tuple(importlib.import_module(f"mk.ui.{m}") for m in ("menu_data", "menu_map", "notices"))
+        mods = tuple(importlib.import_module(f"mk.ui.{m}") for m in ("menu_data", "menu_map", "notices"))
+        mods[0].EDITORS = importlib.import_module("mk.ui.editor_menu_data").EDITORS   # step 104 editor menu bars
+        return mods
     finally:
         for name, mod in saved.items():
             if mod is None:
@@ -101,7 +103,21 @@ def count(md=None, mm=None, nt=None):
                     greyed.append(path)
         out[label] = c
         total.update(c)
-    return {"sets": out, "total": total, "greyed": sorted(set(greyed)),
+    editors = {}
+    for editor, menus in getattr(md, "EDITORS", {}).items():   # Graph Editor / Dope Sheet / UV Editor menu bars
+        c = collections.Counter()
+        for title, items in menus:
+            for path, _it in leaves(md, mm, items, f"{editor}/{title}"):
+                c["leaves"] += 1
+                if path in mm.MAP:
+                    c["working"] += 1
+                elif nt.greyed_notice(path):
+                    c["greyed+notice"] += 1
+                else:
+                    c["greyed"] += 1
+                    greyed.append(path)
+        editors[editor] = c
+    return {"sets": out, "total": total, "greyed": sorted(set(greyed)), "editors": editors,
             "unique": (len(unique), sum(unique.values()))}
 
 
@@ -113,6 +129,9 @@ def main():
               f"  greyed+notice {c['greyed+notice']:4}  greyed {c['greyed']:4}")
     print(f"{'total':18} leaves {t['leaves']:4}  working {t['working']:4} ({100 * t['working'] / t['leaves']:.1f} %)"
           f"  greyed+notice {t['greyed+notice']:4}  greyed without notice {len(r['greyed'])}")
+    for label, c in r["editors"].items():
+        print(f"{label:18} leaves {c['leaves']:4}  working {c['working']:4} ({100 * c['working'] / max(c['leaves'], 1):.0f} %)"
+              f"  greyed+notice {c['greyed+notice']:4}  greyed {c['greyed']:4}  (editor menu bar)")
     n, w = r["unique"]
     print(f"{'unique paths':18} leaves {n:4}  working {w:4} ({100 * w / n:.1f} %)")
     if "--greyed" in sys.argv:

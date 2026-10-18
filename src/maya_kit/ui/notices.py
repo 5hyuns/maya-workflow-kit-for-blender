@@ -327,6 +327,115 @@ CATEGORIES = {
 }
 
 
+def _anim_editor_categories(ed):
+    """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104, menus captured in Maya 2022)."""
+    return {
+        f"{ed}/Edit/Transformation Tools": (
+            "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice, region "
+            "or retime key tool."),
+        f"{ed}/Edit/Select Unsnapped": (
+            "Snap", "Blender can't select the keys off whole frames: Edit > Snap puts the selected keys on frames."),
+        f"{ed}/Edit/Select Curve Nodes": (
+            "F-curves", "Blender's curves are F-curves inside an Action, not scene nodes you can select."),
+        f"{ed}/Edit/Set Curve Colors...": (
+            "Change Curve Color", "Blender colours curves one selection at a time: Edit > Change Curve Color."),
+        f"{ed}/Edit/Scene Time Warp": (
+            "Time Stretching", "Blender has no time warp curve: Output Properties > Frame Range > Time Stretching "
+            "remaps the whole scene."),
+        f"{ed}/Curves": (
+            "Graph Editor Key / Channel menus", "Blender has no such curve command: its curve tools are in the Graph "
+            "Editor's Key and Channel menus (Smooth, Decimate, Clean, Bake, Euler Filter)."),
+        f"{ed}/Curves/Change Rotation Interp": (
+            "Rotation Mode", "Blender interpolates each rotation channel on its own; Euler / Quaternion is the "
+            "object's Rotation Mode (sidebar Item tab)."),
+        f"{ed}/Curves/Spreadsheet...": (
+            "Sidebar F-Curve tab", "Blender edits key values in the sidebar (F-Curve > Active Keyframe), not in a "
+            "spreadsheet."),
+        f"{ed}/Curves/Default Tangent Weight": (
+            "Bézier handles", "Blender's Bézier handles always have a length (weighted tangents): there is no "
+            "non-weighted mode."),
+        **{f"{ed}/Curves/{item}": (
+            "Bézier handles", "Blender's Bézier handles always have a length (weighted tangents): there is nothing to "
+            "convert.") for item in ("Non-weighted Tangents", "Weighted Tangents")},
+        f"{ed}/Keys": (
+            "Channel mute / I key", "Blender mutes whole channels, not single keys, and inserts keys with I or "
+            "Ctrl+right-click."),
+        **{f"{ed}/Tangents/{sub}": (
+            "Preferences > Animation", "Blender has no flat default: new keys get Auto Clamped, Auto, Vector, Aligned "
+            "or Free handles.") for sub in ("Default In Tangent", "Default Out Tangent")},
+        **{f"{ed}/Tangents/{item}": (
+            "Handle types", "Blender's handles keep their own length: lengths are never locked or freed.")
+           for item in ("Lock Tangent Length", "Free Tangent Length")},
+        f"{ed}/List": (
+            "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects); "
+            "it has no bookmarks or manual loading."),
+        f"{ed}/Show": (
+            "Channel filters", "Blender filters channels by data type and by name (header filter popover); Maya's "
+            "other node and attribute filters aren't there."),
+        f"{ed}/Help/What's New/Highlight What's New": (
+            "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    }
+
+
+CATEGORIES.update({
+    **_anim_editor_categories("Graph Editor"),
+    **_anim_editor_categories("Dope Sheet"),
+    "Graph Editor/View": (
+        "View menu", "Blender's Graph Editor has no such display option: see its View menu and the sidebar View tab "
+        "(Blender ▸ menu)."),
+    "Graph Editor/View/Theme": (
+        "Themes", "Blender's colours come from the theme: Preferences > Themes (Maya Kit applies a Maya theme)."),
+    "Graph Editor/View/Curve Name": (
+        "Channel list", "Blender doesn't write curve names in the graph: they are in the channel list."),
+    "Graph Editor/Select": (
+        "Select menu", "Blender has no selection mask: it selects keys with their handles (click a handle to pick "
+        "it alone)."),
+    "Dope Sheet/View": (
+        "View menu", "Blender's Dope Sheet always draws its ticks and has no scene summary or auto frame."),
+    "Dope Sheet/Curves": (
+        "Graph Editor", "This curve filter is in Blender's Graph Editor only (Windows > Animation Editors > Graph "
+        "Editor)."),
+    "UV Editor/Edit": (
+        "Select All + Unpin", "Blender's UVs can't be deleted (every face has them); Unpin All = Select > All, then "
+        "Unpin Selection."),
+    "UV Editor/Edit/Reset UV Editor UI": (
+        "Load Factory Settings", "Blender resets editors with File > Defaults > Load Factory Settings."),
+    "UV Editor/Create": (
+        "Unwrap / Project", "Blender has no best-plane or contour-stretch mapping: Create > Automatic (Smart UV "
+        "Project) or Unwrap."),
+    "UV Editor/Select": (
+        "Select menu", "Blender's UV Select menu has no such filter: Select Linked, Split, Overlap, Pinned and "
+        "Shortest Path are there."),
+    "UV Editor/Select/Convert Selection": (
+        "Select mode", "Blender converts only between vertex, edge, face, UV and shell (the UV Toolkit icons)."),
+    "UV Editor/Cut/Sew": (
+        "Seams / Rip", "Blender makes shells from seams (Cut, Unwrap) and splits UVs with the Rip tool; it has no "
+        "auto seams or grid shells."),
+    "UV Editor/Modify": (
+        "UV menu", "Blender has no such UV layout command: Pack Islands, Align, Snap and Average Islands Scale are "
+        "its tools."),
+    "UV Editor/Tools": (
+        "UV tools", "Blender's UV tools are Select, Move / Rotate / Scale, Rip and the Grab / Relax / Pinch sculpt "
+        "brushes."),
+    "UV Editor/View": (
+        "Overlays", "Blender's UV Editor has no such display option: see its Overlays popover and View menu."),
+    "UV Editor/View/Isolate Select": (
+        "Hide", "Blender isolates UVs by hiding the rest: UV > Show/Hide Faces (H / Shift+H)."),
+    "UV Editor/Image": (
+        "Image field", "Blender shows one image (header image field): no dimming, PSD networks, bake preview or pixel "
+        "ruler."),
+    "UV Editor/Textures": (
+        "Image field", "Blender lists the images in the header image field."),
+    "UV Editor/UV Sets": (
+        "UV Maps", "Blender's UV sets are UV Maps (Object Data Properties > UV Maps: rename there; no per-instance "
+        "sharing)."),
+    "UV Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    "UV Toolkit/Options": (
+        "Panel sections", "Blender's panels have no settings reset: fold the sections by hand."),
+})
+
+
 SHOW_SECONDS = 5.0
 _current = {"text": "", "until": 0.0}
 _status_area = []   # the status bar area, seen while drawing it (global areas aren't in screen.areas)
@@ -418,3 +527,11 @@ def unregister():
             bpy.app.timers.unregister(fn)
     _current.update(text="", until=0.0)
     _status_area.clear()
+
+# Mapped editor items that run a near substitute (step 104): Maya 2022's newer auto tangents are one Blender handle.
+NOTICES.update({
+    f"{ed}/Tangents/{sub}Auto/{kind}": (
+        "Auto Clamped handles", "Blender has one auto tangent (Auto Clamped): Maya's Ease / Mix / Custom weights "
+        "aren't there.")
+    for ed in ("Graph Editor", "Dope Sheet") for sub in ("", "In Tangent/", "Out Tangent/")
+    for kind in ("Auto Ease", "Auto Mix", "Auto Custom")})

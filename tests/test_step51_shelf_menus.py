@@ -72,8 +72,9 @@ def test_option_box_count_matches_maya():
     submenus = [b for b in boxes if b["kind"] == "menu"]     # a submenu entry with a Maya option box
     # Every Maya item with an option box is drawn with one (some menus share a label, so some paths
     # are drawn more than once).
-    assert drawn | {p for p in menu_data.OPTION_BOXES
-                    if p.rsplit("/", 1)[-1] + menu_sets.BOX_MARK in {b["text"] for b in submenus}}         == set(menu_data.OPTION_BOXES), sorted(set(menu_data.OPTION_BOXES) - drawn)[:5]
+    # (menu_sets.OPTION_BOXES = the main menus' + the step 104 editor menu bars')
+    assert drawn | {p for p in menu_sets.OPTION_BOXES
+                    if p.rsplit("/", 1)[-1] + menu_sets.BOX_MARK in {b["text"] for b in submenus}}         == set(menu_sets.OPTION_BOXES), sorted(set(menu_sets.OPTION_BOXES) - drawn)[:5]
     assert len(menu_data.OPTION_BOXES) > 400
 
 

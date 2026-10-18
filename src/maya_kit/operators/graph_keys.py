@@ -11,7 +11,7 @@ Shift+S = ``KeyTangentBinding``: hold + LMB opens the marking menu; a tap does n
 """
 
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, FloatVectorProperty
 
 from . import keystate, taphold, time_keys
 
@@ -21,6 +21,11 @@ KEY_ACTIONS = [(k, l, d) for k, l, d in time_keys.ACTIONS if k not in {"SNAP", "
 def in_graph_editor(context):
     space = getattr(context, "space_data", None)
     return space is not None and space.type == 'GRAPH_EDITOR'
+
+
+def in_dope_sheet(context):
+    space = getattr(context, "space_data", None)
+    return space is not None and space.type == 'DOPESHEET_EDITOR' and space.mode != 'TIMELINE'
 
 
 def selected_keys(context):
@@ -33,13 +38,35 @@ def selected_keys(context):
     return out
 
 
-def tangent_selected(context, kind):
+def apply_side(fc, index, kind, side):
+    """Maya Tangents > In Tangent / Out Tangent: one side of a key. The handle type is per side; the segment
+    shape (Linear / Stepped) belongs to the key before the segment, so an in tangent sets the previous key's."""
+    if side == "BOTH":
+        time_keys.apply_tangent(fc.keyframe_points[index], kind)
+        return
+    interp, handle = time_keys.TANGENTS[kind]
+    kp = fc.keyframe_points[index]
+    if handle is not None:
+        setattr(kp, "handle_left_type" if side == "IN" else "handle_right_type", handle)
+    if kind == "FLAT":
+        (kp.handle_left if side == "IN" else kp.handle_right).y = kp.co.y
+    if interp is not None:
+        seg = index - 1 if side == "IN" else index
+        if seg >= 0:
+            fc.keyframe_points[seg].interpolation = interp
+
+
+def tangent_selected(context, kind, side="BOTH"):
     n = 0
-    for fc, pts in selected_keys(context):
-        for kp in pts:
-            time_keys.apply_tangent(kp, kind)
-            n += 1
-        fc.update()
+    for fc in getattr(context, "editable_fcurves", None) or ():
+        hit = 0
+        for i, kp in enumerate(fc.keyframe_points):
+            if kp.select_control_point:
+                apply_side(fc, i, kind, side)
+                hit += 1
+        if hit:
+            fc.update()
+        n += hit
     return n
 
 
@@ -57,6 +84,9 @@ class MAYAKIT_OT_set_tangent(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     kind: EnumProperty(items=time_keys.TANGENT_ITEMS, name="Tangent")
+    side: EnumProperty(items=(("BOTH", "In and Out", "Both tangents"), ("IN", "In Tangent", "Only the in tangent"),
+                              ("OUT", "Out Tangent", "Only the out tangent")),
+                       name="Side", options={'SKIP_SAVE'})
 
     @classmethod
     def description(cls, context, props):
@@ -66,15 +96,16 @@ class MAYAKIT_OT_set_tangent(bpy.types.Operator):
         return f"{time_keys.TANGENT_LABELS[props.kind]} tangents = Blender {blender}{note}"
 
     def execute(self, context):
-        if in_graph_editor(context):
-            n = tangent_selected(context, self.kind)
+        if in_graph_editor(context) or in_dope_sheet(context):
+            n = tangent_selected(context, self.kind, self.side)
         else:
             a, b = time_keys.time_range(context)
             n = time_keys.set_tangent(context, a, b, self.kind)
         if self.kind == "STEPPED_NEXT":
             self.report({'INFO'}, "Stepped Next isn't available in Blender: Stepped used")
         elif not n:
-            self.report({'WARNING'}, "No keys selected" if in_graph_editor(context) else "No keys at this time")
+            self.report({'WARNING'}, "No keys selected" if in_graph_editor(context) or in_dope_sheet(context)
+                        else "No keys at this time")
         _redraw(context)
         return {'FINISHED'}
 
@@ -94,6 +125,16 @@ class MAYAKIT_OT_key_edit(bpy.types.Operator):
 
     def execute(self, context):
         act = self.action
+        if in_dope_sheet(context) and act in {"CUT", "COPY", "PASTE", "DELETE"}:
+            # the Dope Sheet's own clipboard ops (Maya Dope Sheet Edit menu, step 104)
+            if act in {"CUT", "COPY"}:
+                bpy.ops.action.copy()
+            if act == "PASTE":
+                bpy.ops.action.paste()
+            elif act in {"CUT", "DELETE"}:
+                bpy.ops.action.delete(confirm=False)
+            _redraw(context)
+            return {'FINISHED'}
         if not in_graph_editor(context) or act in {"ADD_INBETWEEN", "REMOVE_INBETWEEN"}:
             try:
                 return bpy.ops.maya_kit.time_keys(action=act)
@@ -401,7 +442,86 @@ class KeyTangentBinding(taphold.TapHoldBinding):
         modal.open_menu("buildKeyframeTangentMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
-classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit, MAYAKIT_OT_graph_view_mode, MAYAKIT_OT_graph_center_time,
+# --- Curves > Pre / Post Infinity, Edit > Change / Remove Curve Color -------------------
+# Maya infinity per side (Cycle, Cycle with Offset, Oscillate, Linear, Constant). Blender: Cycles F-modifier modes per
+# side (REPEAT / REPEAT_OFFSET / MIRROR), extrapolation Linear / Constant for the whole curve (both sides).
+INFINITY = {"CYCLE": 'REPEAT', "CYCLE_OFFSET": 'REPEAT_OFFSET', "OSCILLATE": 'MIRROR', "LINEAR": 'NONE',
+            "CONSTANT": 'NONE'}
+
+
+def target_curves(context):
+    """Curves a Maya Curves command works on: the selected visible ones, else every visible one."""
+    curves = list(getattr(context, "selected_editable_fcurves", None) or ())
+    return curves or list(getattr(context, "editable_fcurves", None) or ())
+
+
+def set_infinity(fc, side, mode):
+    cyc = next((m for m in fc.modifiers if m.type == 'CYCLES'), None)
+    if mode in {"LINEAR", "CONSTANT"}:
+        fc.extrapolation = mode
+        if cyc is not None:
+            setattr(cyc, "mode_before" if side == "PRE" else "mode_after", 'NONE')
+            if cyc.mode_before == 'NONE' and cyc.mode_after == 'NONE':
+                fc.modifiers.remove(cyc)
+        return
+    if cyc is None:
+        cyc = fc.modifiers.new('CYCLES')
+        cyc.mode_before = cyc.mode_after = 'NONE'
+    setattr(cyc, "mode_before" if side == "PRE" else "mode_after", INFINITY[mode])
+
+
+class MAYAKIT_OT_curve_infinity(bpy.types.Operator):
+    """Maya Curves > Pre / Post Infinity on the selected curves: Cycle / Cycle with Offset / Oscillate = a Cycles
+    modifier side, Linear / Constant = the curve's extrapolation (Blender's is the same on both sides)"""
+    bl_idname = "maya_kit.curve_infinity"
+    bl_label = "Curve Infinity"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    side: EnumProperty(items=(("PRE", "Pre Infinity", ""), ("POST", "Post Infinity", "")), name="Side")
+    mode: EnumProperty(items=(("CYCLE", "Cycle", ""), ("CYCLE_OFFSET", "Cycle with Offset", ""),
+                              ("OSCILLATE", "Oscillate", ""), ("LINEAR", "Linear", ""), ("CONSTANT", "Constant", "")),
+                       name="Infinity")
+
+    def execute(self, context):
+        curves = target_curves(context)
+        if not curves:
+            self.report({'WARNING'}, "No animation curves selected")
+            return {'CANCELLED'}
+        for fc in curves:
+            set_infinity(fc, self.side, self.mode)
+            fc.update()
+        if self.mode in {"LINEAR", "CONSTANT"}:
+            self.report({'INFO'}, f"{self.mode.title()} infinity: Blender extrapolates both ends the same way")
+        _redraw(context)
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_curve_color(bpy.types.Operator):
+    """Maya Edit > Change Curve Color (option box = the colour) / Remove Curve Color on the selected curves"""
+    bl_idname = "maya_kit.curve_color"
+    bl_label = "Curve Color"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    action: EnumProperty(items=(("CHANGE", "Change", ""), ("REMOVE", "Remove", "")), name="Action")
+    color: FloatVectorProperty(name="Color", subtype='COLOR', size=3, min=0.0, max=1.0, default=(1.0, 1.0, 1.0))
+
+    def execute(self, context):
+        curves = list(getattr(context, "selected_editable_fcurves", None) or ())
+        if not curves:
+            self.report({'WARNING'}, "No animation curves selected")
+            return {'CANCELLED'}
+        for fc in curves:
+            if self.action == "CHANGE":
+                fc.color_mode = 'CUSTOM'
+                fc.color = self.color
+            else:   # back to Blender's default for new curves (XYZ to RGB for transform channels)
+                fc.color_mode = 'AUTO_RGB' if fc.data_path.rsplit(".", 1)[-1] in {
+                    "location", "rotation_euler", "scale"} else 'AUTO_RAINBOW'
+        _redraw(context)
+        return {'FINISHED'}
+
+
+classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit, MAYAKIT_OT_curve_infinity, MAYAKIT_OT_curve_color, MAYAKIT_OT_graph_view_mode, MAYAKIT_OT_graph_center_time,
            MAYAKIT_OT_snap_time_toggle, MAYAKIT_OT_insert_key_tool)
 
 

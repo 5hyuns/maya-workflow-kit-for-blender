@@ -13,6 +13,8 @@ Modeling, Rigging and Animation share map once. Value:
 - ``("tool", "builtin.id", edit)``: switch the active tool, entering mesh edit
   mode first when ``edit``;
 - ``("menu", "MENU_ID")``: a Blender menu as the submenu.
+- ``("prop", "context.path", {"value": v})``: a Maya check / radio item drawn as that Blender property (step 104;
+  without ``value`` a check box, with it one choice of a radio collection).
 
 Items not listed are drawn greyed out. ``EXTRA`` adds items Maya builds at run
 time (not in the static menu data), e.g. Modify's Pivot section.
@@ -777,6 +779,12 @@ BLENDER_MENU = {
 }
 
 
+# Graph Editor / Dope Sheet / UV Editor / UV Toolkit menu bars (step 104): their own module, same forms.
+from .editor_menu_map import MAP as _EDITOR_MAP  # noqa: E402
+
+MAP.update(_EDITOR_MAP)
+
+
 def spec(path):
     """Normalised (kind, target, props) for a label path, or None if unmapped."""
     return normalize(MAP.get(path))
@@ -795,4 +803,6 @@ def normalize(value):
         return ("tool", value[1], {"edit": value[2]})
     if value[0] in ("menu", "pie"):
         return (value[0], value[1], {})
+    if value[0] == "prop":   # a Maya check / radio item = a Blender property (step 104)
+        return ("prop", value[1], dict(value[2]))
     return ("op", value[0], dict(value[1]))

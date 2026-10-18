@@ -67,6 +67,8 @@ def run_action(context, action, option=False, path=None):
                 raise RuntimeError(res)
             return res
     kind, target, props = menu_map.normalize(action)
+    if kind == "prop":     # a Maya check / radio item (step 104)
+        return menu_sets.set_prop(context, target, props)
     if kind == "menu":
         return bpy.ops.wm.call_menu(name=target)
     if kind == "pie":

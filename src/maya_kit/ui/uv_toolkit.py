@@ -83,6 +83,10 @@ class MAYAKIT_PT_uv_toolkit(bpy.types.Panel):
         layout = self.layout
         editing = context.mode == 'EDIT_MESH'
         comp = current_component(context) if editing else None
+        from . import editor_menu_data, menu_sets
+        bar = layout.row(align=True)    # the toolkit's own menu bar: Options / Help (step 104 capture)
+        for i, (title, _items) in enumerate(editor_menu_data.EDITORS["UV Toolkit"]):
+            bar.menu(menu_sets.editor_menu_idname("UV Toolkit", i), text=title)
         row = layout.row(align=True)
         row.scale_x = row.scale_y = 1.3
         for mode, icon, label in COMPONENTS:

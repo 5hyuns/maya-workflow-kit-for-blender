@@ -22,6 +22,9 @@ def draw_toolbar(self, context):
     space = context.space_data
     if space is None or space.type != 'GRAPH_EDITOR' or space.mode != 'FCURVES':
         return
+    from . import editor_chrome
+    if editor_chrome.enabled(context):     # the Maya icon row has these buttons (step 104)
+        return
     layout = self.layout
     layout.separator()
     row = layout.row(align=True)
