@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 361 개 (step 93 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **348 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 364 개 (step 94 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **351 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -631,3 +631,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 93) 편집 모드 Shift+Q 홀드 + LMB → Faces 옆 체크 상자가 지금 선택 모드대로, Points ▸ / Lines ▸ 안의 Poly Vertices / Poly Edges 도. 하나 누르면 다음에 열 때 상태가 바뀌어 있음.
 - [ ] (step 93) Status Line 의 선택 마스크 (예: 메시) 를 끄고 File > New, 그다음 File > Open → 마스크가 그대로 꺼져 있음 (Maya 와 같음). 엣지 선택 모드도 그대로.
 - [ ] (step 93) Move 툴 옵션 (축 Local, Step Snap Relative) 을 바꾸고 Tool Settings 의 Reset Tool → 축 World, Step Snap 끔. Rotate 툴 = 축 Object, 스텝 15°.
+
+### Step 94 — 피벗 편집 RMB 메뉴
+
+- [ ] (step 94) 오브젝트 모드에서 D 를 누른 채 (또는 Insert 뒤) RMB 홀드 → Pin / Snap / Reset / Exit 메뉴. 피벗을 옮긴 뒤 S 방향 = Reset Pivot (피벗이 오브젝트 원점으로, 지오메트리 그대로), SE = 위치만, SW = 방향만, E = 피벗 편집 끝.
+- [ ] (step 94) 편집 모드에서 면 선택 → D 로 피벗을 다른 곳에 놓기 → 다른 면 선택 = 피벗이 새 선택 가운데로 (Pin 꺼짐). D + RMB 로 Pin Component Pivot 체크 → 선택을 바꿔도 놓은 피벗이 남음.
+- [ ] (step 94) Snap Pivot Orientation 끄기 → D + 면 클릭 = 피벗 위치만 바뀌고 방향은 그대로. Snap Pivot Position 끄기 → 클릭 위치가 면에 붙지 않음 (뷰 깊이).

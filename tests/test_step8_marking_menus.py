@@ -20,6 +20,8 @@ RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 # Menus resolved by hand (radials set from variables in Maya, hotkeys_and_menus.md:248-252).
 HAND_RESOLVED = {"dagMenuProc", "dagMenuProc_curve", "buildObjectMenuItemsNow"}
 LABEL_ALIASES = {"To Edges": "<$toEdges>", "To Faces": "<$toFaces>"}
+# Kit menus that are one branch of a Maya proc (step 94: the pivot-edit branch of buildObjectMenuItemsNow).
+RESEARCH_PROC = {"buildObjectMenuItemsNow_pivot": "buildObjectMenuItemsNow"}
 
 
 class FakeLayout:
@@ -76,7 +78,7 @@ def _fresh():
 # --- definitions ------------------------------------------------------------------
 
 def test_definitions_well_formed():
-    assert len(mm.MENUS) == 25, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10) + 3 UV Editor (step 66)
+    assert len(mm.MENUS) == 26, sorted(mm.MENUS)  # 13 + 5 hotbox zones (step 9) + A (step 10) + 3 UV Editor (step 66) + pivot edit (step 94)
     # + Shift+S keyframe / tangent (step 70) + Shift+Q / Alt+Q (step 78)
     for name, menu in mm.MENUS.items():
         for path, label, action in mm.walk(menu, name):
@@ -119,8 +121,9 @@ def test_radial_positions_match_research():
         if name in HAND_RESOLVED:
             continue
         # Items a menu gets from the procs it calls (e.g. commonReflectionOptionsPopup = Symmetry ▸).
-        called = [it for c in data[name].get("calls", ()) for it in data.get(c["call"], {}).get("items", ())]
-        compare(menu, data[name]["items"] + called, name)
+        proc = RESEARCH_PROC.get(name, name)
+        called = [it for c in data[proc].get("calls", ()) for it in data.get(c["call"], {}).get("items", ())]
+        compare(menu, data[proc]["items"] + called, name)
     print("radial items checked against research:", checked)
     assert not bad, bad
     assert checked >= 80, checked

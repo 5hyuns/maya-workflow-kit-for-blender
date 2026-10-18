@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 94 (피벗 편집 RMB 마킹 메뉴) 완료 — `docs/steps/step_94.md`.
+  - D / Insert 피벗 편집 중 RMB = Maya buildObjectMenuItemsNow 편집 모드 메뉴 (N Pin ☐ · NW/NE Snap Orientation/Position ☐ · S/SE/SW Reset ·
+    E Exit, research 위치). Reset = 오브젝트 delta_location 0 / 컴포넌트 커서 → bbox 중심, Pin 꺼짐 (Maya 기본) = 선택이 바뀌면 사용자 컴포넌트
+    피벗 해제 (`operators/pivot_menu.py`, `hold.ComponentPivotEdit`).
+  - 검증: 헤드리스 704/704, GUI 702/702, dogfood 47/47.
+  - **바로 다음 할 일**: step 95 = backlog 6 「V snap when zoomed in」 (step_81.md 「남은 것」: 확대 상태에서 V 점 스냅이 안 걸림 — GUI 재현, 원인,
+    고치거나 한계로 문서화). backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 93 (선택 마스크 다듬기) 완료 — `docs/steps/step_93.md`.
   - Shift+Q 메뉴 체크 상자 (Poly Vertices / Poly Edges / Faces = 메시 선택 모드), **선택 마스크를 New / Open 너머로 유지** (Maya 2022 GUI 측정:
     마스크는 세션 상태라 초기화되지 않음 — backlog 문구와 반대, `research/maya/re/selection_masks.md`), Tool Settings 맨 위 Reset Tool
