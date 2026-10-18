@@ -309,6 +309,40 @@ TOOL_BINDINGS = (
 TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R", "tool_scale"))
 
 
+class SelectComponentBinding(ToolOptionsBinding):
+    """Shift+Q (Maya, Maya-206): the select tool in component mode;
+    hold + LMB = the component pick mask marking menu."""
+    name = "select_component"
+    label = "Select Tool, Components / Pick Mask"
+    tool = "builtin.select_box"
+    menu = "doSelectComponentMM"
+
+    def _set_tool(self):
+        context = bpy.context
+        ob = context.active_object
+        if context.mode == 'OBJECT' and ob is not None and ob.type == 'MESH':
+            bpy.ops.object.mode_set(mode='EDIT')     # selectMode -component
+        super()._set_tool()
+
+    def tap(self, context):
+        self._set_tool()
+
+
+class SelectPolygonBinding(ToolOptionsBinding):
+    """Alt+Q (Maya, Maya-49): the select tool; hold + LMB = Vertices / Edges / Faces /
+    UVs."""
+    name = "select_polygon"
+    label = "Select Tool / Polygon Components"
+    tool = "builtin.select_box"
+    menu = "doSelectPolygonMM"
+
+    def tap(self, context):
+        self._set_tool()
+
+
+SELECT_BINDINGS = (SelectComponentBinding, SelectPolygonBinding)
+
+
 classes = (MAYAKIT_OT_marking_menu, MAYAKIT_OT_mm_component, MAYAKIT_OT_mm_clear_selection,
            *modal.classes, *_classes)
 
@@ -319,14 +353,14 @@ def register():
     bpy.types.WindowManager.maya_kit_mm_target = StringProperty(
         name="Marking Menu Target", description="Object under the mouse when the RMB menu opened",
         options={'SKIP_SAVE'})
-    for cls in TOOL_BINDINGS:
+    for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.register_binding(cls())
     draw.register()
 
 
 def unregister():
     draw.unregister()
-    for cls in TOOL_BINDINGS:
+    for cls in (*TOOL_BINDINGS, *SELECT_BINDINGS):
         taphold.unregister_binding(cls.name)
     del bpy.types.WindowManager.maya_kit_mm_target
     for cls in reversed(classes):
