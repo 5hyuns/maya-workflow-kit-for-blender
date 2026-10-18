@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 110 |
-| IC 일치 | 8 |
+| 구현 | 113 |
+| IC 일치 | 10 |
 | 해당 없음 | 10 |
-| 미검토 | 272 |
+| 미검토 | 267 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -73,14 +73,14 @@
 | g | G | timeEditorPanel | TimeEditorFramePlaybackRange | Screen: `screen.repeat_last` | 미검토 |  | hotkeySetup.mel:136 |
 | y | Y | timeEditorPanel | TimeEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:137 |
 | x | X | timeEditorPanel | TimeEditorToggleSnapToClipPress / TimeEditorToggleSnapToClipRelease (release) | — | 미검토 |  | hotkeySetup.mel:138 |
-| a | A | graphEditor | GraphEditorFrameAll | Graph Editor: `graph.view_all` | 미검토 |  | hotkeySetup.mel:144 |
-| f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | 미검토 |  | hotkeySetup.mel:145 |
-| g | G | graphEditor | GraphEditorFramePlaybackRange | Screen: `screen.repeat_last` | 미검토 |  | hotkeySetup.mel:146 |
+| a | A | graphEditor | GraphEditorFrameAll | Graph Editor: `graph.view_all` | IC 일치 |  | hotkeySetup.mel:144 |
+| f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | IC 일치 |  | hotkeySetup.mel:145 |
+| g | G | graphEditor | GraphEditorFramePlaybackRange | Graph Editor: `anim.scene_range_frame`; Screen: `screen.repeat_last` | 구현 | 재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤 | hotkeySetup.mel:146 |
 | t | T | graphEditor | GraphEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:147 |
 | 1 | ONE | graphEditor | GraphEditorAbsoluteView | — | 미검토 |  | hotkeySetup.mel:148 |
 | 2 | TWO | graphEditor | GraphEditorStackedView | — | 미검토 |  | hotkeySetup.mel:149 |
 | 3 | THREE | graphEditor | GraphEditorNormalizedView | — | 미검토 |  | hotkeySetup.mel:150 |
-| d | D | graphEditor | TangentAuto | — | 미검토 |  | hotkeySetup.mel:151 |
+| d | D | graphEditor | TangentAuto | Graph Editor: `maya_kit.set_tangent` (kind='AUTO') | 구현 | 선택 키 = Bezier + Auto Clamped | hotkeySetup.mel:151 |
 | h | H | graphEditor | GraphEditorLockChannel | — | 미검토 |  | hotkeySetup.mel:152 |
 | j | J | graphEditor | GraphEditorUnlockChannel | — | 미검토 |  | hotkeySetup.mel:153 |
 | l | L | graphEditor | GraphEditorValueLinesToggle | — | 미검토 |  | hotkeySetup.mel:154 |
@@ -260,7 +260,7 @@
 | Alt+Cmd+Left | Alt+Oskey+LEFT_ARROW | global | PolySpinEdgeBackward | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:410 |
 | Alt+Cmd+Right | Alt+Oskey+RIGHT_ARROW | global | PolySpinEdgeForward | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:411 |
 | Cmd+e | Oskey+E | global | PolyExtrude | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:413 |
-| Shift+S | Shift+S | global | KeyframeTangentMarkingMenu / KeyframeTangentMarkingMenuPopDown (release) | Object Mode: `anim.keyframe_insert` | 미검토 |  | hotkeySetup.mel:418 |
+| Shift+S | Shift+S | global | KeyframeTangentMarkingMenu / KeyframeTangentMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='key_tangent') | 구현 | 홀드 + LMB = Keys / Tangents 마킹 메뉴 (Graph Editor·Dope Sheet·포즈도), 탭 = 없음 | hotkeySetup.mel:418 |
 | n | N | global | TraversalMarkingMenu / TraversalMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:424 |
 | Alt+Shift+< | Alt+Shift+COMMA | global | PreviousGreasePencilFrame | — | 미검토 |  | hotkeySetup.mel:429 |
 | Alt+Shift+> | Alt+Shift+PERIOD | global | NextGreasePencilFrame | — | 미검토 |  | hotkeySetup.mel:430 |

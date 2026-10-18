@@ -285,6 +285,15 @@ ENTRIES = {
     "DecrementFluidCenter": _e("NO", note="Maya Fluids 없음"),
     "CoarserSubdivLevel": _e("NO", note="Maya subdiv surface 노드 없음"),
     "CreateSubdivRegion": _e("NO", note="Maya subdiv surface 노드 없음"),
+    # --- step 70: Graph Editor, Shift+S keyframe / tangent marking menu (operators/graph_keys.py) ---
+    "graphEditor:GraphEditorFrameAll": _e("IC", ("Graph Editor", "graph.view_all", {})),
+    "graphEditor:GraphEditorFrameSelected": _e("IC", ("Graph Editor", "graph.view_selected", {})),
+    "graphEditor:GraphEditorFramePlaybackRange": _e("KIT", ("Graph Editor", "anim.scene_range_frame", {}),
+                                                    note="재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤"),
+    "graphEditor:TangentAuto": _e("KIT", ("Graph Editor", "maya_kit.set_tangent", {"kind": "AUTO"}),
+                                  note="선택 키 = Bezier + Auto Clamped"),
+    "KeyframeTangentMarkingMenu": _e("KIT", (OBJ, "maya_kit.tap_hold", {"binding": "key_tangent"}),
+                                     note="홀드 + LMB = Keys / Tangents 마킹 메뉴 (Graph Editor·Dope Sheet·포즈도), 탭 = 없음"),
     # --- step 69: scene files (Window keymap, operators/project.py) ---
     "OpenScene": _e("KIT", ("Window", "maya_kit.open_scene", {}), note="파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로)"),
     "SaveScene": _e("KIT", ("Window", "maya_kit.save_scene", {}), note="처음 저장은 프로젝트 scenes 폴더에서 Save As"),

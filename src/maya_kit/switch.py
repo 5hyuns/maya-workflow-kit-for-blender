@@ -39,7 +39,7 @@ FOOTPRINT = (
     "inputs.view_rotate_method", "inputs.use_rotate_around_active", "inputs.use_mouse_depth_navigate",
     "inputs.use_zoom_to_mouse", "inputs.use_auto_perspective", "inputs.view_zoom_method",
     "inputs.view_zoom_axis", "inputs.invert_mouse_zoom", "inputs.invert_zoom_wheel",
-    "edit.undo_steps", "view.show_splash", "view.ui_scale", "view.font_path_ui", "view.gizmo_size",
+    "edit.undo_steps", "edit.use_keyframe_insert_available", "view.show_splash", "view.ui_scale", "view.font_path_ui", "view.gizmo_size",
     "system.use_overlay_smooth_wire", "system.use_edit_mode_smooth_wire",
 )
 _THEME_MAP = (("themes[0]", "Theme"), ("ui_styles[0]", "ThemeStyle"))

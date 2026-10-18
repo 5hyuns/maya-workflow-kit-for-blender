@@ -49,6 +49,20 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
                     "Turning it off restores your previous value",
         default=True, update=_update_undo)
     undo_backup: bpy.props.StringProperty(options={'HIDDEN'})
+
+    def _update_auto_key(self, context):
+        from . import prefs_preset
+        if self.use_maya_auto_key:
+            prefs_preset.apply(context.preferences, self, "autokey")
+        else:
+            prefs_preset.restore(context.preferences, self, "autokey")
+
+    use_maya_auto_key: bpy.props.BoolProperty(
+        name="Maya Auto Key",
+        description="Auto Key keys only channels that already have keys, like Maya (Blender's Only Insert "
+                    "Available). Turning it off restores your previous value",
+        default=True, update=_update_auto_key)
+    autokey_backup: bpy.props.StringProperty(options={'HIDDEN'})
     # Edit-mode marquee/lasso also selects occluded components (Maya selectPrefUseDepth false).
     select_through: bpy.props.BoolProperty(
         name="Marquee Selects Hidden Components",
@@ -306,6 +320,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
         col.prop(self, "use_maya_undo")
+        col.prop(self, "use_maya_auto_key")
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")
 

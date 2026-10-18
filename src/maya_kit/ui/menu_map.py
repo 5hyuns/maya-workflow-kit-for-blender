@@ -249,7 +249,7 @@ MAP = {
     **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "MAYAKIT_MT_ui_elements"),
     "Windows/Settings/Preferences": "screen.userpref_show",
-    "Windows/Playblast": ("v3d", "render.opengl", {"animation": True}),
+    "Windows/Playblast": ("v3d", "maya_kit.playblast", {}),              # step 70: temp movie + player
     "Windows/Output Window": "wm.console_toggle",
     # --- Mesh (Modeling) ---
     "Mesh/Combine": "maya_kit.combine",                     # Maya: new pCube2, centre pivot (step 63)
@@ -386,7 +386,7 @@ MAP = {
     "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Key/Bake Simulation": "nla.bake",
     # --- Playback ---
-    "Playback/Playblast": ("v3d", "render.opengl", {"animation": True}),
+    "Playback/Playblast": ("v3d", "maya_kit.playblast", {}),
     "Playback/Play": "screen.animation_play",
     "Playback/Backward": ("screen.animation_play", {"reverse": True}),
     "Playback/Stop": ("screen.animation_cancel", {"restore_frame": False}),

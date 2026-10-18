@@ -485,3 +485,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 69) Ctrl+Alt+S (= File > Increment and Save): `shot_v001.blend` → `shot_v001.0001.blend` 로 저장하고 그 파일에서 계속 (원본 유지, 상태 표시줄 "Saved …").
 - [ ] (step 69) Ctrl+R (= File > Create Reference…): 파일 창 (scenes 에서 시작, 오른쪽 옵션 Namespace / Editable) → `prop:pCube1` 등이 `prop` 컬렉션 아래에, 옮기기·키 가능 (원본 파일 그대로), 같은 파일 다시 = `prop1:`. 파일 브라우저·이미지 에디터·시퀀서에서는 Ctrl+R 이 원래 새로고침.
 - [ ] (step 69) File > Reference Editor: Outliner 새 창 Blender File 보기, 레퍼런스 파일 행 우클릭 Reload / Relocate.
+
+### Step 70 — Graph Editor 툴바 · Shift+S · G · Auto Key · Playblast
+
+- [ ] (step 70) Graph Editor 헤더 오른쪽 아이콘 줄: Auto / Spline / Clamped / Linear / Flat / Stepped / Plateau | Break / Unify | 고스트 커브 (Buffer Curve). 툴팁 = Maya 이름 + Blender 대응. 키 선택 후 클릭 → 커브 모양이 animation_02_win1 의 툴바와 같은 뜻으로 바뀌는지.
+- [ ] (step 70) Shift+S 누른 채 LMB: Keys (W) / Tangents (E) 마킹 메뉴 — Graph Editor 에서는 선택 키, 3D View · 타임라인에서는 선택 오브젝트의 현재 프레임 키 (Time Slider 범위가 있으면 그 범위). Shift+S 탭은 아무 일 없음. Stepped Next 는 Stepped + 안내.
+- [ ] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = Repeat Last 그대로), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체.
+- [ ] (step 70) Auto Key 켬: 키가 있는 채널만 값 바꿀 때 키 (이동 키만 있는 큐브를 회전 → 회전 키 안 생김; Channel Box 입력도 같음). 환경설정 「Maya Auto Key」 끄면 Blender 처럼 모든 채널.
+- [ ] (step 70) Windows > Playblast (Playback > Playblast, 셸프) → 재생 범위 동영상 → Blender 플레이어 창이 열림. □ (길게) = Playblast Options (Time Range / View / Format / Quality / Scale) — animation_08_win1 비교. 끝나면 장면의 렌더 설정 (출력 경로·형식·해상도 %) 은 그대로.

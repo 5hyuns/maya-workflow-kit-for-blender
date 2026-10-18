@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 70 (Graph Editor 탄젠트 툴바 · Shift+S · G · Auto Key · Playblast) 완료 — `docs/steps/step_70.md`. Graph Editor 헤더 탄젠트 아이콘 줄 + 고스트 커브,
+  `maya_kit.set_tangent` / `key_edit` (Graph Editor 선택 키, 그 밖은 현재 시간 키), Shift+S 홀드 = Keys / Tangents 마킹 메뉴, Graph Editor G = 재생 범위 · D = Auto,
+  Maya Auto Key (Only Insert Available, 백업·복원), `maya_kit.playblast` (임시 동영상 + 플레이어, □ 옵션 대화상자).
+  헤드리스 574/574, GUI 0.8 484/484, gui_step70 7/7, dogfood 47/47.
+  **바로 다음 할 일**: PLAN 의 워크플로우 단계 (54–70) 가 모두 끝남. 다음은 사용자 결정: (1) 배포 결정 (이름·id, 무료/유료 — decision 11, `docs/DISTRIBUTION.md`),
+  (2) 남긴 후보 (`docs/PLAN.md` 「Left out of steps 54–67」 + 각 step 문서 「남은 것」: 3D Cut and Sew, Quad Draw Make Live, Maya Animation 워크스페이스, MASH, 3D 유체,
+  Outliner Sets, Hypergraph, Graph 1/2/3, 버퍼 커브 스왑 등) 중 고르기, 또는 재점검 4차 (전체 갭 표 다시 매기기).
+
 - Step 69 (씬 관리: 프로젝트 · 증분 저장 · 레퍼런스) 완료 — `docs/steps/step_69.md`. `operators/project.py`: Project Window / Set Project / Recent Projects
   (루트 + Maya 폴더 + 표시 파일, add-on 환경설정), 파일 창이 `<root>/scenes` 에서 (Ctrl+O/S/Shift+S, 메뉴, Status Line), 프로젝트 안 저장 → 렌더 `//../images/`,
   Ctrl+Alt+S = Maya 증분 (`shot_v001.0001`), Ctrl+R Create Reference = 링크 + library override + `ns:` 이름, Reference Editor = Outliner Blender File 창.

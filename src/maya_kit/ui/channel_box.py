@@ -339,9 +339,17 @@ def _proxy_set(key):
             if not has_channel(ob, key) or is_locked(ob, key):
                 continue
             set_value(ob, key, value)
-            if autokey and is_keyable(ob, key):
+            if autokey and auto_keys(ob, key, context):
                 keyframe(ob, key)
     return set_
+
+
+def auto_keys(ob, key, context=None):
+    """Auto Key keys this channel: keyable, and (Maya, Only Insert Available) already keyed (step 70)."""
+    context = context or bpy.context
+    if not is_keyable(ob, key):
+        return False
+    return not context.preferences.edit.use_keyframe_insert_available or fcurve(ob, key) is not None
 
 
 # --- text entry (step 38) ------------------------------------------------------------------
@@ -381,7 +389,7 @@ def apply_entry(key, text, context=None):
                 return count
             set_value(ob, k, value)
             count += 1
-            if autokey and is_keyable(ob, k):
+            if autokey and auto_keys(ob, k, context):
                 keyframe(ob, k)
     return count
 

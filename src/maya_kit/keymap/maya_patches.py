@@ -723,6 +723,21 @@ def patch_scene_files(kd):
          shadows=("Image Generic", "File Browser", "File Browser Main", "Sequencer"))
 
 
+# --- 37. Graph Editor keys, Shift+S tangent marking menu (docs/steps/step_70.md 「계획」 2-3) ----------------
+# HK:146 (Graph Editor G = FramePlaybackRange), HK:151 (D = TangentAuto), HK:418 (Shift+S hold =
+# KeyframeTangentMarkingMenu). G / D go in "Graph Editor" (it runs before Screen's G = repeat_last);
+# Shift+S replaces IC's keyframe_insert menu in Object Mode / Pose (IC:2462, 2535) and is added to the Graph Editor
+# and Dope Sheet. Mesh / UV Shift+S (UV Sew, step 66) stay.
+
+def patch_graph_keys(kd):
+    _add(kd, "Graph Editor", "anim.scene_range_frame", make_event("G"), shadows=("Screen",))   # over repeat_last
+    _add(kd, "Graph Editor", "maya_kit.set_tangent", make_event("D"), {"kind": "AUTO"})
+    for km in ("Object Mode", "Pose"):
+        kd.remove(km, "anim.keyframe_insert", type="S", shift=True)
+    for km in ("Object Mode", "Pose", "Graph Editor", "Dopesheet"):
+        _add(kd, km, "maya_kit.tap_hold", make_event("S", shift=True), {"binding": "key_tangent"})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -732,7 +747,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
-           patch_scene_files)
+           patch_scene_files, patch_graph_keys)
 
 
 def apply(data):
