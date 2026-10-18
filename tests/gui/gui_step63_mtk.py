@@ -18,7 +18,7 @@ C = {"tries": 0}
 FACE_ICON, OBJECT_ICON = (188, 90), (310, 90)
 COMBINE, SEPARATE = (248, 457), (106, 457)          # object mode
 EXTRUDE_EDIT = (248, 582)                            # edit mode: the "N faces selected" row adds 31 px
-MTK_ICON_FROM_LEFT = 1190   # Status Line (3D View tool header, laid out from the left; it overflows at 1.25)
+MTK_SCAN_PX = 10            # Status Line MTK icon: found by sweeping the 3D View tool header (step 75)
 
 
 def shot(name):
@@ -93,9 +93,37 @@ def s_setup():
     redraw()
 
 
+def _button_command(r):
+    """Python command of the button under the mouse in region ``r`` (``ui.copy_python_command_button``)."""
+    wm = bpy.context.window_manager
+    wm.clipboard = ""
+    try:
+        with bpy.context.temp_override(window=win(), screen=win().screen, area=view3d()[0], region=r):
+            bpy.ops.ui.copy_python_command_button()
+    except RuntimeError:
+        return ""
+    return wm.clipboard
+
+
+def s_find_mtk():
+    """Sweep the tool header left to right until the MTK editor toggle is under the mouse (the Status Line
+    layout changes as groups are added, step 75)."""
+    r = region('TOOL_HEADER')
+    if "mtk_x" not in C:
+        C["mtk_x"] = r.x + 4
+    elif "MODELING_TOOLKIT" in _button_command(r):
+        C["mtk"] = (C["mtk_x"], r.y + r.height // 2)
+        return
+    else:
+        C["mtk_x"] += MTK_SCAN_PX
+    if C["mtk_x"] < r.x + r.width:
+        ev('MOUSEMOVE', 'NOTHING', x=C["mtk_x"], y=r.y + r.height // 2)
+        sys.modules["sim"]._steps.insert(0, s_find_mtk)
+
+
 def mtk_icon():
     r = region('TOOL_HEADER')
-    return r.x + px(MTK_ICON_FROM_LEFT), r.y + r.height // 2
+    return C.get("mtk", (r.x + r.width - 4, r.y + r.height // 2))
 
 
 def s_check_dock():
@@ -180,7 +208,7 @@ def s_shot_dialog():
     ev('ESC', 'RELEASE')
 
 
-steps(s_setup, *click_at(mtk_icon), s_check_dock,
+steps(s_setup, s_find_mtk, *click_at(mtk_icon), s_check_dock,
       click(FACE_ICON), s_check_face_mode, s_shot_edit,
       click(EXTRUDE_EDIT), s_check_extrude,
       click(OBJECT_ICON), s_check_object_mode,
