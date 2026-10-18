@@ -2,6 +2,21 @@
 
 ## 현재 작업
 
+- Step 98 (재점검 7차, 정밀 비판 「이건 Maya여야 한다」) 완료 — `docs/steps/step_98.md`, 수치 부록 `docs/steps/step_98_quant.md`,
+  PLAN 「재점검 7차(정밀 비판)」.
+  - Maya 2022 와 kit 를 1600x900 로 같은 장면 (첫 화면, 5 메뉴 세트 전 최상위 메뉴, 셸프 탭, File 대화상자·옵션, 모델링·UV·애니·리깅·FX·렌더
+    창) 을 띄워 나란히 113 쌍 `research/maya/screens/audit7/pairs/` (Maya 스크립트 `research/scripts/maya_audit7/`, kit 세션
+    `tmp/audit7_session.py`). 차이 36 항목 점수화.
+  - 수치: 메뉴 1251 중 작동 370 (29.6 %), 회색 881 중 866 이유 없음, 진짜 옵션 창 6/500, 셸프 98/203, 키 미검토 219 (잘못된 동작 7),
+    실제 Maya 메뉴 최상위 746 중 kit 에 없는 것 약 60 (Audio·Stereo 빈 메뉴).
+  - 가장 큰 차이: 빈 Outliner, **125 % 에서 Tool Box 열이 빔** (이 PC 실제 배율), 회색 메뉴, 옵션 박스, Blender 파일 브라우저, lambert1 없음,
+    Import/Export 하위 메뉴, UV / Graph / Hypershade 창이 Blender 모양.
+  - 고친 버그 2: Channel Box 핸들러 AttributeError (File Browser / Preferences 창 컨텍스트, `tests/test_step98_audit_fixes.py`),
+    Create Reference 의 「.ma 를 Import」 안내 문구.
+  - 검증: 헤드리스 719/719, kit 세션 PASS (콘솔 traceback 0), Maya 촬영 146 장.
+  - **바로 다음 할 일**: step 99 = backlog 1 「First screen: Maya Outliner rows, Tool Box at 125 %, dock tabs」. backlog 12 개 =
+    `hermes/autodrive_bmk/backlog.json` (사본 `backlog_98.json`), PLAN 「재점검 7차」 우선순위 1–12 와 같음. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 97 (manual_checks 정리 2) 완료 — `docs/steps/step_97.md`. **재점검 6차 backlog (90–97) 모두 끝.**
   - `tests/gui/gui_manual_sweep.py` 에 step 59–79 의 시뮬레이션 가능 57 항목 (`[M<step>-<n>]`) → `docs/manual_checks.md` 369 항목 중 [x] 70
     (전 13), 수동 299. step 81–96 절 분류 (사람 판단 10 · 불가 1 · 시뮬레이션 가능 38) 는 step_97.md 「분류」.

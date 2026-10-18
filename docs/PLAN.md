@@ -602,3 +602,68 @@ Audit-5 backlog: items 1–8 all closed (steps 81–88). Audit-5 blindspots 1–
    decision 11.
 10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit extrude record,
     playback Once / Oscillate, 2D pan/zoom in user views.
+
+## 재점검 7차(정밀 비판) (step 98, 2026-10-19)
+
+User request: "it must look and work like Maya — default Maya with Blender features attached". Evidence: `docs/steps/step_98.md`
+(scored findings #1–#36), `docs/steps/step_98_quant.md` (menu / shelf / keymap / Windows counts), side-by-side shots
+`research/maya/screens/audit7/pairs/` (113 pairs: Maya 2022 left, kit right, both 1600x900, kit at effective UI scale 1.0
+with the Maya theme a new user gets from Make Blender Maya; 125 % first screen in `kit_scale125/`). Only differences are
+listed. Grade: look / operation / function / missing; score = daily frequency (1–5) x severity (1–5). Verdicts are delegated.
+
+### Headline numbers
+
+| Measure | Value |
+|---|---|
+| Kit menu items (all sets, shared menus once) | 1251: **370 working (29.6 %)**, 881 greyed, **866 greyed with no reason** |
+| Working share per set | Common 44 %, Animation 32 %, Modeling 22 %, Rigging 21 %, Rendering 21 %, FX 14 %; Surfaces, Generate, Toon, Cache, Help, nConstraint 0 % |
+| Option boxes | Maya 625, kit marks 500: **6 real option windows**, 11 tool settings, 156 redo panel, 323 dead icons |
+| Top-level items in the live Maya menus missing from kit menus | about 60 of 746 (Audio 7 and Stereo 4 are empty menus, XGen 17, Modify > Naming, File > Game Exporter / Send To) |
+| Shelves | 98 of 203 Maya buttons drawn; Sculpting 1/26, Curves/Surfaces 10/38, FX 7/29 |
+| Hotkeys (468) | implemented 155, IC 15, n/a 11, **unreviewed 219**, macOS 68; 7 daily keys do a different Blender action |
+| Windows menu | 68 entries: 34 open something, 31 greyed without a notice |
+| First screen (look_compare, step 41) | rects 5/12 within 10 px, pixels 5/31, 7 Maya elements missing |
+
+### Top findings (score >= 15)
+
+| Score | Grade | Finding (step_98.md #) |
+|---|---|---|
+| 20 | look | Outliner on a new scene is an empty striped column; Maya lists persp / top / front / side and the default sets (#1) |
+| 20 | look/operation | At Windows 125 % the Tool Box column is empty and the tools appear inside the viewport (area_move poll) (#2) |
+| 20 | function | 70 % of menu items greyed, 866 without a reason (#9) |
+| 20 | look/function | Option boxes: 6 real of 500, left window icon instead of Maya's right square (#11) |
+| 20 | look/operation | Open / Save As are Blender's file browser: no Look in, project folders, Options, Files of type; starts in Documents (#15) |
+| 16 | function | No default material lambert1 / initialShadingGroup (#6) |
+| 16 | operation/function | Import / Export are format submenus without Maya options or axis / unit presets (#16) |
+| 16 | function | Normals, Detach / Flip / Circularize / Edge Flow, Connect / Make Hole, Sculpting tools greyed (#23) |
+| 16 | look | UV Editor is Blender's Image Editor header, no Maya menus or UV Toolkit (#24) |
+| 16 | look | Graph Editor / Dope Sheet: Blender headers, Action rows, out-of-range shading (#26) |
+| 16 | look | Hypershade: no swatch Browser tabs, Material Viewer, Maya Create list or menus (#31) |
+| 15 | look | Dock tabs as truncated top buttons + Blender Item tab, not Maya's right-edge vertical tabs (#3) |
+| 15 | look | Viewport panel: Blender header items instead of Maya's panel icon bar (#4) |
+| 15 | look | Mapped menu items greyed by Blender polls where Maya shows them enabled (Edit Mesh in object mode) (#10) |
+
+Below 15 (step_98.md): Tool Settings popover vs Maya dock (#20), AE tabs / menus (#21), Render Settings = Blender Properties
+(#32), wrong daily keys (#35), rigging / deform gaps (#28), .ma unreadable (#18), shelf look and gaps (#7), menu hotkey labels
+(#12), missing live-Maya menu items (#13), Cache menu (#17), unbound daily keys (#36), UV keys (#25), Blender explanation
+sentences in Maya windows (#22), FX Outliner nodes (#29), Script Editor / Render View / Preferences (#33), Windows editors (#34).
+
+Fixed in step 98: Channel Box depsgraph handler AttributeError in File Browser / Preferences window contexts; Create Reference
+message that told users to import .ma.
+
+### Remaining work, by priority (backlog.json, step 99+)
+
+1. **First screen**: Maya Outliner default rows, Tool Box column at 125 %, Maya dock tabs and CB / Layer Editor sizes (#1–#3).
+2. **Default material lambert1** on every created mesh, shown in Hypershade and the AE (#6).
+3. **Menu honesty**: a notice on every greyed item, map the cheap ones (normals, Detach..., Naming, Cache = Alembic / USD,
+   Windows editors, Audio / Stereo), mapped items enabled where Maya's are (#9, #10, #13).
+4. **File I/O the Maya way**: one Maya-like file dialog with Files of type and an Options panel (cm / Y-up presets), default
+   project, mayapy round trip (#15–#19).
+5. **Real option boxes** for the top 30 commands, Maya look (#11).
+6. **Editor chrome**: Graph Editor, Dope Sheet, UV Editor with Maya menu bars and panels (#24, #26).
+7. **Hypershade, Render Settings, Script Editor** look (#31–#33).
+8. **Tool Settings and Attribute Editor** parity (#20–#22).
+9. **Keymap**: 7 wrong daily keys, unbound daily keys, review the 219 unreviewed rows (#35, #36).
+10. **Menu hotkey labels** and menu look (#12, #14).
+11. **Shelves**: Maya order with greyed placeholders, Sculpting brushes, icon look (#7).
+12. **Modeling / rigging function gaps** measured with mayapy (#23, #28).
