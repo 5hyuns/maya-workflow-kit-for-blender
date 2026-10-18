@@ -655,3 +655,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 99) 새 장면 Outliner = persp / top / front / side (회색, 카메라 그림) → defaultLightSet / defaultObjectSet. persp 클릭 = 선택 해제 + 행 강조, defaultLightSet = 라이트 선택. 큐브를 만들면 카메라 행이 pCube1 **뒤**로 감 (Maya 는 앞) — 거슬리는지.
 - [ ] (step 99) 도크 오른쪽 가장자리 세로 탭 「Channel Box / Layer Editor」「Attribute Editor」「Modeling Toolkit」 클릭 → 각 편집기, Ctrl+A 로도 탭이 바뀜. 오브젝트를 선택하면 Blender 「Item」 탭이 네 번째로 생김 (C 패널, 숨길 수 없음) — 눌러도 되고 다른 탭을 누르면 돌아옴.
 - [ ] (step 99) Layer Editor (Display / Anim 탭) 가 도크 높이의 약 절반에서 시작하고 목록이 아래 끝까지 차는지 (Maya 처럼). 큐브 INPUTS 가 있을 때는 CB 바로 밑에 붙음.
+
+### Step 101 — 메뉴 정직성 (회색마다 안내, 싼 매핑, 객체 모드에서도 활성)
+
+- [ ] (step 101) 아무 회색 메뉴 항목 (예: Surfaces > Loft, Generate > XGen Editor, Skeleton > Joint Labelling > Label Left) 에 마우스를 올리면 툴팁에 「(greyed) → 가장 가까운 Blender 기능」 과 한 줄 안내, Help Line 에도 같은 줄. 문장이 Maya 사용자에게 이해되는지.
+- [ ] (step 101) 큐브를 객체 모드로 선택하고 Edit Mesh > Poke / Merge / Bevel → 큐브 전체에 적용되고 객체 모드 그대로 (Maya 처럼), Ctrl+Z 한 번에 원래대로. Bridge / Detach / Wedge → 상태 표시줄에 Maya 경고 문장, 모양 그대로.
+- [ ] (step 101) Edit Mesh > Wedge: 면 몇 개 + 그 테두리 모서리를 활성으로 (Shift+클릭 마지막) → 그 모서리 축으로 90° 4 단 회전 압출. Maya 결과와 방향이 같은지 (반대면 축 부호 확인).
+- [ ] (step 101) Edit Mesh > Edit Edge Flow: 굽은 면 위 가운데 루프를 평평하게 눌러 둔 뒤 실행 → 주변 곡률을 따라 다시 볼록해지는지 (Maya polyEditEdgeFlow 1.0 과 비교).
+- [ ] (step 101) Mesh Tools > Sculpting Tools > Grab Tool 등 → Sculpt 모드 + 해당 브러시. Audio > Import Audio... → 파일 선택 후 재생 시 소리 (VSE 스트립), Mute 토글. Cache > Alembic Cache > Export Selection to Alembic... → .abc 파일, Import Alembic... → 불러옴.
+- [ ] (step 101) Help > Maya Help / Python Command Reference → 웹 브라우저로 Blender 문서가 열림. Help > About Maya → Blender About.

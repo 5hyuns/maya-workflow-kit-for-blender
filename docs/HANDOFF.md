@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 101 (메뉴 정직성: 회색마다 안내, 싼 매핑, 객체 모드에서도 활성) 완료 — `docs/steps/step_101.md`.
+  - 메뉴 데이터: 생성기가 실행 시 항목을 채움 (Modify Naming / Pivot / Attributes, Help, Audio, Stereo, Cache = Alembic /
+    Geometry / GPU Cache, #13 의 File Game Exporter·Create USD·Visualize Ghosting·Generate XGen 등; 라벨은 mayapy 측정,
+    `research/maya/re/menu_honesty.md`). 회색 항목 = `notices.CATEGORIES` (경로 접두사 → 가장 가까운 Blender 기능).
+  - 매핑 188 개 + kit 연산자 14 개 (`operators/menu_items.py`: Naming, Soften/Harden, Detach, Edge Flow, Wedge, Nonlinear,
+    Template, Sculpting Tools, Checker, Audio, Stereo Camera …). 객체 모드 Edit Mesh = Maya 처럼 활성 (`menu_map.OBJECT_MODE`:
+    전체 컴포넌트에 실행 또는 Maya 경고, mayapy 측정).
+  - 검증: `tools/menu_count.py` 작동 42.5 % (전 29.6 %), 안내 없는 회색 0 (전 866); 헤드리스 739/739, GUI 1019/1019.
+  - **바로 다음 할 일**: step 102 = backlog 4 「File I/O the Maya way」 (step_98.md #15–#19, quant §2: Open / Save As / Import /
+    Export 대화상자, Files of type, 옵션, 기본 프로젝트). 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 100 (기본 재질 lambert1 / initialShadingGroup) 완료 — `docs/steps/step_100.md`.
   - mayapy 측정: 새 shape → initialShadingGroup → lambert1 (color 0.5, incandescence 0, diffuse 0.8), Delete Unused 뒤에도 남음, 새
     Lambert = lambert2. kit: `operators/material.default_material` (표시 ID 속성 + fake user), 새 오브젝트 핸들러 + `create` 가
