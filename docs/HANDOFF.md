@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 89 (재점검 6차) 완료 — `docs/steps/step_89.md`, `docs/PLAN.md` 「재점검 6차」.
+  - 대응표 29/2/0/2 (88 %; 타임라인 Done), 키맵 구현 142 · 미검토 237, manual_checks [x] 13 / 348. 탐색 세션 19/19: 부모 관계 점선이
+    그려짐, RMB 목록이 Adjust Last Operation 패널 밑, AE 전환 때 사이드바 탭 순서. blindspot 7 (Ctrl+X, Alt+X Walk, Alt+\, Graph t / Alt+/,
+    Alt+1/2/4, 스무드 프록시 키, Ctrl+PgUp/Dn).
+  - 검증: 헤드리스 677/677, dogfood 47/47, 세션 19/19 (콘솔 0).
+  - **바로 다음 할 일**: step 90 = backlog 1 「Global key batch 4」 (Ctrl+X, Alt+X, Alt+\, Alt+1/2/4, 스무드 프록시 키 + IC 행 정리).
+    backlog = `hermes/autodrive_bmk/backlog.json` (8개, 사본 backlog_90.json). 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 88 (manual_checks → GUI 테스트 정리) 완료 — `docs/steps/step_88.md`. **재점검 5차 backlog (81–88) 모두 끝.**
   - `tests/gui/gui_manual_sweep.py` 46 검사로 step 59–79 의 13 항목 확인 → `docs/manual_checks.md` 348 항목 중 [x] 13 (맨 위 자동 / 수동 수).
     step 59–79 분류: 자동 13, 사람 판단 23, 시뮬레이션 불가 7, 시뮬레이션 가능하지만 아직 안 옮김 58.

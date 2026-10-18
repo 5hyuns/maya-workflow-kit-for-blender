@@ -530,3 +530,70 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
    5.x GUI run, distribution decision 11.
 10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit extrude record,
     playback Once / Oscillate.
+
+## 재점검 6차 (step 89, 2026-10-18)
+
+Evidence: `docs/steps/step_89.md` (tests, dogfood, audit-6 session screenshots). Collected the mapping table, PLAN, every
+「남은 것」 of steps 80–88, `docs/manual_checks.md` and `docs/keymap_mapping.md`, and ran a blindspot pass against
+research/maya/*. A read-only subagent did the collection; its "missing" claims were re-checked by grep. Verdicts are delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 12 | 1 — selection modifiers outside the 3D View: Dope Sheet / NLA / Node patched (step 86), but Ctrl / Ctrl+Shift = toggle where the operator has no deselect, no marquee XOR, no Node Editor Ctrl-marquee deselect | 0 | 0 |
+| UI (9) | **8** (+ timeline: Shift-range move / scale step 84; Once / Oscillate = Blender limit, greyed with a notice) | 1 — Maya Outliner: drag parenting done (step 82), **Sets** missing | 0 | 0 |
+| 개념 (11) | 9 | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **29 (88 %)** | **2 (6 %)** | **0** | **2 (6 %)** |
+
+Audits 1 → 6: 21/8/2/2 → 23/8/0/2 → 25/6/0/2 → 27/4/0/2 → 28/3/0/2 → 29/2/0/2. Keymap rows (`docs/keymap_mapping.md`, 468):
+implemented 125 → **142**, IC 10, not applicable 11, macOS-only 68, unreviewed 254 → **237** (global 76, Node Editor 36,
+Time Editor 36, Hypershade 25, UV 17, sculpt 15, other 32). Some unreviewed rows already behave like Maya through the
+current binding and only need marking IC (Ctrl+Q, Ctrl+N, Ctrl+C / Ctrl+V, Outliner Return / f). Manual checks: 348, **13
+ticked** (step 88), 335 open; sections 81–87 add 28 open.
+
+Audit-5 backlog: items 1–8 all closed (steps 81–88). Audit-5 blindspots 1–5 closed (steps 83, 85, 86, 87); 6 (Reset Tool) open.
+
+### New findings (audit-6 session, step_89.md)
+
+- Session 19 of 19 checks, console errors 0 (create, click select, Channel Box `+=5`, 3 / 1, RMB west = Vertex, F8, Ctrl+D,
+  Ctrl+G, S twice, Alt+I between keys keeps the value, Shift+) nudge with red ticks at 1 / 6 / 10, Alt+P, Ctrl+A, hotbox).
+- **Blender's parent relationship lines are drawn** (dashed line from pCube2 to group1 after Ctrl+G, `a6_05`). Maya draws no
+  DAG parent lines [K]; `show_relationship_lines` appears nowhere in `src/` or `tools/make_startup.py`.
+- **The Adjust Last Operation panel covers the RMB marking-menu list** (`a6_04`): `marking/draw.REGION_TYPES` has no 'HUD',
+  so the menu picture is drawn under the redo panel.
+- Minor: switching the dock to the Attribute Editor puts the sidebar "Item" tab above "Channel Box" (`a6_08`).
+
+### Blindspots (not implemented and not listed as left out; re-checked by grep in src/maya_kit — no hits)
+
+1. **Ctrl+X Cut** (research/maya/hotkeys_and_menus.md:132; keymap_mapping.md:35): no key, Edit > Cut greyed while Copy /
+   Paste work (`ui/menu_map.py:131-132`). Grep `Edit/Cut|CutSelected`.
+2. **Alt+X = Walk** (research/maya/interaction.md:51, hotkeys_and_menus.md:99; keymap_mapping.md:450): IC `view3d.toggle_xray` stays on Alt+X, so a Maya user
+   turns on X-ray. Grep `WalkContext`.
+3. **Alt+\ playback range = animation range** (hotkeys_and_menus.md:168; keymap_mapping.md:483): the function exists
+   (`ui/range_bar.py` `toggle_whole`, double-click) but no key. Grep `PlaybackRangeAnimStartEnd`.
+4. **Graph Editor t (center current time) / Alt+/ (snap time to selection)** (hotkeys_and_menus.md:173, keymap_mapping.md:79 / :471 = hotkeySetup.mel:734).
+   Grep `FrameCenterView|SnapTimeToSelection`.
+5. **Alt+1 / Alt+2 / Alt+4 show NURBS curves / polygons / image planes** (hotkeys_and_menus.md:113; keymap_mapping.md:472-474).
+6. **Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy keys** (hotkeys_and_menus.md:121; keymap_mapping.md:436-438): only the menu path exists.
+7. Low: Ctrl+PgUp / PgDn = Blender workspace cycle (mapping :231-232; step_39.md:88 declined PickWalkIn/Out).
+
+### Remaining work, by priority (backlog.json, step 90+)
+
+1. **Global key batch 4** (blindspots 1–3, 5, 6 + IC bookkeeping rows).
+2. **Viewport chrome fixes** (session findings): relationship lines off in the Maya layout / Maya mode, marking menu over the
+   HUD region, dock tab order.
+3. **Graph Editor key batch** (blindspot 4 + `i` Insert Key tool, step_83.md 「남은 것」).
+4. **Selection mask polish**: Shift+Q check marks (`marking/draw.checked`), masks reset on New / Open scene (PLAN:451),
+   Tool Settings Reset Tool (research/maya/ui_layout.md:267-268).
+5. **Pivot-edit RMB marking menu** (research/maya/interaction.md:81, :128-130).
+6. **V snap when zoomed in** (step_81.md 「남은 것」; research/maya/workflows/pivot_snap.md S4): reproduce, find the cause, fix or document.
+7. **Outliner Sets** (the last UI Partial; mapping row Outliner).
+8. **Manual checks sweep 2**: the 58 automatable step 59–79 items (step_88.md 「분류」).
+9. Later: Left-out items (MASH, UV checker, Component Editor, Quad Draw Make Live, fluids / Bifrost, Straighten, UV display
+   keys, ghosting, Shape Editor, Spline IK, Render Settings 960×540), Rotate tool Ctrl plane, UV Alt+arrow nudge, key editor
+   box XOR, Time Slider hover / selected-key ticks, Cut and Sew tool menu, Maya Animation / Rigging / UV workspaces, 0.8 UI scale
+   and 5.x GUI runs, [K] items never compared with a running Maya (steps 82–87), template copy refresh on update, distribution
+   decision 11.
+10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit extrude record,
+    playback Once / Oscillate, 2D pan/zoom in user views.
