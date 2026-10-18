@@ -563,6 +563,72 @@ KEY_TANGENT = MarkingMenu(
         })),
     })
 
+# --- Shift+Q / Alt+Q hold + LMB (hotkeySetup.mel:286-287; docs/steps/step_78.md) ---------------------------------
+# doSelectComponentMM (buildSelectComponentMM.mel, popup :206 -sh) = the component pick mask; Blender's mask is the
+# mesh select mode, so only Poly Vertices / Poly Edges / Faces / All Components on / Select Objects do something.
+# doSelectPolygonMM (buildPolyMM.mel, popup :49 -alt) = F9 / F10 / F11 / F12.
+
+def _mask(kind):
+    return ("maya_kit.component_mask", {"kind": kind})
+
+
+SELECT_COMPONENT = MarkingMenu(
+    "doSelectComponentMM", "Component Pick Mask", "research/maya/marking_menus.json doSelectComponentMM",
+    radial={
+        "N": ("Points", Sub(radial={                                       # :31
+            "N": ("All Points", None),                                     # :32
+            "E": ("CVs", None),                                            # :35
+            "SE": ("Poly Vertices", _mask("VERT")),                        # :38
+            "S": ("Lattice Points", None),                                 # :41
+            "W": ("Particles", None),                                      # :44
+            "SW": ("Subdiv Mesh Points", None),                            # :47
+        })),
+        "NE": ("Parm Points", Sub(radial={                                 # :55
+            "NE": ("All Parm Points", None),                               # :56
+            "E": ("Edit Points", None),                                    # :61
+            "S": ("Curve Points", None),                                   # :64
+            "W": ("Surface Points", None),                                 # :67
+            "SW": ("Subdiv Mesh UVs", None),                               # :70
+        })),
+        "E": ("Lines", Sub(radial={                                        # :79
+            "E": ("All Lines", None),                                      # :80
+            "S": ("Poly Edges", _mask("EDGE")),                            # :85
+            "W": ("Isoparms", None),                                       # :88
+            "N": ("Trim Edges", None),                                     # :91
+            "SE": ("Springs", None),                                       # :94
+        })),
+        "SE": ("Faces", _mask("FACE")),                                    # :103
+        "S": ("Hulls", None),                                              # :111
+        "SW": ("Pivots", Sub(radial={                                      # :119
+            "SW": ("All Pivots", None),                                    # :120
+            "NW": ("Rotate Pivots", None),                                 # :125
+            "NE": ("Scale Pivots", None),                                  # :128
+            "SE": ("Joint Pivots", None),                                  # :131
+        })),
+        "W": ("Handles", None),                                            # :140
+        "NW": ("Misc.", Sub(radial={                                       # :147
+            "NW": ("All Misc", None),
+            "E": ("Local Rotation Axes", None),
+            "S": ("Image Planes", None),
+        })),
+    },
+    items=[("All Components on", _mask("ALL")), ("All Components off", None), DIVIDER,
+           ("Save to shelf", None), DIVIDER, ("Select Objects", ("object.mode_set", {"mode": 'OBJECT'}))])
+
+
+def _component(kind):
+    return ("maya_kit.component_mode", {"type": kind})
+
+
+SELECT_POLYGON = MarkingMenu(
+    "doSelectPolygonMM", "Polygon Components", "research/maya/marking_menus.json doSelectPolygonMM",
+    radial={
+        "N": ("Vertices", _component("VERT")),
+        "E": ("Edges", _component("EDGE")),
+        "S": ("Faces", _component("FACE")),
+        "W": ("UVs", ("maya_kit.uv_component", {"mode": 'UV'})),
+    })
+
 # --- Hotbox zones (hotkeys_and_menus.md §4 :207-214; marking_menus.json hotbox.zones) ------
 
 def _pane(ui_type):
@@ -732,7 +798,8 @@ MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,
-                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT)}
+                             UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT,
+                             SELECT_COMPONENT, SELECT_POLYGON)}
 
 # Active tool -> its options marking menu (buildToolOptionsMM.mel:29-49).
 TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",

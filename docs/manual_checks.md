@@ -534,3 +534,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 77) F9 + Insert: 툴바가 커서 툴, Help Line 「Pivot edit on」. 면 위 클릭 = 그 자리에 커서, 축이 면에 맞음; 드래그 = 커서가 따라 움직임. Insert 다시 = 이전 툴 (Move) + 매니퓰레이터가 그 피벗에서 면 방향 축으로.
 - [ ] (step 77) Insert 를 켠 채 D 를 누르면 피벗 편집이 꺼짐. 커서를 옮기지 않고 Insert 두 번 = 사용자 피벗 지움 (매니퓰레이터가 선택 bbox 중심).
 - [ ] (step 77) Insert 켠 채 F8 / Tab 으로 오브젝트 모드 → 피벗 편집 꺼짐; 다시 편집 모드 → 원래 툴. Maya 처럼 W 메뉴로 축을 World 로 돌릴 수 있음.
+
+### Step 78 — 키 묶음 2
+
+- [ ] (step 78) Shift+Q 탭 = 선택 툴 + 메시 편집 모드; 홀드 + LMB = 컴포넌트 픽 마스크 마킹 메뉴 (Maya 위치), Poly Vertices / Poly Edges / Faces 가 켜고 끄기, 없는 항목 회색. Maya 의 체크 표시는 안 보임.
+- [ ] (step 78) Alt+Q 홀드 + LMB = Vertices N / Edges E / Faces S / UVs W (F9-F12 와 같음). Alt 를 누른 채라도 뷰가 돌지 않음.
+- [ ] (step 78) Ctrl+Alt+← / → 로 선택 엣지가 돌아감 (Spin Edge Backward / Forward, 메뉴와 같은 방향).
+- [ ] (step 78) 큐브를 만든 뒤 Shift+G 를 그리드 여러 곳에서 = 그 자리마다 큐브. 옆 직교 뷰에서도 원점 깊이의 마우스 자리.
+- [ ] (step 78) Ctrl+Shift+C = 지금 뷰 그대로의 camera1 (Look Through 하면 같은 화면; 직교 뷰는 크기 [I]).
+- [ ] (step 78) Graph Editor 1 / 2 / 3: 2 는 Help Line 에 Stacked 없음 안내 + Normalized.

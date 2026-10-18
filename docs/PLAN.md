@@ -460,7 +460,7 @@ shelf reorder.
 6. **Edit-mode Insert / D pivot** (PLAN 「Left out」, mapping row D/Insert). Done in step 77: mesh Insert toggles the
    D cursor pivot edit, a turned pivot becomes the "Maya Pivot" Move axis; mapping row D/Insert Partial → **Done**
    (조작 / 단축키 12 / 1 / 0 / 0; total 28 / 3 / 0 / 2 = 85 %, with the step 73 timeline still counted Partial).
-7. **Key batch**: Graph Editor 1/2/3, Shift+Q / Alt+Q menus, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C.
+7. **Key batch**: Graph Editor 1/2/3, Shift+Q / Alt+Q menus, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C. Done in step 78 (keymap 구현 113 → 122).
 8. **3D Cut and Sew UV tool** (score 20, the highest Left-out item; x/s/d keys).
 9. Later (Left-out lists + step 33–70 「남은 것」, `docs/steps/step_71.md`): Outliner Sets / drag reparent, Hypershade Textures /
    Lights tabs, Maya Animation / Rigging / UV workspaces, Spline IK, Component Editor, Shape Editor, MASH / fluids, Reference

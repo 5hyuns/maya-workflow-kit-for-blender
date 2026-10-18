@@ -760,6 +760,29 @@ def patch_graph_keys(kd):
         _add(kd, km, "maya_kit.tap_hold", make_event("S", shift=True), {"binding": "key_tangent"})
 
 
+# --- 38. Key batch 2 (docs/steps/step_78.md) ------------------------------------------------------------
+# Graph Editor 1/2/3 (HK:148-150), Shift+Q / Alt+Q select tool marking menus (HK:286-287), Ctrl+Alt+Left/Right
+# Spin Edge (HK:378-379), Shift+G repeat at the mouse (HK:363), Ctrl+Shift+C camera from view (HK:60).
+# IC has none of these events in these keymaps; same-event IC items elsewhere stay (editor keymaps run first):
+# Shift+Q in Grease Pencil modes, Shift+G select similar / grouped in Armature, Metaball, Grease Pencil.
+SELECT_MM_KEYMAPS = ("Object Mode", "Mesh")
+REPEAT_SHADOWS = ("Armature", "Metaball", "Grease Pencil Selection")
+SELECT_MM_KEYS = (({"shift": True}, "select_component"), ({"alt": True}, "select_polygon"))   # marking.SELECT_BINDINGS
+GRAPH_VIEW_KEYS = (("ONE", "ABSOLUTE"), ("TWO", "STACKED"), ("THREE", "NORMALIZED"))
+
+
+def patch_key_batch_2(kd):
+    for key, mode in GRAPH_VIEW_KEYS:
+        _add(kd, "Graph Editor", "maya_kit.graph_view_mode", make_event(key), {"mode": mode})
+    for km in SELECT_MM_KEYMAPS:
+        for mods, binding in SELECT_MM_KEYS:
+            _add(kd, km, "maya_kit.tap_hold", make_event("Q", **mods), {"binding": binding})
+    _add(kd, "Mesh", "mesh.edge_rotate", make_event("LEFT_ARROW", ctrl=True, alt=True), {"use_ccw": True})
+    _add(kd, "Mesh", "mesh.edge_rotate", make_event("RIGHT_ARROW", ctrl=True, alt=True), {"use_ccw": False})
+    _add(kd, "3D View", "maya_kit.repeat_at_mouse", make_event("G", shift=True), shadows=REPEAT_SHADOWS)
+    _add(kd, "Object Mode", "maya_kit.camera_from_view", make_event("C", shift=True, ctrl=True))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -769,7 +792,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
-           patch_scene_files, patch_graph_keys)
+           patch_scene_files, patch_graph_keys, patch_key_batch_2)
 
 
 def apply(data):

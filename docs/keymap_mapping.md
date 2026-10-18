@@ -7,16 +7,16 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 113 |
+| 구현 | 122 |
 | IC 일치 | 10 |
 | 해당 없음 | 10 |
-| 미검토 | 267 |
+| 미검토 | 258 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
 |---|---|---|---|---|---|---|---|
 | Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 구현 | 편집 모드: mesh.select_all(SELECT) | hotkeySetup.mel:59 |
-| Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | — | 미검토 |  | hotkeySetup.mel:60 |
+| Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | Object Mode: `maya_kit.camera_from_view` | 구현 | 뷰와 같은 camera1 (렌즈·직교 크기), 뷰는 그대로 | hotkeySetup.mel:60 |
 | Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `maya_kit.select_none` | 구현 | 편집 모드: maya_kit.select_none (해제 + 오브젝트 모드) | hotkeySetup.mel:62 |
 | Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `maya_kit.duplicate`; Mesh: `mesh.duplicate_move` | 구현 | 제자리, 자식 포함, pCube2/pCubeShape2 (편집 모드는 IC duplicate_move) | hotkeySetup.mel:64 |
 | Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `maya_kit.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
@@ -77,9 +77,9 @@
 | f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | IC 일치 |  | hotkeySetup.mel:145 |
 | g | G | graphEditor | GraphEditorFramePlaybackRange | Graph Editor: `anim.scene_range_frame`; Screen: `screen.repeat_last` | 구현 | 재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤 | hotkeySetup.mel:146 |
 | t | T | graphEditor | GraphEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:147 |
-| 1 | ONE | graphEditor | GraphEditorAbsoluteView | — | 미검토 |  | hotkeySetup.mel:148 |
-| 2 | TWO | graphEditor | GraphEditorStackedView | — | 미검토 |  | hotkeySetup.mel:149 |
-| 3 | THREE | graphEditor | GraphEditorNormalizedView | — | 미검토 |  | hotkeySetup.mel:150 |
+| 1 | ONE | graphEditor | GraphEditorAbsoluteView | Graph Editor: `maya_kit.graph_view_mode` (mode='ABSOLUTE') | 구현 | Normalize 끔 | hotkeySetup.mel:148 |
+| 2 | TWO | graphEditor | GraphEditorStackedView | Graph Editor: `maya_kit.graph_view_mode` (mode='STACKED') | 구현 | Blender 에 Stacked 없음: Normalized 로 + 안내 | hotkeySetup.mel:149 |
+| 3 | THREE | graphEditor | GraphEditorNormalizedView | Graph Editor: `maya_kit.graph_view_mode` (mode='NORMALIZED') | 구현 | Normalize 켬 (-1..1) | hotkeySetup.mel:150 |
 | d | D | graphEditor | TangentAuto | Graph Editor: `maya_kit.set_tangent` (kind='AUTO') | 구현 | 선택 키 = Bezier + Auto Clamped | hotkeySetup.mel:151 |
 | h | H | graphEditor | GraphEditorLockChannel | — | 미검토 |  | hotkeySetup.mel:152 |
 | j | J | graphEditor | GraphEditorUnlockChannel | — | 미검토 |  | hotkeySetup.mel:153 |
@@ -165,8 +165,8 @@
 | v | V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 (매니퓰레이터 중심이 정점에) — step 59 | hotkeySetup.mel:281 |
 | Shift+V | Shift+V | global | SnapToPointPress / SnapToPointRelease (release) | 3D View: `maya_kit.hold` (name='point') | 구현 | 누르는 동안 VERTEX 스냅 (매니퓰레이터 중심이 정점에) — step 59 | hotkeySetup.mel:282 |
 | q | Q | global | SelectToolOptionsMarkingMenu / SelectToolOptionsMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='tool_select'); Mesh: `maya_kit.tap_hold` (binding='tool_select') | 구현 | 누름=툴 전환, 누른 채 LMB=Select 옵션 마킹메뉴(파이, Step 8) | hotkeySetup.mel:285 |
-| Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:286 |
-| Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:287 |
+| Shift+Q | Shift+Q | global | SelectComponentToolMarkingMenu / SelectComponentToolMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='select_component'); Mesh: `maya_kit.tap_hold` (binding='select_component') | 구현 | 탭 = 선택 툴 + 컴포넌트 모드, 홀드 + LMB = 픽 마스크 마킹 메뉴 (메시 정점/엣지/면만) | hotkeySetup.mel:286 |
+| Alt+q | Alt+Q | global | SelectPolygonToolMarkingMenu / SelectPolygonToolMarkingMenuPopDown (release) | Object Mode: `maya_kit.tap_hold` (binding='select_polygon'); Mesh: `maya_kit.tap_hold` (binding='select_polygon') | 구현 | 탭 = 선택 툴, 홀드 + LMB = Vertices / Edges / Faces / UVs | hotkeySetup.mel:287 |
 | Alt+m | Alt+M | global | FullHotboxDisplay | — | 미검토 |  | hotkeySetup.mel:288 |
 | Ctrl+m | Ctrl+M | global | ToggleMainMenubar | — | 미검토 |  | hotkeySetup.mel:289 |
 | Shift+M | Shift+M | global | TogglePanelMenubar | — | 미검토 |  | hotkeySetup.mel:290 |
@@ -223,7 +223,7 @@
 | . | PERIOD | global | NextKey | Frames: `screen.keyframe_jump` (next=True) | 구현 | Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로 | hotkeySetup.mel:360 |
 | Alt+. | Alt+PERIOD | global | NextFrame | Frames: `screen.frame_offset` (delta=1) | 구현 | 누르고 있으면 반복 | hotkeySetup.mel:361 |
 | g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
-| Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | — | 미검토 |  | hotkeySetup.mel:363 |
+| Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | 3D View: `maya_kit.repeat_at_mouse` | 구현 | 마지막 동작 반복 → 선택을 마우스 아래 바닥 (Z=0) 으로 | hotkeySetup.mel:363 |
 | Up | UP_ARROW | global | PickWalkUp | Object Mode: `maya_kit.pick_walk` (direction='UP'); Mesh: `maya_kit.pick_walk_component` (direction='UP') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 위쪽 이웃 (step 39); 포즈 모드: 부모 조인트 (step 57) | hotkeySetup.mel:364 |
 | Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `maya_kit.pick_walk` (direction='DOWN'); Mesh: `maya_kit.pick_walk_component` (direction='DOWN') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 아래쪽 이웃 (step 39); 포즈 모드: 첫 자식 조인트 (step 57) | hotkeySetup.mel:365 |
 | Left | LEFT_ARROW | global | PickWalkLeft | Object Mode: `maya_kit.pick_walk` (direction='LEFT'); Mesh: `maya_kit.pick_walk_component` (direction='LEFT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 왼쪽 이웃 (step 39); 포즈 모드: 형제 조인트 | hotkeySetup.mel:366 |
@@ -236,8 +236,8 @@
 | Alt+Right | Alt+RIGHT_ARROW | global | MoveRight | — | 미검토 |  | hotkeySetup.mel:373 |
 | Ctrl+Backspace | Ctrl+BACK_SPACE | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:375 |
 | Ctrl+Delete | Ctrl+DEL | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:376 |
-| Ctrl+Alt+Left | Ctrl+Alt+LEFT_ARROW | global | PolySpinEdgeBackward | — | 미검토 |  | hotkeySetup.mel:378 |
-| Ctrl+Alt+Right | Ctrl+Alt+RIGHT_ARROW | global | PolySpinEdgeForward | — | 미검토 |  | hotkeySetup.mel:379 |
+| Ctrl+Alt+Left | Ctrl+Alt+LEFT_ARROW | global | PolySpinEdgeBackward | Mesh: `mesh.edge_rotate` (use_ccw=True) | 구현 | Edit Mesh > Spin Edge Backward 와 같음 | hotkeySetup.mel:378 |
+| Ctrl+Alt+Right | Ctrl+Alt+RIGHT_ARROW | global | PolySpinEdgeForward | Mesh: `mesh.edge_rotate` (use_ccw=False) | 구현 | Edit Mesh > Spin Edge Forward 와 같음 | hotkeySetup.mel:379 |
 | Ctrl+Left | Ctrl+LEFT_ARROW | global | RenderViewNextImage | Object Mode: `screen.frame_jump` (end=False) | 미검토 |  | hotkeySetup.mel:381 |
 | Ctrl+Right | Ctrl+RIGHT_ARROW | global | RenderViewPrevImage | Object Mode: `screen.frame_jump` (end=True) | 미검토 |  | hotkeySetup.mel:382 |
 | Ctrl+e | Ctrl+E | global | PolyExtrude | Mesh: `maya_kit.extrude` | 구현 | polyExtrudeFace: 길이 0 압출 + 매니퓰레이터·In-View Editor·INPUTS (step 65); 엣지/정점은 압출 + 법선 드래그 | hotkeySetup.mel:384 |

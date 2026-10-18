@@ -237,5 +237,43 @@ class MAYAKIT_OT_component_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Shift+Q marking menu check boxes (doSelectComponentMM, buildSelectComponentMM.mel:31-160): Maya pick-mask
+# types that Blender has = the mesh select modes (docs/steps/step_78.md).
+MASK_KINDS = (("VERT", "Poly Vertices", ""), ("EDGE", "Poly Edges", ""), ("FACE", "Faces", ""),
+              ("ALL", "All Components On", ""))
+_MASK_INDEX = {"VERT": 0, "EDGE": 1, "FACE": 2}
+
+
+def toggled_mask(mask, kind):
+    """Mesh select mode after toggling ``kind`` (Maya check box); Blender needs at least one mode on."""
+    if kind == "ALL":
+        return (True, True, True)
+    new = list(mask)
+    i = _MASK_INDEX[kind]
+    new[i] = not new[i]
+    return tuple(new) if any(new) else tuple(mask)
+
+
+class MAYAKIT_OT_component_mask(bpy.types.Operator):
+    """Toggle a component type in the pick mask (Maya Shift+Q marking menu)"""
+    bl_idname = "maya_kit.component_mask"
+    bl_label = "Component Pick Mask"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    kind: bpy.props.EnumProperty(items=MASK_KINDS, name="Kind")
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return ob is not None and ob.type == 'MESH'
+
+    def execute(self, context):
+        ts = context.scene.tool_settings
+        if context.mode != 'EDIT_MESH':
+            bpy.ops.object.mode_set(mode='EDIT')
+        ts.mesh_select_mode = toggled_mask(tuple(ts.mesh_select_mode), self.kind)
+        return {'FINISHED'}
+
+
 classes = (MAYAKIT_OT_display_mode, MAYAKIT_OT_smooth_preview, MAYAKIT_OT_smooth_level,
-           MAYAKIT_OT_component_mode)
+           MAYAKIT_OT_component_mode, MAYAKIT_OT_component_mask)

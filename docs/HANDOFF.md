@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 78 (키 묶음 2) 완료 — `docs/steps/step_78.md`.
+  - Graph Editor 1/2/3 (Stacked = Normalized + 안내), Shift+Q / Alt+Q 선택 툴 마킹 메뉴 (픽 마스크 / 정점·엣지·면·UV), Ctrl+Alt+←/→ Spin Edge,
+    Shift+G 마우스 위치 반복, Ctrl+Shift+C 뷰에서 카메라. 키맵 구현 113 → 122.
+  - 검증: 헤드리스 627/627, GUI 549/549, dogfood 47/47.
+  - **바로 다음 할 일**: step 79 3D Cut and Sew UV 툴 (PLAN 「Left out of steps 54–67」 점수 20; 3D 뷰 엣지 클릭/드래그 = 자르기,
+    Ctrl = 꿰매기, x/s/d = Cut/Sew/Unfold; step 66 `operators/uv_tools.py` 의 uv_cut / sew 재사용). 툴 모달이라 「계획」 먼저.
+    79 가 재점검 4차 backlog 의 마지막. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 77 (편집 모드 Insert / D 피벗) 완료 — `docs/steps/step_77.md`.
   - 메시 편집 모드 Insert = D 와 같은 피벗 편집 (커서 툴 + 3D 커서 피벗) 토글. 면을 클릭하면 피벗 방향도 맞고, 끝나면 Move 축 "Maya Pivot".
     탭 = 사용자 피벗 지움 (bbox 중심). 대응표 D/Insert → Done (85 %).

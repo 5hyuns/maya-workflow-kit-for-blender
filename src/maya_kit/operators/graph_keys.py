@@ -121,6 +121,36 @@ class MAYAKIT_OT_key_edit(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Graph Editor 1 / 2 / 3 = graphEditorSetViewMode 0 / 1 / 2 (hotkeySetup.mel:148-150, defaultRunTimeCommands.mel:
+# 12992-13006). Blender has Normalize; a stacked view (each curve in its own band) isn't there: 2 = normalized + notice.
+VIEW_MODES = (("ABSOLUTE", "Absolute", "Maya 1: curves at their values"),
+              ("STACKED", "Stacked", "Maya 2: not in Blender, curves are normalized instead"),
+              ("NORMALIZED", "Normalized", "Maya 3: curves scaled to -1..1"))
+STACKED_NOTICE = "Stacked view isn't in Blender: curves are normalized (-1..1) instead"
+
+
+class MAYAKIT_OT_graph_view_mode(bpy.types.Operator):
+    """Absolute / Stacked / Normalized curve view (Maya Graph Editor 1 / 2 / 3)"""
+    bl_idname = "maya_kit.graph_view_mode"
+    bl_label = "Graph Editor View Mode"
+    bl_options = {'REGISTER'}
+
+    mode: EnumProperty(items=VIEW_MODES, name="Mode")
+
+    @classmethod
+    def poll(cls, context):
+        space = context.space_data
+        return space is not None and space.type == 'GRAPH_EDITOR'
+
+    def execute(self, context):
+        context.space_data.use_normalization = self.mode != "ABSOLUTE"
+        if self.mode == "STACKED":
+            self.report({'INFO'}, STACKED_NOTICE)
+        if context.area is not None:
+            context.area.tag_redraw()
+        return {'FINISHED'}
+
+
 class KeyTangentBinding(taphold.TapHoldBinding):
     """Shift+S: hold + LMB = the Keyframe / Tangent marking menu (buildKeyframeTangentMM); a tap does nothing."""
     name = "key_tangent"
@@ -134,7 +164,7 @@ class KeyTangentBinding(taphold.TapHoldBinding):
         modal.open_menu("buildKeyframeTangentMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
-classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit)
+classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit, MAYAKIT_OT_graph_view_mode)
 
 
 def register_bindings():
