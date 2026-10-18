@@ -514,3 +514,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 74) 면 모드: 커서 아래 면 = 빨간 테두리 + 붉은 채움 (Maya 점무늬 pre_05 와 느낌 비교). 뒤쪽 면 / 엣지 / 정점은 X-ray 일 때만.
 - [ ] (step 74) Move / Rotate / Scale 툴: 컴포넌트 위 프리셀렉트가 그대로 되고, 매니퓰레이터 화살표·가운데·회전 원 위에서는 꺼져서 손잡이를 잡을 수 있음. 클릭은 선택, 드래그는 박스 선택 그대로.
 - [ ] (step 74) 큰 메쉬 (10만 정점) 에서 호버가 끊기지 않는지 (numpy 투영 + 캐시; 편집 후 첫 호버만 캐시를 다시 만듦).
+
+### Step 75 — Status Line 입력 줄
+
+- [ ] (step 75) 입력 줄 모드 버튼: Absolute / Relative / Rename / Select by Name. Abs 에서 X 만 `10` Enter → 선택 오브젝트 x = 10 cm, Y / Z 그대로. Rotate 툴 (E) 이면 회전 값, Scale 툴 (R) 이면 배율. Ctrl+Z 한 번에 되돌림.
+- [ ] (step 75) 편집 모드 (F9 / F11) 에서 Abs Z = 0 → 선택 컴포넌트 중심이 z 0 으로, Rel 은 그만큼 이동.
+- [ ] (step 75) Rename: 칸에 리드 이름이 보이고, 여러 개 선택 후 `crate` → crate, crate1, crate2 (셰이프 crateShape…). `1x`, `a-b` 는 Help Line 오류.
+- [ ] (step 75) Select by Name: `pCube*` / `p?phere1` → 선택, 없는 이름은 Help Line 오류 + 글자 남음. 회색 History 버튼 툴팁 = Blender 에 히스토리 없음 안내.

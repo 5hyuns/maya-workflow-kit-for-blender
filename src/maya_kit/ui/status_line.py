@@ -16,7 +16,7 @@ drawn first in the tool header of the largest 3D View.
 import bpy
 from bpy.props import EnumProperty
 
-from . import menu_sets
+from . import input_line, menu_sets
 
 # --- 3D View helpers ----------------------------------------------------------------
 
@@ -344,7 +344,9 @@ GROUPS = (
     ("MASKS", "Selection masks"),
     ("SNAP", "Snap toggles"),
     ("SYMMETRY", "Symmetry"),
+    ("HISTORY", "Construction History"),
     ("RENDER", "Render"),
+    ("INPUT", "Input line: absolute / relative transform, rename, select by name"),
     ("EDITORS", "Editor toggles"),
 )
 _collapsed = set()
@@ -381,8 +383,10 @@ def _group(layout, group):
     return open_
 
 
-def draw_status_line(layout, context):
-    """The Maya Status Line groups, left to right (ui_layout.md:196-217), each after its collapse handle."""
+def draw_status_line(layout, context, compact=False):
+    """The Maya Status Line groups, left to right (ui_layout.md:196-217), each after its collapse handle.
+    ``compact`` (the 3D View tool header of other layouts, which overflows): the input line goes after the
+    editor toggles so they stay on screen (step 75, delegated)."""
     screen = context.screen
     ts = context.scene.tool_settings
     area, _r = main_view3d(screen)
@@ -440,6 +444,9 @@ def draw_status_line(layout, context):
     if _group(layout, "SYMMETRY"):
         draw_symmetry(layout, context)
 
+    if _group(layout, "HISTORY"):   # Maya statusLine.mel:3017-3032; Blender keeps no history (step 75)
+        input_line.draw_history(layout)
+
     if _group(layout, "RENDER"):
         row = layout.row(align=True)
         row.operator("render.view_show", text="", icon='RENDER_RESULT')
@@ -449,11 +456,17 @@ def draw_status_line(layout, context):
         row.operator(MAYAKIT_OT_render_settings.bl_idname, text="", icon='OPTIONS')
         row.operator("maya_kit.hypershade", text="", icon='NODE_MATERIAL')   # ui/hypershade.py (step 67)
 
+    if not compact and _group(layout, "INPUT"):     # Maya statusLine.mel:3165-3202 (step 75)
+        input_line.draw(layout, context)
+
     if _group(layout, "EDITORS"):
         row = layout.row(align=True)
         for editor, _desc, icon in EDITORS:
             row.operator(MAYAKIT_OT_editor_toggle.bl_idname, text="", icon=icon,
                          depress=editor_shown(screen, editor)).editor = editor
+
+    if compact and _group(layout, "INPUT"):
+        input_line.draw(layout, context)
 
 
 _orig = {}
@@ -533,7 +546,7 @@ def draw_tool_header(self, context):
     from .shelf import strip_area
     if strip_area(context.screen) is not None:  # drawn in the Maya strip (step 12)
         return
-    draw_status_line(self.layout, context)
+    draw_status_line(self.layout, context, compact=True)
     self.layout.separator(type='LINE')
 
 

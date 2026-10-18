@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 75 (Status Line 입력 줄) 완료 — `docs/steps/step_75.md`.
+  - Status Line 에 Maya 입력 줄 (Absolute / Relative X Y Z, Rename, Select by Name) 과 회색 Construction History 를 넣었다 (`ui/input_line.py`).
+  - 검증: 헤드리스 604/604, GUI 516/516, dogfood 47/47.
+  - **바로 다음 할 일**: step 76 선택 우선순위 (조인트·커브·핸들이 메시보다 먼저, research/maya/interaction.md:74). 키맵 충돌 설계라 「계획」 먼저.
+    그 뒤 77 편집 모드 Insert, 78 키 묶음, 79 3D Cut and Sew.
+
 - Step 74 (프리셀렉트 확대) 완료 — `docs/steps/step_74.md`.
   - 엣지 / 면 모드와 Move / Rotate / Scale 툴에서도 Maya 처럼 커서 아래 컴포넌트를 빨갛게 미리 보인다 (Python 기즈모 `operators/preselect.py`).
   - Maya 2022 실측: 오브젝트 모드에는 하이라이트가 없다.
