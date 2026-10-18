@@ -112,7 +112,11 @@ def test_template_layout():
     v3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height).spaces.active
     # sidebar = Channel Box dock; the Tool Box column replaces the toolbar; no tool settings row (step 49)
     assert v3d.show_region_ui and not v3d.show_region_toolbar and not v3d.show_region_tool_header
-    assert abs(v3d.lens - 35.0) < 1e-6
+    # Maya persp angle (35 mm on 36 mm film) = Blender viewport lens 70 (72 mm sensor; step 81)
+    assert abs(v3d.lens - 70.0) < 1e-6
+    for area in scr.areas:
+        if area.type == 'VIEW_3D':
+            assert abs(area.spaces.active.lens - 70.0) < 1e-6, area
 
     scene = bpy.context.scene
     assert scene.unit_settings.length_unit == 'CENTIMETERS' and scene.unit_settings.scale_length == 1.0

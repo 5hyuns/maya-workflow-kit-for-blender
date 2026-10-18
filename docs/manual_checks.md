@@ -550,3 +550,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 79) 엣지 위 호버 = 빨간 하이라이트, 누르고 엣지를 따라 드래그 = 노란 선이 따라오고 놓으면 그 엣지만 잘림 (모서리를 돌아도 옆 세로 엣지는 안 잘림). Ctrl+드래그 = 꿰매기 (작은 셸이 붙음), Shift+드래그 = 선택만.
 - [ ] (step 79) 툴 안에서 x / s = 선택 엣지 Cut / Sew, d = Unfold + Layout (0-1). 툴 밖에서는 X / S / D 가 원래 키 (스냅 홀드 · 스케일 · 피벗).
 - [ ] (step 79) 큰 메시 (10만 정점) 에서 드래그가 끊기지 않는지 (표본마다 프리셀렉트 픽), 경계 선 캐시가 편집 뒤 다시 계산되는지.
+
+### Step 81 — Maya persp 화각
+
+- [ ] (step 81) 새 장면 (MayaKit 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
+- [ ] (step 81) Create > Cameras > Camera = Focal Length 35 (AE / CB), Ctrl+Shift+C 카메라로 Look Through 하면 뷰와 같은 화면.
+- [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 — 시뮬레이션에서는 큰 화면 크기에서 스냅이 안 걸렸음 (step_81.md).

@@ -103,6 +103,8 @@ FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 LIGHT_NOTICE = ("Blender lights always get darker with the square of the distance (Maya Decay Rate: Quadratic); "
                 "there is no No Decay. Power is scaled to the Maya unit.")
 
+MAYA_CAMERA_LENS, MAYA_FILM_MM = 35.0, 36.0
+
 # Operator properties that are lengths (scaled by units.maya_unit).
 LENGTHS = {"size", "radius", "depth", "radius1", "radius2", "major_radius", "minor_radius"}
 
@@ -112,6 +114,9 @@ def _scale_data(ob, k):
     defaults.json:45-46), Blender's light sizes, kept in proportion to the Maya unit."""
     data = ob.data
     if ob.type == 'CAMERA':
+        # Maya camera: focal length 35 on a 1.417 in (36 mm) film back (research/maya/concepts.md:163;
+        # Blender's camera_add gives 50 mm). Camera from View (Ctrl+Shift+C) overrides the lens with the view's.
+        data.lens, data.sensor_width = MAYA_CAMERA_LENS, MAYA_FILM_MM
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
     elif ob.type == 'LIGHT':

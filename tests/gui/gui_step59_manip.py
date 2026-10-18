@@ -131,6 +131,10 @@ def s_setup():
 @step
 def s_cube():
     bpy.ops.maya_kit.keymap_activate()
+    # Keep the on-screen sizes this test was measured with: the template view went from lens 35 to Maya's 70
+    # (step 81), which doubles them; with the bigger cubes the V-snap drag below never engages in event
+    # simulation (docs/steps/step_81.md, 남은 것).
+    view3d()[1].data.view_distance *= 2.0
     ts = bpy.context.scene.tool_settings
     slots = bpy.context.scene.transform_orientation_slots
     check(f"template: Maya axis modes Move World / Rotate+Scale Object, pivot at the lead, rotate step 15 "
@@ -398,7 +402,10 @@ def s_scale_shot():
     set_tool("builtin.move")
     b = bpy.data.objects["pCube2"]
     C["verts2"] = [b.matrix_world @ v.co for v in b.data.vertices]
-    C["target"] = min(C["verts2"], key=lambda p: (p - ob.matrix_world.translation).length)
+    # the pCube2 vertex nearest the camera: the dragged pCube1 must not cover it (Blender snaps to visible
+    # elements only; with Maya's persp angle, step 81, the nearest-to-pCube1 corner ended up behind pCube1)
+    eye = region.data.view_matrix.inverted().translation
+    C["target"] = min(C["verts2"], key=lambda p: (p - eye).length)
     C["p"] = screen(ob.matrix_world.translation)
     C["to"] = screen(C["target"]) + Vector((2, 2))
     hover(C["p"])
@@ -407,7 +414,16 @@ def s_scale_shot():
 @step
 def s_point_snap():
     ev('V', 'PRESS', x=int(C["p"].x), y=int(C["p"].y))
-    press_move(C["p"], C["to"])
+    ev('LEFTMOUSE', 'PRESS', x=int(C["p"].x), y=int(C["p"].y))
+
+
+@step
+def s_point_snap_move():
+    # moves in their own tick: the transform modal started on the press misses moves queued with it (step 28)
+    p, to = C["p"], C["to"]
+    for i in range(1, STEPS + 1):
+        q = p + (to - p) * (i / STEPS)
+        ev('MOUSEMOVE', 'NOTHING', x=int(q.x), y=int(q.y))
 
 
 @step
