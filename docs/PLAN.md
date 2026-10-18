@@ -521,7 +521,7 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
 3. **Insert / nudge key batch** (blindspots 2–3). — done step 83 (Alt+I, Ctrl+Shift+W/E/R shape-keeping insert, Shift+( / ) nudge, Ctrl+Alt+, / . select key).
 4. **Time Slider Shift-range key drag / scale** (mapping row 92; step_56.md:113, step_73.md:121). — done step 84 (middle = move, end arrows = scale, overwrite, one undo step).
 5. **Manipulator Ctrl+LMB plane / Shift+MMB auto axis** (blindspot 4). — done step 85 (Move / Scale manipulator; Rotate keeps the C gizmo).
-6. **Dope Sheet / NLA / Node Editor selection modifiers** (blindspot 1; mapping row 72).
+6. **Dope Sheet / NLA / Node Editor selection modifiers** (blindspot 1; mapping row 72). — done step 86 (Ctrl / Ctrl+Shift clicks fall back to toggle where the operator has no deselect).
 7. **View key batch**: Alt+A, Alt+P, Alt+arrow nudge, backtick tweak, `\` pan/zoom + the `Shift+\` table row.
 8. **Manual checks → GUI tests sweep**: 320 open checks, none ticked; turn the automatable ones of steps 59–79 into GUI tests.
 9. Later: Left-out items (MASH 15, UV checker 12, Component Editor 12, Quad Draw Make Live 12, fluids / Bifrost 10, Straighten 9,

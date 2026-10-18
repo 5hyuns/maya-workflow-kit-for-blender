@@ -586,3 +586,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 85) 아무 곳에서 Shift+MMB 드래그 = 처음 움직인 방향에 가까운 축으로만 이동 (persp 에서 비스듬한 축도), MMB 를 놓으면 확정. R 툴 Ctrl+X 화살표 = Y·Z 스케일.
 - [ ] (step 85) 편집 모드 (컴포넌트) 에서도 같음. E (Rotate) 툴은 Blender 기즈모 그대로 (Ctrl+링 = Blender 스냅).
 
+### Step 86 — Dope Sheet · NLA · Node Editor 선택 수식
+
+- [ ] (step 86) Dope Sheet / NLA: 클릭 = 그것만, Shift+클릭 = 토글, Ctrl+클릭 = 해제 (선택 안 된 키는 Blender 토글이라 선택됨), Ctrl+Shift+클릭 = 추가 (선택된 키는 빠짐 — 같은 한계). 박스: Shift = 추가, Ctrl = 빼기.
+- [ ] (step 86) Node Editor: 클릭 / Shift 토글 / Ctrl 해제 / Ctrl+Shift 추가 (Maya 그대로), Shift+드래그 / Ctrl+Shift+드래그 = 박스 추가, Ctrl+드래그 = Blender 링크 떼기 (소켓에서). Ctrl+Shift+클릭 Viewer 연결은 없어짐.
+- [ ] (step 86) Time Slider 의 클릭 / Shift 드래그 (step 56 / 84) 는 그대로.
+

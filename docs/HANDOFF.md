@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 86 (Dope Sheet · NLA · Node Editor 선택 수식) 완료 — `docs/steps/step_86.md`.
+  - SELECT_RULES 에 action / nla / node 클릭·박스 6 규칙 + Ctrl+Shift+LMB 기존 항목 3 개 제거 (select_leftright ×2, node viewer). Node 는 Maya 그대로
+    (deselect / toggle), Dope Sheet / NLA Ctrl 은 토글 (Graph 와 같은 한계), Node Ctrl+드래그 = Blender 링크 떼기 유지.
+  - 검증: 헤드리스 671/671, GUI 611/611, dogfood 47/47.
+  - **바로 다음 할 일**: step 87 뷰 키 묶음 3 (Alt+A CycleDisplayMode, Alt+P CameraModeToggle, Alt+화살표 뷰 nudge, backtick, 백슬래시 + `Shift+\`
+    표 행 이스케이프). 그 뒤 88 manual_checks → GUI. backlog = `hermes/autodrive_bmk/backlog_81.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 85 (매니퓰레이터 Ctrl+축 / Shift+MMB) 완료 — `docs/steps/step_85.md`.
   - W / R 매니퓰레이터 축 Ctrl+LMB 드래그 = 나머지 두 축 평면 이동 / 스케일 + 그 평면이 활성 핸들, Move 가운데 Ctrl+클릭 = 활성 핸들 해제,
     Shift+MMB 드래그 = 첫 움직임에 가까운 축 (`operators/manip.py` manip_ctrl / manip_mmb_auto). Rotate 는 C 기즈모 그대로.
