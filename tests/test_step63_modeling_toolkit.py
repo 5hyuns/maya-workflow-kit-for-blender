@@ -53,8 +53,9 @@ def test_dock_and_status_line_toggle():
     assert ids == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'], ids
     wm = bpy.context.window_manager
     wm.maya_kit_dock = 'MODELING_TOOLKIT'
-    assert mtk.MAYAKIT_PT_modeling_toolkit.poll(bpy.context)
-    assert not bpy.types.MAYAKIT_PT_channel_box.poll(bpy.context)
+    assert ae.dock_mode(bpy.context) == 'MODELING_TOOLKIT'
+    # one dock panel draws every mode (step 91): no separate Modeling Toolkit panel
+    assert not hasattr(bpy.types, "MAYAKIT_PT_modeling_toolkit") and not hasattr(bpy.types.MAYAKIT_PT_channel_box, "poll")
     wm.maya_kit_dock = 'CHANNEL_BOX'
     assert status_line.EDITORS[0][0] == "MODELING_TOOLKIT", "Maya order: MTK first (ui_layout.md:212)"
     m = menu_map.MAP

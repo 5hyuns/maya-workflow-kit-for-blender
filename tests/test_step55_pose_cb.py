@@ -337,6 +337,6 @@ def test_attribute_editor_joint_tabs():
     assert any(c.type == 'LIMIT_ROTATION' for c in pb2.constraints), "Limit Information adds to the joint"
     _mode('EDIT')
     rec = Recorder()
-    ae.MAYAKIT_PT_attribute_editor.draw(type("P", (), {"layout": rec})(), bpy.context)
+    ae.draw_panel(rec, bpy.context)
     assert "Placing joints:" in rec.texts("label")
     _mode('POSE')

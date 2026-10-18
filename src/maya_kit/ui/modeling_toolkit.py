@@ -13,7 +13,6 @@ import bpy
 from bpy.props import BoolProperty, FloatProperty
 
 from . import chrome, notices
-from .attribute_editor import CATEGORY, dock_mode, draw_dock_switch
 
 MESH = (("Combine", "Mesh/Combine", 'AUTOMERGE_ON'), ("Separate", "Mesh/Separate", 'MOD_EXPLODE'),
         ("Smooth", "Mesh/Smooth", 'MOD_SUBSURF'), ("Boolean", "Mesh/Booleans/Union", 'MOD_BOOLEAN'))
@@ -242,24 +241,8 @@ def draw(layout, context):
         _grid(body, TOOLS, context)
 
 
-class MAYAKIT_PT_modeling_toolkit(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = CATEGORY
-    bl_label = "Modeling Toolkit"
-    bl_order = 0
-    bl_options = {'HIDE_HEADER'}
-
-    @classmethod
-    def poll(cls, context):
-        return dock_mode(context) == 'MODELING_TOOLKIT'
-
-    def draw(self, context):
-        draw_dock_switch(self.layout, context)
-        draw(self.layout, context)
-
-
-classes = (MAYAKIT_OT_soft_select_reset, MAYAKIT_OT_soft_falloff_mode, MAYAKIT_PT_modeling_toolkit)
+# Drawn by the dock panel (channel_box.MAYAKIT_PT_channel_box) when the dock shows the Modeling Toolkit (step 91).
+classes = (MAYAKIT_OT_soft_select_reset, MAYAKIT_OT_soft_falloff_mode)
 
 
 def register():

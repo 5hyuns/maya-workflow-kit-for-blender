@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 353 개 (step 90 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **340 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 355 개 (step 91 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **342 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -614,3 +614,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 90) 재생 범위를 줄인 뒤 Alt+\ → Range Slider 가 애니메이션 범위 전체, Range Slider 더블클릭 → 줄였던 범위로 돌아옴.
 - [ ] (step 90) 네 분할 뷰에서 마우스를 둔 뷰만 Alt+1 = 커브 숨김 / 보임, Alt+2 = 메시 숨김 / 보임. Alt+4 = Free Image Plane 숨김 / 보임 (Blender 한계로 모든 뷰).
 - [ ] (step 90) Ctrl+Shift+~ = Subdivision 추가 (Smooth Preview 3 이 켜져 있어도 미리보기는 스택 끝), Ctrl+` = 케이지 ↔ 스무드, Shift+~ = 스무드 + 케이지 와이어, 다시 Ctrl+` = 케이지만. 프록시 없이 Ctrl+` = Help Line 경고. 미국 배열이 아닌 키보드에서 ` / ~ 위치 확인.
+
+### Step 91 — 뷰 표시
+
+- [ ] (step 91) MayaKit 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
+- [ ] (step 91) 아무 작업 뒤 Adjust Last Operation 패널이 떠 있을 때 RMB / Space 메뉴가 그 패널 위에 그려짐 (UI 배율 0.8 / 1.25 에서도).

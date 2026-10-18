@@ -1207,15 +1207,24 @@ class MAYAKIT_PT_channel_box(bpy.types.Panel):
     bl_order = 0
     bl_options = {'HIDE_HEADER'}   # Maya: a menu bar, no collapsible panel title (step 50)
 
-    @classmethod
-    def poll(cls, context):
-        # Hidden while the dock shows the Attribute Editor (docs/steps/step_11.md 「계획」 1).
-        return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX') == 'CHANNEL_BOX'
+    # The one dock panel: it always polls and draws the Channel Box, the Attribute Editor or the Modeling Toolkit
+    # (WindowManager.maya_kit_dock, step 11 / 63). A separate panel per dock mode made Blender create the AE panel
+    # when the user first switched, after the C "Item" panel, so the "Channel Box" tab moved under "Item"
+    # (docs/steps/step_91.md 「계획」 3).
 
     def draw(self, context):
         layout = self.layout
-        from .attribute_editor import draw_dock_switch
+        from .attribute_editor import dock_mode, draw_dock_switch
         draw_dock_switch(layout, context)
+        mode = dock_mode(context)
+        if mode == 'ATTRIBUTE_EDITOR':
+            from . import attribute_editor
+            attribute_editor.draw_panel(layout, context)
+            return
+        if mode == 'MODELING_TOOLKIT':
+            from . import modeling_toolkit
+            modeling_toolkit.draw(layout, context)
+            return
         chrome.menu_bar(layout, MENU_BAR)
         from . import paint_weights
         if paint_weights.active(context):

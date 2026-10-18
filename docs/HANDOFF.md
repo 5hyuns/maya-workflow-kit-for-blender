@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 91 (뷰 표시 수정) 완료 — `docs/steps/step_91.md`.
+  - 템플릿 3D 뷰 부모 관계 점선 끔 (Maya 2022 실행으로 선 없음 확인, `research/maya/screens/parent/`), 마킹 메뉴가 HUD (Adjust Last Operation) 위에
+    그려짐 (`draw.REGION_TYPES` + 'HUD', 4.5 / 5.2 측정, 대조 실험), 독 = Channel Box 패널 하나가 CB / AE / MTK 를 그림 → Channel Box 탭이 Item 밑으로
+    안 감 (AE 제목 줄도 없어짐).
+  - 검증: 헤드리스 685/685, GUI 685/685, dogfood 47/47.
+  - **바로 다음 할 일**: step 92 = backlog 3 「Graph Editor key batch」 (t = 현재 시간 가운데, Alt+/ = 선택 키로 시간, i 홀드 = Insert Key 툴).
+    backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 90 (전역 키 묶음 4) 완료 — `docs/steps/step_90.md`.
   - Ctrl+X cut (계층째, 빈 data 도) + Ctrl+V paste (첫 노드 lead), Alt+X Walk (IC X-ray 제거), Alt+\ 재생 범위 = 애니메이션 범위, Alt+1/2/4 보이기
     토글, Ctrl+` / Shift+~ / Ctrl+Shift+~ 스무드 프록시 (`operators/global_keys4.py`), Edit > Cut / Paste. 대응표 구현 152 · IC 15 · 미검토 222.

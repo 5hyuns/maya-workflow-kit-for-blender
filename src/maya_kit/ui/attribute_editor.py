@@ -640,38 +640,27 @@ def _redraw(context):
 # --- panels ----------------------------------------------------------------------------------
 
 def draw_dock_switch(layout, context):
-    """CB/LE | AE switch at the top of the dock (Maya: the dock's tabs; drawn inside the first panel so it
+    """CB/LE | AE | MTK switch at the top of the dock (Maya: the dock's tabs; drawn inside the dock panel so it
     stays on top: header-less panels don't keep bl_order against the region's saved panel order, step 50)."""
     layout.prop(context.window_manager, "maya_kit_dock", expand=True)
 
 
-class MAYAKIT_PT_attribute_editor(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = CATEGORY
-    bl_label = "Attribute Editor"
-    bl_order = 0
-
-    @classmethod
-    def poll(cls, context):
-        return dock_mode(context) == 'ATTRIBUTE_EDITOR'
-
-    def draw(self, context):
-        draw_dock_switch(self.layout, context)
-        if channel_box.placing_joints(context):
-            from . import chrome
-            chrome.wrapped(self.layout, channel_box.PLACING_TEXT)
-            return
-        ob = channel_box.lead(context)
-        if ob is None:
-            self.layout.label(text="make a selection")
-            return
-        draw(self.layout, context, ob)
+def draw_panel(layout, context):
+    """The Attribute Editor body of the dock panel (``channel_box.MAYAKIT_PT_channel_box`` draws it when the dock
+    shows the AE; one panel for every dock mode keeps the "Channel Box" sidebar tab first, step 91)."""
+    if channel_box.placing_joints(context):
+        from . import chrome
+        chrome.wrapped(layout, channel_box.PLACING_TEXT)
+        return
+    ob = channel_box.lead(context)
+    if ob is None:
+        layout.label(text="make a selection")
+        return
+    draw(layout, context, ob)
 
 
 classes = (MAYAKIT_OT_ae_tab, MAYAKIT_OT_ae_step, MAYAKIT_OT_ae_modifier, MAYAKIT_OT_ae_add_limit,
-           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show, MAYAKIT_OT_object_attributes,
-           MAYAKIT_PT_attribute_editor)
+           MAYAKIT_OT_ae_select, MAYAKIT_OT_ae_toggle, MAYAKIT_OT_dock_show, MAYAKIT_OT_object_attributes)
 
 
 def register():
