@@ -91,6 +91,50 @@ class MAYAKIT_OT_select_mask(bpy.types.Operator):
         return {'FINISHED'}
 
 
+
+# Maya keeps its selection masks across File > New / Open (they are session state: research/maya/re/selection_masks.md,
+# measured in Maya 2022, step 93). Blender keeps the object select filters in each file's screens and the mesh
+# select mode in its scene, so a load would replace them: remember them before the load and put them back after.
+MASK_FLAGS = tuple(sorted({t for m in OBJECT_MASKS if m[3] for t in m[3]}))
+_carried = {}
+
+
+def session_masks(context=None):
+    """The current masks: {type: selectable} of the main 3D View and the mesh select mode (or None)."""
+    context = context or bpy.context
+    area, _r = main_view3d(context.screen) if context.screen else (None, None)
+    space = area.spaces.active if area else next(iter(all_view3d_spaces()), None)
+    scene = context.scene
+    if space is None and scene is None:
+        return None
+    return {"objects": {t: getattr(space, f"show_object_select_{t}") for t in MASK_FLAGS} if space else None,
+            "mesh": tuple(scene.tool_settings.mesh_select_mode) if scene else None}
+
+
+def apply_masks(masks):
+    if not masks:
+        return
+    if masks["objects"]:
+        for space in all_view3d_spaces():
+            for t, value in masks["objects"].items():
+                setattr(space, f"show_object_select_{t}", value)
+    if masks["mesh"]:
+        for scene in bpy.data.scenes:
+            scene.tool_settings.mesh_select_mode = masks["mesh"]
+
+
+@bpy.app.handlers.persistent
+def _masks_before_load(*_args):
+    try:
+        _carried["masks"] = session_masks()
+    except (AttributeError, ReferenceError):
+        _carried.pop("masks", None)
+
+
+@bpy.app.handlers.persistent
+def _masks_after_load(*_args):
+    apply_masks(_carried.pop("masks", None))
+
 # --- selection mode (ui_layout.md:200) -----------------------------------------------
 
 class MAYAKIT_OT_select_mode(bpy.types.Operator):
@@ -577,9 +621,16 @@ def register():
     patch_topbar()
     bpy.types.VIEW3D_HT_tool_header.prepend(draw_tool_header)
     bpy.types.VIEW3D_PT_active_tool.append(draw_tool_symmetry)
+    bpy.app.handlers.load_pre.append(_masks_before_load)
+    bpy.app.handlers.load_post.append(_masks_after_load)
 
 
 def unregister():
+    for handlers, fn in ((bpy.app.handlers.load_pre, _masks_before_load),
+                         (bpy.app.handlers.load_post, _masks_after_load)):
+        if fn in handlers:
+            handlers.remove(fn)
+    _carried.clear()
     bpy.types.VIEW3D_PT_active_tool.remove(draw_tool_symmetry)
     bpy.types.VIEW3D_HT_tool_header.remove(draw_tool_header)
     unpatch_topbar()

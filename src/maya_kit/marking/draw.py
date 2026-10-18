@@ -153,6 +153,9 @@ def checked(action):
         if op == "maya_kit.symmetry":
             from ..operators import symmetry
             return symmetry.item_state(props["mode"])
+        if op == "maya_kit.component_mask":        # Shift+Q check boxes = the mesh select modes (step 93)
+            mask = bpy.context.scene.tool_settings.mesh_select_mode
+            return bool(mask[engine.MASK_CHECKS.index(props["kind"])])
         from ..operators import manip
         return manip.option_state(props["option"])
     except (ValueError, KeyError, AttributeError):

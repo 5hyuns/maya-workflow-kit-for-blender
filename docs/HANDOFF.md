@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 93 (선택 마스크 다듬기) 완료 — `docs/steps/step_93.md`.
+  - Shift+Q 메뉴 체크 상자 (Poly Vertices / Poly Edges / Faces = 메시 선택 모드), **선택 마스크를 New / Open 너머로 유지** (Maya 2022 GUI 측정:
+    마스크는 세션 상태라 초기화되지 않음 — backlog 문구와 반대, `research/maya/re/selection_masks.md`), Tool Settings 맨 위 Reset Tool
+    (`ui/tool_settings.py`: 툴 옵션 기본값 + Maya Move/Rotate/Scale 기본값).
+  - 검증: 헤드리스 698/698, GUI 698/698, dogfood 47/47.
+  - **바로 다음 할 일**: step 94 = backlog 5 「Pivot-edit RMB marking menu」 (D / Insert 피벗 편집 중 RMB: N Pin, S Reset, NE Snap pivot position, NW Snap
+    pivot orientation, E Exit). backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 92 (Graph Editor 키 묶음) 완료 — `docs/steps/step_92.md`.
   - t = 현재 시간 가운데 (가로만), Alt+/ = Snap Time To Selection **토글** (Maya 관찰: 켜면 키 선택마다 가장 이른 선택 키로 시간; View 메뉴 체크),
     i 홀드 = Insert Key 툴 (MMB → 정수 프레임에 모양 유지 키, 새 키만 선택). Maya 동작 명세 `research/maya/re/graph_editor_keys.md` (QTest 관찰).

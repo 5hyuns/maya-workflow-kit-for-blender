@@ -449,6 +449,8 @@ shelf reorder.
 4. Ctrl+Alt+←/→ Spin Edge: mapped in the menu (`menu_map.py:283-284`), no key. Low–Medium.
 5. Shift+G repeat at mouse position (interaction.md:208; planned in audit 1, then dropped). Low.
 6. Alt+arrow nudge, Ctrl+Shift+C camera from view, `\` 2D pan/zoom, selection masks reset on new scene. Low.
+   (Step 93 measured Maya 2022: the masks are **kept** across File > New / Open — the kit now carries them over the load,
+   research/maya/re/selection_masks.md.)
 
 ### Remaining work, by priority (backlog.json, step 72+)
 
@@ -584,7 +586,8 @@ Audit-5 backlog: items 1–8 all closed (steps 81–88). Audit-5 blindspots 1–
 2. **Viewport chrome fixes** (session findings): relationship lines off in the Maya layout / Maya mode, marking menu over the
    HUD region, dock tab order.
 3. **Graph Editor key batch** (blindspot 4 + `i` Insert Key tool, step_83.md 「남은 것」).
-4. **Selection mask polish**: Shift+Q check marks (`marking/draw.checked`), masks reset on New / Open scene (PLAN:451),
+4. **Selection mask polish**: Shift+Q check marks (`marking/draw.checked`), masks reset on New / Open scene (PLAN:451; step 93
+   measured the opposite in Maya — masks are kept — and implemented that),
    Tool Settings Reset Tool (research/maya/ui_layout.md:267-268).
 5. **Pivot-edit RMB marking menu** (research/maya/interaction.md:81, :128-130).
 6. **V snap when zoomed in** (step_81.md 「남은 것」; research/maya/workflows/pivot_snap.md S4): reproduce, find the cause, fix or document.
