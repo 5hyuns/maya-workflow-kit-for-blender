@@ -98,9 +98,6 @@ NOTICES = {
         "Maya Kit project", "Blender has no projects: Maya Kit makes Maya's project folders and keeps the folder "
         "as your project."),
     # UV (step 66): Blender cuts / sews UVs in the UV Editor only
-    "UV/3D Cut and Sew UV Tool": (
-        "Cut / Sew", "Blender has no 3D cut-and-sew tool (not in Maya Kit yet): select edges in the 3D View, then Cut (Shift+X) / "
-        "Sew (Shift+S) in the UV Editor."),
     "UV/Auto Seams": (
         "Smart UV Project", "Blender has no automatic seams: UV > Automatic (Smart UV Project) cuts by angle."),
     # Modeling (step 64): the Crease Tool works, with Blender's 0-1 crease underneath

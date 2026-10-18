@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 79 (3D Cut and Sew UV Tool) 완료 — `docs/steps/step_79.md`. **재점검 4차 backlog (72–79) 모두 끝.**
+  - UV > 3D Cut and Sew UV Tool: 3D 뷰에서 엣지를 따라 드래그 = UV 자르기, Ctrl = 꿰매기, Shift = 선택, x / s / d = Cut / Sew / Unfold + Layout,
+    셸 경계 흰 굵은 선, 누를 엣지는 빨간 프리셀렉트. 메뉴·셸프·UV Toolkit·UV 마킹 메뉴에서 진입.
+  - 검증: 헤드리스 634/634, GUI 555/555, dogfood 47/47.
+  - **바로 다음 할 일**: 계획된 단계 없음. 사용자 결정 대기 — (1) 배포 결정 (decision 11: 이름·id, 무료/유료, 계정, CC0, 서명;
+    `docs/DISTRIBUTION.md`), (2) 재점검 5차 (대응표·키맵 미검토 254 행·manual_checks 다시 매기기), (3) PLAN 「Left out」 나머지와
+    각 step 문서 「남은 것」 (예: Cut and Sew 툴 마킹 메뉴, Shift+Q 체크 표시, Graph Editor 보기 버튼, 피벗 편집 RMB 메뉴).
+
 - Step 78 (키 묶음 2) 완료 — `docs/steps/step_78.md`.
   - Graph Editor 1/2/3 (Stacked = Normalized + 안내), Shift+Q / Alt+Q 선택 툴 마킹 메뉴 (픽 마스크 / 정점·엣지·면·UV), Ctrl+Alt+←/→ Spin Edge,
     Shift+G 마우스 위치 반복, Ctrl+Shift+C 뷰에서 카메라. 키맵 구현 113 → 122.

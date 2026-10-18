@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 122 |
+| 구현 | 125 |
 | IC 일치 | 10 |
-| 해당 없음 | 10 |
-| 미검토 | 258 |
+| 해당 없음 | 11 |
+| 미검토 | 254 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -342,10 +342,10 @@
 | w | W | polyTexturePlacementPanel | MoveUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.move', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:534 |
 | e | E | polyTexturePlacementPanel | RotateUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.rotate', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:535 |
 | r | R | polyTexturePlacementPanel | ScaleUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.scale', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.transform', cycle=True) | 미검토 |  | hotkeySetup.mel:536 |
-| x | X | polyCutUV | CutUVs3D | — | 미검토 |  | hotkeySetup.mel:539 |
-| s | S | polyCutUV | SewUVs3D | — | 미검토 |  | hotkeySetup.mel:540 |
-| d | D | polyCutUV | UnfoldPackUVs3DInCurrentTile | — | 미검토 |  | hotkeySetup.mel:541 |
-| Shift+d | Shift+D | polyCutUV | UnfoldPackUVs3DInEmptyTile | — | 미검토 |  | hotkeySetup.mel:542 |
+| x | X | polyCutUV | CutUVs3D | — | 구현 | 툴 안에서 x = 선택 엣지 Cut (드래그 = 바로 자르기) | hotkeySetup.mel:539 |
+| s | S | polyCutUV | SewUVs3D | — | 구현 | 툴 안에서 s = 선택 엣지 Sew (Ctrl+드래그 = 바로 꿰매기) | hotkeySetup.mel:540 |
+| d | D | polyCutUV | UnfoldPackUVs3DInCurrentTile | — | 구현 | 툴 안에서 d = Unfold + Layout (0-1) | hotkeySetup.mel:541 |
+| Shift+d | Shift+D | polyCutUV | UnfoldPackUVs3DInEmptyTile | — | 해당 없음 | Blender 에 UDIM 빈 타일 배치 없음 (d = 0-1 에 Layout) | hotkeySetup.mel:542 |
 | Cmd+c | Oskey+C | polyTexturePlacementPanel | CopyUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:545 |
 | Cmd+v | Oskey+V | polyTexturePlacementPanel | PasteUVs | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:546 |
 | Cmd+l | Oskey+L | polyTexturePlacementPanel | LayoutUV | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:547 |

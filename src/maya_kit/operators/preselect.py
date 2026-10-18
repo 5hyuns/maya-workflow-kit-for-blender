@@ -30,7 +30,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 MODES = {'EDIT_MESH'}
-SELECT_TOOLS = ("builtin.select", "maya_kit.target_weld_tool")
+SELECT_TOOLS = ("builtin.select", "maya_kit.target_weld_tool", "maya_kit.cut_sew_tool")   # step 79: the edge a press cuts
 TRANSFORM_TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE', "builtin.rotate": 'ROTATE',
                    "builtin.transform": 'TRANSFORM'}
 

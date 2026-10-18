@@ -543,3 +543,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 78) 큐브를 만든 뒤 Shift+G 를 그리드 여러 곳에서 = 그 자리마다 큐브. 옆 직교 뷰에서도 원점 깊이의 마우스 자리.
 - [ ] (step 78) Ctrl+Shift+C = 지금 뷰 그대로의 camera1 (Look Through 하면 같은 화면; 직교 뷰는 크기 [I]).
 - [ ] (step 78) Graph Editor 1 / 2 / 3: 2 는 Help Line 에 Stacked 없음 안내 + Normalized.
+
+### Step 79 — 3D Cut and Sew UV Tool
+
+- [ ] (step 79) UV > 3D Cut and Sew UV Tool (메뉴 / 셸프 / UV Toolkit / UV 마킹 메뉴 NW) = 편집 모드 + 엣지 모드 + 툴바의 툴. 셸 경계가 흰 굵은 선으로 보임 (Maya Texture Borders).
+- [ ] (step 79) 엣지 위 호버 = 빨간 하이라이트, 누르고 엣지를 따라 드래그 = 노란 선이 따라오고 놓으면 그 엣지만 잘림 (모서리를 돌아도 옆 세로 엣지는 안 잘림). Ctrl+드래그 = 꿰매기 (작은 셸이 붙음), Shift+드래그 = 선택만.
+- [ ] (step 79) 툴 안에서 x / s = 선택 엣지 Cut / Sew, d = Unfold + Layout (0-1). 툴 밖에서는 X / S / D 가 원래 키 (스냅 홀드 · 스케일 · 피벗).
+- [ ] (step 79) 큰 메시 (10만 정점) 에서 드래그가 끊기지 않는지 (표본마다 프리셀렉트 픽), 경계 선 캐시가 편집 뒤 다시 계산되는지.

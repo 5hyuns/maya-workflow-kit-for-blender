@@ -245,9 +245,8 @@ def test_keys_and_menus():
         assert _items(k, 'F12', alt=True) == [("maya_kit.uv_component", {"mode": 'SHELL'})]
     assert menu_map.MAP["UV/Cut UV Edges"] == "maya_kit.uv_cut"
     assert menu_map.MAP["UV/Sew UV Edges"] == "maya_kit.uv_sew"
-    assert "UV/3D Cut and Sew UV Tool" in notices.NOTICES
+    assert menu_map.MAP["UV/3D Cut and Sew UV Tool"] == "maya_kit.cut_sew_tool_set"   # step 79 (was a notice)
     assert hasattr(bpy.types, "MAYAKIT_PT_uv_toolkit")
-    assert "UV Toolkit/Cut and Sew/3D Cut and Sew Tool" in notices.PANEL_NOTICES
 
 
 def test_cube_cut_unfold_layout_keeps_world_scale():

@@ -15,7 +15,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty, FloatProperty, IntProperty, PointerProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty
 from mathutils import Vector
 
 from . import units
@@ -339,6 +339,9 @@ class MAYAKIT_OT_uv_cut(bpy.types.Operator):
     bl_label = "Cut UV Edges"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # 3D Cut and Sew tool x (step 79): the edges selected in the 3D View, whatever the UV sync setting
+    mesh_select: BoolProperty(name="3D View Edges", default=False, options={'SKIP_SAVE'})
+
     poll = classmethod(lambda cls, context: _uv_poll(context))
 
     def execute(self, context):
@@ -346,7 +349,7 @@ class MAYAKIT_OT_uv_cut(bpy.types.Operator):
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.verify()
-            edges = selected_edges(bm, uv, sync(context))
+            edges = selected_edges(bm, uv, sync(context) or self.mesh_select)
             if edges:
                 cut(bm, uv, edges)
                 bmesh.update_edit_mesh(ob.data)
@@ -363,6 +366,8 @@ class MAYAKIT_OT_uv_sew(bpy.types.Operator):
     bl_label = "Sew UV Edges"
     bl_options = {'REGISTER', 'UNDO'}
 
+    mesh_select: BoolProperty(name="3D View Edges", default=False, options={'SKIP_SAVE'})   # step 79 tool s
+
     poll = classmethod(lambda cls, context: _uv_poll(context))
 
     def execute(self, context):
@@ -370,7 +375,7 @@ class MAYAKIT_OT_uv_sew(bpy.types.Operator):
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.verify()
-            edges = selected_edges(bm, uv, sync(context))
+            edges = selected_edges(bm, uv, sync(context) or self.mesh_select)
             if edges:
                 done += sew(bm, uv, edges)
                 bmesh.update_edit_mesh(ob.data)
