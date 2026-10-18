@@ -592,3 +592,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 86) Node Editor: 클릭 / Shift 토글 / Ctrl 해제 / Ctrl+Shift 추가 (Maya 그대로), Shift+드래그 / Ctrl+Shift+드래그 = 박스 추가, Ctrl+드래그 = Blender 링크 떼기 (소켓에서). Ctrl+Shift+클릭 Viewer 연결은 없어짐.
 - [ ] (step 86) Time Slider 의 클릭 / Shift 드래그 (step 56 / 84) 는 그대로.
 
+### Step 87 — 뷰 키 묶음 3
+
+- [ ] (step 87) 리그가 있는 장면에서 Alt+A 세 번: 조인트가 메시 앞에 (In Front) → 보통 → 메시만 (조인트·커브 숨김), 인뷰 메시지로 상태 이름. 네 번째 = 처음으로.
+- [ ] (step 87) Alt+P: persp ↔ ortho, 화면 위치 유지. 카메라를 통해 볼 때 = 그 카메라가 ortho 로 바뀌고 크기가 대략 그대로.
+- [ ] (step 87) Alt+화살표를 누르고 있으면 선택이 화면에서 1 px 씩 (오브젝트·컴포넌트), 언두 단계마다 한 번.
+- [ ] (step 87) ` 를 누른 채 다른 오브젝트 / 컴포넌트를 드래그 = 선택하지 않고 바로 이동, 놓으면 원래 툴 (Move/Rotate/Scale/선택).
+- [ ] (step 87) 카메라 뷰에서 \ 누른 채 LMB 드래그 = 카메라 화면 팬, MMB 드래그 = 줌 (렌더는 그대로); 사용자 뷰에서는 Help Line 안내.
+

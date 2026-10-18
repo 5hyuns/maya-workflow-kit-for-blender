@@ -105,11 +105,34 @@ def write_doc(rows):
               "| Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |",
               "|---|---|---|---|---|---|---|---|"]
     for r in rows:
-        lines.append("| " + " | ".join(str(c).replace("|", "\\|") for c in r[:-1]) + " |")
+        lines.append("| " + " | ".join(cell(c) for c in r[:-1]) + " |")
+    bad = bad_rows(lines)
+    if bad:
+        raise SystemExit("maya_mapping: table rows with the wrong column count:\n" + "\n".join(bad))
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"maya_mapping: wrote {OUT.relative_to(ROOT)} ({len(rows)} rows; "
           + ", ".join(f"{STATUS_LABEL[k]}={counts[k]}" for k in STATUS_LABEL if counts.get(k)) + ")")
     return counts
+
+
+def cell(value):
+    """A table cell: a pipe as an HTML entity (a backslash escape put a backslash before the pipe, step 87)."""
+    return str(value).replace("|", "&#124;")
+
+
+def bad_rows(lines):
+    """Table rows whose cell count differs from their table's header (cells split on every pipe)."""
+    bad, width = [], None
+    for line in lines:
+        if not line.startswith("|"):
+            width = None
+            continue
+        n = line.count("|") - 1
+        if width is None:
+            width = n
+        elif n != width:
+            bad.append(line)
+    return bad
 
 
 def main():

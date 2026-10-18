@@ -10,7 +10,7 @@ import bpy
 
 from . import (component, create, cut_sew, display, driven_key, duplicate, extrude, freeze, fx, graph_keys, group, history, hold, joints, key_batch, key_insert, manip, marquee,
                material, menu_extras, mesh_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, shading_maps, skin, snap_align, symmetry, taphold,
-               time_keys, tool_keys, units, uv_tools, view, visibility)
+               time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
@@ -20,7 +20,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
            *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes,
-           *outliner_drag.classes, *key_insert.classes)
+           *outliner_drag.classes, *key_insert.classes, *view_keys3.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

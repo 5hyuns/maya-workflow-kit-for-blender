@@ -331,6 +331,20 @@ ENTRIES = {
     "SelectNextKey": _e("KIT", ("Screen", "maya_kit.select_key", {"direction": "NEXT"}),
                         note="선택 키 (없으면 현재 시간) 다음 키로 가서 그 키만 선택"),
     "SelectPreviousKey": _e("KIT", ("Screen", "maya_kit.select_key", {"direction": "PREVIOUS"})),
+    # --- step 87: view keys 3 (docs/steps/step_87.md, operators/view_keys3.py) ---
+    "CycleDisplayMode": _e("KIT", (V3D, "maya_kit.cycle_display", {}),
+                           note="X-ray 조인트 (아마추어 In Front) → 전부 → 메시만 (조인트·커브 숨김) 순환"),
+    "CameraModeToggle": _e("KIT", (V3D, "maya_kit.camera_mode_toggle", {}),
+                           note="사용자 뷰 = persp ↔ ortho, 카메라 뷰 = 그 카메라 타입 (화면 크기 유지)"),
+    "MoveUp": _e("KIT", (V3D, "maya_kit.pixel_move", {"dx": 0, "dy": 1}), note="선택을 화면 1 px (뷰 평면), UV 에디터 넛지 없음"),
+    "MoveDown": _e("KIT", (V3D, "maya_kit.pixel_move", {"dx": 0, "dy": -1})),
+    "MoveLeft": _e("KIT", (V3D, "maya_kit.pixel_move", {"dx": -1, "dy": 0})),
+    "MoveRight": _e("KIT", (V3D, "maya_kit.pixel_move", {"dx": 1, "dy": 0})),
+    "STRSTweakModeOn": _e("KIT", (V3D, "maya_kit.tweak_hold", {}),
+                          note="누르는 동안 Blender Tweak 툴 (클릭-드래그 = 그 자리 이동), 놓으면 원래 툴"),
+    "TogglePanZoomPress": _e("KIT", (V3D, "maya_kit.pan_zoom_hold", {}),
+                             note="카메라 뷰에서 누르는 동안 LMB 팬 / MMB 줌 (camera view offset / zoom, 렌더 그대로)"),
+    "TogglePanZoomRelease": _e("KIT", note="놓기 = pan_zoom_hold 모달이 끝냄 (누름 행의 항목)"),
     # --- step 69: scene files (Window keymap, operators/project.py) ---
     "OpenScene": _e("KIT", ("Window", "maya_kit.open_scene", {}), note="파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로)"),
     "SaveScene": _e("KIT", ("Window", "maya_kit.save_scene", {}), note="처음 저장은 프로젝트 scenes 폴더에서 Save As"),
@@ -347,6 +361,8 @@ def entry_for(hotkey):
     press = hotkey.get("press") or {}
     # MTK keys (Ctrl+Shift+X / Q) only have a nameCommand (research/maya/hotkeys_and_menus.md:281)
     rtc = press.get("runTimeCommand") or press.get("nameCommand")
+    if rtc is None:     # release-only row (e.g. TogglePanZoomRelease, step 87)
+        rtc = (hotkey.get("release") or {}).get("runTimeCommand")
     if hotkey.get("context", "global") != "global":
         return ENTRIES.get(f"{hotkey['context']}:{rtc}")
     return ENTRIES.get(rtc)

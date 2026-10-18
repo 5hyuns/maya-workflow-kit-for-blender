@@ -57,7 +57,8 @@
   Ctrl+Shift 항목 지움 + [ ] 키 남음), `tests/test_keymap_maya.py` 12/12 (새 충돌·섀도잉 없음).
 - GUI `tests/gui/gui_step86_select_modifiers.py` 10/10: Dope Sheet 키 10 클릭 = [10], Shift 20 = [10, 20], 다시 = [10], Ctrl+Shift 1 = [1, 10],
   Ctrl 10 = [1]; Node Editor A 클릭 = [A], Shift B = [A, B], Ctrl+Shift C = [A, B, C], 다시 = 그대로 (Maya 추가), Ctrl A = [B, C].
-  스크린샷 `gui_step86_nodes.png` 에서 B, C 테두리.- 전체: 헤드리스 671/671, GUI (기본 배율) 611/611, dogfood 47/47 (콘솔 0). `docs/manual_checks.md` 「Step 86」 3 항목.
+  스크린샷 `gui_step86_nodes.png` 에서 B, C 테두리.
+- 전체: 헤드리스 671/671, GUI (기본 배율) 611/611, dogfood 47/47 (콘솔 0). `docs/manual_checks.md` 「Step 86」 3 항목.
 
 ## 남은 것
 

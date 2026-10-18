@@ -873,6 +873,24 @@ def patch_manip_ctrl(kd):
              shadows=(km,))
 
 
+# --- 42. View keys 3 (docs/steps/step_87.md 「계획」 2) --------------------------------------------------------
+# hotkeySetup.mel:241 (Alt+p), 347 (Alt+a), 370-373 (Alt+arrows), 682 (`), 697-698 (backslash). All in "3D View" (Maya's model
+# panel); the same events elsewhere belong to other editors / modes, whose keymaps run first.
+VIEW3_SHADOWS = ("Sculpt", "Font", "Text", "File Browser", "Sequencer", "Clip", "Node Editor", "Grease Pencil Selection")
+PIXEL_MOVE_KEYS = (("UP_ARROW", 0, 1), ("DOWN_ARROW", 0, -1), ("LEFT_ARROW", -1, 0), ("RIGHT_ARROW", 1, 0))
+
+
+def patch_view_keys_3(kd):
+    _add(kd, "3D View", "maya_kit.cycle_display", make_event("A", alt=True), shadows=VIEW3_SHADOWS)
+    _add(kd, "3D View", "maya_kit.camera_mode_toggle", make_event("P", alt=True), shadows=VIEW3_SHADOWS)
+    for key, dx, dy in PIXEL_MOVE_KEYS:
+        _add(kd, "3D View", "maya_kit.pixel_move", make_event(key, alt=True, repeat=True), {"dx": dx, "dy": dy},
+             shadows=VIEW3_SHADOWS)
+    kd.remove("Object Non-modal", "object.transfer_mode", type="ACCENT_GRAVE")
+    _add(kd, "3D View", "maya_kit.tweak_hold", make_event("ACCENT_GRAVE"), shadows=VIEW3_SHADOWS)
+    _add(kd, "3D View", "maya_kit.pan_zoom_hold", make_event("BACK_SLASH"), shadows=VIEW3_SHADOWS)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -883,7 +901,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
-           patch_key_insert, patch_time_range, patch_manip_ctrl)
+           patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3)
 
 
 def apply(data):

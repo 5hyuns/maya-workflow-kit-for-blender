@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 133 |
+| 구현 | 142 |
 | IC 일치 | 10 |
 | 해당 없음 | 11 |
-| 미검토 | 246 |
+| 미검토 | 237 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -130,7 +130,7 @@
 | Home | HOME | global | GoToDefaultView | 3D View: `maya_kit.view_home` | 구현 | Maya 새 씬 persp 자리 (정사영: 방향 유지, 원점) — step 27 | hotkeySetup.mel:238 |
 | Shift+{ | Shift+LEFT_BRACKET | global | PreviousViewArrangement | Object Mode: `object.select_hierarchy` (direction='PARENT', extend=True) | 미검토 |  | hotkeySetup.mel:239 |
 | Shift+} | Shift+RIGHT_BRACKET | global | NextViewArrangement | Object Mode: `object.select_hierarchy` (direction='CHILD', extend=True) | 미검토 |  | hotkeySetup.mel:240 |
-| Alt+p | Alt+P | global | CameraModeToggle | — | 미검토 |  | hotkeySetup.mel:241 |
+| Alt+p | Alt+P | global | CameraModeToggle | 3D View: `maya_kit.camera_mode_toggle` | 구현 | 사용자 뷰 = persp ↔ ortho, 카메라 뷰 = 그 카메라 타입 (화면 크기 유지) | hotkeySetup.mel:241 |
 | Alt+Home | Alt+HOME | global | AppHome | — | 미검토 |  | hotkeySetup.mel:243 |
 | Shift+D | Shift+D | global | DuplicateWithTransform | Object Mode: `maya_kit.duplicate_with_transform` | 구현 | 직전 복제의 변환을 반복 | hotkeySetup.mel:245 |
 | Alt+Shift+D | Alt+Shift+D | global | DeleteHistory | Object Mode: `maya_kit.delete_history` | 구현 | 모디파이어 + 셰이프 키를 메시에 굽기 | hotkeySetup.mel:247 |
@@ -210,7 +210,7 @@
 | 7 | SEVEN | global | DisplayLight | 3D View: `maya_kit.display_mode` (mode='LIGHTS') | 구현 | Material Preview + 씬 라이트 (근사) | hotkeySetup.mel:344 |
 | Ctrl+Shift+% | Ctrl+Shift+FIVE | global | ToggleUseDefaultMaterial | — | 미검토 |  | hotkeySetup.mel:345 |
 | Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | 3D View: `view3d.localview` (frame_selected=False) | 구현 | 로컬 뷰 (카메라 그대로), 다시 누르면 해제 | hotkeySetup.mel:346 |
-| Alt+a | Alt+A | global | CycleDisplayMode | — | 미검토 |  | hotkeySetup.mel:347 |
+| Alt+a | Alt+A | global | CycleDisplayMode | 3D View: `maya_kit.cycle_display` | 구현 | X-ray 조인트 (아마추어 In Front) → 전부 → 메시만 (조인트·커브 숨김) 순환 | hotkeySetup.mel:347 |
 | Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | IC 일치 | 로컬 뷰 토글 (프레이밍 포함) | hotkeySetup.mel:351 |
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `maya_kit.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
 | Return | RET | global | CompleteCurrentTool | Screen: `file.execute` | 해당 없음 | Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거 | hotkeySetup.mel:353 |
@@ -230,10 +230,10 @@
 | Right | RIGHT_ARROW | global | PickWalkRight | Object Mode: `maya_kit.pick_walk` (direction='RIGHT'); Mesh: `maya_kit.pick_walk_component` (direction='RIGHT') | 구현 | 이름순 형제 순환; 편집 모드: 엣지 = 루프, 정점·면 = 화면 오른쪽 이웃 (step 39); 포즈 모드: 형제 조인트 | hotkeySetup.mel:367 |
 | Ctrl+Page_Up | Ctrl+PAGE_UP | global | PickWalkIn | Screen: `screen.workspace_cycle` (direction='PREV') | 미검토 |  | hotkeySetup.mel:368 |
 | Ctrl+Page_Down | Ctrl+PAGE_DOWN | global | PickWalkOut | Screen: `screen.workspace_cycle` (direction='NEXT') | 미검토 |  | hotkeySetup.mel:369 |
-| Alt+Up | Alt+UP_ARROW | global | MoveUp | — | 미검토 |  | hotkeySetup.mel:370 |
-| Alt+Down | Alt+DOWN_ARROW | global | MoveDown | — | 미검토 |  | hotkeySetup.mel:371 |
-| Alt+Left | Alt+LEFT_ARROW | global | MoveLeft | — | 미검토 |  | hotkeySetup.mel:372 |
-| Alt+Right | Alt+RIGHT_ARROW | global | MoveRight | — | 미검토 |  | hotkeySetup.mel:373 |
+| Alt+Up | Alt+UP_ARROW | global | MoveUp | 3D View: `maya_kit.pixel_move` (dx=0, dy=1) | 구현 | 선택을 화면 1 px (뷰 평면), UV 에디터 넛지 없음 | hotkeySetup.mel:370 |
+| Alt+Down | Alt+DOWN_ARROW | global | MoveDown | 3D View: `maya_kit.pixel_move` (dx=0, dy=-1) | 구현 |  | hotkeySetup.mel:371 |
+| Alt+Left | Alt+LEFT_ARROW | global | MoveLeft | 3D View: `maya_kit.pixel_move` (dx=-1, dy=0) | 구현 |  | hotkeySetup.mel:372 |
+| Alt+Right | Alt+RIGHT_ARROW | global | MoveRight | 3D View: `maya_kit.pixel_move` (dx=1, dy=0) | 구현 |  | hotkeySetup.mel:373 |
 | Ctrl+Backspace | Ctrl+BACK_SPACE | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:375 |
 | Ctrl+Delete | Ctrl+DEL | global | DeletePolyElements | Mesh: `mesh.dissolve_mode` | IC 일치 | 엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24) | hotkeySetup.mel:376 |
 | Ctrl+Alt+Left | Ctrl+Alt+LEFT_ARROW | global | PolySpinEdgeBackward | Mesh: `mesh.edge_rotate` (use_ccw=True) | 구현 | Edit Mesh > Spin Edge Backward 와 같음 | hotkeySetup.mel:378 |
@@ -440,13 +440,13 @@
 | Alt+Shift+~ | Alt+Shift+ACCENT_GRAVE | global | CreateSubdivSurfaceOptions | — | 미검토 |  | hotkeySetup.mel:677 |
 | Page_Up | PAGE_UP | global | SmoothingLevelIncrease | Object Mode: `maya_kit.smooth_level` (delta=1); Mesh: `maya_kit.smooth_level` (delta=1) | 구현 | 스무스 프리뷰 단계 0–4 — step 27 | hotkeySetup.mel:678 |
 | Page_Down | PAGE_DOWN | global | SmoothingLevelDecrease | Object Mode: `maya_kit.smooth_level` (delta=-1); Mesh: `maya_kit.smooth_level` (delta=-1) | 구현 |  | hotkeySetup.mel:679 |
-| ` | ACCENT_GRAVE | global | STRSTweakModeOn / STRSTweakModeOff (release) | Object Non-modal: `object.transfer_mode` | 미검토 |  | hotkeySetup.mel:682 |
+| ` | ACCENT_GRAVE | global | STRSTweakModeOn / STRSTweakModeOff (release) | 3D View: `maya_kit.tweak_hold` | 구현 | 누르는 동안 Blender Tweak 툴 (클릭-드래그 = 그 자리 이동), 놓으면 원래 툴 | hotkeySetup.mel:682 |
 | l | L | global | LockCurveLength / UnlockCurveLength (release) | — | 미검토 |  | hotkeySetup.mel:686 |
 | Alt+g | Alt+G | hyperGraphPanel | HypergraphIncreaseDepth | — | 미검토 |  | hotkeySetup.mel:689 |
 | Alt+t | Alt+T | hyperGraphPanel | HypergraphDecreaseDepth | — | 미검토 |  | hotkeySetup.mel:690 |
 | Ctrl+Shift+W | Ctrl+Shift+W | global | ToggleSteeringWheel | Screen: `maya_kit.insert_key` (channels='TRANSLATE') | 미검토 |  | hotkeySetup.mel:694 |
-| \ | BACK_SLASH | global | TogglePanZoomPress | — | 미검토 |  | hotkeySetup.mel:697 |
-| \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | — | 미검토 |  | hotkeySetup.mel:698 |
+| \ | BACK_SLASH | global | TogglePanZoomPress | 3D View: `maya_kit.pan_zoom_hold` | 구현 | 카메라 뷰에서 누르는 동안 LMB 팬 / MMB 줌 (camera view offset / zoom, 렌더 그대로) | hotkeySetup.mel:697 |
+| \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | 3D View: `maya_kit.pan_zoom_hold` | 구현 | 놓기 = pan_zoom_hold 모달이 끝냄 (누름 행의 항목) | hotkeySetup.mel:698 |
 | Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.toggle_xray` | 미검토 |  | hotkeySetup.mel:701 |
 | Shift+T | Shift+T | global | AssignNewMaterial | Object Mode: `maya_kit.assign_new_material`; Mesh: `maya_kit.assign_new_material` | 구현 | 재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만, step 29) | hotkeySetup.mel:705 |
 | Ctrl+= | Ctrl+EQUAL | global | IncreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:708 |
@@ -477,7 +477,7 @@
 | Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | Screen: `maya_kit.nudge_keys` (delta=-1) | 구현 | 겹치는 키는 덮어씀 (Maya -o over) | hotkeySetup.mel:740 |
 | Alt+t | Alt+T | global | CreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:742 |
 | Alt+Shift+T | Alt+Shift+T | global | QuickCreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:743 |
-| Shift+\| | Shift+BACK_SLASH | global | FrameTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:744 |
+| Shift+&#124; | Shift+BACK_SLASH | global | FrameTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:744 |
 | Shift+" | Shift+QUOTE | global | FrameNextTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:745 |
 | Shift+: | Shift+SEMI_COLON | global | FramePreviousTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:746 |
 | Alt+\ | Alt+BACK_SLASH | global | PlaybackRangeAnimStartEnd | — | 미검토 |  | hotkeySetup.mel:747 |

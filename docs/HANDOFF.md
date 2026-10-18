@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 87 (뷰 키 묶음 3) 완료 — `docs/steps/step_87.md`.
+  - Alt+A 표시 순환 (X-ray 조인트 / 전부 / 메시만), Alt+P persp ↔ ortho, Alt+화살표 1 px 이동, ` 홀드 = Tweak 툴, \ 홀드 = 카메라 뷰 2D 팬/줌
+    (`operators/view_keys3.py`). 대응표 생성기: 셀 `|` = `&#124;` + 열 수 검사. 키맵 구현 142, 미검토 237.
+  - 검증: 헤드리스 677/677, GUI 621/621, dogfood 47/47.
+  - **바로 다음 할 일**: step 88 manual_checks → GUI 테스트 정리 (재점검 5차 backlog 마지막; step 59–79 항목 중 시뮬레이션 가능한 것을
+    tests/gui 로, 체크 표시). backlog = `hermes/autodrive_bmk/backlog_81.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 86 (Dope Sheet · NLA · Node Editor 선택 수식) 완료 — `docs/steps/step_86.md`.
   - SELECT_RULES 에 action / nla / node 클릭·박스 6 규칙 + Ctrl+Shift+LMB 기존 항목 3 개 제거 (select_leftright ×2, node viewer). Node 는 Maya 그대로
     (deselect / toggle), Dope Sheet / NLA Ctrl 은 토글 (Graph 와 같은 한계), Node Ctrl+드래그 = Blender 링크 떼기 유지.
