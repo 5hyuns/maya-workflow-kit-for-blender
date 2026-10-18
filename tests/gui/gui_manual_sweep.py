@@ -3736,10 +3736,12 @@ def _m65_4_check():
     lay = LayoutRecorder()
     with v3d_ctx():
         iv().draw_cb_node(lay, bpy.context, rec)
-    check(f"[M65-4] INPUTS: polyExtrudeFace1 with its five rows and the grey 'Blender keeps no edit-mode history' note "
+    # step 106: the 'Blender keeps no edit-mode history' notice is the node name's tooltip, not grey lines
+    check(f"[M65-4] INPUTS: polyExtrudeFace1 with its five rows, the history notice as its tooltip "
           f"({lay.out[:1]}, {len(ex().FIELDS)} rows)",
           rec is not None and lay.out and lay.out[0].startswith("polyExtrudeFace") and len(ex().FIELDS) == 5
-          and any("keeps no edit-mode history" in t for t in lay.out))
+          and not any("keeps no edit-mode history" in t for t in lay.out)
+          and "keeps no edit-mode history" in iv().HISTORY_TIP)
     z0 = top_z()
     hist().local_translate_z_text = "0.5"
     z1 = top_z()
@@ -4496,7 +4498,10 @@ def _m68_4_setup():
     with override():
         mod("ui.attribute_editor").draw(rec, bpy.context, sc.objects[C["cloth"]])
     text = " ".join(t for kind, t, _x in rec.out if kind == "label")
-    check(f"[M68-4] the nucleus1 tab has the note ({text[:70]!r}…)", "no nucleus node" in text)
+    # step 106: the Blender note is the head row's tooltip (maya_kit.tip), not a sentence in the AE
+    tips = " ".join(x[1].get("text", "") for kind, _t, x in rec.out if kind == "op" and x[0] == "maya_kit.tip")
+    check(f"[M68-4] the nucleus1 tab has the note as a tooltip ({text[:70]!r}…)",
+          "no nucleus node" in tips and "no nucleus node" not in text)
     C["drop98"] = cloth_drop(sc.objects[C["cloth"]], 12)
     nuc.gravity = 19.6
 

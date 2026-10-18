@@ -258,7 +258,10 @@ def draw_tool_symmetry(self, context):
 # --- render (ui_layout.md:210) -----------------------------------------------------------
 
 def _properties_area(screen):
-    return next((a for a in (screen.areas if screen else ()) if a.type == 'PROPERTIES'), None)
+    """A Properties editor of ``screen`` that is not the Tool Settings dock (step 106)."""
+    from . import tool_dock
+    return next((a for a in (screen.areas if screen else ())
+                 if a.type == 'PROPERTIES' and not tool_dock.is_dock(a)), None)
 
 
 def show_properties(screen, context_name):
@@ -312,7 +315,7 @@ EDITORS = (
     # Maya order: Modeling Toolkit first (, step 63)
     ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit (sidebar dock)", 'EDITMODE_HLT'),
     ("ATTRIBUTE", "Show the Attribute Editor (the dock's AE, or a Properties editor's Object tab)", 'PROPERTIES'),
-    ("TOOL_SETTINGS", "Show the Tool Settings of the active tool", 'TOOL_SETTINGS'),
+    ("TOOL_SETTINGS", "Show or hide the Tool Settings of the active tool (dock left of the viewport)", 'TOOL_SETTINGS'),
     ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor (3D View sidebar)", 'MENU_PANEL'),
 )
 
@@ -328,7 +331,10 @@ def editor_shown(screen, editor):
             return (area is not None and area.spaces.active.show_region_ui
                     and getattr(bpy.context.window_manager, "maya_kit_dock", "") == 'ATTRIBUTE_EDITOR')
         return props.spaces.active.context == 'OBJECT'
-    if area is None or editor == "TOOL_SETTINGS":  # a popup, never "shown"
+    if editor == "TOOL_SETTINGS":    # the dock left of the viewport (ui/tool_dock.py, step 106)
+        from . import tool_dock
+        return tool_dock.shown(screen)
+    if area is None:
         return False
     return area.spaces.active.show_region_ui
 
@@ -340,6 +346,8 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     editor: EnumProperty(items=[(e[0], e[0].title(), e[1]) for e in EDITORS])
+    show: bpy.props.BoolProperty(options={'SKIP_SAVE'},
+                                 description="Only show the editor (Maya toolPropertyWindow), never hide it")
 
     @classmethod
     def description(cls, context, props):
@@ -358,6 +366,11 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
                 self.report({'WARNING'}, "No Properties editor (or no active object)")
                 return {'CANCELLED'}
             return {'FINISHED'}
+        if self.editor == "TOOL_SETTINGS":
+            # Maya ToggleToolSettings: the dock left of the viewport (ui/tool_dock.py, step 106)
+            from . import tool_dock
+            tool_dock.toggle(context, show_only=self.show)
+            return {'FINISHED'}
         area, region = main_view3d(screen)
         if area is None:
             return {'CANCELLED'}
@@ -366,12 +379,7 @@ class MAYAKIT_OT_editor_toggle(bpy.types.Operator):
             dock = 'CHANNEL_BOX' if editor_shown(screen, "MODELING_TOOLKIT") else 'MODELING_TOOLKIT'
             with context.temp_override(window=context.window, area=area, region=region):
                 return bpy.ops.maya_kit.dock_show(dock=dock)
-        if self.editor == "TOOL_SETTINGS":
-            # The sidebar Tool tab's panel as a popup (needs a 3D View context).
-            with context.temp_override(window=context.window, area=area, region=region):
-                bpy.ops.wm.call_panel(name="VIEW3D_PT_active_tool", keep_open=True)
-        else:
-            area.spaces.active.show_region_ui = not area.spaces.active.show_region_ui
+        area.spaces.active.show_region_ui = not area.spaces.active.show_region_ui
         return {'FINISHED'}
 
 

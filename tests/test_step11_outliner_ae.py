@@ -52,6 +52,10 @@ class FakeLayout:
     def label(self, text="", **kw):
         self.log.append(("label", text))
 
+    def menu(self, idname, text="", **kw):
+        assert hasattr(bpy.types, idname), idname
+        self.log.append(("menu", idname, text))
+
     def separator(self, *a, **kw):
         pass
 
@@ -213,8 +217,8 @@ def _textured_cube():
 def test_ae_tabs_in_maya_order():
     ob, mat = _textured_cube()
     assert ae.tabs(ob) == [("T", "pCube1", "transform"), ("S", "pCube1Shape", "mesh"),
-                           ("M:polySmooth1", "polySmooth1", "subsurf"),
-                           ("M:polyBevel1", "polyBevel1", "bevel"),
+                           ("M:polySmooth1", "polySmooth1", "polySmoothFace"),   # Maya node types (step 106)
+                           ("M:polyBevel1", "polyBevel1", "polyBevel3"),
                            ("SG:0", "standardSurface1SG", "shadingEngine"),   # Maya's shading group (step 100)
                            ("MAT:0", "standardSurface1", "standardSurface")]
     assert ae.current_tab(bpy.context, ob) == "S"      # default: shape (preferred node)

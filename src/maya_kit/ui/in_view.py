@@ -449,22 +449,22 @@ class MAYAKIT_PG_history(bpy.types.PropertyGroup):
                        for f in extrude.FIELDS}
 
 
+HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can be changed here."
+
+
 def draw_cb_node(layout, context, rec):
-    """The polyExtrudeFace node in Channel Box INPUTS (modeling_04.png) + the notice."""
+    """The polyExtrudeFace node in Channel Box INPUTS (modeling_04.png); the Blender notice is the node name's
+    tooltip (step 106: no Blender sentences in Maya windows)."""
+    from . import notices
     name = layout.row()
     name.separator(factor=1.5)
-    name.label(text=rec.name)
+    notices.tip(name, HISTORY_TIP, label=rec.name, icon='NONE')
     col = layout.column(align=True)
     hist = context.window_manager.maya_kit_history
     for field in extrude.FIELDS:
         split = col.row(align=True).split(factor=0.5, align=True)
         split.label(text=extrude.LABELS[field])
         split.prop(hist, f"{field}_text", text="")
-    note = layout.column(align=True)
-    note.active = False
-    note.scale_y = 0.8
-    for line in ("Blender keeps no edit-mode history:", "only the last operation", "can be changed here."):
-        note.label(text=line)
 
 
 classes = (MAYAKIT_PG_history, MAYAKIT_GT_in_view_row, MAYAKIT_GGT_in_view, MAYAKIT_GGT_extrude,

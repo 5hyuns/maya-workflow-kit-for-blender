@@ -20,7 +20,14 @@ _wrapped = []    # (cls, cls.__dict__ poll before or None, child panels re-regis
 
 def _hidden(context):
     region = context.region
-    if region is None or region.type != 'UI':
+    if region is None:
+        return False
+    if region.type == 'WINDOW':
+        # The Tool Settings dock (a Properties Tool tab, step 106): Maya sections replace Blender's tool panels
+        # for Move / Rotate / Scale.
+        from . import tool_settings
+        return tool_settings.hides_blender_panels(context)
+    if region.type != 'UI':
         return False
     space = context.space_data
     if space is None or space.type != 'VIEW_3D':

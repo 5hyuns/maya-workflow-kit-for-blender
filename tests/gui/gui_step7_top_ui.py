@@ -196,7 +196,9 @@ def s_script_editor():
 @step
 def s_tool_settings():
     shot("gui_step7_tool_settings.png")
-    tap('ESC')
+    # step 106: the Tool Settings dock; toggle again to close it
+    with bpy.context.temp_override(window=win()):
+        bpy.ops.maya_kit.editor_toggle(editor="TOOL_SETTINGS")
     bpy.ops.maya_kit.layout_remove()
 
 

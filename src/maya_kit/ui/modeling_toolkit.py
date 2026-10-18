@@ -126,10 +126,14 @@ class MAYAKIT_OT_soft_falloff_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _draw_soft(layout, context):
+def draw_soft(layout, context):
+    """Maya Soft Selection (Modeling Toolkit and the Tool Settings dock, step 106)."""
+    from . import notices
     ts = context.scene.tool_settings
     prop = _soft_prop(context)
-    layout.prop(ts, prop, text="Soft Select")
+    row = layout.row(align=True)
+    row.prop(ts, prop, text="Soft Select")
+    notices.tip(row, NOTE)          # Blender explanation as a tooltip, not a sentence (step 106)
     col = layout.column(align=True)
     col.active = getattr(ts, prop)
     col.prop(context.scene, "maya_kit_soft_radius")
@@ -144,9 +148,6 @@ def _draw_soft(layout, context):
     sub.operator("maya_kit.menu_unavailable", text="Global").item = "Modeling Toolkit/Soft Selection/Global"
     col.prop(ts, "proportional_edit_falloff", text="Falloff curve")
     col.operator(MAYAKIT_OT_soft_select_reset.bl_idname, text="Reset")
-    hint = layout.row()
-    hint.active = False
-    hint.label(text=NOTE)
 
 
 # --- panel -----------------------------------------------------------------------------------------
@@ -229,7 +230,7 @@ def draw(layout, context):
 
     body = _section(layout, "MAYAKIT_mtk_soft", "Soft Selection", default_closed=True)
     if body:
-        _draw_soft(body, context)
+        draw_soft(body, context)
     body = _section(layout, "MAYAKIT_mtk_mesh", "Mesh")
     if body:
         _grid(body, MESH, context)
