@@ -466,3 +466,67 @@ shelf reorder.
    Lights tabs, Maya Animation / Rigging / UV workspaces, Spline IK, Component Editor, Shape Editor, MASH / fluids, Reference
    Unload/Replace, ViewCube edges, shelf reorder, 5.x GUI run, the 287 manual checks.
 10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history nodes beyond the kit extrude record.
+
+## 재점검 5차 (step 80, 2026-10-18)
+
+Evidence: `docs/steps/step_80.md` (tests, dogfood, audit-5 session screenshots). Collected the mapping table, PLAN, every
+「남은 것」 of steps 72–79, `docs/manual_checks.md` and `docs/keymap_mapping.md`, and ran a blindspot pass against
+research/maya/*. A read-only subagent did the collection; its "missing" claims were re-checked by grep. Verdicts are delegated.
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 12 (+D/Insert step 77) | 1 — selection modifiers outside the 3D View (Outliner / UV / Graph Ctrl = toggle, no marquee XOR; **Dope Sheet, NLA, Node Editor not patched at all**) | 0 | 0 |
+| UI (9) | 7 | 2 — Maya Outliner (drag in the Outliner = Blender parenting, no Sets), timeline (step 73 ticks + Range Slider drag done; Shift-range key drag / scale open; Once / Oscillate = Blender limit) | 0 | 0 |
+| 개념 (11) | 9 | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **28 (85 %)** | **3 (9 %)** | **0** | **2 (6 %)** |
+
+Audits 1 → 5: 21/8/2/2 → 23/8/0/2 → 25/6/0/2 → 27/4/0/2 → 28/3/0/2. Keymap rows (`docs/keymap_mapping.md`, 468): implemented
+113 → **125**, IC 10, not applicable 10 → **11** (polyCutUV Shift+D, step 79), macOS-only 68, unreviewed 267 → **254**
+(global 93, Node Editor 36, Time Editor 36, Hypershade 25, UV 17, sculpt 15, other 32). Generator bug: the `Shift+\` row
+(FrameTimeSliderBookmark) breaks the table (backslash before the pipe). Manual checks: **320 open, none ticked** (287 at audit 4).
+
+Audit-4 backlog: items 1–8 all closed (steps 72–79). Audit-4 blindspots: selection priority (76), Status Line input line (75),
+Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge, `\` pan/zoom, masks reset on new scene open.
+
+### New findings (audit-5 session, step_80.md)
+
+- **The MayaKit persp view is twice as wide-angle as Maya's.** The template sets the Blender viewport lens to 35
+  (`tools/make_startup.py:37`, `MAYA_LENS`), but Blender measures the viewport lens on a 72 mm sensor (step 41: tan(fov/2) =
+  36 / lens): horizontal FOV 2·atan(36/35) = 91.6°, Maya's persp (35 mm on a 36 mm film back) 54.4°; a Blender lens of 70 gives
+  the same angle. Step 41 flagged it (step_41.md:52, lens 50 then) and nothing fixed it. Visible as a tiny pCube1 and strong
+  perspective in every session shot, and Ctrl+Shift+C makes a camera with Focal Length 17.5 instead of Maya's 35.
+- Session 14 of 16 checks; both failures were the session's own (a 1 cm cube under a 25 % circle; the Move manipulator covering
+  the whole cube, where pre-selection yields by design, step 74). Everything from steps 72–79 behaved: selection priority,
+  F3 top bar repaint, F8 in-view message, edit-mode Insert, 3D Cut and Sew drag (1 → 2 shells), S twice → red ticks at 1 / 12,
+  Input Line Abs X 20, Alt+Q menu, Ctrl+Shift+C, Space hotbox. Console errors 0.
+
+### Blindspots (not implemented and not listed as left out; re-checked by grep in src/maya_kit)
+
+1. **Dope Sheet / NLA / Node Editor selection modifiers** (research/maya/interaction.md:69-71): no rules in
+   `maya_patches.SELECT_RULES`; IC has no Ctrl / Ctrl+Shift click there.
+2. **Insert-key family**: Alt+I InsertKey, Ctrl+Shift+W/E/R InsertKeyTranslate/Rotate/Scale, `i` Insert Key tool
+   (keymap_mapping.md:201, :467-470; research/maya/hotkeys_and_menus.md:158). No code, no doc.
+3. **Key nudge / select next key**: Shift+( / ), Ctrl+Alt+, / . (keymap_mapping.md:219-220, :476-477).
+4. **Manipulator Ctrl+LMB on an axis = move in the other two axes' plane, Shift+MMB = automatic axis** (interaction.md:104, :106);
+   listed in step_28.md:60-61, dropped from later lists; `ui/manipulator.py` has no Ctrl handling.
+5. Alt+A cycle display / X-ray, Alt+P persp ↔ ortho (keymap_mapping.md:213, :133). Low–Medium.
+6. Tool Settings "Reset Tool" (research/maya/ui_layout.md:267-268). Low.
+
+### Remaining work, by priority (backlog.json, step 81+)
+
+1. **Maya persp field of view** (new finding): template lens 70, camera from view, look_compare.
+2. **Outliner drag = Maya parenting** (mapping row 90).
+3. **Insert / nudge key batch** (blindspots 2–3).
+4. **Time Slider Shift-range key drag / scale** (mapping row 92; step_56.md:113, step_73.md:121).
+5. **Manipulator Ctrl+LMB plane / Shift+MMB auto axis** (blindspot 4).
+6. **Dope Sheet / NLA / Node Editor selection modifiers** (blindspot 1; mapping row 72).
+7. **View key batch**: Alt+A, Alt+P, Alt+arrow nudge, backtick tweak, `\` pan/zoom + the `Shift+\` table row.
+8. **Manual checks → GUI tests sweep**: 320 open checks, none ticked; turn the automatable ones of steps 59–79 into GUI tests.
+9. Later: Left-out items (MASH 15, UV checker 12, Component Editor 12, Quad Draw Make Live 12, fluids / Bifrost 10, Straighten 9,
+   UV display keys 9, ghosting 9, Shape Editor 9, Spline IK 8, Render Settings 960×540 8, Outliner Sets 8), step 72–79 「남은 것」
+   (Shift+Q check marks, Cut and Sew tool menu, pivot RMB menu, Stacked view), Maya Animation / Rigging / UV workspaces,
+   5.x GUI run, distribution decision 11.
+10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit extrude record,
+    playback Once / Oscillate.

@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 80 (재점검 5차) 완료 — `docs/steps/step_80.md`, `docs/PLAN.md` 「재점검 5차」.
+  - 대응표 28/3/0/2 (85 %), 키맵 구현 125 · 미검토 254, manual_checks 320 열림 (체크 0). 4차 backlog (72–79) 모두 종결.
+  - 새 발견: MayaKit persp 가 Maya 의 두 배 광각 (템플릿 뷰 렌즈 35 = Blender 72 mm 센서 기준 91.6°, Maya 54.4° = Blender 70).
+  - 검증: 헤드리스 634/634, dogfood 47/47, 탐색 세션 14/16 (실패 2 는 세션 탓), 콘솔 0.
+  - **바로 다음 할 일**: `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8개 순서대로 (step 81부터) —
+    1 Maya persp 화각 (렌즈 70), 2 Outliner 드래그 = Maya 부모 지정, 3 키 삽입·이동 묶음, 4 타임 슬라이더 Shift 범위 키 이동,
+    5 매니퓰레이터 Ctrl+축 평면 / Shift+MMB, 6 Dope Sheet·NLA·Node 선택 수식, 7 뷰 키 묶음 3, 8 manual_checks → GUI 테스트.
+    배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 79 (3D Cut and Sew UV Tool) 완료 — `docs/steps/step_79.md`. **재점검 4차 backlog (72–79) 모두 끝.**
   - UV > 3D Cut and Sew UV Tool: 3D 뷰에서 엣지를 따라 드래그 = UV 자르기, Ctrl = 꿰매기, Shift = 선택, x / s / d = Cut / Sew / Unfold + Layout,
     셸 경계 흰 굵은 선, 누를 엣지는 빨간 프리셀렉트. 메뉴·셸프·UV Toolkit·UV 마킹 메뉴에서 진입.
