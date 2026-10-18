@@ -102,11 +102,14 @@ class MAYAKIT_OT_toolbox_guard(bpy.types.Operator):
 # Blender's toolbar is one 56 px column at scale 1 (UI_TOOLBAR_MARGIN + UI_TOOLBAR_COLUMN = 0.5 * 32 +
 # 1.25 * 32, interface UI_interface.hh); Maya's Tool Box is 40 px (ui_layout.md:224). Area sizes don't
 # follow the UI scale: the template's column fits the toolbar at the Maya density (effective scale 1.0,
-# "Maya Density" preset). At a larger scale it is resized to one toolbar column when Blender lets
-# screen.area_move run (its poll fails while the mouse is over a region, measured); until then the
-# toolbar would be cut off, so the main view of that screen shows its own toolbar meanwhile.
+# "Maya Density" preset). At a larger scale it is resized to one toolbar column with screen.area_move,
+# whose poll fails while the mouse is over any region (screen.active_region, measured): the column stayed
+# empty at Windows 125 % without the density preset (docs/steps/step_98.md #2). So MAYAKIT_OT_fit_columns
+# puts the cursor on the area edge for a moment (step 99, measured: the poll passes there), moves the edge and
+# puts the cursor back; until then the main view of that screen shows its own toolbar.
 TOOLBAR_PX = 56
 SHELF_PX = 64        # = tools/make_startup.py SHELF_PX
+OUTLINER_PX = 260    # Maya's narrow panel width (research/maya/ui_layout.md:262) = the template Outliner at scale 1
 _FIT_TICK = 0.5
 _fallback = set()   # screens whose main view shows its toolbar because the column is too narrow
 
@@ -115,19 +118,29 @@ def column_width(context=None):
     return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
 
 
-def _move_edge(window, area, x, y, delta):
+MAX_WARPS = 3        # cursor-warp fits per screen and file load
+_warps = {}          # screen name -> fits started since the last load
+_running = [False]
+
+
+def _move_edge(window, area, x, y, delta, edge, pending):
+    """Move the edge through (x, y) by ``delta``; when the poll fails, remember ``edge`` (a window point in the
+    gap between the areas) for MAYAKIT_OT_fit_columns."""
     with bpy.context.temp_override(window=window, screen=window.screen, area=area):
         if not bpy.ops.screen.area_move.poll():
+            pending.setdefault(window.as_pointer(), (window, edge))
             return False
         return bpy.ops.screen.area_move(x=x, y=y, delta=delta) == {'FINISHED'}
 
 
-def fit_columns():
+def fit_columns(start_fit=True):
     """Tool Box column = one toolbar column at the current UI scale (or the main view's toolbar); the
-    shelf row = 64 px times the UI scale (best effort: screen.area_move only runs when its poll lets it)."""
+    shelf row = 64 px times the UI scale. Returns {window pointer: (window, edge point)} of the moves whose
+    poll failed; with ``start_fit`` a MAYAKIT_OT_fit_columns is started for the first of them."""
     from .status_line import main_view3d
     context = bpy.context
     want = column_width(context)
+    pending = {}
     from .shelf import shelf_row_area
     for window in context.window_manager.windows:
         screen = window.screen
@@ -136,24 +149,108 @@ def fit_columns():
         if row is not None:
             d = round(SHELF_PX * context.preferences.system.ui_scale) - row.height
             if abs(d) > 2:
-                _move_edge(window, row, row.x + row.width // 2, row.y, -d)
+                _move_edge(window, row, row.x + row.width // 2, row.y, -d,
+                           (row.x + row.width // 2, row.y - 1), pending)
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
             continue
         if abs(column.width - want) > 1 and column.x + column.width < window.width - 2:
             _move_edge(window, column, column.x + column.width, column.y + column.height // 2,
-                       want - column.width)
+                       want - column.width, (column.x + column.width + 1, column.y + column.height // 2), pending)
+        elif abs(column.width - want) <= 1:
+            # the layout Outliner right of the column keeps Maya's panel width at this scale (widening the column
+            # took its pixels; step 99)
+            outl = next((a for a in screen.areas if a.type == 'OUTLINER' and abs(a.x - (column.x + column.width)) <= 4
+                         and a.height >= column.height - 4), None)
+            wo = round(OUTLINER_PX * context.preferences.system.ui_scale)
+            if outl is not None and abs(outl.width - wo) > 2 and outl.x + outl.width < window.width - 2:
+                _move_edge(window, outl, outl.x + outl.width, outl.y + outl.height // 2, wo - outl.width,
+                           (outl.x + outl.width + 1, outl.y + outl.height // 2), pending)
         narrow = column.width < want - 1
         main, _r = main_view3d(screen)
         if main is None or main == column:
             continue
         key = screen.name
+        # The property update re-inits the area through the context window: a timer runs with the last active
+        # window, which may just have been closed (crash in WM_window_get_active_workspace, step 99) — so set it
+        # with this window in the context.
         if narrow and key not in _fallback and not main.spaces.active.show_region_toolbar:
-            main.spaces.active.show_region_toolbar = True
+            with context.temp_override(window=window, screen=screen, area=main):
+                main.spaces.active.show_region_toolbar = True
             _fallback.add(key)
         elif not narrow and key in _fallback:
-            main.spaces.active.show_region_toolbar = False
+            with context.temp_override(window=window, screen=screen, area=main):
+                main.spaces.active.show_region_toolbar = False
             _fallback.discard(key)
+    if start_fit and pending and not _running[0] and auto_warp():
+        window, edge = next(iter(pending.values()))
+        key = window.screen.name
+        if _warps.get(key, 0) < MAX_WARPS:
+            _warps[key] = _warps.get(key, 0) + 1
+            with context.temp_override(window=window, screen=window.screen):
+                bpy.ops.maya_kit.fit_columns('INVOKE_DEFAULT', x=edge[0], y=edge[1])
+    return pending
+
+
+def auto_warp():
+    """The cursor fit runs by itself except in event-simulated sessions (GUI tests, dogfood): they own the mouse,
+    and a warp in the middle of a scripted step closes its menus. MAYA_KIT_FIT_WARP=1 turns it on there."""
+    import os
+    return not bpy.app.use_event_simulate or os.environ.get("MAYA_KIT_FIT_WARP") == "1"
+
+
+def _warp(window, x, y):
+    window.cursor_warp(x, y)
+    if bpy.app.use_event_simulate:   # event simulation drops the OS mouse move a warp makes
+        window.event_simulate(type='MOUSEMOVE', value='NOTHING', x=x, y=y)
+
+
+class MAYAKIT_OT_fit_columns(bpy.types.Operator):
+    """Resize the Tool Box column / shelf row: the cursor sits on the area edge (where screen.area_move polls)
+    for a few timer ticks, then goes back"""
+    bl_idname = "maya_kit.fit_columns"
+    bl_label = "Fit Maya Layout Columns"
+    bl_options = {'INTERNAL'}
+
+    x: bpy.props.IntProperty(options={'SKIP_SAVE'})
+    y: bpy.props.IntProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        self._back = (event.mouse_x, event.mouse_y)
+        self._n = 0
+        self._window = context.window
+        self._at = (self.x, self.y)
+        _warp(context.window, self.x, self.y)
+        wm = context.window_manager
+        self._timer = wm.event_timer_add(0.05, window=context.window)
+        wm.modal_handler_add(self)
+        _running[0] = True
+        return {'RUNNING_MODAL'}
+
+    def _finish(self, context, event):
+        context.window_manager.event_timer_remove(self._timer)
+        _running[0] = False
+        if (event.mouse_x, event.mouse_y) == self._at:   # the user didn't move the mouse meanwhile
+            _warp(self._window, *self._back)
+        return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type != 'TIMER':
+            return {'PASS_THROUGH'}
+        self._n += 1
+        try:
+            left = fit_columns(start_fit=False)
+        except Exception:
+            left = {}
+        item = left.get(self._window.as_pointer())
+        if item is None or self._n > 24:
+            return self._finish(context, event)
+        if item[1] != self._at:   # the next edge (column, then Outliner, then shelf row)
+            if (event.mouse_x, event.mouse_y) != self._at:   # the user moved the mouse: stop here
+                return self._finish(context, event)
+            self._at = item[1]
+            _warp(self._window, *item[1])
+        return {'PASS_THROUGH'}
 
 
 def _fit_tick():
@@ -166,6 +263,7 @@ def _fit_tick():
 
 @bpy.app.handlers.persistent
 def _fit_after_load(*_args):
+    _warps.clear()
     if not bpy.app.background:
         bpy.app.timers.register(lambda: _fit_tick() and None, first_interval=0.0)
 
@@ -226,7 +324,7 @@ class MAYAKIT_PT_toolbox_layouts(bpy.types.Panel):
         col.operator("maya_kit.open_editor", text="", icon='OUTLINER').ui_type = 'OUTLINER'
 
 
-classes = (MAYAKIT_OT_toolbox_guard, MAYAKIT_OT_quick_layout, MAYAKIT_PT_toolbox_layouts)
+classes = (MAYAKIT_OT_toolbox_guard, MAYAKIT_OT_fit_columns, MAYAKIT_OT_quick_layout, MAYAKIT_PT_toolbox_layouts)
 
 
 def register():
@@ -242,6 +340,7 @@ def register():
 
 
 def unregister():
+    _running[0] = False
     if _fit_after_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_fit_after_load)
     if bpy.app.timers.is_registered(_fit_tick):

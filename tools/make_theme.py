@@ -129,6 +129,9 @@ VALUES = (
     ("outliner.active", SELECT),                     # [O] the lead row is the same blue (step 41 pixels)
     ("outliner.selected_object", SEL_TEXT),          # [O] selected names are white, not orange
     ("outliner.active_object", SEL_TEXT),
+    # [O] Maya's Outliner list is one flat colour (research/maya/screens/audit7/maya/a01_outliner_crop.png): no
+    # Blender alternating row stripes (step 99)
+    ("outliner.row_alternate", (1.0, 1.0, 1.0, 0.0)),
 )
 
 # Widget shape (docs/steps/step_44.md): Maya 2022's Qt style is "adskdarkflatui" (research/maya/colors.json

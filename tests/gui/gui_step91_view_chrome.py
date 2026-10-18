@@ -168,8 +168,9 @@ def s_ae():
     check(f"Ctrl+A = Attribute Editor ({wm.maya_kit_dock})", wm.maya_kit_dock == 'ATTRIBUTE_EDITOR')
     area, _r = view3d()
     ui = next(r for r in area.regions if r.type == 'UI')
-    check(f"the sidebar stays on the Channel Box tab ({ui.active_panel_category})",
-          ui.active_panel_category == "Channel Box")
+    # step 99: the AE is its own dock tab (Maya's dock tab stack), so the sidebar switches to it
+    check(f"the sidebar shows the Attribute Editor tab ({ui.active_panel_category})",
+          ui.active_panel_category == "Attribute Editor")
     for a in win().screen.areas:
         a.tag_redraw()
 

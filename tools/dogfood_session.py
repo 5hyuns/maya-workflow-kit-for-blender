@@ -398,7 +398,7 @@ def s_cb_open():
     redraw()
 
 
-step(goto_tab("Channel Box", lambda: redraw()))
+step(goto_tab("Channel Box / Layer Editor", lambda: redraw()))
 
 
 @step

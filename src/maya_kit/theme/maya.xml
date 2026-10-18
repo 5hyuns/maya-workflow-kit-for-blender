@@ -1076,7 +1076,7 @@
         selected_object="#ffffff"
         active_object="#ffffff"
         edited_object="#00806266"
-        row_alternate="#ffffff04"
+        row_alternate="#ffffff00"
         >
         <space>
           <ThemeSpaceGeneric

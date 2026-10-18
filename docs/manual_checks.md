@@ -648,3 +648,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 96) 오브젝트를 화면에 다 안 들어갈 만큼 많이 만든 뒤 → 세트 행이 Outliner 아래쪽 불투명 띠로 고정되어 보이고, 그 띠를 클릭하면 밑에 깔린 Blender 행이 아니라 세트 행이 잡히는지 (고정 모드). Maya 처럼 목록 끝에 오지 않는 것이 거슬리는지.
 - [ ] (step 96) Select > Quick Select Sets ▸ (Create > Sets > Quick Select Set... 로 만든 것) → 멤버 선택. 만들기 전에는 회색 "No Quick Select Sets".
 - [ ] (step 96) 세트 행 더블클릭 이름 바꾸기는 없음 (RMB > Rename...), MMB 로 오브젝트를 세트 행에 끌어 넣기도 없음 (RMB > Add Selected Objects) — Maya 사용자에게 필요한지.
+
+### Step 99 — 첫 화면 (Outliner 기본 행, Tool Box 125 %, 도크 탭)
+
+- [ ] (step 99) Windows 125 % 에서 Maya Density 를 끈 채 (또는 Preferences > Interface > Resolution Scale 1.0) MayaKit 새 장면 → 시작 직후 마우스 커서가 Tool Box 열 오른쪽 경계로 잠깐 갔다가 제자리로 돌아오고, Tool Box 열에 Q W E R 툴이 보이며 뷰포트 안에 Blender 툴바가 남지 않는지. 커서가 순간 이동하는 것이 거슬리는지 (로드당 한 번).
+- [ ] (step 99) 새 장면 Outliner = persp / top / front / side (회색, 카메라 그림) → defaultLightSet / defaultObjectSet. persp 클릭 = 선택 해제 + 행 강조, defaultLightSet = 라이트 선택. 큐브를 만들면 카메라 행이 pCube1 **뒤**로 감 (Maya 는 앞) — 거슬리는지.
+- [ ] (step 99) 도크 오른쪽 가장자리 세로 탭 「Channel Box / Layer Editor」「Attribute Editor」「Modeling Toolkit」 클릭 → 각 편집기, Ctrl+A 로도 탭이 바뀜. 오브젝트를 선택하면 Blender 「Item」 탭이 네 번째로 생김 (C 패널, 숨길 수 없음) — 눌러도 되고 다른 탭을 누르면 돌아옴.
+- [ ] (step 99) Layer Editor (Display / Anim 탭) 가 도크 높이의 약 절반에서 시작하고 목록이 아래 끝까지 차는지 (Maya 처럼). 큐브 INPUTS 가 있을 때는 CB 바로 밑에 붙음.

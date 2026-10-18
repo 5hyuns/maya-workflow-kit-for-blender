@@ -9,6 +9,14 @@ row is one flat stripe colour; rows are contiguous, so a binary search). The row
 per region; the "Outliner" keymap items ``maya_kit.outliner_set_click`` (LMB CLICK) and
 ``maya_kit.outliner_set_menu`` (RMB) act on them and pass through elsewhere.
 
+Maya's default rows (step 99): a new Maya scene lists the startup cameras persp / top / front / side (hidden, so
+greyed) and the sets defaultLightSet / defaultObjectSet (research/maya/screens/audit7/maya/a01_outliner_crop.png;
+mayapy, docs/steps/step_99.md: defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
+selecting persp selects the hidden camera). The kit has no camera objects behind them (Blender's user views aren't
+cameras; real objects would render, export and sort among the user's objects), so they are drawn rows too: the
+cameras first, then the default sets, then the kit sets. Blender's rows can't be pushed down, so with objects in
+the scene the cameras follow the DAG rows instead of leading them (delegated, step 99).
+
 Blender row geometry (measured, step 96): row height = UI_UNIT_Y = round(18 x scale) + 2 x pixel size,
 row k spans view y [-(k + 1)·U, -k·U]; a depth-0 row draws its disclosure triangle at ~1.6 U, the icon
 at ~2.5 U and the name from ~3.25 U.
@@ -42,6 +50,33 @@ def first_empty(is_empty, lo, hi):
         else:
             lo = mid + 1
     return lo
+
+
+CAMERAS = ("persp", "top", "front", "side")
+DEFAULT_SETS = ("defaultLightSet", "defaultObjectSet")
+_picked = {"camera": ""}   # camera row clicked last (highlighted while no object is selected)
+
+
+def default_entries():
+    """Maya's default Outliner rows the kit draws: [(kind, name, "")]."""
+    return [('CAMERA', n, "") for n in CAMERAS] + [('DEFAULT_SET', n, "") for n in DEFAULT_SETS]
+
+
+def default_set_members(name, scene):
+    """defaultLightSet = every light in the scene (mayapy, step 99); defaultObjectSet is empty in a new scene."""
+    if name == "defaultLightSet":
+        return [ob for ob in scene.objects if ob.type == 'LIGHT']
+    return []
+
+
+def camera_glyph(shader, cx, cy, u, rgba):
+    """Kit camera glyph: a body and a lens (no Maya icon copied)."""
+    from gpu_extras.batch import batch_for_shader
+    w, h = u * 0.22, u * 0.15
+    _rect(shader, cx - w, cy - h, cx + w * 0.35, cy + h, rgba)
+    batch = batch_for_shader(shader, 'TRIS', {"pos": [(cx + w * 0.35, cy), (cx + w, cy + h), (cx + w, cy - h)]})
+    shader.uniform_float("color", rgba)
+    batch.draw(shader)
 
 
 def entries(scene):
@@ -114,11 +149,8 @@ def draw():
     space, region = context.space_data, context.region
     if region is None or not _is_maya(space):
         return
-    found = entries(context.scene)
+    found = default_entries() + entries(context.scene)
     key = region.as_pointer()
-    if not found:
-        REGIONS.pop(key, None)
-        return
     import blf
     import gpu
     prefs = context.preferences
@@ -154,6 +186,25 @@ def draw():
         y0, y1 = row_y(k0 + i)
         cy = (y0 + y1) / 2.0
         indent = u if kind == 'MEMBER' else 0
+        if kind in ('CAMERA', 'DEFAULT_SET'):
+            if kind == 'CAMERA':
+                hl = not selected and _picked["camera"] == name
+            else:
+                mem = default_set_members(name, context.scene)
+                hl = bool(mem) and set(mem) == selected
+            if hl:
+                _rect(shader, 0, y0, region.width, y1, (*th.outliner.selected_highlight[:3], 1.0))
+            # Maya greys hidden nodes: the startup cameras are hidden
+            rgb = text_rgb[:3] if kind == 'DEFAULT_SET' or hl else tuple(c * 0.62 for c in text_rgb[:3])
+            if kind == 'CAMERA':
+                camera_glyph(shader, 2.5 * u, cy, u, (*rgb, 1.0))
+            else:
+                set_glyph(shader, 2.5 * u, cy, u)
+            blf.color(0, *rgb, 1.0)
+            blf.position(0, 3.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
+            blf.draw(0, name)
+            rows.append((y0, y1, kind, name, "", 0))
+            continue
         coll = sets.get(name)
         if coll is None:
             continue
@@ -215,6 +266,8 @@ class MAYAKIT_OT_outliner_set_click(bpy.types.Operator):
         if row is None:
             return {'PASS_THROUGH'}
         _y0, _y1, kind, name, member, tri_x1 = row
+        if kind in ('CAMERA', 'DEFAULT_SET'):
+            return self._default_row(context, event, kind, name)
         coll = sets.get(name)
         if coll is None:
             return {'PASS_THROUGH'}
@@ -240,6 +293,30 @@ class MAYAKIT_OT_outliner_set_click(bpy.types.Operator):
         return {'FINISHED'}
 
 
+    def _default_row(self, context, event, kind, name):
+        """Maya default rows: a camera row selects the (hidden) camera — the kit has none, so it clears the object
+        selection and highlights the row; defaultLightSet selects every light, defaultObjectSet nothing."""
+        if context.mode != 'OBJECT' and context.active_object is not None:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        if kind == 'CAMERA':
+            _picked["camera"] = name
+            if not (event.shift or event.ctrl):
+                for o in context.selected_objects:
+                    o.select_set(False)
+        else:
+            _picked["camera"] = ""
+            mem = [o for o in default_set_members(name, context.scene) if sets._selectable(o)]
+            if not (event.shift or event.ctrl):
+                for o in context.selected_objects:
+                    o.select_set(False)
+            for o in mem:
+                o.select_set(not o.select_get() if event.ctrl else True)
+            if mem and mem[-1].select_get():
+                context.view_layer.objects.active = mem[-1]
+        _redraw(context)
+        return {'FINISHED'}
+
+
 class MAYAKIT_OT_outliner_set_menu(bpy.types.Operator):
     """Outliner set row: the Maya set menu (Select Set Members, Show Set Members, ...)"""
     bl_idname = "maya_kit.outliner_set_menu"
@@ -251,7 +328,7 @@ class MAYAKIT_OT_outliner_set_menu(bpy.types.Operator):
 
     def invoke(self, context, event):
         row = row_at(context.region, event.mouse_region_y)
-        if row is None:
+        if row is None or row[2] in ('CAMERA', 'DEFAULT_SET'):
             return {'PASS_THROUGH'}
         wm = context.window_manager
         wm.maya_kit_set_target, wm.maya_kit_set_member = row[3], row[4]

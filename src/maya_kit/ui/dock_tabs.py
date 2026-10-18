@@ -2,8 +2,8 @@
 """Sidebar = the Maya dock only: hide Blender's Item / Tool / View sidebar tabs (docs/steps/step_49.md).
 
 Maya's right dock is one tab stack: Channel Box / Layer Editor, Attribute Editor, Modeling Toolkit
-(research/maya/ui_layout.md:122-127). The kit's dock is the 3D View sidebar's "Channel Box" tab
-(``WindowManager.maya_kit_dock`` switches CB/LE and AE, step 11). With the preference
+(research/maya/ui_layout.md:122-127). The kit's dock is three 3D View sidebar tabs with those names
+(step 99; ``WindowManager.maya_kit_dock`` follows them). With the preference
 ``maya_dock_only`` the other sidebar panels that were registered when the kit was enabled are hidden
 by wrapping their ``poll``: only in a 3D View sidebar (``wm.call_panel`` popups such as the Status
 Line's Tool Settings still work). Blender stores a panel's poll callback when the class is registered

@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 99 (첫 화면: Maya Outliner 기본 행, 125 % Tool Box, 도크 탭) 완료 — `docs/steps/step_99.md`.
+  - Outliner: 새 장면에 persp / top / front / side (회색) + defaultLightSet / defaultObjectSet 를 그린 행으로 (`ui/outliner_sets.py`;
+    진짜 카메라는 안 만듦, delegated), 줄무늬 없음. 오브젝트가 있으면 카메라 행이 DAG 행 뒤 (Blender C 행을 못 밂).
+  - Tool Box: 커서를 영역 틈으로 잠깐 옮겨 area_move (`MAYAKIT_OT_fit_columns`), Outliner 도 260 × 배율 유지. 시뮬레이션 세션에선 꺼짐.
+    타이머 `show_region_toolbar` 크래시 (닫힌 창) 수정.
+  - 도크: Maya 이름의 사이드바 세로 탭 3 개 (`maya_kit_dock` 과 양방향), Maya 제목 줄 자리 빈 줄, CB / LE 절반 분할 + LE 목록 끝까지.
+    Item 탭 (C 패널) 은 숨길 수 없음 (측정).
+  - 검증: GUI step99 12/12 (1.25, 1.0), look_compare pixels 25/34 일치 (전 19/31), rects 5/12 (9/12 는 Blender 고정 높이 구조로 불가 —
+    step_99.md 「남은 것」). 전체 테스트 수치는 step_99.md.
+  - **바로 다음 할 일**: step 100 = backlog 2 「Default material lambert1 (initialShadingGroup) like Maya」. backlog =
+    `hermes/autodrive_bmk/backlog.json` (step 98 의 12 개). 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 98 (재점검 7차, 정밀 비판 「이건 Maya여야 한다」) 완료 — `docs/steps/step_98.md`, 수치 부록 `docs/steps/step_98_quant.md`,
   PLAN 「재점검 7차(정밀 비판)」.
   - Maya 2022 와 kit 를 1600x900 로 같은 장면 (첫 화면, 5 메뉴 세트 전 최상위 메뉴, 셸프 탭, File 대화상자·옵션, 모델링·UV·애니·리깅·FX·렌더

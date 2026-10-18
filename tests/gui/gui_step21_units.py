@@ -86,7 +86,7 @@ def s_sizes():
     rv3d = main_view().spaces.active.region_3d
     check(f"Maya persp view distance 44.8 cm ({rv3d.view_distance:.4f} BU)",
           abs(rv3d.view_distance - 0.4482) < 1e-3)
-    sys.modules["sim"]._steps.insert(0, goto_tab("Channel Box", s_cb_ready))
+    sys.modules["sim"]._steps.insert(0, goto_tab("Channel Box / Layer Editor", s_cb_ready))
 
 
 def s_cb_ready():

@@ -82,7 +82,7 @@ def s_layout():
     check("no Properties column", not any(a.type == 'PROPERTIES' for a in win().screen.areas))
     ui = next(r for r in view.regions if r.type == 'UI')
     check(f"sidebar opens on the Channel Box tab ({ui.active_panel_category!r})",
-          ui.active_panel_category == "Channel Box")
+          ui.active_panel_category == "Channel Box / Layer Editor")
     tl = next(a for a in win().screen.areas if a.ui_type == 'TIMELINE')
     regions = {r.type: r for r in tl.regions}
     check("Range Slider row under the Time Slider", regions['HEADER'].y < regions['WINDOW'].y)

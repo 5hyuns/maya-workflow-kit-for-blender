@@ -305,14 +305,10 @@ ANIM_TEXT = ("Blender has no animation layers:", "layer actions in the Nonlinear
 class MAYAKIT_PT_layer_editor(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Channel Box"
+    bl_category = "Channel Box / Layer Editor"   # = channel_box.CATEGORY (the dock's first tab, step 99)
     bl_label = "Layer Editor"
     bl_order = 1
     bl_options = {'HIDE_HEADER'}   # Maya: tabs + menu bar, no collapsible panel title (step 50)
-
-    @classmethod
-    def poll(cls, context):
-        return getattr(context.window_manager, "maya_kit_dock", 'CHANNEL_BOX') == 'CHANNEL_BOX'
 
     def draw(self, context):
         layout = self.layout
@@ -344,7 +340,18 @@ class MAYAKIT_PT_layer_editor(bpy.types.Panel):
         r = root(scene)
         owner = r if r is not None else scene.collection
         layout.template_list("MAYAKIT_UL_layers", "", owner, "children", scene, "maya_kit_layer_index",
-                             rows=8)
+                             rows=list_rows(context))
+
+
+def list_rows(context):
+    """Layer list rows that fill the dock to the bottom (Maya's Layer Editor pane is the dock's lower part,
+    channel_box.CB_SHARE; step 99)."""
+    from .channel_box import CB_SHARE
+    region = context.region
+    if region is None or region.type != 'UI':
+        return 8
+    u = round(18.0 * context.preferences.system.ui_scale) + 2 * context.preferences.system.pixel_size
+    return max(3, int((1.0 - CB_SHARE) * region.height / max(u, 1)) - 5)
 
 
 classes = (MAYAKIT_PG_layer, MAYAKIT_OT_layer_new, MAYAKIT_OT_layer_assign, MAYAKIT_OT_layer_select,

@@ -241,7 +241,7 @@ def draw(layout, context):
         _grid(body, TOOLS, context)
 
 
-# Drawn by the dock panel (channel_box.MAYAKIT_PT_channel_box) when the dock shows the Modeling Toolkit (step 91).
+# Drawn by the dock's Modeling Toolkit tab (channel_box.MAYAKIT_PT_dock_modeling_toolkit, step 99).
 classes = (MAYAKIT_OT_soft_select_reset, MAYAKIT_OT_soft_falloff_mode)
 
 

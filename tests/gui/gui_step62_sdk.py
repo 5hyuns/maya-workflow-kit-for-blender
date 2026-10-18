@@ -205,7 +205,7 @@ def s_shot_dialog():
     check("Add Attribute dialog opened (screenshot)", True)
 
 
-steps(goto_tab("Channel Box"),
+steps(goto_tab("Channel Box / Layer Editor"),
       # driver: select locator1, click Translate X in the Channel Box, Load Driver
       select("locator1"), scroll(TX_LABEL), click(TX_LABEL), scroll(LOAD_DRIVER_LOCATOR),
       click(LOAD_DRIVER_LOCATOR), s_check_driver,
