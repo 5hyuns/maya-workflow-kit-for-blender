@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 90 (전역 키 묶음 4) 완료 — `docs/steps/step_90.md`.
+  - Ctrl+X cut (계층째, 빈 data 도) + Ctrl+V paste (첫 노드 lead), Alt+X Walk (IC X-ray 제거), Alt+\ 재생 범위 = 애니메이션 범위, Alt+1/2/4 보이기
+    토글, Ctrl+` / Shift+~ / Ctrl+Shift+~ 스무드 프록시 (`operators/global_keys4.py`), Edit > Cut / Paste. 대응표 구현 152 · IC 15 · 미검토 222.
+  - 검증: 헤드리스 685/685, GUI 677/677, dogfood 47/47.
+  - **바로 다음 할 일**: step 91 = backlog 2 「Viewport chrome fixes」 (부모 관계 점선 끄기, RMB 목록이 HUD 위로, AE 전환 때 사이드바 탭 순서).
+    backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 89 (재점검 6차) 완료 — `docs/steps/step_89.md`, `docs/PLAN.md` 「재점검 6차」.
   - 대응표 29/2/0/2 (88 %; 타임라인 Done), 키맵 구현 142 · 미검토 237, manual_checks [x] 13 / 348. 탐색 세션 19/19: 부모 관계 점선이
     그려짐, RMB 목록이 Adjust Last Operation 패널 밑, AE 전환 때 사이드바 탭 순서. blindspot 7 (Ctrl+X, Alt+X Walk, Alt+\, Graph t / Alt+/,

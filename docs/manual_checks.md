@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 348 개 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **335 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 353 개 (step 90 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **340 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -606,3 +606,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 87) ` 를 누른 채 다른 오브젝트 / 컴포넌트를 드래그 = 선택하지 않고 바로 이동, 놓으면 원래 툴 (Move/Rotate/Scale/선택).
 - [ ] (step 87) 카메라 뷰에서 \ 누른 채 LMB 드래그 = 카메라 화면 팬, MMB 드래그 = 줌 (렌더는 그대로); 사용자 뷰에서는 Help Line 안내.
 
+
+### Step 90 — 전역 키 묶음 4
+
+- [ ] (step 90) 그룹을 선택하고 Ctrl+X → 그룹과 자식이 사라짐, Ctrl+V → 같은 이름 (shape 도 .001 없음) 으로 돌아오고 그룹이 lead (Channel Box 에 보임). Outliner 에서 Ctrl+X 도 같음. Edit > Cut 메뉴도 같음.
+- [ ] (step 90) Alt+X → Walk (WASD / 마우스), 클릭 또는 Enter = 그 자리에서 끝, ESC = 원래 뷰. X-ray 는 켜지지 않음. Maya Walk 툴은 툴을 바꿀 때까지 남지만 kit 는 모달 (느낌 비교).
+- [ ] (step 90) 재생 범위를 줄인 뒤 Alt+\ → Range Slider 가 애니메이션 범위 전체, Range Slider 더블클릭 → 줄였던 범위로 돌아옴.
+- [ ] (step 90) 네 분할 뷰에서 마우스를 둔 뷰만 Alt+1 = 커브 숨김 / 보임, Alt+2 = 메시 숨김 / 보임. Alt+4 = Free Image Plane 숨김 / 보임 (Blender 한계로 모든 뷰).
+- [ ] (step 90) Ctrl+Shift+~ = Subdivision 추가 (Smooth Preview 3 이 켜져 있어도 미리보기는 스택 끝), Ctrl+` = 케이지 ↔ 스무드, Shift+~ = 스무드 + 케이지 와이어, 다시 Ctrl+` = 케이지만. 프록시 없이 Ctrl+` = Help Line 경고. 미국 배열이 아닌 키보드에서 ` / ~ 위치 확인.

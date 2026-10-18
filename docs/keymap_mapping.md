@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 142 |
-| IC 일치 | 10 |
+| 구현 | 152 |
+| IC 일치 | 15 |
 | 해당 없음 | 11 |
-| 미검토 | 237 |
+| 미검토 | 222 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -23,18 +23,18 @@
 | z | Z | global | Undo | Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:67 |
 | Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:68 |
 | Shift+Z | Shift+Z | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:69 |
-| Ctrl+q | Ctrl+Q | global | Quit | Window: `wm.quit_blender` | 미검토 |  | hotkeySetup.mel:71 |
+| Ctrl+q | Ctrl+Q | global | Quit | Window: `wm.quit_blender` | IC 일치 |  | hotkeySetup.mel:71 |
 | Ctrl+o | Ctrl+O | global | OpenScene | Window: `maya_kit.open_scene` | 구현 | 파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로) | hotkeySetup.mel:73 |
-| Ctrl+n | Ctrl+N | global | NewScene | Window: `wm.read_homefile` | 미검토 |  | hotkeySetup.mel:74 |
+| Ctrl+n | Ctrl+N | global | NewScene | Window: `wm.read_homefile` | IC 일치 | 새 장면 (템플릿 시작 장면) | hotkeySetup.mel:74 |
 | Ctrl+s | Ctrl+S | global | SaveScene | Window: `maya_kit.save_scene` | 구현 | 처음 저장은 프로젝트 scenes 폴더에서 Save As | hotkeySetup.mel:75 |
 | Ctrl+Shift+S | Ctrl+Shift+S | global | SaveSceneAs | Window: `maya_kit.save_scene_as` | 구현 | 프로젝트 scenes 폴더에서 시작 | hotkeySetup.mel:76 |
 | Ctrl+Alt+s | Ctrl+Alt+S | global | IncrementAndSave | Window: `maya_kit.increment_save` | 구현 | Maya 규칙 shot_v001 → shot_v001.0001 (메뉴와 같음; IC 의 Blender 규칙 shot_v002 대신) | hotkeySetup.mel:77 |
 | Ctrl+r | Ctrl+R | global | CreateReference | Window: `maya_kit.create_reference` | 구현 | .blend 링크 + library override, 이름 ns:이름 (편집 모드 등 Ctrl+R 이 있는 에디터는 그쪽 우선) | hotkeySetup.mel:78 |
 | Ctrl+g | Ctrl+G | global | Group | Object Mode: `maya_kit.group` | 구현 | Empty 그룹, 피벗 원점, group1 명명 (Outliner 도) | hotkeySetup.mel:79 |
 | Ctrl+Shift+I | Ctrl+Shift+I | global | InvertSelection | Object Mode: `object.select_all` (action='INVERT'); Mesh: `mesh.select_all` (action='INVERT') | 구현 | 편집 모드: mesh.select_all(INVERT) | hotkeySetup.mel:81 |
-| Ctrl+x | Ctrl+X | global | CutSelected | — | 미검토 |  | hotkeySetup.mel:84 |
-| Ctrl+c | Ctrl+C | global | CopySelected | 3D View: `view3d.copybuffer` | 미검토 |  | hotkeySetup.mel:85 |
-| Ctrl+v | Ctrl+V | global | PasteSelected | 3D View: `view3d.pastebuffer` | 미검토 |  | hotkeySetup.mel:86 |
+| Ctrl+x | Ctrl+X | global | CutSelected | Object Mode: `maya_kit.cut` | 구현 | 선택 (+ 그 아래 계층) 을 클립보드로 복사 후 삭제, Ctrl+V 로 되돌림 (Outliner 도) | hotkeySetup.mel:84 |
+| Ctrl+c | Ctrl+C | global | CopySelected | 3D View: `view3d.copybuffer` | IC 일치 | 선택 오브젝트를 Blender 클립보드로 | hotkeySetup.mel:85 |
+| Ctrl+v | Ctrl+V | global | PasteSelected | Object Mode: `maya_kit.paste`; 3D View: `view3d.pastebuffer` | 구현 | Blender 붙여넣기 + 첫 오브젝트가 lead (Channel Box); Maya 의 pasted_ 접두사는 없음 (이름이 비면 원래 이름) | hotkeySetup.mel:86 |
 | Ctrl+Up | Ctrl+UP_ARROW | global | IncreaseCheckerDensity | — | 미검토 |  | hotkeySetup.mel:88 |
 | Ctrl+Down | Ctrl+DOWN_ARROW | global | DecreaseCheckerDensity | — | 미검토 |  | hotkeySetup.mel:89 |
 | q | Q | timeEditorPanel | TimeEditorSceneAuthoringToggle | NLA Editor: `nla.select_box` (axis_range=False) | 미검토 |  | hotkeySetup.mel:92 |
@@ -279,8 +279,8 @@
 | Ctrl+, | Ctrl+COMMA | global | PrevSkinPaintMode | Screen: `screen.userpref_show` | 미검토 |  | hotkeySetup.mel:457 |
 | o | O | global | PolyBrushMarkingMenu / PolyBrushMarkingMenuPopDown (release) | — | 미검토 |  | hotkeySetup.mel:458 |
 | m | M | global | ModifyDisplacementPress / ModifyDisplacementRelease (release) | Object Mode: `wm.tool_set_by_id` (name='builtin.measure', cycle=True); Mesh: `wm.tool_set_by_id` (name='builtin.measure', cycle=True) | 미검토 |  | hotkeySetup.mel:463 |
-| Return | RET | outlinerPanel | OutlinerRenameSelectedItem | Outliner: `outliner.item_rename` (use_active=True); Screen: `file.execute` | 미검토 |  | hotkeySetup.mel:467 |
-| f | F | outlinerPanel | OutlinerRevealSelected | Outliner: `outliner.show_active` | 미검토 |  | hotkeySetup.mel:468 |
+| Return | RET | outlinerPanel | OutlinerRenameSelectedItem | Outliner: `outliner.item_rename` (use_active=True); Screen: `file.execute` | IC 일치 | 활성 행 이름 바꾸기 | hotkeySetup.mel:467 |
+| f | F | outlinerPanel | OutlinerRevealSelected | Outliner: `outliner.show_active` | IC 일치 | 선택 항목까지 펼치고 보이기 | hotkeySetup.mel:468 |
 | 1 | ONE | nodeEditorPanel | NodeEditorHideAttributes | — | 미검토 |  | hotkeySetup.mel:471 |
 | 2 | TWO | nodeEditorPanel | NodeEditorShowConnectedAttrs | — | 미검토 |  | hotkeySetup.mel:472 |
 | 3 | THREE | nodeEditorPanel | NodeEditorShowAllAttrs | — | 미검토 |  | hotkeySetup.mel:473 |
@@ -433,9 +433,9 @@
 | Ctrl+Space | Ctrl+SPACE | global | ToggleFullScreenMode | Screen: `screen.screen_full_area` (use_hide_panels=True) | 구현 | UI 숨긴 전체 화면 | hotkeySetup.mel:664 |
 | Shift+Space | Shift+SPACE | global | ToggleZoomInMode | 3D View Generic: `wm.context_toggle` (data_path='space_data.show_region_asset_shelf') | 미검토 |  | hotkeySetup.mel:666 |
 | Alt+b | Alt+B | global | CycleBackgroundColor | — | 미검토 |  | hotkeySetup.mel:669 |
-| Ctrl+` | Ctrl+ACCENT_GRAVE | global | SmoothingDisplayToggle | — | 미검토 |  | hotkeySetup.mel:673 |
-| Shift+~ | Shift+ACCENT_GRAVE | global | SmoothingDisplayShowBoth | — | 미검토 |  | hotkeySetup.mel:674 |
-| Ctrl+Shift+~ | Ctrl+Shift+ACCENT_GRAVE | global | SmoothProxy | — | 미검토 |  | hotkeySetup.mel:675 |
+| Ctrl+` | Ctrl+ACCENT_GRAVE | global | SmoothingDisplayToggle | Object Mode: `maya_kit.smooth_proxy` (action='TOGGLE'); Mesh: `maya_kit.smooth_proxy` (action='TOGGLE') | 구현 | 프록시 Subsurf 켬 ↔ 끔 (케이지 ↔ 스무드), 둘 다 보기 → 케이지 | hotkeySetup.mel:673 |
+| Shift+~ | Shift+ACCENT_GRAVE | global | SmoothingDisplayShowBoth | Object Mode: `maya_kit.smooth_proxy` (action='BOTH'); Mesh: `maya_kit.smooth_proxy` (action='BOTH') | 구현 | Subsurf 켬 + 케이지 와이어 | hotkeySetup.mel:674 |
+| Ctrl+Shift+~ | Ctrl+Shift+ACCENT_GRAVE | global | SmoothProxy | Object Mode: `maya_kit.smooth_proxy` (action='CREATE') | 구현 | Mesh > Smooth Proxy > Subdiv Proxy (Subsurf 추가) | hotkeySetup.mel:675 |
 | Alt+` | Alt+ACCENT_GRAVE | global | CreateSubdivSurface | — | 미검토 |  | hotkeySetup.mel:676 |
 | Alt+Shift+~ | Alt+Shift+ACCENT_GRAVE | global | CreateSubdivSurfaceOptions | — | 미검토 |  | hotkeySetup.mel:677 |
 | Page_Up | PAGE_UP | global | SmoothingLevelIncrease | Object Mode: `maya_kit.smooth_level` (delta=1); Mesh: `maya_kit.smooth_level` (delta=1) | 구현 | 스무스 프리뷰 단계 0–4 — step 27 | hotkeySetup.mel:678 |
@@ -447,7 +447,7 @@
 | Ctrl+Shift+W | Ctrl+Shift+W | global | ToggleSteeringWheel | Screen: `maya_kit.insert_key` (channels='TRANSLATE') | 미검토 |  | hotkeySetup.mel:694 |
 | \ | BACK_SLASH | global | TogglePanZoomPress | 3D View: `maya_kit.pan_zoom_hold` | 구현 | 카메라 뷰에서 누르는 동안 LMB 팬 / MMB 줌 (camera view offset / zoom, 렌더 그대로) | hotkeySetup.mel:697 |
 | \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | 3D View: `maya_kit.pan_zoom_hold` | 구현 | 놓기 = pan_zoom_hold 모달이 끝냄 (누름 행의 항목) | hotkeySetup.mel:698 |
-| Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.toggle_xray` | 미검토 |  | hotkeySetup.mel:701 |
+| Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.walk` | 구현 | Blender Walk 모달 (클릭 / Enter = 끝, ESC = 취소); IC Alt+X X-ray 제거 | hotkeySetup.mel:701 |
 | Shift+T | Shift+T | global | AssignNewMaterial | Object Mode: `maya_kit.assign_new_material`; Mesh: `maya_kit.assign_new_material` | 구현 | 재질 종류 검색 팝업 → 만들어 지정 (편집 모드 면 선택 = 면에만, step 29) | hotkeySetup.mel:705 |
 | Ctrl+= | Ctrl+EQUAL | global | IncreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:708 |
 | Ctrl+- | Ctrl+MINUS | global | DecreaseExposureFine | — | 미검토 |  | hotkeySetup.mel:709 |
@@ -469,9 +469,9 @@
 | Ctrl+Shift+R | Ctrl+Shift+R | global | InsertKeyScale | Screen: `maya_kit.insert_key` (channels='SCALE') | 구현 | 있는 Scale 곡선에만, 모양 그대로 | hotkeySetup.mel:731 |
 | Alt+i | Alt+I | global | InsertKey | Screen: `maya_kit.insert_key` (channels='ALL') | 구현 | 곡선 모양 그대로 현재 시간 키: Graph Editor 선택 곡선 → 보이는 곡선, 그 밖 = 선택 노드 곡선 | hotkeySetup.mel:732 |
 | Alt+/ | Alt+SLASH | graphEditor | SnapTimeToSelection | — | 미검토 |  | hotkeySetup.mel:734 |
-| Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | — | 미검토 |  | hotkeySetup.mel:735 |
-| Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | — | 미검토 |  | hotkeySetup.mel:736 |
-| Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | — | 미검토 |  | hotkeySetup.mel:737 |
+| Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | 3D View: `maya_kit.toggle_show` (kind='CURVES') | 구현 | 커서 아래 뷰의 커브 보이기 | hotkeySetup.mel:735 |
+| Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | 3D View: `maya_kit.toggle_show` (kind='POLYGONS') | 구현 | 커서 아래 뷰의 메시 보이기 | hotkeySetup.mel:736 |
+| Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | 3D View: `maya_kit.toggle_show` (kind='IMAGE_PLANES') | 구현 | 이미지 엠프티 (Free Image Plane) 표시 — Blender 에 뷰별 필터가 없어 모든 뷰 | hotkeySetup.mel:737 |
 | Alt+5 | Alt+FIVE | global | ToggleWireframeOnShadedCmd | 3D View: `wm.context_toggle` (data_path='space_data.overlay.show_wireframes') | 구현 | 뷰포트 오버레이 Wireframe (모든 오브젝트) — step 27 | hotkeySetup.mel:738 |
 | Shift+) | Shift+ZERO | global | NudgeSelectedKeysForward | Screen: `maya_kit.nudge_keys` (delta=1) | 구현 | Graph Editor / Dope Sheet 선택 키, 그 밖 = 선택 노드의 현재 시간 (또는 Shift 범위) 키 + 시간도 같이 | hotkeySetup.mel:739 |
 | Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | Screen: `maya_kit.nudge_keys` (delta=-1) | 구현 | 겹치는 키는 덮어씀 (Maya -o over) | hotkeySetup.mel:740 |
@@ -480,6 +480,6 @@
 | Shift+&#124; | Shift+BACK_SLASH | global | FrameTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:744 |
 | Shift+" | Shift+QUOTE | global | FrameNextTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:745 |
 | Shift+: | Shift+SEMI_COLON | global | FramePreviousTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:746 |
-| Alt+\ | Alt+BACK_SLASH | global | PlaybackRangeAnimStartEnd | — | 미검토 |  | hotkeySetup.mel:747 |
+| Alt+\ | Alt+BACK_SLASH | global | PlaybackRangeAnimStartEnd | Screen: `maya_kit.playback_range_anim` | 구현 | 재생 범위 = 애니메이션 범위 (프리뷰 범위 끔, 값은 남아 Range Slider 더블클릭으로 되돌림) | hotkeySetup.mel:747 |
 | ' | QUOTE | global | NextTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:748 |
 | ; | SEMI_COLON | global | PreviousTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:749 |

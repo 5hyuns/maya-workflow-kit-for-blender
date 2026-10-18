@@ -891,6 +891,31 @@ def patch_view_keys_3(kd):
     _add(kd, "3D View", "maya_kit.pan_zoom_hold", make_event("BACK_SLASH"), shadows=VIEW3_SHADOWS)
 
 
+# --- 43. Global key batch 4 (docs/steps/step_90.md 「계획」 2) ----------------------------------------------
+# hotkeySetup.mel:84 (Ctrl+x), 701 (Alt+x), 747 (Alt+backslash), 735-737 (Alt+1/2/4), 673-675 (Ctrl+` / Shift+~ /
+# Ctrl+Shift+~). Ctrl+X exists only in other editors / modes (Text, Console, Font, Grease Pencil edit); Alt+X was IC's
+# X-ray toggle; the rest were free. Plain ` stays step 87's tweak hold.
+CUT_SHADOWS = ("Text", "Console", "Font", "Grease Pencil Edit Mode")
+SHOW_KEYS = (("ONE", "CURVES"), ("TWO", "POLYGONS"), ("FOUR", "IMAGE_PLANES"))
+
+
+def patch_global_keys_4(kd):
+    for km in ("Object Mode", "Outliner"):
+        _add(kd, km, "maya_kit.cut", make_event("X", ctrl=True), shadows=CUT_SHADOWS)
+    # Blender's paste leaves no active object after a cut: the kit paste makes the first pasted node the lead.
+    _add(kd, "Object Mode", "maya_kit.paste", make_event("V", ctrl=True), shadows=("3D View",))
+    kd.remove("3D View", "view3d.toggle_xray", type="X", alt=True)
+    _add(kd, "3D View", "view3d.walk", make_event("X", alt=True), shadows=VIEW3_SHADOWS)
+    _add(kd, "Screen", "maya_kit.playback_range_anim", make_event("BACK_SLASH", alt=True))
+    for key, kind in SHOW_KEYS:
+        _add(kd, "3D View", "maya_kit.toggle_show", make_event(key, alt=True), {"kind": kind}, shadows=VIEW3_SHADOWS)
+    for km in ("Object Mode", "Mesh"):
+        _add(kd, km, "maya_kit.smooth_proxy", make_event("ACCENT_GRAVE", ctrl=True), {"action": "TOGGLE"})
+        _add(kd, km, "maya_kit.smooth_proxy", make_event("ACCENT_GRAVE", shift=True), {"action": "BOTH"})
+    _add(kd, "Object Mode", "maya_kit.smooth_proxy", make_event("ACCENT_GRAVE", ctrl=True, shift=True),
+         {"action": "CREATE"})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -901,7 +926,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
-           patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3)
+           patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
+           patch_global_keys_4)
 
 
 def apply(data):
