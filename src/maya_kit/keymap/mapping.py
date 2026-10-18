@@ -365,6 +365,13 @@ ENTRIES = {
                         note="Blender 붙여넣기 + 첫 오브젝트가 lead (Channel Box); Maya 의 pasted_ 접두사는 없음 (이름이 비면 원래 이름)"),
     "outlinerPanel:OutlinerRenameSelectedItem": _e("IC", ("Outliner", "outliner.item_rename", {}), note="활성 행 이름 바꾸기"),
     "outlinerPanel:OutlinerRevealSelected": _e("IC", ("Outliner", "outliner.show_active", {}), note="선택 항목까지 펼치고 보이기"),
+    # --- step 92: Graph Editor key batch ---
+    "graphEditor:GraphEditorFrameCenterView": _e("KIT", ("Graph Editor", "maya_kit.graph_center_time", {}),
+                                                 note="현재 시간을 가운데로 (가로만, 확대 그대로)"),
+    "graphEditor:SnapTimeToSelection": _e("KIT", ("Graph Editor", "maya_kit.snap_time_toggle", {}),
+                                          note="Snap Time To Selection 켬/끔 (View 메뉴 체크): 키 선택 = 가장 이른 키로 시간"),
+    "InsertKeyToolActivate": _e("KIT", ("Graph Editor", "maya_kit.insert_key_tool", {}),
+                                note="Graph Editor 에서 누르는 동안 MMB 클릭 / 드래그 = 선택 곡선에 모양 그대로 키 (정수 프레임); 전역 I = Mesh inset 그대로"),
     # --- step 69: scene files (Window keymap, operators/project.py) ---
     "OpenScene": _e("KIT", ("Window", "maya_kit.open_scene", {}), note="파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로)"),
     "SaveScene": _e("KIT", ("Window", "maya_kit.save_scene", {}), note="처음 저장은 프로젝트 scenes 폴더에서 Save As"),

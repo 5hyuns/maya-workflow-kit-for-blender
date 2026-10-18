@@ -916,6 +916,17 @@ def patch_global_keys_4(kd):
          {"action": "CREATE"})
 
 
+
+# --- 44. Graph Editor key batch ------------------------------------------
+# Maya (t = GraphEditorFrameCenterView), :734 (Alt+/ = SnapTimeToSelection toggle), :335 (i hold =
+# Insert Key tool; Maya binds it globally, it only means something in the Graph Editor: 
+# animation.md:142). None of these events is bound in the Graph Editor keymaps (checked).
+
+def patch_graph_keys_2(kd):
+    _add(kd, "Graph Editor", "maya_kit.graph_center_time", make_event("T"))
+    _add(kd, "Graph Editor", "maya_kit.snap_time_toggle", make_event("SLASH", alt=True))
+    _add(kd, "Graph Editor", "maya_kit.insert_key_tool", make_event("I"))
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -927,7 +938,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
-           patch_global_keys_4)
+           patch_global_keys_4, patch_graph_keys_2)
 
 
 def apply(data):

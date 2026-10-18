@@ -13,7 +13,7 @@ Shift+S = ``KeyTangentBinding``: hold + LMB opens the marking menu; a tap does n
 import bpy
 from bpy.props import EnumProperty
 
-from . import taphold, time_keys
+from . import keystate, taphold, time_keys
 
 KEY_ACTIONS = [(k, l, d) for k, l, d in time_keys.ACTIONS if k not in {"SNAP", "TANGENT"}]
 
@@ -151,6 +151,243 @@ class MAYAKIT_OT_graph_view_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- t / Alt+/ / i ----------------
+
+def center_delta(frame_x, region_width):
+    """Pixels to pan so the current frame (at region x ``frame_x``) sits in the middle (Maya t = lookAt currentTime:
+    horizontal only, zoom and value range kept)."""
+    return int(round(frame_x - region_width / 2.0))
+
+
+class MAYAKIT_OT_graph_center_time(bpy.types.Operator):
+    """Center the Graph Editor on the current time, keeping the zoom (Maya t)"""
+    bl_idname = "maya_kit.graph_center_time"
+    bl_label = "Center Current Time"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return in_graph_editor(context) and context.region is not None and context.region.type == 'WINDOW'
+
+    def execute(self, context):
+        region = context.region
+        x, _y = region.view2d.view_to_region(context.scene.frame_current, 0.0, clip=False)
+        dx = center_delta(x, region.width)
+        if dx:
+            bpy.ops.view2d.pan(deltax=dx, deltay=0)
+        return {'FINISHED'}
+
+
+def snap_target(times):
+    """Maya Snap Time To Selection: the earliest selected key (None when nothing is selected)."""
+    return min(times) if times else None
+
+
+def selected_key_times(objects):
+    """{(object name, data path, index): (selected key times,)} over the objects' actions (numpy, cheap)."""
+    import numpy as np
+    out = {}
+    for ob in objects:
+        ad = ob.animation_data
+        action = ad.action if ad else None
+        if action is None:
+            continue
+        for fc in action.fcurves:
+            n = len(fc.keyframe_points)
+            if not n:
+                continue
+            sel = np.empty(n, dtype=bool)
+            fc.keyframe_points.foreach_get("select_control_point", sel)
+            if sel.any():
+                co = np.empty(n * 2, dtype=np.float32)
+                fc.keyframe_points.foreach_get("co", co)
+                out[(ob.name, fc.data_path, fc.array_index)] = tuple(float(t) for t in co[0::2][sel])
+    return out
+
+
+_snap = {"last": None}
+SNAP_POLL = 0.15
+
+
+def remember_selection(scene=None):
+    """Take the current key selection as the baseline (a kit edit that selects keys must not move the time)."""
+    scene = scene or bpy.context.scene
+    _snap["last"] = selected_key_times(scene.objects) if scene else None
+
+
+def snap_step(scene, enabled):
+    """One poll: the frame to go to, or None. Keeps the baseline in ``_snap``."""
+    if not enabled:
+        _snap["last"] = None
+        return None
+    now = selected_key_times(scene.objects)
+    last, _snap["last"] = _snap["last"], now
+    if last is None or now == last:
+        return None
+    return snap_target([t for ts in now.values() for t in ts])
+
+
+def _graph_open():
+    wm = bpy.context.window_manager
+    return any(a.type == 'GRAPH_EDITOR' for w in wm.windows for a in w.screen.areas)
+
+
+def _snap_tick():
+    try:
+        from .. import preferences
+        enabled = preferences.get().snap_time_to_selection and _graph_open()
+        scene = bpy.context.scene
+        frame = snap_step(scene, enabled) if scene else None
+        if frame is not None:
+            whole = int(frame // 1)
+            scene.frame_set(whole, subframe=frame - whole)
+    except (KeyError, AttributeError, ReferenceError):
+        pass
+    return SNAP_POLL
+
+
+@bpy.app.handlers.persistent
+def _snap_reset(*_args):
+    _snap["last"] = None
+
+
+class MAYAKIT_OT_snap_time_toggle(bpy.types.Operator):
+    """Turn Snap Time To Selection on or off: selecting keys moves the current time to them (Maya Alt+/)"""
+    bl_idname = "maya_kit.snap_time_toggle"
+    bl_label = "Snap Time To Selection"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        from .. import preferences
+        prefs = preferences.get(context)
+        prefs.snap_time_to_selection = not prefs.snap_time_to_selection
+        remember_selection(context.scene)
+        self.report({'INFO'}, "Snap Time To Selection: " + ("on" if prefs.snap_time_to_selection else "off"))
+        return {'FINISHED'}
+
+
+def draw_view_menu(self, context):
+    """Graph Editor View > Snap Time To Selection (the Maya View menu check item, Maya-945)."""
+    from .. import preferences
+    try:
+        prefs = preferences.get(context)
+    except KeyError:
+        return
+    self.layout.separator()
+    self.layout.prop(prefs, "snap_time_to_selection")
+
+
+def insert_frame(view_x):
+    """Maya's Insert Key tool keys on the whole frame under the mouse."""
+    return int(round(view_x))
+
+
+def insert_curves(curves):
+    """Curves the Insert Key tool keys: the selected ones (a selected key or the channel selected), unlocked."""
+    return [fc for fc in curves
+            if not fc.lock and (fc.select or any(kp.select_control_point for kp in fc.keyframe_points))]
+
+
+def insert_on(curves, frame):
+    """Insert a shape-keeping key at ``frame`` on each curve; afterwards only the new keys are selected (Maya).
+    Returns the curves that got a key."""
+    from .key_insert import _at, insert_keep_shape
+    done = [fc for fc in curves if insert_keep_shape(fc, frame)]
+    for fc in curves:
+        for kp in fc.keyframe_points:
+            kp.select_control_point = kp.select_left_handle = kp.select_right_handle = False
+        kp = _at(fc, frame)
+        if kp is not None:
+            kp.select_control_point = True
+    return done
+
+
+_LINE = {"x": None, "handle": None, "region": None}
+
+
+def _draw_line():
+    x = _LINE["x"]
+    region = bpy.context.region
+    if x is None or region is None or region.as_pointer() != _LINE["region"]:
+        return
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    coords, y = [], 0
+    while y < region.height:                      # dashed, like Maya's insert line
+        coords += [(x, y), (x, min(y + 6, region.height))]
+        y += 10
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    shader.uniform_float("color", (1.0, 1.0, 1.0, 0.9))
+    batch_for_shader(shader, 'LINES', {"pos": coords}).draw(shader)
+
+
+class MAYAKIT_OT_insert_key_tool(bpy.types.Operator):
+    """Insert Key tool while held: MMB click / drag in the Graph Editor inserts a key on the selected curves at that
+    frame, keeping the curve shape (Maya i)"""
+    bl_idname = "maya_kit.insert_key_tool"
+    bl_label = "Insert Key Tool (hold)"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return in_graph_editor(context) and context.region is not None and context.region.type == 'WINDOW'
+
+    def invoke(self, context, event):
+        if event.value != 'PRESS':
+            return {'CANCELLED'}
+        self._key, self._region, self._area, self._drag = event.type, context.region, context.area, False
+        self._timer = context.window_manager.event_timer_add(0.05, window=context.window)
+        _LINE.update(x=None, region=context.region.as_pointer())
+        _LINE["handle"] = bpy.types.SpaceGraphEditor.draw_handler_add(_draw_line, (), 'WINDOW', 'POST_PIXEL')
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _finish(self, context):
+        context.window_manager.event_timer_remove(self._timer)
+        if _LINE["handle"] is not None:
+            bpy.types.SpaceGraphEditor.draw_handler_remove(_LINE["handle"], 'WINDOW')
+        _LINE.update(x=None, handle=None, region=None)
+        self._area.tag_redraw()
+        return {'FINISHED'}
+
+    def _local_x(self, event):
+        return event.mouse_x - self._region.x
+
+    def _insert(self, context, event):
+        view_x, _v = self._region.view2d.region_to_view(self._local_x(event), event.mouse_y - self._region.y)
+        curves = insert_curves(list(getattr(context, "visible_fcurves", None) or ()))
+        if insert_on(curves, insert_frame(view_x)):
+            remember_selection(context.scene)        # Maya: inserting doesn't move the time
+            bpy.ops.ed.undo_push(message="Insert Key")
+
+    def modal(self, context, event):
+        if event.type == self._key:
+            if event.value == 'RELEASE' and not self._drag:
+                return self._finish(context)
+            return {'RUNNING_MODAL'}
+        if event.type == 'MIDDLEMOUSE':
+            if event.value == 'PRESS':
+                self._drag = True
+                _LINE["x"] = self._local_x(event)
+                self._area.tag_redraw()
+                return {'RUNNING_MODAL'}
+            if event.value == 'RELEASE' and self._drag:
+                self._drag = False
+                self._insert(context, event)
+                _LINE["x"] = None
+                self._area.tag_redraw()
+                if keystate.is_down(self._key) is False:
+                    return self._finish(context)
+                return {'RUNNING_MODAL'}
+        if event.type == 'MOUSEMOVE' and self._drag:
+            _LINE["x"] = self._local_x(event)
+            self._area.tag_redraw()
+            return {'RUNNING_MODAL'}
+        if event.type == 'TIMER' and not self._drag and keystate.is_down(self._key) is False:
+            return self._finish(context)
+        return {'RUNNING_MODAL'} if self._drag else {'PASS_THROUGH'}
+
+
 class KeyTangentBinding(taphold.TapHoldBinding):
     """Shift+S: hold + LMB = the Keyframe / Tangent marking menu (buildKeyframeTangentMM); a tap does nothing."""
     name = "key_tangent"
@@ -164,12 +401,23 @@ class KeyTangentBinding(taphold.TapHoldBinding):
         modal.open_menu("buildKeyframeTangentMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
-classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit, MAYAKIT_OT_graph_view_mode)
+classes = (MAYAKIT_OT_set_tangent, MAYAKIT_OT_key_edit, MAYAKIT_OT_graph_view_mode, MAYAKIT_OT_graph_center_time,
+           MAYAKIT_OT_snap_time_toggle, MAYAKIT_OT_insert_key_tool)
 
 
 def register_bindings():
     taphold.register_binding(KeyTangentBinding())
+    bpy.types.GRAPH_MT_view.append(draw_view_menu)
+    bpy.app.handlers.load_post.append(_snap_reset)
+    if not bpy.app.timers.is_registered(_snap_tick):
+        bpy.app.timers.register(_snap_tick, first_interval=SNAP_POLL, persistent=True)
 
 
 def unregister_bindings():
+    if bpy.app.timers.is_registered(_snap_tick):
+        bpy.app.timers.unregister(_snap_tick)
+    if _snap_reset in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_snap_reset)
+    bpy.types.GRAPH_MT_view.remove(draw_view_menu)
+    _snap["last"] = None
     taphold.unregister_binding(KeyTangentBinding.name)
