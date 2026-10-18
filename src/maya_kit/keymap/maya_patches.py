@@ -22,7 +22,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press",
+PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.time_range_drag", "maya_kit.manip_duplicate", "maya_kit.manip_press",
                       "maya_kit.select_priority", "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
                       "maya_kit.time_slider_menu")
 
@@ -819,6 +819,24 @@ def patch_key_insert(kd):
              shadows=KEY_STEP_SHADOWS)
 
 
+# --- 40. Time Slider range drag ---------------------------------------------
+# A press on the highlighted range moves / scales its keys; anywhere else it passes through to time_scrub (step 56),
+# so it goes in front of it (added after patch_time_slider: ``first`` puts the latest item first).
+# The MayaKit Time Slider row (29 px at 1.25) is all Blender's scrub strip, whose "Time Scrub" keymap (LMB =
+# anim.change_frame, blender_default.py:1171-1183) runs before "Dopesheet"; IC has no "Time Scrub", so Blender used
+# its default one (checked with --debug-handlers). The Maya keyconfig gets its own: change_frame kept, the range
+# drag and step 56's time_scrub (a click drops the range) in front; both pass through outside the Time Slider.
+TIME_SCRUB_KM = ("Time Scrub", {"space_type": 'EMPTY', "region_type": 'WINDOW'})
+
+
+def patch_time_range(kd):
+    _add(kd, "Dopesheet", "maya_kit.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=TIME_SLIDER_SHADOWS)
+    kd.ensure(*TIME_SCRUB_KM, [("anim.change_frame", make_event("LEFTMOUSE"), None)])
+    shadows = (*TIME_SLIDER_SHADOWS, "Time Scrub")
+    _add(kd, "Time Scrub", "maya_kit.time_scrub", make_event("LEFTMOUSE"), first=True, shadows=shadows)
+    _add(kd, "Time Scrub", "maya_kit.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=shadows)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -829,7 +847,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
-           patch_key_insert)
+           patch_key_insert, patch_time_range)
 
 
 def apply(data):

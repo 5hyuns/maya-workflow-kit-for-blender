@@ -67,6 +67,14 @@ class KeyconfigData:
             return []
         return self._by_name[km_name][2]["items"]
 
+    def ensure(self, name, params, items=()):
+        """Add a keymap the source data doesn't have (e.g. IC has no "Time Scrub": Blender then uses its default one)."""
+        if name not in self._by_name:
+            km = (name, dict(params), {"items": list(items)})
+            self.data.append(km)
+            self._by_name[name] = km
+        return self._by_name[name]
+
     def keymap_names(self):
         return list(self._by_name)
 

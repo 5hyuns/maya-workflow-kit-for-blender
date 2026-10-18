@@ -195,6 +195,7 @@ def _no_editor_menus(cls, context, layout):
 # through in the Dope Sheet itself (keys are clicked there in Maya too).
 
 RANGE_COLOR = (0.78, 0.16, 0.16, 0.35)   # Maya's red range highlight 
+RANGE_ARROW_COLOR = (1.0, 1.0, 1.0, 0.9)
 MMB_NOTICE = ("Blender always updates the scene when the time changes (no Maya MMB time drag): "
               "copy keys instead (RMB > Copy, move, RMB > Paste).")
 # Time Slider items with no Blender equivalent: (label, Help Line text)
@@ -266,6 +267,93 @@ class MAYAKIT_OT_time_scrub(bpy.types.Operator):
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
             scene.frame_current = self._old[0]
             set_range(wm, *self._old[1], on=self._old[2])
+            _tag(context)
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
+RANGE_EDGE_PX = 8          # end-arrow zone of a highlighted range (x UI scale),  「계획」 1
+
+
+def range_zone(context, region, x):
+    """'LEFT' / 'RIGHT' / 'MOVE' when window x is on the highlighted range of this timeline, else None."""
+    from ..operators import time_range
+    wm = context.window_manager
+    if not getattr(wm, "maya_kit_time_range_on", False):
+        return None
+    x0, x1 = range_rect(region, *wm.maya_kit_time_range)
+    edge = RANGE_EDGE_PX * (context.preferences.system.ui_scale or 1.0)
+    return time_range.zone(x - region.x, x0, x1, edge)
+
+
+class MAYAKIT_OT_time_range_drag(bpy.types.Operator):
+    """Maya Time Slider range: drag the middle to move its keys, an end arrow to scale them"""
+    bl_idname = "maya_kit.time_range_drag"
+    bl_label = "Move / Scale Range Keys"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def invoke(self, context, event):
+        from ..operators import time_keys, time_range
+        region = context.region
+        if not _is_timeline(context) or region is None or region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        mode = range_zone(context, region, event.mouse_x)
+        if mode is None:
+            return {'PASS_THROUGH'}
+        wm = context.window_manager
+        a, b = sorted(wm.maya_kit_time_range)
+        curves, seen = [], set()
+        for node in time_keys.nodes(context):
+            for fc in time_keys.node_fcurves(node):
+                if fc.as_pointer() in seen:
+                    continue
+                seen.add(fc.as_pointer())
+                idx = [i for i, kp in enumerate(fc.keyframe_points) if time_keys._in(kp, a, b)]
+                if idx:
+                    curves.append((fc, idx))
+        self._drag = time_range.Drag(curves, a, b)
+        self._region, self._mode, self._range = region, ('MOVE' if a == b else mode), (a, b)
+        self._f0 = frame_at(region, event.mouse_x)
+        self._f, self._moved = self._f0, False
+        self._x0 = event.mouse_x
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _update(self, context, f):
+        from ..operators import time_range
+        wm = context.window_manager
+        self._f = f
+        self._drag.apply(self._mode, self._f0, f)
+        set_range(wm, *time_range.new_range(*self._range, self._mode, self._f0, f))
+        _tag(context)
+        for area in context.screen.areas:
+            if area.type in {'GRAPH_EDITOR', 'VIEW_3D'}:
+                area.tag_redraw()
+
+    def modal(self, context, event):
+        wm, scene = context.window_manager, context.scene
+        if event.type == 'MOUSEMOVE':
+            f = frame_at(self._region, event.mouse_x)
+            if abs(event.mouse_x - self._x0) >= 3:
+                self._moved = True
+            if self._moved and f != self._f:
+                self._update(context, f)
+            return {'RUNNING_MODAL'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            if not self._moved:
+                # a click on the range = a plain Time Slider click: drop the range, go to that frame (no undo step)
+                wm.maya_kit_time_range_on = False
+                scene.frame_current = self._f0
+                _tag(context)
+                return {'CANCELLED'}
+            n = self._drag.finish(self._mode, self._f0, self._f)
+            scene.frame_set(scene.frame_current)          # re-evaluate at the current time
+            self.report({'INFO'}, f"{'Moved' if self._mode == 'MOVE' else 'Scaled'} {n} key(s)")
+            _tag(context)
+            return {'FINISHED'}
+        if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            self._drag.cancel()
+            set_range(wm, *self._range)
             _tag(context)
             return {'CANCELLED'}
         return {'RUNNING_MODAL'}
@@ -440,6 +528,23 @@ def _draw_range():
     gpu.state.blend_set('ALPHA')
     shader.uniform_float("color", RANGE_COLOR)
     batch.draw(shader)
+    # Maya's arrows on a highlighted range  (step 84): ◀ / ▶ in the end zones (scale), ◀▶ in the middle (move)
+    edge = RANGE_EDGE_PX * (context.preferences.system.ui_scale or 1.0)
+    k = min(edge * 0.6, h * 0.25)
+    y = h * 0.5
+    tris = []
+
+    def arrow(cx, d):
+        tris.extend(((cx - d * k * 0.5, y), (cx + d * k * 0.5, y + k * 0.6), (cx + d * k * 0.5, y - k * 0.6)))
+    cx = (x0 + x1) * 0.5
+    if x1 - x0 >= 3 * edge:
+        arrow(x0 + edge * 0.5, 1)       # tip left
+        arrow(x1 - edge * 0.5, -1)      # tip right
+    arrow(cx - k * 0.55, 1)
+    arrow(cx + k * 0.55, -1)
+    batch = batch_for_shader(shader, 'TRIS', {"pos": tris})
+    shader.uniform_float("color", RANGE_ARROW_COLOR)
+    batch.draw(shader)
     gpu.state.blend_set('NONE')
 
 
@@ -537,7 +642,7 @@ def _on_load(_dummy=None):
         _schedule()
 
 
-classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider, MAYAKIT_OT_time_scrub, MAYAKIT_OT_time_slider_menu,
+classes = (MAYAKIT_MT_anim_preferences, MAYAKIT_PT_time_slider, MAYAKIT_OT_time_scrub, MAYAKIT_OT_time_range_drag, MAYAKIT_OT_time_slider_menu,
            MAYAKIT_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
 
 
