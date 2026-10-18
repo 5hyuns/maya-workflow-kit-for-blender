@@ -517,7 +517,7 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
 ### Remaining work, by priority (backlog.json, step 81+)
 
 1. **Maya persp field of view** (new finding): template lens 70, camera from view, look_compare.
-2. **Outliner drag = Maya parenting** (mapping row 90).
+2. **Outliner drag = Maya parenting** (mapping row 90). — done step 82 (MMB drag onto / between / empty, LMB drop redone the Maya way; Sets still open).
 3. **Insert / nudge key batch** (blindspots 2–3).
 4. **Time Slider Shift-range key drag / scale** (mapping row 92; step_56.md:113, step_73.md:121).
 5. **Manipulator Ctrl+LMB plane / Shift+MMB auto axis** (blindspot 4).

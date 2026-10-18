@@ -783,6 +783,17 @@ def patch_key_batch_2(kd):
     _add(kd, "Object Mode", "maya_kit.camera_from_view", make_event("C", shift=True, ctrl=True))
 
 
+# --- 38. Outliner MMB drag (docs/steps/step_82.md 「계획」 2) ------------------------------------------
+# Maya parents / reorders / unparents with an MMB drag in the Outliner (step_82.md 「근거」); Blender's Outliner has
+# no MMB item (IC "Outliner"), only View2D's MMB scroller_activate (IC:323), which passes through off the scroll
+# bars and runs first. Alt+MMB pans (IC View2D, = Maya). "View2D Buttons List" (MMB pan) belongs to button-list
+# regions (header / sidebar), not the Outliner tree. LMB drag stays Blender's (operators/outliner_drag.py redoes its
+# drop the Maya way).
+
+def patch_outliner_drag(kd):
+    _add(kd, "Outliner", "maya_kit.outliner_drag", make_event("MIDDLEMOUSE"), shadows=("View2D", "View2D Buttons List"))
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -792,7 +803,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
-           patch_scene_files, patch_graph_keys, patch_key_batch_2)
+           patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag)
 
 
 def apply(data):

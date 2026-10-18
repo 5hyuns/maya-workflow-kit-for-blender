@@ -9,7 +9,7 @@ Operator ids use the ``maya_kit.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (component, create, cut_sew, display, driven_key, duplicate, extrude, freeze, fx, graph_keys, group, history, hold, joints, key_batch, manip, marquee,
-               material, menu_extras, mesh_maya, mesh_tools, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, shading_maps, skin, snap_align, symmetry, taphold,
+               material, menu_extras, mesh_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, shading_maps, skin, snap_align, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -19,7 +19,8 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *marquee.classes, *preselect.classes, *select_priority.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
-           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes)
+           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes,
+           *outliner_drag.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -42,9 +43,11 @@ def register():
     project.register_handlers()
     preselect.register_handlers()
     cut_sew.register_handlers()
+    outliner_drag.register_handlers()
 
 
 def unregister():
+    outliner_drag.unregister_handlers()
     cut_sew.unregister_handlers()
     project.unregister_handlers()
     pivot.unregister_handler()

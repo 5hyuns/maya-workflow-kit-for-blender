@@ -556,3 +556,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 81) 새 장면 (MayaKit 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
 - [ ] (step 81) Create > Cameras > Camera = Focal Length 35 (AE / CB), Ctrl+Shift+C 카메라로 Look Through 하면 뷰와 같은 화면.
 - [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 — 시뮬레이션에서는 큰 화면 크기에서 스냅이 안 걸렸음 (step_81.md).
+
+### Step 82 — Outliner 드래그 = Maya 부모 지정
+
+- [ ] (step 82) Outliner 에서 항목을 MMB 로 끌어 다른 항목 위에 놓기 = 그 자식 (흰 테두리가 놓을 행), Channel Box 값이 Maya 처럼 부모 기준. 선택은 그대로.
+- [ ] (step 82) MMB 로 빈 곳에 놓기 = 월드로 (제자리). 선택된 항목을 끌면 선택 전부, 선택 안 된 항목을 끌면 그것만. ESC / RMB = 취소.
+- [ ] (step 82) LMB 드래그 (Blender 드래그) 로 놓아도 결과가 Maya 부모 지정 (parent inverse 없음), Ctrl+Z 한 번 = 드롭 전. 아마추어 본 행에 놓기는 Blender 그대로.
+- [ ] (step 82) Display > Sort Alphabetically 끈 뒤 MMB 를 행 위/아래 1/4 에 놓기 = 그 자리로 순서 바꿈 (흰 선). 정렬이 켜져 있으면 그 행의 부모 아래로만 옮김.
+- [ ] (step 82) Alt+MMB = Outliner 패닝, 휠 스크롤 그대로. 큰 장면 (오브젝트 수천) 에서 MMB 누름이 끊기지 않는지 (누를 때·놓을 때 선택을 바꿨다 되돌림).

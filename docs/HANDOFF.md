@@ -2,6 +2,24 @@
 
 ## 현재 작업
 
+- Step 82 (Outliner 드래그 = Maya 부모 지정) 완료 — `docs/steps/step_82.md`.
+  - Outliner MMB 드래그 = Maya: 항목 위 = 자식으로, 행 사이 = 그 자리 (정렬 끔일 때 순서까지), 빈 곳 = 월드. 월드 위치 유지, parent inverse
+    identity, 선택 그대로 (`operators/outliner_drag.py`). Blender LMB 드롭도 언두 후 Maya 방식으로 다시 적용 (언두 한 단계).
+  - 측정: Blender 의 정렬 끈 Outliner 는 목록의 첫 항목을 맨 뒤에 그림 → 템플릿 정렬은 켜 둠 (delegated).
+  - 검증: 헤드리스 646/646, GUI 579/579, dogfood 47/47.
+  - **바로 다음 할 일**: step 83 키 삽입·이동 묶음 (Alt+I, Ctrl+Shift+W/E/R, Shift+( ), Ctrl+Alt+, .; backlog_81.json 3번).
+    그 뒤 84 Shift 범위 키 이동, 85 매니퓰레이터 Ctrl 평면, 86 Dope Sheet·NLA·Node 수식, 87 뷰 키 묶음 3, 88 manual_checks → GUI.
+    backlog = `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_81.json` (backlog.json 은 없음). 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
+- **체크포인트 (2026-10-18, /sc:save) — 지금 단계 = 없음 (step 81 까지 완료, 다음 = step 82)**
+  - HEAD `06bfd06` = step 81. 작업 트리는 깨끗하다 (research/ 는 원래 추적 안 함; 이 체크포인트 줄만 미커밋).
+  - 이번 세션: step 76–79 (재점검 4차 backlog 끝) → step 80 재점검 5차 (c74dead, f45557c) → step 81 persp 화각 (06bfd06).
+  - 검증 (HEAD): 헤드리스 637/637, GUI (기본 배율) 559/559, dogfood 47/47.
+  - **바로 다음 할 일**: step 82 Outliner 드래그 = Maya 부모 지정 (드롭/키맵 충돌이라 `docs/steps/step_82.md` 「계획」 부터).
+    그 뒤 83 키 삽입·이동, 84 Shift 범위 키 이동, 85 매니퓰레이터 Ctrl 평면, 86 Dope Sheet·NLA·Node 수식, 87 뷰 키 묶음 3, 88 manual_checks → GUI.
+    backlog = `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+  - 열린 발견: 끌고 가는 오브젝트가 화면에서 크면 V 스냅이 안 걸림 (시뮬레이션, step_81.md 「남은 것」, 손 확인 필요).
+
 - Step 81 (Maya persp 화각) 완료 — `docs/steps/step_81.md`.
   - 템플릿 뷰 렌즈 35 → 70 (Blender 72 mm 센서 기준 = Maya 35 mm / 36 mm, 수평 54.4°), 모든 3D 뷰. Create > Camera = Maya 35 mm / 36 mm,
     Ctrl+Shift+C 카메라도 35. 새 장면 그리드 크기가 Maya 와 같아짐 (뷰 폭의 0.75, Maya 0.73).
