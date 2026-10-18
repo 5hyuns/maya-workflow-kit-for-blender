@@ -283,14 +283,12 @@ class MAYAKIT_OT_render_settings(bpy.types.Operator):
         # Render tab, so a Properties editor used as the Attribute Editor keeps its tab
         # (research/maya/workflows/render.md §4.5, step 67). Without a window (background) switch a
         # Properties editor of the screen instead.
-        before = len(context.window_manager.windows)
+        # Step 105: the kit's Render Settings window (ui/render_settings.py: Maya menus, Render Layer / Render Using,
+        # Common | renderer tabs over a Properties editor on the Render tab).
         if context.window is not None:
-            try:
-                bpy.ops.maya_kit.open_editor(ui_type='PROPERTIES', tab='RENDER')
-            except RuntimeError:   # no new window (background): the error report raises here
-                pass
-        if len(context.window_manager.windows) > before:
-            return {'FINISHED'}
+            from . import render_settings
+            if render_settings.open_window(context) is not None:
+                return {'FINISHED'}
         return {'FINISHED'} if show_properties(context.screen, 'RENDER') else {'CANCELLED'}
 
 

@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 105 (Hypershade / Render Settings / Script Editor 모양) 완료 — `docs/steps/step_105.md`.
+  - Maya 2022 GUI 캡처 (`research/scripts/maya_editors105/`): 세 창 메뉴 막대 (329 잎), Hypershade Browser 탭, Render Settings
+    공장값 (HD 540 960 × 540, PNG, padding 4, 단일 프레임) → `ui/editor_menu_data.py` 에 합침. 매핑 Hypershade 111/249,
+    Render Settings 10/21, Script Editor 32/59, 회색은 모두 안내.
+  - Hypershade: Shader Editor 헤더에 Maya 메뉴, Browser 견본 탭 7 + View 크기·정렬, Create 10 종 (Phong E, Anisotropic, Ramp,
+    Layered, Use Background 새로), Create 메뉴 텍스처·유틸리티 → 노드. Render Settings: 표시한 Properties 창, Render Layer /
+    Render Using, Common | 엔진 탭, Common 필드 → `scene.render`, Maya 프리셋 / Default Settings. Script Editor: Info 기록 위
+    Text 입력, MEL / Python 탭, Ctrl+Enter / 숫자패드 Enter 실행 (IC 의 Ctrl+Enter 렌더 제거).
+  - 검증: 헤드리스 777/777, GUI 1048/1048, 나란히 그림 `research/maya/screens/step105/`.
+  - **바로 다음 할 일**: step 106 = backlog 8 「Tool Settings and Attribute Editor parity」 (step_98.md #20–#22). 그다음 107 키맵,
+    108 메뉴 단축키 표시. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 104 (편집기 크롬: Graph Editor / Dope Sheet / UV Editor 의 Maya 메뉴 막대·아이콘 줄) 완료 — `docs/steps/step_104.md`.
   - Maya 2022 GUI 에서 세 창의 메뉴 막대·아이콘 줄을 캡처 (`research/scripts/maya_editors104/`, 메뉴 30, 잎 585, 옵션 상자 120,
     체크 169) → `ui/editor_menu_data.py` (생성). 매핑 339/585 (`ui/editor_menu_map.py`, 체크 항목 = Blender 속성

@@ -180,7 +180,9 @@ def s_script_editor():
     check("Script Editor opens a new window", len(wins) == C["windows"] + 1)
     if len(wins) > C["windows"]:
         new = wins[len(wins) - 1]
-        check("new window is a Python Console", new.screen.areas[0].type == 'CONSOLE')
+        # step 105: the Maya Script Editor = history (Info) over input (Text Editor)
+        check("new window is the Script Editor (history over input)",
+              sorted(a.type for a in new.screen.areas) == ['INFO', 'TEXT_EDITOR'])
         if SHOTS:
             with bpy.context.temp_override(window=new):
                 bpy.ops.screen.screenshot(filepath=os.path.join(SHOTS, "gui_step7_script_editor.png"))

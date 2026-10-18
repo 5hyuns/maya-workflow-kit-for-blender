@@ -684,3 +684,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 104) Graph Editor 왼쪽 Maya 목록: 오브젝트 여러 개 (20 개 이상) 일 때 행이 넘치는지 — kit 목록은 스크롤을 따라가지 않음 (남은 것). 행을 드래그로 여러 개 고르기 (Maya 마키) 가 안 되는 것이 불편한지.
 - [ ] (step 104) 아이콘 줄의 Stats 칸에 키 시간 `+=5` / 값 `10` 을 입력해 선택 키가 움직이고 Ctrl+Z 로 돌아오는지.
 - [ ] (step 104) UV Editor 둘째 줄 아이콘 (Wireframe / Shaded / Distortion / Grid / 체커 / 이미지 칸) 이 Maya 아이콘 줄처럼 읽히는지, 오른쪽 UV Toolkit 의 Options / Help 드롭다운이 Maya 메뉴 막대처럼 보이는지.
+
+### Step 105 — Hypershade / Render Settings / Script Editor
+
+- [ ] (step 105) Hypershade: Browser 탭 (Materials … Shading Groups) 을 차례로 눌러 견본이 바뀌는지, View > As Large Swatches / By Type / Reverse Order 가 격자에 바로 반영되는지. 사이드바가 좁으면 탭 이름이 잘리는데 거슬리는지.
+- [ ] (step 105) Hypershade Create > 2D Textures > Checker / General Utilities > 2d Placement 를 누르면 현재 재질 그래프 왼쪽에 노드가 생기는지 (연결은 안 함 — Maya 처럼).
+- [ ] (step 105) Render Settings Common 탭: File name prefix 를 입력하고 Frame/Animation ext 를 name.#.ext 로 → F12 / 애니메이션 렌더가 그 이름으로 저장되는지; Ctrl+Z 로 필드 편집이 되돌아가는지. EEVEE 탭과 Common 탭을 오갈 때 Blender 렌더 패널이 그 창에서만 숨는지 (다른 Properties 창 Render 탭은 그대로).
+- [ ] (step 105) Script Editor: 실제 키보드로 Ctrl+Enter (입력 유지) / 숫자패드 Enter (입력 지움), MEL 탭에서 실행하면 경고만. 위 기록 창에 명령과 결과가 Maya 처럼 읽히는지 (Blender 연산자 기록도 함께 나옴).

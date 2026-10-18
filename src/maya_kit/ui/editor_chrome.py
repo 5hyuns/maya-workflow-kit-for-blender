@@ -51,7 +51,9 @@ def is_uv(space):
 
 # --- menu bars ---------------------------------------------------------------------------------------------------
 
-BLENDER_MENUS = {GE: "GRAPH_MT_editor_menus", DS: "DOPESHEET_MT_editor_menus", UV: "IMAGE_MT_editor_menus"}
+BLENDER_MENUS = {GE: "GRAPH_MT_editor_menus", DS: "DOPESHEET_MT_editor_menus", UV: "IMAGE_MT_editor_menus",
+                 # step 105 windows (the Render Settings window is a Properties editor: no Blender menus)
+                 "Hypershade": "NODE_MT_editor_menus", "Script Editor": "INFO_MT_editor_menus"}
 
 
 def _blender_menu_class(editor):
@@ -74,14 +76,15 @@ def _bar_class(editor):
                                              "__doc__": f"The Maya {editor} menus folded into one menu"})
 
 
-_BLENDER = {ed: _blender_menu_class(ed) for ed in (GE, DS, UV)}
-_BAR = {ed: _bar_class(ed) for ed in (GE, DS, UV)}
+_BLENDER = {ed: _blender_menu_class(ed) for ed in BLENDER_MENUS}
+_BAR = {ed: _bar_class(ed) for ed in (*BLENDER_MENUS, "Render Settings")}
 
 
 def draw_menu_bar(layout, context, editor):
     for i, (title, _items) in enumerate(editor_menu_data.EDITORS[editor]):
         layout.menu(menu_sets.editor_menu_idname(editor, i), text=title)
-    layout.menu(_BLENDER[editor].bl_idname, text="Blender")
+    if editor in _BLENDER:
+        layout.menu(_BLENDER[editor].bl_idname, text="Blender")
 
 
 def draw_menus(layout, context, editor):

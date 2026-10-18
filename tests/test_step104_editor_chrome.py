@@ -33,7 +33,7 @@ MAYA_BARS = {"Graph Editor": ["Edit", "View", "Select", "Curves", "Keys", "Tange
 def _leaves(editor=None):
     out = {}
     for path, it in menu_sets.iter_items():
-        if path.split("/", 1)[0] not in data.EDITORS or (editor and not path.startswith(editor + "/")):
+        if path.split("/", 1)[0] not in MAYA_BARS or (editor and not path.startswith(editor + "/")):
             continue
         if not menu_sets.sub_items(path, it) or path in menu_map.MAP:
             out[path] = path in menu_map.MAP
@@ -53,7 +53,7 @@ def test_menu_bars_match_the_maya_capture():
     for editor, titles in MAYA_BARS.items():
         assert [t for t, _ in data.EDITORS[editor]] == titles, editor
     leaves = _leaves()
-    print({ed: (len(_leaves(ed)), sum(_leaves(ed).values())) for ed in data.EDITORS}, "total", len(leaves),
+    print({ed: (len(_leaves(ed)), sum(_leaves(ed).values())) for ed in MAYA_BARS}, "total", len(leaves),
           "mapped", sum(leaves.values()))
     assert len(leaves) == 585, len(leaves)
     if CAPTURE.exists():   # research/ is not tracked: checked where the capture is
@@ -61,7 +61,8 @@ def test_menu_bars_match_the_maya_capture():
         n = sum(_count_capture(m["items"]) for key in ("graph_editor", "dope_sheet", "uv_editor")
                 for b in cap[key][0]["bars"] for m in b["menus"])
         assert n == len(leaves), (n, len(leaves))
-    assert len(data.OPTION_BOXES) == 120 and "Graph Editor/Edit/Cut" in data.OPTION_BOXES
+    assert len([p for p in data.OPTION_BOXES if p.split("/", 1)[0] in MAYA_BARS]) == 120
+    assert "Graph Editor/Edit/Cut" in data.OPTION_BOXES
 
 
 def test_every_editor_leaf_mapped_or_noticed():

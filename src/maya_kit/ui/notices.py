@@ -535,3 +535,79 @@ NOTICES.update({
         "aren't there.")
     for ed in ("Graph Editor", "Dope Sheet") for sub in ("", "In Tangent/", "Out Tangent/")
     for kind in ("Auto Ease", "Auto Mix", "Auto Custom")})
+
+
+# Greyed items of the Hypershade / Render Settings / Script Editor menu bars (step 105, captured in Maya 2022)
+CATEGORIES.update({
+    "Hypershade/File": (
+        "File > Append", "Blender shares shading networks by appending or linking materials from another .blend "
+        "(File > Append), not by exporting a network file."),
+    "Hypershade/Edit": (
+        "Shader Editor", "Blender has no such Hypershade command: PSD networks, texture conversion and swatch "
+        "rendering aren't there; edit the network in the Shader Editor."),
+    "Hypershade/Edit/Delete All by Type": (
+        "Outliner / Purge", "Blender has no node of this type to delete: use the Outliner (Blender File view) or "
+        "File > Clean Up > Purge."),
+    "Hypershade/Edit/Select All by Type": (
+        "Outliner", "Blender selects materials and textures in the Outliner's Blender File view, not in the scene."),
+    "Hypershade/Edit/Duplicate": (
+        "Duplicate", "Blender copies a material with its whole node tree (Duplicate / Shading Network)."),
+    "Hypershade/Create": (
+        "Shift+A in the Shader Editor", "Blender has no node of this Maya type: add the closest node with Shift+A "
+        "in the Shader Editor."),
+    "Hypershade/Create/Materials": (
+        "Principled BSDF", "Blender has no game, hair-tube, ocean or USD Preview shader of this kind: start from a "
+        "Standard Surface (Principled BSDF)."),
+    "Hypershade/Create/Volumetric Materials": (
+        "Volume shaders", "Blender's volumes are shaders on the material's Volume output (Principled Volume) or the "
+        "World's: add them with Shift+A > Volume."),
+    "Hypershade/Create/Lights": (
+        "World light", "Blender has no ambient or volume light: light the scene with the World colour."),
+    "Hypershade/Create/Image Plane": (
+        "Image Plane", "Blender's image planes are made in the 3D View (Create > Free Image Plane)."),
+    "Hypershade/Create/Rendering": (
+        "View Layers / AOVs", "Blender's render passes are View Layer passes (View Layer Properties > Passes)."),
+    "Hypershade/Create/Glow": (
+        "Bloom / Glare", "Blender makes glow in the compositor (Glare node)."),
+    "Hypershade/Create/Particle Utilities": (
+        "Attribute node", "Blender's particles feed shaders through the Particle Info / Attribute nodes."),
+    "Hypershade/Create/Switch Utilities": (
+        "Mix nodes", "Blender switches between inputs with Mix nodes (or Geometry Nodes Switch)."),
+    "Hypershade/Create/Create Options": (
+        "Shader Editor", "Blender materials always have their output node; textures get their own Mapping node."),
+    "Hypershade/Tabs": (
+        "Node groups / workspaces", "Blender's Shader Editor has one graph per material: no Hypershade tabs (use "
+        "node groups or another workspace)."),
+    "Hypershade/Graph": (
+        "Shader Editor", "Blender shows the whole node tree of the material: there is no partial graph to build."),
+    "Hypershade/Window": (
+        "Blender editors", "Blender has no such Hypershade panel: the material preview is in the Properties "
+        "Material tab."),
+    "Hypershade/Options": (
+        "Preferences", "Blender's Shader Editor has no such option (see Preferences > Editing / Interface)."),
+    "Hypershade/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    "Render Settings/Edit": (
+        "Path field", "Blender has no project image directory: type the folder in the Common tab's Path field."),
+    "Render Settings/Presets": (
+        "Format presets", "Blender's render presets are the Format panel preset menu (Output Properties); Maya's "
+        "AOV / user presets aren't there."),
+    "Render Settings/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    "Script Editor/File": (
+        "Text Editor", "Blender sources a script by opening it and running it (Text > Run Script) and saves one text "
+        "at a time; shelf buttons from scripts aren't there."),
+    "Script Editor/History": (
+        "Info editor filters", "Blender's history pane is the Info editor: it echoes every operator; its filters are "
+        "in the Info editor's View menu."),
+    "Script Editor/Command": (
+        "Text Editor View menu", "Blender's Text Editor has no such option (see its View menu and Preferences > "
+        "Editing > Text Editor)."),
+    "Script Editor/Tabs": (
+        "Text data-blocks", "Blender's script tabs are texts: rename one in the Text Editor header's name field."),
+    "Script Editor/Help": (
+        "Python API", "Blender has no help on a selected command: see the Python API reference (Help > Python "
+        "Command Reference)."),
+    "Script Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+})

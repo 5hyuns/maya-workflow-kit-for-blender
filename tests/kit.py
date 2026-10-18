@@ -101,7 +101,16 @@ def snapshot():
     snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")
     # step 104: Maya menu bars / icon rows in the Graph Editor and Dope Sheet headers
     snap["ui_methods"] += [f"{c} own draw: {getattr(getattr(bpy.types, c).draw, '_draw_funcs', [getattr(bpy.types, c).draw])[0]!r}"
-                           for c in ("GRAPH_HT_header", "DOPESHEET_HT_header")]
+                           for c in ("GRAPH_HT_header", "DOPESHEET_HT_header",
+                                     # step 105: Render Settings / Script Editor windows
+                                     "PROPERTIES_HT_header", "INFO_HT_header", "TEXT_HT_header")]
+    # step 105: Hypershade menus in the Shader Editor header; Blender's Render panels re-registered with a wrapped poll
+    snap["ui_methods"].append("NODE_MT_editor_menus.draw_collapsible overridden: "
+                              f"{'draw_collapsible' in bpy.types.NODE_MT_editor_menus.__dict__}")
+    snap["render_panel_polls"] = sorted(
+        f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
+        for c in _all_panels() if getattr(c, "bl_space_type", None) == 'PROPERTIES'
+        and getattr(c, "bl_context", "") == "render" and not c.__name__.startswith("MAYAKIT_"))
     snap["ui_methods"].append("TIME_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in time_menus.__dict__}")
     snap["panel_polls"] = sorted(

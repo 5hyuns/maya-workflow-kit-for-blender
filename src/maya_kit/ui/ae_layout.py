@@ -218,6 +218,32 @@ SURFACE_SHADER = [
     S("Surface Shader Attributes", True, ("socket", "Emission Color", "Out Color"),
       ("socket", "Alpha", "Out Opacity")),
 ]
+# Step 105 kinds (Maya AE section names [K]; Principled stand-ins + the extra nodes of operators/material._build)
+PHONG_E = [_LAMBERT_COMMON,
+           S("Specular Shading", True, ("socket", "Roughness", "Roughness"),
+             ("socket", "Specular IOR Level", "Highlight Size"), ("socket", "Specular Tint", "Whiteness")),
+           _RAYTRACE]
+ANISOTROPIC = [_LAMBERT_COMMON,
+               S("Specular Shading", True, ("socket", "Anisotropic Rotation", "Angle"),
+                 ("socket", "Anisotropic", "Spread X / Y"), ("socket", "Roughness", "Roughness"),
+                 ("socket", "Specular Tint", "Specular Color")),
+               _RAYTRACE]
+RAMP_SHADER = [
+    S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)")),
+    S("Specular Shading", True, ("socket", "Roughness", "Specularity")),
+    S("Incandescence", False, ("socket", "Emission Color", "Incandescence")),
+]
+LAYERED_SHADER = [
+    S("Layered Shader Attributes", True,
+      ("missing", "Layers", "a Mix Shader in the graph: input 1 = top layer, Fac = the top layer's transparency")),
+    _LAMBERT_COMMON,
+]
+USE_BACKGROUND = [
+    S("Use Background Attributes", True,
+      ("missing", "Specular Color / Reflectivity / Shadow Mask",
+       "Blender Holdout: the surface shows the background (Cycles: Object > Visibility > Shadow Catcher catches "
+       "shadows)")),
+]
 # Material without nodes: Blender viewport values (no Maya template).
 # --- joint = pose bone (AEjointTemplate.mel:25-54, research/maya/workflows/rigging.md:134-136) ----
 # Joint Labelling (side / type) and Preferred Angle have no Blender counterpart.
@@ -282,6 +308,11 @@ BY_KIND = {
     "blinn": (BLINN, None),
     "phong": (PHONG, None),
     "surfaceShader": (SURFACE_SHADER, None),
+    "phongE": (PHONG_E, None),
+    "anisotropic": (ANISOTROPIC, None),
+    "rampShader": (RAMP_SHADER, None),
+    "layeredShader": (LAYERED_SHADER, None),
+    "useBackground": (USE_BACKGROUND, None),
     "material": (PLAIN_MATERIAL, None),
     "nucleus": (NUCLEUS, None),
 }
