@@ -13,6 +13,9 @@ and from this module's operators, skipped when nothing they show changed.
 Joints (step 55): a Maya joint is a bone (research/maya/workflows/rigging.md:134-136), so an
 expanded armature lists its bones as JOINT rows in bone hierarchy order; clicking one enters
 pose mode and selects that bone (docs/steps/step_55.md 「계획」 4).
+
+Sets (step 96): kit sets (``operators/sets.py``) follow the DAG rows as SET rows; clicking one selects
+its members (docs/steps/step_96.md 「계획」 4).
 """
 
 import bpy
@@ -24,7 +27,14 @@ _state = {"sig": None, "busy": False}
 
 
 def _target(row):
+    if row.kind == 'SET':
+        return None
     return bpy.data.objects.get(row.object)
+
+
+def _set(row):
+    from ..operators import sets
+    return sets.get(row.object) if row.kind == 'SET' else None
 
 
 def _bone(row):
@@ -35,6 +45,8 @@ def _bone(row):
 
 
 def _get_label(self):
+    if self.kind == 'SET':
+        return self.object
     ob = _target(self)
     if ob is None:
         return self.object
@@ -46,6 +58,11 @@ def _get_label(self):
 
 
 def _set_label(self, value):
+    coll = _set(self)
+    if coll is not None and value:
+        coll.name = value
+        self.object = coll.name
+        return
     ob = _target(self)
     if ob is None or not value:
         return
@@ -63,7 +80,8 @@ def _set_label(self, value):
 
 
 class MAYAKIT_PG_outliner_row(bpy.types.PropertyGroup):
-    kind: EnumProperty(items=(('OBJECT', "Object", ""), ('SHAPE', "Shape", ""), ('JOINT', "Joint", "")))
+    kind: EnumProperty(items=(('OBJECT', "Object", ""), ('SHAPE', "Shape", ""), ('JOINT', "Joint", ""),
+                              ('SET', "Set", "")))
     object: StringProperty()
     bone: StringProperty()       # JOINT: bone name
     depth: IntProperty()
@@ -101,6 +119,8 @@ def dag_rows(scene, shapes):
 
     for ob in sorted((o for o in order if o.parent is None or o.parent not in order), key=order.get):
         visit(ob, 0)
+    from ..operators import sets
+    rows.extend(('SET', coll.name, 0, False, "") for coll in sets.all_sets())   # Maya: sets after the DAG
     return rows
 
 
@@ -223,6 +243,12 @@ def select_rows(context, rows, index, mode, anchor=None):
     vl = context.view_layer
     if rows[index].kind == 'JOINT':
         return select_joint_rows(context, rows, index, mode, anchor)
+    if rows[index].kind == 'SET':
+        from ..operators import sets
+        coll = _set(rows[index])
+        if coll is not None:
+            sets.select_members(context, coll, {'TOGGLE': 'TOGGLE', 'RANGE': 'ADD'}.get(mode, 'REPLACE'))
+        return
     ob = bpy.data.objects.get(rows[index].object)
     if ob is None:
         return
@@ -334,8 +360,14 @@ def icon_for(row, ob):
 
 class MAYAKIT_UL_outliner(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0):
-        ob = _target(item)
         row = layout.row(align=True)
+        if item.kind == 'SET':
+            row.label(text="", icon='BLANK1')
+            op = row.operator(MAYAKIT_OT_outliner_select.bl_idname, text="", icon='GROUP', emboss=False)
+            op.index = index
+            row.prop(item, "label", text="", emboss=False)
+            return
+        ob = _target(item)
         if ob is None:
             row.label(text=item.object)
             return

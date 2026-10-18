@@ -37,11 +37,9 @@ NOTICES = {
     # Playback (step 56): Blender playback always loops
     **{f"Playback/Playback Looping/{kind}": (
         "Continuous", "Blender playback always loops (no Once / Oscillate).") for kind in ("Once", "Oscillate")},
-    # Selection sets (W3: Quick Select Sets -> collections)
-    "Create/Sets/Quick Select Set...": (
-        "Collection", "Blender has no quick select sets: put the objects in a collection and select it in the Outliner."),
-    "Select/Quick Select Sets": (
-        "Collection", "Blender has no quick select sets: select a collection's objects from the Outliner."),
+    # Sets (step 96): kit sets are collections outside the scene; Blender has no exclusive sets
+    "Create/Sets/Partition": (
+        "Set", "Blender has no partitions (sets whose members can't be in another set of the partition): use Create > Sets > Set."),
     # Dependency graph editors (W3: Node Editor -> none, Hypergraph -> Outliner)
     "Windows/Node Editor": (
         "Shader Editor", "Blender has no node graph of attribute connections: attribute links are drivers "

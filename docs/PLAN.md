@@ -591,7 +591,9 @@ Audit-5 backlog: items 1–8 all closed (steps 81–88). Audit-5 blindspots 1–
    Tool Settings Reset Tool (research/maya/ui_layout.md:267-268).
 5. **Pivot-edit RMB marking menu** (research/maya/interaction.md:81, :128-130).
 6. **V snap when zoomed in** (step_81.md 「남은 것」; research/maya/workflows/pivot_snap.md S4): reproduce, find the cause, fix or document.
-7. **Outliner Sets** (the last UI Partial; mapping row Outliner).
+7. **Outliner Sets** (the last UI Partial; mapping row Outliner). — done step 96 (kit sets = collections outside the scene; set rows drawn under Blender's
+   Outliner tree, click = members, RMB set menu; Create > Sets / Select > Quick Select Sets mapped): **UI 9 / 0 / 0 / 0, total
+   30 / 1 / 0 / 2 = 91 %**.
 8. **Manual checks sweep 2**: the 58 automatable step 59–79 items (step_88.md 「분류」).
 9. Later: Left-out items (MASH, UV checker, Component Editor, Quad Draw Make Live, fluids / Bifrost, Straighten, UV display
    keys, ghosting, Shape Editor, Spline IK, Render Settings 960×540), Rotate tool Ctrl plane, UV Alt+arrow nudge, key editor

@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 365 개 (step 95 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **352 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 369 개 (step 96 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **356 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -641,3 +641,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 95 — V 스냅 (확대)
 
 - [ ] (step 95) W + V 로 X 축 화살표를 빠르게 휙 끌어 다른 큐브 정점 위에서 바로 놓기 (멈추지 않고) → 대부분 붙음. 가끔 놓은 자리가 정점 바로 앞이면 Blender 의 스냅이 10 ms 에 한 번만 다시 계산되는 한계 (`transform_snap.cc` transform_snap_mixed_apply; Blender 기본 스냅도 같음, step_95.md) — 정점 위에서 잠깐 멈추면 붙는지, Maya 사용자에게 거슬리는지.
+
+### Step 96 — Outliner Sets
+
+- [ ] (step 96) 오브젝트 몇 개 선택 → Create > Sets > Set → Outliner 의 DAG 행 바로 밑에 `set1` 행 (겹친 두 원 아이콘). 행 높이·글자 위치가 Blender 행과 맞는지, UI 배율 0.8 / 1.5 에서도 (행 높이 = round(18 × 배율) + 2 × pixel size 가정).
+- [ ] (step 96) 오브젝트를 화면에 다 안 들어갈 만큼 많이 만든 뒤 → 세트 행이 Outliner 아래쪽 불투명 띠로 고정되어 보이고, 그 띠를 클릭하면 밑에 깔린 Blender 행이 아니라 세트 행이 잡히는지 (고정 모드). Maya 처럼 목록 끝에 오지 않는 것이 거슬리는지.
+- [ ] (step 96) Select > Quick Select Sets ▸ (Create > Sets > Quick Select Set... 로 만든 것) → 멤버 선택. 만들기 전에는 회색 "No Quick Select Sets".
+- [ ] (step 96) 세트 행 더블클릭 이름 바꾸기는 없음 (RMB > Rename...), MMB 로 오브젝트를 세트 행에 끌어 넣기도 없음 (RMB > Add Selected Objects) — Maya 사용자에게 필요한지.

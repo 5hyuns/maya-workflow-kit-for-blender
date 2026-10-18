@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 96 (Outliner Sets) 완료 — `docs/steps/step_96.md`. **대응표 UI 마지막 Partial 종결 (UI 9/0/0/0, 합계 30/1/0/2 = 91 %).**
+  - 세트 = 씬에 연결 안 한 컬렉션 (`operators/sets.py`, mayapy 측정 `research/maya/re/sets.md`: set1/set2…, 선택 유지, select = 멤버). Create > Sets > Set (❑) /
+    Quick Select Set..., Select > Quick Select Sets 매핑. 레이아웃 Outliner (Blender C 목록) 밑에 세트 행을 그림 (`ui/outliner_sets.py`: framebuffer 한 줄 + 이진 탐색으로
+    마지막 행, 클릭 = 멤버 선택 / Ctrl 토글 / 삼각형 = 멤버 행, RMB = 세트 메뉴). 사이드바 kit Outliner 에도 SET 행.
+  - 검증: 헤드리스 713/713, GUI 718/718, dogfood 47/47.
+  - **바로 다음 할 일**: step 97 = manual checks 정리 2 (step_88.md 「분류」 의 step 59–79 시뮬레이션 가능 58 항목을 tests/gui 로, 체크 표시).
+    backlog 의 마지막 항목. backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 95 (V 스냅 확대) 완료 — `docs/steps/step_95.md`.
   - step 81 의 「확대하면 V 스냅이 안 걸림」 은 kit · 확대 · 가림 검사 탓이 아니라 Blender 가 스냅 대상을 10 ms 에 한 번만 찾는 것
     (`transform_snap.cc` transform_snap_mixed_apply) + 시뮬레이션이 이동을 한 틱에 몰아 보낸 것. 확대하면 드래그가 길어 첫 이동이 정점에서 멀었음.
