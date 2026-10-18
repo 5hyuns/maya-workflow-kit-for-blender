@@ -523,7 +523,7 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
 5. **Manipulator Ctrl+LMB plane / Shift+MMB auto axis** (blindspot 4). — done step 85 (Move / Scale manipulator; Rotate keeps the C gizmo).
 6. **Dope Sheet / NLA / Node Editor selection modifiers** (blindspot 1; mapping row 72). — done step 86 (Ctrl / Ctrl+Shift clicks fall back to toggle where the operator has no deselect).
 7. **View key batch**: Alt+A, Alt+P, Alt+arrow nudge, backtick tweak, `\` pan/zoom + the `Shift+\` table row. — done step 87.
-8. **Manual checks → GUI tests sweep**: 320 open checks, none ticked; turn the automatable ones of steps 59–79 into GUI tests.
+8. **Manual checks → GUI tests sweep**: 320 open checks, none ticked; turn the automatable ones of steps 59–79 into GUI tests. — done step 88 (13 items ticked by `tests/gui/gui_manual_sweep.py`; 58 more automatable, 30 stay manual).
 9. Later: Left-out items (MASH 15, UV checker 12, Component Editor 12, Quad Draw Make Live 12, fluids / Bifrost 10, Straighten 9,
    UV display keys 9, ghosting 9, Shape Editor 9, Spline IK 8, Render Settings 960×540 8, Outliner Sets 8), step 72–79 「남은 것」
    (Shift+Q check marks, Cut and Sew tool menu, pivot RMB menu, Stacked view), Maya Animation / Rigging / UV workspaces,

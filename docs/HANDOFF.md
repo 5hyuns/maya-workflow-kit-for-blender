@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 88 (manual_checks → GUI 테스트 정리) 완료 — `docs/steps/step_88.md`. **재점검 5차 backlog (81–88) 모두 끝.**
+  - `tests/gui/gui_manual_sweep.py` 46 검사로 step 59–79 의 13 항목 확인 → `docs/manual_checks.md` 348 항목 중 [x] 13 (맨 위 자동 / 수동 수).
+    step 59–79 분류: 자동 13, 사람 판단 23, 시뮬레이션 불가 7, 시뮬레이션 가능하지만 아직 안 옮김 58.
+  - 검증: 헤드리스 677/677, GUI 667/667, dogfood 47/47.
+  - **바로 다음 할 일**: 계획된 단계 없음. 사용자 결정 대기 — (1) 배포 결정 (decision 11, `docs/DISTRIBUTION.md`), (2) 재점검 6차 (대응표·키맵 미검토
+    237 행·manual_checks 다시 매기기), (3) manual_checks 의 시뮬레이션 가능 58 항목 이어서 옮기기 (step_88.md 「분류」).
+
 - Step 87 (뷰 키 묶음 3) 완료 — `docs/steps/step_87.md`.
   - Alt+A 표시 순환 (X-ray 조인트 / 전부 / 메시만), Alt+P persp ↔ ortho, Alt+화살표 1 px 이동, ` 홀드 = Tweak 툴, \ 홀드 = 카메라 뷰 2D 팬/줌
     (`operators/view_keys3.py`). 대응표 생성기: 셀 `|` = `&#124;` + 열 수 검사. 키맵 구현 142, 미검토 237.
