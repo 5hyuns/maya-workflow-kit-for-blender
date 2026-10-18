@@ -87,6 +87,28 @@ def sdk_fcurve(node, key):
     return fc
 
 
+LENGTH_KEYS = ("tx", "ty", "tz")
+
+
+def curve_scale(driver_key):
+    """Curve x per raw driver value. Blender merges F-curve keys less than 0.01 apart in x (measured, step 97),
+    and a length driver in the cm template moves 0.01 BU per cm: those curves keep x in display units."""
+    from . import units
+    k = units.maya_unit()
+    return 1.0 / k if driver_key in LENGTH_KEYS and k < 1.0 else 1.0
+
+
+def fcurve_scale(fc):
+    """The x scale a kit SDK curve was made with (``sdk*<s>`` expression; plain average = 1)."""
+    d = fc.driver
+    if d.type == 'SCRIPTED' and d.expression.startswith(VAR + "*"):
+        try:
+            return float(d.expression[len(VAR) + 1:])
+        except ValueError:
+            return 1.0
+    return 1.0
+
+
 def ensure_driver(driven, key, driver_node, driver_key):
     """The kit SDK driver of ``driven``.``key`` reading ``driver_node``.``driver_key``."""
     fc = sdk_fcurve(driven, key)
@@ -100,7 +122,12 @@ def ensure_driver(driven, key, driver_node, driver_key):
         fc = ob.driver_add(full, idx) if idx >= 0 else ob.driver_add(full)
         for mod in list(fc.modifiers):
             fc.modifiers.remove(mod)
-        fc.driver.type = 'AVERAGE'
+        scale = curve_scale(driver_key)
+        if scale != 1.0:   # a simple expression: no Python auto-run needed
+            fc.driver.type = 'SCRIPTED'
+            fc.driver.expression = f"{VAR}*{scale:g}"
+        else:
+            fc.driver.type = 'AVERAGE'
         var = fc.driver.variables.new()
         var.name = VAR
         var.type = 'SINGLE_PROP'
@@ -114,9 +141,9 @@ def ensure_driver(driven, key, driver_node, driver_key):
 
 def set_key(driven, key, driver_node, driver_key):
     """One Set Driven Key key: (driver value, driven value) on the driven channel's curve."""
-    x = raw_value(driver_node, driver_key)
     y = raw_value(driven, key)          # held by a muted driver while posing, else the driven value
     fc = ensure_driver(driven, key, driver_node, driver_key)
+    x = raw_value(driver_node, driver_key) * fcurve_scale(fc)
     for kp in fc.keyframe_points:
         if abs(kp.co[0] - x) < 1e-6:
             kp.co[1] = y
@@ -378,12 +405,13 @@ class MAYAKIT_OT_sdk_go(bpy.types.Operator):
         if not fcs:
             self.report({'WARNING'}, "Load a driver and driven attributes with keys (Set Driven Key window)")
             return {'CANCELLED'}
-        x = step_to(key_xs(fcs), raw_value(drv, st.driver_attr), self.direction)
+        scale = fcurve_scale(fcs[0])
+        x = step_to(key_xs(fcs), raw_value(drv, st.driver_attr) * scale, self.direction)
         if x is None:
             self.report({'INFO'}, "No more driven keys")
             return {'CANCELLED'}
         release_all()
-        set_raw_value(drv, st.driver_attr, x)
+        set_raw_value(drv, st.driver_attr, x / scale)
         context.view_layer.update()
         return {'FINISHED'}
 

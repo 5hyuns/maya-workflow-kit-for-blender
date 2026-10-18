@@ -15,6 +15,7 @@ a template switch, which reloads factory preferences); 0.8 = the Maya density pr
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -25,6 +26,12 @@ sys.path.insert(0, str(HERE.parent))
 import run as headless  # noqa: E402
 
 TIMEOUT = 180
+
+
+def file_timeout(path):
+    """A test file may ask for more time with a top-level ``GUI_TIMEOUT = <seconds>`` line (long sweeps)."""
+    m = re.search(r"^GUI_TIMEOUT\s*=\s*(\d+)", path.read_text(encoding="utf-8"), re.M)
+    return int(m.group(1)) if m else TIMEOUT
 
 
 def main(argv=None):
@@ -61,7 +68,7 @@ def main(argv=None):
             proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL,
                                     stdout=fh, stderr=subprocess.STDOUT)
             try:
-                proc.wait(timeout=TIMEOUT)
+                proc.wait(timeout=file_timeout(path))
             except subprocess.TimeoutExpired:
                 proc.kill()  # only the Blender we started
         results = json.loads(out.read_text(encoding="utf-8")) if out.exists() else \

@@ -279,10 +279,43 @@ def _handles_block(context, region, rv3d, mouse, cs):
     return near_handles(mouse, (c2.x, c2.y), tips, half, HANDLE_PX * scale)
 
 
+def _extrude_block(context, region, rv3d, mouse):
+    """The mouse is over the polyExtrudeFace arrow or the In-View Editor box (step 65): like the manipulator's
+    handles, they must get the click, not the hovered face under them (step 97)."""
+    from ..ui import in_view
+    try:
+        if not in_view.manip_visible(context):
+            return False
+        ob, rec = in_view.record(context)
+        frame = in_view.cap_frame(ob, rec) if rec is not None else None
+    except (ReferenceError, AttributeError):
+        return False
+    if frame is None:
+        return False
+    _r, lay = in_view.current_layout(context)
+    if lay is not None and any(x0 <= mouse[0] <= x1 and y0 <= mouse[1] <= y1
+                               for x0, y0, x1, y1 in (lay["box"], lay["title"])):
+        return True
+    centre, n, _k = frame
+    c2 = view3d_utils.location_3d_to_region_2d(region, rv3d, centre)
+    if c2 is None:
+        return False
+    scale = context.preferences.system.ui_scale or 1.0
+    right = rv3d.view_rotation @ Vector((1.0, 0.0, 0.0))
+    p1 = view3d_utils.location_3d_to_region_2d(region, rv3d, centre + right)
+    px_per_world = (p1 - c2).length if p1 is not None else 0.0
+    if px_per_world < 1e-9:
+        return False
+    # GIZMO_GT_arrow_3d at draw scale: about 1.2 x the gizmo size long (measured on a screenshot, step 97)
+    length_px = 1.2 * context.preferences.view.gizmo_size * scale
+    tip = view3d_utils.location_3d_to_region_2d(region, rv3d, centre + n * (length_px / px_per_world))
+    return tip is not None and near_handles(mouse, (c2.x, c2.y), [(tip.x, tip.y)], 0.0, HANDLE_PX * scale)
+
+
 def pick(context, region, rv3d, mouse):
     """(object pointer, 'VERT' / 'EDGE' / 'FACE', index) under ``mouse`` (region pixels), or None."""
     cs = caches(context)
-    if not cs or _handles_block(context, region, rv3d, mouse, cs):
+    if not cs or _handles_block(context, region, rv3d, mouse, cs) or _extrude_block(context, region, rv3d, mouse):
         return None
     ts = context.tool_settings
     vmode, emode, fmode = tuple(ts.mesh_select_mode)

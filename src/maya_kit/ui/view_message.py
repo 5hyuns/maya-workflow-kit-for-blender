@@ -163,6 +163,15 @@ def _rounded(x0, y0, x1, y1, r, steps=4):
     return verts, [(0, 1 + i, 1 + (i + 1) % n) for i in range(n)]
 
 
+def placement(pos, space):
+    """Where a message shown at ``pos`` goes in ``space``: Blender's text info sits in the top left (the MayaKit
+    template hides it), so a TOP_LEFT message moves to the top centre where it is on [delegated]."""
+    overlay = getattr(space, "overlay", None)
+    if pos == 'TOP_LEFT' and overlay is not None and overlay.show_overlays and overlay.show_text:
+        return 'TOP_CENTER'
+    return pos
+
+
 def draw():
     """POST_PIXEL of 3D View WINDOW regions: the message, only in the region it was shown for."""
     context = bpy.context
@@ -180,10 +189,7 @@ def draw():
     line_h = LINE_PX * scale
     size = (max(widths or [0.0]) + 2 * PAD * scale, len(lines) * line_h + 2 * PAD * scale)
     bounds = view.visible_bounds(context.area, region)
-    pos = _state["pos"]
-    overlay = getattr(context.space_data, "overlay", None)
-    if pos == 'TOP_LEFT' and overlay is not None and overlay.show_overlays and overlay.show_text:
-        pos = 'TOP_CENTER'   # Blender's text info is in the top left (the MayaKit template hides it) [delegated]
+    pos = placement(_state["pos"], context.space_data)
     x0, y0, x1, y1 = box_rect(bounds, size, pos, scale)
 
     gpu.state.blend_set('ALPHA')

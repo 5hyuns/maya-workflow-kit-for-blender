@@ -938,6 +938,16 @@ def patch_outliner_sets(kd):
     _add(kd, "Outliner", "maya_kit.outliner_set_menu", make_event("RIGHTMOUSE"), first=True, shadows=("Outliner",))
 
 
+# --- 46. Render slots (docs/steps/step_97.md) --------------------------------------------------------------------
+# Keep Image = a Blender render slot (ui/render_view.py, step 67), compared with J / Alt+J like Blender
+# ($S\presets\keyconfig\keymap_data\blender_default.py:2009-2011); IC's Image keymap has no J, so the kit's tip
+# had no key behind it.
+
+def patch_render_slots(kd):
+    _add(kd, "Image", "image.cycle_render_slot", make_event("J"))
+    _add(kd, "Image", "image.cycle_render_slot", make_event("J", alt=True), {"reverse": True})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -949,7 +959,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
-           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets)
+           patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots)
 
 
 def apply(data):

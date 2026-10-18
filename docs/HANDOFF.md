@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 97 (manual_checks 정리 2) 완료 — `docs/steps/step_97.md`. **재점검 6차 backlog (90–97) 모두 끝.**
+  - `tests/gui/gui_manual_sweep.py` 에 step 59–79 의 시뮬레이션 가능 57 항목 (`[M<step>-<n>]`) → `docs/manual_checks.md` 369 항목 중 [x] 70
+    (전 13), 수동 299. step 81–96 절 분류 (사람 판단 10 · 불가 1 · 시뮬레이션 가능 38) 는 step_97.md 「분류」.
+  - 찾아 고친 kit 버그 10 (step_97.md 「한 것」): 매니퓰레이터 누른 채 멈춤, Tweak 커브 / 본 드래그, Shift+Q 탭 툴, Shift+G 반복, SDK 1 cm 키 병합,
+    CB 사용자 속성 clamp, 프리셀렉트가 압출 화살표 가로챔, J / Alt+J 렌더 슬롯 키 없음, Ctrl+O 가 프로젝트 scenes 에서 안 열림,
+    「Maya Pivot」 Move 축이 다음 오브젝트에 남음. 헤드리스 회귀 `tests/test_step97_sweep_fixes.py`. `tests/gui/run.py` 에 파일별 `GUI_TIMEOUT`.
+  - 검증: 헤드리스 718/718, GUI 1003/1003 (sweep 331), dogfood 47/47 (콘솔 0).
+  - **바로 다음 할 일**: 계획된 단계 없음 (backlog 90–97 끝). 사용자 결정 대기 — (1) 배포 결정 (decision 11, `docs/DISTRIBUTION.md`),
+    (2) 재점검 7차 (대응표·키맵 미검토 219 행·manual_checks), (3) manual_checks step 81–96 의 시뮬레이션 가능 38 항목 이어서 옮기기.
+
 - Step 96 (Outliner Sets) 완료 — `docs/steps/step_96.md`. **대응표 UI 마지막 Partial 종결 (UI 9/0/0/0, 합계 30/1/0/2 = 91 %).**
   - 세트 = 씬에 연결 안 한 컬렉션 (`operators/sets.py`, mayapy 측정 `research/maya/re/sets.md`: set1/set2…, 선택 유지, select = 멤버). Create > Sets > Set (❑) /
     Quick Select Set..., Select > Quick Select Sets 매핑. 레이아웃 Outliner (Blender C 목록) 밑에 세트 행을 그림 (`ui/outliner_sets.py`: framebuffer 한 줄 + 이진 탐색으로

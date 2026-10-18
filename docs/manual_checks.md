@@ -12,10 +12,10 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 369 개 (step 96 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **356 개 수동** (`[ ]`). 수동으로 남긴 이유는
-`docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
-가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
+**자동 / 수동 (step 97, 2026-10-18)**: 항목 369 개 (step 96 까지) 중 **70 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`; step 88 에 13, step 97 에 57), **299 개 수동** (`[ ]`). step 59–79 에서 수동으로 남은
+것은 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율) 과 event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에 가는 키·창 / 재시작·강제 종료·설치)
+뿐 (`docs/steps/step_88.md` 「분류」); step 81–96 의 분류와 다음 정리 후보 (시뮬레이션 가능 38) 는 `docs/steps/step_97.md` 「분류」.
 
 
 ## Checklist
@@ -399,21 +399,21 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 59 — 피벗 · 스냅 · 매니퓰레이터 모양
 
 - [ ] (step 59) Move 툴 매니퓰레이터가 Maya 처럼 읽히는지: 얇은 축 + 원뿔, 가운데 빈 사각, 평면 핸들 (XY 파랑·YZ 빨강·XZ 초록), 크기 (Maya 와 같은 화면 크기, 줌인/아웃 해도 그대로), 축·평면 핸들을 잡기 쉬운지 (선이 얇아도 잡힘).
-- [ ] (step 59) 축을 한 번 끈 뒤 그 축이 노랗게 남는지 (활성 핸들), MMB 아무 데나 드래그 = 그 축; 가운데 사각 드래그 = 화면 평면 자유 이동.
+- [x] (step 59) 축을 한 번 끈 뒤 그 축이 노랗게 남는지 (활성 핸들), MMB 아무 데나 드래그 = 그 축; 가운데 사각 드래그 = 화면 평면 자유 이동. (gui_manual_sweep)
 - [ ] (step 59) Scale 툴: 끝 큐브 + 노란 가운데 큐브 (균일 스케일) + 평면 핸들. Rotate 툴은 Blender 링 (Maya 배치·색) — 차이가 거슬리는지.
-- [ ] (step 59) D 누른 채 매니퓰레이터 끌기 = 피벗만 이동 (Channel Box Translate 그대로, 형상·자식 그대로), 작은 링 = 피벗 방향 (Move 축이 「Maya Pivot」 방향으로), 놓은 뒤 E 회전이 새 피벗 둘레로. Insert 토글도 같은지. Ctrl+Z 한 번 = 피벗 이동 전.
-- [ ] (step 59) D + X / V: 피벗이 그리드 선 / 정점에. Modify > Bake Pivot (방향 → Rotate 채널, 형상 그대로), Tool Settings 의 Reset (피벗 = 오브젝트 원점), Match Transformations > Match Pivots.
-- [ ] (step 59) X 누른 채 드래그 (시작 0.3 cm) → 정수 cm 만, V 누른 채 가운데 핸들 → 다른 오브젝트 정점에 피벗이 붙음, Status Line 의 스냅 버튼이 키를 누른 동안 눌림.
+- [x] (step 59) D 누른 채 매니퓰레이터 끌기 = 피벗만 이동 (Channel Box Translate 그대로, 형상·자식 그대로), 작은 링 = 피벗 방향 (Move 축이 「Maya Pivot」 방향으로), 놓은 뒤 E 회전이 새 피벗 둘레로. Insert 토글도 같은지. Ctrl+Z 한 번 = 피벗 이동 전. (gui_manual_sweep)
+- [x] (step 59) D + X / V: 피벗이 그리드 선 / 정점에. Modify > Bake Pivot (방향 → Rotate 채널, 형상 그대로), Tool Settings 의 Reset (피벗 = 오브젝트 원점), Match Transformations > Match Pivots. (gui_manual_sweep)
+- [x] (step 59) X 누른 채 드래그 (시작 0.3 cm) → 정수 cm 만, V 누른 채 가운데 핸들 → 다른 오브젝트 정점에 피벗이 붙음, Status Line 의 스냅 버튼이 키를 누른 동안 눌림. (gui_manual_sweep)
 - [x] (step 59) 여러 오브젝트 선택: 매니퓰레이터가 마지막 선택 (lead) 피벗에, 컴포넌트 선택: 선택의 바운딩 박스 중심에 (편집 모드로 들어가면 Pivot 이 Bounding Box Center 로 바뀜). (gui_manual_sweep)
-- [ ] (step 59) Status Line / W 메뉴 「Move Options」 Tool Settings: Move Settings (Axis Orientation, Pivot, Step Snap Off/Relative/Absolute, Retain Component Spacing, Edit Pivot/Reset/Bake). W 메뉴 World/Object/Component 가 Move 축만, E 메뉴가 Rotate 축만 바꾸는지; E 메뉴 Discrete Rotate = 15° 스텝.
-- [ ] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 면 스냅이 켜지고 Status Line 칸에 이름, 빈 선택으로 다시 = 해제.
+- [x] (step 59) Status Line / W 메뉴 「Move Options」 Tool Settings: Move Settings (Axis Orientation, Pivot, Step Snap Off/Relative/Absolute, Retain Component Spacing, Edit Pivot/Reset/Bake). W 메뉴 World/Object/Component 가 Move 축만, E 메뉴가 Rotate 축만 바꾸는지; E 메뉴 Discrete Rotate = 15° 스텝. (gui_manual_sweep)
+- [x] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 면 스냅이 켜지고 Status Line 칸에 이름, 빈 선택으로 다시 = 해제. (gui_manual_sweep)
 
 ### Step 60 — Maya ⇄ Blender 스위치 · 완전 되돌리기
 
 - [ ] (step 60) 상단 바 오른쪽 「Maya | Blender」 스위치가 두 모드 모두에서 보이고, 클릭 한 번에 재시작 없이 바뀌는지 (키맵·메뉴·Status Line·Shelf·Channel Box·테마). 바뀌는 데 걸리는 시간이 거슬리지 않는지.
-- [ ] (step 60) Ctrl+Alt+Shift+M 로 같은 전환 (어느 에디터 위에서든). Blender 모드에서 F3 (메뉴 검색) 「Switch to Maya」, Maya 모드에서 Windows > Switch to Blender.
-- [ ] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지.
-- [ ] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로.
+- [x] (step 60) Ctrl+Alt+Shift+M 로 같은 전환 (어느 에디터 위에서든). Blender 모드에서 F3 (메뉴 검색) 「Switch to Maya」, Maya 모드에서 Windows > Switch to Blender. (gui_manual_sweep — F3 = Blender 메뉴 검색이 찾는 Edit 메뉴 항목으로 확인)
+- [x] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지. (gui_manual_sweep)
+- [x] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로. (gui_manual_sweep)
 - [ ] (step 60) Maya 모드인 채 Blender 를 닫고 다시 열기 → Maya 모드 그대로, 그다음 Blender 로 → 원래 설정. Maya 모드에서 작업 관리자로 강제 종료 → 다시 열어서 Blender 로 전환 → 원래 설정.
 - [ ] (step 60) Preferences > Extensions 에서 Maya Kit 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Maya Kit 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.
 
@@ -425,92 +425,92 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 62 — Set Driven Key · 포즈 모드 제약 · Add Attribute · Blend Shape · Quick Rig
 
-- [ ] (step 62) Key > Set Driven Key > Set... → 사이드바 Channel Box 아래에 Driver / Driven 목록 + Key · Load Driver · Load Driven · Close. Maya 처럼 드라이버 선택 → CB 채널 클릭 → Load Driver, 피동 선택 → CB 채널 → Load Driven → Key → 드라이버 값·피동 값 CB 입력 → Key → 드라이버를 움직이면 피동이 따라옴 (CB 피동 행 = 드라이버 표시).
-- [ ] (step 62) SDK 창이 열려 있을 때 피동 채널을 CB 로 바꾸면 값이 남고 (Key 전까지), 창을 닫으면 Key 하지 않은 포즈는 커브 값으로 돌아감. 매니퓰레이터로 피동 채널을 돌리면 Blender 가 드라이버로 되돌림 (CB 로 입력 — 안내대로인지).
-- [ ] (step 62) Key > Set Driven Key > Go to Previous / Go to Next 가 드라이버 값을 이웃 키로 옮기는지. Graph Editor (Drivers) 에서 커브 모양 (Maya 의 SDK 커브와 같은 매끈한 S 자, 끝은 평평).
-- [ ] (step 62) 컨트롤 선택 → 아마추어 Shift 선택 → Ctrl+Tab (포즈 모드) → 조인트 선택 → Constrain > Orient: 제약이 본에 붙고 (Bone Constraints 탭) 아마추어 오브젝트에는 없음. 대상이 없으면 Help Line 에 「Select the control first, then the joint last」.
-- [ ] (step 62) Modify > Add Attribute... (Attributes 절) / CB Edit > Add Attribute: 이름·Float/Integer/Boolean·Min/Max/Default → CB 에 Maya nice name 행 (fingerCurl → Finger Curl), 범위 밖 입력이 잘림. Edit Attribute (이름 바꾸기 → 키가 따라감), Delete Attributes (선택 채널).
-- [ ] (step 62) 머리 복제 → 수정 → 타깃·베이스 순서 선택 → Deform > Blend Shape: 베이스에 Basis + 타깃 이름 셰이프 키 (값 0), CB SHAPES. 정점 수가 다르면 오류 문구.
+- [x] (step 62) Key > Set Driven Key > Set... → 사이드바 Channel Box 아래에 Driver / Driven 목록 + Key · Load Driver · Load Driven · Close. Maya 처럼 드라이버 선택 → CB 채널 클릭 → Load Driver, 피동 선택 → CB 채널 → Load Driven → Key → 드라이버 값·피동 값 CB 입력 → Key → 드라이버를 움직이면 피동이 따라옴 (CB 피동 행 = 드라이버 표시). (gui_manual_sweep)
+- [x] (step 62) SDK 창이 열려 있을 때 피동 채널을 CB 로 바꾸면 값이 남고 (Key 전까지), 창을 닫으면 Key 하지 않은 포즈는 커브 값으로 돌아감. 매니퓰레이터로 피동 채널을 돌리면 Blender 가 드라이버로 되돌림 (CB 로 입력 — 안내대로인지). (gui_manual_sweep)
+- [x] (step 62) Key > Set Driven Key > Go to Previous / Go to Next 가 드라이버 값을 이웃 키로 옮기는지. Graph Editor (Drivers) 에서 커브 모양 (Maya 의 SDK 커브와 같은 매끈한 S 자, 끝은 평평). (gui_manual_sweep)
+- [x] (step 62) 컨트롤 선택 → 아마추어 Shift 선택 → Ctrl+Tab (포즈 모드) → 조인트 선택 → Constrain > Orient: 제약이 본에 붙고 (Bone Constraints 탭) 아마추어 오브젝트에는 없음. 대상이 없으면 Help Line 에 「Select the control first, then the joint last」. (gui_manual_sweep)
+- [x] (step 62) Modify > Add Attribute... (Attributes 절) / CB Edit > Add Attribute: 이름·Float/Integer/Boolean·Min/Max/Default → CB 에 Maya nice name 행 (fingerCurl → Finger Curl), 범위 밖 입력이 잘림. Edit Attribute (이름 바꾸기 → 키가 따라감), Delete Attributes (선택 채널). (gui_manual_sweep)
+- [x] (step 62) 머리 복제 → 수정 → 타깃·베이스 순서 선택 → Deform > Blend Shape: 베이스에 Basis + 타깃 이름 셰이프 키 (값 0), CB SHAPES. 정점 수가 다르면 오류 문구. (gui_manual_sweep)
 - [ ] (step 62) Skeleton > Quick Rig: Rigify 가 꺼져 있으면 확인 대화상자 → 켜고 사람 메타 리그 추가; 툴팁·Help Line 의 Rigify 안내. HumanIK 는 회색 + 같은 안내.
 
 ### Step 63 — Modeling Toolkit · 소프트 선택 Maya 단위 · Combine / Separate / Mirror / Boolean
 
 - [ ] (step 63) Status Line 오른쪽 편집기 토글 맨 앞 (MTK) 아이콘 / Windows > Modeling Editors > Modeling Toolkit / Mesh Tools > Show/Hide Modeling Toolkit → 사이드바 도크가 Modeling Toolkit; 다시 누르면 Channel Box. modeling_03.png 와 순서·묶음이 같은지 (선택 모드 아이콘, "N faces selected", Pick/Marquee · Drag · Tweak/Marquee, Symmetry, ▸Soft Selection, ▾Mesh, ▾Components, ▾Tools).
-- [ ] (step 63) MTK 버튼: Extrude (면 선택 → 바로 압출 + Move 매니퓰레이터, 드래그해서 뺌), Bevel, Bridge, Add Divisions, Multi-Cut, Connect, Quad Draw, Combine, Separate, Smooth, Boolean. 회색 (Highlight Backfaces, Selection/Transform Constraint, UV, Target Weld) 은 툴팁·Help Line 에 안내.
-- [ ] (step 63) Camera Based Selection 을 켜면 편집 모드 마키가 보이는 것만 선택, 끄면 뒤쪽까지 (Maya 기본 꺼짐). Highlight Nearest Component 끄면 호버 강조 없음.
-- [ ] (step 63) B 탭으로 소프트 선택 켤 때 반경이 Maya 기본 5 (cm 템플릿 = 5 cm), B+드래그 머리글이 Maya 단위, MTK Soft Selection 의 Falloff radius 가 같은 숫자; Volume / Surface; Reset.
+- [x] (step 63) MTK 버튼: Extrude (면 선택 → 바로 압출 + Move 매니퓰레이터, 드래그해서 뺌), Bevel, Bridge, Add Divisions, Multi-Cut, Connect, Quad Draw, Combine, Separate, Smooth, Boolean. 회색 (Highlight Backfaces, Selection/Transform Constraint, UV, Target Weld) 은 툴팁·Help Line 에 안내. (gui_manual_sweep)
+- [x] (step 63) Camera Based Selection 을 켜면 편집 모드 마키가 보이는 것만 선택, 끄면 뒤쪽까지 (Maya 기본 꺼짐). Highlight Nearest Component 끄면 호버 강조 없음. (gui_manual_sweep)
+- [x] (step 63) B 탭으로 소프트 선택 켤 때 반경이 Maya 기본 5 (cm 템플릿 = 5 cm), B+드래그 머리글이 Maya 단위, MTK Soft Selection 의 Falloff radius 가 같은 숫자; Volume / Surface; Reset. (gui_manual_sweep)
 - [x] (step 63) pCube1 + pSphere1 선택 → Mesh > Combine → pCube2 하나, Channel Box Translate 0, 피벗이 둘을 합친 상자 중심. Mesh > Separate (오브젝트 모드) → pCube2 그룹 아래 polySurface1 / polySurface2 (Translate 0). 편집 모드 Separate = Blender 그대로. (gui_manual_sweep)
-- [ ] (step 63) Mesh > Mirror (클릭 = 지난 설정), 메뉴를 누른 채 □ = Mirror Options 창 (Cut / World·Object·Bounding Box / Offset / X·Y·Z / + − / Combine / Merge / Threshold). 원점이 아닌 곳의 큐브에 World X − → 오른쪽 반을 잘라 왼쪽으로, 경계 병합. Mesh > Booleans 세 가지 (먼저 선택한 것 − 나중 것).
+- [x] (step 63) Mesh > Mirror (클릭 = 지난 설정), 메뉴를 누른 채 □ = Mirror Options 창 (Cut / World·Object·Bounding Box / Offset / X·Y·Z / + − / Combine / Merge / Threshold). 원점이 아닌 곳의 큐브에 World X − → 오른쪽 반을 잘라 왼쪽으로, 경계 병합. Mesh > Booleans 세 가지 (먼저 선택한 것 − 나중 것). (gui_manual_sweep)
 
 ### Step 64 — Target Weld · Crease Tool · Multi-Cut 감각
 
-- [ ] (step 64) Mesh Tools > Target Weld (또는 Shift+RMB N / 정점 Merge▸S / 엣지 Merge▸S / 셸프 Polygons / MTK Tools) → 편집 모드 + Target Weld 툴, Help Line 안내. 정점 위에서 LMB 누르고 끄는 동안 노란 고무줄 선 + 목표 정점 빨간 점, 놓으면 그 정점으로 병합. 정점 근처가 아닌 곳의 드래그 = 마키 선택 (fallback). ESC/RMB = 취소.
-- [ ] (step 64) 정점 모드에서 이 툴이면 마우스 아래 정점이 빨갛게 강조 (pre-selection). 정점 둘을 선택하고 그중 하나를 끌면 둘 다 목표로 병합 (Maya 설명문), 선택 안 된 정점을 끌면 그것만.
-- [ ] (step 64) Tool Settings (툴 헤더 / Status Line Tool Settings): Merge To Target / Center, Preserve UVs. Center = 중간에서 병합. 엣지 모드: 엣지를 다른 엣지에 끌면 두 끝이 짝지어 병합 (이웃 엣지면 공유 정점은 그대로). Adjust Last Operation 에서 Merge To 바꾸기.
+- [x] (step 64) Mesh Tools > Target Weld (또는 Shift+RMB N / 정점 Merge▸S / 엣지 Merge▸S / 셸프 Polygons / MTK Tools) → 편집 모드 + Target Weld 툴, Help Line 안내. 정점 위에서 LMB 누르고 끄는 동안 노란 고무줄 선 + 목표 정점 빨간 점, 놓으면 그 정점으로 병합. 정점 근처가 아닌 곳의 드래그 = 마키 선택 (fallback). ESC/RMB = 취소. (gui_manual_sweep)
+- [x] (step 64) 정점 모드에서 이 툴이면 마우스 아래 정점이 빨갛게 강조 (pre-selection). 정점 둘을 선택하고 그중 하나를 끌면 둘 다 목표로 병합 (Maya 설명문), 선택 안 된 정점을 끌면 그것만. (gui_manual_sweep)
+- [x] (step 64) Tool Settings (툴 헤더 / Status Line Tool Settings): Merge To Target / Center, Preserve UVs. Center = 중간에서 병합. 엣지 모드: 엣지를 다른 엣지에 끌면 두 끝이 짝지어 병합 (이웃 엣지면 공유 정점은 그대로). Adjust Last Operation 에서 Merge To 바꾸기. (gui_manual_sweep)
 - [ ] (step 64) Mesh Tools > Crease Tool: 엣지 선택 → MMB 를 오른쪽으로 끌면 머리글 "Crease Mode: Absolute   Crease Value: n.nn (Blender b)" 가 오르고 왼쪽은 내려감, 3 (스무스 프리뷰) 에서 각이 살아남. 놓기 = 확정 (Ctrl+Z 한 번), ESC = 원래 값. Relative 모드는 엣지마다 더함. 정점 모드면 정점 crease. 메뉴 툴팁 / Help Line 의 0–1 안내. 감도 (50 px = Maya 1) 가 Maya 와 비슷한지.
-- [ ] (step 64) Multi-Cut (Ctrl+Shift+X): Ctrl+클릭 = 클릭한 자리 비율로 엣지 루프 (삼각형/경계에서 멈춤), Ctrl+MMB = 가운데, Ctrl+Shift+클릭 = Snap Step 자리. Adjust Last Operation 의 Position 으로 옮기기. Shift+클릭 = 커서가 가장 가까운 Snap Step % 점으로 옮겨지며 거기서 자르기 시작; 자르는 중 Shift = 엣지 중점 스냅 (Maya 의 10 % 단계 대신 50 % 만). Tool Settings 에 Snap Step % + 회색 Maya 항목 (Smoothing Angle · Edge Flow · Subdivisions · Slice Tool, 툴팁 안내).
+- [x] (step 64) Multi-Cut (Ctrl+Shift+X): Ctrl+클릭 = 클릭한 자리 비율로 엣지 루프 (삼각형/경계에서 멈춤), Ctrl+MMB = 가운데, Ctrl+Shift+클릭 = Snap Step 자리. Adjust Last Operation 의 Position 으로 옮기기. Shift+클릭 = 커서가 가장 가까운 Snap Step % 점으로 옮겨지며 거기서 자르기 시작; 자르는 중 Shift = 엣지 중점 스냅 (Maya 의 10 % 단계 대신 50 % 만). Tool Settings 에 Snap Step % + 회색 Maya 항목 (Smoothing Angle · Edge Flow · Subdivisions · Slice Tool, 툴팁 안내). (gui_manual_sweep)
 
 ### Step 65 — Extrude 매니퓰레이터 · In-View Editor · 마지막 연산 INPUTS
 
 - [ ] (step 65) 면 선택 → Ctrl+E (또는 Edit Mesh > Extrude / Shift+RMB Extrude Face / 셸프 / MTK Extrude): 모양은 그대로 (길이 0 압출), 면 가운데에 파란 화살표 + 오른쪽에 In-View Editor 상자 (제목 polyExtrudeFace1, Thickness · Local Translate Z · Offset · Divisions · Keep Faces Together) — modeling_03.png 와 비교. Move 툴의 매니퓰레이터는 그동안 숨음.
-- [ ] (step 65) 화살표를 끌면 면이 법선 방향으로 따라오고 In-View / Channel Box 의 Local Translate Z 가 같이 바뀜; 놓으면 Ctrl+Z 한 번으로 되돌아감, ESC/RMB = 취소.
-- [ ] (step 65) In-View 행을 옆으로 끌기 = 값 (Ctrl 미세, Shift 크게), 끌지 않고 클릭 = 값 입력 창, Keep Faces Together 클릭 = 토글 (두 면 압출에서 차이). 호버 / 마지막 행 이름이 노랑.
-- [ ] (step 65) Channel Box INPUTS 맨 위 polyExtrudeFace1 + 다섯 행 (`0.5`, `+=0.25` 입력), 아래 회색 안내 「Blender keeps no edit-mode history」. Divisions 2 → 옆면 고리 2 개 (modeling_04.png). Ctrl+Z / Ctrl+Shift+Z 에 행 값이 따라감. 정점을 손으로 옮기거나 다른 연산을 하면 행이 사라짐 (마지막 하나만).
-- [ ] (step 65) 다른 면을 선택하면 화살표·In-View 가 사라지고 Move 매니퓰레이터가 돌아옴 (INPUTS 행은 남음). F9 (Adjust Last Operation) 에 같은 Maya 이름 속성. 엣지/정점 선택에서 Ctrl+E = 예전처럼 압출 + 법선 드래그.
+- [x] (step 65) 화살표를 끌면 면이 법선 방향으로 따라오고 In-View / Channel Box 의 Local Translate Z 가 같이 바뀜; 놓으면 Ctrl+Z 한 번으로 되돌아감, ESC/RMB = 취소. (gui_manual_sweep)
+- [x] (step 65) In-View 행을 옆으로 끌기 = 값 (Ctrl 미세, Shift 크게), 끌지 않고 클릭 = 값 입력 창, Keep Faces Together 클릭 = 토글 (두 면 압출에서 차이). 호버 / 마지막 행 이름이 노랑. (gui_manual_sweep)
+- [x] (step 65) Channel Box INPUTS 맨 위 polyExtrudeFace1 + 다섯 행 (`0.5`, `+=0.25` 입력), 아래 회색 안내 「Blender keeps no edit-mode history」. Divisions 2 → 옆면 고리 2 개 (modeling_04.png). Ctrl+Z / Ctrl+Shift+Z 에 행 값이 따라감. 정점을 손으로 옮기거나 다른 연산을 하면 행이 사라짐 (마지막 하나만). (gui_manual_sweep)
+- [x] (step 65) 다른 면을 선택하면 화살표·In-View 가 사라지고 Move 매니퓰레이터가 돌아옴 (INPUTS 행은 남음). F9 (Adjust Last Operation) 에 같은 Maya 이름 속성. 엣지/정점 선택에서 Ctrl+E = 예전처럼 압출 + 법선 드래그. (gui_manual_sweep)
 
 ### Step 66 — UV 워크플로우
 
-- [ ] (step 66) 큐브 선택 → UV > UV Editor (또는 Windows > Modeling Editors > UV Editor / F12 / 3D RMB E 「UV」): UV Editor 창이 하나 열리고 (다시 해도 새 창 안 생김) 큐브가 편집 모드, UV 가 바로 보임. F12 = UV (Sync 끔, 정점), Alt+F12 = UV Shell (섬) — 이때 3D 뷰에는 면이 모두 선택돼 보임 (안내대로인지).
+- [x] (step 66) 큐브 선택 → UV > UV Editor (또는 Windows > Modeling Editors > UV Editor / F12 / 3D RMB E 「UV」): UV Editor 창이 하나 열리고 (다시 해도 새 창 안 생김) 큐브가 편집 모드, UV 가 바로 보임. F12 = UV (Sync 끔, 정점), Alt+F12 = UV Shell (섬) — 이때 3D 뷰에는 면이 모두 선택돼 보임 (안내대로인지). (gui_manual_sweep)
 - [ ] (step 66) UV Editor RMB 길게 = 마킹 메뉴 (N Edge, S Face, W Vertex, E UV, NW UV Shell + 아래 Cut/Sew/Unfold/Layout 목록), Shift+RMB = UV 도구 (UV 모드) / UV Shell 도구 (섬 모드) — Maya 와 위치 비교.
-- [ ] (step 66) 3D 뷰에서 에지 고리 선택 → UV Editor 에서 Shift+X: 빨간 솔기 + 셸이 그 자리에서 나뉨 (섬 선택으로 한쪽만 잡히는지), Shift+S: 작은 셸이 엣지에 붙어 하나로. Ctrl+U: 셸 자리 그대로 펴짐 (Unfold3D 와 모양 차이 안내), Ctrl+L: 0–1 안에 겹침 없이, 셸끼리 같은 텍셀 밀도.
+- [x] (step 66) 3D 뷰에서 에지 고리 선택 → UV Editor 에서 Shift+X: 빨간 솔기 + 셸이 그 자리에서 나뉨 (섬 선택으로 한쪽만 잡히는지), Shift+S: 작은 셸이 엣지에 붙어 하나로. Ctrl+U: 셸 자리 그대로 펴짐 (Unfold3D 와 모양 차이 안내), Ctrl+L: 0–1 안에 겹침 없이, 셸끼리 같은 텍셀 밀도. (gui_manual_sweep)
 - [ ] (step 66) UV Editor 사이드바 「UV Toolkit」 탭 (Ctrl+휠): uv_01_win1 순서, 컴포넌트 아이콘·Pick/Drag/Tweak·All/Clear/Inverse·접는 절. Transform > Texel Density: 큐브 Get → 값 (px/cm, 맵 1024), 다른 크기 큐브에서 Set → 같은 밀도. 회색 항목 툴팁 안내.
 
 ### Step 67 — Hypershade · Light Editor · Render 메뉴 · Keep Image · AE 맵 버튼
 
 - [ ] (step 67) Windows > Rendering Editors > Hypershade, Status Line 재질 아이콘, 핫박스 Windows 메뉴 셋 다 같은 새 창 (Shader Editor + 사이드바 「Hypershade」 탭 활성) — render_01_win1 과 구성 비교 (Browser 위, Create, Property Editor). 핫박스 N 존 Hypershade 레이아웃은 여전히 Shading 워크스페이스.
-- [ ] (step 67) Browser 격자 미리보기가 렌더된 뒤 보이는지, 클릭 = 그래프 + Property Editor 가 그 재질 (오브젝트에 없는 재질이면 핀 아이콘 켜짐). Create 버튼 = 할당 없이 새 재질 (저장 후 다시 열어도 남음). Assign Material To Selection = 선택에, 면 선택 모드면 그 면에.
-- [ ] (step 67) AE (독 / Hypershade Property Editor) 재질 행 오른쪽 체커 버튼 → 팝업 Create Render Node: File / Ramp / Noise / Checker → 노드가 그래프 왼쪽에 생기고 연결, 행이 「connected (…)」 + File 이면 이미지 New/Open. 연결된 행 버튼 = Break Connection (노드는 남음). 툴팁에 Maya 속성 이름 (baseColor 등). Normal 은 Bump 노드 경유.
-- [ ] (step 67) Rendering 메뉴셋 (F6) Render 메뉴: Render Settings… / Render Using (엔진 목록) / … / Render Current Frame / Redo Previous Render / IPR … / Render Sequence / Batch Render (회색, 툴팁 「blender -b」). Render Current Frame → Render Result 창, 헤더 왼쪽 Render · Keep Image · Remove Image · 「Slot N · k kept」.
-- [ ] (step 67) Keep Image → 다시 렌더 → 새 슬롯에 그려짐, J / Alt+J 로 이전 이미지와 비교 (Maya Render View 아래 스크롤바 대신). Remove Image = 지금 슬롯 비움.
+- [x] (step 67) Browser 격자 미리보기가 렌더된 뒤 보이는지, 클릭 = 그래프 + Property Editor 가 그 재질 (오브젝트에 없는 재질이면 핀 아이콘 켜짐). Create 버튼 = 할당 없이 새 재질 (저장 후 다시 열어도 남음). Assign Material To Selection = 선택에, 면 선택 모드면 그 면에. (gui_manual_sweep)
+- [x] (step 67) AE (독 / Hypershade Property Editor) 재질 행 오른쪽 체커 버튼 → 팝업 Create Render Node: File / Ramp / Noise / Checker → 노드가 그래프 왼쪽에 생기고 연결, 행이 「connected (…)」 + File 이면 이미지 New/Open. 연결된 행 버튼 = Break Connection (노드는 남음). 툴팁에 Maya 속성 이름 (baseColor 등). Normal 은 Bump 노드 경유. (gui_manual_sweep)
+- [x] (step 67) Rendering 메뉴셋 (F6) Render 메뉴: Render Settings… / Render Using (엔진 목록) / … / Render Current Frame / Redo Previous Render / IPR … / Render Sequence / Batch Render (회색, 툴팁 「blender -b」). Render Current Frame → Render Result 창, 헤더 왼쪽 Render · Keep Image · Remove Image · 「Slot N · k kept」. (gui_manual_sweep — 헤더 왼쪽 위치는 draw 순서로 확인)
+- [x] (step 67) Keep Image → 다시 렌더 → 새 슬롯에 그려짐, J / Alt+J 로 이전 이미지와 비교 (Maya Render View 아래 스크롤바 대신). Remove Image = 지금 슬롯 비움. (gui_manual_sweep)
 - [ ] (step 67) Windows > Rendering Editors > Light Editor: 3D View 창, 사이드바 「Light Editor」 탭 활성, 표 (이름 · 색 · Intensity · 켜기 · Solo), 위 라이트 만들기 아이콘 — render_03_win1 비교. 이름 클릭 = 선택 (Shift 추가), Solo = 나머지 꺼짐 (뷰포트 Rendered 에서 확인), 다시 = 복구. 아래 Property Editor = 선두 라이트 AE 섹션 + Translate/Rotate/Scale.
 - [ ] (step 67) Render > Render Settings… / Status Line 톱니 / Windows > Rendering Editors > Render Settings: 새 Properties 창이 Render 탭으로 열리고 (render_04_win1 비교), 원래 화면의 AE (독 또는 Properties) 는 그대로. AE 라이트 (Point/Spot/Area) 에 회색 Decay Rate: Quadratic 행.
 
 ### Step 68 — FX (시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache)
 
 - [ ] (step 68) MayaKit 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
-- [ ] (step 68) 메시 둘 선택 → Emit from Object: 둘 다 정점에서 방출. Shelf FX 「Emitter」 = Create Emitter, 「Add Emitter」 = Emit from Object.
+- [x] (step 68) 메시 둘 선택 → Emit from Object: 둘 다 정점에서 방출. Shelf FX 「Emitter」 = Create Emitter, 「Add Emitter」 = Emit from Object. (gui_manual_sweep)
 - [ ] (step 68) Create > Plane (위로 올림) → nCloth > Create nCloth → 처음 프레임부터 재생: Maya fx_02→03 처럼 1 m 천 같은 빠르기로 떨어지고 주름. 바닥 평면 Create Passive Collider 위에서 0.2 유닛 정도 위에 멈춤 (1.5 유닛 위에 뜨지 않음). 두 평면을 같이 선택하면 둘 다 천.
-- [ ] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글.
-- [ ] (step 68) nCache > Create New Cache > nObject → 타임라인에 구운 캐시 (주황 → 확정), 선택 없으면 장면 전체; Delete Cache → 다시 시뮬레이션. Enable/Disable All Caches 는 회색 + 안내.
-- [ ] (step 68) Fields/Solvers > Create Active Rigid Body (여러 개 선택) → 모두 강체, 바닥 Passive 위에 Maya 처럼 떨어져 멈춤.
+- [x] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글. (gui_manual_sweep)
+- [x] (step 68) nCache > Create New Cache > nObject → 타임라인에 구운 캐시 (주황 → 확정), 선택 없으면 장면 전체; Delete Cache → 다시 시뮬레이션. Enable/Disable All Caches 는 회색 + 안내. (gui_manual_sweep — 타임라인 캐시 색은 Blender 그리기 — 구운 상태로 확인)
+- [x] (step 68) Fields/Solvers > Create Active Rigid Body (여러 개 선택) → 모두 강체, 바닥 Passive 위에 Maya 처럼 떨어져 멈춤. (gui_manual_sweep)
 
 ### Step 69 — 씬 관리 (프로젝트 · 증분 저장 · 레퍼런스)
 
 - [ ] (step 69) File > Project Window: 대화상자 (안내 글, 이름, 위치, 폴더 12 개) — scene_01_win1 과 비교. Accept → 폴더 생김, 환경설정 Scene Concepts 의 Current Project 에 표시. File > Set Project… = 폴더 고르기 (Create Default Folders 옵션), File > Recent Projects 목록.
-- [ ] (step 69) 프로젝트가 있을 때 Ctrl+O / Ctrl+Shift+S / 처음 Ctrl+S / Status Line 열기·저장 아이콘 / File 메뉴: 파일 창이 `<프로젝트>/scenes` 에서 열림. 프로젝트 안에 저장하면 Render 출력 = `//../images/` (사용자가 바꾼 경로는 그대로). 다른 컴퓨터로 옮긴 프로젝트의 scenes 안 파일을 열면 그 프로젝트가 현재 프로젝트가 됨.
+- [x] (step 69) 프로젝트가 있을 때 Ctrl+O / Ctrl+Shift+S / 처음 Ctrl+S / Status Line 열기·저장 아이콘 / File 메뉴: 파일 창이 `<프로젝트>/scenes` 에서 열림. 프로젝트 안에 저장하면 Render 출력 = `//../images/` (사용자가 바꾼 경로는 그대로). 다른 컴퓨터로 옮긴 프로젝트의 scenes 안 파일을 열면 그 프로젝트가 현재 프로젝트가 됨. (gui_manual_sweep — 다른 컴퓨터 = 프로젝트 폴더를 다른 곳에 복사)
 - [x] (step 69) Ctrl+Alt+S (= File > Increment and Save): `shot_v001.blend` → `shot_v001.0001.blend` 로 저장하고 그 파일에서 계속 (원본 유지, 상태 표시줄 "Saved …"). (gui_manual_sweep — 상태 표시줄 「Saved」 문구는 Blender 저장 report (Python 에서 읽을 수 없음))
-- [ ] (step 69) Ctrl+R (= File > Create Reference…): 파일 창 (scenes 에서 시작, 오른쪽 옵션 Namespace / Editable) → `prop:pCube1` 등이 `prop` 컬렉션 아래에, 옮기기·키 가능 (원본 파일 그대로), 같은 파일 다시 = `prop1:`. 파일 브라우저·이미지 에디터·시퀀서에서는 Ctrl+R 이 원래 새로고침.
-- [ ] (step 69) File > Reference Editor: Outliner 새 창 Blender File 보기, 레퍼런스 파일 행 우클릭 Reload / Relocate.
+- [x] (step 69) Ctrl+R (= File > Create Reference…): 파일 창 (scenes 에서 시작, 오른쪽 옵션 Namespace / Editable) → `prop:pCube1` 등이 `prop` 컬렉션 아래에, 옮기기·키 가능 (원본 파일 그대로), 같은 파일 다시 = `prop1:`. 파일 브라우저·이미지 에디터·시퀀서에서는 Ctrl+R 이 원래 새로고침. (gui_manual_sweep)
+- [x] (step 69) File > Reference Editor: Outliner 새 창 Blender File 보기, 레퍼런스 파일 행 우클릭 Reload / Relocate. (gui_manual_sweep — 행 RMB 메뉴는 Blender 그대로 — Reload 동작으로 확인)
 
 ### Step 70 — Graph Editor 툴바 · Shift+S · G · Auto Key · Playblast
 
 - [ ] (step 70) Graph Editor 헤더 오른쪽 아이콘 줄: Auto / Spline / Clamped / Linear / Flat / Stepped / Plateau | Break / Unify | 고스트 커브 (Buffer Curve). 툴팁 = Maya 이름 + Blender 대응. 키 선택 후 클릭 → 커브 모양이 animation_02_win1 의 툴바와 같은 뜻으로 바뀌는지.
-- [ ] (step 70) Shift+S 누른 채 LMB: Keys (W) / Tangents (E) 마킹 메뉴 — Graph Editor 에서는 선택 키, 3D View · 타임라인에서는 선택 오브젝트의 현재 프레임 키 (Time Slider 범위가 있으면 그 범위). Shift+S 탭은 아무 일 없음. Stepped Next 는 Stepped + 안내.
+- [x] (step 70) Shift+S 누른 채 LMB: Keys (W) / Tangents (E) 마킹 메뉴 — Graph Editor 에서는 선택 키, 3D View · 타임라인에서는 선택 오브젝트의 현재 프레임 키 (Time Slider 범위가 있으면 그 범위). Shift+S 탭은 아무 일 없음. Stepped Next 는 Stepped + 안내. (gui_manual_sweep — Stepped Next 안내는 연산자 INFO report (상태 표시줄))
 - [x] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = Repeat Last 그대로), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체. (gui_manual_sweep)
 - [x] (step 70) Auto Key 켬: 키가 있는 채널만 값 바꿀 때 키 (이동 키만 있는 큐브를 회전 → 회전 키 안 생김; Channel Box 입력도 같음). 환경설정 「Maya Auto Key」 끄면 Blender 처럼 모든 채널. (gui_manual_sweep)
 - [ ] (step 70) Windows > Playblast (Playback > Playblast, 셸프) → 재생 범위 동영상 → Blender 플레이어 창이 열림. □ (길게) = Playblast Options (Time Range / View / Format / Quality / Scale) — animation_08_win1 비교. 끝나면 장면의 렌더 설정 (출력 경로·형식·해상도 %) 은 그대로.
 
 ### Step 72 — 상단 바 다시 그리기 · Maya 인뷰 메시지
 
-- [ ] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜.
+- [x] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜. (gui_manual_sweep)
 - [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
-- [ ] (step 72) MayaKit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지.
-- [ ] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만.
+- [x] (step 72) MayaKit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
+- [x] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만. (gui_manual_sweep)
 
 ### Step 73 — 타임 슬라이더 키 틱 · Range Slider 드래그
 
 - [ ] (step 73) 키가 있는 오브젝트를 선택하면 타임 슬라이더에 그 프레임마다 1 px 빨간 세로선 (Breakdown 키는 초록), 선택을 풀면 사라짐 — research/maya/screens/ts/ts_01_window.png 와 비교. 뼈 (포즈 모드) 는 그 뼈의 키만.
-- [ ] (step 73) Range Slider 바: 회색 구간 가운데를 끌면 재생 범위가 같은 길이로 움직이고 타임 슬라이더가 따라감; 양끝 손잡이를 끌면 그 끝만; 애니메이션 범위 밖으로는 안 나감; ESC / RMB = 취소; Ctrl+Z 로 되돌림.
+- [x] (step 73) Range Slider 바: 회색 구간 가운데를 끌면 재생 범위가 같은 길이로 움직이고 타임 슬라이더가 따라감; 양끝 손잡이를 끌면 그 끝만; 애니메이션 범위 밖으로는 안 나감; ESC / RMB = 취소; Ctrl+Z 로 되돌림. (gui_manual_sweep)
 - [ ] (step 73) 바 더블클릭 = 전체 애니메이션 범위 ↔ 재생 범위 (GUI 테스트는 더블클릭 이벤트를 만들 수 없어 동작만 확인함).
 - [ ] (step 73) UI 배율 1.0 / 1.5 / 2.0 에서 바가 playback start 필드와 playback end 필드 사이에 정확히 그려지고 숫자가 손잡이 옆에 읽힘.
 
@@ -530,30 +530,30 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 76 — 선택 우선순위
 
-- [ ] (step 76) 오브젝트 모드: 메시 앞의 컨트롤 커브 (원) 를 클릭 → 커브. 메시 뒤에 가려진 커브의 선 위를 클릭해도 커브 (Maya 우선순위는 깊이를 보지 않음). 커브에서 5 px 넘게 떨어진 메시 위 = 메시.
-- [ ] (step 76) 리그: 메시 몸통 앞/안의 본 (팔면체 두꺼운 쪽 포함) 클릭 → 아마추어, IK 핸들 (`ikHandleN` 엠프티 축) 클릭 → 핸들 (본·커브보다 먼저).
-- [ ] (step 76) Shift = 토글, Ctrl = 해제, Ctrl+Shift = 추가가 커브·본에서도 그대로. Tweak 툴에서 커브를 눌러 바로 드래그 = 커브가 잡혀 움직임.
-- [ ] (step 76) 환경설정 「Selection Priority」 끄기 → Blender 깊이 픽 (가려진 커브는 메시에 짐). 메시끼리 겹친 곳의 반복 클릭 순환은 켜져 있어도 그대로.
+- [x] (step 76) 오브젝트 모드: 메시 앞의 컨트롤 커브 (원) 를 클릭 → 커브. 메시 뒤에 가려진 커브의 선 위를 클릭해도 커브 (Maya 우선순위는 깊이를 보지 않음). 커브에서 5 px 넘게 떨어진 메시 위 = 메시. (gui_manual_sweep)
+- [x] (step 76) 리그: 메시 몸통 앞/안의 본 (팔면체 두꺼운 쪽 포함) 클릭 → 아마추어, IK 핸들 (`ikHandleN` 엠프티 축) 클릭 → 핸들 (본·커브보다 먼저). (gui_manual_sweep)
+- [x] (step 76) Shift = 토글, Ctrl = 해제, Ctrl+Shift = 추가가 커브·본에서도 그대로. Tweak 툴에서 커브를 눌러 바로 드래그 = 커브가 잡혀 움직임. (gui_manual_sweep)
+- [x] (step 76) 환경설정 「Selection Priority」 끄기 → Blender 깊이 픽 (가려진 커브는 메시에 짐). 메시끼리 겹친 곳의 반복 클릭 순환은 켜져 있어도 그대로. (gui_manual_sweep)
 
 ### Step 77 — 편집 모드 Insert / D 피벗
 
-- [ ] (step 77) F9 + Insert: 툴바가 커서 툴, Help Line 「Pivot edit on」. 면 위 클릭 = 그 자리에 커서, 축이 면에 맞음; 드래그 = 커서가 따라 움직임. Insert 다시 = 이전 툴 (Move) + 매니퓰레이터가 그 피벗에서 면 방향 축으로.
+- [x] (step 77) F9 + Insert: 툴바가 커서 툴, Help Line 「Pivot edit on」. 면 위 클릭 = 그 자리에 커서, 축이 면에 맞음; 드래그 = 커서가 따라 움직임. Insert 다시 = 이전 툴 (Move) + 매니퓰레이터가 그 피벗에서 면 방향 축으로. (gui_manual_sweep)
 - [x] (step 77) Insert 를 켠 채 D 를 누르면 피벗 편집이 꺼짐. 커서를 옮기지 않고 Insert 두 번 = 사용자 피벗 지움 (매니퓰레이터가 선택 bbox 중심). (gui_manual_sweep)
-- [ ] (step 77) Insert 켠 채 F8 / Tab 으로 오브젝트 모드 → 피벗 편집 꺼짐; 다시 편집 모드 → 원래 툴. Maya 처럼 W 메뉴로 축을 World 로 돌릴 수 있음.
+- [x] (step 77) Insert 켠 채 F8 / Tab 으로 오브젝트 모드 → 피벗 편집 꺼짐; 다시 편집 모드 → 원래 툴. Maya 처럼 W 메뉴로 축을 World 로 돌릴 수 있음. (gui_manual_sweep)
 
 ### Step 78 — 키 묶음 2
 
-- [ ] (step 78) Shift+Q 탭 = 선택 툴 + 메시 편집 모드; 홀드 + LMB = 컴포넌트 픽 마스크 마킹 메뉴 (Maya 위치), Poly Vertices / Poly Edges / Faces 가 켜고 끄기, 없는 항목 회색. Maya 의 체크 표시는 안 보임.
-- [ ] (step 78) Alt+Q 홀드 + LMB = Vertices N / Edges E / Faces S / UVs W (F9-F12 와 같음). Alt 를 누른 채라도 뷰가 돌지 않음.
+- [x] (step 78) Shift+Q 탭 = 선택 툴 + 메시 편집 모드; 홀드 + LMB = 컴포넌트 픽 마스크 마킹 메뉴 (Maya 위치), Poly Vertices / Poly Edges / Faces 가 켜고 끄기, 없는 항목 회색. Maya 의 체크 표시는 안 보임. (gui_manual_sweep)
+- [x] (step 78) Alt+Q 홀드 + LMB = Vertices N / Edges E / Faces S / UVs W (F9-F12 와 같음). Alt 를 누른 채라도 뷰가 돌지 않음. (gui_manual_sweep)
 - [x] (step 78) Ctrl+Alt+← / → 로 선택 엣지가 돌아감 (Spin Edge Backward / Forward, 메뉴와 같은 방향). (gui_manual_sweep)
-- [ ] (step 78) 큐브를 만든 뒤 Shift+G 를 그리드 여러 곳에서 = 그 자리마다 큐브. 옆 직교 뷰에서도 원점 깊이의 마우스 자리.
-- [ ] (step 78) Ctrl+Shift+C = 지금 뷰 그대로의 camera1 (Look Through 하면 같은 화면; 직교 뷰는 크기 [I]).
+- [x] (step 78) 큐브를 만든 뒤 Shift+G 를 그리드 여러 곳에서 = 그 자리마다 큐브. 옆 직교 뷰에서도 원점 깊이의 마우스 자리. (gui_manual_sweep)
+- [x] (step 78) Ctrl+Shift+C = 지금 뷰 그대로의 camera1 (Look Through 하면 같은 화면; 직교 뷰는 크기 [I]). (gui_manual_sweep)
 - [x] (step 78) Graph Editor 1 / 2 / 3: 2 는 Help Line 에 Stacked 없음 안내 + Normalized. (gui_manual_sweep — 안내는 연산자 INFO report (상태 표시줄))
 
 ### Step 79 — 3D Cut and Sew UV Tool
 
-- [ ] (step 79) UV > 3D Cut and Sew UV Tool (메뉴 / 셸프 / UV Toolkit / UV 마킹 메뉴 NW) = 편집 모드 + 엣지 모드 + 툴바의 툴. 셸 경계가 흰 굵은 선으로 보임 (Maya Texture Borders).
-- [ ] (step 79) 엣지 위 호버 = 빨간 하이라이트, 누르고 엣지를 따라 드래그 = 노란 선이 따라오고 놓으면 그 엣지만 잘림 (모서리를 돌아도 옆 세로 엣지는 안 잘림). Ctrl+드래그 = 꿰매기 (작은 셸이 붙음), Shift+드래그 = 선택만.
+- [x] (step 79) UV > 3D Cut and Sew UV Tool (메뉴 / 셸프 / UV Toolkit / UV 마킹 메뉴 NW) = 편집 모드 + 엣지 모드 + 툴바의 툴. 셸 경계가 흰 굵은 선으로 보임 (Maya Texture Borders). (gui_manual_sweep — 경계 선은 그릴 선 수·색·굵기로 확인 (픽셀 아님))
+- [x] (step 79) 엣지 위 호버 = 빨간 하이라이트, 누르고 엣지를 따라 드래그 = 노란 선이 따라오고 놓으면 그 엣지만 잘림 (모서리를 돌아도 옆 세로 엣지는 안 잘림). Ctrl+드래그 = 꿰매기 (작은 셸이 붙음), Shift+드래그 = 선택만. (gui_manual_sweep — 빨강 / 노랑은 상수 + 호버·획 상태로 확인)
 - [x] (step 79) 툴 안에서 x / s = 선택 엣지 Cut / Sew, d = Unfold + Layout (0-1). 툴 밖에서는 X / S / D 가 원래 키 (스냅 홀드 · 스케일 · 피벗). (gui_manual_sweep)
 - [ ] (step 79) 큰 메시 (10만 정점) 에서 드래그가 끊기지 않는지 (표본마다 프리셀렉트 픽), 경계 선 캐시가 편집 뒤 다시 계산되는지.
 
