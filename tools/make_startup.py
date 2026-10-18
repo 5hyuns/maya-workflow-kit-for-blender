@@ -34,7 +34,10 @@ TIME_SLIDER_PX = 36
 SHELF_PX = 64
 WINDOW_SIZE = (1600, 900)
 EDGE = 3                  # px the area edges take from a split (checked)
-MAYA_LENS = 35.0          # persp focal length 35 (concepts.md)
+# Maya persp = focal length 35 on a 36 mm film back (, tools/look_data.py:25), horizontal
+# 54.4 deg. Blender measures the viewport lens on a 72 mm sensor (tan(fov/2) = 36 / lens, :11-12),
+# so the same angle is lens 70; lens 35 was a 91.6 deg view.
+MAYA_LENS = 70.0
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md, PREF:469-470)
 MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
 STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER (Status Line row)
@@ -308,6 +311,7 @@ def maya_views():
                 if space.type != 'VIEW_3D':
                     continue
                 space.clip_start, space.clip_end = (c * MAYA_UNIT for c in MAYA_CLIP)
+                space.lens = MAYA_LENS        # every view (and Four View's persp quadrant) = Maya's persp angle
                 # Finest perspective grid step = 1 cm (= units.grid_scale; ):
                 # Maya grid lines every 1 cm ().
                 space.overlay.grid_scale = MAYA_UNIT

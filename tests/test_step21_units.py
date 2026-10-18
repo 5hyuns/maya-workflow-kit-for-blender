@@ -107,6 +107,7 @@ def test_other_kinds_scale_with_the_unit():
     assert _close((cam.data.clip_start, cam.data.clip_end), (0.001, 100.0)), \
         (cam.data.clip_start, cam.data.clip_end)
     assert abs(cam.data.display_size - 0.01) < TOL
+    assert (cam.data.lens, cam.data.sensor_width) == (35.0, 36.0), "Maya camera 35 mm on 36 mm film (step 81)"
     circle = create.create(bpy.context, 'NURBS_CIRCLE')
     assert _close(circle.dimensions[:2], (0.02, 0.02), 1e-3), tuple(circle.dimensions)
     curve = create.create(bpy.context, 'CV_CURVE')
