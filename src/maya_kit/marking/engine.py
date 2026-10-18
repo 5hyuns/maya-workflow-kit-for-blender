@@ -69,12 +69,16 @@ def _inside(rect, x, y):
     return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
 
 
-TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option", "maya_kit.symmetry")
+TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option", "maya_kit.symmetry", "maya_kit.component_mask")
+# Shift+Q pick mask: Poly Vertices / Poly Edges / Faces are check boxes, "All Components on" is a command (step 93).
+MASK_CHECKS = ("VERT", "EDGE", "FACE")
 
 
 def is_toggle(action):
     """An on/off item (Maya check box menu item): shows its state in the menu."""
-    return isinstance(action, tuple) and len(action) == 2 and action[0] in TOGGLE_OPS
+    if not (isinstance(action, tuple) and len(action) == 2 and action[0] in TOGGLE_OPS):
+        return False
+    return action[0] != "maya_kit.component_mask" or action[1].get("kind") in MASK_CHECKS
 
 
 class Layout:
