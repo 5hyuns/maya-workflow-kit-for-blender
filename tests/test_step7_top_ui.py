@@ -216,7 +216,8 @@ def test_menu_items_active_or_grey():
     # Blender's own menu at the end of File; v3d / tool / menu kinds.
     file_log = _draw_menu(menu_sets.menu_idname("mainFileMenu"))
     assert file_log[-1] == ("menu", "TOPBAR_MT_file", "Blender File"), file_log[-1]
-    assert ("menu", "TOPBAR_MT_file_import", "Import...") in file_log
+    imp = next(e for e in file_log if e[0] in ("op", "hold") and e[2] == "Import...")   # step 102: Maya dialog
+    assert _action(imp) == ("op", "maya_kit.file_import", {}), _action(imp)
     tools = _draw_menu(menu_sets.menu_idname("mainMeshToolsMenu"))
     cut = next(e for e in tools if e[0] in ("op", "hold") and e[2] == "Multi-Cut")
     assert _action(cut) == ("tool", "builtin.knife", {"edit": True}), _action(cut)

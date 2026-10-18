@@ -48,6 +48,8 @@ def sandbox_env(sandbox=SANDBOX):
         d = sandbox / sub
         d.mkdir(parents=True)
         env[var] = str(d)
+    # the default Maya Kit project (operators/project.default_root) lives in the sandbox, not in Documents
+    env["MAYA_KIT_PROJECTS_DIR"] = str(sandbox / "projects")
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return env
 

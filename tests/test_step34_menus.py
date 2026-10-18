@@ -18,7 +18,7 @@ extras = import_module(kit.MODULE + ".operators.menu_extras")
 
 NEW_PATHS = {
     "File/Increment and Save": "maya_kit.increment_save",
-    "File/Export Selection...": "MAYAKIT_MT_export_selection",
+    "File/Export Selection...": "maya_kit.file_export_selection",  # step 102 (was a format submenu)
     "Edit/Ungroup": "maya_kit.ungroup",
     "Windows/Outliner": "maya_kit.open_editor",
     "Windows/Node Editor": "maya_kit.open_editor",

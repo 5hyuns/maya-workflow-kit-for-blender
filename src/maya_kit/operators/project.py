@@ -48,10 +48,37 @@ def _norm(path):
     return os.path.normcase(os.path.abspath(bpy.path.abspath(path))) if path else ""
 
 
+# Maya's default project is <Documents>/maya/projects/default, made at first start, so a dialog never starts in a
+# bare Documents folder (step 102 「계획」 2, research/maya/re/file_io.md §1). The kit's own default sits next to it
+# under maya_kit/ (the user's real Maya folder is never written); MAYA_KIT_PROJECTS_DIR moves it (test sandboxes).
+DEFAULT_NAME = "default"
+
+
+def projects_dir():
+    return os.environ.get("MAYA_KIT_PROJECTS_DIR") or \
+        os.path.join(os.path.expanduser("~"), "Documents", "maya_kit", "projects")
+
+
+def default_root():
+    return os.path.join(projects_dir(), DEFAULT_NAME)
+
+
 def current_root(context=None):
+    """The current project: the one set (Set Project / Project Window / opened scene), else the default project."""
     prefs = _prefs(context)
     root = prefs.project_root if prefs is not None else ""
-    return os.path.abspath(bpy.path.abspath(root)) if root else ""
+    return os.path.abspath(bpy.path.abspath(root)) if root else default_root()
+
+
+def ensure_root(context=None):
+    """The current project root; the default project's folders are made on first use (like Maya's first start)."""
+    root = current_root(context)
+    if _norm(root) == _norm(default_root()) and not is_project(root):
+        try:
+            create_project(root)
+        except OSError:
+            pass
+    return root
 
 
 def recent(context=None):
@@ -105,7 +132,7 @@ def detect_root(blend_path):
 
 
 def scenes_dir(context=None):
-    root = current_root(context)
+    root = ensure_root(context)
     return os.path.join(root, "scenes") if root else ""
 
 
@@ -173,7 +200,7 @@ class MAYAKIT_OT_set_project(bpy.types.Operator):
                                              "that are missing (Maya: Create Default Workspace)")
 
     def invoke(self, context, event):
-        self.directory = current_root(context) or os.path.expanduser("~")
+        self.directory = ensure_root(context)
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
@@ -194,15 +221,12 @@ class MAYAKIT_OT_project_window(bpy.types.Operator):
     bl_idname = "maya_kit.project_window"
     bl_label = "Project Window"
 
-    name: StringProperty(name="Current Project", default="new_project")
+    name: StringProperty(name="Current Project", default=DEFAULT_NAME)
     location: StringProperty(name="Location", subtype='DIR_PATH')
 
     def invoke(self, context, event):
         root = current_root(context)
-        if root:
-            self.name, self.location = os.path.basename(root), os.path.dirname(root)
-        elif not self.location:
-            self.location = os.path.join(os.path.expanduser("~"), "Documents")
+        self.name, self.location = os.path.basename(root), os.path.dirname(root)
         return context.window_manager.invoke_props_dialog(self, width=DIALOG_WIDTH, confirm_text="Accept")
 
     def draw(self, context):
@@ -281,10 +305,16 @@ def browse_from_later(folder, op_idname="WM_OT_open_mainfile", tries=40):
     bpy.app.timers.register(tick, first_interval=0.01)
 
 
+_OPTION_BOX = BoolProperty(options={'HIDDEN', 'SKIP_SAVE'},
+                           description="Maya option box: the file dialog's Options panel shows the settings")
+
+
 class MAYAKIT_OT_open_scene(bpy.types.Operator):
     """Open a scene; the file browser starts in the project's scenes folder (Maya Open Scene)"""
     bl_idname = "maya_kit.open_scene"
     bl_label = "Open Scene"
+
+    option_box: _OPTION_BOX
 
     def invoke(self, context, event):
         path = open_path(context)
@@ -303,6 +333,8 @@ class MAYAKIT_OT_save_scene_as(bpy.types.Operator):
     (Maya Save Scene As)"""
     bl_idname = "maya_kit.save_scene_as"
     bl_label = "Save Scene As"
+
+    option_box: _OPTION_BOX
 
     def invoke(self, context, event):
         path = save_as_path(context)

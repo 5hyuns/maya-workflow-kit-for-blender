@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 102 (Maya 파일 I/O: 대화상자, Files of type, 프리셋, 기본 프로젝트) 완료 — `docs/steps/step_102.md`.
+  - File > Import / Export All / Export Selection = 대화상자 하나 (`operators/file_io.py`): 오른쪽 Files of type (Maya Scenes
+    .blend, FBX, OBJ, Alembic, USD, glTF, Import 는 Best Guess) + Maya cm / Y-up 프리셋 + Selection Only, 옵션 박스 = 그 패널.
+    모든 파일 브라우저 왼쪽에 「Current Project」 (폴더 목록, Set Project...). 프로젝트가 없으면 기본 프로젝트
+    `Documents/maya_kit/projects/default` (Maya `projects/default` 처럼), 시작 폴더 = Maya file rule.
+  - mayapy 왕복 (`research/maya/re/file_io.md`): kit → Maya FBX / OBJ / ABC / USD 모두 10 × 20 × 5 cm Y-up, Maya → kit 네
+    형식 모두 같은 크기. 검증: 헤드리스 747/747, GUI 1027/1027, 비교 그림 `research/maya/screens/step102/`.
+  - **바로 다음 할 일**: step 103 = backlog 5 「Real option boxes for the top 30 commands, Maya look」 (step_98.md #11,
+    quant §0). 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 101 (메뉴 정직성: 회색마다 안내, 싼 매핑, 객체 모드에서도 활성) 완료 — `docs/steps/step_101.md`.
   - 메뉴 데이터: 생성기가 실행 시 항목을 채움 (Modify Naming / Pivot / Attributes, Help, Audio, Stereo, Cache = Alembic /
     Geometry / GPU Cache, #13 의 File Game Exporter·Create USD·Visualize Ghosting·Generate XGen 등; 라벨은 mayapy 측정,

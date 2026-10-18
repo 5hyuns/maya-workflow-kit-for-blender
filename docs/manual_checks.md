@@ -664,3 +664,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 101) Edit Mesh > Edit Edge Flow: 굽은 면 위 가운데 루프를 평평하게 눌러 둔 뒤 실행 → 주변 곡률을 따라 다시 볼록해지는지 (Maya polyEditEdgeFlow 1.0 과 비교).
 - [ ] (step 101) Mesh Tools > Sculpting Tools > Grab Tool 등 → Sculpt 모드 + 해당 브러시. Audio > Import Audio... → 파일 선택 후 재생 시 소리 (VSE 스트립), Mute 토글. Cache > Alembic Cache > Export Selection to Alembic... → .abc 파일, Import Alembic... → 불러옴.
 - [ ] (step 101) Help > Maya Help / Python Command Reference → 웹 브라우저로 Blender 문서가 열림. Help > About Maya → Blender About.
+
+### Step 102 — Maya 파일 대화상자, 기본 프로젝트
+
+- [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/maya_kit/projects/default/scenes` 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
+- [ ] (step 102) File > Export Selection... → 오른쪽 Files of type 을 OBJ → FBX 로 바꾸면 파일 이름 확장자가 따라 바뀌는지, 시작 폴더 (OBJ = data, FBX = scenes) 가 Maya 와 같다고 느껴지는지.
+- [ ] (step 102) 실제 Maya 2022 GUI 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지 (mayapy 로는 확인됨). Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
+- [ ] (step 102) Import 대화상자에 .ma 파일을 고르면 「.ma / .mb can't be read: export FBX from Maya」 오류.
