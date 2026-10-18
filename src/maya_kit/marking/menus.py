@@ -199,6 +199,31 @@ RMB_EMPTY = MarkingMenu(
     items=[("Select All", ("object.select_all", {"action": 'SELECT'})),
            ("Complete Tool", None)])
 
+# Pivot edit (D / Insert): the $editMode branch of buildObjectMenuItemsNow (
+# menus.buildObjectMenuItemsNow :69-115; interaction.md:81). Same proc as RMB_EMPTY, so a variant name like
+# dagMenuProc_curve. Show Orientation Handle / Bake Pivot Orientation have no Blender counterpart (greyed).
+def _pivot_option(option):
+    return ("maya_kit.pivot_option", {"option": option})
+
+
+def _pivot_reset(position=True, orientation=True):
+    return ("maya_kit.pivot_reset", {"position": position, "orientation": orientation})
+
+
+PIVOT_EDIT = MarkingMenu(
+    "buildObjectMenuItemsNow_pivot", "Pivot", " buildObjectMenuItemsNow",
+    radial={
+        "N": ("Pin Component Pivot", _pivot_option("PIN")),                # :69
+        "S": ("Reset Pivot", _pivot_reset()),                              # :75
+        "NW": ("Snap Pivot Orientation", _pivot_option("SNAP_ORI")),       # :80
+        "NE": ("Snap Pivot Position", _pivot_option("SNAP_POS")),          # :86
+        "SW": ("Reset Pivot Orientation", _pivot_reset(position=False)),   # :92
+        "SE": ("Reset Pivot Position", _pivot_reset(orientation=False)),   # :97
+        "W": ("Show Orientation Handle", None),                            # :102
+        "E": ("Exit", ("maya_kit.pivot_exit", {})),                        # :108
+    },
+    items=[("Bake Pivot Orientation", None)])                              # :115
+
 # --- Shift+RMB: Maya*MM (, :254-265) ---------------------------------
 
 SOFT_HARD = Sub(radial={  # Maya-169 / Maya-109
@@ -794,7 +819,7 @@ SHIFT_UV_SHELL = MarkingMenu(
     },
     items=list(_UV_TAIL))
 
-MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, SHIFT_OBJECT, SHIFT_VERTEX,
+MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, PIVOT_EDIT, SHIFT_OBJECT, SHIFT_VERTEX,
                              SHIFT_EDGE, SHIFT_FACE, SHIFT_DEFAULT, CTRL_CONVERT,
                              OPT_MOVE, OPT_ROTATE, OPT_SCALE, OPT_SELECT, SELECT_ALL,
                              HB_NORTH, HB_SOUTH, HB_EAST, HB_WEST, HB_CENTER,

@@ -126,6 +126,58 @@ def _set_cursor_orientation(context, value):
         return None
 
 
+def cursor_orientation(context):
+    """The cursor tool orientation for the Maya Snap Pivot Orientation option (step 94; default on = GEOM)."""
+    from .pivot_menu import option
+    return PIVOT_CURSOR_ORIENTATION if option("SNAP_ORI", context) else 'NONE'
+
+
+def apply_cursor_options(context):
+    """Snap Pivot Orientation / Position -> the active cursor tool's orientation / surface projection (step 94)."""
+    from .pivot_menu import option
+    _set_cursor_orientation(context, cursor_orientation(context))
+    try:
+        tool = context.workspace.tools.from_space_view3d_mode(EDIT_MODE, create=False)
+        if tool is not None and tool.idname == CURSOR_TOOL:
+            tool.operator_properties(CURSOR_OP).use_depth = option("SNAP_POS", context)
+    except (AttributeError, RuntimeError, TypeError):
+        pass
+
+
+def selection_signature(context):
+    """Cheap edit-mode selection fingerprint: selected counts and the active element per edited mesh."""
+    import bmesh
+    sig = []
+    for ob in getattr(context, "objects_in_mode", None) or ():
+        if ob.type != 'MESH':
+            continue
+        me = ob.data
+        try:
+            act = bmesh.from_edit_mesh(me).select_history.active
+            act = (type(act).__name__, act.index) if act is not None else None
+        except (ValueError, ReferenceError):
+            act = None
+        sig.append((ob.name, me.total_vert_sel, me.total_edge_sel, me.total_face_sel, act))
+    return tuple(sig)
+
+
+def selection_center(context):
+    """World centre of the bounding box of the selected vertices (Maya component manipulator, P11) or None."""
+    import bmesh
+    from mathutils import Vector
+    lo = hi = None
+    for ob in getattr(context, "objects_in_mode", None) or ():
+        if ob.type != 'MESH':
+            continue
+        mw = ob.matrix_world
+        for v in bmesh.from_edit_mesh(ob.data).verts:
+            if v.select:
+                p = mw @ v.co
+                lo = p.copy() if lo is None else Vector(map(min, lo, p))
+                hi = p.copy() if hi is None else Vector(map(max, hi, p))
+    return None if lo is None else (lo + hi) / 2
+
+
 def turned(before, after, eps=1e-5):
     """True when the 3D cursor rotation (3x3) changed: the user oriented the pivot."""
     return any(abs(before[i][j] - after[i][j]) > eps for i in range(3) for j in range(3))
@@ -139,6 +191,8 @@ class ComponentPivotEdit:
         self.on = False
         self.toggled = False          # started by Insert: stays on until Insert / D / leaving edit mode
         self.pending_tool = None      # tool to bring back on the next mesh edit mode entry
+        self.custom = False           # a placed custom pivot is in use (pivot point CURSOR after finish)
+        self.sel_sig = None           # the selection it was placed for (Pin Component Pivot off: reset on change)
 
     def start(self, context, toggled=False):
         ts = context.scene.tool_settings
@@ -153,7 +207,9 @@ class ComponentPivotEdit:
         ts.transform_pivot_point = 'CURSOR'
         _tool_set(context, CURSOR_TOOL, self.area)
         # tool options belong to the tool: set the orientation once the cursor tool is the active one
-        self.orientation = _set_cursor_orientation(context, PIVOT_CURSOR_ORIENTATION)
+        self.orientation = _set_cursor_orientation(context, cursor_orientation(context))
+        apply_cursor_options(context)
+        self.custom = False
         _redraw()
 
     def finish(self, context):
@@ -165,6 +221,8 @@ class ComponentPivotEdit:
         moved = (cursor.location - self.location).length > 1e-6
         rot = cursor.matrix.to_3x3()
         ts.transform_pivot_point = component_pivot_after(self.pivot, moved)
+        self.custom = ts.transform_pivot_point == 'CURSOR'
+        self.sel_sig = selection_signature(context) if self.custom else None
         if self.orientation is not None and _active_tool(context) == CURSOR_TOOL:
             _set_cursor_orientation(context, self.orientation)
         if moved and turned(self.rotation, rot):
@@ -176,13 +234,46 @@ class ComponentPivotEdit:
             self.pending_tool = self.tool     # a tool can only be set in its own mode
         _redraw()
 
+    def reset(self, context, position=True, orientation=True):
+        """Maya Reset Pivot (Position / Orientation) for components: the pivot back on the selection's bounding-box
+        centre with world axes (manipPivotReset, )."""
+        cursor = context.scene.cursor
+        if position:
+            centre = selection_center(context)
+            if centre is not None:
+                cursor.location = centre
+        if orientation:
+            cursor.rotation_mode = 'XYZ'
+            cursor.rotation_euler = (0.0, 0.0, 0.0)
+            from . import pivot
+            pivot.leave_custom_orientation(context.scene)
+        if self.on:                   # releasing D now = no custom pivot (the reset place counts as "not moved")
+            if position:
+                self.location = cursor.location.copy()
+            if orientation:
+                self.rotation = cursor.matrix.to_3x3()
+        elif position and self.custom:
+            context.scene.tool_settings.transform_pivot_point = 'BOUNDING_BOX_CENTER'
+            self.custom, self.sel_sig = False, None
+        _redraw()
+
     def tick(self, context):
-        """Timer: close a toggled session that left edit mode; restore its tool when edit mode is back."""
+        """Timer: close a toggled session that left edit mode; restore its tool when edit mode is back; drop an
+        unpinned custom pivot when the selection changes (Maya Pin Component Pivot off, step 94)."""
         if self.on and context.mode != EDIT_MODE:
             self.finish(context)
         elif self.pending_tool and context.mode == EDIT_MODE:
             tool, self.pending_tool = self.pending_tool, None
             _tool_set(context, tool, None)
+        if self.custom and not self.on:
+            from .pivot_menu import option
+            ts = context.scene.tool_settings
+            if context.mode != EDIT_MODE or ts.transform_pivot_point != 'CURSOR':
+                self.custom, self.sel_sig = False, None
+            elif not option("PIN", context) and selection_signature(context) != self.sel_sig:
+                ts.transform_pivot_point = 'BOUNDING_BOX_CENTER'
+                self.custom, self.sel_sig = False, None
+                _redraw()
 
 
 def _view3d_area(context):
@@ -220,7 +311,7 @@ def _component_tick():
         COMPONENT.tick(bpy.context)
     except (AttributeError, ReferenceError, RuntimeError):
         pass
-    return _TICK if (COMPONENT.on or COMPONENT.pending_tool) else None
+    return _TICK if (COMPONENT.on or COMPONENT.pending_tool or COMPONENT.custom) else None
 
 
 def watch_component():
@@ -236,8 +327,8 @@ def unregister_component():
             COMPONENT.finish(bpy.context)
         except (AttributeError, ReferenceError, RuntimeError):
             pass
-    COMPONENT.on = COMPONENT.toggled = False
-    COMPONENT.pending_tool = None
+    COMPONENT.on = COMPONENT.toggled = COMPONENT.custom = False
+    COMPONENT.pending_tool = COMPONENT.sel_sig = None
 
 
 GROUPS = {"snap": SnapGroup(), "pivot": PivotGroup(), "component_pivot": ComponentPivotGroup()}

@@ -148,6 +148,9 @@ def resolve(trigger, context, picked=None):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
         return ("pie", idname("contextPolyToolsObjectMM" if meshes else "contextPolyToolsDefaultMM"))
     # RMB
+    from ..operators import pivot_menu
+    if pivot_menu.pivot_editing(context):      # D / Insert held or on: the pivot menu (step 94)
+        return ("pie", idname("buildObjectMenuItemsNow_pivot"))
     if mode == 'EDIT_MESH':
         return ("pie", idname("dagMenuProc"))
     if mode in {'EDIT_CURVE', 'EDIT_SURFACE'}:

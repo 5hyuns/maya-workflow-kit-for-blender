@@ -69,7 +69,8 @@ def _inside(rect, x, y):
     return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
 
 
-TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option", "maya_kit.symmetry", "maya_kit.component_mask")
+TOGGLE_OPS = ("wm.context_toggle", "maya_kit.manip_option", "maya_kit.symmetry", "maya_kit.component_mask",
+              "maya_kit.pivot_option")
 # Shift+Q pick mask: Poly Vertices / Poly Edges / Faces are check boxes, "All Components on" is a command (step 93).
 MASK_CHECKS = ("VERT", "EDGE", "FACE")
 
