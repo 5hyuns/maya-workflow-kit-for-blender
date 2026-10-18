@@ -164,6 +164,10 @@ class SoftSelectBinding(TapHoldBinding):
         setattr(ts, prop, not getattr(ts, prop))
         if getattr(ts, prop):
             maya_soft_radius(context)
+            from ..ui import view_message
+            # Maya Maya (only when it turns on, topCenter).
+            view_message.show(context, "<hl>Soft Select</hl> is <hl>on</hl>. Tap <hl>b</hl> to turn it <hl>off</hl>.",
+                              'TOP_CENTER')
 
     def click(self, context, event):
         ts = context.scene.tool_settings

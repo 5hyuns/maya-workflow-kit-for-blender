@@ -467,7 +467,27 @@ def _maya_bar(context):
         return False
 
 
+# Top bars seen while drawing them, by window pointer: global areas aren't in screen.areas, so
+# window.screen.areas tag_redraw never reaches them. A window's global
+# areas live as long as the window, so only areas of open windows are tagged.
+_top_bars = {}
+
+
+def redraw_top_bars():
+    open_windows = {w.as_pointer() for w in bpy.context.window_manager.windows}
+    for key in list(_top_bars):
+        if key not in open_windows:
+            del _top_bars[key]
+            continue
+        try:
+            _top_bars[key].tag_redraw()
+        except ReferenceError:
+            del _top_bars[key]
+
+
 def draw_left(self, context):
+    if context.window is not None and context.area is not None:
+        _top_bars[context.window.as_pointer()] = context.area
     if not _maya_bar(context):
         return _orig["draw_left"](self, context)
     layout = self.layout
@@ -551,5 +571,6 @@ def unregister():
     bpy.types.VIEW3D_HT_tool_header.remove(draw_tool_header)
     unpatch_topbar()
     _collapsed.clear()
+    _top_bars.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

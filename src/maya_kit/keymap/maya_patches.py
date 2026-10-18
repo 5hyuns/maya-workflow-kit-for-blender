@@ -108,7 +108,8 @@ def patch_display(kd):
         _add(kd, "3D View", "maya_kit.display_mode", make_event(key), {"mode": mode})
     # Losing 4 = object mode leaves no quick way out of edit mode; Maya's F8
     # toggles object <-> last component mode ().
-    _add(kd, "Object Non-modal", "object.editmode_toggle", make_event("F8"))
+    # maya_kit.toggle_sel_mode = editmode_toggle + Maya's in-view message (step 72).
+    _add(kd, "Object Non-modal", "maya_kit.toggle_sel_mode", make_event("F8"))
 
 
 # --- 3. Ctrl+G group --------------------------------------------------------

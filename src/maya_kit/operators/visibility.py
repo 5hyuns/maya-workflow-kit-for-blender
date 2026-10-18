@@ -99,8 +99,32 @@ class MAYAKIT_OT_visibility(bpy.types.Operator):
         return context.view_layer is not None and context.mode == 'OBJECT'
 
     def execute(self, context):
-        apply(context, self.action)
+        vl = context.view_layer
+        had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
+        changed = apply(context, self.action)
+        text = message(self.action, had_selection, changed)
+        if text:
+            from ..ui import view_message
+            view_message.show(context, text)
         return {'FINISHED'}
+
+
+def message(action, had_selection, changed):
+    """Maya's in-view message for a visibility action, or None (Maya-90,
+    Maya-125)."""
+    if action == 'HIDE':
+        if had_selection:
+            return ("Selection <hl>hidden</hl>.\n"
+                    "To show it again, select it in the Outliner and press <hl>Shift+H</hl>.")
+        return "Nothing is selected to hide."
+    if action == 'HIDE_UNSELECTED':
+        if changed:
+            return ("Unselected objects <hl>hidden</hl>.\n"
+                    "To show them, select them in the Outliner and press <hl>Shift+H</hl>.")
+        return "No unselected objects to hide."
+    if action == 'TOGGLE' and not changed:
+        return "Nothing selected to toggle."
+    return None
 
 
 classes = (MAYAKIT_OT_visibility,)

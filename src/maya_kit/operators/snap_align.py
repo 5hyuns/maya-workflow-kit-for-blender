@@ -274,6 +274,10 @@ class MAYAKIT_OT_make_live(bpy.types.Operator):
             ob = None
         make_live(context, ob)
         self.report({'INFO'}, f"Live surface: {ob.name}" if ob else "No Live Surface")
+        from ..ui import view_message
+        # Maya Maya-1900 (topCenter).
+        view_message.show(context, f"{ob.name} is <hl>live</hl>." if ob else "Make Live is <hl>off</hl>.",
+                          'TOP_CENTER')
         return {'FINISHED'}
 
 

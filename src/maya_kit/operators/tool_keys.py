@@ -151,10 +151,36 @@ class MAYAKIT_OT_menu_set(bpy.types.Operator):
         for window in context.window_manager.windows:
             for area in window.screen.areas:
                 area.tag_redraw()
+        from ..ui import status_line
+        status_line.redraw_top_bars()   # the Maya menu bar is in the top bar, a global area (step 72)
         return {'FINISHED'}
 
 
-classes = (MAYAKIT_OT_box_zoom, MAYAKIT_OT_last_tool, MAYAKIT_OT_menu_set)
+class MAYAKIT_OT_toggle_sel_mode(bpy.types.Operator):
+    """Toggle object / component selection (Maya F8, SelectToggleMode) with Maya's in-view message"""
+    bl_idname = "maya_kit.toggle_sel_mode"
+    bl_label = "Object/Component"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.ops.object.editmode_toggle.poll()
+
+    def execute(self, context):
+        result = bpy.ops.object.editmode_toggle()
+        if 'FINISHED' not in result:
+            return {'CANCELLED'}
+        from ..ui import view_message
+        # Maya Maya-30: a topCenter message naming the new mode and the key back.
+        if context.mode == 'OBJECT':
+            text = "Object selection <hl>on</hl>.\nF8 goes back to components."
+        else:
+            text = "Component selection <hl>on</hl>.\nF8 goes back to objects."
+        view_message.show(context, text, 'TOP_CENTER')
+        return {'FINISHED'}
+
+
+classes = (MAYAKIT_OT_box_zoom, MAYAKIT_OT_last_tool, MAYAKIT_OT_menu_set, MAYAKIT_OT_toggle_sel_mode)
 
 
 def register_timer():
