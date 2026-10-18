@@ -86,22 +86,24 @@ def properties_tab_later(window, tab, tries=40):
     state = {"n": tries}
 
     def tick():
+        # Reading ``space.context`` before the tab list exists prints an rna enum WARN (step 98), so only a
+        # successful assignment is read back.
         try:
             space = window.screen.areas[0].spaces.active
             try:
                 space.context = tab
             except TypeError:   # tab not available yet (or ever: no active object etc.)
                 pass
-            if space.context == tab:
-                window.screen.areas[0].tag_redraw()
-                return None
+            else:
+                if space.context == tab:
+                    window.screen.areas[0].tag_redraw()
+                    return None
         except (ReferenceError, AttributeError, IndexError):   # window closed meanwhile
             return None
         state["n"] -= 1
         return 0.05 if state["n"] > 0 else None
 
-    tick()
-    if window.screen.areas[0].spaces.active.context != tab:
+    if tick() is not None:
         bpy.app.timers.register(tick, first_interval=0.05)
 
 
