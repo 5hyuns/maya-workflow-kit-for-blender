@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 92 (Graph Editor 키 묶음) 완료 — `docs/steps/step_92.md`.
+  - t = 현재 시간 가운데 (가로만), Alt+/ = Snap Time To Selection **토글** (Maya 관찰: 켜면 키 선택마다 가장 이른 선택 키로 시간; View 메뉴 체크),
+    i 홀드 = Insert Key 툴 (MMB → 정수 프레임에 모양 유지 키, 새 키만 선택). Maya 동작 명세 `research/maya/re/graph_editor_keys.md` (QTest 관찰).
+    대응표 구현 155 · 미검토 219.
+  - 검증: 헤드리스 692/692, GUI 693/693, dogfood 47/47.
+  - **바로 다음 할 일**: step 93 = backlog 4 「Selection mask polish」 (Shift+Q 마킹 메뉴 체크 표시, 새 장면 / 열기에서 마스크 초기화, Tool Settings
+    Reset Tool). backlog = `hermes/autodrive_bmk/backlog.json`. 배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 91 (뷰 표시 수정) 완료 — `docs/steps/step_91.md`.
   - 템플릿 3D 뷰 부모 관계 점선 끔 (Maya 2022 실행으로 선 없음 확인, `research/maya/screens/parent/`), 마킹 메뉴가 HUD (Adjust Last Operation) 위에
     그려짐 (`draw.REGION_TYPES` + 'HUD', 4.5 / 5.2 측정, 대조 실험), 독 = Channel Box 패널 하나가 CB / AE / MTK 를 그림 → Channel Box 탭이 Item 밑으로

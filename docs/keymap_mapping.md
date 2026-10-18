@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 152 |
+| 구현 | 155 |
 | IC 일치 | 15 |
 | 해당 없음 | 11 |
-| 미검토 | 222 |
+| 미검토 | 219 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -76,7 +76,7 @@
 | a | A | graphEditor | GraphEditorFrameAll | Graph Editor: `graph.view_all` | IC 일치 |  | hotkeySetup.mel:144 |
 | f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | IC 일치 |  | hotkeySetup.mel:145 |
 | g | G | graphEditor | GraphEditorFramePlaybackRange | Graph Editor: `anim.scene_range_frame`; Screen: `screen.repeat_last` | 구현 | 재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤 | hotkeySetup.mel:146 |
-| t | T | graphEditor | GraphEditorFrameCenterView | — | 미검토 |  | hotkeySetup.mel:147 |
+| t | T | graphEditor | GraphEditorFrameCenterView | Graph Editor: `maya_kit.graph_center_time` | 구현 | 현재 시간을 가운데로 (가로만, 확대 그대로) | hotkeySetup.mel:147 |
 | 1 | ONE | graphEditor | GraphEditorAbsoluteView | Graph Editor: `maya_kit.graph_view_mode` (mode='ABSOLUTE') | 구현 | Normalize 끔 | hotkeySetup.mel:148 |
 | 2 | TWO | graphEditor | GraphEditorStackedView | Graph Editor: `maya_kit.graph_view_mode` (mode='STACKED') | 구현 | Blender 에 Stacked 없음: Normalized 로 + 안내 | hotkeySetup.mel:149 |
 | 3 | THREE | graphEditor | GraphEditorNormalizedView | Graph Editor: `maya_kit.graph_view_mode` (mode='NORMALIZED') | 구현 | Normalize 켬 (-1..1) | hotkeySetup.mel:150 |
@@ -198,7 +198,7 @@
 | Alt+v | Alt+V | global | PlaybackToggle | Frames: `screen.animation_play` | 구현 |  | hotkeySetup.mel:332 |
 | Alt+Shift+V | Alt+Shift+V | global | GoToMinFrame | Frames: `screen.frame_jump` (end=False) | 구현 |  | hotkeySetup.mel:333 |
 | k | K | global | TimeDraggerToolActivate / TimeDraggerToolDeactivate (release) | Screen: `maya_kit.tap_hold` (binding='time_drag') | 구현 | K 누른 채 LMB 드래그 = 시간 (어느 에디터든), 선택 그대로; Mesh knife K → Multi-Cut 은 Ctrl+Shift+X (step 56) | hotkeySetup.mel:334 |
-| i | I | global | InsertKeyToolActivate / InsertKeyToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.inset_faces', cycle=True) | 미검토 |  | hotkeySetup.mel:335 |
+| i | I | global | InsertKeyToolActivate / InsertKeyToolDeactivate (release) | Mesh: `wm.tool_set_by_id` (name='builtin.inset_faces', cycle=True) | 구현 | Graph Editor 에서 누르는 동안 MMB 클릭 / 드래그 = 선택 곡선에 모양 그대로 키 (정수 프레임); 전역 I = Mesh inset 그대로 | hotkeySetup.mel:335 |
 | 0 | ZERO | global | DefaultQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=1); Mesh: `maya_kit.smooth_preview` (level=1) | 구현 | 1 과 같음 (거친 표시) — step 27 | hotkeySetup.mel:336 |
 | 1 | ONE | global | LowQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=1); Mesh: `maya_kit.smooth_preview` (level=1) | 구현 | Subsurf 뷰포트 끔 | hotkeySetup.mel:337 |
 | 2 | TWO | global | MediumQualityDisplay | Object Mode: `maya_kit.smooth_preview` (level=2); Mesh: `maya_kit.smooth_preview` (level=2) | 구현 | Subsurf + 와이어 (케이지 근사) | hotkeySetup.mel:338 |
@@ -468,7 +468,7 @@
 | Ctrl+Shift+W | Ctrl+Shift+W | global | InsertKeyTranslate | Screen: `maya_kit.insert_key` (channels='TRANSLATE') | 구현 | 있는 Translate 곡선에만, 모양 그대로 (새 곡선 안 만듦) | hotkeySetup.mel:730 |
 | Ctrl+Shift+R | Ctrl+Shift+R | global | InsertKeyScale | Screen: `maya_kit.insert_key` (channels='SCALE') | 구현 | 있는 Scale 곡선에만, 모양 그대로 | hotkeySetup.mel:731 |
 | Alt+i | Alt+I | global | InsertKey | Screen: `maya_kit.insert_key` (channels='ALL') | 구현 | 곡선 모양 그대로 현재 시간 키: Graph Editor 선택 곡선 → 보이는 곡선, 그 밖 = 선택 노드 곡선 | hotkeySetup.mel:732 |
-| Alt+/ | Alt+SLASH | graphEditor | SnapTimeToSelection | — | 미검토 |  | hotkeySetup.mel:734 |
+| Alt+/ | Alt+SLASH | graphEditor | SnapTimeToSelection | Graph Editor: `maya_kit.snap_time_toggle` | 구현 | Snap Time To Selection 켬/끔 (View 메뉴 체크): 키 선택 = 가장 이른 키로 시간 | hotkeySetup.mel:734 |
 | Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | 3D View: `maya_kit.toggle_show` (kind='CURVES') | 구현 | 커서 아래 뷰의 커브 보이기 | hotkeySetup.mel:735 |
 | Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | 3D View: `maya_kit.toggle_show` (kind='POLYGONS') | 구현 | 커서 아래 뷰의 메시 보이기 | hotkeySetup.mel:736 |
 | Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | 3D View: `maya_kit.toggle_show` (kind='IMAGE_PLANES') | 구현 | 이미지 엠프티 (Free Image Plane) 표시 — Blender 에 뷰별 필터가 없어 모든 뷰 | hotkeySetup.mel:737 |

@@ -165,6 +165,12 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     cb_hyperbolic: bpy.props.BoolProperty(
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
+    # Graph Editor View > Snap Time To Selection (Maya optionVar snapTimeToSelection, default off; Alt+/ toggles it;
+    # research/maya/re/graph_editor_keys.md, docs/steps/step_92.md).
+    snap_time_to_selection: bpy.props.BoolProperty(
+        name="Snap Time To Selection",
+        description="Selecting keys in the Graph Editor moves the current time to the earliest selected key")
+
     # Top UI (docs/steps/step_7.md; Maya Windows > UI Elements, research/maya/ui_layout.md:190-191).
     maya_top_bar: bpy.props.BoolProperty(
         name="Maya Menu Bar",

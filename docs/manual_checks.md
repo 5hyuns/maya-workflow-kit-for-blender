@@ -12,8 +12,8 @@ set BLENDER_USER_EXTENSIONS=C:\Repos\blender-maya-kit\tmp\test_env\extensions
 
 Format: `- [ ] (step N) what to do → what you should see`.
 
-**자동 / 수동 (step 88, 2026-10-18)**: 항목 355 개 (step 91 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
-`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **342 개 수동** (`[ ]`). 수동으로 남긴 이유는
+**자동 / 수동 (step 88, 2026-10-18)**: 항목 358 개 (step 92 까지) 중 **13 개 자동 확인** (`[x]`, 끝에 확인한 GUI 테스트 이름 —
+`tests/gui/gui_manual_sweep.py`, 항목 id `[M<step>-<번호>]`), **345 개 수동** (`[ ]`). 수동으로 남긴 이유는
 `docs/steps/step_88.md` 「분류」: 사람 판단 (느낌·색·Maya 화면 비교·다른 UI 배율), event_simulate 로 못 만드는 입력 (DOUBLE_CLICK, OS 에
 가는 키·창 / 재시작·강제 종료·설치), 아직 옮기지 않은 시뮬레이션 가능 항목 (다음 정리 후보).
 
@@ -619,3 +619,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 91) MayaKit 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
 - [ ] (step 91) 아무 작업 뒤 Adjust Last Operation 패널이 떠 있을 때 RMB / Space 메뉴가 그 패널 위에 그려짐 (UI 배율 0.8 / 1.25 에서도).
+
+### Step 92 — Graph Editor 키
+
+- [ ] (step 92) Graph Editor 를 확대한 상태에서 t → 현재 시간이 가운데로, 확대와 세로 범위는 그대로.
+- [ ] (step 92) Alt+/ (또는 View > Snap Time To Selection) 켜고 키를 클릭 / 마키 / Shift 추가 → 현재 시간이 선택한 키 중 가장 이른 키로. 빈 곳 클릭 = 시간 그대로. 다시 Alt+/ = 끔.
+- [ ] (step 92) 곡선을 선택하고 i 를 누른 채 MMB 클릭 → 그 프레임에 키, 곡선 모양 그대로, 새 키만 선택. MMB 를 누른 채 끌면 점선이 따라오고 놓은 곳에 키. 선택된 곡선이 없으면 아무 일 없음. i 를 놓으면 원래대로.
