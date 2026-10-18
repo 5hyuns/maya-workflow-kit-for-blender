@@ -7,10 +7,10 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 125 |
+| 구현 | 133 |
 | IC 일치 | 10 |
 | 해당 없음 | 11 |
-| 미검토 | 254 |
+| 미검토 | 246 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -216,8 +216,8 @@
 | Return | RET | global | CompleteCurrentTool | Screen: `file.execute` | 해당 없음 | Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거 | hotkeySetup.mel:353 |
 | Esc | ESC | global | AbortCurrentTool | Frames: `screen.animation_cancel`; Screen: `file.cancel`; Screen: `render.view_cancel` | 미검토 |  | hotkeySetup.mel:354 |
 | d | D | global | EnterEditModePress / EnterEditModeRelease (release) | Object Mode: `maya_kit.hold` (name='pivot'); Mesh: `maya_kit.hold` (name='component_pivot') | 구현 | 오브젝트 모드: 누르는 동안 피벗 편집 (Translate 불변, 자식 제자리, step 59); 편집 모드: 3D 커서 피벗 배치 (step 18), 피벗 방향 = Maya Pivot (step 77) | hotkeySetup.mel:355 |
-| Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | — | 미검토 |  | hotkeySetup.mel:356 |
-| Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | — | 미검토 |  | hotkeySetup.mel:357 |
+| Ctrl+Alt+, | Ctrl+Alt+COMMA | global | SelectPreviousKey | Screen: `maya_kit.select_key` (direction='PREVIOUS') | 구현 |  | hotkeySetup.mel:356 |
+| Ctrl+Alt+. | Ctrl+Alt+PERIOD | global | SelectNextKey | Screen: `maya_kit.select_key` (direction='NEXT') | 구현 | 선택 키 (없으면 현재 시간) 다음 키로 가서 그 키만 선택 | hotkeySetup.mel:357 |
 | , | COMMA | global | PreviousKey | Frames: `screen.keyframe_jump` (next=False) | 구현 | 3D View 방향 파이는 헤더로 | hotkeySetup.mel:358 |
 | Alt+, | Alt+COMMA | global | PreviousFrame | Frames: `screen.frame_offset` (delta=-1) | 구현 |  | hotkeySetup.mel:359 |
 | . | PERIOD | global | NextKey | Frames: `screen.keyframe_jump` (next=True) | 구현 | Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로 | hotkeySetup.mel:360 |
@@ -444,7 +444,7 @@
 | l | L | global | LockCurveLength / UnlockCurveLength (release) | — | 미검토 |  | hotkeySetup.mel:686 |
 | Alt+g | Alt+G | hyperGraphPanel | HypergraphIncreaseDepth | — | 미검토 |  | hotkeySetup.mel:689 |
 | Alt+t | Alt+T | hyperGraphPanel | HypergraphDecreaseDepth | — | 미검토 |  | hotkeySetup.mel:690 |
-| Ctrl+Shift+W | Ctrl+Shift+W | global | ToggleSteeringWheel | — | 미검토 |  | hotkeySetup.mel:694 |
+| Ctrl+Shift+W | Ctrl+Shift+W | global | ToggleSteeringWheel | Screen: `maya_kit.insert_key` (channels='TRANSLATE') | 미검토 |  | hotkeySetup.mel:694 |
 | \ | BACK_SLASH | global | TogglePanZoomPress | — | 미검토 |  | hotkeySetup.mel:697 |
 | \ | BACK_SLASH | global | — / TogglePanZoomRelease (release) | — | 미검토 |  | hotkeySetup.mel:698 |
 | Alt+x | Alt+X | global | WalkContext_Command | 3D View: `view3d.toggle_xray` | 미검토 |  | hotkeySetup.mel:701 |
@@ -464,17 +464,17 @@
 | 3 | THREE | profilerPanel | ProfilerToolThreadView | — | 미검토 |  | hotkeySetup.mel:722 |
 | Ctrl+f | Ctrl+F | global | SearchEngine | — | 미검토 |  | hotkeySetup.mel:724 |
 | Cmd+f | Oskey+F | global | SearchEngine | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:727 |
-| Ctrl+Shift+E | Ctrl+Shift+E | global | InsertKeyRotate | — | 미검토 |  | hotkeySetup.mel:729 |
-| Ctrl+Shift+W | Ctrl+Shift+W | global | InsertKeyTranslate | — | 미검토 |  | hotkeySetup.mel:730 |
-| Ctrl+Shift+R | Ctrl+Shift+R | global | InsertKeyScale | — | 미검토 |  | hotkeySetup.mel:731 |
-| Alt+i | Alt+I | global | InsertKey | — | 미검토 |  | hotkeySetup.mel:732 |
+| Ctrl+Shift+E | Ctrl+Shift+E | global | InsertKeyRotate | Screen: `maya_kit.insert_key` (channels='ROTATE') | 구현 | 있는 Rotate 곡선에만, 모양 그대로 | hotkeySetup.mel:729 |
+| Ctrl+Shift+W | Ctrl+Shift+W | global | InsertKeyTranslate | Screen: `maya_kit.insert_key` (channels='TRANSLATE') | 구현 | 있는 Translate 곡선에만, 모양 그대로 (새 곡선 안 만듦) | hotkeySetup.mel:730 |
+| Ctrl+Shift+R | Ctrl+Shift+R | global | InsertKeyScale | Screen: `maya_kit.insert_key` (channels='SCALE') | 구현 | 있는 Scale 곡선에만, 모양 그대로 | hotkeySetup.mel:731 |
+| Alt+i | Alt+I | global | InsertKey | Screen: `maya_kit.insert_key` (channels='ALL') | 구현 | 곡선 모양 그대로 현재 시간 키: Graph Editor 선택 곡선 → 보이는 곡선, 그 밖 = 선택 노드 곡선 | hotkeySetup.mel:732 |
 | Alt+/ | Alt+SLASH | graphEditor | SnapTimeToSelection | — | 미검토 |  | hotkeySetup.mel:734 |
 | Alt+1 | Alt+ONE | global | ToggleNurbsCurvesOptionCmd | — | 미검토 |  | hotkeySetup.mel:735 |
 | Alt+2 | Alt+TWO | global | TogglePolygonsOptionCmd | — | 미검토 |  | hotkeySetup.mel:736 |
 | Alt+4 | Alt+FOUR | global | ToggleImagePlaneOptionCmd | — | 미검토 |  | hotkeySetup.mel:737 |
 | Alt+5 | Alt+FIVE | global | ToggleWireframeOnShadedCmd | 3D View: `wm.context_toggle` (data_path='space_data.overlay.show_wireframes') | 구현 | 뷰포트 오버레이 Wireframe (모든 오브젝트) — step 27 | hotkeySetup.mel:738 |
-| Shift+) | Shift+ZERO | global | NudgeSelectedKeysForward | — | 미검토 |  | hotkeySetup.mel:739 |
-| Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | — | 미검토 |  | hotkeySetup.mel:740 |
+| Shift+) | Shift+ZERO | global | NudgeSelectedKeysForward | Screen: `maya_kit.nudge_keys` (delta=1) | 구현 | Graph Editor / Dope Sheet 선택 키, 그 밖 = 선택 노드의 현재 시간 (또는 Shift 범위) 키 + 시간도 같이 | hotkeySetup.mel:739 |
+| Shift+( | Shift+NINE | global | NudgeSelectedKeysBackward | Screen: `maya_kit.nudge_keys` (delta=-1) | 구현 | 겹치는 키는 덮어씀 (Maya -o over) | hotkeySetup.mel:740 |
 | Alt+t | Alt+T | global | CreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:742 |
 | Alt+Shift+T | Alt+Shift+T | global | QuickCreateTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:743 |
 | Shift+\| | Shift+BACK_SLASH | global | FrameTimeSliderBookmark | — | 미검토 |  | hotkeySetup.mel:744 |

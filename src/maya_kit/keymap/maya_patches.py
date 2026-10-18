@@ -794,6 +794,31 @@ def patch_outliner_drag(kd):
     _add(kd, "Outliner", "maya_kit.outliner_drag", make_event("MIDDLEMOUSE"), shadows=("View2D", "View2D Buttons List"))
 
 
+# --- 39. Insert / nudge / select keys (docs/steps/step_83.md 「계획」 4) ------------------------------------
+# Maya global keys (hotkeySetup.mel:356-357, 729-732, 739-740). "Screen" so they work over the 3D View, Graph Editor,
+# Dope Sheet and Time Slider; the operators read the editor under the mouse. Editor / mode keymaps with the same
+# event run first and keep it (Weight Paint / Grease Pencil / Mask Alt+I, Animation Channels Ctrl+Shift+W, Text
+# Ctrl+Shift+E, the UI colour-ramp eyedropper Alt+I).
+INSERT_KEY_KEYS = (("I", {"alt": True}, {"channels": "ALL"}),
+                   ("W", {"ctrl": True, "shift": True}, {"channels": "TRANSLATE"}),
+                   ("E", {"ctrl": True, "shift": True}, {"channels": "ROTATE"}),
+                   ("R", {"ctrl": True, "shift": True}, {"channels": "SCALE"}))
+KEY_STEP_SHADOWS = ("User Interface", "Mask Editing", "Weight Paint", "Grease Pencil Paint Mode",
+                    "Grease Pencil Edit Mode", "Grease Pencil Sculpt Mode", "Grease Pencil Weight Paint",
+                    "Grease Pencil Vertex Paint", "Animation Channels", "Text")
+
+
+def patch_key_insert(kd):
+    for key, mods, props in INSERT_KEY_KEYS:
+        _add(kd, "Screen", "maya_kit.insert_key", make_event(key, **mods), props, shadows=KEY_STEP_SHADOWS)
+    for key, delta in (("NINE", -1), ("ZERO", 1)):
+        _add(kd, "Screen", "maya_kit.nudge_keys", make_event(key, shift=True, repeat=True), {"delta": delta},
+             shadows=KEY_STEP_SHADOWS)
+    for key, direction in (("COMMA", "PREVIOUS"), ("PERIOD", "NEXT")):
+        _add(kd, "Screen", "maya_kit.select_key", make_event(key, ctrl=True, alt=True), {"direction": direction},
+             shadows=KEY_STEP_SHADOWS)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -803,7 +828,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
-           patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag)
+           patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
+           patch_key_insert)
 
 
 def apply(data):

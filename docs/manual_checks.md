@@ -564,3 +564,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 82) LMB 드래그 (Blender 드래그) 로 놓아도 결과가 Maya 부모 지정 (parent inverse 없음), Ctrl+Z 한 번 = 드롭 전. 아마추어 본 행에 놓기는 Blender 그대로.
 - [ ] (step 82) Display > Sort Alphabetically 끈 뒤 MMB 를 행 위/아래 1/4 에 놓기 = 그 자리로 순서 바꿈 (흰 선). 정렬이 켜져 있으면 그 행의 부모 아래로만 옮김.
 - [ ] (step 82) Alt+MMB = Outliner 패닝, 휠 스크롤 그대로. 큰 장면 (오브젝트 수천) 에서 MMB 누름이 끊기지 않는지 (누를 때·놓을 때 선택을 바꿨다 되돌림).
+
+### Step 83 — 키 삽입·이동 묶음
+
+- [ ] (step 83) 애니메이션된 큐브, 키 사이 프레임에서 Ctrl+Shift+W / E / R = 그 채널에만 키, Graph Editor 곡선 모양 그대로 (오버슈트 있는 곡선도). 키 없는 채널은 그대로 (새 곡선 안 생김).
+- [ ] (step 83) Alt+I: Graph Editor 에서 곡선 하나의 키를 선택하고 = 그 곡선에만, 선택 없으면 보이는 곡선 전부; 3D View 에서는 선택 오브젝트 곡선 전부.
+- [ ] (step 83) Shift+) / Shift+( 를 3D View 에서 누르고 있으면 현재 시간 키와 시간이 같이 한 프레임씩; Graph Editor / Dope Sheet 에서는 선택 키만 (시간 그대로). 다른 키 위로 가면 그 키를 덮어씀.
+- [ ] (step 83) Ctrl+Alt+. / , = 다음 / 이전 키로 시간 이동 + 그 키만 선택 (Graph Editor 에서 하이라이트). 웨이트 페인트·그리스 펜슬 모드의 Alt+I 는 원래 기능.
+

@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 83 (키 삽입·이동 묶음) 완료 — `docs/steps/step_83.md`.
+  - Alt+I / Ctrl+Shift+W/E/R = 곡선 모양 그대로 키 삽입 (Blender insert 는 auto 구간만 지킴 → 그 밖은 de Casteljau 분할), Shift+( / ) = 키 1 프레임
+    이동 (키 에디터 = 선택 키, 그 밖 = 현재 시간 키 + 시간), Ctrl+Alt+, / . = 이전 / 다음 키 선택 + 이동 (`operators/key_insert.py`). 키맵 구현 133.
+  - 검증: 헤드리스 656/656, GUI 585/587 (gui_step26 RMB 취소 간헐 2, 단독 통과), dogfood 47/47.
+  - **바로 다음 할 일**: step 84 타임 슬라이더 Shift 범위 키 이동·늘이기 (모달이라 「계획」 먼저; `key_insert.move_keys`, `time_keys.time_range` 재사용).
+    그 뒤 85 매니퓰레이터 Ctrl 평면, 86 Dope Sheet·NLA·Node 수식, 87 뷰 키 묶음 3, 88 manual_checks → GUI.
+    backlog = `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_81.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - Step 82 (Outliner 드래그 = Maya 부모 지정) 완료 — `docs/steps/step_82.md`.
   - Outliner MMB 드래그 = Maya: 항목 위 = 자식으로, 행 사이 = 그 자리 (정렬 끔일 때 순서까지), 빈 곳 = 월드. 월드 위치 유지, parent inverse
     identity, 선택 그대로 (`operators/outliner_drag.py`). Blender LMB 드롭도 언두 후 Maya 방식으로 다시 적용 (언두 한 단계).
