@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 74 (프리셀렉트 확대) 완료 — `docs/steps/step_74.md`.
+  - 엣지 / 면 모드와 Move / Rotate / Scale 툴에서도 Maya 처럼 커서 아래 컴포넌트를 빨갛게 미리 보인다 (Python 기즈모 `operators/preselect.py`).
+  - Maya 2022 실측: 오브젝트 모드에는 하이라이트가 없다.
+  - 검증: 헤드리스 596/596, GUI 510/510, dogfood 47/47.
+  - **바로 다음 할 일**: step 75 Status Line 입력 줄 (abs / rel / rename / select by name, research/maya/ui_layout.md:208-211).
+    그 뒤 76 선택 우선순위, 77 편집 모드 Insert, 78 키 묶음, 79 3D Cut and Sew.
+
 - Step 73 (타임 슬라이더 키 틱 + Range Slider 드래그) 완료 — `docs/steps/step_73.md`.
   - 선택 노드의 키가 Maya 처럼 1 px 빨간 선 (브레이크다운 초록).
   - MayaKit 타임라인 헤더의 Range Slider 바를 끌어 재생 범위를 옮기거나 끝을 바꾼다. 더블클릭 = 전체 범위.

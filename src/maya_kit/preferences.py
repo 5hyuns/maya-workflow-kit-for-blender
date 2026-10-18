@@ -73,7 +73,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
     # Maya preSelectHilite true (research/maya/interaction.md:73).
     preselect_highlight: bpy.props.BoolProperty(
         name="Pre-selection Highlight",
-        description="In mesh edit mode with a select tool, highlight the vertex, edge or face "
+        description="In mesh edit mode (select and Move / Rotate / Scale tools), highlight the vertex, edge or face "
                     "under the mouse before clicking (Maya)",
         default=True)
     # First start (docs/steps/step_42.md): welcome dialog shown once; Maya look options.

@@ -40,6 +40,7 @@ def register():
     symmetry.register_handler()
     pivot.register_handler()
     project.register_handlers()
+    preselect.register_handlers()
 
 
 def unregister():
