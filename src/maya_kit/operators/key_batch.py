@@ -56,7 +56,9 @@ class MAYAKIT_OT_repeat_at_mouse(bpy.types.Operator):
     """Repeat the last action and move the result to the mouse position (Maya Shift+G)"""
     bl_idname = "maya_kit.repeat_at_mouse"
     bl_label = "Repeat Last at Mouse Position"
-    bl_options = {'REGISTER', 'UNDO'}
+    # Not REGISTER: it must not become the "last operator" itself, or the next Shift+G repeats the
+    # move instead of the create (Maya repeats the command every time; step 97).
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):

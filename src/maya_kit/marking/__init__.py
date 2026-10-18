@@ -312,6 +312,20 @@ TOOL_BINDINGS = (
 TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R", "tool_scale"))
 
 
+def _tool_later(idname):
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == 'VIEW_3D':
+                region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+                try:
+                    with bpy.context.temp_override(window=window, area=area, region=region):
+                        bpy.ops.wm.tool_set_by_id(name=idname)
+                except RuntimeError:
+                    pass
+                return None
+    return None
+
+
 class SelectComponentBinding(ToolOptionsBinding):
     """Shift+Q (Maya, Maya-206): the select tool in component mode;
     hold + LMB = the component pick mask marking menu."""
@@ -325,6 +339,8 @@ class SelectComponentBinding(ToolOptionsBinding):
         ob = context.active_object
         if context.mode == 'OBJECT' and ob is not None and ob.type == 'MESH':
             bpy.ops.object.mode_set(mode='EDIT')     # selectMode -component
+            # a tool is set for the mode the call starts in: set the edit-mode tool once in it (step 97)
+            bpy.app.timers.register(lambda: _tool_later(self.tool), first_interval=0.0)
         super()._set_tool()
 
     def tap(self, context):

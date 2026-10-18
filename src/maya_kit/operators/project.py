@@ -262,6 +262,25 @@ class MAYAKIT_MT_recent_projects(bpy.types.Menu):
 
 # --- operators: open / save -------------------------------------------------------------------------
 
+def browse_from_later(folder, op_idname="WM_OT_open_mainfile", tries=40):
+    """Point the file browser that ``op_idname`` opens at ``folder`` once it is there (a few ticks later).
+    Blender's Open dialog starts at the most recent file whatever ``filepath`` it is given (checked, step 97:
+    Ctrl+O went to Documents), unlike Save As."""
+    left = [tries]
+
+    def tick():
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                space = area.spaces.active
+                op = getattr(space, "active_operator", None) if area.type == 'FILE_BROWSER' else None
+                if op is not None and op.bl_idname == op_idname and space.params is not None:
+                    space.params.directory = folder.encode()
+                    return None
+        left[0] -= 1
+        return 0.05 if left[0] > 0 else None
+    bpy.app.timers.register(tick, first_interval=0.01)
+
+
 class MAYAKIT_OT_open_scene(bpy.types.Operator):
     """Open a scene; the file browser starts in the project's scenes folder (Maya Open Scene)"""
     bl_idname = "maya_kit.open_scene"
@@ -270,7 +289,9 @@ class MAYAKIT_OT_open_scene(bpy.types.Operator):
     def invoke(self, context, event):
         path = open_path(context)
         if path:
-            return bpy.ops.wm.open_mainfile('INVOKE_DEFAULT', filepath=path)
+            result = bpy.ops.wm.open_mainfile('INVOKE_DEFAULT', filepath=path)
+            browse_from_later(path)
+            return result
         return bpy.ops.wm.open_mainfile('INVOKE_DEFAULT')
 
     def execute(self, context):

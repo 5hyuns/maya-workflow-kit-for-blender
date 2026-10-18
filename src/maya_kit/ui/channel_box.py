@@ -232,7 +232,16 @@ def set_value(ob, key, value):
         hook(ob, key)
     path, idx, kind = channel_path(key)
     if kind == "CUSTOM":
-        ob[key[len(CUSTOM_PREFIX):]] = type(ob[key[len(CUSTOM_PREFIX):]])(value)
+        name = key[len(CUSTOM_PREFIX):]
+        cur = ob[name]
+        if isinstance(cur, (int, float)) and not isinstance(cur, bool):
+            # Maya clamps a typed value to the attribute's Min / Max (Add Attribute, step 97)
+            try:
+                ui = ob.id_properties_ui(name).as_dict()
+                value = max(ui.get("min", value), min(ui.get("max", value), value))
+            except TypeError:
+                pass
+        ob[name] = type(cur)(value)
         ob.id_data.update_tag()   # an ID property write tags nothing: drivers reading it would not update
     elif kind == "VIS":
         if is_bone(ob):

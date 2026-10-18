@@ -16,7 +16,7 @@ waits for the transform to end and takes the copy / extrusion back when nothing 
 import bmesh
 import bpy
 
-from . import duplicate
+from . import duplicate, keystate
 
 # Gizmo groups of the transform manipulator (tool gizmo and the viewport's object gizmos);
 # light/camera/spot gizmos share the keymap but are left alone (checked, ).
@@ -211,6 +211,11 @@ def watch(state, window, area, region):
                 cleanup(state)
                 return None
             if _transform_running(window):
+                state["seen"] = True
+                return POLL
+            # The gizmo starts its transform only once the mouse moves past the drag threshold ("Maybe Drag"):
+            # a press held still has no transform yet, so wait while the button is down (step 97).
+            if not state.get("seen") and keystate.is_down('LEFTMOUSE'):
                 return POLL
             finish(state, window, area, region)
         except ReferenceError:

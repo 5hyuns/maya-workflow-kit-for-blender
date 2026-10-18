@@ -318,15 +318,43 @@ def maya_pivot_point(ts, mode):
     return False
 
 
+_last_lead = [None]
+
+
+def follow_lead(context, scene):
+    """The "Maya Pivot" Move axis belongs to the object whose pivot was turned (Maya keeps pivot axes per object):
+    a new lead with a turned pivot gets its own axes, one without goes back to Object axes (step 97: the next
+    object was moved along the previous object's pivot axes)."""
+    ob = context.view_layer.objects.active if context.mode == 'OBJECT' else None
+    key = ob.as_pointer() if ob is not None else None
+    if key == _last_lead[0]:
+        return
+    _last_lead[0] = key
+    if ob is None or scene.transform_orientation_slots[MOVE_SLOT].type != ORIENT_NAME:
+        return
+    if PROP in ob:
+        orient = _orientation(scene)
+        if orient is not None:
+            rot = ob.matrix_world.to_3x3().normalized().to_quaternion() @ Quaternion(ob[PROP])
+            orient.matrix = rot.to_matrix()
+    else:
+        leave_custom_orientation(scene, 'LOCAL')
+
+
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, _depsgraph):
     try:
-        mode = bpy.context.mode
+        context = bpy.context
+        mode = context.mode
     except AttributeError:
         return
     if mode != _last_mode[0]:
         _last_mode[0] = mode
         maya_pivot_point(scene.tool_settings, mode)
+    try:
+        follow_lead(context, scene)
+    except (AttributeError, ReferenceError, TypeError):
+        pass
 
 
 # --- operators -------------------------------------------------------------------------------

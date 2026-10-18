@@ -10,6 +10,8 @@ depth, so a control curve or a joint in front of (or behind) a mesh can lose to 
 candidates above priority 2: when there is none, Blender's own pick (with its cycling) runs as usual.
 """
 
+import math
+
 import bpy
 import numpy as np
 
@@ -188,8 +190,26 @@ class MAYAKIT_OT_select_priority(bpy.types.Operator):
         best = rank(hits(context, region, rv3d, (event.mouse_region_x, event.mouse_region_y)), RADIUS_PX * scale)
         if best is None:
             return {'PASS_THROUGH'}
-        apply(context, context.scene.objects[best[0]], event.shift, event.ctrl)
+        ob = context.scene.objects[best[0]]
+        apply(context, ob, event.shift, event.ctrl)
+        if event.value == 'PRESS' and ob.select_get():
+            # Tweak tool: this press is consumed, so Blender makes no CLICK_DRAG from it — start the
+            # tweak's move ourselves once the mouse leaves the drag threshold (step 97)
+            self._start = (event.mouse_x, event.mouse_y)
+            self._threshold = context.preferences.inputs.drag_threshold_mouse * scale
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
         return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            if math.hypot(event.mouse_x - self._start[0], event.mouse_y - self._start[1]) >= self._threshold:
+                bpy.ops.transform.translate('INVOKE_DEFAULT', release_confirm=True)
+                return {'FINISHED'}
+            return {'RUNNING_MODAL'}
+        if event.type in {'LEFTMOUSE', 'ESC', 'RIGHTMOUSE'} and event.value in {'RELEASE', 'PRESS'}:
+            return {'FINISHED'}
+        return {'RUNNING_MODAL'}
 
 
 classes = (MAYAKIT_OT_select_priority,)
