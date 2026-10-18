@@ -23,7 +23,7 @@ ADDED = []
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
 PASS_THROUGH_FIRST = ("maya_kit.cb_virtual_slider", "maya_kit.manip_duplicate", "maya_kit.manip_press",
-                      "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
+                      "maya_kit.select_priority", "maya_kit.select_through", "maya_kit.toolbox_guard", "maya_kit.time_scrub",
                       "maya_kit.time_slider_menu")
 
 
@@ -543,6 +543,19 @@ def patch_toolbox_guard(kd):
              first=True, shadows=("3D View",))   # in front of view3d.select on purpose (PASS_THROUGH)
 
 
+# Step 76: Maya selection priority () — in front of the object-mode click
+# select items ("3D View" CLICK, Tweak tool PRESS); passes through outside object mode and when no IK
+# handle / joint / curve is under the mouse (operators/select_priority.py).
+SELECT_PRIORITY_ITEMS = (("3D View", "CLICK"), ("3D View Tool: Tweak", "PRESS"))
+
+
+def patch_select_priority(kd):
+    for km, value in SELECT_PRIORITY_ITEMS:
+        for shift, ctrl in ((False, False), (True, False), (False, True), (True, True)):
+            _add(kd, km, "maya_kit.select_priority", make_event("LEFTMOUSE", value, shift=shift, ctrl=ctrl),
+                 first=True, shadows=(km,))   # in front of view3d.select on purpose (PASS_THROUGH)
+
+
 # --- 27. Maya key batch -------------------------------------------
 # Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator (HK:313), Y last non-sacred
 # tool (HK:316), Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw (HK:319-320), F2-F6 menu sets
@@ -753,7 +766,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
            patch_select_through, patch_key_batch, patch_component_pick_walk,
-           patch_toolbox_guard, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
+           patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_multi_cut, patch_uv,
            patch_scene_files, patch_graph_keys)
 
 

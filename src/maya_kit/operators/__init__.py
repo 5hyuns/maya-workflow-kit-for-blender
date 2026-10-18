@@ -9,14 +9,14 @@ Operator ids use the ``maya_kit.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (component, create, display, driven_key, duplicate, extrude, freeze, fx, graph_keys, group, history, hold, joints, manip, marquee,
-               material, menu_extras, mesh_maya, mesh_tools, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, shading_maps, skin, snap_align, symmetry, taphold,
+               material, menu_extras, mesh_maya, mesh_tools, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, shading_maps, skin, snap_align, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
            *duplicate.classes, *history.classes, *create.classes, *visibility.classes,
            *component.classes, *manip.classes, *material.classes,
-           *marquee.classes, *preselect.classes, *menu_extras.classes,
+           *marquee.classes, *preselect.classes, *select_priority.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
            *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes)
