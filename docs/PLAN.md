@@ -497,8 +497,8 @@ Spin Edge / Shift+G / Ctrl+Shift+C (78) closed; backtick tweak, Alt+arrow nudge,
   36 / lens): horizontal FOV 2·atan(36/35) = 91.6°, Maya's persp (35 mm on a 36 mm film back) 54.4°; a Blender lens of 70 gives
   the same angle. Step 41 flagged it (step_41.md:52, lens 50 then) and nothing fixed it. Visible as a tiny pCube1 and strong
   perspective in every session shot, and Ctrl+Shift+C makes a camera with Focal Length 17.5 instead of Maya's 35.
-- Session 14 of 16 checks; both failures were the session's own (a 1 cm cube under a 25 % circle; the Move manipulator covering
-  the whole cube, where pre-selection yields by design, step 74). Everything from steps 72–79 behaved: selection priority,
+- Session 15 of 16 checks; the failure was the session's own (the Move manipulator covering the whole 1 cm cube, where
+  pre-selection yields by design, step 74; a first run also clicked a cube hidden under the test circle). Everything from steps 72–79 behaved: selection priority,
   F3 top bar repaint, F8 in-view message, edit-mode Insert, 3D Cut and Sew drag (1 → 2 shells), S twice → red ticks at 1 / 12,
   Input Line Abs X 20, Alt+Q menu, Ctrl+Shift+C, Space hotbox. Console errors 0.
 
