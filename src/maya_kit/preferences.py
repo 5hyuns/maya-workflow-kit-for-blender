@@ -76,6 +76,12 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         description="In mesh edit mode (select and Move / Rotate / Scale tools), highlight the vertex, edge or face "
                     "under the mouse before clicking (Maya)",
         default=True)
+    # Maya selectPrefPriorityMode "animation", ignoreSelectionPriority false (research/maya/interaction.md:74).
+    select_priority: bpy.props.BoolProperty(
+        name="Selection Priority",
+        description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
+                    "under the mouse, like Maya's selection priority",
+        default=True)
     # First start (docs/steps/step_42.md): welcome dialog shown once; Maya look options.
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
 
@@ -328,6 +334,7 @@ class MAYAKIT_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "use_maya_auto_key")
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")
+        col.prop(self, "select_priority")
 
         box = layout.box()
         box.label(text="Scene Concepts")

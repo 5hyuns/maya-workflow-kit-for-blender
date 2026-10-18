@@ -456,7 +456,7 @@ shelf reorder.
 2. **Time Slider key ticks + Range Slider drag** (step_56.md:26, step_50.md:67).
 3. **Pre-selection highlight** for edges / faces / objects and under Move/Rotate/Scale (step 30 left it vertex + select tools only).
 4. **Status Line Input Line** (blindspot 2).
-5. **Selection priority** (blindspot 1).
+5. **Selection priority** (blindspot 1). Done in step 76.
 6. **Edit-mode Insert / D pivot** (PLAN 「Left out」, mapping row D/Insert).
 7. **Key batch**: Graph Editor 1/2/3, Shift+Q / Alt+Q menus, Ctrl+Alt+←/→ Spin Edge, Shift+G, Ctrl+Shift+C.
 8. **3D Cut and Sew UV tool** (score 20, the highest Left-out item; x/s/d keys).

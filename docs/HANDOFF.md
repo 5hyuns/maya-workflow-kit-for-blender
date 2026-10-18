@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 76 (선택 우선순위) 완료 — `docs/steps/step_76.md`.
+  - 오브젝트 모드 클릭이 Maya 처럼 IK 핸들 (10) > 조인트 = 아마추어 (9) > 커브 (4) > 메시 (2) 순으로 겹친 것 중 고른다 (가려져도).
+    `operators/select_priority.py`, "3D View" CLICK / Tweak PRESS 앞 PASS_THROUGH_FIRST, 환경설정 「Selection Priority」.
+  - 검증: 헤드리스 612/612, GUI 528/528, dogfood 47/47.
+  - **바로 다음 할 일**: step 77 편집 모드 Insert / D 피벗 (컴포넌트 매니퓰레이터 피벗, research/maya/interaction.md D/Insert 행).
+    그 뒤 78 키 묶음 (Graph 1/2/3, Shift+Q / Alt+Q, Spin Edge, Shift+G, Ctrl+Shift+C), 79 3D Cut and Sew.
+    backlog = `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_72.json`. 배포 결정 (decision 11) 은 여전히 사용자 대기.
+
 - **체크포인트 (2026-10-18, /sc:save) — 지금 단계 = 없음 (step 75 까지 완료, 다음 = step 76)**
   - HEAD `10e6fd5` = step 75. 작업 트리는 깨끗하다 (research/ 는 원래 추적 안 함).
   - 이번 세션: step 71 재점검 4차 (8f4b596) → backlog 8개 (step 72–79) 중 72 (90ec5db) · 73 (9936fef) · 74 (46e43c9) · 75 (10e6fd5) 완료, 각 STEP_DONE.

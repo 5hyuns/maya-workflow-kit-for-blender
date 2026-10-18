@@ -521,3 +521,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 75) 편집 모드 (F9 / F11) 에서 Abs Z = 0 → 선택 컴포넌트 중심이 z 0 으로, Rel 은 그만큼 이동.
 - [ ] (step 75) Rename: 칸에 리드 이름이 보이고, 여러 개 선택 후 `crate` → crate, crate1, crate2 (셰이프 crateShape…). `1x`, `a-b` 는 Help Line 오류.
 - [ ] (step 75) Select by Name: `pCube*` / `p?phere1` → 선택, 없는 이름은 Help Line 오류 + 글자 남음. 회색 History 버튼 툴팁 = Blender 에 히스토리 없음 안내.
+
+### Step 76 — 선택 우선순위
+
+- [ ] (step 76) 오브젝트 모드: 메시 앞의 컨트롤 커브 (원) 를 클릭 → 커브. 메시 뒤에 가려진 커브의 선 위를 클릭해도 커브 (Maya 우선순위는 깊이를 보지 않음). 커브에서 5 px 넘게 떨어진 메시 위 = 메시.
+- [ ] (step 76) 리그: 메시 몸통 앞/안의 본 (팔면체 두꺼운 쪽 포함) 클릭 → 아마추어, IK 핸들 (`ikHandleN` 엠프티 축) 클릭 → 핸들 (본·커브보다 먼저).
+- [ ] (step 76) Shift = 토글, Ctrl = 해제, Ctrl+Shift = 추가가 커브·본에서도 그대로. Tweak 툴에서 커브를 눌러 바로 드래그 = 커브가 잡혀 움직임.
+- [ ] (step 76) 환경설정 「Selection Priority」 끄기 → Blender 깊이 픽 (가려진 커브는 메시에 짐). 메시끼리 겹친 곳의 반복 클릭 순환은 켜져 있어도 그대로.
