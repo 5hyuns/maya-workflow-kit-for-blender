@@ -132,8 +132,8 @@ def s_setup():
 def s_cube():
     bpy.ops.maya_kit.keymap_activate()
     # Keep the on-screen sizes this test was checked with: the template view went from lens 35 to Maya's 70
-    # (step 81), which doubles them; with the bigger cubes the V-snap drag below never engages in event
-    # simulation.
+    # (step 81), which doubles them. (The V-snap drag below queues its moves in one tick; Blender recomputes the
+    # snap target at most once per 10 ms, so a longer drag never caught — )
     view3d()[1].data.view_distance *= 2.0
     ts = bpy.context.scene.tool_settings
     slots = bpy.context.scene.transform_orientation_slots
