@@ -105,12 +105,14 @@ def _tools_from_context(cls, context, mode=None):
     yield from original(cls, context, mode)
 
 
-def _draw(self, context):
+def _draw_begin(self, context):
+    """Prepended to the toolbar's draw: Blender's own draw (ToolSelectPanelHelper.draw) lists the Maya tools while
+    the flag is on. A prepend / append pair, not a replaced draw (step 115)."""
     _drawing[0] = _enabled(context)
-    try:
-        self.draw_cls(self.layout, context)
-    finally:
-        _drawing[0] = False
+
+
+def _draw_end(self, context):
+    _drawing[0] = False
 
 
 class ALLSET_OT_toolbox_guard(bpy.types.Operator):
@@ -363,9 +365,9 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     _saved["tools_from_context"] = TOOLBAR.__dict__["tools_from_context"]
-    _saved["draw"] = TOOLBAR.__dict__.get("draw")
     TOOLBAR.tools_from_context = classmethod(_tools_from_context)
-    TOOLBAR.draw = _draw
+    TOOLBAR.prepend(_draw_begin)
+    TOOLBAR.append(_draw_end)
     if not bpy.app.background and not bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.register(_fit_tick, first_interval=_FIT_TICK, persistent=True)
     bpy.app.handlers.load_post.append(_fit_after_load)
@@ -378,10 +380,7 @@ def unregister():
     if bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.unregister(_fit_tick)
     TOOLBAR.tools_from_context = _saved.pop("tools_from_context")
-    draw = _saved.pop("draw")
-    if draw is None:
-        del TOOLBAR.draw
-    else:
-        TOOLBAR.draw = draw
+    TOOLBAR.remove(_draw_begin)
+    TOOLBAR.remove(_draw_end)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -13,11 +13,20 @@ def _raise(ex):
     raise ex
 
 
-def enable():
+def enable(maya=True):
+    """Enable the extension; ``maya`` also opts in to Maya mode (since step 115 enabling alone changes nothing),
+    without the theme, which is what a plain enable gave the tests before."""
     mod = addon_utils.enable(MODULE, default_set=True, handle_error=_raise)
     assert mod is not None, f"addon_utils.enable({MODULE!r}) returned None"
     assert MODULE in bpy.context.preferences.addons, f"{MODULE} not in preferences.addons"
+    if maya:
+        maya_mode_on()
     return mod
+
+
+def maya_mode_on():
+    import importlib
+    importlib.import_module(MODULE + ".switch").set_mode(True, layout=False, theme=False)
 
 
 def disable():
@@ -79,16 +88,21 @@ def snapshot():
     # step 20: Time / Range Slider in the Timeline header (Blender 5.x: the Dope Sheet's, step 53)
     time_buttons, time_menus = _timeline_classes()
     snap["ui_methods"] = [f"{f.__module__}.{f.__qualname__}" for f in
-                          (topbar.draw_left, topbar.draw_right,
-                           bpy.types.IMAGE_HT_header.draw, bpy.types.IMAGE_HT_tool_header.draw,
-                           time_buttons.draw_header)]
+                          (topbar.draw_left, topbar.draw_right, time_buttons.draw_header)]
+    # step 115: kit draws replace only the class's own draw function in Blender's draw list (ui/own_draw.py) or
+    # are prepended / appended, so compare the draw functions, not the class's draw attribute (Blender turns it
+    # into its list wrapper on the first append / swap, and leaves it so; bpy_types._GenericUI).
+    snap["ui_methods"] += [f"{c} draws: {_draw_funcs(c)}" for c in
+                           ("TOPBAR_HT_upper_bar", "IMAGE_HT_header", "IMAGE_HT_tool_header", "STATUSBAR_HT_header",
+                            "OUTLINER_HT_header")]
     # step 37: Maya panel menus replace the 3D View header menus (a class attribute while enabled).
     snap["ui_methods"].append("VIEW3D_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in bpy.types.VIEW3D_MT_editor_menus.__dict__}")
     # step 49: Tool Box (toolbar draw filter), status bar row, dock-only sidebar polls.
     from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active
-    snap["ui_methods"] += [f"VIEW3D_PT_tools_active.{n} own: {VIEW3D_PT_tools_active.__dict__.get(n)!r}"
-                           for n in ("draw", "tools_from_context")]
+    snap["ui_methods"] += [f"VIEW3D_PT_tools_active draws: {_draw_funcs(VIEW3D_PT_tools_active)}",
+                           "VIEW3D_PT_tools_active.tools_from_context own: "
+                           f"{VIEW3D_PT_tools_active.__dict__.get('tools_from_context')!r}"]
     # step 59: Move/Rotate/Scale ToolDefs carry the Maya manipulator's gizmo group while enabled.
     from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
     for mode in ("OBJECT", "EDIT_MESH"):
@@ -96,9 +110,6 @@ def snapshot():
             f"tool {mode} {it.idname}: {it.widget}"
             for it, _i in ToolSelectPanelHelper._tools_flatten_with_tool_index(VIEW3D_PT_tools_active._tools[mode])
             if it is not None and not callable(it) and it.idname in ("builtin.move", "builtin.rotate", "builtin.scale"))
-    snap["ui_methods"].append(f"STATUSBAR_HT_header.draw: {bpy.types.STATUSBAR_HT_header.draw!r}")
-    # step 50: Maya Outliner header, timeline menus moved into the Range Slider's preferences menu
-    snap["ui_methods"].append(f"OUTLINER_HT_header.draw: {bpy.types.OUTLINER_HT_header.draw!r}")
     # step 104: Maya menu bars / icon rows in the Graph Editor and Dope Sheet headers
     snap["ui_methods"] += [f"{c} own draw: {getattr(getattr(bpy.types, c).draw, '_draw_funcs', [getattr(bpy.types, c).draw])[0]!r}"
                            for c in ("GRAPH_HT_header", "DOPESHEET_HT_header",
@@ -133,6 +144,13 @@ def snapshot():
     snap["theme"] = [_struct_hash(prefs.themes[0])]
     snap["ui_styles"] = {k: [v] for k, v in _walk(prefs.ui_styles[0]).items()}
     return snap
+
+
+def _draw_funcs(cls):
+    """A UI class's draw functions (module.qualname): Blender's draw list once extended, else its draw."""
+    cls = getattr(bpy.types, cls) if isinstance(cls, str) else cls
+    funcs = getattr(cls.draw, "_draw_funcs", [cls.draw])
+    return [f"{getattr(f, '__module__', '?')}.{getattr(f, '__qualname__', repr(f))}" for f in funcs]
 
 
 def _all_panels(cls=None):

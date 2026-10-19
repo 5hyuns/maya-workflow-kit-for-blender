@@ -221,8 +221,9 @@ def test_draw_shelf():
 # --- strip ---------------------------------------------------------------------------------------------
 
 def test_image_headers_patched():
-    assert bpy.types.IMAGE_HT_header.draw is shelf._draw_image_header
-    assert bpy.types.IMAGE_HT_tool_header.draw is shelf._draw_image_tool_header
+    # step 115: only Blender's own draw in the class's draw list is swapped (ui/own_draw.py)
+    assert shelf._draw_image_header in bpy.types.IMAGE_HT_header.draw._draw_funcs
+    assert shelf._draw_image_tool_header in bpy.types.IMAGE_HT_tool_header.draw._draw_funcs
 
 
 def test_template_has_marked_strip():

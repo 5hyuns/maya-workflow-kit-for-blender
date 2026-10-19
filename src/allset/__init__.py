@@ -10,13 +10,16 @@ Each feature area is a sub-package with its own ``register()`` /
 then the Blender-preferences preset, keymap last (keymap items reference
 operators registered before it). ``CORE`` stays registered; ``MODE`` is
 Maya mode, switched on and off at run time by ``switch`` (step 60).
+
+Opt-in (step 115): Maya mode is off after install, so enabling registers only CORE and changes
+none of the user's settings; the welcome dialog / preferences button / switch turn it on.
 """
 
-from . import (preferences, switch, prefs_preset, operators, ui, command_line, marking, theme,
+from . import (preferences, switch, welcome, prefs_preset, operators, ui, command_line, marking, theme,
                app_template, first_start, keymap)
 
-# Always registered: the preferences and the Maya / Blender switch.
-CORE = (preferences, switch)
+# Always registered: the preferences, the Maya / Blender switch and the opt-in (step 115).
+CORE = (preferences, switch, welcome)
 # "Maya mode": registered while the add-on preference ``maya_mode`` is on; switching to
 # Blender unregisters them, which puts back everything they changed.
 MODE = (prefs_preset, operators, ui, command_line, marking, theme, app_template, first_start, keymap)
@@ -33,7 +36,11 @@ def register():
         switch.register_mode()
         switch._registered[0] = True
     elif switch.has_snapshot():
-        switch.finish_interrupted()     # a switch to Blender was interrupted (crash): finish it
+        if switch.maya_state_left():
+            switch.finish_interrupted()     # a switch to Blender was interrupted (crash): finish it
+        else:
+            switch.forget_snapshot()        # stale (e.g. an earlier install): the preferences aren't Maya's
+    app_template.reinstall_if_wanted()  # the user installed it and it is gone (removed by an older version's disable)
 
 
 def unregister():
@@ -43,5 +50,10 @@ def unregister():
         # Disable / Remove gives the user's settings back. The snapshot file stays: Blender also
         # unregisters add-ons when it quits, and the next start in Maya mode still needs it.
         switch.restore_snapshot(delete=False)
+    if switch.user_disabling():
+        # A user disable / Remove: the settings are back, nothing is kept for a next start (step 115)
+        switch.forget_snapshot()
+        theme.forget_backup()
+        app_template.remove_on_disable()   # and the layout template goes with it
     for mod in reversed(CORE):
         mod.unregister()

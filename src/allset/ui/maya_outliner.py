@@ -11,12 +11,11 @@ Outliners draw as usual. The rows themselves are Blender's (the C list): Maya's 
 
 import bpy
 
-from . import chrome
+from . import chrome, own_draw
 
 HELP_URL = "https://docs.blender.org/manual/en/4.5/editors/outliner/index.html"
 MENU_BAR = (("Display", "ALLSET_MT_outliner_display"), ("Show", "ALLSET_MT_outliner_show"),
             ("Help", "ALLSET_MT_outliner_help"))
-_saved = {}
 
 
 def is_maya_outliner(space):
@@ -73,7 +72,7 @@ class ALLSET_MT_outliner_help(bpy.types.Menu):
 def _draw(self, context):
     space = context.space_data
     if not is_maya_outliner(space):
-        return _saved["draw"](self, context)
+        return own_draw.original("OUTLINER_HT_header", _draw)(self, context)
     layout = self.layout
     chrome.menu_bar(layout, MENU_BAR)
     layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
@@ -85,11 +84,10 @@ classes = (ALLSET_MT_outliner_display, ALLSET_MT_outliner_show, ALLSET_MT_outlin
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    _saved["draw"] = bpy.types.OUTLINER_HT_header.draw
-    bpy.types.OUTLINER_HT_header.draw = _draw
+    own_draw.swap("OUTLINER_HT_header", _draw)   # Blender's own draw only (step 115)
 
 
 def unregister():
-    bpy.types.OUTLINER_HT_header.draw = _saved.pop("draw")
+    own_draw.restore("OUTLINER_HT_header", _draw)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -258,15 +258,17 @@ def test_menu_tool_enters_edit_mode():
 # --- top bar ----------------------------------------------------------------------
 
 def test_topbar_methods_swapped_and_restored():
+    # step 115: the kit swaps only the class's own draw in its draw list; draw_left / draw_right stay Blender's
     cls = bpy.types.TOPBAR_HT_upper_bar
-    assert cls.draw_left is status_line.draw_left and cls.draw_right is status_line.draw_right
+    assert status_line.draw_upper_bar in cls.draw._draw_funcs
+    assert cls.draw_left.__module__ == "bl_ui.space_topbar" and cls.draw_right.__module__ == "bl_ui.space_topbar"
     kit.disable()
     try:
-        assert cls.draw_left.__module__ == "bl_ui.space_topbar", cls.draw_left.__module__
-        assert cls.draw_right.__module__ == "bl_ui.space_topbar"
+        assert status_line.draw_upper_bar not in cls.draw._draw_funcs
+        assert cls.draw._draw_funcs[0].__qualname__ == "TOPBAR_HT_upper_bar.draw", cls.draw._draw_funcs
     finally:
         kit.enable()
-    assert cls.draw_left is status_line.draw_left
+    assert status_line.draw_upper_bar in cls.draw._draw_funcs
 
 
 def test_topbar_draw_maya_and_blender():

@@ -4,47 +4,27 @@ starting Blender in the Maya layout.
 
 - ``allset.make_maya``: install the layout template, Maya theme on, Blender splash off,
   Maya density / font / aliased wires on (step 44),
-  start-in-Maya-layout on, save the preferences, open a new file with the Maya layout.
+  start-in-Maya-layout on, preferences marked changed (never saved by the kit, step 115), open a new file with the
+  Maya layout.
 - ``allset.revert_maya``: all of it off again (theme and splash setting restored), the
   template removed; the open file is left alone.
-- ``allset.welcome``: shown once on the first GUI start after the add-on is enabled
-  (its confirm button = make_maya). Not in background runs; GUI tests set
-  ``ALLSET_NO_WELCOME=1``.
+- The welcome dialog (opt-in) lives in ``welcome.py`` (CORE, step 115).
 - Start in the Maya layout: armed on register, the first load_post (Blender's startup file,
   loaded right after the add-ons register) switches to the template when Blender started
   without a file; the first timer tick disarms it, so File > New later is left alone.
 
-Switching templates reloads the saved preferences, so make_maya
-saves them first; the template has no userpref.blend of its own (it would replace the
-user's add-on list, checked in step 42). The reload also unregisters and registers the
-add-on, so operators never switch templates themselves (Blender crashed reporting an
-operator whose class was re-registered meanwhile): ``open_layout_later`` does it from a
+The template has no userpref.blend of its own (it would replace the user's add-on list,
+checked in step 42). Operators never switch templates themselves (Blender crashed reporting
+an operator whose class was re-registered meanwhile): ``open_layout_later`` does it from a
 timer after the operator has returned.
 """
-
-import os
 
 import bpy
 from bpy.app.handlers import persistent
 
 from . import app_template, preferences, prefs_preset
 
-# Square art made by tools/make_splash.py (icons are square; the 2:1 splash would letterbox).
-WELCOME_IMAGE = os.path.join(os.path.dirname(__file__), "welcome.png")
-_previews = None
 _armed = [False]
-
-
-def _splash_icon():
-    global _previews
-    if not os.path.isfile(WELCOME_IMAGE):
-        return 0
-    if _previews is None:
-        import bpy.utils.previews
-        _previews = bpy.utils.previews.new()
-    if "splash" not in _previews:
-        _previews.load("splash", WELCOME_IMAGE, 'IMAGE')
-    return _previews["splash"].icon_id
 
 
 def make(context, open_layout=True):
@@ -59,8 +39,9 @@ def make(context, open_layout=True):
     prefs.maya_wire = True
     prefs.start_in_maya_layout = True
     prefs.welcome_done = True
-    # Loading a template reloads the saved preferences: keep these choices.
-    bpy.ops.wm.save_userpref()
+    # No save_userpref (step 115): a template switch doesn't reload the preferences (checked, tmp/probe115), and
+    # Blender saves them on quit when the user's Auto-Save Preferences is on; otherwise the user saves them.
+    context.preferences.is_dirty = True
     if open_layout:
         bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
     return dst
@@ -130,63 +111,9 @@ class ALLSET_OT_revert_maya(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ALLSET_OT_welcome(bpy.types.Operator):
-    """Allset first start"""
-    bl_idname = "allset.welcome"
-    bl_label = "Welcome to Allset"
-    bl_options = {'INTERNAL'}
-
-    def invoke(self, context, event):
-        preferences.get(context).welcome_done = True    # asked once, never again
-        context.preferences.is_dirty = True
-        return context.window_manager.invoke_props_dialog(
-            self, width=600, title="Welcome to Allset for Maya Users", confirm_text="Make Blender feel like Maya")
-
-    def draw(self, context):
-        row = self.layout.row()
-        icon = _splash_icon()
-        if icon:
-            row.template_icon(icon_value=icon, scale=7.0)
-        col = row.column()
-        col.label(text="Allset for Maya Users")
-        for line in ("The whole Maya workflow in Blender, in one install.",
-                     "",
-                     "The Maya-style keymap is on: Alt+mouse, QWER, Space hotbox,",
-                     "marking menus, Maya keys.",
-                     "",
-                     "Make Blender Maya adds the Maya layout and colours,",
-                     "starts Blender in the Maya layout and hides the splash.",
-                     "Preferences > Add-ons > Allset turns any of it off."):
-            col.label(text=line)
-
-    def execute(self, context):
-        try:
-            make(context, open_layout=False)
-        except (OSError, RuntimeError) as ex:
-            self.report({'ERROR'}, str(ex))
-            return {'CANCELLED'}
-        open_layout_later()
-        return {'FINISHED'}
-
-
 def _window():
     wm = bpy.context.window_manager
     return wm.windows[0] if wm and wm.windows else None
-
-
-def _show_welcome():
-    try:
-        prefs = preferences.get()
-    except KeyError:
-        return None
-    if prefs.welcome_done:
-        return None
-    win = _window()
-    if win is None:
-        return 0.5
-    with bpy.context.temp_override(window=win, screen=win.screen):
-        bpy.ops.allset.welcome('INVOKE_DEFAULT')
-    return None
 
 
 @persistent
@@ -217,8 +144,8 @@ def _disarm():
     return None
 
 
-classes = (ALLSET_OT_make_maya, ALLSET_OT_revert_maya, ALLSET_OT_welcome)
-_timers = (_show_welcome, _open_layout, _disarm)
+classes = (ALLSET_OT_make_maya, ALLSET_OT_revert_maya)
+_timers = (_open_layout, _disarm)
 
 
 def register():
@@ -229,20 +156,14 @@ def register():
         return
     _armed[0] = True
     bpy.app.timers.register(_disarm, first_interval=0.0)
-    if os.environ.get("ALLSET_NO_WELCOME") != "1":
-        bpy.app.timers.register(_show_welcome, first_interval=0.5)
 
 
 def unregister():
-    global _previews
     for fn in _timers:
         if bpy.app.timers.is_registered(fn):
             bpy.app.timers.unregister(fn)
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     _armed[0] = False
-    if _previews is not None:
-        bpy.utils.previews.remove(_previews)
-        _previews = None
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

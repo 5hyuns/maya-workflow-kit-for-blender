@@ -3,7 +3,11 @@
 
 Fallback for hold modals whose RELEASE event was eaten by another modal
 (e.g. the transform modal while dragging).  「계획」 1.
-Windows only; elsewhere ``is_down`` returns None ("unknown").
+
+Windows only: a read-only ``user32.GetAsyncKeyState`` query through ctypes (no hook,
+no other OS call). Elsewhere, or if the call fails, ``is_down`` returns None
+("unknown"); every caller acts only on an explicit False, so the hold then ends on
+Blender's RELEASE event alone (docs/distribution/listing.md, step 115).
 """
 
 import sys
@@ -36,4 +40,7 @@ def is_down(event_type):
     vk = _VK.get(event_type)
     if _user32 is None or vk is None:
         return None
-    return bool(_user32.GetAsyncKeyState(vk) & 0x8000)
+    try:
+        return bool(_user32.GetAsyncKeyState(vk) & 0x8000)
+    except (OSError, AttributeError, ValueError):
+        return None

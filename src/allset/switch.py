@@ -133,6 +133,14 @@ def maya_state_saved(prefs=None):
     return prefs.keymap.active_keyconfig == keymap_name()
 
 
+def maya_state_left(prefs=None):
+    """The preferences still show Maya mode (stored keyconfig "Maya-style" or the Maya theme) although Maya mode is
+    off: a switch to Blender was interrupted. Otherwise a snapshot found at start is stale (step 115)."""
+    prefs = prefs or bpy.context.preferences
+    from .theme import THEME_NAME
+    return maya_state_saved(prefs) or prefs.themes[0].name == THEME_NAME
+
+
 def read_snapshot():
     try:
         with open(snapshot_path(), encoding="utf-8") as fh:
@@ -222,6 +230,21 @@ def restore_snapshot(prefs=None, delete=True):
         except OSError:
             pass
     return changed
+
+
+def user_disabling():
+    """True while the user disables or removes the extension (Preferences checkbox, Extensions Remove): the
+    ``addon_utils.disable`` call that unregisters us has ``default_set=True``. Quitting (``bpy.utils._on_exit`` →
+    ``disable_all``), script reloads and extension updates disable with ``default_set=False`` (Blender 4.5,
+    $S/modules/addon_utils.py:538, $S/addons_core/bl_pkg/bl_extension_ops.py:681; )."""
+    import sys
+    frame = sys._getframe(1)
+    while frame is not None:
+        code = frame.f_code
+        if code.co_name == "disable" and code.co_filename.replace("\\", "/").endswith("/addon_utils.py"):
+            return frame.f_locals.get("module_name") == _ADDON and frame.f_locals.get("default_set") is True
+        frame = frame.f_back
+    return False
 
 
 # --- mode on / off ------------------------------------------------------------------------------
@@ -367,8 +390,9 @@ def unregister_mode():
         mod.unregister()
 
 
-def set_mode(on, layout=True):
-    """Switch Maya mode on / off now (no restart). The open file's scenes are not touched."""
+def set_mode(on, layout=True, theme=True):
+    """Switch Maya mode on / off now (no restart). The open file's scenes are not touched. ``theme=False`` leaves
+    the theme option as it is (tests: Maya mode as a plain enable gave it before step 115)."""
     prefs = _prefs_addon()
     if on == bool(prefs.maya_mode) and (on == _registered[0]):
         return False
@@ -384,7 +408,7 @@ def set_mode(on, layout=True):
         # Maya mode = Maya keymap, layout, menus *and* look (the switch's own description): the Maya theme comes on
         # with it (the user's theme is in the snapshot and comes back on the switch to Blender; step 113 — Blender's
         # theme made the Maya top area read as Blender, user report 2026-10-19).
-        if not prefs.maya_theme:
+        if theme and not prefs.maya_theme:
             prefs.maya_theme = True
         if layout and not bpy.app.background:
             for window in _windows()[:1]:
@@ -415,26 +439,15 @@ def _redraw():
             area.tag_redraw()
 
 
-def _save_and_forget():
-    """Save the restored preferences, then drop the snapshot (without saving, the userpref.blend
-    on disk would keep the Maya values while the snapshot with the originals was gone)."""
-    try:
-        bpy.ops.wm.save_userpref()
-    except (RuntimeError, AttributeError):
-        return 0.5        # not possible yet (start-up): try again
-    try:
-        os.remove(snapshot_path())
-    except OSError:
-        pass
-    return None
-
-
 def finish_interrupted():
-    """Maya mode is off but its snapshot is still there: Blender stopped during a switch to Blender
-    (or quit before saving it). Put the user's values back and save them."""
-    restore_snapshot(delete=False)
-    # Not from register(): its context is restricted (operators fail there, checked).
-    bpy.app.timers.register(_save_and_forget, first_interval=0.5, persistent=True)
+    """Maya mode is off but its snapshot is still there: Blender stopped during a switch to Blender (or quit
+    without saving the preferences after it). Put the user's values back; nothing is saved (step 115: the kit never
+    saves the preferences by itself) — Blender's Auto-Save Preferences or the user does. The restore only touches
+    values still in their Maya state, so it is repeated at each start until it finds nothing left to restore, and
+    only then is the snapshot dropped."""
+    changed = restore_snapshot(delete=False)
+    if changed is not None and not changed:
+        forget_snapshot()
 
 
 def restore_blender(context=None):
@@ -589,9 +602,8 @@ def unregister():
     _keymaps.clear()
     bpy.types.TOPBAR_MT_edit.remove(draw_edit_menu)
     bpy.types.TOPBAR_HT_upper_bar.remove(draw_topbar_switch)
-    for fn in (_apply_pending, _save_and_forget):
-        if bpy.app.timers.is_registered(fn):
-            bpy.app.timers.unregister(fn)
+    if bpy.app.timers.is_registered(_apply_pending):
+        bpy.app.timers.unregister(_apply_pending)
     _pending.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

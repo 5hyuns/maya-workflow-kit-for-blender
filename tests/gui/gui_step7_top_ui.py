@@ -51,7 +51,7 @@ def s_wait():
 @step
 def s_topbar():
     cls = bpy.types.TOPBAR_HT_upper_bar
-    check("top bar draws the Maya menu bar", cls.draw_left is C["sl"].draw_left)
+    check("top bar draws the Maya menu bar", C["sl"].draw_upper_bar in cls.draw._draw_funcs)   # own draw swapped (step 115)
     area, _r = view3d()
     # step 49: the Status Line lives in the Maya strip (step 12); step 113: the tool header row is Maya's panel toolbar
     check("main 3D View: the tool header row is the Maya panel toolbar", area.spaces.active.show_region_tool_header)

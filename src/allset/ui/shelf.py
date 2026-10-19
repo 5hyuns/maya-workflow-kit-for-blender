@@ -36,7 +36,7 @@ import traceback
 import bpy
 from bpy.props import BoolProperty, IntProperty, StringProperty
 
-from . import shelf_data, shelf_icons, shelf_map
+from . import own_draw, shelf_data, shelf_icons, shelf_map
 
 MARKER = ".AllsetStrip"
 SHELF_MARKER = ".AllsetShelf"   # the template's shelf row (step 49)
@@ -992,9 +992,6 @@ class ALLSET_GGT_shelf(bpy.types.GizmoGroup):
             gz.target_set_operator(ALLSET_OT_shelf_tab.bl_idname).slot = slot
 
 
-_orig = {}
-
-
 def _draw_image_header(self, context):
     if is_strip(context.space_data):
         from .status_line import draw_status_line
@@ -1006,7 +1003,7 @@ def _draw_image_header(self, context):
         return None
     from .render_view import draw_header   # Render View Keep / Remove Image (step 67): first, like Maya's
     draw_header(self.layout, context)       # toolbar, so a small render window doesn't clip them
-    return _orig["header"](self, context)
+    return own_draw.original("IMAGE_HT_header", _draw_image_header)(self, context)
 
 
 def _draw_image_tool_header(self, context):
@@ -1015,21 +1012,18 @@ def _draw_image_tool_header(self, context):
     from .editor_chrome import draw_uv_tool_header   # Maya UV Editor icon row (step 104)
     if draw_uv_tool_header(self, context):
         return None
-    return _orig["tool_header"](self, context)
+    return own_draw.original("IMAGE_HT_tool_header", _draw_image_tool_header)(self, context)
 
 
 def patch_image_headers():
-    if not _orig:
-        _orig["header"] = bpy.types.IMAGE_HT_header.draw
-        _orig["tool_header"] = bpy.types.IMAGE_HT_tool_header.draw
-    bpy.types.IMAGE_HT_header.draw = _draw_image_header
-    bpy.types.IMAGE_HT_tool_header.draw = _draw_image_tool_header
+    """Blender's own Image Editor header draws only (step 115): others' appended items keep drawing."""
+    own_draw.swap("IMAGE_HT_header", _draw_image_header)
+    own_draw.swap("IMAGE_HT_tool_header", _draw_image_tool_header)
 
 
 def unpatch_image_headers():
-    if _orig:
-        bpy.types.IMAGE_HT_header.draw = _orig.pop("header")
-        bpy.types.IMAGE_HT_tool_header.draw = _orig.pop("tool_header")
+    own_draw.restore("IMAGE_HT_header", _draw_image_header)
+    own_draw.restore("IMAGE_HT_tool_header", _draw_image_tool_header)
 
 
 classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,

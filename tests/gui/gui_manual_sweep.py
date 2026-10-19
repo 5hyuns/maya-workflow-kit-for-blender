@@ -1465,14 +1465,15 @@ def prefs():
 def _m72_1_setup():
     clear()
     select_only(create('CUBE'))
-    cls = bpy.types.TOPBAR_HT_upper_bar
-    C["draw_left"] = cls.draw_left
+    # step 115: the kit swaps the top bar's own draw, which calls status_line.draw_left (not the class method)
+    sl = mod("ui.status_line")
+    C["draw_left"] = sl.draw_left
     C["drawn"] = []
 
     def recorder(self, context):
         C["drawn"].append((context.window.as_pointer(), prefs().menu_set))
         return C["draw_left"](self, context)
-    cls.draw_left = recorder
+    sl.draw_left = recorder
     with override():
         bpy.ops.wm.window_new_main()   # a second main window (its own top bar)
     hover()
@@ -1505,7 +1506,7 @@ def _m72_1_wait():
 
 @named("m72_1_check")
 def _m72_1_check():
-    bpy.types.TOPBAR_HT_upper_bar.draw_left = C["draw_left"]
+    mod("ui.status_line").draw_left = C["draw_left"]
     painted = {w for w, s in C["drawn"] if s == 'animationMenuSet'}
     check(f"[M72-1] F4 with the mouse in the view: the menu set is Animation ({prefs().menu_set})",
           prefs().menu_set == 'animationMenuSet')

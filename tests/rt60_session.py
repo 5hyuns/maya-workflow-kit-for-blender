@@ -4,7 +4,7 @@
 
 Runs with a sandbox BLENDER_USER_CONFIG (the caller creates it and checks it is under tmp/),
 WITHOUT --factory-startup so the saved preferences of the previous session are read.
-Actions: user_setup, enable, make_maya, maya_off, maya_on, disable, fake_crash_off, run_timers, save.
+Actions: user_setup, enable, make_maya, maya_off, maya_on, disable, fake_crash_off, save.
 Writes {"dump": ..., "state": ...} after the actions (dump = tests/rt60_dump.dump()).
 """
 
@@ -58,12 +58,6 @@ def main():
         elif action == "fake_crash_off":
             # Maya mode flag already off but nothing restored yet (Blender died during the switch)
             mod("preferences").get().maya_mode = False
-        elif action == "run_timers":
-            # background Blender runs no timers: run the kit's pending start-up timer by hand
-            sw = mod("switch")
-            if bpy.app.timers.is_registered(sw._save_and_forget):
-                bpy.app.timers.unregister(sw._save_and_forget)
-                sw._save_and_forget()
         elif action == "save":
             bpy.ops.wm.save_userpref()
     if kit.is_enabled():

@@ -125,7 +125,7 @@ def main():
         # Make Blender Maya (theme, splash, density ...), saved like a user would leave it (step 60)
         from importlib import import_module
         kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".allset"))
-        import_module(kit + ".first_start").make(bpy.context, open_layout=False)
+        import_module(kit + ".welcome").opt_in(open_layout=False)   # step 115: Maya mode on + Make Blender Maya
         bpy.ops.wm.save_userpref()
     elif mode == "remove":
         # Preferences > Extensions > Remove in a running session (the add-on's code runs: disable,

@@ -2,13 +2,18 @@
 """Maya layout app template: install / remove / open.
 
 An app template is not an extension type, so the template ("Allset": the
-generated startup.blend + a thin __init__.py) ships inside this package and
+generated startup.blend and splash images) ships inside this package and
 is copied to the user's ``scripts/startup/bl_app_templates_user/``
 (; ,).
 Layout: ; generator: tools/make_startup.py.
+
+Data only (step 115): no ``__init__.py``, so no code runs outside the extension
+(Blender imports a template with ``ignore_not_found``, $S/modules/bl_app_template_utils.py:162).
+The Maya keymap is re-activated after a template switch by the keymap module.
+Only the user installs it (Make Blender Maya / Install Maya Layout); a user disable
+or Remove of the extension deletes it again (``remove_on_disable``).
 """
 
-import importlib
 import os
 import shutil
 
@@ -53,24 +58,63 @@ def install():
         raise RuntimeError(f"{dst} exists and was not installed by Allset")
     shutil.copytree(SOURCE_DIR, dst, dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("__pycache__", "*.blend1"))
+    stale = os.path.join(dst, "__init__.py")   # copies made before step 115 carried code
+    if os.path.isfile(stale):
+        os.remove(stale)
+        shutil.rmtree(os.path.join(dst, "__pycache__"), ignore_errors=True)
     with open(os.path.join(dst, MARKER), "w", encoding="utf-8") as fh:
-        fh.write("Installed by the Allset extension. Removed by its 'Remove Maya Layout' button.\n")
-    # A clean config has no scripts/startup at launch, so it is not on sys.path and the
-    # template's __init__ (enables the add-on, re-activates the Maya keymap) would not
-    # import until a restart (found by tools/release_check.py, ).
-    bpy.utils.refresh_script_paths()
-    importlib.invalidate_caches()
+        fh.write("Installed by the Allset extension. Removed by its 'Remove Maya Layout' button and when the "
+                 "extension is disabled or removed.\n")
+    _set_wanted(True)
     return dst
 
 
-def remove():
+def _set_wanted(value):
+    try:
+        from .. import preferences
+        preferences.get().layout_installed = value
+    except (KeyError, AttributeError):
+        pass
+
+
+def remove(keep_wanted=False):
     removed_old = bool(remove_legacy())
+    if not keep_wanted:
+        _set_wanted(False)
     dst = installed_dir()
     if not os.path.isdir(dst):
         return removed_old
     if not os.path.isfile(os.path.join(dst, MARKER)):
         raise RuntimeError(f"{dst} was not installed by Allset; not removing it")
     shutil.rmtree(dst)
+    return True
+
+
+def remove_on_disable():
+    """The extension is being disabled or removed by the user: take the template (ours only, marker-checked)
+    with it. Quitting keeps it (``switch.user_disabling``)."""
+    try:
+        return remove(keep_wanted=True)
+    except (OSError, RuntimeError) as ex:
+        print("Allset: Maya layout template not removed:", ex)
+        return False
+
+
+def reinstall_if_wanted():
+    """Register: the user installed the template and it is gone although the add-on preferences still say so
+    (removed while they were kept, e.g. by an older version's disable): put it back."""
+    try:
+        from .. import preferences
+        wanted = preferences.get().layout_installed
+    except (KeyError, AttributeError):
+        return False
+    if not wanted or is_installed() or os.path.isdir(installed_dir()):
+        return False
+    try:
+        install()
+    except (OSError, RuntimeError) as ex:
+        print("Allset: Maya layout template not reinstalled:", ex)
+        return False
     return True
 
 

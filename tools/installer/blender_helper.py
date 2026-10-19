@@ -43,7 +43,7 @@ def make():
     if not module or module not in bpy.context.preferences.addons:
         return False, "Allset is not enabled"
     from importlib import import_module
-    import_module(module + ".first_start").make(bpy.context, open_layout=False)
+    import_module(module + ".welcome").opt_in(open_layout=False)   # Maya mode on + Make Blender Maya (step 115)
     bpy.ops.wm.save_userpref()
     return True, "Make Blender Maya done"
 
