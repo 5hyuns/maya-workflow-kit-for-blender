@@ -165,22 +165,33 @@ def in_blender():
     import bpy
 
     bpy.ops.preferences.reset_default_theme()
-    bpy.ops.script.execute_preset(filepath=str(ROOT / "src" / "allset" / "theme" / "studio_grey.xml"),
-                                  menu_idname="USERPREF_MT_interface_theme_presets")
+    # the kit's theme file for this Blender (studio_grey.xml for 4.5, studio_grey_<5.m>.xml, step 119)
+    folder = ROOT / "src" / "allset" / "theme"
+    theme_xml = folder / "studio_grey.xml"
+    for f in sorted(folder.glob("studio_grey_*.xml")):
+        if tuple(int(x) for x in f.stem.split("_")[-1].split(".")) <= tuple(bpy.app.version[:2]):
+            theme_xml = f
+    bpy.ops.script.execute_preset(filepath=str(theme_xml), menu_idname="USERPREF_MT_interface_theme_presets")
     theme = bpy.context.preferences.themes[0]
-    # Blender 5.x keeps some 4.5 theme values elsewhere: apply the kit's own move table and read them there
-    # (src/allset/theme MOVED, step 118)
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("allset_theme_look", ROOT / "src" / "allset" / "theme" / "__init__.py")
-    kit_theme = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(kit_theme)
-    kit_theme._apply_moved(theme)
-    moved = {old: new for new, old in kit_theme.MOVED}
+    # Blender 5.x keeps some 4.5 theme values elsewhere (src/allset/theme MOVED = the 5.0 migration table): read
+    # the PAIRS paths (4.5 names) at their 5.x place (step 118, 119)
+    sys.path.insert(0, str(ROOT / "tools"))
+    import make_theme
+    moved = {old: new for new, old in make_theme.moved_table()}
+
+    def exists(path):
+        owner = theme
+        for part in path.split("."):
+            if not hasattr(owner, part):
+                return False
+            owner = getattr(owner, part)
+        return True
+
     colors = json.loads((MAYA / "colors.json").read_text())
     rows = []
     for label, path, key in PAIRS:
         owner = theme
-        if kit_theme._resolve(theme, path)[0] is None and path in moved:
+        if not exists(path) and path in moved:
             path = moved[path]
         try:
             for p in path.split("."):
@@ -293,6 +304,9 @@ def pixel_table(colors, geom, kit_img):
             continue
         shot, anchor, dx, dy, r, note = spec
         rects = geom["rects"].get(shot, {})
+        if anchor not in rects and name in L.KIT_POINTS_ALT:
+            shot, anchor, dx, dy, r, note = L.KIT_POINTS_ALT[name]
+            rects = geom["rects"].get(shot, {})
         if anchor not in rects:
             missing += 1
             lines.append(f"| {name} | {mshot} | {ref['hex']} | {shot} | ? | ? | anchor `{anchor}` not found |")

@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 119 (5.x 색 일치, 사용자 요청 10-19) 완료 — `docs/steps/step_119.md`, 테마 차이 `docs/compat_5x.md` 「테마 차이」.
+  - 버전마다 테마 파일: `tools/make_theme.py` 가 각 Blender 에서 4.5 `studio_grey.xml` (그대로) + 5.x `studio_grey_5.0/5.1/5.2.xml`
+    (4.5 값 + MOVED + `FIVE_X`, Blender 값으로 둔 10 키 `KEEP_FACTORY_5X`), `compat.theme_file` 이 고름. 5.0+ 셸프 아이콘 셰이더
+    `compat.LINEAR_IMAGE_SHADER`, MOVED `channels_selected` 수정. 도구: `theme_diff.py`, `theme_xml_diff.py`, `version_compare.py`.
+  - 검증: look_compare 네 버전 같음 (테마 0/38, 장면 3/3, 밀도 5/6, 격자 4/4), 4.5 대비 5.x ΔE00>5 0.83–0.97 % (배치만), 헤드리스
+    880/880 × 4, GUI 4.5 1121/1121 + 5.x 색·레이아웃 6 파일 72/72 × 3, release_check 23/23 × 4.
+  - 남은 것: 5.x Outliner 활성 행 외곽선 (테마 키 없음), manual_checks 「Step 119」.
+  - **바로 다음 할 일**: step 120 = Maya 배경색 · Alt+B 배경 순환 (hotkeySetup.mel 에서 실제 키 확인). 그 밖에 열린 것: 사용자 업로드
+    (manual_checks 117; 지원 범위가 넓어졌으니 업로드 전 버전 올리기 권장), 툴바 떼기, manual_checks 115/116/118/119.
+
 - Step 118 (Blender 5.x 호환, 사용자 요청 10-19) 완료 — `docs/steps/step_118.md`, 영향 목록·버전별 결과 `docs/compat_5x.md`.
   - 공식 5.x 마이너 최신 zip (5.0.1 / 5.1.2 / 5.2.2, sha256) → `C:/Users/ohnsk/AppData/Local/allset_blenders/` (저장소 밖, 설치기 없음).
   - 버전 분기는 `src/allset/compat.py` 한 곳 (기능 검사 우선, `test_step118_compat` 가 다른 곳의 `bpy.app.version` 을 막음): layered

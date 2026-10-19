@@ -717,7 +717,8 @@ def _draw_rect(x, y, w, h, colour, texture=None):
         batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords})
         sh.uniform_float("color", colour)
     else:
-        sh = gpu.shader.from_builtin('IMAGE')
+        from .. import compat
+        sh = gpu.shader.from_builtin(compat.LINEAR_IMAGE_SHADER)
         batch = batch_for_shader(sh, 'TRI_FAN', {"pos": coords, "texCoord": ((0, 0), (1, 0), (1, 1), (0, 1))})
         sh.uniform_sampler("image", texture)
     batch.draw(sh)

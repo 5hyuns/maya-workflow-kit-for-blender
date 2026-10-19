@@ -243,3 +243,27 @@ def toolbar_back(theme):
     if regions is not None and hasattr(regions, "sidebars"):
         return regions.sidebars.back
     return theme.view_3d.space.button
+
+
+# --- Theme file -----------------------------------------------------------------------------
+# Blender 5.0 rewrote the theme keys (docs/compat_5x.md "테마 차이"): tools/make_theme.py writes one preset per
+# minor version (studio_grey.xml = 4.5, studio_grey_<5.m>.xml). Pick the newest file not newer than this Blender.
+
+def theme_file(folder):
+    import os
+    import re
+    best, best_v = os.path.join(folder, "studio_grey.xml"), TARGET
+    for name in os.listdir(folder):
+        m = re.fullmatch(r"studio_grey_(\d+)\.(\d+)\.xml", name)
+        if m:
+            v = (int(m.group(1)), int(m.group(2)))
+            if best_v < v <= VERSION:
+                best, best_v = os.path.join(folder, name), v
+    return best
+
+
+# --- GPU image shader -----------------------------------------------------------------------
+# Kit textures (shelf icons) hold scene-linear colours. 4.5's builtin 'IMAGE' shader converts them for display;
+# from 5.0 'IMAGE' draws the values as they are and the converting shader is
+# 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB' (5.0 Python API notes, GPU; seen as darker shelf icons, step 119).
+LINEAR_IMAGE_SHADER = 'IMAGE' if VERSION < (5, 0) else 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB'

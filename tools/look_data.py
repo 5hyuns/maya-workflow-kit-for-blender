@@ -60,7 +60,8 @@ KIT_POINTS = {
     "toolbox_active_tool": ("02_cube_selected_move", "toolbox.TOOLS", 27, 132, 1, "Move tool button (step 99: re-picked)"),
     "outliner_header_bg": (None, "no Outliner dock title"),
     "outliner_menu_bg": ("02_cube_selected_move", "outliner.HEADER", 3, 16, 1, "Outliner header padding"),
-    "outliner_search_field": ("02_cube_selected_move", "outliner.HEADER", 210, 16, 2, "Outliner search field"),
+    "outliner_search_field": ("02_cube_selected_move", "outliner.HEADER", 207, 16, 0,
+                              "Outliner search field (step 119: the 1-2 px of fill left of the icon in 4.5 and 5.x)"),
     "outliner_list_bg": ("02_cube_selected_move", "outliner.WINDOW", 130, -60, 2, "Outliner list"),
     "outliner_row_selected": ("11_channel_box", "outliner.WINDOW", 200, 14, 2, "selected row pCube1"),
     "outliner_row_selected_component_mode": ("08_verts_selected", "outliner.WINDOW", 200, 14, 2,
@@ -189,6 +190,13 @@ def maya_colors():
     return json.loads((MAYA / "colors.json").read_text())
 
 
+# Used when the KIT_POINTS anchor is missing: Blender 5.x never opens the Timeline sidebar, so the Allset timeline is
+# one row and the Time Slider buttons sit at the right end of the header (step 118, 119).
+KIT_POINTS_ALT = {
+    "time_field": ("11_channel_box", "timeline.HEADER", -230, 13, 2, "current frame field (5.x: header right end)"),
+}
+
+
 def resolve(rects, anchor, dx=0, dy=0):
     """Point (x, y) from an anchor rect [x, y, w, h] and offsets (negative = from right/bottom)."""
     x, y, w, h = rects[anchor]
@@ -252,7 +260,8 @@ DENSITY = (
 )
 # Menu popup background: Maya #525252 (colors.json ui notes), kit theme wcol_menu_back #535353.
 MENU_BG = {"maya": "#525252", "kit": "#535353"}
-MENU_SEARCH = (0, 20, 700, 680)   # where the Create menu opens under the menu bar, [x, y, w, h]
+MENU_SEARCH = (10, 20, 690, 680)  # where the Create menu opens under the menu bar, [x, y, w, h]; from x 10: the
+# 1 px editor outline at the window edge (x 2 in 5.x, the same #535353 as the menu) is no menu (step 119)
 
 
 def colour_area(img, hex_colour, rect, tol=2, min_run=60):

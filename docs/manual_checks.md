@@ -767,3 +767,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 118) 5.x: 관절 Channel Box Visibility off → 포즈·오브젝트 모드에서 그 본이 정말 숨는지 (5.0 의 `PoseBone.hide`), on → 다시 보이는지.
 - [ ] (step 118) 5.2: 저장 안 된 이미지 (Texture Paint 한 획) 가 있는 채로 Ctrl+S → Blender 5.2 의 「수정된 이미지 저장」 창이 뜨는지.
 - [ ] (step 118) 5.x 의 Maya 테마: 이음매 (빨강) / 날카로운 모서리 (청록) / 주름 (자홍) 색, Graph Editor 핸들 색, Properties 패널 머리·배경이 4.5 와 같은지. Blender 로 전환하면 사용자 테마로 돌아오는지.
+
+### Step 119 — 5.x 색 일치
+
+- [ ] (step 119) Blender 5.0 / 5.1 / 5.2 실제 화면에서 Make Blender Maya 뒤 4.5 와 나란히: 메뉴 막대·Status Line·셸프 (아이콘 밝기 — 5.x 는 `IMAGE_SCENE_LINEAR_TO_REC709_SRGB` 셰이더), Channel Box / AE 패널 배경·머리, 뷰포트 #5c5c5c, 격자 (주 격자선이 따로 밝지 않은지 — `grid_major`), 선택 흰색 / 리드 초록, 매니퓰레이터 축 색이 같은지.
+- [ ] (step 119) 5.x Graph Editor / Dope Sheet: 채널 배경·선택 채널, 키 (보통 / 선택), 핸들 색, 재생 헤드, 미리보기 범위 어둡게가 4.5 Maya 테마와 같은지 (`common.anim.*`, `common.curves.*`).
+- [ ] (step 119) 5.x 위젯 선택 외곽선 (`wcol_*.outline_sel`): 숫자칸·체크박스·메뉴를 눌렀을 때 Blender 기본 강조색 대신 Maya 처럼 외곽선이 그대로인지; Properties / 도크 패널의 활성 패널 표시 (`panel_active`).
+- [ ] (step 119) 5.x Outliner 활성 행 외곽선 (테마 키 없음, 남은 것): Maya 와 얼마나 달라 보이는지 — 거슬리면 보고.
+- [ ] (step 119) 5.x 에서 Blender 로 전환 → 사용자 테마로 돌아오는지, 다시 Maya → 버전 파일 (`studio_grey_5.<m>.xml`) 이 적용되는지 (Preferences > Themes 의 이름 "Maya").
