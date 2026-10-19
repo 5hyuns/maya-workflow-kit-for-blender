@@ -24,17 +24,17 @@ def _close(a, b, tol=2e-3):
 # --- install / remove ----------------------------------------------------------------
 
 def test_install_into_user_templates_in_sandbox():
-    assert bpy.ops.maya_kit.layout_install() == {'FINISHED'}
+    assert bpy.ops.allset.layout_install() == {'FINISHED'}
     dst = app_template.installed_dir()
     assert os.path.normcase(dst).startswith(os.path.normcase(SANDBOX_SCRIPTS)), dst
     for name in ("startup.blend", "__init__.py", app_template.MARKER):
         assert os.path.isfile(os.path.join(dst, name)), name
     assert app_template.is_installed()
-    assert bpy.ops.maya_kit.layout_install() == {'FINISHED'}, "reinstall over our own copy"
+    assert bpy.ops.allset.layout_install() == {'FINISHED'}, "reinstall over our own copy"
 
 
 def test_remove_and_refuse_foreign_folder():
-    assert bpy.ops.maya_kit.layout_remove() == {'FINISHED'}
+    assert bpy.ops.allset.layout_remove() == {'FINISHED'}
     assert not os.path.exists(app_template.installed_dir())
     assert app_template.remove() is False  # nothing to remove
     foreign = app_template.installed_dir()
@@ -68,7 +68,7 @@ def test_theme_apply_and_restore():
     default_top = tuple(grad.high_gradient)
     default_type = grad.background_type
     assert not theme.has_backup()
-    assert bpy.ops.maya_kit.theme_apply() == {'FINISHED'}
+    assert bpy.ops.allset.theme_apply() == {'FINISHED'}
     assert theme.has_backup()
     # Maya 2022 factory: flat 0.36 grey, gradient off (research/maya/colors.json, step 42)
     assert grad.background_type == 'SINGLE_COLOR'
@@ -80,16 +80,16 @@ def test_theme_apply_and_restore():
     path = theme.backup_path()
     assert os.path.normcase(path).startswith(
         os.path.normcase(os.path.dirname(os.environ["BLENDER_USER_EXTENSIONS"]))), path
-    assert bpy.ops.maya_kit.theme_restore() == {'FINISHED'}
+    assert bpy.ops.allset.theme_restore() == {'FINISHED'}
     assert not theme.has_backup()
     assert grad.background_type == default_type and _close(grad.high_gradient, default_top)
 
 
 def test_theme_backup_keeps_first_original():
     _theme().view_3d.grid = (0.9, 0.1, 0.1, 1.0)   # a "user" theme tweak
-    bpy.ops.maya_kit.theme_apply()
-    bpy.ops.maya_kit.theme_apply()                 # second apply must not overwrite the backup
-    bpy.ops.maya_kit.theme_restore()
+    bpy.ops.allset.theme_apply()
+    bpy.ops.allset.theme_apply()                 # second apply must not overwrite the backup
+    bpy.ops.allset.theme_restore()
     assert _close(_theme().view_3d.grid, (0.9, 0.1, 0.1, 1.0))
     bpy.ops.preferences.reset_default_theme()
 
@@ -97,7 +97,7 @@ def test_theme_backup_keeps_first_original():
 # --- loading the template (last: replaces the open file) -----------------------------------
 
 def test_template_layout():
-    bpy.ops.maya_kit.layout_install()
+    bpy.ops.allset.layout_install()
     bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
     assert bpy.context.preferences.app_template == app_template.TEMPLATE_ID
     assert kit.is_enabled()
@@ -124,4 +124,4 @@ def test_template_layout():
     assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 200, 24)
     assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (1, 120)
     assert len(bpy.data.objects) == 0, [o.name for o in bpy.data.objects]
-    bpy.ops.maya_kit.layout_remove()
+    bpy.ops.allset.layout_remove()

@@ -1,4 +1,4 @@
-"""Step 47 in a real UI: Maya selection wire over shading — drawn for the selected objects in the MayaKit
+"""Step 47 in a real UI: Maya selection wire over shading — drawn for the selected objects in the Allset
 layout, and the frame time with a 100k-poly selected mesh grows < 20 % (wm.redraw_timer). Plan:
 docs/steps/step_47.md."""
 
@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -44,17 +44,17 @@ def frame_ms(n=40):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_cubes():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     with bpy.context.temp_override(window=win(), area=area3d(), region=region3d()):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         a = bpy.context.view_layer.objects.active
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         b = bpy.context.view_layer.objects.active
     b.location.x = 2 * import_module(MODULE + ".operators.units").maya_unit()
     for ob in bpy.context.view_layer.objects:
@@ -73,7 +73,7 @@ def s_wire_check():
     check(f"selected {a.name} (lead) and {b.name} get the selection wire, drawn ({sw.frame_ms():.3f} ms), "
           f"no show_wire written", names == sorted((a.name, b.name)) and sw.frame_ms() > 0
           and not a.show_wire and not b.show_wire)
-    check("MayaKit view: no Blender selection outline (Maya highlights with the wire)",
+    check("Allset view: no Blender selection outline (Maya highlights with the wire)",
           not area3d().spaces.active.overlay.show_outline_selected)
     shot("gui_step47_two_selected.png")
     # 100k-poly mesh, selected alone

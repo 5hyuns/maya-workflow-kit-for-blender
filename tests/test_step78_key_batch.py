@@ -17,7 +17,7 @@ taphold = import_module(kit.MODULE + ".operators.taphold")
 
 
 def _items(km, key, **mods):
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     want = {m: mods.get(m, False) for m in ("shift", "ctrl", "alt")}
     return [k for k in kc.keymaps[km].keymap_items if k.active and k.type == key and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items())]
@@ -26,18 +26,18 @@ def _items(km, key, **mods):
 def test_keymap_items():
     for key, mode in (("ONE", "ABSOLUTE"), ("TWO", "STACKED"), ("THREE", "NORMALIZED")):
         it = _items("Graph Editor", key)
-        assert [k.idname for k in it] == ["maya_kit.graph_view_mode"], (key, it)
+        assert [k.idname for k in it] == ["allset.graph_view_mode"], (key, it)
         assert it[0].properties.mode == mode
     for km in ("Object Mode", "Mesh"):
         for mods, binding in (({"shift": True}, "select_component"), ({"alt": True}, "select_polygon")):
             it = _items(km, "Q", **mods)
-            assert [k.idname for k in it] == ["maya_kit.tap_hold"], (km, mods, it)
+            assert [k.idname for k in it] == ["allset.tap_hold"], (km, mods, it)
             assert it[0].properties.binding == binding
     for key, ccw in (("LEFT_ARROW", True), ("RIGHT_ARROW", False)):
         it = _items("Mesh", key, ctrl=True, alt=True)
         assert [k.idname for k in it] == ["mesh.edge_rotate"] and it[0].properties.use_ccw == ccw, key
-    assert [k.idname for k in _items("3D View", "G", shift=True)] == ["maya_kit.repeat_at_mouse"]
-    assert [k.idname for k in _items("Object Mode", "C", shift=True, ctrl=True)] == ["maya_kit.camera_from_view"]
+    assert [k.idname for k in _items("3D View", "G", shift=True)] == ["allset.repeat_at_mouse"]
+    assert [k.idname for k in _items("Object Mode", "C", shift=True, ctrl=True)] == ["allset.camera_from_view"]
     assert {"select_component", "select_polygon"} <= set(taphold.binding_names())
 
 
@@ -46,7 +46,7 @@ def test_menus_registered():
     poly = menus.MENUS["doSelectPolygonMM"].radial
     assert [poly[d][0] for d in ("N", "E", "S", "W")] == ["Vertices", "Edges", "Faces", "UVs"]
     comp = menus.MENUS["doSelectComponentMM"].radial
-    assert comp["SE"][1] == ("maya_kit.component_mask", {"kind": "FACE"})
+    assert comp["SE"][1] == ("allset.component_mask", {"kind": "FACE"})
 
 
 def test_toggled_mask():
@@ -69,11 +69,11 @@ def _cube():
 def test_component_mask_operator():
     _cube()
     ts = bpy.context.scene.tool_settings
-    bpy.ops.maya_kit.component_mask(kind="EDGE")
+    bpy.ops.allset.component_mask(kind="EDGE")
     assert bpy.context.mode == 'EDIT_MESH'
     first = tuple(ts.mesh_select_mode)
     assert first[1], first
-    bpy.ops.maya_kit.component_mask(kind="ALL")
+    bpy.ops.allset.component_mask(kind="ALL")
     assert tuple(ts.mesh_select_mode) == (True, True, True)
     bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -106,6 +106,6 @@ def test_camera_matrix_inverts_view():
 
 
 def test_graph_view_mode_requires_graph_editor():
-    assert not bpy.ops.maya_kit.graph_view_mode.poll()
+    assert not bpy.ops.allset.graph_view_mode.poll()
     names = [m[0] for m in graph_keys.VIEW_MODES]
     assert names == ["ABSOLUTE", "STACKED", "NORMALIZED"]

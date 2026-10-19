@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -46,12 +46,12 @@ def shortcut():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     bpy.data.objects["Cube"].location = (1.5, 0.25, 0.0)
     C["scene"] = scene_state()
     C["ws"] = win().workspace.name
     check(f"enabled = Maya mode ({sw().is_on()}, keymap {bpy.context.window_manager.keyconfigs.active.name})",
-          sw().is_on() and bpy.context.window_manager.keyconfigs.active.name == "Maya")
+          sw().is_on() and bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
     redraw()
 
 
@@ -65,7 +65,7 @@ def s_shot_maya_keys():
 def s_blender():
     kcs = bpy.context.window_manager.keyconfigs
     check(f"Ctrl+Alt+Shift+M -> Blender mode (keymap {kcs.active.name}, Maya classes gone)",
-          not sw().is_on() and kcs.active.name == "Blender" and not hasattr(bpy.types.Scene, "maya_kit_cb"))
+          not sw().is_on() and kcs.active.name == "Blender" and not hasattr(bpy.types.Scene, "allset_cb"))
     check("the open file's objects are untouched", scene_state() == C["scene"])
     check(f"workspace unchanged ({win().workspace.name})", win().workspace.name == C["ws"])
     redraw()
@@ -82,7 +82,7 @@ def s_maya():
     kcs = bpy.context.window_manager.keyconfigs
     ws = win().workspace
     check(f"Ctrl+Alt+Shift+M again -> Maya mode (keymap {kcs.active.name})",
-          sw().is_on() and kcs.active.name == "Maya" and hasattr(bpy.types.Scene, "maya_kit_cb"))
+          sw().is_on() and kcs.active.name == "Maya-style" and hasattr(bpy.types.Scene, "allset_cb"))
     check(f"Maya layout workspace appended and active ({ws.name}, from {ws.get(sw().PREV_KEY)})",
           ws.name == sw().WORKSPACE and ws.get(sw().PREV_KEY) == C["ws"])
     check("objects still untouched", scene_state() == C["scene"])
@@ -96,7 +96,7 @@ def s_maya():
 @step
 def s_shot_maya():
     shot("gui_step60_maya_mode.png")
-    bpy.ops.maya_kit.switch_mode(mode='BLENDER')     # what the top bar "Blender" button runs
+    bpy.ops.allset.switch_mode(mode='BLENDER')     # what the top bar "Blender" button runs
 
 
 @step

@@ -27,16 +27,16 @@ def _only(*obs):
 
 
 def _create(kind):
-    assert bpy.ops.maya_kit.create(kind=kind) == {'FINISHED'}
+    assert bpy.ops.allset.create(kind=kind) == {'FINISHED'}
     return bpy.context.active_object
 
 
 def test_ctrl_d_binding():
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Object Mode"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Object Mode"]
     items = [k for k in km.keymap_items if k.active and k.type == 'D' and k.ctrl and not k.shift
              and not k.alt and k.value == 'PRESS']
-    assert [k.idname for k in items] == ["maya_kit.duplicate"], [k.idname for k in items]
-    assert menu_map.MAP["Edit/Duplicate"] == "maya_kit.duplicate"
+    assert [k.idname for k in items] == ["allset.duplicate"], [k.idname for k in items]
+    assert menu_map.MAP["Edit/Duplicate"] == "allset.duplicate"
 
 
 def test_three_duplicates_count_up():
@@ -46,7 +46,7 @@ def test_three_duplicates_count_up():
     assert cube.name == "pCube1" and cube.data.name == "pCubeShape1"
     names = []
     for _ in range(3):
-        assert bpy.ops.maya_kit.duplicate() == {'FINISHED'}
+        assert bpy.ops.allset.duplicate() == {'FINISHED'}
         dup = bpy.context.active_object
         names.append((dup.name, dup.data.name))
         assert (dup.location - Vector((1, 2, 3))).length < 1e-6, "in place"
@@ -59,12 +59,12 @@ def test_group_duplicate_renames_children():
     _fresh()
     cube, sphere = _create('CUBE'), _create('SPHERE')
     _only(cube, sphere)
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     grp = bpy.data.objects["group1"]
     sphere.location = (3, 0, 0)
     bpy.context.view_layer.update()
     _only(grp)
-    bpy.ops.maya_kit.duplicate()
+    bpy.ops.allset.duplicate()
     new = bpy.context.active_object
     assert new.name == "group2", new.name
     kids = sorted(c.name for c in new.children)
@@ -77,11 +77,11 @@ def test_group_duplicate_renames_children():
 def test_shift_d_repeats_after_ctrl_d():
     _fresh()
     cube = _create('CUBE')
-    bpy.ops.maya_kit.duplicate()
+    bpy.ops.allset.duplicate()
     dup = bpy.context.active_object
     dup.location.x += 2.0
     bpy.context.view_layer.update()
-    bpy.ops.maya_kit.duplicate_with_transform()
+    bpy.ops.allset.duplicate_with_transform()
     third = bpy.context.active_object
     assert third.name == "pCube3", third.name
     assert abs(third.location.x - 4.0) < 1e-5, third.location
@@ -94,5 +94,5 @@ def test_blender_names_renumber():
     bpy.context.scene.collection.objects.link(ob)
     bpy.context.view_layer.update()
     _only(ob)
-    bpy.ops.maya_kit.duplicate()
+    bpy.ops.allset.duplicate()
     assert bpy.context.active_object.name == "Cube1", bpy.context.active_object.name

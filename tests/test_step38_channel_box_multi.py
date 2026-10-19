@@ -33,13 +33,13 @@ def _scene(n=2, cm=True):
     for ob in obs:
         ob.select_set(True)
     bpy.context.view_layer.objects.active = obs[0] if obs else None
-    bpy.context.window_manager.maya_kit_cb_selected = ""
+    bpy.context.window_manager.allset_cb_selected = ""
     cb_mod.rebuild_rows()
     return obs
 
 
 def P():
-    return bpy.context.scene.maya_kit_cb
+    return bpy.context.scene.allset_cb
 
 
 def test_display_format():

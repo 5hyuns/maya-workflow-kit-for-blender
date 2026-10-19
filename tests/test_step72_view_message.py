@@ -58,9 +58,9 @@ def test_f8_operator():
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     bpy.ops.mesh.primitive_cube_add()
-    assert bpy.ops.maya_kit.toggle_sel_mode() == {'FINISHED'}
+    assert bpy.ops.allset.toggle_sel_mode() == {'FINISHED'}
     assert bpy.context.mode == 'EDIT_MESH'
-    assert bpy.ops.maya_kit.toggle_sel_mode() == {'FINISHED'}
+    assert bpy.ops.allset.toggle_sel_mode() == {'FINISHED'}
     assert bpy.context.mode == 'OBJECT'
 
 
@@ -68,6 +68,6 @@ def test_top_bar_redraw_is_safe():
     status_line._top_bars[123456] = None   # a closed window's entry is dropped, not tagged
     status_line.redraw_top_bars()
     assert 123456 not in status_line._top_bars
-    bpy.ops.maya_kit.menu_set(set='riggingMenuSet')
+    bpy.ops.allset.menu_set(set='riggingMenuSet')
     assert preferences.get(bpy.context).menu_set == 'riggingMenuSet'
-    bpy.ops.maya_kit.menu_set(set='modelingMenuSet')
+    bpy.ops.allset.menu_set(set='modelingMenuSet')

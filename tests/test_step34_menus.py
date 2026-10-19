@@ -17,18 +17,18 @@ menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 extras = import_module(kit.MODULE + ".operators.menu_extras")
 
 NEW_PATHS = {
-    "File/Increment and Save": "maya_kit.increment_save",
-    "File/Export Selection...": "maya_kit.file_export_selection",  # step 102 (was a format submenu)
-    "Edit/Ungroup": "maya_kit.ungroup",
-    "Windows/Outliner": "maya_kit.open_editor",
-    "Windows/Node Editor": "maya_kit.open_editor",
-    "Windows/General Editors/Attribute Editor": "maya_kit.dock_show",
-    "Windows/General Editors/Script Editor": "maya_kit.script_editor",
-    "Windows/Animation Editors/Graph Editor": "maya_kit.open_editor",
-    "Windows/Rendering Editors/Hypershade": "maya_kit.hypershade",   # step 67: own window
-    "UV/UV Editor": "maya_kit.open_editor",
-    "UV/Planar": "maya_kit.uv_planar",
-    "UV/Normal-Based": "maya_kit.uv_planar",
+    "File/Increment and Save": "allset.increment_save",
+    "File/Export Selection...": "allset.file_export_selection",  # step 102 (was a format submenu)
+    "Edit/Ungroup": "allset.ungroup",
+    "Windows/Outliner": "allset.open_editor",
+    "Windows/Node Editor": "allset.open_editor",
+    "Windows/General Editors/Attribute Editor": "allset.dock_show",
+    "Windows/General Editors/Script Editor": "allset.script_editor",
+    "Windows/Animation Editors/Graph Editor": "allset.open_editor",
+    "Windows/Rendering Editors/Hypershade": "allset.hypershade",   # step 67: own window
+    "UV/UV Editor": "allset.open_editor",
+    "UV/Planar": "allset.uv_planar",
+    "UV/Normal-Based": "allset.uv_planar",
     "Display/Heads Up Display/Poly Count": "wm.context_toggle",
 }
 
@@ -99,10 +99,10 @@ def test_increment_save_keeps_original_and_skips_taken_numbers():
     first = os.path.join(folder, "shot.blend")
     bpy.ops.wm.save_as_mainfile(filepath=first)
     open(os.path.join(folder, "shot.0002.blend"), "wb").close()   # taken by someone else
-    assert bpy.ops.maya_kit.increment_save() == {'FINISHED'}
+    assert bpy.ops.allset.increment_save() == {'FINISHED'}
     assert os.path.basename(bpy.data.filepath) == "shot.0001.blend"
     assert os.path.exists(first) and os.path.exists(bpy.data.filepath)
-    assert bpy.ops.maya_kit.increment_save() == {'FINISHED'}
+    assert bpy.ops.allset.increment_save() == {'FINISHED'}
     assert os.path.basename(bpy.data.filepath) == "shot.0003.blend", "0002 exists: never overwritten"
     assert os.path.getsize(os.path.join(folder, "shot.0002.blend")) == 0
 
@@ -134,7 +134,7 @@ def test_ungroup_moves_children_up_keeping_world():
         ob.select_set(False)
     grp.select_set(True)
     bpy.context.view_layer.objects.active = grp
-    assert bpy.ops.maya_kit.ungroup() == {'FINISHED'}
+    assert bpy.ops.allset.ungroup() == {'FINISHED'}
     bpy.context.view_layer.update()
     assert "group1" not in bpy.data.objects, "the group is deleted"
     for ob in (a, b):
@@ -147,7 +147,7 @@ def test_ungroup_moves_children_up_keeping_world():
     for ob in (a, b):
         ob.select_set(False)
     bpy.context.view_layer.objects.active = top
-    bpy.ops.maya_kit.ungroup()
+    bpy.ops.allset.ungroup()
     bpy.context.view_layer.update()
     assert a.parent is None and b.parent is None
     diff = max(abs(x - y) for r1, r2 in zip(a.matrix_world, world["pCube1"]) for x, y in zip(r1, r2))
@@ -165,7 +165,7 @@ def test_uv_planar_projects_selected_faces():
     top = max(bm.faces, key=lambda f: f.calc_center_median().z)
     top.select = True
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.uv_planar() == {'FINISHED'}
+    assert bpy.ops.allset.uv_planar() == {'FINISHED'}
     bm = bmesh.from_edit_mesh(ob.data)
     layer = bm.loops.layers.uv.active
     top = max(bm.faces, key=lambda f: f.calc_center_median().z)
@@ -191,7 +191,7 @@ def test_export_selection_menu_sets_selected_only():
             return p
 
     fake = Fake()
-    bpy.types.MAYAKIT_MT_export_selection.draw(type("M", (), {"layout": fake})(), bpy.context)
+    bpy.types.ALLSET_MT_export_selection.draw(type("M", (), {"layout": fake})(), bpy.context)
     assert fake.operator_context == 'INVOKE_DEFAULT'
     names = [i for i, _p in ops]
     assert "export_scene.fbx" in names and "wm.obj_export" in names, names

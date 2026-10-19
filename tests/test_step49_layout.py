@@ -1,4 +1,4 @@
-"""Step 49: Maya layout parity — Tool Box, dock-only sidebar, Help + Command row, the MayaKit template's
+"""Step 49: Maya layout parity — Tool Box, dock-only sidebar, Help + Command row, the Allset template's
 areas. Plan: docs/steps/step_49.md; GUI: tests/gui/gui_step49_layout.py."""
 
 import sys
@@ -105,10 +105,10 @@ def test_dock_only_hides_blender_sidebar_tabs():
 def test_kit_outliner_tab_follows_dock_only():
     outliner = import_module(kit.MODULE + ".ui.outliner")
     prefs = preferences.get()
-    assert not outliner.MAYAKIT_PT_outliner.poll(bpy.context)
+    assert not outliner.ALLSET_PT_outliner.poll(bpy.context)
     prefs.maya_dock_only = False
     try:
-        assert outliner.MAYAKIT_PT_outliner.poll(bpy.context)
+        assert outliner.ALLSET_PT_outliner.poll(bpy.context)
     finally:
         prefs.maya_dock_only = True
 
@@ -121,10 +121,10 @@ def test_status_bar_is_help_and_command_row():
     assert command_line.HELP_UNITS * 20 == 675 and command_line.COMMAND_UNITS * 20 == 915
 
 
-# --- MayaKit template ------------------------------------------------------------------------------
+# --- Allset template ------------------------------------------------------------------------------
 
 def test_template_is_maya_general():
-    path = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     areas = list(screen.areas)
@@ -163,7 +163,7 @@ def test_attribute_editor_toggle_uses_dock_without_properties():
     wm = bpy.context.window_manager
     screen = bpy.context.window.screen
     assert status_line._properties_area(screen) is None
-    wm.maya_kit_dock = 'CHANNEL_BOX'
-    assert bpy.ops.maya_kit.editor_toggle(editor='ATTRIBUTE') == {'FINISHED'}
-    assert wm.maya_kit_dock == 'ATTRIBUTE_EDITOR'
+    wm.allset_dock = 'CHANNEL_BOX'
+    assert bpy.ops.allset.editor_toggle(editor='ATTRIBUTE') == {'FINISHED'}
+    assert wm.allset_dock == 'ATTRIBUTE_EDITOR'
     assert status_line.editor_shown(screen, "ATTRIBUTE")

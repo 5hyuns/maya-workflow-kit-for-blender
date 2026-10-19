@@ -84,21 +84,21 @@ def test_tool_and_keys():
     km = bpy.context.window_manager.keyconfigs.addon.keymaps.get(KM)
     assert km is not None, [k.name for k in bpy.context.window_manager.keyconfigs.addon.keymaps if "Tool" in k.name]
     got = {(k.type, k.ctrl, k.shift, k.idname, getattr(k.properties, "action", None)) for k in km.keymap_items}
-    want = {('LEFTMOUSE', False, False, "maya_kit.cut_sew_stroke", 'CUT'),
-            ('LEFTMOUSE', True, False, "maya_kit.cut_sew_stroke", 'SEW'),
-            ('LEFTMOUSE', False, True, "maya_kit.cut_sew_stroke", 'SELECT'),
-            ('X', False, False, "maya_kit.uv_cut", None), ('S', False, False, "maya_kit.uv_sew", None),
-            ('D', False, False, "maya_kit.uv_unfold_layout", None)}
+    want = {('LEFTMOUSE', False, False, "allset.cut_sew_stroke", 'CUT'),
+            ('LEFTMOUSE', True, False, "allset.cut_sew_stroke", 'SEW'),
+            ('LEFTMOUSE', False, True, "allset.cut_sew_stroke", 'SELECT'),
+            ('X', False, False, "allset.uv_cut", None), ('S', False, False, "allset.uv_sew", None),
+            ('D', False, False, "allset.uv_unfold_layout", None)}
     assert want <= got, got
     assert cs.TOOL.startswith(preselect.SELECT_TOOLS), "pre-selection shows the edge a press cuts"
 
 
 def test_entries():
-    assert menu_map.MAP["UV/3D Cut and Sew UV Tool"] == "maya_kit.cut_sew_tool_set"
+    assert menu_map.MAP["UV/3D Cut and Sew UV Tool"] == "allset.cut_sew_tool_set"
     assert "UV/3D Cut and Sew UV Tool" not in notices.NOTICES
-    assert shelf_map.BY_COMMAND["SetCutSewUVTool"][0] == "maya_kit.cut_sew_tool_set"
+    assert shelf_map.BY_COMMAND["SetCutSewUVTool"][0] == "allset.cut_sew_tool_set"
     for name in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM"):
-        assert menus.MENUS[name].radial["NW"] == ("3D Cut and Sew UV Tool", "maya_kit.cut_sew_tool_set"), name
+        assert menus.MENUS[name].radial["NW"] == ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"), name
 
 
 def test_tool_set_needs_a_view_and_unfold_layout_runs():
@@ -106,14 +106,14 @@ def test_tool_set_needs_a_view_and_unfold_layout_runs():
     bpy.ops.object.mode_set(mode='OBJECT')
     ob.select_set(True)
     bpy.context.view_layer.objects.active = ob
-    assert bpy.ops.maya_kit.cut_sew_tool_set.poll()
+    assert bpy.ops.allset.cut_sew_tool_set.poll()
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     cs.apply(bm, uv, _top_edges(bm), "CUT")
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.uv_unfold_layout() == {'FINISHED'}
+    assert bpy.ops.allset.uv_unfold_layout() == {'FINISHED'}
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     us = [l[uv].uv for f in bm.faces for l in f.loops]

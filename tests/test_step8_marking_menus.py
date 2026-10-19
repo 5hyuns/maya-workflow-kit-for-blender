@@ -175,7 +175,7 @@ def test_pie_classes_and_slot_order():
     assert seps, "N is empty in Maya's rotate options: a separator keeps the slot"
     # step 59: Discrete Rotate (greyed before) is the rotate step snap now
     ops = [e for e in fake.layout.log if e[0] == "op"]
-    assert any(e[1] == "maya_kit.step_snap" and e[2] == "Discrete Rotate" for e in ops), ops
+    assert any(e[1] == "allset.step_snap" and e[2] == "Discrete Rotate" for e in ops), ops
 
 
 def test_dispatch_by_context():
@@ -221,18 +221,18 @@ def test_component_item_targets_picked_object():
         a = bpy.context.active_object
         bpy.ops.mesh.primitive_cube_add(location=(5, 0, 0))
         b = bpy.context.active_object
-        bpy.context.window_manager.maya_kit_mm_target = a.name  # RMB was over cube a
-        bpy.ops.maya_kit.mm_component(type='EDGE')
+        bpy.context.window_manager.allset_mm_target = a.name  # RMB was over cube a
+        bpy.ops.allset.mm_component(type='EDGE')
         assert bpy.context.mode == 'EDIT_MESH' and bpy.context.active_object == a
         assert tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, True, False)
         assert not b.select_get()
         bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.context.window_manager.maya_kit_mm_target = b.name
-        bpy.ops.maya_kit.mm_component(type='NONE')
+        bpy.context.window_manager.allset_mm_target = b.name
+        bpy.ops.allset.mm_component(type='NONE')
         assert bpy.context.mode == 'OBJECT' and b.select_get() and not a.select_get()
-        bpy.ops.maya_kit.mm_clear_selection()
+        bpy.ops.allset.mm_clear_selection()
         assert not bpy.context.selected_objects
-        bpy.context.window_manager.maya_kit_mm_target = ""
+        bpy.context.window_manager.allset_mm_target = ""
 
 
 def test_pick_object_ray_cast():
@@ -256,7 +256,7 @@ def test_pick_object_ray_cast():
 # --- keymap and Q/W/E/R ------------------------------------------------------------
 
 def _items(km_name):
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     return kc.keymaps[km_name].keymap_items
 
 
@@ -265,7 +265,7 @@ def test_keymap_marking_menus():
         items = _items(km)
         found = {}
         for kmi in items:
-            if kmi.type == 'RIGHTMOUSE' and kmi.idname == "maya_kit.marking_menu" and kmi.value == 'PRESS':
+            if kmi.type == 'RIGHTMOUSE' and kmi.idname == "allset.marking_menu" and kmi.value == 'PRESS':
                 found[(kmi.shift, kmi.ctrl)] = kmi.properties.trigger
         assert found == {(False, False): "RMB", (True, False): "SHIFT_RMB",
                          (False, True): "CTRL_RMB", (True, True): "TOOL_OPTIONS"}, (km, found)
@@ -279,7 +279,7 @@ def test_keymap_qwer_tap_hold():
         items = _items(km)
         for key, binding in maya_patches.TOOL_KEYS:
             hits = [k for k in items if k.type == key and not (k.shift or k.ctrl or k.alt)]
-            assert [(k.idname, k.properties.binding) for k in hits] == [("maya_kit.tap_hold", binding)], \
+            assert [(k.idname, k.properties.binding) for k in hits] == [("allset.tap_hold", binding)], \
                 (km, key, [(k.idname) for k in hits])
     for _key, binding in maya_patches.TOOL_KEYS:
         b = taphold.get_binding(binding)
@@ -292,6 +292,6 @@ def test_bindings_removed_on_disable():
         names = taphold.binding_names()
         assert not any(n.startswith("tool_") for n in names), names
         assert not hasattr(bpy.types, marking.idname("dagMenuProc"))
-        assert "maya_kit_mm_target" not in bpy.types.WindowManager.bl_rna.properties
+        assert "allset_mm_target" not in bpy.types.WindowManager.bl_rna.properties
     finally:
         kit.enable()

@@ -2,7 +2,7 @@
 
     python tools/installer_check.py [--blender PATH] [--no-build]
 
-Runs tools/installer/maya_kit_setup.ps1 (what the Inno Setup draft maya_kit.iss calls) with Windows
+Runs tools/installer/allset_setup.ps1 (what the Inno Setup draft allset.iss calls) with Windows
 PowerShell 5.1 on a clean sandbox (tmp/release_env_installer; BLENDER_USER_* point there and are
 inherited by the Blender processes the script starts, decision 7) after seeding a "user" setup
 (tools/release_probe.py seed). The .exe itself is not built or signed here.
@@ -21,7 +21,7 @@ import build  # noqa: E402
 import release_check  # noqa: E402
 
 SANDBOX = ROOT / "tmp" / "release_env_installer"
-SCRIPT = ROOT / "tools" / "installer" / "maya_kit_setup.ps1"
+SCRIPT = ROOT / "tools" / "installer" / "allset_setup.ps1"
 KEYS = ("active_keyconfig", "inputs", "undo_steps", "view", "theme")
 
 
@@ -30,12 +30,12 @@ def main(argv=None):
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
     ap.add_argument("--no-build", action="store_true")
     args = ap.parse_args(argv)
-    zip_path = build.DIST / f"maya_kit-{build.manifest_value('version')}.zip"
+    zip_path = build.DIST / f"allset-{build.manifest_value('version')}.zip"
     if not args.no_build or not zip_path.exists():
         zip_path = build.main(["--blender", args.blender, "--no-legacy"])
 
     env = release_check.sandbox_env(SANDBOX)
-    env["MAYA_KIT_NO_WELCOME"] = "1"
+    env["ALLSET_NO_WELCOME"] = "1"
     probe = [args.blender, "-b", "--python", str(ROOT / "tools" / "release_probe.py"), "--"]
     ps = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT)]
     snap, results = {}, []
@@ -49,7 +49,7 @@ def main(argv=None):
     def setup(*extra):
         r = subprocess.run(ps + list(extra), env=env, stdin=subprocess.DEVNULL, capture_output=True,
                            text=True, encoding="utf-8", errors="replace", timeout=600)
-        print(f"--- maya_kit_setup.ps1 {' '.join(extra[:1])} (exit {r.returncode})\n{(r.stdout + r.stderr).strip()[-1500:]}")
+        print(f"--- allset_setup.ps1 {' '.join(extra[:1])} (exit {r.returncode})\n{(r.stdout + r.stderr).strip()[-1500:]}")
         return r.returncode
 
     before = probe_snap("seed", "before")
@@ -57,7 +57,7 @@ def main(argv=None):
         print("FAIL seed a user setup")
         return 1
 
-    record = SANDBOX / "targets.txt"      # what maya_kit.iss keeps in {app} for the uninstaller
+    record = SANDBOX / "targets.txt"      # what allset.iss keeps in {app} for the uninstaller
     rc = setup("-Install", "-Zip", str(zip_path), "-Blender", args.blender + ";", "-MakeMaya", "-Record", str(record))
     if rc == 3:
         print("SKIP: this Blender is running (close it to run the installer check)")
@@ -65,8 +65,8 @@ def main(argv=None):
     s = probe_snap("check", "installed")
     results.append((f"setup -Install -MakeMaya exits 0 (got {rc})", rc == 0))
     results.append(("installed into user_default and enabled", s and s["kit_version"] and
-                    "bl_ext.user_default.maya_kit" in s["addons"]))
-    results.append((f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya"))
+                    "bl_ext.user_default.allset" in s["addons"]))
+    results.append((f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya-style"))
     results.append(("Make Blender Maya applied (theme changed, splash off)", s and s["theme"] != before["theme"]
                     and s["view"]["show_splash"] == "False"))
     results.append(("the user's add-ons are kept", s and set(before["addons"]) < set(s["addons"])))

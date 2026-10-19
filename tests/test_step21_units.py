@@ -1,8 +1,8 @@
 """Step 21: one length rule for every creation path (decision 8).
 
 A Maya length of 1 = one scene display unit: Create / shelf / menu / marking menu
-(``maya_kit.create``), ``cmds.polyCube()`` and a Maya FBX import give the same size,
-with the MayaKit template units (m + cm display), with "Maya Units" on and in a
+(``allset.create``), ``cmds.polyCube()`` and a Maya FBX import give the same size,
+with the Allset template units (m + cm display), with "Maya Units" on and in a
 factory (m) scene. Plan: docs/steps/step_21.md 「계획」.
 """
 
@@ -98,7 +98,7 @@ def test_template_cube_reads_one_cm():
 def test_other_kinds_scale_with_the_unit():
     _set_units("template")
     _fresh()
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     grp = bpy.data.objects["group1"]
     assert abs(grp.empty_display_size - 0.01) < TOL, grp.empty_display_size
     loc = create.create(bpy.context, 'LOCATOR')
@@ -118,7 +118,7 @@ def test_other_kinds_scale_with_the_unit():
     _set_units("factory")
 
 
-def test_every_creation_path_uses_maya_kit_create():
+def test_every_creation_path_uses_allset_create():
     def actions(sub):
         for _pos, (label, action) in sub.radial.items():
             yield label, action
@@ -126,16 +126,16 @@ def test_every_creation_path_uses_maya_kit_create():
             if item != mm.DIVIDER:
                 yield item
     created = {label: action for label, action in actions(mm.SHIFT_DEFAULT)
-               if isinstance(action, tuple) and action and str(action[0]).startswith(("mesh.", "maya_kit.create"))}
+               if isinstance(action, tuple) and action and str(action[0]).startswith(("mesh.", "allset.create"))}
     assert set(created) == {"Disc", "Sphere", "Torus", "Cube", "Cone", "Cylinder", "Plane",
                             "Platonic Solid", "Pyramid", "Prism", "Type"}, created   # Type: step 54
     for label, action in created.items():
-        assert action[0] == "maya_kit.create" and action[1]["kind"] in create.KINDS, (label, action)
+        assert action[0] == "allset.create" and action[1]["kind"] in create.KINDS, (label, action)
     for key in ("Create/Curve Tools/CV Curve Tool", "Create/Curve Tools/Bezier Curve Tool"):
-        assert menu_map.MAP[key][0] == "maya_kit.create", key
+        assert menu_map.MAP[key][0] == "allset.create", key
     for cmd in ("EPCurveTool", "CreateBezierCurveTool", "CreatePolygonCube"):
-        assert shelf_map.BY_COMMAND[cmd][0][0] == "maya_kit.create", cmd
-    # no menu / shelf / marking item adds a Blender primitive behind maya_kit.create's back
+        assert shelf_map.BY_COMMAND[cmd][0][0] == "allset.create", cmd
+    # no menu / shelf / marking item adds a Blender primitive behind allset.create's back
     for label, action in list(menu_map.MAP.items()) + [(k, v[0]) for k, v in shelf_map.BY_COMMAND.items()]:
         op = action if isinstance(action, str) else action[0]
         assert not (isinstance(op, str) and ".primitive_" in op), (label, op)
@@ -145,7 +145,7 @@ def test_marking_cube_runs_maya_create():
     _set_units("template")
     _fresh()
     action = mm.SHIFT_DEFAULT.radial["S"][1]
-    getattr(bpy.ops.maya_kit, action[0].split(".")[1])(**action[1])
+    getattr(bpy.ops.allset, action[0].split(".")[1])(**action[1])
     ob = bpy.context.view_layer.objects.active
     assert ob.name == "pCube1" and _close(ob.dimensions, (0.01,) * 3), (ob.name, tuple(ob.dimensions))
     _set_units("factory")
@@ -181,7 +181,7 @@ def _template_view():
 
 
 def test_template_view_is_maya_persp_and_rescales_with_maya_units():
-    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "MayaKit" / "startup.blend"
+    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path))
     v3d = _template_view()
     rv3d = v3d.region_3d

@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, scale, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"rects": {}}
 shelf = import_module(MODULE + ".ui.shelf")
 shelf_data = import_module(MODULE + ".ui.shelf_data")
@@ -40,21 +40,21 @@ def icon_centre(slot):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    bpy.ops.maya_kit.make_maya(open_layout=False)     # Maya theme (dogfood note, step 98)
-    bpy.ops.maya_kit.shelf_select(shelf=TABS[0])
+    bpy.ops.allset.keymap_activate()
+    bpy.ops.allset.make_maya(open_layout=False)     # Maya theme (dogfood note, step 98)
+    bpy.ops.allset.shelf_select(shelf=TABS[0])
     redraw()
 
 
 def _tab_steps(name):
     def select():
-        bpy.ops.maya_kit.shelf_select(shelf=name)
+        bpy.ops.allset.shelf_select(shelf=name)
         ev('MOUSEMOVE', 'NOTHING', x=win().width // 2, y=win().height // 2)
         redraw()
 
@@ -80,7 +80,7 @@ for _name in TABS:
 
 @step
 def s_greyed_hover():
-    bpy.ops.maya_kit.shelf_select(shelf="CurvesSurfaces")
+    bpy.ops.allset.shelf_select(shelf="CurvesSurfaces")
     redraw()
     _cur, buttons = shelf.icon_buttons(bpy.context)
     C["trim"] = next(k for k, b in enumerate(buttons) if b[1] == "Trim Tool")
@@ -100,9 +100,9 @@ def s_greyed_check():
     check(f"greyed Trim Tool click shows its notice ({notices.current()!r})",
           notices.current().startswith("Trim Tool: "))
     C["n0"] = len(bpy.data.objects)
-    bpy.ops.maya_kit.shelf_select(shelf="Sculpting")
+    bpy.ops.allset.shelf_select(shelf="Sculpting")
     redraw()
-    bpy.ops.maya_kit.create(kind='SPHERE')
+    bpy.ops.allset.create(kind='SPHERE')
     _cur, buttons = shelf.icon_buttons(bpy.context)
     x, y = icon_centre(next(k for k, b in enumerate(buttons) if b[1] == "Grab Tool"))
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)

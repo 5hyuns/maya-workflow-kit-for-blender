@@ -92,12 +92,12 @@ def test_orient_joint():
     bpy.ops.object.mode_set(mode='POSE')
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint1")
-    assert bpy.ops.maya_kit.orient_joint(world="Y+", children=False) == {'FINISHED'}
+    assert bpy.ops.allset.orient_joint(world="Y+", children=False) == {'FINISHED'}
     bones = ob.data.bones
     z = lambda b: b.matrix_local.to_3x3().col[2]
     assert z(bones["joint1"]).dot(Vector((0, 0, 1))) > 0.999, "Maya world up Y+ = Blender +Z"
     assert z(bones["joint2"]).dot(Vector((0, 0, 1))) < 0.99, "children untouched without the option"
-    bpy.ops.maya_kit.orient_joint(world="Z+", children=True)
+    bpy.ops.allset.orient_joint(world="Z+", children=True)
     for b in bones:
         assert z(b).dot(Vector((0, -1, 0))) > 0.999, (b.name, tuple(z(b)))   # Maya Z = Blender -Y
     assert ob.mode == 'POSE'
@@ -112,7 +112,7 @@ def test_mirror_joints_yz():
     bpy.ops.object.mode_set(mode='POSE')
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint1")
-    assert bpy.ops.maya_kit.mirror_joints(plane="YZ") == {'FINISHED'}
+    assert bpy.ops.allset.mirror_joints(plane="YZ") == {'FINISHED'}
     bones = ob.data.bones
     assert len(bones) == 6 and {"joint4", "joint5", "joint6"} <= set(bones.keys()), bones.keys()
     for src, dst in (("joint1", "joint4"), ("joint2", "joint5"), ("joint3", "joint6")):
@@ -149,7 +149,7 @@ def test_pick_walk_joints():
     ob, names = _skeleton()
     joints.add_joint(ob, Vector((2.0, 1.0, 1.0)), "joint1")     # joint4: a second child of joint1
     joints.finish(bpy.context, ob, ["joint2"])                  # joint2 selected
-    walk = lambda d: (bpy.ops.maya_kit.pick_walk_joint(direction=d), cb.lead().name)[1]
+    walk = lambda d: (bpy.ops.allset.pick_walk_joint(direction=d), cb.lead().name)[1]
     assert walk("UP") == "joint1"
     assert walk("UP") == "joint1", "the root stays"
     assert walk("DOWN") == "joint2", "first child by name"
@@ -167,34 +167,34 @@ def test_parent_and_unparent_joints():
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name in ("joint4", "joint2"))
     ob.data.bones.active = ob.data.bones["joint2"]              # Maya: the parent is selected last
-    assert bpy.ops.maya_kit.parent_joint() == {'FINISHED'}
+    assert bpy.ops.allset.parent_joint() == {'FINISHED'}
     assert ob.data.bones["joint4"].parent.name == "joint2" and ob.mode == 'POSE'
     assert (ob.data.bones["joint4"].head_local - head).length < 1e-6, "kept its place"
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint4")
-    assert bpy.ops.maya_kit.unparent_joint() == {'FINISHED'}
+    assert bpy.ops.allset.unparent_joint() == {'FINISHED'}
     assert ob.data.bones["joint4"].parent is None
     # no loops: a joint can't become the child of its own child
     for pb in ob.pose.bones:
         cb.set_bone_selected(pb, pb.name in ("joint1", "joint3"))
     ob.data.bones.active = ob.data.bones["joint3"]
-    bpy.ops.maya_kit.parent_joint()
+    bpy.ops.allset.parent_joint()
     assert ob.data.bones["joint1"].parent is None
 
 
 def test_menus_shelf_keymaps():
-    assert menu_map.MAP["Skeleton/Create Joints"] == "maya_kit.joint_tool"
-    assert menu_map.MAP["Skeleton/Mirror Joints"] == "maya_kit.mirror_joints"
-    assert menu_map.MAP["Skeleton/Orient Joint"] == "maya_kit.orient_joint"
-    assert shelf_map.BY_COMMAND["JointTool"][0] == "maya_kit.joint_tool"
+    assert menu_map.MAP["Skeleton/Create Joints"] == "allset.joint_tool"
+    assert menu_map.MAP["Skeleton/Mirror Joints"] == "allset.mirror_joints"
+    assert menu_map.MAP["Skeleton/Orient Joint"] == "allset.orient_joint"
+    assert shelf_map.BY_COMMAND["JointTool"][0] == "allset.joint_tool"
     kd = patch.KeyconfigData(maya_patches.apply(ic_data.generate()))
     for key, d in (("UP_ARROW", "UP"), ("DOWN_ARROW", "DOWN"), ("LEFT_ARROW", "LEFT"), ("RIGHT_ARROW", "RIGHT")):
-        found = kd.find("Pose", "maya_kit.pick_walk_joint", type=key, repeat=True)
+        found = kd.find("Pose", "allset.pick_walk_joint", type=key, repeat=True)
         assert found and dict(found[0][2]["properties"])["direction"] == d, key
     assert not kd.find("Pose", "pose.select_hierarchy", type="UP_ARROW", repeat=True)
     for km in ("Pose", "Armature"):
-        assert kd.find(km, "maya_kit.parent_joint", type="P")
-        assert kd.find(km, "maya_kit.unparent_joint", type="P", shift=True)
+        assert kd.find(km, "allset.parent_joint", type="P")
+        assert kd.find(km, "allset.unparent_joint", type="P", shift=True)
     assert not kd.find("Armature", "armature.parent_set", type="P")
     # the option box dialogs say why there is no primary axis choice
     assert "Y axis" in joints.AXIS_NOTE and math.isclose(1.0, 1.0)

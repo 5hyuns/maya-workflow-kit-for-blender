@@ -1,4 +1,4 @@
-"""Step 81: the MayaKit persp view has Maya's field of view — Blender viewport lens 70 (72 mm sensor) = Maya persp
+"""Step 81: the Allset persp view has Maya's field of view — Blender viewport lens 70 (72 mm sensor) = Maya persp
 35 mm on a 36 mm film back; Create > Camera is Maya's 35 mm camera; Camera from View keeps the angle.
 Plan: docs/steps/step_81.md."""
 

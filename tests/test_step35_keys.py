@@ -12,29 +12,29 @@ preferences = import_module(kit.MODULE + ".preferences")
 
 
 def _items(km_name, etype, value='PRESS', shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km_name]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
     return [(k.idname, {p: getattr(k.properties, p) for p in k.properties.keys()} if k.properties else {})
             for k in km.keymap_items if k.active and k.type == etype and k.value == value
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]
 
 
 def test_bindings():
-    assert _items("3D View", 'LEFTMOUSE', ctrl=True, alt=True)[0][0] == "maya_kit.box_zoom"
+    assert _items("3D View", 'LEFTMOUSE', ctrl=True, alt=True)[0][0] == "allset.box_zoom"
     for km in ("Object Mode", "Mesh"):
         assert ("wm.tool_set_by_id", {"name": "builtin.transform"}) in [
             (i, {k: v for k, v in p.items() if k == "name"}) for i, p in _items(km, 'T', ctrl=True)], km
-        assert [i for i, _p in _items(km, 'Y')] == ["maya_kit.last_tool"], km
+        assert [i for i, _p in _items(km, 'Y')] == ["allset.last_tool"], km
         knife = _items(km, 'X', shift=True, ctrl=True)
         quad = _items(km, 'Q', shift=True, ctrl=True)
-        assert knife == [("maya_kit.menu_tool", {"tool": "builtin.knife", "edit": True})], (km, knife)
-        assert quad == [("maya_kit.menu_tool", {"tool": "builtin.poly_build", "edit": True})], (km, quad)
+        assert knife == [("allset.menu_tool", {"tool": "builtin.knife", "edit": True})], (km, knife)
+        assert quad == [("allset.menu_tool", {"tool": "builtin.poly_build", "edit": True})], (km, quad)
 
 
 def test_f_keys_are_menu_sets_and_view_keys_kept():
     sets = {}
     for key in ('F2', 'F3', 'F4', 'F5', 'F6'):
         found = _items("Screen", key)
-        assert found and found[0][0] == "maya_kit.menu_set", (key, found)
+        assert found and found[0][0] == "allset.menu_set", (key, found)
         sets[key] = found[0][1]["set"]
         assert not [i for i, _p in _items("3D View", key)], (key, _items("3D View", key))
     assert sets == {'F2': 'modelingMenuSet', 'F3': 'riggingMenuSet', 'F4': 'animationMenuSet',
@@ -52,7 +52,7 @@ def test_return_no_rename_popover_in_3d_view():
 def test_menu_set_operator():
     ap = preferences.get()
     for sid in ('riggingMenuSet', 'renderingMenuSet', 'modelingMenuSet'):
-        assert bpy.ops.maya_kit.menu_set(set=sid) == {'FINISHED'}
+        assert bpy.ops.allset.menu_set(set=sid) == {'FINISHED'}
         assert ap.menu_set == sid
 
 
@@ -66,7 +66,7 @@ def test_last_tool_memory():
     tool_keys.remember('OBJECT', "builtin.measure")
     assert tool_keys.LAST == {'EDIT_MESH': "builtin.knife", 'OBJECT': "builtin.measure"}
     tool_keys.LAST.clear()
-    assert bpy.ops.maya_kit.last_tool() == {'CANCELLED'}, "nothing remembered yet"
+    assert bpy.ops.allset.last_tool() == {'CANCELLED'}, "nothing remembered yet"
 
 
 def test_box_zoom_direction():

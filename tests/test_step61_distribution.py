@@ -11,7 +11,7 @@ import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PKG = os.path.join(ROOT, "src", "maya_kit")
+PKG = os.path.join(ROOT, "src", "allset")
 
 
 def _manifest():

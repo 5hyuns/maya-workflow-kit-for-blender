@@ -1,4 +1,4 @@
-"""Step 49 in a real UI: MayaKit layout = Maya General — Tool Box column (clicks set tools, a click under
+"""Step 49 in a real UI: Allset layout = Maya General — Tool Box column (clicks set tools, a click under
 the tools keeps the selection), sidebar opens on the Channel Box tab, Help + Command row, Range Slider
 under the Time Slider, quick layout buttons; screenshot."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, scale, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 toolbox = import_module(MODULE + ".ui.toolbox")
 
@@ -56,14 +56,14 @@ def active_tool():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.keymap_activate()
+    bpy.ops.allset.create(kind='CUBE')
     C["cube"] = bpy.context.active_object.name
     redraw()
 
@@ -136,7 +136,7 @@ def s_empty_click():
     ev('MOUSEMOVE', 'NOTHING', x=view.x + view.width // 3, y=view.y + view.height // 2)
     bpy.ops.wm.tool_set_by_id(name="builtin.move", space_type='VIEW_3D')
     with bpy.context.temp_override(window=win(), area=toolbox_area(), region=column_window()):
-        bpy.ops.maya_kit.quick_layout(layout='FOUR')
+        bpy.ops.allset.quick_layout(layout='FOUR')
     redraw()
 
 
@@ -146,7 +146,7 @@ def s_four():
     check("Four View quick layout splits the main view, not the Tool Box",
           bool(view.spaces.active.region_quadviews) and not toolbox_area().spaces.active.region_quadviews)
     with bpy.context.temp_override(window=win(), area=toolbox_area(), region=column_window()):
-        bpy.ops.maya_kit.quick_layout(layout='SINGLE')
+        bpy.ops.allset.quick_layout(layout='SINGLE')
     redraw()
 
 

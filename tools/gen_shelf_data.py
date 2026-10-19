@@ -1,4 +1,4 @@
-"""Generate src/maya_kit/ui/shelf_data.py from research/maya/shelves.json.
+"""Generate src/allset/ui/shelf_data.py from research/maya/shelves.json.
 
     python tools/gen_shelf_data.py
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "research" / "maya" / "shelves.json"
-OUT = ROOT / "src" / "maya_kit" / "ui" / "shelf_data.py"
+OUT = ROOT / "src" / "allset" / "ui" / "shelf_data.py"
 
 # Default tab order (research/maya/shelves.md:25-28, initShelf.mel:458-485) and tab labels
 # (shelves.md:21-22, MayaStrings m_shelfLabel.*). "Custom" is the empty user shelf.

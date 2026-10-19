@@ -1,4 +1,4 @@
-"""Generate the Maya grey theme preset src/maya_kit/theme/maya.xml.
+"""Generate the Maya grey theme preset src/allset/theme/studio_grey.xml.
 
     python tools/make_theme.py      # re-runs itself in `blender -b --factory-startup`
 
@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "maya_kit" / "theme" / "maya.xml"
+OUT = ROOT / "src" / "allset" / "theme" / "studio_grey.xml"
 
 
 def rgb(v):
@@ -105,7 +105,7 @@ VALUES = (
     # Manipulator: transformX/Y (0.9 red / green); Z as drawn = pure blue (Move/Scale axis pixels
     # in 02/06; displayRGBColor transformZ 0.29/0.57/1 is not what VP2 draws). Active/hovered
     # handle = manipCurrent 17 (yellow) [O]. Blender's axis colours also paint the grid axis
-    # lines: the MayaKit template hides those (step 43).
+    # lines: the Allset template hides those (step 43).
     ("user_interface.axis_x", rgb("#e60000")),
     ("user_interface.axis_y", rgb("#00e600")),
     ("user_interface.axis_z", rgb("#0000ff")),

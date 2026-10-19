@@ -14,7 +14,7 @@ from bpy_extras import view3d_utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 DRAG = 120
 
@@ -64,7 +64,7 @@ def redraw():
 @step
 def s_setup():
     C["x"], C["y"] = setup()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya")
+    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
     bpy.context.view_layer.objects.active = cube()
     cube().select_set(True)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
@@ -85,7 +85,7 @@ def s_mm_release():
 @step
 def s_weld_tool():
     check(f"Shift+RMB N (Target Weld Tool) -> edit mode + Target Weld (got {bpy.context.mode}, {tool_id()})",
-          bpy.context.mode == 'EDIT_MESH' and tool_id() == "maya_kit.target_weld_tool")
+          bpy.context.mode == 'EDIT_MESH' and tool_id() == "allset.target_weld_tool")
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     tap('F9')
 
@@ -189,7 +189,7 @@ def s_loop():
 
 @step
 def s_snap_press():
-    bpy.context.scene.maya_kit_mesh_tools.snap_step = 25
+    bpy.context.scene.allset_mesh_tools.snap_step = 25
     i, a, b = _visible_edge()
     C["edge"] = (a, b)
     C["n2"] = len(bm().verts)
@@ -234,7 +234,7 @@ def s_snapped():
     ts = sorted(round((v.co - a).length / (e1 - a).length, 4) for v in on_edge)
     check(f"Multi-Cut Shift+click: the cut starts on the 25 % Snap Step (got {ts}, {C['n2']} -> {len(b.verts)} vertices)",
           ts == [0.25] or ts == [0.75])
-    bpy.context.scene.maya_kit_mesh_tools.snap_step = 10
+    bpy.context.scene.allset_mesh_tools.snap_step = 10
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     ev('Z', 'PRESS', ctrl=True)
     ev('Z', 'RELEASE', ctrl=True)
@@ -244,7 +244,7 @@ def s_snapped():
 def s_crease_setup():
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.wm.tool_set_by_id(name="maya_kit.crease_tool", space_type='VIEW_3D')
+        bpy.ops.wm.tool_set_by_id(name="allset.crease_tool", space_type='VIEW_3D')
     bpy.context.scene.tool_settings.mesh_select_mode = (False, True, False)
     b = bm()
     for e in b.edges:
@@ -277,7 +277,7 @@ def s_crease_release():
 
 @step
 def s_creased():
-    check(f"Crease Tool active (got {tool_id()})", tool_id() == "maya_kit.crease_tool")
+    check(f"Crease Tool active (got {tool_id()})", tool_id() == "allset.crease_tool")
     b = bm()
     layer = b.edges.layers.float.get("crease_edge")
     top = [e[layer] for e in b.edges if e.select] if layer else []

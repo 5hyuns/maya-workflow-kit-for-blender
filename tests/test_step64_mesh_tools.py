@@ -20,8 +20,8 @@ mm = import_module(kit.MODULE + ".marking.menus")
 command_line = import_module(kit.MODULE + ".command_line")
 maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
-TARGET_WELD = ("tool", "maya_kit.target_weld_tool", True)
-CREASE = ("tool", "maya_kit.crease_tool", True)
+TARGET_WELD = ("tool", "allset.target_weld_tool", True)
+CREASE = ("tool", "allset.crease_tool", True)
 
 
 def _cube():
@@ -100,13 +100,13 @@ def test_crease_drag_exec_absolute_relative_and_vertices():
     e1, e2 = bm.edges[0], bm.edges[1]
     e1.select = e2.select = True
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.crease_drag(value=2.0, mode='ABSOLUTE') == {'FINISHED'}
+    assert bpy.ops.allset.crease_drag(value=2.0, mode='ABSOLUTE') == {'FINISHED'}
     bm = _bm(ob)
     layer = bm.edges.layers.float.get("crease_edge")
     assert layer is not None
     assert all(abs(bm.edges[i][layer] - math.sqrt(0.2)) < 1e-6 for i in (0, 1))
     assert all(bm.edges[i][layer] == 0.0 for i in range(2, len(bm.edges)))
-    assert bpy.ops.maya_kit.crease_drag(value=1.0, mode='RELATIVE') == {'FINISHED'}
+    assert bpy.ops.allset.crease_drag(value=1.0, mode='RELATIVE') == {'FINISHED'}
     bm = _bm(ob)
     layer = bm.edges.layers.float.get("crease_edge")
     assert abs(mt.blender_to_maya_crease(bm.edges[0][layer]) - 3.0) < 1e-6, "relative adds to Maya 2"
@@ -115,14 +115,14 @@ def test_crease_drag_exec_absolute_relative_and_vertices():
     _deselect(bm)
     bm.verts[0].select = True
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.crease_drag(value=10.0, mode='ABSOLUTE') == {'FINISHED'}
+    assert bpy.ops.allset.crease_drag(value=10.0, mode='ABSOLUTE') == {'FINISHED'}
     bm = _bm(ob)
     vl = bm.verts.layers.float.get("crease_vert")
     assert vl is not None and bm.verts[0][vl] == 1.0 and bm.verts[1][vl] == 0.0
     # nothing selected: Maya's "Select components to crease"
     _deselect(bm)
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.crease_drag(value=1.0) == {'CANCELLED'}
+    assert bpy.ops.allset.crease_drag(value=1.0) == {'CANCELLED'}
     assert mt.crease_kind((False, False, True)) == 'EDGE', "face mode creases the faces' edges"
 
 
@@ -134,7 +134,7 @@ def test_target_weld_vertex_to_target_and_center():
     bm = _bm(ob)
     _deselect(bm)
     src, dst = _vert_at(bm, (1, 1, 1)), _vert_at(bm, (1, -1, 1))
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='VERT', source=src.index, target=dst.index,
+    assert bpy.ops.allset.target_weld(object=ob.name, element='VERT', source=src.index, target=dst.index,
                                         merge_to='TARGET') == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 7
@@ -146,7 +146,7 @@ def test_target_weld_vertex_to_target_and_center():
     bm = _bm(ob)
     _deselect(bm)
     src, dst = _vert_at(bm, (1, 1, 1)), _vert_at(bm, (1, -1, 1))
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='VERT', source=src.index, target=dst.index,
+    assert bpy.ops.allset.target_weld(object=ob.name, element='VERT', source=src.index, target=dst.index,
                                         merge_to='CENTER') == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 7 and any((v.co - Vector((1, 0, 1))).length < 1e-6 for v in bm.verts)
@@ -162,7 +162,7 @@ def test_target_weld_selected_vertex_brings_the_selection():
     dst = _vert_at(bm, (1, -1, 1))
     a.select = c.select = True
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='VERT', source=a.index, target=dst.index) \
+    assert bpy.ops.allset.target_weld(object=ob.name, element='VERT', source=a.index, target=dst.index) \
         == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 6, len(bm.verts)
@@ -175,7 +175,7 @@ def test_target_weld_selected_vertex_brings_the_selection():
     a, c, dst = _vert_at(bm, (1, 1, 1)), _vert_at(bm, (-1, 1, 1)), _vert_at(bm, (1, -1, 1))
     c.select = True
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='VERT', source=a.index, target=dst.index) \
+    assert bpy.ops.allset.target_weld(object=ob.name, element='VERT', source=a.index, target=dst.index) \
         == {'FINISHED'}
     assert len(_bm(ob).verts) == 7
 
@@ -186,7 +186,7 @@ def test_target_weld_edges():
     bm = _bm(ob)
     src = _edge(bm, (1, 1, 1), (-1, 1, 1))
     dst = _edge(bm, (1, -1, 1), (-1, -1, 1))
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='EDGE', source=src.index, target=dst.index) \
+    assert bpy.ops.allset.target_weld(object=ob.name, element='EDGE', source=src.index, target=dst.index) \
         == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 6
@@ -197,13 +197,13 @@ def test_target_weld_edges():
     bm = _bm(ob)
     src = _edge(bm, (1, 1, 1), (-1, 1, 1))
     dst = _edge(bm, (1, 1, 1), (1, -1, 1))
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='EDGE', source=src.index, target=dst.index,
+    assert bpy.ops.allset.target_weld(object=ob.name, element='EDGE', source=src.index, target=dst.index,
                                         merge_to='CENTER') == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 7
     assert any((v.co - Vector((0, 0, 1))).length < 1e-6 for v in bm.verts)
     # same edge / bad indices: nothing happens
-    assert bpy.ops.maya_kit.target_weld(object=ob.name, element='EDGE', source=0, target=0) == {'CANCELLED'}
+    assert bpy.ops.allset.target_weld(object=ob.name, element='EDGE', source=0, target=0) == {'CANCELLED'}
 
 
 # --- Multi-Cut ---------------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ def test_snap_step():
     assert abs(mt.snap_factor(0.02, 10, inner=True) - 0.1) < 1e-9, "a loop stays inside the edge"
     assert abs(mt.snap_factor(0.98, 10, inner=True) - 0.9) < 1e-9
     assert mt.snap_factor(0.3, 50, inner=True) == 0.5 and mt.snap_factor(0.9, 100, inner=True) == 0.5
-    assert bpy.context.scene.maya_kit_mesh_tools.snap_step == 10, "Maya Snap Step % 10 (modeling_06_win1)"
+    assert bpy.context.scene.allset_mesh_tools.snap_step == 10, "Maya Snap Step % 10 (modeling_06_win1)"
 
 
 def test_multicut_loop_at_the_clicked_position():
@@ -223,12 +223,12 @@ def test_multicut_loop_at_the_clicked_position():
     bm = _bm(ob)
     e = _edge(bm, (-1, 1, -1), (-1, -1, -1))
     t = 0.25 if e.verts[0].co.y > 0 else 0.75      # 25 % from the y = +1 end
-    assert bpy.ops.maya_kit.multicut_loop(object=ob.name, edge=e.index, factor=t) == {'FINISHED'}
+    assert bpy.ops.allset.multicut_loop(object=ob.name, edge=e.index, factor=t) == {'FINISHED'}
     bm = _bm(ob)
     assert (len(bm.verts), len(bm.edges), len(bm.faces)) == (12, 20, 10)
     new = sorted(tuple(round(c, 4) for c in v.co) for v in bm.verts if abs(abs(v.co.y) - 1) > 1e-4)
     assert new == [(-1, 0.5, -1), (-1, 0.5, 1), (1, 0.5, -1), (1, 0.5, 1)], new
-    assert bpy.ops.maya_kit.multicut_loop(object=ob.name, edge=e.index, factor=0.0) == {'CANCELLED'}
+    assert bpy.ops.allset.multicut_loop(object=ob.name, edge=e.index, factor=0.0) == {'CANCELLED'}
 
 
 def test_multicut_ring_stops_at_triangles():
@@ -241,7 +241,7 @@ def test_multicut_ring_stops_at_triangles():
     e = _edge(bm, (-1, 1, -1), (-1, -1, -1))
     ring = mt.edge_ring(e, e.verts[0], 0.5)
     assert len(ring) == 4, "both directions end at the top triangles"
-    assert bpy.ops.maya_kit.multicut_loop(object=ob.name, edge=e.index, factor=0.5) == {'FINISHED'}
+    assert bpy.ops.allset.multicut_loop(object=ob.name, edge=e.index, factor=0.5) == {'FINISHED'}
     bm = _bm(ob)
     assert len(bm.verts) == 12 and all(len(f.verts) <= 4 for f in bm.faces)
 
@@ -257,34 +257,34 @@ def _tool_ids(mode='EDIT_MESH'):
 
 def test_tools_registered_with_keymaps():
     ids = _tool_ids()
-    assert "maya_kit.target_weld_tool" in ids and "maya_kit.crease_tool" in ids, ids
-    assert ids.index("maya_kit.target_weld_tool") > ids.index("builtin.knife")
+    assert "allset.target_weld_tool" in ids and "allset.crease_tool" in ids, ids
+    assert ids.index("allset.target_weld_tool") > ids.index("builtin.knife")
     addon = bpy.context.window_manager.keyconfigs.addon
     weld = addon.keymaps.get("3D View Tool: Edit Mesh, Target Weld")
     crease = addon.keymaps.get("3D View Tool: Edit Mesh, Crease Tool")
     assert weld is not None and [(k.idname, k.type, k.value) for k in weld.keymap_items] == [
-        ("maya_kit.target_weld", 'LEFTMOUSE', 'PRESS')]
+        ("allset.target_weld", 'LEFTMOUSE', 'PRESS')]
     assert crease is not None and [(k.idname, k.type, k.value) for k in crease.keymap_items] == [
-        ("maya_kit.crease_drag", 'MIDDLEMOUSE', 'PRESS')]
+        ("allset.crease_drag", 'MIDDLEMOUSE', 'PRESS')]
     _cube()
-    bpy.ops.wm.tool_set_by_id(name="maya_kit.target_weld_tool", space_type='VIEW_3D')
+    bpy.ops.wm.tool_set_by_id(name="allset.target_weld_tool", space_type='VIEW_3D')
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH')
-    assert tool.idname == "maya_kit.target_weld_tool"
+    assert tool.idname == "allset.target_weld_tool"
     assert "drag a vertex" in command_line.help_for_tool(tool.idname)
     assert "Ctrl+click" in command_line.help_for_tool("builtin.knife")
-    assert "middle-drag" in command_line.help_for_tool("maya_kit.crease_tool")
+    assert "middle-drag" in command_line.help_for_tool("allset.crease_tool")
     bpy.ops.wm.tool_set_by_id(name="builtin.select_box", space_type='VIEW_3D')
     kit.disable()
     try:
-        assert "maya_kit.target_weld_tool" not in _tool_ids()
+        assert "allset.target_weld_tool" not in _tool_ids()
         assert addon.keymaps.get("3D View Tool: Edit Mesh, Target Weld") is None
     finally:
         kit.enable()
-    assert "maya_kit.target_weld_tool" in _tool_ids()
+    assert "allset.target_weld_tool" in _tool_ids()
 
 
 def _items(km_name, etype, value='PRESS', shift=False, ctrl=False):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km_name]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
     return [(k.idname, {p: getattr(k.properties, p) for p in k.properties.keys()} if k.properties else {})
             for k in km.keymap_items if k.active and k.type == etype and k.value == value
             and k.shift == shift and k.ctrl == ctrl and not k.alt]
@@ -293,11 +293,11 @@ def _items(km_name, etype, value='PRESS', shift=False, ctrl=False):
 def test_multicut_keys():
     km = maya_patches.KNIFE_TOOL
     assert [i for i, _p in _items(km, 'LEFTMOUSE')] == ["mesh.knife_tool"], "plain LMB still cuts"
-    assert _items(km, 'LEFTMOUSE', ctrl=True) == [("maya_kit.multicut_loop", {})]
-    assert _items(km, 'LEFTMOUSE', ctrl=True, shift=True) == [("maya_kit.multicut_loop", {"snap": True})]
-    assert _items(km, 'MIDDLEMOUSE', ctrl=True) == [("maya_kit.multicut_loop", {"center": True})]
-    assert _items(km, 'LEFTMOUSE', shift=True) == [("maya_kit.multicut_snap", {})]
-    modal = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Knife Tool Modal Map"]
+    assert _items(km, 'LEFTMOUSE', ctrl=True) == [("allset.multicut_loop", {})]
+    assert _items(km, 'LEFTMOUSE', ctrl=True, shift=True) == [("allset.multicut_loop", {"snap": True})]
+    assert _items(km, 'MIDDLEMOUSE', ctrl=True) == [("allset.multicut_loop", {"center": True})]
+    assert _items(km, 'LEFTMOUSE', shift=True) == [("allset.multicut_snap", {})]
+    modal = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Knife Tool Modal Map"]
     shift = {(k.type, k.value): k.propvalue for k in modal.keymap_items if k.type in ('LEFT_SHIFT', 'RIGHT_SHIFT')}
     assert shift == {('LEFT_SHIFT', 'PRESS'): 'SNAP_MIDPOINTS_ON', ('LEFT_SHIFT', 'RELEASE'): 'SNAP_MIDPOINTS_OFF',
                      ('RIGHT_SHIFT', 'PRESS'): 'SNAP_MIDPOINTS_ON', ('RIGHT_SHIFT', 'RELEASE'): 'SNAP_MIDPOINTS_OFF'}, shift

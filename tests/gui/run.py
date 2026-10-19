@@ -35,7 +35,7 @@ def file_timeout(path):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Run Maya Kit GUI event tests")
+    ap = argparse.ArgumentParser(description="Run Allset GUI event tests")
     ap.add_argument("-k", default="")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--shots", default="", help="directory for screenshots")
@@ -48,20 +48,20 @@ def main(argv=None):
     else:
         zip_path = headless.build.main(["--blender", args.blender, "--no-legacy"])
     env = headless.make_sandbox()
-    env["MAYA_KIT_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
+    env["ALLSET_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
     headless.install(args.blender, zip_path, env)
     if args.ui_scale:
-        env["MAYA_KIT_GUI_UI_SCALE"] = str(args.ui_scale)
+        env["ALLSET_GUI_UI_SCALE"] = str(args.ui_scale)
     if args.shots:
         Path(args.shots).mkdir(parents=True, exist_ok=True)
-        env["MAYA_KIT_GUI_SHOTS"] = str(Path(args.shots).resolve())
+        env["ALLSET_GUI_SHOTS"] = str(Path(args.shots).resolve())
 
     passed = failed = 0
     files = sorted(p for p in HERE.glob("gui_*.py") if args.k in p.name)
     for path in files:
         out = headless.SANDBOX / "results" / f"{path.stem}.json"
         log = headless.SANDBOX / "logs" / f"{path.stem}.log"
-        cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("MAYA_KIT_GUI_ARGS", "").split(),
+        cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("ALLSET_GUI_ARGS", "").split(),
                "--window-geometry", "0", "0", "1600", "900",
                "--python", str(path), "--", str(out)]
         with open(log, "w", encoding="utf-8", errors="replace") as fh:

@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 111 (배포 준비 1: 이름 변경 「Allset for Maya Users」 + 상표 정리; 사용자 결정 2026-10-19) 완료 — `docs/steps/step_111.md`.
+  - 결정 12 (`docs/user_decisions.md`): extensions.blender.org 무료 배포, 이름 Allset for Maya Users, id `allset`, tagline
+    "The whole Maya workflow in Blender, in one install". 근거 `docs/distribution/extensions_audit.md`, `naming.md`.
+  - 패키지 `src/allset`, 연산자 `allset.` / 클래스 `ALLSET_` / 속성 `allset_*` / 환경 변수 `ALLSET_*`, 앱 템플릿 `Allset` (예전
+    `MayaKit` 설치본 정리), 키맵 "Maya-style", 테마 "Studio Grey (Maya-inspired)", 핫박스 제목 "Allset", Help > Blender Extensions.
+    README·환경설정 About·스플래시에 「한 조각씩이 아니라 워크플로우 전체를 한 번에」 메시지 + 영문 상표 고지문.
+  - 검증: 옛 이름 0 (역사 문서·레거시 정리 줄 제외), 헤드리스 846/846, GUI 1074/1074, `extension validate` PASS. release_check 의
+    사이드바 탭 확인 1 건 FAIL 은 이름 변경 전에도 같음 (남은 것).
+  - **바로 다음 할 일**: step 112 = 배포 준비 2 (감사의 위반 2 건: `sys.modules["maya"]` 삽입 → exec 네임스페이스 전용, 자산 CC0
+    표기). 그다음 113 (opt-in·정리·monkeypatch 줄이기), 114 (등록 자료, 업로드는 사용자).
+
 - Step 110 (모델링·리깅 기능 빈틈; step_98.md #23, #28) 완료 — `docs/steps/step_110.md`.
   - mayapy 로 먼저 측정 (`research/maya/re/modeling_rigging_110.md`), 그 값으로 구현·테스트.
   - 모델링 (`operators/poly_maya.py`): Circularize (평균 반지름·등간격, Maya 값 일치), Connect (모서리 가운데 / 정점, 개수 일치),

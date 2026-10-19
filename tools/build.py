@@ -1,14 +1,14 @@
-"""Build the Maya Kit packages into dist/.
+"""Build the Allset packages into dist/.
 
     python tools/build.py [--blender PATH] [--no-legacy]
 
 Outputs:
-  dist/maya_kit-<version>.zip         Blender 4.2+ extension
-  dist/maya_kit-<version>-legacy.zip  legacy add-on zip (folder maya_kit/, uses bl_info)
+  dist/allset-<version>.zip         Blender 4.2+ extension
+  dist/allset-<version>-legacy.zip  legacy add-on zip (folder allset/, uses bl_info)
 
 The extension is built with ``blender --command extension build`` (it also
 validates the manifest). When Blender is not available it falls back to a
-plain zip of src/maya_kit with the manifest at the archive root, which is the
+plain zip of src/allset with the manifest at the archive root, which is the
 layout the extension builder produces.
 
 The build runs Blender with a throwaway user config inside tmp/ so the
@@ -25,7 +25,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src" / "maya_kit"
+SRC = ROOT / "src" / "allset"
 DIST = ROOT / "dist"
 DEFAULT_BLENDER = r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"
 
@@ -87,7 +87,7 @@ def build_legacy(out):
         for path, rel in iter_source_files():
             if rel.name == "blender_manifest.toml":
                 continue
-            zf.write(path, ("maya_kit" / rel).as_posix())
+            zf.write(path, ("allset" / rel).as_posix())
 
 
 def main(argv=None):

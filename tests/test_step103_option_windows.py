@@ -25,7 +25,7 @@ def _clear():
     for me in list(bpy.data.meshes):
         bpy.data.meshes.remove(me)
     us = bpy.context.scene.unit_settings
-    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # MayaKit template units
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # Allset template units
     ow.store("poly_cube", None)
 
 
@@ -72,7 +72,7 @@ def test_windows_registered_with_maya_titles_and_buttons():
     assert len(ow.WINDOWS) >= 24
     for w in ow.WINDOWS:
         assert w.title.endswith("Options") and w.action, w.key
-        rna = getattr(bpy.ops.maya_kit, "opt_" + w.key).get_rna_type()
+        rna = getattr(bpy.ops.allset, "opt_" + w.key).get_rna_type()
         for f in w.fields:
             assert f.name in rna.properties, (w.key, f.name)
         for name in ("apply_now", "save_now", "reset_now"):
@@ -106,10 +106,10 @@ def test_box_mark_not_a_left_window_icon():
     menu_sets._draw_boxed(rec, "Create/Polygon Primitives/Cube", "Cube" + menu_sets.BOX_MARK)   # step 108: full text
     idname, text, icon, menu, props = rec.log[0]
     assert text == "Cube" + menu_sets.BOX_MARK and icon == 'NONE' and props.item == "Create/Polygon Primitives/Cube"
-    assert menu == "MAYAKIT_MT_option_box"
-    assert menu_sets.MAYAKIT_OT_menu_option_box.description(
+    assert menu == "ALLSET_MT_option_box"
+    assert menu_sets.ALLSET_OT_menu_option_box.description(
         bpy.context, types.SimpleNamespace(item="Create/Polygon Primitives/Cube")) == "Polygon Cube Options"
-    tip = menu_sets.MAYAKIT_OT_menu_item.description(bpy.context, types.SimpleNamespace(item="Mesh/Combine"))
+    tip = menu_sets.ALLSET_OT_menu_item.description(bpy.context, types.SimpleNamespace(item="Mesh/Combine"))
     assert "Press and hold" not in tip, tip
 
 
@@ -149,13 +149,13 @@ def test_saved_settings_used_by_a_plain_click_and_reset():
 
 def test_edit_commands_and_transforms():
     _clear()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     _select(ob)
     _run("bevel", width=0.5, segments=2)
     assert len(ob.data.vertices) > 8 and bpy.context.mode == 'OBJECT'
     _clear()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     _select(ob)
     _run("extrude", thickness=2.0, divisions=2)
@@ -174,9 +174,9 @@ def test_edit_commands_and_transforms():
 
 def test_combine_pivot_and_merge():
     _clear()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     a = bpy.context.active_object
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     b = bpy.context.active_object
     b.location = (0.1, 0.0, 0.0)
     _select(a, b)
@@ -210,7 +210,7 @@ def test_constraint_windows():
 
 def test_uv_and_keys():
     _clear()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     _select(ob)
     _run("uv_planar", fit="Bounding box", project_from="Y axis")

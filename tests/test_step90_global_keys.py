@@ -28,7 +28,7 @@ def _cube(name="pCube1", parent=None):
 
 
 def _keymap():
-    return bpy.context.window_manager.keyconfigs["Maya"].keymaps
+    return bpy.context.window_manager.keyconfigs["Maya-style"].keymaps
 
 
 def _items(km, t, **mods):
@@ -41,19 +41,19 @@ def test_keymap_items():
         found = [k for k in _items(km, t, **mods) if k.idname == idname
                  and all(getattr(k.properties, p) == v for p, v in (props or {}).items())]
         assert len(found) == 1, (km, t, idname, props, mods, [k.idname for k in _items(km, t, **mods)])
-    one("Object Mode", 'X', "maya_kit.cut", ctrl=True)
-    one("Outliner", 'X', "maya_kit.cut", ctrl=True)
-    one("Object Mode", 'V', "maya_kit.paste", ctrl=True)
+    one("Object Mode", 'X', "allset.cut", ctrl=True)
+    one("Outliner", 'X', "allset.cut", ctrl=True)
+    one("Object Mode", 'V', "allset.paste", ctrl=True)
     one("3D View", 'X', "view3d.walk", alt=True)
     assert not [k for k in _items("3D View", 'X', alt=True) if k.idname == "view3d.toggle_xray"]
-    one("Screen", 'BACK_SLASH', "maya_kit.playback_range_anim", alt=True)
+    one("Screen", 'BACK_SLASH', "allset.playback_range_anim", alt=True)
     for key, kind in (('ONE', 'CURVES'), ('TWO', 'POLYGONS'), ('FOUR', 'IMAGE_PLANES')):
-        one("3D View", key, "maya_kit.toggle_show", {"kind": kind}, alt=True)
+        one("3D View", key, "allset.toggle_show", {"kind": kind}, alt=True)
     for km in ("Object Mode", "Mesh"):
-        one(km, 'ACCENT_GRAVE', "maya_kit.smooth_proxy", {"action": 'TOGGLE'}, ctrl=True)
-        one(km, 'ACCENT_GRAVE', "maya_kit.smooth_proxy", {"action": 'BOTH'}, shift=True)
-    one("Object Mode", 'ACCENT_GRAVE', "maya_kit.smooth_proxy", {"action": 'CREATE'}, ctrl=True, shift=True)
-    one("3D View", 'ACCENT_GRAVE', "maya_kit.tweak_hold")      # plain ` stays step 87's tweak hold
+        one(km, 'ACCENT_GRAVE', "allset.smooth_proxy", {"action": 'TOGGLE'}, ctrl=True)
+        one(km, 'ACCENT_GRAVE', "allset.smooth_proxy", {"action": 'BOTH'}, shift=True)
+    one("Object Mode", 'ACCENT_GRAVE', "allset.smooth_proxy", {"action": 'CREATE'}, ctrl=True, shift=True)
+    one("3D View", 'ACCENT_GRAVE', "allset.tweak_hold")      # plain ` stays step 87's tweak hold
 
 
 def test_cut_takes_the_hierarchy_and_paste_brings_it_back():
@@ -66,10 +66,10 @@ def test_cut_takes_the_hierarchy_and_paste_brings_it_back():
     for o in bpy.context.scene.objects:
         o.select_set(o is grp)
     bpy.context.view_layer.objects.active = grp
-    assert bpy.ops.maya_kit.cut() == {'FINISHED'}
+    assert bpy.ops.allset.cut() == {'FINISHED'}
     assert "group1" not in bpy.data.objects and "pCube1" not in bpy.data.objects and other.name == "pCube2"
     del child
-    assert bpy.ops.maya_kit.paste() == {'FINISHED'}
+    assert bpy.ops.allset.paste() == {'FINISHED'}
     assert "group1" in bpy.data.objects and "pCube1" in bpy.data.objects, sorted(bpy.data.objects.keys())
     assert bpy.data.objects["pCube1"].parent == bpy.data.objects["group1"]
     assert bpy.context.view_layer.objects.active == bpy.data.objects["group1"]     # Maya: the first pasted node leads
@@ -81,7 +81,7 @@ def test_cut_needs_object_mode_and_a_selection():
     _cube()
     for o in bpy.context.scene.objects:
         o.select_set(False)
-    assert not bpy.ops.maya_kit.cut.poll()
+    assert not bpy.ops.allset.cut.poll()
 
 
 def test_playback_range_becomes_the_animation_range():
@@ -89,7 +89,7 @@ def test_playback_range_becomes_the_animation_range():
     sc.frame_start, sc.frame_end = 1, 120
     range_bar.set_playback(sc, 20, 40)
     assert range_bar.playback(sc) == (20, 40)
-    assert bpy.ops.maya_kit.playback_range_anim() == {'FINISHED'}
+    assert bpy.ops.allset.playback_range_anim() == {'FINISHED'}
     assert range_bar.playback(sc) == (1, 120)
     range_bar.toggle_whole(sc)                 # the Range Slider double-click brings the old range back
     assert range_bar.playback(sc) == (20, 40)
@@ -143,11 +143,11 @@ def test_smooth_proxy_operator_reports_without_proxy():
     for o in bpy.context.scene.objects:
         o.select_set(o is ob)
     bpy.context.view_layer.objects.active = ob
-    assert bpy.ops.maya_kit.smooth_proxy(action='TOGGLE') == {'CANCELLED'}
-    assert bpy.ops.maya_kit.smooth_proxy(action='CREATE') == {'FINISHED'}
+    assert bpy.ops.allset.smooth_proxy(action='TOGGLE') == {'CANCELLED'}
+    assert bpy.ops.allset.smooth_proxy(action='CREATE') == {'FINISHED'}
     assert gk.proxy_modifier(ob) is not None
 
 
 def test_edit_cut_menu_item():
-    assert menu_map.MAP["Edit/Cut"] == "maya_kit.cut"
-    assert menu_map.MAP["Edit/Paste"] == ("v3d", "maya_kit.paste", {})
+    assert menu_map.MAP["Edit/Cut"] == "allset.cut"
+    assert menu_map.MAP["Edit/Paste"] == ("v3d", "allset.paste", {})

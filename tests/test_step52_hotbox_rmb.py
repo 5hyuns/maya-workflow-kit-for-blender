@@ -52,7 +52,7 @@ def test_hotbox_layout_like_maya():
     above, sides, below = modal.hotbox_rows(bpy.context, area_type='VIEW_3D')
     c = (800.0, 450.0)
     lay = engine.HotboxLayout(above, c, measure, below=below, side=sides, bounds=(0, 0, 1600, 900))
-    assert lay.title == "Maya" and abs((lay.center_rect[1] + lay.center_rect[3]) / 2 - c[1]) < 1e-6
+    assert lay.title == "Allset" and abs((lay.center_rect[1] + lay.center_rect[3]) / 2 - c[1]) < 1e-6
     rows = {}
     for rect, _key, label in lay.labels:
         rows.setdefault(rect[1], []).append((rect[0], label))
@@ -141,11 +141,11 @@ def test_object_attributes_operator():
     bpy.ops.mesh.primitive_cube_add()
     ob = bpy.context.active_object
     bpy.ops.object.select_all(action='DESELECT')
-    bpy.context.window_manager.maya_kit_mm_target = ob.name
+    bpy.context.window_manager.allset_mm_target = ob.name
     try:
-        assert bpy.ops.maya_kit.object_attributes.poll()
+        assert bpy.ops.allset.object_attributes.poll()
     finally:
-        bpy.context.window_manager.maya_kit_mm_target = ""
+        bpy.context.window_manager.allset_mm_target = ""
 
 
 def test_submenu_arrow_measured_without_the_glyph():

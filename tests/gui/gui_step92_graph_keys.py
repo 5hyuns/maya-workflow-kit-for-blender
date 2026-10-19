@@ -1,4 +1,4 @@
-"""Step 92 in a real UI (MayaKit layout, the big view switched to the Graph Editor): t centers the current time,
+"""Step 92 in a real UI (Allset layout, the big view switched to the Graph Editor): t centers the current time,
 Alt+/ turns on Snap Time To Selection (clicking key 20 moves the time there), i held + MMB click inserts a key that
 keeps the curve shape. Plan: docs/steps/step_92.md."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -51,16 +51,16 @@ def hover():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, reg = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=reg):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     ob = bpy.data.objects["pCube1"]
     for f, v in ((1, 0.0), (10, 0.05), (20, 0.0)):
         ob.location.x = v
@@ -165,7 +165,7 @@ def s_insert_check():
         check(f"only the new key is selected ({sel})", sel == [7])
     check(f"the time stays at 20 ({bpy.context.scene.frame_current})", bpy.context.scene.frame_current == 20)
     mods = [op.bl_idname for op in win().modal_operators]
-    check(f"releasing i ends the tool ({mods})", "MAYAKIT_OT_insert_key_tool" not in mods)
+    check(f"releasing i ends the tool ({mods})", "ALLSET_OT_insert_key_tool" not in mods)
     for a in win().screen.areas:
         a.tag_redraw()
 

@@ -13,7 +13,7 @@ pivot = import_module(kit.MODULE + ".operators.pivot")
 
 
 def _kmis(km, key):
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     return [k for k in kc.keymaps[km].keymap_items if k.active and k.type == key and k.value == 'PRESS'
             and not (k.shift or k.ctrl or k.alt)]
 
@@ -40,8 +40,8 @@ def _cursor_orientation():
 
 
 def test_insert_is_bound_in_mesh_and_object_mode():
-    assert [k.idname for k in _kmis("Mesh", "INSERT")] == ["maya_kit.pivot_toggle"]
-    assert [k.idname for k in _kmis("Object Mode", "INSERT")] == ["maya_kit.pivot_toggle"]
+    assert [k.idname for k in _kmis("Mesh", "INSERT")] == ["allset.pivot_toggle"]
+    assert [k.idname for k in _kmis("Object Mode", "INSERT")] == ["allset.pivot_toggle"]
     assert _kmis("Mesh", "D")[0].properties.name == "component_pivot"
 
 
@@ -61,29 +61,29 @@ def test_turned():
 def test_insert_toggles_the_cursor_pivot_edit():
     sc = _edit_cube()
     before = _cursor_orientation()
-    assert bpy.ops.maya_kit.pivot_toggle() == {'FINISHED'}
+    assert bpy.ops.allset.pivot_toggle() == {'FINISHED'}
     assert hold.COMPONENT.on and hold.COMPONENT.toggled
     assert sc.tool_settings.transform_pivot_point == 'CURSOR'
     assert _cursor_orientation() == 'GEOM', "Maya snapPivotOri: component click orients the pivot"
     assert not sc.tool_settings.use_transform_data_origin, "edit mode doesn't use Affect Only Origins"
     sc.cursor.location = (0.5, 0.0, 1.0)                      # the user placed the pivot
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert not hold.COMPONENT.on
     assert sc.tool_settings.transform_pivot_point == 'CURSOR', "a placed pivot stays"
     assert _cursor_orientation() == before
     assert sc.transform_orientation_slots[pivot.MOVE_SLOT].type == 'GLOBAL', "not turned: axis kept"
     # tap on / off without moving: the custom pivot goes back to the bbox centre
-    bpy.ops.maya_kit.pivot_toggle()
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert sc.tool_settings.transform_pivot_point == 'BOUNDING_BOX_CENTER'
 
 
 def test_turned_cursor_becomes_maya_pivot_orientation():
     sc = _edit_cube()
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     sc.cursor.location = (0.0, 0.0, 1.0)
     sc.cursor.rotation_euler = (0.4, 0.0, 0.0)                # cursor tool GEOM on a tilted face
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     slot = sc.transform_orientation_slots[pivot.MOVE_SLOT]
     assert slot.type == pivot.ORIENT_NAME, slot.type
     want = Euler((0.4, 0.0, 0.0)).to_matrix()
@@ -93,7 +93,7 @@ def test_turned_cursor_becomes_maya_pivot_orientation():
 
 def test_leaving_edit_mode_closes_the_toggle():
     sc = _edit_cube()
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert hold.COMPONENT.on
     bpy.ops.object.mode_set(mode='OBJECT')
     hold.COMPONENT.tick(bpy.context)
@@ -110,7 +110,7 @@ def test_object_mode_insert_unchanged():
     bpy.ops.object.mode_set(mode='OBJECT')
     ts = sc.tool_settings
     ts.use_transform_data_origin = False
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert ts.use_transform_data_origin and not hold.COMPONENT.on
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert not ts.use_transform_data_origin

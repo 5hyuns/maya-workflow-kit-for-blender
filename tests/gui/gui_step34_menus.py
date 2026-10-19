@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -103,7 +103,7 @@ def s_anim_shot():
 @step
 def s_open_graph():
     with bpy.context.temp_override(window=win()):
-        res = bpy.ops.maya_kit.open_editor(ui_type='FCURVES')
+        res = bpy.ops.allset.open_editor(ui_type='FCURVES')
     check("Graph Editor opens", res == {'FINISHED'})
 
 
@@ -127,7 +127,7 @@ def s_hud():
     kind, target, props = import_module(MODULE + ".ui.menu_map").spec("Display/Heads Up Display/Poly Count")
     import json
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.menu_run(op=target, props=json.dumps(props))
+        bpy.ops.allset.menu_run(op=target, props=json.dumps(props))
     check("Heads Up Display > Poly Count toggles the statistics overlay",
           overlay.show_stats != C["stats0"])
     _ = menu_sets
@@ -138,7 +138,7 @@ def s_hud():
 def s_hud_shot():
     shot("gui_step34_poly_count.png")
     with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_export_selection")
+        bpy.ops.wm.call_menu(name="ALLSET_MT_export_selection")
 
 
 @step

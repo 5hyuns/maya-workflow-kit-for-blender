@@ -13,7 +13,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 D = 90   # marking menu drag distance (px)
 
@@ -48,7 +48,7 @@ def mask():
 @step
 def s_setup():
     C["mid"] = setup()
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     cube = bpy.data.objects["Cube"]
     for ob in bpy.context.selected_objects:
         ob.select_set(False)
@@ -120,7 +120,7 @@ def s_shift_q_done():
     C["meshes"] = {o.name for o in bpy.data.objects if o.type == 'MESH'}
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create('EXEC_DEFAULT', True, kind='CUBE')   # registered, like a menu click
+        bpy.ops.allset.create('EXEC_DEFAULT', True, kind='CUBE')   # registered, like a menu click
     C["target"] = Vector((3.0, 2.0, 0.0))
     x, y = screen_xy(C["target"])
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)

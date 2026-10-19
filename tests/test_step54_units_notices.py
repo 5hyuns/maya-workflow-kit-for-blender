@@ -16,7 +16,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 mm = import_module(kit.MODULE + ".marking.menus")
 
-# The three unit setups of decision 8: MayaKit template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
+# The three unit setups of decision 8: Allset template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
 SETUPS = {
     "template": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=1.0),   # maya_unit 0.01
     "maya units": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=0.01),  # 1
@@ -41,7 +41,7 @@ def _fresh():
 
 
 def _make(kind):
-    assert bpy.ops.maya_kit.create(kind=kind) == {'FINISHED'}, kind
+    assert bpy.ops.allset.create(kind=kind) == {'FINISHED'}, kind
     return bpy.context.view_layer.objects.active
 
 
@@ -92,7 +92,7 @@ def test_quick_smoke_domain_in_maya_units():
         k = _units(setup)
         cube = _make('CUBE')                         # 1 Maya unit cube at the origin
         cube.select_set(True)
-        assert bpy.ops.maya_kit.quick_smoke() == {'FINISHED'}
+        assert bpy.ops.allset.quick_smoke() == {'FINISHED'}
         domain = next(o for o in bpy.data.objects if o is not cube)
         half = 0.5 * k
         want = (half + 1.0 * k, half + 1.0 * k, half + 2.0 * k)
@@ -149,29 +149,29 @@ class _Rec:
 
 
 def test_notice_in_tooltip_and_help_line():
-    # an item with a substitute draws through maya_kit.menu_item (its tooltip carries the notice)
+    # an item with a substitute draws through allset.menu_item (its tooltip carries the notice)
     rec = _Rec()
     menu_sets.draw_item(rec, "Windows/Animation Editors/Trax Editor", "Trax Editor")
-    assert rec.log[0][0] == "maya_kit.menu_item" and rec.log[0][2].item == "Windows/Animation Editors/Trax Editor"
+    assert rec.log[0][0] == "allset.menu_item" and rec.log[0][2].item == "Windows/Animation Editors/Trax Editor"
     props = types.SimpleNamespace(item="Windows/Animation Editors/Trax Editor")
-    tip = menu_sets.MAYAKIT_OT_menu_item.description(bpy.context, props)
+    tip = menu_sets.ALLSET_OT_menu_item.description(bpy.context, props)
     assert "NLA" in tip and "Trax" in tip, tip
     assert "NLA" in notices.current(), "the Help Line shows the notice while the tooltip is up"
-    # a greyed item keeps maya_kit.menu_unavailable, tooltip with the notice
+    # a greyed item keeps allset.menu_unavailable, tooltip with the notice
     rec = _Rec()
     menu_sets.draw_item(rec, "Render/Batch Render", "Batch Render")     # step 67 (Light Editor is mapped now)
-    assert rec.log[0][0] == "maya_kit.menu_unavailable"
-    tip = menu_sets.MAYAKIT_OT_menu_unavailable.description(
+    assert rec.log[0][0] == "allset.menu_unavailable"
+    tip = menu_sets.ALLSET_OT_menu_unavailable.description(
         bpy.context, types.SimpleNamespace(item="Render/Batch Render"))
     assert "Batch Render" in tip and "blender -b" in tip, tip
-    # items without a notice run the same action through maya_kit.menu_item (step 108: Blender prints no shortcut
+    # items without a notice run the same action through allset.menu_item (step 108: Blender prints no shortcut
     # of its own beside it)
     rec = _Rec()
     menu_sets.draw_item(rec, "Create/Polygon Primitives/Cube", "Cube")
-    assert rec.log[0][0] == "maya_kit.menu_item" and rec.log[0][2].item == "Create/Polygon Primitives/Cube"
-    assert menu_map.spec("Create/Polygon Primitives/Cube")[1] == "maya_kit.create"
+    assert rec.log[0][0] == "allset.menu_item" and rec.log[0][2].item == "Create/Polygon Primitives/Cube"
+    assert menu_map.spec("Create/Polygon Primitives/Cube")[1] == "allset.create"
     # every notice gets into its item's tooltip
     for path in notices.NOTICES:
-        cls = menu_sets.MAYAKIT_OT_menu_item if path in menu_map.MAP else menu_sets.MAYAKIT_OT_menu_unavailable
+        cls = menu_sets.ALLSET_OT_menu_item if path in menu_map.MAP else menu_sets.ALLSET_OT_menu_unavailable
         tip = cls.description(bpy.context, types.SimpleNamespace(item=path))
         assert notices.NOTICES[path][1] in tip, path

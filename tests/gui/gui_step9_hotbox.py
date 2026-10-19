@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 D = 110  # px: past the ring (radius 80 x UI scale)
 
@@ -189,11 +189,11 @@ def s_zone_done():
     check(f"hotbox centre zone, drag W = Top View (got {rv3d.view_perspective})",
           rv3d.view_perspective == 'ORTHO')
     with bpy.context.temp_override(window=win(), area=area):
-        bpy.ops.maya_kit.hb_view(view='PERSP')
+        bpy.ops.allset.hb_view(view='PERSP')
     check("Perspective View restores the perspective camera", rv3d.view_perspective == 'PERSP')
     C["tb"] = area.spaces.active.show_region_toolbar
     with bpy.context.temp_override(window=win(), area=area):
-        bpy.ops.maya_kit.hb_ui(element='TOOLBOX')
+        bpy.ops.allset.hb_ui(element='TOOLBOX')
 
 
 @step

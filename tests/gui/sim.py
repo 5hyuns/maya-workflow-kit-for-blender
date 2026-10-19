@@ -17,10 +17,10 @@ from importlib import import_module
 import addon_utils
 import bpy
 
-MODULE = os.environ.get("MAYA_KIT_MODULE", "bl_ext.user_default.maya_kit")
+MODULE = os.environ.get("ALLSET_MODULE", "bl_ext.user_default.allset")
 RESULT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else None
 
-UI_SCALE = float(os.environ.get("MAYA_KIT_GUI_UI_SCALE", "0") or 0)
+UI_SCALE = float(os.environ.get("ALLSET_GUI_UI_SCALE", "0") or 0)
 
 _pos = [0, 0]
 _down = set()
@@ -33,7 +33,7 @@ def win():
 
 
 def view3d():
-    # the largest: the MayaKit layout also has the narrow Tool Box 3D View (step 49)
+    # the largest: the Allset layout also has the narrow Tool Box 3D View (step 49)
     area = max((a for a in win().screen.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)
     region = next(r for r in area.regions if r.type == 'WINDOW')
     return area, region

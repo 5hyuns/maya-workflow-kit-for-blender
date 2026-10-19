@@ -15,7 +15,7 @@ preferences = import_module(kit.MODULE + ".preferences")
 
 
 def _items(km, type, **mods):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km]
     want = {"shift": False, "ctrl": False, "alt": False, **mods}
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items())]
@@ -23,32 +23,32 @@ def _items(km, type, **mods):
 
 def test_keys_bound():
     assert [(k.idname, round(k.properties.factor, 2)) for k in _items("3D View", 'EQUAL')] == \
-        [("maya_kit.manip_size", 1.25)]
+        [("allset.manip_size", 1.25)]
     assert [(k.idname, round(k.properties.factor, 2)) for k in _items("3D View", 'EQUAL', shift=True)] == \
-        [("maya_kit.manip_size", 1.25)]
+        [("allset.manip_size", 1.25)]
     assert [(k.idname, round(k.properties.factor, 2)) for k in _items("3D View", 'MINUS')] == \
-        [("maya_kit.manip_size", 0.8)]
-    assert [k.idname for k in _items("3D View", 'HOME')] == ["maya_kit.view_home"]
+        [("allset.manip_size", 0.8)]
+    assert [k.idname for k in _items("3D View", 'HOME')] == ["allset.view_home"]
     alt5 = _items("3D View", 'FIVE', alt=True)
     assert [k.properties.data_path for k in alt5] == ["space_data.overlay.show_wireframes"]
     for km in ("Object Mode", "Mesh"):
         assert [k.properties.delta for k in _items(km, 'PAGE_UP')] == [1], km
         assert [k.properties.delta for k in _items(km, 'PAGE_DOWN')] == [-1], km
         assert [(k.idname, k.properties.level) for k in _items(km, 'ZERO')] == \
-            [("maya_kit.smooth_preview", 1)], km
+            [("allset.smooth_preview", 1)], km
 
 
 def test_manip_size_steps_and_restores_on_disable():
     view_prefs = bpy.context.preferences.view
     original = view_prefs.gizmo_size
-    bpy.ops.maya_kit.manip_size(factor=1.25)
+    bpy.ops.allset.manip_size(factor=1.25)
     bigger = view_prefs.gizmo_size
     assert bigger == round(original * 1.25), (original, bigger)
-    bpy.ops.maya_kit.manip_size(factor=0.8)
-    bpy.ops.maya_kit.manip_size(factor=0.8)
+    bpy.ops.allset.manip_size(factor=0.8)
+    bpy.ops.allset.manip_size(factor=0.8)
     assert view_prefs.gizmo_size < original
     for _ in range(30):
-        bpy.ops.maya_kit.manip_size(factor=1.25)
+        bpy.ops.allset.manip_size(factor=1.25)
     assert view_prefs.gizmo_size == 200, "clamped to Blender's range"
     assert str(original) in preferences.get().runtime_backup
     kit.disable()
@@ -68,18 +68,18 @@ def _mesh():
 
 def test_smoothing_level_up_down_and_clamp():
     ob = _mesh()
-    bpy.ops.maya_kit.smooth_level(delta=1)
+    bpy.ops.allset.smooth_level(delta=1)
     mod = display.preview_modifier(ob, create=False)
     assert mod is not None and mod.levels == 3 and not mod.show_viewport, "hidden until 3"
-    bpy.ops.maya_kit.smooth_preview(level=3)
+    bpy.ops.allset.smooth_preview(level=3)
     assert mod.show_viewport and mod.levels == 3
     for _ in range(5):
-        bpy.ops.maya_kit.smooth_level(delta=1)
+        bpy.ops.allset.smooth_level(delta=1)
     assert mod.levels == display.SMOOTH_LEVELS[1]
     for _ in range(9):
-        bpy.ops.maya_kit.smooth_level(delta=-1)
+        bpy.ops.allset.smooth_level(delta=-1)
     assert mod.levels == display.SMOOTH_LEVELS[0]
-    bpy.ops.maya_kit.smooth_preview(level=1)        # = Maya 0 key
+    bpy.ops.allset.smooth_preview(level=1)        # = Maya 0 key
     assert not mod.show_viewport
 
 

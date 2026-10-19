@@ -18,7 +18,7 @@ prefs_mod = import_module(kit.MODULE + ".preferences")
 
 
 def _mask(kind):
-    return ("maya_kit.component_mask", {"kind": kind})
+    return ("allset.component_mask", {"kind": kind})
 
 
 def test_mask_items_are_check_boxes():
@@ -35,7 +35,7 @@ def test_mask_items_are_check_boxes():
         for _d, (_label, act) in sub.radial.items():
             if isinstance(act, menus.Sub):
                 walk(act)
-            elif isinstance(act, tuple) and act[0] == "maya_kit.component_mask":
+            elif isinstance(act, tuple) and act[0] == "allset.component_mask":
                 found.add(act[1]["kind"])
     walk(menus.SELECT_COMPONENT)
     assert {"VERT", "EDGE", "FACE"} <= found, found
@@ -87,7 +87,7 @@ def test_reset_tool_restores_defaults():
     ts.snap_angle_increment_3d = math.radians(5)
     snap_align.set_step_snap(ts, 'ROTATE', 'RELATIVE')
     assert snap_align.step_snap_mode(ts, 'ROTATE') != 'OFF'
-    assert bpy.ops.maya_kit.reset_tool() == {'FINISHED'}
+    assert bpy.ops.allset.reset_tool() == {'FINISHED'}
     assert not props.is_property_set("release_confirm")
     assert scene.transform_orientation_slots[2].type == 'LOCAL'          # Maya Rotate axis = Object
     assert ts.transform_pivot_point == 'ACTIVE_ELEMENT'

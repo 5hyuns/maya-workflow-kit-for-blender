@@ -87,19 +87,19 @@ def test_insert_targets_and_keeps_the_shape():
 def test_snap_toggle_operator_and_menu():
     prefs = prefs_mod.get()
     prefs.snap_time_to_selection = False
-    assert bpy.ops.maya_kit.snap_time_toggle() == {'FINISHED'} and prefs.snap_time_to_selection
-    assert bpy.ops.maya_kit.snap_time_toggle() == {'FINISHED'} and not prefs.snap_time_to_selection
+    assert bpy.ops.allset.snap_time_toggle() == {'FINISHED'} and prefs.snap_time_to_selection
+    assert bpy.ops.allset.snap_time_toggle() == {'FINISHED'} and not prefs.snap_time_to_selection
     assert gk.draw_view_menu in bpy.types.GRAPH_MT_view._dyn_ui_initialize()
     assert bpy.app.timers.is_registered(gk._snap_tick)
 
 
 def test_keymap_items():
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Graph Editor"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Graph Editor"]
 
     def one(t, idname, **mods):
         items = [k for k in km.keymap_items if k.active and k.type == t and k.idname == idname
                  and all(getattr(k, m) == mods.get(m, False) for m in ("shift", "ctrl", "alt"))]
         assert len(items) == 1, (t, idname, mods)
-    one('T', "maya_kit.graph_center_time")
-    one('SLASH', "maya_kit.snap_time_toggle", alt=True)
-    one('I', "maya_kit.insert_key_tool")
+    one('T', "allset.graph_center_time")
+    one('SLASH', "allset.snap_time_toggle", alt=True)
+    one('I', "allset.insert_key_tool")

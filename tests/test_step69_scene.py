@@ -49,7 +49,7 @@ def _new_project(name="proj"):
 def test_project_window_creates_maya_folders():
     _reset_prefs()
     folder, _root = _new_project("unused")
-    assert bpy.ops.maya_kit.project_window(name="shotA", location=folder) == {'FINISHED'}
+    assert bpy.ops.allset.project_window(name="shotA", location=folder) == {'FINISHED'}
     root = os.path.join(folder, "shotA")
     for sub in ("scenes", "sourceimages", "images", "renderData", "assets", "data", "cache"):
         assert os.path.isdir(os.path.join(root, sub)), sub
@@ -67,20 +67,20 @@ def test_set_project_and_recent():
     _reset_prefs()
     _f1, a = _new_project("a")
     _f2, b = _new_project("b")
-    assert bpy.ops.maya_kit.set_project(directory=a, create_folders=False) == {'FINISHED'}
+    assert bpy.ops.allset.set_project(directory=a, create_folders=False) == {'FINISHED'}
     assert not project.is_project(a), "an unmarked folder stays as it is when not asked to create folders"
-    assert bpy.ops.maya_kit.set_project(directory=b) == {'FINISHED'}
+    assert bpy.ops.allset.set_project(directory=b) == {'FINISHED'}
     assert project.is_project(b) and os.path.isdir(os.path.join(b, "scenes"))
     assert project.recent()[:2] == [b, a]
-    assert bpy.ops.maya_kit.project_recent(path=a) == {'FINISHED'}
+    assert bpy.ops.allset.project_recent(path=a) == {'FINISHED'}
     assert project.recent()[:2] == [a, b] and os.path.normcase(project.current_root()) == os.path.normcase(a)
-    assert _cancelled(lambda: bpy.ops.maya_kit.set_project(directory=os.path.join(b, "missing")))
+    assert _cancelled(lambda: bpy.ops.allset.set_project(directory=os.path.join(b, "missing")))
 
 
 def test_save_in_project_renders_to_images_and_detects_project():
     _reset_prefs()
     folder, _ = _new_project("unused")
-    bpy.ops.maya_kit.project_window(name="p", location=folder)
+    bpy.ops.allset.project_window(name="p", location=folder)
     root = os.path.join(folder, "p")
     bpy.context.scene.render.filepath = "/tmp\\"
     path = os.path.join(root, "scenes", "shot_v001.blend")
@@ -103,14 +103,14 @@ def test_save_in_project_renders_to_images_and_detects_project():
 # --- increment ----------------------------------------------------------------------------------------
 
 def test_ctrl_alt_s_is_maya_increment():
-    found = [it for it in patches.ADDED if it[0] == "Window" and it[1] == "maya_kit.increment_save"]
+    found = [it for it in patches.ADDED if it[0] == "Window" and it[1] == "allset.increment_save"]
     assert found and found[0][2]["type"] == 'S' and found[0][2].get("ctrl") and found[0][2].get("alt"), found
     by_id = {it[1]: it for it in patches.ADDED if it[0] == "Window"}
-    for idname in ("maya_kit.open_scene", "maya_kit.save_scene", "maya_kit.save_scene_as", "maya_kit.create_reference"):
+    for idname in ("allset.open_scene", "allset.save_scene", "allset.save_scene_as", "allset.create_reference"):
         assert idname in by_id, idname
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Window"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Window"]
     incr = [kmi for kmi in km.keymap_items if kmi.type == 'S' and kmi.ctrl and kmi.alt and kmi.active]
-    assert [kmi.idname for kmi in incr] == ["maya_kit.increment_save"], [kmi.idname for kmi in incr]
+    assert [kmi.idname for kmi in incr] == ["allset.increment_save"], [kmi.idname for kmi in incr]
     assert not [kmi for kmi in km.keymap_items if kmi.idname in {"wm.open_mainfile", "wm.save_mainfile",
                                                                   "wm.save_as_mainfile"}]
     for rtc in ("OpenScene", "SaveScene", "SaveSceneAs", "IncrementAndSave", "CreateReference"):
@@ -119,7 +119,7 @@ def test_ctrl_alt_s_is_maya_increment():
     folder = tempfile.mkdtemp(prefix="mk69_")
     path = os.path.join(folder, "shot_v001.blend")
     bpy.ops.wm.save_as_mainfile(filepath=path)
-    assert bpy.ops.maya_kit.increment_save() == {'FINISHED'}
+    assert bpy.ops.allset.increment_save() == {'FINISHED'}
     assert os.path.basename(bpy.data.filepath) == "shot_v001.0001.blend" and os.path.isfile(path)
 
 
@@ -142,20 +142,20 @@ def _source_file():
 def test_create_reference_namespace_override():
     folder, src = _source_file()
     sc = bpy.context.scene
-    assert bpy.ops.maya_kit.create_reference(filepath=src, namespace="prop") == {'FINISHED'}
+    assert bpy.ops.allset.create_reference(filepath=src, namespace="prop") == {'FINISHED'}
     cube = bpy.data.objects.get("prop:pCube1")
     assert cube is not None, sorted(o.name for o in sc.objects)
     assert cube.override_library is not None and cube.library is None, "editable reference = library override"
-    assert "prop" in sc.collection.children and sc.collection.children["prop"]["maya_kit_reference"] == src
+    assert "prop" in sc.collection.children and sc.collection.children["prop"]["allset_reference"] == src
     names = sorted(o.name for o in sc.objects if o.name != "pCube1")
     assert names == ["prop:Camera", "prop:Light", "prop:pCube1"], names
     assert not [o for o in sc.objects if o.library is not None], "the linked originals aren't in the scene"
     cube.location.x = 3.0                                   # a reference edit
     # same file again: Maya numbers the namespace
-    assert bpy.ops.maya_kit.create_reference(filepath=src, namespace="prop") == {'FINISHED'}
+    assert bpy.ops.allset.create_reference(filepath=src, namespace="prop") == {'FINISHED'}
     assert "prop1:pCube1" in bpy.data.objects and "prop1" in sc.collection.children
     # default namespace = file name; linked only (not editable)
-    assert bpy.ops.maya_kit.create_reference(filepath=src, editable=False) == {'FINISHED'}
+    assert bpy.ops.allset.create_reference(filepath=src, editable=False) == {'FINISHED'}
     group = sc.collection.children["shot_v001"]
     assert group.all_objects and all(o.library is not None for o in group.all_objects)
     # saved and reopened: the edit stays, the source file is unchanged
@@ -166,19 +166,19 @@ def test_create_reference_namespace_override():
     assert [lib.filepath for lib in bpy.data.libraries] and \
         os.path.normcase(bpy.path.abspath(bpy.data.libraries[0].filepath)) == os.path.normcase(src)
     # not a .blend / itself
-    assert _cancelled(lambda: bpy.ops.maya_kit.create_reference(filepath=os.path.join(folder, "x.fbx")))
-    assert _cancelled(lambda: bpy.ops.maya_kit.create_reference(filepath=main))
+    assert _cancelled(lambda: bpy.ops.allset.create_reference(filepath=os.path.join(folder, "x.fbx")))
+    assert _cancelled(lambda: bpy.ops.allset.create_reference(filepath=main))
 
 
 def test_menus_and_notices():
     m = menu_map.MAP
-    assert m["File/Open Scene..."] == "maya_kit.open_scene" and m["File/Save Scene"] == "maya_kit.save_scene"
-    assert m["File/Save Scene As..."] == "maya_kit.save_scene_as"
-    assert m["File/Create Reference..."] == "maya_kit.create_reference"
-    assert m["File/Reference Editor"] == ("maya_kit.open_editor", {"ui_type": 'OUTLINER', "display_mode": 'LIBRARIES'})
-    assert m["File/Project Window"] == "maya_kit.project_window" and m["File/Set Project..."] == "maya_kit.set_project"
-    assert m["File/Recent Projects"] == ("menu", "MAYAKIT_MT_recent_projects")
-    assert "Maya Kit project" in notices.NOTICES["File/Set Project..."][0]
+    assert m["File/Open Scene..."] == "allset.open_scene" and m["File/Save Scene"] == "allset.save_scene"
+    assert m["File/Save Scene As..."] == "allset.save_scene_as"
+    assert m["File/Create Reference..."] == "allset.create_reference"
+    assert m["File/Reference Editor"] == ("allset.open_editor", {"ui_type": 'OUTLINER', "display_mode": 'LIBRARIES'})
+    assert m["File/Project Window"] == "allset.project_window" and m["File/Set Project..."] == "allset.set_project"
+    assert m["File/Recent Projects"] == ("menu", "ALLSET_MT_recent_projects")
+    assert "Allset project" in notices.NOTICES["File/Set Project..."][0]
     assert "ns:name" in notices.NOTICES["File/Create Reference..."][1]
     # Recent Projects menu lists the prefs entries
     _reset_prefs()
@@ -198,5 +198,5 @@ def test_menus_and_notices():
             self.ops.append(("label", kw.get("text"), None))
 
     rec = Rec()
-    project.MAYAKIT_MT_recent_projects.draw(type("M", (), {"layout": rec})(), bpy.context)
-    assert rec.ops[0][0] == "maya_kit.project_recent" and rec.ops[0][2].path == root
+    project.ALLSET_MT_recent_projects.draw(type("M", (), {"layout": rec})(), bpy.context)
+    assert rec.ops[0][0] == "allset.project_recent" and rec.ops[0][2].path == root

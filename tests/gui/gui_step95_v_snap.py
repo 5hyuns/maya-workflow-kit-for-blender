@@ -1,6 +1,6 @@
 """Step 95: V point snap with the Move manipulator, default and close zoom (research/maya/workflows/pivot_snap.md S4).
 
-MayaKit cm template, pCube1 at the origin and pCube2 at x = 3 cm, Move tool. V held + drag of pCube1's X arrow to the
+Allset cm template, pCube1 at the origin and pCube2 at x = 3 cm, Move tool. V held + drag of pCube1's X arrow to the
 screen position of a pCube2 vertex -> pCube1's pivot lands on that vertex projected onto the X axis (t x = 2.5 cm).
 Run with the template view (small cubes) and zoomed in close (the dragged cube fills much of the view,
 docs/steps/step_81.md 「남은 것」). Mouse moves go one per timer tick: Blender recomputes the snap target at most once
@@ -18,7 +18,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, scale  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 STEPS = 12
 
@@ -75,17 +75,17 @@ def cubes():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_cubes():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     a, b = cubes()
     b.location = (3 * k(), 0, 0)
     C["view"] = (region.data.view_distance, region.data.view_location.copy())
@@ -166,7 +166,7 @@ def case(name, distance, handle="arrow", target="camera", pacing="paced"):
         step(fn)
 
 
-CASES = os.environ.get("MAYA_KIT_STEP95_CASES", "")
+CASES = os.environ.get("ALLSET_STEP95_CASES", "")
 if CASES:
     for spec in CASES.split(";"):
         n, d, h, t, pc = spec.split(",")

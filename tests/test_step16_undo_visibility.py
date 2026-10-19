@@ -10,7 +10,7 @@ import kit
 
 visibility = import_module(kit.MODULE + ".operators.visibility")
 
-KC = "Maya"
+KC = "Maya-style"
 
 
 def _items(km, type, shift=False, ctrl=False, alt=False):
@@ -43,7 +43,7 @@ def test_visibility_keys():
             (True, True, False): "SHOW_LAST"}
     for (shift, ctrl, alt), action in want.items():
         got = _kmis("Object Mode", "H", shift=shift, ctrl=ctrl, alt=alt)
-        assert [(k.idname, k.properties.action) for k in got] == [("maya_kit.visibility", action)],             (shift, ctrl, alt, [k.idname for k in got])
+        assert [(k.idname, k.properties.action) for k in got] == [("allset.visibility", action)],             (shift, ctrl, alt, [k.idname for k in got])
     alt_h = _kmis("Mesh", "H", alt=True)
     assert [k.idname for k in alt_h] == ["mesh.hide"] and alt_h[0].properties.unselected
     for mods in ({"shift": True}, {"ctrl": True, "shift": True}, {"ctrl": True, "alt": True}):
@@ -61,7 +61,7 @@ def test_isolate_and_invert_keys():
     assert [g[0] for g in _items("Mesh", "I", ctrl=True, shift=True)] == ["mesh.select_all"]
 
 
-# --- maya_kit.visibility -------------------------------------------------------------
+# --- allset.visibility -------------------------------------------------------------
 
 def _scene(names=("a", "b", "c")):
     if bpy.context.mode != 'OBJECT':
@@ -85,7 +85,7 @@ def _select(*obs):
 
 
 def _vis(action):
-    assert bpy.ops.maya_kit.visibility(action=action) == {'FINISHED'}
+    assert bpy.ops.allset.visibility(action=action) == {'FINISHED'}
 
 
 def test_h_toggles_and_keeps_selection():

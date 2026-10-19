@@ -1,4 +1,4 @@
-"""Release check helper (step 53): does installing Maya Kit leave the user's own setup alone?
+"""Release check helper (step 53): does installing Allset leave the user's own setup alone?
 
 Runs inside a background Blender on the release sandbox (tools/release_check.py), without
 --factory-startup so the sandbox preferences load like a user's:
@@ -9,7 +9,7 @@ Runs inside a background Blender on the release sandbox (tools/release_check.py)
     ... -- enable / make / remove OUT.json      # enable, Make Blender Maya, Remove from inside Blender (step 60)
     ... -- offline_org OUT.json                 # switch off non-file:// remote repositories (repo_check, step 61)
 
-MAYA_KIT_REPO names the repository the kit is in (default user_default; tools/repo_check.py: mayakit).
+ALLSET_REPO names the repository the kit is in (default user_default; tools/repo_check.py: mayakit).
 
 ``seed`` installs and enables a user add-on (a legacy add-on file), changes input preferences
 and the theme the way a user might, saves the preferences and writes a snapshot; ``check`` only
@@ -92,7 +92,7 @@ def _kit_version():
     """Version of the installed kit package (any repository), "" when not installed."""
     import re
     for repo in bpy.context.preferences.extensions.repos:
-        path = os.path.join(repo.directory, "maya_kit", "blender_manifest.toml")
+        path = os.path.join(repo.directory, "allset", "blender_manifest.toml")
         if os.path.isfile(path):
             with open(path, encoding="utf-8") as fh:
                 m = re.search(r'^version\s*=\s*"([^"]+)"', fh.read(), re.M)
@@ -124,17 +124,17 @@ def main():
     elif mode == "make":
         # Make Blender Maya (theme, splash, density ...), saved like a user would leave it (step 60)
         from importlib import import_module
-        kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".maya_kit"))
+        kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".allset"))
         import_module(kit + ".first_start").make(bpy.context, open_layout=False)
         bpy.ops.wm.save_userpref()
     elif mode == "remove":
         # Preferences > Extensions > Remove in a running session (the add-on's code runs: disable,
         # then the files go). `blender --command extension remove` never loads add-ons (step 60).
-        repo = os.environ.get("MAYA_KIT_REPO", "user_default")   # tools/repo_check.py: its own repository
+        repo = os.environ.get("ALLSET_REPO", "user_default")   # tools/repo_check.py: its own repository
         # repo_index counts enabled repositories only ($S\addons_core\bl_pkg\bl_extension_ops.py:811-830)
         from bl_pkg.bl_extension_ops import extension_repos_read
         repo_index = next(i for i, r in enumerate(extension_repos_read()) if r.module == repo)
-        bpy.ops.extensions.package_uninstall(repo_index=repo_index, pkg_id="maya_kit")
+        bpy.ops.extensions.package_uninstall(repo_index=repo_index, pkg_id="allset")
         bpy.ops.wm.save_userpref()
     elif mode == "offline_org":
         # tools/repo_check.py syncs only its own file:// repository: the built-in extensions.blender.org
@@ -144,11 +144,11 @@ def main():
                 repo.enabled = False
         bpy.ops.wm.save_userpref()
     elif mode == "enable":
-        repo = os.environ.get("MAYA_KIT_REPO", "user_default")
-        addon_utils.enable(f"bl_ext.{repo}.maya_kit", default_set=True)
+        repo = os.environ.get("ALLSET_REPO", "user_default")
+        addon_utils.enable(f"bl_ext.{repo}.allset", default_set=True)
         bpy.ops.wm.save_userpref()
     elif mode == "disable":
-        kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".maya_kit"))
+        kit = next(a.module for a in bpy.context.preferences.addons if a.module.endswith(".allset"))
         addon_utils.disable(kit, default_set=True)
         bpy.ops.wm.save_userpref()
     with open(out, "w", encoding="utf-8") as fh:

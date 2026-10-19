@@ -17,7 +17,7 @@ cb = import_module(kit.MODULE + ".ui.channel_box")
 
 
 def _clear():
-    st = bpy.context.window_manager.maya_kit_sdk
+    st = bpy.context.window_manager.allset_sdk
     st.open = False
     st.driven.clear()
     st.driver.object = None
@@ -58,23 +58,23 @@ def test_sdk_keys_one_cm_apart_stay_apart():
     _clear()
     _cm_scene()
     loc, cube = _empty("locator1"), _empty("pCube1")
-    bpy.ops.maya_kit.sdk_window()
+    bpy.ops.allset.sdk_window()
     _select(loc)
     cb.set_selected_channels(["tx"])
-    assert bpy.ops.maya_kit.sdk_load(which='DRIVER') == {'FINISHED'}
+    assert bpy.ops.allset.sdk_load(which='DRIVER') == {'FINISHED'}
     _select(cube)
     cb.set_selected_channels(["ry"])
-    assert bpy.ops.maya_kit.sdk_load(which='DRIVEN') == {'FINISHED'}
+    assert bpy.ops.allset.sdk_load(which='DRIVEN') == {'FINISHED'}
     for cm, deg in ((0, 0), (1, 45), (2, 90)):
         loc.location.x = cm * 0.01
         _select(cube)
         cb.apply_entry("ry", str(deg))
-        assert bpy.ops.maya_kit.sdk_key() == {'FINISHED'}
+        assert bpy.ops.allset.sdk_key() == {'FINISHED'}
     fc = sdk.sdk_fcurve(cube, "ry")
     xs = [round(kp.co.x, 6) for kp in fc.keyframe_points]
     assert xs == [0.0, 1.0, 2.0], f"curve x in cm, three keys: {xs}"
     assert sdk.fcurve_scale(fc) == 100.0
-    bpy.ops.maya_kit.sdk_close()
+    bpy.ops.allset.sdk_close()
     loc.location.x = 0.01
     assert abs(_ry(cube) - 45) < 1e-3, _ry(cube)
     loc.location.x = 0.015
@@ -89,7 +89,7 @@ def test_custom_attribute_entry_is_clamped():
     _clear()
     ob = _empty("ctrl")
     _select(ob)
-    assert bpy.ops.maya_kit.add_attribute(long_name="fingerCurl", data_type='FLOAT', use_min=True, minimum=-2,
+    assert bpy.ops.allset.add_attribute(long_name="fingerCurl", data_type='FLOAT', use_min=True, minimum=-2,
                                           use_max=True, maximum=5, default=0) == {'FINISHED'}
     cb.set_value(ob, "cp:fingerCurl", 9.0)
     assert ob["fingerCurl"] == 5.0
@@ -97,13 +97,13 @@ def test_custom_attribute_entry_is_clamped():
     assert ob["fingerCurl"] == -2.0
     cb.apply_entry("cp:fingerCurl", "+=100")
     assert ob["fingerCurl"] == 5.0
-    bpy.ops.maya_kit.add_attribute(long_name="free", data_type='FLOAT', default=0)
+    bpy.ops.allset.add_attribute(long_name="free", data_type='FLOAT', default=0)
     cb.set_value(ob, "cp:free", 1e6)
     assert ob["free"] == 1e6, "no limits: nothing clamped"
 
 
 def test_render_slot_keys():
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Image"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Image"]
     items = [(i.alt, i.properties.reverse) for i in km.keymap_items
              if i.active and i.idname == "image.cycle_render_slot" and i.type == 'J' and not (i.ctrl or i.shift)]
     assert sorted(items) == [(False, False), (True, True)], items

@@ -43,16 +43,16 @@ def test_snapshot_detects_leaks():
     def _leak_handler(*_):
         pass
 
-    bpy.types.Scene.maya_kit_leak = bpy.props.IntProperty()
+    bpy.types.Scene.allset_leak = bpy.props.IntProperty()
     kc = bpy.context.window_manager.keyconfigs.addon
     km = kc.keymaps.new(name="3D View", space_type="VIEW_3D")
     kmi = km.keymap_items.new("view3d.view_all", "F13", "PRESS")
     bpy.app.handlers.load_post.append(_leak_handler)
     try:
         d = "\n".join(kit.diff(before, kit.snapshot()))
-        for needle in ("maya_kit_leak", "F13", "_leak_handler"):
+        for needle in ("allset_leak", "F13", "_leak_handler"):
             assert needle in d, f"snapshot missed {needle}:\n{d}"
     finally:
-        del bpy.types.Scene.maya_kit_leak
+        del bpy.types.Scene.allset_leak
         km.keymap_items.remove(kmi)
         bpy.app.handlers.load_post.remove(_leak_handler)

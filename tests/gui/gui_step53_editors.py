@@ -1,4 +1,4 @@
-"""Step 53 in a real UI: with Maya Kit on (Maya keymap active), the other editors keep their own basic
+"""Step 53 in a real UI: with Allset on (Maya keymap active), the other editors keep their own basic
 operation (research/competitors.md §6: Maya add-ons that break Graph Editor navigation).
 
 - Text Editor: typing inserts text, including the keys the kit binds elsewhere (z = undo, h = hide,
@@ -16,7 +16,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, screenshot, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -51,8 +51,8 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.keymap_activate()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya")
+    bpy.ops.allset.keymap_activate()
+    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
     C["area"], _r = view3d()
     # --- Text Editor
     text = bpy.data.texts.new("probe")

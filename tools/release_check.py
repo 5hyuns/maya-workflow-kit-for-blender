@@ -15,7 +15,7 @@
 4. A GUI Blender on that sandbox (no --factory-startup, so the saved sandbox
    preferences with the enabled extension load like a real first start) runs
    tools/release_shots.py: checks the extension and the Maya keymap are active,
-   installs the MayaKit layout, builds a small scene and writes docs/screenshots/.
+   installs the Allset layout, builds a small scene and writes docs/screenshots/.
    Only the Blender process started here is terminated on timeout.
 Plan: docs/steps/step_13.md 「계획」.
 """
@@ -48,8 +48,8 @@ def sandbox_env(sandbox=SANDBOX):
         d = sandbox / sub
         d.mkdir(parents=True)
         env[var] = str(d)
-    # the default Maya Kit project (operators/project.default_root) lives in the sandbox, not in Documents
-    env["MAYA_KIT_PROJECTS_DIR"] = str(sandbox / "projects")
+    # the default Allset project (operators/project.default_root) lives in the sandbox, not in Documents
+    env["ALLSET_PROJECTS_DIR"] = str(sandbox / "projects")
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return env
 
@@ -121,7 +121,7 @@ def user_setup_checks(before_path, after_path, disabled_path):
         (f"install changes only the declared navigation preferences ({sorted(changed)})",
          changed <= DECLARED_INPUTS),
         (f"active keymap: {before['active_keyconfig']} -> {after['active_keyconfig']} (declared)",
-         after["active_keyconfig"] in (before["active_keyconfig"], "Maya")),
+         after["active_keyconfig"] in (before["active_keyconfig"], "Maya-style")),
         (f"disabling the kit restores everything ({[k for k, v in restored.items() if not v] or 'all'})",
          all(restored.values()) and kit not in off["addons"] and set(before["addons"]) <= set(off["addons"])),
     ]
@@ -161,8 +161,8 @@ def main(argv=None):
     shots.mkdir(parents=True, exist_ok=True)
     result = SANDBOX / "shots.json"
     log = SANDBOX / "shots.log"
-    env["MAYA_KIT_SHOTS"] = str(shots)
-    env["MAYA_KIT_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
+    env["ALLSET_SHOTS"] = str(shots)
+    env["ALLSET_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
     cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
            "--python", str(ROOT / "tools" / "release_shots.py"), "--", str(result)]
     with open(log, "w", encoding="utf-8", errors="replace") as fh:

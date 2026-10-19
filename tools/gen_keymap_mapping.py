@@ -6,7 +6,7 @@
 Input: research/maya/hotkeys_default.json (all 468 bindings). Only keys,
 contexts and runTimeCommand names are written (no MEL, no Maya UI strings;
 docs/user_decisions.md #6). Blender side: the "Maya" keyconfig data generated
-by src/maya_kit/keymap (IC + maya_patches), status from keymap/mapping.py.
+by src/allset/keymap (IC + maya_patches), status from keymap/mapping.py.
 Exit code 1 if an IC/KIT row is not actually bound.
 """
 
@@ -45,15 +45,15 @@ def fmt_event(ev):
 
 
 def fmt_item(km, item):
-    from maya_kit.keymap.patch import props_dict
+    from allset.keymap.patch import props_dict
     p = ", ".join(f"{k}={v!r}" for k, v in props_dict(item[2]).items())
     return f"{km}: `{item[0]}`" + (f" ({p})" if p else "")
 
 
 def build_rows():
     sys.path.insert(0, str(ROOT / "src"))
-    from maya_kit.keymap import ic_data, maya_patches, mapping
-    from maya_kit.keymap.patch import KeyconfigData
+    from allset.keymap import ic_data, maya_patches, mapping
+    from allset.keymap.patch import KeyconfigData
 
     kd = KeyconfigData(maya_patches.apply(ic_data.generate()))
     hotkeys = json.loads(HOTKEYS.read_text(encoding="utf-8"))["hotkeys"]
@@ -90,7 +90,7 @@ def write_doc(rows):
         "자동 생성: `python tools/gen_keymap_mapping.py` (손으로 고치지 말 것).",
         f"입력: `research/maya/hotkeys_default.json` (Maya 2022 팩토리 핫키 {len(rows)}개; "
         "근거 열 = Maya `scripts/startup/hotkeySetup.mel` 줄). "
-        "Blender 쪽: 이 킷의 \"Maya\" 키컨피그 (`src/maya_kit/keymap/`), 상태 = `keymap/mapping.py`.",
+        "Blender 쪽: 이 킷의 \"Maya\" 키컨피그 (`src/allset/keymap/`), 상태 = `keymap/mapping.py`.",
         "",
         "현재 바인딩 = Maya 컨텍스트에 대응하는 Blender 키맵들(`mapping.CONTEXT_KEYMAPS`)에서 "
         "같은 키에 걸린 항목. 근사 조회라 모드에 따라 실제로 먼저 잡히는 항목은 다를 수 있다.",

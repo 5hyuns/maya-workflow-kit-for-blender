@@ -15,7 +15,7 @@ from bpy_extras import view3d_utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 # Channel Box rows: Translate X value field 136 px left of the UI region's right edge and 114 px
 # below its top at scale 1.25 (gui_step38); rows are 16 px at 1.0 (ROW_SCALE 0.8, step 44) = 20 at 1.25.
@@ -91,7 +91,7 @@ def s_setup():
     us.system, us.length_unit, us.system_rotation = 'METRIC', 'CENTIMETERS', 'DEGREES'
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=main_region()):
-        bpy.ops.maya_kit.create(kind='JOINT')
+        bpy.ops.allset.create(kind='JOINT')
         a = bpy.context.active_object
         bpy.ops.object.mode_set(mode='EDIT')
         prev = a.data.edit_bones["joint1"]
@@ -237,7 +237,7 @@ def s_lock():
           C["sel_rx"] == ["rx"] and sel == ["rz"])
     # Shift+click adds (step 6); simulated Shift doesn't reach UI buttons, so set Rotate X..Z here
     cb().set_selected_channels(["rx", "ry", "rz"])
-    bpy.ops.maya_kit.cb_lock(lock=True)      # Channels > Lock Selected (menu clicks: gui_step6)
+    bpy.ops.allset.cb_lock(lock=True)      # Channels > Lock Selected (menu clicks: gui_step6)
     redraw()
 
 
@@ -275,7 +275,7 @@ def s_wait():
 @step
 def s_constraint_shot():
     shot("gui_step55_cb_constraint.png")
-    rows = [r for r in bpy.context.scene.maya_kit_cb.rows if r.kind == "CONSTRAINT"]
+    rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
     check("CB INPUTS has the constraint weight row (locator1W0)", len(rows) == 1)
     # Weight field: below the 10 channel rows, INPUTS title and the constraint node name
     C["w0"] = field(12.6)
@@ -313,8 +313,8 @@ def s_w0_applied():
 @step
 def s_final_shot():
     shot("gui_step55_cb_weight.png")
-    bpy.context.window_manager.maya_kit_dock = 'ATTRIBUTE_EDITOR'
-    bpy.ops.maya_kit.ae_tab(key="J")
+    bpy.context.window_manager.allset_dock = 'ATTRIBUTE_EDITOR'
+    bpy.ops.allset.ae_tab(key="J")
     redraw()
 
 
@@ -330,7 +330,7 @@ def s_ae_shot():
     pb = arm().pose.bones["joint2"]
     check(f"AE shows the joint tab and its constraint node ({[t[1] for t in ae.tabs(pb)]})",
           [t[2] for t in ae.tabs(pb)] == ["joint", "pointConstraint"])
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
 
 
 run()

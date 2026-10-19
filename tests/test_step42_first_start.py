@@ -68,7 +68,7 @@ def test_make_maya_keeps_user_addons_and_reverts():
     files = os.listdir(app_template.installed_dir())
     assert "splash.png" in files and "userpref.blend" not in files, files
 
-    assert bpy.ops.maya_kit.revert_maya() == {'FINISHED'}
+    assert bpy.ops.allset.revert_maya() == {'FINISHED'}
     prefs = preferences.get()
     assert not (prefs.maya_theme or prefs.maya_hide_splash or prefs.start_in_maya_layout)
     assert _theme_hash() == h0
@@ -82,7 +82,7 @@ def test_make_without_opening_keeps_the_file():
     bpy.ops.mesh.primitive_cube_add()
     name = bpy.context.active_object.name
     template = bpy.context.preferences.app_template
-    assert bpy.ops.maya_kit.make_maya(open_layout=False) == {'FINISHED'}
+    assert bpy.ops.allset.make_maya(open_layout=False) == {'FINISHED'}
     assert name in bpy.data.objects, "open_layout=False leaves the open file alone"
     assert bpy.context.preferences.app_template == template
-    bpy.ops.maya_kit.revert_maya()
+    bpy.ops.allset.revert_maya()

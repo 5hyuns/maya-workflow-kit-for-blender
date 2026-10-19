@@ -32,7 +32,7 @@ import look_data as L  # noqa: E402
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ["MAYA_KIT_LOOK_SHOTS"]
+SHOTS = os.environ["ALLSET_LOOK_SHOTS"]
 C = {}
 GEOM = {"rects": {}, "cubes": {}}
 
@@ -51,9 +51,9 @@ def anchor_rects():
     toolbox = import_module(MODULE + ".ui.toolbox")
     views = sorted((a for a in areas if a.type == 'VIEW_3D'), key=lambda a: -a.width * a.height)
     for a in areas:
-        if a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".MayaKitStrip":
+        if a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".AllsetStrip":
             names[a] = "strip"
-        elif a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".MayaKitShelf":
+        elif a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".AllsetShelf":
             names[a] = "shelf"              # the Shelf row (step 49)
         elif a.type == 'VIEW_3D' and toolbox.is_toolbox(a.spaces.active):
             names[a] = "toolbox"            # the Tool Box column (step 49)
@@ -253,11 +253,11 @@ def s_wait2():
     prefs = bpy.context.preferences
     addon = prefs.addons[MODULE].preferences
     check("one Return in the welcome dialog opens the Maya layout",
-          prefs.app_template == "MayaKit")
+          prefs.app_template == "Allset")
     check("... with the Maya theme on and the splash off",
           addon.maya_theme and not prefs.view.show_splash)
     kc = bpy.context.window_manager.keyconfigs.active
-    check(f"Maya keymap active (got {kc.name if kc else None})", kc is not None and kc.name == "Maya")
+    check(f"Maya keymap active (got {kc.name if kc else None})", kc is not None and kc.name == "Maya-style")
     # The template opened under the factory scale and the shot scale came after it: the header-only
     # Status Line row shrank and gave its pixels to the middle row. toolbox.fit_columns (0.5 s timer)
     # puts the shelf row back to 64 px, but screen.area_move polls False while the mouse is over a
@@ -288,7 +288,7 @@ def s_layout():
     shot("01_layout_empty")
     record_grid("01_layout_empty")
     with v3d_override():
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
     maya_camera("02_cube_selected_move")
     redraw()
@@ -319,7 +319,7 @@ def s_cube_unsel():
     k = import_module(MODULE + ".operators.units").maya_unit()
     with v3d_override():
         for name, x in (("pCube2", 2), ("pCube3", -2)):
-            bpy.ops.maya_kit.create(kind='CUBE')
+            bpy.ops.allset.create(kind='CUBE')
             ob = bpy.context.active_object
             ob.location.x = x * k
             check(f"{name} named like Maya", ob.name == name)

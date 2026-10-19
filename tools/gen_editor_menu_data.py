@@ -1,4 +1,4 @@
-"""Generate src/maya_kit/ui/editor_menu_data.py from the Maya 2022 editor capture (docs/steps/step_104.md).
+"""Generate src/allset/ui/editor_menu_data.py from the Maya 2022 editor capture (docs/steps/step_104.md).
 
     python tools/gen_editor_menu_data.py
 
@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "research" / "maya" / "screens" / "editors104" / "_editors104.json"
 # step 105: Hypershade, Render Settings, Script Editor (research/scripts/maya_editors105/)
 SRC_105 = ROOT / "research" / "maya" / "screens" / "editors105" / "_editors105.json"
-OUT = ROOT / "src" / "maya_kit" / "ui" / "editor_menu_data.py"
+OUT = ROOT / "src" / "allset" / "ui" / "editor_menu_data.py"
 
 # capture key -> kit editor name; the UV Editor window holds two menu bars (UV Editor, then the UV Toolkit's)
 EDITORS = (("graph_editor", "Graph Editor"), ("dope_sheet", "Dope Sheet"), ("uv_editor", "UV Editor"))

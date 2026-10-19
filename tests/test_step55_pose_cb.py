@@ -54,7 +54,7 @@ def _skeleton(quaternion_last=False):
         bpy.data.objects.remove(ob)
     us = bpy.context.scene.unit_settings
     us.system, us.scale_length, us.length_unit, us.system_rotation = 'METRIC', 1.0, 'CENTIMETERS', 'DEGREES'
-    assert bpy.ops.maya_kit.create(kind='JOINT') == {'FINISHED'}
+    assert bpy.ops.allset.create(kind='JOINT') == {'FINISHED'}
     arm = bpy.context.active_object
     bpy.ops.object.mode_set(mode='EDIT')
     prev = arm.data.edit_bones["joint1"]
@@ -70,7 +70,7 @@ def _skeleton(quaternion_last=False):
         cb.set_bone_selected(pb, False)
     if quaternion_last:
         arm.pose.bones["joint3"].rotation_mode = 'QUATERNION'
-    bpy.context.window_manager.maya_kit_cb_selected = ""
+    bpy.context.window_manager.allset_cb_selected = ""
     return arm
 
 
@@ -84,7 +84,7 @@ def _pick(arm, *names):
 
 def _draw_cb():
     rec = Recorder()
-    cb.MAYAKIT_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
+    cb.ALLSET_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
     return rec
 
 
@@ -115,7 +115,7 @@ def test_bone_channels_paths_and_entry():
     assert cb.apply_entry("rz", "+=10") == 2           # relative per joint (step 38 rule)
     assert abs(math.degrees(pb2.rotation_euler[2]) - 10) < 1e-4
     assert abs(math.degrees(pb3.rotation_euler[2]) - 15) < 1e-4
-    assert bpy.context.scene.maya_kit_cb.rz_text == "10", bpy.context.scene.maya_kit_cb.rz_text
+    assert bpy.context.scene.allset_cb.rz_text == "10", bpy.context.scene.allset_cb.rz_text
     assert cb.apply_entry("tx", "2") == 2 and abs(pb2.location[0] - 0.02) < 1e-6   # 2 cm
     cb.set_value(pb2, "v", False)
     assert pb2.bone.hide and not cb.get_value(pb2, "v")
@@ -132,42 +132,42 @@ def test_channel_menu_ops_on_joints():
     _pick(arm, "joint2", "joint3")
     pb2, pb3 = arm.pose.bones["joint2"], arm.pose.bones["joint3"]
     cb.set_selected_channels(["rz"])
-    assert bpy.ops.maya_kit.cb_key_selected() == {'FINISHED'}
+    assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
     fc = cb.fcurve(pb2, "rz")
     assert fc is not None and fc.data_path == 'pose.bones["joint2"].rotation_euler' and fc.array_index == 2
     assert fc.group is not None and fc.group.name == "joint2"
     assert cb.fcurve(pb3, "rz") is not None and cb.channel_state(pb2, "rz") == 'KEYED'
     bpy.context.scene.frame_set(5)
-    assert bpy.ops.maya_kit.cb_breakdown_selected() == {'FINISHED'}
+    assert bpy.ops.allset.cb_breakdown_selected() == {'FINISHED'}
     assert any(k.type == 'BREAKDOWN' for k in fc.keyframe_points)
-    bpy.ops.maya_kit.cb_mute(mute=True)
+    bpy.ops.allset.cb_mute(mute=True)
     assert fc.mute
-    bpy.ops.maya_kit.cb_delete_keys()
+    bpy.ops.allset.cb_delete_keys()
     assert cb.fcurve(pb2, "rz") is None and cb.fcurve(pb3, "rz") is None
     drv = pb2.driver_add("rotation_euler", 2)
     assert cb.channel_state(pb2, "rz") == 'DRIVEN', drv
-    bpy.ops.maya_kit.cb_break_connections()
+    bpy.ops.allset.cb_break_connections()
     assert cb.driver(pb2, "rz") is None
-    bpy.ops.maya_kit.cb_lock(lock=True)
+    bpy.ops.allset.cb_lock(lock=True)
     assert pb2.lock_rotation[2] and pb3.lock_rotation[2] and not pb2.lock_rotation[0]
     assert cb.apply_entry("rz", "45") == 0, "locked channels take no entry"
-    bpy.ops.maya_kit.cb_lock(lock=False)
+    bpy.ops.allset.cb_lock(lock=False)
     cb.set_selected_channels(["sx", "sy", "sz"])
-    bpy.ops.maya_kit.cb_hide(lock=True)
-    assert cb.is_hidden(pb2, "sx") and pb2.lock_scale[0] and "maya_kit_cb_hidden" in pb2.keys()
+    bpy.ops.allset.cb_hide(lock=True)
+    assert cb.is_hidden(pb2, "sx") and pb2.lock_scale[0] and "allset_cb_hidden" in pb2.keys()
     assert "Scale X" not in _draw_cb().texts("operator")
-    bpy.ops.maya_kit.cb_show_all()
+    bpy.ops.allset.cb_show_all()
     assert not cb.is_hidden(pb2, "sx")
     cb.set_selected_channels(["tx"])
-    bpy.ops.maya_kit.cb_keyable(keyable=False)
+    bpy.ops.allset.cb_keyable(keyable=False)
     assert not cb.is_keyable(pb3, "tx")
-    bpy.ops.maya_kit.cb_key_selected()
+    bpy.ops.allset.cb_key_selected()
     assert cb.fcurve(pb3, "tx") is None
     pb2.location[0] = 0.3
-    bpy.ops.maya_kit.cb_duplicate_values()
+    bpy.ops.allset.cb_duplicate_values()
     assert abs(pb3.location[0] - 0.3) < 1e-6
     cb.set_selected_channels([])
-    bpy.ops.maya_kit.cb_key_all()                      # every keyable visible channel
+    bpy.ops.allset.cb_key_all()                      # every keyable visible channel
     assert cb.fcurve(pb2, "sz") is not None and cb.fcurve(pb3, "tx") is None
 
 
@@ -178,11 +178,11 @@ def test_custom_attribute_on_joint():
     pb2["curl"] = 1.0
     cb.rebuild_rows()
     assert cb.full_path(pb2, '["curl"]') == 'pose.bones["joint2"]["curl"]'
-    row = next(r for r in bpy.context.scene.maya_kit_cb.rows if r.kind == "CUSTOM")
+    row = next(r for r in bpy.context.scene.allset_cb.rows if r.kind == "CUSTOM")
     row.text = "+=2"
     assert pb2["curl"] == 3.0
     cb.set_selected_channels(["cp:curl"])
-    bpy.ops.maya_kit.cb_key_selected()
+    bpy.ops.allset.cb_key_selected()
     assert cb.fcurve(pb2, "cp:curl") is not None
 
 
@@ -197,7 +197,7 @@ def test_quaternion_joint_rotate_order_button():
     assert not cb.has_channel(pb3, "rx")
     rec = _draw_cb()
     assert "Rotation mode QUATERNION" in rec.texts("label") and "Rotate Order XYZ" in rec.texts("operator")
-    assert bpy.ops.maya_kit.cb_rotate_order(order='XYZ') == {'FINISHED'}
+    assert bpy.ops.allset.cb_rotate_order(order='XYZ') == {'FINISHED'}
     bpy.context.view_layer.update()
     assert pb3.rotation_mode == 'XYZ' and cb.has_channel(pb3, "rx")
     err = max(abs(a - b) for ra, rb in zip(before, pb3.matrix_basis) for a, b in zip(ra, rb))
@@ -224,7 +224,7 @@ def test_constraint_weight_rows():
     assert cb.constrained_keys(pb2) == {"tx", "ty", "tz"}
     con2.use_y = False
     assert cb.constrained_keys(pb2) == {"tx", "tz"}
-    rows = [r for r in bpy.context.scene.maya_kit_cb.rows if r.kind == "CONSTRAINT"]
+    rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
     assert len(rows) == 1 and rows[0].name == "influence", [(r.kind, r.name) for r in rows]
     rows[0].text = "0.5"
     assert abs(con2.influence - 0.5) < 1e-6 and abs(pb3.constraints[0].influence - 0.5) < 1e-6
@@ -255,9 +255,9 @@ def test_object_mode_armature_hint_and_object_menu():
     _mode('POSE')
     _pick(arm, "joint1", "joint3")
     rec = Recorder()
-    cb.MAYAKIT_MT_cb_object.draw(type("M", (), {"layout": rec})(), bpy.context)
+    cb.ALLSET_MT_cb_object.draw(type("M", (), {"layout": rec})(), bpy.context)
     assert rec.texts("operator") == ["joint1", "joint3"]
-    assert bpy.ops.maya_kit.cb_make_lead(name="joint3", only=True) == {'FINISHED'}
+    assert bpy.ops.allset.cb_make_lead(name="joint3", only=True) == {'FINISHED'}
     assert cb.lead() == arm.pose.bones["joint3"] and cb.targets() == [arm.pose.bones["joint3"]]
 
 
@@ -268,7 +268,7 @@ def test_virtual_slider_targets_joints():
     pairs = cb.slider_targets(bpy.context)
     assert [(n.name, k) for n, k in pairs] == [("joint1", "rx"), ("joint2", "rx")]
     events = {(km, idname, ev.get("type"), ev.get("ctrl", False)) for km, idname, ev, _p, _s in patches.ADDED}
-    assert ("Pose", "maya_kit.cb_virtual_slider", "MIDDLEMOUSE", False) in events
+    assert ("Pose", "allset.cb_virtual_slider", "MIDDLEMOUSE", False) in events
     assert ("Object Non-modal", "object.posemode_toggle", "TAB", True) in events
 
 
@@ -277,30 +277,30 @@ def test_outliner_joint_rows_and_click():
     _mode('OBJECT')
     wm = bpy.context.window_manager
     outliner.rebuild(force=True)
-    rows = [(r.kind, r.label, r.depth, r.has_children) for r in wm.maya_kit_outliner_rows]
+    rows = [(r.kind, r.label, r.depth, r.has_children) for r in wm.allset_outliner_rows]
     assert rows == [('OBJECT', "skeleton1", 0, True)], rows
-    arm.maya_kit_expanded = True
-    arm.data.bones["joint1"].maya_kit_expanded = True
+    arm.allset_expanded = True
+    arm.data.bones["joint1"].allset_expanded = True
     outliner.rebuild(force=True)
-    rows = [(r.kind, r.label, r.depth) for r in wm.maya_kit_outliner_rows]
+    rows = [(r.kind, r.label, r.depth) for r in wm.allset_outliner_rows]
     assert rows == [('OBJECT', "skeleton1", 0), ('JOINT', "joint1", 1), ('JOINT', "joint2", 2)], rows
-    bpy.ops.maya_kit.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
-    bpy.ops.maya_kit.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
-    rows = [r.label for r in wm.maya_kit_outliner_rows]
+    bpy.ops.allset.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
+    bpy.ops.allset.outliner_expand(name="skeleton1", bone="joint1", recursive=True)
+    rows = [r.label for r in wm.allset_outliner_rows]
     assert rows == ["skeleton1", "joint1", "joint2", "joint3"], rows
-    assert outliner.icon_for(wm.maya_kit_outliner_rows[2], arm) == 'BONE_DATA'
+    assert outliner.icon_for(wm.allset_outliner_rows[2], arm) == 'BONE_DATA'
     # click joint2: pose mode + that joint
-    assert bpy.ops.maya_kit.outliner_select(index=2, mode='REPLACE') == {'FINISHED'}
+    assert bpy.ops.allset.outliner_select(index=2, mode='REPLACE') == {'FINISHED'}
     assert arm.mode == 'POSE' and cb.lead() == arm.pose.bones["joint2"]
-    assert wm.maya_kit_outliner_index == 2
-    bpy.ops.maya_kit.outliner_select(index=3, mode='TOGGLE')
+    assert wm.allset_outliner_index == 2
+    bpy.ops.allset.outliner_select(index=3, mode='TOGGLE')
     assert [pb.name for pb in cb.targets()] == ["joint3", "joint2"]
-    bpy.ops.maya_kit.outliner_select(index=1, mode='RANGE')
+    bpy.ops.allset.outliner_select(index=1, mode='RANGE')
     assert {pb.name for pb in cb.targets()} == {"joint1", "joint2", "joint3"}
-    wm.maya_kit_outliner_rows[3].label = "wrist"            # rename = bone name
+    wm.allset_outliner_rows[3].label = "wrist"            # rename = bone name
     assert "wrist" in arm.data.bones
     # an object row leaves pose mode
-    bpy.ops.maya_kit.outliner_select(index=0, mode='REPLACE')
+    bpy.ops.allset.outliner_select(index=0, mode='REPLACE')
     assert arm.mode == 'OBJECT' and cb.lead() == arm
 
 
@@ -318,7 +318,7 @@ def test_attribute_editor_joint_tabs():
     assert ae.tabs(pb2) == [("J", "joint2", "joint"),
                             (f"C:{con.name}", "joint2_orientConstraint1", "orientConstraint")]
     wm = bpy.context.window_manager
-    wm.maya_kit_ae_tab, wm.maya_kit_ae_kind = "", "S"
+    wm.allset_ae_tab, wm.allset_ae_kind = "", "S"
     assert ae.current_tab(bpy.context, pb2) == "J"
     rec = Recorder()
     notices = import_module(kit.MODULE + ".ui.notices")
@@ -340,7 +340,7 @@ def test_attribute_editor_joint_tabs():
     # Joint Orient = rest rotation relative to the parent's rest
     eul = ae.joint_orient(pb2)
     assert all(abs(v) < 1e-5 for v in eul), tuple(eul)     # a straight chain: no orient
-    assert bpy.ops.maya_kit.ae_add_limit(type='LIMIT_ROTATION') == {'FINISHED'}
+    assert bpy.ops.allset.ae_add_limit(type='LIMIT_ROTATION') == {'FINISHED'}
     assert any(c.type == 'LIMIT_ROTATION' for c in pb2.constraints), "Limit Information adds to the joint"
     _mode('EDIT')
     rec = Recorder()

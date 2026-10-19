@@ -1,4 +1,4 @@
-"""Step 106 in a real UI: the MayaKit layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
+"""Step 106 in a real UI: the Allset layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
 Tool Settings (ToggleToolSettings) opens the dock left of the viewport with Maya's Move Settings, a second toggle
 closes it (the old popup stayed open: audit 7 c03), a third opens it again; Rotate / Scale show their sections;
 the Attribute Editor shows the history / material tabs, menu bar, buttons and Notes (screenshots beside audit-7
@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, setup, step, win  # noqa: E402
 
 GUI_TIMEOUT = 240
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -40,7 +40,7 @@ def in_v3d(fn, *a, **kw):
 
 
 def menu(path):
-    return in_v3d(bpy.ops.maya_kit.menu_item, item=path)
+    return in_v3d(bpy.ops.allset.menu_item, item=path)
 
 
 def dock():
@@ -55,15 +55,15 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.make_maya(open_layout=False)
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.make_maya(open_layout=False)
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    in_v3d(bpy.ops.maya_kit.create, kind='CUBE')
+    bpy.ops.allset.keymap_activate()
+    in_v3d(bpy.ops.allset.create, kind='CUBE')
     ob = bpy.context.active_object
     C["ob"] = ob.name
     in_v3d(bpy.ops.object.mode_set, mode='EDIT')
@@ -74,7 +74,7 @@ def s_scene():
     bm.select_flush_mode()
     bmesh.update_edit_mesh(ob.data)
     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
-    in_v3d(bpy.ops.maya_kit.extrude, local_translate_z=0.5)
+    in_v3d(bpy.ops.allset.extrude, local_translate_z=0.5)
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.move")
     C["areas"] = len(win().screen.areas)
     C["main_w"] = v3d()[0].width
@@ -120,7 +120,7 @@ def s_toggle2_check():
     check(f"toggle 2: the dock is closed, the layout is back ({len(win().screen.areas)} areas, viewport "
           f"{v3d()[0].width} px)",
           dock() is None and len(win().screen.areas) == C["areas"] and abs(v3d()[0].width - C["main_w"]) <= 4)
-    in_v3d(bpy.ops.maya_kit.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
+    in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
 
 
 @step
@@ -128,7 +128,7 @@ def s_toggle3_check():
     redraw()
     check("toggle 3 (Status Line button): open again", dock() is not None)
     # an option box of a tool (toolPropertyWindow) only shows it
-    in_v3d(bpy.ops.maya_kit.editor_toggle, editor='TOOL_SETTINGS', show=True)
+    in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS', show=True)
     check("show-only (tool option box) keeps it open", dock() is not None)
     in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.rotate")
     redraw()
@@ -154,8 +154,8 @@ def s_select_shot():
 @step
 def s_object_move_shot():
     shot("gui_step106_ts_move_object.png")      # pair with audit-7 c02 (object mode Move tool)
-    in_v3d(bpy.ops.maya_kit.editor_toggle, editor='TOOL_SETTINGS')
-    in_v3d(bpy.ops.maya_kit.dock_show, dock='ATTRIBUTE_EDITOR')
+    in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')
+    in_v3d(bpy.ops.allset.dock_show, dock='ATTRIBUTE_EDITOR')
     ae = mod(".ui.attribute_editor")
     ae.set_tab(bpy.context, "S")
     redraw()
@@ -198,7 +198,7 @@ def s_ae_edit_shot():
 def s_ae_history_shot():
     shot("gui_step106_ae_history.png")
     in_v3d(bpy.ops.object.mode_set, mode='OBJECT')
-    in_v3d(bpy.ops.maya_kit.dock_show, dock='CHANNEL_BOX')
+    in_v3d(bpy.ops.allset.dock_show, dock='CHANNEL_BOX')
     check("session ran", True)
 
 

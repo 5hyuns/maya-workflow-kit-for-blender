@@ -8,7 +8,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, step, tap, setup, screenshot, view3d  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -32,7 +32,7 @@ def s_setup():
     ts().use_snap, ts().snap_elements = False, {'INCREMENT'}
     ts().use_transform_data_origin = False
     ts().use_proportional_edit_objects, ts().proportional_size = False, 2.0   # a user radius (1.0 = Blender default becomes Maya 5, step 63)
-    check("keymap active = Maya", bpy.context.window_manager.keyconfigs.active.name == "Maya")
+    check("keymap active = Maya", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
     ev('X', 'PRESS')
 
 

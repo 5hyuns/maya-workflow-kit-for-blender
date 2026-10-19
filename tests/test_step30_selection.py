@@ -20,8 +20,8 @@ preferences = import_module(kit.MODULE + ".preferences")
 
 
 def test_select_through_items_lead_box_and_lasso():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
-    assert "maya_kit.select_through" in patches.PASS_THROUGH_FIRST
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    assert "allset.select_through" in patches.PASS_THROUGH_FIRST
     for km_name in patches.SELECT_DRAG_KEYMAPS:
         items = [k for k in kc.keymaps[km_name].keymap_items if k.active]
         target = "view3d.select_lasso" if "Lasso" in km_name else "view3d.select_box"
@@ -29,7 +29,7 @@ def test_select_through_items_lead_box_and_lasso():
             for ctrl in (False, True):
                 same = [k.idname for k in items if k.type == 'LEFTMOUSE' and k.value == 'CLICK_DRAG'
                         and k.shift == shift and k.ctrl == ctrl and not k.alt]
-                assert same[:2] == ["maya_kit.select_through", target], (km_name, shift, ctrl, same)
+                assert same[:2] == ["allset.select_through", target], (km_name, shift, ctrl, same)
 
 
 def _fake_entry(running):
@@ -60,11 +60,11 @@ def test_watch_restores_after_the_select_modal():
 def test_select_through_needs_edit_mesh_and_option():
     # Headless: no 3D View space; begin() must refuse quietly.
     assert marquee.begin(bpy.context) is False
-    assert bpy.ops.maya_kit.select_through.poll()
+    assert bpy.ops.allset.select_through.poll()
 
 
 def test_preselect_group_registered_and_polls_off():
-    assert "bl_rna" in preselect.MAYAKIT_GGT_preselect.__dict__, "registered"
+    assert "bl_rna" in preselect.ALLSET_GGT_preselect.__dict__, "registered"
     assert preferences.get().preselect_highlight is True
     assert preselect._enabled(bpy.context) is False, "object mode"
 

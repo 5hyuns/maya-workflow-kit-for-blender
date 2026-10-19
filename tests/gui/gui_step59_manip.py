@@ -1,6 +1,6 @@
 """Step 59 in a real UI, in Maya's order (research/maya/workflows/pivot_snap.md):
 
-MayaKit layout, a cube, Move tool: the Maya-shaped manipulator (size, X handle drag, active
+Allset layout, a cube, Move tool: the Maya-shaped manipulator (size, X handle drag, active
 handle), X hold + X arrow drag from 0.3 cm lands on whole cm (S2), D hold + drag moves only
 the pivot (translate, geometry stay, P3), D + X snaps the pivot to the grid, E then rotates
 about the new pivot (P1), V + centre handle puts the pivot on another cube's vertex (S4), the
@@ -17,10 +17,10 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, scale  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 STEPS = 10
-TMP = os.path.join(os.environ.get("TEMP", "."), "maya_kit_step59_shot.png")
+TMP = os.path.join(os.environ.get("TEMP", "."), "allset_step59_shot.png")
 
 
 def mod(name):
@@ -119,18 +119,18 @@ def measure(path, origin, colour, radius):
     return best
 
 
-# --- MayaKit layout, a cube, Move tool ---------------------------------------------------------
+# --- Allset layout, a cube, Move tool ---------------------------------------------------------
 
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_cube():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     # Keep the on-screen sizes this test was measured with: the template view went from lens 35 to Maya's 70
     # (step 81), which doubles them. (The V-snap drag below queues its moves in one tick; Blender recomputes the
     # snap target at most once per 10 ms, so a longer drag never caught — docs/steps/step_95.md.)
@@ -144,8 +144,8 @@ def s_cube():
           and ts.transform_pivot_point == 'ACTIVE_ELEMENT' and abs(ts.snap_angle_increment_3d - 0.2618) < 1e-3)
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     b = bpy.context.view_layer.objects.active
     b.location = (3 * k(), 0, 0)
     select_only(ob1())
@@ -158,7 +158,7 @@ def s_widget():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         tool = bpy.context.workspace.tools.from_space_view3d_mode('OBJECT')
         check(f"Move tool draws the Maya manipulator ({tool.idname}: {tool.widget})",
-              tool.idname == "builtin.move" and tool.widget == "MAYAKIT_GGT_xform")
+              tool.idname == "builtin.move" and tool.widget == "ALLSET_GGT_xform")
     redraw()
 
 
@@ -395,7 +395,7 @@ def s_scale_shot():
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region, active_object=ob,
                                    selected_objects=[ob], object=ob):
-        bpy.ops.maya_kit.reset_pivot()
+        bpy.ops.allset.reset_pivot()
     ob.rotation_euler = (0, 0, 0)
     ob.location = (0, 0, 0)
     bpy.context.view_layer.update()

@@ -62,10 +62,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 5 — 레이아웃·테마
 
-- [ ] (step 5) 애드온 환경설정 「Install Maya Layout」 → File > New 에 MayaKit 이 보이고, 선택하면 General 레이아웃(좌 Outliner / 가운데 뷰포트 / 우 Layer Editor·Properties / 아래 타임라인)으로 새 파일.
+- [ ] (step 5) 애드온 환경설정 「Install Maya Layout」 → File > New 에 Allset 이 보이고, 선택하면 General 레이아웃(좌 Outliner / 가운데 뷰포트 / 우 Layer Editor·Properties / 아래 타임라인)으로 새 파일.
 - [ ] (step 5) 「New File with Maya Layout」 → 확인 창 후 같은 결과. 「Remove Maya Layout」 → File > New 목록에서 사라짐.
 - [ ] (step 5) 「Apply Maya Theme」 → Maya 와 나란히 놓고 회색·선택 색·그라디언트 비교 ([K] 값 조정 필요 여부). 「Restore Previous Theme」 → 원래 테마.
-- [ ] (step 5) Maya Kit 을 끈 상태에서 MayaKit 템플릿으로 새 파일 → Maya Kit 이 다시 켜짐.
+- [ ] (step 5) Allset 을 끈 상태에서 Allset 템플릿으로 새 파일 → Allset 이 다시 켜짐.
 - [ ] (step 5) 오브젝트 와이어프레임(4) 색: 비선택 짙은 파랑, 선택 초록, 리드 흰색이 Maya 와 비슷한지.
 
 ### Step 6 — Channel Box / Layer Editor
@@ -79,7 +79,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 7 — 메뉴바·메뉴셋, Status Line, 커맨드 라인, Help Line
 
-- [ ] (step 7) 저장한 사용자 환경설정으로 Blender 시작 → File > New > MayaKit: 활성 키맵이 계속 "Maya" 인지 (GUI 테스트의 `--factory-startup` 에서는 Blender 로 돌아감).
+- [ ] (step 7) 저장한 사용자 환경설정으로 Blender 시작 → File > New > Allset: 활성 키맵이 계속 "Maya" 인지 (GUI 테스트의 `--factory-startup` 에서는 Blender 로 돌아감).
 - [ ] (step 7) 메뉴셋 드롭다운 Modeling → Rigging → Animation → FX → Rendering: 메뉴가 바뀌고 다시 시작해도 마지막 메뉴셋 유지.
 - [ ] (step 7) 각 메뉴의 진한 항목 몇 개 실행 (Create > Polygon Primitives > Cube, Edit Mesh > Bevel 은 마우스로 조절, Mesh Tools > Multi-Cut, Constrain > Parent 를 대상→피구속 순서로 선택 후) — Maya 와 비슷한 결과인지. 회색 항목 툴팁에 Maya 경로.
 - [ ] (step 7) 좁은 창(1280 px)에서 메뉴바가 잘리는 정도; 헤더 우클릭 > Show Menus 끄면 메뉴가 하나로 접힘.
@@ -128,7 +128,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 12 — 셸프
 
-- [ ] (step 12) MayaKit 레이아웃: 메뉴바 아래 Status Line, 그 아래 셸프 (Maya 와 같은 순서), 창 크기를 바꿔도 띠가 두 줄 높이로 남는지.
+- [ ] (step 12) Allset 레이아웃: 메뉴바 아래 Status Line, 그 아래 셸프 (Maya 와 같은 순서), 창 크기를 바꿔도 띠가 두 줄 높이로 남는지.
 - [ ] (step 12) Poly Modeling 큐브 버튼 클릭 → pCube1, **더블클릭** → 큐브 하나 + Adjust Last Operation 팝업 (두 개 생기지 않음), Ctrl+클릭 → 옵션.
 - [ ] (step 12) 탭 드롭다운 / ◀ ▶ 로 Rigging·Animation·Rendering 전환, 다시 시작해도 마지막 탭 유지 (환경설정 저장 시).
 - [ ] (step 12) 톱니 > New Shelf → Add Button(스크립트 한 줄, 아이콘 이름) → 클릭 실행, Edit/Delete Button, Add Last Command (커맨드 라인 실행 후), 다시 시작해도 사용자 셸프가 남음.
@@ -137,7 +137,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 13 — 배포
 
 - [ ] (step 13) 실제 사용자 설정(새 프로필)에서 zip 을 끌어다 놓아 설치: Maya 키맵·내비게이션 적용, Quick Setup 창에서 Continue 를 눌렀을 때 키맵이 Blender 로 바뀌는지 (바뀌면 Activate Maya Keymap).
-- [ ] (step 13) Install Maya Layout → File > New > MayaKit → Blender 재시작 뒤에도 레이아웃·키맵 유지, Remove Maya Layout 후 템플릿 목록에서 사라짐.
+- [ ] (step 13) Install Maya Layout → File > New > Allset → Blender 재시작 뒤에도 레이아웃·키맵 유지, Remove Maya Layout 후 템플릿 목록에서 사라짐.
 - [ ] (step 13) 비활성화 → 키맵·내비게이션·Image Editor 헤더가 원래대로, 다시 활성화.
 
 ### Step 14 — 재점검 1차
@@ -177,7 +177,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 21 — 단위
 
-- [ ] (step 21) MayaKit 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
+- [ ] (step 21) Allset 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
 - [ ] (step 21) Maya 에서 내보낸 FBX(cm)를 File > Import 로 가져와 Create 큐브와 같은 크기인지, Maya Units 켬/끔 둘 다.
 
 ### Step 22 — 매니퓰레이터 Shift+드래그 복제
@@ -192,7 +192,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 25 — cm 그리드·스냅
 
-- [ ] (step 25) MayaKit 레이아웃에서 확대/축소하며 그리드 단계(1 cm → 10 cm → 1 m)가 바뀔 때 X 홀드 스냅 간격이 따라 바뀌는지, Maya 2022 그리드 스냅 감각과 비교.
+- [ ] (step 25) Allset 레이아웃에서 확대/축소하며 그리드 단계(1 cm → 10 cm → 1 m)가 바뀔 때 X 홀드 스냅 간격이 따라 바뀌는지, Maya 2022 그리드 스냅 감각과 비교.
 
 ### Step 26 — Smart Extrude
 
@@ -201,7 +201,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 27 — 매니퓰레이터 크기·뷰 키
 
-- [ ] (step 27) = / - 몇 번 눌러 매니퓰레이터 크기 변화 폭을 Maya 2022 와 비교; 애드온을 껐다 켜면 원래 크기. Home 이 Maya 기본 뷰처럼 느껴지는지 (MayaKit 레이아웃 cm 장면에서). PgUp/PgDn 단계 변화를 3 모드에서 비교.
+- [ ] (step 27) = / - 몇 번 눌러 매니퓰레이터 크기 변화 폭을 Maya 2022 와 비교; 애드온을 껐다 켜면 원래 크기. Home 이 Maya 기본 뷰처럼 느껴지는지 (Allset 레이아웃 cm 장면에서). PgUp/PgDn 단계 변화를 3 모드에서 비교.
 
 ### Step 28 — MMB 활성 핸들
 
@@ -221,7 +221,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 31 — 레이아웃 다듬기
 
-- [ ] (step 31) MayaKit 레이아웃 왼쪽 Outliner 에서 긴 이름(pCylinder12, group3 아래 3 단계)이 잘리지 않는지, 컬렉션 행 없이 오브젝트만 보이는 것이 Maya Outliner 처럼 느껴지는지. 새 컬렉션을 만든 경우 Layer Editor 쪽에서만 보이는 것이 혼란스럽지 않은지.
+- [ ] (step 31) Allset 레이아웃 왼쪽 Outliner 에서 긴 이름(pCylinder12, group3 아래 3 단계)이 잘리지 않는지, 컬렉션 행 없이 오브젝트만 보이는 것이 Maya Outliner 처럼 느껴지는지. 새 컬렉션을 만든 경우 Layer Editor 쪽에서만 보이는 것이 혼란스럽지 않은지.
 - [ ] (step 31) Space 탭 4분할 → top/front/side 위에서 다시 Space 탭 → 헤더가 "Top/Front/Right Orthographic" 으로 남는지.
 - [ ] (step 31) W/E/R 홀드 메뉴 체크 상자 켜짐/꺼짐이 한눈에 구분되는지 (엔진, 환경설정 Blender Pies 둘 다).
 - [ ] (step 31) 타임라인 현재 프레임 상자가 옆 눈금 숫자를 가리는 것 (Blender C 그리기, 고치지 못함) 이 Maya 사용자에게 거슬리는지.
@@ -263,7 +263,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 38 — Channel Box 다중 선택·상대값, AE 재질 라벨
 
-- [ ] (step 38) Channel Box 값 필드를 클릭해 숫자 입력 → Enter: Maya 처럼 바로 적용되는지. `+=5`, `-=2`, `*=2`, `/=2` 가 여러 오브젝트에서 오브젝트마다 자기 값 기준으로 적용되는지. 단위 없는 숫자 = cm (MayaKit 템플릿), `5 m` 도 되는지.
+- [ ] (step 38) Channel Box 값 필드를 클릭해 숫자 입력 → Enter: Maya 처럼 바로 적용되는지. `+=5`, `-=2`, `*=2`, `/=2` 가 여러 오브젝트에서 오브젝트마다 자기 값 기준으로 적용되는지. 단위 없는 숫자 = cm (Allset 템플릿), `5 m` 도 되는지.
 - [ ] (step 38) 채널 이름 여러 개 (Rotate X/Y/Z) 를 고르고 하나에 입력 → 고른 채널 모두에 적용; 고르지 않은 채널에 입력하면 그 채널만.
 - [ ] (step 38) 필드 숫자가 단위 없이 보이는 것 (Maya 처럼 "1.5"), 필드 Ctrl+휠·드래그가 없어진 것 (값 끌기는 뷰포트 MMB 가상 슬라이더) 이 Maya 사용자에게 자연스러운지; Blender 사용자는 불편할 수 있음.
 - [ ] (step 38) 여러 오브젝트에 같은 Bevel/Subdivision 모디파이어가 있을 때 INPUTS 값 입력이 모두에 적용되는지, 카메라 여러 개 선택 후 SHAPES Focal Length, 사용자 속성. 그 뒤 Ctrl+Z 한 번에 모두 되돌아가는지.
@@ -280,9 +280,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 42 — 켜자마자 Maya (환영 대화상자, Make Blender Maya)
 
 - [ ] (step 42) 실제 설치 (환경설정 > Get Extensions > Install from Disk 로 zip) 직후 환영 대화상자가 커서 근처에 뜨는지, Blender 스플래시와 겹쳐도 "Make Blender Maya" 를 누를 수 있는지. 누르면 Maya 레이아웃 + 테마, 스플래시 없음.
-- [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Maya Kit 맨 위 버튼으로 할 수 있는지.
+- [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Allset 맨 위 버튼으로 할 수 있는지.
 - [ ] (step 42) Blender 를 껐다 켜면 (파일 없이) Maya 레이아웃으로 열리는지; .blend 를 더블클릭해 열면 그 파일이 그대로 열리는지; 세션 중 File > New > General 은 General 인지.
-- [ ] (step 42) Revert Maya Look → 원래 테마·스플래시 설정이 돌아오고 File > New 목록에서 MayaKit 이 사라지는지. Maya Kit 을 끄면 원래 테마로, 다시 켜면 Maya 테마로 돌아오는지.
+- [ ] (step 42) Revert Maya Look → 원래 테마·스플래시 설정이 돌아오고 File > New 목록에서 Allset 이 사라지는지. Allset 을 끄면 원래 테마로, 다시 켜면 Maya 테마로 돌아오는지.
 - [ ] (step 42) 다른 애드온 (예: Node Wrangler) 이 Make Blender Maya 전후로 그대로 켜져 있는지.
 
 ### Step 44 — Maya 위젯 감각 (평면 위젯·밀도·Segoe UI)
@@ -291,11 +291,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 44) 실제 모니터 배율을 Blender 실행 중에 바꾸면 (노트북 ↔ 외부 모니터) 밀도는 처음 계산한 값 그대로 (delegated: 다시 켜면 새로 계산). 작아서 불편한지.
 - [ ] (step 44) Segoe UI: 한글·특수문자 (°, ×) 가 빠지지 않고 보이는지 (Blender 가 빠진 글자는 기본 글꼴로 채우는지), 마킹 메뉴·핫박스 글자도 Segoe UI 인지.
 - [ ] (step 44) 각진 평면 위젯이 Maya 처럼 읽히는지; 버튼·필드 경계가 너무 안 보이지 않는지 (엠보스 없음). 메뉴 그림자 없음이 어색하지 않은지.
-- [ ] (step 44) Revert Maya Look / Maya Kit 끄기 → Resolution Scale·글꼴·와이어 부드럽게가 원래대로 돌아오는지.
+- [ ] (step 44) Revert Maya Look / Allset 끄기 → Resolution Scale·글꼴·와이어 부드럽게가 원래대로 돌아오는지.
 
 ### Step 45 — Maya 그리드
 
-- [ ] (step 45) MayaKit 레이아웃 persp: 그리드가 ±12 cm 에서 끝나고 5 cm 마다 굵은 선, 축선도 굵은 회색 (빨강/초록 아님). 확대·축소·텀블해도 깜빡이거나 끊기지 않는지, 큐브가 그리드 뒤를 가리는지.
+- [ ] (step 45) Allset 레이아웃 persp: 그리드가 ±12 cm 에서 끝나고 5 cm 마다 굵은 선, 축선도 굵은 회색 (빨강/초록 아님). 확대·축소·텀블해도 깜빡이거나 끊기지 않는지, 큐브가 그리드 뒤를 가리는지.
 - [ ] (step 45) 4 분할: top 에만 그리드, front / side 에는 그리드 없음 (Maya 와 같음). 사용자 정사영 (Numpad 5 로 바꾼 비스듬한 뷰) 에서는 바닥 그리드.
 - [ ] (step 45) X 홀드 + 이동: 그리드 안에서 사본이 그리드선에 붙는지; 멀리 축소하면 Blender 가 10 cm 단계로 붙는데 (Blender 그리드 단계) 그것도 그리드선 (10 의 배수) 인지. 정사영에서 아주 크게 확대하면 1 cm 보다 잘게 붙을 수 있음 — Maya 사용자에게 괜찮은지.
 - [ ] (step 45) Show > Grid / Display > Grid: 끄면 그리드 없음, 다시 켜면 Maya 그리드. 오버레이 팝오버에서 Blender Floor 를 켜면 Blender 그리드로 바뀌는 것 (delegated) 이 헷갈리지 않는지.
@@ -317,7 +317,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 49 — 레이아웃 동등화
 
-- [ ] (step 49) MayaKit 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
+- [ ] (step 49) Allset 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
 - [ ] (step 49) 툴박스: Select·Lasso·Paint Select·Move·Rotate·Scale 가 오브젝트·편집·포즈 모드에서 같은 자리에 있고, 다른 툴 (Multi-Cut 등) 을 쓴 뒤 그 툴이 구분선 아래 마지막 칸에 나오는지. 툴 버튼 더블클릭·길게 누르기가 이상하지 않은지.
 - [ ] (step 49) 툴박스 아래 빈 곳 클릭·드래그 → 선택이 그대로인지. 빠른 레이아웃 Single / Four 버튼, Outliner 버튼 (새 창), Front/Persp 는 회색.
 - [ ] (step 49) Resolution Scale 을 1.0 보다 크게 (Maya Density 끔) 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
@@ -356,7 +356,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 54 — 단위 생성 경로·조명 세기·「Blender 에 없음」 안내
 
-- [ ] (step 54) MayaKit 템플릿에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
+- [ ] (step 54) Allset 템플릿에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
 - [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 m 장면의 같은 배치와 비슷한지 (역제곱 미터 보정). 상태 표시줄 보고에 감쇠 안내.
 - [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Animation Layers / Character Sets, Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
 - [ ] (step 54) Fluids > 3D Container / Effects > Smoke 를 메시 선택 후: 도메인이 메시 둘레에 Maya 단위로 알맞게 (cm 템플릿에서 2 m 상자가 아님).
@@ -372,7 +372,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 56 — Time Slider·키 감각
 
-- [ ] (step 56) MayaKit 레이아웃 Time Slider 아무 곳 LMB 클릭·드래그 = 시간 이동 (키를 집어 옮기지 않음), Dope Sheet 창 본문 LMB 는 여전히 키 선택.
+- [ ] (step 56) Allset 레이아웃 Time Slider 아무 곳 LMB 클릭·드래그 = 시간 이동 (키를 집어 옮기지 않음), Dope Sheet 창 본문 LMB 는 여전히 키 선택.
 - [ ] (step 56) Time Slider Shift+LMB 드래그 = 빨간 범위 띠; 그 상태로 RMB > Copy / Delete 가 범위의 키에, 보통 클릭으로 띠가 사라지는지. 범위 띠가 Maya 처럼 읽히는지 (색·투명도).
 - [ ] (step 56) Time Slider RMB 메뉴: Cut/Copy/Paste ▸/Delete/Snap/Keys ▸/Tangents ▸/Playback Speed ▸/Playback Looping ▸/Set Range to ▸/Playblast... 순서, 회색 항목 (Paste Connect, Free, Once/Oscillate) 툴팁 안내. 현재 프레임 Copy → 다른 프레임 Paste.
 - [ ] (step 56) K 누른 채 뷰 (또는 Graph Editor) 에서 LMB 드래그 = 시간 이동, 속도가 너무 빠르거나 느리지 않은지 (영역 폭 = 재생 범위), 놓은 뒤 선택 그대로. 편집 모드 K 가 더 이상 Knife 가 아님 (Multi-Cut = Ctrl+Shift+X).
@@ -415,13 +415,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지. (gui_manual_sweep)
 - [x] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로. (gui_manual_sweep)
 - [ ] (step 60) Maya 모드인 채 Blender 를 닫고 다시 열기 → Maya 모드 그대로, 그다음 Blender 로 → 원래 설정. Maya 모드에서 작업 관리자로 강제 종료 → 다시 열어서 Blender 로 전환 → 원래 설정.
-- [ ] (step 60) Preferences > Extensions 에서 Maya Kit 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Maya Kit 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.
+- [ ] (step 60) Preferences > Extensions 에서 Allset 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Allset 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.
 
 ### Step 61 — 배포 경로 (공개 전, 실제 Blender 창에서)
 
 - [ ] (step 61) `python tools/build_repo.py` 로 만든 `dist/repo/index.html` 을 브라우저로 열고, 링크를 Blender 창에 끌어 놓기 → 설치 + 저장소 등록, 이후 Get Extensions 에 업데이트가 보이는지 (테스트용 Blender 설정에서).
 - [ ] (step 61) Preferences > Get Extensions > Repositories > + > Add Remote Repository 에 `file:///…/dist/repo/index.json` → 검색 → Install → 「Check for Updates on Startup」 켜고 다음 시작에 상태 표시줄 알림.
-- [ ] (step 61) (exe 를 만들기로 하면) Inno Setup 으로 `tools/installer/maya_kit.iss` 컴파일 → 서명 없는 exe 의 SmartScreen 화면, Blender 버전 선택 페이지, 제어판 제거 뒤 원래 설정.
+- [ ] (step 61) (exe 를 만들기로 하면) Inno Setup 으로 `tools/installer/allset.iss` 컴파일 → 서명 없는 exe 의 SmartScreen 화면, Blender 버전 선택 페이지, 제어판 제거 뒤 원래 설정.
 
 ### Step 62 — Set Driven Key · 포즈 모드 제약 · Add Attribute · Blend Shape · Quick Rig
 
@@ -477,7 +477,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 68 — FX (시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache)
 
-- [ ] (step 68) MayaKit 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
+- [ ] (step 68) Allset 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
 - [x] (step 68) 메시 둘 선택 → Emit from Object: 둘 다 정점에서 방출. Shelf FX 「Emitter」 = Create Emitter, 「Add Emitter」 = Emit from Object. (gui_manual_sweep)
 - [ ] (step 68) Create > Plane (위로 올림) → nCloth > Create nCloth → 처음 프레임부터 재생: Maya fx_02→03 처럼 1 m 천 같은 빠르기로 떨어지고 주름. 바닥 평면 Create Passive Collider 위에서 0.2 유닛 정도 위에 멈춤 (1.5 유닛 위에 뜨지 않음). 두 평면을 같이 선택하면 둘 다 천.
 - [x] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글. (gui_manual_sweep)
@@ -504,7 +504,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [x] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜. (gui_manual_sweep)
 - [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
-- [x] (step 72) MayaKit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
+- [x] (step 72) Allset 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
 - [x] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만. (gui_manual_sweep)
 
 ### Step 73 — 타임 슬라이더 키 틱 · Range Slider 드래그
@@ -559,7 +559,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 81 — Maya persp 화각
 
-- [ ] (step 81) 새 장면 (MayaKit 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
+- [ ] (step 81) 새 장면 (Allset 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
 - [ ] (step 81) Create > Cameras > Camera = Focal Length 35 (AE / CB), Ctrl+Shift+C 카메라로 Look Through 하면 뷰와 같은 화면.
 - [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 → 붙음 (step 95: 시뮬레이션 실패는 확대 탓이 아니라 Blender 의 10 ms 스냅 스로틀 + 한 틱에 몰아 보낸 이동 탓, `gui_step95_v_snap` 은 확대 / 기본 모두 통과).
 
@@ -617,7 +617,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 91 — 뷰 표시
 
-- [ ] (step 91) MayaKit 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
+- [ ] (step 91) Allset 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
 - [ ] (step 91) 아무 작업 뒤 Adjust Last Operation 패널이 떠 있을 때 RMB / Space 메뉴가 그 패널 위에 그려짐 (UI 배율 0.8 / 1.25 에서도).
 
 ### Step 92 — Graph Editor 키
@@ -651,7 +651,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 99 — 첫 화면 (Outliner 기본 행, Tool Box 125 %, 도크 탭)
 
-- [ ] (step 99) Windows 125 % 에서 Maya Density 를 끈 채 (또는 Preferences > Interface > Resolution Scale 1.0) MayaKit 새 장면 → 시작 직후 마우스 커서가 Tool Box 열 오른쪽 경계로 잠깐 갔다가 제자리로 돌아오고, Tool Box 열에 Q W E R 툴이 보이며 뷰포트 안에 Blender 툴바가 남지 않는지. 커서가 순간 이동하는 것이 거슬리는지 (로드당 한 번).
+- [ ] (step 99) Windows 125 % 에서 Maya Density 를 끈 채 (또는 Preferences > Interface > Resolution Scale 1.0) Allset 새 장면 → 시작 직후 마우스 커서가 Tool Box 열 오른쪽 경계로 잠깐 갔다가 제자리로 돌아오고, Tool Box 열에 Q W E R 툴이 보이며 뷰포트 안에 Blender 툴바가 남지 않는지. 커서가 순간 이동하는 것이 거슬리는지 (로드당 한 번).
 - [ ] (step 99) 새 장면 Outliner = persp / top / front / side (회색, 카메라 그림) → defaultLightSet / defaultObjectSet. persp 클릭 = 선택 해제 + 행 강조, defaultLightSet = 라이트 선택. 큐브를 만들면 카메라 행이 pCube1 **뒤**로 감 (Maya 는 앞) — 거슬리는지.
 - [ ] (step 99) 도크 오른쪽 가장자리 세로 탭 「Channel Box / Layer Editor」「Attribute Editor」「Modeling Toolkit」 클릭 → 각 편집기, Ctrl+A 로도 탭이 바뀜. 오브젝트를 선택하면 Blender 「Item」 탭이 네 번째로 생김 (C 패널, 숨길 수 없음) — 눌러도 되고 다른 탭을 누르면 돌아옴.
 - [ ] (step 99) Layer Editor (Display / Anim 탭) 가 도크 높이의 약 절반에서 시작하고 목록이 아래 끝까지 차는지 (Maya 처럼). 큐브 INPUTS 가 있을 때는 CB 바로 밑에 붙음.
@@ -667,7 +667,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 102 — Maya 파일 대화상자, 기본 프로젝트
 
-- [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/maya_kit/projects/default/scenes` 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
+- [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/allset/projects/default/scenes` 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
 - [ ] (step 102) File > Export Selection... → 오른쪽 Files of type 을 OBJ → FBX 로 바꾸면 파일 이름 확장자가 따라 바뀌는지, 시작 폴더 (OBJ = data, FBX = scenes) 가 Maya 와 같다고 느껴지는지.
 - [ ] (step 102) 실제 Maya 2022 GUI 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지 (mayapy 로는 확인됨). Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
 - [ ] (step 102) Import 대화상자에 .ma 파일을 고르면 「.ma / .mb can't be read: export FBX from Maya」 오류.
@@ -725,3 +725,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 110) 실제 손으로: 구멍 테두리 / 면 묶음에 Circularize, 구 링을 줄였다가 Edit Edge Flow, 모서리 둘 → Connect, 면 두 개 → Make Hole 의 결과가 Maya 손에 맞는지 (뷰포트에서).
 - [ ] (step 110) 조인트 체인에서 Reroot / Set·Assume Preferred Angle / Create IK Spline Handle (curve1 을 움직이면 체인이 따라오는지), Hammer Skin Weights 를 웨이트 페인트로 확인.
 - [ ] (step 110) Cluster / Soft Modification 핸들을 W 로 움직이는 느낌 (Soft Mod 는 반경 5 안에서 부드럽게), Nonlinear Bend / Twist 값을 Channel Box 나 모디파이어에서 바꿀 때 핸들 기준으로 휘는지.
+
+### Step 111 — 이름 변경 (Allset for Maya Users)
+
+- [ ] (step 111) 깨끗한 설정에 `allset-0.1.0.zip` 을 끌어 놓아 설치: Preferences > Add-ons 에 「Allset for Maya Users」, 맨 위 About 상자 (설명 + 상표 고지문), 환영 창 제목·문구, 스플래시, File > New > Allset, 키맵 이름 「Maya-style」, 테마 이름 「Studio Grey (Maya-inspired)」.
+- [ ] (step 111) 예전 Maya Kit 를 쓰던 설정: `bl_app_templates_user/MayaKit` 이 레이아웃 설치 / 제거 때 지워지는지 (표시 파일 `.maya_kit` 있을 때만).

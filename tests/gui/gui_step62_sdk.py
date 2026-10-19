@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
 # Sidebar points measured in gui_step62_sdk_loaded / _scrolled.png (1600 x 900, scale 1.25, UI region
@@ -127,7 +127,7 @@ def goto_tab(category):
 
 
 def sdk():
-    return bpy.context.window_manager.maya_kit_sdk
+    return bpy.context.window_manager.allset_sdk
 
 
 def ry():
@@ -144,7 +144,7 @@ def s_setup():
     loc.location = (0, -3, 0)       # Translate X 0 = the first driven key (Maya scenario)
     bpy.context.scene.collection.objects.link(loc)
     view3d()[0].spaces.active.show_region_ui = True
-    bpy.ops.maya_kit.sdk_window()          # Key > Set Driven Key > Set... (menu mapping: headless test)
+    bpy.ops.allset.sdk_window()          # Key > Set Driven Key > Set... (menu mapping: headless test)
     redraw()
 
 
@@ -192,7 +192,7 @@ def s_shot_result():
     area, region = view3d()
     ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.add_attribute('INVOKE_DEFAULT')    # Modify > Add Attribute... dialog
+        bpy.ops.allset.add_attribute('INVOKE_DEFAULT')    # Modify > Add Attribute... dialog
 
 
 def s_wait_dialog():

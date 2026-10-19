@@ -55,8 +55,8 @@ def _scene(n=1):
     sc.frame_start, sc.frame_end, sc.use_preview_range = 1, 200, False
     sc.frame_set(1)
     wm = bpy.context.window_manager
-    wm.maya_kit_cb_selected = ""
-    wm.maya_kit_time_range_on = False
+    wm.allset_cb_selected = ""
+    wm.allset_time_range_on = False
     obs = []
     for i in range(n):
         bpy.ops.mesh.primitive_cube_add(location=(i, 0, 0))
@@ -82,7 +82,7 @@ def test_s_keys_every_keyable_channel():
     ob["curl"] = 1.0
     cb._set_flag_list(ob, cb.HIDDEN_PROP, ["sz"])          # Channel Box Hide = not keyable (Maya)
     cb._set_flag_list(ob, cb.NONKEYABLE_PROP, ["tx"])
-    assert bpy.ops.maya_kit.set_key() == {'FINISHED'}
+    assert bpy.ops.allset.set_key() == {'FINISHED'}
     want = [('["curl"]', 0), ("hide_viewport", 0), ("location", 1), ("location", 2), ("rotation_euler", 0),
             ("rotation_euler", 1), ("rotation_euler", 2), ("scale", 0), ("scale", 1)]
     assert _paths(ob) == want, _paths(ob)
@@ -90,22 +90,22 @@ def test_s_keys_every_keyable_channel():
 
 def test_set_breakdown_key_and_keying_set():
     ob, = _scene()
-    bpy.ops.maya_kit.set_key()
+    bpy.ops.allset.set_key()
     bpy.context.scene.frame_set(12)
-    assert bpy.ops.maya_kit.set_key(breakdown=True) == {'FINISHED'}
+    assert bpy.ops.allset.set_key(breakdown=True) == {'FINISHED'}
     fc = cb._fcurves(ob).find("location", index=0)
     assert [(round(k.co.x), k.type) for k in fc.keyframe_points] == [(1, 'KEYFRAME'), (12, 'BREAKDOWN')]
 
 
 def test_s_keys_selected_joints():
     _scene(0)
-    bpy.ops.maya_kit.create(kind='JOINT')
+    bpy.ops.allset.create(kind='JOINT')
     arm = bpy.context.active_object
     bpy.ops.object.mode_set(mode='POSE')
     pb = arm.pose.bones["joint1"]
     cb.set_bone_selected(pb, True)
     arm.data.bones.active = pb.bone
-    bpy.ops.maya_kit.set_key()
+    bpy.ops.allset.set_key()
     paths = {p for p, _i in _paths(arm)}
     assert paths == {'pose.bones["joint1"].location', 'pose.bones["joint1"].rotation_euler',
                      'pose.bones["joint1"].scale'}, paths
@@ -115,25 +115,25 @@ def test_s_keys_selected_joints():
 def _two_keys(ob):
     sc = bpy.context.scene
     sc.frame_set(1)
-    bpy.ops.maya_kit.set_key()
+    bpy.ops.allset.set_key()
     sc.frame_set(24)
     ob.location.x = 3.0
-    bpy.ops.maya_kit.set_key()
+    bpy.ops.allset.set_key()
 
 
 def test_time_slider_delete_this_frame_and_range():
     ob, = _scene()
     _two_keys(ob)
     assert _frames(ob) == [1, 24]
-    assert bpy.ops.maya_kit.time_keys(action='DELETE') == {'FINISHED'}   # frame 24, no range
+    assert bpy.ops.allset.time_keys(action='DELETE') == {'FINISHED'}   # frame 24, no range
     assert _frames(ob) == [1]
     _two_keys(ob)
     ts.set_range(bpy.context.window_manager, 20, 30)
     bpy.context.scene.frame_set(1)
-    bpy.ops.maya_kit.time_keys(action='DELETE')
+    bpy.ops.allset.time_keys(action='DELETE')
     assert _frames(ob) == [1], "the Shift range, not the current frame"
     ts.set_range(bpy.context.window_manager, 0, 30)
-    bpy.ops.maya_kit.time_keys(action='DELETE')
+    bpy.ops.allset.time_keys(action='DELETE')
     assert cb._fcurves(ob).find("location", index=0) is None, "an emptied curve goes"
 
 
@@ -143,19 +143,19 @@ def test_copy_paste_cut():
     _two_keys(a)
     sc = bpy.context.scene
     sc.frame_set(24)
-    bpy.ops.maya_kit.time_keys(action='COPY')
+    bpy.ops.allset.time_keys(action='COPY')
     sc.frame_set(40)
-    bpy.ops.maya_kit.time_keys(action='PASTE')
+    bpy.ops.allset.time_keys(action='PASTE')
     assert _frames(a) == [1, 24, 40]
     fc = cb._fcurves(a).find("location", index=0)
     assert abs(fc.keyframe_points[2].co.y - 3.0) < 1e-6
-    bpy.ops.maya_kit.time_keys(action='CUT')
+    bpy.ops.allset.time_keys(action='CUT')
     assert _frames(a) == [1, 24]
     sc.frame_set(10)
     b.select_set(True)
     bpy.context.view_layer.objects.active = b
     a.select_set(False)
-    bpy.ops.maya_kit.time_keys(action='PASTE')                  # the cut keys onto another object
+    bpy.ops.allset.time_keys(action='PASTE')                  # the cut keys onto another object
     assert _frames(b) == [10] and abs(cb._fcurves(b).find("location", index=0).keyframe_points[0].co.y - 3) < 1e-6
 
 
@@ -165,23 +165,23 @@ def test_snap_convert_inbetween_tangents():
     fc = cb._fcurves(ob).find("location", index=0)
     fc.keyframe_points[1].co.x = 24.4
     ts.set_range(bpy.context.window_manager, 1, 30)
-    bpy.ops.maya_kit.time_keys(action='SNAP')
+    bpy.ops.allset.time_keys(action='SNAP')
     assert _frames(ob) == [1, 24] and fc.keyframe_points[1].co.x == 24.0
-    bpy.ops.maya_kit.time_keys(action='TO_BREAKDOWN')
+    bpy.ops.allset.time_keys(action='TO_BREAKDOWN')
     assert {k.type for k in fc.keyframe_points} == {'BREAKDOWN'}
-    bpy.ops.maya_kit.time_keys(action='TO_KEY')
+    bpy.ops.allset.time_keys(action='TO_KEY')
     assert {k.type for k in fc.keyframe_points} == {'KEYFRAME'}
     for kind, interp in (("LINEAR", 'LINEAR'), ("STEPPED", 'CONSTANT'), ("SPLINE", 'BEZIER')):
-        bpy.ops.maya_kit.time_keys(action='TANGENT', tangent=kind)
+        bpy.ops.allset.time_keys(action='TANGENT', tangent=kind)
         assert {k.interpolation for k in fc.keyframe_points} == {interp}, kind
-    bpy.ops.maya_kit.time_keys(action='TANGENT', tangent='FLAT')
+    bpy.ops.allset.time_keys(action='TANGENT', tangent='FLAT')
     kp = fc.keyframe_points[1]
     assert abs(kp.handle_left.y - kp.co.y) < 1e-6 and abs(kp.handle_right.y - kp.co.y) < 1e-6
-    bpy.context.window_manager.maya_kit_time_range_on = False
+    bpy.context.window_manager.allset_time_range_on = False
     bpy.context.scene.frame_set(10)
-    bpy.ops.maya_kit.time_keys(action='ADD_INBETWEEN')
+    bpy.ops.allset.time_keys(action='ADD_INBETWEEN')
     assert _frames(ob) == [1, 25]
-    bpy.ops.maya_kit.time_keys(action='REMOVE_INBETWEEN')
+    bpy.ops.allset.time_keys(action='REMOVE_INBETWEEN')
     assert _frames(ob) == [1, 24]
 
 
@@ -189,26 +189,26 @@ def test_set_range_to():
     ob, = _scene()
     _two_keys(ob)
     sc = bpy.context.scene
-    bpy.ops.maya_kit.time_set_range(mode='MIN_MAX')
+    bpy.ops.allset.time_set_range(mode='MIN_MAX')
     assert sc.use_preview_range and (sc.frame_preview_start, sc.frame_preview_end) == (1, 24)
-    bpy.ops.maya_kit.time_set_range(mode='START_END')
+    bpy.ops.allset.time_set_range(mode='START_END')
     assert (sc.frame_preview_start, sc.frame_preview_end) == (1, 200)
     ts.set_range(bpy.context.window_manager, 30, 10)
-    bpy.ops.maya_kit.time_set_range(mode='SELECTED')
+    bpy.ops.allset.time_set_range(mode='SELECTED')
     assert (sc.frame_preview_start, sc.frame_preview_end) == (10, 30)
-    bpy.context.window_manager.maya_kit_time_range_on = False
-    assert bpy.ops.maya_kit.time_set_range(mode='SELECTED') == {'CANCELLED'}
+    bpy.context.window_manager.allset_time_range_on = False
+    assert bpy.ops.allset.time_set_range(mode='SELECTED') == {'CANCELLED'}
 
 
 def test_key_menu_mapping():
     m = menu_map.MAP
     assert m["Key/Delete Keys"] == ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}), "Maya: all keys"
     assert m["Edit/Keys/Delete Keys"] == m["Key/Delete Keys"]
-    assert m["Key/Set Key"] == "maya_kit.set_key"
-    assert m["Key/Set Breakdown Key"] == ("maya_kit.set_key", {"breakdown": True})
+    assert m["Key/Set Key"] == "allset.set_key"
+    assert m["Key/Set Breakdown Key"] == ("allset.set_key", {"breakdown": True})
     for path in ("Key/Copy Keys", "Key/Paste Keys", "Key/Cut Keys", "Edit/Keys/Copy Keys"):
-        assert m[path][0] == "maya_kit.time_keys", path
-    assert m["Playback/Set Range to/Min/Max"] == ("maya_kit.time_set_range", {"mode": "MIN_MAX"})
+        assert m[path][0] == "allset.time_keys", path
+    assert m["Playback/Set Range to/Min/Max"] == ("allset.time_set_range", {"mode": "MIN_MAX"})
     assert "Playback/Playback Looping/Once" in notices.NOTICES
 
 
@@ -218,15 +218,15 @@ def test_keymap_patches():
     dope = kd.items("Dopesheet")
     first = [(it[0], patch.event_key(it[1])) for it in dope[:5]]
     # step 84 puts the range drag (passes through off the range) in front of time_scrub
-    assert {f[0] for f in first} == {"maya_kit.time_range_drag", "maya_kit.time_scrub", "maya_kit.time_slider_menu"}, first
-    assert kd.find("Dopesheet", "maya_kit.time_scrub", type="LEFTMOUSE", shift=True)
-    assert kd.find("Dopesheet", "maya_kit.time_scrub", type="MIDDLEMOUSE")
+    assert {f[0] for f in first} == {"allset.time_range_drag", "allset.time_scrub", "allset.time_slider_menu"}, first
+    assert kd.find("Dopesheet", "allset.time_scrub", type="LEFTMOUSE", shift=True)
+    assert kd.find("Dopesheet", "allset.time_scrub", type="MIDDLEMOUSE")
     assert not kd.find("Dopesheet", "action.select_column", type="K")
     assert kd.find("Dopesheet", "action.select_column", type="K", ctrl=True), "the K variants stay"
     assert not kd.find("Mesh", "wm.tool_set_by_id", type="K"), "no knife K (Multi-Cut = Ctrl+Shift+X)"
-    assert kd.find("Screen", "maya_kit.tap_hold", type="K")
+    assert kd.find("Screen", "allset.tap_hold", type="K")
     for km in ("Object Mode", "Pose"):
-        assert kd.find(km, "maya_kit.set_key", type="S") and not kd.find(km, "anim.keyframe_insert_by_name", type="S")
+        assert kd.find(km, "allset.set_key", type="S") and not kd.find(km, "anim.keyframe_insert_by_name", type="S")
     assert "time_drag" in taphold.binding_names()
 
 
@@ -243,23 +243,23 @@ def test_time_drag_speed():
 
 def test_time_slider_menu_order():
     rec = Recorder()
-    ts.MAYAKIT_MT_time_slider.draw(types.SimpleNamespace(layout=rec), bpy.context)
+    ts.ALLSET_MT_time_slider.draw(types.SimpleNamespace(layout=rec), bpy.context)
     assert rec.texts() == ["Cut", "Copy", "Paste", "Delete", "Snap", "Keys", "Tangents", "Playback Speed",
                            "Playback Looping", "Set Range to", "Playblast..."], rec.texts()
     rec = Recorder()
-    ts.MAYAKIT_MT_time_slider_tangents.draw(types.SimpleNamespace(layout=rec), bpy.context)
+    ts.ALLSET_MT_time_slider_tangents.draw(types.SimpleNamespace(layout=rec), bpy.context)
     assert rec.texts() == ["Spline", "Linear", "Clamped", "Stepped", "Flat", "Plateau", "Auto"]
     rec = Recorder()
-    ts.MAYAKIT_MT_time_slider_looping.draw(types.SimpleNamespace(layout=rec), bpy.context)
+    ts.ALLSET_MT_time_slider_looping.draw(types.SimpleNamespace(layout=rec), bpy.context)
     assert rec.texts() == ["Once", "Oscillate", "Continuous"]
-    tip = ts.MAYAKIT_OT_time_slider_unavailable.description(bpy.context, types.SimpleNamespace(item="Once"))
+    tip = ts.ALLSET_OT_time_slider_unavailable.description(bpy.context, types.SimpleNamespace(item="Once"))
     assert "always loops" in tip
 
 
 def test_channel_box_rmb_items():
     _scene()
     rec = Recorder()
-    ctx = types.SimpleNamespace(button_pointer=bpy.context.scene.maya_kit_cb, button_operator=None)
+    ctx = types.SimpleNamespace(button_pointer=bpy.context.scene.allset_cb, button_operator=None)
     cb.draw_button_menu(types.SimpleNamespace(layout=rec), ctx)
     assert rec.texts()[:2] == ["Key Selected", "Breakdown Selected"], rec.texts()
     rec = Recorder()

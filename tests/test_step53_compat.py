@@ -54,7 +54,7 @@ def test_keymap_patches_strict_on_target_drift_known_elsewhere():
     else:
         assert not patch.STRICT
         assert set(patch.DRIFT) <= KNOWN_5X_DRIFT, sorted(set(patch.DRIFT) - KNOWN_5X_DRIFT)
-    assert bpy.context.window_manager.keyconfigs.get("Maya") is not None
+    assert bpy.context.window_manager.keyconfigs.get("Maya-style") is not None
 
 
 def test_theme_round_trip_gives_the_user_theme_back():
@@ -62,17 +62,17 @@ def test_theme_round_trip_gives_the_user_theme_back():
     t.view_3d.grid = (0.9, 0.1, 0.1, 1.0)          # the user's own tweak
     t.user_interface.wcol_regular.roundness = 0.3
     before = _theme_hash()
-    assert bpy.ops.maya_kit.theme_apply() == {'FINISHED'}
+    assert bpy.ops.allset.theme_apply() == {'FINISHED'}
     assert _theme_hash() != before
     assert t.user_interface.wcol_regular.roundness == 0.0
-    assert bpy.ops.maya_kit.theme_restore() == {'FINISHED'}
+    assert bpy.ops.allset.theme_restore() == {'FINISHED'}
     assert _theme_hash() == before, "every theme value comes back"
     bpy.ops.preferences.reset_default_theme()
 
 
 def test_moved_theme_values_applied():
     t = bpy.context.preferences.themes[0]
-    bpy.ops.maya_kit.theme_apply()
+    bpy.ops.allset.theme_apply()
     try:
         if hasattr(t, "common"):     # Blender 5.x
             assert tuple(round(c, 2) for c in t.common.anim.playhead[:3]) == (0.78, 0.78, 0.78)
@@ -83,11 +83,11 @@ def test_moved_theme_values_applied():
         assert all(getattr(ui, p.identifier).roundness == 0.0 for p in ui.bl_rna.properties
                    if p.identifier.startswith("wcol_") and p.identifier != "wcol_state")
     finally:
-        bpy.ops.maya_kit.theme_restore()
+        bpy.ops.allset.theme_restore()
 
 
 def test_manifest_declares_the_tested_range():
-    data = tomllib.loads((ROOT / "src" / "maya_kit" / "blender_manifest.toml").read_text(encoding="utf-8"))
+    data = tomllib.loads((ROOT / "src" / "allset" / "blender_manifest.toml").read_text(encoding="utf-8"))
     assert data["blender_version_min"] == "4.2.0"
     assert data["blender_version_max"] == "5.3.0", "tested up to 5.2.x (step 53); later versions need a new check"
     v = tuple(bpy.app.version)
@@ -117,7 +117,7 @@ def test_select_loops_wrapper():
         bm.edges.ensure_lookup_table()
         bm.edges[0].select = True
         bmesh.update_edit_mesh(bpy.context.active_object.data)
-        assert bpy.ops.maya_kit.select_loops(ring=True) == {'FINISHED'}
+        assert bpy.ops.allset.select_loops(ring=True) == {'FINISHED'}
         bm = bmesh.from_edit_mesh(bpy.context.active_object.data)
         assert sum(e.select for e in bm.edges) == 4, "a cube edge ring has 4 edges"
     finally:
@@ -127,7 +127,7 @@ def test_select_loops_wrapper():
 def test_sources_compile_without_warnings():
     """Python in Blender 5.x warns about invalid escapes (later Pythons reject them)."""
     import warnings
-    src = Path(__file__).resolve().parent.parent / "src" / "maya_kit"
+    src = Path(__file__).resolve().parent.parent / "src" / "allset"
     bad = []
     for path in src.rglob("*.py"):
         with warnings.catch_warnings(record=True) as caught:

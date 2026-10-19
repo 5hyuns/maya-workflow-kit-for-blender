@@ -1,11 +1,11 @@
-"""Generate src/maya_kit/ui/menu_hotkeys.py: the Maya hotkey shown right-aligned beside a kit menu item (step 108).
+"""Generate src/allset/ui/menu_hotkeys.py: the Maya hotkey shown right-aligned beside a kit menu item (step 108).
 
     python tools/gen_menu_hotkeys.py
 
 Maya shows, beside a menu item, the hotkey bound to the runTimeCommand the item runs. Source:
 research/maya/menus.json (item -> command, via tools/gen_menu_data.py so the label paths match ui/menu_data.py) and
 research/maya/hotkeys_default.json (command -> key, global context, Windows / all platforms). A key is listed only when
-the kit's Maya keyconfig really does the Maya thing with it (src/maya_kit/keymap/mapping.py status KIT or IC, checked
+the kit's Maya keyconfig really does the Maya thing with it (src/allset/keymap/mapping.py status KIT or IC, checked
 against the keyconfig by tools/gen_keymap_mapping.py), so a menu never advertises a key that does something else.
 Only key names and label paths are written (no MEL; docs/user_decisions.md #6).
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MENUS = ROOT / "research" / "maya" / "menus.json"
 HOTKEYS = ROOT / "research" / "maya" / "hotkeys_default.json"
-OUT = ROOT / "src" / "maya_kit" / "ui" / "menu_hotkeys.py"
+OUT = ROOT / "src" / "allset" / "ui" / "menu_hotkeys.py"
 
 # Maya (Qt) key names in menus (research/maya/screens/audit7/maya/menu_Modeling_Edit_Mesh.png: "Ctrl+Del",
 # "Ctrl+Alt+Left"); modifiers in Qt's order Ctrl, Alt, Shift ("Ctrl+Shift+S", "Ctrl+Alt+S").
@@ -62,7 +62,7 @@ def _paths(items, prefix):
 def table():
     sys.path.insert(0, str(ROOT / "tools"))
     import gen_menu_data
-    mapping = _load("mapping", ROOT / "src" / "maya_kit" / "keymap" / "mapping.py")
+    mapping = _load("mapping", ROOT / "src" / "allset" / "keymap" / "mapping.py")
     data = json.loads(MENUS.read_text(encoding="utf-8"))
     menus = gen_menu_data.build(data)
     commands = {}

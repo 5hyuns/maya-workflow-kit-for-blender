@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 WORLD = {"A": (1, 0, 0), "B": (0, 2, 0), "C": (0, 0, 3), "D": (0, -2, 0)}
 
 
@@ -87,13 +87,13 @@ def undo(kind="undo"):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
     col = bpy.context.scene.collection.children[0]
@@ -149,7 +149,7 @@ def s_lmb_check():
     b = ob("B")
     last = bpy.context.window_manager.operators[-1].bl_idname
     check(f"LMB drop: B under A, parent inverse identity, world kept (last op {last})",
-          b.parent == ob("A") and identity(b) and world_kept("B") and last == "MAYA_KIT_OT_outliner_reparent")
+          b.parent == ob("A") and identity(b) and world_kept("B") and last == "ALLSET_OT_outliner_reparent")
     check(f"LMB drop: B channels are local to A (Maya), not its world values ({tuple(round(v, 3) for v in b.location)})",
           (b.location - __import__("mathutils").Vector(WORLD["B"])).length > 0.1)
     undo()

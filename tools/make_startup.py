@@ -2,7 +2,7 @@
 
     python tools/make_startup.py          # re-runs itself in `blender --factory-startup` (a window opens briefly)
 
-Writes src/maya_kit/app_template/MayaKit/startup.blend. Layout and reasons: docs/steps/step_5.md,
+Writes src/allset/app_template/Allset/startup.blend. Layout and reasons: docs/steps/step_5.md,
 docs/steps/step_49.md 「계획」 (research/maya/ui_layout.md §2 General layout, widget sizes from
 research/maya/screens/_maya_ui_dump.json). It runs in a GUI Blender because the factory right column
 (Outliner + Properties) can only be removed there: in `-b` screen.area_close hangs and area_join crashes
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+OUT = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
 
 # Maya widget sizes at effective scale 1.0 (research/maya/screens/_maya_ui_dump.json, ui_layout.md:122-127):
 # Outliner 260, Channel Box / Layer Editor dock 260 (+ tab strip), Time Slider 36 (the timeline WINDOW region); the
@@ -40,8 +40,8 @@ EDGE = 3                  # px the area edges take from a split (measured)
 MAYA_LENS = 70.0
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md §12, PREF:469-470)
 MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
-STRIP_MARKER = ".MayaKitStrip"  # = ui/shelf.py MARKER (Status Line row)
-SHELF_MARKER = ".MayaKitShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
+STRIP_MARKER = ".AllsetStrip"  # = ui/shelf.py MARKER (Status Line row)
+SHELF_MARKER = ".AllsetShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 # Maya lengths are cm (decision 8): 1 Maya unit = 0.01 BU with decision 1's m + cm display.
 MAYA_UNIT = 0.01
 MAYA_CLIP = (0.1, 10000.0)        # cm, research/maya/defaults.json:45-46 (= operators/units.py CLIP)
@@ -79,7 +79,7 @@ def _region(area, kind):
 
 
 def is_toolbox_space(space):
-    """= src/maya_kit/ui/toolbox.py is_toolbox (kept in sync by tests/test_step49_layout.py)."""
+    """= src/allset/ui/toolbox.py is_toolbox (kept in sync by tests/test_step49_layout.py)."""
     return (space.type == 'VIEW_3D' and space.show_region_toolbar and not space.show_region_header
             and not space.show_region_ui and not space.overlay.show_overlays)
 
@@ -210,7 +210,7 @@ class Builder:
     def select_dock_tab(self, view):
         bpy = self.bpy
 
-        class MAYAKIT_PT_dock_stand_in(bpy.types.Panel):
+        class ALLSET_PT_dock_stand_in(bpy.types.Panel):
             bl_space_type = 'VIEW_3D'
             bl_region_type = 'UI'
             bl_category = DOCK_CATEGORY
@@ -219,7 +219,7 @@ class Builder:
             def draw(self, context):
                 self.layout.label(text="Channel Box")
 
-        bpy.utils.register_class(MAYAKIT_PT_dock_stand_in)
+        bpy.utils.register_class(ALLSET_PT_dock_stand_in)
         ui = _region(view, 'UI')
         for _i in range(12):
             view.tag_redraw()
@@ -231,7 +231,7 @@ class Builder:
                                     y=ui.y + ui.height - 60, ctrl=True)
         log("sidebar tab", ui.active_panel_category)
         assert ui.active_panel_category == DOCK_CATEGORY, ui.active_panel_category
-        bpy.utils.unregister_class(MAYAKIT_PT_dock_stand_in)
+        bpy.utils.unregister_class(ALLSET_PT_dock_stand_in)
 
     def configure(self):
         a = self.areas
@@ -319,7 +319,7 @@ def maya_views():
                 # the theme axis colours, which now are Maya's manipulator red/green (step 43).
                 space.overlay.show_axis_x = space.overlay.show_axis_y = False
                 # Maya's finite 12-unit grid instead of Blender's floor, also in ortho side views
-                # (src/maya_kit/ui/maya_grid.py: show_floor / show_ortho_grid off, grid_lines 0; step 45).
+                # (src/allset/ui/maya_grid.py: show_floor / show_ortho_grid off, grid_lines 0; step 45).
                 space.overlay.show_floor = space.overlay.show_ortho_grid = False
                 space.overlay.grid_lines = 0
                 # Maya view furniture (ViewCube, axis triad, camera name; ui/view_furniture.py, step 46)

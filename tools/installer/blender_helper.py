@@ -1,4 +1,4 @@
-"""Runs inside a background Blender for the Windows installer (tools/installer/maya_kit_setup.ps1).
+"""Runs inside a background Blender for the Windows installer (tools/installer/allset_setup.ps1).
 
     blender -b --python blender_helper.py -- make   OUT.json   # Make Blender Maya (layout template, theme ...)
     blender -b --python blender_helper.py -- remove OUT.json   # uninstall the way Preferences > Remove does
@@ -16,11 +16,11 @@ import sys
 import addon_utils
 import bpy
 
-PKG = "maya_kit"
+PKG = "allset"
 
 
 def kit_module():
-    """bl_ext.<repo>.maya_kit of the installed kit (enabled or not), else None."""
+    """bl_ext.<repo>.allset of the installed kit (enabled or not), else None."""
     for mod in addon_utils.modules(refresh=False):
         name = mod.__name__
         if name.startswith("bl_ext.") and name.endswith("." + PKG):
@@ -41,7 +41,7 @@ def status():
 def make():
     module = kit_module()
     if not module or module not in bpy.context.preferences.addons:
-        return False, "Maya Kit is not enabled"
+        return False, "Allset is not enabled"
     from importlib import import_module
     import_module(module + ".first_start").make(bpy.context, open_layout=False)
     bpy.ops.wm.save_userpref()
@@ -51,16 +51,16 @@ def make():
 def remove():
     module = kit_module()
     if not module:
-        return True, "Maya Kit is not installed (nothing to remove)"
+        return True, "Allset is not installed (nothing to remove)"
     repo = module.split(".")[1]
     # repo_index counts enabled repositories only ($S\addons_core\bl_pkg\bl_extension_ops.py:811-830)
     from bl_pkg.bl_extension_ops import extension_repos_read
     repo_index = next((i for i, r in enumerate(extension_repos_read()) if r.module == repo), None)
     if repo_index is None:
-        return False, f"repository {repo} is disabled: enable it or remove Maya Kit in Preferences"
+        return False, f"repository {repo} is disabled: enable it or remove Allset in Preferences"
     bpy.ops.extensions.package_uninstall(repo_index=repo_index, pkg_id=PKG)
     bpy.ops.wm.save_userpref()
-    return kit_module() is None, "Maya Kit removed, your Blender settings are back"
+    return kit_module() is None, "Allset removed, your Blender settings are back"
 
 
 def main():
@@ -80,7 +80,7 @@ def main():
     if out:
         with open(out, "w", encoding="utf-8") as fh:
             json.dump(result, fh, indent=1)
-    print("MAYA_KIT_HELPER", json.dumps(result))
+    print("ALLSET_HELPER", json.dumps(result))
 
 
 main()

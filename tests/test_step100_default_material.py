@@ -34,7 +34,7 @@ def test_new_cubes_share_lambert1():
     assert ma is not None and ma.name == "lambert1", ma
     assert ma == mb, (ma, mb)
     assert len(a.material_slots) == 1 and material.is_default(ma)
-    assert ma.get("maya_kit_type") == "lambert" and ma.use_fake_user
+    assert ma.get("allset_type") == "lambert" and ma.use_fake_user
     col = tuple(_principled(ma).inputs["Base Color"].default_value)
     assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # mayapy lambert1.color = (0.5, 0.5, 0.5)
     inc = tuple(_principled(ma).inputs["Emission Color"].default_value)
@@ -89,5 +89,5 @@ def test_existing_objects_keep_no_material_and_legacy_lambert1_is_adopted():
     bpy.context.view_layer.update()
     assert not old.material_slots
     legacy = bpy.data.materials.new("lambert1")
-    legacy["maya_kit_type"] = "lambert"
+    legacy["allset_type"] = "lambert"
     assert material.default_material() == legacy and material.is_default(legacy)

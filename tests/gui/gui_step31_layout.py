@@ -1,4 +1,4 @@
-"""Step 31 in a real UI: MayaKit layout Outliner (width, DAG rows), leaving four views keeps the
+"""Step 31 in a real UI: Allset layout Outliner (width, DAG rows), leaving four views keeps the
 picked view's name, W hold menu toggles show their state (engine and pie fallback), timeline;
 screenshots."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -40,19 +40,19 @@ def left_outliner():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     for kind in ('CUBE', 'SPHERE', 'CYLINDER'):
-        bpy.ops.maya_kit.create(kind=kind)
+        bpy.ops.allset.create(kind=kind)
     bpy.ops.object.select_all(action='DESELECT')
     bpy.data.objects["pCube1"].select_set(True)
     bpy.context.view_layer.objects.active = bpy.data.objects["pCube1"]
-    bpy.ops.maya_kit.group()   # group1 > pCube1, like the step-23 audit scene
+    bpy.ops.allset.group()   # group1 > pCube1, like the step-23 audit scene
     area = main_view()
     ev('MOUSEMOVE', 'NOTHING', x=area.x + area.width // 2, y=area.y + area.height // 2)
     redraw()
@@ -76,7 +76,7 @@ def s_layout_shot():
     area = main_view()
     region = next(r for r in area.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.toggle_quad_view()
+        bpy.ops.allset.toggle_quad_view()
     C["area"] = area
 
 
@@ -99,7 +99,7 @@ def s_quad_shot():
     rv = tl.data
     C["picked"] = (rv.view_perspective, rv.is_orthographic_side_view)
     with bpy.context.temp_override(window=win(), area=C["area"], region=tl):
-        bpy.ops.maya_kit.toggle_quad_view()
+        bpy.ops.allset.toggle_quad_view()
 
 
 @step
@@ -119,7 +119,7 @@ def s_single_shot():
     region = next(r for r in area.regions if r.type == 'WINDOW')
     region.data.view_perspective = 'PERSP'
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.view_home()   # Maya persp again for the menu shots
+        bpy.ops.allset.view_home()   # Maya persp again for the menu shots
     bpy.context.scene.frame_set(8)
     redraw()
 

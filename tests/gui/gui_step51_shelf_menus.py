@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, scale, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 shelf = import_module(MODULE + ".ui.shelf")
 
@@ -44,14 +44,14 @@ def slot_of(label):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.keymap_activate()
+    bpy.ops.allset.shelf_select(shelf="Polygons")
     redraw()
 
 
@@ -93,7 +93,7 @@ def s_clicked():
 @step
 def s_tab():
     # switch shelves with the tab row: Rigging
-    bpy.ops.maya_kit.shelf_select(shelf="Rigging")
+    bpy.ops.allset.shelf_select(shelf="Rigging")
     redraw()
 
 
@@ -102,7 +102,7 @@ def s_tab_check():
     _cur, buttons = shelf.icon_buttons(bpy.context)
     check(f"Rigging shelf icons ({len(buttons)})", buttons and buttons[0][1] == "Create Locator")
     shot("gui_step51_rigging.png")
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
     redraw()
 
 

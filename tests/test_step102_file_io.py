@@ -27,7 +27,7 @@ SIZE = (10.0, 20.0, 5.0)
 
 def _cm_scene():
     us = bpy.context.scene.unit_settings
-    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # the MayaKit template's units
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # the Allset template's units
 
 
 def _clear():
@@ -50,7 +50,7 @@ def _cube():
     """pCube1 in a cm scene: X 10, Blender Z (up) 20, Blender Y 5 Maya units."""
     _clear()
     _cm_scene()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     k = 0.01
     ob.scale = (SIZE[0], SIZE[2], SIZE[1])            # Maya cube is 1 unit; Maya Y (20) = Blender Z
@@ -62,7 +62,7 @@ def _cube():
 # --- presets ------------------------------------------------------------------------------------
 
 def test_presets_cm_y_up():
-    k = 0.01          # MayaKit template: one Maya unit (cm) = 0.01 BU
+    k = 0.01          # Allset template: one Maya unit (cm) = 0.01 BU
     op, a = file_io.export_args('OBJ', k, False)
     assert op == "wm.obj_export" and abs(a["global_scale"] - 100) < 1e-9 and a["up_axis"] == 'Y'
     op, a = file_io.import_args('OBJ', k)
@@ -100,12 +100,12 @@ def test_format_by_extension_and_files_of_type():
 def test_file_menu_runs_the_dialog_and_option_boxes_are_live():
     for path, op in (("File/Import...", "file_import"), ("File/Export All...", "file_export_all"),
                      ("File/Export Selection...", "file_export_selection")):
-        assert menu_map.spec(path) == ("op", "maya_kit." + op, {}), path
-        assert getattr(bpy.ops.maya_kit, op).get_rna_type().name in ("Import", "Export All", "Export Selection")
+        assert menu_map.spec(path) == ("op", "allset." + op, {}), path
+        assert getattr(bpy.ops.allset, op).get_rna_type().name in ("Import", "Export All", "Export Selection")
         assert path in menu_data.OPTION_BOXES
     # an operator with option_box gets the option box itself (marking/modal.run_action): no dead box icon
     for op in ("file_import", "file_export_all", "file_export_selection", "open_scene", "save_scene_as"):
-        assert "option_box" in getattr(bpy.ops.maya_kit, op).get_rna_type().properties, op
+        assert "option_box" in getattr(bpy.ops.allset, op).get_rna_type().properties, op
 
 
 # --- default project ----------------------------------------------------------------------------
@@ -115,7 +115,7 @@ def test_default_project_like_maya():
     prefs.project_root = ""
     root = project.current_root()
     assert os.path.basename(root) == "default", root
-    assert os.path.normcase(root).startswith(os.path.normcase(os.environ["MAYA_KIT_PROJECTS_DIR"])), root
+    assert os.path.normcase(root).startswith(os.path.normcase(os.environ["ALLSET_PROJECTS_DIR"])), root
     scenes = project.scenes_dir()
     assert os.path.isdir(scenes) and project.is_project(root)      # made on first use, Maya's folders
     assert project.open_path() == os.path.join(scenes, "")
@@ -126,7 +126,7 @@ def test_default_project_like_maya():
 
 def _export(fmt, mode='EXPORT_ALL'):
     path = IO / f"kit_cube{file_io._BY_ID[fmt][2]}"
-    res = bpy.ops.maya_kit.file_dialog('EXEC_DEFAULT', mode=mode, export_type=fmt, filepath=str(path))
+    res = bpy.ops.allset.file_dialog('EXEC_DEFAULT', mode=mode, export_type=fmt, filepath=str(path))
     assert res == {'FINISHED'} and path.exists(), (fmt, res)
     return path
 
@@ -135,7 +135,7 @@ def _import(path):
     _clear()
     _cm_scene()
     before = set(bpy.data.objects)
-    res = bpy.ops.maya_kit.file_dialog('EXEC_DEFAULT', mode='IMPORT', import_type='AUTO', filepath=str(path))
+    res = bpy.ops.allset.file_dialog('EXEC_DEFAULT', mode='IMPORT', import_type='AUTO', filepath=str(path))
     assert res == {'FINISHED'}, (path, res)
     return [ob for ob in bpy.data.objects if ob not in before]
 
@@ -171,7 +171,7 @@ def test_export_selection_writes_only_the_selection():
     assert "other" not in path.read_text()
     for o in bpy.context.scene.objects:
         o.select_set(False)
-    assert bpy.ops.maya_kit.file_dialog('EXEC_DEFAULT', mode='EXPORT_SELECTION', export_type='OBJ',
+    assert bpy.ops.allset.file_dialog('EXEC_DEFAULT', mode='EXPORT_SELECTION', export_type='OBJ',
                                         filepath=str(path)) == {'CANCELLED'}
 
 

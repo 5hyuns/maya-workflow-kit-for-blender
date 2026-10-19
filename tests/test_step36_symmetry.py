@@ -1,6 +1,6 @@
 """Step 36: Maya symmetric modelling (Status Line Symmetry, W/E/R marking menu Symmetry ▸).
 
-One global Maya state (Scene.maya_kit_symmetry) drives Blender's per-mesh mirror flags.
+One global Maya state (Scene.allset_symmetry) drives Blender's per-mesh mirror flags.
 Plan: docs/steps/step_36.md.
 """
 
@@ -27,9 +27,9 @@ def _scene(n=1):
     for i in range(n):
         bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
         obs.append(bpy.context.active_object)
-    sym_mod.set_mode(bpy.context.scene.maya_kit_symmetry, "OFF")
-    bpy.context.scene.maya_kit_symmetry.about = 'OBJECT'
-    bpy.context.scene.maya_kit_symmetry.axis = 'X'
+    sym_mod.set_mode(bpy.context.scene.allset_symmetry, "OFF")
+    bpy.context.scene.allset_symmetry.about = 'OBJECT'
+    bpy.context.scene.allset_symmetry.axis = 'X'
     return obs
 
 
@@ -39,14 +39,14 @@ def _flags(ob):
 
 
 def _sym():
-    return bpy.context.scene.maya_kit_symmetry
+    return bpy.context.scene.allset_symmetry
 
 
 def test_factory_default_is_maya():
     # Maya factory: off, axis x, about object (interaction.md:159, defaults.json:117-124).
     scene = bpy.data.scenes.new("SymDefaults")
     try:
-        s = scene.maya_kit_symmetry
+        s = scene.allset_symmetry
         assert (s.on, s.about, s.axis) == (False, 'OBJECT', 'X'), (s.on, s.about, s.axis)
         assert sym_mod.label(s) == "Symmetry: Off"
     finally:
@@ -63,9 +63,9 @@ def test_modes_set_mesh_flags():
         "OFF": (False, False, False, False),
     }
     for mode, flags in expect.items():
-        bpy.ops.maya_kit.symmetry(mode=mode)
+        bpy.ops.allset.symmetry(mode=mode)
         assert _flags(ob) == flags, (mode, _flags(ob))
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_Y")
+    bpy.ops.allset.symmetry(mode="OBJECT_Y")
     assert sym_mod.label(_sym()) == "Object Y"
     assert sym_mod.mode_of(_sym()) == "OBJECT_Y"
 
@@ -75,10 +75,10 @@ def test_world_uses_closest_local_axis():
     ob.rotation_euler = (0, 0, math.radians(90))  # local Y now points along world -X
     bpy.context.view_layer.update()
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="WORLD_X")
+    bpy.ops.allset.symmetry(mode="WORLD_X")
     assert _flags(ob) == (False, True, False, False), _flags(ob)
     assert sym_mod.world_fit(ob, _sym())
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+    bpy.ops.allset.symmetry(mode="OBJECT_X")
     assert _flags(ob) == (True, False, False, False), _flags(ob)
     # Off the world plane: Blender still mirrors through the origin -> reported as not fitting.
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -95,7 +95,7 @@ def test_entering_edit_mode_applies_global_state():
     a.select_set(True)
     bpy.context.view_layer.objects.active = a
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+    bpy.ops.allset.symmetry(mode="OBJECT_X")
     assert _flags(a)[0]
     bpy.ops.object.mode_set(mode='OBJECT')
     assert not _flags(b)[0]
@@ -105,7 +105,7 @@ def test_entering_edit_mode_applies_global_state():
     bpy.ops.object.mode_set(mode='EDIT')
     assert _flags(b) == (True, False, False, False), _flags(b)  # Maya: symmetry is global
     bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.maya_kit.symmetry(mode="OFF")
+    bpy.ops.allset.symmetry(mode="OFF")
     b.data.use_mirror_x = True  # a Blender user's per-mesh flag outside edit mode
     bpy.ops.object.mode_set(mode='EDIT')
     assert _flags(b) == (False, False, False, False), _flags(b)
@@ -126,27 +126,27 @@ def test_blender_header_buttons_update_global_state():
 def test_toggle_returns_to_last_mode():
     ob, = _scene()
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="WORLD_Y")
-    bpy.ops.maya_kit.symmetry(mode="TOGGLE")
+    bpy.ops.allset.symmetry(mode="WORLD_Y")
+    bpy.ops.allset.symmetry(mode="TOGGLE")
     assert not _sym().on and _flags(ob) == (False,) * 4
-    bpy.ops.maya_kit.symmetry(mode="TOGGLE")
+    bpy.ops.allset.symmetry(mode="TOGGLE")
     assert sym_mod.mode_of(_sym()) == "WORLD_Y", sym_mod.mode_of(_sym())
 
 
 def test_marking_menu_parts():
     ob, = _scene()
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="AXIS_Z")       # axis only: still off
+    bpy.ops.allset.symmetry(mode="AXIS_Z")       # axis only: still off
     assert not _sym().on and _sym().axis == 'Z'
-    bpy.ops.maya_kit.symmetry(mode="ABOUT_WORLD")
+    bpy.ops.allset.symmetry(mode="ABOUT_WORLD")
     assert not _sym().on and _sym().about == 'WORLD'
-    bpy.ops.maya_kit.symmetry(mode="ON")           # check box on: keeps about / axis
+    bpy.ops.allset.symmetry(mode="ON")           # check box on: keeps about / axis
     assert sym_mod.mode_of(_sym()) == "WORLD_Z" and _flags(ob)[2]
     for part, want in (("ON", True), ("ABOUT_WORLD", True), ("ABOUT_OBJECT", False),
                        ("AXIS_Z", True), ("AXIS_X", False), ("TOPOLOGY", False)):
         assert sym_mod.item_state(part) is want, part
-        assert draw.checked(("maya_kit.symmetry", {"mode": part})) is want, part
-    bpy.ops.maya_kit.symmetry(mode="ON")
+        assert draw.checked(("allset.symmetry", {"mode": part})) is want, part
+    bpy.ops.allset.symmetry(mode="ON")
     assert not _sym().on and not any(_flags(ob))
 
 
@@ -160,7 +160,7 @@ def test_switching_on_symmetrizes_selection():
         v.select = v.co.x > 0 and v.co.z > 0
     bm.select_flush(True)
     bmesh.update_edit_mesh(ob.data)
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+    bpy.ops.allset.symmetry(mode="OBJECT_X")
     bm = bmesh.from_edit_mesh(ob.data)
     picked = sorted((round(v.co.x), round(v.co.z)) for v in bm.verts if v.select)
     assert picked == [(-1, 1), (-1, 1), (1, 1), (1, 1)], picked
@@ -169,7 +169,7 @@ def test_switching_on_symmetrizes_selection():
 def test_transform_moves_mirrored_side():
     ob, = _scene()
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+    bpy.ops.allset.symmetry(mode="OBJECT_X")
     bpy.ops.mesh.select_mode(type='VERT')
     bm = bmesh.from_edit_mesh(ob.data)
     for v in bm.verts:
@@ -217,14 +217,14 @@ def test_status_line_draws_symmetry():
     ob, = _scene()
     log = []
     status_line.draw_symmetry(_Layout(log), bpy.context)
-    assert ("menu", "MAYAKIT_MT_symmetry", "Symmetry: Off") in log, log
-    assert ("op", "maya_kit.symmetry", "", False) in log, log
+    assert ("menu", "ALLSET_MT_symmetry", "Symmetry: Off") in log, log
+    assert ("op", "allset.symmetry", "", False) in log, log
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+    bpy.ops.allset.symmetry(mode="OBJECT_X")
     log.clear()
     status_line.draw_symmetry(_Layout(log), bpy.context)
-    assert ("menu", "MAYAKIT_MT_symmetry", "Object X") in log, log
-    assert ("op", "maya_kit.symmetry", "", True) in log, log
+    assert ("menu", "ALLSET_MT_symmetry", "Object X") in log, log
+    assert ("op", "allset.symmetry", "", True) in log, log
     assert any(f is status_line.draw_tool_symmetry
                for f in bpy.types.VIEW3D_PT_active_tool.draw._draw_funcs)
 
@@ -233,7 +233,7 @@ def test_disable_removes_state():
     _scene()
     kit.disable()
     try:
-        assert not hasattr(bpy.types.Scene, "maya_kit_symmetry")
+        assert not hasattr(bpy.types.Scene, "allset_symmetry")
         assert not any(getattr(f, "__module__", "").endswith("symmetry")
                        for f in bpy.app.handlers.depsgraph_update_post)
     finally:

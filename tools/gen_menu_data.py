@@ -1,4 +1,4 @@
-"""Generate src/maya_kit/ui/menu_data.py from research/maya/menus.json.
+"""Generate src/allset/ui/menu_data.py from research/maya/menus.json.
 
     python tools/gen_menu_data.py
 
@@ -15,13 +15,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "research" / "maya" / "menus.json"
-OUT = ROOT / "src" / "maya_kit" / "ui" / "menu_data.py"
+OUT = ROOT / "src" / "allset" / "ui" / "menu_data.py"
 
 DYNAMIC = {"$QuitLabel": "Exit", "$kIncrementAndSaveLabel": "Increment and Save"}
 # Placeholder items the static parse made parents of their following siblings: their label, and
 # the swallowed siblings come back after them (the only one in menus.json: Render > Render Using,
 # research/maya/menus.md:1686-1704; docs/steps/step_67.md 「계획」 3).
 PLACEHOLDERS = {'("renMenuRenderUsingItemMenuItem")': "Render Using"}
+# Step 111 (decision 12, docs/distribution/extensions_audit.md): Maya menu labels that read as an Autodesk storefront
+# are drawn under a neutral name for the item's Blender counterpart.
+LABEL_RENAMES = {"Autodesk App Store": "Blender Extensions"}
 _CLEAN = re.compile(r"^[A-Za-z0-9][\w ./&+()'\-]*$")
 
 # Run-time items the static parse can't see (docs/steps/step_101.md 「계획」 1; labels and order from a live
@@ -133,6 +136,7 @@ def convert(items, runtime=None):
         label = label_of(it, runtime)
         if not label:
             continue
+        label = LABEL_RENAMES.get(label, label)
         children = convert(it.get("children") or [])
         if out and out[-1][0] == label and not children:
             continue

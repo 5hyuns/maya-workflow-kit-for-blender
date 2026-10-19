@@ -1,4 +1,4 @@
-"""Step 52 in a real UI (MayaKit layout, Channel Box dock open): the hotbox shows Maya's rows (all menu sets,
+"""Step 52 in a real UI (Allset layout, Channel Box dock open): the hotbox shows Maya's rows (all menu sets,
 "Maya" in the centre) and draws over the sidebar too; RMB on pCube1 shows the Maya 2022 list under the ring.
 Screenshots: gui_step52_hotbox.png, gui_step52_rmb.png."""
 
@@ -12,7 +12,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, screenshot, step, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -38,16 +38,16 @@ def redraw():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = main_view()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     bpy.ops.object.select_all(action='DESELECT')
     redraw()
 
@@ -80,7 +80,7 @@ def s_hotbox():
     for r, _k, label in lay.labels:
         rows.setdefault(r[1], []).append(label)
     check(f"{len(rows)} rows (Maya: 2 above, the centre row, 5 menu sets)", len(rows) == 8)
-    check("centre box says Maya", lay.title == "Maya")
+    check("centre box says Allset", lay.title == "Allset")
     check("four zone lines", len(lay.zone_lines) == 4)
     ui_x = C["ui"][0] - region.x
     check("rows reach over the sidebar dock (drawn there too)", max(r[2] for r, _k, _l in lay.labels) > ui_x)

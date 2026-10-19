@@ -1,5 +1,8 @@
 # 배포 방식 — 조사·비교·추천 (step 61)
 
+> **2026-10-19 사용자 결정 (`docs/user_decisions.md` 12)**: extensions.blender.org 에 무료로, 이름 **Allset for Maya
+> Users** (id `allset`). 아래의 `maya_kit` / "Maya Kit" 는 step 111 전 이름이다. 등록 감사: `docs/distribution/extensions_audit.md`.
+
 사용자 요청 (2026-10-18): 「나중에 addon이나 exe 설치, 배포가 어떤 방식이 좋을지 고민해 봐라.」
 조사·비교·준비만 했다. **업로드·공개·결제 설정·서명은 하지 않았다** — 결정 항목은 `docs/user_decisions.md` 11.
 조사 날짜 2026-10-18. 출처는 각 줄의 URL (블렌더 매뉴얼 "latest" = 5.2 LTS, 확장 플랫폼 ToS = 2026-08-10 판).
@@ -29,7 +32,7 @@
 - **ToS 1.2 바이너리 자산 CC0**: 킷의 바이너리 4개는 모두 킷 스크립트가 만든 것 — `startup.blend` (`tools/make_startup.py`),
   `splash.png` / `splash_2x.png` / `welcome.png` (`tools/make_splash.py`, Blender 번들 글꼴로 렌더한 글자 포함), `maya.xml` 은 텍스트
   (`tools/make_theme.py`). Maya 자료는 들어 있지 않음 (결정 6). 저작권자가 CC0 로 내놓기로 하면 조건 충족 → 결정 11-d.
-- **ToS 2.1** 이름에 "Blender" 금지 — "Maya Kit" 는 해당 없음. **2.4** 다른 회사 로고는 그 회사 지침이 허용할 때만 — Autodesk 지침상 Maya
+- **ToS 2.1** 이름에 "Blender" 금지 — "Allset" 는 해당 없음. **2.4** 다른 회사 로고는 그 회사 지침이 허용할 때만 — Autodesk 지침상 Maya
   로고·아이콘 불가 (킷은 쓰지 않음).
 - **ToS 3.1 "No surprises"**: 설명에 하는 일을 전부 — 킷은 키맵 (Maya 키컨피그 활성), 탐색·언두 환경설정 (백업·복원), 테마 (선택),
   레이아웃 템플릿 설치 (선택), 상단 바·메뉴·헤더 그리기 교체를 바꾼다 → 설명 초안에 그대로 적을 것 (「공개 전 체크리스트」).
@@ -41,7 +44,7 @@
   (`bpy.utils.extension_path_user`), `sys` 읽기 전용, background 에서 `keyconfigs.addon` None 처리, `bl_ext`/`user_default`/`blender_org`
   하드코딩 금지. 킷 상태: 네트워크·업데이터 코드 없음, 저장소 이름 하드코딩 없음, 쓰기 데이터 (`switch_snapshot.json`, 테마 백업,
   `shelves.json`) 는 `extension_path_user` (CONFIG 는 레거시 애드온 빌드의 대체 경로일 뿐) — `tests/test_step61_distribution.py` 가 지킨다.
-  **예외 하나**: Maya 레이아웃 = 앱 템플릿을 `scripts/startup/bl_app_templates_user/MayaKit` 로 복사 (사용자가 Make Blender Maya /
+  **예외 하나**: Maya 레이아웃 = 앱 템플릿을 `scripts/startup/bl_app_templates_user/Allset` 로 복사 (사용자가 Make Blender Maya /
   Install Maya Layout 을 누를 때만, 끄기·Restore·Remove 때 삭제). 앱 템플릿은 확장 종류가 아니라 (`type` = add-on / theme) 다른 방법이
   없다 — 설명에 명시.
 - manifest 규칙 (getting_started.html): `tagline` ≤ 64자·끝 문장부호 없음, 권한 설명 ≤ 64자·끝 문장부호 없음, 선택 필드는 비우지 말고 빼기,
@@ -55,7 +58,7 @@
   https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/static_repository.html —
   `blender --command extension server-generate --repo-dir DIR --html` → `index.json` + `index.html` (끌어 놓기 링크 포함).
   **`python tools/build_repo.py`** 가 이것을 `dist/repo/` 에 만든다 (zip + index.json + index.html; 실측).
-- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `maya_kit-x.y.z.zip?repository=./index.json&blender_version_min=4.2.0`
+- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `allset-x.y.z.zip?repository=./index.json&blender_version_min=4.2.0`
   링크를 Blender 창에 끌어 놓기 (설치 + 저장소 등록), 또는 명령줄 `blender --command extension repo-add --url …` (설치기가 쓸 수 있음).
 - 비공개 배포가 필요하면 Access Token 지원 (Superhive·Poly Hammer 가 같은 방식) https://docs.polyhammer.com/poly-hammer-portal/blender-extension-repo
 - **실측 (`python tools/repo_check.py`, 깨끗한 샌드박스 + 「사용자 설정」 시드, `file:///…/index.json`)**: repo-add + sync + install --enable
@@ -85,13 +88,13 @@
   → (선택) Make Blender Maya → 제거 때 **Blender 안에서** Remove (킷의 unregister 가 사용자 설정을 되돌린 뒤 파일 삭제; `blender --command
   extension remove` 는 애드온 코드를 안 불러 복원 불가 — step 60).
 - 초안 (`tools/installer/`, **컴파일·서명 안 함**):
-  - `maya_kit_setup.ps1` — Windows PowerShell 5.1. Blender 찾기: MSI 의 Uninstall 키 (`DisplayName=Blender`, `InstallLocation`; 이
+  - `allset_setup.ps1` — Windows PowerShell 5.1. Blender 찾기: MSI 의 Uninstall 키 (`DisplayName=Blender`, `InstallLocation`; 이
     PC 실측: `HKLM\SOFTWARE\BlenderFoundation` 은 없음), `Program Files\Blender Foundation\*`, Steam (`HKCU\Software\Valve\Steam`
     SteamPath 의 기본 라이브러리), Microsoft Store (목록에만, WindowsApps 는 직접 실행 불가 → Blender 안에서 설치 안내). zip 의 manifest
     `blender_version_min/max` 로 호환 판단. 여러 버전 선택 (`-Blender "a;b"`), 실행 중인 Blender 감지 (종료할 때 옛 환경설정을 덮어쓰므로
     거부, 코드 3), 설치한 버전 기록 (`-Record`) → 제거 때 그 목록 (`-TargetsFile`).
   - `blender_helper.py` — Blender 안에서 make / remove / status.
-  - `maya_kit.iss` — Inno Setup 6 스크립트: 사용자 단위 (관리자 권한 없음), GPL 라이선스 페이지, Blender 버전 체크 목록 (최신만 기본 체크),
+  - `allset.iss` — Inno Setup 6 스크립트: 사용자 단위 (관리자 권한 없음), GPL 라이선스 페이지, Blender 버전 체크 목록 (최신만 기본 체크),
     「Make Blender Maya now」 옵션, 제거기 = helper remove. Autodesk 상표 각주 포함.
   - **실측 (`python tools/installer_check.py`, 깨끗한 샌드박스 + 사용자 설정 시드)**: -Install -MakeMaya → user_default 에 설치·켜짐, Maya 키맵,
     테마·스플래시 바뀜, 사용자 애드온 유지, 기록 1줄 → -Uninstall -TargetsFile → 원래대로 → 두 번째 제거도 무해. 9/9.
@@ -124,14 +127,14 @@
   → `research/maya/screens` 는 홍보에 쓰지 않음 (결정 6 과 같은 방향).
 - 현실: 플랫폼에 "Maya" 테마·"Maya Pivot", Superhive 에 "Maya Config Pro" 가 있다 — 묵인이지 허락이 아니다. 무료 애드온에 대한 Autodesk 의 집행
   사례는 못 찾음 [U].
-- 결론 [I]: 지금 이름 "Maya Kit" (와 id `maya_kit`) 는 지침의 "Don't" 에 해당. 공개 전에 **자기 이름 + "for Maya users" 류 설명**으로 바꾸는 것이
+- 결론 [I]: 지금 이름 "Allset" (와 id `allset`) 는 지침의 "Don't" 에 해당. 공개 전에 **자기 이름 + "for Maya users" 류 설명**으로 바꾸는 것이
   안전하다. **`id` 는 업데이트의 정체성**이라 공개 뒤에 바꾸면 기존 사용자에게 업데이트가 끊긴다 → 첫 공개 전에 정할 것 (결정 11-a).
   킷 안 화면 문구 (상단 바 「Maya | Blender」, 메뉴 이름 등) 는 Maya 를 가리키는 서술적 사용이라 유지 [I].
 
 ## 추천 (delegated)
 
 1. **이름·id 먼저** (11-a): 공개 전에 한 번. Autodesk 지침에 맞게 자기 이름 + tagline "Maya-style keymap, UI and workflow for Maya users"
-   + 설명 끝 상표 각주. 바꾸면 manifest `id`/`name`, 스플래시 글자 (`tools/make_splash.py`), 템플릿 이름 `MayaKit` 을 함께.
+   + 설명 끝 상표 각주. 바꾸면 manifest `id`/`name`, 스플래시 글자 (`tools/make_splash.py`), 템플릿 이름 `Allset` 을 함께.
 2. **무료 GPL 핵심판 = (b) 자체 저장소로 시작**: 심사 없이 바로, 앱 안 설치·업데이트 그대로 (실측 10/10), 비용 0. 첫 사용자들로 거친 곳을 고친다.
 3. **그다음 (a) 플랫폼 제출**: 도달 범위가 가장 넓다. 준비: 바이너리 CC0 선언 (11-d), ToS 3.1 설명 (모든 변경 + 되돌리기), 3.9 대비 설명
    (그리기 교체와 끄면 복원). 거절돼도 (b) 가 그대로 남는다. 두 곳에 같은 `id` 로 두면 사용자는 한 곳에서만 받는다 (저장소마다 따로 설치됨) [I].
@@ -142,12 +145,12 @@
 
 ## 준비물 (이번 단계에서 만든 것)
 
-- `src/maya_kit/blender_manifest.toml`: `tags = ["User Interface", "3D View", "Modeling", "Animation"]`, `copyright = ["2026 ohnsk"]`
+- `src/allset/blender_manifest.toml`: `tags = ["User Interface", "3D View", "Modeling", "Animation"]`, `copyright = ["2026 ohnsk"]`
   (`website` 는 공개 페이지가 생기면, `platforms` 는 순수 Python 이라 생략). `extension validate` 통과.
   주의: `maintainer` 의 이메일은 공개 목록에 그대로 보인다 (11-c).
 - `tools/build_repo.py` — zip + `index.json` + `index.html` (`dist/repo/`, Blender 의 `server-generate`).
 - `tools/repo_check.py` — (b) 경로 왕복 (설치·켜기·Make Maya·끄기·업데이트·Remove·저장소 제거).
-- `tools/installer/` (`maya_kit_setup.ps1`, `blender_helper.py`, `maya_kit.iss`) + `tools/installer_check.py` — (d) 초안과 그 왕복.
+- `tools/installer/` (`allset_setup.ps1`, `blender_helper.py`, `allset.iss`) + `tools/installer_check.py` — (d) 초안과 그 왕복.
 - `tests/test_step61_distribution.py` — manifest 규칙, 네트워크·자동 업데이트 코드 없음, 저장소 이름 하드코딩 없음, 쓰기 위치.
 - 기존 `tools/release_check.py` — zip 설치 (Install from Disk 와 같은 `install-file`) 왕복.
 

@@ -1,4 +1,4 @@
-"""Step 2 operators: maya_kit.display_mode, maya_kit.group."""
+"""Step 2 operators: allset.display_mode, allset.group."""
 
 from importlib import import_module
 
@@ -37,12 +37,12 @@ def test_display_mode_sets_shading():
 
 def test_display_mode_operator():
     screen, area, space = _view3d_space()
-    assert not bpy.ops.maya_kit.display_mode.poll(), "poll must reject non-3D context"
+    assert not bpy.ops.allset.display_mode.poll(), "poll must reject non-3D context"
     region = next(r for r in area.regions if r.type == 'WINDOW')
     # No window in -b: override the screen too.
     with bpy.context.temp_override(screen=screen, area=area, region=region, space_data=space):
         for mode, want in SHADING_CASES:
-            assert bpy.ops.maya_kit.display_mode(mode=mode) == {'FINISHED'}, mode
+            assert bpy.ops.allset.display_mode(mode=mode) == {'FINISHED'}, mode
             got = {k: getattr(space.shading, k) for k in want}
             assert got == want, (mode, got)
 
@@ -79,7 +79,7 @@ def test_group_at_world_origin():
     bpy.context.view_layer.update()
     worlds = {o.name: o.matrix_world.copy() for o in (a, b)}
     _select([a, b])
-    assert bpy.ops.maya_kit.group() == {'FINISHED'}
+    assert bpy.ops.allset.group() == {'FINISHED'}
     grp = bpy.context.view_layer.objects.active
     assert grp.type == 'EMPTY' and grp.name == "group1", (grp.type, grp.name)
     assert grp.parent is None
@@ -105,7 +105,7 @@ def test_group_under_common_parent():
     bpy.context.view_layer.update()
     worlds = {o.name: o.matrix_world.copy() for o in kids}
     _select(kids)
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     grp = bpy.context.view_layer.objects.active
     bpy.context.view_layer.update()
     assert grp.parent == p, grp.parent
@@ -121,21 +121,21 @@ def test_group_naming_and_empty_selection():
     assert group.next_group_name(["group1", "group3", "pCube1", "group", "group02x"]) == "group2"
     assert group.next_group_name([]) == "group1"
     _select([])
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     first = bpy.context.view_layer.objects.active
     _select([])
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     second = bpy.context.view_layer.objects.active
     assert (first.name, second.name) == ("group1", "group2"), (first.name, second.name)
     assert first.type == 'EMPTY' and not first.children
     bpy.data.objects.remove(first)
     _select([])
-    bpy.ops.maya_kit.group()
+    bpy.ops.allset.group()
     assert bpy.context.view_layer.objects.active.name == "group1"  # lowest free number
 
 
 def test_group_is_undoable_operator():
-    assert 'UNDO' in group.MAYAKIT_OT_group.bl_options
+    assert 'UNDO' in group.ALLSET_OT_group.bl_options
 
 
 def test_group_regroups_selected_group():
@@ -143,7 +143,7 @@ def test_group_regroups_selected_group():
     _clear_groups()
     a = _new_obj("G_A", (0, 0, 1))
     _select([a])
-    bpy.ops.maya_kit.group()
-    bpy.ops.maya_kit.group()  # selection is now group1
+    bpy.ops.allset.group()
+    bpy.ops.allset.group()  # selection is now group1
     g1, g2 = bpy.data.objects["group1"], bpy.data.objects["group2"]
     assert a.parent == g1 and g1.parent == g2 and g2.parent is None

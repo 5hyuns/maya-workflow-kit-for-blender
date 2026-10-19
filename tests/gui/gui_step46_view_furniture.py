@@ -1,4 +1,4 @@
-"""Step 46 in a real UI: Maya view furniture in the MayaKit layout — ViewCube click on TOP gives the
+"""Step 46 in a real UI: Maya view furniture in the Allset layout — ViewCube click on TOP gives the
 top view, four-view panel labels top / persp / side / front, Blender navigation gizmo and text info
 off (screenshots). Plan: docs/steps/step_46.md."""
 
@@ -12,7 +12,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -59,15 +59,15 @@ def face_centre(region, name):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_template():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     space = area3d().spaces.active
-    check("MayaKit view: Blender navigation gizmo and text info off",
+    check("Allset view: Blender navigation gizmo and text info off",
           not space.show_gizmo_navigate and not space.overlay.show_text)
     check("... so it is a Maya view (ViewCube, triad, camera name)", vf().maya_view(space))
     redraw()

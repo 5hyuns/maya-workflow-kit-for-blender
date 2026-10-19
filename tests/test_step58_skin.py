@@ -69,7 +69,7 @@ def test_ik_handle_from_two_selected_joints():
         cb.set_bone_selected(pb, pb.name in ("joint1", "joint3"))
     arm.data.bones.active = arm.data.bones["joint3"]
     assert skin.selected_pair(bpy.context)[1:] == (("joint1", 'HEAD'), ("joint3", 'HEAD'))
-    assert bpy.ops.maya_kit.ik_handle() == {'FINISHED'}
+    assert bpy.ops.allset.ik_handle() == {'FINISHED'}
     h = bpy.data.objects["ikHandle1"]
     con = arm.pose.bones["joint2"].constraints["ikHandle1"]
     assert con.type == 'IK' and con.target == h and con.chain_count == 2 and con.use_tail
@@ -105,7 +105,7 @@ def test_pole_vector_keeps_the_pose():
     for pb in arm.pose.bones:
         cb.set_bone_selected(pb, pb.name in ("joint1", "joint3"))
     arm.data.bones.active = arm.data.bones["joint3"]
-    bpy.ops.maya_kit.ik_handle()
+    bpy.ops.allset.ik_handle()
     handle = bpy.data.objects["ikHandle1"]
     bpy.context.view_layer.update()
     before = arm.pose.bones["joint2"].head.copy()
@@ -117,7 +117,7 @@ def test_pole_vector_keeps_the_pose():
     pole.select_set(True)
     handle.select_set(True)
     bpy.context.view_layer.objects.active = handle
-    assert bpy.ops.maya_kit.pole_vector() == {'FINISHED'}
+    assert bpy.ops.allset.pole_vector() == {'FINISHED'}
     con = arm.pose.bones["joint2"].constraints["ikHandle1"]
     assert con.pole_target == pole
     bpy.context.view_layer.update()
@@ -132,7 +132,7 @@ def test_bind_skin_any_order_no_parenting():
     for ob in bpy.context.view_layer.objects:
         ob.select_set(True)
     bpy.context.view_layer.objects.active = cyl            # Maya habit: joints first, mesh last (mesh active)
-    assert bpy.ops.maya_kit.bind_skin() == {'FINISHED'}
+    assert bpy.ops.allset.bind_skin() == {'FINISHED'}
     assert cyl.parent is None, "Maya keeps the skin out of the joint hierarchy"
     mod = skin.armature_modifier(cyl)
     assert mod is not None and mod.object == arm
@@ -140,10 +140,10 @@ def test_bind_skin_any_order_no_parenting():
     top = max(cyl.data.vertices, key=lambda v: v.co.z)
     assert any(cyl.vertex_groups[g.group].name == "joint3" and g.weight > 0.3 for g in top.groups)
     # Max Influences 1: one joint per vertex
-    bpy.ops.maya_kit.unbind_skin()
+    bpy.ops.allset.unbind_skin()
     assert skin.armature_modifier(cyl) is None and not skin.influences(cyl)
     arm.select_set(True)
-    bpy.ops.maya_kit.bind_skin(max_influences=1)
+    bpy.ops.allset.bind_skin(max_influences=1)
     assert all(len([g for g in v.groups if g.weight > 0]) <= 1 for v in cyl.data.vertices)
 
 
@@ -157,7 +157,7 @@ def test_bind_selected_joints_only():
     bpy.ops.object.mode_set(mode='POSE')
     for pb in arm.pose.bones:
         cb.set_bone_selected(pb, pb.name in ("joint1", "joint2"))
-    assert bpy.ops.maya_kit.bind_skin(bind_to='SELECTED') == {'FINISHED'}
+    assert bpy.ops.allset.bind_skin(bind_to='SELECTED') == {'FINISHED'}
     assert sorted(vg.name for vg in skin.influences(cyl)) == ["joint1", "joint2"]
 
 
@@ -168,7 +168,7 @@ def _bound():
     arm.select_set(True)
     cyl.select_set(True)
     bpy.context.view_layer.objects.active = cyl
-    bpy.ops.maya_kit.bind_skin()
+    bpy.ops.allset.bind_skin()
     return arm, cyl
 
 
@@ -178,7 +178,7 @@ def test_paint_skin_weights_mode_and_panel():
         ob.select_set(False)
     cyl.select_set(True)
     bpy.context.view_layer.objects.active = cyl
-    assert bpy.ops.maya_kit.paint_skin_weights() == {'FINISHED'}
+    assert bpy.ops.allset.paint_skin_weights() == {'FINISHED'}
     assert bpy.context.mode == 'PAINT_WEIGHT' and arm.mode == 'POSE', "the skeleton is posable while painting"
     assert cyl.vertex_groups.active is not None
     assert paint_weights.active(bpy.context)
@@ -186,7 +186,7 @@ def test_paint_skin_weights_mode_and_panel():
     flags, _order = paint_weights.influence_filter(cyl, 1)
     shown = [vg.name for vg, f in zip(cyl.vertex_groups, flags) if f]
     assert sorted(shown) == ["joint1", "joint2", "joint3"], shown
-    assert bpy.ops.maya_kit.paint_skin_weights() == {'FINISHED'}     # again = leave the tool
+    assert bpy.ops.allset.paint_skin_weights() == {'FINISHED'}     # again = leave the tool
     assert bpy.context.mode == 'OBJECT'
 
 
@@ -198,7 +198,7 @@ def test_copy_skin_weights_to_another_mesh():
     cyl.select_set(True)
     other.select_set(True)
     bpy.context.view_layer.objects.active = other          # Maya: source, then destination
-    assert bpy.ops.maya_kit.copy_skin_weights() == {'FINISHED'}
+    assert bpy.ops.allset.copy_skin_weights() == {'FINISHED'}
     assert skin.armature_modifier(other).object == arm
     assert sorted(vg.name for vg in other.vertex_groups) == ["joint1", "joint2", "joint3"]
     top = max(other.data.vertices, key=lambda v: v.co.z)
@@ -222,7 +222,7 @@ def test_mirror_skin_weights_pairs_mirrored_joints():
     neg = [v.index for v in plane.data.vertices if v.co.x < 0]
     g2.add(pos, 0.8, 'REPLACE')
     g2.add(neg, 0.1, 'REPLACE')                            # the -x side is wrong before the mirror
-    assert bpy.ops.maya_kit.mirror_skin_weights() == {'FINISHED'}
+    assert bpy.ops.allset.mirror_skin_weights() == {'FINISHED'}
     for i in neg:
         ws = {plane.vertex_groups[g.group].name: g.weight for g in plane.data.vertices[i].groups}
         assert ws == {"joint5": 0.8} or abs(ws.get("joint5", 0) - 0.8) < 1e-6 and "joint2" not in ws, ws
@@ -247,11 +247,11 @@ def test_copy_paste_vertex_weights():
     bm.select_history.clear()
     bm.select_history.add(top)
     bmesh.update_edit_mesh(cyl.data)
-    assert bpy.ops.maya_kit.copy_vertex_weights() == {'FINISHED'}
+    assert bpy.ops.allset.copy_vertex_weights() == {'FINISHED'}
     for v in bm.verts:
         v.select = v is low
     bmesh.update_edit_mesh(cyl.data)
-    assert bpy.ops.maya_kit.paste_vertex_weights() == {'FINISHED'}
+    assert bpy.ops.allset.paste_vertex_weights() == {'FINISHED'}
     bpy.ops.object.mode_set(mode='OBJECT')
     ws = lambda v: {cyl.vertex_groups[g.group].name: round(g.weight, 5) for g in v.groups if g.weight > 0}
     verts = cyl.data.vertices
@@ -262,13 +262,13 @@ def test_copy_paste_vertex_weights():
 
 def test_menus_and_shelf():
     m = menu_map.MAP
-    assert m["Skeleton/Create IK Handle"] == "maya_kit.ik_handle"
-    assert m["Constrain/Pole Vector"] == "maya_kit.pole_vector"
+    assert m["Skeleton/Create IK Handle"] == "allset.ik_handle"
+    assert m["Constrain/Pole Vector"] == "allset.pole_vector"
     for path, op in (("Skin/Bind Skin", "bind_skin"), ("Skin/Unbind Skin", "unbind_skin"),
                      ("Skin/Paint Skin Weights", "paint_skin_weights"), ("Skin/Mirror Skin Weights", "mirror_skin_weights"),
                      ("Skin/Copy Skin Weights", "copy_skin_weights"), ("Skin/Copy Vertex Weights", "copy_vertex_weights"),
                      ("Skin/Paste Vertex Weights", "paste_vertex_weights")):
-        assert m[path] == f"maya_kit.{op}", path
-    assert shelf_map.BY_COMMAND["IKHandleTool"][0] == "maya_kit.ik_handle"
-    assert shelf_map.BY_COMMAND["SmoothBindSkin"][0] == "maya_kit.bind_skin"
-    assert shelf_map.BY_COMMAND["ArtPaintSkinWeightsTool"][0] == "maya_kit.paint_skin_weights"
+        assert m[path] == f"allset.{op}", path
+    assert shelf_map.BY_COMMAND["IKHandleTool"][0] == "allset.ik_handle"
+    assert shelf_map.BY_COMMAND["SmoothBindSkin"][0] == "allset.bind_skin"
+    assert shelf_map.BY_COMMAND["ArtPaintSkinWeightsTool"][0] == "allset.paint_skin_weights"

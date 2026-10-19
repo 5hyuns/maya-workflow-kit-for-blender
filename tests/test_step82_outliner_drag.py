@@ -118,7 +118,7 @@ def test_reorder_relinks_in_drawn_order_and_keeps_base_state():
 def test_reparent_operator_is_one_maya_step():
     a, b, c = _scene()
     c.select_set(True)
-    res = bpy.ops.maya_kit.outliner_reparent(changes=json.dumps({"B": "A", "C": None}),
+    res = bpy.ops.allset.outliner_reparent(changes=json.dumps({"B": "A", "C": None}),
                                              select=json.dumps(["B"]), active="B")
     bpy.context.view_layer.update()
     assert res == {'FINISHED'}
@@ -130,14 +130,14 @@ def test_reparent_operator_is_one_maya_step():
 def test_lmb_drop_watch_and_mmb_keymap_item():
     assert od._on_depsgraph in bpy.app.handlers.depsgraph_update_post
     assert set(od.DROP_OPS) == {"OUTLINER_OT_parent_drop", "OUTLINER_OT_parent_clear"}
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     items = [k for k in kc.keymaps["Outliner"].keymap_items
              if k.active and k.type == 'MIDDLEMOUSE' and k.value == 'PRESS' and not (k.shift or k.ctrl or k.alt)]
-    assert [k.idname for k in items] == ["maya_kit.outliner_drag"], [k.idname for k in items]
+    assert [k.idname for k in items] == ["allset.outliner_drag"], [k.idname for k in items]
     pans = [k for k in kc.keymaps["View2D"].keymap_items if k.idname == "view2d.pan" and k.type == 'MIDDLEMOUSE']
     assert any(k.alt for k in pans)                                   # Alt+MMB pans (= Maya)
-    assert ("Outliner", "maya_kit.outliner_drag") in [(a[0], a[1]) for a in patches.ADDED]
+    assert ("Outliner", "allset.outliner_drag") in [(a[0], a[1]) for a in patches.ADDED]
 
 
 def test_mmb_poll_object_mode_outliner_only():
-    assert not bpy.ops.maya_kit.outliner_drag.poll()                  # no Outliner region in background
+    assert not bpy.ops.allset.outliner_drag.poll()                  # no Outliner region in background

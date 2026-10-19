@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -121,7 +121,7 @@ def s_existing_shot():
     shot("gui_step29_rmb_existing.png")
     ops = bpy.context.window_manager.operators
     check("the click's release did not pick a row of the popup",
-          not ops or ops[-1].bl_idname != "MAYA_KIT_OT_assign_material")
+          not ops or ops[-1].bl_idname != "ALLSET_OT_assign_material")
     tap('ESC')
 
 
@@ -135,10 +135,10 @@ def s_attributes():
     area, r = view3d()
     region = next(rg for rg in area.regions if rg.type == 'WINDOW')
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        check("Material Attributes runs", bpy.ops.maya_kit.material_attributes() == {'FINISHED'})
+        check("Material Attributes runs", bpy.ops.allset.material_attributes() == {'FINISHED'})
     wm = bpy.context.window_manager
     check("dock = Attribute Editor on the material tab",
-          wm.maya_kit_dock == 'ATTRIBUTE_EDITOR' and wm.maya_kit_ae_tab == "MAT:0")
+          wm.allset_dock == 'ATTRIBUTE_EDITOR' and wm.allset_ae_tab == "MAT:0")
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 5, y=C["y"])
 
 
@@ -152,7 +152,7 @@ def s_attributes_wait():
 @step
 def s_attributes_shot():
     shot("gui_step29_ae_material.png")
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     prefs = bpy.context.preferences.addons[MODULE].preferences
     prefs.menu_set = 'renderingMenuSet'
     menu_sets = import_module(MODULE + ".ui.menu_sets")
@@ -165,7 +165,7 @@ def s_menu_shot():
     shot("gui_step29_shading_menu.png")
     tap('ESC')
     with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_assign_existing_material")
+        bpy.ops.wm.call_menu(name="ALLSET_MT_assign_existing_material")
 
 
 @step

@@ -28,7 +28,7 @@ def mod(name):
 
 
 def user_setup():
-    """A user who changed things before Maya Kit: a key, the theme, navigation, another add-on."""
+    """A user who changed things before Allset: a key, the theme, navigation, another add-on."""
     import addon_utils
     prefs = bpy.context.preferences
     edit_user_key()                         # a user keymap edit

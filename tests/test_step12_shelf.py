@@ -133,12 +133,12 @@ def _index(shelf_name, label):
 
 def test_poly_cube_button_creates_maya_cube():
     _fresh()
-    res = bpy.ops.maya_kit.shelf_button(shelf="Polygons", index=_index("Polygons", "Polygon Cube"))
+    res = bpy.ops.allset.shelf_button(shelf="Polygons", index=_index("Polygons", "Polygon Cube"))
     assert res == {'FINISHED'}
     ob = bpy.context.view_layer.objects.active
     assert ob.name == "pCube1" and tuple(ob.dimensions) == (1.0, 1.0, 1.0)
-    bpy.ops.maya_kit.shelf_button(shelf="Polygons", index=_index("Polygons", "Freeze Transformations"))
-    bpy.ops.maya_kit.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
+    bpy.ops.allset.shelf_button(shelf="Polygons", index=_index("Polygons", "Freeze Transformations"))
+    bpy.ops.allset.shelf_button(shelf="Rendering", index=_index("Rendering", "Lambert Material"))
     assert ob.active_material.name == "lambert2"   # lambert1 = Maya's default material (step 100)
     node = next(n for n in ob.active_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     assert node.inputs["Roughness"].default_value == 1.0
@@ -158,18 +158,18 @@ def test_user_shelf_lifecycle():
         os.remove(path)
     shelf.reload_user()
     assert [s[1] for s in shelf.shelves()][-1] == "Custom"           # Maya's empty Custom tab
-    assert bpy.ops.maya_kit.shelf_new(name="Mine") == {'FINISHED'}
+    assert bpy.ops.allset.shelf_new(name="Mine") == {'FINISHED'}
     assert shelf.current() == "USER:Mine"
-    bpy.ops.maya_kit.shelf_add_button(label="Hello", icon="NOT_AN_ICON",
+    bpy.ops.allset.shelf_add_button(label="Hello", icon="NOT_AN_ICON",
                                       script="bpy.context.scene['shelf_ran'] = 42")
-    bpy.ops.maya_kit.shelf_add_button(label="Broken", icon="ERROR", script="1/0")
+    bpy.ops.allset.shelf_add_button(label="Broken", icon="ERROR", script="1/0")
     s = shelf.user_shelf("Mine")
     assert [b["label"] for b in s["buttons"]] == ["Hello", "Broken"]
     assert s["buttons"][0]["icon"] == 'SCRIPT'                           # invalid icon replaced
-    assert bpy.ops.maya_kit.shelf_button(shelf="USER:Mine", index=0) == {'FINISHED'}
+    assert bpy.ops.allset.shelf_button(shelf="USER:Mine", index=0) == {'FINISHED'}
     assert bpy.context.scene["shelf_ran"] == 42
     try:
-        res = bpy.ops.maya_kit.shelf_button(shelf="USER:Mine", index=1)
+        res = bpy.ops.allset.shelf_button(shelf="USER:Mine", index=1)
     except RuntimeError:
         res = {'CANCELLED'}                                              # reported as an error
     assert res == {'CANCELLED'}
@@ -177,45 +177,45 @@ def test_user_shelf_lifecycle():
     assert [x["name"] for x in on_disk["shelves"]] == ["Custom", "Mine"]
     shelf.reload_user()
     assert len(shelf.user_shelf("Mine")["buttons"]) == 2
-    bpy.ops.maya_kit.shelf_edit_button(index=0, label="Hi", icon="MESH_CUBE", script="x = 1")
+    bpy.ops.allset.shelf_edit_button(index=0, label="Hi", icon="MESH_CUBE", script="x = 1")
     assert shelf.user_shelf("Mine")["buttons"][0] == {"label": "Hi", "icon": "MESH_CUBE", "script": "x = 1"}
-    bpy.ops.maya_kit.shelf_remove_button(index=1)
+    bpy.ops.allset.shelf_remove_button(index=1)
     assert len(shelf.user_shelf("Mine")["buttons"]) == 1
     runner.run("bpy.context.scene['from_cmd'] = 7")
-    bpy.ops.maya_kit.shelf_add_last_command()
+    bpy.ops.allset.shelf_add_last_command()
     assert shelf.user_shelf("Mine")["buttons"][-1]["script"] == "bpy.context.scene['from_cmd'] = 7"
-    bpy.ops.maya_kit.shelf_delete()
+    bpy.ops.allset.shelf_delete()
     assert shelf.user_shelf("Mine") is None and shelf.current() == "Polygons"
-    assert not bpy.ops.maya_kit.shelf_delete.poll()                      # factory shelf: nothing to delete
+    assert not bpy.ops.allset.shelf_delete.poll()                      # factory shelf: nothing to delete
 
 
 def test_tab_step_and_select():
     shelf.reload_user()
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
-    bpy.ops.maya_kit.shelf_step(forward=True)
+    bpy.ops.allset.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_step(forward=True)
     assert shelf.current() == "Sculpting"
-    bpy.ops.maya_kit.shelf_step(forward=False)
-    bpy.ops.maya_kit.shelf_step(forward=False)
+    bpy.ops.allset.shelf_step(forward=False)
+    bpy.ops.allset.shelf_step(forward=False)
     assert shelf.current() == "CurvesSurfaces"
-    bpy.ops.maya_kit.shelf_step(forward=False)                           # wraps to the last tab
+    bpy.ops.allset.shelf_step(forward=False)                           # wraps to the last tab
     assert shelf.current() == shelf.shelves()[-1][0]
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
 
 
 def test_draw_shelf():
     shelf.reload_user()
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
     lay = FakeLayout()
     shelf.draw_shelf(lay, bpy.context)
-    buttons = [e for e in lay.log if e[0] == "op" and e[1] == "maya_kit.shelf_button"]
+    buttons = [e for e in lay.log if e[0] == "op" and e[1] == "allset.shelf_button"]
     assert len(buttons) == len(shelf.factory_buttons("Polygons"))
     assert buttons[1][3] == 'MESH_CUBE' and buttons[1][2] == ""          # icon only, like Maya
-    assert ("menu", "MAYAKIT_MT_shelf_tabs", "Poly Modeling") in lay.log
-    bpy.ops.maya_kit.shelf_select(shelf="USER:Custom")
+    assert ("menu", "ALLSET_MT_shelf_tabs", "Poly Modeling") in lay.log
+    bpy.ops.allset.shelf_select(shelf="USER:Custom")
     lay = FakeLayout()
     shelf.draw_shelf(lay, bpy.context)
-    assert any(e[0] == "op" and e[1] == "maya_kit.shelf_add_button" for e in lay.log)  # empty: add
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    assert any(e[0] == "op" and e[1] == "allset.shelf_add_button" for e in lay.log)  # empty: add
+    bpy.ops.allset.shelf_select(shelf="Polygons")
 
 
 # --- strip ---------------------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ def test_image_headers_patched():
 
 def test_template_has_marked_strip():
     path = os.path.join(os.path.dirname(import_module(kit.MODULE).__file__),
-                        "app_template", "MayaKit", "startup.blend")
+                        "app_template", "Allset", "startup.blend")
     bpy.ops.wm.open_mainfile(filepath=path, load_ui=True)
     scr = bpy.context.window_manager.windows[0].screen
     strip = shelf.strip_area(scr)

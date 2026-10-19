@@ -45,3 +45,12 @@
       `maintainer` 의 이메일은 공개 목록에 보인다 — 공개용 주소로 바꿀지.
     - d. **킷 바이너리의 CC0 선언** (`startup.blend`, `splash*.png`, `welcome.png`: 모두 킷 스크립트가 만든 것) — 플랫폼 ToS 1.2 조건.
     - e. **exe 를 만든다면 코드 서명** (OV 인증서 약 $215–400/년, 한국 개인은 Azure Artifact Signing 불가) — 기본값: exe 안 만듦.
+12. **배포처와 이름 (사용자 결정, 2026-10-19 — 사용자 지시의 「결정 8」; 8 번이 이미 단위 규칙이라 12 번으로 적음, delegated)**:
+    - 배포처 = **extensions.blender.org (무료, GPL)**. 결정 11 의 a / b 를 이것으로 정한다 (업로드는 사용자가 직접).
+    - 이름 = **Allset for Maya Users**, manifest `id = "allset"`, tagline **"The whole Maya workflow in Blender, in one install"**
+      (50 자, 마침표 없음). Autodesk 상표 지침의 「for」 참조 형태: 우리 브랜드 Allset 이 앞, Maya 는 대상 표시로만.
+      id · URL · 패키지 · 연산자 / 클래스 접두사에는 maya 를 쓰지 않는다 (`allset.` / `ALLSET_`).
+    - 사용자에게 보이는 글: Maya 동작을 설명하는 표현 (Maya-style, as in Maya, Maya 메뉴 이름 재현) 은 유지, 브랜드처럼 쓰인 이름
+      (테마, 앱 템플릿, 스플래시, 「Autodesk App Store」 메뉴) 은 중립 이름. README · 환경설정 About · 등록 설명에 영문 상표 고지문
+      (`docs/distribution/extensions_audit.md` 「필수 고지문」). 근거: `docs/distribution/extensions_audit.md`, 이름 선택 과정
+      `docs/distribution/naming.md`.

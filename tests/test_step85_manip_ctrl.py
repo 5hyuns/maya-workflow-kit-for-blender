@@ -32,14 +32,14 @@ def test_pick_axis():
 
 
 def test_keymap_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     for km in patches.GIZMO_KEYMAPS:
         items = [k for k in kc.keymaps[km].keymap_items if k.active and k.type == 'LEFTMOUSE' and k.value == 'PRESS'
                  and k.ctrl and not k.shift and not k.alt]
-        assert items and items[0].idname == "maya_kit.manip_ctrl", (km, [k.idname for k in items])
-    assert "maya_kit.manip_ctrl" in patches.PASS_THROUGH_FIRST
+        assert items and items[0].idname == "allset.manip_ctrl", (km, [k.idname for k in items])
+    assert "allset.manip_ctrl" in patches.PASS_THROUGH_FIRST
     for km, _idname, mode in patches.MMB_TOOLS:
-        found = [k for k in kc.keymaps[km].keymap_items if k.idname == "maya_kit.manip_mmb_auto"
+        found = [k for k in kc.keymaps[km].keymap_items if k.idname == "allset.manip_mmb_auto"
                  and k.type == 'MIDDLEMOUSE' and k.value == 'PRESS' and k.shift and not k.ctrl]
         assert (len(found) == 1 and found[0].properties.mode == mode) if mode != 'ROTATE' else not found, km
 
@@ -50,4 +50,4 @@ def test_ctrl_passes_through_without_a_gizmo():
 
 
 def test_handle_slots():
-    assert {"handle_role", "handle_axis"} <= set(manipulator.MAYAKIT_GT_maya_handle.__slots__)
+    assert {"handle_role", "handle_axis"} <= set(manipulator.ALLSET_GT_maya_handle.__slots__)

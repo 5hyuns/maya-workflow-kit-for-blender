@@ -74,10 +74,10 @@ def test_category_rules_all_used():
 
 
 def test_greyed_tooltip_carries_the_category():
-    tip = menu_sets.MAYAKIT_OT_menu_unavailable.description(
+    tip = menu_sets.ALLSET_OT_menu_unavailable.description(
         bpy.context, types.SimpleNamespace(item="Surfaces/Loft"))
     assert "Surfaces/Loft" in tip and "NURBS" in tip, tip
-    tip = menu_sets.MAYAKIT_OT_menu_unavailable.description(
+    tip = menu_sets.ALLSET_OT_menu_unavailable.description(
         bpy.context, types.SimpleNamespace(item="Generate/XGen Editor"))
     assert "XGen" in tip and "Curves" in tip, tip
 
@@ -119,12 +119,12 @@ def test_prefix_and_search_replace_names():
     b.parent = a
     a.data.name = "pCubeShape1"
     _select(a)
-    bpy.ops.maya_kit.prefix_hierarchy(prefix="L_")
+    bpy.ops.allset.prefix_hierarchy(prefix="L_")
     assert a.name == "L_pCube1" and b.name == "L_pCube2" and a.data.name == "L_pCubeShape1"
     _select(a)
-    bpy.ops.maya_kit.search_replace_names(search="L_", replace="R_", scope='SELECTED')
+    bpy.ops.allset.search_replace_names(search="L_", replace="R_", scope='SELECTED')
     assert a.name == "R_pCube1" and b.name == "L_pCube2"
-    bpy.ops.maya_kit.search_replace_names(search="L_", replace="R_", scope='ALL')
+    bpy.ops.allset.search_replace_names(search="L_", replace="R_", scope='ALL')
     assert b.name == "R_pCube2"
 
 
@@ -132,12 +132,12 @@ def test_soften_harden_object_and_edges():
     _clear()
     ob = _cube()
     _select(ob)
-    bpy.ops.maya_kit.soften_harden(angle=30.0)          # Maya default: cube edges (90 deg) hard
+    bpy.ops.allset.soften_harden(angle=30.0)          # Maya default: cube edges (90 deg) hard
     assert not any(_smooth(ob, e) for e in range(12))
     assert all(p.use_smooth for p in ob.data.polygons)
-    bpy.ops.maya_kit.soften_harden(angle=180.0)
+    bpy.ops.allset.soften_harden(angle=180.0)
     assert all(_smooth(ob, e) for e in range(12))
-    bpy.ops.maya_kit.soften_harden(angle=0.0)
+    bpy.ops.allset.soften_harden(angle=0.0)
     assert not any(_smooth(ob, e) for e in range(12))
 
 
@@ -150,7 +150,7 @@ def test_detach_vertex_and_object_mode_warning():
     _clear()
     ob = _cube()
     _select(ob)
-    assert bpy.ops.maya_kit.menu_item(item="Edit Mesh/Detach") == {'CANCELLED'}    # Maya warns on an object
+    assert bpy.ops.allset.menu_item(item="Edit Mesh/Detach") == {'CANCELLED'}    # Maya warns on an object
     assert len(ob.data.vertices) == 8
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type='VERT')
@@ -159,7 +159,7 @@ def test_detach_vertex_and_object_mode_warning():
     bm.verts.ensure_lookup_table()
     bm.verts[0].select = True
     bmesh.update_edit_mesh(ob.data)
-    bpy.ops.maya_kit.detach()
+    bpy.ops.allset.detach()
     bpy.ops.object.mode_set(mode='OBJECT')
     assert len(ob.data.vertices) == 10, len(ob.data.vertices)     # a corner of 3 faces -> 3 vertices
 
@@ -204,7 +204,7 @@ def test_wedge_sweeps_faces_round_an_edge():
     edge = bm.edges[0]
     bm.select_history.add(edge)
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.wedge(angle=90.0, divisions=4) == {'FINISHED'}
+    assert bpy.ops.allset.wedge(angle=90.0, divisions=4) == {'FINISHED'}
     bpy.ops.object.mode_set(mode='OBJECT')
     assert len(ob.data.polygons) > 4, len(ob.data.polygons)
 
@@ -213,30 +213,30 @@ def test_nonlinear_object_display_checker_stereo():
     _clear()
     ob = _cube()
     _select(ob)
-    bpy.ops.maya_kit.nonlinear(method='BEND')
+    bpy.ops.allset.nonlinear(method='BEND')
     md = ob.modifiers[-1]
     assert md.type == 'SIMPLE_DEFORM' and md.deform_method == 'BEND' and md.name == "bend1" and md.angle == 0.0
-    bpy.ops.maya_kit.object_display(kind='TEMPLATE')
+    bpy.ops.allset.object_display(kind='TEMPLATE')
     assert ob.hide_select and ob.display_type == 'WIRE' and not ob.select_get()
-    bpy.ops.maya_kit.object_display(kind='UNTEMPLATE')     # nothing selectable: every templated object
+    bpy.ops.allset.object_display(kind='UNTEMPLATE')     # nothing selectable: every templated object
     assert not ob.hide_select and ob.display_type == 'TEXTURED'
     _select(ob)
-    bpy.ops.maya_kit.checker_shader()
+    bpy.ops.allset.checker_shader()
     mat = ob.active_material
     img = next(n.image for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE')
     assert img.generated_type == 'UV_GRID'
-    bpy.ops.maya_kit.stereo_camera()
+    bpy.ops.allset.stereo_camera()
     assert bpy.context.scene.render.use_multiview and bpy.context.active_object.type == 'CAMERA'
     bpy.context.scene.render.use_multiview = False
-    assert bpy.ops.maya_kit.delete_sounds() == {'FINISHED'}
-    assert bpy.ops.maya_kit.menu_note(item="Playback/Playback Looping/Continuous") == {'FINISHED'}
+    assert bpy.ops.allset.delete_sounds() == {'FINISHED'}
+    assert bpy.ops.allset.menu_note(item="Playback/Playback Looping/Continuous") == {'FINISHED'}
 
 
 def test_sculpt_tool_brush():
     _clear()
     ob = _cube()
     _select(ob)
-    assert bpy.ops.maya_kit.sculpt_tool(brush="Grab") == {'FINISHED'}
+    assert bpy.ops.allset.sculpt_tool(brush="Grab") == {'FINISHED'}
     assert bpy.context.mode == 'SCULPT'
     brush = bpy.context.tool_settings.sculpt.brush
     assert brush is not None and brush.name == "Grab", brush
@@ -279,31 +279,31 @@ def test_edit_mesh_menu_enabled_in_object_mode():
         if entry[0] not in ("op", "hold"):
             continue
         path = getattr(entry[3], "item", None)
-        if entry[1] == "maya_kit.menu_unavailable" and path in menu_map.MAP:
+        if entry[1] == "allset.menu_unavailable" and path in menu_map.MAP:
             greyed_mapped.append(path)
-        if entry[1] not in ("maya_kit.menu_unavailable", "maya_kit.menu_item", "maya_kit.menu_run",
-                            "maya_kit.menu_tool"):
+        if entry[1] not in ("allset.menu_unavailable", "allset.menu_item", "allset.menu_run",
+                            "allset.menu_tool"):
             mod, name = entry[1].split(".")
             if not getattr(getattr(bpy.ops, mod), name).poll():
                 greyed_mapped.append(entry[1])
     assert not greyed_mapped, greyed_mapped
     labels = {e[2]: e for e in rec.log if e[0] in ("op", "hold")}
-    assert labels["Collapse"][1] == "maya_kit.menu_item", labels["Collapse"]
+    assert labels["Collapse"][1] == "allset.menu_item", labels["Collapse"]
 
 
 def test_object_mode_runs_on_the_whole_mesh():
     _clear()
     ob = _cube()
     _select(ob)
-    assert bpy.ops.maya_kit.menu_item(item="Edit Mesh/Poke") == {'FINISHED'}
+    assert bpy.ops.allset.menu_item(item="Edit Mesh/Poke") == {'FINISHED'}
     assert bpy.context.mode == 'OBJECT' and len(ob.data.polygons) == 24, len(ob.data.polygons)   # mayapy 6 -> 24
     bpy.ops.ed.undo_push(message="poked")
     _clear()
     ob = _cube()
     _select(ob)
-    bpy.ops.maya_kit.menu_item(item="Edit Mesh/Bevel")
+    bpy.ops.allset.menu_item(item="Edit Mesh/Bevel")
     assert len(ob.data.vertices) > 8 and bpy.context.mode == 'OBJECT'
     # Maya warns (no change) for Bridge on an object
     n = len(ob.data.vertices)
-    assert bpy.ops.maya_kit.menu_item(item="Edit Mesh/Bridge") == {'CANCELLED'}
+    assert bpy.ops.allset.menu_item(item="Edit Mesh/Bridge") == {'CANCELLED'}
     assert len(ob.data.vertices) == n

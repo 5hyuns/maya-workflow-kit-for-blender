@@ -16,13 +16,13 @@ RESULT = sys.argv[sys.argv.index("--") + 1]
 
 def _check():
     prefs = bpy.context.preferences
-    module = next((m for m in prefs.addons.keys() if m.endswith("maya_kit")), None)
+    module = next((m for m in prefs.addons.keys() if m.endswith("allset")), None)
     addon = prefs.addons[module].preferences if module else None
     results = [
-        {"name": "second start opens the Maya layout (app template MayaKit)",
-         "ok": prefs.app_template == "MayaKit"},
+        {"name": "second start opens the Maya layout (app template Allset)",
+         "ok": prefs.app_template == "Allset"},
         {"name": "Maya theme still on", "ok": bool(addon and addon.maya_theme)
-         and prefs.themes[0].name == "Maya"},
+         and prefs.themes[0].name == "Studio Grey (Maya-inspired)"},
         {"name": "Blender splash off", "ok": not prefs.view.show_splash},
         {"name": "no welcome dialog again", "ok": bool(addon and addon.welcome_done)},
     ]

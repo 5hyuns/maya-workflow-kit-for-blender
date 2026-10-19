@@ -1,8 +1,8 @@
-"""Headless test harness for Maya Kit.
+"""Headless test harness for Allset.
 
     python tests/run.py [-k PATTERN] [--no-build] [--blender PATH]
 
-1. Builds dist/maya_kit-<version>.zip with tools/build.py (skip: --no-build).
+1. Builds dist/allset-<version>.zip with tools/build.py (skip: --no-build).
 2. Recreates a sandbox tmp/test_env/{config,scripts,extensions} and points
    BLENDER_USER_CONFIG / BLENDER_USER_SCRIPTS / BLENDER_USER_EXTENSIONS at it,
    so the real %APPDATA%/Blender Foundation is never touched
@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
 SANDBOX = ROOT / "tmp" / "test_env"
 REPO_ID = "user_default"
-PKG_ID = "maya_kit"
+PKG_ID = "allset"
 MODULE = f"bl_ext.{REPO_ID}.{PKG_ID}"
 TIMEOUT = 300
 
@@ -50,9 +50,9 @@ def make_sandbox():
         env[var] = str(d)
     (SANDBOX / "logs").mkdir()
     (SANDBOX / "results").mkdir()
-    # the default Maya Kit project (operators/project.default_root) lives in the sandbox, not in Documents
-    env["MAYA_KIT_PROJECTS_DIR"] = str(SANDBOX / "projects")
-    env["MAYA_KIT_MODULE"] = MODULE
+    # the default Allset project (operators/project.default_root) lives in the sandbox, not in Documents
+    env["ALLSET_PROJECTS_DIR"] = str(SANDBOX / "projects")
+    env["ALLSET_MODULE"] = MODULE
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return env
 
@@ -95,7 +95,7 @@ def run_test_file(blender, path, env):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Run Maya Kit headless tests")
+    ap = argparse.ArgumentParser(description="Run Allset headless tests")
     ap.add_argument("-k", default="", help="only test files whose name contains this")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))

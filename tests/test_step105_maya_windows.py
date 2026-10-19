@@ -52,29 +52,29 @@ def test_common_tab_writes_scene_render():
     sc = bpy.context.scene
     r = sc.render
     r.filepath = "//../images/"
-    assert sc.maya_kit_rs_dir == "//../images/" and sc.maya_kit_rs_prefix == "" and sc.maya_kit_rs_ext == 'SINGLE'
-    sc.maya_kit_rs_prefix = "shot"
+    assert sc.allset_rs_dir == "//../images/" and sc.allset_rs_prefix == "" and sc.allset_rs_ext == 'SINGLE'
+    sc.allset_rs_prefix = "shot"
     assert r.filepath.replace("\\", "/") == "//../images/shot", r.filepath
-    sc.maya_kit_rs_ext = 'DOT'
+    sc.allset_rs_ext = 'DOT'
     assert r.filepath.endswith("shot.####"), r.filepath      # Maya name.#.ext, padding 4
-    sc.maya_kit_rs_padding = 3
-    assert r.filepath.endswith("shot.###") and sc.maya_kit_rs_padding == 3
-    sc.maya_kit_rs_ext = 'UNDERSCORE'
+    sc.allset_rs_padding = 3
+    assert r.filepath.endswith("shot.###") and sc.allset_rs_padding == 3
+    sc.allset_rs_ext = 'UNDERSCORE'
     assert r.filepath.endswith("shot_###")
-    sc.maya_kit_rs_dir = "//renders/"
+    sc.allset_rs_dir = "//renders/"
     assert r.filepath.replace("\\", "/") == "//renders/shot_###", r.filepath
-    sc.maya_kit_rs_size = 'HD_720'
+    sc.allset_rs_size = 'HD_720'
     assert (r.resolution_x, r.resolution_y, r.resolution_percentage) == (1280, 720, 100)
-    sc.maya_kit_rs_size = 'CCIR_601'
+    sc.allset_rs_size = 'CCIR_601'
     assert (r.resolution_x, r.resolution_y) == (720, 486) and abs(r.pixel_aspect_x / r.pixel_aspect_y - 0.9) < 1e-4
     r.resolution_x = 1000
-    assert sc.maya_kit_rs_size == 'CUSTOM'
+    assert sc.allset_rs_size == 'CUSTOM'
     # Presets > Import Render Settings > Default Settings = Maya factory (captured: 960 x 540, PNG, padding 4, single)
     r.image_settings.file_format = 'JPEG'
-    assert bpy.ops.maya_kit.rs_defaults() == {'FINISHED'}
+    assert bpy.ops.allset.rs_defaults() == {'FINISHED'}
     assert (r.resolution_x, r.resolution_y, r.pixel_aspect_x, r.pixel_aspect_y) == (960, 540, 1.0, 1.0)
-    assert sc.maya_kit_rs_size == 'HD_540'
-    assert r.image_settings.file_format == 'PNG' and sc.maya_kit_rs_ext == 'SINGLE'
+    assert sc.allset_rs_size == 'HD_540'
+    assert r.image_settings.file_format == 'PNG' and sc.allset_rs_ext == 'SINGLE'
     lines = rs.info_lines(sc)
     assert lines[2].startswith("Image size: 960 x 540 (13.3 x 7.5 inches 72 pixels/inch)"), lines
 
@@ -96,15 +96,15 @@ def test_render_panels_hidden_only_in_the_kit_window():
     try:
         kctx = types.SimpleNamespace(window=win, space_data=types.SimpleNamespace(type='PROPERTIES'),
                                      window_manager=bpy.context.window_manager, scene=bpy.context.scene)
-        bpy.context.window_manager.maya_kit_rs_tab = 'COMMON'
-        assert cls.poll(kctx) is False and rs.MAYAKIT_PT_rs_common.poll(kctx)
-        bpy.context.window_manager.maya_kit_rs_tab = 'RENDERER'
-        assert not rs.MAYAKIT_PT_rs_common.poll(kctx)
+        bpy.context.window_manager.allset_rs_tab = 'COMMON'
+        assert cls.poll(kctx) is False and rs.ALLSET_PT_rs_common.poll(kctx)
+        bpy.context.window_manager.allset_rs_tab = 'RENDERER'
+        assert not rs.ALLSET_PT_rs_common.poll(kctx)
         ctx_cls = next(c for c in wrapped if c.__name__ == "RENDER_PT_context")
         assert ctx_cls.poll(kctx) is False    # the kit's Render Using row replaces it
     finally:
         rs._WINDOWS.discard(12345)
-        bpy.context.window_manager.maya_kit_rs_tab = 'COMMON'
+        bpy.context.window_manager.allset_rs_tab = 'COMMON'
 
 
 def test_create_list_maya_shaders():
@@ -131,19 +131,19 @@ def test_browser_tabs_and_edit_commands():
     a.use_fake_user = True
     b = material.new_material('PHONG')
     b.use_fake_user = True
-    wm.maya_kit_hs_material = b.name
-    assert bpy.ops.maya_kit.hs_node(node_type='ShaderNodeTexChecker', label="Checker") == {'FINISHED'}
-    assert bpy.ops.maya_kit.hs_node(node_type='ShaderNodeMapping', label="2d Placement") == {'FINISHED'}
+    wm.allset_hs_material = b.name
+    assert bpy.ops.allset.hs_node(node_type='ShaderNodeTexChecker', label="Checker") == {'FINISHED'}
+    assert bpy.ops.allset.hs_node(node_type='ShaderNodeMapping', label="2d Placement") == {'FINISHED'}
     ctx = bpy.context
-    wm.maya_kit_hs_sort = 'NAME'
+    wm.allset_hs_sort = 'NAME'
     names = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
     assert "blinn1" in names and "phong1" in names
     assert [it[1] for it in hs.browser_items(ctx, 'TEXTURES')] == ["Checker"]
     assert [it[1] for it in hs.browser_items(ctx, 'UTILITIES')] == ["2d Placement"]
     assert {it[1] for it in hs.browser_items(ctx, 'SHADING_GROUPS')} >= {"blinn1SG", "phong1SG"}
-    wm.maya_kit_hs_reverse = True
+    wm.allset_hs_reverse = True
     rev = [it[1] for it in hs.browser_items(ctx, 'MATERIALS')]
-    wm.maya_kit_hs_reverse = False
+    wm.allset_hs_reverse = False
     assert rev == sorted(rev, key=str.lower, reverse=True)
     # Delete Unused Nodes keeps lambert1 (Maya) and used materials
     lam = material.default_material()
@@ -151,7 +151,7 @@ def test_browser_tabs_and_edit_commands():
     ob = bpy.data.objects.new("o", me)
     bpy.context.scene.collection.objects.link(ob)
     me.materials.append(a)
-    assert bpy.ops.maya_kit.hs_edit(action='DELETE_UNUSED') == {'FINISHED'}
+    assert bpy.ops.allset.hs_edit(action='DELETE_UNUSED') == {'FINISHED'}
     left = {m.name for m in bpy.data.materials}
     assert lam.name in left and "blinn1" in left and "phong1" not in left, left
 

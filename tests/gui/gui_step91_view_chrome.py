@@ -1,4 +1,4 @@
-"""Step 91 in a real UI (MayaKit layout): no parent relationship lines in the template views, the RMB marking-menu
+"""Step 91 in a real UI (Allset layout): no parent relationship lines in the template views, the RMB marking-menu
 list draws over the Adjust Last Operation (HUD) panel, and the dock stays one panel when Ctrl+A shows the Attribute
 Editor (the "Channel Box" sidebar tab no longer moves under "Item"). Plan: docs/steps/step_91.md."""
 
@@ -13,7 +13,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d, region_2d_to_locat
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -50,20 +50,20 @@ def pixel(img, x, y):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     lines = [sp.overlay.show_relationship_lines for scr in bpy.data.screens for a in scr.areas
              for sp in a.spaces if sp.type == 'VIEW_3D']
     check(f"template 3D views draw no relationship lines ({lines.count(True)} of {len(lines)} on)",
           lines and not any(lines))
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     # Put the cube low on the left of the view so its RMB list (under the ring) covers the HUD panel.
     target = (region.width * 0.30, region.height * 0.42)
     p = region_2d_to_location_3d(region, region.data, target, (0.0, 0.0, 0.0))
@@ -138,7 +138,7 @@ def s_esc():
     ev('ESC', 'RELEASE')
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.group()
+        bpy.ops.allset.group()
     p = cube().location.copy()
     cube().location = (p.x + 0.04, p.y, p.z + 0.02)     # away from group1's pivot at the origin
     ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
@@ -165,7 +165,7 @@ def s_group_shot2():
 @step
 def s_ae():
     wm = bpy.context.window_manager
-    check(f"Ctrl+A = Attribute Editor ({wm.maya_kit_dock})", wm.maya_kit_dock == 'ATTRIBUTE_EDITOR')
+    check(f"Ctrl+A = Attribute Editor ({wm.allset_dock})", wm.allset_dock == 'ATTRIBUTE_EDITOR')
     area, _r = view3d()
     ui = next(r for r in area.regions if r.type == 'UI')
     # step 99: the AE is its own dock tab (Maya's dock tab stack), so the sidebar switches to it

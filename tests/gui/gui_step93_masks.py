@@ -1,4 +1,4 @@
-"""Step 93 in a real UI (MayaKit layout): the Shift+Q pick-mask menu shows check boxes for Faces (and Poly Vertices /
+"""Step 93 in a real UI (Allset layout): the Shift+Q pick-mask menu shows check boxes for Faces (and Poly Vertices /
 Poly Edges in their submenus), a Status Line selection mask turned off survives File > New, and the Tool Settings
 popup has Maya's Reset Tool button. Plan: docs/steps/step_93.md."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -29,16 +29,16 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         bpy.ops.object.mode_set(mode='EDIT')
     bpy.context.scene.tool_settings.mesh_select_mode = (True, False, True)   # vertices + faces
     centre()
@@ -80,12 +80,12 @@ def s_mask_off():
         bpy.ops.object.mode_set(mode='OBJECT')
     status_line = import_module(MODULE + ".ui.status_line")
     status_line.set_mask("SURFACES", False)              # Status Line: meshes not selectable
-    bpy.ops.wm.read_homefile(app_template="MayaKit")     # File > New
+    bpy.ops.wm.read_homefile(app_template="Allset")     # File > New
 
 
 @step
 def s_after_new():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, _r = view3d()
     sp = area.spaces.active
     check(f"after File > New meshes are still unselectable (show_object_select_mesh {sp.show_object_select_mesh})",

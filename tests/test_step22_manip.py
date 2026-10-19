@@ -1,6 +1,6 @@
 """Step 22: Shift+drag a manipulator = Maya Smart Duplicate.
 
-The Maya keyconfig puts ``maya_kit.manip_duplicate`` (Shift+LMB press, PASS_THROUGH)
+The Maya keyconfig puts ``allset.manip_duplicate`` (Shift+LMB press, PASS_THROUGH)
 in front of the gizmo's own tweak; the operator duplicates only in object mode with a
 selection, the option on and the transform gizmo shown. The drag itself is checked in
 tests/gui/gui_step22_manip_duplicate.py. Plan: docs/steps/step_22.md 「계획」.
@@ -28,28 +28,28 @@ def _fresh():
 
 
 def test_gizmo_keymaps_run_smart_duplicate_first():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     for name in patches.GIZMO_KEYMAPS:
         items = [k for k in kc.keymaps[name].keymap_items if k.active]
         ids = [k.idname for k in items]
-        dup = items[ids.index("maya_kit.manip_duplicate")]
+        dup = items[ids.index("allset.manip_duplicate")]
         assert (dup.type, dup.value, dup.shift, dup.ctrl, dup.alt) == \
             ('LEFTMOUSE', 'PRESS', True, False, False), name
         # step 28 puts manip_press (plain LMB) in front too; both before the gizmo's tweak
-        assert ids.index("maya_kit.manip_duplicate") < ids.index("gizmogroup.gizmo_tweak"), (name, ids)
-    assert "maya_kit.manip_duplicate" in patches.PASS_THROUGH_FIRST
+        assert ids.index("allset.manip_duplicate") < ids.index("gizmogroup.gizmo_tweak"), (name, ids)
+    assert "allset.manip_duplicate" in patches.PASS_THROUGH_FIRST
 
 
 def test_shift_precision_kept():
     # Measured (GUI): Shift held when the drag starts doesn't turn precision on, so Blender's
     # Shift precision during a drag stays (docs/steps/step_22.md 「계획」 3).
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Transform Modal Map"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Transform Modal Map"]
     assert {k.type for k in km.keymap_items if k.propvalue == 'PRECISION'} == {'LEFT_SHIFT', 'RIGHT_SHIFT'}
 
 
 def _run():
     n = len(bpy.data.objects)
-    res = bpy.ops.maya_kit.manip_duplicate()
+    res = bpy.ops.allset.manip_duplicate()
     assert res == {'PASS_THROUGH'}, res
     return len(bpy.data.objects) - n
 
@@ -88,11 +88,11 @@ def test_duplicates_only_when_it_applies():
 def test_hold_menus_toggle_smart_duplicate():
     for menu in (mm.OPT_MOVE, mm.OPT_ROTATE, mm.OPT_SCALE):
         items = dict(i for i in menu.items if i != mm.DIVIDER)
-        assert items["Smart Duplicate"] == ("maya_kit.manip_option", {"option": 'SMART_DUPLICATE'}), menu
-        assert items["Smart Extrude"] == ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'}), menu
+        assert items["Smart Duplicate"] == ("allset.manip_option", {"option": 'SMART_DUPLICATE'}), menu
+        assert items["Smart Extrude"] == ("allset.manip_option", {"option": 'SMART_EXTRUDE'}), menu
     prefs = preferences.get()
     assert prefs.smart_duplicate is True, "Maya default on (PREF:371-374)"
-    bpy.ops.maya_kit.manip_option(option='SMART_DUPLICATE')
+    bpy.ops.allset.manip_option(option='SMART_DUPLICATE')
     assert prefs.smart_duplicate is False
-    bpy.ops.maya_kit.manip_option(option='SMART_DUPLICATE')
+    bpy.ops.allset.manip_option(option='SMART_DUPLICATE')
     assert prefs.smart_duplicate is True

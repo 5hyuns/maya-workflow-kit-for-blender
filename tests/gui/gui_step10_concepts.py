@@ -11,7 +11,7 @@ from mathutils import Matrix
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, tap, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 D = 110  # px: past the marking menu ring
 
@@ -123,7 +123,7 @@ def s_frozen():
     check("freeze kept the pivot", abs(cube.matrix_world.translation.x - 1.0) < 1e-4)
     check("menu closed", not C["draw"].ACTIVE)
     with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_mainModifyMenu")
+        bpy.ops.wm.call_menu(name="ALLSET_MT_mainModifyMenu")
 
 
 @step

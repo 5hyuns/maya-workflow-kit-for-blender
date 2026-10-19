@@ -1,6 +1,6 @@
 """What "the user's Blender setup" is for the step 60 round trip: every preference value, the
 user keyconfig (with the user's key edits), the active keyconfig, the theme as XML, the
-enabled add-ons. Maya Kit's own add-on entry is left out (it stays installed in Blender mode)."""
+enabled add-ons. Allset's own add-on entry is left out (it stays installed in Blender mode)."""
 
 import os
 import tempfile
@@ -56,8 +56,8 @@ def keymaps(kc):
     out = []
     for km in kc.keymaps:
         for kmi in km.keymap_items:
-            if kmi.idname.startswith("maya_kit."):
-                continue   # Maya Kit's own switch shortcut stays in Blender mode (by design)
+            if kmi.idname.startswith("allset."):
+                continue   # Allset's own switch shortcut stays in Blender mode (by design)
             out.append(f"{km.name}|{kmi.idname}|{kmi.type}|{kmi.value}|{kmi.ctrl}{kmi.shift}{kmi.alt}"
                        f"|{kmi.active}|{kmi.is_user_modified}")
     return out

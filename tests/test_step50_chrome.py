@@ -51,9 +51,9 @@ def test_channel_box_menu_bar():
 
 
 def test_channel_box_panel_chrome():
-    assert 'HIDE_HEADER' in channel_box.MAYAKIT_PT_channel_box.bl_options
-    assert 'HIDE_HEADER' in layer_editor.MAYAKIT_PT_layer_editor.bl_options
-    assert not hasattr(channel_box.MAYAKIT_PT_channel_box, "draw_header_preset"), "no gear in a panel title"
+    assert 'HIDE_HEADER' in channel_box.ALLSET_PT_channel_box.bl_options
+    assert 'HIDE_HEADER' in layer_editor.ALLSET_PT_layer_editor.bl_options
+    assert not hasattr(channel_box.ALLSET_PT_channel_box, "draw_header_preset"), "no gear in a panel title"
 
 
 def test_channel_box_empty_text():
@@ -61,7 +61,7 @@ def test_channel_box_empty_text():
         ob.select_set(False)
     bpy.context.view_layer.objects.active = None
     rec = Recorder()
-    channel_box.MAYAKIT_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
+    channel_box.ALLSET_PT_channel_box.draw(type("P", (), {"layout": rec})(), bpy.context)
     assert " ".join(t for t in rec.texts("label") if t) == \
         "Select objects in the scene to view, edit and set keyframes on channels (attributes)"
 
@@ -71,7 +71,7 @@ def test_layer_editor_tabs_and_menus():
     rec = Recorder()
     chrome.menu_bar(rec, layer_editor.MENU_BAR)
     assert rec.texts("menu") == ["Layers", "Options", "Help"]
-    assert bpy.context.window_manager.maya_kit_le_tab == 'DISPLAY'
+    assert bpy.context.window_manager.allset_le_tab == 'DISPLAY'
 
 
 def test_outliner_header_is_maya():
@@ -99,12 +99,12 @@ def test_range_slider_order_and_menus_moved():
     assert rec.log == [], "Playback / Keying / View / Marker are not in the Range Slider row"
     assert time_slider.RANGE_ITEMS[:5] == ("start", "playback start", "range", "playback end", "end")
     rec = Recorder()
-    time_slider.MAYAKIT_MT_anim_preferences.draw(type("M", (), {"layout": rec})(), bpy.context)
+    time_slider.ALLSET_MT_anim_preferences.draw(type("M", (), {"layout": rec})(), bpy.context)
     assert rec.texts("popover") + rec.texts("menu") == ["Playback", "Keying", "View", "Marker"]
 
 
 def test_template_timeline_sidebar_and_outliner():
-    path = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     areas = bpy.data.workspaces["General"].screens[0].areas
     tl = next(a for a in areas if a.ui_type == 'TIMELINE')

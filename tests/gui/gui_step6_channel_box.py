@@ -9,7 +9,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -93,7 +93,7 @@ def s_tab():
     ob["speed"] = 2.5
     ob.modifiers.new("Smooth", 'SUBSURF')
     C["cb"].set_selected_channels(["tx", "rz"])
-    bpy.ops.maya_kit.layer_new(selected=True)
+    bpy.ops.allset.layer_new(selected=True)
 
 
 @step

@@ -1,4 +1,4 @@
-"""Step 12 in a real UI: the Maya strip (Status Line + Shelf) of the MayaKit layout,
+"""Step 12 in a real UI: the Maya strip (Status Line + Shelf) of the Allset layout,
 tab switching, UI Elements > Shelf toggle in the factory layout; screenshots."""
 
 import os
@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -32,13 +32,13 @@ def regions(area):
 def s_setup():
     setup()
     C["shelf"] = import_module(MODULE + ".ui.shelf")
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_loaded():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     redraw()
 
 
@@ -46,7 +46,7 @@ def s_loaded():
 def s_strip():
     scr = win().screen
     strip = C["shelf"].strip_area(scr)
-    check("MayaKit layout has the Maya strip", strip is not None)
+    check("Allset layout has the Maya strip", strip is not None)
     if strip is None:
         return
     area3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)
@@ -67,7 +67,7 @@ def s_strip():
 @step
 def s_shot():
     shot("gui_step12_strip_poly.png")
-    bpy.ops.maya_kit.shelf_select(shelf="Rigging")
+    bpy.ops.allset.shelf_select(shelf="Rigging")
     redraw()
 
 
@@ -79,7 +79,7 @@ def s_wait():
 @step
 def s_rigging_shot():
     shot("gui_step12_strip_rigging.png")
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
     # Factory layout: UI Elements > Shelf adds the strip over the largest 3D View.
     bpy.ops.wm.read_homefile(app_template="")
 
@@ -88,7 +88,7 @@ def s_rigging_shot():
 def s_factory():
     setup_view = view3d()[0]
     with bpy.context.temp_override(window=win(), screen=win().screen, area=setup_view):
-        res = bpy.ops.maya_kit.shelf_strip_toggle()
+        res = bpy.ops.allset.shelf_strip_toggle()
     check("Shelf toggle adds the strip in another layout", res == {'FINISHED'}
           and C["shelf"].strip_area(win().screen) is not None)
     redraw()
@@ -106,7 +106,7 @@ def s_factory_shot():
     shot("gui_step12_strip_factory.png")
     strip = C["shelf"].strip_area(win().screen)
     with bpy.context.temp_override(window=win(), screen=win().screen, area=strip):
-        bpy.ops.maya_kit.shelf_strip_toggle()
+        bpy.ops.allset.shelf_strip_toggle()
 
 
 @step
