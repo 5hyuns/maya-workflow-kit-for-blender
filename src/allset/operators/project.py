@@ -338,11 +338,16 @@ class ALLSET_OT_save_scene_as(bpy.types.Operator):
     def invoke(self, context, event):
         path = save_as_path(context)
         if path:
-            return bpy.ops.wm.save_as_mainfile('INVOKE_DEFAULT', filepath=path)
-        return bpy.ops.wm.save_as_mainfile('INVOKE_DEFAULT')
+            return bpy.ops.wm.save_as_mainfile('INVOKE_DEFAULT', filepath=path, **_save_args(bpy.ops.wm.save_as_mainfile))
+        return bpy.ops.wm.save_as_mainfile('INVOKE_DEFAULT', **_save_args(bpy.ops.wm.save_as_mainfile))
 
     def execute(self, context):
         return self.invoke(context, None)
+
+
+def _save_args(op):
+    from .. import compat
+    return compat.save_dialog_args(op)
 
 
 class ALLSET_OT_save_scene(bpy.types.Operator):
@@ -352,7 +357,7 @@ class ALLSET_OT_save_scene(bpy.types.Operator):
 
     def invoke(self, context, event):
         if bpy.data.filepath:
-            return bpy.ops.wm.save_mainfile('INVOKE_DEFAULT')
+            return bpy.ops.wm.save_mainfile('INVOKE_DEFAULT', **_save_args(bpy.ops.wm.save_mainfile))
         return bpy.ops.allset.save_scene_as('INVOKE_DEFAULT')
 
     def execute(self, context):

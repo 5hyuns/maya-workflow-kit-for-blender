@@ -22,6 +22,7 @@ buttons and an Outliner toggle. Here:
 import bpy
 from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 
+from .. import compat
 from ..operators import tool_keys
 
 # Maya-302 order: Select, Lasso, Paint Select, Move, Rotate, Scale.
@@ -57,7 +58,7 @@ def settle(space, prefs=None):
     # the viewport background colour is scene linear, theme colours are display (sRGB) values (checked: an sRGB
     # 0.188 written as is showed as 119/255)
     rgb = tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-                for c in tuple(prefs.themes[0].view_3d.space.button)[:3])
+                for c in tuple(compat.toolbar_back(prefs.themes[0]))[:3])
     shading = space.shading
     changed = False
     if space.overlay.show_overlays:

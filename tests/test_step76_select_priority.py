@@ -9,6 +9,7 @@ from mathutils import Matrix
 
 import kit
 
+compat = import_module(kit.MODULE + ".compat")
 sp = import_module(kit.MODULE + ".operators.select_priority")
 patches = import_module(kit.MODULE + ".keymap.maya_patches")
 preferences = import_module(kit.MODULE + ".preferences")
@@ -142,7 +143,7 @@ def test_hidden_or_unselectable_candidates_are_skipped():
     circle.hide_select = False
     circle.hide_set(True)
     assert _best(_px(0.5, 0.0)) is None
-    arm.data.bones["a"].hide = True
+    compat.set_bone_hidden(arm.pose.bones["a"], True)
     assert _best(_px(3.0, -0.5)) is None
     assert _best(_px(3.0, 1.0)) == arm.name                  # bone b still shows
     pb = arm.pose.bones["b"]

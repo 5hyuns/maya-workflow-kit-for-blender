@@ -29,7 +29,7 @@ pCube1 이름 붙이기. 대상: Blender 4.2+ (4.5 LTS), Maya 2022 를 쓰던 �
 ### 설치
 
 1. `allset-<버전>.zip` 을 받습니다. 소스에서 만들려면 `python tools/build.py` 를 실행합니다(결과: `dist/`).
-2. Blender 4.5 LTS (4.5.x; 5.x 는 아직 — step 117)에서 *Edit > Preferences > Get Extensions > ▾ > Install from Disk…* 로 zip을 고르거나,
+2. Blender 4.5 LTS 또는 5.0 – 5.2 (4.5.x – 5.2.x, step 118)에서 *Edit > Preferences > Get Extensions > ▾ > Install from Disk…* 로 zip을 고르거나,
    zip을 Blender 창에 끌어다 놓습니다. 명령줄 설치:
    `blender --command extension install-file -r user_default --enable allset-<버전>.zip`
 3. 처음 켜면 키맵이 **"Maya-style"** 로 바뀌고 Maya 내비게이션 환경설정이 적용됩니다(끄면 원래 값으로 돌아갑니다).
@@ -132,7 +132,7 @@ PNG, `startup.blend`, 테마 XML) 은 CC0-1.0 입니다 ([ASSETS_LICENSE.txt](sr
 
 ## English
 
-A Blender 4.2+ extension (target: Blender 4.5 LTS) for people coming from Maya 2022. Other tools give you one piece
+A Blender extension for Blender 4.5 LTS and 5.0 – 5.2 (4.5.x – 5.2.x) for people coming from Maya 2022. Other tools give you one piece
 at a time — a pivot, a keymap, a shelf, a theme; Allset brings the whole Maya workflow in one install: not only the
 hotkeys but the interaction feel, UI layout and scene concepts.
 

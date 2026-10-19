@@ -264,13 +264,8 @@ def _rename_paths(ob, old, new, prefix=""):
     ad = ob.animation_data
     if ad is None:
         return
-    fcs = list(ad.drivers)
-    try:
-        from bpy_extras.anim_utils import action_get_channelbag_for_slot
-        bag = action_get_channelbag_for_slot(ad.action, ad.action_slot) if ad.action else None
-        fcs += list(bag.fcurves) if bag is not None else []
-    except ImportError:
-        fcs += list(ad.action.fcurves) if ad.action else []
+    from .. import compat
+    fcs = list(ad.drivers) + compat.id_fcurves(ob)
     for fc in fcs:
         if fc.data_path == a:
             fc.data_path = b

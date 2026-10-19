@@ -134,7 +134,8 @@ def apply_defaults(scene):
     stays: Blender has one range for the Time Slider and the render)."""
     r = scene.render
     apply_size(r, DEFAULTS["size"])
-    r.image_settings.file_format = DEFAULTS["file_format"]
+    from .. import compat
+    compat.set_file_format(r.image_settings, DEFAULTS["file_format"])
     d, p, _e, _n = split_path(r.filepath)
     r.filepath = join_path(d, p, DEFAULTS["ext"], DEFAULTS["padding"])
 

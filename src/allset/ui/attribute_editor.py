@@ -25,6 +25,7 @@ import re
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from .. import compat
 from ..operators import display
 from . import ae_layout
 from . import cb_entry, channel_box
@@ -41,7 +42,7 @@ def dock_mode(context):
 # --- tabs ---------------------------------------------------------------------------------
 
 def principled(material):
-    if material is None or not material.use_nodes or material.node_tree is None:
+    if not compat.material_uses_nodes(material):
         return None
     return next((n for n in material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
 

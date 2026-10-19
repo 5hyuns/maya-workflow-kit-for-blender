@@ -75,11 +75,8 @@ def _resolve(prefs, path):
 
 
 def _rna_xml():
-    try:
-        import rna_xml
-    except ImportError:   # Blender 5.x (step 53)
-        import _rna_xml as rna_xml
-    return rna_xml
+    from . import compat
+    return compat.rna_xml()
 
 
 def _theme_xml(prefs):
@@ -358,16 +355,43 @@ def leave_layout(window):
         return False
     window.workspace = prev
     added = list(ws.get(MASK_KEY, ()))
-    with bpy.context.temp_override(**_window_override(window), workspace=ws):
-        try:
-            bpy.ops.workspace.delete()
-        except RuntimeError:
-            pass
-    for name in added:                       # masks the switch loaded go too: the file is as before
-        mask = bpy.data.masks.get(name)
+    name = ws.name
+    if window.workspace == ws:
+        # The window changes workspace on its next event loop: delete the old one after that. Deleting the
+        # screen the window still draws crashed Blender 5.1 (screen_draw_move_highlight, GUI sweep, step 118).
+        _delete_later(window, name, added)
+    else:
+        _delete_workspace(window, name, added)
+    return True
+
+
+def _delete_workspace(window, name, added):
+    ws = bpy.data.workspaces.get(name)
+    # workspace.delete removes the window's active workspace whatever the override says (checked): remove the
+    # left one as data once no window shows it (4.5 and 5.1 GUI, step 118)
+    if ws is not None and all(w.workspace != ws for w in _windows()):
+        bpy.data.batch_remove(ids=[ws])
+    for mask_name in added:                  # masks the switch loaded go too: the file is as before
+        mask = bpy.data.masks.get(mask_name)
         if mask is not None:
             bpy.data.masks.remove(mask)
-    return True
+
+
+def _delete_later(window, name, added, tries=40):
+    ptr = window.as_pointer()
+    left = [tries]
+
+    def tick():
+        win = next((w for w in _windows() if w.as_pointer() == ptr), None)
+        ws = bpy.data.workspaces.get(name)
+        if win is None or ws is None:
+            return None
+        left[0] -= 1
+        if win.workspace == ws and left[0] > 0:
+            return 0.05
+        _delete_workspace(win, name, added)
+        return None
+    bpy.app.timers.register(tick, first_interval=0.05)
 
 
 def _windows():
@@ -427,7 +451,8 @@ def set_mode(on, layout=True, theme=True):
             unregister_mode()
             _registered[0] = False
         restore_snapshot()
-        prefs["maya_theme"] = False   # theme restored above; no update callback (the theme module is unregistered)
+        from . import preferences
+        preferences.set_quiet(prefs, "maya_theme", False)  # theme restored above; the theme module is unregistered
         from .theme import forget_backup
         forget_backup()        # the theme module keeps it across quits; a switch to Blender is final
     bpy.context.preferences.is_dirty = True
@@ -464,7 +489,8 @@ def restore_blender(context=None):
     for name in ("maya_theme", "maya_hide_splash", "maya_density", "maya_font", "maya_wire",
                  "start_in_maya_layout"):
         # option off without its update callbacks running against unregistered modules
-        prefs[name] = False
+        from . import preferences
+        preferences.set_quiet(prefs, name, False)
     from . import app_template
     try:
         if app_template.is_installed():

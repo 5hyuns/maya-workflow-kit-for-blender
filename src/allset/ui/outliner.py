@@ -22,6 +22,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, IntProperty, StringProperty
 
+from .. import compat
+
 CATEGORY = "Outliner"
 _state = {"sig": None, "busy": False}
 
@@ -389,7 +391,7 @@ class ALLSET_UL_outliner(bpy.types.UIList):
             from .channel_box import bone_selected
             pb = ob.pose.bones.get(bone.name)
             selected = ob.mode == 'POSE' and pb is not None and bone_selected(pb)
-            visible = ob.visible_get() and not bone.hide
+            visible = ob.visible_get() and not (compat.bone_hidden(pb) if pb is not None else bone.hide)
         else:
             selected, visible = ob.select_get(), ob.visible_get()
         op = row.operator(ALLSET_OT_outliner_select.bl_idname, text="", icon=icon_for(item, ob),

@@ -38,7 +38,7 @@ def test_key_frames_breakdown_merge():
     ob.keyframe_insert("location", index=0, frame=5)
     ob.keyframe_insert("location", index=1, frame=5)
     ob.keyframe_insert("location", index=0, frame=8)
-    fcs = {fc.array_index: fc for fc in ob.animation_data.action.fcurves}
+    fcs = {fc.array_index: fc for fc in kit.fcurves(ob)}
     for kp in fcs[0].keyframe_points:
         kp.type = 'BREAKDOWN'
     # frame 5: one curve has a regular key -> red; frame 8: only a breakdown -> green

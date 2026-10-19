@@ -12,6 +12,8 @@ A full "Maya" keyconfig is generated from Blender's Industry Compatible data
 import bpy
 from bpy.app.handlers import persistent
 
+from .. import compat
+
 KEYCONFIG_NAME = "Maya-style"   # descriptive, not a brand ()
 
 # (KeyMap, KeyMapItem) pairs this add-on created in wm.keyconfigs.addon.
@@ -35,14 +37,14 @@ def add_item(km_name, idname, type, value, space_type="EMPTY", region_type="WIND
     return kmi
 
 
-TARGET_VERSION = (4, 5)   #  
+TARGET_VERSION = compat.TARGET   #  
 
 
 def generate_data():
     """IC data with the Maya patches applied (fresh list each call). Strict on Blender 4.5 ();
     elsewhere IC differences are collected in ``patch.DRIFT``."""
     from . import ic_data, maya_patches, patch
-    patch.STRICT = tuple(bpy.app.version[:2]) == TARGET_VERSION
+    patch.STRICT = compat.IS_TARGET
     patch.DRIFT.clear()
     data = maya_patches.apply(ic_data.generate())
     if patch.DRIFT:

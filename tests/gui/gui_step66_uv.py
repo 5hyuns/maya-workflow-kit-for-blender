@@ -196,7 +196,7 @@ def s_rmb_release():
 def s_shell_mode():
     ts = bpy.context.scene.tool_settings
     check(f"UV Editor RMB NW = UV Shell: island mode, sync off (got {ts.uv_select_mode}, {ts.use_uv_select_sync})",
-          ts.uv_select_mode == 'ISLAND' and not ts.use_uv_select_sync)
+          mod(".compat").uv_island_mode(ts) and not ts.use_uv_select_sync)
     _w, a, _r = uv_window()
     a.spaces.active.show_region_ui = True
     redraw_all()

@@ -27,7 +27,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
-SANDBOX = ROOT / "tmp" / "test_env"
+# ALLSET_SANDBOX: another folder under tmp/ so runs on several Blender versions can go in parallel
+SANDBOX = ROOT / "tmp" / os.environ.get("ALLSET_SANDBOX", "test_env")
 REPO_ID = "user_default"
 PKG_ID = "allset"
 MODULE = f"bl_ext.{REPO_ID}.{PKG_ID}"
@@ -96,7 +97,7 @@ def run_test_file(blender, path, env):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Run Allset headless tests")
-    ap.add_argument("-k", default="", help="only test files whose name contains this")
+    ap.add_argument("-k", default="", help="only test files whose name contains this (comma-separated: any of them)")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
     args = ap.parse_args(argv)
@@ -112,7 +113,8 @@ def main(argv=None):
     env = make_sandbox()
     install(args.blender, zip_path, env)
 
-    files = sorted(p for p in TESTS.glob("test_*.py") if args.k in p.name)
+    pats = args.k.split(",")
+    files = sorted(p for p in TESTS.glob("test_*.py") if any(k in p.name for k in pats))
     passed = failed = 0
     for path in files:
         results, log, dt = run_test_file(args.blender, path, env)

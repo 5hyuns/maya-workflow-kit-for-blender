@@ -13,6 +13,13 @@ def _raise(ex):
     raise ex
 
 
+def fcurves(anim_id):
+    """The F-curve collection the ID's animation plays (its action slot's channelbag; Blender 5.0 removed
+    ``Action.fcurves``, step 118)."""
+    from importlib import import_module
+    return import_module(MODULE + ".compat").id_fcurve_collection(anim_id)
+
+
 def enable(maya=True):
     """Enable the extension; ``maya`` also opts in to Maya mode (since step 115 enabling alone changes nothing),
     without the theme, which is what a plain enable gave the tests before."""

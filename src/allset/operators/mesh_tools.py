@@ -191,7 +191,8 @@ def weld_vertices(bm, sources, target, merge_to='TARGET', preserve_uvs=True):
     else:
         co = target.co.copy()
     if preserve_uvs:
-        bmesh.ops.pointmerge_facedata(bm, verts=group, vert_snap=target)
+        from .. import compat
+        compat.pointmerge_facedata(bm, group, target)
     bmesh.ops.pointmerge(bm, verts=group, merge_co=co)
     return target if target.is_valid else None
 

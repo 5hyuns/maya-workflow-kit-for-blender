@@ -444,18 +444,8 @@ def attr_color(fc):
 
 def object_curves(ob):
     """The object's own F-curves (its action's slot), Blender order."""
-    ad = ob.animation_data
-    if ad is None or ad.action is None:
-        return []
-    act = ad.action
-    try:
-        from bpy_extras import anim_utils
-        bag = anim_utils.action_get_channelbag_for_slot(act, ad.action_slot)
-        if bag is not None:
-            return list(bag.fcurves)
-    except (ImportError, AttributeError):
-        pass
-    return list(getattr(act, "fcurves", ()))
+    from .. import compat
+    return compat.id_fcurves(ob)
 
 
 def listed_objects(context, space):

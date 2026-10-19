@@ -101,6 +101,13 @@ def s_shot_maya():
 
 @step
 def s_back():
+    # the Maya workspace is deleted once the window has left it (a timer, step 118): wait up to 40 ticks
+    import sim as _sim
+    C.setdefault("back_waits", 0)
+    if (sw().is_on() or sw().WORKSPACE in bpy.data.workspaces) and C["back_waits"] < 40:
+        C["back_waits"] += 1
+        _sim._steps.insert(0, s_back)
+        return
     names = [w.name for w in bpy.data.workspaces]
     check(f"back in Blender: the user's workspace again, the Maya one removed ({win().workspace.name}, {names})",
           not sw().is_on() and win().workspace.name == C["ws"] and sw().WORKSPACE not in names)
