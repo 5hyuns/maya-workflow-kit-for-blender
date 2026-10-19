@@ -4,11 +4,16 @@
 Keys: the button's runTimeCommand (``shelf_data``), or "<shelf file>/<label>" for
 buttons whose Maya command is a MEL expression. Values: (action, icon) with the
 action in ``ui/menu_map.py`` form (run by ``marking.modal.run_action``). Icons are
-Blender's own (no Maya artwork, ). Buttons not
-listed have no Blender counterpart and are not drawn.
+Blender's own (no Maya artwork, ); the shelf row draws kit-made
+pictograms (``shelf_icons``).
+
+Step 109: every factory button keeps its slot. ``MENU`` names the Maya menu
+item that runs the same runTimeCommand ( ``rtc:`` tags): the button takes that item's
+action (``menu_map.MAP``) or, when the item is greyed, its notice (``ui/notices.py``). Buttons that are in no
+Maya menu carry their own notice in ``NOTICES``. Unmapped buttons are drawn greyed with the notice as tooltip.
 """
 
-from .menu_map import _con, _create, _mod
+from .menu_map import MAP as _MENU_MAP, _con, _create, _dock, _mod
 
 
 def _key(kind):
@@ -85,6 +90,7 @@ BY_COMMAND = {
     "CreateLattice": (("object.add", {"type": 'LATTICE'}), 'OUTLINER_OB_LATTICE'),
     **_CONSTRAINTS,
     "SetKey": ("anim.keyframe_insert", 'KEY_HLT'),
+    "PoleVectorConstraint": ("maya_kit.pole_vector", 'CON_KINEMATIC'),     # Rigging and Animation shelves
     # --- Animation ---
     "PlayblastWindow": (("v3d", "maya_kit.playblast", {}), 'RENDER_ANIMATION'),
     "CreateMotionTrail": ("object.paths_calculate", 'ANIM_DATA'),
@@ -102,11 +108,13 @@ BY_COMMAND = {
     "BatchRender": (("render.render", {"animation": True}), 'RENDER_ANIMATION'),
     "RenderSequence": (("render.render", {"animation": True}), 'RENDER_RESULT'),
     "Art3dPaintTool": ("paint.texture_paint_toggle", 'TPAINT_HLT'),
+    "ShowShadingGroupAttributeEditor": (_dock('ATTRIBUTE_EDITOR'), 'MATERIAL'),   # Edit Material Attributes
     # --- FX ---
     # step 68: operators/fx.py (the old Emitter = particle_system_add was Emit from Object, fx.md:54-57)
     "NCreateEmitter": ("maya_kit.fx_emitter", 'PARTICLES'),
     "NEmitFromObject": ("maya_kit.fx_emit_from_object", 'PARTICLE_DATA'),
     "makeCollideNCloth": ("maya_kit.fx_passive", 'MOD_PHYSICS'),
+    "Create3DContainerEmitter": ("maya_kit.fluid_container_emitter", 'MOD_FLUIDSIM'),   # step 109
     "CreateHairOptions": ("object.curves_empty_hair_add", 'CURVES_DATA'),
     "InteractivePlayback": ("screen.animation_play", 'PLAY'),
     # --- FX Caching (Blender point caches) ---
@@ -125,14 +133,124 @@ BY_LABEL = {
     "Rendering/Blinn Material": (_shader('BLINN'), 'SHADING_RENDERED'),
     "Rendering/Phong Material": (_shader('PHONG'), 'SHADING_TEXTURE'),
     "Rendering/Surface Material": (_shader('SURFACE'), 'LIGHT'),
+    # step 105 kinds (operators/material.MATERIALS)
+    "Rendering/Anisotropic Material": (_shader('ANISOTROPIC'), 'MATERIAL'),
+    "Rendering/Phong E Material": (_shader('PHONG_E'), 'MATERIAL'),
+    "Rendering/Layered Material": (_shader('LAYERED'), 'MATERIAL'),
+    "Rendering/Ramp Material": (_shader('RAMP'), 'MATERIAL'),
+    "Rendering/Use Background": (_shader('USE_BACKGROUND'), 'MATERIAL'),
     "FX/Create nCloth": ("maya_kit.fx_ncloth", 'MOD_CLOTH'),
     "FX/Remove nCloth": ("maya_kit.fx_remove_ncloth", 'X'),
     "FXCaching/Create New Cache": (("maya_kit.ncache", {"action": 'CREATE', "kind": 'NOBJECT'}), 'FILE_CACHE'),
 }
 
+# Shelf button -> the Maya menu item with the same runTimeCommand ( ``command`` =
+#  ``rtc:``). Mapped items lend their action, greyed ones their notice.
+_SCULPT = ("Smooth", "Relax", "Grab", "Pinch", "Flatten", "Foamy", "Spray", "Repeat", "Imprint", "Wax", "Scrape",
+           "Fill", "Knife", "Smear", "Bulge", "Amplify", "Freeze", "Smooth Target", "Clone Target", "Mask Target",
+           "Erase Target")
+_HAIR = {"Current Position": "Display/Current Position", "Start Position": "Display/Start Position",
+         "Rest Position": "Display/Rest Position", "Current and Start": "Display/Current and Start",
+         "Current and Rest": "Display/Current and Rest", "From Current": "Set Start Position/From Current",
+         "Scale Hair Tool": "Scale Hair Tool", "Make Selected Curves Dynamic": "Make Selected Curves Dynamic",
+         "Paint Hair Tool Options": "Paint Hair Follicles",
+         **{f"To {t}": f"Convert Selection/To {t}" for t in (
+             "Hair Systems", "Follicles", "Start Curves", "Rest Curves", "Start Curve End CVs",
+             "Rest Curve End CVs")}}
+MENU = {
+    # Curves / Surfaces
+    "CurvesSurfaces/NURBS Square": "Create/NURBS Primitives/Square",
+    "CurvesSurfaces/NURBS Cube": "Create/NURBS Primitives/Cube",
+    "CurvesSurfaces/NURBS Cone": "Create/NURBS Primitives/Cone",
+    "CurvesSurfaces/Pencil Curve Tool": "Create/Curve Tools/Pencil Curve Tool",
+    "CurvesSurfaces/Three Point Circular Arc": "Create/Curve Tools/Three Point Circular Arc",
+    "CurvesSurfaces/Attach Curves": "Curves/Attach",
+    "CurvesSurfaces/Detach Curves": "Curves/Detach",
+    "CurvesSurfaces/Extend Curve": "Curves/Extend/Extend Curve",
+    "CurvesSurfaces/Offset Curve": "Curves/Offset/Offset Curve",
+    "CurvesSurfaces/Rebuild Curve": "Curves/Rebuild",
+    "CurvesSurfaces/Add Points Tool": "Curves/Add Points Tool",
+    "CurvesSurfaces/Loft": "Surfaces/Loft",
+    "CurvesSurfaces/Planar": "Surfaces/Planar",
+    "CurvesSurfaces/Extrude": "Surfaces/Extrude",
+    "CurvesSurfaces/Birail 1 Tool": "Surfaces/Birail/Birail 1 Tool",
+    "CurvesSurfaces/Bevel Plus": "Surfaces/Bevel Plus",
+    "CurvesSurfaces/Project Curve on Surface": "Surfaces/Project Curve on Surface",
+    "CurvesSurfaces/Intersect Surfaces": "Surfaces/Intersect",
+    "CurvesSurfaces/Trim Tool": "Surfaces/Trim Tool",
+    "CurvesSurfaces/Untrim Surfaces": "Surfaces/Untrim",
+    "CurvesSurfaces/Attach Surfaces": "Surfaces/Attach",
+    "CurvesSurfaces/Detach Surfaces": "Surfaces/Detach",
+    "CurvesSurfaces/Insert Isoparms": "Surfaces/Insert Isoparms",
+    "CurvesSurfaces/Extend Surfaces": "Surfaces/Extend",
+    "CurvesSurfaces/Rebuild Surfaces": "Surfaces/Rebuild",
+    "CurvesSurfaces/Sculpt Geometry Tool": "Surfaces/Sculpt Geometry Tool",
+    "CurvesSurfaces/Surface Editing Tool": "Surfaces/Surface Editing/Surface Editing Tool",
+    # Poly Modeling
+    "Polygons/Super Shape": "Create/Polygon Primitives/Super Ellipse",
+    "Polygons/Sweep Mesh": "Create/Sweep Mesh",
+    "Polygons/SVG": "Create/SVG",
+    "Polygons/Content Browser": "Windows/Content Browser",
+    "Polygons/Retopologize": "Mesh/Retopologize",
+    "Polygons/Circularize": "Edit Mesh/Circularize",
+    "Polygons/Contour Stretch": "UV/Contour Stretch",
+    "Polygons/3D Grab UV Tool": "UV/3D Grab UV Tool",
+    # Sculpting (Mesh Tools > Sculpting Tools = the essentials brushes, step 101)
+    **{f"Sculpting/{t} Tool": f"Mesh Tools/Sculpting Tools/{t} Tool" for t in _SCULPT},
+    "Sculpting/Base Meshes": "Windows/Content Browser",       # Maya opens the Content Browser on its meshes
+    "Sculpting/Shape Editor": "Windows/Animation Editors/Shape Editor",
+    "Sculpting/Pose Editor": "Windows/Animation Editors/Pose Editor",
+    # Rigging / Animation
+    "Rigging/Human IK": "Windows/Animation Editors/HumanIK",
+    "Rigging/Create Cluster": "Deform/Cluster",
+    # Rendering
+    "Rendering/Ambient Light": "Create/Lights/Ambient Light",
+    "Rendering/Volume Light": "Create/Lights/Volume Light",
+    "Rendering/Shading Map": "Hypershade/Create/Materials/Shading Map",
+    "Rendering/Cancel Batch Render": "Render/Cancel Batch Render",
+    "Rendering/Show Batch Render": "Render/Show Batch Render",
+    # FX
+    "FX/3D Fluid Container with Emitter": "Fluids/3D Container",
+    "FX/2D Fluid Container with Emitter": "Fluids/2D Container",
+    "FX/Emit Fluid from Object": "Fluids/Add/Edit Contents/Emit from Object",
+    "FX/Make Collide": "Fluids/Make Collide",
+    **{f"FX/{label}": f"nHair/{path}" for label, path in _HAIR.items()},
+    "FX/Display Input Mesh": "nCloth/Display Input Mesh",
+    "FX/Display Current Mesh": "nCloth/Display Current Mesh",
+    # FX Caching
+    "FXCaching/Set Initial State": "Fields/Solvers/Initial State/Set Initial State",
+    "FXCaching/Clear Initial State": "Fields/Solvers/Initial State/Clear Initial State",
+    "FXCaching/Enable All Caches On Selected": "nCache/Enable All Caches on Selected",
+    "FXCaching/Disable All Caches On Selected": "nCache/Disable All Caches on Selected",
+    "FXCaching/Merge Caches": "nCache/Merge Caches",
+    "FXCaching/Replace Cache Frame": "nCache/Replace Cache Frame",
+}
+
+# Buttons with no Maya menu item: (Blender substitute, one line), like ui/notices.NOTICES.
+NOTICES = {
+    "CurvesSurfaces/Curve Editing Tool": (
+        "Curve edit mode", "Blender has no curve editing manipulator: edit the curve's points in Edit Mode (Tab)."),
+    "Sculpting/Convert To Frozen": (
+        "Sculpt mode Mask", "Blender masks are painted in Sculpt mode (Mask brush, Mask menu); there is no "
+        "conversion from a component selection."),
+    "Rendering/Render Diagnostics": (
+        "Info editor", "Blender reports render problems in the Info editor and the status bar; there is no "
+        "diagnostics window."),
+}
+
+
+def menu_path(shelf, label):
+    """The Maya menu item behind a shelf button (``MENU``), or None."""
+    return MENU.get(f"{shelf}/{label}")
+
 
 def lookup(shelf, label, command):
-    """(action, icon) for a factory button, or None."""
+    """(action, icon) for a factory button, or None (greyed)."""
     if command and command in BY_COMMAND:
         return BY_COMMAND[command]
-    return BY_LABEL.get(f"{shelf}/{label}")
+    hit = BY_LABEL.get(f"{shelf}/{label}")
+    if hit is not None:
+        return hit
+    path = menu_path(shelf, label)
+    action = _MENU_MAP.get(path) if path else None
+    return (action, 'DOT') if action is not None else None

@@ -23,6 +23,9 @@ scripts, drawn under the Status Line in a thin "Maya strip" area.
   = options (Adjust Last Operation of that run), like Maya's doubleClickCommand.
 - User shelves: ``shelves.json`` in the extension's user directory; a button runs
   its Python script (Maya ``-sourceType python``).
+- Step 109: every factory button keeps its Maya slot. Buttons without a
+  Blender action are drawn greyed; their tooltip and a click show the notice (``button_notice``) in the
+  Help Line, like greyed Maya menu items (step 101).
 """
 
 import json
@@ -97,17 +100,46 @@ def shelves():
     return out
 
 
-def factory_buttons(name):
-    """[(index, label, action, icon)] of the mapped buttons of a factory shelf."""
+def all_buttons(name):
+    """[(index, label, action or None, icon)] of every button of a factory shelf, in Maya order."""
     for shelf, _label, buttons in shelf_data.SHELVES:
         if shelf == name:
             out = []
             for i, (label, command) in enumerate(buttons):
                 hit = shelf_map.lookup(shelf, label, command)
-                if hit is not None:
-                    out.append((i, label, hit[0], hit[1]))
+                out.append((i, label, hit[0], hit[1]) if hit is not None else (i, label, None, 'NONE'))
             return out
     return []
+
+
+def factory_buttons(name):
+    """[(index, label, action, icon)] of the mapped buttons of a factory shelf."""
+    return [b for b in all_buttons(name) if b[2] is not None]
+
+
+def button_notice(shelf, label):
+    """(Blender substitute, line) of a factory button: its own, else its Maya menu item's (step 109)."""
+    from . import notices
+    own = shelf_map.NOTICES.get(f"{shelf}/{label}")
+    if own is not None:
+        return own
+    path = shelf_map.menu_path(shelf, label)
+    return notices.greyed_notice(path) if path else None
+
+
+def button_tooltip(shelf, label, mapped):
+    """Tooltip of a factory button; a greyed one (or one whose Blender result differs) shows its notice and puts
+    the line in the Help Line, like greyed menu items."""
+    from . import notices
+    path = shelf_map.menu_path(shelf, label)
+    n = button_notice(shelf, label) if not mapped else (notices.NOTICES.get(path) if path else None)
+    if n is None:
+        return f"{label} (Maya shelf). Double-click or Ctrl+click: options" if mapped else f"{label} (Maya shelf)"
+    substitute, line = n
+    notices.show(f"{label}: {line}")
+    if mapped:
+        return f"{label} (Maya shelf)  →  Blender: {substitute}\n{line}\nDouble-click or Ctrl+click: options"
+    return f"{label} (Maya shelf, greyed)  →  {substitute}\n{line}"
 
 
 def current(context=None):
@@ -155,9 +187,9 @@ class MAYAKIT_OT_shelf_button(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        for i, label, _a, _icon in factory_buttons(props.shelf):
+        for i, label, action, _icon in all_buttons(props.shelf):
             if i == props.index:
-                return f"{label} (Maya shelf). Double-click: options"
+                return button_tooltip(props.shelf, label, action is not None)
         if props.shelf.startswith(USER_PREFIX):
             s = user_shelf(props.shelf[len(USER_PREFIX):])
             if s and 0 <= props.index < len(s["buttons"]):
@@ -200,7 +232,15 @@ class MAYAKIT_OT_shelf_button(bpy.types.Operator):
                 self.report({'ERROR'}, msg)
                 return {'CANCELLED'}
             return {'FINISHED'}
-        for i, _label, action, _icon in factory_buttons(self.shelf):
+        for i, label, action, _icon in all_buttons(self.shelf):
+            if i == self.index and action is None:
+                # Greyed: Maya's button has no Blender counterpart; say what Blender has instead.
+                from . import notices
+                n = button_notice(self.shelf, label)
+                text = f"{label}: {n[1]}" if n else f"{label}: not in Blender"
+                notices.show(text)
+                self.report({'INFO'}, text)
+                return {'CANCELLED'}
             if i == self.index:
                 from ..marking.modal import run_action
                 try:
@@ -575,13 +615,14 @@ _factory_cache = {}
 
 
 def icon_buttons(context):
-    """(shelf id, [(button index, label, shelf colour key)]) of the current shelf, in order."""
+    """(shelf id, [(button index, label, shelf colour key, mapped)]) of the current shelf, in Maya order
+    (greyed buttons keep their slot, step 109)."""
     cur = current(context)
     if cur.startswith(USER_PREFIX):
         s = user_shelf(cur[len(USER_PREFIX):]) or {"buttons": []}
-        return cur, [(i, b["label"], None) for i, b in enumerate(s["buttons"])]
+        return cur, [(i, b["label"], None, True) for i, b in enumerate(s["buttons"])]
     if cur not in _factory_cache:
-        _factory_cache[cur] = [(i, label, cur) for i, label, _a, _icon in factory_buttons(cur)]
+        _factory_cache[cur] = [(i, label, cur, action is not None) for i, label, action, _icon in all_buttons(cur)]
     return cur, _factory_cache[cur]
 
 
@@ -600,8 +641,12 @@ class MAYAKIT_OT_shelf_slot(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        _cur, b = slot_button(context, props.slot)
-        return f"{b[1]} (Maya shelf). Double-click or Ctrl+click: options" if b else ""
+        cur, b = slot_button(context, props.slot)
+        if b is None:
+            return ""
+        if cur.startswith(USER_PREFIX):
+            return f"{b[1]} (shelf)"
+        return button_tooltip(cur, b[1], b[3])
 
     def invoke(self, context, event):
         cur, b = slot_button(context, self.slot)
@@ -675,13 +720,13 @@ def draw_row():
     _draw_rect(0, 0, region.width, region.height, _theme_colour(context))
     _cur, buttons = icon_buttons(context)
     hover = _hover.get(region.as_pointer())
-    for slot, (_index, label, colour_key) in enumerate(buttons[:SLOTS]):
+    for slot, (_index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
         x, y, size = icon_rect(region, slot, s)
         if x > region.width:
             break
         if slot == hover:
-            _draw_rect(x - 2, y - 2, size + 4, size + 4, (1, 1, 1, 0.18))
-        _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key))
+            _draw_rect(x - 2, y - 2, size + 4, size + 4, (1, 1, 1, 0.18 if mapped else 0.08))
+        _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key, greyed=not mapped))
 
 
 class MAYAKIT_GT_shelf_icon(bpy.types.Gizmo):

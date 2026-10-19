@@ -412,12 +412,39 @@ class MAYAKIT_OT_sculpt_tool(bpy.types.Operator):
         if context.mode != 'SCULPT':
             bpy.ops.object.mode_set(mode='SCULPT')
         try:
-            bpy.ops.brush.asset_activate(asset_library_type='ESSENTIALS',
-                                         relative_asset_identifier=SCULPT_LIBRARY + self.brush)
+            res = _activate_brush(self.brush)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
+        if res != {'FINISHED'} and context.window is not None:
+            # The essentials library loads in the background on the first use in a session (step 109, GUI:
+            # the operator cancels with "Asset loading is unfinished"): try again for a few seconds.
+            _retry_brush(self.brush)
         return {'FINISHED'}
+
+
+BRUSH_RETRY_S, BRUSH_RETRIES = 0.2, 25
+
+
+def _activate_brush(brush):
+    return bpy.ops.brush.asset_activate(asset_library_type='ESSENTIALS', relative_asset_identifier=SCULPT_LIBRARY + brush)
+
+
+def _retry_brush(brush):
+    left = [BRUSH_RETRIES]
+
+    def tick():
+        left[0] -= 1
+        win = bpy.context.window_manager.windows[0] if bpy.context.window_manager.windows else None
+        if win is None or bpy.context.mode != 'SCULPT':
+            return None
+        try:
+            with bpy.context.temp_override(window=win):
+                done = _activate_brush(brush) == {'FINISHED'}
+        except RuntimeError:
+            done = False
+        return None if done or left[0] <= 0 else BRUSH_RETRY_S
+    bpy.app.timers.register(tick, first_interval=BRUSH_RETRY_S)
 
 
 # --- UV > Assign Checker Shader ---------------------------------------------------------------

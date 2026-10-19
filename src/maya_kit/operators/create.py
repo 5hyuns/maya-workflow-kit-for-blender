@@ -60,6 +60,10 @@ KINDS = {
                     {"radius": 1.0}, None),
     'NURBS_CIRCLE': ("NURBS Circle", "nurbsCircle", "curve.primitive_nurbs_circle_add",
                      {"radius": 1.0}, None),
+    # Step 109: NURBS primitives Blender has no operator for, built by operators/curve_tools.py (BUILDERS).
+    'NURBS_SQUARE': ("NURBS Square", "nurbsSquare", None, {}, None),
+    'NURBS_CUBE': ("NURBS Cube", "nurbsCube", None, {}, None),
+    'NURBS_CONE': ("NURBS Cone", "nurbsCone", None, {}, None),
     # Maya's curve tools draw a curve; Blender adds one to edit (names "curve1" / "bezier1" ).
     'CV_CURVE': ("CV Curve", "curve", "curve.primitive_nurbs_curve_add", {"radius": 1.0}, None),
     'BEZIER_CURVE': ("Bezier Curve", "bezier", "curve.primitive_bezier_curve_add",
@@ -143,6 +147,18 @@ def create(context, kind, maya_naming=True, overrides=None):
     props = {**props, **(overrides or {})}
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
+    if op is None:
+        from . import curve_tools
+        builder = {'NURBS_SQUARE': curve_tools.nurbs_square, 'NURBS_CUBE': curve_tools.nurbs_cube,
+                   'NURBS_CONE': curve_tools.nurbs_cone}[kind]
+        ob = builder(context, units.maya_unit(context.scene))
+        for o in context.selected_objects:
+            o.select_set(False)
+        ob.select_set(True)
+        context.view_layer.objects.active = ob
+        from . import material
+        material.give_default(ob)
+        return ob
     mod, name = op.split(".")
     k = units.maya_unit(context.scene)
     kw = {key: v * k if key in LENGTHS else v for key, v in props.items()}

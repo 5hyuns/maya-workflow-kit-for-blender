@@ -430,8 +430,88 @@ class MAYAKIT_OT_ncache(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- step 109: FX shelf buttons Blender can do ---------------------------
+# Maya 3D Fluid Container with Emitter (Maya, Maya 2022): fluid1 10 x 10 x 10 units, base resolution 10, at the
+# origin, with the omni emitter fluidEmitter1 (max distance 1) at its centre. Blender: a Mantaflow domain of the
+# same size around a radius-1 emitter mesh (Blender flows come from meshes).
+FLUID_SIZE, FLUID_RESOLUTION, FLUID_EMITTER_RADIUS = 10.0, 10, 1.0
+
+
+class MAYAKIT_OT_fluid_container_emitter(bpy.types.Operator):
+    """Create a 3D fluid container with an emitter at the origin (Maya FX shelf: 3D Fluid Container with
+    Emitter; a Mantaflow smoke domain around an emitter mesh)"""
+    bl_idname = "maya_kit.fluid_container_emitter"
+    bl_label = "3D Fluid Container with Emitter"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        if context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        k = units.maya_unit(context.scene)
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=FLUID_EMITTER_RADIUS * k,
+                                              location=(0.0, 0.0, 0.0), align='WORLD')
+        emitter = context.view_layer.objects.active
+        naming.apply_maya_name(emitter, "fluidEmitter")
+        before = set(bpy.data.objects)
+        res = bpy.ops.maya_kit.quick_smoke(style='SMOKE')
+        if res != {'FINISHED'}:
+            return res
+        domain = next((ob for ob in bpy.data.objects if ob not in before), None)
+        if domain is not None:
+            domain.location = (0.0, 0.0, 0.0)
+            domain.scale = (FLUID_SIZE * k / 2,) * 3      # Blender's domain cube is 2 BU wide
+            naming.apply_maya_name(domain, "fluid")
+            md = next((m for m in domain.modifiers if m.type == 'FLUID'), None)
+            if md is not None and md.domain_settings is not None:
+                md.domain_settings.resolution_max = FLUID_RESOLUTION
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_fluid_collide(bpy.types.Operator):
+    """Make the selected meshes collide with fluids (Maya Fluids > Make Collide: a Mantaflow effector)"""
+    bl_idname = "maya_kit.fluid_collide"
+    bl_label = "Make Collide"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and bool(_meshes(context))
+
+    def execute(self, context):
+        for ob in _meshes(context):
+            md = next((m for m in ob.modifiers if m.type == 'FLUID'), None)
+            if md is None:
+                md = ob.modifiers.new("Fluid", 'FLUID')
+            if md.fluid_type == 'NONE':
+                md.fluid_type = 'EFFECTOR'
+        return {'FINISHED'}
+
+
+class MAYAKIT_OT_ncloth_display(bpy.types.Operator):
+    """Show the selected cloth objects' input mesh (cloth off in the viewport) or the simulated current mesh
+    (Maya nCloth > Display Input Mesh / Display Current Mesh)"""
+    bl_idname = "maya_kit.ncloth_display"
+    bl_label = "Display nCloth Mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    mesh: bpy.props.EnumProperty(items=(('INPUT', "Input Mesh", ""), ('CURRENT', "Current Mesh", "")),
+                                 options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return any(md.type == 'CLOTH' for ob in context.selected_objects for md in ob.modifiers)
+
+    def execute(self, context):
+        for ob in context.selected_objects:
+            for md in ob.modifiers:
+                if md.type == 'CLOTH':
+                    md.show_viewport = self.mesh == 'CURRENT'
+        return {'FINISHED'}
+
+
 classes = (MayaKitNucleus, MAYAKIT_OT_fx_emitter, MAYAKIT_OT_fx_emit_from_object, MAYAKIT_OT_fx_ncloth,
-           MAYAKIT_OT_fx_remove_ncloth, MAYAKIT_OT_fx_passive, MAYAKIT_OT_fx_rigid, MAYAKIT_OT_ncache)
+           MAYAKIT_OT_fx_remove_ncloth, MAYAKIT_OT_fx_passive, MAYAKIT_OT_fx_rigid, MAYAKIT_OT_ncache,
+           MAYAKIT_OT_fluid_container_emitter, MAYAKIT_OT_fluid_collide, MAYAKIT_OT_ncloth_display)
 
 
 def register_props():
