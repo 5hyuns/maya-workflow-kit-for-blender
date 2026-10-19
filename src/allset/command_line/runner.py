@@ -7,10 +7,13 @@
 """
 
 import ast
+import builtins
 import contextlib
+import importlib.util
 import io
 import re
 import traceback
+import types
 
 import bpy
 
@@ -31,17 +34,60 @@ class Result:
         return f"Result({self.text!r}, error={self.error})"
 
 
+# --- `import maya.cmds` inside the namespace only ------------------------------------------------------
+# Extension guideline: no entries in the global module dictionary (docs/distribution/extensions_audit.md, step 114).
+# Code run from the Command Line, shelf buttons and the Script Editor gets its own ``__builtins__`` whose
+# ``__import__`` answers ``maya`` / ``maya.cmds`` with a stand-in package (not in sys.modules) holding the cmds shim;
+# every other import, and any real ``maya`` package (Maya), goes to Python's own import.
+
+_maya_pkg = []
+
+
+def _maya():
+    if not _maya_pkg:
+        from . import cmds_shim
+        pkg = types.ModuleType("maya", "Allset stand-in package: only maya.cmds (cmds_shim)")
+        pkg.__path__ = []
+        pkg.cmds = cmds_shim
+        _maya_pkg.append(pkg)
+    return _maya_pkg[0]
+
+
+def _real_maya():
+    try:
+        return importlib.util.find_spec("maya") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _import(name, globals=None, locals=None, fromlist=(), level=0):
+    if level == 0 and name in ("maya", "maya.cmds") and not _real_maya():
+        pkg = _maya()
+        if name == "maya.cmds" and fromlist:
+            return pkg.cmds          # from maya.cmds import ls
+        return pkg                   # import maya / import maya.cmds (as x) / from maya import cmds
+    return builtins.__import__(name, globals, locals, fromlist, level)
+
+
+def _builtins():
+    b = dict(builtins.__dict__)
+    b["__import__"] = _import
+    return b
+
+
 def namespace():
-    """Session namespace: bpy, C, D, cmds (maya.cmds subset); variables persist."""
+    """Session namespace: bpy, C, D, cmds (maya.cmds subset); variables persist. ``import maya.cmds`` works only
+    here (``_import``)."""
     if not _namespace:
         from . import cmds_shim
-        _namespace.update(__name__="__allset_cmd__", bpy=bpy, C=bpy.context, D=bpy.data,
+        _namespace.update(__name__="__allset_cmd__", __builtins__=_builtins(), bpy=bpy, C=bpy.context, D=bpy.data,
                           cmds=cmds_shim, mc=cmds_shim)
     return _namespace
 
 
 def reset():
     _namespace.clear()
+    _maya_pkg.clear()
     history.clear()
 
 

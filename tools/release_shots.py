@@ -44,9 +44,15 @@ def goto_tab(category, then):
     def s_tab():
         r = ui_region()
         if r.active_panel_category != category and C["tries"] < 12:
+            # the dock's own switch (WindowManager.allset_dock sets the sidebar tab, step 99): since the dock became
+            # three tabs, Ctrl+wheel over the tab strip moved past the Channel Box onto Blender's C "Item" tab
             C["tries"] += 1
-            ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width - 8, y=r.y + r.height - 60)
-            ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
+            ae = import_module(MODULE + ".ui.attribute_editor")
+            dock = {v: k for k, v in ae.DOCK_CATEGORIES.items()}.get(category)
+            if dock is not None:
+                with v3d_override():
+                    bpy.context.window_manager.allset_dock = dock
+            redraw()
             sim._steps.insert(0, s_tab)
             return
         C["tries"] = 0

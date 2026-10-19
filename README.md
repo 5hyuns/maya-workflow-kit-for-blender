@@ -125,7 +125,8 @@ python tools/release_check.py   # 빌드 → extension validate → 깨끗한 �
 
 ### 라이선스
 
-GPL-3.0-or-later ([LICENSE](LICENSE)). Blender 익스텐션 요구 사항입니다.
+GPL-3.0-or-later ([LICENSE](LICENSE)). Blender 익스텐션 요구 사항입니다. 킷이 만든 그림·데이터 파일 (스플래시 / 환영
+PNG, `startup.blend`, 테마 XML) 은 CC0-1.0 입니다 ([ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)).
 
 ---
 
@@ -214,4 +215,5 @@ Every Blender run uses a sandbox user config under `tmp/`.
 
 ### License
 
-GPL-3.0-or-later ([LICENSE](LICENSE)), as required for Blender extensions.
+GPL-3.0-or-later ([LICENSE](LICENSE)), as required for Blender extensions. The kit-made images and data files
+(splash / welcome PNGs, `startup.blend`, the theme XML) are CC0-1.0 ([ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)).

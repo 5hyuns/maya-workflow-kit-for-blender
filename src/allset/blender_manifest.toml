@@ -16,8 +16,11 @@ blender_version_min = "4.2.0"
 # clear "not compatible" from the extension system instead of a half-working kit, until it is checked.
 blender_version_max = "5.3.0"
 
+# Code GPL-3.0-or-later; the kit-made images and data files (splash / welcome PNGs, startup.blend, the theme XML)
+# CC0-1.0 — extensions.blender.org terms 1.2, ASSETS_LICENSE.txt (step 114).
 license = [
   "SPDX:GPL-3.0-or-later",
+  "SPDX:CC0-1.0",
 ]
 copyright = [
   "2026 ohnsk",
