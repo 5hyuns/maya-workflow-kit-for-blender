@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "tests" / "gui"))
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_SHOTS", str(ROOT / "docs" / "screenshots"))
+SHOTS = os.environ.get("ALLSET_SHOTS", str(ROOT / "docs" / "screenshots"))
 C = {"tries": 0}
 
 
@@ -50,7 +50,7 @@ def goto_tab(category, then):
             sim._steps.insert(0, s_tab)
             return
         C["tries"] = 0
-        check(f"sidebar shows the {category} tab", r.active_panel_category == category)
+        check(f"sidebar shows the {category} tab (got {r.active_panel_category!r})", r.active_panel_category == category)
         then()
     return s_tab
 
@@ -61,31 +61,31 @@ def s_first_start():
     check("extension enabled by the command-line install", MODULE in prefs.addons)
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap active on first start (got {kc.name if kc else None})",
-          kc is not None and kc.name == "Maya")
+          kc is not None and kc.name == "Maya-style")
     setup()   # closes the splash; the add-on is already enabled
-    check("install the Maya layout template", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
     kc = bpy.context.window_manager.keyconfigs.active
-    check("Maya keymap still active after loading the layout", kc is not None and kc.name == "Maya")
+    check("Maya keymap still active after loading the layout", kc is not None and kc.name == "Maya-style")
     check("layout has the Maya strip (Status Line + Shelf)",
-          bpy.data.masks.get(".MayaKitStrip") is not None)
+          bpy.data.masks.get(".AllsetStrip") is not None)
     k = import_module(MODULE + ".operators.units").maya_unit()  # Maya lengths ()
     with v3d_override():
-        bpy.ops.maya_kit.create(kind='SPHERE')
+        bpy.ops.allset.create(kind='SPHERE')
         bpy.context.active_object.location = (3.5 * k, 0, k)
-        bpy.ops.maya_kit.create(kind='CYLINDER')
+        bpy.ops.allset.create(kind='CYLINDER')
         bpy.context.active_object.location = (-3.5 * k, 0, k)
         bpy.data.objects["pSphere1"].select_set(True)
-        bpy.ops.maya_kit.group()
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.group()
+        bpy.ops.allset.create(kind='CUBE')
         cube = bpy.context.active_object
         cube.scale = (1.5, 1.5, 1.5)
         cube.modifiers.new("polySmooth1", 'SUBSURF')
-        bpy.ops.maya_kit.shelf_material(kind='LAMBERT')
+        bpy.ops.allset.shelf_material(kind='LAMBERT')
         bpy.ops.view3d.view_all(center=False)
     check("Maya names (pCube1, pSphere1, group1)",
           all(n in bpy.data.objects for n in ("pCube1", "pSphere1", "pCylinder1", "group1")))
@@ -104,7 +104,7 @@ def s_wait_layout():
 def s_layout():
     shot("01_layout.png")
     with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_mainCreateMenu")
+        bpy.ops.wm.call_menu(name="ALLSET_MT_mainCreateMenu")
 
 
 @step
@@ -154,8 +154,8 @@ def s_hotbox_shot():
 @step
 def s_ae():
     with v3d_override():
-        bpy.ops.maya_kit.ae_toggle()
-        bpy.ops.maya_kit.ae_tab(key="T")
+        bpy.ops.allset.ae_toggle()
+        bpy.ops.allset.ae_tab(key="T")
     redraw()
 
 
@@ -175,7 +175,7 @@ def s_ae_wait():
 def s_ae_shot():
     shot("05_attribute_editor.png")
     with v3d_override():
-        bpy.ops.maya_kit.ae_tab(key="M:polySmooth1")
+        bpy.ops.allset.ae_tab(key="M:polySmooth1")
     redraw()
 
 
@@ -188,12 +188,12 @@ def s_ae_hist_wait():
 def s_ae_hist_shot():
     shot("06_attribute_editor_history.png")
     with v3d_override():
-        bpy.ops.maya_kit.ae_toggle()
+        bpy.ops.allset.ae_toggle()
     wm = bpy.context.window_manager
-    wm.maya_kit_outliner_shapes = True
-    bpy.data.objects["group1"].maya_kit_expanded = True
-    bpy.data.objects["pCube1"].maya_kit_expanded = True
-    bpy.ops.maya_kit.shelf_select(shelf="Rigging")
+    wm.allset_outliner_shapes = True
+    bpy.data.objects["group1"].allset_expanded = True
+    bpy.data.objects["pCube1"].allset_expanded = True
+    bpy.ops.allset.shelf_select(shelf="Rigging")
     redraw()
 
 
@@ -217,7 +217,7 @@ def s_outliner_wait():
 @step
 def s_outliner_shot():
     shot("07_outliner_rigging_shelf.png")
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
 
 
 run(interval=0.5, first=3.0)

@@ -1,4 +1,4 @@
-"""Step 31: MayaKit layout Outliner (width, Maya DAG rows) and marking-menu toggle state in the
+"""Step 31: Allset layout Outliner (width, Maya DAG rows) and marking-menu toggle state in the
 Blender pie fallback. ; GUI: tests/gui/gui_step31_layout.py."""
 
 import sys
@@ -18,7 +18,7 @@ def test_template_outliner_is_maya_dag():
     sys.path.insert(0, str(ROOT / "tools"))
     import make_startup
     assert make_startup.OUTLINER_PX >= 260   # Maya narrow dock width (step 49; step 31: names not cut)
-    path = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     outliners = [a.spaces.active for a in screen.areas if a.type == 'OUTLINER'

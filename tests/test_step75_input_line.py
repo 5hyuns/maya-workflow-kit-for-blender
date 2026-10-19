@@ -39,7 +39,7 @@ def _cube(name):
 
 
 def _inp():
-    return bpy.context.scene.maya_kit_input
+    return bpy.context.scene.allset_input
 
 
 def test_abs_move_in_display_units():
@@ -156,4 +156,4 @@ def test_history_notice_and_groups():
     assert il.HISTORY_PATH in notices.PANEL_NOTICES
     tip = notices.tooltip(il.HISTORY_PATH, mapped=False)
     assert tip and "construction history" in tip.lower()
-    assert isinstance(bpy.context.scene.bl_rna.properties["maya_kit_input"], bpy.types.PointerProperty)
+    assert isinstance(bpy.context.scene.bl_rna.properties["allset_input"], bpy.types.PointerProperty)

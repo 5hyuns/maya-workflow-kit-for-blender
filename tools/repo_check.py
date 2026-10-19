@@ -8,7 +8,7 @@ their own, changed navigation, undo steps and theme). The repository is a folder
 served as ``file:///.../index.json`` — the same listing a static web host would serve
 (tools/build_repo.py,  §(b)):
 
- 1. repo-add + sync + ``extension install maya_kit --enable`` (what "Add Remote Repository" +
+ 1. repo-add + sync + ``extension install allset --enable`` (what "Add Remote Repository" +
     Install does in Preferences > Get Extensions)
  2. Make Blender Maya, then disable -> the user's setup is back
  3. enable, then a new version (same source, version + patch 1) is published to the repository:
@@ -33,7 +33,7 @@ import build_repo  # noqa: E402
 import release_check  # noqa: E402
 
 SANDBOX = ROOT / "tmp" / "release_env_repo"
-REPO_ID = "mayakit"      # repository module: the kit becomes bl_ext.mayakit.maya_kit
+REPO_ID = "mayakit"      # repository module: the kit becomes bl_ext.mayakit.allset
 KEYS = ("active_keyconfig", "inputs", "undo_steps", "view", "theme")
 
 
@@ -44,7 +44,7 @@ def next_version(version):
 
 def build_next(blender, out_dir):
     """The same source with the next patch version (what a release would publish)."""
-    src = out_dir / "src_next" / "maya_kit"
+    src = out_dir / "src_next" / "allset"
     if src.parent.exists():
         shutil.rmtree(src.parent)
     shutil.copytree(build.SRC, src, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -53,7 +53,7 @@ def build_next(blender, out_dir):
     text = re.sub(r'^version\s*=\s*"[^"]+"', f'version = "{version}"', manifest.read_text(encoding="utf-8"),
                   count=1, flags=re.M)
     manifest.write_text(text, encoding="utf-8")
-    out = out_dir / f"maya_kit-{version}.zip"
+    out = out_dir / f"allset-{version}.zip"
     cmd = [blender, "--factory-startup", "--command", "extension", "build",
            "--source-dir", str(src), "--output-filepath", str(out)]
     rc, log = release_check.run(cmd, build.sandbox_env())
@@ -70,13 +70,13 @@ def main(argv=None):
     blender = args.blender
 
     version = build.manifest_value("version")
-    zip_path = build.DIST / f"maya_kit-{version}.zip"
+    zip_path = build.DIST / f"allset-{version}.zip"
     if not args.no_build or not zip_path.exists():
         zip_path = build.main(["--blender", blender, "--no-legacy"])
 
     env = release_check.sandbox_env(SANDBOX)
-    env["MAYA_KIT_REPO"] = REPO_ID
-    env["MAYA_KIT_NO_WELCOME"] = "1"
+    env["ALLSET_REPO"] = REPO_ID
+    env["ALLSET_NO_WELCOME"] = "1"
     server = SANDBOX / "server"
     index = build_repo.main(["--blender", blender, "--out", str(server), "--zip", str(zip_path)])
     url = build_repo.file_url(index)
@@ -110,18 +110,18 @@ def main(argv=None):
 
     step("offline_org", probe + ["offline_org", str(SANDBOX / "offline.json")], "offline")
     # 1. add the repository, install + enable from it
-    ok = step("repo-add", ext + ["repo-add", REPO_ID, "--name", "Maya Kit (test repository)", "--url", url])
+    ok = step("repo-add", ext + ["repo-add", REPO_ID, "--name", "Allset (test repository)", "--url", url])
     ok &= step("sync", ext + ["sync"])
-    ok &= step("install", ext + ["install", "maya_kit", "--enable"])
+    ok &= step("install", ext + ["install", "allset", "--enable"])
     step("check", probe + ["check", str(SANDBOX / "installed.json")], "installed")
     s = snap["installed"]
-    kit = f"bl_ext.{REPO_ID}.maya_kit"
+    kit = f"bl_ext.{REPO_ID}.allset"
     check(f"add the repository ({url}) and install from it", ok and s and REPO_ID in s["repos"])
     check(f"installed version {s and s['kit_version']} == {version}, enabled", s and s["kit_version"] == version
           and kit in s["addons"])
     check("the user's add-ons and theme are kept", s and set(snap["before"]["addons"]) < set(s["addons"])
           and s["theme"] == snap["before"]["theme"])
-    check(f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya")
+    check(f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya-style")
 
     # 2. Make Blender Maya, then disable
     step("make", probe + ["make", str(SANDBOX / "made.json")], "made")
@@ -142,7 +142,7 @@ def main(argv=None):
     check(f"update from the repository: {version} -> {s and s['kit_version']} (expected {nxt_version})",
           ok and s and s["kit_version"] == nxt_version)
     check("after the update the kit is still enabled with the Maya keymap",
-          s and kit in s["addons"] and s["active_keyconfig"] == "Maya")
+          s and kit in s["addons"] and s["active_keyconfig"] == "Maya-style")
 
     # 4. Remove in Maya mode (inside Blender), then remove the repository
     step("make", probe + ["make", str(SANDBOX / "made2.json")], "made2")

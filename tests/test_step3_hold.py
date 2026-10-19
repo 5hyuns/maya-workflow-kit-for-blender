@@ -19,7 +19,7 @@ def _ts():
 
 
 def _kmis(km_name, type, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km_name]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]
 
@@ -109,9 +109,9 @@ def test_keystate():
 def test_pivot_toggle():
     ts = _ts()
     ts.use_transform_data_origin = False
-    assert bpy.ops.maya_kit.pivot_toggle() == {'FINISHED'}
+    assert bpy.ops.allset.pivot_toggle() == {'FINISHED'}
     assert ts.use_transform_data_origin
-    bpy.ops.maya_kit.pivot_toggle()
+    bpy.ops.allset.pivot_toggle()
     assert not ts.use_transform_data_origin
 
 
@@ -200,13 +200,13 @@ def test_pick_walk():
     assert pickwalk.walk(vl, root, "UP") == root         # already at the top
 
     _select([leaf])
-    assert bpy.ops.maya_kit.pick_walk(direction="UP") == {'FINISHED'}
+    assert bpy.ops.allset.pick_walk(direction="UP") == {'FINISHED'}
     assert _selected() == ["pw_a"] and vl.objects.active == a
     _select([a, b], active=b)
-    bpy.ops.maya_kit.pick_walk(direction="UP")
+    bpy.ops.allset.pick_walk(direction="UP")
     assert _selected() == ["pw_root"], _selected()       # both walk to the same parent
     _select([a, b], active=b)
-    bpy.ops.maya_kit.pick_walk(direction="RIGHT")
+    bpy.ops.allset.pick_walk(direction="RIGHT")
     assert _selected() == ["pw_b", "pw_c"] and vl.objects.active == c
 
 
@@ -216,7 +216,7 @@ def test_hold_keys_bound():
     for key, name in maya_patches.HOLD_KEYS:
         for shift in (False, True):
             items = _kmis("3D View", key, shift=shift)
-            assert [(k.idname, k.properties.name) for k in items] == [("maya_kit.hold", name)], \
+            assert [(k.idname, k.properties.name) for k in items] == [("allset.hold", name)], \
                 (key, shift, [k.idname for k in items])
     for km in ("Object Mode", "Mesh", "Curve", "Armature", "Metaball"):
         assert _kmis(km, "C") == [], km     # cursor tool removed so the 3D View hold runs
@@ -233,15 +233,15 @@ def test_soft_select_and_select_all_keys():
 
 def test_pivot_and_pick_walk_keys():
     assert [k.properties.name for k in _kmis("Object Mode", "D")] == ["pivot"]
-    assert [k.idname for k in _kmis("Object Mode", "INSERT")] == ["maya_kit.pivot_toggle"]
+    assert [k.idname for k in _kmis("Object Mode", "INSERT")] == ["allset.pivot_toggle"]
     for key, direction in maya_patches.PICK_WALK_KEYS:
         items = _kmis("Object Mode", key)
         assert [(k.idname, k.properties.direction) for k in items] == \
-            [("maya_kit.pick_walk", direction)], key
+            [("allset.pick_walk", direction)], key
     # Pose mode arrows walk joints since step 57 (frames: Alt+, / Alt+.); other modes keep IC's.
-    assert [k.idname for k in _kmis("Pose", "LEFT_ARROW")] == ["maya_kit.pick_walk_joint"]
+    assert [k.idname for k in _kmis("Pose", "LEFT_ARROW")] == ["allset.pick_walk_joint"]
 
 
 def test_hold_operator_refuses_non_press():
     # Invoked without a PRESS event (e.g. from Python) it must not start a modal.
-    assert bpy.ops.maya_kit.hold('EXEC_DEFAULT', name="grid") != {'RUNNING_MODAL'}
+    assert bpy.ops.allset.hold('EXEC_DEFAULT', name="grid") != {'RUNNING_MODAL'}

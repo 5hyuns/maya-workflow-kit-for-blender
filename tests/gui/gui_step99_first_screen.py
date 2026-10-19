@@ -1,9 +1,9 @@
 """Step 99 in a real UI: the Maya first screen.
 
-New MayaKit scene -> the Tool Box column shows its tools at the running UI scale (run at the default 1.25 and with
-``--ui-scale 0.8``: the column is resized through MAYAKIT_OT_fit_columns, the main view keeps no toolbar), the
+New Allset scene -> the Tool Box column shows its tools at the running UI scale (run at the default 1.25 and with
+``--ui-scale 0.8``: the column is resized through ALLSET_OT_fit_columns, the main view keeps no toolbar), the
 layout Outliner lists Maya's default rows (persp / top / front / side, defaultLightSet, defaultObjectSet) from the
-top, the dock shows Maya's three tabs (Channel Box / Layer Editor first) and maya_kit_dock follows them both ways.
+top, the dock shows Maya's three tabs (Channel Box / Layer Editor first) and allset_dock follows them both ways.
 Then a cube and a light: the default rows follow the DAG rows, defaultLightSet selects the light, persp clears the
 selection."""
 
@@ -16,8 +16,8 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
-os.environ["MAYA_KIT_FIT_WARP"] = "1"   # the cursor fit is off in event-simulated sessions unless asked for
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
+os.environ["ALLSET_FIT_WARP"] = "1"   # the cursor fit is off in event-simulated sessions unless asked for
 C = {}
 CB, AE, MTK = "Channel Box / Layer Editor", "Attribute Editor", "Modeling Toolkit"
 
@@ -68,19 +68,19 @@ def click_row(row):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_keymap():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     _a, r = view3d()
     ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)   # over a region: area_move can't poll
     redraw()
 
 
-for _i in range(8):          # the fit timer (0.5 s) + MAYAKIT_OT_fit_columns ticks (column, then Outliner)
+for _i in range(8):          # the fit timer (0.5 s) + ALLSET_OT_fit_columns ticks (column, then Outliner)
     step(redraw)
 
 
@@ -114,14 +114,14 @@ def s_toolbox():
 
 @step
 def s_ae():
-    bpy.context.window_manager.maya_kit_dock = 'ATTRIBUTE_EDITOR'
+    bpy.context.window_manager.allset_dock = 'ATTRIBUTE_EDITOR'
     redraw()
 
 
 @step
 def s_ae_check():
     ui = dock_region()
-    check(f"maya_kit_dock = AE switches the tab ({ui.active_panel_category!r})", ui.active_panel_category == AE)
+    check(f"allset_dock = AE switches the tab ({ui.active_panel_category!r})", ui.active_panel_category == AE)
     # the user clicks a tab: Ctrl+wheel over the sidebar steps through its tabs (Blender's own tab switching)
     x, y = ui.x + ui.width - 8, ui.y + ui.height - 60
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
@@ -137,15 +137,15 @@ def s_tab_wait():
 @step
 def s_tab_check():
     ui = dock_region()
-    dock = bpy.context.window_manager.maya_kit_dock
+    dock = bpy.context.window_manager.allset_dock
     check(f"a tab the user picks becomes the dock state ({ui.active_panel_category!r} -> {dock})",
           ui.active_panel_category in (CB, MTK) and dock == {CB: 'CHANNEL_BOX', MTK: 'MODELING_TOOLKIT'}
           [ui.active_panel_category])
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='POINT_LIGHT')
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='POINT_LIGHT')
+        bpy.ops.allset.create(kind='CUBE')
     redraw()
 
 

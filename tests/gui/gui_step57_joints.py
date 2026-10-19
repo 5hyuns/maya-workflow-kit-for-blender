@@ -1,4 +1,4 @@
-"""Step 57 in a real UI, Maya rigging_01 hand order on the MayaKit layout: Skeleton > Create Joints -> three clicks in
+"""Step 57 in a real UI, Maya rigging_01 hand order on the Allset layout: Skeleton > Create Joints -> three clicks in
 the persp view (ground plane) -> Enter -> pose mode, joint1 > joint2 > joint3, Channel Box lead joint3 -> Up Up (pick-walk)
 -> joint1 -> Skeleton > Mirror Joints (option dialog, YZ) -> six joints.  「계획」 4."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -54,13 +54,13 @@ def skeleton():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_menu():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     for ob in list(bpy.data.objects):
         ob.select_set(False)
     open_menu("Skeleton")
@@ -74,7 +74,7 @@ def s_create_joints():
 @step
 def s_tool_running():
     names = [op.bl_idname for op in win().modal_operators]
-    check(f"Skeleton > Create Joints starts the Joint Tool ({names})", "MAYA_KIT_OT_joint_tool" in names)
+    check(f"Skeleton > Create Joints starts the Joint Tool ({names})", "ALLSET_OT_joint_tool" in names)
     _a, r = main_view()
     # three clicks below the horizon of the persp view (the ground plane), left to right
     C["clicks"] = [(r.x + r.width * f // 10, r.y + r.height * g // 10) for f, g in ((4, 3), (5, 2), (6, 3))]

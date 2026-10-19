@@ -16,7 +16,7 @@ maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 mapping = import_module(kit.MODULE + ".keymap.mapping")
 patch = import_module(kit.MODULE + ".keymap.patch")
 
-KC_NAME = "Maya"
+KC_NAME = "Maya-style"
 
 
 def _kc():
@@ -100,16 +100,16 @@ def test_outliner_and_graph_click_select():
 
 def test_display_keys():
     for key, mode in maya_patches.DISPLAY_KEYS:
-        assert _one("3D View", "maya_kit.display_mode", key).properties.mode == mode
+        assert _one("3D View", "allset.display_mode", key).properties.mode == mode
         assert _any_event("Object Non-modal", key) == [], key
-    assert _one("Object Non-modal", "maya_kit.toggle_sel_mode", "F8")
+    assert _one("Object Non-modal", "allset.toggle_sel_mode", "F8")
 
 
 # --- Ctrl+G -----------------------------------------------------------------
 
 def test_group_keys():
     for km in ("Object Mode", "Outliner"):
-        assert _any_event(km, "G", ctrl=True) == ["maya_kit.group"], km
+        assert _any_event(km, "G", ctrl=True) == ["allset.group"], km
 
 
 # --- Space free, playback on Alt+V ------------------------------------------
@@ -120,7 +120,7 @@ def test_space_is_free_for_hotbox():
         assert _any_event(km, "SPACE") == [], (km, _any_event(km, "SPACE"))
     # Step 9: Space = hotbox (tap = four views / maximize) in 3D View and the panel editors.
     for km in ("3D View", "Outliner", "Graph Editor", "Dopesheet", "Node Editor", "Image"):
-        assert _any_event(km, "SPACE") == ["maya_kit.hotbox"], (km, _any_event(km, "SPACE"))
+        assert _any_event(km, "SPACE") == ["allset.hotbox"], (km, _any_event(km, "SPACE"))
     assert _one("Frames", "screen.animation_play", "V", alt=True)
     assert not _one("Frames", "screen.frame_jump", "V", alt=True, shift=True).properties.end
 

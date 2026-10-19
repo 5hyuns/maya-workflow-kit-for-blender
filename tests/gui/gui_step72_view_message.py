@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 vm = None
 

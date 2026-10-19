@@ -108,19 +108,19 @@ def test_menu_and_shelf_agree():
 
 
 def test_icon_buttons_include_greyed_slots():
-    bpy.ops.maya_kit.shelf_select(shelf="Sculpting")
+    bpy.ops.allset.shelf_select(shelf="Sculpting")
     cur, buttons = shelf.icon_buttons(bpy.context)
     assert cur == "Sculpting" and len(buttons) == 26
     assert buttons[0][1] == "Sculpt Tool" and buttons[0][3]
     by = {b[1]: b[3] for b in buttons}
     assert by["Bulge Tool"] and by["Freeze Tool"] and by["Smooth Tool"]
     assert not by["Imprint Tool"] and not by["Convert To Frozen"]
-    bpy.ops.maya_kit.shelf_select(shelf="Polygons")
+    bpy.ops.allset.shelf_select(shelf="Polygons")
 
 
 def test_greyed_click_and_tooltip_show_the_notice():
     i = next(i for i, lab, a, _ic in shelf.all_buttons("CurvesSurfaces") if lab == "Trim Tool")
-    assert bpy.ops.maya_kit.shelf_button(shelf="CurvesSurfaces", index=i) == {'CANCELLED'}
+    assert bpy.ops.allset.shelf_button(shelf="CurvesSurfaces", index=i) == {'CANCELLED'}
     assert notices.current().startswith("Trim Tool: "), notices.current()
     tip = shelf.button_tooltip("CurvesSurfaces", "Trim Tool", False)
     assert "(Maya shelf, greyed)" in tip and notices.category("Surfaces/Trim Tool")[0] in tip, tip
@@ -139,14 +139,14 @@ def test_sculpting_tools_are_blender_brushes():
     by = {lab: a for _i, lab, a, _ic in shelf.all_buttons("Sculpting")}
     for label, brush in want.items():
         kind, target, props = menu_map.normalize(by[label])
-        assert target == "maya_kit.sculpt_tool" and props["brush"] == brush, (label, by[label])
+        assert target == "allset.sculpt_tool" and props["brush"] == brush, (label, by[label])
 
 
 def test_sculpt_button_activates_the_brush():
     _fresh()
     bpy.ops.mesh.primitive_cube_add()
     i = next(i for i, lab, _a, _ic in shelf.all_buttons("Sculpting") if lab == "Bulge Tool")
-    res = bpy.ops.maya_kit.shelf_button(shelf="Sculpting", index=i)
+    res = bpy.ops.allset.shelf_button(shelf="Sculpting", index=i)
     assert res == {'FINISHED'}, res
     assert bpy.context.mode == 'SCULPT'
     brush = bpy.context.tool_settings.sculpt.brush
@@ -159,7 +159,7 @@ def test_sculpt_button_activates_the_brush():
 def test_planar_fills_a_closed_curve():
     _fresh()
     c = _circle(2.0)
-    assert bpy.ops.maya_kit.surface_planar() == {'FINISHED'}
+    assert bpy.ops.allset.surface_planar() == {'FINISHED'}
     ob = bpy.data.objects["planarTrimmedSurface1"]
     assert ob.data is not c.data and ob.data.dimensions == '2D' and ob.data.fill_mode == 'BOTH'
     assert _evaluated_faces(ob) > 0
@@ -169,7 +169,7 @@ def test_planar_fills_a_closed_curve():
 def test_planar_needs_closed_curves():
     _fresh()
     bpy.ops.curve.primitive_nurbs_curve_add()
-    assert bpy.ops.maya_kit.surface_planar() == {'CANCELLED'}
+    assert bpy.ops.allset.surface_planar() == {'CANCELLED'}
 
 
 def test_loft_two_circles():
@@ -177,7 +177,7 @@ def test_loft_two_circles():
     a = _circle(1.0, 0.0)
     b = _circle(1.0, 5.0)
     _select(a, b)
-    assert bpy.ops.maya_kit.loft() == {'FINISHED'}
+    assert bpy.ops.allset.loft() == {'FINISHED'}
     ob = bpy.data.objects["loftedSurface1"]
     me = ob.data
     n = len(me.vertices) // 2
@@ -195,7 +195,7 @@ def test_extrude_sweeps_profile_along_path():
     bpy.ops.curve.primitive_nurbs_path_add()
     path = bpy.context.active_object
     _select(prof, path)
-    assert bpy.ops.maya_kit.surface_extrude() == {'FINISHED'}
+    assert bpy.ops.allset.surface_extrude() == {'FINISHED'}
     ob = bpy.data.objects["extrudedSurface1"]
     assert ob.data.bevel_mode == 'OBJECT' and ob.data.bevel_object == prof and ob.data is not path.data
     assert _evaluated_faces(ob) > 0
@@ -204,7 +204,7 @@ def test_extrude_sweeps_profile_along_path():
 def test_bevel_plus_makes_a_mesh_and_keeps_the_curve():
     _fresh()
     c = _circle(2.0)
-    assert bpy.ops.maya_kit.bevel_plus() == {'FINISHED'}
+    assert bpy.ops.allset.bevel_plus() == {'FINISHED'}
     ob = bpy.data.objects["bevelPolygon1"]
     assert ob.type == 'MESH' and len(ob.data.polygons) > 0
     assert c.name in bpy.data.objects
@@ -226,7 +226,7 @@ def test_offset_curve_follows_maya_direction():
     line = bpy.data.objects.new("line", data)
     bpy.context.collection.objects.link(line)
     _select(line)
-    assert bpy.ops.maya_kit.offset_curve() == {'FINISHED'}
+    assert bpy.ops.allset.offset_curve() == {'FINISHED'}
     ob = bpy.data.objects["offsetNurbsCurve1"]
     ys = {round(p.co.y, 4) for p in ob.data.splines[0].points}
     # Maya: a line along +X (normal Maya +Y) moved to Maya -Z = Blender +Y by the distance 1.
@@ -237,7 +237,7 @@ def test_sweep_mesh_is_an_8_sided_tube():
     _fresh()
     bpy.ops.curve.primitive_nurbs_path_add()
     path = bpy.context.active_object
-    assert bpy.ops.maya_kit.sweep_mesh() == {'FINISHED'}
+    assert bpy.ops.allset.sweep_mesh() == {'FINISHED'}
     ob = bpy.data.objects["sweep1"]
     assert ob.type == 'MESH' and path.name in bpy.data.objects
     ring = [v for v in ob.data.vertices]
@@ -246,19 +246,19 @@ def test_sweep_mesh_is_an_8_sided_tube():
 
 def test_nurbs_square_cube_cone():
     _fresh()
-    assert bpy.ops.maya_kit.create(kind='NURBS_SQUARE') == {'FINISHED'}
+    assert bpy.ops.allset.create(kind='NURBS_SQUARE') == {'FINISHED'}
     grp = bpy.data.objects["nurbsSquare1"]
     assert sorted(c.name for c in grp.children) == sorted(
         f"{s}nurbsSquare1" for s in ("top", "left", "bottom", "right"))
     top = bpy.data.objects["topnurbsSquare1"]
     assert {round(p.co.y, 3) for p in top.data.splines[0].points} == {-0.5}    # Maya +Z = Blender -Y
-    assert bpy.ops.maya_kit.create(kind='NURBS_CUBE') == {'FINISHED'}
+    assert bpy.ops.allset.create(kind='NURBS_CUBE') == {'FINISHED'}
     cube = bpy.data.objects["nurbsCube1"]
     assert len(cube.children) == 6
     assert bpy.data.objects["topnurbsCube1"].location.z == 0.5
     assert bpy.data.objects["leftnurbsCube1"].location.y == -0.5
     assert bpy.data.objects["frontnurbsCube1"].location.x == 0.5
-    assert bpy.ops.maya_kit.create(kind='NURBS_CONE') == {'FINISHED'}
+    assert bpy.ops.allset.create(kind='NURBS_CONE') == {'FINISHED'}
     cone = bpy.data.objects["nurbsCone1"]
     pts = [p.co for sp in cone.data.splines for p in sp.points]
     top_z = max(p.z for p in pts)
@@ -267,13 +267,13 @@ def test_nurbs_square_cube_cone():
 
 def test_pencil_and_add_points():
     _fresh()
-    assert bpy.ops.maya_kit.pencil_curve() == {'FINISHED'}
+    assert bpy.ops.allset.pencil_curve() == {'FINISHED'}
     ob = bpy.context.active_object
     assert ob.name == "curve1" and ob.type == 'CURVE' and bpy.context.mode == 'EDIT_CURVE'
     bpy.ops.object.mode_set(mode='OBJECT')
     _fresh()
     bpy.ops.curve.primitive_nurbs_curve_add()
-    assert bpy.ops.maya_kit.add_points() == {'FINISHED'}
+    assert bpy.ops.allset.add_points() == {'FINISHED'}
     ob = bpy.context.active_object
     assert bpy.context.mode == 'EDIT_CURVE'
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -286,7 +286,7 @@ def test_pencil_and_add_points():
 def test_fluid_container_with_emitter():
     _fresh()
     i = next(i for i, lab, _a, _ic in shelf.all_buttons("FX") if lab == "3D Fluid Container with Emitter")
-    assert bpy.ops.maya_kit.shelf_button(shelf="FX", index=i) == {'FINISHED'}
+    assert bpy.ops.allset.shelf_button(shelf="FX", index=i) == {'FINISHED'}
     dom = bpy.data.objects["fluid1"]
     em = bpy.data.objects["fluidEmitter1"]
     assert tuple(round(d, 3) for d in dom.dimensions) == (10.0, 10.0, 10.0), dom.dimensions
@@ -300,14 +300,14 @@ def test_fluid_collide_and_ncloth_display():
     _fresh()
     bpy.ops.mesh.primitive_cube_add()
     cube = bpy.context.active_object
-    assert bpy.ops.maya_kit.fluid_collide() == {'FINISHED'}
+    assert bpy.ops.allset.fluid_collide() == {'FINISHED'}
     assert next(m for m in cube.modifiers if m.type == 'FLUID').fluid_type == 'EFFECTOR'
     bpy.ops.mesh.primitive_plane_add()
     plane = bpy.context.active_object
-    assert bpy.ops.maya_kit.fx_ncloth() == {'FINISHED'}
+    assert bpy.ops.allset.fx_ncloth() == {'FINISHED'}
     cloth = next(m for m in plane.modifiers if m.type == 'CLOTH')
-    assert bpy.ops.maya_kit.ncloth_display(mesh='INPUT') == {'FINISHED'} and not cloth.show_viewport
-    assert bpy.ops.maya_kit.ncloth_display(mesh='CURRENT') == {'FINISHED'} and cloth.show_viewport
+    assert bpy.ops.allset.ncloth_display(mesh='INPUT') == {'FINISHED'} and not cloth.show_viewport
+    assert bpy.ops.allset.ncloth_display(mesh='CURRENT') == {'FINISHED'} and cloth.show_viewport
 
 
 # --- icons ------------------------------------------------------------------------------------

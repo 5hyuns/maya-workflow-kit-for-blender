@@ -13,7 +13,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, px, run, screenshot, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -85,7 +85,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     area, _region = view3d()
     area.spaces.active.show_region_ui = True
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     bpy.context.view_layer.objects.active = cube()
     cube().select_set(True)
     with v3d_ctx():

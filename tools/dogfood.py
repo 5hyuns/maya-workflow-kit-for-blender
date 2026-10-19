@@ -39,7 +39,7 @@ def main(argv=None):
 
     zip_path = build.main(["--blender", args.blender])
     env = rc.sandbox_env()
-    env["MAYA_KIT_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
+    env["ALLSET_NO_WELCOME"] = "1"   # the first-start dialog would eat the simulated events (step 42)
     code, out = rc.run([args.blender, "--command", "extension", "install-file", "-r", rc.REPO_ID,
                         "--enable", str(zip_path)], env)
     if code != 0:
@@ -51,7 +51,7 @@ def main(argv=None):
         p.unlink()
     result, log = out_dir / "dogfood.json", out_dir / "dogfood.log"
     result.unlink(missing_ok=True)
-    env["MAYA_KIT_DOGFOOD_SHOTS"] = str(shots)
+    env["ALLSET_DOGFOOD_SHOTS"] = str(shots)
     cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
            "--python", str(session), "--", str(result)]
     with open(log, "w", encoding="utf-8", errors="replace") as fh:

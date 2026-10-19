@@ -124,7 +124,7 @@ def test_pivot_rotate_becomes_custom_orientation_then_bake():
     m = slot.custom_orientation.matrix.copy()
     assert abs(abs(Vector(m.col[0]).dot(Vector((1, 0, 0)))) - math.cos(math.radians(45))) < 1e-3, m
     # Bake Pivot: orientation into rotate, geometry stays, axis mode back to Object (P8)
-    bpy.ops.maya_kit.bake_pivot()
+    bpy.ops.allset.bake_pivot()
     assert abs(abs(ob.rotation_euler.z) - math.radians(45)) < 1e-3, ob.rotation_euler[:]
     bpy.context.view_layer.update()
     got = ob.matrix_world.to_3x3().normalized()
@@ -142,7 +142,7 @@ def test_reset_and_match_pivots():
     before = _world_verts(a)
     freeze.shift_pivot(a, Vector((2, 2, 0)))
     bpy.context.view_layer.update()
-    bpy.ops.maya_kit.reset_pivot()
+    bpy.ops.allset.reset_pivot()
     bpy.context.view_layer.update()
     assert Vector(a.delta_location).length < TOL and (Vector(a.location) - Vector((1, 0, 0))).length < TOL
     assert _same_points(before, _world_verts(a))
@@ -150,7 +150,7 @@ def test_reset_and_match_pivots():
     freeze.shift_pivot(b, Vector((0, 0.5, 1)))
     bpy.context.view_layer.update()
     _select(a, b, active=b)
-    bpy.ops.maya_kit.match_pivots()
+    bpy.ops.allset.match_pivots()
     bpy.context.view_layer.update()
     assert (a.matrix_world.translation - b.matrix_world.translation).length < TOL
     assert (Vector(a.location) - Vector((1, 0, 0))).length < TOL
@@ -162,7 +162,7 @@ def test_freeze_keeps_pivot_after_pivot_move():
     ob = _cube(loc=(2, 1, 0))
     _select(ob)
     _origin_transform("translate", value=(0.5, 0, 0))
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     bpy.context.view_layer.update()
     assert Vector(ob.location).length < TOL
     assert (ob.matrix_world.translation - Vector((2.5, 1, 0))).length < TOL   # P4
@@ -258,14 +258,14 @@ def test_make_live():
     _fresh()
     p = _cube("pPlane1")
     _select(p)
-    bpy.ops.maya_kit.make_live()
+    bpy.ops.allset.make_live()
     ts = bpy.context.scene.tool_settings
-    assert bpy.context.scene.maya_kit_live == p
+    assert bpy.context.scene.allset_live == p
     assert ts.use_snap and 'FACE_PROJECT' in ts.snap_elements
     for o in bpy.data.objects:
         o.select_set(False)
-    bpy.ops.maya_kit.make_live()
-    assert bpy.context.scene.maya_kit_live is None and 'FACE_PROJECT' not in ts.snap_elements
+    bpy.ops.allset.make_live()
+    assert bpy.context.scene.allset_live is None and 'FACE_PROJECT' not in ts.snap_elements
 
 
 # --- manipulator (M1-M7) ----------------------------------------------------------------------
@@ -327,12 +327,12 @@ def test_modify_menu_pivot_and_align_sections():
     assert "Match Pivots" in [it[0] for it in menu_map.CHILDREN["Modify/Match Transformations"]]
     assert i_match < i_pivot < i_align, items
     assert "Bake Pivot" in items
-    assert menu_map.MAP["Modify/Bake Pivot"] == "maya_kit.bake_pivot"
-    assert menu_map.MAP["Modify/Match Transformations/Match Pivots"] == "maya_kit.match_pivots"
+    assert menu_map.MAP["Modify/Bake Pivot"] == "allset.bake_pivot"
+    assert menu_map.MAP["Modify/Match Transformations/Match Pivots"] == "allset.match_pivots"
     for label in ("Point to Point", "2 Points to 2 Points", "3 Points to 3 Points", "Align Objects"):
         assert f"Modify/Snap Align Objects/{label}" in menu_map.MAP, label
-    assert menu_map.MAP["Modify/Snap Together Tool"] == "maya_kit.snap_together"
-    assert menu_map.MAP["Modify/Make Live"] == "maya_kit.make_live"
+    assert menu_map.MAP["Modify/Snap Together Tool"] == "allset.snap_together"
+    assert menu_map.MAP["Modify/Make Live"] == "allset.make_live"
 
 
 def test_move_tool_keeps_select_fallback():

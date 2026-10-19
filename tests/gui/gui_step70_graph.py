@@ -13,7 +13,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 D = 110      # px past the marking menu ring (radius 80 x UI scale)
 
@@ -69,7 +69,7 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     ob = bpy.data.objects["Cube"]
     sc = bpy.context.scene
     sc.frame_start, sc.frame_end = 1, 120
@@ -95,7 +95,7 @@ def s_graph_open():
         # the toolbar's Linear button (operator of the header button)
         header = next(rg for rg in a.regions if rg.type == 'HEADER')
     with bpy.context.temp_override(window=w, area=a, region=header):
-        C["linear"] = bpy.ops.maya_kit.set_tangent(kind="LINEAR")
+        C["linear"] = bpy.ops.allset.set_tangent(kind="LINEAR")
     C["gpos"] = (r.x + r.width // 2, r.y + r.height // 2)
     redraw()
 

@@ -93,7 +93,7 @@ def test_operator_walks_selection_and_active():
     b.select_set(True)
     bm.select_history.add(a)
     bmesh.update_edit_mesh(ob.data)
-    bpy.ops.maya_kit.pick_walk_component(direction='RIGHT')   # headless: front projection
+    bpy.ops.allset.pick_walk_component(direction='RIGHT')   # headless: front projection
     bm = _bm(ob)
     sel = sorted(_xz(v) for v in bm.verts if v.select)
     assert sel == [(0, -0.5), (0.5, 0)], sel
@@ -103,7 +103,7 @@ def test_operator_walks_selection_and_active():
     bm = _bm(ob)
     _at(bm.faces, 0.25, 0.25).select_set(True)
     bmesh.update_edit_mesh(ob.data)
-    bpy.ops.maya_kit.pick_walk_component(direction='UP')
+    bpy.ops.allset.pick_walk_component(direction='UP')
     bm = _bm(ob)
     assert [_xz(f) for f in bm.faces if f.select] == [(0.25, 0.75)]
 
@@ -129,10 +129,10 @@ def test_keymap_items():
     items = {k[0]: k[2]["items"] for k in data}
     mesh = [(i[0], i[1]["type"], dict(i[2]["properties"]) if i[2] else {}) for i in items["Mesh"]]
     for key, d in (("UP_ARROW", "UP"), ("DOWN_ARROW", "DOWN"), ("LEFT_ARROW", "LEFT"), ("RIGHT_ARROW", "RIGHT")):
-        assert ("maya_kit.pick_walk_component", key, {"direction": d}) in mesh, key
+        assert ("allset.pick_walk_component", key, {"direction": d}) in mesh, key
     assert not any(i[0] in ("mesh.select_more", "mesh.select_less") and i[1] in ("UP_ARROW", "DOWN_ARROW")
                    for i in mesh)
     v3d = [(i[0], i[1]["type"], i[1].get("shift"), i[1].get("alt"), i[1].get("ctrl"),
             dict(i[2]["properties"]) if i[2] else {}) for i in items["3D View"]]
-    assert ("maya_kit.view_axis_lock", "LEFTMOUSE", True, True, None, {"mode": "TUMBLE"}) in v3d
-    assert ("maya_kit.view_axis_lock", "MIDDLEMOUSE", True, True, None, {"mode": "TRACK"}) in v3d
+    assert ("allset.view_axis_lock", "LEFTMOUSE", True, True, None, {"mode": "TUMBLE"}) in v3d
+    assert ("allset.view_axis_lock", "MIDDLEMOUSE", True, True, None, {"mode": "TRACK"}) in v3d

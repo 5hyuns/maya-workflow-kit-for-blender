@@ -16,7 +16,7 @@ INPUTS = bpy.context.preferences.inputs
 
 
 def _kmis(km_name, idname, type, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km_name]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
     return [k for k in km.keymap_items if k.active and k.idname == idname and k.type == type
             and k.value == 'PRESS' and k.shift == shift and k.ctrl == ctrl and k.alt == alt]
 
@@ -141,16 +141,16 @@ def _select(ob):
 def test_smooth_preview_levels():
     ob = _mesh("sp_a")
     _select(ob)
-    assert bpy.ops.maya_kit.smooth_preview(level=3) == {'FINISHED'}
+    assert bpy.ops.allset.smooth_preview(level=3) == {'FINISHED'}
     mods = [m for m in ob.modifiers if m.type == 'SUBSURF']
     assert len(mods) == 1 and mods[0].name == display.PREVIEW_MOD_NAME
     m = mods[0]
     assert m.show_viewport and not m.show_render and m.levels == 2 and not ob.show_wire
-    bpy.ops.maya_kit.smooth_preview(level=2)
+    bpy.ops.allset.smooth_preview(level=2)
     assert m.show_viewport and ob.show_wire
-    bpy.ops.maya_kit.smooth_preview(level=1)
+    bpy.ops.allset.smooth_preview(level=1)
     assert not m.show_viewport and not ob.show_wire
-    bpy.ops.maya_kit.smooth_preview(level=3)
+    bpy.ops.allset.smooth_preview(level=3)
     assert len(ob.modifiers) == 2, "re-uses the preview (+ its shading) modifier"
 
 
@@ -162,12 +162,12 @@ def test_smooth_preview_leaves_user_subsurf_and_user_wire():
     user.levels = 3
     ob.show_wire = True
     _select(ob)
-    bpy.ops.maya_kit.smooth_preview(level=1)
+    bpy.ops.allset.smooth_preview(level=1)
     assert user.show_viewport and len(ob.modifiers) == 1
-    bpy.ops.maya_kit.smooth_preview(level=3)
+    bpy.ops.allset.smooth_preview(level=3)
     assert user.show_viewport and user.levels == 3
     assert ob.modifiers[-1].name == display.PREVIEW_MOD_NAME
-    bpy.ops.maya_kit.smooth_preview(level=1)
+    bpy.ops.allset.smooth_preview(level=1)
     assert user.show_viewport, "1 does not hide the user's own Subsurf"
     assert ob.show_wire, "a wire display the user set is not cleared"
 
@@ -178,7 +178,7 @@ def test_component_modes():
     ts = bpy.context.scene.tool_settings
     for comp, want in (("EDGE", (False, True, False)), ("VERT", (True, False, False)),
                        ("FACE", (False, False, True)), ("MULTI", (True, True, True))):
-        assert bpy.ops.maya_kit.component_mode(type=comp) == {'FINISHED'}
+        assert bpy.ops.allset.component_mode(type=comp) == {'FINISHED'}
         assert bpy.context.mode == 'EDIT_MESH'
         assert tuple(ts.mesh_select_mode) == want, (comp, tuple(ts.mesh_select_mode))
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -187,34 +187,34 @@ def test_component_modes():
 # --- keys ----------------------------------------------------------------------------
 
 def test_camera_keys():
-    assert _kmis("3D View", "maya_kit.tumble", "LEFTMOUSE", alt=True)
+    assert _kmis("3D View", "allset.tumble", "LEFTMOUSE", alt=True)
     assert not _kmis("3D View", "view3d.rotate", "LEFTMOUSE", alt=True)
-    assert _kmis("3D View", "maya_kit.frame_all_views", "F", shift=True)[0].properties.selected
-    assert not _kmis("3D View", "maya_kit.frame_all_views", "A", shift=True)[0].properties.selected
+    assert _kmis("3D View", "allset.frame_all_views", "F", shift=True)[0].properties.selected
+    assert not _kmis("3D View", "allset.frame_all_views", "A", shift=True)[0].properties.selected
     # Step 17: plain F = the kit's Maya-fit framing instead of IC view_selected.
-    assert _kmis("3D View", "maya_kit.frame", "F") and not _kmis("3D View", "view3d.view_selected", "F")
+    assert _kmis("3D View", "allset.frame", "F") and not _kmis("3D View", "view3d.view_selected", "F")
 
 
 def test_view_history_keys():
     for type, alt, direction in (("LEFT_BRACKET", False, "UNDO"), ("RIGHT_BRACKET", False, "REDO"),
                                  ("Z", True, "UNDO"), ("Y", True, "REDO")):
-        items = _kmis("3D View", "maya_kit.view_history", type, alt=alt)
+        items = _kmis("3D View", "allset.view_history", type, alt=alt)
         assert [k.properties.direction for k in items] == [direction], type
     assert not _kmis("Object Mode", "object.select_hierarchy", "LEFT_BRACKET")
 
 
 def test_space_ctrl_space_keys():
     # Step 9: the Space tap (four views) now lives in the hotbox operator.
-    assert len(_kmis("3D View", "maya_kit.hotbox", "SPACE")) == 1
+    assert len(_kmis("3D View", "allset.hotbox", "SPACE")) == 1
     assert _kmis("Screen", "screen.screen_full_area", "SPACE", ctrl=True)[0].properties.use_hide_panels
 
 
 def test_smooth_and_component_keys():
     for key, level in maya_patches.SMOOTH_KEYS:
         for km in ("Object Mode", "Mesh"):
-            items = _kmis(km, "maya_kit.smooth_preview", key)
+            items = _kmis(km, "allset.smooth_preview", key)
             assert [k.properties.level for k in items] == [level], (km, key)
     assert not _kmis("Mesh", "mesh.select_mode", "ONE")
     for key, comp in maya_patches.COMPONENT_KEYS:
-        items = _kmis("Object Non-modal", "maya_kit.component_mode", key)
+        items = _kmis("Object Non-modal", "allset.component_mode", key)
         assert [k.properties.type for k in items] == [comp], key

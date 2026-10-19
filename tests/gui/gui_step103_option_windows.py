@@ -1,6 +1,6 @@
 """Step 103 in a real UI: option boxes are Maya's right-side square (Create > Polygon Primitives, Edit Mesh), and
 three option windows (Polygon Cube, Bevel, Parent Constraint) open as dialogs with the command / Cancel buttons and
-Apply / Save Settings / Reset Settings; screenshots (MAYA_KIT_GUI_SHOTS) for """
+Apply / Save Settings / Reset Settings; screenshots (ALLSET_GUI_SHOTS) for """
 
 import os
 import sys
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -29,7 +29,7 @@ def submenu(path):
     menu_sets = import_module(MODULE + ".ui.menu_sets")
     for name in dir(bpy.types):
         cls = getattr(bpy.types, name)
-        if name.startswith("MAYAKIT_MT_main") and getattr(cls, "__doc__", "") == f"Maya menu: {path}":
+        if name.startswith("ALLSET_MT_main") and getattr(cls, "__doc__", "") == f"Maya menu: {path}":
             return name
     return menu_sets.menu_idname("mainCreateMenu")
 
@@ -46,7 +46,7 @@ def s_setup():
     C["mid"] = (a.x + a.width // 2, a.y + a.height // 2)
     ev('MOUSEMOVE', 'NOTHING', x=C["mid"][0], y=C["mid"][1])
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
 
 
 @step
@@ -85,7 +85,7 @@ def s_edit_mesh_shot():
 def _window(key):
     ev('MOUSEMOVE', 'NOTHING', x=C["mid"][0], y=C["mid"][1])
     with bpy.context.temp_override(window=win()):
-        res = getattr(bpy.ops.maya_kit, "opt_" + key)('INVOKE_DEFAULT')
+        res = getattr(bpy.ops.allset, "opt_" + key)('INVOKE_DEFAULT')
     check(f"{key} option window opens", res == {'RUNNING_MODAL'})
 
 
@@ -141,7 +141,7 @@ def s_parent_shot():
 def s_box_click():
     # the right-side square of Create > Polygon Primitives > Cube opens the window (operator path, as the button)
     with bpy.context.temp_override(window=win()):
-        res = bpy.ops.maya_kit.menu_option_box('INVOKE_DEFAULT', item="Create/Polygon Primitives/Cube")
+        res = bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item="Create/Polygon Primitives/Cube")
     check("the Cube option box runs", res in ({'FINISHED'}, {'RUNNING_MODAL'}))
 
 

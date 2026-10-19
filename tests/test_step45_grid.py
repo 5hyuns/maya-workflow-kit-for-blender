@@ -123,6 +123,6 @@ def test_draw_handler_removed_on_disable():
     kit.disable()
     try:
         assert not mod._handle
-        assert "toggle_grid" not in dir(bpy.ops.maya_kit)
+        assert "toggle_grid" not in dir(bpy.ops.allset)
     finally:
         kit.enable()

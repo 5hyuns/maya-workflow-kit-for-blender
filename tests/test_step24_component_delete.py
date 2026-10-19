@@ -42,14 +42,14 @@ def _select(ob, kind, indices):
 
 
 def test_keymap_binds_delete_and_backspace():
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Mesh"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
     for key in ('DEL', 'BACK_SPACE'):
         plain = [k.idname for k in km.keymap_items if k.active and k.type == key and k.value == 'PRESS'
                  and not (k.ctrl or k.shift or k.alt or k.oskey)]
-        assert plain == ["maya_kit.delete_components"], (key, plain)
+        assert plain == ["allset.delete_components"], (key, plain)
         ctrl = [k.idname for k in km.keymap_items if k.active and k.type == key and k.ctrl]
         assert ctrl == ["mesh.dissolve_mode"], (key, ctrl)
-    obj = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Object Mode"]
+    obj = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Object Mode"]
     assert any(k.type == 'DEL' and k.idname.startswith("object.delete") for k in obj.keymap_items), \
         "object mode Delete unchanged"
 
@@ -57,14 +57,14 @@ def test_keymap_binds_delete_and_backspace():
 def test_delete_all_faces():
     ob = _cube('FACE')
     bpy.ops.mesh.select_all(action='SELECT')
-    assert bpy.ops.maya_kit.delete_components() == {'FINISHED'}
+    assert bpy.ops.allset.delete_components() == {'FINISHED'}
     assert _counts(ob) == (0, 0, 0), _counts(ob)
 
 
 def test_delete_one_face_keeps_the_rest():
     ob = _cube('FACE')
     _select(ob, "FACE", [0])
-    bpy.ops.maya_kit.delete_components()
+    bpy.ops.allset.delete_components()
     assert _counts(ob) == (8, 12, 5), _counts(ob)
     bm = bmesh.from_edit_mesh(ob.data)
     assert not any(el.select for el in bm.verts), "nothing selected afterwards"
@@ -73,7 +73,7 @@ def test_delete_one_face_keeps_the_rest():
 def test_delete_edge_dissolves_and_cleans_vertices():
     ob = _cube('EDGE')
     _select(ob, "EDGE", [0])
-    bpy.ops.maya_kit.delete_components()
+    bpy.ops.allset.delete_components()
     # two quads merge into one face; the edge's end vertices keep 2 edges each -> cleaned up
     assert _counts(ob) == (6, 9, 5), _counts(ob)
 
@@ -81,27 +81,27 @@ def test_delete_edge_dissolves_and_cleans_vertices():
 def test_border_edge_is_kept():
     ob = _cube('FACE')
     _select(ob, "FACE", [0])
-    bpy.ops.maya_kit.delete_components()        # open box: border edges now
+    bpy.ops.allset.delete_components()        # open box: border edges now
     bpy.ops.mesh.select_mode(type='EDGE')
     bm = bmesh.from_edit_mesh(ob.data)
     border = next(e for e in bm.edges if len(e.link_faces) == 1)
     border.select = True
     bmesh.update_edit_mesh(ob.data)
     before = _counts(ob)
-    assert bpy.ops.maya_kit.delete_components() == {'CANCELLED'}
+    assert bpy.ops.allset.delete_components() == {'CANCELLED'}
     assert _counts(ob) == before
 
 
 def test_delete_vertex_dissolves():
     ob = _cube('VERT')
     _select(ob, "VERT", [0])
-    bpy.ops.maya_kit.delete_components()
+    bpy.ops.allset.delete_components()
     # corner vertex and its 3 edges go; the 3 faces around it merge into one
     assert _counts(ob) == (7, 9, 4), _counts(ob)
 
 
 def test_nothing_selected_cancels():
     ob = _cube('FACE')
-    assert bpy.ops.maya_kit.delete_components() == {'CANCELLED'}
+    assert bpy.ops.allset.delete_components() == {'CANCELLED'}
     assert _counts(ob) == (8, 12, 6)
     bpy.ops.object.mode_set(mode='OBJECT')

@@ -112,7 +112,7 @@ def test_freeze_keeps_pivot_and_vertices():
     pivot = ob.matrix_world.translation.copy()
     before = _world_verts(ob)
     _select([ob])
-    assert bpy.ops.maya_kit.freeze_transform() == {'FINISHED'}
+    assert bpy.ops.allset.freeze_transform() == {'FINISHED'}
     _update()
     assert _is_zero(ob), _channels(ob)
     assert _close_v(ob.matrix_world.translation, pivot), (ob.matrix_world.translation, pivot)
@@ -130,13 +130,13 @@ def test_freeze_folds_existing_deltas():
     ob.delta_scale = (1, 2, 1)
     before, pivot = _world_verts(ob), ob.matrix_world.translation.copy()
     _select([ob])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     assert _is_zero(ob)
     assert _close_v(ob.delta_rotation_euler, (0, 0, 0)) and _close_v(ob.delta_scale, (1, 1, 1))
     assert _close_vs(_world_verts(ob), before)
     assert _close_v(ob.matrix_world.translation, pivot)
     # A second freeze changes nothing.
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     assert _close_vs(_world_verts(ob), before) and _is_zero(ob)
 
 
@@ -150,7 +150,7 @@ def test_freeze_partial_flags_keep_world():
         loc, rot, scl = _channels(ob)
         before = _world_verts(ob)
         _select([ob])
-        bpy.ops.maya_kit.freeze_transform(**flags)
+        bpy.ops.allset.freeze_transform(**flags)
         assert _close_vs(_world_verts(ob), before), flags
         got_loc, got_rot, got_scl = _channels(ob)
         assert _close_v(got_loc, (0, 0, 0) if flags["translate"] else loc), (flags, got_loc)
@@ -170,7 +170,7 @@ def test_freeze_hierarchy():
     before = {o.name: _world_verts(o) for o in obs}
     pivots = {o.name: o.matrix_world.translation.copy() for o in obs}
     _select([parent])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     _update()
     for o in obs:
         assert _is_zero(o), (o.name, _channels(o))
@@ -184,7 +184,7 @@ def test_freeze_negative_scale_keeps_normals_out():
     assert _outward(ob)
     before = _world_verts(ob)
     _select([ob])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     assert _close_vs(_world_verts(ob), before)
     assert _outward(ob)
 
@@ -197,7 +197,7 @@ def test_freeze_shared_mesh_made_single_user():
     _update()
     b_before = _world_verts(b)
     _select([a])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     assert a.data is not b.data
     assert _close_vs(_world_verts(b), b_before)
 
@@ -213,7 +213,7 @@ def test_freeze_empty_group_only_translates_and_children_stay():
     kid_before = _world_verts(kid)
     grp_world = grp.matrix_world.copy()
     _select([grp])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     _update()
     assert _close_v(grp.location, (0, 0, 0))
     assert _close_v(grp.rotation_euler, (0.4, -0.3, 0.7)) and _close_v(grp.scale, (2.0, 0.5, 1.5))
@@ -227,11 +227,11 @@ def test_reset_returns_to_frozen_state():
     _fresh()
     ob = _transformed(_cube())
     _select([ob])
-    bpy.ops.maya_kit.freeze_transform()
+    bpy.ops.allset.freeze_transform()
     frozen = _world_verts(ob)
     _transformed(ob, loc=(3, 3, 3), rot=(1, 0, 0), scale=(3, 3, 3))
     assert not _close_vs(_world_verts(ob), frozen)
-    bpy.ops.maya_kit.reset_transform()
+    bpy.ops.allset.reset_transform()
     assert _is_zero(ob)
     assert _close_vs(_world_verts(ob), frozen)
 
@@ -240,7 +240,7 @@ def test_reset_flags():
     _fresh()
     ob = _transformed(_cube())
     _select([ob])
-    bpy.ops.maya_kit.reset_transform(translate=False, rotate=True, scale=False)
+    bpy.ops.allset.reset_transform(translate=False, rotate=True, scale=False)
     loc, rot, scl = _channels(ob)
     assert _close_v(loc, (1, 2, 3)) and _close_v(rot, (0, 0, 0)) and _close_v(scl, (2.0, 0.5, 1.5))
 
@@ -257,7 +257,7 @@ def test_center_pivot():
     kid_channels = _channels(kid)
     before, kid_before = _world_verts(ob), _world_verts(kid)
     _select([ob])
-    assert bpy.ops.maya_kit.center_pivot() == {'FINISHED'}
+    assert bpy.ops.allset.center_pivot() == {'FINISHED'}
     _update()
     assert _close_vs(_world_verts(ob), before)
     center = sum(before, Vector()) / len(before)  # a box: vertex mean = bbox centre
@@ -276,7 +276,7 @@ def test_center_pivot_group_uses_children_bounds():
     _update()
     kid_before = _world_verts(kid)
     _select([grp])
-    bpy.ops.maya_kit.center_pivot()
+    bpy.ops.allset.center_pivot()
     _update()
     center = sum(kid_before, Vector()) / len(kid_before)
     assert _close_v(grp.matrix_world.translation, center)
@@ -292,7 +292,7 @@ def test_parent_maya_mode():
     child = _transformed(_cube("child"), loc=(5, -1, 2), rot=(0.2, 0.1, 0), scale=(1, 1, 1))
     world = child.matrix_world.copy()
     _select([child, parent], active=parent)
-    assert bpy.ops.maya_kit.parent() == {'FINISHED'}
+    assert bpy.ops.allset.parent() == {'FINISHED'}
     _update()
     assert child.parent is parent
     assert _close_m(child.matrix_parent_inverse, Matrix.Identity(4))
@@ -301,7 +301,7 @@ def test_parent_maya_mode():
     assert _close_v(child.location, local.translation), (child.location, local.translation)
     # Unparent: back to the world, same place.
     _select([child])
-    assert bpy.ops.maya_kit.unparent() == {'FINISHED'}
+    assert bpy.ops.allset.unparent() == {'FINISHED'}
     _update()
     assert child.parent is None and _close_m(child.matrix_world, world)
     assert _close_v(child.location, (5, -1, 2))
@@ -313,7 +313,7 @@ def test_parent_shear_residual_in_parent_inverse():
     child = _transformed(_cube("child"), loc=(5, -1, 2), rot=(0.2, 0.1, 0), scale=(1, 1, 1))
     world = child.matrix_world.copy()
     _select([child, parent], active=parent)
-    bpy.ops.maya_kit.parent()
+    bpy.ops.allset.parent()
     _update()
     assert _close_m(child.matrix_world, world)        # exact, shear kept in the inverse
     assert not _close_m(child.matrix_parent_inverse, Matrix.Identity(4))
@@ -330,7 +330,7 @@ def test_parent_blender_mode_keeps_inverse():
         child = _transformed(_cube("child"), loc=(5, -1, 2), rot=(0, 0, 0), scale=(1, 1, 1))
         world = child.matrix_world.copy()
         _select([child, parent], active=parent)
-        bpy.ops.maya_kit.parent()
+        bpy.ops.allset.parent()
         _update()
         assert child.parent is parent and _close_m(child.matrix_world, world)
         assert not _close_m(child.matrix_parent_inverse, Matrix.Identity(4))
@@ -345,7 +345,7 @@ def test_parent_refuses_cycles():
     b.parent = a
     _update()
     _select([a, b], active=b)   # a under its own child b
-    bpy.ops.maya_kit.parent()
+    bpy.ops.allset.parent()
     assert a.parent is None and b.parent is a
 
 
@@ -359,7 +359,7 @@ def test_duplicate_special_offsets_and_names():
     kid.parent = ob
     _update()
     _select([ob])
-    res = bpy.ops.maya_kit.duplicate_special(copies=3, translate=(1, 0, 0),
+    res = bpy.ops.allset.duplicate_special(copies=3, translate=(1, 0, 0),
                                              rotate=(0, 0, math.radians(10)), scale=(2, 1, 1))
     assert res == {'FINISHED'}
     _update()
@@ -378,7 +378,7 @@ def test_duplicate_special_instance_and_new_group():
     _fresh()
     ob = _cube("pCube1")
     _select([ob])
-    bpy.ops.maya_kit.duplicate_special(geometry_type='INSTANCE', group_under='NEW_GROUP', copies=2)
+    bpy.ops.allset.duplicate_special(geometry_type='INSTANCE', group_under='NEW_GROUP', copies=2)
     copies = [o for o in bpy.data.objects if o.name in ("pCube2", "pCube3")]
     assert len(copies) == 2 and all(c.data is ob.data for c in copies)
     grp = copies[0].parent
@@ -390,19 +390,19 @@ def test_duplicate_with_transform_repeats_offset():
     _fresh()
     ob = _cube("pCube1")
     _select([ob])
-    bpy.ops.maya_kit.duplicate_with_transform()
+    bpy.ops.allset.duplicate_with_transform()
     first = bpy.context.view_layer.objects.active
     assert first.name == "pCube2" and _close_m(first.matrix_basis, ob.matrix_basis)
     first.location = (2, 0, 0)
     first.rotation_euler = (0, 0, 0.5)
     _update()
-    bpy.ops.maya_kit.duplicate_with_transform()
+    bpy.ops.allset.duplicate_with_transform()
     second = bpy.context.view_layer.objects.active
     _update()
     assert second.name == "pCube3"
     delta = first.matrix_world @ ob.matrix_world.inverted()
     assert _close_m(second.matrix_world, delta @ first.matrix_world)
-    bpy.ops.maya_kit.duplicate_with_transform()
+    bpy.ops.allset.duplicate_with_transform()
     third = bpy.context.view_layer.objects.active
     _update()
     assert _close_m(third.matrix_world, delta @ second.matrix_world)
@@ -432,7 +432,7 @@ CREATE_CASES = (
 def test_create_maya_defaults():
     _fresh()
     for kind, name, data_name, dims, faces in CREATE_CASES:
-        assert bpy.ops.maya_kit.create(kind=kind) == {'FINISHED'}, kind
+        assert bpy.ops.allset.create(kind=kind) == {'FINISHED'}, kind
         ob = bpy.context.view_layer.objects.active
         _update()
         assert (ob.name, ob.data.name) == (name, data_name), (kind, ob.name, ob.data.name)
@@ -443,16 +443,16 @@ def test_create_maya_defaults():
 
 def test_create_numbers_and_other_kinds():
     _fresh()
-    bpy.ops.maya_kit.create(kind='CUBE')
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     bpy.data.objects.remove(bpy.data.objects["pCube1"])
     bpy.data.meshes.remove(bpy.data.meshes["pCubeShape1"])
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     assert bpy.context.view_layer.objects.active.name == "pCube1"   # lowest free number
     for kind, name in (('POINT_LIGHT', "pointLight1"), ('DIRECTIONAL_LIGHT', "directionalLight1"),
                        ('CAMERA', "camera1"), ('LOCATOR', "locator1"), ('EMPTY_GROUP', "null1"),
                        ('NURBS_SPHERE', "nurbsSphere1"), ('NURBS_CIRCLE', "nurbsCircle1")):
-        bpy.ops.maya_kit.create(kind=kind)
+        bpy.ops.allset.create(kind=kind)
         ob = bpy.context.view_layer.objects.active
         assert ob.name == name, (kind, ob.name)
         assert _close_v(ob.location, (0, 0, 0)), kind
@@ -463,14 +463,14 @@ def test_create_numbers_and_other_kinds():
 
 def test_create_leaves_edit_mode_and_blender_names_option():
     _fresh()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.create(kind='CUBE')
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.maya_kit.create(kind='SPHERE')
+    bpy.ops.allset.create(kind='SPHERE')
     assert bpy.context.mode == 'OBJECT' and len(bpy.data.objects) == 2
     prefs = preferences.get()
     prefs.maya_naming = False
     try:
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         assert not bpy.context.view_layer.objects.active.name.startswith("pCube")
     finally:
         prefs.maya_naming = True
@@ -538,7 +538,7 @@ def test_delete_history_bakes_modifiers_and_shape_keys():
     eval_verts = len(ob.evaluated_get(dg).data.vertices)
     zmax = max(v.co.z for v in ob.evaluated_get(dg).data.vertices)
     _select([ob])
-    assert bpy.ops.maya_kit.delete_history() == {'FINISHED'}
+    assert bpy.ops.allset.delete_history() == {'FINISHED'}
     assert len(ob.modifiers) == 0 and ob.data.shape_keys is None
     assert len(ob.data.vertices) == eval_verts
     assert abs(max(v.co.z for v in ob.data.vertices) - zmax) < 1e-5
@@ -553,7 +553,7 @@ def test_delete_non_deformer_history_keeps_deformers():
     _update()
     n_before = len(ob.data.vertices)
     _select([ob])
-    bpy.ops.maya_kit.delete_history(non_deformer=True)
+    bpy.ops.allset.delete_history(non_deformer=True)
     assert [m.name for m in ob.modifiers] == ["arm", "sub"], [m.name for m in ob.modifiers]
     assert len(ob.data.vertices) > n_before   # bevel baked
 
@@ -570,20 +570,20 @@ def test_delete_by_type():
     cam = bpy.data.objects["cam"]
     bpy.context.scene.collection.objects.link(cam)
     _select([a])
-    bpy.ops.maya_kit.delete_by_type(type='CONSTRAINTS')
+    bpy.ops.allset.delete_by_type(type='CONSTRAINTS')
     assert len(a.constraints) == 0
-    bpy.ops.maya_kit.delete_by_type(type='STATIC_CHANNELS')
+    bpy.ops.allset.delete_by_type(type='STATIC_CHANNELS')
     paths = sorted((fc.data_path, fc.array_index) for owner in
                    [cb for layer in a.animation_data.action.layers for st in layer.strips
                     for cb in st.channelbags] for fc in owner.fcurves)
     assert paths == [("location", 0)], paths
-    bpy.ops.maya_kit.delete_by_type(type='CHANNELS')
+    bpy.ops.allset.delete_by_type(type='CHANNELS')
     assert a.animation_data is None
-    bpy.ops.maya_kit.delete_by_type(type='CLUSTERS', all=True)
+    bpy.ops.allset.delete_by_type(type='CLUSTERS', all=True)
     assert len(a.modifiers) == 0
-    bpy.ops.maya_kit.delete_by_type(type='CAMERAS')            # selection only: camera stays
+    bpy.ops.allset.delete_by_type(type='CAMERAS')            # selection only: camera stays
     assert "cam" in bpy.data.objects
-    bpy.ops.maya_kit.delete_by_type(type='CAMERAS', all=True)
+    bpy.ops.allset.delete_by_type(type='CAMERAS', all=True)
     assert "cam" not in bpy.data.objects
 
 
@@ -597,28 +597,28 @@ def _kmis(km_name, key, **mods):
 
 
 def test_concept_keys():
-    cases = (("Object Mode", "P", {}, "maya_kit.parent"),
-             ("Object Mode", "P", {"shift": True}, "maya_kit.unparent"),
-             ("Outliner", "P", {}, "maya_kit.parent"),
-             ("Outliner", "P", {"shift": True}, "maya_kit.unparent"),
-             ("Object Mode", "D", {"shift": True}, "maya_kit.duplicate_with_transform"),
-             ("Object Mode", "D", {"shift": True, "ctrl": True}, "maya_kit.duplicate_special"),
-             ("Object Mode", "D", {"shift": True, "alt": True}, "maya_kit.delete_history"))
+    cases = (("Object Mode", "P", {}, "allset.parent"),
+             ("Object Mode", "P", {"shift": True}, "allset.unparent"),
+             ("Outliner", "P", {}, "allset.parent"),
+             ("Outliner", "P", {"shift": True}, "allset.unparent"),
+             ("Object Mode", "D", {"shift": True}, "allset.duplicate_with_transform"),
+             ("Object Mode", "D", {"shift": True, "ctrl": True}, "allset.duplicate_special"),
+             ("Object Mode", "D", {"shift": True, "alt": True}, "allset.delete_history"))
     for km, key, mods, idname in cases:
         got = [k.idname for k in _kmis(km, key, **mods)]
         assert got == [idname], (km, key, mods, got)
 
 
 def test_menus_use_concept_operators():
-    want = {"Modify/Freeze Transformations": "maya_kit.freeze_transform",
-            "Modify/Reset Transformations": "maya_kit.reset_transform",
-            "Modify/Center Pivot": "maya_kit.center_pivot",
-            "Edit/Delete by Type/History": "maya_kit.delete_history",
-            "Edit/Delete All by Type/Cameras": "maya_kit.delete_by_type",
-            "Edit/Duplicate Special": "maya_kit.duplicate_special",
-            "Edit/Duplicate with Transform": "maya_kit.duplicate_with_transform",
-            "Edit/Parent": "maya_kit.parent", "Edit/Unparent": "maya_kit.unparent",
-            "Create/Polygon Primitives/Cube": "maya_kit.create"}
+    want = {"Modify/Freeze Transformations": "allset.freeze_transform",
+            "Modify/Reset Transformations": "allset.reset_transform",
+            "Modify/Center Pivot": "allset.center_pivot",
+            "Edit/Delete by Type/History": "allset.delete_history",
+            "Edit/Delete All by Type/Cameras": "allset.delete_by_type",
+            "Edit/Duplicate Special": "allset.duplicate_special",
+            "Edit/Duplicate with Transform": "allset.duplicate_with_transform",
+            "Edit/Parent": "allset.parent", "Edit/Unparent": "allset.unparent",
+            "Create/Polygon Primitives/Cube": "allset.create"}
     for path, idname in want.items():
         assert menu_map.spec(path)[1] == idname, (path, menu_map.spec(path))
     # Center Pivot sits in a "Pivot" section after Match Transformations (EXTRA, Maya order, step 59).
@@ -630,6 +630,6 @@ def test_menus_use_concept_operators():
 
 def test_select_all_marking_menu():
     menu = mm.MENUS["buildSelectAllMM"]
-    assert menu.radial["NW"][1] == "maya_kit.delete_history"
-    assert menu.radial["SE"][1] == "maya_kit.freeze_transform"
+    assert menu.radial["NW"][1] == "allset.delete_history"
+    assert menu.radial["SE"][1] == "allset.freeze_transform"
     assert "Freeze Transforms" in menu.options

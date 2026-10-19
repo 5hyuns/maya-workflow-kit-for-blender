@@ -14,8 +14,8 @@ ms = import_module(kit.MODULE + ".ui.menu_sets")
 hotkeys = import_module(kit.MODULE + ".ui.menu_hotkeys")
 ROOT = Path(kit.__file__).resolve().parent.parent
 
-KIT_OPS = {"maya_kit.menu_item", "maya_kit.menu_unavailable", "maya_kit.menu_run", "maya_kit.menu_tool",
-           "maya_kit.menu_set_value", "wm.call_menu_pie"}
+KIT_OPS = {"allset.menu_item", "allset.menu_unavailable", "allset.menu_run", "allset.menu_tool",
+           "allset.menu_set_value", "wm.call_menu_pie"}
 
 
 class Recorder:
@@ -126,9 +126,9 @@ def test_no_blender_shortcut_source_in_menus():
                 assert target in KIT_OPS, (maya_name, text, target)
             if kind == "menu":
                 blender_menus = {v[0] for v in ms.menu_map.BLENDER_MENU.values()}   # the kit's "Blender" submenus
-                assert target.startswith("MAYAKIT_MT_") or target == "TOPBAR_MT_file_open_recent" \
+                assert target.startswith("ALLSET_MT_") or target == "TOPBAR_MT_file_open_recent" \
                     or target in blender_menus, (maya_name, text, target)
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Window"]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Window"]
     assert not [k for k in km.keymap_items if k.idname == "wm.call_menu" and k.type == 'O' and k.ctrl and k.shift]
 
 
@@ -140,6 +140,6 @@ def test_proxy_menus_follow_the_kit():
         assert cls.is_registered and ms._proxies[getattr(base, "bl_idname", base.__name__)] == cls.bl_idname, cls
     kit.disable()
     try:
-        assert not ms._proxies and not [c for c in dir(bpy.types) if c.startswith("MAYAKIT_MT_proxy_")]
+        assert not ms._proxies and not [c for c in dir(bpy.types) if c.startswith("ALLSET_MT_proxy_")]
     finally:
         kit.enable()

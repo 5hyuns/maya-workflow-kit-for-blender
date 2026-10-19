@@ -242,29 +242,29 @@ def test_zone_operators():
         rv3d = area.spaces.active.region_3d
         rv3d.view_perspective = 'PERSP'
         rot = rv3d.view_rotation.copy()
-        bpy.ops.maya_kit.hb_view(view='TOP')
+        bpy.ops.allset.hb_view(view='TOP')
         assert rv3d.view_perspective == 'ORTHO'
-        bpy.ops.maya_kit.hb_view(view='PERSP')
+        bpy.ops.allset.hb_view(view='PERSP')
         assert rv3d.view_perspective == 'PERSP' and rv3d.view_rotation == rot, "persp view restored"
-        bpy.ops.maya_kit.hb_mask(preset='POLYGONS')
+        bpy.ops.allset.hb_mask(preset='POLYGONS')
         sp = area.spaces.active
         assert sp.show_object_select_mesh and not sp.show_object_select_camera and not sp.show_object_select_curve
-        bpy.ops.maya_kit.hb_mask(preset='ALL')
+        bpy.ops.allset.hb_mask(preset='ALL')
         assert sp.show_object_select_camera
         prefs = bpy.context.preferences.addons[kit.MODULE].preferences
         before = prefs.show_help_line
-        bpy.ops.maya_kit.hb_ui(element='HELP_LINE')
+        bpy.ops.allset.hb_ui(element='HELP_LINE')
         assert prefs.show_help_line != before
-        bpy.ops.maya_kit.hb_ui(element='HELP_LINE')
+        bpy.ops.allset.hb_ui(element='HELP_LINE')
         # TOOLBOX (show_region_toolbar) is checked in the GUI test: no toolbar region in -b.
-        bpy.ops.maya_kit.hb_style(style='ZONES')
+        bpy.ops.allset.hb_style(style='ZONES')
         assert prefs.hotbox_style == 'ZONES'
         prefs.hotbox_style = 'ALL'
-        bpy.ops.maya_kit.hb_pane(ui_type='OUTLINER')
+        bpy.ops.allset.hb_pane(ui_type='OUTLINER')
         assert area.type == 'OUTLINER'
     win = bpy.context.window_manager.windows[0]
     with bpy.context.temp_override(window=win, area=area):
-        bpy.ops.maya_kit.hb_view(view='PERSP')  # back to a model panel
+        bpy.ops.allset.hb_view(view='PERSP')  # back to a model panel
     assert area.type == 'VIEW_3D'
 
 
@@ -298,10 +298,10 @@ def test_poll_action_cache_inputs():
 # --- keymap, prefs, cleanup ----------------------------------------------------------
 
 def test_space_hotbox_keymap():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     for km in maya_patches.HOTBOX_KEYMAPS:
         items = [k for k in kc.keymaps[km].keymap_items if k.type == 'SPACE' and not (k.ctrl or k.shift or k.alt)]
-        assert [k.idname for k in items] == ["maya_kit.hotbox"], (km, [k.idname for k in items])
+        assert [k.idname for k in items] == ["allset.hotbox"], (km, [k.idname for k in items])
 
 
 def test_engine_is_default_and_pie_fallback():
@@ -312,7 +312,7 @@ def test_engine_is_default_and_pie_fallback():
         modal.bpy = types.SimpleNamespace(
             context=bpy.context,
             ops=types.SimpleNamespace(
-                maya_kit=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k))),
+                allset=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k))),
                 wm=types.SimpleNamespace(call_menu_pie=lambda **k: calls.append(("pie", k)))))
         modal.open_menu("dagMenuProc", "RIGHTMOUSE")
         prefs.marking_menu_style = 'PIE'
@@ -322,7 +322,7 @@ def test_engine_is_default_and_pie_fallback():
         prefs.marking_menu_style = 'ENGINE'
     assert calls[0] == ("engine", {"menu": "dagMenuProc", "button": "RIGHTMOUSE"}), calls
     modal.bpy = types.SimpleNamespace(context=bpy.context, ops=types.SimpleNamespace(
-        maya_kit=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k)))))
+        allset=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k)))))
     try:
         modal.open_menu("dagMenuProc", "LEFTMOUSE", (10, 20))
     finally:

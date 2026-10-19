@@ -33,16 +33,16 @@ def test_rank_priority_then_distance_then_name():
 
 
 def test_items_lead_the_click_select_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
-    assert "maya_kit.select_priority" in patches.PASS_THROUGH_FIRST
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    assert "allset.select_priority" in patches.PASS_THROUGH_FIRST
     for km_name, value in patches.SELECT_PRIORITY_ITEMS:
         items = [k for k in kc.keymaps[km_name].keymap_items if k.active]
         for shift in (False, True):
             for ctrl in (False, True):
                 same = [k.idname for k in items if k.type == 'LEFTMOUSE' and k.value == value
                         and k.shift == shift and k.ctrl == ctrl and not k.alt]
-                assert "maya_kit.select_priority" in same and "view3d.select" in same, (km_name, same)
-                assert same.index("maya_kit.select_priority") < same.index("view3d.select"), (km_name, same)
+                assert "allset.select_priority" in same and "view3d.select" in same, (km_name, same)
+                assert same.index("allset.select_priority") < same.index("view3d.select"), (km_name, same)
     assert preferences.get().select_priority is True       # Maya ignoreSelectionPriority false
 
 

@@ -13,7 +13,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -62,7 +62,7 @@ def s_setup():
         bpy.ops.mesh.select_mode(type='VERT')
         bpy.ops.mesh.select_all(action='DESELECT')
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
-        bpy.ops.maya_kit.symmetry(mode="OBJECT_X")
+        bpy.ops.allset.symmetry(mode="OBJECT_X")
     me = cube().data
     check("Object X sets the mesh X mirror flag only",
           (me.use_mirror_x, me.use_mirror_y, me.use_mirror_z) == (True, False, False))
@@ -158,7 +158,7 @@ def s_menu_shot():
 def s_tool_settings():
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     with v3d_override():
-        bpy.ops.maya_kit.editor_toggle(editor='TOOL_SETTINGS')
+        bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')
 
 
 @step
@@ -175,7 +175,7 @@ def s_tool_settings_shot():
     tool_dock = import_module(MODULE + ".ui.tool_dock")
     shown = tool_dock.shown(win().screen)
     with v3d_override():
-        bpy.ops.maya_kit.editor_toggle(editor='TOOL_SETTINGS')
+        bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS')
     check("Tool Settings dock drawn (screenshot), closed by the second toggle",
           shown and not tool_dock.shown(win().screen))
 

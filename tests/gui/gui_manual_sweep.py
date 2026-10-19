@@ -1,4 +1,4 @@
-"""Step 88:  items of steps 59-79 that event simulation can prove, run in one MayaKit session.
+"""Step 88:  items of steps 59-79 that event simulation can prove, run in one Allset session.
 
 Each check name starts with the item's id ``[M<step>-<n>]`` (n = its place in that step's list); an item is ticked in
 manual_checks.md only when all of its checks pass. Keys, clicks and drags are simulated events; a few Enter-in-a-field
@@ -67,7 +67,7 @@ def select_only(*obs):
 
 def create(kind):
     with override():
-        bpy.ops.maya_kit.create(kind=kind)
+        bpy.ops.allset.create(kind=kind)
     return bpy.context.view_layer.objects.active
 
 
@@ -96,13 +96,13 @@ def notice():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_keymap():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     hover()
 
 
@@ -152,7 +152,7 @@ def m63_5_combine():
     C["bbox"] = (Vector([min(p[i] for p in pts) for i in range(3)]) + Vector([max(p[i] for p in pts) for i in range(3)])) / 2
     select_only(cube, sphere)
     with override():
-        C["combine"] = bpy.ops.maya_kit.combine()
+        C["combine"] = bpy.ops.allset.combine()
 
 
 @step
@@ -166,7 +166,7 @@ def m63_5_combined():
           near(ob.location, (0, 0, 0)) and near(ob.matrix_world.translation, C["bbox"]))
     select_only(ob)
     with override():
-        bpy.ops.maya_kit.separate()
+        bpy.ops.allset.separate()
 
 
 @step
@@ -191,7 +191,7 @@ def m63_5_separated():
     C["before_sep"] = len(bpy.data.objects)
     with override():
         bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.maya_kit.separate()
+        bpy.ops.allset.separate()
         bpy.ops.object.mode_set(mode='OBJECT')
     new = sorted(o.name for o in bpy.data.objects if o.name.startswith("parts"))
     check(f"[M63-5] edit mode Separate = Blender's (loose parts, Blender names, no group: {new})",
@@ -203,7 +203,7 @@ def m63_5_separated():
 
 @step
 def m69_3_save():
-    d = tempfile.mkdtemp(prefix="maya_kit_sweep_")
+    d = tempfile.mkdtemp(prefix="allset_sweep_")
     C["v001"] = os.path.join(d, "shot_v001.blend")
     bpy.ops.wm.save_as_mainfile(filepath=C["v001"])
     hover()
@@ -292,7 +292,7 @@ def m70_3_a():
     x0 = r.view2d.region_to_view(0, 0)[0]
     x1 = r.view2d.region_to_view(r.width, 0)[0]
     check(f"[M70-3] A frames all keys (5..30 in view {x0:.1f}..{x1:.1f})", x0 < 5 and x1 > 30)
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     rep = [km.name for km in kc.keymaps for it in km.keymap_items
            if it.active and it.idname == "screen.repeat_last" and it.type == 'G' and not (it.shift or it.ctrl or it.alt)]
     v3d_g = [it.idname for km_name in ("3D View", "Object Mode", "3D View Generic")
@@ -326,7 +326,7 @@ def m70_4_on():
     check("[M70-4] Maya Auto Key is on by default", prefs.use_maya_auto_key)
     with override():
         bpy.ops.transform.rotate(value=0.5, orient_axis='Z')
-    bpy.context.scene.maya_kit_cb.rx_text = "30"
+    bpy.context.scene.allset_cb.rx_text = "30"
     c = curves(cube)
     check(f"[M70-4] rotating a cube with only Translate keys adds no rotate keys (manipulator or Channel Box) ({sorted(c)})",
           not any(p == "rotation_euler" for p, _i in c))
@@ -349,7 +349,7 @@ def m70_4_off():
 # --- [M75-1..4] Status Line input line -----------------------------------------------------------------------
 
 def inp():
-    return bpy.context.scene.maya_kit_input
+    return bpy.context.scene.allset_input
 
 
 @step
@@ -449,7 +449,7 @@ def m75_4():
     check(f"[M75-4] a missing name: Help Line message, the text stays ({notice()!r}, {inp().text!r})",
           bool(notice()) and inp().text == "nothing*")
     il = mod("ui.input_line")
-    um = mod("ui.menu_sets").MAYAKIT_OT_menu_unavailable
+    um = mod("ui.menu_sets").ALLSET_OT_menu_unavailable
     props = type("P", (), {"item": il.HISTORY_PATH})()
     tip = um.description(bpy.context, props) or ""
     check(f"[M75-4] the grey History button's tooltip says Blender keeps no construction history ({tip[-80:]!r})",
@@ -558,7 +558,7 @@ def m78_3_left():
     e2 = shared_edge(bpy.data.objects["strip"])
     check(f"[M78-3] Ctrl+Alt+Left spins it the other way, back ({e2})", e2 == C["e0"])
     mm = mod("ui.menu_map").MAP
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     keys = {it.type: bool(it.properties.use_ccw) for it in kc.keymaps["Mesh"].keymap_items
             if it.active and it.idname == "mesh.edge_rotate" and it.ctrl and it.alt}
     check(f"[M78-3] the keys spin like the menu (Right = Forward, Left = Backward: {keys})",
@@ -609,9 +609,9 @@ def m78_6_two():
     gk = mod("operators.graph_keys")
     # the notice is the operator's INFO report (status bar = Maya Help Line); Python can't read the report list,
     # so the check is: 2 ran the STACKED mode (normalized) and that mode reports the notice
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     two = [it for it in kc.keymaps["Graph Editor"].keymap_items
-           if it.active and it.type == 'TWO' and it.idname == "maya_kit.graph_view_mode"]
+           if it.active and it.type == 'TWO' and it.idname == "allset.graph_view_mode"]
     check(f"[M78-6] 2 = Stacked mode: normalized + its 'no Stacked' report ({sp.use_normalization}, "
           f"{two and two[0].properties.mode}, {gk.STACKED_NOTICE!r})",
           sp.use_normalization and two and two[0].properties.mode == "STACKED" and "Stacked" in gk.STACKED_NOTICE)
@@ -712,7 +712,7 @@ def m79_3_outside_s_check():
 
 # =============================================================================================================
 # Step 97: the remaining simulatable items of steps 59-79.
-# Menu / shelf / sidebar-button actions run the Maya menu path (maya_kit.menu_item) or the button's operator: the
+# Menu / shelf / sidebar-button actions run the Maya menu path (allset.menu_item) or the button's operator: the
 # click -> operator link is what the menu / shelf / sidebar GUI tests prove (gui_step34, 51, 62, ...); keys, clicks
 # in the views and drags are simulated events (delegated,  「계획」).
 # =============================================================================================================
@@ -726,7 +726,7 @@ from mathutils import Matrix, Quaternion  # noqa: E402
 
 
 def named(name):
-    """@step with a readable name (MAYA_KIT_SWEEP_ONLY keeps steps whose name starts with one of its prefixes)."""
+    """@step with a readable name (ALLSET_SWEEP_ONLY keeps steps whose name starts with one of its prefixes)."""
     def deco(fn):
         fn.__name__ = name
         return step(fn)
@@ -818,7 +818,7 @@ def drag(name, start, end, hold=(), button='LEFTMOUSE', moves=8, mods=None, skip
 
 def menu(path, **kw):
     with override():
-        return bpy.ops.maya_kit.menu_item(item=path, **kw)
+        return bpy.ops.allset.menu_item(item=path, **kw)
 
 
 def set_tool(name):
@@ -1085,7 +1085,7 @@ def _m59_5_bake_check():
           abs(abs(a.rotation_euler.z) - math.radians(30)) < 1e-3 and same_points(C["verts"], world_verts(a)))
     C["verts"] = world_verts(a)
     with override():
-        bpy.ops.maya_kit.reset_pivot()   # the Tool Settings "Reset" button (manipulator.draw_tool_settings)
+        bpy.ops.allset.reset_pivot()   # the Tool Settings "Reset" button (manipulator.draw_tool_settings)
     bpy.context.view_layer.update()
     check(f"[M59-5] Tool Settings Reset: pivot = the object origin (delta {cm(a.delta_location)}), geometry stays",
           a.delta_location.length < 1e-7 and same_points(C["verts"], world_verts(a)))
@@ -1419,7 +1419,7 @@ def _m59_9_together_setup():
 
 @named("m59_9_click1")
 def _m59_9_click1():
-    check("[M59-9] Snap Together Tool waits for clicks", any(op.bl_idname == "MAYA_KIT_OT_snap_together"
+    check("[M59-9] Snap Together Tool waits for clicks", any(op.bl_idname == "ALLSET_OT_snap_together"
                                                              for op in win().modal_operators))
     p = C["p_top"]
     ev('LEFTMOUSE', 'PRESS', x=int(p.x), y=int(p.y))
@@ -1444,14 +1444,14 @@ def _m59_9_together_check():
           (top - Vector((3.5 * k(), 0, 0))).length < 0.1 * k() and n.dot(Vector((-1, 0, 0))) > 0.999)
     select_only(C["b"])
     menu("Modify/Make Live")
-    live = getattr(bpy.context.scene, "maya_kit_live", None)
+    live = getattr(bpy.context.scene, "allset_live", None)
     check(f"[M59-9] Make Live: face snapping on, the Status Line field shows the name ({live and live.name}, "
           f"{set(ts().snap_elements)})", live == C["b"] and ts().use_snap and 'FACE_PROJECT' in ts().snap_elements)
     for o in bpy.context.scene.objects:
         o.select_set(False)
     menu("Modify/Make Live")
-    check(f"[M59-9] Make Live with an empty selection = off ({getattr(bpy.context.scene, 'maya_kit_live', None)})",
-          bpy.context.scene.maya_kit_live is None and 'FACE_PROJECT' not in ts().snap_elements)
+    check(f"[M59-9] Make Live with an empty selection = off ({getattr(bpy.context.scene, 'allset_live', None)})",
+          bpy.context.scene.allset_live is None and 'FACE_PROJECT' not in ts().snap_elements)
     ts().use_snap = False
 
 
@@ -1542,7 +1542,7 @@ def _m72_3_setup():
 @named("m72_3_group")
 def _m72_3_group():
     space = view3d()[0].spaces.active
-    check(f"[M72-3] Ctrl+G message top left in the MayaKit view ({message()!r}, "
+    check(f"[M72-3] Ctrl+G message top left in the Allset view ({message()!r}, "
           f"{vm().placement(vm()._state['pos'], space)})",
           "grouped" in message() and vm().placement(vm()._state["pos"], space) == 'TOP_LEFT')
     space.overlay.show_text = True
@@ -2040,7 +2040,7 @@ def _m77_1_insert():
 def _m77_1_insert_check():
     check(f"[M77-1] Insert: the toolbar shows the cursor tool ({tool_id()}), pivot = cursor ({ts().transform_pivot_point})",
           tool_id() == "builtin.cursor" and ts().transform_pivot_point == 'CURSOR')
-    # the Help Line text is the operator's report ("Pivot edit on", operators/hold.py MAYAKIT_OT_pivot_toggle):
+    # the Help Line text is the operator's report ("Pivot edit on", operators/hold.py ALLSET_OT_pivot_toggle):
     # Python can't read reports (RNA looks Operator.report up before the class), so the state stands for it
     check("[M77-1] pivot edit on (its report says 'Pivot edit on')", mod("operators.hold").COMPONENT.on)
     # the +X side face (camera on +x / -y / +z)
@@ -2241,7 +2241,7 @@ def _m78_2_w_check():
 def _m78_4_setup():
     clear()
     with override():
-        bpy.ops.maya_kit.create('EXEC_DEFAULT', True, kind='CUBE')   # registered like a menu click
+        bpy.ops.allset.create('EXEC_DEFAULT', True, kind='CUBE')   # registered like a menu click
     C["spots"] = [Vector((3 * k(), 2 * k(), 0)), Vector((-4 * k(), 1 * k(), 0)), Vector((1 * k(), -5 * k(), 0))]
     C["made"] = []
 
@@ -2354,7 +2354,7 @@ def sdk():
 
 
 def sdk_state():
-    return bpy.context.window_manager.maya_kit_sdk
+    return bpy.context.window_manager.allset_sdk
 
 
 def ry(ob):
@@ -2378,12 +2378,12 @@ def _m62_1_setup():
     select_only(loc)
     cb().set_selected_channels(["tx"])
     with override():
-        bpy.ops.maya_kit.sdk_load(which='DRIVER')
+        bpy.ops.allset.sdk_load(which='DRIVER')
     select_only(cube)
     cb().set_selected_channels(["ry"])
     with override():
-        bpy.ops.maya_kit.sdk_load(which='DRIVEN')
-        bpy.ops.maya_kit.sdk_key()
+        bpy.ops.allset.sdk_load(which='DRIVEN')
+        bpy.ops.allset.sdk_key()
     check(f"[M62-1] driver locator1 Translate X, driven pCube1 Rotate Y, Key = a driven key "
           f"({sdk().driver_node(st) and sdk().driver_node(st).name}, {st.driver_attr}, {sdk().driven_keys(st)})",
           sdk().driver_node(st) == loc and st.driver_attr == "tx" and sdk().driven_keys(st) == ["ry"]
@@ -2397,7 +2397,7 @@ def _m62_1_setup():
     select_only(cube)
     cb().apply_entry("ry", "90")
     with override():
-        bpy.ops.maya_kit.sdk_key()
+        bpy.ops.allset.sdk_key()
     select_only(loc)
     cb().apply_entry("tx", "0.5")
     check(f"[M62-1] moving the driver drives the driven (tx 0.5 -> ry {ry(cube):.2f}), its Channel Box row = driven "
@@ -2413,7 +2413,7 @@ def _m62_2_held():
     cb().apply_entry("ry", "60")
     check(f"[M62-2] with the window open a typed driven value stays until Key ({ry(cube):.2f})", abs(ry(cube) - 60) < 0.5)
     with override():
-        bpy.ops.maya_kit.sdk_close()
+        bpy.ops.allset.sdk_close()
     check(f"[M62-2] closing the window: the un-keyed pose goes back to the curve ({ry(cube):.2f})", abs(ry(cube) - 90) < 0.5)
     cube.rotation_euler[1] = math.radians(10)   # what a manipulator drag writes
     check(f"[M62-2] a manipulator change on a driven channel goes back to the driver ({ry(cube):.2f})",
@@ -2439,7 +2439,7 @@ def _m62_3_go():
           and fc.extrapolation == 'CONSTANT'
           and all(abs(p.handle_left[1] - p.co[1]) < 1e-6 and abs(p.handle_right[1] - p.co[1]) < 1e-6 for p in (kps[0], kps[-1])))
     with override():
-        bpy.ops.maya_kit.sdk_close()
+        bpy.ops.allset.sdk_close()
 
 
 # --- [M62-4] control, Shift armature, Ctrl+Tab pose mode, joint, Constrain > Orient -> on the bone ------------------
@@ -2498,7 +2498,7 @@ def _m62_5_attr():
     ob = create('CUBE')
     select_only(ob)
     with override():   # the Add Attribute dialog's OK with these fields
-        r = bpy.ops.maya_kit.add_attribute(long_name="fingerCurl", data_type='FLOAT', use_min=True, minimum=0,
+        r = bpy.ops.allset.add_attribute(long_name="fingerCurl", data_type='FLOAT', use_min=True, minimum=0,
                                            use_max=True, maximum=10, default=0)
     check(f"[M62-5] Modify > Add Attribute: Channel Box row 'Finger Curl' ({r}, "
           f"{cb().channel_label('cp:fingerCurl')}, visible {'cp:fingerCurl' in cb()._visible_channels(ob)})",
@@ -2507,19 +2507,19 @@ def _m62_5_attr():
     check(f"[M62-5] a value outside Min / Max is clamped ({ob['fingerCurl']})", abs(ob["fingerCurl"] - 10) < 1e-6)
     for kind in ('INT', 'BOOL'):
         with override():
-            bpy.ops.maya_kit.add_attribute(long_name=f"a{kind.lower()}", data_type=kind, default=1)
+            bpy.ops.allset.add_attribute(long_name=f"a{kind.lower()}", data_type=kind, default=1)
     check(f"[M62-5] Integer / Boolean attributes ({type(ob['aint']).__name__}, {type(ob['abool']).__name__})",
           isinstance(ob["aint"], int) and isinstance(ob["abool"], bool))
     ob.keyframe_insert('["fingerCurl"]', frame=1)
     cb().set_selected_channels(["cp:fingerCurl"])
     with override():
-        bpy.ops.maya_kit.edit_attribute(attribute="fingerCurl", long_name="curl", data_type='FLOAT', use_min=True,
+        bpy.ops.allset.edit_attribute(attribute="fingerCurl", long_name="curl", data_type='FLOAT', use_min=True,
                                         minimum=0, use_max=True, maximum=10, default=0)
     check(f"[M62-5] Edit Attribute renames it and its keys follow ({sorted(k for k in ob.keys() if not k.startswith('_'))})",
           "curl" in ob.keys() and "fingerCurl" not in ob.keys() and cb().fcurve(ob, "cp:curl") is not None)
     cb().set_selected_channels(["cp:curl"])
     with override():
-        bpy.ops.maya_kit.delete_attribute()
+        bpy.ops.allset.delete_attribute()
     check("[M62-5] Delete Attributes removes the selected channel and its keys",
           "curl" not in ob.keys() and cb().fcurve(ob, "cp:curl") is None)
 
@@ -2604,7 +2604,7 @@ def _m63_2_paths():
     ob = edit_cube([0])
     C["ob"] = ob
     with override():
-        r = bpy.ops.maya_kit.extrude('INVOKE_DEFAULT')
+        r = bpy.ops.allset.extrude('INVOKE_DEFAULT')
     rec = mod("operators.extrude").current(ob)
     with override():
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -2719,7 +2719,7 @@ def _m63_3_setup():
     C["ob"] = edit_cube()
     ts().mesh_select_mode = (True, False, False)
     set_tool("builtin.select_box")
-    bpy.context.window_manager.maya_kit_mtk_camera_based = True
+    bpy.context.window_manager.allset_mtk_camera_based = True
 
 
 box_all("m63_3_box_on")
@@ -2733,7 +2733,7 @@ def _m63_3_on_check():
     for v in bm.verts:
         v.select_set(False)
     bmesh.update_edit_mesh(C["ob"].data)
-    bpy.context.window_manager.maya_kit_mtk_camera_based = False
+    bpy.context.window_manager.allset_mtk_camera_based = False
 
 
 box_all("m63_3_box_off")
@@ -2748,9 +2748,9 @@ def _m63_3_off_check():
     ps = mod("operators.preselect")
     with override():
         on = ps._enabled(bpy.context)
-        wm.maya_kit_mtk_nearest = False
+        wm.allset_mtk_nearest = False
         off = ps._enabled(bpy.context)
-        wm.maya_kit_mtk_nearest = True
+        wm.allset_mtk_nearest = True
     check(f"[M63-3] Highlight Nearest Component off = no hover highlight (pre-selection gizmo {on} -> {off})", on and not off)
     object_mode()
 
@@ -2777,8 +2777,8 @@ def _m63_4_tap():
     r = ts().proportional_size / k()
     check(f"[M63-4] b tap turns soft select on with Maya's radius 5 (= 5 cm here: {r:.3f})",
           ts().use_proportional_edit and abs(r - 5) < 1e-6)
-    check(f"[M63-4] the MTK Falloff radius shows the same number ({bpy.context.scene.maya_kit_soft_radius:.3f})",
-          abs(bpy.context.scene.maya_kit_soft_radius - 5) < 1e-6)
+    check(f"[M63-4] the MTK Falloff radius shows the same number ({bpy.context.scene.allset_soft_radius:.3f})",
+          abs(bpy.context.scene.allset_soft_radius - 5) < 1e-6)
     cls = mod("operators.taphold").SoftSelectBinding
     C["hdr"] = []
     C["hdr_orig"] = cls.__dict__["_header"]
@@ -2805,20 +2805,20 @@ def _m63_4_bdrag_check():
     cls = mod("operators.taphold").SoftSelectBinding
     cls._header = C["hdr_orig"]
     shown = [h for h in C["hdr"] if h is not None]
-    r = bpy.context.scene.maya_kit_soft_radius
+    r = bpy.context.scene.allset_soft_radius
     check(f"[M63-4] b + drag right 100 px: the header shows the radius in Maya units, ending at the MTK Falloff "
           f"radius ({shown[-1:] if shown else None} vs {r:.3f})",
           bool(shown) and abs(shown[-1] - r) < 1e-3 and abs(r - 10) < 0.5)
     with override():
-        bpy.ops.maya_kit.soft_falloff_mode(surface=True)
+        bpy.ops.allset.soft_falloff_mode(surface=True)
     surf = ts().use_proportional_connected
     with override():
-        bpy.ops.maya_kit.soft_falloff_mode(surface=False)
+        bpy.ops.allset.soft_falloff_mode(surface=False)
     check(f"[M63-4] Falloff mode Surface / Volume = connected only / by distance ({surf}, {ts().use_proportional_connected})",
           surf and not ts().use_proportional_connected)
     ts().proportional_edit_falloff = 'LINEAR'
     with override():
-        bpy.ops.maya_kit.soft_select_reset()
+        bpy.ops.allset.soft_select_reset()
     check(f"[M63-4] Reset: radius 5, Volume, smooth falloff ({ts().proportional_size / k():.3f}, "
           f"{ts().proportional_edit_falloff})",
           abs(ts().proportional_size / k() - 5) < 1e-6 and ts().proportional_edit_falloff == 'SMOOTH')
@@ -2836,15 +2836,15 @@ def _m63_6_mirror():
     bpy.context.view_layer.update()
     select_only(ob)
     with override():   # the Mirror Options window's Mirror button with World, X, -, Cut, Combine, Merge
-        r = bpy.ops.maya_kit.mirror(cut=True, position='WORLD', axis='X', direction='NEGATIVE', combine=True, merge=True)
+        r = bpy.ops.allset.mirror(cut=True, position='WORLD', axis='X', direction='NEGATIVE', combine=True, merge=True)
     xs = [(ob.matrix_world @ v.co).x / k() for v in ob.data.vertices]
     check(f"[M63-6] World X -: the cube across the world plane becomes its mirror pair, one mesh ({r}, x "
           f"{min(xs):.2f}..{max(xs):.2f} cm, {len(ob.data.vertices)} verts)",
           abs(min(xs) + 2.5) < 1e-4 and abs(max(xs) - 2.5) < 1e-4 and len(ob.data.vertices) == 16)
-    last = bpy.context.window_manager.operator_properties_last("maya_kit.mirror")
+    last = bpy.context.window_manager.operator_properties_last("allset.mirror")
     check(f"[M63-6] a plain click reuses the last settings ({last.position}, {last.axis}, {last.direction})",
           (last.position, last.axis, last.direction) == ('WORLD', 'X', 'NEGATIVE'))
-    props = {p.identifier for p in bpy.ops.maya_kit.mirror.get_rna_type().properties}
+    props = {p.identifier for p in bpy.ops.allset.mirror.get_rna_type().properties}
     want = {"cut", "position", "offset", "axis", "direction", "combine", "merge", "threshold", "option_box"}
     check(f"[M63-6] the option box (hold the menu item) opens Mirror Options with Cut / Position / Offset / Axis / "
           f"Direction / Combine / Merge / Threshold ({sorted(want - props)} missing)", want <= props)
@@ -2855,7 +2855,7 @@ def _m63_6_mirror():
     bpy.context.view_layer.update()
     select_only(ob)
     with override():
-        bpy.ops.maya_kit.mirror(cut=True, position='WORLD', axis='X', direction='NEGATIVE', combine=True, merge=True)
+        bpy.ops.allset.mirror(cut=True, position='WORLD', axis='X', direction='NEGATIVE', combine=True, merge=True)
     xs = [(ob.matrix_world @ v.co).x / k() for v in ob.data.vertices]
     check(f"[M63-6] a cube across the plane: the + half is cut and mirrored to -, border merged (x {min(xs):.2f}.."
           f"{max(xs):.2f}, {len(ob.data.vertices)} verts)",
@@ -2969,7 +2969,7 @@ def _m64_1_entries():
     C["obname"] = ob.name
     menu("Mesh Tools/Target Weld")
     check(f"[M64-1] the menu item = edit mode + the Target Weld tool ({bpy.context.mode}, {tool_id()})",
-          bpy.context.mode == 'EDIT_MESH' and tool_id() == "maya_kit.target_weld_tool")
+          bpy.context.mode == 'EDIT_MESH' and tool_id() == "allset.target_weld_tool")
     ts().mesh_select_mode = (True, False, False)
     deselect_all(ob)
     undo_base("m64 setup")
@@ -3017,7 +3017,7 @@ def _m64_1_band_move():
 
 @named("m64_1_band_state")
 def _m64_1_band_state():
-    ops = [op for op in win().modal_operators if op.bl_idname == "MAYA_KIT_OT_target_weld"]
+    ops = [op for op in win().modal_operators if op.bl_idname == "ALLSET_OT_target_weld"]
     hover_ok = None
     if ops:
         try:
@@ -3164,10 +3164,10 @@ def _m64_3_redo():
     name, src, dst, el = C["last"]
     ob = OB()
     with override():
-        r = bpy.ops.maya_kit.target_weld('EXEC_DEFAULT', True, object=ob.name, element=el, source=src, target=dst, merge_to='TARGET')
+        r = bpy.ops.allset.target_weld('EXEC_DEFAULT', True, object=ob.name, element=el, source=src, target=dst, merge_to='TARGET')
     b = emesh(ob)
     check(f"[M64-3] Adjust Last Operation Merge To = Target re-runs it at the target ({name}, {r}, {len(b.verts)} verts)",
-          name == "MAYA_KIT_OT_target_weld" and r == {'FINISHED'} and any((v.co - C["dst"]).length < 1e-6 for v in b.verts))
+          name == "ALLSET_OT_target_weld" and r == {'FINISHED'} and any((v.co - C["dst"]).length < 1e-6 for v in b.verts))
     hover()
     key('Z', ctrl=True)
 
@@ -3285,10 +3285,10 @@ def _m64_5_ctrl_click_check():
 def _m64_5_position():
     name, edge, obname = C["loop"]
     with override():   # Adjust Last Operation: Position 0.7
-        r = bpy.ops.maya_kit.multicut_loop('EXEC_DEFAULT', True, object=obname, edge=edge, factor=0.7)
+        r = bpy.ops.allset.multicut_loop('EXEC_DEFAULT', True, object=obname, edge=edge, factor=0.7)
     t = on_edge_ts(OB(), *C["edge"])
     check(f"[M64-5] Adjust Last Operation Position moves the loop ({name}, {r}, t {t})",
-          name == "MAYA_KIT_OT_multicut_loop" and len(t) == 1 and abs(min(t[0], 1 - t[0]) - 0.3) < 1e-3)
+          name == "ALLSET_OT_multicut_loop" and len(t) == 1 and abs(min(t[0], 1 - t[0]) - 0.3) < 1e-3)
     hover()
     key('Z', ctrl=True)
 
@@ -3417,7 +3417,7 @@ def xrec():
 
 
 def hist():
-    return bpy.context.window_manager.maya_kit_history
+    return bpy.context.window_manager.allset_history
 
 
 def top_z():
@@ -3642,7 +3642,7 @@ def _m65_3_plain_check():
     C["under"] = next((i for i, (_f, x0, y0, x1, y1) in enumerate(lay["rows"])
                        if region.x + x0 <= mx <= region.x + x1 and region.y + y0 <= my <= region.y + y1), None)
     with v3d_ctx():
-        bpy.ops.maya_kit.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
+        bpy.ops.allset.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
     check(f"[M65-3] dragging the Thickness row sideways changes it ({C['t_plain']:.3f}); the row is the hot (yellow) one "
           f"({C['hot']} = row under the mouse {C['under']})",
           C["t_plain"] > 0.05 and C["hot"] == C["under"])
@@ -3655,7 +3655,7 @@ row_drag("m65_3_ctrl", "thickness", 20, mods={"ctrl": True})
 def _m65_3_ctrl_check():
     C["t_ctrl"] = xrec().params["thickness"]
     with v3d_ctx():
-        bpy.ops.maya_kit.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
+        bpy.ops.allset.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
 
 
 row_drag("m65_3_shift", "thickness", 20, mods={"shift": True})
@@ -3668,8 +3668,8 @@ def _m65_3_shift_check():
           abs(C["t_ctrl"] * 10 - C["t_plain"]) < 0.02 * C["t_plain"] + 1e-3
           and abs(t_shift - C["t_plain"] * 10) < 0.02 * t_shift + 1e-3)
     with v3d_ctx():
-        bpy.ops.maya_kit.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
-    cls = mod("ui.in_view").MAYAKIT_OT_inview_type
+        bpy.ops.allset.extrude_edit('EXEC_DEFAULT', True, thickness=0.0)
+    cls = mod("ui.in_view").ALLSET_OT_inview_type
     C["typed"] = []
     C["type_invoke"] = cls.__dict__["invoke"]
 
@@ -3690,7 +3690,7 @@ def _m65_3_click():
 
 @named("m65_3_click_check")
 def _m65_3_click_check():
-    mod("ui.in_view").MAYAKIT_OT_inview_type.invoke = C["type_invoke"]
+    mod("ui.in_view").ALLSET_OT_inview_type.invoke = C["type_invoke"]
     check(f"[M65-3] a click without dragging opens the value entry window ({C['typed']})",
           C["typed"] == [ex().FIELDS.index("divisions")])
     tap('ESC')
@@ -3702,7 +3702,7 @@ fresh("m65_3_keep", n_faces=2)
 @named("m65_3_keep_drag")
 def _m65_3_keep_drag():
     with v3d_ctx():
-        bpy.ops.maya_kit.extrude_edit('EXEC_DEFAULT', True, local_translate_z=0.5)
+        bpy.ops.allset.extrude_edit('EXEC_DEFAULT', True, local_translate_z=0.5)
     C["together"] = ecounts()
     p = iv_rows()["keep_faces_together"]
     move_to(p)
@@ -3800,11 +3800,11 @@ def _m65_5_other():
 def _m65_5_other_check():
     with v3d_ctx():
         vis = iv().manip_visible(bpy.context)
-        man = mod("ui.manipulator").MAYAKIT_GGT_xform.poll(bpy.context)
+        man = mod("ui.manipulator").ALLSET_GGT_xform.poll(bpy.context)
     rec = iv().cb_record(bpy.context, OB())
     check(f"[M65-5] another face selected: the arrow / In-View hide ({vis}), the Move manipulator is back ({man}), "
           f"INPUTS stays ({rec and rec.name})", not vis and man and rec is not None)
-    labels = {p.identifier: p.name for p in bpy.ops.maya_kit.extrude.get_rna_type().properties}
+    labels = {p.identifier: p.name for p in bpy.ops.allset.extrude.get_rna_type().properties}
     want = [ex().LABELS[f] for f in ex().FIELDS]
     check(f"[M65-5] Adjust Last Operation shows the same Maya names ({[labels.get(f) for f in ex().FIELDS]})",
           [labels.get(f) for f in ex().FIELDS] == want)
@@ -3925,7 +3925,7 @@ def _m66_1_again_check():
             obj_e = m.radial["E"][1]
             break
     check(f"[M66-1] Windows > Modeling Editors > UV Editor and F12 again: still one UV Editor window ({len(uv_windows())}); "
-          f"3D RMB E = UV ({obj_e})", len(uv_windows()) == 1 and obj_e == ("maya_kit.uv_component", {"mode": 'UV'}))
+          f"3D RMB E = UV ({obj_e})", len(uv_windows()) == 1 and obj_e == ("allset.uv_component", {"mode": 'UV'}))
     check(f"[M66-1] F12 = UV mode: sync off, vertex UVs ({ts().use_uv_select_sync}, {ts().uv_select_mode})",
           not ts().use_uv_select_sync and ts().uv_select_mode == 'VERTEX')
     hover()
@@ -4086,7 +4086,7 @@ class OpRecorder:
 
 def can_save_render(image):
     """True when the shown render slot holds an image (save_render fails on an empty slot)."""
-    path = os.path.join(tempfile.gettempdir(), "maya_kit_sweep_slot.png")
+    path = os.path.join(tempfile.gettempdir(), "allset_sweep_slot.png")
     try:
         image.save_render(path)
     except RuntimeError:
@@ -4132,7 +4132,7 @@ def _m67_2_setup():
     C["obname"] = ob.name
     select_only(ob)
     with override():
-        bpy.ops.maya_kit.assign_new_material(kind='LAMBERT')
+        bpy.ops.allset.assign_new_material(kind='LAMBERT')
     C["onmat"] = ob.active_material.name
     menu("Windows/Rendering Editors/Hypershade")
 
@@ -4143,8 +4143,8 @@ def _m67_2_open():
     if wait(_m67_2_open, lambda: window_with('ShaderNodeTree')[0] is not None):
         return
     with hs_ctx():
-        bpy.ops.maya_kit.hs_create(kind='STANDARD_SURFACE')
-    C["newmat"] = bpy.context.window_manager.maya_kit_hs_material
+        bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
+    C["newmat"] = bpy.context.window_manager.allset_hs_material
     mat = bpy.data.materials.get(C["newmat"])
     check(f"[M67-2] Create = a new material, not assigned ({mat is not None}, users {mat.users if mat else None}, "
           f"slots {[s.material.name for s in OB().material_slots]})",
@@ -4170,7 +4170,7 @@ def _m67_2_previews():
     check(f"[M67-2] the Browser swatches get rendered previews ({[m.name for m in mats]}: {rendered()})", rendered())
     w, a = window_with('ShaderNodeTree')
     with hs_ctx():
-        bpy.ops.maya_kit.hs_pick(material=C["newmat"])
+        bpy.ops.allset.hs_pick(material=C["newmat"])
     sp = a.spaces.active
     with hs_ctx():
         cur = mod("ui.hypershade").current(bpy.context)
@@ -4178,12 +4178,12 @@ def _m67_2_previews():
           f"({cur.name if cur else None}, pin {sp.pin}, graph {sp.node_tree.name if sp.node_tree else None})",
           cur and cur.name == C["newmat"] and sp.pin and sp.node_tree == bpy.data.materials[C["newmat"]].node_tree)
     with hs_ctx():
-        bpy.ops.maya_kit.hs_pick(material=C["onmat"])
+        bpy.ops.allset.hs_pick(material=C["onmat"])
         cur = mod("ui.hypershade").current(bpy.context)
     check(f"[M67-2] click the object's material: it is shown, the graph follows the object (pin {sp.pin})",
           cur.name == C["onmat"] and not sp.pin)
     # Create keeps the material on save (Blender drops datablocks without users)
-    path = os.path.join(tempfile.gettempdir(), "maya_kit_sweep_m67.blend")
+    path = os.path.join(tempfile.gettempdir(), "allset_sweep_m67.blend")
     bpy.ops.wm.save_as_mainfile(filepath=path, copy=True)
     with bpy.data.libraries.load(path) as (src, _dst):
         saved = list(src.materials)
@@ -4195,7 +4195,7 @@ def _m67_2_previews():
 def _m67_2_assign():
     ob = OB()
     with hs_ctx():
-        bpy.ops.maya_kit.assign_material(material=C["newmat"])
+        bpy.ops.allset.assign_material(material=C["newmat"])
     check(f"[M67-2] Assign Material To Selection: the object gets it ({[s.material.name for s in ob.material_slots]})",
           [s.material.name for s in ob.material_slots] == [C["newmat"]])
     # face selection mode: only the selected faces
@@ -4208,7 +4208,7 @@ def _m67_2_assign():
     C["topfaces"] = sum(f.select for f in b.faces)
     bmesh.update_edit_mesh(ob.data)
     with hs_ctx():
-        bpy.ops.maya_kit.assign_material(material=C["onmat"])
+        bpy.ops.allset.assign_material(material=C["onmat"])
 
 
 @named("m67_2_faces")
@@ -4227,14 +4227,14 @@ def _m67_3_map():
     sm = mod("operators.shading_maps")
     mat = bpy.data.materials[C["newmat"]]
     with hs_ctx():
-        res = bpy.ops.maya_kit.ae_map('INVOKE_DEFAULT', material=mat.name, socket="Base Color")
+        res = bpy.ops.allset.ae_map('INVOKE_DEFAULT', material=mat.name, socket="Base Color")
     check(f"[M67-3] the map button opens Create Render Node with File / Ramp / Noise / Checker ({res}, "
           f"{[v[0] for v in sm.MAPS.values()]})", res == {'FINISHED'} and list(sm.MAPS) == ['FILE', 'RAMP', 'NOISE', 'CHECKER'])
-    # the popup's rows run maya_kit.ae_map_connect (one per texture kind)
+    # the popup's rows run allset.ae_map_connect (one per texture kind)
     node = sm.principled(mat)
     for kind, socket in (('FILE', "Base Color"), ('RAMP', "Roughness"), ('NOISE', "Metallic"), ('CHECKER', "Alpha")):
         with hs_ctx():
-            bpy.ops.maya_kit.ae_map_connect(material=mat.name, socket=socket, kind=kind)
+            bpy.ops.allset.ae_map_connect(material=mat.name, socket=socket, kind=kind)
         inp = node.inputs[socket]
         src = inp.links[0].from_node if inp.is_linked else None
         check(f"[M67-3] {kind} on {socket}: a texture node left of the shader, linked "
@@ -4258,16 +4258,16 @@ def _m67_3_rows():
 
     class _P:
         socket = "Base Color"
-    tip = sm.MAYAKIT_OT_ae_map.description(bpy.context, _P())
+    tip = sm.ALLSET_OT_ae_map.description(bpy.context, _P())
     check(f"[M67-3] the button's tooltip names the Maya attribute ({tip!r})", tip.startswith("baseColor"))
     with hs_ctx():
-        bpy.ops.maya_kit.ae_map_break(material=mat.name, socket="Base Color")
+        bpy.ops.allset.ae_map_break(material=mat.name, socket="Base Color")
     inp = sm.principled(mat).inputs["Base Color"]
     tex = [n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE']
     check(f"[M67-3] Break Connection: unlinked, the File node stays ({inp.is_linked}, {len(tex)} image node)",
           not inp.is_linked and len(tex) == 1)
     with hs_ctx():
-        bpy.ops.maya_kit.ae_map_connect(material=mat.name, socket="Normal", kind='NOISE')
+        bpy.ops.allset.ae_map_connect(material=mat.name, socket="Normal", kind='NOISE')
     inp = sm.principled(mat).inputs["Normal"]
     src = inp.links[0].from_node if inp.is_linked else None
     via = src.inputs["Height"].links[0].from_node.type if src is not None and src.inputs["Height"].is_linked else None
@@ -4308,7 +4308,7 @@ def _m67_4_menu():
     batch = next(x for kind, t, x in rec.out if t == "Batch Render" and kind == "op")
     tip = mod("ui.notices").tooltip("Render/Batch Render", False)
     check(f"[M67-4] Render Using = engine list ({using}), Batch Render greyed ({batch[0]}) with "
-          f"in its tooltip", using == "MAYAKIT_MT_render_using" and batch[0] == "maya_kit.menu_unavailable"
+          f"in its tooltip", using == "ALLSET_MT_render_using" and batch[0] == "allset.menu_unavailable"
           and "blender -b" in tip)
     menu("Render/Render Current Frame")
 
@@ -4330,11 +4330,11 @@ def _m67_4_rendered():
         rv.draw_header(rec, bpy.context)
     got = [(x[0] if kind == "op" else t) for kind, t, x in rec.out]
     check(f"[M67-4] its header starts Render · Keep Image · Remove Image · ({got})",
-          got[:3] == ["render.render", "maya_kit.render_keep_image", "maya_kit.render_remove_image"]
+          got[:3] == ["render.render", "allset.render_keep_image", "allset.render_remove_image"]
           and got[3].startswith("Slot 1") and got[3].endswith("0 kept"))
     C["rv"] = (w, a)
     with bpy.context.temp_override(window=w, area=a, space_data=a.spaces.active):
-        bpy.ops.maya_kit.render_keep_image()
+        bpy.ops.allset.render_keep_image()
     menu("Render/Render Current Frame")
 
 
@@ -4379,7 +4379,7 @@ def _m67_5_alt_j():
     w, a = C["rv"]
     C["saved_before"] = can_save_render(image)
     with bpy.context.temp_override(window=w, area=a, space_data=a.spaces.active):
-        bpy.ops.maya_kit.render_remove_image()
+        bpy.ops.allset.render_remove_image()
     a.tag_redraw()
 
 
@@ -4413,7 +4413,7 @@ def shelf_action(shelf, label):
 def run_shelf(shelf, label):
     i, _a = shelf_action(shelf, label)
     with override():
-        return bpy.ops.maya_kit.shelf_button(shelf=shelf, index=i)
+        return bpy.ops.allset.shelf_button(shelf=shelf, index=i)
 
 
 def cloth_drop(ob, frames):
@@ -4452,7 +4452,7 @@ def _m68_2_emit():
     check(f"[M68-2] Emit from Object with two meshes: both emit from their vertices "
           f"({[(o.name, len(o.particle_systems), o.particle_systems[0].settings.emit_from if o.particle_systems else None) for o in (a, b)]})",
           ok)
-    for label, want in (("Emitter", "maya_kit.fx_emitter"), ("Add Emitter", "maya_kit.fx_emit_from_object")):
+    for label, want in (("Emitter", "allset.fx_emitter"), ("Add Emitter", "allset.fx_emit_from_object")):
         _i, act = shelf_action("FX", label)
         got = act[0] if isinstance(act, tuple) else act
         check(f"[M68-2] shelf FX = {want} ({got})", got == want)
@@ -4494,13 +4494,13 @@ def _m68_4_setup():
     has = {n: any(t[0] == "NUC" for t in mod("ui.attribute_editor").tabs(sc.objects[n])) for n in names}
     check(f"[M68-4] the AE has the nucleus1 tab on cloth, collider, particles and rigid body ({has})", all(has.values()))
     rec = OpRecorder()
-    bpy.context.window_manager.maya_kit_dock = 'ATTRIBUTE_EDITOR'
+    bpy.context.window_manager.allset_dock = 'ATTRIBUTE_EDITOR'
     mod("ui.attribute_editor").set_tab(bpy.context, "NUC")
     with override():
         mod("ui.attribute_editor").draw(rec, bpy.context, sc.objects[C["cloth"]])
     text = " ".join(t for kind, t, _x in rec.out if kind == "label")
-    # step 106: the Blender note is the head row's tooltip (maya_kit.tip), not a sentence in the AE
-    tips = " ".join(x[1].get("text", "") for kind, _t, x in rec.out if kind == "op" and x[0] == "maya_kit.tip")
+    # step 106: the Blender note is the head row's tooltip (allset.tip), not a sentence in the AE
+    tips = " ".join(x[1].get("text", "") for kind, _t, x in rec.out if kind == "op" and x[0] == "allset.tip")
     check(f"[M68-4] the nucleus1 tab has the note as a tooltip ({text[:70]!r}…)",
           "no nucleus node" in tips and "no nucleus node" not in text)
     C["drop98"] = cloth_drop(sc.objects[C["cloth"]], 12)
@@ -4670,15 +4670,15 @@ def browser_check(name, label, then):
 @named("m69_2_new")
 def _m69_2_new():
     object_mode()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")   # an unsaved scene: the first Ctrl+S asks for a name
+    bpy.ops.wm.read_homefile(app_template="Allset")   # an unsaved scene: the first Ctrl+S asks for a name
 
 
 @named("m69_2_project")
 def _m69_2_project():
-    bpy.ops.maya_kit.keymap_activate()
-    C["proj_parent"] = tempfile.mkdtemp(prefix="maya_kit_sweep_proj_")
+    bpy.ops.allset.keymap_activate()
+    C["proj_parent"] = tempfile.mkdtemp(prefix="allset_sweep_proj_")
     C["proj0"] = proj().current_root()
-    bpy.ops.maya_kit.project_window(name="proj97", location=C["proj_parent"])
+    bpy.ops.allset.project_window(name="proj97", location=C["proj_parent"])
     C["proj"] = os.path.join(C["proj_parent"], "proj97")
     check(f"[M69-2] a current project ({proj().current_root()})",
           os.path.normcase(proj().current_root()) == os.path.normcase(C["proj"]))
@@ -4693,7 +4693,7 @@ browser_check("m69_2_ctrl_o", "Ctrl+O", lambda: key('S', ctrl=True, shift=True))
 
 def _status_open():
     with override():
-        bpy.ops.maya_kit.open_scene('INVOKE_DEFAULT')
+        bpy.ops.allset.open_scene('INVOKE_DEFAULT')
 
 
 browser_check("m69_2_ctrl_shift_s", "Ctrl+Shift+S", _status_open)
@@ -4701,10 +4701,10 @@ browser_check("m69_2_ctrl_shift_s", "Ctrl+Shift+S", _status_open)
 
 def _status_save():
     with override():
-        bpy.ops.maya_kit.save_scene('INVOKE_DEFAULT')
+        bpy.ops.allset.save_scene('INVOKE_DEFAULT')
 
 
-browser_check("m69_2_status_open", "Status Line open icon (maya_kit.open_scene)", _status_save)
+browser_check("m69_2_status_open", "Status Line open icon (allset.open_scene)", _status_save)
 
 
 def _menu_open():
@@ -4712,7 +4712,7 @@ def _menu_open():
         mod("marking.modal").run_action(bpy.context, mod("ui.menu_map").MAP["File/Open Scene..."])
 
 
-browser_check("m69_2_status_save", "Status Line save icon (maya_kit.save_scene)", _menu_open)
+browser_check("m69_2_status_save", "Status Line save icon (allset.save_scene)", _menu_open)
 
 
 def _menu_save_as():
@@ -4739,7 +4739,7 @@ def _m69_2_render_output():
     bpy.ops.wm.save_as_mainfile(filepath=C["shot"])
     # "another computer": the project folder copied elsewhere, open its scene there
     import shutil
-    C["moved"] = os.path.join(tempfile.mkdtemp(prefix="maya_kit_sweep_moved_"), "proj97")
+    C["moved"] = os.path.join(tempfile.mkdtemp(prefix="allset_sweep_moved_"), "proj97")
     shutil.copytree(C["proj"], C["moved"])
     proj().set_current(C["proj"])
     bpy.ops.wm.open_mainfile(filepath=os.path.join(C["moved"], "scenes", "shot.blend"))
@@ -4763,7 +4763,7 @@ def _m69_4_browser():
     props = {p.identifier for p in op.properties.bl_rna.properties} if op is not None else set()
     check(f"[M69-4] Ctrl+R = Create Reference: the browser starts in <project>/scenes ({got}), options Namespace / "
           f"Editable ({op.bl_idname if op else None})",
-          got == scenes_dir() and op is not None and op.bl_idname == "MAYA_KIT_OT_create_reference"
+          got == scenes_dir() and op is not None and op.bl_idname == "ALLSET_OT_create_reference"
           and {"namespace", "editable"} <= props)
     close_browser()
 
@@ -4777,7 +4777,7 @@ def _m69_4_reference():
     bpy.ops.wm.save_as_mainfile(filepath=src, copy=True)
     C["src"], C["src_mtime"] = src, os.path.getmtime(src)
     with override():
-        bpy.ops.maya_kit.create_reference(filepath=src, namespace="prop")
+        bpy.ops.allset.create_reference(filepath=src, namespace="prop")
     ob = bpy.data.objects.get("prop:pCube1")
     coll = bpy.data.collections.get("prop")
     check(f"[M69-4] prop:pCube1 in the prop collection ({ob is not None}, "
@@ -4790,7 +4790,7 @@ def _m69_4_reference():
           f"({os.path.getmtime(src) == C['src_mtime']})", ok_key and abs(ob.location.x / k() - 3) < 0.6
           and os.path.getmtime(src) == C["src_mtime"])
     with override():
-        bpy.ops.maya_kit.create_reference(filepath=src, namespace="prop")
+        bpy.ops.allset.create_reference(filepath=src, namespace="prop")
     check(f"[M69-4] the same file again = prop1: ({[o.name for o in bpy.data.objects if o.name.startswith('prop1:')]})",
           bpy.data.objects.get("prop1:pCube1") is not None)
     # other editors keep their own Ctrl+R (Window items run after editor keymaps)
@@ -4801,7 +4801,7 @@ def _m69_4_reference():
         km = kc.keymaps.get(km_name)
         own[km_name] = bool(km) and any(i.idname == idname and i.type == 'R' and i.ctrl and i.active
                                         for i in km.keymap_items)
-    window_r = any(i.idname == "maya_kit.create_reference" and i.type == 'R' and i.ctrl
+    window_r = any(i.idname == "allset.create_reference" and i.type == 'R' and i.ctrl
                    for i in kc.keymaps["Window"].keymap_items)
     check(f"[M69-4] Ctrl+R = Create Reference in the Window keymap ({window_r}); File Browser / Image / Sequencer "
           f"keep their Ctrl+R refresh ({own})", window_r and all(own.values()))
@@ -4930,7 +4930,7 @@ def _m70_2_setup():
         ob.location.x = x * k()
         ob.keyframe_insert("location", index=0, frame=f)
     select_only(ob)
-    bpy.context.window_manager.maya_kit_time_range_on = False
+    bpy.context.window_manager.allset_time_range_on = False
     sc.frame_set(10)
     C["k0"] = kinds()
     hover()
@@ -4946,8 +4946,8 @@ def _m70_2_v3d_check():
           f"submenu opened {C['m70_2_v3d_opened']})",
           C["m70_2_v3d_opened"] and got[10] == 'LINEAR' and got[1] == C["k0"][1] and got[20] == C["k0"][20])
     wm = bpy.context.window_manager
-    wm.maya_kit_time_range = (1, 10)
-    wm.maya_kit_time_range_on = True
+    wm.allset_time_range = (1, 10)
+    wm.allset_time_range_on = True
 
 
 mm2("m70_2_range", "E", "E", v3d_centre)   # Tangents > Flat on the Shift range
@@ -4959,7 +4959,7 @@ def _m70_2_range_check():
     flat = [f for f, kp in xkeys().items() if kp.interpolation == 'BEZIER' and kp.handle_left_type == 'ALIGNED'
             and abs(kp.handle_right.y - kp.co.y) < 1e-4]
     check(f"[M70-2] with a Time Slider range 1-10: Flat on the keys in it ({got}, flat {flat})", flat == [1, 10])
-    bpy.context.window_manager.maya_kit_time_range_on = False
+    bpy.context.window_manager.allset_time_range_on = False
     C["k1"] = kinds()
 
 
@@ -5027,7 +5027,7 @@ def _m70_2_graph_check():
           f"the current frame's key (1) untouched", got[20] == 'CONSTANT' and got[1] == C["k3"][1] and got[30] == C["k3"][30])
     note = "Stepped Next isn't available in Blender: Stepped used"
     import inspect
-    src = inspect.getsource(mod("operators.graph_keys").MAYAKIT_OT_set_tangent.execute)
+    src = inspect.getsource(mod("operators.graph_keys").ALLSET_OT_set_tangent.execute)
     check("[M70-2] Stepped Next reports that Blender has none (INFO report)", note in src)
     C["garea70"].ui_type = 'VIEW_3D'
     hover()
@@ -5069,7 +5069,7 @@ def cs_state():
     return (bpy.context.mode, tuple(ts().mesh_select_mode), tool_id())
 
 
-CS_ON = ('EDIT_MESH', (False, True, False), "maya_kit.cut_sew_tool")
+CS_ON = ('EDIT_MESH', (False, True, False), "allset.cut_sew_tool")
 
 
 def top_path():
@@ -5120,25 +5120,25 @@ def _m79_1_menu():
                  if any(lab == "3D Cut and Sew UV Tool" for lab, _c in buttons))
     i = next(i for i, lab, _a, _ic in mod("ui.shelf").factory_buttons(shelf) if lab == "3D Cut and Sew UV Tool")
     with override():
-        bpy.ops.maya_kit.shelf_button(shelf=shelf, index=i)
+        bpy.ops.allset.shelf_button(shelf=shelf, index=i)
     check(f"[M79-1] the {shelf} shelf button does the same ({cs_state()})", cs_state() == CS_ON)
     # the UV Toolkit button and the UV marking menus' NW item run the same operator
     rec = OpRecorder()
-    panel = mod("ui.uv_toolkit").MAYAKIT_PT_uv_toolkit
+    panel = mod("ui.uv_toolkit").ALLSET_PT_uv_toolkit
     fake = type("P", (), {**{n: f for n, f in vars(panel).items() if callable(f) and not n.startswith("__")},
                           "layout": rec})()
     with override():
         panel.draw(fake, bpy.context) \
-            if hasattr(mod("ui.uv_toolkit"), "MAYAKIT_PT_uv_toolkit") else None
+            if hasattr(mod("ui.uv_toolkit"), "ALLSET_PT_uv_toolkit") else None
     tk = [x[0] for kind, t, x in rec.out if kind == "op" and t == "3D Cut and Sew Tool"]
     mm = mod("marking.menus")
     nw = [m.radial["NW"][1] for m in (mm.SHIFT_UV, mm.SHIFT_UV_SHELL)] if hasattr(mm, "SHIFT_UV") else \
         [m.radial["NW"][1] for m in mm.MENUS.values() if m.radial.get("NW", (None,))[0] == "3D Cut and Sew UV Tool"]
-    check(f"[M79-1] UV Toolkit button ({tk}) and UV marking menu NW ({nw}) = maya_kit.cut_sew_tool_set",
-          tk == ["maya_kit.cut_sew_tool_set"] and len(nw) == 2 and set(nw) == {"maya_kit.cut_sew_tool_set"})
+    check(f"[M79-1] UV Toolkit button ({tk}) and UV marking menu NW ({nw}) = allset.cut_sew_tool_set",
+          tk == ["allset.cut_sew_tool_set"] and len(nw) == 2 and set(nw) == {"allset.cut_sew_tool_set"})
     cs_reset(False)
     with override():
-        bpy.ops.maya_kit.cut_sew_tool_set()
+        bpy.ops.allset.cut_sew_tool_set()
     redraw_all()
 
 
@@ -5254,13 +5254,13 @@ def _m60_new():
 
 @named("m60_setup")
 def _m60_setup():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     cube = bpy.data.objects.get("Cube")
     cube.location = (1.5, 0.25, 0.0)
     cube.keyframe_insert("location", frame=1)
     cube.location.x = 3.0
     cube.keyframe_insert("location", frame=10)
-    path = os.path.join(tempfile.mkdtemp(prefix="maya_kit_sweep_switch_"), "switch.blend")
+    path = os.path.join(tempfile.mkdtemp(prefix="allset_sweep_switch_"), "switch.blend")
     bpy.ops.wm.save_as_mainfile(filepath=path)
     C["file"] = file_state()
     C["ws"] = win().workspace.name
@@ -5310,7 +5310,7 @@ def _m60_maya():
     kcs = bpy.context.window_manager.keyconfigs
     ws = win().workspace
     check(f"[M60-2] Ctrl+Alt+Shift+M over the {C['from']} -> Maya mode (keymap {kcs.active.name})",
-          kcs.active.name == "Maya")
+          kcs.active.name == "Maya-style")
     check(f"[M60-3] Maya mode: the Maya layout workspace ({ws.name}); the file untouched",
           ws.name == sw().WORKSPACE and file_state() == C["file"])
     C["tips0"] = bpy.context.preferences.view.show_tooltips_python
@@ -5352,9 +5352,9 @@ def _m60_back():
     p.view.show_tooltips_python = C["tips0"]
 
 
-# --- development filter: MAYA_KIT_SWEEP_ONLY="m59_,m72_" runs the setup steps + steps with those name prefixes ----
+# --- development filter: ALLSET_SWEEP_ONLY="m59_,m72_" runs the setup steps + steps with those name prefixes ----
 
-_ONLY = [x for x in os.environ.get("MAYA_KIT_SWEEP_ONLY", "").split(",") if x]
+_ONLY = [x for x in os.environ.get("ALLSET_SWEEP_ONLY", "").split(",") if x]
 if _ONLY:
     import sim as _sim
     _sim._steps[:] = [f for f in _sim._steps if f.__name__.startswith(("s_",) + tuple(_ONLY))]

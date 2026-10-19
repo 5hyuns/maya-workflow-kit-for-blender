@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, px, run, scale, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -195,8 +195,8 @@ def s_range_release():
 @step
 def s_range_check():
     wm = bpy.context.window_manager
-    check(f"Shift+LMB drag highlighted 10..30 ({tuple(wm.maya_kit_time_range)}, on={wm.maya_kit_time_range_on})",
-          wm.maya_kit_time_range_on and tuple(wm.maya_kit_time_range) == (10, 30))
+    check(f"Shift+LMB drag highlighted 10..30 ({tuple(wm.allset_time_range)}, on={wm.allset_time_range_on})",
+          wm.allset_time_range_on and tuple(wm.allset_time_range) == (10, 30))
     redraw()
 
 
@@ -221,7 +221,7 @@ def s_mmb_check():
     check(f"MMB on the Time Slider: time 40 + the notice ({bpy.context.scene.frame_current})",
           bpy.context.scene.frame_current == 40 and "always updates" in notices.current())
     wm = bpy.context.window_manager
-    check("a plain click drops the range", not wm.maya_kit_time_range_on)
+    check("a plain click drops the range", not wm.allset_time_range_on)
 
 
 run()

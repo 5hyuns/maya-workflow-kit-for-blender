@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, step, tap, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -49,14 +49,14 @@ def open_menu(name):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.make_maya(open_layout=False)
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.make_maya(open_layout=False)
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_keys():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     # an open tooltip hides the popup menu from screen.screenshot (checked): no tooltips in this session
     bpy.context.preferences.view.show_tooltips = False
     ms = mod(".ui.menu_sets")

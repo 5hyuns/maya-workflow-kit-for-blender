@@ -13,7 +13,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, scale  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 STEPS = 8
 
@@ -103,17 +103,17 @@ def drag(button, mods, start, end):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_cube():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     view3d()[1].data.view_distance *= 2.0          # the sizes the step 59 test uses
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     set_tool("builtin.move")
     C["start"] = ob1().location.copy()
 

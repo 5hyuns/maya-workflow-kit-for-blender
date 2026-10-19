@@ -38,7 +38,7 @@ class Rec:
 
 
 def _scene(cm=True):
-    """Fresh objects; cm = the MayaKit template's units (m + cm display: one Maya unit = 0.01 BU)."""
+    """Fresh objects; cm = the Allset template's units (m + cm display: one Maya unit = 0.01 BU)."""
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     for ps in list(bpy.data.particles):
@@ -51,7 +51,7 @@ def _scene(cm=True):
     sc.render.fps, sc.render.fps_base = 24, 1.0
     if sc.rigidbody_world is not None:
         bpy.ops.rigidbody.world_remove()
-    nuc = sc.maya_kit_nucleus
+    nuc = sc.allset_nucleus
     nuc["exists"] = False
     nuc["space_scale"], nuc["gravity"], nuc["substeps"] = 1.0, fx.MAYA_GRAVITY, fx.MAYA_SUBSTEPS
     nuc["gravity_direction"] = (0.0, -1.0, 0.0)
@@ -86,7 +86,7 @@ def _play(sc, last):
 
 def test_scale_formulas():
     sc = _scene(cm=True)
-    nuc = sc.maya_kit_nucleus
+    nuc = sc.allset_nucleus
     assert abs(units.maya_unit() - 0.01) < 1e-9
     assert abs(fx.sim_scale(sc) - 0.01) < 1e-9
     g = fx.gravity_vector(sc)
@@ -104,7 +104,7 @@ def test_scale_formulas():
 
 def _fall(cm):
     sc = _scene(cm)
-    assert bpy.ops.maya_kit.fx_emitter() == {'FINISHED'}
+    assert bpy.ops.allset.fx_emitter() == {'FINISHED'}
     ob = bpy.data.objects["emitter1"]
     _play(sc, 25)                                   # one second at 24 fps
     psys = ob.evaluated_get(bpy.context.evaluated_depsgraph_get()).particle_systems[0]
@@ -114,7 +114,7 @@ def _fall(cm):
 
 def test_create_emitter():
     sc = _scene(cm=True)
-    assert bpy.ops.maya_kit.fx_emitter() == {'FINISHED'}
+    assert bpy.ops.allset.fx_emitter() == {'FINISHED'}
     ob = bpy.data.objects["emitter1"]
     assert bpy.context.active_object == ob and ob.select_get()
     assert len(ob.data.vertices) == 1 and tuple(ob.location) == (0, 0, 0) and ob.hide_render
@@ -125,9 +125,9 @@ def test_create_emitter():
     # Blender's hard minimum particle size is 0.001 m (= 0.1 unit in a cm scene; step 68 「계획」)
     assert abs(st.particle_size - 0.001) < 1e-7 and abs(st.factor_random - 0.01) < 1e-7, (st.particle_size, st.factor_random)
     assert abs(st.display_size - 0.001) < 1e-7, "viewport dots in Maya units, not 10-unit balls"
-    assert sc.maya_kit_nucleus.exists and abs(sc.gravity.z + 0.098) < 1e-6
+    assert sc.allset_nucleus.exists and abs(sc.gravity.z + 0.098) < 1e-6
     # a second emitter: Maya numbering
-    bpy.ops.maya_kit.fx_emitter()
+    bpy.ops.allset.fx_emitter()
     assert "emitter2" in bpy.data.objects and bpy.data.objects["emitter2"].particle_systems[0].name == "nParticle2"
 
 
@@ -145,7 +145,7 @@ def test_emit_from_object():
     _scene(cm=True)
     a, b = _grid("pPlane1", 1, 0), _grid("pPlane2", 1, 3)
     _select(a, b)
-    assert bpy.ops.maya_kit.fx_emit_from_object() == {'FINISHED'}
+    assert bpy.ops.allset.fx_emit_from_object() == {'FINISHED'}
     assert [o.particle_systems[0].name for o in (a, b)] == ["nParticle1", "nParticle2"]
 
 
@@ -155,7 +155,7 @@ def test_ncloth_on_every_selected_and_nucleus():
     sc = _scene(cm=True)
     a, b = _grid("pPlane1", 1, 2), _grid("pPlane2", 1, 4)
     _select(a, b)
-    assert bpy.ops.maya_kit.fx_ncloth() == {'FINISHED'}
+    assert bpy.ops.allset.fx_ncloth() == {'FINISHED'}
     mds = [next(m for m in o.modifiers if m.type == 'CLOTH') for o in (a, b)]
     assert [m.name for m in mds] == ["nCloth1", "nCloth2"]
     for md in mds:
@@ -164,17 +164,17 @@ def test_ncloth_on_every_selected_and_nucleus():
         assert abs(md.settings.tension_stiffness - 15 * 0.01) < 1e-6, md.settings.tension_stiffness
         assert md.settings.quality == 5
     # nucleus: Space Scale 0.01 = real cm: gravity 9.8, stiffness back to Blender's
-    sc.maya_kit_nucleus.space_scale = 0.01
+    sc.allset_nucleus.space_scale = 0.01
     assert abs(sc.gravity.z + 9.8) < 1e-5
     assert abs(mds[0].settings.tension_stiffness - 15) < 1e-4
-    sc.maya_kit_nucleus.space_scale = 1.0
-    sc.maya_kit_nucleus.substeps = 6
+    sc.allset_nucleus.space_scale = 1.0
+    sc.allset_nucleus.substeps = 6
     assert all(md.settings.quality == 10 for md in mds)
-    sc.maya_kit_nucleus.gravity_direction = (1.0, 0.0, 0.0)
+    sc.allset_nucleus.gravity_direction = (1.0, 0.0, 0.0)
     assert abs(sc.gravity.x - 0.098) < 1e-6 and abs(sc.gravity.z) < 1e-7
     # Remove nCloth
     _select(b)
-    bpy.ops.maya_kit.fx_remove_ncloth()
+    bpy.ops.allset.fx_remove_ncloth()
     assert not any(m.type == 'CLOTH' for m in b.modifiers) and fx.CLOTH_G_PROP not in b
 
 
@@ -184,12 +184,12 @@ def test_cloth_lands_on_passive_collider():
     sc = _scene(cm=True)
     ground = _grid("pPlane1", 10, 0, subdiv=2)
     _select(ground)
-    assert bpy.ops.maya_kit.fx_passive() == {'FINISHED'}
+    assert bpy.ops.allset.fx_passive() == {'FINISHED'}
     assert abs(ground.collision.thickness_outer - 0.001) < 1e-7      # 0.02 x 0.01, clamped to 0.001 m
     assert ground.modifiers[-1].name == "nRigid1"
     cloth = _grid("pPlane2", 1, 2)
     _select(cloth)
-    bpy.ops.maya_kit.fx_ncloth()
+    bpy.ops.allset.fx_ncloth()
     _play(sc, 60)
     me = cloth.evaluated_get(bpy.context.evaluated_depsgraph_get()).to_mesh()
     zs = [(cloth.matrix_world @ v.co).z / units.maya_unit() for v in me.vertices]
@@ -201,7 +201,7 @@ def test_rigid_bodies_in_maya_units():
     sc = _scene(cm=True)
     a, b = _grid("pPlane1", 1, 0), _grid("pPlane2", 1, 3)
     _select(a, b)
-    assert bpy.ops.maya_kit.fx_rigid(type='ACTIVE') == {'FINISHED'}
+    assert bpy.ops.allset.fx_rigid(type='ACTIVE') == {'FINISHED'}
     for ob in (a, b):
         assert ob.rigid_body is not None and ob.rigid_body.type == 'ACTIVE'
         assert abs(ob.rigid_body.collision_margin - 0.04 * 0.01) < 1e-7
@@ -215,22 +215,22 @@ def test_ncache_bake_and_delete():
     sc.frame_end = 10
     cloth = _grid("pPlane1", 1, 2, subdiv=3)
     _select(cloth)
-    bpy.ops.maya_kit.fx_ncloth()
+    bpy.ops.allset.fx_ncloth()
     other = _grid("pPlane2", 1, 4, subdiv=3)
     _select(other)
-    bpy.ops.maya_kit.fx_ncloth()
+    bpy.ops.allset.fx_ncloth()
     pc = cloth.modifiers["nCloth1"].point_cache
     pc2 = other.modifiers["nCloth2"].point_cache
     _select(cloth)
-    assert bpy.ops.maya_kit.ncache(action='CREATE', kind='NOBJECT') == {'FINISHED'}
+    assert bpy.ops.allset.ncache(action='CREATE', kind='NOBJECT') == {'FINISHED'}
     assert pc.is_baked and not pc2.is_baked, "only the selection"
-    assert bpy.ops.maya_kit.ncache(action='DELETE', kind='ALL') == {'FINISHED'}
+    assert bpy.ops.allset.ncache(action='DELETE', kind='ALL') == {'FINISHED'}
     assert not pc.is_baked
     _select()
-    bpy.ops.maya_kit.ncache(action='CREATE', kind='NOBJECT')
+    bpy.ops.allset.ncache(action='CREATE', kind='NOBJECT')
     assert pc.is_baked and pc2.is_baked, "nothing selected = the whole scene"
-    bpy.ops.maya_kit.ncache(action='DELETE', kind='NOBJECT')
-    assert bpy.ops.maya_kit.ncache(action='CREATE', kind='FLUID') == {'CANCELLED'}, "no fluid domain"
+    bpy.ops.allset.ncache(action='DELETE', kind='NOBJECT')
+    assert bpy.ops.allset.ncache(action='CREATE', kind='FLUID') == {'CANCELLED'}, "no fluid domain"
 
 
 # --- AE / menus ---------------------------------------------------------------------------------------
@@ -240,9 +240,9 @@ def test_ae_nucleus_tab():
     plane = _grid("pPlane1", 1, 2)
     assert not any(t[0] == "NUC" for t in ae.tabs(plane)), "no nucleus before kit FX"
     _select(plane)
-    bpy.ops.maya_kit.fx_ncloth()
+    bpy.ops.allset.fx_ncloth()
     assert ("NUC", "nucleus1", "nucleus") in ae.tabs(plane)
-    assert ae.tab_target(plane, "NUC") == bpy.context.scene.maya_kit_nucleus
+    assert ae.tab_target(plane, "NUC") == bpy.context.scene.allset_nucleus
     ae.set_tab(bpy.context, "NUC")
     rec = Rec()
     ae.draw(rec, bpy.context, plane)
@@ -252,19 +252,19 @@ def test_ae_nucleus_tab():
     labels = " ".join(e[2].get("text", "") for e in rec.log if e[0] == "label")
     assert "nucleus1" in labels and "no nucleus node" not in labels, labels
     # the Blender notice is a tooltip of the head row (step 106)
-    tips = [e[3].text for e in rec.log if e[0] == "operator" and e[1][:1] == ("maya_kit.tip",)]
+    tips = [e[3].text for e in rec.log if e[0] == "operator" and e[1][:1] == ("allset.tip",)]
     assert any("no nucleus node" in t for t in tips), tips
 
 
 def test_fx_menu_and_shelf_mapping():
-    assert menu_map.MAP["nParticles/Create Emitter"] == "maya_kit.fx_emitter"
-    assert menu_map.MAP["nParticles/Emit from Object"] == "maya_kit.fx_emit_from_object"
-    assert menu_map.MAP["nCloth/Create nCloth"] == "maya_kit.fx_ncloth"
-    assert menu_map.MAP["nCloth/Create Passive Collider"] == "maya_kit.fx_passive"
-    assert menu_map.MAP["nCache/Create New Cache/nObject"][0] == "maya_kit.ncache"
-    assert menu_map.MAP["Fields/Solvers/Create Active Rigid Body"] == ("maya_kit.fx_rigid", {"type": 'ACTIVE'})
-    assert shelf_map.BY_COMMAND["NCreateEmitter"][0] == "maya_kit.fx_emitter"
-    assert shelf_map.BY_COMMAND["NEmitFromObject"][0] == "maya_kit.fx_emit_from_object"
-    assert shelf_map.BY_LABEL["FX/Create nCloth"][0] == "maya_kit.fx_ncloth"
+    assert menu_map.MAP["nParticles/Create Emitter"] == "allset.fx_emitter"
+    assert menu_map.MAP["nParticles/Emit from Object"] == "allset.fx_emit_from_object"
+    assert menu_map.MAP["nCloth/Create nCloth"] == "allset.fx_ncloth"
+    assert menu_map.MAP["nCloth/Create Passive Collider"] == "allset.fx_passive"
+    assert menu_map.MAP["nCache/Create New Cache/nObject"][0] == "allset.ncache"
+    assert menu_map.MAP["Fields/Solvers/Create Active Rigid Body"] == ("allset.fx_rigid", {"type": 'ACTIVE'})
+    assert shelf_map.BY_COMMAND["NCreateEmitter"][0] == "allset.fx_emitter"
+    assert shelf_map.BY_COMMAND["NEmitFromObject"][0] == "allset.fx_emit_from_object"
+    assert shelf_map.BY_LABEL["FX/Create nCloth"][0] == "allset.fx_ncloth"
     flat = repr(menu_map.MAP) + repr(shelf_map.BY_COMMAND) + repr(shelf_map.BY_LABEL)
     assert "particle_system_add" not in flat and "ptcache.bake_all" not in flat

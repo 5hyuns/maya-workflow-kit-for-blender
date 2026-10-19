@@ -84,7 +84,7 @@ def test_saved_file_keeps_no_wire():
     try:
         assert len(loaded) == 3
         left = [(ob.name, ob.show_wire, list(ob.keys())) for ob in loaded
-                if ob.show_wire or any(k.startswith("maya_kit_") for k in ob.keys())]
+                if ob.show_wire or any(k.startswith("allset_") for k in ob.keys())]
         assert not left, left
     finally:
         for ob in loaded:

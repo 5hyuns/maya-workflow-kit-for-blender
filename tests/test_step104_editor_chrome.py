@@ -19,7 +19,7 @@ data = import_module(kit.MODULE + ".ui.editor_menu_data")
 chrome = import_module(kit.MODULE + ".ui.editor_chrome")
 graph_keys = import_module(kit.MODULE + ".operators.graph_keys")
 
-CAPTURE = Path(os.environ.get("MAYA_KIT_ROOT", Path(__file__).resolve().parent.parent)) / \
+CAPTURE = Path(os.environ.get("ALLSET_ROOT", Path(__file__).resolve().parent.parent)) / \
     "research" / "maya" / "screens" / "editors104" / "_editors104.json"
 
 # Maya 2022 GUI capture ()
@@ -156,7 +156,7 @@ def test_header_draw_menus_and_icons():
     menus = [t for kind, _i, t in rec.log if kind == "menu"]
     assert menus[:9] == MAYA_BARS["Graph Editor"] and menus[9] == "Blender", menus
     ops = [i for kind, i, _ in rec.log if kind == "op"]
-    assert ops.count("maya_kit.editor_icon") >= 15 and "maya_kit.editor_icon_unavailable" in ops
+    assert ops.count("allset.editor_icon") >= 15 and "allset.editor_icon_unavailable" in ops
 
 
 def _keyed_cube():
@@ -176,15 +176,15 @@ def test_curve_infinity_and_in_out_tangents():
     ob, fcs = _keyed_cube()
     fx = fcs[0]
     with bpy.context.temp_override(selected_editable_fcurves=[fx], editable_fcurves=[fx]):
-        bpy.ops.maya_kit.curve_infinity(side='POST', mode='CYCLE_OFFSET')
-        bpy.ops.maya_kit.curve_infinity(side='PRE', mode='OSCILLATE')
+        bpy.ops.allset.curve_infinity(side='POST', mode='CYCLE_OFFSET')
+        bpy.ops.allset.curve_infinity(side='PRE', mode='OSCILLATE')
     cyc = [m for m in fx.modifiers if m.type == 'CYCLES']
     assert len(cyc) == 1 and cyc[0].mode_after == 'REPEAT_OFFSET' and cyc[0].mode_before == 'MIRROR'
     with bpy.context.temp_override(selected_editable_fcurves=[fx], editable_fcurves=[fx]):
-        bpy.ops.maya_kit.curve_infinity(side='POST', mode='LINEAR')
+        bpy.ops.allset.curve_infinity(side='POST', mode='LINEAR')
     assert fx.extrapolation == 'LINEAR' and cyc[0].mode_after == 'NONE' and cyc[0].mode_before == 'MIRROR'
     with bpy.context.temp_override(selected_editable_fcurves=[fx], editable_fcurves=[fx]):
-        bpy.ops.maya_kit.curve_infinity(side='PRE', mode='CONSTANT')
+        bpy.ops.allset.curve_infinity(side='PRE', mode='CONSTANT')
     assert not [m for m in fx.modifiers if m.type == 'CYCLES'] and fx.extrapolation == 'CONSTANT'
     # In / Out tangent on the middle key only
     for i, kp in enumerate(fx.keyframe_points):
@@ -207,12 +207,12 @@ def test_stats_fields_read_and_move_the_selected_key():
         kp.select_control_point = False
     sc = bpy.context.scene
     with bpy.context.temp_override(editable_fcurves=fcs):
-        assert sc.maya_kit_key_time == "24", sc.maya_kit_key_time
-        sc.maya_kit_key_time = "+=6"
+        assert sc.allset_key_time == "24", sc.allset_key_time
+        sc.allset_key_time = "+=6"
         assert abs(fx.keyframe_points[2].co.x - 30) < 1e-6
-        sc.maya_kit_key_value = "7"
+        sc.allset_key_value = "7"
         k = fx.keyframe_points[2]
-        shown = sc.maya_kit_key_value
+        shown = sc.allset_key_value
     from importlib import import_module as im
     cb = im(kit.MODULE + ".ui.cb_entry")
     assert abs(k.co.y - cb.from_display(7.0, "LENGTH", sc)) < 1e-6, (k.co.y, shown)
@@ -239,11 +239,11 @@ def test_graph_outliner_rows_maya_names():
 
 
 def test_out_of_range_shading_off_in_the_maya_theme():
-    text = (Path(import_module(kit.MODULE).__file__).parent / "theme" / "maya.xml").read_text(encoding="utf-8")
+    text = (Path(import_module(kit.MODULE).__file__).parent / "theme" / "studio_grey.xml").read_text(encoding="utf-8")
     assert text.count('preview_range="#00000000"') == 2
 
 
 def test_editor_click_item_passes_through_first():
     patches = import_module(kit.MODULE + ".keymap.maya_patches")
-    assert "maya_kit.graph_channel_click" in patches.PASS_THROUGH_FIRST
-    assert any(a[0] == "Animation Channels" and a[1] == "maya_kit.graph_channel_click" for a in patches.ADDED)
+    assert "allset.graph_channel_click" in patches.PASS_THROUGH_FIRST
+    assert any(a[0] == "Animation Channels" and a[1] == "allset.graph_channel_click" for a in patches.ADDED)

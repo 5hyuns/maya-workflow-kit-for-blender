@@ -13,7 +13,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tmp", "gui69")
 C = {}
 
@@ -73,7 +73,7 @@ def scenes():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     shutil.rmtree(ROOT, ignore_errors=True)
     os.makedirs(ROOT)
     _a, r = view3d()
@@ -99,7 +99,7 @@ def s_project_dialog():
 @step
 def s_project_made():
     # the dialog's Accept, with the test folder as location
-    bpy.ops.maya_kit.project_window(name="proj69", location=ROOT)
+    bpy.ops.allset.project_window(name="proj69", location=ROOT)
     root = os.path.join(ROOT, "proj69")
     have = [d for d in ("scenes", "sourceimages", "images", "renderData") if os.path.isdir(os.path.join(root, d))]
     check(f"File > Project Window (got {C['pw']}): Accept makes Maya's folders ({have}) and the current project",
@@ -153,7 +153,7 @@ def s_reference_browser():
 def s_referenced():
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        res = bpy.ops.maya_kit.create_reference(filepath=C["src"], namespace="prop")
+        res = bpy.ops.allset.create_reference(filepath=C["src"], namespace="prop")
     ob = bpy.data.objects.get("prop:pCube1")
     check(f"Create Reference shot_v001 as prop: prop:pCube1, editable override (got {res}, {ob is not None})",
           ob is not None and ob.override_library is not None)

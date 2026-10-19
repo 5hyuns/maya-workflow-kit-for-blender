@@ -35,7 +35,7 @@ def _fresh(n=2):
     return obs
 
 
-P = lambda: bpy.context.scene.maya_kit_cb  # noqa: E731
+P = lambda: bpy.context.scene.allset_cb  # noqa: E731
 
 
 # --- proxies -------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ def test_proxy_skips_locked_and_autokeys():
 
 
 def test_proxy_units():
-    props = cb.MAYAKIT_PG_channel_box.bl_rna.properties
+    props = cb.ALLSET_PG_channel_box.bl_rna.properties
     assert props["tx"].unit == 'LENGTH' and props["rx"].unit == 'ROTATION'
     assert props["tx"].precision == 3
 
@@ -115,7 +115,7 @@ def test_custom_attributes_listed():
     a["speed"] = 1.5
     a["flag"] = True
     a["_private"] = 1
-    a["maya_kit_cb_hidden"] = ""
+    a["allset_cb_hidden"] = ""
     assert cb.custom_keys(a) == ["flag", "speed"]
     assert cb.get_value(a, "cp:speed") == 1.5
 
@@ -149,51 +149,51 @@ def test_slider_targets_and_apply():
 def test_key_selected_and_key_all():
     a, b = _fresh()
     cb.set_selected_channels(["tx"])
-    assert bpy.ops.maya_kit.cb_key_selected() == {'FINISHED'}
+    assert bpy.ops.allset.cb_key_selected() == {'FINISHED'}
     assert cb.fcurve(a, "tx") and cb.fcurve(b, "tx") and not cb.fcurve(a, "ty")
     cb.set_selected_channels([])
     cb._set_flag_list(a, cb.NONKEYABLE_PROP, ["sz"])
-    bpy.ops.maya_kit.cb_key_all()
+    bpy.ops.allset.cb_key_all()
     assert cb.fcurve(a, "rz") and cb.fcurve(a, "sx") and not cb.fcurve(a, "sz"), "nonkeyable skipped"
 
 
 def test_breakdown_mute_delete_break():
     a, _b = _fresh()
     cb.set_selected_channels(["tx"])
-    bpy.ops.maya_kit.cb_breakdown_selected()
+    bpy.ops.allset.cb_breakdown_selected()
     fc = cb.fcurve(a, "tx")
     assert fc.keyframe_points[0].type == 'BREAKDOWN'
-    bpy.ops.maya_kit.cb_mute(mute=True)
+    bpy.ops.allset.cb_mute(mute=True)
     assert fc.mute
-    bpy.ops.maya_kit.cb_mute(mute=False)
+    bpy.ops.allset.cb_mute(mute=False)
     assert not fc.mute
-    bpy.ops.maya_kit.cb_delete_keys()
+    bpy.ops.allset.cb_delete_keys()
     assert cb.fcurve(a, "tx") is None
     d = a.driver_add("location", 0)
     d.driver.expression = "1"
-    bpy.ops.maya_kit.cb_break_connections()
+    bpy.ops.allset.cb_break_connections()
     assert cb.driver(a, "tx") is None
 
 
 def test_lock_hide_keyable_duplicate():
     a, b = _fresh()
     cb.set_selected_channels(["ty", "rx"])
-    bpy.ops.maya_kit.cb_lock(lock=True)
+    bpy.ops.allset.cb_lock(lock=True)
     assert a.lock_location[1] and b.lock_rotation[0]
-    bpy.ops.maya_kit.cb_lock(lock=False)
+    bpy.ops.allset.cb_lock(lock=False)
     assert not a.lock_location[1]
-    bpy.ops.maya_kit.cb_hide(lock=True)
+    bpy.ops.allset.cb_hide(lock=True)
     assert cb.is_hidden(a, "ty") and a.lock_location[1]
-    bpy.ops.maya_kit.cb_show_all()
+    bpy.ops.allset.cb_show_all()
     assert not cb.is_hidden(a, "ty")
-    bpy.ops.maya_kit.cb_lock(lock=False)
-    bpy.ops.maya_kit.cb_keyable(keyable=False)
+    bpy.ops.allset.cb_lock(lock=False)
+    bpy.ops.allset.cb_keyable(keyable=False)
     assert not cb.is_keyable(a, "rx")
-    bpy.ops.maya_kit.cb_keyable(keyable=True)
+    bpy.ops.allset.cb_keyable(keyable=True)
     assert cb.is_keyable(a, "rx")
     a.location.y, b.location.y = 4.0, 9.0
     a.rotation_euler.x = 0.3
-    bpy.ops.maya_kit.cb_duplicate_values()
+    bpy.ops.allset.cb_duplicate_values()
     assert b.location.y == 4.0 and abs(b.rotation_euler.x - 0.3) < 1e-6
 
 
@@ -210,7 +210,7 @@ def test_inputs_modifier_props():
 def test_layer_new_from_selected():
     a, b = _fresh()
     scene = bpy.context.scene
-    assert bpy.ops.maya_kit.layer_new(selected=True) == {'FINISHED'}
+    assert bpy.ops.allset.layer_new(selected=True) == {'FINISHED'}
     layer = le.layers(scene)[0]
     assert layer.name == "layer1" and set(o.name for o in layer.objects) == {"cb0", "cb1"}
     r = le.root(scene)
@@ -223,7 +223,7 @@ def test_layer_toggles():
     a, b = _fresh()
     scene = bpy.context.scene
     layer = le.new_layer(scene, [a])
-    st = layer.maya_kit_layer
+    st = layer.allset_layer
     st.visible = False
     assert a.hide_viewport and not b.hide_viewport
     st.visible = True
@@ -231,7 +231,7 @@ def test_layer_toggles():
     assert a.hide_select and a.display_type == 'WIRE'
     st.display_type = "REFERENCE"
     assert a.hide_select and a.display_type == 'TEXTURED'
-    bpy.ops.maya_kit.layer_cycle_type(layer=layer.name)
+    bpy.ops.allset.layer_cycle_type(layer=layer.name)
     assert st.display_type == "NORMAL" and not a.hide_select
 
 
@@ -239,7 +239,7 @@ def test_layer_exclusive_membership_and_delete():
     a, b = _fresh()
     scene = bpy.context.scene
     l1 = le.new_layer(scene, [a, b])
-    l1.maya_kit_layer.visible = False
+    l1.allset_layer.visible = False
     l2 = le.new_layer(scene, [a])
     assert a.name not in l1.objects and a.name in l2.objects, "one display layer per object"
     assert not a.hide_viewport, "takes the new layer's state"
@@ -251,7 +251,7 @@ def test_layer_playback_handlers():
     a, b = _fresh()
     scene = bpy.context.scene
     layer = le.new_layer(scene, [a])
-    layer.maya_kit_layer.playback = False
+    layer.allset_layer.playback = False
     le.on_playback_pre(scene)
     assert a.hide_viewport and not b.hide_viewport
     le.on_playback_post(scene)
@@ -263,28 +263,28 @@ def test_layer_assign_remove_select_ops():
     a, b = _fresh()
     scene = bpy.context.scene
     _select([a], a)
-    bpy.ops.maya_kit.layer_new(selected=False)
+    bpy.ops.allset.layer_new(selected=False)
     _select([a, b], a)
-    bpy.ops.maya_kit.layer_assign(remove=False)
+    bpy.ops.allset.layer_assign(remove=False)
     layer = le.active_layer(bpy.context)
     assert len(layer.objects) == 2
     _select([b], b)
-    bpy.ops.maya_kit.layer_assign(remove=True)
+    bpy.ops.allset.layer_assign(remove=True)
     assert [o.name for o in layer.objects] == ["cb0"]
     _select([], None)
-    bpy.ops.maya_kit.layer_select()
+    bpy.ops.allset.layer_select()
     assert [o.name for o in bpy.context.selected_objects] == ["cb0"]
     name, before = layer.name, len(le.layers(scene))
-    bpy.ops.maya_kit.layer_delete()
+    bpy.ops.allset.layer_delete()
     assert len(le.layers(scene)) == before - 1 and name not in bpy.data.collections
 
 
 # --- keymap ------------------------------------------------------------------------------------
 
 def test_slider_keymap_in_front_of_tool_mmb():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     for km_name in maya_patches.SLIDER_TOOL_KEYMAPS:
         first_mmb = next(k for k in kc.keymaps[km_name].keymap_items if k.type == 'MIDDLEMOUSE')
-        assert first_mmb.idname == "maya_kit.cb_virtual_slider", km_name
-    assert any(k.idname == "maya_kit.cb_virtual_slider"
+        assert first_mmb.idname == "allset.cb_virtual_slider", km_name
+    assert any(k.idname == "allset.cb_virtual_slider"
                for k in kc.keymaps["Object Mode"].keymap_items)

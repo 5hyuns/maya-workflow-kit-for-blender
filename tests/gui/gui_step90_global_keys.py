@@ -1,4 +1,4 @@
-"""Step 90 in a real UI (MayaKit layout): Ctrl+X cuts the cube, Ctrl+V pastes it back, Alt+X starts Walk (ESC ends it),
+"""Step 90 in a real UI (Allset layout): Ctrl+X cuts the cube, Ctrl+V pastes it back, Alt+X starts Walk (ESC ends it),
 Alt+2 hides meshes in the view under the mouse, Alt+\\ sets the playback range to the animation range.
 """
 
@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -40,16 +40,16 @@ def modals():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     for o in bpy.context.scene.objects:
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = bpy.data.objects["pCube1"]

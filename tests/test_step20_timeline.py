@@ -12,7 +12,7 @@ time_slider = import_module(kit.MODULE + ".ui.time_slider")
 
 
 def _kmis(km, type, **mods):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km]
     want = {"shift": False, "ctrl": False, "alt": False, **mods}
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items()) and not k.oskey]

@@ -80,7 +80,7 @@ def s_remembered():
     ev('MIDDLEMOUSE', 'PRESS', x=x, y=y)
 
 
-# The nested transform modal (started by maya_kit.manip_mmb on the press) needs a tick
+# The nested transform modal (started by allset.manip_mmb on the press) needs a tick
 # before it sees mouse moves in event simulation: press, moves and release in separate steps.
 @step
 def s_mmb_move():

@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -31,15 +31,15 @@ def redraw():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_wait():
     # --factory-startup: switching app template reloads factory preferences, so the
     # "Maya" keyconfig is not active any more (a user's saved prefs keep it).
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     C["cl"] = import_module(MODULE + ".command_line")
     C["sl"] = import_module(MODULE + ".ui.status_line")
     area, r = view3d()
@@ -72,7 +72,7 @@ def s_rigging():
     prefs().menu_set = 'modelingMenuSet'
     # Open a Maya menu as Blender would (same Menu class the menu bar uses).
     with bpy.context.temp_override(window=win()):
-        bpy.ops.wm.call_menu(name="MAYAKIT_MT_mainMeshMenu")
+        bpy.ops.wm.call_menu(name="ALLSET_MT_mainMeshMenu")
 
 
 @step
@@ -103,7 +103,7 @@ def s_typed():
     res = C["cl"]._result
     check(f"typed command ran: result {res['text']!r}", res["text"].startswith("# Result: ['pCube1'"))
     check("cube created by cmds.polyCube", "pCube1" in bpy.data.objects)
-    check("command field cleared", bpy.context.window_manager.maya_kit_cmd == "")
+    check("command field cleared", bpy.context.window_manager.allset_cmd == "")
     redraw()
 
 
@@ -119,7 +119,7 @@ def s_cmd_shot():
 def s_undo():
     check("Ctrl+Z undoes the whole command (one step)", "pCube1" not in bpy.data.objects)
     # Error result: red field.
-    bpy.context.window_manager.maya_kit_cmd = "polyCube -w 2;"
+    bpy.context.window_manager.allset_cmd = "polyCube -w 2;"
     redraw()
 
 
@@ -155,7 +155,7 @@ def s_release():
     check("Help Line text for the Move tool", "Move Tool" in C["cl"].help_text(bpy.context))
     # Tool switch from a Maya menu item (fails headless: no tool keymaps in -b).
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.menu_tool(tool="builtin.knife", edit=True)
+        bpy.ops.allset.menu_tool(tool="builtin.knife", edit=True)
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
     check("Mesh Tools > Multi-Cut: edit mode + knife tool",
           bpy.context.mode == 'EDIT_MESH' and tool is not None and tool.idname == "builtin.knife")
@@ -165,13 +165,13 @@ def s_release():
     grid = import_module(MODULE + ".ui.maya_grid")
     C["grid"] = grid.visible(v3d)
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.menu_run(op="maya_kit.toggle_grid", props='{}')
+        bpy.ops.allset.menu_run(op="allset.toggle_grid", props='{}')
     check("Display > Grid toggles the viewport grid (Maya grid, step 45)", grid.visible(v3d) != C["grid"])
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.menu_run(op="maya_kit.toggle_grid", props='{}')
+        bpy.ops.allset.menu_run(op="allset.toggle_grid", props='{}')
     C["windows"] = len(bpy.context.window_manager.windows)
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.script_editor()
+        bpy.ops.allset.script_editor()
 
 
 @step
@@ -190,7 +190,7 @@ def s_script_editor():
             bpy.ops.wm.window_close()
     # Tool Settings button: the active tool's settings as a popup.
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.editor_toggle(editor="TOOL_SETTINGS")
+        bpy.ops.allset.editor_toggle(editor="TOOL_SETTINGS")
 
 
 @step
@@ -198,8 +198,8 @@ def s_tool_settings():
     shot("gui_step7_tool_settings.png")
     # step 106: the Tool Settings dock; toggle again to close it
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.editor_toggle(editor="TOOL_SETTINGS")
-    bpy.ops.maya_kit.layout_remove()
+        bpy.ops.allset.editor_toggle(editor="TOOL_SETTINGS")
+    bpy.ops.allset.layout_remove()
 
 
 run()

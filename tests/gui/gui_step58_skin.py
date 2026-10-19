@@ -1,4 +1,4 @@
-"""Step 58 in a real UI, Maya rigging_04 hand order on the MayaKit layout: a cylinder + a three-joint skeleton ->
+"""Step 58 in a real UI, Maya rigging_04 hand order on the Allset layout: a cylinder + a three-joint skeleton ->
 click the skeleton, Shift+click the cylinder (joints first, mesh last) -> Skin > Bind Skin -> Armature modifier + three
 joint groups -> Skin > Paint Skin Weights -> pick joint2 in the influence list -> paint on the mesh -> joint2's weights go
 up.  「계획」 5."""
@@ -14,7 +14,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -70,18 +70,18 @@ def joint2_weight():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     joints = import_module(MODULE + ".operators.joints")
     k = import_module(MODULE + ".operators.units").maya_unit()
     area, r = main_view()
     with bpy.context.temp_override(window=win(), area=area, region=r):
-        bpy.ops.maya_kit.create(kind='CYLINDER')            # pCylinder1: radius 1, height 2 (Maya units)
+        bpy.ops.allset.create(kind='CYLINDER')            # pCylinder1: radius 1, height 2 (Maya units)
         c = bpy.context.active_object
         import bmesh                                        # Maya users add height divisions for skinning
         bm = bmesh.new()
@@ -98,7 +98,7 @@ def s_scene():
         joints.finish(bpy.context, sk, ["joint1", "joint2", "joint3"])
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
-        bpy.ops.maya_kit.frame(selected=False)
+        bpy.ops.allset.frame(selected=False)
     C["k"] = k
 
 

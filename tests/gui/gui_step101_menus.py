@@ -1,6 +1,6 @@
 """Step 101 in a real UI: with a cube selected in object mode the Edit Mesh menu has no greyed mapped item,
 Poke from the menu pokes the whole cube (Maya runs it on every face), the Cache menu has Maya's three
-submenus, the Audio menu is filled; screenshots (MAYA_KIT_GUI_SHOTS)."""
+submenus, the Audio menu is filled; screenshots (ALLSET_GUI_SHOTS)."""
 
 import os
 import sys
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -34,7 +34,7 @@ def esc():
 def s_setup():
     setup()
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     C["cube"] = bpy.context.view_layer.objects.active
     check("object mode with a cube", bpy.context.mode == 'OBJECT' and C["cube"] is not None)
 
@@ -58,7 +58,7 @@ def s_edit_mesh_shot():
 @step
 def s_poke():
     with bpy.context.temp_override(window=win()):
-        res = bpy.ops.maya_kit.menu_item('INVOKE_DEFAULT', item="Edit Mesh/Poke")
+        res = bpy.ops.allset.menu_item('INVOKE_DEFAULT', item="Edit Mesh/Poke")
     check("Poke from the menu in object mode runs", res == {'FINISHED'})
     check("Poke made 24 faces (Maya pokes every face)", len(C["cube"].data.polygons) == 24)
     check("still in object mode", bpy.context.mode == 'OBJECT')

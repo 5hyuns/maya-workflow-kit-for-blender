@@ -92,7 +92,7 @@ def test_poll_modes_and_tools():
     try:
         for tid, want in (("builtin.select_box", True), ("builtin.select_lasso", True), ("builtin.move", True),
                           ("builtin.rotate", True), ("builtin.scale", True), ("builtin.knife", False),
-                          ("builtin.extrude_region", False), ("maya_kit.target_weld_tool", True)):
+                          ("builtin.extrude_region", False), ("allset.target_weld_tool", True)):
             pre.tool_id = lambda _c, t=tid: t
             for mode in ('VERT', 'EDGE', 'FACE'):
                 bpy.ops.mesh.select_mode(type=mode)

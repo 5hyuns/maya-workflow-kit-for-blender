@@ -1,7 +1,15 @@
 # Changelog
 
-All notable changes to Maya Kit. Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
+All notable changes to Allset for Maya Users (called Maya Kit before step 111). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/). Step documents: <n>.md`.
+
+## [Unreleased]
+
+### Changed
+- **Renamed to Allset for Maya Users** (step 111, ): extension id `allset`, tagline "The whole Maya
+  workflow in Blender, in one install", Python package `src/allset`, operator / class prefixes `allset.` /
+  `ALLSET_`, app template `Allset` (an old `MayaKit` template install is removed), keymap "Maya-style", theme
+  "Studio Grey (Maya-inspired)", Help > Blender Extensions; trademark notice in the README and the preferences.
 
 ## [0.1.0] — 2026-10-16
 

@@ -135,7 +135,7 @@ def test_hotbox_rows_stay_in_bounds():
 
 
 def _kmis(km, type, **mods):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km]
     want = {"shift": False, "ctrl": False, "alt": False, **mods}
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items()) and not k.oskey]
@@ -143,8 +143,8 @@ def _kmis(km, type, **mods):
 
 def test_frame_keys():
     f = _kmis("3D View", "F")
-    assert [k.idname for k in f] == ["maya_kit.frame"] and f[0].properties.selected
+    assert [k.idname for k in f] == ["allset.frame"] and f[0].properties.selected
     cf = _kmis("3D View", "F", ctrl=True, shift=True)
-    assert [k.idname for k in cf] == ["maya_kit.frame_all_views"]
+    assert [k.idname for k in cf] == ["allset.frame_all_views"]
     assert cf[0].properties.selected and cf[0].properties.children
-    assert [k.idname for k in _kmis("3D View", "F", shift=True)] == ["maya_kit.frame_all_views"]
+    assert [k.idname for k in _kmis("3D View", "F", shift=True)] == ["allset.frame_all_views"]

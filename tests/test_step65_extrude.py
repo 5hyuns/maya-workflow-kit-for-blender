@@ -139,13 +139,13 @@ def _top_z(ob):
 
 def test_extrude_operator_and_node_name():
     ob = _cube_top_selected()
-    assert bpy.ops.maya_kit.extrude() == {'FINISHED'}
+    assert bpy.ops.allset.extrude() == {'FINISHED'}
     assert _counts(ob) == (12, 10)
     o, rec = ex.active(bpy.context)
     assert o is ob and rec.name == "polyExtrudeFace1" and rec.params == ex.DEFAULTS, rec and rec.params
     assert ex.caps_selected(ob, rec)
     # a second extrusion is a new node
-    assert bpy.ops.maya_kit.extrude(local_translate_z=0.5) == {'FINISHED'}
+    assert bpy.ops.allset.extrude(local_translate_z=0.5) == {'FINISHED'}
     _o, rec = ex.active(bpy.context)
     assert rec.name == "polyExtrudeFace2" and abs(_top_z(ob) - 1.0) < 1e-6
     # no faces selected: nothing for the face extrusion (Ctrl+E then drags edges / vertices)
@@ -153,7 +153,7 @@ def test_extrude_operator_and_node_name():
     for f in bm.faces:
         f.select_set(False)
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.extrude() == {'CANCELLED'}
+    assert bpy.ops.allset.extrude() == {'CANCELLED'}
 
 
 def test_maya_units_in_cm_scene():
@@ -163,7 +163,7 @@ def test_maya_units_in_cm_scene():
     us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
     try:
         unit = units.maya_unit(bpy.context.scene)
-        assert bpy.ops.maya_kit.extrude(local_translate_z=0.5) == {'FINISHED'}
+        assert bpy.ops.allset.extrude(local_translate_z=0.5) == {'FINISHED'}
         assert abs(_top_z(ob) - (0.5 + 0.5 * unit)) < 1e-6, (_top_z(ob), unit)
     finally:
         us.system, us.length_unit, us.scale_length = old
@@ -171,7 +171,7 @@ def test_maya_units_in_cm_scene():
 
 def test_edit_last_extrusion_and_states():
     ob = _cube_top_selected()
-    bpy.ops.maya_kit.extrude()
+    bpy.ops.allset.extrude()
     assert ex.set_params(bpy.context, local_translate_z=0.5) == {'FINISHED'}
     assert abs(_top_z(ob) - 1.0) < 1e-6 and _counts(ob) == (12, 10)
     assert ex.set_params(bpy.context, divisions=2) == {'FINISHED'}
@@ -189,12 +189,12 @@ def test_edit_last_extrusion_and_states():
     bm.verts[rec.cap_verts[0]].co.z += 0.3
     bmesh.update_edit_mesh(ob.data)
     assert ex.active(bpy.context) == (None, None)
-    assert bpy.ops.maya_kit.extrude_edit(divisions=3) == {'CANCELLED'}
+    assert bpy.ops.allset.extrude_edit(divisions=3) == {'CANCELLED'}
 
 
 def test_preview_then_edit_is_one_result():
     ob = _cube_top_selected()
-    bpy.ops.maya_kit.extrude()
+    bpy.ops.allset.extrude()
     o, rec = ex.active(bpy.context)
     unit = units.maya_unit(bpy.context.scene)
     ex.preview(ob, rec, dict(rec.params, thickness=0.25), unit)
@@ -205,28 +205,28 @@ def test_preview_then_edit_is_one_result():
 
 
 def test_redo_keeps_node_name():
-    """Adjust Last Operation re-runs maya_kit.extrude on the mesh before it: same polyExtrudeFace1."""
+    """Adjust Last Operation re-runs allset.extrude on the mesh before it: same polyExtrudeFace1."""
     ob = _cube_top_selected()
-    bpy.ops.maya_kit.extrude()
+    bpy.ops.allset.extrude()
     _o, rec = ex.active(bpy.context)
     bm = bmesh.from_edit_mesh(ob.data)
     ex.restore_pre(bm, rec)
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.extrude(thickness=0.2) == {'FINISHED'}
+    assert bpy.ops.allset.extrude(thickness=0.2) == {'FINISHED'}
     _o, rec = ex.active(bpy.context)
     assert rec.name == "polyExtrudeFace1" and bpy.context.scene[ex.COUNTER] == 1
 
 
 def test_bindings_and_menus():
-    action = ("v3d", "maya_kit.extrude", {})
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps["Mesh"]
+    action = ("v3d", "allset.extrude", {})
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
     ce = [k.idname for k in km.keymap_items if k.type == 'E' and k.ctrl and not k.shift and not k.alt and k.active]
-    assert ce == ["maya_kit.extrude"], ce
+    assert ce == ["allset.extrude"], ce
     assert menu_map.MAP["Edit Mesh/Extrude"] == action
     assert shelf_map.BY_COMMAND["PolyExtrude"][0] == action
     radial = mm.SHIFT_FACE.radial["S"]
     assert radial == ("Extrude Face", action), radial
-    assert mapping.ENTRIES["PolyExtrude"]["check"][1] == "maya_kit.extrude"
+    assert mapping.ENTRIES["PolyExtrude"]["check"][1] == "allset.extrude"
 
 
 # --- Channel Box INPUTS, In-View Editor --------------------------------------------------------------
@@ -237,8 +237,8 @@ in_view = import_module(kit.MODULE + ".ui.in_view")
 def test_channel_box_rows_edit_the_last_extrusion():
     """modeling_04: INPUTS > polyExtrudeFace1 > Local Translate Z 0.5, Divisions 2."""
     ob = _cube_top_selected()
-    bpy.ops.maya_kit.extrude()
-    hist = bpy.context.window_manager.maya_kit_history
+    bpy.ops.allset.extrude()
+    hist = bpy.context.window_manager.allset_history
     assert in_view.cb_record(bpy.context, ob).name == "polyExtrudeFace1"
     assert hist.local_translate_z_text == "0" and hist.divisions_text == "1" and hist.keep_faces_together_text == "on"
     hist.local_translate_z_text = "0.5"
@@ -271,8 +271,8 @@ def test_in_view_layout():
 
 
 def test_ui_registered():
-    assert bpy.ops.maya_kit.inview_drag.get_rna_type() is not None
-    assert bpy.ops.maya_kit.extrude_drag.get_rna_type() is not None
-    assert bpy.ops.maya_kit.inview_type.get_rna_type() is not None
+    assert bpy.ops.allset.inview_drag.get_rna_type() is not None
+    assert bpy.ops.allset.extrude_drag.get_rna_type() is not None
+    assert bpy.ops.allset.inview_type.get_rna_type() is not None
     assert in_view._state["handle"] is not None
     assert not in_view.manip_visible(bpy.context), "no 3D View in the background"

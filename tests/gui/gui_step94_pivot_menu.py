@@ -1,4 +1,4 @@
-"""Step 94 in a real UI (MayaKit layout): with a custom pivot on pCube1, hold D, hold RMB = the pivot menu (Maya
+"""Step 94 in a real UI (Allset layout): with a custom pivot on pCube1, hold D, hold RMB = the pivot menu (Maya
 buildObjectMenuItemsNow edit-mode branch), drag south + release = Reset Pivot (delta_location back to 0), release D =
 pivot edit off. """
 
@@ -12,7 +12,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 DRAG = 120
 
@@ -24,16 +24,16 @@ def cube():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     import_module(MODULE + ".operators.freeze").shift_pivot(cube(), Vector((1.0, 0.0, 0.0)))   # custom pivot
     for o in bpy.context.scene.objects:
         o.select_set(o.name == "pCube1")

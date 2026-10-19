@@ -1,4 +1,4 @@
-"""Step 21 in a real UI: in the MayaKit layout (m + cm display) the shelf cube and
+"""Step 21 in a real UI: in the Allset layout (m + cm display) the shelf cube and
 ``cmds.polyCube()`` are the same 1 cm cube, seen by Maya's persp view; Channel Box
 and Attribute Editor show Maya's numbers (cm); screenshots."""
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
 
@@ -52,15 +52,15 @@ def goto_tab(category, then):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_loaded():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     units = import_module(MODULE + ".operators.units")
-    check(f"MayaKit layout: 1 Maya unit = 0.01 BU (m + cm, ) ({units.maya_unit():.4f})",
+    check(f"Allset layout: 1 Maya unit = 0.01 BU (m + cm, ) ({units.maya_unit():.4f})",
           abs(units.maya_unit() - 0.01) < 1e-6)
     area = main_view()
     shelf_map = import_module(MODULE + ".ui.shelf_map")
@@ -73,7 +73,7 @@ def s_loaded():
     cmds.move(2, 0, 0, C["cmds_cube"])
     cmds.select("pCube1")
     area.spaces.active.show_region_ui = True
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     redraw()
 
 
@@ -99,8 +99,8 @@ def s_cb_ready():
 @step
 def s_cb_shot():
     shot("gui_step21_channel_box.png")
-    bpy.context.window_manager.maya_kit_dock = 'ATTRIBUTE_EDITOR'
-    bpy.context.window_manager.maya_kit_ae_tab = "T"    # transform node: Translate in cm
+    bpy.context.window_manager.allset_dock = 'ATTRIBUTE_EDITOR'
+    bpy.context.window_manager.allset_ae_tab = "T"    # transform node: Translate in cm
     redraw()
 
 
@@ -112,7 +112,7 @@ def s_ae_redraw():
 @step
 def s_ae_shot():
     shot("gui_step21_attribute_editor.png")
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
 
 
 @step

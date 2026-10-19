@@ -1,4 +1,4 @@
-"""Step 73 in a real UI (MayaKit layout): red key ticks on the Time Slider at the keyed frames, and the
+"""Step 73 in a real UI (Allset layout): red key ticks on the Time Slider at the keyed frames, and the
 Range Slider bar dragged like Maya's (segment = move, end handle = that end, double-click = whole range).
 """
 
@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -52,16 +52,16 @@ def pixel(path, x, y):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     ob = bpy.data.objects["pCube1"]
     sc = bpy.context.scene
     sc.frame_start, sc.frame_end = 1, 200

@@ -1,4 +1,4 @@
-"""Step 81 in a real UI: the MayaKit layout's persp view has Maya's angle (lens 70 = 54.4 deg), a Maya pCube1 looks the
+"""Step 81 in a real UI: the Allset layout's persp view has Maya's angle (lens 70 = 54.4 deg), a Maya pCube1 looks the
 size it does in Maya's new scene, Four View keeps the angle, Ctrl+Shift+C makes a 35 mm camera.
 """
 
@@ -13,7 +13,7 @@ from mathutils import Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, screenshot, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -30,15 +30,15 @@ def override():
 @step
 def s_start():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     with override():
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     for o in bpy.context.selected_objects:
         o.select_set(False)
     area, region = view3d()

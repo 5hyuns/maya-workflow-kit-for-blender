@@ -45,14 +45,14 @@ def hover_view():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.keymap_activate()
+    bpy.ops.allset.create(kind='CUBE')
     ob = C["ob"] = bpy.context.active_object
     for f, x, rz in ((1, 0.0, 0.0), (20, 0.1, 1.5)):
         ob.location.x = x

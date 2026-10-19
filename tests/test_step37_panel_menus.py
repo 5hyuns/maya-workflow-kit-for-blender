@@ -88,7 +88,7 @@ def test_header_draws_maya_menus():
 def test_collapsed_header_is_one_menu():
     log = []
     bpy.types.VIEW3D_MT_editor_menus.draw_collapsible(Ctx(_space(), show_menus=False), Layout(log))
-    assert log == [("menu", "MAYAKIT_MT_panel_bar", "", 'COLLAPSEMENU')], log
+    assert log == [("menu", "ALLSET_MT_panel_bar", "", 'COLLAPSEMENU')], log
 
 
 def test_preference_off_draws_blender_menus():

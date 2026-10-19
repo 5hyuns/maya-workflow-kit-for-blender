@@ -1,4 +1,4 @@
-"""Step 96 in a real UI: Maya object sets in the MayaKit layout's Outliner.
+"""Step 96 in a real UI: Maya object sets in the Allset layout's Outliner.
 
 Three cubes, two selected -> Create > Sets > Set (the Maya menu item) -> a `set1` row under the DAG rows of
 Blender's Outliner (kit overlay, ui/outliner_sets.py) -> click = the members are selected, Ctrl+click toggles,
@@ -14,7 +14,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, tap  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -64,23 +64,23 @@ def shot(name):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_cubes():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         for _ in range(3):
-            bpy.ops.maya_kit.create(kind='CUBE')
+            bpy.ops.allset.create(kind='CUBE')
     for o in bpy.context.scene.objects:
         o.select_set(o.name in {"pCube1", "pCube2"})
     bpy.context.view_layer.objects.active = bpy.data.objects["pCube2"]
     with bpy.context.temp_override(window=win(), area=area, region=region):
         check("Create > Sets > Set through the Maya menu item",
-              bpy.ops.maya_kit.menu_item(item="Create/Sets/Set") == {'FINISHED'})
+              bpy.ops.allset.menu_item(item="Create/Sets/Set") == {'FINISHED'})
     s = mod("operators.sets").get("set1")
     check(f"set1 holds pCube1 pCube2, selection kept ({selected()})",
           s is not None and {o.name for o in s.objects} == {"pCube1", "pCube2"} and selected() == {"pCube1", "pCube2"})
@@ -127,7 +127,7 @@ def s_expanded():
     s = mod("operators.sets").get("set1")
     r = rows()
     check(f"triangle shows the members ({[(x[2], x[4]) for x in r]})",
-          s.maya_kit_expanded and [x[2] for x in r] == ['SET', 'MEMBER', 'MEMBER'])
+          s.allset_expanded and [x[2] for x in r] == ['SET', 'MEMBER', 'MEMBER'])
     redraw()
 
 
@@ -150,8 +150,8 @@ def s_member_done():
 @step
 def s_menu_open():
     shot("gui_step96_set_menu.png")
-    check(f"RMB on the set row targets set1 (menu {bpy.context.window_manager.maya_kit_set_target!r})",
-          bpy.context.window_manager.maya_kit_set_target == "set1")
+    check(f"RMB on the set row targets set1 (menu {bpy.context.window_manager.allset_set_target!r})",
+          bpy.context.window_manager.allset_set_target == "set1")
     tap('ESC')
 
 

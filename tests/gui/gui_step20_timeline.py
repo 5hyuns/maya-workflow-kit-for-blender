@@ -1,4 +1,4 @@
-"""Step 20 in a real UI: . , Alt+. Alt+, over the 3D View and the Timeline; MayaKit template
+"""Step 20 in a real UI: . , Alt+. Alt+, over the 3D View and the Timeline; Allset template
 timeline shows the playback range and follows it; Range Slider header."""
 
 import os
@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -88,8 +88,8 @@ def s_prev_frame():
 @step
 def s_timeline_key():
     check(f"'.' over the Timeline: next key ({scene().frame_current})", scene().frame_current == 10)
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
@@ -106,7 +106,7 @@ def s_template_wait():
 @step
 def s_template_range():
     s = scene()
-    check(f"MayaKit ranges: animation {s.frame_start}-{s.frame_end}, playback "
+    check(f"Allset ranges: animation {s.frame_start}-{s.frame_end}, playback "
           f"{s.frame_preview_start}-{s.frame_preview_end}",
           (s.frame_start, s.frame_end, s.use_preview_range, s.frame_preview_start, s.frame_preview_end)
           == (1, 200, True, 1, 120))

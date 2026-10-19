@@ -1,10 +1,10 @@
-"""Generate the MayaKit app template splash images.
+"""Generate the Allset app template splash images.
 
     python tools/make_splash.py     # re-runs itself in `blender -b --factory-startup`
 
-Writes src/maya_kit/app_template/MayaKit/splash.png (1000x500) and splash_2x.png (2000x1000):
-Blender shows them as the splash screen while the MayaKit template is active; and
-src/maya_kit/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square). The artwork is the kit's own (: no Maya image or logo): Maya's
+Writes src/allset/app_template/Allset/splash.png (1000x500) and splash_2x.png (2000x1000):
+Blender shows them as the splash screen while the Allset template is active; and
+src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square). The artwork is the kit's own (: no Maya image or logo): Maya's
 panel grey and highlight blue ( ui_palette_qt), three wire cubes in Maya's
 dormant blue / lead green / selected white (displayColor 5 / 19 / 16), Blender's bundled font.
 Rendered with Workbench (flat lighting, object colours, Standard view transform).
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit"
+OUT = ROOT / "src" / "allset" / "app_template" / "Allset"
 
 
 def srgb(h):
@@ -118,9 +118,11 @@ def main():
         colour(ob, hex_colour)
     # Text (Blender's bundled font)
     title = len(bpy.data.objects)
-    text("Maya Kit", 0.6, 1.0, 1.9, TEXT)
-    text("Maya 2022 workflow for Blender 4.5", 0.65, -0.3, 0.55, TEXT_DIM)
-    text("keymap · hotbox · marking menus · Channel Box · layout", 0.65, -1.2, 0.36, TEXT_DIM)
+    text("Allset", 0.6, 1.0, 1.9, TEXT)
+    # Step 111 (, docs/distribution/naming.md): the whole workflow in one install, Maya only as the audience
+    text("for Maya users", 0.65, -0.3, 0.55, TEXT_DIM)
+    text("The whole Maya workflow in Blender, in one install", 0.65, -1.1, 0.3, TEXT_DIM)
+    text("hotbox · marking menus · Channel Box · shelves", 0.65, -1.8, 0.3, TEXT_DIM)
     text("Not affiliated with or endorsed by Autodesk. Maya is a trademark of Autodesk, Inc.",
          0.0, -4.7, 0.3, TEXT_SMALL, align='CENTER')
 

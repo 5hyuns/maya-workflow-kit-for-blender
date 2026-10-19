@@ -1,4 +1,4 @@
-"""Step 104 in a real UI: the MayaKit layout, pCube1 keyed like the audit-7 scene (translateX 0 -> 5 at 1 / 24,
+"""Step 104 in a real UI: the Allset layout, pCube1 keyed like the audit-7 scene (translateX 0 -> 5 at 1 / 24,
 translateY 3 at 12), Windows > Animation Editors > Graph Editor / Dope Sheet and UV > UV Editor in new windows ->
 Maya menu bars, icon rows, channel names, UV Toolkit (screenshots for )."""
 
@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, setup, step, win  # noqa: E402
 
 GUI_TIMEOUT = 240
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -34,7 +34,7 @@ def v3d():
 def menu(path):
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        return bpy.ops.maya_kit.menu_item(item=path)
+        return bpy.ops.allset.menu_item(item=path)
 
 
 def editor(ui_type):
@@ -62,17 +62,17 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.make_maya(open_layout=False)
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.make_maya(open_layout=False)
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     ob = bpy.context.active_object
     k = mod(".operators.units").maya_unit()
     sc = bpy.context.scene

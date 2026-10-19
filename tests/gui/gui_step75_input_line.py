@@ -1,4 +1,4 @@
-"""Step 75 in a real UI (MayaKit layout): type into the Status Line input line like a Maya user —
+"""Step 75 in a real UI (Allset layout): type into the Status Line input line like a Maya user —
 Absolute X = 10 moves pCube1 to x = 10 cm, Rename "crate", Select by name "pSph*". 
 
 Python can't tell where a header layout put a field, so the test finds it: it moves the mouse along the
@@ -13,7 +13,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"scan": None}
 STEP_PX = 12
 
@@ -30,7 +30,7 @@ def strip():
 
 
 def inp():
-    return bpy.context.scene.maya_kit_input
+    return bpy.context.scene.allset_input
 
 
 def redraw():
@@ -79,17 +79,17 @@ def scanner(prop, key, steps=140):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
-        bpy.ops.maya_kit.create(kind='SPHERE')
+        bpy.ops.allset.create(kind='CUBE')
+        bpy.ops.allset.create(kind='SPHERE')
     for o in bpy.context.view_layer.objects:
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = bpy.data.objects["pCube1"]
@@ -97,7 +97,7 @@ def s_scene():
     redraw()
 
 
-scanner("maya_kit_input.x", "x_field")
+scanner("allset_input.x", "x_field")
 
 
 @step
@@ -132,7 +132,7 @@ def s_abs_done():
     redraw()
 
 
-scanner("maya_kit_input.text", "text_field")
+scanner("allset_input.text", "text_field")
 
 
 @step

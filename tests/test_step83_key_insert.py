@@ -113,13 +113,13 @@ def test_insert_key_channels_only_existing_curves():
     bpy.context.scene.frame_set(7)
     rot = cb._fcurves(ob).find("rotation_euler", index=2)
     rv = rot.evaluate(7)
-    assert bpy.ops.maya_kit.insert_key(channels='ROTATE') == {'FINISHED'}
+    assert bpy.ops.allset.insert_key(channels='ROTATE') == {'FINISHED'}
     assert ki._at(rot, 7) is not None and abs(rot.evaluate(7) - rv) < 1e-5
     assert ki._at(fc, 7) is None                       # translate untouched
     assert cb._fcurves(ob).find("scale", index=0) is None
-    assert bpy.ops.maya_kit.insert_key(channels='SCALE') == {'CANCELLED'}     # no scale curves: none made
+    assert bpy.ops.allset.insert_key(channels='SCALE') == {'CANCELLED'}     # no scale curves: none made
     assert cb._fcurves(ob).find("scale", index=0) is None
-    assert bpy.ops.maya_kit.insert_key(channels='ALL') == {'FINISHED'}
+    assert bpy.ops.allset.insert_key(channels='ALL') == {'FINISHED'}
     assert ki._at(fc, 7) is not None
 
 
@@ -154,15 +154,15 @@ def test_move_keys_overwrites_and_nudge_follows_time():
     ob, fc = _animated()
     sc = bpy.context.scene
     sc.frame_set(10)
-    bpy.context.window_manager.maya_kit_time_range_on = False
-    assert bpy.ops.maya_kit.nudge_keys(delta=1) == {'FINISHED'}
+    bpy.context.window_manager.allset_time_range_on = False
+    assert bpy.ops.allset.nudge_keys(delta=1) == {'FINISHED'}
     assert [round(kp.co.x) for kp in fc.keyframe_points] == [1, 11, 20, 30] and sc.frame_current == 11
-    assert bpy.ops.maya_kit.nudge_keys(delta=1) == {'FINISHED'}       # again: the key follows
+    assert bpy.ops.allset.nudge_keys(delta=1) == {'FINISHED'}       # again: the key follows
     assert ki._at(fc, 12) is not None and sc.frame_current == 12
-    assert bpy.ops.maya_kit.nudge_keys(delta=-1) == {'FINISHED'}
+    assert bpy.ops.allset.nudge_keys(delta=-1) == {'FINISHED'}
     assert ki._at(fc, 11) is not None
     sc.frame_set(5)
-    assert bpy.ops.maya_kit.nudge_keys(delta=1) == {'CANCELLED'}      # no key at this time
+    assert bpy.ops.allset.nudge_keys(delta=1) == {'CANCELLED'}      # no key at this time
 
 
 def test_select_next_previous_key():
@@ -185,21 +185,21 @@ def test_select_next_previous_key():
 
 
 def test_keymap_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     km = kc.keymaps["Screen"]
 
     def find(t, **mods):
         return [k for k in km.keymap_items if k.active and k.type == t and k.value == 'PRESS'
                 and all(getattr(k, m) == mods.get(m, False) for m in ("shift", "ctrl", "alt"))]
-    for t, mods, idname, prop, val in (("I", {"alt": True}, "maya_kit.insert_key", "channels", "ALL"),
-                                       ("W", {"ctrl": True, "shift": True}, "maya_kit.insert_key", "channels", "TRANSLATE"),
-                                       ("E", {"ctrl": True, "shift": True}, "maya_kit.insert_key", "channels", "ROTATE"),
-                                       ("R", {"ctrl": True, "shift": True}, "maya_kit.insert_key", "channels", "SCALE"),
-                                       ("NINE", {"shift": True}, "maya_kit.nudge_keys", "delta", -1),
-                                       ("ZERO", {"shift": True}, "maya_kit.nudge_keys", "delta", 1),
-                                       ("COMMA", {"ctrl": True, "alt": True}, "maya_kit.select_key", "direction", "PREVIOUS"),
-                                       ("PERIOD", {"ctrl": True, "alt": True}, "maya_kit.select_key", "direction", "NEXT")):
+    for t, mods, idname, prop, val in (("I", {"alt": True}, "allset.insert_key", "channels", "ALL"),
+                                       ("W", {"ctrl": True, "shift": True}, "allset.insert_key", "channels", "TRANSLATE"),
+                                       ("E", {"ctrl": True, "shift": True}, "allset.insert_key", "channels", "ROTATE"),
+                                       ("R", {"ctrl": True, "shift": True}, "allset.insert_key", "channels", "SCALE"),
+                                       ("NINE", {"shift": True}, "allset.nudge_keys", "delta", -1),
+                                       ("ZERO", {"shift": True}, "allset.nudge_keys", "delta", 1),
+                                       ("COMMA", {"ctrl": True, "alt": True}, "allset.select_key", "direction", "PREVIOUS"),
+                                       ("PERIOD", {"ctrl": True, "alt": True}, "allset.select_key", "direction", "NEXT")):
         items = [k for k in find(t, **mods) if k.idname == idname]
         assert len(items) == 1 and getattr(items[0].properties, prop) == val, (t, mods)
     names = [a[1] for a in patches.ADDED]
-    assert names.count("maya_kit.insert_key") == 4 and names.count("maya_kit.nudge_keys") == 2
+    assert names.count("allset.insert_key") == 4 and names.count("allset.nudge_keys") == 2

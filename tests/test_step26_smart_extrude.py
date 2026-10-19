@@ -127,7 +127,7 @@ def test_hold_menu_check_boxes():
                 assert engine.is_toggle(action), (menu.name, label)
                 assert engine.Layout._text(label, action).endswith("    "), "room for the box"
     prefs = preferences.get()
-    action = ("maya_kit.manip_option", {"option": 'SMART_EXTRUDE'})
+    action = ("allset.manip_option", {"option": 'SMART_EXTRUDE'})
     assert draw.checked(action) is True
     prefs.smart_extrude = False
     assert draw.checked(action) is False
@@ -135,4 +135,4 @@ def test_hold_menu_check_boxes():
     ts = bpy.context.scene.tool_settings
     uv = ("wm.context_toggle", {"data_path": "scene.tool_settings.use_transform_correct_face_attributes"})
     assert draw.checked(uv) is ts.use_transform_correct_face_attributes
-    assert draw.checked(("maya_kit.editor_toggle", {"editor": 'TOOL_SETTINGS'})) is None
+    assert draw.checked(("allset.editor_toggle", {"editor": 'TOOL_SETTINGS'})) is None

@@ -10,7 +10,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, px, run, screenshot, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
 # checked in gui_step63_explore*.png (1600 x 900, scale 1.25, sidebar UI region (971, 94, 350, 709)):
@@ -89,7 +89,7 @@ def s_setup():
     setup()
     bpy.data.objects["Cube"].name = "pCube1"
     view3d()[0].spaces.active.show_region_ui = True
-    bpy.context.window_manager.maya_kit_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     redraw()
 
 
@@ -128,8 +128,8 @@ def mtk_icon():
 
 def s_check_dock():
     wm = bpy.context.window_manager
-    check(f"Status Line MTK icon -> Modeling Toolkit in the dock (got {wm.maya_kit_dock})",
-          wm.maya_kit_dock == 'MODELING_TOOLKIT')
+    check(f"Status Line MTK icon -> Modeling Toolkit in the dock (got {wm.allset_dock})",
+          wm.allset_dock == 'MODELING_TOOLKIT')
     redraw()
 
 
@@ -162,7 +162,7 @@ def s_check_extrude():
 
 def s_check_object_mode():
     check(f"MTK Object icon -> object mode (got {bpy.context.mode})", bpy.context.mode == 'OBJECT')
-    bpy.ops.maya_kit.create(kind='SPHERE')
+    bpy.ops.allset.create(kind='SPHERE')
     sphere = bpy.context.active_object
     sphere.location.x = 3.0
     cube = bpy.data.objects["pCube1"]

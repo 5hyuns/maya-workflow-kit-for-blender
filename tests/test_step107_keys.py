@@ -21,7 +21,7 @@ ROOT = Path(kit.__file__).resolve().parent.parent
 
 
 def _keymap():
-    return bpy.context.window_manager.keyconfigs["Maya"].keymaps
+    return bpy.context.window_manager.keyconfigs["Maya-style"].keymaps
 
 
 def _items(km, t, **mods):
@@ -45,13 +45,13 @@ def _none(km, t, idname, **mods):
 def test_alt_r_is_reflection_not_clear_scale():
     _none("Object Mode", 'R', "object.scale_clear", alt=True)
     _none("Pose", 'R', "pose.scale_clear", alt=True)
-    _one("3D View", 'R', "maya_kit.symmetry", {"mode": 'TOGGLE'}, alt=True)
+    _one("3D View", 'R', "allset.symmetry", {"mode": 'TOGGLE'}, alt=True)
     scene = bpy.context.scene
     sym = symmetry.state(scene)
     before = sym.on
-    assert bpy.ops.maya_kit.symmetry(mode='TOGGLE') == {'FINISHED'}
+    assert bpy.ops.allset.symmetry(mode='TOGGLE') == {'FINISHED'}
     assert sym.on != before
-    bpy.ops.maya_kit.symmetry(mode='TOGGLE')
+    bpy.ops.allset.symmetry(mode='TOGGLE')
     assert sym.on == before
 
 
@@ -72,7 +72,7 @@ def test_f1_is_help():
 
 def test_alt_c_and_m_lose_blender_tools():
     _none("Mesh", 'C', "wm.tool_set_by_id", alt=True)
-    _one("Weight Paint", 'C', "maya_kit.color_feedback", alt=True)
+    _one("Weight Paint", 'C', "allset.color_feedback", alt=True)
     for km in ("Object Mode", "Mesh", "Pose", "Curve", "Armature"):
         assert not [k for k in _items(km, 'M') if k.idname == "wm.tool_set_by_id"
                     and k.properties.name == "builtin.measure"], km
@@ -105,7 +105,7 @@ def test_pick_walk_in_out_and_no_preferences_key():
 # --- missing keys ------------------------------------------------------------------------------------------------
 
 def test_menu_bar_keys():
-    _one("Screen", 'M', "maya_kit.main_menubar_toggle", ctrl=True)
+    _one("Screen", 'M', "allset.main_menubar_toggle", ctrl=True)
     _one("Screen", 'M', "wm.context_toggle", {"data_path": "area.show_menus"}, shift=True)
     _one("3D View", 'M', "wm.context_toggle", {"data_path": "space_data.show_region_header"}, ctrl=True, shift=True)
     # Ctrl+M folds the top bar menus (the area the kit menu bar draws in)
@@ -115,14 +115,14 @@ def test_menu_bar_keys():
         status_line._top_bars[window.as_pointer()] = fake
         try:
             with bpy.context.temp_override(window=window):
-                assert bpy.ops.maya_kit.main_menubar_toggle() == {'FINISHED'}
+                assert bpy.ops.allset.main_menubar_toggle() == {'FINISHED'}
             assert fake.show_menus is False
         finally:
             status_line._top_bars.pop(window.as_pointer(), None)
 
 
 def test_background_cycle_follows_maya():
-    _one("3D View", 'B', "maya_kit.cycle_background", alt=True)
+    _one("3D View", 'B', "allset.cycle_background", alt=True)
     sh = bpy.context.scene.display.shading     # a View3DShading like a 3D View's
     sh.background_type = 'THEME'
     assert kb3.cycle_background(sh) == "LIGHT" and sh.background_type == 'VIEWPORT'
@@ -132,16 +132,16 @@ def test_background_cycle_follows_maya():
 
 
 def test_skin_paint_keys():
-    _one("Weight Paint", 'U', "wm.call_menu", {"name": "MAYAKIT_MT_paint_operation"})
+    _one("Weight Paint", 'U', "wm.call_menu", {"name": "ALLSET_MT_paint_operation"})
     assert not [k for k in _items("Weight Paint", 'U') if k.idname == "wm.radial_control"]
     k = _one("Weight Paint", 'N', "wm.radial_control")
     assert k.properties.data_path_primary.endswith("brush.weight")
     k = _one("Weight Paint", 'B', "wm.radial_control")
     assert k.properties.data_path_primary.endswith("brush.size")
     _one("Weight Paint", 'F', "paint.weight_set", alt=True)
-    _one("Mesh", 'C', "maya_kit.copy_vertex_weights", ctrl=True, alt=True)
-    _one("Mesh", 'V', "maya_kit.paste_vertex_weights", ctrl=True, alt=True)
-    assert hasattr(bpy.types, "MAYAKIT_MT_paint_operation")
+    _one("Mesh", 'C', "allset.copy_vertex_weights", ctrl=True, alt=True)
+    _one("Mesh", 'V', "allset.paste_vertex_weights", ctrl=True, alt=True)
+    assert hasattr(bpy.types, "ALLSET_MT_paint_operation")
 
 
 def test_sculpt_keys():
@@ -173,35 +173,35 @@ def test_graph_editor_lock_keys():
 
 
 def test_bookmark_keys_and_ranges():
-    _one("Screen", 'T', "maya_kit.bookmark_create", alt=True)
-    _one("Screen", 'T', "maya_kit.bookmark_create", {"quick": True}, alt=True, shift=True)
+    _one("Screen", 'T', "allset.bookmark_create", alt=True)
+    _one("Screen", 'T', "allset.bookmark_create", {"quick": True}, alt=True, shift=True)
     _one("Screen", 'QUOTE', "screen.marker_jump", {"next": True})
     _one("Screen", 'SEMI_COLON', "screen.marker_jump", {"next": False})
-    _one("Screen", 'BACK_SLASH', "maya_kit.bookmark_frame", {"which": 'CURRENT'}, shift=True)
-    _one("Screen", 'QUOTE', "maya_kit.bookmark_frame", {"which": 'NEXT'}, shift=True)
-    _one("Screen", 'SEMI_COLON', "maya_kit.bookmark_frame", {"which": 'PREVIOUS'}, shift=True)
+    _one("Screen", 'BACK_SLASH', "allset.bookmark_frame", {"which": 'CURRENT'}, shift=True)
+    _one("Screen", 'QUOTE', "allset.bookmark_frame", {"which": 'NEXT'}, shift=True)
+    _one("Screen", 'SEMI_COLON', "allset.bookmark_frame", {"which": 'PREVIOUS'}, shift=True)
     scene = bpy.context.scene
     scene.timeline_markers.clear()
     scene.pop(bookmarks.ENDS, None)
     scene.frame_start, scene.frame_end = 1, 120
     wm = bpy.context.window_manager
     # a bookmark from a selected Time Slider range keeps its end
-    wm.maya_kit_time_range, wm.maya_kit_time_range_on = (10, 30), True
-    assert bpy.ops.maya_kit.bookmark_create(quick=True) == {'FINISHED'}
-    wm.maya_kit_time_range_on = False
+    wm.allset_time_range, wm.allset_time_range_on = (10, 30), True
+    assert bpy.ops.allset.bookmark_create(quick=True) == {'FINISHED'}
+    wm.allset_time_range_on = False
     scene.frame_current = 50
-    assert bpy.ops.maya_kit.bookmark_create(quick=True) == {'FINISHED'}
+    assert bpy.ops.allset.bookmark_create(quick=True) == {'FINISHED'}
     names = [m.name for m in bookmarks.markers(scene)]
     assert names == ["bookmark1", "bookmark2"], names
     m1, m2 = bookmarks.markers(scene)
     assert bookmarks.bookmark_range(scene, m1) == (10, 30)
     assert bookmarks.bookmark_range(scene, m2) == (50, 120)      # no range: up to the scene end
     scene.frame_current = 20
-    assert bpy.ops.maya_kit.bookmark_frame(which='CURRENT') == {'FINISHED'}
+    assert bpy.ops.allset.bookmark_frame(which='CURRENT') == {'FINISHED'}
     assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (10, 30)
-    assert bpy.ops.maya_kit.bookmark_frame(which='NEXT') == {'FINISHED'}
+    assert bpy.ops.allset.bookmark_frame(which='NEXT') == {'FINISHED'}
     assert (scene.frame_preview_start, scene.frame_preview_end) == (50, 120) and scene.frame_current == 50
-    assert bpy.ops.maya_kit.bookmark_frame(which='PREVIOUS') == {'FINISHED'}
+    assert bpy.ops.allset.bookmark_frame(which='PREVIOUS') == {'FINISHED'}
     assert scene.frame_current == 10
     scene.use_preview_range = False
     scene.timeline_markers.clear()
@@ -209,7 +209,7 @@ def test_bookmark_keys_and_ranges():
 
 def test_other_keys():
     _one("Screen", 'F', "wm.search_menu", ctrl=True)
-    _one("3D View", 'FIVE', "maya_kit.panel_set", {"key": 'DEFAULT_MATERIAL'}, ctrl=True, shift=True)
+    _one("3D View", 'FIVE', "allset.panel_set", {"key": 'DEFAULT_MATERIAL'}, ctrl=True, shift=True)
     _one("UV Editor", 'SEVEN', "wm.context_toggle", {"data_path": "space_data.uv_editor.show_stretch"})
     _one("UV Editor", 'FIVE', "wm.context_toggle", {"data_path": "space_data.uv_editor.show_faces"})
     assert "show_faces" in bpy.types.SpaceUVEditor.bl_rna.properties

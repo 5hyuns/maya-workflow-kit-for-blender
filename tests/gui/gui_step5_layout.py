@@ -8,7 +8,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, run, step, setup, screenshot, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 
 
 def areas(t):
@@ -18,9 +18,9 @@ def areas(t):
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.maya_kit.layout_install() == {'FINISHED'})
-    check("apply theme", bpy.ops.maya_kit.theme_apply() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
+    check("apply theme", bpy.ops.allset.theme_apply() == {'FINISHED'})
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
@@ -54,8 +54,8 @@ def s_object():
     check("sidebar dock on the Channel Box tab with an object", ui.active_panel_category == "Channel Box / Layer Editor")
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
-    bpy.ops.maya_kit.theme_restore()
-    bpy.ops.maya_kit.layout_remove()
+    bpy.ops.allset.theme_restore()
+    bpy.ops.allset.layout_remove()
 
 
 run()

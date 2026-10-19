@@ -82,9 +82,9 @@ def test_option_box_runs_with_options():
     path = "Create/Polygon Primitives/Cube"
     assert path in menu_data.OPTION_BOXES
     n = len(bpy.data.objects)
-    assert bpy.ops.maya_kit.menu_option_box(item=path) == {'FINISHED'}
+    assert bpy.ops.allset.menu_option_box(item=path) == {'FINISHED'}
     assert len(bpy.data.objects) == n + 1
-    assert bpy.ops.maya_kit.menu_item(item=path) == {'FINISHED'}
+    assert bpy.ops.allset.menu_item(item=path) == {'FINISHED'}
     assert len(bpy.data.objects) == n + 2
 
 
@@ -121,7 +121,7 @@ def test_shelf_row_layout():
 
 
 def test_template_shelf_row():
-    path = ROOT / "src" / "maya_kit" / "app_template" / "MayaKit" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     row = shelf.shelf_row_area(screen)
@@ -157,15 +157,15 @@ def test_status_line_collapse_handles():
         return log
 
     log = draw()
-    handles = [e for e in log if e[1] and e[1][0] == "maya_kit.status_group"]
+    handles = [e for e in log if e[1] and e[1][0] == "allset.status_group"]
     assert len(handles) == len(status_line.GROUPS), handles
     assert all(e[2] == 'GRIP_V' for e in handles)
     assert any(e[2] == 'FILE_NEW' for e in log)
-    assert bpy.ops.maya_kit.status_group(group="FILE") == {'FINISHED'}
+    assert bpy.ops.allset.status_group(group="FILE") == {'FINISHED'}
     try:
         log = draw()
         assert not any(e[2] in ('FILE_NEW', 'LOOP_BACK') for e in log), "File group hidden"
         assert any(e[2] == 'TRIA_RIGHT' for e in log) and any(e[2] == 'RENDER_STILL' for e in log)
     finally:
-        bpy.ops.maya_kit.status_group(group="FILE")
+        bpy.ops.allset.status_group(group="FILE")
     assert any(e[2] == 'FILE_NEW' for e in draw())

@@ -13,7 +13,7 @@ from bpy_extras import view3d_utils
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -89,7 +89,7 @@ def stroke(name, **mods):
 @step
 def s_setup():
     C["mid"] = setup()
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     for o in bpy.context.selected_objects:
         o.select_set(False)
     ob().select_set(True)
@@ -104,7 +104,7 @@ def s_tool():
     check(f"UV > 3D Cut and Sew UV Tool: edit mode, edge mode, the tool ({bpy.context.mode}, "
           f"{tuple(bpy.context.scene.tool_settings.mesh_select_mode)}, {tool_id()})",
           bpy.context.mode == 'EDIT_MESH' and tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, True, False)
-          and tool_id() == "maya_kit.cut_sew_tool")
+          and tool_id() == "allset.cut_sew_tool")
     C["shells0"] = shells()
     bpy.ops.mesh.select_all(action='DESELECT')
 

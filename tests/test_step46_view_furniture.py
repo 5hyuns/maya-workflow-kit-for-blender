@@ -1,5 +1,5 @@
 """Step 46: Maya view furniture maths (ViewCube projection / hit test / face -> view axis, labels, sizes,
-layout) and the MayaKit template flags (Blender navigation gizmo and text info off)."""
+layout) and the Allset template flags (Blender navigation gizmo and text info off)."""
 
 import math
 from importlib import import_module

@@ -1,7 +1,7 @@
 """Step 25: the finest perspective grid step (and so X-hold grid snap) is one Maya unit.
 
 Blender skips grid steps below 1 m in user perspective views and divides by scale_length,
-so ``units.grid_scale`` = metres per display unit. The MayaKit template has it on every 3D
+so ``units.grid_scale`` = metres per display unit. The Allset template has it on every 3D
 view; Maya Units sets and restores it.  The snap itself is
 checked in tests/gui/gui_step25_grid_snap.py.
 """
@@ -22,7 +22,7 @@ def _set(system, unit, scale):
 
 
 def test_grid_scale_per_unit_setting():
-    for setting, want in ((('METRIC', 'CENTIMETERS', 1.0), 0.01),     # MayaKit template
+    for setting, want in ((('METRIC', 'CENTIMETERS', 1.0), 0.01),     # Allset template
                           (('METRIC', 'CENTIMETERS', 0.01), 0.01),    # Maya Units
                           (('METRIC', 'METERS', 1.0), 1.0),           # factory
                           (('METRIC', 'MILLIMETERS', 1.0), 0.001),
@@ -36,7 +36,7 @@ def test_grid_scale_per_unit_setting():
 
 
 def test_template_views_have_cm_grid():
-    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "MayaKit" / "startup.blend"
+    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "Allset" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path))
     views = list(units._views())
     grids = [v.overlay.grid_scale for v in views]

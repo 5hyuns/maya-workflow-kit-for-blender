@@ -105,12 +105,12 @@ def test_greyed_rows_have_tooltips():
     paths = set()
     for kind in ('TRANSLATE', 'ROTATE', 'RESIZE'):
         rec = _draw_all(kind)
-        paths |= {p.item for p in rec.ops("maya_kit.menu_unavailable")}
+        paths |= {p.item for p in rec.ops("allset.menu_unavailable")}
     rec = Recorder()
     tool = SimpleNamespace(idname="builtin.move")
     ts_mod.draw_head(rec, bpy.context, tool)
     assert "Move Tool" in rec.texts("label") and "Reset Tool" in rec.texts("operator")
-    paths |= {p.item for p in rec.ops("maya_kit.menu_unavailable")}
+    paths |= {p.item for p in rec.ops("allset.menu_unavailable")}
     assert len(paths) >= 15, paths
     for path in paths:
         text = notices.tooltip(path, mapped=False)
@@ -133,8 +133,8 @@ def test_dock_hides_blender_tool_panels_only_for_maya_tools():
     finally:
         ts_mod.active_tool = saved
     # the Maya panel polls only in a Properties editor (the dock), never in a 3D View sidebar
-    assert ts_mod.MAYAKIT_PT_tool_settings.poll(SimpleNamespace(space_data=props_space))
-    assert not ts_mod.MAYAKIT_PT_tool_settings.poll(SimpleNamespace(space_data=SimpleNamespace(type='VIEW_3D')))
+    assert ts_mod.ALLSET_PT_tool_settings.poll(SimpleNamespace(space_data=props_space))
+    assert not ts_mod.ALLSET_PT_tool_settings.poll(SimpleNamespace(space_data=SimpleNamespace(type='VIEW_3D')))
 
 
 class _Space:
@@ -166,7 +166,7 @@ def test_dock_recognised_and_not_the_ae_properties():
 def test_toggle_operator_never_opens_a_popup():
     src = open(status_line.__file__, encoding="utf-8").read()
     assert "VIEW3D_PT_active_tool\", keep_open" not in src and "tool_dock.toggle" in src
-    props = bpy.ops.maya_kit.editor_toggle.get_rna_type().properties
+    props = bpy.ops.allset.editor_toggle.get_rna_type().properties
     assert "show" in props
 
 
@@ -178,7 +178,7 @@ def _cube():
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     bpy.context.scene.pop(ex.COUNTER, None)
-    assert bpy.ops.maya_kit.create(kind='CUBE') == {'FINISHED'}
+    assert bpy.ops.allset.create(kind='CUBE') == {'FINISHED'}
     return bpy.context.active_object
 
 
@@ -207,7 +207,7 @@ def test_extrude_record_is_a_history_tab():
         f.select_set(f.normal.z > 0.9)
     bm.select_flush_mode()
     bmesh.update_edit_mesh(ob.data)
-    assert bpy.ops.maya_kit.extrude(local_translate_z=0.5) == {'FINISHED'}
+    assert bpy.ops.allset.extrude(local_translate_z=0.5) == {'FINISHED'}
     t = ae.tabs(ob)
     assert ("H", "polyExtrudeFace1", "polyExtrudeFace") in t and [x[0] for x in t].index("H") == 2, t
     ae.set_tab(bpy.context, "H")
@@ -216,12 +216,12 @@ def test_extrude_record_is_a_history_tab():
     labels = rec.texts("label")
     assert "polyExtrudeFace:" in labels and "polyExtrudeFace1" in labels
     assert "Local Translate Z" in labels and "Thickness" in labels, labels
-    assert any(i == "maya_kit_ae_history_extrude" for k, i, _kw in rec.log if k == "panel")
+    assert any(i == "allset_ae_history_extrude" for k, i, _kw in rec.log if k == "panel")
     # Channel Box INPUTS: the node, its rows, and no Blender sentence (the notice is the name's tooltip)
     rec = Recorder()
     in_view.draw_cb_node(rec, bpy.context, ex.active(bpy.context)[1])
     assert not any("history" in t.lower() for t in rec.texts("label")), rec.texts("label")
-    tips = rec.ops("maya_kit.tip")
+    tips = rec.ops("allset.tip")
     assert len(tips) == 1 and tips[0].text == in_view.HISTORY_TIP
     bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -240,7 +240,7 @@ def test_ae_chrome_buttons_and_menus():
     assert "Notes:  " + ob.data.name in rec.texts("label")
     for cls in ae.MENUS:
         assert cls.is_registered and cls.__name__ in {m[1] for m in ae.MENU_BAR} | {
-            "MAYAKIT_MT_ae_attribute_names", "MAYAKIT_MT_ae_node_types", "MAYAKIT_MT_ae_presets"}
+            "ALLSET_MT_ae_attribute_names", "ALLSET_MT_ae_node_types", "ALLSET_MT_ae_presets"}
     for path in ae.AE_NOTICES:
         assert notices.tooltip(path, mapped=False)
 
@@ -250,42 +250,42 @@ def test_hide_and_show_node_types():
     ob.modifiers.new("Bevel", 'BEVEL')
     wm = bpy.context.window_manager
     ae.set_tab(bpy.context, "M:Bevel")
-    assert bpy.ops.maya_kit.ae_hide_type() == {'FINISHED'}
-    assert not any(x[2] == "polyBevel3" for x in ae.tabs(ob)) and "polyBevel3" in wm.maya_kit_ae_hidden
+    assert bpy.ops.allset.ae_hide_type() == {'FINISHED'}
+    assert not any(x[2] == "polyBevel3" for x in ae.tabs(ob)) and "polyBevel3" in wm.allset_ae_hidden
     ae.set_tab(bpy.context, "T")
-    assert bpy.ops.maya_kit.ae_hide_type() == {'CANCELLED'}     # the transform keeps its tab
-    assert bpy.ops.maya_kit.ae_show_types() == {'FINISHED'}
-    assert any(x[2] == "polyBevel3" for x in ae.tabs(ob)) and wm.maya_kit_ae_hidden == ""
+    assert bpy.ops.allset.ae_hide_type() == {'CANCELLED'}     # the transform keeps its tab
+    assert bpy.ops.allset.ae_show_types() == {'FINISHED'}
+    assert any(x[2] == "polyBevel3" for x in ae.tabs(ob)) and wm.allset_ae_hidden == ""
 
 
 def test_focus_locks_and_load_follows_selection():
     ob = _cube()
     wm = bpy.context.window_manager
-    wm.maya_kit_ae_auto_load = True
-    assert bpy.ops.maya_kit.ae_focus() == {'FINISHED'}
-    assert not wm.maya_kit_ae_auto_load and wm.maya_kit_ae_node == ob.name
-    assert bpy.ops.maya_kit.create(kind='SPHERE') == {'FINISHED'}
+    wm.allset_ae_auto_load = True
+    assert bpy.ops.allset.ae_focus() == {'FINISHED'}
+    assert not wm.allset_ae_auto_load and wm.allset_ae_node == ob.name
+    assert bpy.ops.allset.create(kind='SPHERE') == {'FINISHED'}
     sphere = bpy.context.active_object
     assert ae.ae_node(bpy.context) is ob              # focused: stays on the cube
-    assert bpy.ops.maya_kit.ae_load() == {'FINISHED'}
+    assert bpy.ops.allset.ae_load() == {'FINISHED'}
     assert ae.ae_node(bpy.context) is sphere           # Load Attributes: the current selection
-    wm.maya_kit_ae_auto_load = True
+    wm.allset_ae_auto_load = True
     assert ae.ae_node(bpy.context) is sphere
 
 
 def test_notes_live_on_the_node():
     ob = _cube()
     wm = bpy.context.window_manager
-    wm.maya_kit_ae_auto_load = True
+    wm.allset_ae_auto_load = True
     scene = bpy.context.scene
     ae.set_tab(bpy.context, "S")
-    scene.maya_kit_ae_notes = "shape note"
-    assert ob.data.get(ae.NOTES_PROP) == "shape note" and scene.maya_kit_ae_notes == "shape note"
+    scene.allset_ae_notes = "shape note"
+    assert ob.data.get(ae.NOTES_PROP) == "shape note" and scene.allset_ae_notes == "shape note"
     ae.set_tab(bpy.context, "T")
-    assert scene.maya_kit_ae_notes == ""
-    scene.maya_kit_ae_notes = "transform note"
+    assert scene.allset_ae_notes == ""
+    scene.allset_ae_notes = "transform note"
     assert ob.get(ae.NOTES_PROP) == "transform note"
-    scene.maya_kit_ae_notes = ""
+    scene.allset_ae_notes = ""
     assert ae.NOTES_PROP not in ob.keys()
     # Extra Attributes don't list the notes
     rec = Recorder()
@@ -296,18 +296,18 @@ def test_notes_live_on_the_node():
 def test_attribute_names_display():
     ctx = bpy.context
     wm = ctx.window_manager
-    wm.maya_kit_ae_names = 'LONG'
+    wm.allset_ae_names = 'LONG'
     assert ae.attr_label(ctx, "Visibility", "hide_viewport") == "hide_viewport"
-    wm.maya_kit_ae_names = 'SHORT'
+    wm.allset_ae_names = 'SHORT'
     assert ae.attr_label(ctx, "Visibility", "hide_viewport") == "hv"
-    wm.maya_kit_ae_names = 'NICE'
+    wm.allset_ae_names = 'NICE'
     assert ae.attr_label(ctx, "Visibility", "hide_viewport") == "Visibility"
 
 
 # --- explanation sentences -> tooltips (#22) -------------------------------------------------------------------
 
 def test_project_window_notice_is_a_tooltip():
-    rna = bpy.ops.maya_kit.project_window.get_rna_type()
+    rna = bpy.ops.allset.project_window.get_rna_type()
     assert rna.properties["name"].description == project.NOTICE
     src = open(project.__file__, encoding="utf-8").read()
     assert "chrome.paragraph(layout, context, NOTICE" not in src
@@ -317,4 +317,4 @@ def test_soft_selection_note_is_a_tooltip():
     rec = Recorder()
     mtk.draw_soft(rec, bpy.context)
     assert mtk.NOTE not in rec.texts("label")
-    assert [p.text for p in rec.ops("maya_kit.tip")] == [mtk.NOTE]
+    assert [p.text for p in rec.ops("allset.tip")] == [mtk.NOTE]

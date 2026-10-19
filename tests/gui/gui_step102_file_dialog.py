@@ -1,7 +1,7 @@
 """Step 102 in a real UI: File > Import opens the Maya file dialog (Blender file browser window) in the default
 project's scenes folder, with Files of type + the Maya preset in the Options panel and the Current Project folder
 list on the left; File > Export Selection with OBJ starts in the project's data folder (Maya file rule);
-screenshots (MAYA_KIT_GUI_SHOTS) to compare with """
+screenshots (ALLSET_GUI_SHOTS) to compare with """
 
 import os
 import sys
@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, step, setup, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -45,8 +45,8 @@ def s_setup():
     setup()
     C["project"] = import_module(MODULE + ".operators.project")
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.create(kind='CUBE')
-        bpy.ops.maya_kit.menu_item('INVOKE_DEFAULT', item="File/Import...")
+        bpy.ops.allset.create(kind='CUBE')
+        bpy.ops.allset.menu_item('INVOKE_DEFAULT', item="File/Import...")
 
 
 @step
@@ -60,7 +60,7 @@ def s_import():
     check("Import opens a file browser", a is not None)
     space = a.spaces.active
     op = space.active_operator
-    check("it runs the Maya file dialog", op is not None and op.bl_idname == "MAYA_KIT_OT_file_import")
+    check("it runs the Maya file dialog", op is not None and op.bl_idname == "ALLSET_OT_file_import")
     got = os.path.normcase(os.path.normpath(space.params.directory.decode()))
     want = os.path.normcase(os.path.normpath(C["project"].scenes_dir()))
     check(f"it starts in the default project's scenes folder ({got})", got == want)
@@ -83,7 +83,7 @@ def s_import_shot():
 @step
 def s_export():
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.file_export_selection('INVOKE_DEFAULT', export_type='OBJ')
+        bpy.ops.allset.file_export_selection('INVOKE_DEFAULT', export_type='OBJ')
 
 
 @step
@@ -115,7 +115,7 @@ def s_export_shot():
 @step
 def s_open():
     with bpy.context.temp_override(window=win()):
-        bpy.ops.maya_kit.open_scene('INVOKE_DEFAULT')
+        bpy.ops.allset.open_scene('INVOKE_DEFAULT')
 
 
 @step

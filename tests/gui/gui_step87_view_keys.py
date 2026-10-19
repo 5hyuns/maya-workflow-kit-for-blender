@@ -1,4 +1,4 @@
-"""Step 87 in a real UI (MayaKit layout): Alt+A cycles X-ray joints / everything / meshes only, Alt+P toggles
+"""Step 87 in a real UI (Allset layout): Alt+A cycles X-ray joints / everything / meshes only, Alt+P toggles
 persp / ortho, Alt+Right moves the cube one pixel, ` held = Tweak tool then back to Move, \\ held + LMB drag pans
 the camera view. """
 
@@ -11,7 +11,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -52,16 +52,16 @@ def tool():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
     arm = bpy.data.objects.new("joint_rig", bpy.data.armatures.new("joint_rig"))
     bpy.context.scene.collection.objects.link(arm)

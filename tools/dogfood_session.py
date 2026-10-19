@@ -1,10 +1,10 @@
 """In-Blender part of tools/dogfood.py: a Maya user's first session, driven by events.
 
 Runs in a GUI Blender on the clean sandbox of tools/release_check.py (extension
-installed + enabled from the command line, MayaKit layout loaded), with
+installed + enabled from the command line, Allset layout loaded), with
 --enable-event-simulate. Every action is a simulated key/mouse event where the
 kit binds one (operators only to build the scene). Each "check" records what a
-Maya user would expect; screenshots go to $MAYA_KIT_DOGFOOD_SHOTS for review.
+Maya user would expect; screenshots go to $ALLSET_DOGFOOD_SHOTS for review.
  「계획」.
 """
 
@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT / "tests" / "gui"))
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_DOGFOOD_SHOTS", str(ROOT / "tmp" / "dogfood" / "shots"))
+SHOTS = os.environ.get("ALLSET_DOGFOOD_SHOTS", str(ROOT / "tmp" / "dogfood" / "shots"))
 C = {"tries": 0}
 D = 110  # px: past the marking menu ring
 
@@ -92,10 +92,10 @@ def only(name):
 def s_first_start():
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap active on first start (got {kc.name if kc else None})",
-          kc is not None and kc.name == "Maya")
+          kc is not None and kc.name == "Maya-style")
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
@@ -114,7 +114,7 @@ def s_layout():
 def s_layout_shot():
     shot("01_first_start.png")
     with v3d_override():
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     check("Create > Cube gives pCube1 at the origin",
           "pCube1" in bpy.data.objects and bpy.data.objects["pCube1"].location.length < 1e-6)
     C["dist0"] = rv3d().view_distance
@@ -429,7 +429,7 @@ def s_cb_after():
 @step
 def s_ae():
     wm = bpy.context.window_manager
-    check(f"Ctrl+A opens the Attribute Editor (dock {wm.maya_kit_dock})", wm.maya_kit_dock == 'ATTRIBUTE_EDITOR')
+    check(f"Ctrl+A opens the Attribute Editor (dock {wm.allset_dock})", wm.allset_dock == 'ATTRIBUTE_EDITOR')
     redraw()
 
 

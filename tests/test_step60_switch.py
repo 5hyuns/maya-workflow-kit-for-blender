@@ -1,7 +1,7 @@
 """Step 60: Maya ⇄ Blender switch and the complete revert.
 
 In one process: factory → the user's own changes (a key edit, theme colour, navigation, splash,
-another add-on) → Maya Kit on → Make Blender Maya → switch to Blender → everything as before
+another add-on) → Allset on → Make Blender Maya → switch to Blender → everything as before
 → Maya again → Blender again → as before → disable → as before.
 Across processes (saved preferences re-read by a new Blender): the same round trip, the saved
 userpref.blend compared, an interrupted switch (crash) and the extension disabled in Maya mode.
@@ -62,11 +62,11 @@ def test_round_trip_in_one_session():
     assert sw.is_on() and sw.has_snapshot(), "fresh install = Maya mode with a snapshot"
     _mod("first_start").make(bpy.context, open_layout=False)   # Make Blender Maya (theme, splash, density ...)
     maya = dump()
-    assert maya["active_keyconfig"] == "Maya", maya["active_keyconfig"]
+    assert maya["active_keyconfig"] == "Maya-style", maya["active_keyconfig"]
     assert maya["theme_xml"] != before["theme_xml"], "Maya theme not applied"
     # Marked by name, not by a filepath inside the package: extension removal would reset the
     # theme after the restore when that file is gone (bl_extension_ops.py:1233-1270).
-    assert maya["theme_name"] == "Maya" and maya["theme_filepath"] == "", \
+    assert maya["theme_name"] == "Studio Grey (Maya-inspired)" and maya["theme_filepath"] == "", \
         (maya["theme_name"], maya["theme_filepath"])
     assert maya["values"]["inputs.view_rotate_method"] == "'TURNTABLE'"
     for n in (1, 2):
@@ -77,10 +77,10 @@ def test_round_trip_in_one_session():
         assert not sw.has_snapshot() and not sw.is_on()
         assert "draw_topbar_switch" in [getattr(f, "__name__", "") for f in
                                         bpy.types.TOPBAR_HT_upper_bar.draw._draw_funcs], "switch gone in Blender mode"
-        assert not hasattr(bpy.types.Scene, "maya_kit_cb"), "Maya mode classes still registered"
+        assert not hasattr(bpy.types.Scene, "allset_cb"), "Maya mode classes still registered"
         sw.set_mode(True)
         again = dump()
-        assert again["active_keyconfig"] == "Maya" and again["theme_xml"] == maya["theme_xml"], \
+        assert again["active_keyconfig"] == "Maya-style" and again["theme_xml"] == maya["theme_xml"], \
             "switching back on is the same Maya setup"
     kit.disable()
     d = _diff(before, dump())
@@ -110,7 +110,7 @@ def _session(cfg, name, *actions):
     out = os.path.join(cfg, "..", f"{name}.json")
     env = dict(os.environ)
     env["BLENDER_USER_CONFIG"] = cfg
-    env["MAYA_KIT_NO_WELCOME"] = "1"
+    env["ALLSET_NO_WELCOME"] = "1"
     cmd = [bpy.app.binary_path, "-b", "--python", os.path.join(HERE, "rt60_session.py"), "--", out, *actions]
     proc = subprocess.run(cmd, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=180)
@@ -141,7 +141,7 @@ def test_round_trip_across_restarts():
     cfg = _sandbox()
     a = _session(cfg, "a", "user_setup", "save")
     b = _session(cfg, "b", "enable", "make_maya", "save")
-    assert b["state"]["maya_mode"] and b["dump"]["active_keyconfig"] == "Maya", b["state"]
+    assert b["state"]["maya_mode"] and b["dump"]["active_keyconfig"] == "Maya-style", b["state"]
     c = _session(cfg, "c", "maya_off", "save")            # Blender starts in Maya mode, switch off
     assert not c["state"]["maya_mode"] and not c["state"]["snapshot"], c["state"]
     d = _diff(a["dump"], c["dump"])

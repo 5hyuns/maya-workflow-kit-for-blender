@@ -56,13 +56,13 @@ def test_resolve_only_while_editing_a_pivot():
 
 def test_check_boxes_follow_the_options():
     for opt, _prop, default in pivot_menu.OPTIONS:
-        action = ("maya_kit.pivot_option", {"option": opt})
+        action = ("allset.pivot_option", {"option": opt})
         assert engine.is_toggle(action)
         assert draw.checked(action) is default, (opt, default)        # Maya defaults: pin off, snaps on
-    assert bpy.ops.maya_kit.pivot_option(option="PIN") == {'FINISHED'}
-    assert draw.checked(("maya_kit.pivot_option", {"option": "PIN"})) is True
-    bpy.ops.maya_kit.pivot_option(option="PIN")
-    assert not engine.is_toggle(("maya_kit.pivot_reset", {}))
+    assert bpy.ops.allset.pivot_option(option="PIN") == {'FINISHED'}
+    assert draw.checked(("allset.pivot_option", {"option": "PIN"})) is True
+    bpy.ops.allset.pivot_option(option="PIN")
+    assert not engine.is_toggle(("allset.pivot_reset", {}))
 
 
 def test_object_reset_pivot():
@@ -72,11 +72,11 @@ def test_object_reset_pivot():
     assert Vector(ob.delta_location).length > 0.5
     bpy.context.view_layer.update()
     world = [ob.matrix_world @ v.co for v in ob.data.vertices]
-    assert bpy.ops.maya_kit.pivot_reset() == {'FINISHED'}
+    assert bpy.ops.allset.pivot_reset() == {'FINISHED'}
     bpy.context.view_layer.update()
     assert Vector(ob.delta_location).length < 1e-6
     assert all((ob.matrix_world @ v.co - w).length < 1e-5 for v, w in zip(ob.data.vertices, world)), "geometry stays"
-    assert bpy.ops.maya_kit.pivot_exit() == {'FINISHED'}
+    assert bpy.ops.allset.pivot_exit() == {'FINISHED'}
     assert not bpy.context.scene.tool_settings.use_transform_data_origin
 
 
@@ -102,7 +102,7 @@ def test_component_reset_and_pin():
     cursor.rotation_euler = (0.3, 0.0, 0.0)
     hold.COMPONENT.start(bpy.context, toggled=True)
     cursor.location = (3.0, 0.0, 0.0)                                  # "placed" a custom pivot
-    assert bpy.ops.maya_kit.pivot_reset() == {'FINISHED'}
+    assert bpy.ops.allset.pivot_reset() == {'FINISHED'}
     assert (cursor.location - Vector((0, 0, 1))).length < 1e-6
     assert all(abs(a) < 1e-9 for a in cursor.rotation_euler)
     hold.COMPONENT.finish(bpy.context)
@@ -118,14 +118,14 @@ def test_component_reset_and_pin():
     hold.COMPONENT.tick(bpy.context)
     assert ts.transform_pivot_point == 'BOUNDING_BOX_CENTER' and not hold.COMPONENT.custom
     # Pin on: kept across the change
-    bpy.context.window_manager.maya_kit_pin_pivot = True
+    bpy.context.window_manager.allset_pin_pivot = True
     hold.COMPONENT.start(bpy.context, toggled=True)
     cursor.location = (2.0, 0.0, 0.0)
     hold.COMPONENT.finish(bpy.context)
     _edit_select(ob, lambda co: co.y > 0)
     hold.COMPONENT.tick(bpy.context)
     assert ts.transform_pivot_point == 'CURSOR', "pinned"
-    bpy.context.window_manager.maya_kit_pin_pivot = False
+    bpy.context.window_manager.allset_pin_pivot = False
     bpy.ops.object.mode_set(mode='OBJECT')
     hold.COMPONENT.tick(bpy.context)
     assert not hold.COMPONENT.custom
@@ -140,10 +140,10 @@ def test_snap_options_drive_the_cursor_tool():
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
     props = tool.operator_properties(hold.CURSOR_OP)
     assert props.orientation == 'GEOM' and props.use_depth
-    wm.maya_kit_snap_pivot_ori = False
-    wm.maya_kit_snap_pivot_pos = False
+    wm.allset_snap_pivot_ori = False
+    wm.allset_snap_pivot_pos = False
     hold.apply_cursor_options(bpy.context)
     assert props.orientation == 'NONE' and not props.use_depth
-    wm.maya_kit_snap_pivot_ori = wm.maya_kit_snap_pivot_pos = True
+    wm.allset_snap_pivot_ori = wm.allset_snap_pivot_pos = True
     bpy.ops.object.mode_set(mode='OBJECT')
     del ob

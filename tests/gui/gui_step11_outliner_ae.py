@@ -9,7 +9,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
 
 
@@ -66,7 +66,7 @@ def s_setup():
 @step
 def s_toggled():
     wm = bpy.context.window_manager
-    check("Ctrl+A -> dock shows the Attribute Editor", wm.maya_kit_dock == 'ATTRIBUTE_EDITOR')
+    check("Ctrl+A -> dock shows the Attribute Editor", wm.allset_dock == 'ATTRIBUTE_EDITOR')
 
 
 @step
@@ -85,7 +85,7 @@ step(goto_tab("Attribute Editor", _after_cb_tab))   # step 99: the AE is its own
 @step
 def s_shape_shot():
     shot("gui_step11_ae_shape.png")      # default tab: shape
-    bpy.ops.maya_kit.ae_tab(key="T")
+    bpy.ops.allset.ae_tab(key="T")
     redraw()
 
 
@@ -97,7 +97,7 @@ def s_wait_t():
 @step
 def s_transform_shot():
     shot("gui_step11_ae_transform.png")
-    bpy.ops.maya_kit.ae_tab(key="M:polySmooth1")
+    bpy.ops.allset.ae_tab(key="M:polySmooth1")
     redraw()
 
 
@@ -109,7 +109,7 @@ def s_wait_m():
 @step
 def s_history_shot():
     shot("gui_step11_ae_history.png")
-    bpy.ops.maya_kit.ae_tab(key="MAT:0")
+    bpy.ops.allset.ae_tab(key="MAT:0")
     redraw()
 
 
@@ -128,16 +128,16 @@ def s_material_shot():
 
 @step
 def s_back():
-    check("Ctrl+A again -> Channel Box", bpy.context.window_manager.maya_kit_dock == 'CHANNEL_BOX')
+    check("Ctrl+A again -> Channel Box", bpy.context.window_manager.allset_dock == 'CHANNEL_BOX')
     wm = bpy.context.window_manager
-    wm.maya_kit_outliner_shapes = True
-    bpy.data.objects["group1"].maya_kit_expanded = True
-    bpy.data.objects["Cube"].maya_kit_expanded = True
+    wm.allset_outliner_shapes = True
+    bpy.data.objects["group1"].allset_expanded = True
+    bpy.data.objects["Cube"].allset_expanded = True
     redraw()
 
 
 def _after_outliner_tab():
-    rows = [(r.kind, r.object, r.depth) for r in bpy.context.window_manager.maya_kit_outliner_rows]
+    rows = [(r.kind, r.object, r.depth) for r in bpy.context.window_manager.allset_outliner_rows]
     i = rows.index(('OBJECT', "Cube", 1)) if ('OBJECT', "Cube", 1) in rows else -1
     check(f"Outliner: Cube under group1, its shape row next ({rows})",
           i > 0 and rows[i - 1][1] == "group1" and rows[i + 1] == ('SHAPE', "Cube", 2))

@@ -12,7 +12,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, run, setup, step, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -66,7 +66,7 @@ def s_setup():
     sc.render.resolution_percentage = 50
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='SPHERE')
+        bpy.ops.allset.create(kind='SPHERE')
     C["sphere"] = bpy.context.active_object.name
     C["open"] = run_menu("Windows/Rendering Editors/Hypershade")
 
@@ -86,7 +86,7 @@ def s_hypershade_open():
     C["hs"] = (w, a)
     # Create > Standard Surface, then Assign Material To Selection (the panel buttons' operators)
     with bpy.context.temp_override(window=w, area=a, region=ui, space_data=a.spaces.active):
-        bpy.ops.maya_kit.hs_create(kind='STANDARD_SURFACE')
+        bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
     mat = bpy.data.materials.get("standardSurface1")
     sphere = bpy.data.objects[C["sphere"]]
     # step 100: the new sphere already has default lambert1
@@ -95,7 +95,7 @@ def s_hypershade_open():
           mat is not None and sphere.active_material is not mat and a.spaces.active.pin
           and a.spaces.active.node_tree == mat.node_tree)
     with bpy.context.temp_override(window=w, area=a, region=ui):
-        bpy.ops.maya_kit.assign_material(material="standardSurface1")
+        bpy.ops.allset.assign_material(material="standardSurface1")
     redraw_all()
 
 
@@ -108,9 +108,9 @@ def s_assigned():
     # pick it in the browser: the graph follows the object again (unpinned)
     ui = next(r for r in a.regions if r.type == 'UI')
     with bpy.context.temp_override(window=w, area=a, region=ui, space_data=a.spaces.active):
-        bpy.ops.maya_kit.hs_pick(material="standardSurface1")
+        bpy.ops.allset.hs_pick(material="standardSurface1")
     # AE Base Color map button > File
-    bpy.ops.maya_kit.ae_map_connect(material="standardSurface1", socket="Base Color", kind='FILE')
+    bpy.ops.allset.ae_map_connect(material="standardSurface1", socket="Base Color", kind='FILE')
     redraw_all()
 
 
@@ -153,7 +153,7 @@ def s_keep():
     shot("gui_step67_render_view.png", w)
     header = next(r for r in a.regions if r.type == 'HEADER')
     with bpy.context.temp_override(window=w, area=a, region=header, space_data=a.spaces.active):
-        bpy.ops.maya_kit.render_keep_image()
+        bpy.ops.allset.render_keep_image()
     C["slot_after_keep"] = mod(".ui.render_view").render_result().render_slots.active_index
     C["render2"] = run_menu("Render/Render Current Frame")
 
@@ -177,8 +177,8 @@ def s_light():
     shot("gui_step67_keep_image.png", w)
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='POINT_LIGHT')
-        bpy.ops.maya_kit.create(kind='DIRECTIONAL_LIGHT')
+        bpy.ops.allset.create(kind='POINT_LIGHT')
+        bpy.ops.allset.create(kind='DIRECTIONAL_LIGHT')
     C["le"] = run_menu("Windows/Rendering Editors/Light Editor")
     C["nwin"] = len(bpy.context.window_manager.windows)
 
@@ -199,8 +199,8 @@ def s_light_open():
           a.type == 'VIEW_3D' and ui is not None and ui.active_panel_category == "Light Editor" and marked)
     C["lew"] = w
     with bpy.context.temp_override(window=w, area=a, region=ui):
-        bpy.ops.maya_kit.light_select(light="pointLight1")
-        bpy.ops.maya_kit.light_isolate(light="pointLight1")
+        bpy.ops.allset.light_select(light="pointLight1")
+        bpy.ops.allset.light_isolate(light="pointLight1")
     sun = bpy.context.scene.objects["directionalLight1"]
     check(f"Light Editor: pick pointLight1 + Isolate -> directionalLight1 off ({sun.hide_render})",
           sun.hide_render and bpy.context.active_object.name == "pointLight1")
@@ -229,7 +229,7 @@ def s_render_settings_open():
 def s_end():
     shot("gui_step67_light_editor.png", C["lew"])
     with bpy.context.temp_override(window=C["lew"]):
-        bpy.ops.maya_kit.light_isolate(light="pointLight1")
+        bpy.ops.allset.light_isolate(light="pointLight1")
     check("Isolate again: directionalLight1 back on", not bpy.context.scene.objects["directionalLight1"].hide_render)
 
 

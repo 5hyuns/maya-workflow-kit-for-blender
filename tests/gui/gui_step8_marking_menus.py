@@ -9,7 +9,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import check, ev, run, step, setup, screenshot, tap, view3d, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 DRAG = 120  # px, well past the pie threshold
 
@@ -26,7 +26,7 @@ def cube():
 @step
 def s_setup():
     C["x"], C["y"] = setup()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya")
+    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
     # Deselect: the RMB menu must target the object under the mouse, not the selection.
     for o in bpy.context.view_layer.objects:
         o.select_set(False)

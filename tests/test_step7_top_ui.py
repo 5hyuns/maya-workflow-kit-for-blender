@@ -86,12 +86,12 @@ def _label(text):
 
 def _action(entry):
     """(kind, target, props) a drawn Maya menu item runs."""
-    if entry[1] == "maya_kit.menu_item":
+    if entry[1] == "allset.menu_item":
         return menu_map.spec(entry[3].item)
     props = dict(vars(entry[3]))
-    if entry[1] == "maya_kit.menu_tool":
+    if entry[1] == "allset.menu_tool":
         return ("tool", props["tool"], {"edit": props["edit"]})
-    if entry[1] == "maya_kit.menu_run":
+    if entry[1] == "allset.menu_run":
         return ("v3d", props["op"], props)
     return ("op", entry[1], props)
 
@@ -211,17 +211,17 @@ def test_menu_items_active_or_grey():
     items = _draw_menu(sub)
     ops = {_label(e[2]): e for e in items if e[0] in ("op", "hold")}  # step 103 box mark, step 108 hotkey
     # Step 10: Maya creation (origin, Maya size and names). Step 51: option-box items are one
-    # maya_kit.menu_item button (press and hold = option box) running the item's mapped action.
-    assert _action(ops["Cube"]) == ("op", "maya_kit.create", {"kind": 'CUBE'}), ops["Cube"]
-    assert _action(ops["Pyramid"]) == ("op", "maya_kit.create", {"kind": 'PYRAMID'})
-    assert ops["Pipe"][1] == "maya_kit.menu_unavailable", ops["Pipe"]
+    # allset.menu_item button (press and hold = option box) running the item's mapped action.
+    assert _action(ops["Cube"]) == ("op", "allset.create", {"kind": 'CUBE'}), ops["Cube"]
+    assert _action(ops["Pyramid"]) == ("op", "allset.create", {"kind": 'PYRAMID'})
+    assert ops["Pipe"][1] == "allset.menu_unavailable", ops["Pipe"]
     assert ops["Pipe"][3].item == "Create/Polygon Primitives/Pipe"
-    assert not menu_sets.MAYAKIT_OT_menu_unavailable.poll(bpy.context)
+    assert not menu_sets.ALLSET_OT_menu_unavailable.poll(bpy.context)
     # Blender's own menu at the end of File; v3d / tool / menu kinds.
     file_log = _draw_menu(menu_sets.menu_idname("mainFileMenu"))
     assert file_log[-1] == ("menu", "TOPBAR_MT_file", "Blender File"), file_log[-1]
     imp = next(e for e in file_log if e[0] in ("op", "hold") and _label(e[2]) == "Import...")   # step 102: Maya dialog
-    assert _action(imp) == ("op", "maya_kit.file_import", {}), _action(imp)
+    assert _action(imp) == ("op", "allset.file_import", {}), _action(imp)
     tools = _draw_menu(menu_sets.menu_idname("mainMeshToolsMenu"))
     cut = next(e for e in tools if e[0] in ("op", "hold") and _label(e[2]) == "Multi-Cut")
     assert _action(cut) == ("tool", "builtin.knife", {"edit": True}), _action(cut)
@@ -235,7 +235,7 @@ def test_menu_items_active_or_grey():
     assert len(comps) == 3 and len({e[1] for e in comps}) == 3, comps  # three distinct submenus
     # Every menu class draws without error.
     for cls_name in dir(bpy.types):
-        if cls_name.startswith("MAYAKIT_MT_main") or cls_name.startswith("MAYAKIT_MT_Main"):
+        if cls_name.startswith("ALLSET_MT_main") or cls_name.startswith("ALLSET_MT_Main"):
             _draw_menu(cls_name)
 
 
@@ -244,7 +244,7 @@ def test_menu_tool_enters_edit_mode():
     with _override():
         bpy.ops.mesh.primitive_cube_add()
         try:
-            bpy.ops.maya_kit.menu_tool(tool="builtin.knife", edit=True)
+            bpy.ops.allset.menu_tool(tool="builtin.knife", edit=True)
         except RuntimeError as ex:
             # -b: tool keymaps are not built (),
             # so activating a tool fails; the tool switch itself is checked in the GUI test.
@@ -292,8 +292,8 @@ def test_topbar_draw_maya_and_blender():
     fake = types.SimpleNamespace(layout=FakeLayout())
     status_line.draw_tool_header(fake, _ctx(area=area))
     ops = [e[1] for e in fake.layout.log if e[0] == "op"]
-    for op in ("maya_kit.save_scene", "maya_kit.select_mode", "maya_kit.select_mask", "maya_kit.snap_toggle",
-               "render.render", "maya_kit.render_settings", "maya_kit.editor_toggle"):
+    for op in ("allset.save_scene", "allset.select_mode", "allset.select_mask", "allset.snap_toggle",
+               "render.render", "allset.render_settings", "allset.editor_toggle"):
         assert op in ops, (op, ops)
     other = types.SimpleNamespace(type='VIEW_3D')
     fake = types.SimpleNamespace(layout=FakeLayout())
@@ -334,7 +334,7 @@ def test_snap_toggles_and_hold_keys():
     hold.end(ts, "point")
     assert not ts.use_snap, "... the hold restores the state from before it"
     with _override():
-        bpy.ops.maya_kit.snap_toggle(snap="LIVE")
+        bpy.ops.allset.snap_toggle(snap="LIVE")
     assert ts.use_snap and set(ts.snap_elements) == {'FACE_PROJECT'}
     ts.use_snap = False
 
@@ -347,10 +347,10 @@ def test_selection_masks_all_views():
         assert all(not s.show_object_select_armature for s in spaces)
         assert not status_line.mask_on(spaces[0], "JOINTS") and status_line.mask_on(spaces[0], "CURVES")
         with _override():
-            bpy.ops.maya_kit.select_mask(group="JOINTS")
+            bpy.ops.allset.select_mask(group="JOINTS")
         assert all(s.show_object_select_armature for s in spaces)
         with _override():
-            bpy.ops.maya_kit.select_mask(group="SURFACES")
+            bpy.ops.allset.select_mask(group="SURFACES")
         assert all(not s.show_object_select_mesh and not s.show_object_select_surf for s in spaces)
     finally:
         for group in ("JOINTS", "SURFACES"):
@@ -361,26 +361,26 @@ def test_selection_mode_and_editor_buttons():
     _clear_objects()
     with _override():
         bpy.ops.mesh.primitive_cube_add()
-        bpy.ops.maya_kit.select_mode(mode="COMPONENT")
+        bpy.ops.allset.select_mode(mode="COMPONENT")
         assert bpy.context.mode == 'EDIT_MESH'
-        bpy.ops.maya_kit.select_mode(mode="OBJECT")
+        bpy.ops.allset.select_mode(mode="OBJECT")
         assert bpy.context.mode == 'OBJECT'
         screen = bpy.context.window_manager.windows[0].screen
-        bpy.ops.maya_kit.render_settings()
+        bpy.ops.allset.render_settings()
         props = next(a for a in screen.areas if a.type == 'PROPERTIES')
         assert props.spaces.active.context == 'RENDER'
-        bpy.ops.maya_kit.editor_toggle(editor="ATTRIBUTE")
+        bpy.ops.allset.editor_toggle(editor="ATTRIBUTE")
         assert props.spaces.active.context == 'OBJECT'
         area, _r = status_line.main_view3d(screen)
         before = area.spaces.active.show_region_ui
-        bpy.ops.maya_kit.editor_toggle(editor="CHANNEL_BOX")
+        bpy.ops.allset.editor_toggle(editor="CHANNEL_BOX")
         assert area.spaces.active.show_region_ui != before
         assert status_line.editor_shown(screen, "CHANNEL_BOX") == (not before)
-        bpy.ops.maya_kit.editor_toggle(editor="CHANNEL_BOX")
+        bpy.ops.allset.editor_toggle(editor="CHANNEL_BOX")
         assert not status_line.editor_shown(screen, "TOOL_SETTINGS")
-        bpy.ops.maya_kit.ipr_toggle()
+        bpy.ops.allset.ipr_toggle()
         assert area.spaces.active.shading.type == 'RENDERED'
-        bpy.ops.maya_kit.ipr_toggle()
+        bpy.ops.allset.ipr_toggle()
         assert area.spaces.active.shading.type == 'SOLID'
 
 
@@ -423,16 +423,16 @@ def test_command_field_runs_through_operator():
     runner.reset()
     wm = bpy.context.window_manager
     with _override():
-        wm.maya_kit_cmd = "z = 7; z + 1"
-    assert wm.maya_kit_cmd == "", "field is cleared after Enter"
+        wm.allset_cmd = "z = 7; z + 1"
+    assert wm.allset_cmd == "", "field is cleared after Enter"
     assert command_line._result["text"] == "# Result: 8 #", command_line._result
     with _override():
-        wm.maya_kit_cmd = "1/0"  # an error from the field does not raise
+        wm.allset_cmd = "1/0"  # an error from the field does not raise
     assert command_line._result["error"]
     runner.history.remove("1/0")
     with _override():
         try:
-            bpy.ops.maya_kit.command_line_exec(command="nope()")
+            bpy.ops.allset.command_line_exec(command="nope()")
             raise AssertionError("an error result is reported as ERROR")
         except RuntimeError as ex:
             assert "NameError" in str(ex), ex
@@ -462,8 +462,8 @@ def test_help_line_text():
     fake = types.SimpleNamespace(layout=FakeLayout())
     command_line.draw_status_bar(fake, _ctx())
     entries = fake.layout.log
-    assert ("prop", "maya_kit_cmd", "") in entries, entries
-    assert any(e[0] == "op" and e[1] == "maya_kit.command_line_language" for e in entries)
+    assert ("prop", "allset_cmd", "") in entries, entries
+    assert any(e[0] == "op" and e[1] == "allset.command_line_language" for e in entries)
 
 
 # --- cmds_shim ---------------------------------------------------------------------
@@ -582,4 +582,4 @@ def test_cmds_select_ls_scene():
     try:
         cmds.fooBar
     except AttributeError as ex:
-        assert "not available in Maya Kit" in str(ex)
+        assert "not available in Allset" in str(ex)

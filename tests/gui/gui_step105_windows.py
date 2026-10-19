@@ -1,4 +1,4 @@
-"""Step 105 in a real UI: the MayaKit layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
+"""Step 105 in a real UI: the Allset layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
 Hypershade, Render > Render Settings, Windows > General Editors > Script Editor in new windows -> Maya menu bars,
 Browser tabs, Common tab, history over MEL / Python input (screenshots beside audit-7 pairs h01 / h03 / h05)."""
 
@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, run, setup, step, win  # noqa: E402
 
 GUI_TIMEOUT = 240
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
 
@@ -34,7 +34,7 @@ def v3d():
 def menu(path):
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        return bpy.ops.maya_kit.menu_item(item=path)
+        return bpy.ops.allset.menu_item(item=path)
 
 
 def newest():
@@ -59,17 +59,17 @@ def redraw():
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.make_maya(open_layout=False)
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.make_maya(open_layout=False)
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
+    bpy.ops.allset.keymap_activate()
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
-        bpy.ops.maya_kit.create(kind='CUBE')
+        bpy.ops.allset.create(kind='CUBE')
     m = mod(".operators.material")
     for kind in ('BLINN', 'RAMP', 'STANDARD_SURFACE'):
         m.new_material(kind).use_fake_user = True
@@ -122,7 +122,7 @@ def s_rs_wait():
 def s_rs_shot():
     w = newest()
     shot("gui_step105_render_settings.png", w)
-    bpy.context.window_manager.maya_kit_rs_tab = 'RENDERER'
+    bpy.context.window_manager.allset_rs_tab = 'RENDERER'
     redraw()
 
 
@@ -135,7 +135,7 @@ def s_rs_renderer_wait():
 def s_rs_renderer_shot():
     w = newest()
     shot("gui_step105_render_settings_renderer.png", w)
-    bpy.context.window_manager.maya_kit_rs_tab = 'COMMON'
+    bpy.context.window_manager.allset_rs_tab = 'COMMON'
     close_extra_windows()
     C["se"] = menu("Windows/General Editors/Script Editor")
 

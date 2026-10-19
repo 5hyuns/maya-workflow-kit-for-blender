@@ -341,7 +341,7 @@ def test_cluster_handle_at_component_centroid():
         v.select = v.co.z > 0
     bm.select_flush(True)
     bmesh.update_edit_mesh(cube.data)
-    assert bpy.ops.maya_kit.cluster() == {'FINISHED'}
+    assert bpy.ops.allset.cluster() == {'FINISHED'}
     h = bpy.data.objects["cluster1Handle"]
     md = cube.modifiers["cluster1"]
     assert md.type == 'HOOK' and md.object == h
@@ -354,7 +354,7 @@ def test_cluster_handle_at_component_centroid():
     assert zs == [-0.5] * 4 + [1.5] * 4, zs                                  # only the cluster's points move
     bpy.context.view_layer.objects.active = cube
     cube.select_set(True)
-    assert bpy.ops.maya_kit.cluster() == {'FINISHED'}                        # object mode: whole object
+    assert bpy.ops.allset.cluster() == {'FINISHED'}                        # object mode: whole object
     h2 = bpy.data.objects["cluster2Handle"]
     assert (h2.location - Vector((3, 0, 0))).length < 1e-6
 
@@ -369,7 +369,7 @@ def test_nonlinear_handle_like_maya():
             o.select_set(False)
         cyl.select_set(True)
         bpy.context.view_layer.objects.active = cyl
-        assert bpy.ops.maya_kit.nonlinear(method=method) == {'FINISHED'}
+        assert bpy.ops.allset.nonlinear(method=method) == {'FINISHED'}
         h = bpy.data.objects[f"{name}Handle"]
         md = cyl.modifiers[name]
         assert md.deform_method == method and md.origin == h and md.deform_axis == 'Z'
@@ -393,7 +393,7 @@ def test_soft_mod_falloff_matches_maya():
     for v in bme.verts:
         v.select = v.co.length < 1e-6
     bmesh.update_edit_mesh(me)
-    assert bpy.ops.maya_kit.soft_mod() == {'FINISHED'}
+    assert bpy.ops.allset.soft_mod() == {'FINISHED'}
     h = bpy.data.objects["softMod1Handle"]
     md = ob.modifiers["softMod1"]
     assert md.falloff_type == 'CURVE' and abs(md.falloff_radius - 5.0) < 1e-6

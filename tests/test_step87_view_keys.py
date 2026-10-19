@@ -57,7 +57,7 @@ def test_camera_offset_follows_the_mouse():
 
 
 def test_keymap_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     km = kc.keymaps["3D View"]
 
     def one(t, idname, **mods):
@@ -65,13 +65,13 @@ def test_keymap_items():
                  and all(getattr(k, m) == mods.get(m, False) for m in ("shift", "ctrl", "alt"))]
         assert len(items) == 1, (t, idname, mods)
         return items[0]
-    one('A', "maya_kit.cycle_display", alt=True)
-    one('P', "maya_kit.camera_mode_toggle", alt=True)
+    one('A', "allset.cycle_display", alt=True)
+    one('P', "allset.camera_mode_toggle", alt=True)
     for key, dx, dy in patches.PIXEL_MOVE_KEYS:
-        k = one(key, "maya_kit.pixel_move", alt=True)
+        k = one(key, "allset.pixel_move", alt=True)
         assert (k.properties.dx, k.properties.dy) == (dx, dy) and k.repeat
-    one('ACCENT_GRAVE', "maya_kit.tweak_hold")
-    one('BACK_SLASH', "maya_kit.pan_zoom_hold")
+    one('ACCENT_GRAVE', "allset.tweak_hold")
+    one('BACK_SLASH', "allset.pan_zoom_hold")
     assert not [k for k in kc.keymaps["Object Non-modal"].keymap_items
                 if k.idname == "object.transfer_mode" and k.type == 'ACCENT_GRAVE']
 

@@ -6,7 +6,7 @@ import sys
 import addon_utils
 import bpy
 
-MODULE = os.environ.get("MAYA_KIT_MODULE", "bl_ext.user_default.maya_kit")
+MODULE = os.environ.get("ALLSET_MODULE", "bl_ext.user_default.allset")
 
 
 def _raise(ex):
@@ -110,13 +110,13 @@ def snapshot():
     snap["render_panel_polls"] = sorted(
         f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
         for c in _all_panels() if getattr(c, "bl_space_type", None) == 'PROPERTIES'
-        and getattr(c, "bl_context", "") == "render" and not c.__name__.startswith("MAYAKIT_"))
+        and getattr(c, "bl_context", "") == "render" and not c.__name__.startswith("ALLSET_"))
     snap["ui_methods"].append("TIME_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in time_menus.__dict__}")
     snap["panel_polls"] = sorted(
         f"{c.__name__}: {c.__dict__.get('poll')!r} registered={c.is_registered}"
         for c in _all_panels() if getattr(c, "bl_space_type", None) == 'VIEW_3D'
-        and not c.__name__.startswith("MAYAKIT_"))
+        and not c.__name__.startswith("ALLSET_"))
     snap["sys_modules"] = sorted(m for m in sys.modules if m == "maya" or m.startswith("maya."))
 
     snap["addons"] = sorted(bpy.context.preferences.addons.keys())

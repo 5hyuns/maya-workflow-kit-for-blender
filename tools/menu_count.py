@@ -41,10 +41,10 @@ def _load():
         mod.__getattr__ = lambda key: _Stub()
         sys.modules[name] = mod
     pkg = types.ModuleType("mk")
-    pkg.__path__ = [str(ROOT / "src" / "maya_kit")]
+    pkg.__path__ = [str(ROOT / "src" / "allset")]
     sys.modules["mk"] = pkg
     ui = types.ModuleType("mk.ui")
-    ui.__path__ = [str(ROOT / "src" / "maya_kit" / "ui")]
+    ui.__path__ = [str(ROOT / "src" / "allset" / "ui")]
     sys.modules["mk.ui"] = ui
     try:
         mods = tuple(importlib.import_module(f"mk.ui.{m}") for m in ("menu_data", "menu_map", "notices"))

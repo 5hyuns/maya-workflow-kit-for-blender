@@ -69,9 +69,9 @@ def _fresh():
     for me in list(bpy.data.meshes):
         bpy.data.meshes.remove(me)
     wm = bpy.context.window_manager
-    wm.maya_kit_ae_tab = ""
-    wm.maya_kit_ae_kind = "S"
-    wm.maya_kit_outliner_shapes = False
+    wm.allset_ae_tab = ""
+    wm.allset_ae_kind = "S"
+    wm.allset_outliner_shapes = False
 
 
 def _mesh(name, parent=None):
@@ -90,7 +90,7 @@ def _empty(name, parent=None):
 
 def _rows():
     outliner.rebuild(bpy.context, force=True)
-    return [(r.kind, r.label, r.depth) for r in bpy.context.window_manager.maya_kit_outliner_rows]
+    return [(r.kind, r.label, r.depth) for r in bpy.context.window_manager.allset_outliner_rows]
 
 
 def _select(objs, active=None):
@@ -117,28 +117,28 @@ def _scene():
 def test_outliner_dag_order_and_collapse():
     grp, a, b, c, d = _scene()
     assert _rows() == [('OBJECT', "group1", 0), ('OBJECT', "pPlane1", 0)]   # autoExpand 0
-    grp.maya_kit_expanded = True
+    grp.allset_expanded = True
     assert _rows() == [('OBJECT', "group1", 0), ('OBJECT', "pCube1", 1), ('OBJECT', "pSphere1", 1),
                        ('OBJECT', "pPlane1", 0)]
-    rows = bpy.context.window_manager.maya_kit_outliner_rows
+    rows = bpy.context.window_manager.allset_outliner_rows
     assert rows[0].has_children and rows[1].has_children and not rows[2].has_children
 
 
 def test_outliner_expand_recursive_and_shapes():
     grp, a, b, c, d = _scene()
     outliner.rebuild(bpy.context, force=True)
-    bpy.ops.maya_kit.outliner_expand(name="group1", recursive=True)
-    assert a.maya_kit_expanded and c.maya_kit_expanded
+    bpy.ops.allset.outliner_expand(name="group1", recursive=True)
+    assert a.allset_expanded and c.allset_expanded
     assert [r[1] for r in _rows()] == ["group1", "pCube1", "pCone1", "pSphere1", "pPlane1"]
-    bpy.context.window_manager.maya_kit_outliner_shapes = True
-    d.maya_kit_expanded = True
+    bpy.context.window_manager.allset_outliner_shapes = True
+    d.allset_expanded = True
     rows = _rows()
     assert ('SHAPE', "pCube1Shape", 2) in rows, rows
     i = rows.index(('OBJECT', "pCube1", 1))
     assert rows[i + 1] == ('SHAPE', "pCube1Shape", 2)          # shape first under its transform
     assert ('SHAPE', "pPlane1Shape", 1) in rows
     assert not any(r[1] == "group1" and r[0] == 'SHAPE' for r in rows)  # empty: no shape
-    bpy.ops.maya_kit.outliner_expand(name="group1")             # collapse
+    bpy.ops.allset.outliner_expand(name="group1")             # collapse
     assert [r[1] for r in _rows()][:2] == ["group1", "pPlane1"]
 
 
@@ -153,10 +153,10 @@ def test_outliner_rebuild_skips_when_unchanged():
 def test_outliner_rename_through_label():
     grp, a, b, c, d = _scene()
     wm = bpy.context.window_manager
-    wm.maya_kit_outliner_shapes = True
-    d.maya_kit_expanded = True
+    wm.allset_outliner_shapes = True
+    d.allset_expanded = True
     outliner.rebuild(bpy.context, force=True)
-    rows = wm.maya_kit_outliner_rows
+    rows = wm.allset_outliner_rows
     obj_row = next(r for r in rows if r.kind == 'OBJECT' and r.object == "pPlane1")
     obj_row.label = "floor"
     assert d.name == "floor" and obj_row.object == "floor"
@@ -168,36 +168,36 @@ def test_outliner_rename_through_label():
 
 def test_outliner_selection_modes():
     grp, a, b, c, d = _scene()
-    grp.maya_kit_expanded = True
+    grp.allset_expanded = True
     outliner.rebuild(bpy.context, force=True)
     wm = bpy.context.window_manager
-    names = [r.object for r in wm.maya_kit_outliner_rows]     # group1 pCube1 pSphere1 pPlane1
-    wm.maya_kit_outliner_index = names.index("pCube1")        # row click = replace
+    names = [r.object for r in wm.allset_outliner_rows]     # group1 pCube1 pSphere1 pPlane1
+    wm.allset_outliner_index = names.index("pCube1")        # row click = replace
     assert bpy.context.selected_objects == [a] and bpy.context.view_layer.objects.active is a
-    assert wm.maya_kit_outliner_index == names.index("pCube1")
-    bpy.ops.maya_kit.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
+    assert wm.allset_outliner_index == names.index("pCube1")
+    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
     assert set(bpy.context.selected_objects) == {a, d}
-    bpy.ops.maya_kit.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
+    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='TOGGLE')
     assert set(bpy.context.selected_objects) == {a}
     _select([grp], grp)
-    bpy.ops.maya_kit.outliner_select(index=names.index("pSphere1"), mode='RANGE')
+    bpy.ops.allset.outliner_select(index=names.index("pSphere1"), mode='RANGE')
     assert set(bpy.context.selected_objects) == {grp, a, b}
-    bpy.ops.maya_kit.outliner_select(index=names.index("pPlane1"), mode='REPLACE')
+    bpy.ops.allset.outliner_select(index=names.index("pPlane1"), mode='REPLACE')
     assert bpy.context.selected_objects == [d]
 
 
 def test_outliner_list_draws():
     grp, a, b, c, d = _scene()
-    bpy.context.window_manager.maya_kit_outliner_shapes = True
-    a.maya_kit_expanded = grp.maya_kit_expanded = True
+    bpy.context.window_manager.allset_outliner_shapes = True
+    a.allset_expanded = grp.allset_expanded = True
     outliner.rebuild(bpy.context, force=True)
-    ul = outliner.MAYAKIT_UL_outliner
+    ul = outliner.ALLSET_UL_outliner
     lay = FakeLayout()
-    for i, row in enumerate(bpy.context.window_manager.maya_kit_outliner_rows):
+    for i, row in enumerate(bpy.context.window_manager.allset_outliner_rows):
         ul.draw_item(None, bpy.context, lay, None, row, 0, None, "", i)
-    icons = [e for e in lay.log if e[0] == "op" and e[1] == "maya_kit.outliner_select"]
-    assert len(icons) == len(bpy.context.window_manager.maya_kit_outliner_rows)
-    assert outliner.icon_for(bpy.context.window_manager.maya_kit_outliner_rows[0], grp) == 'OUTLINER_OB_EMPTY'
+    icons = [e for e in lay.log if e[0] == "op" and e[1] == "allset.outliner_select"]
+    assert len(icons) == len(bpy.context.window_manager.allset_outliner_rows)
+    assert outliner.icon_for(bpy.context.window_manager.allset_outliner_rows[0], grp) == 'OUTLINER_OB_EMPTY'
 
 
 # --- Attribute Editor ----------------------------------------------------------------------------
@@ -226,16 +226,16 @@ def test_ae_tabs_in_maya_order():
 
 def test_ae_tab_kind_kept_across_selection_and_steps():
     ob, mat = _textured_cube()
-    bpy.ops.maya_kit.ae_tab(key="M:polySmooth1")
-    bpy.ops.maya_kit.ae_step(forward=True)
+    bpy.ops.allset.ae_tab(key="M:polySmooth1")
+    bpy.ops.allset.ae_step(forward=True)
     assert ae.current_tab(bpy.context, ob) == "M:polyBevel1"
-    bpy.ops.maya_kit.ae_step(forward=False)
+    bpy.ops.allset.ae_step(forward=False)
     assert ae.current_tab(bpy.context, ob) == "M:polySmooth1"
     other = _mesh("pSphere1")
     other.modifiers.new("polyMirror1", 'MIRROR')
     _select([other], other)
     assert ae.current_tab(bpy.context, other) == "M:polyMirror1"   # same kind: history
-    bpy.ops.maya_kit.ae_tab(key="T")
+    bpy.ops.allset.ae_tab(key="T")
     lamp = bpy.data.objects.new("pointLight1", bpy.data.lights.new("pointLightShape1", 'POINT'))
     bpy.context.scene.collection.objects.link(lamp)
     assert ae.current_tab(bpy.context, lamp) == "T"
@@ -296,7 +296,7 @@ def _rna_owner(owner_name, kind):
     return {"MESH": bpy.types.Mesh, "CAMERA": bpy.types.Camera, "POINT": bpy.types.PointLight,
             "SUN": bpy.types.SunLight, "SPOT": bpy.types.SpotLight, "AREA": bpy.types.AreaLight,
             "material": bpy.types.Material,
-            "nucleus": bpy.types.Scene.bl_rna.properties["maya_kit_nucleus"].fixed_type}.get(kind)   # step 68
+            "nucleus": bpy.types.Scene.bl_rna.properties["allset_nucleus"].fixed_type}.get(kind)   # step 68
 
 
 def test_ae_rows_exist_in_blender():
@@ -338,7 +338,7 @@ def test_ae_draws_every_tab():
     for target in (ob, cam, lamp, sun):
         _select([target], target)
         for key, _label, _type in ae.tabs(target):
-            bpy.ops.maya_kit.ae_tab(key=key)
+            bpy.ops.allset.ae_tab(key=key)
             lay = FakeLayout()
             ae.draw(lay, bpy.context, target)
             panels = [e for e in lay.log if e[0] == "panel"]
@@ -351,15 +351,15 @@ def test_ae_draws_every_tab():
                 if target is ob:
                     assert any(e[0] == "prop" and e[2] == '["myAttr"]' for e in lay.log)
             if key.startswith("M:"):
-                assert any(e[0] == "op" and e[1] == "maya_kit.ae_modifier" for e in lay.log)
+                assert any(e[0] == "op" and e[1] == "allset.ae_modifier" for e in lay.log)
     # Material tab: sockets of the Principled BSDF under Maya standardSurface sections.
     _select([ob], ob)
-    bpy.ops.maya_kit.ae_tab(key="MAT:0")
+    bpy.ops.allset.ae_tab(key="MAT:0")
     lay = FakeLayout()
     ae.draw(lay, bpy.context, ob)
     labels = [e[3] for e in lay.log if e[0] == "prop" and e[2] == "default_value"]
     assert "Color" in labels and "Metalness" in labels, labels
-    bpy.ops.maya_kit.ae_tab(key="MAT:1")
+    bpy.ops.allset.ae_tab(key="MAT:1")
     lay = FakeLayout()
     ae.draw(lay, bpy.context, ob)
     if plain.node_tree is not None and any(n.type == 'BSDF_PRINCIPLED' for n in plain.node_tree.nodes):
@@ -372,40 +372,40 @@ def test_ae_draws_every_tab():
 def test_ae_modifier_apply_and_remove():
     ob, mat = _textured_cube()
     n = len(ob.data.vertices)
-    bpy.ops.maya_kit.ae_modifier(modifier="polyBevel1", action='REMOVE')
+    bpy.ops.allset.ae_modifier(modifier="polyBevel1", action='REMOVE')
     assert [m.name for m in ob.modifiers] == ["polySmooth1"]
-    bpy.ops.maya_kit.ae_modifier(modifier="polySmooth1", action='APPLY')
+    bpy.ops.allset.ae_modifier(modifier="polySmooth1", action='APPLY')
     assert len(ob.modifiers) == 0 and len(ob.data.vertices) == n   # empty mesh stays empty
 
 
 def test_ae_add_limit_and_select():
     ob, mat = _textured_cube()
-    bpy.ops.maya_kit.ae_add_limit(type='LIMIT_ROTATION')
+    bpy.ops.allset.ae_add_limit(type='LIMIT_ROTATION')
     assert ob.constraints[0].type == 'LIMIT_ROTATION'
     lay = FakeLayout()
     ae.draw_limit(lay, bpy.context, ob, 'LIMIT_ROTATION')
     assert ("prop", ob.constraints[0], "use_limit_x", None) in lay.log
     other = _mesh("pSphere1")
     _select([ob, other], ob)
-    bpy.ops.maya_kit.ae_select()
+    bpy.ops.allset.ae_select()
     assert bpy.context.selected_objects == [ob]
 
 
 def test_dock_mode_switches_panels():
     wm = bpy.context.window_manager
-    wm.maya_kit_dock = 'CHANNEL_BOX'
+    wm.allset_dock = 'CHANNEL_BOX'
     # step 99: the dock = three sidebar tabs named like Maya's, one panel each, none with a poll (all exist from
     # the first draw, so Blender puts them before the C "Item" tab)
-    tabs = {bpy.types.MAYAKIT_PT_channel_box: "Channel Box / Layer Editor",
-            bpy.types.MAYAKIT_PT_layer_editor: "Channel Box / Layer Editor",
-            bpy.types.MAYAKIT_PT_dock_attribute_editor: "Attribute Editor",
-            bpy.types.MAYAKIT_PT_dock_modeling_toolkit: "Modeling Toolkit"}
+    tabs = {bpy.types.ALLSET_PT_channel_box: "Channel Box / Layer Editor",
+            bpy.types.ALLSET_PT_layer_editor: "Channel Box / Layer Editor",
+            bpy.types.ALLSET_PT_dock_attribute_editor: "Attribute Editor",
+            bpy.types.ALLSET_PT_dock_modeling_toolkit: "Modeling Toolkit"}
     for panel, category in tabs.items():
         assert panel.bl_category == category and not hasattr(panel, "poll"), panel
-    bpy.ops.maya_kit.ae_toggle()
-    assert wm.maya_kit_dock == 'ATTRIBUTE_EDITOR'
-    bpy.ops.maya_kit.ae_toggle()
-    assert wm.maya_kit_dock == 'CHANNEL_BOX'
+    bpy.ops.allset.ae_toggle()
+    assert wm.allset_dock == 'ATTRIBUTE_EDITOR'
+    bpy.ops.allset.ae_toggle()
+    assert wm.allset_dock == 'CHANNEL_BOX'
 
 
 def _kmis(km_name, key, **mods):
@@ -417,6 +417,6 @@ def _kmis(km_name, key, **mods):
 
 
 def test_keys():
-    assert _kmis("Object Mode", "A", ctrl=True) == [("maya_kit.ae_toggle", None)]
+    assert _kmis("Object Mode", "A", ctrl=True) == [("allset.ae_toggle", None)]
     assert _kmis("Object Mode", "A", ctrl=True, shift=True) == [("object.select_all", 'SELECT')]
     assert _kmis("Object Mode", "D", alt=True) == [("object.select_all", 'DESELECT')]

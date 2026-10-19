@@ -11,7 +11,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, screenshot, setup, step, win  # noqa: E402
 
-SHOTS = os.environ.get("MAYA_KIT_GUI_SHOTS", "")
+SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 KEYS = ((1, 0.0), (12, 5.0), (15, -2.0), (20, 8.0), (30, 1.0))
 
 
@@ -72,14 +72,14 @@ def drag(x0, x1, shift=False):
 @step
 def s_setup():
     setup()
-    bpy.ops.maya_kit.layout_install()
-    bpy.ops.wm.read_homefile(app_template="MayaKit")
+    bpy.ops.allset.layout_install()
+    bpy.ops.wm.read_homefile(app_template="Allset")
 
 
 @step
 def s_scene():
-    bpy.ops.maya_kit.keymap_activate()
-    bpy.ops.maya_kit.create(kind='CUBE')
+    bpy.ops.allset.keymap_activate()
+    bpy.ops.allset.create(kind='CUBE')
     bpy.context.active_object.name = "Cube"
     _a, r = timeline()
     print("TIMELINE region", r.x, r.y, r.width, r.height)
@@ -104,8 +104,8 @@ drag(lambda: tx(10), lambda: tx(16), shift=True)
 
 @step
 def s_range():
-    check(f"Shift-drag highlights 10-16 ({tuple(wm().maya_kit_time_range)})",
-          wm().maya_kit_time_range_on and tuple(sorted(wm().maya_kit_time_range)) == (10, 16))
+    check(f"Shift-drag highlights 10-16 ({tuple(wm().allset_time_range)})",
+          wm().allset_time_range_on and tuple(sorted(wm().allset_time_range)) == (10, 16))
     redraw()
 
 
@@ -122,8 +122,8 @@ drag(lambda: tx(13), lambda: tx(18))
 def s_move_check():
     check(f"middle drag +5: keys 12 15 -> 17 20, the old 20 overwritten ({keys()})",
           keys() == [(1, 0.0), (17, 5.0), (20, -2.0), (30, 1.0)])
-    check(f"the range follows: 15-21 ({tuple(wm().maya_kit_time_range)})",
-          tuple(sorted(wm().maya_kit_time_range)) == (15, 21))
+    check(f"the range follows: 15-21 ({tuple(wm().allset_time_range)})",
+          tuple(sorted(wm().allset_time_range)) == (15, 21))
     with bpy.context.temp_override(window=win()):
         bpy.ops.ed.undo()
 
@@ -131,8 +131,8 @@ def s_move_check():
 @step
 def s_undo_check():
     check(f"one undo = before the drag ({keys()})", keys() == list(KEYS))
-    wm().maya_kit_time_range = (10, 16)
-    wm().maya_kit_time_range_on = True
+    wm().allset_time_range = (10, 16)
+    wm().allset_time_range_on = True
     redraw()
 
 
@@ -150,7 +150,7 @@ drag(right_end, lambda: tx(22))
 def s_scale_check():
     check(f"right end drag 16 -> 22: keys scale x2 from 10 (12 -> 14, 15 -> 20 overwriting 20) ({keys()})",
           keys() == [(1, 0.0), (14, 5.0), (20, -2.0), (30, 1.0)])
-    check(f"range 10-22 ({tuple(wm().maya_kit_time_range)})", tuple(sorted(wm().maya_kit_time_range)) == (10, 22))
+    check(f"range 10-22 ({tuple(wm().allset_time_range)})", tuple(sorted(wm().allset_time_range)) == (10, 22))
 
 
 @step
@@ -167,7 +167,7 @@ def s_click():
 @step
 def s_click_check():
     check(f"a click on the range = plain click: range off, time 15 ({bpy.context.scene.frame_current})",
-          not wm().maya_kit_time_range_on and bpy.context.scene.frame_current == 15
+          not wm().allset_time_range_on and bpy.context.scene.frame_current == 15
           and keys() == [(1, 0.0), (14, 5.0), (20, -2.0), (30, 1.0)])
 
 

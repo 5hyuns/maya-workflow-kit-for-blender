@@ -39,22 +39,22 @@ def test_reset():
 
 
 def test_keymaps():
-    kc = bpy.context.window_manager.keyconfigs["Maya"]
+    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
     for name in patches.GIZMO_KEYMAPS:
         # step 85 puts its Ctrl+LMB item in front; the first plain item is still the handle press
         items = [k for k in kc.keymaps[name].keymap_items if k.active and not k.ctrl]
         first = items[0]
         assert (first.idname, first.type, first.value, first.shift) == \
-            ("maya_kit.manip_press", 'LEFTMOUSE', 'PRESS', False), name
+            ("allset.manip_press", 'LEFTMOUSE', 'PRESS', False), name
     for km, _idname, mode in patches.MMB_TOOLS:
         mmb = [k for k in kc.keymaps[km].keymap_items if k.active and k.type == 'MIDDLEMOUSE' and not k.shift]
-        assert [k.idname for k in mmb] == ["maya_kit.cb_virtual_slider", "maya_kit.manip_mmb"], (km, mmb)
+        assert [k.idname for k in mmb] == ["allset.cb_virtual_slider", "allset.manip_mmb"], (km, mmb)
         assert mmb[1].properties.mode == mode
-    assert "maya_kit.manip_press" in patches.PASS_THROUGH_FIRST
+    assert "allset.manip_press" in patches.PASS_THROUGH_FIRST
 
 
 def test_mmb_without_selection_passes():
     for ob in list(bpy.data.objects):
         ob.select_set(False)
     # no 3D view in background mode: poll fails, nothing happens
-    assert not bpy.ops.maya_kit.manip_mmb.poll()
+    assert not bpy.ops.allset.manip_mmb.poll()

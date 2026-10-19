@@ -12,7 +12,7 @@ component = import_module(kit.MODULE + ".operators.component")
 
 
 def _kmis(km, type, **mods):
-    km = bpy.context.window_manager.keyconfigs["Maya"].keymaps[km]
+    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km]
     want = {"shift": False, "ctrl": False, "alt": False, **mods}
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items()) and not k.oskey]
@@ -24,19 +24,19 @@ def _ids(km, type, **mods):
 
 def test_mesh_bindings():
     d = _kmis("Mesh", "D")
-    assert [k.idname for k in d] == ["maya_kit.hold"] and d[0].properties.name == "component_pivot"
+    assert [k.idname for k in d] == ["allset.hold"] and d[0].properties.name == "component_pivot"
     sa = _kmis("Mesh", "A", ctrl=True, shift=True)
     assert [k.idname for k in sa] == ["mesh.select_all"] and sa[0].properties.action == 'SELECT'
-    assert _ids("Mesh", "D", alt=True) == ["maya_kit.select_none"]
-    assert _ids("Mesh", "E", ctrl=True) == ["maya_kit.extrude"]   # polyExtrudeFace since step 65
-    assert _ids("Mesh", "B", ctrl=True) == ["maya_kit.bevel"]
+    assert _ids("Mesh", "D", alt=True) == ["allset.select_none"]
+    assert _ids("Mesh", "E", ctrl=True) == ["allset.extrude"]   # polyExtrudeFace since step 65
+    assert _ids("Mesh", "B", ctrl=True) == ["allset.bevel"]
     assert _ids("Mesh", "PERIOD", shift=True) == ["mesh.select_more"]
     assert _ids("Mesh", "COMMA", shift=True) == ["mesh.select_less"]
     assert _ids("Mesh", "PERIOD", shift=True, ctrl=True) == ["mesh.select_next_item"]
     assert _ids("Mesh", "COMMA", shift=True, ctrl=True) == ["mesh.select_prev_item"]
     for key, comp in (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE")):
         k = _kmis("Mesh", key, ctrl=True)
-        assert [i.idname for i in k] == ["maya_kit.convert_selection"], key
+        assert [i.idname for i in k] == ["allset.convert_selection"], key
         assert k[0].properties.type == comp, key
     # object mode keeps its own D (affect only origins)
     assert _kmis("Object Mode", "D")[0].properties.name == "pivot"
@@ -79,7 +79,7 @@ def test_select_none_leaves_edit_mode():
     ob = _cube()
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    assert bpy.ops.maya_kit.select_none() == {'FINISHED'}
+    assert bpy.ops.allset.select_none() == {'FINISHED'}
     assert bpy.context.mode == 'OBJECT' and not ob.select_get()
     assert not any(v.select for v in ob.data.vertices), "components deselected too"
 
@@ -93,14 +93,14 @@ def test_bevel_exec_vertex_and_edge():
     bpy.ops.object.mode_set(mode='OBJECT')
     ob.data.vertices[0].select = True
     bpy.ops.object.mode_set(mode='EDIT')
-    assert bpy.ops.maya_kit.bevel() == {'FINISHED'}
+    assert bpy.ops.allset.bevel() == {'FINISHED'}
     bpy.ops.object.mode_set(mode='OBJECT')
     assert len(ob.data.vertices) == 10, len(ob.data.vertices)   # one corner -> 3 new verts
     bpy.ops.object.mode_set(mode='EDIT')
     ts.mesh_select_mode = (False, False, True)
     bpy.ops.mesh.select_all(action='SELECT')
     n = len(ob.data.polygons)
-    bpy.ops.maya_kit.bevel()
+    bpy.ops.allset.bevel()
     bpy.ops.object.mode_set(mode='OBJECT')
     assert len(ob.data.polygons) > n
 
@@ -131,19 +131,19 @@ def test_convert_selection_touching():
     bpy.ops.object.mode_set(mode='EDIT')
     ts = bpy.context.scene.tool_settings
     _pick(ob, "verts", 0, (True, False, False))
-    bpy.ops.maya_kit.convert_selection(type='FACE')
+    bpy.ops.allset.convert_selection(type='FACE')
     assert tuple(ts.mesh_select_mode) == (False, False, True)
     assert _count(ob)[2] == 3, _count(ob)          # a cube corner touches 3 faces
     _pick(ob, "verts", 0, (True, False, False))
-    bpy.ops.maya_kit.convert_selection(type='EDGE')
+    bpy.ops.allset.convert_selection(type='EDGE')
     assert _count(ob)[1] == 3, _count(ob)          # and 3 edges
     _pick(ob, "faces", 0, (False, False, True))
-    bpy.ops.maya_kit.convert_selection(type='EDGE')
+    bpy.ops.allset.convert_selection(type='EDGE')
     assert _count(ob)[1] == 4, _count(ob)          # a face -> its 4 border edges
     _pick(ob, "faces", 0, (False, False, True))
-    bpy.ops.maya_kit.convert_selection(type='VERT')
+    bpy.ops.allset.convert_selection(type='VERT')
     assert _count(ob)[0] == 4 and tuple(ts.mesh_select_mode) == (True, False, False)
-    bpy.ops.maya_kit.convert_selection(type='FACE')   # 4 verts of one face -> 5 faces touch them
+    bpy.ops.allset.convert_selection(type='FACE')   # 4 verts of one face -> 5 faces touch them
     assert _count(ob)[2] == 5, _count(ob)
     bpy.ops.object.mode_set(mode='OBJECT')
 
@@ -157,7 +157,7 @@ def test_bevel_exec_width_is_in_maya_units():
     us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
     try:
         ob = _cube()
-        ob.scale = (0.005, 0.005, 0.005)             # a 1 cm cube, like the MayaKit pCube1
+        ob.scale = (0.005, 0.005, 0.005)             # a 1 cm cube, like the Allset pCube1
         bpy.ops.object.transform_apply(scale=True)
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_mode(type='EDGE')
@@ -166,7 +166,7 @@ def test_bevel_exec_width_is_in_maya_units():
         bm.edges.ensure_lookup_table()
         bm.edges[0].select = True
         bmesh.update_edit_mesh(ob.data)
-        assert bpy.ops.maya_kit.bevel() == {'FINISHED'}
+        assert bpy.ops.allset.bevel() == {'FINISHED'}
         bm = bmesh.from_edit_mesh(ob.data)
         shortest = min(e.calc_length() for e in bm.edges)
         assert abs(units.maya_unit() - 0.01) < 1e-9
