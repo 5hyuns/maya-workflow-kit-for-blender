@@ -2,14 +2,20 @@
 
 ## 현재 작업
 
+- Step 108 (메뉴의 Maya 단축키 글자와 Maya 메뉴 모양; step_98.md #12, #14) 완료 — `docs/steps/step_108.md`.
+  - 메인 메뉴 57 항목에 Maya 키를 오른쪽 한 열로 (`ui/menu_hotkeys.py` ← `tools/gen_menu_hotkeys.py`; kit 이 Maya 뜻으로 묶은 키만),
+    옵션 상자 표시도 그 열에. Blender 단축키는 안 보임 (연산자 항목은 `maya_kit.menu_item`, Blender Python 메뉴는 kit 하위 클래스,
+    IC Shift+Ctrl+O 제거). File 메뉴는 1.25 배율 900 px 창에 Exit 까지 들어감.
+  - 검증: 헤드리스 810/810, GUI 1063/1063, 나란히 그림 `research/maya/screens/step108/`.
+  - **바로 다음 할 일**: step 109 = 셸프 (step_98.md #7: Maya 순서, 회색 자리, Sculpting 브러시). 그다음 110 모델링·리깅 기능.
+    배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 107 (키맵: 틀린 일상 키, 없던 키, 미검토 분류; step_98.md #35–#36) 완료 — `docs/steps/step_107.md`.
   - 틀린 IC 키 제거 + Maya 뜻: Alt+R 대칭, Ctrl+I (반전 제거), F1 도움말, Alt+C 색 피드백, m 조각 세기, Ctrl+PgUp/PgDn 픽워크,
     Ctrl+, (환경설정 제거). 새 키: Ctrl+M / Shift+M / Ctrl+Shift+M, Alt+B, 스킨 페인트 u / n / b / Alt+F / Ctrl+Alt+C·V, 조각 Ctrl+0–9 /
     b / m, Graph Editor h / j, Time Slider 북마크 = 마커 (`operators/bookmarks.py`), Ctrl+F 검색.
   - `docs/keymap_mapping.md`: 구현 198 · IC 31 · 해당 없음 171 · **미검토 0** (219 에서).
   - 검증: 헤드리스 805/805, GUI 1060/1060.
-  - **바로 다음 할 일**: step 108 = 메뉴 단축키 표시와 Maya 메뉴 모양 (step_98.md #12, #14). 그다음 109 셸프, 110 모델링·리깅 기능.
-    배포 결정 (decision 11) 은 사용자 대기.
 
 - Step 106 (Tool Settings 도크 + Attribute Editor parity, step_98.md #20–#22) 완료 — `docs/steps/step_106.md`.
   - Maya 2022 GUI 측정 `research/scripts/maya_ts106/` → `research/maya/screens/ts106/` (Tool Settings 절·줄, 도크 자리, 토글, AE

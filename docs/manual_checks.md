@@ -708,3 +708,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 107) 스킨 페인트에서 u 메뉴로 Replace / Add / Scale / Smooth 가 바뀌는지, n 드래그 = 값, b 드래그 = 크기, Alt+F = Flood, Alt+C 로 가중치 색이 사라졌다 돌아오는지.
 - [ ] (step 107) 조각에서 Ctrl+1–9 브러시가 바뀌는지 (Spray = Draw Sharp, Repeat = Layer 가 납득되는지), b / m 드래그, Shift+U / Ctrl+Shift+I 마스크.
 - [ ] (step 107) Time Slider 에서 Shift 드래그로 범위를 고르고 Alt+T → 이름 → 마커; ' / ; 로 이동, Shift+| 로 재생 범위가 그 북마크로 바뀌는지.
+
+### Step 108 — 메뉴 단축키 글자
+
+- [ ] (step 108) 실제 마우스로 위 막대 File / Edit / Edit Mesh / Select / Key 메뉴를 열어 Maya 키가 오른쪽 한 열에 맞는지 (글꼴·배율 바꿔서도: Preferences > Interface > Resolution Scale), Recent Files 옆에 Blender 키가 없는지, 125 % 에서 File 메뉴 끝 (Exit) 이 화면 안에 있는지.

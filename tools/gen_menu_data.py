@@ -108,6 +108,7 @@ def label_of(item, runtime=None):
 
 
 _OPTION = {}   # id(converted entry) -> the Maya item has an option box (menus.json "optionBox")
+_COMMAND = {}  # id(converted entry) -> the Maya runTimeCommand it runs (menus.json "command" / "rtc"; step 108)
 
 
 def convert(items, runtime=None):
@@ -142,6 +143,8 @@ def convert(items, runtime=None):
             continue
         entry = (label, children) if children else (label,)
         _OPTION[id(entry)] = bool(it.get("optionBox"))
+        if it.get("command") or it.get("rtc"):
+            _COMMAND[id(entry)] = it.get("command") or it.get("rtc")
         out.append(entry)
     while out and out[-1][0] == "-":
         out.pop()
@@ -161,6 +164,21 @@ def option_paths(items, prefix):
             yield path
         if len(it) > 1:
             yield from option_paths(it[1], path)
+
+
+def command_paths(items, prefix):
+    """(label path, Maya runTimeCommand) of the entries whose Maya item names one (same path rules as
+    ``option_paths``)."""
+    seen = {}
+    for it in items:
+        if it[0] == "-":
+            continue
+        n = seen[it[0]] = seen.get(it[0], 0) + 1
+        path = f"{prefix}/{it[0]}" + (f"#{n}" if n > 1 else "")
+        if _COMMAND.get(id(it)):
+            yield path, _COMMAND[id(it)]
+        if len(it) > 1:
+            yield from command_paths(it[1], path)
 
 
 def build(data):

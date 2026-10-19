@@ -164,10 +164,12 @@ def test_notice_in_tooltip_and_help_line():
     tip = menu_sets.MAYAKIT_OT_menu_unavailable.description(
         bpy.context, types.SimpleNamespace(item="Render/Batch Render"))
     assert "Batch Render" in tip and "blender -b" in tip, tip
-    # items without a notice are unchanged
+    # items without a notice run the same action through maya_kit.menu_item (step 108: Blender prints no shortcut
+    # of its own beside it)
     rec = _Rec()
     menu_sets.draw_item(rec, "Create/Polygon Primitives/Cube", "Cube")
-    assert rec.log[0][0] == "maya_kit.create"
+    assert rec.log[0][0] == "maya_kit.menu_item" and rec.log[0][2].item == "Create/Polygon Primitives/Cube"
+    assert menu_map.spec("Create/Polygon Primitives/Cube")[1] == "maya_kit.create"
     # every notice gets into its item's tooltip
     for path in notices.NOTICES:
         cls = menu_sets.MAYAKIT_OT_menu_item if path in menu_map.MAP else menu_sets.MAYAKIT_OT_menu_unavailable

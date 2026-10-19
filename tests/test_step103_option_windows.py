@@ -103,7 +103,7 @@ def test_box_mark_not_a_left_window_icon():
             return lambda *a, **k: None
 
     rec = Rec()
-    menu_sets._draw_boxed(rec, "Create/Polygon Primitives/Cube", "Cube")
+    menu_sets._draw_boxed(rec, "Create/Polygon Primitives/Cube", "Cube" + menu_sets.BOX_MARK)   # step 108: full text
     idname, text, icon, menu, props = rec.log[0]
     assert text == "Cube" + menu_sets.BOX_MARK and icon == 'NONE' and props.item == "Create/Polygon Primitives/Cube"
     assert menu == "MAYAKIT_MT_option_box"
