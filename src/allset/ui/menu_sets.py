@@ -731,8 +731,35 @@ class ALLSET_MT_menu_bar(bpy.types.Menu):
         draw_menu_bar(self.layout, context, collapsed=True)
 
 
-def draw_menu_bar(layout, context, collapsed=False):
-    """Blender logo menu, Maya common menus, menu set dropdown, set menus, Cache, Help."""
+# Maya menu bar items are their text plus ~11 px ( menubar: "File" 30 px,
+# "Mesh Display" 80 px, Segoe UI 11 px); Blender's header pulldowns add about a UI unit, so the Maya bar overflowed a
+# 1600 px window at 125 % (step 113). Each item gets its checked text width plus this padding.
+MENU_PAD_PX = 11
+
+
+def menu_width_units(text, context):
+    """``ui_units_x`` of a header pulldown showing ``text`` at Maya's spacing."""
+    import blf
+    prefs = context.preferences
+    scale = prefs.system.ui_scale or 1.0
+    blf.size(0, prefs.ui_styles[0].widget.points * scale)
+    w = blf.dimensions(0, text)[0]
+    return (w + MENU_PAD_PX * scale) / (20.0 * scale)
+
+
+def _menu(layout, context, idname, collapsed):
+    if collapsed:
+        layout.menu(idname)
+        return
+    label = getattr(bpy.types, idname).bl_label
+    sub = layout.row(align=True)
+    sub.ui_units_x = menu_width_units(label, context)
+    sub.menu(idname)
+
+
+def draw_menu_bar(layout, context, collapsed=False, menu_set=True):
+    """Blender logo menu, Maya common menus, set menus, Cache, Help. ``menu_set``: the menu set dropdown after the
+    common menus (only when no Status Line shows it, step 113: Maya keeps it at the Status Line's left end)."""
     from .. import preferences
     prefs = preferences.get(context)
     if collapsed:
@@ -741,16 +768,16 @@ def draw_menu_bar(layout, context, collapsed=False):
         layout.menu("TOPBAR_MT_blender", text="", icon='BLENDER')
     set_id = prefs.menu_set
     for name in _SET_MENUS[COMMON_SET]:
-        layout.menu(menu_idname(name))
+        _menu(layout, context, menu_idname(name), collapsed)
     if collapsed:
         layout.separator()
         layout.prop(prefs, "menu_set", text="")
-    else:
+    elif menu_set:
         sub = layout.row()
         sub.ui_units_x = 5.5
         sub.prop(prefs, "menu_set", text="")
     for name in _SET_MENUS.get(set_id, ()) + _ALWAYS_MENUS:
-        layout.menu(menu_idname(name))
+        _menu(layout, context, menu_idname(name), collapsed)
 
 
 def editor_menu_idname(editor, index):

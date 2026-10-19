@@ -35,7 +35,7 @@ DOCK_CATEGORY = "Channel Box / Layer Editor"   # = ui/channel_box.py CATEGORY (s
 # (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
 TIME_CONTROLS_PX = 300   # = ui/channel_box.py CATEGORY
 TIME_SLIDER_PX = 36
-# Maya shelf: tab row + 32 px icon row = 64 (ui_layout.md:219-222; step 51: header = tabs, WINDOW = icons)
+# Maya shelf: tab row + 32 px icon row = 64 (ui_layout.md:219-222; step 113: one WINDOW region draws both)
 SHELF_PX = 64
 WINDOW_SIZE = (1600, 900)
 EDGE = 3                  # px the area edges take from a split (checked)
@@ -260,7 +260,8 @@ class Builder:
             marker.use_fake_user = True
             sp.mask = marker
             sp.mode = 'VIEW'
-            sp.show_region_header = True
+            # the shelf row draws tab strip + icons in its WINDOW region (ui/shelf.py, step 113)
+            sp.show_region_header = key == "strip"
             sp.show_region_tool_header = False
             sp.show_region_ui = False
             sp.show_region_toolbar = False
@@ -268,7 +269,7 @@ class Builder:
         v3d = a["view3d"].spaces.active
         v3d.show_region_ui = True              # sidebar = Channel Box dock (step 6, 11)
         v3d.show_region_toolbar = False        # the Tool Box column replaces it (step 49)
-        v3d.show_region_tool_header = False    # Maya has no tool settings row (step 49)
+        v3d.show_region_tool_header = True     # = Maya's panel toolbar (ui/panel_toolbar.py, step 113)
         v3d.show_region_header = True          # Maya panel menu bar (step 37)
         v3d.lens = MAYA_LENS
         v3d.region_3d.view_perspective = 'PERSP'

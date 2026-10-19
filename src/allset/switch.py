@@ -271,9 +271,9 @@ def _fit_views(ws, scene):
             for space in area.spaces:
                 if space.type != 'VIEW_3D':
                     continue
-                # The template hides the tool header (Maya has no such row); an appended screen
-                # came back with it shown (checked, step 60).
-                space.show_region_tool_header = False
+                # The tool header is Maya's panel toolbar in views with a header (step 113); the Tool Box column has
+                # neither. Set it explicitly: an appended screen came back with it shown (checked, step 60).
+                space.show_region_tool_header = space.show_region_header
                 for key, value in units.clip(scene).items():
                     setattr(space, key, value)
                 space.overlay.grid_scale = units.grid_scale(scene)
@@ -381,6 +381,11 @@ def set_mode(on, layout=True):
             _registered[0] = True
         from . import keymap
         keymap.activate()
+        # Maya mode = Maya keymap, layout, menus *and* look (the switch's own description): the Maya theme comes on
+        # with it (the user's theme is in the snapshot and comes back on the switch to Blender; step 113 — Blender's
+        # theme made the Maya top area read as Blender, user report 2026-10-19).
+        if not prefs.maya_theme:
+            prefs.maya_theme = True
         if layout and not bpy.app.background:
             for window in _windows()[:1]:
                 enter_layout(window)
@@ -393,6 +398,7 @@ def set_mode(on, layout=True):
             unregister_mode()
             _registered[0] = False
         restore_snapshot()
+        prefs["maya_theme"] = False   # theme restored above; no update callback (the theme module is unregistered)
         from .theme import forget_backup
         forget_backup()        # the theme module keeps it across quits; a switch to Blender is final
     bpy.context.preferences.is_dirty = True
@@ -530,12 +536,16 @@ def draw_topbar_switch(self, context):
     if region is None or region.alignment != 'RIGHT':
         return
     on = is_on()
+    # Maya's menu bar has nothing here: flat text, the current mode bright and the other dim (step 113)
     row = self.layout.row(align=True)
-    row.scale_x = 0.9
-    op = row.operator(ALLSET_OT_switch_mode.bl_idname, text="Maya", depress=on)
-    op.mode = 'MAYA'
-    op = row.operator(ALLSET_OT_switch_mode.bl_idname, text="Blender", depress=not on)
-    op.mode = 'BLENDER'
+    row.scale_x = 0.85
+    sub = row.row(align=True)
+    sub.active = on
+    sub.operator(ALLSET_OT_switch_mode.bl_idname, text="Maya", emboss=False).mode = 'MAYA'
+    row.label(text="|")
+    sub = row.row(align=True)
+    sub.active = not on
+    sub.operator(ALLSET_OT_switch_mode.bl_idname, text="Blender", emboss=False).mode = 'BLENDER'
 
 
 def draw_edit_menu(self, context):

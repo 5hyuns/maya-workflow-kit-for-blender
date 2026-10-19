@@ -659,12 +659,51 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
 ICON_PX = 32
 PITCH_PX = 35
 LEFT_PX = 6
+# Step 113 (Maya 2022 grab  shelf): the shelf row is one 64 px block — an
+# 18 px tab strip at the top (tabs from x 37, Segoe UI 11 px), the shelf menu / editor glyphs in a 16 px column at
+# x 16, icons from x 43 at y 24 under the row's top, 12 px separators between Maya's button groups
+# (``shelf_data.GAPS``). The kit draws that whole block in the shelf row's WINDOW region when the row has no
+# header (the Allset template since step 113); with a header (older files) the header keeps the tab buttons.
+TAB_PX = 19
+TAB_LEFT_PX = 37
+TAB_PAD_PX = 10
+TAB_FONT_PX = 11
+STRIP_LEFT_PX = 43
+SEP_PX = 12
+
+
+def _space_of(region):
+    """The space of the area holding ``region`` (gizmo / draw contexts give it directly; tests pass bare regions)."""
+    space = getattr(bpy.context, "space_data", None)
+    area = getattr(bpy.context, "area", None)
+    if area is not None and any(r == region for r in area.regions):
+        return space
+    for window in bpy.context.window_manager.windows:
+        for a in window.screen.areas:
+            if any(r == region for r in a.regions):
+                return a.spaces.active
+    return None
+
+
+def tabs_in_window(space):
+    """The shelf row draws its tab strip itself (no header region)."""
+    return space is not None and is_shelf_row(space) and not space.show_region_header
+
+
+def _gaps():
+    cur = current(bpy.context)
+    return () if cur.startswith(USER_PREFIX) else shelf_data.GAPS.get(cur, ())
 
 
 def icon_rect(region, slot, scale):
-    size = min(ICON_PX * scale, region.height - 4)
-    x = LEFT_PX * scale + slot * PITCH_PX * scale
-    return x, (region.height - size) / 2, size
+    space = _space_of(region)
+    tabs = tabs_in_window(space)
+    top = round(TAB_PX * scale) if tabs else 0
+    size = min(ICON_PX * scale, region.height - top - 4)
+    left = STRIP_LEFT_PX if tabs else LEFT_PX
+    seps = sum(1 for g in _gaps() if g <= slot) if tabs else 0
+    x = left * scale + slot * PITCH_PX * scale + seps * SEP_PX * scale
+    return x, (region.height - top - size) / 2, size
 
 
 def _draw_rect(x, y, w, h, colour, texture=None):
@@ -707,26 +746,192 @@ def draw_tab_row():
 
 
 _hover = {}   # region pointer -> slot under the mouse (set by the gizmos' test_select)
+_tab_rects = {}   # region pointer -> [(x0, y0, x1, y1, action)] of the tab strip, drawn last ("menu", "gear", shelf id)
+
+
+def tab_rects(context, region):
+    """Rects of the shelf menu glyph, the editor gear and the tabs in region pixels, left to right."""
+    import blf
+    s = context.preferences.system.ui_scale or 1.0
+    h = region.height
+    th = round(TAB_PX * s)
+    out = [(round(14 * s), h - th, round(32 * s), h, "menu"),
+           (round(14 * s), round(4 * s), round(32 * s), h - th - round(4 * s), "gear")]
+    blf.size(0, TAB_FONT_PX * s)
+    x = TAB_LEFT_PX * s
+    for shelf_id, label in shelves():
+        w = blf.dimensions(0, label)[0] + 2 * TAB_PAD_PX * s
+        out.append((round(x), h - th, round(x + w), h, shelf_id))
+        x += w + round(2 * s)
+    return out
+
+
+def _text(x, y, text, colour, size):
+    import blf
+    blf.size(0, size)
+    blf.color(0, *colour)
+    blf.position(0, x, y, 0)
+    blf.draw(0, text)
+
+
+def _draw_tabs(context, region, base):
+    """Maya's shelf tab strip (): #373737 strip, flat tabs, the current one
+    in the row colour with light text, the others dim; the shelf menu glyph left of the tabs, the shelf editor gear
+    left of the icons."""
+    s = context.preferences.system.ui_scale or 1.0
+    h = region.height
+    th = round(TAB_PX * s)
+    dim = (base[0] * (1 - TAB_DIM), base[1] * (1 - TAB_DIM), base[2] * (1 - TAB_DIM), 1.0)
+    _draw_rect(0, h - th, region.width, th, dim)
+    rects = _tab_rects[region.as_pointer()] = tab_rects(context, region)
+    cur = current(context)
+    labels = dict(shelves())
+    hover = _hover.get(region.as_pointer())
+    grey = (0.80, 0.80, 0.80, 1.0)
+    for x0, y0, x1, y1, action in rects:
+        if action == "menu":
+            for k in range(3):
+                _draw_rect(x0 + 2 * s, y0 + (5 + 4 * k) * s, (x1 - x0) - 4 * s, max(1.0, 1.5 * s), grey)
+            continue
+        if action == "gear":
+            cy = (y0 + y1) / 2
+            _draw_rect(x0 + 2 * s, cy - 6 * s, (x1 - x0) - 4 * s, 12 * s, None,
+                       shelf_icons_gear())
+            continue
+        on = action == cur
+        if on:
+            _draw_rect(x0, y0, x1 - x0, y1 - y0 - s, base)
+        elif hover == ("tab", action):
+            _draw_rect(x0, y0, x1 - x0, y1 - y0 - s, (1, 1, 1, 0.06))
+        _text(x0 + TAB_PAD_PX * s, y0 + 5 * s, labels.get(action, action),
+              (0.86, 0.86, 0.86, 1.0) if on else (0.62, 0.62, 0.62, 1.0), TAB_FONT_PX * s)
+
+
+_gear_tex = []
+
+
+def shelf_icons_gear():
+    if not _gear_tex:
+        import gpu
+        import numpy as np
+        from . import status_icons
+        cv = status_icons.Canvas(32)
+        status_icons.gear(cv, 0.5, 0.5, 0.40, status_icons.GREY)
+        px = cv.pixels().reshape(32, 32, 4).copy()
+        rgb = px[..., :3]
+        px[..., :3] = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+        buf = gpu.types.Buffer('FLOAT', 32 * 32 * 4, px.ravel().tolist())
+        _gear_tex.append(gpu.types.GPUTexture((32, 32), format='RGBA32F', data=buf))
+    return _gear_tex[0]
+
+
+def _separators(region, s, count):
+    """x of each Maya separator before ``count`` drawn icons."""
+    out = []
+    for g in _gaps():
+        if g < count:
+            x, _y, size = icon_rect(region, g, s)
+            out.append(x - (PITCH_PX - ICON_PX + SEP_PX) * s / 2)
+    return out
 
 
 def draw_row():
-    """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons). The gizmos only
-    pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor did not, checked)."""
+    """POST_PIXEL of image editors: the shelf icon row (background, hover box, icons; the tab strip when the row has
+    no header). The gizmos only pick (draw handlers draw in plain region pixels; gizmo drawing in the image editor
+    did not, checked)."""
     context = bpy.context
     if not is_shelf_row(context.space_data):
         return
     region = context.region
     s = context.preferences.system.ui_scale
-    _draw_rect(0, 0, region.width, region.height, _theme_colour(context))
+    base = _theme_colour(context)
+    _draw_rect(0, 0, region.width, region.height, base)
+    tabs = tabs_in_window(context.space_data)
+    if tabs:
+        _draw_tabs(context, region, base)
     _cur, buttons = icon_buttons(context)
     hover = _hover.get(region.as_pointer())
+    shown = 0
     for slot, (_index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
         x, y, size = icon_rect(region, slot, s)
         if x > region.width:
             break
+        shown = slot + 1
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, (1, 1, 1, 0.18 if mapped else 0.08))
         _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key, greyed=not mapped))
+    if tabs:
+        for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
+            _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, (0.18, 0.18, 0.18, 1.0))
+            _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, (0.40, 0.40, 0.40, 1.0))
+
+
+class ALLSET_GT_shelf_tab(bpy.types.Gizmo):
+    """Tab strip slot ``slot`` of ``tab_rects`` (the shelf menu, the gear, a tab): picking only, drawn by
+    ``draw_row``; clicking runs allset.shelf_tab."""
+    bl_idname = "ALLSET_GT_shelf_tab"
+    __slots__ = ("slot",)
+
+    def setup(self):
+        self.slot = 0
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        if not tabs_in_window(context.space_data):
+            return -1
+        key = context.region.as_pointer()
+        rects = _tab_rects.get(key) or tab_rects(context, context.region)
+        hit = self.slot < len(rects) and rects[self.slot][0] <= location[0] <= rects[self.slot][2] \
+            and rects[self.slot][1] <= location[1] <= rects[self.slot][3]
+        tag = ("tab", rects[self.slot][4]) if self.slot < len(rects) else None
+        if hit:
+            if _hover.get(key) != tag:
+                _hover[key] = tag
+                context.region.tag_redraw()
+            return 0
+        if tag is not None and _hover.get(key) == tag:
+            _hover.pop(key, None)
+            context.region.tag_redraw()
+        return -1
+
+
+class ALLSET_OT_shelf_tab(bpy.types.Operator):
+    """Shelf tab strip: show this shelf, or open the shelf menu"""
+    bl_idname = "allset.shelf_tab"
+    bl_label = "Shelf Tab"
+    bl_options = {'INTERNAL'}
+
+    slot: IntProperty()
+
+    @classmethod
+    def description(cls, context, props):
+        rects = _tab_rects.get(context.region.as_pointer()) if context.region else None
+        action = rects[props.slot][4] if rects and props.slot < len(rects) else ""
+        if action == "menu":
+            return "Shelf menu: choose a shelf"
+        if action == "gear":
+            return "Shelf editor: new / delete shelf, add / edit / remove buttons"
+        return f"Show the {dict(shelves()).get(action, action)} shelf"
+
+    def invoke(self, context, event):
+        rects = _tab_rects.get(context.region.as_pointer()) if context.region else None
+        if not rects or self.slot >= len(rects):
+            return {'CANCELLED'}
+        action = rects[self.slot][4]
+        _hover.pop(context.region.as_pointer(), None)
+        if action == "menu":
+            bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_tabs.bl_idname)
+        elif action == "gear":
+            bpy.ops.wm.call_menu(name=ALLSET_MT_shelf_settings.bl_idname)
+        else:
+            set_current(context, action)
+            _redraw(context)
+        return {'FINISHED'}
+
+
+TAB_SLOTS = 24
 
 
 class ALLSET_GT_shelf_icon(bpy.types.Gizmo):
@@ -745,6 +950,9 @@ class ALLSET_GT_shelf_icon(bpy.types.Gizmo):
     def test_select(self, context, location):
         key = context.region.as_pointer()
         hit = slot_button(context, self.slot)[1] is not None
+        if hit and tabs_in_window(context.space_data) \
+                and location[1] > context.region.height - TAB_PX * context.preferences.system.ui_scale:
+            hit = False
         if hit:
             x, y, size = icon_rect(context.region, self.slot, context.preferences.system.ui_scale)
             hit = x <= location[0] <= x + size and y <= location[1] <= y + size
@@ -778,6 +986,10 @@ class ALLSET_GGT_shelf(bpy.types.GizmoGroup):
             gz = self.gizmos.new(ALLSET_GT_shelf_icon.bl_idname)
             gz.slot = slot
             gz.target_set_operator(ALLSET_OT_shelf_slot.bl_idname).slot = slot
+        for slot in range(TAB_SLOTS):
+            gz = self.gizmos.new(ALLSET_GT_shelf_tab.bl_idname)
+            gz.slot = slot
+            gz.target_set_operator(ALLSET_OT_shelf_tab.bl_idname).slot = slot
 
 
 _orig = {}
@@ -825,7 +1037,7 @@ classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
            ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
-           ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GGT_shelf)
+           ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab, ALLSET_GGT_shelf)
 
 
 _handle = []
@@ -846,6 +1058,8 @@ def unregister():
     shelf_icons.clear()
     _factory_cache.clear()
     _hover.clear()
+    _tab_rects.clear()
+    _gear_tex.clear()
     _last_click.clear()
     unpatch_image_headers()
     for cls in reversed(classes):

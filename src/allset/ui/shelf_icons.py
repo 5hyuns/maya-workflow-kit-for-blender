@@ -462,8 +462,140 @@ def g_fluid(cv, c):
     cv.poly(pts + [(0.81, 0.81), (0.19, 0.81)], c)
 
 
+# --- step 113: buttons that shared one picture (Poly Modeling's four orange balls, six identical checkers) ----------
+
+def g_reduce(cv, c):
+    cv.poly([(0.10, 0.86), (0.50, 0.14), (0.90, 0.86)], c)
+    cv.line((0.30, 0.50), (0.70, 0.50), 0.05, LIGHT)
+    cv.line((0.50, 0.50), (0.50, 0.86), 0.05, LIGHT)
+
+
+def g_remesh(cv, c):
+    cv.poly([(0.10, 0.86), (0.50, 0.14), (0.90, 0.86)], c)
+    for k in (0.38, 0.62):
+        cv.line((0.5 - 0.4 * k, 0.14 + 0.72 * k), (0.5 + 0.4 * k, 0.14 + 0.72 * k), 0.04, LIGHT)
+    cv.line((0.30, 0.50), (0.50, 0.86), 0.04, LIGHT)
+    cv.line((0.70, 0.50), (0.50, 0.86), 0.04, LIGHT)
+
+
+def g_retopo(cv, c):
+    cv.rect(0.12, 0.12, 0.88, 0.88, c)
+    for k in (0.37, 0.62):
+        cv.line((k, 0.12), (k, 0.88), 0.05, LIGHT)
+        cv.line((0.12, k), (0.88, k), 0.05, LIGHT)
+
+
+def g_merge_center(cv, c):
+    for x, y in ((0.18, 0.18), (0.82, 0.18), (0.18, 0.82), (0.82, 0.82)):
+        cv.circle(x, y, 0.08, LIGHT)
+        cv.line((x, y), (0.5 + (x - 0.5) * 0.35, 0.5 + (y - 0.5) * 0.35), 0.05, LIGHT)
+    cv.circle(0.5, 0.5, 0.13, c)
+
+
+def g_collapse(cv, c):
+    cv.poly([(0.10, 0.20), (0.90, 0.20), (0.58, 0.50), (0.42, 0.50)], c)
+    cv.poly([(0.42, 0.50), (0.58, 0.50), (0.90, 0.80), (0.10, 0.80)], shade(c, -0.3))
+    cv.circle(0.5, 0.5, 0.08, LIGHT)
+
+
+def g_target_weld(cv, c):
+    cv.circle(0.30, 0.66, 0.10, LIGHT)
+    cv.line((0.38, 0.58), (0.66, 0.30), 0.06, LIGHT)
+    cv.ring(0.72, 0.28, 0.10, 0.16, c)
+
+
+def _checker_mask(cv, mask, c):
+    cell = ((np.floor(cv.x / 0.19) + np.floor(cv.y / 0.19)) % 2).astype(bool)
+    cv.fill(mask & cell, c)
+    cv.fill(mask & ~cell, LIGHT)
+
+
+def g_uv_planar(cv, c):
+    _checker_mask(cv, (cv.x > 0.12) & (cv.x < 0.88) & (cv.y > 0.30) & (cv.y < 0.88), c)
+    cv.line((0.5, 0.06), (0.5, 0.30), 0.06, LIGHT)
+    cv.poly([(0.40, 0.20), (0.60, 0.20), (0.50, 0.32)], LIGHT)
+
+
+def g_uv_cylinder(cv, c):
+    _checker_mask(cv, (cv.x > 0.22) & (cv.x < 0.78) & (cv.y > 0.20) & (cv.y < 0.82), c)
+    cv.ellipse(0.5, 0.20, 0.28, 0.08, shade(c, 0.3))
+    cv.ellipse(0.5, 0.82, 0.28, 0.08, c)
+
+
+def g_uv_sphere(cv, c):
+    _checker_mask(cv, (cv.x - 0.5) ** 2 + (cv.y - 0.5) ** 2 <= 0.38 ** 2, c)
+
+
+def g_uv_auto(cv, c):
+    _checker_mask(cv, (cv.x > 0.14) & (cv.x < 0.62) & (cv.y > 0.38) & (cv.y < 0.86), c)
+    cv.poly([(0.14, 0.38), (0.38, 0.14), (0.86, 0.14), (0.62, 0.38)], shade(c, 0.3))
+    cv.poly([(0.62, 0.38), (0.86, 0.14), (0.86, 0.62), (0.62, 0.86)], shade(c, -0.3))
+
+
+def g_uv_contour(cv, c):
+    _checker_mask(cv, (cv.x > 0.12) & (cv.x < 0.88) & (cv.y > 0.12) & (cv.y < 0.88)
+                  & ((cv.y - 0.5) ** 2 * 1.6 + (cv.x - 0.5) ** 2 * 0.4 <= 0.16), c)
+    cv.polyline([(0.12, 0.30), (0.5, 0.18), (0.88, 0.30)], 0.05, LIGHT)
+    cv.polyline([(0.12, 0.70), (0.5, 0.82), (0.88, 0.70)], 0.05, LIGHT)
+
+
+def g_uv_grab(cv, c):
+    _checker_mask(cv, (cv.x > 0.10) & (cv.x < 0.66) & (cv.y > 0.34) & (cv.y < 0.90), c)
+    cv.circle(0.70, 0.30, 0.20, LIGHT)
+    cv.circle(0.70, 0.30, 0.10, c)
+
+
+def g_ambient(cv, c):
+    cv.circle(0.5, 0.5, 0.30, c)
+    cv.ring(0.5, 0.5, 0.36, 0.44, shade(c, 0.35))
+
+
+def g_directional(cv, c):
+    for y in (0.24, 0.50, 0.76):
+        cv.line((0.10, y - 0.10), (0.70, y + 0.10), 0.07, c)
+        cv.poly([(0.66, y + 0.18), (0.86, y + 0.16), (0.74, y + 0.01)], c)
+
+
+def g_spot(cv, c):
+    cv.poly([(0.40, 0.10), (0.60, 0.10), (0.92, 0.86), (0.08, 0.86)], c)
+    cv.ellipse(0.5, 0.86, 0.42, 0.08, shade(c, 0.35))
+
+
+def g_area(cv, c):
+    cv.poly([(0.10, 0.34), (0.66, 0.20), (0.90, 0.66), (0.34, 0.80)], c)
+    cv.line((0.50, 0.50), (0.62, 0.92), 0.05, LIGHT)
+
+
+def g_volume_light(cv, c):
+    cv.circle(0.5, 0.5, 0.40, shade(c, -0.35))
+    cv.circle(0.5, 0.5, 0.16, c)
+
+
+def badge(cv, text):
+    """A small light tag at the lower right (step 113): tells apart buttons that still share a picture."""
+    text = text[:2]
+    cell = 0.042
+    w = len(text) * 6 * cell + cell
+    x0, y0 = 0.98 - w, 0.98 - 9 * cell
+    cv.rect(x0, y0, 0.98, 0.98, DARK, 0.85)
+    x = x0 + cell
+    for ch in text:
+        for k, bit in enumerate(FONT.get(ch.upper(), "")):
+            if bit == "#":
+                r, col = divmod(k, 5)
+                cv.rect(x + col * cell, y0 + cell + r * cell, x + (col + 1) * cell, y0 + cell + (r + 1) * cell, LIGHT)
+        x += 6 * cell
+
+
 # Keyword -> glyph, first match wins (on the lower-case label).
 GLYPHS = (
+    (("reduce",), g_reduce), (("remesh",), g_remesh), (("retopolog",), g_retopo),
+    (("merge to center",), g_merge_center), (("collapse",), g_collapse), (("target weld",), g_target_weld),
+    (("planar mapping",), g_uv_planar), (("cylindrical mapping",), g_uv_cylinder),
+    (("spherical mapping",), g_uv_sphere), (("automatic mapping",), g_uv_auto), (("contour stretch",), g_uv_contour),
+    (("grab uv",), g_uv_grab),
+    (("ambient light",), g_ambient), (("directional light",), g_directional), (("spot light",), g_spot),
+    (("area light",), g_area), (("volume light",), g_volume_light),
     (("set key",), g_key), (("driven key",), g_key), (("material", "shading map", "background"), None),
     (("svg",), lambda cv, c: cv.text("SV", c)), (("sweep",), g_cylinder),
     (("editor", "browser", "base meshes", "uv editor"), g_window),
@@ -520,6 +652,37 @@ def glyph_for(label):
     return None
 
 
+_STOP = {"on", "to", "the", "with", "from", "and", "of", "a", "tool", "create", "new"}
+_badges = {}
+
+
+def badge_text(label, shelf):
+    """Two letters for a button whose picture another button of the same shelf also uses: its first word that the
+    others don't share (Parent / Point / Orient Constraint -> PA / PO / OR)."""
+    if shelf is None:
+        return ""
+    if shelf not in _badges:
+        from . import shelf_data
+        buttons = next((b for name, _l, b in shelf_data.SHELVES if name == shelf), [])
+        groups = {}
+        for lab, _cmd in buttons:
+            g = glyph_for(lab)
+            if g is not None and not (shelf == "Sculpting" and lab.endswith(" Tool")):
+                groups.setdefault(getattr(g, "__name__", "") + ("" if g.__name__ != "<lambda>" else lab), []).append(lab)
+        tags = {}
+        for labs in groups.values():
+            if len(set(labs)) < 2:
+                continue
+            words = [[w for w in lab.replace("/", " ").replace("-", " ").lower().split() if w not in _STOP]
+                     for lab in labs]
+            for lab, ws in zip(labs, words):
+                others = [o for o, l2 in zip(words, labs) if l2 != lab]
+                pick = next((w for w in ws if all(w not in o for o in others)), ws[-1] if ws else "")
+                tags[lab] = pick[:2].upper() if pick else ""
+        _badges[shelf] = tags
+    return _badges[shelf].get(label, "")
+
+
 def draw(label, shelf=None, greyed=False):
     """32x32 RGBA (float, straight alpha) icon for a shelf button; ``greyed``: grey and faded."""
     colour = SHELF_COLOURS.get(shelf, USER_COLOUR)
@@ -534,6 +697,9 @@ def draw(label, shelf=None, greyed=False):
         cv.text(initials(label), DARK)
     else:
         glyph(cv, colour)
+        tag = badge_text(label, shelf)
+        if tag:
+            badge(cv, tag)
     px = cv.result()
     if greyed:
         lum = px[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)

@@ -110,8 +110,9 @@ def test_template_layout():
     outliners = [a.spaces.active for a in scr.areas if a.type == 'OUTLINER']
     assert outliners[0].use_filter_object and not outliners[0].use_filter_object_content, "DAG-only Outliner"
     v3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height).spaces.active
-    # sidebar = Channel Box dock; the Tool Box column replaces the toolbar; no tool settings row (step 49)
-    assert v3d.show_region_ui and not v3d.show_region_toolbar and not v3d.show_region_tool_header
+    # sidebar = Channel Box dock; the Tool Box column replaces the toolbar (step 49); the tool header row is Maya's
+    # panel toolbar (step 113)
+    assert v3d.show_region_ui and not v3d.show_region_toolbar and v3d.show_region_tool_header
     # Maya persp angle (35 mm on 36 mm film) = Blender viewport lens 70 (72 mm sensor; step 81)
     assert abs(v3d.lens - 70.0) < 1e-6
     for area in scr.areas:

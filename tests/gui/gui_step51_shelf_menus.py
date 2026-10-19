@@ -66,7 +66,7 @@ def s_rows():
         check(f"icons {size:.0f} px (Maya 32)", abs(size - 32) < 0.5)
     else:   # other scales: the row is resized when Blender lets the kit move the edge (best effort)
         check(f"Shelf row shows tabs and icons at scale {scale():.2f} ({area.height} px, icons {size:.0f})",
-              regions['HEADER'].height > 20 and size >= 16)
+              not area.spaces.active.show_region_header and size >= 16)
     C["n0"] = len(bpy.data.objects)
     x, y = icon_centre(slot_of("Polygon Cube"))
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
@@ -130,10 +130,11 @@ status_line = import_module(MODULE + ".ui.status_line")
 
 
 def file_handle():
-    # the Status Line's first collapse handle (File group): left end of the strip header
+    # the File group's collapse arrow (step 113: after the menu set combo and the five file / undo icons; checked
+    # at x 296 in a scale 1.25 shot of the Allset layout)
     strip = next(a for a in win().screen.areas if a.type == 'IMAGE_EDITOR' and shelf.is_strip(a.spaces.active))
     hdr = next(r for r in strip.regions if r.type == 'HEADER')
-    return hdr.x + round(15 * scale()), hdr.y + hdr.height // 2
+    return hdr.x + round(237 * scale()), hdr.y + hdr.height // 2
 
 
 @step
@@ -152,15 +153,24 @@ def s_handle_click():
 @step
 def s_handle_check():
     check(f"Status Line File handle hides the group ({sorted(status_line._collapsed)})",
-          status_line._collapsed == {"FILE"})
+          status_line._collapsed == {"FILE"} | set(status_line.DEFAULT_COLLAPSED))
     shot("gui_step51_status_collapsed.png")
-    ev('LEFTMOUSE', 'PRESS')
-    ev('LEFTMOUSE', 'RELEASE')
+    # Maya: a collapsed group keeps only its bar and a filled arrow, right after the menu set combo (x 166 at 1.25)
+    x, y = file_handle()
+    C["again"] = (x - round(237 * scale()) + round(133 * scale()), y)
+    ev('MOUSEMOVE', 'NOTHING', x=C["again"][0], y=y)
+
+
+@step
+def s_handle_click_again():   # hover in one tick, press in the next
+    x, y = C["again"]
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
 
 
 @step
 def s_handle_again():
-    check("... and the same handle shows it again", not status_line._collapsed)
+    check("... and its arrow shows it again", status_line._collapsed == set(status_line.DEFAULT_COLLAPSED))
 
 
 run()

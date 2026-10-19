@@ -172,6 +172,10 @@ def fit_columns(start_fit=True):
         screen = window.screen
         # the Maya shelf row (tab row + icon row, 64 px at scale 1, step 51): grow it downwards
         row = shelf_row_area(screen)
+        if row is not None and row.spaces.active.show_region_header:
+            # step 113: the shelf row draws its tab strip in the WINDOW region (layouts saved before carry a header)
+            with context.temp_override(window=window, screen=screen, area=row):
+                row.spaces.active.show_region_header = False
         if row is not None:
             d = round(SHELF_PX * context.preferences.system.ui_scale) - row.height
             if abs(d) > 2:

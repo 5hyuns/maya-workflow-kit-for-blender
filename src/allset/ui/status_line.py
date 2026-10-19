@@ -14,9 +14,9 @@ drawn first in the tool header of the largest 3D View.
 """
 
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, StringProperty
 
-from . import input_line, menu_sets
+from . import input_line, menu_sets, status_icons
 
 # --- 3D View helpers ----------------------------------------------------------------
 
@@ -168,6 +168,7 @@ SNAPS = (
     ("GRID", "Snap to grids (hold X)", 'SNAP_GRID', {'GRID'}),
     ("CURVE", "Snap to curves (hold C)", 'SNAP_EDGE', {'EDGE'}),
     ("POINT", "Snap to points (hold V)", 'SNAP_VERTEX', {'VERTEX'}),
+    ("PROJECTED", "Snap to projected center", 'PIVOT_MEDIAN', None),
     ("PLANE", "Snap to view planes", 'VIEW_PERSPECTIVE', None),
     ("LIVE", "Snap to the surface under the cursor (Make Live)", 'SNAP_FACE', {'FACE_PROJECT'}),
 )
@@ -175,7 +176,8 @@ _SNAP_ELEMENTS = {s[0]: s[3] for s in SNAPS}
 
 
 def snap_on(ts, name):
-    return ts.use_snap and _SNAP_ELEMENTS[name] <= set(ts.snap_elements)
+    elements = _SNAP_ELEMENTS[name]
+    return elements is not None and ts.use_snap and elements <= set(ts.snap_elements)
 
 
 def toggle_snap(ts, name):
@@ -399,7 +401,10 @@ GROUPS = (
     ("INPUT", "Input line: absolute / relative transform, rename, select by name"),
     ("EDITORS", "Editor toggles"),
 )
-_collapsed = set()
+# Groups Maya 2022 shows collapsed on a factory Status Line ( only the bar
+# and arrow between selection modes and snaps, after symmetry and after render; step 113).
+DEFAULT_COLLAPSED = ("MASKS", "HISTORY", "INPUT")
+_collapsed = set(DEFAULT_COLLAPSED)
 
 
 class ALLSET_OT_status_group(bpy.types.Operator):
@@ -423,100 +428,171 @@ class ALLSET_OT_status_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Maya Status Line icons are 20 px on a 23 px pitch ( status); a Blender
+# header button draws its icon at 16 px x UI scale unless the button is scaled.
+ICON_SCALE = 1.0
+
+
+def _flat(layout, op, name, depress=False, text=""):
+    """A Maya Status Line button: a kit-drawn glyph without a frame; a pressed button gets the frame (Maya's blue
+    square behind an active toggle)."""
+    sub = layout.row(align=True)
+    sub.scale_x = sub.scale_y = ICON_SCALE
+    if not depress:
+        sub.emboss = 'NONE'
+    return sub.operator(op, text=text, icon_value=status_icons.icon(name), depress=depress)
+
+
+def _grey(layout, name, item):
+    _flat(layout, menu_sets.ALLSET_OT_menu_unavailable.bl_idname, name).item = item
+
+
 def _group(layout, group):
-    """The collapse handle of ``group``; True when the group's buttons should be drawn."""
-    open_ = group not in _collapsed
+    """Maya group start: the bar, then the filled arrow when the group is collapsed. True when its buttons should be
+    drawn (``_group_end`` then adds the open collapse arrow)."""
+    bar = layout.row(align=True)
+    bar.ui_units_x = 0.5
+    bar.label(text="", icon_value=status_icons.icon("bar"))
+    if group in _collapsed:
+        sub = layout.row(align=True)
+        sub.ui_units_x = 0.6
+        sub.emboss = 'NONE'
+        sub.operator(ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("closed")).group = group
+        return False
+    return True
+
+
+def _group_end(layout, group):
     sub = layout.row(align=True)
     sub.ui_units_x = 0.6
-    sub.operator(ALLSET_OT_status_group.bl_idname, text="", emboss=False,
-                 icon='GRIP_V' if open_ else 'TRIA_RIGHT').group = group
-    return open_
+    sub.emboss = 'NONE'
+    sub.operator(ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("open")).group = group
+
+
+def _field(layout, owner, prop, units):
+    sub = layout.row(align=True)
+    sub.ui_units_x = units
+    sub.prop(owner, prop, text="")
 
 
 def draw_status_line(layout, context, compact=False):
-    """The Maya Status Line groups, left to right (ui_layout.md:196-217), each after its collapse handle.
-    ``compact`` (the 3D View tool header of other layouts, which overflows): the input line goes after the
-    editor toggles so they stay on screen (step 75, delegated)."""
+    """The Maya Status Line, left to right (ui_layout.md:196-217; Maya 2022 grab 
+    menu set combo, then groups of bar + buttons + collapse arrow, sidebar toggles at the right end). ``compact``
+    (the 3D View tool header of other layouts, which overflows): the input line goes after the editor toggles
+    (step 75, delegated)."""
+    from .. import preferences
     screen = context.screen
     ts = context.scene.tool_settings
     area, _r = main_view3d(screen)
     space = area.spaces.active if area else None
 
+    sub = layout.row(align=True)
+    sub.ui_units_x = 5                       # Maya: 100 px combo
+    sub.prop(preferences.get(context), "menu_set", text="")
+
     if _group(layout, "FILE"):
         row = layout.row(align=True)
-        row.operator("wm.read_homefile", text="", icon='FILE_NEW')
-        row.operator("allset.open_scene", text="", icon='FILE_FOLDER')     # project scenes folder (step 69)
-        row.operator("allset.save_scene", text="", icon='FILE_TICK')
-        row = layout.row(align=True)
-        row.operator("ed.undo", text="", icon='LOOP_BACK')
-        row.operator("ed.redo", text="", icon='LOOP_FORWARDS')
+        _flat(row, "wm.read_homefile", "new")
+        _flat(row, "allset.open_scene", "open_scene")      # project scenes folder (step 69)
+        _flat(row, "allset.save_scene", "save")
+        _flat(row, "ed.undo", "undo")
+        _flat(row, "ed.redo", "redo")
+        _group_end(layout, "FILE")
 
     if _group(layout, "SELECT_MODE"):
         editing = context.mode != 'OBJECT' and context.mode.startswith('EDIT')
         row = layout.row(align=True)
-        row.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text="",
-                     icon='OUTLINER_OB_GROUP_INSTANCE').item = "Status Line/Select by hierarchy"
-        row.operator(ALLSET_OT_select_mode.bl_idname, text="", icon='OBJECT_DATAMODE',
-                     depress=not editing).mode = "OBJECT"
-        row.operator(ALLSET_OT_select_mode.bl_idname, text="", icon='EDITMODE_HLT',
-                     depress=editing).mode = "COMPONENT"
+        _grey(row, "sel_hierarchy", "Status Line/Select by hierarchy")
+        _flat(row, ALLSET_OT_select_mode.bl_idname, "sel_object", depress=not editing).mode = "OBJECT"
+        _flat(row, ALLSET_OT_select_mode.bl_idname, "sel_component", depress=editing).mode = "COMPONENT"
+        _group_end(layout, "SELECT_MODE")
 
     if _group(layout, "MASKS"):
         row = layout.row(align=True)
         if context.mode == 'EDIT_MESH':
-            for i, icon in enumerate(('VERTEXSEL', 'EDGESEL', 'FACESEL')):
-                row.prop(ts, "mesh_select_mode", index=i, text="", icon=icon)
+            for i, name in enumerate(("vertex", "edge", "face")):
+                sub = row.row(align=True)
+                if not ts.mesh_select_mode[i]:
+                    sub.emboss = 'NONE'
+                sub.prop(ts, "mesh_select_mode", index=i, text="", icon_value=status_icons.icon(name))
         else:
-            for group, _desc, icon, types in OBJECT_MASKS:
+            for group, desc, _icon, types in OBJECT_MASKS:
                 if types is None:
-                    row.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text="",
-                                 icon=icon).item = f"Status Line/{_desc}"
+                    _grey(row, "mask_" + group, f"Status Line/{desc}")
                 else:
-                    row.operator(ALLSET_OT_select_mask.bl_idname, text="", icon=icon,
-                                 depress=bool(space) and mask_on(space, group)).group = group
+                    _flat(row, ALLSET_OT_select_mask.bl_idname, "mask_" + group,
+                          depress=bool(space) and mask_on(space, group)).group = group
+        _group_end(layout, "MASKS")
 
     if _group(layout, "SNAP"):
         row = layout.row(align=True)
-        for name, desc, icon, elements in SNAPS:
+        for name, desc, _icon, elements in SNAPS:
             if elements is None:
-                row.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text="",
-                             icon=icon).item = f"Status Line/{desc}"
+                _grey(row, "snap_" + name, f"Status Line/{desc}")
             else:
-                row.operator(ALLSET_OT_snap_toggle.bl_idname, text="", icon=icon,
-                             depress=snap_on(ts, name)).snap = name
-        # Maya's live surface field ( S13, step 59)
-        live = getattr(context.scene, "allset_live", None)
-        sub = layout.row(align=True)
-        sub.ui_units_x = 6
-        sub.operator("allset.make_live", text=live.name if live else "No Live Surface",
-                     icon='SNAP_FACE' if live else 'NONE', depress=live is not None)
+                _flat(row, ALLSET_OT_snap_toggle.bl_idname, "snap_" + name, depress=snap_on(ts, name)).snap = name
+        # Maya's live surface field ( S13, step 59): arrow + text field
+        row = layout.row(align=True)
+        sub = row.row(align=True)
+        sub.emboss = 'NONE'
+        sub.operator("allset.make_live", text="", icon='DOWNARROW_HLT')
+        _field(row, context.scene, "allset_live_text", 5)
+        _group_end(layout, "SNAP")
 
     if _group(layout, "SYMMETRY"):
-        draw_symmetry(layout, context)
+        row = layout.row(align=True)
+        sub = row.row(align=True)
+        sub.emboss = 'NONE'
+        sub.menu(ALLSET_MT_symmetry.bl_idname, text="", icon='DOWNARROW_HLT')
+        _field(row, context.scene, "allset_symmetry_text", 5)
+        _group_end(layout, "SYMMETRY")
 
     if _group(layout, "HISTORY"):   # Maya Maya-3032; Blender keeps no history (step 75)
-        input_line.draw_history(layout)
+        _grey(layout, "history", input_line.HISTORY_PATH)
+        _group_end(layout, "HISTORY")
 
     if _group(layout, "RENDER"):
         row = layout.row(align=True)
-        row.operator("render.view_show", text="", icon='RENDER_RESULT')
-        row.operator("render.render", text="", icon='RENDER_STILL')
-        row.operator(ALLSET_OT_ipr_toggle.bl_idname, text="", icon='SHADING_RENDERED',
-                     depress=bool(space) and space.shading.type == 'RENDERED')
-        row.operator(ALLSET_OT_render_settings.bl_idname, text="", icon='OPTIONS')
-        row.operator("allset.hypershade", text="", icon='NODE_MATERIAL')   # ui/hypershade.py (step 67)
+        _flat(row, "render.view_show", "render_view")
+        _flat(row, "render.render", "render")
+        _flat(row, ALLSET_OT_ipr_toggle.bl_idname, "ipr", depress=bool(space) and space.shading.type == 'RENDERED')
+        _flat(row, ALLSET_OT_render_settings.bl_idname, "render_settings")
+        _flat(row, "allset.hypershade", "hypershade")       # ui/hypershade.py (step 67)
+        _grey(row, "render_setup", "Status Line/Render Setup")
+        _flat(row, "allset.light_editor", "light_editor")   # ui/light_editor.py (step 67)
+        _grey(row, "pause", "Status Line/Pause Viewport 2.0")
+        _group_end(layout, "RENDER")
 
     if not compact and _group(layout, "INPUT"):     # Maya Maya-3202 (step 75)
         input_line.draw(layout, context)
+        _group_end(layout, "INPUT")
 
-    if _group(layout, "EDITORS"):
-        row = layout.row(align=True)
-        for editor, _desc, icon in EDITORS:
-            row.operator(ALLSET_OT_editor_toggle.bl_idname, text="", icon=icon,
-                         depress=editor_shown(screen, editor)).editor = editor
+    if not compact:
+        layout.separator_spacer()            # Maya: the sidebar toggles sit at the right end
+    row = layout.row(align=True)
+    for editor, _desc, _icon in EDITORS:
+        if editor == "TOOL_SETTINGS":         # Maya order: toolkit, character controls, AE, tool settings, CB
+            _grey(row, "ed_CHARACTER", "Status Line/Show or hide the Character Controls")
+        _flat(row, ALLSET_OT_editor_toggle.bl_idname, "ed_" + editor,
+              depress=editor_shown(screen, editor)).editor = editor
 
     if compact and _group(layout, "INPUT"):
         input_line.draw(layout, context)
+        _group_end(layout, "INPUT")
+
+
+def _live_text(self):
+    live = getattr(bpy.context.scene, "allset_live", None)
+    return live.name if live else "No Live Surface"
+
+
+def _symmetry_text(self):
+    from ..operators import symmetry
+    return symmetry.label(symmetry.state(bpy.context.scene))
+
+
+def _read_only(self, value):
+    pass
 
 
 _orig = {}
@@ -555,7 +631,7 @@ def draw_left(self, context):
         return _orig["draw_left"](self, context)
     layout = self.layout
     if context.area.show_menus:
-        menu_sets.draw_menu_bar(layout.row(align=True), context)
+        menu_sets.draw_menu_bar(layout.row(align=True), context, menu_set=not status_line_shown(context))
     else:
         layout.menu(menu_sets.ALLSET_MT_menu_bar.bl_idname, text="", icon='COLLAPSEMENU')
     if context.screen.show_fullscreen:
@@ -571,15 +647,67 @@ def draw_right(self, context):
     if not context.screen.show_statusbar:  # as space_topbar.py:46-49
         layout.template_reports_banner()
         layout.template_running_jobs()
-    # Workspace selector at the far right, as Maya's (ui_layout.md:217).
-    # Kept narrow so the Maya menus fit (1600 px window: ).
-    row = layout.row()
-    row.ui_units_x = 6
-    row.template_ID(window, "workspace")
+    # Maya: "Workspace:" and a dropdown at the far right of the menu bar (ui_layout.md:217;
+    #  menubar_corner: label 60 px, combo 194 px), not Blender's ID field
+    # (screen icon, name, unlink button; step 113).
+    row = layout.row(align=True)
+    row.label(text="Workspace:")
+    sub = row.row(align=True)
+    sub.ui_units_x = 7
+    sub.prop(context.window_manager, "allset_workspace", text="")
     if len(bpy.data.scenes) > 1:  # Maya has one scene per file; show only when needed
         row = layout.row()
         row.ui_units_x = 6
         row.template_ID(window, "scene", new="scene.new")
+
+
+def status_line_shown(context):
+    """A Status Line is drawn in this screen: the Maya strip row, or the main 3D View's tool header."""
+    from .shelf import strip_area
+    screen = context.screen
+    if screen is None:
+        return False
+    if strip_area(screen) is not None:
+        return True
+    from .. import preferences
+    try:
+        if not preferences.get(context).show_status_line:
+            return False
+    except KeyError:
+        return False
+    area, _r = main_view3d(screen)
+    return area is not None and area.spaces.active.show_region_tool_header
+
+
+# The workspace dropdown (Maya's "Workspace:" combo): items are the file's workspaces. Blender keeps pointers into
+# the item strings of earlier calls, so an item list is never freed while the add-on runs: one list per set of
+# names, cached (a rebuilt list per draw crashed Blender in Maya, step 113).
+_workspace_items = {}
+
+
+def _workspaces(self, context):
+    names = tuple(ws.name for ws in bpy.data.workspaces)
+    items = _workspace_items.get(names)
+    if items is None:
+        items = [(str(i), n, "Switch to this workspace") for i, n in enumerate(names)] or [("0", "-", "")]
+        _workspace_items[names] = items
+    return items
+
+
+def _get_workspace(self):
+    window = bpy.context.window
+    if window is None:
+        return 0
+    for i, ws in enumerate(bpy.data.workspaces):
+        if ws == window.workspace:
+            return i
+    return 0
+
+
+def _set_workspace(self, value):
+    window = bpy.context.window
+    if window is not None and 0 <= value < len(bpy.data.workspaces):
+        window.workspace = bpy.data.workspaces[value]
 
 
 def draw_tool_header(self, context):
@@ -624,6 +752,15 @@ classes = (ALLSET_OT_select_mask, ALLSET_OT_select_mode, ALLSET_OT_snap_toggle, 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    bpy.types.Scene.allset_live_text = StringProperty(
+        name="Live Surface", description="The live surface (Make Live); No Live Surface when none",
+        get=_live_text, set=_read_only, options={'SKIP_SAVE'})
+    bpy.types.Scene.allset_symmetry_text = StringProperty(
+        name="Symmetry", description="Symmetric modeling: the current mode (the arrow opens the list)",
+        get=_symmetry_text, set=_read_only, options={'SKIP_SAVE'})
+    bpy.types.WindowManager.allset_workspace = EnumProperty(
+        name="Workspace", description="Maya workspace: switch to another workspace of this file",
+        items=_workspaces, get=_get_workspace, set=_set_workspace, options={'SKIP_SAVE'})
     patch_topbar()
     bpy.types.VIEW3D_HT_tool_header.prepend(draw_tool_header)
     bpy.types.VIEW3D_PT_active_tool.append(draw_tool_symmetry)
@@ -640,7 +777,12 @@ def unregister():
     bpy.types.VIEW3D_PT_active_tool.remove(draw_tool_symmetry)
     bpy.types.VIEW3D_HT_tool_header.remove(draw_tool_header)
     unpatch_topbar()
+    del bpy.types.WindowManager.allset_workspace
+    del bpy.types.Scene.allset_live_text
+    del bpy.types.Scene.allset_symmetry_text
+    _workspace_items.clear()
     _collapsed.clear()
+    _collapsed.update(DEFAULT_COLLAPSED)
     _top_bars.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -163,8 +163,10 @@ def s_single():
 @step
 def s_rows():
     shelf = import_module(MODULE + ".ui.shelf")
+    # the Status Line header and the shelf row (no header since step 113: its WINDOW draws tab strip + icons)
     rows = [shelf.strip_area(win().screen), shelf.shelf_row_area(win().screen)]
-    hs = [next(r.height for r in a.regions if r.type == 'HEADER') if a else 0 for a in rows]
+    hs = [next(r.height for r in a.regions if r.type == ('HEADER' if i == 0 else 'WINDOW')) if a else 0
+          for i, a in enumerate(rows)]
     want = round(26 * scale()) - 2
     check(f"Status Line and Shelf rows fully shown at this scale (headers {hs}, want >= {want})",
           all(h >= want for h in hs))

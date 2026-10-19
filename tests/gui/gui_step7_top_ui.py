@@ -53,8 +53,8 @@ def s_topbar():
     cls = bpy.types.TOPBAR_HT_upper_bar
     check("top bar draws the Maya menu bar", cls.draw_left is C["sl"].draw_left)
     area, _r = view3d()
-    # step 49: Maya has no tool settings row; the Status Line lives in the Maya strip (step 12)
-    check("main 3D View has no tool header row", not area.spaces.active.show_region_tool_header)
+    # step 49: the Status Line lives in the Maya strip (step 12); step 113: the tool header row is Maya's panel toolbar
+    check("main 3D View: the tool header row is the Maya panel toolbar", area.spaces.active.show_region_tool_header)
     shot("gui_step7_topbar_modeling.png")
     prefs().menu_set = 'riggingMenuSet'
     # The top bar is a global area (not in screen.areas): hovering it redraws it.

@@ -125,8 +125,8 @@ def test_template_shelf_row():
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     row = shelf.shelf_row_area(screen)
-    regions = {r.type: r for r in row.regions}
-    assert row.spaces.active.show_region_header
+    # step 113: no header — tab strip and icons are drawn in the WINDOW region (64 px shelf block)
+    assert not row.spaces.active.show_region_header
     assert 60 <= row.height <= 68, row.height       # Maya shelf 64 (ui_layout.md:219)
 
 
@@ -148,24 +148,31 @@ class _Fake:
 
 
 def test_status_line_collapse_handles():
-    """Every Maya Status Line group has an openBar handle that hides it (ui_layout.md:194-195)."""
+    """Every Maya Status Line group has a collapse arrow (ui_layout.md:194-195); Maya's factory collapsed groups
+    (masks, history, input line) start collapsed (step 113, )."""
     status_line = import_module(kit.MODULE + ".ui.status_line")
+    icons = import_module(kit.MODULE + ".ui.status_icons")
 
     def draw():
         log = []
         status_line.draw_status_line(_Fake(log), bpy.context)
         return log
 
+    groups = [g for g, _d in status_line.GROUPS if g != "EDITORS"]
     log = draw()
     handles = [e for e in log if e[1] and e[1][0] == "allset.status_group"]
-    assert len(handles) == len(status_line.GROUPS), handles
-    assert all(e[2] == 'GRIP_V' for e in handles)
-    assert any(e[2] == 'FILE_NEW' for e in log)
+    assert len(handles) == len(groups), handles
+    assert set(status_line.DEFAULT_COLLAPSED) <= set(groups)
+    assert any(e[0] == "operator" and e[1] and e[1][0] == "wm.read_homefile" for e in log)
     assert bpy.ops.allset.status_group(group="FILE") == {'FINISHED'}
     try:
         log = draw()
-        assert not any(e[2] in ('FILE_NEW', 'LOOP_BACK') for e in log), "File group hidden"
-        assert any(e[2] == 'TRIA_RIGHT' for e in log) and any(e[2] == 'RENDER_STILL' for e in log)
+        assert not any(e[1] and e[1][0] in ("wm.read_homefile", "ed.undo") for e in log), "File group hidden"
+        assert any(e[1] and e[1][0] == "render.render" for e in log)
     finally:
         bpy.ops.allset.status_group(group="FILE")
-    assert any(e[2] == 'FILE_NEW' for e in draw())
+    # every kit-drawn Status Line / panel toolbar glyph renders (icon ids are 0 in background: no GPU previews)
+    for name in list(icons.GLYPHS) + list(icons.EXTRA):
+        cv = icons.Canvas(16)
+        (icons.GLYPHS.get(name) or icons.EXTRA[name])(cv)
+        assert cv.px[..., 3].max() > 0.5, name
