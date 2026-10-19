@@ -782,3 +782,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 120) Windows > Settings/Preferences 가 Maya 처럼 하위 메뉴 (Preferences, Hotkey Editor, Color Settings, Marking Menu Editor, Shelf Editor, Panel Editor, Plug-in Manager) 인지; Color Settings 에서 Background 색을 바꾸고 Apply → 모든 뷰가 그 색, Gradient Background 켜고 Apply → 그라데이션.
 - [ ] (step 120) 자기 테마 (Maya 테마 끔) 로 Maya 모드: Alt+B 가 회색 → 밝은 회색 → 검정 (그라데이션 없음) 이고 Preferences > Themes 가 바뀌지 않는지. Blender 로 전환 → 테마가 사용자 것으로 돌아오는지.
 - [ ] (step 120) Edit Mode 에서 Ctrl+B = Bevel (Maya BevelPolygon) 그대로인지.
+
+### Step 123 — 클립 · 트레일러 · 마케팅 키트
+
+- [ ] (step 123) `docs/distribution/marketing/clips/00_trailer.mp4` 와 클립 7 개를 실제 속도로 보기: 커서 움직임이 자연스러운지 (가상 시간 — 드래그는 1/15 초 간격 그림), 클릭 원·키 칩이 화면 동작과 같은 순간인지, 캡션 줄이 하는 일과 맞는지, 크로스페이드에서 두 띠 글자가 겹쳐 보이는 0.27 초가 거슬리는지.
+- [ ] (step 123) GIF 7 개를 GitHub 처럼 50 % 폭 (약 480 px) 으로 보았을 때 캡션 띠 글자를 읽을 수 있는지 (UI 글자는 못 읽어도 됨).
+- [ ] (step 123) 올리기 전: 트레일러 끝 카드·`posts.md` 의 다운로드 자리표시 (`extensions.blender.org/add-ons/allset`, `<listing URL>` 등) 를 실제 주소로 바꾸고 `python tools/marketing/clip_compose.py` 다시; r/blender · r/Maya 사이드바 규칙을 직접 다시 읽기 (조사 때 Reddit 페이지가 막혀 검색 결과 문구만 봄).

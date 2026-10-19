@@ -71,6 +71,25 @@ steps 57–58; Modeling Toolkit = step 63; switch / revert = "What happens when 
 9. The Modeling Toolkit docked in the tab stack: multi-component selection, mesh, component and tool buttons.
 10. Installing changes nothing: the welcome dialog asks first, and the Maya | Blender switch gives Blender back in one click.
 
+## Clips (step 123, `tools/marketing/content.json` → `clips`, `trailer`)
+
+Each clip's band shows its title (≤ 6 words) and, beat by beat, one line of what happens now (written in
+`tools/marketing/clips.py` next to the action it describes) plus the keys pressed. Captions = store captions.
+
+| # | Clip | Title | Store caption (≤ 255 characters) |
+|---|---|---|---|
+| 0 | trailer | (key visual title card → clips → end card) | Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 1 | hotbox | The hotbox, under the space bar | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
+| 2 | marking_menu | Right-click marking menus | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
+| 3 | channel_box_keys | Key it in the Channel Box | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
+| 4 | navigation | Navigate the Maya way | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
+| 5 | pivot_snap | Edit the pivot, snap with V | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
+| 6 | rigging | Joints, IK and skin weights | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
+| 7 | switch | Maya or Blender, one click | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
+
+Trailer end card: name, "for Maya Users", the final headline "The tutorial ends. Your Channel Box comes back.", "Free and open source · Blender 4.5 – 5.2",
+and "Get it on extensions.blender.org/add-ons/allset" (placeholder until the listing is live).
+
 ## Short intro (≤ 40 words)
 
 Allset brings the Maya workflow to Blender: hotbox, marking menus, Channel Box, menu sets, shelves and option boxes.

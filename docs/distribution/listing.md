@@ -23,7 +23,7 @@ Rules followed: `docs/distribution/extensions_audit.md` (final status of every r
 | Website / support URL | none yet (no public page or issue tracker — decision 11); add the tracker URL on the platform after the upload |
 | Icon | `docs/distribution/media/icon.png` (256 × 256) |
 | Featured image | `docs/distribution/media/featured.png` (1920 × 1080) |
-| Preview images | `docs/distribution/media/01_…10_*.png` (1920 × 1080, part C; MP4 clips from step 123) |
+| Preview images | 10 gallery items in part C order: `docs/distribution/marketing/clips/00_trailer.mp4` + `01–07_*.mp4` (1920 × 1080 H.264) + two stills from `docs/distribution/media/` |
 
 ## B. Long description
 
@@ -161,23 +161,28 @@ and Quaternius — `docs/distribution/marketing/CREDITS.md` — then Pillow capt
 `docs/distribution/marketing/style.md`, copy from `copy.md`). The icon and featured image are kit-made; the scenes use
 the CC0 models credited at the end of part B (add the copy.md "Credits line" there when pasting).
 
-Step 122 set (stills; step 123 adds the MP4 trailer and feature clips — then the gallery follows references.md §5:
-trailer, six clips, and three of these stills, `03`, `04` and `10`):
+Gallery (step 123, references.md §5 — `delegated`: seven feature clips instead of six because the step 123 request
+names seven topics; the "switch" still `10` is replaced by clip 7, so the gallery stays at 10 items with two stills).
+Paths below are under `docs/distribution/`. Clips: `python tools/marketing/make_clips.py`; the MP4s carry English
+caption bands, key chips and a drawn cursor; no audio. **GIFs (`marketing/gif/`) are never uploaded here** — they are
+for the GitHub README and social posts (`marketing/README.md`).
 
-| File | Size | Caption (upload order, `copy.md` → Store preview captions) |
-|---|---|---|
-| `icon.png` | 256 × 256 | — (icon: radial marking menu) |
-| `featured.png` | 1920 × 1080 | — (featured image: key visual, name + tagline + two real screens) |
-| `01_hotbox.png` | 1920 × 1080 | Hold Space anywhere in the viewport: the hotbox shows every menu of the current menu set, Recent Commands and the marking-menu zones. |
-| `02_marking_menus.png` | 1920 × 1080 | Right-click over an object or component for Maya's marking menus, in Maya's radial positions, with gestures and click mode. |
-| `03_channel_box_ae.png` | 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
-| `04_menus_shelves.png` | 1920 × 1080 | Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf. |
-| `05_navigate_select.png` | 1920 × 1080 | Component selection on a mesh with Maya selection colors and the Move manipulator; Alt + mouse navigation and QWERTY tools. |
-| `06_pivot_snapping.png` | 1920 × 1080 | Hold D to edit the pivot; right-click while editing for the pivot marking menu. X, C and V snap while held. |
-| `07_animation.png` | 1920 × 1080 | Time Slider with key ticks and Range Slider, Graph Editor with Maya menus and tangents, a walking robot. |
-| `08_rigging.png` | 1920 × 1080 | Paint Skin Weights on a skinned character: influences list, Replace / Add / Scale / Smooth, joints drawn in front. |
-| `09_modeling_toolkit.png` | 1920 × 1080 | The Modeling Toolkit docked in the tab stack: multi-component selection, mesh, component and tool buttons. |
-| `10_switch_before.png` | 1920 × 1080 | Installing changes nothing: the welcome dialog asks first, and the Maya &#124; Blender switch gives Blender back in one click. |
+| # | File | Kind | Caption (≤ 255 characters) |
+|---|---|---|---|
+| – | `media/icon.png` | icon 256 × 256 | — |
+| – | `media/featured.png` | featured image 1920 × 1080 | — (key visual: name + tagline + two real screens) |
+| 1 | `marketing/clips/00_trailer.mp4` | MP4 38.8 s (poster = key visual title card) | Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 2 | `marketing/clips/01_hotbox.mp4` | MP4 6–9 s | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
+| 3 | `marketing/clips/02_marking_menu.mp4` | MP4 6–9 s | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
+| 4 | `marketing/clips/03_channel_box_keys.mp4` | MP4 6–9 s | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
+| 5 | `marketing/clips/04_navigation.mp4` | MP4 6–9 s | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
+| 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 6–9 s | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
+| 7 | `marketing/clips/06_rigging.mp4` | MP4 6–9 s | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
+| 8 | `marketing/clips/07_switch.mp4` | MP4 6–9 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
+| 9 | `media/03_channel_box_ae.png` | still 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
+| 10 | `media/04_menus_shelves.png` | still 1920 × 1080 | Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf. |
+
+The other step 122 stills (`01`, `02`, `05`–`10`) stay in `docs/distribution/media/` for other uses (press, README).
 
 ## D. Technical disclosure for the reviewers
 

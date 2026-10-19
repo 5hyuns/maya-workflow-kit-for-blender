@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 123 (클립 · 트레일러 · GIF · 마케팅 키트, 사용자 요청 10-19) 완료 — `docs/steps/step_123.md`, 결과 목록
+  `docs/distribution/marketing/README.md`.
+  - 클립 7 개 (hotbox, marking menu, Channel Box keys, navigation, pivot + V snap, Joint → IK → Paint Skin Weights, Maya ⇄ Blender
+    스위치) = `clips/01–07_*.mp4` (1920 × 1080 H.264 30 fps, 0.4 – 1.3 MB) + `gif/01–07_*.gif` (960 px, 1.0 – 4.9 MB), 트레일러
+    `clips/00_trailer.mp4` (38.8 초, 4.0 MB, 첫 프레임 = 키 비주얼). 키트 `kit/` (README 히어로, 소셜 프리뷰 1280 × 640, X 카드, Reddit
+    두 장, YouTube 썸네일), `README_marketing.md`, `posts.md` (플랫폼 규칙 포함, 게시 안 함), listing.md C 갤러리 10.
+  - 재생성: `python tools/marketing/make_clips.py` (녹화 `clips.py` = 틱마다 screenshot + 가상 시간, 합성 `clip_compose.py`),
+    `python tools/marketing/kit.py`. 장면 도우미 `tools/marketing/scene.py` (shots.py 도 씀, step 122 이미지 바이트 동일 확인).
+  - 남은 것: 다운로드 자리표시 · Reddit 규칙 직접 확인 (manual_checks 「Step 123」), 크로스페이드 중 캡션 띠 겹침 0.27 초.
+  - **바로 다음 할 일**: 사용자 결정 — 업로드 (manual_checks 117 / 123: 버전 올리기, 자리표시 채우기) 또는 다음 개발 단계. 그 밖에
+    열린 것: 환영 창 본문 잘림 · 「persp」 두 번 (122 에서 발견, 킷), 툴바 떼기, manual_checks 115–123.
+
 - Step 122 (마케팅 카피 · 키 비주얼 · 캡션 스크린샷, 사용자 요청 10-19) 완료 — `docs/steps/step_122.md`, 결과
   `docs/distribution/marketing/` (copy.md, style.md, CREDITS.md, screens/01–10, key_visual(.png / _square), icon_256) + `docs/distribution/media/`.
   - 카피 = copy-masters 실행 (최종 「The tutorial ends. Your Channel Box comes back.」, 과정 점검 45/45), 디자인 = Maya 회색 + amber #ffb547 +
