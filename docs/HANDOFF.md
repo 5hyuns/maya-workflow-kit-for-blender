@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 117 (배포 준비 4: 등록 자료 + 최종 검증, 0.2.0) 완료 — `docs/steps/step_117.md`. 업로드는 하지 않음 (사용자).
+  - `docs/distribution/listing.md` = A 폼 필드 / B 긴 설명 (영어, "Not just a Maya keymap" 로 시작, 워크플로우 6 묶음, opt-in,
+    되돌리기, 확장 밖 경로, exec·execfile·ctypes, 상표 고지) / C 미디어 표 / D 심사자용 고지. 미디어 `docs/distribution/media/`
+    (아이콘 256, 대표 1920×1080, 묶음별 스크린샷 6장, Blender 로고 덮음) = `python tools/make_listing_media.py`.
+  - manifest 0.2.0, tags + Rigging, `files` 사유 갱신, **지원 4.5.x 만** (4.2.23 25 실패, 5.0.1–5.2.2 19–23 실패 실측),
+    `.ruff_cache/` 빌드 제외. moderation ruff 지적 10 건 수정. release_check 에 leftover_check (남는 파일 0).
+    `extensions_audit.md` 「최종 상태」 표. CHANGELOG [0.2.0].
+  - 검증: 헤드리스 4.5 869/869, release_check 24/24 (validate Success), GUI 전체 1121/1121.
+  - **바로 다음 할 일**: 사용자 업로드 (manual_checks step 117). 개발은 step 118 = **Blender 5.x 호환** (layered actions 의
+    `Action.fcurves`, 템플릿 도크 역할, 키맵 / UV / Target Weld — step_117.md 실패 목록) 후 `blender_version_max` 올리기. 그 밖에 열린 것:
+    툴바 떼기, `ui/outliner.py` 안 쓰는 행 목록, manual_checks 115/116.
+
 - Step 116 (사용자 지시 10-19: Maya 도킹 모델 — 패널마다 독립 창, ::::: 핸들로 떼기) 완료 — `docs/steps/step_116.md`.
   - CB/LE · AE · MTK 가 뷰포트 사이드바를 떠나 자기 영역 (`ui/maya_dock.py`: Tool 탭 Properties 편집기, 역할 = 숨은 탭 플래그,
     파일 저장·`area_dupli` 에도 유지). Allset 템플릿 = 뷰포트 오른쪽 탭 스택 (겹침 없음), 뷰포트 사이드바는 Blender 것.

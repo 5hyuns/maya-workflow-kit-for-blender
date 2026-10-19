@@ -58,7 +58,7 @@
   https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/static_repository.html —
   `blender --command extension server-generate --repo-dir DIR --html` → `index.json` + `index.html` (끌어 놓기 링크 포함).
   **`python tools/build_repo.py`** 가 이것을 `dist/repo/` 에 만든다 (zip + index.json + index.html; 실측).
-- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `allset-x.y.z.zip?repository=./index.json&blender_version_min=4.2.0`
+- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `allset-x.y.z.zip?repository=./index.json&blender_version_min=4.5.0`
   링크를 Blender 창에 끌어 놓기 (설치 + 저장소 등록), 또는 명령줄 `blender --command extension repo-add --url …` (설치기가 쓸 수 있음).
 - 비공개 배포가 필요하면 Access Token 지원 (Superhive·Poly Hammer 가 같은 방식) https://docs.polyhammer.com/poly-hammer-portal/blender-extension-repo
 - **실측 (`python tools/repo_check.py`, 깨끗한 샌드박스 + 「사용자 설정」 시드, `file:///…/index.json`)**: repo-add + sync + install --enable

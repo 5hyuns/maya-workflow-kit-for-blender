@@ -1,10 +1,11 @@
 """Generate the Allset app template splash images (docs/steps/step_42.md).
 
-    python tools/make_splash.py     # re-runs itself in `blender -b --factory-startup`
+    python tools/make_splash.py [--media]   # re-runs itself in `blender -b --factory-startup`
 
 Writes src/allset/app_template/Allset/splash.png (1000x500) and splash_2x.png (2000x1000):
 Blender shows them as the splash screen while the Allset template is active; and
-src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square). The artwork is the kit's own (decision 6: no Maya image or logo): Maya's
+src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square), and the same
+square as docs/distribution/media/icon.png plus media/featured.png (1920x1080) for the extensions.blender.org listing. The artwork is the kit's own (decision 6: no Maya image or logo): Maya's
 panel grey and highlight blue (research/maya/colors.json ui_palette_qt), three wire cubes in Maya's
 dormant blue / lead green / selected white (displayColor 5 / 19 / 16), Blender's bundled font.
 Rendered with Workbench (flat lighting, object colours, Standard view transform).
@@ -17,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "allset" / "app_template" / "Allset"
+MEDIA = ROOT / "docs" / "distribution" / "media"   # extensions.blender.org icon + featured image (step 117)
 
 
 def srgb(h):
@@ -42,7 +44,7 @@ def run_outside_blender():
     sys.path.insert(0, str(ROOT / "tools"))
     import build
     r = subprocess.run([os.environ.get("BLENDER", build.DEFAULT_BLENDER), "-b", "--factory-startup",
-                        "--python-exit-code", "1", "--python", __file__],
+                        "--python-exit-code", "1", "--python", __file__, "--", *sys.argv[1:]],
                        env=build.sandbox_env(), stdin=subprocess.DEVNULL,
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
     for line in r.stdout.splitlines():
@@ -127,7 +129,9 @@ def main():
          0.0, -4.7, 0.3, TEXT_SMALL, align='CENTER')
 
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, pct in (("splash.png", 100), ("splash_2x.png", 200)):
+    # --media: only the listing pictures (tools/make_listing_media.py); re-rendering the shipped PNGs changes their bytes
+    media_only = "--media" in sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else False
+    for name, pct in () if media_only else (("splash.png", 100), ("splash_2x.png", 200)):
         scene.render.resolution_x, scene.render.resolution_y = 1000, 500
         scene.render.resolution_percentage = pct
         scene.render.filepath = str(OUT / name)
@@ -145,9 +149,30 @@ def main():
     scene.render.resolution_x = scene.render.resolution_y = 256
     scene.render.resolution_percentage = 100
     welcome = OUT.parent.parent / "welcome.png"
-    scene.render.filepath = str(welcome)
+    MEDIA.mkdir(parents=True, exist_ok=True)
+    # step 117: the same square picture is the extensions.blender.org icon (256 x 256)
+    for path in (MEDIA / "icon.png",) if media_only else (welcome, MEDIA / "icon.png"):
+        scene.render.filepath = str(path)
+        bpy.ops.render.render(write_still=True)
+        print(f"make_splash: wrote {path.relative_to(ROOT)}")
+
+    # Featured image of the listing (16:9, 1920 x 1080): the splash picture with bars at the taller frame's edges
+    for ob in list(bpy.data.objects)[title:]:
+        ob.hide_render = False
+    for name in ("bar", "footer"):
+        bpy.data.objects[name].hide_render = False
+    bpy.data.objects["bar"].location.z = 5.375
+    bpy.data.objects["footer"].location.z = -5.175
+    bpy.data.objects["Not affiliat"].location.z = -5.3
+    # the listing leads with "not just a keymap" (docs/distribution/listing.md)
+    bpy.data.objects["hotbox · mar"].data.body = "not just a keymap: hotbox, Channel Box, menus, shelves, Maya concepts"
+    cam.location.x = cam.location.z = 0.0
+    cam_data.ortho_scale = 20.0
+    scene.render.resolution_x, scene.render.resolution_y = 1920, 1080
+    featured = MEDIA / "featured.png"
+    scene.render.filepath = str(featured)
     bpy.ops.render.render(write_still=True)
-    print(f"make_splash: wrote {welcome.relative_to(ROOT)}")
+    print(f"make_splash: wrote {featured.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

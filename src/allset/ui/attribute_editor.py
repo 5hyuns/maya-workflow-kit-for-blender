@@ -28,7 +28,6 @@ from bpy.props import EnumProperty, StringProperty
 from ..operators import display
 from . import ae_layout
 from . import cb_entry, channel_box
-from .channel_box import CATEGORY
 
 DOCK_ITEMS = (('CHANNEL_BOX', "Channel Box / Layer Editor", "Maya Channel Box and Layer Editor"),
               ('ATTRIBUTE_EDITOR', "Attribute Editor", "Maya Attribute Editor"),

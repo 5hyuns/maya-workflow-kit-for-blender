@@ -12,7 +12,7 @@ equivalent for are greyed with their notice (ui/notices.py).
 import bpy
 from bpy.props import BoolProperty, FloatProperty
 
-from . import chrome, notices
+from . import notices
 
 MESH = (("Combine", "Mesh/Combine", 'AUTOMERGE_ON'), ("Separate", "Mesh/Separate", 'MOD_EXPLODE'),
         ("Smooth", "Mesh/Smooth", 'MOD_SUBSURF'), ("Boolean", "Mesh/Booleans/Union", 'MOD_BOOLEAN'))

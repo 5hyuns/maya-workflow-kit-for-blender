@@ -376,7 +376,7 @@ class ALLSET_OT_pencil_curve(bpy.types.Operator):
         _object_mode(context)
         data = bpy.data.curves.new("curveShape", 'CURVE')
         data.dimensions = '3D'
-        ob = _link_new(context, bpy.data.objects.new("curve", data), "curve")
+        _link_new(context, bpy.data.objects.new("curve", data), "curve")
         bpy.ops.object.mode_set(mode='EDIT')
         try:
             bpy.ops.wm.tool_set_by_id(name="builtin.draw", space_type='VIEW_3D')

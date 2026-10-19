@@ -88,10 +88,10 @@ def test_moved_theme_values_applied():
 
 def test_manifest_declares_the_tested_range():
     data = tomllib.loads((ROOT / "src" / "allset" / "blender_manifest.toml").read_text(encoding="utf-8"))
-    assert data["blender_version_min"] == "4.2.0"
-    assert data["blender_version_max"] == "5.3.0", "tested up to 5.2.x (step 53); later versions need a new check"
+    assert data["blender_version_min"] == "4.5.0", "4.2.23 fails 25 tests (step 117)"
+    assert data["blender_version_max"] == "5.0.0", "4.5.x only: 5.0.1 fails 19 tests (step 117); re-measure before raising"
     v = tuple(bpy.app.version)
-    assert (4, 2, 0) <= v < (5, 3, 0), v
+    assert (4, 5, 0) <= v < (5, 0, 0), v
 
 
 def test_timeline_shim_matches_this_blender():

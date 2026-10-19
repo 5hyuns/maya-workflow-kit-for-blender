@@ -103,6 +103,41 @@ def user_setup_check(blender, zip_path):
                       all(same.values()) and set(before["addons"]) == set(gone["addons"]))]
 
 
+CLEAN_SANDBOX = ROOT / "tmp" / "release_env_clean"
+# Files Blender itself writes in a config it runs on (not the kit): the preferences the probe saves,
+# the extension repositories' index / cache, the recent-files and bookmark lists.
+BLENDER_OWN = ("config/userpref.blend", "config/userpref.blend1", "config/recent-files.txt",
+               "config/recent-searches.txt", "config/bookmarks.txt", "config/platform_support.txt")
+
+
+def _files(root):
+    return {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
+
+
+def leftover_check(blender, zip_path):
+    """Step 117: clean config -> install -> enable -> opt in -> disable -> Remove leaves no kit file behind."""
+    env = sandbox_env(CLEAN_SANDBOX)
+    probe = [blender, "-b", "--python", str(ROOT / "tools" / "release_probe.py"), "--"]
+    run(probe + ["check", str(CLEAN_SANDBOX / "start.json")], env)
+    before = _files(CLEAN_SANDBOX)
+    run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
+    run(probe + ["make", str(CLEAN_SANDBOX / "made.json")], env)
+    template = CLEAN_SANDBOX / "scripts" / "startup" / "bl_app_templates_user" / "Allset"
+    user_dir = CLEAN_SANDBOX / "extensions" / ".user" / REPO_ID / build.manifest_value("id")
+    made = template.is_dir() and user_dir.is_dir()
+    run(probe + ["disable", str(CLEAN_SANDBOX / "disabled.json")], env)
+    rc, out = run(probe + ["remove", str(CLEAN_SANDBOX / "removed.json")], env)
+    # the probe's snapshots sit at the sandbox root; Blender keeps a managed repository's index / cache
+    left = sorted(f for f in _files(CLEAN_SANDBOX) - before
+                  if "/" in f and f not in BLENDER_OWN
+                  and not f.startswith(("extensions/.cache/", f"extensions/{REPO_ID}/.blender_ext/")))
+    for f in left:
+        print("  left behind:", f)
+    return [(f"opt-in wrote the layout template and the extension user folder ({made})", made),
+             ("Remove from inside Blender", rc == 0),
+             (f"clean config: install -> enable -> opt in -> disable -> Remove leaves {len(left)} kit files", not left)]
+
+
 def user_setup_checks(before_path, after_path, disabled_path):
     """(name, ok) pairs: installing the kit kept the user's add-ons and settings (step 53)."""
     if not after_path.exists() or not disabled_path.exists():
@@ -152,7 +187,7 @@ def main(argv=None):
         print(out[-3000:])
         return 1
 
-    for name, good in user_setup_check(args.blender, zip_path):
+    for name, good in user_setup_check(args.blender, zip_path) + leftover_check(args.blender, zip_path):
         print("PASS" if good else "FAIL", name)
         ok &= good
 

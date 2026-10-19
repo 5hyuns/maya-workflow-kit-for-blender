@@ -13,7 +13,7 @@ shelf buttons and the Script Editor only (``runner._import``; nothing goes into 
 import bpy
 from bpy.props import StringProperty
 
-from . import cmds_shim, runner
+from . import runner
 from ..ui import own_draw
 
 # --- state shown in the status bar --------------------------------------------------

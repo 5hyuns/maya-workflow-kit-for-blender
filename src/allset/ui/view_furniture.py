@@ -20,7 +20,7 @@ letters have to match the Channel Box channels.
 import math
 
 import bpy
-from mathutils import Quaternion, Vector
+from mathutils import Vector
 
 # --- Maya measurements (step_46.md) -------------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view

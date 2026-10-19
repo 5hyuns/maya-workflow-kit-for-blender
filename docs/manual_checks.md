@@ -754,3 +754,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 116) 스택 맨 위 ::::: 핸들 클릭 → 그 탭만 든 떠 있는 창, OS 창으로 옮기기 / 크기 바꾸기, 그 창의 ::::: → Dock / Close. 창의 X 로 닫아도 탭이 스택으로 돌아오는지. 두 모니터에서도.
 - [ ] (step 116) Outliner 헤더 왼쪽 ::::: , Tool Settings 맨 위 ::::: 로 떼기 / 붙이기. 메뉴 맨 위 점선 줄 → 떠 있는 메뉴 창에서 항목 실행.
 - [ ] (step 116) 떠 있는 창이 있는 채로 파일 저장 → 다시 열기: CB / AE 창은 그대로 보이고, 떼어낸 메뉴 창은 저절로 닫히는지. Blender 로 전환하면 떠 있는 Maya 패널 창이 닫히는지.
+
+### Step 117 — 등록 자료 (업로드는 사용자)
+
+- [ ] (step 117) https://extensions.blender.org/submit/ 에 `dist/allset-0.2.0.zip` 업로드 → 폼이 manifest 의 이름·tagline·태그·권한 사유·지원 버전을 그대로 읽는지; 설명 칸에 `docs/distribution/listing.md` B 를 붙여 넣고 미리보기에서 Markdown (굵게, 목록, 코드) 이 깨지지 않는지.
+- [ ] (step 117) 아이콘 (256 × 256), 대표 이미지 (1920 × 1080), 미리보기 6장이 플랫폼의 크기·비율 요구에 맞는지 (맞지 않으면 `tools/make_splash.py` / `tools/listing_shots.py` 의 크기를 바꿔 다시 만들기), 캡션은 listing.md C 표 순서대로.
+- [ ] (step 117) 업로드 뒤 지원 URL (이슈 트래커) 을 정했으면 플랫폼에 넣기 — 아직 공개 저장소 없음 (결정 11).
