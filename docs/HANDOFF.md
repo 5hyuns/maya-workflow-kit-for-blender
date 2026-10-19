@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 107 (키맵: 틀린 일상 키, 없던 키, 미검토 분류; step_98.md #35–#36) 완료 — `docs/steps/step_107.md`.
+  - 틀린 IC 키 제거 + Maya 뜻: Alt+R 대칭, Ctrl+I (반전 제거), F1 도움말, Alt+C 색 피드백, m 조각 세기, Ctrl+PgUp/PgDn 픽워크,
+    Ctrl+, (환경설정 제거). 새 키: Ctrl+M / Shift+M / Ctrl+Shift+M, Alt+B, 스킨 페인트 u / n / b / Alt+F / Ctrl+Alt+C·V, 조각 Ctrl+0–9 /
+    b / m, Graph Editor h / j, Time Slider 북마크 = 마커 (`operators/bookmarks.py`), Ctrl+F 검색.
+  - `docs/keymap_mapping.md`: 구현 198 · IC 31 · 해당 없음 171 · **미검토 0** (219 에서).
+  - 검증: 헤드리스 805/805, GUI 1060/1060.
+  - **바로 다음 할 일**: step 108 = 메뉴 단축키 표시와 Maya 메뉴 모양 (step_98.md #12, #14). 그다음 109 셸프, 110 모델링·리깅 기능.
+    배포 결정 (decision 11) 은 사용자 대기.
+
 - Step 106 (Tool Settings 도크 + Attribute Editor parity, step_98.md #20–#22) 완료 — `docs/steps/step_106.md`.
   - Maya 2022 GUI 측정 `research/scripts/maya_ts106/` → `research/maya/screens/ts106/` (Tool Settings 절·줄, 도크 자리, 토글, AE
     메뉴 막대·버튼·탭).
@@ -10,8 +19,6 @@
   - AE: polyExtrudeFace1 기록 탭, 모디파이어 = Maya 노드 이름·타입, 메뉴 막대 7 개, Focus / Presets / Show / Hide, Notes, Select /
     Load Attributes / Copy Tab. Blender 설명문 (CB INPUTS, Project Window, AE nucleus / joint, Soft Selection) → 툴팁 (`notices.tip`).
   - 검증: 헤드리스 792/792, GUI 1060/1060 (sweep m68 재실행 포함), 나란히 그림 `research/maya/screens/step106/`.
-  - **바로 다음 할 일**: step 107 = 키맵 (step_98.md #35–#36: 틀린 일상 키 Alt+R 등, 빠진 키, 미검토 219 행). 그다음 108 메뉴 단축키
-    표시, 109 셸프. 배포 결정 (decision 11) 은 사용자 대기.
 
 - Step 105 (Hypershade / Render Settings / Script Editor 모양) 완료 — `docs/steps/step_105.md`.
   - Maya 2022 GUI 캡처 (`research/scripts/maya_editors105/`): 세 창 메뉴 막대 (329 잎), Hypershade Browser 탭, Render Settings

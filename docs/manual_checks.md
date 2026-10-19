@@ -699,3 +699,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 106) 회색 줄 (Transform Constraint, Tweak Mode, Bake Pivot Orientation …) 에 마우스를 올리면 툴팁에 Blender 대안이 나오는지; 머리 줄의 도구 아이콘과 "Move Tool" 글자가 겹쳐 보이지 않는지.
 - [ ] (step 106) AE: Focus 를 누르고 다른 물체를 선택해도 AE 가 그 노드에 머무는지, List > Auto Load Selected Attributes 를 켜면 다시 선택을 따르는지; Copy Tab 으로 뜬 창이 그 물체에 고정되는지; Notes 에 입력 → Ctrl+Z.
 - [ ] (step 106) Channel Box INPUTS 의 polyExtrudeFace1 이름에 마우스를 올리면 「Blender keeps no edit-mode history」 툴팁이 나오는지; Project Window 의 Current Project 칸 툴팁.
+
+### Step 107 — 키맵 batch 3
+
+- [ ] (step 107) 실제 키보드: Alt+R 로 대칭이 켜지고 꺼지는지 (Status Line Symmetry 글자), Ctrl+I 가 아무것도 반전하지 않는지, F1 을 버튼 위에서 누르면 Blender 설명서가 브라우저에 열리는지 (인터넷 필요).
+- [ ] (step 107) Ctrl+M 으로 메인 메뉴가 ≡ 버튼으로 접히고 다시 펴지는지, Shift+M (마우스 아래 편집기 메뉴), Ctrl+Shift+M (3D 뷰 머리 숨김) 이 Maya 처럼 느껴지는지.
+- [ ] (step 107) Alt+B 를 세 번: 밝은 회색 → 검정 → 원래 회색 (뷰마다 따로).
+- [ ] (step 107) 스킨 페인트에서 u 메뉴로 Replace / Add / Scale / Smooth 가 바뀌는지, n 드래그 = 값, b 드래그 = 크기, Alt+F = Flood, Alt+C 로 가중치 색이 사라졌다 돌아오는지.
+- [ ] (step 107) 조각에서 Ctrl+1–9 브러시가 바뀌는지 (Spray = Draw Sharp, Repeat = Layer 가 납득되는지), b / m 드래그, Shift+U / Ctrl+Shift+I 마스크.
+- [ ] (step 107) Time Slider 에서 Shift 드래그로 범위를 고르고 Alt+T → 이름 → 마커; ' / ; 로 이동, Shift+| 로 재생 범위가 그 북마크로 바뀌는지.

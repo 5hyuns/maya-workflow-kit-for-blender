@@ -39,8 +39,8 @@ def test_f_keys_are_menu_sets_and_view_keys_kept():
         assert not [i for i, _p in _items("3D View", key)], (key, _items("3D View", key))
     assert sets == {'F2': 'modelingMenuSet', 'F3': 'riggingMenuSet', 'F4': 'animationMenuSet',
                     'F5': 'dynamicsMenuSet', 'F6': 'renderingMenuSet'}, sets
-    # Ortho views still on F1 and Ctrl+F1-F3.
-    assert _items("3D View", 'F1')[0][0] == "view3d.view_axis"
+    # F1 = Maya Help since step 107 (Window keymap); ortho views still on Ctrl+F1-F3.
+    assert not _items("3D View", 'F1'), _items("3D View", 'F1')
     for key in ('F1', 'F2', 'F3'):
         assert _items("3D View", key, ctrl=True)[0][0] == "view3d.view_axis", key
 
