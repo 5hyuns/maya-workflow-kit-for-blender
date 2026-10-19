@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Allset: make Blender feel like Maya (keymap, interaction, UI, concepts).
 
-Shipped as one Blender 4.2+ extension (docs/user_decisions.md #3). The same
-source also builds a legacy add-on zip, which is why ``bl_info`` is kept;
-extensions read ``blender_manifest.toml`` instead and ignore it.
+Shipped as one Blender 4.2+ extension (docs/user_decisions.md #3); Blender reads ``blender_manifest.toml``. The
+legacy add-on zip gets its ``bl_info`` from ``tools/build.py`` (step 114: the extension build carries none, as the
+extension guidelines recommend).
 
 Each feature area is a sub-package with its own ``register()`` /
 ``unregister()``. Order matters: preferences first (others may read them),
@@ -11,16 +11,6 @@ then the Blender-preferences preset, keymap last (keymap items reference
 operators registered before it). ``CORE`` stays registered; ``MODE`` is
 Maya mode, switched on and off at run time by ``switch`` (step 60).
 """
-
-bl_info = {
-    "name": "Allset",
-    "author": "ohnsk",
-    "version": (0, 1, 0),
-    "blender": (4, 2, 0),
-    "location": "Preferences > Add-ons > Allset",
-    "description": "Maya-style keymap, interaction, UI and concepts for Maya users",
-    "category": "Interface",
-}
 
 from . import (preferences, switch, prefs_preset, operators, ui, command_line, marking, theme,
                app_template, first_start, keymap)

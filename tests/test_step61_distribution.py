@@ -41,7 +41,7 @@ def _code_lines(text):
 def test_manifest_fields():
     m = _manifest()
     assert "blender" not in m["name"].lower(), "ToS 2.1: no 'Blender' in the extension name"
-    assert m["license"] == ["SPDX:GPL-3.0-or-later"], m["license"]
+    assert m["license"] == ["SPDX:GPL-3.0-or-later", "SPDX:CC0-1.0"], m["license"]   # code GPL, kit-made assets CC0 (step 114)
     tagline = m["tagline"]
     assert len(tagline) <= 64 and tagline[-1] not in ".!?,;:", tagline
     for key, reason in m.get("permissions", {}).items():

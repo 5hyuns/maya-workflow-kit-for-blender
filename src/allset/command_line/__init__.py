@@ -5,11 +5,10 @@ research/maya/ui_layout.md §4.12 (:290-293: language toggle, input/result
 field, Script Editor button), §4.13 (:295-298: Help Line);
 research/blender/api_limits.md #14 (:93-94). Design: docs/steps/step_7.md
 「계획」 4. Python only: MEL is not supported (decision 5). ``maya.cmds`` is a
-small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds``.
+small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds`` in code run from the Command Line,
+shelf buttons and the Script Editor only (``runner._import``; nothing goes into ``sys.modules``, step 114).
 """
 
-import sys
-import types
 
 import bpy
 from bpy.props import StringProperty
@@ -192,31 +191,6 @@ def draw_status_bar(self, context):
     layout.template_status_info()
 
 
-# --- `import maya.cmds` --------------------------------------------------------------------
-
-_installed = []
-
-
-def install_maya_module():
-    """Make ``import maya.cmds`` give the shim, unless a real ``maya`` package exists."""
-    if "maya" in sys.modules:
-        return
-    import importlib.util
-    if importlib.util.find_spec("maya") is not None:
-        return
-    pkg = types.ModuleType("maya", "Allset stand-in package: only maya.cmds (cmds_shim)")
-    pkg.__path__ = []
-    pkg.cmds = cmds_shim
-    sys.modules["maya"] = pkg
-    sys.modules["maya.cmds"] = cmds_shim
-    _installed.extend(("maya", "maya.cmds"))
-
-
-def uninstall_maya_module():
-    while _installed:
-        sys.modules.pop(_installed.pop(), None)
-
-
 classes = (ALLSET_OT_command_line_exec, ALLSET_OT_command_line_language,
            ALLSET_OT_script_editor, ALLSET_MT_command_history)
 
@@ -229,11 +203,9 @@ def register():
         options={'SKIP_SAVE'}, update=_on_command)
     _blender_draw.append(bpy.types.STATUSBAR_HT_header.draw)
     bpy.types.STATUSBAR_HT_header.draw = draw_status_bar
-    install_maya_module()
 
 
 def unregister():
-    uninstall_maya_module()
     bpy.types.STATUSBAR_HT_header.draw = _blender_draw.pop()
     del bpy.types.WindowManager.allset_cmd
     for cls in reversed(classes):

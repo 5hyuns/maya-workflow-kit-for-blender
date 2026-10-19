@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 114 (배포 준비 2: 확장 가이드라인 위반 2 건) 완료 — `docs/steps/step_114.md`.
+  - `sys.modules["maya"]` 삽입 제거: `import maya.cmds` 는 Command Line / 셸프 / Script Editor 네임스페이스의 전용
+    `__builtins__.__import__` (`command_line/runner._import`) 에서만 됨, 활성화·사용·끄기 뒤 `sys.modules` 에 maya 없음.
+  - 자산: 패키지의 비코드 파일 5 개 모두 킷 생성물 → `src/allset/ASSETS_LICENSE.txt` (CC0-1.0), manifest `license` 에
+    `SPDX:CC0-1.0` (validate PASS), README. 확장 zip 에서 `bl_info` 제거 (레거시 zip 은 build.py 가 manifest 로 붙임).
+  - release_check 사이드바 탭 확인을 `allset_dock` 으로 → 전부 PASS, `docs/screenshots/` 다시 찍음.
+  - 검증: 헤드리스 854/854, GUI 1093/1093, `extension validate` PASS.
+  - **바로 다음 할 일**: step 115 = 배포 준비 3 (no surprises: opt-in — 설치 직후 키맵·환경설정·테마 적용 대신 환영 창에서
+    확인 뒤, 자동 save_userpref 줄이기, 앱 템플릿 코드 최소화·제거 시 삭제, draw 교체를 가능한 곳은 append/prepend 로 —
+    STATUSBAR / TOPBAR / IMAGE / VIEW3D 헤더, 남는 것은 설명에 이유·복원, keystate ctypes 설명, "Autodesk App Store" 라벨).
+    그다음 116 (등록 자료, 업로드는 사용자).
+
 - Step 113 (사용자 피드백: 상단이 Maya 같지 않음 — 메뉴 막대·Status Line·셸프·패널 바) 완료 — `docs/steps/step_113.md`.
   - Maya 2022 GUI 측정 (`research/maya/screens/top113/`: 1600×900 상단 그림, 위젯 위치, 셸프 8 개 구분선) → 차이 표 → 고침.
   - 메뉴 막대: 메뉴셋 드롭다운을 Status Line 맨 앞으로, 항목 폭 = 글자 + Maya 여백 (125 % 에서도 Help 까지), `Workspace:`
@@ -11,9 +23,7 @@
     패널 툴바 아이콘 줄. Maya 모드 전환 = Maya 테마 켬 (Blender 로 돌아가면 복원).
   - 검증: GUI `gui_step113_top` 10/10 (1.25 / 1.0, 화면 픽셀), 헤드리스 851/851, GUI 전체 1093/1093. 비교 그림
     `docs/steps/step_113/`.
-  - **바로 다음 할 일**: step 114 = 배포 준비 2 (감사 위반 2 건: command_line 의 `sys.modules["maya"]` 삽입 → exec 네임스페이스
-    전용 `cmds` + `__import__` 훅, 킷이 만든 자산 CC0 표기; release_check 사이드바 탭 확인 FAIL 도). 그다음 115 (opt-in·정리·
-    monkeypatch: 이번에 늘어난 VIEW3D 헤더 교체도 포함), 116 (등록 자료, 업로드는 사용자).
+  - 다음: step 114 (배포 준비 2).
 
 - Step 112 (사용자 버그: 비치는 Channel Box 도크, 빈 Tool Box 띠; 2026-10-19 보고) 완료 — `docs/steps/step_112.md`.
   - 원인: Blender Region Overlap + Blender 테마의 영역 알파 0 → 도크 뒤로 뷰포트가 비침 (Maya 테마를 안 켠 사용자). 템플릿

@@ -82,10 +82,29 @@ def build_extension_fallback(out):
             zf.write(path, rel.as_posix())
 
 
+def legacy_bl_info():
+    """The legacy add-on's ``bl_info``, from the manifest (the extension source has none, step 114)."""
+    version = tuple(int(p) for p in manifest_value("version").split("."))
+    blender = tuple(int(p) for p in manifest_value("blender_version_min").split("."))
+    return ("\n\n# Legacy add-on metadata, added by tools/build.py (extensions read blender_manifest.toml).\n"
+            "bl_info = {\n"
+            f"    \"name\": {manifest_value('name')!r},\n"
+            "    \"author\": \"ohnsk\",\n"
+            f"    \"version\": {version!r},\n"
+            f"    \"blender\": {blender!r},\n"
+            "    \"location\": \"Preferences > Add-ons\",\n"
+            f"    \"description\": {manifest_value('tagline')!r},\n"
+            "    \"category\": \"Interface\",\n"
+            "}\n")
+
+
 def build_legacy(out):
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
         for path, rel in iter_source_files():
             if rel.name == "blender_manifest.toml":
+                continue
+            if rel.as_posix() == "__init__.py":
+                zf.writestr(("allset" / rel).as_posix(), path.read_text(encoding="utf-8") + legacy_bl_info())
                 continue
             zf.write(path, ("allset" / rel).as_posix())
 

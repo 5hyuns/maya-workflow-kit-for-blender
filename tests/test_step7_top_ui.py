@@ -444,18 +444,15 @@ def test_command_field_runs_through_operator():
 
 
 def test_import_maya_cmds():
-    assert sys.modules.get("maya.cmds") is cmds
-    r = runner.run("import maya.cmds as mc; mc.ls is cmds.ls")
-    assert r.text == "# Result: True #", r
-
-
-def test_maya_module_removed_on_disable():
-    kit.disable()
-    try:
-        assert "maya" not in sys.modules and "maya.cmds" not in sys.modules
-    finally:
-        kit.enable()
-    assert "maya.cmds" in sys.modules
+    """Every import form works inside the Command Line namespace (step 114: without sys.modules entries)."""
+    assert "maya" not in sys.modules and "maya.cmds" not in sys.modules
+    for src in ("import maya.cmds as mc; mc.ls is cmds.ls", "from maya import cmds as c2; c2.ls is cmds.ls",
+                "import maya.cmds; maya.cmds.ls is cmds.ls", "from maya.cmds import ls; ls is cmds.ls"):
+        r = runner.run(src)
+        assert r.text == "# Result: True #", (src, r)
+    assert "maya" not in sys.modules and "maya.cmds" not in sys.modules
+    r = runner.run("import json; json.dumps(1)")
+    assert r.text == "# Result: '1' #", r
 
 
 def test_help_line_text():
