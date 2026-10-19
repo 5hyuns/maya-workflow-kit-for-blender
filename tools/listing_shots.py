@@ -101,6 +101,8 @@ def s_scene():
     kc = bpy.context.window_manager.keyconfigs.active
     check("Maya keymap active in the Allset layout", kc is not None and kc.name == "Maya-style")
     import_module(MODULE + ".theme").apply()   # what Make Blender feel like Maya does (welcome.opt_in)
+    # Maya 2022 factory background (flat #5c5c5c) in every view, whatever an earlier Alt+B left (step 120)
+    import_module(MODULE + ".operators.key_batch3").reset_background()
     bpy.context.preferences.view.show_tooltips = False   # sandbox prefs: no tooltip over the pictures
     prefs().in_view_messages = False                     # no "group1 grouped." in every shot
     k = import_module(MODULE + ".operators.units").maya_unit()   # Maya lengths ()

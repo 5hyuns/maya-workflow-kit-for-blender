@@ -14,6 +14,16 @@ import bpy
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
+    # Windows > Settings/Preferences (step 120)
+    "Windows/Settings/Preferences/Marking Menu Editor": (
+        "Marking menus", "The marking menus are the kit's Maya layouts; Blender has no editor for them "
+        "(Preferences > Keymap edits which key opens which menu)."),
+    "Windows/Settings/Preferences/Shelf Editor": (
+        "Shelves", "The shelves are Maya's factory shelves; there is no shelf editor (right-click a Blender "
+        "button > Add to Quick Favorites keeps your own commands)."),
+    "Windows/Settings/Preferences/Panel Editor": (
+        "Workspaces", "Blender saves panel layouts as workspaces: drag area edges and save the file or "
+        "use Windows > Workspaces."),
     # Pivot / snapping (step 59, )
     "Modify/Make Live": (
         "Face snapping", "Blender snaps onto every surface, not only the live one: Make Live turns face "

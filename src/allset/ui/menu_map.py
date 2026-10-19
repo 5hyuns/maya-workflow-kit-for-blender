@@ -255,7 +255,11 @@ MAP = {
     "Windows/Node Editor": _editor('ShaderNodeTree'),
     **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "ALLSET_MT_ui_elements"),
-    "Windows/Settings/Preferences": "screen.userpref_show",
+    # Settings/Preferences submenu ($M/scripts/startup/Maya Maya; step 120)
+    "Windows/Settings/Preferences/Preferences": "screen.userpref_show",
+    "Windows/Settings/Preferences/Hotkey Editor": ("screen.userpref_show", {"section": 'KEYMAP'}),
+    "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
+    "Windows/Settings/Preferences/Plug-in Manager": ("screen.userpref_show", {"section": 'ADDONS'}),
     "Windows/Playblast": ("v3d", "allset.playblast", {}),              # step 70: temp movie + player
     "Windows/Output Window": "wm.console_toggle",
     # --- Mesh (Modeling) ---
@@ -474,6 +478,11 @@ EXTRA = {
 # Submenus Maya builds at run time, so  has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
 CHILDREN = {
+    # Windows > Settings/Preferences ($M/scripts/startup/Maya Maya; Performance
+    # Settings only with the legacy viewport, off by default; step 120)
+    "Windows/Settings/Preferences": [
+        ("Preferences",), ("-", ""), ("Hotkey Editor",), ("Color Settings",), ("Marking Menu Editor",),
+        ("Shelf Editor",), ("Panel Editor",), ("-", ""), ("Plug-in Manager",)],
     # Modify > Match Transformations / Snap Align Objects ($M\startup\Maya-480, step 59)
     "Modify/Match Transformations": [
         ("Match All Transforms",), ("Match Translation",), ("Match Rotation",), ("Match Scaling",),
