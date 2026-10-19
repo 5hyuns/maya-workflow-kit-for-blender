@@ -1865,17 +1865,18 @@ def _m76_1_front():
 @named("m76_1_behind")
 def _m76_1_behind():
     check(f"[M76-1] the curve behind the mesh: click on its line = still the curve ({sel()})", sel() == ["ctrl"])
-    # a click on the mesh more than 5 px from the curve line
+    # a click on the mesh more than the pick radius from the curve line: 9 px in from the line, or the circle's centre
+    # when the circle is smaller on screen (the view is narrower beside a solid dock, step 112)
     p = circle_point()
     c = screen(C["circle"].matrix_world.translation)
-    away = p + (c - p).normalized() * 9
+    away = p + (c - p).normalized() * min(9, (c - p).length)
     C["away"] = away
     click_at(away)
 
 
 @named("m76_1_away")
 def _m76_1_away():
-    check(f"[M76-1] 9 px off the curve, over the mesh = the mesh ({sel()})", sel() == ["pCube1"])
+    check(f"[M76-1] off the curve (9 px or its centre), over the mesh = the mesh ({sel()})", sel() == ["pCube1"])
     click_at(circle_point(), shift=True)
 
 
@@ -2261,7 +2262,8 @@ for _n in range(3):
 
 @named("m78_4_check")
 def _m78_4_check():
-    ok = all(m is not None and (m - s).length < 0.1 * k() for m, s in zip(C["made"], C["spots"]))
+    # 0.15: one screen pixel is ~0.07 cm at this zoom in the view beside the solid dock (step 112)
+    ok = all(m is not None and (m - s).length < 0.15 * k() for m, s in zip(C["made"], C["spots"]))
     meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
     check(f"[M78-4] Shift+G at three grid spots = a cube at each ({[cm(m) if m else None for m in C['made']]}, "
           f"{len(meshes)} cubes)", ok and len(meshes) == 4)
@@ -5059,6 +5061,10 @@ def cs_reset(from_object=True):
         ob = create('CUBE')
         C["obname"] = ob.name
         select_only(ob)
+        # frame it (Maya F): the strokes need edges long enough on screen for 4 px samples with 6 px corner
+        # margins, and the view beside the solid dock (step 112) draws the cube smaller than the old overlapped one
+        with override():
+            bpy.ops.allset.frame()
     else:
         object_mode()
         select_only(OB())

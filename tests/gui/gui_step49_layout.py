@@ -73,8 +73,12 @@ def s_layout():
     tb = toolbox_area()
     want = toolbox.column_width()
     fits = abs(tb.width - want) <= 1
-    check(f"Tool Box column = one toolbar column at this scale ({tb.width} px, want {want}), or the main "
-          f"view shows its toolbar meanwhile", fits or main_view().spaces.active.show_region_toolbar)
+    # step 112: the template column has room up to scale 1.6, so unfitted it still draws its toolbar (spare width
+    # in the toolbar colour); narrower than the toolbar, the main view shows its toolbar meanwhile
+    room = tb.width >= want - 1 and any(r.type == 'TOOLS' and r.width > 1 for r in tb.regions)         and not main_view().spaces.active.show_region_toolbar
+    check(f"Tool Box column = one toolbar column at this scale ({tb.width} px, want {want}), or wider with its "
+          f"toolbar drawn, or the main view shows its toolbar meanwhile",
+          fits or room or main_view().spaces.active.show_region_toolbar)
     check("Tool Box column on the left", tb is not None and tb.x <= 2)   # Blender 5.x keeps areas 2 px in
     outl = next(a for a in win().screen.areas if a.type == 'OUTLINER')
     view = main_view()

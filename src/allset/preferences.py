@@ -50,6 +50,20 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_undo)
     undo_backup: bpy.props.StringProperty(options={'HIDDEN'})
 
+    def _update_panels(self, context):
+        from . import prefs_preset
+        if self.use_maya_panels:
+            prefs_preset.apply(context.preferences, self, "panels")
+        else:
+            prefs_preset.restore(context.preferences, self, "panels")
+
+    use_maya_panels: bpy.props.BoolProperty(
+        name="Solid Side Panels",
+        description="Channel Box, Attribute Editor and toolbars beside the viewport, not over it, like Maya "
+                    "(turns off Blender's Region Overlap). Turning it off restores your previous value",
+        default=True, update=_update_panels)
+    panels_backup: bpy.props.StringProperty(options={'HIDDEN'})
+
     def _update_auto_key(self, context):
         from . import prefs_preset
         if self.use_maya_auto_key:
@@ -340,6 +354,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
         col.prop(self, "use_maya_undo")
+        col.prop(self, "use_maya_panels")
         col.prop(self, "use_maya_auto_key")
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")

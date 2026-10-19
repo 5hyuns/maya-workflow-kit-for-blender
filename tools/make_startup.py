@@ -25,6 +25,11 @@ OUTLINER_PX = 260
 # Sidebar = Maya's dock column: Channel Box / Layer Editor 260 + the vertical dock tab strip right of it
 # (Maya: dock [1323, 260] then tabs to 1598). Blender draws its tab strip inside the sidebar.
 DOCK_PX = 260 + 17
+# Tool Box column = room for one toolbar column up to UI scale 1.6 (step 112): area sizes are pixels scaled with
+# the window, not with the UI scale, and a toolbar wider than its area is not drawn at all (an empty strip, the
+# tools fell back into the main view). ui/toolbox.fit_columns fits it to one toolbar column when it can; until
+# then the extra width is the toolbar colour (toolbox.settle). 1.6 = 125 % display in a window down to 1280 px.
+TOOLBOX_ROOM = 1.6
 DOCK_CATEGORY = "Channel Box / Layer Editor"   # = ui/channel_box.py CATEGORY (step 99)
 # Maya Time Slider right end: current time field (90) + 8 transport buttons (22 each) and padding
 # (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
@@ -81,7 +86,7 @@ def _region(area, kind):
 def is_toolbox_space(space):
     """= src/allset/ui/toolbox.py is_toolbox (kept in sync by tests/test_step49_layout.py)."""
     return (space.type == 'VIEW_3D' and space.show_region_toolbar and not space.show_region_header
-            and not space.show_region_ui and not space.overlay.show_overlays)
+            and not space.show_region_ui and not space.show_object_viewport_mesh)
 
 
 class Builder:
@@ -167,7 +172,7 @@ class Builder:
         yield
         # 4. Tool Box column (a 3D View showing only its toolbar, ui/toolbox.py), then the Outliner.
         view = self.biggest_view()
-        toolbox = yield from self.split(view, 'VERTICAL', _region(view, 'TOOLS').width + 1, 'LEFT')
+        toolbox = yield from self.split(view, 'VERTICAL', round(_region(view, 'TOOLS').width * TOOLBOX_ROOM) + 1, 'LEFT')
         yield
         outliner = yield from self.split(self.biggest_view(), 'VERTICAL', OUTLINER_PX + EDGE, 'LEFT')
         outliner.type = 'OUTLINER'

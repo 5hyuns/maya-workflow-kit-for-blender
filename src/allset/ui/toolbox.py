@@ -41,9 +41,35 @@ def _enabled(context):
 
 
 def is_toolbox(space):
-    """True for the Allset template's Tool Box column (= tools/make_startup.py is_toolbox_space)."""
+    """True for the Allset template's Tool Box column (= tools/make_startup.py is_toolbox_space). Not keyed on
+    its overlays: a column whose overlays got turned on is still the column (``settle`` turns them off again;
+    user report 2026-10-19, )."""
     return (space is not None and space.type == 'VIEW_3D' and space.show_region_toolbar
-            and not space.show_region_header and not space.show_region_ui and not space.overlay.show_overlays)
+            and not space.show_region_header and not space.show_region_ui and not space.show_object_viewport_mesh)
+
+
+def settle(space, prefs=None):
+    """Keep the column a solid tool strip: overlays off (else the grid axis lines show through it) and a flat
+    background in the toolbar's theme colour, so any width left beside the tools (the column is wider than one
+    toolbar column until ALLSET_OT_fit_columns has fitted it) reads as part of the Tool Box, not as a viewport.
+    Returns True when something changed."""
+    prefs = prefs or bpy.context.preferences
+    # the viewport background colour is scene linear, theme colours are display (sRGB) values (checked: an sRGB
+    # 0.188 written as is showed as 119/255)
+    rgb = tuple(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+                for c in tuple(prefs.themes[0].view_3d.space.button)[:3])
+    shading = space.shading
+    changed = False
+    if space.overlay.show_overlays:
+        space.overlay.show_overlays = False
+        changed = True
+    if shading.background_type != 'VIEWPORT':
+        shading.background_type = 'VIEWPORT'
+        changed = True
+    if any(abs(a - b) > 1e-4 for a, b in zip(shading.background_color, rgb)):
+        shading.background_color = rgb
+        changed = True
+    return changed
 
 
 def _flat(items):
@@ -154,6 +180,8 @@ def fit_columns(start_fit=True):
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
             continue
+        if settle(column.spaces.active, context.preferences):
+            column.tag_redraw()
         if abs(column.width - want) > 1 and column.x + column.width < window.width - 2:
             _move_edge(window, column, column.x + column.width, column.y + column.height // 2,
                        want - column.width, (column.x + column.width + 1, column.y + column.height // 2), pending)

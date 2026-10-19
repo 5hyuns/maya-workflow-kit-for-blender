@@ -70,41 +70,70 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
     tx, ty = (rect[0] + rect[2]) / 2.0, (rect[1] + rect[3]) / 2.0
     hw, hh = (rect[2] - rect[0]) / 2.0 * factor, (rect[3] - rect[1]) / 2.0 * factor
     right, up = rot @ Vector((1.0, 0.0, 0.0)), rot @ Vector((0.0, 1.0, 0.0))
-    loc = centre.copy()
 
     def persp_at(loc, d):
         return window_matrix_at(win0, dist0, d, ortho) @ view_matrix(loc, rot, d)
 
-    def scale(loc, d):
+    def offset(loc, d):
+        """Projected box centre minus the target, and the bounds (None when a corner is behind the eye)."""
         b = _bounds(persp_at(loc, d), corners, size)
+        if b is None:
+            return None, None
+        return Vector(((b[0] + b[2]) / 2.0 - tx, (b[1] + b[3]) / 2.0 - ty)), b
+
+    def centred(d):
+        """Pan at distance ``d`` until the projected box is centred in the visible rect (sidebar excluded):
+        (view location, box bounds or None). Newton steps on the checked response (the box's near and far
+        corners move by different amounts in perspective, so one unit at the centre's depth over- or
+        undershoots), halved while the error grows."""
+        loc = centre.copy()
+        err, b = offset(loc, d)
+        eps = max(radius, 1e-6) * 1e-3
+        for _i in range(24):
+            if err is None:
+                return loc, None
+            if abs(err.x) < 0.25 and abs(err.y) < 0.25:
+                break
+            ex, _ = offset(loc + right * eps, d)
+            ey, _ = offset(loc + up * eps, d)
+            if ex is None or ey is None:
+                break
+            jx, jy = (ex - err) / eps, (ey - err) / eps
+            det = jx.x * jy.y - jy.x * jx.y
+            if abs(det) < 1e-12:
+                break
+            sr = (err.x * jy.y - jy.x * err.y) / det
+            su = (jx.x * err.y - err.x * jx.y) / det
+            step = 1.0
+            while step > 1e-3:
+                cand = loc - right * (sr * step) - up * (su * step)
+                e2, b2 = offset(cand, d)
+                if e2 is not None and e2.length < err.length:
+                    loc, err, b = cand, e2, b2
+                    break
+                step *= 0.5
+            else:
+                break
+        return loc, b
+
+    def scale(d):
+        b = centred(d)[1]
         if b is None:
             return float("inf")
         return max((b[2] - b[0]) / (2.0 * hw), (b[3] - b[1]) / (2.0 * hh))
 
-    dist = max(dist0, radius * 2.0)
-    for _round in range(4):
-        lo, hi = radius * 1e-3, max(dist, radius * 4.0)
-        while scale(loc, hi) > 1.0 and hi < radius * 1e7:
-            hi *= 2.0
-        for _i in range(60):
-            mid = (lo * hi) ** 0.5
-            if scale(loc, mid) > 1.0:
-                lo = mid
-            else:
-                hi = mid
-        dist = hi
-        # Pan so the projected box is centred in the visible rect (sidebar excluded).
-        persp = persp_at(loc, dist)
-        b = _bounds(persp, corners, size)
-        p0, px, py = (project(persp, centre + v, size) for v in (Vector(), right, up))
-        if b is None or None in (p0, px, py):
-            break
-        dx, dy = (b[0] + b[2]) / 2.0 - tx, (b[1] + b[3]) / 2.0 - ty
-        ux, uy = (px - p0).length, (py - p0).length
-        if ux < 1e-9 or uy < 1e-9 or (abs(dx) < 0.25 and abs(dy) < 0.25):
-            break
-        loc = loc + right * (dx / ux) + up * (dy / uy)
-    return loc, dist
+    # Distance search on the centred box: refitting the distance and panning in turns oscillated for a box much
+    # wider than deep in a narrow perspective view (A with a far child: the view ended off by 100+ px, step 112).
+    lo, hi = radius * 1e-3, max(dist0, radius * 4.0)
+    while scale(hi) > 1.0 and hi < radius * 1e7:
+        hi *= 2.0
+    for _i in range(48):
+        mid = (lo * hi) ** 0.5
+        if scale(mid) > 1.0:
+            lo = mid
+        else:
+            hi = mid
+    return centred(hi)[0], hi
 
 
 def visible_rect(window_region, others):

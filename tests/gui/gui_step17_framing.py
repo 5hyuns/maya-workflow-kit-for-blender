@@ -85,7 +85,11 @@ def s_f_drawn():
 def s_f():
     area, region = view3d()
     rect = view_mod().visible_bounds(area, region)
-    check(f"sidebar excluded from the visible rect ({rect[2]:.0f} of {region.width} px)", rect[2] < region.width)
+    ui = next(r for r in area.regions if r.type == 'UI')
+    # with Region Overlap (Blender's default) the rect stops at the sidebar; Maya mode turns overlap off (step 112)
+    # and the sidebar is beside the view region
+    check(f"sidebar excluded from the visible rect ({rect[2]:.0f} of {region.width} px, sidebar at {ui.x - region.x})",
+          region.x + rect[2] <= ui.x + 1)
     inside, ratio = fit_ratio(area, region, [bpy.data.objects["Cube"]])
     check(f"F: cube inside the visible part, fills 0.95 (ratio {ratio:.3f})", inside and abs(ratio - 0.95) < 0.03)
     shot("step17_f.png")
