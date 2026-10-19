@@ -121,7 +121,8 @@ def s_quad_on():
     # Hover the top-left quadrant (Blender: top view) and tap again.
     area = view3d()[0]
     regions = [r for r in area.regions if r.type == 'WINDOW']
-    tl = max((r for r in regions if r.x <= area.x + 2), key=lambda r: r.y)
+    left = min(r.x for r in regions)   # = area.x with Region Overlap, right of the toolbar without (step 112)
+    tl = max((r for r in regions if r.x <= left + 2), key=lambda r: r.y)
     C["hover_persp"] = tl.data.view_perspective
     C["hover_rot"] = tuple(round(v, 4) for v in tl.data.view_rotation)
     ev('MOUSEMOVE', 'NOTHING', x=tl.x + tl.width // 2, y=tl.y + tl.height // 2)

@@ -89,10 +89,20 @@ WIRE_PRESET = (
     ("system.use_edit_mode_smooth_wire", False),
 )
 
+# Maya's side panels are solid: the Channel Box / Attribute Editor dock, the Tool Box and editor toolbars sit
+# beside the viewport, never over it (research/maya/ui_layout.md:96, the viewport area ends where the dock starts).
+# Blender's region overlap draws 3D View / Image Editor sidebars and toolbars over the view with the theme's
+# region alpha (0 in Blender's own theme): the dock showed the grid through it (user report 2026-10-19,
+# docs/steps/step_112.md).
+PANELS_PRESET = (
+    ("system.use_region_overlap", False),
+)
+
 # group -> (preset or function returning one, backup property, option property) on the add-on preferences.
 GROUPS = {
     "navigation": (PRESET, "prefs_backup", "use_maya_navigation"),
     "undo": (UNDO_PRESET, "undo_backup", "use_maya_undo"),
+    "panels": (PANELS_PRESET, "panels_backup", "use_maya_panels"),
     "autokey": (AUTOKEY_PRESET, "autokey_backup", "use_maya_auto_key"),
     "splash": (SPLASH_PRESET, "splash_backup", "maya_hide_splash"),
     "density": (_density_preset, "density_backup", "maya_density"),

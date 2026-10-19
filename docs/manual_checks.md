@@ -730,3 +730,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 111) 깨끗한 설정에 `allset-0.1.0.zip` 을 끌어 놓아 설치: Preferences > Add-ons 에 「Allset for Maya Users」, 맨 위 About 상자 (설명 + 상표 고지문), 환영 창 제목·문구, 스플래시, File > New > Allset, 키맵 이름 「Maya-style」, 테마 이름 「Studio Grey (Maya-inspired)」.
 - [ ] (step 111) 예전 Maya Kit 를 쓰던 설정: `bl_app_templates_user/MayaKit` 이 레이아웃 설치 / 제거 때 지워지는지 (표시 파일 `.maya_kit` 있을 때만).
+
+### Step 112 — 불투명 도크, Tool Box 띠
+
+- [ ] (step 112) 실제 설정 (자기 테마 그대로): Maya 로 전환 → Maya-style 레이아웃에서 오른쪽 Channel Box / Attribute Editor / Modeling Toolkit 탭 배경이 불투명하고 뷰포트가 그 왼쪽에서 끝나는지, 맨 왼쪽 열에 Select / Lasso / Paint / Move / Rotate / Scale 아이콘이 보이고 뷰포트 안에는 도구 줄이 없는지 (125 %, 창 크기 바꿔서도). UV Editor 사이드바도 불투명한지. 환경설정 「Solid Side Panels」를 끄면 Blender 의 Region Overlap 이 돌아오는지, Blender 로 전환해도 돌아오는지.

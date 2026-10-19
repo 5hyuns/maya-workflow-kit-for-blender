@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 112 (사용자 버그: 비치는 Channel Box 도크, 빈 Tool Box 띠; 2026-10-19 보고) 완료 — `docs/steps/step_112.md`.
+  - 원인: Blender Region Overlap + Blender 테마의 영역 알파 0 → 도크 뒤로 뷰포트가 비침 (Maya 테마를 안 켠 사용자). 템플릿
+    Tool Box 열 57 px < 125 % 의 도구 줄 70 px → Blender 가 도구 줄을 아예 안 그림, 커서 맞춤 실패 시 빈 띠 + 뷰포트 안 도구 줄.
+  - 고침: Maya 모드 = Region Overlap 끔 (`prefs_preset` 그룹 `panels`, 「Solid Side Panels」, 백업·복원, FOOTPRINT), 템플릿
+    열 90 px (`TOOLBOX_ROOM` 1.6), `toolbox.settle` (남는 폭 = 도구 줄 색, 오버레이 끔), `is_toolbox` 가 오버레이에 안 묶임.
+  - 덤: 뷰가 도크 옆으로 좁아져 `framing.fit` 의 거리·이동 번갈아 맞추기가 진동 → 가운데 맞춘 상자에서 거리 탐색으로 다시 씀.
+  - 검증: GUI `gui_step112_opaque` 9/9 (1.25 / 1.0, 화면 픽셀), 헤드리스 851/851, GUI 전체 1083/1083. 전후 그림
+    `docs/steps/step_112/`.
+  - **바로 다음 할 일**: step 113 = 배포 준비 2 (감사 위반 2 건: command_line 의 `sys.modules["maya"]` 삽입 → exec 네임스페이스
+    전용 `cmds` + `__import__` 훅, 킷이 만든 자산 CC0 표기; release_check 사이드바 탭 확인 FAIL 도 `allset_dock` 로). 그다음
+    114 (opt-in·정리·monkeypatch), 115 (등록 자료, 업로드는 사용자).
+
 - Step 111 (배포 준비 1: 이름 변경 「Allset for Maya Users」 + 상표 정리; 사용자 결정 2026-10-19) 완료 — `docs/steps/step_111.md`.
   - 결정 12 (`docs/user_decisions.md`): extensions.blender.org 무료 배포, 이름 Allset for Maya Users, id `allset`, tagline
     "The whole Maya workflow in Blender, in one install". 근거 `docs/distribution/extensions_audit.md`, `naming.md`.

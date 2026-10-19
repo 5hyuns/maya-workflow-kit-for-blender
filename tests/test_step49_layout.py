@@ -77,10 +77,10 @@ def test_is_toolbox_matches_generator():
     import make_startup
     for flags in itertools.product((False, True), repeat=4):
         space = SimpleNamespace(type='VIEW_3D', show_region_toolbar=flags[0], show_region_header=flags[1],
-                                show_region_ui=flags[2], overlay=SimpleNamespace(show_overlays=flags[3]))
+                                show_region_ui=flags[2], show_object_viewport_mesh=flags[3])
         assert toolbox.is_toolbox(space) == make_startup.is_toolbox_space(space), flags
     assert toolbox.is_toolbox(SimpleNamespace(type='VIEW_3D', show_region_toolbar=True, show_region_header=False,
-                                              show_region_ui=False, overlay=SimpleNamespace(show_overlays=False)))
+                                              show_region_ui=False, show_object_viewport_mesh=False))
 
 
 # --- dock-only sidebar ------------------------------------------------------------------------

@@ -22,6 +22,13 @@ RESULT = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else None
 
 UI_SCALE = float(os.environ.get("ALLSET_GUI_UI_SCALE", "0") or 0)
 
+# Enabling the add-on turns Blender's region overlap off ("Solid Side Panels", step 112), but region rects only
+# follow at the next screen refresh: positions a test computes in its setup tick would still be the overlapping
+# ones. Start the session without overlap so the layout is final from the first step (a test of the preference
+# itself sets ALLSET_GUI_KEEP_OVERLAP=1 before importing this module).
+if os.environ.get("ALLSET_GUI_KEEP_OVERLAP") != "1":
+    bpy.context.preferences.system.use_region_overlap = False
+
 _pos = [0, 0]
 _down = set()
 _steps = []
