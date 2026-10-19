@@ -129,5 +129,88 @@
     }
    ]
   }
- ]
+ ],
+ "clips": [
+  {
+   "name": "hotbox",
+   "file": "01_hotbox",
+   "title": "The hotbox, under the space bar",
+   "caption": "Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox.",
+   "trailer": [
+    2.9,
+    7.6
+   ]
+  },
+  {
+   "name": "marking_menu",
+   "file": "02_marking_menu",
+   "title": "Right-click marking menus",
+   "caption": "Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode.",
+   "trailer": [
+    0.6,
+    5.2
+   ]
+  },
+  {
+   "name": "channel_box_keys",
+   "file": "03_channel_box_keys",
+   "title": "Key it in the Channel Box",
+   "caption": "S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider.",
+   "trailer": [
+    0.6,
+    5.6
+   ]
+  },
+  {
+   "name": "navigation",
+   "file": "04_navigation",
+   "title": "Navigate the Maya way",
+   "caption": "Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything.",
+   "trailer": [
+    0.4,
+    5.0
+   ]
+  },
+  {
+   "name": "pivot_snap",
+   "file": "05_pivot_snap",
+   "title": "Edit the pivot, snap with V",
+   "caption": "Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot.",
+   "trailer": [
+    0.6,
+    5.4
+   ]
+  },
+  {
+   "name": "rigging",
+   "file": "06_rigging",
+   "title": "Joints, IK and skin weights",
+   "caption": "From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights.",
+   "trailer": [
+    0.4,
+    5.6
+   ]
+  },
+  {
+   "name": "switch",
+   "file": "07_switch",
+   "title": "Maya or Blender, one click",
+   "caption": "One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back.",
+   "trailer": [
+    0.8,
+    6.4
+   ]
+  }
+ ],
+ "trailer": {
+  "file": "00_trailer",
+  "title_card": "key_visual",
+  "title_seconds": 3.0,
+  "end_headline": "The tutorial ends. Your Channel Box comes back.",
+  "end_line": "Free and open source · Blender 4.5 – 5.2",
+  "download": "Get it on extensions.blender.org/add-ons/allset",
+  "download_note": "placeholder until the listing is live (: nothing published yet)",
+  "end_seconds": 4.0,
+  "caption": "Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender."
+ }
 }
