@@ -60,6 +60,47 @@ NOTICES = {
     **{f"Render/{item}": (
         "Command line", "Blender has no batch render queue: render frames with blender -b file.blend -a "
         "(or Render Sequence here).") for item in ("Batch Render", "Cancel Batch Render", "Show Batch Render")},
+    # step 109: mapped items whose Blender result differs (docs/steps/step_109.md)
+    "Create/NURBS Primitives/Square": (
+        "Four NURBS curves", "Blender has no NURBS square: four straight NURBS curves under an empty, like Maya's group."),
+    "Create/NURBS Primitives/Cube": (
+        "Six NURBS patches", "Blender has no NURBS cube: six NURBS surface patches under an empty, like Maya's group."),
+    "Create/NURBS Primitives/Cone": (
+        "NURBS cylinder", "Blender has no NURBS cone: a NURBS cylinder with its top row of points closed."),
+    "Create/Curve Tools/Pencil Curve Tool": (
+        "Curve Draw tool", "Blender's Draw tool on a new curve in Edit Mode: drag to draw (on the 3D cursor's plane)."),
+    "Create/Sweep Mesh": (
+        "Curve bevel, converted", "Blender makes the mesh from a copy of the curve with a round bevel (8 sides); no live "
+        "profile options."),
+    "Curves/Add Points Tool": (
+        "Extrude (E)", "Blender extrudes the curve's end points: move the mouse, click to place the new point."),
+    "Curves/Offset/Offset Curve": (
+        "Poly curve", "Blender's offset copy is a poly curve through the moved points, not a fitted NURBS curve."),
+    "Surfaces/Loft": (
+        "Mesh", "Blender can't loft NURBS surfaces: the loft is a quad mesh through the curves (active curve last)."),
+    "Surfaces/Planar": (
+        "Filled 2D curve", "Blender fills closed 2D curves: a copy of the curve, flattened onto its own XY plane."),
+    "Surfaces/Extrude": (
+        "Curve bevel object", "Blender bevels a copy of the path curve with the profile curve (select the profile "
+        "first, the path last)."),
+    "Surfaces/Bevel Plus": (
+        "Curve extrude + bevel, converted", "Blender builds a mesh from the filled curve, extruded and bevelled both ways around "
+        "the curve's plane."),
+    "Mesh Tools/Sculpting Tools/Spray Tool": (
+        "Draw Sharp brush", "Blender has no stamp spray brush: Draw Sharp is the closest (also sculpt Ctrl+8)."),
+    "Mesh Tools/Sculpting Tools/Repeat Tool": (
+        "Layer brush", "Blender has no repeating stamp brush: Layer is the closest (also sculpt Ctrl+9)."),
+    "Fluids/Add/Edit Contents/Emit from Object": (
+        "Quick Smoke", "Blender makes the selected meshes smoke flows inside a new Mantaflow domain."),
+    "Fluids/Make Collide": (
+        "Fluid effector", "Blender gives the selected meshes a Fluid modifier of type Effector."),
+    "nCloth/Display Input Mesh": (
+        "Cloth modifier off", "Blender shows the input mesh by turning the Cloth modifier off in the viewport."),
+    "nCloth/Display Current Mesh": (
+        "Cloth modifier on", "Blender shows the simulated mesh with the Cloth modifier on in the viewport."),
+    "nHair/Paint Hair Follicles": (
+        "Hair Sculpt mode", "Blender hair is a Curves object groomed in Sculpt mode: select one (Add > Curves > Empty "
+        "Hair) and use the Add brush."),
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
     # FX (step 68, research/maya/workflows/fx.md §4, decision 10)
@@ -173,7 +214,8 @@ _XGEN_ITEMS = ("XGen Editor", "XGen Library", "Import Collections or Description
 CATEGORIES = {
     # whole Maya-only systems
     "Surfaces": ("NURBS surface edit mode", "Blender's NURBS surfaces can be edited (CVs, Open/Close, Revolve = "
-                 "Screw modifier) but have no Loft, Trim, Fillet or Stitch: model with polygons."),
+                 "Screw modifier) but have no Trim, Fillet or Stitch (Loft, Planar, Extrude and Bevel Plus are "
+                 "built by Maya Kit): model with polygons."),
     "Generate": ("Grease Pencil / Geometry Nodes", "Blender has no Paint Effects: draw strokes with Grease Pencil, "
                  "scatter geometry with Geometry Nodes."),
     **{f"Generate/{item}": ("Hair curves", "Blender has no XGen: hair is a Curves object groomed in Sculpt mode "
@@ -291,8 +333,6 @@ CATEGORIES = {
                      "containers."),
     "Create/Scene Assembly": ("Collection instance", "Blender's scene assemblies are collection instances (Add > "
                               "Collection Instance)."),
-    "Create/Sweep Mesh": ("Curve Bevel", "Blender sweeps a profile along a curve with the curve's Bevel (Object / "
-                          "Profile) or Geometry Nodes Curve to Mesh."),
     "Select": ("Select menu", "Blender has no selection by this type or constraint: Select All by Type, Select "
                "Linked and Select Similar are the closest."),
     **{f"Select/{sub}": ("Curve edit mode", "Blender selects curve and surface control points in edit mode (Tab); "

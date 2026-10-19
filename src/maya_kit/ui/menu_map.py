@@ -769,6 +769,30 @@ OBJECT_MODE = {
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
 }
 
+# Step 109 (docs/steps/step_109.md 「계획」 3): Curves / Surfaces and FX commands built for the shelf, same in the
+# menus. operators/curve_tools.py, operators/fx.py; Maya results measured with mayapy (step_109.md).
+MAP.update({
+    "Create/NURBS Primitives/Square": _create('NURBS_SQUARE'),
+    "Create/NURBS Primitives/Cube": _create('NURBS_CUBE'),
+    "Create/NURBS Primitives/Cone": _create('NURBS_CONE'),
+    "Create/Curve Tools/Pencil Curve Tool": "maya_kit.pencil_curve",
+    "Create/Sweep Mesh": "maya_kit.sweep_mesh",
+    "Curves/Add Points Tool": ("v3d", "maya_kit.add_points", {}),
+    "Curves/Offset/Offset Curve": "maya_kit.offset_curve",
+    "Surfaces/Loft": "maya_kit.loft",
+    "Surfaces/Planar": "maya_kit.surface_planar",
+    "Surfaces/Extrude": "maya_kit.surface_extrude",
+    "Surfaces/Bevel Plus": "maya_kit.bevel_plus",
+    # Sculpting stamps Blender lacks: the keymap's step-107 substitutes (sculpt Ctrl+8 / Ctrl+9)
+    "Mesh Tools/Sculpting Tools/Spray Tool": _sculpt("Draw Sharp"),
+    "Mesh Tools/Sculpting Tools/Repeat Tool": _sculpt("Layer"),
+    "Fluids/Add/Edit Contents/Emit from Object": "maya_kit.quick_smoke",
+    "Fluids/Make Collide": "maya_kit.fluid_collide",
+    "nCloth/Display Input Mesh": ("maya_kit.ncloth_display", {"mesh": 'INPUT'}),
+    "nCloth/Display Current Mesh": ("maya_kit.ncloth_display", {"mesh": 'CURRENT'}),
+    "nHair/Paint Hair Follicles": ("object.mode_set", {"mode": 'SCULPT_CURVES'}),
+})
+
 # Blender's own menu kept at the end of the Maya menu with the same role.
 BLENDER_MENU = {
     "File": ("TOPBAR_MT_file", "Blender File"),

@@ -712,3 +712,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 108 — 메뉴 단축키 글자
 
 - [ ] (step 108) 실제 마우스로 위 막대 File / Edit / Edit Mesh / Select / Key 메뉴를 열어 Maya 키가 오른쪽 한 열에 맞는지 (글꼴·배율 바꿔서도: Preferences > Interface > Resolution Scale), Recent Files 옆에 Blender 키가 없는지, 125 % 에서 File 메뉴 끝 (Exit) 이 화면 안에 있는지.
+
+### Step 109 — 셸프 (Maya 순서, 회색 자리, 조각 브러시, 아이콘)
+
+- [ ] (step 109) 실제 마우스로 셸프 탭 8 개를 돌며 버튼 수가 Maya 공장 셸프와 같은지 (38 / 43 / 26 / 18 / 14 / 25 / 29 / 10), 회색 아이콘 위에 머물면 「(Maya shelf, greyed) → 대체」 툴팁과 Help Line 글이 뜨는지, 누르면 아무것도 안 되고 안내만 나오는지.
+- [ ] (step 109) Sculpting 셸프: 메시를 고르고 Smooth / Grab / Bulge / Freeze 를 차례로 눌러 조각 모드 + Smooth / Grab / Inflate/Deflate / Mask 브러시가 되는지 (세션 첫 클릭도 — 에셋 라이브러리 로딩 뒤 재시도), 드래그 느낌이 Maya 툴과 납득되는지.
+- [ ] (step 109) Curves / Surfaces: 원 두 개 → Loft, 닫힌 커브 → Planar / Bevel Plus, 프로필 + 경로 → Extrude, 커브 → Offset Curve / Sweep Mesh, Pencil Curve Tool 로 그리기, Add Points Tool 로 끝점 연장이 Maya 손에 맞는지.
+- [ ] (step 109) 아이콘 모양 (셸프마다 Maya 색, 도구 부분 회색) 이 125 % 와 100 % 에서 Maya 셸프와 같은 인상인지 (`research/maya/screens/step109/`).

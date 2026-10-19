@@ -101,8 +101,8 @@ def test_every_factory_button_has_a_kit_icon():
 
 
 def test_letters_fallback_and_colours():
-    assert shelf_icons.glyph_for("Use Background") is None
-    assert shelf_icons.initials("Use Background") == "UB"
+    assert shelf_icons.glyph_for("Convert To Frozen") is None     # step 109: Use Background = a shader ball
+    assert shelf_icons.initials("Convert To Frozen") == "CT"
     a = shelf_icons.draw("Polygon Cube", "Polygons")
     b = shelf_icons.draw("Polygon Cube", "Rigging")
     assert not np.allclose(a, b), "the shelf colour changes the icon"

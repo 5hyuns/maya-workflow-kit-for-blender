@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 109 (셸프: Maya 순서, 회색 자리, 조각 브러시, Maya 풍 아이콘; step_98.md #7, quant §3) 완료 — `docs/steps/step_109.md`.
+  - 공장 셸프 203 버튼이 모두 Maya 자리에 (탭별 38/43/26/18/14/25/29/10), 매핑 없는 52 개는 회색 + 안내 툴팁 / Help Line
+    (`shelf_map.MENU` = 같은 runTimeCommand 의 Maya 메뉴 항목에서 동작·안내를 가져옴, 메뉴에 없는 3 개는 `shelf_map.NOTICES`).
+  - 작동 98 → **151 / 203**: Sculpting 도구 = essentials 브러시 (Bulge = Inflate/Deflate, Freeze = Mask …), 새
+    `operators/curve_tools.py` (Planar, Loft, Extrude, Bevel Plus, Offset Curve, Sweep Mesh, Pencil Curve, Add Points,
+    NURBS Square / Cube / Cone — mayapy 측정 이름·값), FX 유체 용기 + 이미터 / Make Collide / nCloth 표시, 재질 5 종 등. 같은 동작을
+    Maya 메뉴에도 매핑.
+  - 아이콘 다시 그림: Maya 셸프에서 잰 셸프 색 + 도구 부분 #c0c0c0, 평면 2 톤. 첫 브러시 사용 시 에셋 로딩 취소 → 타이머 재시도.
+  - 검증: 헤드리스 830/830, GUI 1074/1074, 나란히 그림 `research/maya/screens/step109/shelf_*.png` 8 장.
+  - **바로 다음 할 일**: step 110 = 모델링·리깅 기능 (step_98.md #23, #28: Normals 도구 Soften/Harden·Set/Lock, …). 배포 결정
+    (decision 11) 은 사용자 대기.
+
 - Step 108 (메뉴의 Maya 단축키 글자와 Maya 메뉴 모양; step_98.md #12, #14) 완료 — `docs/steps/step_108.md`.
   - 메인 메뉴 57 항목에 Maya 키를 오른쪽 한 열로 (`ui/menu_hotkeys.py` ← `tools/gen_menu_hotkeys.py`; kit 이 Maya 뜻으로 묶은 키만),
     옵션 상자 표시도 그 열에. Blender 단축키는 안 보임 (연산자 항목은 `maya_kit.menu_item`, Blender Python 메뉴는 kit 하위 클래스,
