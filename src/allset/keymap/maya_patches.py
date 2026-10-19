@@ -1125,6 +1125,6 @@ def apply(data):
     """Apply all patches to IC data in place and return it."""
     ADDED.clear()
     kd = KeyconfigData(data)
-    for patch in PATCHES:
-        patch(kd)
+    for apply_patch in PATCHES:
+        apply_patch(kd)
     return data

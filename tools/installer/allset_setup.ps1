@@ -5,7 +5,7 @@
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -List
-  powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Install -Zip allset-0.1.0.zip [-Blender "C:\...\blender.exe"] [-MakeMaya]
+  powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Install -Zip allset-0.2.0.zip [-Blender "C:\...\blender.exe"] [-MakeMaya]
   powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Uninstall [-Blender "C:\...\blender.exe"]
 
 .NOTES

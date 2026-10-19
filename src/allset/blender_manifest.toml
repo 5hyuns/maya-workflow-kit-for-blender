@@ -2,19 +2,22 @@ schema_version = "1.0.0"
 
 # Template: <Blender 4.5>/4.5/scripts/templates_toml/blender_manifest.toml
 id = "allset"
-version = "0.1.0"
+version = "0.2.0"
 name = "Allset for Maya Users"
 tagline = "The whole Maya workflow in Blender, in one install"
 maintainer = "ohnsk <555hyuns@gmail.com>"
 type = "add-on"
 # Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; , step 61).
 # No `website` until there is a public page; no `platforms`: pure Python, every OS.
-tags = ["User Interface", "3D View", "Modeling", "Animation"]
+tags = ["User Interface", "3D View", "Modeling", "Animation", "Rigging"]
 
-blender_version_min = "4.2.0"
-# Exclusive. Target 4.5 (); 5.0-5.2 checked in  A newer Blender gets a
-# clear "not compatible" from the extension system instead of a half-working kit, until it is checked.
-blender_version_max = "5.3.0"
+# 4.5: Blender 4.2.23 fails 25 of 869 headless tests (step 117: the 4.5-saved layout template, 4.3+ brush
+# assets, file I/O options), so 4.2-4.4 are not offered the kit.
+blender_version_min = "4.5.0"
+# Exclusive. Target 4.5 (). 5.0-5.2 passed in step 53, but steps 54-116 were never re-checked there and
+# step 117 found 5.0.1 failing 19 tests (layered actions: no Action.fcurves; the template dock role ...), so 5.x
+# gets a clear "not compatible" instead of a half-working kit until a 5.x step fixes it (raise this to measure).
+blender_version_max = "5.0.0"
 
 # Code GPL-3.0-or-later; the kit-made images and data files (splash / welcome PNGs, startup.blend, the theme XML)
 # CC0-1.0 — extensions.blender.org terms 1.2, ASSETS_LICENSE.txt (step 114).
@@ -27,11 +30,14 @@ copyright = [
 ]
 
 [permissions]
-files = "Install the layout template, back up the theme, save shelves"
+# Writes: the layout template folder, the extension user folder (preference snapshot, theme backup, shelves) and
+# the Maya project folders the file dialogs open in (docs/distribution/listing.md "Files it writes").
+files = "Layout template, settings backup, shelves, Maya project folders"
 
 [build]
 paths_exclude_pattern = [
   "__pycache__/",
+  ".ruff_cache/",
   "/.git/",
   "/*.zip",
   "*.blend1",

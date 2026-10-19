@@ -189,7 +189,7 @@ MAP = {
     f"{GE}/View/Normalized View": _prop(f"{_SP}.use_normalization", True),
     f"{GE}/View/Renormalize": _prop(f"{_SP}.use_auto_normalization"),
     f"{GE}/Select/All": ("graph.select_all", {"action": 'SELECT'}),
-    f"{GE}/Select/Snap time to selection": _prop(f"addon_prefs.snap_time_to_selection"),
+    f"{GE}/Select/Snap time to selection": _prop("addon_prefs.snap_time_to_selection"),
     **_curves_menu(GE, True),
     **_keys_menu(GE, True),
     **_tangents_menu(GE),

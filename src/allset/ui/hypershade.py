@@ -56,9 +56,6 @@ SHADER_NODES = {'OUTPUT_MATERIAL', 'BSDF_PRINCIPLED', 'MIX_SHADER', 'ADD_SHADER'
                 'VOLUME_ABSORPTION', 'VOLUME_SCATTER', 'PRINCIPLED_VOLUME', 'BSDF_METALLIC', 'FRAME', 'REROUTE',
                 'GROUP_INPUT', 'GROUP_OUTPUT'}
 
-# Hypershade Create menu node types -> Blender shader nodes (data in editor_menu_map, bpy-free)
-from .editor_menu_map import HS_NODES as NODES  # noqa: E402
-
 
 def materials():
     return sorted((m for m in bpy.data.materials if not m.is_grease_pencil), key=lambda m: m.name.lower())
