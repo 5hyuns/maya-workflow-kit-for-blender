@@ -974,6 +974,128 @@ def patch_script_editor(kd):
          shadows=("Text", "Screen"))
 
 
+
+# --- 49. Key batch 3: wrong daily keys, missing keys ---------------------------------
+# Maya (Alt+r ToggleReflection), :398 (Ctrl+i), :400 (F1 Help), :452 (Alt+c ToggleColorFeedback),
+# :463 (m ModifyDisplacement), :368-369 (Ctrl+PgUp / PgDn PickWalkIn / Out), :457 (Ctrl+, PrevSkinPaintMode),
+# :289-291 (Ctrl+m / Shift+M / Ctrl+Shift+M menu bars), :669 (Alt+b), :433-455 (paint u / n / Alt+f / Ctrl+Alt+c / v),
+# :607-621 (sculpt Ctrl+0-9, f, b, m, Shift+U, Ctrl+Shift+I), :152-153 (Graph Editor h / j), :742-749 (Time Slider
+# bookmarks), :724 (Ctrl+f), :345 (Ctrl+Shift+% Use Default Material), :526 / :525 (UV Editor 7 / 5).
+
+MODE_KEYMAPS = ("Object Mode", "Mesh", "Pose", "Curve", "Curves", "Armature", "Metaball", "Lattice", "Particle",
+                "Paint Face Mask (Weight, Vertex, Texture)", "Paint Vertex Selection (Weight, Vertex)")
+SCULPT_BRUSHES = (("ZERO", "Mask"), ("ONE", "Draw"), ("TWO", "Smooth"), ("THREE", "Relax Slide"), ("FOUR", "Grab"),
+                  ("FIVE", "Pinch/Magnify"), ("SIX", "Flatten/Contrast"), ("SEVEN", "Blob"), ("EIGHT", "Draw Sharp"),
+                  ("NINE", "Layer"))
+SCULPT_LIBRARY = "brushes/essentials_brushes-mesh_sculpt.blend/Brush/"
+SEARCH_SHADOWS = ("Property Editor", "Outliner", "Graph Editor Generic", "Node Editor", "Dopesheet", "NLA Generic",
+                  "Text Generic", "Animation Channels", "Image Paint", "Vertex Paint", "Weight Paint", "Sculpt",
+                  "Grease Pencil Weight Paint")
+BOOKMARK_KEYS = (("T", {"alt": True}, "maya_kit.bookmark_create", {}),
+                 ("T", {"alt": True, "shift": True}, "maya_kit.bookmark_create", {"quick": True}),
+                 ("QUOTE", {}, "screen.marker_jump", {"next": True}),
+                 ("SEMI_COLON", {}, "screen.marker_jump", {"next": False}),
+                 ("BACK_SLASH", {"shift": True}, "maya_kit.bookmark_frame", {"which": "CURRENT"}),
+                 ("QUOTE", {"shift": True}, "maya_kit.bookmark_frame", {"which": "NEXT"}),
+                 ("SEMI_COLON", {"shift": True}, "maya_kit.bookmark_frame", {"which": "PREVIOUS"}))
+
+
+def _props_of(kd, km, idname, **ev):
+    """Properties of the first matching item (to copy IC's radial-control settings onto a Maya key)."""
+    found = kd.find(km, idname, **ev)
+    return patch.props_dict(found[0][2]) if found else {}
+
+
+def _remove_where(kd, km, predicate, **ev):
+    if km not in kd.keymap_names():
+        return []
+    items = kd.items(km)
+    found = [it for it in kd.find(km, **ev) if predicate(it)]
+    items[:] = [it for it in items if not any(it is f for f in found)]
+    return found
+
+
+def patch_key_batch_3(kd):
+    # Alt+R: IC clear scale -> Maya reflection (symmetry) toggle
+    kd.remove("Object Mode", "object.scale_clear", type="R", alt=True)
+    kd.remove("Pose", "pose.scale_clear", type="R", alt=True)
+    _add(kd, "3D View", "maya_kit.symmetry", make_event("R", alt=True), {"mode": "TOGGLE"}, shadows=VIEW3_SHADOWS)
+    # Ctrl+I: IC invert in the 3D modes (Maya Ctrl+I = next intermediate object; Ctrl+Shift+I still inverts)
+    for km in MODE_KEYMAPS:
+        _remove_where(kd, km, lambda it: it[0].endswith("select_all"), type="I", ctrl=True)
+    # F1: Maya Help = Blender's manual for the button under the mouse
+    kd.remove("3D View", "view3d.view_axis", type="F1")
+    kd.remove("Image", "image.view_zoom_ratio", type="F1")
+    _add(kd, "Window", "wm.doc_view_manual_ui_context", make_event("F1"))
+    # Alt+C: IC loop cut tool -> Maya colour feedback while painting skin weights
+    kd.remove("Mesh", "wm.tool_set_by_id", type="C", alt=True)
+    _add(kd, "Weight Paint", "maya_kit.color_feedback", make_event("C", alt=True))
+    # m: IC Measure tool in every 3D mode -> Maya displacement / strength drag (sculpt)
+    for km in MODE_KEYMAPS:
+        _remove_where(kd, km, lambda it: it[0] == "wm.tool_set_by_id"
+                      and patch.props_dict(it[2]).get("name") == "builtin.measure", type="M")
+    # Ctrl+PgUp / PgDn: IC workspace cycle -> Maya pick-walk in / out (down / up the hierarchy)
+    kd.remove("Screen", "screen.workspace_cycle", type="PAGE_UP", ctrl=True)
+    kd.remove("Screen", "screen.workspace_cycle", type="PAGE_DOWN", ctrl=True)
+    for km, op in (("Object Mode", "object.select_hierarchy"), ("Pose", "pose.select_hierarchy")):
+        _add(kd, km, op, make_event("PAGE_UP", ctrl=True), {"direction": "CHILD", "extend": False})
+        _add(kd, km, op, make_event("PAGE_DOWN", ctrl=True), {"direction": "PARENT", "extend": False})
+    # Ctrl+,: IC Preferences (Maya on Windows opens them from Windows > Settings/Preferences only)
+    kd.remove("Screen", "screen.userpref_show", type="COMMA", ctrl=True)
+
+    # menu bars and background
+    _add(kd, "Screen", "maya_kit.main_menubar_toggle", make_event("M", ctrl=True), shadows=("Grease Pencil Edit Mode",))
+    _add(kd, "Screen", "wm.context_toggle", make_event("M", shift=True), {"data_path": "area.show_menus"},
+         shadows=("Sequencer",))
+    _add(kd, "3D View", "wm.context_toggle", make_event("M", ctrl=True, shift=True),
+         {"data_path": "space_data.show_region_header"}, shadows=VIEW3_SHADOWS)
+    _add(kd, "3D View", "maya_kit.cycle_background", make_event("B", alt=True), shadows=VIEW3_SHADOWS)
+    _add(kd, "3D View", "maya_kit.panel_set", make_event("FIVE", ctrl=True, shift=True), {"key": "DEFAULT_MATERIAL"},
+         shadows=VIEW3_SHADOWS)
+    # editors with their own Ctrl+F (find / filter, paint radial controls) keep it
+    _add(kd, "Screen", "wm.search_menu", make_event("F", ctrl=True), shadows=SEARCH_SHADOWS)
+
+    # skin weight painting
+    size = _props_of(kd, "Weight Paint", "wm.radial_control", type="S")
+    weight = _props_of(kd, "Weight Paint", "wm.radial_control", type="F", ctrl=True)
+    kd.remove("Weight Paint", "wm.radial_control", type="U")
+    kd.remove("Weight Paint", "wm.call_asset_shelf_popover", type="B")
+    _add(kd, "Weight Paint", "wm.call_menu", make_event("U"), {"name": "MAYAKIT_MT_paint_operation"})
+    _add(kd, "Weight Paint", "wm.radial_control", make_event("N"), weight)
+    _add(kd, "Weight Paint", "wm.radial_control", make_event("B"), size, shadows=("3D View",))
+    _add(kd, "Weight Paint", "paint.weight_set", make_event("F", alt=True))
+    _add(kd, "Mesh", "maya_kit.copy_vertex_weights", make_event("C", ctrl=True, alt=True))
+    _add(kd, "Mesh", "maya_kit.paste_vertex_weights", make_event("V", ctrl=True, alt=True))
+
+    # sculpting
+    size = _props_of(kd, "Sculpt", "wm.radial_control", type="S")
+    strength = _props_of(kd, "Sculpt", "wm.radial_control", type="U")
+    for n in range(6):
+        kd.remove("Sculpt", "object.subdivision_set", type=("ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE")[n],
+                  ctrl=True)
+    for key, brush in SCULPT_BRUSHES:
+        _add(kd, "Sculpt", "brush.asset_activate", make_event(key, ctrl=True),
+             {"asset_library_type": "ESSENTIALS", "relative_asset_identifier": SCULPT_LIBRARY + brush},
+             shadows=("3D View",))
+    kd.remove("Sculpt", "wm.call_asset_shelf_popover", type="B")
+    _add(kd, "Sculpt", "wm.radial_control", make_event("B"), size, shadows=("3D View",))
+    _add(kd, "Sculpt", "wm.radial_control", make_event("M"), strength)
+    _add(kd, "Sculpt", "paint.mask_flood_fill", make_event("U", shift=True), {"mode": "VALUE", "value": 0.0})
+    _add(kd, "Sculpt", "paint.mask_flood_fill", make_event("I", ctrl=True, shift=True), {"mode": "INVERT"})
+
+    # Graph Editor lock / unlock channel
+    _add(kd, "Graph Editor", "anim.channels_setting_enable", make_event("H"), {"type": "PROTECT"})
+    _add(kd, "Graph Editor", "anim.channels_setting_disable", make_event("J"), {"type": "PROTECT"})
+
+    # Time Slider bookmarks = timeline markers (operators/bookmarks.py)
+    for key, mods, op, props in BOOKMARK_KEYS:
+        _add(kd, "Screen", op, make_event(key, **mods), props, shadows=("Clip Editor", "Clip Graph Editor", "Curve"))
+
+    # UV Editor display toggles
+    _add(kd, "UV Editor", "wm.context_toggle", make_event("SEVEN"), {"data_path": "space_data.uv_editor.show_stretch"})
+    _add(kd, "UV Editor", "wm.context_toggle", make_event("FIVE"), {"data_path": "space_data.uv_editor.show_faces"})
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -986,7 +1108,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
-           patch_graph_outliner, patch_script_editor)
+           patch_graph_outliner, patch_script_editor, patch_key_batch_3)
 
 
 def apply(data):
