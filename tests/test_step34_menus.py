@@ -76,6 +76,9 @@ def test_runtime_submenus_are_menus():
         def label(self, text=""):
             pass
 
+        def row(self):     # step 108: section titles sit on a lower row
+            return self
+
     cls.draw(type("M", (), {"layout": Fake()})(), bpy.context)
     for name in ("General Editors", "Modeling Editors", "Animation Editors", "Rendering Editors",
                  "Relationship Editors"):

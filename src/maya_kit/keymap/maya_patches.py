@@ -1096,6 +1096,15 @@ def patch_key_batch_3(kd):
     _add(kd, "UV Editor", "wm.context_toggle", make_event("FIVE"), {"data_path": "space_data.uv_editor.show_faces"})
 
 
+# --- 50. Menu shortcuts --------------------------------------------------------
+# Blender prints the keymap shortcut of a menu's ``wm.call_menu`` beside the item that opens it: File > Recent Files
+# showed IC's "Shift Ctrl O" (a C menu, so no kit subclass can hide it). Maya has no Ctrl+Shift+O
+# (); the recent files stay in File > Recent Files.
+
+def patch_menu_shortcuts(kd):
+    kd.remove("Window", "wm.call_menu", type="O", ctrl=True, shift=True)
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -1108,7 +1117,8 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
-           patch_graph_outliner, patch_script_editor, patch_key_batch_3)
+           patch_graph_outliner, patch_script_editor, patch_key_batch_3,
+           patch_menu_shortcuts)
 
 
 def apply(data):

@@ -66,7 +66,7 @@ def test_option_box_count_matches_maya():
         expected = gen_menu_data.option_boxes(gen_menu_data.build(data))   # incl. step 101 run-time items
         assert expected == set(menu_data.OPTION_BOXES), len(expected ^ set(menu_data.OPTION_BOXES))
     # step 103: the box is Maya's mark at the end of the label (no left window icon)
-    boxes = [b for b in _all_menu_buttons() if b["text"].endswith(menu_sets.BOX_MARK)]
+    boxes = [b for b in _all_menu_buttons() if b["text"].endswith(menu_sets.BOX_MARK.strip())]
     assert not [b for b in _all_menu_buttons() if b["icon"] == 'WINDOW']
     drawn = {b["item"] for b in boxes if "item" in b}
     submenus = [b for b in boxes if b["kind"] == "menu"]     # a submenu entry with a Maya option box
@@ -74,7 +74,7 @@ def test_option_box_count_matches_maya():
     # are drawn more than once).
     # (menu_sets.OPTION_BOXES = the main menus' + the step 104 editor menu bars')
     assert drawn | {p for p in menu_sets.OPTION_BOXES
-                    if p.rsplit("/", 1)[-1] + menu_sets.BOX_MARK in {b["text"] for b in submenus}}         == set(menu_sets.OPTION_BOXES), sorted(set(menu_sets.OPTION_BOXES) - drawn)[:5]
+                    if any(b["text"].startswith(p.rsplit("/", 1)[-1]) for b in submenus)}   # step 108: aligned box         == set(menu_sets.OPTION_BOXES), sorted(set(menu_sets.OPTION_BOXES) - drawn)[:5]
     assert len(menu_data.OPTION_BOXES) > 400
 
 

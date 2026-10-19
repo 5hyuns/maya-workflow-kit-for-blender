@@ -79,10 +79,14 @@ def _ctx(**extra):
     return types.SimpleNamespace(**d)
 
 
+def _label(text):
+    """The item label of a drawn text (step 108: a filler, the Maya hotkey and the box mark follow it)."""
+    return text.replace(menu_sets.HAIR, "").split("  ")[0].replace(menu_sets.BOX_MARK.strip(), "").strip()
+
+
 def _action(entry):
     """(kind, target, props) a drawn Maya menu item runs."""
-    if entry[0] == "hold":
-        assert entry[1] == "maya_kit.menu_item"
+    if entry[1] == "maya_kit.menu_item":
         return menu_map.spec(entry[3].item)
     props = dict(vars(entry[3]))
     if entry[1] == "maya_kit.menu_tool":
@@ -205,7 +209,7 @@ def test_menu_items_active_or_grey():
     create = _draw_menu(menu_sets.menu_idname("mainCreateMenu"))
     sub = next(e[1] for e in create if e[0] == "menu" and e[2] == "Polygon Primitives")
     items = _draw_menu(sub)
-    ops = {e[2].replace(menu_sets.BOX_MARK, ""): e for e in items if e[0] in ("op", "hold")}  # step 103 box mark
+    ops = {_label(e[2]): e for e in items if e[0] in ("op", "hold")}  # step 103 box mark, step 108 hotkey
     # Step 10: Maya creation (origin, Maya size and names). Step 51: option-box items are one
     # maya_kit.menu_item button (press and hold = option box) running the item's mapped action.
     assert _action(ops["Cube"]) == ("op", "maya_kit.create", {"kind": 'CUBE'}), ops["Cube"]
@@ -216,13 +220,13 @@ def test_menu_items_active_or_grey():
     # Blender's own menu at the end of File; v3d / tool / menu kinds.
     file_log = _draw_menu(menu_sets.menu_idname("mainFileMenu"))
     assert file_log[-1] == ("menu", "TOPBAR_MT_file", "Blender File"), file_log[-1]
-    imp = next(e for e in file_log if e[0] in ("op", "hold") and e[2].replace(menu_sets.BOX_MARK, "") == "Import...")   # step 102: Maya dialog
+    imp = next(e for e in file_log if e[0] in ("op", "hold") and _label(e[2]) == "Import...")   # step 102: Maya dialog
     assert _action(imp) == ("op", "maya_kit.file_import", {}), _action(imp)
     tools = _draw_menu(menu_sets.menu_idname("mainMeshToolsMenu"))
-    cut = next(e for e in tools if e[0] in ("op", "hold") and e[2].replace(menu_sets.BOX_MARK, "") == "Multi-Cut")
+    cut = next(e for e in tools if e[0] in ("op", "hold") and _label(e[2]) == "Multi-Cut")
     assert _action(cut) == ("tool", "builtin.knife", {"edit": True}), _action(cut)
     edit_mesh = _draw_menu(menu_sets.menu_idname("mainEditMeshMenu"))
-    bevel = next(e for e in edit_mesh if e[0] in ("op", "hold") and e[2].replace(menu_sets.BOX_MARK, "") == "Bevel")
+    bevel = next(e for e in edit_mesh if e[0] in ("op", "hold") and _label(e[2]) == "Bevel")
     assert _action(bevel)[:2] == ("v3d", "mesh.bevel"), _action(bevel)
     # Section labels from Maya dividers.
     assert ("label", "Pivot") not in file_log

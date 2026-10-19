@@ -16,7 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
-from . import editor_menu_data, menu_data, menu_map, notices
+from . import editor_menu_data, menu_data, menu_hotkeys, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -97,8 +97,11 @@ def draw_item(layout, path, label):
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
     enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``)."""
     s = menu_map.spec(path)
-    if s is not None and s[0] in ("op", "v3d", "tool") and (notices.notice(path) or not runs_directly(path, s)
-                                                            or _has_saved_options(path)):
+    # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
+    # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``maya_kit.menu_item``, which
+    # no key runs, so only the Maya hotkey drawn into the label shows (step 108 「계획」 3).
+    if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
+            notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
         layout.operator(MAYAKIT_OT_menu_item.bl_idname, text=label).item = path
         return
     draw_spec(layout, label, s, path)
@@ -148,7 +151,7 @@ def draw_spec(layout, label, s, path, icon='NONE'):
     if kind == "prop":
         draw_prop(layout, label, target, props, path)
     elif kind == "menu":
-        layout.menu(target, text=label, icon=icon)
+        layout.menu(proxy_menu(target), text=label, icon=icon)
     elif kind == "pie":
         layout.operator("wm.call_menu_pie", text=label + " ▸", icon=icon).name = target
     elif kind == "tool":
@@ -235,29 +238,168 @@ class MAYAKIT_OT_menu_set_value(bpy.types.Operator):
 BOX_MARK = "  ❒"
 
 
-def _draw_boxed(layout, path, label):
+def _draw_boxed(layout, path, text):
+    """An item with a Maya option box; ``text`` already ends with the box mark (``item_texts``)."""
     s = menu_map.spec(path)
     if s is None or s[0] in ("menu", "pie"):
-        draw_spec(layout, label + BOX_MARK, s, path)
+        draw_spec(layout, text, s, path)
         return
-    op = layout.operator_menu_hold(MAYAKIT_OT_menu_item.bl_idname, text=label + BOX_MARK,
+    op = layout.operator_menu_hold(MAYAKIT_OT_menu_item.bl_idname, text=text,
                                    menu=MAYAKIT_MT_option_box.bl_idname)
     op.item = path
 
 
+# --- Maya hotkey column -----------------------------------------------------
+# Maya prints an item's hotkey right-aligned ( "Ctrl+N",
+# menu_Modeling_Edit_Mesh.png "Ctrl+B"), the option box after it. Blender takes no such text for a Python button,
+# so the label carries it: label + filler + "Ctrl+N  ❒", the filler checked with the menu font so the tails line
+# up on the right.
+HAIR = "\u200a"          # a hair space: fine filler steps (plain spaces only if the UI font lacks it)
+MIN_GAP = 3              # spaces between the longest label and its tail
+
+
+def hotkey(path):
+    """The Maya hotkey shown beside a menu item ("" without one): ui/menu_hotkeys.py (tools/gen_menu_hotkeys.py)."""
+    return menu_hotkeys.HOTKEYS.get(path, "")
+
+
+def font_size(context=None):
+    """The menu text size in px: the UI style's widget points x the effective UI scale (0 in background -> 1)."""
+    prefs = (context or bpy.context).preferences
+    scale = prefs.system.ui_scale or 1.0
+    try:
+        points = prefs.ui_styles[0].widget.points
+    except (IndexError, AttributeError):
+        points = 11
+    return points * scale
+
+
+def text_width(text, size):
+    import blf
+    blf.size(0, size)
+    return blf.dimensions(0, text)[0]
+
+
+def filler(width, size, space=None, hair=None):
+    """Blank text about ``width`` px wide: spaces, then hair spaces for the rest (if the UI font has them)."""
+    space = space or (text_width(" ", size) or 1.0)
+    if hair is None:
+        hair = text_width(HAIR, size)
+        if not 0.0 < hair < space:
+            hair = 0.0
+    n = int(max(width, 0.0) // space)
+    hairs = int(round((width - n * space) / hair)) if hair else 0
+    return " " * n + HAIR * hairs
+
+
+def aligned(entries, size=None):
+    """[(label, tail)] -> texts with the tails right-aligned on one column (rows without a tail stay as they are)."""
+    if not any(tail for _label, tail in entries):
+        return [label for label, _tail in entries]
+    size = size or font_size()
+    space = text_width(" ", size) or 1.0
+    hair = text_width(HAIR, size)
+    if not 0.0 < hair < space:
+        hair = 0.0
+    widths = [(text_width(label, size), text_width(tail, size) if tail else 0.0) for label, tail in entries]
+    total = max(lw + MIN_GAP * space + tw for (lw, tw), (_l, tail) in zip(widths, entries) if tail)
+    out = []
+    for (label, tail), (lw, tw) in zip(entries, widths):
+        if not tail:
+            out.append(label)
+            continue
+        out.append(label + filler(max(total - lw - tw, space), size, space, hair) + tail)
+    return out
+
+
+def item_texts(rows, size=None):
+    """{path: drawn text} for a menu's (path, label, boxed) rows: label + Maya hotkey + option box, aligned. In a
+    menu with option boxes a hotkey without a box keeps the box column empty, so every hotkey ends on one line
+    (Maya: Increment and Save "Ctrl+Alt+S" under "Ctrl+S" of Save Scene)."""
+    size = size or font_size()
+    any_box = any(boxed for _p, _l, boxed in rows)
+    box_gap = filler(text_width(BOX_MARK, size), size) if any_box else ""
+    entries = []
+    for path, label, boxed in rows:
+        key = hotkey(path)
+        if key:
+            tail = key + (BOX_MARK if boxed else box_gap)
+        else:
+            tail = BOX_MARK.strip() if boxed else ""
+        entries.append((label, tail))
+    return {row[0]: text for row, text in zip(rows, aligned(entries, size))}
+
+
 def _draw_items(layout, items, prefix, submenus):
-    for path, it in children(items, prefix):
+    kids = list(children(items, prefix))
+    texts = item_texts([(path, it[0], path in OPTION_BOXES) for path, it in kids
+                        if path is not None and not (sub_items(path, it) and path not in menu_map.MAP)])
+    for path, it in kids:
         if path is None:
             layout.separator()
             if it[1]:
-                layout.label(text=it[1])
+                # Maya section titles are small (menu_Modeling_File.png); a lower row also keeps File inside a
+                # 900 px window at 125 % (step 108 「계획」 4)
+                _section_label(layout, it[1])
             continue
         if sub_items(path, it) and path not in menu_map.MAP:
             layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""))
         elif path in OPTION_BOXES:
-            _draw_boxed(layout, path, it[0])
+            _draw_boxed(layout, path, texts[path])
         else:
-            draw_item(layout, path, it[0])
+            draw_item(layout, path, texts[path])
+
+
+def _section_label(layout, text):
+    """A Maya section title, on a lower row than an item (Maya draws them small)."""
+    row = layout.row()
+    if row is None:      # a minimal stand-in layout (tests)
+        layout.label(text=text)
+        return
+    row.scale_y = 0.8
+    row.label(text=text)
+
+
+# Blender menus a Maya item opens (Recent Files = TOPBAR_MT_file_open_recent) are drawn through a kit subclass:
+# for the original Blender prints the keymap shortcut of ``wm.call_menu`` ("Shift Ctrl O", step 108).
+_proxies = {}          # Blender menu idname -> kit subclass idname
+_PROXY_CLASSES = []
+
+
+def proxy_menu(target):
+    return _proxies.get(target, target)
+
+
+def _menu_targets():
+    out = set()
+    for path in menu_map.MAP:
+        s = menu_map.spec(path)
+        if s is not None and s[0] == "menu" and not s[1].startswith("MAYAKIT_"):
+            out.add(s[1])
+    return sorted(out)
+
+
+def register_proxies():
+    for target in _menu_targets():
+        base = getattr(bpy.types, target, None)
+        if not (isinstance(base, type) and issubclass(base, bpy.types.Menu) and "draw" in base.__dict__):
+            continue
+        idname = "MAYAKIT_MT_proxy_" + target
+        cls = type(idname, (base,), {"bl_idname": idname, "__doc__": base.__doc__ or base.bl_label})
+        try:
+            bpy.utils.register_class(cls)
+        except (RuntimeError, ValueError):
+            continue
+        _proxies[target] = idname
+        _PROXY_CLASSES.append(cls)
+
+
+def unregister_proxies():
+    for cls in reversed(_PROXY_CLASSES):
+        if cls.is_registered:
+            bpy.utils.unregister_class(cls)
+    _PROXY_CLASSES.clear()
+    _proxies.clear()
 
 
 # Menu class of every Maya submenu path (e.g. "Graph Editor/Tangents/Default In Tangent"), for buttons that open one
@@ -630,8 +772,10 @@ classes = (MAYAKIT_OT_menu_unavailable, MAYAKIT_OT_menu_set_value, MAYAKIT_OT_me
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    register_proxies()
 
 
 def unregister():
+    unregister_proxies()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
