@@ -2,14 +2,21 @@
 
 ## 현재 작업
 
+- Step 122 (마케팅 카피 · 키 비주얼 · 캡션 스크린샷, 사용자 요청 10-19) 완료 — `docs/steps/step_122.md`, 결과
+  `docs/distribution/marketing/` (copy.md, style.md, CREDITS.md, screens/01–10, key_visual(.png / _square), icon_256) + `docs/distribution/media/`.
+  - 카피 = copy-masters 실행 (최종 「The tutorial ends. Your Channel Box comes back.」, 과정 점검 45/45), 디자인 = Maya 회색 + amber #ffb547 +
+    Inter, 장면 = CC0 모델 (Poly Haven, Kenney, Quaternius), 재생성 `python tools/make_listing_media.py` (= tools/marketing/make_marketing.py).
+  - 남은 것: 환영 창 본문 잘림, 「persp」 두 번 그려짐 (킷 쪽), 빈 폴더 `C:\previews` (사용자 삭제).
+  - **바로 다음 할 일**: step 123 = 클립 6 + 트레일러 (MP4) + README 용 GIF + 마케팅 키트 (references.md §6, copy.md 캡션, style.md).
+    그 밖에 열린 것: 사용자 업로드 (manual_checks 117), 툴바 떼기, manual_checks 115–120.
+
 - Step 121 (인기 애드온 등록 페이지 레퍼런스 → 미디어 기준, 사용자 요청 10-19) 완료 — `docs/steps/step_121.md`,
   `docs/distribution/marketing/references.md` (원자료 `research/marketing_refs/`, 추적 안 함).
   - 공식 규칙 (사이트 소스): 미리보기 = JPEG / PNG / WebP 또는 **MP4** (GIF 불가), 16:9, 개수·크기 제한 없음, 영상 포스터 = 첫 프레임.
     `listing.md` C 의 「no GIF」 정정, 옛 사본 (5.0.0 문구) 삭제.
   - 미디어 기준 (§5): 대표 이미지 = 실제 화면 + 이름 + 한 줄, 갤러리 10 = 트레일러 30–45 초 + 클립 6 × 6–15 초 + 제목 정지 이미지 3, 캡션 전부,
     이미지 속 글자 제목만, extensions 설명에 GIF 없음.
-  - **바로 다음 할 일**: step 122 = references.md §6 의 지시대로 copy.md / style.md, 대표 이미지 + 정지 이미지 3 장. 그 밖에 열린 것: 사용자
-    업로드 (manual_checks 117), 툴바 떼기, manual_checks 115–120.
+  - 다음: step 122 (카피 · 키 비주얼).
 
 - Step 120 (Maya 배경색 · Alt+B, 사용자 요청 10-19) 완료 — `docs/steps/step_120.md`, Maya 실측 `research/maya/re/background_120.md`.
   - Maya 2022: Alt+B = CycleBackgroundColor (전역: 0.36 → 0.631 → 그라데이션 #889db3/#0d0d0d → 검정), Ctrl+B = Bevel (그대로, 보조 연결 안 함

@@ -23,7 +23,7 @@ Rules followed: `docs/distribution/extensions_audit.md` (final status of every r
 | Website / support URL | none yet (no public page or issue tracker — decision 11); add the tracker URL on the platform after the upload |
 | Icon | `docs/distribution/media/icon.png` (256 × 256) |
 | Featured image | `docs/distribution/media/featured.png` (1920 × 1080) |
-| Preview images | `docs/distribution/media/1_…6_*.png` (1600 × 900, part C) |
+| Preview images | `docs/distribution/media/01_…10_*.png` (1920 × 1080, part C; MP4 clips from step 123) |
 
 ## B. Long description
 
@@ -147,30 +147,37 @@ It is not affiliated with, endorsed by, sponsored by, or otherwise approved by A
 Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; references to Maya are solely to
 describe compatibility and the intended audience.
 
-## C. Media (`docs/distribution/media/`, all made by the kit: CC0, no Maya or Blender logo, no Maya capture)
+## C. Media (`docs/distribution/media/`: Blender screenshots taken with Allset, no Maya or Blender logo, no Maya capture)
 
 Store rules (step 121, sources in `docs/distribution/marketing/references.md` §1): icon 256 × 256 PNG; featured
 image JPEG / PNG / WebP ≥ 1920 × 1080, 16:9 (also the social card); previews 16:9, each **a JPEG / PNG / WebP image
 or an MP4 video** (no GIF, no WebM), ≥ 1 required, no count or size cap in the site code, caption ≤ 255 characters;
 a video's poster is its first frame. GIFs can only be linked in the description, which the moderation guideline
-discourages ("no heavy image (.gif images in particular)"). The set below is the 0.2.0 one (six stills); the
-target set — featured image, a 30–45 s trailer, six 6–15 s clips, three captioned stills — is the media standard in
-`references.md` §5, made by steps 122–123.
+discourages ("no heavy image (.gif images in particular)").
 
-Regenerate with `python tools/make_listing_media.py` (icon + featured image: `tools/make_splash.py --media`, Workbench
-render of the kit's own artwork; screenshots: `tools/listing_shots.py` in a GUI Blender on a clean sandbox with the
-built zip, Maya theme applied as Make Blender feel like Maya does).
+Regenerate with `python tools/make_listing_media.py` (= `tools/marketing/make_marketing.py`: a GUI Blender in a clean
+sandbox with the built zip, Maya theme and Maya's factory background, a scene of CC0 models from Poly Haven, Kenney
+and Quaternius — `docs/distribution/marketing/CREDITS.md` — then Pillow captions in the visual system of
+`docs/distribution/marketing/style.md`, copy from `copy.md`). The icon and featured image are kit-made; the scenes use
+the CC0 models credited at the end of part B (add the copy.md "Credits line" there when pasting).
 
-| File | Size | Caption (upload order) |
+Step 122 set (stills; step 123 adds the MP4 trailer and feature clips — then the gallery follows references.md §5:
+trailer, six clips, and three of these stills, `03`, `04` and `10`):
+
+| File | Size | Caption (upload order, `copy.md` → Store preview captions) |
 |---|---|---|
-| `icon.png` | 256 × 256 | — (icon) |
-| `featured.png` | 1920 × 1080 | — (featured image) |
-| `1_navigate_select.png` | 1600 × 900 | Navigate & Select: Maya tools, component selection and the Move manipulator |
-| `2_hotbox_marking_menus.png` | 1600 × 900 | Hotbox & Marking Menus: Space-hold hotbox with every menu of the menu set |
-| `3_channel_box_attribute_editor.png` | 1600 × 900 | Channel Box & Attribute Editor: keyed channels, SHAPES / INPUTS, Maya node tabs |
-| `4_menu_sets_shelves.png` | 1600 × 900 | Menu Sets & Shelves: Rigging menu set, Skeleton menu with option boxes, Rigging shelf |
-| `5_maya_concepts.png` | 1600 × 900 | Maya concepts: group1 / shapes in the Outliner, Freeze Transformations (pivot kept), Modify menu |
-| `6_option_windows.png` | 1600 × 900 | Option windows: Duplicate Special Options with Maya's factory values |
+| `icon.png` | 256 × 256 | — (icon: radial marking menu) |
+| `featured.png` | 1920 × 1080 | — (featured image: key visual, name + tagline + two real screens) |
+| `01_hotbox.png` | 1920 × 1080 | Hold Space anywhere in the viewport: the hotbox shows every menu of the current menu set, Recent Commands and the marking-menu zones. |
+| `02_marking_menus.png` | 1920 × 1080 | Right-click over an object or component for Maya's marking menus, in Maya's radial positions, with gestures and click mode. |
+| `03_channel_box_ae.png` | 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
+| `04_menus_shelves.png` | 1920 × 1080 | Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf. |
+| `05_navigate_select.png` | 1920 × 1080 | Component selection on a mesh with Maya selection colors and the Move manipulator; Alt + mouse navigation and QWERTY tools. |
+| `06_pivot_snapping.png` | 1920 × 1080 | Hold D to edit the pivot; right-click while editing for the pivot marking menu. X, C and V snap while held. |
+| `07_animation.png` | 1920 × 1080 | Time Slider with key ticks and Range Slider, Graph Editor with Maya menus and tangents, a walking robot. |
+| `08_rigging.png` | 1920 × 1080 | Paint Skin Weights on a skinned character: influences list, Replace / Add / Scale / Smooth, joints drawn in front. |
+| `09_modeling_toolkit.png` | 1920 × 1080 | The Modeling Toolkit docked in the tab stack: multi-component selection, mesh, component and tool buttons. |
+| `10_switch_before.png` | 1920 × 1080 | Installing changes nothing: the welcome dialog asks first, and the Maya &#124; Blender switch gives Blender back in one click. |
 
 ## D. Technical disclosure for the reviewers
 

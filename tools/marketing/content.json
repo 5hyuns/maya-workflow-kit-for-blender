@@ -1,0 +1,133 @@
+{
+ "_doc": "Copy for tools/marketing/compose.py, from docs/distribution/marketing/copy.md (step 122). Callout rects: names from tmp/marketing/raw/meta.json or [x, y, w, h] in raw 1920 x 1080 window pixels (top-down).",
+ "key_visual_shots": [
+  "hero",
+  "rigging"
+ ],
+ "key_visual_lines": [
+  "The whole Maya workflow",
+  "in Blender, in one install."
+ ],
+ "key_visual_footer": "Free, open-source extension for Blender 4.5 – 5.2",
+ "screens": [
+  {
+   "name": "hotbox",
+   "title": "The hotbox, under the space bar",
+   "line": "Hold Space for every menu of the current menu set.",
+   "callouts": []
+  },
+  {
+   "name": "marking_menus",
+   "title": "Right-click marking menus",
+   "line": "Object and component menus in Maya's radial positions, with gestures.",
+   "callouts": []
+  },
+  {
+   "name": "channel_box_ae",
+   "title": "Channel Box and Attribute Editor",
+   "line": "Type +=5, see keyed channels in red, browse node tabs.",
+   "callouts": [
+    {
+     "rect": "cb",
+     "label": "Channel Box",
+     "side": "left",
+     "gap": 60
+    },
+    {
+     "rect": "ae",
+     "label": "Attribute Editor",
+     "side": "left",
+     "gap": 60
+    }
+   ]
+  },
+  {
+   "name": "menus_shelves",
+   "title": "Menu sets, shelves, option boxes",
+   "line": "F2–F6 menu sets, factory shelves, option windows with Maya's defaults.",
+   "callouts": [
+    {
+     "rect": "IMAGE_EDITOR",
+     "label": "Factory shelves",
+     "side": "below",
+     "gap": 40
+    },
+    {
+     "rect": [
+      598,
+      372,
+      34,
+      368
+     ],
+     "label": "Option boxes",
+     "side": "right",
+     "gap": 50
+    }
+   ]
+  },
+  {
+   "name": "navigate_select",
+   "title": "Navigate and select the Maya way",
+   "line": "Alt + mouse to tumble, QWERTY tools, F8 components, Maya selection colors.",
+   "callouts": []
+  },
+  {
+   "name": "pivot_snapping",
+   "title": "Pivots and snapping you know",
+   "line": "Hold D to edit the pivot; hold X, C or V to snap.",
+   "callouts": []
+  },
+  {
+   "name": "animation",
+   "title": "Time Slider and Graph Editor",
+   "line": "Key ticks, Range Slider, Maya tangents and Auto Key.",
+   "callouts": [
+    {
+     "rect": "TIMELINE",
+     "label": "Time Slider",
+     "side": "above",
+     "gap": 40
+    }
+   ]
+  },
+  {
+   "name": "rigging",
+   "title": "Joints, IK and skin weights",
+   "line": "Joint Tool, IK handles, Bind Skin and Paint Skin Weights.",
+   "callouts": [
+    {
+     "rect": "cb",
+     "label": "Paint Skin Weights",
+     "side": "left",
+     "gap": 60
+    }
+   ]
+  },
+  {
+   "name": "modeling_toolkit",
+   "title": "Modeling Toolkit, docked",
+   "line": "Multi-component selection and the mesh tools in one panel.",
+   "callouts": [
+    {
+     "rect": "mtk",
+     "label": "Modeling Toolkit",
+     "side": "left",
+     "gap": 60
+    }
+   ]
+  },
+  {
+   "name": "switch_before",
+   "title": "Nothing changes until you choose",
+   "line": "Click Blender in the switch and everything Allset changed comes back.",
+   "callouts": [
+    {
+     "rect": "switch",
+     "label": "Maya | Blender switch",
+     "side": "below",
+     "gap": 60
+    }
+   ]
+  }
+ ]
+}
