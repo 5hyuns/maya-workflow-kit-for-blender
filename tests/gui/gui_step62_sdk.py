@@ -10,7 +10,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -30,7 +30,17 @@ def shot(name):
 
 
 def ui_region():
-    return next(r for r in view3d()[0].regions if r.type == 'UI')
+    return dock_region()       # Maya's tab stack (step 116; was the 3D View sidebar)
+
+
+def dock():
+    return dock_area(), dock_region()
+
+
+# step 116: the dock is its own area, so x offsets from the old sidebar's right edge (which held Blender's tab strip)
+# don't hold. Channel Box columns are found once by data path; the Set Driven Key button grid (two columns) by its
+# share of the width (old sidebar content 325 px: Key / Load Driven at 28 %, Load Driver at 71 %).
+GRID = {260: 0.28, 118: 0.71}
 
 
 def redraw():
@@ -43,7 +53,13 @@ def point(spot):
     dx, dy = spot
     r = ui_region()
     top = r.view2d.view_to_region(0, 0, clip=False)[1]       # content top in region pixels (scrolled)
-    return r.x + r.width - px(dx), r.y + top - px(dy)
+    if dx == 136:
+        x = C["x_field"]
+    elif dx == 266:
+        x = C["x_label"]
+    else:
+        x = r.x + int(r.width * GRID[dx])
+    return x, r.y + top - px(dy)
 
 
 def visible(spot):
@@ -68,8 +84,35 @@ def scroll(spot):
     return s_scroll
 
 
+BUTTONS = {KEY_CUBE: ("sdk_key", 0.28), LOAD_DRIVEN_CUBE: ("which='DRIVEN'", 0.28),
+           LOAD_DRIVER_LOCATOR: ("which='DRIVER'", 0.71)}
+
+
 def click(spot):
-    """Hover in one tick, press + release in the next: a Blender button activates on hover."""
+    """Hover in one tick, press + release in the next: a Blender button activates on hover. Set Driven Key buttons
+    are looked up by their command (their height follows the dock's, step 116)."""
+    if spot in BUTTONS:
+        text, frac = BUTTONS[spot]
+        state = {}
+
+        def s_find():
+            if not state:
+                state["f"] = find_button(dock, lambda _path, cmd: text in cmd, C, "button", x_frac=frac,
+                                         start_frac=0.4)
+            state["f"]()
+
+        def s_hover_found():
+            check(f"Set Driven Key button {text} found ({C['button']})", C["button"] is not None)
+            if C["button"]:
+                ev('MOUSEMOVE', 'NOTHING', x=C["button"][0], y=C["button"][1])
+
+        def s_press_found():    # a press goes to the hovered button: hover first (the sweep ended on the next one)
+            if C["button"]:
+                x, y = C["button"]
+                ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+                ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+        return [s_find, s_hover_found, s_press_found]
+
     def s_hover():
         x, y = point(spot)
         ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
@@ -111,19 +154,32 @@ def steps(*fns):
             step(f)
 
 
-def goto_tab(category):
-    def s_tab():
+def columns():
+    """Channel Box value / label columns on the Translate X row (locator1 selected), by data path."""
+    def s_row():
         r = ui_region()
-        if r.active_panel_category != category and C["tries"] < 12:
-            C["tries"] += 1
-            ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width - 8, y=r.y + r.height - 60)
-            ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
-            sys.modules["sim"]._steps.insert(0, s_tab)
-            return
-        C["tries"] = 0
-        check(f"sidebar shows the {category} tab", r.active_panel_category == category)
-        redraw()
-    return s_tab
+        top = r.view2d.view_to_region(0, 0, clip=False)[1]
+        C["tx_row"] = r.y + r.height - (r.y + top - px(TX_FIELD[1]))
+    out = [s_row]
+
+    def finder(key, match):
+        state = {}
+
+        def s_find():
+            if not state:
+                state["f"] = find_button(dock, match, C, key, rows=(C["tx_row"],))
+            state["f"]()
+        return s_find
+    out.append(finder("x_field_at", lambda path, _cmd: path.endswith("tx_text")))
+    out.append(finder("x_label_at", lambda _path, cmd: "cb_select_channel" in cmd))
+
+    def s_done():
+        check(f"Channel Box columns found in the dock ({C['x_field_at']}, {C['x_label_at']})",
+              C["x_field_at"] and C["x_label_at"])
+        C["x_field"] = C["x_field_at"][0] if C["x_field_at"] else 0
+        C["x_label"] = C["x_label_at"][0] if C["x_label_at"] else 0
+    out.append(s_done)
+    return out
 
 
 def sdk():
@@ -143,7 +199,7 @@ def s_setup():
     loc.empty_display_type = 'PLAIN_AXES'
     loc.location = (0, -3, 0)       # Translate X 0 = the first driven key (Maya scenario)
     bpy.context.scene.collection.objects.link(loc)
-    view3d()[0].spaces.active.show_region_ui = True
+    dock_area('CHANNEL_BOX')    # Maya's tab stack right of the viewport (step 116)
     bpy.ops.allset.sdk_window()          # Key > Set Driven Key > Set... (menu mapping: headless test)
     redraw()
 
@@ -205,16 +261,15 @@ def s_shot_dialog():
     check("Add Attribute dialog opened (screenshot)", True)
 
 
-steps(goto_tab("Channel Box / Layer Editor"),
+steps(select("locator1"), columns(),
       # driver: select locator1, click Translate X in the Channel Box, Load Driver
-      select("locator1"), scroll(TX_LABEL), click(TX_LABEL), scroll(LOAD_DRIVER_LOCATOR),
-      click(LOAD_DRIVER_LOCATOR), s_check_driver,
+      scroll(TX_LABEL), click(TX_LABEL), click(LOAD_DRIVER_LOCATOR), s_check_driver,
       # driven: select pCube1, click Rotate Y, Load Driven, Key
-      select("pCube1"), scroll(RY_LABEL), click(RY_LABEL), scroll(LOAD_DRIVEN_CUBE), click(LOAD_DRIVEN_CUBE),
+      select("pCube1"), scroll(RY_LABEL), click(RY_LABEL), click(LOAD_DRIVEN_CUBE),
       s_check_driven, click(KEY_CUBE), s_check_key1,
       # pose: tx 1, ry 90, Key
       select("locator1"), type_into(TX_FIELD, "1"), select("pCube1"), type_into(RY_FIELD, "90"),
-      s_check_posed, scroll(KEY_CUBE), click(KEY_CUBE), s_check_key2,
+      s_check_posed, click(KEY_CUBE), s_check_key2,
       # drive: tx 0.5 -> ry 45
       select("locator1"), type_into(TX_FIELD, "0.5"), s_check_result, select("pCube1"), scroll(KEY_CUBE),
       s_shot_result, s_wait_dialog, s_shot_dialog)

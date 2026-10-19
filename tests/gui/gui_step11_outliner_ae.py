@@ -5,6 +5,7 @@ import os
 import sys
 
 import bpy
+from importlib import import_module
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
@@ -24,7 +25,10 @@ def redraw():
 
 def shot(name):
     if SHOTS:
-        screenshot(os.path.join(SHOTS, name))
+        wm = bpy.context.window_manager
+        window = wm.windows[-1]        # the floating Attribute Editor once it is open (step 116)
+        with bpy.context.temp_override(window=window):
+            bpy.ops.screen.screenshot(filepath=os.path.join(SHOTS, name))
 
 
 def goto_tab(category, then):
@@ -69,17 +73,22 @@ def s_toggled():
     check("Ctrl+A -> dock shows the Attribute Editor", wm.allset_dock == 'ATTRIBUTE_EDITOR')
 
 
+def floating_dock():
+    md = import_module(MODULE + ".ui.maya_dock")
+    wm = bpy.context.window_manager
+    return [w for w in wm.windows if md.is_floating(w, wm) and md.role(w.screen.areas[0]) in md.KINDS]
+
+
 @step
 def s_sidebar_open():
-    # the sidebar is opened from a timer after the operator (ae_toggle, step 9 trap): one tick later
-    check("Ctrl+A opens the sidebar", view3d()[0].spaces.active.show_region_ui)
-
-
-def _after_cb_tab():
+    # step 116: a factory layout has no Maya tab stack, so Ctrl+A opens the Attribute Editor as a floating window
+    # (Maya opens panels that aren't in the workspace as floating windows); the viewport sidebar stays closed
+    md = import_module(MODULE + ".ui.maya_dock")
+    fl = floating_dock()
+    check(f"Ctrl+A opens a floating Attribute Editor ({[md.role(w.screen.areas[0]) for w in fl]})",
+          len(fl) == 1 and md.role(fl[0].screen.areas[0]) == 'ATTRIBUTE_EDITOR'
+          and not view3d()[0].spaces.active.show_region_ui)
     redraw()
-
-
-step(goto_tab("Attribute Editor", _after_cb_tab))   # step 99: the AE is its own dock tab
 
 
 @step
@@ -128,7 +137,11 @@ def s_material_shot():
 
 @step
 def s_back():
-    check("Ctrl+A again -> Channel Box", bpy.context.window_manager.allset_dock == 'CHANNEL_BOX')
+    md = import_module(MODULE + ".ui.maya_dock")
+    fl = floating_dock()
+    check("Ctrl+A again -> Channel Box, in the same floating window",
+          bpy.context.window_manager.allset_dock == 'CHANNEL_BOX' and len(fl) == 1
+          and md.role(fl[0].screen.areas[0]) == 'CHANNEL_BOX')
     wm = bpy.context.window_manager
     wm.allset_outliner_shapes = True
     bpy.data.objects["group1"].allset_expanded = True
@@ -145,13 +158,9 @@ def _after_outliner_tab():
 
 
 @step
-def s_outliner_tab_on():
-    # step 49: the kit's sidebar Outliner tab shows only with "Channel Box Dock Only" off
-    bpy.context.preferences.addons[MODULE].preferences.maya_dock_only = False
-    redraw()
-
-
-step(goto_tab("Outliner", _after_outliner_tab))
+def s_outliner_rows():
+    # the kit's Outliner rows (the sidebar Outliner tab went with the sidebar dock in step 116)
+    _after_outliner_tab()
 
 
 @step

@@ -83,13 +83,13 @@ def s_gravity_check():
 
 @step
 def s_trax_walk():
-    # The menu opens with its first item (Graph Editor) under the mouse; rows are 20 px at scale 1:
-    # Trax Editor is two rows down.
+    # The menu opens with its first row under the mouse — Maya's tear-off line since step 116 — rows are 20 px at
+    # scale 1: Graph Editor is one row down, Trax Editor three.
     area, region = view3d()
     x, y = region.x + region.width // 2, region.y + region.height // 2
     pitch = round(20 * bpy.context.preferences.system.ui_scale)
-    ev('MOUSEMOVE', 'NOTHING', x=x + 4, y=y - pitch)
-    ev('MOUSEMOVE', 'NOTHING', x=x + 4, y=y - 2 * pitch)
+    for n in (1, 2, 3):
+        ev('MOUSEMOVE', 'NOTHING', x=x + 4, y=y - n * pitch)
 
 
 @step
@@ -99,11 +99,20 @@ def s_trax_wait():
 
 @step
 def s_trax_wait2():
-    pass
+    # rest on the row (a small move restarts Blender's tooltip timer once the menu has settled)
+    area, region = view3d()
+    x, y = region.x + region.width // 2, region.y + region.height // 2
+    pitch = round(20 * bpy.context.preferences.system.ui_scale)
+    ev('MOUSEMOVE', 'NOTHING', x=x + 6, y=y - 3 * pitch)
 
 
 @step
 def s_trax_wait3():
+    pass
+
+
+@step
+def s_trax_wait4():
     for a in win().screen.areas:
         a.tag_redraw()
 

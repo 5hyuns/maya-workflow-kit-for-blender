@@ -428,11 +428,8 @@ class ALLSET_OT_material_attributes(bpy.types.Operator):
             return {'CANCELLED'}
         if context.active_object is not ob and context.view_layer.objects.get(ob.name):
             context.view_layer.objects.active = ob
-        context.window_manager.allset_dock = 'ATTRIBUTE_EDITOR'
+        attribute_editor.show_dock(context, 'ATTRIBUTE_EDITOR')
         attribute_editor.set_tab(context, f"MAT:{i}")
-        space = context.space_data
-        if space is not None and space.type == 'VIEW_3D' and not space.show_region_ui:
-            attribute_editor._show_sidebar_later(space)
         for area in context.screen.areas if context.screen else ():
             if area.type == 'VIEW_3D':
                 area.tag_redraw()

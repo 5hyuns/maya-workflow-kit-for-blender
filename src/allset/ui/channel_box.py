@@ -1234,9 +1234,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
     bl_order = 0
     bl_options = {'HIDE_HEADER'}   # Maya: a menu bar, no collapsible panel title (step 50)
 
-    # The dock = three sidebar tabs named like Maya's (CATEGORY / AE_CATEGORY / MTK_CATEGORY, step 99), one panel
-    # each, all polling from the first draw so Blender creates them before the C "Item" panel (step 91: a panel made
-    # on first use landed after "Item"). WindowManager.allset_dock follows the active tab (attribute_editor).
+    # Not registered since step 116: ui/maya_dock.ALLSET_PT_maya_dock draws ``body`` in the Maya dock areas.
 
     def draw(self, context):
         units = ALLSET_PT_channel_box.body(self.layout, context)
@@ -1244,8 +1242,8 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
 
     @staticmethod
     def body(layout, context):
-        """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane)."""
-        dock_title_row(layout)
+        """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane). The row above it
+        (Maya's title / tab row) is the dock's handle + tab row (ui/maya_dock.py, step 116)."""
         chrome.menu_bar(layout, MENU_BAR)
         units = 2.0
         from . import paint_weights
@@ -1357,18 +1355,11 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         return units
 
 
-def dock_title_row(layout):
-    """Maya's dock has a title row (with a few icons at its right) above each editor's menu bar
-    (, y 141 above "Channels Edit Object Show" at 163): an
-    empty row of the same height where the kit's CB / AE / MTK switch was (step 99)."""
-    layout.label(text="")
-
-
 def fill_pane(layout, context, units):
     """Empty space under the Channel Box so the Layer Editor starts at CB_SHARE of the dock height, like Maya's
     fixed split; nothing when the Channel Box is taller (Blender panels can't scroll on their own)."""
     region = context.region
-    if units is None or region is None or region.type != 'UI':
+    if units is None or region is None or region.type not in {'UI', 'WINDOW'}:
         return
     sdk = getattr(context.window_manager, "allset_sdk", None)
     if sdk is not None and sdk.open:   # the Set Driven Key window takes the Layer Editor's place (step 62): no split
@@ -1397,7 +1388,6 @@ class ALLSET_PT_dock_attribute_editor(bpy.types.Panel):
 
     def draw(self, context):
         from . import attribute_editor
-        dock_title_row(self.layout)
         attribute_editor.draw_panel(self.layout, context)
 
 
@@ -1412,7 +1402,6 @@ class ALLSET_PT_dock_modeling_toolkit(bpy.types.Panel):
 
     def draw(self, context):
         from . import modeling_toolkit
-        dock_title_row(self.layout)
         modeling_toolkit.draw(self.layout, context)
 
 
@@ -1420,8 +1409,10 @@ classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider,
            ALLSET_OT_cb_deselect_channels, *CHANNEL_OPS, ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
-           ALLSET_MT_cb_object, ALLSET_MT_cb_show, ALLSET_PT_channel_box, ALLSET_PT_dock_attribute_editor,
-           ALLSET_PT_dock_modeling_toolkit)
+           ALLSET_MT_cb_object, ALLSET_MT_cb_show)
+# ALLSET_PT_channel_box / _dock_attribute_editor / _dock_modeling_toolkit are no longer registered as 3D View sidebar
+# tabs: the Maya panels live in their own dock areas / floating windows (ui/maya_dock.py, step 116), which call
+# ``ALLSET_PT_channel_box.body`` etc.
 
 
 def register():

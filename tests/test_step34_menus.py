@@ -20,7 +20,7 @@ NEW_PATHS = {
     "File/Increment and Save": "allset.increment_save",
     "File/Export Selection...": "allset.file_export_selection",  # step 102 (was a format submenu)
     "Edit/Ungroup": "allset.ungroup",
-    "Windows/Outliner": "allset.open_editor",
+    "Windows/Outliner": "allset.panel_show",   # raise a docked Outliner, else a floating one (step 116)
     "Windows/Node Editor": "allset.open_editor",
     "Windows/General Editors/Attribute Editor": "allset.dock_show",
     "Windows/General Editors/Script Editor": "allset.script_editor",

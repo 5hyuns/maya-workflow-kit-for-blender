@@ -119,7 +119,8 @@ def s_toggle2_check():
     redraw()
     check(f"toggle 2: the dock is closed, the layout is back ({len(win().screen.areas)} areas, viewport "
           f"{v3d()[0].width} px)",
-          dock() is None and len(win().screen.areas) == C["areas"] and abs(v3d()[0].width - C["main_w"]) <= 4)
+          dock() is None and len(win().screen.areas) == C["areas"] and v3d()[0].width >= C["main_w"] - 4)
+    # (wider is fine: the Tool Box column may have been fitted to one toolbar column meanwhile, toolbox.settle)
     in_v3d(bpy.ops.allset.editor_toggle, editor='TOOL_SETTINGS')     # the Status Line button
 
 

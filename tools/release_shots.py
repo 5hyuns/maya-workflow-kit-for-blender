@@ -41,22 +41,15 @@ def ui_region():
 
 
 def goto_tab(category, then):
+    """Show ``category`` in Maya's tab stack (its own area since step 116; made right of the view if missing)."""
+    kinds = {"Channel Box / Layer Editor": 'CHANNEL_BOX', "Attribute Editor": 'ATTRIBUTE_EDITOR',
+             "Modeling Toolkit": 'MODELING_TOOLKIT'}
+
     def s_tab():
-        r = ui_region()
-        if r.active_panel_category != category and C["tries"] < 12:
-            # the dock's own switch (WindowManager.allset_dock sets the sidebar tab, step 99): since the dock became
-            # three tabs, Ctrl+wheel over the tab strip moved past the Channel Box onto Blender's C "Item" tab
-            C["tries"] += 1
-            ae = import_module(MODULE + ".ui.attribute_editor")
-            dock = {v: k for k, v in ae.DOCK_CATEGORIES.items()}.get(category)
-            if dock is not None:
-                with v3d_override():
-                    bpy.context.window_manager.allset_dock = dock
-            redraw()
-            sim._steps.insert(0, s_tab)
-            return
-        C["tries"] = 0
-        check(f"sidebar shows the {category} tab (got {r.active_panel_category!r})", r.active_panel_category == category)
+        md = import_module(MODULE + ".ui.maya_dock")
+        sim.dock_area(kinds[category])
+        redraw()
+        check(f"the tab stack shows the {category} tab ({md.current_tab()})", md.current_tab() == kinds[category])
         then()
     return s_tab
 
@@ -171,7 +164,7 @@ def _after_cb():
     redraw()
 
 
-step(goto_tab("Channel Box / Layer Editor", _after_cb))
+step(goto_tab("Attribute Editor", _after_cb))   # the AE shots that follow (05 / 06)
 
 
 @step

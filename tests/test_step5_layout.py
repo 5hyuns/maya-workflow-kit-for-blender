@@ -105,14 +105,15 @@ def test_template_layout():
     scr = ws.screens[0]
     types = sorted(a.type for a in scr.areas)
     # Maya General (step 49): Status Line row, Shelf row, Tool Box (narrow 3D View), Outliner, view,
-    # Time + Range Slider (timeline); CB/LE and AE are the view's sidebar dock, no Properties column.
-    assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'VIEW_3D', 'VIEW_3D'], types
+    # Time + Range Slider (timeline); CB/LE, AE and MTK are Maya's right tab stack, its own Properties area (step 116).
+    assert types == ['DOPESHEET_EDITOR', 'IMAGE_EDITOR', 'IMAGE_EDITOR', 'OUTLINER', 'PROPERTIES', 'VIEW_3D',
+                     'VIEW_3D'], types
     outliners = [a.spaces.active for a in scr.areas if a.type == 'OUTLINER']
     assert outliners[0].use_filter_object and not outliners[0].use_filter_object_content, "DAG-only Outliner"
     v3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height).spaces.active
-    # sidebar = Channel Box dock; the Tool Box column replaces the toolbar (step 49); the tool header row is Maya's
-    # panel toolbar (step 113)
-    assert v3d.show_region_ui and not v3d.show_region_toolbar and v3d.show_region_tool_header
+    # no sidebar (the Maya panels are their own areas, step 116); the Tool Box column replaces the toolbar (step 49);
+    # the tool header row is Maya's panel toolbar (step 113)
+    assert not v3d.show_region_ui and not v3d.show_region_toolbar and v3d.show_region_tool_header
     # Maya persp angle (35 mm on 36 mm film) = Blender viewport lens 70 (72 mm sensor; step 81)
     assert abs(v3d.lens - 70.0) < 1e-6
     for area in scr.areas:

@@ -1,0 +1,665 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Maya's docking model: every Maya panel is its own area or window, torn off by its ::::: handle
+.
+
+Maya builds every UI element as a dockable ``workspaceControl``; the right column is one tab stack of Channel Box /
+Layer Editor, Attribute Editor and Modeling Toolkit (, 117-129), and a panel's
+dotted handle tears it off into a floating window. Here:
+
+- **Dock areas.** A Maya panel lives in its own Properties editor on the Tool tab, header and tab column hidden (the
+  Tool tab draws 3D View "Tool"-category panels, step 106), never in the viewport's sidebar. The area's role is kept
+  in the space's hidden tab flags (``ROLE_FLAGS``: Tool tab + one flag), so it survives saving and ``area_dupli``
+  (checked: the copy keeps context, flags and the hidden header). The Tool Settings dock (``tool_dock``) is the
+  Tool tab with no role flag.
+- **Stack.** The ``STACK`` area shows a tab row and the selected tab (``WindowManager.allset_dock``); kinds that
+  have a floating window leave the row.
+- **Tear off / dock.** The handle row (``ALLSET_OT_dock_handle``) on a docked panel opens a floating window with only
+  that panel (``area_dupli`` + role); on a floating panel it offers Dock (close the window, the panel goes back) and
+  Close. A floating window closed by its OS button docks back by itself (the stack only hides kinds that float).
+  Cross-window drag and drop isn't possible from Python: a click replaces Maya's drag.
+- **Menus.** Kit Maya menus start with Maya's dotted tear-off line: a floating ``MENU`` window draws that menu's items
+  as buttons (the menu id per window is kept in memory, ``_torn_menus``; a MENU window loaded from a file closes).
+"""
+
+import bpy
+from bpy.props import EnumProperty, StringProperty
+
+KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT')
+LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attribute Editor",
+          'MODELING_TOOLKIT': "Modeling Toolkit", 'TOOL_SETTINGS': "Tool Settings", 'OUTLINER': "Outliner"}
+# Role marker = Tool tab + exactly one of these hidden tab flags (invisible: the tab column is hidden).
+ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
+              'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
+              'MENU': "show_properties_texture"}
+WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya-221, ui_layout.md:72-73)
+HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
+TEAR_LINE = "- " * 18        # Maya's tear-off line at the top of a menu (``-to true``, ui_layout.md:184)
+
+_torn_menus = {}             # window pointer -> (menu idname, label)
+_pending = {}                # area pointer -> role it waits for (a new Properties space has no tab list yet)
+
+
+# --- roles ---------------------------------------------------------------------------------------------------------
+
+def _flags(space):
+    return [p.identifier for p in space.bl_rna.properties if p.identifier.startswith("show_properties_")]
+
+
+def role(area):
+    """'STACK' / a KINDS member / 'MENU' for a kit dock area, else None (the Tool Settings dock has no role)."""
+    if area is None or area.type != 'PROPERTIES':
+        return None
+    space = area.spaces.active
+    if space.show_region_header or not space.show_properties_tool:
+        return None
+    on = [name for name, flag in ROLE_FLAGS.items() if getattr(space, flag, False)]
+    if len(on) != 1:
+        return None
+    if any(getattr(space, f) for f in _flags(space) if f != "show_properties_tool" and f != ROLE_FLAGS[on[0]]):
+        return None
+    return on[0]
+
+
+def set_role(area, name, window=None):
+    """Make ``area`` (a Properties editor) a kit dock area with role ``name``. True when done; a space that hasn't
+    drawn yet can't take the Tool tab, so callers retry (``set_role_later``)."""
+    space = area.spaces.active
+    try:
+        space.context = 'TOOL'
+    except TypeError:
+        return False
+    for flag in _flags(space):
+        setattr(space, flag, flag == "show_properties_tool" or flag == ROLE_FLAGS.get(name))
+    space.show_region_header = False
+    nav = next((r for r in area.regions if r.type == 'NAVIGATION_BAR'), None)
+    if nav is not None and nav.width > 1 and window is not None and not bpy.app.background:
+        try:
+            with bpy.context.temp_override(window=window, area=area):
+                bpy.ops.screen.region_toggle(region_type='NAVIGATION_BAR')
+        except (RuntimeError, TypeError):
+            pass
+    area.tag_redraw()
+    return True
+
+
+def set_role_later(area, name, window=None, tries=40):
+    if set_role(area, name, window):
+        return
+    key = area.as_pointer()
+    _pending[key] = name
+    state = {"n": tries}
+
+    def tick():
+        try:
+            if window is not None:
+                with bpy.context.temp_override(window=window):
+                    done = set_role(area, name, window)
+            else:
+                done = set_role(area, name, window)
+        except ReferenceError:
+            done = True
+        state["n"] -= 1
+        if done or state["n"] <= 0:
+            _pending.pop(key, None)
+            return None
+        return 0.05
+    bpy.app.timers.register(tick, first_interval=0.0)
+
+
+def area_role(context):
+    return role(getattr(context, "area", None))
+
+
+def is_floating(window, wm=None):
+    """A window holding a single area (Maya's floating panel), not the first window."""
+    wm = wm or bpy.context.window_manager
+    return window is not None and len(window.screen.areas) == 1 and wm.windows[0] != window
+
+
+# --- stack ---------------------------------------------------------------------------------------------------------
+
+def floating_kinds(wm=None):
+    wm = wm or bpy.context.window_manager
+    out = set()
+    for window in wm.windows:
+        for area in window.screen.areas:
+            r = role(area)
+            if r in KINDS:
+                out.add(r)
+    return out
+
+
+def stack_tabs(wm=None):
+    floating = floating_kinds(wm)
+    return [k for k in KINDS if k not in floating]
+
+
+def current_tab(wm=None):
+    wm = wm or bpy.context.window_manager
+    tabs = stack_tabs(wm)
+    want = getattr(wm, "allset_dock", 'CHANNEL_BOX')
+    return want if want in tabs else (tabs[0] if tabs else None)
+
+
+def shown_kind(context):
+    """The Maya panel this dock area shows (None: nothing)."""
+    r = area_role(context)
+    if r == 'STACK':
+        return current_tab(context.window_manager)
+    return r
+
+
+def find_stack(screen):
+    """The tab-stack area of ``screen`` (also one made this tick whose role is still pending)."""
+    return next((a for a in (screen.areas if screen else ())
+                 if role(a) == 'STACK' or _pending.get(a.as_pointer()) == 'STACK'), None)
+
+
+def kind_visible(wm, kind):
+    """The panel shows somewhere: the selected tab of a stack, or a floating window of its own."""
+    if kind in floating_kinds(wm):
+        return True
+    if current_tab(wm) != kind:
+        return False
+    return any(find_stack(w.screen) is not None for w in wm.windows)
+
+
+def _main_view(screen):
+    from .status_line import main_view3d
+    return main_view3d(screen)
+
+
+def main_window(wm=None):
+    """The window with the main Maya viewport (the first non-floating window)."""
+    wm = wm or bpy.context.window_manager
+    for window in wm.windows:
+        if not is_floating(window, wm) and _main_view(window.screen)[0] is not None:
+            return window
+    return wm.windows[0] if wm.windows else None
+
+
+def split_side(context, window, side, width, ui_type):
+    """Split ``window``'s main viewport and return the new area on ``side`` ('LEFT' / 'RIGHT') of ``width`` unscaled
+    px (checked: VERTICAL factor < 0.5 = new area left, factor > 0.5 = new area right, ``1 - factor`` wide)."""
+    screen = window.screen
+    area, region = _main_view(screen)
+    if area is None or region is None:
+        return None
+    scale = context.preferences.system.ui_scale or 1.0
+    share = min(0.4, width * scale / max(area.width, 1))
+    factor = share if side == 'LEFT' else 1.0 - share
+    before = {a.as_pointer() for a in screen.areas}
+    with context.temp_override(window=window, screen=screen, area=area, region=region):
+        if bpy.ops.screen.area_split(direction='VERTICAL', factor=factor) != {'FINISHED'}:
+            return None
+    new = next((a for a in screen.areas if a.as_pointer() not in before), None)
+    if new is not None:
+        new.ui_type = ui_type
+    return new
+
+
+def open_stack(context, window=None):
+    """The stack area right of ``window``'s viewport (made if missing)."""
+    window = window or main_window(context.window_manager)
+    if window is None:
+        return None
+    stack = find_stack(window.screen)
+    if stack is not None:
+        return stack
+    new = split_side(context, window, 'RIGHT', WIDTH, 'PROPERTIES')
+    if new is not None:
+        set_role_later(new, 'STACK', window)
+    return new
+
+
+def close_area(context, window, area):
+    """``screen.area_close`` (GUI only: it hangs in background)."""
+    if bpy.app.background or area is None:
+        return False
+    with context.temp_override(window=window, screen=window.screen, area=area):
+        return bpy.ops.screen.area_close() == {'FINISHED'}
+
+
+def close_window_later(window):
+    """Close a window from a timer (closing the window an operator runs in would pull the context away)."""
+    def tick():
+        try:
+            if window in bpy.context.window_manager.windows[:]:
+                with bpy.context.temp_override(window=window):
+                    bpy.ops.wm.window_close()
+        except (ReferenceError, RuntimeError):
+            pass
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
+
+
+def show(context, kind):
+    """Maya Windows > ... : raise the panel (stack tab), else open it floating when the layout has no stack."""
+    wm = context.window_manager
+    wm.allset_dock = kind          # the stack's tab (also when the panel floats: it comes back there)
+    if kind in floating_kinds(wm):
+        return 'FLOATING'
+    window = main_window(wm)
+    if window is not None and find_stack(window.screen) is not None:
+        redraw()
+        return 'DOCKED'
+    # No tab stack in this layout: one floating dock window switches between the panels (Ctrl+A flips it between
+    # Attribute Editor and Channel Box instead of opening a window per press)
+    for w in wm.windows:
+        if is_floating(w, wm) and role(w.screen.areas[0]) in KINDS:
+            set_role(w.screen.areas[0], kind, w)
+            redraw()
+            return 'FLOATING'
+    return 'FLOATING' if open_floating(context, kind) is not None else None
+
+
+def toggle(context, kind, show_only=False):
+    """Maya toggleUIComponentVisibility: a hidden or tabbed-behind panel is raised; a shown one is hidden (its
+    floating window closed, or the tab stack closed when it is the stack's tab). Returns True = shown after."""
+    wm = context.window_manager
+    if kind_visible(wm, kind):
+        if show_only:
+            return True
+        for window in list(wm.windows):
+            if is_floating(window, wm) and role(window.screen.areas[0]) == kind:
+                close_window_later(window)
+                return False
+        window = main_window(wm)
+        stack = find_stack(window.screen) if window is not None else None
+        if stack is not None:
+            close_area(context, window, stack)
+        return False
+    window = main_window(wm)
+    if window is not None and find_stack(window.screen) is None and _main_view(window.screen)[0] is not None:
+        wm.allset_dock = kind
+        with context.temp_override(window=window):
+            open_stack(bpy.context, window)
+        return True
+    return show(context, kind) is not None
+
+
+def open_floating(context, kind):
+    """A floating window with only ``kind`` (no stack to raise it in)."""
+    from ..operators.menu_extras import open_window
+    window = context.window or main_window(context.window_manager)
+    if window is None:
+        return None
+    area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
+    if area is None:
+        return None
+    new = open_window(context, area)
+    if new is None:
+        return None
+    target = new.screen.areas[0]
+    target.ui_type = 'PROPERTIES'
+    set_role_later(target, kind, new)
+    return new
+
+
+# --- tear off / dock -----------------------------------------------------------------------------------------------
+
+def tear_off(context, area=None):
+    """Tear the panel in ``area`` off into a floating window. Returns the new window or None."""
+    from ..operators.menu_extras import open_window
+    area = area or context.area
+    window = context.window
+    r = role(area)
+    if r == 'STACK':
+        kind = current_tab(context.window_manager)
+        if kind is None:
+            return None
+        new = open_window(context, area)
+        if new is None:
+            return None
+        set_role_later(new.screen.areas[0], kind, new)
+        rest = [k for k in stack_tabs(context.window_manager) if k != kind]
+        if rest:
+            context.window_manager.allset_dock = rest[0]
+        else:
+            close_area(context, window, area)          # an empty tab stack goes away, like Maya's
+        return new
+    from . import tool_dock
+    if area is not None and (tool_dock.is_dock(area) or area.type == 'OUTLINER'):
+        new = open_window(context, area)
+        if new is None:
+            return None
+        if area.type == 'OUTLINER':
+            from . import maya_outliner
+            maya_outliner.setup(new.screen.areas[0].spaces.active)
+        close_area(context, window, area)
+        return new
+    return None
+
+
+def dock(context, window=None):
+    """Put the floating panel in ``window`` back into the main window's layout and close the window."""
+    window = window or context.window
+    area = window.screen.areas[0] if window and window.screen.areas else None
+    if area is None:
+        return False
+    r = role(area)
+    main = main_window(context.window_manager)
+    if r == 'MENU':
+        _torn_menus.pop(window.as_pointer(), None)
+    elif r in KINDS:
+        close_window_later(window)
+
+        def back():
+            try:
+                bpy.context.window_manager.allset_dock = r
+                if main is not None:
+                    with bpy.context.temp_override(window=main):
+                        open_stack(bpy.context, main)
+                redraw()
+            except ReferenceError:
+                pass
+            return None
+        bpy.app.timers.register(back, first_interval=0.05)
+        return True
+    else:
+        from . import tool_dock
+        kind = 'TOOL_SETTINGS' if tool_dock.is_dock(area) else ('OUTLINER' if area.type == 'OUTLINER' else None)
+        if kind is None or main is None:
+            return False
+        close_window_later(window)
+
+        def back():
+            try:
+                with bpy.context.temp_override(window=main):
+                    if kind == 'TOOL_SETTINGS':
+                        tool_dock.open_dock(bpy.context, main)
+                    elif not any(a.type == 'OUTLINER' for a in main.screen.areas):
+                        new = split_side(bpy.context, main, 'LEFT', WIDTH, 'OUTLINER')
+                        if new is not None:
+                            from . import maya_outliner
+                            maya_outliner.setup(new.spaces.active)
+            except ReferenceError:
+                pass
+            return None
+        bpy.app.timers.register(back, first_interval=0.05)
+        return True
+    close_window_later(window)
+    return True
+
+
+def tear_menu(context, idname, label):
+    """Maya's menu tear-off: a floating window listing the menu's items."""
+    from ..operators.menu_extras import open_window
+    window = main_window(context.window_manager) or context.window
+    # area_dupli makes a window of the copied area's size: copy a narrow side panel (Maya's torn-off menus are a
+    # narrow column), the viewport only when there is none
+    side = [a for a in window.screen.areas if a.type in {'PROPERTIES', 'OUTLINER'} and a.height > 200]
+    area = max(side, key=lambda a: a.height) if side else _main_view(window.screen)[0]
+    if area is None:
+        return None
+    with context.temp_override(window=window):
+        new = open_window(bpy.context, area)
+    if new is None:
+        return None
+    _torn_menus[new.as_pointer()] = (idname, label)
+    target = new.screen.areas[0]
+    target.ui_type = 'PROPERTIES'
+    set_role_later(target, 'MENU', new)
+    return new
+
+
+def redraw():
+    try:
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'PROPERTIES':
+                    area.tag_redraw()
+    except (AttributeError, ReferenceError):
+        pass
+
+
+# --- operators -----------------------------------------------------------------------------------------------------
+
+class ALLSET_OT_dock_handle(bpy.types.Operator):
+    """Maya panel handle: click to tear this panel off into a floating window; on a floating panel, dock it back"""
+    bl_idname = "allset.dock_handle"
+    bl_label = "Panel Handle"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if is_floating(context.window, context.window_manager):
+            context.window_manager.popup_menu(_draw_float_menu, title=_float_title(context))
+            return {'FINISHED'}
+        return self.execute(context)
+
+    def execute(self, context):
+        if tear_off(context) is None:
+            self.report({'WARNING'}, "This panel can't be torn off")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+def _float_title(context):
+    r = area_role(context)
+    if r in LABELS:
+        return LABELS[r]
+    if r == 'MENU':
+        return _torn_menus.get(context.window.as_pointer(), ("", "Menu"))[1]
+    return LABELS['OUTLINER'] if context.area and context.area.type == 'OUTLINER' else LABELS['TOOL_SETTINGS']
+
+
+def _draw_float_menu(self, context):
+    layout = self.layout
+    if area_role(context) != 'MENU':
+        layout.operator(ALLSET_OT_dock_back.bl_idname, text="Dock", icon='DOCUMENTS').action = 'DOCK'
+    layout.operator(ALLSET_OT_dock_back.bl_idname, text="Close", icon='X').action = 'CLOSE'
+
+
+class ALLSET_OT_dock_back(bpy.types.Operator):
+    """Dock this floating panel again (or close it)"""
+    bl_idname = "allset.dock_back"
+    bl_label = "Dock Panel"
+    bl_options = {'INTERNAL'}
+
+    action: EnumProperty(items=(('DOCK', "Dock", ""), ('CLOSE', "Close", "")), options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        if self.action == 'CLOSE':
+            _torn_menus.pop(context.window.as_pointer(), None)
+            close_window_later(context.window)   # a closed panel window docks back by itself (stack tabs)
+            return {'FINISHED'}
+        return {'FINISHED'} if dock(context) else {'CANCELLED'}
+
+
+class ALLSET_OT_dock_tab(bpy.types.Operator):
+    """Show this panel in the tab stack"""
+    bl_idname = "allset.dock_tab"
+    bl_label = "Dock Tab"
+    bl_options = {'INTERNAL'}
+
+    kind: EnumProperty(items=[(k, LABELS[k], "") for k in KINDS])
+
+    def execute(self, context):
+        context.window_manager.allset_dock = self.kind
+        redraw()
+        return {'FINISHED'}
+
+
+class ALLSET_OT_panel_show(bpy.types.Operator):
+    """Show this Maya panel: raise it where it is docked, else open it as a floating window (Maya Windows menu)"""
+    bl_idname = "allset.panel_show"
+    bl_label = "Show Panel"
+    bl_options = {'INTERNAL'}
+
+    panel: EnumProperty(items=[(k, LABELS[k], "") for k in (*KINDS, 'OUTLINER', 'TOOL_SETTINGS')])
+
+    def execute(self, context):
+        if self.panel in KINDS:
+            return {'FINISHED'} if show(context, self.panel) else {'CANCELLED'}
+        wm = context.window_manager
+        if self.panel == 'TOOL_SETTINGS':
+            from . import tool_dock
+            if any(tool_dock.is_dock(a) for w in wm.windows for a in w.screen.areas):
+                return {'FINISHED'}
+            tool_dock.toggle(context, show_only=True)
+            return {'FINISHED'}
+        # Outliner: docked in this layout or already floating = shown; else a floating Maya Outliner
+        if any(a.type == 'OUTLINER' for w in wm.windows for a in w.screen.areas):
+            return {'FINISHED'}
+        return bpy.ops.allset.open_editor(ui_type='OUTLINER')
+
+
+class ALLSET_OT_menu_tear_off(bpy.types.Operator):
+    """Tear off this menu into a floating window (Maya's dotted line at the top of a menu)"""
+    bl_idname = "allset.menu_tear_off"
+    bl_label = "Tear Off"
+    bl_options = {'INTERNAL'}
+
+    menu: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        cls = getattr(bpy.types, self.menu, None)
+        if cls is None:
+            return {'CANCELLED'}
+        menu, label = self.menu, cls.bl_label
+
+        def later():   # after the menu has closed
+            try:
+                tear_menu(bpy.context, menu, label)
+            except Exception as ex:
+                print("Allset: menu tear-off failed:", ex)
+            return None
+        bpy.app.timers.register(later, first_interval=0.0)
+        return {'FINISHED'}
+
+
+def draw_tear_line(layout, idname):
+    """Maya's dotted first line of a menu (click = tear off)."""
+    if _drawing_torn[0]:
+        return
+    layout.operator(ALLSET_OT_menu_tear_off.bl_idname, text=TEAR_LINE, emboss=False).menu = idname
+
+
+_drawing_torn = [False]
+
+
+# --- panel ---------------------------------------------------------------------------------------------------------
+
+def draw_handle(layout, context=None, tabs=False):
+    """The top row of a Maya panel: Maya's dotted grip (click = tear off / dock) and, in the tab stack, the tabs
+    (Maya's title / tab row above the editor's menu bar, )."""
+    row = layout.row(align=True)
+    grip = row.row(align=True)
+    grip.alignment = 'LEFT'
+    grip.operator(ALLSET_OT_dock_handle.bl_idname, text=HANDLE, emboss=False)
+    if tabs and context is not None:
+        current = current_tab(context.window_manager)
+        for kind in stack_tabs(context.window_manager):
+            row.operator(ALLSET_OT_dock_tab.bl_idname, text=LABELS[kind], depress=(kind == current)).kind = kind
+
+
+class ALLSET_PT_maya_dock(bpy.types.Panel):
+    """A Maya panel in its own dock area or floating window (Channel Box / Layer Editor, Attribute Editor, Modeling
+    Toolkit, torn-off menus)"""
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"           # = drawn by the Properties Tool tab (step 106 mechanism)
+    bl_label = "Maya Panel"
+    bl_options = {'HIDE_HEADER'}
+    bl_order = -200
+
+    @classmethod
+    def poll(cls, context):
+        return area_role(context) is not None
+
+    def draw(self, context):
+        layout = self.layout
+        r = area_role(context)
+        if r == 'MENU':
+            draw_handle(layout)
+            draw_torn_menu(layout, context)
+            return
+        draw_handle(layout, context, tabs=(r == 'STACK'))
+        kind = shown_kind(context)
+        if kind is None:
+            layout.label(text="Every panel of this tab stack is in its own window")
+            return
+        from . import channel_box
+        if kind == 'CHANNEL_BOX':
+            units = channel_box.ALLSET_PT_channel_box.body(layout, context)
+            channel_box.fill_pane(layout, context, units)
+            from . import layer_editor      # Maya's Layer Editor under the Channel Box (or the Set Driven Key window)
+            layer_editor.ALLSET_PT_layer_editor.draw(_Holder(layout), context)
+        elif kind == 'ATTRIBUTE_EDITOR':
+            from . import attribute_editor
+            attribute_editor.draw_panel(layout, context)
+        elif kind == 'MODELING_TOOLKIT':
+            from . import modeling_toolkit
+            modeling_toolkit.draw(layout, context)
+
+
+def draw_torn_menu(layout, context):
+    entry = _torn_menus.get(context.window.as_pointer()) if context.window else None
+    if entry is None:
+        layout.label(text="This torn-off menu ended with its session")
+        return
+    cls = getattr(bpy.types, entry[0], None)
+    if cls is None:
+        return
+    layout.label(text=entry[1])
+    col = layout.column(align=True)
+    col.alignment = 'LEFT'           # items left-aligned like the menu (not centred buttons)
+    col.emboss = 'PULLDOWN_MENU'
+    _drawing_torn[0] = True
+    try:
+        cls.draw(_Holder(col), context)
+    finally:
+        _drawing_torn[0] = False
+
+
+class _Holder:
+    def __init__(self, layout):
+        self.layout = layout
+
+
+def _close_stale_menus():
+    """MENU windows restored from a file have no menu to show (the id lives in memory): close them."""
+    wm = bpy.context.window_manager
+    for window in list(wm.windows):
+        if window.as_pointer() in _torn_menus:
+            continue
+        if len(window.screen.areas) == 1 and role(window.screen.areas[0]) == 'MENU':
+            close_window_later(window)
+    return None
+
+
+@bpy.app.handlers.persistent
+def _on_load(*_args):
+    _torn_menus.clear()
+    if not bpy.app.background:
+        bpy.app.timers.register(_close_stale_menus, first_interval=0.2)
+
+
+def close_floating():
+    """Switch to Blender: close windows whose only area is a kit role (they would show Blender's Tool tab)."""
+    wm = bpy.context.window_manager
+    for window in list(wm.windows):
+        if is_floating(window, wm) and role(window.screen.areas[0]) is not None:
+            close_window_later(window)
+    _torn_menus.clear()
+
+
+classes = (ALLSET_OT_dock_handle, ALLSET_OT_dock_back, ALLSET_OT_dock_tab, ALLSET_OT_panel_show,
+           ALLSET_OT_menu_tear_off, ALLSET_PT_maya_dock)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.app.handlers.load_post.append(_on_load)
+
+
+def unregister():
+    if _on_load in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load)
+    if bpy.app.timers.is_registered(_close_stale_menus):
+        bpy.app.timers.unregister(_close_stale_menus)
+    _torn_menus.clear()
+    _pending.clear()
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

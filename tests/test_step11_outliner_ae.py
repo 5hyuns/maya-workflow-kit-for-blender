@@ -394,14 +394,12 @@ def test_ae_add_limit_and_select():
 def test_dock_mode_switches_panels():
     wm = bpy.context.window_manager
     wm.allset_dock = 'CHANNEL_BOX'
-    # step 99: the dock = three sidebar tabs named like Maya's, one panel each, none with a poll (all exist from
-    # the first draw, so Blender puts them before the C "Item" tab)
-    tabs = {bpy.types.ALLSET_PT_channel_box: "Channel Box / Layer Editor",
-            bpy.types.ALLSET_PT_layer_editor: "Channel Box / Layer Editor",
-            bpy.types.ALLSET_PT_dock_attribute_editor: "Attribute Editor",
-            bpy.types.ALLSET_PT_dock_modeling_toolkit: "Modeling Toolkit"}
-    for panel, category in tabs.items():
-        assert panel.bl_category == category and not hasattr(panel, "poll"), panel
+    # step 116: no 3D View sidebar tabs any more; one panel draws the Maya panels in their own dock areas (a
+    # Properties Tool tab draws "Tool"-category panels)
+    for gone in ("ALLSET_PT_channel_box", "ALLSET_PT_layer_editor", "ALLSET_PT_dock_attribute_editor",
+                 "ALLSET_PT_dock_modeling_toolkit"):
+        assert not hasattr(bpy.types, gone), gone
+    assert bpy.types.ALLSET_PT_maya_dock.bl_category == "Tool"
     bpy.ops.allset.ae_toggle()
     assert wm.allset_dock == 'ATTRIBUTE_EDITOR'
     bpy.ops.allset.ae_toggle()

@@ -11,7 +11,7 @@ import bmesh
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, px, run, screenshot, setup, step, view3d, win  # noqa: E402
+from sim import check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -84,8 +84,7 @@ def arrow_point():
 def s_setup():
     C["x"], C["y"] = setup()
     area, _region = view3d()
-    area.spaces.active.show_region_ui = True
-    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
+    dock_area('CHANNEL_BOX')    # Maya's tab stack right of the viewport (step 116; was the 3D View sidebar)
     bpy.context.view_layer.objects.active = cube()
     cube().select_set(True)
     with v3d_ctx():
@@ -162,15 +161,36 @@ DIVISIONS_FIELD = (116, 503)
 
 
 def cb_point(spot):
-    area, _r = view3d()
-    ui = next(r for r in area.regions if r.type == 'UI')
+    """The row still sits ``spot[1]`` px under the dock's content top; the field's x is found on that row by its data
+    path (step 116: the dock is its own area, its width isn't the sidebar's)."""
+    ui = dock_region()
     top = ui.view2d.view_to_region(0, 0, clip=False)[1]
-    return ui.x + ui.width - px(spot[0]), ui.y + top - px(spot[1])
+    found = C.get("divisions")
+    return (found[0] if found else ui.x + ui.width - px(spot[0])), ui.y + top - px(spot[1])
+
+
+def dock():
+    return dock_area(), dock_region()
 
 
 @step
 def s_shot_thickness():
     shot("gui_step65_thickness.png")
+    redraw()
+
+
+@step
+def s_find_divisions():
+    ui = dock_region()
+    y = cb_point(DIVISIONS_FIELD)[1]
+    C["finder"] = find_button(dock, lambda path, _cmd: path.endswith("divisions_text"), C, "divisions",
+                              rows=(ui.y + ui.height - y,))
+    C["finder"]()
+
+
+@step
+def s_hover_divisions():
+    check(f"INPUTS Divisions field found ({C.get('divisions')})", C.get("divisions") is not None)
     x, y = cb_point(DIVISIONS_FIELD)
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     redraw()

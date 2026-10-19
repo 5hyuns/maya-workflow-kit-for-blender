@@ -72,8 +72,7 @@ def s_loaded():
     C["cmds_cube"] = cmds.polyCube()[0]
     cmds.move(2, 0, 0, C["cmds_cube"])
     cmds.select("pCube1")
-    area.spaces.active.show_region_ui = True
-    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
+    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'   # the layout's tab stack (step 116)
     redraw()
 
 
@@ -86,7 +85,9 @@ def s_sizes():
     rv3d = main_view().spaces.active.region_3d
     check(f"Maya persp view distance 44.8 cm ({rv3d.view_distance:.4f} BU)",
           abs(rv3d.view_distance - 0.4482) < 1e-3)
-    sys.modules["sim"]._steps.insert(0, goto_tab("Channel Box / Layer Editor", s_cb_ready))
+    md = import_module(MODULE + ".ui.maya_dock")
+    check("the tab stack shows the Channel Box", md.find_stack(win().screen) is not None and md.current_tab() == 'CHANNEL_BOX')
+    s_cb_ready()
 
 
 def s_cb_ready():

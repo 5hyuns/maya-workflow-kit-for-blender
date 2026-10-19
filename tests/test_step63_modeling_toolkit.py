@@ -54,8 +54,8 @@ def test_dock_and_status_line_toggle():
     wm = bpy.context.window_manager
     wm.allset_dock = 'MODELING_TOOLKIT'
     assert ae.dock_mode(bpy.context) == 'MODELING_TOOLKIT'
-    # one dock panel draws every mode (step 91): no separate Modeling Toolkit panel
-    assert not hasattr(bpy.types, "ALLSET_PT_modeling_toolkit") and not hasattr(bpy.types.ALLSET_PT_channel_box, "poll")
+    # one dock panel draws every mode (step 91; since step 116 in the Maya dock areas)
+    assert not hasattr(bpy.types, "ALLSET_PT_modeling_toolkit") and hasattr(bpy.types, "ALLSET_PT_maya_dock")
     wm.allset_dock = 'CHANNEL_BOX'
     assert status_line.EDITORS[0][0] == "MODELING_TOOLKIT", "Maya order: MTK first (ui_layout.md:212)"
     m = menu_map.MAP

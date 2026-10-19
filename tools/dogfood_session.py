@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import bpy
+from importlib import import_module
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests" / "gui"))
@@ -65,17 +66,15 @@ def ui_region():
 
 
 def goto_tab(category, then):
+    """Show ``category`` in Maya's tab stack (its own area since step 116; made right of the view if missing)."""
+    kinds = {"Channel Box / Layer Editor": 'CHANNEL_BOX', "Attribute Editor": 'ATTRIBUTE_EDITOR',
+             "Modeling Toolkit": 'MODELING_TOOLKIT'}
+
     def s_tab():
-        r = ui_region()
-        if r.active_panel_category != category and C["tries"] < 12:
-            C["tries"] += 1
-            ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width - 8, y=r.y + r.height - 60)
-            ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
-            sim._steps.insert(0, s_tab)
-            return
-        C["tries"] = 0
-        check(f"sidebar shows the {category} tab", r.active_panel_category == category)
-        centre()
+        md = import_module(MODULE + ".ui.maya_dock")
+        sim.dock_area(kinds[category])
+        redraw()
+        check(f"the tab stack shows the {category} tab ({md.current_tab()})", md.current_tab() == kinds[category])
         then()
     return s_tab
 
@@ -396,7 +395,6 @@ def s_quad_shot():
 
 @step
 def s_cb_open():
-    view3d()[0].spaces.active.show_region_ui = True
     only("pCube1")
     redraw()
 

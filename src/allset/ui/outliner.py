@@ -406,43 +406,14 @@ class ALLSET_UL_outliner(bpy.types.UIList):
         return flags, []
 
 
-class ALLSET_PT_outliner(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = CATEGORY
-    bl_label = "Outliner"
-
-    @classmethod
-    def poll(cls, context):
-        # The Maya dock has no Outliner tab: with "Channel Box Dock Only" the Outliner is the
-        # layout's own Outliner editor (ui/dock_tabs.py, ).
-        from .. import preferences
-        try:
-            return not preferences.get(context).maya_dock_only
-        except KeyError:
-            return True
-
-    def draw_header_preset(self, context):
-        row = self.layout.row(align=True)
-        row.prop(context.window_manager, "allset_outliner_shapes", text="Shapes", toggle=True)
-
-    def draw(self, context):
-        layout = self.layout
-        wm = context.window_manager
-        row = layout.row(align=True)
-        row.operator("allset.parent", text="Parent", icon='LINKED')
-        row.operator("allset.unparent", text="Unparent", icon='UNLINKED')
-        row.operator(ALLSET_OT_outliner_refresh.bl_idname, text="", icon='FILE_REFRESH')
-        layout.template_list("ALLSET_UL_outliner", "", wm, "allset_outliner_rows",
-                             wm, "allset_outliner_index", rows=12)
-
-
 def _shapes_changed(self, context):
     rebuild(context)
 
 
 classes = (ALLSET_PG_outliner_row, ALLSET_OT_outliner_select, ALLSET_OT_outliner_expand,
-           ALLSET_OT_outliner_refresh, ALLSET_UL_outliner, ALLSET_PT_outliner)
+           ALLSET_OT_outliner_refresh, ALLSET_UL_outliner)
+# ALLSET_PT_outliner (a 3D View sidebar list, shown when the dock-only option was off) went with the sidebar dock
+# (step 116): the Outliner is the layout's own Outliner area / floating window.
 
 
 def _first_rebuild():

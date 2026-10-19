@@ -7,7 +7,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -39,7 +39,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     C["cb"] = import_module(MODULE + ".ui.channel_box")
     area, _r = view3d()
-    area.spaces.active.show_region_ui = True
+    dock_area('CHANNEL_BOX')    # Maya's tab stack right of the viewport (step 116; was the 3D View sidebar)
     for o in bpy.context.view_layer.objects:
         o.select_set(o.name == "Cube")
     bpy.context.view_layer.objects.active = cube()
@@ -71,22 +71,13 @@ def s_cancel():
 def s_pass_through():
     moved = any(abs(a - b) > 1e-4 for a, b in zip(cube().location, C["loc"]))
     check("no channel selected -> MMB drag is the Move tool's drag", moved)
-    # Open the Channel Box tab: Ctrl+wheel over the sidebar cycles its tabs.
-    r = ui_region()
-    # Tabs are drawn in a strip on the sidebar's right edge.
-    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width - 8, y=r.y + r.height - 60)
     C["tries"] = 0
 
 
 @step
 def s_tab():
-    r = ui_region()
-    if r.active_panel_category != "Channel Box / Layer Editor" and C["tries"] < 8:
-        C["tries"] += 1
-        ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
-        sys.modules["sim"]._steps.insert(0, s_tab)  # retry next tick
-        return
-    check("sidebar shows the Channel Box tab", r.active_panel_category == "Channel Box / Layer Editor")
+    md = import_module(MODULE + ".ui.maya_dock")
+    check("the dock shows the Channel Box tab", md.role(dock_area()) == 'STACK' and md.current_tab() == 'CHANNEL_BOX')
     ob = cube()
     ob.keyframe_insert("location", index=0)
     ob.lock_location[1] = True

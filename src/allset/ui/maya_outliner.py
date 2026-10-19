@@ -74,6 +74,8 @@ def _draw(self, context):
     if not is_maya_outliner(space):
         return own_draw.original("OUTLINER_HT_header", _draw)(self, context)
     layout = self.layout
+    from . import maya_dock      # Maya's dotted handle: tear the Outliner off / dock it back (step 116)
+    layout.operator("allset.dock_handle", text=maya_dock.HANDLE[:8], emboss=False)
     chrome.menu_bar(layout, MENU_BAR)
     layout.prop(space, "filter_text", text="", icon='VIEWZOOM', placeholder="Search...")
 

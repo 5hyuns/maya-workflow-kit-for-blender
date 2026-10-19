@@ -305,7 +305,7 @@ ANIM_TEXT = ("Blender has no animation layers:", "layer actions in the Nonlinear
 class ALLSET_PT_layer_editor(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Channel Box / Layer Editor"   # = channel_box.CATEGORY (the dock's first tab, step 99)
+    bl_category = "Channel Box / Layer Editor"   # not registered since step 116 (ui/maya_dock.py draws it)
     bl_label = "Layer Editor"
     bl_order = 1
     bl_options = {'HIDE_HEADER'}   # Maya: tabs + menu bar, no collapsible panel title (step 50)
@@ -356,7 +356,8 @@ def list_rows(context):
 
 classes = (ALLSET_PG_layer, ALLSET_OT_layer_new, ALLSET_OT_layer_assign, ALLSET_OT_layer_select,
            ALLSET_OT_layer_delete, ALLSET_OT_layer_cycle_type, ALLSET_UL_layers,
-           ALLSET_MT_le_layers, ALLSET_MT_le_options, ALLSET_MT_le_help, ALLSET_PT_layer_editor)
+           ALLSET_MT_le_layers, ALLSET_MT_le_options, ALLSET_MT_le_help)
+# ALLSET_PT_layer_editor is drawn under the Channel Box by ui/maya_dock.py (step 116), not registered as a panel.
 
 
 def register():

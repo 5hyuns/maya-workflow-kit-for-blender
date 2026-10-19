@@ -15,7 +15,8 @@ hotkeys = import_module(kit.MODULE + ".ui.menu_hotkeys")
 ROOT = Path(kit.__file__).resolve().parent.parent
 
 KIT_OPS = {"allset.menu_item", "allset.menu_unavailable", "allset.menu_run", "allset.menu_tool",
-           "allset.menu_set_value", "wm.call_menu_pie"}
+           "allset.menu_set_value", "wm.call_menu_pie",
+           "allset.menu_tear_off"}   # Maya's tear-off line (step 116): no keymap item runs it
 
 
 class Recorder:

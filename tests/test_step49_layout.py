@@ -13,6 +13,7 @@ import kit
 ROOT = Path(__file__).resolve().parent.parent
 toolbox = import_module(kit.MODULE + ".ui.toolbox")
 dock_tabs = import_module(kit.MODULE + ".ui.dock_tabs")
+maya_dock = import_module(kit.MODULE + ".ui.maya_dock")
 tool_keys = import_module(kit.MODULE + ".operators.tool_keys")
 command_line = import_module(kit.MODULE + ".command_line")
 status_line = import_module(kit.MODULE + ".ui.status_line")
@@ -85,34 +86,17 @@ def test_is_toolbox_matches_generator():
                                               show_region_ui=False, show_object_viewport_mesh=False))
 
 
-# --- dock-only sidebar ------------------------------------------------------------------------
+# --- the viewport sidebar is Blender's again (step 116: Maya panels are their own areas) -------------------------
 
-def test_dock_only_hides_blender_sidebar_tabs():
+def test_viewport_sidebar_has_no_maya_panel():
     area, regions = _view3d()
-    prefs = preferences.get()
-    view_panel = bpy.types.VIEW3D_PT_view3d_properties          # "View" tab
-    assert dock_tabs._wrapped, "sidebar panels were wrapped"
+    assert dock_tabs._wrapped, "Blender's Tool panels are wrapped (hidden in the Maya dock areas)"
     with bpy.context.temp_override(area=area, region=regions['UI']):
-        assert prefs.maya_dock_only and not view_panel.poll(bpy.context)
-        prefs.maya_dock_only = False
-        try:
-            assert view_panel.poll(bpy.context)
-        finally:
-            prefs.maya_dock_only = True
+        assert bpy.types.VIEW3D_PT_view3d_properties.poll(bpy.context), "Blender's View tab is not hidden"
+        assert not bpy.types.ALLSET_PT_maya_dock.poll(bpy.context), "no Maya panel in the viewport sidebar"
     # a popup of the same panel (Status Line Tool Settings: wm.call_panel) is not hidden
     with bpy.context.temp_override(area=area, region=regions['WINDOW']):
         assert bpy.types.VIEW3D_PT_active_tool.poll(bpy.context)
-
-
-def test_kit_outliner_tab_follows_dock_only():
-    outliner = import_module(kit.MODULE + ".ui.outliner")
-    prefs = preferences.get()
-    assert not outliner.ALLSET_PT_outliner.poll(bpy.context)
-    prefs.maya_dock_only = False
-    try:
-        assert outliner.ALLSET_PT_outliner.poll(bpy.context)
-    finally:
-        prefs.maya_dock_only = True
 
 
 # --- Help Line + Command Line row ------------------------------------------------------------------
@@ -142,13 +126,14 @@ def test_template_is_maya_general():
             by["strip"] = a
         else:
             by[a.ui_type] = a
-    assert set(by) == {"toolbox", "view", "strip", "OUTLINER", "TIMELINE"}, sorted(by)
+    assert set(by) == {"toolbox", "view", "strip", "OUTLINER", "TIMELINE", "PROPERTIES"}, sorted(by)
     # full-width rows: Status Line + Shelf on top, Time + Range Slider at the bottom
     for key in ("strip", "TIMELINE"):
         assert by[key].x == 0 and by[key].width == width, (key, by[key].x, by[key].width)
-    # left to right: Tool Box | Outliner | view (sidebar dock on the right edge)
-    assert by["toolbox"].x < by["OUTLINER"].x < by["view"].x
-    assert by["view"].x + by["view"].width == width
+    # left to right: Tool Box | Outliner | view | Maya tab stack (its own area since step 116)
+    assert by["toolbox"].x < by["OUTLINER"].x < by["view"].x < by["PROPERTIES"].x
+    assert by["PROPERTIES"].x + by["PROPERTIES"].width == width
+    assert maya_dock.role(by["PROPERTIES"]) == 'STACK' and not by["view"].spaces.active.show_region_ui
     tb = by["toolbox"].spaces.active
     assert not any(getattr(tb, n) for n in dir(tb) if n.startswith("show_object_viewport_")), \
         "no object type is visible (clicks under the tools select nothing)"
@@ -157,7 +142,7 @@ def test_template_is_maya_general():
     assert regions['HEADER'].y < regions['WINDOW'].y
     st = by["TIMELINE"].spaces.active
     assert not st.show_region_channels and st.show_region_ui   # sidebar = Time Slider buttons (step 50)
-    assert not any(a.type == 'PROPERTIES' for a in areas)
+    assert [a for a in areas if a.type == 'PROPERTIES'] == [by["PROPERTIES"]]
 
 
 def test_attribute_editor_toggle_uses_dock_without_properties():
