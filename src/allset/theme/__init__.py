@@ -15,7 +15,12 @@ import os
 
 import bpy
 
-THEME_FILE = os.path.join(os.path.dirname(__file__), "studio_grey.xml")
+from .. import compat
+
+# 4.5 = studio_grey.xml; Blender 5.x = studio_grey_<5.m>.xml, written by tools/make_theme.py in that Blender
+# (step 119: the 5.x theme has other keys; compat.theme_file picks the file for this Blender)
+LEGACY_FILE = os.path.join(os.path.dirname(__file__), "studio_grey.xml")
+THEME_FILE = compat.theme_file(os.path.dirname(__file__))
 # The applied Maya theme is marked by the theme's name (saved with the preferences, not in the
 # XML), not by ``filepath``: Blender's extension removal remembers ``themes[0].filepath`` and
 # resets to the default theme when that file is gone afterwards, which would undo the restore
@@ -91,7 +96,7 @@ def apply():
 # -> theme.common.curves, 3D View edge marks renamed. Each 5.x value is copied from the 4.5 path of the same XML
 # (one source per value: the Properties editor for panels — the Maya dock, step 116 — else the Dope Sheet /
 # Graph Editor / 3D View one). Settings 5.0 removed without a successor keep Blender's value.
-_ANIM = ("preview_range", "channel_group", "channel_selected", "keyframe", "keyframe_selected", "keyframe_extreme",
+_ANIM = ("preview_range", "channel_group", "keyframe", "keyframe_selected", "keyframe_extreme",
          "keyframe_extreme_selected", "keyframe_breakdown", "keyframe_breakdown_selected", "keyframe_jitter",
          "keyframe_jitter_selected", "keyframe_generated", "keyframe_generated_selected", "long_key",
          "long_key_selected")
@@ -119,6 +124,7 @@ MOVED = (
     ("common.anim.channels_sub", "dopesheet_editor.dopesheet_subchannel"),
     ("common.anim.channel_group_active", "dopesheet_editor.active_channels_group"),
     ("common.anim.channel", "dopesheet_editor.channels"),
+    ("common.anim.channel_selected", "dopesheet_editor.channels_selected"),
     ("common.anim.keyframe_moving_hold", "dopesheet_editor.keyframe_movehold"),
     ("common.anim.keyframe_moving_hold_selected", "dopesheet_editor.keyframe_movehold_selected"),
     *((f"common.anim.{n}", f"dopesheet_editor.{n}") for n in _ANIM),
@@ -156,10 +162,13 @@ def _resolve(theme, path):
 
 
 def _apply_moved(theme):
+    """Fallback for a Blender later than 4.5 without its own theme file: copy the moved values from the 4.5 one."""
+    if THEME_FILE != LEGACY_FILE:
+        return   # this Blender has its own file (tools/make_theme.py), moved values included
     if not any(_resolve(theme, new)[0] is not None for new, _old in MOVED):
         return   # Blender 4.5: everything came from the XML
     import xml.dom.minidom
-    root = xml.dom.minidom.parse(THEME_FILE).getElementsByTagName("Theme")[0]
+    root = xml.dom.minidom.parse(LEGACY_FILE).getElementsByTagName("Theme")[0]
     for new, old in MOVED:
         obj, name = _resolve(theme, new)
         value = _xml_value(root, old)

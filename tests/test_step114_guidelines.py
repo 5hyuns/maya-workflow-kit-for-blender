@@ -78,7 +78,9 @@ def test_every_asset_is_kit_made_and_cc0():
     listed = open(os.path.join(PKG, "ASSETS_LICENSE.txt"), encoding="utf-8").read()
     assets = _assets()
     assert assets == ["app_template/Allset/splash.png", "app_template/Allset/splash_2x.png",
-                      "app_template/Allset/startup.blend", "theme/studio_grey.xml", "welcome.png"], assets
+                      "app_template/Allset/startup.blend", "theme/studio_grey.xml",
+                      "theme/studio_grey_5.0.xml", "theme/studio_grey_5.1.xml", "theme/studio_grey_5.2.xml",
+                      "welcome.png"], assets
     for rel in assets:
         assert rel in listed, f"{rel} missing from ASSETS_LICENSE.txt"
     assert "CC0" in listed

@@ -1,6 +1,12 @@
-"""Generate the Maya grey theme preset src/allset/theme/studio_grey.xml.
+"""Generate the Maya grey theme presets src/allset/theme/studio_grey*.xml.
 
-    python tools/make_theme.py      # re-runs itself in `blender -b --factory-startup`
+    python tools/make_theme.py      # re-runs itself in `blender -b --factory-startup` of every Blender:
+                                    # 4.5 -> studio_grey.xml, each portable 5.x minor -> studio_grey_<5.m>.xml
+
+Blender 5.0 rewrote the theme ( "테마 차이", tools/theme_diff.py): this is the one place
+that branches per version (step 119). A 5.x file = factory 5.x theme + the same table (paths only 4.5 has are
+skipped) + every 5.0-moved value copied from the 4.5 file (src/allset/theme MOVED, Blender's official migration
+table) + the 5.x-only keys below (FIVE_X), so no Blender default colour is left where Maya has one.
 
 Resets Blender's theme to the factory default, applies the colour table below
 and writes the theme with Blender's own preset writer (`rna_xml.xml_file_write`
@@ -150,6 +156,29 @@ SHAPE = (
     ("user_interface.panel_roundness", 0.0),
 )
 
+# Blender 5.x keys with no 4.5 counterpart (tools/theme_diff.py "added" minus the MOVED targets). Values follow
+# the 4.5 look of the same thing (step 119). Widget outline_sel and the new wcol_curve are filled in apply_5x.
+FIVE_X = (
+    # Blender 5.x splits major grid lines out of view_3d.grid; Maya draws one grid colour (displayColor grid 2)
+    ("view_3d.grid_major", (0.25, 0.25, 0.25, 1.0)),
+    ("user_interface.panel_active", SELECT),                  #  Maya selection highlight
+    ("user_interface.panel_outline", (0.0, 0.0, 0.0, 0.0)),   # flat Maya panels: no outline (step 44)
+    ("regions.scrubbing.text", TEXT_DIM),                     # Time Slider numbers, as the 4.5 Dope Sheet text
+)
+# 5.x-only keys left at Blender's value on purpose (no Maya counterpart / not drawn in a Maya workflow):
+KEEP_FACTORY_5X = {
+    "user_interface.link": "hyperlink text (Preferences, tooltips): Maya has none",
+    "user_interface.axis_w": "quaternion W colour: Maya has no W channel",
+    "view_3d.grid_axis_brightness": "axis colour strength on grid axis lines: the Allset views hide them",
+    "view_3d.gp_wire_edit": "Grease Pencil edit wire: Maya has no Grease Pencil",
+    "node_editor.node_outline": "node outline in node editors (Hypershade keeps the Blender node look)",
+    "preferences.match": "search match highlight in Preferences",
+    "common.anim.scene_strip_range": "Sequencer scene strip range",
+    "dopesheet_editor.anim_interpolation_constant": "Dope Sheet interpolation line (5.2), like 4.5 interpolation_line",
+    "dopesheet_editor.anim_interpolation_linear": "Dope Sheet interpolation line (5.2), like 4.5 interpolation_line",
+    "dopesheet_editor.anim_interpolation_other": "Dope Sheet interpolation line (5.2), like 4.5 interpolation_line",
+}
+
 # Editors whose generic space colours get the Maya panel grey.
 EDITORS = ("view_3d", "graph_editor", "dopesheet_editor", "nla_editor", "image_editor",
            "sequence_editor", "properties", "text_editor", "node_editor", "outliner",
@@ -157,27 +186,47 @@ EDITORS = ("view_3d", "graph_editor", "dopesheet_editor", "nla_editor", "image_e
            "spreadsheet", "preferences")
 
 
+def blenders():
+    """(version, exe): Blender 4.5 first (the 5.x files copy moved values from its file), then each portable 5.x."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import build
+    out = [("4.5", os.environ.get("BLENDER", build.DEFAULT_BLENDER))]
+    portable = Path(os.environ.get("ALLSET_BLENDERS", r"C:\Users\ohnsk\AppData\Local\allset_blenders"))
+    for d in sorted(portable.glob("blender-5.*-windows-x64")):
+        out.append((d.name.split("-")[1], str(d / "blender.exe")))
+    return out
+
+
 def run_outside_blender():
     import subprocess
     sys.path.insert(0, str(ROOT / "tools"))
     import build
-    r = subprocess.run([os.environ.get("BLENDER", build.DEFAULT_BLENDER), "-b", "--factory-startup",
-                        "--python-exit-code", "1", "--python", __file__],
-                       env=build.sandbox_env(), stdin=subprocess.DEVNULL,
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
-    for line in r.stdout.splitlines():
-        if line.startswith("make_theme"):
-            print(line)
-    if r.returncode:
-        sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
-    return r.returncode
+    for _ver, exe in blenders():
+        r = subprocess.run([exe, "-b", "--factory-startup", "--python-exit-code", "1", "--python", __file__],
+                           env=build.sandbox_env(), stdin=subprocess.DEVNULL,
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        for line in r.stdout.splitlines():
+            if line.startswith("make_theme"):
+                print(line)
+        if r.returncode:
+            sys.stderr.write(r.stdout[-3000:] + r.stderr[-3000:])
+            return r.returncode
+    return 0
+
+
+LEGACY_OK = set()   # 4.5 paths a 5.x Blender lacks (their values come through MOVED instead)
 
 
 def _set(owner, path, value):
     *parents, attr = path.split(".")
-    for p in parents:
-        owner = getattr(owner, p)
-    current = getattr(owner, attr)  # AttributeError = path drifted: fail loudly
+    try:
+        for p in parents:
+            owner = getattr(owner, p)
+        current = getattr(owner, attr)  # AttributeError = path drifted: fail loudly
+    except AttributeError:
+        if path in LEGACY_OK:
+            return
+        raise
     if isinstance(value, tuple) and hasattr(current, "__len__") and len(current) == 4 and len(value) == 3:
         value = (*value, current[3])
     setattr(owner, attr, value)
@@ -220,16 +269,100 @@ def apply_table(theme):
         _set(theme, path, value)
 
 
+def out_path(version):
+    """studio_grey.xml for 4.5, studio_grey_<major>.<minor>.xml for later Blenders (compat.theme_file picks it)."""
+    major, minor = version[:2]
+    return OUT if (major, minor) == (4, 5) else OUT.with_name(f"studio_grey_{major}.{minor}.xml")
+
+
+def moved_table():
+    """MOVED of src/allset/theme (Blender's 5.0 migration table), read from its source."""
+    src = (ROOT / "src" / "allset" / "theme" / "__init__.py").read_text(encoding="utf-8")
+    start = src.index("_ANIM = (")
+    end = src.index("\n)\n", src.index("MOVED = (")) + 3
+    ns = {}
+    exec(src[start:end], ns)
+    return ns["MOVED"]
+
+
+def _xml_value(root, path):
+    *parts, attr = path.split(".")
+    node = root
+    for part in parts:
+        prop = next((c for c in node.childNodes if c.nodeType == c.ELEMENT_NODE and c.tagName == part), None)
+        node = next((c for c in prop.childNodes if c.nodeType == c.ELEMENT_NODE), None) if prop else None
+        if node is None:
+            return ""
+    return node.getAttribute(attr)
+
+
+def apply_5x(theme):
+    """Moved values from the 4.5 file, then the 5.x-only keys."""
+    import xml.dom.minidom
+    root = xml.dom.minidom.parse(str(OUT)).getElementsByTagName("Theme")[0]
+    for new, old in moved_table():
+        value = _xml_value(root, old)
+        if not value:
+            raise LookupError(f"{old} not in {OUT.name} (needed for {new})")
+        *parents, name = new.split(".")
+        owner = theme
+        for p in parents:
+            owner = getattr(owner, p)
+        current = getattr(owner, name)
+        if isinstance(current, (int, float)):
+            setattr(owner, name, type(current)(float(value)))
+            continue
+        h = value.lstrip("#")
+        col = [int(h[k:k + 2], 16) / 255 for k in range(0, min(len(h), 2 * len(current)), 2)]
+        if len(col) < len(current):
+            col.append(current[3])
+        setattr(owner, name, col)
+    ui = theme.user_interface
+    for prop in ui.bl_rna.properties:
+        if prop.identifier.startswith("wcol_"):
+            w = getattr(ui, prop.identifier)
+            if hasattr(w, "outline_sel"):
+                w.outline_sel = w.outline     # 4.5 drew a selected widget with its normal outline
+    if hasattr(ui, "wcol_curve"):
+        for attr in ("inner", "inner_sel", "item", "text", "text_sel", "outline"):
+            setattr(ui.wcol_curve, attr, getattr(ui.wcol_regular, attr))
+        ui.wcol_curve.outline_sel = ui.wcol_regular.outline
+    for path, value in FIVE_X:   # some exist from a later minor on (grid_major: 5.2)
+        *parents, name = path.split(".")
+        owner = theme
+        for p in parents:
+            owner = getattr(owner, p, None)
+        if owner is not None and hasattr(owner, name):
+            _set(theme, path, value)
+
+
 def main():
     import bpy
-    import rna_xml
+    try:
+        import rna_xml
+    except ImportError:   # Blender 5.x
+        import _rna_xml as rna_xml
     from bl_ui.space_userpref import USERPREF_MT_interface_theme_presets as presets
 
+    out = out_path(bpy.app.version)
+    later = out != OUT
+    if later:
+        LEGACY_OK.update(old for _new, old in moved_table())
+        # also merged into a moved value: graph_editor.preview_range -> common.anim.preview_range (same value)
+        LEGACY_OK.add("graph_editor.preview_range")
     bpy.ops.preferences.reset_default_theme()
-    apply_table(bpy.context.preferences.themes[0])
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    rna_xml.xml_file_write(bpy.context, str(OUT), presets.preset_xml_map)
-    print(f"make_theme: wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size} bytes)")
+    theme = bpy.context.preferences.themes[0]
+    if later:
+        # every key this Blender shares with 4.5 takes the 4.5 file's value (the loader skips the rest), so the
+        # colours Blender itself changed in 5.x (node headers, list outlines ...) look as in 4.5 too
+        rna_xml.xml_file_run(bpy.context.preferences, str(OUT), (("themes[0]", "Theme"), ("ui_styles[0]", "ThemeStyle")),
+                             secure_types=presets.preset_xml_secure_types)
+    apply_table(theme)
+    if later:
+        apply_5x(theme)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rna_xml.xml_file_write(bpy.context, str(out), presets.preset_xml_map)
+    print(f"make_theme: Blender {bpy.app.version_string}: wrote {out.relative_to(ROOT)} ({out.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":
