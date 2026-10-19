@@ -26,7 +26,10 @@ def is_dock(area):
     if area is None or area.type != 'PROPERTIES':
         return False
     space = area.spaces.active
-    return space.context == 'TOOL' and not space.show_region_header
+    if space.show_region_header or space.context != 'TOOL':
+        return False
+    from .maya_dock import ROLE_FLAGS     # a Maya panel's dock area (step 116) is a Tool tab too: role flag set
+    return not any(getattr(space, flag, False) for flag in ROLE_FLAGS.values())
 
 
 def find(screen):

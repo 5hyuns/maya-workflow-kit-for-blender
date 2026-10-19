@@ -12,7 +12,7 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, win  # noqa: E402
+from sim import MODULE, check, dock_region, ev, px, run, screenshot, setup, step, tap, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -177,11 +177,11 @@ def s_panel_shot():
     shot("gui_step58_paint_panel.png")
     c = cyl()
     rows = [vg.name for vg in sorted(c.vertex_groups, key=lambda g: g.name)]
-    area, _r = main_view()
-    ui = next(r for r in area.regions if r.type == 'UI')
+    ui = dock_region()     # Maya's tab stack (step 116; was the 3D View sidebar): rows below its content top
+    top = ui.view2d.view_to_region(0, 0, clip=False)[1]
     # Influences list: rows are 20 px x scale under the panel's "Influences" label (gui_step58_paint_panel.png)
     i = rows.index("joint2")
-    C["row"] = (ui.x + ui.width // 3, ui.y + ui.height - px(LIST_TOP + ROW * i))
+    C["row"] = (ui.x + ui.width // 3, ui.y + top - px(LIST_TOP + ROW * i))
     ev('MOUSEMOVE', 'NOTHING', x=C["row"][0], y=C["row"][1])
 
 

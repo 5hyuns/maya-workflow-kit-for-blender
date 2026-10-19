@@ -6,7 +6,8 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, run, step, setup, screenshot, win  # noqa: E402
+from sim import MODULE, check, run, step, setup, screenshot, win  # noqa: E402
+from importlib import import_module  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 
@@ -38,10 +39,14 @@ def s_layout():
     time = areas('DOPESHEET_EDITOR')[0]
     check("Tool Box column, then Outliner, left of the viewport",
           len(views) == 2 and column.x < outl.x and outl.x + outl.width <= v3d.x + 2)
-    check("no Properties column (AE = the sidebar dock)", not areas('PROPERTIES'))
+    # step 116: CB/LE | AE | MTK = Maya's tab stack, its own area right of the viewport (no other Properties column)
+    md = import_module(MODULE + ".ui.maya_dock")
+    props = areas('PROPERTIES')
+    check("one Properties area: the Maya tab stack, right of the viewport",
+          len(props) == 1 and md.role(props[0]) == 'STACK' and props[0].x >= v3d.x + v3d.width)
     check("timeline across the bottom", time.y < v3d.y and time.width >= win().width - 4)   # 5.x: 2 px edge
     check("Outliner about 16% of the width", 0.10 < outl.width / win().width < 0.22)
-    check("viewport sidebar shown (Channel Box host)", v3d.spaces.active.show_region_ui)
+    check("no viewport sidebar (the Maya panels are their own areas)", not v3d.spaces.active.show_region_ui)
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_layout.png"))
     bpy.ops.mesh.primitive_cube_add()
@@ -49,9 +54,8 @@ def s_layout():
 
 @step
 def s_object():
-    v3d = max(areas('VIEW_3D'), key=lambda a: a.width * a.height)
-    ui = next(r for r in v3d.regions if r.type == 'UI')
-    check("sidebar dock on the Channel Box tab with an object", ui.active_panel_category == "Channel Box / Layer Editor")
+    md = import_module(MODULE + ".ui.maya_dock")
+    check("the tab stack shows the Channel Box with an object", md.current_tab() == 'CHANNEL_BOX')
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
     bpy.ops.allset.theme_restore()

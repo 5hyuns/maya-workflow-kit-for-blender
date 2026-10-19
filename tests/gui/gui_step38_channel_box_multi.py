@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -20,29 +20,13 @@ def shot(name):
         screenshot(os.path.join(SHOTS, name))
 
 
-def ui_region():
-    return next(r for r in view3d()[0].regions if r.type == 'UI')
-
-
 def redraw():
     for a in win().screen.areas:
         a.tag_redraw()
 
 
-def goto_tab(category, then):
-    """Ctrl+wheel over the sidebar tab strip until ``category`` shows (gui_step11)."""
-    def s_tab():
-        r = ui_region()
-        if r.active_panel_category != category and C["tries"] < 12:
-            C["tries"] += 1
-            ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width - 8, y=r.y + r.height - 60)
-            ev('WHEELDOWNMOUSE', 'PRESS', ctrl=True)
-            sys.modules["sim"]._steps.insert(0, s_tab)
-            return
-        C["tries"] = 0
-        check(f"sidebar shows the {category} tab", r.active_panel_category == category)
-        then()
-    return s_tab
+def dock():
+    return dock_area(), dock_region()
 
 
 def cubes():
@@ -60,11 +44,8 @@ def s_setup():
     for o in bpy.context.view_layer.objects:
         o.select_set(o in (a, b))
     bpy.context.view_layer.objects.active = a
-    view3d()[0].spaces.active.show_region_ui = True
+    dock_area('CHANNEL_BOX')     # Maya's tab stack right of the viewport (step 116; was the 3D View sidebar)
     redraw()
-
-
-step(goto_tab("Channel Box / Layer Editor", redraw))
 
 
 @step
@@ -75,15 +56,21 @@ def s_wait():
 @step
 def s_cb_shot():
     shot("gui_step38_cb_before.png")
-    r = ui_region()
-    C["ui"] = (r.x, r.y, r.width, r.height)
-    print("GUI UI region", C["ui"])
-    check("Channel Box drawn with two objects selected (screenshot)", True)
-    # Translate X value field: 1185, 229 in gui_step38_cb_before.png (1600 x 900 window, scale 1.25,
-    # UI region (971, 94, 350, 709)) = 136 px left of the region's right edge, 114 px below its top
-    # (step 50: dock switch + menu bar rows instead of a panel title; 132 before).
-    C["field"] = (r.x + r.width - px(136), r.y + r.height - px(114))
-    ev('MOUSEMOVE', 'NOTHING', x=C["field"][0], y=C["field"][1])
+    from importlib import import_module as im
+    md = im(MODULE + ".ui.maya_dock")
+    check("Channel Box drawn in its own dock area with two objects selected (screenshot)",
+          md.role(dock_area()) == 'STACK' and md.current_tab() == 'CHANNEL_BOX')
+
+
+# Translate X value field: looked up by its data path (Scene.allset_cb.tx_text) along the row ~114 px under the top
+step(find_button(dock, lambda path, _cmd: path.endswith("tx_text"), C, "field", rows=(px(114), px(90), px(140))))
+
+
+@step
+def s_hover_field():
+    check(f"Translate X field found in the Channel Box ({C['field']})", C["field"] is not None)
+    if C["field"]:
+        ev('MOUSEMOVE', 'NOTHING', x=C["field"][0], y=C["field"][1])
 
 
 @step

@@ -1,5 +1,5 @@
 """Step 49 in a real UI: Allset layout = Maya General — Tool Box column (clicks set tools, a click under
-the tools keeps the selection), sidebar opens on the Channel Box tab, Help + Command row, Range Slider
+the tools keeps the selection), the tab stack opens on the Channel Box, Help + Command row, Range Slider
 under the Time Slider, quick layout buttons; screenshot."""
 
 import os
@@ -83,10 +83,13 @@ def s_layout():
     outl = next(a for a in win().screen.areas if a.type == 'OUTLINER')
     view = main_view()
     check("Tool Box | Outliner | view, left to right", tb.x < outl.x < view.x)
-    check("no Properties column", not any(a.type == 'PROPERTIES' for a in win().screen.areas))
-    ui = next(r for r in view.regions if r.type == 'UI')
-    check(f"sidebar opens on the Channel Box tab ({ui.active_panel_category!r})",
-          ui.active_panel_category == "Channel Box / Layer Editor")
+    # step 116: the Maya tab stack is its own area right of the view (not the view's sidebar), on the Channel Box
+    md = import_module(MODULE + ".ui.maya_dock")
+    props = [a for a in win().screen.areas if a.type == 'PROPERTIES']
+    check("the only Properties area is the Maya tab stack, right of the view",
+          len(props) == 1 and md.role(props[0]) == 'STACK' and props[0].x >= view.x + view.width)
+    check(f"the tab stack opens on the Channel Box ({md.current_tab()})",
+          md.current_tab() == 'CHANNEL_BOX' and not view.spaces.active.show_region_ui)
     tl = next(a for a in win().screen.areas if a.ui_type == 'TIMELINE')
     regions = {r.type: r for r in tl.regions}
     check("Range Slider row under the Time Slider", regions['HEADER'].y < regions['WINDOW'].y)

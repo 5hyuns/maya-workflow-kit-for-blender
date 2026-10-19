@@ -144,8 +144,9 @@ def s_attributes():
 
 @step
 def s_attributes_wait():
-    area, _r = view3d()
-    check("sidebar shown", area.spaces.active.show_region_ui)
+    md = import_module(MODULE + ".ui.maya_dock")
+    check("the Attribute Editor is shown (its own floating window: this layout has no tab stack, step 116)",
+          md.kind_visible(bpy.context.window_manager, 'ATTRIBUTE_EDITOR'))
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
 
 

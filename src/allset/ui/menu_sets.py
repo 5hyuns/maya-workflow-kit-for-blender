@@ -433,6 +433,8 @@ def _menu_class(idname, label, prefix, items, submenus, top_label=None):
 
     def draw(self, context):
         layout = self.layout
+        from . import maya_dock
+        maya_dock.draw_tear_line(layout, idname)    # Maya's dotted tear-off line (step 116)
         _draw_items(layout, items, prefix, submenus)
         if blender:
             layout.separator()

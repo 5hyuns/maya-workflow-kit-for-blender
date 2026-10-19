@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 116 (사용자 지시 10-19: Maya 도킹 모델 — 패널마다 독립 창, ::::: 핸들로 떼기) 완료 — `docs/steps/step_116.md`.
+  - CB/LE · AE · MTK 가 뷰포트 사이드바를 떠나 자기 영역 (`ui/maya_dock.py`: Tool 탭 Properties 편집기, 역할 = 숨은 탭 플래그,
+    파일 저장·`area_dupli` 에도 유지). Allset 템플릿 = 뷰포트 오른쪽 탭 스택 (겹침 없음), 뷰포트 사이드바는 Blender 것.
+  - 모든 Maya 패널 맨 위 ::::: 핸들: 클릭 = 떠 있는 창 (그 패널만), 떠 있는 창의 핸들 = Dock / Close, OS 창 닫기 = 자동 도킹.
+    Tool Settings · Outliner 도 떼기·붙이기. 메뉴 맨 위 점선 = 떠 있는 메뉴 창. Windows 메뉴 / Ctrl+A / Status Line 토글 =
+    Maya 처럼 탭 올리기, 스택이 없으면 떠 있는 창.
+  - 검증: 헤드리스 869/869, GUI 전체 1119/1121 → 실패 2 파일 테스트 수정 후 단독 재실행 통과 (step54 5/5, step106 12/12),
+    gui_step116_dock 20/20, release_check 전부 PASS, 스크린샷 직접 확인 (`tmp/shots116/`).
+  - 남은 것: 툴바(Status Line·Shelf·Time Slider) 떼기, 끌어서 도킹(Python 불가), Maya 옆 탭(불가) — step_116.md.
+  - **바로 다음 할 일**: step 117 = 배포 준비 4 (등록 자료 `docs/distribution/listing.md`, 최종 validate; 업로드는 사용자).
+
 - Step 115 (배포 준비 3: no surprises — opt-in, 자동 저장 없음, 코드 없는 템플릿, draw 교체 정리) 완료 — `docs/steps/step_115.md`.
   - 활성화만으로는 아무것도 안 바뀜: `maya_mode` 기본 꺼짐, CORE = preferences / switch / 새 `welcome.py`. 환영 창·환경설정의
     「Make Blender feel like Maya」(`welcome.opt_in`) 또는 Maya | Blender 스위치로만 Maya 모드. 킷은 `save_userpref` 를 안 부름

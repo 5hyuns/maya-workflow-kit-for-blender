@@ -83,8 +83,9 @@ def s_layout():
     check(f"Blender's own theme ({C['theme']}), Solid Side Panels on -> region overlap off",
           C["theme"] != "Maya" and mod("preferences").get().use_maya_panels and not prefs.system.use_region_overlap)
     area, win_r = view3d()
-    ui = region(area, 'UI')
-    check(f"the dock is beside the viewport, not over it (view {win_r.x}+{win_r.width}, dock {ui.x})",
+    stack = mod("ui.maya_dock").find_stack(win().screen)     # its own area since step 116
+    ui = region(stack, 'WINDOW') if stack else None
+    check(f"the dock is beside the viewport, not over it (view {win_r.x}+{win_r.width}, dock {ui and ui.x})",
           ui is not None and win_r.x + win_r.width <= ui.x + 1)
     col = column()
     tools = region(col, 'TOOLS') if col else None
@@ -108,11 +109,12 @@ def s_pixels():
     theme = bpy.context.preferences.themes[0].view_3d
     back = tuple(theme.space.button)[:3]
     view_bg = tuple(theme.space.gradients.high_gradient)
-    area, _win_r = view3d()
-    ui = region(area, 'UI')
+    dock_back = tuple(bpy.context.preferences.themes[0].properties.space.back)[:3]   # a Properties editor (step 116)
+    stack = mod("ui.maya_dock").find_stack(win().screen)
+    ui = region(stack, 'WINDOW')
     p_dock = pixel(path, ui.x + 3, ui.y + ui.height // 2)    # the dock's left margin, half way down
-    check(f"dock background opaque = region colour {rgb(back)} (pixel {rgb(p_dock)}, viewport {rgb(view_bg)})",
-          near(p_dock, back) and not near(p_dock, view_bg))
+    check(f"dock background opaque = its editor colour {rgb(dock_back)} (pixel {rgb(p_dock)}, viewport {rgb(view_bg)})",
+          near(p_dock, dock_back) and not near(p_dock, view_bg))
     col = column()
     p_col = pixel(path, col.x + col.width - 4, col.y + col.height // 2)
     check(f"spare Tool Box width = toolbar colour {rgb(back)} (pixel {rgb(p_col)})", near(p_col, back))

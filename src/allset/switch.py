@@ -414,6 +414,11 @@ def set_mode(on, layout=True, theme=True):
             for window in _windows()[:1]:
                 enter_layout(window)
     else:
+        try:
+            from .ui import maya_dock
+            maya_dock.close_floating()     # floating Maya panels would show Blender's Tool tab (step 116)
+        except Exception:
+            pass
         if layout:
             for window in _windows():
                 leave_layout(window)

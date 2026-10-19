@@ -22,15 +22,16 @@ OUT = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
 # Outliner 260, Channel Box / Layer Editor dock 260 (+ tab strip), Time Slider 36 (the timeline WINDOW region); the
 # Range Slider is the timeline header, flipped under it.
 OUTLINER_PX = 260
-# Sidebar = Maya's dock column: Channel Box / Layer Editor 260 + the vertical dock tab strip right of it
-# (Maya: dock [1323, 260] then tabs to 1598). Blender draws its tab strip inside the sidebar.
+# Maya's right dock column (Channel Box / Layer Editor 260 + Maya's side tab strip; dock [1323, 260] then tabs to
+# 1598) = the kit's tab-stack area, its own Properties editor right of the viewport (ui/maya_dock.py, step 116).
 DOCK_PX = 260 + 17
 # Tool Box column = room for one toolbar column up to UI scale 1.6 (step 112): area sizes are pixels scaled with
 # the window, not with the UI scale, and a toolbar wider than its area is not drawn at all (an empty strip, the
 # tools fell back into the main view). ui/toolbox.fit_columns fits it to one toolbar column when it can; until
 # then the extra width is the toolbar colour (toolbox.settle). 1.6 = 125 % display in a window down to 1280 px.
 TOOLBOX_ROOM = 1.6
-DOCK_CATEGORY = "Channel Box / Layer Editor"   # = ui/channel_box.py CATEGORY (step 99)
+# = ui/maya_dock.ROLE_FLAGS['STACK']: Tool tab + this hidden tab flag marks the tab-stack area (step 116)
+STACK_FLAG = "show_properties_world"
 # Maya Time Slider right end: current time field (90) + 8 transport buttons (22 each) and padding
 # (20_time_slider_crop.png: from x 1300 of 1596; ui_layout.md:272-276).
 TIME_CONTROLS_PX = 300   # = ui/channel_box.py CATEGORY
@@ -177,18 +178,20 @@ class Builder:
         outliner = yield from self.split(self.biggest_view(), 'VERTICAL', OUTLINER_PX + EDGE, 'LEFT')
         outliner.type = 'OUTLINER'
         yield
+        # 5. Maya's right tab stack (Channel Box / Layer Editor | Attribute Editor | Modeling Toolkit): its own area,
+        #    not the viewport's sidebar (step 116).
+        dock = yield from self.split(self.biggest_view(), 'VERTICAL', DOCK_PX + EDGE, 'RIGHT')
+        dock.type = 'PROPERTIES'
+        yield
+        yield from self.make_stack(dock)
         view = self.biggest_view()
-        self.areas = {"strip": strip, "shelf": shelf, "timeline": timeline, "toolbox": toolbox, "outliner": outliner, "view3d": view}
+        self.areas = {"strip": strip, "shelf": shelf, "timeline": timeline, "toolbox": toolbox, "outliner": outliner,
+                      "view3d": view, "dock": dock}
         self.configure()
         yield
-        # 5. Sidebar = Channel Box dock, 277 px; the timeline's sidebar = the Time Slider's current frame field
-        #    and transport buttons (step 50): drag their left edges (region size has no API).
-        yield from self.drag_region_edge(view, DOCK_PX)
+        # 6. The timeline's sidebar = the Time Slider's current frame field and transport buttons (step 50): drag
+        #    its left edge (region size has no API).
         yield from self.drag_region_edge(timeline, TIME_CONTROLS_PX)
-        # 6. The sidebar opens on the Channel Box tab: the region saves its active category, but there is
-        #    no API to set it and the kit is not installed here, so a stand-in panel gives the category and
-        #    Ctrl+wheel over the tab strip selects it. Blender's Item tab (C panels, step 49) stays possible.
-        yield from self.select_dock_tab(view)
         self.report()
         shot = os.environ.get("MAKE_STARTUP_SHOT")
         if shot:
@@ -212,31 +215,27 @@ class Builder:
         yield
         log("sidebar", area.ui_type, _region(area, 'UI').width)
 
-    def select_dock_tab(self, view):
+    def make_stack(self, area):
+        """The tab-stack area = a Properties editor on its Tool tab, header and tab column hidden, marked by
+        ``STACK_FLAG`` (= ui/maya_dock.set_role; the Tool tab can be chosen once the editor has drawn)."""
         bpy = self.bpy
-
-        class ALLSET_PT_dock_stand_in(bpy.types.Panel):
-            bl_space_type = 'VIEW_3D'
-            bl_region_type = 'UI'
-            bl_category = DOCK_CATEGORY
-            bl_label = "Channel Box"
-
-            def draw(self, context):
-                self.layout.label(text="Channel Box")
-
-        bpy.utils.register_class(ALLSET_PT_dock_stand_in)
-        ui = _region(view, 'UI')
-        for _i in range(12):
-            view.tag_redraw()
-            yield
-            if ui.active_panel_category == DOCK_CATEGORY:
+        space = area.spaces.active
+        for _i in range(20):
+            try:
+                space.context = 'TOOL'
                 break
-            self.win.event_simulate(type='MOUSEMOVE', value='NOTHING', x=ui.x + ui.width - 8, y=ui.y + ui.height - 60)
-            self.win.event_simulate(type='WHEELDOWNMOUSE', value='PRESS', x=ui.x + ui.width - 8,
-                                    y=ui.y + ui.height - 60, ctrl=True)
-        log("sidebar tab", ui.active_panel_category)
-        assert ui.active_panel_category == DOCK_CATEGORY, ui.active_panel_category
-        bpy.utils.unregister_class(ALLSET_PT_dock_stand_in)
+            except TypeError:
+                area.tag_redraw()
+                yield
+        assert space.context == 'TOOL', space.context
+        for prop in space.bl_rna.properties:
+            if prop.identifier.startswith("show_properties_"):
+                setattr(space, prop.identifier, prop.identifier in ("show_properties_tool", STACK_FLAG))
+        space.show_region_header = False
+        with self.ov(area, 'NAVIGATION_BAR'):
+            assert bpy.ops.screen.region_toggle(region_type='NAVIGATION_BAR') == {'FINISHED'}
+        yield
+        log("stack", area.width, [(r.type, r.width) for r in area.regions])
 
     def configure(self):
         a = self.areas
@@ -267,7 +266,7 @@ class Builder:
             sp.show_region_toolbar = False
 
         v3d = a["view3d"].spaces.active
-        v3d.show_region_ui = True              # sidebar = Channel Box dock (step 6, 11)
+        v3d.show_region_ui = False             # Maya panels are their own areas, not the viewport's sidebar (step 116)
         v3d.show_region_toolbar = False        # the Tool Box column replaces it (step 49)
         v3d.show_region_tool_header = True     # = Maya's panel toolbar (ui/panel_toolbar.py, step 113)
         v3d.show_region_header = True          # Maya panel menu bar (step 37)

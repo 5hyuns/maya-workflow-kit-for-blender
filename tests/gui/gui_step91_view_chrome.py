@@ -166,11 +166,9 @@ def s_group_shot2():
 def s_ae():
     wm = bpy.context.window_manager
     check(f"Ctrl+A = Attribute Editor ({wm.allset_dock})", wm.allset_dock == 'ATTRIBUTE_EDITOR')
-    area, _r = view3d()
-    ui = next(r for r in area.regions if r.type == 'UI')
-    # step 99: the AE is its own dock tab (Maya's dock tab stack), so the sidebar switches to it
-    check(f"the sidebar shows the Attribute Editor tab ({ui.active_panel_category})",
-          ui.active_panel_category == "Attribute Editor")
+    # step 116: the AE is a tab of Maya's tab stack (its own area) or, with no stack in this layout, a floating window
+    md = import_module(MODULE + ".ui.maya_dock")
+    check(f"the Attribute Editor is shown ({md.current_tab()})", md.kind_visible(wm, 'ATTRIBUTE_EDITOR'))
     for a in win().screen.areas:
         a.tag_redraw()
 

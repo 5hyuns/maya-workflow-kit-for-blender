@@ -747,3 +747,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 115) 실제 Blender 에서 Get Extensions 로 설치·활성화 → 그 자리에서 환영 창이 뜨고, 그 전에는 키맵·테마·레이아웃이 그대로인지. 「Make Blender feel like Maya」 → 저장 안 한 작업 중 파일이면 그 파일에 Maya-style 작업 공간만 붙고 데이터는 그대로, 새 빈 파일이면 Allset 레이아웃 파일로 바뀌는지. 취소하면 아무것도 안 바뀌고 다시 안 뜨는지 (환경설정의 같은 버튼은 남음).
 - [ ] (step 115) Auto-Save Preferences 를 끈 설정: Maya 로 바꾸고 저장하지 않고 종료 → 다음 시작이 Blender 그대로인지 (킷이 혼자 저장하지 않음).
 - [ ] (step 115) 확장을 끄거나 Remove → `scripts/startup/bl_app_templates_user/Allset` 이 지워지는지, 그냥 종료·재시작·확장 업데이트로는 남는지. File > New > Allset 뒤에도 Maya 키맵인지.
+
+### Step 116 — Maya 도킹 모델 (패널마다 창, ::::: 핸들)
+
+- [ ] (step 116) 실제 화면에서 오른쪽 탭 스택 (Channel Box / Layer Editor | Attribute Editor | Modeling Toolkit) 이 뷰포트 옆 자기 영역에 있고, 뷰포트 사이드바(N)에는 Maya 패널이 없는지. 스택과 뷰포트 경계를 끌어 폭이 바뀌는지.
+- [ ] (step 116) 스택 맨 위 ::::: 핸들 클릭 → 그 탭만 든 떠 있는 창, OS 창으로 옮기기 / 크기 바꾸기, 그 창의 ::::: → Dock / Close. 창의 X 로 닫아도 탭이 스택으로 돌아오는지. 두 모니터에서도.
+- [ ] (step 116) Outliner 헤더 왼쪽 ::::: , Tool Settings 맨 위 ::::: 로 떼기 / 붙이기. 메뉴 맨 위 점선 줄 → 떠 있는 메뉴 창에서 항목 실행.
+- [ ] (step 116) 떠 있는 창이 있는 채로 파일 저장 → 다시 열기: CB / AE 창은 그대로 보이고, 떼어낸 메뉴 창은 저절로 닫히는지. Blender 로 전환하면 떠 있는 Maya 패널 창이 닫히는지.

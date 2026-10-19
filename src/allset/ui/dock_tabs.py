@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Sidebar = the Maya dock only: hide Blender's Item / Tool / View sidebar tabs (docs/steps/step_49.md).
+"""Hide Blender's 3D View "Tool" panels where a Properties Tool tab hosts a Maya panel (docs/steps/step_49.md,
+step 106, step 116).
 
-Maya's right dock is one tab stack: Channel Box / Layer Editor, Attribute Editor, Modeling Toolkit
-(research/maya/ui_layout.md:122-127). The kit's dock is three 3D View sidebar tabs with those names
-(step 99; ``WindowManager.allset_dock`` follows them). With the preference
-``maya_dock_only`` the other sidebar panels that were registered when the kit was enabled are hidden
-by wrapping their ``poll``: only in a 3D View sidebar (``wm.call_panel`` popups such as the Status
-Line's Tool Settings still work). Blender stores a panel's poll callback when the class is registered
+A Properties editor on its Tool tab draws the 3D View "Tool"-category panels. The kit's Maya dock areas
+(``ui/maya_dock.py``: Channel Box / Layer Editor, Attribute Editor, Modeling Toolkit, torn-off menus) and the Tool
+Settings dock (``ui/tool_dock.py``) are such editors, so Blender's panels that were registered when the kit was
+enabled are hidden there by wrapping their ``poll`` (only in a Properties WINDOW region; until step 116 also in the
+3D View sidebar, which then hosted the dock). Blender stores a panel's poll callback when the class is registered
 and only calls Python if the class had a ``poll`` then, so each panel is unregistered, given the
 wrapper and registered again (children first out, parents first in; all of them, so their order
 stays); ``unregister`` does the same with the original poll.
@@ -20,23 +20,16 @@ _wrapped = []    # (cls, cls.__dict__ poll before or None, child panels re-regis
 
 def _hidden(context):
     region = context.region
-    if region is None:
+    if region is None or region.type != 'WINDOW':
         return False
-    if region.type == 'WINDOW':
-        # The Tool Settings dock (a Properties Tool tab, step 106): Maya sections replace Blender's tool panels
-        # for Move / Rotate / Scale.
-        from . import tool_settings
-        return tool_settings.hides_blender_panels(context)
-    if region.type != 'UI':
-        return False
-    space = context.space_data
-    if space is None or space.type != 'VIEW_3D':
-        return False
-    from .. import preferences
-    try:
-        return preferences.get(context).maya_dock_only
-    except KeyError:
-        return False
+    # A Maya panel's own dock area (ui/maya_dock.py, step 116) shows only that panel.
+    from . import maya_dock
+    if maya_dock.area_role(context) is not None:
+        return True
+    # The Tool Settings dock (a Properties Tool tab, step 106): Maya sections replace Blender's tool panels
+    # for Move / Rotate / Scale.
+    from . import tool_settings
+    return tool_settings.hides_blender_panels(context)
 
 
 def _subclasses(cls):

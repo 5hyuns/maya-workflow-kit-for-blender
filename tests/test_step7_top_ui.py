@@ -374,15 +374,13 @@ def test_selection_mode_and_editor_buttons():
         bpy.ops.allset.render_settings()
         props = next(a for a in screen.areas if a.type == 'PROPERTIES')
         assert props.spaces.active.context == 'RENDER'
-        bpy.ops.allset.editor_toggle(editor="ATTRIBUTE")
-        assert props.spaces.active.context == 'OBJECT'
-        area, _r = status_line.main_view3d(screen)
-        before = area.spaces.active.show_region_ui
-        bpy.ops.allset.editor_toggle(editor="CHANNEL_BOX")
-        assert area.spaces.active.show_region_ui != before
-        assert status_line.editor_shown(screen, "CHANNEL_BOX") == (not before)
-        bpy.ops.allset.editor_toggle(editor="CHANNEL_BOX")
+        # step 116: the Maya panels are dock areas / floating windows (GUI: gui_step116_dock); a factory screen has
+        # no tab stack, so they aren't shown and the user's Properties editor is left alone
+        assert not status_line.editor_shown(screen, "CHANNEL_BOX")
+        assert not status_line.editor_shown(screen, "ATTRIBUTE")
+        assert status_line._properties_area(screen) == props
         assert not status_line.editor_shown(screen, "TOOL_SETTINGS")
+        area, _r = status_line.main_view3d(screen)
         bpy.ops.allset.ipr_toggle()
         assert area.spaces.active.shading.type == 'RENDERED'
         bpy.ops.allset.ipr_toggle()

@@ -14,7 +14,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, ev, find_button, px, run, step, setup, screenshot, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 os.environ["ALLSET_FIT_WARP"] = "1"   # the cursor fit is off in event-simulated sessions unless asked for
@@ -52,8 +52,12 @@ def column():
 
 
 def dock_region():
-    area, _r = view3d()
-    return next(r for r in area.regions if r.type == 'UI')
+    """Maya's tab stack (its own area since step 116)."""
+    return next(r for r in dock_area().regions if r.type == 'WINDOW')
+
+
+def tab():
+    return mod("ui.maya_dock").current_tab()
 
 
 def click_row(row):
@@ -107,8 +111,7 @@ def s_toolbox():
     u = mod("ui.outliner_sets").unit(bpy.context.preferences)
     check(f"persp is the first row, at the top of the Outliner (y1 {r and r[0][1]} of {reg.height})",
           bool(r) and abs(r[0][1] - reg.height) <= u)
-    ui = dock_region()
-    check(f"dock opens on the {CB!r} tab ({ui.active_panel_category!r})", ui.active_panel_category == CB)
+    check(f"dock opens on the {CB!r} tab ({tab()})", tab() == 'CHANNEL_BOX')
     shot("s99_first_screen")
 
 
@@ -120,27 +123,34 @@ def s_ae():
 
 @step
 def s_ae_check():
-    ui = dock_region()
-    check(f"allset_dock = AE switches the tab ({ui.active_panel_category!r})", ui.active_panel_category == AE)
-    # the user clicks a tab: Ctrl+wheel over the sidebar steps through its tabs (Blender's own tab switching)
-    x, y = ui.x + ui.width - 8, ui.y + ui.height - 60
-    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
-    ev('WHEELDOWNMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+    check(f"allset_dock = AE switches the tab ({tab()})", tab() == 'ATTRIBUTE_EDITOR')
     redraw()
 
 
+# the user clicks the Modeling Toolkit tab of the stack's top row (step 116: tabs are buttons in the dock area)
+step(find_button(lambda: (dock_area(), dock_region()), lambda _p, cmd: "MODELING_TOOLKIT" in cmd and "dock_tab" in cmd,
+                 C, "mtk_tab", rows=(px(16),)))
+
+
 @step
-def s_tab_wait():
+def s_tab_hover():
+    if C.get("mtk_tab"):
+        ev('MOUSEMOVE', 'NOTHING', x=C["mtk_tab"][0], y=C["mtk_tab"][1])
+
+
+@step
+def s_tab_click():
+    if C.get("mtk_tab"):
+        ev('LEFTMOUSE', 'PRESS', x=C["mtk_tab"][0], y=C["mtk_tab"][1])
+        ev('LEFTMOUSE', 'RELEASE', x=C["mtk_tab"][0], y=C["mtk_tab"][1])
     redraw()
 
 
 @step
 def s_tab_check():
-    ui = dock_region()
     dock = bpy.context.window_manager.allset_dock
-    check(f"a tab the user picks becomes the dock state ({ui.active_panel_category!r} -> {dock})",
-          ui.active_panel_category in (CB, MTK) and dock == {CB: 'CHANNEL_BOX', MTK: 'MODELING_TOOLKIT'}
-          [ui.active_panel_category])
+    check(f"a tab the user picks becomes the dock state ({C.get('mtk_tab')} -> {dock})",
+          dock == 'MODELING_TOOLKIT' and tab() == 'MODELING_TOOLKIT')
     bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):

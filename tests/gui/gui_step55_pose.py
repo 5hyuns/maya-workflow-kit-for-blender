@@ -13,7 +13,7 @@ import bpy
 from bpy_extras import view3d_utils
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -32,7 +32,11 @@ def shot(name):
 
 
 def ui_region():
-    return next(r for r in view3d()[0].regions if r.type == 'UI')
+    return dock_region()       # Maya's tab stack (step 116; was the 3D View sidebar)
+
+
+def dock():
+    return dock_area(), dock_region()
 
 
 def main_region():
@@ -45,9 +49,10 @@ def redraw():
 
 
 def field(row, from_right=136):
-    """Window position of Channel Box value row ``row`` (0 = Translate X)."""
-    r = ui_region()
-    return r.x + r.width - px(from_right), r.y + r.height - px(114 + ROW * row)
+    """Window position of Channel Box value row ``row`` (0 = Translate X): the value / name column x found by
+    ``find_button`` (step 116: the dock's width is not the old sidebar's), rows ROW px apart below Translate X."""
+    x = C["value_x"] if from_right == 136 else C["name_x"]
+    return x, C["tx_y"] - px(ROW * row)
 
 
 def goto_tab(category, then):
@@ -89,6 +94,7 @@ def s_setup():
         bpy.data.objects.remove(ob)
     us = bpy.context.scene.unit_settings
     us.system, us.length_unit, us.system_rotation = 'METRIC', 'CENTIMETERS', 'DEGREES'
+    dock_area('CHANNEL_BOX')    # Maya's tab stack right of the viewport (step 116), before framing the view
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=main_region()):
         bpy.ops.allset.create(kind='JOINT')
@@ -107,11 +113,12 @@ def s_setup():
         bpy.context.view_layer.objects.active = a
         bpy.ops.view3d.view_axis(type='FRONT')
         bpy.ops.view3d.view_selected()
-    area.spaces.active.show_region_ui = True
     redraw()
 
 
-step(goto_tab("Channel Box / Layer Editor", redraw))
+@step
+def s_dock_wait():
+    redraw()
 
 
 @step
@@ -154,6 +161,19 @@ def s_bone_picked():
           ld is not None and ld.name == "joint2")
     check("joint2 has Euler channels (Rotate X/Y/Z rows)", ld is not None and cb().has_channel(ld, "rz"))
     redraw()
+
+
+# the joint's rows (pose mode: no object-mode note row above them), looked up by data path (step 116)
+step(find_button(dock, lambda path, _cmd: path.endswith("tx_text"), C, "tx", x_frac=0.8, step_px=6))
+step(find_button(dock, lambda _path, cmd: "cb_select_channel" in cmd, C, "name", y_from="tx"))
+
+
+@step
+def s_columns():
+    check(f"Channel Box columns found in the dock (value {C['tx']}, name {C['name']})", C["tx"] and C["name"])
+    C["value_x"] = C["tx"][0] if C["tx"] else 0
+    C["name_x"] = C["name"][0] if C["name"] else 0
+    C["tx_y"] = C["tx"][1] if C["tx"] else 0
 
 
 @step

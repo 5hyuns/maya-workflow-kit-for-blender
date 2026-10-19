@@ -8,7 +8,7 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, px, run, screenshot, setup, step, view3d, win  # noqa: E402
+from sim import check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -35,16 +35,27 @@ def redraw():
         a.tag_redraw()
 
 
+# step 116: the dock is its own area (no tab strip, another width): a spot's row (px below the content top) still
+# holds, its x is found by sweeping that row for the button's command.
+COMMANDS = {FACE_ICON: "type='FACE'", OBJECT_ICON: "mode='OBJECT'", COMBINE: "Mesh/Combine",
+            SEPARATE: "Mesh/Separate", EXTRUDE_EDIT: "allset.extrude"}
+
+
+def dock():
+    return dock_area(), dock_region()
+
+
 def point(spot):
     dx, dy = spot
-    r = region('UI')
+    r = dock_region()
     top = r.view2d.view_to_region(0, 0, clip=False)[1]
-    return r.x + r.width - px(dx), r.y + top - px(dy)
+    found = C.get(("at", spot))
+    return (found[0] if found else r.x + r.width // 2), r.y + top - px(dy)
 
 
 def scroll(spot):
     def s_scroll():
-        r = region('UI')
+        r = dock_region()
         _x, y = point(spot)
         if not (r.y + 10 < y < r.y + r.height - 10) and C["tries"] < 40:
             C["tries"] += 1
@@ -71,8 +82,25 @@ def click_at(get_xy):
     return [s_hover, s_press]
 
 
+def locate(spot):
+    state = {}
+
+    def s_find():
+        if not state:
+            r = dock_region()
+            y = point(spot)[1]
+            text = COMMANDS[spot]
+            state["f"] = find_button(dock, lambda _path, cmd: text in cmd, C, ("at", spot),
+                                     rows=(r.y + r.height - y,))
+        state["f"]()
+
+    def s_found():
+        check(f"MTK button {COMMANDS[spot]} found in the dock ({C.get(('at', spot))})", C.get(("at", spot)))
+    return [s_find, s_found]
+
+
 def click(spot):
-    return [scroll(spot), *click_at(lambda: point(spot))]
+    return [scroll(spot), *locate(spot), *click_at(lambda: point(spot))]
 
 
 def steps(*fns):
@@ -88,9 +116,7 @@ def meshes():
 def s_setup():
     setup()
     bpy.data.objects["Cube"].name = "pCube1"
-    view3d()[0].spaces.active.show_region_ui = True
-    bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
-    redraw()
+    redraw()      # no tab stack yet: the Status Line MTK icon opens it right of the viewport (step 116)
 
 
 def _button_command(r):
@@ -128,8 +154,14 @@ def mtk_icon():
 
 def s_check_dock():
     wm = bpy.context.window_manager
+    from importlib import import_module
+    md = import_module(sys.modules["sim"].MODULE + ".ui.maya_dock")
     check(f"Status Line MTK icon -> Modeling Toolkit in the dock (got {wm.allset_dock})",
-          wm.allset_dock == 'MODELING_TOOLKIT')
+          wm.allset_dock == 'MODELING_TOOLKIT' and md.find_stack(win().screen) is not None)
+    redraw()
+
+
+def s_dock_drawn():
     redraw()
 
 
@@ -208,7 +240,7 @@ def s_shot_dialog():
     ev('ESC', 'RELEASE')
 
 
-steps(s_setup, s_find_mtk, *click_at(mtk_icon), s_check_dock,
+steps(s_setup, s_find_mtk, *click_at(mtk_icon), s_check_dock, s_dock_drawn,
       click(FACE_ICON), s_check_face_mode, s_shot_edit,
       click(EXTRUDE_EDIT), s_check_extrude,
       click(OBJECT_ICON), s_check_object_mode,

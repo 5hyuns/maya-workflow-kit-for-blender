@@ -250,7 +250,8 @@ MAP = {
                                                            {"selected": True, "children": True}),
     # --- Windows ---
     "Windows/Workspaces": ("menu", "TOPBAR_MT_workspace_menu"),
-    "Windows/Outliner": _editor('OUTLINER'),
+    # Maya raises a docked Outliner, else opens a floating one (ui/maya_dock.py, step 116)
+    "Windows/Outliner": ("allset.panel_show", {"panel": 'OUTLINER'}),
     "Windows/Node Editor": _editor('ShaderNodeTree'),
     **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "ALLSET_MT_ui_elements"),

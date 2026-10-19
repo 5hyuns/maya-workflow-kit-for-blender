@@ -176,8 +176,12 @@ TS_NOTICES = {
 
 
 def in_dock(context):
+    """A Properties Tool tab that isn't a Maya panel's dock area (ui/maya_dock.py, step 116)."""
     space = getattr(context, "space_data", None)
-    return space is not None and space.type == 'PROPERTIES'
+    if space is None or space.type != 'PROPERTIES':
+        return False
+    from . import maya_dock
+    return maya_dock.area_role(context) is None
 
 
 def tool_kind(context):
@@ -383,6 +387,9 @@ class ALLSET_PT_tool_settings(bpy.types.Panel):
         return in_dock(context)    # never in a 3D View sidebar (the Maya dock there is the Channel Box / AE)
 
     def draw(self, context):
+        from . import maya_dock, tool_dock
+        if tool_dock.is_dock(context.area):     # the kit's dock (not a user's Properties editor): Maya's handle
+            maya_dock.draw_handle(self.layout)
         draw_dock(self.layout, context)
 
 

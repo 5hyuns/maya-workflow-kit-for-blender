@@ -261,9 +261,9 @@ def draw_tool_symmetry(self, context):
 
 def _properties_area(screen):
     """A Properties editor of ``screen`` that is not the Tool Settings dock (step 106)."""
-    from . import tool_dock
+    from . import maya_dock, tool_dock
     return next((a for a in (screen.areas if screen else ())
-                 if a.type == 'PROPERTIES' and not tool_dock.is_dock(a)), None)
+                 if a.type == 'PROPERTIES' and not tool_dock.is_dock(a) and maya_dock.role(a) is None), None)
 
 
 def show_properties(screen, context_name):
@@ -315,30 +315,21 @@ class ALLSET_OT_ipr_toggle(bpy.types.Operator):
 
 EDITORS = (
     # Maya order: Modeling Toolkit first (research/maya/ui_layout.md:212-216, step 63)
-    ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit (sidebar dock)", 'EDITMODE_HLT'),
-    ("ATTRIBUTE", "Show the Attribute Editor (the dock's AE, or a Properties editor's Object tab)", 'PROPERTIES'),
+    ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit", 'EDITMODE_HLT'),
+    ("ATTRIBUTE", "Show or hide the Attribute Editor", 'PROPERTIES'),
     ("TOOL_SETTINGS", "Show or hide the Tool Settings of the active tool (dock left of the viewport)", 'TOOL_SETTINGS'),
-    ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor (3D View sidebar)", 'MENU_PANEL'),
+    ("CHANNEL_BOX", "Show or hide the Channel Box / Layer Editor", 'MENU_PANEL'),
 )
+# Status Line toggle -> Maya panel of the tab stack (ui/maya_dock.py, step 116)
+DOCK_KINDS = {"MODELING_TOOLKIT": 'MODELING_TOOLKIT', "ATTRIBUTE": 'ATTRIBUTE_EDITOR', "CHANNEL_BOX": 'CHANNEL_BOX'}
 
 
 def editor_shown(screen, editor):
-    area, _r = main_view3d(screen)
-    if editor == "MODELING_TOOLKIT":
-        return (area is not None and area.spaces.active.show_region_ui
-                and getattr(bpy.context.window_manager, "allset_dock", "") == 'MODELING_TOOLKIT')
-    if editor == "ATTRIBUTE":
-        props = _properties_area(screen)
-        if props is None:   # the dock's Attribute Editor (step 49: no Properties column)
-            return (area is not None and area.spaces.active.show_region_ui
-                    and getattr(bpy.context.window_manager, "allset_dock", "") == 'ATTRIBUTE_EDITOR')
-        return props.spaces.active.context == 'OBJECT'
     if editor == "TOOL_SETTINGS":    # the dock left of the viewport (ui/tool_dock.py, step 106)
         from . import tool_dock
         return tool_dock.shown(screen)
-    if area is None:
-        return False
-    return area.spaces.active.show_region_ui
+    from . import maya_dock
+    return maya_dock.kind_visible(bpy.context.window_manager, DOCK_KINDS[editor])
 
 
 class ALLSET_OT_editor_toggle(bpy.types.Operator):
@@ -356,32 +347,15 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
         return next(e[1] for e in EDITORS if e[0] == props.editor)
 
     def execute(self, context):
-        screen = context.screen
-        if self.editor == "ATTRIBUTE" and _properties_area(screen) is None:
-            area, region = main_view3d(screen)
-            if area is None:
-                return {'CANCELLED'}
-            with context.temp_override(window=context.window, area=area, region=region):
-                return bpy.ops.allset.ae_toggle()
-        if self.editor == "ATTRIBUTE":
-            if not show_properties(screen, 'OBJECT'):
-                self.report({'WARNING'}, "No Properties editor (or no active object)")
-                return {'CANCELLED'}
-            return {'FINISHED'}
         if self.editor == "TOOL_SETTINGS":
             # Maya ToggleToolSettings: the dock left of the viewport (ui/tool_dock.py, step 106)
             from . import tool_dock
             tool_dock.toggle(context, show_only=self.show)
             return {'FINISHED'}
-        area, region = main_view3d(screen)
-        if area is None:
-            return {'CANCELLED'}
-        if self.editor == "MODELING_TOOLKIT":
-            # Maya hides the MTK tab (the Channel Box stays) or shows it in the dock
-            dock = 'CHANNEL_BOX' if editor_shown(screen, "MODELING_TOOLKIT") else 'MODELING_TOOLKIT'
-            with context.temp_override(window=context.window, area=area, region=region):
-                return bpy.ops.allset.dock_show(dock=dock)
-        area.spaces.active.show_region_ui = not area.spaces.active.show_region_ui
+        # Maya toggleUIComponentVisibility (UIComponents.mel:1308-1419): a panel tabbed behind another is raised,
+        # a shown one hidden (ui/maya_dock.py, step 116)
+        from . import maya_dock
+        maya_dock.toggle(context, DOCK_KINDS[self.editor], show_only=self.show)
         return {'FINISHED'}
 
 
