@@ -775,3 +775,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 119) 5.x 위젯 선택 외곽선 (`wcol_*.outline_sel`): 숫자칸·체크박스·메뉴를 눌렀을 때 Blender 기본 강조색 대신 Maya 처럼 외곽선이 그대로인지; Properties / 도크 패널의 활성 패널 표시 (`panel_active`).
 - [ ] (step 119) 5.x Outliner 활성 행 외곽선 (테마 키 없음, 남은 것): Maya 와 얼마나 달라 보이는지 — 거슬리면 보고.
 - [ ] (step 119) 5.x 에서 Blender 로 전환 → 사용자 테마로 돌아오는지, 다시 Maya → 버전 파일 (`studio_grey_5.<m>.xml`) 이 적용되는지 (Preferences > Themes 의 이름 "Maya").
+
+### Step 120 — Maya 배경 · Alt+B
+
+- [ ] (step 120) Allset 레이아웃 (Maya 테마) 에서 뷰포트 위 Alt+B 를 네 번: 회색 #5c5c5c → 밝은 회색 → 위 청회색·아래 검정 그라데이션 → 검정 → 회색, 네 분할 뷰 (Space 탭) 모두 함께 바뀌는지; Maya 와 나란히 볼 때 그라데이션 가운데가 조금 어두운 것 (ΔE00 ≈ 9, 남은 것) 이 거슬리는지.
+- [ ] (step 120) Windows > Settings/Preferences 가 Maya 처럼 하위 메뉴 (Preferences, Hotkey Editor, Color Settings, Marking Menu Editor, Shelf Editor, Panel Editor, Plug-in Manager) 인지; Color Settings 에서 Background 색을 바꾸고 Apply → 모든 뷰가 그 색, Gradient Background 켜고 Apply → 그라데이션.
+- [ ] (step 120) 자기 테마 (Maya 테마 끔) 로 Maya 모드: Alt+B 가 회색 → 밝은 회색 → 검정 (그라데이션 없음) 이고 Preferences > Themes 가 바뀌지 않는지. Blender 로 전환 → 테마가 사용자 것으로 돌아오는지.
+- [ ] (step 120) Edit Mode 에서 Ctrl+B = Bevel (Maya BevelPolygon) 그대로인지.

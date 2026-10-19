@@ -403,7 +403,7 @@ ENTRIES = {
     "ToggleModelEditorBars": _e("KIT", (V3D, "wm.context_toggle", {"data_path": "space_data.show_region_header"}),
                                 note="3D 뷰 머리 (메뉴 + 아이콘 줄) 숨김/보임"),
     "CycleBackgroundColor": _e("KIT", (V3D, "allset.cycle_background", {}),
-                               note="테마 회색 → 밝은 회색 → 검정 (Maya 의 그라데이션 단계는 Blender 에선 전역 테마라 건너뜀)"),
+                               note="모든 뷰: 회색 0.36 → 밝은 회색 0.631 → 그라데이션 → 검정 (Maya 실측, 그라데이션은 Maya 테마일 때만; step 120)"),
     "PaintOperationMarkingMenuPress": _e("KIT", ("Weight Paint", "wm.call_menu", {"name": "ALLSET_MT_paint_operation"}),
                                          note="Replace / Add / Scale / Smooth 메뉴 (누르면 열림, 드래그 아님)"),
     "ModifyPaintValuePress": _e("KIT", ("Weight Paint", "wm.radial_control", {}), note="가중치 값 드래그"),

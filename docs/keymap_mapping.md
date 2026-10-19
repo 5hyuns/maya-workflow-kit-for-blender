@@ -431,7 +431,7 @@
 | Alt+Shift+S | Alt+Shift+S | global | IncrementFluidCenter | — | 해당 없음 | Maya Fluids 없음 | hotkeySetup.mel:661 |
 | Ctrl+Space | Ctrl+SPACE | global | ToggleFullScreenMode | Screen: `screen.screen_full_area` (use_hide_panels=True) | 구현 | UI 숨긴 전체 화면 | hotkeySetup.mel:664 |
 | Shift+Space | Shift+SPACE | global | ToggleZoomInMode | 3D View Generic: `wm.context_toggle` (data_path='space_data.show_region_asset_shelf') | 해당 없음 | 2D Pan/Zoom 확대 모드 없음; IC 에셋 선반 토글 그대로 | hotkeySetup.mel:666 |
-| Alt+b | Alt+B | global | CycleBackgroundColor | 3D View: `allset.cycle_background` | 구현 | 테마 회색 → 밝은 회색 → 검정 (Maya 의 그라데이션 단계는 Blender 에선 전역 테마라 건너뜀) | hotkeySetup.mel:669 |
+| Alt+b | Alt+B | global | CycleBackgroundColor | 3D View: `allset.cycle_background` | 구현 | 모든 뷰: 회색 0.36 → 밝은 회색 0.631 → 그라데이션 → 검정 (Maya 실측, 그라데이션은 Maya 테마일 때만; step 120) | hotkeySetup.mel:669 |
 | Ctrl+` | Ctrl+ACCENT_GRAVE | global | SmoothingDisplayToggle | Object Mode: `allset.smooth_proxy` (action='TOGGLE'); Mesh: `allset.smooth_proxy` (action='TOGGLE') | 구현 | 프록시 Subsurf 켬 ↔ 끔 (케이지 ↔ 스무드), 둘 다 보기 → 케이지 | hotkeySetup.mel:673 |
 | Shift+~ | Shift+ACCENT_GRAVE | global | SmoothingDisplayShowBoth | Object Mode: `allset.smooth_proxy` (action='BOTH'); Mesh: `allset.smooth_proxy` (action='BOTH') | 구현 | Subsurf 켬 + 케이지 와이어 | hotkeySetup.mel:674 |
 | Ctrl+Shift+~ | Ctrl+Shift+ACCENT_GRAVE | global | SmoothProxy | Object Mode: `allset.smooth_proxy` (action='CREATE') | 구현 | Mesh > Smooth Proxy > Subdiv Proxy (Subsurf 추가) | hotkeySetup.mel:675 |

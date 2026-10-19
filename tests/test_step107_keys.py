@@ -125,10 +125,11 @@ def test_background_cycle_follows_maya():
     _one("3D View", 'B', "allset.cycle_background", alt=True)
     sh = bpy.context.scene.display.shading     # a View3DShading like a 3D View's
     sh.background_type = 'THEME'
+    # without the kit's Maya theme the gradient step is skipped (step 120: tests/test_step120_background.py)
     assert kb3.cycle_background(sh) == "LIGHT" and sh.background_type == 'VIEWPORT'
     assert abs(sh.background_color[0] - kb3.srgb_to_linear(0.631)) < 1e-4
     assert kb3.cycle_background(sh) == "BLACK" and sh.background_color[0] == 0.0
-    assert kb3.cycle_background(sh) == "THEME" and sh.background_type == 'THEME'
+    assert kb3.cycle_background(sh) == "GREY" and sh.background_type == 'THEME'
 
 
 def test_skin_paint_keys():
