@@ -114,8 +114,9 @@ def set_playback(scene, a, b):
 def active(context):
     from . import time_slider
     space = context.space_data
+    # the Allset layout's timeline (sidebar on; on 5.x it can't open, step 118 — the bar stays in the header)
     return (space is not None and getattr(space, "mode", None) == 'TIMELINE'
-            and time_slider.has_slider_panel(space, context.area))
+            and time_slider.has_slider_panel(space))
 
 
 def _rounded(x0, y0, x1, y1, r, colour):
@@ -141,7 +142,10 @@ def _rounded(x0, y0, x1, y1, r, colour):
 def _read_row(region, y):
     import gpu
     fb = gpu.state.active_framebuffer_get()
-    buf = fb.read_color(0, y, region.width, 1, 4, 0, 'UBYTE')
+    from .. import compat
+    buf = compat.read_region_row(fb, region, y)
+    if buf is None:
+        return []
     return [tuple(buf[0][i][:3]) for i in range(region.width)]
 
 

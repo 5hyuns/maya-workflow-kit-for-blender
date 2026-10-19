@@ -23,23 +23,13 @@ animation end). Blender form (docs/steps/step_20.md 「계획」 2, 4):
 """
 
 import bpy
-from bl_ui import space_time
+
+from .. import compat
 from bpy.app.handlers import persistent
 
-# Blender 5.x (docs/steps/step_53.md): the Timeline is a Dope Sheet mode and bl_ui.space_time has no
-# TIME_HT_editor_buttons / TIME_MT_editor_menus; the timeline header is DOPESHEET_HT_editor_buttons.draw_header
-# and DOPESHEET_MT_editor_menus with ``mode == 'TIMELINE'`` ($S52\startupl_ui\space_dopesheet.py:198-230,
-# :395-412). There the kit wraps the Dope Sheet ones and keeps other modes untouched.
-LEGACY_TIMELINE = hasattr(space_time, "TIME_HT_editor_buttons")
-
-
-def header_classes():
-    """(class whose ``draw_header`` draws the timeline buttons, class whose ``draw_collapsible`` draws
-    the timeline menus) of this Blender."""
-    if LEGACY_TIMELINE:
-        return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
-    from bl_ui import space_dopesheet
-    return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
+# Blender 5.x (docs/steps/step_53.md): the Timeline is a Dope Sheet mode; compat picks the header classes.
+LEGACY_TIMELINE = compat.LEGACY_TIMELINE
+header_classes = compat.timeline_header_classes
 
 
 def _is_timeline(context):
@@ -92,7 +82,15 @@ RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto 
 
 
 def draw_header(context, layout):
-    if not has_slider_panel(context.space_data, context.area):
+    space, area = context.space_data, context.area
+    if has_slider_panel(space) and not has_slider_panel(space, area):
+        # Allset layout whose sidebar can't open (Blender 5.x: the Timeline mode keeps its sidebar 1 px, even in a
+        # factory file — measured, step 118): one row, Range Slider first, the Time Slider buttons at the right end
+        draw_range_slider(layout, context)
+        layout.separator_spacer()
+        draw_transport(layout, context)
+        return
+    if not has_slider_panel(space, area):
         layout.separator_spacer()
         draw_transport(layout, context)
         layout.separator_spacer()
@@ -164,7 +162,7 @@ class ALLSET_MT_anim_preferences(bpy.types.Menu):
         lay.popover(panel="TIME_PT_keyframing_settings", text="Keying")
         lay.separator()
         lay.menu("TIME_MT_view", text="View")
-        lay.menu("TIME_MT_marker", text="Marker")
+        lay.menu(compat.timeline_marker_menu(), text="Marker")
 
 
 class ALLSET_PT_time_slider(bpy.types.Panel):

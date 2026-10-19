@@ -20,7 +20,7 @@ def _cube_with_keys():
     for f, v in ((1, 0.0), (10, 5.0), (20, 0.0)):
         ob.location.x = v
         ob.keyframe_insert("location", index=0, frame=f)
-    fc = ob.animation_data.action.fcurves.find("location", index=0)
+    fc = kit.fcurves(ob).find("location", index=0)
     for kp in fc.keyframe_points:
         kp.select_control_point = kp.select_left_handle = kp.select_right_handle = False
     return ob, fc

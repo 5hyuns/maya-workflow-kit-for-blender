@@ -49,11 +49,8 @@ def _prefs():
 
 
 def _rna_xml():
-    try:
-        import rna_xml
-    except ImportError:   # Blender 5.x renamed the module (step 53)
-        import _rna_xml as rna_xml
-    return rna_xml
+    from .. import compat
+    return compat.rna_xml()
 
 
 def save_backup():
@@ -88,23 +85,49 @@ def apply():
 
 
 # studio_grey.xml is written for Blender 4.5 (tools/make_theme.py); the XML loader skips attributes a later
-# Blender doesn't have. Blender 5.x keeps some of them elsewhere (docs/steps/step_53.md): the animation
-# editors' colours in theme.common.anim, region backgrounds in theme.regions. Those are copied from the
-# same studio_grey.xml values here (5.x path, 4.5 path in the XML).
-_ANIM = ("preview_range", "channels", "channels_sub", "channel_group", "channel_group_active", "channel",
-         "channel_selected", "keyframe", "keyframe_selected", "keyframe_extreme", "keyframe_extreme_selected",
-         "keyframe_breakdown", "keyframe_breakdown_selected", "keyframe_jitter", "keyframe_jitter_selected",
-         "keyframe_moving_hold", "keyframe_moving_hold_selected", "keyframe_generated",
-         "keyframe_generated_selected", "long_key", "long_key_selected")
+# Blender doesn't have. Blender 5.0 moved them (docs/compat_5x.md, the official table
+# https://developer.blender.org/docs/release_notes/5.0/migration/theme_migration_api/): per-editor panel colours ->
+# user_interface.panel_*, region backgrounds -> theme.regions, animation colours -> theme.common.anim, curve handles
+# -> theme.common.curves, 3D View edge marks renamed. Each 5.x value is copied from the 4.5 path of the same XML
+# (one source per value: the Properties editor for panels — the Maya dock, step 116 — else the Dope Sheet /
+# Graph Editor / 3D View one). Settings 5.0 removed without a successor keep Blender's value.
+_ANIM = ("preview_range", "channel_group", "channel_selected", "keyframe", "keyframe_selected", "keyframe_extreme",
+         "keyframe_extreme_selected", "keyframe_breakdown", "keyframe_breakdown_selected", "keyframe_jitter",
+         "keyframe_jitter_selected", "keyframe_generated", "keyframe_generated_selected", "long_key",
+         "long_key_selected")
+_HANDLES = ("handle_free", "handle_sel_free", "handle_auto", "handle_sel_auto", "handle_vect", "handle_sel_vect",
+            "handle_align", "handle_sel_align", "handle_auto_clamped", "handle_sel_auto_clamped", "handle_vertex",
+            "handle_vertex_select", "handle_vertex_size")
 MOVED = (
-    ("common.anim.playhead", "dopesheet_editor.frame_current"),
-    *((f"common.anim.{n}", f"dopesheet_editor.{n}") for n in _ANIM),
+    ("user_interface.panel_header", "properties.space.panelcolors.header"),
+    ("user_interface.panel_back", "properties.space.panelcolors.back"),
+    ("user_interface.panel_sub_back", "properties.space.panelcolors.sub_back"),
+    ("user_interface.panel_title", "properties.space.title"),
+    ("user_interface.panel_text", "properties.space.text"),
     ("regions.sidebars.back", "view_3d.space.button"),
     ("regions.sidebars.tab_back", "view_3d.space.tab_back"),
     ("regions.channels.back", "dopesheet_editor.space_list.list"),
+    ("regions.channels.text", "dopesheet_editor.space_list.list_text"),
+    ("regions.channels.text_selected", "dopesheet_editor.space_list.list_text_hi"),
+    ("regions.asset_shelf.header_back", "view_3d.asset_shelf.header_back"),
+    ("regions.asset_shelf.back", "view_3d.asset_shelf.back"),
     ("regions.scrubbing.back", "dopesheet_editor.time_scrub_background"),
     ("regions.scrubbing.time_marker", "dopesheet_editor.time_marker_line"),
     ("regions.scrubbing.time_marker_selected", "dopesheet_editor.time_marker_line_selected"),
+    ("common.anim.playhead", "dopesheet_editor.frame_current"),
+    ("common.anim.channels", "dopesheet_editor.dopesheet_channel"),
+    ("common.anim.channels_sub", "dopesheet_editor.dopesheet_subchannel"),
+    ("common.anim.channel_group_active", "dopesheet_editor.active_channels_group"),
+    ("common.anim.channel", "dopesheet_editor.channels"),
+    ("common.anim.keyframe_moving_hold", "dopesheet_editor.keyframe_movehold"),
+    ("common.anim.keyframe_moving_hold_selected", "dopesheet_editor.keyframe_movehold_selected"),
+    *((f"common.anim.{n}", f"dopesheet_editor.{n}") for n in _ANIM),
+    *((f"common.curves.{n}", f"graph_editor.{n}") for n in _HANDLES),
+    ("view_3d.bevel", "view_3d.vertex_bevel"),
+    ("view_3d.seam", "view_3d.edge_seam"),
+    ("view_3d.sharp", "view_3d.edge_sharp"),
+    ("view_3d.crease", "view_3d.edge_crease"),
+    ("view_3d.freestyle", "view_3d.freestyle_edge_mark"),
 )
 
 
@@ -142,9 +165,12 @@ def _apply_moved(theme):
         value = _xml_value(root, old)
         if obj is None or not value:
             continue
+        current = getattr(obj, name)
+        if isinstance(current, (int, float)):     # e.g. handle_vertex_size
+            setattr(obj, name, type(current)(float(value)))
+            continue
         h = value.lstrip("#")
         rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
-        current = getattr(obj, name)
         if len(current) == 4:
             rgb.append(int(h[6:8], 16) / 255 if len(h) >= 8 else current[3])
         setattr(obj, name, rgb)

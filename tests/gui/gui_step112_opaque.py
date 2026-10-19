@@ -107,7 +107,7 @@ def s_pixels_wait():
 def s_pixels():
     path = grab()
     theme = bpy.context.preferences.themes[0].view_3d
-    back = tuple(theme.space.button)[:3]
+    back = tuple(mod("compat").toolbar_back(bpy.context.preferences.themes[0]))[:3]
     view_bg = tuple(theme.space.gradients.high_gradient)
     dock_back = tuple(bpy.context.preferences.themes[0].properties.space.back)[:3]   # a Properties editor (step 116)
     stack = mod("ui.maya_dock").find_stack(win().screen)

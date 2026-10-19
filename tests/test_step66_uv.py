@@ -14,6 +14,7 @@ import kit
 uvt = import_module(kit.MODULE + ".operators.uv_tools")
 marking = import_module(kit.MODULE + ".marking")
 mm = import_module(kit.MODULE + ".marking.menus")
+compat = import_module(kit.MODULE + ".compat")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
@@ -199,10 +200,10 @@ def test_uv_components():
     assert bpy.ops.allset.uv_component(mode='EDGE') == {'FINISHED'}
     assert ob.mode == 'EDIT' and ts.use_uv_select_sync and tuple(ts.mesh_select_mode) == (False, True, False)
     assert bpy.ops.allset.uv_component(mode='SHELL') == {'FINISHED'}
-    assert not ts.use_uv_select_sync and ts.uv_select_mode == 'ISLAND'
+    assert not ts.use_uv_select_sync and compat.uv_island_mode(ts)
     assert ob.data.total_face_sel == 2, "every face selected so the UV Editor draws all UVs"
     assert bpy.ops.allset.uv_component(mode='UV') == {'FINISHED'}
-    assert ts.uv_select_mode == 'VERTEX'
+    assert ts.uv_select_mode == 'VERTEX' and not compat.uv_island_mode(ts)
     bpy.ops.object.mode_set(mode='OBJECT')
     assert uvt.prepare(bpy.context) and ob.mode == 'EDIT' and ts.use_uv_select_sync
 
@@ -210,7 +211,7 @@ def test_uv_components():
 def _ctx(space_mode='UV', sync=True, island=False):
     ts = bpy.context.scene.tool_settings
     ts.use_uv_select_sync = sync
-    ts.uv_select_mode = 'ISLAND' if island else 'VERTEX'
+    compat.set_uv_island_mode(ts, island)
     return types.SimpleNamespace(mode='EDIT_MESH', scene=bpy.context.scene, active_object=None,
                                  space_data=types.SimpleNamespace(type='IMAGE_EDITOR', mode=space_mode))
 

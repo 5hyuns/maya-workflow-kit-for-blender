@@ -54,7 +54,8 @@ def _section(layout, idname, label, default_closed=True):
 def current_component(context):
     ts = context.scene.tool_settings
     if not ts.use_uv_select_sync:
-        return 'SHELL' if ts.uv_select_mode == 'ISLAND' else 'UV'
+        from .. import compat
+        return 'SHELL' if compat.uv_island_mode(ts) else 'UV'
     v, e, f = ts.mesh_select_mode
     return 'FACE' if f and not (v or e) else 'EDGE' if e and not v else 'VERTEX'
 

@@ -120,8 +120,13 @@ def ensure_driver(driven, key, driver_node, driver_key):
         if old is not None:   # another driver on this channel: Maya replaces the connection
             ob.animation_data.drivers.remove(old)
         fc = ob.driver_add(full, idx) if idx >= 0 else ob.driver_add(full)
+        # A new driver curve maps 1:1 — a Generator modifier in 4.5, two keys (0, 0) (1, 1) in 5.x (measured,
+        # step 118): SDK curves start empty either way.
         for mod in list(fc.modifiers):
             fc.modifiers.remove(mod)
+        while len(fc.keyframe_points):
+            fc.keyframe_points.remove(fc.keyframe_points[0], fast=True)
+        fc.extrapolation = 'CONSTANT'   # Maya infinity Constant (5.x driver curves start LINEAR)
         scale = curve_scale(driver_key)
         if scale != 1.0:   # a simple expression: no Python auto-run needed
             fc.driver.type = 'SCRIPTED'

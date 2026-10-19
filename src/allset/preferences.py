@@ -7,6 +7,19 @@ from step 10, layout install buttons (#3) from step 5.
 
 import bpy
 
+# Property names whose update callback is skipped while set from code (switch.set_mode). Blender 5.0 removed
+# dict-style access to bpy.props values (``prefs["maya_theme"] = False``), which 4.5 used to skip the callback.
+QUIET = set()
+
+
+def set_quiet(prefs, name, value):
+    """``prefs.<name> = value`` without its update callback."""
+    QUIET.add(name)
+    try:
+        setattr(prefs, name, value)
+    finally:
+        QUIET.discard(name)
+
 
 class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Must equal the top-level package name: "bl_ext.<repo>.allset" as an
@@ -104,6 +117,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
 
     def _update_theme(self, context):
+        if "maya_theme" in QUIET:
+            return
         from . import theme
         if self.maya_theme:
             theme.apply()
@@ -117,6 +132,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default=False, update=_update_theme)
 
     def _update_splash(self, context):
+        if "maya_hide_splash" in QUIET:
+            return
         from . import prefs_preset
         if self.maya_hide_splash:
             prefs_preset.apply(context.preferences, self, "splash")
@@ -134,6 +151,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # preferences: backed up, restored when turned off or the add-on is disabled (prefs_preset).
     def _update_group(group, option):
         def update(self, context):
+            if option in QUIET:
+                return
             from . import prefs_preset
             if getattr(self, option):
                 prefs_preset.apply(context.preferences, self, group)

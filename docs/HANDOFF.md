@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 118 (Blender 5.x 호환, 사용자 요청 10-19) 완료 — `docs/steps/step_118.md`, 영향 목록·버전별 결과 `docs/compat_5x.md`.
+  - 공식 5.x 마이너 최신 zip (5.0.1 / 5.1.2 / 5.2.2, sha256) → `C:/Users/ohnsk/AppData/Local/allset_blenders/` (저장소 밖, 설치기 없음).
+  - 버전 분기는 `src/allset/compat.py` 한 곳 (기능 검사 우선, `test_step118_compat` 가 다른 곳의 `bpy.app.version` 을 막음): layered
+    action F-curve, UV 섬 모드·루프 선택, `media_type`, `PoseBone.hide`, `pointmerge_facedata` 5.2, framebuffer 범위, 테마 MOVED =
+    공식 5.0 이전 표 55 항목, Timeline 클래스·Marker 메뉴, 5.x Properties 새 탭 플래그 (템플릿 도크), 5.2 Ctrl+S 옵션, 재질 노드.
+    버전 무관 수정: Maya → Blender 전환이 작업 공간을 창이 떠난 뒤 지움 (5.1.2 크래시), `preferences.set_quiet` (5.0 은 bpy.props dict 쓰기 불가), SDK 새 드라이버 키 삭제 + CONSTANT, 5.x IC 「Screen
+    Editing」 Alt+F12 렌더 제거, 조각 브러시 3D View 문맥, 5.x 타임라인 = 한 줄 (사이드바가 열리지 않음).
+  - 매니페스트 `blender_version_max = "5.3.0"` (4.5.x – 5.2.x), listing.md / DISTRIBUTION.md / audit / README / CLAUDE.md 갱신.
+  - 검증: 헤드리스 877/877 (4.5.4, 5.0.1, 5.1.2, 5.2.2 각각), GUI 1121/1121 × 4 (5.1.2 는 수동 스윕을 두 세션으로 — 한 세션은 5.1.2 에서만 멈춤, 원인 미확정), release_check
+    23/23 ×4, look_compare 테마 ΔE00 > 5 = 0/38 ×4 + 스크린샷 직접 확인.
+  - **바로 다음 할 일**: step 119 = Maya 배경색·Alt+B 배경 순환 (hotkeySetup.mel 에서 실제 키 확인). 그 밖에 열린 것: 사용자 업로드
+    (manual_checks 117; 0.2.0 → 지원 범위가 넓어졌으니 업로드 전 버전 올리기 권장), 툴바 떼기, manual_checks 115/116/118.
+
 - Step 117 (배포 준비 4: 등록 자료 + 최종 검증, 0.2.0) 완료 — `docs/steps/step_117.md`. 업로드는 하지 않음 (사용자).
   - `docs/distribution/listing.md` = A 폼 필드 / B 긴 설명 (영어, "Not just a Maya keymap" 로 시작, 워크플로우 6 묶음, opt-in,
     되돌리기, 확장 밖 경로, exec·execfile·ctypes, 상표 고지) / C 미디어 표 / D 심사자용 고지. 미디어 `docs/distribution/media/`

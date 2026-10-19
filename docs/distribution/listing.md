@@ -17,7 +17,7 @@ Rules followed: `docs/distribution/extensions_audit.md` (final status of every r
 | Tags (platform list) | User Interface, 3D View, Modeling, Animation, Rigging |
 | License | GPL-3.0-or-later (code); CC0-1.0 (the kit-made images and data files, `ASSETS_LICENSE.txt`) |
 | Copyright | 2026 ohnsk |
-| Supported Blender | 4.5 LTS (4.5.x; built and tested on 4.5.4) — manifest `blender_version_min` / `max` (see part D "Versions") |
+| Supported Blender | 4.5 LTS and 5.0 – 5.2 (4.5.x – 5.2.x; tested on 4.5.4, 5.0.1, 5.1.2, 5.2.2) — manifest `blender_version_min` / `max` (see part D "Versions") |
 | Permissions | `files`: "Layout template, settings backup, shelves, Maya project folders" (63, no end punctuation). No `network`, no `clipboard`, no `camera` / `microphone` |
 | Platforms | all (pure Python, no `platforms` entry) |
 | Website / support URL | none yet (no public page or issue tracker — decision 11); add the tracker URL on the platform after the upload |
@@ -88,6 +88,94 @@ Allset rebuilds those, one workflow at a time, on top of Blender's own tools.
   Duplicate Special, Freeze, Extrude, Bevel, Bind Skin, constraints, Set Key, UV projections and more.
 
 ### What happens when you enable it — nothing until you choose Maya
+
+Installing and enabling Allset does not change your keymap, preferences, theme or layout. It adds a small
+Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a
+welcome dialog. Only when you click **Make Blender feel like Maya** (in the welcome dialog or in the add-on
+preferences) or switch to Maya does Allset turn on its Maya-style keymap, Maya layout, menus, theme
+("Studio Grey (Maya-inspired)") and Maya-like preferences (navigation, undo steps, solid side panels, auto key,
+density, font, wireframes, splash). Before that, a copy of everything it will change is written to the extension's
+user folder.
+
+### How to go back
+
+- Click **Blender** in the Maya | Blender switch (or Ctrl+Alt+Shift+M): Blender's keymap, theme, layout and every
+  preference Allset changed come back; switch again whenever you like.
+- **Revert Maya Look** in the add-on preferences removes the theme, splash and layout template only.
+- Disabling or removing the extension puts your values back the same way and deletes the layout template. Allset never
+  saves your preferences by itself: Blender's own Auto-Save Preferences (or you) do.
+
+### Files it writes outside the extension
+
+- `scripts/startup/bl_app_templates_user/Allset/` — the Maya layout (File > New > Allset): only data
+  (`startup.blend`, splash images, a marker file), copied when you choose Maya or click Install Maya Layout, deleted
+  when you disable or remove Allset (folders without Allset's marker are never touched).
+- The extension's user folder (Blender's `extension_path_user`): preference snapshot, theme backup, your shelves.
+- Maya projects: the file dialogs open in the current project like Maya's. With no project set, the default project
+  `Documents/allset/projects/default` is made the first time a project-aware dialog opens; Set Project / Project
+  Window make folders only where you choose.
+- Playblast writes its movie to Blender's temporary folder; exports and saves go where you choose.
+
+### Technical notes
+
+- **Python `exec`**: only text you type or write yourself — the Python Command Line, your Python shelf buttons and the
+  Script Editor run it in their own namespace (with the `maya.cmds` look-alike), exactly like Blender's Python
+  console. Allset never downloads or generates code.
+- **`bpy.utils.execfile`**: the Maya-style keymap is built from Blender's own bundled Industry Compatible keymap data
+  (`presets/keyconfig/keymap_data/industry_compatible_data.py` of the running Blender), loaded the way Blender's
+  keymap preset loads it, then patched. No keymap data is copied into the extension.
+- **`ctypes` (Windows only)**: one read-only `user32.GetAsyncKeyState` call, to end Maya hold keys (D, X, C, V, B ...)
+  whose key release Blender's transform tool swallows. No hook, nothing written; elsewhere Blender's own key-release
+  event is used.
+- **Blender UI classes**: most of Allset's UI is its own panels, menus and gizmos, or `append` / `prepend`. In Maya
+  areas it draws instead of a few Blender headers and re-registers some panels with a wrapped `poll` — only in Maya
+  mode, put back when you switch to Blender, disable or remove it; other add-ons' additions keep drawing.
+- No network access, no auto-updater, no `sys.path` / `sys.modules` changes. Help menu items open Blender manual
+  pages in your web browser when you click them.
+
+### Limits
+
+Blender is Z-up and has one pivot per object; dragging over a field with the middle mouse, Maya's MEL, side tabs and
+OS-level docking of panels need Blender's C++ code and are not imitated. Each greyed menu item says what to use
+instead.
+
+### Trademarks
+
+Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc., and/or its subsidiaries and/or affiliates
+in the USA and/or other countries. This project is an independent, free and open-source (GPL) extension for Blender.
+It is not affiliated with, endorsed by, sponsored by, or otherwise approved by Autodesk, Inc. or the Blender
+Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; references to Maya are solely to
+describe compatibility and the intended audience.
+
+## C. Media (`docs/distribution/media/`, all made by the kit: CC0, no Maya or Blender logo, no Maya capture, no GIF)
+
+Regenerate with `python tools/make_listing_media.py` (icon + featured image: `tools/make_splash.py --media`, Workbench
+render of the kit's own artwork; screenshots: `tools/listing_shots.py` in a GUI Blender on a clean sandbox with the
+built zip, Maya theme applied as Make Blender feel like Maya does).
+
+| File | Size | Caption (upload order) |
+|---|---|---|
+| `icon.png` | 256 × 256 | — (icon) |
+| `featured.png` | 1920 × 1080 | — (featured image) |
+| `1_navigate_select.png` | 1600 × 900 | Navigate & Select: Maya tools, component selection and the Move manipulator |
+| `2_hotbox_marking_menus.png` | 1600 × 900 | Hotbox & Marking Menus: Space-hold hotbox with every menu of the menu set |
+| `3_channel_box_attribute_editor.png` | 1600 × 900 | Channel Box & Attribute Editor: keyed channels, SHAPES / INPUTS, Maya node tabs |
+| `4_menu_sets_shelves.png` | 1600 × 900 | Menu Sets & Shelves: Rigging menu set, Skeleton menu with option boxes, Rigging shelf |
+| `5_maya_concepts.png` | 1600 × 900 | Maya concepts: group1 / shapes in the Outliner, Freeze Transformations (pivot kept), Modify menu |
+| `6_option_windows.png` | 1600 × 900 | Option windows: Duplicate Special Options with Maya's factory values |
+
+## D. Technical disclosure for the reviewers
+
+### Versions
+
+`blender_version_min = "4.5.0"`, `blender_version_max = "5.3.0"` (exclusive): 4.5.x – 5.2.x. Target 4.5 LTS
+(decision 4); step 118 made 5.0 – 5.2 work and measured every minor version's latest release (4.5.4, 5.0.1, 5.1.2,
+5.2.2): the full headless suite, the GUI suite and the clean install → enable → disable → remove round trip pass on each
+(`docs/compat_5x.md`, version differences in one module, `compat.py`). Blender 4.2.23 LTS fails 25 of 869 tests (the
+layout template is saved by 4.5, brush assets are 4.3+, file I/O options differ), so 4.2 – 4.4 are not offered the
+extension, and a Blender after 5.2 is not offered it until it is measured the same way.
+
+## What happens when you enable it — nothing until you choose Maya
 
 Installing and enabling Allset does not change your keymap, preferences, theme or layout. It adds a small
 Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a

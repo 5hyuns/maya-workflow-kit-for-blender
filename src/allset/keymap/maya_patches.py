@@ -826,7 +826,9 @@ INSERT_KEY_KEYS = (("I", {"alt": True}, {"channels": "ALL"}),
                    ("R", {"ctrl": True, "shift": True}, {"channels": "SCALE"}))
 KEY_STEP_SHADOWS = ("User Interface", "Mask Editing", "Weight Paint", "Grease Pencil Paint Mode",
                     "Grease Pencil Edit Mode", "Grease Pencil Sculpt Mode", "Grease Pencil Weight Paint",
-                    "Grease Pencil Vertex Paint", "Animation Channels", "Text")
+                    "Grease Pencil Vertex Paint", "Animation Channels", "Text",
+                    # Blender 5.x IC only (step 118): Draw Mode Alt+I / Ctrl+Shift+E, Sequencer Ctrl+Shift+R
+                    "Grease Pencil Draw Mode", "Sequencer")
 
 
 def patch_key_insert(kd):
@@ -968,6 +970,11 @@ def patch_script_editor(kd):
     # --debug-handlers: the Script Editor's Ctrl+Enter rendered, "No camera found"). Maya has no Ctrl+Enter render
     # (Render > Render Current Frame has no default hotkey; Ctrl+Alt+Enter render animation stays IC's).
     kd.remove("Screen Editing", "render.render", type="RET", ctrl=True, alt=False)
+    # Blender 5.x IC adds Alt+F12 / Ctrl+Alt+F12 sequencer-scene renders there too (5.2 IC:299-302, step 118): they
+    # took the UV Editor's Maya Alt+F12 (UV Shell, hotkeySetup.mel:256-258). Not in 4.5's IC data.
+    for ctrl in (False, True):
+        if kd.find("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl):
+            kd.remove("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl)
     _add(kd, "Text", "allset.script_run", make_event("RET", ctrl=True), first=True, shadows=("Text",))
     # Screen's numpad Enter = file.execute (file browsers only): the Text item runs first in a Text Editor anyway
     _add(kd, "Text", "allset.script_run", make_event("NUMPAD_ENTER"), {"clear": True}, first=True,
@@ -990,7 +997,8 @@ SCULPT_BRUSHES = (("ZERO", "Mask"), ("ONE", "Draw"), ("TWO", "Smooth"), ("THREE"
 SCULPT_LIBRARY = "brushes/essentials_brushes-mesh_sculpt.blend/Brush/"
 SEARCH_SHADOWS = ("Property Editor", "Outliner", "Graph Editor Generic", "Node Editor", "Dopesheet", "NLA Generic",
                   "Text Generic", "Animation Channels", "Image Paint", "Vertex Paint", "Weight Paint", "Sculpt",
-                  "Grease Pencil Weight Paint")
+                  "Grease Pencil Weight Paint",
+                  "Preferences", "Preferences_nav")   # Blender 5.x: Ctrl+F filter in Preferences (step 118)
 BOOKMARK_KEYS = (("T", {"alt": True}, "allset.bookmark_create", {}),
                  ("T", {"alt": True, "shift": True}, "allset.bookmark_create", {"quick": True}),
                  ("QUOTE", {}, "screen.marker_jump", {"next": True}),

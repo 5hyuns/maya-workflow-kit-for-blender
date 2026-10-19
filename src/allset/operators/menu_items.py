@@ -458,8 +458,12 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
         try:
             res = _activate_brush(self.brush)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
-            return {'CANCELLED'}
+            if context.window is None:
+                self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+                return {'CANCELLED'}
+            # 5.2: right after the switch to sculpt mode the brush operator may still see the old mode
+            # ("wrong object mode", GUI, step 118): the timer below tries again
+            res = {'CANCELLED'}
         if res != {'FINISHED'} and context.window is not None:
             # The essentials library loads in the background on the first use in a session (step 109, GUI:
             # the operator cancels with "Asset loading is unfinished"): try again for a few seconds.
@@ -470,8 +474,17 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
 BRUSH_RETRY_S, BRUSH_RETRIES = 0.2, 25
 
 
-def _activate_brush(brush):
-    return bpy.ops.brush.asset_activate(asset_library_type='ESSENTIALS', relative_asset_identifier=SCULPT_LIBRARY + brush)
+def _activate_brush(brush, window=None):
+    """``brush.asset_activate`` in a 3D View of the window when there is one: 5.2 checks the mode there and refuses
+    from another editor (a shelf button: "Unable to activate brush, wrong object mode", GUI, step 118)."""
+    window = window or bpy.context.window
+    area = next((a for a in window.screen.areas if a.type == 'VIEW_3D'), None) if window else None
+    region = next((r for r in area.regions if r.type == 'WINDOW'), None) if area else None
+    kwargs = dict(asset_library_type='ESSENTIALS', relative_asset_identifier=SCULPT_LIBRARY + brush)
+    if region is None:
+        return bpy.ops.brush.asset_activate(**kwargs)
+    with bpy.context.temp_override(window=window, area=area, region=region):
+        return bpy.ops.brush.asset_activate(**kwargs)
 
 
 def _retry_brush(brush):
@@ -483,8 +496,7 @@ def _retry_brush(brush):
         if win is None or bpy.context.mode != 'SCULPT':
             return None
         try:
-            with bpy.context.temp_override(window=win):
-                done = _activate_brush(brush) == {'FINISHED'}
+            done = _activate_brush(brush, win) == {'FINISHED'}
         except RuntimeError:
             done = False
         return None if done or left[0] <= 0 else BRUSH_RETRY_S
@@ -528,8 +540,8 @@ def _strips(scene, create=False):
         if not create:
             return None
         scene.sequence_editor_create()
-    se = scene.sequence_editor
-    return getattr(se, "strips", None) or se.sequences
+    from .. import compat
+    return compat.strips(scene.sequence_editor)
 
 
 class ALLSET_OT_import_audio(bpy.types.Operator, ImportHelper):

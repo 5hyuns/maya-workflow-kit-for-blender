@@ -227,13 +227,10 @@ def snap_target(times):
 def selected_key_times(objects):
     """{(object name, data path, index): (selected key times,)} over the objects' actions (numpy, cheap)."""
     import numpy as np
+    from .. import compat
     out = {}
     for ob in objects:
-        ad = ob.animation_data
-        action = ad.action if ad else None
-        if action is None:
-            continue
-        for fc in action.fcurves:
+        for fc in compat.id_fcurves(ob):
             n = len(fc.keyframe_points)
             if not n:
                 continue

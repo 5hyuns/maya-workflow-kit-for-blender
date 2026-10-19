@@ -24,6 +24,7 @@ hotbox's Windows menu all run it.
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import compat
 from ..operators import material as material_ops
 from ..operators import menu_extras
 from . import ae_layout
@@ -96,7 +97,7 @@ def _hypershade_area(context):
 def _node_items(want_textures):
     out = []
     for mat in materials():
-        if not mat.use_nodes or mat.node_tree is None:
+        if not compat.material_uses_nodes(mat):
             continue
         for node in mat.node_tree.nodes:
             if node.type in SHADER_NODES:
@@ -272,7 +273,7 @@ class ALLSET_OT_hs_node(bpy.types.Operator):
         if mat is None:
             mat = material_ops.new_material('LAMBERT')
             mat.use_fake_user = True
-        mat.use_nodes = True
+        compat.ensure_material_nodes(mat)
         tree = mat.node_tree
         try:
             node = tree.nodes.new(self.node_type)

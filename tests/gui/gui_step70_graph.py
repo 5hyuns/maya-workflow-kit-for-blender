@@ -57,7 +57,7 @@ def gev(type, value, x=None, y=None, **kw):
 
 
 def keys():
-    return list(bpy.data.objects["Cube"].animation_data.action.fcurves[0].keyframe_points)
+    return list(import_module(MODULE + ".compat").id_fcurve_collection(bpy.data.objects["Cube"])[0].keyframe_points)
 
 
 def redraw():

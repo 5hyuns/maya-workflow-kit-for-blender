@@ -15,6 +15,7 @@ import math
 import bpy
 import numpy as np
 
+from .. import compat
 from .preselect import project, segment_distance
 
 # Maya factory customSelectPriority (PREF:781-847) for the kit's object kinds; anything else is 2.
@@ -93,7 +94,7 @@ def _segments(ob, kind, depsgraph):
         a, b = [], []
         for pb in ob.pose.bones:
             bone = pb.bone
-            if bone.hide or (len(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)):
+            if compat.bone_hidden(pb) or (len(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)):
                 continue
             a.append(mw @ pb.head)
             b.append(mw @ pb.tail)
@@ -111,7 +112,7 @@ def _segments(ob, kind, depsgraph):
         finally:
             ev.to_mesh_clear()
         if len(co):
-            m = np.array(mw)
+            m = np.array(mw, dtype=np.float64)
             co = co @ m[:3, :3].T + m[:3, 3]
         return co[ed[:, 0]], co[ed[:, 1]], 0.0
     # IK handle empty: the plain axes it draws (other empty shapes approximated by their axes)
@@ -130,7 +131,7 @@ def hits(context, region, rv3d, mouse):
     space, view_layer = context.space_data, context.view_layer
     depsgraph = context.evaluated_depsgraph_get()
     targets = ik_targets(context.scene)
-    persp = np.array(rv3d.perspective_matrix)
+    persp = np.array(rv3d.perspective_matrix, dtype=np.float64)
     out = []
     for ob in context.scene.objects:   # view_layer.objects can yield None after removals (step 67)
         kind = kind_of(ob, targets)

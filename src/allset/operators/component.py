@@ -205,19 +205,12 @@ class ALLSET_OT_select_loops(bpy.types.Operator):
     def execute(self, context):
         # Blender 4.5: mesh.loop_multi_select(ring); 5.x: mesh.select_edge_loop_multi /
         # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops, docs/steps/step_53.md).
-        if _has_op(bpy.ops.mesh, "loop_multi_select"):
+        from .. import compat
+        if compat.has_op(bpy.ops.mesh, "loop_multi_select"):
             return bpy.ops.mesh.loop_multi_select(ring=self.ring)
         op = bpy.ops.mesh.select_edge_ring_multi if self.ring else bpy.ops.mesh.select_edge_loop_multi
         return op()
 
-
-def _has_op(module, name):
-    """Does this Blender have the operator? (bpy.ops returns a wrapper for any name.)"""
-    try:
-        getattr(module, name).get_rna_type()
-        return True
-    except (AttributeError, KeyError):
-        return False
 
 
 classes = (ALLSET_OT_select_none, ALLSET_OT_bevel, ALLSET_OT_convert_selection,

@@ -30,7 +30,7 @@ def region():
 
 
 def curve():
-    return bpy.data.objects["pCube1"].animation_data.action.fcurves.find("location", index=0)
+    return import_module(MODULE + ".compat").id_fcurve_collection(bpy.data.objects["pCube1"]).find("location", index=0)
 
 
 def frames():

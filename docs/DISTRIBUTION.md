@@ -22,6 +22,9 @@
 **추천 (delegated)** — 아래 「추천」 절: 이름부터 정하고 → **무료 GPL 핵심판을 자체 저장소 (b) 로 먼저** → 플랫폼 위험 항목을 정리한 뒤
 **extensions.blender.org (a) 에 제출** → exe (d) 는 선택 (지금은 만들지 않음, 초안만) → 유료 (c) 는 하더라도 「무료 킷 + 별도 유료 상품」 → 묶음 (e) 은 하지 않음.
 
+**지원 Blender** (모든 경로 공통, manifest `blender_version_min` 4.5.0 / `blender_version_max` 5.3.0): 4.5.x – 5.2.x —
+4.5.4, 5.0.1, 5.1.2, 5.2.2 에서 헤드리스·GUI·설치 왕복 통과 (`docs/compat_5x.md`, step 118). 5.3 이 나오면 같은 측정 뒤 올림.
+
 ## (a) Blender Extensions 플랫폼
 
 - 누구나 Blender ID 로 /submit/ 에 zip 업로드 → 사람이 심사 → 공개. https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html

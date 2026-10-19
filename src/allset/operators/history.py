@@ -90,11 +90,8 @@ def _static(fcurve):
 
 def _fcurve_owners(action):
     """Collections holding the action's F-curves (layered actions in 4.4+, legacy fallback)."""
-    owners = []
-    for layer in getattr(action, "layers", ()):
-        for strip in layer.strips:
-            owners.extend(getattr(strip, "channelbags", ()))
-    return owners or [action]
+    from .. import compat
+    return compat.fcurve_owners(action)
 
 
 def delete_static_channels(ob):

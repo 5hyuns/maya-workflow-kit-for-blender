@@ -19,6 +19,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, Po
 from mathutils import Vector
 
 from . import units
+from .. import compat
 
 EPS = 1e-5           # UVs closer than this are one UV
 NUDGE = 2e-4         # how far Cut moves the smaller side (0.2 px on a 1024 map)
@@ -98,7 +99,7 @@ def sync(context):
 def selected_faces(bm, uv, synced):
     if synced:
         return [f for f in bm.faces if f.select and not f.hide]
-    return [f for f in bm.faces if f.select and not f.hide and all(l[uv].select for l in f.loops)]
+    return [f for f in bm.faces if f.select and not f.hide and all(compat.uv_vert_selected(l, uv) for l in f.loops)]
 
 
 def selected_edges(bm, uv, synced):
@@ -109,7 +110,7 @@ def selected_edges(bm, uv, synced):
         if f.hide or not f.select:
             continue
         for loop in f.loops:
-            if loop[uv].select_edge:
+            if compat.uv_edge_selected(loop, uv):
                 out.add(loop.edge)
     return list(out)
 
@@ -120,7 +121,7 @@ def target_islands(bm, uv, synced):
     if synced:
         picked = {f for f in bm.faces if f.select}
     else:
-        picked = {f for f in bm.faces if f.select and any(l[uv].select for l in f.loops)}
+        picked = {f for f in bm.faces if f.select and any(compat.uv_vert_selected(l, uv) for l in f.loops)}
     chosen = [isl for isl in every if picked & set(isl)]
     return chosen or every
 
@@ -513,7 +514,7 @@ def set_component(context, mode):
         ts.mesh_select_mode = (mode == 'VERTEX', mode == 'EDGE', mode == 'FACE')
     elif mode in ('UV', 'SHELL'):
         ts.use_uv_select_sync = False
-        ts.uv_select_mode = 'ISLAND' if mode == 'SHELL' else 'VERTEX'
+        compat.set_uv_island_mode(ts, mode == 'SHELL')
         # without sync Blender draws only the selected faces' UVs: Maya shows them all
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)

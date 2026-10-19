@@ -340,8 +340,10 @@ def m70_4_off():
     with override():
         bpy.ops.transform.rotate(value=0.5, orient_axis='Z')
     c = curves(cube)
-    check(f"[M70-4] Maya Auto Key off: Blender keys every channel ({sorted(c)})",
-          any(p == "rotation_euler" for p, _i in c))
+    # Maya Auto Key off = Blender's own "Only Insert Available" value back: off before 5.2, on in 5.2 (step 118)
+    factory = type(bpy.context.preferences.edit).bl_rna.properties["use_keyframe_insert_available"].default
+    check(f"[M70-4] Maya Auto Key off: Blender's own auto key ({'available only' if factory else 'every channel'}, "
+          f"{sorted(c)})", any(p == "rotation_euler" for p, _i in c) != factory)
     bpy.context.preferences.addons[MODULE].preferences.use_maya_auto_key = True
     ts().use_keyframe_insert_auto = False
 
@@ -3940,7 +3942,7 @@ def _m66_1_shell_check():
     b = ubm()
     check(f"[M66-1] Alt+F12 = UV Shell (island mode, {ts().uv_select_mode}); the 3D view shows every face selected "
           f"({sum(f.select for f in b.faces)} of {len(b.faces)})",
-          ts().uv_select_mode == 'ISLAND' and all(f.select for f in b.faces))
+          import_module(MODULE + ".compat").uv_island_mode(ts()) and all(f.select for f in b.faces))
     # [M66-3] the top face's border edges in the 3D view, then the UV Editor keys
     ts().use_uv_select_sync = True
     ts().mesh_select_mode = (False, True, False)
@@ -5250,7 +5252,7 @@ def user_km_item():
     return next(i for i in km.keymap_items if i.idname == "view3d.view_selected")
 
 
-ADDON = "copy_global_transform"
+ADDON = "node_wrangler"   # a core add-on off by default in 4.5 and 5.x (copy_global_transform became built-in in 5.0)
 
 
 @named("m60_new")
@@ -5328,7 +5330,8 @@ def _m60_maya():
 
 @named("m60_back")
 def _m60_back():
-    if wait(_m60_back, lambda: not sw().is_on(), limit=12):
+    # the Maya workspace goes once the window has left it (a timer, step 118)
+    if wait(_m60_back, lambda: not sw().is_on() and sw().WORKSPACE not in bpy.data.workspaces, limit=20):
         return
     names = [w.name for w in bpy.data.workspaces]
     check(f"[M60-2] Windows > Switch to Blender -> Blender mode ({sw().is_on()})", not sw().is_on())

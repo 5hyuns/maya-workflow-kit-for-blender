@@ -55,7 +55,9 @@ def role(area):
     on = [name for name, flag in ROLE_FLAGS.items() if getattr(space, flag, False)]
     if len(on) != 1:
         return None
-    if any(getattr(space, f) for f in _flags(space) if f != "show_properties_tool" and f != ROLE_FLAGS[on[0]]):
+    from .. import compat
+    if any(getattr(space, f) for f in _flags(space)
+           if f not in ("show_properties_tool", ROLE_FLAGS[on[0]]) and f not in compat.LATER_PROPERTIES_TABS):
         return None
     return on[0]
 

@@ -14,6 +14,8 @@ import os
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 
+from .. import compat
+
 MAYA_QUALITY = 70          # Maya Playblast option defaults (animation_08_win1)
 MAYA_SCALE = 0.5
 
@@ -32,7 +34,8 @@ def _crf(quality):
 
 SETTINGS = ("render.filepath", "render.resolution_percentage", "render.image_settings.file_format",
             "render.image_settings.quality", "render.ffmpeg.format", "render.ffmpeg.codec",
-            "render.ffmpeg.constant_rate_factor", "use_preview_range", "frame_preview_start", "frame_preview_end")
+            "render.ffmpeg.constant_rate_factor", "use_preview_range", "frame_preview_start", "frame_preview_end",
+            *(("render.image_settings.media_type",) if compat.MEDIA_TYPE else ()))
 
 
 def _get(scene, path):
@@ -48,8 +51,9 @@ def save_settings(scene):
 
 
 def restore_settings(scene, saved):
-    # file format first: the ffmpeg values only stick while the format is FFMPEG
-    order = sorted(saved, key=lambda p: p != "render.image_settings.file_format")
+    # media type (5.x), then file format: the ffmpeg values only stick while the format is FFMPEG
+    first = ("render.image_settings.media_type", "render.image_settings.file_format")
+    order = sorted(saved, key=lambda p: first.index(p) if p in first else len(first))
     for path in order:
         owner, attr = _get(scene, path)
         try:
@@ -64,12 +68,12 @@ def apply_settings(scene, fmt, quality, scale, frames=None):
     r.filepath = output_path(scene)
     r.resolution_percentage = max(1, min(100, round(scale * 100)))
     if fmt == 'MOVIE':
-        r.image_settings.file_format = 'FFMPEG'
+        compat.set_file_format(r.image_settings, 'FFMPEG')
         r.ffmpeg.format = 'MPEG4'
         r.ffmpeg.codec = 'H264'
         r.ffmpeg.constant_rate_factor = _crf(quality)
     else:
-        r.image_settings.file_format = 'JPEG'
+        compat.set_file_format(r.image_settings, 'JPEG')
         r.image_settings.quality = quality
     if frames is not None:
         scene.use_preview_range = True

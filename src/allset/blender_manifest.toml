@@ -14,10 +14,10 @@ tags = ["User Interface", "3D View", "Modeling", "Animation", "Rigging"]
 # 4.5: Blender 4.2.23 fails 25 of 869 headless tests (step 117: the 4.5-saved layout template, 4.3+ brush
 # assets, file I/O options), so 4.2-4.4 are not offered the kit.
 blender_version_min = "4.5.0"
-# Exclusive. Target 4.5 (decision 4). 5.0-5.2 passed in step 53, but steps 54-116 were never re-measured there and
-# step 117 found 5.0.1 failing 19 tests (layered actions: no Action.fcurves; the template dock role ...), so 5.x
-# gets a clear "not compatible" instead of a half-working kit until a 5.x step fixes it (raise this to measure).
-blender_version_max = "5.0.0"
+# Exclusive. Target 4.5 (decision 4); 5.0-5.2 measured in step 118 (docs/compat_5x.md: headless, GUI and install round
+# trip on 4.5.4, 5.0.1, 5.1.2, 5.2.2; version differences in compat.py). A Blender after 5.2 gets a clear "not
+# compatible" until it is measured the same way.
+blender_version_max = "5.3.0"
 
 # Code GPL-3.0-or-later; the kit-made images and data files (splash / welcome PNGs, startup.blend, the theme XML)
 # CC0-1.0 — extensions.blender.org terms 1.2, ASSETS_LICENSE.txt (step 114).

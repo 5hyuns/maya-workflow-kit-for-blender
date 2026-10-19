@@ -37,7 +37,7 @@ import look_data as L  # noqa: E402
 
 MAYA = L.MAYA
 COMPARE = L.COMPARE
-SANDBOX = ROOT / "tmp" / "look_env"
+SANDBOX = ROOT / "tmp" / ("look_env_" + os.environ["ALLSET_LOOK_TAG"] if os.environ.get("ALLSET_LOOK_TAG") else "look_env")
 TIMEOUT = 300
 
 # (label, theme path, Maya colour key in colors.json) -- key "a.b" walks the json
@@ -168,12 +168,26 @@ def in_blender():
     bpy.ops.script.execute_preset(filepath=str(ROOT / "src" / "allset" / "theme" / "studio_grey.xml"),
                                   menu_idname="USERPREF_MT_interface_theme_presets")
     theme = bpy.context.preferences.themes[0]
+    # Blender 5.x keeps some 4.5 theme values elsewhere: apply the kit's own move table and read them there
+    # (src/allset/theme MOVED, step 118)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("allset_theme_look", ROOT / "src" / "allset" / "theme" / "__init__.py")
+    kit_theme = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kit_theme)
+    kit_theme._apply_moved(theme)
+    moved = {old: new for new, old in kit_theme.MOVED}
     colors = json.loads((MAYA / "colors.json").read_text())
     rows = []
     for label, path, key in PAIRS:
         owner = theme
-        for p in path.split("."):
-            owner = getattr(owner, p)
+        if kit_theme._resolve(theme, path)[0] is None and path in moved:
+            path = moved[path]
+        try:
+            for p in path.split("."):
+                owner = getattr(owner, p)
+        except AttributeError:   # a setting this Blender removed without a successor
+            rows.append((label, path + " (not in this Blender)", key, "?", "?", None))
+            continue
         kit = tuple(owner)[:3]
         try:
             ref = maya_colour(colors, key)

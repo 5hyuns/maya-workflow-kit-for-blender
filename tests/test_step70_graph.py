@@ -44,7 +44,7 @@ def _graph_area():
 
 
 def _keys(ob):
-    return list(ob.animation_data.action.fcurves[0].keyframe_points)
+    return list(kit.fcurves(ob)[0].keyframe_points)
 
 
 # --- tangents ---------------------------------------------------------------------------------------
@@ -169,15 +169,16 @@ def test_auto_key_only_keyed_channels():
         sc.frame_set(50)
         sc.allset_cb.tx = 2.0
         sc.allset_cb.rx = 0.5
-        fcs = ob.animation_data.action.fcurves
+        fcs = kit.fcurves(ob)
         assert [kp.co.x for kp in fcs.find("location", index=0).keyframe_points] == [1, 24, 50]
         assert fcs.find("rotation_euler", index=0) is None
     finally:
         sc.tool_settings.use_keyframe_insert_auto = False
-    # turning the kit off gives the user's value back
+    # turning the kit off gives the user's value back (the factory default: off before 5.2, on in 5.2)
+    factory = type(prefs.edit).bl_rna.properties["use_keyframe_insert_available"].default
     kit.disable()
     try:
-        assert not prefs.edit.use_keyframe_insert_available
+        assert prefs.edit.use_keyframe_insert_available == factory
     finally:
         kit.enable()
     assert prefs.edit.use_keyframe_insert_available

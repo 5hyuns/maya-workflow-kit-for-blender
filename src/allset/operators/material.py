@@ -18,6 +18,8 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import compat
+
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
 # Maya createAndAssignShader kinds on Principled BSDF (research/maya/shelves.md:60-62):
@@ -68,7 +70,7 @@ def new_material(kind):
     n = naming.next_number(base, {m.name for m in bpy.data.materials})
     mat = bpy.data.materials.new(f"{base}{n}")
     mat[TYPE_PROP] = base
-    mat.use_nodes = True
+    compat.ensure_material_nodes(mat)
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in values.items():
         node.inputs[socket].default_value = value
@@ -127,7 +129,7 @@ def default_material(create=True):
     mat[TYPE_PROP] = "lambert"
     mat[DEFAULT_PROP] = True
     mat.use_fake_user = True
-    mat.use_nodes = True
+    compat.ensure_material_nodes(mat)
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in MATERIALS['LAMBERT'][2].items():
         node.inputs[socket].default_value = value

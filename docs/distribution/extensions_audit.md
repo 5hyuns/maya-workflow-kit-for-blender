@@ -58,7 +58,7 @@ OK = 코드/파일로 충족하고 검증함, 설명함 = 남겨 두고 등록 �
 | tagline ≤ 64 자, 끝 문장부호 없음, 빈 값 금지 [M] | OK | "The whole Maya workflow in Blender, in one install" (50) — `tests/test_step61_distribution.py` |
 | type = add-on, tags 는 공식 목록에서만 [M][T] | OK | User Interface, 3D View, Modeling, Animation, Rigging (`_bpy_internal/extensions/tags.py` 와 대조하는 test_step61) |
 | 권한 사유 ≤ 64 자, 마침표 없음, 맞는 권한 [M][MG] | OK | `files` = "Layout template, settings backup, shelves, Maya project folders" (63); network 없음 |
-| 지원 버전 표기 [M] | OK | 4.5.0 ≤ Blender < 5.0.0 (4.5.x): 4.5.4 869/869; 4.2.23 과 5.0.1–5.2.2 는 실패가 있어 제외 (`docs/steps/step_117.md` 「검증」) |
+| 지원 버전 표기 [M] | OK | 4.5.0 ≤ Blender < 5.3.0 (4.5.x – 5.2.x): 4.5.4 / 5.0.1 / 5.1.2 / 5.2.2 헤드리스·GUI·설치 왕복 통과 (`docs/compat_5x.md`, step 118); 4.2.23 은 실패가 있어 제외 (step 117) |
 | GPL-3.0-or-later [ToS 1.1][L] | OK | `LICENSE` (루트와 `src/allset/` 동일, test_step13) |
 | 바이너리·자산 CC0 [ToS 1.2] | OK | manifest `SPDX:CC0-1.0`, `src/allset/ASSETS_LICENSE.txt` 목록 (test_step114); 등록 미디어도 킷 스크립트가 만든 것 (`tools/make_splash.py --media`, `tools/listing_shots.py`) |
 | copyright 필드 [ToS 1.3] | OK | `2026 ohnsk` |

@@ -30,7 +30,7 @@ def _addons():
 def test_runs_sandboxed():
     # Make Blender Maya saves the preferences: never let that reach the real config (step 42).
     cfg = os.path.normcase(bpy.utils.user_resource('CONFIG'))
-    assert os.path.normcase(os.path.join("tmp", "test_env")) in cfg, cfg
+    assert os.path.normcase(os.path.join("tmp", os.environ.get("ALLSET_SANDBOX", "test_env"))) in cfg, cfg
 
 
 def test_theme_option_comes_back_on_disable():

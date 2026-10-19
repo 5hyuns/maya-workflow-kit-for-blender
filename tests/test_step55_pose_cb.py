@@ -9,6 +9,7 @@ import bpy
 
 import kit
 
+compat = import_module(kit.MODULE + ".compat")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 outliner = import_module(kit.MODULE + ".ui.outliner")
 ae = import_module(kit.MODULE + ".ui.attribute_editor")
@@ -118,7 +119,7 @@ def test_bone_channels_paths_and_entry():
     assert bpy.context.scene.allset_cb.rz_text == "10", bpy.context.scene.allset_cb.rz_text
     assert cb.apply_entry("tx", "2") == 2 and abs(pb2.location[0] - 0.02) < 1e-6   # 2 cm
     cb.set_value(pb2, "v", False)
-    assert pb2.bone.hide and not cb.get_value(pb2, "v")
+    assert compat.bone_hidden(pb2) and not cb.get_value(pb2, "v")
     assert not cb.is_keyable(pb2, "v"), "Bone.hide is armature data: not in the object's action"
     cb.set_value(pb2, "v", True)
     _pick(arm, "joint2", "joint3")                        # hiding a bone deselects it

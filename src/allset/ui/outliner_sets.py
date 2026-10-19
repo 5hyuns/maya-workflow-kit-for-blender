@@ -90,7 +90,10 @@ def entries(scene):
 
 
 def _flat_line(fb, region, y):
-    buf = fb.read_color(0, int(y), region.width, 1, 4, 0, 'UBYTE')
+    from .. import compat
+    buf = compat.read_region_row(fb, region, y)
+    if buf is None:
+        return True     # outside the region: no row there
     line = buf[0]
     lo = [255, 255, 255]
     hi = [0, 0, 0]

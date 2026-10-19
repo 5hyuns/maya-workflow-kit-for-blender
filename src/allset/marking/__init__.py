@@ -132,7 +132,8 @@ def resolve(trigger, context, picked=None):
             return ("pie", idname("textureWindowCreatePopupRadialMenu"))
         if trigger == "SHIFT_RMB":
             ts = context.scene.tool_settings
-            shell = not ts.use_uv_select_sync and ts.uv_select_mode == 'ISLAND'
+            from .. import compat
+            shell = not ts.use_uv_select_sync and compat.uv_island_mode(ts)
             return ("pie", idname("contextPolyToolsUVShellMM" if shell else "contextPolyToolsUVMM"))
         return None
     if trigger == "CTRL_RMB":

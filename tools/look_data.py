@@ -10,12 +10,14 @@ the anchor's left/top edge, < 0 from its right/bottom edge.
 """
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MAYA = ROOT / "research" / "maya"
 SCREENS = MAYA / "screens"
-COMPARE = SCREENS / "compare"
+# ALLSET_LOOK_TAG (step 118): another Blender version writes into compare_<tag> and tmp/look_env_<tag>
+COMPARE = SCREENS / ("compare_" + os.environ["ALLSET_LOOK_TAG"] if os.environ.get("ALLSET_LOOK_TAG") else "compare")
 
 # ---------------------------------------------------------------- camera (docs/steps/step_41.md)
 # Maya persp: 35 mm lens, 1.417 in (36 mm) horizontal aperture, Fill fit = horizontal on the

@@ -760,3 +760,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 117) https://extensions.blender.org/submit/ 에 `dist/allset-0.2.0.zip` 업로드 → 폼이 manifest 의 이름·tagline·태그·권한 사유·지원 버전을 그대로 읽는지; 설명 칸에 `docs/distribution/listing.md` B 를 붙여 넣고 미리보기에서 Markdown (굵게, 목록, 코드) 이 깨지지 않는지.
 - [ ] (step 117) 아이콘 (256 × 256), 대표 이미지 (1920 × 1080), 미리보기 6장이 플랫폼의 크기·비율 요구에 맞는지 (맞지 않으면 `tools/make_splash.py` / `tools/listing_shots.py` 의 크기를 바꿔 다시 만들기), 캡션은 listing.md C 표 순서대로.
 - [ ] (step 117) 업로드 뒤 지원 URL (이슈 트래커) 을 정했으면 플랫폼에 넣기 — 아직 공개 저장소 없음 (결정 11).
+
+### Step 118 — Blender 5.x 호환
+
+- [ ] (step 118) Blender 5.0 / 5.1 / 5.2 실제 화면 (사용자 Blender 5.x 설치본): 확장 설치 → 환영 창 → Make Blender Maya → Allset 레이아웃. 타임라인은 5.x 에서 사이드바가 열리지 않으므로 Range Slider 막대가 머리줄에 있고 재생 버튼 8 개는 그 줄 오른쪽 끝 — 막대 끌기 / 양 끝 핸들 / 더블클릭이 4.5 처럼 되는지.
+- [ ] (step 118) 5.x: 관절 Channel Box Visibility off → 포즈·오브젝트 모드에서 그 본이 정말 숨는지 (5.0 의 `PoseBone.hide`), on → 다시 보이는지.
+- [ ] (step 118) 5.2: 저장 안 된 이미지 (Texture Paint 한 획) 가 있는 채로 Ctrl+S → Blender 5.2 의 「수정된 이미지 저장」 창이 뜨는지.
+- [ ] (step 118) 5.x 의 Maya 테마: 이음매 (빨강) / 날카로운 모서리 (청록) / 주름 (자홍) 색, Graph Editor 핸들 색, Properties 패널 머리·배경이 4.5 와 같은지. Blender 로 전환하면 사용자 테마로 돌아오는지.

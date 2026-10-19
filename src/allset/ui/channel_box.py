@@ -25,6 +25,7 @@ from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProp
                        StringProperty)
 
 from ..operators import display
+from .. import compat
 from . import cb_entry, chrome
 
 # Maya's dock is one tab stack with vertical tabs on its right edge (research/maya/ui_layout.md:121-128): the
@@ -119,7 +120,7 @@ def pose_objects(context=None):
 
 def selected_bones(context=None):
     return [pb for arm in pose_objects(context) for pb in arm.pose.bones
-            if bone_selected(pb) and not pb.bone.hide]
+            if bone_selected(pb) and not compat.bone_hidden(pb)]
 
 
 def lead(context=None):
@@ -130,7 +131,7 @@ def lead(context=None):
         return active_object(context)
     act = arm.data.bones.active
     pb = arm.pose.bones.get(act.name) if act is not None else None
-    if pb is not None and bone_selected(pb) and not pb.bone.hide:
+    if pb is not None and bone_selected(pb) and not compat.bone_hidden(pb):
         return pb
     sel = selected_bones(context)
     return sel[0] if sel else None
@@ -236,7 +237,7 @@ def get_value(ob, key):
     if kind == "CUSTOM":
         return ob[key[len(CUSTOM_PREFIX):]]
     if kind == "VIS":
-        return not (ob.bone.hide if is_bone(ob) else ob.hide_viewport)
+        return not (compat.bone_hidden(ob) if is_bone(ob) else ob.hide_viewport)
     return getattr(ob, path)[idx]
 
 
@@ -263,7 +264,7 @@ def set_value(ob, key, value):
         ob.id_data.update_tag()   # an ID property write tags nothing: drivers reading it would not update
     elif kind == "VIS":
         if is_bone(ob):
-            ob.bone.hide = not value
+            compat.set_bone_hidden(ob, not value)
         else:
             ob.hide_viewport = not value
     else:
@@ -280,15 +281,8 @@ def keyframe(ob, key, keytype='KEYFRAME'):
 # --- animation state ---------------------------------------------------------------------
 
 def _fcurves(ob):
-    ad = ob.id_data.animation_data
-    if ad is None or ad.action is None:
-        return None
-    try:
-        from bpy_extras.anim_utils import action_get_channelbag_for_slot
-        bag = action_get_channelbag_for_slot(ad.action, ad.action_slot)
-        return bag.fcurves if bag is not None else None
-    except ImportError:  # pre-4.4 actions
-        return ad.action.fcurves
+    from .. import compat
+    return compat.id_fcurve_collection(ob.id_data)
 
 
 def fcurve(ob, key):
