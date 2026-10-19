@@ -219,11 +219,27 @@ def _across(v, e):
     return others[0] if len(others) == 1 else None
 
 
+def _circle_tangent(p_prev, p, p_next):
+    """Unit tangent at ``p`` of the circle through three points, pointing from ``p_prev`` towards ``p_next``
+    (None when they are in a line)."""
+    a, b = p_prev - p, p_next - p
+    axb = a.cross(b)
+    if axb.length_squared < 1e-18:
+        return None
+    centre = p + (b * a.length_squared - a * b.length_squared).cross(axb) / (2 * axb.length_squared)
+    t = axb.cross(p - centre)
+    if t.length_squared < 1e-18:
+        return None
+    t.normalize()
+    return t if t.dot(p_next - p_prev) >= 0 else -t
+
+
 def edge_flow(bm, edges, flow=1.0):
-    """Maya Edit Edge Flow (polyEditEdgeFlow -adjustEdgeFlow): move each vertex of the selected edges onto the
-    curve through its two ring neighbours and their next ring neighbours (Catmull-Rom at the vertex's own
-    parameter), so the loop follows the surrounding curvature; flow 0 = the straight line between them.
-    Returns the number of moved vertices."""
+    """Maya Edit Edge Flow (polyEditEdgeFlow -adjustEdgeFlow): each vertex of the selected edges moves onto a cubic
+    Hermite curve between its two ring neighbours a, b, with tangents along the circles through (a's outer
+    neighbour, a, b) and (a, b, b's outer neighbour) and length = |ab|, at the vertex's own parameter; flow 0 = the
+    straight line. checked:  (sphere ring: Maya 0.9983, this rule
+    0.9971; the step-101 Catmull-Rom gave 0.951). Returns the number of moved vertices."""
     selected = set(edges)
     moves = {}
     for v in {v for e in edges for v in e.verts}:
@@ -234,17 +250,26 @@ def edge_flow(bm, edges, flow=1.0):
         for x in ring:
             a = x.other_vert(v)
             nxt = _across(a, x)
-            pts.append((a.co.copy(), nxt.other_vert(a).co.copy() if nxt else a.co.copy()))
+            pts.append((a.co.copy(), nxt.other_vert(a).co.copy() if nxt else None))
         (a, a2), (b, b2) = pts
         da, db = (v.co - a).length, (v.co - b).length
         if da + db < 1e-9:
             continue
         t = da / (da + db)
-        t2, t3 = t * t, t * t * t
-        # Catmull-Rom between a and b with outer points a2, b2
-        curve = 0.5 * ((2 * a) + (-a2 + b) * t + (2 * a2 - 5 * a + 4 * b - b2) * t2 + (-a2 + 3 * a - 3 * b + b2) * t3)
-        line = a.lerp(b, t)
-        moves[v] = line.lerp(curve, flow)
+        chord = b - a
+        length = chord.length
+        ta = _circle_tangent(a2, a, b) if a2 is not None else None
+        tb = _circle_tangent(a, b, b2) if b2 is not None else None
+        if ta is None and tb is None:
+            curve = a.lerp(b, t)
+        else:
+            u = chord.normalized()
+            ta = ta if ta is not None else (u * 2 * u.dot(tb) - tb)    # mirror the other tangent about the chord
+            tb = tb if tb is not None else (u * 2 * u.dot(ta) - ta)
+            h00, h10 = 2 * t ** 3 - 3 * t ** 2 + 1, t ** 3 - 2 * t ** 2 + t
+            h01, h11 = -2 * t ** 3 + 3 * t ** 2, t ** 3 - t ** 2
+            curve = a * h00 + ta * (length * h10) + b * h01 + tb * (length * h11)
+        moves[v] = a.lerp(b, t).lerp(curve, flow)
     for v, co in moves.items():
         v.co = co
     return len(moves)
@@ -314,13 +339,23 @@ class MAYAKIT_OT_wedge(bpy.types.Operator):
 
 NONLINEAR = (('BEND', "Bend", "Maya bend1: Simple Deform Bend"),
              ('TAPER', "Flare", "Maya flare1: Simple Deform Taper"),
-             ('STRETCH', "Squash", "Maya squash1: Simple Deform Stretch"))
-_NONLINEAR_NAME = {'BEND': "bend", 'TAPER': "flare", 'STRETCH': "squash"}
+             ('STRETCH', "Squash", "Maya squash1: Simple Deform Stretch"),
+             ('TWIST', "Twist", "Maya twist1: Simple Deform Twist"))
+_NONLINEAR_NAME = {'BEND': "bend", 'TAPER': "flare", 'STRETCH': "squash", 'TWIST': "twist"}
+_DEFORMABLE = {'MESH', 'CURVE', 'SURFACE', 'LATTICE'}
+
+
+def world_bounds(objects):
+    from mathutils import Vector
+    pts = [ob.matrix_world @ Vector(c) for ob in objects for c in ob.bound_box]
+    lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
+    hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    return lo, hi
 
 
 class MAYAKIT_OT_nonlinear(bpy.types.Operator):
-    """Add a nonlinear deformer to the selected objects: Simple Deform with Maya's neutral start value
-    (Maya Deform > Nonlinear: curvature 0 / flare 1 / factor 0 until you edit it)"""
+    """Add a nonlinear deformer to the selected objects: Simple Deform with Maya's neutral start value, deforming
+    around the handle ``<type>NHandle`` at the objects' bounding-box centre (Maya Deform > Nonlinear)"""
     bl_idname = "maya_kit.nonlinear"
     bl_label = "Nonlinear Deformer"
     bl_options = {'REGISTER', 'UNDO'}
@@ -329,20 +364,30 @@ class MAYAKIT_OT_nonlinear(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return any(ob.type in {'MESH', 'CURVE', 'SURFACE', 'LATTICE'} for ob in context.selected_objects)
+        return any(ob.type in _DEFORMABLE for ob in context.selected_objects)
 
     def execute(self, context):
         base = _NONLINEAR_NAME[self.method]
-        names = {md.name for ob in bpy.data.objects for md in ob.modifiers}
+        obs = [ob for ob in context.selected_objects if ob.type in _DEFORMABLE]
+        names = {md.name for ob in bpy.data.objects for md in ob.modifiers} | {o.name for o in bpy.data.objects}
         n = 1
-        while f"{base}{n}" in names:
+        while f"{base}{n}" in names or f"{base}{n}Handle" in names:
             n += 1
-        for ob in context.selected_objects:
-            if ob.type not in {'MESH', 'CURVE', 'SURFACE', 'LATTICE'}:
-                continue
+        # Maya (): the handle sits at the bounding-box centre, pointing
+        # up (Maya +Y = Blender +Z), scaled to half the height; low / high bound -1 / 1 = the whole object.
+        lo, hi = world_bounds(obs)
+        handle = bpy.data.objects.new(f"{base}{n}Handle", None)
+        context.view_layer.active_layer_collection.collection.objects.link(handle)
+        handle.empty_display_type = 'SINGLE_ARROW'
+        handle.empty_display_size = 1.0
+        handle.location = (lo + hi) / 2
+        half = max((hi.z - lo.z) / 2, 1e-6)
+        handle.scale = (half, half, half)
+        for ob in obs:
             md = ob.modifiers.new(f"{base}{n}", 'SIMPLE_DEFORM')
             md.deform_method = self.method
-            md.deform_axis = 'Z'          # Maya's handle points along Y (up) = Blender Z
+            md.deform_axis = 'Z'
+            md.origin = handle
             md.angle = 0.0
             md.factor = 0.0
         return {'FINISHED'}

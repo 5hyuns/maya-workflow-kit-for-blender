@@ -323,7 +323,6 @@ MAP = {
     "Deform/Lattice": _mod('LATTICE'),
     "Deform/Wrap": _mod('SURFACE_DEFORM'),
     "Deform/ShrinkWrap": _mod('SHRINKWRAP'),
-    "Deform/Nonlinear/Twist": _mod('SIMPLE_DEFORM'),
     "Deform/Nonlinear/Wave": _mod('WAVE'),
     "Deform/Texture": _mod('DISPLACE'),
     "Deform/Paint Weights/Set Membership": "paint.weight_paint_toggle",
@@ -607,7 +606,6 @@ MAP.update({
     "Mesh/Smooth Proxy/Toggle Proxy Display": ("maya_kit.smooth_proxy", {"action": 'TOGGLE'}),
     "Mesh/Smooth Proxy/Both Proxy and Subdiv Display": ("maya_kit.smooth_proxy", {"action": 'BOTH'}),
     # Edit Mesh
-    "Edit Mesh/Circularize": ("v3d", "transform.tosphere", {}),
     "Edit Mesh/Detach": "maya_kit.detach",
     "Edit Mesh/Transform": ("tool", "builtin.transform", True),
     "Edit Mesh/Flip": ("v3d", "transform.mirror", {"orient_type": 'LOCAL', "constraint_axis": (True, False, False)}),
@@ -616,7 +614,6 @@ MAP.update({
     "Edit Mesh/Split Mesh with Projected Curve": ("v3d", "mesh.knife_project", {}),
     # Mesh Tools (Sculpting Tools -> the essentials brushes, )
     "Mesh Tools/Append to Polygon": ("tool", "builtin.poly_build", True),
-    "Mesh Tools/Connect": "mesh.vert_connect_path",
     **{f"Mesh Tools/Sculpting Tools/{maya} Tool": _sculpt(brush) for maya, brush in (
         ("Sculpt", "Draw"), ("Smooth", "Smooth"), ("Relax", "Relax Slide"), ("Grab", "Grab"),
         ("Pinch", "Pinch/Magnify"), ("Flatten", "Flatten/Contrast"), ("Foamy", "Clay"), ("Wax", "Clay Strips"),
@@ -651,13 +648,11 @@ MAP.update({
     "Surfaces/Insert Isoparms": "curve.subdivide",
     # Deform
     "Deform/Curve Warp": _mod('CURVE'),
-    "Deform/Cluster": "object.hook_add_newob",
     "Deform/Proximity Wrap": _mod('SURFACE_DEFORM'),
     "Deform/Nonlinear/Bend": ("maya_kit.nonlinear", {"method": 'BEND'}),
     "Deform/Nonlinear/Flare": ("maya_kit.nonlinear", {"method": 'TAPER'}),
     "Deform/Nonlinear/Squash": ("maya_kit.nonlinear", {"method": 'STRETCH'}),
     "Deform/Nonlinear/Sine": _mod('WAVE'),
-    "Deform/Soft Modification Tool": _PROPORTIONAL,
     "Deform/Blend Shape#2/Remove": "object.shape_key_remove",
     **{f"Deform/Paint Weights/{kind}": "paint.weight_paint_toggle" for kind in (
         "Blend Shape", "Cluster", "Delta Mush", "Tension", "Proximity Wrap", "Lattice", "ShrinkWrap", "Wire",
@@ -679,7 +674,6 @@ MAP.update({
         ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": True}),
     "Skin/Normalize Weights/Disable Weight Normalization":
         ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": False}),
-    "Skin/Edit Influences/Remove Influence": "object.vertex_group_remove",
     "Constrain/Rivet": "object.vertex_parent_set",
     "Constrain/Closest Point": _con('SHRINKWRAP'),
     "Constrain/Point On Poly": _con('SHRINKWRAP'),
@@ -791,6 +785,25 @@ MAP.update({
     "nCloth/Display Input Mesh": ("maya_kit.ncloth_display", {"mesh": 'INPUT'}),
     "nCloth/Display Current Mesh": ("maya_kit.ncloth_display", {"mesh": 'CURRENT'}),
     "nHair/Paint Hair Follicles": ("object.mode_set", {"mode": 'SCULPT_CURVES'}),
+})
+
+# Step 110: modeling / rigging commands with checked results
+# (); operators/poly_maya.py, operators/rig_maya.py, menu_items.nonlinear.
+MAP.update({
+    "Edit Mesh/Circularize": "maya_kit.circularize",
+    "Mesh Tools/Connect": "maya_kit.connect",
+    "Mesh Tools/Make Hole": "maya_kit.make_hole",
+    "Skeleton/Reroot Skeleton": "maya_kit.reroot_skeleton",
+    "Skeleton/Set Preferred Angle": "maya_kit.set_preferred_angle",
+    "Skeleton/Assume Preferred Angle": "maya_kit.assume_preferred_angle",
+    "Skeleton/Create IK Spline Handle": "maya_kit.ik_spline_handle",
+    "Skin/Hammer Skin Weights": "maya_kit.hammer_weights",
+    "Skin/Edit Influences/Add Influence": "maya_kit.add_influence",
+    "Skin/Edit Influences/Remove Influence": "maya_kit.remove_influence",
+    "Skin/Edit Influences/Remove Unused Influences": "maya_kit.remove_unused_influences",
+    "Deform/Cluster": "maya_kit.cluster",
+    "Deform/Nonlinear/Twist": ("maya_kit.nonlinear", {"method": 'TWIST'}),
+    "Deform/Soft Modification Tool": "maya_kit.soft_mod",
 })
 
 # Blender's own menu kept at the end of the Maya menu with the same role.
