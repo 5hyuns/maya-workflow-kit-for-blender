@@ -101,6 +101,21 @@ NOTICES = {
     "nHair/Paint Hair Follicles": (
         "Hair Sculpt mode", "Blender hair is a Curves object groomed in Sculpt mode: select one (Add > Curves > Empty "
         "Hair) and use the Add brush."),
+    # step 110: mapped items whose Blender result differs (docs/steps/step_110.md)
+    "Mesh Tools/Make Hole": (
+        "Bridged loops", "Blender faces can't have holes: the stamp outline is bridged to the face's border with "
+        "quads (select the face to cut, then the stamp face)."),
+    "Skeleton/Set Preferred Angle": (
+        "Stored rotation", "Blender's IK bends from the rest pose: the angle is stored for Assume Preferred Angle, "
+        "the solver doesn't read it."),
+    "Skeleton/Create IK Spline Handle": (
+        "Spline IK constraint", "Blender makes a Spline IK constraint on the end bone and the curve curve1; there is no "
+        "ikHandle / effector node."),
+    "Deform/Cluster": (
+        "Hook modifier", "Blender's cluster is a Hook modifier driven by the clusterNHandle empty."),
+    "Deform/Soft Modification Tool": (
+        "Hook with falloff", "Blender's soft modification is a Hook modifier on the whole mesh with Maya's falloff "
+        "(radius 5, smooth), driven by softModNHandle."),
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
     # FX (step 68, research/maya/workflows/fx.md §4, decision 10)
@@ -266,8 +281,8 @@ CATEGORIES = {
                        "the keys and press S."),
     "Key/Set Blend Shape Target Weight Keys": ("Shape key Value", "Blender keys a shape key's Value in the Shape "
                                                "Keys panel (I over the field)."),
-    "Skeleton": ("Armature edit / pose mode", "Blender: preferred angles = the rest pose, IK handles are IK "
-                 "constraints (switch with Influence), reroot = re-parent bones in edit mode."),
+    "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "
+                 "joints are bone heads edited in armature edit mode."),
     "Skeleton/Joint Labelling": ("Bone names (.L / .R)", "Blender has no joint labels: side and role come from bone "
                                  "names (.L / .R suffixes drive mirroring and Symmetrize)."),
     "Skin": ("Vertex groups / Weight Paint", "Blender skin weights are vertex groups edited in Weight Paint mode "
@@ -299,8 +314,8 @@ CATEGORIES = {
        for sub in ("Color Material Channel", "Material Blend Setting")},
     "Mesh Display/Per Instance Sharing": ("Linked data", "Blender instances share mesh data (Alt+D, Object > "
                                           "Link/Transfer Data); per-instance attributes aren't available."),
-    "Mesh Tools": ("Edit mode tools", "Blender: Make Hole = Boolean modifier, paint reduce / transfer weights = "
-                   "vertex groups on Decimate / Data Transfer modifiers."),
+    "Mesh Tools": ("Edit mode tools", "Blender: paint reduce / transfer weights = vertex groups on Decimate / "
+                   "Data Transfer modifiers."),
     "Mesh Tools/Sculpting Tools": ("Sculpt mode", "Blender has no Spray / Repeat / Imprint stamps or Maya sculpt "
                                    "targets: use a textured Draw brush, or sculpt on a shape key."),
     "Mesh": ("Object > Link/Transfer Data", "Blender has no attribute clipboard or vertex-order transfer: Object > "

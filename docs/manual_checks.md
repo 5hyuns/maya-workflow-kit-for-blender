@@ -719,3 +719,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 109) Sculpting 셸프: 메시를 고르고 Smooth / Grab / Bulge / Freeze 를 차례로 눌러 조각 모드 + Smooth / Grab / Inflate/Deflate / Mask 브러시가 되는지 (세션 첫 클릭도 — 에셋 라이브러리 로딩 뒤 재시도), 드래그 느낌이 Maya 툴과 납득되는지.
 - [ ] (step 109) Curves / Surfaces: 원 두 개 → Loft, 닫힌 커브 → Planar / Bevel Plus, 프로필 + 경로 → Extrude, 커브 → Offset Curve / Sweep Mesh, Pencil Curve Tool 로 그리기, Add Points Tool 로 끝점 연장이 Maya 손에 맞는지.
 - [ ] (step 109) 아이콘 모양 (셸프마다 Maya 색, 도구 부분 회색) 이 125 % 와 100 % 에서 Maya 셸프와 같은 인상인지 (`research/maya/screens/step109/`).
+
+### Step 110 — 모델링·리깅 기능
+
+- [ ] (step 110) 실제 손으로: 구멍 테두리 / 면 묶음에 Circularize, 구 링을 줄였다가 Edit Edge Flow, 모서리 둘 → Connect, 면 두 개 → Make Hole 의 결과가 Maya 손에 맞는지 (뷰포트에서).
+- [ ] (step 110) 조인트 체인에서 Reroot / Set·Assume Preferred Angle / Create IK Spline Handle (curve1 을 움직이면 체인이 따라오는지), Hammer Skin Weights 를 웨이트 페인트로 확인.
+- [ ] (step 110) Cluster / Soft Modification 핸들을 W 로 움직이는 느낌 (Soft Mod 는 반경 5 안에서 부드럽게), Nonlinear Bend / Twist 값을 Channel Box 나 모디파이어에서 바꿀 때 핸들 기준으로 휘는지.

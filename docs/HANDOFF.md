@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 110 (모델링·리깅 기능 빈틈; step_98.md #23, #28) 완료 — `docs/steps/step_110.md`.
+  - mayapy 로 먼저 측정 (`research/maya/re/modeling_rigging_110.md`), 그 값으로 구현·테스트.
+  - 모델링 (`operators/poly_maya.py`): Circularize (평균 반지름·등간격, Maya 값 일치), Connect (모서리 가운데 / 정점, 개수 일치),
+    Make Hole (새로, 쿼드로 이음), Edit Edge Flow 규칙 개선 (구 적도 0.951 → 0.9971, Maya 0.9983).
+  - 리깅 (`operators/rig_maya.py`): Reroot, Set / Assume Preferred Angle, Create IK Spline Handle, Hammer (= Maya), Add /
+    Remove / Remove Unused Influence, Cluster (Hook + cluster1Handle), Nonlinear 4 종 핸들 + Twist, Soft Mod (Hook + Maya
+    코사인 감쇠, 높이 Maya 와 소수 넷째 자리까지 같음).
+  - 메뉴 작동: Modeling 47 %, Rigging 39.5 % (전 36 %). 검증: 헤드리스 846/846, GUI 1074/1074.
+  - 남은 것: Edit Edge Flow 와 IK Spline 커브 맞춤의 정확한 Maya 규칙 (REA 디컴파일 제공자 미설치로 막힘), Make Hole 의 다른
+    merge 모드, Flip 은 GUI Maya 측정 필요.
+  - **바로 다음 할 일**: step_98 backlog 의 다음 항목 (`docs/PLAN.md` 「재점검 7차」 우선순위). 배포 결정 (decision 11) 은 사용자
+    대기.
+
 - Step 109 (셸프: Maya 순서, 회색 자리, 조각 브러시, Maya 풍 아이콘; step_98.md #7, quant §3) 완료 — `docs/steps/step_109.md`.
   - 공장 셸프 203 버튼이 모두 Maya 자리에 (탭별 38/43/26/18/14/25/29/10), 매핑 없는 52 개는 회색 + 안내 툴팁 / Help Line
     (`shelf_map.MENU` = 같은 runTimeCommand 의 Maya 메뉴 항목에서 동작·안내를 가져옴, 메뉴에 없는 3 개는 `shelf_map.NOTICES`).
