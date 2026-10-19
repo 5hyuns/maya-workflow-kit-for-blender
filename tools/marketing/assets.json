@@ -1,0 +1,535 @@
+{
+  "note": "Marketing-screenshot assets (not shipped in the extension). Fetch with tools/marketing/fetch_assets.py into <id>/.",
+  "assets": [
+    {
+      "id": "kenney_protagonists",
+      "name": "Animated Characters: Protagonists",
+      "role": "character",
+      "author": "Kenney (www.kenney.nl)",
+      "source_page": "https://kenney.nl/assets/animated-characters-protagonists",
+      "downloads": [
+        {
+          "url": "https://kenney.nl/media/pages/assets/animated-characters-protagonists/608191acc4-1774773108/kenney_animated-characters-protagonists.zip",
+          "path": "kenney_animated-characters-protagonists.zip",
+          "extract": true,
+          "sha256": "ec3787de70fa2200256848d74201b10f6b6c3126594e9857bf989753312c2b84",
+          "size": 581441
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Asset page: 'License: Creative Commons CC0'; License.txt in the zip: 'License: (Creative Commons Zero, CC0) http://creativecommons.org/publicdomain/zero/1.0/ You can use this content for personal, educational, and commercial purposes.' -- https://kenney.nl/assets/animated-characters-protagonists",
+      "files": [
+        "Model/characterMedium.fbx",
+        "Animations/idle.fbx",
+        "Animations/run.fbx",
+        "Animations/jump.fbx",
+        "Skins/skaterMaleA.png",
+        "License.txt"
+      ],
+      "modified": false,
+      "download_url": "https://kenney.nl/media/pages/assets/animated-characters-protagonists/608191acc4-1774773108/kenney_animated-characters-protagonists.zip",
+      "sha256": "ec3787de70fa2200256848d74201b10f6b6c3126594e9857bf989753312c2b84",
+      "notes": "Rigged humanoid for rigging / skin weights / animation / hotbox scenes. characterMedium.fbx: 1 skinned mesh (1604 tris, 32 vertex groups, Armature modifier), armature 'Root' 58 bones incl. fingers and IK/ctrl bones. Animations in separate FBX (idle 33 f, run 17 f, jump 13 f), 45 animated bones, all names match the model armature. 4 skins (Skins/*.png: criminalMaleA, cyborgFemaleA, skaterFemaleA, skaterMaleA); the FBX material has no texture and imports with Alpha 0: connect a skin PNG and set Alpha 1 in the scene (file itself unmodified). Imports ~3.76 units tall (FBX cm scale): scale to taste."
+    },
+    {
+      "id": "robot_expressive",
+      "name": "RobotExpressive",
+      "role": "character",
+      "author": "Tomás Laulhé (Quaternius); facial morph targets and glTF conversion by Don McCurdy",
+      "source_page": "https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive",
+      "downloads": [
+        {
+          "url": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+          "path": "RobotExpressive.glb",
+          "sha256": "047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319",
+          "size": 463988
+        },
+        {
+          "url": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/README.md",
+          "path": "README.md",
+          "sha256": "14687ac4a51d5e013b0fbc5486dabc743f76c1e37b7ca872af74cfb93115b4b2",
+          "size": 364
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "README.md next to the model: 'Model by Tomás Laulhé ... CC0 1.0. Modifications by Don McCurdy: Added three facial expression morph targets, Converted with FBX2GLTF ...' -- https://github.com/mrdoob/three.js/blob/dev/examples/models/gltf/RobotExpressive/README.md",
+      "files": [
+        "RobotExpressive.glb"
+      ],
+      "modified": false,
+      "download_url": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
+      "sha256": "047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319",
+      "notes": "Animated robot character for animation / Graph Editor / Time Slider / marking-menu scenes. 15 meshes (2 skinned + rigid parts parented to bones), 3314 tris, armature 'RobotArmature' 43 bones (fingers, IK pole targets), 4 shape keys (facial morphs). 14 actions: Dance, Death, Idle, Jump, No, Punch, Running, Sitting, Standing, ThumbsUp, WalkJump, Walking, Wave, Yes. Flat materials Main/Grey/Black (no textures). ~4.0 m tall as imported (armature scale 100)."
+    },
+    {
+      "id": "ph_drill_01",
+      "name": "Drill 01",
+      "role": "hardsurface",
+      "author": "Fernando Quinn (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/Drill_01",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Drill_01/Drill_01_1k.gltf",
+          "path": "Drill_01_1k.gltf",
+          "sha256": "b162c83a8e35c869aef4f50e2cd80a750be248389e829f6cf9ced73ba094b9db",
+          "size": 2637
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Drill_01/Drill_01_diff_1k.jpg",
+          "path": "textures/Drill_01_diff_1k.jpg",
+          "sha256": "2c1cfdc0d3e65ca490e0bd5cdc28173672bf68f9bb62278cc7094c9c5d6a7dcb",
+          "size": 106186
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Drill_01/Drill_01_arm_1k.jpg",
+          "path": "textures/Drill_01_arm_1k.jpg",
+          "sha256": "974670d66a17cceebec08dcee5e4895684b519bcd2e4c8ea748a955fe1e41057",
+          "size": 168655
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Drill_01/Drill_01_nor_gl_1k.jpg",
+          "path": "textures/Drill_01_nor_gl_1k.jpg",
+          "sha256": "08d3efc87520243ad9ef031ec0d67369dac5aae2752f8db33988015cbb06e2eb",
+          "size": 133488
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/Drill_01/Drill_01.bin",
+          "path": "Drill_01.bin",
+          "sha256": "0353e743c05051546945fd2d79e9c96bfad7ad387e0d47bc5d408d78ae7b9fe8",
+          "size": 90100
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "Drill_01_1k.gltf"
+      ],
+      "polyhaven_polycount": 2926,
+      "dimensions_mm": [
+        183,
+        52,
+        185
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Drill_01/Drill_01_1k.gltf",
+      "sha256": "b162c83a8e35c869aef4f50e2cd80a750be248389e829f6cf9ced73ba094b9db",
+      "notes": "Hard-surface prop for Modeling Toolkit / component selection / pivot & snapping scenes. 1 mesh, 2926 tris, clean modelled topology (not a scan), PBR 1k textures (diff/arm/normal); no brand marks (only '18V 1.3Ah LITHIUM-ION'). 0.18 x 0.05 x 0.19 m."
+    },
+    {
+      "id": "ph_desk_lamp_arm_01",
+      "name": "Desk Lamp Arm 01",
+      "role": "mechanical",
+      "author": "Yann Kervran (Rigging); Kuutti Siitonen (Modeling & texturing) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/desk_lamp_arm_01",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/desk_lamp_arm_01/desk_lamp_arm_01_1k.blend",
+          "path": "desk_lamp_arm_01_1k.blend",
+          "sha256": "349d75e41809bf21a8c863510144eb0bc318aef00e66aece0bd229d7301965ec",
+          "size": 806566
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/desk_lamp_arm_01/desk_lamp_arm_01_metal_1k.exr",
+          "path": "textures/desk_lamp_arm_01_metal_1k.exr",
+          "sha256": "8b0dfec9d8c40825b1aca08114fcdc38bb6f1a4fba497b4e7cd696219a63b622",
+          "size": 911353
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/desk_lamp_arm_01/desk_lamp_arm_01_mask01_1k.png",
+          "path": "textures/desk_lamp_arm_01_mask01_1k.png",
+          "sha256": "07b5669cc5366ccff274f4abcab98af4e938a0b7ff3ca04a475436f2c8e8fcb3",
+          "size": 8742
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/desk_lamp_arm_01/desk_lamp_arm_01_rough_1k.exr",
+          "path": "textures/desk_lamp_arm_01_rough_1k.exr",
+          "sha256": "61adadb0fa119dc20a7c730820bbbd6c3a16cfe21fd1599194c7fe112cf1167d",
+          "size": 1236466
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/desk_lamp_arm_01/desk_lamp_arm_01_diff_1k.jpg",
+          "path": "textures/desk_lamp_arm_01_diff_1k.jpg",
+          "sha256": "159eb178aba3271bd555cbe07ca36431d8af9a006f0b8e9d8c67030cbdc9e4d3",
+          "size": 702522
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/desk_lamp_arm_01/desk_lamp_arm_01_nor_gl_1k.exr",
+          "path": "textures/desk_lamp_arm_01_nor_gl_1k.exr",
+          "sha256": "83d10fa9bb42c3f34ff2b32b9643ebcd9278e40f3e93632b21935efae839c658",
+          "size": 1392656
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "desk_lamp_arm_01_1k.blend"
+      ],
+      "polyhaven_polycount": 25710,
+      "dimensions_mm": [
+        617,
+        408,
+        879
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/desk_lamp_arm_01/desk_lamp_arm_01_1k.blend",
+      "sha256": "349d75e41809bf21a8c863510144eb0bc318aef00e66aece0bd229d7301965ec",
+      "notes": "Mechanical rigged prop (optional 'animated machine'). .blend 1k: armature 'rig_lamp' 53 bones, 25 skinned meshes, 25710 tris, 2 curves, no actions (pose it / key it in the scene). 0.60 x 0.42 x 0.93 m. glTF export of this asset drops the rig, so the .blend is used (load with wm.append / bpy.data.libraries.load)."
+    },
+    {
+      "id": "ph_barrel_01",
+      "name": "Barrel_01",
+      "role": "prop",
+      "author": "Jorge Camacho (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/Barrel_01",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Barrel_01/Barrel_01_1k.gltf",
+          "path": "Barrel_01_1k.gltf",
+          "sha256": "e084945dedd6a3379c6f3e97842cac89df7169797707e123a5e5b42c135d6888",
+          "size": 2711
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin",
+          "path": "Barrel_01.bin",
+          "sha256": "fe8369c1ac796059b62a091c0db7367dc420aa2cee212672e48f991f4208da98",
+          "size": 81756
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_diff_1k.jpg",
+          "path": "textures/Barrel_01_explosive_diff_1k.jpg",
+          "sha256": "a7e5a7b03bbe0c9c56bf1ac09b24121a5d19148428e9e6eac326c803fc297098",
+          "size": 179308
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.jpg",
+          "path": "textures/Barrel_01_explosive_nor_gl_1k.jpg",
+          "sha256": "fa4750d64c6f568c8de3e36bc631348710329cf2d6d9c8c87bd2e47a96bc4fcb",
+          "size": 185578
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_arm_1k.jpg",
+          "path": "textures/Barrel_01_explosive_arm_1k.jpg",
+          "sha256": "eab507df7719f0e7a3615bd22bb7bc0c09fed83bfc44e72a51451f8069c2d374",
+          "size": 243594
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "Barrel_01_1k.gltf"
+      ],
+      "polyhaven_polycount": 2682,
+      "dimensions_mm": [
+        563,
+        563,
+        880
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Barrel_01/Barrel_01_1k.gltf",
+      "sha256": "e084945dedd6a3379c6f3e97842cac89df7169797707e123a5e5b42c135d6888",
+      "notes": "Set dressing. 1 mesh, 2682 tris, PBR 1k (red explosive barrel). 0.56 x 0.56 x 0.88 m."
+    },
+    {
+      "id": "ph_cardboard_box_01",
+      "name": "Cardboard Box 01",
+      "role": "prop",
+      "author": "Rahul Chaudhary (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/cardboard_box_01",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/cardboard_box_01/cardboard_box_01_1k.gltf",
+          "path": "cardboard_box_01_1k.gltf",
+          "sha256": "6038bcc5bba5a08a5f6643a265977e37e3d14553e62981e144c33a89f10b78e1",
+          "size": 2903
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/cardboard_box_01/cardboard_box_01_arm_1k.jpg",
+          "path": "textures/cardboard_box_01_arm_1k.jpg",
+          "sha256": "5db63828d0f904c6a8d9c83afc912260b2a27261c15a28d06360519384574d2b",
+          "size": 398433
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/cardboard_box_01/cardboard_box_01.bin",
+          "path": "cardboard_box_01.bin",
+          "sha256": "7212d43b4cb56459e46d31ab34dc7c310fcfbe170f4a588416dea07ae5628a4b",
+          "size": 381936
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/cardboard_box_01/cardboard_box_01_diff_1k.jpg",
+          "path": "textures/cardboard_box_01_diff_1k.jpg",
+          "sha256": "122c7ba8c5935e289804a730b480677a4bffdf74a45c91970cba682df92e171c",
+          "size": 567741
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/cardboard_box_01/cardboard_box_01_nor_gl_1k.jpg",
+          "path": "textures/cardboard_box_01_nor_gl_1k.jpg",
+          "sha256": "d2d1f529a851966b65411b5094510dd9eba03cd5c0a89921f79325c377a8e8eb",
+          "size": 817424
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "cardboard_box_01_1k.gltf"
+      ],
+      "polyhaven_polycount": 16952,
+      "dimensions_mm": [
+        387,
+        516,
+        342
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/cardboard_box_01/cardboard_box_01_1k.gltf",
+      "sha256": "6038bcc5bba5a08a5f6643a265977e37e3d14553e62981e144c33a89f10b78e1",
+      "notes": "Set dressing. 1 mesh, 16952 tris (scan-like), PBR 1k. 0.39 x 0.52 x 0.34 m."
+    },
+    {
+      "id": "ph_woodentable_01",
+      "name": "Wooden Table 01",
+      "role": "prop",
+      "author": "Ethan Place (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/WoodenTable_01",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/WoodenTable_01/WoodenTable_01_1k.gltf",
+          "path": "WoodenTable_01_1k.gltf",
+          "sha256": "413804e054055c397b4cfbd0916027097d2a20853b165b533007a46d131e1d17",
+          "size": 2688
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/WoodenTable_01/WoodenTable_01.bin",
+          "path": "WoodenTable_01.bin",
+          "sha256": "1083a3442969d27e18e6a7a454bc164407439e3908bf8f17f5fb24d58cd0172e",
+          "size": 42064
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/WoodenTable_01/WoodenTable_01_nor_gl_1k.jpg",
+          "path": "textures/WoodenTable_01_nor_gl_1k.jpg",
+          "sha256": "330655534ea1fc7c7387b5d2ba5ca3231711a9fa680b980933a3a9c82cdb1c67",
+          "size": 151350
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/WoodenTable_01/WoodenTable_01_diff_1k.jpg",
+          "path": "textures/WoodenTable_01_diff_1k.jpg",
+          "sha256": "9535de577ad6b64deb68457af14240dd9b6d82143da0b6d2bf337660ebd855f3",
+          "size": 160147
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/WoodenTable_01/WoodenTable_01_arm_1k.jpg",
+          "path": "textures/WoodenTable_01_arm_1k.jpg",
+          "sha256": "ad876f814215006d35f74670d4fc14a9f6eab386a9307764521449464a1cd6ef",
+          "size": 198099
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "WoodenTable_01_1k.gltf"
+      ],
+      "polyhaven_polycount": 952,
+      "dimensions_mm": [
+        1800,
+        657,
+        549
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/WoodenTable_01/WoodenTable_01_1k.gltf",
+      "sha256": "413804e054055c397b4cfbd0916027097d2a20853b165b533007a46d131e1d17",
+      "notes": "Set dressing / ground for props. 1 mesh, 952 tris, PBR 1k. 1.80 x 0.66 x 0.55 m."
+    },
+    {
+      "id": "ph_potted_plant_02",
+      "name": "Potted Plant 02",
+      "role": "prop",
+      "author": "Rico Cilliers (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/potted_plant_02",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/potted_plant_02/potted_plant_02_1k.gltf",
+          "path": "potted_plant_02_1k.gltf",
+          "sha256": "c533dcce0d1aa4379eb7db04601a04983f8df2422b28578de922655a416e64a9",
+          "size": 6653
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_leaves_diff_1k.jpg",
+          "path": "textures/potted_plant_02_leaves_diff_1k.jpg",
+          "sha256": "3643dce6e6c0a9f40129bd837ec1a11802e8f43ea43cb29e58219d82e0ac632b",
+          "size": 167700
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/potted_plant_02/potted_plant_02.bin",
+          "path": "potted_plant_02.bin",
+          "sha256": "9c9812482c78a59789ed32fa842b4cbd9365e09c900c31ebb998e5efe627fe97",
+          "size": 1852244
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_pot_rough_1k.jpg",
+          "path": "textures/potted_plant_02_pot_rough_1k.jpg",
+          "sha256": "4e92ad8ee0f098050785d9a025e2c5a7d55bc7a7f7e1916cc7627fc7824a938f",
+          "size": 114886
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_leaves_rough_1k.jpg",
+          "path": "textures/potted_plant_02_leaves_rough_1k.jpg",
+          "sha256": "ac8959f70c0e91e77f3cd6fd3f73578b8aed64ac6c33fc34ac027a4e88276960",
+          "size": 102396
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_pot_diff_1k.jpg",
+          "path": "textures/potted_plant_02_pot_diff_1k.jpg",
+          "sha256": "684949bf24821d7e951d46915366b5a388d2e4ccaaa9d5284e718c83604705e9",
+          "size": 155244
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_leaves_nor_gl_1k.jpg",
+          "path": "textures/potted_plant_02_leaves_nor_gl_1k.jpg",
+          "sha256": "e0fe090ff7a511729c9bbe59df7288b400430fdab178529443dec75e0f06007d",
+          "size": 127232
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_02/potted_plant_02_pot_nor_gl_1k.jpg",
+          "path": "textures/potted_plant_02_pot_nor_gl_1k.jpg",
+          "sha256": "981a68721c8b7b9ac26b96d0210334599d5e8f529362f505082c071a0a58e86c",
+          "size": 108343
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "potted_plant_02_1k.gltf"
+      ],
+      "polyhaven_polycount": 69806,
+      "dimensions_mm": [
+        701,
+        657,
+        841
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/potted_plant_02/potted_plant_02_1k.gltf",
+      "sha256": "c533dcce0d1aa4379eb7db04601a04983f8df2422b28578de922655a416e64a9",
+      "notes": "Set dressing. 3 meshes, 69806 tris (heaviest asset), PBR 1k. 0.70 x 0.66 x 0.84 m."
+    },
+    {
+      "id": "ph_metal_toolbox",
+      "name": "Metal Toolbox",
+      "role": "prop",
+      "author": "Mateusz Sadek (All) / Poly Haven",
+      "source_page": "https://polyhaven.com/a/metal_toolbox",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/metal_toolbox/metal_toolbox_1k.gltf",
+          "path": "metal_toolbox_1k.gltf",
+          "sha256": "9b8d240f1e41e83119771a063e4f4b4bb9ddfefd47f9f5baeda998107aa135c5",
+          "size": 10717
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_toolbox/metal_toolbox_nor_gl_1k.jpg",
+          "path": "textures/metal_toolbox_nor_gl_1k.jpg",
+          "sha256": "7ba19a233bcfff9c3d95b62c3a992c8e19cb2d6355c98d6e12bdc756a8af44cf",
+          "size": 572273
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_toolbox/metal_toolbox_diff_1k.jpg",
+          "path": "textures/metal_toolbox_diff_1k.jpg",
+          "sha256": "21e1d21880e49db3fde0457d53b78a70db61234a201da9f0181dd0880b110473",
+          "size": 661804
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/metal_toolbox/metal_toolbox_arm_1k.jpg",
+          "path": "textures/metal_toolbox_arm_1k.jpg",
+          "sha256": "97676b2324b105b710904b20bfdeb32bfce3c6b4ccaaf215827b37961fc22763",
+          "size": 1033149
+        },
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/metal_toolbox/metal_toolbox.bin",
+          "path": "metal_toolbox.bin",
+          "sha256": "fe5551028e5b398c78c86911abf549010f83831c30b01593ca3eb3d8ba7ceae7",
+          "size": 468892
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_evidence": "Our assets are all licensed as CC0, which is effectively Public Domain even in jurisdictions that do not support the Public Domain. ... You can use our assets for any purpose, including commercial work. You do not need to give credit or attribution when using them -- https://polyhaven.com/license",
+      "files": [
+        "metal_toolbox_1k.gltf"
+      ],
+      "polyhaven_polycount": 14228,
+      "dimensions_mm": [
+        400,
+        292,
+        347
+      ],
+      "modified": false,
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/metal_toolbox/metal_toolbox_1k.gltf",
+      "sha256": "9b8d240f1e41e83119771a063e4f4b4bb9ddfefd47f9f5baeda998107aa135c5",
+      "notes": "Set dressing / secondary hard-surface (open lid, separate parts). 6 meshes, 14228 tris, PBR 1k. 0.40 x 0.27 x 0.31 m."
+    },
+    {
+      "id": "font_inter",
+      "name": "Inter 4.1",
+      "role": "font",
+      "author": "Rasmus Andersson and the Inter project authors",
+      "source_page": "https://github.com/rsms/inter/releases/tag/v4.1",
+      "downloads": [
+        {
+          "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+          "path": "Inter-4.1.zip",
+          "extract": true,
+          "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+          "size": 33707794
+        }
+      ],
+      "license": "OFL-1.1",
+      "license_evidence": "LICENSE.txt in the release zip: 'Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter). This Font Software is licensed under the SIL Open Font License, Version 1.1.' -- https://github.com/rsms/inter/blob/master/LICENSE.txt",
+      "files": [
+        "extras/ttf/Inter-Regular.ttf",
+        "extras/ttf/Inter-Medium.ttf",
+        "extras/ttf/Inter-SemiBold.ttf",
+        "extras/ttf/Inter-Bold.ttf",
+        "InterVariable.ttf",
+        "LICENSE.txt"
+      ],
+      "modified": false,
+      "download_url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "notes": "Marketing typography. Static TTFs in extras/ttf/ (Inter-Regular/Medium/SemiBold/Bold.ttf), variable InterVariable.ttf, LICENSE.txt (OFL 1.1). Do not embed in the extension."
+    }
+  ],
+  "rejected": [
+    {
+      "id": "Poly Haven Camera_01",
+      "why": "textures carry real trademarks (LEICA, SUMMILUX-M, ERNST LEITZ WETZLAR)"
+    },
+    {
+      "id": "Poly Haven Television_01",
+      "why": "brand logo 'VTECH' on the front"
+    },
+    {
+      "id": "Poly Haven boombox",
+      "why": "redundant with the drill; stickers on the body"
+    },
+    {
+      "id": "Kenney Blaster Kit",
+      "why": "~300-500 tri flat-colour blocks, reads as crude for a modeling showcase"
+    },
+    {
+      "id": "Kenney Blocky Characters",
+      "why": "no armature (node animation only), 72 tris"
+    },
+    {
+      "id": "Kenney Mini Characters",
+      "why": "only 7 bones: too thin a rig for rigging / skin-weight scenes"
+    },
+    {
+      "id": "Kenney Toon Characters",
+      "why": "2D sprites"
+    },
+    {
+      "id": "Quaternius packs (quaternius.com)",
+      "why": "downloads are Google Drive folders (not a direct file); newer Quaternius licence page forbids redistributing the assets, conflicting with the CC0 badge; poly.pizza lists the same model as CC-BY 3.0 - ambiguous, not used"
+    },
+    {
+      "id": "Sketchfab / Mixamo / 3D Warehouse",
+      "why": "login required or licence not open (per user rule)"
+    }
+  ]
+}
