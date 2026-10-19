@@ -3,6 +3,7 @@
 
 Source: research/maya/shelves.json (factory shelf files; labels and runTimeCommand
 names only). SHELVES = [(file name, tab label, [(button label, runTimeCommand | None)])].
+GAPS = {file name: button indices that follow a Maya shelf separator}.
 """
 
 DEFAULT = 'Polygons'
@@ -228,3 +229,12 @@ SHELVES = [
         ('Replace Cache Frame', None),
     ]),
 ]
+
+GAPS = {
+    'CurvesSurfaces': (14,),
+    'Polygons': (7, 8, 12, 13, 16, 23, 32, 35),
+    'Sculpting': (18, 20, 22),
+    'Rendering': (),
+    'FX': (2, 6, 23, 28),
+    'FXCaching': (2, 4),
+}

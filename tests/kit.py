@@ -103,7 +103,9 @@ def snapshot():
     snap["ui_methods"] += [f"{c} own draw: {getattr(getattr(bpy.types, c).draw, '_draw_funcs', [getattr(bpy.types, c).draw])[0]!r}"
                            for c in ("GRAPH_HT_header", "DOPESHEET_HT_header",
                                      # step 105: Render Settings / Script Editor windows
-                                     "PROPERTIES_HT_header", "INFO_HT_header", "TEXT_HT_header")]
+                                     "PROPERTIES_HT_header", "INFO_HT_header", "TEXT_HT_header",
+                                     # step 113: Maya panel bar / panel toolbar in the Allset layout's 3D Views
+                                     "VIEW3D_HT_header", "VIEW3D_HT_tool_header")]
     # step 105: Hypershade menus in the Shader Editor header; Blender's Render panels re-registered with a wrapped poll
     snap["ui_methods"].append("NODE_MT_editor_menus.draw_collapsible overridden: "
                               f"{'draw_collapsible' in bpy.types.NODE_MT_editor_menus.__dict__}")

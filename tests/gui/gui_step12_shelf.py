@@ -54,8 +54,9 @@ def s_strip():
     check(f"strip sits above the 3D View (strip y {strip.y}, 3D View top {area3d.y + area3d.height})",
           strip.y >= area3d.y + area3d.height - 2)
     # step 49: the template's Shelf is its own header-only row under the Status Line
+    # (step 113: the shelf row has no header — tab strip + icons in its WINDOW region)
     row = C["shelf"].shelf_row_area(scr)
-    shelf_h = regions(row)['HEADER'].height if row else 0
+    shelf_h = regions(row)['WINDOW'].height if row else 0
     check(f"Status Line row and Shelf row both shown ({rg['HEADER'].height}, {shelf_h})",
           rg['HEADER'].height > 20 and shelf_h > 20 and row.y < strip.y)
     outliner = next(a for a in scr.areas if a.type == 'OUTLINER' and a.x < area3d.x)

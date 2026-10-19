@@ -277,7 +277,9 @@ def test_topbar_draw_maya_and_blender():
     assert menu_sets.menu_idname("mainMeshMenu") in menus, menus
     fake = types.SimpleNamespace(layout=FakeLayout())
     status_line.draw_right(fake, _ctx())
-    assert any(e[0] == "template_ID" and e[2] == "workspace" for e in fake.layout.log)
+    # Maya's "Workspace:" label + dropdown (step 113), not Blender's workspace ID field
+    assert any(e[0] == "prop" and e[1] == "allset_workspace" for e in fake.layout.log), fake.layout.log
+    assert not any(e[0] == "template_ID" and e[2] == "workspace" for e in fake.layout.log)
     assert not any(e[0] == "template_ID" and e[2] == "scene" for e in fake.layout.log), "one scene"
     assert not [e for e in fake.layout.log if e[0] == "op"], "Status Line is not in the top bar"
     extra = bpy.data.scenes.new("Second")
@@ -292,7 +294,8 @@ def test_topbar_draw_maya_and_blender():
     fake = types.SimpleNamespace(layout=FakeLayout())
     status_line.draw_tool_header(fake, _ctx(area=area))
     ops = [e[1] for e in fake.layout.log if e[0] == "op"]
-    for op in ("allset.save_scene", "allset.select_mode", "allset.select_mask", "allset.snap_toggle",
+    # (selection masks: collapsed by default like Maya's factory Status Line, step 113)
+    for op in ("allset.save_scene", "allset.select_mode", "allset.status_group", "allset.snap_toggle",
                "render.render", "allset.render_settings", "allset.editor_toggle"):
         assert op in ops, (op, ops)
     other = types.SimpleNamespace(type='VIEW_3D')

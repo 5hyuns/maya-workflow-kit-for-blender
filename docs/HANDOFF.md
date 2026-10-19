@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 113 (사용자 피드백: 상단이 Maya 같지 않음 — 메뉴 막대·Status Line·셸프·패널 바) 완료 — `docs/steps/step_113.md`.
+  - Maya 2022 GUI 측정 (`research/maya/screens/top113/`: 1600×900 상단 그림, 위젯 위치, 셸프 8 개 구분선) → 차이 표 → 고침.
+  - 메뉴 막대: 메뉴셋 드롭다운을 Status Line 맨 앞으로, 항목 폭 = 글자 + Maya 여백 (125 % 에서도 Help 까지), `Workspace:`
+    드롭다운, Maya | Blender 는 테두리 없는 글자. Status Line: Maya 순서·그룹 (| … ▷), 접힌 그룹 공장값, 킷이 그린 Maya 풍
+    아이콘 (`ui/status_icons.py`), 사이드바 토글 오른쪽 끝. 셸프: 머리 없이 WINDOW 에 18 px 탭 줄 + 아이콘 + 구분선,
+    같은 그림이던 버튼에 새 글리프·배지. 패널 바 (`ui/panel_toolbar.py`): Allset 레이아웃 3D View = Maya 패널 메뉴 +
+    패널 툴바 아이콘 줄. Maya 모드 전환 = Maya 테마 켬 (Blender 로 돌아가면 복원).
+  - 검증: GUI `gui_step113_top` 10/10 (1.25 / 1.0, 화면 픽셀), 헤드리스 851/851, GUI 전체 1093/1093. 비교 그림
+    `docs/steps/step_113/`.
+  - **바로 다음 할 일**: step 114 = 배포 준비 2 (감사 위반 2 건: command_line 의 `sys.modules["maya"]` 삽입 → exec 네임스페이스
+    전용 `cmds` + `__import__` 훅, 킷이 만든 자산 CC0 표기; release_check 사이드바 탭 확인 FAIL 도). 그다음 115 (opt-in·정리·
+    monkeypatch: 이번에 늘어난 VIEW3D 헤더 교체도 포함), 116 (등록 자료, 업로드는 사용자).
+
 - Step 112 (사용자 버그: 비치는 Channel Box 도크, 빈 Tool Box 띠; 2026-10-19 보고) 완료 — `docs/steps/step_112.md`.
   - 원인: Blender Region Overlap + Blender 테마의 영역 알파 0 → 도크 뒤로 뷰포트가 비침 (Maya 테마를 안 켠 사용자). 템플릿
     Tool Box 열 57 px < 125 % 의 도구 줄 70 px → Blender 가 도구 줄을 아예 안 그림, 커서 맞춤 실패 시 빈 띠 + 뷰포트 안 도구 줄.
@@ -10,9 +23,7 @@
   - 덤: 뷰가 도크 옆으로 좁아져 `framing.fit` 의 거리·이동 번갈아 맞추기가 진동 → 가운데 맞춘 상자에서 거리 탐색으로 다시 씀.
   - 검증: GUI `gui_step112_opaque` 9/9 (1.25 / 1.0, 화면 픽셀), 헤드리스 851/851, GUI 전체 1083/1083. 전후 그림
     `docs/steps/step_112/`.
-  - **바로 다음 할 일**: step 113 = 배포 준비 2 (감사 위반 2 건: command_line 의 `sys.modules["maya"]` 삽입 → exec 네임스페이스
-    전용 `cmds` + `__import__` 훅, 킷이 만든 자산 CC0 표기; release_check 사이드바 탭 확인 FAIL 도 `allset_dock` 로). 그다음
-    114 (opt-in·정리·monkeypatch), 115 (등록 자료, 업로드는 사용자).
+  - 다음: step 113 (상단 Maya 모양) 이 끼어들어 배포 준비는 114–116 으로 밀림.
 
 - Step 111 (배포 준비 1: 이름 변경 「Allset for Maya Users」 + 상표 정리; 사용자 결정 2026-10-19) 완료 — `docs/steps/step_111.md`.
   - 결정 12 (`docs/user_decisions.md`): extensions.blender.org 무료 배포, 이름 Allset for Maya Users, id `allset`, tagline

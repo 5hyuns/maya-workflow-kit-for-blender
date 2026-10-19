@@ -734,3 +734,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 112 — 불투명 도크, Tool Box 띠
 
 - [ ] (step 112) 실제 설정 (자기 테마 그대로): Maya 로 전환 → Maya-style 레이아웃에서 오른쪽 Channel Box / Attribute Editor / Modeling Toolkit 탭 배경이 불투명하고 뷰포트가 그 왼쪽에서 끝나는지, 맨 왼쪽 열에 Select / Lasso / Paint / Move / Rotate / Scale 아이콘이 보이고 뷰포트 안에는 도구 줄이 없는지 (125 %, 창 크기 바꿔서도). UV Editor 사이드바도 불투명한지. 환경설정 「Solid Side Panels」를 끄면 Blender 의 Region Overlap 이 돌아오는지, Blender 로 전환해도 돌아오는지.
+
+### Step 113 — 상단 (메뉴 막대, Status Line, 셸프, 패널 바)
+
+- [ ] (step 113) 실제 125 % 화면, 자기 설정: Maya 로 전환 → 메뉴 막대에 File … Help 가 다 보이고 메뉴셋 드롭다운은 Status Line 맨 왼쪽, 오른쪽 Workspace: 드롭다운으로 작업 공간이 바뀌는지, Maya | Blender 글자가 눈에 덜 띄면서 눌리는지.
+- [ ] (step 113) Status Line 의 ▷ 로 그룹 접기 / ▶ 로 펴기, 스냅 자석·선택 모드·렌더 아이콘 툴팁, 오른쪽 끝 사이드바 토글 (Modeling Toolkit / Attribute Editor / Tool Settings / Channel Box).
+- [ ] (step 113) 셸프: 탭 클릭, ≡ (셸프 고르기), 톱니 (셸프 편집), 아이콘이 버튼마다 알아볼 만한지, 구분선 위치가 Maya 와 같은지.
+- [ ] (step 113) 뷰 패널 툴바: 와이어 / 스무스 / 텍스처 / 모든 조명 / 그림자 / X-ray / 아이솔레이트 / 그리드가 그 뷰에서 켜고 꺼지는지, 노출·감마 칸, Blender 로 돌아가면 Blender 헤더와 테마가 돌아오는지.
