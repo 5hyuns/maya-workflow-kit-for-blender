@@ -105,14 +105,16 @@ def s_y_done():
     bpy.ops.object.mode_set(mode='OBJECT')
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     # Record which menu set the top bar draws (step 72: F2-F6 must repaint it without a hover).
-    cls = bpy.types.TOPBAR_HT_upper_bar
-    C["draw_left"] = cls.draw_left
+    # step 115: the kit swaps the top bar's own draw, which calls status_line.draw_left (not the class method)
+    from importlib import import_module
+    sl = import_module(MODULE + ".ui.status_line")
+    C["draw_left"] = sl.draw_left
     C["drawn"] = []
 
     def recorder(self, context):
         C["drawn"].append(bpy.context.preferences.addons[MODULE].preferences.menu_set)
         return C["draw_left"](self, context)
-    cls.draw_left = recorder
+    sl.draw_left = recorder
     tap('F3')
 
 
@@ -124,7 +126,8 @@ def s_f3():
 
 @step
 def s_f3_shot():
-    bpy.types.TOPBAR_HT_upper_bar.draw_left = C["draw_left"]
+    from importlib import import_module
+    import_module(MODULE + ".ui.status_line").draw_left = C["draw_left"]
     check(f"the top bar repaints after F3 with no hover (drew {sorted(set(C['drawn']))})",
           'riggingMenuSet' in C["drawn"])
     shot("gui_step35_f3_rigging.png")

@@ -10,6 +10,7 @@ docs/steps/step_2.md 「키컨피그 활성화 규칙」.
 """
 
 import bpy
+from bpy.app.handlers import persistent
 
 KEYCONFIG_NAME = "Maya-style"   # descriptive, not a brand (decision 12)
 
@@ -72,6 +73,30 @@ def activate():
         kcs.active = kc  # also stores the name in the preferences
 
 
+# A GUI template switch (File > New > Allset, Start in Maya Layout) sets the active keyconfig back to "Blender"
+# (stored name too), after load_post, while the preferences and the add-on stay; load_pre doesn't run for it (measured,
+# docs/steps/step_115.md). Before step 115 the template's own __init__.py re-activated Maya; the template now carries
+# no code, so the keymap module does the same: in the Allset template, Blender's default keyconfig -> Maya (a keymap
+# the user picked other than Blender's default is left alone).
+def wants_maya(app_template, active_name):
+    from ..app_template import TEMPLATE_ID
+    return app_template == TEMPLATE_ID and active_name in (None, "Blender")
+
+
+def _reactivate():
+    kcs = bpy.context.window_manager.keyconfigs
+    if wants_maya(bpy.context.preferences.app_template, kcs.active.name if kcs.active else None):
+        activate()
+    return None
+
+
+@persistent
+def _keep_keyconfig(*_args):
+    _reactivate()
+    if not bpy.app.timers.is_registered(_reactivate):
+        bpy.app.timers.register(_reactivate, first_interval=0.0, persistent=True)
+
+
 class ALLSET_OT_keymap_activate(bpy.types.Operator):
     """Use the Maya keymap (it is not listed in the keymap preset menu)"""
     bl_idname = "allset.keymap_activate"
@@ -102,10 +127,15 @@ def register():
         # the Blender keymap (found by tools/release_check.py, docs/steps/step_13.md).
         if not bpy.app.background:
             prefs.keymap_auto_activated = True
+    bpy.app.handlers.load_post.append(_keep_keyconfig)
 
 
 def unregister():
     global _previous_active
+    if _keep_keyconfig in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_keep_keyconfig)
+    if bpy.app.timers.is_registered(_reactivate):
+        bpy.app.timers.unregister(_reactivate)
     for km, kmi in reversed(_addon_keymaps):
         try:
             km.keymap_items.remove(kmi)

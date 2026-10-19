@@ -121,11 +121,15 @@ def main(argv=None):
           and kit in s["addons"])
     check("the user's add-ons and theme are kept", s and set(snap["before"]["addons"]) < set(s["addons"])
           and s["theme"] == snap["before"]["theme"])
-    check(f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya-style")
+    # step 115: installing + enabling changes nothing until the user opts in
+    check(f"keymap untouched before the opt-in (got {s and s['active_keyconfig']})",
+          s and s["active_keyconfig"] == snap["before"]["active_keyconfig"])
 
-    # 2. Make Blender Maya, then disable
+    # 2. Make Blender feel like Maya (the opt-in), then disable
     step("make", probe + ["make", str(SANDBOX / "made.json")], "made")
     check("Make Blender Maya changes the look (theme)", snap["made"] and snap["made"]["theme"] != snap["before"]["theme"])
+    check(f"Maya keymap after the opt-in (got {snap['made'] and snap['made']['active_keyconfig']})",
+          snap["made"] and snap["made"]["active_keyconfig"] == "Maya-style")
     step("disable", probe + ["disable", str(SANDBOX / "disabled.json")], "disabled")
     diff, s = same_as_before("disabled")
     check(f"disable after Make Blender Maya restores the user's setup ({diff or 'all'})",
@@ -141,8 +145,8 @@ def main(argv=None):
     s = snap["updated"]
     check(f"update from the repository: {version} -> {s and s['kit_version']} (expected {nxt_version})",
           ok and s and s["kit_version"] == nxt_version)
-    check("after the update the kit is still enabled with the Maya keymap",
-          s and kit in s["addons"] and s["active_keyconfig"] == "Maya-style")
+    check("after the update the kit is still enabled (Maya mode as before the update: off after the re-enable)",
+          s and kit in s["addons"] and s["active_keyconfig"] == snap["before"]["active_keyconfig"])
 
     # 4. Remove in Maya mode (inside Blender), then remove the repository
     step("make", probe + ["make", str(SANDBOX / "made2.json")], "made2")

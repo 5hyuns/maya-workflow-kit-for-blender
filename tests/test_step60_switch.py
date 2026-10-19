@@ -167,10 +167,15 @@ def test_interrupted_switch_and_disable_restore():
     cfg = _sandbox()
     a = _session(cfg, "a", "user_setup", "save")
     _session(cfg, "b", "enable", "make_maya", "fake_crash_off", "save")   # died half way
-    c = _session(cfg, "c", "run_timers")                    # next start finishes the switch (+ saves)
-    assert not c["state"]["maya_mode"] and not c["state"]["snapshot"], c["state"]
+    # The next start finishes the switch without saving (step 115): the snapshot stays until a start finds nothing
+    # left to restore — here after the user's (or Blender's auto) save.
+    c = _session(cfg, "c", "save")
+    assert not c["state"]["maya_mode"] and c["state"]["snapshot"], c["state"]
     d = _diff(a["dump"], c["dump"])
     assert not d, "interrupted switch not finished on restart:\n" + "\n".join(d[:20])
+    c2 = _session(cfg, "c2")
+    assert not c2["state"]["maya_mode"] and not c2["state"]["snapshot"], c2["state"]
+    assert not _diff(a["dump"], c2["dump"])
     _session(cfg, "d", "maya_on", "save")
     e = _session(cfg, "e", "disable", "save")               # extension disabled (or removed) in Maya mode
     d = _diff(a["dump"], e["dump"])

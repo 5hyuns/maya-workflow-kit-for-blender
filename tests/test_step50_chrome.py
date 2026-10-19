@@ -75,7 +75,7 @@ def test_layer_editor_tabs_and_menus():
 
 
 def test_outliner_header_is_maya():
-    assert bpy.types.OUTLINER_HT_header.draw is maya_outliner._draw
+    assert maya_outliner._draw in bpy.types.OUTLINER_HT_header.draw._draw_funcs   # own draw swapped (step 115)
     rec = Recorder()
     chrome.menu_bar(rec, maya_outliner.MENU_BAR)
     assert rec.texts("menu") == ["Display", "Show", "Help"]

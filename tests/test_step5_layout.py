@@ -27,7 +27,7 @@ def test_install_into_user_templates_in_sandbox():
     assert bpy.ops.allset.layout_install() == {'FINISHED'}
     dst = app_template.installed_dir()
     assert os.path.normcase(dst).startswith(os.path.normcase(SANDBOX_SCRIPTS)), dst
-    for name in ("startup.blend", "__init__.py", app_template.MARKER):
+    for name in ("startup.blend", app_template.MARKER):
         assert os.path.isfile(os.path.join(dst, name)), name
     assert app_template.is_installed()
     assert bpy.ops.allset.layout_install() == {'FINISHED'}, "reinstall over our own copy"
@@ -58,7 +58,7 @@ def test_remove_and_refuse_foreign_folder():
 def test_bundled_template_files():
     src = app_template.SOURCE_DIR
     assert sorted(f for f in os.listdir(src) if not f.startswith("__pycache__")) == \
-        ["__init__.py", "splash.png", "splash_2x.png", "startup.blend"]
+        ["splash.png", "splash_2x.png", "startup.blend"]   # data only, no code outside the extension (step 115)
 
 
 # --- theme --------------------------------------------------------------------------------

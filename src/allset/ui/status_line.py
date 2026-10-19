@@ -16,7 +16,7 @@ drawn first in the tool header of the largest 3D View.
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
-from . import input_line, menu_sets, status_icons
+from . import input_line, menu_sets, own_draw, status_icons
 
 # --- 3D View helpers ----------------------------------------------------------------
 
@@ -595,7 +595,6 @@ def _read_only(self, value):
     pass
 
 
-_orig = {}
 
 
 def _maya_bar(context):
@@ -628,7 +627,7 @@ def draw_left(self, context):
     if context.window is not None and context.area is not None:
         _top_bars[context.window.as_pointer()] = context.area
     if not _maya_bar(context):
-        return _orig["draw_left"](self, context)
+        return bpy.types.TOPBAR_HT_upper_bar.draw_left(self, context)
     layout = self.layout
     if context.area.show_menus:
         menu_sets.draw_menu_bar(layout.row(align=True), context, menu_set=not status_line_shown(context))
@@ -641,7 +640,7 @@ def draw_left(self, context):
 
 def draw_right(self, context):
     if not _maya_bar(context):
-        return _orig["draw_right"](self, context)
+        return bpy.types.TOPBAR_HT_upper_bar.draw_right(self, context)
     layout = self.layout
     window = context.window
     if not context.screen.show_statusbar:  # as space_topbar.py:46-49
@@ -728,20 +727,21 @@ def draw_tool_header(self, context):
     self.layout.separator(type='LINE')
 
 
+def draw_upper_bar(self, context):
+    """The top bar's own draw while the kit is on (as space_topbar.py TOPBAR_HT_upper_bar.draw, with the kit's
+    left / right): Blender's ``draw_left`` / ``draw_right`` methods stay untouched (step 115)."""
+    if context.region.alignment == 'RIGHT':
+        draw_right(self, context)
+    else:
+        draw_left(self, context)
+
+
 def patch_topbar():
-    cls = bpy.types.TOPBAR_HT_upper_bar
-    if not _orig:
-        _orig["draw_left"] = cls.draw_left
-        _orig["draw_right"] = cls.draw_right
-    cls.draw_left = draw_left
-    cls.draw_right = draw_right
+    own_draw.swap("TOPBAR_HT_upper_bar", draw_upper_bar)
 
 
 def unpatch_topbar():
-    cls = bpy.types.TOPBAR_HT_upper_bar
-    if _orig:
-        cls.draw_left = _orig.pop("draw_left")
-        cls.draw_right = _orig.pop("draw_right")
+    own_draw.restore("TOPBAR_HT_upper_bar", draw_upper_bar)
 
 
 classes = (ALLSET_OT_select_mask, ALLSET_OT_select_mode, ALLSET_OT_snap_toggle, ALLSET_MT_symmetry,

@@ -91,9 +91,12 @@ def only(name):
 @step
 def s_first_start():
     kc = bpy.context.window_manager.keyconfigs.active
-    check(f"Maya keymap active on first start (got {kc.name if kc else None})",
-          kc is not None and kc.name == "Maya-style")
+    # step 115: nothing changes until the user opts in; setup() opts in like the welcome dialog's button
+    check(f"keymap untouched before the opt-in (got {kc.name if kc else None})",
+          kc is not None and kc.name == "Blender")
     setup()
+    kc = bpy.context.window_manager.keyconfigs.active
+    check(f"Maya keymap after the opt-in (got {kc.name if kc else None})", kc is not None and kc.name == "Maya-style")
     bpy.ops.allset.layout_install()
     bpy.ops.wm.read_homefile(app_template="Allset")
 

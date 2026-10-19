@@ -741,3 +741,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 113) Status Line 의 ▷ 로 그룹 접기 / ▶ 로 펴기, 스냅 자석·선택 모드·렌더 아이콘 툴팁, 오른쪽 끝 사이드바 토글 (Modeling Toolkit / Attribute Editor / Tool Settings / Channel Box).
 - [ ] (step 113) 셸프: 탭 클릭, ≡ (셸프 고르기), 톱니 (셸프 편집), 아이콘이 버튼마다 알아볼 만한지, 구분선 위치가 Maya 와 같은지.
 - [ ] (step 113) 뷰 패널 툴바: 와이어 / 스무스 / 텍스처 / 모든 조명 / 그림자 / X-ray / 아이솔레이트 / 그리드가 그 뷰에서 켜고 꺼지는지, 노출·감마 칸, Blender 로 돌아가면 Blender 헤더와 테마가 돌아오는지.
+
+### Step 115 — opt-in, 템플릿 정리
+
+- [ ] (step 115) 실제 Blender 에서 Get Extensions 로 설치·활성화 → 그 자리에서 환영 창이 뜨고, 그 전에는 키맵·테마·레이아웃이 그대로인지. 「Make Blender feel like Maya」 → 저장 안 한 작업 중 파일이면 그 파일에 Maya-style 작업 공간만 붙고 데이터는 그대로, 새 빈 파일이면 Allset 레이아웃 파일로 바뀌는지. 취소하면 아무것도 안 바뀌고 다시 안 뜨는지 (환경설정의 같은 버튼은 남음).
+- [ ] (step 115) Auto-Save Preferences 를 끈 설정: Maya 로 바꾸고 저장하지 않고 종료 → 다음 시작이 Blender 그대로인지 (킷이 혼자 저장하지 않음).
+- [ ] (step 115) 확장을 끄거나 Remove → `scripts/startup/bl_app_templates_user/Allset` 이 지워지는지, 그냥 종료·재시작·확장 업데이트로는 남는지. File > New > Allset 뒤에도 Maya 키맵인지.

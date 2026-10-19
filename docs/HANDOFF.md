@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 115 (배포 준비 3: no surprises — opt-in, 자동 저장 없음, 코드 없는 템플릿, draw 교체 정리) 완료 — `docs/steps/step_115.md`.
+  - 활성화만으로는 아무것도 안 바뀜: `maya_mode` 기본 꺼짐, CORE = preferences / switch / 새 `welcome.py`. 환영 창·환경설정의
+    「Make Blender feel like Maya」(`welcome.opt_in`) 또는 Maya | Blender 스위치로만 Maya 모드. 킷은 `save_userpref` 를 안 부름
+    (Maya File > Save Preferences 메뉴만). 중단된 전환은 저장 없이 반복 복원, 낡은 스냅숏은 버림.
+  - 앱 템플릿 = 데이터만 (`__init__.py` 삭제). 사용자 비활성화 / Remove (`addon_utils.disable(default_set=True)`) 때 마커 템플릿
+    삭제, 종료·리로드·업데이트는 유지. Allset 템플릿 로드 뒤 키맵 재활성화는 keymap 모듈 (load_post + persistent 타이머).
+  - draw: 덧붙이기만 하는 것은 prepend/append (Tool Box), 대신 그리는 것은 draw 목록의 Blender 자기 함수만 교체 (`ui/own_draw.py`:
+    STATUSBAR / TOPBAR / OUTLINER / IMAGE 두 헤더), 나머지 (헬퍼·poll 래퍼) 는 `docs/distribution/listing.md` 에 이유·복원.
+    ctypes keystate 는 None 대체 경로 확인·설명.
+  - 검증: 헤드리스 864/864, GUI 1093/1093, release_check 전부 PASS, repo_check 11/11, installer_check 9/9, 환영 창 GUI 그림.
+  - **바로 다음 할 일**: step 116 = 배포 준비 4 (등록 자료: `docs/distribution/listing.md` 에 이름·tagline·설명·태그·스크린샷,
+    최종 validate; 업로드는 사용자).
+
 - Step 114 (배포 준비 2: 확장 가이드라인 위반 2 건) 완료 — `docs/steps/step_114.md`.
   - `sys.modules["maya"]` 삽입 제거: `import maya.cmds` 는 Command Line / 셸프 / Script Editor 네임스페이스의 전용
     `__builtins__.__import__` (`command_line/runner._import`) 에서만 됨, 활성화·사용·끄기 뒤 `sys.modules` 에 maya 없음.

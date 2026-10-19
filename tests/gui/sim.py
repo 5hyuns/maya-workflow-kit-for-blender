@@ -109,6 +109,8 @@ def setup():
     tap('ESC')
     _keep_ui_scale()
     addon_utils.enable(MODULE, default_set=True)
+    # opt in to Maya mode (enabling alone changes nothing since step 115); theme as before: only via make_maya
+    import_module(MODULE + ".switch").set_mode(True, layout=False, theme=False)
     import_module(MODULE + ".operators.keystate").is_down = lambda t: t in _down
     _area, r = view3d()
     ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)

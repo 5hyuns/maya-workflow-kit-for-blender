@@ -66,9 +66,11 @@ def s_first_start():
     prefs = bpy.context.preferences
     check("extension enabled by the command-line install", MODULE in prefs.addons)
     kc = bpy.context.window_manager.keyconfigs.active
-    check(f"Maya keymap active on first start (got {kc.name if kc else None})",
-          kc is not None and kc.name == "Maya-style")
-    setup()   # closes the splash; the add-on is already enabled
+    # step 115: enabling alone changes nothing; the user opts in (welcome dialog / preferences button)
+    check(f"keymap untouched until the user opts in (got {kc.name if kc else None})",
+          kc is not None and kc.name == "Blender")
+    check("Maya mode off until the user opts in", not prefs.addons[MODULE].preferences.maya_mode)
+    setup()   # closes the splash, opts in to Maya mode
     check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
     bpy.ops.wm.read_homefile(app_template="Allset")
 

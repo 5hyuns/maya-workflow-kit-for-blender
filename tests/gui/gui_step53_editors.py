@@ -192,6 +192,8 @@ def s_graph_zoomed():
     mat = bpy.data.materials.new("probeMaterial")
     mat.use_nodes = True
     ob.data.materials.append(mat)
+    # the new cube may already have lambert1 (step 100 default material): show this material's tree
+    ob.active_material_index = len(ob.material_slots) - 1
     area().type = 'NODE_EDITOR'
     area().ui_type = 'ShaderNodeTree'
     for n in mat.node_tree.nodes:

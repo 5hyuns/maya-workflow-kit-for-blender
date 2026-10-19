@@ -67,7 +67,9 @@ def test_only_drawing_is_filtered():
     finally:
         toolbox._drawing[0] = False
     assert drawn[:6] == list(toolbox.MAYA_TOOLS), drawn
-    assert TOOLBAR.draw is toolbox._draw
+    # step 115: a prepend / append pair around Blender's own toolbar draw
+    names = [getattr(f, '__name__', '') for f in TOOLBAR.draw._draw_funcs]
+    assert names[0] == '_draw_begin' and names[-1] == '_draw_end', names
 
 
 def test_is_toolbox_matches_generator():
@@ -116,7 +118,7 @@ def test_kit_outliner_tab_follows_dock_only():
 # --- Help Line + Command Line row ------------------------------------------------------------------
 
 def test_status_bar_is_help_and_command_row():
-    assert bpy.types.STATUSBAR_HT_header.draw is command_line.draw_status_bar
+    assert command_line.draw_status_bar in bpy.types.STATUSBAR_HT_header.draw._draw_funcs   # own draw swapped (115)
     # Maya widths at 1600 px (_maya_ui_dump.json HelpLine 675, CommandLine 915) in 20 px units
     assert command_line.HELP_UNITS * 20 == 675 and command_line.COMMAND_UNITS * 20 == 915
 

@@ -17,8 +17,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # starts respect a different keymap the user picked (docs/steps/step_2.md).
     keymap_auto_activated: bpy.props.BoolProperty(options={'HIDDEN'})
 
-    # Maya mode on/off (switch.py, docs/steps/step_60.md): on after install, kept across restarts.
-    maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=True, options={'HIDDEN'})
+    # Maya mode on/off (switch.py, docs/steps/step_60.md), kept across restarts. Off after install: enabling the
+    # extension changes nothing until the user opts in (welcome dialog / button / switch; docs/steps/step_115.md).
+    maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
+    # The Maya layout template was installed by the user: a user disable deletes it, a later register puts it back
+    # if it is gone while this is still set (app_template.py, step 115).
+    layout_installed: bpy.props.BoolProperty(options={'HIDDEN'})
 
     def _update_navigation(self, context):
         from . import prefs_preset
@@ -319,8 +323,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         if self.maya_mode:
             row.operator("allset.switch_mode", text="Switch to Blender", icon='BLENDER').mode = 'BLENDER'
         else:
-            row.operator("allset.switch_mode", text="Switch to Maya", icon='EVENT_M').mode = 'MAYA'
+            # Nothing is changed until the user asks for it (step 115): the same dialog as the first start.
+            row.operator("allset.welcome", text="Make Blender feel like Maya", icon='EVENT_M')
+            row.operator("allset.switch_mode", text="Maya Mode Only").mode = 'MAYA'
         row.operator("allset.restore_blender", icon='LOOP_BACK')
+        if not self.maya_mode:
+            box.label(text="Allset is off: your keymap, theme, preferences and layout are unchanged until you "
+                           "choose Maya.", icon='INFO')
         box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches "
                        "at any time. Blender mode restores your keymap, theme and preferences.", icon='INFO')
         if switch.has_snapshot():

@@ -14,6 +14,7 @@ import bpy
 from bpy.props import StringProperty
 
 from . import cmds_shim, runner
+from ..ui import own_draw
 
 # --- state shown in the status bar --------------------------------------------------
 
@@ -134,7 +135,6 @@ def help_text(context):
 # at 1600 px) in UI units (20 px at effective scale 1.0).
 HELP_UNITS = 33.75
 COMMAND_UNITS = 45.75
-_blender_draw = []
 
 
 def draw_help_line(layout, context):
@@ -175,7 +175,7 @@ def draw_status_bar(self, context):
     except KeyError:
         prefs = None
     if prefs is None or not (prefs.show_help_line or prefs.show_command_line):
-        return _blender_draw[0](self, context)
+        return own_draw.original("STATUSBAR_HT_header", draw_status_bar)(self, context)
     layout = self.layout
     if prefs.show_help_line:
         row = layout.row()
@@ -185,8 +185,6 @@ def draw_status_bar(self, context):
         row = layout.row()
         row.ui_units_x = COMMAND_UNITS
         draw_command_line(row, context)
-    for func in getattr(_blender_draw[0], "_draw_funcs", ())[1:]:   # other add-ons' .append()ed items
-        func(self, context)
     layout.separator_spacer()
     layout.template_status_info()
 
@@ -201,12 +199,12 @@ def register():
     bpy.types.WindowManager.allset_cmd = StringProperty(
         name="Command Line", description="Python command (Enter to run). MEL is not supported",
         options={'SKIP_SAVE'}, update=_on_command)
-    _blender_draw.append(bpy.types.STATUSBAR_HT_header.draw)
-    bpy.types.STATUSBAR_HT_header.draw = draw_status_bar
+    # Only Blender's own status bar draw is swapped: other add-ons' appended items keep drawing (step 115).
+    own_draw.swap("STATUSBAR_HT_header", draw_status_bar)
 
 
 def unregister():
-    bpy.types.STATUSBAR_HT_header.draw = _blender_draw.pop()
+    own_draw.restore("STATUSBAR_HT_header", draw_status_bar)
     del bpy.types.WindowManager.allset_cmd
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
