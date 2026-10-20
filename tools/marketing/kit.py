@@ -67,8 +67,8 @@ def brand_block(d, x, y, s, lines, name_px):
     return y
 
 
-def place_screen(c, img, width, x, y, tilt=12):
-    t = tilted(img, width, tilt, shrink=0.12)
+def place_screen(c, img, width, x, y):
+    t = tilted(img, width)
     shadow(c, (x, y, x + t.width, y + t.height), 16, 26, 170)
     c.alpha_composite(t, (x, y))
 
@@ -95,8 +95,8 @@ def wide(size, name, lines, name_px, screen="hero", screen_w=None, text_scale=1.
     s = H / 1080
     c = canvas(size, (W * 0.70, H * 0.52, H * 0.6))
     sw = screen_w or round(W * 0.56)
-    t = tilted(shot(screen), sw, 12, shrink=0.12)
-    x, y = W - sw - round(W * 0.03), (H - t.height) // 2
+    t = tilted(shot(screen), sw)
+    x, y = W - t.width - round(W * 0.03), (H - t.height) // 2
     shadow(c, (x, y, x + t.width, y + t.height), 16, 26, 170)
     c.alpha_composite(t, (x, y))
     d = ImageDraw.Draw(c)
@@ -150,7 +150,7 @@ def square():
     d = ImageDraw.Draw(c)
     y = brand_block(d, 92, 96, 0.82, [("Hotbox, marking menus, Channel Box,", 34, "text"),
                                       ("and plain Blender one click away.", 34, "text")], SQUARE_N)
-    place_screen(c, shot("hotbox"), 1040, 150, 560)
+    place_screen(c, shot("hotbox"), 1400, 150, 560)   # step 126: a real turn projects to 0.73 x the width
     fine_print(d, CONTENT, ["hotbox"], 96, y + 22, W, top=True)   # the screen fills the bottom: under the text
     return save(c, "reddit_square.png")
 
@@ -179,15 +179,15 @@ def youtube():
 def main():
     out = [
         wide((1920, 720), "readme_hero.png", [(TAGLINE, 34, "text"), (HEADLINE, 34, "text-strong")], HERO_N,
-             screen_w=900),
+             screen_w=1080),
         wide((1280, 640), "social_preview.png", [("The whole Maya workflow", 34, "text"),
                                                  ("in Blender, in one install.", 34, "text"),
                                                  ("Free · open source · Blender 4.5 – 5.2", 26, "text-muted")],
-             SOCIAL_N, screen_w=560, text_scale=1.05),
+             SOCIAL_N, screen_w=680, text_scale=1.05),
         wide((1600, 900), "x_card.png", [("The tutorial ends.", 44, "text-strong"),
                                          ("Your Channel Box comes back.", 44, "text-strong"),
                                          ("Maya workflow in Blender, one install.", 28, "text")],
-             X_N, screen_w=740, text_scale=1.05),
+             X_N, screen_w=890, text_scale=1.05),
         before_after(),
         square(),
         youtube(),

@@ -2,6 +2,10 @@
 
 ## 현재 작업
 
+- Step 126 (키 비주얼 기울인 화면 가로 늘어남, 사용자 버그 10-20) 완료 — `docs/steps/step_126.md`. `compose.tilted` = 실제 Y축 24° 회전 +
+  핀홀 투영 (같은 θ·카메라, 2× 슈퍼샘플), `perspective_check.py` 5/5 (투영 폭 = 원본의 0.729, 기대 0.728), 키 비주얼 · 정사각 · 키트 6 ·
+  스토어 featured · 트레일러 재생성. **바로 다음 할 일**: 사용자 결정 (업로드 또는 다음 단계); 열린 것: step 125 「남은 것」.
+
 - Step 125 (홍보 장면 모델 교체 + 이름 Maya Workflow Kit + README, 사용자 지시 10-20) 완료 — `docs/steps/step_125.md`.
   - 이름: 보이는 글자 전부 Maya Workflow Kit (`src/allset/names.py`, 템플릿 폴더 `Maya_Workflow_Kit`, zip `maya-workflow-kit-<ver>.zip`),
     내부 id `allset` 그대로; 결정 12 개정 (사용자 결정, 상표 위험, 대체 이름 Workflow Kit for Maya Users); README = 「Maya Workflow Kit for

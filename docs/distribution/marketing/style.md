@@ -141,3 +141,9 @@ Words in images: a title of ≤ 6 words and one line of ≤ 12 words (references
 - Bones are shown only in the rigging shot; import helpers (empties) are hidden; glTF quaternion channels converted
   to Rotate X / Y / Z so the Channel Box reads like Maya's.
 - The Blender logo in the top-left corner is painted over (extensions.blender.org terms 2.2).
+
+## Turned screens (step 126)
+
+Every turned screen is the capture's own rectangle rotated `TILT_DEG` (24°) about its near vertical edge and projected by
+one pinhole camera (`TILT_DEPTH` 1.6 × width): its projected width is 0.73 × the unturned width, never wider than the
+capture (`compose.tilt_quad`, checked by `tools/marketing/perspective_check.py`).
