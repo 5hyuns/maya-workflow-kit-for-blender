@@ -22,7 +22,7 @@ groups, centimetres and `pCube1` — rebuilt on top of Blender's own tools. **In
 choose Maya**, and one click on the Maya | Blender switch gives you plain Blender back whenever a tutorial uses
 Blender's own keys.
 
-▶ **[Watch the half-minute tour (MP4)](docs/distribution/marketing/clips/00_trailer.mp4)**
+▶ **[Watch the half-minute tour (MP4)](docs/distribution/marketing/clips/00_trailer.mp4)** · [Website](https://5hyuns.github.io/maya-workflow-kit-for-blender/) <!-- live once the repository is public and Pages is enabled -->
 · [Install](#installation) · [Quick start](#quick-start-for-maya-users) · [FAQ](#faq)
 
 ---

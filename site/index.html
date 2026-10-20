@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maya Workflow Kit — for Maya users, in Blender</title>
+  <meta name="description" content="Maya Workflow Kit is a free, open-source Blender extension for Maya users: hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows, Maya navigation and scene concepts. Nothing changes until you choose Maya.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#1e1e1e">
+  <link rel="canonical" href="https://5hyuns.github.io/maya-workflow-kit-for-blender/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Maya Workflow Kit — for Maya users, in Blender">
+  <meta property="og:description" content="The whole Maya workflow in Blender, in one install. Free and open source, Blender 4.5 – 5.2.">
+  <meta property="og:url" content="https://5hyuns.github.io/maya-workflow-kit-for-blender/">
+  <meta property="og:image" content="https://5hyuns.github.io/maya-workflow-kit-for-blender/media/og.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32.png">
+  <link rel="apple-touch-icon" href="media/favicon-180.png">
+  <link rel="preload" href="fonts/InterVariable-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="menubar">
+  <a class="menubar__brand" href="#top" aria-label="Maya Workflow Kit, top of page">Maya Workflow Kit</a>
+  <nav aria-label="Sections">
+    <ul class="menubar__menu">
+      <li><a href="#workflows">Workflows</a></li>
+      <li><a href="#choose">Going back</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#limits">Limits</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+  </nav>
+  <a class="menubar__repo" href="https://github.com/5hyuns/maya-workflow-kit-for-blender">GitHub</a>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <div class="hero__copy">
+    <h1 id="hero-title" class="lockup">
+      <span class="lockup__name">Maya Workflow Kit</span>
+      <span class="lockup__line">for Maya users, in Blender</span>
+    </h1>
+    <p class="hero__tagline">The whole Maya workflow in Blender, in one install.</p>
+    <p class="hero__lede">Other tools bring one piece over: a pivot tool, a keymap, a shelf, a theme. This rebuilds the
+      set together — hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows —
+      on top of Blender's own tools. Installing it changes nothing until you choose Maya.</p>
+    <div class="hero__actions">
+      <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download the zip</a>
+      <a class="btn btn--quiet" href="#tour">Watch the 30-second tour</a>
+    </div>
+    <p class="hero__meta">Free · GPL-3.0 · Blender 4.5 – 5.2 · pure Python</p>
+  </div>
+
+  <div class="maya" id="workflows" aria-label="Workflows">
+    <div class="maya__shelf">
+      <span class="handle" aria-hidden="true"></span>
+      <div class="shelf" role="tablist" aria-label="Maya workflows" data-shelf>
+        <button class="shelf__tab" role="tab" id="tab-hotbox" aria-controls="panel" aria-selected="true" data-wf="hotbox" title="Hotbox &amp; Marking Menus">Hotbox</button>
+        <button class="shelf__tab" role="tab" id="tab-navigate" aria-controls="panel" aria-selected="false" tabindex="-1" data-wf="navigate" title="Navigate &amp; Select">Navigate</button>
+        <button class="shelf__tab" role="tab" id="tab-channels" aria-controls="panel" aria-selected="false" tabindex="-1" data-wf="channels" title="Channel Box &amp; Attribute Editor">Channel Box</button>
+        <button class="shelf__tab" role="tab" id="tab-menus" aria-controls="panel" aria-selected="false" tabindex="-1" data-wf="menus" title="Menu Sets &amp; Shelves">Menus &amp; Shelves</button>
+        <button class="shelf__tab" role="tab" id="tab-concepts" aria-controls="panel" aria-selected="false" tabindex="-1" data-wf="concepts" title="Maya concepts">Concepts</button>
+        <button class="shelf__tab" role="tab" id="tab-options" aria-controls="panel" aria-selected="false" tabindex="-1" data-wf="options" title="Option windows">Option windows</button>
+      </div>
+    </div>
+
+    <div class="maya__body" id="panel" role="tabpanel" aria-labelledby="tab-hotbox" tabindex="0">
+      <figure class="viewport">
+        <div class="viewport__crop">
+        <video class="viewport__media" data-video muted loop playsinline preload="none" width="1280" height="720"
+               poster="media/hotbox.jpg" aria-describedby="viewport-caption">
+          <source src="media/hotbox.webm" type="video/webm">
+          <source src="media/hotbox.mp4" type="video/mp4">
+        </video>
+        <img class="viewport__media" data-still hidden src="media/shot-menus_shelves.jpg" alt="" width="1600" height="900" decoding="async" loading="lazy">
+        </div>
+        <figcaption class="viewport__caption" id="viewport-caption" data-caption>Hold Space for the hotbox: every menu of the current menu set. Here: Select &gt; All.</figcaption>
+      </figure>
+
+      <aside class="channels" aria-label="What this workflow brings">
+        <p class="channels__node" data-node>hotbox</p>
+        <dl class="channels__list" data-facts></dl>
+        <p class="channels__credit" data-credit></p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="choose" id="choose" aria-labelledby="choose-title">
+  <div class="choose__copy">
+    <h2 id="choose-title">Nothing changes until you choose Maya</h2>
+    <p>Enabling the extension adds a small <strong>Maya | Blender</strong> switch at the right of the top bar, an Edit
+      menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a welcome dialog. Your keymap, theme, layout and
+      preferences stay as they are.</p>
+    <p>Choose <strong>Make Blender feel like Maya</strong> and the kit turns on its Maya-style keymap, layout, menus,
+      theme and Maya-like preferences — after writing a copy of everything it will change. Click <strong>Blender</strong>
+      in the switch and all of it comes back; switch again whenever a tutorial uses Blender's own keys.</p>
+  </div>
+  <div class="switcher">
+    <div class="switcher__toggle" role="group" aria-label="Show the same scene in">
+      <button type="button" class="switcher__opt" data-mode="maya" aria-pressed="true">Maya</button>
+      <span class="switcher__bar" aria-hidden="true">|</span>
+      <button type="button" class="switcher__opt" data-mode="blender" aria-pressed="false">Blender</button>
+    </div>
+    <div class="switcher__frame">
+      <picture data-mode-shot="maya">
+        <source type="image/webp" srcset="media/shot-hero-800.webp 800w, media/shot-hero.webp 1600w" sizes="(min-width: 1100px) 56vw, 100vw">
+        <img src="media/shot-hero.jpg" width="1600" height="900" loading="lazy" decoding="async"
+             alt="Maya mode: Blender with the Maya layout — menu bar, Status Line, Shelf, Tool Box, Outliner, Channel Box — on the DOGWALK scene.">
+      </picture>
+      <picture data-mode-shot="blender" hidden>
+        <source type="image/webp" srcset="media/shot-switch_before-800.webp 800w, media/shot-switch_before.webp 1600w" sizes="(min-width: 1100px) 56vw, 100vw">
+        <img src="media/shot-switch_before.jpg" width="1600" height="900" loading="lazy" decoding="async"
+             alt="Plain Blender, as installed: Blender's own layout, keymap and theme, with the welcome dialog and the Maya&nbsp;|&nbsp;Blender switch.">
+      </picture>
+    </div>
+    <p class="switcher__note"><span data-mode-note>Maya mode — same file, Maya layout, keys and colours.</span><br><span class="credit">DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</span></p>
+  </div>
+</section>
+
+<section class="tour" id="tour" aria-labelledby="tour-title">
+  <h2 id="tour-title">The tour, in half a minute</h2>
+  <figure class="tour__frame">
+    <video controls muted playsinline preload="none" poster="media/trailer.jpg" width="1280" height="720">
+      <source src="media/trailer.webm" type="video/webm">
+      <source src="media/trailer.mp4" type="video/mp4">
+    </video>
+    <figcaption>Hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click
+      switch back to plain Blender. No sound.<br><span class="credit">Scenes: DOGWALK, Rain, Pack Bot and Security Bot rigs
+      (CC BY 4.0) Blender Foundation | studio.blender.org, modified.</span></figcaption>
+  </figure>
+</section>
+
+<section class="install" id="install" aria-labelledby="install-title">
+  <h2 id="install-title">Install</h2>
+  <div class="optwin">
+  <p class="optwin__title"><span class="handle" aria-hidden="true"></span>Install Maya Workflow Kit</p>
+  <ol class="steps">
+    <li>
+      <h3>Get the zip</h3>
+      <p>Download <code>maya-workflow-kit-&lt;version&gt;.zip</code> from
+        <a href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">GitHub Releases</a>.
+        The extensions.blender.org listing is not live yet.</p>
+    </li>
+    <li>
+      <h3>Install from disk</h3>
+      <p>In Blender 4.5 or later: <span class="path">Edit › Preferences › Get Extensions</span>, open the drop-down at the top right and choose <span class="path">Install from Disk…</span>,
+        pick the zip. Or drag the zip onto the Blender window.</p>
+    </li>
+    <li>
+      <h3>Choose Maya</h3>
+      <p>Click <strong>Make Blender feel like Maya</strong> in the welcome dialog — or later, in the add-on preferences
+        or with the Maya&nbsp;|&nbsp;Blender switch. Ctrl+Alt+Shift+M goes back.</p>
+    </li>
+  </ol>
+  </div>
+  <p class="install__more">Disabling or removing the extension puts your values back and deletes the Maya layout
+    template. It writes only the layout template, a preference snapshot, your shelves and Maya project folders you
+    create — never outside them, and no network access.</p>
+</section>
+
+<section class="limits" id="limits" aria-labelledby="limits-title">
+  <h2 id="limits-title">Where Blender's C++ draws the line</h2>
+  <p>Everything here is Python on top of Blender. Some of Maya lives deeper than an extension can reach, so these are
+    not imitated:</p>
+  <ul class="limits__list">
+    <li>Blender is Z-up and has one pivot per object.</li>
+    <li>Dragging over a field with the middle mouse to scrub its value.</li>
+    <li>MEL. A Python Command Line with a small <code>maya.cmds</code> look-alike is there instead.</li>
+    <li>Side tabs and operating-system docking of panels.</li>
+  </ul>
+  <p>Every Maya menu item Blender cannot do is still shown, greyed, with a one-line note saying why and what to use
+    instead.</p>
+</section>
+
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <h2 id="faq-title">FAQ</h2>
+  <details>
+    <summary>Is this just a Maya keymap?</summary>
+    <p>No. The keymap is one part. The kit adds Maya's layout, hotbox and marking menus, Channel Box and Attribute
+      Editor, menu sets with Maya's menus, shelves, option windows with Maya 2022's factory values, and Maya's scene
+      concepts — Freeze, Delete History, Center Pivot, groups, centimetres, <code>pCube1</code>.</p>
+  </details>
+  <details>
+    <summary>Will it change my Blender settings?</summary>
+    <p>Not until you choose Maya. Before it changes anything it saves a copy; the switch, disabling or removing the
+      extension restores your values. It never saves your preferences by itself.</p>
+  </details>
+  <details>
+    <summary>Can I follow Blender tutorials with it installed?</summary>
+    <p>Yes: click <strong>Blender</strong> in the Maya&nbsp;|&nbsp;Blender switch (or Ctrl+Alt+Shift+M) for plain Blender with the
+      same scene, and switch back afterwards.</p>
+  </details>
+  <details>
+    <summary>Which Blender versions?</summary>
+    <p>Blender 4.5 LTS and 5.0 – 5.2. Earlier versions are not offered the extension.</p>
+  </details>
+  <details>
+    <summary>Does it need Maya installed?</summary>
+    <p>No. It contains no Autodesk code, icons or scripts and never talks to Maya; it rebuilds the behaviour in
+      Blender.</p>
+  </details>
+  <details>
+    <summary>Is it free?</summary>
+    <p>Yes. The code is GPL-3.0-or-later; the kit's own images and data are CC0. Source and issues on
+      <a href="https://github.com/5hyuns/maya-workflow-kit-for-blender">GitHub</a>.</p>
+  </details>
+</section>
+
+<section class="close" aria-labelledby="close-title">
+  <h2 id="close-title" class="close__title">The tutorial ends. Your Channel Box comes back.</h2>
+  <a class="btn btn--press" href="https://github.com/5hyuns/maya-workflow-kit-for-blender/releases">Download the zip</a>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p class="footer__brand"><span class="lockup__name">Maya Workflow Kit</span> <span class="lockup__line">for Maya users, in Blender</span></p>
+  <p>Free and open source (GPL-3.0-or-later). <a href="https://github.com/5hyuns/maya-workflow-kit-for-blender">Source on GitHub</a>.</p>
+  <p class="footer__credits">Scenes in the clips and screenshots: Rain, Pack Bot and Security Bot rigs and DOGWALK (Blender 4.5
+    splash) — (CC BY 4.0) Blender Foundation | studio.blender.org, modified; Cube Diorama (CC0) Blender Studio; Studio
+    Small 09 HDRI (CC0) Poly Haven. <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Type: Inter (SIL OFL 1.1).</p>
+  <p class="footer__legal">Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc., and/or its
+    subsidiaries and/or affiliates in the USA and/or other countries. Maya Workflow Kit is an independent, free and
+    open-source extension for Blender. It is not affiliated with, endorsed by, sponsored by, or otherwise approved by
+    Autodesk, Inc. or the Blender Foundation, and contains no Autodesk code, icons, MEL scripts or other Autodesk assets.
+    Blender is a trademark of the Blender Foundation.</p>
+</footer>
+
+<script type="application/json" id="workflows-data">
+{
+  "hotbox": {
+    "video": "hotbox", "caption": "Hold Space for the hotbox: every menu of the current menu set. Here: Select > All.",
+    "node": "hotbox", "credit": "DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "facts": [["Space hold", "hotbox, every menu of the menu set"], ["Space tap", "one view or four views"], ["RMB", "marking menu over the object"], ["Shift / Ctrl+RMB", "tool and component menus"], ["Positions", "Maya's radial layout, gestures"], ["Option box", "❒ opens the option window"]]
+  },
+  "navigate": {
+    "video": "navigation", "caption": "Alt + left / middle / right drag tumbles, tracks and dollies; F frames the selection, A frames everything.",
+    "node": "persp", "credit": "Pack Bot rig (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "facts": [["Alt + LMB", "tumble"], ["Alt + MMB", "track"], ["Alt + RMB", "dolly"], ["F / A", "frame selected / all"], ["Q W E R T Y", "Maya tools"], ["F8, F9 – F12", "object / component modes"]]
+  },
+  "channels": {
+    "video": "channel_box_keys", "caption": "S keys every channel and the Channel Box turns red; type +=90, Key Selected, scrub the Time Slider.",
+    "node": "GEO-casing_main", "credit": "Security Bot rig (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "facts": [["Translate X", "+=5 · *=2 entry"], ["Keyed", "red, as in Maya"], ["SHAPES / INPUTS", "history nodes"], ["MMB drag in the view", "virtual slider for selected channels"], ["Attribute Editor", "node tabs and sections"], ["Docking", "tab stack, tear-off handle"]]
+  },
+  "menus": {
+    "video": "rigging", "caption": "From the Rigging shelf: Create Joints, an IK Handle, Bind Skin, then Paint Skin Weights.",
+    "node": "skeleton1", "credit": "Rain rig (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "facts": [["F2 – F6", "Modeling · Rigging · Animation · FX · Rendering"], ["Shelf", "factory shelves + your Python ones"], ["Menus", "Maya order, names and hotkeys"], ["Status Line", "and Command Line"], ["Editors", "Graph Editor, UV, Hypershade"], ["Greyed items", "say what to use instead"]]
+  },
+  "concepts": {
+    "video": "pivot_snap", "caption": "Insert edits the pivot, hold V to snap it to a vertex, Insert again and rotate around it.",
+    "node": "pivot", "credit": "Security Bot rig (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "facts": [["Freeze", "channels 0 / 0 / 1, pivot kept"], ["Delete History", "and by type"], ["Center Pivot", "D / Insert to edit"], ["Ctrl+G · P", "groups, Maya parenting"], ["Units", "centimetres, Maya sizes"], ["Names", "pCube1, joint1, lambert1"]]
+  },
+  "options": {
+    "still": "menus_shelves", "caption": "The Rigging menu set with its option boxes; each opens Maya's option window with Maya 2022's factory values.",
+    "node": "optionBox", "credit": "Rain rig (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+    "alt": "The Skeleton menu of the Rigging menu set open over the Rain rig, with option boxes next to its items.",
+    "facts": [["❒", "opens the option window"], ["Defaults", "Maya 2022 factory values"], ["Buttons", "Apply · Save · Reset Settings"], ["Plain click", "uses your saved values"], ["Covers", "primitives, Extrude, Bevel, Bind Skin"], ["And", "constraints, Set Key, UV projections"]]
+  }
+}
+</script>
+</body>
+</html>
