@@ -1,4 +1,4 @@
-"""Step 52 in a real UI (Allset layout, Channel Box dock open): the hotbox shows Maya's rows (all menu sets,
+"""Step 52 in a real UI (Maya Workflow Kit layout, Channel Box dock open): the hotbox shows Maya's rows (all menu sets,
 "Maya" in the centre) and draws over the sidebar too; RMB on pCube1 shows the Maya 2022 list under the ring.
 Screenshots: gui_step52_hotbox.png, gui_step52_rmb.png."""
 
@@ -39,7 +39,7 @@ def redraw():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
@@ -80,7 +80,7 @@ def s_hotbox():
     for r, _k, label in lay.labels:
         rows.setdefault(r[1], []).append(label)
     check(f"{len(rows)} rows (Maya: 2 above, the centre row, 5 menu sets)", len(rows) == 8)
-    check("centre box says Allset", lay.title == "Allset")
+    check("centre box says Maya Workflow Kit", lay.title == "Maya Workflow Kit")
     check("four zone lines", len(lay.zone_lines) == 4)
     ui_x = C["ui"][0] - region.x
     check("rows reach over the sidebar dock (drawn there too)", max(r[2] for r, _k, _l in lay.labels) > ui_x)

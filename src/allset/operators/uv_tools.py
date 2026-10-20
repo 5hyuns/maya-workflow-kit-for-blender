@@ -32,7 +32,7 @@ class ALLSET_PG_uv(bpy.types.PropertyGroup):
     map_size: IntProperty(name="Map Size", default=MAYA_MAP_SIZE, min=1, soft_max=8192,
                           description="Texture size in pixels for Texel Density and Layout padding")
     texel_density: FloatProperty(name="Texel Density", default=0.0, min=0.0, precision=3,
-                                 description="Pixels per Maya unit (px/cm in the Allset template)")
+                                 description="Pixels per Maya unit (px/cm in the Maya Workflow Kit template)")
     shell_padding: FloatProperty(name="Shell Padding", default=MAYA_SHELL_PADDING, min=0.0, soft_max=64.0,
                                  description="Pixels between UV shells (Layout)")
 

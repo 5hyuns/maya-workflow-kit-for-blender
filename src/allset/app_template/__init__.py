@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya layout app template: install / remove / open.
 
-An app template is not an extension type, so the template ("Allset": the
+An app template is not an extension type, so the template ("Maya_Workflow_Kit", shown as "Maya Workflow Kit": the
 generated startup.blend and splash images) ships inside this package and
 is copied to the user's ``scripts/startup/bl_app_templates_user/``
 (; ,).
@@ -19,12 +19,14 @@ import shutil
 
 import bpy
 
-TEMPLATE_ID = "Allset"
+from ..names import PRODUCT
+
+TEMPLATE_ID = "Maya_Workflow_Kit"   # Blender shows "Maya Workflow Kit" (underscores -> spaces)
 SOURCE_DIR = os.path.join(os.path.dirname(__file__), TEMPLATE_ID)
 MARKER = ".allset"   # only folders carrying this file are ever removed
-# Before step 111 the kit was "Maya Kit": its template folder and marker (). Installing or removing the
-# layout also removes that old copy, again only when it carries the old marker.
-LEGACY = (("MayaKit", ".maya_kit"),)
+# Earlier names of the template folder (): "MayaKit" before step 111, "Allset" before step 125. Installing
+# or removing the layout also removes those old copies, again only when they carry the marker of their time.
+LEGACY = (("MayaKit", ".maya_kit"), ("Allset", MARKER))
 
 
 def user_templates_dir(create=False):
@@ -55,7 +57,7 @@ def install():
     remove_legacy()
     dst = os.path.join(user_templates_dir(create=True), TEMPLATE_ID)
     if os.path.isdir(dst) and not os.path.isfile(os.path.join(dst, MARKER)):
-        raise RuntimeError(f"{dst} exists and was not installed by Allset")
+        raise RuntimeError(f"{dst} exists and was not installed by {PRODUCT}")
     shutil.copytree(SOURCE_DIR, dst, dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns("__pycache__", "*.blend1"))
     stale = os.path.join(dst, "__init__.py")   # copies made before step 115 carried code
@@ -63,7 +65,7 @@ def install():
         os.remove(stale)
         shutil.rmtree(os.path.join(dst, "__pycache__"), ignore_errors=True)
     with open(os.path.join(dst, MARKER), "w", encoding="utf-8") as fh:
-        fh.write("Installed by the Allset extension. Removed by its 'Remove Maya Layout' button and when the "
+        fh.write(f"Installed by the {PRODUCT} extension. Removed by its 'Remove Maya Layout' button and when the "
                  "extension is disabled or removed.\n")
     _set_wanted(True)
     return dst
@@ -85,7 +87,7 @@ def remove(keep_wanted=False):
     if not os.path.isdir(dst):
         return removed_old
     if not os.path.isfile(os.path.join(dst, MARKER)):
-        raise RuntimeError(f"{dst} was not installed by Allset; not removing it")
+        raise RuntimeError(f"{dst} was not installed by {PRODUCT}; not removing it")
     shutil.rmtree(dst)
     return True
 
@@ -96,7 +98,7 @@ def remove_on_disable():
     try:
         return remove(keep_wanted=True)
     except (OSError, RuntimeError) as ex:
-        print("Allset: Maya layout template not removed:", ex)
+        print(f"{PRODUCT}: Maya layout template not removed:", ex)
         return False
 
 
@@ -113,13 +115,13 @@ def reinstall_if_wanted():
     try:
         install()
     except (OSError, RuntimeError) as ex:
-        print("Allset: Maya layout template not reinstalled:", ex)
+        print(f"{PRODUCT}: Maya layout template not reinstalled:", ex)
         return False
     return True
 
 
 class ALLSET_OT_layout_install(bpy.types.Operator):
-    """Install the Maya layout as an application template (File > New > Allset)"""
+    """Install the Maya layout as an application template (File > New > Maya Workflow Kit)"""
     bl_idname = "allset.layout_install"
     bl_label = "Install Maya Layout"
     bl_options = {'REGISTER', 'INTERNAL'}

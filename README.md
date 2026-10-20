@@ -1,219 +1,398 @@
-# Allset for Maya Users
+<div align="center">
+
+# Maya Workflow Kit for Blender
+
+### for Maya users, in Blender
 
 **The whole Maya workflow in Blender, in one install.**
 
-Other tools give you one piece at a time — a pivot, a keymap, a shelf, a theme. Allset brings the whole Maya workflow
-into Blender at once: hotbox and marking menus, Channel Box, Attribute Editor, Outliner, menu sets, shelves, option
-windows, Freeze / History concepts, centimetre units and pCube1-style naming. *한국어는 아래.*
+[![Blender 4.5 – 5.2](https://img.shields.io/badge/Blender-4.5%20LTS%20%E2%80%93%205.2-5285a6)](#requirements)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
-다른 도구는 한 조각씩 줍니다 — 피벗, 키맵, 셸프, 테마. Allset 은 Maya 워크플로우 전체를 한 번에 Blender 로 옮깁니다:
-핫박스·마킹메뉴, Channel Box, Attribute Editor, Outliner, 메뉴셋, 셸프, 옵션 창, Freeze / History 개념, cm 단위,
-pCube1 이름 붙이기. 대상: Blender 4.2+ (4.5 LTS), Maya 2022 를 쓰던 사람.
+![Maya Workflow Kit — for Maya users, in Blender. The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
 
-![Allset layout](docs/screenshots/01_layout.png)
+</div>
 
-> Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc., and/or its subsidiaries and/or
-> affiliates in the USA and/or other countries. This project is an independent, free and open-source (GPL)
-> extension for Blender. It is not affiliated with, endorsed by, sponsored by, or otherwise approved by
-> Autodesk, Inc. or the Blender Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk
-> assets; references to Maya are solely to describe compatibility and the intended audience.
+**The tutorial ends. Your Channel Box comes back.**
 
-> (한국어 요지) Autodesk 와 Maya 는 Autodesk, Inc. 의 상표입니다. 이 프로젝트는 Autodesk·Blender Foundation 과 관계없는
-> 독립 GPL 익스텐션이며 Autodesk 코드·아이콘·MEL·자산을 포함하지 않습니다. Maya 는 호환성과 대상 사용자를 설명하는
-> 데만 씁니다.
+Maya Workflow Kit is a free, open-source Blender extension for people who learned 3D in Maya. It brings the Maya
+workflow to Blender — hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option
+windows, Maya-style navigation and selection, and Maya scene concepts such as Freeze Transformations, Delete History,
+groups, centimetres and `pCube1` — rebuilt on top of Blender's own tools. **Installing it changes nothing until you
+choose Maya**, and one click on the Maya | Blender switch gives you plain Blender back whenever a tutorial uses
+Blender's own keys.
+
+▶ **[Watch the half-minute tour (MP4)](docs/distribution/marketing/clips/00_trailer.mp4)**
+· [Install](#installation) · [Quick start](#quick-start-for-maya-users) · [FAQ](#faq)
 
 ---
 
-## 한국어
+## Contents
 
-### 설치
+- [Features](#features)
+- [Known limits](#known-limits)
+- [Installation](#installation)
+- [First run: turning Maya mode on and off](#first-run-turning-maya-mode-on-and-off)
+- [Quick start for Maya users](#quick-start-for-maya-users)
+- [FAQ](#faq)
+- [Development](#development)
+- [Credits](#credits) · [License](#license) · [Trademarks](#trademarks)
 
-1. `allset-<버전>.zip` 을 받습니다. 소스에서 만들려면 `python tools/build.py` 를 실행합니다(결과: `dist/`).
-2. Blender 4.5 LTS 또는 5.0 – 5.2 (4.5.x – 5.2.x, step 118)에서 *Edit > Preferences > Get Extensions > ▾ > Install from Disk…* 로 zip을 고르거나,
-   zip을 Blender 창에 끌어다 놓습니다. 명령줄 설치:
-   `blender --command extension install-file -r user_default --enable allset-<버전>.zip`
-3. 처음 켜면 키맵이 **"Maya-style"** 로 바뀌고 Maya 내비게이션 환경설정이 적용됩니다(끄면 원래 값으로 돌아갑니다).
-   새 설정의 첫 실행에서 나오는 *Quick Setup* 창은 키맵을 "Blender" 로 덮어쓸 수 있으니 ESC로 닫거나, 나중에
-   *Preferences > Add-ons > Allset > Activate Maya Keymap* 을 누르세요.
-4. *Preferences > Add-ons > Allset > Install Maya Layout* → *File > New > Allset* 으로 Maya 레이아웃을 엽니다
-   (Outliner 왼쪽, 위쪽 Status Line·Shelf, 오른쪽 Channel Box/AE, 아래 타임라인). 같은 곳에서 Maya 테마를 적용/되돌립니다.
-5. 레거시 애드온 zip(`allset-<버전>-legacy.zip`)도 같은 소스에서 만들어집니다.
+---
 
-### 기능
+## Features
 
-| 영역 | 내용 |
+Everything below is in the current version. Maya menu items that Blender cannot do are still shown — greyed, with a
+one-line note saying why and what to use instead.
+
+### Look & layout
+
+- **Maya layout** as a Blender application template (*File > New > Maya Workflow Kit*): menu bar, Status Line, Shelf,
+  Tool Box, Outliner, Channel Box / Layer Editor tab stack, Time Slider and Range Slider, Help Line and Command Line.
+- **Studio Grey (Maya-inspired)** theme, with colours taken from Maya 2022's factory preferences; one theme file per
+  Blender minor version so 4.5 and 5.x look the same.
+- **Maya's docking**: Channel Box, Attribute Editor and Modeling Toolkit share one tab stack next to the viewport and
+  tear off into floating windows by their `:::::` handle; Outliner and Tool Settings dock on the left.
+- **Maya selection colours** (lead object green, others white), solid side panels, and the Move / Scale manipulator.
+- **Alt+B** cycles the background of every 3D view: grey → light grey → gradient → black (the gradient needs the kit's
+  theme).
+
+### Navigation & selection
+
+- **Alt + LMB / MMB / RMB** tumble, track and dolly; **F / A** frame selected / all in the visible part of the view;
+  **Shift+F / Shift+A** in all views; **`[` `]`** view undo / redo; **Space** tap toggles one view / four views.
+- **Q W E R T Y** tools (Y = last non-QWERT tool), Maya selection modifiers (Shift toggles, Ctrl deselects, Ctrl+Shift
+  adds), **F8** object / component toggle, **F9–F12** vertex / edge / face / UV.
+- Pre-selection highlight, edit-mode box select through occluded elements, selection priority, arrow-key **pick-walk**
+  (edge loops / rings, joints), soft select and symmetry.
+- **Hold keys**: **X / C / V** snap to grid / edge / vertex while held, **J** step snap, **D / Insert** edit the pivot,
+  **B** soft select.
+
+![Edit the pivot, snap with V](docs/distribution/marketing/gif/05_pivot_snap.gif)
+
+*Insert edits the pivot; hold V while dragging and it snaps to a vertex. Insert again, and the object rotates around its new pivot.*
+
+### Hotbox, marking menus & menu sets
+
+- **Space-hold hotbox** with every menu of the current menu set, Recent Commands and the marking-menu zones.
+- **Right-click, Shift+right-click and Ctrl+right-click marking menus** over objects and components, in Maya's radial
+  positions, with gestures, click mode, submenus and option boxes; **Q / W / E / R + LMB** tool option menus;
+  **Shift+Q / Alt+Q / Shift+S** hold menus.
+- **Menu sets** Modeling / Rigging / Animation / FX / Rendering on **F2–F6**, Maya's menu order and names, Maya hotkeys
+  shown in the menus, dotted tear-off lines.
+- **Option boxes (❒)** open Maya option windows with Maya 2022's factory values — Save Settings, Reset Settings, Apply
+  and the command button; a plain click then uses your saved values.
+- **Shelves**: the factory shelves (Polygons, Rigging, Animation, Rendering, FX …) with every button in its Maya slot,
+  plus your own Python shelves.
+
+![Hold Space for the hotbox](docs/distribution/marketing/gif/01_hotbox.gif)
+
+*Tap Space to toggle one view and four views; hold Space for the hotbox. Here: Select > All, straight from the hotbox.*
+
+![Right-click marking menus](docs/distribution/marketing/gif/02_marking_menu.gif)
+
+*Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode.*
+
+### Channel Box & editors
+
+- **Channel Box / Layer Editor**: Translate / Rotate / Scale / Visibility of every selected object, SHAPES and INPUTS
+  (history), keyed / locked / driven colours, `+=5` and `*=2` entry, middle-drag virtual slider in the viewport for
+  selected channels, Channels menu and right-click menu, display layers.
+- **Attribute Editor** with Maya's node tabs and sections (transform, shape, history, material, shading group) and
+  Notes; **Ctrl+A** toggles Channel Box ↔ Attribute Editor.
+- **Outliner** with Maya's Display / Show menus (DAG hierarchy, Shapes toggle), sets and Maya's default rows.
+- Maya menu bars in the **Graph Editor, Dope Sheet, UV Editor, Hypershade, Render Settings and Script Editor**; a
+  **Tool Settings** dock; the **Modeling Toolkit**.
+- **Command Line** and **Script Editor** run Python with a small `maya.cmds` look-alike (e.g. `cmds.polyCube()`,
+  `cmds.move(5, 0, 0)`).
+
+![Key it in the Channel Box](docs/distribution/marketing/gif/03_channel_box_keys.gif)
+
+*S keys every channel and the Channel Box turns red; type `+=90` into Rotate Z, right-click › Key Selected, then scrub the Time Slider.*
+
+### Modeling & UV
+
+- **Maya creation defaults**: Maya names (`pCube1`, `pCubeShape1`, `group1`, `polySmooth1`), Maya sizes in
+  centimetres, a default `lambert1` material; optional **Maya Units** preference (1 Blender unit = 1 cm).
+- **Maya concepts**: Freeze Transformations (channels back to 0 / 0 / 1, pivot kept), Reset Transformations, Center
+  Pivot, Delete History and Delete by Type, Maya-style parenting (**P / Shift+P** keep the Channel Box values),
+  **Ctrl+G** groups, Duplicate Special.
+- **Smooth Mesh Preview** on **1 / 2 / 3**, display modes on **4 / 5 / 6 / 7**.
+- Mesh tools including Combine / Separate / Mirror / Boolean, extrude with editable history, **Ctrl+B** Bevel,
+  Circularize, Connect and Make Hole, Maya's convert-selection rules.
+- **UV**: Cut / Sew UV Edges, 3D Cut and Sew, Unfold, Layout, UV shell selection, Maya UV Editor menus and UV Toolkit.
+
+### Animation
+
+- **S** sets a key on every keyable channel; **Shift+W / E / R** key translate / rotate / scale.
+- **Time Slider** with key ticks and **Range Slider**; **K**-drag to scrub; **, / .** previous / next key;
+  **Alt+V** play; Time Slider bookmarks.
+- **Graph Editor** with Maya menus and the tangent toolbar (Spline, Linear, Clamped, Stepped, Flat …), **Shift+S**
+  tangents marking menu, **I** insert-key tool.
+- **Auto Key** and **Playblast**.
+
+![Navigate the Maya way](docs/distribution/marketing/gif/04_navigation.gif)
+
+*Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything.*
+
+### Rigging
+
+- **Joint Tool**, **IK Handle** and IK Spline, joint pick-walk, Reroot and Preferred Angle.
+- **Bind Skin** and **Paint Skin Weights** (influence list, Replace / Add / Scale / Smooth), Hammer weights.
+- **Set Driven Key**, constraints, Cluster and Soft Modification.
+
+![Joints, IK and skin weights](docs/distribution/marketing/gif/06_rigging.gif)
+
+*From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights.*
+
+### Rendering & FX
+
+- **Hypershade** menus and Browser tabs, Maya shader types with their Attribute Editor sections, shading groups.
+- **Render Settings** window with Maya's Common tab; Rendering menu set (Render Current Frame, Keep Image in the
+  render view).
+- **FX** menu set with Maya's simulation scale: nucleus gravity, nParticles emitters, nCloth.
+
+### Scene & files
+
+- **Maya projects**: Set Project / Project Window; file dialogs start in the current project's folders (default
+  project `Documents/Maya Workflow Kit/projects/default`).
+- **Ctrl+S / Ctrl+Shift+S** save in the project's scenes folder; **Ctrl+Alt+S** increment and save the Maya way
+  (`shot_v001` → `shot_v001.0001`).
+- **Ctrl+R** Create Reference: links a `.blend` with a library override and `namespace:name` naming.
+- **File > Import / Export** with Files of type (FBX, OBJ, Alembic, USD …) and Maya presets (cm, Y-up).
+
+### Switch & revert
+
+- A **Maya | Blender** switch at the right of the top bar, an Edit menu entry and **Ctrl+Alt+Shift+M**.
+- Switching to Blender brings back Blender's keymap, theme, layout and every preference the kit changed — with the
+  same scene open; switch again whenever you like.
+- Before Maya mode changes anything, a copy of everything it will change is written to the extension's user folder.
+
+![Maya or Blender, one click](docs/distribution/marketing/gif/07_switch.gif)
+
+*One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colours back.*
+
+All clips as MP4 (1920 × 1080): [docs/distribution/marketing/clips/](docs/distribution/marketing/clips/).
+
+### Known limits
+
+Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so these are worked around or left out:
+
+- **Z-up world.** Blender is Z-up; Y-up applies only to the import / export presets.
+- **One pivot per object.** Maya's separate rotate and scale pivots have no Blender equivalent.
+- **No middle-drag on fields.** Select channels in the Channel Box and middle-drag in the viewport instead.
+- **No MEL.** Scripting is Python, with a small `maya.cmds` look-alike.
+- **No Maya scene files.** `.ma` / `.mb` can't be read — export FBX (or OBJ / Alembic / USD) from Maya.
+- **Docking stays inside Blender's areas.** Maya's side tabs and OS-level docking of panels are not imitated.
+- Not every Maya menu item has a Blender counterpart; those items are greyed with a note.
+- Blender versions after 5.2 are not offered the extension until they are tested.
+
+---
+
+## Installation
+
+### Requirements
+
+- **Blender 4.5 LTS through 5.2.x** (`blender_version_min = "4.5.0"`, `blender_version_max = "5.3.0"` exclusive).
+  The full test suites and the clean install → enable → disable → remove round trip were run on 4.5.4, 5.0.1, 5.1.2
+  and 5.2.2 ([]()). Blender 4.2 – 4.4 are not supported.
+- Pure Python, no compiled code, no network access. On Windows, hold keys read the keyboard state with one read-only
+  system call; elsewhere Blender's own key-release event is used. Development and testing so far have been on Windows
+  only.
+
+### Option 1 — Blender Extensions platform *(not yet listed)*
+
+Maya Workflow Kit is not on extensions.blender.org yet. Once it is, install it from inside Blender:
+*Edit > Preferences > Get Extensions*, search **Maya Workflow Kit**, click **Install**.
+<!-- TODO: add the listing URL when it is live -->
+
+### Option 2 — Install the zip from disk
+
+1. Get `maya-workflow-kit-<version>.zip` (current version: 0.2.0) — build it as in option 3; there is no download page
+   yet. <!-- TODO: link the GitHub Releases page once it exists -->
+2. In Blender: *Edit > Preferences > Get Extensions > ▾ (top-right menu) > Install from Disk…* and pick the zip — or
+   drag the zip onto the Blender window.
+
+Command line (installs into the user repository and enables it):
+
+```sh
+blender --command extension install-file -r user_default --enable maya-workflow-kit-<version>.zip
+```
+
+### Option 3 — Build from source
+
+```sh
+git clone https://github.com/5hyuns/maya-workflow-kit-for-blender.git
+cd maya-workflow-kit-for-blender
+python tools/build.py            # -> dist/maya-workflow-kit-<version>.zip (+ dist/maya-workflow-kit-<version>-legacy.zip)
+python tools/build.py --blender "/path/to/blender"   # if Blender is not at the default Windows 4.5 path
+```
+
+The build runs `blender --command extension build` (which also validates the manifest) in a throwaway user config;
+then install `dist/maya-workflow-kit-<version>.zip` as in option 2.
+
+---
+
+## First run: turning Maya mode on and off
+
+**Enabling the extension does not change your keymap, preferences, theme or layout.** It only adds the Maya | Blender
+switch at the right of the top bar, an Edit menu entry, the shortcut **Ctrl+Alt+Shift+M** and, once, a welcome dialog.
+
+**Turn Maya mode on** — click **Make Blender feel like Maya** in the welcome dialog or in
+*Preferences > Add-ons > Maya Workflow Kit*, or click **Maya** in the top-bar switch. The kit then turns on its
+Maya-style keymap, the Maya layout (*File > New > Maya Workflow Kit*), menus, the Studio Grey theme and Maya-like
+preferences (navigation, undo steps, solid side panels, auto key, density, font, wireframes, splash).
+
+**Go back** — any of these:
+
+| Want | Do |
 |---|---|
-| 키맵 | Industry Compatible 데이터를 바탕으로 만든 "Maya-style" 키컨피그. Q/W/E/R, 선택 수정키(Shift 토글, Ctrl 해제, Ctrl+Shift 추가), 4/5/6/7 표시, 1/2/3 스무스 미리보기, F8–F11 컴포넌트, Ctrl+G 그룹, P/Shift+P, Ctrl+D/Shift+D/Ctrl+Shift+D, Alt+Shift+D, Ctrl+A, 화살표 pick-walk… 전체 대응: []() |
-| 홀드 키 | X/C/V/J 누르는 동안 스냅, D/Insert 피벗 편집, B 소프트 셀렉트(탭 토글, 홀드 드래그 반경), A 탭 = 전체 프레이밍 |
-| 카메라 | Alt+LMB/MMB/RMB 텀블·트랙·돌리, 정사영 텀블 잠금, Shift+F/Shift+A 모든 뷰 프레이밍, `[` `]` 뷰 언두, Space 탭 4분할 |
-| 마킹메뉴·핫박스 | Maya 방사 위치 그대로의 RMB / Shift+RMB / Ctrl+RMB / Ctrl+Shift+RMB 마킹메뉴, Q/W/E/R/A 홀드 메뉴, 긋기·클릭 모드·그 자리 하위 메뉴·옵션 박스(GPU 엔진, 파이 메뉴로 바꿀 수 있음), Space 홀드 핫박스 |
-| 레이아웃·테마 | Maya General 레이아웃 App Template, Studio Grey 테마 (Maya-inspired, 백업·복원) |
-| 상단 UI | Maya 메뉴바(메뉴셋 Modeling/Rigging/Animation/FX/Rendering, 대응 없는 항목은 회색), Status Line, Python 커맨드 라인(`cmds` 일부), Help Line |
-| Channel Box·Layer Editor | 선택 전체 일괄 편집, 채널 선택 + 뷰포트 MMB 가상 슬라이더, Channels 메뉴(키·잠금·숨김…), SHAPES/INPUTS, 디스플레이 레이어(컬렉션) |
-| Attribute Editor | Channel Box와 같은 자리에서 Ctrl+A로 전환. transform / shape / history(모디파이어) / 재질 노드 탭, Maya 템플릿 섹션 |
-| Outliner | 사이드바 "Outliner" 탭: DAG 순서, Shapes 토글, 더블클릭 이름 변경, Parent/Unparent |
-| Shelf | Status Line 아래 셸프 띠: Maya 기본 8개 탭(Poly Modeling 등)을 Blender 연산자 + 내장 아이콘으로, 더블클릭 = 옵션, 사용자 셸프(버튼 = Python 스크립트) |
-| 개념 | Freeze Transformations(피벗 유지, 채널 0/0/1), Reset, Center Pivot, Delete History / By Type, Maya식 부모 지정(parent inverse 단위), Duplicate Special / with Transform, Maya 이름(pCube1/pCubeShape1)·원점·기본 크기로 생성, Maya Units 옵션(1 BU = 1 cm) |
+| Plain Blender for a while | Click **Blender** in the switch (or Ctrl+Alt+Shift+M). Keymap, theme, layout and every changed preference come back; switch again any time. |
+| Undo everything the kit did | *Preferences > Add-ons > Maya Workflow Kit >* **Restore Blender Settings** — Maya mode off, layout template removed, your original settings back. |
+| Keep Maya keys, drop the look | **Revert Maya Look** in the add-on preferences removes the theme, splash and layout template only. |
+| Uninstall | Disable or **Remove** the extension *inside Blender* (*Preferences > Add-ons*). Your values are put back and the layout template is deleted. |
 
-<p>
-<img src="docs/screenshots/03_marking_menu.png" width="49%"> <img src="docs/screenshots/04_hotbox.png" width="49%">
-<img src="docs/screenshots/05_attribute_editor.png" width="49%"> <img src="docs/screenshots/07_outliner_rigging_shelf.png" width="49%">
-</p>
+> **Uninstall from inside Blender.** `blender --command extension remove` does not load the add-on, so it cannot
+> restore the settings Maya mode changed — switch to Blender first if you use it.
 
-### 단위
+The kit never saves your preferences by itself; Blender's own Auto-Save Preferences (or you) do.
 
-Maya 길이 1 = 씬 표시 길이 단위 1 (Maya 의 working unit 과 같은 규칙, [결정 8]()).
-Create 메뉴·셸프·마킹 메뉴·핫박스·Ctrl+G·커맨드 라인 `cmds.polyCube()` 가 모두 같은 크기를 만들고, Maya FBX(cm)를 가져온 크기와도 같다.
+**Files it writes outside the extension**
 
-| 씬 | Blender 단위 (BU) | pCube1 | Channel Box `cmds.move(5, 0, 0)` |
-|---|---|---|---|
-| Allset 레이아웃 (기본: m 유지 + cm 표시) | 1 BU = 1 m | 0.01 BU = **1 cm** | 5 cm |
-| 환경설정 켬 (`scale_length` 0.01) | 1 BU = 1 cm | 1 BU = **1 cm** | 5 cm |
-| 팩토리 레이아웃 (m 표시) | 1 BU = 1 m | 1 BU = 1 m | 5 m |
-
-- 기본값은 물리·라이트 감쇠가 실제 크기(1 cm)로 계산된다. Maya 에서 가져온 장면과 같은 조건이다.
-- Allset 레이아웃의 3D 뷰는 Maya 새 씬 persp 카메라(28, 21, 28 cm)와 클립 0.1 / 10000 cm 로 시작한다.
-- Maya Units 는 이미 저장된 파일을 바꾸지 않는다. 켤 때 열려 있는 파일과 새 파일에만 적용된다.
-  BU 값은 그대로이고 표시만 100배 바뀐다 (1 BU 물체가 "1 cm" 로 보인다).
-
-### Maya ↔ Blender 대응표
-
-| Maya | Blender (이 킷에서) | 비고 |
-|---|---|---|
-| transform / shape 노드 | Object / Object Data | AE 탭·Outliner Shapes 토글로 Maya처럼 보여 줌 |
-| 피벗 (rotate/scale pivot) | 객체 원점 + `delta_location` (피벗 오프셋) | rotate/scale 피벗 분리는 불가 |
-| Freeze Transformations | `allset.freeze_transform` | 메시에 굽고 채널 0/0/1, 피벗 제자리 (Blender Apply 는 원점이 월드 0으로 감) |
-| Construction history / Delete History | 모디파이어 스택 + 셰이프 키 / 평가 결과로 굽기 | Non-Deformer History = 디포머 남김 |
-| 부모 지정 (P) | `matrix_parent_inverse` = 단위, 월드 유지 | 채널 값이 부모 기준 (Maya와 같은 숫자) |
-| group (Ctrl+G) | Empty + 부모 지정 | 이름 group1, 피벗 원점 |
-| instance | linked duplicate (데이터 공유) | Duplicate Special > Instance |
-| display layer | 컬렉션 (Layer Editor) | 가시성·Reference(선택 불가) |
-| shading group / material | 재질 슬롯 / Principled BSDF | 셸프 재질 버튼, AE standardSurface 섹션 |
-| cm, Y-up | m + cm 표시 (옵션: 1 BU = 1 cm), **Z-up** | Y-up 불가 |
-| Channel Box INPUTS | 모디파이어 | |
-| Attribute Editor | 사이드바 AE (Properties 탭은 고정이라 추가 불가) | |
-| Shelf | Status Line 아래 Image Editor 띠 | 새 영역 종류를 만들 수 없음 |
-| MEL | 없음 — Python 커맨드 라인 + `cmds` 일부 흉내 | |
-
-### 한계 — Blender C++ 쪽이라 Python으로 넘을 수 없는 벽
-
-C++ 수정 없이 우회하고, 안 되는 것은 적어 둡니다(사용자 결정 5). 근거: .
-
-1. **Y-up 월드** — Blender는 Z-up이 내비게이션·뷰·그리드·물리에 박혀 있음. 입출력에서만 축 변환.
-2. **UI 필드 위 MMB 드래그** (Channel Box 필드에서 직접) — 버튼 이벤트가 C. 채널 선택 + 뷰포트 MMB로 대신.
-3. **기본 트랜스폼 기즈모 확장** (Maya 매니퓰레이터 동작 그대로) — C 기즈모.
-4. **새 에디터·영역 종류** — 진짜 Channel Box 에디터, Shelf 영역, 모든 에디터 위 핫박스. 사이드바·Image Editor 띠·GPU 오버레이로 대신.
-5. **Outliner 트리 그리기** — 자체 UIList Outliner로 대신(드래그 재부모 없음).
-6. **타임라인 키 그리기·스크럽** — Maya 붉은 키 틱, 듀얼 핸들 Range Slider 없음.
-7. **객체의 분리된 rotate/scale 피벗** — RNA 없음.
-8. **MEL** — Python만.
-
-그 밖의 알려진 차이: 메뉴 옵션 박스 `[]`·tear-off 없음(마킹메뉴는 지원), 드래그 중 X/C/V로 스냅 켜기 불가, 사이드바 탭을 코드로
-선택 불가(Ctrl+A는 Channel Box 탭 안에서만 전환), 메뉴셋 F2–F6 키 미구현, 셸프 버튼 드래그 정렬 없음, Sculpting 셸프는 Sculpt
-Tool만. 단계별 상세: *.md` 「남은 것」, 손으로 확인할 항목: []().
-
-### 개발
-
-```
-python tests/run.py             # 빌드 + 샌드박스 설치 + 헤드리스 테스트 전부
-python tests/gui/run.py         # GUI 이벤트 시뮬레이션 테스트 (창이 잠깐 뜸)
-python tools/release_check.py   # 빌드 → extension validate → 깨끗한 설정에 설치·활성화 → docs/screenshots/
-```
-
-모든 Blender 실행은 `tmp/` 안의 샌드박스 사용자 설정을 씁니다(실제 Blender 설정은 건드리지 않음). 설계 기록: ,
-, 결정: .
-
-### 라이선스
-
-GPL-3.0-or-later ([LICENSE](LICENSE)). Blender 익스텐션 요구 사항입니다. 킷이 만든 그림·데이터 파일 (스플래시 / 환영
-PNG, `startup.blend`, 테마 XML) 은 CC0-1.0 입니다 ([ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)).
+- `scripts/startup/bl_app_templates_user/Maya_Workflow_Kit/` — the Maya layout (data only: `startup.blend`, splash
+  images, a marker file). Copied when you choose Maya or click Install Maya Layout; deleted when you disable or remove
+  the extension (folders without the kit's marker are never touched).
+- The extension's user folder — preference snapshot, theme backup, your shelves.
+- Maya project folders — the default project `Documents/Maya Workflow Kit/projects/default` the first time a
+  project-aware dialog opens, and folders you choose with Set Project.
+- Playblast writes its movie to Blender's temporary folder; exports and saves go where you choose.
 
 ---
 
-## English
+## Quick start for Maya users
 
-A Blender extension for Blender 4.5 LTS and 5.0 – 5.2 (4.5.x – 5.2.x) for people coming from Maya 2022. Other tools give you one piece
-at a time — a pivot, a keymap, a shelf, a theme; Allset brings the whole Maya workflow in one install: not only the
-hotkeys but the interaction feel, UI layout and scene concepts.
+With Maya mode on. The table of all 468 Maya 2022 factory hotkeys, their Blender counterparts and the status of each:
+[]().
 
-> Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc., and/or its subsidiaries and/or
-> affiliates in the USA and/or other countries. This project is an independent, free and open-source (GPL)
-> extension for Blender. It is not affiliated with, endorsed by, sponsored by, or otherwise approved by
-> Autodesk, Inc. or the Blender Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk
-> assets; references to Maya are solely to describe compatibility and the intended audience.
+| Action | Keys / mouse |
+|---|---|
+| Tumble / track / dolly | Alt + LMB / MMB / RMB drag |
+| Frame selected / all | F / A (Shift+F / Shift+A: all views) |
+| One view ↔ four views | Space (tap) |
+| Hotbox | Space (hold) |
+| Marking menus | RMB, Shift+RMB, Ctrl+RMB over an object or component |
+| Select / Move / Rotate / Scale | Q / W / E / R (hold + LMB for the tool's marking menu) |
+| Last tool | Y |
+| Add / toggle / remove from selection | Ctrl+Shift+click / Shift+click / Ctrl+click |
+| Object ↔ component mode | F8; F9 vertex, F10 edge, F11 face, F12 UV |
+| Pick-walk | Arrow keys |
+| Edit pivot | D (hold) or Insert (toggle) |
+| Snap to grid / edge / vertex | X / C / V (hold while dragging) |
+| Soft select | B |
+| Smooth preview / display modes | 1 / 2 / 3 · 4 / 5 / 6 / 7 |
+| Channel Box ↔ Attribute Editor | Ctrl+A |
+| Menu sets | F2 Modeling · F3 Rigging · F4 Animation · F5 FX · F6 Rendering |
+| Undo / redo | Z or Ctrl+Z / Shift+Z |
+| Duplicate / with transform / special | Ctrl+D / Shift+D / Ctrl+Shift+D |
+| Group / parent / unparent | Ctrl+G / P / Shift+P |
+| Delete history | Alt+Shift+D |
+| Hide / show | Ctrl+H / Shift+H |
+| Set key / key T, R, S | S / Shift+W, Shift+E, Shift+R |
+| Previous / next key · play | , / . · Alt+V |
+| Scrub time | K + LMB drag |
+| Tangent marking menu | Shift+S (hold) + LMB |
+| Background colour | Alt+B |
+| Save / increment and save | Ctrl+S / Ctrl+Alt+S |
+| Create Reference | Ctrl+R |
+| Switch Maya ↔ Blender | Ctrl+Alt+Shift+M |
 
-### Install
+---
 
-1. Get `allset-<version>.zip` (or build it: `python tools/build.py` → `dist/`).
-2. *Edit > Preferences > Get Extensions > ▾ > Install from Disk…* (or drop the zip on the Blender window). Command line:
-   `blender --command extension install-file -r user_default --enable allset-<version>.zip`
-3. On first enable the keymap switches to **"Maya-style"** and Maya navigation preferences are applied (restored when turned off).
-   On a brand-new config the *Quick Setup* splash can put the keymap back to "Blender": close it with Esc, or press
-   *Preferences > Add-ons > Allset > Activate Maya Keymap*.
-4. *Preferences > Add-ons > Allset > Install Maya Layout*, then *File > New > Allset* for the Maya layout (Outliner left,
-   Status Line + Shelf on top, Channel Box / Attribute Editor right, timeline at the bottom). The Maya theme is applied and
-   restored from the same panel.
-5. A legacy add-on zip (`allset-<version>-legacy.zip`) is built from the same source.
+## FAQ
 
-### Features
+**Does it change my Blender settings?**
+Not on install or enable. Nothing changes until you choose Maya (welcome dialog, preferences button or the switch).
+Before Maya mode changes anything, a copy of the affected settings is written to the extension's user folder.
 
-- **Keymap**: a "Maya-style" keyconfig built from Industry Compatible data — Q/W/E/R, Maya selection modifiers, 4/5/6/7, 1/2/3,
-  F8–F11, Ctrl+G, P/Shift+P, Ctrl/Shift/Ctrl+Shift+D, Alt+Shift+D, Ctrl+A, arrow pick-walk; full table in
-  []().
-- **Hold keys**: X/C/V/J snapping while held, D/Insert pivot editing, B soft select (tap toggle, hold-drag radius).
-- **Camera**: Alt+LMB/MMB/RMB, ortho tumble lock, Shift+F/Shift+A in all views, `[` `]` view undo, Space tap four views.
-- **Marking menus and hotbox**: RMB / Shift+RMB / Ctrl+RMB / Ctrl+Shift+RMB and Q/W/E/R/A-hold menus at Maya's radial
-  positions; gestures, click mode, in-place submenus, option boxes (GPU engine; Blender pies as an option); Space-hold hotbox.
-- **Layout and theme**: Maya General layout app template, Studio Grey theme (Maya-inspired) with backup/restore.
-- **Top UI**: Maya menu bar with menu sets, Status Line, Python command line (with a small `cmds` shim), Help Line.
-- **Channel Box / Layer Editor**: edits every selected object, channel selection + viewport MMB virtual slider, Channels
-  menu, SHAPES/INPUTS, display layers on collections.
-- **Attribute Editor**: toggled with Ctrl+A in the Channel Box dock; transform / shape / history (modifier) / material
-  node tabs with the Maya template sections.
-- **Outliner**: DAG order, Shapes toggle, double-click rename, Parent/Unparent.
-- **Shelf**: under the Status Line; Maya's 8 factory tabs as Blender operators with Blender's own icons, double-click for
-  options, user shelves of Python script buttons.
-- **Concepts**: Freeze Transformations keeping the pivot, Reset, Center Pivot, Delete History / by Type, Maya-style
-  parenting, Duplicate Special / with Transform, Maya names (pCube1/pCubeShape1) and creation defaults, optional Maya units.
+**Is it reversible?**
+Yes. Click **Blender** in the top-bar switch, use **Restore Blender Settings**, or disable / remove the extension
+inside Blender — your keymap, theme, layout and preferences come back and the layout template is deleted. See
+[First run](#first-run-turning-maya-mode-on-and-off).
 
-### Units
+**Can I follow Blender tutorials with it installed?**
+Yes — switch to Blender, follow along with Blender's own keys, and switch back to Maya.
 
-A Maya length of 1 is one scene display length unit, like Maya's working unit ([]()).
-The Create menu, shelf, marking menus, hotbox, Ctrl+G and `cmds.polyCube()` all make the same size, which is also the size a
-Maya (cm) FBX imports at.
+**Which Blender versions are supported?**
+Blender 4.5 LTS through 5.2.x. 4.2 – 4.4 are not offered; versions after 5.2 are added once they are tested.
 
-| Scene | Blender unit (BU) | pCube1 | Channel Box after `cmds.move(5, 0, 0)` |
-|---|---|---|---|
-| Allset layout (default: metres kept, cm shown) | 1 BU = 1 m | 0.01 BU = **1 cm** | 5 cm |
-| "Maya Units" preference on (`scale_length` 0.01) | 1 BU = 1 cm | 1 BU = **1 cm** | 5 cm |
-| Factory layout (m shown) | 1 BU = 1 m | 1 BU = 1 m | 5 m |
+**Does it open Maya `.ma` / `.mb` files?**
+No. Export FBX (or OBJ, Alembic, USD) from Maya; the kit's Import uses Maya presets (cm, Y-up).
 
-- With the default, physics and light falloff work on the real size (1 cm), the same as a scene imported from Maya.
-- The Allset layout's 3D views start at Maya's new-scene persp camera (28, 21, 28 cm) with 0.1 / 10000 cm clipping.
-- Maya Units never changes a saved file: it applies to the open file when turned on and to new files. BU values stay
-  as they are and only the display changes by 100x (a 1 BU object then reads "1 cm").
+**Does it include any Maya code or files?**
+No. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; behaviour is re-implemented on
+Blender's own tools. It does not need Maya installed.
 
-### Maya ↔ Blender
+**Is it affiliated with Autodesk?**
+No. Maya Workflow Kit is an independent, free and open-source project, not affiliated with or endorsed by Autodesk or
+the Blender Foundation. See [Trademarks](#trademarks).
 
-See the Korean table above: transform/shape = Object/Data; pivot = origin + `delta_location`; history = modifier stack +
-shape keys; parenting with identity parent inverse; group = Empty; instance = linked duplicate; display layer =
-collection; cm display (optional 1 BU = 1 cm) on a Z-up world.
+**Does it use the network?**
+No network access and no auto-updater. Help menu items open Blender manual pages in your browser only when you click
+them.
 
-### Limits (the C++ wall)
+---
 
-Worked around without forking Blender (); evidence in :
-Y-up world; MMB-drag on UI fields; extending the built-in transform gizmo; new editor/region types (real Channel Box editor,
-Shelf region, hotbox over every editor); Outliner tree drawing; timeline key drawing and scrubbing (Maya key ticks, range
-slider); separate rotate/scale pivots on objects; MEL. Also missing: menu option boxes and tear-offs, turning snapping on
-mid-drag, selecting a sidebar tab from code, F2–F6 menu-set keys, shelf drag-and-drop.
+## Development
 
-### Development
+The extension's internal id is `allset` (package `src/allset/`, operators `allset.*`, classes `ALLSET_*`, environment
+variables `ALLSET_*`); the id stays the same whatever the display name.
 
-`python tests/run.py` (headless suite), `python tests/gui/run.py` (simulated-input GUI tests),
-`python tools/release_check.py` (build → `extension validate` → clean install + enable → `docs/screenshots/`).
-Every Blender run uses a sandbox user config under `tmp/`.
+### Repository layout
 
-### License
+| Path | What |
+|---|---|
+| `src/allset/` | The extension: `blender_manifest.toml`, `preferences.py`, `switch.py`, `keymap/`, `marking/`, `operators/`, `ui/`, `theme/`, `app_template/`, `compat.py` (all Blender-version differences) |
+| `tests/` | Headless harness `run.py`, GUI tests `gui/`, helpers `kit.py`, tests `test_*.py` |
+| `tools/` | `build.py` (packages), `release_check.py`, `build_repo.py` (static extension repository), generators for the keymap doc, menus, shelves, theme and layout |
+| `docs/` | , , per-step notes `steps/`, `keymap_mapping.md`, `compat_5x.md`, `manual_checks.md`, `distribution/` |
 
-GPL-3.0-or-later ([LICENSE](LICENSE)), as required for Blender extensions. The kit-made images and data files
-(splash / welcome PNGs, `startup.blend`, the theme XML) are CC0-1.0 ([ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)).
+### Build and test
+
+Every Blender run uses a sandbox user config under `tmp/` — your real Blender settings are never read or written.
+
+```sh
+python tools/build.py              # build dist/maya-workflow-kit-<version>.zip and the legacy zip
+python tests/run.py                # build + install into tmp/test_env + run all headless tests
+python tests/run.py -k enable      # only matching test files
+python tests/run.py --no-build     # reuse the zip in dist/
+python tests/gui/run.py            # GUI tests with simulated key / mouse events (a Blender window opens briefly)
+python tools/release_check.py      # build, extension validate, clean-config install + enable, screenshots
+python tools/gen_keymap_mapping.py # regenerate 
+python tools/build_repo.py         # static extension repository in dist/repo/ (zip + index.json + index.html)
+```
+
+Per-version results: [](). Things automated tests can't prove (feel, visuals) are
+listed in []().
+
+---
+
+## Credits
+
+The scenes in the screenshots and clips use third-party models and images under their own licences; every asset, its
+author, source and licence is listed in
+[docs/distribution/marketing/CREDITS.md](docs/distribution/marketing/CREDITS.md). Captions are set in Inter (SIL OFL).
+These assets are used only in the marketing media and are not shipped in the extension.
+
+## License
+
+Code: **GPL-3.0-or-later** ([LICENSE](LICENSE)). The kit-made images and data files in the extension (splash /
+welcome PNGs, `startup.blend`, the theme XML) are **CC0-1.0**
+([src/allset/ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)). Copyright 2026 ohnsk.
+
+## Trademarks
+
+Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc., and/or its subsidiaries and/or affiliates
+in the USA and/or other countries. This project is an independent, free and open-source (GPL) extension for Blender.
+It is not affiliated with, endorsed by, sponsored by, or otherwise approved by Autodesk, Inc. or the Blender
+Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; references to Maya are solely to
+describe compatibility and the intended audience.

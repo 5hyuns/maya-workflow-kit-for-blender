@@ -35,7 +35,7 @@ def file_timeout(path):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Run Allset GUI event tests")
+    ap = argparse.ArgumentParser(description="Run Maya Workflow Kit GUI event tests")
     ap.add_argument("-k", default="", help="only files whose name contains this (comma-separated: any)")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--shots", default="", help="directory for screenshots")
@@ -44,7 +44,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     if args.no_build:
-        zip_path = headless.build.DIST / f"{headless.PKG_ID}-{headless.build.manifest_value('version')}.zip"
+        zip_path = headless.build.ext_zip()
     else:
         zip_path = headless.build.main(["--blender", args.blender, "--no-legacy"])
     env = headless.make_sandbox()

@@ -1,4 +1,4 @@
-"""Step 87 in a real UI (Allset layout): Alt+A cycles X-ray joints / everything / meshes only, Alt+P toggles
+"""Step 87 in a real UI (Maya Workflow Kit layout): Alt+A cycles X-ray joints / everything / meshes only, Alt+P toggles
 persp / ortho, Alt+Right moves the cube one pixel, ` held = Tweak tool then back to Move, \\ held + LMB drag pans
 the camera view. """
 
@@ -53,7 +53,7 @@ def tool():
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

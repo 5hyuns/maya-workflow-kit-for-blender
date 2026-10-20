@@ -1,4 +1,4 @@
-"""Step 93 in a real UI (Allset layout): the Shift+Q pick-mask menu shows check boxes for Faces (and Poly Vertices /
+"""Step 93 in a real UI (Maya Workflow Kit layout): the Shift+Q pick-mask menu shows check boxes for Faces (and Poly Vertices /
 Poly Edges in their submenus), a Status Line selection mask turned off survives File > New, and the Tool Settings
 popup has Maya's Reset Tool button. """
 
@@ -30,7 +30,7 @@ def redraw():
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
@@ -80,7 +80,7 @@ def s_mask_off():
         bpy.ops.object.mode_set(mode='OBJECT')
     status_line = import_module(MODULE + ".ui.status_line")
     status_line.set_mask("SURFACES", False)              # Status Line: meshes not selectable
-    bpy.ops.wm.read_homefile(app_template="Allset")     # File > New
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")     # File > New
 
 
 @step

@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  Allset setup helper for Windows: find Blender installs, install / uninstall the extension.
+  Maya Workflow Kit setup helper for Windows: find Blender installs, install / uninstall the extension.
   Draft for the installer ( section (d)); called by allset.iss, usable on its own.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -List
-  powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Install -Zip allset-0.2.0.zip [-Blender "C:\...\blender.exe"] [-MakeMaya]
+  powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Install -Zip maya-workflow-kit-0.2.0.zip [-Blender "C:\...\blender.exe"] [-MakeMaya]
   powershell -ExecutionPolicy Bypass -File allset_setup.ps1 -Uninstall [-Blender "C:\...\blender.exe"]
 
 .NOTES
@@ -155,7 +155,7 @@ if ($List) {
 
 $status = 0
 if ($Install) {
-    if (-not $Zip) { Write-Error "-Install needs -Zip <allset-x.y.z.zip>"; exit 1 }
+    if (-not $Zip) { Write-Error "-Install needs -Zip <maya-workflow-kit-x.y.z.zip>"; exit 1 }
     $zipPath = (Resolve-Path -LiteralPath $Zip).Path
     foreach ($exe in (Select-Targets)) {
         if (Test-BlenderRunning $exe) { Write-Output "Close Blender first: $exe"; $status = 3; continue }
@@ -163,7 +163,7 @@ if ($Install) {
         if ($r.Code -ne 0) { Write-Output "Install failed for ${exe}:`n$($r.Output)"; $status = 1; continue }
         $s = Invoke-Helper $exe "status"
         if (-not $s.enabled) { Write-Output "Installed but not enabled for ${exe}: $($s.message)"; $status = 1; continue }
-        Write-Output "Installed Allset for Blender $($s.blender) (keymap: $($s.keyconfig))"
+        Write-Output "Installed Maya Workflow Kit for Blender $($s.blender) (keymap: $($s.keyconfig))"
         if ($Record) { Add-Content -LiteralPath $Record -Value $exe -Encoding UTF8 }
         if ($MakeMaya) {
             $m = Invoke-Helper $exe "make"

@@ -1,7 +1,7 @@
 """Step 60: Maya ⇄ Blender switch and the complete revert.
 
 In one process: factory → the user's own changes (a key edit, theme colour, navigation, splash,
-another add-on) → Allset on → Make Blender Maya → switch to Blender → everything as before
+another add-on) → Maya Workflow Kit on → Make Blender Maya → switch to Blender → everything as before
 → Maya again → Blender again → as before → disable → as before.
 Across processes (saved preferences re-read by a new Blender): the same round trip, the saved
 userpref.blend compared, an interrupted switch (crash) and the extension disabled in Maya mode.

@@ -40,7 +40,7 @@ def win():
 
 
 def view3d():
-    # the largest: the Allset layout also has the narrow Tool Box 3D View (step 49)
+    # the largest: the Maya Workflow Kit layout also has the narrow Tool Box 3D View (step 49)
     area = max((a for a in win().screen.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)
     region = next(r for r in area.regions if r.type == 'WINDOW')
     return area, region

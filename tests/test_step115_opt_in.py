@@ -113,12 +113,12 @@ def test_no_automatic_preference_save():
 
 def test_keymap_back_after_template_switch():
     """GUI template switches set the keyconfig back to "Blender" after load_post (checked, GUI probe in step 115);
-    in the Allset template the keymap module puts Maya back, a keymap the user picked is left alone."""
+    in the Maya Workflow Kit template the keymap module puts Maya back, a keymap the user picked is left alone."""
     kit.enable()
     try:
         keymap = _mod("keymap")
-        assert keymap.wants_maya("Allset", "Blender") and keymap.wants_maya("Allset", None)
-        assert not keymap.wants_maya("Allset", "Industry_Compatible"), "the user's own keymap stays"
+        assert keymap.wants_maya("Maya_Workflow_Kit", "Blender") and keymap.wants_maya("Maya_Workflow_Kit", None)
+        assert not keymap.wants_maya("Maya_Workflow_Kit", "Industry_Compatible"), "the user's own keymap stays"
         assert not keymap.wants_maya("", "Blender"), "plain Blender files: no change"
         kcs = bpy.context.window_manager.keyconfigs
         kcs.active = kcs.default

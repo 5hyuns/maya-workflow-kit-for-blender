@@ -52,7 +52,7 @@ def test_hotbox_layout_like_maya():
     above, sides, below = modal.hotbox_rows(bpy.context, area_type='VIEW_3D')
     c = (800.0, 450.0)
     lay = engine.HotboxLayout(above, c, measure, below=below, side=sides, bounds=(0, 0, 1600, 900))
-    assert lay.title == "Allset" and abs((lay.center_rect[1] + lay.center_rect[3]) / 2 - c[1]) < 1e-6
+    assert lay.title == "Maya Workflow Kit" and abs((lay.center_rect[1] + lay.center_rect[3]) / 2 - c[1]) < 1e-6
     rows = {}
     for rect, _key, label in lay.labels:
         rows.setdefault(rect[1], []).append((rect[0], label))

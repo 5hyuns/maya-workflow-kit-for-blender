@@ -1,4 +1,4 @@
-"""Step 47 in a real UI: Maya selection wire over shading — drawn for the selected objects in the Allset
+"""Step 47 in a real UI: Maya selection wire over shading — drawn for the selected objects in the Maya Workflow Kit
 layout, and the frame time with a 100k-poly selected mesh grows < 20 % (wm.redraw_timer). Plan:
 """
 
@@ -45,7 +45,7 @@ def frame_ms(n=40):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
@@ -73,7 +73,7 @@ def s_wire_check():
     check(f"selected {a.name} (lead) and {b.name} get the selection wire, drawn ({sw.frame_ms():.3f} ms), "
           f"no show_wire written", names == sorted((a.name, b.name)) and sw.frame_ms() > 0
           and not a.show_wire and not b.show_wire)
-    check("Allset view: no Blender selection outline (Maya highlights with the wire)",
+    check("Maya Workflow Kit view: no Blender selection outline (Maya highlights with the wire)",
           not area3d().spaces.active.overlay.show_outline_selected)
     shot("gui_step47_two_selected.png")
     # 100k-poly mesh, selected alone

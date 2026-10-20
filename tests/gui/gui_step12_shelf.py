@@ -1,4 +1,4 @@
-"""Step 12 in a real UI: the Maya strip (Status Line + Shelf) of the Allset layout,
+"""Step 12 in a real UI: the Maya strip (Status Line + Shelf) of the Maya Workflow Kit layout,
 tab switching, UI Elements > Shelf toggle in the factory layout; screenshots."""
 
 import os
@@ -33,7 +33,7 @@ def s_setup():
     setup()
     C["shelf"] = import_module(MODULE + ".ui.shelf")
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
@@ -46,7 +46,7 @@ def s_loaded():
 def s_strip():
     scr = win().screen
     strip = C["shelf"].strip_area(scr)
-    check("Allset layout has the Maya strip", strip is not None)
+    check("Maya Workflow Kit layout has the Maya strip", strip is not None)
     if strip is None:
         return
     area3d = max((a for a in scr.areas if a.type == 'VIEW_3D'), key=lambda a: a.width * a.height)

@@ -1,4 +1,4 @@
-"""Step 21 in a real UI: in the Allset layout (m + cm display) the shelf cube and
+"""Step 21 in a real UI: in the Maya Workflow Kit layout (m + cm display) the shelf cube and
 ``cmds.polyCube()`` are the same 1 cm cube, seen by Maya's persp view; Channel Box
 and Attribute Editor show Maya's numbers (cm); screenshots."""
 
@@ -53,14 +53,14 @@ def goto_tab(category, then):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_loaded():
     bpy.ops.allset.keymap_activate()
     units = import_module(MODULE + ".operators.units")
-    check(f"Allset layout: 1 Maya unit = 0.01 BU (m + cm, ) ({units.maya_unit():.4f})",
+    check(f"Maya Workflow Kit layout: 1 Maya unit = 0.01 BU (m + cm, ) ({units.maya_unit():.4f})",
           abs(units.maya_unit() - 0.01) < 1e-6)
     area = main_view()
     shelf_map = import_module(MODULE + ".ui.shelf_map")

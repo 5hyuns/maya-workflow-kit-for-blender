@@ -164,7 +164,7 @@ def _rounded(x0, y0, x1, y1, r, steps=4):
 
 
 def placement(pos, space):
-    """Where a message shown at ``pos`` goes in ``space``: Blender's text info sits in the top left (the Allset
+    """Where a message shown at ``pos`` goes in ``space``: Blender's text info sits in the top left (the Maya Workflow Kit
     template hides it), so a TOP_LEFT message moves to the top centre where it is on [delegated]."""
     overlay = getattr(space, "overlay", None)
     if pos == 'TOP_LEFT' and overlay is not None and overlay.show_overlays and overlay.show_text:

@@ -1,4 +1,4 @@
-"""Step 106 in a real UI: the Allset layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
+"""Step 106 in a real UI: the Maya Workflow Kit layout, pCube1 with its top face extruded, Move tool. Windows > General Editors >
 Tool Settings (ToggleToolSettings) opens the dock left of the viewport with Maya's Move Settings, a second toggle
 closes it (the old popup stayed open: audit 7 c03), a third opens it again; Rotate / Scale show their sections;
 the Attribute Editor shows the history / material tabs, menu bar, buttons and Notes (screenshots beside audit-7
@@ -57,7 +57,7 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

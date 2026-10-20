@@ -1,4 +1,4 @@
-"""Step 75 in a real UI (Allset layout): type into the Status Line input line like a Maya user —
+"""Step 75 in a real UI (Maya Workflow Kit layout): type into the Status Line input line like a Maya user —
 Absolute X = 10 moves pCube1 to x = 10 cm, Rename "crate", Select by name "pSph*". 
 
 Python can't tell where a header layout put a field, so the test finds it: it moves the mouse along the
@@ -80,7 +80,7 @@ def scanner(prop, key, steps=140):
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

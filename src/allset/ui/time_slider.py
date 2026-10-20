@@ -17,7 +17,7 @@ animation end). Blender form:
 - Step 50: the
   header is the Range Slider row in Maya's order; Blender's Playback / Keying / View / Marker menus move
   into the animation preferences menu at its right end (``TIME_MT_editor_menus.draw_collapsible`` is
-  overridden on the class, deleted on unregister). A timeline with its sidebar shown (the Allset
+  overridden on the class, deleted on unregister). A timeline with its sidebar shown (the Maya Workflow Kit
   layout) draws the current frame field and the 8 transport buttons there, at the right end of the
   Time Slider row like Maya (``ALLSET_PT_time_slider``); other timelines keep them in the header.
 """
@@ -65,7 +65,7 @@ def draw_transport(layout, context):
 
 
 def has_slider_panel(space, area=None):
-    """The timeline shows the Time Slider buttons in its sidebar (the Allset layout). With ``area``, the
+    """The timeline shows the Time Slider buttons in its sidebar (the Maya Workflow Kit layout). With ``area``, the
     sidebar must also have room: Blender 5.x loads the 4.5 template's timeline sidebar 1 px wide
 , and then the buttons stay in the header."""
     if space is None or space.type != 'DOPESHEET_EDITOR' or not space.show_region_ui:
@@ -84,7 +84,7 @@ RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto 
 def draw_header(context, layout):
     space, area = context.space_data, context.area
     if has_slider_panel(space) and not has_slider_panel(space, area):
-        # Allset layout whose sidebar can't open (Blender 5.x: the Timeline mode keeps its sidebar 1 px, even in a
+        # Maya Workflow Kit layout whose sidebar can't open (Blender 5.x: the Timeline mode keeps its sidebar 1 px, even in a
         # factory file — checked, step 118): one row, Range Slider first, the Time Slider buttons at the right end
         draw_range_slider(layout, context)
         layout.separator_spacer()
@@ -107,7 +107,7 @@ def draw_range_slider(layout, context):
     row.ui_units_x = 4.5
     row.active = scene.use_preview_range
     row.prop(scene, "frame_preview_start", text="")
-    # Maya's range bar (ui_layout.md:285). In the Allset layout an empty label holds its place and
+    # Maya's range bar (ui_layout.md:285). In the Maya Workflow Kit layout an empty label holds its place and
     # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
     # widget: the toggle = use the playback range (off = the whole animation range), the button frames it.
     from . import range_bar

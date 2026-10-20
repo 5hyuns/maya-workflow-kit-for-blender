@@ -22,7 +22,7 @@ def rna_xml():
     return mod
 
 
-# Properties tab flags newer than 4.5 (checked, step 118): a 4.5-saved file (the Allset template) opens in 5.x with
+# Properties tab flags newer than 4.5 (checked, step 118): a 4.5-saved file (the Maya Workflow Kit template) opens in 5.x with
 # them on, so they carry no meaning in a kit dock's role (ui/maya_dock.role).
 LATER_PROPERTIES_TABS = frozenset({"show_properties_strip", "show_properties_strip_modifier"})
 

@@ -1,4 +1,4 @@
-"""Step 116 in a real UI: Maya's docking model. The Allset layout has the Channel Box / Layer Editor | Attribute Editor
+"""Step 116 in a real UI: Maya's docking model. The Maya Workflow Kit layout has the Channel Box / Layer Editor | Attribute Editor
 | Modeling Toolkit tab stack in its own area right of the viewport (no sidebar, no overlap). Clicking the stack's
 ::::: handle tears the Channel Box off into a floating window that shows only it; Dock puts it back; a floating
 Attribute Editor closed by its window docks back by itself; Tool Settings and the Outliner tear off and dock back;
@@ -69,14 +69,14 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_layout():
     bpy.ops.allset.keymap_activate()
     s, v = stack(), view()
-    check("the Allset layout has Maya's tab stack as its own area", s is not None)
+    check("the Maya Workflow Kit layout has Maya's tab stack as its own area", s is not None)
     check(f"the viewport has no sidebar and ends where the stack begins (view {v.x}+{v.width}, stack {s and s.x})",
           s is not None and not v.spaces.active.show_region_ui and v.x + v.width <= s.x)
     check("the viewport's main region covers the whole area (nothing drawn over it)",

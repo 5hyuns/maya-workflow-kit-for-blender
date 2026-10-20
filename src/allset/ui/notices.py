@@ -59,10 +59,10 @@ NOTICES = {
     "Windows/General Editors/Hypergraph: Connections": (
         "Drivers", "Blender has no connection graph: attribute links are drivers (Expression Editor)."),
     "Windows/General Editors/Namespace Editor": (
-        "ns: name prefix", "Blender has no namespaces: Allset keeps them as a \"ns:\" prefix in names."),
+        "ns: name prefix", "Blender has no namespaces: Maya Workflow Kit keeps them as a \"ns:\" prefix in names."),
     # Rendering (W3: Light Editor -> kit light list, step 67)
     "Windows/Rendering Editors/Light Editor": (
-        "kit Light Editor", "Blender has no Light Editor: Allset lists the scene lights in a 3D View sidebar tab "
+        "kit Light Editor", "Blender has no Light Editor: Maya Workflow Kit lists the scene lights in a 3D View sidebar tab "
         "(Exposure is part of Power)."),
     "Windows/Rendering Editors/Hypershade": (
         "Shader Editor + kit list", "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar "
@@ -129,11 +129,11 @@ NOTICES = {
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
     # FX (step 68, , )
-    **{path: ("one-point mesh emitter", "Blender particles come from a mesh: Allset makes a one-point mesh emitter1 "
+    **{path: ("one-point mesh emitter", "Blender particles come from a mesh: Maya Workflow Kit makes a one-point mesh emitter1 "
               "with the particles, sized in Maya units.")
        for path in ("nParticles/Create Emitter", "nParticles/Create Emitter#2")},
     "nCloth/Create nCloth": (
-        "Cloth modifier", "Blender cloth simulates real sizes: Allset scales collision distances, stiffness and gravity "
+        "Cloth modifier", "Blender cloth simulates real sizes: Maya Workflow Kit scales collision distances, stiffness and gravity "
         "so one unit moves like Maya's (nucleus Space Scale in the Attribute Editor)."),
     **{f"nCache/{item}": (
         "Baked caches", "Blender always plays a baked cache: Delete Cache to simulate again.")
@@ -141,7 +141,7 @@ NOTICES = {
     # Lights (PLAN W5, )
     **{f"Create/Lights/{kind} Light": (
         f"{kind} light", "Blender lights always get darker with the square of the distance (no No Decay); "
-        "Allset scales the power to the Maya unit.") for kind in ("Point", "Spot", "Area")},
+        "Maya Workflow Kit scales the power to the Maya unit.") for kind in ("Point", "Spot", "Area")},
     # Rigging (W3: HumanIK / Quick Rig -> Rigify)
     **{path: ("Rigify", "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a "
                         "meta-rig fitted to the mesh (Generate Rig).")
@@ -150,16 +150,16 @@ NOTICES = {
     # Scene / files (W3: Reference -> link + library override, Set Project -> relative paths)
     # Scene management (step 69, operators/project.py, )
     "File/Create Reference...": (
-        "Link + Library Override", "Blender references are linked .blend files: Allset makes them editable "
+        "Link + Library Override", "Blender references are linked .blend files: Maya Workflow Kit makes them editable "
         "(library override) and prefixes the names with the namespace (ns:name)."),
     "File/Reference Editor": (
         "Outliner: Blender File", "Linked files are listed in the Outliner's Blender File view (right-click: "
         "Reload / Relocate)."),
     "File/Set Project...": (
-        "Allset project", "Blender has no projects: Allset keeps this folder, opens file dialogs in its scenes "
+        "Maya Workflow Kit project", "Blender has no projects: Maya Workflow Kit keeps this folder, opens file dialogs in its scenes "
         "folder and renders to its images folder."),
     "File/Project Window": (
-        "Allset project", "Blender has no projects: Allset makes Maya's project folders and keeps the folder "
+        "Maya Workflow Kit project", "Blender has no projects: Maya Workflow Kit makes Maya's project folders and keeps the folder "
         "as your project."),
     # UV (step 66): Blender cuts / sews UVs in the UV Editor only
     "UV/Auto Seams": (
@@ -223,10 +223,10 @@ NOTICES.update({
     **{f"Cache/GPU Cache/{item}": ("Alembic", "Blender has no GPU cache node: GPU caches are Alembic files.")
        for item in ("Import...", "Export All...", "Export Selection...")},
     "Help/Maya Help": ("Blender Manual", "Blender's manual opens in the web browser."),
-    "Help/About Maya": ("About Blender", "Blender's About shows its version (Allset is an extension)."),
+    "Help/About Maya": ("About Blender", "Blender's About shows its version (Maya Workflow Kit is an extension)."),
 })
 
-# Greyed items (no Blender action in Allset) by Maya menu path prefix: (closest Blender feature, one line).
+# Greyed items (no Blender action in Maya Workflow Kit) by Maya menu path prefix: (closest Blender feature, one line).
 # notices.category picks the longest matching prefix; tests/test_step101_menu_honesty.py checks that every
 # greyed menu item has a notice and that every rule here matches at least one greyed item.
 # (Create Description... / Create Interactive Groom Splines are mapped to a new hair Curves object.)
@@ -240,7 +240,7 @@ CATEGORIES = {
     # whole Maya-only systems
     "Surfaces": ("NURBS surface edit mode", "Blender's NURBS surfaces can be edited (CVs, Open/Close, Revolve = "
                  "Screw modifier) but have no Trim, Fillet or Stitch (Loft, Planar, Extrude and Bevel Plus are "
-                 "built by Allset): model with polygons."),
+                 "built by Maya Workflow Kit): model with polygons."),
     "Generate": ("Grease Pencil / Geometry Nodes", "Blender has no Paint Effects: draw strokes with Grease Pencil, "
                  "scatter geometry with Geometry Nodes."),
     **{f"Generate/{item}": ("Hair curves", "Blender has no XGen: hair is a Curves object groomed in Sculpt mode "
@@ -449,7 +449,7 @@ CATEGORIES.update({
         "View menu", "Blender's Graph Editor has no such display option: see its View menu and the sidebar View tab "
         "(Blender ▸ menu)."),
     "Graph Editor/View/Theme": (
-        "Themes", "Blender's colours come from the theme: Preferences > Themes (Allset applies a Maya theme)."),
+        "Themes", "Blender's colours come from the theme: Preferences > Themes (Maya Workflow Kit applies a Maya theme)."),
     "Graph Editor/View/Curve Name": (
         "Channel list", "Blender doesn't write curve names in the graph: they are in the channel list."),
     "Graph Editor/Select": (

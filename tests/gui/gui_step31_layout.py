@@ -1,4 +1,4 @@
-"""Step 31 in a real UI: Allset layout Outliner (width, DAG rows), leaving four views keeps the
+"""Step 31 in a real UI: Maya Workflow Kit layout Outliner (width, DAG rows), leaving four views keeps the
 picked view's name, W hold menu toggles show their state (engine and pie fallback), timeline;
 screenshots."""
 
@@ -41,7 +41,7 @@ def left_outliner():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

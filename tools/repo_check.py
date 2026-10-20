@@ -53,7 +53,7 @@ def build_next(blender, out_dir):
     text = re.sub(r'^version\s*=\s*"[^"]+"', f'version = "{version}"', manifest.read_text(encoding="utf-8"),
                   count=1, flags=re.M)
     manifest.write_text(text, encoding="utf-8")
-    out = out_dir / f"allset-{version}.zip"
+    out = build.ext_zip(version, out_dir)
     cmd = [blender, "--factory-startup", "--command", "extension", "build",
            "--source-dir", str(src), "--output-filepath", str(out)]
     rc, log = release_check.run(cmd, build.sandbox_env())
@@ -70,7 +70,7 @@ def main(argv=None):
     blender = args.blender
 
     version = build.manifest_value("version")
-    zip_path = build.DIST / f"allset-{version}.zip"
+    zip_path = build.ext_zip(version)
     if not args.no_build or not zip_path.exists():
         zip_path = build.main(["--blender", blender, "--no-legacy"])
 
@@ -110,7 +110,7 @@ def main(argv=None):
 
     step("offline_org", probe + ["offline_org", str(SANDBOX / "offline.json")], "offline")
     # 1. add the repository, install + enable from it
-    ok = step("repo-add", ext + ["repo-add", REPO_ID, "--name", "Allset (test repository)", "--url", url])
+    ok = step("repo-add", ext + ["repo-add", REPO_ID, "--name", "Maya Workflow Kit (test repository)", "--url", url])
     ok &= step("sync", ext + ["sync"])
     ok &= step("install", ext + ["install", "allset", "--enable"])
     step("check", probe + ["check", str(SANDBOX / "installed.json")], "installed")

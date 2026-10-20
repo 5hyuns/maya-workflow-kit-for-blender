@@ -8,7 +8,7 @@ opacity 0.5 (FRONT/RIGHT/TOP readable in the default persp), only in the active 
 label "persp" / "top -Y" ... 11 px #e3e3e3, baseline 9 px above the bottom, centred 9 px left of the
 middle; axis triad origin 26 px from the left and bottom, 13 px lines, lower-case letters.
 
-A view gets these when Blender's navigation gizmo is off in it (``show_gizmo_navigate``; the Allset
+A view gets these when Blender's navigation gizmo is off in it (``show_gizmo_navigate``; the Maya Workflow Kit
 template turns it and ``overlay.show_text`` off): the Maya furniture replaces Blender's. What is shown is
 global like Maya's HUD / ViewCube preferences (add-on preferences ``maya_viewcube``,
 ``maya_camera_names``, ``maya_view_axis``).

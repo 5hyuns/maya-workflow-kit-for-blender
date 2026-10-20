@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Add-on preferences (Preferences > Add-ons > Allset).
+"""Add-on preferences (Preferences > Add-ons > Maya Workflow Kit).
 
 Options backed by : Maya units (#1) and parent mode (#2)
 from step 10, layout install buttons (#3) from step 5.
@@ -285,7 +285,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya project (operators/project.py, ): Blender has no projects, so the current
     # project folder and the Recent Projects list live here, like Maya keeps the workspace in its prefs.
     project_root: bpy.props.StringProperty(name="Current Project", subtype='DIR_PATH',
-                                           description="Allset project folder: file dialogs open in its scenes "
+                                           description="Maya Workflow Kit project folder: file dialogs open in its scenes "
                                                        "folder, renders go to its images folder")
     recent_projects: bpy.props.StringProperty(options={'HIDDEN'})   # newline-separated, newest first
     # Maya option window values (operators/option_windows.py, step 103): Maya keeps them in setting.
@@ -343,7 +343,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
             row.operator("allset.switch_mode", text="Maya Mode Only").mode = 'MAYA'
         row.operator("allset.restore_blender", icon='LOOP_BACK')
         if not self.maya_mode:
-            box.label(text="Allset is off: your keymap, theme, preferences and layout are unchanged until you "
+            box.label(text="Maya Workflow Kit is off: your keymap, theme, preferences and layout are unchanged until you "
                            "choose Maya.", icon='INFO')
         box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches "
                        "at any time. Blender mode restores your keymap, theme and preferences.", icon='INFO')
@@ -432,7 +432,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
 
 
 # Step 111 (, docs/distribution/naming.md, docs/distribution/extensions_audit.md 「필수 고지문」)
-ABOUT = ("Other tools give you one piece at a time: a pivot, a keymap, a shelf, a theme. Allset brings the whole Maya "
+ABOUT = ("Other tools give you one piece at a time: a pivot, a keymap, a shelf, a theme. Maya Workflow Kit brings the whole Maya "
          "workflow into Blender in one install: hotbox and marking menus, Channel Box, Attribute Editor, Outliner, "
          "menu sets, shelves, option windows, Freeze / History concepts, centimetre units and pCube1-style naming.")
 TRADEMARK_NOTICE = (
@@ -457,9 +457,9 @@ def _wrapped(layout, text, width=110):
 
 
 def draw_about(layout):
-    """The About box of the preferences: what Allset is, and the trademark notice."""
+    """The About box of the preferences: what Maya Workflow Kit is, and the trademark notice."""
     box = layout.box()
-    box.label(text="Allset for Maya Users: the whole Maya workflow in Blender, in one install", icon='INFO')
+    box.label(text="Maya Workflow Kit: the whole Maya workflow in Blender, in one install", icon='INFO')
     _wrapped(box, ABOUT)
     sub = box.column()
     sub.scale_y = 0.8

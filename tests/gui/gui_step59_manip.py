@@ -1,6 +1,6 @@
 """Step 59 in a real UI, in Maya's order ():
 
-Allset layout, a cube, Move tool: the Maya-shaped manipulator (size, X handle drag, active
+Maya Workflow Kit layout, a cube, Move tool: the Maya-shaped manipulator (size, X handle drag, active
 handle), X hold + X arrow drag from 0.3 cm lands on whole cm (S2), D hold + drag moves only
 the pivot (translate, geometry stay, P3), D + X snaps the pivot to the grid, E then rotates
 about the new pivot (P1), V + centre handle puts the pivot on another cube's vertex (S4), the
@@ -119,13 +119,13 @@ def measure(path, origin, colour, radius):
     return best
 
 
-# --- Allset layout, a cube, Move tool ---------------------------------------------------------
+# --- Maya Workflow Kit layout, a cube, Move tool ---------------------------------------------------------
 
 @step
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

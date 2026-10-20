@@ -1,10 +1,12 @@
-"""Build the Allset packages into dist/.
+"""Build the Maya Workflow Kit packages into dist/.
 
     python tools/build.py [--blender PATH] [--no-legacy]
 
 Outputs:
-  dist/allset-<version>.zip         Blender 4.2+ extension
-  dist/allset-<version>-legacy.zip  legacy add-on zip (folder allset/, uses bl_info)
+  dist/maya-workflow-kit-<version>.zip         Blender 4.2+ extension (id ``allset`` inside)
+  dist/maya-workflow-kit-<version>-legacy.zip  legacy add-on zip (folder allset/, uses bl_info)
+
+The file names follow the product name (step 125); the extension id, package and module stay ``allset``.
 
 The extension is built with ``blender --command extension build`` (it also
 validates the manifest). When Blender is not available it falls back to a
@@ -29,6 +31,10 @@ SRC = ROOT / "src" / "allset"
 DIST = ROOT / "dist"
 DEFAULT_BLENDER = r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"
 
+# Zip file name stem = the product name (step 125, ). `extension build` would name the file after the
+# manifest id; the output path is passed explicitly.
+ZIP_STEM = "maya-workflow-kit"
+
 EXCLUDE_DIRS = {"__pycache__", ".git"}
 EXCLUDE_SUFFIXES = {".pyc", ".zip", ".blend1"}
 
@@ -39,6 +45,15 @@ def manifest_value(key):
     if not m:
         raise SystemExit(f"blender_manifest.toml: '{key}' not found")
     return m.group(1)
+
+
+def ext_zip(version=None, folder=None):
+    """dist/maya-workflow-kit-<version>.zip (the extension package)."""
+    return (folder or DIST) / f"{ZIP_STEM}-{version or manifest_value('version')}.zip"
+
+
+def legacy_zip(version=None, folder=None):
+    return (folder or DIST) / f"{ZIP_STEM}-{version or manifest_value('version')}-legacy.zip"
 
 
 def iter_source_files():
@@ -115,10 +130,10 @@ def main(argv=None):
     ap.add_argument("--no-legacy", action="store_true", help="skip the legacy add-on zip")
     args = ap.parse_args(argv)
 
-    pkg_id, version = manifest_value("id"), manifest_value("version")
+    version = manifest_value("version")
     DIST.mkdir(exist_ok=True)
 
-    ext = DIST / f"{pkg_id}-{version}.zip"
+    ext = ext_zip(version)
     ext.unlink(missing_ok=True)
     if Path(args.blender).is_file():
         build_extension_with_blender(args.blender, ext)
@@ -128,7 +143,7 @@ def main(argv=None):
     print(f"built {ext.relative_to(ROOT)}")
 
     if not args.no_legacy:
-        legacy = DIST / f"{pkg_id}-{version}-legacy.zip"
+        legacy = legacy_zip(version)
         build_legacy(legacy)
         print(f"built {legacy.relative_to(ROOT)}")
     return ext

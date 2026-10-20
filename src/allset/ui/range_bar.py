@@ -11,7 +11,7 @@ Blender has no such widget and Python can't tell where a header layout put an it
 mouse) and the header POST_PIXEL handler here finds that gap by reading one row of the header it has
 just drawn (``bar_span``), draws the bar there and remembers the rectangle for
 ``allset.range_bar_drag`` ("Screen" keymap: a click on an empty label reaches the window keymaps).
-Only in timelines whose transport buttons sit in the sidebar (the Allset layout), where nothing
+Only in timelines whose transport buttons sit in the sidebar (the Maya Workflow Kit layout), where nothing
 stretches before the bar.
 """
 
@@ -114,7 +114,7 @@ def set_playback(scene, a, b):
 def active(context):
     from . import time_slider
     space = context.space_data
-    # the Allset layout's timeline (sidebar on; on 5.x it can't open, step 118 — the bar stays in the header)
+    # the Maya Workflow Kit layout's timeline (sidebar on; on 5.x it can't open, step 118 — the bar stays in the header)
     return (space is not None and getattr(space, "mode", None) == 'TIMELINE'
             and time_slider.has_slider_panel(space))
 

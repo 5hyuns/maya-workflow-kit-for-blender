@@ -1,6 +1,260 @@
 {
-  "note": "Marketing-screenshot assets (not shipped in the extension). Fetch with tools/marketing/fetch_assets.py into <id>/.",
+  "note": "Marketing-screenshot assets (not shipped in the extension, never redistributed). Fetch with tools/marketing/fetch_assets.py into <id>/ ('--active' skips superseded entries). Step 125 set = status 'active'; licences checked on each page on the 'checked' date; inventory in ",
   "assets": [
+    {
+      "id": "bs_rain_v3",
+      "status": "active",
+      "set": "step125",
+      "name": "Rain v3 (character rig; folder 'Rain v3.3', file rain_v3.2.blend)",
+      "role": "character",
+      "author": "Blender Studio (publisher Demeter Dzadik); original 2019 rig, updated for Blender 4.1+",
+      "source_page": "https://studio.blender.org/characters/rain/v3/",
+      "downloads": [
+        {
+          "url": "https://studio.blender.org/download-source/files/ee/a7/eea73e55dba1cea31c09848df6a794b2-4.zip",
+          "path": "rain_v3.zip",
+          "extract": true,
+          "sha256": "80217f163f6392dc829233d63c2cfb5e1376775bc34101ad14f39631fea70d24",
+          "size": 67579177
+        }
+      ],
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "license_quote": "Page: 'Download (64.4 MB) License CC-BY ... Free Blender 4.1 License: CC-BY 8 May 2025' and 'The rig is free to use, provided that the you respect the CC-BY license and include the credit: Rain Rig (CC) Blender Foundation | studio.blender.org' (licence link -> https://creativecommons.org/licenses/by/4.0/). ReadMe.txt text block in the .blend: 'This character rig is provided under the CC-BY license by the Blender Studio. https://creativecommons.org/licenses/by/4.0/'",
+      "license_evidence": "Asset page (Free label; no login: the download link 302-redirects to a signed S3 URL without an account) + ReadMe.txt inside the .blend + Blender Studio Terms & Conditions (https://studio.blender.org/terms-and-conditions): 'Blender Studio licences Unless notified otherwise, all digital content (webpages, video, artwork, 3D data) is available under the Creative Commons Attribution 4.0.' Trademarks clause: 'Trademarks and logos - including the Blender logo - are copyrighted properties, with all rights reserved by its owners.'",
+      "checked": "2026-10-20",
+      "attribution": "Rain Rig (CC) Blender Foundation | studio.blender.org - CC BY 4.0",
+      "use": [
+        "rigging / joints",
+        "skin weights (Paint Skin Weights)",
+        "marking menus on a rig",
+        "Channel Box / Graph Editor / Time Slider animation",
+        "UV / Hypershade on the jeans and top (image textures)"
+      ],
+      "modified": "file unchanged; in our scenes it is appended, posed / keyed, re-lit and shown in Blender UI screenshots and clips (an adaptation under CC BY 4.0: credit says 'modified')",
+      "files": [
+        "Rain v3.3/rain_v3.2.blend",
+        "Rain v3.3/textures/TEX-rain_jeans_diffuse.png",
+        "Rain v3.3/textures/TEX-rain_body_diffuse.1001.png"
+      ],
+      "notes": "Blender 4.1 file, opens in 4.5 (headless checked). Collection CH-rain: RIG-rain (CloudRig, 2166 bones, 392 deform) + 18 visible GEO-rain-* meshes (52.9k base verts, 79.6k tris evaluated, Subdivision last) + WGT-* widgets (hidden collection) + HLP lattice. 1.65 m tall, metric, scale 1. Text block cloudrig.py is the rig UI: it only runs with Python auto-exec on (keep it off; the rig still poses). See ",
+      "download_url": "https://studio.blender.org/download-source/files/ee/a7/eea73e55dba1cea31c09848df6a794b2-4.zip",
+      "sha256": "80217f163f6392dc829233d63c2cfb5e1376775bc34101ad14f39631fea70d24"
+    },
+    {
+      "id": "bs_pack_bot",
+      "status": "active",
+      "set": "step125",
+      "name": "Pack Bot (character rig, Charge open movie)",
+      "role": "hardsurface",
+      "author": "Blender Studio (Charge, 2022; publisher Demeter Dzadik)",
+      "source_page": "https://studio.blender.org/characters/pack-bot/v1/",
+      "downloads": [
+        {
+          "url": "https://studio.blender.org/download-source/files/7f/7ff4fc87459976386061eb572a4e19f7/7ff4fc87459976386061eb572a4e19f7.zip",
+          "path": "pack_bot.zip",
+          "extract": true,
+          "sha256": "224a08d5b1a7b2b311850c4221c923b69056c2b81344939fc9ac35ba3c69af71",
+          "size": 43447668
+        }
+      ],
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "license_quote": "Page: 'Download (41.4 MB) License CC-BY ... Free Blender 3.5 Charge License: CC-BY 14 Dec 2022' and 'The character is free to use, provided that the you respect the CC-BY license and include the credit: Pack Bot Rig (CC-BY) Blender Foundation | studio.blender.org'. ReadMe.txt in the .blend: 'This character rig is provided under the CC-BY license by the Blender Studio. https://creativecommons.org/licenses/by/4.0/'",
+      "license_evidence": "Asset page (Free, direct download without login) + ReadMe.txt in the .blend + Blender Studio Terms & Conditions (https://studio.blender.org/terms-and-conditions): 'Blender Studio licences Unless notified otherwise, all digital content (webpages, video, artwork, 3D data) is available under the Creative Commons Attribution 4.0.' Trademarks clause: 'Trademarks and logos - including the Blender logo - are copyrighted properties, with all rights reserved by its owners.'",
+      "checked": "2026-10-20",
+      "attribution": "Pack Bot Rig (CC-BY) Blender Foundation | studio.blender.org - CC BY 4.0",
+      "use": [
+        "Modeling Toolkit / component selection (bevel-modifier hard-surface pieces)",
+        "smooth preview 1/2/3",
+        "hotbox / menus on a hard-surface model",
+        "turntable key visual"
+      ],
+      "modified": "file unchanged; in scenes: appended, components edited on camera, re-lit, shown in UI screenshots / clips",
+      "files": [
+        "pack_bot_v1/pack_bot_release_v1.blend",
+        "pack_bot_v1/textures/trim_sheet_01.normal.tif"
+      ],
+      "notes": "Blender 3.5 file, opens in 4.5. CH-pack_bot: RIG-pack_bot (81 bones) + 79 pieces in pack_bot.geometry (45.7k base verts; ~986k tris evaluated because of Bevel + geometry-nodes modifiers) + pack_bot.shading decals (fictional lettering / QR decal, no real brand). ~1.0 m tall. Do not append its Cameras / Lights collections or the turntable path helpers; the 'Error in PyDriver' lines headless come from those helpers.",
+      "download_url": "https://studio.blender.org/download-source/files/7f/7ff4fc87459976386061eb572a4e19f7/7ff4fc87459976386061eb572a4e19f7.zip",
+      "sha256": "224a08d5b1a7b2b311850c4221c923b69056c2b81344939fc9ac35ba3c69af71"
+    },
+    {
+      "id": "bs_security_bot",
+      "status": "active",
+      "set": "step125",
+      "name": "Security Bot (character rig with battery prop, Charge open movie)",
+      "role": "mechanical",
+      "author": "Blender Studio (Charge, 2022; publisher Demeter Dzadik)",
+      "source_page": "https://studio.blender.org/characters/security-bot/v1/",
+      "downloads": [
+        {
+          "url": "https://studio.blender.org/download-source/files/f9/f99e59b56ce9b2cd560a98d453b12585/f99e59b56ce9b2cd560a98d453b12585.zip",
+          "path": "security_bot.zip",
+          "extract": true,
+          "sha256": "2eae6929ab4bbc61e2dc948a12deb0453523c20b310a64d6dcb9994950a99089",
+          "size": 76209409
+        }
+      ],
+      "license": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "license_quote": "Page: 'Download (72.7 MB) License CC-BY ... Free Blender 3.5 Charge License: CC-BY 14 Dec 2022' and 'The character is free to use, provided that the you respect the CC-BY license and include the credit: Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org'. ReadMe.txt in the .blend: 'This character rig is provided under the CC-BY license by the Blender Studio. https://creativecommons.org/licenses/by/4.0/'",
+      "license_evidence": "Asset page (Free, direct download without login) + ReadMe.txt in the .blend + Blender Studio Terms & Conditions (https://studio.blender.org/terms-and-conditions): 'Blender Studio licences Unless notified otherwise, all digital content (webpages, video, artwork, 3D data) is available under the Creative Commons Attribution 4.0.' Trademarks clause: 'Trademarks and logos - including the Blender logo - are copyrighted properties, with all rights reserved by its owners.'",
+      "checked": "2026-10-20",
+      "attribution": "Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org - CC BY 4.0",
+      "use": [
+        "pivot editing (D / Insert) on arm / leg joints",
+        "snapping (battery lid, battery onto the robot)",
+        "Channel Box on a mechanical rig",
+        "textured mechanical prop for Hypershade (battery: battery.base texture)"
+      ],
+      "modified": "file unchanged; in scenes: appended, parts moved / pivots edited on camera, re-lit, shown in UI screenshots / clips",
+      "files": [
+        "security_bot_v1/security_bot_release_v1.blend",
+        "security_bot_v1/textures/battery.base.tif"
+      ],
+      "notes": "Blender 3.5 file, opens in 4.5 (one EEVEE background render crashed with EXCEPTION_ACCESS_VIOLATION; file load and Workbench render fine). 38 MB .blend, 240 meshes; the hidden paint-splat meshes are 1.1M faces (keep them hidden / excluded). RIG-security_bot 206 bones, 1.95 m tall; separate prop PR-battery (RIG-battery 2 bones, 'battery' collection, about 10 x 10 x 16 cm). gun_arm collection hidden by default (Gun Mode action).",
+      "download_url": "https://studio.blender.org/download-source/files/f9/f99e59b56ce9b2cd560a98d453b12585/f99e59b56ce9b2cd560a98d453b12585.zip",
+      "sha256": "2eae6929ab4bbc61e2dc948a12deb0453523c20b310a64d6dcb9994950a99089"
+    },
+    {
+      "id": "bdemo_splash_45",
+      "status": "active",
+      "set": "step125",
+      "name": "Blender 4.5 LTS splash - DOGWALK",
+      "role": "environment",
+      "author": "Blender Studio (DOGWALK interactive project)",
+      "source_page": "https://www.blender.org/download/demo-files/",
+      "downloads": [
+        {
+          "url": "https://download.blender.org/demo/splash/blender-4.5-splash.blend",
+          "path": "blender-4.5-splash.blend",
+          "extract": false,
+          "sha256": "7f8718cfd89baf59151cc4ba431eeab38b9ff260ffa0054d93293f228a70cc36",
+          "size": 401947045
+        }
+      ],
+      "license": "CC-BY (version not stated on the demo page; Blender Studio content is CC BY 4.0 by its terms)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "license_quote": "Demo files page, Splash Artwork: 'Blender 4.5 LTS - DOGWALK | by | Blender Studio | 383MB - CC-BY' (link https://www.blender.org/download/demo/splash/blender-4.5-splash.blend, file served from https://download.blender.org/demo/splash/blender-4.5-splash.blend)",
+      "license_evidence": "blender.org demo files page (https://www.blender.org/download/demo-files/) + Blender Studio Terms & Conditions (https://studio.blender.org/terms-and-conditions): 'Blender Studio licences Unless notified otherwise, all digital content (webpages, video, artwork, 3D data) is available under the Creative Commons Attribution 4.0.' Trademarks clause: 'Trademarks and logos - including the Blender logo - are copyrighted properties, with all rights reserved by its owners.' No licence text inside the .blend (its only text block is a light-energy script).",
+      "checked": "2026-10-20",
+      "attribution": "DOGWALK (Blender 4.5 splash) (CC-BY) Blender Foundation | studio.blender.org - CC BY 4.0",
+      "use": [
+        "first screen / key visual (finished scene)",
+        "hero shots",
+        "textured characters / props for UV Editor and Hypershade (packed hand-painted textures: Chocomel 4K albedo, snowman)",
+        "secondary rigs for animation (RIG-Chocomel 318 bones, RIG-Pinda 215 bones, RIG-Snowman.001)"
+      ],
+      "modified": "file unchanged; in scenes: opened / appended, re-framed, re-lit, shown in UI screenshots / clips",
+      "files": [
+        "blender-4.5-splash.blend"
+      ],
+      "notes": "Blender 4.5 file, 70 of 73 images packed, nothing missing. Collections Background (46 collection-instance empties LI-* + curve ground), Props (PR-snowman, PR-leash_handle), Characters (CH-Pinda, CH-Chocomel), Cameras (camera rig), Lighting (2 suns + shadow-caster meshes). World 'game_world', AgX. Frame range 85-85 (still).",
+      "download_url": "https://download.blender.org/demo/splash/blender-4.5-splash.blend",
+      "sha256": "7f8718cfd89baf59151cc4ba431eeab38b9ff260ffa0054d93293f228a70cc36"
+    },
+    {
+      "id": "bdemo_cube_diorama",
+      "status": "active",
+      "set": "step125",
+      "name": "Cube Diorama (asset demo bundle, Blender 3.0)",
+      "role": "prop",
+      "author": "Blender Studio",
+      "source_page": "https://www.blender.org/download/demo-files/",
+      "downloads": [
+        {
+          "url": "https://download.blender.org/demo/bundles/bundles-3.0/asset-demo-bundle-3.0-cube-diorama.zip",
+          "path": "asset-demo-bundle-3.0-cube-diorama.zip",
+          "extract": true,
+          "sha256": "b76732089f6e41d3543a986875963eb13742dde4f68021974f25564b727dde6a",
+          "size": 11606058
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_quote": "Demo files page, Asset Bundles: 'Cube Diorama | by | Blender Studio | 11MB - CC0'. README text block in the .blend: 'Asset Browser Demo ... Demo for Blender 3.0 --- License: CC-0'",
+      "license_evidence": "blender.org demo files page (https://www.blender.org/download/demo-files/) + README text block inside cube_diorama.blend",
+      "checked": "2026-10-20",
+      "attribution": "Cube Diorama - Blender Studio (CC0)",
+      "use": [
+        "optional set dressing (table / bench / shelf / plant next to the robots)",
+        "small textured props for the Hypershade browser (rug, picture frames, books)"
+      ],
+      "modified": "file unchanged",
+      "files": [
+        "cube_diorama/cube_diorama.blend"
+      ],
+      "notes": "Blender 3.0 file. Demo assets are in collection 'Demo Assets' (34 meshes, all at the origin, excluded in the view layer 'Studio', which is itself disabled for render). Do NOT use 'Computer' (material 'computer.logo' - a device logo). Cycles scene, Filmic.",
+      "download_url": "https://download.blender.org/demo/bundles/bundles-3.0/asset-demo-bundle-3.0-cube-diorama.zip",
+      "sha256": "b76732089f6e41d3543a986875963eb13742dde4f68021974f25564b727dde6a"
+    },
+    {
+      "id": "ph_studio_small_09",
+      "status": "active",
+      "set": "step125",
+      "name": "Studio Small 09 (HDRI, 2k)",
+      "role": "hdri",
+      "author": "Sergej Majboroda / Poly Haven",
+      "source_page": "https://polyhaven.com/a/studio_small_09",
+      "downloads": [
+        {
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/studio_small_09_2k.hdr",
+          "path": "studio_small_09_2k.hdr",
+          "extract": false,
+          "sha256": "36724313c0fc66dab126ff90f081b85a0b1ef47be65eda1417bd20b033f0573f",
+          "size": 6312947
+        }
+      ],
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "license_quote": "https://polyhaven.com/license: 'All assets ( HDRIs , textures and 3D models ) on this site are ... licensed as CC0 ... You can use our assets for any purpose , including commercial work. You do not need to give credit or attribution'. API https://api.polyhaven.com/info/studio_small_09: authors {'Sergej Majboroda': 'All'}; API md5 b056fea247bc84b81d2e0987d44c87d8 matches the file.",
+      "license_evidence": "Poly Haven licence page + API metadata",
+      "checked": "2026-10-20",
+      "attribution": "Studio Small 09 HDRI - Sergej Majboroda / Poly Haven (CC0)",
+      "use": [
+        "world lighting for Material Preview / EEVEE shots (softbox studio, neutral)"
+      ],
+      "modified": "file unchanged",
+      "files": [
+        "studio_small_09_2k.hdr"
+      ],
+      "notes": "Use as the scene World (Environment Texture) with Material Preview 'Scene World' on, or as a studio light inside the sandbox config only. Softboxes / umbrellas show if the background is drawn: keep studiolight_background_alpha 0 so the Maya gradient stays.",
+      "download_url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/studio_small_09_2k.hdr",
+      "sha256": "36724313c0fc66dab126ff90f081b85a0b1ef47be65eda1417bd20b033f0573f"
+    },
+    {
+      "id": "font_inter",
+      "name": "Inter 4.1",
+      "role": "font",
+      "author": "Rasmus Andersson and the Inter project authors",
+      "source_page": "https://github.com/rsms/inter/releases/tag/v4.1",
+      "downloads": [
+        {
+          "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+          "path": "Inter-4.1.zip",
+          "extract": true,
+          "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+          "size": 33707794
+        }
+      ],
+      "license": "OFL-1.1",
+      "license_evidence": "LICENSE.txt in the release zip: 'Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter). This Font Software is licensed under the SIL Open Font License, Version 1.1.' -- https://github.com/rsms/inter/blob/master/LICENSE.txt",
+      "files": [
+        "extras/ttf/Inter-Regular.ttf",
+        "extras/ttf/Inter-Medium.ttf",
+        "extras/ttf/Inter-SemiBold.ttf",
+        "extras/ttf/Inter-Bold.ttf",
+        "InterVariable.ttf",
+        "LICENSE.txt"
+      ],
+      "modified": false,
+      "download_url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+      "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+      "notes": "Marketing typography. Static TTFs in extras/ttf/ (Inter-Regular/Medium/SemiBold/Bold.ttf), variable InterVariable.ttf, LICENSE.txt (OFL 1.1). Do not embed in the extension.",
+      "status": "active",
+      "set": "step125 (kept)"
+    },
     {
       "id": "kenney_protagonists",
       "name": "Animated Characters: Protagonists",
@@ -29,7 +283,9 @@
       "modified": false,
       "download_url": "https://kenney.nl/media/pages/assets/animated-characters-protagonists/608191acc4-1774773108/kenney_animated-characters-protagonists.zip",
       "sha256": "ec3787de70fa2200256848d74201b10f6b6c3126594e9857bf989753312c2b84",
-      "notes": "Rigged humanoid for rigging / skin weights / animation / hotbox scenes. characterMedium.fbx: 1 skinned mesh (1604 tris, 32 vertex groups, Armature modifier), armature 'Root' 58 bones incl. fingers and IK/ctrl bones. Animations in separate FBX (idle 33 f, run 17 f, jump 13 f), 45 animated bones, all names match the model armature. 4 skins (Skins/*.png: criminalMaleA, cyborgFemaleA, skaterFemaleA, skaterMaleA); the FBX material has no texture and imports with Alpha 0: connect a skin PNG and set Alpha 1 in the scene (file itself unmodified). Imports ~3.76 units tall (FBX cm scale): scale to taste."
+      "notes": "Rigged humanoid for rigging / skin weights / animation / hotbox scenes. characterMedium.fbx: 1 skinned mesh (1604 tris, 32 vertex groups, Armature modifier), armature 'Root' 58 bones incl. fingers and IK/ctrl bones. Animations in separate FBX (idle 33 f, run 17 f, jump 13 f), 45 animated bones, all names match the model armature. 4 skins (Skins/*.png: criminalMaleA, cyborgFemaleA, skaterFemaleA, skaterMaleA); the FBX material has no texture and imports with Alpha 0: connect a skin PNG and set Alpha 1 in the scene (file itself unmodified). Imports ~3.76 units tall (FBX cm scale): scale to taste.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "robot_expressive",
@@ -59,7 +315,9 @@
       "modified": false,
       "download_url": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/RobotExpressive/RobotExpressive.glb",
       "sha256": "047f5e5fb3bb6d378bd1df16ca6137f2a596c99b3a1b5690b4020c05aaf6f319",
-      "notes": "Animated robot character for animation / Graph Editor / Time Slider / marking-menu scenes. 15 meshes (2 skinned + rigid parts parented to bones), 3314 tris, armature 'RobotArmature' 43 bones (fingers, IK pole targets), 4 shape keys (facial morphs). 14 actions: Dance, Death, Idle, Jump, No, Punch, Running, Sitting, Standing, ThumbsUp, WalkJump, Walking, Wave, Yes. Flat materials Main/Grey/Black (no textures). ~4.0 m tall as imported (armature scale 100)."
+      "notes": "Animated robot character for animation / Graph Editor / Time Slider / marking-menu scenes. 15 meshes (2 skinned + rigid parts parented to bones), 3314 tris, armature 'RobotArmature' 43 bones (fingers, IK pole targets), 4 shape keys (facial morphs). 14 actions: Dance, Death, Idle, Jump, No, Punch, Running, Sitting, Standing, ThumbsUp, WalkJump, Walking, Wave, Yes. Flat materials Main/Grey/Black (no textures). ~4.0 m tall as imported (armature scale 100).",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_drill_01",
@@ -113,7 +371,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Drill_01/Drill_01_1k.gltf",
       "sha256": "b162c83a8e35c869aef4f50e2cd80a750be248389e829f6cf9ced73ba094b9db",
-      "notes": "Hard-surface prop for Modeling Toolkit / component selection / pivot & snapping scenes. 1 mesh, 2926 tris, clean modelled topology (not a scan), PBR 1k textures (diff/arm/normal); no brand marks (only '18V 1.3Ah LITHIUM-ION'). 0.18 x 0.05 x 0.19 m."
+      "notes": "Hard-surface prop for Modeling Toolkit / component selection / pivot & snapping scenes. 1 mesh, 2926 tris, clean modelled topology (not a scan), PBR 1k textures (diff/arm/normal); no brand marks (only '18V 1.3Ah LITHIUM-ION'). 0.18 x 0.05 x 0.19 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_desk_lamp_arm_01",
@@ -173,7 +433,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/desk_lamp_arm_01/desk_lamp_arm_01_1k.blend",
       "sha256": "349d75e41809bf21a8c863510144eb0bc318aef00e66aece0bd229d7301965ec",
-      "notes": "Mechanical rigged prop (optional 'animated machine'). .blend 1k: armature 'rig_lamp' 53 bones, 25 skinned meshes, 25710 tris, 2 curves, no actions (pose it / key it in the scene). 0.60 x 0.42 x 0.93 m. glTF export of this asset drops the rig, so the .blend is used (load with wm.append / bpy.data.libraries.load)."
+      "notes": "Mechanical rigged prop (optional 'animated machine'). .blend 1k: armature 'rig_lamp' 53 bones, 25 skinned meshes, 25710 tris, 2 curves, no actions (pose it / key it in the scene). 0.60 x 0.42 x 0.93 m. glTF export of this asset drops the rig, so the .blend is used (load with wm.append / bpy.data.libraries.load).",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_barrel_01",
@@ -227,7 +489,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Barrel_01/Barrel_01_1k.gltf",
       "sha256": "e084945dedd6a3379c6f3e97842cac89df7169797707e123a5e5b42c135d6888",
-      "notes": "Set dressing. 1 mesh, 2682 tris, PBR 1k (red explosive barrel). 0.56 x 0.56 x 0.88 m."
+      "notes": "Set dressing. 1 mesh, 2682 tris, PBR 1k (red explosive barrel). 0.56 x 0.56 x 0.88 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_cardboard_box_01",
@@ -281,7 +545,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/cardboard_box_01/cardboard_box_01_1k.gltf",
       "sha256": "6038bcc5bba5a08a5f6643a265977e37e3d14553e62981e144c33a89f10b78e1",
-      "notes": "Set dressing. 1 mesh, 16952 tris (scan-like), PBR 1k. 0.39 x 0.52 x 0.34 m."
+      "notes": "Set dressing. 1 mesh, 16952 tris (scan-like), PBR 1k. 0.39 x 0.52 x 0.34 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_woodentable_01",
@@ -335,7 +601,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/WoodenTable_01/WoodenTable_01_1k.gltf",
       "sha256": "413804e054055c397b4cfbd0916027097d2a20853b165b533007a46d131e1d17",
-      "notes": "Set dressing / ground for props. 1 mesh, 952 tris, PBR 1k. 1.80 x 0.66 x 0.55 m."
+      "notes": "Set dressing / ground for props. 1 mesh, 952 tris, PBR 1k. 1.80 x 0.66 x 0.55 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_potted_plant_02",
@@ -407,7 +675,9 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/potted_plant_02/potted_plant_02_1k.gltf",
       "sha256": "c533dcce0d1aa4379eb7db04601a04983f8df2422b28578de922655a416e64a9",
-      "notes": "Set dressing. 3 meshes, 69806 tris (heaviest asset), PBR 1k. 0.70 x 0.66 x 0.84 m."
+      "notes": "Set dressing. 3 meshes, 69806 tris (heaviest asset), PBR 1k. 0.70 x 0.66 x 0.84 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     },
     {
       "id": "ph_metal_toolbox",
@@ -461,40 +731,72 @@
       "modified": false,
       "download_url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/metal_toolbox/metal_toolbox_1k.gltf",
       "sha256": "9b8d240f1e41e83119771a063e4f4b4bb9ddfefd47f9f5baeda998107aa135c5",
-      "notes": "Set dressing / secondary hard-surface (open lid, separate parts). 6 meshes, 14228 tris, PBR 1k. 0.40 x 0.27 x 0.31 m."
-    },
-    {
-      "id": "font_inter",
-      "name": "Inter 4.1",
-      "role": "font",
-      "author": "Rasmus Andersson and the Inter project authors",
-      "source_page": "https://github.com/rsms/inter/releases/tag/v4.1",
-      "downloads": [
-        {
-          "url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
-          "path": "Inter-4.1.zip",
-          "extract": true,
-          "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
-          "size": 33707794
-        }
-      ],
-      "license": "OFL-1.1",
-      "license_evidence": "LICENSE.txt in the release zip: 'Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter). This Font Software is licensed under the SIL Open Font License, Version 1.1.' -- https://github.com/rsms/inter/blob/master/LICENSE.txt",
-      "files": [
-        "extras/ttf/Inter-Regular.ttf",
-        "extras/ttf/Inter-Medium.ttf",
-        "extras/ttf/Inter-SemiBold.ttf",
-        "extras/ttf/Inter-Bold.ttf",
-        "InterVariable.ttf",
-        "LICENSE.txt"
-      ],
-      "modified": false,
-      "download_url": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
-      "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
-      "notes": "Marketing typography. Static TTFs in extras/ttf/ (Inter-Regular/Medium/SemiBold/Bold.ttf), variable InterVariable.ttf, LICENSE.txt (OFL 1.1). Do not embed in the extension."
+      "notes": "Set dressing / secondary hard-surface (open lid, separate parts). 6 meshes, 14228 tris, PBR 1k. 0.40 x 0.27 x 0.31 m.",
+      "status": "superseded",
+      "superseded_note": "step 125: replaced by the Blender Studio / blender.org set; still read by the step 122-124 scene.py until lane A0 switches it. Files kept, not deleted."
     }
   ],
   "rejected": [
+    {
+      "id": "blender.org demo: Classroom (Christophe Seux, CC0)",
+      "checked": "2026-10-20",
+      "why": "textures carry real trademarks: officeSupplies/textures/pencil_brandMask.png 'STAEDTLER ... tradition HB', eraser.jpg 'STAEDTLER Mars plastic' + barcode, books/textures/zapBook.jpg 'ZAP BOOK' (Clairefontaine), a 'rotring' pen collection; photo textures (europeMap.png, childDrawing_*.jpg) of unstated origin. Downloaded to _rejected/bdemo_classroom."
+    },
+    {
+      "id": "blender.org demo: Barcelona Pavillion (eMirage, CC-BY)",
+      "checked": "2026-10-20",
+      "why": "reconstruction of Mies van der Rohe's pavilion with its furniture designs (third-party architecture / design rights); photo textures DSC_*.JPG, url.jpeg of unstated origin. Downloaded to _rejected/bdemo_barcelona."
+    },
+    {
+      "id": "blender.org demo: Blender 4.3 splash 'House of Chores' (Blender Studio, CC-BY)",
+      "checked": "2026-10-20",
+      "why": "Grease Pencil 2D artwork with textures projected from one camera: breaks in any other view, nothing Maya-like to show. Downloaded to _rejected/bdemo_splash_43."
+    },
+    {
+      "id": "blender.org demo: CC-BY-SA splash / demo files (4.0 Gaku, 3.5 Cozy Kitchen, 3.3 Scanlands, 3.2 White Lands, 3.1 Secret Deer, 2.92, 2.91 Red Autumn Forest, 2.90 Splash Fox, 2.83, 2.82, 2.77 Racing Car, Hair Styles, Repeat Zone Flower, Bike Ride)",
+      "checked": "2026-10-20",
+      "why": "ShareAlike: a promo image / clip that composes the model with our UI, re-lit and re-posed, is likely an Adaptation (CC BY-SA 4.0 s.1(a)) and would have to be released under BY-SA; our marketing material is not, so excluded conservatively."
+    },
+    {
+      "id": "blender.org demo: EEVEE / Cycles / sculpt demos without a stated licence (Wasp Bot, Race Spaceship, Tree Creature, Temple, Wanderer, Mr. Elephant, Ember Forest, Archiviz, Monster UDIM, Lone Monk, Curve Bevel Profile, ...)",
+      "checked": "2026-10-20",
+      "why": "the demo files page states no licence for these items: unknown licence = excluded."
+    },
+    {
+      "id": "blender.org demo: splashes only on Blender Cloud gallery pages (3.0 Sprite Fright, 2.93 Still Life, 2.81 Junk Shop, 2.80 Spring, 2.79 Agent 327, 2.78)",
+      "checked": "2026-10-20",
+      "why": "no direct file on the demo page (cloud.blender.org gallery), several without a stated licence."
+    },
+    {
+      "id": "Blender Studio characters without the 'Free' label (Singularity, Project Storm, Gold, Wing It!, Glass Half, Cosmos Laundromat, Caminandes, Sintel, Big Buck Bunny, Elephants Dream, Vincent)",
+      "checked": "2026-10-20",
+      "why": "not labelled Free on https://studio.blender.org/characters/ - treated as subscription content, excluded per rule."
+    },
+    {
+      "id": "Blender Studio Einar (Charge, Free, CC-BY)",
+      "checked": "2026-10-20",
+      "why": "553 MB download for one character; Rain covers the rigging shots."
+    },
+    {
+      "id": "Blender Studio Snow v4 / Ellie / other Sprite Fright characters (Free, CC-BY)",
+      "checked": "2026-10-20",
+      "why": "licence fine, not needed (Rain chosen: same CloudRig features, smaller, updated May 2025). Alternatives if Rain does not suit a shot."
+    },
+    {
+      "id": "blender.org demo: Ellie Pose Library v2.0.0 (CC-BY) / Human Base Meshes v1.4.1 (CC0)",
+      "checked": "2026-10-20",
+      "why": "pose library / unrigged base meshes - no advantage over Rain for the rig shots."
+    },
+    {
+      "id": "Blend Swap (blendswap.com)",
+      "checked": "2026-10-20",
+      "why": "downloads go through an ad-gated JS page ('Please turn off your ad blocker ... reload the page to download'), not a direct file; community uploads include fan art of trademarked characters (e.g. blend 25000 'Springtrap'), so provenance can't be verified per file. Not used: Blender Studio first-party files cover every role."
+    },
+    {
+      "id": "Blender Artists forum uploads",
+      "checked": "2026-10-20",
+      "why": "attachments need a forum account and licences are free text per post: excluded."
+    },
     {
       "id": "Poly Haven Camera_01",
       "why": "textures carry real trademarks (LEICA, SUMMILUX-M, ERNST LEITZ WETZLAR)"

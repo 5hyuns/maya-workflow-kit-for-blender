@@ -49,7 +49,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageStat
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from compose import (ROOT, flatten, font, key_visual_layers, lockup, rgb, shadow, text_w,  # noqa: E402
+from compose import (ROOT, credit_line, flatten, font, key_visual_layers, lockup, rgb, shadow, text_w,  # noqa: E402
                      vertical_gradient)
 
 HERE = Path(__file__).resolve().parent
@@ -190,7 +190,7 @@ _LOCK = {}
 def lockup_img(name_px, one_line=True, colours=None):
     k = (name_px, one_line, colours)
     if k not in _LOCK:
-        im = Image.new("RGBA", (int(name_px * 12), int(name_px * 3)), (0, 0, 0, 0))
+        im = Image.new("RGBA", (int(name_px * 20) + 8, int(name_px * 3)), (0, 0, 0, 0))
         lockup(ImageDraw.Draw(im), 4, 4, name_px, one_line=one_line, colours=colours)
         _LOCK[k] = im.crop(im.getbbox())
     return _LOCK[k]
@@ -268,11 +268,12 @@ def clip_info(name):
 
 class Frame:
     """One composed frame as parts: ``shot`` (RGB, shot size, overlays drawn), ``band`` (RGBA band text layer) and
-    whether the brand mark shows; or a ``full`` RGB frame (cards)."""
-    __slots__ = ("shot", "band", "brand", "full")
+    whether the brand mark shows (+ the clip's attribution ``credit``, content.json credits); or a ``full`` RGB frame
+    (cards)."""
+    __slots__ = ("shot", "band", "brand", "full", "credit")
 
-    def __init__(self, shot=None, band=None, brand=1.0, full=None):
-        self.shot, self.band, self.brand, self.full = shot, band, brand, full
+    def __init__(self, shot=None, band=None, brand=1.0, full=None, credit=""):
+        self.shot, self.band, self.brand, self.full, self.credit = shot, band, brand, full, credit
 
     def image(self):
         if self.full is not None:
@@ -285,6 +286,9 @@ class Frame:
             lk = lockup_img(26, True, ("text", "accent"))
             right = SHOT[0] + SHOT[2]
             put(canvas, lk, right - lk.width / 2, BAND_Y + 104, self.brand)
+            if self.credit:   # small, muted, the band's bottom-right corner under the brand mark
+                ci = text_img(self.credit, "font-regular", 15, "text-muted")
+                put(canvas, ci, right - ci.width / 2, BAND_Y + 128, self.brand)
         return canvas.convert("RGB")
 
 
@@ -299,6 +303,7 @@ class Clip:
         tl = json.loads((self.folder / "timeline.json").read_text(encoding="utf-8"))
         self.logo = tl.get("logo")
         self.title = info["title"]
+        self.credit = credit_line(CONTENT, [name])
         self.entries = tl["entries"]
         speed = info.get("speed", SPEED)
         self.zoom_max = info.get("zoom_max", ZOOM_MAX)
@@ -525,7 +530,7 @@ class Clip:
         brand = 1.0
         if not brand_static:
             brand = ease_out((t - band_start - 0.25) / 0.3) * (1 - clamp((t - self.body) / 0.2) if outro else 1)
-        return Frame(shot, band, brand)
+        return Frame(shot, band, brand, credit=self.credit)
 
     def _cursor_chip(self, shot, t, k, pos):
         skip = self.info.get("no_cursor_chip", ())
@@ -701,6 +706,8 @@ class EndCard:
         pd.text((pill.width / 2, 38), cta, font=f, fill=rgb("on-highlight", 255), anchor="mm")
         self.pill = pill
         self.pill_glow = glow_sprite(110, "highlight")
+        fine = [*tr.get("end_card_credits", []), CONTENT.get("trademark_note", "")]   # bottom up: note last
+        self.credits = [text_img(t, "font-regular", 17, "text-muted") for t in fine if t]
 
     def frame(self, t):
         out = self.bg.copy()
@@ -717,6 +724,9 @@ class EndCard:
         if v > 0:
             put(out, self.pill_glow, cx, 800 + drift, clamp(v) * (0.16 + 0.12 * breathe), 1.4)   # a halo, not a wash: yellow over the teal glow turns olive
             put(out, self.pill, cx, 800 + drift, ease_out(v), 0.8 + 0.2 * ease_out_back(v))
+        a = ease_out((t - 0.6) / 0.4)
+        for i, img in enumerate(reversed(self.credits)):        # attribution lines, bottom up, still
+            put(out, img, cx, H - 36 - i * 26, a)
         return out.convert("RGB")
 
 
@@ -760,7 +770,7 @@ def shot_transition(fa, fb, j, n, kind):
         band = fade(fa.band, 1 - (j + 1) / half) if fa.band is not None else None
     else:
         band = fb.band
-    return Frame(shot, band, 1.0)
+    return Frame(shot, band, 1.0, credit=fa.credit if j < n / 2 else fb.credit)
 
 
 def trailer_parts():

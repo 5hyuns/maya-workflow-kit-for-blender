@@ -12,6 +12,7 @@ tap vs hold); timings and distances marked  are from Maya use, not files.
 
 import math
 
+from ..names import PRODUCT
 from . import menus as mm
 
 # Sector order for atan2 angles (0 = east, counter-clockwise, 45 degrees each).
@@ -396,7 +397,7 @@ class HotboxLayout:
     LINE_GAP, LINE_LEN = 20.0, 28.0     # zone lines: start past the rows, length per axis [checked, step 52]
 
     def __init__(self, rows, center, measure, params=None, style="ALL", scale=1.0, bounds=None,
-                 below=(), side=None, title="Allset"):
+                 below=(), side=None, title=PRODUCT):
         """``bounds`` = (x0, y0, x1, y1): where the hotbox may draw (step 52: the window's screen areas,
         in region pixels); rows are wrapped / moved to stay inside it (steps 17, 33)."""
         self.params = p = (params or Params()).scaled(scale) if scale != 1.0 else (params or Params())

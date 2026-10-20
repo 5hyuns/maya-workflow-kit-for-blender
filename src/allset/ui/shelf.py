@@ -7,7 +7,7 @@ scripts, drawn under the Status Line in a thin "Maya strip" area.
 
 - The strip is an Image Editor area marked by the hidden Mask ``.AllsetStrip``
   (``space.mask``): its header row draws the Status Line, its tool header row the
-  shelf. The Allset template (step 49) uses two header-only areas instead, the strip
+  shelf. The Maya Workflow Kit template (step 49) uses two header-only areas instead, the strip
   without its tool header and a shelf row marked ``.AllsetShelf`` whose header draws
   the shelf: Blender keeps every area at least one header high, so both rows follow
   the UI scale (a two-row area of fixed height lost its tool header at scale 1.25).
@@ -663,7 +663,7 @@ LEFT_PX = 6
 # 18 px tab strip at the top (tabs from x 37, Segoe UI 11 px), the shelf menu / editor glyphs in a 16 px column at
 # x 16, icons from x 43 at y 24 under the row's top, 12 px separators between Maya's button groups
 # (``shelf_data.GAPS``). The kit draws that whole block in the shelf row's WINDOW region when the row has no
-# header (the Allset template since step 113); with a header (older files) the header keeps the tab buttons.
+# header (the Maya Workflow Kit template since step 113); with a header (older files) the header keeps the tab buttons.
 TAB_PX = 19
 TAB_LEFT_PX = 37
 TAB_PAD_PX = 10

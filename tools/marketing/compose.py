@@ -97,29 +97,72 @@ def arrow(draw, start, end, col, width, head):
 
 
 def lockup(draw, x, y, name_px, one_line=False, anchor_right=False, colours=None, alpha=255):
-    """The Allset lockup (style.md "Lockup"): "Allset" Bold + "for Maya Users" SemiBold at ``for_ratio`` x the name
-    size, two lines on one left edge, or one line on one baseline. ``(x, y)`` = top-left of the name's em box (top
-    right with ``anchor_right``). Returns the box (x0, y0, x1, y1) of the drawn ink rows."""
+    """The lockup (style.md "Lockup"): the name (``component.lockup.name``, Bold) + the line (``lockup.line``,
+    SemiBold at ``for_ratio`` x the name size), two lines on one left edge, or one line on one baseline. ``(x, y)`` =
+    top-left of the name's em box (top right with ``anchor_right``). Returns the box (x0, y0, x1, y1) of the drawn
+    ink rows."""
     lk = STYLE["component"]["lockup"]
+    name, line = lk["name"], lk["line"]
     fpx = round(name_px * lk["for_ratio"])
     nf, ff = font(lk["name_font"], name_px), font(lk["for_font"], fpx)
     ncol, fcol = colours or (lk["name_color"], lk["for_color"])
-    nw, fw = text_w(draw, "Allset", nf), text_w(draw, "for Maya Users", ff)
+    nw, fw = text_w(draw, name, nf), text_w(draw, line, ff)
     if one_line:
         gap = name_px * lk["one_line_gap"]
         width = nw + gap + fw
         x0 = x - width if anchor_right else x
         base = y + nf.getmetrics()[0]
-        draw.text((x0, base), "Allset", font=nf, fill=rgb(ncol, alpha), anchor="ls")
-        draw.text((x0 + nw + gap, base), "for Maya Users", font=ff, fill=rgb(fcol, alpha), anchor="ls")
+        draw.text((x0, base), name, font=nf, fill=rgb(ncol, alpha), anchor="ls")
+        draw.text((x0 + nw + gap, base), line, font=ff, fill=rgb(fcol, alpha), anchor="ls")
         return (x0, y, x0 + width, base + nf.getmetrics()[1])
-    width = max(nw, fw)
+    width = max(nw, fw + name_px * 0.02)
     x0 = x - width if anchor_right else x
     base1 = y + nf.getmetrics()[0]
     base2 = base1 + round(fpx * (1.0 + lk["line_gap"]) + fpx * 0.12)
-    draw.text((x0, base1), "Allset", font=nf, fill=rgb(ncol, alpha), anchor="ls")
-    draw.text((x0 + name_px * 0.02, base2), "for Maya Users", font=ff, fill=rgb(fcol, alpha), anchor="ls")
+    draw.text((x0, base1), name, font=nf, fill=rgb(ncol, alpha), anchor="ls")
+    draw.text((x0 + name_px * 0.02, base2), line, font=ff, fill=rgb(fcol, alpha), anchor="ls")
     return (x0, y, x0 + width, base2 + ff.getmetrics()[1])
+
+
+def lockup_ink(name_px, one_line=False):
+    """(width, height) of the lockup's ink at ``name_px`` (drawn once on a scratch image)."""
+    im = Image.new("RGB", (int(name_px * 20) + 16, int(name_px * 3) + 16))
+    lockup(ImageDraw.Draw(im), 8, 8, name_px, one_line=one_line, colours=("white", "white"))
+    x0, y0, x1, y1 = im.getbbox()
+    return x1 - x0, y1 - y0
+
+
+def credit_line(content, names):
+    """The attribution text (content.json ``credits``, CC-BY etc.) for the shots / clips ``names``; '' if none."""
+    cr = content.get("credits") or {}
+    seen = []
+    for n in names:
+        t = cr.get(n)
+        if t and t not in seen:
+            seen.append(t)
+    return " · ".join(seen)
+
+
+def fine_size(width):
+    """Fine-print size (trademark note, credits) for a canvas ``width`` px wide: 17 px at 1920, at least 14."""
+    return max(14, round(17 * width / 1920))
+
+
+def fine_print(draw, content, names, x, y, width, anchor="l", top=False):
+    """The small muted lines of a brand image: the credits of ``names`` (content.json) and the trademark note.
+    ``top`` = first line's top at ``y`` (stacked down: credit, note), else the note's bottom at ``y`` (stacked up:
+    note, credit above). ``anchor`` l / m / r = horizontal anchor at ``x``. Returns the far y (bottom / top)."""
+    f = font("font-regular", fine_size(width))
+    # step 125: one row per distinct credit (two CC BY credits on one row ran into the key visual's screens)
+    credits = [t for t in credit_line(content, names).split(" · ") if t]
+    lines = credits + [t for t in (content.get("trademark_note", ""),) if t]
+    step = round(f.size * 1.45)
+    if not top:
+        lines = lines[::-1]
+    for t in lines:
+        draw.text((x, y), t, font=f, fill=rgb("text-muted"), anchor=anchor + ("a" if top else "d"))
+        y += step if top else -step
+    return y
 
 
 def outlined_rect(draw, box, radius, colour, width, outline):
@@ -132,7 +175,7 @@ def outlined_rect(draw, box, radius, colour, width, outline):
 
 
 # --------------------------------------------------------------------------------------------- feature screens
-def screen(name, title, line, callouts, out_path):
+def screen(name, title, line, callouts, out_path, credit=""):
     st = STYLE["component"]["screen"]
     band = STYLE["component"]["band"]
     co = STYLE["component"]["callout"]
@@ -149,8 +192,28 @@ def screen(name, title, line, callouts, out_path):
     tx = mx + band["tick_w"] + band["tick_gap"]
     draw.text((tx, ty), title, font=tfont, fill=rgb(band["title_color"]))
     draw.text((tx, ty + band["title_size"] + band["line_gap"]), line, font=lfont, fill=rgb(band["line_color"]))
-    lockup(draw, W - mx, ty + 4, band["brand_size"], one_line=True, anchor_right=True,
-           colours=(band["brand_color"], "accent"))
+    bx = lockup(draw, W - mx, ty + 4, band["brand_size"], one_line=True, anchor_right=True,
+                colours=(band["brand_color"], "accent"))[0]
+    if tx + text_w(draw, title, tfont) > bx - band["brand_clear"]:
+        print(f"WARNING {name}: title runs into the brand mark")
+    if credit:   # attribution (content.json credits) right-aligned on the line row, under the brand
+        cf = font(band["credit_font"], band["credit_size"])
+        cy = ty + band["title_size"] + band["line_gap"] + band["line_size"] - band["credit_size"]
+        rows = [credit]
+        line_end = tx + text_w(draw, line, lfont) + band["brand_clear"]
+        if line_end > W - mx - text_w(draw, credit, cf) and " | " in credit:
+            # step 125: a long CC BY credit takes two rows (split after the author, " | "): the upper one sits
+            # between the brand mark and the line row, right of the title
+            a, b = credit.split(" | ", 1)
+            rows = [a + " |", b]
+        step = round(band["credit_size"] * 1.4)
+        for i, row in enumerate(reversed(rows)):
+            draw.text((W - mx, cy - i * step), row, font=cf, fill=rgb(band["credit_color"]), anchor="ra")
+        widest = max(text_w(draw, r, cf) for r in rows)
+        if line_end > W - mx - text_w(draw, rows[-1], cf):
+            print(f"WARNING {name}: line runs into the credit")
+        if len(rows) > 1 and tx + text_w(draw, title, tfont) + band["brand_clear"] > W - mx - widest:
+            print(f"WARNING {name}: title runs into the credit")
 
     # the shot, scaled into the frame below the band
     raw = Image.open(RAW / f"{name}.png").convert("RGB")
@@ -261,13 +324,11 @@ def key_visual_layers(content, shots, size=(1920, 1080), square=False):
 
     if not square:
         # back screen, then front screen, staggered to the right
-        for img, wdt, x, y in [(imgs[1], 1000, 940, 150), (imgs[0], 1160, 780, 390)]:
+        for img, wdt, (x, y) in zip((imgs[1], imgs[0]), (1000, 1160), kv["screens_xy"]):
             add(tilted(img, wdt, 14), x, y)
-        tx = STYLE["component"]["key_visual"]["text_x"]
-        ty = 300
     else:
-        add(tilted(imgs[0], 1020, 12, shrink=0.12), 150, 600)
-        tx, ty = 96, 120
+        add(tilted(imgs[0], 1020, 12, shrink=0.12), *kv["screens_xy"][0])
+    tx, ty = kv["text_xy"]
     text = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(text)
     tag_f = font("font-regular", kv["tagline_size"])
@@ -278,6 +339,10 @@ def key_visual_layers(content, shots, size=(1920, 1080), square=False):
         yy += round(kv["tagline_size"] * 1.35)
     foot_f = font("font-medium", 24 if not square else 22)
     draw.text((tx + 4, yy + 28), content["key_visual_footer"], font=foot_f, fill=rgb("text-muted"))
+    if square:   # the screen fills the bottom: credit + trademark note under the footer
+        fine_print(draw, content, shots, tx + 4, yy + 28 + round(foot_f.size * 2.2), W, top=True)
+    else:        # bottom-left, under the text column (the screens are right of it)
+        fine_print(draw, content, shots, tx + 4, H - 40, W)
     return bg, screens, text
 
 
@@ -357,7 +422,7 @@ def main(argv=None):
             else:
                 print(f"{sc['name']}: no rect {c['rect']}")
         made.append(screen(sc["name"], sc["title"], sc["line"], callouts,
-                           OUT / "screens" / f"{i:02d}_{sc['name']}.png"))
+                           OUT / "screens" / f"{i:02d}_{sc['name']}.png", credit_line(content, [sc["name"]])))
     if not only or "key_visual" in only:
         made.append(key_visual(content, content["key_visual_shots"], OUT / "key_visual.png"))
     if not only or "square" in only:

@@ -1,4 +1,4 @@
-"""Step 58 in a real UI, Maya rigging_04 hand order on the Allset layout: a cylinder + a three-joint skeleton ->
+"""Step 58 in a real UI, Maya rigging_04 hand order on the Maya Workflow Kit layout: a cylinder + a three-joint skeleton ->
 click the skeleton, Shift+click the cylinder (joints first, mesh last) -> Skin > Bind Skin -> Armature modifier + three
 joint groups -> Skin > Paint Skin Weights -> pick joint2 in the influence list -> paint on the mesh -> joint2's weights go
 up.  「계획」 5."""
@@ -71,7 +71,7 @@ def joint2_weight():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

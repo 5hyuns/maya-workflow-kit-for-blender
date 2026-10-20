@@ -28,7 +28,7 @@ __all__ = ["ls", "select", "move", "rotate", "scale", "setAttr", "getAttr", "xfo
 def __getattr__(name):
     if name.startswith("__"):
         raise AttributeError(name)
-    raise AttributeError(f"maya.cmds.{name} is not available in Allset (cmds_shim)")
+    raise AttributeError(f"maya.cmds.{name} is not available in Maya Workflow Kit (cmds_shim)")
 
 
 # --- units, flags, objects ----------------------------------------------------------

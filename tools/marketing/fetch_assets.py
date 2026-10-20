@@ -3,11 +3,14 @@
     python tools/marketing/fetch_assets.py            # download / verify everything
     python tools/marketing/fetch_assets.py -k robot   # only ids containing "robot"
     python tools/marketing/fetch_assets.py --record   # fill in missing sha256 / size
+    python tools/marketing/fetch_assets.py --active   # skip entries with status "superseded"
 
-Files go to <id>/ (untracked, outside the extension).
+Files go to <id>/ (untracked, outside the extension, never redistributed).
 Each download is checked against its sha256; a file already present with the
 right hash is skipped. Zip archives listed with "extract": true are unpacked
-next to the zip. Standard library only.
+next to the zip, path-traversal-safe; members already on disk with the same size
+are left alone (a running composer may hold the font files open on Windows).
+Blender Studio links redirect to a signed download URL (no login). Standard library only.
 """
 import argparse
 import hashlib
@@ -35,7 +38,7 @@ def sha256(path):
 def download(url, path):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     tmp = path + ".part"
-    with urllib.request.urlopen(req, timeout=120) as r, open(tmp, "wb") as f:
+    with urllib.request.urlopen(req, timeout=300) as r, open(tmp, "wb") as f:
         while True:
             block = r.read(1 << 20)
             if not block:
@@ -45,14 +48,26 @@ def download(url, path):
 
 
 def safe_extract(zpath, folder):
-    """Unzip without letting member names escape the folder."""
+    """Unzip without letting member names escape the folder. Members already extracted with the
+    same size are skipped. Returns the number of files written."""
     base = os.path.realpath(folder)
+    written = 0
     with zipfile.ZipFile(zpath) as z:
-        for m in z.infolist():
+        members = z.infolist()
+        for m in members:
             target = os.path.realpath(os.path.join(base, m.filename))
             if target != base and not target.startswith(base + os.sep):
                 raise ValueError(f"unsafe path in {zpath}: {m.filename}")
-        z.extractall(base)
+        for m in members:
+            target = os.path.realpath(os.path.join(base, m.filename))
+            if m.is_dir():
+                os.makedirs(target, exist_ok=True)
+                continue
+            if os.path.isfile(target) and os.path.getsize(target) == m.file_size:
+                continue
+            z.extract(m, base)
+            written += 1
+    return written
 
 
 def fetch(asset, record):
@@ -79,9 +94,10 @@ def fetch(asset, record):
                 continue
             d["sha256"] = got
         d["size"] = os.path.getsize(path)
+        extra = ""
         if d.get("extract"):
-            safe_extract(path, folder)
-        print(f"  ok   {asset['id']}/{d['path']} ({state}, {d['size']} bytes)")
+            extra = f", {safe_extract(path, folder)} files extracted"
+        print(f"  ok   {asset['id']}/{d['path']} ({state}, {d['size']} bytes{extra})")
     for rel in asset.get("files", []):
         if not os.path.exists(os.path.join(folder, *rel.split("/"))):
             print(f"  FAIL {asset['id']}: import file missing: {rel}")
@@ -93,12 +109,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-k", default="", help="only asset ids containing this text")
     ap.add_argument("--record", action="store_true", help="write missing sha256/size into assets.json")
+    ap.add_argument("--active", action="store_true", help="skip assets with status 'superseded'")
     a = ap.parse_args()
     with open(LIST, encoding="utf-8") as f:
         data = json.load(f)
     failed = []
     for asset in data["assets"]:
         if a.k and a.k not in asset["id"]:
+            continue
+        if a.active and asset.get("status") == "superseded":
             continue
         print(asset["id"])
         if not fetch(asset, a.record):

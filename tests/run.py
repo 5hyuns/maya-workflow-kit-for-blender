@@ -1,8 +1,8 @@
-"""Headless test harness for Allset.
+"""Headless test harness for Maya Workflow Kit.
 
     python tests/run.py [-k PATTERN] [--no-build] [--blender PATH]
 
-1. Builds dist/allset-<version>.zip with tools/build.py (skip: --no-build).
+1. Builds dist/maya-workflow-kit-<version>.zip with tools/build.py (skip: --no-build).
 2. Recreates a sandbox tmp/test_env/{config,scripts,extensions} and points
    BLENDER_USER_CONFIG / BLENDER_USER_SCRIPTS / BLENDER_USER_EXTENSIONS at it,
    so the real %APPDATA%/Blender Foundation is never touched
@@ -51,7 +51,7 @@ def make_sandbox():
         env[var] = str(d)
     (SANDBOX / "logs").mkdir()
     (SANDBOX / "results").mkdir()
-    # the default Allset project (operators/project.default_root) lives in the sandbox, not in Documents
+    # the default Maya Workflow Kit project (operators/project.default_root) lives in the sandbox, not in Documents
     env["ALLSET_PROJECTS_DIR"] = str(SANDBOX / "projects")
     env["ALLSET_MODULE"] = MODULE
     env["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -96,7 +96,7 @@ def run_test_file(blender, path, env):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Run Allset headless tests")
+    ap = argparse.ArgumentParser(description="Run Maya Workflow Kit headless tests")
     ap.add_argument("-k", default="", help="only test files whose name contains this (comma-separated: any of them)")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
@@ -106,7 +106,7 @@ def main(argv=None):
         raise SystemExit(f"Blender not found: {args.blender}")
 
     if args.no_build:
-        zip_path = build.DIST / f"{PKG_ID}-{build.manifest_value('version')}.zip"
+        zip_path = build.ext_zip()
     else:
         zip_path = build.main(["--blender", args.blender, "--no-legacy"])
 

@@ -1,4 +1,4 @@
-"""Step 92 in a real UI (Allset layout, the big view switched to the Graph Editor): t centers the current time,
+"""Step 92 in a real UI (Maya Workflow Kit layout, the big view switched to the Graph Editor): t centers the current time,
 Alt+/ turns on Snap Time To Selection (clicking key 20 moves the time there), i held + MMB click inserts a key that
 keeps the curve shape. """
 
@@ -52,7 +52,7 @@ def hover():
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

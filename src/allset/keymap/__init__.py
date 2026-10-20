@@ -48,7 +48,7 @@ def generate_data():
     patch.DRIFT.clear()
     data = maya_patches.apply(ic_data.generate())
     if patch.DRIFT:
-        print(f"Allset: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
+        print(f"Maya Workflow Kit: {len(patch.DRIFT)} keymap patches don't apply to Blender {bpy.app.version_string} "
               "(made for 4.5):", *patch.DRIFT[:20], sep="\n  ")
     return data
 
@@ -75,10 +75,10 @@ def activate():
         kcs.active = kc  # also stores the name in the preferences
 
 
-# A GUI template switch (File > New > Allset, Start in Maya Layout) sets the active keyconfig back to "Blender"
+# A GUI template switch (File > New > Maya Workflow Kit, Start in Maya Layout) sets the active keyconfig back to "Blender"
 # (stored name too), after load_post, while the preferences and the add-on stay; load_pre doesn't run for it (checked,
 # ). Before step 115 the template's own __init__.py re-activated Maya; the template now carries
-# no code, so the keymap module does the same: in the Allset template, Blender's default keyconfig -> Maya (a keymap
+# no code, so the keymap module does the same: in the Maya Workflow Kit template, Blender's default keyconfig -> Maya (a keymap
 # the user picked other than Blender's default is left alone).
 def wants_maya(app_template, active_name):
     from ..app_template import TEMPLATE_ID

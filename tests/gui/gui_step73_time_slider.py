@@ -1,4 +1,4 @@
-"""Step 73 in a real UI (Allset layout): red key ticks on the Time Slider at the keyed frames, and the
+"""Step 73 in a real UI (Maya Workflow Kit layout): red key ticks on the Time Slider at the keyed frames, and the
 Range Slider bar dragged like Maya's (segment = move, end handle = that end, double-click = whole range).
 """
 
@@ -53,7 +53,7 @@ def pixel(path, x, y):
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

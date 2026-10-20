@@ -16,7 +16,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 mm = import_module(kit.MODULE + ".marking.menus")
 
-# The three unit setups of : Allset template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
+# The three unit setups of : Maya Workflow Kit template (m, cm shown), Maya Units (1 BU = 1 cm), factory m.
 SETUPS = {
     "template": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=1.0),   # maya_unit 0.01
     "maya units": dict(system='METRIC', length_unit='CENTIMETERS', scale_length=0.01),  # 1

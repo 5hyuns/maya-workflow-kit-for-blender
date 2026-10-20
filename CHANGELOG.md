@@ -1,9 +1,17 @@
 # Changelog
 
-All notable changes to Allset for Maya Users (called Maya Kit before step 111). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
+All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 111–124 and Maya Kit before step 111). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
 [Semantic Versioning](https://semver.org/). Step documents: <n>.md`.
 
 ## [Unreleased]
+
+### Changed
+- **Renamed to Maya Workflow Kit** (step 125,  —  revision): store / display
+  name "Maya Workflow Kit" (no "Blender" in the store name), repository "Maya Workflow Kit for Blender"
+  (`maya-workflow-kit-for-blender`), app template "Maya Workflow Kit", release zip `maya-workflow-kit-<version>.zip`,
+  default project folder `Documents/Maya Workflow Kit/projects/default`. Unchanged: extension id `allset`, package
+  `src/allset`, `allset.` / `ALLSET_` prefixes, tagline, theme and keyconfig names. Marketing lockup "Maya Workflow
+  Kit" + "for Maya users, in Blender". README rewritten for GitHub.
 
 ## [0.2.0] — 2026-10-19
 

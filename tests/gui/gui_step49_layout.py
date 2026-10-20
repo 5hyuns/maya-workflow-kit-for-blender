@@ -1,4 +1,4 @@
-"""Step 49 in a real UI: Allset layout = Maya General — Tool Box column (clicks set tools, a click under
+"""Step 49 in a real UI: Maya Workflow Kit layout = Maya General — Tool Box column (clicks set tools, a click under
 the tools keeps the selection), the tab stack opens on the Channel Box, Help + Command row, Range Slider
 under the Time Slider, quick layout buttons; screenshot."""
 
@@ -57,7 +57,7 @@ def active_tool():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

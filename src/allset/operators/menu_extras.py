@@ -33,7 +33,7 @@ EDITOR_TYPES = (
 
 
 def _maya_outliner(space):
-    # Same filters as the Allset layout's Outliner (Maya DAG, , ).
+    # Same filters as the Maya Workflow Kit layout's Outliner (Maya DAG, , ).
     from ..ui import maya_outliner
     maya_outliner.setup(space)
 

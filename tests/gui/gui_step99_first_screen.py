@@ -1,6 +1,6 @@
 """Step 99 in a real UI: the Maya first screen.
 
-New Allset scene -> the Tool Box column shows its tools at the running UI scale (run at the default 1.25 and with
+New Maya Workflow Kit scene -> the Tool Box column shows its tools at the running UI scale (run at the default 1.25 and with
 ``--ui-scale 0.8``: the column is resized through ALLSET_OT_fit_columns, the main view keeps no toolbar), the
 layout Outliner lists Maya's default rows (persp / top / front / side, defaultLightSet, defaultObjectSet) from the
 top, the dock shows Maya's three tabs (Channel Box / Layer Editor first) and allset_dock follows them both ways.
@@ -73,7 +73,7 @@ def click_row(row):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

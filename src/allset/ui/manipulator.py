@@ -577,7 +577,7 @@ def draw_tool_settings(self, context):
     if kind == 'ROTATE':
         layout.prop(ts, "snap_angle_increment_3d", text="Step")
     else:
-        # Blender's increment is the grid step: 1 Maya unit in the Allset template (step 25).
+        # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template (step 25).
         layout.label(text="Step: one grid unit", icon='SNAP_INCREMENT')
     if kind == 'TRANSLATE':
         # Blender snapping always keeps the selection's spacing (Maya's default; off = not possible).

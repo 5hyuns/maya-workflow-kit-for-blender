@@ -77,8 +77,8 @@ def _assets():
 def test_every_asset_is_kit_made_and_cc0():
     listed = open(os.path.join(PKG, "ASSETS_LICENSE.txt"), encoding="utf-8").read()
     assets = _assets()
-    assert assets == ["app_template/Allset/splash.png", "app_template/Allset/splash_2x.png",
-                      "app_template/Allset/startup.blend", "theme/studio_grey.xml",
+    assert assets == ["app_template/Maya_Workflow_Kit/splash.png", "app_template/Maya_Workflow_Kit/splash_2x.png",
+                      "app_template/Maya_Workflow_Kit/startup.blend", "theme/studio_grey.xml",
                       "theme/studio_grey_5.0.xml", "theme/studio_grey_5.1.xml", "theme/studio_grey_5.2.xml",
                       "welcome.png"], assets
     for rel in assets:
@@ -99,7 +99,7 @@ def test_extension_zip_has_no_bl_info():
     finally:
         sys.path.pop(0)
     version = build.manifest_value("version")
-    ext = os.path.join(ROOT, "dist", f"allset-{version}.zip")
+    ext = os.path.join(ROOT, "dist", f"maya-workflow-kit-{version}.zip")
     assert os.path.exists(ext), ext
     with zipfile.ZipFile(ext) as zf:
         text = zf.read("__init__.py").decode("utf-8")
@@ -108,5 +108,5 @@ def test_extension_zip_has_no_bl_info():
     tail = build.legacy_bl_info()
     ns = {}
     exec(tail, ns)
-    assert ns["bl_info"]["name"] == "Allset for Maya Users" and ns["bl_info"]["version"] == tuple(
+    assert ns["bl_info"]["name"] == "Maya Workflow Kit" and ns["bl_info"]["version"] == tuple(
         int(p) for p in version.split("."))

@@ -1,7 +1,7 @@
 """In-Blender part of tools/dogfood.py: a Maya user's first session, driven by events.
 
 Runs in a GUI Blender on the clean sandbox of tools/release_check.py (extension
-installed + enabled from the command line, Allset layout loaded), with
+installed + enabled from the command line, Maya Workflow Kit layout loaded), with
 --enable-event-simulate. Every action is a simulated key/mouse event where the
 kit binds one (operators only to build the scene). Each "check" records what a
 Maya user would expect; screenshots go to $ALLSET_DOGFOOD_SHOTS for review.
@@ -97,7 +97,7 @@ def s_first_start():
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap after the opt-in (got {kc.name if kc else None})", kc is not None and kc.name == "Maya-style")
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

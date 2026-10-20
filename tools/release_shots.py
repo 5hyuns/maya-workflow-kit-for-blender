@@ -65,7 +65,7 @@ def s_first_start():
     check("Maya mode off until the user opts in", not prefs.addons[MODULE].preferences.maya_mode)
     setup()   # closes the splash, opts in to Maya mode
     check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

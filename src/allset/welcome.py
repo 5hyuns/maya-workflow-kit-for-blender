@@ -107,7 +107,7 @@ class ALLSET_OT_welcome(bpy.types.Operator):
     def invoke(self, context, event):
         preferences.get(context).welcome_done = True    # asked once, never again
         return context.window_manager.invoke_props_dialog(
-            self, width=DIALOG_WIDTH, title="Welcome to Allset for Maya Users", confirm_text="Make Blender feel like Maya")
+            self, width=DIALOG_WIDTH, title="Welcome to Maya Workflow Kit", confirm_text="Make Blender feel like Maya")
 
     def draw(self, context):
         icon = _splash_icon()
@@ -117,7 +117,7 @@ class ALLSET_OT_welcome(bpy.types.Operator):
         else:
             row = self.layout.row()
         col = row.column()
-        col.label(text="Allset for Maya Users")
+        col.label(text="Maya Workflow Kit")
         scale = context.preferences.system.ui_scale or 1.0      # 0 in background
         size = context.preferences.ui_styles[0].widget.points * scale
         width = text_room(bool(icon)) * scale

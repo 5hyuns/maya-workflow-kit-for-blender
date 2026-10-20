@@ -1,4 +1,4 @@
-"""Release check helper (step 53): does installing Allset leave the user's own setup alone?
+"""Release check helper (step 53): does installing Maya Workflow Kit leave the user's own setup alone?
 
 Runs inside a background Blender on the release sandbox (tools/release_check.py), without
 --factory-startup so the sandbox preferences load like a user's:

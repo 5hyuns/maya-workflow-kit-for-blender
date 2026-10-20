@@ -1,4 +1,4 @@
-"""Step 68 in a real UI, Allset layout (1 unit = 1 cm;  fx_01-02): F5 -> nParticles >
+"""Step 68 in a real UI, Maya Workflow Kit layout (1 unit = 1 cm;  fx_01-02): F5 -> nParticles >
 Create Emitter -> Alt+V plays -> after one second the oldest particles fell ~4.9 units like in Maya -> ground plane
 Create Passive Collider + a 1 unit plane two units up nCloth > Create nCloth -> two seconds -> the cloth lies on the
 ground (Blender's 0.015 m collision distance would keep it 1.5 units up) -> AE nucleus1 tab (screenshots)."""
@@ -51,13 +51,13 @@ def redraw():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_loaded():
     bpy.ops.allset.keymap_activate()
-    check(f"Allset layout: 1 unit = 0.01 BU ({k():.4f})", abs(k() - 0.01) < 1e-6)
+    check(f"Maya Workflow Kit layout: 1 unit = 0.01 BU ({k():.4f})", abs(k() - 0.01) < 1e-6)
     _a, r = view3d()
     C["mid"] = (r.x + r.width // 2, r.y + r.height // 2)
     ev('MOUSEMOVE', 'NOTHING', x=C["mid"][0], y=C["mid"][1])

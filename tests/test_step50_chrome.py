@@ -104,7 +104,7 @@ def test_range_slider_order_and_menus_moved():
 
 
 def test_template_timeline_sidebar_and_outliner():
-    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     areas = bpy.data.workspaces["General"].screens[0].areas
     tl = next(a for a in areas if a.ui_type == 'TIMELINE')

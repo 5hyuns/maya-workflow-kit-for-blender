@@ -11,7 +11,7 @@ buttons and an Outliner toggle. Here:
   activating tools that are not in the Tool Box (Multi-Cut, Quad Draw, ...). Modes without the Maya
   tools (sculpt and paint modes) keep Blender's list.
 - ``ALLSET_PT_toolbox_layouts`` adds the quick layout buttons under the tools.
-- The Allset template has a Tool Box column: a narrow 3D View showing only its toolbar (``is_toolbox``),
+- The Maya Workflow Kit template has a Tool Box column: a narrow 3D View showing only its toolbar (``is_toolbox``),
   with every object type hidden in that view (nothing drawn behind the tools; box / lasso select there
   touch nothing). A click under the tools reaches that view's WINDOW region and ``view3d.select`` would
   still deselect everything (checked), so ``allset.toolbox_guard`` sits in front of it in the
@@ -42,7 +42,7 @@ def _enabled(context):
 
 
 def is_toolbox(space):
-    """True for the Allset template's Tool Box column (= tools/make_startup.py is_toolbox_space). Not keyed on
+    """True for the Maya Workflow Kit template's Tool Box column (= tools/make_startup.py is_toolbox_space). Not keyed on
     its overlays: a column whose overlays got turned on is still the column (``settle`` turns them off again;
     user report 2026-10-19, )."""
     return (space is not None and space.type == 'VIEW_3D' and space.show_region_toolbar

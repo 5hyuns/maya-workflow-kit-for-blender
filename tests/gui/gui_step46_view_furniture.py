@@ -1,4 +1,4 @@
-"""Step 46 in a real UI: Maya view furniture in the Allset layout — ViewCube click on TOP gives the
+"""Step 46 in a real UI: Maya view furniture in the Maya Workflow Kit layout — ViewCube click on TOP gives the
 top view, four-view panel labels top / persp / side / front, Blender navigation gizmo and text info
 off (screenshots). """
 
@@ -60,14 +60,14 @@ def face_centre(region, name):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_template():
     bpy.ops.allset.keymap_activate()
     space = area3d().spaces.active
-    check("Allset view: Blender navigation gizmo and text info off",
+    check("Maya Workflow Kit view: Blender navigation gizmo and text info off",
           not space.show_gizmo_navigate and not space.overlay.show_text)
     check("... so it is a Maya view (ViewCube, triad, camera name)", vf().maya_view(space))
     redraw()

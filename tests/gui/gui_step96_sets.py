@@ -1,4 +1,4 @@
-"""Step 96 in a real UI: Maya object sets in the Allset layout's Outliner.
+"""Step 96 in a real UI: Maya object sets in the Maya Workflow Kit layout's Outliner.
 
 Three cubes, two selected -> Create > Sets > Set (the Maya menu item) -> a `set1` row under the DAG rows of
 Blender's Outliner (kit overlay, ui/outliner_sets.py) -> click = the members are selected, Ctrl+click toggles,
@@ -65,7 +65,7 @@ def shot(name):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
