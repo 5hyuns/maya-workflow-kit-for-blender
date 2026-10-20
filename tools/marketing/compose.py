@@ -360,19 +360,37 @@ def key_visual_layers(content, shots, size=(1920, 1080), square=False):
     return bg, screens, text
 
 
+def _paste_subpixel(out, layer, x, y):
+    """Composite ``layer`` at a fractional (x, y): integer part as an offset, the remainder as a bicubic shift.
+    Rounding to whole pixels made slow drifts (< 1 px per frame) step visibly in the trailer title card."""
+    ix, iy = math.floor(x), math.floor(y)
+    fx, fy = x - ix, y - iy
+    if fx > 1e-6 or fy > 1e-6:   # zero shift = exact paste (stills); any drift goes through the same resample
+        pad = Image.new("RGBA", (layer.width + 2, layer.height + 2), (0, 0, 0, 0))
+        pad.paste(layer, (1, 1))
+        layer = pad.transform(pad.size, Image.AFFINE, (1, 0, -fx, 0, 1, -fy), resample=Image.BICUBIC)
+        ix, iy = ix - 1, iy - 1
+    out.alpha_composite(layer, (ix, iy)) if ix >= 0 and iy >= 0 else _composite_clipped(out, layer, ix, iy)
+
+
+def _composite_clipped(out, layer, x, y):
+    sx, sy = max(0, -x), max(0, -y)
+    out.alpha_composite(layer, (max(0, x), max(0, y)), (sx, sy))
+
+
 def flatten(bg, screens, text, offsets=None, text_offset=(0, 0), text_alpha=1.0):
     """Composite key visual layers; ``offsets`` = per-screen (dx, dy)."""
     out = bg.copy()
     for i, (layer, x, y) in enumerate(screens):
         dx, dy = offsets[i] if offsets else (0, 0)
-        out.alpha_composite(layer, (round(x + dx), round(y + dy)))
+        _paste_subpixel(out, layer, x + dx, y + dy)
     if text_alpha >= 1.0 and text_offset == (0, 0):
         out.alpha_composite(text)
     elif text_alpha > 0:
         t = text if text_alpha >= 1.0 else Image.eval(text.getchannel("A"), lambda v: v * text_alpha)
         if t is not text:
             t = Image.merge("RGBA", (*text.split()[:3], t))
-        out.alpha_composite(t, tuple(round(v) for v in text_offset))
+        _paste_subpixel(out, t, *text_offset)
     return out
 
 
@@ -384,30 +402,13 @@ def key_visual(content, shots, out_path, size=(1920, 1080), square=False):
 
 
 def icon(out_path, size=256):
-    """A radial marking menu: eight items round a centre, one in the accent (kit-made, no Maya mark)."""
-    ss = 4
-    N = size * ss
-    img = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    r = STYLE["component"]["icon"]["radius"] * ss
-    d.rounded_rectangle((0, 0, N - 1, N - 1), r, fill=rgb("grey-800"))
-    d.rounded_rectangle((6 * ss, 6 * ss, N - 1 - 6 * ss, N - 1 - 6 * ss), r - 6 * ss, outline=rgb("grey-700"),
-                        width=3 * ss)
-    c = N / 2
-    ring = N * 0.30
-    pw, ph = N * 0.17, N * 0.085
-    for i in range(8):
-        a = math.radians(90 - i * 45)
-        x, y = c + ring * math.cos(a), c - ring * math.sin(a)
-        col = rgb("accent") if i == 1 else rgb("grey-300")
-        d.rounded_rectangle((x - pw / 2, y - ph / 2, x + pw / 2, y + ph / 2), ph / 2, fill=col)
-    # gesture line from the centre to the accent item
-    a = math.radians(45)
-    d.line(((c, c), (c + ring * 0.62 * math.cos(a), c - ring * 0.62 * math.sin(a))), fill=rgb("accent"),
-           width=round(N * 0.028))
-    cr = N * 0.06
-    d.ellipse((c - cr, c - cr, c + cr, c + cr), fill=rgb("grey-050"))
-    img = img.resize((size, size), Image.LANCZOS)
+    """The kit icon: an orange ring linked through a teal square link (Blender + Maya as one chain; kit-made, no
+    Blender or Maya mark). Master art: docs/distribution/marketing/icon/icon.svg (+ a hand-hinted icon_32.svg);
+    the PNGs here are scaled from the 1024 px render of that SVG."""
+    master = ROOT / "docs/distribution/marketing/icon" / ("icon_32.png" if size <= 32 else "icon_1024.png")
+    img = Image.open(master).convert("RGBA")
+    if img.size != (size, size):
+        img = img.resize((size, size), Image.LANCZOS)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
     return out_path

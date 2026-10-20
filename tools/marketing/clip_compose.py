@@ -681,7 +681,7 @@ def title_card(n):
     for i in range(n):
         u = smooth(i / max(n - 1, 1)) * 0.5 + 0.5 * (i / max(n - 1, 1))
         offs = [(dx * u, dy * u) for dx, dy in drift[:len(screens)]]
-        yield flatten(bg, screens, text, offsets=offs, text_offset=(0, round(-10 * u))).convert("RGB")
+        yield flatten(bg, screens, text, offsets=offs, text_offset=(0, -10 * u)).convert("RGB")
 
 
 class EndCard:
@@ -823,12 +823,13 @@ def main(argv=None):
     ap.add_argument("--only", default="")
     ap.add_argument("--no-trailer", action="store_true")
     ap.add_argument("--no-gif", action="store_true")
+    ap.add_argument("--trailer-only", action="store_true")
     args = ap.parse_args(argv)
     only = [n for n in args.only.split(",") if n]
     ok = True
     report = []
     for c in CONTENT["clips"]:
-        if only and c["name"] not in only:
+        if args.trailer_only or (only and c["name"] not in only):
             continue
         if not (FRAMES / c["name"] / "timeline.json").exists():
             print("missing frames:", c["name"])

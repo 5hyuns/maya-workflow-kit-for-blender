@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs><clipPath id="mtc"><path d="M166.421,166.421L307.843,25L25,-257.843L-116.421,-116.421Z"/></clipPath><mask id="mt" maskUnits="userSpaceOnUse" x="-32" y="-32" width="128" height="128"><rect x="-32" y="-32" width="128" height="128" fill="#fff"/><g clip-path="url(#mtc)"><circle cx="25" cy="25" r="14" fill="none" stroke-width="12" stroke="#000"/></g></mask><clipPath id="moc"><path d="M-116.421,-116.421L-257.843,25L25,307.843L166.421,166.421Z"/></clipPath><mask id="mo" maskUnits="userSpaceOnUse" x="-32" y="-32" width="128" height="128"><rect x="-32" y="-32" width="128" height="128" fill="#fff"/><g clip-path="url(#moc)"><rect x="25" y="25" width="28" height="28" fill="none" stroke-linejoin="miter" stroke-width="12" stroke="#000"/></g></mask></defs>
+<g mask="url(#mt)"><rect x="25" y="25" width="28" height="28" fill="none" stroke-linejoin="miter" stroke-width="6" stroke="#00bcbb"/></g>
+<g mask="url(#mo)"><circle cx="25" cy="25" r="14" fill="none" stroke-width="6" stroke="#e87d0d"/></g>
+</svg>

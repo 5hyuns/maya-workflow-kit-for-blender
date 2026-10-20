@@ -82,10 +82,10 @@ def main():
     if not only or "stills" in only:
         for n in RAW: still(n)
         shutil.copyfile(MK / "kit/social_preview.png", OUT / "og.png")
-        icon = Image.open(MK / "icon_256.png").convert("RGBA")
-        icon.save(OUT / "icon-256.png", optimize=True)
-        for s in (32, 180):
-            icon.resize((s, s), Image.LANCZOS).save(OUT / f"favicon-{s}.png", optimize=True)
+        master = Image.open(MK / "icon/icon_1024.png").convert("RGBA")        # icon master (link_a)
+        master.resize((256, 256), Image.LANCZOS).save(OUT / "icon-256.png", optimize=True)
+        master.resize((180, 180), Image.LANCZOS).save(OUT / "favicon-180.png", optimize=True)
+        Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
     files, total = [], 0
     for p in sorted(OUT.iterdir()):
         if p.name == "media.json" or p.name.startswith("_"): continue
