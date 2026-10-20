@@ -270,6 +270,7 @@ def _draw_hud():
     prefs = _prefs()
     if prefs is None:
         return
+    _check_strip(context)
     import gpu
     s = _scale()
     _cube, label, origin = layout(_bounds(context), s, 0.0)
@@ -303,6 +304,82 @@ def _hud_callback():
         import traceback
         traceback.print_exc()
         _remove_handler()
+
+
+# --- asset shelf strip (step 124) ----------------------------------------------------------
+# Pose / paint modes give the view an ASSET_SHELF_HEADER region (29 px at the bottom, checked) that never draws
+# while the shelf is collapsed: it expects Region Overlap, which Maya mode turns off (step 112). Without overlap the
+# WINDOW region shrinks above it and the strip keeps the pixels drawn there before the mode change — the camera
+# label and triad showed twice ("persp" under "persp"). A draw handler on that region is never called (checked),
+# so the strip is hidden instead (screen.region_toggle; Maya has no asset shelf) and shown again when the shelf is
+# opened or the kit unregisters. The HUD draw sees the state; the toggle runs from a timer.
+
+def strip_action(area, overlap):
+    """'HIDE' / 'SHOW' for the asset shelf header of ``area``, or None."""
+    shelf = next((r for r in area.regions if r.type == 'ASSET_SHELF'), None)
+    header = next((r for r in area.regions if r.type == 'ASSET_SHELF_HEADER'), None)
+    if shelf is None or header is None:
+        return None
+    if header.height > 1 and shelf.height <= 1 and not overlap:
+        return 'HIDE'
+    if header.height <= 1 and area.as_pointer() in _HIDDEN and (shelf.height > 1 or overlap):
+        return 'SHOW'
+    return None
+
+
+_HIDDEN = set()       # area pointers whose shelf header the kit hid (this session)
+_PENDING = {}        # area pointer -> its timer function
+
+
+def _toggle_strip(window, area):
+    region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+    if region is None:
+        return False
+    with bpy.context.temp_override(window=window, screen=window.screen, area=area, region=region):
+        return bpy.ops.screen.region_toggle(region_type='ASSET_SHELF_HEADER') == {'FINISHED'}
+
+
+def _strip_later(area_ptr):
+    def tick():
+        _PENDING.pop(area_ptr, None)
+        overlap = bpy.context.preferences.system.use_region_overlap
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.as_pointer() != area_ptr:
+                    continue
+                act = strip_action(area, overlap)
+                if act and _toggle_strip(window, area):
+                    (_HIDDEN.add if act == 'HIDE' else _HIDDEN.discard)(area_ptr)
+                    area.tag_redraw()
+        return None
+    if area_ptr not in _PENDING:
+        _PENDING[area_ptr] = tick
+        bpy.app.timers.register(tick, first_interval=0.0)
+
+
+def _check_strip(context):
+    area = context.area
+    if area is not None and strip_action(area, context.preferences.system.use_region_overlap):
+        _strip_later(area.as_pointer())
+
+
+def _show_strips():
+    """Unregister: give back every shelf header the kit hid."""
+    wm = getattr(bpy.context, "window_manager", None)
+    for window in (wm.windows if wm else ()):
+        for area in window.screen.areas:
+            if area.as_pointer() in _HIDDEN:
+                header = next((r for r in area.regions if r.type == 'ASSET_SHELF_HEADER'), None)
+                if header is not None and header.height <= 1:
+                    try:
+                        _toggle_strip(window, area)
+                    except RuntimeError:
+                        pass
+    _HIDDEN.clear()
+    for tick in _PENDING.values():
+        if bpy.app.timers.is_registered(tick):
+            bpy.app.timers.unregister(tick)
+    _PENDING.clear()
 
 
 _handle = []
@@ -386,6 +463,7 @@ def register():
 
 def unregister():
     _remove_handler()
+    _show_strips()
     _ACTIVE["region"] = None
     _shader.clear()
     for cls in reversed(classes):

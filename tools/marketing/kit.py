@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from compose import RAW, ROOT, font, rgb, rounded, shadow, text_w, tilted, vertical_gradient  # noqa: E402
+from compose import RAW, ROOT, font, lockup, rgb, rounded, shadow, text_w, tilted, vertical_gradient  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 OUT = ROOT / "docs" / "distribution" / "marketing" / "kit"
@@ -46,17 +46,15 @@ def canvas(size, glow_at=None):
     if glow_at:
         g = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         gx, gy, gr = glow_at
-        ImageDraw.Draw(g).ellipse((gx - gr, gy - gr, gx + gr, gy + gr), fill=rgb("accent", 46))
+        ImageDraw.Draw(g).ellipse((gx - gr, gy - gr, gx + gr, gy + gr), fill=rgb("accent-deep", 70))
         c.alpha_composite(g.filter(ImageFilter.GaussianBlur(gr * 0.3)))
     return c
 
 
-def brand_block(d, x, y, s, lines, name_px=132):
-    """Name, "for Maya Users", then ``lines``; ``s`` scales the 1920 x 1080 sizes of style.md."""
-    d.text((x, y), "Allset", font=font("font-bold", round(name_px * s)), fill=rgb("text-strong"))
-    y += round((name_px + 6) * s)
-    d.text((x + 4 * s, y), "for Maya Users", font=font("font-medium", round(46 * s)), fill=rgb("accent"))
-    y += round(90 * s)
+def brand_block(d, x, y, s, lines, name_px=120):
+    """The lockup (style.md), then ``lines``; ``s`` scales the 1920 x 1080 sizes of style.md."""
+    box = lockup(d, x, y, round(name_px * s))
+    y = box[3] + round(40 * s)
     for ln, size, col in lines:
         d.text((x + 4 * s, y), ln, font=font("font-regular" if col == "text" else "font-semibold", round(size * s)),
                fill=rgb(col))
@@ -114,13 +112,21 @@ def before_after():
     bw, bh = 864, 486
     for i, (im, label) in enumerate(((maya, "Maya mode"), (blender, "Blender mode"))):
         x = 72 + i * (bw + 48)
+        if i == 0:   # the Maya side carries the accent: a frame and a filled pill; Blender's side stays grey
+            d.rounded_rectangle((x - 8, 242, x + bw + 8, 250 + bh + 8), 16, outline=rgb("accent"), width=5)
         flat_screen(c, im, (x, 250, bw, bh))
         f = font("font-semibold", 30)
         tw = text_w(d, label, f)
-        d.rounded_rectangle((x + bw / 2 - tw / 2 - 22, 770, x + bw / 2 + tw / 2 + 22, 826), 10, fill=rgb("accent"))
-        d.text((x + bw / 2, 798), label, font=f, fill=rgb("on-accent"), anchor="mm")
-    d.text((W // 2, 905), "Allset for Maya Users", font=font("font-bold", 52), fill=rgb("text-strong"), anchor="mt")
-    d.text((W // 2, 975), "Free and open-source extension for Blender 4.5 – 5.2", font=font("font-medium", 28),
+        pill = (x + bw / 2 - tw / 2 - 22, 770, x + bw / 2 + tw / 2 + 22, 826)
+        if i == 0:
+            d.rounded_rectangle(pill, 10, fill=rgb("accent"))
+        else:
+            d.rounded_rectangle(pill, 10, outline=rgb("grey-500"), width=3)
+        d.text((x + bw / 2, 798), label, font=f, fill=rgb("on-accent" if i == 0 else "text"), anchor="mm")
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    box = lockup(probe, 0, 0, 64, one_line=True)
+    lockup(d, (W - (box[2] - box[0])) / 2, 880, 64, one_line=True)
+    d.text((W // 2, 985), "Free and open-source extension for Blender 4.5 – 5.2", font=font("font-medium", 28),
            fill=rgb("text-muted"), anchor="mt")
     return save(c, "reddit_before_after.png")
 
@@ -150,20 +156,20 @@ def youtube():
     for ln, col in (("Blender,", "text-strong"), ("the Maya", "accent"), ("way.", "text-strong")):
         d.text((48, y), ln, font=font("font-bold", 84), fill=rgb(col))
         y += 100
-    d.text((52, y + 26), "Allset for Maya Users", font=font("font-semibold", 34), fill=rgb("text"))
-    d.text((52, y + 76), "free · open source", font=font("font-medium", 28), fill=rgb("text-muted"))
+    lockup(d, 52, y + 18, 40, one_line=True)
+    d.text((52, y + 82), "free · open source", font=font("font-medium", 28), fill=rgb("text-muted"))
     return save(c, "youtube_thumbnail.png")
 
 
 def main():
     out = [
-        wide((1920, 720), "readme_hero.png", [(TAGLINE, 34, "text"), (HEADLINE, 34, "accent")], screen_w=1050),
+        wide((1920, 720), "readme_hero.png", [(TAGLINE, 34, "text"), (HEADLINE, 34, "text-strong")], screen_w=1050),
         wide((1280, 640), "social_preview.png", [("The whole Maya workflow", 34, "text"),
                                                  ("in Blender, in one install.", 34, "text"),
                                                  ("Free · open source · Blender 4.5 – 5.2", 26, "text-muted")],
              screen_w=660, text_scale=1.05, text_y=0.17),
         wide((1600, 900), "x_card.png", [("The tutorial ends.", 44, "text-strong"),
-                                         ("Your Channel Box", 44, "accent"), ("comes back.", 44, "accent"),
+                                         ("Your Channel Box comes back.", 44, "text-strong"),
                                          ("Maya workflow in Blender, one install.", 28, "text")],
              screen_w=860, text_scale=1.05, text_y=0.17),
         before_after(),

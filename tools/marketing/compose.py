@@ -13,6 +13,7 @@ icon_256.png. Pure Pillow (no numpy) so it runs with any Python that has Pillow.
 import argparse
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -25,7 +26,9 @@ OUT = ROOT / "docs" / "distribution" / "marketing"
 FONTS = ROOT / "research" / "marketing_assets" / "font_inter"
 
 STYLE = json.loads((HERE / "style.json").read_text(encoding="utf-8"))
-P, S = STYLE["primitive"], STYLE["semantic"]
+P = STYLE["primitive"]
+PALETTE = os.environ.get("ALLSET_MARKETING_PALETTE") or STYLE["palette"]
+S = {**STYLE["semantic"], **{k: v for k, v in STYLE["palettes"][PALETTE].items() if not k.startswith("_")}}
 
 
 def colour(token):
@@ -93,6 +96,41 @@ def arrow(draw, start, end, col, width, head):
         draw.line((end, (end[0] + head * math.cos(a), end[1] + head * math.sin(a))), fill=col, width=width)
 
 
+def lockup(draw, x, y, name_px, one_line=False, anchor_right=False, colours=None, alpha=255):
+    """The Allset lockup (style.md "Lockup"): "Allset" Bold + "for Maya Users" SemiBold at ``for_ratio`` x the name
+    size, two lines on one left edge, or one line on one baseline. ``(x, y)`` = top-left of the name's em box (top
+    right with ``anchor_right``). Returns the box (x0, y0, x1, y1) of the drawn ink rows."""
+    lk = STYLE["component"]["lockup"]
+    fpx = round(name_px * lk["for_ratio"])
+    nf, ff = font(lk["name_font"], name_px), font(lk["for_font"], fpx)
+    ncol, fcol = colours or (lk["name_color"], lk["for_color"])
+    nw, fw = text_w(draw, "Allset", nf), text_w(draw, "for Maya Users", ff)
+    if one_line:
+        gap = name_px * lk["one_line_gap"]
+        width = nw + gap + fw
+        x0 = x - width if anchor_right else x
+        base = y + nf.getmetrics()[0]
+        draw.text((x0, base), "Allset", font=nf, fill=rgb(ncol, alpha), anchor="ls")
+        draw.text((x0 + nw + gap, base), "for Maya Users", font=ff, fill=rgb(fcol, alpha), anchor="ls")
+        return (x0, y, x0 + width, base + nf.getmetrics()[1])
+    width = max(nw, fw)
+    x0 = x - width if anchor_right else x
+    base1 = y + nf.getmetrics()[0]
+    base2 = base1 + round(fpx * (1.0 + lk["line_gap"]) + fpx * 0.12)
+    draw.text((x0, base1), "Allset", font=nf, fill=rgb(ncol, alpha), anchor="ls")
+    draw.text((x0 + name_px * 0.02, base2), "for Maya Users", font=ff, fill=rgb(fcol, alpha), anchor="ls")
+    return (x0, y, x0 + width, base2 + ff.getmetrics()[1])
+
+
+def outlined_rect(draw, box, radius, colour, width, outline):
+    """A stroke with a thin dark edge on both sides, so the accent reads on light and dark UI alike."""
+    if outline:
+        x0, y0, x1, y1 = box
+        draw.rounded_rectangle((x0 - outline, y0 - outline, x1 + outline, y1 + outline), radius + outline,
+                               outline=rgb("outline"), width=width + 2 * outline)
+    draw.rounded_rectangle(box, radius, outline=rgb(colour), width=width)
+
+
 # --------------------------------------------------------------------------------------------- feature screens
 def screen(name, title, line, callouts, out_path):
     st = STYLE["component"]["screen"]
@@ -111,9 +149,8 @@ def screen(name, title, line, callouts, out_path):
     tx = mx + band["tick_w"] + band["tick_gap"]
     draw.text((tx, ty), title, font=tfont, fill=rgb(band["title_color"]))
     draw.text((tx, ty + band["title_size"] + band["line_gap"]), line, font=lfont, fill=rgb(band["line_color"]))
-    bfont = font(band["brand_font"], band["brand_size"])
-    brand = "Allset for Maya Users"
-    draw.text((W - mx - text_w(draw, brand, bfont), ty + 8), brand, font=bfont, fill=rgb(band["brand_color"]))
+    lockup(draw, W - mx, ty + 4, band["brand_size"], one_line=True, anchor_right=True,
+           colours=(band["brand_color"], "accent"))
 
     # the shot, scaled into the frame below the band
     raw = Image.open(RAW / f"{name}.png").convert("RGB")
@@ -130,14 +167,15 @@ def screen(name, title, line, callouts, out_path):
         x, y, w, h = c["rect"]
         p = co["pad"]
         box = (ox + x * sx - p, oy + y * sy - p, ox + (x + w) * sx + p, oy + (y + h) * sy + p)
-        draw.rounded_rectangle(box, co["radius"], outline=rgb(co["stroke"]), width=co["stroke_w"])
+        outlined_rect(draw, box, co["radius"], co["stroke"], co["stroke_w"], co.get("outline_w", 0))
         if not c.get("label"):
             continue
         tw = text_w(draw, c["label"], lab_font)
         lw, lh = tw + 2 * co["label_pad_x"], co["label_size"] + 2 * co["label_pad_y"]
         side = c.get("side", "right")
         gap = c.get("gap", 70)
-        cx, cy = (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+        at = c.get("at", 0.5)       # where along the box the arrow meets it (0 = left / top edge)
+        cx, cy = box[0] + (box[2] - box[0]) * at, box[1] + (box[3] - box[1]) * at
         if side == "right":
             lx, ly = box[2] + gap, cy - lh / 2
             a0, a1 = (lx, cy), (box[2] + 4, cy)
@@ -152,6 +190,8 @@ def screen(name, title, line, callouts, out_path):
             a0, a1 = (cx, ly), (cx, box[3] + 4)
         lx = min(max(lx, ox + 8), ox + st["shot_w"] - lw - 8)
         ly = min(max(ly, oy + 8), oy + st["shot_h"] - lh - 8)
+        if co.get("outline_w"):
+            arrow(draw, a0, a1, rgb("outline"), co["arrow_w"] + 2 * co["outline_w"], co["arrow_head"])
         arrow(draw, a0, a1, rgb(co["stroke"]), co["arrow_w"], co["arrow_head"])
         draw.rounded_rectangle((lx, ly, lx + lw, ly + lh), co["label_radius"], fill=rgb(co["label_bg"]))
         draw.text((lx + co["label_pad_x"], ly + co["label_pad_y"] - 2), c["label"], font=lab_font,
@@ -196,48 +236,71 @@ def tilted(img, width, tilt_deg, shrink=0.16, rise=0.06):
     return src.transform((W, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
 
 
-def key_visual(content, shots, out_path, size=(1920, 1080), square=False):
+def key_visual_layers(content, shots, size=(1920, 1080), square=False):
+    """The key visual as layers for the trailer's moving title card (clip_compose.title_card): background (gradient +
+    glow), screens [(RGBA, x, y, shadowed RGBA box)] back to front, text (RGBA, full canvas)."""
     kv = STYLE["component"]["square" if square else "key_visual"]
     W, H = size
-    canvas = vertical_gradient((W, H), rgb("grey-850"), rgb("grey-950")).convert("RGBA")
+    bg = vertical_gradient((W, H), rgb("grey-850"), rgb("grey-950")).convert("RGBA")
     # soft accent glow behind the screens
     glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
     gx, gy, gr = (W * 0.68, H * 0.5, H * 0.55) if not square else (W * 0.55, H * 0.68, W * 0.45)
-    gd.ellipse((gx - gr, gy - gr, gx + gr, gy + gr), fill=rgb("accent", 46))
-    canvas.alpha_composite(glow.filter(ImageFilter.GaussianBlur(160)))
-    draw = ImageDraw.Draw(canvas)
+    gd.ellipse((gx - gr, gy - gr, gx + gr, gy + gr), fill=rgb("accent-deep", 70))
+    bg.alpha_composite(glow.filter(ImageFilter.GaussianBlur(160)))
 
     imgs = [Image.open(RAW / f"{n}.png").convert("RGB") for n in shots]
+    screens = []
+
+    def add(t, x, y):
+        pad = 120
+        layer = Image.new("RGBA", (t.width + 2 * pad, t.height + 2 * pad), (0, 0, 0, 0))
+        shadow(layer, (pad, pad, pad + t.width, pad + t.height), 18, 30, 170)
+        layer.alpha_composite(t, (pad, pad))
+        screens.append((layer, x - pad, y - pad))
+
     if not square:
         # back screen, then front screen, staggered to the right
-        placements = [(imgs[1], 1000, 940, 150), (imgs[0], 1160, 780, 390)]
-        for img, wdt, x, y in placements:
-            t = tilted(img, wdt, 14)
-            shadow(canvas, (x, y, x + t.width, y + t.height), 18, 30, 170)
-            canvas.alpha_composite(t, (x, y))
+        for img, wdt, x, y in [(imgs[1], 1000, 940, 150), (imgs[0], 1160, 780, 390)]:
+            add(tilted(img, wdt, 14), x, y)
         tx = STYLE["component"]["key_visual"]["text_x"]
         ty = 300
     else:
-        t = tilted(imgs[0], 1020, 12, shrink=0.12)
-        x, y = 150, 600
-        shadow(canvas, (x, y, x + t.width, y + t.height), 18, 30, 170)
-        canvas.alpha_composite(t, (x, y))
+        add(tilted(imgs[0], 1020, 12, shrink=0.12), 150, 600)
         tx, ty = 96, 120
-    name_f = font("font-bold", kv["name_size"])
-    for_f = font("font-medium", kv["for_size"])
+    text = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(text)
     tag_f = font("font-regular", kv["tagline_size"])
-    draw.text((tx, ty), "Allset", font=name_f, fill=rgb("text-strong"))
-    fy = ty + kv["name_size"] + 6
-    draw.text((tx + 6, fy), "for Maya Users", font=for_f, fill=rgb("accent"))
-    yy = fy + kv["for_size"] + 44
+    box = lockup(draw, tx, ty, kv["name_size"])
+    yy = box[3] + 44
     for ln in content["key_visual_lines"]:
-        draw.text((tx + 6, yy), ln, font=tag_f, fill=rgb("text"))
+        draw.text((tx + 4, yy), ln, font=tag_f, fill=rgb("text"))
         yy += round(kv["tagline_size"] * 1.35)
     foot_f = font("font-medium", 24 if not square else 22)
-    draw.text((tx + 6, yy + 28), content["key_visual_footer"], font=foot_f, fill=rgb("text-muted"))
+    draw.text((tx + 4, yy + 28), content["key_visual_footer"], font=foot_f, fill=rgb("text-muted"))
+    return bg, screens, text
+
+
+def flatten(bg, screens, text, offsets=None, text_offset=(0, 0), text_alpha=1.0):
+    """Composite key visual layers; ``offsets`` = per-screen (dx, dy)."""
+    out = bg.copy()
+    for i, (layer, x, y) in enumerate(screens):
+        dx, dy = offsets[i] if offsets else (0, 0)
+        out.alpha_composite(layer, (round(x + dx), round(y + dy)))
+    if text_alpha >= 1.0 and text_offset == (0, 0):
+        out.alpha_composite(text)
+    elif text_alpha > 0:
+        t = text if text_alpha >= 1.0 else Image.eval(text.getchannel("A"), lambda v: v * text_alpha)
+        if t is not text:
+            t = Image.merge("RGBA", (*text.split()[:3], t))
+        out.alpha_composite(t, tuple(round(v) for v in text_offset))
+    return out
+
+
+def key_visual(content, shots, out_path, size=(1920, 1080), square=False):
+    out = flatten(*key_visual_layers(content, shots, size, square))
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.convert("RGB").save(out_path)
+    out.convert("RGB").save(out_path)
     return out_path
 
 

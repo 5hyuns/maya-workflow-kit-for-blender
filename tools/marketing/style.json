@@ -1,5 +1,5 @@
 {
-  "_doc": "Allset marketing visual tokens (step 122, docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys ( ui_palette_qt, src/allset/theme) + one accent.",
+  "_doc": "Allset marketing visual tokens (steps 122, 124; docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys ( ui_palette_qt, src/allset/theme) + Maya logo teal (pixels of the Maya 2022 icon / splash, colour values only) + Autodesk brand Hello Yellow / Black (brand.autodesk.com/brand-system/color). 'palettes' holds the semantic accent sets; 'palette' picks one (env ALLSET_MARKETING_PALETTE overrides).",
   "primitive": {
     "grey-950": "#1e1e1e",
     "grey-900": "#252525",
@@ -13,14 +13,19 @@
     "grey-050": "#eeeeee",
     "white": "#ffffff",
     "blue-500": "#5285a6",
-    "amber-400": "#ffb547",
-    "amber-600": "#e0952a",
     "font-family": "Inter",
     "font-regular": "Inter-Regular.ttf",
     "font-medium": "Inter-Medium.ttf",
     "font-semibold": "Inter-SemiBold.ttf",
     "font-bold": "Inter-Bold.ttf",
-    "space-unit": 8
+    "space-unit": 8,
+    "teal-500": "#00bcbb",
+    "teal-600": "#149b9a",
+    "teal-800": "#008b8d",
+    "adsk-yellow": "#ffff00",
+    "adsk-black": "#000000",
+    "blue-300": "#8fb7d3",
+    "green-400": "#43ffa3"
   },
   "semantic": {
     "canvas-bg": "grey-900",
@@ -29,26 +34,121 @@
     "text-strong": "grey-050",
     "text": "grey-200",
     "text-muted": "grey-500",
-    "accent": "amber-400",
-    "accent-strong": "amber-600",
-    "on-accent": "grey-950",
     "rule": "grey-700",
     "viewport": "grey-600"
   },
   "component": {
-    "screen": {"canvas": [1920, 1080], "margin_x": 144, "band_h": 162, "shot_w": 1632, "shot_h": 918,
-               "shot_radius": 10, "shot_shadow_blur": 28, "shot_shadow_alpha": 150},
-    "band": {"bg": "canvas-bg", "title_size": 56, "title_font": "font-semibold", "title_color": "text-strong",
-             "line_size": 28, "line_font": "font-regular", "line_color": "text", "title_y": 34, "line_gap": 14,
-             "tick_w": 6, "tick_h": 56, "tick_color": "accent", "tick_gap": 22,
-             "brand_size": 22, "brand_font": "font-medium", "brand_color": "text-muted"},
-    "callout": {"stroke": "accent", "stroke_w": 4, "radius": 10, "pad": 6, "label_size": 24,
-                "label_font": "font-semibold", "label_bg": "accent", "label_fg": "on-accent", "label_pad_x": 14,
-                "label_pad_y": 8, "label_radius": 8, "arrow_w": 4, "arrow_head": 16, "dim_outside_alpha": 0},
-    "key_visual": {"canvas": [1920, 1080], "name_size": 132, "name_font": "font-bold", "for_size": 46,
-                   "for_font": "font-medium", "tagline_size": 34, "tagline_font": "font-regular",
-                   "text_x": 128, "screens_tilt_deg": 14, "glow": "accent"},
-    "square": {"canvas": [1080, 1080], "name_size": 104, "for_size": 38, "tagline_size": 30},
-    "icon": {"canvas": [256, 256], "radius": 52}
+    "screen": {
+      "canvas": [
+        1920,
+        1080
+      ],
+      "margin_x": 144,
+      "band_h": 162,
+      "shot_w": 1632,
+      "shot_h": 918,
+      "shot_radius": 10,
+      "shot_shadow_blur": 28,
+      "shot_shadow_alpha": 150
+    },
+    "band": {
+      "bg": "canvas-bg",
+      "title_size": 56,
+      "title_font": "font-semibold",
+      "title_color": "text-strong",
+      "line_size": 28,
+      "line_font": "font-regular",
+      "line_color": "text",
+      "title_y": 34,
+      "line_gap": 14,
+      "tick_w": 6,
+      "tick_h": 56,
+      "tick_color": "accent",
+      "tick_gap": 22,
+      "brand_size": 26,
+      "brand_font": "font-semibold",
+      "brand_color": "text"
+    },
+    "callout": {
+      "stroke": "accent",
+      "stroke_w": 4,
+      "radius": 10,
+      "pad": 6,
+      "label_size": 24,
+      "label_font": "font-semibold",
+      "label_bg": "accent",
+      "label_fg": "on-accent",
+      "label_pad_x": 14,
+      "label_pad_y": 8,
+      "label_radius": 8,
+      "arrow_w": 4,
+      "arrow_head": 16,
+      "dim_outside_alpha": 0,
+      "outline_w": 2
+    },
+    "key_visual": {
+      "canvas": [
+        1920,
+        1080
+      ],
+      "name_size": 120,
+      "name_font": "font-bold",
+      "for_size": null,
+      "for_font": "font-medium",
+      "tagline_size": 34,
+      "tagline_font": "font-regular",
+      "text_x": 128,
+      "screens_tilt_deg": 14,
+      "glow": "accent"
+    },
+    "square": {
+      "canvas": [
+        1080,
+        1080
+      ],
+      "name_size": 100,
+      "for_size": null,
+      "tagline_size": 30
+    },
+    "icon": {
+      "canvas": [
+        256,
+        256
+      ],
+      "radius": 52
+    },
+    "lockup": {
+      "_doc": "Allset over 'for Maya Users' (same left edge); 'for Maya Users' = for_ratio x the name size, same family, so its ink is the same share of the name's",
+      "name_font": "font-bold",
+      "for_font": "font-semibold",
+      "for_ratio": 0.66,
+      "line_gap": 0.06,
+      "one_line_gap": 0.3,
+      "name_color": "text-strong",
+      "for_color": "accent"
+    }
+  },
+  "palette": "maya-autodesk",
+  "palettes": {
+    "maya-autodesk": {
+      "_doc": "default (step 124): Maya logo teal leads, Autodesk Hello Yellow only for action moments (CTA, click pulse), Autodesk Black ink on the accents",
+      "accent": "teal-500",
+      "accent-strong": "teal-600",
+      "accent-deep": "teal-800",
+      "on-accent": "adsk-black",
+      "highlight": "adsk-yellow",
+      "on-highlight": "adsk-black",
+      "outline": "adsk-black"
+    },
+    "maya-ui": {
+      "_doc": "fallback if a store review reads the logo teal as an Autodesk affiliation: Maya 2022 UI colours only (highlight blue, lead green)",
+      "accent": "blue-300",
+      "accent-strong": "blue-500",
+      "accent-deep": "blue-500",
+      "on-accent": "adsk-black",
+      "highlight": "green-400",
+      "on-highlight": "adsk-black",
+      "outline": "adsk-black"
+    }
   }
 }

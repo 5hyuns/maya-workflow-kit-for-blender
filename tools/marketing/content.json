@@ -86,7 +86,8 @@
      "rect": "TIMELINE",
      "label": "Time Slider",
      "side": "above",
-     "gap": 40
+     "gap": 40,
+     "at": 0.3
     }
    ]
   },
@@ -125,7 +126,7 @@
      "rect": "switch",
      "label": "Maya | Blender switch",
      "side": "below",
-     "gap": 60
+     "gap": 160
     }
    ]
   }
@@ -137,8 +138,22 @@
    "title": "The hotbox, under the space bar",
    "caption": "Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox.",
    "trailer": [
-    2.9,
-    7.6
+    2.3,
+    7.38
+   ],
+   "speed": 1.35,
+   "wide": [
+    [
+     0,
+     3.0
+    ],
+    [
+     6.0,
+     99
+    ]
+   ],
+   "no_cursor_chip": [
+    "Space (hold)"
    ]
   },
   {
@@ -148,8 +163,9 @@
    "caption": "Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode.",
    "trailer": [
     0.6,
-    5.2
-   ]
+    6.0
+   ],
+   "speed": 1.35
   },
   {
    "name": "channel_box_keys",
@@ -158,7 +174,30 @@
    "caption": "S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider.",
    "trailer": [
     0.6,
-    5.6
+    6.4
+   ],
+   "speed": 1.35,
+   "focus": [
+    {
+     "t": [
+      0,
+      1.75
+     ],
+     "pt": [
+      1800,
+      330
+     ]
+    },
+    {
+     "t": [
+      6.4,
+      99
+     ],
+     "pt": [
+      950,
+      560
+     ]
+    }
    ]
   },
   {
@@ -168,8 +207,10 @@
    "caption": "Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything.",
    "trailer": [
     0.4,
-    5.0
-   ]
+    6.4
+   ],
+   "speed": 1.35,
+   "zoom_max": 1.15
   },
   {
    "name": "pivot_snap",
@@ -178,7 +219,20 @@
    "caption": "Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot.",
    "trailer": [
     0.6,
-    5.4
+    6.4
+   ],
+   "speed": 1.35,
+   "focus": [
+    {
+     "t": [
+      0,
+      1.6
+     ],
+     "pt": [
+      1000,
+      520
+     ]
+    }
    ]
   },
   {
@@ -188,7 +242,14 @@
    "caption": "From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights.",
    "trailer": [
     0.4,
-    5.6
+    6.4
+   ],
+   "speed": 1.35,
+   "wide": [
+    [
+     7.3,
+     99
+    ]
    ]
   },
   {
@@ -198,7 +259,14 @@
    "caption": "One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back.",
    "trailer": [
     0.8,
-    6.4
+    6.1
+   ],
+   "speed": 1.35,
+   "wide": [
+    [
+     0,
+     99
+    ]
    ]
   }
  ],
@@ -210,7 +278,9 @@
   "end_line": "Free and open source · Blender 4.5 – 5.2",
   "download": "Get it on extensions.blender.org/add-ons/allset",
   "download_note": "placeholder until the listing is live (: nothing published yet)",
-  "end_seconds": 4.0,
-  "caption": "Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender."
+  "end_seconds": 2.5,
+  "caption": "Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender.",
+  "cta": "Free on extensions.blender.org",
+  "_doc": "Step 124 (tools/marketing/clip_compose.py). Clip fields: speed = playback speed vs the recording; wide = timeline-second ranges where the camera stays on the whole window; focus = extra points of interest pt [x, y] (window px) during t [a, b] (timeline s); zoom_max; trailer = timeline-second range used in the trailer. Trailer: cta = short CTA pill text (download = full URL, the fallback). no_cursor_chip = chip texts never shown next to the cursor."
  }
 }
