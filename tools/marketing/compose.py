@@ -283,20 +283,34 @@ def perspective_coeffs(src, dst):
     return [m[i][n] / m[i][i] for i in range(n)]
 
 
-def tilted(img, width, tilt_deg, shrink=0.16, rise=0.06):
-    """A screen turned about its vertical axis: the far (right) edge shorter, as a simple perspective."""
+TILT_DEG = 24.0      # step 126: every turned screen = the same plane rotation ...
+TILT_DEPTH = 1.6     # ... seen by the same pinhole camera: distance to the near edge = TILT_DEPTH x the plane width
+
+
+def tilt_quad(w, h, width, tilt_deg=TILT_DEG, depth=TILT_DEPTH):
+    """Projected corners of a ``width`` x (``width`` h / w) screen turned ``tilt_deg`` about its near (left) vertical
+    edge, away from a pinhole camera at ``depth`` x width whose focal length keeps the near edge at its own height.
+    Step 126: the old quad kept the full width (only tapered the far edge), so turned screens came out wider than the
+    capture's aspect; a real rotation projects the width to width cos(t) d / (d + width sin(t)) < width cos(t)."""
+    W, H = float(width), width * h / w
+    t = math.radians(tilt_deg)
+    d = depth * W
+    k = d / (d + W * math.sin(t))              # far edge scale
+    uf, hf = W * math.cos(t) * k, H * k
+    return [(0.0, 0.0), (uf, (H - hf) / 2), (uf, (H + hf) / 2), (0.0, H)], (uf, H)
+
+
+def tilted(img, width, tilt_deg=TILT_DEG, depth=TILT_DEPTH, ss=2):
+    """``img`` as a real screen turned about its near vertical edge (tilt_quad), supersampled ``ss`` x then reduced
+    with Lanczos so the UI text stays readable. ``width`` = the unturned screen width in output px."""
     w, h = img.size
-    scale = width / w
-    W, H = width, round(h * scale)
-    k = math.sin(math.radians(tilt_deg)) * 2 * shrink / math.sin(math.radians(14))
-    far = H * k / 2
-    dst = [(0, 0), (W, far - H * rise), (W, H - far - H * rise), (0, H)]
-    top = min(p[1] for p in dst)
-    dst = [(x, y - top) for x, y in dst]
-    out_h = round(max(p[1] for p in dst))
+    quad, (uw, uh) = tilt_quad(w, h, width, tilt_deg, depth)
+    dst = [(x * ss, y * ss) for x, y in quad]
+    size = (math.ceil(uw * ss), math.ceil(uh * ss))
     coeffs = perspective_coeffs([(0, 0), (w, 0), (w, h), (0, h)], dst)
-    src = rounded(img, 18)
-    return src.transform((W, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+    src = rounded(img.convert("RGBA"), 18)
+    big = src.transform(size, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+    return big.resize((math.ceil(uw), math.ceil(uh)), Image.LANCZOS)
 
 
 def key_visual_layers(content, shots, size=(1920, 1080), square=False):
@@ -325,9 +339,9 @@ def key_visual_layers(content, shots, size=(1920, 1080), square=False):
     if not square:
         # back screen, then front screen, staggered to the right
         for img, wdt, (x, y) in zip((imgs[1], imgs[0]), (1000, 1160), kv["screens_xy"]):
-            add(tilted(img, wdt, 14), x, y)
+            add(tilted(img, wdt), x, y)
     else:
-        add(tilted(imgs[0], 1020, 12, shrink=0.12), *kv["screens_xy"][0])
+        add(tilted(imgs[0], 1400), *kv["screens_xy"][0])   # step 126: projects to ~1020 px wide
     tx, ty = kv["text_xy"]
     text = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(text)
