@@ -82,7 +82,7 @@ Never the same text twice on one day (Reddit spam filter).
 (JPG / PNG / GIF / WEBP), animated GIF ≤ 15 MB; video: the Help Center says 2:20 / 512 MB for non-Premium accounts
 (the API docs say more — stay under 2:20); add alt text before posting (≤ 1,000 characters, not editable later).
 
-**Post 1** (video `clips/00_trailer.mp4`, 38.8 s; 271 characters with the link counted as 23):
+**Post 1** (video `clips/00_trailer.mp4`, 33.5 s; 271 characters with the link counted as 23):
 
 > The tutorial ends. Your Channel Box comes back.
 >

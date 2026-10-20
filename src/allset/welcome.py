@@ -53,6 +53,48 @@ def opt_in(open_layout=True):
         switch.enter_layout(window)         # the user's file: append the layout workspace, keep the data
 
 
+# Body text, wrapped to the measured room left of the icon: fixed lines were cut ("the Maya colou...") at 125 %
+# UI scale (step 124).
+PARAGRAPHS = (
+    "The whole Maya workflow in Blender, in one install.",
+    "Nothing has changed yet. Make Blender feel like Maya turns on the Maya-style keymap: Alt+mouse, QWER, Space "
+    "hotbox, marking menus; the Maya layout, menus, Channel Box and shelf; the Maya colours; Maya navigation, undo "
+    "and panel preferences.",
+    "Your settings are kept: the Maya | Blender switch at the top right or Ctrl+Alt+Shift+M brings them back at "
+    "any time.",
+)
+DIALOG_WIDTH = 640      # unscaled px
+ICON_SCALE = 7.0        # template_icon scale = 20 px units
+ICON_FACTOR = (ICON_SCALE * 20 + 16) / DIALOG_WIDTH     # icon column share of the split
+TEXT_PAD = 40           # dialog margins + label padding, unscaled px (generous: a cut word is worse than a short line)
+
+
+def text_room(with_icon=True):
+    """Unscaled px a body line may take."""
+    return DIALOG_WIDTH * ((1.0 - ICON_FACTOR) if with_icon else 1.0) - TEXT_PAD
+
+
+def text_width(text, size):
+    import blf
+    blf.size(0, size)
+    return blf.dimensions(0, text)[0]
+
+
+def wrap(text, width, size, measure=text_width):
+    """Words of ``text`` in lines no wider than ``width`` px at font ``size`` (a word longer than a line stays whole)."""
+    lines, cur = [], ""
+    for word in text.split():
+        cand = f"{cur} {word}" if cur else word
+        if cur and measure(cand, size) > width:
+            lines.append(cur)
+            cur = word
+        else:
+            cur = cand
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 class ALLSET_OT_welcome(bpy.types.Operator):
     """Turn on the Maya-style keymap, layout, menus, theme and Maya preferences (asks first).
     Ctrl+Alt+Shift+M or the Maya / Blender switch turns it off again and restores your settings"""
@@ -65,25 +107,25 @@ class ALLSET_OT_welcome(bpy.types.Operator):
     def invoke(self, context, event):
         preferences.get(context).welcome_done = True    # asked once, never again
         return context.window_manager.invoke_props_dialog(
-            self, width=600, title="Welcome to Allset for Maya Users", confirm_text="Make Blender feel like Maya")
+            self, width=DIALOG_WIDTH, title="Welcome to Allset for Maya Users", confirm_text="Make Blender feel like Maya")
 
     def draw(self, context):
-        row = self.layout.row()
         icon = _splash_icon()
-        if icon:
-            row.template_icon(icon_value=icon, scale=7.0)
+        if icon:    # a plain row halves the dialog (measured): give the icon only its own width
+            row = self.layout.split(factor=ICON_FACTOR)
+            row.template_icon(icon_value=icon, scale=ICON_SCALE)
+        else:
+            row = self.layout.row()
         col = row.column()
         col.label(text="Allset for Maya Users")
-        for line in ("The whole Maya workflow in Blender, in one install.",
-                     "",
-                     "Nothing has changed yet. Make Blender feel like Maya turns on",
-                     "the Maya-style keymap: Alt+mouse, QWER, Space hotbox, marking menus;",
-                     "the Maya layout, menus, Channel Box and shelf; the Maya colours;",
-                     "Maya navigation, undo and panel preferences.",
-                     "",
-                     "Your settings are kept: the Maya | Blender switch at the top right",
-                     "or Ctrl+Alt+Shift+M brings them back at any time."):
-            col.label(text=line)
+        scale = context.preferences.system.ui_scale or 1.0      # 0 in background
+        size = context.preferences.ui_styles[0].widget.points * scale
+        width = text_room(bool(icon)) * scale
+        for k, para in enumerate(PARAGRAPHS):
+            if k:
+                col.separator()
+            for line in wrap(para, width, size):
+                col.label(text=line)
 
     def execute(self, context):
         preferences.get(context).welcome_done = True

@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 124 (홍보 디자인 재작업, 사용자 피드백 10-20) 완료 — `docs/steps/step_124.md`, 감수 `docs/distribution/marketing/design_review.md`.
+  - impeccable critique (A/B 두 서브에이전트) 22/32 → 반영: accent = Maya 로고 틸 #00bcbb (설치본 아이콘 픽셀) + Autodesk Hello Yellow
+    (동작 순간) + 검정, 대체 팔레트 `maya-ui`, 상표 메모 (`style.md`); 잠금업 `compose.lockup()` (for Maya Users = 0.66 ×) 모든 형식;
+    영상 1.35 × · 가상 카메라 · 칩/클릭 펄스 · 전환 · 움직이는 타이틀/엔드 카드 (정적 ≤ 1.13 s, GIF ≤ 4 MB, 트레일러 33.5 s).
+  - 킷 버그: 포즈/페인트 모드 「persp」 두 번 (에셋 셸프 헤더 띠, `ui/view_furniture.py`), 환영 창 본문 잘림 (`welcome.py`) + 테스트.
+  - 남은 것: design_review 「Left」 (03 AE 초록 vs 캡션 빨강, 07 쿼터니언 행, 썸네일 핫박스 가독성 등), manual_checks 「Step 124」.
+  - **바로 다음 할 일**: 사용자 결정 — 업로드 (manual_checks 117 / 123 / 124) 또는 다음 개발 단계. 열린 것: design_review Left, 툴바 떼기.
+
 - Step 123 (클립 · 트레일러 · GIF · 마케팅 키트, 사용자 요청 10-19) 완료 — `docs/steps/step_123.md`, 결과 목록
   `docs/distribution/marketing/README.md`.
   - 클립 7 개 (hotbox, marking menu, Channel Box keys, navigation, pivot + V snap, Joint → IK → Paint Skin Weights, Maya ⇄ Blender

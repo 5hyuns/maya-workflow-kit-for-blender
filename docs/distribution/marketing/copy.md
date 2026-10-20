@@ -78,7 +78,7 @@ Each clip's band shows its title (≤ 6 words) and, beat by beat, one line of wh
 
 | # | Clip | Title | Store caption (≤ 255 characters) |
 |---|---|---|---|
-| 0 | trailer | (key visual title card → clips → end card) | Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 0 | trailer | (key visual title card → clips → end card) | Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
 | 1 | hotbox | The hotbox, under the space bar | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
 | 2 | marking_menu | Right-click marking menus | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
 | 3 | channel_box_keys | Key it in the Channel Box | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |

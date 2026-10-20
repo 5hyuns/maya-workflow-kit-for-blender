@@ -14,7 +14,7 @@ Allset brings the Maya workflow to Blender: hotbox, marking menus, Channel Box, 
 It changes nothing until you choose Maya, and one click on the Maya | Blender switch gives you plain Blender back.
 Free and open source (GPL) · Blender 4.5 – 5.2.
 
-[Get it on extensions.blender.org](<listing URL>) · [40-second tour (video)](docs/distribution/marketing/clips/00_trailer.mp4)
+[Get it on extensions.blender.org](<listing URL>) · [half-minute tour (video)](docs/distribution/marketing/clips/00_trailer.mp4)
 
 | | |
 |---|---|

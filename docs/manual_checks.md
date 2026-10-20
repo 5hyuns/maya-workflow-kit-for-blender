@@ -788,3 +788,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 123) `docs/distribution/marketing/clips/00_trailer.mp4` 와 클립 7 개를 실제 속도로 보기: 커서 움직임이 자연스러운지 (가상 시간 — 드래그는 1/15 초 간격 그림), 클릭 원·키 칩이 화면 동작과 같은 순간인지, 캡션 줄이 하는 일과 맞는지, 크로스페이드에서 두 띠 글자가 겹쳐 보이는 0.27 초가 거슬리는지.
 - [ ] (step 123) GIF 7 개를 GitHub 처럼 50 % 폭 (약 480 px) 으로 보았을 때 캡션 띠 글자를 읽을 수 있는지 (UI 글자는 못 읽어도 됨).
 - [ ] (step 123) 올리기 전: 트레일러 끝 카드·`posts.md` 의 다운로드 자리표시 (`extensions.blender.org/add-ons/allset`, `<listing URL>` 등) 를 실제 주소로 바꾸고 `python tools/marketing/clip_compose.py` 다시; r/blender · r/Maya 사이드바 규칙을 직접 다시 읽기 (조사 때 Reddit 페이지가 막혀 검색 결과 문구만 봄).
+
+### Step 124 — 홍보 디자인 재작업 (틸 · 잠금업 · 영상 움직임)
+
+- [ ] (step 124) 클립 7 개 + 트레일러를 실제 속도로: 1.35 × 에서 조작이 읽히는지, 카메라 줌·팬이 어지럽지 않고 조작 지점을 잘라 먹지 않는지, 노랑 클릭 펄스·키 칩 플래시가 동작과 같은 순간인지, 트레일러 전환 (푸시 / 줌) 과 엔드 카드 움직임이 의도적으로 보이는지.
+- [ ] (step 124) 키 비주얼 · 키트 카드를 갤러리 크기 (약 400 px 폭) 로 보았을 때 「for Maya Users」 가 바로 읽히고, 틸이 Maya 색으로 읽히는지 (Blender 주황과 헷갈리지 않는지).
+- [ ] (step 124) 포즈 / 웨이트 페인트 모드 (Maya 모드) 에서 뷰포트 아래 카메라 라벨이 한 번만 보이는지, 에셋 셸프를 열고 닫아도 띠가 바르게 나오고 사라지는지; 환영 창 (125 % 와 100 % UI 배율) 본문이 잘리지 않는지.
+- [ ] (step 124) 스토어 심사에서 틸이 Autodesk 제휴 암시로 지적되면 `ALLSET_MARKETING_PALETTE=maya-ui python tools/make_listing_media.py --no-shots` + `python tools/marketing/clip_compose.py` + `python tools/marketing/kit.py` 로 대체 팔레트 재생성 (style.md 「Trademark note」).

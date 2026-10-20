@@ -164,21 +164,21 @@ the CC0 models credited at the end of part B (add the copy.md "Credits line" the
 Gallery (step 123, references.md §5 — `delegated`: seven feature clips instead of six because the step 123 request
 names seven topics; the "switch" still `10` is replaced by clip 7, so the gallery stays at 10 items with two stills).
 Paths below are under `docs/distribution/`. Clips: `python tools/marketing/make_clips.py`; the MP4s carry English
-caption bands, key chips and a drawn cursor; no audio. **GIFs (`marketing/gif/`) are never uploaded here** — they are
+caption bands, key chips and a drawn cursor, played at 1.35 × with a moving camera (step 124); no audio. **GIFs (`marketing/gif/`) are never uploaded here** — they are
 for the GitHub README and social posts (`marketing/README.md`).
 
 | # | File | Kind | Caption (≤ 255 characters) |
 |---|---|---|---|
 | – | `media/icon.png` | icon 256 × 256 | — |
 | – | `media/featured.png` | featured image 1920 × 1080 | — (key visual: name + tagline + two real screens) |
-| 1 | `marketing/clips/00_trailer.mp4` | MP4 38.8 s (poster = key visual title card) | Allset in 40 seconds: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
-| 2 | `marketing/clips/01_hotbox.mp4` | MP4 6–9 s | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
-| 3 | `marketing/clips/02_marking_menu.mp4` | MP4 6–9 s | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
-| 4 | `marketing/clips/03_channel_box_keys.mp4` | MP4 6–9 s | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
-| 5 | `marketing/clips/04_navigation.mp4` | MP4 6–9 s | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
-| 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 6–9 s | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
-| 7 | `marketing/clips/06_rigging.mp4` | MP4 6–9 s | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
-| 8 | `marketing/clips/07_switch.mp4` | MP4 6–9 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
+| 1 | `marketing/clips/00_trailer.mp4` | MP4 33.5 s (poster = key visual title card) | Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 2 | `marketing/clips/01_hotbox.mp4` | MP4 5.6–7.6 s | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
+| 3 | `marketing/clips/02_marking_menu.mp4` | MP4 5.6–7.6 s | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
+| 4 | `marketing/clips/03_channel_box_keys.mp4` | MP4 5.6–7.6 s | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
+| 5 | `marketing/clips/04_navigation.mp4` | MP4 5.6–7.6 s | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
+| 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 5.6–7.6 s | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
+| 7 | `marketing/clips/06_rigging.mp4` | MP4 5.6–7.6 s | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
+| 8 | `marketing/clips/07_switch.mp4` | MP4 5.6–7.6 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
 | 9 | `media/03_channel_box_ae.png` | still 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
 | 10 | `media/04_menus_shelves.png` | still 1920 × 1080 | Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf. |
 
