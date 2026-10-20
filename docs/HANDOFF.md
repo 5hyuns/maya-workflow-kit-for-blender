@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 127 (제품 사이트 GitHub Pages, impeccable, 사용자 지시 10-20) 완료 — `docs/steps/step_127.md`. `site/` 정적 사이트 (셸프 탭 = 워크플로우
+  6 묶음 + 클립 + Channel Box 사실 열, Maya | Blender 전환, 설치 · 한계 · FAQ · 상표 고지), `site/PRODUCT.md` · `DESIGN.md`, 미디어
+  `tools/site/make_media.py`, 검사 `tools/site/check_site.py` (경로 PASS, 첫 화면 210 KiB), `.github/workflows/pages.yml`. push 안 함.
+  **바로 다음 할 일**: Hermes/사용자 — 저장소 공개 + push 후 Pages 켜기; 그 밖에 step 125/127 「남은 것」.
+
 - Step 126 (키 비주얼 기울인 화면 가로 늘어남, 사용자 버그 10-20) 완료 — `docs/steps/step_126.md`. `compose.tilted` = 실제 Y축 24° 회전 +
   핀홀 투영 (같은 θ·카메라, 2× 슈퍼샘플), `perspective_check.py` 5/5 (투영 폭 = 원본의 0.729, 기대 0.728), 키 비주얼 · 정사각 · 키트 6 ·
   스토어 featured · 트레일러 재생성. **바로 다음 할 일**: 사용자 결정 (업로드 또는 다음 단계); 열린 것: step 125 「남은 것」.

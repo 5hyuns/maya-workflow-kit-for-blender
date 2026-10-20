@@ -1,0 +1,428 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T17:30:00+09:00",
+  "title": "Design System: Maya Workflow Kit (product site)",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "#1e1e1e",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "base": {
+        "role": "neutral",
+        "displayName": "Maya Base",
+        "canonical": "#2b2b2b",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Maya Panel",
+        "canonical": "#373737",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule Grey",
+        "canonical": "#444444",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "vp-top": {
+        "role": "neutral",
+        "displayName": "Viewport Gradient Top",
+        "canonical": "#889db3",
+        "tonalRamp": [
+          "#1e262f",
+          "#323f4e",
+          "#485b70",
+          "#5d7792",
+          "#7c93ac",
+          "#a2b2c3",
+          "#c7d1db",
+          "#eff2f5"
+        ]
+      },
+      "vp-bottom": {
+        "role": "neutral",
+        "displayName": "Viewport Gradient Bottom",
+        "canonical": "#0d0d0d",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "text-strong": {
+        "role": "neutral",
+        "displayName": "Button Text White",
+        "canonical": "#eeeeee",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Maya Text",
+        "canonical": "#c8c8c8",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "#9a9a9a",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "teal": {
+        "role": "primary",
+        "displayName": "Maya Logo Teal",
+        "canonical": "#00bcbb",
+        "tonalRamp": [
+          "#004c4c",
+          "#00807f",
+          "#00b8b7",
+          "#00f0ee",
+          "#29fffe",
+          "#66fffe",
+          "#a3ffff",
+          "#e5ffff"
+        ]
+      },
+      "teal-hover": {
+        "role": "primary",
+        "displayName": "Lit Teal",
+        "canonical": "#3fd6d5",
+        "tonalRamp": [
+          "#0d3f3f",
+          "#166969",
+          "#209797",
+          "#2ac6c4",
+          "#4ed9d8",
+          "#81e4e3",
+          "#b3efee",
+          "#eafbfa"
+        ]
+      },
+      "teal-dim": {
+        "role": "primary",
+        "displayName": "Shadow Teal",
+        "canonical": "#005f61",
+        "tonalRamp": [
+          "#004b4c",
+          "#007d80",
+          "#00b4b8",
+          "#00ebf0",
+          "#29fbff",
+          "#66fcff",
+          "#a3fdff",
+          "#e5feff"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "Hello Yellow",
+        "canonical": "#ffff00",
+        "tonalRamp": [
+          "#4c4c00",
+          "#7f8000",
+          "#b8b800",
+          "#f0f000",
+          "#ffff29",
+          "#ffff66",
+          "#ffffa3",
+          "#ffffe5"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#787878",
+          "#949494",
+          "#b2b2b2",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "lockup-name": {
+        "displayName": "Lockup name",
+        "purpose": "'Maya Workflow Kit', one weight and colour."
+      },
+      "lockup-line": {
+        "displayName": "Lockup line",
+        "purpose": "'for Maya users, in Blender' at 0.66 x the name, teal."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section h2 and the closing title."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Install step h3 with a teal number."
+      },
+      "tagline": {
+        "displayName": "Tagline",
+        "purpose": "One hero line under the lockup."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, max 66ch; 16 px under 760 px."
+      },
+      "ui-label": {
+        "displayName": "UI label",
+        "purpose": "Text inside Maya fragments: tabs 12.5, rows 13, titles 13.5, menu bar and captions 14."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "File names and maya.cmds; menu paths use Inter 600 instead."
+      }
+    },
+    "shadows": [
+      {
+        "name": "window-fragment",
+        "value": "0 18px 32px -18px rgba(0,0,0,.85), 0 2px 6px rgba(0,0,0,.3)",
+        "purpose": "The shelf + viewport window block."
+      },
+      {
+        "name": "screenshot-frame",
+        "value": "0 16px 30px -20px #000",
+        "purpose": "The Maya | Blender screenshot frame."
+      },
+      {
+        "name": "press-rest",
+        "value": "0 6px 16px -8px rgba(0,0,0,.7)",
+        "purpose": "Yellow press button at rest."
+      },
+      {
+        "name": "press-lifted",
+        "value": "0 10px 22px -10px rgba(0,0,0,.8)",
+        "purpose": "Yellow press button on hover / focus."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Every eased transition (button lift, tab underline, media swap, disclosure triangle)."
+      },
+      {
+        "name": "tab-underline",
+        "value": "transform .35s",
+        "purpose": "Selected shelf tab underline scales in from the centre."
+      },
+      {
+        "name": "media-swap",
+        "value": "opacity .3s, filter .3s (to 25 %, blur 6px)",
+        "purpose": "Viewport media while a shelf tab swaps workflows."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "transition-duration 0s; scroll-behavior auto",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "1100px"
+      },
+      {
+        "name": "compact",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Press Button",
+      "kind": "button",
+      "refersTo": "button-press",
+      "description": "The download action; the only yellow fill on the page, used at most twice.",
+      "html": "<a class=\"ds-btn-press\" href=\"#\">Download the zip</a>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-btn-press{font-family:Inter,system-ui,sans-serif;display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:5px;font-weight:650;font-size:16px;text-decoration:none;background:var(--yellow);color:var(--ink);box-shadow:0 6px 16px -8px rgba(0,0,0,.7);transition:transform .25s var(--ease),box-shadow .25s var(--ease);}.ds-btn-press:hover,.ds-btn-press:focus-visible{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(0,0,0,.8);}.ds-btn-press:active{transform:translateY(1px);}.ds-btn-press:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary action next to the press button.",
+      "html": "<a class=\"ds-btn-quiet\" href=\"#\">Watch the 30-second tour</a>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-btn-quiet{font-family:Inter,system-ui,sans-serif;display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:5px;font-weight:650;font-size:16px;text-decoration:none;color:var(--text-strong);background:var(--base);border:1px solid var(--rule);transition:border-color .2s;}.ds-btn-quiet:hover{border-color:var(--teal);}.ds-btn-quiet:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}"
+    },
+    {
+      "name": "Menu Bar",
+      "kind": "nav",
+      "refersTo": "menubar-item",
+      "description": "Sticky Maya main menu bar: name left, sections, repository link right.",
+      "html": "<header class=\"ds-menubar\"><a class=\"ds-brand\" href=\"#\">Maya Workflow Kit</a><nav><a href=\"#\">Workflows</a><a href=\"#\">Install</a><a href=\"#\">FAQ</a></nav><a class=\"ds-repo\" href=\"#\">GitHub</a></header>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-menubar{font-family:Inter,system-ui,sans-serif;display:flex;align-items:center;gap:28px;height:48px;padding:0 24px;background:rgba(43,43,43,.96);border-bottom:1px solid var(--rule);font-size:14px;}.ds-brand{color:var(--text-strong);font-weight:700;text-decoration:none;letter-spacing:-.01em;}.ds-menubar nav{display:flex;gap:4px;}.ds-menubar nav a,.ds-repo{display:block;padding:6px 10px;border-radius:3px;color:var(--text);text-decoration:none;}.ds-menubar nav a:hover,.ds-repo:hover{background:#005f61;color:var(--text-strong);}.ds-repo{margin-left:auto;border:1px solid var(--rule);}.ds-menubar a:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}"
+    },
+    {
+      "name": "Shelf Tabs",
+      "kind": "custom",
+      "refersTo": "shelf-tab",
+      "description": "Signature: Maya shelf strip with tear-off handle; the selected tab takes the panel grey and a 3 px teal underline.",
+      "html": "<div class=\"ds-shelf\"><span class=\"ds-handle\" aria-hidden=\"true\"></span><button class=\"ds-tab\" aria-selected=\"true\">Hotbox</button><button class=\"ds-tab\" aria-selected=\"false\">Navigate</button><button class=\"ds-tab\" aria-selected=\"false\">Channel Box</button></div>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-shelf{display:flex;align-items:stretch;background:var(--base);border-bottom:1px solid var(--rule);}.ds-handle{flex:none;width:18px;background:radial-gradient(circle,#8a8a8a 1px,transparent 1.4px) 0 0/4px 4px;margin:10px 6px 10px 10px;opacity:.7;}.ds-tab{font-family:Inter,system-ui,sans-serif;position:relative;border:0;border-right:1px solid #333;background:none;cursor:pointer;padding:10px 13px 9px;color:var(--text);font-size:12.5px;font-weight:500;line-height:1.2;}.ds-tab::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--teal);transform:scaleX(0);transition:transform .35s var(--ease);}.ds-tab:hover{color:var(--text-strong);background:#323232;}.ds-tab[aria-selected='true']{color:var(--text-strong);background:var(--panel);}.ds-tab[aria-selected='true']::after{transform:scaleX(1);}.ds-tab:focus-visible{outline:2px solid var(--yellow);outline-offset:-3px;}"
+    },
+    {
+      "name": "Channel Box Rows",
+      "kind": "card",
+      "refersTo": "maya-window",
+      "description": "Signature: node name over attribute rows, names teal right-aligned, values light, alternate rows tinted.",
+      "html": "<aside class=\"ds-channels\"><p class=\"ds-node\">hotbox</p><dl><dt>Space hold</dt><dd>hotbox, every menu</dd><dt>RMB</dt><dd>marking menu</dd><dt>Option box</dt><dd>opens the option window</dd></dl></aside>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-channels{font-family:Inter,system-ui,sans-serif;width:17.5rem;background:var(--panel);border-left:1px solid var(--rule);padding:12px 0 14px;font-size:13px;}.ds-node{margin:0;padding:0 14px 8px;color:var(--text-strong);font-weight:600;border-bottom:1px solid var(--rule);}.ds-channels dl{margin:6px 0 0;display:grid;grid-template-columns:auto 1fr;}.ds-channels dt,.ds-channels dd{margin:0;padding:5px 14px;line-height:1.35;}.ds-channels dt{color:var(--teal);text-align:right;font-weight:600;padding-right:8px;white-space:nowrap;}.ds-channels dd{color:var(--text-strong);padding-left:6px;}.ds-channels dt:nth-of-type(odd),.ds-channels dt:nth-of-type(odd)+dd{background:rgba(255,255,255,.025);}"
+    },
+    {
+      "name": "Option Window",
+      "kind": "card",
+      "refersTo": "maya-window",
+      "description": "Panel-grey frame with a Maya Base title bar and handle; holds numbered steps divided by rules.",
+      "html": "<div class=\"ds-optwin\"><p class=\"ds-title\"><span class=\"ds-handle\" aria-hidden=\"true\"></span>Install Maya Workflow Kit</p><ol class=\"ds-steps\"><li><h3>Get the zip</h3><p>Download it from GitHub Releases.</p></li><li><h3>Install from disk</h3><p>Edit &rsaquo; Preferences &rsaquo; Get Extensions.</p></li></ol></div>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-handle{flex:none;width:18px;background:radial-gradient(circle,#8a8a8a 1px,transparent 1.4px) 0 0/4px 4px;margin:10px 6px 10px 10px;opacity:.7;}.ds-optwin{font-family:Inter,system-ui,sans-serif;background:var(--panel);border:1px solid var(--rule);border-radius:6px;overflow:hidden;color:var(--text);}.ds-title{margin:0;display:flex;align-items:center;gap:4px;padding:8px 14px 8px 0;background:var(--base);border-bottom:1px solid var(--rule);font-size:13.5px;font-weight:600;color:var(--text-strong);}.ds-title .ds-handle{height:14px;margin:0 8px 0 10px;}.ds-steps{list-style:none;margin:0;padding:4px 24px 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));counter-reset:step;}.ds-steps li{counter-increment:step;padding:22px 26px 4px 0;}.ds-steps li+li{padding-left:26px;border-left:1px solid var(--rule);}.ds-steps h3{margin:0 0 10px;font-size:19px;font-weight:650;color:var(--text-strong);}.ds-steps h3::before{content:counter(step) '  ';color:var(--teal);}.ds-steps p{margin:0;font-size:15px;}"
+    },
+    {
+      "name": "Maya | Blender Toggle",
+      "kind": "chip",
+      "refersTo": "toggle-option-pressed",
+      "description": "Two-option pressed toggle; the pressed option is teal with black ink.",
+      "html": "<div class=\"ds-toggle\" role=\"group\"><button class=\"ds-opt\" aria-pressed=\"true\">Maya</button><span class=\"ds-bar\">|</span><button class=\"ds-opt\" aria-pressed=\"false\">Blender</button></div>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-toggle{display:inline-flex;align-items:center;gap:2px;background:var(--base);border:1px solid var(--rule);border-radius:4px;padding:3px;}.ds-opt{font-family:Inter,system-ui,sans-serif;border:0;border-radius:3px;cursor:pointer;padding:7px 16px;font-size:14px;font-weight:600;background:none;color:var(--text-muted);transition:background-color .2s,color .2s;}.ds-opt[aria-pressed='true']{background:var(--teal);color:var(--ink);}.ds-opt:not([aria-pressed='true']):hover{color:var(--text-strong);}.ds-bar{color:var(--rule);}.ds-opt:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}"
+    },
+    {
+      "name": "Attribute Editor Frame",
+      "kind": "custom",
+      "description": "FAQ entry as a collapsible frame: header bar with a teal disclosure triangle that turns on open.",
+      "html": "<details class=\"ds-frame\" open><summary>Is this just a Maya keymap?</summary><p>No. The keymap is one part.</p></details>",
+      "css": ":host{--canvas:#1e1e1e;--base:#2b2b2b;--panel:#373737;--rule:#444444;--text-strong:#eeeeee;--text:#c8c8c8;--text-muted:#9a9a9a;--teal:#00bcbb;--yellow:#ffff00;--ink:#000000;--ease:cubic-bezier(.16,1,.3,1);}.ds-frame{font-family:Inter,system-ui,sans-serif;background:var(--base);border:1px solid var(--rule);border-radius:4px;color:var(--text);}.ds-frame summary{cursor:pointer;list-style:none;padding:12px 16px 12px 40px;position:relative;background:#3a3a3a;border-radius:3px;color:var(--text-strong);font-weight:600;font-size:17px;}.ds-frame summary:hover{background:#424242;}.ds-frame summary::-webkit-details-marker{display:none;}.ds-frame summary::before{content:'';position:absolute;left:16px;top:50%;margin-top:-5px;border-style:solid;border-width:5px 0 5px 8px;border-color:transparent transparent transparent var(--teal);transition:transform .3s var(--ease);}.ds-frame[open] summary::before{transform:rotate(90deg);}.ds-frame p{margin:0;padding:14px 18px 18px 40px;}.ds-frame summary:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Maya Shelf",
+    "overview": "The page is a piece of Maya 2022's own interface, not a marketing page about it. Its chrome is Maya's: a sticky main menu bar, a shelf strip of tabs over a viewport, a Channel Box column of attribute rows, an option window for the install steps, Attribute Editor frames with disclosure triangles for the FAQ, and Maya's dotted tear-off line between sections. A Maya artist should recognise the furniture before reading a word.\n\nDensity is split on purpose: UI-sized labels (11.5–14 px) in the Maya fragments, large tight lockup type in the hero. Surfaces are Maya's flat greys separated by 1 px rules; colour is almost absent, so the one teal accent and the one yellow press moment carry all the emphasis. Real UI footage (clips, screenshots) is the imagery; nothing is illustrated.\n\nThe visual values are inherited from the product's marketing system (`docs/distribution/marketing/style.md`); this file records how they landed in the shipped site.",
+    "keyCharacteristics": [
+      "Maya 2022 greys as tonal layers, 1 px #444 rules as the only dividers.",
+      "Maya logo teal as the single accent; Autodesk Hello Yellow only where the visitor presses (and for keyboard focus).",
+      "One family, Inter, from 11.5 px UI labels to the 56 px lockup.",
+      "Maya chrome devices: shelf tabs, Channel Box rows, option window title bar with the \"::::\" handle, dotted tear-off rule, disclosure triangles.",
+      "Square-ish corners (3–6 px), soft low shadows only under window fragments and the press button."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Teal is the only hue that marks information. A second accent hue never appears in page chrome; selection colours inside screenshots are the product's, not the page's.",
+        "section": "colors"
+      },
+      {
+        "name": "The Press Moment Rule",
+        "body": "Yellow appears only where something is pressed or focused: the download button, the skip link, the focus ring. Never as a fill for decoration, never on a heading, never with white text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Black Ink Rule",
+        "body": "Text on teal or yellow is #000000, never white.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lockup Rule",
+        "body": "The name is one weight and one colour; \"Maya\" is never set apart. The teal line follows immediately at 0.66 × the name size, in the hero and in the footer (18 / 12 px).",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Densities Rule",
+        "body": "Inside a Maya fragment, type is UI-sized (≤ 14 px) and tight; outside, it is reading-sized. Don't blend the two in one block.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal First Rule",
+        "body": "A new surface gets its depth from the grey it sits on and a 1 px rule. A shadow is added only if it is a window or a press target.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** build new sections out of Maya chrome (shelf, Channel Box rows, option window, Attribute Editor frame, tear-off rule) before inventing a new container.",
+      "**Do** keep solid dividers 1 px Rule Grey (#444444), section breaks as the 1 px dotted tear-off rule (#5a5a5a), and every corner between 3 and 6 px.",
+      "**Do** put black ink on teal and yellow, and keep yellow to the press moment and keyboard focus.",
+      "**Do** show the product with real UI footage in 16:9 frames, with the media credit next to the media.",
+      "**Do** honour reduced motion: smooth scrolling and every transition switch off."
+    ],
+    "donts": [
+      "**Don't** add a second accent hue to page chrome or style \"Maya\" apart from the rest of the product name.",
+      "**Don't** use yellow for decoration, headings or large fills, or put white text on teal or yellow.",
+      "**Don't** add shadows to flat bands, cards or text; depth comes from the grey layers.",
+      "**Don't** go above 6 px corners in site chrome (the pill shapes of the marketing images belong to the image system, not to page controls)."
+    ]
+  }
+}

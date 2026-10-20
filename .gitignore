@@ -16,3 +16,6 @@ tmp/
 
 # Blender backups
 *.blend1
+
+# impeccable review captures (step 127)
+site/.impeccable/review/

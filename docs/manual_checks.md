@@ -802,3 +802,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 125) 이전 (Allset) 빌드에서 이 빌드로 업데이트: 같은 id `allset` 이라 업데이트로 보이고, 옛 `bl_app_templates_user/Allset` 템플릿이 남아 File > New 에 두 개가 보이지 않는지.
 - [ ] (step 125) 저장소를 GitHub (`5hyuns/maya-workflow-kit-for-blender`) 에 올린 뒤 README 를 GitHub 화면에서: 히어로 이미지 · GIF 7 개 · 트레일러 MP4 링크가 열리고, 목차 앵커가 맞는 곳으로 가는지 (`tools` 없이 로컬 검사는 경로 존재만 확인).
 - [ ] (step 125) 업로드 전 extensions.blender.org 에서 「Maya Workflow Kit」 와 같은 / 비슷한 이름이 없는지 검색 (다시 확인 안 함). 심사에서 이름이 지적되면 대체 이름 「Workflow Kit for Maya Users」 (결정 12 개정).
+
+### Step 127 — 제품 사이트
+
+- [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
+- [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
