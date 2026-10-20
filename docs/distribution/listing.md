@@ -1,18 +1,22 @@
-# extensions.blender.org listing — Allset for Maya Users
+# extensions.blender.org listing — Maya Workflow Kit
 
 The submission package (step 117). The user uploads it at https://extensions.blender.org/submit/ — nothing here was
 uploaded. Part A = the form fields, part B = the long description (paste as it is, Markdown), part C = the media,
 part D = the technical disclosure for the reviewers (step 115; the paragraphs marked **[listing]** are also in part B).
 Rules followed: `docs/distribution/extensions_audit.md` (final status of every requirement there).
+Name (step 125, user decision — `docs/user_decisions.md` 12 revision): "Maya Workflow Kit", no "Blender" in the store
+name (ToS 2.1); the id stays `allset`. Autodesk's guidelines prefer the "for Maya" form, so if the review objects to
+the name, resubmit as **Workflow Kit for Maya Users** (only `name` and the visible texts change). The long description
+opens with "For Maya users, in Blender" and ends with the trademark notice.
 
 ## A. Form fields (most come from `src/allset/blender_manifest.toml` in the zip)
 
 | Field | Value |
 |---|---|
-| File | `dist/allset-0.2.0.zip` (`python tools/build.py`; `blender --command extension validate` passes) |
-| Name | Allset for Maya Users |
+| File | `dist/maya-workflow-kit-0.2.0.zip` (`python tools/build.py`; `blender --command extension validate` passes) |
+| Name | Maya Workflow Kit |
 | Tagline (≤ 64, no end punctuation) | The whole Maya workflow in Blender, in one install (50) |
-| Short description (the first paragraph of B) | Not just a Maya keymap: Allset brings the whole Maya workflow to Blender — hotbox and marking menus, Channel Box and Attribute Editor, menu sets and shelves, option windows and Maya's scene concepts — and changes nothing until you choose Maya. |
+| Short description (the first paragraph of B) | For Maya users, in Blender — not just a Maya keymap: Maya Workflow Kit brings the whole Maya workflow to Blender — hotbox and marking menus, Channel Box and Attribute Editor, menu sets and shelves, option windows and Maya's scene concepts — and changes nothing until you choose Maya. |
 | Type | Add-on |
 | Tags (platform list) | User Interface, 3D View, Modeling, Animation, Rigging |
 | License | GPL-3.0-or-later (code); CC0-1.0 (the kit-made images and data files, `ASSETS_LICENSE.txt`) |
@@ -20,21 +24,21 @@ Rules followed: `docs/distribution/extensions_audit.md` (final status of every r
 | Supported Blender | 4.5 LTS and 5.0 – 5.2 (4.5.x – 5.2.x; tested on 4.5.4, 5.0.1, 5.1.2, 5.2.2) — manifest `blender_version_min` / `max` (see part D "Versions") |
 | Permissions | `files`: "Layout template, settings backup, shelves, Maya project folders" (63, no end punctuation). No `network`, no `clipboard`, no `camera` / `microphone` |
 | Platforms | all (pure Python, no `platforms` entry) |
-| Website / support URL | none yet (no public page or issue tracker — decision 11); add the tracker URL on the platform after the upload |
+| Website / support URL | none yet: the repository https://github.com/5hyuns/maya-workflow-kit-for-blender is to be created private, so manifest `website` stays out until it is public; then add it and the tracker URL |
 | Icon | `docs/distribution/media/icon.png` (256 × 256) |
 | Featured image | `docs/distribution/media/featured.png` (1920 × 1080) |
 | Preview images | 10 gallery items in part C order: `docs/distribution/marketing/clips/00_trailer.mp4` + `01–07_*.mp4` (1920 × 1080 H.264) + two stills from `docs/distribution/media/` |
 
 ## B. Long description
 
-**Not just a Maya keymap: Allset brings the whole Maya workflow to Blender** — hotbox and marking menus, Channel Box
+**For Maya users, in Blender. Not just a Maya keymap: Maya Workflow Kit brings the whole Maya workflow to Blender** — hotbox and marking menus, Channel Box
 and Attribute Editor, menu sets and shelves, option windows and Maya's scene concepts — and changes nothing until you
 choose Maya.
 
 Moving from Maya to Blender is rarely about keys alone. It is the hotbox under the space bar, the right-click marking
 menu over an object, the Channel Box where you type `+=5`, the menu sets and shelves, the option box next to a menu
 item, and objects that behave like Maya transforms — Freeze, History, Center Pivot, groups, centimetres, `pCube1`.
-Allset rebuilds those, one workflow at a time, on top of Blender's own tools.
+Maya Workflow Kit rebuilds those, one workflow at a time, on top of Blender's own tools.
 
 ### Navigate & Select
 
@@ -76,7 +80,7 @@ Allset rebuilds those, one workflow at a time, on top of Blender's own tools.
 - Freeze Transformations (channels back to 0 / 0 / 1, pivot kept), Reset Transformations, Center Pivot, Delete History
   and Delete by Type, Maya-style parenting (P / Shift+P keep the Channel Box values), Ctrl+G groups, Duplicate
   Special.
-- Centimetres: the Allset layout uses Maya's cm display and Maya sizes for everything it creates; an optional "Maya
+- Centimetres: the Maya layout uses Maya's cm display and Maya sizes for everything it creates; an optional "Maya
   Units" preference sets 1 Blender unit = 1 cm.
 - Maya names (`pCube1`, `pCubeShape1`, `group1`, `polySmooth1`, `joint1`, `lambert1`), the default material, Maya's
   extrude history you can edit afterwards, Smooth Mesh Preview (1 / 2 / 3), Maya projects with Set Project.
@@ -89,10 +93,10 @@ Allset rebuilds those, one workflow at a time, on top of Blender's own tools.
 
 ### What happens when you enable it — nothing until you choose Maya
 
-Installing and enabling Allset does not change your keymap, preferences, theme or layout. It adds a small
+Installing and enabling Maya Workflow Kit does not change your keymap, preferences, theme or layout. It adds a small
 Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a
 welcome dialog. Only when you click **Make Blender feel like Maya** (in the welcome dialog or in the add-on
-preferences) or switch to Maya does Allset turn on its Maya-style keymap, Maya layout, menus, theme
+preferences) or switch to Maya does the kit turn on its Maya-style keymap, Maya layout, menus, theme
 ("Studio Grey (Maya-inspired)") and Maya-like preferences (navigation, undo steps, solid side panels, auto key,
 density, font, wireframes, splash). Before that, a copy of everything it will change is written to the extension's
 user folder.
@@ -100,19 +104,19 @@ user folder.
 ### How to go back
 
 - Click **Blender** in the Maya | Blender switch (or Ctrl+Alt+Shift+M): Blender's keymap, theme, layout and every
-  preference Allset changed come back; switch again whenever you like.
+  preference the kit changed come back; switch again whenever you like.
 - **Revert Maya Look** in the add-on preferences removes the theme, splash and layout template only.
-- Disabling or removing the extension puts your values back the same way and deletes the layout template. Allset never
+- Disabling or removing the extension puts your values back the same way and deletes the layout template. The kit never
   saves your preferences by itself: Blender's own Auto-Save Preferences (or you) do.
 
 ### Files it writes outside the extension
 
-- `scripts/startup/bl_app_templates_user/Allset/` — the Maya layout (File > New > Allset): only data
+- `scripts/startup/bl_app_templates_user/Maya_Workflow_Kit/` — the Maya layout (File > New > Maya Workflow Kit): only data
   (`startup.blend`, splash images, a marker file), copied when you choose Maya or click Install Maya Layout, deleted
-  when you disable or remove Allset (folders without Allset's marker are never touched).
+  when you disable or remove the extension (folders without the kit's marker are never touched).
 - The extension's user folder (Blender's `extension_path_user`): preference snapshot, theme backup, your shelves.
 - Maya projects: the file dialogs open in the current project like Maya's. With no project set, the default project
-  `Documents/allset/projects/default` is made the first time a project-aware dialog opens; Set Project / Project
+  `Documents/Maya Workflow Kit/projects/default` is made the first time a project-aware dialog opens; Set Project / Project
   Window make folders only where you choose.
 - Playblast writes its movie to Blender's temporary folder; exports and saves go where you choose.
 
@@ -120,14 +124,14 @@ user folder.
 
 - **Python `exec`**: only text you type or write yourself — the Python Command Line, your Python shelf buttons and the
   Script Editor run it in their own namespace (with the `maya.cmds` look-alike), exactly like Blender's Python
-  console. Allset never downloads or generates code.
+  console. The kit never downloads or generates code.
 - **`bpy.utils.execfile`**: the Maya-style keymap is built from Blender's own bundled Industry Compatible keymap data
   (`presets/keyconfig/keymap_data/industry_compatible_data.py` of the running Blender), loaded the way Blender's
   keymap preset loads it, then patched. No keymap data is copied into the extension.
 - **`ctypes` (Windows only)**: one read-only `user32.GetAsyncKeyState` call, to end Maya hold keys (D, X, C, V, B ...)
   whose key release Blender's transform tool swallows. No hook, nothing written; elsewhere Blender's own key-release
   event is used.
-- **Blender UI classes**: most of Allset's UI is its own panels, menus and gizmos, or `append` / `prepend`. In Maya
+- **Blender UI classes**: most of the kit's UI is its own panels, menus and gizmos, or `append` / `prepend`. In Maya
   areas it draws instead of a few Blender headers and re-registers some panels with a wrapped `poll` — only in Maya
   mode, put back when you switch to Blender, disable or remove it; other add-ons' additions keep drawing.
 - No network access, no auto-updater, no `sys.path` / `sys.modules` changes. Help menu items open Blender manual
@@ -147,7 +151,7 @@ It is not affiliated with, endorsed by, sponsored by, or otherwise approved by A
 Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; references to Maya are solely to
 describe compatibility and the intended audience.
 
-## C. Media (`docs/distribution/media/`: Blender screenshots taken with Allset, no Maya or Blender logo, no Maya capture)
+## C. Media (`docs/distribution/media/`: Blender screenshots taken with the kit, no Maya or Blender logo, no Maya capture)
 
 Store rules (step 121, sources in `docs/distribution/marketing/references.md` §1): icon 256 × 256 PNG; featured
 image JPEG / PNG / WebP ≥ 1920 × 1080, 16:9 (also the social card); previews 16:9, each **a JPEG / PNG / WebP image
@@ -156,10 +160,10 @@ a video's poster is its first frame. GIFs can only be linked in the description,
 discourages ("no heavy image (.gif images in particular)").
 
 Regenerate with `python tools/make_listing_media.py` (= `tools/marketing/make_marketing.py`: a GUI Blender in a clean
-sandbox with the built zip, Maya theme and Maya's factory background, a scene of CC0 models from Poly Haven, Kenney
-and Quaternius — `docs/distribution/marketing/CREDITS.md` — then Pillow captions in the visual system of
+sandbox with the built zip, Maya theme and Maya's factory background, a scene of licensed third-party models — each
+credited with its licence in `docs/distribution/marketing/CREDITS.md` — then Pillow captions in the visual system of
 `docs/distribution/marketing/style.md`, copy from `copy.md`). The icon and featured image are kit-made; the scenes use
-the CC0 models credited at the end of part B (add the copy.md "Credits line" there when pasting).
+the models credited at the end of part B (add the copy.md "Credits line" there when pasting).
 
 Gallery (step 123, references.md §5 — `delegated`: seven feature clips instead of six because the step 123 request
 names seven topics; the "switch" still `10` is replaced by clip 7, so the gallery stays at 10 items with two stills).
@@ -171,12 +175,12 @@ for the GitHub README and social posts (`marketing/README.md`).
 |---|---|---|---|
 | – | `media/icon.png` | icon 256 × 256 | — |
 | – | `media/featured.png` | featured image 1920 × 1080 | — (key visual: name + tagline + two real screens) |
-| 1 | `marketing/clips/00_trailer.mp4` | MP4 33.5 s (poster = key visual title card) | Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 1 | `marketing/clips/00_trailer.mp4` | MP4 33.5 s (poster = key visual title card) | Maya Workflow Kit in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
 | 2 | `marketing/clips/01_hotbox.mp4` | MP4 5.6–7.6 s | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
 | 3 | `marketing/clips/02_marking_menu.mp4` | MP4 5.6–7.6 s | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
 | 4 | `marketing/clips/03_channel_box_keys.mp4` | MP4 5.6–7.6 s | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
 | 5 | `marketing/clips/04_navigation.mp4` | MP4 5.6–7.6 s | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
-| 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 5.6–7.6 s | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
+| 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 5.6–7.6 s | Insert edits the pivot; hold V while dragging and it snaps to a corner of the battery. Insert again, and the battery rotates around its new pivot. |
 | 7 | `marketing/clips/06_rigging.mp4` | MP4 5.6–7.6 s | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
 | 8 | `marketing/clips/07_switch.mp4` | MP4 5.6–7.6 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
 | 9 | `media/03_channel_box_ae.png` | still 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
@@ -197,19 +201,19 @@ extension, and a Blender after 5.2 is not offered it until it is measured the sa
 
 ## What happens when you enable it — nothing until you choose Maya
 
-**[listing]** Installing and enabling Allset does not change your keymap, preferences, theme or layout. It adds a
+**[listing]** Installing and enabling Maya Workflow Kit does not change your keymap, preferences, theme or layout. It adds a
 small Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once,
 a welcome dialog. Only when you click **Make Blender feel like Maya** (in the welcome dialog or in the add-on
-preferences) or switch to Maya does Allset turn on its Maya-style keymap, Maya layout, menus, theme and Maya-like
+preferences) or switch to Maya does the kit turn on its Maya-style keymap, Maya layout, menus, theme and Maya-like
 preferences (navigation, undo steps, solid side panels, auto key, density, font, wireframes, splash). Before that, a
 copy of everything it will change is written to the extension's user folder; switching back to Blender, disabling or
-removing the extension puts your values back. Allset never saves your preferences by itself: Blender's own
+removing the extension puts your values back. The kit never saves your preferences by itself: Blender's own
 Auto-Save Preferences (or you) do.
 
-**[listing]** The Maya layout is an application template (File > New > Allset). Allset copies it to your
-`scripts/startup/bl_app_templates_user/Allset` folder only when you choose Maya or click Install Maya Layout. It holds
+**[listing]** The Maya layout is an application template (File > New > Maya Workflow Kit). The kit copies it to your
+`scripts/startup/bl_app_templates_user/Maya_Workflow_Kit` folder only when you choose Maya or click Install Maya Layout. It holds
 only data (`startup.blend`, splash images, a marker file) — no code — and is deleted when you disable or remove the
-extension (folders without Allset's marker are never touched).
+extension (folders without the kit's marker are never touched).
 
 Implementation: `src/allset/welcome.py`, `switch.py` (snapshot / restore), `first_start.py`, `app_template/__init__.py`,
 tests `tests/test_step115_opt_in.py`, `tests/test_enable_disable.py`, `tests/test_step60_switch.py`.
@@ -219,26 +223,26 @@ tests `tests/test_step115_opt_in.py`, `tests/test_enable_disable.py`, `tests/tes
 Most kit UI is its own panels, menus, gizmos and draw handlers, or is added with Blender's `append` / `prepend`
 (about 20 places: the top bar switch, the Edit menu item, the Graph Editor toolbar, the Channel Box button context
 menu, the Status Line at the start of the 3D View tool header, the Tool Box filter around the toolbar draw, ...).
-Where Allset has to draw *instead of* Blender in its Maya areas, it uses one of the mechanisms below. All of them are
+Where the kit has to draw *instead of* Blender in its Maya areas, it uses one of the mechanisms below. All of them are
 active only in Maya mode and are undone when you switch to Blender, disable or remove the extension;
 `tests/test_enable_disable.py` (via `tests/kit.py` `snapshot`) fails if any of them is left behind, and
 `tests/test_step115_opt_in.py` checks that other add-ons' `append`ed UI survives both directions.
 
 ### 1. Own draw swapped inside Blender's draw list (`ui/own_draw.py` and the per-editor modules)
 
-Blender keeps a class's draw functions in a list once anything is appended (`bpy_types._GenericUI`). Allset replaces
-only Blender's *own* entry in that list with a function that draws the Maya version in Allset's areas and calls
+Blender keeps a class's draw functions in a list once anything is appended (`bpy_types._GenericUI`). The kit replaces
+only Blender's *own* entry in that list with a function that draws the Maya version in the kit's Maya areas and calls
 Blender's original everywhere else. Other add-ons' appended / prepended functions keep drawing, and the restore puts
-Blender's function back in place even if others extended the class after Allset.
+Blender's function back in place even if others extended the class after the kit.
 
 | Class | Module | Maya areas (elsewhere Blender's own draw) |
 |---|---|---|
 | `STATUSBAR_HT_header` | `command_line/__init__.py` | Help Line + Command Line row (Blender's when both are off) |
 | `TOPBAR_HT_upper_bar` | `ui/status_line.py` | Maya menu bar / Status Line (pref "Maya Menu Bar"); `draw_left` / `draw_right` untouched |
 | `OUTLINER_HT_header` | `ui/maya_outliner.py` | Outliner in View Layer mode: Maya Display / Show / Help menus |
-| `IMAGE_HT_header`, `IMAGE_HT_tool_header` | `ui/shelf.py` | the Status Line / Shelf rows of the Allset layout, Maya UV Editor menus, Render View buttons |
+| `IMAGE_HT_header`, `IMAGE_HT_tool_header` | `ui/shelf.py` | the Status Line / Shelf rows of the Maya layout, Maya UV Editor menus, Render View buttons |
 | `GRAPH_HT_header`, `DOPESHEET_HT_header` | `ui/editor_chrome.py` | Maya Graph Editor / Dope Sheet menu bars (Timeline mode stays Blender's) |
-| `VIEW3D_HT_header`, `VIEW3D_HT_tool_header` | `ui/panel_toolbar.py` | Maya panel menus / panel toolbar in Allset-layout 3D Views |
+| `VIEW3D_HT_header`, `VIEW3D_HT_tool_header` | `ui/panel_toolbar.py` | Maya panel menus / panel toolbar in Maya-layout 3D Views |
 | `PROPERTIES_HT_header` | `ui/render_settings.py` | the Render Settings window only |
 | `INFO_HT_header`, `TEXT_HT_header` | `ui/script_editor.py` | the Script Editor window only |
 
@@ -262,7 +266,7 @@ No `append` API exists for these: they are methods Blender's own draw calls.
 
 Blender has no API to hide a panel. `ui/dock_tabs.py` (3D View sidebar: only the Maya dock tabs, pref "Channel Box
 Dock Only") and `ui/render_settings.py` (Render properties in the Render Settings window) re-register Blender's own
-panel classes with a `poll` that also asks Allset; restoring re-registers them with their original `poll`, in
+panel classes with a `poll` that also asks the kit; restoring re-registers them with their original `poll`, in
 Blender's registration order (`registration_key`), and never re-registers a class its add-on already unregistered.
 
 ## Other system access

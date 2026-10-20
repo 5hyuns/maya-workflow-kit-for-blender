@@ -257,11 +257,11 @@ def register():
     wm = bpy.types.WindowManager
     wm.allset_mtk_camera_based = BoolProperty(
         name="Camera Based Selection", get=_camera_based_get, set=_camera_based_set,
-        description="Marquee selects only components facing the camera (Allset preference "
+        description="Marquee selects only components facing the camera (Maya Workflow Kit preference "
                     "\"Marquee Selects Hidden Components\" off)")
     wm.allset_mtk_nearest = BoolProperty(
         name="Highlight Nearest Component", get=_nearest_get, set=_nearest_set,
-        description="Highlight the component under the mouse before clicking (Allset preference)")
+        description="Highlight the component under the mouse before clicking (Maya Workflow Kit preference)")
 
 
 def unregister():

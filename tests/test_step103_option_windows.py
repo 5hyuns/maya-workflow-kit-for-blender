@@ -25,7 +25,7 @@ def _clear():
     for me in list(bpy.data.meshes):
         bpy.data.meshes.remove(me)
     us = bpy.context.scene.unit_settings
-    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # Allset template units
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # Maya Workflow Kit template units
     ow.store("poly_cube", None)
 
 

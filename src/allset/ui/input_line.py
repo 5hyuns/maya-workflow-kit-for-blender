@@ -12,7 +12,7 @@ numericalInputChangeCommand.mel and renameSelectionList.mel:
 - Select by name selects with ``*`` / ``?`` wildcards; nothing found = an error, the text stays.
 
 The fields are Scene string properties with get / set (set = Enter), so an entry is one undo step.
-Numbers are display units like the Channel Box (``ui/cb_entry.py``): ``5`` = 5 cm in the Allset
+Numbers are display units like the Channel Box (``ui/cb_entry.py``): ``5`` = 5 cm in the Maya Workflow Kit
 layout, ``5 m`` and ``2*3`` work; rotations are degrees. X / Y / Z are Blender's axes (the Channel
 Box letters). Results and errors go to the Help Line.
 """

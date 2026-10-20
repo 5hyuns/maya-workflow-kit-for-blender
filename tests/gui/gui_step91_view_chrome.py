@@ -1,4 +1,4 @@
-"""Step 91 in a real UI (Allset layout): no parent relationship lines in the template views, the RMB marking-menu
+"""Step 91 in a real UI (Maya Workflow Kit layout): no parent relationship lines in the template views, the RMB marking-menu
 list draws over the Adjust Last Operation (HUD) panel, and the dock stays one panel when Ctrl+A shows the Attribute
 Editor (the "Channel Box" sidebar tab no longer moves under "Item"). Plan: docs/steps/step_91.md."""
 
@@ -51,7 +51,7 @@ def pixel(img, x, y):
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

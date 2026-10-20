@@ -1,4 +1,4 @@
-"""Step 81 in a real UI: the Allset layout's persp view has Maya's angle (lens 70 = 54.4 deg), a Maya pCube1 looks the
+"""Step 81 in a real UI: the Maya Workflow Kit layout's persp view has Maya's angle (lens 70 = 54.4 deg), a Maya pCube1 looks the
 size it does in Maya's new scene, Four View keeps the angle, Ctrl+Shift+C makes a 35 mm camera.
 Plan: docs/steps/step_81.md."""
 
@@ -31,7 +31,7 @@ def override():
 def s_start():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

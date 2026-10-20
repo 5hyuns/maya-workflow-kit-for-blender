@@ -27,7 +27,7 @@ import release_check  # noqa: E402
 HERE = Path(__file__).resolve().parent
 SANDBOX = ROOT / "tmp" / "marketing_env"
 FRAMES = ROOT / "tmp" / "marketing" / "clips"
-TIMEOUT = 420
+TIMEOUT = 900
 ORDER = ["hotbox", "marking_menu", "channel_box_keys", "navigation", "pivot_snap", "rigging", "switch"]
 
 
@@ -61,11 +61,11 @@ def main(argv=None):
     ap.add_argument("--no-encode", action="store_true")
     args = ap.parse_args(argv)
     names = [n for n in args.only.split(",") if n] or ORDER
-    if subprocess.run([sys.executable, str(HERE / "fetch_assets.py")], stdin=subprocess.DEVNULL).returncode:
+    if subprocess.run([sys.executable, str(HERE / "fetch_assets.py"), "--active"], stdin=subprocess.DEVNULL).returncode:
         return 1
     ok = True
     if not args.no_record:
-        zip_path = ROOT / "dist" / f"allset-{build.manifest_value('version')}.zip"
+        zip_path = build.ext_zip()
         if not args.no_build or not zip_path.exists():
             zip_path = build.main(["--blender", args.blender, "--no-legacy"])
         env = release_check.sandbox_env(SANDBOX)

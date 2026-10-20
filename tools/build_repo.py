@@ -49,14 +49,14 @@ def main(argv=None):
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
     ap.add_argument("--out", default=str(REPO), help="repository folder (default dist/repo)")
     ap.add_argument("--zip", action="append", default=[], help="extension zip(s) to list (default: build one)")
-    ap.add_argument("--no-build", action="store_true", help="use dist/<id>-<version>.zip as it is")
+    ap.add_argument("--no-build", action="store_true", help="use dist/maya-workflow-kit-<version>.zip as it is")
     args = ap.parse_args(argv)
 
     out = Path(args.out)
     zips = [Path(z) for z in args.zip]
     if not zips:
         version = build.manifest_value("version")
-        zip_path = build.DIST / f"{build.manifest_value('id')}-{version}.zip"
+        zip_path = build.ext_zip(version)
         if not args.no_build or not zip_path.exists():
             zip_path = build.main(["--blender", args.blender, "--no-legacy"])
         zips = [zip_path]

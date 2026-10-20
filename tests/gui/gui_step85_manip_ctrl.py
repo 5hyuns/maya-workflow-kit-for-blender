@@ -104,7 +104,7 @@ def drag(button, mods, start, end):
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

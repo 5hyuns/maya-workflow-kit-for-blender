@@ -1,9 +1,9 @@
-"""Generate the Allset app template splash images (docs/steps/step_42.md).
+"""Generate the Maya Workflow Kit app template splash images (docs/steps/step_42.md).
 
     python tools/make_splash.py [--media]   # re-runs itself in `blender -b --factory-startup`
 
-Writes src/allset/app_template/Allset/splash.png (1000x500) and splash_2x.png (2000x1000):
-Blender shows them as the splash screen while the Allset template is active; and
+Writes src/allset/app_template/Maya_Workflow_Kit/splash.png (1000x500) and splash_2x.png (2000x1000):
+Blender shows them as the splash screen while the Maya Workflow Kit template is active; and
 src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square), and the same
 square as docs/distribution/media/icon.png plus media/featured.png (1920x1080) for the extensions.blender.org listing. The artwork is the kit's own (decision 6: no Maya image or logo): Maya's
 panel grey and highlight blue (research/maya/colors.json ui_palette_qt), three wire cubes in Maya's
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "allset" / "app_template" / "Allset"
+OUT = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit"
 MEDIA = ROOT / "docs" / "distribution" / "media"   # extensions.blender.org icon + featured image (step 117)
 
 
@@ -120,9 +120,10 @@ def main():
         colour(ob, hex_colour)
     # Text (Blender's bundled font)
     title = len(bpy.data.objects)
-    text("Allset", 0.6, 1.0, 1.9, TEXT)
-    # Step 111 (decision 12, docs/distribution/naming.md): the whole workflow in one install, Maya only as the audience
-    text("for Maya users", 0.65, -0.3, 0.55, TEXT_DIM)
+    # Step 125 (decision 12): the product name + the lockup line "for Maya users, in Blender" (step 111: Maya only
+    # as the audience)
+    text("Maya Workflow Kit", 0.6, 1.0, 0.95, TEXT)
+    text("for Maya users, in Blender", 0.65, -0.3, 0.55, TEXT_DIM)
     text("The whole Maya workflow in Blender, in one install", 0.65, -1.1, 0.3, TEXT_DIM)
     text("hotbox · marking menus · Channel Box · shelves", 0.65, -1.8, 0.3, TEXT_DIM)
     text("Not affiliated with or endorsed by Autodesk. Maya is a trademark of Autodesk, Inc.",

@@ -41,7 +41,7 @@ def icon_centre(slot):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

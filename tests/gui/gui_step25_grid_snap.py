@@ -1,6 +1,6 @@
 """Step 25 in a real UI: X hold + Move gizmo drag snaps to whole Maya units (1 cm) in the
-Allset layout and with Maya Units on, to whole metres in the factory scene; the grid
-shows in the Allset persp view (screenshot). Plan: docs/steps/step_25.md."""
+Maya Workflow Kit layout and with Maya Units on, to whole metres in the factory scene; the grid
+shows in the Maya Workflow Kit persp view (screenshot). Plan: docs/steps/step_25.md."""
 
 import os
 import sys
@@ -80,20 +80,20 @@ def check_snap(label, unit_name):
           abs(n - round(n)) < 1e-3 and round(n) >= 1 and abs(ob.location.y) < 1e-6)
 
 
-# --- Allset layout (m + cm display) ----------------------------------------------------
+# --- Maya Workflow Kit layout (m + cm display) ----------------------------------------------------
 
 @step
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_template():
     bpy.ops.allset.keymap_activate()
     ov = area3d().spaces.active.overlay
-    check(f"Allset persp grid scale = 0.01 (1 cm step) ({ov.grid_scale})", abs(ov.grid_scale - 0.01) < 1e-6)
+    check(f"Maya Workflow Kit persp grid scale = 0.01 (1 cm step) ({ov.grid_scale})", abs(ov.grid_scale - 0.01) < 1e-6)
     make_cube()
     redraw()
 
@@ -111,14 +111,14 @@ def s_template_drag():
 
 @step
 def s_template_done():
-    check_snap("Allset layout", "cm")
+    check_snap("Maya Workflow Kit layout", "cm")
     # Step 45: the view draws the Maya grid (Blender floor off), its lines are every Maya unit, so the
     # snapped copy sits on a grid line inside the 12-unit grid; the grid was drawn (draw time > 0).
     grid = import_module(MODULE + ".ui.maya_grid")
     space = area3d().spaces.active
     n = bpy.data.objects[C["ob"]].location.x / C["k"]
     lines = {round(line[0][0]) for kind in grid.segments().values() for line in kind if line[0][1] == -grid.SIZE}
-    check(f"Maya grid on in the Allset view, snapped x = {n:.3f} is one of its lines",
+    check(f"Maya grid on in the Maya Workflow Kit view, snapped x = {n:.3f} is one of its lines",
           grid.is_on(space) and not space.overlay.show_floor and round(n) in lines)
     check(f"Maya grid drawn ({grid.frame_ms():.3f} ms per draw)", 0.0 < grid.frame_ms() < 5.0)
     print("GUI grid draw ms", grid.frame_ms())
@@ -126,7 +126,7 @@ def s_template_done():
     # Maya Units on: a new file gets cm with scale_length 0.01
     prefs = import_module(MODULE + ".preferences").get()
     prefs.maya_units = True
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

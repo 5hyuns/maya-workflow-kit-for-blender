@@ -51,7 +51,7 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

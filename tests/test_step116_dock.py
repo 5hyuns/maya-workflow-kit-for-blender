@@ -142,7 +142,7 @@ def test_menus_start_with_the_tear_off_line():
 
 
 def test_template_stack_and_no_viewport_sidebar():
-    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     stack = maya_dock.find_stack(screen)

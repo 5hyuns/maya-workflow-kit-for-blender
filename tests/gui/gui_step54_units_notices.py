@@ -1,4 +1,4 @@
-"""Step 54 in a real UI (Allset template = cm scene, maya_unit 0.01), Maya hand order:
+"""Step 54 in a real UI (Maya Workflow Kit template = cm scene, maya_unit 0.01), Maya hand order:
 Create > Lights > Point Light -> power 10 W x maya_unit^2; Fields/Solvers > Gravity -> field 1 Maya unit;
 Windows > Animation Editors > Trax Editor under the mouse -> tooltip + Help Line 「NLA」 notice.
 Menus are the kit's Maya menus, opened as menus and picked with the keyboard (accelerator / arrows).
@@ -42,14 +42,14 @@ def open_menu(path):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
 def s_scene():
     bpy.ops.allset.keymap_activate()
     C["k"] = import_module(MODULE + ".operators.units").maya_unit()
-    check(f"Allset template: a Maya unit is {C['k']} BU (cm)", abs(C["k"] - 0.01) < 1e-9)
+    check(f"Maya Workflow Kit template: a Maya unit is {C['k']} BU (cm)", abs(C["k"] - 0.01) < 1e-9)
     open_menu("Create/Lights")
 
 

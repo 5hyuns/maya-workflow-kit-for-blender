@@ -758,7 +758,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 117 — 등록 자료 (업로드는 사용자)
 
 - [ ] (step 117) https://extensions.blender.org/submit/ 에 `dist/allset-0.2.0.zip` 업로드 → 폼이 manifest 의 이름·tagline·태그·권한 사유·지원 버전을 그대로 읽는지; 설명 칸에 `docs/distribution/listing.md` B 를 붙여 넣고 미리보기에서 Markdown (굵게, 목록, 코드) 이 깨지지 않는지.
-- [ ] (step 117) 아이콘 (256 × 256), 대표 이미지 (1920 × 1080), 미리보기 6장이 플랫폼의 크기·비율 요구에 맞는지 (맞지 않으면 `tools/make_splash.py` / `tools/listing_shots.py` 의 크기를 바꿔 다시 만들기), 캡션은 listing.md C 표 순서대로.
+- [ ] (step 117) 아이콘 (256 × 256), 대표 이미지 (1920 × 1080), 미리보기 6장이 플랫폼의 크기·비율 요구에 맞는지 (맞지 않으면 `tools/make_splash.py` / `tools/marketing/` 스크립트의 크기를 바꿔 다시 만들기), 캡션은 listing.md C 표 순서대로.
 - [ ] (step 117) 업로드 뒤 지원 URL (이슈 트래커) 을 정했으면 플랫폼에 넣기 — 아직 공개 저장소 없음 (결정 11).
 
 ### Step 118 — Blender 5.x 호환
@@ -795,3 +795,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 124) 키 비주얼 · 키트 카드를 갤러리 크기 (약 400 px 폭) 로 보았을 때 「for Maya Users」 가 바로 읽히고, 틸이 Maya 색으로 읽히는지 (Blender 주황과 헷갈리지 않는지).
 - [ ] (step 124) 포즈 / 웨이트 페인트 모드 (Maya 모드) 에서 뷰포트 아래 카메라 라벨이 한 번만 보이는지, 에셋 셸프를 열고 닫아도 띠가 바르게 나오고 사라지는지; 환영 창 (125 % 와 100 % UI 배율) 본문이 잘리지 않는지.
 - [ ] (step 124) 스토어 심사에서 틸이 Autodesk 제휴 암시로 지적되면 `ALLSET_MARKETING_PALETTE=maya-ui python tools/make_listing_media.py --no-shots` + `python tools/marketing/clip_compose.py` + `python tools/marketing/kit.py` 로 대체 팔레트 재생성 (style.md 「Trademark note」).
+
+### Step 125 — 이름 Maya Workflow Kit · README
+
+- [ ] (step 125) 깨끗한 설정에 `maya-workflow-kit-<ver>.zip` 설치: Preferences > Add-ons 에 「Maya Workflow Kit」, 환영 창 제목 「Welcome to Maya Workflow Kit」, File > New 에 「Maya Workflow Kit」 템플릿, 핫박스 가운데 상자 「Maya Workflow Kit」; 화면 어디에도 「Allset」 글자가 남지 않는지 (내부 id `allset` 은 Get Extensions 의 정보에만).
+- [ ] (step 125) 이전 (Allset) 빌드에서 이 빌드로 업데이트: 같은 id `allset` 이라 업데이트로 보이고, 옛 `bl_app_templates_user/Allset` 템플릿이 남아 File > New 에 두 개가 보이지 않는지.
+- [ ] (step 125) 저장소를 GitHub (`5hyuns/maya-workflow-kit-for-blender`) 에 올린 뒤 README 를 GitHub 화면에서: 히어로 이미지 · GIF 7 개 · 트레일러 MP4 링크가 열리고, 목차 앵커가 맞는 곳으로 가는지 (`tools` 없이 로컬 검사는 경로 존재만 확인).
+- [ ] (step 125) 업로드 전 extensions.blender.org 에서 「Maya Workflow Kit」 와 같은 / 비슷한 이름이 없는지 검색 (다시 확인 안 함). 심사에서 이름이 지적되면 대체 이름 「Workflow Kit for Maya Users」 (결정 12 개정).

@@ -24,7 +24,7 @@ import release_check  # noqa: E402
 
 SANDBOX = ROOT / "tmp" / "marketing_env"
 RAW = ROOT / "tmp" / "marketing" / "raw"
-TIMEOUT = 600
+TIMEOUT = 1500
 
 
 def main(argv=None):
@@ -34,10 +34,10 @@ def main(argv=None):
     ap.add_argument("--no-shots", action="store_true", help="reuse tmp/marketing/raw")
     args = ap.parse_args(argv)
     here = Path(__file__).resolve().parent
-    if subprocess.run([sys.executable, str(here / "fetch_assets.py")], stdin=subprocess.DEVNULL).returncode:
+    if subprocess.run([sys.executable, str(here / "fetch_assets.py"), "--active"], stdin=subprocess.DEVNULL).returncode:
         return 1
     if not args.no_shots:
-        zip_path = ROOT / "dist" / f"allset-{build.manifest_value('version')}.zip"
+        zip_path = build.ext_zip()
         if not args.no_build or not zip_path.exists():
             zip_path = build.main(["--blender", args.blender, "--no-legacy"])
         env = release_check.sandbox_env(SANDBOX)

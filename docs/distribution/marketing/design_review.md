@@ -4,6 +4,10 @@ Run 2026-10-20 with the impeccable skill (`/impeccable critique docs/distributio
 colorize → typeset → layout → animate → polish passes listed at the end. User feedback that triggered it (10-20):
 the accent read as Blender orange, "Allset" was much bigger than "for Maya Users", the videos were static.
 
+> Step 125: the product is now **Maya Workflow Kit** with the line "for Maya users, in Blender" (user decision,
+> `docs/user_decisions.md` 12 revision). This review is kept as written for the step 124 name "Allset for Maya Users";
+> the 0.66 lockup rule carries over (`style.md`).
+
 Method: dual-agent, as the skill requires — Assessment A (design review, a sub-agent that saw only the committed
 HEAD 5173b5c assets and the request) and Assessment B (detector + mechanical measures, a separate sub-agent), then
 synthesis here. The impeccable context step found no PRODUCT.md / DESIGN.md (the target is raster / video, not a web
@@ -86,5 +90,6 @@ small halo (a wide one mixed with the teal into olive).
 
 - Should "for Maya Users" lead and "Allset" sign? — No: Autodesk's trademark guidance wants the own brand first and
   Maya only in the "for" reference (`extensions_audit.md`); the 0.66 lockup makes the reference readable instead.
+  (Step 125: the user chose a name that leads with Maya, knowing this guidance — risk and fallback name in decision 12.)
 - Would one 15 s "muscle memory" clip beat the 39 s tour? — Possibly for social; the store gallery keeps the tour +
   feature clips (`references.md` §5).

@@ -1,4 +1,4 @@
-"""Step 105 in a real UI: the Allset layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
+"""Step 105 in a real UI: the Maya Workflow Kit layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
 Hypershade, Render > Render Settings, Windows > General Editors > Script Editor in new windows -> Maya menu bars,
 Browser tabs, Common tab, history over MEL / Python input (screenshots beside audit-7 pairs h01 / h03 / h05)."""
 
@@ -61,7 +61,7 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

@@ -1,5 +1,5 @@
 {
-  "_doc": "Allset marketing visual tokens (steps 122, 124; docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys (research/maya/colors.json ui_palette_qt, src/allset/theme) + Maya logo teal (pixels of the Maya 2022 icon / splash, colour values only) + Autodesk brand Hello Yellow / Black (brand.autodesk.com/brand-system/color). 'palettes' holds the semantic accent sets; 'palette' picks one (env ALLSET_MARKETING_PALETTE overrides).",
+  "_doc": "Maya Workflow Kit marketing visual tokens (steps 122, 124, 125; docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys (research/maya/colors.json ui_palette_qt, src/allset/theme) + Maya logo teal (pixels of the Maya 2022 icon / splash, colour values only) + Autodesk brand Hello Yellow / Black (brand.autodesk.com/brand-system/color). 'palettes' holds the semantic accent sets; 'palette' picks one (env ALLSET_MARKETING_PALETTE overrides).",
   "primitive": {
     "grey-950": "#1e1e1e",
     "grey-900": "#252525",
@@ -67,7 +67,11 @@
       "tick_gap": 22,
       "brand_size": 26,
       "brand_font": "font-semibold",
-      "brand_color": "text"
+      "brand_color": "text",
+      "brand_clear": 48,
+      "credit_size": 18,
+      "credit_font": "font-regular",
+      "credit_color": "text-muted"
     },
     "callout": {
       "stroke": "accent",
@@ -91,7 +95,10 @@
         1920,
         1080
       ],
-      "name_size": 120,
+      "name_size": 76,
+      "_name_doc": "step 125: 'Maya Workflow Kit' is ~3x the width of 'Allset' -> N 120 -> 76 so the lockup stays left of the screens; screens moved right",
+      "text_xy": [128, 330],
+      "screens_xy": [[1060, 150], [900, 390]],
       "name_font": "font-bold",
       "for_size": null,
       "for_font": "font-medium",
@@ -106,7 +113,9 @@
         1080,
         1080
       ],
-      "name_size": 100,
+      "name_size": 90,
+      "text_xy": [96, 120],
+      "screens_xy": [[150, 600]],
       "for_size": null,
       "tagline_size": 30
     },
@@ -118,7 +127,9 @@
       "radius": 52
     },
     "lockup": {
-      "_doc": "Allset over 'for Maya Users' (same left edge); 'for Maya Users' = for_ratio x the name size, same family, so its ink is the same share of the name's",
+      "_doc": "name over line (same left edge, two-line form) or name then line on one baseline (one-line form, gap one_line_gap x N); line = for_ratio x the name size, same family, so its ink is the same share of the name's. Step 125: name 'Maya Workflow Kit' (no separate colour for 'Maya'), line = the 'for Maya users, in Blender' context right after the name",
+      "name": "Maya Workflow Kit",
+      "line": "for Maya users, in Blender",
       "name_font": "font-bold",
       "for_font": "font-semibold",
       "for_ratio": 0.66,

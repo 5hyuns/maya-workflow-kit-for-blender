@@ -1,4 +1,4 @@
-# Visual system — Allset marketing images (steps 122, 124)
+# Visual system — Maya Workflow Kit marketing images (steps 122, 124, 125)
 
 Tokens live in `tools/marketing/style.json` (three layers: primitive → semantic → component, the structure of the
 ui-ux-pro-max design-system skill); `tools/marketing/compose.py` reads them, so a change there changes every image,
@@ -19,8 +19,8 @@ glyphs in every shot, so the brand read as "Blender add-on" (user feedback 10-20
 | `grey-600` | #5c5c5c | the viewport — Maya's factory background (step 120) |
 | `grey-500` | #808080 | muted text (footers) |
 | `grey-200` | #c8c8c8 | caption line, brand name in the band (Maya Text) |
-| `grey-050` | #eeeeee | titles, "Allset" (Maya ButtonText) |
-| **`teal-500`** = `accent` | **#00bcbb** | "for Maya Users", title tick, callouts, chips, icon item, glow |
+| `grey-050` | #eeeeee | titles, the name "Maya Workflow Kit" (Maya ButtonText) |
+| **`teal-500`** = `accent` | **#00bcbb** | "for Maya users, in Blender", title tick, callouts, chips, icon item, glow |
 | `teal-600` = `accent-strong` | #149b9a | secondary teal (pressed / small marks) |
 | `teal-800` = `accent-deep` | #008b8d | background glow behind the screens |
 | `adsk-yellow` = `highlight` | #ffff00 | **action moments only**: click pulse, key-press flash, the CTA pill |
@@ -48,8 +48,12 @@ Selection colours in the shots stay what they are (kit Maya theme: selected whit
 - Only **colour values** are used. No Maya or Autodesk logo, M symbol, icon, splash image or wordmark appears in any
   file; the icons / splash were read for pixel values only and are not in the repository.
 - Every material keeps the notice "not affiliated with or endorsed by Autodesk" (listing.md B, README_marketing.md,
-  posts.md, CREDITS.md) and the "for Maya Users" referential form with Allset first (Autodesk trademark guidelines:
-  a third-party name may say it is *for* an Autodesk product, it may not lead with it).
+  posts.md, CREDITS.md).
+- Name (step 125, user decision — `docs/user_decisions.md` 12 revision): **Maya Workflow Kit**. Autodesk's guidelines
+  prefer the "for Maya" form with the own name first; this name leads with Maya, a risk the user accepted. So the
+  lockup never colours or styles "Maya" apart from the rest of the name (one weight, one colour), and the line
+  **"for Maya users, in Blender"** always follows the name at once. Store fallback if the review objects: "Workflow
+  Kit for Maya Users". Before step 125 the lockup was "Allset" + "for Maya Users" (Allset first).
 - **Fallback palette `maya-ui`** (in `style.json`, `ALLSET_MARKETING_PALETTE=maya-ui python tools/make_listing_media.py`
   and `tools/marketing/make_clips.py --no-record` regenerate everything): if a store review reads the logo teal as an
   implied affiliation, switch to Maya 2022's **UI** colours only — accent `blue-300` #8fb7d3 (light tint of Maya's
@@ -60,7 +64,7 @@ Selection colours in the shots stay what they are (kit Maya theme: selected whit
 
 | Pair | Ratio | Use |
 |---|---|---|
-| teal #00bcbb on #252525 / #1e1e1e / #2b2b2b | 6.50 / 7.07 / 6.01 | "for Maya Users", tick (AA, AAA ≥ 18 pt) |
+| teal #00bcbb on #252525 / #1e1e1e / #2b2b2b | 6.50 / 7.07 / 6.01 | "for Maya users, in Blender", tick (AA, AAA ≥ 18 pt) |
 | black on teal | 8.91 | chips, callout labels (AAA) |
 | black on Hello Yellow | 19.56 | CTA pill, flashing chip |
 | teal on viewport #5c5c5c | 2.84 | callout strokes over the UI → 2 px black edge each side (edge ≥ 3:1 both ways) |
@@ -72,26 +76,26 @@ Selection colours in the shots stay what they are (kit Maya theme: selected whit
 
 Inter (SIL OFL 1.1, `research/marketing_assets/font_inter/`, fetched by `tools/marketing/fetch_assets.py`). One family.
 
-### Lockup (step 124)
+### Lockup (steps 124, 125)
 
-"Allset" Bold N px + "for Maya Users" SemiBold **0.66 N** (`component.lockup.for_ratio`) in teal, drawn only by
-`compose.lockup()` so every format uses the same rule:
+"Maya Workflow Kit" Bold N px (`component.lockup.name`) + "for Maya users, in Blender" SemiBold **0.66 N**
+(`component.lockup.line`, `for_ratio`) in teal, drawn only by `compose.lockup()` so every format uses the same rule:
 
-- **Two lines** (key visuals, kit cards, trailer end card): one left edge, "for Maya Users" right under the name. Its
-  cap height is 66 % of the name's (measured ink: name 88 px / line 77 px at N = 120 — the descender of "y" makes the
-  ink taller), its width is 1.7 × the name's, so the two read as one unit and "for Maya Users" is legible at gallery
-  size. Step 122 had 132 / 46 px (ink ratio 2.2 – 2.9).
+- **Two lines** (key visuals, kit cards, trailer end card): one left edge, the line right under the name. Its
+  cap height is 66 % of the name's, so the two read as one unit and the line is legible at gallery size. (Step 124
+  measured with the old name "Allset": ink 88 / 77 px at N = 120; step 122 had 132 / 46 px. "Maya Workflow Kit" is
+  about three times as wide as "Allset", so step 125 lowered the key visual N — values in `style.json`.)
 - **One line** (title band brand mark, YouTube thumbnail, Reddit before / after, clip band): same sizes on one
   baseline, gap 0.3 N.
-- Allset always comes first (brand), "for Maya Users" always the teal part.
+- The name always comes first, in one colour (light grey, "Maya" not set apart); the line is always the teal part.
 
 | Role | Weight / size (1920 × 1080) |
 |---|---|
 | Screen title | SemiBold 56 px |
 | Screen line | Regular 28 px |
-| Brand mark (band, right) | one-line lockup, N = 26 (Allset #c8c8c8, for Maya Users teal) |
+| Brand mark (band, right) | one-line lockup, N = 26 (name #c8c8c8, line teal) |
 | Callout label | SemiBold 24 px, black on teal |
-| Key visual lockup | N = 120 (square 100) |
+| Key visual lockup | N from `style.json` `key_visual.name_size` / `key_visual_square.name_size` (step 125: 76 / 90; 120 / 100 with "Allset") |
 | Key visual tagline | Regular 34 px (square 30) |
 | Footer | Medium 24 px, muted |
 
@@ -128,9 +132,12 @@ Words in images: a title of ≤ 6 words and one line of ≤ 12 words (references
 
 ## Scenes
 
-- Real Allset session (GUI Blender 4.5, clean sandbox, Maya theme, Material Preview with the world hidden so the
-  viewport shows Maya's #5c5c5c), 1920 × 1080 window at this PC's 125 % UI scale.
-- Licensed models only (`CREDITS.md`): a Poly Haven workbench, Kenney's rigged character, Quaternius' RobotExpressive.
+- Real kit session (GUI Blender 4.5, clean sandbox, Maya theme, Material Preview with the world hidden so the
+  viewport shows the theme background), 1920 × 1080 window at this PC's 125 % UI scale.
+- Licensed models only, each with its licence recorded in `CREDITS.md` (the step 125 scene set replaces step 122's).
+- Viewport background (step 125): every 3D View in a shot or clip shows **Maya's gradient** (Alt+B state, top #889db3
+  → bottom #111315, `research/maya/re/background_120.md`), checked after capture by `tools/marketing/bg_check.py`
+  (a flat background fails). Steps 122–124 used Maya's flat #5c5c5c.
 - Bones are shown only in the rigging shot; import helpers (empties) are hidden; glTF quaternion channels converted
   to Rotate X / Y / Z so the Channel Box reads like Maya's.
 - The Blender logo in the top-left corner is painted over (extensions.blender.org terms 2.2).

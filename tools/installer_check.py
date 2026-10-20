@@ -30,7 +30,7 @@ def main(argv=None):
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
     ap.add_argument("--no-build", action="store_true")
     args = ap.parse_args(argv)
-    zip_path = build.DIST / f"allset-{build.manifest_value('version')}.zip"
+    zip_path = build.ext_zip()
     if not args.no_build or not zip_path.exists():
         zip_path = build.main(["--blender", args.blender, "--no-legacy"])
 

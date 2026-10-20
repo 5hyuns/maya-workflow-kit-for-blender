@@ -14,6 +14,7 @@ import traceback
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from ..names import PRODUCT
 from ..operators import keystate
 from ..ui import menu_data, menu_map, menu_sets
 from . import draw, engine
@@ -256,7 +257,7 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
         above, sides, below = hotbox_rows(context)
         self._layout = engine.HotboxLayout(above, center, draw.measure, style=prefs.hotbox_style,
                                            scale=draw.ui_scale(), bounds=draw.window_bounds(context.window, region),
-                                           below=below, side=sides, title="Allset")
+                                           below=below, side=sides, title=PRODUCT)
         draw.activate(context.window, region, hotbox=self._layout, hover=None)
         self._timer = context.window_manager.event_timer_add(_TIMER, window=context.window)
         context.window_manager.modal_handler_add(self)

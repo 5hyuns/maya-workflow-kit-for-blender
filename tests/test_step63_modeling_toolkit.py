@@ -178,7 +178,7 @@ def test_soft_select_maya_units():
     assert abs(ts.proportional_size - 2.0 * k) < 1e-9
     taphold.maya_soft_radius(bpy.context)
     assert abs(sc.allset_soft_radius - 2.0) < 1e-6, "a radius the user set is kept"
-    # cm scene (Allset template units): 5 Maya units = 5 cm
+    # cm scene (Maya Workflow Kit template units): 5 Maya units = 5 cm
     us = sc.unit_settings
     us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
     ts.proportional_size = 1.0

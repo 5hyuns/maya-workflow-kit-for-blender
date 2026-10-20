@@ -1,6 +1,6 @@
 """Step 95: V point snap with the Move manipulator, default and close zoom (research/maya/workflows/pivot_snap.md S4).
 
-Allset cm template, pCube1 at the origin and pCube2 at x = 3 cm, Move tool. V held + drag of pCube1's X arrow to the
+Maya Workflow Kit cm template, pCube1 at the origin and pCube2 at x = 3 cm, Move tool. V held + drag of pCube1's X arrow to the
 screen position of a pCube2 vertex -> pCube1's pivot lands on that vertex projected onto the X axis (t x = 2.5 cm).
 Run with the template view (small cubes) and zoomed in close (the dragged cube fills much of the view,
 docs/steps/step_81.md 「남은 것」). Mouse moves go one per timer tick: Blender recomputes the snap target at most once
@@ -76,7 +76,7 @@ def cubes():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

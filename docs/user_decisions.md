@@ -54,3 +54,28 @@
       (테마, 앱 템플릿, 스플래시, 「Autodesk App Store」 메뉴) 은 중립 이름. README · 환경설정 About · 등록 설명에 영문 상표 고지문
       (`docs/distribution/extensions_audit.md` 「필수 고지문」). 근거: `docs/distribution/extensions_audit.md`, 이름 선택 과정
       `docs/distribution/naming.md`.
+    - **2026-10-20 — 이 결정의 이름 부분은 아래 개정으로 바뀌었다** (위 글은 이전 결정과 그 이유로 남긴다).
+
+    **결정 12 개정 — 이름 (사용자 결정, 2026-10-20, step 125 — delegated 아님)**. 사용자 지시 (원문):
+    「Allset은 브랜드 힘이 없다. 제품 이름은 'Maya Workflow Kit'으로 하고, 저장소 이름에는 Blender를 붙이고
+    (maya-workflow-kit-for-blender), Blender 애드온(스토어) 이름에서는 Blender를 뺀다. 제품 이름과 저장소 이름은 같은 계열이어야 한다.」
+    - 제품 / 스토어 표시 이름 = **Maya Workflow Kit** (manifest `name`; 「Blender」 는 넣지 않는다 — 플랫폼 ToS 2.1).
+    - 저장소 이름 = **Maya Workflow Kit for Blender**, GitHub 슬러그 `maya-workflow-kit-for-blender`
+      (`https://github.com/5hyuns/maya-workflow-kit-for-blender`, 비공개로 만들 예정). README 제목도 「Maya Workflow Kit for Blender」.
+      문서 · README · manifest `website` / 링크의 저장소 표기는 이 슬러그. 로컬 폴더 `C:/Repos/blender-maya-kit` 는 그대로.
+    - 그대로 두는 것: manifest `id = "allset"`, 패키지 `src/allset`, 연산자 / 클래스 접두사 `allset.` / `ALLSET_`, 환경 변수
+      `ALLSET_*`, tagline **"The whole Maya workflow in Blender, in one install"**, 테마 "Studio Grey (Maya-inspired)", 키컨피그
+      "Maya-style". 바뀌는 것: 앱 템플릿 표시 이름 (폴더 `Maya_Workflow_Kit` → File > New > Maya Workflow Kit), 릴리스 zip
+      `maya-workflow-kit-<version>.zip`, 화면의 「Allset」 글자 (환영 창, 환경설정, 스위치, 메뉴, 핫박스, 알림, 마케팅 잠금업).
+    - 바꾼 이유 (사용자): 「Allset」 은 브랜드 힘이 없다 — 이름만으로 누구를 위한 무엇인지 알 수 없다.
+    - **상표 위험 (사용자가 알고 선택함)**: Autodesk 상표 지침은 Autodesk 상표 (Maya) 를 **제품 이름의 일부로 쓰지 말고**, 자기 이름 뒤에
+      「for Maya」 같은 참조 형태로 쓰라고 권한다 (`docs/distribution/extensions_audit.md` 「Maya 상표 결론」; 이전 이름 Allset for
+      Maya Users 가 그 형태였다). 「Maya Workflow Kit」 은 Maya 로 시작하므로 이 권고에서 벗어난다. 대비:
+      - **id 는 중립 유지** (`allset`, URL · 패키지 · 접두사에 maya 없음): Autodesk 가 이름을 바꾸라고 하면 manifest `name`, 템플릿
+        표시 이름, 화면 글자, 문서만 바꾸면 된다 — 업데이트 정체성 (`id`) 과 사용자의 설치는 이어진다.
+      - **스토어 심사에서 이름이 지적되면 대체 이름 후보 = 「Workflow Kit for Maya Users」** (지침의 「for」 형태; 같은 계열 저장소 이름은
+        그때 다시 정한다).
+      - 모든 자료 (README, 스토어 설명, 환경설정 About, 마케팅 이미지 · 글) 에 **비제휴 상표 고지문을 유지**한다
+        (`docs/distribution/extensions_audit.md` 「필수 고지문」).
+      - 이름 바로 뒤 첫 문장에 **「for Maya users, in Blender」 맥락**이 오게 한다 (마케팅 잠금업의 둘째 줄, README · 스토어 설명의 첫
+        문장). 「Maya」 를 이름 안에서 따로 강조색으로 칠하지 않는다.

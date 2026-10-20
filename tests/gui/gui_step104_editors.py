@@ -1,4 +1,4 @@
-"""Step 104 in a real UI: the Allset layout, pCube1 keyed like the audit-7 scene (translateX 0 -> 5 at 1 / 24,
+"""Step 104 in a real UI: the Maya Workflow Kit layout, pCube1 keyed like the audit-7 scene (translateX 0 -> 5 at 1 / 24,
 translateY 3 at 12), Windows > Animation Editors > Graph Editor / Dope Sheet and UV > UV Editor in new windows ->
 Maya menu bars, icon rows, channel names, UV Toolkit (screenshots for research/maya/screens/step104)."""
 
@@ -64,7 +64,7 @@ def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

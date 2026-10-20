@@ -43,7 +43,7 @@ def has_backup():
 
 # Theme preset map relative to the Preferences struct (not bpy.context): the add-on also
 # applies/restores from register()/unregister(), which Blender runs under a restricted context
-# when it reloads the preferences (e.g. on switching to the Allset template, step 42), where
+# when it reloads the preferences (e.g. on switching to the Maya Workflow Kit template, step 42), where
 # context-based paths and operators fail. studio_grey.xml and the backup are full theme dumps, so no
 # reset to the default theme is needed first.
 _MAP = (("themes[0]", "Theme"), ("ui_styles[0]", "ThemeStyle"))

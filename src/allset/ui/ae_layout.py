@@ -282,7 +282,7 @@ NUCLEUS = [
     S("Scale Attributes", True,
       ("prop", "data", "space_scale", "Space Scale")),
 ]
-NUCLEUS_NOTE = ("Blender has no nucleus node: Allset writes these values to the scene gravity, the rigid body world "
+NUCLEUS_NOTE = ("Blender has no nucleus node: Maya Workflow Kit writes these values to the scene gravity, the rigid body world "
                 "and every cloth.")
 
 PLAIN_MATERIAL = [

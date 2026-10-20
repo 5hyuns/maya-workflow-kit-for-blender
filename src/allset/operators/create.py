@@ -9,7 +9,7 @@ and two are unverified [U] (docs/steps/step_10.md 「계획」 6).
 
 Size rule (decision 8, docs/steps/step_21.md 「계획」, delegated): a Maya length of 1
 is one scene display unit (``units.maya_unit``), like ``cmds.polyCube()`` and a
-Maya FBX import: pCube1 shows 1 cm in the Allset template (0.01 BU) and with
+Maya FBX import: pCube1 shows 1 cm in the Maya Workflow Kit template (0.01 BU) and with
 the "Maya Units" preference (1 BU). Lengths below are in Maya units.
 """
 

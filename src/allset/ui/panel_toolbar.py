@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya viewport panel bar in the Allset layout: the panel menu bar alone, and the panel toolbar under it.
+"""Maya viewport panel bar in the Maya Workflow Kit layout: the panel menu bar alone, and the panel toolbar under it.
 
 Maya 2022 (research/maya/screens/top113/t02_top.png, _top113.json "panel"): every model panel has a 19 px menu bar
 (View Shading Lighting Show Renderer Panels) and under it a toolbar of 16 px icons on a 19 px pitch in groups —
@@ -8,7 +8,7 @@ colour management view. Blender's 3D View header mixed Maya's menus with its own
 transform orientation, pivot, snapping, proportional editing, overlays and shading (user report 2026-10-19,
 docs/steps/step_113.md).
 
-In 3D Views of the Allset layout (a screen with the Maya strip) the class's own draw of ``VIEW3D_HT_header`` is
+In 3D Views of the Maya Workflow Kit layout (a screen with the Maya strip) the class's own draw of ``VIEW3D_HT_header`` is
 replaced by the Maya menu bar and the tool header's by the Maya panel toolbar (like ``editor_chrome``: only the
 class's own draw function, so UI appended by others still draws; restored on unregister). Other layouts keep
 Blender's header with the Maya menus (``panel_menus``). Icons are kit-drawn (``status_icons``), no Maya assets.
@@ -317,7 +317,7 @@ def draw_toolbar(layout, context):
 # --- header patch ---------------------------------------------------------------------------------------
 
 def maya_layout(context):
-    """A 3D View of the Allset layout (its screen has the Maya strip)."""
+    """A 3D View of the Maya Workflow Kit layout (its screen has the Maya strip)."""
     from .shelf import strip_area
     area = context.area
     return (area is not None and area.type == 'VIEW_3D' and context.screen is not None

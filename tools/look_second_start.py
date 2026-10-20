@@ -19,8 +19,8 @@ def _check():
     module = next((m for m in prefs.addons.keys() if m.endswith("allset")), None)
     addon = prefs.addons[module].preferences if module else None
     results = [
-        {"name": "second start opens the Maya layout (app template Allset)",
-         "ok": prefs.app_template == "Allset"},
+        {"name": "second start opens the Maya layout (app template Maya_Workflow_Kit)",
+         "ok": prefs.app_template == "Maya_Workflow_Kit"},
         {"name": "Maya theme still on", "ok": bool(addon and addon.maya_theme)
          and prefs.themes[0].name == "Studio Grey (Maya-inspired)"},
         {"name": "Blender splash off", "ok": not prefs.view.show_splash},

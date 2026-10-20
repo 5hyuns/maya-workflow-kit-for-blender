@@ -178,7 +178,7 @@ def test_menus_and_notices():
     assert m["File/Reference Editor"] == ("allset.open_editor", {"ui_type": 'OUTLINER', "display_mode": 'LIBRARIES'})
     assert m["File/Project Window"] == "allset.project_window" and m["File/Set Project..."] == "allset.set_project"
     assert m["File/Recent Projects"] == ("menu", "ALLSET_MT_recent_projects")
-    assert "Allset project" in notices.NOTICES["File/Set Project..."][0]
+    assert "Maya Workflow Kit project" in notices.NOTICES["File/Set Project..."][0]
     assert "ns:name" in notices.NOTICES["File/Create Reference..."][1]
     # Recent Projects menu lists the prefs entries
     _reset_prefs()

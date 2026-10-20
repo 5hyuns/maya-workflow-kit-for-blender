@@ -49,6 +49,15 @@
 - **Allset for Maya Users** (id `allset`). tagline: **The whole Maya workflow in Blender, in one install** (50자). 위 Switchover 안은 폐기.
 - extensions.blender.org에 같은 이름 없음. 다른 업종에 Allset(음식 픽업 앱)이 있지만 3D 도구와는 분야가 다르다.
 
+## 이름 개정 (사용자 결정 2026-10-20, step 125 — `docs/user_decisions.md` 12 개정)
+- 사용자: 「Allset은 브랜드 힘이 없다.」 → 표시 / 스토어 이름 **Maya Workflow Kit** (Blender 없음, ToS 2.1), 저장소 **Maya Workflow Kit for
+  Blender** (`https://github.com/5hyuns/maya-workflow-kit-for-blender`). id `allset`, 패키지, 접두사, tagline 은 그대로.
+- **상표 위험 (사용자가 알고 선택)**: 위 「Maya 상표 결론」 의 첫 줄 — Autodesk 지침은 제품 이름에 Maya 를 넣지 말고 「for Maya」 형태를 권한다 —
+  에서 벗어난다. 대비: id 를 중립 (`allset`) 으로 두어 Autodesk 가 요구하면 표시 이름만 바꾼다; 스토어 심사에서 지적되면 대체 이름
+  **「Workflow Kit for Maya Users」**; 아래 필수 고지문은 모든 자료에 유지; 이름 바로 뒤 첫 문장에 「for Maya users, in Blender」 맥락;
+  이름 안의 「Maya」 를 따로 강조하지 않는다.
+- 플랫폼 검색은 이 이름으로 다시 하지 않았다 [U] — 업로드 전에 같은 이름이 없는지 확인할 것.
+
 ## 최종 상태 (step 117, 0.2.0 제출 직전)
 
 OK = 코드/파일로 충족하고 검증함, 설명함 = 남겨 두고 등록 설명(`docs/distribution/listing.md` B·D)에 이유를 적음.
@@ -60,10 +69,10 @@ OK = 코드/파일로 충족하고 검증함, 설명함 = 남겨 두고 등록 �
 | 권한 사유 ≤ 64 자, 마침표 없음, 맞는 권한 [M][MG] | OK | `files` = "Layout template, settings backup, shelves, Maya project folders" (63); network 없음 |
 | 지원 버전 표기 [M] | OK | 4.5.0 ≤ Blender < 5.3.0 (4.5.x – 5.2.x): 4.5.4 / 5.0.1 / 5.1.2 / 5.2.2 헤드리스·GUI·설치 왕복 통과 (`docs/compat_5x.md`, step 118); 4.2.23 은 실패가 있어 제외 (step 117) |
 | GPL-3.0-or-later [ToS 1.1][L] | OK | `LICENSE` (루트와 `src/allset/` 동일, test_step13) |
-| 바이너리·자산 CC0 [ToS 1.2] | OK | manifest `SPDX:CC0-1.0`, `src/allset/ASSETS_LICENSE.txt` 목록 (test_step114); 등록 미디어도 킷 스크립트가 만든 것 (`tools/make_splash.py --media`, `tools/listing_shots.py`) |
+| 바이너리·자산 CC0 [ToS 1.2] | OK | manifest `SPDX:CC0-1.0`, `src/allset/ASSETS_LICENSE.txt` 목록 (test_step114); 등록 미디어도 킷 스크립트가 만든 것 (`tools/make_splash.py --media`, `tools/marketing/make_marketing.py`) |
 | copyright 필드 [ToS 1.3] | OK | `2026 ohnsk` |
-| 이름에 "Blender" 금지, Blender 로고 금지 [ToS 2.1–2.2] | OK | 이름 "Allset for Maya Users"; 아이콘·대표 이미지는 킷 그림 (로고 없음), 스크린샷은 Blender 창이지만 로고 노출은 상단 메뉴의 작은 Blender 메뉴 아이콘뿐 (Blender UI 그 자체) |
-| 보증·제휴 암시 금지 [ToS 2.3], Autodesk 상표 지침 | OK | 고지문을 설명 B 「Trademarks」, README, 환경설정 About, 대표 이미지 하단에; id·URL·패키지에 maya 없음 (decision 12) |
+| 이름에 "Blender" 금지, Blender 로고 금지 [ToS 2.1–2.2] | OK | 이름 "Maya Workflow Kit" (step 125; 이전 "Allset for Maya Users"); 아이콘·대표 이미지는 킷 그림 (로고 없음), 스크린샷은 Blender 창이지만 로고 노출은 상단 메뉴의 작은 Blender 메뉴 아이콘뿐 (Blender UI 그 자체) |
+| 보증·제휴 암시 금지 [ToS 2.3], Autodesk 상표 지침 | OK | 고지문을 설명 B 「Trademarks」, README, 환경설정 About, 대표 이미지 하단에; id·URL·패키지에 maya 없음 (decision 12); 표시 이름은 step 125 부터 Maya 로 시작 — 위 「이름 개정」 의 위험·대체 이름 |
 | No surprises: 하는 일 전부 설명 [ToS 3.1] | 설명함 | 설명 B: 워크플로우 6묶음, 켤 때 바뀌는 것 (opt-in 전에는 없음), 되돌리는 법, 확장 밖에 쓰는 경로, exec / execfile / ctypes 이유; D: UI 클래스 교체 표 |
 | 순수 Python, 난독화 없음 [ToS 3.5–3.6] | OK | `.py` 와 킷 자산만 (zip 목록: `tools/build.py`) |
 | OS·다른 소프트웨어·다른 확장·Blender 내부 모듈 [ToS 3.9][G] | 설명함 | Blender UI 클래스: own draw 교체 / helper / poll 감싼 재등록 — Maya 모드에서만, 끄면 원상 (test_enable_disable, test_step115 의 다른 애드온 append 보존); ctypes `GetAsyncKeyState` 읽기 전용 (Windows); `bpy.utils.execfile` = Blender 동봉 IC 키맵 데이터 |
@@ -78,7 +87,7 @@ OK = 코드/파일로 충족하고 검증함, 설명함 = 남겨 두고 등록 �
 | `keyconfigs.addon` None 처리 [MG] | OK | `keymap/__init__.py`, `switch.py` 둘 다 None 이면 건너뜀 |
 | 확장 빌드에 `bl_info` 없음 [A] | OK | `tools/build.py legacy_bl_info()` 는 레거시 zip 만 (test_step114) |
 | 리뷰 이미지 품질, 무거운 GIF 금지 [MG] | OK | PNG 6장 1600×900 + 대표 1920×1080 + 아이콘 256×256, GIF 없음 (`docs/distribution/media/`) |
-| `blender --command extension validate <zip>` [MG] | OK | step 117: `dist/allset-0.2.0.zip` validate 통과 (release_check) |
+| `blender --command extension validate <zip>` [MG] | OK | step 117: `dist/allset-0.2.0.zip` validate 통과 (release_check; step 125 부터 zip 이름 `maya-workflow-kit-<ver>.zip`) |
 | ruff 명령 [MG] `find . -iname "*.py" \| xargs ruff check --output-format=concise --ignore=E402,E741,E731` | OK | 확장 소스 (`src/allset`) 에서 지적 10 건 수정 → "All checks passed!" (ruff 0.8.6 = 기본 규칙 E4/E7/E9/F). 최신 ruff 0.17 은 기본 규칙이 넓어져 스타일 지적 (RUF012 등) 이 수백 건 — 오류가 아니라 남김 (step_117.md) |
 | 바이너리 / 위반 감사 항목 (위 「현재 코드 감사」) | OK | sys.modules → step 114, CC0 → 114, 템플릿 코드 → 115 (코드 없는 템플릿, 제거 시 삭제), opt-in·자동 저장 → 115, draw 교체 → 115 (own-draw), ctypes → 설명함, "Autodesk App Store" 라벨 → 111 (Blender Extensions), bl_info → 114 |
 | 깨끗한 설정에서 설치→활성화→opt-in→비활성화→제거 후 남는 파일 0 | OK | `tools/release_check.py leftover_check` (step 117): 남는 것은 Blender 자신의 `userpref.blend`, `extensions/.cache` 뿐 |

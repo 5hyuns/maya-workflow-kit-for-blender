@@ -524,7 +524,7 @@ class ALLSET_OT_menu_tear_off(bpy.types.Operator):
             try:
                 tear_menu(bpy.context, menu, label)
             except Exception as ex:
-                print("Allset: menu tear-off failed:", ex)
+                print("Maya Workflow Kit: menu tear-off failed:", ex)
             return None
         bpy.app.timers.register(later, first_interval=0.0)
         return {'FINISHED'}

@@ -1,7 +1,12 @@
 # 배포 방식 — 조사·비교·추천 (step 61)
 
-> **2026-10-19 사용자 결정 (`docs/user_decisions.md` 12)**: extensions.blender.org 에 무료로, 이름 **Allset for Maya
-> Users** (id `allset`). 아래의 `maya_kit` / "Maya Kit" 는 step 111 전 이름이다. 등록 감사: `docs/distribution/extensions_audit.md`.
+> **2026-10-20 사용자 결정 (`docs/user_decisions.md` 12 개정, step 125)**: 표시 이름 **Maya Workflow Kit** (스토어 이름에 Blender 없음),
+> 저장소 **Maya Workflow Kit for Blender** (`https://github.com/5hyuns/maya-workflow-kit-for-blender`), id `allset` 그대로, 릴리스 zip
+> `maya-workflow-kit-<version>.zip`. 이 이름은 Autodesk 지침의 「for」 형태가 아니다 — 위험과 대체 이름 후보 「Workflow Kit for Maya
+> Users」 는 결정 12 개정에.
+> 2026-10-19 사용자 결정 (`docs/user_decisions.md` 12): extensions.blender.org 에 무료로, 이름 Allset for Maya Users (id `allset`) —
+> 이름 부분은 위 개정으로 바뀜. 아래의 `maya_kit` / "Maya Kit" 는 step 111 전, "Allset" 은 step 125 전 이름이다. 등록 감사:
+> `docs/distribution/extensions_audit.md`.
 
 사용자 요청 (2026-10-18): 「나중에 addon이나 exe 설치, 배포가 어떤 방식이 좋을지 고민해 봐라.」
 조사·비교·준비만 했다. **업로드·공개·결제 설정·서명은 하지 않았다** — 결정 항목은 `docs/user_decisions.md` 11.
@@ -35,7 +40,7 @@
 - **ToS 1.2 바이너리 자산 CC0**: 킷의 바이너리 4개는 모두 킷 스크립트가 만든 것 — `startup.blend` (`tools/make_startup.py`),
   `splash.png` / `splash_2x.png` / `welcome.png` (`tools/make_splash.py`, Blender 번들 글꼴로 렌더한 글자 포함), `maya.xml` 은 텍스트
   (`tools/make_theme.py`). Maya 자료는 들어 있지 않음 (결정 6). 저작권자가 CC0 로 내놓기로 하면 조건 충족 → 결정 11-d.
-- **ToS 2.1** 이름에 "Blender" 금지 — "Allset" 는 해당 없음. **2.4** 다른 회사 로고는 그 회사 지침이 허용할 때만 — Autodesk 지침상 Maya
+- **ToS 2.1** 이름에 "Blender" 금지 — 표시 이름 "Maya Workflow Kit" 에는 없음 (저장소 이름 "… for Blender" 는 스토어 밖). **2.4** 다른 회사 로고는 그 회사 지침이 허용할 때만 — Autodesk 지침상 Maya
   로고·아이콘 불가 (킷은 쓰지 않음).
 - **ToS 3.1 "No surprises"**: 설명에 하는 일을 전부 — 킷은 키맵 (Maya 키컨피그 활성), 탐색·언두 환경설정 (백업·복원), 테마 (선택),
   레이아웃 템플릿 설치 (선택), 상단 바·메뉴·헤더 그리기 교체를 바꾼다 → 설명 초안에 그대로 적을 것 (「공개 전 체크리스트」).
@@ -47,7 +52,7 @@
   (`bpy.utils.extension_path_user`), `sys` 읽기 전용, background 에서 `keyconfigs.addon` None 처리, `bl_ext`/`user_default`/`blender_org`
   하드코딩 금지. 킷 상태: 네트워크·업데이터 코드 없음, 저장소 이름 하드코딩 없음, 쓰기 데이터 (`switch_snapshot.json`, 테마 백업,
   `shelves.json`) 는 `extension_path_user` (CONFIG 는 레거시 애드온 빌드의 대체 경로일 뿐) — `tests/test_step61_distribution.py` 가 지킨다.
-  **예외 하나**: Maya 레이아웃 = 앱 템플릿을 `scripts/startup/bl_app_templates_user/Allset` 로 복사 (사용자가 Make Blender Maya /
+  **예외 하나**: Maya 레이아웃 = 앱 템플릿을 `scripts/startup/bl_app_templates_user/Maya_Workflow_Kit` (step 125 전 `Allset`) 로 복사 (사용자가 Make Blender Maya /
   Install Maya Layout 을 누를 때만, 끄기·Restore·Remove 때 삭제). 앱 템플릿은 확장 종류가 아니라 (`type` = add-on / theme) 다른 방법이
   없다 — 설명에 명시.
 - manifest 규칙 (getting_started.html): `tagline` ≤ 64자·끝 문장부호 없음, 권한 설명 ≤ 64자·끝 문장부호 없음, 선택 필드는 비우지 말고 빼기,
@@ -61,7 +66,7 @@
   https://docs.blender.org/manual/en/latest/advanced/extensions/creating_repository/static_repository.html —
   `blender --command extension server-generate --repo-dir DIR --html` → `index.json` + `index.html` (끌어 놓기 링크 포함).
   **`python tools/build_repo.py`** 가 이것을 `dist/repo/` 에 만든다 (zip + index.json + index.html; 실측).
-- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `allset-x.y.z.zip?repository=./index.json&blender_version_min=4.5.0`
+- 사용자: Repositories > + > Add Remote Repository 에 `<호스트>/index.json`, 또는 웹 페이지의 `maya-workflow-kit-x.y.z.zip?repository=./index.json&blender_version_min=4.5.0`
   링크를 Blender 창에 끌어 놓기 (설치 + 저장소 등록), 또는 명령줄 `blender --command extension repo-add --url …` (설치기가 쓸 수 있음).
 - 비공개 배포가 필요하면 Access Token 지원 (Superhive·Poly Hammer 가 같은 방식) https://docs.polyhammer.com/poly-hammer-portal/blender-extension-repo
 - **실측 (`python tools/repo_check.py`, 깨끗한 샌드박스 + 「사용자 설정」 시드, `file:///…/index.json`)**: repo-add + sync + install --enable
@@ -130,14 +135,14 @@
   → `research/maya/screens` 는 홍보에 쓰지 않음 (결정 6 과 같은 방향).
 - 현실: 플랫폼에 "Maya" 테마·"Maya Pivot", Superhive 에 "Maya Config Pro" 가 있다 — 묵인이지 허락이 아니다. 무료 애드온에 대한 Autodesk 의 집행
   사례는 못 찾음 [U].
-- 결론 [I]: 지금 이름 "Allset" (와 id `allset`) 는 지침의 "Don't" 에 해당. 공개 전에 **자기 이름 + "for Maya users" 류 설명**으로 바꾸는 것이
+- 결론 [I] (step 61 당시 이름 "Maya Kit" / `maya_kit` 에 대한 것; step 125 의 "Maya Workflow Kit" 도 같은 "Don't" 에 해당 — 사용자가 위험을 알고 선택, 결정 12 개정): 지금 이름은 지침의 "Don't" 에 해당. 공개 전에 **자기 이름 + "for Maya users" 류 설명**으로 바꾸는 것이
   안전하다. **`id` 는 업데이트의 정체성**이라 공개 뒤에 바꾸면 기존 사용자에게 업데이트가 끊긴다 → 첫 공개 전에 정할 것 (결정 11-a).
   킷 안 화면 문구 (상단 바 「Maya | Blender」, 메뉴 이름 등) 는 Maya 를 가리키는 서술적 사용이라 유지 [I].
 
 ## 추천 (delegated)
 
 1. **이름·id 먼저** (11-a): 공개 전에 한 번. Autodesk 지침에 맞게 자기 이름 + tagline "Maya-style keymap, UI and workflow for Maya users"
-   + 설명 끝 상표 각주. 바꾸면 manifest `id`/`name`, 스플래시 글자 (`tools/make_splash.py`), 템플릿 이름 `Allset` 을 함께.
+   + 설명 끝 상표 각주. 바꾸면 manifest `id`/`name`, 스플래시 글자 (`tools/make_splash.py`), 앱 템플릿 이름을 함께.
 2. **무료 GPL 핵심판 = (b) 자체 저장소로 시작**: 심사 없이 바로, 앱 안 설치·업데이트 그대로 (실측 10/10), 비용 0. 첫 사용자들로 거친 곳을 고친다.
 3. **그다음 (a) 플랫폼 제출**: 도달 범위가 가장 넓다. 준비: 바이너리 CC0 선언 (11-d), ToS 3.1 설명 (모든 변경 + 되돌리기), 3.9 대비 설명
    (그리기 교체와 끄면 복원). 거절돼도 (b) 가 그대로 남는다. 두 곳에 같은 `id` 로 두면 사용자는 한 곳에서만 받는다 (저장소마다 따로 설치됨) [I].

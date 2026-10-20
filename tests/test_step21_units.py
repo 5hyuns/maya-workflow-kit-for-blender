@@ -2,7 +2,7 @@
 
 A Maya length of 1 = one scene display unit: Create / shelf / menu / marking menu
 (``allset.create``), ``cmds.polyCube()`` and a Maya FBX import give the same size,
-with the Allset template units (m + cm display), with "Maya Units" on and in a
+with the Maya Workflow Kit template units (m + cm display), with "Maya Units" on and in a
 factory (m) scene. Plan: docs/steps/step_21.md 「계획」.
 """
 
@@ -181,7 +181,7 @@ def _template_view():
 
 
 def test_template_view_is_maya_persp_and_rescales_with_maya_units():
-    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "Allset" / "startup.blend"
+    path = Path(import_module(kit.MODULE).__file__).parent / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path))
     v3d = _template_view()
     rv3d = v3d.region_3d

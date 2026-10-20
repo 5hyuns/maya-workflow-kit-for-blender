@@ -1,17 +1,20 @@
 # Draft: top of the GitHub README with the GIFs (step 123)
 
+> **Step 125:** merged into the repository `README.md` (title "Maya Workflow Kit for Blender"). This file stays as the
+> short paste-ready block for other pages; the README is the reference.
+
 Paste-ready Markdown for the English README once the repository is public (paths are relative to the repository root;
-GitHub renders GIFs inline — keep each ≤ 5 MB, `gif/*.gif` are 1.0 – 4.9 MB). Not for extensions.blender.org (MP4 only
-there). The Korean half of `README.md` keeps its own screenshots.
+GitHub renders GIFs inline — keep each ≤ 5 MB, `gif/*.gif` are ≤ 4 MB since step 124). Not for extensions.blender.org (MP4 only
+there). (Step 123 note — the README is English-only since step 125.)
 
 ---
 
-![Allset for Maya Users — The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
+![Maya Workflow Kit — for Maya users, in Blender. The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
 
 **The tutorial ends. Your Channel Box comes back.**
 
-Allset brings the Maya workflow to Blender: hotbox, marking menus, Channel Box, menu sets, shelves and option boxes.
-It changes nothing until you choose Maya, and one click on the Maya | Blender switch gives you plain Blender back.
+For Maya users, in Blender: Maya Workflow Kit brings the hotbox, marking menus, Channel Box, menu sets, shelves and
+option boxes. It changes nothing until you choose Maya; one click on the Maya | Blender switch gives plain Blender back.
 Free and open source (GPL) · Blender 4.5 – 5.2.
 
 [Get it on extensions.blender.org](<listing URL>) · [half-minute tour (video)](docs/distribution/marketing/clips/00_trailer.mp4)
@@ -29,8 +32,8 @@ Free and open source (GPL) · Blender 4.5 – 5.2.
 
 **Maya or Blender, one click** — following a Blender tutorial? Click Blender in the top bar, follow along, click Maya.
 
-<sub>Scenes use CC0 models by Poly Haven, Kenney and Quaternius (`docs/distribution/marketing/CREDITS.md`). Autodesk and
-Maya are registered trademarks of Autodesk, Inc.; Allset is an independent project, not affiliated with or endorsed by
+<sub>Scene models: third-party assets under their own licences, credited in `docs/distribution/marketing/CREDITS.md`. Autodesk and
+Maya are registered trademarks of Autodesk, Inc.; Maya Workflow Kit is an independent project, not affiliated with or endorsed by
 Autodesk or the Blender Foundation.</sub>
 
 ---

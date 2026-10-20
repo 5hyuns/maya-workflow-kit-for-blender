@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 125 (홍보 장면 모델 교체 + 이름 Maya Workflow Kit + README, 사용자 지시 10-20) 완료 — `docs/steps/step_125.md`.
+  - 이름: 보이는 글자 전부 Maya Workflow Kit (`src/allset/names.py`, 템플릿 폴더 `Maya_Workflow_Kit`, zip `maya-workflow-kit-<ver>.zip`),
+    내부 id `allset` 그대로; 결정 12 개정 (사용자 결정, 상표 위험, 대체 이름 Workflow Kit for Maya Users); README = 「Maya Workflow Kit for
+    Blender」 (https://github.com/5hyuns/maya-workflow-kit-for-blender, 비공개 예정, manifest website 없음).
+  - 장면: Blender Studio Rain / Pack Bot / Security Bot 리그 + 4.5 스플래시 DOGWALK (CC BY 4.0), Cube Diorama · Poly Haven HDRI (CC0),
+    `assets.json` 에 라이선스 문구, CREDITS.md, 이미지·영상에 작은 크레딧 + 상표 고지. 모든 Maya 모드 뷰포트 = Maya 그라디언트
+    (`bg_check.py` 가 단색이면 FAIL).
+  - 검증: 헤드리스 894/894, release_check / repo_check 11/11 / installer_check 9/9, 촬영·합성 검사 PASS.
+  - 남은 것: pivot_snap 재녹화 불안정 (배포본은 정상 녹화본), manual_checks 「Step 125」.
+  - **바로 다음 할 일**: step 126 = 키 비주얼 기울인 화면 가로 늘어남 (사용자 버그).
+
 - Step 124 (홍보 디자인 재작업, 사용자 피드백 10-20) 완료 — `docs/steps/step_124.md`, 감수 `docs/distribution/marketing/design_review.md`.
   - impeccable critique (A/B 두 서브에이전트) 22/32 → 반영: accent = Maya 로고 틸 #00bcbb (설치본 아이콘 픽셀) + Autodesk Hello Yellow
     (동작 순간) + 검정, 대체 팔레트 `maya-ui`, 상표 메모 (`style.md`); 잠금업 `compose.lockup()` (for Maya Users = 0.66 ×) 모든 형식;

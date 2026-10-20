@@ -73,7 +73,7 @@ def drag(x0, x1, shift=False):
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

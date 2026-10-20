@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya projects, scene saving and references (docs/steps/step_69.md, research/maya/workflows/scene.md).
 
-Blender has no project system. A Allset project is a root folder with Maya's default sub-folders (Project Window,
+Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's default sub-folders (Project Window,
 research/maya/workflows/shots/scene_01_win1.png) and a marker file; the current project and Recent Projects live in
 the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 
@@ -23,6 +23,8 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, StringProperty
 
+from ..names import PRODUCT
+
 # Maya's default project folders (scene_01_win1.png: Scenes, Templates = assets, Images, Source Images, Render Data,
 # Clips, Sound, Scripts, Disk Cache = data, Movies, ..., AutoSave); "cache" for Blender's simulation caches.
 FOLDERS = ("scenes", "assets", "images", "sourceimages", "renderData", "clips", "sound", "scripts", "data", "movies",
@@ -32,7 +34,7 @@ RECENT_MAX = 10
 DIALOG_WIDTH = 420
 # Blender's factory render output (measured '/tmp\\' on Windows).
 DEFAULT_RENDER_PATHS = {"", "/tmp\\", "/tmp/", "//"}
-NOTICE = ("Blender has no project system: Allset keeps this folder as your project. File dialogs open in its "
+NOTICE = ("Blender has no project system: Maya Workflow Kit keeps this folder as your project. File dialogs open in its "
           "scenes folder, renders go to its images folder and paths are saved relative (//).")
 
 
@@ -50,13 +52,14 @@ def _norm(path):
 
 # Maya's default project is <Documents>/maya/projects/default, made at first start, so a dialog never starts in a
 # bare Documents folder (step 102 「계획」 2, research/maya/re/file_io.md §1). The kit's own default sits next to it
-# under allset/ (the user's real Maya folder is never written); ALLSET_PROJECTS_DIR moves it (test sandboxes).
+# under "Maya Workflow Kit/" (the product name, step 125; the user's real Maya folder is never written);
+# ALLSET_PROJECTS_DIR moves it (test sandboxes).
 DEFAULT_NAME = "default"
 
 
 def projects_dir():
     return os.environ.get("ALLSET_PROJECTS_DIR") or \
-        os.path.join(os.path.expanduser("~"), "Documents", "allset", "projects")
+        os.path.join(os.path.expanduser("~"), "Documents", PRODUCT, "projects")
 
 
 def default_root():

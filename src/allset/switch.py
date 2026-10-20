@@ -268,7 +268,7 @@ def _window_override(window):
 
 
 def is_maya_workspace(ws):
-    """A workspace that already is the Maya layout (appended by the switch or a Allset file)."""
+    """A workspace that already is the Maya layout (appended by the switch or a Maya Workflow Kit file)."""
     if ws is None:
         return False
     if PREV_KEY in ws:
@@ -481,7 +481,7 @@ def finish_interrupted():
 
 
 def restore_blender(context=None):
-    """Everything back as before Allset ("Restore Blender Settings"): Maya mode off, the
+    """Everything back as before Maya Workflow Kit ("Restore Blender Settings"): Maya mode off, the
     Make Blender Maya options off, the layout template removed, the snapshot applied."""
     prefs = _prefs_addon()
     if prefs.maya_mode:
@@ -514,7 +514,7 @@ def _apply_pending():
         try:
             set_mode(on, layout=layout)
         except Exception as ex:   # never leave a timer raising forever
-            print("Allset: switch failed:", ex)
+            print("Maya Workflow Kit: switch failed:", ex)
             import traceback
             traceback.print_exc()
     return None
@@ -554,7 +554,7 @@ class ALLSET_OT_switch_mode(bpy.types.Operator):
 
 
 class ALLSET_OT_restore_blender(bpy.types.Operator):
-    """Turn Maya mode off and put every preference Allset changed back as it was before
+    """Turn Maya mode off and put every preference Maya Workflow Kit changed back as it was before
     (keymap, theme, navigation, splash, UI scale), remove the Maya layout template"""
     bl_idname = "allset.restore_blender"
     bl_label = "Restore Blender Settings"

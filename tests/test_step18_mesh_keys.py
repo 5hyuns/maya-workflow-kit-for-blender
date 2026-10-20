@@ -157,7 +157,7 @@ def test_bevel_exec_width_is_in_maya_units():
     us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
     try:
         ob = _cube()
-        ob.scale = (0.005, 0.005, 0.005)             # a 1 cm cube, like the Allset pCube1
+        ob.scale = (0.005, 0.005, 0.005)             # a 1 cm cube, like the Maya Workflow Kit pCube1
         bpy.ops.object.transform_apply(scale=True)
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_mode(type='EDGE')

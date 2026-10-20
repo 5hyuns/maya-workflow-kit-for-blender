@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Allset: make Blender feel like Maya (keymap, interaction, UI, concepts).
+"""Maya Workflow Kit: make Blender feel like Maya (keymap, interaction, UI, concepts).
 
 Shipped as one Blender 4.2+ extension (docs/user_decisions.md #3); Blender reads ``blender_manifest.toml``. The
 legacy add-on zip gets its ``bl_info`` from ``tools/build.py`` (step 114: the extension build carries none, as the

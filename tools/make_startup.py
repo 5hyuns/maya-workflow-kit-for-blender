@@ -2,7 +2,7 @@
 
     python tools/make_startup.py          # re-runs itself in `blender --factory-startup` (a window opens briefly)
 
-Writes src/allset/app_template/Allset/startup.blend. Layout and reasons: docs/steps/step_5.md,
+Writes src/allset/app_template/Maya_Workflow_Kit/startup.blend. Layout and reasons: docs/steps/step_5.md,
 docs/steps/step_49.md 「계획」 (research/maya/ui_layout.md §2 General layout, widget sizes from
 research/maya/screens/_maya_ui_dump.json). It runs in a GUI Blender because the factory right column
 (Outliner + Properties) can only be removed there: in `-b` screen.area_close hangs and area_join crashes
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
+OUT = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
 
 # Maya widget sizes at effective scale 1.0 (research/maya/screens/_maya_ui_dump.json, ui_layout.md:122-127):
 # Outliner 260, Channel Box / Layer Editor dock 260 (+ tab strip), Time Slider 36 (the timeline WINDOW region); the

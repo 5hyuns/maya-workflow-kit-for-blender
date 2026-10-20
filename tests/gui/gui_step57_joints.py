@@ -1,4 +1,4 @@
-"""Step 57 in a real UI, Maya rigging_01 hand order on the Allset layout: Skeleton > Create Joints -> three clicks in
+"""Step 57 in a real UI, Maya rigging_01 hand order on the Maya Workflow Kit layout: Skeleton > Create Joints -> three clicks in
 the persp view (ground plane) -> Enter -> pose mode, joint1 > joint2 > joint3, Channel Box lead joint3 -> Up Up (pick-walk)
 -> joint1 -> Skeleton > Mirror Joints (option dialog, YZ) -> six joints. Plan: docs/steps/step_57.md 「계획」 4."""
 
@@ -55,7 +55,7 @@ def skeleton():
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step

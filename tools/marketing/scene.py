@@ -2,7 +2,16 @@
 
 Runs inside a GUI Blender started with --enable-event-simulate (tests/gui/sim.py). The scene is built from the
 licensed models in research/marketing_assets/ (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md):
-a Poly Haven workbench with a drill and props, Kenney's rigged character and Quaternius' RobotExpressive.
+Blender Studio's Rain, Pack Bot and Security Bot rigs, the Blender 4.5 splash scene DOGWALK, Cube Diorama props and
+the Poly Haven Studio Small 09 HDRI (step 125; research/marketing_assets/INVENTORY_125.md).
+
+Viewport background (step 125, user instruction 2026-10-20): every Maya-mode 3D View in a promotional capture shows
+Maya's gradient background — the "gradient" state of the Alt+B cycle (src/allset/operators/key_batch3.py,
+research/maya/re/background_120.md: top #889db3, bottom #111315). ``maya_look()`` turns it on and a persistent timer
+(``GRADIENT_KEEPER``) keeps every 3D View of every window in that state, so views made later in a session (four-view
+layout, Graph Editor split, switch back from Blender, new windows) are gradient before they are drawn; captures are
+checked afterwards by tools/marketing/bg_check.py (``viewport_rects`` = what to check). Plain Blender (Blender mode)
+keeps Blender's own theme: the keeper only acts while Maya mode is on and the kit's Maya theme is applied.
 """
 
 import math
@@ -15,6 +24,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from mathutils import Euler, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # bg_check.py
 sys.path.insert(0, str(ROOT / "tests" / "gui"))
 from sim import MODULE, view3d, win  # noqa: E402
 
@@ -72,104 +82,399 @@ def select(obs, active=None):
     bpy.context.view_layer.objects.active = active or (obs[-1] if obs else None)
 
 
-def frame(obs, zoom=1.0, rot=None):
-    """Frame objects in the main view (Maya F), then move the camera back by ``zoom``."""
-    area, region = view3d()
-    rv3d = area.spaces.active.region_3d
-    if rot is not None:
-        rv3d.view_rotation = Euler([math.radians(a) for a in rot]).to_quaternion()
-    rv3d.view_perspective = 'PERSP'
-    pts = [o.matrix_world @ Vector(c) for o in obs if o.type in {'MESH', 'ARMATURE'} for c in o.bound_box]
-    lo = Vector([min(p[i] for p in pts) for i in range(3)])
-    hi = Vector([max(p[i] for p in pts) for i in range(3)])
-    rv3d.view_location = (lo + hi) / 2
-    rv3d.view_distance = (hi - lo).length * 1.25 * zoom
-
-
 def bounds(objs):
-    pts = [o.matrix_world @ Vector(c) for o in objs if o.type == 'MESH' for c in o.bound_box]
+    """World bounding box of the visible meshes of ``objs`` (evaluated: modifiers / GN / armature pose included)."""
+    dg = bpy.context.evaluated_depsgraph_get()
+    pts = []
+    for o in objs:
+        if o.type not in {'MESH', 'CURVE'} or not o.visible_get():
+            continue
+        ev = o.evaluated_get(dg)
+        pts += [ev.matrix_world @ Vector(c) for c in ev.bound_box]
     lo = Vector([min(p[i] for p in pts) for i in range(3)])
     hi = Vector([max(p[i] for p in pts) for i in range(3)])
     return lo, hi
 
 
-def place(root, objs, height=None, pos=(0, 0, 0), rot_z=0.0, floor=True):
-    """Scale an imported hierarchy to ``height`` metres and stand it at ``pos`` (its lowest point on z = pos.z)."""
+def frame(obs, zoom=1.0, rot=None, offset=(0, 0, 0)):
+    """Frame objects in the main view (Maya F), then move the camera back by ``zoom``; ``offset`` moves the centre
+    (world units)."""
+    area, region = view3d()
+    rv3d = area.spaces.active.region_3d
+    if rot is not None:
+        rv3d.view_rotation = Euler([math.radians(a) for a in rot]).to_quaternion()
+    rv3d.view_perspective = 'PERSP'
+    lo, hi = bounds(obs)
+    rv3d.view_location = (lo + hi) / 2 + Vector(offset)
+    rv3d.view_distance = (hi - lo).length * 1.25 * zoom
+
+
+def look(location, rot, distance):
+    """Set the main view: centre ``location``, Euler ``rot`` (degrees), ``distance``."""
+    area, _region = view3d()
+    rv3d = area.spaces.active.region_3d
+    rv3d.view_perspective = 'PERSP'
+    rv3d.view_rotation = Euler([math.radians(a) for a in rot]).to_quaternion()
+    rv3d.view_location = Vector(location)
+    rv3d.view_distance = distance
+
+
+# ------------------------------------------------------------------------------------------------ step 125 assets
+# Blender Studio / blender.org files (tools/marketing/assets.json, research/marketing_assets/INVENTORY_125.md,
+# docs/distribution/marketing/CREDITS.md). Collections are appended at scale 1 (the files are metric, the template is
+# metres with cm display); the files' own cameras / lights are not used; widget / helper collections stay hidden.
+# Python auto-exec stays off (factory default): CloudRig's UI scripts don't run, the rigs still pose.
+FILES = {
+    "rain": ASSETS / "bs_rain_v3" / "Rain v3.3" / "rain_v3.2.blend",
+    "pack": ASSETS / "bs_pack_bot" / "pack_bot_v1" / "pack_bot_release_v1.blend",
+    "sec": ASSETS / "bs_security_bot" / "security_bot_v1" / "security_bot_release_v1.blend",
+    "dog": ASSETS / "bdemo_splash_45" / "blender-4.5-splash.blend",
+    "cube": ASSETS / "bdemo_cube_diorama" / "cube_diorama" / "cube_diorama.blend",
+}
+HDRI = ASSETS / "ph_studio_small_09" / "studio_small_09_2k.hdr"
+HIDDEN_COLLECTION_WORDS = ("widgets", "helpers", "WGT", "splats", "droplets", "boolean_diff", "curve_deformers",
+                           "rigging-", "leash_points", "collision")
+RAIN_BONES = {"Main Controls", "IK Controls", "FK Controls", "Fingers", "Face Main"}
+
+
+def _layer_collection(lc, col):
+    if lc.collection == col:
+        return lc
+    for ch in lc.children:
+        r = _layer_collection(ch, col)
+        if r is not None:
+            return r
+    return None
+
+
+def append(key, names):
+    """Append collections ``names`` of FILES[key] and link them to the scene. Hidden: widget / helper collections;
+    removed: the file's cameras and lights. Returns the visible objects."""
+    out = []
+    for col in append_cols(key, names):
+        out += list(col.all_objects)
+    return [o for o in out if o.name in bpy.context.view_layer.objects and o.visible_get()]
+
+
+def append_cols(key, names):
+    """``append`` returning the appended collections (names may get .001 when a collection came in before)."""
+    with bpy.data.libraries.load(str(FILES[key]), link=False) as (src, dst):
+        missing = [n for n in names if n not in src.collections]
+        assert not missing, f"{key}: no collection {missing}"
+        dst.collections = list(names)
+    sc = bpy.context.scene
+    for col in dst.collections:
+        sc.collection.children.link(col)
+        for o in list(col.all_objects):
+            if o.type in {'CAMERA', 'LIGHT', 'LIGHT_PROBE'}:
+                bpy.data.objects.remove(o)
+        for sub in col.children_recursive:
+            if any(w in sub.name for w in HIDDEN_COLLECTION_WORDS):
+                lc = _layer_collection(bpy.context.view_layer.layer_collection, sub)
+                if lc is not None:
+                    lc.exclude = True
     bpy.context.view_layer.update()
-    if height:
-        lo, hi = bounds(objs)
-        root.scale = root.scale * (height / max(hi.z - lo.z, 1e-6))
-    root.rotation_euler.z += math.radians(rot_z)
+    return list(dst.collections)
+
+
+def obj(name):
+    return bpy.data.objects[name]
+
+
+def rain_bone_view(rig):
+    """Rain's animator controls only (Main / IK / FK / Fingers / Face Main bone collections and their sub-collections
+    that are on in the file); mechanism, deform and helper collections hidden."""
+    for c in rig.data.collections_all:
+        keep, p = c.name in RAIN_BONES, c.parent
+        while p is not None and not keep:
+            keep = p.name in RAIN_BONES
+            p = p.parent
+        c.is_visible = keep and (c.name in RAIN_BONES or c.is_visible)
+
+
+def pose_bone_world(rig, name, delta):
+    """Move a pose bone by ``delta`` (world, metres) — e.g. Rain's IK hand controls out of the T-pose."""
+    pb = rig.pose.bones[name]
+    m = pb.matrix.copy()
+    m.translation += rig.matrix_world.inverted().to_3x3() @ Vector(delta)
+    pb.matrix = m
     bpy.context.view_layer.update()
-    lo, hi = bounds(objs)
-    centre = (lo + hi) / 2
-    root.location += Vector((pos[0] - centre.x, pos[1] - centre.y, pos[2] - lo.z if floor else 0))
-    bpy.context.view_layer.update()
 
 
-def import_asset(asset_id, filename):
-    path = next((ASSETS / asset_id).rglob(filename))
-    before = set(bpy.data.objects)
-    with v3d_override():
-        if path.suffix.lower() in {".gltf", ".glb"}:
-            bpy.ops.import_scene.gltf(filepath=str(path))
-        elif path.suffix.lower() == ".fbx":
-            bpy.ops.import_scene.fbx(filepath=str(path))
-    new = [o for o in bpy.data.objects if o not in before]
-    for o in new:
-        o.rotation_mode = 'XYZ'             # glTF quaternions -> Rotate X/Y/Z channels (the value is converted)
-        if o.type == 'EMPTY':
-            o.empty_display_size = 1e-4      # import helpers: no axes drawn through the scene
-    roots = [o for o in new if o.parent is None]
-    if len(roots) > 1:
-        empty = bpy.data.objects.new(asset_id, None)
-        empty.empty_display_size = 1e-4
-        bpy.context.scene.collection.objects.link(empty)
-        for r in roots:
-            r.parent = empty
-        root = empty
-        new.append(empty)
-    else:
-        root = roots[0]
-    return root, new
+def rain_relaxed(rig):
+    """Arms down from the rest T-pose (the IK hand controls, poles stay): the pose Rain is shown in."""
+    for side, sx in (("L", 1), ("R", -1)):
+        pose_bone_world(rig, f"IK-Hand_Parent.{side}", (RAIN_RELAXED[0] * sx, RAIN_RELAXED[1], RAIN_RELAXED[2]))
 
 
-def kenney_skin(objs):
-    """Kenney's FBX comes in with an untextured, alpha 0 material: connect its skin texture (file unchanged)."""
-    png = next((ASSETS / "kenney_protagonists").rglob("skaterMaleA.png"))
-    img = bpy.data.images.load(str(png))
+def load_rain(relaxed=True):
+    objs = append("rain", ["CH-rain"])
+    rig = obj("RIG-rain")
+    rain_bone_view(rig)
+    if relaxed:
+        rain_relaxed(rig)
+    meshes = [o for o in objs if o.type == 'MESH' and o.name.startswith("GEO-rain")]
+    return rig, meshes
+
+
+def load_pack_bot():
+    objs = append("pack", ["CH-pack_bot"])
+    return obj("RIG-pack_bot"), [o for o in objs if o.type in {'MESH', 'CURVE'}]
+
+
+def load_security_bot():
+    objs = append("sec", ["CH-security_bot"])
+    # its gun arm carries a hidden instance of the battery prop: drop it, so load_battery's parts keep their names
+    bat = bpy.data.collections.get("PR-battery")
+    if bat is not None:
+        for o in list(bat.all_objects) + [o for o in bpy.data.objects if o.instance_collection == bat]:
+            bpy.data.objects.remove(o)
+        for c in list(bat.children_recursive) + [bat]:
+            bpy.data.collections.remove(c)
+        bpy.data.orphans_purge(do_local_ids=True, do_recursive=True)
+    vl = bpy.context.view_layer.objects
+    used = {getattr(m, "object", None) for o in bpy.data.objects for m in getattr(o, "modifiers", [])}
+    for o in list(bpy.data.objects):          # hidden parts (gun arm, paint proxies): not part of these shots
+        if o.name in vl and (o.hide_get() or o.hide_viewport) and o.type != 'ARMATURE' and o not in used                 and not o.children:
+            bpy.data.objects.remove(o)
+    objs = [o for o in objs if o.name in bpy.data.objects]
+    return obj("RIG-security_bot"), [o for o in objs if o.type in {'MESH', 'CURVE'}]
+
+
+def load_battery(pos=(0, 0, 0), rot_z=0.0):
+    """Security Bot's battery as one prop: every part re-parented (transform kept) to the casing, the 2-bone prop rig
+    and its widgets removed, the casing's origin at its bottom centre. Returns (casing, parts)."""
+    top = append_cols("sec", ["PR-battery"])[0]
+    for c in [top] + list(top.children_recursive):
+        if not any(w in c.name for w in HIDDEN_COLLECTION_WORDS):
+            c.hide_viewport = False                  # the prop is a hidden instance source in the robot file
+    objs = [o for o in top.all_objects]
     for o in objs:
-        if o.type != 'MESH':
+        if not o.name.startswith("WGT-"):
+            o.hide_viewport = False
+            o.hide_set(False)
+    bpy.context.view_layer.update()
+    rig = next(o for o in objs if o.type == 'ARMATURE')
+    casing = next(o for o in objs if o.name.startswith("GEO-casing_main"))
+    parts = [o for o in objs if o.type in {'MESH', 'CURVE'} and o.parent == rig]
+    mws = {o: o.matrix_world.copy() for o in parts}
+    for o in parts:
+        o.parent = None
+        o.matrix_world = mws[o]
+    for o in [rig] + [o for o in bpy.data.objects if o.name.startswith("WGT-") and o.users_collection
+                      and any("battery" in c.name for c in o.users_collection)]:
+        bpy.data.objects.remove(o)
+    bpy.context.view_layer.update()
+    lo, hi = bounds([casing])
+    origin_to(casing, ((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, lo.z))
+    for o in parts:
+        if o is casing:
             continue
-        for slot in o.material_slots:
-            m = slot.material
-            if m is None:
-                continue
-            m.use_nodes = True
-            nt = m.node_tree
-            bsdf = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None)
-            if bsdf is None:
-                continue
-            tex = nt.nodes.new("ShaderNodeTexImage")
-            tex.image = img
-            nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-            bsdf.inputs["Alpha"].default_value = 1.0
-            m.blend_method = 'OPAQUE' if hasattr(m, "blend_method") else None
+        mw = o.matrix_world.copy()
+        o.parent = casing
+        o.matrix_parent_inverse = casing.matrix_world.inverted()
+        o.matrix_world = mw
+    casing.location = Vector(pos)
+    casing.rotation_euler.z = math.radians(rot_z)
+    bpy.context.view_layer.update()
+    return casing, parts
 
 
-def shading():
+def origin_to(ob, world):
+    """Move ``ob``'s origin to ``world`` without moving its geometry (children kept where they are)."""
+    from mathutils import Matrix
+    kids = {c: c.matrix_world.copy() for c in ob.children}
+    local = ob.matrix_world.inverted() @ Vector(world)
+    ob.data.transform(Matrix.Translation(-local))
+    ob.matrix_world = ob.matrix_world @ Matrix.Translation(local)
+    bpy.context.view_layer.update()
+    for c, mw in kids.items():
+        c.matrix_world = mw
+    bpy.context.view_layer.update()
+
+
+def load_cube_props(names):
+    """Cube Diorama props (CC0; never "Computer") as standalone objects. Returns {name: object}."""
+    assert "Computer" not in names
+    with bpy.data.libraries.load(str(FILES["cube"]), link=False) as (src, dst):
+        dst.objects = [n for n in names if n in src.objects]
+    out = {}
+    for o in dst.objects:
+        bpy.context.scene.collection.objects.link(o)
+        o.parent = None
+        out[o.name] = o
+    bpy.context.view_layer.update()
+    return out
+
+
+def stand(ob, pos, rot_z=None, objs=None):
+    """Put ``ob`` (and what follows it) so the bottom of ``objs`` (default [ob]) sits at ``pos``."""
+    bpy.context.view_layer.update()
+    lo, hi = bounds(objs or [ob])
+    c = (lo + hi) / 2
+    if rot_z is not None:
+        ob.rotation_euler.z = math.radians(rot_z)
+        bpy.context.view_layer.update()
+        lo, hi = bounds(objs or [ob])
+        c = (lo + hi) / 2
+    ob.location += Vector((pos[0] - c.x, pos[1] - c.y, pos[2] - lo.z))
+    bpy.context.view_layer.update()
+
+
+def load_dogwalk(frame_no=85):
+    """The Blender 4.5 splash scene: environment, props and characters (its cameras and lights are not used)."""
+    objs = append("dog", ["Background", "Props", "Characters"])
+    vl = bpy.context.view_layer.objects
+    for o in bpy.data.objects:
+        if o.name.startswith("LGT-") and o.name in vl:
+            o.hide_set(True)
+    sc = bpy.context.scene
+    sc.frame_start, sc.frame_end = 1, 120
+    sc.frame_set(frame_no)
+    return objs
+
+
+# ------------------------------------------------------------------------------------------------ scenes per feature
+def largest_mesh(objs):
+    meshes = [o for o in objs if o.type == 'MESH' and o.visible_get()]
+    return max(meshes, key=lambda o: len(o.data.vertices)) if meshes else None
+
+
+def dog_scene(C):
+    """First screen / key visual / hotbox / navigation / switch: the DOGWALK splash set (Pinda, Chocomel, snowman)."""
+    objs = load_dogwalk()
+    vl = bpy.context.view_layer.objects
+    for o in bpy.data.objects:
+        helper = o.type == 'LATTICE' or o.name.startswith(("COL-", "LGT-", "WGT-")) or "leash" in o.name.lower()
+        if helper:
+            o.hide_viewport = True               # also inside the collection instances (trees, bushes)
+            if o.name in vl:
+                o.hide_set(True)
+        elif o.type == 'EMPTY':
+            o.empty_display_size = 1e-4          # collection-instance empties: no axes drawn
+    def member(colname):
+        col = bpy.data.collections.get(colname)
+        return [o for o in col.all_objects] if col else []
+    C["dog_objs"] = [o for o in objs if o.visible_get()]
+    C["snowman"] = next((o for o in member("PR-snowman") if "body" in o.name and o.type == 'MESH'), None) \
+        or largest_mesh(member("PR-snowman"))
+    C["snow_head"] = next((o for o in member("PR-snowman") if "head" in o.name and o.type == 'MESH'), C["snowman"])
+    C["pinda"] = largest_mesh(member("CH-Pinda"))
+    C["chocomel"] = largest_mesh(member("CH-Chocomel"))
+    C["dog_chars"] = [o for o in member("CH-Pinda") + member("CH-Chocomel") + member("PR-snowman")
+                      if o.type == 'MESH' and o.visible_get()]
+    return all(C[k] for k in ("snowman", "pinda", "chocomel"))
+
+
+def dog_view(kind="hero"):
+    """Hand-framed views of the DOGWALK set (world metres; the characters stand around x -2 .. 1.3, y -2 .. 0.8)."""
+    views = {
+        "hero": ((-0.55, -0.6, 0.8), (87, 0, -8), 5.4),     # horizon ~40 % down: the sky shows Maya's gradient
+        "hotbox": ((-0.5, -0.5, 0.85), (87, 0, -14), 6.2),
+        "wide": ((-0.5, -0.3, 0.9), (87, 0, -22), 8.0),
+    }
+    look(*views[kind])
+
+
+def lab_scene(C):
+    """Pivot / snapping / mechanical Channel Box: Security Bot, a display-case pedestal (Cube Diorama) and the
+    battery prop on it."""
+    rig, objs = load_security_bot()
+    props = load_cube_props(["Display Case"])
+    case = props["Display Case"]
+    stand(case, (0.62, -0.55, 0.0), rot_z=-20)
+    top = bounds([case])[1].z
+    casing, parts = load_battery()
+    stand(casing, (0.62, -0.55, top), objs=[casing] + parts)
+    casing.rotation_euler.z = math.radians(-25)
+    bpy.context.view_layer.update()
+    C.update(sec_rig=rig, sec_objs=objs, case=case, battery=casing, battery_parts=parts, case_top=top)
+    return True
+
+
+def pack_scene(C):
+    """Modeling Toolkit / components: Pack Bot."""
+    rig, objs = load_pack_bot()
+    objs = [o for o in objs if o.type == 'MESH' and o.name.startswith("GEO")]   # no path / cable helper curves
+    C.update(pack_rig=rig, pack_objs=objs, torso=obj("GEO-shell_torso"))
+    return True
+
+
+RAIN_RELAXED = (-0.30, -0.05, -0.50)        # IK hand controls from the T-pose (world m, mirrored for .R)
+
+
+def rain_scene(C, relaxed=True):
+    """Rigging / skin weights / animation / marking menus: Rain, arms relaxed."""
+    rig, meshes = load_rain(relaxed=relaxed)
+    C.update(rig=rig, rain_meshes=meshes, top_mesh=obj("GEO-rain-top"), body=obj("GEO-rain-body"),
+             jeans=obj("GEO-rain-jeans"))
+    return True
+
+
+def rain_keys(rig, frames=(1, 12, 24)):
+    """A small wave on Rain: right IK hand up and back, hips dip, keyed on the pose bones (Graph Editor curves)."""
+    sc = bpy.context.scene
+    hand, hips = rig.pose.bones["IK-Hand_Parent.R"], rig.pose.bones["MSTR-Hips"]
+    base_h, base_p = hand.location.copy(), hips.location.copy()
+    poses = {frames[0]: ((0, 0, 0), 0.0), frames[1]: ((0.10, -0.12, 0.62), -0.035), frames[2]: ((0, 0, 0), 0.0)}
+    for f, (dh, dz) in poses.items():
+        sc.frame_set(f)
+        hand.location = base_h
+        hips.location = base_p
+        bpy.context.view_layer.update()
+        if any(dh):
+            pose_bone_world(rig, "IK-Hand_Parent.R", dh)
+        pose_bone_world(rig, "MSTR-Hips", (0, 0, dz))
+        hand.keyframe_insert("location", frame=f)
+        hips.keyframe_insert("location", frame=f)
+    for f in (6, 18):
+        sc.frame_set(f)
+        bpy.context.view_layer.update()
+        hips.keyframe_insert("location", frame=f)
+    sc.frame_start, sc.frame_end = 1, 24
+    sc.frame_set(8)
+
+
+# ------------------------------------------------------------------------------------------------ look-dev
+def studio_light():
+    """The Poly Haven Studio Small 09 HDRI as a Material Preview world (preferences of the sandbox only)."""
+    lights = bpy.context.preferences.studio_lights
+    name = HDRI.name
+    sl = next((s for s in lights if s.name == name), None)
+    if sl is None:
+        sl = lights.load(str(HDRI), 'WORLD')
+    return sl.name
+
+
+def shading(kind='MATERIAL', rotate=0.0, intensity=1.0, clip_end=None):
+    """Material Preview lit by the HDRI (background alpha 0: the viewport keeps Maya's gradient) in every 3D View but
+    the Tool Box column; ``kind`` 'SOLID' = studio-lit solid with material colours."""
+    name = studio_light() if kind == 'MATERIAL' else None
     for a in win().screen.areas:
         if a.type == 'VIEW_3D' and not mod(".ui.toolbox").is_toolbox(a.spaces.active):
-            sh = a.spaces.active.shading
-            sh.type = 'MATERIAL'
-            sh.use_scene_world = False
-            sh.studiolight_background_alpha = 0.0    # the viewport shows the theme background (Maya #5c5c5c)
-            sh.studiolight_intensity = 1.0
-            ov = a.spaces.active.overlay
+            sp = a.spaces.active
+            sh = sp.shading
+            sh.type = kind
+            if kind == 'MATERIAL':
+                sh.use_scene_world = False
+                sh.use_scene_lights = False
+                sh.studio_light = name
+                sh.studiolight_rotate_z = math.radians(rotate)
+                sh.studiolight_intensity = intensity
+                sh.studiolight_background_alpha = 0.0     # the HDRI lights, the theme gradient stays visible
+                sh.studiolight_background_blur = 0.0
+            else:
+                sh.light = 'STUDIO'
+                sh.color_type = 'MATERIAL'
+                sh.show_cavity = True
+            ov = sp.overlay
             ov.show_floor = True
-            ov.show_bones = False                    # bones only in the rigging shot
-            if hasattr(a.spaces.active, "show_region_asset_shelf"):
-                a.spaces.active.show_region_asset_shelf = False
+            ov.show_bones = False                    # bones only in the rigging shots
+            ov.show_relationship_lines = False
+            if hasattr(sp, "show_region_asset_shelf"):
+                sp.show_region_asset_shelf = False
+            if clip_end:
+                sp.clip_end = clip_end
 
 
 def show_bones(on):
@@ -178,65 +483,157 @@ def show_bones(on):
             a.spaces.active.overlay.show_bones = on
 
 
+# ------------------------------------------------------------------------------------------------ Maya look
+GRADIENT = {"on": False}
+KEEPER_INTERVAL = 0.05      # s: well inside one recording tick (0.3 - 0.7 s), so a new view is gradient when drawn
+
+
+def template_name():
+    """The installed layout template: "Maya_Workflow_Kit" (step 125; Blender shows "Maya Workflow Kit"), else the
+    pre-125 "Allset" (builds made before the rename)."""
+    names = []
+    try:
+        tid = getattr(mod(".app_template"), "TEMPLATE_ID", None)
+        if tid:
+            names.append(tid)
+    except ImportError:
+        pass
+    names += ["Maya_Workflow_Kit", "Allset"]
+    for name in names:
+        for base in bpy.utils.app_template_paths():
+            if (Path(base) / name).is_dir():
+                return name
+    return names[-1]
+
+
+def maya_mode_on():
+    try:
+        return mod(".switch").is_on() and mod(".theme").is_applied()
+    except Exception:
+        return False
+
+
+def apply_gradient(force=False):
+    """Maya's Alt+B gradient state in every 3D View but the Tool Box column (key_batch3.apply_background), written
+    only where it differs (each write redraws). Returns True when something changed."""
+    kb = mod(".operators.key_batch3")
+    changed = False
+    g = kb.theme_gradients()
+    want = (tuple(round(c, 4) for c in kb.GRADIENT_TOP), tuple(round(c, 4) for c in kb.GRADIENT_BOTTOM))
+    have = (tuple(round(c, 4) for c in g.high_gradient), tuple(round(c, 4) for c in g.gradient))
+    if force or g.background_type != 'LINEAR' or have != want:
+        kb.set_gradient(g, True)             # the gradient lives in the theme (Blender has no per-view gradient)
+        changed = True
+    for area, space in kb.view_spaces():
+        sh = space.shading
+        if force or sh.background_type != 'THEME':
+            kb.set_shading(sh, "GRADIENT")
+            area.tag_redraw()
+            changed = True
+        if sh.type in {'MATERIAL', 'RENDERED'} and sh.studiolight_background_alpha != 0.0:
+            sh.studiolight_background_alpha = 0.0    # the HDRI would hide the theme background
+            changed = True
+    if changed:
+        redraw()
+    return changed
+
+
+def GRADIENT_KEEPER():
+    if GRADIENT["on"] and maya_mode_on():
+        try:
+            apply_gradient()
+        except (ReferenceError, AttributeError, KeyError):
+            pass
+    return KEEPER_INTERVAL
+
+
 def maya_look():
-    """Maya theme, Maya factory background #5c5c5c (step 120), no tooltips / in-view messages in the pictures."""
-    mod(".theme").apply()
-    mod(".operators.key_batch3").reset_background()
+    """Maya theme, Maya's gradient viewport background (Alt+B state, step 125), no tooltips / in-view messages in the
+    pictures. The keeper timer re-applies the gradient to views made later (while Maya mode is on)."""
+    th = mod(".theme")
+    if not th.is_applied():
+        th.apply()
+    GRADIENT["on"] = True
+    apply_gradient(force=True)
+    if not bpy.app.timers.is_registered(GRADIENT_KEEPER):
+        bpy.app.timers.register(GRADIENT_KEEPER, first_interval=KEEPER_INTERVAL, persistent=True)
     bpy.context.preferences.view.show_tooltips = False
     prefs().in_view_messages = False
 
 
+def viewport_rects(window=None):
+    """Top-down window rects of the WINDOW regions of every 3D View that should show the gradient (Tool Box column
+    excluded; quad views give four), largest first — what bg_check.py samples."""
+    w = window or win()
+    tb = mod(".ui.toolbox")
+    out = []
+    for a in w.screen.areas:
+        if a.type != 'VIEW_3D' or tb.is_toolbox(a.spaces.active):
+            continue
+        regions = [r for r in a.regions if r.type == 'WINDOW' and r.width > 1 and r.height > 1]
+        if len(regions) > 1:
+            # quad view: one space, one background for its four regions; the orthographic ones may show nothing
+            # but ground (DOGWALK top view), so the perspective region stands for the space
+            persp = [r for r in regions if r.data is not None and r.data.view_perspective == 'PERSP']
+            regions = persp[:1] or regions[-1:]
+        for r in regions:
+            out.append([r.x, w.height - (r.y + r.height), r.width, r.height])
+    return sorted(out, key=lambda rc: -rc[2] * rc[3])
+
+
+def bg_result(path, rects, window_size):
+    """bg_check.py on a saved capture: (ok, per-rect results)."""
+    import bg_check
+    return bg_check.check_image(path, rects, window_size)
+
+
+def check_capture(path, label, rects, window_size):
+    """bg_check.py on a saved capture, recorded as a check (FAIL = a viewport is not Maya's gradient)."""
+    import bg_check
+    from sim import check
+    ok, res = bg_result(path, rects, window_size)
+    check(bg_check.summary(label, ok, res), ok)
+    return ok, res
+
+
 def clear_objects():
+    """Empty scene: objects, then the data they leave behind (meshes, armatures, materials, images, actions)."""
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
+    for c in list(bpy.data.collections):
+        if not c.get("allset_set"):
+            bpy.data.collections.remove(c)
+    bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+    sc = bpy.context.scene                  # Maya's default time range for every new set
+    sc.frame_start, sc.frame_end = 1, 120
+    sc.use_preview_range = False
+    sc.frame_set(1)
 
 
-def build_workbench(C, characters=True):
-    """The step 122 scene: a Poly Haven workbench (table, drill, toolbox, plant, barrel, box) and, with
-    ``characters``, Kenney's skinned character and Quaternius' walking robot. Fills ``C``; returns True when every
-    model came in (and the robot's walk action was found)."""
-    table, t_objs = import_asset("ph_woodentable_01", "WoodenTable_01_1k.gltf")
-    place(table, t_objs, pos=(0, 0, 0))
-    top = bounds(t_objs)[1].z
-    drill, d_objs = import_asset("ph_drill_01", "Drill_01_1k.gltf")
-    place(drill, d_objs, pos=(0.05, -0.05, top), rot_z=-30)
-    box, b_objs = import_asset("ph_metal_toolbox", "metal_toolbox_1k.gltf")
-    place(box, b_objs, pos=(-0.42, 0.12, top), rot_z=15)
-    plant, p_objs = import_asset("ph_potted_plant_02", "potted_plant_02_1k.gltf")
-    place(plant, p_objs, pos=(2.5, 1.3, 0))
-    barrel, ba_objs = import_asset("ph_barrel_01", "Barrel_01_1k.gltf")
-    place(barrel, ba_objs, pos=(-1.15, 1.0, 0))
-    crate, c_objs = import_asset("ph_cardboard_box_01", "cardboard_box_01_1k.gltf")
-    place(crate, c_objs, pos=(-0.55, 1.45, 0), rot_z=20)
-    C.update(table=table, table_objs=t_objs, drill=drill, box=box, top=top)
-    C["drill_mesh"] = next(o for o in d_objs if o.type == 'MESH')
-    if not characters:
-        return all(C[k] for k in ("table", "drill"))
+def shaders_ready_step(max_ticks=120, then=2):
+    """A sim step that repeats (one tick each, up to ``max_ticks``) while EEVEE still compiles shaders — Material
+    Preview draws placeholder grey until it is done — then gives ``then`` more ticks for the final draw."""
+    import sim
+    state = {"n": 0, "after": then}
 
-    robot, r_objs = import_asset("robot_expressive", "RobotExpressive.glb")
-    place(robot, r_objs, height=1.5, pos=(1.55, -0.45, 0), rot_z=-30)
-    kid, k_objs = import_asset("kenney_protagonists", "characterMedium.fbx")
-    kenney_skin(k_objs)
-    place(kid, k_objs, height=1.7, pos=(-1.7, -0.3, 0), rot_z=25)
-    C.update(robot=robot, kid=kid)
-    C["kid_mesh"] = next(o for o in k_objs if o.type == 'MESH')
-    C["kid_arm"] = next(o for o in k_objs if o.type == 'ARMATURE')
-    C["robot_arm"] = next(o for o in r_objs if o.type == 'ARMATURE')
-    C["robot_meshes"] = [o for o in r_objs if o.type == 'MESH']
+    def fn():
+        redraw()
+        state["n"] += 1
+        busy = bpy.app.is_job_running('SHADER_COMPILATION')
+        if (busy or state["n"] < 3) and state["n"] < max_ticks:
+            sim._steps.insert(0, fn)
+        elif state["after"] > 0:
+            state["after"] -= 1
+            sim._steps.insert(0, fn)
+        else:
+            print(f"shaders ready after {state['n']} ticks")
+    return fn
 
-    # robot walking: the glTF actions come in as NLA tracks / stashed actions; play "Walking" from frame 1
-    acts = [a for a in bpy.data.actions if "walk" in a.name.lower()]
-    ad = C["robot_arm"].animation_data or C["robot_arm"].animation_data_create()
-    for t in list(ad.nla_tracks):
-        ad.nla_tracks.remove(t)
-    if acts:
-        ad.action = acts[0]
-        sc = bpy.context.scene
-        fr = acts[0].frame_range
-        n = int(round(fr[1] - fr[0])) + 1
-        sc.frame_start, sc.frame_end = 1, n
-        sc.use_preview_range = True
-        sc.frame_preview_start, sc.frame_preview_end = 1, n
-        sc.frame_set(8)
-        C["walk"] = acts[0]
-    return all(C[k] for k in ("table", "drill", "robot", "kid")) and bool(acts)
+
+def floor(on):
+    """The grid floor of every 3D View (off where the set has its own ground)."""
+    for a in win().screen.areas:
+        if a.type == 'VIEW_3D' and not mod(".ui.toolbox").is_toolbox(a.spaces.active):
+            a.spaces.active.overlay.show_floor = on
+            a.spaces.active.overlay.show_axis_x = on
+            a.spaces.active.overlay.show_axis_y = on

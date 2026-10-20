@@ -1,4 +1,4 @@
-"""Step 88: docs/manual_checks.md items of steps 59-79 that event simulation can prove, run in one Allset session.
+"""Step 88: docs/manual_checks.md items of steps 59-79 that event simulation can prove, run in one Maya Workflow Kit session.
 
 Each check name starts with the item's id ``[M<step>-<n>]`` (n = its place in that step's list); an item is ticked in
 manual_checks.md only when all of its checks pass. Keys, clicks and drags are simulated events; a few Enter-in-a-field
@@ -97,7 +97,7 @@ def notice():
 def s_setup():
     setup()
     bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Allset")
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
 @step
@@ -1545,7 +1545,7 @@ def _m72_3_setup():
 @named("m72_3_group")
 def _m72_3_group():
     space = view3d()[0].spaces.active
-    check(f"[M72-3] Ctrl+G message top left in the Allset view ({message()!r}, "
+    check(f"[M72-3] Ctrl+G message top left in the Maya Workflow Kit view ({message()!r}, "
           f"{vm().placement(vm()._state['pos'], space)})",
           "grouped" in message() and vm().placement(vm()._state["pos"], space) == 'TOP_LEFT')
     space.overlay.show_text = True
@@ -4675,7 +4675,7 @@ def browser_check(name, label, then):
 @named("m69_2_new")
 def _m69_2_new():
     object_mode()
-    bpy.ops.wm.read_homefile(app_template="Allset")   # an unsaved scene: the first Ctrl+S asks for a name
+    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")   # an unsaved scene: the first Ctrl+S asks for a name
 
 
 @named("m69_2_project")

@@ -471,7 +471,7 @@ MAP = {
 # items like menu_data's ((label,) or ("-", section label)). Modify's Pivot / Naming / Attributes
 # sections now come from tools/gen_menu_data.py RUNTIME_LABELS (step 101).
 EXTRA = {
-    # Allset's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
+    # The kit's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
     "Windows/Settings/Preferences": [("Switch to Blender",)],
 }
 

@@ -582,4 +582,4 @@ def test_cmds_select_ls_scene():
     try:
         cmds.fooBar
     except AttributeError as ex:
-        assert "not available in Allset" in str(ex)
+        assert "not available in Maya Workflow Kit" in str(ex)

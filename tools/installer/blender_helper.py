@@ -41,7 +41,7 @@ def status():
 def make():
     module = kit_module()
     if not module or module not in bpy.context.preferences.addons:
-        return False, "Allset is not enabled"
+        return False, "Maya Workflow Kit is not enabled"
     from importlib import import_module
     import_module(module + ".welcome").opt_in(open_layout=False)   # Maya mode on + Make Blender Maya (step 115)
     bpy.ops.wm.save_userpref()
@@ -51,16 +51,16 @@ def make():
 def remove():
     module = kit_module()
     if not module:
-        return True, "Allset is not installed (nothing to remove)"
+        return True, "Maya Workflow Kit is not installed (nothing to remove)"
     repo = module.split(".")[1]
     # repo_index counts enabled repositories only ($S\addons_core\bl_pkg\bl_extension_ops.py:811-830)
     from bl_pkg.bl_extension_ops import extension_repos_read
     repo_index = next((i for i, r in enumerate(extension_repos_read()) if r.module == repo), None)
     if repo_index is None:
-        return False, f"repository {repo} is disabled: enable it or remove Allset in Preferences"
+        return False, f"repository {repo} is disabled: enable it or remove Maya Workflow Kit in Preferences"
     bpy.ops.extensions.package_uninstall(repo_index=repo_index, pkg_id=PKG)
     bpy.ops.wm.save_userpref()
-    return kit_module() is None, "Allset removed, your Blender settings are back"
+    return kit_module() is None, "Maya Workflow Kit removed, your Blender settings are back"
 
 
 def main():

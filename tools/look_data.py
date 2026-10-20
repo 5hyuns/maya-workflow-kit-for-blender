@@ -190,7 +190,7 @@ def maya_colors():
     return json.loads((MAYA / "colors.json").read_text())
 
 
-# Used when the KIT_POINTS anchor is missing: Blender 5.x never opens the Timeline sidebar, so the Allset timeline is
+# Used when the KIT_POINTS anchor is missing: Blender 5.x never opens the Timeline sidebar, so the Maya Workflow Kit timeline is
 # one row and the Time Slider buttons sit at the right end of the header (step 118, 119).
 KIT_POINTS_ALT = {
     "time_field": ("11_channel_box", "timeline.HEADER", -230, 13, 2, "current frame field (5.x: header right end)"),

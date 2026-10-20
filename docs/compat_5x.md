@@ -25,7 +25,7 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | `ImageFormatSettings.media_type` 먼저 (`FFMPEG` 는 `VIDEO` 일 때만) | Playblast, Render Settings 기본값 | **깨짐** | `set_file_format`, Playblast 저장·복원에 `media_type` 추가 |
 | `SequenceEditor.sequences` 제거 | Audio > Delete Sounds | **깨짐** | `strips` |
 | `Bone.hide` = 편집 본 표시만, 포즈·오브젝트 표시 = `PoseBone.hide` | 관절 Channel Box Visibility, 선택 우선순위, Outliner | 동작 (숨겨도 안 숨음) | `bone_hidden` / `set_bone_hidden` |
-| Properties 탭 플래그 추가 (`show_properties_strip`, `_strip_modifier`) — 4.5 로 저장한 파일에서 켜진 채 열림 | Maya 도크 역할 (숨은 탭 플래그, step 116) | **깨짐**: Allset 템플릿의 도크 스택을 못 알아봄 | `LATER_PROPERTIES_TABS` 는 역할 판정에서 뺌 |
+| Properties 탭 플래그 추가 (`show_properties_strip`, `_strip_modifier`) — 4.5 로 저장한 파일에서 켜진 채 열림 | Maya 도크 역할 (숨은 탭 플래그, step 116) | **깨짐**: Maya 레이아웃 템플릿 (그때 Allset) 의 도크 스택을 못 알아봄 | `LATER_PROPERTIES_TABS` 는 역할 판정에서 뺌 |
 | Timeline = Dope Sheet 모드: `TIME_HT_editor_buttons`, `TIME_MT_editor_menus`, `TIME_MT_marker` 없음 | Time Slider / Range Slider 헤더, Marker 메뉴 | 켜기 실패 (step 53 에서 고침) / Marker 메뉴 빈칸 | `timeline_header_classes`, `timeline_marker_menu` (`DOPESHEET_MT_marker`) |
 | 테마 구조 재편 (300 개 넘게 이동·삭제, 공식 표 theme_migration_api) | `theme/studio_grey.xml` (4.5 형식) | 동작: 5.x 에서 Maya 패널색·핸들색·이음매/날카로움 색 등이 Blender 값 | `theme.MOVED` = 공식 표 55 항목 전부 (이전: 26). 후속 없이 삭제된 설정 (face_dot 등) 은 Blender 값 |
 | `rna_xml` → `_rna_xml` (비공개) | 테마 적용·복원, 스위치 스냅숏 | 깨짐 (step 53) | `rna_xml()` |
@@ -57,7 +57,9 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 
 ## 버전별 결과
 
-마지막 코드 기준 (2026-10-20). 헤드리스 = `tests/run.py` 전체 (104 파일), GUI = `tests/gui/run.py` 전체 (89 파일, 기본 UI 배율 =
+아래 표 = **step 118 측정 (2026-10-19, 그때의 코드)** — 네 버전을 모두 같은 날 잰 마지막 전체 비교. 그 뒤 단계에서 테스트가 늘어 숫자는
+지금 전체와 다르다: 최신 실행은 **4.5.4, step 124 (2026-10-20): 헤드리스 890 / 890, GUI 1142 / 1142**; 5.x 는 그 뒤 단계마다 바뀐 기능의
+파일만 다시 돌렸다 (`docs/steps/step_119.md` 이후). 헤드리스 = `tests/run.py` 전체 (그때 104 파일), GUI = `tests/gui/run.py` 전체 (그때 89 파일, 기본 UI 배율 =
 이 PC 125 %), 설치 왕복 = `tools/release_check.py` (extension validate, 깨끗한 설정에 설치 → 켜기, 사용자 셋업 유지, 끄기 = 전부 복원,
 Remove, 남는 킷 파일 0, opt-in · 레이아웃 스크린샷).
 
@@ -103,7 +105,7 @@ Blender 기본색으로 남았다. step 119 부터 **버전마다 테마 파일*
   `wcol_curve` = `wcol_regular`, `FIVE_X`: `view_3d.grid_major` 0.25 (Maya 격자는 한 색), `user_interface.panel_active` = Maya 선택색,
   `panel_outline` 투명 (평평한 Maya 패널, step 44), `regions.scrubbing.text` = 4.5 Dope Sheet 글자색.
 - 일부러 Blender 값으로 둔 10 키 (`make_theme.KEEP_FACTORY_5X`, Maya 에 대응 없음 / Maya 워크플로우에서 안 그려짐): `user_interface.link`,
-  `axis_w`, `view_3d.grid_axis_brightness` (5.2, Allset 뷰는 격자 축선을 숨김), `gp_wire_edit`, `node_editor.node_outline`,
+  `axis_w`, `view_3d.grid_axis_brightness` (5.2, Maya 레이아웃 뷰는 격자 축선을 숨김), `gp_wire_edit`, `node_editor.node_outline`,
   `preferences.match`, `common.anim.scene_strip_range`, 5.2 Dope Sheet `anim_interpolation_*` 3 개.
   `test_step119_theme_5x.test_no_blender_default_left_on_new_keys` 가 나머지 새 키에 Blender 기본값이 남지 않았는지 본다.
 - 후속 없이 없어진 키 (`face_dot`, `*.space.button_*`, `tab_*`, `lastsel_point` 등) 는 5.x 에 그릴 곳이 없음 — 영향 없음.

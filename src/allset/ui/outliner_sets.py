@@ -2,7 +2,7 @@
 """Maya Outliner set rows on Blender's Outliner (docs/steps/step_96.md 「계획」 3).
 
 Maya lists object sets after the DAG nodes, outside the hierarchy; expanding one shows its members
-(research/maya/re/sets.md S9). The Allset layout's Outliner is Blender's C tree (``maya_outliner``),
+(research/maya/re/sets.md S9). The Maya Workflow Kit layout's Outliner is Blender's C tree (``maya_outliner``),
 which Python can't add rows to, so a WINDOW POST_PIXEL handler draws the set rows under Blender's last
 row: that row is found by reading one pixel line through the middle of each candidate row (an empty
 row is one flat stripe colour; rows are contiguous, so a binary search). The rows drawn are remembered

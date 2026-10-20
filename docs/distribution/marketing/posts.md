@@ -4,7 +4,7 @@ English drafts for r/blender, r/Maya, X, BlenderArtists and an 80.lv pitch, each
 (research: `research/marketing_refs/platform_rules_123.md`, 2026-10-20; Reddit pages could not be fetched — its rules
 below come from Reddit's own text in search results, so **read the live sidebar before posting**). Claims follow
 `copy.md` (only implemented features; Maya only to describe compatibility; trademark line in long texts). Fill
-`<listing URL>`, `<GitHub URL>`, `<YouTube URL>` first. Post from the author's own account and say so.
+`<listing URL>` and `<YouTube URL>` first; the source link is https://github.com/5hyuns/maya-workflow-kit-for-blender (created private — make it public before posting). Post from the author's own account and say so.
 
 Order and spacing (`delegated`): BlenderArtists first (the forum's own release thread, updates go there), r/blender
 the next day, X the same day as r/blender, r/Maya only after the mods answer, 80.lv once the store page is live.
@@ -29,7 +29,8 @@ Never the same text twice on one day (Reddit spam filter).
 **Body**:
 
 > Hi r/blender — I'm the author. A lot of people come to Blender from Maya (school, a new job, a studio switch), and
-> the usual advice is "just learn the default keymap". Allset is for the weeks in between.
+> the usual advice is "just learn the default keymap". Maya Workflow Kit — for Maya users, in Blender — is for the
+> weeks in between.
 >
 > It isn't only a keymap: hold Space for the hotbox, right-click an object for its marking menu, key channels in the
 > Channel Box (`+=90` works), F2–F6 menu sets, the factory shelves, option boxes, Insert / D pivot editing, V snapping,
@@ -38,7 +39,7 @@ Never the same text twice on one day (Reddit spam filter).
 > Installing it changes nothing until you choose Maya. When a tutorial uses Blender's keys, click **Blender** in the
 > top-bar switch, follow along, click **Maya** to come back — same scene (that's the clip).
 >
-> Free, GPL, Blender 4.5 – 5.2: <listing URL> · source: <GitHub URL>
+> Free, GPL, Blender 4.5 – 5.2: <listing URL> · source: https://github.com/5hyuns/maya-workflow-kit-for-blender
 > Feedback from Maya people especially welcome — what's missing for you?
 >
 > (Maya is a trademark of Autodesk; this is an independent project, not affiliated with Autodesk.)
@@ -86,12 +87,12 @@ Never the same text twice on one day (Reddit spam filter).
 
 > The tutorial ends. Your Channel Box comes back.
 >
-> Allset: a free, open-source Blender extension for Maya users — hotbox, marking menus, Channel Box, shelves. It
-> changes nothing until you choose Maya, and plain Blender is one click away.
+> Maya Workflow Kit, for Maya users, in Blender: free and open source — hotbox, marking menus, Channel Box, shelves.
+> Nothing changes until you choose Maya; plain Blender is one click away.
 >
 > <listing URL> #b3d #Maya
 
-Alt text: "Screen recording of Blender with the Allset extension: the Space hotbox, a right-click marking menu, keying in
+Alt text: "Screen recording of Blender with the Maya Workflow Kit extension: the Space hotbox, a right-click marking menu, keying in
 the Channel Box, Alt-mouse navigation, pivot snapping, rigging with joints and IK, and the one-click switch between
 Maya mode and plain Blender."
 
@@ -109,7 +110,7 @@ scene: the Maya-style layout and the default Blender layout."
   count too; free and commercial count the same. Updates go into the **same topic** as replies.
 - Links to your own social accounts are not self-promotion; artwork reposts are not wanted (post here first).
 
-**Title**: [Free] Allset for Maya Users — the Maya workflow in Blender, plain Blender one click away
+**Title**: [Free] Maya Workflow Kit — for Maya users, in Blender; plain Blender one click away
 
 **Body**: the long intro of `copy.md`, then the image `kit/reddit_before_after.png`, the GIFs `gif/01`–`07` (the forum
 renders GIFs inline; ≤ 5 MB each), the feature list of `listing.md` part B (headings only), the install line
@@ -124,27 +125,27 @@ renders GIFs inline; ≤ 5 MB each), the feature list of `listing.md` part B (he
 Content gloria@80.lv) or through their socials; features are free for artists, companies go through Business
 Development, paid content is labelled "sponsored". They run short news items about single tools.
 
-**Subject**: Free tool: Allset makes Blender work like Maya (hotbox, Channel Box) — and back in one click
+**Subject**: Free tool: Maya Workflow Kit makes Blender work like Maya (hotbox, Channel Box) — and back in one click
 
 > Hello 80 Level team,
 >
-> I'm the independent developer of Allset for Maya Users, a free and open-source (GPL) Blender extension for artists
-> who move between Maya and Blender. It rebuilds the Maya workflow on top of Blender's own tools — the Space hotbox,
+> I'm the independent developer of Maya Workflow Kit — for Maya users, in Blender: a free and open-source (GPL)
+> Blender extension for artists who move between Maya and Blender. It rebuilds the Maya workflow on top of Blender's own tools — the Space hotbox,
 > right-click marking menus, the Channel Box and Attribute Editor, menu sets, shelves, option boxes with Maya's default
 > values, Maya-style pivots and snapping, joints / IK / skin weights — and switches back to plain Blender in one
 > click, so Blender tutorials still work.
 >
 > A 40-second video: <YouTube URL> (MP4 attached). Stills (1920 × 1080) and the key visual are attached; everything is
-> a real screen recording, scenes use CC0 models (Poly Haven, Kenney, Quaternius).
-> Store page: <listing URL> · source: <GitHub URL>
+> a real screen recording; the scene models are third-party assets used under their licences (credits attached).
+> Store page: <listing URL> · source: https://github.com/5hyuns/maya-workflow-kit-for-blender
 >
 > No company behind it — just me. Happy to answer questions or write a short breakdown of how the Maya behaviours
 > were measured and rebuilt.
 >
 > Best regards, <name>
 >
-> Autodesk and Maya are registered trademarks of Autodesk, Inc. Allset is not affiliated with or endorsed by
-> Autodesk or the Blender Foundation.
+> Autodesk and Maya are registered trademarks of Autodesk, Inc. Maya Workflow Kit is an independent project, not
+> affiliated with or endorsed by Autodesk or the Blender Foundation.
 
 Attach: `clips/00_trailer.mp4`, `key_visual.png`, `screens/01_hotbox.png`, `03_channel_box_ae.png`, `08_rigging.png`,
 `kit/reddit_before_after.png`.

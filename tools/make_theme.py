@@ -111,7 +111,7 @@ VALUES = (
     # Manipulator: transformX/Y (0.9 red / green); Z as drawn = pure blue (Move/Scale axis pixels
     # in 02/06; displayRGBColor transformZ 0.29/0.57/1 is not what VP2 draws). Active/hovered
     # handle = manipCurrent 17 (yellow) [O]. Blender's axis colours also paint the grid axis
-    # lines: the Allset template hides those (step 43).
+    # lines: the Maya Workflow Kit template hides those (step 43).
     ("user_interface.axis_x", rgb("#e60000")),
     ("user_interface.axis_y", rgb("#00e600")),
     ("user_interface.axis_z", rgb("#0000ff")),
@@ -169,7 +169,7 @@ FIVE_X = (
 KEEP_FACTORY_5X = {
     "user_interface.link": "hyperlink text (Preferences, tooltips): Maya has none",
     "user_interface.axis_w": "quaternion W colour: Maya has no W channel",
-    "view_3d.grid_axis_brightness": "axis colour strength on grid axis lines: the Allset views hide them",
+    "view_3d.grid_axis_brightness": "axis colour strength on grid axis lines: the Maya Workflow Kit views hide them",
     "view_3d.gp_wire_edit": "Grease Pencil edit wire: Maya has no Grease Pencil",
     "node_editor.node_outline": "node outline in node editors (Hypershade keeps the Blender node look)",
     "preferences.match": "search match highlight in Preferences",

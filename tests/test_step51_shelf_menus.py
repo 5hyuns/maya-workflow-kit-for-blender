@@ -121,7 +121,7 @@ def test_shelf_row_layout():
 
 
 def test_template_shelf_row():
-    path = ROOT / "src" / "allset" / "app_template" / "Allset" / "startup.blend"
+    path = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
     bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=True)
     screen = bpy.data.workspaces["General"].screens[0]
     row = shelf.shelf_row_area(screen)

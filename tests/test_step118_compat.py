@@ -84,7 +84,7 @@ def test_pointmerge_facedata_and_strips():
 
 
 def test_dock_role_ignores_newer_properties_tabs():
-    """The Allset template is saved by 4.5: 5.x opens its dock with the newer strip tabs on."""
+    """The Maya Workflow Kit template is saved by 4.5: 5.x opens its dock with the newer strip tabs on."""
     assert compat.LATER_PROPERTIES_TABS.isdisjoint(set(maya_dock.ROLE_FLAGS.values()) | {"show_properties_tool"})
     if compat.IS_TARGET:
         names = {p.identifier for p in bpy.types.SpaceProperties.bl_rna.properties}

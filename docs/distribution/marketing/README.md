@@ -1,7 +1,9 @@
-# Marketing kit — Allset for Maya Users
+# Marketing kit — Maya Workflow Kit
 
-Everything here is made from real Allset sessions in Blender (GUI Blender, clean sandbox, Maya theme, Maya's factory
-viewport background #5c5c5c) with the licensed models of `CREDITS.md`. Copy: `copy.md`. Visual system: `style.md` (step 124: Maya logo teal + Autodesk Hello Yellow, one lockup rule, motion). Design
+Everything here is made from real kit sessions in Blender (GUI Blender, clean sandbox, Maya theme; step 125: Maya's
+gradient viewport background, checked by `tools/marketing/bg_check.py` — steps 122–124 used the flat #5c5c5c) with the
+licensed models of `CREDITS.md`. Name and lockup (step 125): "Maya Workflow Kit" + "for Maya users, in Blender"
+(`style.md`, decision 12 revision). Copy: `copy.md`. Visual system: `style.md` (step 124: Maya logo teal + Autodesk Hello Yellow, one lockup rule, motion). Design
 review: `design_review.md` (impeccable critique and what was fixed).
 Media standard and platform research: `references.md` (step 121), `research/marketing_refs/platform_rules_123.md`
 (not tracked). Nothing has been published (decision 11).
@@ -70,5 +72,5 @@ clips are joined by push / zoom-through transitions, and the end card animates i
 
 - Trailer end card: the CTA pill says "Free on extensions.blender.org" (`content.json` → `trailer.cta`; the full listing
   URL placeholder is `trailer.download`) — fine once the listing is live; rerun `clip_compose.py` if the text changes.
-  Posts: "extensions.blender.org/add-ons/allset" placeholder.
-- `posts.md`: `<listing URL>`, `<GitHub URL>`, `<YouTube URL>`.
+  Posts / copy: "extensions.blender.org" placeholder (the listing URL comes from the platform).
+- `posts.md`: `<listing URL>`, `<YouTube URL>` (source link filled: https://github.com/5hyuns/maya-workflow-kit-for-blender, created private — make it public first).

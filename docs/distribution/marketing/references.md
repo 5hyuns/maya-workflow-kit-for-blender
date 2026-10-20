@@ -1,4 +1,4 @@
-# Listing media references and the Allset media standard (step 121)
+# Listing media references and the kit media standard (step 121)
 
 User request (2026-10-19): 「Blender 상위 애드온(인기 많은 것)을 레퍼런스 삼아서 가자. Blender 보면 움직이는 이미지도 들어가던데?」
 
@@ -133,9 +133,9 @@ transition products sell little (30+–100+); the largest Maya-transition audien
 Maya Config Addon (752 ratings). No other complete "Blender works like Maya" product was found besides the Form
 Affinity family — none of them shows the whole Maya workflow (Channel Box, hotbox, Maya menus) in its first media.
 
-## 5. The Allset media standard (delegated, from §1–§4)
+## 5. The kit media standard (delegated, from §1–§4)
 
-1. **Featured image** (1920 × 1080 PNG, also the social card): the real Allset screen (Maya layout, Maya theme, Maya
+1. **Featured image** (1920 × 1080 PNG, also the social card): the real kit screen (Maya layout, Maya theme, Maya
    factory background #5c5c5c, `key_batch3.reset_background()`) as the picture, with the product name and **one** short
    line on a band — no paragraphs, no feature list (bestsellers 9/10 name + one line, 0/10 paragraphs). No Maya-like
    "M" logo and no Maya screenshot (decision 12 / trademark; 5/10 competitors do the M — we don't need it: our proof is
@@ -174,7 +174,7 @@ composited text with Pillow; take the session-driving ideas, not the layout (it 
    users say them (Channel Box, hotbox, marking menu, shelf, option box). No claims the tests don't back.
 2. `style.md`: font (one sans, sizes for 1920 × 1080 headline / line / lower third), band colours taken from the Maya theme
    (`src/allset/theme/studio_grey.xml`: header / panel greys, Maya selection highlight), margins, safe area (keep the demonstrated UI clear), logo use
-   (Allset icon only).
+   (the kit icon only).
 3. Key visual = featured image (§5.1) and the three stills (§5.2 #8–#10): rendered by a tool in `tools/marketing/`
    from GUI shots of the real UI (`tools/listing_shots.py` session: Maya theme, `reset_background()`, UI scale 1.0 at
    1920 × 1080), text composited with Pillow from `copy.md`. Check every image by eye; ΔE not needed, but the viewport

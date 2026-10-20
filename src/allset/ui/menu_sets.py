@@ -448,7 +448,7 @@ def _menu_class(idname, label, prefix, items, submenus, top_label=None):
 # --- operators -----------------------------------------------------------------
 
 class ALLSET_OT_menu_unavailable(bpy.types.Operator):
-    """Maya menu item without a Blender equivalent in Allset (always greyed out)"""
+    """Maya menu item without a Blender equivalent in Maya Workflow Kit (always greyed out)"""
     bl_idname = "allset.menu_unavailable"
     bl_label = "Not Available"
     bl_options = {'INTERNAL'}
@@ -461,7 +461,7 @@ class ALLSET_OT_menu_unavailable(bpy.types.Operator):
 
     @classmethod
     def description(cls, context, props):
-        return notices.tooltip(props.item, mapped=False) or f"Maya: {props.item}\nNo Blender equivalent in Allset yet"
+        return notices.tooltip(props.item, mapped=False) or f"Maya: {props.item}\nNo Blender equivalent in Maya Workflow Kit yet"
 
     def execute(self, context):
         return {'CANCELLED'}
@@ -483,14 +483,14 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
     def description(cls, context, props):
         if props.item not in menu_map.MAP:
             return notices.tooltip(props.item, mapped=False) or \
-                f"Maya: {props.item}\nNo Blender equivalent in Allset yet"
+                f"Maya: {props.item}\nNo Blender equivalent in Maya Workflow Kit yet"
         text = notices.tooltip(props.item, mapped=True) or _op_description(props.item)
         return text
 
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
         if action is None:
-            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Allset yet")
+            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
         if isinstance(rule, str):     # Maya warns and does nothing (mayapy, research/maya/re/menu_honesty.md §2)
@@ -590,7 +590,7 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
         from ..operators import option_windows
         label = props.item.rsplit('/', 1)[-1]
         if props.item not in menu_map.MAP:
-            return f"{label} options (greyed: no Blender equivalent in Allset)"
+            return f"{label} options (greyed: no Blender equivalent in Maya Workflow Kit)"
         w = option_windows.find_path(props.item)
         if w is not None:
             return w.title
@@ -602,7 +602,7 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
         if action is None:
-            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Allset yet")
+            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
         if option_kind(self.item) == "generic":
             return bpy.ops.allset.option_generic('INVOKE_DEFAULT', item=self.item)

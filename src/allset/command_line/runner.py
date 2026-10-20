@@ -46,7 +46,7 @@ _maya_pkg = []
 def _maya():
     if not _maya_pkg:
         from . import cmds_shim
-        pkg = types.ModuleType("maya", "Allset stand-in package: only maya.cmds (cmds_shim)")
+        pkg = types.ModuleType("maya", "Maya Workflow Kit stand-in package: only maya.cmds (cmds_shim)")
         pkg.__path__ = []
         pkg.cmds = cmds_shim
         _maya_pkg.append(pkg)

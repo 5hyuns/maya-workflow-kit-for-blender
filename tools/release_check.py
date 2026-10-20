@@ -15,7 +15,7 @@
 4. A GUI Blender on that sandbox (no --factory-startup, so the saved sandbox
    preferences with the enabled extension load like a real first start) runs
    tools/release_shots.py: checks the extension and the Maya keymap are active,
-   installs the Allset layout, builds a small scene and writes docs/screenshots/.
+   installs the Maya Workflow Kit layout, builds a small scene and writes docs/screenshots/.
    Only the Blender process started here is terminated on timeout.
 Plan: docs/steps/step_13.md 「계획」.
 """
@@ -48,7 +48,7 @@ def sandbox_env(sandbox=SANDBOX):
         d = sandbox / sub
         d.mkdir(parents=True)
         env[var] = str(d)
-    # the default Allset project (operators/project.default_root) lives in the sandbox, not in Documents
+    # the default Maya Workflow Kit project (operators/project.default_root) lives in the sandbox, not in Documents
     env["ALLSET_PROJECTS_DIR"] = str(sandbox / "projects")
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     return env
@@ -122,7 +122,7 @@ def leftover_check(blender, zip_path):
     before = _files(CLEAN_SANDBOX)
     run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
     run(probe + ["make", str(CLEAN_SANDBOX / "made.json")], env)
-    template = CLEAN_SANDBOX / "scripts" / "startup" / "bl_app_templates_user" / "Allset"
+    template = CLEAN_SANDBOX / "scripts" / "startup" / "bl_app_templates_user" / "Maya_Workflow_Kit"
     user_dir = CLEAN_SANDBOX / "extensions" / ".user" / REPO_ID / build.manifest_value("id")
     made = template.is_dir() and user_dir.is_dir()
     run(probe + ["disable", str(CLEAN_SANDBOX / "disabled.json")], env)

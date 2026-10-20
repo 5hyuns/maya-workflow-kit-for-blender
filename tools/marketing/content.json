@@ -1,5 +1,25 @@
 {
  "_doc": "Copy for tools/marketing/compose.py, from docs/distribution/marketing/copy.md (step 122). Callout rects: names from tmp/marketing/raw/meta.json or [x, y, w, h] in raw 1920 x 1080 window pixels (top-down).",
+ "_credits_doc": "Step 125: optional attribution per shot / clip name (e.g. a CC-BY model credit), printed small and muted: screens = right of the title band's line row, key visuals = under the footer, kit cards = a bottom corner, clips = the caption band's bottom-right corner. trailer.end_card_credits = lines printed at the bottom of the trailer end card. Empty = nothing printed.",
+ "credits": {
+  "hero": "DOGWALK (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "hotbox": "DOGWALK (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "navigation": "Pack Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "switch": "DOGWALK (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "marking_menus": "Rain Rig (CC) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "marking_menu": "Rain Rig (CC) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "menus_shelves": "Rain Rig (CC) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "rigging": "Rain Rig (CC) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "animation": "Rain Rig (CC) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "navigate_select": "Pack Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "modeling_toolkit": "Pack Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "channel_box_ae": "Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "pivot_snapping": "Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "channel_box_keys": "Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified",
+  "pivot_snap": "Security Bot Rig (CC-BY) Blender Foundation | studio.blender.org — CC BY 4.0, modified"
+ },
+ "_trademark_doc": "Step 125: the product name starts with 'Maya', so every image that carries the name as a brand (key visuals, kit cards, trailer end card) prints this small and muted at its bottom edge; feature screens / clip bands don't (store / README text carries it).",
+ "trademark_note": "Maya is a trademark of Autodesk, Inc. Not affiliated with or endorsed by Autodesk.",
  "key_visual_shots": [
   "hero",
   "rigging"
@@ -120,7 +140,7 @@
   {
    "name": "switch_before",
    "title": "Nothing changes until you choose",
-   "line": "Click Blender in the switch and everything Allset changed comes back.",
+   "line": "Click Blender in the switch and every Maya Workflow Kit change goes back.",
    "callouts": [
     {
      "rect": "switch",
@@ -216,7 +236,7 @@
    "name": "pivot_snap",
    "file": "05_pivot_snap",
    "title": "Edit the pivot, snap with V",
-   "caption": "Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot.",
+   "caption": "Insert edits the pivot; hold V while dragging and it snaps to a corner of the battery. Insert again, and the battery rotates around its new pivot.",
    "trailer": [
     0.6,
     6.4
@@ -279,7 +299,11 @@
   "download": "Get it on extensions.blender.org/add-ons/allset",
   "download_note": "placeholder until the listing is live (decision 11: nothing published yet)",
   "end_seconds": 2.5,
-  "caption": "Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender.",
+  "end_card_credits": [
+   "3D assets: Rain, Pack Bot and Security Bot rigs and DOGWALK scene (CC BY 4.0) Blender Foundation | studio.blender.org, modified",
+   "Cube Diorama (CC0) Blender Studio · Studio Small 09 HDRI (CC0) Poly Haven · CC BY 4.0: creativecommons.org/licenses/by/4.0"
+  ],
+  "caption": "Maya Workflow Kit in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender.",
   "cta": "Free on extensions.blender.org",
   "_doc": "Step 124 (tools/marketing/clip_compose.py). Clip fields: speed = playback speed vs the recording; wide = timeline-second ranges where the camera stays on the whole window; focus = extra points of interest pt [x, y] (window px) during t [a, b] (timeline s); zoom_max; trailer = timeline-second range used in the trailer. Trailer: cta = short CTA pill text (download = full URL, the fallback). no_cursor_chip = chip texts never shown next to the cursor."
  }

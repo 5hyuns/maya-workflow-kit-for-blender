@@ -27,7 +27,7 @@ SIZE = (10.0, 20.0, 5.0)
 
 def _cm_scene():
     us = bpy.context.scene.unit_settings
-    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # the Allset template's units
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0   # the Maya Workflow Kit template's units
 
 
 def _clear():
@@ -62,7 +62,7 @@ def _cube():
 # --- presets ------------------------------------------------------------------------------------
 
 def test_presets_cm_y_up():
-    k = 0.01          # Allset template: one Maya unit (cm) = 0.01 BU
+    k = 0.01          # Maya Workflow Kit template: one Maya unit (cm) = 0.01 BU
     op, a = file_io.export_args('OBJ', k, False)
     assert op == "wm.obj_export" and abs(a["global_scale"] - 100) < 1e-9 and a["up_axis"] == 'Y'
     op, a = file_io.import_args('OBJ', k)

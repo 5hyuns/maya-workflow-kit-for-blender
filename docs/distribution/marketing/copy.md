@@ -1,9 +1,20 @@
-# Marketing copy — Allset for Maya Users (step 122)
+# Marketing copy — Maya Workflow Kit (steps 122, 125)
 
 English, US market, brand mode, landing page / store listing / README / social. Claims only about implemented
 features (`docs/distribution/listing.md` part B is the fact base); no "exactly like Maya", no "100 %", no claims about
 other products, no implied Autodesk endorsement; Maya only to describe compatibility. The trademark notice below is
 kept in every long text.
+
+## Name (decision 12 revision, 2026-10-20 — user decision)
+
+- Product / store name: **Maya Workflow Kit** (no "Blender" in the store name, ToS 2.1). Repository / README title:
+  **Maya Workflow Kit for Blender** (`https://github.com/5hyuns/maya-workflow-kit-for-blender`).
+- The name is always followed at once by the context **"for Maya users, in Blender"** — the second line of the lockup
+  (`compose.lockup()`, style.md) and the first sentence of every long text. "Maya" is not coloured or styled apart
+  from the rest of the name.
+- The name puts Maya first, which Autodesk's trademark guidelines advise against (they prefer "for Maya"); the user
+  chose it knowing that. If the store review objects, the fallback is **Workflow Kit for Maya Users**
+  (`docs/user_decisions.md` 12). Before step 125 the name was "Allset for Maya Users"; the run notes below keep it.
 
 ## How the headlines were made
 
@@ -50,7 +61,7 @@ menu entry, a shortcut and the welcome dialog, so the headline is not literally 
 | 7 | Animation | Time Slider and Graph Editor | Key ticks, Range Slider, Maya tangents and Auto Key. |
 | 8 | Rigging | Joints, IK and skin weights | Joint Tool, IK handles, Bind Skin and Paint Skin Weights. |
 | 9 | Modeling Toolkit | Modeling Toolkit, docked | Multi-component selection and the mesh tools in one panel. |
-| 10 | Switch & revert | Nothing changes until you choose | Click Blender in the switch and everything Allset changed comes back. |
+| 10 | Switch & revert | Nothing changes until you choose | Click Blender in the switch and everything the kit changed comes back. |
 
 Fact base per line (listing.md part B): hotbox / marking menus = "Hotbox & Marking Menus"; `+=5`, keyed colours, node
 tabs = "Channel Box & Attribute Editor"; F2–F6, shelves, option windows with Maya 2022 factory values = "Menu Sets &
@@ -66,8 +77,8 @@ steps 57–58; Modeling Toolkit = step 63; switch / revert = "What happens when 
 4. Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf.
 5. Component selection on a mesh with Maya selection colors and the Move manipulator; Alt + mouse navigation and QWERTY tools.
 6. Hold D to edit the pivot; right-click while editing for the pivot marking menu. X, C and V snap while held.
-7. Time Slider with key ticks and Range Slider, Graph Editor with Maya menus and tangents, a walking robot.
-8. Paint Skin Weights on a skinned character: influences list, Replace / Add / Scale / Smooth, joints drawn in front.
+7. Time Slider with key ticks and Range Slider, Graph Editor with Maya menus and tangents on Rain's keyed wave.
+8. Paint Skin Weights on Rain's skinned body: influences list, Replace / Add / Scale / Smooth, joints drawn in front.
 9. The Modeling Toolkit docked in the tab stack: multi-component selection, mesh, component and tool buttons.
 10. Installing changes nothing: the welcome dialog asks first, and the Maya | Blender switch gives Blender back in one click.
 
@@ -78,28 +89,28 @@ Each clip's band shows its title (≤ 6 words) and, beat by beat, one line of wh
 
 | # | Clip | Title | Store caption (≤ 255 characters) |
 |---|---|---|---|
-| 0 | trailer | (key visual title card → clips → end card) | Allset in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
+| 0 | trailer | (key visual title card → clips → end card) | Maya Workflow Kit in half a minute: hotbox, marking menus, Channel Box keys, Maya navigation, pivot snapping, rigging, and the one-click switch back to plain Blender. |
 | 1 | hotbox | The hotbox, under the space bar | Tap Space to toggle one view and four views; hold Space for the hotbox with every menu of every menu set. Here: Select > All, straight from the hotbox. |
 | 2 | marking_menu | Right-click marking menus | Right-click over an object for its marking menu in Maya's positions: drag to Vertex for component mode, right-click again for Object Mode. |
 | 3 | channel_box_keys | Key it in the Channel Box | S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider. |
 | 4 | navigation | Navigate the Maya way | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
-| 5 | pivot_snap | Edit the pivot, snap with V | Insert edits the pivot; hold V while dragging and it snaps to a vertex of the drill. Insert again, and the drill rotates around its new pivot. |
+| 5 | pivot_snap | Edit the pivot, snap with V | Insert edits the pivot; hold V while dragging and it snaps to a corner of the battery. Insert again, and the battery rotates around its new pivot. |
 | 6 | rigging | Joints, IK and skin weights | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
 | 7 | switch | Maya or Blender, one click | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
 
-Trailer end card: name, "for Maya Users", the final headline "The tutorial ends. Your Channel Box comes back.", "Free and open source · Blender 4.5 – 5.2",
-and "Get it on extensions.blender.org/add-ons/allset" (placeholder until the listing is live).
+Trailer end card: name, "for Maya users, in Blender", the final headline "The tutorial ends. Your Channel Box comes back.", "Free and open source · Blender 4.5 – 5.2",
+and "Get it on extensions.blender.org" (placeholder until the listing is live; the listing URL is the platform's, from the id `allset`).
 
 ## Short intro (≤ 40 words)
 
-Allset brings the Maya workflow to Blender: hotbox, marking menus, Channel Box, menu sets, shelves and option boxes.
-It changes nothing until you choose Maya, and one click on the Maya | Blender switch gives you plain Blender back.
+For Maya users, in Blender: Maya Workflow Kit brings the hotbox, marking menus, Channel Box, menu sets, shelves and
+option boxes. It changes nothing until you choose Maya; one click on the Maya | Blender switch gives plain Blender back.
 
 ## Long intro (≈ 120 words)
 
-Moving from Maya to Blender is rarely about keys alone. It is the hotbox under the space bar, the right-click marking
+Maya Workflow Kit is for Maya users, in Blender. Moving from Maya to Blender is rarely about keys alone. It is the hotbox under the space bar, the right-click marking
 menu over an object, the Channel Box where you type `+=5`, the menu sets and shelves, the option box next to a menu
-item, and objects that behave like Maya transforms. Allset, a free and open-source Blender extension, rebuilds those
+item, and objects that behave like Maya transforms. The kit, a free and open-source Blender extension, rebuilds those
 on top of Blender's own tools: Maya-style navigation and selection, Freeze and Delete History, joints, IK and skin
 weights, the Time Slider and Graph Editor, the Modeling Toolkit. Installing it changes nothing until you choose Maya.
 When a tutorial uses Blender's own keys, click Blender in the Maya | Blender switch, follow along, and switch back.
@@ -110,9 +121,10 @@ When a tutorial uses Blender's own keys, click Blender in the Maya | Blender swi
 
 ## Credits line (end of the listing description and README)
 
-Scenes in the screenshots use CC0 models by Poly Haven (Fernando Quinn, Ethan Place, Mateusz Sadek, Jorge Camacho,
-Rahul Chaudhary, Rico Cilliers), Kenney and Quaternius (RobotExpressive); captions set in Inter (SIL OFL). Details:
-`docs/distribution/marketing/CREDITS.md`.
+Scenes in the screenshots and clips use third-party models and images under their own licences, credited in
+`docs/distribution/marketing/CREDITS.md`; captions set in Inter (SIL OFL). They are used only in the marketing media
+and are not shipped in the extension. (Paste the author / licence list from CREDITS.md where the platform needs it
+spelled out — the asset set changes with step 125.)
 
 ## Trademark notice (keep in every long text)
 

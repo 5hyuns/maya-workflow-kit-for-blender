@@ -228,7 +228,7 @@ def test_image_headers_patched():
 
 def test_template_has_marked_strip():
     path = os.path.join(os.path.dirname(import_module(kit.MODULE).__file__),
-                        "app_template", "Allset", "startup.blend")
+                        "app_template", "Maya_Workflow_Kit", "startup.blend")
     bpy.ops.wm.open_mainfile(filepath=path, load_ui=True)
     scr = bpy.context.window_manager.windows[0].screen
     strip = shelf.strip_area(scr)

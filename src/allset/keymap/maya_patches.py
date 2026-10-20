@@ -845,7 +845,7 @@ def patch_key_insert(kd):
 # --- 40. Time Slider range drag (docs/steps/step_84.md 「계획」 2) ---------------------------------------------
 # A press on the highlighted range moves / scales its keys; anywhere else it passes through to time_scrub (step 56),
 # so it goes in front of it (added after patch_time_slider: ``first`` puts the latest item first).
-# The Allset Time Slider row (29 px at 1.25) is all Blender's scrub strip, whose "Time Scrub" keymap (LMB =
+# The Maya Workflow Kit Time Slider row (29 px at 1.25) is all Blender's scrub strip, whose "Time Scrub" keymap (LMB =
 # anim.change_frame, blender_default.py:1171-1183) runs before "Dopesheet"; IC has no "Time Scrub", so Blender used
 # its default one (measured with --debug-handlers). The Maya keyconfig gets its own: change_frame kept, the range
 # drag and step 56's time_scrub (a click drops the range) in front; both pass through outside the Time Slider.

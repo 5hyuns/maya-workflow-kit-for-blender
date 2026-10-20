@@ -10,7 +10,7 @@ Blender has no Light Editor and Python can't make an editor type, so ``allset.li
 - Enable = ``hide_render`` and ``hide_viewport`` together (Maya: the light's visibility, which also stops it lighting);
 - Isolate = every other light off; their previous values are kept in the scene ID property ``allset_light_isolate``
   and come back when Isolate is pressed again (lights deleted meanwhile are skipped);
-- Intensity = ``energy`` (Watts for point / spot / area, Allset scales the created power to the Maya unit, step 54);
+- Intensity = ``energy`` (Watts for point / spot / area, Maya Workflow Kit scales the created power to the Maya unit, step 54);
   Maya's Exposure has no separate value in Blender.
 """
 
@@ -21,7 +21,7 @@ from ..operators import menu_extras
 from . import ae_layout
 
 CATEGORY = "Light Editor"
-NOTICE = "Light Editor (kit): Blender has no Light Editor, Allset lists the scene lights. Exposure is part of Intensity."
+NOTICE = "Light Editor (kit): Blender has no Light Editor, Maya Workflow Kit lists the scene lights. Exposure is part of Intensity."
 ISOLATE_PROP = "allset_light_isolate"
 # Maya Light Editor toolbar order (render_03_win1): create light buttons
 CREATE = (("DIRECTIONAL_LIGHT", 'LIGHT_SUN'), ("POINT_LIGHT", 'LIGHT_POINT'), ("SPOT_LIGHT", 'LIGHT_SPOT'),

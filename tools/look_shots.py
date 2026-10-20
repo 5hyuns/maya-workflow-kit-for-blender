@@ -253,7 +253,7 @@ def s_wait2():
     prefs = bpy.context.preferences
     addon = prefs.addons[MODULE].preferences
     check("one Return in the welcome dialog opens the Maya layout",
-          prefs.app_template == "Allset")
+          prefs.app_template == "Maya_Workflow_Kit")
     check("... with the Maya theme on and the splash off",
           addon.maya_theme and not prefs.view.show_splash)
     kc = bpy.context.window_manager.keyconfigs.active

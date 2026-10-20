@@ -38,7 +38,7 @@ class Rec:
 
 
 def _scene(cm=True):
-    """Fresh objects; cm = the Allset template's units (m + cm display: one Maya unit = 0.01 BU)."""
+    """Fresh objects; cm = the Maya Workflow Kit template's units (m + cm display: one Maya unit = 0.01 BU)."""
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)
     for ps in list(bpy.data.particles):
