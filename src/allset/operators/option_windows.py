@@ -71,66 +71,30 @@ def _k(context):
     return units.maya_unit(context.scene)
 
 
-def _maya_axis(axis):
-    """Rotation turning Blender's +Z (Maya's Y-up primitive axis) onto Maya axis X / Y / Z (Maya Z = Blender -Y)."""
-    if axis == "X":
-        return Matrix.Rotation(math.pi / 2, 4, 'Y')
-    if axis == "Z":
-        return Matrix.Rotation(math.pi / 2, 4, 'X')
-    return Matrix.Identity(4)
-
-
-def _subdivide_along(bm, axis, cuts):
-    """Cut every edge parallel to ``axis`` (a Vector) into cuts + 1 pieces (keeps quads and UVs)."""
-    if cuts < 1:
-        return
-    edges = [e for e in bm.edges
-             if abs((e.verts[1].co - e.verts[0].co).normalized().dot(axis)) > 0.999]
-    if edges:
-        bmesh.ops.subdivide_edges(bm, edges=edges, cuts=cuts, use_grid_fill=True)
-
-
-def _finish_mesh(ob, axis, cuts=()):
-    bm = bmesh.new()
-    bm.from_mesh(ob.data)
-    for vec, n in cuts:
-        _subdivide_along(bm, vec, n - 1)
-    bm.transform(_maya_axis(axis))
-    bm.to_mesh(ob.data)
-    bm.free()
-    ob.data.update()
+_AXES = {"X": (1.0, 0.0, 0.0), "Y": (0.0, 1.0, 0.0), "Z": (0.0, 0.0, 1.0)}
+# option window field -> Maya creation node attribute (step 129: the window fills the node, operators/prim_history.py)
+_NODE_FIELDS = {
+    'CUBE': {"width": "width", "height": "height", "depth": "depth", "width_div": "subdivisionsWidth",
+             "height_div": "subdivisionsHeight", "depth_div": "subdivisionsDepth"},
+    'SPHERE': {"radius": "radius", "axis_div": "subdivisionsAxis", "height_div": "subdivisionsHeight"},
+    'CYLINDER': {"radius": "radius", "height": "height", "axis_div": "subdivisionsAxis",
+                 "height_div": "subdivisionsHeight", "cap_div": "subdivisionsCaps", "round_cap": "roundCap"},
+    'CONE': {"radius": "radius", "height": "height", "axis_div": "subdivisionsAxis", "height_div": "subdivisionsHeight",
+             "cap_div": "subdivisionsCap", "round_cap": "roundCap"},
+    'TORUS': {"radius": "radius", "section_radius": "sectionRadius", "twist": "twist", "axis_div": "subdivisionsAxis",
+              "height_div": "subdivisionsHeight"},
+    'PLANE': {"width": "width", "height": "height", "width_div": "subdivisionsWidth",
+              "height_div": "subdivisionsHeight"},
+}
 
 
 def _primitive(kind):
     def run(context, v):
         from . import create
-        over = {"calc_uvs": v.get("create_uvs", True)}
-        if kind == 'CUBE':
-            over["size"] = 1.0
-        elif kind == 'SPHERE':
-            over.update(radius=v["radius"], segments=max(3, v["axis_div"]), ring_count=max(3, v["height_div"]))
-        elif kind == 'CYLINDER':
-            over.update(radius=v["radius"], depth=v["height"], vertices=max(3, v["axis_div"]))
-        elif kind == 'CONE':
-            over.update(radius1=v["radius"], depth=v["height"], vertices=max(3, v["axis_div"]))
-        elif kind == 'TORUS':
-            over.update(major_radius=v["radius"], minor_radius=v["section_radius"],
-                        major_segments=max(3, v["axis_div"]), minor_segments=max(3, v["height_div"]))
-        elif kind == 'PLANE':
-            over.update(x_subdivisions=max(1, v["width_div"]), y_subdivisions=max(1, v["height_div"]), size=1.0)
-        ob = create.create(context, kind, overrides=over)
-        if kind == 'CUBE':
-            # Maya width / height / depth = Blender X / Z / Y; divisions cut the edges along each axis
-            ob.data.transform(Matrix.Diagonal((v["width"], v["depth"], v["height"], 1.0)))
-            _finish_mesh(ob, v["axis"], ((Vector((1, 0, 0)), v["width_div"]), (Vector((0, 1, 0)), v["depth_div"]),
-                                         (Vector((0, 0, 1)), v["height_div"])))
-        elif kind == 'PLANE':
-            ob.data.transform(Matrix.Diagonal((v["width"], v["height"], 1.0, 1.0)))
-            _finish_mesh(ob, v["axis"])
-        elif kind == 'CYLINDER':
-            _finish_mesh(ob, v["axis"], ((Vector((0, 0, 1)), v["height_div"]),))
-        else:
-            _finish_mesh(ob, v["axis"])
+        over = {node: v[field] for field, node in _NODE_FIELDS[kind].items() if field in v}
+        ax = _AXES.get(v.get("axis", "Y"), _AXES["Y"])
+        over.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2], createUVs=int(bool(v.get("create_uvs", True))))
+        create.create(context, kind, overrides=over)
         return {'FINISHED'}
     return run
 
@@ -399,16 +363,19 @@ WINDOWS = [
     Window("poly_cylinder", "Polygon Cylinder Options", "Create", ("allset.create", {"kind": 'CYLINDER'}), [
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=100), F("height", "Height:", "length", 2.0, lo=0.0001, hi=100),
         F("axis_div", "Axis divisions:", "int", 20, lo=3, hi=200), F("height_div", "Height divisions:", "int", 1, lo=1, hi=100),
-        AXIS, UVS], _primitive('CYLINDER'), missing=("Cap divisions", "Round cap", "Normalize", "Preserve aspect ratio")),
+        F("cap_div", "Cap divisions:", "int", 1, lo=0, hi=100), F("round_cap", "", "bool", False, text="Round cap"),
+        AXIS, UVS], _primitive('CYLINDER'), missing=("Normalize", "Preserve aspect ratio")),
     Window("poly_cone", "Polygon Cone Options", "Create", ("allset.create", {"kind": 'CONE'}), [
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=100), F("height", "Height:", "length", 2.0, lo=0.0001, hi=100),
-        F("axis_div", "Axis divisions:", "int", 20, lo=3, hi=200), AXIS, UVS], _primitive('CONE'),
-        missing=("Height divisions", "Cap divisions", "Round cap", "Normalize", "Preserve aspect ratio")),
+        F("axis_div", "Axis divisions:", "int", 20, lo=3, hi=200), F("height_div", "Height divisions:", "int", 1, lo=1, hi=100),
+        F("cap_div", "Cap divisions:", "int", 0, lo=0, hi=100), F("round_cap", "", "bool", False, text="Round cap"),
+        AXIS, UVS], _primitive('CONE'), missing=("Normalize", "Preserve aspect ratio")),
     Window("poly_torus", "Polygon Torus Options", "Create", ("allset.create", {"kind": 'TORUS'}), [
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=100),
         F("section_radius", "Section Radius:", "length", 0.5, lo=0.0001, hi=100),
+        F("twist", "Twist:", "float", 0.0, lo=-360, hi=360),
         F("axis_div", "Axis divisions:", "int", 20, lo=3, hi=200), F("height_div", "Height divisions:", "int", 20, lo=3, hi=200),
-        AXIS, UVS], _primitive('TORUS'), missing=("Twist",)),
+        AXIS, UVS], _primitive('TORUS')),
     Window("poly_plane", "Polygon Plane Options", "Create", ("allset.create", {"kind": 'PLANE'}), [
         F("width", "Width:", "length", 1.0, lo=0.0001, hi=100), F("height", "Height:", "length", 1.0, lo=0.0001, hi=100),
         F("width_div", "Width divisions:", "int", 10, lo=1, hi=200), F("height_div", "Height divisions:", "int", 10, lo=1, hi=200),

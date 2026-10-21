@@ -15,7 +15,7 @@ import bpy
 from bpy.props import EnumProperty, FloatVectorProperty, IntProperty
 from mathutils import Euler, Quaternion, Vector
 
-from . import naming
+from . import naming, prim_history
 from .freeze import hierarchy
 from .group import make_group
 
@@ -42,6 +42,11 @@ def copy_subtree(root, instance=False):
         new = ob.copy()
         if ob.data is not None and not instance:
             new.data = ob.data.copy()
+        if not instance:   # Maya duplicates without the input graph: no polyCube1 on pCube2 (step 129)
+            for idb in (new, new.data):
+                for key in (prim_history.KEY, prim_history.PART):
+                    if idb is not None and key in idb:
+                        del idb[key]
         for coll in ob.users_collection:
             coll.objects.link(new)
         if ob is not root:

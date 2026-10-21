@@ -14,7 +14,6 @@ listRelatives, currentTime. Anything else raises AttributeError.
 
 import math
 
-import bmesh
 import bpy
 from mathutils import Vector
 
@@ -370,108 +369,65 @@ def xform(*args, **kwargs):
 
 # --- creation (Maya naming: pCube1 / pCubeShape1 / polyCube1) ----------------------
 
-def _unique(base):
-    n = 1
-    while f"{base}{n}" in bpy.data.objects or f"{base}{n}" in bpy.data.meshes:
-        n += 1
-    return n
+# Maya flags (long, short) -> creation node attribute; the bare command's defaults (polyCylinder caps 0, unlike
+# the Create menu's 1: research/maya/re/primitives_129.md §1)
+_PRIM_FLAGS = {
+    "polyCube": ('CUBE', {}, (("width", "w"), ("height", "h"), ("depth", "d"), ("subdivisionsX", "sx", "subdivisionsWidth"),
+                             ("subdivisionsY", "sy", "subdivisionsHeight"), ("subdivisionsZ", "sz", "subdivisionsDepth"))),
+    "polySphere": ('SPHERE', {}, (("radius", "r"), ("subdivisionsAxis", "sa"), ("subdivisionsX", "sx", "subdivisionsAxis"),
+                                 ("subdivisionsHeight", "sh"), ("subdivisionsY", "sy", "subdivisionsHeight"))),
+    "polyCylinder": ('CYLINDER', {"subdivisionsCaps": 0},
+                     (("radius", "r"), ("height", "h"), ("subdivisionsAxis", "sa"), ("subdivisionsX", "sx", "subdivisionsAxis"),
+                      ("subdivisionsHeight", "sh"), ("subdivisionsY", "sy", "subdivisionsHeight"),
+                      ("subdivisionsCaps", "sc"), ("subdivisionsZ", "sz", "subdivisionsCaps"), ("roundCap", "rcp"))),
+    "polyPlane": ('PLANE', {}, (("width", "w"), ("height", "h"), ("subdivisionsX", "sx", "subdivisionsWidth"),
+                               ("subdivisionsY", "sy", "subdivisionsHeight"))),
+}
 
 
-def _create(kind, base, name, build):
-    """Build a mesh with ``build(bm)``, link it like Maya (origin, selected, lead)."""
+def _primitive(cmd, kwargs):
+    """Build a Maya primitive with its creation node (operators/prim_history.py, step 129): returns
+    [transform, node] like Maya, or [transform] with constructionHistory off."""
+    from ..operators import prim_history
+    kind, values, flags = _PRIM_FLAGS[cmd]
+    f = _Flags(cmd, kwargs)
+    values = dict(values)
+    for spec in flags:
+        long, short = spec[0], spec[1]
+        v = f.get(long, short)
+        if v is not None:
+            values[spec[2] if len(spec) > 2 else long] = v
+    ax = f.get("axis", "ax")
+    if ax is not None:
+        values.update(axisX=ax[0], axisY=ax[1], axisZ=ax[2])
+    name = f.get("name", "n")
+    ch = f.get("constructionHistory", "ch", True)
+    f.done()
+    ob = prim_history.create_object(bpy.context, kind, values)
+    node = prim_history.node_dict(prim_history.owner_of(ob))["name"]
     if name:
-        ob_name, shape_name = name, f"{name}Shape"
-        n = _unique(f"poly{kind}")
-    else:
-        n = _unique(base)
-        ob_name, shape_name = f"{base}{n}", f"{base}Shape{n}"
-    mesh = bpy.data.meshes.new(shape_name)
-    bm = bmesh.new()
-    build(bm)
-    bm.to_mesh(mesh)
-    bm.free()
-    ob = bpy.data.objects.new(ob_name, mesh)
-    bpy.context.collection.objects.link(ob)
-    vl = _view_layer()
-    for o in vl.objects:
-        o.select_set(False)
-    ob.select_set(True)
-    vl.objects.active = ob
-    return [ob.name, f"poly{kind}{n}"]
-
-
-def _no_history(f):
-    f.get("constructionHistory", "ch")
-    f.get("axis", "ax")
+        ob.name = str(name)
+        ob.data.name = f"{ob.name}Shape"
+    if not ch:
+        prim_history.drop(ob)
+        return [ob.name]
+    return [ob.name, node]
 
 
 def polyCube(**kwargs):
-    f = _Flags("polyCube", kwargs)
-    w = f.get("width", "w", 1.0)
-    h = f.get("height", "h", 1.0)
-    d = f.get("depth", "d", 1.0)
-    for long, short in (("subdivisionsX", "sx"), ("subdivisionsY", "sy"), ("subdivisionsZ", "sz")):
-        if f.get(long, short, 1) != 1:
-            raise ValueError("polyCube: subdivisions are not supported by cmds_shim")
-    name = f.get("name", "n")
-    _no_history(f)
-    f.done()
-    k = linear_factor()
-
-    def build(bm):
-        bmesh.ops.create_cube(bm, size=1.0)
-        # Maya is Y-up: width = X, height = up (Blender Z), depth = Blender Y.
-        bmesh.ops.scale(bm, vec=(w * k, d * k, h * k), verts=bm.verts)
-    return _create("Cube", "pCube", name, build)
+    return _primitive("polyCube", kwargs)
 
 
 def polySphere(**kwargs):
-    f = _Flags("polySphere", kwargs)
-    r = f.get("radius", "r", 1.0)
-    sa = f.get("subdivisionsAxis", "sa", 20)
-    sh = f.get("subdivisionsHeight", "sh", 20)
-    name = f.get("name", "n")
-    _no_history(f)
-    f.done()
-
-    def build(bm):
-        bmesh.ops.create_uvsphere(bm, u_segments=sa, v_segments=sh, radius=r * linear_factor())
-    return _create("Sphere", "pSphere", name, build)
+    return _primitive("polySphere", kwargs)
 
 
 def polyCylinder(**kwargs):
-    f = _Flags("polyCylinder", kwargs)
-    r = f.get("radius", "r", 1.0)
-    h = f.get("height", "h", 2.0)
-    sa = f.get("subdivisionsAxis", "sa", 20)
-    if f.get("subdivisionsHeight", "sh", 1) != 1:
-        raise ValueError("polyCylinder: height subdivisions are not supported by cmds_shim")
-    name = f.get("name", "n")
-    _no_history(f)
-    f.done()
-    k = linear_factor()
-
-    def build(bm):
-        bmesh.ops.create_cone(bm, cap_ends=True, segments=sa, radius1=r * k, radius2=r * k, depth=h * k)
-    return _create("Cylinder", "pCylinder", name, build)
+    return _primitive("polyCylinder", kwargs)
 
 
 def polyPlane(**kwargs):
-    f = _Flags("polyPlane", kwargs)
-    w = f.get("width", "w", 1.0)
-    h = f.get("height", "h", 1.0)
-    sx = f.get("subdivisionsX", "sx", 10)
-    sy = f.get("subdivisionsY", "sy", 10)
-    name = f.get("name", "n")
-    _no_history(f)
-    f.done()
-    k = linear_factor()
-
-    def build(bm):
-        # Maya's plane lies on the ground (XZ), Blender's ground is XY.
-        bmesh.ops.create_grid(bm, x_segments=sx, y_segments=sy, size=0.5)
-        bmesh.ops.scale(bm, vec=(w * k, h * k, 1.0), verts=bm.verts)
-    return _create("Plane", "pPlane", name, build)
+    return _primitive("polyPlane", kwargs)
 
 
 # --- scene ------------------------------------------------------------------------------
