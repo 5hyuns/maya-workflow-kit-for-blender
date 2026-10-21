@@ -451,7 +451,8 @@ CATEGORIES.update({
         "View menu", "Blender's Graph Editor has no such display option: see its View menu and the sidebar View tab "
         "(Blender ▸ menu)."),
     "Graph Editor/View/Theme": (
-        "Themes", "Blender's colours come from the theme: Preferences > Themes (Maya Workflow Kit applies a Maya theme)."),
+        "Themes", "Blender's colours come from the theme: Preferences > Themes (install a Maya-like theme there if you want "
+        "Maya's colours)."),
     "Graph Editor/View/Curve Name": (
         "Channel list", "Blender doesn't write curve names in the graph: they are in the channel list."),
     "Graph Editor/Select": (

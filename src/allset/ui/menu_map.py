@@ -107,7 +107,7 @@ _WINDOW_EDITORS = {
 
 MAP = {
     # --- File (research/maya/menus.md "File") ---
-    "File/New Scene": "wm.read_homefile",
+    "File/New Scene": "allset.new_maya_scene",     # the Maya layout file bundled in the extension (step 130)
     # step 69: file dialogs start in the project's scenes folder (operators/project.py)
     "File/Open Scene...": "allset.open_scene",
     "File/Save Scene": "allset.save_scene",

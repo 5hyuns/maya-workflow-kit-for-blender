@@ -9,7 +9,7 @@ import bpy
 import bmesh
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sim import MODULE, check, ev, run, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, setup, step, tap, view3d, win, load_maya_layout  # noqa: E402
 
 GUI_TIMEOUT = 240
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
@@ -61,8 +61,7 @@ def shot(name):
 def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

@@ -10,7 +10,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, find_button, run, setup, step, win, _steps  # noqa: E402
+from sim import MODULE, check, ev, find_button, run, setup, step, win, _steps, load_maya_layout  # noqa: E402
 
 GUI_TIMEOUT = 240
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
@@ -72,8 +72,7 @@ def dock_state():
 def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

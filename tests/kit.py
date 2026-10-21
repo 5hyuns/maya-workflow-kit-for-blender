@@ -21,8 +21,7 @@ def fcurves(anim_id):
 
 
 def enable(maya=True):
-    """Enable the extension; ``maya`` also opts in to Maya mode (since step 115 enabling alone changes nothing),
-    without the theme, which is what a plain enable gave the tests before."""
+    """Enable the extension; ``maya`` also opts in to Maya mode (since step 115 enabling alone changes nothing)."""
     mod = addon_utils.enable(MODULE, default_set=True, handle_error=_raise)
     assert mod is not None, f"addon_utils.enable({MODULE!r}) returned None"
     assert MODULE in bpy.context.preferences.addons, f"{MODULE} not in preferences.addons"
@@ -33,7 +32,7 @@ def enable(maya=True):
 
 def maya_mode_on():
     import importlib
-    importlib.import_module(MODULE + ".switch").set_mode(True, layout=False, theme=False)
+    importlib.import_module(MODULE + ".switch").set_mode(True, layout=False)
 
 
 class _MayaKeymap:

@@ -1,5 +1,5 @@
 """Step 30: selection feel — marquee select-through keymap items, the X-ray watch, the
-pre-selection gizmo group, Maya undo queue (256 steps) through prefs_preset.
+pre-selection gizmo group, Blender's undo steps left alone (step 130).
 
 Box/lasso through hidden vertices and the highlight are measured in tests/gui/gui_step30_selection.py.
 Plan: docs/steps/step_30.md.
@@ -15,7 +15,6 @@ import kit
 patches = import_module(kit.MODULE + ".keymap.maya_patches")
 marquee = import_module(kit.MODULE + ".operators.marquee")
 preselect = import_module(kit.MODULE + ".operators.preselect")
-prefs_preset = import_module(kit.MODULE + ".prefs_preset")
 preferences = import_module(kit.MODULE + ".preferences")
 
 
@@ -85,14 +84,9 @@ def test_preselect_group_registered_and_polls_off():
     assert preselect._enabled(bpy.context) is False, "object mode"
 
 
-def test_undo_queue_is_maya_infinite():
+def test_undo_steps_left_alone():
+    """The 256-step undo preset is gone since step 130 (docs/user_decisions.md #13): Blender's value stays."""
     prefs = bpy.context.preferences
-    ap = preferences.get()
-    assert ap.use_maya_undo and prefs.edit.undo_steps == 256, prefs.edit.undo_steps
-    assert ap.undo_backup, "the user's value is backed up"
-    ap.use_maya_undo = False
-    assert prefs.edit.undo_steps == 32 and ap.undo_backup == ""
-    ap.use_maya_undo = True
-    assert prefs.edit.undo_steps == 256
-    # Navigation group untouched by the undo group.
-    assert prefs_preset.read(prefs) == dict(prefs_preset.PRESET)
+    default = type(prefs.edit).bl_rna.properties["undo_steps"].default
+    assert prefs.edit.undo_steps == default, prefs.edit.undo_steps
+    assert not hasattr(preferences.get(), "use_maya_undo")

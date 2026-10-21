@@ -1,7 +1,7 @@
-"""Compare the kit's look with Maya 2022: side-by-side shots and theme colour ΔE.
+"""Compare the kit's look with Maya 2022: side-by-side shots and pixel colour ΔE.
 
-    python tools/look_compare.py              # Blender shots + side-by-side images + ΔE table
-    python tools/look_compare.py --no-shots   # only ΔE (theme vs research/maya/colors.json)
+    python tools/look_compare.py              # Blender shots + side-by-side images + ΔE tables
+    python tools/look_compare.py --no-shots   # reuse the last shots
 
 Maya side (not run here; research/ is untracked, decision 6): research/maya/screens/*.png and
 research/maya/colors.json, made by research/scripts/maya_shots/shots.py inside Maya 2022 and
@@ -12,8 +12,6 @@ research/scripts/maya_colors.py (docs/steps/step_40.md).
    (same size as the Maya shots) -> tmp/look_env/shots/<name>.png.
 2. Re-runs itself in `blender -b` and writes into research/maya/screens/compare/:
    - <name>.png: Maya left, Blender right, for every shot name present on both sides;
-   - delta_e.md: CIEDE2000 between each Maya reference colour and the theme value the kit sets
-     for it (theme/studio_grey.xml applied over the factory theme);
    - pixels.md: CIEDE2000 between the Maya screenshot samples (colors.json "ui_samples") and the
      rendered kit pixels at the matching kit points (look_data.KIT_POINTS);
    - rects.md: Maya widget rectangles (_maya_ui_dump.json) vs kit areas/regions (look_data.RECTS,
@@ -39,49 +37,6 @@ MAYA = L.MAYA
 COMPARE = L.COMPARE
 SANDBOX = ROOT / "tmp" / ("look_env_" + os.environ["ALLSET_LOOK_TAG"] if os.environ.get("ALLSET_LOOK_TAG") else "look_env")
 TIMEOUT = 300
-
-# (label, theme path, Maya colour key in colors.json) -- key "a.b" walks the json
-PAIRS = (
-    ("panel background", "properties.space.back", "ui_palette_qt.active.Window"),
-    ("menu bar (top bar)", "topbar.space.header", "ui_samples.menu_bar_bg"),
-    ("button", "user_interface.wcol_regular.inner", "ui_palette_qt.active.Button"),
-    ("button text", "user_interface.wcol_regular.text", "ui_palette_qt.active.ButtonText"),
-    ("selection highlight", "user_interface.wcol_regular.inner_sel", "ui_palette_qt.active.Highlight"),
-    ("text field", "user_interface.wcol_text.inner", "ui_palette_qt.active.Base"),
-    ("number field (CB value)", "user_interface.wcol_num.inner", "ui_samples.cb_field"),
-    ("menu / popup body", "user_interface.wcol_menu_back.inner", "ui_samples.menu_popup_bg"),
-    ("menu item hover", "user_interface.wcol_menu_item.inner_sel", "ui_palette_qt.active.Highlight"),
-    ("list (Outliner) background", "outliner.space.back", "ui_samples.outliner_list_bg"),
-    ("list row selected", "outliner.selected_highlight", "ui_samples.outliner_row_selected"),
-    ("tab inactive", "user_interface.wcol_tab.inner", "ui_samples.shelf_tab_inactive"),
-    ("tab active", "user_interface.wcol_tab.inner_sel", "ui_samples.shelf_tab_active"),
-    ("label text", "properties.space.text", "ui_palette_qt.active.WindowText"),
-    ("viewport background (flat)", "view_3d.space.gradients.high_gradient", "viewport.background_flat"),
-    ("gradient bottom (Alt+B only)", "view_3d.space.gradients.gradient", "viewport.background_gradient_bottom"),
-    ("grid", "view_3d.grid", "viewport.displayColor.grid"),
-    ("dormant wire", "view_3d.wire", "viewport.dormant_polymesh_wire"),
-    ("lead selected (active)", "view_3d.object_active", "viewport.displayColor.lead"),
-    ("other selected", "view_3d.object_selected", "viewport.displayColor.active"),
-    ("component-mode wire", "view_3d.wire_edit", "viewport.displayColor.hilite"),
-    ("vertex (unselected)", "view_3d.vertex", "viewport.displayColor.hiliteComponent"),
-    ("vertex selected (as drawn)", "view_3d.vertex_select", "viewport.vertex_selected_rendered"),
-    ("edge selected", "view_3d.edge_select", "viewport.displayColor.polyEdge"),
-    ("edge selected (edge mode)", "view_3d.edge_mode_select", "viewport.displayColor.polyEdge"),
-    ("face selected", "view_3d.face_select", "viewport.displayColor.polyFace"),
-    ("face selected (face mode)", "view_3d.face_mode_select", "viewport.displayColor.polyFace"),
-    ("manipulator X", "user_interface.axis_x", "viewport.manip_x"),
-    ("manipulator Y", "user_interface.axis_y", "viewport.manip_y"),
-    ("manipulator Z (as drawn)", "user_interface.axis_z", "viewport.manip_z_rendered"),
-    ("manipulator active handle", "user_interface.gizmo_primary", "viewport.displayColor.manipCurrent"),
-    ("manipulator hovered handle", "user_interface.gizmo_hi", "viewport.displayColor.manipCurrent"),
-    ("Outliner lead row", "outliner.active", "ui_samples.outliner_row_selected"),
-    ("Outliner selected name", "outliner.selected_object", "ui_palette_qt.active.HighlightedText"),
-    ("Outliner lead name", "outliner.active_object", "ui_palette_qt.active.HighlightedText"),
-    ("time slider background", "dopesheet_editor.space.back", "viewport.time_slider_bg"),
-    ("time slider key", "dopesheet_editor.keyframe", "viewport.time_slider_key"),
-    ("time slider current frame", "dopesheet_editor.frame_current", "viewport.time_slider_current_frame"),
-)
-
 
 # ---------------------------------------------------------------- colour maths
 def _lin(c):
@@ -146,82 +101,14 @@ def rgb2hex(c):
     return "#%02x%02x%02x" % tuple(round(max(0.0, min(1.0, v)) * 255) for v in c[:3])
 
 
-def maya_colour(colors, key):
-    """Walk ``key`` ("viewport.displayColor.lead") through colors.json; keys may contain dots."""
-    node, parts = colors, key.split(".")
-    while parts:
-        for n in range(len(parts), 0, -1):
-            k = ".".join(parts[:n])
-            if k in node:
-                node, parts = node[k], parts[n:]
-                break
-        else:
-            raise KeyError(key)
-    return hex2rgb(node if isinstance(node, str) else node["hex"])
-
-
 # ---------------------------------------------------------------- in Blender
 def in_blender():
     import bpy
 
-    bpy.ops.preferences.reset_default_theme()
-    # the kit's theme file for this Blender (studio_grey.xml for 4.5, studio_grey_<5.m>.xml, step 119)
-    folder = ROOT / "src" / "allset" / "theme"
-    theme_xml = folder / "studio_grey.xml"
-    for f in sorted(folder.glob("studio_grey_*.xml")):
-        if tuple(int(x) for x in f.stem.split("_")[-1].split(".")) <= tuple(bpy.app.version[:2]):
-            theme_xml = f
-    bpy.ops.script.execute_preset(filepath=str(theme_xml), menu_idname="USERPREF_MT_interface_theme_presets")
-    theme = bpy.context.preferences.themes[0]
-    # Blender 5.x keeps some 4.5 theme values elsewhere (src/allset/theme MOVED = the 5.0 migration table): read
-    # the PAIRS paths (4.5 names) at their 5.x place (step 118, 119)
-    sys.path.insert(0, str(ROOT / "tools"))
-    import make_theme
-    moved = {old: new for new, old in make_theme.moved_table()}
-
-    def exists(path):
-        owner = theme
-        for part in path.split("."):
-            if not hasattr(owner, part):
-                return False
-            owner = getattr(owner, part)
-        return True
-
+    # Step 130 (#40): the kit no longer ships or applies a theme, so there is no theme-vs-Maya colour table;
+    # the pixel tables below compare what the kit draws in Blender's own theme with Maya's screenshots.
     colors = json.loads((MAYA / "colors.json").read_text())
-    rows = []
-    for label, path, key in PAIRS:
-        owner = theme
-        if not exists(path) and path in moved:
-            path = moved[path]
-        try:
-            for p in path.split("."):
-                owner = getattr(owner, p)
-        except AttributeError:   # a setting this Blender removed without a successor
-            rows.append((label, path + " (not in this Blender)", key, "?", "?", None))
-            continue
-        kit = tuple(owner)[:3]
-        try:
-            ref = maya_colour(colors, key)
-        except KeyError:
-            rows.append((label, path, key, rgb2hex(kit), "?", None))
-            continue
-        rows.append((label, path, key, rgb2hex(kit), rgb2hex(ref), de2000(kit, ref)))
-    gt = theme.view_3d.space.gradients.background_type
     COMPARE.mkdir(parents=True, exist_ok=True)
-    lines = ["# Theme vs Maya 2022 colours (CIEDE2000)", "",
-             "Generated by `python tools/look_compare.py`. Maya values: research/maya/colors.json.",
-             f"Kit theme: src/allset/theme/studio_grey.xml over the factory theme. Viewport background type: `{gt}` "
-             f"(Maya factory: flat, gradient {colors['viewport']['gradient_default_on']}).",
-             "ΔE00 < 2: same to the eye · 2–5: close · > 5: visibly different.", "",
-             "| element | theme path | kit | Maya | ΔE00 |", "|---|---|---|---|---|"]
-    bad = 0
-    for label, path, key, kit, ref, de in rows:
-        mark = "?" if de is None else f"{de:.1f}" + (" ✗" if de > 5 else " ~" if de > 2 else "")
-        bad += de is not None and de > 5
-        lines.append(f"| {label} | `{path}` | {kit} | {ref} | {mark} |")
-    lines += ["", f"{bad} of {len(rows)} pairs differ visibly (ΔE00 > 5)."]
-    (COMPARE / "delta_e.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print("look_compare:", f"{bad}/{len(rows)} theme pairs with ΔE00 > 5")
 
     shots = Path(os.environ.get("ALLSET_LOOK_SHOTS", SANDBOX / "shots"))
     made = 0

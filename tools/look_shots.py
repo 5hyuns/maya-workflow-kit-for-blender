@@ -2,8 +2,8 @@
 
 Runs in a GUI Blender (1600x900, --enable-event-simulate) on a clean sandbox config with the
 extension installed and enabled. Shot names match the Maya shots (research/scripts/maya_shots/
-shots.py) so look_compare.py can pair them. ``00_first_start`` is the layout before the Maya theme
-is applied (what a new user sees); every later shot has the theme on.
+shots.py) so look_compare.py can pair them. ``00_first_start`` is the layout before Maya mode
+(what a new user sees). The kit ships no theme (step 130, #40): every shot is in Blender's factory theme.
 
 Same scene as Maya (docs/steps/step_41.md): pCube1 1 cm at the origin (decision 8), pCube2/3 at
 x = +-2 cm, Maya's persp view direction, Maya's focal length in screen pixels and the distance that
@@ -251,11 +251,9 @@ def s_wait():
 @step
 def s_wait2():
     prefs = bpy.context.preferences
-    addon = prefs.addons[MODULE].preferences
     check("one Return in the welcome dialog opens the Maya layout",
           prefs.app_template == "Maya_Workflow_Kit")
-    check("... with the Maya theme on and the splash off",
-          addon.maya_theme and not prefs.view.show_splash)
+    check("... with the splash off", not prefs.view.show_splash)
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap on (active keyconfig {kc.name if kc else None} unchanged, step 130)",
           kc is not None and import_module(MODULE + ".keymap").is_applied())

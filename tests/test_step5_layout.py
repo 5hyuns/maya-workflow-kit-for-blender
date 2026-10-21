@@ -1,4 +1,5 @@
-"""Step 5: Maya layout app template (install/remove/load) and Maya theme."""
+"""Step 5: the Maya layout file bundled in the extension (step 130: never copied into the user's scripts folder as an
+app template; "New Scene in Maya Layout" reads it as an untitled file)."""
 
 import os
 from importlib import import_module
@@ -8,99 +9,49 @@ import bpy
 import kit
 
 app_template = import_module(kit.MODULE + ".app_template")
-theme = import_module(kit.MODULE + ".theme")
-
-SANDBOX_SCRIPTS = os.environ["BLENDER_USER_SCRIPTS"]
+first_start = import_module(kit.MODULE + ".first_start")
 
 
-def _theme():
-    return bpy.context.preferences.themes[0]
-
-
-def _close(a, b, tol=2e-3):
-    return all(abs(x - y) < tol for x, y in zip(a, b))
-
-
-# --- install / remove ----------------------------------------------------------------
-
-def test_install_into_user_templates_in_sandbox():
-    assert bpy.ops.allset.layout_install() == {'FINISHED'}
-    dst = app_template.installed_dir()
-    assert os.path.normcase(dst).startswith(os.path.normcase(SANDBOX_SCRIPTS)), dst
-    for name in ("startup.blend", app_template.MARKER):
-        assert os.path.isfile(os.path.join(dst, name)), name
-    assert app_template.is_installed()
-    assert bpy.ops.allset.layout_install() == {'FINISHED'}, "reinstall over our own copy"
-
-
-def test_remove_and_refuse_foreign_folder():
-    assert bpy.ops.allset.layout_remove() == {'FINISHED'}
-    assert not os.path.exists(app_template.installed_dir())
-    assert app_template.remove() is False  # nothing to remove
-    foreign = app_template.installed_dir()
-    os.makedirs(foreign)
-    with open(os.path.join(foreign, "keep.txt"), "w") as fh:
-        fh.write("not ours")
-    try:
-        for fn in (app_template.install, app_template.remove):
-            try:
-                fn()
-            except RuntimeError:
-                pass
-            else:
-                raise AssertionError(f"{fn.__name__} touched a folder it did not create")
-        assert os.path.isfile(os.path.join(foreign, "keep.txt"))
-    finally:
-        os.remove(os.path.join(foreign, "keep.txt"))
-        os.rmdir(foreign)
-
-
-def test_bundled_template_files():
+def test_bundled_layout_files():
     src = app_template.SOURCE_DIR
     assert sorted(f for f in os.listdir(src) if not f.startswith("__pycache__")) == \
-        ["splash.png", "splash_2x.png", "startup.blend"]   # data only, no code outside the extension (step 115)
+        ["splash.png", "splash_2x.png", "startup.blend"]   # data only, no code (step 115)
+    assert app_template.STARTUP == os.path.join(src, "startup.blend")
 
 
 # --- theme --------------------------------------------------------------------------------
 
-def test_theme_apply_and_restore():
-    grad = _theme().view_3d.space.gradients
-    default_top = tuple(grad.high_gradient)
-    default_type = grad.background_type
-    assert not theme.has_backup()
-    assert bpy.ops.allset.theme_apply() == {'FINISHED'}
-    assert theme.has_backup()
-    # Maya 2022 factory: flat 0.36 grey, gradient off (research/maya/colors.json, step 42)
-    assert grad.background_type == 'SINGLE_COLOR'
-    assert _close(grad.high_gradient, (0.36, 0.36, 0.36))
-    ds = _theme().dopesheet_editor
-    keyframe = ds.keyframe if hasattr(ds, "keyframe") else _theme().common.anim.keyframe   # 5.x: moved (step 53)
-    assert _close(keyframe[:3], (1.0, 0.0, 0.0))  # timeSliderKey
-    assert _close(_theme().user_interface.wcol_regular.inner[:3], (0x5d / 255,) * 3)
-    path = theme.backup_path()
-    assert os.path.normcase(path).startswith(
-        os.path.normcase(os.path.dirname(os.environ["BLENDER_USER_EXTENSIONS"]))), path
-    assert bpy.ops.allset.theme_restore() == {'FINISHED'}
-    assert not theme.has_backup()
-    assert grad.background_type == default_type and _close(grad.high_gradient, default_top)
+def test_no_theme_in_the_kit():
+    """Step 130 (#40): the kit ships no theme and has no theme operators; the user's theme is never written."""
+    import importlib.util
+    assert importlib.util.find_spec(kit.MODULE + ".theme") is None
+    assert not hasattr(bpy.types, "ALLSET_OT_theme_apply") and not hasattr(bpy.types, "ALLSET_OT_theme_restore")
+    root = os.path.dirname(import_module(kit.MODULE).__file__)
+    xml = [os.path.join(d, f) for d, _s, fs in os.walk(root) for f in fs if f.endswith(".xml")]
+    assert not xml, xml
 
 
-def test_theme_backup_keeps_first_original():
-    _theme().view_3d.grid = (0.9, 0.1, 0.1, 1.0)   # a "user" theme tweak
-    bpy.ops.allset.theme_apply()
-    bpy.ops.allset.theme_apply()                 # second apply must not overwrite the backup
-    bpy.ops.allset.theme_restore()
-    assert _close(_theme().view_3d.grid, (0.9, 0.1, 0.1, 1.0))
-    bpy.ops.preferences.reset_default_theme()
+def test_nothing_installed_into_user_scripts():
+    assert not hasattr(app_template, "install") and not hasattr(app_template, "remove_on_disable")
+    tpl = bpy.utils.user_resource('SCRIPTS', path=os.path.join("startup", "bl_app_templates_user"))
+    assert not os.path.isdir(tpl), os.listdir(tpl)
 
 
-# --- loading the template (last: replaces the open file) -----------------------------------
+# --- loading the layout (last: replaces the open file) -----------------------------------
 
-def test_template_layout():
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
-    assert bpy.context.preferences.app_template == app_template.TEMPLATE_ID
+def test_new_maya_scene_layout():
+    template = bpy.context.preferences.app_template
+    first_start.new_maya_scene()
+    assert bpy.context.preferences.app_template == template, "no app template switch"
+    assert bpy.data.filepath == "", "an untitled file: saving never writes into the extension"
     assert kit.is_enabled()
+    # Maya's flat #5c5c5c viewport as view data, not theme (#45): scene linear 0.10702
+    for screen in bpy.data.screens:
+        for area in screen.areas:
+            if area.type == 'VIEW_3D' and area.spaces.active.show_region_header:   # not the Tool Box column
+                sh = area.spaces.active.shading
+                assert sh.background_type == 'VIEWPORT', (screen.name, sh.background_type)
+                assert abs(sh.background_color[0] - 0.10702) < 1e-3, tuple(sh.background_color)
     ws = bpy.data.workspaces["General"]
     scr = ws.screens[0]
     types = sorted(a.type for a in scr.areas)
@@ -126,4 +77,4 @@ def test_template_layout():
     assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 200, 24)
     assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (1, 120)
     assert len(bpy.data.objects) == 0, [o.name for o in bpy.data.objects]
-    bpy.ops.allset.layout_remove()
+    bpy.ops.wm.read_homefile()

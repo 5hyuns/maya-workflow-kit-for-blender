@@ -1,9 +1,9 @@
 """Step 115: no surprises — enabling changes nothing until the user opts in, no automatic preference saves, a code-free
-layout template that leaves with a user disable, kit draws that keep other add-ons' UI (docs/steps/step_115.md)."""
+layout file, kit draws that keep other add-ons' UI (docs/steps/step_115.md). Step 130: opting in changes no Blender
+preference either, and nothing is written outside the extension (no app template copy, no snapshot)."""
 
 import os
 import re
-import shutil
 from importlib import import_module
 
 import addon_utils
@@ -33,12 +33,12 @@ def test_enable_alone_changes_nothing():
         assert not changed, "enabling alone changed: " + ", ".join(changed) + "\n" + "\n".join(
             d for d in kit.diff(before, during) if d.split(":")[0].split(".")[0] in changed)
         sw = _mod("switch")
-        assert not sw.is_on() and not sw.has_snapshot()
+        assert not sw.is_on()
         assert not hasattr(bpy.types.Scene, "allset_cb"), "Maya mode modules registered without opting in"
         assert bpy.context.window_manager.keyconfigs.active.name == "Blender"
-        assert not _mod("app_template").is_installed()
+        assert not os.path.isdir(_templates_dir())
         # what enabling alone does add: the opt-in and the switch
-        for op in ("welcome", "switch_mode", "restore_blender"):
+        for op in ("welcome", "switch_mode"):
             assert getattr(bpy.ops.allset, op).get_rna_type() is not None, op
         funcs = [getattr(f, "__name__", "") for f in bpy.types.TOPBAR_HT_upper_bar.draw._draw_funcs]
         assert "draw_topbar_switch" in funcs, funcs
@@ -48,54 +48,52 @@ def test_enable_alone_changes_nothing():
     assert not d, "state leaked after disable:\n" + "\n".join(d)
 
 
-def test_opt_in_turns_maya_on_and_disable_restores():
+PREFS = ("prefs_inputs", "prefs_view", "prefs_edit", "prefs_system_wire", "theme", "ui_styles")
+
+
+def _templates_dir():
+    return bpy.utils.user_resource('SCRIPTS', path=os.path.join("startup", "bl_app_templates_user"))
+
+
+def test_opt_in_turns_maya_on_without_changing_preferences():
     before = kit.snapshot()
     kit.enable(maya=False)
     _mod("welcome").opt_in(open_layout=False)      # what the dialog's confirm / the preferences button run
     prefs = _mod("preferences").get()
     assert _mod("switch").is_on() and hasattr(bpy.types.Scene, "allset_cb")
+    assert prefs.start_in_maya_layout and prefs.welcome_done
+    during = kit.snapshot()
+    changed = [k for k in PREFS if before[k] != during[k]]
+    assert not changed, "opting in changed Blender preferences: " + ", ".join(changed)
+    assert not os.path.isdir(_templates_dir()), "nothing copied into the user's scripts folder"
     assert bpy.context.window_manager.keyconfigs.active.name == "Blender", "step 130: the active keyconfig stays"
     assert _mod("keymap").is_applied()
-    assert bpy.context.preferences.themes[0].name == "Studio Grey (Maya-inspired)"
-    assert prefs.maya_theme and prefs.start_in_maya_layout and prefs.layout_installed
-    assert _mod("app_template").is_installed()
     assert bpy.context.preferences.is_dirty, "the choice is marked for Blender's own preference save"
-    tpl = _mod("app_template").installed_dir()
     kit.disable()
-    assert not os.path.isdir(tpl), "a user disable takes the layout template with it"
     d = kit.diff(before, kit.snapshot())
     assert not d, "state leaked after disable:\n" + "\n".join(d)
 
 
-def test_quit_and_update_keep_the_template():
+def test_quit_and_user_disable_are_the_same():
+    """No user_disabling any more (step 130): quit / update (default_set=False) and a user disable unregister the
+    same way, and neither leaves anything behind."""
+    before = kit.snapshot()
     kit.enable()
-    app_template = _mod("app_template")
-    app_template.install()
-    tpl = app_template.installed_dir()
-    assert not _mod("switch").user_disabling(), "not inside addon_utils.disable"
-    # Quitting / reloading scripts / updating the extension unregister with default_set=False
     addon_utils.disable(kit.MODULE, default_set=False)
-    assert os.path.isfile(os.path.join(tpl, app_template.MARKER)), "quit removed the template"
-    kit.enable()
-    app_template = _mod("app_template")
-    assert _mod("preferences").get().layout_installed
-    # gone while the preferences still want it (e.g. an older build's disable): register puts it back
-    shutil.rmtree(tpl)
-    assert app_template.reinstall_if_wanted() and app_template.is_installed()
-    kit.disable()
-    assert not os.path.isdir(tpl)
+    try:
+        # default_set=False keeps the add-on in the enabled list (Blender re-enables it at the next start): only that
+        d = [x for x in kit.diff(before, kit.snapshot()) if not x.startswith("addons:")]
+        assert not d, "quit-style disable leaked:\n" + "\n".join(d)
+        assert not hasattr(_mod("switch"), "user_disabling")
+    finally:
+        addon_utils.disable(kit.MODULE, default_set=True)
 
 
-def test_template_has_no_code():
+def test_layout_file_has_no_code():
     app_template = _mod("app_template")
     files = os.listdir(app_template.SOURCE_DIR)
     assert not [f for f in files if f.endswith((".py", ".pyc")) or f == "__pycache__"], files
-    kit.enable()
-    try:
-        dst = app_template.install()
-        assert not [f for f in os.listdir(dst) if f.endswith(".py")], os.listdir(dst)
-    finally:
-        kit.disable()
+    assert os.path.isfile(app_template.STARTUP)
 
 
 def test_no_automatic_preference_save():
@@ -196,30 +194,3 @@ def test_keystate_unknown_off_windows_or_on_failure():
         assert not bad, bad
     finally:
         kit.disable()
-
-
-def test_stale_snapshot_is_dropped_not_applied():
-    """A snapshot left by an earlier install must not overwrite the user's current values on a fresh enable."""
-    view = bpy.context.preferences.view
-    kit.enable(maya=False)
-    sw = _mod("switch")
-    view.ui_scale = 1.3
-    sw.take_snapshot()                              # "the user's values" of some earlier time
-    view.ui_scale = 1.0
-    addon_utils.disable(kit.MODULE, default_set=False)   # like a quit: the file stays
-    assert os.path.isfile(sw.snapshot_path())
-    kit.enable(maya=False)
-    try:
-        sw = _mod("switch")
-        assert not sw.has_snapshot() and view.ui_scale == 1.0, (sw.has_snapshot(), view.ui_scale)
-    finally:
-        kit.disable()
-
-
-def test_user_disable_drops_the_snapshot():
-    kit.enable()
-    sw = _mod("switch")
-    assert sw.has_snapshot()
-    path = sw.snapshot_path()
-    kit.disable()
-    assert not os.path.isfile(path), "a user disable leaves nothing for a next start"

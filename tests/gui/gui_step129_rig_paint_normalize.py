@@ -16,7 +16,7 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, setup, step, win  # noqa: E402
+from sim import MODULE, check, ev, run, setup, step, win, load_maya_layout  # noqa: E402
 
 GUI_TIMEOUT = 200
 C = {}
@@ -61,8 +61,7 @@ def weight_of(name, indices):
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

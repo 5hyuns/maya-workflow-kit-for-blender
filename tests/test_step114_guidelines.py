@@ -78,9 +78,7 @@ def test_every_asset_is_kit_made_and_cc0():
     listed = open(os.path.join(PKG, "ASSETS_LICENSE.txt"), encoding="utf-8").read()
     assets = _assets()
     assert assets == ["app_template/Maya_Workflow_Kit/splash.png", "app_template/Maya_Workflow_Kit/splash_2x.png",
-                      "app_template/Maya_Workflow_Kit/startup.blend", "theme/studio_grey.xml",
-                      "theme/studio_grey_5.0.xml", "theme/studio_grey_5.1.xml", "theme/studio_grey_5.2.xml",
-                      "welcome.png"], assets
+                      "app_template/Maya_Workflow_Kit/startup.blend", "welcome.png"], assets   # no theme (step 130)
     for rel in assets:
         assert rel in listed, f"{rel} missing from ASSETS_LICENSE.txt"
     assert "CC0" in listed

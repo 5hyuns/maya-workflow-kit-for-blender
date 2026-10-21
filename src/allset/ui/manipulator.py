@@ -8,7 +8,8 @@ circle. Maya's (research/maya/workflows/pivot_snap.md M1-M7, shots ``manip_*.png
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
   plane handles (normal-axis colour), the active handle drawn yellow (M2).
 - Rotate: axis rings (front half), a camera ring, a grey trackball — Blender's C rotate gizmo
-  already has this layout, so the Rotate tool keeps it (Maya theme colours).
+  already has this layout, so the Rotate tool keeps it (axis colours of the user's theme, like the Move / Scale
+  handles here: ``_theme_axis`` reads them, the kit never writes a theme).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
 - Pivot edit mode (D / Insert): Move plus small rings to orient the pivot (M7).
 - Constant screen size, Maya 108 px for the Move Y arrow at manipGlobalScale 1.5 (M3, M4).
@@ -31,7 +32,7 @@ GROUP = "ALLSET_GGT_xform"
 GIZMO = "ALLSET_GT_maya_handle"
 MODES = ('OBJECT', 'EDIT_MESH')
 # Rotate keeps Blender's C gizmo: its axis rings (front half), camera ring and trackball already
-# have Maya's layout (M5) and take the Maya theme colours; a Python dial can't clip the back half
+# have Maya's layout (M5) and take the theme's axis colours; a Python dial can't clip the back half
 # the same way (measured, docs/steps/step_59.md 「한 것」). Delegated.
 TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE'}
 # Orientation slot per tool kind (Blender: 0 default, 1 move, 2 rotate, 3 scale).
@@ -384,9 +385,14 @@ class ALLSET_GT_maya_handle(Gizmo):
             self.draw_custom_shape(sh, select_id=select_id)
 
 
+# Maya = / - (operators/manip.ALLSET_OT_manip_size): the kit manipulator's own size factor for this session. Not
+# Blender's gizmo_size preference, which the kit never writes (step 130).
+SIZE = [1.0]
+
+
 def scale_basis(context):
     """World size of one arrow unit is set by the draw scale; this is the px factor."""
-    return ARROW_PX / 75.0 * context.preferences.view.gizmo_size / BASE_PX_PER_UNIT
+    return ARROW_PX / 75.0 * context.preferences.view.gizmo_size * SIZE[0] / BASE_PX_PER_UNIT
 
 
 # Pixels one gizmo unit spans with use_draw_scale and scale_basis 1 at gizmo_size 75 (measured, step 59).
@@ -707,6 +713,7 @@ def register():
 
 
 def unregister():
+    SIZE[0] = 1.0
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     if bpy.app.timers.is_registered(_ensure_timer):
