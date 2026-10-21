@@ -849,3 +849,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129, #22) 실제 마우스로 엣지 / 버텍스 / 페이스 모드에서 더블클릭 = 루프 (방향은 가까운 엣지), 하나 고르고 같은 줄의 다른 하나를 Shift+더블클릭 = 사이 구간, 다른 줄이면 그 루프 추가. 이벤트 시뮬레이션은 DOUBLE_CLICK 을 못 보내므로 GUI 테스트는 연산자를 직접 부른다.
 - [ ] (step 129, #37) Time Slider 오른쪽 열쇠 버튼 = Auto Key (켜면 빨갛게), 키가 있는 큐브를 다른 프레임에서 움직이면 움직인 채널만 키가 생기는지 (Channel Box 입력도).
 - [ ] (step 129, #38) 현재 프레임에 키가 있으면 플레이헤드 상자 둘레가 빨갛게 보이는지 (Blender 가 상자를 애드온 그림 위에 그려 키 틱이 가려졌음); 다른 프레임의 틱은 1 px 빨간 선.
+
+### Step 129 — Channel Box 채널 드래그 · Layer Editor · 가시성 하나 (lane CB)
+
+- [ ] (step 129) 실제 마우스로 Channel Box 이름 칸 Translate X → Scale Z 를 끌어 범위 선택 (파란 이름 칸), 값 칸에서 시작한 드래그도 범위 선택; Ctrl 클릭 토글, Shift 클릭 범위. 값 칸 한 번 클릭 → 그 자리에 편집 칸이 바로 뜨고 (글자 전체 선택) 입력 + Enter 로 선택한 채널 전부 · 선택한 오브젝트 전부에 들어가는지, Esc 로 닫으면 값이 그대로인지.
+- [ ] (step 129) 빠르게 끌 때 (한 이벤트에 여러 행) 범위 끝이 마우스 행과 맞는지, 드래그 중 Channel Box 밖으로 나갔다 들어와도 선택이 남는지, 125 % 와 100 % UI 배율.
+- [ ] (step 129) h → Channel Box Visibility off; Channel Box Visibility 0 → Display > Show 로 다시 보임; 레이어 V 끄고 켜도 자기 Visibility 0 인 오브젝트는 숨은 채; 레이어 Template → Normal 뒤 Bounding Box 표시가 그대로인지.
+- [ ] (step 129) Layer Editor: 행의 V / P / T 상자 클릭, 이름 더블클릭 이름 바꾸기, 상자 위 RMB → Maya 레이어 메뉴, 화살표로 순서 이동 (새 레이어가 맨 위). Maya 캡처 `research/maya/screens/le129/le02_dock.png` 와 나란히.

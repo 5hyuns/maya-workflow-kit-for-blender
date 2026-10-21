@@ -92,9 +92,9 @@ def test_h_toggles_and_keeps_selection():
     a, b, c = _scene()
     _select(a, b)
     _vis('TOGGLE')
-    assert a.hide_get() and b.hide_get() and not c.hide_get()
+    assert a.hide_viewport and b.hide_viewport and not c.hide_viewport
     _vis('TOGGLE')   # nothing visible selected: the kept selection comes back, selected
-    assert not a.hide_get() and not b.hide_get()
+    assert not a.hide_viewport and not b.hide_viewport
     assert a.select_get() and b.select_get() and not c.select_get()
     assert visibility.KEPT not in a and visibility.KEPT not in b
 
@@ -106,22 +106,22 @@ def test_h_new_selection_replaces_kept():
     _select(b)
     _vis('TOGGLE')          # hides b; a is no longer the kept selection
     _vis('TOGGLE')          # shows b only
-    assert not b.hide_get() and a.hide_get()
+    assert not b.hide_viewport and a.hide_viewport
 
 
 def test_hide_show_last_and_selected():
     a, b, c = _scene()
     _select(a)
     _vis('HIDE')
-    assert a.hide_get() and not a.select_get()
+    assert a.hide_viewport and not a.select_get()
     _select(b)
     _vis('HIDE_UNSELECTED')                 # hides c (a is already hidden)
-    assert c.hide_get() and not b.hide_get()
+    assert c.hide_viewport and not b.hide_viewport
     _vis('SHOW_LAST')                       # last hide = c only
-    assert not c.hide_get() and a.hide_get() and c.select_get()
+    assert not c.hide_viewport and a.hide_viewport and c.select_get()
     bpy.context.view_layer.objects.active = a   # e.g. picked in the Outliner
     _vis('SHOW_SELECTED')
-    assert not a.hide_get() and a.select_get()
+    assert not a.hide_viewport and a.select_get()
 
 
 def test_show_selected_uses_kept():
@@ -130,4 +130,4 @@ def test_show_selected_uses_kept():
     _vis('TOGGLE')
     _select(c)
     _vis('SHOW_SELECTED')
-    assert not a.hide_get() and not b.hide_get()
+    assert not a.hide_viewport and not b.hide_viewport

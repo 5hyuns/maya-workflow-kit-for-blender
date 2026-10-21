@@ -5,9 +5,14 @@ research/maya/interaction.md:233-238 (HK:271-277): h toggles the visibility of t
 selection and keeps it selected; Ctrl+H hides the selection, Alt+H the rest;
 Shift+H shows the selected hidden objects; Ctrl+Shift+H shows what was hidden last.
 
-Blender deselects an object when it is hidden (``hide_set``), so Maya's "hidden but
-still selected" is kept as an ID property on the object (``KEPT``). ``LAST`` marks
-what the latest hide of this operator hid. Plan: docs/steps/step_16.md 2.
+Maya's ``visibility`` attribute is ``Object.hide_viewport`` (per object, keyable; the Channel
+Box Visibility row reads the same flag): h, Display > Hide / Show and the Channel Box write one
+attribute (docs/steps/step_129_cb.md 「계획」 #26). A display layer's V uses the view-layer flag
+(``hide_set``) instead, so it never changes this attribute.
+
+A hidden object can't stay selected in Blender, so Maya's "hidden but still selected" is kept
+as an ID property on the object (``KEPT``). ``LAST`` marks what the latest hide of this
+operator hid. Plan: docs/steps/step_16.md 2.
 """
 
 import bpy
@@ -22,6 +27,7 @@ ACTIONS = (
     ('HIDE_UNSELECTED', "Hide Unselected Objects", "Maya Alt+H"),
     ('SHOW_SELECTED', "Show Selected Objects", "Maya Shift+H"),
     ('SHOW_LAST', "Show Last Hidden", "Maya Ctrl+Shift+H"),
+    ('SHOW_ALL', "Show All", "Maya Display > Show > All: every object whose visibility is off"),
 )
 
 
@@ -37,20 +43,27 @@ def _hide(objects, all_objects, kept=False):
     if kept:
         _clear(all_objects, KEPT)
     for ob in objects:
-        ob.hide_set(True)
+        ob.hide_viewport = True
+        try:
+            ob.select_set(False)
+        except RuntimeError:
+            pass
         ob[LAST] = True
         if kept:
             ob[KEPT] = True
     return len(objects)
 
 
-def _show(objects, view_layer):
+def _show(objects, view_layer, select=True):
     shown = 0
     for ob in objects:
-        ob.hide_set(False)
+        ob.hide_viewport = False
         for key in (KEPT, LAST):
             if key in ob:
                 del ob[key]
+        if not select:
+            shown += 1
+            continue
         try:
             ob.select_set(True)
         except RuntimeError:   # not selectable in this view layer
@@ -65,7 +78,7 @@ def apply(context, action):
     vl = context.view_layer
     objs = list(vl.objects)
     selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
-    hidden = [ob for ob in objs if ob.hide_get()]
+    hidden = [ob for ob in objs if ob.hide_viewport]
     if action == 'TOGGLE':
         if selected:
             return _hide(selected, objs, kept=True)
@@ -79,6 +92,8 @@ def apply(context, action):
         return _show([ob for ob in hidden if KEPT in ob or ob == act], vl)
     if action == 'SHOW_LAST':
         return _show([ob for ob in hidden if LAST in ob], vl)
+    if action == 'SHOW_ALL':
+        return _show(hidden, vl, select=False)
     raise ValueError(action)
 
 

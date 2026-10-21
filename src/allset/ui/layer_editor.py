@@ -5,10 +5,12 @@ research/maya/channel_box.md §3.1; design docs/steps/step_6.md 「계획」.
 A display layer is a child collection of a "Display Layers" collection that
 is excluded from every view layer, so layers are membership lists that do
 not change the scene hierarchy or visibility by themselves. The layer state
-is applied to its member objects:
-  V (visible)  -> hide_viewport
+is an override on its member objects that never changes their own Maya
+attributes (step 129 #26; the object's visibility is ``hide_viewport``):
+  V (visible)  -> the view-layer flag (``hide_set``)
   T (template) -> unselectable, wireframe; R (reference) -> unselectable
-  P (playback) -> off: members hidden while animation plays
+                  (the member's own display type / selectability are kept in ``OWN`` and put back)
+  P (playback) -> off: members hidden (view-layer flag) while animation plays
 An object belongs to at most one display layer, as in Maya.
 """
 
@@ -40,6 +42,8 @@ class ALLSET_PG_layer(bpy.types.PropertyGroup):
     playback: BoolProperty(name="Playback", default=True, update=_update,
                            description="Show the layer's objects during playback (Maya P)")
     display_type: EnumProperty(name="Display Type", items=TYPES, default="NORMAL", update=_update)
+    # list position: Maya lists the newest layer on top and Move Up / Down reorders (layerEditor.mel:5100-5111)
+    order: IntProperty(options={'HIDDEN'})
 
 
 # --- data helpers -------------------------------------------------------------------------------
@@ -61,6 +65,25 @@ def layers(scene):
     return [c for c in r.children if c.allset_layer.is_layer] if r else []
 
 
+def display_order(scene):
+    """Layers top to bottom as Maya lists them: highest ``order`` (newest) first."""
+    ls = layers(scene)
+    return sorted(ls, key=lambda c: (-c.allset_layer.order, -ls.index(c)))
+
+
+def move_layer(scene, coll, delta):
+    """Move ``coll`` ``delta`` rows down the list (-1 = up)."""
+    seq = display_order(scene)
+    i = seq.index(coll)
+    j = max(0, min(len(seq) - 1, i + delta))
+    if i == j:
+        return False
+    seq.insert(j, seq.pop(i))
+    for n, c in enumerate(reversed(seq)):
+        c.allset_layer.order = n + 1
+    return True
+
+
 def layer_of(ob, scene):
     for coll in layers(scene):
         if ob.name in coll.objects:
@@ -76,17 +99,50 @@ def next_layer_name():
     return f"layer{n}"
 
 
+OWN = "allset_layer_own"   # the member's own display_type / hide_select while a layer overrides them
+
+
+def _layer_hide(ob, hidden):
+    """The layer's V / P: the view-layer flag, never the object's own visibility (hide_viewport)."""
+    for vl in bpy.context.scene.view_layers if bpy.context.scene else ():
+        try:
+            if ob.hide_get(view_layer=vl) != hidden:
+                ob.hide_set(hidden, view_layer=vl)
+        except RuntimeError:   # not in this view layer
+            pass
+
+
+def _override_display(ob, display_type, unselectable):
+    if OWN not in ob:
+        ob[OWN] = {"display_type": ob.display_type, "hide_select": bool(ob.hide_select)}
+    ob.display_type = display_type
+    ob.hide_select = unselectable
+
+
+def _restore_display(ob):
+    own = ob.get(OWN)
+    if own is None:
+        return
+    ob.display_type = own.get("display_type", 'TEXTURED')
+    ob.hide_select = bool(own.get("hide_select", False))
+    del ob[OWN]
+
+
 def apply_object(ob, layer):
-    """Apply a layer's state to one member (None = back to normal)."""
+    """Apply a layer's state to one member (None = back to the object's own state). Maya: a display layer is an
+    override (drawOverride) that never changes the node's own attributes (step 129 #26)."""
     if layer is None:
-        ob.hide_viewport = False
-        ob.hide_select = False
-        ob.display_type = 'TEXTURED'
+        _layer_hide(ob, False)
+        _restore_display(ob)
         return
     st = layer.allset_layer
-    ob.hide_viewport = not st.visible
-    ob.hide_select = st.display_type != "NORMAL"
-    ob.display_type = 'WIRE' if st.display_type == "TEMPLATE" else 'TEXTURED'
+    _layer_hide(ob, not st.visible)
+    if st.display_type == "NORMAL":
+        _restore_display(ob)
+    else:
+        own = ob.get(OWN)
+        own_type = own.get("display_type", ob.display_type) if own is not None else ob.display_type
+        _override_display(ob, 'WIRE' if st.display_type == "TEMPLATE" else own_type, True)
 
 
 def apply_layer(coll):
@@ -95,9 +151,11 @@ def apply_layer(coll):
 
 
 def new_layer(scene, objects=()):
+    top = max((c.allset_layer.order for c in layers(scene)), default=0)
     coll = bpy.data.collections.new(next_layer_name())
     root(scene, create=True).children.link(coll)
     coll.allset_layer.is_layer = True
+    coll.allset_layer.order = top + 1
     add_objects(scene, coll, objects)
     return coll
 
@@ -142,9 +200,8 @@ def on_playback_pre(scene, *_args):
         st = coll.allset_layer
         if st.visible and not st.playback:
             for ob in coll.objects:
-                if not ob.hide_viewport:
-                    ob.hide_viewport = True
-                    _hidden_for_playback.append(ob.name)
+                _layer_hide(ob, True)
+                _hidden_for_playback.append(ob.name)
 
 
 @persistent
@@ -152,7 +209,7 @@ def on_playback_post(scene, *_args):
     for name in _hidden_for_playback:
         ob = bpy.data.objects.get(name)
         if ob is not None:
-            ob.hide_viewport = False
+            _layer_hide(ob, False)
     _hidden_for_playback.clear()
 
 
@@ -242,23 +299,150 @@ class ALLSET_OT_layer_cycle_type(_LayerOp, bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_layer_toggle(_LayerOp, bpy.types.Operator):
+    """Toggle the layer's visibility (V) or playback (P)"""
+    bl_idname = "allset.layer_toggle"
+    bl_label = "Toggle Layer"
+
+    layer: bpy.props.StringProperty()
+    attr: EnumProperty(items=(("visible", "Visible", "Maya V"), ("playback", "Playback", "Maya P")))
+
+    @classmethod
+    def description(cls, context, props):
+        return ("Visibility (Maya V): show or hide the layer's objects" if props.attr == "visible" else
+                "Playback (Maya P): show the layer's objects while animation plays")
+
+    def execute(self, context):
+        coll = bpy.data.collections.get(self.layer)
+        if coll is None:
+            return {'CANCELLED'}
+        st = coll.allset_layer
+        setattr(st, self.attr, not getattr(st, self.attr))
+        return {'FINISHED'}
+
+
+class ALLSET_OT_layer_move(_LayerOp, bpy.types.Operator):
+    """Move the selected layer up or down in the list (Maya Layer Editor arrows)"""
+    bl_idname = "allset.layer_move"
+    bl_label = "Move Layer"
+
+    direction: EnumProperty(items=(("UP", "Up", "Move selection up in list"),
+                                   ("DOWN", "Down", "Move selection down in list")))
+
+    @classmethod
+    def description(cls, context, props):
+        return f"Move selection {props.direction.lower()} in list"
+
+    @classmethod
+    def poll(cls, context):
+        return active_layer(context) is not None
+
+    def execute(self, context):
+        coll = active_layer(context)
+        move_layer(context.scene, coll, -1 if self.direction == "UP" else 1)
+        context.scene.allset_layer_index = layers(context.scene).index(coll)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_layer_empty(_LayerOp, bpy.types.Operator):
+    """Remove every object from the selected layer (Maya Empty the Layer)"""
+    bl_idname = "allset.layer_empty"
+    bl_label = "Empty the Layer"
+
+    @classmethod
+    def poll(cls, context):
+        return active_layer(context) is not None
+
+    def execute(self, context):
+        coll = active_layer(context)
+        remove_objects(context.scene, coll, list(coll.objects))
+        return {'FINISHED'}
+
+
+class ALLSET_OT_layer_set_type(_LayerOp, bpy.types.Operator):
+    """Set the selected layer's display type (Maya Set Selected Layers)"""
+    bl_idname = "allset.layer_set_type"
+    bl_label = "Set Layer Type"
+
+    display_type: EnumProperty(items=TYPES)
+
+    @classmethod
+    def poll(cls, context):
+        return active_layer(context) is not None
+
+    def execute(self, context):
+        active_layer(context).allset_layer.display_type = self.display_type
+        return {'FINISHED'}
+
+
 # --- UI ------------------------------------------------------------------------------------------
 
+# Maya layer row (research/maya/screens/le129/_le129.json): three 20x14 boxes V / P / type with 3 px gaps, a 16x14
+# colour swatch, then the name as plain text, rows 20 px: boxes one UI unit wide in a left-aligned row (natural
+# widths, small gaps).
+BOX_UNITS = 1.4
+SWATCH_UNITS = 0.9
+
+
 class ALLSET_UL_layers(bpy.types.UIList):
+    """Maya display layer rows: newest on top (``order``), click = select the layer, double-click = rename"""
+
     def filter_items(self, context, data, propname):
-        items = getattr(data, propname)
+        items = list(getattr(data, propname))
         flags = [self.bitflag_filter_item if c.allset_layer.is_layer else 0 for c in items]
-        return flags, []
+        # neworder[i] = display position of item i: highest order first (Maya lists the newest layer on top)
+        ranked = sorted(range(len(items)), key=lambda i: (-items[i].allset_layer.order, -i))
+        neworder = [0] * len(items)
+        for pos, i in enumerate(ranked):
+            neworder[i] = pos
+        return flags, neworder
+
+    def draw_filter(self, context, layout):
+        pass   # Maya's layer list has no filter / sort options
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         st = item.allset_layer
-        row = layout.row(align=True)
-        row.prop(st, "visible", text="V", toggle=True)
-        row.prop(st, "playback", text="P", toggle=True)
-        row.operator("allset.layer_cycle_type", text=TYPE_LETTER[st.display_type]).layer = item.name
-        row.prop(item, "color_tag", text="", icon_only=True)
+        row = layout.row(align=False)
+        boxes = row.row(align=True)
+        boxes.alignment = 'LEFT'           # natural widths: fixed boxes, the name takes the rest
+        for attr, letter in (("visible", "V"), ("playback", "P")):
+            cell = boxes.row(align=True)
+            cell.ui_units_x = BOX_UNITS
+            op = cell.operator("allset.layer_toggle", text=letter if getattr(st, attr) else " ")
+            op.layer, op.attr = item.name, attr
+            boxes.separator(factor=0.3)
+        cell = boxes.row(align=True)
+        cell.ui_units_x = BOX_UNITS
+        cell.operator("allset.layer_cycle_type", text=TYPE_LETTER[st.display_type]).layer = item.name
+        sw = boxes.row(align=True)
+        sw.ui_units_x = SWATCH_UNITS
+        sw.prop(item, "color_tag", text="", icon_only=True, emboss=False)
         row.prop(item, "name", text="", emboss=False)
-        row.label(text=str(len(item.objects)))
+
+
+LAYER_MENU = (   # Maya's layer RMB menu (layerEditorShowPopupMenu, layerEditor.mel:6434; research/maya/channel_box.md:158)
+    ("allset.layer_assign", "Add Selected Objects", {"remove": False}),
+    ("allset.layer_assign", "Remove Selected Objects", {"remove": True}),
+    ("allset.layer_select", "Select Objects", {}),
+    None,
+    ("allset.layer_set_type", "Set Normal", {"display_type": "NORMAL"}),
+    ("allset.layer_set_type", "Set Template", {"display_type": "TEMPLATE"}),
+    ("allset.layer_set_type", "Set Reference", {"display_type": "REFERENCE"}),
+    None,
+    ("allset.layer_empty", "Empty the Layer", {}),
+    ("allset.layer_delete", "Delete Layer", {}),
+)
+
+
+def draw_layer_items(layout):
+    for entry in LAYER_MENU:
+        if entry is None:
+            layout.separator()
+            continue
+        idname, text, props = entry
+        op = layout.operator(idname, text=text)
+        for k, v in props.items():
+            setattr(op, k, v)
 
 
 class ALLSET_MT_le_layers(bpy.types.Menu):
@@ -270,11 +454,24 @@ class ALLSET_MT_le_layers(bpy.types.Menu):
         lay.operator("allset.layer_new", text="Create Empty Layer").selected = False
         lay.operator("allset.layer_new", text="Create Layer from Selected").selected = True
         lay.separator()
-        lay.operator("allset.layer_assign", text="Add Selected Objects").remove = False
-        lay.operator("allset.layer_assign", text="Remove Selected Objects").remove = True
-        lay.operator("allset.layer_select", text="Select Objects")
-        lay.separator()
-        lay.operator("allset.layer_delete", text="Delete Layer")
+        draw_layer_items(lay)
+
+
+def is_layer_button(context):
+    """The button under the mouse belongs to a display layer row (for its RMB menu)."""
+    op = getattr(context, "button_operator", None)
+    if op is not None and op.bl_rna.identifier in ("ALLSET_OT_layer_toggle", "ALLSET_OT_layer_cycle_type"):
+        return True
+    ptr = getattr(context, "button_pointer", None)
+    return isinstance(ptr, bpy.types.Collection) and getattr(ptr.allset_layer, "is_layer", False)
+
+
+def draw_button_menu(self, context):
+    """Maya's layer RMB menu on top of Blender's button context menu (a C menu, not a keymap item)."""
+    if not is_layer_button(context):
+        return
+    draw_layer_items(self.layout)
+    self.layout.separator()
 
 
 class ALLSET_MT_le_options(bpy.types.Menu):
@@ -320,27 +517,33 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             set_driven_key.draw(layout, context)
             return
         layout.separator(type='LINE')   # Maya's splitter between Channel Box and Layer Editor
-        layout.row(align=True).prop(wm, "allset_le_tab", expand=True)
+        # Maya: slim tabs on the left (Display 67 px, Anim 56 px, 18 px high; le129/_le129.json), not a
+        # full-width switch
+        tabs = layout.row(align=True)
+        tabs.alignment = 'LEFT'
+        tabs.scale_y = 0.9
+        for ident, label, _tip in TABS:
+            tabs.prop_enum(wm, "allset_le_tab", ident, text=f"  {label}  ")
         chrome.menu_bar(layout, MENU_BAR)
         if wm.allset_le_tab == 'ANIM':
             chrome.wrapped(layout, ANIM_TEXT, alignment='LEFT')
             layout.operator("allset.open_editor", text="Nonlinear Animation").ui_type = 'NLA_EDITOR'
             return
+        # Maya's toolbar, right-aligned, frameless icon buttons in Maya's order: move up, move down, create
+        # empty layer, create layer from selected (layerEditor.mel:5100-5111)
         row = layout.row(align=True)
         row.alignment = 'RIGHT'
+        row.emboss = 'NONE'
+        for direction, icon in (("UP", 'TRIA_UP_BAR'), ("DOWN", 'TRIA_DOWN_BAR')):
+            row.operator("allset.layer_move", text="", icon=icon).direction = direction
         row.operator("allset.layer_new", text="", icon='ADD').selected = False
         row.operator("allset.layer_new", text="", icon='COLLECTION_NEW').selected = True
-        row.separator()
-        row.operator("allset.layer_assign", text="", icon='ZOOM_IN').remove = False
-        row.operator("allset.layer_assign", text="", icon='ZOOM_OUT').remove = True
-        row.operator("allset.layer_select", text="", icon='RESTRICT_SELECT_OFF')
-        row.operator("allset.layer_delete", text="", icon='TRASH')
         # Maya shows the (empty) layer list area even with no layers (11b_channel_box_crop.png): an empty
         # list over the scene collection's children (the filter keeps display layers only).
         r = root(scene)
         owner = r if r is not None else scene.collection
         layout.template_list("ALLSET_UL_layers", "", owner, "children", scene, "allset_layer_index",
-                             rows=list_rows(context))
+                             rows=list_rows(context), sort_lock=True)
 
 
 def list_rows(context):
@@ -348,14 +551,15 @@ def list_rows(context):
     channel_box.CB_SHARE; step 99)."""
     from .channel_box import CB_SHARE
     region = context.region
-    if region is None or region.type != 'UI':
+    if region is None or region.type not in {'UI', 'WINDOW'}:   # the dock is a Properties WINDOW (step 116)
         return 8
     u = round(18.0 * context.preferences.system.ui_scale) + 2 * context.preferences.system.pixel_size
     return max(3, int((1.0 - CB_SHARE) * region.height / max(u, 1)) - 5)
 
 
 classes = (ALLSET_PG_layer, ALLSET_OT_layer_new, ALLSET_OT_layer_assign, ALLSET_OT_layer_select,
-           ALLSET_OT_layer_delete, ALLSET_OT_layer_cycle_type, ALLSET_UL_layers,
+           ALLSET_OT_layer_delete, ALLSET_OT_layer_cycle_type, ALLSET_OT_layer_toggle, ALLSET_OT_layer_move,
+           ALLSET_OT_layer_empty, ALLSET_OT_layer_set_type, ALLSET_UL_layers,
            ALLSET_MT_le_layers, ALLSET_MT_le_options, ALLSET_MT_le_help)
 # ALLSET_PT_layer_editor is drawn under the Channel Box by ui/maya_dock.py (step 116), not registered as a panel.
 
@@ -369,9 +573,11 @@ def register():
                                                            options={'SKIP_SAVE'})
     bpy.app.handlers.animation_playback_pre.append(on_playback_pre)
     bpy.app.handlers.animation_playback_post.append(on_playback_post)
+    bpy.types.UI_MT_button_context_menu.prepend(draw_button_menu)
 
 
 def unregister():
+    bpy.types.UI_MT_button_context_menu.remove(draw_button_menu)
     bpy.app.handlers.animation_playback_post.remove(on_playback_post)
     bpy.app.handlers.animation_playback_pre.remove(on_playback_pre)
     del bpy.types.WindowManager.allset_le_tab
