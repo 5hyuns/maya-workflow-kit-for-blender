@@ -13,7 +13,7 @@ opens with "For Maya users, in Blender" and ends with the trademark notice.
 
 | Field | Value |
 |---|---|
-| File | `dist/maya-workflow-kit-0.2.0.zip` (`python tools/build.py`; `blender --command extension validate` passes) |
+| File | `dist/maya-workflow-kit-0.2.1.zip` (`python tools/build.py`; `blender --command extension validate` passes) |
 | Name | Maya Workflow Kit |
 | Tagline (≤ 64, no end punctuation) | The whole Maya workflow in Blender, in one install (50) |
 | Short description (the first paragraph of B) | For Maya users, in Blender — not just a Maya keymap: Maya Workflow Kit brings the whole Maya workflow to Blender — hotbox and marking menus, Channel Box and Attribute Editor, menu sets and shelves, option windows and Maya's scene concepts — and changes nothing until you choose Maya. |

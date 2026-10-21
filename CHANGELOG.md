@@ -5,13 +5,68 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
-### Changed
+## [0.2.1] — 2026-10-21
+
+A bug-fix and store-compliance release (steps 125–132). Blender 4.5 LTS through 5.2.x.
+
+**Thank you** to everyone who used the kit in real work and reported what felt wrong — most fixes below come from
+those reports (labelled `user-report` on GitHub).
+
+### Changed — store review (extensions.blender.org, #40)
+- **Nothing outside the extension changes any more** (#40, #42, #43, #46): no theme is shipped or applied, Blender
+  preferences and your active keymap are never written (Maya keys are add-on keymap items that disappear when Maya mode
+  or the extension is off), no app template is copied into your scripts folder, no `exec` / `eval` or import hooks
+  (scripts run as Text blocks through Blender's Run Script). Disabling or removing the extension is a plain unregister.
+  Recommended theme / navigation settings are listed in the README instead.
+- Alt+RMB dolly works without Blender's zoom preference (#51); Maya menu items that used to write preferences open
+  Blender's Preferences instead (#43).
+- Store tags: User Interface only.
 - **Renamed to Maya Workflow Kit** (step 125, user decision — `docs/user_decisions.md` 12 revision): store / display
   name "Maya Workflow Kit" (no "Blender" in the store name), repository "Maya Workflow Kit for Blender"
-  (`maya-workflow-kit-for-blender`), app template "Maya Workflow Kit", release zip `maya-workflow-kit-<version>.zip`,
-  default project folder `Documents/Maya Workflow Kit/projects/default`. Unchanged: extension id `allset`, package
-  `src/allset`, `allset.` / `ALLSET_` prefixes, tagline, theme and keyconfig names. Marketing lockup "Maya Workflow
-  Kit" + "for Maya users, in Blender". README rewritten for GitHub.
+  (`maya-workflow-kit-for-blender`), release zip `maya-workflow-kit-<version>.zip`, default project folder
+  `Documents/Maya Workflow Kit/projects/default`. Unchanged: extension id `allset` (updates keep working), package
+  `src/allset`, `allset.` / `ALLSET_` prefixes, tagline. README rewritten for GitHub.
+
+### Fixed — reported by users
+- Soft Select: middle-mouse drag changes the falloff radius, soft select is off by default (#1); vertices are coloured
+  by influence (#2).
+- Tool Box: double-clicking a tool opens its Tool Settings (#3).
+- Torn-off panels open at a size that fits their content (#4).
+- Marking menus no longer close while dragging or over the Time Slider (#5).
+- Channel Box: drag over value fields to select channels; one typed value goes into all of them (#6).
+- Layer Editor rows, V / P boxes, toolbar icons and tabs follow Maya (#7).
+- Quick Layout: Single Perspective shows the perspective view; Four View back to persp works (#8).
+- F frames with the camera you look through (#9).
+- Viewport panel toolbar buttons toggle on and off and all do something (#10).
+- Primitives show their creation INPUTS in the Channel Box (#11) and use Maya's topology (cap fans, Subdivisions
+  Caps) (#12).
+- UV Editor checker toggles off again (#13).
+- Material colour changes show in shaded mode (#14).
+- Double-click loop selection and "pick two, select the run between" for edges / vertices / faces (#22).
+- **Icons**: every shelf button, Status Line / panel toolbar glyph, Tool Box tool, Layer Editor button and Outliner
+  set / camera row is redrawn after Maya 2022's icons (kit-drawn, one picture per button, sharp at 100 / 125 / 150 %);
+  190 Maya menu items show icons (#23).
+- **Hypershade** opens as its own window in Maya's layout: Browser, Create, Material Viewer, Graph with Maya's toolbar,
+  Property Editor (#25).
+- Multi-Cut works like Maya's (click / drag points, Shift snap %, Ctrl loop cut, Backspace, RMB finish) (#27); tools
+  have Maya Tool Settings (#28).
+- Auto Key button (#37) and key ticks on the Time Slider (#38).
+- Crash when closing an editor window opened from a Maya menu within 2 s (#36).
+
+### Fixed — found by our own audit
+- Soft Select shared between object and component mode (#15); Ctrl+D in component mode duplicates the object (#17);
+  Delete History works in component mode (#18); Edit menu items work in component mode (#39).
+- Switching Maya → Blender leaves no empty Maya strips (#19).
+- Paint Skin Weights normalizes like Maya (#20).
+- Torn-off Display menu: Hide / Show work (#21).
+- Status Line IPR off restores the previous shading (#24).
+- One Maya visibility: h, Channel Box Visibility and display layer V agree (#26).
+- Select / Lasso / Paint Selection Tool Settings have Maya's sections (#29).
+- Viewport background / selection colours without the kit theme (#45), Hypershade opening (#47), top-bar test and
+  dogfood session after the store changes (#48, #49, #50).
+- Blender 4.5 crashed on quit with the new Tool Box vector icons (fixed before release, step 131).
+- Ctrl+N (New Scene) opens a new scene in the Maya layout again, like File > New Scene (#44).
+- At 125 % UI scale, opening and closing Tool Settings no longer narrows the viewport (#53).
 
 ## [0.2.0] — 2026-10-19
 
