@@ -57,6 +57,9 @@ def diff(a, b):
 @step
 def s_setup():
     setup()
+    # Maya density (effective UI scale 1.0) so the whole toolbar fits the header: since step 130 the kit no longer
+    # sets Blender's UI scale, and at 1.25 the toolbar is cut off (#52). Sandbox preferences only.
+    bpy.context.preferences.view.ui_scale = round(1.0 / max(bpy.context.preferences.system.ui_scale, 0.1), 3)
     bpy.ops.allset.make_maya(open_layout=False)
     load_maya_layout()
 

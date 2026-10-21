@@ -7,7 +7,7 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, step, setup, screenshot, tap, view3d  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, tap, view3d  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -17,6 +17,12 @@ def centre():
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
 
 
+def manip_size():
+    """Step 130: = / - scale the kit's Move / Scale manipulator for the session (Blender's gizmo_size is a preference)."""
+    from importlib import import_module
+    return import_module(MODULE + ".ui.manipulator").SIZE[0]
+
+
 def preview():
     return bpy.data.objects["Cube"].modifiers.get("Maya Smooth Preview")
 
@@ -24,14 +30,14 @@ def preview():
 @step
 def s_setup():
     C["x"], C["y"] = setup()
-    C["size"] = bpy.context.preferences.view.gizmo_size
+    C["size"] = manip_size()
     centre()
     tap('EQUAL')
 
 
 @step
 def s_bigger():
-    size = bpy.context.preferences.view.gizmo_size
+    size = manip_size()
     check(f"= makes the manipulator bigger ({C['size']} -> {size})", size > C["size"])
     C["big"] = size
     centre()
@@ -40,7 +46,7 @@ def s_bigger():
 
 @step
 def s_smaller():
-    size = bpy.context.preferences.view.gizmo_size
+    size = manip_size()
     check(f"- makes it smaller ({C['big']} -> {size})", size < C["big"])
     ov = view3d()[0].spaces.active.overlay
     C["wire"] = ov.show_wireframes
