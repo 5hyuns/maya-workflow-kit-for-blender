@@ -204,7 +204,10 @@ def test_extrude_record_is_a_history_tab():
     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
     bm = bmesh.from_edit_mesh(ob.data)
     for f in bm.faces:
-        f.select_set(f.normal.z > 0.9)
+        f.select_set(False)
+    for f in bm.faces:   # deselect first: a later face's select_set(False) would drop shared verts
+        if f.normal.z > 0.9:
+            f.select_set(True)
     bm.select_flush_mode()
     bmesh.update_edit_mesh(ob.data)
     assert bpy.ops.allset.extrude(local_translate_z=0.5) == {'FINISHED'}

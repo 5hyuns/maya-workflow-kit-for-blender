@@ -63,6 +63,7 @@ def s_scene():
         ob = bpy.context.active_object
         ob.scale = (4, 4, 4)
         bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')     # a kit primitive enters edit mode with nothing selected (Maya)
         bpy.ops.mesh.subdivide(number_cuts=2)
         bpy.context.tool_settings.mesh_select_mode = (False, True, False)
         bpy.ops.mesh.select_all(action='DESELECT')

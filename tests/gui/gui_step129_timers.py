@@ -82,7 +82,11 @@ def s_tear_panel():
     region = next(r for r in stack.regions if r.type == 'WINDOW')
     with bpy.context.temp_override(window=win(), screen=win().screen, area=stack, region=region):
         md.tear_off(bpy.context, stack)
-    close_new("Torn-off Channel Box")
+
+
+# step 129 lane X: a tear-off sizes its window first and opens it from a timer a tick later
+step(lambda: None)
+step(lambda: close_new("Torn-off Channel Box"))
 
 
 @step
@@ -96,7 +100,10 @@ def s_tear_menu():
     remember()
     with bpy.context.temp_override(window=win()):
         md.tear_menu(bpy.context, name, "File")
-    close_new("Torn-off File menu")
+
+
+step(lambda: None)
+step(lambda: close_new("Torn-off File menu"))
 
 
 for _ in range(8):       # 8 x 0.4 s > 3 s: every retry timer has ticked on its closed window

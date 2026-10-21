@@ -92,7 +92,10 @@ def s_setup():
     bpy.context.scene.tool_settings.mesh_select_mode = (False, False, True)
     bm = bmesh.from_edit_mesh(cube().data)
     for f in bm.faces:
-        f.select_set(f.normal.z > 0.9)
+        f.select_set(False)
+    for f in bm.faces:   # deselect first: a later face's select_set(False) would drop shared verts
+        if f.normal.z > 0.9:
+            f.select_set(True)
     bm.select_flush_mode()
     bmesh.update_edit_mesh(cube().data)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] - px(200), y=C["y"] - px(150))
