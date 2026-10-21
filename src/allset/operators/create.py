@@ -18,7 +18,7 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
-from . import naming, units
+from . import naming, prim_history, units
 
 HALF_PI = math.pi / 2
 # Maya's Y-up "front" (looking down -Z) is Blender's front (+Y): directional lights,
@@ -27,40 +27,23 @@ LEVEL = (HALF_PI, 0.0, 0.0)
 
 # kind: (label, Maya base name, operator, props, rotation)
 KINDS = {
-    'CUBE': ("Cube", "pCube", "mesh.primitive_cube_add", {"size": 1.0}, None),
-    'SPHERE': ("Sphere", "pSphere", "mesh.primitive_uv_sphere_add",
-               {"segments": 20, "ring_count": 20, "radius": 1.0}, None),
-    'CYLINDER': ("Cylinder", "pCylinder", "mesh.primitive_cylinder_add",
-                 {"vertices": 20, "radius": 1.0, "depth": 2.0}, None),
-    'CONE': ("Cone", "pCone", "mesh.primitive_cone_add",
-             {"vertices": 20, "radius1": 1.0, "radius2": 0.0, "depth": 2.0}, None),
-    'TORUS': ("Torus", "pTorus", "mesh.primitive_torus_add",
-              {"major_segments": 20, "minor_segments": 20, "major_radius": 1.0,
-               "minor_radius": 0.5}, None),
-    'PLANE': ("Plane", "pPlane", "mesh.primitive_grid_add",
-              {"x_subdivisions": 10, "y_subdivisions": 10, "size": 1.0}, None),
-    'DISC': ("Disc", "pDisc", "mesh.primitive_circle_add",
-             {"vertices": 20, "radius": 1.0, "fill_type": 'NGON'}, None),
-    'PLATONIC': ("Platonic Solid", "pPlatonic", "mesh.primitive_ico_sphere_add",
-                 {"subdivisions": 1, "radius": 1.0}, None),
-    # Side length 1: square base radius 1/sqrt(2), equilateral faces -> height 1/sqrt(2).
-    'PYRAMID': ("Pyramid", "pPyramid", "mesh.primitive_cone_add",
-                {"vertices": 4, "radius1": math.sqrt(0.5), "radius2": 0.0,
-                 "depth": math.sqrt(0.5)}, None),
-    # Side length 1: triangle radius 1/sqrt(3); length 2.
-    'PRISM': ("Prism", "pPrism", "mesh.primitive_cylinder_add",
-              {"vertices": 3, "radius": 1 / math.sqrt(3), "depth": 2.0}, None),
-    'NURBS_SPHERE': ("NURBS Sphere", "nurbsSphere", "surface.primitive_nurbs_surface_sphere_add",
-                     {"radius": 1.0}, None),
-    'NURBS_CYLINDER': ("NURBS Cylinder", "nurbsCylinder",
-                       "surface.primitive_nurbs_surface_cylinder_add", {"radius": 1.0}, None),
-    'NURBS_PLANE': ("NURBS Plane", "nurbsPlane", "surface.primitive_nurbs_surface_surface_add",
-                    {"radius": 0.5}, None),
-    'NURBS_TORUS': ("NURBS Torus", "nurbsTorus", "surface.primitive_nurbs_surface_torus_add",
-                    {"radius": 1.0}, None),
-    'NURBS_CIRCLE': ("NURBS Circle", "nurbsCircle", "curve.primitive_nurbs_circle_add",
-                     {"radius": 1.0}, None),
-    # Step 109: NURBS primitives Blender has no operator for, built by operators/curve_tools.py (BUILDERS).
+    # Primitives with a Maya creation node (#11, #12, step 129): built from operators/prim_shapes.py by
+    # operators/prim_history.py with Maya's topology, the node shown in Channel Box INPUTS. op = None.
+    'CUBE': ("Cube", "pCube", None, {}, None),
+    'SPHERE': ("Sphere", "pSphere", None, {}, None),
+    'CYLINDER': ("Cylinder", "pCylinder", None, {}, None),
+    'CONE': ("Cone", "pCone", None, {}, None),
+    'TORUS': ("Torus", "pTorus", None, {}, None),
+    'PLANE': ("Plane", "pPlane", None, {}, None),
+    'DISC': ("Disc", "pDisc", None, {}, None),
+    'PLATONIC': ("Platonic Solid", "pPlatonic", None, {}, None),
+    'PYRAMID': ("Pyramid", "pPyramid", None, {}, None),
+    'PRISM': ("Prism", "pPrism", None, {}, None),
+    'NURBS_SPHERE': ("NURBS Sphere", "nurbsSphere", None, {}, None),
+    'NURBS_CYLINDER': ("NURBS Cylinder", "nurbsCylinder", None, {}, None),
+    'NURBS_PLANE': ("NURBS Plane", "nurbsPlane", None, {}, None),
+    'NURBS_TORUS': ("NURBS Torus", "nurbsTorus", None, {}, None),
+    'NURBS_CIRCLE': ("NURBS Circle", "nurbsCircle", None, {}, None),
     'NURBS_SQUARE': ("NURBS Square", "nurbsSquare", None, {}, None),
     'NURBS_CUBE': ("NURBS Cube", "nurbsCube", None, {}, None),
     'NURBS_CONE': ("NURBS Cone", "nurbsCone", None, {}, None),
@@ -141,23 +124,21 @@ def _maya_naming(context):
 
 
 def create(context, kind, maya_naming=True, overrides=None):
-    """Create ``kind`` at the world origin; returns the new object. ``overrides``: operator values in Maya units
-    (lengths are scaled like the defaults), e.g. from the primitive's option window (step 103)."""
+    """Create ``kind`` at the world origin; returns the new object. ``overrides``: for primitives Maya node
+    attributes (``{"subdivisionsCaps": 2}``, lengths in Maya units, ``createUVs`` 0 = no UVs), else operator values
+    in Maya units (lengths are scaled like the defaults), e.g. from the primitive's option window (step 103)."""
     _label, base, op, props, rot = KINDS[kind]
     props = {**props, **(overrides or {})}
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
-    if op is None:
-        from . import curve_tools
-        builder = {'NURBS_SQUARE': curve_tools.nurbs_square, 'NURBS_CUBE': curve_tools.nurbs_cube,
-                   'NURBS_CONE': curve_tools.nurbs_cone}[kind]
-        ob = builder(context, units.maya_unit(context.scene))
-        for o in context.selected_objects:
-            o.select_set(False)
-        ob.select_set(True)
-        context.view_layer.objects.active = ob
+    if kind in prim_history.KIND_NODES:
+        vals = dict(overrides or {})
+        uvs = bool(vals.pop("createUVs", True))
+        ob = prim_history.create_object(context, kind, vals, maya_naming, create_uvs=uvs)
         from . import material
-        material.give_default(ob)
+        for part in [ob, *ob.children]:   # nurbsCube: each patch joins lambert1 (step 100)
+            if part.type in {'MESH', 'SURFACE'}:
+                material.give_default(part)
         return ob
     mod, name = op.split(".")
     k = units.maya_unit(context.scene)
