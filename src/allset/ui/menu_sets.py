@@ -126,6 +126,8 @@ def runs_directly(path, s):
     """False if the item must go through ``allset.menu_item`` to stay enabled the Maya way."""
     if path in menu_map.OBJECT_MODE and bpy.context.mode == 'OBJECT':
         return False
+    if path in menu_map.EDIT_MODE and bpy.context.mode == 'EDIT_MESH':
+        return False
     return s[0] != "op" or op_polls(s[1])
 
 
@@ -492,6 +494,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if action is None:
             self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
+        if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
+            return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
         if isinstance(rule, str):     # Maya warns and does nothing (Maya, )
             self.report({'WARNING'}, rule)
@@ -565,6 +569,74 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
         finally:
             bpy.ops.object.mode_set(mode='OBJECT')
         return {'FINISHED'}
+
+
+class ALLSET_OT_component_command(bpy.types.Operator):
+    """A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there
+    (``menu_map.EDIT_MODE``)"""
+    bl_idname = "allset.component_command"
+    bl_label = "Maya Command in Component Mode"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    item: StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    @classmethod
+    def description(cls, context, props):
+        return _op_description(props.item)
+
+    def execute(self, context):
+        rule = menu_map.EDIT_MODE.get(self.item)
+        if rule is None:
+            return {'CANCELLED'}
+        kind, label = rule[0], self.item.rsplit("/", 1)[-1]
+        if kind == "warn":
+            self.report({'WARNING'}, rule[1])
+            return {'CANCELLED'}
+        if kind == "none":
+            self.report({'INFO'}, f"{label}: works on objects; in component mode Maya leaves it alone "
+                                  "(F8 = object mode)")
+            return {'CANCELLED'}
+        from ..marking.modal import run_action
+        try:
+            if kind == "run":
+                run_action(context, rule[1], path=self.item)
+            elif kind == "object":
+                bpy.ops.object.mode_set(mode='OBJECT')
+                run_action(context, rule[1], path=self.item)
+            elif kind == "owner":
+                _run_on_owners(context, rule[1], self.item)
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+def _select_only(context, objects):
+    for ob in context.scene.objects:
+        try:
+            ob.select_set(ob in objects)
+        except RuntimeError:          # not in the view layer
+            pass
+
+
+def _run_on_owners(context, action, path):
+    """Run ``action`` in object mode on the objects whose components are being edited, then come back to component
+    mode on the same objects with their components still selected (Maya keeps the component selection)."""
+    from ..marking.modal import run_action
+    owners = list(context.objects_in_mode)
+    active = context.view_layer.objects.active
+    bpy.ops.object.mode_set(mode='OBJECT')
+    _select_only(context, owners)
+    try:
+        run_action(context, action, path=path)
+    finally:
+        _select_only(context, owners)
+        context.view_layer.objects.active = active
+        bpy.ops.object.mode_set(mode='EDIT')
 
 
 class ALLSET_MT_option_box(bpy.types.Menu):
@@ -794,7 +866,8 @@ for _editor, _menus in editor_menu_data.EDITORS.items():
     for _i, (_title, _items) in enumerate(_menus):
         _menu_classes.extend(_make_menu(editor_menu_idname(_editor, _i), _title, f"{_editor}/{_title}", _items))
 
-classes = (ALLSET_OT_menu_unavailable, ALLSET_OT_menu_set_value, ALLSET_OT_menu_item, ALLSET_OT_menu_whole_mesh, ALLSET_MT_option_box, ALLSET_OT_menu_option_box, ALLSET_OT_menu_run, ALLSET_OT_menu_tool,
+classes = (ALLSET_OT_menu_unavailable, ALLSET_OT_menu_set_value, ALLSET_OT_menu_item, ALLSET_OT_menu_whole_mesh,
+           ALLSET_OT_component_command, ALLSET_MT_option_box, ALLSET_OT_menu_option_box, ALLSET_OT_menu_run, ALLSET_OT_menu_tool,
            ALLSET_MT_ui_elements, ALLSET_MT_menu_bar, *_menu_classes)
 
 

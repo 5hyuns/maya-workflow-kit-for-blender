@@ -407,6 +407,31 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         bpy.ops.paint.weight_paint_toggle()              # the skeleton goes to pose mode with it
         if mesh.vertex_groups.active is None and influences(mesh):
             mesh.vertex_groups.active_index = influences(mesh)[0].index
+        # Maya Bind Skin makes the skinCluster with Normalize Weights = Interactive (normalizeWeights 1): painting a
+        # joint takes weight from the others so every vertex keeps a total of 1 (#20, step 129). Blender's factory
+        # Auto Normalize is off; Skin > Normalize Weights > Disable still turns it off while painting.
+        context.tool_settings.use_auto_normalize = True
+        return {'FINISHED'}
+
+
+class ALLSET_OT_flood_weights(bpy.types.Operator):
+    """Maya Paint Skin Weights Flood: the Value on every vertex for the selected joint; with weight normalization on
+    (Maya Interactive) the other joints make room so every vertex keeps a total weight of 1"""
+    bl_idname = "allset.flood_weights"
+    bl_label = "Flood"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        ob = context.active_object
+        return context.mode == 'PAINT_WEIGHT' and ob is not None and ob.vertex_groups.active is not None
+
+    def execute(self, context):
+        res = bpy.ops.paint.weight_set()                 # Blender's fill ignores Auto Normalize (checked, step 129)
+        if res != {'FINISHED'}:
+            return res
+        if context.tool_settings.use_auto_normalize:
+            bpy.ops.object.vertex_group_normalize_all(group_select_mode='BONE_DEFORM', lock_active=True)
         return {'FINISHED'}
 
 
@@ -584,5 +609,5 @@ class ALLSET_OT_paste_vertex_weights(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
-           ALLSET_OT_paint_skin_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
+           ALLSET_OT_paint_skin_weights, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
            ALLSET_OT_copy_vertex_weights, ALLSET_OT_paste_vertex_weights)
