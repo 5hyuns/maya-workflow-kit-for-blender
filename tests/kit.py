@@ -110,6 +110,9 @@ def snapshot():
     snap["ui_methods"] += [f"VIEW3D_PT_tools_active draws: {_draw_funcs(VIEW3D_PT_tools_active)}",
                            "VIEW3D_PT_tools_active.tools_from_context own: "
                            f"{VIEW3D_PT_tools_active.__dict__.get('tools_from_context')!r}"]
+    # step 129: Tool Box double-click watches tool sets through a wrapped activate_by_id
+    from bl_ui import space_toolsystem_common
+    snap["ui_methods"].append(f"space_toolsystem_common.activate_by_id: {space_toolsystem_common.activate_by_id!r}")
     # step 59: Move/Rotate/Scale ToolDefs carry the Maya manipulator's gizmo group while enabled.
     from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
     for mode in ("OBJECT", "EDIT_MESH"):

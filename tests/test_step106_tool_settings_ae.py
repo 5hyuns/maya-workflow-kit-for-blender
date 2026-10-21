@@ -125,7 +125,7 @@ def test_dock_hides_blender_tool_panels_only_for_maya_tools():
     try:
         ts_mod.active_tool = lambda c: SimpleNamespace(idname="builtin.move")
         assert dock_tabs._hidden(ctx)
-        ts_mod.active_tool = lambda c: SimpleNamespace(idname="builtin.select_box")
+        ts_mod.active_tool = lambda c: SimpleNamespace(idname="builtin.knife")   # no Maya sections (step 129)
         assert not dock_tabs._hidden(ctx)
         ts_mod.active_tool = lambda c: SimpleNamespace(idname="builtin.rotate")
         ctx.space_data = SimpleNamespace(type='VIEW_3D')    # a 3D View main region: never
