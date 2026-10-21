@@ -148,17 +148,19 @@ class Layout:
         return (rect[2] - s, rect[1] + (rect[3] - rect[1] - s) / 2,
                 rect[2], rect[1] + (rect[3] - rect[1] + s) / 2)
 
-    def hit(self, dx, dy):
+    def hit(self, dx, dy, rects_only=False):
         """(item, on_option_box) under a point relative to the centre, or (None, False).
 
         Rectangles win (list rows, option boxes, radial boxes); otherwise the
-        direction picks the radial item of that sector.
+        direction picks the radial item of that sector (not with ``rects_only``).
         """
         for it in self.items:
             if it.opt_rect and _inside(it.opt_rect, dx, dy):
                 return it, True
             if _inside(it.rect, dx, dy):
                 return it, False
+        if rects_only:
+            return None, False
         d = direction(dx, dy, self.params.dead)
         if d and d in self.radial:
             return self.radial[d], False
@@ -280,6 +282,10 @@ class Session:
         self.enabled = enabled
         self.t0 = t0
         self.stack = [(root, origin)]
+        # Per stack level: the item of the level below that opened it, when it is a list row's cascade (a Qt
+        # menu submenu beside the row, step 129): the menus under a cascade stay drawn and hit-tested. In-place
+        # radial submenus (None) replace the menu, like Maya's.
+        self.openers = [None]
         self.mode = "PRESS"           # "PRESS" (button held) | "CLICK" (menu stays open)
         self.pos = origin
         self.trail = [origin]
@@ -303,14 +309,48 @@ class Session:
     def _rel(self, x, y):
         return x - self.center[0], y - self.center[1]
 
-    def _push(self, item, at):
+    def layers(self):
+        """[(layout, centre, (hovered item, on option box))] to draw, bottom first: the top menu and, under an
+        open cascade, the menus it hangs from (their hovered row = the cascade's opener)."""
+        top = len(self.stack) - 1
+        level = top
+        while self.openers[level] is not None:
+            level -= 1
+        out = []
+        for k in range(level, top + 1):
+            lay, center = self.stack[k]
+            out.append((lay, center, self.hover if k == top else (self.openers[k + 1], False)))
+        return out
+
+    def _push(self, item, at, cascade=False):
         layout = Layout(item.sub, self.measure, self.params, self.enabled)
         if self.bounds is not None and layout.items and not layout.radial:
             at = self._inside_bounds(layout, at)
         elif self.bounds is not None and layout.items:
             fit_ring(layout, at, self.bounds)   # in-place radial submenu: centre = pointer
         self.stack.append((layout, at))
+        self.openers.append(item if cascade else None)
         self.hover = (None, False)
+
+    def _pop_to(self, level):
+        del self.stack[level + 1:]
+        del self.openers[level + 1:]
+
+    def _hit_stack(self, x, y):
+        """(level, item, on option box) under (x, y): the top menu first (directions included); when it has
+        nothing there and is a cascade, the boxes / rows of the menus it hangs from (step 129, #5: dragging on
+        down the list after passing a submenu row closed the whole menu)."""
+        top = len(self.stack) - 1
+        lay, (cx, cy) = self.stack[top]
+        item, opt = lay.hit(x - cx, y - cy)
+        level = top
+        while item is None and self.openers[level] is not None:
+            level -= 1
+            lay, (cx, cy) = self.stack[level]
+            item, opt = lay.hit(x - cx, y - cy, rects_only=True)
+            if item is not None:
+                return level, item, opt
+        return top, item, opt
 
     def _inside_bounds(self, layout, at):
         """Shift a list submenu up / left so all its rows are inside ``bounds``."""
@@ -330,8 +370,15 @@ class Session:
         self.trail.append((x, y))
         ox, oy = self.stack[0][1]
         self.max_dist = max(self.max_dist, math.hypot(x - ox, y - oy))
+        level, item, opt = self._hit_stack(x, y)
+        if level < len(self.stack) - 1:
+            if item is self.openers[level + 1]:
+                # back on the row whose cascade is open: keep it (close deeper ones)
+                self._pop_to(level + 1)
+                self.hover = (item, opt)
+                return
+            self._pop_to(level)   # another row of a menu under the cascade: the cascade closes
         dx, dy = self._rel(x, y)
-        item, opt = self.layout.hit(dx, dy)
         self.hover = (item, opt)
         if item is None or item.sub is None or not item.enabled:
             return
@@ -340,7 +387,7 @@ class Session:
         if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius:
             self._push(item, (x, y))
         elif item.kind == "list" and _inside(item.rect, dx, dy):
-            self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]))
+            self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]), cascade=True)
 
     def release(self, x, y, t):
         """The button that opened the menu was released."""
@@ -367,7 +414,7 @@ class Session:
             return self._cancel()
         if item.sub is not None:
             if len(self.stack) and self.layout.sub is not item.sub:
-                self._push(item, (x, y))
+                self._push(item, (x, y), cascade=item.kind == "list")
             return None
         return self._finish(item, opt)
 

@@ -168,13 +168,17 @@ def draw_session(s, now):
     if not s.visible(now):
         _line(s.trail, LINE, 2.0)  # a quick mark: only the stroke
         return
-    cx, cy = s.center
-    lay = s.layout
-    hover, hover_opt = s.hover
-    p = lay.params
-    _circle(cx, cy, p.dead, LINE)
+    layers = s.layers()   # a list row's open cascade is drawn over the menu it hangs from (step 129)
+    _lay, (cx, cy), _hover = layers[0]
+    _circle(cx, cy, s.params.dead, LINE)
     _line([(cx, cy), s.pos], LINE, 1.5)
-    pad = p.pad
+    for lay, (cx, cy), hover in layers:
+        _draw_layout(lay, cx, cy, hover)
+
+
+def _draw_layout(lay, cx, cy, hover):
+    hover, hover_opt = hover
+    pad = lay.params.pad
     _draw_list_body(lay, cx, cy)
     for it in lay.items:
         on = it is hover

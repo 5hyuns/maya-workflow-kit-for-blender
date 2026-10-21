@@ -807,3 +807,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 marking menu bounds
+
+- [ ] (step 129, #5) 실제 마우스로 Maya Workflow Kit 레이아웃에서 pCube1 을 뷰포트 아래쪽에 두고 RMB 를 누른 채 목록을 따라 천천히 아래로 끌기: Paint ▸ / Assign Favorite Material ▸ 줄을 지날 때 하위 메뉴가 줄 오른쪽에 열리고 목록은 그대로 남는지, 다음 줄로 내려가면 하위 메뉴가 닫히는지, 하위 메뉴 안의 항목에서 놓으면 실행되는지 (Qt 메뉴처럼; delegated).
+- [ ] (step 129, #5) 같은 RMB 메뉴를 Time Slider 바로 위에서 열어 커서를 Time Slider / Range Slider 위로 내리기: 메뉴가 닫히지 않고, Time Slider 위에 그려진 남쪽 항목 · 목록 줄이 강조되고 놓으면 실행되는지; Time Slider 의 현재 프레임이 바뀌지 않는지 (RMB 놓기가 타임라인으로 가지 않음).
+- [ ] (step 129, #5) Space 를 누른 채 (핫박스) 뷰포트 아래쪽에서 커서를 Time Slider 위로: 핫박스가 남아 있고 그 위 메뉴 이름이 강조되며 클릭하면 그 메뉴가 열리는지.
