@@ -221,6 +221,31 @@ def column_width(context=None):
 MAX_WARPS = 3        # cursor-warp fits per screen and file load
 _warps = {}          # screen name -> fits started since the last load
 _running = [False]
+# #53: the fit only resizes a layout as it was loaded (or as it was when the UI scale changed). A move whose poll
+# failed used to wait and run the first time the poll passed: right after the next area split (a split clears
+# screen.active_region), so opening the Tool Settings dock at UI scale 1.25 moved the Outliner edge 45 px into it
+# and closing the dock left the viewport 45 px narrower (checked, ); later it also
+# undid the user's own Outliner / shelf row sizes whenever the mouse crossed an area gap.
+_state = {}          # screen name -> [ui scale, area pointers, armed]
+
+
+def _armed(screen, scale):
+    """True while ``screen`` may still be fitted: same areas as when it was first seen / loaded / the UI scale
+    changed, and not fitted yet. Once its areas change (split, close, dock, tear-off) it stays off for this scale."""
+    areas = frozenset(a.as_pointer() for a in screen.areas)
+    state = _state.get(screen.name)
+    if state is None or state[0] != scale:
+        _state[screen.name] = [scale, areas, True]
+        return True
+    if state[2] and state[1] != areas:
+        state[2] = False
+    return state[2]
+
+
+def _disarm(screen):
+    state = _state.get(screen.name)
+    if state is not None:
+        state[2] = False
 
 
 def _move_edge(window, area, x, y, delta, edge, pending):
@@ -242,8 +267,11 @@ def fit_columns(start_fit=True):
     want = column_width(context)
     pending = {}
     from .shelf import shelf_row_area
+    scale = context.preferences.system.ui_scale
     for window in context.window_manager.windows:
         screen = window.screen
+        armed = _armed(screen, scale)
+        needed = False       # an edge of this screen is off its fitted place
         # the Maya shelf row (tab row + icon row, 64 px at scale 1, step 51): grow it downwards
         row = shelf_row_area(screen)
         if row is not None and row.spaces.active.show_region_header:
@@ -251,16 +279,22 @@ def fit_columns(start_fit=True):
             with context.temp_override(window=window, screen=screen, area=row):
                 row.spaces.active.show_region_header = False
         if row is not None:
-            d = round(SHELF_PX * context.preferences.system.ui_scale) - row.height
-            if abs(d) > 2:
+            d = round(SHELF_PX * scale) - row.height
+            if abs(d) > 2 and armed:
+                needed = True
                 _move_edge(window, row, row.x + row.width // 2, row.y, -d,
                            (row.x + row.width // 2, row.y - 1), pending)
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
+            if armed and not needed:
+                _disarm(screen)
             continue
         if settle(column.spaces.active, context.preferences):
             column.tag_redraw()
-        if abs(column.width - want) > 1 and column.x + column.width < window.width - 2:
+        if not armed:
+            pass
+        elif abs(column.width - want) > 1 and column.x + column.width < window.width - 2:
+            needed = True
             _move_edge(window, column, column.x + column.width, column.y + column.height // 2,
                        want - column.width, (column.x + column.width + 1, column.y + column.height // 2), pending)
         elif abs(column.width - want) <= 1:
@@ -268,10 +302,13 @@ def fit_columns(start_fit=True):
             # took its pixels; step 99)
             outl = next((a for a in screen.areas if a.type == 'OUTLINER' and abs(a.x - (column.x + column.width)) <= 4
                          and a.height >= column.height - 4), None)
-            wo = round(OUTLINER_PX * context.preferences.system.ui_scale)
+            wo = round(OUTLINER_PX * scale)
             if outl is not None and abs(outl.width - wo) > 2 and outl.x + outl.width < window.width - 2:
+                needed = True
                 _move_edge(window, outl, outl.x + outl.width, outl.y + outl.height // 2, wo - outl.width,
                            (outl.x + outl.width + 1, outl.y + outl.height // 2), pending)
+        if armed and not needed:
+            _disarm(screen)      # fitted: the user's own edge moves stay
         narrow = column.width < want - 1
         main, _r = main_view3d(screen)
         if main is None or main == column:
@@ -370,6 +407,13 @@ def _fit_tick():
 @bpy.app.handlers.persistent
 def _fit_after_load(*_args):
     _warps.clear()
+    _state.clear()       # a loaded layout may be fitted again: its areas as loaded, before any split (#53)
+    try:
+        scale = bpy.context.preferences.system.ui_scale
+        for window in bpy.context.window_manager.windows:
+            _armed(window.screen, scale)
+    except (AttributeError, ReferenceError):
+        pass
     if not bpy.app.background:
         bpy.app.timers.register(lambda: _fit_tick() and None, first_interval=0.0)
 
