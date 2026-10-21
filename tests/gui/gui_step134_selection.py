@@ -75,6 +75,41 @@ def edge_points(ob):
             (e.vertices for e in ob.data.edges)]
 
 
+def _hull(pts):
+    """Convex hull (counter-clockwise) of 2D points (monotone chain)."""
+    pts = sorted(set(pts))
+    if len(pts) < 3:
+        return pts
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def covered(xy, ob, margin=4.0):
+    """Window point ``xy`` lies on (or within ``margin`` px of) ``ob``'s screen silhouette: an edge of another object
+    drawn there may carry ``ob``'s wire colour (step 135: the narrower viewport made the cubes overlap)."""
+    pts = [to_window(ob.matrix_world @ v.co) for v in ob.data.vertices]
+    hull = _hull([(p[0], p[1]) for p in pts if p is not None])
+    if len(hull) < 3:
+        return False
+    for (x0, y0), (x1, y1) in zip(hull, hull[1:] + hull[:1]):
+        ex, ey = x1 - x0, y1 - y0
+        length = (ex * ex + ey * ey) ** 0.5 or 1.0
+        if (ex * (xy[1] - y0) - ey * (xy[0] - x0)) / length < -margin:   # outside this edge (CCW hull)
+            return False
+    return True
+
+
 def redraw():
     for a in win().screen.areas:
         a.tag_redraw()
@@ -114,12 +149,16 @@ def s_object_mode():
     on = {}
     for ob, col in ((lead, LEAD), (other, OTHER), (rest, LEAD)):
         pts = [to_window(p) for p in edge_points(ob)]
+        if ob is rest:      # only rest's own edges: skip spots the selected cubes' silhouettes cover
+            pts = [p for p in pts if p is not None and not covered(p, lead) and not covered(p, other)]
+            C["rest_pts"] = len(pts)
         on[ob.name] = sum(1 for p in pts if p is not None and hits(px, p, col))
     check(f"object mode: lead {lead.name} wire Maya green #43ffa3 on {on[lead.name]}/12 edges (>= 7)",
           on[lead.name] >= 7)
     check(f"object mode: other selected {other.name} wire white on {on[other.name]}/12 edges (>= 7)",
           on[other.name] >= 7)
-    check(f"object mode: unselected {rest.name} has no green wire ({on[rest.name]}/12)", on[rest.name] == 0)
+    check(f"object mode: unselected {rest.name} has no green wire ({on[rest.name]}/{C['rest_pts']} uncovered edges)",
+          on[rest.name] == 0 and C["rest_pts"] >= 4)
     # Blender's own orange (factory theme active object) must not show around the lead in the Maya layout
     theme = np.array(bpy.context.preferences.themes[0].view_3d.object_active[:3])
     pts = np.array([to_window(p) for p in edge_points(lead)])

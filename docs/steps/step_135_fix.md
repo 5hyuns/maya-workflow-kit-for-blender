@@ -17,3 +17,7 @@ Root causes and fixes, one per failing GUI test. Decisions made here without ask
   `area.y`, which is already in window coordinates like the screenshot, so it scanned 60 px below the view's bottom
   (it passed only while the OS put the window near the top of the desktop). The kit draws "persp" once; the probe now scans
   `area.y .. area.y + 70`.
+- **gui_step134_selection** — test: in the narrower viewport pCube1 (lead, green) covers part of pCube3, so two of
+  pCube3's sampled edge midpoints landed on pCube1's green silhouette. The kit colours were right. The probe now skips
+  pCube3 points inside (or within 4 px of) the selected cubes' screen hulls and needs at least 4 uncovered edges
+  (10 of 12 at 1.25) — delegated: kept the scene, filtered the samples.
