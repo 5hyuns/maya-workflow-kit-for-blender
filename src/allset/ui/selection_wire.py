@@ -10,10 +10,11 @@ The kit draws the edges itself (POST_VIEW), docs/steps/step_47.md 「실측」:
   so it can't give Maya's flat colour; it is also ID data (saved, in undo steps) and shared with the
   smooth preview 2 cage wire (operators/display.py ``_WIRE_FLAG``).
 - Here: evaluated mesh edges in a cached batch per object (numpy, ~28 ms for 100k polys, rebuilt only when
-  the object's geometry changes), drawn with the object matrix and a small depth bias (no z-fighting),
-  colours = the user's theme ``object_active`` / ``object_selected`` (read only; Blender's factory theme gives
-  orange / dark orange, Maya's lead green / white needs a theme with those colours — step 130, #40).
+  the object's geometry changes), drawn with the object matrix and a small depth bias (no z-fighting).
   Nothing is written to the file.
+- Step 134 (docs/steps/step_134_sel.md): the colours are kit-fixed Maya values (decision 13). Steps 130-133 read the
+  user's theme ``object_active`` / ``object_selected``, which is Blender's orange since the kit ships no theme.
+  LEAD / OTHER = research/maya/colors.json viewport displayColor lead (19) / active (16).
 """
 
 import bpy
@@ -21,6 +22,8 @@ from bpy.app.handlers import persistent
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template (probe)
+LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active), research/maya/colors.json displayColor.lead
+OTHER = "#ffffff"          # Maya other selected objects, displayColor.active
 
 _batches = {}              # object session_uid -> (batch, edge count)
 _handle = []
@@ -87,10 +90,21 @@ def wire_objects(context):
             if ob.type in TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
 
 
+def srgb(hex_str):
+    """'#rrggbb' -> sRGB floats (r, g, b)."""
+    h = hex_str.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+
 def _linear(c):
     from mathutils import Color
     lin = Color(tuple(c)[:3]).from_srgb_to_scene_linear()
     return (lin.r, lin.g, lin.b, 1.0)
+
+
+def wire_colors():
+    """(lead, other) RGBA in scene linear: kit-fixed Maya colours, whatever the user's theme is."""
+    return _linear(srgb(LEAD)), _linear(srgb(OTHER))
 
 
 def frame_ms():
@@ -108,11 +122,10 @@ def _draw():
     import time
     import gpu
     t0 = time.perf_counter()
-    theme = context.preferences.themes[0].view_3d
     active = context.view_layer.objects.active
-    # theme colours are sRGB, this shader writes the 3D View's linear framebuffer as is (#43ffa3 drew as
+    # the colours are sRGB, this shader writes the 3D View's linear framebuffer as is (#43ffa3 drew as
     # #8bffd0 without the conversion; built-in shaders convert by themselves)
-    lead, other = (_linear(theme.object_active), _linear(theme.object_selected))
+    lead, other = wire_colors()
     # view_layer.depsgraph: already evaluated for this redraw; evaluated_depsgraph_get() inside a draw
     # callback re-evaluates and broke a timer-set region flag (gui_step11 Ctrl+A sidebar)
     depsgraph = context.view_layer.depsgraph

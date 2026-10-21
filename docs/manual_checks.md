@@ -894,3 +894,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 134, #58) Maya 레이아웃에서 큐브를 만들고 1 / 2 / 3, 4 / 5 / 6 / 7, F8, F9 / F10 / F11, Alt+A, Alt+P 를 실제 키보드로 눌러: 뷰포트 왼쪽 아래에 Adjust Last Operation 패널 (「Component Mode」, 「Smooth Mesh Preview」 등) 이 뜨지 않는지. 다른 연산 (예: Shift+H) 의 패널이 떠 있을 때 3 / F9 를 누르면 그 패널이 닫히는지.
 - [ ] (step 134) F9 → Ctrl+Z 가 오브젝트 모드로 돌아가는지, 3 → 이동 → Ctrl+Z 가 이동만 되돌리고 미리보기는 남는지.
 - [ ] (step 134, #61) Create > Polygon Primitives 의 Cube / Cylinder / Pipe 에 3: 미리보기가 매끈한 음영 (면 경계가 보이지 않음), 1 로 돌아오면 Maya 처럼 각진 hard edge. 0.2.x 에서 3 을 켜고 저장한 파일을 열어 3 을 다시 누르면 매끈해지는지.
+### Step 134 — selection colours
+
+- [ ] (step 134 SEL) 오브젝트 모드에서 큐브 둘을 Shift 클릭: 마지막에 고른 것 (리드) 의 모든 엣지가 Maya 연두 #43ffa3, 다른 선택은 흰색, 선택 안 된 것은 와이어 없음 — Blender 기본 테마 (주황) 그대로인 사용자 설정에서도. 와이어프레임 (4) 에서도 같은 색. Maya 레이아웃 밖의 뷰 (사용자 화면) 는 Blender 주황 외곽선이 와이어 바깥에 남는다 (의도, `docs/steps/step_134_sel.md`).
+- [ ] (step 134) 편집 모드 F9 / F10 / F11 을 오가며: 엣지 연파랑 #64dcff, 정점 모드 = 보라 점 + 선택 노랑 점 (조금 큼), 엣지 모드 = 선택 엣지 주황 #e3ac79, 면 모드 = 선택 면이 주황 점묘. 가려진 뒤쪽 정점 · 엣지는 셰이딩 모드에서 안 보이고 X-ray (Alt+Z) 에서는 보이는지. 100 % / 125 %.
+- [ ] (step 134) 10 만 정점 메시 편집 모드에서 정점 선택 · G 드래그가 느려지지 않는지 (변경마다 캐시 약 30 ms), Smooth Preview 3 을 켠 메시는 케이지 위에 색이 그려지는지 (5 만 정점 초과 + 편집 모드 모디파이어면 Blender 색으로 돌아감). Preferences > Component Colors 끄면 Blender 색.
+- [ ] (step 134) Soft Select (b) 켬: 거짓 색 (노랑-빨강-검정) 이 킷 컴포넌트 색 위에 보이는지; 마우스 아래 프리셀렉트 빨강도 그 위에.

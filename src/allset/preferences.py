@@ -91,6 +91,11 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
                                                 "Maya (lead light green, others white)",
         default=True, update=_update_selection_wire)
+    # Maya component colours in mesh edit mode (docs/steps/step_134_sel.md).
+    maya_component_colors: bpy.props.BoolProperty(
+        name="Component Colors", description="Mesh edit mode shows Maya's component colors: light blue edges, "
+                                              "purple / yellow vertices, orange edges and stippled faces",
+        default=True, update=_update_selection_wire)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
     # Maya in-view messages (inViewMessageEnable 1, research/maya/interaction.md:30; docs/steps/step_72.md).
@@ -247,6 +252,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_camera_names")
         row.prop(self, "maya_view_axis")
         row.prop(self, "maya_selection_wire")
+        row.prop(self, "maya_component_colors")
         box.prop(self, "in_view_messages")
 
 
