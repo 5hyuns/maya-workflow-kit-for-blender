@@ -40,9 +40,9 @@ def label_rows():
     px = img.pixels[:]
     bpy.data.images.remove(img)
     area = area3d()
-    cx = area.x - win().x + area.width // 2
+    cx = area.x + area.width // 2      # area.x / y are window coordinates, like the screenshot (not win().x / y)
     rows = []
-    for y in range(max(0, area.y - win().y), area.y - win().y + 70):
+    for y in range(area.y, area.y + 70):
         n = sum(1 for x in range(cx - 60, cx + 40) if px[(y * w + x) * 4] > 0.8)
         if 0 < n < 60:          # text, not the area's outline (a full-width line)
             rows.append(y)
