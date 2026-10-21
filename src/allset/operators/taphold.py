@@ -21,15 +21,16 @@ _BINDINGS = {}
 class TapHoldBinding:
     name = ""
     label = ""
+    buttons = frozenset({'LEFTMOUSE'})      # mouse buttons whose press while held calls click()
 
     def tap(self, context):
         """Key released without a click while held."""
 
     def click(self, context, event):
-        """LMB pressed while the key is held.
+        """A mouse button of ``buttons`` (LMB by default) pressed while the key is held.
 
         Return 'DRAG' to receive ``drag()`` for mouse moves and ``drag_end()``
-        on LMB release (the LMB release is consumed, not passed on).
+        on that button's release (the release is consumed, not passed on).
         """
 
     def drag(self, context, event, start):
@@ -79,6 +80,7 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
         self._used = False
         self._key_released = False
         self._drag_start = None
+        self._button = None
         self._timer = context.window_manager.event_timer_add(self._POLL_INTERVAL, window=context.window)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
@@ -97,7 +99,7 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
             if event.type == 'MOUSEMOVE':
                 self._b.drag(context, event, self._drag_start)
                 return {'RUNNING_MODAL'}
-            if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            if event.type == self._button and event.value == 'RELEASE':
                 self._b.drag_end(context)
                 self._drag_start = None
                 return self._finish(context, False) if self._key_released else {'RUNNING_MODAL'}
@@ -114,10 +116,12 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
                 return {'RUNNING_MODAL'}
             return {'RUNNING_MODAL'}  # key repeat
 
-        if event.type == 'LEFTMOUSE' and event.value == 'PRESS' and self._drag_start is None:
+        if event.type in self._b.buttons and event.value == 'PRESS' and self._drag_start is None:
+            # MMB (soft select) is consumed here, so the 3D View orbit never starts (issue #1).
             self._used = True
             if self._b.click(context, event) == 'DRAG':
                 self._drag_start = (event.mouse_x, event.mouse_y)
+                self._button = event.type
             return {'RUNNING_MODAL'}
 
         if event.type == 'TIMER' and keystate.is_down(self._key) is False:
@@ -128,11 +132,6 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
 
 
 # --- bindings of this step ----------------------------------------------------
-
-def proportional_prop(context):
-    """Soft select toggle: per-mode proportional editing property."""
-    return "use_proportional_edit_objects" if context.mode == 'OBJECT' else "use_proportional_edit"
-
 
 # Maya's factory soft select radius: softSelect -q -softSelectDistance = 5.0 (Maya units; Maya, factory
 # prefs, ). Blender's own default proportional_size is 1.0 BU.
@@ -149,57 +148,61 @@ def maya_soft_radius(context):
 
 
 def radius_from_drag(start_size, dx):
-    """B + LMB drag: doubles the radius every 100 px to the right."""
+    """B + LMB / MMB drag: doubles the radius every 100 px to the right. Maya's rate is not checked (synthetic
+    drags don't reach Maya's screen slider,  「계획」 0); relative, so it feels
+    the same at every radius (delegated)."""
     return max(1e-4, start_size * 2.0 ** (dx / 100.0))
 
 
 class SoftSelectBinding(TapHoldBinding):
-    """B: tap toggles soft select, hold + LMB drag sets the radius (interaction.md:155-156)."""
+    """B: tap toggles soft select, hold + LMB / MMB drag sets the radius (interaction.md:155-156).
+    One Maya state for object and component mode (operators/soft_select.py, issue #15)."""
     name = "soft_select"
     label = "Soft Select"
+    buttons = frozenset({'LEFTMOUSE', 'MIDDLEMOUSE'})
 
     def tap(self, context):
-        ts = context.scene.tool_settings
-        prop = proportional_prop(context)
-        setattr(ts, prop, not getattr(ts, prop))
-        if getattr(ts, prop):
-            maya_soft_radius(context)
+        from . import soft_select
+        if soft_select.toggle(context):
             from ..ui import view_message
             # Maya Maya (only when it turns on, topCenter).
             view_message.show(context, "<hl>Soft Select</hl> is <hl>on</hl>. Tap <hl>b</hl> to turn it <hl>off</hl>.",
                               'TOP_CENTER')
 
     def click(self, context, event):
+        from . import soft_select
+        soft_select.pull(context.scene)
+        self._was_on = soft_select.is_on()
+        soft_select.set_on(True, context)
         ts = context.scene.tool_settings
-        maya_soft_radius(context)
         self._start_size = ts.proportional_size
-        self._prop = proportional_prop(context)
-        self._was_on = getattr(ts, self._prop)
-        setattr(ts, self._prop, True)
-        self._header(context, ts.proportional_size)
+        self._show(context, event, ts.proportional_size)
         return 'DRAG'
 
     def drag(self, context, event, start):
         ts = context.scene.tool_settings
         ts.proportional_size = radius_from_drag(self._start_size, event.mouse_x - start[0])
-        self._header(context, ts.proportional_size)
+        self._show(context, event, ts.proportional_size)
 
     def drag_end(self, context):
-        self._header(context, None)
+        self._show(context, None, None)
 
     def drag_cancel(self, context):
-        ts = context.scene.tool_settings
-        ts.proportional_size = self._start_size
-        setattr(ts, self._prop, self._was_on)
-        self._header(context, None)
+        from . import soft_select
+        context.scene.tool_settings.proportional_size = self._start_size
+        soft_select.set_on(self._was_on)
+        self._show(context, None, None)
 
     @staticmethod
-    def _header(context, size):
+    def _show(context, event, size):
+        """Header text + the radius circle and Maya's 'Falloff Radius' value in the view (ui/soft_overlay.py)."""
+        from . import units
+        from ..ui import soft_overlay
+        text = None if size is None else f"Falloff Radius: {size / units.maya_unit(context.scene):.3f}"
         area = context.area
         if area is not None:
-            from . import units
-            area.header_text_set(None if size is None else
-                                 f"Soft Select radius: {size / units.maya_unit(context.scene):.3f} (Maya units)")
+            area.header_text_set(None if text is None else text + " (Maya units)")
+        soft_overlay.radius_drag(context, event, text)
 
 
 class SelectAllBinding(TapHoldBinding):

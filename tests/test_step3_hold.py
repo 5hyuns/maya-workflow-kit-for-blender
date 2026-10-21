@@ -133,17 +133,19 @@ class _Ev:
         self.mouse_x, self.mouse_y = x, 0
 
 
-def test_soft_select_tap_toggles_per_mode():
+def test_soft_select_tap_toggles_one_state():
+    """Step 129 (#15): one Maya state, both Blender flags follow it (was per mode)."""
     ts = _ts()
     b = taphold.get_binding("soft_select")
     ts.use_proportional_edit_objects = False
     ts.use_proportional_edit = False
     b.tap(_Ctx('OBJECT'))
-    assert ts.use_proportional_edit_objects and not ts.use_proportional_edit
+    assert ts.use_proportional_edit_objects and ts.use_proportional_edit
     b.tap(_Ctx('EDIT_MESH'))
-    assert ts.use_proportional_edit
+    assert not ts.use_proportional_edit and not ts.use_proportional_edit_objects
     b.tap(_Ctx('OBJECT'))
-    assert not ts.use_proportional_edit_objects
+    assert ts.use_proportional_edit_objects and ts.use_proportional_edit
+    b.tap(_Ctx('OBJECT'))
 
 
 def test_soft_select_drag_and_cancel():
