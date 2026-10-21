@@ -900,3 +900,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 134) 편집 모드 F9 / F10 / F11 을 오가며: 엣지 연파랑 #64dcff, 정점 모드 = 보라 점 + 선택 노랑 점 (조금 큼), 엣지 모드 = 선택 엣지 주황 #e3ac79, 면 모드 = 선택 면이 주황 점묘. 가려진 뒤쪽 정점 · 엣지는 셰이딩 모드에서 안 보이고 X-ray (Alt+Z) 에서는 보이는지. 100 % / 125 %.
 - [ ] (step 134) 10 만 정점 메시 편집 모드에서 정점 선택 · G 드래그가 느려지지 않는지 (변경마다 캐시 약 30 ms), Smooth Preview 3 을 켠 메시는 케이지 위에 색이 그려지는지 (5 만 정점 초과 + 편집 모드 모디파이어면 Blender 색으로 돌아감). Preferences > Component Colors 끄면 Blender 색.
 - [ ] (step 134) Soft Select (b) 켬: 거짓 색 (노랑-빨강-검정) 이 킷 컴포넌트 색 위에 보이는지; 마우스 아래 프리셀렉트 빨강도 그 위에.
+
+## Step 135 — dock width
+
+- [ ] (step 135 WIDTH, #60) Windows 100 % / 125 % / 150 % (또는 Preferences > Interface > Resolution Scale 1.0 / 1.25 / 1.5) 에서 새 Maya 장면을 열고 마우스를 가만히 둔다: 오른쪽 탭 스택 폭이 약 466 / 574 / 672 px 로 맞춰지고 (커서가 잠깐 영역 틈으로 갔다 돌아옴), 탭 「Channel Box / Layer Editor」 「Attribute Editor」 「Modeling Toolkit」 이 「…」 없이 보이는지 (레인 CB 의 자연 폭 탭과 병합 뒤), 큐브를 만들면 「Subdivisions Height」 가 잘리지 않는지, AE 탭의 메뉴 줄 (List … Help) 이 한 줄인지. 뷰포트가 아웃라이너와 독 사이 남은 폭을 다 차지하는지.
+- [ ] (step 135) 맞춘 뒤 독 왼쪽 모서리를 직접 끌어 좁히거나 넓혀도 다시 되돌아가지 않는지 (#53 규칙), Tool Settings 를 열고 닫아도 뷰포트 폭이 그대로인지, UI 배율을 바꾸면 다시 맞춰지는지.

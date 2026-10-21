@@ -19,6 +19,8 @@ buttons and an Outliner toggle. Here:
   wire) skips it as well.
 """
 
+import math
+
 import bpy
 from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 
@@ -218,6 +220,63 @@ def column_width(context=None):
     return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
 
 
+# Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md): 280 px with the Channel Box
+# on top (research/maya/screens/01_layout_empty.png x 1320-1600; = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px
+# with the Attribute Editor raised (10_attribute_editor.png x 1120-1600). Maya's tabs are a vertical strip; the kit's are
+# one horizontal row, so the stack is as wide as its tab row, the Channel Box labels and the AE menu bar need at this
+# scale (blf widths), between those two Maya widths (delegated).
+DOCK_MAYA_PX = 277
+DOCK_MAX_PX = 480
+# px between neighbouring areas: 3 at UI scale 1.0, 5 at 1.5 (the area edge grows with the scale, measured)
+GAP_PX = 8
+# the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
+# window at UI scale 1.5 keeps a 439 px viewport (Maya at 150 % with the AE raised: about 430 px)
+MIN_VIEW_PX = 280
+# the longest Maya default channel labels the Channel Box shows (polyCube / polyCylinder / polySphere INPUTS)
+LONG_LABELS = ("Subdivisions Height", "Subdivisions Width", "Subdivisions Depth", "Subdivisions Axis",
+               "Subdivisions Caps")
+FONT_PT = 11         # Blender's widget font (Preferences > Interface > Text Rendering: ui_styles[0].widget.points)
+
+
+def _unit(scale, pixel_size=1.0):
+    """Blender's widget unit UI_UNIT_X in px (= toolbar_fit.unit, measured step 132)."""
+    from .toolbar_fit import unit
+    return unit(scale, pixel_size)
+
+
+def text_px(text, scale):
+    """Width of ``text`` in the UI font at ``scale`` (blf; about 7 px a character when blf can't measure)."""
+    try:
+        import blf
+        blf.size(0, FONT_PT * scale)
+        w = blf.dimensions(0, text)[0]
+        if w > 0:
+            return w
+    except Exception:
+        pass
+    return len(text) * 7 * scale
+
+
+def dock_need(scale, pixel_size=1.0, measure=text_px):
+    """{"tabs", "labels", "ae_menu"}: px the tab stack needs at ``scale`` so nothing is truncated or wraps."""
+    from . import attribute_editor, maya_dock
+    u = _unit(scale, pixel_size)
+    tabs = (measure(maya_dock.HANDLE, scale) + 1.5 * u + sum(measure(maya_dock.LABELS[k], scale) + u
+                                                             for k in maya_dock.KINDS) + 2 * u)
+    label = max(measure(t, scale) for t in LONG_LABELS)
+    labels = 2 * (label + 0.8 * u) + 0.8 * u
+    # = attribute_editor.fits: the width at which the AE menu bar is drawn on one row
+    ae = (sum(len(text) * 7 + 14 for text, _m in attribute_editor.MENU_BAR) + 20) * scale
+    return {"tabs": math.ceil(tabs), "labels": math.ceil(labels), "ae_menu": math.ceil(ae)}
+
+
+def dock_width(scale, pixel_size=1.0, measure=text_px):
+    """The tab stack width at ``scale``: what its contents need, at least Maya's Channel Box stack, at most Maya's
+    stack with the Attribute Editor raised."""
+    need = max(dock_need(scale, pixel_size, measure).values())
+    return min(round(DOCK_MAX_PX * scale), max(round(DOCK_MAYA_PX * scale), need))
+
+
 MAX_WARPS = 3        # cursor-warp fits per screen and file load
 _warps = {}          # screen name -> fits started since the last load
 _running = [False]
@@ -258,6 +317,35 @@ def _move_edge(window, area, x, y, delta, edge, pending):
         return bpy.ops.screen.area_move(x=x, y=y, delta=delta) == {'FINISHED'}
 
 
+def _fit_dock(window, scale, pixel_size, pending):
+    """Move the left edge of the Maya tab stack right of the main viewport to ``dock_width`` (#60). True while it is
+    off its fitted place (moved now or pending)."""
+    from . import maya_dock
+    from .status_line import main_view3d
+    screen = window.screen
+    dock = maya_dock.find_stack(screen)
+    main, _r = main_view3d(screen)
+    if dock is None or main is None or abs(main.x + main.width - dock.x) > GAP_PX or dock.x <= 2:
+        return False         # not the layout's stack right of the viewport (torn off, a user layout)
+    want = dock_width(scale, pixel_size)
+    # never squeeze the viewport below MIN_VIEW_PX once the column and Outliner left of it are fitted as well (a small
+    # window keeps a narrower dock)
+    left = 0
+    column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
+    if column is not None:
+        left += column_width() - column.width
+        outl = next((a for a in screen.areas if a.type == 'OUTLINER' and abs(a.x - (column.x + column.width)) <= GAP_PX
+                     and abs(a.x + a.width - main.x) <= GAP_PX), None)
+        if outl is not None:
+            left += round(OUTLINER_PX * scale) - outl.width
+    want = min(want, dock.width + max(0, main.width - left - round(MIN_VIEW_PX * scale)))
+    if abs(dock.width - want) <= 2:
+        return False
+    y = dock.y + dock.height // 2
+    _move_edge(window, dock, dock.x, y, dock.width - want, (dock.x - 1, y), pending)
+    return True
+
+
 def fit_columns(start_fit=True):
     """Tool Box column = one toolbar column at the current UI scale (or the main view's toolbar); the
     shelf row = 64 px times the UI scale. Returns {window pointer: (window, edge point)} of the moves whose
@@ -284,6 +372,8 @@ def fit_columns(start_fit=True):
                 needed = True
                 _move_edge(window, row, row.x + row.width // 2, row.y, -d,
                            (row.x + row.width // 2, row.y - 1), pending)
+        if armed and _fit_dock(window, scale, context.preferences.system.pixel_size, pending):
+            needed = True
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
             if armed and not needed:
@@ -300,7 +390,7 @@ def fit_columns(start_fit=True):
         elif abs(column.width - want) <= 1:
             # the layout Outliner right of the column keeps Maya's panel width at this scale (widening the column
             # took its pixels; step 99)
-            outl = next((a for a in screen.areas if a.type == 'OUTLINER' and abs(a.x - (column.x + column.width)) <= 4
+            outl = next((a for a in screen.areas if a.type == 'OUTLINER' and abs(a.x - (column.x + column.width)) <= GAP_PX
                          and a.height >= column.height - 4), None)
             wo = round(OUTLINER_PX * scale)
             if outl is not None and abs(outl.width - wo) > 2 and outl.x + outl.width < window.width - 2:

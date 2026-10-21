@@ -25,7 +25,10 @@ OUT = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.
 OUTLINER_PX = 260
 # Maya's right dock column (Channel Box / Layer Editor 260 + Maya's side tab strip; dock [1323, 260] then tabs to
 # 1598) = the kit's tab-stack area, its own Properties editor right of the viewport (ui/maya_dock.py, step 116).
-DOCK_PX = 260 + 17
+# Step 135 (#60): the kit's tabs are one horizontal row, so the stack is as wide as its tab row / Channel Box labels /
+# AE menu bar need = src/allset/ui/toolbox.dock_width(1.0) (277 <= width <= Maya's AE stack 480; kept in sync by
+# tests/test_step135_width.py); toolbox.fit_columns refits it at other UI scales.
+DOCK_PX = 466
 # Tool Box column = room for one toolbar column up to UI scale 1.6 (step 112): area sizes are pixels scaled with
 # the window, not with the UI scale, and a toolbar wider than its area is not drawn at all (an empty strip, the
 # tools fell back into the main view). ui/toolbox.fit_columns fits it to one toolbar column when it can; until
