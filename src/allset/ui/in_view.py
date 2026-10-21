@@ -454,15 +454,20 @@ HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can b
 
 def draw_cb_node(layout, context, rec):
     """The polyExtrudeFace node in Channel Box INPUTS (modeling_04.png); the Blender notice is the node name's
-    tooltip (step 106: no Blender sentences in Maya windows)."""
-    from . import notices
-    name = layout.row()
-    name.separator(factor=1.5)
-    notices.tip(name, HISTORY_TIP, label=rec.name, icon='NONE')
-    col = layout.column(align=True)
+    tooltip (step 106: no Blender sentences in Maya windows). Collapsed until its name is clicked, like Maya
+    (research/maya/screens/cb135/pass1/c07_extruded_component.png, step 135)."""
+    from . import channel_box
+    lines = channel_box.as_lines(layout)
+    ob = channel_box.lead(context)
+    _row, opened = channel_box.node_row(lines, ob, channel_box.history_node(rec.name), rec.name, tip=HISTORY_TIP)
+    if not opened:
+        return
     hist = context.window_manager.allset_history
     for field in extrude.FIELDS:
-        split = col.row(align=True).split(factor=0.5, align=True)
+        row = lines.row()
+        if row is None:
+            continue
+        split = row.split(factor=0.5, align=True)
         split.label(text=extrude.LABELS[field])
         split.prop(hist, f"{field}_text", text="")
 

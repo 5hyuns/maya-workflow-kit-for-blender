@@ -8,7 +8,7 @@ every selected object whose node has the same type; ``operators/prim_history.reb
 """
 
 import bpy
-from bpy.props import BoolProperty, PointerProperty, StringProperty
+from bpy.props import PointerProperty, StringProperty
 
 from ..operators import prim_history, prim_shapes
 from . import cb_entry
@@ -102,35 +102,29 @@ class ALLSET_PG_creation(bpy.types.PropertyGroup):
                        for n in ALL_ATTRS}
 
 
-class ALLSET_OT_creation_node_toggle(bpy.types.Operator):
-    """Show or hide the creation node's attributes (Maya: click the node name in INPUTS)"""
-    bl_idname = "allset.creation_node_toggle"
-    bl_label = "Creation Node"
-    bl_options = {'INTERNAL'}
-
-    def execute(self, context):
-        wm = context.window_manager
-        wm.allset_creation_closed = not wm.allset_creation_closed
-        return {'FINISHED'}
-
-
 def has_node(ob):
     return prim_history.node_of(ob)[1] is not None
 
 
 def draw_cb(layout, context, ob):
-    """The node in Channel Box INPUTS: its name (click = collapse) and one text row per attribute."""
+    """The node in Channel Box INPUTS: its name (click = expand / collapse, collapsed at first like Maya, step 135)
+    and, expanded, one text row per attribute."""
     _owner, node = prim_history.node_of(ob)
     if node is None:
         return False
-    wm = context.window_manager
-    row = layout.row()
-    row.alignment = 'LEFT'     # Maya: the node name indented under INPUTS, like SHAPES' shape name
-    row.separator(factor=1.5)
-    row.operator(ALLSET_OT_creation_node_toggle.bl_idname, text=node["name"], emboss=False)
-    if wm.allset_creation_closed:
+    from . import channel_box
+    lines = channel_box.as_lines(layout)
+    _row, opened = channel_box.node_row(lines, ob, channel_box.history_node(node["name"]), node["name"])
+    if not opened:
         return True
-    _rows(layout.column(align=True), context, node, 0.5)
+    props = context.scene.allset_creation
+    for name in node_rows(node["type"]):
+        row = lines.row()
+        if row is None:
+            continue
+        split = row.split(factor=0.5, align=True)
+        split.label(text=prim_shapes.spec(node["type"], name)[1])
+        split.prop(props, f"{name}_text", text="")
     return True
 
 
@@ -159,18 +153,16 @@ def draw_ae(layout, context, ob):
         _rows(body.column(align=True), context, node, 0.42)
 
 
-classes = (ALLSET_PG_creation, ALLSET_OT_creation_node_toggle)
+classes = (ALLSET_PG_creation,)
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.allset_creation = PointerProperty(type=ALLSET_PG_creation)
-    bpy.types.WindowManager.allset_creation_closed = BoolProperty(options={'SKIP_SAVE'})
 
 
 def unregister():
-    del bpy.types.WindowManager.allset_creation_closed
     del bpy.types.Scene.allset_creation
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
