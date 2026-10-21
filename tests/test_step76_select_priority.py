@@ -34,7 +34,7 @@ def test_rank_priority_then_distance_then_name():
 
 
 def test_items_lead_the_click_select_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     assert "allset.select_priority" in patches.PASS_THROUGH_FIRST
     for km_name, value in patches.SELECT_PRIORITY_ITEMS:
         items = [k for k in kc.keymaps[km_name].keymap_items if k.active]

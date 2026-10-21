@@ -117,7 +117,7 @@ def test_component_rules_name_real_items():
 def test_mesh_ctrl_d_is_maya_duplicate():
     # #17: Blender's mesh.duplicate_move copied faces inside the mesh; Maya's Duplicate in component mode
     # duplicates nothing ("No object(s) to duplicate")
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
+    km = kit.maya_kc().keymaps["Mesh"]
     items = [k for k in km.keymap_items if k.active and k.type == 'D' and k.value == 'PRESS' and k.ctrl
              and not (k.shift or k.alt or k.oskey)]
     assert [k.idname for k in items] == ["allset.component_command"], [k.idname for k in items]

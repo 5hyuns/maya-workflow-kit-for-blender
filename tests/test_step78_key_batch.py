@@ -17,7 +17,7 @@ taphold = import_module(kit.MODULE + ".operators.taphold")
 
 
 def _items(km, key, **mods):
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     want = {m: mods.get(m, False) for m in ("shift", "ctrl", "alt")}
     return [k for k in kc.keymaps[km].keymap_items if k.active and k.type == key and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items())]

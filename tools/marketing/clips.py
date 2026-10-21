@@ -223,7 +223,7 @@ def maya_session(kind="dog", setup_scene=None):
     @step
     def s_scene():
         kc = bpy.context.window_manager.keyconfigs.active
-        check("Maya keymap active in the Maya layout", kc is not None and kc.name == "Maya-style")
+        check("Maya keymap on in the Maya layout (add-on items, step 130)", kc is not None and mod(".keymap").is_applied())
         maya_look()
         clear_objects()
         if setup_scene is None:
@@ -918,7 +918,7 @@ def clip_switch():
     @step
     def s_check():
         kc = bpy.context.window_manager.keyconfigs.active
-        check(f"back in Maya mode ({kc.name})", kc.name == "Maya-style" and mod(".switch").is_on())
+        check(f"back in Maya mode ({kc.name})", mod(".keymap").is_applied() and mod(".switch").is_on())
 
 
 CLIPS = {"hotbox": clip_hotbox, "marking_menu": clip_marking_menu, "channel_box_keys": clip_channel_box_keys,

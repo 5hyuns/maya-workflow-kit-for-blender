@@ -282,7 +282,7 @@ def test_layer_assign_remove_select_ops():
 # --- keymap ------------------------------------------------------------------------------------
 
 def test_slider_keymap_in_front_of_tool_mmb():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     for km_name in maya_patches.SLIDER_TOOL_KEYMAPS:
         first_mmb = next(k for k in kc.keymaps[km_name].keymap_items if k.type == 'MIDDLEMOUSE')
         assert first_mmb.idname == "allset.cb_virtual_slider", km_name

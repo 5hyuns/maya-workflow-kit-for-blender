@@ -54,7 +54,8 @@ def test_opt_in_turns_maya_on_and_disable_restores():
     _mod("welcome").opt_in(open_layout=False)      # what the dialog's confirm / the preferences button run
     prefs = _mod("preferences").get()
     assert _mod("switch").is_on() and hasattr(bpy.types.Scene, "allset_cb")
-    assert bpy.context.window_manager.keyconfigs.active.name == "Maya-style"
+    assert bpy.context.window_manager.keyconfigs.active.name == "Blender", "step 130: the active keyconfig stays"
+    assert _mod("keymap").is_applied()
     assert bpy.context.preferences.themes[0].name == "Studio Grey (Maya-inspired)"
     assert prefs.maya_theme and prefs.start_in_maya_layout and prefs.layout_installed
     assert _mod("app_template").is_installed()
@@ -111,23 +112,17 @@ def test_no_automatic_preference_save():
     assert hits == [("ui/menu_map.py", '"File/Save Preferences": "wm.save_userpref",')], hits
 
 
-def test_keymap_back_after_template_switch():
-    """GUI template switches set the keyconfig back to "Blender" after load_post (measured, GUI probe in step 115);
-    in the Maya Workflow Kit template the keymap module puts Maya back, a keymap the user picked is left alone."""
+def test_keymap_never_changes_the_active_keyconfig():
+    """Step 130 replaced the template-switch re-activation (``wants_maya`` / ``_keep_keyconfig``): the Maya keys are
+    add-on items, so nothing has to be put back after a template switch and no load_post handler is left."""
     kit.enable()
     try:
         keymap = _mod("keymap")
-        assert keymap.wants_maya("Maya_Workflow_Kit", "Blender") and keymap.wants_maya("Maya_Workflow_Kit", None)
-        assert not keymap.wants_maya("Maya_Workflow_Kit", "Industry_Compatible"), "the user's own keymap stays"
-        assert not keymap.wants_maya("", "Blender"), "plain Blender files: no change"
-        kcs = bpy.context.window_manager.keyconfigs
-        kcs.active = kcs.default
-        keymap._keep_keyconfig()                    # factory file in -b: left alone
-        assert kcs.active.name == "Blender"
-        assert keymap._keep_keyconfig in bpy.app.handlers.load_post
+        assert not hasattr(keymap, "wants_maya") and not hasattr(keymap, "_keep_keyconfig")
+        assert bpy.context.window_manager.keyconfigs.active.name == "Blender"
+        assert not [f for f in bpy.app.handlers.load_post if "keymap" in getattr(f, "__module__", "")]
     finally:
         kit.disable()
-
 
 def _other_addon(self, context):
     pass

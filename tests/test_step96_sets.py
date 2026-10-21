@@ -170,7 +170,7 @@ def test_overlay_helpers():
 
 
 def test_keymap_items_first_in_outliner():
-    kc = bpy.context.window_manager.keyconfigs.active
+    kc = kit.maya_kc()
     km = kc.keymaps.get("Outliner")
     if km is None:
         return

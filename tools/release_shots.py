@@ -71,7 +71,8 @@ def s_first_start():
 @step
 def s_scene():
     kc = bpy.context.window_manager.keyconfigs.active
-    check("Maya keymap still active after loading the layout", kc is not None and kc.name == "Maya-style")
+    check("Maya keymap still on after loading the layout (add-on items, step 130)",
+          kc is not None and sys.modules[MODULE + ".keymap"].is_applied())
     check("layout has the Maya strip (Status Line + Shelf)",
           bpy.data.masks.get(".AllsetStrip") is not None)
     k = import_module(MODULE + ".operators.units").maya_unit()  # Maya lengths (decision 8)

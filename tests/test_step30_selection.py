@@ -20,7 +20,7 @@ preferences = import_module(kit.MODULE + ".preferences")
 
 
 def test_select_through_items_lead_box_and_lasso():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     assert "allset.select_through" in patches.PASS_THROUGH_FIRST
     for km_name in patches.SELECT_DRAG_KEYMAPS:
         items = [k for k in kc.keymaps[km_name].keymap_items if k.active]

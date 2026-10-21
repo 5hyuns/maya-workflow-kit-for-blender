@@ -13,7 +13,7 @@ pivot = import_module(kit.MODULE + ".operators.pivot")
 
 
 def _kmis(km, key):
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     return [k for k in kc.keymaps[km].keymap_items if k.active and k.type == key and k.value == 'PRESS'
             and not (k.shift or k.ctrl or k.alt)]
 

@@ -32,7 +32,7 @@ def _create(kind):
 
 
 def test_ctrl_d_binding():
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Object Mode"]
+    km = kit.maya_kc().keymaps["Object Mode"]
     items = [k for k in km.keymap_items if k.active and k.type == 'D' and k.ctrl and not k.shift
              and not k.alt and k.value == 'PRESS']
     assert [k.idname for k in items] == ["allset.duplicate"], [k.idname for k in items]

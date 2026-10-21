@@ -222,7 +222,7 @@ def test_redo_keeps_node_name():
 
 def test_bindings_and_menus():
     action = ("v3d", "allset.extrude", {})
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
+    km = kit.maya_kc().keymaps["Mesh"]
     ce = [k.idname for k in km.keymap_items if k.type == 'E' and k.ctrl and not k.shift and not k.alt and k.active]
     assert ce == ["allset.extrude"], ce
     assert menu_map.MAP["Edit Mesh/Extrude"] == action

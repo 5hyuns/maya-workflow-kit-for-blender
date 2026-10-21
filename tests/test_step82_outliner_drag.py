@@ -130,7 +130,7 @@ def test_reparent_operator_is_one_maya_step():
 def test_lmb_drop_watch_and_mmb_keymap_item():
     assert od._on_depsgraph in bpy.app.handlers.depsgraph_update_post
     assert set(od.DROP_OPS) == {"OUTLINER_OT_parent_drop", "OUTLINER_OT_parent_clear"}
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     items = [k for k in kc.keymaps["Outliner"].keymap_items
              if k.active and k.type == 'MIDDLEMOUSE' and k.value == 'PRESS' and not (k.shift or k.ctrl or k.alt)]
     assert [k.idname for k in items] == ["allset.outliner_drag"], [k.idname for k in items]

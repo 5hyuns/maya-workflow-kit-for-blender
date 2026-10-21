@@ -284,7 +284,7 @@ def test_tools_registered_with_keymaps():
 
 
 def _items(km_name, etype, value='PRESS', shift=False, ctrl=False):
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
+    km = kit.maya_kc().keymaps[km_name]
     return [(k.idname, {p: getattr(k.properties, p) for p in k.properties.keys()} if k.properties else {})
             for k in km.keymap_items if k.active and k.type == etype and k.value == value
             and k.shift == shift and k.ctrl == ctrl and not k.alt]

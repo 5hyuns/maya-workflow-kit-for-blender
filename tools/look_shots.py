@@ -257,7 +257,8 @@ def s_wait2():
     check("... with the Maya theme on and the splash off",
           addon.maya_theme and not prefs.view.show_splash)
     kc = bpy.context.window_manager.keyconfigs.active
-    check(f"Maya keymap active (got {kc.name if kc else None})", kc is not None and kc.name == "Maya-style")
+    check(f"Maya keymap on (active keyconfig {kc.name if kc else None} unchanged, step 130)",
+          kc is not None and import_module(MODULE + ".keymap").is_applied())
     # The template opened under the factory scale and the shot scale came after it: the header-only
     # Status Line row shrank and gave its pixels to the middle row. toolbox.fit_columns (0.5 s timer)
     # puts the shelf row back to 64 px, but screen.area_move polls False while the mouse is over a

@@ -62,7 +62,7 @@ def test_round_trip_in_one_session():
     assert sw.is_on() and sw.has_snapshot(), "fresh install = Maya mode with a snapshot"
     _mod("first_start").make(bpy.context, open_layout=False)   # Make Blender Maya (theme, splash, density ...)
     maya = dump()
-    assert maya["active_keyconfig"] == "Maya-style", maya["active_keyconfig"]
+    assert maya["active_keyconfig"] == before["active_keyconfig"], maya["active_keyconfig"]   # step 130
     assert maya["theme_xml"] != before["theme_xml"], "Maya theme not applied"
     # Marked by name, not by a filepath inside the package: extension removal would reset the
     # theme after the restore when that file is gone (bl_extension_ops.py:1233-1270).
@@ -80,7 +80,7 @@ def test_round_trip_in_one_session():
         assert not hasattr(bpy.types.Scene, "allset_cb"), "Maya mode classes still registered"
         sw.set_mode(True)
         again = dump()
-        assert again["active_keyconfig"] == "Maya-style" and again["theme_xml"] == maya["theme_xml"], \
+        assert again["active_keyconfig"] == before["active_keyconfig"] and again["theme_xml"] == maya["theme_xml"], \
             "switching back on is the same Maya setup"
     kit.disable()
     d = _diff(before, dump())
@@ -141,7 +141,7 @@ def test_round_trip_across_restarts():
     cfg = _sandbox()
     a = _session(cfg, "a", "user_setup", "save")
     b = _session(cfg, "b", "enable", "make_maya", "save")
-    assert b["state"]["maya_mode"] and b["dump"]["active_keyconfig"] == "Maya-style", b["state"]
+    assert b["state"]["maya_mode"] and b["dump"]["active_keyconfig"] == a["dump"]["active_keyconfig"], b["state"]
     c = _session(cfg, "c", "maya_off", "save")            # Blender starts in Maya mode, switch off
     assert not c["state"]["maya_mode"] and not c["state"]["snapshot"], c["state"]
     d = _diff(a["dump"], c["dump"])

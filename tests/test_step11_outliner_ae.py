@@ -407,7 +407,7 @@ def test_dock_mode_switches_panels():
 
 
 def _kmis(km_name, key, **mods):
-    km = bpy.context.window_manager.keyconfigs.active.keymaps[km_name]
+    km = kit.maya_kc().keymaps[km_name]
     return [(k.idname, getattr(k.properties, "action", None)) for k in km.keymap_items
             if k.type == key and k.value == 'PRESS' and k.active
             and k.shift == mods.get("shift", False) and k.ctrl == mods.get("ctrl", False)

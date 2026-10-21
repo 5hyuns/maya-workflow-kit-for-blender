@@ -135,7 +135,7 @@ def test_hotbox_rows_stay_in_bounds():
 
 
 def _kmis(km, type, **mods):
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km]
+    km = kit.maya_kc().keymaps[km]
     want = {"shift": False, "ctrl": False, "alt": False, **mods}
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and all(getattr(k, m) == v for m, v in want.items()) and not k.oskey]

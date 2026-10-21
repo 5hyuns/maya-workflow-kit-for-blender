@@ -54,7 +54,7 @@ def test_keymap_patches_strict_on_target_drift_known_elsewhere():
     else:
         assert not patch.STRICT
         assert set(patch.DRIFT) <= KNOWN_5X_DRIFT, sorted(set(patch.DRIFT) - KNOWN_5X_DRIFT)
-    assert bpy.context.window_manager.keyconfigs.get("Maya-style") is not None
+    assert keymap.is_applied() and len(kit.maya_kc().keymaps) >= 240
 
 
 def test_theme_round_trip_gives_the_user_theme_back():

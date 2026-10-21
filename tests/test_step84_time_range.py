@@ -91,7 +91,7 @@ def test_drag_scale_handles_and_cancel():
 
 
 def test_keymap_item_leads_time_scrub():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     items = [k.idname for k in kc.keymaps["Dopesheet"].keymap_items
              if k.active and k.type == 'LEFTMOUSE' and k.value == 'PRESS' and not (k.shift or k.ctrl or k.alt)]
     assert items.index("allset.time_range_drag") < items.index("allset.time_scrub"), items

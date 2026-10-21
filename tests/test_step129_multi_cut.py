@@ -210,7 +210,7 @@ def test_menu_shelf_marking_menu_hotkey_point_to_the_tool():
     for menu in (mm.SHIFT_OBJECT, mm.SHIFT_VERTEX, mm.SHIFT_EDGE, mm.SHIFT_FACE):
         _actions(menu, "Multi-Cut", cuts)
     assert len(cuts) == 4 and all(a == TOOL for a in cuts), cuts
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
+    km = kit.maya_kc().keymaps["Mesh"]
     hot = [(k.idname, k.properties.tool) for k in km.keymap_items
            if k.active and k.type == 'X' and k.ctrl and k.shift and not k.alt]
     assert hot == [("allset.menu_tool", "allset.multi_cut_tool")], hot
@@ -221,7 +221,7 @@ def test_menu_shelf_marking_menu_hotkey_point_to_the_tool():
 
 def test_knife_is_blender_again():
     """Multi-Cut is no longer the knife: the step 64 knife patches are gone (Shift = Blender's ignore snap)."""
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     modal = kc.keymaps["Knife Tool Modal Map"]
     shift = {k.propvalue for k in modal.keymap_items if k.type in ('LEFT_SHIFT', 'RIGHT_SHIFT')}
     assert not shift & {'SNAP_MIDPOINTS_ON', 'SNAP_MIDPOINTS_OFF'}, shift

@@ -256,7 +256,7 @@ def test_pick_object_ray_cast():
 # --- keymap and Q/W/E/R ------------------------------------------------------------
 
 def _items(km_name):
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     return kc.keymaps[km_name].keymap_items
 
 

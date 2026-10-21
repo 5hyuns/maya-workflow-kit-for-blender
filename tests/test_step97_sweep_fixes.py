@@ -103,7 +103,7 @@ def test_custom_attribute_entry_is_clamped():
 
 
 def test_render_slot_keys():
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Image"]
+    km = kit.maya_kc().keymaps["Image"]
     items = [(i.alt, i.properties.reverse) for i in km.keymap_items
              if i.active and i.idname == "image.cycle_render_slot" and i.type == 'J' and not (i.ctrl or i.shift)]
     assert sorted(items) == [(False, False), (True, True)], items

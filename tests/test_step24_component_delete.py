@@ -42,14 +42,14 @@ def _select(ob, kind, indices):
 
 
 def test_keymap_binds_delete_and_backspace():
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
+    km = kit.maya_kc().keymaps["Mesh"]
     for key in ('DEL', 'BACK_SPACE'):
         plain = [k.idname for k in km.keymap_items if k.active and k.type == key and k.value == 'PRESS'
                  and not (k.ctrl or k.shift or k.alt or k.oskey)]
         assert plain == ["allset.delete_components"], (key, plain)
         ctrl = [k.idname for k in km.keymap_items if k.active and k.type == key and k.ctrl]
         assert ctrl == ["mesh.dissolve_mode"], (key, ctrl)
-    obj = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Object Mode"]
+    obj = kit.maya_kc().keymaps["Object Mode"]
     assert any(k.type == 'DEL' and k.idname.startswith("object.delete") for k in obj.keymap_items), \
         "object mode Delete unchanged"
 

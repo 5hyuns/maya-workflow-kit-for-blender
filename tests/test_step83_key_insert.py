@@ -185,7 +185,7 @@ def test_select_next_previous_key():
 
 
 def test_keymap_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     km = kc.keymaps["Screen"]
 
     def find(t, **mods):

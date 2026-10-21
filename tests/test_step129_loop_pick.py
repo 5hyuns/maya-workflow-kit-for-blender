@@ -94,7 +94,7 @@ def test_shift_double_click_selects_between_edges():
 
 
 def test_mesh_keymap_double_click():
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Mesh"]
+    km = kit.maya_kc().keymaps["Mesh"]
     items = [k for k in km.keymap_items if k.idname == "allset.loop_pick" and k.type == 'LEFTMOUSE'
              and k.value == 'DOUBLE_CLICK' and not k.ctrl and not k.alt]
     by_shift = {k.shift: k.properties.between for k in items}

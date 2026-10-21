@@ -48,4 +48,4 @@ def test_background_enable_does_not_mark_keymap_choice():
     prefs = import_module(kit.MODULE + ".preferences").get()
     assert bpy.app.background
     assert not prefs.keymap_auto_activated
-    assert bpy.context.window_manager.keyconfigs.active.name == "Maya-style"
+    assert bpy.context.window_manager.keyconfigs.active.name == "Blender"   # step 130: never changed

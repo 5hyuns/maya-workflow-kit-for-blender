@@ -95,7 +95,9 @@ def s_first_start():
           kc is not None and kc.name == "Blender")
     setup()
     kc = bpy.context.window_manager.keyconfigs.active
-    check(f"Maya keymap after the opt-in (got {kc.name if kc else None})", kc is not None and kc.name == "Maya-style")
+    # step 130: the Maya keys are add-on keymap items, the active keyconfig stays the user's
+    check(f"Maya keymap after the opt-in (active keyconfig still {kc.name if kc else None})",
+          kc is not None and kc.name == "Blender" and import_module(MODULE + ".keymap").is_applied())
     bpy.ops.allset.layout_install()
     bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 

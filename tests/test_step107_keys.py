@@ -21,7 +21,7 @@ ROOT = Path(kit.__file__).resolve().parent.parent
 
 
 def _keymap():
-    return bpy.context.window_manager.keyconfigs["Maya-style"].keymaps
+    return kit.maya_kc().keymaps
 
 
 def _items(km, t, **mods):
