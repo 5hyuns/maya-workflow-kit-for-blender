@@ -533,6 +533,96 @@ class ALLSET_OT_checker_shader(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- UV Editor checker button / Textures > Checker Map (a display toggle, #13) -------------------------------
+# Maya: textureWindowDisplayCheckered(1, 1/0) shows / hides a checker map on the objects (Maya-606,
+# Maya checkeredButton = iconTextCheckBox). Blender has no display-only override, so the kit
+# puts a checker material on the objects' slots at object level (``link = 'OBJECT'``: the mesh's own materials are
+# untouched) and remembers what was there in the object property CHECKER_PREV; off puts it back.
+
+CHECKER_PREV = "allset_checker_prev"
+CHECKER_MAT = "allset_checker_display"
+
+
+def checker_objects(scene):
+    return [ob for ob in scene.objects if CHECKER_PREV in ob]
+
+
+def checker_on(context):
+    return bool(checker_objects(context.scene))
+
+
+def _checker_material():
+    from . import material
+    mat = next((m for m in bpy.data.materials if m.get(CHECKER_MAT)), None)
+    if mat is not None:
+        return mat
+    img = bpy.data.images.get(CHECKER_IMAGE) or bpy.data.images.new(CHECKER_IMAGE, 1024, 1024)
+    img.generated_type = 'UV_GRID'
+    mat = material.new_material('LAMBERT')
+    mat.name = "checkerDisplay"
+    mat[CHECKER_MAT] = True
+    tree = mat.node_tree
+    node = tree.nodes.new("ShaderNodeTexImage")
+    node.image = img
+    node.location = (-350, 300)
+    tree.nodes.active = node
+    bsdf = next(nd for nd in tree.nodes if nd.type == 'BSDF_PRINCIPLED')
+    tree.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
+    return mat
+
+
+def checker_show(obs):
+    import json
+    mat = _checker_material()
+    for ob in obs:
+        if CHECKER_PREV in ob:
+            continue
+        added = not ob.material_slots
+        if added:
+            ob.data.materials.append(None)
+        prev = [(s.link, s.material.name if s.link == 'OBJECT' and s.material else "") for s in ob.material_slots]
+        ob[CHECKER_PREV] = json.dumps({"slots": prev, "added": added})
+        for slot in ob.material_slots:
+            slot.link = 'OBJECT'
+            slot.material = mat
+
+
+def checker_hide(obs):
+    import json
+    for ob in obs:
+        raw = ob.get(CHECKER_PREV)
+        if raw is None:
+            continue
+        data = json.loads(raw)
+        for slot, (link, name) in zip(ob.material_slots, data["slots"]):
+            slot.link = 'OBJECT'
+            slot.material = bpy.data.materials.get(name) if name else None
+            slot.link = link
+        if data.get("added") and ob.type == 'MESH' and len(ob.data.materials) == 1 and ob.data.materials[0] is None:
+            ob.data.materials.clear()
+        del ob[CHECKER_PREV]
+
+
+class ALLSET_OT_checker_toggle(bpy.types.Operator):
+    """Show or hide a checker map on the selected objects (Maya UV Editor checker button); a second click puts the
+    objects' own materials back"""
+    bl_idname = "allset.checker_toggle"
+    bl_label = "Checker Map"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        shown = checker_objects(context.scene)
+        if shown:
+            checker_hide(shown)
+            return {'FINISHED'}
+        obs = [ob for ob in (context.objects_in_mode or context.selected_objects) if ob.type == 'MESH']
+        if not obs:
+            self.report({'WARNING'}, "Select objects or faces to show the checker on")
+            return {'CANCELLED'}
+        checker_show(obs)
+        return {'FINISHED'}
+
+
 # --- Audio ------------------------------------------------------------------------------------
 
 def _strips(scene, create=False):
@@ -621,5 +711,5 @@ class ALLSET_OT_menu_note(bpy.types.Operator):
 
 classes = (ALLSET_OT_prefix_hierarchy, ALLSET_OT_search_replace_names, ALLSET_OT_soften_harden,
            ALLSET_OT_detach, ALLSET_OT_edge_flow, ALLSET_OT_wedge, ALLSET_OT_nonlinear,
-           ALLSET_OT_object_display, ALLSET_OT_sculpt_tool, ALLSET_OT_checker_shader, ALLSET_OT_import_audio,
+           ALLSET_OT_object_display, ALLSET_OT_sculpt_tool, ALLSET_OT_checker_shader, ALLSET_OT_checker_toggle, ALLSET_OT_import_audio,
            ALLSET_OT_delete_sounds, ALLSET_OT_stereo_camera, ALLSET_OT_menu_note)

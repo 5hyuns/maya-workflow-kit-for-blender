@@ -22,7 +22,7 @@ Item forms (one tuple per row):
 import json
 
 import bpy
-from bpy.props import EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 GREY_OP = "allset.menu_unavailable"
 
@@ -45,7 +45,7 @@ def _view(label, view):
 
 VIEW = [
     ("set", "SELECT_CAMERA", "Select Camera"),
-    _grey("Lock Camera"),
+    ("set", "CAMERA_LOCK", "Lock Camera"),
     _sep(),
     _run("Undo View Change", "allset.view_history", direction='UNDO'),
     _run("Redo View Change", "allset.view_history", direction='REDO'),
@@ -176,7 +176,7 @@ PANELS = [
     ("menu", "Perspective", "ALLSET_MT_panel_perspective"),
     _grey("Stereo"),
     ("menu", "Orthographic", "ALLSET_MT_panel_orthographic"),
-    _run("Look Through Selected", "view3d.object_as_camera"),
+    _run("Look Through Selected", "allset.panel_look_through"),
     _grey("Camera Set"),
     _sep(),
     ("menu", "Panel", "ALLSET_MT_panel_panel"),
@@ -222,11 +222,83 @@ def _scene_camera_view(context):
     return rv3d is not None and rv3d.view_perspective == 'CAMERA'
 
 
+def view_camera(context):
+    """The object this view looks through (None: Blender's persp / ortho view, which has no camera object)."""
+    space = _space(context)
+    if space is None or not _scene_camera_view(context):
+        return None
+    if space.use_local_camera and space.camera is not None:
+        return space.camera
+    return context.scene.camera
+
+
+def camera_locked(ob):
+    """Maya Lock Camera (camera -lockTransform): the kit locks the camera's location and rotation channels;
+    Blender's camera-view navigation keeps locked channels (checked, step 129)."""
+    return all(ob.lock_location) and all(ob.lock_rotation)
+
+
+# Maya camera display toggles (Maya modelPanelBarDecorationsCallback) -> Blender camera data.
+# Blender draws title and action safe areas together (one flag).
+CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
+               "SAFE_ACTION": "show_safe_areas", "SAFE_TITLE": "show_safe_areas"}
+CAMERA_KEYS = {"CAMERA_LOCK", *CAMERA_DATA}
+
+# Toolbar toggles whose Maya off state is another mode (Maya modelPanelBarShadingCallback):
+# Wireframe off = smooth shaded, Smooth Shade All off = wireframe, Use All Lights off = default lighting.
+TOGGLE_OFF = {"SHADE_WIRE": "SHADE_SMOOTH", "SHADE_SMOOTH": "SHADE_WIRE", "LIGHT_ALL": "LIGHT_DEFAULT"}
+
+# Maya colour management icons (Maya: exposure / gamma icon = toggle between the
+# default and the last other value, view transform check box = colour management on / off). Blender keeps these per
+# scene (view settings); the last values live in Scene ID properties.
+EXPOSURE_LAST, GAMMA_LAST, TRANSFORM_LAST = "allset_exposure_last", "allset_gamma_last", "allset_view_transform_last"
+RAW = 'Raw'
+
+FAILS = {
+    "SELECT_CAMERA": "This view is not looking through a camera object (Blender's persp view has none)",
+    "CAMERA_LOCK": "Look through a camera first (Panels > Perspective): Blender's persp view has no camera",
+    "ISOLATE": "Select the objects to isolate",
+}
+for _k in CAMERA_DATA:
+    FAILS[_k] = FAILS["CAMERA_LOCK"]
+
+TIPS = {
+    "SELECT_CAMERA": "Select camera: the camera this view looks through",
+    "CAMERA_LOCK": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and "
+                   "rotation channels are locked)",
+    "FILM_GATE": "Film gate (Blender: camera sensor frame)",
+    "GATE_MASK": "Gate mask (Blender: passepartout)",
+    "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
+    "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
+    "GRID": "Grid",
+    "SHADE_WIRE": "Wireframe",
+    "SHADE_SMOOTH": "Smooth shade all",
+    "DEFAULT_MATERIAL": "Use default material",
+    "HW_TEXTURE": "Textured",
+    "LIGHT_ALL": "Use all lights",
+    "ISOLATE": "Isolate select",
+    "EXPOSURE": "Exposure: switch between 0 and the last exposure",
+    "GAMMA": "Gamma: switch between 1 and the last gamma",
+    "CM_ENABLE": "Colour management on / off (off = Blender's Raw view transform)",
+}
+
+
 def state(context, key):
     """On/off of a ``set`` row (None: plain command)."""
     space = _space(context)
     if space is None:
         return None
+    if key in CAMERA_KEYS:
+        ob = view_camera(context)
+        if ob is None:
+            return False
+        if key == "CAMERA_LOCK":
+            return camera_locked(ob)
+        return ob.type == 'CAMERA' and bool(getattr(ob.data, CAMERA_DATA[key]))
+    if key == "ISOLATE":
+        return space.local_view is not None
+    if key == "CM_ENABLE":
+        return context.scene.view_settings.view_transform != RAW
     sh = space.shading
     if key == "SHADE_WIRE":
         return sh.type == 'WIREFRAME'
@@ -265,6 +337,8 @@ RADIO = {"SHADE_WIRE", "SHADE_SMOOTH", "LIGHT_DEFAULT", "LIGHT_ALL", "LIGHT_FLAT
          "RENDER_ENGINE", "TUMBLE_SELECTION", "TUMBLE_COI", "LAYOUT_SINGLE", "LAYOUT_FOUR"}
 SET_KEYS = [s[1] for menu in (VIEW, SHADING, LIGHTING, SHOW, RENDERER, LAYOUTS) for s in menu
             if s[0] == "set"]
+# keys only the panel toolbar uses (ui/panel_toolbar.py)
+TOOLBAR_KEYS = ["FILM_GATE", "GATE_MASK", "SAFE_ACTION", "SAFE_TITLE", "ISOLATE", "EXPOSURE", "GAMMA", "CM_ENABLE"]
 
 # Shading / overlay values "Apply Current to All" copies (Maya: current panel's settings to all).
 _COPY_SHADING = ("type", "light", "color_type", "show_xray", "show_backface_culling", "show_shadows",
@@ -279,6 +353,23 @@ def main_region(area):
     wins = [r for r in area.regions if r.type == 'WINDOW']
     rv3d = getattr(space, "region_3d", None)
     return next((r for r in wins if r.data == rv3d), wins[-1] if wins else None)
+
+
+_before_render = {}   # 3D View space pointer -> shading type before Rendered (IPR / Renderer menu)
+
+
+def enter_rendered(space):
+    sh = space.shading
+    if sh.type != 'RENDERED':
+        _before_render[space.as_pointer()] = sh.type
+        sh.type = 'RENDERED'
+
+
+def leave_rendered(space):
+    """Back to the shading the view had before Rendered (Maya: stopping IPR keeps the panel's mode, #24)."""
+    sh = space.shading
+    if sh.type == 'RENDERED':
+        sh.type = _before_render.pop(space.as_pointer(), 'SOLID')
 
 
 def apply(context, key):
@@ -307,10 +398,9 @@ def apply(context, key):
             sh.type = 'SOLID'
         sh.light = 'FLAT'
     elif key == "RENDER_VP2":
-        if sh.type == 'RENDERED':
-            sh.type = 'SOLID'
+        leave_rendered(space)
     elif key == "RENDER_ENGINE":
-        sh.type = 'RENDERED'
+        enter_rendered(space)
     elif key == "TUMBLE_SELECTION":
         context.preferences.inputs.use_rotate_around_active = True
     elif key == "TUMBLE_COI":
@@ -332,20 +422,66 @@ def apply(context, key):
                     for name in _COPY_OVERLAY:
                         setattr(other.overlay, name, getattr(space.overlay, name))
     elif key == "SELECT_CAMERA":
-        cam = context.scene.camera
-        if cam is None or not _scene_camera_view(context):
+        cam = view_camera(context)
+        if cam is None:
             return False
-        for ob in context.view_layer.objects:
-            ob.select_set(ob == cam)
+        for ob in context.scene.objects:
+            if ob.visible_get():
+                ob.select_set(ob == cam)
         context.view_layer.objects.active = cam
+    elif key in CAMERA_KEYS:
+        ob = view_camera(context)
+        if ob is None or (key != "CAMERA_LOCK" and ob.type != 'CAMERA'):
+            return False
+        if key == "CAMERA_LOCK":
+            on = not camera_locked(ob)
+            ob.lock_location = (on,) * 3
+            ob.lock_rotation = (on,) * 3
+        else:
+            prop = CAMERA_DATA[key]
+            setattr(ob.data, prop, not getattr(ob.data, prop))
+    elif key == "ISOLATE":
+        area = context.area
+        if area is None or area.type != 'VIEW_3D':
+            return False
+        if space.local_view is None and not any(ob.select_get() for ob in context.view_layer.objects if ob):
+            return False
+        with context.temp_override(area=area, region=main_region(area)):
+            bpy.ops.view3d.localview(frame_selected=False)
+    elif key in ("EXPOSURE", "GAMMA", "CM_ENABLE"):
+        _toggle_colour(context.scene, key)
     elif key in ("LAYOUT_SINGLE", "LAYOUT_FOUR"):
+        from ..operators import view
+        area = context.area
         if bool(space.region_quadviews) != (key == "LAYOUT_FOUR"):
-            area = context.area
             with context.temp_override(area=area, region=main_region(area)):
                 bpy.ops.screen.region_quadview()
+        # Maya: Single Perspective is always the persp camera, Four View's top right panel is persp (#8)
+        view.ensure_persp(area, space)
     else:
         return False
     return True
+
+
+def _toggle_colour(scene, key):
+    vs = scene.view_settings
+    if key == "CM_ENABLE":
+        if vs.view_transform != RAW:
+            scene[TRANSFORM_LAST] = vs.view_transform
+            vs.view_transform = RAW
+        else:
+            try:
+                vs.view_transform = scene.get(TRANSFORM_LAST, 'Standard')
+            except TypeError:       # a transform of another colour config
+                vs.view_transform = 'Standard'
+        return
+    prop, default, last = ("exposure", 0.0, EXPOSURE_LAST) if key == "EXPOSURE" else ("gamma", 1.0, GAMMA_LAST)
+    value = getattr(vs, prop)
+    if abs(value - default) > 1e-6:
+        scene[last] = value
+        setattr(vs, prop, default)
+    else:
+        setattr(vs, prop, scene.get(last, default))
 
 
 class ALLSET_OT_panel_set(bpy.types.Operator):
@@ -355,16 +491,25 @@ class ALLSET_OT_panel_set(bpy.types.Operator):
     bl_options = {'INTERNAL', 'UNDO'}
 
     key: EnumProperty(items=[(k, k.title(), "") for k in
-                             dict.fromkeys(SET_KEYS + ["SHOW_ALL", "SHOW_NONE"])])
+                             dict.fromkeys(SET_KEYS + ["SHOW_ALL", "SHOW_NONE"] + TOOLBAR_KEYS)])
+    # panel toolbar button: a second click turns a radio-like mode off again (Maya iconTextCheckBox)
+    toggle: BoolProperty(default=False, options={'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
         return _space(context) is not None
 
+    @classmethod
+    def description(cls, context, props):
+        return TIPS.get(props.key, "Maya panel menu item for this view")
+
     def execute(self, context):
-        if not apply(context, self.key):
-            if self.key == "SELECT_CAMERA":
-                self.report({'WARNING'}, "This view is not looking through a camera")
+        key = self.key
+        if self.toggle and key in TOGGLE_OFF and state(context, key):
+            key = TOGGLE_OFF[key]
+        if not apply(context, key):
+            if key in FAILS:
+                self.report({'WARNING'}, FAILS[key])
             return {'CANCELLED'}
         return {'FINISHED'}
 
@@ -456,17 +601,21 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
     bl_label = "Look Through Camera"
     bl_options = {'INTERNAL'}
 
-    camera: StringProperty(options={'SKIP_SAVE'})
+    camera: StringProperty(options={'SKIP_SAVE'})   # empty: the active object (Maya Look Through Selected)
 
     def execute(self, context):
-        ob = context.scene.objects.get(self.camera)
+        ob = context.scene.objects.get(self.camera) if self.camera else context.active_object
         area = context.area
         if ob is None or area is None or area.type != 'VIEW_3D':
+            if ob is None:
+                self.report({'WARNING'}, "Select an object to look through")
             return {'CANCELLED'}
         space = area.spaces.active
         space.camera = ob
         space.use_local_camera = ob != context.scene.camera
         space.region_3d.view_perspective = 'CAMERA'
+        # Maya: navigating a view that looks through a camera moves the camera (#9)
+        space.lock_camera = True
         return {'FINISHED'}
 
 

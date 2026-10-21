@@ -277,7 +277,7 @@ MAP = {
     f"{UV}/Image/Alpha": _prop(f"{_SP}.display_channels", 'ALPHA'),
     f"{UV}/Image/Pixel Snap": _prop(f"{_SP}.uv_editor.pixel_round_mode", 'CORNER'),
     f"{UV}/Image/UV Snapshot...": "uv.export_layout",
-    f"{UV}/Textures/Checker Map": "allset.checker_shader",
+    f"{UV}/Textures/Checker Map": "allset.checker_toggle",
     f"{UV}/UV Sets/UV Set Editor": ("allset.open_editor", {"ui_type": 'PROPERTIES', "tab": 'DATA'}),
     f"{UV}/UV Sets/Copy UVs to UV Set/Copy into New UV Set": "mesh.uv_texture_add",
     f"{UV}/UV Sets/Create Empty UV Set": "mesh.uv_texture_add",
