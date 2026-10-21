@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 131 (아이콘 #23 + Hypershade #25) 완료 — `docs/steps/step_131.md` (+ `step_131_{icons,shelf,status,toolbox,menu,hypershade}.md`).
+  셸프 203 버튼 · Status Line · 패널 툴바 · Tool Box · Layer Editor · 킷 Outliner 행을 Maya 2022 모양으로 다시 그림 (킷이 그린 numpy, 버튼마다
+  고유, 16–64 px 힌팅), Maya 메뉴 항목 190 개에 아이콘, 콘택트 시트 `docs/icons/` (`tools/icon_sheet.py`), 고유성 테스트
+  `tests/test_step131_icons.py`. Hypershade = Maya 배치의 별도 창 (Browser · Create · Graph · Material Viewer · Property Editor).
+  Blender 4.5 `new_triangles` 아이콘 해제 크래시를 .dat 파일로 우회. 헤드리스 1011/1011, GUI 1307/1308 (실패 1 = #53). 후속 #54 (0.3.0).
+  **바로 다음 할 일**: step 132 = 0.2.1 릴리스 준비 (버전 · 변경 기록 · 빌드 · validate · GitHub release 초안) — 그 전에 #53 #52 #44 #41 (모두 마일스톤 0.2.1).
+  손 확인 `docs/manual_checks.md` 「Step 131 — …」.
+
 - Step 130 (스토어 심사 대응 #40) 완료 — `docs/steps/step_130.md` (+ `step_130_*.md`). exec/eval·import 훅·sys.* 0건, 테마 전부 삭제,
   환경설정·keyconfig 영구 변경 없음 (애드온 키맵), 앱 템플릿 설치·user_disabling·스냅숏 삭제, tags = User Interface. 결정 13·14,
   답글 초안 `docs/distribution/review_reply.md`. 헤드리스 전체 PASS, validate Success, dogfood 48/48, GUI 전체 948/957 → 실패 파일 재실행 후

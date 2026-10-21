@@ -872,3 +872,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 131, #23) Create > Polygon Primitives / NURBS Primitives, Mesh, Edit Mesh, Mesh Tools, Deform, Constrain, Key, Windows > General Editors 를 실제 마우스로 열어 Maya 2022 메뉴 (`tmp/maya_icons131/grab`) 와 나란히: 아이콘이 있는 줄이 Maya 와 같은 명령인지, 16 px 에서 한눈에 구분되는지 (같은 메뉴 안에서 서로 다른 그림).
 - [ ] (step 131) 아이콘이 있는 줄 / 없는 줄의 글자가 한 열에서 시작하는지, Maya 단축키 (Ctrl+B, Ctrl+Shift+X …) 와 ❒ 옵션 상자 열이 그대로 오른쪽에 맞는지 — 100 % 와 125 % UI 배율, 그리고 Preferences 에서 Resolution Scale 을 바꾼 직후 (잠깐 이전 크기 그림이 쓰이다가 새 크기로 바뀜).
 - [ ] (step 131) Maya 모드를 켠 직후 처음 여는 메뉴에도 아이콘이 있는지 (미리 만들어 둠), 회색 항목 (Super Ellipse 등) 의 아이콘이 흐리게 보이는지.
+
+## Step 131 — icons
+
+- [ ] Shelves (every tab) at 100 % and 125 %: each button readable as the Maya 2022 button (shape, hue, corner mark), no two alike; greyed buttons faded.
+- [ ] Status Line, panel toolbar, Tool Box column, Layer Editor buttons, Outliner set / camera rows: crisp at 100 / 125 / 150 % (change Resolution Scale while Blender runs — icons rebuild at the new size).
+- [ ] Tool Box tools show Maya's teal accents at the default theme Icon Saturation; switching Maya mode off and quitting Blender does not crash.
