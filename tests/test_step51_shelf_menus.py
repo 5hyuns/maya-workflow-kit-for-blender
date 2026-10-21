@@ -101,11 +101,21 @@ def test_every_factory_button_has_a_kit_icon():
 
 
 def test_letters_fallback_and_colours():
-    assert shelf_icons.glyph_for("Convert To Frozen") is None     # step 109: Use Background = a shader ball
+    # step 131: every factory button has its own drawing (no letter tiles); only user shelf buttons with a label
+    # the kit doesn't know get Maya's generic script button with the label's initials written on it
+    for shelf_id, _label, buttons in shelf_data.SHELVES:
+        for label, _cmd in buttons:
+            assert shelf_icons.icon_for(label, shelf_id) is not None, (shelf_id, label)
+    assert shelf_icons.icon_for("My Script") is None
     assert shelf_icons.initials("Convert To Frozen") == "CT"
-    a = shelf_icons.draw("Polygon Cube", "Polygons")
-    b = shelf_icons.draw("Polygon Cube", "Rigging")
-    assert not np.allclose(a, b), "the shelf colour changes the icon"
+    a, b = shelf_icons.draw("My Script"), shelf_icons.draw("Other Tool")
+    assert not np.allclose(a, b), "the label's initials tell user buttons apart"
+    # a factory command keeps its picture on any shelf, like Maya's icon (Set Key on Rigging and Animation)
+    assert np.allclose(shelf_icons.draw("Set Key", "Rigging"), shelf_icons.draw("Set Key", "Animation"))
+    assert np.allclose(shelf_icons.draw("Polygon Cube"), shelf_icons.draw("Polygon Cube", "Polygons"))
+    # Maya buttons that share a label (FX From Current: start / rest) differ by their shelf position
+    assert not np.allclose(shelf_icons.draw("From Current", "FX", index=19),
+                           shelf_icons.draw("From Current", "FX", index=21))
 
 
 def test_shelf_row_layout():

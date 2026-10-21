@@ -315,9 +315,10 @@ def test_fluid_collide_and_ncloth_display():
 # --- icons ------------------------------------------------------------------------------------
 
 def test_icons_use_maya_hues_and_fade_when_greyed():
+    # step 131: hues checked on the exported Maya 2022 icons ()
     assert shelf_icons.SHELF_COLOURS["Polygons"] == shelf_icons.SHELF_COLOURS["Sculpting"]
     r, g, b = shelf_icons.SHELF_COLOURS["CurvesSurfaces"]
-    assert b > r and round(b * 255) == 0xd0
+    assert b > r and round(b * 255) == 0xcb
     px = shelf_icons.draw("Polygon Cube", "Polygons")
     opaque = px[px[..., 3] > 0.99][:, :3]
     hue = np.array(shelf_icons.SHELF_COLOURS["Polygons"])
@@ -328,6 +329,11 @@ def test_icons_use_maya_hues_and_fade_when_greyed():
     tools = shelf_icons.draw("Merge", "Polygons")
     light = np.array(shelf_icons.LIGHT)
     assert (np.abs(tools[tools[..., 3] > 0.99][:, :3] - light).max(axis=1) < 0.02).any(), "tool parts in grey"
-    sculpt = {shelf_icons.draw(lab, "Sculpting").round(2).tobytes()
-              for lab, _c in next(b for n, _l, b in shelf_data.SHELVES if n == "Sculpting") if lab.endswith(" Tool")}
-    assert len(sculpt) >= 8, len(sculpt)
+    tools = [lab for lab, _c in next(b for n, _l, b in shelf_data.SHELVES if n == "Sculpting") if lab.endswith(" Tool")]
+    sculpt = {shelf_icons.draw(lab, "Sculpting").round(2).tobytes() for lab in tools}
+    assert len(sculpt) == len(tools), (len(sculpt), len(tools))     # step 131: every brush its own picture
+    # step 131: Maya's dark outline round the shapes, UV tools green
+    outline = np.array(shelf_icons.DARK)
+    assert (np.abs(px[px[..., 3] > 0.5][:, :3] - outline).max(axis=1) < 0.03).any(), "dark outline"
+    uv = shelf_icons.draw("Planar Mapping", "Polygons")
+    assert (np.abs(uv[uv[..., 3] > 0.99][:, :3] - np.array(shelf_icons.GREEN)).max(axis=1) < 0.03).any(), "UV green"
