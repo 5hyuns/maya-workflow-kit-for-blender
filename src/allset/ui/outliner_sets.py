@@ -31,7 +31,6 @@ from ..operators import sets
 _handle = [None]
 REGIONS = {}            # region pointer -> [(y0, y1, kind, set name, member name, triangle x1)]
 FLAT = 40               # max channel spread of an empty row line (stripes are flat; text / icons spread > 80)
-ICON_RGB = (0.55, 0.75, 1.0)   # kit set glyph colour (two overlapping rings; no Maya icon copied)
 
 
 def unit(prefs):
@@ -69,14 +68,12 @@ def default_set_members(name, scene):
     return []
 
 
-def camera_glyph(shader, cx, cy, u, rgba):
-    """Kit camera glyph: a body and a lens (no Maya icon copied)."""
-    from gpu_extras.batch import batch_for_shader
-    w, h = u * 0.22, u * 0.15
-    _rect(shader, cx - w, cy - h, cx + w * 0.35, cy + h, rgba)
-    batch = batch_for_shader(shader, 'TRIS', {"pos": [(cx + w * 0.35, cy), (cx + w, cy + h), (cx + w, cy - h)]})
-    shader.uniform_float("color", rgba)
-    batch.draw(shader)
+def row_icon(name, cx, cy, prefs, greyed=False):
+    """Kit-drawn Maya Outliner icon (``kit_icons`` ``outliner:SET`` / ``outliner:CAMERA``, step 131, #23) centred on
+    (cx, cy), drawn unscaled at Blender's icon size (16 px x UI scale)."""
+    from . import kit_icons
+    n = kit_icons.size_for(name, prefs.system.ui_scale)
+    kit_icons.draw_texture(name, math.floor(cx - n / 2), math.floor(cy - n / 2), n, greyed)
 
 
 def entries(scene):
@@ -133,20 +130,6 @@ def _tri(shader, cx, cy, r, down, rgba):
     batch.draw(shader)
 
 
-def _ring(shader, cx, cy, r, rgba, n=24):
-    from gpu_extras.batch import batch_for_shader
-    pts = [(cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n)) for i in range(n)]
-    batch = batch_for_shader(shader, 'LINE_LOOP', {"pos": pts})
-    shader.uniform_float("color", rgba)
-    batch.draw(shader)
-
-
-def set_glyph(shader, cx, cy, u):
-    r = u * 0.2
-    _ring(shader, cx - r * 0.55, cy, r, (*ICON_RGB, 1.0))
-    _ring(shader, cx + r * 0.55, cy, r, (*ICON_RGB, 1.0))
-
-
 def draw():
     context = bpy.context
     space, region = context.space_data, context.region
@@ -199,10 +182,8 @@ def draw():
                 _rect(shader, 0, y0, region.width, y1, (*th.outliner.selected_highlight[:3], 1.0))
             # Maya greys hidden nodes: the startup cameras are hidden
             rgb = text_rgb[:3] if kind == 'DEFAULT_SET' or hl else tuple(c * 0.62 for c in text_rgb[:3])
-            if kind == 'CAMERA':
-                camera_glyph(shader, 2.5 * u, cy, u, (*rgb, 1.0))
-            else:
-                set_glyph(shader, 2.5 * u, cy, u)
+            row_icon("outliner:CAMERA" if kind == 'CAMERA' else "outliner:SET", 2.5 * u, cy, prefs,
+                     greyed=kind == 'CAMERA' and not hl)
             blf.color(0, *rgb, 1.0)
             blf.position(0, 3.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
             blf.draw(0, name)
@@ -224,7 +205,7 @@ def draw():
             _tri(shader, 1.6 * u, cy, u * 0.17, coll.allset_expanded, (*text_rgb[:3], 0.8))
             tri_x1 = 2.05 * u
         if kind == 'SET':
-            set_glyph(shader, 2.5 * u, cy, u)
+            row_icon("outliner:SET", 2.5 * u, cy, prefs)
         else:
             _rect(shader, indent + 2.5 * u - u * 0.12, cy - u * 0.12, indent + 2.5 * u + u * 0.12, cy + u * 0.12,
                   (*text_rgb[:3], 0.7))
