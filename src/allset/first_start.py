@@ -27,6 +27,7 @@ _armed = [False]
 
 def new_maya_scene():
     """Replace the open file with a new untitled file in the Maya layout (not from inside an operator)."""
+    _armed[0] = False      # this load is the Maya layout: the start hook must not load it again (#47)
     win = _window()
     if win is None:
         return bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)

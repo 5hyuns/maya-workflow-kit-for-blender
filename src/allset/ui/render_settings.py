@@ -326,13 +326,22 @@ def _subclasses(cls):
         yield from _subclasses(sub)
 
 
+def _module_names(cls):
+    """Global names of the module that defined ``cls``, read from one of its own functions (draw / poll ...) — no
+    lookup in the module table (step 130); {} when the class defines no function itself."""
+    for attr in vars(cls).values():
+        func = getattr(attr, "__func__", attr)          # classmethod / staticmethod
+        names = getattr(func, "__globals__", None)
+        if isinstance(names, dict) and names.get("__name__") == cls.__module__:
+            return names
+    return {}
+
+
 def registration_key(cls):
     """Blender lists panels in registration order, and re-registering moves a panel to the end: re-register them in
     the order they were registered — bl_ui modules in ``bl_ui._modules`` order, each module's ``classes`` tuple
     order, add-ons (Cycles) after them (checked: subclass order put EEVEE's Motion Blur above Sampling)."""
-    import sys
-    mod = sys.modules.get(cls.__module__)
-    seq = list(getattr(mod, "classes", ()) or ())
+    seq = list(_module_names(cls).get("classes", ()) or ())
     index = seq.index(cls) if cls in seq else len(seq)
     if cls.__module__.startswith("bl_ui."):
         import bl_ui

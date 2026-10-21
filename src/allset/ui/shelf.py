@@ -53,11 +53,13 @@ def _package():
 
 
 def store_path():
-    """``shelves.json`` in the extension's user directory (legacy add-on: user config)."""
+    """``shelves.json`` in the extension's user directory (legacy add-on build: a folder inside the add-on's own
+    folder — nothing is written to the user's Blender config, #42)."""
     try:
         base = bpy.utils.extension_path_user(_package(), create=True)
     except (ValueError, AttributeError):
-        base = bpy.utils.user_resource('CONFIG', path="allset", create=True)
+        base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user_data")
+        os.makedirs(base, exist_ok=True)
     return os.path.join(base, "shelves.json")
 
 
@@ -158,14 +160,12 @@ def set_current(context, shelf_id):
 
 
 def run_script(context, label, script):
-    """Run a user shelf button's Python script; returns (ok, message)."""
+    """Run a user shelf button's Python script with Blender's Run Script (``runner.run``: a temporary Text named after
+    the button, the Command Line's names, its variables not kept); returns (ok, message)."""
     from ..command_line import runner
-    ns = dict(runner.namespace(), C=context, __name__="__allset_shelf__")
-    try:
-        exec(compile(script, f"<shelf button {label}>", "exec"), ns)
-    except Exception as ex:  # a user script: report, don't break the UI
-        traceback.print_exc()
-        return False, f"{label}: {type(ex).__name__}: {ex}"
+    res = runner.run(script, name=f".allset_shelf {label}", persist=False, remember=False)
+    if res.error:                       # a user script: report, don't break the UI
+        return False, f"{label}: {res.text.removeprefix('# Error: ')}"
     return True, ""
 
 
