@@ -241,8 +241,9 @@ MAP = {
     "Modify/Convert/Instance to Object": "object.duplicates_make_real",
     # --- Display ---
     "Display/Grid": ("v3d", "allset.toggle_grid", {}),     # Maya grid (ui/maya_grid.py, step 45)
-    "Display/Hide": ("object.hide_view_set", {"unselected": False}),
-    "Display/Show": "object.hide_view_clear",
+    # one Maya visibility = hide_viewport (operators/visibility.py, step 129 #26)
+    "Display/Hide": ("allset.visibility", {"action": 'HIDE'}),
+    "Display/Show": ("allset.visibility", {"action": 'SHOW_ALL'}),
     "Display/Transform Display/Local Rotation Axes": ("wm.context_toggle", {"data_path": "object.show_axis"}),
     "Display/Frame All in All Views": ("allset.frame_all_views", {"selected": False}),
     "Display/Frame Selection in All Views": ("allset.frame_all_views", {"selected": True}),

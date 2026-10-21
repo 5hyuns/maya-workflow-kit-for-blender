@@ -807,3 +807,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 — Channel Box 채널 드래그 · Layer Editor · 가시성 하나 (lane CB)
+
+- [ ] (step 129) 실제 마우스로 Channel Box 이름 칸 Translate X → Scale Z 를 끌어 범위 선택 (파란 이름 칸), 값 칸에서 시작한 드래그도 범위 선택; Ctrl 클릭 토글, Shift 클릭 범위. 값 칸 한 번 클릭 → 그 자리에 편집 칸이 바로 뜨고 (글자 전체 선택) 입력 + Enter 로 선택한 채널 전부 · 선택한 오브젝트 전부에 들어가는지, Esc 로 닫으면 값이 그대로인지.
+- [ ] (step 129) 빠르게 끌 때 (한 이벤트에 여러 행) 범위 끝이 마우스 행과 맞는지, 드래그 중 Channel Box 밖으로 나갔다 들어와도 선택이 남는지, 125 % 와 100 % UI 배율.
+- [ ] (step 129) h → Channel Box Visibility off; Channel Box Visibility 0 → Display > Show 로 다시 보임; 레이어 V 끄고 켜도 자기 Visibility 0 인 오브젝트는 숨은 채; 레이어 Template → Normal 뒤 Bounding Box 표시가 그대로인지.
+- [ ] (step 129) Layer Editor: 행의 V / P / T 상자 클릭, 이름 더블클릭 이름 바꾸기, 상자 위 RMB → Maya 레이어 메뉴, 화살표로 순서 이동 (새 레이어가 맨 위). Maya 캡처 `research/maya/screens/le129/le02_dock.png` 와 나란히.

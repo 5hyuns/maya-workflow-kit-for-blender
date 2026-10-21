@@ -22,7 +22,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
+PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.script_run")
@@ -308,6 +308,9 @@ def patch_cb_slider(kd):
         _add(kd, km, "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"), first=True,
              shadows=(km,))
     _add(kd, "Object Mode", "allset.cb_virtual_slider", make_event("MIDDLEMOUSE"))
+    # Channel Box rows: drag over names / fields selects a range (the dock is a Properties editor, step 116;
+    # ui/channel_box.ALLSET_OT_cb_hover, docs/steps/step_129_cb.md 「계획」 #6)
+    _add(kd, "Property Editor", "allset.cb_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB (docs/steps/step_8.md 「계획」 2-4) ----

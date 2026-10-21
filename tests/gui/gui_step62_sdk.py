@@ -171,7 +171,7 @@ def columns():
             state["f"]()
         return s_find
     out.append(finder("x_field_at", lambda path, _cmd: path.endswith("tx_text")))
-    out.append(finder("x_label_at", lambda _path, cmd: "cb_select_channel" in cmd))
+    out.append(finder("x_label_at", lambda path, cmd: "cb_select_channel" in cmd or path.endswith("tx_sel")))
 
     def s_done():
         check(f"Channel Box columns found in the dock ({C['x_field_at']}, {C['x_label_at']})",

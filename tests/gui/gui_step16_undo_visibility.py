@@ -87,14 +87,14 @@ def s_outliner_z():
 @step
 def s_h_hide():
     cube = bpy.data.objects["Cube"]
-    check("h hides the selection", cube.hide_get())
+    check("h hides the selection", cube.hide_viewport)
     tap('H')
 
 
 @step
 def s_h_show():
     cube = bpy.data.objects["Cube"]
-    check("h again shows it and it is still selected", not cube.hide_get() and cube.select_get())
+    check("h again shows it and it is still selected", not cube.hide_viewport and cube.select_get())
     only_cube()
     ev('ONE', 'PRESS', ctrl=True)
     ev('ONE', 'RELEASE', ctrl=True)
