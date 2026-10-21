@@ -1,4 +1,4 @@
-"""Step 27: = / - manipulator size (restored on disable), PgUp/PgDn smoothing level, 0,
+"""Step 27: = / - manipulator size (kit manipulator only since step 130), PgUp/PgDn smoothing level, 0,
 Home default view, Alt+5 wireframe on shaded. """
 
 from importlib import import_module
@@ -38,25 +38,25 @@ def test_keys_bound():
             [("allset.smooth_preview", 1)], km
 
 
-def test_manip_size_steps_and_restores_on_disable():
+def test_manip_size_steps_without_touching_preferences():
+    """Step 130: = / - scale the kit manipulator only (ui/manipulator.SIZE); Blender's gizmo_size stays."""
+    manipulator = import_module(kit.MODULE + ".ui.manipulator")
     view_prefs = bpy.context.preferences.view
     original = view_prefs.gizmo_size
     bpy.ops.allset.manip_size(factor=1.25)
-    bigger = view_prefs.gizmo_size
-    assert bigger == round(original * 1.25), (original, bigger)
+    assert round(original * manipulator.SIZE[0]) == round(original * 1.25), manipulator.SIZE
     bpy.ops.allset.manip_size(factor=0.8)
     bpy.ops.allset.manip_size(factor=0.8)
-    assert view_prefs.gizmo_size < original
+    assert manipulator.SIZE[0] < 1.0
     for _ in range(30):
         bpy.ops.allset.manip_size(factor=1.25)
-    assert view_prefs.gizmo_size == 200, "clamped to Blender's range"
-    assert str(original) in preferences.get().runtime_backup
+    assert round(original * manipulator.SIZE[0]) == 200, "clamped to Blender's range"
+    assert view_prefs.gizmo_size == original, "the preference is never written"
     kit.disable()
     try:
-        assert view_prefs.gizmo_size == original, "disable restores the user's size"
+        assert manipulator.SIZE[0] == 1.0 and view_prefs.gizmo_size == original
     finally:
         kit.enable()
-    assert preferences.get().runtime_backup == ""
 
 
 def _mesh():

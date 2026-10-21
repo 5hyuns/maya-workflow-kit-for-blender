@@ -1,10 +1,10 @@
 """Step 113 in a real UI: the top area reads like Maya 2022.
 
-The user's path: Maya mode switched off and on again in a factory session (Blender's theme) — the switch brings the
-Maya theme and appends the Maya layout. Then: menu bar without the menu set dropdown and with every Maya menu on
+The user's path: Maya mode switched off and on again in a factory session (Blender's theme) — the switch appends the
+Maya layout and keeps the user's theme (step 130). Then: menu bar without the menu set dropdown and with every Maya menu on
 screen, "Workspace:" dropdown, flat Maya / Blender switch; Status Line led by the menu set, Maya's collapsed groups;
 shelf row without a header, tab strip drawn in its WINDOW region and clickable; viewport header = Maya panel menus,
-tool header = Maya panel toolbar. Screen pixels: #444444 menu bar, #373737 shelf tab strip. Screenshots for the
+tool header = Maya panel toolbar. Screen pixels: the theme's menu bar colour, the shelf tab strip dimmed like Maya's. Screenshots for the
 side-by-side with Maya's grab ()."""
 
 import os
@@ -83,9 +83,8 @@ def s_wait2():
 @step
 def s_layout():
     from bpy import context
-    theme = mod("theme")
-    check(f"Maya mode brings the Maya theme ({C['theme_before']} -> {context.preferences.themes[0].name})",
-          context.preferences.themes[0].name == theme.THEME_NAME)
+    check(f"Maya mode keeps the user's theme ({C['theme_before']} -> {context.preferences.themes[0].name})",
+          context.preferences.themes[0].name == C["theme_before"])
     sl = mod("ui.status_line")
     with context.temp_override(window=win(), screen=win().screen):
         check("a Status Line is on screen, so the menu bar has no menu set dropdown", sl.status_line_shown(context))
@@ -144,18 +143,22 @@ def s_shot():
     path = shot("step113_top")
     scale = bpy.context.preferences.system.ui_scale
     w = win().width
+    th = bpy.context.preferences.themes[0]
     p_menu = pixel(path, int(w * 0.70), int(6 * scale))
-    check(f"menu bar background = #444444 (pixel {p_menu})", near(p_menu, (0x44, 0x44, 0x44)))
+    menu_bg = tuple(round(c * 255) for c in th.topbar.space.header[:3])
+    check(f"menu bar background = the theme's top bar {menu_bg} (pixel {p_menu})", near(p_menu, menu_bg))
     row = shelf_row()
     top = win().height - (row.y + row.height)        # the shelf row's top edge, from the window top
     p_tab = pixel(path, w - 20, top + int(8 * scale))
-    check(f"shelf tab strip = #373737 (pixel {p_tab})", near(p_tab, (0x37, 0x37, 0x37)))
+    # the tab strip = the theme's Image Editor header dimmed by Maya's ratio #444444 -> #373737 (ui/shelf.TAB_DIM)
+    tab_bg = tuple(round(c * 255 * (1 - mod("ui.shelf").TAB_DIM)) for c in th.image_editor.space.header[:3])
+    check(f"shelf tab strip = theme header x Maya's dim {tab_bg} (pixel {p_tab})", near(p_tab, tab_bg))
     mod("switch").set_mode(False)
 
 
 @step
 def s_blender():
-    check(f"switching to Blender gives the theme back ({bpy.context.preferences.themes[0].name})",
+    check(f"the user's theme was never replaced ({bpy.context.preferences.themes[0].name})",
           bpy.context.preferences.themes[0].name == C["theme_before"])
 
 

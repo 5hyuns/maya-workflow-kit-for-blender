@@ -8,7 +8,7 @@ Operator ids use the ``allset.`` prefix. Each module lists its classes in
 
 import bpy
 
-from . import (bookmarks, component, create, curve_tools, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
+from . import (auto_key, bookmarks, component, create, curve_tools, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
                material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
 
@@ -52,9 +52,11 @@ def register():
     multi_cut.register_handlers()
     outliner_drag.register_handlers()
     material.register_handlers()
+    auto_key.register_handlers()
 
 
 def unregister():
+    auto_key.unregister_handlers()
     material.unregister_handlers()
     outliner_drag.unregister_handlers()
     multi_cut.unregister_handlers()

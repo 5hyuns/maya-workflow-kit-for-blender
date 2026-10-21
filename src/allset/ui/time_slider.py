@@ -98,7 +98,7 @@ def draw_header(context, layout):
 
 
 def draw_range_slider(layout, context):
-    scene, ts = context.scene, context.tool_settings
+    scene = context.scene
     # animation start | playback start [range bar] playback end | animation end
     row = layout.row(align=True)
     row.ui_units_x = 4.5
@@ -131,13 +131,12 @@ def draw_range_slider(layout, context):
     layout.separator_spacer()
     row = layout.row(align=True)
     # Maya auto key (:585): Maya's key button, red while on (issue #37: Blender's record circle wasn't recognised)
+    # The kit's own Maya Auto Key (operators/auto_key.py, step 130): keys only already keyed channels without
+    # Blender's "Only Insert Available" preference.
+    on = getattr(scene, "allset_auto_key", False)
     key = row.row(align=True)
-    key.alert = ts.use_keyframe_insert_auto
-    key.prop(ts, "use_keyframe_insert_auto", text="", toggle=True,
-             icon='KEY_HLT' if ts.use_keyframe_insert_auto else 'KEY_DEHLT')
-    sub = row.row(align=True)
-    sub.active = ts.use_keyframe_insert_auto
-    sub.popover(panel="TIME_PT_auto_keyframing", text="")
+    key.alert = on
+    key.prop(scene, "allset_auto_key", text="", toggle=True, icon='KEY_HLT' if on else 'KEY_DEHLT')
     for text in ("No Character Set", "No Anim Layer"):   # Maya character sets / anim layers: none in Blender
         sub = layout.row()
         sub.enabled = False
