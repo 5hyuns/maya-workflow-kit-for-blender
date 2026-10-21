@@ -76,24 +76,43 @@ def is_preview(mod):
 
 
 def _shade_group():
+    """Node group that makes the preview smooth shaded: Set Shade Smooth on faces (sharp_face) and on edges
+    (sharp_edge). Maya primitives keep their hard edges as sharp_edge (operators/prim_history.py
+    fill_bmesh); the Subsurf hands that flag on to the child edges, so a face-only group left the preview
+    faceted (#61, docs/steps/step_134_hud.md). Maya's smooth mesh preview is smooth shaded everywhere."""
     ng = bpy.data.node_groups.get(SHADE_GROUP_NAME)
     if ng is not None and ng.bl_idname == 'GeometryNodeTree':
-        return ng
-    ng = bpy.data.node_groups.new(SHADE_GROUP_NAME, 'GeometryNodeTree')
-    ng.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
-    ng.interface.new_socket("Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+        if _shade_group_current(ng):
+            return ng
+        ng.nodes.clear()              # a 0.2.x file: face-only group, rebuild it in place
+    else:
+        ng = bpy.data.node_groups.new(SHADE_GROUP_NAME, 'GeometryNodeTree')
+    if not ng.interface.items_tree:
+        ng.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+        ng.interface.new_socket("Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
     gin, gout = ng.nodes.new("NodeGroupInput"), ng.nodes.new("NodeGroupOutput")
-    smooth = ng.nodes.new("GeometryNodeSetShadeSmooth")   # domain FACE, Shade Smooth = True
-    smooth.inputs["Shade Smooth"].default_value = True
-    gin.location, smooth.location, gout.location = (-250, 0), (0, 0), (250, 0)
-    ng.links.new(gin.outputs[0], smooth.inputs["Geometry"])
-    ng.links.new(smooth.outputs[0], gout.inputs[0])
+    last = gin.outputs[0]
+    for i, domain in enumerate(('FACE', 'EDGE')):
+        smooth = ng.nodes.new("GeometryNodeSetShadeSmooth")
+        smooth.domain = domain
+        smooth.inputs["Shade Smooth"].default_value = True
+        smooth.location = (i * 200, 0)
+        ng.links.new(last, smooth.inputs["Geometry"])
+        last = smooth.outputs[0]
+    gin.location, gout.location = (-250, 0), (450, 0)
+    ng.links.new(last, gout.inputs[0])
     return ng
+
+
+def _shade_group_current(ng):
+    return {n.domain for n in ng.nodes if n.bl_idname == "GeometryNodeSetShadeSmooth"} == {'FACE', 'EDGE'}
 
 
 def _ensure_shade_modifier(ob, sub):
     """The shading modifier, placed directly before the preview Subsurf ``sub``."""
     shade = ob.modifiers.get(PREVIEW_SHADE_NAME)
+    if shade is not None and (shade.node_group is None or not _shade_group_current(shade.node_group)):
+        shade.node_group = _shade_group()
     if shade is None:
         shade = ob.modifiers.new(PREVIEW_SHADE_NAME, 'NODES')
         shade.node_group = _shade_group()
@@ -148,7 +167,7 @@ class ALLSET_OT_smooth_preview(bpy.types.Operator):
     """Maya 1/2/3: smooth mesh preview off / cage + smooth / smooth"""
     bl_idname = "allset.smooth_preview"
     bl_label = "Smooth Mesh Preview"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     level: bpy.props.IntProperty(name="Level", min=1, max=3, default=3)
 
@@ -189,7 +208,7 @@ class ALLSET_OT_smooth_level(bpy.types.Operator):
     """Raise or lower the smooth preview level of the selection (Maya PgUp / PgDn)"""
     bl_idname = "allset.smooth_level"
     bl_label = "Smoothing Level"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     delta: bpy.props.IntProperty(name="Delta", default=1, options={'SKIP_SAVE'})
 
@@ -221,7 +240,7 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
     """Enter a mesh component mode (Maya F7/F9/F10/F11)"""
     bl_idname = "allset.component_mode"
     bl_label = "Component Mode"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     type: bpy.props.EnumProperty(items=COMPONENTS, name="Component")
 
@@ -258,7 +277,7 @@ class ALLSET_OT_component_mask(bpy.types.Operator):
     """Toggle a component type in the pick mask (Maya Shift+Q marking menu)"""
     bl_idname = "allset.component_mask"
     bl_label = "Component Pick Mask"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     kind: bpy.props.EnumProperty(items=MASK_KINDS, name="Kind")
 

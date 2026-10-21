@@ -883,3 +883,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 132, #52) Maya 레이아웃 메인 뷰포트를 100 % / 125 % / 150 % 에서: 패널 툴바가 잘리지 않고, 들어가지 않는 묶음이 있으면 오른쪽 끝에 » 가 보이는지. » 클릭 → 숨은 버튼 (아이콘 + Maya 이름) 과 노출 / 감마 / view transform 칸이 열리고, 각 버튼이 툴바 버튼과 똑같이 동작 (토글 두 번 = 원래대로)하는지.
 - [ ] (step 132) 뷰포트 경계를 끌어 넓히고 좁히면 묶음이 하나씩 » 로 들어가고 나오는지 (넓으면 » 없음), Panels > Layouts 로 네 화면을 만들었을 때 좁은 패널마다 » 가 따로 맞는지.
+
+## Step 134 — display keys
+
+- [ ] (step 134, #58) Maya 레이아웃에서 큐브를 만들고 1 / 2 / 3, 4 / 5 / 6 / 7, F8, F9 / F10 / F11, Alt+A, Alt+P 를 실제 키보드로 눌러: 뷰포트 왼쪽 아래에 Adjust Last Operation 패널 (「Component Mode」, 「Smooth Mesh Preview」 등) 이 뜨지 않는지. 다른 연산 (예: Shift+H) 의 패널이 떠 있을 때 3 / F9 를 누르면 그 패널이 닫히는지.
+- [ ] (step 134) F9 → Ctrl+Z 가 오브젝트 모드로 돌아가는지, 3 → 이동 → Ctrl+Z 가 이동만 되돌리고 미리보기는 남는지.
+- [ ] (step 134, #61) Create > Polygon Primitives 의 Cube / Cylinder / Pipe 에 3: 미리보기가 매끈한 음영 (면 경계가 보이지 않음), 1 로 돌아오면 Maya 처럼 각진 hard edge. 0.2.x 에서 3 을 켜고 저장한 파일을 열어 3 을 다시 누르면 매끈해지는지.

@@ -529,7 +529,7 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
     Blender picks UVs in the UV Editor only"""
     bl_idname = "allset.uv_component"
     bl_label = "UV Component"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     mode: EnumProperty(items=COMPONENTS, name="Component", default='UV')
 
