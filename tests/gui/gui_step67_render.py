@@ -1,5 +1,5 @@
 """Step 67 in a real UI ( render_01-05): sphere -> Windows > Rendering Editors >
-Hypershade -> a Shader Editor window on its "Hypershade" sidebar tab -> Create Standard Surface -> Assign Material To
+Hypershade -> a window in Maya's Hypershade layout (step 131: panes + Graph) -> Create Standard Surface -> Assign Material To
 Selection -> AE Base Color map button > File -> Render > Render Current Frame -> Keep Image -> render again -> two
 slots used; Windows > Rendering Editors > Light Editor -> a window on its "Light Editor" tab (screenshots)."""
 
@@ -71,21 +71,28 @@ def s_setup():
     C["open"] = run_menu("Windows/Rendering Editors/Hypershade")
 
 
+def hypershade_ready():
+    """(window, graph area, Browser pane) once the Hypershade window has all its panes (step 131), else Nones."""
+    hs = mod(".ui.hypershade")
+    for w in bpy.context.window_manager.windows[1:]:
+        panes = {hs.pane(a): a for a in w.screen.areas if hs.pane(a)}
+        if len(panes) == 4 and hs.graph_area(w.screen) is not None:
+            return w, hs.graph_area(w.screen), panes['BROWSER']
+    return None, None, None
+
+
 @step
 def s_hypershade_open():
-    w, a = window_with('ShaderNodeTree')
-    if w is None and wait(s_hypershade_open, lambda: window_with('ShaderNodeTree')[0] is not None):
-        return
-    ui = next((r for r in a.regions if r.type == 'UI'), None) if a else None
-    if ui is not None and wait(s_hypershade_open, lambda: ui.active_panel_category == "Hypershade"):
+    w, a, browser = hypershade_ready()
+    if w is None and wait(s_hypershade_open, lambda: hypershade_ready()[0] is not None):
         redraw_all()
         return
-    check(f"Windows > Rendering Editors > Hypershade: a Shader Editor window, sidebar on the Hypershade tab "
-          f"(got {C['open']}, {a is not None}, {ui.active_panel_category if ui else None})",
-          a is not None and ui.active_panel_category == "Hypershade" and a.spaces.active.show_region_ui)
+    check(f"Windows > Rendering Editors > Hypershade: a window with Browser / Create / Material Viewer / Property "
+          f"Editor panes and the Graph (got {C['open']}, {w is not None})", w is not None)
     C["hs"] = (w, a)
-    # Create > Standard Surface, then Assign Material To Selection (the panel buttons' operators)
-    with bpy.context.temp_override(window=w, area=a, region=ui, space_data=a.spaces.active):
+    # Create > Standard Surface from the Create pane (a Properties editor), then Assign Material To Selection
+    region = next(r for r in browser.regions if r.type == 'WINDOW')
+    with bpy.context.temp_override(window=w, area=browser, region=region, space_data=browser.spaces.active):
         bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
     mat = bpy.data.materials.get("standardSurface1")
     sphere = bpy.data.objects[C["sphere"]]
@@ -94,8 +101,9 @@ def s_hypershade_open():
           f"({mat is not None}, {sphere.active_material and sphere.active_material.name}, {a.spaces.active.pin})",
           mat is not None and sphere.active_material is not mat and a.spaces.active.pin
           and a.spaces.active.node_tree == mat.node_tree)
-    with bpy.context.temp_override(window=w, area=a, region=ui):
+    with bpy.context.temp_override(window=w, area=browser, region=region):
         bpy.ops.allset.assign_material(material="standardSurface1")
+    C["browser"] = browser
     redraw_all()
 
 
@@ -105,9 +113,10 @@ def s_assigned():
     check(f"Assign Material To Selection: {sphere.name} slot 0 = standardSurface1",
           sphere.material_slots and sphere.material_slots[0].material.name == "standardSurface1")
     w, a = C["hs"]
-    # pick it in the browser: the graph follows the object again (unpinned)
-    ui = next(r for r in a.regions if r.type == 'UI')
-    with bpy.context.temp_override(window=w, area=a, region=ui, space_data=a.spaces.active):
+    # pick it in the Browser pane: the graph follows the object again (unpinned)
+    browser = C["browser"]
+    region = next(r for r in browser.regions if r.type == 'WINDOW')
+    with bpy.context.temp_override(window=w, area=browser, region=region, space_data=browser.spaces.active):
         bpy.ops.allset.hs_pick(material="standardSurface1")
     # AE Base Color map button > File
     bpy.ops.allset.ae_map_connect(material="standardSurface1", socket="Base Color", kind='FILE')

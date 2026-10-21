@@ -210,7 +210,35 @@ UV_ICONS = (
     "|", "UVMAP",
 )
 
-ICONS = {GE: GRAPH_ICONS, DS: DOPE_ICONS, UV: UV_ICONS}
+def _hsg(action):
+    return ("allset.hs_graph", {"action": action})
+
+
+# Maya Hypershade graph toolbar (step 131: control names + tooltips from 
+# _hypershade131.json); actions run in the Hypershade's graph (ui/hypershade.py)
+HS_GRAPH_ICONS = (
+    ("showUpstreamButton", 'BACK', _hsg("UPSTREAM"), "Input connections"),
+    ("showUpAndDownstreamButton", 'ARROW_LEFTRIGHT', _hsg("BOTH"), "Input and output connections"),
+    ("showDownstreamButton", 'FORWARD', _hsg("DOWNSTREAM"), "Output connections"),
+    "|",
+    ("clearGraphButton", 'X', None, "Clear graph"),
+    ("addSelectedButton", 'ADD', None, "Add selected nodes to graph"),
+    ("removeSelectedButton", 'REMOVE', None, "Remove selected nodes from graph"),
+    ("rearrangeGraphButton", 'NODETREE', None, "Rearrange graph"),
+    ("graphMaterialsButton", 'MATERIAL', ("allset.hs_edit", {"action": "FROM_OBJECT"}),
+     "Graph materials on selected objects"),
+    "|",
+    ("LODSimpleModeButton", 'COLLAPSEMENU', _hsg("COLLAPSE"), "Hide attributes on selected nodes"),
+    ("LODConnectedModeButton", 'LINKED', _hsg("CONNECTED"), "Show connected attributes on selected nodes"),
+    ("LODShowAllButton", 'ALIGN_JUSTIFY', _hsg("SHOW_ALL"), "Show primary attributes on selected nodes"),
+    ("LODShowCustomButton", 'PRESET', None, "Show attributes from custom attribute view"),
+    ("attrFilterToggleButton", 'FILTER', None, "Toggle the display of the attribute filter field on selected nodes"),
+    ("swatchSizeToggleButton", 'IMAGE_PLANE', _hsg("PREVIEW"), "Toggle the icon swatch size of selected nodes to "
+     "small/large"),
+    "|",
+    ("tabsRLCTButton", 'LOOP_BACK', None, "Restore last closed tab"),
+)
+ICONS = {GE: GRAPH_ICONS, DS: DOPE_ICONS, UV: UV_ICONS, "Hypershade": HS_GRAPH_ICONS}
 
 # Notices of the greyed icon buttons (same form as ui/notices.NOTICES)
 NOTICES = {
@@ -231,6 +259,15 @@ NOTICES = {
     "toggleShellBorderButton": ("Select Linked", "Blender doesn't draw shell borders in the UV Editor: select a "
                                 "shell with Select > Select Linked."),
     "isolateViewSelectButton": ("Hide", "Blender isolates UVs by hiding the rest (H / Shift+H)."),
+    "clearGraphButton": ("Pin", "Blender's graph always shows the whole material: pin another material to change "
+                         "what it shows."),
+    "addSelectedButton": ("Pin", "Blender's graph shows one material's whole network: nodes can't be added to it "
+                          "from elsewhere."),
+    "removeSelectedButton": ("Hide attributes", "Blender's graph shows the whole network: collapse nodes instead."),
+    "rearrangeGraphButton": ("Move nodes", "Blender has no automatic node layout: move nodes with G."),
+    "LODShowCustomButton": ("Not in Blender", "Blender has no custom attribute views on nodes."),
+    "attrFilterToggleButton": ("Not in Blender", "Blender's nodes have no attribute filter field."),
+    "tabsRLCTButton": ("Not in Blender", "Blender's graph has one tab (one material at a time)."),
     "dimmerButton": ("Image field", "Blender doesn't dim the image: pick no image in the header field to hide it."),
 }
 

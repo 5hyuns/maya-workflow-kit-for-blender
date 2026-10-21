@@ -75,11 +75,24 @@ def s_scene():
     C["hs"] = menu("Windows/Rendering Editors/Hypershade")
 
 
+def hs_window():
+    hs = mod(".ui.hypershade")
+    w = newest()
+    return w if w is not None and sum(1 for a in w.screen.areas if hs.pane(a)) == 4 else None
+
+
 @step
 def s_hs():
-    w = newest()
-    a = w.screen.areas[0] if w else None
-    check(f"Hypershade window opened ({C['hs']}, {a and a.ui_type})", a is not None and a.ui_type == 'ShaderNodeTree')
+    C.setdefault("hs_wait", 0)
+    if hs_window() is None and C["hs_wait"] < 40:       # the layout is split one area per tick (step 131)
+        C["hs_wait"] += 1
+        sys.modules["sim"]._steps.insert(0, s_hs)
+        redraw()
+        return
+    w = hs_window()
+    hs = mod(".ui.hypershade")
+    a = hs.graph_area(w.screen) if w else None
+    check(f"Hypershade window opened ({C['hs']}, graph {a and a.ui_type})", a is not None and a.ui_type == 'ShaderNodeTree')
     redraw()
 
 
@@ -91,11 +104,9 @@ def s_hs_wait():
 @step
 def s_hs_shot():
     w = newest()
-    a = w.screen.areas[0]
-    ui = next(r for r in a.regions if r.type == 'UI')
-    check(f"Hypershade sidebar on its tab ({ui.active_panel_category})", ui.active_panel_category == "Hypershade")
-    check("Shader Editor header draws the Maya Hypershade menus",
-          "draw_collapsible" in bpy.types.NODE_MT_editor_menus.__dict__)
+    hs = mod(".ui.hypershade")
+    check("Hypershade menu strip + Graph header draw the Maya menus / graph toolbar",
+          hs.menu_area(w.screen) is not None and hs.graph_area(w.screen) is not None)
     shot("gui_step105_hypershade.png", w)
     close_extra_windows()
     C["rs"] = menu("Render/Render Settings...")
