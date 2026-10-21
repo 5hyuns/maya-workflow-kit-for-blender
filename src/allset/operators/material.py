@@ -78,7 +78,47 @@ def new_material(kind):
         node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
     if kind in BUILT:
         _build(mat, node, kind)
+    sync_display(mat)
     return mat
+
+
+# --- viewport colour (issue #14) ---------------------------------------------------------------
+# Maya's shaded mode (5) draws the material colour. Blender's Solid shading with colour type MATERIAL (the kit's
+# display mode SHADED, operators/display.py) draws ``Material.diffuse_color``, the viewport display colour, which
+# a Principled Base Color edit (Attribute Editor Color, Blender's material panel) doesn't change. Kit materials
+# keep it equal to their Maya colour (surfaceShader: out colour = Emission Color; rampShader: the ramp's mean
+# colour) and transparency (Alpha); materials made in Blender keep Blender's own display colour.
+
+def _maya_colour(mat):
+    """(r, g, b, a) Maya's shaded mode would show for a kit material, or None (not a kit material / no colour)."""
+    if mat is None or not mat.get(TYPE_PROP) or mat.node_tree is None:
+        return None
+    bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if bsdf is None:
+        return None
+    sock = bsdf.inputs.get("Emission Color" if mat.get(TYPE_PROP) == "surfaceShader" else "Base Color")
+    if sock is None:
+        return None
+    if sock.is_linked:
+        src = sock.links[0].from_node
+        if src.type != 'VALTORGB' or not len(src.color_ramp.elements):
+            return None              # a texture: Maya's 5 shows no texture either, keep the display colour
+        els = src.color_ramp.elements
+        rgb = [sum(e.color[i] for e in els) / len(els) for i in range(3)]
+    else:
+        rgb = list(sock.default_value[:3])
+    alpha = bsdf.inputs.get("Alpha")
+    a = 1.0 if alpha is None or alpha.is_linked else float(alpha.default_value)
+    return (*rgb, a)
+
+
+def sync_display(mat):
+    """Set a kit material's viewport display colour to its Maya colour; True when it changed."""
+    col = _maya_colour(mat)
+    if col is None or all(abs(x - y) < 1e-6 for x, y in zip(mat.diffuse_color, col)):
+        return False
+    mat.diffuse_color = col
+    return True
 
 
 def _build(mat, bsdf, kind):
@@ -133,6 +173,7 @@ def default_material(create=True):
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in MATERIALS['LAMBERT'][2].items():
         node.inputs[socket].default_value = value
+    sync_display(mat)
     return mat
 
 
@@ -191,7 +232,17 @@ def _on_undo(*_args):
 
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, depsgraph):
-    if _busy[0] or not depsgraph.id_type_updated('OBJECT'):
+    if _busy[0]:
+        return
+    if depsgraph.id_type_updated('MATERIAL') or depsgraph.id_type_updated('NODETREE'):
+        _busy[0] = True
+        try:
+            for mat in bpy.data.materials:
+                if mat.library is None and mat.get(TYPE_PROP):
+                    sync_display(mat)
+        finally:
+            _busy[0] = False
+    if not depsgraph.id_type_updated('OBJECT'):
         return
     key = scene.as_pointer()
     now = {o.as_pointer() for o in scene.objects}
