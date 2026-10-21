@@ -1603,7 +1603,9 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         cons = constraints(ob)
         from . import in_view
         last = in_view.cb_record(context, ob)    # the last kit extrusion = Maya's newest history node (step 65)
-        if inputs or cons or last is not None:
+        from . import creation_inputs
+        created = creation_inputs.has_node(ob)   # the primitive's creation node, oldest history (step 129)
+        if inputs or cons or last is not None or created:
             box = layout.column(align=True)
             box.label(text="INPUTS")
             # INPUTS can be long (expanded nodes): no pane estimate, the Layer Editor just follows
@@ -1621,6 +1623,8 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
                     for prop in _modifier_props(mod):
                         _draw_text_row(sub, context, ob, mod, prop, "INPUT", mod.type,
                                        _nth_of_type(ob, mod))
+            if created:
+                creation_inputs.draw_cb(box, context, ob)
             for con in cons:
                 # Maya constraint node + its target weight (animation.md:42, :126)
                 row = box.row(align=True)

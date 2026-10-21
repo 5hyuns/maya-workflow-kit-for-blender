@@ -50,8 +50,14 @@ def _bake(context, ob, keep):
 
 def delete_history(context, objects, non_deformer=False):
     """Bake history on mesh ``objects``. Returns (baked, notes)."""
+    from . import prim_history
     baked, notes = 0, []
     for ob in objects:
+        # The primitive's creation node (polyCube1, makeNurbCircle1) is history too: both kinds drop it, the shape
+        # stays as it is (step 129)
+        if prim_history.drop(ob) and not ob.modifiers and not (ob.type == 'MESH' and ob.data.shape_keys):
+            baked += 1
+            continue
         # Smooth Mesh Preview (1/2/3) is a display attribute in Maya, not history
         # (): never baked, always kept (step 15).
         preview = {md.name for md in ob.modifiers if is_preview(md)}

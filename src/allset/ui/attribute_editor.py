@@ -142,6 +142,10 @@ def tabs(ob):
             continue
         name, mtype = modifier_node(ob, md)
         out.append((f"M:{md.name}", name, mtype))
+    from ..operators import prim_history
+    _owner, node = prim_history.node_of(ob)
+    if node is not None:             # the primitive's creation node, the oldest history (step 129)
+        out.append(("CH", node["name"], node["type"]))
     from ..operators import material as material_ops
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
@@ -203,6 +207,9 @@ def tab_target(ob, key):
         return bpy.context.scene.allset_nucleus
     if kind == "H":
         return history_record(ob)
+    if kind == "CH":
+        from ..operators import prim_history
+        return prim_history.node_of(ob)[0]
     return None
 
 
@@ -527,6 +534,9 @@ def draw(layout, context, ob):
         draw_constraint(layout, context, ob, target)
     elif kind == "H":
         draw_extrude_history(layout, context, target)
+    elif kind == "CH":
+        from . import creation_inputs
+        creation_inputs.draw_ae(layout, context, ob)
     elif kind == "M":
         draw_history(layout, context, ob, target)
     else:
@@ -546,7 +556,7 @@ def draw_head(layout, context, ob, key, target, entry):
     top = layout.row(align=True)
     head = top.row(align=True)
     head.label(text=f"{entry[2]}:")
-    if kind in ("NUC", "SG", "H"):
+    if kind in ("NUC", "SG", "H", "CH"):
         head.label(text=entry[1])
         if kind == "NUC":     # a tooltip, not a Blender sentence in the AE (step 106)
             notices.tip(head, ae_layout.NUCLEUS_NOTE)
@@ -554,7 +564,7 @@ def draw_head(layout, context, ob, key, target, entry):
         head.label(text=entry[1])           # the Maya node name (polyBevel31); renaming keeps Blender's name
     else:
         head.prop(target, "name", text="")
-    if kind in ("M", "H"):
+    if kind in ("M", "H", "CH"):
         sub = head.row(align=True)
         sub.operator("allset.ae_step", text="", icon='TRIA_LEFT').forward = False
         sub.operator("allset.ae_step", text="", icon='TRIA_RIGHT').forward = True
@@ -678,7 +688,7 @@ class ALLSET_OT_ae_step(bpy.types.Operator):
         ob = ae_node(context)
         if ob is None:
             return {'CANCELLED'}
-        keys = [t[0] for t in tabs(ob) if _kind(t[0]) in ("H", "M")]
+        keys = [t[0] for t in tabs(ob) if _kind(t[0]) in ("H", "M", "CH")]
         cur = current_tab(context, ob)
         if cur not in keys:
             return {'CANCELLED'}
@@ -1139,7 +1149,7 @@ class ALLSET_OT_ae_show_node(bpy.types.Operator):
 
 
 # AE tab kind -> Properties tab of the Copy Tab window and the ID it pins
-COPY_TABS = {"T": 'OBJECT', "S": 'DATA', "M": 'MODIFIER', "H": 'DATA', "C": 'CONSTRAINT', "MAT": 'MATERIAL',
+COPY_TABS = {"T": 'OBJECT', "S": 'DATA', "M": 'MODIFIER', "H": 'DATA', "CH": 'DATA', "C": 'CONSTRAINT', "MAT": 'MATERIAL',
              "SG": 'MATERIAL', "J": 'BONE', "NUC": 'PHYSICS'}
 
 

@@ -255,9 +255,11 @@ def test_nurbs_square_cube_cone():
     assert bpy.ops.allset.create(kind='NURBS_CUBE') == {'FINISHED'}
     cube = bpy.data.objects["nurbsCube1"]
     assert len(cube.children) == 6
-    assert bpy.data.objects["topnurbsCube1"].location.z == 0.5
-    assert bpy.data.objects["leftnurbsCube1"].location.y == -0.5
-    assert bpy.data.objects["frontnurbsCube1"].location.x == 0.5
+    def cvs(name):   # step 129: Maya builds the patches in place (CVs), the part transforms stay at the origin
+        return [p.co for p in bpy.data.objects[name].data.splines[0].points]
+    assert {round(p.z, 4) for p in cvs("topnurbsCube1")} == {0.5}
+    assert {round(p.y, 4) for p in cvs("leftnurbsCube1")} == {-0.5}      # Maya left = +Z side
+    assert {round(p.x, 4) for p in cvs("frontnurbsCube1")} == {0.5}      # Maya front = +X side
     assert bpy.ops.allset.create(kind='NURBS_CONE') == {'FINISHED'}
     cone = bpy.data.objects["nurbsCone1"]
     pts = [p.co for sp in cone.data.splines for p in sp.points]

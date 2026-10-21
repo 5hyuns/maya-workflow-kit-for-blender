@@ -422,7 +422,7 @@ CREATE_CASES = (
     # kind, object name, data name, dimensions, polygon count
     ('CUBE', "pCube1", "pCubeShape1", (1, 1, 1), 6),
     ('SPHERE', "pSphere1", "pSphereShape1", (2, 2, 2), 400),
-    ('CYLINDER', "pCylinder1", "pCylinderShape1", (2, 2, 2), 22),
+    ('CYLINDER', "pCylinder1", "pCylinderShape1", (2, 2, 2), 60),   # Maya menu: caps = centre fans (step 129)
     ('CONE', "pCone1", "pConeShape1", (2, 2, 2), 21),
     ('TORUS', "pTorus1", "pTorusShape1", (3, 3, 1), 400),
     ('PLANE', "pPlane1", "pPlaneShape1", (1, 1, 0), 100),
