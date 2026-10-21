@@ -13,7 +13,7 @@ import bpy
 from bpy_extras import view3d_utils
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, px, run, scroll_channel_box, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -285,6 +285,7 @@ def s_not_rotated():
     con.target = loc
     cb().rebuild_rows()
     open_inputs()    # step 135: the constraint node starts collapsed (Maya)
+    scroll_channel_box()    # ... and a long Channel Box scrolls inside its part
     redraw()
 
 
@@ -298,8 +299,21 @@ def s_constraint_shot():
     shot("gui_step55_cb_constraint.png")
     rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
     check("CB INPUTS has the constraint weight row (locator1W0)", len(rows) == 1)
-    # Weight field: below the 10 channel rows, INPUTS title and the constraint node name
-    C["w0"] = field(12.6)
+    redraw()
+
+
+def _is_w0(path, _cmd):
+    """The weight row's text field (step 135: looked up by data path, the Channel Box part scrolls)."""
+    rows = bpy.context.scene.allset_cb.rows
+    return any(r.kind == "CONSTRAINT" and path.endswith(f"rows[{i}].text") for i, r in enumerate(rows))
+
+
+step(find_button(dock, _is_w0, C, "w0", x_frac=0.8, step_px=6))
+
+
+@step
+def s_hover_w0():
+    check(f"locator1W0 weight field found ({C.get('w0')})", C.get("w0") is not None)
     ev('MOUSEMOVE', 'NOTHING', x=C["w0"][0], y=C["w0"][1])
 
 

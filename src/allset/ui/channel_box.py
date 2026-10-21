@@ -49,7 +49,7 @@ def cb_share(region, u):
     without scrolling — fixed for a given dock height, like Maya's split (step 135, delegated)."""
     if region is None or region.height <= 0 or u <= 0:
         return CB_SHARE
-    need = (PANE_TOP + 3.0 + CB_LINES * ROW_SCALE) * u
+    need = (PANE_TOP + 3.0 + 0.3 + CB_LINES * ROW_SCALE) * u    # = pane_room's terms for the menu bar + name line
     return min(CB_SHARE_MAX, max(CB_SHARE, need / region.height))
 
 # key, label, data path, index, kind
@@ -1646,7 +1646,8 @@ def pane_room(context, units):
     u = _unit(context)
     if u <= 0 or region.height <= 0:
         return None
-    return max(2, int((cb_share(region, u) * region.height / u - units - PANE_TOP - 0.3) / ROW_SCALE))
+    room = (cb_share(region, u) * region.height / u - units - PANE_TOP - 0.3) / ROW_SCALE
+    return max(2, int(room + 1e-6))    # 11.2 / 0.8 = 13.999...: don't lose the last line to rounding
 
 
 def node_row(lines, ob, node, label, tip="", active=True):
