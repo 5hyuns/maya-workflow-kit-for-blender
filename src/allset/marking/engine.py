@@ -190,38 +190,179 @@ def _slide(lo, hi, low, high):
 MIN_COLUMN_ROWS = 4
 
 
-def _columns(rows, top, floor, w):
-    """Re-flow list rows (in order, divider gaps kept) into columns of width ``w`` from ``top`` down to
-    ``floor``; the first column stays where it is."""
-    x_first = rows[0].rect[0]
-    col, y, prev_bottom = 0, top, None
+# --- area borders (step 136, #56) --------------------------------------------------------------------------------
+# ``edges`` = rectangles (x0, y0, x1, y1) where nothing a region draws is seen: the gaps between the window's areas
+# and the rim Blender draws over every area edge after all regions (draw.window_edges). A list row or radial box
+# overlapping one is cut (tmp/audit133_ui m14 / m15), so rows go below horizontal bands (one column kept, like
+# Maya's list) and whole lists / boxes move sideways off vertical ones.
+
+def _horizontal(band):
+    return band[2] - band[0] >= band[3] - band[1]
+
+
+def _overlaps(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def _rel_edges(edges, cx, cy):
+    return [(e[0] - cx, e[1] - cy, e[2] - cx, e[3] - cy) for e in edges]
+
+
+def _below_bands(row_top, height, x0, x1, bands):
+    """Top of a row (``height`` high, from x0 to x1) moved down until it overlaps no horizontal band."""
+    moved = True
+    while moved:
+        moved = False
+        for b in bands:
+            if _overlaps((x0, row_top - height, x1, row_top), b):
+                row_top = b[1]
+                moved = True
+    return row_top
+
+
+def _flow(rows, top, floor, w, gap_unit, edges=(), x_first=None):
+    """Lay list rows (in order) out top-down from ``top`` in columns of width ``w`` from ``x_first`` (default: where
+    the first row is): a divider = ``gap_unit`` (Layout), a row that would overlap a horizontal band goes below it,
+    a row under ``floor`` starts the next column (step 52), a column on a vertical band moves right past it (the
+    next columns follow). Returns the number of columns."""
+    hbands = [b for b in edges if _horizontal(b)]
+    vbands = [b for b in edges if not _horizontal(b)]
+    xs = [rows[0].rect[0] if x_first is None else x_first]
+    for _round in range(len(vbands) + 2):
+        col, y, prev = 0, top, None
+        for it in rows:
+            r = it.rect
+            height = r[3] - r[1]
+            gap = (it.key - prev - 1) * gap_unit if prev is not None else 0.0
+            prev = it.key
+            if col >= len(xs):
+                xs.append(xs[-1] + w)
+            row_top = _below_bands(y - gap, height, xs[col], xs[col] + w, hbands)
+            if row_top - height < floor and y != top:
+                col += 1
+                if col >= len(xs):
+                    xs.append(xs[-1] + w)
+                row_top = _below_bands(top, height, xs[col], xs[col] + w, hbands)
+            _move(it, xs[col] - r[0], row_top - r[3])
+            y = row_top - height
+        del xs[col + 1:]
+        if not vbands:
+            break
+        moved = False
+        for c, (bx0, by0, _bx1, by1) in enumerate(_column_boxes(rows)):
+            x = xs[c] if c == 0 else max(xs[c], xs[c - 1] + w)
+            hit = True
+            while hit:
+                hit = next((b for b in vbands if _overlaps((x, by0, x + w, by1), b)), None)
+                if hit:
+                    x = hit[2]
+            moved = moved or x != xs[c]
+            xs[c] = x
+        if not moved:
+            break
+    return len(xs)
+
+
+def _column_boxes(rows):
+    """Bounding box of each list column, left to right."""
+    cols = {}
     for it in rows:
-        r = it.rect
-        height = r[3] - r[1]
-        gap = (prev_bottom - r[3]) if prev_bottom is not None else 0.0
-        prev_bottom = r[1]
-        row_top = y - gap
-        if row_top - height < floor and y != top:
-            col += 1
-            row_top = top
-        _move(it, x_first + col * w - r[0], row_top - r[3])
-        y = row_top - height
+        cols.setdefault(round(it.rect[0], 3), []).append(it)
+    return [_bbox(cols[k]) for k in sorted(cols)]
 
 
-def fit_ring(layout, center, bounds):
+def _off_bands(rect, edges, x0, y0, x1, y1):
+    """Offset that moves one (radial) box off the bands it overlaps, inside the bounds: the shortest way, towards
+    the ring centre (0, 0) when two are as short."""
+    hits = [b for b in edges if _overlaps(rect, b)]
+    if not hits:
+        return 0.0, 0.0
+    cands = []
+    for b in hits:
+        if _horizontal(b):
+            cands += [(0.0, b[1] - rect[3]), (0.0, b[3] - rect[1])]
+        else:
+            cands += [(b[0] - rect[2], 0.0), (b[2] - rect[0], 0.0)]
+    mx, my = (rect[0] + rect[2]) / 2, (rect[1] + rect[3]) / 2
+
+    def cost(d):
+        return (abs(d[0]) + abs(d[1]), math.hypot(mx + d[0], my + d[1]))
+    for dx, dy in sorted(cands, key=cost):
+        r = (rect[0] + dx, rect[1] + dy, rect[2] + dx, rect[3] + dy)
+        if r[0] >= x0 and r[2] <= x1 and r[1] >= y0 and r[3] <= y1 and not any(_overlaps(r, b) for b in edges):
+            return dx, dy
+    return 0.0, 0.0
+
+
+def _lift(rows, top, floor, ceiling, w, gap_unit, edges):
+    """Top from which the rows, pushed down by the bands, end above ``floor`` in one column (moved up at most to
+    ``ceiling``)."""
+    for _round in range(4):
+        _flow(rows, top, -math.inf, w, gap_unit, [b for b in edges if _horizontal(b)])
+        over = floor - min(it.rect[1] for it in rows)
+        higher = min(top + over, ceiling)
+        if over <= 0 or higher <= top:
+            break
+        top = higher
+    return top
+
+
+def _settle_list(rows, top, floor, x0, x1, gap_unit, edges, center=None, lift=None):
+    """Re-flow placed list rows around the bands (``_flow``) inside [x0, x1]: ``center`` = x the columns are
+    centred on (the list under the ring), ``lift`` = how high the rows may move up to stay in one column (None:
+    they stay). The columns start as near as they can to where they would be without vertical bands."""
+    w = rows[0].rect[2] - rows[0].rect[0]
+    if lift is not None:
+        top = _lift(rows, top, floor, lift, w, gap_unit, edges)
+    hbands = [b for b in edges if _horizontal(b)]
+    xf = rows[0].rect[0]
+    _flow(rows, top, floor, w, gap_unit, hbands, xf)
+    bx0, _by0, bx1, _by1 = _bbox(rows)
+    if center is not None:
+        xf += center - (bx0 + bx1) / 2
+        bx0, bx1 = bx0 + center - (bx0 + bx1) / 2, bx1 + center - (bx0 + bx1) / 2
+    want = xf + _slide(bx0, bx1, x0, x1)
+
+    def place(x):
+        n = _flow(rows, top, floor, w, gap_unit, edges, x)
+        lo, _y0, hi, _y1 = _bbox(rows)
+        return n, lo >= x0 - 1e-6 and hi <= x1 + 1e-6
+    n, ok = place(want)
+    if ok:
+        return
+    vbands = [b for b in edges if not _horizontal(b)]
+    cands = {x0} | {b[2] for b in vbands} | {b[0] - k * w for b in vbands for k in range(1, n + 2)}
+    for x in sorted(cands, key=lambda v: abs(v - want)):
+        if place(x)[1]:
+            return
+    # no place clear of the vertical bands: as without them (cut by a border line, but inside the window)
+    _flow(rows, top, floor, w, gap_unit, hbands, want)
+    lo, _y0, hi, _y1 = _bbox(rows)
+    d = _slide(lo, hi, x0, x1)
+    for it in rows:
+        _move(it, d, 0.0)
+
+
+def fit_ring(layout, center, bounds, edges=()):
     """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1) without moving its
     centre, the press point the gesture directions are checked from (step 33 「계획」).
 
     Radial boxes slide inside; the list goes under the ring (Maya), else above it, else
-    beside it (right, then left), else is pushed up from under the ring."""
+    beside it (right, then left), else is pushed up from under the ring. ``edges`` = area
+    border bands (region pixels, step 136): no box or row is left overlapping one."""
     cx, cy = center
     x0, y0, x1, y1 = bounds[0] - cx, bounds[1] - cy, bounds[2] - cx, bounds[3] - cy  # centre-relative
+    edges = _rel_edges(edges, cx, cy)
     for it in layout.radial.values():
         _move(it, _slide(it.rect[0], it.rect[2], x0, x1), _slide(it.rect[1], it.rect[3], y0, y1))
+        if edges:
+            _move(it, *_off_bands(it.rect, edges, x0, y0, x1, y1))
     rows = [it for it in layout.items if it.kind == "list"]
     if not rows:
         return
+    gap_unit = layout.params.list_gap / 2
     lx0, ly0, lx1, ly1 = _bbox(rows)
+    floor, lift = y0, y1
     if not layout.radial:
         dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
     else:
@@ -233,21 +374,30 @@ def fit_ring(layout, center, bounds):
         if ly0 < y0 and ly1 <= y1 and ly1 - y0 >= MIN_COLUMN_ROWS * layout.params.item_h:
             # Maya keeps the list under the ring (14_marking_menu_object.png, where it runs off the screen);
             # here the rows that don't fit continue in more columns, still under the ring (step 52).
-            _columns(rows, ly1, y0, w)
+            if edges:
+                _settle_list(rows, ly1, y0, x0, x1, gap_unit, edges, center=0.0)
+                return
+            _flow(rows, ly1, y0, w, gap_unit)
             bx0, _by0, bx1, _by1 = _bbox(rows)
             dx = -(bx0 + bx1) / 2
             dx += _slide(bx0 + dx, bx1 + dx, x0, x1)
             for it in rows:
                 _move(it, dx, 0.0)
             return
+        floor = y0
         below = (0.0, 0.0)                                    # as laid out (under the ring)
         above = (0.0, ry1 + gap - ly0)
         right = (rx1 + gap - lx0, -h / 2 - ly0)
         left = (rx0 - gap - lx1, -h / 2 - ly0)
         dx = dy = None
+        lift = y1           # how high re-flowed rows may go (step 136): not into the ring when under it
         for cdx, cdy in (below, above):
             if ly0 + cdy >= y0 and ly1 + cdy <= y1:
                 dx, dy = cdx + _slide(lx0 + cdx, lx1 + cdx, x0, x1), cdy
+                if cdy:
+                    floor = ry1 + gap
+                else:
+                    lift = None
                 break
         else:
             for cdx, cdy in (right, left):
@@ -260,6 +410,8 @@ def fit_ring(layout, center, bounds):
             dx = x0 - lx0
     for it in rows:
         _move(it, dx, dy)
+    if edges:
+        _settle_list(rows, max(it.rect[3] for it in rows), floor, x0, x1, gap_unit, edges, lift=lift)
 
 
 class Session:
@@ -270,14 +422,16 @@ class Session:
     ``("RUN", item, option)`` or ``("CANCEL", None, False)``; ``None`` while open.
     """
 
-    def __init__(self, menu, origin, t0, measure, params=None, enabled=None, bounds=None):
+    def __init__(self, menu, origin, t0, measure, params=None, enabled=None, bounds=None, edges=()):
         """``bounds`` = (x0, y0, x1, y1): the visible part of the region; list
-        submenus that would cross it are moved inside (step 29)."""
+        submenus that would cross it are moved inside (step 29). ``edges`` = area
+        border bands in region pixels (step 136, ``fit_ring``)."""
         self.params = params or Params()
         self.bounds = bounds
+        self.edges = tuple(edges) if bounds is not None else ()
         root = Layout(menu, measure, self.params, enabled)
         if bounds is not None:
-            fit_ring(root, origin, bounds)
+            fit_ring(root, origin, bounds, self.edges)
         self.measure = measure
         self.enabled = enabled
         self.t0 = t0
@@ -327,7 +481,7 @@ class Session:
         if self.bounds is not None and layout.items and not layout.radial:
             at = self._inside_bounds(layout, at)
         elif self.bounds is not None and layout.items:
-            fit_ring(layout, at, self.bounds)   # in-place radial submenu: centre = pointer
+            fit_ring(layout, at, self.bounds, self.edges)   # in-place radial submenu: centre = pointer
         self.stack.append((layout, at))
         self.openers.append(item if cascade else None)
         self.hover = (None, False)
@@ -362,7 +516,20 @@ class Session:
         x, y = at
         x = max(x0 - lx0, min(x, x1 - lx1))
         y = min(y1 - ly1, max(y, y0 - ly0))
+        if self.edges:
+            x, y = self._around_edges(layout, (x, y))
         return (x, y)
+
+    def _around_edges(self, layout, at):
+        """A list submenu's rows off the area border bands (step 136, ``_settle_list``): a row that would overlap a
+        horizontal band goes below it; when that runs the rows past the window bottom they move up (as far as the
+        top allows) before wrapping into a second column."""
+        x0, y0, x1, y1 = self.bounds
+        x, y = at
+        rows = layout.items
+        _settle_list(rows, max(it.rect[3] for it in rows), y0 - y, x0 - x, x1 - x, self.params.list_gap / 2,
+                     _rel_edges(self.edges, x, y), lift=y1 - y)
+        return at
 
     # -- input ----------------------------------------------------------------
     def move(self, x, y, t):
