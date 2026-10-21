@@ -7,8 +7,8 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 198 |
-| IC 일치 | 31 |
+| 구현 | 199 |
+| IC 일치 | 30 |
 | 해당 없음 | 171 |
 | macOS 전용 | 68 |
 
@@ -24,7 +24,7 @@
 | Shift+Z | Shift+Z | global | Redo | Screen: `ed.redo` | 구현 |  | hotkeySetup.mel:69 |
 | Ctrl+q | Ctrl+Q | global | Quit | Window: `wm.quit_blender` | IC 일치 |  | hotkeySetup.mel:71 |
 | Ctrl+o | Ctrl+O | global | OpenScene | Window: `allset.open_scene` | 구현 | 파일 창이 프로젝트 scenes 폴더에서 시작 (없으면 Blender 그대로) | hotkeySetup.mel:73 |
-| Ctrl+n | Ctrl+N | global | NewScene | Window: `wm.read_homefile` | IC 일치 | 새 장면 (템플릿 시작 장면) | hotkeySetup.mel:74 |
+| Ctrl+n | Ctrl+N | global | NewScene | Window: `allset.new_maya_scene` | 구현 | 새 장면 = Maya 레이아웃 파일 (File > New Scene 와 같음, #44) | hotkeySetup.mel:74 |
 | Ctrl+s | Ctrl+S | global | SaveScene | Window: `allset.save_scene` | 구현 | 처음 저장은 프로젝트 scenes 폴더에서 Save As | hotkeySetup.mel:75 |
 | Ctrl+Shift+S | Ctrl+Shift+S | global | SaveSceneAs | Window: `allset.save_scene_as` | 구현 | 프로젝트 scenes 폴더에서 시작 | hotkeySetup.mel:76 |
 | Ctrl+Alt+s | Ctrl+Alt+S | global | IncrementAndSave | Window: `allset.increment_save` | 구현 | Maya 규칙 shot_v001 → shot_v001.0001 (메뉴와 같음; IC 의 Blender 규칙 shot_v002 대신) | hotkeySetup.mel:77 |
