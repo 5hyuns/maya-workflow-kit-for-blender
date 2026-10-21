@@ -1602,6 +1602,7 @@ def _m72_3_b_off():
           not ts().use_proportional_edit_objects and message() == "")
     for o in bpy.context.scene.objects:
         o.hide_set(False)
+        o.hide_viewport = False      # step 129 (#26): Maya visibility = hide_viewport
     select_only(bpy.data.objects["pCube2"])
     menu("Modify/Make Live")
     check(f"[M72-3] Make Live on message ({message()!r})", "live" in message() and "pCube2" in message())
@@ -2030,6 +2031,8 @@ def _m77_1_setup():
 @named("m77_1_w")
 def _m77_1_w():
     check(f"[M77-1] F9 = vertex mode ({bpy.context.mode})", bpy.context.mode == 'EDIT_MESH')
+    with override():     # step 129: a new Maya primitive enters component mode with nothing selected
+        bpy.ops.mesh.select_all(action='SELECT')
     hover()
     tap('W')
 
@@ -2786,12 +2789,12 @@ def _m63_4_tap():
           abs(bpy.context.scene.allset_soft_radius - 5) < 1e-6)
     cls = mod("operators.taphold").SoftSelectBinding
     C["hdr"] = []
-    C["hdr_orig"] = cls.__dict__["_header"]
+    C["hdr_orig"] = cls.__dict__["_show"]      # step 129: header text + radius circle
 
-    def rec(context, size):
+    def rec(context, event, size):
         C["hdr"].append(None if size is None else size / k())
-        return C["hdr_orig"].__func__(context, size)
-    cls._header = staticmethod(rec)
+        return C["hdr_orig"].__func__(context, event, size)
+    cls._show = staticmethod(rec)
 
 
 _a_b = {}
@@ -2808,7 +2811,7 @@ drag("m63_4_bdrag", _b_start, lambda: _b_start() + Vector((100, 0)), hold=('B',)
 @named("m63_4_bdrag_check")
 def _m63_4_bdrag_check():
     cls = mod("operators.taphold").SoftSelectBinding
-    cls._header = C["hdr_orig"]
+    cls._show = C["hdr_orig"]
     shown = [h for h in C["hdr"] if h is not None]
     r = bpy.context.scene.allset_soft_radius
     check(f"[M63-4] b + drag right 100 px: the header shows the radius in Maya units, ending at the MTK Falloff "
@@ -3393,7 +3396,7 @@ def _m64_5_cut_check():
     hover()
     key('Z', ctrl=True)
     notes = mod("ui.notices").PANEL_NOTICES
-    grey = ["Multi-Cut/Smoothing Angle", "Multi-Cut/Edge Flow", "Multi-Cut/Subdivisions", "Multi-Cut/Slice Tool"]
+    grey = ["Multi-Cut/Edge Flow"]     # step 129: Smoothing Angle, Subdivisions, Slice Tool are real now
     check(f"[M64-5] Tool Settings: Snap Step % + greyed Maya items with tooltip notices ({[g for g in grey if g not in notes]} "
           f"missing)", "snap_step" in mtools().settings(bpy.context).bl_rna.properties and all(g in notes for g in grey))
     set_tool("builtin.select_box")
@@ -3968,7 +3971,9 @@ def _m66_3_cut_check():
     b = ubm()
     seams = sum(e.seam for e in b.edges)
     check(f"[M66-3] Shift+X: red seams on the 4 edges, the shell splits ({C['shells0']} -> {len(isls)})",
-          seams == 4 and len(isls) == C["shells0"] + 1)
+          seams == 4 and len(isls) > C["shells0"])
+    # step 129: Maya's cube UV layout is a cross strip, cutting the top splits the strip too (1 -> 3)
+    C["shells_cut"] = len(isls)
     # island selection picks only one side now
     top = next(f for f in b.faces if f.normal.z > 0.9)
     isl = next(i for i in isls if top in i)
@@ -4000,7 +4005,7 @@ def _m66_3_unfold_check():
           len(after) == len(C["centres"]) and all(abs(a - b) < 0.05 for a, b in zip(after, C["centres"])))
     note = mod("operators.uv_tools").NOTICE_UNFOLD   # its Help Line report (Python can't read reports)
     check(f"[M66-3] Ctrl+U unfolds the shells where they are ({len(isls)} shells); the Help Line notes the shape "
-          f"differs from Unfold3D ({note!r})", len(isls) == C["shells0"] + 1 and "Unfold3D" in note)
+          f"differs from Unfold3D ({note!r})", len(isls) == C["shells_cut"] and "Unfold3D" in note)
     b = ubm()
     for el in (*b.verts, *b.edges, *b.faces):
         el.select = False
@@ -5187,7 +5192,7 @@ def _m79_2_cut_check():
           mid >= 2 and cs().STROKE_RGB[0] > 0.9 and cs().STROKE_RGB[2] < 0.3)
     check(f"[M79-2] release: only the 4 top edges are cut, not the side edges at the corners ({cs_seams()} vs "
           f"{C['top_edges']}), shells {C['shells0']} -> {cs_shells()}",
-          cs_seams() == C["top_edges"] and cs_shells() == C["shells0"] + 1)
+          cs_seams() == C["top_edges"] and cs_shells() > C["shells0"])
 
 
 cs_stroke("m79_2_sew", ctrl=True)

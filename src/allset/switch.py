@@ -27,6 +27,8 @@ import os
 
 import bpy
 
+from . import live_refs
+
 _ADDON = __package__
 SNAPSHOT = "switch_snapshot.json"
 WORKSPACE = "Maya-style"
