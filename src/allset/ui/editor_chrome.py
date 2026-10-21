@@ -203,7 +203,7 @@ UV_ICONS = (
     "|",
     ("snapShotButton", 'IMAGE_DATA', "uv.export_layout", "UV snapshot"),
     "|",
-    ("checkeredButton", 'TEXTURE', "allset.checker_shader", "Checker tiling"),
+    ("checkeredButton", 'TEXTURE', "allset.checker_toggle", "Checker tiling"),
     "IMAGE",
     ("imageChannelButton", 'IMAGE_RGB_ALPHA', ("channels", "space_data.display_channels", {}), "Image channels"),
     ("dimmerButton", 'LIGHT', None, "Dim the image"),
@@ -300,7 +300,16 @@ def _draw_icon(row, context, editor, it):
         op = row.operator(menu_sets.ALLSET_OT_menu_set_value.bl_idname, text="", icon=icon, depress=on)
         op.target, op.value = action[1], repr(value)
         return
-    row.operator(ALLSET_OT_editor_icon.bl_idname, text="", icon=icon).key = f"{editor}|{key}"
+    on = _toggle_state(context, key)
+    row.operator(ALLSET_OT_editor_icon.bl_idname, text="", icon=icon, depress=bool(on)).key = f"{editor}|{key}"
+
+
+def _toggle_state(context, key):
+    """Pressed state of icon buttons that run a toggle operator (Maya iconTextCheckBox), None otherwise."""
+    if key == "checkeredButton":
+        from ..operators import menu_items
+        return menu_items.checker_on(context)
+    return None
 
 
 class ALLSET_OT_editor_icon(bpy.types.Operator):

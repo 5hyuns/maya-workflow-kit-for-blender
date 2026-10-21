@@ -306,9 +306,17 @@ class ALLSET_OT_ipr_toggle(bpy.types.Operator):
         area, _r = main_view3d(context.screen)
         if area is None:
             return {'CANCELLED'}
-        shading = area.spaces.active.shading
-        shading.type = 'SOLID' if shading.type == 'RENDERED' else 'RENDERED'
+        ipr_toggle(area.spaces.active)
         return {'FINISHED'}
+
+
+def ipr_toggle(space):
+    """IPR on = Rendered shading; off = the shading the view had before (Wireframe stays Wireframe, #24)."""
+    from . import panel_menus
+    if space.shading.type == 'RENDERED':
+        panel_menus.leave_rendered(space)
+    else:
+        panel_menus.enter_rendered(space)
 
 
 # --- editor toggles (ui_layout.md:213-216) -----------------------------------------------

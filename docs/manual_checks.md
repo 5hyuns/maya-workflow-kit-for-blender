@@ -836,3 +836,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129) 면 위 / 빈 곳에서 드래그 → 노란 선이 그려지고 놓으면 메시 전체가 그 선 (시선 방향 평면) 으로 잘리는지; Tool Settings 의 Ignore Backfaces / Delete Faces / Extract Faces (오프셋, cm 템플릿에서 0.5 cm) 와 Slice Along Plane YZ / ZX / XY (클릭한 점을 지나는 월드 평면) 결과를 Maya 와 비교 (지우는 쪽이 Maya 와 같은지 [K]).
 - [ ] (step 129) Tool Settings 도크 (Properties Tool 탭) 에 Maya 순서대로 Snap Step % · Cut / Insert Edge Loop Tool (Smoothing Angle, Edge Flow 회색, Subdivisions) · Slice Tool · Color Settings / Live Constraint Options 회색 (툴팁 안내) · Keyboard/Mouse Shortcuts 가 보이고, Reset Tool 이 값을 Maya 공장값 (10 / 180 / 1 / 모두 끔) 으로 돌리는지; 툴 헤더에는 Snap Step 만.
 - [ ] (step 129) Alt+LMB / MMB / 휠 네비게이션이 점을 찍는 중에도 되는지 (모달이 통과시킴), 여러 메시를 편집 모드에 넣었을 때 첫 점의 메시에만 점이 찍히는지.
+
+### Step 129 — 뷰포트 (카메라 뷰, 패널 툴바)
+
+- [ ] (step 129) Panels > Perspective > camera1 로 본 뒤 Alt+LMB / Alt+MMB / Alt+RMB / 휠: camera1 이 텀블 · 트랙 · 돌리되고 카메라 뷰가 유지되는지 (Maya 느낌), 툴바 Lock Camera 를 켜면 안 움직이는지.
+- [ ] (step 129) 패널 툴바 아이콘을 실제 마우스로 두 번씩: 눌린 표시가 상태를 따라가는지 (카메라 버튼은 persp 에서 비활성).
