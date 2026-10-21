@@ -3,7 +3,7 @@
 ).
 
 Step 130 (): the file is no longer copied into the user's
-``scripts/startup/bl_app_templates_user/`` as an application template — nothing is written outside the extension's
+scripts folder as an application template — nothing is written outside the extension's
 folders. It is only read from here: ``switch.enter_layout`` appends its layout workspace into the open file, and
 "New Scene in Maya Layout" (``first_start``) loads it as an untitled new file with
 ``wm.read_homefile(filepath=...)``, which keeps the preferences (checked, step 130).
