@@ -878,3 +878,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Shelves (every tab) at 100 % and 125 %: each button readable as the Maya 2022 button (shape, hue, corner mark), no two alike; greyed buttons faded.
 - [ ] Status Line, panel toolbar, Tool Box column, Layer Editor buttons, Outliner set / camera rows: crisp at 100 / 125 / 150 % (change Resolution Scale while Blender runs — icons rebuild at the new size).
 - [ ] Tool Box tools show Maya's teal accents at the default theme Icon Saturation; switching Maya mode off and quitting Blender does not crash.
+
+### Step 132 — panel toolbar overflow
+
+- [ ] (step 132, #52) Maya 레이아웃 메인 뷰포트를 100 % / 125 % / 150 % 에서: 패널 툴바가 잘리지 않고, 들어가지 않는 묶음이 있으면 오른쪽 끝에 » 가 보이는지. » 클릭 → 숨은 버튼 (아이콘 + Maya 이름) 과 노출 / 감마 / view transform 칸이 열리고, 각 버튼이 툴바 버튼과 똑같이 동작 (토글 두 번 = 원래대로)하는지.
+- [ ] (step 132) 뷰포트 경계를 끌어 넓히고 좁히면 묶음이 하나씩 » 로 들어가고 나오는지 (넓으면 » 없음), Panels > Layouts 로 네 화면을 만들었을 때 좁은 패널마다 » 가 따로 맞는지.
