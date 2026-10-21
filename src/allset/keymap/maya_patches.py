@@ -761,6 +761,10 @@ def patch_scene_files(kd):
     for ic, kit, mods, key in SCENE_KEYS:
         kd.remove("Window", ic, type=key, **mods)
         _add(kd, "Window", kit, make_event(key, **mods))
+    # Ctrl+N = Maya New Scene (HK NewScene): IC's wm.read_homefile opens Blender's default file since step 130 removed
+    # the app template copy; the kit's new_maya_scene reads the Maya layout file like File > New Scene (#44).
+    kd.remove("Window", "wm.read_homefile", type="N", ctrl=True)
+    _add(kd, "Window", "allset.new_maya_scene", make_event("N", ctrl=True), shadows=("Text",))  # Text: new text
     # Ctrl+R stays refresh / reload where an editor binds it (they run before Window items).
     _add(kd, "Window", "allset.create_reference", make_event("R", ctrl=True),
          shadows=("Image Generic", "File Browser", "File Browser Main", "Sequencer"))
