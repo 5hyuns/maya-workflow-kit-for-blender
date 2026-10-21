@@ -33,6 +33,7 @@ Blender's own keys.
 - [Known limits](#known-limits)
 - [Installation](#installation)
 - [First run: turning Maya mode on and off](#first-run-turning-maya-mode-on-and-off)
+- [Recommended setup](#recommended-setup)
 - [Quick start for Maya users](#quick-start-for-maya-users)
 - [FAQ](#faq)
 - [Development](#development)
@@ -47,15 +48,13 @@ one-line note saying why and what to use instead.
 
 ### Look & layout
 
-- **Maya layout** as a Blender application template (*File > New > Maya Workflow Kit*): menu bar, Status Line, Shelf,
-  Tool Box, Outliner, Channel Box / Layer Editor tab stack, Time Slider and Range Slider, Help Line and Command Line.
-- **Studio Grey (Maya-inspired)** theme, with colours taken from Maya 2022's factory preferences; one theme file per
-  Blender minor version so 4.5 and 5.x look the same.
+- **Maya layout**, added to the open file as workspaces when you choose Maya: menu bar, Status Line, Shelf, Tool Box,
+  Outliner, Channel Box / Layer Editor tab stack, Time Slider and Range Slider, Help Line and Command Line.
 - **Maya's docking**: Channel Box, Attribute Editor and Modeling Toolkit share one tab stack next to the viewport and
   tear off into floating windows by their `:::::` handle; Outliner and Tool Settings dock on the left.
-- **Maya selection colours** (lead object green, others white), solid side panels, and the Move / Scale manipulator.
-- **Alt+B** cycles the background of every 3D view: grey → light grey → gradient → black (the gradient needs the kit's
-  theme).
+- The Maya **Move / Scale manipulator**.
+- **Alt+B** cycles the background of every 3D view through Maya's solid background colours.
+- The kit uses your own Blender theme; see [Recommended setup](#recommended-setup) for a Maya-like look.
 
 ### Navigation & selection
 
@@ -164,13 +163,13 @@ one-line note saying why and what to use instead.
 ### Switch & revert
 
 - A **Maya | Blender** switch at the right of the top bar, an Edit menu entry and **Ctrl+Alt+Shift+M**.
-- Switching to Blender brings back Blender's keymap, theme, layout and every preference the kit changed — with the
-  same scene open; switch again whenever you like.
-- Before Maya mode changes anything, a copy of everything it will change is written to the extension's user folder.
+- Switching to Blender unregisters the Maya keys and Maya UI and gives Blender's own back — with the same scene open;
+  switch again whenever you like.
+- Maya mode never changes your preferences, theme or active keymap, so there is nothing to restore.
 
 ![Maya or Blender, one click](docs/distribution/marketing/gif/07_switch.gif)
 
-*One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colours back.*
+*One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout and keys back.*
 
 All clips as MP4 (1920 × 1080): [docs/distribution/marketing/clips/](docs/distribution/marketing/clips/).
 
@@ -183,6 +182,8 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 - **No middle-drag on fields.** Select channels in the Channel Box and middle-drag in the viewport instead.
 - **No MEL.** Scripting is Python, with a small `maya.cmds` look-alike.
 - **No Maya scene files.** `.ma` / `.mb` can't be read — export FBX (or OBJ / Alembic / USD) from Maya.
+- **No theme.** Maya's grey UI and green lead selection come from a theme you install yourself
+  ([Recommended setup](#recommended-setup)); extensions.blender.org add-ons may not change themes.
 - **Docking stays inside Blender's areas.** Maya's side tabs and OS-level docking of panels are not imitated.
 - Not every Maya menu item has a Blender counterpart; those items are greyed with a note.
 - Blender versions after 5.2 are not offered the extension until they are tested.
@@ -239,33 +240,40 @@ then install `dist/maya-workflow-kit-<version>.zip` as in option 2.
 switch at the right of the top bar, an Edit menu entry, the shortcut **Ctrl+Alt+Shift+M** and, once, a welcome dialog.
 
 **Turn Maya mode on** — click **Make Blender feel like Maya** in the welcome dialog or in
-*Preferences > Add-ons > Maya Workflow Kit*, or click **Maya** in the top-bar switch. The kit then turns on its
-Maya-style keymap, the Maya layout (*File > New > Maya Workflow Kit*), menus, the Studio Grey theme and Maya-like
-preferences (navigation, undo steps, solid side panels, auto key, density, font, wireframes, splash).
+*Preferences > Add-ons > Maya Workflow Kit*, or click **Maya** in the top-bar switch. The kit then adds its Maya-style
+keys (as add-on keymap items: your active keymap stays selected), its Maya menus and panels, and the Maya layout as
+workspaces appended to the open file. It does not change your theme or your Blender preferences.
 
 **Go back** — any of these:
 
 | Want | Do |
 |---|---|
-| Plain Blender for a while | Click **Blender** in the switch (or Ctrl+Alt+Shift+M). Keymap, theme, layout and every changed preference come back; switch again any time. |
-| Undo everything the kit did | *Preferences > Add-ons > Maya Workflow Kit >* **Restore Blender Settings** — Maya mode off, layout template removed, your original settings back. |
-| Keep Maya keys, drop the look | **Revert Maya Look** in the add-on preferences removes the theme, splash and layout template only. |
-| Uninstall | Disable or **Remove** the extension *inside Blender* (*Preferences > Add-ons*). Your values are put back and the layout template is deleted. |
+| Plain Blender for a while | Click **Blender** in the switch (or Ctrl+Alt+Shift+M). The Maya keys and UI go away; switch again any time. |
+| Uninstall | Disable or **Remove** the extension (*Preferences > Add-ons*). Everything it registered is unregistered; there is nothing else to undo. |
+| Drop the Maya layout from a file | Delete its workspace tabs, or don't save the file — they are ordinary file data. |
 
-> **Uninstall from inside Blender.** `blender --command extension remove` does not load the add-on, so it cannot
-> restore the settings Maya mode changed — switch to Blender first if you use it.
-
-The kit never saves your preferences by itself; Blender's own Auto-Save Preferences (or you) do.
+The kit never saves your preferences.
 
 **Files it writes outside the extension**
 
-- `scripts/startup/bl_app_templates_user/Maya_Workflow_Kit/` — the Maya layout (data only: `startup.blend`, splash
-  images, a marker file). Copied when you choose Maya or click Install Maya Layout; deleted when you disable or remove
-  the extension (folders without the kit's marker are never touched).
-- The extension's user folder — preference snapshot, theme backup, your shelves.
+- The extension's user folder — your shelves.
 - Maya project folders — the default project `Documents/Maya Workflow Kit/projects/default` the first time a
   project-aware dialog opens, and folders you choose with Set Project.
 - Playblast writes its movie to Blender's temporary folder; exports and saves go where you choose.
+
+---
+
+## Recommended setup
+
+Optional — the kit leaves your theme and preferences to you. Maya users usually like:
+
+- **A dark grey theme.** *Edit > Preferences > Get Extensions*, filter by *Themes*, and install a dark grey theme you
+  like (or pick one in *Preferences > Themes > Presets*).
+- **Navigation** (*Preferences > Navigation*): Orbit Method *Turntable*, Orbit Around Selection *off*, Zoom to Mouse
+  Position *off*, Auto Perspective *on*, Zoom Method *Dolly* with Zoom Axis *Horizontal*.
+- **Undo Steps 256** (*Preferences > System*) — Blender's maximum; Maya's undo queue is unlimited.
+- **Region Overlap off** (*Preferences > Interface > Editors*), so side panels sit beside the viewport like Maya's.
+- **Only Insert Available** (*Preferences > Animation > Keyframes*) for Maya-like auto key.
 
 ---
 
@@ -311,12 +319,13 @@ With Maya mode on. The table of all 468 Maya 2022 factory hotkeys, their Blender
 ## FAQ
 
 **Does it change my Blender settings?**
-Not on install or enable. Nothing changes until you choose Maya (welcome dialog, preferences button or the switch).
-Before Maya mode changes anything, a copy of the affected settings is written to the extension's user folder.
+No. Maya mode adds add-on keymap items, menus, panels and layout workspaces in the open file; it never writes your
+preferences, theme or active keymap. The settings Maya users usually change are listed under
+[Recommended setup](#recommended-setup) for you to set yourself.
 
 **Is it reversible?**
-Yes. Click **Blender** in the top-bar switch, use **Restore Blender Settings**, or disable / remove the extension
-inside Blender — your keymap, theme, layout and preferences come back and the layout template is deleted. See
+Yes. Click **Blender** in the top-bar switch, or disable / remove the extension — everything the kit registered is
+unregistered, and nothing else was changed. See
 [First run](#first-run-turning-maya-mode-on-and-off).
 
 **Can I follow Blender tutorials with it installed?**
@@ -351,9 +360,9 @@ variables `ALLSET_*`); the id stays the same whatever the display name.
 
 | Path | What |
 |---|---|
-| `src/allset/` | The extension: `blender_manifest.toml`, `preferences.py`, `switch.py`, `keymap/`, `marking/`, `operators/`, `ui/`, `theme/`, `app_template/`, `compat.py` (all Blender-version differences) |
+| `src/allset/` | The extension: `blender_manifest.toml`, `preferences.py`, `switch.py`, `keymap/`, `marking/`, `operators/`, `ui/`, `compat.py` (all Blender-version differences) |
 | `tests/` | Headless harness `run.py`, GUI tests `gui/`, helpers `kit.py`, tests `test_*.py` |
-| `tools/` | `build.py` (packages), `release_check.py`, `build_repo.py` (static extension repository), generators for the keymap doc, menus, shelves, theme and layout |
+| `tools/` | `build.py` (packages), `release_check.py`, `build_repo.py` (static extension repository), generators for the keymap doc, menus, shelves and layout |
 | `docs/` | , , per-step notes `steps/`, `keymap_mapping.md`, `compat_5x.md`, `manual_checks.md`, `distribution/` |
 
 ### Build and test
@@ -385,8 +394,8 @@ These assets are used only in the marketing media and are not shipped in the ext
 
 ## License
 
-Code: **GPL-3.0-or-later** ([LICENSE](LICENSE)). The kit-made images and data files in the extension (splash /
-welcome PNGs, `startup.blend`, the theme XML) are **CC0-1.0**
+Code: **GPL-3.0-or-later** ([LICENSE](LICENSE)). The kit-made images and data files in the extension (welcome PNGs,
+the Maya layout `startup.blend`) are **CC0-1.0**
 ([src/allset/ASSETS_LICENSE.txt](src/allset/ASSETS_LICENSE.txt)). Copyright 2026 ohnsk.
 
 ## Trademarks

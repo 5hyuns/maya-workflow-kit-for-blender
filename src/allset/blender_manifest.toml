@@ -8,8 +8,9 @@ tagline = "The whole Maya workflow in Blender, in one install"
 maintainer = "ohnsk <555hyuns@gmail.com>"
 type = "add-on"
 # Extensions platform tags ($S\modules\_bpy_internal\extensions\tags.py; , step 61).
+# "User Interface" only: the moderator asked to remove every other tag (store review, GitHub #40, step 130).
 # No `website` until there is a public page; no `platforms`: pure Python, every OS.
-tags = ["User Interface", "3D View", "Modeling", "Animation", "Rigging"]
+tags = ["User Interface"]
 
 # 4.5: Blender 4.2.23 fails 25 of 869 headless tests (step 117: the 4.5-saved layout template, 4.3+ brush
 # assets, file I/O options), so 4.2-4.4 are not offered the kit.
@@ -19,7 +20,7 @@ blender_version_min = "4.5.0"
 # compatible" until it is checked the same way.
 blender_version_max = "5.3.0"
 
-# Code GPL-3.0-or-later; the kit-made images and data files (splash / welcome PNGs, startup.blend, the theme XML)
+# Code GPL-3.0-or-later; the kit-made images and data files (welcome PNGs, the Maya layout startup.blend)
 # CC0-1.0 — extensions.blender.org terms 1.2, ASSETS_LICENSE.txt (step 114).
 license = [
   "SPDX:GPL-3.0-or-later",
@@ -30,9 +31,10 @@ copyright = [
 ]
 
 [permissions]
-# Writes: the layout template folder, the extension user folder (preference snapshot, theme backup, shelves) and
-# the Maya project folders the file dialogs open in (docs/distribution/listing.md "Files it writes").
-files = "Layout template, settings backup, shelves, Maya project folders"
+# Writes: the extension user folder (your shelves) and the Maya project folders the file dialogs open in
+# (docs/distribution/listing.md "Files it writes"). Since step 130 nothing outside them: no layout template, no
+# preference snapshot, no theme backup.
+files = "Your shelves and Maya project folders"
 
 [build]
 paths_exclude_pattern = [
