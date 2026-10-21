@@ -160,7 +160,7 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
     """Toggle object / component selection (Maya F8, SelectToggleMode) with Maya's in-view message"""
     bl_idname = "allset.toggle_sel_mode"
     bl_label = "Object/Component"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):

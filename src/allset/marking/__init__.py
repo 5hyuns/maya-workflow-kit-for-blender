@@ -219,7 +219,7 @@ class ALLSET_OT_mm_component(bpy.types.Operator):
     """Select the object under the marking menu and enter this component mode (Maya RMB menu)"""
     bl_idname = "allset.mm_component"
     bl_label = "Component Mode"
-    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+    bl_options = {'UNDO', 'INTERNAL'}
 
     type: EnumProperty(items=COMPONENTS)
 

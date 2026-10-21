@@ -141,7 +141,7 @@ class ALLSET_OT_select_mode(bpy.types.Operator):
     """Maya selection mode: Object (object mode) or Component (edit mode)"""
     bl_idname = "allset.select_mode"
     bl_label = "Selection Mode"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     mode: EnumProperty(items=(("OBJECT", "Object", "Select by object type (object mode)"),
                               ("COMPONENT", "Component", "Select by component type (edit mode)")))
