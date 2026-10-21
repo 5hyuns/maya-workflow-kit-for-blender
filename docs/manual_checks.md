@@ -866,3 +866,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 131) Material Viewer: 모양 (Sphere / Shader Ball …) · World 토글 · EEVEE 미리보기가 그려지는지 (Workbench 면 안내 문구); 미리보기 아래 ::: 로 크기 조절.
 - [ ] (step 131) Graph 툴바: 입력 / 입출력 / 출력 연결 = 네트워크 선택 + 화면 맞춤, Hide / Show connected / Show primary attributes, swatch 토글; 회색 버튼 툴팁. View > Frame All / Frame Selected 가 메뉴 줄이 아니라 Graph 에서 동작하는지.
 - [ ] (step 131) Hypershade 를 연 채 메인 창에서 다시 열기 → 이전 창이 닫히고 새 창이 앞에 하나만; Hypershade 창의 Window > Browser… 는 아무 창도 새로 열지 않음. 파일 저장 → 다시 열기 후에도 패널들이 Hypershade 로 그려지는지 (메뉴 줄 / Graph 인식은 패널 표식 기준).
+
+### Step 131 — menu icons
+
+- [ ] (step 131, #23) Create > Polygon Primitives / NURBS Primitives, Mesh, Edit Mesh, Mesh Tools, Deform, Constrain, Key, Windows > General Editors 를 실제 마우스로 열어 Maya 2022 메뉴 (`tmp/maya_icons131/grab`) 와 나란히: 아이콘이 있는 줄이 Maya 와 같은 명령인지, 16 px 에서 한눈에 구분되는지 (같은 메뉴 안에서 서로 다른 그림).
+- [ ] (step 131) 아이콘이 있는 줄 / 없는 줄의 글자가 한 열에서 시작하는지, Maya 단축키 (Ctrl+B, Ctrl+Shift+X …) 와 ❒ 옵션 상자 열이 그대로 오른쪽에 맞는지 — 100 % 와 125 % UI 배율, 그리고 Preferences 에서 Resolution Scale 을 바꾼 직후 (잠깐 이전 크기 그림이 쓰이다가 새 크기로 바뀜).
+- [ ] (step 131) Maya 모드를 켠 직후 처음 여는 메뉴에도 아이콘이 있는지 (미리 만들어 둠), 회색 항목 (Super Ellipse 등) 의 아이콘이 흐리게 보이는지.
