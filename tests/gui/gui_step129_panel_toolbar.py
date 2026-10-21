@@ -3,7 +3,11 @@ Workflow Kit layout — state before -> click -> after -> click -> after.
 
 The viewport looks through a camera (so the camera buttons are enabled) and a cube is selected (Isolate Select).
 Toggles must change on the first click and come back on the second (Maya iconTextCheckBox); commands act; greyed
-buttons change nothing. Value fields (exposure / gamma / view transform) are not clicked."""
+buttons change nothing. Value fields (exposure / gamma / view transform) are not clicked.
+
+Step 132 (#52): runs at the session's UI scale (1.25 on a 125 % display; ``--ui-scale 0.8`` = 1.0, ``1.2`` = 1.5).
+The groups that don't fit the header are in Maya's » overflow popover: the test opens it, sweeps it top to bottom
+and clicks those buttons there (the popover is reopened before every click)."""
 
 import os
 import sys
@@ -14,9 +18,10 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sim import MODULE, button_under_mouse, check, ev, run, screenshot, setup, step, view3d, win, load_maya_layout  # noqa: E402
 
-GUI_TIMEOUT = 420
+GUI_TIMEOUT = 480
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
-C = {"buttons": {}, "rows": []}
+# buttons: command / data path -> (x0, x1, y0, y1) window px; popover: the ones found in the » popover
+C = {"buttons": {}, "popover": set(), "rows": []}
 
 
 def mod(name):
@@ -57,9 +62,6 @@ def diff(a, b):
 @step
 def s_setup():
     setup()
-    # Maya density (effective UI scale 1.0) so the whole toolbar fits the header: since step 130 the kit no longer
-    # sets Blender's UI scale, and at 1.25 the toolbar is cut off (#52). Sandbox preferences only.
-    bpy.context.preferences.view.ui_scale = round(1.0 / max(bpy.context.preferences.system.ui_scale, 0.1), 3)
     bpy.ops.allset.make_maya(open_layout=False)
     load_maya_layout()
 
@@ -80,6 +82,15 @@ def s_scene():
         a.tag_redraw()
 
 
+def _record(key, x, y):
+    """Button extent relative to the tool header: the Maya strip rows settle a moment after the layout loads and
+    move the viewport header down (the clicks would hit the panel menu bar)."""
+    _a, region = header()
+    x, y = x - region.x, y - region.y
+    x0, x1, y0, y1 = C["buttons"].get(key, (x, x, y, y))
+    C["buttons"][key] = (min(x0, x), max(x1, x), min(y0, y), max(y1, y))
+
+
 def sweep():
     """One probe per tick along the tool header's middle row, 4 px apart: every button's command and x range."""
     state = {}
@@ -93,8 +104,7 @@ def sweep():
             path, cmd = button_under_mouse(area, region)
             key = cmd or path
             if key:
-                lo, hi = C["buttons"].get(key, (state["x"], state["x"]))
-                C["buttons"][key] = (min(lo, state["x"]), max(hi, state["x"]))
+                _record(key, state["x"], state["y"])
             state["x"] += 4
             if state["x"] >= region.x + region.width - 2:
                 return
@@ -107,22 +117,103 @@ def sweep():
 step(sweep())
 
 
+def more_xy():
+    """Centre of the » button (right end of the tool header, toolbar_fit.more_x)."""
+    _a, region = header()
+    fit = mod("ui.toolbar_fit")
+    system = bpy.context.preferences.system
+    x0, x1 = fit.more_x(region.width, system.ui_scale, system.pixel_size)
+    return region.x + (x0 + x1) // 2, region.y + region.height // 2
+
+
+@step
+def s_bar():
+    _a, region = header()
+    pt, fit = mod("ui.panel_toolbar"), mod("ui.toolbar_fit")
+    system = bpy.context.preferences.system
+    C["shown"] = fit.fit(pt.fit_groups(), region.width, system.ui_scale, system.pixel_size)
+    print("PT scale", system.ui_scale, "header", region.width, "groups shown", C["shown"], "of", len(pt.TOOLBAR) + 1)
+    shown = sum(len(g) for g in pt.TOOLBAR[:C["shown"]]) + (3 if C["shown"] > len(pt.TOOLBAR) else 0)
+    found = [k for k in C["buttons"] if "view_settings." not in k]
+    check(f"UI scale {system.ui_scale:g}: the header shows {C['shown']} groups, every button of them found "
+          f"({len(found)} of {shown})", len(found) == shown)
+    _a, region = header()
+    last = region.x + max((v[1] for v in C["buttons"].values()), default=0)
+    if C["shown"] <= len(pt.TOOLBAR):
+        check("the shown groups end left of the » button", last < more_xy()[0] - 4)
+        ev('MOUSEMOVE', 'NOTHING', x=more_xy()[0], y=more_xy()[1])
+    else:
+        check("everything fits: no » button", last < region.x + region.width)
+
+
+@step
+def s_open_more():
+    if C["shown"] <= len(mod("ui.panel_toolbar").TOOLBAR):
+        x, y = more_xy()
+        ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+        ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
+
+def sweep_popover():
+    """Top to bottom under the » button, 4 px apart, until 60 px without a button after the last one: the
+    popover's buttons (looked up through the header's open popover button). Five columns per row (the popover
+    isn't centred on the »): the colour management lines have the icon button on the left and the field on the right."""
+    state = {}
+
+    def look():
+        if C["shown"] > len(mod("ui.panel_toolbar").TOOLBAR):
+            return
+        area, region = header()
+        cols = [more_xy()[0] + round(k * bpy.context.preferences.system.ui_scale) for k in (-100, -50, 0, 50, 100)]
+        if not state:
+            state["col"] = 0
+            state["y"] = region.y - 4
+            state["last"] = state["y"]
+            if SHOTS:
+                screenshot(os.path.join(SHOTS, f"gui_step132_more_{bpy.context.preferences.system.ui_scale:g}.png"))
+        else:
+            path, cmd = button_under_mouse(area, region)
+            key = cmd or path
+            if key and "panel_toolbar_more" not in key:
+                _record(key, cols[state["col"]], state["y"])
+                C["popover"].add(key)
+                state["last"] = state["y"]
+            state["col"] = (state["col"] + 1) % len(cols)
+            if state["col"] == 0:
+                state["y"] -= 4
+            if state["y"] < 4 or state["last"] - state["y"] > 60:
+                return
+        ev('MOUSEMOVE', 'NOTHING', x=cols[state["col"]], y=state["y"])
+        import sim
+        sim._steps.insert(0, look)
+    return look
+
+
+step(sweep_popover())
+
+
 @step
 def s_found():
-    _a, region = header()
+    if SHOTS:      # the open popover a moment later (screenshot shows the previous frame)
+        screenshot(os.path.join(SHOTS, f"gui_step132_more_{bpy.context.preferences.system.ui_scale:g}_b.png"))
+    ev('ESC', 'PRESS')
+    ev('ESC', 'RELEASE')
     names = list(C["buttons"])
     print("PT buttons", len(names))
     for k, v in C["buttons"].items():
-        print("PT", v, k)
+        print("PT", "pop" if k in C["popover"] else "bar", v, k)
     pt = mod("ui.panel_toolbar")
     expected = sum(len(g) for g in pt.TOOLBAR)
     clickable = [k for k in names if "view_settings." not in k]
-    check(f"panel toolbar: every icon found under the mouse ({len(clickable)} buttons, {expected} icons + 3 colour "
-          "management icons)", len(clickable) >= expected + 3)
+    fields = [k for k in names if "view_settings." in k]
+    scale = bpy.context.preferences.system.ui_scale
+    check(f"UI scale {scale:g}: every panel toolbar icon reachable in the bar or the » popover ({len(clickable)} "
+          f"buttons, {expected} icons + 3 colour management icons; {len(C['popover'])} in the popover)",
+          len(clickable) == expected + 3)
+    check(f"UI scale {scale:g}: exposure, gamma and view transform fields reachable ({fields})", len(fields) == 3)
     C["queue"] = clickable
-    C["y"] = region.y + region.height // 2
     if SHOTS:
-        screenshot(os.path.join(SHOTS, "gui_step129_toolbar_camera_view.png"))
+        screenshot(os.path.join(SHOTS, f"gui_step129_toolbar_{scale:g}.png"))
 
 
 def label_of(cmd):
@@ -152,13 +243,31 @@ def kind_of(cmd):
 
 
 def click_steps():
+    """hover, [open the popover], click, mid, [open the popover], click, end — per button."""
+    def in_pop():
+        return C["queue"] and C["queue"][0] in C["popover"]
+
+    def close():          # a popover left open by the last click (ESC goes to it; no-op in the viewport)
+        if in_pop():
+            ev('ESC', 'PRESS')
+            ev('ESC', 'RELEASE')
+
+    def to_more():
+        if in_pop():
+            ev('MOUSEMOVE', 'NOTHING', x=more_xy()[0], y=more_xy()[1])
+
+    def open_more():
+        if in_pop():
+            x, y = more_xy()
+            ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+            ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
+
     def hover():
         if not C["queue"]:
             return
-        cmd = C["queue"][0]
-        lo, hi = C["buttons"][cmd]
-        C["xy"] = ((lo + hi) // 2, C["y"])
-        C["s0"] = snapshot()
+        x0, x1, y0, y1 = C["buttons"][C["queue"][0]]
+        _a, region = header()
+        C["xy"] = (region.x + (x0 + x1) // 2, region.y + (y0 + y1) // 2)
         ev('MOUSEMOVE', 'NOTHING', x=C["xy"][0], y=C["xy"][1])
 
     def click():
@@ -174,8 +283,9 @@ def click_steps():
     def end():
         if not C["queue"]:
             return
+        close()
         cmd = C["queue"].pop(0)
-        s0, s1, s2 = C["s0"], C["s1"], snapshot()
+        s0, s1, s2 = C.pop("s0"), C["s1"], snapshot()
         C["rows"].append((label_of(cmd), kind_of(cmd), cmd, diff(s0, s1), diff(s1, s2), diff(s0, s2)))
         if "SELECT_CAMERA" in cmd or "wm.tool_set_by_id" in cmd:   # put the cube selection / Move tool back
             scene = bpy.context.scene
@@ -189,7 +299,12 @@ def click_steps():
         if C["queue"]:
             for f in reversed(seq):
                 sim._steps.insert(0, f)
-    seq = (hover, click, mid, click, end)
+
+    def snap0():
+        if C["queue"]:
+            C["s0"] = snapshot()
+
+    seq = (close, to_more, open_more, snap0, hover, click, mid, close, to_more, open_more, hover, click, end)
     return seq
 
 
@@ -201,14 +316,15 @@ for _f in click_steps():
 def s_table():
     print("TABLE | Button | kind | 1st click | 2nd click | net |")
     for label, kind, cmd, d1, d2, d0 in C["rows"]:
-        print(f"TABLE | {label} | {kind} | {d1} | {d2} | {d0} |")
+        where = "popover" if cmd in C["popover"] else "bar"
+        print(f"TABLE | {label} ({where}) | {kind} | {d1} | {d2} | {d0} |")
         if kind == "toggle":
-            check(f"toolbar {label}: click turns it on, click again gives the start back ({d1} / {d0})",
+            check(f"toolbar {label} ({where}): click turns it on, click again gives the start back ({d1} / {d0})",
                   d1 and not d0)
         elif kind == "grey":
-            check(f"toolbar {label}: greyed button changes nothing ({d1})", not d1 and not d0)
+            check(f"toolbar {label} ({where}): greyed button changes nothing ({d1})", not d1 and not d0)
         else:
-            check(f"toolbar {label}: command acts ({d1} {d2})", d1 or d2)
+            check(f"toolbar {label} ({where}): command acts ({d1} {d2})", d1 or d2)
 
 
 run(interval=0.12)
