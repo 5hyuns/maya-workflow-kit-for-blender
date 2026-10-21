@@ -7,9 +7,8 @@
 - Crease Tool (Maya polyCreaseCtx, modeling.md:49): MMB drag left / right = less / more crease on the selected
   edges (vertices in vertex mode), shown as Maya's value. Blender stores 0-1 with OpenSubdiv sharpness = 10 * b^2
   (measured, step 64), so Maya value c is stored as sqrt(c / 10).
-- Multi-Cut (Blender knife, modeling.md:30-33, 98-100, shots/modeling_06_win1.png): Ctrl+click on an edge inserts an
-  edge loop where you clicked (Ctrl+MMB: in the middle, Ctrl+Shift: at a Snap Step), Shift+click starts the cut at
-  the nearest Snap Step % point of the edge.
+- Multi-Cut: since step 129 a kit tool (operators/multi_cut.py); its Tool Settings live here
+  (shots/modeling_06_win1.png) and it reuses ``edge_ring`` / ``insert_loop`` / ``snap_factor``.
 """
 
 import math
@@ -17,12 +16,12 @@ import math
 import bmesh
 import bpy
 import gpu
-from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty, StringProperty
+from bpy.props import (BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, PointerProperty,
+                       StringProperty)
 from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector, geometry
 
-from .. import live_refs
 
 PICK_RADIUS = 15          # px at UI scale 1: how far from a vertex / edge a press still picks it
 CREASE_PER_PX = 0.02      # Maya crease value per px of horizontal MMB drag (50 px = 1; sensitivity [U])
@@ -31,7 +30,7 @@ MAYA_SNAP_STEP = 10       # Multi-Cut Snap Step % (shots/modeling_06_win1.png)
 
 TARGET_WELD_TOOL = "allset.target_weld_tool"
 CREASE_TOOL = "allset.crease_tool"
-MULTI_CUT_TOOL = "builtin.knife"
+MULTI_CUT_TOOL = "allset.multi_cut_tool"     # step 129 (operators/multi_cut.py)
 
 _handles = []   # (space type, handle) of draw handlers of running modals (removed on unregister)
 
@@ -53,6 +52,33 @@ class ALLSET_PG_mesh_tools(bpy.types.PropertyGroup):
     snap_step: IntProperty(
         name="Snap Step %", default=MAYA_SNAP_STEP, min=1, max=100,
         description="Multi-Cut: Shift snaps the cut point along the edge in these steps")
+    # Multi-Cut Tool Settings, Maya factory values (shots/modeling_06_win1.png, research/maya/re/multi_cut.md)
+    smoothing_angle: FloatProperty(
+        name="Smoothing Angle", default=180.0, min=0.0, max=180.0, precision=0,
+        description="New edges between faces bent more than this are hard (sharp), the rest soft")
+    edge_flow: BoolProperty(name="Edge Flow", default=False)
+    edge_flow_adjust: FloatProperty(name="Edge Flow Adjust", default=1.0, min=-1.0, max=1.0)
+    subdivisions: IntProperty(
+        name="Subdivisions", default=1, min=1, max=32,
+        description="Each new edge of the cut is split into this many parts")
+    ignore_backfaces: BoolProperty(
+        name="Ignore Backfaces", default=False,
+        description="Slice: only faces facing the camera are cut")
+    delete_faces: BoolProperty(
+        name="Delete Faces", default=False,
+        description="Slice: delete the faces on one side of the slice (the side to the right of the drag)")
+    extract_faces: BoolProperty(
+        name="Extract Faces", default=False,
+        description="Slice: split the faces on one side off and move them by the offset")
+    extract_offset: FloatVectorProperty(
+        name="Extract Offset", size=3, default=(0.5, 0.5, 0.5),
+        description="Slice: how far extracted faces move (Maya X / Y / Z, scene units)")
+    slice_plane: EnumProperty(
+        name="Slice Along Plane", default='NONE',
+        items=(('NONE', "Free", "Slice along the dragged line"),
+               ('YZ', "YZ", "A click slices along the world YZ plane through the clicked point"),
+               ('ZX', "ZX", "A click slices along the world ZX (Maya ground) plane through the clicked point"),
+               ('XY', "XY", "A click slices along the world XY plane through the clicked point")))
 
 
 def settings(context):
@@ -567,8 +593,13 @@ class ALLSET_OT_multicut_loop(bpy.types.Operator):
         bm.edges.ensure_lookup_table()
         if not 0 <= self.edge < len(bm.edges) or not 0.0 < self.factor < 1.0:
             return {'CANCELLED'}
-        if not insert_loop(bm, bm.edges[self.edge], self.factor):
+        edges = insert_loop(bm, bm.edges[self.edge], self.factor)
+        if not edges:
             return {'CANCELLED'}
+        limit = math.radians(settings(context).smoothing_angle)   # Multi-Cut Smoothing Angle (step 129)
+        for e in edges:
+            if len(e.link_faces) == 2:
+                e.smooth = e.calc_face_angle(0.0) <= limit + 1e-6
         bmesh.update_edit_mesh(ob.data)
         return {'FINISHED'}
 
@@ -589,116 +620,12 @@ class ALLSET_OT_multicut_loop(bpy.types.Operator):
         return self.execute(context)
 
 
-KNIFE_PROPS = ("use_occlude_geometry", "only_selected", "xray", "visible_measurements", "angle_snapping",
-               "angle_snapping_increment")
-
-
-def knife_tool_props(context):
-    """The Multi-Cut (knife) tool's own settings, for a knife started from Python."""
-    try:
-        tool = context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
-        props = tool.operator_properties("mesh.knife_tool") if tool is not None else None
-    except (AttributeError, TypeError, RuntimeError):
-        props = None
-    return {k: getattr(props, k) for k in KNIFE_PROPS if props is not None and hasattr(props, k)}
-
-
-class ALLSET_OT_multicut_snap(bpy.types.Operator):
-    """Start the cut at the nearest Snap Step % point of the edge under the mouse (Maya Multi-Cut Shift)"""
-    bl_idname = "allset.multicut_snap"
-    bl_label = "Multi-Cut Snap Step"
-
-    @classmethod
-    def poll(cls, context):
-        return context.mode == 'EDIT_MESH' and context.window is not None
-
-    def invoke(self, context, event):
-        view = _view(context)
-        if view is None:
-            return {'PASS_THROUGH'}
-        mouse = (event.mouse_region_x, event.mouse_region_y)
-        ob, index = pick(view, _mesh_objects(context), mouse, 'EDGE', PICK_RADIUS * _ui_scale())
-        if ob is None:
-            return {'PASS_THROUGH'}
-        bm = bmesh.from_edit_mesh(ob.data)
-        bm.edges.ensure_lookup_table()
-        edge = bm.edges[index]
-        t = snap_factor(edge_factor(view, ob, edge, mouse), settings(context).snap_step)
-        point = ob.matrix_world @ edge.verts[0].co.lerp(edge.verts[1].co, t)
-        p = view3d_utils.location_3d_to_region_2d(view[0], view[1], point)
-        if p is None:
-            return {'PASS_THROUGH'}
-        region = context.region
-        # The knife starts its cut at the window's mouse position: move it onto the snapped point first.
-        context.window.cursor_warp(region.x + round(p.x), region.y + round(p.y))
-        res = bpy.ops.mesh.knife_tool('INVOKE_DEFAULT', wait_for_input=False, **knife_tool_props(context))
-        if 'RUNNING_MODAL' in res:
-            # The cursor lands on a whole pixel: when the cut is done, put its vertex on the exact step.
-            _snap_fixes.append((context.window.as_pointer(), ob.name, edge.verts[0].co.copy(), edge.verts[1].co.copy(), t))
-            if not bpy.app.timers.is_registered(_fix_snap_points):
-                bpy.app.timers.register(_fix_snap_points, first_interval=0.1)
-        return res
-
-
-_snap_fixes = []    # (window pointer (#36), object name, edge end a, end b, step t) waiting for the knife to finish
-SNAP_FIX_TOLERANCE = 0.03   # of the edge length: a cut vertex this close to the step is the snapped one
-
-
-def snap_cut_vertex(bm, a, b, t):
-    """Move the vertex the knife put on segment a-b (object space) near ``t`` exactly onto ``t``."""
-    seg = b - a
-    n = seg.length_squared
-    if n < 1e-12:
-        return False
-    best = None
-    for v in bm.verts:
-        u = (v.co - a).dot(seg) / n
-        if not 0.0 < u < 1.0 or (a + seg * u - v.co).length > 1e-4 * math.sqrt(n):
-            continue
-        if abs(u - t) <= SNAP_FIX_TOLERANCE and (best is None or abs(u - t) < abs(best[0] - t)):
-            best = (u, v)
-    if best is None:
-        return False
-    best[1].co = a + seg * t
-    return True
-
-
-def _knife_running(win_ptr):
-    window = live_refs.window(win_ptr)
-    if window is None:
-        return False
-    try:
-        return any(op.bl_idname == "MESH_OT_knife_tool" for op in window.modal_operators)
-    except (ReferenceError, AttributeError):
-        return False
-
-
-def _fix_snap_points():
-    waiting = []
-    for item in _snap_fixes:
-        win_ptr, name, a, b, t = item
-        if _knife_running(win_ptr):
-            waiting.append(item)
-            continue
-        ob = bpy.data.objects.get(name)
-        if ob is not None and ob.type == 'MESH' and ob.mode == 'EDIT':
-            bm = bmesh.from_edit_mesh(ob.data)
-            if snap_cut_vertex(bm, a, b, t):
-                bmesh.update_edit_mesh(ob.data, loop_triangles=True, destructive=False)
-    _snap_fixes[:] = waiting
-    return 0.1 if waiting else None
-
-
 # ALLSET_PG_mesh_tools is registered by register_props()
-classes = (ALLSET_OT_target_weld, ALLSET_OT_crease_drag, ALLSET_OT_multicut_loop,
-           ALLSET_OT_multicut_snap)
+classes = (ALLSET_OT_target_weld, ALLSET_OT_crease_drag, ALLSET_OT_multicut_loop)
 
 
 def clear():
-    """Remove draw handlers a running modal left behind (add-on disabled mid-drag) and pending snap fixes."""
-    _snap_fixes.clear()
-    if bpy.app.timers.is_registered(_fix_snap_points):
-        bpy.app.timers.unregister(_fix_snap_points)
+    """Remove draw handlers a running modal left behind (add-on disabled mid-drag)."""
     for space, handle in _handles:
         try:
             space.draw_handler_remove(handle, 'WINDOW')

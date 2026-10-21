@@ -300,7 +300,7 @@ MAP = {
     "Mesh Tools/Show/Hide Modeling Toolkit": ("allset.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
     "Mesh Tools/Create Polygon": ("tool", "builtin.poly_build", True),
     "Mesh Tools/Insert Edge Loop": ("tool", "builtin.loop_cut", True),
-    "Mesh Tools/Multi-Cut": ("tool", "builtin.knife", True),
+    "Mesh Tools/Multi-Cut": ("tool", "allset.multi_cut_tool", True),      # step 129
     "Mesh Tools/Offset Edge Loop": ("v3d", "mesh.offset_edge_loops_slide", {}),
     "Mesh Tools/Quad Draw": ("tool", "builtin.poly_build", True),
     "Mesh Tools/Slide Edge": ("tool", "builtin.edge_slide", True),

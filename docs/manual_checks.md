@@ -825,3 +825,14 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129) Edit mode, select one vertex of a dense grid, B on: the wire around it is yellow at the selection → red → black at the radius (Maya look, `tmp/maya129/out/softsel_00_on.png` reference); G moves exactly the coloured region and the colours stay put during the move; switch Volume / Surface and the falloff curve in the Modeling Toolkit → colours follow at once.
 - [ ] (step 129) Hold B, drag with the **middle** mouse (and with the left) left / right: a white circle of the radius around the selection + "Falloff Radius: x" next to the mouse, the view does not orbit, releasing B keeps soft select on. Judge whether ×2 per 100 px feels like Maya (Maya's rate is not measured: synthetic drags don't reach its screen slider).
 - [ ] (step 129) Feel on a ~100k-vertex mesh: orbiting / selecting with soft select on stays fluid; Surface mode first draw after a selection change ~0.5 s at radius ≈ 6 % of the mesh (headless: Volume 0.2 s first / 5 ms on a radius change, Surface 0.5 s).
+
+### Step 129 Multi-Cut
+
+- [ ] (step 129) Ctrl+Shift+X (또는 Mesh Tools > Multi-Cut, Shift+RMB W, Polygons 셸프) → 엣지 위에 마우스를 두면 노란/회색 점과 `NN%` 가 마우스를 따라오고, 클릭 → 다음 엣지까지 회색 미리보기 선이 실시간으로 따라오는지; Maya 2022 Multi-Cut 과 나란히 놓고 점 크기·색·% 위치 비교.
+- [ ] (step 129) 엣지를 누른 채 드래그 → 점이 엣지를 따라 미끄러지고 Shift 를 누르면 Snap Step % (Tool Settings 의 값) 칸마다 딱딱 붙는지.
+- [ ] (step 129) Ctrl 만 누르고 (마우스 이동 없이) 엣지 위에 있을 때 링 전체에 주황 루프 미리보기가 바로 뜨고, Ctrl 을 떼면 사라지는지 (OS 키 이벤트 경로); Ctrl+클릭 → 루프, Ctrl+Shift+클릭 → 스텝 위치, Ctrl+MMB → 가운데; F9 (Adjust Last Operation) 의 Position 으로 루프가 움직이는지.
+- [ ] (step 129) 정점 근처 (10 px) 클릭 = 정점에서 시작, 면 가운데 클릭 = 면 위 점 → 다음 엣지 클릭 → Enter: 면 안에 새 정점이 생기는지; 다른 면의 엣지를 클릭하면 경고만 나오고 점이 안 생기는지 (빨간 미리보기 점).
+- [ ] (step 129) Backspace 로 점 하나씩 지우기, RMB / Enter 로 완료 후에도 툴이 그대로인지, Ctrl+Z 한 번에 컷 전체가 되돌아가는지, 점 없이 Esc → Select 툴.
+- [ ] (step 129) 면 위 / 빈 곳에서 드래그 → 노란 선이 그려지고 놓으면 메시 전체가 그 선 (시선 방향 평면) 으로 잘리는지; Tool Settings 의 Ignore Backfaces / Delete Faces / Extract Faces (오프셋, cm 템플릿에서 0.5 cm) 와 Slice Along Plane YZ / ZX / XY (클릭한 점을 지나는 월드 평면) 결과를 Maya 와 비교 (지우는 쪽이 Maya 와 같은지 [K]).
+- [ ] (step 129) Tool Settings 도크 (Properties Tool 탭) 에 Maya 순서대로 Snap Step % · Cut / Insert Edge Loop Tool (Smoothing Angle, Edge Flow 회색, Subdivisions) · Slice Tool · Color Settings / Live Constraint Options 회색 (툴팁 안내) · Keyboard/Mouse Shortcuts 가 보이고, Reset Tool 이 값을 Maya 공장값 (10 / 180 / 1 / 모두 끔) 으로 돌리는지; 툴 헤더에는 Snap Step 만.
+- [ ] (step 129) Alt+LMB / MMB / 휠 네비게이션이 점을 찍는 중에도 되는지 (모달이 통과시킴), 여러 메시를 편집 모드에 넣었을 때 첫 점의 메시에만 점이 찍히는지.

@@ -224,7 +224,7 @@ def test_menu_items_active_or_grey():
     assert _action(imp) == ("op", "allset.file_import", {}), _action(imp)
     tools = _draw_menu(menu_sets.menu_idname("mainMeshToolsMenu"))
     cut = next(e for e in tools if e[0] in ("op", "hold") and _label(e[2]) == "Multi-Cut")
-    assert _action(cut) == ("tool", "builtin.knife", {"edit": True}), _action(cut)
+    assert _action(cut) == ("tool", "allset.multi_cut_tool", {"edit": True}), _action(cut)
     edit_mesh = _draw_menu(menu_sets.menu_idname("mainEditMeshMenu"))
     bevel = next(e for e in edit_mesh if e[0] in ("op", "hold") and _label(e[2]) == "Bevel")
     assert _action(bevel)[:2] == ("v3d", "mesh.bevel"), _action(bevel)
