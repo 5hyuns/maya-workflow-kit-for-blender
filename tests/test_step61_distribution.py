@@ -77,7 +77,7 @@ def test_writes_outside_the_extension_folder_are_known():
     """Writable data goes to bpy.utils.extension_path_user; the exceptions are reviewed in
     : the layout template (an app template is not an extension type) and the
     legacy add-on build's CONFIG fallback. A new user_resource() call must be added there first."""
-    known = {"app_template/__init__.py", "switch.py", "theme/__init__.py", "ui/shelf.py"}
+    known = {"app_template/__init__.py", "switch.py", "theme/__init__.py"}     # ui/shelf.py: none since #42
     found = {rel for rel, text in _sources()
              if any("user_resource(" in code for code in _code_lines(text))}
     assert found <= known, f"new write location outside extension_path_user: {sorted(found - known)}"
