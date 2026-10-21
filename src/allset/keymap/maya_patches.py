@@ -441,6 +441,12 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "mesh.select_prev_item", make_event("COMMA", shift=True, ctrl=True, repeat=True))
     for key, comp in CONVERT_KEYS:
         _add(kd, "Mesh", "allset.convert_selection", make_event(key, ctrl=True), {"type": comp})
+    # Maya double-click = loop, Shift+double-click = the run between two picks (issue #22, operators/loop_pick.py);
+    # IC's own double-click loop picks (Shift = add the loop) give way, Ctrl (deselect the loop) stays
+    for shift in (False, True):
+        kd.remove("Mesh", "mesh.loop_select", type="LEFTMOUSE", value="DOUBLE_CLICK", shift=shift)
+        _add(kd, "Mesh", "allset.loop_pick", make_event("LEFTMOUSE", value="DOUBLE_CLICK", shift=shift),
+             {"between": shift}, shadows=("Screen",))
 
 
 # --- 20. Key / frame stepping: . , Alt+. Alt+, -----------------
