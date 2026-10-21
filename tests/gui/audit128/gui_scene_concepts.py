@@ -80,9 +80,10 @@ def s_vis():
     cb.set_value(b, "v", False)
     print("AUDIT CB v=0: visible", visible(b))
     try:
-        ov(bpy.ops.object.hide_view_clear)
+        # what the Maya menu Display > Show runs (step 129: the kit item, no longer Blender's hide_view_clear)
+        ov(bpy.ops.allset.menu_item, item="Display/Show")
     except Exception as ex:
-        print("AUDIT hide_view_clear", ex)
+        print("AUDIT Display > Show", ex)
     check(f"Channel Box Visibility 0, then Display > Show > All shows it again (visible={visible(b)})", visible(b))
     cb.set_value(b, "v", True)
 

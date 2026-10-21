@@ -341,6 +341,63 @@ def select_channel(key, mode="SET", context=None):
     return sel
 
 
+# --- channel ranges (drag over the rows, step 129 #6) -------------------------------------------------------------
+
+def drawn_keys(ob):
+    """Channel keys in the order the Channel Box draws them (main channels, then custom attributes)."""
+    keys = [c[0] for c in MAIN if not is_hidden(ob, c[0]) and has_channel(ob, c[0])]
+    return keys + [CUSTOM_PREFIX + n for n in custom_keys(ob) if not is_hidden(ob, CUSTOM_PREFIX + n)]
+
+
+def channel_range(ob, first, last):
+    """The drawn channels from ``first`` to ``last`` (either order), top to bottom."""
+    keys = drawn_keys(ob)
+    if first not in keys or last not in keys:
+        return [k for k in (first, last) if k in keys]
+    i, j = sorted((keys.index(first), keys.index(last)))
+    return keys[i:j + 1]
+
+
+def select_range(ob, first, last, mode="SET", base=None, context=None):
+    """Select the rows ``first``..``last``: SET replaces the selection, ADD adds to ``base`` (default: the current
+    selection). Maya: drag over channel names / fields selects a range, Ctrl+drag adds (channel_box.md)."""
+    rng = channel_range(ob, first, last)
+    if mode == "SET":
+        sel = rng
+    else:
+        sel = list(selected_channels(context) if base is None else base) + rng
+    set_selected_channels(sel, context)
+    return selected_channels(context)
+
+
+def _sel_get(key):
+    def get(_self):
+        return key in selected_channels()
+    return get
+
+
+def _sel_set(key):
+    def set_(_self, value):
+        sel = [k for k in selected_channels() if k != key]
+        set_selected_channels(sel + [key] if value else sel)
+    return set_
+
+
+def cell_key(path, scene=None):
+    """(channel key, "NAME" / "VALUE") of a Channel Box cell from its data path (``context.property``), or None."""
+    import re
+    m = re.match(r"^allset_cb\.([a-z]+)_(text|sel)$", path or "")
+    if m and m.group(1) in MAIN_BY_KEY:
+        return m.group(1), ("VALUE" if m.group(2) == "text" else "NAME")
+    m = re.match(r"^allset_cb\.rows\[(\d+)\]\.(text|sel)$", path or "")
+    if m and scene is not None:
+        rows = scene.allset_cb.rows
+        i = int(m.group(1))
+        if i < len(rows) and rows[i].kind == "CUSTOM":
+            return CUSTOM_PREFIX + rows[i].name, ("VALUE" if m.group(2) == "text" else "NAME")
+    return None
+
+
 # --- proxies -------------------------------------------------------------------------------------
 
 def _proxy_get(key):
@@ -590,12 +647,23 @@ def _row_set(self, text):
     apply_row_entry(self, text)
 
 
+def _row_sel_get(self):
+    return self.kind == "CUSTOM" and CUSTOM_PREFIX + self.name in selected_channels()
+
+
+def _row_sel_set(self, value):
+    if self.kind == "CUSTOM":
+        _sel_set(CUSTOM_PREFIX + self.name)(self, value)
+
+
 class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
     kind: StringProperty()        # CUSTOM / SHAPE / INPUT / CONSTRAINT
     name: StringProperty()        # property name
     mod_type: StringProperty()    # INPUT: modifier type, CONSTRAINT: constraint type
     nth: IntProperty()            # position among the lead's modifiers / constraints of that type
     text: StringProperty(get=_row_get, set=_row_set)
+    sel: BoolProperty(name="Selected", get=_row_sel_get, set=_row_sel_set,
+                      description="Select this channel: click, Ctrl toggle, Shift range, drag over the rows")
 
 
 def _make_proxy_annotations():
@@ -613,6 +681,9 @@ def _make_proxy_annotations():
             ann[key] = FloatProperty(name=label, get=_proxy_get(key), set=_proxy_set(key),
                                      precision=3, step=10)
         ann[key + "_text"] = StringProperty(name=label, get=_text_get(key), set=_text_set(key))
+        ann[key + "_sel"] = BoolProperty(name=label, get=_sel_get(key), set=_sel_set(key),
+                                         description="Select this channel: click, Ctrl toggle, Shift range, "
+                                                     "drag over the rows")
     ann["rows"] = CollectionProperty(type=ALLSET_PG_cb_row)
     ann["rows_sig"] = StringProperty(options={'HIDDEN'})
     return ann
@@ -733,6 +804,217 @@ class ALLSET_OT_cb_deselect_channels(bpy.types.Operator):
     def execute(self, context):
         set_selected_channels([], context)
         return {'FINISHED'}
+
+
+# --- drag over the rows -----------------------------------------------------
+# An embossed text field starts its text edit on PRESS, so no keymap item sees a press-drag that starts on a value
+# field (checked, tmp/probe129). ``allset.cb_hover`` (Property Editor MOUSEMOVE, first) remembers the Channel Box
+# cell under the mouse (``context.property``) and starts ``allset.cb_channel_drag``, a window modal (window handlers
+# run before the UI) that lives while the mouse is in that region and handles the LMB presses on channel cells.
+
+_hover = {}      # window pointer -> (key, "NAME" / "VALUE") under the mouse, or None
+_watching = set()
+_anchor = {"key": None}
+
+
+def row_pitch(context):
+    """Channel row height in px (ROW_SCALE x Blender's widget unit)."""
+    system = context.preferences.system
+    unit = round(18.0 * system.ui_scale) + 2 * system.pixel_size
+    return max(1.0, unit * ROW_SCALE)
+
+
+def _redraw(window):
+    for area in window.screen.areas if window is not None and window.screen else ():
+        area.tag_redraw()
+
+
+def _hovered_cell(context):
+    prop = getattr(context, "property", None)
+    if not prop or not isinstance(prop[0], bpy.types.Scene):
+        return None
+    return cell_key(prop[1], prop[0])
+
+
+class ALLSET_OT_cb_hover(bpy.types.Operator):
+    """Channel Box: remember the channel under the mouse and watch for a drag over the rows"""
+    bl_idname = "allset.cb_hover"
+    bl_label = "Channel Box Hover"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        window = context.window
+        if window is None:
+            return {'PASS_THROUGH'}
+        hit = _hovered_cell(context)
+        _hover[window.as_pointer()] = hit
+        if hit is not None and window.as_pointer() not in _watching and context.region is not None:
+            bpy.ops.allset.cb_channel_drag('INVOKE_DEFAULT')
+        return {'PASS_THROUGH'}
+
+
+class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
+    """Maya Channel Box selection: click a channel name or field, drag over the rows to select a range
+    (Ctrl toggles / adds, Shift selects from the last clicked channel)"""
+    bl_idname = "allset.cb_channel_drag"
+    bl_label = "Select Channels"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        region = context.region
+        if region is None or context.window is None:
+            return {'CANCELLED'}
+        self._win = context.window.as_pointer()
+        self._window = context.window
+        self._rect = (region.x, region.y, region.x + region.width, region.y + region.height)
+        self._pitch = row_pitch(context)
+        self._press = None
+        _watching.add(self._win)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _inside(self, event):
+        x0, y0, x1, y1 = self._rect
+        return x0 <= event.mouse_x < x1 and y0 <= event.mouse_y < y1
+
+    def _finish(self, cancel=False):
+        _watching.discard(self._win)
+        return {'CANCELLED' if cancel else 'FINISHED', 'PASS_THROUGH'}
+
+    def modal(self, context, event):
+        try:
+            self._window.screen
+        except ReferenceError:
+            _watching.discard(self._win)
+            return {'CANCELLED', 'PASS_THROUGH'}
+        if self._press is None:
+            if event.type == 'MOUSEMOVE' and not self._inside(event):
+                return self._finish()
+            if event.type == 'LEFTMOUSE' and event.value == 'PRESS' and self._inside(event):
+                hit = _hover.get(self._win)
+                if hit is not None:
+                    return self._on_press(context, event, hit)
+            return {'PASS_THROUGH'}
+        if event.type == 'MOUSEMOVE':
+            self._on_move(context, event)
+            return {'PASS_THROUGH'}
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            return self._on_release(context, event)
+        if event.type == 'ESC' and event.value == 'PRESS':
+            set_selected_channels(self._base)
+            self._press = None
+            _redraw(self._window)
+            return {'RUNNING_MODAL'}
+        return {'PASS_THROUGH'}
+
+    def _on_press(self, context, event, hit):
+        ob = lead(context)
+        if ob is None:
+            return {'PASS_THROUGH'}
+        key, part = hit
+        self._ob = ob
+        self._y0 = event.mouse_y
+        self._dragging = False
+        self._ctrl = event.ctrl
+        self._base = selected_channels(context)
+        self._anchor = key
+        self._part = part
+        self._key = key
+        if event.shift and _anchor["key"] is not None:
+            select_range(ob, _anchor["key"], key, "SET", context=context)
+            self._anchor = _anchor["key"]
+        elif event.ctrl:
+            select_channel(key, "TOGGLE", context)
+            _anchor["key"] = key
+        elif not (part == "VALUE" and key in self._base and len(self._base) > 1):
+            # a field of one of several selected channels keeps them (the typed value goes to all of them)
+            set_selected_channels([key], context)
+            _anchor["key"] = key
+        self._press = part
+        _redraw(self._window)
+        # eaten: an embossed field would start its text edit here and swallow the drag (tmp/probe129)
+        return {'RUNNING_MODAL'}
+
+    def _key_at_offset(self, event):
+        keys = drawn_keys(self._ob)
+        if self._anchor not in keys:
+            return None
+        rows = round((self._y0 - event.mouse_y) / self._pitch)
+        i = max(0, min(len(keys) - 1, keys.index(self._anchor) + rows))
+        return keys[i]
+
+    def _current(self, event):
+        hit = _hover.get(self._win)   # updated by allset.cb_hover after the previous move
+        return hit[0] if hit is not None else self._key_at_offset(event)
+
+    def _extend(self, context, cur):
+        if cur is None or (cur == self._anchor and not self._dragging):
+            return
+        self._dragging = True
+        base = self._base if self._ctrl else None
+        select_range(self._ob, self._anchor, cur, "ADD" if self._ctrl else "SET", base=base, context=context)
+        _redraw(self._window)
+
+    def _on_move(self, context, event):
+        if not self._dragging and abs(event.mouse_y - self._y0) < 0.5 * self._pitch:
+            return
+        self._extend(context, self._current(event))
+
+    def _on_release(self, context, event):
+        part, self._press = self._press, None
+        if self._dragging:
+            self._extend(context, self._current(event))   # the hover of the last move
+        elif part == "VALUE" and not (event.ctrl or event.shift):
+            # a click on a field: Maya edits it in place. The press was eaten, so the field is edited in a popup
+            # over it (text active at once); Enter writes the text into every selected channel (apply_entry).
+            try:
+                edit_field(context, self._key)
+            except RuntimeError:
+                pass
+        _redraw(self._window)
+        return {'RUNNING_MODAL'}
+
+
+def field_owner(context, key):
+    """(owner, property) of the Channel Box text field of channel ``key``."""
+    cb = context.scene.allset_cb
+    if key in MAIN_BY_KEY:
+        return cb, key + "_text"
+    if key.startswith(CUSTOM_PREFIX):
+        name = key[len(CUSTOM_PREFIX):]
+        for r in cb.rows:
+            if r.kind == "CUSTOM" and r.name == name:
+                return r, "text"
+    return None, None
+
+
+_edit = {"key": None}
+
+
+def edit_field(context, key):
+    """Edit channel ``key``'s field in a popover at the mouse with the text active at once (Maya: a click into a
+    field edits it); Enter writes the text into every selected channel (apply_entry) and closes it, like F2."""
+    if field_owner(context, key)[0] is None:
+        return False
+    _edit["key"] = key
+    bpy.ops.wm.call_panel(name=ALLSET_PT_cb_field.__name__, keep_open=False)
+    return True
+
+
+class ALLSET_PT_cb_field(bpy.types.Panel):
+    """The Channel Box field editor popover (called by edit_field only)"""
+    bl_space_type = 'TOPBAR'   # dummy, like Blender's TOPBAR_PT_name (F2): only shown through wm.call_panel
+    bl_region_type = 'HEADER'
+    bl_label = "Channel Value"
+    bl_ui_units_x = 6
+
+    def draw(self, context):
+        owner, prop = field_owner(context, _edit["key"] or "")
+        if owner is None:
+            return
+        row = self.layout.row()
+        row.activate_init = True
+        row.prop(owner, prop, text="")
 
 
 def _visible_channels(ob):
@@ -1071,8 +1353,13 @@ def draw_empty(layout):
 _STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DRIVEN': 'DECORATE_DRIVER'}
 
 
-def _row_label(row, key, selected):
+def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     sub = row.row(align=True)
+    if sel_owner is not None:
+        # a toggle of the channel's selection: pressed = Maya's blue name cell (
+        # le02_dock.png); the drag watcher reads it from ``context.property`` (step 129 #6)
+        sub.prop(sel_owner, sel_prop, text=channel_label(key), toggle=True, emboss=selected)
+        return
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
                       emboss=selected)
     op.key = key
@@ -1080,11 +1367,11 @@ def _row_label(row, key, selected):
 
 ROW_SCALE = 0.8
 
-
-def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constrained=False):
+def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constrained=False,
+                     sel_owner=None, sel_prop=None):
     row = layout.row(align=True)
     split = row.split(factor=0.5, align=True)
-    _row_label(split, key, selected)
+    _row_label(split, key, selected, sel_owner, sel_prop)
     right = split.row(align=True)
     state = channel_state(ob, key)
     right.enabled = not is_locked(ob, key)
@@ -1277,7 +1564,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
                 continue
             if kind == "ROT" and not has_channel(ob, key):
                 continue
-            draw_channel_row(col, ob, key, cb, key + "_text", key in sel, key in blue)
+            draw_channel_row(col, ob, key, cb, key + "_text", key in sel, key in blue, cb, key + "_sel")
             rows += 1
         if not has_channel(ob, "rx"):
             rows += 3
@@ -1291,7 +1578,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             if not is_hidden(ob, key):
                 row = row_for(context, ob, "CUSTOM", name)
                 if row is not None:
-                    draw_channel_row(col, ob, key, row, "text", key in sel)
+                    draw_channel_row(col, ob, key, row, "text", key in sel, sel_owner=row, sel_prop="sel")
                 else:
                     draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
                 rows += 1
@@ -1400,7 +1687,8 @@ class ALLSET_PT_dock_modeling_toolkit(bpy.types.Panel):
 
 
 classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider, ALLSET_OT_cb_select_channel,
-           ALLSET_OT_cb_deselect_channels, *CHANNEL_OPS, ALLSET_OT_cb_show_all,
+           ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag,
+           ALLSET_PT_cb_field, *CHANNEL_OPS, ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
            ALLSET_MT_cb_object, ALLSET_MT_cb_show)
@@ -1422,6 +1710,8 @@ def register():
 
 
 def unregister():
+    _watching.clear()
+    _hover.clear()
     bpy.types.UI_MT_button_context_menu.remove(draw_button_menu)
     if bpy.app.timers.is_registered(_first_rebuild):
         bpy.app.timers.unregister(_first_rebuild)
