@@ -43,6 +43,9 @@ def poll_action(action):
         return False
     if isinstance(action, mm.Sub):
         return not mm.is_unavailable(action)
+    if _is_item(action):
+        # a main-menu item (step 136): enabled like in the menu; a failing poll gives Maya's warning, not grey
+        return action[1] in menu_map.MAP
     kind, target, _props = menu_map.normalize(action)
     if kind not in ("op", "v3d"):
         return True
@@ -53,10 +56,37 @@ def poll_action(action):
         return False
 
 
+def _is_item(action):
+    """``("item", "<Maya main menu path>")``: a marking-menu entry that runs that main-menu item."""
+    return isinstance(action, tuple) and len(action) == 2 and action[0] == "item"
+
+
+def hover_notice(session):
+    """(key, Help Line text) for the hovered greyed item: its ``notices.MARKING`` notice (step 136), or None."""
+    from ..ui import notices
+    menu = session.stack[0][0].sub        # the root layout's menu (a MarkingMenu)
+    item, _opt = session.hover
+    if item is None or item.enabled:
+        return None
+    lay = session.stack[-1][0]
+    sub_path = mm.sub_label_path(menu, lay.sub)
+    if sub_path is None:
+        return None
+    key = "/".join(p for p in (menu.name, sub_path, item.label) if p)
+    n = notices.MARKING.get(key)
+    return (key, f"{item.label}: {n[1]}  (Blender: {n[0]})") if n else None
+
+
 def run_action(context, action, option=False, path=None):
     """Run a menu action like Maya runs the item (or its option box). An action with an option window
     (``operators/option_windows``) opens it as the option box, and a plain run uses its saved values (Maya runs
     a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path."""
+    if _is_item(action):
+        # The main-menu item itself (allset.menu_item: component / object mode rules, Maya warnings); its option box
+        # is the menu's (option window / dialog for that path), step 136.
+        if option and action[1] in menu_map.MAP:
+            return run_action(context, menu_map.MAP[action[1]], option=True, path=action[1])
+        return bpy.ops.allset.menu_item(item=action[1])
     from ..operators import option_windows
     window = option_windows.find_path(path) if path else option_windows.find(action)
     if window is not None:
@@ -137,6 +167,16 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         draw.redraw()
         return {'RUNNING_MODAL'}
 
+    def _show_notice(self):
+        """A greyed item under the mouse puts its notice in the Help Line, like a greyed main-menu item's tooltip
+        (step 54 / 136)."""
+        found = hover_notice(self._session)
+        key = found[0] if found else None
+        if key is not None and key != getattr(self, "_notice", None):
+            from ..ui import notices
+            notices.show(found[1])
+        self._notice = key
+
     def _cleanup(self, context):
         if getattr(self, "_timer", None) is not None:
             context.window_manager.event_timer_remove(self._timer)
@@ -174,6 +214,7 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
             if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
                 s.move(x, y, now)
                 draw.redraw()
+                self._show_notice()
             elif event.type == self.button and event.value == 'RELEASE':
                 res = s.release(x, y, now)
                 draw.redraw()

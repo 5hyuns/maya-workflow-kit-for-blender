@@ -772,6 +772,11 @@ OBJECT_MODE = {
     "Edit Mesh/Flip Triangle Edge": "Select edges to flip.",
     "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
+    # Step 136 (the Shift+RMB object menu runs these from object mode): PolyExtrude extrudes every face (checked,
+    # menu_honesty.md); Mesh > Fill Hole / Quadrangulate act on the whole object in Maya  (delegated).
+    "Edit Mesh/Extrude": ('ALL', 'FACE'),
+    "Mesh/Fill Hole": ('ALL', 'EDGE'),
+    "Mesh/Quadrangulate": ('ALL', 'FACE'),
 }
 
 # Edit / Select / Modify items run in component (mesh edit) mode the way Maya 2022 runs them there (step 129, #39 /
@@ -786,6 +791,7 @@ EDIT_MODE = {
     "Select/Inverse": ("run", ("mesh.select_all", {"action": 'INVERT'})),
     "Select/Deselect All": ("run", "allset.select_none"),       # SelectNone: select -cl + object mode
     "Select/Hierarchy": ("none",),
+    "Select/Similar": ("run", "mesh.select_similar"),           # SelectSimilar on components (step 136, delegated)
     "Edit/Delete": ("run", "allset.delete_components"),        # the Delete key (step 24)
     "Edit/Cut": ("run", "allset.delete_components"),           # deleteComponent; nothing goes to the clipboard
     "Edit/Group": ("object", _create('EMPTY_GROUP')),          # doGroup on components = an empty group null1
@@ -878,4 +884,6 @@ def normalize(value):
         return (value[0], value[1], {})
     if value[0] == "prop":   # a Maya check / radio item = a Blender property (step 104)
         return ("prop", value[1], dict(value[2]))
+    if value[0] == "item":   # a marking-menu entry that runs a main-menu item (step 136; marking/modal.run_action)
+        return ("op", "allset.menu_item", {"item": value[1]})
     return ("op", value[0], dict(value[1]))
