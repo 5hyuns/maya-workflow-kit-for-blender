@@ -1407,7 +1407,6 @@ def _m59_9_together_setup():
     C.update(a=a, b=b)
     C["p_top"] = screen(Vector((0, 0, 0.5 * k())))
     C["p_side"] = screen(Vector((3.5 * k(), 0, 0)))
-    print("DBG59", tuple(C["p_top"]), tuple(C["p_side"]), px_world(Vector()) / k(), view3d()[1].width)
     move_to(C["p_top"])
     menu("Modify/Snap Together Tool")
 
@@ -1417,13 +1416,27 @@ def _m59_9_click1():
     check("[M59-9] Snap Together Tool waits for clicks", any(op.bl_idname == "ALLSET_OT_snap_together"
                                                              for op in win().modal_operators))
     p = C["p_top"]
+    C["a_mw0"] = C["a"].matrix_world.copy()
+    C["hit_top"] = click_hit(p, Vector((0, 0, 0.5 * k())), Vector((0, 0, 1)))
     ev('LEFTMOUSE', 'PRESS', x=int(p.x), y=int(p.y))
     ev('LEFTMOUSE', 'RELEASE', x=int(p.x), y=int(p.y))
+
+
+def click_hit(p, plane_co, plane_no):
+    """The world point a click at whole pixel ``p`` hits on a face plane (step 135: one pixel is ~0.06 cm in the
+    viewport beside the wider dock, so the tool's result is checked against the clicked points)."""
+    from mathutils.geometry import intersect_line_plane
+    from bpy_extras.view3d_utils import region_2d_to_origin_3d, region_2d_to_vector_3d
+    _a, region = view3d()
+    xy = Vector((int(p.x) - region.x, int(p.y) - region.y))
+    o = region_2d_to_origin_3d(region, region.data, xy)
+    return intersect_line_plane(o, o + region_2d_to_vector_3d(region, region.data, xy), plane_co, plane_no)
 
 
 @named("m59_9_click2")
 def _m59_9_click2():
     p = C["p_side"]
+    C["hit_side"] = click_hit(p, Vector((3.5 * k(), 0, 0)), Vector((1, 0, 0)))
     move_to(p)
     ev('LEFTMOUSE', 'PRESS', x=int(p.x), y=int(p.y))
     ev('LEFTMOUSE', 'RELEASE', x=int(p.x), y=int(p.y))
@@ -1432,11 +1445,12 @@ def _m59_9_click2():
 @named("m59_9_together_check")
 def _m59_9_together_check():
     a = C["a"]
-    top = a.matrix_world @ Vector((0, 0, 0.5 * k()))
+    top = a.matrix_world @ C["a_mw0"].inverted() @ C["hit_top"]     # the clicked point of the top face, moved
+    want = C["hit_side"]
     n = (a.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized()
-    check(f"[M59-9] Snap Together: the clicked top face meets the target's side face ({cm(top)} cm vs (3.5, 0, 0)), "
-          f"facing it (normal {tuple(round(c, 3) for c in n)})",
-          (top - Vector((3.5 * k(), 0, 0))).length < 0.1 * k() and n.dot(Vector((-1, 0, 0))) > 0.999)
+    check(f"[M59-9] Snap Together: the clicked top face point meets the clicked side face point ({cm(top)} cm vs "
+          f"{cm(want)}), facing it (normal {tuple(round(c, 3) for c in n)})",
+          (top - want).length < 0.01 * k() and abs(want.x - 3.5 * k()) < 1e-6 and n.dot(Vector((-1, 0, 0))) > 0.999)
     select_only(C["b"])
     menu("Modify/Make Live")
     live = getattr(bpy.context.scene, "allset_live", None)
@@ -2289,8 +2303,11 @@ def _m78_4_check():
 def _m78_4_side():
     _a, region = view3d()
     p = location_3d_to_region_2d(region, region.data, C["side"])
-    print("DBG78", tuple(p), px_world(C["side"]) / k(), region.width)
     move_to(Vector((region.x + p.x, region.y + p.y)))
+    # where the mouse really is: move_to ends at (int(x) + 1, int(y)); one pixel is ~0.06 cm in the viewport beside
+    # the wider dock (step 135), more than the 0.05 cm tolerance
+    C["side_mouse"] = region_2d_to_location_3d(region, region.data, Vector((int(region.x + p.x) + 1 - region.x,
+                                                                             int(region.y + p.y) - region.y)), Vector())
     ev('G', 'PRESS', shift=True)
     ev('G', 'RELEASE', shift=True)
 
@@ -2299,8 +2316,11 @@ def _m78_4_side():
 def _m78_4_side_check():
     ob = bpy.context.view_layer.objects.active
     got = ob.matrix_world.translation if ob else Vector((99, 99, 99))
-    check(f"[M78-4] front ortho view: the mouse spot at the origin's depth ({cm(got)} cm, want {cm(C['side'])})",
-          abs(got.x - C["side"].x) < 0.05 * k() and abs(got.z - C["side"].z) < 0.05 * k() and abs(got.y) < 1e-6)
+    want = C["side_mouse"]
+    check(f"[M78-4] front ortho view: the mouse spot at the origin's depth ({cm(got)} cm, want {cm(want)}, "
+          f"aimed at {cm(C['side'])})",
+          abs(got.x - want.x) < 0.01 * k() and abs(got.z - want.z) < 0.01 * k() and abs(got.y) < 1e-6
+          and (want - C["side"]).length < 0.15 * k())
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.view3d.view_persportho()

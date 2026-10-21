@@ -27,3 +27,8 @@ Root causes and fixes, one per failing GUI test. Decisions made here without ask
   curve and the later toggle checks cascaded. Not a kit bug. The M76 section now zooms in 2x (view distance restored
   at `m76_2_ik`; the first click moved one tick later because the view matrices update when the view draws) —
   delegated.
+- **gui_manual_sweep [M59-9] Snap Together / [M78-4] front ortho** — test tolerance: clicks land on whole pixels
+  (`move_to` even ends one pixel right) and one pixel is ~0.06 cm in the narrower viewport (fixed lens), more than the
+  0.1 cm / 0.05 cm tolerances allowed against the aimed face centre / grid spot. Not a kit bug: compared with the
+  points under the real click pixels, both results match to < 0.001 cm. The checks now use those points (ray onto the
+  face plane / `region_2d_to_location_3d` at the mouse pixel) with a 0.01 cm tolerance — delegated.
