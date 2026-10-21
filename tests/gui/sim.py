@@ -270,3 +270,12 @@ def open_inputs(*history):
     for key in keys:
         cb.set_open(ob, key)
     cb.rebuild_rows()
+
+
+def scroll_channel_box(first=10 ** 6):
+    """Scroll the dock's Channel Box part to line ``first`` (default: the end, where the INPUTS nodes are). Step 135:
+    a long Channel Box scrolls inside its part; the wheel itself is tested in gui_step135_dock. The draw clamps it."""
+    cb = import_module(MODULE + ".ui.channel_box")
+    area = dock_area()
+    cb._scroll[area.as_pointer()] = first
+    area.tag_redraw()
