@@ -726,14 +726,44 @@ def _draw_rect(x, y, w, h, colour, texture=None):
 
 
 def _theme_colour(context):
+    """The shelf row background = the user's Image Editor header colour (read only; the kit ships no theme since
+    step 130, #40), so the shelf sits in the same colour as the Status Line row in any theme."""
     c = context.preferences.themes[0].image_editor.space.header
     return (c[0], c[1], c[2], 1.0)
+
+
+def _luma(c):
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def _text_colours(context):
+    """(current tab text, other tab text, glyph) from the user's header text colours: Maya's light current tab and
+    dimmer other tabs, readable on a dark or a light header."""
+    sp = context.preferences.themes[0].image_editor.space
+    base = _theme_colour(context)
+    hi = tuple(getattr(sp, "header_text_hi", (1.0, 1.0, 1.0)))[:3]
+    text = tuple(getattr(sp, "header_text", hi))[:3]
+    other = tuple(t * 0.7 + b * 0.3 for t, b in zip(text, base))
+    return (*hi, 1.0), (*other, 1.0), (*text, 1.0)
+
+
+def _separator_colours(base):
+    """Maya's raised vertical rule (dark line + light line) relative to the row colour."""
+    dark = tuple(c * 0.55 for c in base[:3])
+    light = tuple(c + (1.0 - c) * 0.18 for c in base[:3])
+    return (*dark, 1.0), (*light, 1.0)
+
+
+def _hover_colour(base, mapped):
+    """A hover box that shows on dark and light rows: white over dark, black over light."""
+    ink = 1.0 if _luma(base) < 0.5 else 0.0
+    return (ink, ink, ink, (0.18 if mapped else 0.08) if ink else (0.12 if mapped else 0.05))
 
 
 # Maya's shelf tab row is darker than the icon row and the Status Line (colors.json ui_samples:
 # shelf_tab_bar_bg / shelf_tab_inactive #373737, shelf_tab_active and shelf_icon_row_bg #444444), but
 # both rows share the Image Editor header colour. The tab row's header is dimmed by this black overlay
-# (#444444 -> #373737); the raised current tab (wcol_tool inner) comes out close to Maya's #444444.
+# (Maya's ratio #444444 -> #373737, applied to whatever header colour the user's theme has).
 TAB_DIM = 1.0 - 0x37 / 0x44
 
 
@@ -788,7 +818,7 @@ def _draw_tabs(context, region, base):
     cur = current(context)
     labels = dict(shelves())
     hover = _hover.get(region.as_pointer())
-    grey = (0.80, 0.80, 0.80, 1.0)
+    text_on, text_off, grey = _text_colours(context)
     for x0, y0, x1, y1, action in rects:
         if action == "menu":
             for k in range(3):
@@ -803,9 +833,9 @@ def _draw_tabs(context, region, base):
         if on:
             _draw_rect(x0, y0, x1 - x0, y1 - y0 - s, base)
         elif hover == ("tab", action):
-            _draw_rect(x0, y0, x1 - x0, y1 - y0 - s, (1, 1, 1, 0.06))
+            _draw_rect(x0, y0, x1 - x0, y1 - y0 - s, _hover_colour(dim, False))
         _text(x0 + TAB_PAD_PX * s, y0 + 5 * s, labels.get(action, action),
-              (0.86, 0.86, 0.86, 1.0) if on else (0.62, 0.62, 0.62, 1.0), TAB_FONT_PX * s)
+              text_on if on else text_off, TAB_FONT_PX * s)
 
 
 _gear_tex = []
@@ -859,12 +889,13 @@ def draw_row():
             break
         shown = slot + 1
         if slot == hover:
-            _draw_rect(x - 2, y - 2, size + 4, size + 4, (1, 1, 1, 0.18 if mapped else 0.08))
+            _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
         _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key, greyed=not mapped))
     if tabs:
+        dark, light = _separator_colours(base)
         for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
-            _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, (0.18, 0.18, 0.18, 1.0))
-            _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, (0.40, 0.40, 0.40, 1.0))
+            _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, dark)
+            _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, light)
 
 
 class ALLSET_GT_shelf_tab(bpy.types.Gizmo):

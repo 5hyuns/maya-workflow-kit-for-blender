@@ -258,8 +258,9 @@ DENSITY = (
     ("shelf height", 64, 2),
     ("shelf icon", 32, 2),
 )
-# Menu popup background: Maya #525252 (colors.json ui notes), kit theme wcol_menu_back #535353.
-MENU_BG = {"maya": "#525252", "kit": "#535353"}
+# Menu popup background: Maya #525252 (colors.json ui notes); the kit ships no theme since step 130 (#40):
+# Blender 4.5 factory wcol_menu_back #181818 (measured).
+MENU_BG = {"maya": "#525252", "kit": "#181818"}
 MENU_SEARCH = (10, 20, 690, 680)  # where the Create menu opens under the menu bar, [x, y, w, h]; from x 10: the
 # 1 px editor outline at the window edge (x 2 in 5.x, the same #535353 as the menu) is no menu (step 119)
 

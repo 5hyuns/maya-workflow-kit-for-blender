@@ -1,10 +1,9 @@
 """Step 53: Blender version compatibility and a safe install (docs/steps/step_53.md).
 
 Runs on the target Blender 4.5 and on 5.x (BLENDER=... python tests/run.py): the keymap patches are strict
-on 4.5 and only show the known Industry Compatible drift elsewhere, the Maya theme round trip gives the
-user's theme back exactly, the manifest declares the tested range, the timeline shim matches the Blender."""
+on 4.5 and only show the known Industry Compatible drift elsewhere, the manifest declares the tested range, the
+timeline shim matches the Blender. (The theme round trip tests went with the theme, step 130.)"""
 
-import hashlib
 import tomllib
 from importlib import import_module
 from pathlib import Path
@@ -16,35 +15,12 @@ import kit
 ROOT = Path(__file__).resolve().parent.parent
 patch = import_module(kit.MODULE + ".keymap.patch")
 keymap = import_module(kit.MODULE + ".keymap")
-theme = import_module(kit.MODULE + ".theme")
 time_slider = import_module(kit.MODULE + ".ui.time_slider")
 
 # Industry Compatible items the 4.5 patches expect that Blender 5.x doesn't have (measured on 5.2.2).
 KNOWN_5X_DRIFT = {
     "Node Editor: no item node.viewer_border {'type': 'Z'}",
 }
-
-
-def _theme_hash():
-    h = hashlib.sha256()
-
-    def walk(obj, depth=0):
-        if depth > 6:
-            return
-        for p in obj.bl_rna.properties:
-            if p.identifier in ("rna_type", "filepath"):
-                continue
-            v = getattr(obj, p.identifier)
-            if p.type == 'POINTER' and v is not None and hasattr(v, "bl_rna"):
-                walk(v, depth + 1)
-            elif p.type in ('FLOAT', 'INT', 'BOOLEAN', 'ENUM', 'STRING'):
-                if hasattr(v, "__len__") and not isinstance(v, str):
-                    v = [round(x, 4) if isinstance(x, float) else x for x in v]
-                elif isinstance(v, float):
-                    v = round(v, 4)
-                h.update(f"{p.identifier}={v};".encode())
-    walk(bpy.context.preferences.themes[0])
-    return h.hexdigest()
 
 
 def test_keymap_patches_strict_on_target_drift_known_elsewhere():
@@ -55,35 +31,6 @@ def test_keymap_patches_strict_on_target_drift_known_elsewhere():
         assert not patch.STRICT
         assert set(patch.DRIFT) <= KNOWN_5X_DRIFT, sorted(set(patch.DRIFT) - KNOWN_5X_DRIFT)
     assert bpy.context.window_manager.keyconfigs.get("Maya-style") is not None
-
-
-def test_theme_round_trip_gives_the_user_theme_back():
-    t = bpy.context.preferences.themes[0]
-    t.view_3d.grid = (0.9, 0.1, 0.1, 1.0)          # the user's own tweak
-    t.user_interface.wcol_regular.roundness = 0.3
-    before = _theme_hash()
-    assert bpy.ops.allset.theme_apply() == {'FINISHED'}
-    assert _theme_hash() != before
-    assert t.user_interface.wcol_regular.roundness == 0.0
-    assert bpy.ops.allset.theme_restore() == {'FINISHED'}
-    assert _theme_hash() == before, "every theme value comes back"
-    bpy.ops.preferences.reset_default_theme()
-
-
-def test_moved_theme_values_applied():
-    t = bpy.context.preferences.themes[0]
-    bpy.ops.allset.theme_apply()
-    try:
-        if hasattr(t, "common"):     # Blender 5.x
-            assert tuple(round(c, 2) for c in t.common.anim.playhead[:3]) == (0.78, 0.78, 0.78)
-            assert tuple(round(c, 2) for c in t.common.anim.keyframe[:3]) == (1.0, 0.0, 0.0)
-        else:
-            assert tuple(round(c, 2) for c in t.dopesheet_editor.frame_current[:3]) == (0.78, 0.78, 0.78)
-        ui = t.user_interface
-        assert all(getattr(ui, p.identifier).roundness == 0.0 for p in ui.bl_rna.properties
-                   if p.identifier.startswith("wcol_") and p.identifier != "wcol_state")
-    finally:
-        bpy.ops.allset.theme_restore()
 
 
 def test_manifest_declares_the_tested_range():

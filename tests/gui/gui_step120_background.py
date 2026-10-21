@@ -1,6 +1,7 @@
-"""Step 120 in a real UI: Maya's Alt+B (cycleBackgroundColor) with the Maya theme on, read back from screen pixels and
-compared with a running Maya 2022 (research/maya/screens/bg120/_bg120.json): factory flat #5c5c5c -> #a1a1a1 ->
-gradient #889db3 (top) .. #0d0d0d (bottom) -> black -> #5c5c5c, in every 3D View. Also the Color Settings dialog
+"""Steps 120 / 130 in a real UI: Maya's Alt+B (cycleBackgroundColor) in Blender's own theme, read back from screen
+pixels and compared with a running Maya 2022 (research/maya/screens/bg120/_bg120.json): the theme background counts
+as Maya's factory state -> #a1a1a1 -> black -> #5c5c5c -> #a1a1a1, per view (no gradient: the kit never writes the
+theme, step 130), in every 3D View; the theme is unchanged. Also the Color Settings dialog
 (Windows > Settings/Preferences > Color Settings) on screen."""
 
 import json
@@ -83,10 +84,16 @@ def alt_b():
     ev('B', 'RELEASE', alt=True)
 
 
+def theme_hash():
+    t = bpy.context.preferences.themes[0]
+    gr = t.view_3d.space.gradients
+    return gr.background_type, tuple(round(c, 4) for c in gr.high_gradient), tuple(round(c, 4) for c in gr.gradient)
+
+
 @step
 def s_setup():
     setup()
-    mod("theme").apply()   # Make Blender feel like Maya turns the Maya theme on (switch.set_mode)
+    C["theme"] = theme_hash()
     for area in win().screen.areas:
         if area.type == 'VIEW_3D':
             sp = area.spaces.active
@@ -115,10 +122,9 @@ def flat_check(tag, maya_label, expect_hex):
 
 @step
 def s_factory():
-    flat_check("factory", "factory", "#5c5c5c")
-    state = mod("operators.key_batch3").background_state(view3d()[0].spaces.active.shading,
-                                                         mod("operators.key_batch3").theme_gradients())
-    check(f"the view starts in Maya's factory state (GREY, got {state})", state == "GREY")
+    grab("factory_theme")
+    state = mod("operators.key_batch3").background_state(view3d()[0].spaces.active.shading)
+    check(f"the theme background counts as Maya's factory state (GREY, got {state})", state == "GREY")
     alt_b()
 
 
@@ -134,35 +140,6 @@ def s_light():
 
 
 @step
-def s_gradient_wait():
-    pass
-
-
-@step
-def s_gradient():
-    at = grab("gradient")
-    col = samples(at)
-    top, bottom = hexrgb("#889db3"), hexrgb("#0d0d0d")
-    check(f"gradient top {rgb(col[0.0])} = Maya #889db3 (ΔE00 {de2000(col[0.0], top):.2f} ≤ 2)",
-          de2000(col[0.0], top) <= 2.0)
-    check(f"gradient bottom {rgb(col[1.0])} = Maya #0d0d0d (ΔE00 {de2000(col[1.0], bottom):.2f} ≤ 2)",
-          de2000(col[1.0], bottom) <= 2.0)
-    m = maya_column("press2")
-    if m:
-        des = {t: de2000(c, nearest(m, t)) for t, c in col.items()}
-        C["gradient_de"] = des
-        print("GUI gradient profile:", ", ".join(f"{t:.1f} {rgb(col[t])}/{rgb(nearest(m, t))} {d:.1f}"
-                                                for t, d in sorted(des.items())))
-        # Blender mixes the two theme colours in scene-linear light, Maya in between (step_120.md): recorded,
-        # bounded so a wrong direction (top / bottom swapped) or a missing gradient still fails
-        check(f"gradient follows Maya down the view (max ΔE00 {max(des.values()):.1f} < 12)",
-              max(des.values()) < 12)
-    gr = mod("operators.key_batch3").theme_gradients()
-    check("the Maya theme carries the gradient (LINEAR)", gr.background_type == 'LINEAR')
-    alt_b()
-
-
-@step
 def s_black_wait():
     pass
 
@@ -170,9 +147,6 @@ def s_black_wait():
 @step
 def s_black():
     flat_check("black", "press3", "#000000")
-    gr = mod("operators.key_batch3").theme_gradients()
-    check("gradient off again, the theme's flat colour is Maya's 0.36",
-          gr.background_type == 'SINGLE_COLOR' and abs(gr.high_gradient[0] - 0.36) < 1e-3)
     alt_b()
 
 
@@ -183,7 +157,11 @@ def s_grey_wait():
 
 @step
 def s_grey():
-    flat_check("grey again", "press4", "#5c5c5c")
+    flat_check("grey", "press4", "#5c5c5c")
+    others = [a.spaces.active.shading for a, _s in mod("operators.key_batch3").view_spaces()]
+    check(f"every 3D View but the Tool Box is Maya grey ({len(others)} views)",
+          all(sh.background_type == 'VIEWPORT' and abs(sh.background_color[0] - 0.107) < 0.01 for sh in others))
+    check("the user's theme is unchanged (no gradient written)", theme_hash() == C["theme"])
     area, r = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=r):
         bpy.ops.allset.color_settings('INVOKE_DEFAULT')
@@ -199,7 +177,6 @@ def s_dialog():
     grab("color_settings")     # the dialog is looked at by hand (docs/steps/step_120.md)
     ev('ESC', 'PRESS')
     ev('ESC', 'RELEASE')
-    mod("theme").restore()
 
 
 run()

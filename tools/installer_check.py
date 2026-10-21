@@ -67,7 +67,7 @@ def main(argv=None):
     results.append(("installed into user_default and enabled", s and s["kit_version"] and
                     "bl_ext.user_default.allset" in s["addons"]))
     results.append((f"Maya keymap active (got {s and s['active_keyconfig']})", s and s["active_keyconfig"] == "Maya-style"))
-    results.append(("Make Blender Maya applied (theme changed, splash off)", s and s["theme"] != before["theme"]
+    results.append(("Make Blender Maya applied (theme kept, splash off)", s and s["theme"] == before["theme"]
                     and s["view"]["show_splash"] == "False"))
     results.append(("the user's add-ons are kept", s and set(before["addons"]) < set(s["addons"])))
     recorded = record.read_text(encoding="utf-8-sig").splitlines() if record.exists() else []

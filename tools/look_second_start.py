@@ -1,7 +1,7 @@
 """In-Blender part of tools/look_compare.py: the second GUI start in the same sandbox.
 
 After "Make Blender Maya" in the first run (tools/look_shots.py), Blender started without a file
-must come up in the Maya layout with the Maya theme and without its splash
+must come up in the Maya layout without its splash
 (docs/steps/step_42.md). Writes the checks to the result file given after ``--`` and quits.
 """
 
@@ -21,8 +21,6 @@ def _check():
     results = [
         {"name": "second start opens the Maya layout (app template Maya_Workflow_Kit)",
          "ok": prefs.app_template == "Maya_Workflow_Kit"},
-        {"name": "Maya theme still on", "ok": bool(addon and addon.maya_theme)
-         and prefs.themes[0].name == "Studio Grey (Maya-inspired)"},
         {"name": "Blender splash off", "ok": not prefs.view.show_splash},
         {"name": "no welcome dialog again", "ok": bool(addon and addon.welcome_done)},
     ]
