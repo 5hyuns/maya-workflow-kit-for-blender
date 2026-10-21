@@ -22,6 +22,8 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector, geometry
 
+from .. import live_refs
+
 PICK_RADIUS = 15          # px at UI scale 1: how far from a vertex / edge a press still picks it
 CREASE_PER_PX = 0.02      # Maya crease value per px of horizontal MMB drag (50 px = 1; sensitivity [U])
 MAYA_CREASE_MAX = 10.0    # Blender crease 1.0 = sharpness 10 (and "infinitely" sharp)
@@ -632,13 +634,13 @@ class ALLSET_OT_multicut_snap(bpy.types.Operator):
         res = bpy.ops.mesh.knife_tool('INVOKE_DEFAULT', wait_for_input=False, **knife_tool_props(context))
         if 'RUNNING_MODAL' in res:
             # The cursor lands on a whole pixel: when the cut is done, put its vertex on the exact step.
-            _snap_fixes.append((context.window, ob.name, edge.verts[0].co.copy(), edge.verts[1].co.copy(), t))
+            _snap_fixes.append((context.window.as_pointer(), ob.name, edge.verts[0].co.copy(), edge.verts[1].co.copy(), t))
             if not bpy.app.timers.is_registered(_fix_snap_points):
                 bpy.app.timers.register(_fix_snap_points, first_interval=0.1)
         return res
 
 
-_snap_fixes = []    # (window, object name, edge end a, end b, step t) waiting for the knife to finish
+_snap_fixes = []    # (window pointer (#36), object name, edge end a, end b, step t) waiting for the knife to finish
 SNAP_FIX_TOLERANCE = 0.03   # of the edge length: a cut vertex this close to the step is the snapped one
 
 
@@ -661,7 +663,10 @@ def snap_cut_vertex(bm, a, b, t):
     return True
 
 
-def _knife_running(window):
+def _knife_running(win_ptr):
+    window = live_refs.window(win_ptr)
+    if window is None:
+        return False
     try:
         return any(op.bl_idname == "MESH_OT_knife_tool" for op in window.modal_operators)
     except (ReferenceError, AttributeError):
@@ -671,8 +676,8 @@ def _knife_running(window):
 def _fix_snap_points():
     waiting = []
     for item in _snap_fixes:
-        window, name, a, b, t = item
-        if _knife_running(window):
+        win_ptr, name, a, b, t = item
+        if _knife_running(win_ptr):
             waiting.append(item)
             continue
         ob = bpy.data.objects.get(name)

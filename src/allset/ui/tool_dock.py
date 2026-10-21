@@ -17,6 +17,8 @@ hides the tab column. ``screen.area_close`` hangs in background mode (CLAUDE.md)
 
 import bpy
 
+from .. import live_refs
+
 WIDTH = 280          # unscaled px (Maya's narrow panels are 260, createGlobalOptVars.mel:218-221; its Tool Settings 460)
 MAX_SHARE = 0.35     # of the main viewport's width
 _pending = {}        # area pointer -> True while a new dock waits for its first tick
@@ -94,13 +96,19 @@ def open_dock(context, window=None):
     if configure(new, window):
         return new
     key = new.as_pointer()
+    win_ptr = live_refs.pointer(window)
     _pending[key] = True
 
     def later(tries=[20]):
+        # pointers, looked up each tick: a closed window's area must not be touched (#36)
+        win, area = live_refs.find_area(key, win_ptr or None)
         try:
-            with bpy.context.temp_override(window=window):
-                done = configure(new, window)
-        except ReferenceError:     # area or window gone
+            if area is None:       # area or window gone
+                done = True
+            else:
+                with bpy.context.temp_override(window=win):
+                    done = configure(area, win)
+        except ReferenceError:
             done = True
         tries[0] -= 1
         if done or tries[0] <= 0:
