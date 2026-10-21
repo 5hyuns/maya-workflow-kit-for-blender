@@ -21,6 +21,10 @@ Plan: docs/steps/step_130.md 결정 1 (delegated).
      session (also after an error, like Maya). Shelf runs (`persist=False`) keep nothing.
 - `command_line/maya_stub.py` (new): the module `import maya` gets (`cmds` = `cmds_shim`).
 - `ui/shelf.py` `run_script`: through `runner.run(..., persist=False, remember=False)`.
+- `ui/shelf.py` `store_path` (#42): the legacy add-on build's fallback is `<add-on folder>/user_data/shelves.json`
+  instead of `user_resource('CONFIG')/allset` — nothing is written to the user's Blender config. The extension build
+  always uses `bpy.utils.extension_path_user` (unchanged). `tests/test_step61_distribution.py` now allows no
+  `user_resource()` call at all.
 - `ui/script_editor.py`: unchanged (it already called `runner.run`).
 - `ui/render_settings.py` `registration_key`: the defining module's `classes` tuple is read from one of the class's
   own functions' `__globals__` (`_module_names`), not `sys.modules`.
