@@ -16,7 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
-from . import editor_menu_data, menu_data, menu_hotkeys, menu_map, notices
+from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -91,20 +91,21 @@ def current_set(context=None):
 
 # --- items ---------------------------------------------------------------------
 
-def draw_item(layout, path, label):
+def draw_item(layout, path, label, icon_value=0):
     """Draw one Maya menu item: its Blender action, or greyed out. An item with a notice and an
     operator substitute runs through ``allset.menu_item``, whose tooltip carries the notice (step 54). So does a
     mapped item Blender's poll would grey out (component commands in object mode): Maya keeps its menu items
-    enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``)."""
+    enabled and runs or warns (step 101 「계획」 4, ``menu_map.OBJECT_MODE``). ``icon_value``: the item's kit icon
+    (``menu_icons``, step 131), 0 = none."""
     s = menu_map.spec(path)
     # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
     # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``allset.menu_item``, which
     # no key runs, so only the Maya hotkey drawn into the label shows (step 108 「계획」 3).
     if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
             notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
-        layout.operator(ALLSET_OT_menu_item.bl_idname, text=label).item = path
+        layout.operator(ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value).item = path
         return
-    draw_spec(layout, label, s, path)
+    draw_spec(layout, label, s, path, icon_value=icon_value)
 
 
 def _has_saved_options(path):
@@ -143,29 +144,30 @@ def maya_warning(path, target):
     return f"{label}: select {what} first."
 
 
-def draw_spec(layout, label, s, path, icon='NONE'):
+def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
     """Draw a normalised action (``menu_map.normalize``); None = greyed out with
-    ``path`` (the Maya menu path) in the tooltip."""
+    ``path`` (the Maya menu path) in the tooltip. ``icon_value`` (a kit icon) wins over ``icon``."""
+    iv = {"icon_value": icon_value} if icon_value else {"icon": icon}
     if s is None:
-        layout.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label, icon=icon).item = path
+        layout.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label, **iv).item = path
         return
     kind, target, props = s
     if kind == "prop":
         draw_prop(layout, label, target, props, path)
     elif kind == "menu":
-        layout.menu(proxy_menu(target), text=label, icon=icon)
+        layout.menu(proxy_menu(target), text=label, **iv)
     elif kind == "pie":
-        layout.operator("wm.call_menu_pie", text=label + " ▸", icon=icon).name = target
+        layout.operator("wm.call_menu_pie", text=label + " ▸", **iv).name = target
     elif kind == "tool":
-        op = layout.operator(ALLSET_OT_menu_tool.bl_idname, text=label, icon=icon)
+        op = layout.operator(ALLSET_OT_menu_tool.bl_idname, text=label, **iv)
         op.tool = target
         op.edit = props["edit"]
     elif kind == "v3d":
-        op = layout.operator(ALLSET_OT_menu_run.bl_idname, text=label, icon=icon)
+        op = layout.operator(ALLSET_OT_menu_run.bl_idname, text=label, **iv)
         op.op = target
         op.props = json.dumps(props)
     else:
-        op = layout.operator(target, text=label, icon=icon)
+        op = layout.operator(target, text=label, **iv)
         for key, value in props.items():
             setattr(op, key, value)
 
@@ -243,13 +245,13 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 BOX_MARK = "  ❒"
 
 
-def _draw_boxed(layout, path, text):
+def _draw_boxed(layout, path, text, icon_value=0):
     """An item with a Maya option box; ``text`` already ends with the box mark (``item_texts``)."""
     s = menu_map.spec(path)
     if s is None or s[0] in ("menu", "pie"):
-        draw_spec(layout, text, s, path)
+        draw_spec(layout, text, s, path, icon_value=icon_value)
         return
-    op = layout.operator_menu_hold(ALLSET_OT_menu_item.bl_idname, text=text,
+    op = layout.operator_menu_hold(ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value,
                                    menu=ALLSET_MT_option_box.bl_idname)
     op.item = path
 
@@ -347,12 +349,13 @@ def _draw_items(layout, items, prefix, submenus):
                 # 900 px window at 125 % (step 108 「계획」 4)
                 _section_label(layout, it[1])
             continue
+        iv = menu_icons.icon_value(path)
         if sub_items(path, it) and path not in menu_map.MAP:
-            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""))
+            layout.menu(submenus[path], text=it[0] + (BOX_MARK if path in OPTION_BOXES else ""), icon_value=iv)
         elif path in OPTION_BOXES:
-            _draw_boxed(layout, path, texts[path])
+            _draw_boxed(layout, path, texts[path], iv)
         else:
-            draw_item(layout, path, texts[path])
+            draw_item(layout, path, texts[path], iv)
 
 
 def _section_label(layout, text):
@@ -879,9 +882,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     register_proxies()
+    menu_icons.register()
 
 
 def unregister():
+    menu_icons.unregister()
     unregister_proxies()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
