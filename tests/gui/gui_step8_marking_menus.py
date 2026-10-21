@@ -26,7 +26,7 @@ def cube():
 @step
 def s_setup():
     C["x"], C["y"] = setup()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
+    check("Maya keymap active", sys.modules["sim"].maya_keys())
     # Deselect: the RMB menu must target the object under the mouse, not the selection.
     for o in bpy.context.view_layer.objects:
         o.select_set(False)

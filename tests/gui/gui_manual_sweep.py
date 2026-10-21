@@ -291,7 +291,7 @@ def m70_3_a():
     x0 = r.view2d.region_to_view(0, 0)[0]
     x1 = r.view2d.region_to_view(r.width, 0)[0]
     check(f"[M70-3] A frames all keys (5..30 in view {x0:.1f}..{x1:.1f})", x0 < 5 and x1 > 30)
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = sys.modules["sim"].maya_kc()
     rep = [km.name for km in kc.keymaps for it in km.keymap_items
            if it.active and it.idname == "screen.repeat_last" and it.type == 'G' and not (it.shift or it.ctrl or it.alt)]
     v3d_g = [it.idname for km_name in ("3D View", "Object Mode", "3D View Generic")
@@ -559,7 +559,7 @@ def m78_3_left():
     e2 = shared_edge(bpy.data.objects["strip"])
     check(f"[M78-3] Ctrl+Alt+Left spins it the other way, back ({e2})", e2 == C["e0"])
     mm = mod("ui.menu_map").MAP
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = sys.modules["sim"].maya_kc()
     keys = {it.type: bool(it.properties.use_ccw) for it in kc.keymaps["Mesh"].keymap_items
             if it.active and it.idname == "mesh.edge_rotate" and it.ctrl and it.alt}
     check(f"[M78-3] the keys spin like the menu (Right = Forward, Left = Backward: {keys})",
@@ -610,7 +610,7 @@ def m78_6_two():
     gk = mod("operators.graph_keys")
     # the notice is the operator's INFO report (status bar = Maya Help Line); Python can't read the report list,
     # so the check is: 2 ran the STACKED mode (normalized) and that mode reports the notice
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = sys.modules["sim"].maya_kc()
     two = [it for it in kc.keymaps["Graph Editor"].keymap_items
            if it.active and it.type == 'TWO' and it.idname == "allset.graph_view_mode"]
     check(f"[M78-6] 2 = Stacked mode: normalized + its 'no Stacked' report ({sp.use_normalization}, "
@@ -5323,7 +5323,7 @@ def _m60_maya():
     kcs = bpy.context.window_manager.keyconfigs
     ws = win().workspace
     check(f"[M60-2] Ctrl+Alt+Shift+M over the {C['from']} -> Maya mode (keymap {kcs.active.name})",
-          kcs.active.name == "Maya-style")
+          sys.modules["sim"].maya_keys())
     check(f"[M60-3] Maya mode: the Maya layout workspace ({ws.name}); the file untouched",
           ws.name == sw().WORKSPACE and file_state() == C["file"])
     C["tips0"] = bpy.context.preferences.view.show_tooltips_python

@@ -102,7 +102,7 @@ def on_edge_ts(a, b):
 @step
 def s_setup():
     C["x"], C["y"] = setup()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
+    check("Maya keymap active", sys.modules["sim"].maya_keys())
     bpy.context.view_layer.objects.active = cube()
     cube().select_set(True)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
