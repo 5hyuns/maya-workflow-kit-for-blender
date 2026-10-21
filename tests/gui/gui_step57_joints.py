@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, px, run, screenshot, setup, step, tap, view3d, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -54,8 +54,7 @@ def skeleton():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

@@ -74,14 +74,14 @@ def test_no_hard_coded_repository_names():
 
 
 def test_writes_outside_the_extension_folder_are_known():
-    """Writable data goes to bpy.utils.extension_path_user; the exceptions are reviewed in
-    docs/DISTRIBUTION.md: the layout template (an app template is not an extension type) and the
-    legacy add-on build's CONFIG fallback. A new user_resource() call must be added there first."""
-    known = {"app_template/__init__.py", "switch.py", "theme/__init__.py", "ui/shelf.py"}
+    """Writable data goes to bpy.utils.extension_path_user; the only exception is the legacy add-on build's
+    CONFIG fallback (docs/DISTRIBUTION.md). Since step 130 the layout file is never copied out of the extension
+    (no app template) and the switch keeps no snapshot. A new user_resource() call must be added there first."""
+    known = {"theme/__init__.py", "ui/shelf.py"}     # theme: removed by step 130 lane H; shelf: #42
     found = {rel for rel, text in _sources()
              if any("user_resource(" in code for code in _code_lines(text))}
     assert found <= known, f"new write location outside extension_path_user: {sorted(found - known)}"
-    for rel in known - {"app_template/__init__.py"}:
+    for rel in found:
         text = dict(_sources())[rel]
         assert "extension_path_user" in text and re.search(r"except \(?ValueError", text), \
             f"{rel}: CONFIG must stay the legacy-build fallback only"

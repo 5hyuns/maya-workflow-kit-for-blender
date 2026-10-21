@@ -163,11 +163,11 @@ def test_status_line_collapse_handles():
     handles = [e for e in log if e[1] and e[1][0] == "allset.status_group"]
     assert len(handles) == len(groups), handles
     assert set(status_line.DEFAULT_COLLAPSED) <= set(groups)
-    assert any(e[0] == "operator" and e[1] and e[1][0] == "wm.read_homefile" for e in log)
+    assert any(e[0] == "operator" and e[1] and e[1][0] == "allset.new_maya_scene" for e in log)
     assert bpy.ops.allset.status_group(group="FILE") == {'FINISHED'}
     try:
         log = draw()
-        assert not any(e[1] and e[1][0] in ("wm.read_homefile", "ed.undo") for e in log), "File group hidden"
+        assert not any(e[1] and e[1][0] in ("allset.new_maya_scene", "ed.undo") for e in log), "File group hidden"
         assert any(e[1] and e[1][0] == "render.render" for e in log)
     finally:
         bpy.ops.allset.status_group(group="FILE")
