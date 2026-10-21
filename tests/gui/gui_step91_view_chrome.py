@@ -72,7 +72,9 @@ def s_scene():
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = cube()
     ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
-    key('THREE')                  # Smooth Mesh Preview: its Adjust Last Operation panel shows (the HUD)
+    # Shift+H (Show Selected) leaves its Adjust Last Operation panel (the HUD); since step 134 the display keys
+    # (3 = Smooth Mesh Preview) no longer show one (#58).
+    key('H', shift=True)
 
 
 @step
