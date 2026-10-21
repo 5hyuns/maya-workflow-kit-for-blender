@@ -807,3 +807,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 soft select
+
+- [ ] (step 129) Maya Workflow Kit layout, cube in object mode: B → in-view message; F11 (faces) → soft select still on (header proportional button lit); B in face mode → off; back to object mode → off too (#15). Open a file saved with soft select on → it follows the current setting (Maya global option).
+- [ ] (step 129) Edit mode, select one vertex of a dense grid, B on: the wire around it is yellow at the selection → red → black at the radius (Maya look, `tmp/maya129/out/softsel_00_on.png` reference); G moves exactly the coloured region and the colours stay put during the move; switch Volume / Surface and the falloff curve in the Modeling Toolkit → colours follow at once.
+- [ ] (step 129) Hold B, drag with the **middle** mouse (and with the left) left / right: a white circle of the radius around the selection + "Falloff Radius: x" next to the mouse, the view does not orbit, releasing B keeps soft select on. Judge whether ×2 per 100 px feels like Maya (Maya's rate is not measured: synthetic drags don't reach its screen slider).
+- [ ] (step 129) Feel on a ~100k-vertex mesh: orbiting / selecting with soft select on stays fluid; Surface mode first draw after a selection change ~0.5 s at radius ≈ 6 % of the mesh (headless: Volume 0.2 s first / 5 ms on a radius change, Surface 0.5 s).
