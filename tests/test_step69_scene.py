@@ -108,7 +108,7 @@ def test_ctrl_alt_s_is_maya_increment():
     by_id = {it[1]: it for it in patches.ADDED if it[0] == "Window"}
     for idname in ("allset.open_scene", "allset.save_scene", "allset.save_scene_as", "allset.create_reference"):
         assert idname in by_id, idname
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Window"]
+    km = kit.maya_kc().keymaps["Window"]
     incr = [kmi for kmi in km.keymap_items if kmi.type == 'S' and kmi.ctrl and kmi.alt and kmi.active]
     assert [kmi.idname for kmi in incr] == ["allset.increment_save"], [kmi.idname for kmi in incr]
     assert not [kmi for kmi in km.keymap_items if kmi.idname in {"wm.open_mainfile", "wm.save_mainfile",

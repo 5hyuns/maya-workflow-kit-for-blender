@@ -53,7 +53,8 @@ def tool_operators(context, tool):
     except (AttributeError, TypeError):
         item = None
     names = getattr(item, "keymap", None) or ()
-    keymaps = context.window_manager.keyconfigs.active.keymaps if context.window_manager.keyconfigs.active else {}
+    # the merged keymaps (user = active keyconfig + add-on items: the Maya items live in the add-on one, step 130)
+    keymaps = context.window_manager.keyconfigs.user.keymaps if context.window_manager.keyconfigs.user else {}
     for name in names if isinstance(names, (tuple, list)) else ():
         km = keymaps.get(name) if isinstance(name, str) else None
         for kmi in (km.keymap_items if km else ()):
@@ -671,8 +672,9 @@ POLY_BUILD_KEYMAP = "3D View Tool: Edit Mesh, Poly Build"
 
 
 def keymap_rows(context, name):
-    """[(keys, operator name)] of a tool keymap of the active keyconfig (empty in -b: no keyconfig there)."""
-    kc = context.window_manager.keyconfigs.active
+    """[(keys, operator name)] of a tool keymap as Blender uses it (the user keyconfig = active keyconfig + add-on
+    items, where the Maya items are since step 130; empty in -b)."""
+    kc = context.window_manager.keyconfigs.user
     km = kc.keymaps.get(name) if kc is not None else None
     out = []
     for kmi in (km.keymap_items if km is not None else ()):

@@ -120,7 +120,7 @@ def test_color_settings_operator():
 
 
 def test_keys_alt_b_cycles_ctrl_b_bevels():
-    kc = bpy.context.window_manager.keyconfigs.active
+    kc = kit.maya_kc()
     km = kc.keymaps["3D View"]
     alt_b = [k for k in km.keymap_items if k.type == 'B' and k.alt and not k.ctrl and not k.shift and k.active]
     assert [k.idname for k in alt_b] == ["allset.cycle_background"]

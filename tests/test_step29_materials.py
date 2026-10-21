@@ -212,7 +212,7 @@ def test_rmb_menu_lists_material_items():
 
 
 def test_shift_t_keymap():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     for km_name in ("Object Mode", "Mesh"):
         km = kc.keymaps[km_name]
         hits = [k.idname for k in km.keymap_items if k.active and k.type == 'T' and k.value == 'PRESS'

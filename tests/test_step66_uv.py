@@ -228,7 +228,7 @@ def test_uv_editor_marking_menus():
 
 
 def _items(km_name, etype, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
+    km = kit.maya_kc().keymaps[km_name]
     return [(k.idname, {p: getattr(k.properties, p) for p in k.properties.keys()} if k.properties else {})
             for k in km.keymap_items if k.active and k.type == etype and k.value == 'PRESS'
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]

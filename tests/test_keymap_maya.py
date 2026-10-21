@@ -20,7 +20,7 @@ KC_NAME = "Maya-style"
 
 
 def _kc():
-    return bpy.context.window_manager.keyconfigs[KC_NAME]
+    return kit.maya_kc()
 
 
 def _kmis(km_name, idname, type, value="PRESS", shift=False, ctrl=False, alt=False):
@@ -42,9 +42,9 @@ def _any_event(km_name, type, value="PRESS", shift=False, ctrl=False, alt=False)
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]
 
 
-def test_maya_keyconfig_is_active_and_full():
+def test_maya_keymap_is_full_and_active_keyconfig_unchanged():
     kcs = bpy.context.window_manager.keyconfigs
-    assert kcs.active.name == KC_NAME, kcs.active.name
+    assert kcs.active.name == "Blender" and KC_NAME not in kcs, (kcs.active.name, [k.name for k in kcs])
     n = sum(len(km.keymap_items) for km in _kc().keymaps)
     assert len(_kc().keymaps) >= 240 and n > 2000, (len(_kc().keymaps), n)
 
@@ -224,12 +224,15 @@ def test_mapping_rows_are_bound():
     assert checked >= 20 and not bad, (checked, bad)
 
 
-def test_disable_restores_previous_keyconfig():
+def test_disable_leaves_keyconfigs_alone():
+    """Step 130: no keyconfig of the kit's own, the active one never changes; disable removes every Maya item."""
     kcs = bpy.context.window_manager.keyconfigs
+    active = kcs.active.name
     kit.disable()
     try:
         assert KC_NAME not in kcs, [k.name for k in kcs]
-        assert kcs.active is not None and kcs.active.name != KC_NAME
+        assert kcs.active.name == active
+        assert not [k for km in kcs.addon.keymaps for k in km.keymap_items if k.idname.startswith("allset.")]
     finally:
         kit.enable()
-    assert kcs.active.name == KC_NAME
+    assert kcs.active.name == active and KC_NAME not in kcs

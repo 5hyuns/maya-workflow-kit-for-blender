@@ -145,7 +145,7 @@ def test_keymap():
     assert added[("Graph Editor", "allset.set_tangent", "D", False)] == {"kind": "AUTO"}
     for km in ("Object Mode", "Pose", "Graph Editor", "Dopesheet"):
         assert added[(km, "allset.tap_hold", "S", True)] == {"binding": "key_tangent"}, km
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     om = kc.keymaps["Object Mode"]
     assert not [i for i in om.keymap_items if i.idname == "anim.keyframe_insert" and i.type == 'S' and i.shift]
     for rtc in ("graphEditor:GraphEditorFramePlaybackRange", "graphEditor:TangentAuto", "KeyframeTangentMarkingMenu"):

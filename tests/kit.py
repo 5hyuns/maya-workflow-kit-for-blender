@@ -36,6 +36,74 @@ def maya_mode_on():
     importlib.import_module(MODULE + ".switch").set_mode(True, layout=False, theme=False)
 
 
+class _MayaKeymap:
+    """One Maya keymap as Blender uses it: the add-on keymap's items in merged (effective) order — Blender puts
+    add-on items at the head one by one, so the kit stores them reversed (step 130) — or, for a modal map, the
+    active keyconfig's modal map with the items that are on."""
+
+    def __init__(self, km, modal):
+        self._km = km
+        items = [k for k in km.keymap_items if k.active] if modal else list(reversed(km.keymap_items))
+        self.keymap_items = _Items(items)
+
+    def __getattr__(self, name):
+        return getattr(self._km, name)
+
+
+class _Items(list):
+    def find_from_operator(self, idname):
+        return next((k for k in self if k.idname == idname), None)
+
+
+class _MayaKeymaps:
+    def _wrap(self, name, space_type=None, region_type=None):
+        kcs = bpy.context.window_manager.keyconfigs
+        for kc, modal in ((kcs.addon, False), (kcs.active, True)):
+            for km in (kc.keymaps if kc else ()):
+                if km.name == name and km.is_modal == modal and (space_type is None or km.space_type == space_type) \
+                        and (region_type is None or km.region_type == region_type):
+                    return _MayaKeymap(km, modal)
+        return None
+
+    def __getitem__(self, name):
+        km = self._wrap(name)
+        if km is None:
+            raise KeyError(name)
+        return km
+
+    def get(self, name, default=None):
+        km = self._wrap(name)
+        return default if km is None else km
+
+    def find(self, name, space_type='EMPTY', region_type='WINDOW'):
+        return self._wrap(name, space_type, region_type)
+
+    def __contains__(self, name):
+        return self._wrap(name) is not None
+
+    def __iter__(self):
+        kcs = bpy.context.window_manager.keyconfigs
+        for km in (kcs.addon.keymaps if kcs.addon else ()):
+            yield _MayaKeymap(km, False)
+        for km in (kcs.active.keymaps if kcs.active else ()):
+            if km.is_modal:
+                yield _MayaKeymap(km, True)
+
+    def __len__(self):
+        return sum(1 for _ in self)
+
+
+class _MayaKeyconfig:
+    name = "Maya (add-on keymap items)"
+    keymaps = _MayaKeymaps()
+
+
+def maya_kc():
+    """The Maya keymap for tests: since step 130 its items are add-on keymap items (non-modal) plus the active
+    keyconfig's modal maps patched in memory — no keyconfig of its own."""
+    return _MayaKeyconfig()
+
+
 def disable():
     addon_utils.disable(MODULE, default_set=True, handle_error=_raise)
     assert MODULE not in bpy.context.preferences.addons, f"{MODULE} still in preferences.addons"

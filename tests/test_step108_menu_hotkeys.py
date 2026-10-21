@@ -129,7 +129,7 @@ def test_no_blender_shortcut_source_in_menus():
                 blender_menus = {v[0] for v in ms.menu_map.BLENDER_MENU.values()}   # the kit's "Blender" submenus
                 assert target.startswith("ALLSET_MT_") or target == "TOPBAR_MT_file_open_recent" \
                     or target in blender_menus, (maya_name, text, target)
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Window"]
+    km = kit.maya_kc().keymaps["Window"]
     assert not [k for k in km.keymap_items if k.idname == "wm.call_menu" and k.type == 'O' and k.ctrl and k.shift]
 
 

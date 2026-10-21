@@ -19,7 +19,7 @@ def _ts():
 
 
 def _kmis(km_name, type, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps[km_name]
+    km = kit.maya_kc().keymaps[km_name]
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]
 

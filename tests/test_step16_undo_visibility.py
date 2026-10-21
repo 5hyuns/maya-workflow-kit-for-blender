@@ -14,7 +14,7 @@ KC = "Maya-style"
 
 
 def _items(km, type, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs[KC].keymaps[km]
+    km = kit.maya_kc().keymaps[km]
     return [(k.idname, dict(k.properties.items()) if k.properties else {}) for k in km.keymap_items
             if k.active and k.type == type and k.value == 'PRESS' and k.shift == shift
             and k.ctrl == ctrl and k.alt == alt and not k.oskey]
@@ -32,7 +32,7 @@ def test_undo_redo_keys_in_screen():
 
 
 def _kmis(km, type, shift=False, ctrl=False, alt=False):
-    km = bpy.context.window_manager.keyconfigs[KC].keymaps[km]
+    km = kit.maya_kc().keymaps[km]
     return [k for k in km.keymap_items if k.active and k.type == type and k.value == 'PRESS'
             and k.shift == shift and k.ctrl == ctrl and k.alt == alt and not k.oskey]
 
@@ -53,7 +53,7 @@ def test_visibility_keys():
 def test_isolate_and_invert_keys():
     got = _items("3D View", "ONE", ctrl=True)
     assert [g[0] for g in got] == ["view3d.localview"], got
-    km = bpy.context.window_manager.keyconfigs[KC].keymaps["3D View"]
+    km = kit.maya_kc().keymaps["3D View"]
     kmi = next(k for k in km.keymap_items if k.idname == "view3d.localview" and k.ctrl and k.type == 'ONE')
     assert kmi.properties.frame_selected is False, "isolate keeps the camera"
     assert _items("Mesh", "ONE", ctrl=True) == [], "Mesh Ctrl+1 vertex mode removed"

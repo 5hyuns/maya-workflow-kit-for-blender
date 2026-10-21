@@ -156,7 +156,7 @@ def user_setup_checks(before_path, after_path, disabled_path):
         (f"install changes only the declared navigation preferences ({sorted(changed)})",
          changed <= DECLARED_INPUTS),
         (f"active keymap: {before['active_keyconfig']} -> {after['active_keyconfig']} (declared)",
-         after["active_keyconfig"] in (before["active_keyconfig"], "Maya-style")),
+         after["active_keyconfig"] == before["active_keyconfig"]),   # step 130: never changed
         (f"disabling the kit restores everything ({[k for k, v in restored.items() if not v] or 'all'})",
          all(restored.values()) and kit not in off["addons"] and set(before["addons"]) <= set(off["addons"])),
     ]

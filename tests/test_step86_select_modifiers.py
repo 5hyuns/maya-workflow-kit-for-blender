@@ -11,7 +11,7 @@ patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
 
 def _items(km, idname, value):
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     return [k for k in kc.keymaps[km].keymap_items
             if k.active and k.idname == idname and k.type == 'LEFTMOUSE' and k.value == value and not k.alt]
 
@@ -30,7 +30,7 @@ def test_dopesheet_and_nla_clicks():
             assert m[mods].properties.extend, (km, mods)
     m = _by_mods(_items("Dopesheet", "action.clickselect", 'PRESS'))
     assert not m[(False, False)].properties.column and not m[(False, False)].properties.channel
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     alts = [k for k in kc.keymaps["Dopesheet"].keymap_items if k.idname == "action.clickselect" and k.alt]
     assert len(alts) == 4, "the Alt column / channel variants stay"
 
@@ -56,13 +56,13 @@ def test_boxes():
         assert {mods: k.properties.mode for mods, k in m.items()} == want, (km, {k: v.properties.mode for k, v in m.items()})
         assert all(k.properties.tweak for k in m.values())
     # Node Editor Ctrl+drag stays Blender's link detach
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     assert [k for k in kc.keymaps["Node Editor"].keymap_items
             if k.idname == "node.link" and k.type == 'LEFTMOUSE' and k.value == 'CLICK_DRAG' and k.ctrl and not k.shift]
 
 
 def test_ctrl_shift_items_removed():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     for km, idname in patches.SELECT_CTRL_SHIFT_REMOVED:
         left = [k for k in kc.keymaps[km].keymap_items if k.idname == idname and k.type == 'LEFTMOUSE'
                 and k.shift and k.ctrl and not k.alt]

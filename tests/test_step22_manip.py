@@ -28,7 +28,7 @@ def _fresh():
 
 
 def test_gizmo_keymaps_run_smart_duplicate_first():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     for name in patches.GIZMO_KEYMAPS:
         items = [k for k in kc.keymaps[name].keymap_items if k.active]
         ids = [k.idname for k in items]
@@ -43,7 +43,7 @@ def test_gizmo_keymaps_run_smart_duplicate_first():
 def test_shift_precision_kept():
     # checked (GUI): Shift held when the drag starts doesn't turn precision on, so Blender's
     # Shift precision during a drag stays.
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Transform Modal Map"]
+    km = kit.maya_kc().keymaps["Transform Modal Map"]
     assert {k.type for k in km.keymap_items if k.propvalue == 'PRECISION'} == {'LEFT_SHIFT', 'RIGHT_SHIFT'}
 
 

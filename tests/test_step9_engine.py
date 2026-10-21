@@ -298,7 +298,7 @@ def test_poll_action_cache_inputs():
 # --- keymap, prefs, cleanup ----------------------------------------------------------
 
 def test_space_hotbox_keymap():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     for km in maya_patches.HOTBOX_KEYMAPS:
         items = [k for k in kc.keymaps[km].keymap_items if k.type == 'SPACE' and not (k.ctrl or k.shift or k.alt)]
         assert [k.idname for k in items] == ["allset.hotbox"], (km, [k.idname for k in items])

@@ -28,7 +28,7 @@ def _cube(name="pCube1", parent=None):
 
 
 def _keymap():
-    return bpy.context.window_manager.keyconfigs["Maya-style"].keymaps
+    return kit.maya_kc().keymaps
 
 
 def _items(km, t, **mods):

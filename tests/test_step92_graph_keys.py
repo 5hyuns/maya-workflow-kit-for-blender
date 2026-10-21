@@ -94,7 +94,7 @@ def test_snap_toggle_operator_and_menu():
 
 
 def test_keymap_items():
-    km = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Graph Editor"]
+    km = kit.maya_kc().keymaps["Graph Editor"]
 
     def one(t, idname, **mods):
         items = [k for k in km.keymap_items if k.active and k.type == t and k.idname == idname

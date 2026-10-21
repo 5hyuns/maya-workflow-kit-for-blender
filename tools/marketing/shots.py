@@ -170,7 +170,8 @@ def tool(name):
 @step
 def s_dog():
     kc = bpy.context.window_manager.keyconfigs.active
-    check("Maya keymap active in the Maya layout", kc is not None and kc.name == "Maya-style")
+    check("Maya keymap on in the Maya layout (add-on items, step 130)",
+          kc is not None and sys.modules[MODULE + ".keymap"].is_applied())
     maya_look()
     clear_objects()
     check("DOGWALK set appended (Pinda, Chocomel, snowman)", dog_scene(C))

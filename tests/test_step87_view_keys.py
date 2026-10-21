@@ -57,7 +57,7 @@ def test_camera_offset_follows_the_mouse():
 
 
 def test_keymap_items():
-    kc = bpy.context.window_manager.keyconfigs["Maya-style"]
+    kc = kit.maya_kc()
     km = kc.keymaps["3D View"]
 
     def one(t, idname, **mods):
