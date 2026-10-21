@@ -271,9 +271,9 @@ ENTRIES = {
                            note="Blender 에 Show Manipulator 툴 없음: Transform 툴"),
     "NonSacredTool": _e("KIT", (OBJ, "allset.last_tool", {}),
                         note="Q/W/E/R/T 가 아닌 마지막 툴 (모드별 기억)"),
-    "MultiCutToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "builtin.knife"}),
-                                  note="Knife, 오브젝트 모드면 편집 모드로; 툴 안 Ctrl+클릭 = 엣지 루프 (Ctrl+MMB 가운데), "
-                                       "Shift = Snap Step % (step 64)"),
+    "MultiCutToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "allset.multi_cut_tool"}),
+                                  note="kit Multi-Cut 툴 (step 129), 오브젝트 모드면 편집 모드로; 툴 안 Ctrl+클릭 = 엣지 "
+                                       "루프 (Ctrl+MMB 가운데), Shift = Snap Step %, Backspace, Enter/RMB 완료"),
     "QuadDrawToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "builtin.poly_build"}),
                                   note="Poly Build, 오브젝트 모드면 편집 모드로"),
     "CompleteCurrentTool": _e("NO", note="Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거"),

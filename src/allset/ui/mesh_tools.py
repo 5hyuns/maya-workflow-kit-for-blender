@@ -4,27 +4,24 @@
 - Target Weld (Maya Mesh Tools > Target Weld, ): LMB press on a
   vertex / edge starts ``allset.target_weld``; a press away from them falls back to the select tool.
 - Crease Tool (Mesh Tools > Crease Tool): MMB drag = ``allset.crease_drag``; LMB selects (fallback).
-- Multi-Cut stays Blender's knife (``builtin.knife``); its Ctrl / Shift keys are keymap patches
-  (keymap/maya_patches.py patch_multi_cut). Its Maya settings (shots/modeling_06_win1.png) are drawn in the
-  Tool Settings panel in front of Blender's knife settings.
+- Multi-Cut (step 129, ): the kit tool ``allset.multi_cut_tool`` running
+  ``allset.multi_cut`` (operators/multi_cut.py); its Tool Settings are Maya's (shots/modeling_06_win1.png).
 Settings live in ``Scene.allset_mesh_tools`` (operators/mesh_tools.py).
 """
 
 import bpy
 
 from . import notices
-from ..operators import cut_sew, mesh_tools
+from ..operators import cut_sew, mesh_tools, multi_cut
 
 # Greyed Maya settings: (notice key, label) -> (substitute, one line)
 GREY = {
-    "Multi-Cut/Smoothing Angle": (
-        "Mark Sharp", "Blender's cuts don't harden edges by angle: mark them with Mesh Display > Harden Edge."),
     "Multi-Cut/Edge Flow": (
-        "Edge Slide", "Blender has no edge flow for new loops: slide them with G G (Edge Slide)."),
-    "Multi-Cut/Subdivisions": (
-        "Subdivide", "New edges have no extra divisions: Edit Mesh > Add Divisions afterwards."),
-    "Multi-Cut/Slice Tool": (
-        "Bisect tool", "Blender slices with the Bisect tool (Knife group in the toolbar), not inside the knife."),
+        "Edge Slide", "New loops are straight: Blender has no edge flow; slide them with G G (Edge Slide)."),
+    "Multi-Cut/Color Settings": (
+        "Preferences > Themes", "The cut colours are the kit's (yellow points, grey preview, orange loop)."),
+    "Multi-Cut/Live Constraint Options": (
+        "Snap to Face", "No live surface in Blender: snap with the Face snap while moving the new vertices."),
     "Crease Tool/Extend to creased components": (
         "Select Similar", "Select the creased edges with Select > Select Similar > Crease first."),
 }
@@ -106,7 +103,89 @@ class ALLSET_TL_cut_sew(bpy.types.WorkSpaceTool):
         row.operator("allset.uv_unfold_layout", text="Unfold + Layout (d)")
 
 
-TOOLS = (ALLSET_TL_target_weld, ALLSET_TL_crease, ALLSET_TL_cut_sew)
+MULTI_CUT_SHORTCUTS = (
+    ("Click edge / face / vertex", "place a cut point (drag: slide it along the edge)"),
+    ("Shift", "snap the point to the Snap Step %"),
+    ("Ctrl+click", "insert an edge loop (Ctrl+Shift: at the Snap Step)"),
+    ("Ctrl+middle-click", "edge loop in the middle of the edge"),
+    ("Backspace", "remove the last point"),
+    ("Enter / right-click", "complete the cut (the tool stays)"),
+    ("Esc", "drop the points; with none, leave the tool"),
+    ("Drag across faces", "slice"),
+)
+
+
+def _hover_items():
+    items = [("allset.multi_cut_hover", {"type": 'MOUSEMOVE', "value": 'ANY', "any": True}, None)]
+    for key in ('LEFT_CTRL', 'RIGHT_CTRL', 'LEFT_SHIFT', 'RIGHT_SHIFT'):
+        for value in ('PRESS', 'RELEASE'):
+            items.append(("allset.multi_cut_hover", {"type": key, "value": value, "any": True}, None))
+    return tuple(items)
+
+
+class ALLSET_TL_multi_cut(bpy.types.WorkSpaceTool):
+    """Maya Multi-Cut: points on edges / faces / vertices, Enter or RMB cuts,
+    Ctrl = edge loop, Shift = Snap Step, Backspace, drag = slice. No select fallback: Maya's Multi-Cut LMB doesn't
+    select."""
+    bl_space_type = 'VIEW_3D'
+    bl_context_mode = 'EDIT_MESH'
+    bl_idname = multi_cut.TOOL
+    bl_label = "Multi-Cut"
+    bl_description = ("Click edges, faces or vertices to place cut points, Enter or right-click to cut. "
+                      "Ctrl+click = edge loop, Shift = Snap Step %, Backspace = remove the last point, "
+                      "drag across faces = slice (Maya Multi-Cut)")
+    bl_icon = "ops.mesh.knife_tool"
+    bl_widget = None
+    bl_keymap = (
+        # loops first: one undo step each and Adjust Last Operation Position (step 64's operator); they pass
+        # through when no edge is under the mouse
+        ("allset.multicut_loop", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True}, None),
+        ("allset.multicut_loop", {"type": 'LEFTMOUSE', "value": 'PRESS', "ctrl": True, "shift": True},
+         {"properties": [("snap", True)]}),
+        ("allset.multicut_loop", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "ctrl": True},
+         {"properties": [("center", True)]}),
+        ("allset.multi_cut", {"type": 'LEFTMOUSE', "value": 'PRESS', "any": True}, None),
+        ("allset.multi_cut_exit", {"type": 'ESC', "value": 'PRESS'}, None),
+        *_hover_items(),
+    )
+
+    @staticmethod
+    def draw_settings(context, layout, tool):
+        s = mesh_tools.settings(context)
+        if context.region.type == 'TOOL_HEADER':
+            layout.prop(s, "snap_step", slider=True)
+            return
+        draw_multi_cut(layout, s)
+
+
+def draw_multi_cut(layout, s):
+    """Maya's Multi-Cut Tool Settings, Maya's order and factory values (shots/modeling_06_win1.png)."""
+    layout.prop(s, "snap_step", slider=True)
+    box = layout.box()
+    box.label(text="Cut / Insert Edge Loop Tool")
+    box.prop(s, "smoothing_angle", slider=True)
+    _grey(box, "Multi-Cut/Edge Flow", "Edge Flow")
+    box.prop(s, "subdivisions", slider=True)
+    box = layout.box()
+    box.label(text="Slice Tool")
+    box.prop(s, "ignore_backfaces")
+    box.prop(s, "delete_faces")
+    box.prop(s, "extract_faces")
+    row = box.row(align=True)
+    row.enabled = s.extract_faces          # Maya greys the offset while Extract Faces is off
+    row.prop(s, "extract_offset", text="")
+    box.label(text="Slice Along Plane:")
+    box.row(align=True).prop(s, "slice_plane", expand=True)
+    _grey(layout, "Multi-Cut/Color Settings", "Color Settings")
+    _grey(layout, "Multi-Cut/Live Constraint Options", "Live Constraint Options")
+    box = layout.box()
+    box.label(text="Keyboard/Mouse Shortcuts")
+    col = box.column(align=True)
+    for key, what in MULTI_CUT_SHORTCUTS:
+        col.label(text=f"{key}: {what}")
+
+
+TOOLS = (ALLSET_TL_multi_cut, ALLSET_TL_target_weld, ALLSET_TL_crease, ALLSET_TL_cut_sew)
 
 
 def active_tool_id(context):
@@ -117,31 +196,13 @@ def active_tool_id(context):
     return tool.idname if tool is not None else ""
 
 
-def draw_multicut_settings(self, context):
-    """Maya's Multi-Cut Tool Settings (shots/modeling_06_win1.png) above Blender's knife settings."""
-    if active_tool_id(context) != mesh_tools.MULTI_CUT_TOOL:
-        return
-    layout = self.layout
-    layout.separator()
-    layout.label(text="Multi-Cut")
-    layout.prop(mesh_tools.settings(context), "snap_step", slider=True)
-    layout.label(text="Shift: snap the cut to the step, Ctrl+click: edge loop", icon='INFO')
-    box = layout.box()
-    box.label(text="Cut / Insert Edge Loop Tool")
-    for name in ("Smoothing Angle", "Edge Flow", "Subdivisions"):
-        _grey(box, f"Multi-Cut/{name}", name)
-    _grey(layout, "Multi-Cut/Slice Tool", "Slice Tool")
-
-
 def register():
     notices.PANEL_NOTICES.update(GREY)
     for tool in TOOLS:
         bpy.utils.register_tool(tool, after={"builtin.knife"})
-    bpy.types.VIEW3D_PT_active_tool.append(draw_multicut_settings)
 
 
 def unregister():
-    bpy.types.VIEW3D_PT_active_tool.remove(draw_multicut_settings)
     for tool in reversed(TOOLS):
         bpy.utils.unregister_tool(tool)
     for key in GREY:

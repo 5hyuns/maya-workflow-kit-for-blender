@@ -155,10 +155,10 @@ def s_release():
     check("Help Line text for the Move tool", "Move Tool" in C["cl"].help_text(bpy.context))
     # Tool switch from a Maya menu item (fails headless: no tool keymaps in -b).
     with bpy.context.temp_override(window=win()):
-        bpy.ops.allset.menu_tool(tool="builtin.knife", edit=True)
+        bpy.ops.allset.menu_tool(tool="allset.multi_cut_tool", edit=True)
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
-    check("Mesh Tools > Multi-Cut: edit mode + knife tool",
-          bpy.context.mode == 'EDIT_MESH' and tool is not None and tool.idname == "builtin.knife")
+    check("Mesh Tools > Multi-Cut: edit mode + Multi-Cut tool",
+          bpy.context.mode == 'EDIT_MESH' and tool is not None and tool.idname == "allset.multi_cut_tool")
     bpy.ops.object.mode_set(mode='OBJECT')
     # A "v3d" item: runs in the 3D View (Display > Grid).
     v3d = view3d()[0].spaces.active

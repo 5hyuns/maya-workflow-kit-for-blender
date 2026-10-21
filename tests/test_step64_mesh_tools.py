@@ -271,7 +271,7 @@ def test_tools_registered_with_keymaps():
     tool = bpy.context.workspace.tools.from_space_view3d_mode('EDIT_MESH')
     assert tool.idname == "allset.target_weld_tool"
     assert "drag a vertex" in command_line.help_for_tool(tool.idname)
-    assert "Ctrl+click" in command_line.help_for_tool("builtin.knife")
+    assert "Ctrl+click" in command_line.help_for_tool("allset.multi_cut_tool")   # step 129
     assert "middle-drag" in command_line.help_for_tool("allset.crease_tool")
     bpy.ops.wm.tool_set_by_id(name="builtin.select_box", space_type='VIEW_3D')
     kit.disable()
@@ -288,19 +288,6 @@ def _items(km_name, etype, value='PRESS', shift=False, ctrl=False):
     return [(k.idname, {p: getattr(k.properties, p) for p in k.properties.keys()} if k.properties else {})
             for k in km.keymap_items if k.active and k.type == etype and k.value == value
             and k.shift == shift and k.ctrl == ctrl and not k.alt]
-
-
-def test_multicut_keys():
-    km = maya_patches.KNIFE_TOOL
-    assert [i for i, _p in _items(km, 'LEFTMOUSE')] == ["mesh.knife_tool"], "plain LMB still cuts"
-    assert _items(km, 'LEFTMOUSE', ctrl=True) == [("allset.multicut_loop", {})]
-    assert _items(km, 'LEFTMOUSE', ctrl=True, shift=True) == [("allset.multicut_loop", {"snap": True})]
-    assert _items(km, 'MIDDLEMOUSE', ctrl=True) == [("allset.multicut_loop", {"center": True})]
-    assert _items(km, 'LEFTMOUSE', shift=True) == [("allset.multicut_snap", {})]
-    modal = bpy.context.window_manager.keyconfigs["Maya-style"].keymaps["Knife Tool Modal Map"]
-    shift = {(k.type, k.value): k.propvalue for k in modal.keymap_items if k.type in ('LEFT_SHIFT', 'RIGHT_SHIFT')}
-    assert shift == {('LEFT_SHIFT', 'PRESS'): 'SNAP_MIDPOINTS_ON', ('LEFT_SHIFT', 'RELEASE'): 'SNAP_MIDPOINTS_OFF',
-                     ('RIGHT_SHIFT', 'PRESS'): 'SNAP_MIDPOINTS_ON', ('RIGHT_SHIFT', 'RELEASE'): 'SNAP_MIDPOINTS_OFF'}, shift
 
 
 def _actions(menu, label, out):
@@ -335,15 +322,3 @@ def test_menus_marking_menus_shelf_mtk():
     assert "0-1" in line and "Maya" in line
     for key in ui_mt.GREY:
         assert key in notices.PANEL_NOTICES, key
-
-
-def test_snap_cut_vertex_lands_on_the_exact_step():
-    """The knife starts on a whole pixel: the cut vertex near the step moves exactly onto it afterwards."""
-    ob = _cube()
-    bm = _bm(ob)
-    a, b = Vector((-1, 1, -1)), Vector((-1, -1, -1))
-    e = _edge(bm, a, b)
-    bmesh.ops.subdivide_edges(bm, edges=[e], cuts=1, edge_percents={e: 0.2525 if e.verts[0].co == a else 0.7475})
-    assert mt.snap_cut_vertex(bm, a, b, 0.25)
-    assert any((v.co - Vector((-1, 0.5, -1))).length < 1e-6 for v in bm.verts)
-    assert not mt.snap_cut_vertex(bm, a, b, 0.5), "no cut vertex near another step"

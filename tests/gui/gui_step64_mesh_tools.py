@@ -162,7 +162,7 @@ def _visible_edge():
 
 @step
 def s_multicut():
-    check(f"Ctrl+Shift+X = Multi-Cut (knife) (got {tool_id()})", tool_id() == "builtin.knife")
+    check(f"Ctrl+Shift+X = Multi-Cut (got {tool_id()})", tool_id() == "allset.multi_cut_tool")
     i, a, b = _visible_edge()
     C["edge"] = (a, b)
     C["n1"] = len(bm().verts)
