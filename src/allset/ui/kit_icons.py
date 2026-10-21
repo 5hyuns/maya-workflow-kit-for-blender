@@ -596,8 +596,23 @@ def geom_icon(name, context=None):
     if v is None:
         import bpy
         coords, cols = triangles(name, sat)
-        v = _geom_ids[(name, sat)] = bpy.app.icons.new_triangles((0, 255), coords, cols)
+        # Blender 4.5 crashes freeing an icon made by ``new_triangles`` (released or at quit: "MEM_freeN on a
+        # pointer created with MEM_new", checked in -b); icons read by ``new_triangles_from_file`` free cleanly,
+        # so the kit writes Blender's own .dat layout (datafiles/icons: "VCO", version 0, 255 x 255, offset 0,
+        # coords, colours) into the extension's user folder and reads it back.
+        path = _dat_path(name, sat)
+        with open(path, "wb") as fh:
+            fh.write(b"VCO\x00" + bytes((255, 255, 0, 0)) + coords + cols)
+        v = _geom_ids[(name, sat)] = bpy.app.icons.new_triangles_from_file(path)
     return v
+
+
+def _dat_path(name, sat):
+    import os
+    import bpy
+    folder = bpy.utils.extension_path_user(__package__.rpartition(".")[0], path="icons", create=True)
+    safe = "".join(c if c.isalnum() else "_" for c in name)
+    return os.path.join(folder, f"{safe}_{int(sat * 1000)}.dat")
 
 
 def tool_icon_name(idname, context=None):

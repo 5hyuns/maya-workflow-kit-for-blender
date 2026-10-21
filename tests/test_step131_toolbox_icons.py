@@ -122,3 +122,22 @@ def test_previews_and_toolbar_cache():
         assert not ki._geom_ids, "disable must release the vector icons"
     finally:
         kit.enable()
+
+
+def test_vector_icons_free_cleanly():
+    """Blender 4.5 crashes freeing a ``new_triangles`` icon (release or quit; every GUI test crashed on quit and ran
+    into its timeout): the kit's vector icons are .dat files read by ``new_triangles_from_file``, which free cleanly
+    — this test would kill the process before writing its result."""
+    import os
+    name = "tool:builtin.move"
+    v = ki.geom_icon(name)
+    sat = round(ki.icon_saturation(), 3)
+    path = ki._dat_path(name, sat)
+    assert v and os.path.isfile(path), (v, path)
+    with open(path, "rb") as fh:
+        head = fh.read(8)
+    assert head == b"VCO\x00" + bytes((255, 255, 0, 0)), head
+    bpy.app.icons.release(v)
+    ki._geom_ids.pop((name, sat), None)
+    v2 = ki.geom_icon(name)
+    assert v2
