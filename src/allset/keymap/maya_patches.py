@@ -227,7 +227,8 @@ def patch_camera(kd):
     _add(kd, "3D View", "allset.tumble", make_event("LEFTMOUSE", alt=True))
     # Alt+RMB dolly reads the drag itself: Blender's zoom axis is a preference the kit no longer sets (#51, step 130)
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433 (ic_4_5)
-    _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True))
+    _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
+         shadows=("Image Paint", "Vertex Paint", "Sculpt"))     # their Alt+RMB stencil control stays, as before
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Step 17: Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);
