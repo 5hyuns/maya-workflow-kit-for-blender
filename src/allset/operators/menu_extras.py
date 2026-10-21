@@ -19,6 +19,8 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 from mathutils import Vector
 
+from .. import live_refs
+
 # --- editor windows ----------------------------------------------------------------------------
 
 EDITOR_TYPES = (
@@ -48,20 +50,7 @@ def open_window(context, area):
     return new[0] if new else None
 
 
-
-def _window_alive(ptr):
-    """The window whose ``as_pointer()`` is ``ptr``, or None once it is closed.  A ``bpy.types.Window``
-    kept across timer ticks is NOT invalidated when the window closes: reading ``.screen`` on it then
-    dereferences freed memory and crashes Blender (#36), so timers keep the pointer and look it up again."""
-    wm = getattr(bpy.context, "window_manager", None)
-    if wm is None:
-        return None
-    for w in wm.windows:
-        if w.as_pointer() == ptr:
-            return w
-    return None
-
-
+# Timers below keep the window's pointer and look it up each tick (live_refs, #36).
 def sidebar_tab_later(window, category, tries=100):
     """Show the sidebar of ``window``'s only area and make ``category`` its active tab.
 
@@ -74,7 +63,7 @@ def sidebar_tab_later(window, category, tries=100):
     ptr = window.as_pointer()
 
     def tick():
-        window = _window_alive(ptr)
+        window = live_refs.window(ptr)
         if window is None:
             return None
         try:
@@ -109,7 +98,7 @@ def properties_tab_later(window, tab, tries=40):
     ptr = window.as_pointer()
 
     def tick():
-        window = _window_alive(ptr)
+        window = live_refs.window(ptr)
         if window is None:
             return None
         # Reading ``space.context`` before the tab list exists prints an rna enum WARN (step 98), so only a

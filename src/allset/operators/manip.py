@@ -16,6 +16,7 @@ waits for the transform to end and takes the copy / extrusion back when nothing 
 import bmesh
 import bpy
 
+from .. import live_refs
 from . import duplicate, keystate
 
 # Gizmo groups of the transform manipulator (tool gizmo and the viewport's object gizmos);
@@ -204,10 +205,13 @@ def finish(state, window, area, region):
 def watch(state, window, area, region):
     """Poll until the gizmo's transform ends, then ``finish``."""
     state["last_op"] = _last_op()
+    # pointers, looked up each tick: a Window / Area / Region kept after its window closed crashes (#36)
+    win_ptr, area_ptr, region_ptr = live_refs.pointer(window), live_refs.pointer(area), live_refs.pointer(region)
 
     def tick():
+        window = live_refs.window(win_ptr)
         try:
-            if window not in bpy.context.window_manager.windows[:]:
+            if window is None:
                 cleanup(state)
                 return None
             if _transform_running(window):
@@ -217,7 +221,8 @@ def watch(state, window, area, region):
             # a press held still has no transform yet, so wait while the button is down (step 97).
             if not state.get("seen") and keystate.is_down('LEFTMOUSE'):
                 return POLL
-            finish(state, window, area, region)
+            area = live_refs.area(area_ptr, window)
+            finish(state, window, area, live_refs.region(area, region_ptr))
         except ReferenceError:
             cleanup(state)
         return None

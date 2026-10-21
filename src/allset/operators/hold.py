@@ -12,6 +12,7 @@ docs/steps/step_3.md 「계획」 1-4.
 
 import bpy
 
+from .. import live_refs
 from . import keystate
 
 
@@ -198,14 +199,14 @@ class ComponentPivotEdit:
         ts = context.scene.tool_settings
         tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
         cursor = context.scene.cursor
-        self.area = context.area
+        self.area_ptr = live_refs.pointer(context.area)   # a pointer: the timer may run after its window closed (#36)
         self.tool = tool.idname if tool and tool.idname != CURSOR_TOOL else "builtin.select_box"
         self.pivot = ts.transform_pivot_point
         self.location = cursor.location.copy()
         self.rotation = cursor.matrix.to_3x3()
         self.on, self.toggled, self.pending_tool = True, toggled, None
         ts.transform_pivot_point = 'CURSOR'
-        _tool_set(context, CURSOR_TOOL, self.area)
+        _tool_set(context, CURSOR_TOOL, self.area_ptr)
         # tool options belong to the tool: set the orientation once the cursor tool is the active one
         self.orientation = _set_cursor_orientation(context, cursor_orientation(context))
         apply_cursor_options(context)
@@ -229,7 +230,7 @@ class ComponentPivotEdit:
             from . import pivot
             pivot.set_custom_orientation(context, rot)
         if context.mode == EDIT_MODE:
-            _tool_set(context, self.tool, self.area)
+            _tool_set(context, self.tool, self.area_ptr)
         else:
             self.pending_tool = self.tool     # a tool can only be set in its own mode
         _redraw()
@@ -264,7 +265,7 @@ class ComponentPivotEdit:
             self.finish(context)
         elif self.pending_tool and context.mode == EDIT_MODE:
             tool, self.pending_tool = self.pending_tool, None
-            _tool_set(context, tool, None)
+            _tool_set(context, tool, 0)
         if self.custom and not self.on:
             from .pivot_menu import option
             ts = context.scene.tool_settings
@@ -282,15 +283,10 @@ def _view3d_area(context):
     return max(areas, key=lambda a: a.width * a.height) if areas else None
 
 
-def _alive(area):
-    try:
-        return area is not None and area.type == 'VIEW_3D'
-    except ReferenceError:
-        return False
-
-
-def _tool_set(context, idname, area):
-    area = area if _alive(area) else _view3d_area(context)
+def _tool_set(context, idname, area_ptr):
+    area = live_refs.area(area_ptr)
+    if area is None or area.type != 'VIEW_3D':
+        area = _view3d_area(context)
     try:
         if area is not None:
             region = next((r for r in area.regions if r.type == 'WINDOW'), None)
