@@ -106,7 +106,7 @@ def s_other_frame_shot():
     check(f"#38: the key at frame 10 shows a red tick while the time is 20 ({n} red px)", n >= 15)
 
 
-step(find_button(lambda: timeline()[0::2], lambda path, cmd: "use_keyframe_insert_auto" in path, C, "auto",
+step(find_button(lambda: timeline()[0::2], lambda path, cmd: "allset_auto_key" in path, C, "auto",
                      step_px=6))
 
 
@@ -127,8 +127,8 @@ def s_press_auto():
 
 @step
 def s_auto_on():
-    ts = bpy.context.scene.tool_settings
-    check("#37: clicking it turns Auto Key on", ts.use_keyframe_insert_auto)
+    # step 130: the kit's own Maya Auto Key (Scene.allset_auto_key), no Blender preference
+    check("#37: clicking it turns Auto Key on", bpy.context.scene.allset_auto_key)
     redraw()
 
 
@@ -138,6 +138,11 @@ def s_auto_shot():
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.transform.translate(value=(2.0, 0.0, 0.0))
+
+
+@step
+def s_auto_check():
+    # step 130: the kit's Maya Auto Key keys from a short timer after the change (Blender's own keyed at once)
     ob = bpy.data.objects["pCube1"]
     fc = ob.animation_data.action.fcurves.find("location", index=0)
     frames = sorted(round(k.co.x) for k in fc.keyframe_points) if fc else []

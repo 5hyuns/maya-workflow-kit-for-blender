@@ -136,7 +136,7 @@ The kit leaves these to you. Maya users usually like:
   import hook: `import maya.cmds` in your script is rewritten, in the visible Text, to import the kit's small
   `maya.cmds` look-alike module.
 - **Keymap**: the Maya-style keys are add-on keymap items (`wm.keyconfigs.addon`) that disappear on unregister; the
-  active keyconfig is never switched. <!-- lane K: say how the Industry Compatible base data is read (no execfile) -->
+  active keyconfig is never switched. The Industry Compatible base keymap is static data in the package (no file is executed at run time).
 - **`ctypes` (Windows only)**: one read-only `user32.GetAsyncKeyState` call, to end Maya hold keys (D, X, C, V, B ...)
   whose key release Blender's transform tool swallows. No hook, nothing written; elsewhere Blender's own key-release
   event is used.
@@ -222,7 +222,7 @@ preference snapshot, no theme backup, no `user_disabling` hook. Disabling or rem
 
 Implementation: `src/allset/welcome.py`, `switch.py`, `keymap/`; tests `tests/test_step130_package_scan.py` (static
 scan of the package and the zip), `tests/test_enable_disable.py`, the step 130 install → Maya mode → remove round trip
-(`<round-trip test>`), `tests/test_step60_switch.py`.
+(`tests/test_step130_lifecycle.py`, `tests/test_step130_keymap_lifecycle.py`), `tests/test_step60_switch.py`.
 
 ## Changes to Blender's own UI classes
 

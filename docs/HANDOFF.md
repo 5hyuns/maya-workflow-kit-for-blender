@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 130 (스토어 심사 대응 #40) 완료 — `docs/steps/step_130.md` (+ `step_130_*.md`). exec/eval·import 훅·sys.* 0건, 테마 전부 삭제,
+  환경설정·keyconfig 영구 변경 없음 (애드온 키맵), 앱 템플릿 설치·user_disabling·스냅숏 삭제, tags = User Interface. 결정 13·14,
+  답글 초안 `docs/distribution/review_reply.md`. 헤드리스 전체 PASS, validate Success, dogfood 48/48, GUI 전체 948/957 → 실패 파일 재실행 후
+  남은 1건 = #53 (1.25 배율 레이아웃 재조정).
+  **바로 다음 할 일**: step 131 = #23 아이콘 + #25 Hypershade; 0.2.1 전에 #53 #52 #44 #41 (마일스톤 0.2.1).
+
 - Step 129 (0.2.1 수정 배치) 완료 — `docs/steps/step_129.md` (+ 레인 문서 `step_129_*.md`). #36 크래시 핫픽스 병합 + 타이머 46곳
   전수 (`src/allset/live_refs.py`); user-report #1–#14 #22 #27 #28 #37 #38, P1 #19 #20 #26 #39, 같은 원인 #15 #17 #18 #21 #24 #29 수정.
   헤드리스 999/999, GUI 전체 1092/1102 → 통합 수정 후 실패 파일 재실행 모두 PASS. 마일스톤 0.2.1 / 0.3.0 배정.

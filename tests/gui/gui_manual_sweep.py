@@ -320,16 +320,14 @@ def m70_4_on():
     sc.frame_set(1)
     cube.keyframe_insert("location", frame=1)
     sc.frame_set(10)
-    ts().use_keyframe_insert_auto = True
-    prefs = bpy.context.preferences.addons[MODULE].preferences
-    check("[M70-4] Maya Auto Key is on by default", prefs.use_maya_auto_key)
+    sc.allset_auto_key = True        # step 130: the kit's own Maya Auto Key, no Blender preference
     with override():
         bpy.ops.transform.rotate(value=0.5, orient_axis='Z')
     bpy.context.scene.allset_cb.rx_text = "30"
     c = curves(cube)
     check(f"[M70-4] rotating a cube with only Translate keys adds no rotate keys (manipulator or Channel Box) ({sorted(c)})",
           not any(p == "rotation_euler" for p, _i in c))
-    prefs.use_maya_auto_key = False
+    sc.allset_auto_key = False
 
 
 @step
@@ -339,12 +337,7 @@ def m70_4_off():
     with override():
         bpy.ops.transform.rotate(value=0.5, orient_axis='Z')
     c = curves(cube)
-    # Maya Auto Key off = Blender's own "Only Insert Available" value back: off before 5.2, on in 5.2 (step 118)
-    factory = type(bpy.context.preferences.edit).bl_rna.properties["use_keyframe_insert_available"].default
-    check(f"[M70-4] Maya Auto Key off: Blender's own auto key ({'available only' if factory else 'every channel'}, "
-          f"{sorted(c)})", any(p == "rotation_euler" for p, _i in c) != factory)
-    bpy.context.preferences.addons[MODULE].preferences.use_maya_auto_key = True
-    ts().use_keyframe_insert_auto = False
+    check(f"[M70-4] Maya Auto Key off: no keys added at frame 20 ({sorted(c)})", not any(p == "rotation_euler" for p, _i in c))
 
 
 # --- [M75-1..4] Status Line input line -----------------------------------------------------------------------
