@@ -39,7 +39,7 @@ def test_menu_matches_maya():
     assert {pos: label for pos, (label, _a) in m.radial.items()} == {
         "N": "Pin Component Pivot", "S": "Reset Pivot", "NW": "Snap Pivot Orientation", "NE": "Snap Pivot Position",
         "SW": "Reset Pivot Orientation", "SE": "Reset Pivot Position", "W": "Show Orientation Handle", "E": "Exit"}
-    assert m.items[0][0] == "Bake Pivot Orientation" and m.items[0][1] is None
+    assert m.items[0] == ("Bake Pivot Orientation", ("item", "Modify/Bake Pivot"))   # step 136
     assert menus.MENUS["buildObjectMenuItemsNow_pivot"] is m
 
 
