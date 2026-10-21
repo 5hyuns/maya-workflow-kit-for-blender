@@ -1,36 +1,68 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Kit-drawn Maya-style icons for the Status Line, the menu bar and the viewport panel toolbar.
+"""Kit-drawn Maya-style icons for the Status Line, the menu bar and the viewport panel toolbar (,
+redrawn in step 131 for #23: ).
 
-Decision 6: no Maya icons. Maya's Status Line and panel toolbar show flat light-grey glyphs with teal accents and no
-button frame (, w/status_*.png); Blender's own icons in embossed boxes read
-as Blender. Here every glyph is a few vector shapes rasterised with numpy (4x supersampled, no files) and handed to
-Blender as a ``bpy.utils.previews`` image, so layouts use them through ``icon_value``.
+Decision 6: no Maya icons. Maya's Status Line (20 px) and panel toolbar (16 px) show flat light-grey #bcbcbc line art
+with teal #48a9b4 accents, a dark outline around every shape and no button frame (,
+). Every glyph here is a few vector shapes in unit coordinates, rasterised
+with numpy (supersampled, no files) and handed to Blender as a ``bpy.utils.previews`` image (``icon_value``).
+
+Pixel hinting: ``Canvas`` snaps rectangle edges to the target size's pixel grid, rounds line widths to whole pixels
+(at least one) and centres odd-width strokes and odd-diameter discs on pixel centres, so the same drawing is crisp at
+16, 20, 24, 32 and 48 px. ``image(name, size)`` is that picture (top-down straight-alpha RGBA) with Maya's dark
+outline added at the final size. Blender draws a button icon at 16 px x UI scale; ``icon(name)`` hands it a picture
+of exactly that size (one image pixel per screen pixel) and rebuilds the previews when the UI scale changes.
 """
 
 import math
 
 import numpy as np
 
-SIZE = 32          # drawn size; Blender scales a button icon to 16 px x UI scale
-SS = 4
-GREY = (0.80, 0.80, 0.80)      # Maya's glyph grey (status line grabs, ~#cccccc)
+SIZE = 32          # default drawing size (``Canvas`` / ``render``)
+SS = 4             # minimum supersampling
+GREY = (0.74, 0.74, 0.74)      # Maya glyph grey #bcbcbc ()
+LIGHT = (0.88, 0.88, 0.88)     # pointer / highlight
 DIM = (0.55, 0.55, 0.55)
-TEAL = (0.29, 0.73, 0.82)      # snap magnets / selection accents (~#4abad1)
+TEAL = (0.28, 0.66, 0.71)      # Maya accent #48a9b4
+TEAL_DARK = (0.18, 0.47, 0.52)
+TEAL_LIGHT = (0.55, 0.84, 0.88)
 BLUE = (0.40, 0.62, 0.86)
 ORANGE = (0.90, 0.58, 0.30)
 DARK = (0.20, 0.20, 0.20)
+OUTLINE = (0.13, 0.13, 0.13)   # Maya's #3a3a3a outline, darker so it also shows on Blender's darker header
 
 
 class Canvas:
-    """RGBA canvas in unit coordinates (0..1, y down), supersampled."""
+    """RGBA canvas in unit coordinates (0..1, y down), supersampled, with pixel hinting for ``size``."""
 
-    def __init__(self, size=SIZE):
-        n = size * SS
+    def __init__(self, size=SIZE, hint=True):
         self.size = size
+        self.ss = max(SS, -(-128 // size))
+        n = size * self.ss
         c = (np.arange(n) + 0.5) / n
         self.x, self.y = np.meshgrid(c, c)
         self.px = np.zeros((n, n, 4), np.float32)
+        self.hint = hint
 
+    # hinting -----------------------------------------------------------------------------------------
+    def edge(self, v):
+        """``v`` on the nearest pixel boundary."""
+        return round(v * self.size) / self.size if self.hint else v
+
+    def width(self, w):
+        """A stroke width of whole pixels (at least one)."""
+        return max(1, round(w * self.size)) / self.size if self.hint else w
+
+    def centre(self, v, w):
+        """Centre of a stroke / disc ``w`` wide: odd pixel counts sit on a pixel centre, even ones on a boundary."""
+        if not self.hint:
+            return v
+        n = round(w * self.size)
+        if n % 2:
+            return (math.floor(v * self.size) + 0.5) / self.size
+        return round(v * self.size) / self.size
+
+    # compositing -------------------------------------------------------------------------------------
     def fill(self, mask, colour, alpha=1.0):
         a = mask.astype(np.float32) * alpha
         out = self.px
@@ -44,16 +76,36 @@ class Canvas:
     def clear(self, mask):
         self.px[..., 3] *= 1 - mask.astype(np.float32)
 
-    # shapes -----------------------------------------------------------------------------------------
+    # shapes ------------------------------------------------------------------------------------------
+    def rect_mask(self, x0, y0, x1, y1):
+        x0, y0, x1, y1 = self.edge(x0), self.edge(y0), self.edge(x1), self.edge(y1)
+        if self.hint:
+            p = 1 / self.size
+            x1, y1 = max(x1, x0 + p), max(y1, y0 + p)
+        return (self.x >= x0) & (self.x <= x1) & (self.y >= y0) & (self.y <= y1)
+
     def rect(self, x0, y0, x1, y1, colour):
-        self.fill((self.x >= x0) & (self.x <= x1) & (self.y >= y0) & (self.y <= y1), colour)
+        self.fill(self.rect_mask(x0, y0, x1, y1), colour)
 
     def frame(self, x0, y0, x1, y1, w, colour):
+        w = self.width(w)
+        x0, y0, x1, y1 = self.edge(x0), self.edge(y0), self.edge(x1), self.edge(y1)
         outer = (self.x >= x0) & (self.x <= x1) & (self.y >= y0) & (self.y <= y1)
         inner = (self.x > x0 + w) & (self.x < x1 - w) & (self.y > y0 + w) & (self.y < y1 - w)
         self.fill(outer & ~inner, colour)
 
     def seg_mask(self, ax, ay, bx, by, w):
+        w = self.width(w)
+        if self.hint and (abs(ax - bx) < 1e-6 or abs(ay - by) < 1e-6):
+            # axis-aligned: a pixel-exact bar with square caps (joins of polylines stay closed)
+            if abs(ax - bx) < 1e-6:
+                c = self.centre(ax, w)
+                y0, y1 = sorted((ay, by))
+                return self.rect_mask(c - w / 2, y0 - w / 2, c + w / 2, y1 + w / 2)
+            c = self.centre(ay, w)
+            x0, x1 = sorted((ax, bx))
+            return self.rect_mask(x0 - w / 2, c - w / 2, x1 + w / 2, c + w / 2)
+        ax, ay, bx, by = self.centre(ax, w), self.centre(ay, w), self.centre(bx, w), self.centre(by, w)
         dx, dy = bx - ax, by - ay
         L = dx * dx + dy * dy or 1e-9
         t = np.clip(((self.x - ax) * dx + (self.y - ay) * dy) / L, 0, 1)
@@ -68,18 +120,32 @@ class Canvas:
             m |= self.seg_mask(ax, ay, bx, by, w)
         self.fill(m, colour)
 
-    def circle(self, cx, cy, r, colour):
-        self.fill((self.x - cx) ** 2 + (self.y - cy) ** 2 <= r * r, colour)
+    def disc_mask(self, cx, cy, r):
+        d = self.width(2 * r)
+        cx, cy = self.centre(cx, d), self.centre(cy, d)
+        r = d / 2
+        return (self.x - cx) ** 2 + (self.y - cy) ** 2 <= r * r
 
-    def ring(self, cx, cy, r, w, colour, a0=None, a1=None):
-        d = np.sqrt((self.x - cx) ** 2 + (self.y - cy) ** 2)
-        m = np.abs(d - r) <= w / 2
+    def circle(self, cx, cy, r, colour):
+        self.fill(self.disc_mask(cx, cy, r), colour)
+
+    def ring_mask(self, cx, cy, r, w, a0=None, a1=None):
+        w = self.width(w)
+        d = self.width(2 * r + w)
+        cx, cy = self.centre(cx, d), self.centre(cy, d)
+        r = d / 2 - w / 2
+        dist = np.sqrt((self.x - cx) ** 2 + (self.y - cy) ** 2)
+        m = np.abs(dist - r) <= w / 2
         if a0 is not None:
             ang = np.degrees(np.arctan2(-(self.y - cy), self.x - cx)) % 360
             m &= ((ang - a0) % 360) <= ((a1 - a0) % 360)
-        self.fill(m, colour)
+        return m
+
+    def ring(self, cx, cy, r, w, colour, a0=None, a1=None):
+        self.fill(self.ring_mask(cx, cy, r, w, a0, a1), colour)
 
     def poly_mask(self, pts):
+        pts = [(self.edge(x), self.edge(y)) for x, y in pts]
         inside = np.zeros_like(self.x, bool)
         n = len(pts)
         for i in range(n):
@@ -93,30 +159,105 @@ class Canvas:
     def poly(self, pts, colour):
         self.fill(self.poly_mask(pts), colour)
 
-    def pixels(self):
-        """Flat RGBA floats, bottom row first (Blender image order), premultiplied box filter."""
-        s = self.size
-        p = self.px.reshape(s, SS, s, SS, 4)
+    # output ------------------------------------------------------------------------------------------
+    def array(self):
+        """(size, size, 4) float32, top row first, straight alpha (premultiplied box filter)."""
+        s, k = self.size, self.ss
+        p = self.px.reshape(s, k, s, k, 4)
         a = p[..., 3].mean(axis=(1, 3))
         rgb = (p[..., :3] * p[..., 3:4]).mean(axis=(1, 3)) / np.maximum(a, 1e-6)[..., None]
-        out = np.concatenate([rgb, a[..., None]], axis=2)[::-1]
-        return out.ravel()
+        return np.concatenate([rgb, a[..., None]], axis=2).astype(np.float32)
+
+    def pixels(self):
+        """Flat RGBA floats, bottom row first (Blender image order)."""
+        return self.array()[::-1].ravel()
 
 
-# --- glyphs -----------------------------------------------------------------------------------------
+def outlined(img, colour=OUTLINE, alpha=0.9):
+    """Maya's dark outline: the shape's alpha grown by one pixel (8-neighbourhood), drawn behind it."""
+    a = img[..., 3]
+    p = np.pad(a, 1)
+    h, w = a.shape
+    grown = np.max([p[1 + dy:1 + dy + h, 1 + dx:1 + dx + w] for dy in (-1, 0, 1) for dx in (-1, 0, 1)], axis=0)
+    ha = grown * alpha
+    na = a + ha * (1 - a)
+    safe = np.where(na > 0, na, 1)[..., None]
+    rgb = (img[..., :3] * a[..., None] + np.array(colour, np.float32) * (ha * (1 - a))[..., None]) / safe
+    return np.concatenate([rgb, na[..., None]], axis=2).astype(np.float32)
 
-def arrow_cursor(cv, x, y, s, colour=GREY):
+
+# --- shared parts -----------------------------------------------------------------------------------
+
+def arrow_cursor(cv, x, y, s, colour=LIGHT):
     """Mouse pointer with its tip at (x, y), height s."""
     cv.poly([(x, y), (x, y + s), (x + s * 0.28, y + s * 0.75), (x + s * 0.5, y + s * 1.05),
              (x + s * 0.62, y + s * 0.98), (x + s * 0.42, y + s * 0.68), (x + s * 0.72, y + s * 0.68)], colour)
 
 
-def magnet(cv, colour=TEAL):
-    """Maya snap magnet: a U turned down-left."""
-    cv.ring(0.40, 0.40, 0.24, 0.12, colour, 120, 330)
-    cv.line(0.20, 0.53, 0.30, 0.64, 0.13, colour)
-    cv.line(0.53, 0.20, 0.64, 0.30, 0.13, colour)
+def magnet(cv, colour=GREY):
+    """Maya's snap magnet: a horseshoe whose bend is upper left, legs pointing to the lower right, teal pole tips."""
+    cx, cy, r, w = 0.36, 0.36, 0.20, 0.15
+    cv.ring(cx, cy, r, w, colour, 45, 225)
+    c, s = math.cos(math.radians(45)), math.sin(math.radians(45))
+    for (ex, ey) in ((cx + r * c, cy - r * s), (cx - r * c, cy + r * s)):
+        mx, my = ex + 0.12, ey + 0.12
+        cv.line(ex, ey, mx, my, w, colour)
+        cv.line(mx, my, mx + 0.09, my + 0.09, w, TEAL)
 
+
+def gear(cv, cx, cy, r, colour):
+    for k in range(8):
+        a = k * math.pi / 4
+        cv.line(cx + math.cos(a) * r * 0.6, cy + math.sin(a) * r * 0.6,
+                cx + math.cos(a) * r, cy + math.sin(a) * r, r * 0.42, colour)
+    cv.circle(cx, cy, r * 0.72, colour)
+    cv.circle(cx, cy, r * 0.30, DARK)
+
+
+def clapper(cv, colour=GREY, top=0.06):
+    """Maya's clapperboard: a striped clapstick over the board (rvRender)."""
+    cv.rect(0.06, top, 0.94, top + 0.20, colour)
+    for i in range(4):
+        x = 0.14 + i * 0.22
+        cv.poly([(x, top), (x + 0.09, top), (x + 0.03, top + 0.20), (x - 0.06, top + 0.20)], DARK)
+    cv.rect(0.06, top + 0.27, 0.94, 0.94, colour)
+
+
+def stack(cv, cx, cy, s, colour, gap=DARK):
+    """Layer stack: three flat diamonds (Render Setup / Channel Box layers)."""
+    for k in (2, 1, 0):
+        y = cy + (k - 1) * s * 0.42
+        cv.poly([(cx - s, y), (cx, y - s * 0.55), (cx + s, y), (cx, y + s * 0.55)], gap)
+        cv.poly([(cx - s * 0.86, y), (cx, y - s * 0.46), (cx + s * 0.86, y), (cx, y + s * 0.46)],
+                LIGHT if k == 0 else colour)
+
+
+def letter(cv, ch, x, y, h, w, colour):
+    """Block capitals for badges: I P R O N F T, top-left at (x, y), height h, stroke w."""
+    hw = h * 0.55
+    if ch == "I":
+        cv.line(x + hw / 2, y, x + hw / 2, y + h, w, colour)
+    elif ch == "T":
+        cv.line(x, y, x + hw * 1.2, y, w, colour)
+        cv.line(x + hw * 0.6, y, x + hw * 0.6, y + h, w, colour)
+    elif ch in "PR":
+        cv.line(x, y, x, y + h, w, colour)
+        cv.polyline([(x, y), (x + hw, y), (x + hw, y + h * 0.5), (x, y + h * 0.5)], w, colour)
+        if ch == "R":
+            cv.line(x + hw * 0.4, y + h * 0.5, x + hw, y + h, w, colour)
+    elif ch == "F":
+        cv.line(x, y, x, y + h, w, colour)
+        cv.line(x, y, x + hw, y, w, colour)
+        cv.line(x, y + h * 0.5, x + hw * 0.8, y + h * 0.5, w, colour)
+    elif ch == "O":
+        cv.polyline([(x, y), (x + hw, y), (x + hw, y + h), (x, y + h), (x, y)], w, colour)
+    elif ch == "N":
+        cv.line(x, y, x, y + h, w, colour)
+        cv.line(x + hw, y, x + hw, y + h, w, colour)
+        cv.line(x, y, x + hw, y + h, w, colour)
+
+
+# --- Status Line glyphs (20 px, ) ------------------------------
 
 def g_bar(cv):
     cv.line(0.5, 0.15, 0.5, 0.85, 0.08, DIM)
@@ -131,170 +272,200 @@ def g_closed(cv):
 
 
 def g_new(cv):
-    cv.poly([(0.22, 0.08), (0.60, 0.08), (0.80, 0.28), (0.80, 0.92), (0.22, 0.92)], GREY)
-    cv.poly([(0.60, 0.08), (0.60, 0.28), (0.80, 0.28)], DIM)
+    cv.poly([(0.20, 0.06), (0.56, 0.06), (0.82, 0.32), (0.82, 0.94), (0.20, 0.94)], GREY)
+    cv.poly([(0.56, 0.06), (0.56, 0.32), (0.82, 0.32)], DIM)
+    cv.line(0.56, 0.32, 0.82, 0.32, 0.06, DARK)
+    cv.line(0.56, 0.06, 0.56, 0.32, 0.06, DARK)
 
 
 def g_open_scene(cv):
-    cv.poly([(0.08, 0.25), (0.38, 0.25), (0.46, 0.33), (0.86, 0.33), (0.86, 0.85), (0.08, 0.85)], DIM)
-    cv.poly([(0.20, 0.47), (0.96, 0.47), (0.84, 0.85), (0.08, 0.85)], GREY)
+    cv.poly([(0.06, 0.18), (0.36, 0.18), (0.44, 0.28), (0.84, 0.28), (0.84, 0.86), (0.06, 0.86)], DIM)
+    cv.poly([(0.22, 0.44), (0.96, 0.44), (0.80, 0.86), (0.06, 0.86)], GREY)
 
 
 def g_save(cv):
-    cv.rect(0.12, 0.12, 0.88, 0.88, GREY)
-    cv.rect(0.28, 0.12, 0.70, 0.38, DARK)
-    cv.rect(0.58, 0.16, 0.66, 0.34, GREY)
-    cv.rect(0.24, 0.55, 0.76, 0.88, DARK)
+    cv.poly([(0.08, 0.08), (0.80, 0.08), (0.92, 0.20), (0.92, 0.92), (0.08, 0.92)], GREY)
+    cv.rect(0.26, 0.08, 0.70, 0.36, DARK)
+    cv.rect(0.54, 0.14, 0.64, 0.30, GREY)
+    cv.rect(0.22, 0.52, 0.78, 0.92, DARK)
+    cv.rect(0.30, 0.60, 0.70, 0.84, DIM)
 
 
-def _curl(cv, mirror):
+def _hook(cv, mirror):
+    """Maya undo: arrowhead upper left, shaft right, bending down and back to the middle."""
     f = (lambda x: 1 - x) if mirror else (lambda x: x)
-    cv.ring(0.52 if not mirror else 0.48, 0.55, 0.28, 0.12, GREY, *((270, 90) if not mirror else (90, 270)))
-    cv.poly([(f(0.08), 0.27), (f(0.38), 0.05), (f(0.38), 0.49)], GREY)
-    cv.line(f(0.36), 0.27, f(0.52), 0.27, 0.12, GREY)
-    cv.line(f(0.52), 0.83, f(0.30), 0.83, 0.12, GREY)
+    w = 0.15
+    cv.line(f(0.30), 0.34, f(0.62), 0.34, w, GREY)
+    cv.ring(f(0.62), 0.55, 0.21, w, GREY, *((270, 90) if not mirror else (90, 270)))
+    cv.line(f(0.62), 0.76, f(0.40), 0.76, w, GREY)
+    cv.poly([(f(0.04), 0.34), (f(0.34), 0.08), (f(0.34), 0.60)], GREY)
 
 
 def g_undo(cv):
-    _curl(cv, False)
+    _hook(cv, False)
 
 
 def g_redo(cv):
-    _curl(cv, True)
+    _hook(cv, True)
 
 
 def g_sel_hierarchy(cv):
-    cv.rect(0.06, 0.06, 0.34, 0.30, GREY)
-    cv.rect(0.40, 0.36, 0.66, 0.58, GREY)
-    cv.line(0.20, 0.30, 0.20, 0.47, 0.06, GREY)
-    cv.line(0.20, 0.47, 0.40, 0.47, 0.06, GREY)
-    arrow_cursor(cv, 0.58, 0.50, 0.46, TEAL)
+    cv.rect(0.06, 0.06, 0.34, 0.32, GREY)
+    cv.rect(0.06, 0.62, 0.34, 0.88, GREY)
+    cv.polyline([(0.34, 0.19), (0.58, 0.19), (0.58, 0.40)], 0.08, TEAL)
+    cv.line(0.20, 0.32, 0.20, 0.62, 0.08, GREY)
+    arrow_cursor(cv, 0.50, 0.42, 0.52)
 
 
 def g_sel_object(cv):
-    cv.poly([(0.10, 0.30), (0.40, 0.10), (0.72, 0.30), (0.72, 0.60), (0.40, 0.80), (0.10, 0.60)], GREY)
-    arrow_cursor(cv, 0.52, 0.46, 0.50, TEAL)
+    cv.rect(0.34, 0.06, 0.74, 0.44, TEAL)
+    cv.circle(0.30, 0.62, 0.24, GREY)
+    arrow_cursor(cv, 0.52, 0.40, 0.54)
 
 
 def g_sel_component(cv):
     for i in range(2):
         for j in range(2):
-            cv.rect(0.06 + i * 0.32, 0.06 + j * 0.32, 0.32 + i * 0.32, 0.32 + j * 0.32, GREY)
-    arrow_cursor(cv, 0.56, 0.50, 0.48, TEAL)
+            cv.rect(0.06 + i * 0.30, 0.06 + j * 0.30, 0.30 + i * 0.30, 0.30 + j * 0.30, TEAL if i == j == 0 else GREY)
+    arrow_cursor(cv, 0.54, 0.42, 0.52)
 
 
 def g_mask_handles(cv):
-    cv.line(0.5, 0.12, 0.5, 0.88, 0.10, GREY)
-    cv.line(0.12, 0.5, 0.88, 0.5, 0.10, GREY)
-    cv.circle(0.5, 0.5, 0.14, TEAL)
+    cv.line(0.5, 0.10, 0.5, 0.90, 0.11, TEAL)
+    cv.line(0.10, 0.5, 0.90, 0.5, 0.11, TEAL)
 
 
 def g_mask_joints(cv):
-    cv.ring(0.30, 0.70, 0.14, 0.08, GREY)
-    cv.ring(0.70, 0.30, 0.14, 0.08, GREY)
-    cv.poly([(0.38, 0.56), (0.70, 0.44), (0.56, 0.38), (0.44, 0.70)], GREY)
+    cv.poly([(0.74, 0.20), (0.82, 0.30), (0.34, 0.58), (0.28, 0.48)], TEAL_DARK)
+    cv.poly([(0.30, 0.56), (0.40, 0.52), (0.68, 0.84), (0.60, 0.88)], TEAL_DARK)
+    for x, y, r in ((0.78, 0.22, 0.13), (0.30, 0.52, 0.13), (0.66, 0.86, 0.10)):
+        cv.circle(x, y, r, TEAL)
 
 
 def g_mask_curves(cv):
-    pts = [(0.10 + 0.8 * t, 0.5 - 0.32 * math.sin(t * 2 * math.pi)) for t in np.linspace(0, 1, 24)]
-    cv.polyline(pts, 0.10, GREY)
+    pts = []
+    for t in np.linspace(0, 1, 28):
+        # cubic from the upper-left CV to the lower-right CV (an S)
+        p0, p1, p2, p3 = (0.20, 0.22), (0.90, 0.10), (0.10, 0.90), (0.80, 0.78)
+        u = 1 - t
+        pts.append((u ** 3 * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t ** 3 * p3[0],
+                    u ** 3 * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t ** 3 * p3[1]))
+    cv.polyline(pts, 0.09, TEAL)
+    for x, y in ((0.14, 0.16), (0.74, 0.72)):
+        cv.rect(x, y, x + 0.16, y + 0.16, TEAL)
+        cv.rect(x + 0.05, y + 0.05, x + 0.11, y + 0.11, DARK)
 
 
 def g_mask_surfaces(cv):
-    cv.circle(0.5, 0.5, 0.38, GREY)
-    cv.ring(0.5, 0.5, 0.20, 0.06, DARK, 200, 340)
+    """NURBS quilt: a teal diamond patch of 2 x 2 diamonds."""
+    cv.poly([(0.5, 0.06), (0.94, 0.5), (0.5, 0.94), (0.06, 0.5)], TEAL)
+    cv.line(0.28, 0.28, 0.72, 0.72, 0.08, TEAL_DARK)
+    cv.line(0.72, 0.28, 0.28, 0.72, 0.08, TEAL_DARK)
+    for x, y in ((0.5, 0.25), (0.25, 0.5), (0.75, 0.5), (0.5, 0.75)):
+        cv.circle(x, y, 0.07, TEAL_LIGHT)
 
 
 def g_mask_deformers(cv):
-    for k in (0.15, 0.5, 0.85):
-        cv.line(k, 0.15, k, 0.85, 0.06, GREY)
-        cv.line(0.15, k, 0.85, k, 0.06, GREY)
+    """Lattice: teal square with corner points and a bent inner shape."""
+    cv.frame(0.12, 0.12, 0.88, 0.88, 0.08, TEAL)
+    cv.poly([(0.30, 0.30), (0.70, 0.26), (0.66, 0.70), (0.34, 0.66)], TEAL_DARK)
+    for x, y in ((0.06, 0.06), (0.76, 0.06), (0.06, 0.76), (0.76, 0.76)):
+        cv.rect(x, y, x + 0.18, y + 0.18, TEAL)
+        cv.rect(x + 0.06, y + 0.06, x + 0.12, y + 0.12, DARK)
 
 
 def g_mask_dynamics(cv):
-    for x, y, r in ((0.25, 0.30, 0.10), (0.62, 0.22, 0.08), (0.45, 0.58, 0.12), (0.78, 0.66, 0.10),
-                    (0.22, 0.78, 0.07)):
-        cv.circle(x, y, r, GREY)
+    for x, y, r in ((0.70, 0.30, 0.15), (0.40, 0.56, 0.12), (0.76, 0.70, 0.10), (0.20, 0.30, 0.07),
+                    (0.44, 0.18, 0.06), (0.18, 0.80, 0.08), (0.52, 0.88, 0.05)):
+        cv.circle(x, y, r, TEAL)
 
 
 def g_mask_rendering(cv):
-    cv.circle(0.5, 0.40, 0.26, GREY)
-    cv.rect(0.38, 0.62, 0.62, 0.84, GREY)
+    clapper(cv, TEAL_DARK, top=0.04)
+    cv.circle(0.32, 0.66, 0.26, TEAL)
+    cv.circle(0.26, 0.58, 0.08, TEAL_LIGHT)
 
 
 def g_mask_misc(cv):
-    cv.line(0.5, 0.10, 0.5, 0.90, 0.07, GREY)
-    cv.line(0.10, 0.5, 0.90, 0.5, 0.07, GREY)
-    cv.line(0.25, 0.75, 0.75, 0.25, 0.07, GREY)
+    cv.ring(0.5, 0.32, 0.20, 0.13, TEAL, 330, 180)
+    cv.polyline([(0.66, 0.42), (0.5, 0.56), (0.5, 0.66)], 0.13, TEAL)
+    cv.circle(0.5, 0.85, 0.08, TEAL)
 
 
 def g_vertex(cv):
-    cv.frame(0.18, 0.18, 0.82, 0.82, 0.05, DIM)
-    for x, y in ((0.18, 0.18), (0.82, 0.18), (0.18, 0.82), (0.82, 0.82)):
-        cv.circle(x, y, 0.11, TEAL)
+    cv.frame(0.18, 0.18, 0.82, 0.82, 0.10, GREY)
+    cv.rect(0.38, 0.38, 0.62, 0.62, GREY)
 
 
 def g_edge(cv):
-    cv.frame(0.18, 0.18, 0.82, 0.82, 0.05, DIM)
-    cv.line(0.18, 0.18, 0.18, 0.82, 0.12, TEAL)
+    cv.line(0.20, 0.20, 0.80, 0.80, 0.10, GREY)
+    cv.circle(0.20, 0.20, 0.05, DIM)
+    cv.circle(0.80, 0.80, 0.05, DIM)
 
 
 def g_face(cv):
-    cv.rect(0.18, 0.18, 0.82, 0.82, TEAL)
-    cv.frame(0.18, 0.18, 0.82, 0.82, 0.05, DIM)
+    for x, y, filled in ((0.08, 0.08, False), (0.08, 0.52, True), (0.52, 0.52, False)):
+        cv.frame(x, y, x + 0.40, y + 0.40, 0.08, GREY)
+        if filled:
+            cv.rect(x + 0.08, y + 0.08, x + 0.32, y + 0.32, DIM)
+        cv.circle(x + 0.20, y + 0.20, 0.05, GREY)
 
 
 def _snap(target):
     def draw(cv):
         magnet(cv)
         target(cv)
+    draw.__name__ = "snap_" + target.__name__
     return draw
 
 
 def _t_grid(cv):
-    for k in (0.66, 0.84):
-        cv.line(k, 0.56, k, 0.98, 0.05, GREY)
-        cv.line(0.56, k, 0.98, k, 0.05, GREY)
+    for k in (0.68, 0.86):
+        cv.line(k, 0.54, k, 0.98, 0.07, TEAL)
+        cv.line(0.54, k, 0.98, k, 0.07, TEAL)
 
 
 def _t_curve(cv):
-    cv.ring(0.90, 0.92, 0.32, 0.07, GREY, 90, 180)
+    cv.ring(0.40, 0.34, 0.58, 0.09, TEAL, 255, 345)
 
 
 def _t_point(cv):
-    cv.circle(0.78, 0.78, 0.13, GREY)
+    cv.circle(0.80, 0.80, 0.14, TEAL)
 
 
 def _t_projected(cv):
-    cv.ring(0.78, 0.78, 0.16, 0.06, GREY)
-    cv.circle(0.78, 0.78, 0.06, GREY)
+    cv.ring(0.74, 0.76, 0.14, 0.07, TEAL)
+    cv.circle(0.74, 0.76, 0.05, TEAL)
+    cv.line(0.50, 0.76, 0.58, 0.76, 0.06, TEAL)
+    cv.line(0.74, 0.92, 0.74, 0.98, 0.06, TEAL)
+    cv.frame(0.80, 0.04, 0.96, 0.20, 0.06, TEAL)
 
 
 def _t_plane(cv):
-    cv.poly([(0.58, 0.78), (0.78, 0.60), (0.98, 0.78), (0.78, 0.96)], GREY)
+    cv.poly([(0.50, 0.80), (0.80, 0.52), (0.98, 0.70), (0.68, 0.98)], TEAL)
+    cv.line(0.65, 0.66, 0.83, 0.84, 0.05, TEAL_DARK)
 
 
 def _t_live(cv):
-    cv.rect(0.55, 0.80, 0.98, 0.92, GREY)
+    """Make Live: Maya shows the magnet alone; the kit adds a short grey ground line under it."""
+    cv.line(0.52, 0.94, 0.94, 0.94, 0.08, DIM)
 
 
 def g_history(cv):
-    cv.rect(0.20, 0.14, 0.80, 0.86, GREY)
-    for y in (0.32, 0.48, 0.64):
-        cv.line(0.32, y, 0.68, y, 0.06, DARK)
-
-
-def clapper(cv):
-    cv.rect(0.10, 0.36, 0.90, 0.86, GREY)
-    for i in range(4):
-        x = 0.12 + i * 0.2
-        cv.poly([(x, 0.14), (x + 0.12, 0.14), (x + 0.08, 0.30), (x - 0.04, 0.30)], GREY)
+    cv.circle(0.30, 0.30, 0.25, GREY)
+    cv.line(0.30, 0.30, 0.30, 0.14, 0.06, DARK)
+    cv.line(0.30, 0.30, 0.42, 0.30, 0.06, DARK)
+    for y in (0.40, 0.62, 0.84):
+        cv.rect(0.60 if y < 0.5 else 0.40, y - 0.05, 0.94, y + 0.05, GREY)
+    for y in (0.62, 0.84):
+        cv.rect(0.10, y - 0.05, 0.28, y + 0.05, GREY)
 
 
 def g_render_view(cv):
     clapper(cv)
-    cv.ring(0.5, 0.61, 0.15, 0.06, DARK)
-    cv.circle(0.5, 0.61, 0.06, DARK)
+    cv.poly([(0.16, 0.66), (0.34, 0.50), (0.66, 0.50), (0.84, 0.66), (0.66, 0.82), (0.34, 0.82)], DARK)
+    cv.poly([(0.24, 0.66), (0.38, 0.55), (0.62, 0.55), (0.76, 0.66), (0.62, 0.77), (0.38, 0.77)], GREY)
+    cv.circle(0.5, 0.66, 0.11, DARK)
 
 
 def g_render(cv):
@@ -304,94 +475,77 @@ def g_render(cv):
 def g_ipr(cv):
     clapper(cv)
     for i, ch in enumerate("IPR"):
-        x = 0.24 + i * 0.2
-        if ch == "I":
-            cv.line(x + 0.04, 0.46, x + 0.04, 0.76, 0.06, DARK)
-        elif ch == "P":
-            cv.line(x, 0.46, x, 0.76, 0.06, DARK)
-            cv.ring(x + 0.05, 0.55, 0.07, 0.05, DARK, 270, 90)
-        else:
-            cv.line(x, 0.46, x, 0.76, 0.06, DARK)
-            cv.ring(x + 0.05, 0.55, 0.07, 0.05, DARK, 270, 90)
-            cv.line(x + 0.04, 0.62, x + 0.11, 0.76, 0.05, DARK)
-
-
-def gear(cv, cx, cy, r, colour):
-    for k in range(8):
-        a = k * math.pi / 4
-        cv.line(cx + math.cos(a) * r * 0.6, cy + math.sin(a) * r * 0.6,
-                cx + math.cos(a) * r, cy + math.sin(a) * r, r * 0.42, colour)
-    cv.circle(cx, cy, r * 0.72, colour)
-    cv.circle(cx, cy, r * 0.30, DARK)
+        letter(cv, ch, 0.20 + i * 0.23, 0.48, 0.34, 0.08, DARK)
 
 
 def g_render_settings(cv):
     clapper(cv)
-    gear(cv, 0.72, 0.72, 0.24, TEAL)
+    gear(cv, 0.70, 0.70, 0.27, TEAL)
 
 
 def g_hypershade(cv):
-    cv.ring(0.5, 0.5, 0.30, 0.20, TEAL)
-    cv.circle(0.42, 0.42, 0.08, (0.85, 0.95, 0.97))
+    cv.circle(0.5, 0.5, 0.44, TEAL_DARK)
+    cv.circle(0.46, 0.46, 0.36, TEAL)
+    cv.circle(0.5, 0.5, 0.18, GREY)
+    cv.circle(0.46, 0.45, 0.07, LIGHT)
 
 
 def g_render_setup(cv):
     clapper(cv)
-    cv.poly([(0.46, 0.74), (0.74, 0.60), (1.0, 0.74), (0.74, 0.88)], TEAL)
+    stack(cv, 0.68, 0.70, 0.30, TEAL)
 
 
 def g_light_editor(cv):
-    cv.circle(0.36, 0.36, 0.22, GREY)
-    for k in range(6):
-        a = k * math.pi / 3 + 0.3
-        cv.line(0.36 + math.cos(a) * 0.27, 0.36 + math.sin(a) * 0.27,
-                0.36 + math.cos(a) * 0.36, 0.36 + math.sin(a) * 0.36, 0.06, GREY)
-    gear(cv, 0.72, 0.72, 0.22, TEAL)
+    # spot lamp pointing to the lower left, its rays teal, and Maya's teal gear at the lower right
+    cv.line(0.66, 0.10, 0.40, 0.36, 0.22, GREY)
+    cv.poly([(0.26, 0.34), (0.42, 0.18), (0.56, 0.46), (0.48, 0.54)], GREY)
+    for (ax, ay, bx, by) in ((0.22, 0.48, 0.08, 0.62), (0.34, 0.58, 0.26, 0.74), (0.14, 0.36, 0.04, 0.40)):
+        cv.line(ax, ay, bx, by, 0.07, TEAL)
+    gear(cv, 0.72, 0.72, 0.25, TEAL)
 
 
 def g_pause(cv):
-    cv.rect(0.26, 0.18, 0.42, 0.82, GREY)
-    cv.rect(0.58, 0.18, 0.74, 0.82, GREY)
+    cv.rect(0.24, 0.14, 0.42, 0.86, GREY)
+    cv.rect(0.58, 0.14, 0.76, 0.86, GREY)
 
 
 def g_modeling_toolkit(cv):
-    cv.poly([(0.10, 0.32), (0.45, 0.14), (0.80, 0.32), (0.45, 0.50)], GREY)
-    cv.poly([(0.10, 0.32), (0.45, 0.50), (0.45, 0.90), (0.10, 0.72)], DIM)
-    cv.poly([(0.45, 0.50), (0.80, 0.32), (0.80, 0.72), (0.45, 0.90)], GREY)
-    cv.line(0.62, 0.92, 0.96, 0.58, 0.10, TEAL)
+    cv.poly([(0.04, 0.46), (0.32, 0.32), (0.60, 0.46), (0.32, 0.60)], LIGHT)
+    cv.poly([(0.04, 0.46), (0.32, 0.60), (0.32, 0.96), (0.04, 0.82)], DIM)
+    cv.poly([(0.32, 0.60), (0.60, 0.46), (0.60, 0.82), (0.32, 0.96)], GREY)
+    cv.rect(0.50, 0.06, 0.96, 0.22, GREY)
+    cv.line(0.80, 0.22, 0.80, 0.94, 0.11, GREY)
 
 
 def g_character(cv):
-    cv.circle(0.5, 0.18, 0.11, GREY)
-    cv.rect(0.38, 0.32, 0.62, 0.62, GREY)
-    cv.line(0.20, 0.36, 0.80, 0.36, 0.08, GREY)
-    cv.line(0.42, 0.62, 0.36, 0.92, 0.08, GREY)
-    cv.line(0.58, 0.62, 0.64, 0.92, 0.08, GREY)
+    cv.circle(0.5, 0.13, 0.10, GREY)
+    cv.rect(0.06, 0.28, 0.94, 0.38, GREY)
+    cv.rect(0.34, 0.28, 0.66, 0.62, GREY)
+    cv.rect(0.44, 0.40, 0.56, 0.52, DARK)
+    cv.rect(0.34, 0.62, 0.45, 0.94, GREY)
+    cv.rect(0.55, 0.62, 0.66, 0.94, GREY)
 
 
 def g_attribute_editor(cv):
-    for y in (0.20, 0.42, 0.64, 0.86):
-        cv.rect(0.10, y - 0.05, 0.28, y + 0.05, GREY)
-        cv.frame(0.36, y - 0.07, 0.92, y + 0.07, 0.04, GREY)
+    for k, y in enumerate((0.20, 0.50, 0.80)):
+        cv.rect(0.04, y - 0.04, 0.26, y + 0.04, GREY)
+        cv.frame(0.32, y - 0.11, 0.96, y + 0.11, 0.06, GREY)
+        kx = (0.46, 0.66, 0.84)[k]
+        cv.rect(kx - 0.06, y - 0.06, kx + 0.06, y + 0.06, LIGHT)
 
 
 def g_tool_settings(cv):
-    for y in (0.22, 0.50, 0.78):
-        cv.rect(0.10, y - 0.05, 0.24, y + 0.05, GREY)
-        cv.line(0.32, y, 0.70, y, 0.06, GREY)
-    cv.rect(0.74, 0.10, 0.90, 0.34, GREY)
-    cv.line(0.82, 0.30, 0.82, 0.90, 0.07, GREY)
+    for y in (0.24, 0.50, 0.76):
+        cv.rect(0.04, y - 0.05, 0.18, y + 0.05, GREY)
+        cv.rect(0.26, y - 0.05, 0.58, y + 0.05, GREY)
+    cv.rect(0.62, 0.06, 0.98, 0.24, GREY)
+    cv.line(0.84, 0.24, 0.84, 0.94, 0.11, GREY)
 
 
 def g_channel_box(cv):
-    for k, colour in enumerate((GREY, DIM, GREY)):
-        y = 0.30 + k * 0.20
-        cv.poly([(0.10, y), (0.50, y - 0.18), (0.90, y), (0.50, y + 0.18)], colour)
-
-
-def g_live_surface(cv):
-    magnet(cv)
-    _t_live(cv)
+    stack(cv, 0.5, 0.52, 0.46, GREY)
+    for y in (0.28, 0.36):
+        cv.line(0.36, y, 0.64, y, 0.05, DIM)
 
 
 def g_workspace(cv):
@@ -417,17 +571,39 @@ GLYPHS = {
     "workspace": g_workspace,
 }
 
+# Status Line chrome (group bar, collapse handles): drawn without Maya's outline.
+CHROME = {"bar", "open", "closed"}
+
+EXTRA = {}     # name -> drawing function, added by other modules (panel toolbar glyphs) before first use
+
+
+def _glyph(name):
+    return GLYPHS.get(name) or EXTRA[name]
+
 
 def render(name, size=SIZE):
     cv = Canvas(size)
-    GLYPHS[name](cv)
+    _glyph(name)(cv)
     return cv
 
 
+def image(name, size=SIZE):
+    """Glyph ``name`` at ``size`` px: (size, size, 4) float32, top row first, straight alpha, Maya outline added."""
+    img = render(name, size).array()
+    if name in CHROME:
+        return img
+    return outlined(img)
+
+
 # --- previews ---------------------------------------------------------------------------------------
+#
+# Blender draws a button icon at round(16 x UI scale) px and resamples a preview of another size; a preview of the
+# drawn size shows the hinted pixels 1:1 (checked: ). Previews are keyed by
+# name and size ("undo@20"): a UI scale change makes new previews (from a timer, never inside a header draw while
+# an old-size preview can stand in) instead of rewriting pixels Blender may have cached on the GPU.
 
 _pcoll = []
-EXTRA = {}     # name -> drawing function, added by other modules (panel toolbar glyphs) before first use
+_size = []      # the icon size the previews were last made for
 
 
 def _collection():
@@ -437,29 +613,72 @@ def _collection():
     return _pcoll[0]
 
 
-def icon(name):
-    """icon_value of glyph ``name`` (made on first use)."""
-    pc = _collection()
-    p = pc.get(name)
+def icon_px():
+    """Pixel size Blender draws a 16 px button icon at, for the current UI scale."""
+    import bpy
+    s = bpy.context.preferences.system.ui_scale or 1.0      # 0 in background
+    return max(16, int(round(16 * s)))
+
+
+def _make(pc, name, size):
+    key = f"{name}@{size}"
+    p = pc.get(key)
     if p is None:
-        fn = GLYPHS.get(name) or EXTRA[name]
-        cv = Canvas(SIZE)
-        fn(cv)
-        px = cv.pixels()
-        p = pc.new(name)
-        p.icon_size = (SIZE, SIZE)
+        px = image(name, size)[::-1].ravel()
+        p = pc.new(key)
+        p.icon_size = (size, size)
         p.icon_pixels_float = px
-        p.image_size = (SIZE, SIZE)
+        p.image_size = (size, size)
         p.image_pixels_float = px
-    return p.icon_id
+    return p
+
+
+def icon(name):
+    """icon_value of glyph ``name`` at the current UI scale's icon size."""
+    pc = _collection()
+    size = icon_px()
+    p = pc.get(f"{name}@{size}")
+    if p is not None:
+        return p.icon_id
+    old = _size[0] if _size else None
+    if old is not None and old != size:
+        q = pc.get(f"{name}@{old}")
+        if q is not None:           # stand-in until the timer has made this size
+            _schedule()
+            return q.icon_id
+    return _make(pc, name, size).icon_id
+
+
+def _schedule():
+    import bpy
+    if not bpy.app.timers.is_registered(make_all):
+        bpy.app.timers.register(make_all, first_interval=0.0)
+
+
+def _redraw():
+    import bpy
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            area.tag_redraw()
+    try:
+        from . import status_line
+        status_line.redraw_top_bars()
+    except Exception:
+        pass
 
 
 def make_all():
-    """Create every glyph preview outside drawing (a timer after register): previews made while a header draws
-    are avoided."""
+    """Create every glyph preview for the current icon size outside drawing (a timer after register and after a UI
+    scale change): previews made while a header draws are avoided."""
     try:
+        size = icon_px()
+        pc = _collection()
         for name in list(GLYPHS) + list(EXTRA):
-            icon(name)
+            _make(pc, name, size)
+        changed = bool(_size) and _size[0] != size
+        _size[:] = [size]
+        if changed:
+            _redraw()
     except Exception:   # never leave a timer raising
         pass
     return None
@@ -475,6 +694,7 @@ def unregister():
     import bpy
     if bpy.app.timers.is_registered(make_all):
         bpy.app.timers.unregister(make_all)
+    _size.clear()
     if _pcoll:
         import bpy.utils.previews
         bpy.utils.previews.remove(_pcoll.pop())
