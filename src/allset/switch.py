@@ -307,6 +307,12 @@ def enter_layout(window):
     """Append and activate the Maya layout workspace in ``window`` (unless it already is one)."""
     if window is None or is_maya_workspace(window.workspace):
         return None
+    own = next((ws for ws in bpy.data.workspaces if PREV_KEY not in ws and is_maya_workspace(ws)), None)
+    if own is not None:
+        # the file's own Maya layout (a Maya Workflow Kit template file left by a switch to Blender): back to it,
+        # nothing appended twice (#19, step 129)
+        window.workspace = own
+        return own
     prev = window.workspace.name
     before = set(bpy.data.workspaces)
     with bpy.context.temp_override(**_window_override(window)):
@@ -347,8 +353,10 @@ def leave_layout(window):
     if window is None:
         return False
     ws = window.workspace
-    if ws is None or PREV_KEY not in ws:
+    if ws is None:
         return False
+    if PREV_KEY not in ws:
+        return _leave_template_layout(window) if is_maya_workspace(ws) else False
     prev = bpy.data.workspaces.get(ws[PREV_KEY]) or next(
         (w for w in bpy.data.workspaces if w != ws and not is_maya_workspace(w)), None)
     if prev is None:
@@ -363,6 +371,53 @@ def leave_layout(window):
     else:
         _delete_workspace(window, name, added)
     return True
+
+
+BLENDER_LAYOUT_KEY = "allset_blender_layout"
+# Blender's embedded factory startup file: what Add Workspace > General appends from (workspace_edit.cc
+# workspace_append_button, BLO_EMBEDDED_STARTUP_BLEND; measured on 4.5, step 129)
+EMBEDDED_STARTUP = "<startup.blend>"
+
+
+def _leave_template_layout(window):
+    """The window shows the Maya layout of a Maya Workflow Kit template file (no workspace to go back to): give it
+    Blender's factory Layout workspace, appended once and reused (#19, step 129). The Maya one stays in the file
+    for the way back (``enter_layout``)."""
+    target = next((w for w in bpy.data.workspaces if BLENDER_LAYOUT_KEY in w), None)
+    if target is None:
+        before = set(bpy.data.workspaces)
+        try:
+            with bpy.context.temp_override(**_window_override(window)):
+                bpy.ops.workspace.append_activate(idname="Layout", filepath=EMBEDDED_STARTUP)
+        except RuntimeError as ex:
+            print("Maya Workflow Kit: Blender layout not appended:", ex)
+            return False
+        new = [w for w in bpy.data.workspaces if w not in before]
+        if not new:
+            return False
+        target = new[0]
+        target[BLENDER_LAYOUT_KEY] = True
+    window.workspace = target
+    return True
+
+
+def _template_off():
+    """File > New follows the app template: in Blender mode it is Blender's General startup again (#19)."""
+    from . import app_template
+    prefs = bpy.context.preferences
+    if prefs.app_template == app_template.TEMPLATE_ID:
+        prefs.app_template = ""
+        _cleared_template[0] = True
+
+
+def _template_back():
+    from . import app_template
+    if _cleared_template[0] and bpy.context.preferences.app_template == "" and app_template.is_installed():
+        bpy.context.preferences.app_template = app_template.TEMPLATE_ID
+    _cleared_template[0] = False
+
+
+_cleared_template = [False]
 
 
 def _delete_workspace(window, name, added):
@@ -434,6 +489,8 @@ def set_mode(on, layout=True, theme=True):
         # theme made the Maya top area read as Blender, user report 2026-10-19).
         if theme and not prefs.maya_theme:
             prefs.maya_theme = True
+        if layout:
+            _template_back()
         if layout and not bpy.app.background:
             for window in _windows()[:1]:
                 enter_layout(window)
@@ -446,6 +503,7 @@ def set_mode(on, layout=True, theme=True):
         if layout:
             for window in _windows():
                 leave_layout(window)
+            _template_off()
         prefs.maya_mode = False
         if _registered[0]:
             unregister_mode()

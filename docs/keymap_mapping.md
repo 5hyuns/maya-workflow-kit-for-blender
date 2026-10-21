@@ -17,7 +17,7 @@
 | Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 구현 | 편집 모드: mesh.select_all(SELECT) | hotkeySetup.mel:59 |
 | Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | Object Mode: `allset.camera_from_view` | 구현 | 뷰와 같은 camera1 (렌즈·직교 크기), 뷰는 그대로 | hotkeySetup.mel:60 |
 | Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `allset.select_none` | 구현 | 편집 모드: allset.select_none (해제 + 오브젝트 모드) | hotkeySetup.mel:62 |
-| Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `allset.duplicate`; Mesh: `mesh.duplicate_move` | 구현 | 제자리, 자식 포함, pCube2/pCubeShape2 (편집 모드는 IC duplicate_move) | hotkeySetup.mel:64 |
+| Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `allset.duplicate`; Mesh: `allset.component_command` (item='Edit/Duplicate') | 구현 | 제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고, step 129) | hotkeySetup.mel:64 |
 | Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `allset.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
 | z | Z | global | Undo | Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:67 |
 | Ctrl+z | Ctrl+Z | global | Undo | Screen: `asset.catalog_undo`; Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:68 |

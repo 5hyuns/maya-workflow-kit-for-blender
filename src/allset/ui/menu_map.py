@@ -773,6 +773,31 @@ OBJECT_MODE = {
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
 }
 
+# Edit / Select / Modify items run in component (mesh edit) mode the way Maya 2022 runs them there (step 129, #39 /
+# #17 / #18; measured in a Maya GUI session with pCube1.f[1] selected after F11, docs/steps/step_129_audit_p1.md):
+# ("run", action) = this action instead of the object one; ("object", action) = back to object mode, then the
+# action; ("owner", action) = the action on the objects whose components are selected, then back to component mode
+# with the same components; ("warn", text) = Maya's warning, nothing done; ("none",) = Maya runs it with no effect.
+_NO_DUPLICATE = "No object(s) to duplicate"
+_NO_PARENT = "Cannot parent components or objects in the underworld."
+EDIT_MODE = {
+    "Select/All": ("run", ("mesh.select_all", {"action": 'SELECT'})),       # every face, still component mode
+    "Select/Inverse": ("run", ("mesh.select_all", {"action": 'INVERT'})),
+    "Select/Deselect All": ("run", "allset.select_none"),       # SelectNone: select -cl + object mode
+    "Select/Hierarchy": ("none",),
+    "Edit/Delete": ("run", "allset.delete_components"),        # the Delete key (step 24)
+    "Edit/Cut": ("run", "allset.delete_components"),           # deleteComponent; nothing goes to the clipboard
+    "Edit/Group": ("object", _create('EMPTY_GROUP')),          # doGroup on components = an empty group null1
+    "Edit/Duplicate": ("warn", _NO_DUPLICATE),
+    "Edit/Duplicate Special": ("warn", _NO_DUPLICATE),
+    "Edit/Duplicate with Transform": ("owner", "allset.duplicate_with_transform"),   # pCube2, f[1] kept
+    "Edit/Parent": ("warn", _NO_PARENT),
+    "Edit/Unparent": ("warn", _NO_PARENT),
+    "Modify/Freeze Transformations": ("none",),                # makeIdentity runs, Translate X stays
+    "Modify/Reset Transformations": ("none",),
+    "Edit/Delete by Type/History": ("none",),                  # delete -ch keeps polyExtrudeFace1 (#18)
+}
+
 # Step 109 (docs/steps/step_109.md 「계획」 3): Curves / Surfaces and FX commands built for the shelf, same in the
 # menus. operators/curve_tools.py, operators/fx.py; Maya results measured with mayapy (step_109.md).
 MAP.update({

@@ -10,6 +10,8 @@ import bpy
 
 # Maya paint operation -> Blender brush blend (Smooth = the Blur tool)
 OPERATIONS = (("MIX", "Replace"), ("ADD", "Add"), ("MUL", "Scale"))
+# The Flood button: Blender's fill + Maya Interactive normalization (operators/skin.py, step 129)
+FLOOD_OP = "allset.flood_weights"
 
 
 class ALLSET_UL_influences(bpy.types.UIList):
@@ -62,7 +64,8 @@ def draw(layout, context):
                                        text="Value", slider=True)
         UnifiedPaintPanel.prop_unified(col, context, brush, "strength", unified_name="use_unified_strength",
                                        text="Opacity", slider=True)
-    box.operator("paint.weight_set", text="Flood")
+    box.prop(context.tool_settings, "use_auto_normalize", text="Normalize Weights (Interactive)")
+    box.operator(FLOOD_OP, text="Flood")
     note = box.row()
     note.active = False
     note.label(text="Ctrl+LMB a joint to paint it")
