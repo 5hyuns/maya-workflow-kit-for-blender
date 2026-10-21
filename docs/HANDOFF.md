@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 134 (테마 없이 Maya 뷰포트 모습, #58 #59 #61 #75) 완료 — `docs/steps/step_134.md` (+ `step_134_{sel,grid,hud,look}.md`). 킷 고정 Maya
+  선택 · 컴포넌트 색 (`ui/component_colors.py`), 그리드 #404040 + 커서 숨김, 디스플레이 키 뒤 Adjust Last Operation 없음, Smooth Preview 매끈,
+  look_compare 도구 갱신 (viewport 1/12 → 7/12, grid FAIL → ok). 헤드리스 1046/1046, GUI 1345/1345. 후속 #76 (조작기 · 와이어 색).
+  **바로 다음 할 일**: step 135 = Dock / Channel Box (INPUTS 접힘, Layer Editor 보임, 배율별 dock 폭; #55 #60), 그다음 136–141 (backlog.json).
+
 - Step 133 (재점검 8차 — 사용자 지시의 「재점검 7차」) 완료 — `docs/steps/step_133.md` (+ `step_133_{ui,work,quant,remaining}.md`),
   PLAN 「재점검 8차」. 헤드리스 1025/1025, dogfood 48/48 (콘솔 오류 0), 구현률 29/2/0/2 (테마 행이 step 130 으로 부분), 메뉴 작동 44.5 %
   (step 98 29.6 %), 알림 없는 회색 0, 마킹 메뉴 회색 112 그대로. 새 이슈 #55–#75 (0.3.0).

@@ -285,12 +285,12 @@ def viewport_table(geom, kit_img):
             k_sel, k_base = L.mean_colour(kimg, kbox), L.mean_colour(kit_img(kit_base), kbox)
             m = L.mean_colour(mimg, mreg)
             m_base = L.mean_colour(L.load_rgb(MAYA / "screens" / f"{base_shot}.png"), mreg)
-            f = hex2rgb("#e4ac79")
+            f = hex2rgb("#e3ac79")   # the kit face stipple colour (ui/component_colors.py, step 134)
             alpha = sum((k_sel[i] - k_base[i]) / (f[i] - k_base[i]) for i in range(3)) / 3
             k = tuple(m_base[i] + alpha * (f[i] - m_base[i]) for i in range(3))
             mtxt = f"{rgb2hex(m)} mean of {list(mreg)}"
             ktxt = f"alpha {alpha:.2f} -> {rgb2hex(k)} on Maya's base (raw kit mean {rgb2hex(k_sel)})"
-            expect = "stipple #e4ac79 25 %"
+            expect = "stipple #e3ac79 25 %"
         else:
             ref = hex2rgb(colour)
             # 64 closest by RGB distance, then the closest by CIEDE2000 (RGB distance prefers
