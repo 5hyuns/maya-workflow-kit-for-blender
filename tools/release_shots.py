@@ -64,8 +64,8 @@ def s_first_start():
           kc is not None and kc.name == "Blender")
     check("Maya mode off until the user opts in", not prefs.addons[MODULE].preferences.maya_mode)
     setup()   # closes the splash, opts in to Maya mode
-    check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    # step 130: no app template is installed; the Maya layout is the bundled startup.blend (New Scene)
+    import_module(MODULE + ".first_start").new_maya_scene()
 
 
 @step
