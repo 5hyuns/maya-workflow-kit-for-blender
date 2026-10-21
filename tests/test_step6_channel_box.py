@@ -225,7 +225,7 @@ def test_layer_toggles():
     layer = le.new_layer(scene, [a])
     st = layer.allset_layer
     st.visible = False
-    assert a.hide_viewport and not b.hide_viewport
+    assert a.hide_get() and not b.hide_get() and not a.hide_viewport, "layer V = view-layer flag (step 129)"
     st.visible = True
     st.display_type = "TEMPLATE"
     assert a.hide_select and a.display_type == 'WIRE'
@@ -242,9 +242,9 @@ def test_layer_exclusive_membership_and_delete():
     l1.allset_layer.visible = False
     l2 = le.new_layer(scene, [a])
     assert a.name not in l1.objects and a.name in l2.objects, "one display layer per object"
-    assert not a.hide_viewport, "takes the new layer's state"
+    assert not a.hide_get(), "takes the new layer's state"
     le.delete_layer(scene, l1)
-    assert not b.hide_viewport and b.name not in [c.name for c in le.layers(scene)]
+    assert not b.hide_get() and b.name not in [c.name for c in le.layers(scene)]
 
 
 def test_layer_playback_handlers():
@@ -253,9 +253,9 @@ def test_layer_playback_handlers():
     layer = le.new_layer(scene, [a])
     layer.allset_layer.playback = False
     le.on_playback_pre(scene)
-    assert a.hide_viewport and not b.hide_viewport
+    assert a.hide_get() and not b.hide_get() and not a.hide_viewport, "layer V = view-layer flag (step 129)"
     le.on_playback_post(scene)
-    assert not a.hide_viewport
+    assert not a.hide_get()
     assert le.on_playback_pre in bpy.app.handlers.animation_playback_pre
 
 

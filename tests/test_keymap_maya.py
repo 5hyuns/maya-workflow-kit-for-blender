@@ -154,6 +154,8 @@ _OBJECT_MODE_STACK = ("Window", "Screen", "Frames", "3D View", "3D View Generic"
                       "Object Mode", "Object Non-modal")
 _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "Object Non-modal": _VIEW3D_STACK,
+           # Step 129: the Maya dock is a Properties editor (Channel Box row hover / drag)
+           "Property Editor": ("Window", "Screen", "Property Editor", "View2D Buttons List"),
            # 3D View edit/pose modes: the mode keymap on top of the 3D View ones (step 8 adds
            # RMB marking menus and Q/W/E/R to them).
            **{km: ("Window", "Screen", "Frames", "3D View", "3D View Generic", km, "Object Non-modal")
