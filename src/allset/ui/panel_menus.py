@@ -13,7 +13,7 @@ mode selector and the right-hand buttons (Maya's panel icon bar) stay Blender's.
 View / Select / Add / Object ... menus stay reachable under.
 
 Item forms (one tuple per row):
-``("prop", owner, prop, label)`` check box on ``space`` / ``shading`` / ``overlay`` / ``inputs``;
+``("prop", owner, prop, label)`` check box on ``space`` / ``shading`` / ``overlay``;
 ``("set", key, label)`` ``allset.panel_set`` (radio / toggle state from ``state``);
 ``("run", label, op, props)`` an operator run in this view's main region;
 ``("menu", label, idname)``; ``("grey", label)`` no Blender equivalent; ``("sep", label)``.
@@ -213,8 +213,7 @@ def _space(context):
 
 
 def _owner(space, context, owner):
-    return {"space": space, "shading": space.shading, "overlay": space.overlay,
-            "inputs": context.preferences.inputs}[owner]
+    return {"space": space, "shading": space.shading, "overlay": space.overlay}[owner]
 
 
 def _scene_camera_view(context):
@@ -263,6 +262,10 @@ for _k in CAMERA_DATA:
     FAILS[_k] = FAILS["CAMERA_LOCK"]
 
 TIPS = {
+    "TUMBLE_SELECTION": "Tumble around the selection: Blender's Orbit Around Selection preference "
+                        "(opens Preferences > Navigation; the kit doesn't change preferences)",
+    "TUMBLE_COI": "Tumble around the center of interest: Orbit Around Selection off "
+                  "(opens Preferences > Navigation; the kit doesn't change preferences)",
     "SELECT_CAMERA": "Select camera: the camera this view looks through",
     "CAMERA_LOCK": "Lock Camera: the camera this view looks through can't be moved (Blender: its location and "
                    "rotation channels are locked)",
@@ -401,10 +404,13 @@ def apply(context, key):
         leave_rendered(space)
     elif key == "RENDER_ENGINE":
         enter_rendered(space)
-    elif key == "TUMBLE_SELECTION":
-        context.preferences.inputs.use_rotate_around_active = True
-    elif key == "TUMBLE_COI":
-        context.preferences.inputs.use_rotate_around_active = False
+    elif key in ("TUMBLE_SELECTION", "TUMBLE_COI"):
+        # Blender's Orbit Around Selection is a user preference, which the kit never writes (step 130,
+        # ): the items show it and open Preferences > Navigation to change it.
+        try:
+            bpy.ops.screen.userpref_show('INVOKE_DEFAULT', section='NAVIGATION')
+        except RuntimeError:      # no window (background)
+            return False
     elif key == "GRID":
         from . import maya_grid
         maya_grid.toggle(space)

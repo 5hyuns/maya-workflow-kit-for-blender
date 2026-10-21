@@ -1,4 +1,4 @@
-"""Step 4: navigation prefs preset, view history, smooth preview, component modes, keys."""
+"""Step 4: view history, smooth preview, component modes, keys."""
 
 from importlib import import_module
 
@@ -6,7 +6,6 @@ import bpy
 
 import kit
 
-prefs_preset = import_module(kit.MODULE + ".prefs_preset")
 preferences = import_module(kit.MODULE + ".preferences")
 view = import_module(kit.MODULE + ".operators.view")
 display = import_module(kit.MODULE + ".operators.display")
@@ -21,38 +20,16 @@ def _kmis(km_name, idname, type, shift=False, ctrl=False, alt=False):
             and k.value == 'PRESS' and k.shift == shift and k.ctrl == ctrl and k.alt == alt]
 
 
-# --- preferences preset ---------------------------------------------------------
+# --- preferences: left alone (step 130) ---------------------------------------------
 
-def test_preset_applied_on_enable():
-    got = prefs_preset.read(bpy.context.preferences)
-    assert got == dict(prefs_preset.PRESET), got
-    assert preferences.get().prefs_backup, "original values must be backed up"
-
-
-def test_toggle_option_restores_and_reapplies():
-    ap = preferences.get()
-    ap.use_maya_navigation = False
-    assert INPUTS.view_zoom_axis == 'VERTICAL'  # factory
-    assert ap.prefs_backup == ""
-    ap.use_maya_navigation = True
-    assert INPUTS.view_zoom_axis == 'HORIZONTAL' and not INPUTS.invert_mouse_zoom
-
-
-def test_user_change_survives_restart():
-    # After the first apply, a restart (register again) must not override the user.
-    INPUTS.use_zoom_to_mouse = True
-    prefs_preset.register()
-    assert INPUTS.use_zoom_to_mouse
-    INPUTS.use_zoom_to_mouse = False
-
-
-def test_disable_restores_user_values():
-    kit.disable()
-    try:
-        assert INPUTS.view_zoom_axis == 'VERTICAL'
-    finally:
-        kit.enable()
-    assert INPUTS.view_zoom_axis == 'HORIZONTAL'
+def test_navigation_preferences_left_alone():
+    """The Maya navigation preset (turntable, dolly, no zoom to mouse, ...) is gone since step 130
+    (): Maya mode leaves Blender's navigation preferences at the user's values."""
+    defaults = {p.identifier: p.default for p in INPUTS.bl_rna.properties
+                if p.identifier in ("view_zoom_axis", "view_zoom_method", "use_zoom_to_mouse", "view_rotate_method")}
+    for name, default in defaults.items():
+        assert getattr(INPUTS, name) == default, (name, getattr(INPUTS, name), default)
+    assert not hasattr(preferences.get(), "use_maya_navigation")
 
 
 # --- view history ----------------------------------------------------------------

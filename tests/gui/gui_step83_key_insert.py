@@ -8,7 +8,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, tap, view3d, win, load_maya_layout  # noqa: E402
 
 C = {}
 
@@ -45,8 +45,7 @@ def hover_view():
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

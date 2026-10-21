@@ -11,7 +11,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sim import MODULE, check, run, step, setup, screenshot, win  # noqa: E402
+from sim import MODULE, check, run, step, setup, screenshot, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 
@@ -36,13 +36,12 @@ def headerless_properties():
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step
 def s_maya():
-    sw().set_mode(True, layout=False, theme=False)
+    sw().set_mode(True, layout=False)
     bpy.ops.allset.keymap_activate()
     check(f"Maya mode in the template file ({len(strips())} strips)", sw().is_on() and len(strips()) == 2)
 

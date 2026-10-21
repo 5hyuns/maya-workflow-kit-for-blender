@@ -15,7 +15,7 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, setup, step, tap, view3d, win, load_maya_layout  # noqa: E402
 
 C = {}
 
@@ -96,8 +96,7 @@ def notice():
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step
@@ -4680,7 +4679,7 @@ def browser_check(name, label, then):
 @named("m69_2_new")
 def _m69_2_new():
     object_mode()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")   # an unsaved scene: the first Ctrl+S asks for a name
+    load_maya_layout()   # an unsaved scene: the first Ctrl+S asks for a name
 
 
 @named("m69_2_project")

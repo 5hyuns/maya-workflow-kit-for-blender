@@ -4,7 +4,8 @@
 Part of CORE (registered whenever the extension is enabled, also in Blender mode). Enabling the extension only adds
 the Maya | Blender switch, an Edit menu item, Ctrl+Alt+Shift+M and, once in a GUI session, this welcome dialog. Its
 confirm button "Make Blender feel like Maya" (also in the add-on preferences) turns on Maya mode and Make Blender
-Maya (``first_start.make``: layout template, theme, splash, density, start option). Cancelling changes nothing.
+Maya (``first_start.make``: start in the Maya layout, the layout shown now). Cancelling changes nothing. Blender's
+preferences are never written (step 130).
 
 Not in background runs; GUI tests and tools set ``ALLSET_NO_WELCOME=1`` (the dialog would eat simulated events).
 """
@@ -44,24 +45,19 @@ def opt_in(open_layout=True):
     switch.set_mode(True, layout=False)
     from . import first_start
     first_start.make(bpy.context, open_layout=False)
-    window = _window()
-    if not open_layout or bpy.app.background or window is None:
-        return
-    if not bpy.data.is_dirty and not bpy.data.filepath:
-        first_start.open_layout_later()     # an untouched new file: start over in the template file
-    else:
-        switch.enter_layout(window)         # the user's file: append the layout workspace, keep the data
+    if open_layout:
+        # an untouched new file: a new Maya scene; the user's file: the layout workspace appended, data kept
+        first_start.show_layout(_window())
 
 
 # Body text, wrapped to the checked room left of the icon: fixed lines were cut ("the Maya colou...") at 125 %
 # UI scale (step 124).
 PARAGRAPHS = (
     "The whole Maya workflow in Blender, in one install.",
-    "Nothing has changed yet. Make Blender feel like Maya turns on the Maya-style keymap: Alt+mouse, QWER, Space "
-    "hotbox, marking menus; the Maya layout, menus, Channel Box and shelf; the Maya colours; Maya navigation, undo "
-    "and panel preferences.",
-    "Your settings are kept: the Maya | Blender switch at the top right or Ctrl+Alt+Shift+M brings them back at "
-    "any time.",
+    "Nothing has changed yet. Make Blender feel like Maya turns on the Maya-style keys: Alt+mouse, QWER, Space "
+    "hotbox, marking menus; the Maya layout, menus, Channel Box and shelf.",
+    "Your Blender preferences are never changed: the Maya | Blender switch at the top right or Ctrl+Alt+Shift+M "
+    "goes back to plain Blender at any time.",
 )
 DIALOG_WIDTH = 640      # unscaled px
 ICON_SCALE = 7.0        # template_icon scale = 20 px units
@@ -96,8 +92,8 @@ def wrap(text, width, size, measure=text_width):
 
 
 class ALLSET_OT_welcome(bpy.types.Operator):
-    """Turn on the Maya-style keymap, layout, menus, theme and Maya preferences (asks first).
-    Ctrl+Alt+Shift+M or the Maya / Blender switch turns it off again and restores your settings"""
+    """Turn on the Maya-style keys, layout and menus (asks first). Blender's preferences are not changed;
+    Ctrl+Alt+Shift+M or the Maya / Blender switch turns it off again"""
     bl_idname = "allset.welcome"
     bl_label = "Make Blender feel like Maya"
     bl_options = {'INTERNAL'}
