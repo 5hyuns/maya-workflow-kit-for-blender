@@ -818,3 +818,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 129) 실제 마우스로 Tool Box 아이콘 (Select / Lasso / Paint Select / Move / Rotate / Scale) 을 더블클릭: Tool Settings 도크가 열리고 그 툴의 Maya 절이 보이는지; 이미 열려 있으면 두 번째 도크가 생기지 않는지; 한 번 클릭 / W W 키는 열지 않는지.
 - [ ] (step 129) Paint Selection 의 Select / Unselect / Add to current selection 이 실제 칠하기 선택 결과와 맞는지, Insert Edge Loop 의 Equal distance / Multiple edge loops 가 loop cut 결과에 반영되는지.
+
+### Step 129 soft select
+
+- [ ] (step 129) Maya Workflow Kit layout, cube in object mode: B → in-view message; F11 (faces) → soft select still on (header proportional button lit); B in face mode → off; back to object mode → off too (#15). Open a file saved with soft select on → it follows the current setting (Maya global option).
+- [ ] (step 129) Edit mode, select one vertex of a dense grid, B on: the wire around it is yellow at the selection → red → black at the radius (Maya look, `tmp/maya129/out/softsel_00_on.png` reference); G moves exactly the coloured region and the colours stay put during the move; switch Volume / Surface and the falloff curve in the Modeling Toolkit → colours follow at once.
+- [ ] (step 129) Hold B, drag with the **middle** mouse (and with the left) left / right: a white circle of the radius around the selection + "Falloff Radius: x" next to the mouse, the view does not orbit, releasing B keeps soft select on. Judge whether ×2 per 100 px feels like Maya (Maya's rate is not measured: synthetic drags don't reach its screen slider).
+- [ ] (step 129) Feel on a ~100k-vertex mesh: orbiting / selecting with soft select on stays fluid; Surface mode first draw after a selection change ~0.5 s at radius ≈ 6 % of the mesh (headless: Volume 0.2 s first / 5 ms on a radius change, Surface 0.5 s).

@@ -9,7 +9,7 @@ Operator ids use the ``allset.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (bookmarks, component, create, curve_tools, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, manip, marquee,
-               material, menu_extras, menu_items, mesh_maya, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, sets, shading_maps, skin, snap_align, symmetry, taphold,
+               material, menu_extras, menu_items, mesh_maya, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -44,6 +44,7 @@ def register():
     units.register_handler()
     tool_keys.register_timer()
     symmetry.register_handler()
+    soft_select.register_handlers()
     pivot.register_handler()
     project.register_handlers()
     preselect.register_handlers()
@@ -58,6 +59,7 @@ def unregister():
     cut_sew.unregister_handlers()
     project.unregister_handlers()
     pivot.unregister_handler()
+    soft_select.unregister_handlers()
     symmetry.unregister_handler()
     tool_keys.unregister_timer()
     marquee.restore_all()
