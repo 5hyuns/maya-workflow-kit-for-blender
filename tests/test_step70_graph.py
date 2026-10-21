@@ -155,16 +155,17 @@ def test_keymap():
 # --- Auto Key ------------------------------------------------------------------------------------------
 
 def test_auto_key_only_keyed_channels():
+    """Step 130: the kit's own Auto Key (Scene.allset_auto_key, operators/auto_key.py); Blender's Only Insert
+    Available preference is never written."""
     prefs = bpy.context.preferences
-    assert prefs.edit.use_keyframe_insert_available, "Maya Auto Key on by default"
+    factory = type(prefs.edit).bl_rna.properties["use_keyframe_insert_available"].default
+    assert prefs.edit.use_keyframe_insert_available == factory
     ob = _cube_with_keys()
     assert channel_box.auto_keys(ob, "tx") and not channel_box.auto_keys(ob, "rx")
-    prefs.edit.use_keyframe_insert_available = False
-    assert channel_box.auto_keys(ob, "rx")
-    prefs.edit.use_keyframe_insert_available = True
     # the Channel Box proxy with Auto Key on: keyed channel gets a key, an unkeyed one doesn't
     sc = bpy.context.scene
-    sc.tool_settings.use_keyframe_insert_auto = True
+    assert not sc.allset_auto_key, "off by default (Maya's Auto Key button starts off)"
+    sc.allset_auto_key = True
     try:
         sc.frame_set(50)
         sc.allset_cb.tx = 2.0
@@ -172,16 +173,19 @@ def test_auto_key_only_keyed_channels():
         fcs = kit.fcurves(ob)
         assert [kp.co.x for kp in fcs.find("location", index=0).keyframe_points] == [1, 24, 50]
         assert fcs.find("rotation_euler", index=0) is None
+        # a move outside the Channel Box (viewport, Python): the depsgraph handler keys it, unkeyed channels stay
+        auto_key = import_module(kit.MODULE + ".operators.auto_key")
+        sc.frame_set(60)
+        ob.location.x = 5.0
+        ob.rotation_euler.x = 0.3
+        assert [fc.data_path for fc, _v in auto_key.changed_curves(ob, 60)] == ["location"]
+        assert auto_key.key_changed(ob, 60) == 1
+        assert [kp.co.x for kp in fcs.find("location", index=0).keyframe_points] == [1, 24, 50, 60]
+        assert fcs.find("rotation_euler", index=0) is None
+        assert auto_key.changed_curves(ob, 60) == [], "nothing left to key"
     finally:
-        sc.tool_settings.use_keyframe_insert_auto = False
-    # turning the kit off gives the user's value back (the factory default: off before 5.2, on in 5.2)
-    factory = type(prefs.edit).bl_rna.properties["use_keyframe_insert_available"].default
-    kit.disable()
-    try:
-        assert prefs.edit.use_keyframe_insert_available == factory
-    finally:
-        kit.enable()
-    assert prefs.edit.use_keyframe_insert_available
+        sc.allset_auto_key = False
+    assert prefs.edit.use_keyframe_insert_available == factory and not sc.tool_settings.use_keyframe_insert_auto
 
 
 # --- Playblast --------------------------------------------------------------------------------------------

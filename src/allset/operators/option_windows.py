@@ -310,7 +310,8 @@ def _run_new_scene(context, v):
     values = dict(v)
 
     def later():
-        bpy.ops.wm.read_homefile()
+        from .. import first_start
+        first_start.new_maya_scene()     # the Maya layout file bundled in the extension (step 130)
         scene = bpy.context.scene
         us = scene.unit_settings
         if not values["keep_units"]:

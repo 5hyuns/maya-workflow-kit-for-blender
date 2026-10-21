@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, screenshot, setup, step, win  # noqa: E402
+from sim import MODULE, check, ev, run, screenshot, setup, step, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 KEYS = ((1, 0.0), (12, 5.0), (15, -2.0), (20, 8.0), (30, 1.0))
@@ -72,8 +72,7 @@ def drag(x0, x1, shift=False):
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

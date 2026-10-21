@@ -4,7 +4,7 @@
 
 Runs with a sandbox BLENDER_USER_CONFIG (the caller creates it and checks it is under tmp/),
 WITHOUT --factory-startup so the saved preferences of the previous session are read.
-Actions: user_setup, enable, make_maya, maya_off, maya_on, disable, fake_crash_off, save.
+Actions: user_setup, enable, make_maya, maya_off, maya_on, disable, save.
 Writes {"dump": ..., "state": ...} after the actions (dump = tests/rt60_dump.dump()).
 """
 
@@ -55,14 +55,11 @@ def main():
             mod("switch").set_mode(True)
         elif action == "disable":
             kit.disable()
-        elif action == "fake_crash_off":
-            # Maya mode flag already off but nothing restored yet (Blender died during the switch)
-            mod("preferences").get().maya_mode = False
         elif action == "save":
             bpy.ops.wm.save_userpref()
     if kit.is_enabled():
         sw = mod("switch")
-        state = {"maya_mode": sw.is_on(), "snapshot": sw.has_snapshot(),
+        state = {"maya_mode": sw.is_on(),
                  "keyconfig": bpy.context.window_manager.keyconfigs.active.name}
     with open(out, "w", encoding="utf-8") as fh:
         json.dump({"dump": dump(), "state": state,

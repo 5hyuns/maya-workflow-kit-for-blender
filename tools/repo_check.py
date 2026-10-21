@@ -127,7 +127,8 @@ def main(argv=None):
 
     # 2. Make Blender feel like Maya (the opt-in), then disable
     step("make", probe + ["make", str(SANDBOX / "made.json")], "made")
-    check("Make Blender Maya changes the look (theme)", snap["made"] and snap["made"]["theme"] != snap["before"]["theme"])
+    check("Make Blender Maya keeps the user's theme (step 130)",
+          snap["made"] and snap["made"]["theme"] == snap["before"]["theme"])
     check(f"active keymap unchanged by the opt-in (got {snap['made'] and snap['made']['active_keyconfig']}, step 130)",
           snap["made"] and snap["made"]["active_keyconfig"] == snap["before"]["active_keyconfig"])
     step("disable", probe + ["disable", str(SANDBOX / "disabled.json")], "disabled")
