@@ -35,7 +35,9 @@ AE_CATEGORY = "Attribute Editor"
 MTK_CATEGORY = "Modeling Toolkit"
 # Channel Box pane share of the dock, Layer Editor below: initChannelsLayers.mel asks for 70 % (research/maya/
 # ui_layout.md:252), but the factory Maya 2022 screen puts the Display / Anim tabs at y 473 of a 132-785 dock
-# (research/maya/screens/audit7/maya/a01_first_screen.png) = about half of the kit's sidebar below its header
+# (research/maya/screens/audit7/maya/a01_first_screen.png) = about half of the kit's sidebar below its header; step 135
+# measured the panes: ChannelBoxForm 299 px / LayerEditorForm 328 px (research/maya/screens/cb135/_cb135.json) = 0.48.
+# The split is fixed: a long Channel Box scrolls inside its part (cb135/pass1/c09_long_history.png).
 CB_SHARE = 0.50
 
 # key, label, data path, index, kind
@@ -491,6 +493,65 @@ def _text_set(key):
 
 def _inputs(ob):
     return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m)]
+
+
+# --- INPUTS node expansion (step 135, #55; docs/steps/step_135_cb.md 「계획」) -----------------------------------------
+# Maya 2022 (research/maya/screens/cb135): every INPUTS node starts collapsed (polyCube1, polyExtrudeFace1), a click on
+# its name shows its attributes under it and a second click hides them; a new lead shows every node collapsed again,
+# also when the earlier lead comes back (d04_first_again.png). This is UI state, not scene data: kept in Python (never
+# Blender's ``Modifier.show_expanded``, which is the Properties editor's panel state, saved and undone), not undone,
+# not saved.
+
+_open = {"lead": None, "nodes": set()}
+
+
+def lead_key(ob):
+    if ob is None:
+        return None
+    if is_bone(ob):
+        return ("BONE", ob.id_data.name, ob.name)
+    return ("OB", ob.name)
+
+
+def open_nodes(ob):
+    """The expanded INPUTS node keys of lead ``ob`` (emptied when the lead changed, Maya's behaviour)."""
+    key = lead_key(ob)
+    if key != _open["lead"]:
+        _open["lead"] = key
+        _open["nodes"] = set()
+        _scroll.clear()
+    return _open["nodes"]
+
+
+def is_open(ob, node):
+    return node in open_nodes(ob)
+
+
+def set_open(ob, node, state=True):
+    nodes = open_nodes(ob)
+    if state:
+        nodes.add(node)
+    else:
+        nodes.discard(node)
+
+
+def mod_node(mod):
+    return "mod:" + mod.name
+
+
+def history_node(name):
+    """A Maya history node drawn by the kit (creation node polyCube1, extrusion polyExtrudeFace1)."""
+    return "node:" + name
+
+
+def con_node(node, con):
+    return "con:" + constraint_node_name(node, con)
+
+
+def reset_open():
+    _open["lead"] = None
+    _open["nodes"] = set()
+    _scroll.clear()
 
 
 # --- constraints = Maya constraint nodes (docs/steps/step_55.md 「계획」 3) ------------------------
@@ -1423,11 +1484,12 @@ def wanted_rows(ob):
             if rna is not None and cb_entry.kind_of_rna(rna):
                 out.append(("SHAPE", prop, "", 0))
     for mod in _inputs(ob):
-        if mod.show_expanded:
+        if is_open(ob, mod_node(mod)):
             for prop in _modifier_props(mod):
                 out.append(("INPUT", prop, mod.type, _nth_of_type(ob, mod)))
     for con in constraints(ob):
-        out.append(("CONSTRAINT", "influence", con.type, _nth_constraint(ob, con)))
+        if is_open(ob, con_node(ob, con)):
+            out.append(("CONSTRAINT", "influence", con.type, _nth_constraint(ob, con)))
     return out
 
 
@@ -1435,10 +1497,11 @@ def rows_signature(ob):
     if ob is None:
         return ""
     cons = [(c.name, c.type, weight_name(c)) for c in constraints(ob)]
+    opened = sorted(open_nodes(ob))
     if is_bone(ob):
-        return repr(("BONE", ob.id_data.name, ob.name, custom_keys(ob), cons))
-    mods = [(m.name, m.type, m.show_expanded) for m in _inputs(ob)]
-    return repr((ob.name, ob.type, custom_keys(ob), mods, cons))
+        return repr(("BONE", ob.id_data.name, ob.name, custom_keys(ob), cons, opened))
+    mods = [(m.name, m.type) for m in _inputs(ob)]
+    return repr((ob.name, ob.type, custom_keys(ob), mods, cons, opened))
 
 
 _rows_state = {"busy": False}
@@ -1487,6 +1550,7 @@ def _on_depsgraph(_scene, _depsgraph):
 
 @persistent
 def _on_load(_dummy):
+    reset_open()
     rebuild_rows()
 
 
@@ -1505,6 +1569,250 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
     split = layout.row(align=True).split(factor=0.5, align=True)
     split.label(text=label)
     split.prop(row, "text", text="")
+
+
+# --- lines: the Channel Box below its name row is a fixed pane that scrolls (step 135, #55) ---------------------------
+# Maya keeps the Channel Box / Layer Editor split and scrolls a long Channel Box inside its part (research/maya/screens/
+# cb135/pass1/c09_long_history.png, d02_clicked.png). Blender can't scroll part of a region, so every Channel Box row
+# under the lead's name is one equal line (ROW_SCALE) of one aligned column, and the pane draws the lines that fit
+# (docs/steps/step_135_cb.md 「계획」 2c).
+
+_scroll = {}    # area pointer -> first line shown
+_last = {}      # area pointer -> (first, total, limit) of the last draw (limit None: every line fits)
+WHEEL_LINES = 2
+BUTTON_LINES = 3
+
+
+class Lines:
+    """An aligned column of equal rows that shows only rows ``first`` .. ``first + limit`` (``layout`` None: count)."""
+
+    def __init__(self, layout, first=0, limit=None):
+        self.layout = layout
+        self.first = first
+        self.limit = limit
+        self.n = 0
+        self.shown = 0
+
+    def row(self):
+        i = self.n
+        self.n += 1
+        if self.layout is None or i < self.first or (self.limit is not None and self.shown >= self.limit):
+            return None
+        self.shown += 1
+        return self.layout.row(align=True)
+
+
+def as_lines(layout):
+    return layout if isinstance(layout, Lines) else Lines(layout)
+
+
+def window_lines(total, room, first):
+    """(first, limit, overflow) for ``total`` lines in a pane of ``room`` lines: an overflowing pane keeps its last
+    line for the scroll buttons."""
+    if room is None or total <= room:
+        return 0, None, False
+    limit = max(1, room - 1)
+    return max(0, min(first, total - limit)), limit, True
+
+
+def _unit(context):
+    system = context.preferences.system
+    return round(18.0 * system.ui_scale) + 2 * system.pixel_size
+
+
+def _split_off(context):
+    sdk = getattr(context.window_manager, "allset_sdk", None)
+    return sdk is not None and sdk.open    # the Set Driven Key window takes the Layer Editor's place (step 62)
+
+
+def pane_room(context, units):
+    """Lines that fit in the Channel Box part (CB_SHARE of the region) under ``units`` of fixed rows; None = no
+    split (no region: headless drawing, or the Set Driven Key window)."""
+    region = context.region
+    if region is None or region.type not in {'UI', 'WINDOW'} or _split_off(context):
+        return None
+    u = _unit(context)
+    if u <= 0 or region.height <= 0:
+        return None
+    return max(2, int((CB_SHARE * region.height / u - units - PANE_TOP - 0.3) / ROW_SCALE))
+
+
+def node_row(lines, ob, node, label, tip="", active=True):
+    """An INPUTS node name: Maya's indented, flat, click-to-expand row. Returns (row or None, expanded)."""
+    opened = is_open(ob, node)
+    row = lines.row()
+    if row is not None:
+        name = row.row(align=True)
+        name.alignment = 'LEFT'
+        name.active = active
+        name.separator(factor=1.5)
+        op = name.operator(ALLSET_OT_cb_node_toggle.bl_idname, text=label, emboss=False)
+        op.node = node
+        op.tip = tip
+    return row, opened
+
+
+class ALLSET_OT_cb_node_toggle(bpy.types.Operator):
+    """Show or hide this node's attributes (Maya: click the node name in INPUTS)"""
+    bl_idname = "allset.cb_node_toggle"
+    bl_label = "Expand Node"
+    bl_options = {'INTERNAL'}     # no undo step: Maya's expansion is UI state
+
+    node: StringProperty(options={'SKIP_SAVE'})
+    tip: StringProperty(options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, props):
+        return props.tip or cls.__doc__
+
+    def execute(self, context):
+        ob = lead(context)
+        if ob is None or not self.node:
+            return {'CANCELLED'}
+        set_open(ob, self.node, not is_open(ob, self.node))
+        rebuild_rows(context)
+        _redraw(context.window)
+        return {'FINISHED'}
+
+
+def over_pane(context, event):
+    """The mouse is over an overflowing Channel Box part of a Maya dock."""
+    area, region = context.area, context.region
+    if area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW':
+        return False
+    from . import maya_dock
+    if maya_dock.shown_kind(context) != 'CHANNEL_BOX':
+        return False
+    if _last.get(area.as_pointer(), (0, 0, None))[2] is None:
+        return False
+    from_top = region.height - event.mouse_region_y
+    return 0 <= from_top <= CB_SHARE * region.height
+
+
+class ALLSET_OT_cb_scroll(bpy.types.Operator):
+    """Scroll the Channel Box (Maya: its own scroll bar; the Layer Editor below stays)"""
+    bl_idname = "allset.cb_scroll"
+    bl_label = "Scroll Channel Box"
+    bl_options = {'INTERNAL'}
+
+    lines: IntProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            if event.ctrl or event.shift or event.alt or not over_pane(context, event):
+                return {'PASS_THROUGH'}
+            self.lines = WHEEL_LINES if event.type == 'WHEELDOWNMOUSE' else -WHEEL_LINES
+        return self.execute(context)
+
+    def execute(self, context):
+        area = context.area
+        if area is None:
+            return {'CANCELLED'}
+        ptr = area.as_pointer()
+        first, total, limit = _last.get(ptr, (0, 0, None))
+        if limit is None:
+            return {'CANCELLED'}
+        _scroll[ptr] = max(0, min(first + self.lines, total - limit))
+        area.tag_redraw()
+        return {'FINISHED'}
+
+
+def _scroll_row(col, first, limit, total):
+    row = col.row(align=True)
+    row.alignment = 'RIGHT'
+    for lines, icon, on in ((-BUTTON_LINES, 'TRIA_UP', first > 0), (BUTTON_LINES, 'TRIA_DOWN', first + limit < total)):
+        sub = row.row(align=True)
+        sub.enabled = on
+        sub.operator(ALLSET_OT_cb_scroll.bl_idname, text="", icon=icon, emboss=False).lines = lines
+
+
+def _draw_lines(lines, context, ob, cb, sel, blue):
+    """Every Channel Box line under the lead's name: channels, SHAPES, INPUTS (collapsed nodes, step 135)."""
+    for key, _label, _path, _idx, kind in MAIN:
+        if is_hidden(ob, key):
+            continue
+        if kind == "ROT" and not has_channel(ob, key):
+            continue
+        r = lines.row()
+        if r is not None:
+            draw_channel_row(r, ob, key, cb, key + "_text", key in sel, key in blue, cb, key + "_sel")
+    if not has_channel(ob, "rx"):
+        r = lines.row()
+        if r is not None:
+            r.label(text=f"Rotation mode {ob.rotation_mode}")
+        r = lines.row()
+        if r is not None:
+            r.prop(ob, "rotation_quaternion" if ob.rotation_mode == 'QUATERNION' else "rotation_axis_angle", text="")
+        r = lines.row()
+        if r is not None:
+            r.operator(ALLSET_OT_cb_rotate_order.bl_idname, text="Rotate Order XYZ").order = 'XYZ'
+    for name in custom_keys(ob):
+        key = CUSTOM_PREFIX + name
+        if is_hidden(ob, key):
+            continue
+        r = lines.row()
+        if r is None:
+            continue
+        row = row_for(context, ob, "CUSTOM", name)
+        if row is not None:
+            draw_channel_row(r, ob, key, row, "text", key in sel, sel_owner=row, sel_prop="sel")
+        else:
+            draw_channel_row(r, ob, key, ob, f'["{name}"]', key in sel)
+
+    # SHAPES: the shape name is a rename field (Maya, cb135/pass1/c04_shape_clicked.png); camera / light shapes show
+    # their attributes expanded (c11_camera.png, c12_spot_light.png)
+    data = getattr(ob, "data", None)
+    if data is not None:
+        r = lines.row()
+        if r is not None:
+            r.label(text="SHAPES")
+        r = lines.row()
+        if r is not None:
+            r.separator(factor=1.5)
+            r.prop(data, "name", text="", emboss=False)
+        for prop in SHAPE_PROPS.get(ob.type, ()):
+            if hasattr(data, prop):
+                r = lines.row()
+                if r is not None:
+                    _draw_text_row(r, context, ob, data, prop, "SHAPE")
+
+    # INPUTS, newest first; every node starts collapsed (cb135/d01_cube.png, pass1/c07_extruded_component.png).
+    # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
+    inputs = _inputs(ob)
+    cons = constraints(ob)
+    from . import in_view
+    last = in_view.cb_record(context, ob)    # the last kit extrusion = Maya's newest history node (step 65)
+    from . import creation_inputs
+    created = creation_inputs.has_node(ob)   # the primitive's creation node, oldest history (step 129)
+    if not (inputs or cons or last is not None or created):
+        return
+    r = lines.row()
+    if r is not None:
+        r.label(text="INPUTS")
+    if last is not None:
+        in_view.draw_cb_node(lines, context, last)
+    for mod in inputs:
+        row, opened = node_row(lines, ob, mod_node(mod), mod.name)
+        if row is not None:
+            row.prop(mod, "show_viewport", text="")
+        if opened:
+            for prop in _modifier_props(mod):
+                r = lines.row()
+                if r is not None:
+                    _draw_text_row(r, context, ob, mod, prop, "INPUT", mod.type, _nth_of_type(ob, mod))
+    if created:
+        creation_inputs.draw_cb(lines, context, ob)
+    for con in cons:
+        # Maya constraint node + its target weight (animation.md:42, :126)
+        row, opened = node_row(lines, ob, con_node(ob, con), constraint_node_name(ob, con),
+                               active=constraint_enabled(con))
+        if row is not None and hasattr(con, "enabled"):
+            row.prop(con, "enabled", text="")
+        if opened:
+            r = lines.row()
+            if r is not None:
+                _draw_text_row(r, context, ob, con, "influence", "CONSTRAINT", con.type,
+                               _nth_constraint(ob, con), label=weight_name(con))
 
 
 class ALLSET_PT_channel_box(bpy.types.Panel):
@@ -1552,104 +1860,35 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             hint.active = False
             hint.label(text=POSE_HINT)
             units += 1.0
-        blue = constrained_keys(ob)
-        rows = 0
-
+        args = (context, ob, cb, sel, constrained_keys(ob))
+        count = Lines(None)
+        _draw_lines(count, *args)      # first pass: how many lines (also resets the expansion on a new lead)
+        area = context.area
+        ptr = area.as_pointer() if area is not None else 0
+        first, limit, over = window_lines(count.n, pane_room(context, units), _scroll.get(ptr, 0))
+        if over:
+            _scroll[ptr] = first
         col = layout.column(align=True)
         # Maya channel rows are 16 px with 11 px text (research/maya/colors.json metrics,
         # screens/11b_channel_box_crop.png); Blender rows are 20 px at scale 1.0 (step 44).
         col.scale_y = ROW_SCALE
-        for key, _label, _path, _idx, kind in MAIN:
-            if is_hidden(ob, key):
-                continue
-            if kind == "ROT" and not has_channel(ob, key):
-                continue
-            draw_channel_row(col, ob, key, cb, key + "_text", key in sel, key in blue, cb, key + "_sel")
-            rows += 1
-        if not has_channel(ob, "rx"):
-            rows += 3
-            col.label(text=f"Rotation mode {ob.rotation_mode}")
-            col.prop(ob, "rotation_quaternion" if ob.rotation_mode == 'QUATERNION' else "rotation_axis_angle",
-                     text="")
-            col.operator(ALLSET_OT_cb_rotate_order.bl_idname, text="Rotate Order XYZ").order = 'XYZ'
-
-        for name in custom_keys(ob):
-            key = CUSTOM_PREFIX + name
-            if not is_hidden(ob, key):
-                row = row_for(context, ob, "CUSTOM", name)
-                if row is not None:
-                    draw_channel_row(col, ob, key, row, "text", key in sel, sel_owner=row, sel_prop="sel")
-                else:
-                    draw_channel_row(col, ob, key, ob, f'["{name}"]', key in sel)
-                rows += 1
-        units += rows * ROW_SCALE + 0.3
-
-        # SHAPES / INPUTS: a section title and indented node names, no boxes (11b_channel_box_crop).
-        data = getattr(ob, "data", None)
-        if data is not None:
-            box = layout.column(align=True)
-            box.label(text="SHAPES")
-            name = box.row()
-            name.separator(factor=1.5)
-            name.prop(data, "name", text="", emboss=False)
-            units += 2.3
-            for prop in SHAPE_PROPS.get(ob.type, ()):
-                if hasattr(data, prop):
-                    _draw_text_row(box, context, ob, data, prop, "SHAPE")
-                    units += 1.0
-
-        # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
-        inputs = _inputs(ob)
-        cons = constraints(ob)
-        from . import in_view
-        last = in_view.cb_record(context, ob)    # the last kit extrusion = Maya's newest history node (step 65)
-        from . import creation_inputs
-        created = creation_inputs.has_node(ob)   # the primitive's creation node, oldest history (step 129)
-        if inputs or cons or last is not None or created:
-            box = layout.column(align=True)
-            box.label(text="INPUTS")
-            # INPUTS can be long (expanded nodes): no pane estimate, the Layer Editor just follows
-            units = None
-            if last is not None:
-                in_view.draw_cb_node(box, context, last)
-            for mod in inputs:
-                row = box.row(align=True)
-                row.prop(mod, "show_expanded", text="", emboss=False,
-                         icon='DISCLOSURE_TRI_DOWN' if mod.show_expanded else 'DISCLOSURE_TRI_RIGHT')
-                row.prop(mod, "name", text="", emboss=False)
-                row.prop(mod, "show_viewport", text="")
-                if mod.show_expanded:
-                    sub = box.column(align=True)
-                    for prop in _modifier_props(mod):
-                        _draw_text_row(sub, context, ob, mod, prop, "INPUT", mod.type,
-                                       _nth_of_type(ob, mod))
-            if created:
-                creation_inputs.draw_cb(box, context, ob)
-            for con in cons:
-                # Maya constraint node + its target weight (animation.md:42, :126)
-                row = box.row(align=True)
-                name = row.row()
-                name.active = constraint_enabled(con)
-                name.separator(factor=1.5)
-                name.label(text=constraint_node_name(ob, con))
-                if hasattr(con, "enabled"):
-                    row.prop(con, "enabled", text="")
-                sub = box.column(align=True)
-                _draw_text_row(sub, context, ob, con, "influence", "CONSTRAINT", con.type,
-                               _nth_constraint(ob, con), label=weight_name(con))
-        return units
+        lines = Lines(col, first, limit)
+        _draw_lines(lines, *args)
+        shown = lines.shown
+        if over:
+            _scroll_row(col, first, limit, count.n)
+            shown += 1
+        _last[ptr] = (first, count.n, limit)
+        return units + shown * ROW_SCALE + 0.3
 
 
 def fill_pane(layout, context, units):
     """Empty space under the Channel Box so the Layer Editor starts at CB_SHARE of the dock height, like Maya's
-    fixed split; nothing when the Channel Box is taller (Blender panels can't scroll on their own)."""
+    fixed split (a longer Channel Box scrolls inside its part, ``Lines``)."""
     region = context.region
-    if units is None or region is None or region.type not in {'UI', 'WINDOW'}:
+    if units is None or region is None or region.type not in {'UI', 'WINDOW'} or _split_off(context):
         return
-    sdk = getattr(context.window_manager, "allset_sdk", None)
-    if sdk is not None and sdk.open:   # the Set Driven Key window takes the Layer Editor's place (step 62): no split
-        return
-    u = round(18.0 * context.preferences.system.ui_scale) + 2 * context.preferences.system.pixel_size
+    u = _unit(context)
     if u <= 0:
         return
     gap = CB_SHARE * region.height / u - units - PANE_TOP
@@ -1692,7 +1931,8 @@ class ALLSET_PT_dock_modeling_toolkit(bpy.types.Panel):
 
 classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider, ALLSET_OT_cb_select_channel,
            ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag,
-           ALLSET_PT_cb_field, *CHANNEL_OPS, ALLSET_OT_cb_show_all,
+           ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, *CHANNEL_OPS,
+           ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
            ALLSET_MT_cb_object, ALLSET_MT_cb_show)
@@ -1716,6 +1956,8 @@ def register():
 def unregister():
     _watching.clear()
     _hover.clear()
+    reset_open()
+    _last.clear()
     bpy.types.UI_MT_button_context_menu.remove(draw_button_menu)
     if bpy.app.timers.is_registered(_first_rebuild):
         bpy.app.timers.unregister(_first_rebuild)

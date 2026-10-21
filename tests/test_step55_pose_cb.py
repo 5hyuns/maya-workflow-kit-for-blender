@@ -225,13 +225,17 @@ def test_constraint_weight_rows():
     assert cb.constrained_keys(pb2) == {"tx", "ty", "tz"}
     con2.use_y = False
     assert cb.constrained_keys(pb2) == {"tx", "tz"}
+    assert not [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"], "collapsed node (step 135)"
+    cb.set_open(pb2, cb.con_node(pb2, con2))          # Maya: click the node name to show its weight
+    cb.rebuild_rows()
     rows = [r for r in bpy.context.scene.allset_cb.rows if r.kind == "CONSTRAINT"]
     assert len(rows) == 1 and rows[0].name == "influence", [(r.kind, r.name) for r in rows]
     rows[0].text = "0.5"
     assert abs(con2.influence - 0.5) < 1e-6 and abs(pb3.constraints[0].influence - 0.5) < 1e-6
     rec = _draw_cb()
     labels = rec.texts("label")
-    assert "INPUTS" in labels and "joint2_pointConstraint1" in labels and "locator1W0" in labels, labels
+    assert "INPUTS" in labels and "locator1W0" in labels, labels
+    assert "joint2_pointConstraint1" in rec.texts("operator"), "the node name is the expand button (step 135)"
     blue = [kw for k, _t, kw in rec.log if k == "operator" and kw.get("depress") and _t not in
             ("Translate X", "Translate Z")]
     assert len(blue) == 2, ("Translate X / Z drawn as blue (pressed) value buttons", blue)
