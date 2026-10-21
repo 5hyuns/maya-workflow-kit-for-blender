@@ -1,4 +1,5 @@
-"""Generate the Maya layout app template's startup.blend (in a GUI Blender).
+"""Generate the Maya layout startup.blend bundled inside the extension (in a GUI Blender; read from there by
+switch.enter_layout and "New Scene in Maya Layout", never copied out of the extension since step 130).
 
     python tools/make_startup.py          # re-runs itself in `blender --factory-startup` (a window opens briefly)
 
@@ -50,6 +51,8 @@ STRIP_MARKER = ".AllsetStrip"  # = ui/shelf.py MARKER (Status Line row)
 SHELF_MARKER = ".AllsetShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 # Maya lengths are cm (decision 8): 1 Maya unit = 0.01 BU with decision 1's m + cm display.
 MAYA_UNIT = 0.01
+# Maya factory viewport #5c5c5c as a scene-linear View3DShading.background_color (sRGB 92/255 -> linear; #45)
+MAYA_BG_LINEAR = round(((92 / 255 + 0.055) / 1.055) ** 2.4, 5)
 MAYA_CLIP = (0.1, 10000.0)        # cm, research/maya/defaults.json:45-46 (= operators/units.py CLIP)
 MAYA_PERSP_EYE = (28.0, -28.0, 21.0)  # cm, Maya persp (28, 21, 28) Y-up [K] (= units.PERSP_EYE)
 
@@ -336,6 +339,10 @@ def maya_views():
                 # Maya draws no line from a child to its parent (factory Maya 2022 shots:
                 # research/maya/screens/parent/parent_0*.png, step 91); Blender's dashed relationship lines go.
                 space.overlay.show_relationship_lines = False
+                # Maya's factory viewport is flat #5c5c5c (research/maya/re/background_120.md:33). Without the kit
+                # theme (step 130) that is view data: the view's own background colour, scene linear (#45).
+                space.shading.background_type = 'VIEWPORT'
+                space.shading.background_color = (MAYA_BG_LINEAR,) * 3
                 rv3d = space.region_3d
                 rv3d.view_location = (0.0, 0.0, 0.0)
                 rv3d.view_rotation = eye.normalized().to_track_quat('Z', 'Y')
