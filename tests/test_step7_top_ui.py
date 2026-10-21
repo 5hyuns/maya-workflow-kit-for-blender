@@ -453,6 +453,33 @@ def test_import_maya_cmds():
     assert "maya" not in sys.modules and "maya.cmds" not in sys.modules
     r = runner.run("import json; json.dumps(1)")
     assert r.text == "# Result: '1' #", r
+    r = runner.run("import os, maya.cmds as c3\nif True:\n    from maya.cmds import ls as l2\nl2 is c3.ls and bool(os.sep)")
+    assert r.text == "# Result: True #", r
+
+
+def test_runner_uses_blenders_run_script():
+    """Step 130 (#40): entries run from a temporary Text through ``text.run_script`` — prepared source, no Text left."""
+    runner.reset()
+    before = {t.name for t in bpy.data.texts}
+    src = runner.prepare("import maya.cmds as cmds\nx = 1\nx + 1  # c")
+    assert "import maya" not in src and f"from {runner._PKG} import cmds_shim as cmds" in src, src
+    assert "_allset_result = (x + 1\n)  # c" in src, src
+    assert src.splitlines()[0].endswith(f"{runner.RUNNER}.bind(globals())"), src
+    r = runner.run("y = (\n  2 *\n  3)\ny")
+    assert r.text == "# Result: 6 #", r
+    r = runner.run("name = 'ü'; name + 'x'")                            # non-ASCII columns (UTF-8 offsets)
+    assert r.text == "# Result: 'üx' #", r
+    r = runner.run("for i in range(2):\n    print('line', i)")
+    assert r.text == "line 1" and not r.error, r
+    r = runner.run("def g():\n    return undefined_name\ng()")
+    assert r.error and r.text == "# Error: NameError: name 'undefined_name' is not defined", r
+    assert {t.name for t in bpy.data.texts} == before, "the temporary Text is removed"
+    r = runner.run("y * 2")
+    assert r.text == "# Result: 12 #", "variables of earlier entries persist"
+    r = runner.run("w = 4\n1/0")
+    assert r.error and runner.namespace().get("w") == 4, "variables set before an error persist (Maya)"
+    r = runner.run("z = 3", persist=False)
+    assert not r.error and "z" not in runner.namespace(), "a shelf run keeps no variables"
 
 
 def test_help_line_text():

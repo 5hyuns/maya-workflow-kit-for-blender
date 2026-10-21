@@ -6,7 +6,8 @@ field, Script Editor button), §4.13 (:295-298: Help Line);
 research/blender/api_limits.md #14 (:93-94). Design: docs/steps/step_7.md
 「계획」 4. Python only: MEL is not supported (decision 5). ``maya.cmds`` is a
 small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds`` in code run from the Command Line,
-shelf buttons and the Script Editor only (``runner._import``; nothing goes into ``sys.modules``, step 114).
+shelf buttons and the Script Editor only: those imports are rewritten to the kit's module before Blender's Run Script
+runs the entry (``runner.prepare``, step 130).
 """
 
 
