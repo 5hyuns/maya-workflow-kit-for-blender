@@ -1,4 +1,4 @@
-"""Step 44: Maya widget feel — square flat widgets (theme), Maya density, Segoe UI, aliased wires."""
+"""Step 44: Maya widget feel — Maya density, Segoe UI, aliased wires (square flat widgets were theme: gone, step 130)."""
 
 import os
 from importlib import import_module
@@ -7,32 +7,11 @@ import bpy
 
 import kit
 
-theme = import_module(kit.MODULE + ".theme")
 preferences = import_module(kit.MODULE + ".preferences")
 prefs_preset = import_module(kit.MODULE + ".prefs_preset")
 first_start = import_module(kit.MODULE + ".first_start")
 draw = import_module(kit.MODULE + ".marking.draw")
 channel_box = import_module(kit.MODULE + ".ui.channel_box")
-
-
-def test_theme_square_flat_widgets():
-    preferences.get().maya_theme = True
-    try:
-        ui = bpy.context.preferences.themes[0].user_interface
-        for prop in ui.bl_rna.properties:
-            name = prop.identifier
-            if name.startswith("wcol_") and name != "wcol_state":
-                w = getattr(ui, name)
-                assert w.roundness <= 0.1, (name, w.roundness)
-                assert not w.show_shaded, name
-        assert ui.widget_emboss[3] == 0.0, tuple(ui.widget_emboss)
-        assert ui.panel_roundness == 0.0, ui.panel_roundness
-        assert ui.menu_shadow_width == 0, ui.menu_shadow_width
-    finally:
-        preferences.get().maya_theme = False
-    # Restored: Blender's default theme is rounded again.
-    ui = bpy.context.preferences.themes[0].user_interface
-    assert ui.wcol_regular.roundness > 0.1 and ui.widget_emboss[3] > 0.0
 
 
 def test_maya_ui_scale_is_one_over_os_scale():

@@ -1376,8 +1376,8 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
     state = channel_state(ob, key)
     right.enabled = not is_locked(ob, key)
     if constrained:
-        # Maya draws constrained channels blue (channel_box.md:138-139): a pressed button is the
-        # theme's selection blue (wcol_tool inner_sel #5285a6); UILayout has no other colour.
+        # Maya draws constrained channels blue (channel_box.md:138-139): a pressed button is the user's
+        # theme selection colour (wcol_tool inner_sel; Blender's factory #4772b3 is blue); UILayout has no other colour.
         text = cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
         right.operator("allset.cb_select_channel", text=text, depress=True).key = key
         row.label(text="", icon='CONSTRAINT')

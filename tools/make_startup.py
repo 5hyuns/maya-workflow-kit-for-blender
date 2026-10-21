@@ -321,7 +321,7 @@ def maya_views():
                 # Maya grid lines every 1 cm ().
                 space.overlay.grid_scale = MAYA_UNIT
                 # Maya's grid axes are grey (displayColor gridAxis = grid); Blender colours them with
-                # the theme axis colours, which now are Maya's manipulator red/green (step 43).
+                # the user's theme axis colours (the kit ships no theme since step 130).
                 space.overlay.show_axis_x = space.overlay.show_axis_y = False
                 # Maya's finite 12-unit grid instead of Blender's floor, also in ortho side views
                 # (src/allset/ui/maya_grid.py: show_floor / show_ortho_grid off, grid_lines 0; step 45).

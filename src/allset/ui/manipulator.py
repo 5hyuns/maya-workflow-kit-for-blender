@@ -8,7 +8,8 @@ circle. Maya's ( M1-M7, shots ``manip_*.png``):
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
   plane handles (normal-axis colour), the active handle drawn yellow (M2).
 - Rotate: axis rings (front half), a camera ring, a grey trackball — Blender's C rotate gizmo
-  already has this layout, so the Rotate tool keeps it (Maya theme colours).
+  already has this layout, so the Rotate tool keeps it (axis colours of the user's theme, like the Move / Scale
+  handles here: ``_theme_axis`` reads them, the kit never writes a theme).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
 - Pivot edit mode (D / Insert): Move plus small rings to orient the pivot (M7).
 - Constant screen size, 108 px for the Move Y arrow at manipGlobalScale 1.5 (M3, M4).
@@ -31,7 +32,7 @@ GROUP = "ALLSET_GGT_xform"
 GIZMO = "ALLSET_GT_maya_handle"
 MODES = ('OBJECT', 'EDIT_MESH')
 # Rotate keeps Blender's C gizmo: its axis rings (front half), camera ring and trackball already
-# have Maya's layout (M5) and take the Maya theme colours; a Python dial can't clip the back half
+# have Maya's layout (M5) and take the theme's axis colours; a Python dial can't clip the back half
 # the same way (checked, ). Delegated.
 TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE'}
 # Orientation slot per tool kind (Blender: 0 default, 1 move, 2 rotate, 3 scale).
