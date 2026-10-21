@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, run, screenshot, setup, step, tap  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, run, scroll_channel_box, screenshot, setup, step, tap  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -64,6 +64,7 @@ def s_inputs_shot():
 @step
 def s_open_cylinder_node():
     open_inputs("polyCylinder1")   # step 135: INPUTS nodes start collapsed (Maya)
+    scroll_channel_box()           # ... and a long Channel Box scrolls inside its part
     for a in bpy.context.window.screen.areas:
         a.tag_redraw()
 
@@ -152,6 +153,7 @@ def s_wait2():
 @step
 def s_open_circle_node():
     open_inputs("makeNurbCircle1")
+    scroll_channel_box()
     for a in bpy.context.window.screen.areas:
         a.tag_redraw()
 
