@@ -4,8 +4,8 @@
 Maya 2022 factory grid ( metrics.grid {size 12, spacing 5, divisions 5};
 , Maya-226): lines from -12 to +12 every 1 unit, every
 5th line (and the axes through the origin) thicker, all the same grey (displayColor grid / gridAxis /
-gridHighlight = index 2, #404040), aliased. checked in 
-only the background and #404040 in the view, minor lines 1 px, major lines and axes 2 px
+gridHighlight = index 2, #404040, a kit colour since step 134: no theme), aliased. checked in
+ only the background and #404040 in the view, minor lines 1 px, major lines and axes 2 px
 .
 
 Blender's floor is infinite with unit-system steps of x10 (no 5-unit lines, ), so
@@ -28,6 +28,11 @@ SPACING = 5
 DIVISIONS = 5
 # Line widths in px (01_layout_empty.png): minor, major (every SPACING), axes.
 WIDTHS = (1.0, 2.0, 2.0)
+# Line colour: Maya displayColor grid / gridAxis / gridHighlight = index 2 = #404040 (colors.json; every grid pixel
+# of 01_layout_empty.png / 03_cube_unselected.png). A kit colour, not the theme's grid colour: the kit ships no theme
+# since step 130 and Blender's (#545454) all but vanished on Maya's #5c5c5c (#59, ).
+# The axes are the same grey, only thicker (no darker pixel in the Maya shots).
+LINE_RGB = (64 / 255, 64 / 255, 64 / 255)
 OFF_LINES = 16          # Blender's default grid_lines: "not the Maya grid"
 
 _handle = []
@@ -155,6 +160,11 @@ class ALLSET_OT_toggle_grid(bpy.types.Operator):
 
 # --- drawing -------------------------------------------------------------------------------
 
+def line_colour():
+    """RGBA of every grid line (display space, drawn as is like Blender's overlay colours)."""
+    return (*LINE_RGB, 1.0)
+
+
 def frame_ms():
     """Average time (ms) of the last grid draws (step 45 frame-time record)."""
     return sum(_times) / len(_times) * 1000.0 if _times else 0.0
@@ -190,13 +200,12 @@ def _draw():
     if plane is None:
         return
     shader, batches = _batch_set(plane, units.maya_unit(context.scene))
-    colour = tuple(context.preferences.themes[0].view_3d.grid)[:3]
     gpu.state.depth_test_set('LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     gpu.state.blend_set('ALPHA')
     shader.bind()
     shader.uniform_float("viewportSize", (region.width, region.height))
-    shader.uniform_float("color", (*colour, 1.0))
+    shader.uniform_float("color", line_colour())
     shader.uniform_bool("lineSmooth", False)
     for width, batch in zip(WIDTHS, batches):
         shader.uniform_float("lineWidth", width)

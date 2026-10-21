@@ -339,6 +339,9 @@ def maya_views():
                 # Maya draws no line from a child to its parent (factory Maya 2022 shots:
                 # *.png, step 91); Blender's dashed relationship lines go.
                 space.overlay.show_relationship_lines = False
+                # Maya has no 3D cursor (01_layout_empty.png): hidden; the component pivot edit (D / Insert,
+                # operators/hold.ComponentPivotEdit) shows it while the cursor is the pivot (step 134, #59).
+                space.overlay.show_cursor = False
                 # factory viewport is flat #5c5c5c (). Without the kit
                 # theme (step 130) that is view data: the view's own background colour, scene linear (#45).
                 space.shading.background_type = 'VIEWPORT'
