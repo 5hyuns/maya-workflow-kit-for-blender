@@ -12,7 +12,7 @@ A free, open-source (GPL-3.0-or-later) Blender extension, Blender 4.5.x – 5.2.
 shelves and option windows, Maya navigation and selection, and Maya scene concepts (Freeze, History, Center Pivot,
 groups, centimetres, `pCube1`). Tagline: **The whole Maya workflow in Blender, in one install.**
 
-Unique mechanism: it is not a keymap. Other tools cover one piece each (a pivot tool, a keymap, a shelf, a theme);
+Unique mechanism: it is not a keymap. Other tools cover one piece each (a pivot tool, a keymap, a shelf);
 this rebuilds the whole set together, one Maya workflow at a time, on top of Blender's own tools — and it changes
 nothing until the user chooses Maya, with one click (or Ctrl+Alt+Shift+M) back to plain Blender.
 
@@ -26,8 +26,12 @@ nothing until the user chooses Maya, with one click (or Ctrl+Alt+Shift+M) back t
 ## Job of the site (Persuade)
 
 Within one viewport: what this is (Maya's workflow inside Blender), that it is real (the actual UI, moving), and what to
-do (install). Then proof per workflow, how install / revert works (nothing changes until you choose), honest limits,
-FAQ, credits and the trademark notice.
+do (install). Then proof per workflow, how install / revert works (nothing changes until you choose), the
+recommended setup (a dark grey theme of the user's choice and the Blender preferences the kit no longer sets — step
+130, store review), honest limits, FAQ, credits and the trademark notice.
+
+Since step 130 the kit ships no theme and writes no preferences: never claim Maya colours, a Maya theme, a layout
+template or restored settings.
 
 ## Truth rules
 

@@ -79,3 +79,30 @@
         (`docs/distribution/extensions_audit.md` 「필수 고지문」).
       - 이름 바로 뒤 첫 문장에 **「for Maya users, in Blender」 맥락**이 오게 한다 (마케팅 잠금업의 둘째 줄, README · 스토어 설명의 첫
         문장). 「Maya」 를 이름 안에서 따로 강조색으로 칠하지 않는다.
+13. **스토어 심사 대응 — 사라지는 기능 (delegated, step 130, 2026-10-21, GitHub #40)**. extensions.blender.org 심사자 요구
+    (exec/eval 금지, sys.path·sys.modules 금지, 테마 관련 전부 삭제, `user_disabling` 삭제, 끄면 모든 것이 되돌아가야 하고 되돌리는 데
+    추가 조치가 필요한 변경 금지, tags = User Interface 만) 를 따르기 위해 아래 기능을 없애거나 바꾼다. 결정 3·9 의 테마·앱 템플릿·
+    환경설정 저장 부분과 결정 12 개정의 테마 이름 "Studio Grey (Maya-inspired)" 를 대체한다. 근거와 레인 분담: `docs/steps/step_130.md`.
+    - **테마 삭제**: 킷 테마 (`theme/studio_grey*.xml`), 테마 적용·백업·복원 코드, 「Revert Maya Look」 을 모두 뺀다. 킷이 그리는 색은
+      사용자 테마 값이나 킷 고정 색을 쓴다. 그래서 Maya 선택 색 (리드 초록 #43ffa3, 나머지 흰색), Maya 회색 UI, Alt+B 그라디언트
+      배경은 더 이상 자동으로 오지 않는다 — Alt+B 는 뷰마다 단색 배경 (`View3DShading.background_type = 'VIEWPORT'`) 만 돌린다.
+      대신 README · 리스팅 · 사이트의 「Recommended setup」 에 사용자가 직접 고르는 어두운 회색 테마 (Blender 의 Get Extensions 에서
+      설치) 를 권한다. Maya 회색 테마는 나중에 **별도 테마 확장** 으로 낼 수 있다 (미정).
+    - **앱 템플릿 삭제**: 사용자 `scripts/startup/bl_app_templates_user/` 로 복사하던 「Maya Workflow Kit」 템플릿 (File > New 항목,
+      스플래시) 을 없앤다 — 확장 폴더 밖 쓰기 금지. Maya 레이아웃은 확장 안의 `startup.blend` 에서 워크스페이스를 **현재 파일에
+      append** 한다 (파일 데이터일 뿐, 저장하지 않으면 남지 않음). 「Start in Maya Layout」, 템플릿 설치·제거 버튼, 스플래시 숨김도 없어진다.
+    - **환경설정 프리셋 삭제** (`prefs_preset.py`): 내비게이션 (Turntable, 활성 주변 회전 끔, 마우스 위치 줌 끔, Dolly 줌, 자동 원근),
+      Undo Steps 256, Region Overlap 끔 (단단한 사이드 패널), 오토키 「Only Insert Available」, UI 밀도 (`ui_scale`), Segoe UI 글꼴,
+      매끈하지 않은 와이어, 스플래시 숨김 — 킷은 더 이상 `bpy.context.preferences` 에 쓰지 않는다. 필요한 값은 「Recommended setup」 에
+      사용자가 직접 바꿀 항목으로 적는다. Maya 의 오토키 「있는 채널만」 은 킷이 직접 키를 넣는 방식으로 대신한다 (레인 C 판단).
+      3D View 패널 메뉴의 「Tumble around selection」 은 환경설정 대신 뷰 단위로 바꾸거나 뺀다 (레인 C).
+    - **활성 keyconfig 를 바꾸지 않는다**: Maya 키는 모두 **애드온 keyconfig** (`wm.keyconfigs.addon`) 항목이고, 확장을 끄거나 Maya 모드를
+      끄면 사라진다. 사용자의 활성 keyconfig 이름이 userpref 에 "Maya-style" 로 저장되는 일이 없다.
+    - **`switch.user_disabling` / `app_template.remove_on_disable` / 환경설정 스냅숏 삭제**: 되돌릴 영구 변경이 없으므로 끄기 = 평범한
+      `unregister()`. 「Restore Blender Settings」 도 필요 없어진다.
+    - **스크립트 실행 = Blender 자신의 경로**: Command Line · Script Editor · Python 셸프 버튼의 코드는 Text 데이터블록에 쓰고
+      `bpy.ops.text.run_script` 로 실행한다 (`exec` / `eval` / `compile` 없음). `import maya.cmds` 는 import 훅 대신 실행 전에 그 줄을 킷
+      cmds 모듈 import 로 바꿔 쓴다 (사용자에게 보이는 Text 에 그대로 남음).
+    - **manifest `tags = ["User Interface"]`** 만, 권한 `files` = "Your shelves and Maya project folders".
+    - 검증: `tests/test_step130_package_scan.py` (패키지 정적 스캔), 레인 C 의 설치→등록→Maya 모드→해제→제거 왕복 비교 테스트,
+      `blender --command extension validate`. 심사자 답글 초안: `docs/distribution/review_reply.md`.

@@ -18,11 +18,11 @@ opens with "For Maya users, in Blender" and ends with the trademark notice.
 | Tagline (≤ 64, no end punctuation) | The whole Maya workflow in Blender, in one install (50) |
 | Short description (the first paragraph of B) | For Maya users, in Blender — not just a Maya keymap: Maya Workflow Kit brings the whole Maya workflow to Blender — hotbox and marking menus, Channel Box and Attribute Editor, menu sets and shelves, option windows and Maya's scene concepts — and changes nothing until you choose Maya. |
 | Type | Add-on |
-| Tags (platform list) | User Interface, 3D View, Modeling, Animation, Rigging |
+| Tags (platform list) | User Interface (only — the moderator asked to remove the others, step 130) |
 | License | GPL-3.0-or-later (code); CC0-1.0 (the kit-made images and data files, `ASSETS_LICENSE.txt`) |
 | Copyright | 2026 ohnsk |
 | Supported Blender | 4.5 LTS and 5.0 – 5.2 (4.5.x – 5.2.x; tested on 4.5.4, 5.0.1, 5.1.2, 5.2.2) — manifest `blender_version_min` / `max` (see part D "Versions") |
-| Permissions | `files`: "Layout template, settings backup, shelves, Maya project folders" (63, no end punctuation). No `network`, no `clipboard`, no `camera` / `microphone` |
+| Permissions | `files`: "Your shelves and Maya project folders" (37, no end punctuation). No `network`, no `clipboard`, no `camera` / `microphone` |
 | Platforms | all (pure Python, no `platforms` entry) |
 | Website / support URL | none yet: the repository https://github.com/5hyuns/maya-workflow-kit-for-blender is to be created private, so manifest `website` stays out until it is public; then add it and the tracker URL |
 | Icon | `docs/distribution/media/icon.png` (256 × 256) |
@@ -47,7 +47,7 @@ Maya Workflow Kit rebuilds those, one workflow at a time, on top of Blender's ow
 - Q W E R T Y tools, Maya's selection modifiers (Shift toggles, Ctrl deselects, Ctrl+Shift adds), F8 object / component
   toggle and F9–F12 component modes, pre-selection highlight, edit-mode box select through occluded elements like Maya, selection priority.
 - Hold keys as in Maya: X / C / V snap while held, D / Insert edit the pivot, B soft select, J step snap; arrow-key
-  pick-walk; Maya selection colours (lead green, others white) and the Move / Scale manipulator.
+  pick-walk; the Maya Move / Scale manipulator.
 
 ### Hotbox & Marking Menus
 
@@ -96,25 +96,33 @@ Maya Workflow Kit rebuilds those, one workflow at a time, on top of Blender's ow
 Installing and enabling Maya Workflow Kit does not change your keymap, preferences, theme or layout. It adds a small
 Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a
 welcome dialog. Only when you click **Make Blender feel like Maya** (in the welcome dialog or in the add-on
-preferences) or switch to Maya does the kit turn on its Maya-style keymap, Maya layout, menus, theme
-("Studio Grey (Maya-inspired)") and Maya-like preferences (navigation, undo steps, solid side panels, auto key,
-density, font, wireframes, splash). Before that, a copy of everything it will change is written to the extension's
-user folder.
+preferences) or switch to Maya does the kit add its Maya-style keys (as add-on keymap items — your active keymap stays
+selected and untouched), its Maya menus and panels, and the Maya layout as workspaces appended to the open file. It
+never changes your theme or your Blender preferences and never saves them.
 
 ### How to go back
 
-- Click **Blender** in the Maya | Blender switch (or Ctrl+Alt+Shift+M): Blender's keymap, theme, layout and every
-  preference the kit changed come back; switch again whenever you like.
-- **Revert Maya Look** in the add-on preferences removes the theme, splash and layout template only.
-- Disabling or removing the extension puts your values back the same way and deletes the layout template. The kit never
-  saves your preferences by itself: Blender's own Auto-Save Preferences (or you) do.
+- Click **Blender** in the Maya | Blender switch (or Ctrl+Alt+Shift+M): the Maya keys and Maya UI are unregistered and
+  Blender's own come back; switch again whenever you like.
+- Disabling or removing the extension unregisters everything it registered. Nothing else needs undoing: the kit made no
+  change to your preferences, keymap, theme or startup files. The Maya workspaces appended to a file are ordinary file
+  data — delete their tabs, or don't save the file.
+
+### Recommended setup (optional, your choice)
+
+The kit leaves these to you. Maya users usually like:
+
+- **A dark grey theme.** *Edit > Preferences > Get Extensions*, filter by *Themes*, and install a dark grey theme you
+  like (or pick one in *Preferences > Themes > Presets*).
+- **Navigation** (*Preferences > Navigation*): Orbit Method *Turntable*, Orbit Around Selection *off*, Zoom to Mouse
+  Position *off*, Auto Perspective *on*, Zoom Method *Dolly* with Zoom Axis *Horizontal*.
+- **Undo Steps 256** (*Preferences > System*) — Blender's maximum; Maya's undo queue is unlimited.
+- **Region Overlap off** (*Preferences > Interface > Editors*), so side panels sit beside the viewport like Maya's.
+- **Only Insert Available** (*Preferences > Animation > Keyframes*) for Maya-like auto key.
 
 ### Files it writes outside the extension
 
-- `scripts/startup/bl_app_templates_user/Maya_Workflow_Kit/` — the Maya layout (File > New > Maya Workflow Kit): only data
-  (`startup.blend`, splash images, a marker file), copied when you choose Maya or click Install Maya Layout, deleted
-  when you disable or remove the extension (folders without the kit's marker are never touched).
-- The extension's user folder (Blender's `extension_path_user`): preference snapshot, theme backup, your shelves.
+- The extension's user folder (Blender's `extension_path_user`): your shelves.
 - Maya projects: the file dialogs open in the current project like Maya's. With no project set, the default project
   `Documents/Maya Workflow Kit/projects/default` is made the first time a project-aware dialog opens; Set Project / Project
   Window make folders only where you choose.
@@ -122,20 +130,21 @@ user folder.
 
 ### Technical notes
 
-- **Python `exec`**: only text you type or write yourself — the Python Command Line, your Python shelf buttons and the
-  Script Editor run it in their own namespace (with the `maya.cmds` look-alike), exactly like Blender's Python
-  console. The kit never downloads or generates code.
-- **`bpy.utils.execfile`**: the Maya-style keymap is built from Blender's own bundled Industry Compatible keymap data
-  (`presets/keyconfig/keymap_data/industry_compatible_data.py` of the running Blender), loaded the way Blender's
-  keymap preset loads it, then patched. No keymap data is copied into the extension.
+- **Scripts run through Blender's own Text editor path**: the Python Command Line, your Python shelf buttons and the
+  Script Editor put your code into a Text datablock and run it with `bpy.ops.text.run_script`, like Blender's own
+  *Run Script*. The kit contains no `exec`, `eval` or `compile`, never downloads or generates code, and installs no
+  import hook: `import maya.cmds` in your script is rewritten, in the visible Text, to import the kit's small
+  `maya.cmds` look-alike module.
+- **Keymap**: the Maya-style keys are add-on keymap items (`wm.keyconfigs.addon`) that disappear on unregister; the
+  active keyconfig is never switched. <!-- lane K: say how the Industry Compatible base data is read (no execfile) -->
 - **`ctypes` (Windows only)**: one read-only `user32.GetAsyncKeyState` call, to end Maya hold keys (D, X, C, V, B ...)
   whose key release Blender's transform tool swallows. No hook, nothing written; elsewhere Blender's own key-release
   event is used.
 - **Blender UI classes**: most of the kit's UI is its own panels, menus and gizmos, or `append` / `prepend`. In Maya
   areas it draws instead of a few Blender headers and re-registers some panels with a wrapped `poll` — only in Maya
   mode, put back when you switch to Blender, disable or remove it; other add-ons' additions keep drawing.
-- No network access, no auto-updater, no `sys.path` / `sys.modules` changes. Help menu items open Blender manual
-  pages in your web browser when you click them.
+- No network access, no auto-updater, no `sys.path` / `sys.modules` changes, no theme files. Help menu items open
+  Blender manual pages in your web browser when you click them.
 
 ### Limits
 
@@ -160,7 +169,7 @@ a video's poster is its first frame. GIFs can only be linked in the description,
 discourages ("no heavy image (.gif images in particular)").
 
 Regenerate with `python tools/make_listing_media.py` (= `tools/marketing/make_marketing.py`: a GUI Blender in a clean
-sandbox with the built zip, Maya theme and Maya's factory background, a scene of licensed third-party models — each
+sandbox with the built zip (until step 130 also the kit's Maya theme — those shots are listed to retake in `docs/steps/step_130_docs.md`), a scene of licensed third-party models — each
 credited with its licence in `docs/distribution/marketing/CREDITS.md` — then Pillow captions in the visual system of
 `docs/distribution/marketing/style.md`, copy from `copy.md`). The icon and featured image are kit-made; the scenes use
 the models credited at the end of part B (add the copy.md "Credits line" there when pasting).
@@ -182,7 +191,7 @@ for the GitHub README and social posts (`marketing/README.md`).
 | 5 | `marketing/clips/04_navigation.mp4` | MP4 5.6–7.6 s | Alt + left drag tumbles, Alt + middle drag tracks, Alt + right drag dollies; click an object and press F to frame it, A to frame everything. |
 | 6 | `marketing/clips/05_pivot_snap.mp4` | MP4 5.6–7.6 s | Insert edits the pivot; hold V while dragging and it snaps to a corner of the battery. Insert again, and the battery rotates around its new pivot. |
 | 7 | `marketing/clips/06_rigging.mp4` | MP4 5.6–7.6 s | From the Rigging shelf: Create Joints by clicking, an IK Handle from shoulder to wrist, Bind Skin, pull the handle, then Paint Skin Weights. |
-| 8 | `marketing/clips/07_switch.mp4` | MP4 5.6–7.6 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout, keys and colors back. |
+| 8 | `marketing/clips/07_switch.mp4` | MP4 5.6–7.6 s | One click on Blender in the top-bar switch gives plain Blender back with the same scene; one click on Maya brings the Maya layout and keys back. |
 | 9 | `media/03_channel_box_ae.png` | still 1920 × 1080 | Channel Box and Attribute Editor: keyed channels in red, +=5 and *=2 entry, Maya node tabs, docked next to the viewport. |
 | 10 | `media/04_menus_shelves.png` | still 1920 × 1080 | Rigging menu set (F3) with option boxes that open Maya option windows with Maya 2022's factory values, and the Rigging shelf. |
 
@@ -201,22 +210,19 @@ extension, and a Blender after 5.2 is not offered it until it is measured the sa
 
 ## What happens when you enable it — nothing until you choose Maya
 
-**[listing]** Installing and enabling Maya Workflow Kit does not change your keymap, preferences, theme or layout. It adds a
-small Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and, once,
-a welcome dialog. Only when you click **Make Blender feel like Maya** (in the welcome dialog or in the add-on
-preferences) or switch to Maya does the kit turn on its Maya-style keymap, Maya layout, menus, theme and Maya-like
-preferences (navigation, undo steps, solid side panels, auto key, density, font, wireframes, splash). Before that, a
-copy of everything it will change is written to the extension's user folder; switching back to Blender, disabling or
-removing the extension puts your values back. The kit never saves your preferences by itself: Blender's own
-Auto-Save Preferences (or you) do.
+**[listing]** Installing and enabling Maya Workflow Kit does not change your keymap, preferences, theme or layout. It
+adds a small Maya | Blender switch at the right of the top bar, an Edit menu entry, the shortcut Ctrl+Alt+Shift+M and,
+once, a welcome dialog. Choosing Maya registers the Maya-style keys as add-on keymap items, the Maya menus and panels,
+and appends the Maya layout workspaces to the open file. It never changes your theme or Blender preferences, never
+switches your active keyconfig and never saves preferences.
 
-**[listing]** The Maya layout is an application template (File > New > Maya Workflow Kit). The kit copies it to your
-`scripts/startup/bl_app_templates_user/Maya_Workflow_Kit` folder only when you choose Maya or click Install Maya Layout. It holds
-only data (`startup.blend`, splash images, a marker file) — no code — and is deleted when you disable or remove the
-extension (folders without the kit's marker are never touched).
+Since step 130 (store review, GitHub #40) there is nothing to restore: no layout template outside the extension, no
+preference snapshot, no theme backup, no `user_disabling` hook. Disabling or removing the extension is a plain
+`unregister()`, which removes every class, keymap item, handler, timer, draw callback and msgbus subscription it added.
 
-Implementation: `src/allset/welcome.py`, `switch.py` (snapshot / restore), `first_start.py`, `app_template/__init__.py`,
-tests `tests/test_step115_opt_in.py`, `tests/test_enable_disable.py`, `tests/test_step60_switch.py`.
+Implementation: `src/allset/welcome.py`, `switch.py`, `keymap/`; tests `tests/test_step130_package_scan.py` (static
+scan of the package and the zip), `tests/test_enable_disable.py`, the step 130 install → Maya mode → remove round trip
+(`<round-trip test>`), `tests/test_step60_switch.py`.
 
 ## Changes to Blender's own UI classes
 
@@ -275,6 +281,7 @@ Blender's registration order (`registration_key`), and never re-registers a clas
   (read-only, no hook) to end Maya "hold" keys whose release Blender's transform modal swallowed. On other systems, or
   if the call fails, it answers "unknown" and the hold ends on Blender's own release event (callers act only on an
   explicit "not held"; `tests/test_step115_opt_in.py`).
-- **Files.** Writes only to the extension's user folder (`bpy.utils.extension_path_user`: preference snapshot, theme
-  backup, shelves) and, on request, the layout template folder above and the user's chosen project folders.
-- **No network**, no `sys.path` / `sys.modules` changes (step 114), no auto-updater, Python only.
+- **Files.** Writes only to the extension's user folder (`bpy.utils.extension_path_user`: shelves) and the user's
+  Maya project folders.
+- **No network**, no `exec` / `eval` / `compile`, no `sys.path` / `sys.modules` changes or import hooks (step 130), no
+  theme files, no preference writes, no auto-updater, Python only.

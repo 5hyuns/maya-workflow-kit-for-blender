@@ -91,3 +91,21 @@ OK = 코드/파일로 충족하고 검증함, 설명함 = 남겨 두고 등록 �
 | ruff 명령 [MG] `find . -iname "*.py" \| xargs ruff check --output-format=concise --ignore=E402,E741,E731` | OK | 확장 소스 (`src/allset`) 에서 지적 10 건 수정 → "All checks passed!" (ruff 0.8.6 = 기본 규칙 E4/E7/E9/F). 최신 ruff 0.17 은 기본 규칙이 넓어져 스타일 지적 (RUF012 등) 이 수백 건 — 오류가 아니라 남김 (step_117.md) |
 | 바이너리 / 위반 감사 항목 (위 「현재 코드 감사」) | OK | sys.modules → step 114, CC0 → 114, 템플릿 코드 → 115 (코드 없는 템플릿, 제거 시 삭제), opt-in·자동 저장 → 115, draw 교체 → 115 (own-draw), ctypes → 설명함, "Autodesk App Store" 라벨 → 111 (Blender Extensions), bl_info → 114 |
 | 깨끗한 설정에서 설치→활성화→opt-in→비활성화→제거 후 남는 파일 0 | OK | `tools/release_check.py leftover_check` (step 117): 남는 것은 Blender 자신의 `userpref.blend`, `extensions/.cache` 뿐 |
+
+## 첫 심사 결과와 대응 (step 130, 2026-10-21, GitHub #40)
+
+위 「최종 상태 (step 117)」 의 몇 줄은 심사자가 받아들이지 않았다. 심사자 원문 (요약): exec / eval 금지; sys path / modules 수정 금지;
+테마 XML 수정 금지 — 테마 관련 전부 삭제, 테마는 설명·웹사이트에서 추천; `user_disabling` 삭제 — 등록한 것은 전부 해제, 되돌리는 데
+추가 조치가 필요한 변경 금지; tags 는 User Interface 만. 바뀐 상태:
+
+| 요건 | step 117 판단 | step 130 상태 |
+|---|---|---|
+| tags | User Interface, 3D View, Modeling, Animation, Rigging | `["User Interface"]` 만 (`test_step130_package_scan`) |
+| 권한 `files` | "Layout template, settings backup, shelves, Maya project folders" | "Your shelves and Maya project folders" (37) |
+| exec / eval [MG] | 「사용자가 입력한 코드만」 으로 설명함 | **불가** — Command Line / Script Editor / 셸프는 Text 데이터블록 + `bpy.ops.text.run_script`; 패키지에 `exec` / `eval` / `compile(..., 'exec')` / `execfile` 0 건 (정적 스캔) |
+| sys.path / sys.modules / import 훅 [G][MG] | step 114 에서 sys.modules 쓰기만 없앰, `__import__` 훅은 둠 | **읽기 포함 0 건**, `import builtins` / `__builtins__` / `importlib.util` 없음; `import maya.cmds` 는 실행 전 Text 의 import 줄을 킷 모듈 import 로 바꿔 씀 |
+| 테마 | 선택 기능 (적용·백업·복원) | **삭제** — 테마 파일·패키지·`rna_xml` 없음, `preferences.themes` 쓰기 0 건; 리스팅·README·사이트에 「Recommended setup」 |
+| 영구 변경 / user_disabling | opt-in 뒤 환경설정 프리셋·키컨피그 전환·앱 템플릿 복사, 끄면 복원 | **삭제** — `prefs_preset`·스냅숏·`user_disabling`·`remove_on_disable`·앱 템플릿 없음; Maya 키 = `keyconfigs.addon` 항목; `preferences.<섹션>.<값> =` / `keyconfigs.active =` / `save_userpref` 호출 0 건 (Maya 의 File > Save Preferences 메뉴 항목 = 사용자가 고르는 명령, 연산자 id 문자열만) |
+| 설치→Maya 모드→제거 뒤 원상 | `release_check leftover_check` (파일만) | userpref.blend 바이트·keyconfig 목록·활성 keyconfig·config 폴더·handlers·timers·msgbus 비교 (레인 C 왕복 테스트) |
+
+답글 초안: `docs/distribution/review_reply.md`. 사라진 기능의 결정: `docs/user_decisions.md` 13.

@@ -32,6 +32,7 @@
       <li><a href="#workflows">Workflows</a></li>
       <li><a href="#choose">Going back</a></li>
       <li><a href="#install">Install</a></li>
+      <li><a href="#setup">Setup</a></li>
       <li><a href="#limits">Limits</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
@@ -48,7 +49,7 @@
       <span class="lockup__line">for Maya users, in Blender</span>
     </h1>
     <p class="hero__tagline">The whole Maya workflow in Blender, in one install.</p>
-    <p class="hero__lede">Other tools bring one piece over: a pivot tool, a keymap, a shelf, a theme. This rebuilds the
+    <p class="hero__lede">Other tools bring one piece over: a pivot tool, a keymap, a shelf. This rebuilds the
       set together — hotbox and marking menus, Channel Box and Attribute Editor, menu sets, shelves and option windows —
       on top of Blender's own tools. Installing it changes nothing until you choose Maya.</p>
     <div class="hero__actions">
@@ -99,9 +100,10 @@
     <p>Enabling the extension adds a small <strong>Maya | Blender</strong> switch at the right of the top bar, an Edit
       menu entry, the shortcut Ctrl+Alt+Shift+M and, once, a welcome dialog. Your keymap, theme, layout and
       preferences stay as they are.</p>
-    <p>Choose <strong>Make Blender feel like Maya</strong> and the kit turns on its Maya-style keymap, layout, menus,
-      theme and Maya-like preferences — after writing a copy of everything it will change. Click <strong>Blender</strong>
-      in the switch and all of it comes back; switch again whenever a tutorial uses Blender's own keys.</p>
+    <p>Choose <strong>Make Blender feel like Maya</strong> and the kit adds its Maya-style keys, menus and panels and
+      the Maya layout in the open file. It never touches your theme, preferences or active keymap. Click
+      <strong>Blender</strong> in the switch and Blender's own keys and UI are back; switch again whenever a tutorial
+      uses Blender's own keys.</p>
   </div>
   <div class="switcher">
     <div class="switcher__toggle" role="group" aria-label="Show the same scene in">
@@ -121,7 +123,7 @@
              alt="Plain Blender, as installed: Blender's own layout, keymap and theme, with the welcome dialog and the Maya&nbsp;|&nbsp;Blender switch.">
       </picture>
     </div>
-    <p class="switcher__note"><span data-mode-note>Maya mode — same file, Maya layout, keys and colours.</span><br><span class="credit">DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</span></p>
+    <p class="switcher__note"><span data-mode-note>Maya mode — same file, Maya layout and keys.</span><br><span class="credit">DOGWALK (CC BY 4.0) Blender Foundation | studio.blender.org, modified</span></p>
   </div>
 </section>
 
@@ -161,9 +163,22 @@
     </li>
   </ol>
   </div>
-  <p class="install__more">Disabling or removing the extension puts your values back and deletes the Maya layout
-    template. It writes only the layout template, a preference snapshot, your shelves and Maya project folders you
-    create — never outside them, and no network access.</p>
+  <p class="install__more">Disabling or removing the extension unregisters everything it added — there is nothing
+    else to undo. It writes only your shelves and the Maya project folders you create, and has no network access.</p>
+</section>
+
+<section class="limits" id="setup" aria-labelledby="setup-title">
+  <h2 id="setup-title">Recommended setup</h2>
+  <p>Optional. The kit leaves your theme and Blender preferences to you; Maya users usually like:</p>
+  <ul class="limits__list">
+    <li>A dark grey theme: <span class="path">Edit › Preferences › Get Extensions</span>, filter by Themes and install
+      one you like.</li>
+    <li>Navigation: Orbit Method Turntable, Orbit Around Selection off, Zoom to Mouse Position off, Auto Perspective on,
+      Zoom Method Dolly with a horizontal axis.</li>
+    <li>Undo Steps 256 (Blender's maximum) under System.</li>
+    <li>Region Overlap off under Interface › Editors, so side panels sit beside the viewport.</li>
+    <li>Only Insert Available under Animation › Keyframes, for Maya-like auto key.</li>
+  </ul>
 </section>
 
 <section class="limits" id="limits" aria-labelledby="limits-title">
@@ -190,8 +205,8 @@
   </details>
   <details>
     <summary>Will it change my Blender settings?</summary>
-    <p>Not until you choose Maya. Before it changes anything it saves a copy; the switch, disabling or removing the
-      extension restores your values. It never saves your preferences by itself.</p>
+    <p>No. Maya mode adds keys, menus, panels and a layout; it never writes your theme, preferences or active
+      keymap, and never saves preferences. The switch, disabling or removing the extension takes its additions away.</p>
   </details>
   <details>
     <summary>Can I follow Blender tutorials with it installed?</summary>
