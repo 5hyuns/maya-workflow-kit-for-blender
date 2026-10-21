@@ -73,6 +73,33 @@ SMART_DUPLICATE = ("allset.manip_option", {"option": 'SMART_DUPLICATE'})  # step
 SMART_EXTRUDE = ("allset.manip_option", {"option": 'SMART_EXTRUDE'})      # step 26
 
 
+def _item(path):
+    """Run Maya main-menu item ``path`` exactly like the menu (``allset.menu_item``: component / object mode rules,
+    Maya warnings, option window as the option box); docs/steps/step_136.md 「계획」 B."""
+    return ("item", path)
+
+
+def _on_object(path):
+    """A main-menu item run on the object the RMB menu was opened on (Maya passes ``$object``)."""
+    return ("allset.mm_object_item", {"item": path})
+
+
+def _overlay(prop):
+    # Maya polyOptions display toggles (-se / -dn) = the 3D View's edit-mode overlays (check boxes, step 136).
+    return ("wm.context_toggle", {"data_path": f"space_data.overlay.{prop}"})
+
+
+SOFT_EDGE_DISPLAY = _overlay("show_edge_sharp")
+# ArtPaintSelectTool: Maya paints a selection with a brush = Blender's circle select tool (edit mode).
+PAINT_SELECT = ("tool", "builtin.select_circle", True)
+CIRCULARIZE = _item("Edit Mesh/Circularize")
+
+
+def _poly(kind):
+    # Ctrl+RMB "convert, then act" items (polyConvertMM) and Reverse Propagate: marking/rmb_items.py ALLSET_OT_mm_poly.
+    return ("allset.mm_poly", {"kind": kind})
+
+
 def _sym(mode):
     return ("allset.symmetry", {"mode": mode})
 
@@ -134,23 +161,30 @@ def _object_items():
         (OBJECT_TITLE, ("allset.object_attributes", {"rmb": True})),
         DIVIDER,
         ("Select", ("allset.mm_component", {"type": 'NONE'})),
-        ("Select All", ("object.select_all", {"action": 'SELECT'})),
-        ("Deselect All", ("object.select_all", {"action": 'DESELECT'})),
-        ("Select Hierarchy", ("object.select_grouped", {"type": 'CHILDREN_RECURSIVE', "extend": True})),
-        ("Invert Selection", ("object.select_all", {"action": 'INVERT'})),
+        # SelectAll / SelectNone / InvertSelection = the Select menu's runTimeCommands (dagMenuProc.mel:2592-2595):
+        # the same items, so component mode follows menu_map.EDIT_MODE (#62)
+        ("Select All", _item("Select/All")),
+        ("Deselect All", _item("Select/Deselect All")),
+        ("Select Hierarchy", ("allset.mm_select_hierarchy", {})),     # select -hierarchy $object (:2594)
+        ("Invert Selection", _item("Select/Inverse")),
         DIVIDER,
-        ("Select Similar", ("object.select_grouped", {"type": 'TYPE', "extend": True})),
+        ("Select Similar", _item("Select/Similar")),                 # SelectSimilar (:2612)
         DIVIDER,
-        ("Make Live", None),
+        ("Make Live", _on_object("Modify/Make Live")),                # makeLive $object (:2619)
         DIVIDER,
         ("DG Traversal", unavailable()),
         ("Inputs", unavailable()),
         ("Outputs", unavailable()),
         ("Paint", Sub(items=[("Paint Skin Weights", ("paint.weight_paint_toggle", {}))])),
         ("Metadata", unavailable()),
-        ("Actions", unavailable()),
-        ("UV Sets", unavailable()),
-        ("Color Sets", unavailable()),
+        ("Actions", Sub(items=[                                          # createActionsMenuItems :1851-1854
+            ("Template", _on_object("Display/Object Display/Template")),
+            ("Untemplate", _on_object("Display/Object Display/Untemplate")),
+            ("Unparent", _on_object("Edit/Unparent")),
+            ("Bounding Box", ("allset.mm_bounding_box", {})),            # toggleBoundingBoxDisplay $item
+        ])),
+        ("UV Sets", ("menu", "ALLSET_MT_mm_uv_sets")),                   # createUVsetMenuItems :2060-2104
+        ("Color Sets", ("menu", "ALLSET_MT_mm_color_sets")),             # createColorSetMenuItems :2216-2252
         ("Time Editor", unavailable()),
         *_material_items(),
     ]
@@ -196,7 +230,7 @@ def with_object_name(menu, name):
 # Nothing under the cursor: Select All / Complete Tool (buildObjectMenuItemsNow.mel:126-150).
 RMB_EMPTY = MarkingMenu(
     "buildObjectMenuItemsNow", "Select", "research/maya/hotkeys_and_menus.md:252",
-    items=[("Select All", ("object.select_all", {"action": 'SELECT'})),
+    items=[("Select All", _item("Select/All")),                           # SelectAll :140
            ("Complete Tool", None)])
 
 # Pivot edit (D / Insert): the $editMode branch of buildObjectMenuItemsNow (research/maya/marking_menus.json
@@ -222,29 +256,29 @@ PIVOT_EDIT = MarkingMenu(
         "W": ("Show Orientation Handle", None),                            # :102
         "E": ("Exit", ("allset.pivot_exit", {})),                        # :108
     },
-    items=[("Bake Pivot Orientation", None)])                              # :115
+    items=[("Bake Pivot Orientation", _item("Modify/Bake Pivot"))])        # :115 (Blender bakes the orientation)
 
 # --- Shift+RMB: contextPolyTools*MM (§5.3, :254-265) ---------------------------------
 
 SOFT_HARD = Sub(radial={  # contextPolyToolsObjectMM.mel:127-169 / EdgeMM.mel:67-109
-    "S": ("Toggle Soft Edge Display", None),
+    "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
     "SE": ("Harden Edge", "mesh.mark_sharp"),
-    "E": ("Soften/Harden", None),
+    "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),   # PolygonSoftenHarden
     "NE": ("Soften Edge", ("mesh.mark_sharp", {"clear": True})),
 }, options={"Soften/Harden"})
 
 SHIFT_OBJECT = MarkingMenu(
     "contextPolyToolsObjectMM", "Object Tools", "research/maya/marking_menus.json contextPolyToolsObjectMM",
     radial={
-        "S": ("Extrude", None),                                            # :26
+        "S": ("Extrude", _item("Edit Mesh/Extrude")),                      # :26 performPolyExtrude
         "SW": ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),  # :34
-        "E": ("Append to Polygon Tool", None),                             # :50
-        "NE": ("Fill Holes", None),                                        # :66
+        "E": ("Append to Polygon Tool", _item("Mesh Tools/Append to Polygon")),  # :50
+        "NE": ("Fill Holes", _item("Mesh/Fill Hole")),                     # :66 FillHole
         "N": ("Target Weld Tool", TARGET_WELD),                            # :74
         "W": ("Multi-Cut", MULTI_CUT),                                     # :89
         "NW": ("Sculpt Tool", ("object.mode_set", {"mode": 'SCULPT'})),    # :111
         "SE": ("Soften/Harden Edges", Sub(radial={                         # :127 (object level)
-            "S": ("Toggle Soft Edge Display", None),
+            "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
             "SE": ("Harden Edge", "object.shade_flat"),
             "E": ("Soften/Harden", "object.shade_auto_smooth"),
             "NE": ("Soften Edge", "object.shade_smooth"),
@@ -258,15 +292,17 @@ SHIFT_OBJECT = MarkingMenu(
         ("Mirror", "allset.mirror"),                                        # :280
         DIVIDER,
         ("Triangulate", _mod('TRIANGULATE')),                              # :303
-        ("Quadrangulate", None),
+        ("Quadrangulate", _item("Mesh/Quadrangulate")),
         ("Reduce", _mod('DECIMATE')),                                      # :324
         DIVIDER,
         ("Separate", "allset.separate"),                # :380
         ("Combine", "allset.combine"),                                        # :387
-        ("Booleans", Sub(items=[("Union", None), ("Difference", None), ("Intersection", None)],
+        ("Booleans", Sub(items=[("Union", _item("Mesh/Booleans/Union")),
+                                ("Difference", _item("Mesh/Booleans/Difference")),
+                                ("Intersection", _item("Mesh/Booleans/Intersection"))],
                          options={"Union", "Difference", "Intersection"})),
         DIVIDER,
-        ("Quad Draw Tool", ("tool", "builtin.poly_build", True)),          # :480
+        ("Quad Draw Tool", _item("Mesh Tools/Quad Draw")),                 # :480
     ],
     options=['Append to Polygon Tool', 'Combine', 'Crease Tool', 'Insert Edge Loop Tool', 'Mirror', 'Multi-Cut', 'Quad Draw Tool', 'Quadrangulate', 'Reduce', 'Sculpt Tool', 'Smooth', 'Subdiv Proxy', 'Target Weld Tool'])
 
@@ -277,9 +313,9 @@ SHIFT_VERTEX = MarkingMenu(
         "E": ("Chamfer Vertex", ("v3d", "mesh.bevel", {"affect": 'VERTICES'})),  # :43
         "SW": ("Delete Vertex", "mesh.dissolve_verts"),                    # :59
         "SE": ("Vertex Normals", Sub(radial={                              # :68
-            "S": ("Toggle Vertex Normal Display", None),
+            "S": ("Toggle Vertex Normal Display", _overlay("show_vertex_normals")),
             "NE": ("Average Normals", "mesh.average_normals"),
-            "E": ("Vertex Normal Edit Tool", None),
+            "E": ("Vertex Normal Edit Tool", _item("Mesh Display/Vertex Normal Edit Tool")),
             "SE": ("Set Normals to Face", "mesh.set_normals_from_faces"),
         }, options={"Average Normals", "Set Normals to Face"})),
         "N": ("Merge Vertices", Sub(radial={                               # :127
@@ -289,15 +325,15 @@ SHIFT_VERTEX = MarkingMenu(
         }, options={"Merge Vertices", "Target Weld Tool"})),
         "NE": ("Average Vertices", "mesh.vertices_smooth"),                # :176
         "W": ("Multi-Cut", MULTI_CUT),                                     # :184
-        "NW": ("Paint Select Vertices", None),                             # :202
+        "NW": ("Paint Select Vertices", PAINT_SELECT),                     # :202
     },
     items=[
         ("Crease Tool", CREASE),
         ("Connect Components", "mesh.vert_connect_path"),                  # :225
-        ("Detach Components", None),
+        ("Detach Components", _item("Edit Mesh/Detach")),
         ("Connect Tool", MULTI_CUT),
         DIVIDER,
-        ("Circularize Vertices", None),
+        ("Circularize Vertices", CIRCULARIZE),
         ("Reorder Vertices", None),
     ],
     options=['Chamfer Vertex', 'Circularize Vertices', 'Connect Components', 'Connect Tool', 'Crease Tool', 'Extrude Vertex', 'Multi-Cut'])
@@ -322,14 +358,14 @@ SHIFT_EDGE = MarkingMenu(
             "W": ("Spin Backward", ("mesh.edge_rotate", {"use_ccw": True})),
         })),
         "W": ("Multi-Cut", MULTI_CUT),                                     # :232
-        "NW": ("Paint Select Edges", None),                                # :251
+        "NW": ("Paint Select Edges", PAINT_SELECT),                        # :251
     },
     items=[
         ("Crease Tool", CREASE),
         ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),     # :302
         ("Slide Edge Tool", ("tool", "builtin.edge_slide", True)),         # :316
-        ("Circularize Components", None),
-        ("Edit Edge Flow", None),
+        ("Circularize Components", CIRCULARIZE),
+        ("Edit Edge Flow", _item("Edit Mesh/Edit Edge Flow")),
         DIVIDER,
         ("Add Divisions To Edge", "mesh.subdivide"),                       # :366
         ("Bridge", "mesh.bridge_edge_loops"),                              # :379
@@ -345,23 +381,23 @@ SHIFT_FACE = MarkingMenu(
     radial={
         "N": ("Merge Faces To Center", MERGE_CENTER),                      # :27
         "S": ("Extrude Face", ("v3d", "allset.extrude", {})),            # :35 (step 65)
-        "SW": ("Wedge Face", None),                                        # :51
+        "SW": ("Wedge Face", _item("Edit Mesh/Wedge")),                    # :51
         "NE": ("Poke Face", "mesh.poke"),                                  # :68
         "E": ("Bevel Face", ("v3d", "mesh.bevel", {})),                    # :84
         "SE": ("Face Normals", Sub(radial={                                # :100
-            "S": ("Toggle Face Normal Display", None),
-            "NE": ("Reverse Propagate", None),
+            "S": ("Toggle Face Normal Display", _overlay("show_face_normals")),
+            "NE": ("Reverse Propagate", _poly('REVERSE_PROPAGATE')),     # polyNormal -normalMode 4
             "SE": ("Conform Normals", "mesh.normals_make_consistent"),
-            "E": ("Reverse Normals", "mesh.flip_normals"),
+            "E": ("Reverse Normals", _item("Mesh Display/Reverse")),
         }, options={"Reverse Normals"})),
         "W": ("Multi-Cut", MULTI_CUT),                                     # :150
-        "NW": ("Paint Select Faces", None),                                # :168
+        "NW": ("Paint Select Faces", PAINT_SELECT),                        # :168
     },
     items=[
         ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),         # :181
         ("Assign Invisible Faces", None),
         ("Add Divisions To Faces", "mesh.subdivide"),                      # :210
-        ("Circularize Components", None),
+        ("Circularize Components", CIRCULARIZE),
         ("Triangulate Faces", "mesh.quads_convert_to_tris"),               # :263
         ("Quadrangulate Faces", "mesh.tris_convert_to_quads"),             # :270
         DIVIDER,
@@ -376,7 +412,7 @@ SHIFT_FACE = MarkingMenu(
 SHIFT_DEFAULT = MarkingMenu(
     "contextPolyToolsDefaultMM", "Create", "research/maya/marking_menus.json contextPolyToolsDefaultMM",
     radial={
-        "N": ("Create Polygon Tool", None),                                # :56
+        "N": ("Create Polygon Tool", _item("Mesh Tools/Create Polygon")),  # :56
         "NE": ("Disc", _create('DISC')),  # :72
         "E": ("Sphere", _create('SPHERE')),                   # :89
         "SE": ("Torus", _create('TORUS')),                       # :105
@@ -392,7 +428,7 @@ SHIFT_DEFAULT = MarkingMenu(
         ("Pipe", None), ("Helix", None), ("Gear", None),
         DIVIDER,
         ("Type", _create('TEXT')),                                       # :308
-        ("Quad Draw Tool", None),
+        ("Quad Draw Tool", _item("Mesh Tools/Quad Draw")),
     ],
     options=['Cone', 'Create Polygon Tool', 'Cube', 'Cylinder', 'Disc', 'Gear', 'Helix', 'Pipe', 'Plane', 'Platonic Solid', 'Prism', 'Pyramid', 'Quad Draw Tool', 'Sphere', 'Torus'])
 
@@ -411,16 +447,19 @@ CTRL_CONVERT = MarkingMenu(
             "NW": ("Shrink", "mesh.select_less"),
             "N": ("Shrink Selection Along Loop", None),
         })),
-        "E": ("To UVs", Sub(radial={"E": ("To UVs", None), "NE": ("To UV Perimeter", None)})),  # :109
+        "E": ("To UVs", Sub(radial={                                       # :109
+            "E": ("To UVs", ("allset.uv_component", {"mode": 'UV'})),       # UV picking = the UV Editor (step 66)
+            "NE": ("To UV Perimeter", None),
+        })),
         "SE": ("Edge Loop Utilities", Sub(radial={                         # :134
             "SE": ("To Edge Loop", ("allset.select_loops", {"ring": False})),
-            "NE": ("To Edge Loop and Delete", None),
-            "SW": ("To Edge Loop and Duplicate", None),
+            "NE": ("To Edge Loop and Delete", _poly('LOOP_DELETE')),
+            "SW": ("To Edge Loop and Duplicate", _poly('LOOP_DUPLICATE')),
         })),
         "SW": ("Edge Ring Utilities", Sub(radial={                         # :165
             "SW": ("To Edge Ring", ("allset.select_loops", {"ring": True})),
-            "SE": ("To Edge Ring and Split", None),
-            "NW": ("To Edge Ring and Collapse", None),
+            "SE": ("To Edge Ring and Split", _poly('RING_SPLIT')),
+            "NW": ("To Edge Ring and Collapse", _poly('RING_COLLAPSE')),
         })),
         "S": ("To Faces", Sub(radial={                                     # :198
             "S": ("To Faces", ("mesh.select_mode", {"type": 'FACE', "use_expand": True})),
@@ -429,7 +468,7 @@ CTRL_CONVERT = MarkingMenu(
         })),
         "W": ("To Vertices", Sub(radial={                                  # :229
             "W": ("To Vertices", ("mesh.select_mode", {"type": 'VERT'})),
-            "NW": ("To Vertex Perimeter", None),
+            "NW": ("To Vertex Perimeter", _poly('VERTEX_PERIMETER')),
         })),
         "NE": ("Grow Selection", Sub(radial={                              # :254
             "NE": ("Grow", "mesh.select_more"),
@@ -438,9 +477,9 @@ CTRL_CONVERT = MarkingMenu(
     },
     items=[
         ("To Face Path", None),                                            # :276
-        ("To UV Shell", None),
+        ("To UV Shell", _item("Select/Convert Selection/To UV Shell")),
         ("To Shell", "mesh.select_linked"),                                # :288
-        ("To Shell Border", None),
+        ("To Shell Border", _poly('SHELL_BORDER')),
         DIVIDER,
         ("Selection Boundary", "mesh.region_to_loop"),                     # :310
     ])
@@ -528,7 +567,7 @@ OPT_SELECT = MarkingMenu(
     radial={
         "NW": ("Marquee", ("tool", "builtin.select_box", False)),         # :31
         "NE": ("Drag", ("tool", "builtin.select", False)),                # :36
-        "E": ("Camera-Based Selection", None),                             # :41
+        "E": ("Camera-Based Selection", ("allset.mm_camera_based", {})),  # :41 (marquee skips hidden components)
         "SE": ("Clear Selection", "allset.mm_clear_selection"),          # :46
         "W": ("Paint Select", ("tool", "builtin.select_circle", False)),   # :50
         "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),          # :54
@@ -682,7 +721,7 @@ HB_NORTH = MarkingMenu(
         "NE": ("Hypershade/Render/Persp", SHADING_WS),                     # :39
         "SE": ("Hypershade/Outliner/Persp", SHADING_WS),                   # :42
         "E": ("Hypershade/Persp", SHADING_WS),                             # :45
-        "S": ("Toggle Outliner", None),                                    # :47
+        "S": ("Toggle Outliner", _item("Windows/Outliner")),               # :47 ToggleOutliner
         "SW": ("Persp/Graph/Outliner", ANIMATION_WS),                      # :49
         "W": ("Persp/Graph", ANIMATION_WS),                                # :52
         "NW": ("Persp/Relationship Editor", None),                         # :55
@@ -694,11 +733,11 @@ HB_SOUTH = MarkingMenu(
         "N": ("Outliner", _pane('OUTLINER')),                              # HotboxSouthMenu.mel:134
         "E": ("Graph Editor", _pane('FCURVES')),                           # :137
         "SE": ("Dope Sheet", _pane('DOPESHEET')),                          # :140
-        "S": ("Hypergraph", None),                                         # :143
+        "S": ("Hypergraph", _pane('OUTLINER')),                            # :143 (hierarchy = the Outliner)
         "SW": ("Node Editor", _pane('ShaderNodeTree')),                    # :146
         "W": ("Hypershade", _pane('ShaderNodeTree')),                      # :149
         "NW": ("Render View", _pane('IMAGE_EDITOR')),                      # :152
-        "NE": ("Set Editor", None),                                        # :155
+        "NE": ("Set Editor", _pane('OUTLINER')),                           # :155 (kit sets = Outliner rows, step 96)
     })
 
 HB_EAST = MarkingMenu(
@@ -715,7 +754,7 @@ HB_EAST = MarkingMenu(
         "SE": ("Tool Box", _ui('TOOLBOX')),
         "S": ("Time Slider", None),
         "SW": ("Range Slider", None),
-        "W": ("Shelf", None),
+        "W": ("Shelf", ("allset.shelf_strip_toggle", {})),                 # Windows > UI Elements > Shelf
         "NW": ("Command Line", _ui('COMMAND_LINE')),
     })
 
@@ -783,13 +822,13 @@ UV_MAPPING = Sub(radial={
     "NE": ("Normal-Based", "allset.uv_planar"),
     "E": ("Camera-Based", ("v3d", "uv.project_from_view", {})),
     "SE": ("Cylindrical", ("v3d", "uv.cylinder_project", {})),
-    "S": ("Best Plane", None),
+    "S": ("Best Plane", _item("UV/Best Plane")),
     "SW": ("Spherical", ("v3d", "uv.sphere_project", {})),
-    "W": ("Contour Stretch", None),
+    "W": ("Contour Stretch", _item("UV/Contour Stretch")),
     "NW": ("Automatic", "uv.smart_project"),
 })
 _UV_TAIL = [("Texture Borders", None), DIVIDER, ("UV Editor", ("allset.uv_component", {"mode": 'OPEN'})),
-            ("UV Set Editor", None)]
+            ("UV Set Editor", _item("UV/UV Set Editor"))]
 
 SHIFT_UV = MarkingMenu(
     "contextPolyToolsUVMM", "UV Tools", "research/maya/marking_menus.json contextPolyToolsUVMM",
@@ -847,3 +886,41 @@ def walk(sub, path):
         yield f"{path}/{i}", label, action
         if isinstance(action, Sub):
             yield from walk(action, f"{path}/{i}")
+
+
+def label_walk(sub, path):
+    """Like ``walk`` with label paths ("contextPolyToolsFaceMM/Face Normals/Reverse Propagate"): the keys of
+    ``ui/notices.MARKING`` (step 136)."""
+    for pos in RADIALS:
+        if pos in sub.radial:
+            label, action = sub.radial[pos]
+            yield f"{path}/{label}", label, action
+            if isinstance(action, Sub):
+                yield from label_walk(action, f"{path}/{label}")
+    for entry in sub.items:
+        if entry == DIVIDER:
+            continue
+        label, action = entry
+        yield f"{path}/{label}", label, action
+        if isinstance(action, Sub):
+            yield from label_walk(action, f"{path}/{label}")
+
+
+def is_greyed(action):
+    """Drawn greyed whatever the context: no action, or an empty submenu."""
+    return action is None or is_unavailable(action)
+
+
+def greyed_entries():
+    """[(label path, label)] of every greyed entry of every menu."""
+    return [(p, label) for name, menu in MENUS.items() for p, label, a in label_walk(menu, name) if is_greyed(a)]
+
+
+def sub_label_path(menu, sub):
+    """Label path of submenu ``sub`` inside ``menu`` ("" for the menu itself), or None."""
+    if sub is menu:
+        return ""
+    for path, _label, action in label_walk(menu, ""):
+        if action is sub:
+            return path.lstrip("/")
+    return None
