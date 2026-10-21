@@ -23,6 +23,7 @@ import gpu
 from bpy.props import StringProperty
 from gpu_extras.batch import batch_for_shader
 
+from .. import live_refs
 from . import editor_menu_data, menu_map, menu_sets
 
 GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
@@ -681,8 +682,12 @@ def prepare_later(window, ui_type, tries=60):
     object rows (Maya Dopesheet Summary + objects), show the UV Editor's tool header and UV Toolkit. From a timer:
     a new window's regions have no size inside the operator (step 9)."""
     state = {"n": tries}
+    ptr = window.as_pointer()
 
     def tick():
+        window = live_refs.window(ptr)     # the pointer, looked up each tick: a closed window crashes (#36)
+        if window is None:
+            return None
         try:
             area = window.screen.areas[0]
             if area.ui_type != ui_type:

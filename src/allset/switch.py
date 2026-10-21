@@ -437,7 +437,7 @@ def _delete_later(window, name, added, tries=40):
     left = [tries]
 
     def tick():
-        win = next((w for w in _windows() if w.as_pointer() == ptr), None)
+        win = live_refs.window(ptr)
         ws = bpy.data.workspaces.get(name)
         if win is None or ws is None:
             return None

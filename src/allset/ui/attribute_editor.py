@@ -25,7 +25,7 @@ import re
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
-from .. import compat
+from .. import compat, live_refs
 from ..operators import display
 from . import ae_layout
 from . import cb_entry, channel_box
@@ -1178,8 +1178,12 @@ class ALLSET_OT_ae_copy_tab(bpy.types.Operator):
         target = new.screen.areas[0]
         target.ui_type = 'PROPERTIES'
         state = {"n": 40}
+        win_ptr, area_ptr = new.as_pointer(), target.as_pointer()
 
         def tick():
+            target = live_refs.area(area_ptr, win_ptr)   # pointers, looked up each tick (#36)
+            if target is None:
+                return None
             try:
                 space = target.spaces.active
                 space.pin_id = pin
