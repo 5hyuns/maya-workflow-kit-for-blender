@@ -183,8 +183,8 @@ def _object_items():
             ("Unparent", _on_object("Edit/Unparent")),
             ("Bounding Box", ("allset.mm_bounding_box", {})),            # toggleBoundingBoxDisplay $item
         ])),
-        ("UV Sets", ("menu", "ALLSET_MT_mm_uv_sets")),                   # createUVsetMenuItems :2060-2104
-        ("Color Sets", ("menu", "ALLSET_MT_mm_color_sets")),             # createColorSetMenuItems :2216-2252
+        ("UV Sets", ("menu", "ALLSET_MT_uv_sets_rmb")),                   # createUVsetMenuItems :2060-2104
+        ("Color Sets", ("menu", "ALLSET_MT_color_sets_rmb")),             # createColorSetMenuItems :2216-2252
         ("Time Editor", unavailable()),
         *_material_items(),
     ]
@@ -827,6 +827,8 @@ UV_MAPPING = Sub(radial={
     "W": ("Contour Stretch", _item("UV/Contour Stretch")),
     "NW": ("Automatic", "uv.smart_project"),
 })
+# SetMeshGrabUVTool: Maya grabs UVs from the 3D View; these menus open in the UV Editor, whose Grab tool does it.
+GRAB_UV = _item("UV Editor/Tools/Grab")
 _UV_TAIL = [("Texture Borders", None), DIVIDER, ("UV Editor", ("allset.uv_component", {"mode": 'OPEN'})),
             ("UV Set Editor", _item("UV/UV Set Editor"))]
 
@@ -834,7 +836,7 @@ SHIFT_UV = MarkingMenu(
     "contextPolyToolsUVMM", "UV Tools", "research/maya/marking_menus.json contextPolyToolsUVMM",
     radial={
         "N": ("Mapping", UV_MAPPING),                                      # :25
-        "NE": ("3D Grab UV Tool", None),                                   # :38
+        "NE": ("3D Grab UV Tool", GRAB_UV),                                # :38
         "E": ("Sew UVs", "allset.uv_sew"),                               # :54
         "SE": ("Create UV Shell", None),                                   # :64
         "S": ("Merge UVs", "uv.weld"),                                     # :74
@@ -848,7 +850,7 @@ SHIFT_UV_SHELL = MarkingMenu(
     "contextPolyToolsUVShellMM", "UV Shell Tools", "research/maya/marking_menus.json contextPolyToolsUVShellMM",
     radial={
         "N": ("Mapping", UV_MAPPING),                                      # :25
-        "NE": ("3D Grab UV Tool", None),                                   # :38
+        "NE": ("3D Grab UV Tool", GRAB_UV),                                # :38
         "E": ("Optimize", "uv.minimize_stretch"),                          # :54
         "SE": ("Flip", ("transform.mirror", {"constraint_axis": (True, False, False)})),   # :69 (Flip U)
         "S": ("Auto Seams", None),                                         # :81
