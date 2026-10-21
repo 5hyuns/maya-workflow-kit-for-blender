@@ -17,206 +17,284 @@ Blender's header with the Maya menus (``panel_menus``). Icons are kit-drawn (``s
 import math
 
 import bpy
+import numpy as np
 
 from . import panel_menus, status_icons
-from .status_icons import BLUE, DARK, DIM, GREY, TEAL
+from .status_icons import DARK, DIM, GREY, LIGHT, TEAL, TEAL_DARK, TEAL_LIGHT, letter
 
 GREY_OP = "allset.menu_unavailable"
 
 
-# --- glyphs (16 px buttons; drawn on the 32 px status_icons canvas) -----------------------------------
+# --- glyphs (Maya 16 px panel toolbar, research/maya/re/icons131.md; drawn by status_icons at the icon size) ----
 
-def _camera(cv):
-    cv.rect(0.10, 0.34, 0.66, 0.78, GREY)
-    cv.poly([(0.66, 0.48), (0.92, 0.32), (0.92, 0.80), (0.66, 0.64)], GREY)
+def _camera(cv, y=0.0):
+    """Maya camera: a body with the lens cone opening to the right."""
+    cv.rect(0.04, 0.30 + y, 0.60, 0.70 + y, GREY)
+    cv.poly([(0.66, 0.50 + y), (0.96, 0.26 + y), (0.96, 0.74 + y)], GREY)
 
 
 def g_cam_select(cv):
     _camera(cv)
-    status_icons.arrow_cursor(cv, 0.40, 0.08, 0.42, TEAL)
 
 
 def g_cam_lock(cv):
-    _camera(cv)
-    cv.ring(0.36, 0.30, 0.13, 0.07, TEAL, 0, 180)
-    cv.rect(0.22, 0.30, 0.50, 0.52, TEAL)
+    _camera(cv, -0.16)
+    cv.ring(0.32, 0.50, 0.12, 0.08, TEAL, 0, 180)
+    cv.rect(0.14, 0.52, 0.50, 0.94, TEAL)
+    cv.rect(0.30, 0.64, 0.36, 0.80, DARK)
 
 
 def g_cam_attr(cv):
-    _camera(cv)
-    for y in (0.48, 0.62):
-        cv.line(0.18, y, 0.56, y, 0.05, DARK)
+    _camera(cv, -0.16)
+    status_icons.gear(cv, 0.32, 0.70, 0.27, TEAL)
 
 
 def g_bookmark(cv):
-    cv.poly([(0.26, 0.10), (0.74, 0.10), (0.74, 0.90), (0.50, 0.70), (0.26, 0.90)], GREY)
+    cv.poly([(0.24, 0.04), (0.76, 0.04), (0.76, 0.96), (0.50, 0.72), (0.24, 0.96)], GREY)
 
 
 def g_image_plane(cv):
-    cv.frame(0.12, 0.18, 0.88, 0.82, 0.06, GREY)
-    cv.poly([(0.20, 0.74), (0.42, 0.44), (0.58, 0.62), (0.68, 0.50), (0.82, 0.74)], TEAL)
+    """Maya: a teal plane standing on a grey floor."""
+    cv.polyline([(0.04, 0.94), (0.60, 0.94), (0.94, 0.70), (0.40, 0.70), (0.04, 0.94)], 0.07, GREY)
+    cv.poly([(0.30, 0.82), (0.30, 0.30), (0.70, 0.04), (0.70, 0.56)], TEAL)
 
 
 def g_pan_zoom(cv):
-    cv.frame(0.12, 0.12, 0.88, 0.88, 0.06, GREY)
-    cv.line(0.5, 0.25, 0.5, 0.75, 0.08, GREY)
-    cv.line(0.25, 0.5, 0.75, 0.5, 0.08, GREY)
+    """Maya: a four-way move arrow with a teal magnifier."""
+    cv.line(0.34, 0.08, 0.34, 0.62, 0.08, GREY)
+    cv.line(0.06, 0.34, 0.62, 0.34, 0.08, GREY)
+    cv.poly([(0.34, 0.0), (0.48, 0.16), (0.20, 0.16)], GREY)
+    cv.poly([(0.0, 0.34), (0.16, 0.20), (0.16, 0.48)], GREY)
+    cv.poly([(0.68, 0.34), (0.52, 0.20), (0.52, 0.48)], GREY)
+    cv.ring(0.66, 0.64, 0.16, 0.09, TEAL)
+    cv.line(0.54, 0.76, 0.34, 0.96, 0.12, TEAL)
 
 
 def g_grease(cv):
-    cv.line(0.20, 0.82, 0.78, 0.22, 0.16, GREY)
-    cv.poly([(0.13, 0.92), (0.16, 0.76), (0.28, 0.86)], TEAL)
+    cv.line(0.84, 0.12, 0.38, 0.58, 0.20, GREY)
+    cv.poly([(0.26, 0.56), (0.40, 0.70), (0.14, 0.82)], TEAL)
+    cv.ring(0.56, 0.80, 0.14, 0.07, TEAL, 180, 360)
 
 
 def g_grid(cv):
-    for k in (0.15, 0.38, 0.62, 0.85):
-        cv.line(k, 0.12, k, 0.88, 0.05, GREY)
-        cv.line(0.12, k, 0.88, k, 0.05, GREY)
+    cv.rect(0.10, 0.10, 0.90, 0.90, GREY)
+    for i in range(3):
+        for j in range(3):
+            x, y = 0.18 + i * 0.25, 0.18 + j * 0.25
+            cv.rect(x, y, x + 0.14, y + 0.14, DARK)
 
 
 def _gate(cv):
-    cv.frame(0.08, 0.20, 0.92, 0.80, 0.06, GREY)
+    cv.frame(0.02, 0.10, 0.98, 0.90, 0.10, GREY)
 
 
 def g_film_gate(cv):
-    _gate(cv)
-    cv.frame(0.24, 0.32, 0.76, 0.68, 0.05, DIM)
+    cv.frame(0.02, 0.10, 0.98, 0.90, 0.20, GREY)
+    for i in range(5):
+        x = 0.12 + i * 0.17
+        cv.rect(x, 0.15, x + 0.08, 0.22, DARK)
+        cv.rect(x, 0.78, x + 0.08, 0.85, DARK)
 
 
 def g_res_gate(cv):
     _gate(cv)
-    cv.rect(0.24, 0.32, 0.76, 0.68, DIM)
+    cv.circle(0.5, 0.5, 0.20, TEAL)
 
 
 def g_gate_mask(cv):
-    cv.rect(0.08, 0.20, 0.92, 0.80, DIM)
-    cv.rect(0.26, 0.32, 0.74, 0.68, DARK)
+    cv.rect(0.02, 0.10, 0.98, 0.90, GREY)
+    cv.circle(0.5, 0.5, 0.27, DARK)
 
 
 def g_field_chart(cv):
     _gate(cv)
-    for r in (0.12, 0.22):
-        cv.ring(0.5, 0.5, r, 0.04, DIM)
+    for k in range(4):
+        y = 0.22 + k * 0.16
+        cv.rect(0.46, y, 0.54, y + 0.08, TEAL)
+    for k in range(6):
+        x = 0.16 + k * 0.13
+        if abs(x - 0.47) > 0.06:
+            cv.rect(x, 0.46, x + 0.08, 0.54, TEAL)
 
 
 def g_safe_action(cv):
     _gate(cv)
-    cv.frame(0.18, 0.28, 0.82, 0.72, 0.04, TEAL)
+    cv.poly([(0.18, 0.80), (0.38, 0.44), (0.58, 0.80)], TEAL)
+    cv.circle(0.66, 0.36, 0.13, TEAL)
 
 
 def g_safe_title(cv):
     _gate(cv)
-    cv.frame(0.26, 0.34, 0.74, 0.66, 0.04, TEAL)
+    cv.rect(0.26, 0.24, 0.74, 0.36, TEAL)
+    cv.rect(0.44, 0.24, 0.56, 0.78, TEAL)
 
 
-def _ball(cv, colour, wire=False):
-    if wire:
-        cv.ring(0.5, 0.5, 0.36, 0.06, colour)
-        cv.ring(0.5, 0.5, 0.36, 0.05, colour)
-        for k in (-0.18, 0.0, 0.18):
-            cv.line(0.16, 0.5 + k, 0.84, 0.5 + k, 0.04, colour)
-        cv.line(0.5, 0.14, 0.5, 0.86, 0.04, colour)
-    else:
-        cv.circle(0.5, 0.5, 0.36, colour)
+# isometric cube corners (shading icons)
+_TOP = [(0.50, 0.04), (0.92, 0.24), (0.50, 0.44), (0.08, 0.24)]
+_LEFT = [(0.08, 0.24), (0.50, 0.44), (0.50, 0.96), (0.08, 0.76)]
+_RIGHT = [(0.50, 0.44), (0.92, 0.24), (0.92, 0.76), (0.50, 0.96)]
+
+
+def _solid_cube(cv):
+    cv.poly(_TOP, TEAL_LIGHT)
+    cv.poly(_LEFT, TEAL)
+    cv.poly(_RIGHT, TEAL_DARK)
+
+
+def _wire_cube(cv, colour, w=0.07):
+    cv.polyline(_TOP + [_TOP[0]], w, colour)
+    cv.polyline([(0.08, 0.24), (0.08, 0.76), (0.50, 0.96), (0.92, 0.76), (0.92, 0.24)], w, colour)
+    cv.line(0.50, 0.44, 0.50, 0.96, w, colour)
 
 
 def g_wire(cv):
-    _ball(cv, GREY, wire=True)
+    _wire_cube(cv, GREY)
+    # hidden edges, dimmer
+    cv.polyline([(0.08, 0.76), (0.50, 0.56), (0.92, 0.76)], 0.05, DIM)
+    cv.line(0.50, 0.04, 0.50, 0.56, 0.05, DIM)
 
 
 def g_smooth(cv):
-    _ball(cv, GREY)
-    cv.circle(0.40, 0.38, 0.10, (0.95, 0.95, 0.95))
-
-
-def g_default_mat(cv):
-    _ball(cv, DIM)
+    _solid_cube(cv)
 
 
 def g_wire_on_shaded(cv):
-    _ball(cv, DIM)
-    _ball(cv, GREY, wire=True)
+    _solid_cube(cv)
+    _wire_cube(cv, LIGHT, 0.06)
+
+
+def _disc(cv):
+    return cv.disc_mask(0.5, 0.5, 0.44)
+
+
+def _checker(cv, mask, n=4):
+    c = ((np.floor(cv.x * n) + np.floor(cv.y * n)) % 2) == 0
+    cv.fill(mask, GREY)
+    cv.fill(mask & c, DARK)
+
+
+def g_default_mat(cv):
+    d = _disc(cv)
+    _checker(cv, d & (cv.x >= 0.5))
+    cv.fill(d & (cv.x < 0.5), GREY)
 
 
 def g_textured(cv):
-    cv.circle(0.5, 0.5, 0.36, GREY)
-    for i in range(3):
-        for j in range(3):
-            if (i + j) % 2:
-                cv.fill(((cv.x - 0.5) ** 2 + (cv.y - 0.5) ** 2 <= 0.36 ** 2)
-                        & (cv.x >= 0.14 + i * 0.24) & (cv.x < 0.38 + i * 0.24)
-                        & (cv.y >= 0.14 + j * 0.24) & (cv.y < 0.38 + j * 0.24), DARK)
+    _checker(cv, _disc(cv), 5)
 
 
 def g_all_lights(cv):
-    cv.circle(0.5, 0.42, 0.24, (0.95, 0.85, 0.40))
-    cv.rect(0.40, 0.66, 0.60, 0.86, GREY)
+    cv.circle(0.5, 0.42, 0.22, GREY)
+    cv.rect(0.40, 0.58, 0.60, 0.80, GREY)
+    cv.rect(0.42, 0.84, 0.58, 0.92, GREY)
+    for a in (180, 135, 90, 45, 0):
+        r = math.radians(a)
+        cv.line(0.5 + math.cos(r) * 0.32, 0.42 - math.sin(r) * 0.32,
+                0.5 + math.cos(r) * 0.44, 0.42 - math.sin(r) * 0.44, 0.08, GREY)
 
 
 def g_shadows(cv):
-    cv.poly([(0.10, 0.86), (0.60, 0.86), (0.90, 0.62), (0.40, 0.62)], DIM)
-    cv.circle(0.40, 0.38, 0.22, GREY)
+    cv.poly([(0.04, 0.84), (0.30, 0.60), (0.62, 0.60), (0.36, 0.84)], GREY)
+    for k in range(3):
+        cv.line(0.12 + k * 0.10, 0.80, 0.30 + k * 0.10, 0.64, 0.05, DARK)
+    cv.circle(0.64, 0.40, 0.30, TEAL)
 
 
 def g_ssao(cv):
-    cv.rect(0.12, 0.12, 0.88, 0.88, GREY)
-    cv.poly([(0.12, 0.88), (0.88, 0.12), (0.88, 0.88)], DIM)
-    cv.frame(0.12, 0.12, 0.88, 0.88, 0.04, DARK)
+    """Maya: a grey ball sitting in a teal occlusion pool."""
+    cv.poly([(0.04, 0.74), (0.50, 0.58), (0.96, 0.74), (0.50, 0.94)], TEAL)
+    cv.circle(0.5, 0.40, 0.32, GREY)
+    cv.ring(0.5, 0.40, 0.32, 0.06, DIM, 200, 340)
 
 
 def g_motion_blur(cv):
-    cv.circle(0.66, 0.5, 0.22, GREY)
-    for k, y in enumerate((0.36, 0.5, 0.64)):
-        cv.line(0.10 + k * 0.04, y, 0.42, y, 0.06, DIM)
+    cv.circle(0.30, 0.66, 0.24, DARK)
+    cv.circle(0.46, 0.50, 0.26, DIM)
+    cv.circle(0.64, 0.34, 0.28, GREY)
 
 
 def g_aa(cv):
-    cv.poly([(0.14, 0.84), (0.50, 0.14), (0.86, 0.84)], GREY)
-    cv.poly([(0.30, 0.84), (0.50, 0.44), (0.70, 0.84)], DARK)
+    """Maya: a ring, smooth teal on the left, stair-stepped grey on the right."""
+    cv.ring(0.5, 0.5, 0.36, 0.14, TEAL, 90, 270)
+    for x0, y0, x1, y1 in ((0.50, 0.08, 0.66, 0.22), (0.66, 0.16, 0.80, 0.34), (0.76, 0.32, 0.90, 0.68),
+                           (0.66, 0.66, 0.80, 0.84), (0.50, 0.78, 0.66, 0.92)):
+        cv.rect(x0, y0, x1, y1, GREY)
 
 
 def g_dof(cv):
-    cv.circle(0.32, 0.50, 0.14, GREY)
-    cv.circle(0.68, 0.50, 0.20, DIM)
+    m = cv.rect_mask(0.04, 0.04, 0.54, 0.54)
+    c = ((np.floor(cv.x * 12) + np.floor(cv.y * 12)) % 2) == 0
+    cv.fill(m, TEAL_DARK)
+    cv.fill(m & c, TEAL)
+    cv.rect(0.34, 0.34, 0.96, 0.96, TEAL)
 
 
 def g_isolate(cv):
-    cv.frame(0.10, 0.10, 0.90, 0.90, 0.05, DIM)
-    cv.poly([(0.30, 0.38), (0.50, 0.26), (0.70, 0.38), (0.70, 0.62), (0.50, 0.74), (0.30, 0.62)], TEAL)
+    for (ax, ay, bx, by) in ((0.06, 0.06, 0.30, 0.06), (0.46, 0.06, 0.66, 0.06), (0.06, 0.06, 0.06, 0.30),
+                             (0.06, 0.46, 0.06, 0.66), (0.66, 0.06, 0.66, 0.26), (0.06, 0.66, 0.26, 0.66)):
+        cv.line(ax, ay, bx, by, 0.10, TEAL)
+    status_icons.arrow_cursor(cv, 0.44, 0.40, 0.56)
+
+
+def _xray_tile(cv):
+    cv.rect(0.0, 0.0, 1.0, 1.0, DARK)
 
 
 def g_xray(cv):
-    cv.circle(0.5, 0.5, 0.36, GREY)
-    cv.circle(0.5, 0.5, 0.26, DIM)
-    cv.ring(0.5, 0.5, 0.36, 0.05, GREY)
+    """Maya: two overlapping squares on a dark tile, the overlap lighter (see-through)."""
+    _xray_tile(cv)
+    cv.rect(0.38, 0.12, 0.88, 0.62, DIM)
+    cv.rect(0.12, 0.38, 0.62, 0.88, DIM)
+    cv.rect(0.38, 0.38, 0.62, 0.62, LIGHT)
 
 
 def g_xray_comp(cv):
-    g_xray(cv)
-    for x, y in ((0.30, 0.30), (0.70, 0.30), (0.30, 0.70), (0.70, 0.70)):
-        cv.circle(x, y, 0.08, TEAL)
+    """Maya: the front square solid, the back one only an outline; teal component points on the front one."""
+    _xray_tile(cv)
+    cv.frame(0.38, 0.12, 0.88, 0.62, 0.08, GREY)
+    cv.rect(0.12, 0.38, 0.62, 0.88, GREY)
+    for x, y in ((0.12, 0.38), (0.62, 0.38), (0.12, 0.88), (0.62, 0.88)):
+        cv.circle(x, y, 0.09, TEAL)
 
 
 def g_xray_joints(cv):
-    g_xray(cv)
-    cv.ring(0.36, 0.64, 0.09, 0.05, TEAL)
-    cv.line(0.42, 0.58, 0.66, 0.34, 0.07, TEAL)
+    _xray_tile(cv)
+    cv.frame(0.10, 0.10, 0.90, 0.90, 0.07, GREY)
+    cv.poly([(0.28, 0.66), (0.38, 0.74), (0.74, 0.32), (0.68, 0.26)], GREY)
+    cv.circle(0.30, 0.70, 0.11, TEAL)
+    cv.circle(0.72, 0.28, 0.08, GREY)
 
 
 def g_exposure(cv):
-    cv.circle(0.5, 0.5, 0.36, GREY)
-    cv.poly([(0.5, 0.14), (0.86, 0.5), (0.5, 0.86)], DARK)
+    """Maya: a camera iris (grey disc, dark blades)."""
+    cv.circle(0.5, 0.5, 0.44, GREY)
+    for k in range(6):
+        a = math.radians(k * 60 + 15)
+        b = math.radians(k * 60 + 75)
+        cv.line(0.5 + math.cos(a) * 0.14, 0.5 + math.sin(a) * 0.14,
+                0.5 + math.cos(b) * 0.40, 0.5 + math.sin(b) * 0.40, 0.05, DARK)
+    cv.circle(0.5, 0.5, 0.12, DARK)
 
 
 def g_gamma(cv):
-    pts = [(0.14 + 0.72 * t, 0.86 - 0.72 * (t ** 0.45)) for t in [i / 20 for i in range(21)]]
-    cv.polyline(pts, 0.09, GREY)
+    """Maya: a half-filled disc on a bracket (gamma)."""
+    cv.polyline([(0.50, 0.06), (0.90, 0.06), (0.90, 0.94), (0.50, 0.94)], 0.10, GREY)
+    m = cv.disc_mask(0.5, 0.5, 0.34)
+    cv.fill(m & (cv.x < 0.5), GREY)
+    cv.ring(0.5, 0.5, 0.34, 0.07, GREY, 270, 90)
 
 
 def g_color_mgmt(cv):
-    for k, c in enumerate(((0.85, 0.35, 0.35), (0.40, 0.75, 0.40), BLUE)):
-        a = k * 2 * math.pi / 3 - math.pi / 2
-        cv.circle(0.5 + 0.17 * math.cos(a), 0.5 + 0.17 * math.sin(a), 0.22, c)
+    """Maya rvViewingPipelineOff: a grey disc with OFF (the kit shows ON while colour management is on)."""
+    cv.circle(0.5, 0.5, 0.46, GREY)
+    for i, ch in enumerate("OFF"):
+        letter(cv, ch, 0.18 + i * 0.23, 0.36, 0.28, 0.07, DARK)
+
+
+def g_color_mgmt_on(cv):
+    cv.circle(0.5, 0.5, 0.46, TEAL)
+    for i, ch in enumerate("ON"):
+        letter(cv, ch, 0.28 + i * 0.27, 0.36, 0.28, 0.07, DARK)
 
 
 GLYPHS = {name[2:]: fn for name, fn in globals().items() if name.startswith("g_")}
@@ -321,7 +399,8 @@ def draw_toolbar(layout, context):
     sub.ui_units_x = 2.2
     sub.prop(vs, "gamma", text="")
     cm = bool(panel_menus.state(context, "CM_ENABLE"))
-    op = _flat(row, cm).operator(set_op, text="", icon_value=_icon("color_mgmt"), depress=cm)
+    op = _flat(row, cm).operator(set_op, text="", icon_value=_icon("color_mgmt_on" if cm else "color_mgmt"),
+                                 depress=cm)
     op.key, op.toggle = "CM_ENABLE", True
     sub = row.row(align=True)
     sub.ui_units_x = 6
