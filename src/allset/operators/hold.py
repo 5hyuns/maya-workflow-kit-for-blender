@@ -194,6 +194,7 @@ class ComponentPivotEdit:
         self.pending_tool = None      # tool to bring back on the next mesh edit mode entry
         self.custom = False           # a placed custom pivot is in use (pivot point CURSOR after finish)
         self.sel_sig = None           # the selection it was placed for (Pin Component Pivot off: reset on change)
+        self.cursors = set()          # 3D views whose hidden cursor this edit shows (step 134)
 
     def start(self, context, toggled=False):
         ts = context.scene.tool_settings
@@ -206,6 +207,8 @@ class ComponentPivotEdit:
         self.rotation = cursor.matrix.to_3x3()
         self.on, self.toggled, self.pending_tool = True, toggled, None
         ts.transform_pivot_point = 'CURSOR'
+        # the pivot is the 3D cursor: the Maya layout hides it (Maya has none, #59), show it while it is edited
+        self.cursors |= show_cursors()
         _tool_set(context, CURSOR_TOOL, self.area_ptr)
         # tool options belong to the tool: set the orientation once the cursor tool is the active one
         self.orientation = _set_cursor_orientation(context, cursor_orientation(context))
@@ -217,6 +220,8 @@ class ComponentPivotEdit:
         if not self.on:
             return
         self.on = self.toggled = False
+        hide_cursors(self.cursors)
+        self.cursors = set()
         ts = context.scene.tool_settings
         cursor = context.scene.cursor
         moved = (cursor.location - self.location).length > 1e-6
@@ -275,6 +280,35 @@ class ComponentPivotEdit:
                 ts.transform_pivot_point = 'BOUNDING_BOX_CENTER'
                 self.custom, self.sel_sig = False, None
                 _redraw()
+
+
+def _view3d_spaces(screens=None):
+    for screen in bpy.data.screens if screens is None else screens:
+        for area in screen.areas:
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    yield space
+
+
+def show_cursors(screens=None):
+    """Show the 3D cursor in every 3D View that hides it (the Maya layout views, step 134 #59); returns their space
+    pointers for ``hide_cursors``. Spaces are looked up afresh from ``bpy.data.screens`` (default) every time: no
+    reference is kept across a closed window (step 129 #36)."""
+    shown = set()
+    for space in _view3d_spaces(screens):
+        if not space.overlay.show_cursor:
+            space.overlay.show_cursor = True
+            shown.add(space.as_pointer())
+    return shown
+
+
+def hide_cursors(pointers, screens=None):
+    """Hide the cursor again in the views ``show_cursors`` showed (views that showed it before stay as they were)."""
+    if not pointers:
+        return
+    for space in _view3d_spaces(screens):
+        if space.as_pointer() in pointers:
+            space.overlay.show_cursor = False
 
 
 def _view3d_area(context):
