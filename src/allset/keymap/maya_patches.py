@@ -352,6 +352,10 @@ def patch_concepts(kd):
     # duplicate_move would name the copy pCube1.001 and start a move.
     kd.remove("Object Mode", "object.duplicate_move", type="D", ctrl=True)
     _add(kd, "Object Mode", "allset.duplicate", make_event("D", ctrl=True))
+    # Component mode Ctrl+D (#17, step 129): Maya's Duplicate there copies nothing ("No object(s) to duplicate",
+    # GUI-checked, ); IC mesh.duplicate_move copied the faces inside the mesh.
+    kd.remove("Mesh", "mesh.duplicate_move", type="D", ctrl=True)
+    _add(kd, "Mesh", "allset.component_command", make_event("D", ctrl=True), {"item": "Edit/Duplicate"})
     _add(kd, "Object Mode", "allset.duplicate_with_transform", make_event("D", shift=True))
     _add(kd, "Object Mode", "allset.duplicate_special", make_event("D", shift=True, ctrl=True))
     _add(kd, "Object Mode", "allset.delete_history", make_event("D", shift=True, alt=True))
