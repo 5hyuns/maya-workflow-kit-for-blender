@@ -209,8 +209,11 @@ def test_hypershade_browser_create_assign():
         hs.draw_browser(rec, bpy.context)
         assert {p.material for i, p in rec.ops() if i == "allset.hs_pick"} == {mat.name, other.name, "lambert1"}
         rec = Rec()
+        wm.allset_hs_create_cat = 'SURFACE'          # step 131: Create pane = Maya's category tree + node list
         hs.draw_create(rec, bpy.context)
-        assert [p.kind for i, p in rec.ops()] == list(hs.CREATE)
+        made = [p.item.rsplit("/", 1)[-1] for i, p in rec.ops() if i == "allset.menu_item"]
+        assert made == [material.MATERIALS[k][1] for k in hs.CREATE], made
+        wm.allset_hs_create_cat = 'MAYA'
         rec = Rec()
         hs.draw_property_editor(rec, bpy.context)
         assert any(i == "allset.ae_map" for i, _p in rec.ops())

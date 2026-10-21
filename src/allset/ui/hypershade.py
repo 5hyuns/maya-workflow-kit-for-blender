@@ -1,41 +1,41 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Hypershade = a Shader Editor window with a "Hypershade" sidebar tab (docs/steps/step_67.md 「계획」 1,
-docs/steps/step_105.md 「계획」 1).
+"""Maya Hypershade = its own window in Maya's layout (docs/steps/step_131_hypershade.md 「계획」, issue #25; before:
+step 67 / 105 Shader Editor + sidebar tab).
 
-Maya's Hypershade (research/maya/workflows/render.md:20-29; audit-7 pair h01_hypershade_win1; menus and Browser tabs
-captured in research/maya/screens/editors105/_editors105.json) is a floating window: a menu bar (File / Edit / View /
-Create / Tabs / Graph / Window / Options / Help), the Browser (swatch tabs Materials / Textures / Utilities /
-Rendering / Lights / Cameras / Shading Groups ...), Create (node types), the node graph and the Property Editor.
-Blender's Shader Editor is the graph; the kit adds:
+Maya 2022's factory Hypershade (research/maya/re/hypershade131.md, capture research/maya/screens/hypershade131/) is a
+floating window: the menu bar (File / Edit / View / Create / Tabs / Graph / Window / Options / Help) over the Browser
+(top-left: toolbar, 10 swatch tabs, swatch grid), Material Viewer (top-right), Create (bottom-left: category tree +
+node list), the Graph work area (centre: graph toolbar, "Untitled_1" tab, node editor) and the Property Editor
+(bottom-right). ``allset.hypershade`` builds the same arrangement out of Blender areas in a new window
+(``hypershade_layout`` = Maya's proportions as ``area_split`` steps, made one per timer tick):
 
-- the Maya menu bar in every Shader Editor header (``NODE_MT_editor_menus.draw_collapsible``, step 37 pattern;
-  Blender's menus in a 「Blender」 menu, the slot / New buttons stay); items in ``editor_menu_map`` "Hypershade/...";
-- Browser: swatch tabs as a preview grid (View menu: swatch size and sort order); a click makes a material the
-  Hypershade's current one (the active object's slot when it has it, else this Shader Editor is pinned to it),
-  selects a light / camera, or shows a texture / utility node in its material's graph;
-- Create: Maya's surface shaders Blender can build (Maya order), created unassigned like Maya's Create bar;
-- Assign Material To Selection (Maya's swatch RMB item, ``allset.assign_material``);
-- Property Editor: the Attribute Editor's material sections with their map buttons.
+- menu strip = a Shader Editor one header high whose header draws only the Maya menus (``NODE_HT_header``'s own draw
+  swapped, ``own_draw``); items in ``editor_menu_map`` "Hypershade/...";
+- Graph = a Shader Editor whose header is Maya's graph toolbar (``editor_chrome.ICONS["Hypershade"]``) + Blender's
+  node menus folded into "Blender"; a drawn "Untitled_1" tab at its top-left;
+- Browser / Create / Material Viewer / Property Editor = Properties editors on the Tool tab (the step 106 / 116
+  mechanism), marked by hidden tab flags (``MARK`` + ``PANE_FLAGS``) and drawn by ``ALLSET_PT_hypershade_pane``.
 
-``allset.hypershade`` opens the window: Windows > Rendering Editors > Hypershade, the Status Line icon and the
-hotbox's Windows menu all run it.
+The Hypershade's current material (Browser click, Create, Edit menu) shows in the Graph (the active object's slot
+when it has it, else the Graph is pinned to it), the Material Viewer and the Property Editor.
+Windows > Rendering Editors > Hypershade, the Status Line icon and the hotbox's Windows menu all run
+``allset.hypershade``; other Shader Editors keep the Maya menu bar in their header (``draw_collapsible``, step 105).
 """
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
-from .. import compat
+from .. import compat, live_refs
 from ..operators import material as material_ops
 from ..operators import menu_extras
-from . import ae_layout
+from . import ae_layout, hypershade_layout
 
-CATEGORY = "Hypershade"
 # Maya Hypershade Create > Maya > Surface, alphabetical like Maya (h01_hypershade_win1): the ones Blender can build
 CREATE = ('ANISOTROPIC', 'BLINN', 'LAMBERT', 'LAYERED', 'PHONG', 'PHONG_E', 'RAMP', 'STANDARD_SURFACE', 'SURFACE',
           'USE_BACKGROUND')
 COLUMNS = 3
 
-# Browser swatch tabs (captured tab bar; Bake Sets / Projects / Asset Nodes have no Blender counterpart)
+# Browser swatch tabs (captured tab bar, research/maya/screens/hypershade131/_hypershade131.json)
 TABS = (("MATERIALS", "Materials", "Materials of the scene"),
         ("TEXTURES", "Textures", "Image and texture nodes in the materials"),
         ("UTILITIES", "Utilities", "Other nodes in the materials (Maya utility nodes)"),
@@ -43,11 +43,20 @@ TABS = (("MATERIALS", "Materials", "Materials of the scene"),
         ("LIGHTS", "Lights", "Light objects"),
         ("CAMERAS", "Cameras", "Camera objects"),
         ("SHADING_GROUPS", "Shading Groups", "Maya shading groups: one per material"))
-# View > As Icons / As List / As Small ... Extra Large Swatches (captured View menu); icon scale per size
-SWATCHES = (("ICONS", "As Icons", "", 2.0), ("LIST", "As List", "", 0.0), ("SMALL", "As Small Swatches", "", 2.0),
-            ("MEDIUM", "As Medium Swatches", "", 3.0), ("LARGE", "As Large Swatches", "", 4.5),
-            ("XLARGE", "As Extra Large Swatches", "", 6.0))
-SORTS = (("NAME", "By Name", ""), ("TYPE", "By Type", ""), ("TIME", "By Time", ""))
+# Maya's last three Browser tabs: no Blender counterpart (greyed, notices in PANE_NOTICES)
+MAYA_ONLY_TABS = ("Bake Sets", "Projects", "Asset Nodes")
+# View > As Icons / As List / As Small ... Extra Large Swatches (captured View menu; descriptions = the Browser
+# toolbar's Maya tooltips); icon scale per size
+SWATCHES = (("ICONS", "As Icons", "View as icons", 2.0), ("LIST", "As List", "View as list", 0.0),
+            ("SMALL", "As Small Swatches", "View as small swatches", 2.0),
+            ("MEDIUM", "As Medium Swatches", "View as medium swatches", 3.0),
+            ("LARGE", "As Large Swatches", "View as large swatches", 4.5),
+            ("XLARGE", "As Extra Large Swatches", "View as extra large swatches", 6.0))
+SORTS = (("NAME", "By Name", "Sort by name"), ("TYPE", "By Type", "Sort by type"), ("TIME", "By Time", "Sort by time"))
+# Browser toolbar icons (Blender icons standing in for Maya's)
+SWATCH_ICONS = {"ICONS": 'IMGDISPLAY', "LIST": 'LONGDISPLAY', "SMALL": 'DOT', "MEDIUM": 'RADIOBUT_OFF',
+                "LARGE": 'MATSPHERE', "XLARGE": 'MATERIAL'}
+SORT_ICONS = {"NAME": 'SORTALPHA', "TYPE": 'SORTBYEXT', "TIME": 'SORTTIME'}
 
 TEXTURE_NODES = {'TEX_IMAGE', 'TEX_CHECKER', 'TEX_NOISE', 'TEX_WAVE', 'TEX_VORONOI', 'TEX_BRICK', 'TEX_GRADIENT',
                  'TEX_MAGIC', 'TEX_ENVIRONMENT', 'TEX_SKY', 'TEX_WHITE_NOISE', 'TEX_GABOR'}
@@ -71,11 +80,15 @@ def current(context):
 
 
 def show(context, mat, space=None):
-    """Make ``mat`` current and show it in the Shader Editor ``space``: the active object's slot when it has
-    the material (the editor follows the object, unpinned), else pin the editor to it."""
+    """Make ``mat`` current and show it in the Shader Editor ``space`` (default: the Hypershade Graph of this
+    window, since panes are Properties editors): the active object's slot when it has the material (the editor
+    follows the object, unpinned), else pin the editor to it."""
     context.window_manager.allset_hs_material = mat.name
     ob = context.active_object
     index = next((i for i, s in enumerate(ob.material_slots) if s.material == mat), None) if ob else None
+    if space is None or space.type != 'NODE_EDITOR':
+        graph = graph_area(getattr(context, "screen", None))
+        space = graph.spaces.active if graph is not None else None
     if space is None or space.type != 'NODE_EDITOR':
         if index is not None:
             ob.active_material_index = index
@@ -88,8 +101,182 @@ def show(context, mat, space=None):
         space.node_tree = mat.node_tree
 
 
-def _hypershade_area(context):
+# --- the Hypershade window: panes, menu strip, Graph ---------------------------------------------------------
+# A pane = a Properties editor on the Tool tab (header hidden) with both MARK flags and one PANE_FLAGS flag. Two of
+# maya_dock's role flags make ``maya_dock.role`` None and ``tool_dock.is_dock`` False, so neither the Maya dock panel
+# nor Tool Settings draw there; the flags are saved with the file and copied by ``area_dupli``.
+MARK = ("show_properties_world", "show_properties_texture")
+PANE_FLAGS = {"BROWSER": "show_properties_render", "CREATE": "show_properties_output",
+              "VIEWER": "show_properties_view_layer", "PROPERTY": "show_properties_scene"}
+PANE_LABELS = {"BROWSER": "Browser", "CREATE": "Create", "VIEWER": "Material Viewer", "PROPERTY": "Property Editor"}
+
+
+def _flags(space):
+    return [p.identifier for p in space.bl_rna.properties if p.identifier.startswith("show_properties_")]
+
+
+def pane(area):
+    """'BROWSER' / 'CREATE' / 'VIEWER' / 'PROPERTY' for a Hypershade pane, else None."""
+    if area is None or area.type != 'PROPERTIES':
+        return None
+    space = area.spaces.active
+    if space.show_region_header or not space.show_properties_tool or not all(getattr(space, f) for f in MARK):
+        return None
+    on = [name for name, flag in PANE_FLAGS.items() if getattr(space, flag, False)]
+    if len(on) != 1:
+        return None
+    allowed = {"show_properties_tool", *MARK, PANE_FLAGS[on[0]], *compat.LATER_PROPERTIES_TABS}
+    if any(getattr(space, f) for f in _flags(space) if f not in allowed):
+        return None
+    return on[0]
+
+
+def context_pane(context):
+    return pane(getattr(context, "area", None))
+
+
+def set_pane(area, name, window=None):
+    """Make the Properties editor ``area`` the Hypershade pane ``name``. False while its space can't take the Tool
+    tab yet (a new Properties space has an empty tab list until it has drawn: retry next tick)."""
+    space = area.spaces.active
+    try:
+        space.context = 'TOOL'
+    except TypeError:
+        return False
+    for flag in _flags(space):
+        setattr(space, flag, flag in ("show_properties_tool", *MARK, PANE_FLAGS[name]))
+    space.show_region_header = False
+    nav = next((r for r in area.regions if r.type == 'NAVIGATION_BAR'), None)
+    if nav is not None and nav.width > 1 and window is not None and not bpy.app.background:
+        try:
+            with bpy.context.temp_override(window=window, area=area):
+                bpy.ops.screen.region_toggle(region_type='NAVIGATION_BAR')
+        except (RuntimeError, TypeError):
+            pass
+    area.tag_redraw()
+    return True
+
+
+def is_hypershade(screen):
+    try:
+        return screen is not None and any(pane(a) is not None for a in screen.areas)
+    except ReferenceError:
+        return False
+
+
+def _node_areas(screen):
+    return [a for a in screen.areas if a.type == 'NODE_EDITOR' and a.ui_type == 'ShaderNodeTree']
+
+
+def graph_area(screen):
+    """The Hypershade Graph of ``screen`` (its tallest Shader Editor), else None."""
+    if not is_hypershade(screen):
+        return None
+    areas = _node_areas(screen)
+    return max(areas, key=lambda a: a.height, default=None)
+
+
+def menu_area(screen):
+    """The Hypershade menu strip of ``screen`` (its lowest Shader Editor when there are two or more), else None."""
+    if not is_hypershade(screen):
+        return None
+    areas = _node_areas(screen)
+    if len(areas) < 2:
+        return None
+    return min(areas, key=lambda a: a.height)
+
+
+def hypershade_windows(wm=None):
+    wm = wm or bpy.context.window_manager
+    return [w for w in wm.windows if is_hypershade(w.screen)]
+
+
+def _largest_area(context):
     return max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
+
+
+def _header_px(area):
+    """Height for the menu strip: a header (Blender's HEADERY = 26 px x UI scale) plus the area border; an area
+    shorter than its header collapses the header to 1 px and shows the main region instead (measured)."""
+    header = next((r for r in area.regions if r.type == 'HEADER'), None)
+    scale = bpy.context.preferences.system.ui_scale or 1.0
+    h = header.height if header is not None and header.height > 1 else round(26 * scale)
+    return max(h, round(26 * scale)) + 3
+
+
+def build_later(window, graph, tries=200):
+    """Split ``window`` (its only area ``graph``, a Shader Editor) into Maya's Hypershade layout, one split per tick
+    (area rects update one tick after a split), then turn the panes into Properties editors and mark them. Window and
+    areas are kept as pointers (live_refs, #36)."""
+    win_ptr = window.as_pointer()
+    roles = {"GRAPH": graph.as_pointer()}
+    state = {"steps": None, "i": 0, "n": tries, "typed": False}
+
+    def area_of(role):
+        return live_refs.area(roles.get(role), win_ptr)
+
+    def tick():
+        win = live_refs.window(win_ptr)
+        state["n"] -= 1
+        if win is None or state["n"] <= 0:
+            return None
+        try:
+            return _tick(win)
+        except ReferenceError:
+            return None
+
+    def _tick(win):
+        screen = win.screen
+        if state["steps"] is None:
+            g = area_of("GRAPH")
+            if g is None:
+                return None
+            if g.height <= 1 or g.width <= 1:
+                return 0.02
+            state["steps"] = hypershade_layout.plan(g.height, _header_px(g))
+        steps = state["steps"]
+        if state["i"] < len(steps):
+            src, direction, factor, new = steps[state["i"]]
+            area = area_of(src)
+            if area is None:
+                return None
+            if area.width <= 1 or area.height <= 1:
+                return 0.02
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+            before = {a.as_pointer() for a in screen.areas}
+            with bpy.context.temp_override(window=win, screen=screen, area=area, region=region):
+                bpy.ops.screen.area_split(direction=direction, factor=factor)
+            made = next((a for a in screen.areas if a.as_pointer() not in before), None)
+            if made is None:
+                return 0.02
+            roles[new] = made.as_pointer()
+            state["i"] += 1
+            return 0.02
+        if not state["typed"]:
+            for role in ("MENU", "GRAPH"):
+                a = area_of(role)
+                if a is not None:
+                    sp = a.spaces.active
+                    sp.show_region_toolbar = False
+                    sp.show_region_ui = False
+            for role in PANE_FLAGS:
+                a = area_of(role)
+                if a is not None:
+                    a.ui_type = 'PROPERTIES'
+            state["typed"] = True
+            return 0.02
+        done = True
+        for role in PANE_FLAGS:
+            a = area_of(role)
+            if a is not None and pane(a) != role:
+                with bpy.context.temp_override(window=win):
+                    done = set_pane(a, role, win) and done
+        if not done:
+            return 0.05
+        for a in screen.areas:
+            a.tag_redraw()
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
 
 
 # --- Browser items --------------------------------------------------------------------------------------------
@@ -163,14 +350,22 @@ def _uid(context, tab, key):
 
 
 class ALLSET_OT_hypershade(bpy.types.Operator):
-    """Hypershade: a Shader Editor window with the material browser, Create and Property Editor (sidebar tab)"""
+    """Hypershade: Maya's window with the Browser, Material Viewer, Create, the graph (Shader Editor) and the
+    Property Editor"""
     bl_idname = "allset.hypershade"
     bl_label = "Hypershade"
 
     def execute(self, context):
         if context.window is None:
             return {'CANCELLED'}
-        area = _hypershade_area(context)
+        if is_hypershade(context.screen):     # Hypershade > Window > Browser / Create / Property Editor: shown here
+            return {'FINISHED'}
+        # Maya brings its one Hypershade to the front; Blender can't raise a window: the old one closes and a fresh
+        # one opens on top (delegated, docs/steps/step_131_hypershade.md 「계획」 6)
+        from . import maya_dock
+        for w in hypershade_windows(context.window_manager):
+            maya_dock.close_window_later(w)
+        area = _largest_area(context)
         if area is None:
             return {'CANCELLED'}
         window = menu_extras.open_window(context, area)
@@ -182,7 +377,7 @@ class ALLSET_OT_hypershade(bpy.types.Operator):
         mat = current(context)
         if mat is not None:
             show(context, mat, target.spaces.active)
-        menu_extras.sidebar_tab_later(window, CATEGORY)
+        build_later(window, target)
         return {'FINISHED'}
 
 
@@ -353,18 +548,126 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _redraw(context):
-    for area in context.screen.areas if context.screen else ():
-        area.tag_redraw()
+# --- panes ----------------------------------------------------------------------------------------------------
+
+# Create: Maya's category tree (capture: Favorites > Maya > Surface, then Maya > ...) -> Hypershade Create menu
+# submenus whose items the list shows (same paths as the Create menu, so menu and pane agree)
+CREATE_CATEGORIES = (
+    ("FAVORITES", "Favorites", None),
+    ("MAYA", "Maya", None),
+    ("SURFACE", "Surface", ("Materials",)),
+    ("VOLUMETRIC", "Volumetric", ("Volumetric Materials",)),
+    ("DISPLACEMENT", "Displacement", ()),
+    ("TEX2D", "2D Textures", ("2D Textures",)),
+    ("TEX3D", "3D Textures", ("3D Textures",)),
+    ("ENV", "Env Textures", ("Environment Textures",)),
+    ("OTHER", "Other Textures", ("Layered Texture",)),
+    ("LIGHTS", "Lights", ("Lights",)),
+    ("UTILITIES", "Utilities", ("General Utilities", "Scalar Utilities", "Switch Utilities", "Color Utilities",
+                                "Particle Utilities")),
+    ("IMAGE_PLANES", "Image Planes", ("Image Plane",)),
+    ("GLOW", "Glow", ("Glow",)),
+    ("RENDERING", "Rendering", ("Rendering",)),
+)
+# Maya's Displacement category (captured list) has no Hypershade Create menu items: greyed (category notice)
+DISPLACEMENT = ("C Muscle Shader", "Displacement", "Usd Preview Surface")
+# Favorites > Maya > Surface (captured list order)
+FAVORITES = ("Standard Surface", "Blinn", "Lambert", "Layered Shader", "Phong", "Phong E", "Ramp Shader",
+             "Surface Shader", "Use Background")
+HS = "Hypershade"
+
+# Notices of pane controls that are not Maya menu items (notices.PANEL_NOTICES, filled on register)
+PANE_NOTICES = {
+    **{f"{HS}/Browser/{t}": ("Not in Blender", f"Blender has no {t.lower()} to list: the {t} tab stays empty.")
+       for t in MAYA_ONLY_TABS},
+    f"{HS}/Browser/Pause Swatches": ("Material previews", "Blender renders material previews in the background "
+                                     "by itself: no pause."),
+    f"{HS}/Browser/Show": ("Search field", "Blender's Browser filters by the name in the search field only."),
+    f"{HS}/Bins": ("Not in Blender", "Blender has no node bins: the Browser tabs list everything."),
+    f"{HS}/Property Editor/Presets": ("Not in Blender", "Blender has no attribute presets for materials."),
+}
 
 
-# --- panels ---------------------------------------------------------------------------------------------------
+def _create_menu():
+    from . import editor_menu_data
+    return dict(editor_menu_data.EDITORS[HS])["Create"]
+
+
+def _menu_entries(sub):
+    """(label, Maya menu path) of the Hypershade Create menu's submenu (or single item) ``sub``."""
+    for it in _create_menu():
+        if it[0] != sub:
+            continue
+        if len(it) > 1 and isinstance(it[1], list):
+            return [(c[0], f"{HS}/Create/{sub}/{c[0]}") for c in it[1] if c[0] != '-']
+        return [(sub, f"{HS}/Create/{sub}")]
+    return []
+
+
+def create_items(category):
+    """(label, Maya menu path) listed by the Create pane for a category (Maya: the category scrolls / filters the
+    list; "Maya" = all of them)."""
+    if category == 'FAVORITES':
+        return [(label, f"{HS}/Create/Materials/{label}") for label in FAVORITES]
+    if category == 'MAYA':
+        out = []
+        for key, _label, _subs in CREATE_CATEGORIES[2:]:
+            out += create_items(key)
+        return out
+    key, _label, subs = next(c for c in CREATE_CATEGORIES if c[0] == category)
+    if key == 'DISPLACEMENT':
+        return [(label, f"{HS}/Create/Displacement/{label}") for label in DISPLACEMENT]
+    out = []
+    for sub in subs:
+        out += _menu_entries(sub)
+    if key == 'UTILITIES':
+        out.sort(key=lambda e: e[0].lower())       # Maya lists the utilities alphabetically, one list
+    return out
+
+
+def draw_title(layout, name):
+    """Maya's panel title bar: the panel name between dotted grips."""
+    from .maya_dock import HANDLE
+    row = layout.row()
+    row.alignment = 'CENTER'
+    row.label(text=f"{HANDLE}  {PANE_LABELS[name]}  {HANDLE}")
+
+
+def _greyed(layout, key, text="", icon='NONE'):
+    sub = layout.row(align=True)
+    sub.enabled = False
+    sub.operator("allset.menu_unavailable", text=text, icon=icon).item = key
+
 
 def draw_browser(layout, context):
     wm = context.window_manager
-    layout.row(align=True).prop(wm, "allset_hs_tab", expand=True)
+    # Maya's Browser toolbar: pause | as icons / list | swatch sizes | sort | search (+ Show)
+    bar = layout.row(align=False)
+    sub = bar.row(align=True)
+    _greyed(sub, f"{HS}/Browser/Pause Swatches", icon='PAUSE')
+    sub = bar.row(align=True)
+    for key in ("ICONS", "LIST"):
+        sub.prop_enum(wm, "allset_hs_swatch", key, text="", icon=SWATCH_ICONS[key])
+    sub = bar.row(align=True)
+    for key in ("SMALL", "MEDIUM", "LARGE", "XLARGE"):
+        sub.prop_enum(wm, "allset_hs_swatch", key, text="", icon=SWATCH_ICONS[key])
+    sub = bar.row(align=True)
+    for key, _l, _d in SORTS:
+        sub.prop_enum(wm, "allset_hs_sort", key, text="", icon=SORT_ICONS[key])
+    sub.prop(wm, "allset_hs_reverse", text="", icon='SORT_DESC', toggle=True)
+    sub = bar.row(align=True)
+    sub.prop(wm, "allset_hs_filter", text="", icon='VIEWZOOM', placeholder="Search...")
+    _greyed(sub, f"{HS}/Browser/Show", text="Show")
+    # the ten Maya tabs (the last three greyed)
+    tabs = layout.row(align=True)
+    tabs.prop(wm, "allset_hs_tab", expand=True)
+    for t in MAYA_ONLY_TABS:
+        _greyed(tabs, f"{HS}/Browser/{t}", text=t)
     tab = wm.allset_hs_tab
     items = browser_items(context, tab)
+    text = wm.allset_hs_filter.strip().lower()
+    if text:
+        items = [it for it in items if text in it[1].lower()]
     if not items:
         layout.label(text=f"No {dict((t[0], t[1]) for t in TABS)[tab].lower()} in the scene")
         return
@@ -379,7 +682,7 @@ def draw_browser(layout, context):
         return
     cell = size[3] * 20 * s + 12
     width = region.width if region is not None else 300
-    columns = max(1, min(COLUMNS * 3, int(width // cell))) if region is not None else COLUMNS
+    columns = max(1, min(24, int(width // cell))) if region is not None else COLUMNS
     grid = layout.grid_flow(row_major=True, columns=columns, even_columns=True, align=False)
     for key, label, icon, _t in items:
         col = grid.column(align=True)
@@ -403,9 +706,51 @@ def _item_button(layout, tab, key, label, icon, cur, list_row=False):
 
 
 def draw_create(layout, context):
-    col = layout.column(align=True)
-    for kind in CREATE:
-        col.operator("allset.hs_create", text=material_ops.MATERIALS[kind][1], icon='MATERIAL').kind = kind
+    from . import menu_sets
+    wm = context.window_manager
+    layout.prop(wm, "allset_hs_create_filter", text="", icon='VIEWZOOM', placeholder="Search...")
+    split = layout.split(factor=0.32)
+    left = split.column(align=True)
+    for key, label, subs in CREATE_CATEGORIES:
+        if subs is None:           # tree roots: Favorites, Maya
+            left.prop_enum(wm, "allset_hs_create_cat", key, text=label, icon='DISCLOSURE_TRI_DOWN')
+        else:
+            left.prop_enum(wm, "allset_hs_create_cat", key, text="    " + label)
+    right = split.column(align=True)
+    text = wm.allset_hs_create_filter.strip().lower()
+    items = create_items('MAYA' if text else wm.allset_hs_create_cat)
+    if text:
+        items = [it for it in items if text in it[0].lower()]
+    seen = set()
+    for label, path in items:
+        if path in seen:
+            continue
+        seen.add(path)
+        menu_sets.draw_item(right, path, label)
+    if not items:
+        right.label(text="No node type matches")
+    # Maya's bottom tab row: Create | Bins
+    tabs = layout.row(align=True)
+    tabs.operator("allset.hs_noop", text="Create", depress=True)
+    _greyed(tabs, f"{HS}/Bins", text="Bins")
+
+
+def draw_viewer(layout, context):
+    mat = current(context)
+    row = layout.row(align=True)
+    engine = context.scene.render.engine
+    names = {e.identifier: e.name for e in context.scene.render.bl_rna.properties["engine"].enum_items}
+    row.label(text=names.get(engine, engine), icon='SHADING_RENDERED')
+    if mat is None:
+        layout.label(text="Pick a material in the Browser")
+        return
+    row.prop(mat, "preview_render_type", text="")
+    row.prop(mat, "use_preview_world", text="", icon='WORLD')
+    if engine == 'BLENDER_WORKBENCH':
+        layout.label(text="Workbench draws no material previews: switch the render engine to EEVEE or Cycles",
+                     icon='INFO')
+        return
+    layout.template_preview(mat, show_buttons=False)
 
 
 def draw_property_editor(layout, context):
@@ -414,56 +759,211 @@ def draw_property_editor(layout, context):
     if mat is None:
         layout.label(text="Pick a material")
         return
-    head = layout.row(align=True)
-    head.label(text=f"{attribute_editor.material_type(mat)}:")
-    head.prop(mat, "name", text="")
+    tab = layout.row(align=True)
+    tab.alignment = 'LEFT'
+    tab.operator("allset.hs_noop", text=mat.name, depress=True)
     name = attribute_editor.material_type(mat)
+    head = layout.row(align=True)
+    head.label(text=f"{name}:")
+    head.prop(mat, "name", text="")
+    _greyed(head, f"{HS}/Property Editor/Presets", text="Presets")
     sections = ae_layout.BY_KIND[name][0]
     attribute_editor.draw_sections(layout, context, None, mat, sections, f"hs_{name}")
 
 
-class _Panel:
-    bl_space_type = 'NODE_EDITOR'
+class ALLSET_OT_hs_noop(bpy.types.Operator):
+    """Current tab"""
+    bl_idname = "allset.hs_noop"
+    bl_label = "Tab"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        return {'CANCELLED'}
+
+
+class ALLSET_PT_hypershade_pane(bpy.types.Panel):
+    """A Hypershade pane: Browser, Create, Material Viewer or Property Editor (a marked Properties Tool tab)"""
+    bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = CATEGORY
+    bl_category = "Tool"           # = drawn by the Properties Tool tab (step 106 mechanism)
+    bl_label = "Hypershade"
+    bl_options = {'HIDE_HEADER'}
+    bl_order = -300
 
     @classmethod
     def poll(cls, context):
-        space = context.space_data
-        return space is not None and getattr(space, "tree_type", "") == 'ShaderNodeTree'
-
-
-class ALLSET_PT_hs_browser(_Panel, bpy.types.Panel):
-    bl_label = "Browser"
-    bl_order = 0
+        return context_pane(context) is not None
 
     def draw(self, context):
         layout = self.layout
-        draw_browser(layout, context)
-        cur = current(context)
-        row = layout.row()
-        row.enabled = cur is not None
-        op = row.operator("allset.assign_material", text="Assign Material To Selection", icon='MATERIAL')
-        op.material = cur.name if cur is not None else ""
+        name = context_pane(context)
+        draw_title(layout, name)
+        if name == 'BROWSER':
+            draw_browser(layout, context)
+            cur = current(context)
+            row = layout.row()
+            row.enabled = cur is not None
+            op = row.operator("allset.assign_material", text="Assign Material To Selection", icon='MATERIAL')
+            op.material = cur.name if cur is not None else ""
+        elif name == 'CREATE':
+            draw_create(layout, context)
+        elif name == 'VIEWER':
+            draw_viewer(layout, context)
+        else:
+            draw_property_editor(layout, context)
 
 
-class ALLSET_PT_hs_create(_Panel, bpy.types.Panel):
-    bl_label = "Create"
-    bl_order = 1
+# --- Graph: toolbar actions ------------------------------------------------------------------------------------
 
-    def draw(self, context):
-        draw_create(self.layout, context)
+def _linked(tree, nodes, upstream):
+    """Nodes reachable from ``nodes`` against (upstream) or along (downstream) the links."""
+    found = set()
+    todo = list(nodes)
+    while todo:
+        n = todo.pop()
+        for link in tree.links:
+            a, b = (link.to_node, link.from_node) if upstream else (link.from_node, link.to_node)
+            if a == n and b not in found:
+                found.add(b)
+                todo.append(b)
+    return found
 
 
-class ALLSET_PT_hs_property_editor(_Panel, bpy.types.Panel):
-    bl_label = "Property Editor"
-    bl_order = 2
+class ALLSET_OT_hs_graph(bpy.types.Operator):
+    """Maya Hypershade graph command, run in the Hypershade's graph (Shader Editor)"""
+    bl_idname = "allset.hs_graph"
+    bl_label = "Hypershade Graph"
+    bl_options = {'REGISTER', 'UNDO'}
 
-    def draw(self, context):
-        draw_property_editor(self.layout, context)
+    action: EnumProperty(items=(
+        ("UPSTREAM", "Input Connections", "Select and frame the selected nodes' input network"),
+        ("BOTH", "Input and Output Connections", "Select and frame the selected nodes' whole network"),
+        ("DOWNSTREAM", "Output Connections", "Select and frame the nodes the selected ones feed"),
+        ("FRAME_ALL", "Frame All", "Frame the whole graph"),
+        ("FRAME_SELECTED", "Frame Selected", "Frame the selected nodes"),
+        ("COLLAPSE", "Hide Attributes", "Collapse the selected nodes (Blender: Node > Collapse)"),
+        ("CONNECTED", "Show Connected Attributes", "Hide the unconnected sockets of the selected nodes"),
+        ("SHOW_ALL", "Show Primary Attributes", "Expand the selected nodes and show all their sockets"),
+        ("PREVIEW", "Toggle Swatch Size", "Show / hide the selected nodes' preview swatch"),
+    ), name="Action", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        area = context.area if context.area is not None and context.area.type == 'NODE_EDITOR' else None
+        area = area or graph_area(context.screen)
+        if area is None:
+            self.report({'WARNING'}, "Open the Hypershade (Windows > Rendering Editors > Hypershade)")
+            return {'CANCELLED'}
+        space = area.spaces.active
+        tree = space.edit_tree
+        if tree is None:
+            self.report({'WARNING'}, "No material in the graph")
+            return {'CANCELLED'}
+        act = self.action
+        selected = [n for n in tree.nodes if n.select]
+        if act in {"UPSTREAM", "BOTH", "DOWNSTREAM"}:
+            start = selected or ([tree.nodes.active] if tree.nodes.active else list(tree.nodes))
+            keep = set(start)
+            if act != "DOWNSTREAM":
+                keep |= _linked(tree, start, True)
+            if act != "UPSTREAM":
+                keep |= _linked(tree, start, False)
+            for n in tree.nodes:
+                n.select = n in keep
+            act = "FRAME_SELECTED"
+        elif act == "SHOW_ALL":
+            for n in selected:
+                n.hide = False
+                for sock in (*n.inputs, *n.outputs):
+                    sock.hide = False
+            area.tag_redraw()
+            return {'FINISHED'}
+        ops = {"FRAME_ALL": bpy.ops.node.view_all, "FRAME_SELECTED": bpy.ops.node.view_selected,
+               "COLLAPSE": bpy.ops.node.hide_toggle, "CONNECTED": bpy.ops.node.hide_socket_toggle,
+               "PREVIEW": bpy.ops.node.preview_toggle}
+        region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+        if bpy.app.background or region is None:
+            return {'FINISHED'}            # selection done; view ops need a drawn region
+        with context.temp_override(area=area, region=region, space_data=space):
+            ops[act]()
+        area.tag_redraw()
+        return {'FINISHED'}
 
 
-# --- Maya menu bar in the Shader Editor header ---------------------------------------------------------------
+def _redraw(context):
+    for area in context.screen.areas if context.screen else ():
+        area.tag_redraw()
+
+
+# --- headers: menu strip and Graph -----------------------------------------------------------------------------
+
+def _node_header(self, context):
+    """``NODE_HT_header``'s own draw while the kit is on: in a Hypershade window the menu strip shows Maya's menu
+    bar, the Graph Maya's graph toolbar; elsewhere Blender's header."""
+    from . import editor_chrome, editor_menu_data, menu_sets, own_draw
+    area = context.area
+    screen = context.screen
+    if editor_chrome.enabled(context) and area is not None and is_hypershade(screen):
+        layout = self.layout
+        if area == menu_area(screen):
+            row = layout.row(align=True)
+            for i, (title, _items) in enumerate(editor_menu_data.EDITORS[HS]):
+                row.menu(menu_sets.editor_menu_idname(HS, i), text=title)
+            return
+        if area == graph_area(screen):
+            editor_chrome.draw_icons(layout, context, HS)
+            layout.separator_spacer()
+            layout.menu(editor_chrome._BLENDER[HS].bl_idname, text="Blender")
+            layout.prop(context.space_data, "pin", text="", emboss=False)
+            return
+    return own_draw.original("NODE_HT_header", _node_header)(self, context)
+
+
+TAB_TEXT = "Untitled_1"
+TAB_BACK = (68 / 255, 68 / 255, 68 / 255, 1.0)     # Maya's current tab (capture pixel at the tab: #444444)
+TAB_STRIP = (55 / 255, 55 / 255, 55 / 255, 1.0)    # tab row #373737
+TAB_INK = (0.78, 0.78, 0.78, 1.0)
+
+
+def draw_graph_tab():
+    """Maya's graph tab row ("Untitled_1") over the top of the Hypershade Graph (node editors have no tool header
+    region to hold a tab row)."""
+    context = bpy.context
+    area = context.area
+    if area is None or area.type != 'NODE_EDITOR' or graph_area(context.screen) != area:
+        return
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    region = context.region
+    s = context.preferences.system.ui_scale or 1.0
+    h = round(20 * s)
+    top = region.height
+    font = 0
+    blf.size(font, 11 * s)
+    tw = blf.dimensions(font, TAB_TEXT)[0]
+    w = round(tw + 34 * s)
+    x0 = round(6 * s)
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+
+    def rect(x, y, rw, rh, color):
+        batch = batch_for_shader(shader, 'TRIS', {"pos": ((x, y), (x + rw, y), (x + rw, y + rh), (x, y + rh))},
+                                 indices=((0, 1, 2), (0, 2, 3)))
+        shader.uniform_float("color", color)
+        batch.draw(shader)
+    gpu.state.blend_set('ALPHA')
+    rect(0, top - h, region.width, h, TAB_STRIP)
+    rect(x0, top - h, w, h, TAB_BACK)
+    blf.color(font, *TAB_INK)
+    blf.position(font, x0 + 8 * s, top - h + 6 * s, 0)
+    blf.draw(font, TAB_TEXT)
+    blf.position(font, x0 + w - 14 * s, top - h + 6 * s, 0)
+    blf.draw(font, "×")
+    blf.position(font, x0 + w + 12 * s, top - h + 6 * s, 0)
+    blf.draw(font, "+")
+    gpu.state.blend_set('NONE')
+
+
+# --- Maya menu bar in other Shader Editor headers ---------------------------------------------------------------
 
 def draw_collapsible(cls, context, layout):
     """``NODE_MT_editor_menus.draw_collapsible`` while the kit is on: Maya's Hypershade menus in a Shader Editor."""
@@ -485,26 +985,47 @@ def unpatch_header():
 
 
 classes = (ALLSET_OT_hypershade, ALLSET_OT_hs_pick, ALLSET_OT_hs_item, ALLSET_OT_hs_create, ALLSET_OT_hs_node,
-           ALLSET_OT_hs_edit, ALLSET_PT_hs_browser, ALLSET_PT_hs_create, ALLSET_PT_hs_property_editor)
+           ALLSET_OT_hs_edit, ALLSET_OT_hs_graph, ALLSET_OT_hs_noop, ALLSET_PT_hypershade_pane)
+_handles = []
+_WM_PROPS = ("allset_hs_material", "allset_hs_tab", "allset_hs_swatch", "allset_hs_sort", "allset_hs_reverse",
+             "allset_hs_filter", "allset_hs_create_cat", "allset_hs_create_filter")
 
 
 def register():
+    from . import notices, own_draw
     wm = bpy.types.WindowManager
     wm.allset_hs_material = StringProperty(name="Hypershade Material", options={'SKIP_SAVE'})
     wm.allset_hs_tab = EnumProperty(name="Browser Tab", items=TABS, options={'SKIP_SAVE'})
     wm.allset_hs_swatch = EnumProperty(name="Swatch Size", items=[s[:3] for s in SWATCHES], default='MEDIUM',
                                          options={'SKIP_SAVE'})
     wm.allset_hs_sort = EnumProperty(name="Sort", items=SORTS, options={'SKIP_SAVE'})
-    wm.allset_hs_reverse = BoolProperty(name="Reverse Order", options={'SKIP_SAVE'})
+    wm.allset_hs_reverse = BoolProperty(name="Reverse Order", description="Sort in reverse order",
+                                          options={'SKIP_SAVE'})
+    wm.allset_hs_filter = StringProperty(name="Search", description="Show only the swatches whose name has this text",
+                                          options={'SKIP_SAVE', 'TEXTEDIT_UPDATE'})
+    wm.allset_hs_create_cat = EnumProperty(
+        name="Create Category", items=[(k, label, f"Maya Create > {label}") for k, label, _s in CREATE_CATEGORIES],
+        default='MAYA', options={'SKIP_SAVE'})
+    wm.allset_hs_create_filter = StringProperty(name="Search Node Types",
+                                                 description="List the node types whose name has this text",
+                                                 options={'SKIP_SAVE', 'TEXTEDIT_UPDATE'})
     for cls in classes:
         bpy.utils.register_class(cls)
     patch_header()
+    own_draw.swap("NODE_HT_header", _node_header)
+    _handles.append(bpy.types.SpaceNodeEditor.draw_handler_add(draw_graph_tab, (), 'WINDOW', 'POST_PIXEL'))
+    notices.PANEL_NOTICES.update(PANE_NOTICES)
 
 
 def unregister():
+    from . import notices, own_draw
+    for key in PANE_NOTICES:
+        notices.PANEL_NOTICES.pop(key, None)
+    while _handles:
+        bpy.types.SpaceNodeEditor.draw_handler_remove(_handles.pop(), 'WINDOW')
+    own_draw.restore("NODE_HT_header", _node_header)
     unpatch_header()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    for name in ("allset_hs_material", "allset_hs_tab", "allset_hs_swatch", "allset_hs_sort",
-                 "allset_hs_reverse"):
+    for name in _WM_PROPS:
         delattr(bpy.types.WindowManager, name)
