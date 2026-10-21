@@ -807,3 +807,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 — 뷰포트 (카메라 뷰, 패널 툴바)
+
+- [ ] (step 129) Panels > Perspective > camera1 로 본 뒤 Alt+LMB / Alt+MMB / Alt+RMB / 휠: camera1 이 텀블 · 트랙 · 돌리되고 카메라 뷰가 유지되는지 (Maya 느낌), 툴바 Lock Camera 를 켜면 안 움직이는지.
+- [ ] (step 129) 패널 툴바 아이콘을 실제 마우스로 두 번씩: 눌린 표시가 상태를 따라가는지 (카메라 버튼은 persp 에서 비활성).

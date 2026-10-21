@@ -20,6 +20,15 @@ def tumble_locked(rv3d, lock):
     return bool(lock) and rv3d.view_perspective == 'ORTHO' and rv3d.is_orthographic_side_view
 
 
+def camera_navigation(context):
+    """Maya: tumbling a view that looks through a camera moves that camera (#9). Blender leaves the camera view
+    unless the view's Lock Camera to View is on, so turn it on there; a Maya-locked camera (locked channels) stays
+    put because Blender's camera lock keeps locked channels (measured, step 129)."""
+    space, rv3d = context.space_data, context.region_data
+    if space is not None and space.type == 'VIEW_3D' and rv3d is not None and rv3d.view_perspective == 'CAMERA':
+        space.lock_camera = True
+
+
 class ALLSET_OT_tumble(bpy.types.Operator):
     """Tumble the view (Maya Alt+LMB); locked in axis-aligned ortho views"""
     bl_idname = "allset.tumble"
@@ -33,6 +42,7 @@ class ALLSET_OT_tumble(bpy.types.Operator):
         from .. import preferences
         if tumble_locked(context.region_data, preferences.get(context).lock_ortho_tumble):
             return {'FINISHED'}
+        camera_navigation(context)
         bpy.ops.view3d.rotate('INVOKE_DEFAULT')
         return {'FINISHED'}
 
@@ -157,13 +167,14 @@ def _visible(ob, view_layer, v3d):
         return False
 
 
-def frame_points(context, v3d, selected, children):
+def frame_points(context, v3d, selected, children, exclude=None):
     """World points to frame (Maya F / Ctrl+Shift+F / A), or None if this mode is left to
-    Blender's own operator (curve/armature edit, pose, paint and sculpt modes)."""
+    Blender's own operator (curve/armature edit, pose, paint and sculpt modes). ``exclude``: an object left out
+    (the camera a view looks through)."""
     vl, dg = context.view_layer, context.evaluated_depsgraph_get()
     mode = context.mode
     if not selected:   # A / Shift+A: every visible object, in any mode (Maya fitPanel -all)
-        return [p for ob in vl.objects if _visible(ob, vl, v3d) for p in _object_points(ob, dg)]
+        return [p for ob in vl.objects if ob != exclude and _visible(ob, vl, v3d) for p in _object_points(ob, dg)]
     if mode == 'EDIT_MESH':
         pts = []
         objs = list(context.objects_in_mode_unique_data)
@@ -177,7 +188,7 @@ def frame_points(context, v3d, selected, children):
         return [p for ob in objs for p in _object_points(ob, dg)] or None
     if mode != 'OBJECT':
         return None
-    objs = [ob for ob in vl.objects if _visible(ob, vl, v3d)]
+    objs = [ob for ob in vl.objects if ob != exclude and _visible(ob, vl, v3d)]
     sel = [ob for ob in objs if ob.select_get()]
     if children:
         seen = {ob.name for ob in sel}
@@ -207,7 +218,22 @@ def frame_region(context, area, region, selected=True, children=False):
     sidebar/toolbar). Falls back to Blender's view_selected / view_all."""
     rv3d, v3d = region.data, area.spaces.active
     points = None
-    if rv3d is not None and rv3d.view_perspective != 'CAMERA':
+    if rv3d is not None and rv3d.view_perspective == 'CAMERA':
+        # Maya: F / A in a camera view move that camera (#9); Blender's view_selected would leave the camera view
+        cam = view_camera(context, v3d)
+        if cam is None:
+            return False
+        points = frame_points(context, v3d, selected, children, exclude=cam)
+        if not points:
+            return False
+        if not frame_camera(context, cam, points):
+            return False
+        try:
+            bpy.ops.ed.undo_push(message="Frame Camera")
+        except RuntimeError:
+            pass
+        return True
+    if rv3d is not None:
         points = frame_points(context, v3d, selected, children)
     if not points:
         with context.temp_override(area=area, region=region):
@@ -222,6 +248,49 @@ def frame_region(context, area, region, selected=True, children=False):
     rv3d.view_location = loc
     rv3d.view_distance = dist
     region.tag_redraw()
+    return True
+
+
+def view_camera(context, v3d):
+    """The object a camera view looks through (the view's local camera or the scene camera)."""
+    if v3d.use_local_camera and v3d.camera is not None:
+        return v3d.camera
+    return context.scene.camera
+
+
+def camera_projection(context, cam):
+    """(window matrix, (width, height)) of the camera's frame at the render resolution."""
+    r = context.scene.render
+    w, h = max(r.resolution_x, 1), max(r.resolution_y, 1)
+    win = cam.calc_matrix_camera(context.evaluated_depsgraph_get(), x=w, y=h,
+                                 scale_x=r.pixel_aspect_x, scale_y=r.pixel_aspect_y)
+    return win, (w, h)
+
+
+def frame_camera(context, cam, points):
+    """Move ``cam`` so ``points`` fill Maya's 0.95 of its frame, keeping its orientation (Maya fitPanel in a camera
+    view dollies / tracks the camera; an orthographic camera changes its width). A locked camera (Maya Lock Camera,
+    ui/panel_menus.camera_locked) stays. Returns True when the camera moved."""
+    if all(cam.lock_location):
+        return False
+    mw = cam.matrix_world
+    loc0, rot, scale = mw.decompose()
+    rot = rot.normalized()
+    ortho = cam.type == 'CAMERA' and cam.data.type == 'ORTHO'
+    win, size = camera_projection(context, cam) if cam.type == 'CAMERA' else (None, None)
+    if win is None:
+        return False
+    centre = sum((Vector(p) for p in points), Vector()) / len(points)
+    forward = rot @ Vector((0.0, 0.0, -1.0))
+    dist0 = max((centre - loc0).dot(forward), 1e-3)
+    loc, dist = framing.fit(points, rot, win, dist0, ortho, size, (0.0, 0.0, size[0], size[1]),
+                            min_half=framing.MIN_HALF * units.maya_unit(context.scene))
+    if ortho:
+        cam.data.ortho_scale *= dist / dist0
+        dist = dist0
+    from mathutils import Matrix
+    new = loc + rot @ Vector((0.0, 0.0, dist))
+    cam.matrix_world = Matrix.LocRotScale(new, rot, scale)
     return True
 
 
@@ -437,14 +506,50 @@ class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
         side = leaving and context.region_data is not None and context.region_data.is_orthographic_side_view
         region = context.region if context.region and context.region.type == 'WINDOW' else \
             next(r for r in area.regions if r.type == 'WINDOW')
+        if leaving:
+            remember_persp(area, space)
         with context.temp_override(area=area, region=region):
             bpy.ops.screen.region_quadview()
         if hovered is not None:
             restore(space.region_3d, hovered)
             if side:
                 space.region_3d.is_orthographic_side_view = True
+        elif not leaving:
+            ensure_persp(area, space)    # Maya four view: the top right panel is persp
         area.tag_redraw()
         return {'FINISHED'}
+
+
+def _persp_store():
+    # the hotbox's store (marking/modal.py ALLSET_OT_hb_view): one memory of the persp view per area
+    from ..marking import modal
+    return modal._persp_views
+
+
+def remember_persp(area, space):
+    """Keep the perspective view of a four view before leaving it (the panel under the cursor may be ortho)."""
+    for rv3d in (space.region_3d, *space.region_quadviews):
+        if rv3d is not None and rv3d.view_perspective == 'PERSP':
+            _persp_store()[area.as_pointer()] = (rv3d.view_rotation.copy(), rv3d.view_location.copy(),
+                                                 rv3d.view_distance)
+            return
+
+
+def ensure_persp(area, space):
+    """Maya Single Perspective / Four View (#8): the single view (or the four view's top right panel) shows the
+    persp camera, never an ortho view: an ortho view gets the last persp view of this area back, else Maya's
+    default persp (Home)."""
+    rv3d = space.region_3d
+    if rv3d is None or rv3d.view_perspective != 'ORTHO':
+        return
+    rv3d.is_orthographic_side_view = False
+    rv3d.view_perspective = 'PERSP'
+    saved = _persp_store().get(area.as_pointer())
+    if saved:
+        rv3d.view_rotation, rv3d.view_location, rv3d.view_distance = saved
+    else:
+        home_view(rv3d, units.maya_unit(bpy.context.scene))
+    area.tag_redraw()
 
 
 def home_view(rv3d, k):

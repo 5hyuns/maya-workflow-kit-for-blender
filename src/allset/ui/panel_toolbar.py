@@ -226,21 +226,26 @@ GLYPHS = {name[2:]: fn for name, fn in globals().items() if name.startswith("g_"
 
 # (glyph, kind, data, label): kind "set" = panel_menus.ALLSET_OT_panel_set key, "prop" = (owner, prop) on the view,
 # "run" = (operator, props) run in the view, "grey" = no Blender equivalent (the label explains it).
+#
+# Step 129 (#10): every Maya toggle (iconTextCheckBox, createModelPanelBar.mel; ``checkable`` in _top113.json) is a
+# toggle here too — "set" keys are drawn with ``toggle=True`` so Wireframe / Smooth Shade All / Use All Lights turn
+# off to Maya's off state (panel_menus.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
+# disabled in Blender's persp / ortho views (Maya disables Lock Camera there too). Table: docs/steps/step_129_viewport.md.
 TOOLBAR = (
     (("cam_select", "set", "SELECT_CAMERA", "Select Camera"),
-     ("cam_lock", "prop", ("space", "lock_camera"), "Lock Camera (the view moves its camera)"),
+     ("cam_lock", "set", "CAMERA_LOCK", "Lock Camera"),
      ("cam_attr", "grey", None, "Camera Attributes"),
      ("bookmark", "grey", None, "Bookmarks"),
      ("image_plane", "run", ("allset.create", {"kind": 'IMAGE_PLANE'}), "Image Plane"),
      ("pan_zoom", "grey", None, "2D Pan/Zoom"),
-     ("grease", "grey", None, "Grease Pencil")),
+     ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
     (("grid", "set", "GRID", "Grid"),
-     ("film_gate", "grey", None, "Film Gate"),
+     ("film_gate", "set", "FILM_GATE", "Film Gate"),
      ("res_gate", "grey", None, "Resolution Gate"),
-     ("gate_mask", "grey", None, "Gate Mask"),
+     ("gate_mask", "set", "GATE_MASK", "Gate Mask"),
      ("field_chart", "grey", None, "Field Chart"),
-     ("safe_action", "grey", None, "Safe Action"),
-     ("safe_title", "grey", None, "Safe Title")),
+     ("safe_action", "set", "SAFE_ACTION", "Safe Action"),
+     ("safe_title", "set", "SAFE_TITLE", "Safe Title")),
     (("wire", "set", "SHADE_WIRE", "Wireframe"),
      ("smooth", "set", "SHADE_SMOOTH", "Smooth Shade All"),
      ("default_mat", "set", "DEFAULT_MATERIAL", "Use Default Material"),
@@ -252,7 +257,7 @@ TOOLBAR = (
      ("motion_blur", "grey", None, "Motion Blur"),
      ("aa", "grey", None, "Multisample Anti-aliasing"),
      ("dof", "prop", ("shading", "use_dof"), "Depth of Field")),
-    (("isolate", "run", ("view3d.localview", {"frame_selected": False}), "Isolate Select"),
+    (("isolate", "set", "ISOLATE", "Isolate Select"),
      ("xray", "prop", ("shading", "show_xray"), "X-Ray"),
      ("xray_comp", "grey", None, "X-Ray Active Components"),
      ("xray_joints", "prop", ("overlay", "show_xray_bone"), "X-Ray Joints")),
@@ -280,8 +285,12 @@ def draw_toolbar(layout, context):
         for glyph, kind, data, label in group:
             if kind == "set":
                 on = bool(panel_menus.state(context, data))
-                _flat(row, on).operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text="", icon_value=_icon(glyph),
-                                        depress=on).key = data
+                sub = _flat(row, on)
+                if data in panel_menus.CAMERA_KEYS or data == "SELECT_CAMERA":
+                    sub.enabled = panel_menus.view_camera(context) is not None
+                op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text="", icon_value=_icon(glyph),
+                                  depress=on)
+                op.key, op.toggle = data, True
             elif kind == "prop":
                 owner = panel_menus._owner(space, context, data[0])
                 on = bool(getattr(owner, data[1]))
@@ -300,15 +309,20 @@ def draw_toolbar(layout, context):
     bar.ui_units_x = 0.5
     bar.label(text="", icon_value=status_icons.icon("bar"))
     row = layout.row(align=True)
-    row.label(text="", icon_value=_icon("exposure"))
+    set_op = panel_menus.ALLSET_OT_panel_set.bl_idname
+    # Maya's exposure / gamma icons switch between the default and the last value; the colour management icon is a
+    # check box (createColorManagementSection.mel)
+    _flat(row, False).operator(set_op, text="", icon_value=_icon("exposure")).key = "EXPOSURE"
     sub = row.row(align=True)
     sub.ui_units_x = 2.2
     sub.prop(vs, "exposure", text="")
-    row.label(text="", icon_value=_icon("gamma"))
+    _flat(row, False).operator(set_op, text="", icon_value=_icon("gamma")).key = "GAMMA"
     sub = row.row(align=True)
     sub.ui_units_x = 2.2
     sub.prop(vs, "gamma", text="")
-    row.label(text="", icon_value=_icon("color_mgmt"))
+    cm = bool(panel_menus.state(context, "CM_ENABLE"))
+    op = _flat(row, cm).operator(set_op, text="", icon_value=_icon("color_mgmt"), depress=cm)
+    op.key, op.toggle = "CM_ENABLE", True
     sub = row.row(align=True)
     sub.ui_units_x = 6
     sub.prop(vs, "view_transform", text="")
