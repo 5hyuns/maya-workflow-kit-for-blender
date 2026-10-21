@@ -266,6 +266,75 @@ def activate(window, region, **state):
     ACTIVE.clear()
     ACTIVE.update(state, region=region.as_pointer(), window=window.as_pointer(), origin=(region.x, region.y))
     _window["ptr"] = window.as_pointer()
+    _draw_last()
+
+
+def _draw_last():
+    """Move the handlers to the end of every region's draw list (step 136, #56): Blender draws a region's
+    POST_PIXEL handlers in the order they were added, and kit handlers registered after ``marking`` (Time Slider
+    numbers / key ticks, Range Slider, shelf, Outliner set rows) drew over the open menu
+    (tmp/audit133_ui/pairs/zoom_m14_list.png: Time Slider frame numbers on the list)."""
+    if _handles:
+        unregister_handlers()
+        register_handlers()
+
+
+# Area borders (step 136, #56): Blender draws them after every region (ED_screen_draw_edges), so no POST_PIXEL
+# handler can draw over them. Measured in GUI shots of the Maya Workflow Kit layout at UI scale 1.0 and 1.25
+# (tmp/probe136, docs/steps/step_136_bounds.md): areas are 3 px apart and a 2 px rim is drawn over each area's
+# edge at both scales (the border width preference is in pixels, it does not follow the UI scale). +1 px for the
+# rim's anti-aliasing.
+BORDER_RIM = 2
+AREA_GAP_MAX = 8
+
+
+def window_edges(window, region):
+    """Area border bands of ``window`` in ``region`` pixels: (x0, y0, x1, y1) rectangles, the gaps between areas
+    and the rims around them, including the window's outer edge (engine.fit_ring ``edges``)."""
+    areas = list(window.screen.areas) if window and window.screen else []
+    if not areas:
+        return ()
+    px = bpy.context.preferences.system.pixel_size
+    m = BORDER_RIM * px + 1
+    gap = AREA_GAP_MAX * px
+    rx, ry = region.x, region.y
+    bands = []
+    for a in areas:
+        ax1, ay1 = a.x + a.width, a.y + a.height
+        for b in areas:
+            if b is a:
+                continue
+            bx1, by1 = b.x + b.width, b.y + b.height
+            if 0 <= b.y - ay1 <= gap:                  # b right above a
+                lo, hi = max(a.x, b.x), min(ax1, bx1)
+                if hi > lo:
+                    bands.append((lo - m, ay1 - m, hi + m, b.y + m))
+            if 0 <= b.x - ax1 <= gap:                  # b right of a
+                lo, hi = max(a.y, b.y), min(ay1, by1)
+                if hi > lo:
+                    bands.append((ax1 - m, lo - m, b.x + m, hi + m))
+    # the window's outer edge has the rim too
+    x0, y0 = min(a.x for a in areas), min(a.y for a in areas)
+    x1, y1 = max(a.x + a.width for a in areas), max(a.y + a.height for a in areas)
+    bands += [(x0, y0, x1, y0 + m), (x0, y1 - m, x1, y1), (x0, y0, x0 + m, y1), (x1 - m, y0, x1, y1)]
+    return tuple((b[0] - rx, b[1] - ry, b[2] - rx, b[3] - ry) for b in _merge(bands))
+
+
+def _merge(bands):
+    """Join bands on one line whose ends meet (the pieces of one border between several areas)."""
+    out = []
+    for b in sorted(set(bands)):
+        horizontal = b[2] - b[0] >= b[3] - b[1]
+        for i, o in enumerate(out):
+            if horizontal and (o[1], o[3]) == (b[1], b[3]) and o[2] - o[0] >= o[3] - o[1] and b[0] <= o[2]:
+                out[i] = (min(o[0], b[0]), o[1], max(o[2], b[2]), o[3])
+                break
+            if not horizontal and (o[0], o[2]) == (b[0], b[2]) and o[2] - o[0] < o[3] - o[1] and b[1] <= o[3]:
+                out[i] = (o[0], min(o[1], b[1]), o[2], max(o[3], b[3]))
+                break
+        else:
+            out.append(b)
+    return out
 
 
 def window_bounds(window, region):
@@ -314,7 +383,7 @@ def _callback():
         gpu.state.blend_set('NONE')
 
 
-def register():
+def register_handlers():
     for space in COVER_SPACES:
         for region_type in REGION_TYPES:
             try:
@@ -324,8 +393,16 @@ def register():
                 pass   # this editor has no such region
 
 
-def unregister():
-    ACTIVE.clear()
+def unregister_handlers():
     while _handles:
         space, region_type, handle = _handles.pop()
         space.draw_handler_remove(handle, region_type)
+
+
+def register():
+    register_handlers()
+
+
+def unregister():
+    ACTIVE.clear()
+    unregister_handlers()

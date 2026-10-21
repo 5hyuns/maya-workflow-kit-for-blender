@@ -123,9 +123,11 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         target = getattr(context.window_manager, "allset_mm_target", "") or             (context.active_object.name if context.active_object else "")
         menu = mm.with_object_name(menu, target)
         # Drawn over the whole window like Maya's menus (step 52): bounds = the window's editors.
+        # Rows / boxes stay off the area borders Blender draws over every region (step 136).
         bounds = draw.window_bounds(context.window, region)
+        edges = draw.window_edges(context.window, region)
         self._session = engine.Session(menu, origin, time.monotonic(),
-                                       draw.measure, _params(), poll_action, bounds)
+                                       draw.measure, _params(), poll_action, bounds, edges)
         self._region = region
         self._shown = False
         self._pending = None   # (button, result): click-mode pick waiting for the release
