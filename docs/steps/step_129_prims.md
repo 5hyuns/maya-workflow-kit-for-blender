@@ -55,11 +55,22 @@ User request (verbatim): "#12: 폴리 실린더 캡이 n-gon이 아니라 Maya�
 
 ## bisect
 
-(아래 채움)
+- 회귀가 아님: 폴리곤 프리미티브에도 생성 노드가 **처음부터 없었다**. step 10 (`86f3c29`) 이 「history 를 남기는 생성(polyCube1
+  노드)은 범위 밖」으로 두었고(docs/steps/step_10.md:232), 이슈 본문의 「Polygon primitives already work this way (polyCube1 etc.)」
+  는 사실이 아니다(소스 이력에 노드를 만드는 코드 없음).
+- bisect (terms absent / present, 86f3c29 .. a6ca571, `bisect run` 검사 스크립트와 로그: `research/scripts/maya_prims129/
+  bisect_check.py`, `bisect_log.txt`, `bisect_gitlog.txt`): 확인한 커밋 86f3c29, 8f4b596, 7913725, 2571882, 5173b5c, 2d096b8,
+  109e2bf, c80c01e 모두 Create Cube 에 노드 없음(ID 속성·모디파이어·히스토리 API); **첫 present = a6ca571 (이 레인의 커밋)**.
+  각 커밋의 `src/<pkg>` 를 샌드박스 사용자 폴더(tmp/)에 확장/애드온으로 설치해 Blender 4.5 `-b --factory-startup` 로 검사
+  (maya_kit 시절 커밋도 로드됨).
 
 ## 결과
 
-(아래 채움)
+- 헤드리스 전체 `ALLSET_SANDBOX=lane_p python tests/run.py`: **904 passed, 0 failed, 109 files** (그 뒤 Duplicate 노드 제외 + INPUTS
+  노드 이름 왼쪽 정렬 → `-k step129,step19,step10_,duplicate,enable` 50 passed).
+- GUI `ALLSET_SANDBOX=lane_p_gui python tests/gui/run.py -k step38,step54,step129`: **19 passed, 0 failed** (새 `gui_step129_prims.py`:
+  INPUTS 의 Subdivisions Caps 텍스트 필드에 2 입력 → 82 버텍스, Ctrl+Z → 42, NURBS 원 Sections `+=4` → 12 CV).
+- 주의: `ALLSET_SANDBOX=<name>` 은 `tmp/<name>` 을 통째로 지운다 — 측정 자료를 같은 폴더에 두면 사라진다(이 레인에서 한 번 잃고 재측정).
 
 ## 남은 것
 
