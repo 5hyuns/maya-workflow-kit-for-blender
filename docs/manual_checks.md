@@ -888,3 +888,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 134, #59) 새 Maya 장면 (100 % / 125 %): 그리드가 Maya 2022 첫 화면처럼 또렷한지 (#404040 선, 원점 축선과 5 칸마다 선이 굵게), 원점에 Blender 3D 커서 (빨강·흰 점선 원) 가 없는지. Blender 테마를 바꿔도 (Preferences > Themes) 그리드 색이 그대로인지.
 - [ ] (step 134) 컴포넌트 모드에서 D 를 누르고 있는 동안 / Insert 를 켠 동안 커서 (= 피벗) 가 보이고 클릭으로 옮겨지는지, D 를 떼거나 Insert 를 다시 누르면 커서가 사라지고 조작기가 놓은 피벗에 남는지.
+
+## Step 134 — display keys
+
+- [ ] (step 134, #58) Maya 레이아웃에서 큐브를 만들고 1 / 2 / 3, 4 / 5 / 6 / 7, F8, F9 / F10 / F11, Alt+A, Alt+P 를 실제 키보드로 눌러: 뷰포트 왼쪽 아래에 Adjust Last Operation 패널 (「Component Mode」, 「Smooth Mesh Preview」 등) 이 뜨지 않는지. 다른 연산 (예: Shift+H) 의 패널이 떠 있을 때 3 / F9 를 누르면 그 패널이 닫히는지.
+- [ ] (step 134) F9 → Ctrl+Z 가 오브젝트 모드로 돌아가는지, 3 → 이동 → Ctrl+Z 가 이동만 되돌리고 미리보기는 남는지.
+- [ ] (step 134, #61) Create > Polygon Primitives 의 Cube / Cylinder / Pipe 에 3: 미리보기가 매끈한 음영 (면 경계가 보이지 않음), 1 로 돌아오면 Maya 처럼 각진 hard edge. 0.2.x 에서 3 을 켜고 저장한 파일을 열어 3 을 다시 누르면 매끈해지는지.

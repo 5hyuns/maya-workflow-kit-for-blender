@@ -56,7 +56,7 @@ class ALLSET_OT_cycle_display(bpy.types.Operator):
     """Cycle the view's display: X-ray joints / joints, curves and meshes / meshes only (Maya Alt+A)"""
     bl_idname = "allset.cycle_display"
     bl_label = "Cycle Display Mode"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -83,7 +83,7 @@ class ALLSET_OT_camera_mode_toggle(bpy.types.Operator):
     """Switch the view's camera between perspective and orthographic, keeping the view (Maya Alt+P)"""
     bl_idname = "allset.camera_mode_toggle"
     bl_label = "Camera Mode Toggle"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):

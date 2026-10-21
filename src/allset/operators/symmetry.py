@@ -196,7 +196,7 @@ class ALLSET_OT_symmetry(bpy.types.Operator):
     """Maya symmetric modelling: edit-mode transforms move the mirrored components too"""
     bl_idname = "allset.symmetry"
     bl_label = "Symmetry"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     mode: EnumProperty(items=[(m, l, "") for m, l in MODES] + list(PARTS))
 
