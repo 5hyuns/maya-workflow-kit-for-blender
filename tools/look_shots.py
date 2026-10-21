@@ -8,7 +8,7 @@ shots.py) so look_compare.py can pair them. ``00_first_start`` is the layout bef
 Same scene as Maya (docs/steps/step_41.md): pCube1 1 cm at the origin (decision 8), pCube2/3 at
 x = +-2 cm, Maya's persp view direction, Maya's focal length in screen pixels and the distance that
 gives pCube1 the height it has in the Maya shot (look_data.CUBE_FITS). ``01_layout_empty`` keeps
-the template's own view (what the user gets).
+the Maya layout file's own view (what the user gets; bundled startup.blend, step 130).
 
 Besides the PNGs it writes ``geometry.json``: per shot the kit anchor rectangles (areas, regions,
 top bar, status bar) and, for the fitted shots, pCube1's projected bounding box and the view's
@@ -49,18 +49,24 @@ def anchor_rects():
     outliners = sorted((a for a in areas if a.type == 'OUTLINER'), key=lambda a: a.x)
     names = {}
     toolbox = import_module(MODULE + ".ui.toolbox")
+    dock = import_module(MODULE + ".ui.maya_dock")
+    tool_dock = import_module(MODULE + ".ui.tool_dock")
     views = sorted((a for a in areas if a.type == 'VIEW_3D'), key=lambda a: -a.width * a.height)
     for a in areas:
         if a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".AllsetStrip":
             names[a] = "strip"
         elif a.type == 'IMAGE_EDITOR' and getattr(a.spaces.active.mask, "name", "") == ".AllsetShelf":
-            names[a] = "shelf"              # the Shelf row (step 49)
+            names[a] = "shelf"              # the Shelf row (step 49; header-less since step 113)
         elif a.type == 'VIEW_3D' and toolbox.is_toolbox(a.spaces.active):
             names[a] = "toolbox"            # the Tool Box column (step 49)
         elif a.type == 'VIEW_3D' and a == views[0]:
             names[a] = "view3d"
         elif a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE':
             names[a] = "timeline"
+        elif a.type == 'PROPERTIES' and dock.role(a) in ('STACK', 'CHANNEL_BOX'):
+            names[a] = "dock"               # Channel Box / Layer Editor: its own area since step 116
+        elif a.type == 'PROPERTIES' and tool_dock.is_dock(a):
+            names[a] = "tooldock"           # Tool Settings (step 106)
         elif a.type == 'PROPERTIES':
             names[a] = "properties"
     if outliners:
@@ -81,9 +87,24 @@ def anchor_rects():
         reg = next(r for r in v3.regions if r.type == 'WINDOW')
         x0, y0, x1, y1 = import_module(MODULE + ".operators.view").visible_bounds(v3, reg)
         rects["view3d.visible"] = _img_rect(reg.x + x0, reg.y + y0, x1 - x0, y1 - y0)
-        # the viewport pane without the sidebar dock (= Maya MainPane; the dock is its own column there)
+        # the viewport pane without a sidebar (= Maya MainPane; since step 116 the dock is its own area anyway)
         ui = next((r for r in v3.regions if r.type == 'UI' and r.width > 1), None)
         rects["view3d.pane"] = _img_rect(v3.x, v3.y, v3.width - (ui.width if ui else 0), v3.height)
+    # Header-less shelf row (step 113): the kit draws the tab strip (top TAB_PX) and the icon row in one WINDOW region.
+    s = bpy.context.preferences.system.ui_scale or 1.0
+    shelf_mod = import_module(MODULE + ".ui.shelf")
+    if "shelf.WINDOW" in rects and "shelf.HEADER" not in rects:
+        x, y, w, h = rects["shelf.WINDOW"]
+        th = round(shelf_mod.TAB_PX * s)
+        rects["shelf.tabs"] = [x, y, w, th]
+        rects["shelf.icons"] = [x, y + th, w, h - th]
+    elif "shelf.HEADER" in rects:           # older layout: tab buttons in the header
+        rects["shelf.tabs"] = rects["shelf.HEADER"]
+        rects["shelf.icons"] = rects["shelf.WINDOW"]
+    # editor gap between the Outliner and the viewport (Maya: the viewport frame line)
+    if "outliner" in rects and "view3d" in rects:
+        ox, oy, ow, oh = rects["outliner"]
+        rects["gap.outliner_view"] = [ox + ow, oy, rects["view3d"][0] - (ox + ow), oh]
     tops = [_img_rect(a.x, a.y, a.width, a.height) for a in areas]
     top = min(r[1] for r in tops)
     bottom = max(r[1] + r[3] for r in tops)
@@ -250,10 +271,12 @@ def s_wait():
 
 @step
 def s_wait2():
-    prefs = bpy.context.preferences
-    check("one Return in the welcome dialog opens the Maya layout",
-          prefs.app_template == "Maya_Workflow_Kit")
-    check("... with the splash off", not prefs.view.show_splash)
+    # Step 130 (#40): no app template and no preference writes (Blender's splash stays Blender's). The Maya layout is
+    # the bundled startup.blend read as a new untitled file (first_start.new_maya_scene).
+    switch = import_module(MODULE + ".switch")
+    check("one Return in the welcome dialog turns Maya mode on", switch.is_on())
+    check("... and opens the Maya layout as a new untitled file",
+          switch.is_maya_workspace(win().workspace) and not bpy.data.filepath)
     kc = bpy.context.window_manager.keyconfigs.active
     check(f"Maya keymap on (active keyconfig {kc.name if kc else None} unchanged, step 130)",
           kc is not None and import_module(MODULE + ".keymap").is_applied())
@@ -263,7 +286,8 @@ def s_wait2():
     # region: hold the mouse on the shelf row's bottom edge (step 51).
     row = import_module(MODULE + ".ui.shelf").shelf_row_area(win().screen)
     if row is not None:
-        ev('MOUSEMOVE', 'NOTHING', x=row.x + row.width // 2, y=row.y - 1)
+        # left end: no shelf icon there (mid-row, a shelf tooltip stayed up in the 1.25 shots, step 134)
+        ev('MOUSEMOVE', 'NOTHING', x=row.x + 3, y=row.y - 1)
     redraw()
 
 
@@ -278,6 +302,10 @@ def s_shelf_fit():
     want = round(64 * bpy.context.preferences.system.ui_scale)
     check(f"shelf row {want} px after the fit (got {row.height if row else None})",
           row is not None and abs(row.height - want) <= 2)
+    GEOM["ui_scale"] = bpy.context.preferences.system.ui_scale
+    reg = next((r for r in row.regions if r.type == 'WINDOW'), None) if row else None
+    if reg is not None:
+        GEOM["shelf_icon"] = import_module(MODULE + ".ui.shelf").icon_rect(reg, 0, GEOM["ui_scale"])[2]
     park_mouse()
     redraw()
 
