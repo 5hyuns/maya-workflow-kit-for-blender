@@ -15,5 +15,5 @@ Root causes and fixes, one per failing GUI test. Decisions made here without ask
   of the CONSTRAINT row) after `scroll_channel_box()`.
 - **gui_step124_persp_label** — test probe: it subtracted the window's desktop position (`win().y` = 60 here) from
   `area.y`, which is already in window coordinates like the screenshot, so it scanned 60 px below the view's bottom
-  (the old layout's label still fell inside that band by chance). The kit draws "persp" once; the probe now scans
+  (it passed only while the OS put the window near the top of the desktop). The kit draws "persp" once; the probe now scans
   `area.y .. area.y + 70`.
