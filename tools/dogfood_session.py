@@ -98,8 +98,8 @@ def s_first_start():
     # step 130: the Maya keys are add-on keymap items, the active keyconfig stays the user's
     check(f"Maya keymap after the opt-in (active keyconfig still {kc.name if kc else None})",
           kc is not None and kc.name == "Blender" and import_module(MODULE + ".keymap").is_applied())
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    # step 130: no app template; a new scene from the startup.blend inside the extension (#49)
+    import_module(MODULE + ".first_start").new_maya_scene()
 
 
 @step
