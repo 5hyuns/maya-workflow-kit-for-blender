@@ -883,14 +883,17 @@ def draw_row():
     _cur, buttons = icon_buttons(context)
     hover = _hover.get(region.as_pointer())
     shown = 0
-    for slot, (_index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
+    for slot, (index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
         x, y, size = icon_rect(region, slot, s)
         if x > region.width:
             break
         shown = slot + 1
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
-        _draw_rect(x, y, size, size, None, shelf_icons.texture(label, colour_key, greyed=not mapped))
+        # step 131: the 2x (64 px) picture once the icon is drawn wider than 32 px (UI scale >= 1.25)
+        tex = shelf_icons.texture(label, colour_key, greyed=not mapped, size=shelf_icons.texture_size(size),
+                                  index=index if colour_key else None)
+        _draw_rect(x, y, size, size, None, tex)
     if tabs:
         dark, light = _separator_colours(base)
         for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
