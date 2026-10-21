@@ -21,6 +21,8 @@ dotted handle tears it off into a floating window. Here:
   as buttons (the menu id per window is kept in memory, ``_torn_menus``; a MENU window loaded from a file closes).
 """
 
+import math
+
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
@@ -667,11 +669,33 @@ def draw_handle(layout, context=None, tabs=False):
     row = layout.row(align=True)
     grip = row.row(align=True)
     grip.alignment = 'LEFT'
+    if tabs and context is not None:
+        # Blender splits an expanded row into equal tabs ("Channel Box / Layer Editor" was cut while "Attribute
+        # Editor" got twice its text): each tab gets its text's width (step 135; the same rule sizes the dock,
+        # ui/toolbox.dock_need)
+        row.alignment = 'LEFT'
+        grip.ui_units_x = text_units(context, HANDLE, GRIP_PAD)
     grip.operator(ALLSET_OT_dock_handle.bl_idname, text=HANDLE, emboss=False)
     if tabs and context is not None:
         current = current_tab(context.window_manager)
         for kind in stack_tabs(context.window_manager):
-            row.operator(ALLSET_OT_dock_tab.bl_idname, text=LABELS[kind], depress=(kind == current)).kind = kind
+            tab = row.row(align=True)
+            tab.ui_units_x = math.ceil(text_units(context, LABELS[kind], TAB_PAD))
+            tab.operator(ALLSET_OT_dock_tab.bl_idname, text=LABELS[kind], depress=(kind == current)).kind = kind
+
+
+TAB_PAD = 1.0       # UI units around a tab's text
+GRIP_PAD = 1.5
+
+
+def text_units(context, text, pad):
+    """Width of ``text`` in Blender's UI font (11 pt x UI scale) in UI units, plus ``pad`` units."""
+    import blf
+    system = context.preferences.system
+    s = system.ui_scale or 1.0
+    u = math.floor(18.0 * s + 0.5) + 2 * system.pixel_size
+    blf.size(0, 11.0 * s)
+    return blf.dimensions(0, text)[0] / max(u, 1) + pad
 
 
 class ALLSET_PT_maya_dock(bpy.types.Panel):
