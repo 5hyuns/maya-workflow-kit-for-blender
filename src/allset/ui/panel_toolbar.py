@@ -14,12 +14,14 @@ class's own draw function, so UI appended by others still draws; restored on unr
 Blender's header with the Maya menus (``panel_menus``). Icons are kit-drawn (``status_icons``), no Maya assets.
 """
 
+import json
 import math
 
 import bpy
 import numpy as np
 
-from . import panel_menus, status_icons
+from . import panel_menus, status_icons, toolbar_fit
+from .toolbar_fit import BAR_UNITS
 from .status_icons import DARK, DIM, GREY, LIGHT, TEAL, TEAL_DARK, TEAL_LIGHT, letter
 
 GREY_OP = "allset.menu_unavailable"
@@ -297,6 +299,12 @@ def g_color_mgmt_on(cv):
         letter(cv, ch, 0.28 + i * 0.27, 0.36, 0.28, 0.07, DARK)
 
 
+def g_more(cv):
+    """Maya's overflow arrow (») at the end of a toolbar that doesn't fit its panel."""
+    for dx in (0.0, 0.36):
+        cv.polyline([(0.16 + dx, 0.24), (0.42 + dx, 0.50), (0.16 + dx, 0.76)], 0.12, LIGHT)
+
+
 GLYPHS = {name[2:]: fn for name, fn in globals().items() if name.startswith("g_")}
 
 
@@ -342,8 +350,11 @@ TOOLBAR = (
 )
 
 
-def _flat(layout, on):
+def _flat(layout, on, left=False):
+    """A button row, frameless unless on (Maya); ``left``: icon + text left-aligned (a » popover line)."""
     sub = layout.row(align=True)
+    if left:
+        sub.alignment = 'LEFT'
     if not on:
         sub.emboss = 'NONE'
     return sub
@@ -353,58 +364,144 @@ def _icon(name):
     return status_icons.icon("pt_" + name)
 
 
-def draw_toolbar(layout, context):
+# Maya's colour management section after the groups: exposure icon + field, gamma icon + field, colour management
+# icon + view transform (widths in widget units; the fields are ``ui_units_x`` sub-rows).
+CM_UNITS = (1, 2.2, 1, 2.2, 1, 6)
+CM_FIELDS = (("EXPOSURE", "exposure", "Exposure"), ("GAMMA", "gamma", "Gamma"))
+
+
+def fit_groups():
+    """Unit widths of the toolbar groups in Maya's order (``toolbar_fit``), the colour management section last."""
+    return [[1] * len(g) for g in TOOLBAR] + [list(CM_UNITS)]
+
+
+def _draw_item(row, context, item, text=""):
+    """One toolbar button (``text`` = its Maya name, in the » popover)."""
     space = context.space_data
-    for group in TOOLBAR:
-        bar = layout.row(align=True)
-        bar.ui_units_x = 0.5
-        bar.label(text="", icon_value=status_icons.icon("bar"))
-        row = layout.row(align=True)
-        for glyph, kind, data, label in group:
-            if kind == "set":
-                on = bool(panel_menus.state(context, data))
-                sub = _flat(row, on)
-                if data in panel_menus.CAMERA_KEYS or data == "SELECT_CAMERA":
-                    sub.enabled = panel_menus.view_camera(context) is not None
-                op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text="", icon_value=_icon(glyph),
-                                  depress=on)
-                op.key, op.toggle = data, True
-            elif kind == "prop":
-                owner = panel_menus._owner(space, context, data[0])
-                on = bool(getattr(owner, data[1]))
-                _flat(row, on).prop(owner, data[1], text="", icon_value=_icon(glyph), toggle=True)
-            elif kind == "run":
-                op = _flat(row, False).operator(panel_menus.ALLSET_OT_panel_run.bl_idname, text="",
-                                                icon_value=_icon(glyph))
-                op.op = data[0]
-                import json
-                op.props = json.dumps(data[1])
-            else:
-                _flat(row, False).operator(GREY_OP, text="", icon_value=_icon(glyph)).item = f"Panel toolbar/{label}"
-    # exposure / gamma fields and the view transform (Maya's colour management controls)
-    vs = context.scene.view_settings
+    glyph, kind, data, label = item
+    if kind == "set":
+        on = bool(panel_menus.state(context, data))
+        sub = _flat(row, on, bool(text))
+        if data in panel_menus.CAMERA_KEYS or data == "SELECT_CAMERA":
+            sub.enabled = panel_menus.view_camera(context) is not None
+        op = sub.operator(panel_menus.ALLSET_OT_panel_set.bl_idname, text=text, icon_value=_icon(glyph),
+                          depress=on)
+        op.key, op.toggle = data, True
+    elif kind == "prop":
+        owner = panel_menus._owner(space, context, data[0])
+        on = bool(getattr(owner, data[1]))
+        _flat(row, on, bool(text)).prop(owner, data[1], text=text, icon_value=_icon(glyph), toggle=True)
+    elif kind == "run":
+        op = _flat(row, False, bool(text)).operator(panel_menus.ALLSET_OT_panel_run.bl_idname, text=text,
+                                        icon_value=_icon(glyph))
+        op.op = data[0]
+        op.props = json.dumps(data[1])
+    else:
+        op = _flat(row, False, bool(text)).operator(GREY_OP, text=text, icon_value=_icon(glyph))
+        op.item = f"Panel toolbar/{label}"
+
+
+def _bar(layout):
     bar = layout.row(align=True)
-    bar.ui_units_x = 0.5
+    bar.ui_units_x = BAR_UNITS
     bar.label(text="", icon_value=status_icons.icon("bar"))
+
+
+def _menu_row(layout):
+    """A line of the » popover: icon + Maya name, left-aligned like a Maya menu item."""
     row = layout.row(align=True)
+    row.alignment = 'LEFT'
+    return row
+
+
+def _draw_cm(layout, context, menu=False):
+    """Exposure / gamma fields and the view transform (Maya's colour management controls). Maya's exposure / gamma
+    icons switch between the default and the last value; the colour management icon is a check box
+    (Maya). ``menu``: one line per control (the » popover)."""
+    vs = context.scene.view_settings
     set_op = panel_menus.ALLSET_OT_panel_set.bl_idname
-    # Maya's exposure / gamma icons switch between the default and the last value; the colour management icon is a
-    # check box (Maya)
-    _flat(row, False).operator(set_op, text="", icon_value=_icon("exposure")).key = "EXPOSURE"
-    sub = row.row(align=True)
-    sub.ui_units_x = 2.2
-    sub.prop(vs, "exposure", text="")
-    _flat(row, False).operator(set_op, text="", icon_value=_icon("gamma")).key = "GAMMA"
-    sub = row.row(align=True)
-    sub.ui_units_x = 2.2
-    sub.prop(vs, "gamma", text="")
+
+    def line():
+        """(icon button layout, field layout) of one control."""
+        if not menu:
+            return layout, layout
+        split = layout.split(factor=0.6, align=True)
+        return _menu_row(split), split
+
+    for key, prop, label in CM_FIELDS:
+        left, row = line()
+        _flat(left, False, menu).operator(set_op, text=label if menu else "", icon_value=_icon(prop)).key = key
+        sub = row.row(align=True)
+        if not menu:
+            sub.ui_units_x = CM_UNITS[1]
+        sub.prop(vs, prop, text="")
+    left, row = line()
     cm = bool(panel_menus.state(context, "CM_ENABLE"))
-    op = _flat(row, cm).operator(set_op, text="", icon_value=_icon("color_mgmt_on" if cm else "color_mgmt"),
-                                 depress=cm)
+    op = _flat(left, cm, menu).operator(set_op, text="Colour Management" if menu else "",
+                                 icon_value=_icon("color_mgmt_on" if cm else "color_mgmt"), depress=cm)
     op.key, op.toggle = "CM_ENABLE", True
     sub = row.row(align=True)
-    sub.ui_units_x = 6
+    if not menu:
+        sub.ui_units_x = CM_UNITS[-1]
     sub.prop(vs, "view_transform", text="")
+
+
+# area pointer -> index of the first group in the » popover (written by the tool header draw, read by the popover;
+# a plain dict, no ID data is written while drawing)
+_FIRST_HIDDEN = {}
+
+
+def shown_groups(context):
+    """How many groups (``fit_groups`` order) the tool header of this view shows (Maya's » overflow, #52)."""
+    region = context.region
+    system = context.preferences.system
+    if region is None or region.type != 'TOOL_HEADER':
+        return len(TOOLBAR) + 1
+    return toolbar_fit.fit(fit_groups(), region.width, system.ui_scale, system.pixel_size)
+
+
+def draw_toolbar(layout, context):
+    n = shown_groups(context)
+    if context.area is not None:
+        _FIRST_HIDDEN[context.area.as_pointer()] = n
+    for group in TOOLBAR[:n]:
+        _bar(layout)
+        row = layout.row(align=True)
+        for item in group:
+            _draw_item(row, context, item)
+    if n > len(TOOLBAR):
+        _bar(layout)
+        _draw_cm(layout.row(align=True), context)
+        return
+    # Maya's overflow arrow at the right end of the bar: the groups that don't fit, in a popover
+    layout.separator_spacer()
+    sub = layout.row(align=True)
+    sub.ui_units_x = toolbar_fit.MORE_UNITS
+    sub.popover(ALLSET_PT_panel_toolbar_more.bl_idname, text="", icon_value=_icon("more"))
+
+
+class ALLSET_PT_panel_toolbar_more(bpy.types.Panel):
+    """More panel toolbar buttons: the ones that don't fit this view's width"""
+    bl_idname = "ALLSET_PT_panel_toolbar_more"
+    bl_label = "More Panel Toolbar Buttons"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'HEADER'
+    bl_ui_units_x = 12
+
+    def draw(self, context):
+        space = context.space_data
+        if context.area is None or space is None or space.type != 'VIEW_3D':
+            return
+        first = _FIRST_HIDDEN.get(context.area.as_pointer(), 0)
+        col = self.layout.column()
+        for i in range(first, len(TOOLBAR) + 1):
+            if i > first:
+                col.separator(type='LINE')
+            if i < len(TOOLBAR):
+                for item in TOOLBAR[i]:
+                    _draw_item(_menu_row(col), context, item, text=item[3])
+            else:
+                _draw_cm(col, context, menu=True)
 
 
 # --- header patch ---------------------------------------------------------------------------------------
@@ -463,6 +560,7 @@ def unpatch_headers():
 
 
 def register():
+    bpy.utils.register_class(ALLSET_PT_panel_toolbar_more)
     for name, fn in GLYPHS.items():
         status_icons.EXTRA["pt_" + name] = fn
     patch_headers()
@@ -472,3 +570,5 @@ def unregister():
     unpatch_headers()
     for name in GLYPHS:
         status_icons.EXTRA.pop("pt_" + name, None)
+    _FIRST_HIDDEN.clear()
+    bpy.utils.unregister_class(ALLSET_PT_panel_toolbar_more)
