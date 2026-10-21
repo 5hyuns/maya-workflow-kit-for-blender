@@ -1407,6 +1407,7 @@ def _m59_9_together_setup():
     C.update(a=a, b=b)
     C["p_top"] = screen(Vector((0, 0, 0.5 * k())))
     C["p_side"] = screen(Vector((3.5 * k(), 0, 0)))
+    print("DBG59", tuple(C["p_top"]), tuple(C["p_side"]), px_world(Vector()) / k(), view3d()[1].width)
     move_to(C["p_top"])
     menu("Modify/Snap Together Tool")
 
@@ -1845,7 +1846,18 @@ def _m76_setup():
     C["circle"] = make_circle("ctrl")
     for o in bpy.context.scene.objects:
         o.select_set(False)
-    place(C["circle"], 0.3 * 0.01)   # a little in front of the 1 cm cube (eye is ~45 cm away)
+    # step 135: the viewport beside the wider dock is narrower, so the 0.8 cm circle was ~13 px across and its centre
+    # lay within the 5 px (x UI scale) pick radius of its drawn chords. Zoom in 2x for this section (restored at m76_2_ik).
+    rv3d = view3d()[1].data
+    C["m76_view"] = rv3d.view_distance
+    rv3d.view_distance *= 0.5
+    view3d()[0].tag_redraw()
+
+
+@named("m76_setup_click")
+def _m76_setup_click():
+    # one tick after the zoom (the view matrices update when the view draws); a little in front of the 1 cm cube
+    place(C["circle"], 0.3 * 0.01)
     set_tool("builtin.select_box")
     click_at(circle_point())
 
@@ -1998,6 +2010,8 @@ def _m76_3_bone_shift():
 @named("m76_2_ik")
 def _m76_2_ik():
     check(f"[M76-2] a click where the IK handle crosses the bone = the IK handle first ({sel()})", sel() == ["ikHandle1"])
+    if "m76_view" in C:
+        view3d()[1].data.view_distance = C.pop("m76_view")
 
 
 # --- [M77-1] F9 + Insert: cursor tool, "Pivot edit on", click / drag the pivot, Insert again ----------------------
@@ -2275,6 +2289,7 @@ def _m78_4_check():
 def _m78_4_side():
     _a, region = view3d()
     p = location_3d_to_region_2d(region, region.data, C["side"])
+    print("DBG78", tuple(p), px_world(C["side"]) / k(), region.width)
     move_to(Vector((region.x + p.x, region.y + p.y)))
     ev('G', 'PRESS', shift=True)
     ev('G', 'RELEASE', shift=True)

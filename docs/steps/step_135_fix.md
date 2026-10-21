@@ -21,3 +21,9 @@ Root causes and fixes, one per failing GUI test. Decisions made here without ask
   pCube3's sampled edge midpoints landed on pCube1's green silhouette. The kit colours were right. The probe now skips
   pCube3 points inside (or within 4 px of) the selected cubes' screen hulls and needs at least 4 uncovered edges
   (10 of 12 at 1.25) — delegated: kept the scene, filtered the samples.
+- **gui_manual_sweep [M76-1] / [M76-3]** — test geometry: the template persp lens is fixed (step 81), so in the
+  narrower viewport the 0.8 cm control circle is ~13 px across; its centre (the "off the curve" click) lay within
+  `select_priority.RADIUS_PX` x UI scale (6.25 px) of the circle's drawn chords, so Maya priority rightly picked the
+  curve and the later toggle checks cascaded. Not a kit bug. The M76 section now zooms in 2x (view distance restored
+  at `m76_2_ik`; the first click moved one tick later because the view matrices update when the view draws) —
+  delegated.
