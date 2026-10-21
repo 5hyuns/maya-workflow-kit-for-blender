@@ -93,7 +93,7 @@ ENTRIES = {
 
     # --- IC already matches (research/blender/industry_compatible_vs_maya.md §1) ---
     "Duplicate": _e("KIT", (OBJ, "allset.duplicate", {}),
-                    note="제자리, 자식 포함, pCube2/pCubeShape2 (편집 모드는 IC duplicate_move)"),
+                    note="제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고, step 129)"),
     "FrameSelectedWithoutChildren": _e("KIT", (V3D, "allset.frame", {"selected": True}),
                                        note="Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "allset.tap_hold", {"binding": "select_all"}),
