@@ -130,7 +130,11 @@ def draw_range_slider(layout, context):
 
     layout.separator_spacer()
     row = layout.row(align=True)
-    row.prop(ts, "use_keyframe_insert_auto", text="", toggle=True)   # Maya auto key (:585)
+    # Maya auto key (:585): Maya's key button, red while on (issue #37: Blender's record circle wasn't recognised)
+    key = row.row(align=True)
+    key.alert = ts.use_keyframe_insert_auto
+    key.prop(ts, "use_keyframe_insert_auto", text="", toggle=True,
+             icon='KEY_HLT' if ts.use_keyframe_insert_auto else 'KEY_DEHLT')
     sub = row.row(align=True)
     sub.active = ts.use_keyframe_insert_auto
     sub.popover(panel="TIME_PT_auto_keyframing", text="")
@@ -566,6 +570,20 @@ def key_frames(nodes):
     return sorted(frames.items())
 
 
+def playhead_half_width(context, frame):
+    """Half the width of Blender's current-frame box on the scrub row (time_scrub_ui.cc ``draw_current_frame``:
+    max(text width + 8, 24) x UI scale, the frame number in the widget font)."""
+    import blf
+    s = context.preferences.system.ui_scale or 1.0
+    try:
+        points = context.preferences.ui_styles[0].widget.points
+    except (AttributeError, IndexError):
+        points = 11
+    blf.size(0, points * s)
+    text_w = blf.dimensions(0, str(int(frame)))[0]
+    return max(text_w + 8 * s, 24 * s) / 2
+
+
 def _draw_keys(context, region):
     from . import channel_box
     keys = key_frames(channel_box.targets(context))
@@ -576,6 +594,7 @@ def _draw_keys(context, region):
     w = max(1.0, round(context.preferences.system.ui_scale or 1.0))
     h = region.height
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    current = context.scene.frame_current
     for colour, breakdown in ((KEY_RGB, False), (BREAKDOWN_RGB, True)):
         tris = []
         for f, bd in keys:
@@ -584,8 +603,15 @@ def _draw_keys(context, region):
             x = region.view2d.view_to_region(f, 0, clip=False)[0]
             if x < -w or x > region.width + w:
                 continue
-            x0 = int(x)
-            tris += [(x0, 0), (x0 + w, 0), (x0 + w, h), (x0, 0), (x0 + w, h), (x0, h)]
+            x0, x1 = int(x), int(x) + w
+            if abs(f - current) < 0.5:
+                # Blender draws its playhead box over add-on drawing (the region's draw_overlay runs after
+                # POST_PIXEL), and in the Maya layout that box fills the Time Slider: a key at the current frame
+                # was invisible (issue #38). Maya shows it through its translucent current-time block; here the
+                # key colour frames the box instead (wider than the box, so its edges stay red).
+                half = playhead_half_width(context, current) + 2 * w
+                x0, x1 = int(x - half), int(x + half)
+            tris += [(x0, 0), (x1, 0), (x1, h), (x0, 0), (x1, h), (x0, h)]
         if tris:
             shader.uniform_float("color", colour)
             batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)

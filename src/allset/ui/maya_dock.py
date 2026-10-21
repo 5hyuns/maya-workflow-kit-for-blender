@@ -309,38 +309,142 @@ def open_floating(context, kind):
 
 
 # --- tear off / dock -----------------------------------------------------------------------------------------------
+# Issue #4: Blender has no API to size or place a window, and ``screen.area_dupli`` opens a window of the copied
+# area's size. So the source area is first split (``area_split`` HORIZONTAL, factor > 0.5 = the new area on top,
+# 1 - factor tall: checked, step 129) to the content height checked by ``layout_measure``; that top piece is
+# copied a tick later (a split area has no size before the screen refreshed: a copy in the same call opened a
+# default-size window, checked) and closed again, which gives the source its height back.
+
+MIN_ROWS = 6                 # a torn-off window is never shorter than this ...
+PAD_ROWS = 1.5               # ... and gets the region's top / bottom margins on top of its content
+MIN_KEEP_PX = 40             # Blender keeps a split's other part at least about a header high
+
+
+def content_height(context, n_rows, limit):
+    """Window height (px) for ``n_rows`` rows of content, clamped to [MIN_ROWS rows, ``limit``]."""
+    from . import layout_measure
+    rows = max(MIN_ROWS, (n_rows or 0) + PAD_ROWS)
+    return min(layout_measure.px(rows, context), limit)
+
+
+def panel_rows(context, area=None):
+    """Rows the Maya panel in ``area`` draws now (estimated for the Outliner / Tool Settings), or None."""
+    from . import layout_measure
+    area = area or context.area
+    if area is not None and area.type == 'OUTLINER':
+        n = sum(1 for _ in context.scene.objects) + 7       # objects + Maya's default rows (step 99) + header
+        return min(n, 40)
+    if role(area) is None:
+        from . import tool_dock
+        return 24 if tool_dock.is_dock(area) else None     # Tool Settings: Move / Rotate / Scale settings
+    return layout_measure.rows(ALLSET_PT_maya_dock.draw, context)
+
+
+def menu_rows(context, idname):
+    """Rows a torn-off menu window shows: handle + title + the menu's items."""
+    from . import layout_measure
+    cls = getattr(bpy.types, idname, None)
+    if cls is None:
+        return None
+    _drawing_torn[0] = True           # the torn copy has no tear-off line
+    try:
+        n = layout_measure.rows(cls.draw, context)
+    finally:
+        _drawing_torn[0] = False
+    return None if n is None else n + 2
+
+
+def sized_window(context, window, area, height, then, tries=20):
+    """Open a window copying ``area`` about ``height`` px tall (the area's full height when it isn't taller), then
+    call ``then(new_window)`` (now or from a timer). Returns True when a window is (being) made."""
+    from ..operators.menu_extras import open_window
+    if bpy.app.background or area is None:
+        return False
+    full = area.height
+    if height >= full - MIN_KEEP_PX:
+        with context.temp_override(window=window):
+            new = open_window(bpy.context, area)
+        if new is None:
+            return False
+        then(new)
+        return True
+    screen = window.screen
+    before = {a.as_pointer() for a in screen.areas}
+    factor = 1.0 - height / max(full, 1)
+    with context.temp_override(window=window, screen=screen, area=area):
+        if bpy.ops.screen.area_split(direction='HORIZONTAL', factor=factor) != {'FINISHED'}:
+            return False
+    piece_ptr = next((a.as_pointer() for a in screen.areas if a.as_pointer() not in before), None)
+    if piece_ptr is None:
+        return False
+    state = {"n": tries}
+    win_ptr = window.as_pointer()
+
+    def tick():
+        try:
+            wm = bpy.context.window_manager
+            win = next((w for w in wm.windows if w.as_pointer() == win_ptr), None)
+            if win is None:
+                return None
+            piece = next((a for a in win.screen.areas if a.as_pointer() == piece_ptr), None)
+            if piece is None:
+                return None
+            if piece.height <= 1 and state["n"] > 0:    # the screen hasn't refreshed the split yet
+                state["n"] -= 1
+                return 0.02
+            with bpy.context.temp_override(window=win):
+                new = open_window(bpy.context, piece)
+            close_area(bpy.context, win, piece)          # the source gets its height back
+            if new is not None:
+                then(new)
+        except ReferenceError:
+            pass
+        return None
+    bpy.app.timers.register(tick, first_interval=0.02)
+    return True
+
+
+def _area_by_pointer(window, ptr):
+    try:
+        return next((a for a in window.screen.areas if a.as_pointer() == ptr), None)
+    except ReferenceError:
+        return None
+
 
 def tear_off(context, area=None):
-    """Tear the panel in ``area`` off into a floating window. Returns the new window or None."""
-    from ..operators.menu_extras import open_window
+    """Tear the panel in ``area`` off into a floating window sized to the panel (issue #4). Returns True when the
+    window is (being) made, None when this area can't be torn off."""
+    from . import tool_dock
     area = area or context.area
     window = context.window
+    wm = context.window_manager
     r = role(area)
+    if r != 'STACK' and not (area is not None and (tool_dock.is_dock(area) or area.type == 'OUTLINER')):
+        return None
+    height = content_height(context, panel_rows(context, area), area.height)
+    area_ptr = area.as_pointer()
     if r == 'STACK':
-        kind = current_tab(context.window_manager)
+        kind = current_tab(wm)
         if kind is None:
             return None
-        new = open_window(context, area)
-        if new is None:
-            return None
-        set_role_later(new.screen.areas[0], kind, new)
-        rest = [k for k in stack_tabs(context.window_manager) if k != kind]
-        if rest:
-            context.window_manager.allset_dock = rest[0]
-        else:
-            close_area(context, window, area)          # an empty tab stack goes away, like Maya's
-        return new
-    from . import tool_dock
-    if area is not None and (tool_dock.is_dock(area) or area.type == 'OUTLINER'):
-        new = open_window(context, area)
-        if new is None:
-            return None
-        if area.type == 'OUTLINER':
+        rest = [k for k in stack_tabs(wm) if k != kind]
+
+        def then(new):
+            set_role_later(new.screen.areas[0], kind, new)
+            if rest:
+                bpy.context.window_manager.allset_dock = rest[0]
+            else:                                   # an empty tab stack goes away, like Maya's
+                close_area(bpy.context, window, _area_by_pointer(window, area_ptr))
+            redraw()
+        return True if sized_window(context, window, area, height, then) else None
+    outliner = area.type == 'OUTLINER'
+
+    def then(new):
+        if outliner:
             from . import maya_outliner
             maya_outliner.setup(new.screen.areas[0].spaces.active)
-        close_area(context, window, area)
-        return new
-    return None
+        close_area(bpy.context, window, _area_by_pointer(window, area_ptr))
+    return True if sized_window(context, window, area, height, then) else None
 
 
 def dock(context, window=None):
@@ -400,24 +504,24 @@ def dock(context, window=None):
 
 
 def tear_menu(context, idname, label):
-    """Maya's menu tear-off: a floating window listing the menu's items."""
-    from ..operators.menu_extras import open_window
+    """Maya's menu tear-off: a floating window listing the menu's items, as tall as the menu (issue #4)."""
     window = main_window(context.window_manager) or context.window
-    # area_dupli makes a window of the copied area's size: copy a narrow side panel (Maya's torn-off menus are a
-    # narrow column), the viewport only when there is none
+    # Maya's torn-off menus are a narrow column: copy a narrow side panel (the tallest, so any menu fits), the
+    # viewport only when there is none
     side = [a for a in window.screen.areas if a.type in {'PROPERTIES', 'OUTLINER'} and a.height > 200]
     area = max(side, key=lambda a: a.height) if side else _main_view(window.screen)[0]
     if area is None:
         return None
     with context.temp_override(window=window):
-        new = open_window(bpy.context, area)
-    if new is None:
-        return None
-    _torn_menus[new.as_pointer()] = (idname, label)
-    target = new.screen.areas[0]
-    target.ui_type = 'PROPERTIES'
-    set_role_later(target, 'MENU', new)
-    return new
+        height = content_height(bpy.context, menu_rows(bpy.context, idname), area.height)
+
+    def then(new):
+        _torn_menus[new.as_pointer()] = (idname, label)
+        target = new.screen.areas[0]
+        target.ui_type = 'PROPERTIES'
+        set_role_later(target, 'MENU', new)
+    with context.temp_override(window=window):
+        return True if sized_window(bpy.context, window, area, height, then) else None
 
 
 def redraw():
