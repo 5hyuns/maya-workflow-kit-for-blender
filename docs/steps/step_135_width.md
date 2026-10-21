@@ -53,3 +53,32 @@ startup.blend: 1.0 에서도 277 은 새 규칙과 다르다 → `tools/make_sta
 검증: 헤드리스 `tests/test_step135_width.py` (규칙: 배율별 폭, Maya 하한 · 상한, blf 로 잰 탭 · 라벨 · AE 메뉴 줄이 폭 안,
 `attribute_editor.fits` 가 그 폭에서 한 줄); GUI `tests/gui/gui_step135_width.py` (`ALLSET_FIT_WARP=1`: 로드 후 독 폭 = 규칙, 뷰포트 =
 남은 폭, AE 메뉴 줄 한 줄, 스크린숏). 1.0 / 1.25 / 1.5 첫 화면을 Maya 와 나란히 `tmp/width135/`.
+
+## 한 것
+
+- `src/allset/ui/toolbox.py`: `dock_need` / `dock_width` (blf `text_px`, U = `toolbar_fit.unit`), `_fit_dock` — `fit_columns` 가
+  armed 인 화면에서 STACK 영역 왼쪽 모서리를 옮긴다 (poll 실패 → 틈 점 pending → `ALLSET_OT_fit_columns` 커서 맞춤). 뷰포트 하한은
+  툴 박스 열 · 아웃라이너가 맞춰진 뒤의 폭으로 계산 (`MIN_VIEW_PX` 280 × s; 처음 320 이었는데 1.5 에서 독보다 나중에 아웃라이너가 커져
+  뷰포트가 439 px 로 하한 아래가 됐다 → 계산을 고치고 하한을 Maya 150 % AE 화면 (약 430 px) 에 맞춤, delegated).
+- 측정하며 하나 더 고침: 영역 사이 틈은 1.0 에서 3 px, 1.5 에서 5 px (모서리 굵기가 배율을 따름) — 아웃라이너 · 독을 "옆 영역" 으로
+  찾는 허용치 4 px 때문에 1.5 에서는 아웃라이너 (step 99) 도 독도 맞추지 않았다 → `GAP_PX` = 8.
+- `tools/make_startup.py` `DOCK_PX` = 466 (= `dock_width(1.0)`), startup.blend 다시 만듦 (독 468, 1.0 뷰포트 773 px).
+- 레인 CB (cb135) 와 합의: 탭 줄 = 왼쪽 정렬, 그립 `ui_units_x` = blf / U + 1.5, 탭마다 blf / U + 1. 그립을 고정하지 않으면 그립
+  sub-row 가 늘어나 탭이 다시 잘린다 (미리보기 패치로 측정, `tmp/probe135/gui_probe_merged.py`).
+
+## 검증
+
+- 폭 (blf, 1600 × 900 창): 1.0 **466** (Maya CB 스택 277, AE 480) · 1.25 **574** (346 / 600) · 1.5 **672** (416 / 720);
+  need = 탭 466 / 574 / 672, 라벨 262 / 312 / 382, AE 메뉴 412 / 515 / 618. 맞춘 뒤 뷰포트 807 / 622 / 439 px.
+- `ALLSET_SANDBOX=width135 python tests/run.py -k step135,step99,step132,enable_disable`: **15 / 0** (4 파일); 추가로
+  `-k step49,step31,step116,step112,step130` **36 / 0** (8 파일).
+- `ALLSET_SANDBOX=width135 python tests/gui/run.py -k step135_width,step99,step106_tool,step5_layout,step116,step132`: 1.25 **60 / 0**,
+  `--ui-scale 0.8` **60 / 0**, `--ui-scale 1.2` **60 / 0** (6 파일).
+- 나란히 (Maya 100 % | 킷 1.0 / 1.25 / 1.5, 레인 CB 탭 미리보기 패치 포함): `tmp/width135/side_first_screen.png`,
+  `side_channel_box.png`, `side_attribute_editor.png` — 세 배율 모두 탭 · 라벨 · AE 메뉴 줄 안 잘림, AE 화면 폭이 Maya 의 AE 스택과 비슷.
+  이 레인만으로는 (탭이 같은 폭) 1.25 에서 「Channel Box / Layer …」 가 여전히 잘린다 (`tmp/width135/shots/s135_channel_box_125.png`).
+
+## 남은 것
+
+- 탭이 잘리지 않는 것은 레인 CB 의 탭 줄 변경과 병합된 뒤에야 성립 — 메인이 병합 후 1.0 / 1.25 / 1.5 그림으로 확인.
+- CB 탭이 위일 때 독은 Maya (277 × s) 보다 넓다: 가로 탭 줄 때문. Maya 처럼 세로 탭 띠로 그리면 277 × s 로 돌아갈 수 있다 (후속 후보).
