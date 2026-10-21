@@ -123,8 +123,7 @@ def leftover_check(blender, zip_path):
     run([blender, "--command", "extension", "install-file", "-r", REPO_ID, "--enable", str(zip_path)], env)
     run(probe + ["make", str(CLEAN_SANDBOX / "made.json")], env)
     template = CLEAN_SANDBOX / "scripts" / "startup" / "bl_app_templates_user" / "Maya_Workflow_Kit"
-    user_dir = CLEAN_SANDBOX / "extensions" / ".user" / REPO_ID / build.manifest_value("id")
-    made = template.is_dir() and user_dir.is_dir()
+    made = template.is_dir()
     run(probe + ["disable", str(CLEAN_SANDBOX / "disabled.json")], env)
     rc, out = run(probe + ["remove", str(CLEAN_SANDBOX / "removed.json")], env)
     # the probe's snapshots sit at the sandbox root; Blender keeps a managed repository's index / cache
@@ -133,7 +132,7 @@ def leftover_check(blender, zip_path):
                   and not f.startswith(("extensions/.cache/", f"extensions/{REPO_ID}/.blender_ext/")))
     for f in left:
         print("  left behind:", f)
-    return [(f"opt-in wrote the layout template and the extension user folder ({made})", made),
+    return [(f"opt-in writes no layout template outside the extension (step 130; template there: {made})", not made),
              ("Remove from inside Blender", rc == 0),
              (f"clean config: install -> enable -> opt in -> disable -> Remove leaves {len(left)} kit files", not left)]
 
