@@ -1,4 +1,4 @@
-"""Step 5: Maya layout app template (install/remove/load) and Maya theme."""
+"""Step 5: Maya layout app template (install/remove/load); no theme since step 130."""
 
 import os
 from importlib import import_module
@@ -8,17 +8,8 @@ import bpy
 import kit
 
 app_template = import_module(kit.MODULE + ".app_template")
-theme = import_module(kit.MODULE + ".theme")
 
 SANDBOX_SCRIPTS = os.environ["BLENDER_USER_SCRIPTS"]
-
-
-def _theme():
-    return bpy.context.preferences.themes[0]
-
-
-def _close(a, b, tol=2e-3):
-    return all(abs(x - y) < tol for x, y in zip(a, b))
 
 
 # --- install / remove ----------------------------------------------------------------
@@ -63,35 +54,14 @@ def test_bundled_template_files():
 
 # --- theme --------------------------------------------------------------------------------
 
-def test_theme_apply_and_restore():
-    grad = _theme().view_3d.space.gradients
-    default_top = tuple(grad.high_gradient)
-    default_type = grad.background_type
-    assert not theme.has_backup()
-    assert bpy.ops.allset.theme_apply() == {'FINISHED'}
-    assert theme.has_backup()
-    # Maya 2022 factory: flat 0.36 grey, gradient off (, step 42)
-    assert grad.background_type == 'SINGLE_COLOR'
-    assert _close(grad.high_gradient, (0.36, 0.36, 0.36))
-    ds = _theme().dopesheet_editor
-    keyframe = ds.keyframe if hasattr(ds, "keyframe") else _theme().common.anim.keyframe   # 5.x: moved (step 53)
-    assert _close(keyframe[:3], (1.0, 0.0, 0.0))  # timeSliderKey
-    assert _close(_theme().user_interface.wcol_regular.inner[:3], (0x5d / 255,) * 3)
-    path = theme.backup_path()
-    assert os.path.normcase(path).startswith(
-        os.path.normcase(os.path.dirname(os.environ["BLENDER_USER_EXTENSIONS"]))), path
-    assert bpy.ops.allset.theme_restore() == {'FINISHED'}
-    assert not theme.has_backup()
-    assert grad.background_type == default_type and _close(grad.high_gradient, default_top)
-
-
-def test_theme_backup_keeps_first_original():
-    _theme().view_3d.grid = (0.9, 0.1, 0.1, 1.0)   # a "user" theme tweak
-    bpy.ops.allset.theme_apply()
-    bpy.ops.allset.theme_apply()                 # second apply must not overwrite the backup
-    bpy.ops.allset.theme_restore()
-    assert _close(_theme().view_3d.grid, (0.9, 0.1, 0.1, 1.0))
-    bpy.ops.preferences.reset_default_theme()
+def test_no_theme_in_the_kit():
+    """Step 130 (#40): the kit ships no theme and has no theme operators; the user's theme is never written."""
+    import importlib.util
+    assert importlib.util.find_spec(kit.MODULE + ".theme") is None
+    assert not hasattr(bpy.types, "ALLSET_OT_theme_apply") and not hasattr(bpy.types, "ALLSET_OT_theme_restore")
+    root = os.path.dirname(import_module(kit.MODULE).__file__)
+    xml = [os.path.join(d, f) for d, _s, fs in os.walk(root) for f in fs if f.endswith(".xml")]
+    assert not xml, xml
 
 
 # --- loading the template (last: replaces the open file) -----------------------------------

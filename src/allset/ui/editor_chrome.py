@@ -427,7 +427,7 @@ AXES = "XYZ"
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
 BACK = (0.267, 0.267, 0.267, 1.0)        # Maya outliner pane #444444 (colors.json ui_samples)
-SELECT = (0.322, 0.522, 0.651, 1.0)      # Maya selection blue #5285a6 (theme SELECT)
+SELECT = (0.322, 0.522, 0.651, 1.0)      # Maya selection blue #5285a6 (kit-drawn pane: Maya's colours, any theme)
 _expanded = {}                           # object name -> bool (Maya shows attributes expanded)
 
 

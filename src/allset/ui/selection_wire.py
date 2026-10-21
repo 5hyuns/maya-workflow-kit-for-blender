@@ -11,7 +11,8 @@ The kit draws the edges itself (POST_VIEW), :
   smooth preview 2 cage wire (operators/display.py ``_WIRE_FLAG``).
 - Here: evaluated mesh edges in a cached batch per object (numpy, ~28 ms for 100k polys, rebuilt only when
   the object's geometry changes), drawn with the object matrix and a small depth bias (no z-fighting),
-  colours = theme ``object_active`` / ``object_selected`` (Maya lead green / white with the Maya theme).
+  colours = the user's theme ``object_active`` / ``object_selected`` (read only; Blender's factory theme gives
+  orange / dark orange, Maya's lead green / white needs a theme with those colours — step 130, #40).
   Nothing is written to the file.
 """
 

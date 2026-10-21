@@ -238,11 +238,6 @@ def test_graph_outliner_rows_maya_names():
     assert fcs[1].select and not fcs[1].hide and fcs[0].hide and not fcs[0].select
 
 
-def test_out_of_range_shading_off_in_the_maya_theme():
-    text = (Path(import_module(kit.MODULE).__file__).parent / "theme" / "studio_grey.xml").read_text(encoding="utf-8")
-    assert text.count('preview_range="#00000000"') == 2
-
-
 def test_editor_click_item_passes_through_first():
     patches = import_module(kit.MODULE + ".keymap.maya_patches")
     assert "allset.graph_channel_click" in patches.PASS_THROUGH_FIRST

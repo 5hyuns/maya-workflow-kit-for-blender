@@ -10,10 +10,6 @@ here, and are dedicated to the public domain under CC0 1.0 Universal
   app_template/Maya_Workflow_Kit/splash_2x.png    tools/make_splash.py
   welcome.png                                     tools/make_splash.py
   app_template/Maya_Workflow_Kit/startup.blend    tools/make_startup.py
-  theme/studio_grey.xml                           tools/make_theme.py
-  theme/studio_grey_5.0.xml                       tools/make_theme.py
-  theme/studio_grey_5.1.xml                       tools/make_theme.py
-  theme/studio_grey_5.2.xml                       tools/make_theme.py
 
 Icons in the user interface (shelf, Status Line, viewport toolbar) are drawn
 by code at run time; no image files ship for them.
