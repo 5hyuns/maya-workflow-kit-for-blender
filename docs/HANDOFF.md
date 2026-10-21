@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 135 (Dock / Channel Box, #55 #60) 완료 — `docs/steps/step_135.md` (+ `step_135_{cb,width,fix}.md`). INPUTS 접힘 + 이름 클릭 펼침,
+  Channel Box 부분 스크롤 · Layer Editor 고정 분할, 휠 스크롤 (View2D Buttons List), dock 폭 배율별 (466 / 574 / 672 px). 헤드리스 1060/1060,
+  GUI 전체 뒤 실패 파일 수정 → 416/416. 후속 #77 (1.5 배율 메뉴 줄 · SDK), #78 (dock 폭 vs Maya 세로 탭).
+  **바로 다음 할 일**: step 136 = 마킹 메뉴 (#56 #62 #74), 그다음 137–141 (backlog.json).
+
 - Step 134 (테마 없이 Maya 뷰포트 모습, #58 #59 #61 #75) 완료 — `docs/steps/step_134.md` (+ `step_134_{sel,grid,hud,look}.md`). 킷 고정 Maya
   선택 · 컴포넌트 색 (`ui/component_colors.py`), 그리드 #404040 + 커서 숨김, 디스플레이 키 뒤 Adjust Last Operation 없음, Smooth Preview 매끈,
   look_compare 도구 갱신 (viewport 1/12 → 7/12, grid FAIL → ok). 헤드리스 1046/1046, GUI 1345/1345. 후속 #76 (조작기 · 와이어 색).

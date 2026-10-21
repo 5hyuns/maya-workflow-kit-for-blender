@@ -44,3 +44,13 @@ Editor 경계가 고정이다 (`research/maya/screens/11_channel_box.png`, `rese
   `gui_step62_sdk` 실패는 step 135 전 커밋 2a1c963 에서도 같다 → #77.
 - 그림을 직접 봄: 1.0 접힌 polyCube1 + Layer Editor (`tmp/s135/shots_0.8/s135_cube_collapsed_100.png`), 1.25 (`tmp/s135/shot125/`),
   1.5 (`tmp/s135/shot150/` — ▲▼ 가 이름 줄, Layer Editor 보임), Maya 대비 dock 폭 (`tmp/width135/side_first_screen.png`).
+- 전체: 헤드리스 전체 1060/1060; GUI 전체 1341 PASS / 19 FAIL → 원인별 수정 (`step_135_fix.md`: 접힌 INPUTS 를 찾는 테스트는 `sim.open_inputs` +
+  데이터 경로로 찾기, 좁아진 뷰포트에 맞춘 측정, persp 라벨 탐침의 좌표 오류, `cb_share` 의 한 줄 모자람 = 킷 버그) → 실패했던 파일 + step 135 파일
+  다시 실행 **416/416**, 관련 헤드리스 175/175.
+
+## 남은 것
+
+- #78: Channel Box 탭이 위일 때 dock 이 Maya (277 px) 보다 넓다 (가로 탭 줄 466 px) → 뷰포트가 좁다. Maya 식 세로 탭 띠 또는 탭에 따른 폭.
+- #77: 1.5 배율에서 메뉴 줄이 1600 px 를 넘고 Set Driven Key 창 단추를 못 찾음 (step 135 전부터).
+- 1600×900 창 1.25 / 1.5 배율에서는 polyCube1 INPUTS 가 Channel Box 부분 아래 (한 번 스크롤) — 더 큰 창에서는 보인다.
+- GUI 테스트는 커서 워프 맞춤을 안 하므로 (ALLSET_FIT_WARP 없이) dock 이 템플릿 폭 466 px 그대로 — 배율별 폭은 step135_width 테스트가 확인.
