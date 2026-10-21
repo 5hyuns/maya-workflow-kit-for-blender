@@ -19,7 +19,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
-from . import draw, modal
+from . import draw, modal, rmb_items
 from . import menus as mm
 
 # Blender fills a pie in this order (UILayout.menu_pie).
@@ -364,7 +364,7 @@ SELECT_BINDINGS = (SelectComponentBinding, SelectPolygonBinding)
 
 
 classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_clear_selection,
-           *modal.classes, *_classes)
+           *rmb_items.classes, *modal.classes, *_classes)
 
 
 def register():

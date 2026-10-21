@@ -712,3 +712,124 @@ CATEGORIES.update({
     "Script Editor/Help/What's New/Highlight What's New": (
         "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
 })
+
+
+# Greyed marking-menu entries (step 136, ): key = "<menu proc>/<label path>" (the kit menu
+# name in marking/menus.MENUS, then the labels down to the item), same (substitute, one line) form. While a marking
+# menu hovers a greyed entry, marking/modal.py puts its line in the Help Line. tests/test_step136_items.py checks that
+# every greyed entry has one and every key is a greyed entry.
+_RMB_LIST = {
+    "DG Traversal": ("Modifier stack", "Blender has no dependency graph to walk: an object's history is its modifier "
+                     "stack (Channel Box INPUTS, Properties > Modifiers)."),
+    "Inputs": ("Channel Box INPUTS", "Blender has no input nodes to list here: the object's modifiers and constraints "
+               "are its INPUTS in the Channel Box."),
+    "Outputs": ("Outliner", "Blender has no output connections to list: what uses this object shows in the Outliner "
+                "(Blender File view)."),
+    "Metadata": ("Custom properties", "Blender has no component metadata: store values as custom properties (Attribute "
+                 "Editor Extra Attributes) or mesh attributes."),
+    "Time Editor": ("NLA Editor", "Blender's clip-based animation editor is the NLA Editor (Windows > Animation "
+                    "Editors)."),
+}
+MARKING = {
+    **{f"{menu}/{label}": n for menu in ("dagMenuProc", "dagMenuProc_curve") for label, n in _RMB_LIST.items()},
+    "dagMenuProc/Vertex Face": (
+        "Face corners", "Blender has no vertex-face component: per-corner values (normals, colours, UVs) are edited "
+        "on the face corners through their tools."),
+    "dagMenuProc_curve/Curve Point": (
+        "Control points", "Blender curves are edited by their control points only: there are no points on the curve "
+        "to pick (Subdivide adds one)."),
+    "dagMenuProc_curve/Hull": (
+        "Control points", "Blender draws the control polygon but has no hull component: select its control points."),
+    "dagMenuProc_curve/Edit Point": (
+        "Control points", "Blender curves have no edit points: Bezier curves are edited by their knots and handles."),
+    "buildObjectMenuItemsNow/Complete Tool": (
+        "Enter", "Blender tools finish with Enter or a right-click: there is no tool to complete from this menu."),
+    "buildObjectMenuItemsNow_pivot/Show Orientation Handle": (
+        "Transform orientation", "Blender's pivot has no orientation handle: turn the pivot with a custom "
+        "orientation (Orientation menu > Create)."),
+    "contextPolyToolsVertexMM/Reorder Vertices": (
+        "Sort Mesh Elements", "Blender can't set the vertex order from three picked vertices: Mesh > Sort Elements "
+        "reorders them by a rule."),
+    "contextPolyToolsEdgeMM/Merge/Collapse Edges/Merge Edge Tool": (
+        "Merge / Bridge", "Blender has no tool that merges two clicked border edges: select both edges and use Merge "
+        "(At Center) or Bridge."),
+    "contextPolyToolsFaceMM/Assign Invisible Faces": (
+        "Delete faces / Hide", "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them "
+        "(Display > Hide)."),
+    **{f"contextPolyToolsDefaultMM/{label}": (
+        "Extra Objects add-on", f"Blender has no {label.lower()} primitive by default: the free Extra Objects "
+        "extension adds one (Preferences > Get Extensions).") for label in ("Pipe", "Helix", "Gear")},
+    "polyConvertMM/Grow Selection/Grow Along Loop": (
+        "Select Loops", "Blender grows a selection in every direction only: select the edge loop (Select > Select "
+        "Loops) or use Grow."),
+    "polyConvertMM/Shrink Selection/Shrink Selection Along Loop": (
+        "Shrink", "Blender shrinks a selection in every direction only (Select > Shrink)."),
+    "polyConvertMM/To UVs/To UV Perimeter": (
+        "UV Editor", "Blender selects UV island borders in the UV Editor (Select > Select Split / island select), "
+        "not from the 3D View."),
+    "polyConvertMM/To Face Path": (
+        "Shortest Path", "Blender picks a face path with Ctrl+click on the second face (Select > Shortest Edge Path)."),
+    "translateMarkingMenuImpl/Snap/Face Center": (
+        "Snap to Face", "Blender snaps to faces (Face Project / Face Nearest), not to their centres."),
+    "translateMarkingMenuImpl/Keep Spacing": (
+        "Snap With", "Blender moves the selected components together while snapping (Snap With in the snapping "
+        "popover); there is no separate keep-spacing switch."),
+    "translateMarkingMenuImpl/Axis/Live Object Axis": (
+        "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
+        "menu > Create) and pick it."),
+    "translateMarkingMenuImpl/Axis/Custom": (
+        "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
+        "selection."),
+    "rotateMarkingMenuImpl/Custom/Custom": (
+        "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
+        "selection."),
+    "rotateMarkingMenuImpl/Custom/Reset": (
+        "Orientation: Object", "Blender keeps saved orientations until you delete them: pick Object to go back to "
+        "the default rotate axis."),
+    "scaleMarkingMenuImpl/Axis/Live Object Axis": (
+        "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
+        "menu > Create) and pick it."),
+    **{f"buildSelectAllMM/{label}": (
+        "Modifier stack", "Blender's history is the modifier stack, which has no upstream / downstream nodes to "
+        "select or switch off: show / hide modifiers in Properties > Modifiers.")
+       for label in ("Select All Inputs", "Select All Outputs", "Enable All Outputs", "Disable All Outputs")},
+    "HotboxNorthMenu/Persp/Relationship Editor": (
+        "Workspaces", "Blender has no relationship editor layout: the Outliner and Properties sit beside the view "
+        "in every workspace."),
+    "HotboxEastMenu/Time Slider": (
+        "Timeline area", "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view "
+        "(Ctrl+Space) for more room."),
+    "HotboxEastMenu/Range Slider": (
+        "Timeline header", "The Range Slider is part of the Timeline header in Blender: it hides with the Timeline."),
+    "HotboxWestMenu/Hierarchy": (
+        "Select > Hierarchy", "Blender has no hierarchy select mode: click the object and use Select > Hierarchy "
+        "(or the Outliner) to take its children."),
+    "HotboxWestMenu/Dynamics Mask": (
+        "Object types filter", "Blender's dynamics are modifiers and physics settings on ordinary objects, so they "
+        "have no selection mask of their own."),
+    "contextPolyToolsUVMM/Create UV Shell": (
+        "Unwrap", "Blender makes a UV island by unwrapping the selected faces (UV > Unwrap) or by cutting along "
+        "seams."),
+    "contextPolyToolsUVMM/Delete UVs": (
+        "Unwrap / Reset", "Blender meshes keep UVs for every face: re-unwrap or Reset them (UV > Reset) instead of "
+        "deleting."),
+    **{f"{menu}/Auto Seams": (
+        "Smart UV Project", "Blender has no automatic seam placement: Smart UV Project cuts by angle, or mark seams "
+        "and Unwrap.") for menu in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM")},
+    **{f"{menu}/Texture Borders": (
+        "Seams overlay", "Blender's UV Editor draws island borders itself; the 3D View shows seams (Overlays > "
+        "Seams).") for menu in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM")},
+    "doSelectComponentMM/All Components off": (
+        "Mesh select mode", "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11."),
+    "doSelectComponentMM/Save to shelf": (
+        "Quick Favorites", "Blender has no shelf button from a pick mask: right-click a select mode button > Add to "
+        "Quick Favorites."),
+}
+_PICK_MASK = ("Pick mask", "Blender picks this kind of component in the object's own edit mode (Tab), not through a "
+              "pick mask: the mask only switches mesh vertex / edge / face picking.")
+MARKING.update({f"doSelectComponentMM/{p}": _PICK_MASK for p in (
+    "Points/All Points", "Points/CVs", "Points/Lattice Points", "Points/Subdiv Mesh Points", "Points/Particles",
+    "Parm Points/All Parm Points", "Parm Points/Edit Points", "Parm Points/Curve Points",
+    "Parm Points/Subdiv Mesh UVs", "Parm Points/Surface Points", "Lines/Trim Edges", "Lines/All Lines",
+    "Lines/Springs", "Lines/Isoparms", "Hulls", "Pivots/Scale Pivots", "Pivots/Joint Pivots", "Pivots/All Pivots",
+    "Pivots/Rotate Pivots", "Handles", "Misc./Local Rotation Axes", "Misc./Image Planes", "Misc./All Misc")})
