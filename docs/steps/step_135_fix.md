@@ -7,3 +7,9 @@ Root causes and fixes, one per failing GUI test. Decisions made here without ask
   lost its last line (the INPUTS node name `polyCylinder1`) to the scroll window. Fixed both terms; the test now
   scrolls the expanded node into the pane with `sim.scroll_channel_box()` (sets the pane's first line, clamped by the
   draw; the wheel itself stays tested in gui_step135_dock — delegated).
+- **gui_step65_extrude** — test: the Divisions field was clicked at a fixed measured y (`DIVISIONS_FIELD`, step 65),
+  but with collapsed nodes and a scrolling Channel Box part the expanded polyExtrudeFace1 rows sit elsewhere. Now
+  `scroll_channel_box()` + `find_button` on the `divisions_text` data path.
+- **gui_step55_pose** — test: the constraint weight field was `field(12.6)` (a fixed row offset under Translate X);
+  the expanded constraint node moves it and the part scrolls. Now looked up by data path (the `allset_cb.rows[i].text`
+  of the CONSTRAINT row) after `scroll_channel_box()`.
