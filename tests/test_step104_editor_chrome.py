@@ -96,13 +96,13 @@ def test_check_items_are_blender_properties():
     assert space.show_extrapolation is False
     menu_sets.set_prop(ctx, "space_data.use_normalization", {"value": True})
     assert space.use_normalization is True
+    # #43 (store review): a menu item never writes Blender's preferences
     edit = bpy.context.preferences.edit
     old = edit.keyframe_new_interpolation_type
-    try:
-        menu_sets.set_prop(bpy.context, "preferences.edit.keyframe_new_interpolation_type", {"value": 'LINEAR'})
-        assert edit.keyframe_new_interpolation_type == 'LINEAR'
-    finally:
-        edit.keyframe_new_interpolation_type = old
+    menu_sets.set_prop(bpy.context, "preferences.edit.keyframe_new_interpolation_type",
+                       {"value": 'LINEAR' if old != 'LINEAR' else 'BEZIER'})
+    assert edit.keyframe_new_interpolation_type == old
+    assert menu_map.spec("Graph Editor/Tangents/Default In Tangent/Linear")[1] == "screen.userpref_show"
     assert menu_map.spec("Graph Editor/View/Infinity") == ("prop", "space_data.show_extrapolation", {})
 
 

@@ -171,9 +171,12 @@ def draw_spec(layout, label, s, path, icon='NONE'):
 
 
 def prop_owner(context, target):
-    """(owner, attribute) of a ``("prop", target)`` mapping: a path from the context ("space_data.show_handles",
-    "preferences.edit.keyframe_new_handle_type"), "addon_prefs.<name>" = this add-on's preferences."""
+    """(owner, attribute) of a ``("prop", target)`` mapping: a path from the context ("space_data.show_handles"),
+    "addon_prefs.<name>" = this add-on's preferences. Blender's own preferences are never a target (store review,
+    #40 / #43): such a path has no owner."""
     *parents, attr = target.split(".")
+    if parents and parents[0] == "preferences":
+        return None, attr
     if parents and parents[0] == "addon_prefs":
         from .. import preferences
         owner, parents = preferences.get(context), parents[1:]

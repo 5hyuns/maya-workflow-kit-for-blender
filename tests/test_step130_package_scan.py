@@ -271,3 +271,20 @@ def test_scanner_catches_known_violations():
     assert not _violations("t", "x.py", ok), _violations("t", "x.py", ok)
     assert not _violations("t", "ui/menu_map.py", "MAP = {'File/Save Preferences': 'wm.save_userpref'}\n")
     assert _violations("t", "ui/other.py", "MAP = {'x': 'wm.save_userpref'}\n")
+
+
+def test_no_menu_item_targets_blender_preferences():
+    """#43: a Maya menu item may open Blender's Preferences, never write them ("preferences.<section>..." data paths)."""
+    import re
+    root = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "allset")
+    bad = []
+    pat = re.compile(r"""["']preferences\.(edit|view|inputs|system|filepaths|keymap|experimental|apps|extensions)\.""")
+    for d, _s, fs in os.walk(root):
+        for f in fs:
+            # keymap/ic_*.py = Blender's own Industry Compatible data (its NDOF sensitivity keys are Blender's)
+            if f.endswith(".py") and not (os.path.basename(d) == "keymap" and f.startswith("ic_")):
+                path = os.path.join(d, f)
+                for n, line in enumerate(open(path, encoding="utf-8"), 1):
+                    if pat.search(line):
+                        bad.append(f"{os.path.relpath(path, root)}:{n}: {line.strip()}")
+    assert not bad, chr(10).join(bad)

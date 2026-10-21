@@ -46,16 +46,10 @@ TANGENT_KINDS = {"Spline": "SPLINE", "Linear": "LINEAR", "Clamped": "CLAMPED", "
                  "Stepped Next": "STEPPED_NEXT", "Flat": "FLAT", "Fixed": "FIXED", "Plateau": "PLATEAU"}
 AUTO_KINDS = ("Auto Span (Legacy)", "Auto Ease", "Auto Mix", "Auto Custom")
 
-# Default In / Out Tangent -> Blender's one default for new keys (Preferences > Animation > F-Curves).
-_EDIT = "preferences.edit"
-DEFAULT_TANGENT = {
-    **{label: (f"{_EDIT}.keyframe_new_handle_type", 'AUTO_CLAMPED') for label in AUTO_KINDS},
-    "Spline": (f"{_EDIT}.keyframe_new_handle_type", 'AUTO'),
-    "Clamped": (f"{_EDIT}.keyframe_new_handle_type", 'AUTO_CLAMPED'),
-    "Plateau": (f"{_EDIT}.keyframe_new_handle_type", 'AUTO_CLAMPED'),
-    "Linear": (f"{_EDIT}.keyframe_new_interpolation_type", 'LINEAR'),
-    "Stepped": (f"{_EDIT}.keyframe_new_interpolation_type", 'CONSTANT'),
-}
+# Default In / Out Tangent: Blender keeps the default for new keys in Preferences > Animation > F-Curves. The kit
+# writes no preference (store review, #40 / #43): the items open that page and the user picks the value there.
+_PREFS_ANIMATION = ("screen.userpref_show", {"section": 'ANIMATION'})
+DEFAULT_TANGENT_LABELS = (*AUTO_KINDS, "Spline", "Clamped", "Plateau", "Linear", "Stepped")
 
 
 def _tangents_menu(ed):
@@ -65,7 +59,7 @@ def _tangents_menu(ed):
         m.update({f"{ed}/Tangents/{sub}/Auto/{label}": _tangent("AUTO", side) for label in AUTO_KINDS})
         m.update({f"{ed}/Tangents/{sub}/{label}": _tangent(kind, side) for label, kind in TANGENT_KINDS.items()})
     for sub in ("Default In Tangent", "Default Out Tangent"):
-        m.update({f"{ed}/Tangents/{sub}/{label}": _prop(*target) for label, target in DEFAULT_TANGENT.items()
+        m.update({f"{ed}/Tangents/{sub}/{label}": _PREFS_ANIMATION for label in DEFAULT_TANGENT_LABELS
                   if not (label == "Stepped" and sub == "Default In Tangent")})   # Maya has no stepped in-tangent
     m[f"{ed}/Tangents/Break Tangents"] = _tangent("BREAK")
     m[f"{ed}/Tangents/Unify Tangents"] = _tangent("UNIFY")
@@ -178,8 +172,9 @@ MAP = {
     f"{GE}/View/Frame/Frame Playback Range": "anim.scene_range_frame",
     f"{GE}/View/Center Current Time": "allset.graph_center_time",
     f"{GE}/View/Infinity": _prop(f"{_SP}.show_extrapolation"),
-    f"{GE}/View/Keys/Always": _prop(f"{_EDIT}.show_only_selected_curve_keyframes", False),
-    f"{GE}/View/Keys/Active Only": _prop(f"{_EDIT}.show_only_selected_curve_keyframes", True),
+    # Blender's "Only Selected Curve Keyframes" is a preference (#43): open it, don't write it
+    f"{GE}/View/Keys/Always": _PREFS_ANIMATION,
+    f"{GE}/View/Keys/Active Only": _PREFS_ANIMATION,
     f"{GE}/View/Tangents/Always": _prop(f"{_SP}.use_only_selected_keyframe_handles", False),
     f"{GE}/View/Tangents/Never": _prop(f"{_SP}.show_handles", False),
     f"{GE}/View/Tangents/On Active Keys": _prop(f"{_SP}.use_only_selected_keyframe_handles", True),

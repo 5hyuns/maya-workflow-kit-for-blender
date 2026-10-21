@@ -583,8 +583,8 @@ MAP.update({
     "Modify/Convert/Bezier Curve to NURBS": ("curve.spline_type_set", {"type": 'NURBS'}),
     "Modify/Evaluate Nodes/Evaluate All": ("allset.menu_note", {"item": "Modify/Evaluate Nodes/Evaluate All"}),
     # Display
-    "Display/Heads Up Display/Frame Rate": ("wm.context_toggle",
-                                            {"data_path": "preferences.view.show_playback_fps"}),
+    # Blender's playback frame rate display is a preference (#43): open it, don't write it
+    "Display/Heads Up Display/Frame Rate": ("screen.userpref_show", {"section": 'VIEWPORT'}),
     "Display/Heads Up Display/Object Details": _hud("space_data.overlay.show_stats"),
     "Display/Heads Up Display/Selection Details": _hud("space_data.overlay.show_stats"),
     "Display/Toggle Show/Hide": ("allset.visibility", {"action": 'TOGGLE'}),
