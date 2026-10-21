@@ -680,7 +680,7 @@ def draw_handle(layout, context=None, tabs=False):
         current = current_tab(context.window_manager)
         for kind in stack_tabs(context.window_manager):
             tab = row.row(align=True)
-            tab.ui_units_x = math.ceil(text_units(context, LABELS[kind], TAB_PAD))
+            tab.ui_units_x = text_units(context, LABELS[kind], TAB_PAD)
             tab.operator(ALLSET_OT_dock_tab.bl_idname, text=LABELS[kind], depress=(kind == current)).kind = kind
 
 
