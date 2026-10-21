@@ -905,3 +905,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 135 WIDTH, #60) Windows 100 % / 125 % / 150 % (또는 Preferences > Interface > Resolution Scale 1.0 / 1.25 / 1.5) 에서 새 Maya 장면을 열고 마우스를 가만히 둔다: 오른쪽 탭 스택 폭이 약 466 / 574 / 672 px 로 맞춰지고 (커서가 잠깐 영역 틈으로 갔다 돌아옴), 탭 「Channel Box / Layer Editor」 「Attribute Editor」 「Modeling Toolkit」 이 「…」 없이 보이는지 (레인 CB 의 자연 폭 탭과 병합 뒤), 큐브를 만들면 「Subdivisions Height」 가 잘리지 않는지, AE 탭의 메뉴 줄 (List … Help) 이 한 줄인지. 뷰포트가 아웃라이너와 독 사이 남은 폭을 다 차지하는지.
 - [ ] (step 135) 맞춘 뒤 독 왼쪽 모서리를 직접 끌어 좁히거나 넓혀도 다시 되돌아가지 않는지 (#53 규칙), Tool Settings 를 열고 닫아도 뷰포트 폭이 그대로인지, UI 배율을 바꾸면 다시 맞춰지는지.
+
+## Step 135 — Channel Box / Layer Editor
+
+- [ ] (step 135 CB, #55) Maya 레이아웃 새 장면, 100 % / 125 % / 150 %: Create > Polygon Primitives > Cube → Channel Box INPUTS 에 `polyCube1` 한 줄만 (접힘), 오른쪽 독 아래 절반에 Layer Editor (Display / Anim 탭, Layers / Options / Help, 빈 목록) 가 보이는지 (Maya `research/maya/screens/11_channel_box.png`).
+- [ ] (step 135) `polyCube1` 을 클릭 → Width … 행이 그 아래 펼쳐지고, Layer Editor 는 같은 자리에 그대로; 다시 클릭 → 접힘. 펼침은 Ctrl+Z 단계를 남기지 않는지 (Ctrl+Z 가 큐브 생성을 되돌림).
+- [ ] (step 135) 펼친 채 두 번째 큐브를 만들거나 다른 오브젝트를 고른 뒤 첫 큐브로 돌아오면 다시 접혀 있는지 (Maya `cb135/d04_first_again.png`). 압출 (polyExtrudeFace1), modifier, 제약 노드도 접힌 채 시작하는지.
+- [ ] (step 135) INPUTS 를 여러 개 펼쳐 Channel Box 가 길어지면: 마지막 줄에 ▲ ▼ 단추, Channel Box 위에서 마우스 휠로 행이 스크롤되고 Layer Editor 위의 휠은 Layer Editor 목록에만 작동하는지. Properties 의 modifier 패널 접힘 (show_expanded) 이 Channel Box 클릭으로 바뀌지 않는지.
+- [ ] (step 135) 독 위 탭 줄: 손잡이 「::::::::」 다음에 탭 세 개가 글자 폭대로 왼쪽부터 놓이고 「…」 가 없는지 (100 / 125 / 150 %).
