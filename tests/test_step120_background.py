@@ -83,7 +83,7 @@ def test_color_settings_operator():
     assert abs(kb3.linear_to_srgb(sh.background_color[2]) - 0.4) < 1e-4
     assert bpy.ops.allset.color_settings(background=(0.36, 0.36, 0.36)) == {'FINISHED'}
     assert sh.background_type == 'VIEWPORT' and abs(_display(sh) - 0.36) < 1e-4
-    props = {p.identifier for p in bpy.types.ALLSET_OT_color_settings.bl_rna.properties}
+    props = {p.identifier for p in bpy.ops.allset.color_settings.get_rna_type().properties}
     assert "gradient" not in props and "background" in props
     assert _theme_state() == before
 
