@@ -282,8 +282,8 @@ def in_dock(context):
     space = getattr(context, "space_data", None)
     if space is None or space.type != 'PROPERTIES':
         return False
-    from . import maya_dock
-    return maya_dock.area_role(context) is None
+    from . import hypershade, maya_dock
+    return maya_dock.area_role(context) is None and hypershade.context_pane(context) is None
 
 
 def tool_kind(context):
