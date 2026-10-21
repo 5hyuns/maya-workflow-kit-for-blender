@@ -8,6 +8,15 @@
 > 이름 부분은 위 개정으로 바뀜. 아래의 `maya_kit` / "Maya Kit" 는 step 111 전, "Allset" 은 step 125 전 이름이다. 등록 감사:
 > `docs/distribution/extensions_audit.md`.
 
+> **2026-10-21 첫 심사 결과 (step 130, GitHub #40)**: extensions.blender.org 심사자가 다섯 가지를 요구했다 — `exec` / `eval` 금지,
+> `sys.path` / `sys.modules` 수정 금지, 테마 관련 전부 삭제 (테마는 설명·웹사이트에서 추천만), `user_disabling` 삭제 + 등록한 것은
+> 전부 해제 + 되돌리는 데 추가 조치가 필요한 변경 금지, tags 는 User Interface 만. 그래서 아래 (a) 의 「예외 하나」 (앱 템플릿 복사),
+> 환경설정 프리셋·백업·복원, 테마, 활성 키컨피그 전환은 **모두 없어졌다** (결정 13, `docs/user_decisions.md`): 레이아웃은 현재 파일에
+> 워크스페이스로 append, Maya 키는 애드온 keyconfig 항목, 스크립트는 Text 데이터블록 + `text.run_script`, manifest `tags =
+> ["User Interface"]`, 권한 `files` = "Your shelves and Maya project folders". 「되돌리기」 는 이제 평범한 끄기·Remove 뿐이다 (복원할 것이
+> 없음). 정적 검사 `tests/test_step130_package_scan.py`, 심사자 답글 초안 `docs/distribution/review_reply.md`. 아래 본문은 step 61 의
+> 조사 기록으로 남긴다.
+
 사용자 요청 (2026-10-18): 「나중에 addon이나 exe 설치, 배포가 어떤 방식이 좋을지 고민해 봐라.」
 조사·비교·준비만 했다. **업로드·공개·결제 설정·서명은 하지 않았다** — 결정 항목은 `docs/user_decisions.md` 11.
 조사 날짜 2026-10-18. 출처는 각 줄의 URL (블렌더 매뉴얼 "latest" = 5.2 LTS, 확장 플랫폼 ToS = 2026-08-10 판).
@@ -175,7 +184,8 @@
 
 ## 확인 못 한 것 [U]
 
-- 플랫폼 심사 기간; 그리기 함수 교체·패널 재등록 (ToS 3.9) 과 앱 템플릿 복사를 심사자가 받아들이는지; `files` 권한이 백업 파일에 필요한지.
+- 플랫폼 심사 기간; 그리기 함수 교체·패널 재등록 (ToS 3.9) 을 심사자가 받아들이는지 (첫 심사 (step 130) 에서는 지적되지 않음).
+  앱 템플릿 복사·환경설정 변경·테마는 첫 심사에서 거절됨 → 제거 (결정 13).
 - Autodesk 가 무료 애드온 이름의 "Maya" 를 문제 삼은 사례.
 - Steam 의 Blender 폴더 이름·추가 라이브러리 위치, Store 패키지 이름 (이 PC 에 없음); NSIS 유니코드 세부; Certum 오픈소스 서명 가격.
 - 경쟁 제품 일부 가격 (HardOps/BoxCutter, MACHIN3tools DeusEx: 집계 사이트 값), Gumroad 카드 수수료.

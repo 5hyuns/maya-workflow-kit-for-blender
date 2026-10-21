@@ -101,7 +101,7 @@
   const shots = [...document.querySelectorAll("[data-mode-shot]")];
   const note = document.querySelector("[data-mode-note]");
   const notes = {
-    maya: "Maya mode — same file, Maya layout, keys and colours.",
+    maya: "Maya mode — same file, Maya layout and keys.",
     blender: "Plain Blender — what you have after one click on Blender, or before you choose Maya.",
   };
   opts.forEach((b) => b.addEventListener("click", () => {
