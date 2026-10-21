@@ -551,12 +551,12 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
 def list_rows(context):
     """Layer list rows that fill the dock to the bottom (Maya's Layer Editor pane is the dock's lower part,
     channel_box.CB_SHARE; step 99)."""
-    from .channel_box import CB_SHARE
+    from .channel_box import cb_share
     region = context.region
     if region is None or region.type not in {'UI', 'WINDOW'}:   # the dock is a Properties WINDOW (step 116)
         return 8
     u = round(18.0 * context.preferences.system.ui_scale) + 2 * context.preferences.system.pixel_size
-    return max(3, int((1.0 - CB_SHARE) * region.height / max(u, 1)) - 5)
+    return max(3, int((1.0 - cb_share(region, u)) * region.height / max(u, 1)) - 5)
 
 
 classes = (ALLSET_PG_layer, ALLSET_OT_layer_new, ALLSET_OT_layer_assign, ALLSET_OT_layer_select,

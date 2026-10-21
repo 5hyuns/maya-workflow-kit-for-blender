@@ -9,7 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, dock_region, ev, find_button, run, screenshot, setup, step, tap  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, run, screenshot, setup, step, tap  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -59,6 +59,18 @@ def s_inputs_shot():
     shot("gui_step129_cylinder_inputs.png")
     ob = bpy.data.objects[C["ob"]]
     check(f"Create > Cylinder: {C['ob']} with Maya's 42 vertices (caps = centre fans)", len(ob.data.vertices) == 42)
+
+
+@step
+def s_open_cylinder_node():
+    open_inputs("polyCylinder1")   # step 135: INPUTS nodes start collapsed (Maya)
+    for a in bpy.context.window.screen.areas:
+        a.tag_redraw()
+
+
+@step
+def s_wait_open_cylinder():
+    pass
 
 
 step(find_button(dock, lambda path, _cmd: path.endswith("subdivisionsCaps_text"), C, "caps", x_frac=0.8,
@@ -135,6 +147,18 @@ def s_undone():
 @step
 def s_wait2():
     redraw()
+
+
+@step
+def s_open_circle_node():
+    open_inputs("makeNurbCircle1")
+    for a in bpy.context.window.screen.areas:
+        a.tag_redraw()
+
+
+@step
+def s_wait_open_circle():
+    pass
 
 
 step(find_button(dock, lambda path, _cmd: path.endswith("sections_text"), C, "sections", x_frac=0.8, step_px=8))

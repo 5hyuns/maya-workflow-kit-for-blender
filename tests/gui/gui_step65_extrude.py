@@ -11,7 +11,7 @@ import bmesh
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, view3d, win  # noqa: E402
+from sim import check, dock_area, dock_region, ev, find_button, open_inputs, px, run, screenshot, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -179,6 +179,17 @@ def dock():
 @step
 def s_shot_thickness():
     shot("gui_step65_thickness.png")
+    redraw()
+
+
+@step
+def s_open_extrude_node():
+    open_inputs("polyExtrudeFace1")   # step 135: INPUTS nodes start collapsed (Maya)
+    redraw()
+
+
+@step
+def s_wait_open_extrude():
     redraw()
 
 

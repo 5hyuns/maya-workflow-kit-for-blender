@@ -16,7 +16,7 @@ from sim import MODULE, check, dock_area, ev, find_button, run, screenshot, setu
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 os.environ["ALLSET_FIT_WARP"] = "1"   # the dock / column fit as on a user's screen (step 132)
 C = {}
-GUI_TIMEOUT = 240
+GUI_TIMEOUT = 480
 
 
 def mod(name):
@@ -97,8 +97,37 @@ def s_wait():
     redraw()
 
 
-step(find_button(dock, le_tab, C, "le_tab", x_frac=0.15, step_px=3))
-step(find_button(dock, toggle_btn, C, "node", x_frac=0.15, step_px=3))
+step(find_button(dock, le_tab, C, "le_tab", x_frac=0.15, step_px=5))
+
+
+@step
+def s_scroll_to_inputs():
+    """A short dock (1600x900 at 1.25 / 1.5) scrolls the Channel Box part to show INPUTS — wheel it down like a user;
+    the wheel passes through when nothing overflows (step 135)."""
+    area, region = dock()
+    x = region.x + region.width // 2
+    y = region.y + region.height - int(region.height * 0.25)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    C["inputs_wheel"] = (x, y)
+    redraw()
+
+
+def _wheel_once():
+    x, y = C["inputs_wheel"]
+    ev('WHEELDOWNMOUSE', 'PRESS', x=x, y=y)    # one per tick: wheel events queued in one tick count once
+    redraw()
+
+
+for _i in range(5):
+    step(_wheel_once)
+
+
+@step
+def s_wait_scroll():
+    redraw()
+
+
+step(find_button(dock, toggle_btn, C, "node", x_frac=0.15, step_px=5))
 
 
 @step
@@ -163,7 +192,7 @@ def s_wait2():
     redraw()
 
 
-step(find_button(dock, le_tab, C, "le_tab2", x_frac=0.15, step_px=3))
+step(find_button(dock, le_tab, C, "le_tab2", x_frac=0.15, step_px=5))
 
 
 @step
@@ -176,6 +205,10 @@ def s_expanded():
     shot("s135_cube_expanded")
     if C.get("node"):
         ev('MOUSEMOVE', 'NOTHING', x=C["node"][0] + 1, y=C["node"][1])
+
+
+for _i in range(12):         # past the double-click time: a second PRESS this soon is a DOUBLE_CLICK
+    step(redraw)
 
 
 @step
@@ -210,7 +243,7 @@ def s_wait3():
     redraw()
 
 
-step(find_button(dock, le_tab, C, "le_tab3", x_frac=0.15, step_px=3))
+step(find_button(dock, le_tab, C, "le_tab3", x_frac=0.15, step_px=5))
 
 
 @step

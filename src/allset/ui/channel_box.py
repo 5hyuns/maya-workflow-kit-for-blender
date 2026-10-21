@@ -39,6 +39,18 @@ MTK_CATEGORY = "Modeling Toolkit"
 # checked the panes: ChannelBoxForm 299 px / LayerEditorForm 328 px () = 0.48.
 # The split is fixed: a long Channel Box scrolls inside its part (cb135/pass1/c09_long_history.png).
 CB_SHARE = 0.50
+CB_SHARE_MAX = 0.62      # the Layer Editor keeps its tabs, toolbar and a few rows (step 135, delegated)
+CB_LINES = 14            # a cube's collapsed Channel Box: 10 channels, SHAPES + shape, INPUTS + polyCube1
+
+
+def cb_share(region, u):
+    """Share of the dock height above the Layer Editor: Maya's 0.48 (CB_SHARE, 
+    _cb135.json), more on a short dock so a selected primitive's collapsed Channel Box (CB_LINES) still fits
+    without scrolling — fixed for a given dock height, like Maya's split (step 135, delegated)."""
+    if region is None or region.height <= 0 or u <= 0:
+        return CB_SHARE
+    need = (PANE_TOP + 3.0 + CB_LINES * ROW_SCALE) * u
+    return min(CB_SHARE_MAX, max(CB_SHARE, need / region.height))
 
 # key, label, data path, index, kind
 MAIN = (
@@ -1607,11 +1619,11 @@ def as_lines(layout):
 
 
 def window_lines(total, room, first):
-    """(first, limit, overflow) for ``total`` lines in a pane of ``room`` lines: an overflowing pane keeps its last
-    line for the scroll buttons."""
+    """(first, limit, overflow) for ``total`` lines in a pane of ``room`` lines. The scroll buttons sit on the lead's
+    name line (step 135: on the last content line they took the place of the node that was just expanded)."""
     if room is None or total <= room:
         return 0, None, False
-    limit = max(1, room - 1)
+    limit = max(1, room)
     return max(0, min(first, total - limit)), limit, True
 
 
@@ -1634,7 +1646,7 @@ def pane_room(context, units):
     u = _unit(context)
     if u <= 0 or region.height <= 0:
         return None
-    return max(2, int((CB_SHARE * region.height / u - units - PANE_TOP - 0.3) / ROW_SCALE))
+    return max(2, int((cb_share(region, u) * region.height / u - units - PANE_TOP - 0.3) / ROW_SCALE))
 
 
 def node_row(lines, ob, node, label, tip="", active=True):
@@ -1686,7 +1698,7 @@ def over_pane(context, event):
     if _last.get(area.as_pointer(), (0, 0, None))[2] is None:
         return False
     from_top = region.height - event.mouse_region_y
-    return 0 <= from_top <= CB_SHARE * region.height
+    return 0 <= from_top <= cb_share(region, _unit(context)) * region.height
 
 
 class ALLSET_OT_cb_scroll(bpy.types.Operator):
@@ -1876,8 +1888,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         _draw_lines(lines, *args)
         shown = lines.shown
         if over:
-            _scroll_row(col, first, limit, count.n)
-            shown += 1
+            _scroll_row(head, first, limit, count.n)
         _last[ptr] = (first, count.n, limit)
         return units + shown * ROW_SCALE + 0.3
 
@@ -1891,7 +1902,7 @@ def fill_pane(layout, context, units):
     u = _unit(context)
     if u <= 0:
         return
-    gap = CB_SHARE * region.height / u - units - PANE_TOP
+    gap = cb_share(region, u) * region.height / u - units - PANE_TOP
     if gap > 0.25:
         col = layout.column()
         col.scale_y = gap

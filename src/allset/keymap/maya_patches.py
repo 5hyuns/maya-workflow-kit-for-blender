@@ -318,8 +318,10 @@ def patch_cb_slider(kd):
     # The Channel Box part of the dock scrolls by itself, the Layer Editor below stays (Maya's fixed split, step 135
     # #55); passes through outside an overflowing Channel Box
     for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
-        _add(kd, "Property Editor", "allset.cb_scroll", make_event(wheel), first=True,
-             shadows=("View2D Buttons List",))
+        # the region's "View2D Buttons List" handler runs before "Property Editor" (buttons_main_region_init adds
+        # it first) and scrolls the whole region on the wheel, so the item sits first in that keymap
+        _add(kd, "View2D Buttons List", "allset.cb_scroll", make_event(wheel), first=True,
+             shadows=("View2D Buttons List",))   # first + PASS_THROUGH over view2d.scroll_up / _down
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB ----

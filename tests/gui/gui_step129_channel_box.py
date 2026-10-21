@@ -64,12 +64,14 @@ def s_wait():
     redraw()
 
 
-# names: a sweep down the left part of the dock; fields: down the right part
-step(find_button(dock, lambda p, _c: p.endswith("allset_cb.tx_sel"), C, "tx_name", x_frac=0.3, step_px=4))
-step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sz_sel"), C, "sz_name", x_frac=0.3, step_px=4))
+# fields: a sweep down the right part of the dock; names: along each field's row (step 135: the dock width
+# follows the UI scale, so the name column is no longer at a fixed fraction of it)
 step(find_button(dock, lambda p, _c: p.endswith("allset_cb.tx_text"), C, "tx_field", x_frac=0.7, step_px=4))
 step(find_button(dock, lambda p, _c: p.endswith("allset_cb.rz_text"), C, "rz_field", x_frac=0.7, step_px=4))
 step(find_button(dock, lambda p, _c: p.endswith("allset_cb.ty_text"), C, "ty_field", x_frac=0.7, step_px=4))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sz_text"), C, "sz_field", x_frac=0.7, step_px=4))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.tx_sel"), C, "tx_name", y_from="tx_field", step_px=8))
+step(find_button(dock, lambda p, _c: p.endswith("allset_cb.sz_sel"), C, "sz_name", y_from="sz_field", step_px=8))
 
 
 @step
