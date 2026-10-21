@@ -71,7 +71,7 @@ BY_COMMAND = {
     "FlipTriangleEdge": ("mesh.edge_rotate", 'MOD_TRIANGULATE'),
     "DuplicateFace": (("v3d", "mesh.duplicate_move", {}), 'DUPLICATE'),
     "PolygonCollapse": ("mesh.edge_collapse", 'FULLSCREEN_EXIT'),
-    "dR_multiCutTool": (("tool", "builtin.knife", True), 'SCULPTMODE_HLT'),
+    "dR_multiCutTool": (("tool", "allset.multi_cut_tool", True), 'SCULPTMODE_HLT'),
     "MergeVertexTool": (("tool", "allset.target_weld_tool", True), 'AUTOMERGE_OFF'),   # Target Weld (step 64)
     "dR_quadDrawTool": (("tool", "builtin.poly_build", True), 'MESH_DATA'),
     "TextureViewWindow": (("allset.hb_pane", {"ui_type": 'UV'}), 'UV'),

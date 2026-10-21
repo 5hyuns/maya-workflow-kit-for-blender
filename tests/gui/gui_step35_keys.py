@@ -83,8 +83,8 @@ def s_ctrl_t():
 
 @step
 def s_multicut():
-    check(f"Ctrl+Shift+X -> Multi-Cut (knife) in edit mode ({bpy.context.mode}, {tool()})",
-          bpy.context.mode == 'EDIT_MESH' and tool() == "builtin.knife")
+    check(f"Ctrl+Shift+X -> Multi-Cut in edit mode ({bpy.context.mode}, {tool()})",
+          bpy.context.mode == 'EDIT_MESH' and tool() == "allset.multi_cut_tool")
     tap('W')
 
 
@@ -100,7 +100,7 @@ def s_y():
 
 @step
 def s_y_done():
-    check(f"Y -> back to the last non-QWER tool ({tool()})", tool() == "builtin.knife")
+    check(f"Y -> back to the last non-QWER tool ({tool()})", tool() == "allset.multi_cut_tool")
     tap('W')
     bpy.ops.object.mode_set(mode='OBJECT')
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])

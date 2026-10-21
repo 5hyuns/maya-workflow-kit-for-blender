@@ -93,6 +93,9 @@ def reset_tool(context):
     kind = KINDS.get(tool.idname)
     if kind is not None:
         reset_maya_options(context, kind)
+    from ..operators import multi_cut
+    if tool.idname == multi_cut.TOOL:       # step 129: Multi-Cut keeps its Maya options on the scene
+        multi_cut.reset_settings(multi_cut.mesh_tools.settings(context))
     return tool.idname, n
 
 

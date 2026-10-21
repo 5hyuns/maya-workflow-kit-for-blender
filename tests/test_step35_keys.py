@@ -26,7 +26,7 @@ def test_bindings():
         assert [i for i, _p in _items(km, 'Y')] == ["allset.last_tool"], km
         knife = _items(km, 'X', shift=True, ctrl=True)
         quad = _items(km, 'Q', shift=True, ctrl=True)
-        assert knife == [("allset.menu_tool", {"tool": "builtin.knife", "edit": True})], (km, knife)
+        assert knife == [("allset.menu_tool", {"tool": "allset.multi_cut_tool", "edit": True})], (km, knife)
         assert quad == [("allset.menu_tool", {"tool": "builtin.poly_build", "edit": True})], (km, quad)
 
 

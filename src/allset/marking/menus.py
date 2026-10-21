@@ -62,7 +62,7 @@ def _comp(kind):
     return ("allset.mm_component", {"type": kind})
 
 
-MULTI_CUT = ("tool", "builtin.knife", True)
+MULTI_CUT = ("tool", "allset.multi_cut_tool", True)     # step 129
 MERGE_CENTER = ("mesh.merge", {"type": 'CENTER'})
 TARGET_WELD = ("tool", "allset.target_weld_tool", True)   # step 64
 CREASE = ("tool", "allset.crease_tool", True)
