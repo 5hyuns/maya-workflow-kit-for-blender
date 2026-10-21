@@ -137,9 +137,9 @@ def test_toggle_pushes_no_undo_step():
 def test_window_lines():
     assert cb.window_lines(10, None, 5) == (0, None, False), "no split: every line"
     assert cb.window_lines(10, 10, 3) == (0, None, False), "fits"
-    assert cb.window_lines(20, 10, 0) == (0, 9, True), "the last line is the scroll row"
-    assert cb.window_lines(20, 10, 50) == (11, 9, True), "clamped at the end"
-    assert cb.window_lines(20, 10, -4) == (0, 9, True)
+    assert cb.window_lines(20, 10, 0) == (0, 10, True), "every line of the pane shows content (buttons on the name line)"
+    assert cb.window_lines(20, 10, 50) == (10, 10, True), "clamped at the end"
+    assert cb.window_lines(20, 10, -4) == (0, 10, True)
 
 
 def test_lines_draw_a_window():
@@ -171,7 +171,8 @@ def test_scroll_operator_clamps():
 def test_wheel_keymap_items():
     patches = import_module(kit.MODULE + ".keymap.maya_patches")
     items = [(km, ev["type"]) for km, idname, ev, _p, _s in patches.ADDED if idname == "allset.cb_scroll"]
-    assert sorted(items) == [("Property Editor", "WHEELDOWNMOUSE"), ("Property Editor", "WHEELUPMOUSE")], items
+    # the region's View2D Buttons List handler runs before Property Editor (it would scroll the whole region)
+    assert sorted(items) == [("View2D Buttons List", "WHEELDOWNMOUSE"), ("View2D Buttons List", "WHEELUPMOUSE")], items
     assert "allset.cb_scroll" in patches.PASS_THROUGH_FIRST
 
 

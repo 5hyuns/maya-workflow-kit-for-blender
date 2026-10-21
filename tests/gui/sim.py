@@ -255,3 +255,18 @@ def maya_kc():
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import kit
     return kit.maya_kc()
+
+
+def open_inputs(*history):
+    """Expand the lead's Channel Box INPUTS nodes (step 135: Maya shows them collapsed until the node name is clicked):
+    every modifier and constraint node, plus the kit history nodes named in ``history`` (polyCube1, polyExtrudeFace1)."""
+    cb = import_module(MODULE + ".ui.channel_box")
+    ob = cb.lead(bpy.context)
+    if ob is None:
+        return
+    keys = [cb.mod_node(m) for m in getattr(ob, "modifiers", ())]
+    keys += [cb.con_node(ob, c) for c in getattr(ob, "constraints", ())]
+    keys += [cb.history_node(name) for name in history]
+    for key in keys:
+        cb.set_open(ob, key)
+    cb.rebuild_rows()

@@ -13,7 +13,7 @@ import bpy
 from bpy_extras import view3d_utils
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, dock_region, ev, find_button, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
+from sim import MODULE, check, dock_area, dock_region, ev, find_button, open_inputs, px, run, screenshot, setup, step, tap, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {"tries": 0}
@@ -284,6 +284,7 @@ def s_not_rotated():
     con = pb.constraints.new('COPY_LOCATION')
     con.target = loc
     cb().rebuild_rows()
+    open_inputs()    # step 135: the constraint node starts collapsed (Maya)
     redraw()
 
 
