@@ -4107,9 +4107,18 @@ def window_with(ui_type):
     return None, None
 
 
+def hs_window():
+    """(window, Graph area) of the Hypershade once its layout is complete (step 131), else (None, None)."""
+    hs = mod("ui.hypershade")
+    for w in bpy.context.window_manager.windows[1:]:
+        if sum(1 for a in w.screen.areas if hs.pane(a)) == 4 and hs.graph_area(w.screen) is not None:
+            return w, hs.graph_area(w.screen)
+    return None, None
+
+
 def hs_ctx():
-    w, a = window_with('ShaderNodeTree')
-    ui = next(r for r in a.regions if r.type == 'UI')
+    w, a = hs_window()
+    ui = next(r for r in a.regions if r.type == 'WINDOW')
     return bpy.context.temp_override(window=w, area=a, region=ui, space_data=a.spaces.active)
 
 
@@ -4141,9 +4150,10 @@ def _m67_2_setup():
 
 @named("m67_2_open")
 def _m67_2_open():
-    w, a = window_with('ShaderNodeTree')
-    if wait(_m67_2_open, lambda: window_with('ShaderNodeTree')[0] is not None):
+    w, a = hs_window()
+    if wait(_m67_2_open, lambda: hs_window()[0] is not None):
         return
+    w, a = hs_window()
     with hs_ctx():
         bpy.ops.allset.hs_create(kind='STANDARD_SURFACE')
     C["newmat"] = bpy.context.window_manager.allset_hs_material
@@ -4165,7 +4175,7 @@ def _m67_2_previews():
     def rendered():
         return all(m.preview is not None and any(list(m.preview.icon_pixels)[::97]) for m in mats)
     if wait(_m67_2_previews, rendered, limit=60):
-        w, a = window_with('ShaderNodeTree')
+        w, a = hs_window()
         for r in a.regions:
             r.tag_redraw()
         return

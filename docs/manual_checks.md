@@ -856,3 +856,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129) 빠르게 끌 때 (한 이벤트에 여러 행) 범위 끝이 마우스 행과 맞는지, 드래그 중 Channel Box 밖으로 나갔다 들어와도 선택이 남는지, 125 % 와 100 % UI 배율.
 - [ ] (step 129) h → Channel Box Visibility off; Channel Box Visibility 0 → Display > Show 로 다시 보임; 레이어 V 끄고 켜도 자기 Visibility 0 인 오브젝트는 숨은 채; 레이어 Template → Normal 뒤 Bounding Box 표시가 그대로인지.
 - [ ] (step 129) Layer Editor: 행의 V / P / T 상자 클릭, 이름 더블클릭 이름 바꾸기, 상자 위 RMB → Maya 레이어 메뉴, 화살표로 순서 이동 (새 레이어가 맨 위). Maya 캡처 `research/maya/screens/le129/le02_dock.png` 와 나란히.
+
+### Step 131 — Hypershade
+
+- [ ] (step 131, #25) Windows > Rendering Editors > Hypershade (그리고 Status Line 아이콘, 핫박스 Windows 메뉴) → 새 창이 Maya 배치로 열리는지: 맨 위 Maya 메뉴 줄 (File … Help), 왼쪽 위 Browser, 오른쪽 위 Material Viewer, 왼쪽 아래 Create, 가운데 Graph (툴바 + "Untitled_1" 탭), 오른쪽 아래 Property Editor. `research/maya/screens/hypershade131/hypershade_graph_screen.png` 와 나란히 (`tmp/hyper131/hypershade_side_by_side.png`). 창을 크게 늘렸을 때 비율이 맞는지 (Blender 영역 경계는 창 크기에 비례).
+- [ ] (step 131) 창이 만들어지는 동안 (한 틱에 한 번 나누기, 약 0.2 s) 깜빡임이 거슬리지 않는지; 125 % / 100 % UI 배율에서 메뉴 줄이 헤더 한 줄 높이로 보이고 (본문이 비치지 않음) 메뉴가 열리는지.
+- [ ] (step 131) Browser 스와치 클릭 → Graph · Material Viewer · Property Editor 가 같은 재질로 바뀌는지; 검색 칸에 글자 입력 시 바로 걸러지는지; Bake Sets / Projects / Asset Nodes 탭, Show, 일시정지 버튼은 회색 + 툴팁 안내.
+- [ ] (step 131) Create: Favorites / Maya / 카테고리 클릭으로 목록이 바뀌는지, 검색 칸으로 전체에서 찾기, Blinn 클릭 = 할당 안 된 새 재질, Checker 클릭 = 현재 재질 그래프에 노드, Point Light = 씬에 라이트; 회색 항목 툴팁.
+- [ ] (step 131) Material Viewer: 모양 (Sphere / Shader Ball …) · World 토글 · EEVEE 미리보기가 그려지는지 (Workbench 면 안내 문구); 미리보기 아래 ::: 로 크기 조절.
+- [ ] (step 131) Graph 툴바: 입력 / 입출력 / 출력 연결 = 네트워크 선택 + 화면 맞춤, Hide / Show connected / Show primary attributes, swatch 토글; 회색 버튼 툴팁. View > Frame All / Frame Selected 가 메뉴 줄이 아니라 Graph 에서 동작하는지.
+- [ ] (step 131) Hypershade 를 연 채 메인 창에서 다시 열기 → 이전 창이 닫히고 새 창이 앞에 하나만; Hypershade 창의 Window > Browser… 는 아무 창도 새로 열지 않음. 파일 저장 → 다시 열기 후에도 패널들이 Hypershade 로 그려지는지 (메뉴 줄 / Graph 인식은 패널 표식 기준).
