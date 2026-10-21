@@ -2,12 +2,18 @@
 
 ## 현재 작업
 
+- Step 132 (0.2.1 출시 준비) 완료 — `docs/steps/step_132.md` (+ `step_132_fix{44,52,53}.md`). #44 Ctrl+N = Maya 새 장면, #52 패널 툴바 »
+  넘침 메뉴, #53 1.25 배율 레이아웃 재맞춤 수정; manifest 0.2.1, CHANGELOG, 스토어 릴리스 노트 `docs/distribution/release_notes_0.2.1.md`,
+  GitHub 초안 릴리스 v0.2.1 (zip 2 개). validate PASS, release_check 4.5 22/22 · 5.2.2 14/14 (잔여 0), 헤드리스 1025/1025, GUI 1302/1302.
+  **사용자 할 일**: 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub 초안 publish.
+  **바로 다음 할 일**: 0.3.0 — #16 #30–#35 (Maya 옵션 창 · 도구), #41 (테마 없이 스토어 미디어 다시 찍기), #54 (남은 아이콘).
+
 - Step 131 (아이콘 #23 + Hypershade #25) 완료 — `docs/steps/step_131.md` (+ `step_131_{icons,shelf,status,toolbox,menu,hypershade}.md`).
   셸프 203 버튼 · Status Line · 패널 툴바 · Tool Box · Layer Editor · 킷 Outliner 행을 Maya 2022 모양으로 다시 그림 (킷이 그린 numpy, 버튼마다
   고유, 16–64 px 힌팅), Maya 메뉴 항목 190 개에 아이콘, 콘택트 시트 `docs/icons/` (`tools/icon_sheet.py`), 고유성 테스트
   `tests/test_step131_icons.py`. Hypershade = Maya 배치의 별도 창 (Browser · Create · Graph · Material Viewer · Property Editor).
   Blender 4.5 `new_triangles` 아이콘 해제 크래시를 .dat 파일로 우회. 헤드리스 1011/1011, GUI 1307/1308 (실패 1 = #53). 후속 #54 (0.3.0).
-  **바로 다음 할 일**: step 132 = 0.2.1 릴리스 준비 (버전 · 변경 기록 · 빌드 · validate · GitHub release 초안) — 그 전에 #53 #52 #44 #41 (모두 마일스톤 0.2.1).
+  (다음은 step 132 였음.)
   손 확인 `docs/manual_checks.md` 「Step 131 — …」.
 
 - Step 130 (스토어 심사 대응 #40) 완료 — `docs/steps/step_130.md` (+ `step_130_*.md`). exec/eval·import 훅·sys.* 0건, 테마 전부 삭제,
