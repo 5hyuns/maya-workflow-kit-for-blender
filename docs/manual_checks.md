@@ -807,3 +807,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 misc — 떼어낸 창 크기, 머티리얼 색, 더블클릭 루프, 오토 키, 키 틱
+
+- [ ] (step 129, #4) 오른쪽 탭 스택의 ::::: 을 눌러 Channel Box / Attribute Editor / Modeling Toolkit 을 떼어 낼 때 창이 내용 높이 (최소 약 200 px, 최대 dock 열 높이) 로 dock 열 위쪽 자리에 뜨고, dock 열이 잠깐 나뉘었다 원래대로 돌아오는 깜빡임이 거슬리지 않는지; 짧은 메뉴 (Cache 등) 의 점선 tear-off 는 작은 창, 긴 메뉴는 열 높이 창. 템플릿 첫 화면에서 처음 나누기 (Tool Settings dock 을 열 때도 같음) 에 셸프 줄 / Tool Box 열이 한 번 다시 맞춰지는지 (기존 동작) 확인.
+- [ ] (step 129, #14) Lambert / Blinn 을 Shift+T 등으로 붙이고 Attribute Editor 의 Color · Transparency 를 바꾸면 기본 5 (Solid / Material) 뷰포트에 바로 그 색 · 투명도가 보이는지; Blender 에서 만든 머티리얼 (키트 밖) 은 Viewport Display 색 그대로인지.
+- [ ] (step 129, #22) 실제 마우스로 엣지 / 버텍스 / 페이스 모드에서 더블클릭 = 루프 (방향은 가까운 엣지), 하나 고르고 같은 줄의 다른 하나를 Shift+더블클릭 = 사이 구간, 다른 줄이면 그 루프 추가. 이벤트 시뮬레이션은 DOUBLE_CLICK 을 못 보내므로 GUI 테스트는 연산자를 직접 부른다.
+- [ ] (step 129, #37) Time Slider 오른쪽 열쇠 버튼 = Auto Key (켜면 빨갛게), 키가 있는 큐브를 다른 프레임에서 움직이면 움직인 채널만 키가 생기는지 (Channel Box 입력도).
+- [ ] (step 129, #38) 현재 프레임에 키가 있으면 플레이헤드 상자 둘레가 빨갛게 보이는지 (Blender 가 상자를 애드온 그림 위에 그려 키 틱이 가려졌음); 다른 프레임의 틱은 1 px 빨간 선.
