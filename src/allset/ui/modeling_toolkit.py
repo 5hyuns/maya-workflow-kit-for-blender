@@ -94,10 +94,6 @@ def _radius_set(self, value):
     self.tool_settings.proportional_size = max(1e-6, value * _units().maya_unit(self))
 
 
-def _soft_prop(context):
-    return "use_proportional_edit_objects" if context.mode == 'OBJECT' else "use_proportional_edit"
-
-
 class ALLSET_OT_soft_select_reset(bpy.types.Operator):
     """Reset soft selection to Maya's factory settings (radius 5 Maya units, Volume, smooth falloff)"""
     bl_idname = "allset.soft_select_reset"
@@ -130,12 +126,12 @@ def draw_soft(layout, context):
     """Maya Soft Selection (Modeling Toolkit and the Tool Settings dock, step 106)."""
     from . import notices
     ts = context.scene.tool_settings
-    prop = _soft_prop(context)
     row = layout.row(align=True)
-    row.prop(ts, prop, text="Soft Select")
+    # One Maya setting for object and component mode (operators/soft_select.py, issue #15).
+    row.prop(context.scene, "allset_soft_select", text="Soft Select")
     notices.tip(row, NOTE)          # Blender explanation as a tooltip, not a sentence (step 106)
     col = layout.column(align=True)
-    col.active = getattr(ts, prop)
+    col.active = context.scene.allset_soft_select
     col.prop(context.scene, "allset_soft_radius")
     row = col.row(align=True)
     row.label(text="Falloff mode")
