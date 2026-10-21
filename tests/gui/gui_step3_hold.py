@@ -32,7 +32,7 @@ def s_setup():
     ts().use_snap, ts().snap_elements = False, {'INCREMENT'}
     ts().use_transform_data_origin = False
     ts().use_proportional_edit_objects, ts().proportional_size = False, 2.0   # a user radius (1.0 = Blender default becomes Maya 5, step 63)
-    check("keymap active = Maya", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
+    check("keymap active = Maya", sys.modules["sim"].maya_keys())
     ev('X', 'PRESS')
 
 

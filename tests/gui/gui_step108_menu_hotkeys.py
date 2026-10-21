@@ -59,7 +59,7 @@ def s_keys():
     # an open tooltip hides the popup menu from screen.screenshot (checked): no tooltips in this session
     bpy.context.preferences.view.show_tooltips = False
     ms = mod(".ui.menu_sets")
-    km = bpy.context.window_manager.keyconfigs.active.keymaps["Window"]
+    km = sys.modules["sim"].maya_kc().keymaps["Window"]
     check("no Shift Ctrl O recent-files key left for Blender to print beside Recent Files",
           not [k for k in km.keymap_items if k.idname == "wm.call_menu" and k.type == 'O' and k.ctrl and k.shift])
     del ms

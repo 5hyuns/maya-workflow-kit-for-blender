@@ -242,3 +242,16 @@ def run(interval=0.4, first=2.0):
         return None
     # persistent: survive wm.read_homefile (loading the app template)
     bpy.app.timers.register(tick, first_interval=first, persistent=True)
+
+
+def maya_keys():
+    """Maya keymap on (step 130: add-on keymap items, the active keyconfig stays Blender's)."""
+    kc = bpy.context.window_manager.keyconfigs.active
+    return import_module(MODULE + ".keymap").is_applied() and kc is not None and kc.name == "Blender"
+
+
+def maya_kc():
+    """The Maya keymap view tests read (tests/kit.py ``maya_kc``)."""
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import kit
+    return kit.maya_kc()

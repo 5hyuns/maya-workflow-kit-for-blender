@@ -51,7 +51,7 @@ def s_setup():
     C["scene"] = scene_state()
     C["ws"] = win().workspace.name
     check(f"enabled = Maya mode ({sw().is_on()}, keymap {bpy.context.window_manager.keyconfigs.active.name})",
-          sw().is_on() and bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
+          sw().is_on() and sys.modules["sim"].maya_keys())
     redraw()
 
 
@@ -82,7 +82,7 @@ def s_maya():
     kcs = bpy.context.window_manager.keyconfigs
     ws = win().workspace
     check(f"Ctrl+Alt+Shift+M again -> Maya mode (keymap {kcs.active.name})",
-          sw().is_on() and kcs.active.name == "Maya-style" and hasattr(bpy.types.Scene, "allset_cb"))
+          sw().is_on() and sys.modules["sim"].maya_keys() and hasattr(bpy.types.Scene, "allset_cb"))
     check(f"Maya layout workspace appended and active ({ws.name}, from {ws.get(sw().PREV_KEY)})",
           ws.name == sw().WORKSPACE and ws.get(sw().PREV_KEY) == C["ws"])
     check("objects still untouched", scene_state() == C["scene"])

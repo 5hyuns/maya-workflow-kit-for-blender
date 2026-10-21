@@ -52,7 +52,7 @@ def redraw():
 def s_setup():
     setup()
     bpy.ops.allset.keymap_activate()
-    check("Maya keymap active", bpy.context.window_manager.keyconfigs.active.name == "Maya-style")
+    check("Maya keymap active", sys.modules["sim"].maya_keys())
     C["area"], _r = view3d()
     # --- Text Editor
     text = bpy.data.texts.new("probe")
