@@ -48,6 +48,20 @@ def open_window(context, area):
     return new[0] if new else None
 
 
+
+def _window_alive(ptr):
+    """The window whose ``as_pointer()`` is ``ptr``, or None once it is closed.  A ``bpy.types.Window``
+    kept across timer ticks is NOT invalidated when the window closes: reading ``.screen`` on it then
+    dereferences freed memory and crashes Blender (#36), so timers keep the pointer and look it up again."""
+    wm = getattr(bpy.context, "window_manager", None)
+    if wm is None:
+        return None
+    for w in wm.windows:
+        if w.as_pointer() == ptr:
+            return w
+    return None
+
+
 def sidebar_tab_later(window, category, tries=100):
     """Show the sidebar of ``window``'s only area and make ``category`` its active tab.
 
@@ -57,7 +71,12 @@ def sidebar_tab_later(window, category, tries=100):
     ``show_region_ui`` set inside an operator doesn't stick (step 9): both run from a timer."""
     state = {"n": tries}
 
+    ptr = window.as_pointer()
+
     def tick():
+        window = _window_alive(ptr)
+        if window is None:
+            return None
         try:
             area = window.screen.areas[0]
             space = area.spaces.active
@@ -87,7 +106,12 @@ def properties_tab_later(window, tab, tries=40):
     list until it has drawn, so the assignment is retried from a timer (step 67, checked: it stayed OBJECT)."""
     state = {"n": tries}
 
+    ptr = window.as_pointer()
+
     def tick():
+        window = _window_alive(ptr)
+        if window is None:
+            return None
         # Reading ``space.context`` before the tab list exists prints an rna enum WARN (step 98), so only a
         # successful assignment is read back.
         try:
