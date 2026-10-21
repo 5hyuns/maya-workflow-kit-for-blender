@@ -47,6 +47,55 @@ class ALLSET_OT_tumble(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Alt+RMB dolly (#51) -----------------------------------------------------------------
+# Maya dollies with a left / right drag. Blender's view3d.zoom reads the drag axis from the
+# user preferences (Vertical by default), which the kit no longer writes (step 130, #40), so the drag is read here.
+DOLLY_PX_PER_DOUBLING = 150.0     # px of drag (at UI scale 1) that halve / double the view distance (delegated)
+
+
+def dolly_distance(distance0, dx, dy, ui_scale=1.0):
+    """View distance after a dolly drag of (dx, dy) px from ``distance0``: right (or up) = in."""
+    step = (dx + dy) / (DOLLY_PX_PER_DOUBLING * max(ui_scale, 0.1))
+    return distance0 * (2.0 ** -step)
+
+
+class ALLSET_OT_dolly(bpy.types.Operator):
+    """Dolly the view in / out with a left / right drag (Maya Alt+RMB)"""
+    bl_idname = "allset.dolly"
+    bl_label = "Dolly"
+    bl_options = {'GRAB_CURSOR', 'BLOCKING'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region_data is not None
+
+    def invoke(self, context, event):
+        rv3d = context.region_data
+        if rv3d.view_perspective == 'CAMERA':
+            camera_navigation(context)           # through a camera: Blender's zoom moves it (#9)
+            bpy.ops.view3d.zoom('INVOKE_DEFAULT')
+            return {'FINISHED'}
+        self._start = (event.mouse_x, event.mouse_y)
+        self._d0 = rv3d.view_distance
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        rv3d = context.region_data
+        if event.type == 'MOUSEMOVE':
+            dx = event.mouse_x - self._start[0]
+            dy = event.mouse_y - self._start[1]
+            rv3d.view_distance = dolly_distance(self._d0, dx, dy, context.preferences.system.ui_scale or 1.0)
+            context.area.tag_redraw()
+        elif event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
+            return {'FINISHED'}
+        elif event.type == 'ESC' and event.value == 'PRESS':
+            rv3d.view_distance = self._d0
+            context.area.tag_redraw()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
 # --- Alt+Shift drag: tumble / track locked to one axis (step 39) ---------------------
 #  (): the first dominant drag direction (horizontal or
 # vertical) is kept for the whole drag.  「계획」 2.
@@ -579,7 +628,7 @@ class ALLSET_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_tumble, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
+classes = (ALLSET_OT_tumble, ALLSET_OT_dolly, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
            ALLSET_OT_toggle_quad_view, ALLSET_OT_view_home)
 
 

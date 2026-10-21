@@ -476,7 +476,9 @@ def s_h():
 @step
 def s_h_check():
     ob = bpy.data.objects["pCube1"]
-    check("h toggles visibility of the selection (hidden)", ob.hide_get())
+    # step 129 (#26): Maya visibility = hide_viewport (Channel Box Visibility, h, Display > Show)
+    check("h toggles visibility of the selection (hidden)", not ob.visible_get())
+    ob.hide_viewport = False
     ob.hide_set(False)
     only("pCube1")
     ev('ONE', 'PRESS', ctrl=True)
@@ -522,14 +524,14 @@ def s_prev_key():
     check(f"',' steps to the previous key (11 -> {sc.frame_current})", sc.frame_current == 10)
     sc.frame_set(1)
     tap('ESC')   # in case a pie opened (Blender's . / , before step 20)
-    C["gizmo"] = bpy.context.preferences.view.gizmo_size
+    C["gizmo"] = import_module(MODULE + ".ui.manipulator").SIZE[0]   # step 130: kit manipulator size, no preference
     tap('EQUAL')
 
 
 @step
 def s_gizmo_size():
-    check("'=' grows the manipulator", bpy.context.preferences.view.gizmo_size > C["gizmo"])
-    bpy.context.preferences.view.gizmo_size = C["gizmo"]
+    check("'=' grows the manipulator", import_module(MODULE + ".ui.manipulator").SIZE[0] > C["gizmo"])
+    import_module(MODULE + ".ui.manipulator").SIZE[0] = C["gizmo"]
     tap('ESC')
     only("pCube1")
     C["mode"] = bpy.context.mode + " modal " + str([op.bl_idname for op in win().modal_operators])
