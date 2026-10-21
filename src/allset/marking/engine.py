@@ -271,25 +271,28 @@ def _column_boxes(rows):
     return [_bbox(cols[k]) for k in sorted(cols)]
 
 
-def _off_bands(rect, edges, x0, y0, x1, y1):
-    """Offset that moves one (radial) box off the bands it overlaps, inside the bounds: the shortest way, towards
-    the ring centre (0, 0) when two are as short."""
-    hits = [b for b in edges if _overlaps(rect, b)]
-    if not hits:
+def _off_bands(rect, edges, x0, y0, x1, y1, others=()):
+    """Offset that moves one (radial) box off the bands it overlaps, inside the bounds and clear of ``others`` (the
+    boxes already placed): the shortest way, towards the ring centre (0, 0) when two are as short. Candidates put a
+    box side against a band side, so a box between two close borders jumps over the nearer one."""
+    if not any(_overlaps(rect, b) for b in edges):
         return 0.0, 0.0
-    cands = []
-    for b in hits:
+    xs, ys = {0.0}, {0.0}
+    for b in edges:
         if _horizontal(b):
-            cands += [(0.0, b[1] - rect[3]), (0.0, b[3] - rect[1])]
+            ys.update((b[1] - rect[3], b[3] - rect[1]))
         else:
-            cands += [(b[0] - rect[2], 0.0), (b[2] - rect[0], 0.0)]
+            xs.update((b[0] - rect[2], b[2] - rect[0]))
+    xs.update((x0 - rect[0], x1 - rect[2]))
+    ys.update((y0 - rect[1], y1 - rect[3]))
     mx, my = (rect[0] + rect[2]) / 2, (rect[1] + rect[3]) / 2
 
     def cost(d):
         return (abs(d[0]) + abs(d[1]), math.hypot(mx + d[0], my + d[1]))
-    for dx, dy in sorted(cands, key=cost):
+    for dx, dy in sorted(((dx, dy) for dx in xs for dy in ys), key=cost):
         r = (rect[0] + dx, rect[1] + dy, rect[2] + dx, rect[3] + dy)
-        if r[0] >= x0 and r[2] <= x1 and r[1] >= y0 and r[3] <= y1 and not any(_overlaps(r, b) for b in edges):
+        if (r[0] >= x0 - 1e-6 and r[2] <= x1 + 1e-6 and r[1] >= y0 - 1e-6 and r[3] <= y1 + 1e-6
+                and not any(_overlaps(r, b) for b in edges) and not any(_overlaps(r, o) for o in others)):
             return dx, dy
     return 0.0, 0.0
 
@@ -335,12 +338,18 @@ def _settle_list(rows, top, floor, x0, x1, gap_unit, edges, center=None, lift=No
     for x in sorted(cands, key=lambda v: abs(v - want)):
         if place(x)[1]:
             return
-    # no place clear of the vertical bands: as without them (cut by a border line, but inside the window)
-    _flow(rows, top, floor, w, gap_unit, hbands, want)
-    lo, _y0, hi, _y1 = _bbox(rows)
-    d = _slide(lo, hi, x0, x1)
-    for it in rows:
-        _move(it, d, 0.0)
+    # No place clear of the vertical bands (more columns than the free spans between borders hold): side by side
+    # inside the window where the fewest rows cross a vertical border line, nearest to ``want`` among those.
+    best = None
+    for x in sorted(cands | {want}, key=lambda v: abs(v - want)):
+        _flow(rows, top, floor, w, gap_unit, hbands, x)
+        lo, _y0, hi, _y1 = _bbox(rows)
+        x += _slide(lo, hi, x0, x1)
+        _flow(rows, top, floor, w, gap_unit, hbands, x)
+        crossed = sum(1 for it in rows if any(_overlaps(it.rect, b) for b in vbands))
+        if best is None or crossed < best[0]:
+            best = (crossed, x)
+    _flow(rows, top, floor, w, gap_unit, hbands, best[1])
 
 
 def fit_ring(layout, center, bounds, edges=()):
@@ -353,10 +362,12 @@ def fit_ring(layout, center, bounds, edges=()):
     cx, cy = center
     x0, y0, x1, y1 = bounds[0] - cx, bounds[1] - cy, bounds[2] - cx, bounds[3] - cy  # centre-relative
     edges = _rel_edges(edges, cx, cy)
+    placed = []
     for it in layout.radial.values():
         _move(it, _slide(it.rect[0], it.rect[2], x0, x1), _slide(it.rect[1], it.rect[3], y0, y1))
         if edges:
-            _move(it, *_off_bands(it.rect, edges, x0, y0, x1, y1))
+            _move(it, *_off_bands(it.rect, edges, x0, y0, x1, y1, placed))
+            placed.append(it.rect)
     rows = [it for it in layout.items if it.kind == "list"]
     if not rows:
         return
