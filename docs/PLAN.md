@@ -667,3 +667,87 @@ message that told users to import .ma.
 10. **Menu hotkey labels** and menu look (#12, #14).
 11. **Shelves**: Maya order with greyed placeholders, Sculpting brushes, icon look (#7).
 12. **Modeling / rigging function gaps** measured with mayapy (#23, #28).
+
+## 재점검 8차 (step 133, 2026-10-22 — 사용자 지시의 「재점검 7차」)
+
+User request: audit again — dogfood in a clean install, collect what is left, implementation rate, priorities, backlog; criterion
+"default Maya with Blender features attached", differences only. The PLAN already has 「재점검 7차(정밀 비판)」 (step 98), so this
+one is numbered 8 (delegated). Evidence: `docs/steps/step_133.md` + lane files `step_133_ui.md` (look / keys vs the Maya pairs),
+`step_133_work.md` (workflows vs Maya 2022 / mayapy), `step_133_quant.md` (counts vs step 98), `step_133_remaining.md` (open items,
+manual checks, blindspots). Grade / score as in step 98 (look / operation / function / missing; daily frequency × severity).
+New bugs are filed, not fixed: **#55–#75** (found-by-audit, milestone 0.3.0).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| 조작 / 단축키 (13) | 12 | 1 — selection modifiers outside the 3D View (no box XOR in UV / Outliner / Graph / Dope Sheet / NLA, no Node Ctrl-marquee) | 0 | 0 |
+| UI (9) | 8 | 1 — **theme**: step 130 removed it (store rule); selection colours, widgets and bars follow the user's theme | 0 | 0 |
+| 개념 (11) | 9 | 0 | 0 | 2 — separate rotate/scale pivots, Y-up |
+| **Total (33)** | **29 (88 %)** | **2** | **0** | **2** |
+
+Audits 1 → 8: 21/8/2/2 → … → 29/2/0/2 (audit 6) → 30/1/0/2 (step 96) → **29/2/0/2** (theme row back to Partial after step 130;
+29/1/0/3 if the store rule is counted as a wall).
+
+### Headline numbers (step 98 → now, `step_133_quant.md`)
+
+| Measure | Step 98 | Now |
+|---|---|---|
+| Menu leaves working | 370 / 1251 (29.6 %) | **587 / 1318 (44.5 %)** |
+| Greyed without a notice | 866 | **0** |
+| Real option windows / dead option boxes | 6 / 323 | 48 paths / **231** (+ 62 "no settings") |
+| Shelf buttons working (203) | 98 drawn | **151** (52 greyed with a notice) |
+| Hotkeys implemented / unreviewed (468) | 155 / 219 | 199 / **0** |
+| Marking-menu entries greyed (410) | 112 | **112 — unchanged** |
+| Live Maya top-level items missing | 64 | 11 |
+| look_compare rects ±10 px (1.0 / 1.25) | 5/12 | 5/12 / 3/12 (tool out of date, #75) |
+| Tests | — | headless **1025/1025**, dogfood **48/48**, console errors 0 |
+| Manual checks | 70 ticked | 499 items, 70 ticked, 429 open (31 obsolete since step 130) |
+
+Menus that did not move since step 98: Control 7 %, Visualize 20 %, nConstraint 0 %, nCache 15 %, Fields/Solvers 37 %, Effects 18 %,
+Texturing 12 %, Render 47 %.
+
+### Top differences (score ≥ 12)
+
+| Score | Grade | Difference | Issue |
+|---|---|---|---|
+| 20 | look | Selection is Blender's orange outline / vertices; Maya lead green + white (theme removed) | (decision 13; backlog 1) |
+| 16 | function | Graph Editor shows metres in the cm scene (0.00–0.05 for 5 cm) | #66 |
+| 16 | function | Render Current Frame does nothing in a new Maya scene (no camera) | #67 |
+| 15 | look | Whole UI in Blender's theme (menus, panels, fields) | decision 13 |
+| 15 | look | Grid nearly invisible, 3D cursor at the origin | #59 |
+| 15 | look/op | Layer Editor squeezed / off screen when an object is selected (INPUTS always expanded) | #55 |
+| 15 | function | 112 marking-menu entries greyed, 25 of them work from the main menus | #74 |
+| 15 | look/op | Z-up | decision 5 (not possible) |
+| 12 | function | Ctrl+N: no Save / Don't Save prompt | #57 |
+| 12 | look/op | Marking-menu lists cut at area borders | #56 |
+| 12 | function | UV > Automatic / Contour Stretch do nothing in object mode | #68 |
+| 12 | function | FBX / ABC / USD / OBJ round trips: Rotate X ±90, Scale 100, extra nodes, names | #69 |
+| 12 | function | Option boxes: 231 dead, 62 "no settings" | #32 #33 #35 |
+| 12 | function | Bevel modal; Insert Edge Loop / Quad Draw are Blender tools; Lattice / Wrap / nonlinear bare | #16 #30 #31 #34 |
+| 12 | look | Opening a .blend shows that file's Blender layout | #63 |
+
+Below 12 (lane files): dock width per UI scale (#60), HUD redo panel after F8–F11 / 3 (#58), faceted smooth preview (#61), Edit Mesh
+Connect / Merge / Symmetrize / Smooth results (#70), tool settings reset on New / Open (#64), Ctrl+A in edit / pose mode (#65), Blinn /
+Phong / light decay / render size defaults (#71), RMB list greyed in component mode (#62), Hypershade graph shows Blender nodes,
+UV Editor 88 greyed items, Curves 44 % / Surfaces 20 %, Graph Editor View / Show menus, AE tabs for textures / IK / blendShape /
+cluster, Joint Labelling, field defaults (#72), joint names (#73), undo depth 32 (B6), Channel Box state colours (B5), Time Slider
+ticks, look_compare tool (#75).
+
+### Remaining work, by priority (backlog.json, step 134+)
+
+1. **Maya viewport look without a theme**: kit-fixed lead green / white selection, visible grid, no 3D cursor, no HUD panel after
+   display keys, smooth preview shading (#58 #59 #61 #75).
+2. **Dock / Channel Box**: INPUTS collapsed, Layer Editor always visible, dock width per UI scale (#55 #60).
+3. **Marking menus complete and inside the window** (#56 #62 #74).
+4. **Animation / render basics**: Graph Editor display units, Render Current Frame through persp, Maya material / light / render
+   defaults (#66 #67 #71).
+5. **Scenes and files**: save prompt, Maya layout on Open, global tool settings, FBX / OBJ / ABC / USD round trips (#57 #63 #64 #69).
+6. **Edit Mesh / UV results** measured with mayapy, Bevel non-modal (#70 #68 #16).
+7. **Daily option windows** (#32 #33 #35).
+8. **Keymap / selection batch**: Ctrl+A everywhere, UV zoom axis, undo depth note, Select conversions, joint names, fields (#65 #72 #73).
+9. Later: #30 #31 #34 (Maya tools), #41 (store media without the theme), #54 (icons), Curves / Surfaces / FX / Texturing menus,
+   Hypershade graph nodes, manual-check sweep (delete the 31 obsolete items, sweep the 61 from steps 99–132), selection modifiers
+   outside the 3D View, Maya Animation / Rigging / UV workspaces, 5.x GUI runs.
+10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit's own records, playback
+    Once / Oscillate, .ma / .mb files, a shipped theme or preference presets (store rule, decisions 13 / 14).

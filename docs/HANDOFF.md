@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 133 (재점검 8차 — 사용자 지시의 「재점검 7차」) 완료 — `docs/steps/step_133.md` (+ `step_133_{ui,work,quant,remaining}.md`),
+  PLAN 「재점검 8차」. 헤드리스 1025/1025, dogfood 48/48 (콘솔 오류 0), 구현률 29/2/0/2 (테마 행이 step 130 으로 부분), 메뉴 작동 44.5 %
+  (step 98 29.6 %), 알림 없는 회색 0, 마킹 메뉴 회색 112 그대로. 새 이슈 #55–#75 (0.3.0).
+  **바로 다음 할 일**: backlog.json 8 개 = step 134 Maya 뷰포트 모습 (선택 색 · 그리드 · HUD · 부드러운 미리보기), 135 Dock / Channel Box,
+  136 마킹 메뉴, 137 애니 · 렌더 기본, 138 장면 · 파일, 139 Edit Mesh / UV 결과, 140 옵션 창, 141 키맵 · 선택 묶음.
+  사용자 할 일 (그대로): 스토어에 0.2.1 zip 업로드 + GitHub 초안 publish.
+
 - Step 132 (0.2.1 출시 준비) 완료 — `docs/steps/step_132.md` (+ `step_132_fix{44,52,53}.md`). #44 Ctrl+N = Maya 새 장면, #52 패널 툴바 »
   넘침 메뉴, #53 1.25 배율 레이아웃 재맞춤 수정; manifest 0.2.1, CHANGELOG, 스토어 릴리스 노트 `docs/distribution/release_notes_0.2.1.md`,
   GitHub 초안 릴리스 v0.2.1 (zip 2 개). validate PASS, release_check 4.5 22/22 · 5.2.2 14/14 (잔여 0), 헤드리스 1025/1025, GUI 1302/1302.
