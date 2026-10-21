@@ -474,7 +474,7 @@ def draw_status_line(layout, context, compact=False):
 
     if _group(layout, "FILE"):
         row = layout.row(align=True)
-        _flat(row, "wm.read_homefile", "new")
+        _flat(row, "allset.new_maya_scene", "new")       # new scene in the Maya layout (step 130)
         _flat(row, "allset.open_scene", "open_scene")      # project scenes folder (step 69)
         _flat(row, "allset.save_scene", "save")
         _flat(row, "ed.undo", "undo")

@@ -24,7 +24,7 @@ from bpy.app.handlers import persistent
 from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProperty, IntProperty,
                        StringProperty)
 
-from ..operators import display
+from ..operators import auto_key, display
 from .. import compat
 from . import cb_entry, chrome
 
@@ -412,7 +412,7 @@ def _proxy_get(key):
 def _proxy_set(key):
     def set_(_self, value):
         context = bpy.context
-        autokey = context.scene.tool_settings.use_keyframe_insert_auto
+        autokey = auto_key.enabled(context.scene)
         for ob in targets(context):
             if not has_channel(ob, key) or is_locked(ob, key):
                 continue
@@ -423,11 +423,11 @@ def _proxy_set(key):
 
 
 def auto_keys(ob, key, context=None):
-    """Auto Key keys this channel: keyable, and (Maya, Only Insert Available) already keyed (step 70)."""
-    context = context or bpy.context
+    """Auto Key keys this channel: keyable and (Maya) already keyed (step 70; the kit's own Auto Key since step 130,
+    operators/auto_key.py)."""
     if not is_keyable(ob, key):
         return False
-    return not context.preferences.edit.use_keyframe_insert_available or fcurve(ob, key) is not None
+    return fcurve(ob, key) is not None
 
 
 # --- text entry (step 38) ------------------------------------------------------------------
@@ -452,7 +452,7 @@ def apply_entry(key, text, context=None):
     selected object that has the channel; returns how many values changed."""
     context = context or bpy.context
     scene = context.scene
-    autokey = scene.tool_settings.use_keyframe_insert_auto
+    autokey = auto_key.enabled(scene)
     count = 0
     for k in entry_keys(key, context):
         for ob in targets(context):

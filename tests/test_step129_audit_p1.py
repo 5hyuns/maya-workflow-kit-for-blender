@@ -212,11 +212,10 @@ def _headerless_properties(screen):
 
 def test_switch_to_blender_in_the_template_file():
     # In -b a Window.workspace assignment waits for an event loop that never runs, so this checks the data; the
-    # screen itself is checked by tests/gui/gui_step129_switch_template.py.
+    # screen itself is checked by tests/gui/gui_step129_switch_template.py. Step 130: the Maya layout file is the
+    # bundled one read as a new scene (no app template), File > New stays Blender's.
     sw = _mod("switch")
-    app_template = _mod("app_template")
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
+    _mod("first_start").new_maya_scene()
     win = bpy.context.window_manager.windows[0]
     assert sw.is_on() and sw.is_maya_workspace(win.workspace) and len(_strips(win.screen)) == 2
     n_ws = len(bpy.data.workspaces)
@@ -224,9 +223,8 @@ def test_switch_to_blender_in_the_template_file():
     layouts = [w for w in bpy.data.workspaces if sw.BLENDER_LAYOUT_KEY in w]
     assert len(layouts) == 1 and layouts[0].name == "Layout", [w.name for w in bpy.data.workspaces]
     assert not _strips(layouts[0].screens[0]) and not _headerless_properties(layouts[0].screens[0])
-    assert bpy.context.preferences.app_template == "", "File > New must open Blender's General startup"
+    assert bpy.context.preferences.app_template == ""
     sw.set_mode(True)
-    assert bpy.context.preferences.app_template == app_template.TEMPLATE_ID, "Maya again: File > New = Maya layout"
     sw.set_mode(False)
     assert len(bpy.data.workspaces) == n_ws + 1, "Blender's Layout is appended once and reused"
     bpy.ops.wm.read_homefile()

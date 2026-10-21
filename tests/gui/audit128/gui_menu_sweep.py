@@ -11,7 +11,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sim import MODULE, check, run, setup, step, tap, view3d, win, ev  # noqa: E402
+from sim import MODULE, check, run, setup, step, tap, view3d, win, ev, load_maya_layout  # noqa: E402
 
 GUI_TIMEOUT = 1500
 OUT = os.environ.get("ALLSET_SWEEP_OUT", "")
@@ -99,8 +99,7 @@ def close_extra_windows():
 def s_setup():
     setup()
     bpy.ops.allset.make_maya(open_layout=False)
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

@@ -11,7 +11,7 @@ import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d, region_2d_to_location_3d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -50,8 +50,7 @@ def pixel(img, x, y):
 @step
 def s_setup():
     setup()
-    bpy.ops.allset.layout_install()
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step
