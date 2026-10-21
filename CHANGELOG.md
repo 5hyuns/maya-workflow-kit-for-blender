@@ -67,6 +67,7 @@ those reports (labelled `user-report` on GitHub).
 - Blender 4.5 crashed on quit with the new Tool Box vector icons (fixed before release, step 131).
 - Ctrl+N (New Scene) opens a new scene in the Maya layout again, like File > New Scene (#44).
 - At 125 % UI scale, opening and closing Tool Settings no longer narrows the viewport (#53).
+- The viewport panel toolbar folds the groups that don't fit into a Maya-style » menu, so every button is reachable at 125 % / 150 % (#52).
 
 ## [0.2.0] — 2026-10-19
 
