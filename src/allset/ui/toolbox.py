@@ -96,11 +96,26 @@ def maya_tools(blender_items, mode):
     return out
 
 
+def kit_icons_on(items, context):
+    """The Tool Box column's Maya tools with the kit-drawn Maya icons (step 131, #23): each ToolDef copy names a
+    kit-only icon that ``kit_icons.tool_icon_name`` put into Blender's toolbar icon cache. Only the drawn copy
+    changes (tool switching looks tools up by idname); the last-tool slot and tools without a kit glyph keep
+    Blender's icon."""
+    from . import kit_icons
+    out = []
+    for item in items:
+        name = kit_icons.tool_icon_name(item.idname, context) if item is not None and item.idname in MAYA_TOOLS             else None
+        out.append(item._replace(icon=name) if name else item)
+    return out
+
+
 def _tools_from_context(cls, context, mode=None):
     original = _saved["tools_from_context"].__func__
     if _drawing[0] and mode is None:
         maya = maya_tools(list(original(cls, context)), context.mode)
         if maya is not None:
+            if is_toolbox(context.space_data):
+                maya = kit_icons_on(maya, context)
             yield from maya
             return
     yield from original(cls, context, mode)
@@ -406,13 +421,16 @@ class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
     def draw(self, context):
         col = self.layout.column(align=True)
         col.scale_y = 1.75   # = the tool buttons (ToolSelectPanelHelper.draw_cls scale_y)
-        col.operator(ALLSET_OT_quick_layout.bl_idname, text="", icon='VIEW_PERSPECTIVE').layout = 'SINGLE'
-        col.operator(ALLSET_OT_quick_layout.bl_idname, text="", icon='VIEW_ORTHO').layout = 'FOUR'
+        # kit-drawn Maya layout icons (step 131, #23; Blender's icon until the glyph is made)
+        from .kit_icons import button
+        op = ALLSET_OT_quick_layout.bl_idname
+        button(col, op, "layout:SINGLE", 'VIEW_PERSPECTIVE', text="").layout = 'SINGLE'
+        button(col, op, "layout:FOUR", 'VIEW_ORTHO', text="").layout = 'FOUR'
         sub = col.row()
         sub.enabled = False   # Front/Persp needs a two-pane split: no Blender equivalent
-        sub.operator(ALLSET_OT_quick_layout.bl_idname, text="", icon='SPLIT_VERTICAL').layout = 'FRONT_PERSP'
+        button(sub, op, "layout:FRONT_PERSP", 'SPLIT_VERTICAL', text="").layout = 'FRONT_PERSP'
         col.separator()
-        col.operator("allset.open_editor", text="", icon='OUTLINER').ui_type = 'OUTLINER'
+        button(col, "allset.open_editor", "layout:OUTLINER", 'OUTLINER', text="").ui_type = 'OUTLINER'
 
 
 classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_PT_toolbox_layouts)

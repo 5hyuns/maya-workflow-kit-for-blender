@@ -534,10 +534,12 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
         row = layout.row(align=True)
         row.alignment = 'RIGHT'
         row.emboss = 'NONE'
+        # kit-drawn Maya icons (step 131, #23; Blender's icon until the glyph is made)
+        from .kit_icons import button
         for direction, icon in (("UP", 'TRIA_UP_BAR'), ("DOWN", 'TRIA_DOWN_BAR')):
-            row.operator("allset.layer_move", text="", icon=icon).direction = direction
-        row.operator("allset.layer_new", text="", icon='ADD').selected = False
-        row.operator("allset.layer_new", text="", icon='COLLECTION_NEW').selected = True
+            button(row, "allset.layer_move", f"layer:{direction}", icon, text="").direction = direction
+        button(row, "allset.layer_new", "layer:NEW_EMPTY", 'ADD', text="").selected = False
+        button(row, "allset.layer_new", "layer:NEW_SELECTED", 'COLLECTION_NEW', text="").selected = True
         # Maya shows the (empty) layer list area even with no layers (11b_channel_box_crop.png): an empty
         # list over the scene collection's children (the filter keeps display layers only).
         r = root(scene)
