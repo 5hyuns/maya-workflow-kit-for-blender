@@ -224,8 +224,8 @@ def test_extrude_record_is_a_history_tab():
     rec = Recorder()
     in_view.draw_cb_node(rec, bpy.context, ex.active(bpy.context)[1])
     assert not any("history" in t.lower() for t in rec.texts("label")), rec.texts("label")
-    tips = rec.ops("allset.tip")
-    assert len(tips) == 1 and tips[0].text == in_view.HISTORY_TIP
+    tips = rec.ops("allset.cb_node_toggle")       # the node name expands it (step 135) and carries the notice
+    assert len(tips) == 1 and tips[0].tip == in_view.HISTORY_TIP
     bpy.ops.object.mode_set(mode='OBJECT')
 
 

@@ -148,8 +148,8 @@ def test_input_rows_reach_same_modifier_type():
     for ob in (a, b):
         m = ob.modifiers.new("bevel", 'BEVEL')
         m.segments = 1
-        m.show_expanded = True
     b.modifiers["bevel"].name = "polyBevel2"
+    cb_mod.set_open(a, cb_mod.mod_node(a.modifiers[0]))   # click the node name (step 135)
     cb_mod.rebuild_rows()
     row = cb_mod.row_for(bpy.context, a, "INPUT", "segments", 'BEVEL', 0)
     assert row is not None and row.text == "1", row and row.text
