@@ -1,50 +1,49 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""First start: "Make Blender Maya" in one action, its revert, the welcome dialog and
-starting Blender in the Maya layout (docs/steps/step_42.md).
+"""The Maya layout as a new file, "Make Blender Maya" and starting Blender in the Maya layout (docs/steps/step_42.md,
+reworked in step 130).
 
-- ``allset.make_maya``: install the layout template, Maya theme on, Blender splash off,
-  Maya density / font / aliased wires on (step 44),
-  start-in-Maya-layout on, preferences marked changed (never saved by the kit, step 115), open a new file with the
-  Maya layout.
-- ``allset.revert_maya``: all of it off again (theme and splash setting restored), the
-  template removed; the open file is left alone.
-- The welcome dialog (opt-in) lives in ``welcome.py`` (CORE, step 115).
-- Start in the Maya layout: armed on register, the first load_post (Blender's startup file,
-  loaded right after the add-ons register) switches to the template when Blender started
-  without a file; the first timer tick disarms it, so File > New later is left alone.
+- ``allset.new_maya_scene`` ("New Scene in Maya Layout"): a new untitled file read from the layout file bundled inside
+  the extension (``app_template.STARTUP``) with ``wm.read_homefile(filepath=...)``. Unlike the app template of
+  steps 5–129 nothing is copied into the user's scripts folder, and the preferences are kept (measured, step 130).
+- ``allset.make_maya``: "Start in Maya Layout" on (this add-on's own setting) and the Maya layout now: a new Maya
+  scene when the open file is untouched, else the layout workspace appended to the open file
+  (``switch.enter_layout``). It writes none of Blender's preferences: the Maya theme, splash, density, font, wire,
+  navigation, undo and panel presets of steps 42–112 are gone (docs/user_decisions.md #13).
+- Start in the Maya layout: armed on register, the first load_post (Blender's startup file, loaded right after the
+  add-ons register) opens a new Maya scene when Blender started without a file; the first timer tick disarms it, so
+  File > New later is left alone.
 
-The template has no userpref.blend of its own (it would replace the user's add-on list,
-measured in step 42). Operators never switch templates themselves (Blender crashed reporting
-an operator whose class was re-registered meanwhile): ``open_layout_later`` does it from a
-timer after the operator has returned.
+Operators never load a file themselves (Blender crashed reporting an operator whose class was re-registered
+meanwhile, step 42): ``open_layout_later`` does it from a timer after the operator has returned.
 """
 
 import bpy
 from bpy.app.handlers import persistent
 
-from . import app_template, preferences, prefs_preset
+from . import app_template, preferences
 
 _armed = [False]
 
 
+def new_maya_scene():
+    """Replace the open file with a new untitled file in the Maya layout (not from inside an operator)."""
+    win = _window()
+    if win is None:
+        return bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
+    with bpy.context.temp_override(window=win, screen=win.screen):
+        return bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
+
+
 def make(context, open_layout=True):
-    """Everything "Make Blender Maya" does; returns the installed template folder."""
+    """Everything "Make Blender Maya" does to the kit's own settings; ``open_layout`` also loads a new Maya scene
+    (only outside an operator: use ``open_layout_later`` from one)."""
     prefs = preferences.get(context)
-    dst = app_template.install()
-    prefs.maya_theme = True
-    prefs.maya_hide_splash = True
-    # Widget feel (step 44): Maya pixel density, Segoe UI where installed, aliased wires.
-    prefs.maya_density = True
-    prefs.maya_font = prefs_preset.font_available()
-    prefs.maya_wire = True
     prefs.start_in_maya_layout = True
     prefs.welcome_done = True
-    # No save_userpref (step 115): a template switch doesn't reload the preferences (measured, tmp/probe115), and
-    # Blender saves them on quit when the user's Auto-Save Preferences is on; otherwise the user saves them.
+    # This add-on's own settings changed: marked for Blender's Auto-Save Preferences (never saved by the kit, step 115)
     context.preferences.is_dirty = True
     if open_layout:
-        bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
-    return dst
+        new_maya_scene()
 
 
 def open_layout_later():
@@ -53,61 +52,63 @@ def open_layout_later():
         bpy.app.timers.register(_open_layout, first_interval=0.01)
 
 
-def revert(context):
-    """Undo make(): theme and splash setting restored, start option off, template removed."""
-    prefs = preferences.get(context)
-    prefs.maya_theme = False
-    prefs.maya_hide_splash = False
-    prefs.maya_density = False
-    prefs.maya_font = False
-    prefs.maya_wire = False
-    prefs.start_in_maya_layout = False
-    removed = app_template.remove() if app_template.is_installed() else False
-    context.preferences.is_dirty = True
-    return removed
+def show_layout(window):
+    """The Maya layout in ``window`` now: a new Maya scene when the open file is untouched (later, from a timer),
+    else its layout workspace appended to the open file."""
+    if window is None or bpy.app.background:
+        return
+    if not bpy.data.is_dirty and not bpy.data.filepath:
+        open_layout_later()
+    else:
+        from . import switch
+        switch.enter_layout(window)
 
 
 class ALLSET_OT_make_maya(bpy.types.Operator):
-    """Maya layout, Maya theme and density, no splash screen and start Blender in the Maya layout.
-    Opens a new file with the Maya layout"""
+    """Start Blender in the Maya layout from now on and show the Maya layout: a new Maya scene when the open file
+    is untouched, else the Maya layout added to this file. Blender's preferences are not changed"""
     bl_idname = "allset.make_maya"
     bl_label = "Make Blender Maya"
     bl_options = {'INTERNAL'}
 
     open_layout: bpy.props.BoolProperty(name="Open Maya Layout", default=True, options={'SKIP_SAVE'})
 
+    def execute(self, context):
+        make(context, open_layout=False)
+        if self.open_layout:
+            show_layout(context.window)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_new_maya_scene(bpy.types.Operator):
+    """Start a new file in the Maya layout (centimetre scene, Maya views, Status Line, shelf, Channel Box).
+    Unsaved changes are lost"""
+    bl_idname = "allset.new_maya_scene"
+    bl_label = "New Scene in Maya Layout"
+    bl_options = {'INTERNAL'}
+
     def invoke(self, context, event):
-        if self.open_layout and bpy.data.is_dirty:
+        if bpy.data.is_dirty:
             return context.window_manager.invoke_confirm(
-                self, event, title="Make Blender Maya",
+                self, event, title="New Scene in Maya Layout",
                 message="A new file with the Maya layout replaces the open file (unsaved changes are lost)")
         return self.execute(context)
 
     def execute(self, context):
-        try:
-            make(context, open_layout=False)
-        except (OSError, RuntimeError) as ex:
-            self.report({'ERROR'}, str(ex))
-            return {'CANCELLED'}
-        if self.open_layout:
-            open_layout_later()
+        open_layout_later()
         return {'FINISHED'}
 
 
-class ALLSET_OT_revert_maya(bpy.types.Operator):
-    """Turn off the Maya theme, splash and start options and remove the Maya layout template.
-    The open file is not changed"""
-    bl_idname = "allset.revert_maya"
-    bl_label = "Revert Maya Look"
-    bl_options = {'REGISTER', 'INTERNAL'}
+class ALLSET_OT_maya_layout_here(bpy.types.Operator):
+    """Add the Maya layout to the open file as a workspace and show it (the scenes are not changed)"""
+    bl_idname = "allset.maya_layout_here"
+    bl_label = "Maya Layout in This File"
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        try:
-            revert(context)
-        except (OSError, RuntimeError) as ex:
-            self.report({'ERROR'}, str(ex))
+        from . import switch
+        if switch.enter_layout(context.window) is None and not switch.is_maya_workspace(context.window.workspace):
             return {'CANCELLED'}
-        self.report({'INFO'}, "Maya look reverted")
         return {'FINISHED'}
 
 
@@ -125,17 +126,14 @@ def _on_load_post(*_args):
         prefs = preferences.get()
     except KeyError:
         return
-    if (prefs.start_in_maya_layout and not bpy.data.filepath and not bpy.app.background
-            and bpy.context.preferences.app_template == "" and app_template.is_installed()):
-        bpy.app.timers.register(_open_layout, first_interval=0.01)
+    if prefs.start_in_maya_layout and not bpy.data.filepath and not bpy.app.background:
+        open_layout_later()
 
 
 def _open_layout():
-    win = _window()
-    if win is None:
+    if _window() is None:
         return 0.1
-    with bpy.context.temp_override(window=win, screen=win.screen):
-        bpy.ops.wm.read_homefile(app_template=app_template.TEMPLATE_ID)
+    new_maya_scene()
     return None
 
 
@@ -144,7 +142,7 @@ def _disarm():
     return None
 
 
-classes = (ALLSET_OT_make_maya, ALLSET_OT_revert_maya)
+classes = (ALLSET_OT_make_maya, ALLSET_OT_new_maya_scene, ALLSET_OT_maya_layout_here)
 _timers = (_open_layout, _disarm)
 
 

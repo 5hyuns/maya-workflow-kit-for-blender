@@ -8,7 +8,7 @@ import bpy
 
 MODULE = "bl_ext.user_default.allset"
 addon_utils.enable(MODULE, default_set=True)
-import_module(MODULE + ".switch").set_mode(True, layout=False, theme=False)
+import_module(MODULE + ".switch").set_mode(True, layout=False)
 ms = import_module(MODULE + ".ui.menu_sets")
 md = import_module(MODULE + ".ui.menu_data")
 mm = import_module(MODULE + ".ui.menu_map")

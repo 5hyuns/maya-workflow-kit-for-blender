@@ -1,10 +1,11 @@
-"""Step 60: Maya ⇄ Blender switch and the complete revert (docs/steps/step_60.md 「계획」 5).
+"""Step 60: Maya ⇄ Blender switch (docs/steps/step_60.md 「계획」 5), without any snapshot since step 130.
 
 In one process: factory → the user's own changes (a key edit, theme colour, navigation, splash,
-another add-on) → Maya Workflow Kit on → Make Blender Maya → switch to Blender → everything as before
-→ Maya again → Blender again → as before → disable → as before.
+another add-on) → Maya Workflow Kit on → Make Blender Maya → Blender's preferences unchanged even in Maya mode
+(step 130: nothing to restore) → switch to Blender → everything as before → Maya again → Blender again → as
+before → disable → as before.
 Across processes (saved preferences re-read by a new Blender): the same round trip, the saved
-userpref.blend compared, an interrupted switch (crash) and the extension disabled in Maya mode.
+userpref.blend compared, and the extension disabled in Maya mode.
 """
 
 import json
@@ -54,34 +55,40 @@ def _user_setup():
     addon_utils.enable("node_wrangler", default_set=True)
 
 
+# Keymap state is lane K's (step 130 decision 3: the Maya keys live in the add-on keyconfig); everything else in
+# the preferences must not change even while Maya mode is on.
+KEYMAP_KEYS = ("keymap.active_keyconfig",)
+
+
+def _unchanged_in_maya_mode(before, maya):
+    d = [k for k in set(before["values"]) | set(maya["values"])
+         if before["values"].get(k) != maya["values"].get(k) and k not in KEYMAP_KEYS]
+    assert not d, "Maya mode changed preferences: " + ", ".join(
+        f"{k}: {before['values'].get(k)} -> {maya['values'].get(k)}" for k in sorted(d)[:20])
+    # user_keymaps = the active keyconfig's keymaps with the user's edits: lane K (the active keyconfig) as above
+    for key in ("theme_xml", "theme_filepath", "theme_name", "addons"):
+        assert before[key] == maya[key], f"Maya mode changed {key}"
+
+
 def test_round_trip_in_one_session():
     _user_setup()
     before = dump()
     kit.enable()
     sw = _mod("switch")
-    assert sw.is_on() and sw.has_snapshot(), "fresh install = Maya mode with a snapshot"
-    _mod("first_start").make(bpy.context, open_layout=False)   # Make Blender Maya (theme, splash, density ...)
-    maya = dump()
-    assert maya["active_keyconfig"] == "Maya-style", maya["active_keyconfig"]
-    assert maya["theme_xml"] != before["theme_xml"], "Maya theme not applied"
-    # Marked by name, not by a filepath inside the package: extension removal would reset the
-    # theme after the restore when that file is gone (bl_extension_ops.py:1233-1270).
-    assert maya["theme_name"] == "Studio Grey (Maya-inspired)" and maya["theme_filepath"] == "", \
-        (maya["theme_name"], maya["theme_filepath"])
-    assert maya["values"]["inputs.view_rotate_method"] == "'TURNTABLE'"
+    assert sw.is_on()
+    _mod("first_start").make(bpy.context, open_layout=False)   # Make Blender Maya
+    _unchanged_in_maya_mode(before, dump())
     for n in (1, 2):
         sw.set_mode(False)
         after = dump()
         d = _diff(before, after)
         assert not d, f"switch {n} to Blender left differences:\n" + "\n".join(d[:20])
-        assert not sw.has_snapshot() and not sw.is_on()
+        assert not sw.is_on()
         assert "draw_topbar_switch" in [getattr(f, "__name__", "") for f in
                                         bpy.types.TOPBAR_HT_upper_bar.draw._draw_funcs], "switch gone in Blender mode"
         assert not hasattr(bpy.types.Scene, "allset_cb"), "Maya mode classes still registered"
         sw.set_mode(True)
-        again = dump()
-        assert again["active_keyconfig"] == "Maya-style" and again["theme_xml"] == maya["theme_xml"], \
-            "switching back on is the same Maya setup"
+        _unchanged_in_maya_mode(before, dump())
     kit.disable()
     d = _diff(before, dump())
     assert not d, "disable in Maya mode left differences:\n" + "\n".join(d[:20])
@@ -141,9 +148,9 @@ def test_round_trip_across_restarts():
     cfg = _sandbox()
     a = _session(cfg, "a", "user_setup", "save")
     b = _session(cfg, "b", "enable", "make_maya", "save")
-    assert b["state"]["maya_mode"] and b["dump"]["active_keyconfig"] == "Maya-style", b["state"]
+    assert b["state"]["maya_mode"], b["state"]
     c = _session(cfg, "c", "maya_off", "save")            # Blender starts in Maya mode, switch off
-    assert not c["state"]["maya_mode"] and not c["state"]["snapshot"], c["state"]
+    assert not c["state"]["maya_mode"], c["state"]
     d = _diff(a["dump"], c["dump"])
     assert not d, "after restart + switch off:\n" + "\n".join(d[:20])
     bytes_c = _userpref(cfg)
@@ -163,21 +170,11 @@ def test_round_trip_across_restarts():
     assert not _diff(a["dump"], f["dump"]), "re-read after save differs"
 
 
-def test_interrupted_switch_and_disable_restore():
+def test_disable_after_quitting_in_maya_mode():
     cfg = _sandbox()
     a = _session(cfg, "a", "user_setup", "save")
-    _session(cfg, "b", "enable", "make_maya", "fake_crash_off", "save")   # died half way
-    # The next start finishes the switch without saving (step 115): the snapshot stays until a start finds nothing
-    # left to restore — here after the user's (or Blender's auto) save.
-    c = _session(cfg, "c", "save")
-    assert not c["state"]["maya_mode"] and c["state"]["snapshot"], c["state"]
+    _session(cfg, "b", "enable", "make_maya", "save")       # quit in Maya mode
+    c = _session(cfg, "c", "disable", "save")               # extension disabled (or removed) in Maya mode
     d = _diff(a["dump"], c["dump"])
-    assert not d, "interrupted switch not finished on restart:\n" + "\n".join(d[:20])
-    c2 = _session(cfg, "c2")
-    assert not c2["state"]["maya_mode"] and not c2["state"]["snapshot"], c2["state"]
-    assert not _diff(a["dump"], c2["dump"])
-    _session(cfg, "d", "maya_on", "save")
-    e = _session(cfg, "e", "disable", "save")               # extension disabled (or removed) in Maya mode
-    d = _diff(a["dump"], e["dump"])
     assert not d, "disable in Maya mode:\n" + "\n".join(d[:20])
     shutil.rmtree(os.path.dirname(cfg))

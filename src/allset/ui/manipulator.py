@@ -385,9 +385,14 @@ class ALLSET_GT_maya_handle(Gizmo):
             self.draw_custom_shape(sh, select_id=select_id)
 
 
+# Maya = / - (operators/manip.ALLSET_OT_manip_size): the kit manipulator's own size factor for this session. Not
+# Blender's gizmo_size preference, which the kit never writes (step 130).
+SIZE = [1.0]
+
+
 def scale_basis(context):
     """World size of one arrow unit is set by the draw scale; this is the px factor."""
-    return ARROW_PX / 75.0 * context.preferences.view.gizmo_size / BASE_PX_PER_UNIT
+    return ARROW_PX / 75.0 * context.preferences.view.gizmo_size * SIZE[0] / BASE_PX_PER_UNIT
 
 
 # Pixels one gizmo unit spans with use_draw_scale and scale_basis 1 at gizmo_size 75 (measured, step 59).
@@ -708,6 +713,7 @@ def register():
 
 
 def unregister():
+    SIZE[0] = 1.0
     if _on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load_post)
     if bpy.app.timers.is_registered(_ensure_timer):

@@ -1,7 +1,8 @@
-"""Step 42: Make Blender Maya in one action, its revert and add-on safety (no theme since step 130).
+"""Step 42 (reworked in step 130): Make Blender Maya and New Scene in Maya Layout change none of Blender's
+preferences and write nothing outside the extension.
 
-The welcome dialog and the start-in-Maya-layout switch need a GUI (tools/look_shots.py,
-docs/steps/step_42.md); here: what make/revert change and that nothing leaks.
+The welcome dialog and the start-in-Maya-layout switch need a GUI (docs/steps/step_42.md); here: what make and the
+new Maya scene change and that nothing leaks.
 """
 
 import os
@@ -18,56 +19,55 @@ first_start = import_module(kit.MODULE + ".first_start")
 OTHER = "node_wrangler"   # a core add-on the "user" had on before installing the kit
 
 
-def _theme_hash():
-    return kit._struct_hash(bpy.context.preferences.themes[0])
-
-
 def _addons():
     return set(bpy.context.preferences.addons.keys())
 
 
+def _prefs():
+    s = kit.snapshot()
+    return {k: s[k] for k in ("prefs_inputs", "prefs_view", "prefs_edit", "prefs_system_wire", "theme", "ui_styles")}
+
+
+def _templates_dir():
+    return bpy.utils.user_resource('SCRIPTS', path=os.path.join("startup", "bl_app_templates_user"))
+
+
 def test_runs_sandboxed():
-    # Make Blender Maya saves the preferences: never let that reach the real config (step 42).
     cfg = os.path.normcase(bpy.utils.user_resource('CONFIG'))
     assert os.path.normcase(os.path.join("tmp", os.environ.get("ALLSET_SANDBOX", "test_env"))) in cfg, cfg
 
 
-def test_make_maya_keeps_user_addons_and_reverts():
+def test_make_maya_changes_no_preferences():
     addon_utils.enable(OTHER, default_set=True)
     before_addons = _addons()
-    h0 = _theme_hash()
-    splash0 = bpy.context.preferences.view.show_splash
-    assert splash0, "factory default shows the splash"
-
-    # The operator opens the layout from a timer (never runs in -b): call what it runs.
-    first_start.make(bpy.context, open_layout=True)
+    before = _prefs()
+    template = bpy.context.preferences.app_template
+    first_start.make(bpy.context, open_layout=True)     # the operator opens the layout from a timer: call it here
     prefs = preferences.get()
-    assert bpy.context.preferences.app_template == app_template.TEMPLATE_ID
-    assert app_template.is_installed()
-    assert prefs.maya_hide_splash and prefs.start_in_maya_layout and prefs.welcome_done
-    assert not bpy.context.preferences.view.show_splash
-    assert _theme_hash() == h0, "the kit never writes the user's theme (step 130)"
+    assert prefs.start_in_maya_layout and prefs.welcome_done
+    assert kit.diff(before, _prefs()) == [], kit.diff(before, _prefs())
+    assert bpy.context.preferences.app_template == template, "no app template switch (step 130)"
+    assert not os.path.isdir(os.path.join(_templates_dir(), app_template.TEMPLATE_ID)), "nothing copied out"
     assert _addons() == before_addons, (_addons() ^ before_addons)   # nothing switched off or on
-    assert OTHER in _addons()
-    # the layout template ships its splash, no userpref.blend (would replace the add-on list)
-    files = os.listdir(app_template.installed_dir())
-    assert "splash.png" in files and "userpref.blend" not in files, files
-
-    assert bpy.ops.allset.revert_maya() == {'FINISHED'}
-    prefs = preferences.get()
-    assert not (prefs.maya_hide_splash or prefs.start_in_maya_layout)
-    assert _theme_hash() == h0
-    assert bpy.context.preferences.view.show_splash == splash0
-    assert not app_template.is_installed()
-    assert OTHER in _addons()
+    # the new Maya scene: the bundled layout as an untitled file
+    assert bpy.data.filepath == ""
+    assert bpy.context.scene.unit_settings.length_unit == 'CENTIMETERS'
+    assert any(m.name == ".AllsetStrip" for m in bpy.data.masks), [m.name for m in bpy.data.masks]
     addon_utils.disable(OTHER, default_set=True)
 
 
 def test_make_without_opening_keeps_the_file():
+    bpy.ops.wm.read_homefile()
     bpy.ops.mesh.primitive_cube_add()
     name = bpy.context.active_object.name
-    template = bpy.context.preferences.app_template
     assert bpy.ops.allset.make_maya(open_layout=False) == {'FINISHED'}
     assert name in bpy.data.objects, "open_layout=False leaves the open file alone"
-    assert bpy.context.preferences.app_template == template
-    bpy.ops.allset.revert_maya()
+
+
+def test_new_maya_scene_reads_the_bundled_file():
+    assert os.path.isfile(app_template.STARTUP)
+    before = _prefs()
+    first_start.new_maya_scene()
+    assert bpy.data.filepath == "" and bpy.context.scene.unit_settings.length_unit == 'CENTIMETERS'
+    assert kit.diff(before, _prefs()) == []
+    bpy.ops.wm.read_homefile()
