@@ -14,7 +14,21 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MAYA = ROOT / "research" / "maya"
+
+
+def _research():
+    """research/ is untracked (decision 6): ALLSET_RESEARCH, else this checkout's, else the nearest parent's (a
+    worktree under <main>/.claude/worktrees/<name> has none and reads the main checkout's, step 134)."""
+    if os.environ.get("ALLSET_RESEARCH"):
+        return Path(os.environ["ALLSET_RESEARCH"])
+    for base in (ROOT, *ROOT.parents):
+        if (base / "research" / "maya" / "colors.json").exists():
+            return base / "research"
+    return ROOT / "research"
+
+
+RESEARCH = _research()
+MAYA = RESEARCH / "maya"
 SCREENS = MAYA / "screens"
 # ALLSET_LOOK_TAG (step 118): another Blender version writes into compare_<tag> and tmp/look_env_<tag>
 COMPARE = SCREENS / ("compare_" + os.environ["ALLSET_LOOK_TAG"] if os.environ.get("ALLSET_LOOK_TAG") else "compare")
@@ -47,50 +61,69 @@ CUBE_FITS = {
 # ---------------------------------------------------------------- pixel samples
 # Maya sample name (research/maya/colors.json "ui_samples") -> kit point:
 #   (shot, anchor, dx, dy, radius, note)  or  (None, note) = the kit has no such element.
-# Offsets were read off the kit shots of step 41 (layout of tools/make_startup.py at that time);
-# a layout change moves the anchors, not these numbers. "press" = where Space / RMB went down.
+# Offsets (step 134, re-picked on the step 116 dock / step 113 shelf / step 130 layout): an int is pixels at an
+# effective UI scale of 1.0 and is multiplied by the shot's scale (geometry.json "ui_scale"); a float strictly between
+# -1 and 1 is a fraction of the anchor's width / height (for things that follow the area size, not the UI scale:
+# the timeline ruler, gaps between left- and right-aligned header items). dx/dy >= 0 count from the anchor's
+# left/top edge, < 0 from its right/bottom edge. "press" = where Space / RMB went down.
 KIT_POINTS = {
-    "menu_bar_bg": ("02_cube_selected_move", "topbar", -200, 16, 2, "top bar, left of the workspace menu"),
-    "status_line_bg": ("02_cube_selected_move", "strip.HEADER", -20, 16, 2, "Status Line row, right end"),
-    "shelf_tab_bar_bg": ("02_cube_selected_move", "shelf.HEADER", -20, 13, 2, "shelf tab row, right end"),
-    "shelf_tab_active": ("02_cube_selected_move", "shelf.HEADER", 152, 7, 1, "current tab (Poly Modeling), left padding"),
-    "shelf_tab_inactive": ("02_cube_selected_move", "shelf.HEADER", 395, 5, 1, "Rigging tab, above the text"),
-    "shelf_icon_row_bg": ("02_cube_selected_move", "shelf.WINDOW", -20, 19, 2, "shelf icon row, right end"),
+    "menu_bar_bg": ("02_cube_selected_move", "topbar", 0.725, 13, 2, "top bar between Help and Workspace"),
+    "status_line_bg": ("02_cube_selected_move", "strip.HEADER", 0.88, 13, 2,
+                       "Status Line row, between the groups and the right-hand icons"),
+    "shelf_tab_bar_bg": ("02_cube_selected_move", "shelf.tabs", 0.75, 9, 2, "shelf tab strip right of the tabs"),
+    "shelf_tab_active": ("02_cube_selected_move", "shelf.tabs", 156, 4, 1, "current tab (Poly Modeling), left padding"),
+    "shelf_tab_inactive": ("02_cube_selected_move", "shelf.tabs", 340, 2, 1, "Rigging tab, above the text"),
+    "shelf_icon_row_bg": ("02_cube_selected_move", "shelf.icons", 0.5, -3, 1, "shelf icon row, under the icons"),
     "toolbox_bg": ("02_cube_selected_move", "toolbox.TOOLS", 28, -40, 2, "Tool Box column, bottom"),
-    "toolbox_active_tool": ("02_cube_selected_move", "toolbox.TOOLS", 27, 132, 1, "Move tool button (step 99: re-picked)"),
+    "toolbox_active_tool": ("02_cube_selected_move", "toolbox.TOOLS", 14, 118, 1, "Move tool button, top-left corner"),
     "outliner_header_bg": (None, "no Outliner dock title"),
-    "outliner_menu_bg": ("02_cube_selected_move", "outliner.HEADER", 3, 16, 1, "Outliner header padding"),
-    "outliner_search_field": ("02_cube_selected_move", "outliner.HEADER", 207, 16, 0,
-                              "Outliner search field (step 119: the 1-2 px of fill left of the icon in 4.5 and 5.x)"),
+    "outliner_menu_bg": ("02_cube_selected_move", "outliner.HEADER", 3, 13, 1, "Outliner header padding"),
+    "outliner_search_field": ("02_cube_selected_move", "outliner.HEADER", 212, 13, 0,
+                              "Outliner search field, left of the magnifier"),
     "outliner_list_bg": ("02_cube_selected_move", "outliner.WINDOW", 130, -60, 2, "Outliner list"),
-    "outliner_row_selected": ("11_channel_box", "outliner.WINDOW", 200, 14, 2, "selected row pCube1"),
-    "outliner_row_selected_component_mode": ("08_verts_selected", "outliner.WINDOW", 200, 14, 2,
+    "outliner_row_selected": ("11_channel_box", "outliner.WINDOW", 160, 12, 2, "selected row pCube1"),
+    "outliner_row_selected_component_mode": ("08_verts_selected", "outliner.WINDOW", 160, 12, 2,
                                              "pCube1 row in edit mode"),
-    "panel_menu_bar_bg": ("02_cube_selected_move", "view3d.HEADER", 4, 16, 1, "3D View header padding"),
-    "panel_toolbar_bg": (None, "no panel icon bar (the tool settings row is hidden, step 49)"),
+    "panel_menu_bar_bg": ("02_cube_selected_move", "view3d.HEADER", 4, 13, 1, "3D View header padding"),
+    "panel_toolbar_bg": ("02_cube_selected_move", "view3d.TOOL_HEADER", -6, 13, 1,
+                         "Maya panel toolbar (tool header, step 113), right end"),
     "viewport_bg": ("02_cube_selected_move", "view3d.WINDOW", 380, 90, 2, "persp background, upper area"),
-    "viewport_border": ("02_cube_selected_move", "window", 264, 500, 0, "editor border Outliner | view"),
-    "cb_bg": ("11_channel_box", "view3d.UI", 24, 213, 2, "Channel Box panel background"),
-    "cb_field": ("11_channel_box", "view3d.UI", 172, 92, 2, "Translate X value field"),
-    "cb_shape_row": ("11_channel_box", "view3d.UI", 172, 280, 2, "SHAPES row pCubeShape1"),
-    "cb_input_row": (None, "no INPUTS row for a cube without modifiers (Maya: polyCube1 history)"),
-    "layer_editor_list": ("11_channel_box", "view3d.UI", 130, 450, 2, "Layer Editor list"),
-    "layer_tab_active": ("02_cube_selected_move", "view3d.UI", 37, 341, 1, "Display tab (active: Blender's blue, step 99)"),
-    "dock_side_tab_strip": ("11_channel_box", "view3d.UI", -14, -150, 2, "sidebar tab strip"),
-    "time_slider_bg": ("11_channel_box", "timeline.WINDOW", 705, 15, 2, "timeline ruler between labels"),
-    "time_field": ("11_channel_box", "timeline.UI", 60, 18, 2, "current frame field (Time Slider row)"),
-    "range_slider_field": ("11_channel_box", "timeline.HEADER", 90, 13, 2, "start frame field"),
-    "range_slider_bar": ("02_cube_selected_move", "timeline.HEADER", 350, 13, 2, "Range Slider bar (ui/range_bar.py, step 73)"),
-    "range_slider_handle": ("02_cube_selected_move", "timeline.HEADER", 244, 13, 1, "Range Slider start handle"),
-    "bottom_bars_bg": ("11_channel_box", "timeline.HEADER", 850, 16, 2, "timeline header background"),
-    "command_line_field": ("11_channel_box", "statusbar.command", 160, 14, 2, "Python command field"),
+    "viewport_border": ("02_cube_selected_move", "gap.outliner_view", 1, 378, 0, "editor gap Outliner | view"),
+    "cb_bg": ("11_channel_box", "dock", -75, 303, 2, "Channel Box background right of INPUTS"),
+    "cb_field": ("11_channel_box", "dock", -60, 91, 2, "Translate X value field"),
+    "cb_shape_row": ("11_channel_box", "dock", -75, 278, 2, "SHAPES row pCubeShape1 (no row bar: background)"),
+    "cb_input_row": ("11_channel_box", "dock", -60, 343, 2,
+                     "polyCube1 Width field (the kit shows the INPUTS node expanded, Maya a collapsed bar)"),
+    "layer_editor_list": ("11_channel_box", "dock", 128, -52, 2, "Layer Editor list"),
+    "layer_tab_active": ("02_cube_selected_move", "dock", 14, 538, 1, "Display tab (active), left padding"),
+    "dock_side_tab_strip": ("11_channel_box", "dock", 0.622, 25, 1,
+                            "dock tab row, Attribute Editor tab (kit: tabs on top, Maya: a vertical strip)"),
+    "time_slider_bg": ("11_channel_box", "timeline.WINDOW", 0.554, 25, 2, "timeline ruler between two ticks, lower band"),
+    "time_field": ("11_channel_box", "timeline.UI", 30, 18, 2, "current frame field (Time Slider row), left of the text"),
+    "range_slider_field": ("11_channel_box", "timeline.HEADER", 60, 13, 2, "start frame field, left of the text"),
+    "range_slider_bar": ("02_cube_selected_move", "timeline.HEADER", 340, 13, 2, "Range Slider bar (ui/range_bar.py, step 73)"),
+    "range_slider_handle": ("02_cube_selected_move", "timeline.HEADER", 243, 13, 1, "Range Slider start handle"),
+    "bottom_bars_bg": ("11_channel_box", "timeline.HEADER", 810, 13, 2, "timeline header right of the range fields"),
+    "command_line_field": ("11_channel_box", "statusbar.command", 450, 12, 2, "Python command field, right of the text"),
     "command_result_field": (None, "no result field"),
-    "help_line_bg": ("11_channel_box", "statusbar.help", 600, 14, 2, "Help Line background"),
-    "menu_popup_bg": ("12_create_menu", "topbar", 390, 330, 2, "Create menu body, right margin"),
-    "marking_menu_box": ("14_marking_menu_object", "press", -16, -81, 1, "radial box Edge, padding"),
-    "marking_menu_list_bg": ("14_marking_menu_object", "press", -31, 205, 1, "list body right of Select Hierarchy"),
-    "hotbox_row_bg": ("13_hotbox", "press", -253, 36, 1, "hotbox row Mesh, left padding (over the view background)"),
+    "help_line_bg": ("11_channel_box", "statusbar.help", 600, 12, 2, "Help Line background"),
+    "menu_popup_bg": ("12_create_menu", "topbar", 300, 148, 2, "Create menu body, right of Cameras"),
+    "marking_menu_box": ("14_marking_menu_object", "press", -19, -79, 1, "radial box Edge, left padding"),
+    "marking_menu_list_bg": ("14_marking_menu_object", "press", -25, 164, 1, "list body right of Select Hierarchy"),
+    "hotbox_row_bg": ("13_hotbox", "press", -265, 29, 1, "hotbox row Mesh, left padding (over the view background)"),
 }
+
+# Where the kit's pixel comes from (step 134). The kit ships no theme (step 130, decision 13): most UI colours are
+# Blender's theme (the user's, in the shots Blender's factory one), so a difference there is the user's theme, not a
+# kit fault — listed as "theme" with its ΔE00 but not counted as different. "kit" = drawn by the kit in its own fixed
+# colours (marking menus / hotbox: marking/draw.py, Range Slider: ui/range_bar.py) or set by the Maya layout file
+# (viewport background). Shelf strip colours are derived from the theme's Image Editor header (ui/shelf.py): theme.
+KIT_DRAWN = frozenset({"viewport_bg", "range_slider_bar", "range_slider_handle", "marking_menu_box",
+                       "marking_menu_list_bg", "hotbox_row_bg"})
+
+
+def source(name):
+    return "kit" if name in KIT_DRAWN else "theme"
 
 # ---------------------------------------------------------------- viewport pixels (step 43)
 # Rendered viewport elements. (label, shot, Maya colour or None, kit point key, radius, mode, Maya region)
@@ -156,18 +189,19 @@ def mean_colour(img, rect):
 RECTS = (
     ("menuBar", "topbar", "main menu bar"),
     ("StatusLine", "strip.HEADER", "Status Line"),
-    ("Shelf", "shelf", "Shelf (kit: tab row = header, icon row = WINDOW)"),
+    ("Shelf", "shelf", "Shelf (kit: one header-less row, tab strip + icons drawn by the kit, step 113)"),
     ("ToolBox", "toolbox", "Tool Box"),
     ("Outliner", "outliner", "Outliner"),
-    ("MainPane", "view3d.pane", "viewport pane (kit: 3D View without the sidebar dock)"),
+    ("MainPane", "view3d.pane", "viewport pane (kit: the main 3D View)"),
     ("modelPanel4", "view3d.pane", "persp panel (Maya: incl. panel menu + icon bar; kit: incl. header)"),
-    ("ChannelBoxLayerEditor", "view3d.UI", "Channel Box / Layer Editor dock"),
+    ("ChannelBoxLayerEditor", "dock", "Channel Box / Layer Editor dock (kit: its own Properties area, step 116)"),
     ("TimeSlider", "timeline.WINDOW", "Time Slider"),
     ("RangeSlider", "timeline.HEADER", "Range Slider (kit: timeline header, under the Time Slider)"),
     ("HelpLine", "statusbar.help", "Help Line (kit: status bar row, left)"),
     ("CommandLine", "statusbar.command", "Command Line (kit: status bar row, right)"),
 )
-KIT_ONLY = ("outliner_right", "properties", "view3d.TOOLS", "view3d.TOOL_HEADER")
+# view3d.TOOL_HEADER is the Maya panel toolbar since step 113 (inside modelPanel4 in Maya), so it is no extra.
+KIT_ONLY = ("outliner_right", "properties", "tooldock", "view3d.TOOLS", "view3d.UI")
 RECT_TOL = 10
 
 # ---------------------------------------------------------------- crops
@@ -175,7 +209,7 @@ RECT_TOL = 10
 CROPS = (
     ("status_line", "11_channel_box", "StatusLine", "strip.HEADER", "over"),
     ("shelf", "11_channel_box", "Shelf", "shelf", "over"),
-    ("channel_box", "11_channel_box", "ChannelBoxLayerEditor", "view3d.UI", "side"),
+    ("channel_box", "11_channel_box", "ChannelBoxLayerEditor", "dock", "side"),
     ("outliner", "11_channel_box", "Outliner", "outliner", "side"),
     ("time_slider", "11_channel_box", "TimeSlider", "timeline.WINDOW", "over"),
     ("range_slider", "11_channel_box", "RangeSlider", "timeline.HEADER", "over"),
@@ -193,14 +227,23 @@ def maya_colors():
 # Used when the KIT_POINTS anchor is missing: Blender 5.x never opens the Timeline sidebar, so the Maya Workflow Kit timeline is
 # one row and the Time Slider buttons sit at the right end of the header (step 118, 119).
 KIT_POINTS_ALT = {
-    "time_field": ("11_channel_box", "timeline.HEADER", -230, 13, 2, "current frame field (5.x: header right end)"),
+    "time_field": ("11_channel_box", "timeline.HEADER", -184, 10, 2, "current frame field (5.x: header right end)"),
 }
 
 
-def resolve(rects, anchor, dx=0, dy=0):
-    """Point (x, y) from an anchor rect [x, y, w, h] and offsets (negative = from right/bottom)."""
+def _offset(v, size, scale):
+    """Offset in screenshot px: a float in (-1, 1) is a fraction of ``size``, anything else px at scale 1.0."""
+    if isinstance(v, float) and -1.0 < v < 1.0 and v != 0.0:
+        return v * size
+    return v * scale
+
+
+def resolve(rects, anchor, dx=0, dy=0, scale=1.0):
+    """Point (x, y) from an anchor rect [x, y, w, h] and offsets (negative = from right/bottom; see KIT_POINTS for
+    ints = px at UI scale 1.0 times ``scale``, floats in (-1, 1) = fractions of the anchor)."""
     x, y, w, h = rects[anchor]
-    return (x + dx if dx >= 0 else x + w + dx), (y + dy if dy >= 0 else y + h + dy)
+    ox, oy = _offset(dx, w, scale), _offset(dy, h, scale)
+    return (x + ox if dx >= 0 else x + w + ox), (y + oy if dy >= 0 else y + h + oy)
 
 
 # ---------------------------------------------------------------- images (bpy + numpy)
@@ -316,7 +359,8 @@ def line_pitch(img, rect, contrast=0.15):
 # label = brighter than 180, triad = saturated (max - min channel > 80).
 # (name, corner, search box [dx, dy, w, h] from that corner, test)
 FURNITURE = (
-    ("ViewCube", "top-right", (-160, 0, 160, 130), "bright130"),
+    # right 14 px left out: the 3D View's sidebar toggle arrow sits there since the dock left the sidebar (step 134)
+    ("ViewCube", "top-right", (-160, 0, 146, 130), "bright130"),
     ("camera label", "bottom-centre", (-120, -30, 240, 30), "bright180"),
     ("axis triad", "bottom-left", (0, -90, 90, 90), "saturated"),
 )

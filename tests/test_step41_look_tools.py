@@ -34,6 +34,19 @@ def test_anchor_resolve():
     assert L.resolve(rects, "a", 10, 5) == (110, 55)
     assert L.resolve(rects, "a", -20, -6) == (280, 84)        # from right / bottom
     assert L.resolve(rects, "press", -24, -99) == (676, 301)   # point anchor: plain offsets
+    # step 134: ints are px at UI scale 1.0 (times the shot's scale), floats in (-1, 1) fractions of the anchor
+    assert L.resolve(rects, "a", 10, 4, 1.25) == (112.5, 55.0)
+    assert L.resolve(rects, "a", -20, -8, 1.25) == (275.0, 80.0)
+    assert L.resolve(rects, "a", 0.5, 0.25, 1.25) == (200.0, 60.0)
+    assert L.resolve(rects, "a", -0.25, 2, 1.25) == (250.0, 52.5)
+
+
+def test_pixel_sources():
+    # step 134: no theme ships (step 130), so only kit-drawn samples count as different; every sample has a source
+    assert L.source("marking_menu_box") == "kit" and L.source("menu_bar_bg") == "theme"
+    assert L.KIT_DRAWN <= set(L.KIT_POINTS)
+    anchors = {spec[1] for spec in L.KIT_POINTS.values() if spec[0] is not None}
+    assert not anchors & {"view3d.UI", "shelf.HEADER"}, anchors      # gone since steps 116 / 113 (#75)
 
 
 def test_maya_camera_constants():
@@ -50,7 +63,7 @@ def test_tables_shape():
             shot, anchor, dx, dy, r, note = spec
             assert shot[:2].isdigit() and isinstance(anchor, str) and r in (0, 1, 2), (name, spec)
     anchors = {a for _w, a, _l in L.RECTS}
-    assert {"topbar", "statusbar.help", "statusbar.command", "view3d.UI", "outliner", "toolbox"} <= anchors
+    assert {"topbar", "statusbar.help", "statusbar.command", "dock", "outliner", "toolbox", "shelf"} <= anchors
     assert all(how in ("side", "over") for *_x, how in L.CROPS)
     assert set(L.CUBE_FITS) == {"02_cube_selected_move", "04_wire_selected_lead", "07_faces_selected"}
 
