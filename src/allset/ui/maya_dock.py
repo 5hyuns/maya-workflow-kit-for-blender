@@ -24,6 +24,8 @@ dotted handle tears it off into a floating window. Here:
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from .. import live_refs
+
 KINDS = ('CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT')
 LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attribute Editor",
           'MODELING_TOOLKIT': "Modeling Toolkit", 'TOOL_SETTINGS': "Tool Settings", 'OUTLINER': "Outliner"}
@@ -88,16 +90,21 @@ def set_role_later(area, name, window=None, tries=40):
     if set_role(area, name, window):
         return
     key = area.as_pointer()
+    win_ptr = live_refs.pointer(window)
     _pending[key] = name
     state = {"n": tries}
 
     def tick():
+        # pointers, looked up each tick: a closed window's area must not be touched (#36)
+        win, area_ = live_refs.find_area(key, win_ptr or None)
         try:
-            if window is not None:
-                with bpy.context.temp_override(window=window):
-                    done = set_role(area, name, window)
+            if area_ is None:
+                done = True
+            elif win_ptr:
+                with bpy.context.temp_override(window=win):
+                    done = set_role(area_, name, win)
             else:
-                done = set_role(area, name, window)
+                done = set_role(area_, name, None)
         except ReferenceError:
             done = True
         state["n"] -= 1
@@ -224,9 +231,12 @@ def close_area(context, window, area):
 
 def close_window_later(window):
     """Close a window from a timer (closing the window an operator runs in would pull the context away)."""
+    ptr = live_refs.pointer(window)
+
     def tick():
+        window = live_refs.window(ptr)
         try:
-            if window in bpy.context.window_manager.windows[:]:
+            if window is not None:
                 with bpy.context.temp_override(window=window):
                     bpy.ops.wm.window_close()
         except (ReferenceError, RuntimeError):
@@ -341,12 +351,14 @@ def dock(context, window=None):
         return False
     r = role(area)
     main = main_window(context.window_manager)
+    main_ptr = live_refs.pointer(main)
     if r == 'MENU':
         _torn_menus.pop(window.as_pointer(), None)
     elif r in KINDS:
         close_window_later(window)
 
         def back():
+            main = live_refs.window(main_ptr)
             try:
                 bpy.context.window_manager.allset_dock = r
                 if main is not None:
@@ -366,6 +378,9 @@ def dock(context, window=None):
         close_window_later(window)
 
         def back():
+            main = live_refs.window(main_ptr)
+            if main is None:
+                return None
             try:
                 with bpy.context.temp_override(window=main):
                     if kind == 'TOOL_SETTINGS':

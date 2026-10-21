@@ -12,6 +12,8 @@ import time
 
 import bpy
 
+from .. import live_refs
+
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
     # Windows > Settings/Preferences (step 120)
@@ -503,7 +505,9 @@ CATEGORIES.update({
 
 SHOW_SECONDS = 5.0
 _current = {"text": "", "until": 0.0}
-_status_area = []   # the status bar area, seen while drawing it (global areas aren't in screen.areas)
+# [(window pointer, status bar area)] seen while drawing it. Global areas aren't in screen.areas, so the area can't be
+# found again by pointer; it lives as long as its window, so it is only touched while that window is open (#36).
+_status_area = []
 
 
 def notice(path):
@@ -554,13 +558,17 @@ def current():
     return _current["text"] if time.monotonic() < _current["until"] else ""
 
 
-def remember_status_area(area):
-    if area is not None and (not _status_area or _status_area[0] != area):
-        _status_area[:] = [area]
+def remember_status_area(area, window=None):
+    window = window or bpy.context.window
+    if area is not None and window is not None and (not _status_area or _status_area[0][1] != area):
+        _status_area[:] = [(window.as_pointer(), area)]
 
 
 def _redraw_status():
-    for area in _status_area:
+    for win_ptr, area in list(_status_area):
+        if live_refs.window(win_ptr) is None:
+            _status_area.clear()
+            continue
         try:
             area.tag_redraw()
         except ReferenceError:

@@ -141,7 +141,7 @@ def draw_help_line(layout, context):
     """Tool help, else Blender's mouse/key hints; reports and job progress after it (Maya's Help Line
     shows progress too)."""
     from ..ui import notices
-    notices.remember_status_area(context.area)
+    notices.remember_status_area(context.area, context.window)
     note = notices.current()   # a notice of the menu item under the mouse (step 54)
     text = note or help_text(context)
     if text:

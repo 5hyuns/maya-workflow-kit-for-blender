@@ -37,10 +37,26 @@ def _fake_entry(running):
     space = types.SimpleNamespace(shading=shading)
     window = types.SimpleNamespace(modal_operators=[types.SimpleNamespace(bl_idname="VIEW3D_OT_select_box")]
                                    if running else [])
-    return shading, window, [space, window, "show_xray", "xray_alpha", 0.5, False, 0.0]
+    # entries hold pointers (step 129, #36): resolve the fake ones through the lookup hooks
+    _FAKES[id(space)], _FAKES[id(window)] = space, window
+    return shading, window, [id(space), id(window), "show_xray", "xray_alpha", 0.5, False, 0.0]
+
+
+_FAKES = {}
 
 
 def test_watch_restores_after_the_select_modal():
+    saved = marquee._lookup_space, marquee._lookup_window
+    marquee._lookup_space = lambda sp, _wp: _FAKES.get(sp)
+    marquee._lookup_window = _FAKES.get
+    try:
+        _watch_restores()
+    finally:
+        marquee._lookup_space, marquee._lookup_window = saved
+        _FAKES.clear()
+
+
+def _watch_restores():
     shading, window, entry = _fake_entry(running=True)
     marquee._active.clear()
     marquee._active[1] = entry
