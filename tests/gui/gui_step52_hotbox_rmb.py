@@ -10,7 +10,7 @@ import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, setup, screenshot, step, win  # noqa: E402
+from sim import MODULE, check, ev, run, setup, screenshot, step, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -38,8 +38,7 @@ def redraw():
 @step
 def s_setup():
     setup()
-    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 @step

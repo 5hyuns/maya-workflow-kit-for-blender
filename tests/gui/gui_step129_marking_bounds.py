@@ -12,7 +12,7 @@ import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d, region_2d_to_location_3d
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, ev, run, setup, step, win  # noqa: E402
+from sim import MODULE, check, ev, run, setup, step, win, load_maya_layout  # noqa: E402
 
 C = {}
 # rows with an effect the test can see (object mode, one mesh in the scene)
@@ -124,8 +124,7 @@ def s_released():
           bpy.context.mode == 'EDIT_MESH' and tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, False, True))
     check("factory: menu closed", not draw().ACTIVE)
     bpy.ops.object.mode_set(mode='OBJECT')
-    check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
+    load_maya_layout()
 
 
 # --- part 2: Maya Workflow Kit layout --------------------------------------------------------------------------------

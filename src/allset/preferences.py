@@ -2,23 +2,11 @@
 """Add-on preferences (Preferences > Add-ons > Maya Workflow Kit).
 
 Options backed by docs/user_decisions.md: Maya units (#1) and parent mode (#2)
-from step 10, layout install buttons (#3) from step 5.
+from step 10. Only this add-on's own settings live here: since step 130 (#13) no option writes Blender's
+preferences (the navigation / undo / panel / auto key / theme / splash / density / font / wire presets are gone).
 """
 
 import bpy
-
-# Property names whose update callback is skipped while set from code (switch.set_mode). Blender 5.0 removed
-# dict-style access to bpy.props values (``prefs["maya_theme"] = False``), which 4.5 used to skip the callback.
-QUIET = set()
-
-
-def set_quiet(prefs, name, value):
-    """``prefs.<name> = value`` without its update callback."""
-    QUIET.add(name)
-    try:
-        setattr(prefs, name, value)
-    finally:
-        QUIET.discard(name)
 
 
 class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
@@ -33,67 +21,6 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya mode on/off (switch.py, docs/steps/step_60.md), kept across restarts. Off after install: enabling the
     # extension changes nothing until the user opts in (welcome dialog / button / switch; docs/steps/step_115.md).
     maya_mode: bpy.props.BoolProperty(name="Maya Mode", default=False, options={'HIDDEN'})
-    # The Maya layout template was installed by the user: a user disable deletes it, a later register puts it back
-    # if it is gone while this is still set (app_template.py, step 115).
-    layout_installed: bpy.props.BoolProperty(options={'HIDDEN'})
-
-    def _update_navigation(self, context):
-        from . import prefs_preset
-        if self.use_maya_navigation:
-            prefs_preset.apply(context.preferences, self)
-        else:
-            prefs_preset.restore(context.preferences, self)
-
-    use_maya_navigation: bpy.props.BoolProperty(
-        name="Maya Navigation Preferences",
-        description="Set Blender's view navigation preferences to Maya behaviour "
-                    "(turntable, no zoom to mouse, horizontal dolly, ...). "
-                    "Turning it off restores your previous values",
-        default=True, update=_update_navigation)
-    # JSON of the user's values before the Maya preset (docs/steps/step_4.md).
-    prefs_backup: bpy.props.StringProperty(options={'HIDDEN'})
-
-    def _update_undo(self, context):
-        from . import prefs_preset
-        if self.use_maya_undo:
-            prefs_preset.apply(context.preferences, self, "undo")
-        else:
-            prefs_preset.restore(context.preferences, self, "undo")
-
-    use_maya_undo: bpy.props.BoolProperty(
-        name="Maya Undo Queue",
-        description="Keep as many undo steps as Blender allows (256; Maya's queue is infinite). "
-                    "Turning it off restores your previous value",
-        default=True, update=_update_undo)
-    undo_backup: bpy.props.StringProperty(options={'HIDDEN'})
-
-    def _update_panels(self, context):
-        from . import prefs_preset
-        if self.use_maya_panels:
-            prefs_preset.apply(context.preferences, self, "panels")
-        else:
-            prefs_preset.restore(context.preferences, self, "panels")
-
-    use_maya_panels: bpy.props.BoolProperty(
-        name="Solid Side Panels",
-        description="Channel Box, Attribute Editor and toolbars beside the viewport, not over it, like Maya "
-                    "(turns off Blender's Region Overlap). Turning it off restores your previous value",
-        default=True, update=_update_panels)
-    panels_backup: bpy.props.StringProperty(options={'HIDDEN'})
-
-    def _update_auto_key(self, context):
-        from . import prefs_preset
-        if self.use_maya_auto_key:
-            prefs_preset.apply(context.preferences, self, "autokey")
-        else:
-            prefs_preset.restore(context.preferences, self, "autokey")
-
-    use_maya_auto_key: bpy.props.BoolProperty(
-        name="Maya Auto Key",
-        description="Auto Key keys only channels that already have keys, like Maya (Blender's Only Insert "
-                    "Available). Turning it off restores your previous value",
-        default=True, update=_update_auto_key)
-    autokey_backup: bpy.props.StringProperty(options={'HIDDEN'})
     # Edit-mode marquee/lasso also selects occluded components (Maya selectPrefUseDepth false).
     select_through: bpy.props.BoolProperty(
         name="Marquee Selects Hidden Components",
@@ -113,82 +40,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
                     "under the mouse, like Maya's selection priority",
         default=True)
-    # First start (docs/steps/step_42.md): welcome dialog shown once; Maya look options.
+    # First start (docs/steps/step_42.md): welcome dialog shown once.
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
-
-    def _update_theme(self, context):
-        if "maya_theme" in QUIET:
-            return
-        from . import theme
-        if self.maya_theme:
-            theme.apply()
-        else:
-            theme.restore()
-
-    maya_theme: bpy.props.BoolProperty(
-        name="Maya Theme",
-        description="Maya 2022 colours for the whole interface. Your theme is backed up and comes "
-                    "back when this is turned off or the add-on is disabled",
-        default=False, update=_update_theme)
-
-    def _update_splash(self, context):
-        if "maya_hide_splash" in QUIET:
-            return
-        from . import prefs_preset
-        if self.maya_hide_splash:
-            prefs_preset.apply(context.preferences, self, "splash")
-        else:
-            prefs_preset.restore(context.preferences, self, "splash")
-
-    maya_hide_splash: bpy.props.BoolProperty(
-        name="No Splash Screen",
-        description="Start without Blender's splash screen, like Maya. Turning it off restores "
-                    "your previous setting",
-        default=False, update=_update_splash)
-    splash_backup: bpy.props.StringProperty(options={'HIDDEN'})
-
-    # Widget feel (docs/steps/step_44.md): Maya density, Maya font, aliased wires. Global Blender
-    # preferences: backed up, restored when turned off or the add-on is disabled (prefs_preset).
-    def _update_group(group, option):
-        def update(self, context):
-            if option in QUIET:
-                return
-            from . import prefs_preset
-            if getattr(self, option):
-                prefs_preset.apply(context.preferences, self, group)
-            else:
-                prefs_preset.restore(context.preferences, self, group)
-        return update
-
-    maya_density: bpy.props.BoolProperty(
-        name="Maya Density",
-        description="Interface scale that gives Maya 2022's pixel sizes on this display (11 px text, "
-                    "20 px rows: Maya ignores the Windows display scale). Turning it off restores "
-                    "your previous Resolution Scale",
-        default=False, update=_update_group("density", "maya_density"))
-    density_backup: bpy.props.StringProperty(options={'HIDDEN'})
-    maya_font: bpy.props.BoolProperty(
-        name="Maya Font (Segoe UI)",
-        description="Use the Windows Segoe UI font for the interface, like Maya (Windows only, the "
-                    "installed system font). Turning it off restores your previous font",
-        default=False, update=_update_group("font", "maya_font"))
-    font_backup: bpy.props.StringProperty(options={'HIDDEN'})
-    maya_wire: bpy.props.BoolProperty(
-        name="Aliased Wireframes",
-        description="Draw viewport wireframes as hard 1 px lines like Maya (no line smoothing). "
-                    "Turning it off restores your previous setting",
-        default=False, update=_update_group("wire", "maya_wire"))
-    wire_backup: bpy.props.StringProperty(options={'HIDDEN'})
-    del _update_group
 
     start_in_maya_layout: bpy.props.BoolProperty(
         name="Start in Maya Layout",
-        description="When Blender starts without a file, open a new file with the Maya layout "
-                    "(needs the Maya layout installed)",
+        description="When Blender starts without a file in Maya mode, open a new scene in the Maya layout",
         default=False)
 
-    # JSON of Blender preferences changed by Maya keys (= / - gizmo size), restored on disable.
-    runtime_backup: bpy.props.StringProperty(options={'HIDDEN'})
     lock_ortho_tumble: bpy.props.BoolProperty(
         name="Lock Tumble in Ortho Views",
         description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",
@@ -230,7 +89,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya wireframe on selected objects over shading (docs/steps/step_47.md).
     maya_selection_wire: bpy.props.BoolProperty(
         name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
-                                                "Maya (lead light green, others white with the Maya theme)",
+                                                "Maya (lead light green, others white)",
         default=True, update=_update_selection_wire)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
@@ -330,7 +189,6 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
-        from . import switch
         draw_about(layout)
         box = layout.box()
         row = box.row()
@@ -341,45 +199,18 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
             # Nothing is changed until the user asks for it (step 115): the same dialog as the first start.
             row.operator("allset.welcome", text="Make Blender feel like Maya", icon='EVENT_M')
             row.operator("allset.switch_mode", text="Maya Mode Only").mode = 'MAYA'
-        row.operator("allset.restore_blender", icon='LOOP_BACK')
-        if not self.maya_mode:
-            box.label(text="Maya Workflow Kit is off: your keymap, theme, preferences and layout are unchanged until you "
-                           "choose Maya.", icon='INFO')
-        box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches "
-                       "at any time. Blender mode restores your keymap, theme and preferences.", icon='INFO')
-        if switch.has_snapshot():
-            box.label(text=f"Your settings from before Maya mode are kept in {switch.snapshot_path()}")
+        box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. "
+                       "Blender's own preferences are never changed.", icon='INFO')
         if not self.maya_mode:
             return
-        from . import keymap
         box = layout.box()
         row = box.row()
         row.scale_y = 1.4
-        row.operator("allset.make_maya", icon='CHECKMARK')
-        row.operator("allset.revert_maya", icon='LOOP_BACK')
-        row = box.row()
-        row.prop(self, "maya_theme")
-        row.prop(self, "maya_hide_splash")
-        row.prop(self, "start_in_maya_layout")
-        row = box.row()
-        row.prop(self, "maya_density")
-        from . import prefs_preset
-        sub = row.row()
-        sub.enabled = prefs_preset.font_available() or self.maya_font
-        sub.prop(self, "maya_font")
-        row.prop(self, "maya_wire")
-        kcs = context.window_manager.keyconfigs
-        row = layout.row()
-        active = kcs.active.name if kcs.active else "-"
-        row.label(text=f"Active keymap: {active}")
-        if active != keymap.KEYCONFIG_NAME:
-            row.operator("allset.keymap_activate")
+        row.operator("allset.new_maya_scene", icon='FILE_NEW')
+        row.operator("allset.maya_layout_here", icon='WORKSPACE')
+        box.prop(self, "start_in_maya_layout")
         col = layout.column()
-        col.prop(self, "use_maya_navigation")
         col.prop(self, "lock_ortho_tumble")
-        col.prop(self, "use_maya_undo")
-        col.prop(self, "use_maya_panels")
-        col.prop(self, "use_maya_auto_key")
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")
         col.prop(self, "select_priority")
@@ -417,18 +248,6 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_view_axis")
         row.prop(self, "maya_selection_wire")
         box.prop(self, "in_view_messages")
-
-        from . import app_template
-        box = layout.box()
-        box.label(text="Maya Layout (application template)")
-        row = box.row()
-        if app_template.is_installed():
-            row.operator("allset.layout_open", icon='FILE_NEW')
-            row.operator("allset.layout_install", text="Reinstall")
-            row.operator("allset.layout_remove", icon='TRASH')
-        else:
-            row.operator("allset.layout_install", icon='IMPORT')
-
 
 
 # Step 111 (decision 12, docs/distribution/naming.md, docs/distribution/extensions_audit.md 「필수 고지문」)

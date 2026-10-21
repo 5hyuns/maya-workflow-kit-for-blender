@@ -458,19 +458,22 @@ class ALLSET_OT_manip_size(bpy.types.Operator):
     bl_label = "Manipulator Size"
     bl_options = {'INTERNAL'}
 
-    # Maya: manipOptions -r -s 2.0 / 0.5 (hotkeySetup.mel:387-389 via docs/keymap_mapping.md);
-    # Blender's gizmo_size is 10-200 px, so 1.25x steps (docs/steps/step_27.md, delegated).
+    # Maya: manipOptions -r -s 2.0 / 0.5 (hotkeySetup.mel:387-389 via docs/keymap_mapping.md); 1.25x steps within
+    # Blender's gizmo size range 10-200 px (docs/steps/step_27.md, delegated). Since step 130 this scales the kit's
+    # Move / Scale manipulator only (ui/manipulator.SIZE): Blender's gizmo_size preference is never written, so
+    # Blender's own gizmos (Rotate) keep their size.
     factor: bpy.props.FloatProperty(name="Factor", default=1.25, min=0.1, max=10.0,
                                     options={'SKIP_SAVE'})
 
     def execute(self, context):
-        from .. import prefs_preset
-        size = context.preferences.view.gizmo_size
+        from ..ui import manipulator
+        base = context.preferences.view.gizmo_size
+        size = round(base * manipulator.SIZE[0])
         new = max(10, min(200, round(size * self.factor)))
         if new == size:
             new = max(10, min(200, size + (1 if self.factor > 1 else -1)))
-        got = prefs_preset.set_runtime("view.gizmo_size", new)
-        self.report({'INFO'}, f"Manipulator size {got} px")
+        manipulator.SIZE[0] = new / max(base, 1)
+        self.report({'INFO'}, f"Manipulator size {new} px")
         for area in context.screen.areas if context.screen else ():
             if area.type == 'VIEW_3D':
                 area.tag_redraw()

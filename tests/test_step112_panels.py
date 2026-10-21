@@ -1,5 +1,6 @@
-"""Step 112: Solid Side Panels — Maya mode turns Blender's region overlap off (the dock beside the viewport, not over
-it), restores the user's value when the option, Maya mode or the add-on goes off; the Tool Box column identity."""
+"""Step 112: the Tool Box column identity and framing beside the dock. The Solid Side Panels preset (Region Overlap
+off) is gone since step 130 (docs/user_decisions.md #13): Maya mode leaves Blender's Region Overlap as the user set
+it."""
 
 from importlib import import_module
 from types import SimpleNamespace
@@ -9,36 +10,20 @@ import bpy
 import kit
 
 preferences = import_module(kit.MODULE + ".preferences")
-prefs_preset = import_module(kit.MODULE + ".prefs_preset")
-switch = import_module(kit.MODULE + ".switch")
 toolbox = import_module(kit.MODULE + ".ui.toolbox")
 
 
-def test_enable_turns_region_overlap_off():
-    addon = preferences.get()
-    assert addon.use_maya_panels
-    assert not bpy.context.preferences.system.use_region_overlap
-    assert "system.use_region_overlap" in switch.FOOTPRINT
-
-
-def test_option_off_restores_user_value():
+def test_maya_mode_leaves_region_overlap_alone():
     p = bpy.context.preferences.system
-    addon = preferences.get()
-    addon.use_maya_panels = False
+    assert p.use_region_overlap, "factory value (on) kept in Maya mode"
+    assert not hasattr(preferences.get(), "use_maya_panels")
+    p.use_region_overlap = False          # the user's own choice survives disable / enable
     try:
-        assert p.use_region_overlap and not addon.panels_backup   # factory value (on) back
-    finally:
-        addon.use_maya_panels = True
-    assert not p.use_region_overlap and addon.panels_backup
-
-
-def test_disable_restores_region_overlap():
-    kit.disable()
-    try:
-        assert bpy.context.preferences.system.use_region_overlap
-    finally:
+        kit.disable()
         kit.enable()
-    assert not bpy.context.preferences.system.use_region_overlap
+        assert not p.use_region_overlap
+    finally:
+        p.use_region_overlap = True
 
 
 def test_toolbox_identity_ignores_overlays():

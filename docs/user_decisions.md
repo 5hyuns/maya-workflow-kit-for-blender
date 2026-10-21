@@ -106,3 +106,39 @@
     - **manifest `tags = ["User Interface"]`** 만, 권한 `files` = "Your shelves and Maya project folders".
     - 검증: `tests/test_step130_package_scan.py` (패키지 정적 스캔), 레인 C 의 설치→등록→Maya 모드→해제→제거 왕복 비교 테스트,
       `blender --command extension validate`. 심사자 답글 초안: `docs/distribution/review_reply.md`.
+
+14. **결정 3 · 9 개정 — 영구 변경 없음 (사용자 요청 + 심사자 요구, step 130, 2026-10-21, #40; 세부 선택은 delegated)**.
+    사용자 지시 (원문): 「user_disabling·remove_on_disable 삭제, unregister가 register한 모든 것을 되돌리게; 확장 폴더 밖에 파일을 쓰는 것(app
+    template 복사 등)·사용자 환경설정 영구 변경(save_userpref, 입력/키맵 prefs)·남는 handler/timer/msgbus 전부 제거 또는 런타임·애드온 키맵으로
+    전환 ... 기능이 사라지는 부분(테마, app template, prefs 프리셋 등)은 docs/user_decisions.md에 기록.」 심사자 (extensions.blender.org):
+    "Remove user_disabling. Add-on should uninstall normally without additional functions. Everything that is registered should be
+    unregistered. No modifications should be made with add-on that requires additional steps to be unmade."
+    - **킷은 Blender 환경설정을 쓰지 않는다** (`bpy.context.preferences.*` 값). 킷 자신의 애드온 환경설정 (Maya 모드, Start in Maya Layout 등)
+      만 바꾸고, 그 변경을 Blender 의 Auto-Save Preferences 가 저장하도록 `is_dirty` 만 표시한다. `save_userpref` 는 Maya 의 File > Save
+      Preferences 메뉴 (사용자 명령) 뿐.
+    - **확장 폴더 밖에 쓰지 않는다**: 앱 템플릿 복사 (`scripts/startup/bl_app_templates_user/Maya_Workflow_Kit`) 를 없앴다. Maya 레이아웃
+      `startup.blend` 는 확장 안에만 있고 읽기만 한다 — 「Maya Layout in This File」 / 스위치 = 그 파일의 워크스페이스를 현재 파일로 append
+      (`switch.enter_layout`), 「New Scene in Maya Layout」 (`allset.new_maya_scene`, Maya File > New Scene, Status Line 새 장면 버튼) =
+      `wm.read_homefile(filepath=<번들 startup.blend>, load_ui=True)` — 이름 없는 새 파일이고 환경설정을 다시 읽지 않는다 (측정).
+    - **스냅샷 · 복원 장치 삭제**: `switch_snapshot.json`, `FOOTPRINT`, 테마 백업, `restore_snapshot` / `finish_interrupted`,
+      「Restore Blender Settings」 / 「Revert Maya Look」 버튼, `switch.user_disabling`, `app_template.remove_on_disable` /
+      `reinstall_if_wanted`. 되돌릴 영구 변경이 없으므로 끄기 · 비활성화 · 제거 = 등록한 것의 등록 해제뿐 (handler, timer, 키맵 항목, 클래스,
+      속성, draw 함수). 검증: `tests/test_step130_lifecycle.py`.
+    - **사라진 기능 (사용자에게 보이는 손실)** — 필요하면 사용자가 Blender 환경설정에서 직접 고른다 (리스팅의 「추천 환경설정」 글, 코드 없음):
+      - Maya 내비게이션 프리셋 (Turntable, Dolly, 가로 줌 축, Zoom to Mouse 끔, Auto Perspective ...; step 4).
+      - Undo 256 단계 (Blender 기본 32; step 30).
+      - Solid Side Panels = Region Overlap 끔 (step 112): 겹침이 켜진 사용자 설정에서는 사이드바 / 툴바가 뷰 위에 그려질 수 있다 (Maya
+        패널은 step 116 부터 별도 영역이라 영향이 작다).
+      - Maya 테마 · 스플래시 끔 · Maya 밀도 (UI 크기) · Segoe UI 글꼴 · 앨리어스 와이어 (steps 42–44; 테마 제거는 레인 H).
+      - 앱 템플릿: File > New > Maya Workflow Kit 항목과 「Blender 기본 File > New = Maya 레이아웃」. 대신 Maya 메뉴의 New Scene /
+        「New Scene in Maya Layout」. Ctrl+N 키 항목은 레인 K (#44).
+      - = / − 매니퓰레이터 크기: Blender `gizmo_size` 대신 킷 Move / Scale 매니퓰레이터만 세션 동안 커지고 작아진다 (Blender 의 Rotate
+        기즈모는 그대로).
+      - View > Tumble Behaviour 두 항목: Orbit Around Selection 환경설정을 바꾸지 않고 상태만 보여 주며, 누르면 Preferences > Navigation 을
+        연다.
+    - **Maya Auto Key 는 유지 — 방식만 바뀜**: Blender 의 "Only Insert Available" 환경설정 대신 킷 자체 토글 `Scene.allset_auto_key`
+      (Time Slider 의 키 버튼) + depsgraph handler 가 이미 키가 있는 채널만 현재 프레임에 키한다 (`operators/auto_key.py`; 트랜스폼이
+      끝난 뒤, 재생 중 / NLA 매핑 객체 제외). Blender 의 자체 Auto Keying 은 사용자 몫으로 남는다.
+    - Maya 레이아웃의 3D 뷰 배경 = 뷰 자체의 단색 Maya #5c5c5c (`View3DShading.background_type='VIEWPORT'`, 테마가 아님; #45).
+    - 결정 3 의 「Maya 레이아웃 설치」 버튼 · 사용자 scripts 폴더 복사, 결정 9 의 템플릿 설치 · Maya 테마 · 스플래시 끔 · 환경설정 저장은
+      이 결정으로 대체된다.
