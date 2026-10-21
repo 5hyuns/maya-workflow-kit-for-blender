@@ -17,7 +17,7 @@
   - #2 미구현 (Blender 에 감쇠 색 표시 없음) → POST_VIEW 점 그리기 + preselect BVH 캐시 패턴 제안.
   - #3 Tool Box 아이콘 = C 툴바 버튼, 더블클릭이 키맵에 오지 않음 → 같은 툴 재설정 시간 감지(tool_keys 타이머) 제안.
   - #4 `area_dupli` 는 복사한 영역 크기의 창을 만듦; `maya_dock.tear_menu` 가 가장 높은 영역을 복사 → 원하는 높이로 split 후 복사 제안.
-- 새 이슈 16개 (#15–#21, #24, #26, #29–#35), 라벨 bug + found-by-audit (+ maya-parity).
+- 새 이슈 18개 (#15–#21, #24, #26, #29–#36, #39), 라벨 bug + found-by-audit (+ maya-parity).
 - 툴 전수 표: `docs/steps/step_128_tools.md` (Maya 옵션 박스가 있는 메뉴 항목 386개: Maya 필드 옵션 창 27, 툴 14, Blender redo 124,
   「설정 없음」 50, 연산자 창 11, 미매핑 160). Tool Box: Maya Tool Settings 섹션은 Move/Rotate/Scale 만 (#29).
 
@@ -60,6 +60,10 @@
 | #33 | Modeling commands: option boxes show Blender's redo fields or 'no settings' instead of Maya option windows (only 28 Maya windows exist) | P3 | audit |
 | #34 | Deform menu: Lattice / Wrap / Delta Mush / Nonlinear etc. are bare Blender modifiers without Maya creation options; Paint Weights items don't pick the deformer's weights | P2 | audit |
 | #35 | Key menu and constraints: Cut/Copy/Paste/Delete/Snap Keys and Aim/Scale/Pole Vector constraints have no Maya options; Scale Keys missing | P3 | audit |
+| #36 | Crash: closing an editor window opened from a Maya menu (Wireframe Color, Shape Editor, UV Set Editor...) within 2 s crashes Blender | P0 | audit |
+| #37 | No Auto Key button: keyed channels are not keyed automatically when changed on another frame | — | user |
+| #38 | Time Slider shows no key markers (ticks/diamonds) at keyed frames | — | user |
+| #39 | Component mode: Select All / Inverse / Deselect All, Edit > Delete, Group, Freeze and most Edit menu items say 'select objects first' and do nothing | P1 | audit |
 
 ## 검증 / 재현 스크립트
 
@@ -68,6 +72,11 @@
   `gui_ui_torn_menu_run` (#21), `gui_toggle_roundtrip` (#24; Status Line 스냅 4·마스크 6·대칭·에디터 토글 4·그룹 9 왕복 PASS, 패널 툴바
   실패 5 = #10), `gui_scene_concepts` (#26; Create 이름 10/11 PASS — joint 는 skeleton1 = step 57 의도, CB 다중 선택 입력 PASS).
 - 툴 표: `tests/gui/audit128/tool_inventory.py` (blender -b).
+- 메뉴 전수 실행 스윕 `gui_menu_sweep` (2차 세션): Edit/Modify/Display/Select/Create/Mesh/Edit Mesh/Mesh Tools/Mesh Display/Deform/
+  Skeleton/Skin/Constrain/Key/Control/Curves/Surfaces/UV 의 매핑된 항목 626개 (오브젝트 모드 + 컴포넌트 모드)를 클릭처럼 실행.
+  1차 실행이 Blender 를 크래시시킴 → #36 (P0, `gui_props_window_close_crash` 로 단독 재현). 그 항목을 빼고 재실행: Python 트레이스백 0,
+  크래시 0, 정상 431, 오류 195 (대부분 Blender poll 실패 = 실제 클릭에서는 Maya 식 경고로 바뀜). 컴포넌트 모드 Edit/Select 항목은
+  실제 메뉴 연산자로 다시 재서 #39 (`gui_component_mode_menus`, 6 FAIL). 결과 TSV 는 tmp/audit128_issues/sweep.tsv (추적 안 함).
 - `tools/dogfood.py`: 전 항목 PASS, 콘솔 오류 0 (새 문제 없음).
 - 이 단계는 src/ 를 바꾸지 않음 → 헤드리스·GUI 전체 묶음은 돌리지 않음 (테스트 대상 변경 없음; `tests/gui/run.py` 는 `--dir` 옵션만 추가,
   기본값은 기존 폴더).
@@ -75,6 +84,6 @@
 ## 남은 것
 
 - 점검 못 한 영역: 홀드 키 C/V/J 실측(기존 GUI 테스트 PASS 로 갈음), Graph Editor 조작 세부, UV 툴킷 토글(사용자 #13 외), 셸프 버튼 전수
-  실행, Hypershade(#25 사용자). 메뉴 전수 실행 스윕(모든 매핑 항목 실행 + 예외 수집)은 설계만 하고 못 돌림 — 129 이후 후보.
+  실행, Hypershade(#25 사용자). 메뉴 스윕은 File/Windows/Render 와 새 창을 여는 항목(#36 경로)을 뺐음 — 그쪽은 따로 점검 필요.
 - 심각도는 audit 이슈에만 매김; 사용자 이슈 #5–#14, #22, #23, #25, #27, #28 은 129 에서 분류.
-- 129 = #1–#4 + P0/P1 (#19, #20, #26) 수정 배치.
+- 129 = #1–#4 + P0/P1 (#36, #19, #20, #26, #39) 수정 배치.
