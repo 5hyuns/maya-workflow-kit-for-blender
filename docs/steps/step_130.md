@@ -77,3 +77,6 @@ unregister 가 모든 것을 되돌림 + 추가 조치가 필요한 변경 금�
 - #53 (1.25 배율 레이아웃 재조정), #52 (툴바 넘침), #44 (Ctrl+N), #41 (홍보·스토어 이미지 재촬영 — 테마가 없어진 화면으로).
 - 스토어에 0.2.1 업로드 후 `review_reply.md` 를 심사 스레드에 올리기 (사용자).
 - 심사자가 「활성 keyconfig 항목을 메모리에서 끄는 것」 을 문제 삼으면 대안이 마땅치 않음 (`step_130_keymap.md` 위험 절).
+- 추가 (#43, 레인 C 가 발견): Graph Editor 기본 탄젠트 · View > Keys, Display > Heads Up Display > Frame Rate 메뉴가 Blender 환경설정을 직접 쓰던 것
+  → Preferences 의 해당 섹션을 연다 (`screen.userpref_show`), `menu_sets.prop_owner` 는 `preferences.*` 경로를 거부, 스캔 테스트
+  `test_no_menu_item_targets_blender_preferences` 추가 (Blender 자체 IC 데이터 제외). step130 / 104 / 101 / 7 / 34 / 54 헤드리스 73/73.
