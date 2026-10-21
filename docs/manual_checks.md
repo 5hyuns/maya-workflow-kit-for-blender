@@ -807,3 +807,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 127) 실제 브라우저 (Chrome, Safari 모바일) 에서 `site/index.html` (로컬 서버): 셸프 탭 클릭 · 화살표 · 1–6 으로 클립과 사실 열이 바뀌는지, 클립이 화면에 보일 때만 재생되는지, Maya | Blender 전환, 모바일 가로 스크롤 메뉴, FAQ 열고 닫기.
 - [ ] (step 127) 저장소 공개 + push 뒤 GitHub Pages (Settings › Pages › GitHub Actions) 가 https://5hyuns.github.io/maya-workflow-kit-for-blender/ 에 뜨는지, og 이미지 미리보기.
+
+### Step 129 — Tool Settings (#3, #28, #29)
+
+- [ ] (step 129) 실제 마우스로 Tool Box 아이콘 (Select / Lasso / Paint Select / Move / Rotate / Scale) 을 더블클릭: Tool Settings 도크가 열리고 그 툴의 Maya 절이 보이는지; 이미 열려 있으면 두 번째 도크가 생기지 않는지; 한 번 클릭 / W W 키는 열지 않는지.
+- [ ] (step 129) Paint Selection 의 Select / Unselect / Add to current selection 이 실제 칠하기 선택 결과와 맞는지, Insert Edge Loop 의 Equal distance / Multiple edge loops 가 loop cut 결과에 반영되는지.
