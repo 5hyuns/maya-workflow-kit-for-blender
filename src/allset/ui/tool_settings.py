@@ -18,6 +18,7 @@ import math
 
 import bpy
 
+from ..operators.mesh_tools import CREASE_TOOL, TARGET_WELD_TOOL
 from .manipulator import KINDS, SLOT, active_tool
 
 # Maya factory axis per tool (pivot_snap.md P12); the same values tools/make_startup.py writes into the template.
@@ -26,7 +27,20 @@ MAYA_PIVOT = 'ACTIVE_ELEMENT'
 MAYA_ROTATE_STEP = math.radians(15.0)
 # A tool whose keymap name can't be resolved still resets its main operator.
 TOOL_OPERATORS = {"builtin.move": ("transform.translate",), "builtin.rotate": ("transform.rotate",),
-                  "builtin.scale": ("transform.resize",)}
+                  "builtin.scale": ("transform.resize",), "builtin.select_box": ("view3d.select_box",),
+                  "builtin.select_lasso": ("view3d.select_lasso",), "builtin.select_circle": ("view3d.select_circle",),
+                  "builtin.loop_cut": ("mesh.loopcut_slide",), "builtin.edge_slide": ("transform.edge_slide",),
+                  "builtin.poly_build": ("mesh.polybuild_face_at_cursor_move",)}
+
+# Step 129 (docs/steps/step_129_tool_settings.md): the other tools with Maya Tool Settings sections. Maya tool
+# (runTimeCommand in research/maya/menus.json) -> Blender tool; measured in Maya 2022: research/maya/screens/ts129/.
+TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT',               # SelectTool (Marquee / Tweak)
+         "builtin.select_lasso": 'LASSO', "builtin.select_circle": 'PAINT_SELECT',  # LassoTool, ArtPaintSelectTool
+         "builtin.loop_cut": 'INSERT_EDGE_LOOP', "builtin.edge_slide": 'SLIDE_EDGE',  # SplitEdgeRingTool, SlideEdgeTool
+         TARGET_WELD_TOOL: 'TARGET_WELD', CREASE_TOOL: 'CREASE',                    # MergeVertexTool, PolyCreaseTool
+         "builtin.poly_build": 'QUAD_DRAW'}         # QuadDrawTool / CreatePolygonTool / AppendToPolygonTool (menu_map)
+KIND_OF = {**KINDS, **TOOLS}
+MANIP = ('TRANSLATE', 'ROTATE', 'RESIZE')
 
 
 def tool_operators(context, tool):
@@ -90,10 +104,36 @@ def reset_tool(context):
         except (RuntimeError, TypeError, ValueError):
             continue
         n += reset_operator_properties(props)
-    kind = KINDS.get(tool.idname)
-    if kind is not None:
+    kind = KIND_OF.get(tool.idname)
+    if kind in MANIP:
         reset_maya_options(context, kind)
+    elif kind is not None:
+        reset_kind_defaults(context, kind, tool)
     return tool.idname, n
+
+
+def reset_kind_defaults(context, kind, tool=None):
+    """Maya factory values where they differ from the Blender tool's defaults (research/maya/screens/ts129):
+    Paint Selection = Select + Add to current selection; Target Weld = Target, Preserve UVs on; Crease = Absolute."""
+    if kind == 'PAINT_SELECT':
+        _paint_add[0] = True
+        props = _op_props(tool or active_tool(context), "view3d.select_circle")
+        if props is not None:
+            props.mode = 'ADD'
+    elif kind in ('TARGET_WELD', 'CREASE'):
+        from ..operators import mesh_tools
+        s = mesh_tools.settings(context)
+        for name in (("weld_merge_to", "weld_preserve_uvs") if kind == 'TARGET_WELD' else ("crease_mode",)):
+            setattr(s, name, s.bl_rna.properties[name].default)
+
+
+def _op_props(tool, idname):
+    if tool is None:
+        return None
+    try:
+        return tool.operator_properties(idname)
+    except (RuntimeError, TypeError, ValueError, KeyError):
+        return None
 
 
 class ALLSET_OT_reset_tool(bpy.types.Operator):
@@ -128,17 +168,35 @@ def draw_reset_row(self, context):
 # Section order, default open state and rows measured in Maya 2022 (research/maya/screens/ts106/_ts106.json
 # move / rotate / scale, *_ts_full0.png). Rows without kit state are greyed with a tooltip (TS_NOTICES).
 
-TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scale Tool"}
+TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scale Tool",
+              # step 129: Maya 2022 Tool Settings titles (contextInfo -t, research/maya/screens/ts129)
+              'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
+              'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
+              'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
-# (key, title, open by default, kinds that have it)
+SELECTING = ('SELECT', 'LASSO')
+# (key, title, open by default: True / False / the kinds where it starts open, kinds that have it). One order for
+# every tool (Maya's order within each tool: ts106 / ts129 widget y).
 SECTIONS = (
-    ("settings", None, True, ('TRANSLATE', 'ROTATE', 'RESIZE')),
+    ("settings", None, True, MANIP),
     ("joint_orient", "Joint Orient Settings", False, ('TRANSLATE',)),
     ("move_snap", "Move Snap Settings", False, ('TRANSLATE',)),
-    ("selection", "Common Selection Options", False, ('TRANSLATE', 'ROTATE', 'RESIZE')),
-    ("soft", "Soft Selection", False, ('TRANSLATE', 'ROTATE', 'RESIZE')),
-    ("symmetry", "Symmetry Settings", False, ('TRANSLATE', 'ROTATE', 'RESIZE')),
-    ("smart_duplicate", "Smart Duplicate Settings", False, ('TRANSLATE', 'ROTATE', 'RESIZE')),
+    ("lasso", "Lasso Settings", True, ('LASSO',)),
+    ("brush", "Brush", True, ('PAINT_SELECT',)),
+    ("paint_ops", "Paint Operations", True, ('PAINT_SELECT',)),
+    ("stroke", "Stroke", False, ('PAINT_SELECT',)),
+    ("stylus", "Stylus Pressure", False, ('PAINT_SELECT',)),
+    ("attr_maps", "Attribute Maps", False, ('PAINT_SELECT',)),
+    ("paint_display", "Display", False, ('PAINT_SELECT',)),
+    ("description", "Description", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE')),
+    ("tool", "Settings", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE', 'QUAD_DRAW')),
+    ("slide_snap", "Snapping Settings", True, ('SLIDE_EDGE',)),
+    ("live", "Live Constraint Options", False, ('QUAD_DRAW',)),
+    ("shortcuts", "Keyboard/Mouse Shortcuts", False, ('TARGET_WELD', 'QUAD_DRAW')),
+    ("selection", "Common Selection Options", ('SELECT',), (*MANIP, 'SELECT')),
+    ("soft", "Soft Selection", False, (*MANIP, *SELECTING)),
+    ("symmetry", "Symmetry Settings", False, (*MANIP, *SELECTING)),
+    ("smart_duplicate", "Smart Duplicate Settings", False, MANIP),
 )
 # Maya Rotate / Scale Center (rotate_ts / scale_ts) -> Blender pivot point (delegated: Default = the manipulator at
 # the lead's pivot, the kit's Maya default MAYA_PIVOT; Object = each object's own pivot; Manip = where the component
@@ -161,7 +219,8 @@ TS_NOTICES = {
                                           "Bones are not re-oriented while they move; orient them afterwards"),
     f"{TS}/Retain component spacing": ("always on", "Blender snapping always keeps the selection's spacing"),
     f"{TS}/Snap to live polygon": ("Make Live", "Blender snaps to the live surface with the Face snap"),
-    f"{TS}/Drag": ("Select Box / Lasso tools", "Blender has no paint-drag selection style for the Move tool"),
+    f"{TS}/Drag": ("Paint Selection Tool",
+                   "Blender's drag-to-paint selection is the Paint Selection Tool (Tool Box), not a style of this tool"),
     f"{TS}/Automatic camera-based selection": ("Camera-based selection",
                                                "Turn camera-based selection on or off yourself"),
     f"{TS}/Highlight backfaces": ("X-ray (Alt+Z)", "Blender highlights only what it can select"),
@@ -173,6 +232,45 @@ TS_NOTICES = {
                           "Blender's rotate manipulator has the free trackball rotation built in"),
     f"{TS}/Prevent Negative Scale": ("off", "Blender lets scale go negative"),
 }
+# Step 129: greyed rows of the other tools (Maya 2022 rows, research/maya/screens/ts129) -> (substitute, one line).
+_SPACE = "Blender's selection tools work in screen space"
+TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
+    "Lasso/Open": ("Closed lasso", "Blender's lasso always closes the shape from the last point to the first"),
+    "Lasso/Accurate": ("screen position", "Blender's lasso picks components by their screen position"),
+    "Lasso/Fast": ("screen position", "Blender's lasso picks components by their screen position"),
+    "Paint/Radius(L)": ("one radius", "Blender's paint selection has one radius, no lower stylus radius"),
+    "Paint/Profile": ("hard circle", "Blender's paint selection brush is a hard circle"),
+    "Paint/Rotate to stroke": ("round brush", "The round brush has no direction to rotate"),
+    "Paint/Toggle": ("Ctrl+click", "Blender's paint selection can only select or unselect; toggle with Ctrl+click"),
+    "Paint/Screen projection": ("always on", _SPACE),
+    "Paint/Reflection": ("Mesh Symmetry", "Blender's paint selection doesn't mirror; select the other side too"),
+    "Paint/Stamp spacing": ("continuous", "Blender's paint selection selects along the whole stroke"),
+    "Paint/Stroke commands": ("Script Editor", "Blender's brush runs no MEL commands before or after a stroke"),
+    "Paint/Stylus pressure": ("no pressure", "Blender's paint selection ignores tablet pressure"),
+    "Paint/Attribute Maps": ("no attribute maps", "Blender can't paint a selection into or out of an image"),
+    "Paint/Draw brush": ("always drawn", "Blender always draws the paint selection circle"),
+    "Insert Edge Loop/Use Equal Multiplier": ("always on", "Blender spaces several new loops evenly"),
+    "Insert Edge Loop/Auto complete": ("always on", "Blender's loop cut always runs around the whole edge ring"),
+    "Insert Edge Loop/Fix Quads": ("Edit Mesh > Connect", "Blender's loop cut stops where the ring isn't quads"),
+    "Insert Edge Loop/Insert with edge flow": ("Edit Mesh > Edit Edge Flow",
+                                               "Blender's loop cut is straight; run Edit Edge Flow on the new loop"),
+    "Insert Edge Loop/Adjust Edge Flow": ("Edit Mesh > Edit Edge Flow",
+                                          "Blender's loop cut is straight; run Edit Edge Flow on the new loop"),
+    "Insert Edge Loop/Smoothing angle": ("Mesh Display > Harden Edge",
+                                         "New loops don't harden by angle; set hard edges afterwards"),
+    "Slide Edge/Use Snapping": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
+    "Slide Edge/Snapping Points": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
+    "Slide Edge/Snapping Tolerance": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
+    "Target Weld/MMB": ("Merge To: Center", "Middle-drag isn't bound: set Merge To to Center and drag with the left button"),
+    "Crease/Extend to creased components": ("Select Similar",
+                                            "Select the creased edges with Select > Select Similar > Crease first"),
+    "Quad Draw/Auto-weld": ("Poly Build", "The kit's Quad Draw is Blender's Poly Build: it welds to existing vertices"),
+    "Quad Draw/Relax": ("Mesh > Smooth Vertices", "Poly Build doesn't relax; smooth the vertices afterwards"),
+    "Quad Draw/Extend": ("Poly Build keys", "Poly Build extends a border edge face by face (Keyboard/Mouse Shortcuts)"),
+    "Quad Draw/Quad Strip Width": ("Poly Build keys", "Poly Build has no quad strips; add the faces one by one"),
+    "Quad Draw/Clear Dots": ("no dots", "Poly Build places vertices, not dots"),
+    "Quad Draw/Live Constraint": ("Snap to Face", "Draw on a live surface with Face snapping (Make Live)"),
+}.items()})
 
 
 def in_dock(context):
@@ -185,14 +283,15 @@ def in_dock(context):
 
 
 def tool_kind(context):
-    """'TRANSLATE' / 'ROTATE' / 'RESIZE' when the active tool has Maya sections (Move / Rotate / Scale)."""
+    """The active tool's kind when it has Maya sections ('TRANSLATE' / 'ROTATE' / 'RESIZE' and the step 129 kinds of
+    ``TOOLS``), else None (Blender's tool panels are drawn)."""
     tool = active_tool(context)
-    return KINDS.get(tool.idname) if tool is not None else None
+    return KIND_OF.get(tool.idname) if tool is not None else None
 
 
 def tool_label(context, tool):
     """(label, icon_value) of a tool as its toolbar button shows it."""
-    kind = KINDS.get(tool.idname)
+    kind = KIND_OF.get(tool.idname)
     try:
         from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
         cls = ToolSelectPanelHelper._tool_class_from_space_type('VIEW_3D')
@@ -350,11 +449,323 @@ def draw_section(layout, context, key, kind):
         draw_symmetry_section(layout, context)
     elif key == "smart_duplicate":
         draw_smart_duplicate(layout, context)
+    elif key in OTHER_SECTIONS:
+        OTHER_SECTIONS[key](layout, context, kind)
+
+
+# --- step 129: the other tools' sections (docs/steps/step_129_tool_settings.md, research/maya/screens/ts129) -------
+
+def _radio(layout, text, on, option, value):
+    """A Maya radio button bound through allset.ts_option."""
+    op = layout.operator(ALLSET_OT_ts_option.bl_idname, text=text, icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF',
+                         emboss=False)
+    op.option, op.value = option, value
+    return op
+
+
+def _fixed(layout, text, on=True):
+    """A Maya radio / check value Blender always has: drawn set, not clickable."""
+    row = layout.row()
+    row.alignment = 'LEFT'
+    row.label(text=text, icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF')
+
+
+def _lines(layout, *lines):
+    col = layout.column(align=True)
+    for line in lines:
+        col.label(text=line)
+
+
+def draw_lasso(layout, context, kind):
+    """Lasso Settings: Draw style Closed (Open greyed), Component selection (greyed; Maya default Fast)."""
+    row = _labelled(layout, "Draw style:")
+    _grey(row, "Lasso/Open", text="Open", icon='RADIOBUT_OFF')
+    _fixed(row, "Closed")
+    row = _labelled(layout, "Component selection:")
+    _grey(row, "Lasso/Accurate", text="Accurate", icon='RADIOBUT_OFF')
+    _grey(row, "Lasso/Fast", text="Fast", icon='RADIOBUT_ON')
+
+
+def _circle_props(context):
+    return _op_props(active_tool(context), "view3d.select_circle")
+
+
+def draw_brush(layout, context, kind):
+    """Brush: Radius(U) = Blender's circle radius (pixels), the rest greyed."""
+    from . import notices
+    props = _circle_props(context)
+    row = _labelled(layout, "Radius(U):")
+    if props is not None:
+        row.prop(props, "radius", text="")
+    notices.tip(row, "Maya measures the radius in scene units, Blender's paint selection in screen pixels")
+    _grey(_labelled(layout, "Radius(L):"), "Paint/Radius(L)", text="0.0010")
+    _grey(_labelled(layout, "Profile:"), "Paint/Profile", text="Soft")
+    _grey(_labelled(layout, ""), "Paint/Rotate to stroke", text="Rotate to stroke", check=True)
+
+
+def paint_operation(props):
+    """'SELECT' / 'UNSELECT' from Blender's circle select mode (Maya Paint operation)."""
+    return 'UNSELECT' if props is not None and props.mode == 'SUB' else 'SELECT'
+
+
+def draw_paint_ops(layout, context, kind):
+    """Paint Operations: Select / Unselect (+ Add to current selection) = Blender's select mode, Select All /
+    Unselect All / Toggle All."""
+    props = _circle_props(context)
+    op = paint_operation(props)
+    row = _labelled(layout, "Paint operation:")
+    _radio(row, "Select", op == 'SELECT', "paint_op", "SELECT")
+    _radio(row, "Unselect", op == 'UNSELECT', "paint_op", "UNSELECT")
+    _grey(_labelled(layout, ""), "Paint/Toggle", text="Toggle", icon='RADIOBUT_OFF')
+    sub = _labelled(layout, "").row()
+    sub.active = op == 'SELECT'
+    _check_op(sub, ALLSET_OT_ts_option.bl_idname, "Add to current selection",
+              props is not None and props.mode == 'ADD', option="paint_add", value="")
+    row = layout.row(align=True)
+    for text, value in (("Select All", 'SELECT'), ("Unselect All", 'DESELECT'), ("Toggle All", 'INVERT')):
+        o = row.operator(ALLSET_OT_ts_option.bl_idname, text=text)
+        o.option, o.value = "select_all", value
+
+
+def draw_stroke(layout, context, kind):
+    col = _labelled(layout, "").column(align=True)
+    _grey(col, "Paint/Screen projection", text="Screen projection", check=True)
+    _grey(col, "Paint/Reflection", text="Reflection", check=False)
+    _grey(_labelled(layout, "Stamp spacing:"), "Paint/Stamp spacing", text="0.100")
+    _grey(_labelled(layout, "Before / after stroke:"), "Paint/Stroke commands", text="-")
+
+
+def draw_stylus(layout, context, kind):
+    _grey(_labelled(layout, ""), "Paint/Stylus pressure", text="Stylus pressure", check=False)
+
+
+def draw_attr_maps(layout, context, kind):
+    _grey(_labelled(layout, "Map name:"), "Paint/Attribute Maps", text="Import... / Export...")
+
+
+def draw_paint_display(layout, context, kind):
+    _grey(_labelled(layout, ""), "Paint/Draw brush", text="Draw brush", check=True)
+
+
+DESCRIPTIONS = {   # the kit's own words for what the tool does here
+    'INSERT_EDGE_LOOP': ("Click an edge and drag to place a new edge loop",
+                         "across the edge ring."),
+    'SLIDE_EDGE': ("Select an edge loop or path, then drag", "to slide it along the neighbouring edges."),
+    'TARGET_WELD': ("Drag a vertex or edge onto the target.", "The selected vertices or edges are merged."),
+    'CREASE': ("Crease edges / vertices between hard and smooth:", "select them, then middle-drag left / right."),
+}
+
+
+def draw_description(layout, context, kind):
+    _lines(layout, *DESCRIPTIONS.get(kind, ()))
+
+
+def _loop_props(tool):
+    macro = _op_props(tool, "mesh.loopcut_slide")
+    if macro is None:
+        return None, None
+    return macro.MESH_OT_loopcut, macro.TRANSFORM_OT_edge_slide
+
+
+def edge_loop_position(tool):
+    """Maya Insert Edge Loop "Maintain position" from Blender's loop cut: several cuts = Multiple edge loops, even
+    slide = Equal distance from edge, else Relative distance from edge."""
+    cut, slide = _loop_props(tool)
+    if cut is None:
+        return 'RELATIVE'
+    if cut.number_cuts > 1:
+        return 'MULTIPLE'
+    return 'EQUAL' if slide.use_even else 'RELATIVE'
+
+
+MAYA_EDGE_LOOPS = 2     # Maya Number of edge loops (ts129 insert_edge_loop)
+
+
+def set_edge_loop_position(tool, value):
+    cut, slide = _loop_props(tool)
+    if cut is None:
+        return False
+    if value == 'MULTIPLE':
+        slide.use_even = False
+        if cut.number_cuts < 2:
+            cut.number_cuts = MAYA_EDGE_LOOPS
+    else:
+        cut.number_cuts = 1
+        slide.use_even = value == 'EQUAL'
+    return True
+
+
+def _draw_insert_edge_loop(layout, context):
+    tool = active_tool(context)
+    pos = edge_loop_position(tool)
+    col = _labelled(layout, "Maintain position:").column(align=True)
+    for text, value in (("Relative distance from edge", 'RELATIVE'), ("Equal distance from edge", 'EQUAL'),
+                        ("Multiple edge loops", 'MULTIPLE')):
+        _radio(col, text, pos == value, "iel_position", value)
+    _grey(_labelled(layout, ""), "Insert Edge Loop/Use Equal Multiplier", text="Use Equal Multiplier", check=True)
+    row = _labelled(layout, "Number of edge loops:")
+    cut, _slide = _loop_props(tool)
+    row.active = pos == 'MULTIPLE'
+    if cut is not None:
+        row.prop(cut, "number_cuts", text="")
+    col = _labelled(layout, "").column(align=True)
+    _grey(col, "Insert Edge Loop/Auto complete", text="Auto complete", check=True)
+    _grey(col, "Insert Edge Loop/Fix Quads", text="Fix Quads", check=True)
+    _grey(col, "Insert Edge Loop/Insert with edge flow", text="Insert with edge flow", check=False)
+    _grey(_labelled(layout, "Adjust Edge Flow:"), "Insert Edge Loop/Adjust Edge Flow", text="1.0000")
+    _grey(_labelled(layout, "Smoothing angle:"), "Insert Edge Loop/Smoothing angle", text="30.0000")
+
+
+def _draw_slide_edge(layout, context):
+    props = _op_props(active_tool(context), "transform.edge_slide")
+    absolute = props is not None and props.use_even
+    col = _labelled(layout, "Mode:").column(align=True)
+    _radio(col, "Relative", not absolute, "slide_mode", 'RELATIVE')
+    _radio(col, "Absolute", absolute, "slide_mode", 'ABSOLUTE')
+
+
+def _draw_target_weld(layout, context):
+    from ..operators import mesh_tools
+    s = mesh_tools.settings(context)
+    _labelled(layout, "Merge To:").prop(s, "weld_merge_to", expand=True)
+    _labelled(layout, "Preserve UVs:").prop(s, "weld_preserve_uvs", text="")
+
+
+def _draw_crease(layout, context):
+    from ..operators import mesh_tools
+    _labelled(layout, "Mode:").prop(mesh_tools.settings(context), "crease_mode", expand=True)
+    _grey(_labelled(layout, "Selection:"), "Crease/Extend to creased components",
+          text="Extend to creased components", check=False)
+
+
+def _draw_quad_draw(layout, context):
+    macro = _op_props(active_tool(context), "mesh.polybuild_face_at_cursor_move")
+    _grey(_labelled(layout, "Auto-weld:"), "Quad Draw/Auto-weld", text="10", check=True)
+    _grey(_labelled(layout, "Relax:"), "Quad Draw/Relax", text="Auto-Lock")
+    _grey(_labelled(layout, "Extend:"), "Quad Draw/Extend", text="Edge")
+    _grey(_labelled(layout, "Quad Strip Width:"), "Quad Draw/Quad Strip Width", text="20")
+    _grey(_labelled(layout, ""), "Quad Draw/Clear Dots", text="Clear Dots")
+    if macro is not None:   # Blender's own Poly Build option: new faces from a vertex become quads
+        _labelled(layout, "Quads:").prop(macro.MESH_OT_polybuild_face_at_cursor, "create_quads", text="Create Quads")
+
+
+def draw_tool(layout, context, kind):
+    {'INSERT_EDGE_LOOP': _draw_insert_edge_loop, 'SLIDE_EDGE': _draw_slide_edge, 'TARGET_WELD': _draw_target_weld,
+     'CREASE': _draw_crease, 'QUAD_DRAW': _draw_quad_draw}[kind](layout, context)
+
+
+def draw_slide_snap(layout, context, kind):
+    _grey(_labelled(layout, ""), "Slide Edge/Use Snapping", text="Use Snapping", check=True)
+    _grey(_labelled(layout, "Snapping Points:"), "Slide Edge/Snapping Points", text="1")
+    _grey(_labelled(layout, "Snapping Tolerance:"), "Slide Edge/Snapping Tolerance", text="0.1000")
+
+
+def draw_live(layout, context, kind):
+    _grey(_labelled(layout, ""), "Quad Draw/Live Constraint", text="Wireframe Overlay, Mesh Color / Alpha ...")
+
+
+POLY_BUILD_KEYMAP = "3D View Tool: Edit Mesh, Poly Build"
+
+
+def keymap_rows(context, name):
+    """[(keys, operator name)] of a tool keymap of the active keyconfig (empty in -b: no keyconfig there)."""
+    kc = context.window_manager.keyconfigs.active
+    km = kc.keymaps.get(name) if kc is not None else None
+    out = []
+    for kmi in (km.keymap_items if km is not None else ()):
+        if not kmi.active:
+            continue
+        try:
+            label = getattr(getattr(bpy.ops, kmi.idname.split(".")[0]), kmi.idname.split(".")[1]).get_rna_type().name
+        except (AttributeError, IndexError, KeyError):
+            label = kmi.idname
+        out.append((kmi.to_string(), label))
+    return out
+
+
+def draw_shortcuts(layout, context, kind):
+    if kind == 'TARGET_WELD':
+        split = layout.split(factor=0.42)
+        split.label(text="LMB")
+        split.label(text="Drag to merge components")
+        _grey(layout, "Target Weld/MMB", text="MMB: drag to merge components to center")
+        return
+    rows = keymap_rows(context, POLY_BUILD_KEYMAP)
+    if not rows:
+        layout.label(text="Poly Build keys: hover the tool for its tooltip")
+    for keys, label in rows:
+        split = layout.split(factor=0.42)
+        split.label(text=keys)
+        split.label(text=label)
+
+
+OTHER_SECTIONS = {"lasso": draw_lasso, "brush": draw_brush, "paint_ops": draw_paint_ops, "stroke": draw_stroke,
+                  "stylus": draw_stylus, "attr_maps": draw_attr_maps, "paint_display": draw_paint_display,
+                  "description": draw_description, "tool": draw_tool, "slide_snap": draw_slide_snap,
+                  "live": draw_live, "shortcuts": draw_shortcuts}
+
+_paint_add = [True]    # Maya "Add to current selection" kept while Unselect is picked (factory: on)
+
+
+def _select_all(context, action):
+    if context.mode == 'EDIT_MESH':
+        return bpy.ops.mesh.select_all(action=action)
+    if context.mode == 'OBJECT':
+        return bpy.ops.object.select_all(action=action)
+    return {'CANCELLED'}
+
+
+def apply_option(context, option, value):
+    """Set a Maya Tool Settings value on Blender's tool properties. True when it applied."""
+    tool = active_tool(context)
+    if option in ("paint_op", "paint_add"):
+        props = _op_props(tool, "view3d.select_circle")
+        if props is None:
+            return False
+        if option == "paint_add":
+            if props.mode == 'SUB':
+                return False
+            _paint_add[0] = props.mode != 'ADD'
+            props.mode = 'ADD' if _paint_add[0] else 'SET'
+        elif value == 'UNSELECT':
+            props.mode = 'SUB'
+        else:
+            props.mode = 'ADD' if _paint_add[0] else 'SET'
+        return True
+    if option == "select_all":
+        return 'FINISHED' in _select_all(context, value)
+    if option == "iel_position":
+        return set_edge_loop_position(tool, value)
+    if option == "slide_mode":
+        props = _op_props(tool, "transform.edge_slide")
+        if props is None:
+            return False
+        props.use_even = value == 'ABSOLUTE'
+        return True
+    return False
+
+
+class ALLSET_OT_ts_option(bpy.types.Operator):
+    """Set this Maya tool option"""
+    bl_idname = "allset.ts_option"
+    bl_label = "Tool Option"
+    bl_options = {'INTERNAL', 'UNDO'}
+
+    option: bpy.props.StringProperty(options={'SKIP_SAVE'})
+    value: bpy.props.StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        if not apply_option(context, self.option, self.value):
+            return {'CANCELLED'}
+        for area in context.screen.areas if context.screen else ():
+            area.tag_redraw()
+        return {'FINISHED'}
 
 
 def sections(kind):
     """[(key, title, open)] of the tool kind, in Maya's order."""
-    return [(key, title or SETTINGS[kind], is_open) for key, title, is_open, kinds in SECTIONS if kind in kinds]
+    return [(key, title or SETTINGS[kind], is_open if isinstance(is_open, bool) else kind in is_open)
+            for key, title, is_open, kinds in SECTIONS if kind in kinds]
 
 
 def draw_dock(layout, context):
@@ -363,11 +774,11 @@ def draw_dock(layout, context):
         layout.label(text="No tool settings in this mode")
         return
     draw_head(layout, context, tool)
-    kind = KINDS.get(tool.idname)
+    kind = KIND_OF.get(tool.idname)
     if kind is None:
-        return    # Blender's own tool panels follow (dock_tabs hides them only for Move / Rotate / Scale)
+        return    # Blender's own tool panels follow (dock_tabs hides them only for tools with Maya sections)
     for key, title, is_open in sections(kind):
-        header, body = layout.panel(f"allset_ts_{key}", default_closed=not is_open)
+        header, body = layout.panel(f"allset_ts_{kind.lower()}_{key}", default_closed=not is_open)
         header.label(text=title)
         if body is not None:
             draw_section(body.column(), context, key, kind)
@@ -398,7 +809,7 @@ def hides_blender_panels(context):
     return in_dock(context) and tool_kind(context) is not None
 
 
-classes = (ALLSET_OT_reset_tool, ALLSET_PT_tool_settings)
+classes = (ALLSET_OT_reset_tool, ALLSET_OT_ts_option, ALLSET_PT_tool_settings)
 
 
 def register():

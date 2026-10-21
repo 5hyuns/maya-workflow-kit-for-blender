@@ -106,10 +106,66 @@ def _tools_from_context(cls, context, mode=None):
     yield from original(cls, context, mode)
 
 
+# --- double-click a tool = its Tool Settings (step 129, #3; toolbox.mel:306-307) ------------------------------------
+# A toolbar icon is a UI button: a double click never reaches a keymap, but each click runs wm.tool_set_by_id, whose
+# execute imports bl_ui.space_toolsystem_common.activate_by_id when it runs ($S\startup\bl_operators\wm.py:2338-2347;
+# a DOUBLE_CLICK the button doesn't take comes back as a PRESS). That module function is wrapped: the same tool set
+# twice from a 3D View toolbar button within the double-click time opens the Tool Settings. A toolbar button runs its
+# operator in the view's WINDOW region like a key does (measured), so the toolbar's layout carries a context member
+# (``_draw_begin``: ``context_pointer_set``) that only its buttons' operators see.
+
+TOOLBAR_MEMBER = "allset_toolbar"
+_last_click = [None, 0.0]     # (tool idname, time.monotonic()) of the last toolbar click
+
+
+def note_tool_click(context, idname, now=None):
+    """Remember a tool set from a toolbar button; True when it completes a double click (then forgotten)."""
+    import time
+    if getattr(context, TOOLBAR_MEMBER, None) is None:     # a key / menu / script: never a double click
+        _last_click[:] = [None, 0.0]
+        return False
+    now = time.monotonic() if now is None else now
+    limit = context.preferences.inputs.mouse_double_click_time / 1000.0
+    hit = _last_click[0] == idname and 0.0 <= now - _last_click[1] <= limit
+    _last_click[:] = [None, 0.0] if hit else [idname, now]
+    return hit
+
+
+def _show_tool_settings_later(window):
+    ptr = window.as_pointer() if window is not None else 0
+
+    def later():
+        from . import tool_dock
+        wm = bpy.context.window_manager
+        win = next((w for w in wm.windows if w.as_pointer() == ptr), None) or (wm.windows[0] if wm.windows else None)
+        if win is None:
+            return None
+        try:
+            with bpy.context.temp_override(window=win):
+                tool_dock.show(bpy.context)
+        except (RuntimeError, ReferenceError, TypeError):
+            pass
+        return None
+    bpy.app.timers.register(later, first_interval=0.0)
+
+
+def _make_activate_by_id(original):
+    def activate_by_id(context, space_type, idname, *, as_fallback=False):
+        done = original(context, space_type, idname, as_fallback=as_fallback)
+        if done and space_type == 'VIEW_3D' and note_tool_click(context, idname):
+            _show_tool_settings_later(getattr(context, "window", None))
+        return done
+    activate_by_id._allset_wrapped = True
+    return activate_by_id
+
+
 def _draw_begin(self, context):
     """Prepended to the toolbar's draw: Blender's own draw (ToolSelectPanelHelper.draw) lists the Maya tools while
-    the flag is on. A prepend / append pair, not a replaced draw (step 115)."""
+    the flag is on. A prepend / append pair, not a replaced draw (step 115). Also marks the toolbar's buttons for the
+    double-click watch (step 129)."""
     _drawing[0] = _enabled(context)
+    if context.space_data is not None and context.space_data.type == 'VIEW_3D':
+        self.layout.context_pointer_set(TOOLBAR_MEMBER, context.space_data)
 
 
 def _draw_end(self, context):
@@ -369,6 +425,9 @@ def register():
     TOOLBAR.tools_from_context = classmethod(_tools_from_context)
     TOOLBAR.prepend(_draw_begin)
     TOOLBAR.append(_draw_end)
+    from bl_ui import space_toolsystem_common as stc
+    _saved["activate_by_id"] = stc.activate_by_id
+    stc.activate_by_id = _make_activate_by_id(stc.activate_by_id)
     if not bpy.app.background and not bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.register(_fit_tick, first_interval=_FIT_TICK, persistent=True)
     bpy.app.handlers.load_post.append(_fit_after_load)
@@ -381,6 +440,10 @@ def unregister():
     if bpy.app.timers.is_registered(_fit_tick):
         bpy.app.timers.unregister(_fit_tick)
     TOOLBAR.tools_from_context = _saved.pop("tools_from_context")
+    from bl_ui import space_toolsystem_common as stc
+    if "activate_by_id" in _saved:
+        stc.activate_by_id = _saved.pop("activate_by_id")
+    _last_click[:] = [None, 0.0]
     TOOLBAR.remove(_draw_begin)
     TOOLBAR.remove(_draw_end)
     for cls in reversed(classes):

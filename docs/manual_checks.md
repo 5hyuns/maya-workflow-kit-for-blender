@@ -813,3 +813,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129, #5) 실제 마우스로 Maya Workflow Kit 레이아웃에서 pCube1 을 뷰포트 아래쪽에 두고 RMB 를 누른 채 목록을 따라 천천히 아래로 끌기: Paint ▸ / Assign Favorite Material ▸ 줄을 지날 때 하위 메뉴가 줄 오른쪽에 열리고 목록은 그대로 남는지, 다음 줄로 내려가면 하위 메뉴가 닫히는지, 하위 메뉴 안의 항목에서 놓으면 실행되는지 (Qt 메뉴처럼; delegated).
 - [ ] (step 129, #5) 같은 RMB 메뉴를 Time Slider 바로 위에서 열어 커서를 Time Slider / Range Slider 위로 내리기: 메뉴가 닫히지 않고, Time Slider 위에 그려진 남쪽 항목 · 목록 줄이 강조되고 놓으면 실행되는지; Time Slider 의 현재 프레임이 바뀌지 않는지 (RMB 놓기가 타임라인으로 가지 않음).
 - [ ] (step 129, #5) Space 를 누른 채 (핫박스) 뷰포트 아래쪽에서 커서를 Time Slider 위로: 핫박스가 남아 있고 그 위 메뉴 이름이 강조되며 클릭하면 그 메뉴가 열리는지.
+
+### Step 129 — Tool Settings (#3, #28, #29)
+
+- [ ] (step 129) 실제 마우스로 Tool Box 아이콘 (Select / Lasso / Paint Select / Move / Rotate / Scale) 을 더블클릭: Tool Settings 도크가 열리고 그 툴의 Maya 절이 보이는지; 이미 열려 있으면 두 번째 도크가 생기지 않는지; 한 번 클릭 / W W 키는 열지 않는지.
+- [ ] (step 129) Paint Selection 의 Select / Unselect / Add to current selection 이 실제 칠하기 선택 결과와 맞는지, Insert Edge Loop 의 Equal distance / Multiple edge loops 가 loop cut 결과에 반영되는지.
