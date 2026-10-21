@@ -11,7 +11,7 @@ import bmesh
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, dock_area, dock_region, ev, find_button, open_inputs, px, run, screenshot, setup, step, view3d, win  # noqa: E402
+from sim import check, dock_area, dock_region, ev, find_button, open_inputs, px, run, scroll_channel_box, screenshot, setup, step, view3d, win  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -158,20 +158,6 @@ def s_thickness():
     redraw()
 
 
-# Channel Box INPUTS > polyExtrudeFace1 > Divisions field, checked in gui_step65_inputs.png (1600 x 900, scale 1.25,
-# sidebar UI region (971, 94, 350, 709)): px left of the sidebar's right edge, px below the top of its content.
-DIVISIONS_FIELD = (116, 503)
-
-
-def cb_point(spot):
-    """The row still sits ``spot[1]`` px under the dock's content top; the field's x is found on that row by its data
-    path (step 116: the dock is its own area, its width isn't the sidebar's)."""
-    ui = dock_region()
-    top = ui.view2d.view_to_region(0, 0, clip=False)[1]
-    found = C.get("divisions")
-    return (found[0] if found else ui.x + ui.width - px(spot[0])), ui.y + top - px(spot[1])
-
-
 def dock():
     return dock_area(), dock_region()
 
@@ -185,6 +171,7 @@ def s_shot_thickness():
 @step
 def s_open_extrude_node():
     open_inputs("polyExtrudeFace1")   # step 135: INPUTS nodes start collapsed (Maya)
+    scroll_channel_box()              # ... and a long Channel Box scrolls inside its part
     redraw()
 
 
@@ -193,26 +180,22 @@ def s_wait_open_extrude():
     redraw()
 
 
-@step
-def s_find_divisions():
-    ui = dock_region()
-    y = cb_point(DIVISIONS_FIELD)[1]
-    C["finder"] = find_button(dock, lambda path, _cmd: path.endswith("divisions_text"), C, "divisions",
-                              rows=(ui.y + ui.height - y,))
-    C["finder"]()
+# The field is looked up by its data path (step 135: the Channel Box part scrolls, rows have no fixed y).
+step(find_button(dock, lambda path, _cmd: path.endswith("divisions_text"), C, "divisions", x_frac=0.8, step_px=8))
 
 
 @step
 def s_hover_divisions():
     check(f"INPUTS Divisions field found ({C.get('divisions')})", C.get("divisions") is not None)
-    x, y = cb_point(DIVISIONS_FIELD)
-    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    if C.get("divisions"):
+        x, y = C["divisions"]
+        ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     redraw()
 
 
 @step
 def s_click_divisions():
-    x, y = cb_point(DIVISIONS_FIELD)
+    x, y = C["divisions"]
     ev('LEFTMOUSE', 'PRESS', x=x, y=y)
     ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
 
