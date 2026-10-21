@@ -6,12 +6,12 @@ Blender Studio's Rain, Pack Bot and Security Bot rigs, the Blender 4.5 splash sc
 the Poly Haven Studio Small 09 HDRI (step 125; research/marketing_assets/INVENTORY_125.md).
 
 Viewport background (step 125, user instruction 2026-10-20): every Maya-mode 3D View in a promotional capture shows
-Maya's gradient background — the "gradient" state of the Alt+B cycle (src/allset/operators/key_batch3.py,
-research/maya/re/background_120.md: top #889db3, bottom #111315). ``maya_look()`` turns it on and a persistent timer
+Maya's gradient background (research/maya/re/background_120.md: top #889db3, bottom #111315; since step 130 the
+extension has no gradient state — this tool sets it in the sandbox theme). ``maya_look()`` turns it on and a persistent timer
 (``GRADIENT_KEEPER``) keeps every 3D View of every window in that state, so views made later in a session (four-view
 layout, Graph Editor split, switch back from Blender, new windows) are gradient before they are drawn; captures are
 checked afterwards by tools/marketing/bg_check.py (``viewport_rects`` = what to check). Plain Blender (Blender mode)
-keeps Blender's own theme: the keeper only acts while Maya mode is on and the kit's Maya theme is applied.
+keeps Blender's own background: the keeper only acts while Maya mode is on.
 """
 
 import math
@@ -508,26 +508,35 @@ def template_name():
 
 def maya_mode_on():
     try:
-        return mod(".switch").is_on() and mod(".theme").is_applied()
+        return mod(".switch").is_on()
     except Exception:
         return False
 
 
+# Maya's gradient (research/maya/re/background_120.md). The extension never writes a theme (step 130, #40) and
+# Blender has no per-view gradient, so this marketing tool sets the gradient in the *sandbox's* theme itself — a
+# look any user gets from a theme with a 3D View gradient (the listing's recommended-theme sentence).
+GRADIENT_TOP = (0.535, 0.617, 0.702)
+GRADIENT_BOTTOM = (0.052, 0.052, 0.052)
+
+
 def apply_gradient(force=False):
-    """Maya's Alt+B gradient state in every 3D View but the Tool Box column (key_batch3.apply_background), written
+    """Maya's gradient in every 3D View but the Tool Box column (sandbox theme gradient + views on THEME), written
     only where it differs (each write redraws). Returns True when something changed."""
     kb = mod(".operators.key_batch3")
     changed = False
-    g = kb.theme_gradients()
-    want = (tuple(round(c, 4) for c in kb.GRADIENT_TOP), tuple(round(c, 4) for c in kb.GRADIENT_BOTTOM))
+    g = bpy.context.preferences.themes[0].view_3d.space.gradients
+    want = (tuple(round(c, 4) for c in GRADIENT_TOP), tuple(round(c, 4) for c in GRADIENT_BOTTOM))
     have = (tuple(round(c, 4) for c in g.high_gradient), tuple(round(c, 4) for c in g.gradient))
     if force or g.background_type != 'LINEAR' or have != want:
-        kb.set_gradient(g, True)             # the gradient lives in the theme (Blender has no per-view gradient)
+        g.background_type = 'LINEAR'
+        g.high_gradient = GRADIENT_TOP           # Blender draws high_gradient at the top (measured, step 120)
+        g.gradient = GRADIENT_BOTTOM
         changed = True
     for area, space in kb.view_spaces():
         sh = space.shading
         if force or sh.background_type != 'THEME':
-            kb.set_shading(sh, "GRADIENT")
+            sh.background_type = 'THEME'
             area.tag_redraw()
             changed = True
         if sh.type in {'MATERIAL', 'RENDERED'} and sh.studiolight_background_alpha != 0.0:
@@ -548,11 +557,8 @@ def GRADIENT_KEEPER():
 
 
 def maya_look():
-    """Maya theme, Maya's gradient viewport background (Alt+B state, step 125), no tooltips / in-view messages in the
-    pictures. The keeper timer re-applies the gradient to views made later (while Maya mode is on)."""
-    th = mod(".theme")
-    if not th.is_applied():
-        th.apply()
+    """Maya's gradient viewport background (step 125), no tooltips / in-view messages in the pictures. The keeper
+    timer re-applies the gradient to views made later (while Maya mode is on)."""
     GRADIENT["on"] = True
     apply_gradient(force=True)
     if not bpy.app.timers.is_registered(GRADIENT_KEEPER):

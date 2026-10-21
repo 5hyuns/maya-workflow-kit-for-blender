@@ -1,4 +1,5 @@
-"""Step 5 in a real UI: Maya layout template + Maya theme, area placement, screenshots."""
+"""Step 5 in a real UI: Maya layout template in the user's theme (no kit theme since step 130), area placement,
+screenshots."""
 
 import os
 import sys
@@ -20,7 +21,6 @@ def areas(t):
 def s_setup():
     setup()
     check("install layout", bpy.ops.allset.layout_install() == {'FINISHED'})
-    check("apply theme", bpy.ops.allset.theme_apply() == {'FINISHED'})
     bpy.ops.wm.read_homefile(app_template="Maya_Workflow_Kit")
 
 
@@ -58,7 +58,6 @@ def s_object():
     check("the tab stack shows the Channel Box with an object", md.current_tab() == 'CHANNEL_BOX')
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
-    bpy.ops.allset.theme_restore()
     bpy.ops.allset.layout_remove()
 
 

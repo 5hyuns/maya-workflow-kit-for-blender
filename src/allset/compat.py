@@ -13,15 +13,6 @@ TARGET = (4, 5)
 IS_TARGET = VERSION == TARGET
 
 
-def rna_xml():
-    """The XML theme / preset helper module: ``rna_xml`` in 4.5, ``_rna_xml`` in 5.x (step 53)."""
-    try:
-        import rna_xml as mod
-    except ImportError:
-        import _rna_xml as mod
-    return mod
-
-
 # Properties tab flags newer than 4.5 (measured, step 118): a 4.5-saved file (the Maya Workflow Kit template) opens in 5.x with
 # them on, so they carry no meaning in a kit dock's role (ui/maya_dock.role).
 LATER_PROPERTIES_TABS = frozenset({"show_properties_strip", "show_properties_strip_modifier"})
@@ -237,29 +228,12 @@ def material_uses_nodes(mat):
 
 
 def toolbar_back(theme):
-    """The 3D View toolbar / sidebar background: ``view_3d.space.button`` (4.5), ``regions.sidebars.back``
-    (5.0 theme migration table)."""
+    """The 3D View toolbar / sidebar background of the user's theme (read only — the kit never writes a theme,
+    step 130): ``view_3d.space.button`` (4.5), ``regions.sidebars.back`` (5.0 theme migration table)."""
     regions = getattr(theme, "regions", None)
     if regions is not None and hasattr(regions, "sidebars"):
         return regions.sidebars.back
     return theme.view_3d.space.button
-
-
-# --- Theme file -----------------------------------------------------------------------------
-# Blender 5.0 rewrote the theme keys (docs/compat_5x.md "테마 차이"): tools/make_theme.py writes one preset per
-# minor version (studio_grey.xml = 4.5, studio_grey_<5.m>.xml). Pick the newest file not newer than this Blender.
-
-def theme_file(folder):
-    import os
-    import re
-    best, best_v = os.path.join(folder, "studio_grey.xml"), TARGET
-    for name in os.listdir(folder):
-        m = re.fullmatch(r"studio_grey_(\d+)\.(\d+)\.xml", name)
-        if m:
-            v = (int(m.group(1)), int(m.group(2)))
-            if best_v < v <= VERSION:
-                best, best_v = os.path.join(folder, name), v
-    return best
 
 
 # --- GPU image shader -----------------------------------------------------------------------
