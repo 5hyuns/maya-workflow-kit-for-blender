@@ -74,10 +74,10 @@ def test_no_hard_coded_repository_names():
 
 
 def test_writes_outside_the_extension_folder_are_known():
-    """Writable data goes to bpy.utils.extension_path_user; the only exception is the legacy add-on build's
-    CONFIG fallback (docs/DISTRIBUTION.md). Since step 130 the layout file is never copied out of the extension
-    (no app template) and the switch keeps no snapshot. A new user_resource() call must be added there first."""
-    known = {"ui/shelf.py"}     # shelf: #42 (lane E)
+    """Writable data goes to bpy.utils.extension_path_user only. Since step 130 the layout file is never copied out
+    of the extension (no app template), the switch keeps no snapshot and the shelf's legacy-build fallback is a
+    folder inside the add-on (#42): no user_resource() call is left. A new one must be reviewed first."""
+    known = set()
     found = {rel for rel, text in _sources()
              if any("user_resource(" in code for code in _code_lines(text))}
     assert found <= known, f"new write location outside extension_path_user: {sorted(found - known)}"

@@ -198,7 +198,6 @@ def s_tool_settings():
     # step 106: the Tool Settings dock; toggle again to close it
     with bpy.context.temp_override(window=win()):
         bpy.ops.allset.editor_toggle(editor="TOOL_SETTINGS")
-    bpy.ops.allset.layout_remove()
 
 
 run()

@@ -2,7 +2,8 @@
 
 1. No global module dictionary / module path changes: enabling, using and disabling the kit leaves ``sys.modules``
    without any ``maya`` entry and ``sys.path`` unchanged; ``import maya.cmds`` works only inside the Command Line /
-   shelf / Script Editor namespace (``command_line/runner._import``).
+   shelf / Script Editor entries, whose import lines the runner rewrites to the kit's module (``runner.prepare``,
+   step 130).
 2. Assets: every non-code file in the package is a kit-made file listed in ``ASSETS_LICENSE.txt`` (CC0-1.0, also
    in the manifest's ``license``); the extension zip carries no legacy ``bl_info`` (the legacy zip does).
 """
@@ -32,9 +33,9 @@ def test_no_global_module_entries():
         for src in ("import maya.cmds as cmds; cmds.ls()", "from maya import cmds; cmds.ls()"):
             r = runner.run(src)
             assert not r.error, (src, r.text)
-        ns = dict(runner.namespace())
-        exec("import maya.cmds as mc\nok = mc.ls is not None", ns)    # a shelf button's namespace copy
-        assert ns["ok"]
+        shelf = import_module(kit.MODULE + ".ui.shelf")
+        ok, msg = shelf.run_script(bpy.context, "t", "import maya.cmds as mc\nassert mc.ls is not None")
+        assert ok, msg                                                  # a shelf button's script
         added = {m for m in set(sys.modules) - before_mods if m == "maya" or m.startswith("maya.")}
         assert not added, added
         assert sys.path == before_path, set(sys.path) ^ set(before_path)

@@ -57,7 +57,6 @@ def s_object():
     check("the tab stack shows the Channel Box with an object", md.current_tab() == 'CHANNEL_BOX')
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step5_object.png"))
-    bpy.ops.allset.layout_remove()
 
 
 run()
