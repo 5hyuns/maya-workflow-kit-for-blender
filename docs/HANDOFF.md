@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 128 (0.2.1 버그 점검, 수정 없음) 완료 — `docs/steps/step_128.md`, 툴 전수 표 `docs/steps/step_128_tools.md`. GitHub 이슈
+  #1–#35 (사용자 19 + 점검 16: #15–#21, #24, #26, #29–#35), #1–#4 에 근본 원인 코멘트. P1 = #19 (Maya→Blender 전환이 템플릿 화면을
+  안 되돌림), #20 (Paint Skin Weights 정규화 없음), #26 (h / CB Visibility / 레이어 V 가 다른 플래그). 재현: `tests/gui/audit128/`
+  (`python tests/gui/run.py --dir tests/gui/audit128 -k <이름>`).
+  **바로 다음 할 일**: step 129 = #1–#4 + P0/P1 이슈 수정 배치; 사용자 이슈 심각도 분류부터.
+
 - Step 127 (제품 사이트 GitHub Pages, impeccable, 사용자 지시 10-20) 완료 — `docs/steps/step_127.md`. `site/` 정적 사이트 (셸프 탭 = 워크플로우
   6 묶음 + 클립 + Channel Box 사실 열, Maya | Blender 전환, 설치 · 한계 · FAQ · 상표 고지), `site/PRODUCT.md` · `DESIGN.md`, 미디어
   `tools/site/make_media.py`, 검사 `tools/site/check_site.py` (경로 PASS, 첫 화면 210 KiB), `.github/workflows/pages.yml`. push 안 함.

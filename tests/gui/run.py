@@ -40,6 +40,7 @@ def main(argv=None):
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--shots", default="", help="directory for screenshots")
     ap.add_argument("--ui-scale", type=float, default=0.0, help="view.ui_scale for all tests")
+    ap.add_argument("--dir", default=str(HERE), help="folder of gui_*.py files (audit repro scripts: tests/gui/audit128)")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER))
     args = ap.parse_args(argv)
 
@@ -57,7 +58,7 @@ def main(argv=None):
         env["ALLSET_GUI_SHOTS"] = str(Path(args.shots).resolve())
 
     passed = failed = 0
-    files = sorted(p for p in HERE.glob("gui_*.py") if any(k in p.name for k in args.k.split(",")))
+    files = sorted(p for p in Path(args.dir).resolve().glob("gui_*.py") if any(k in p.name for k in args.k.split(",")))
     for path in files:
         out = headless.SANDBOX / "results" / f"{path.stem}.json"
         log = headless.SANDBOX / "logs" / f"{path.stem}.log"
