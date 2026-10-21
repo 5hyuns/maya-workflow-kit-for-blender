@@ -19,8 +19,6 @@ Selection order: Maya lofts / extrudes in selection order; Blender objects have 
 selected) object is last, the others keep their name order (delegated).
 """
 
-import math
-
 import bpy
 
 from . import naming, units
@@ -427,76 +425,6 @@ class ALLSET_OT_add_points(bpy.types.Operator):
         _end_points(ob.data)
         bpy.ops.object.mode_set(mode='EDIT')
         return {'FINISHED'}
-
-
-# --- NURBS primitives Blender lacks (operators/create.BUILDERS) ---------------------------------
-# Maya axes -> Blender: X -> X, Y -> Z, Z -> -Y (docs/steps/step_57.md). Sizes from mayapy (step_109.md).
-
-def _group(context, base):
-    grp = bpy.data.objects.new(base, None)
-    grp.empty_display_type = 'PLAIN_AXES'
-    grp.empty_display_size = 0.0
-    context.collection.objects.link(grp)
-    naming.apply_maya_name(grp, base, rename_data=False)
-    return grp
-
-
-def _child_name(side, grp):
-    return f"{side}{grp.name}"     # Maya: topnurbsSquare1, ... (the group's number makes it unique)
-
-
-def nurbs_square(context, k):
-    """Group ``nurbsSquare1`` of four straight curves (Maya top / left / bottom / right, side 1)."""
-    grp = _group(context, "nurbsSquare")
-    h = 0.5 * k
-    # Maya (x, z) corners -> Blender (x, -z)
-    sides = {"top": ((-h, -h), (h, -h)), "left": ((-h, h), (-h, -h)), "bottom": ((-h, h), (h, h)),
-             "right": ((h, h), (h, -h))}
-    for side, (a, b) in sides.items():
-        data = bpy.data.curves.new(f"{side}{grp.name}Shape", 'CURVE')
-        data.dimensions = '3D'
-        sp = data.splines.new('NURBS')
-        sp.points.add(1)
-        sp.points[0].co = (a[0], a[1], 0.0, 1.0)
-        sp.points[1].co = (b[0], b[1], 0.0, 1.0)
-        sp.order_u = 2
-        sp.use_endpoint_u = True
-        ob = bpy.data.objects.new(_child_name(side, grp), data)
-        context.collection.objects.link(ob)
-        ob.parent = grp
-    return grp
-
-
-def nurbs_cube(context, k):
-    """Group ``nurbsCube1`` of six NURBS patches (Maya top / bottom / left / right / front / back, width 1)."""
-    grp = _group(context, "nurbsCube")
-    h = 0.5 * k
-    # side -> (Blender location, rotation): Maya +Y top -> +Z, Maya +Z left -> -Y, Maya +X front -> +X.
-    sides = {"top": ((0, 0, h), (0, 0, 0)), "bottom": ((0, 0, -h), (math.pi, 0, 0)),
-             "left": ((0, -h, 0), (math.pi / 2, 0, 0)), "right": ((0, h, 0), (-math.pi / 2, 0, 0)),
-             "front": ((h, 0, 0), (0, math.pi / 2, 0)), "back": ((-h, 0, 0), (0, -math.pi / 2, 0))}
-    for side, (loc, rot) in sides.items():
-        bpy.ops.surface.primitive_nurbs_surface_surface_add(radius=h, location=loc, rotation=rot, align='WORLD')
-        ob = context.view_layer.objects.active
-        ob.name = _child_name(side, grp)
-        ob.data.name = f"{ob.name}Shape"
-        ob.parent = grp
-        from . import material
-        material.give_default(ob)
-    return grp
-
-
-def nurbs_cone(context, k):
-    """``nurbsCone1``: radius 1, height 2 around the origin, apex up (Maya +Y = Blender +Z)."""
-    bpy.ops.surface.primitive_nurbs_surface_cylinder_add(radius=k, location=(0, 0, 0), align='WORLD')
-    ob = context.view_layer.objects.active
-    pts = [p for sp in ob.data.splines for p in sp.points]
-    top = max(p.co.z for p in pts)
-    for p in pts:
-        if abs(p.co.z - top) < 1e-6:
-            p.co = (0.0, 0.0, p.co.z, p.co.w)
-    naming.apply_maya_name(ob, "nurbsCone")
-    return ob
 
 
 classes = (ALLSET_OT_surface_planar, ALLSET_OT_loft, ALLSET_OT_surface_extrude, ALLSET_OT_bevel_plus,
