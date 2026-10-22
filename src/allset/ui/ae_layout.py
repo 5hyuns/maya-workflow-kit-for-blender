@@ -14,6 +14,8 @@ Row forms:
                                  "armob" = the armature object
   ("draw", name)                 custom drawer in ui/attribute_editor.py
   ("socket", input name, label)  Principled BSDF input (material tabs), with the Maya map button
+  ("maya", material prop, label, input name)  a Maya number converted to that Principled input (Material property
+                                 with get/set), with the input's map button
   ("missing", label, note)       Maya attribute Blender doesn't have: a greyed row with the note (step 67)
 
 ``TEMPLATE`` names the research template a section list is checked against
@@ -116,12 +118,12 @@ CAMERA = [
 # --- lights (Maya-124, Maya-43) -----------
 _LIGHT_MAIN = (("prop", "data", "type", "Type"),
                ("prop", "data", "color", "Color"),
-               ("prop", "data", "energy", "Intensity"),
+               ("prop", "data", "allset_intensity", "Intensity"),      # Maya intensity (operators/lights.py)
                ("prop", "data", "diffuse_factor", "Emit Diffuse"),
                ("prop", "data", "specular_factor", "Emit Specular"))
-# Maya Decay Rate (): Blender lights are always quadratic, no No Decay
-# (, step 67).
-_DECAY = ("missing", "Decay Rate", "Quadratic (Blender lights always fall off with distance squared)")
+# Maya Decay Rate (): No Decay / Linear / Quadratic / Cubic, rendered by
+# Cycles with a Light Falloff node; EEVEE / the viewport keep distance squared (step 137, operators/lights.py).
+_DECAY = ("draw", "light_decay")
 POINT_LIGHT = [
     S("Point Light Attributes", True, *_LIGHT_MAIN, _DECAY),
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows"), subs=[
@@ -204,13 +206,14 @@ _RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refr
 LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
 # blinn / phong = lambert common + Specular Shading, open (Maya 2022 Maya-39,
 # Maya-33; not in the research templates).
+# Eccentricity / Cosine Power are Maya numbers converted to the Principled Roughness (operators/material.py, #71).
 BLINN = [_LAMBERT_COMMON,
-         S("Specular Shading", True, ("socket", "Roughness", "Eccentricity"),
+         S("Specular Shading", True, ("maya", "allset_eccentricity", "Eccentricity", "Roughness"),
            ("socket", "Specular IOR Level", "Specular Roll Off"),
            ("socket", "Specular Tint", "Specular Color")),
          _RAYTRACE]
 PHONG = [_LAMBERT_COMMON,
-         S("Specular Shading", True, ("socket", "Roughness", "Roughness (Cosine Power)"),
+         S("Specular Shading", True, ("maya", "allset_cosine_power", "Cosine Power", "Roughness"),
            ("socket", "Specular Tint", "Specular Color")),
          _RAYTRACE]
 # surfaceShader (Maya-34): out color = emission.

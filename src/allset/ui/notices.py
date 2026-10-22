@@ -140,10 +140,12 @@ NOTICES = {
     **{f"nCache/{item}": (
         "Baked caches", "Blender always plays a baked cache: Delete Cache to simulate again.")
        for item in ("Enable All Caches on Selected", "Disable All Caches on Selected")},
-    # Lights (PLAN W5, )
+    # Lights (PLAN W5, ; step 137 operators/lights.py)
     **{f"Create/Lights/{kind} Light": (
-        f"{kind} light", "Blender lights always get darker with the square of the distance (no No Decay); "
-        "Maya Workflow Kit scales the power to the Maya unit.") for kind in ("Point", "Spot", "Area")},
+        f"{kind} light", "Maya Decay Rate No Decay renders in Cycles; Blender EEVEE and the viewport get darker with the "
+        "square of the distance, the power matching Maya intensity 1 at 10 units.") for kind in ("Point", "Spot")},
+    "Create/Lights/Area Light": (
+        "Area light", "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units)."),
     # Rigging (W3: HumanIK / Quick Rig -> Rigify)
     **{path: ("Rigify", "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a "
                         "meta-rig fitted to the mesh (Generate Rig).")

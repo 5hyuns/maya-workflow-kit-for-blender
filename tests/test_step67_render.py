@@ -271,7 +271,7 @@ def test_light_editor_panels():
     for idname in ("allset.light_select", "allset.light_enable", "allset.light_isolate"):
         assert any(i == idname and p.light == "pointLight1" for i, p in ops), idname
     props = [e[1][1] for e in rec.log if e[0] == "prop"]
-    assert "color" in props and "energy" in props
+    assert "color" in props and "allset_intensity" in props
     bpy.context.view_layer.objects.active = bpy.data.objects["pointLight1"]
     rec = Rec()
     le.draw_property_editor(rec, bpy.context)
@@ -321,7 +321,8 @@ def test_keep_image_render_slots():
 def test_light_decay_rate_row():
     for kind in ("POINT", "SPOT", "AREA"):
         rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND[kind][0]) for row in sec.rows]
-        assert any(r[0] == "missing" and r[1] == "Decay Rate" and "Quadratic" in r[2] for r in rows), kind
+        # step 137: a real Decay Rate row (Light.allset_decay, operators/lights.py)
+        assert ("draw", "light_decay") in rows, kind
     rows = [row for _d, sec in ae_layout.walk(ae_layout.BY_KIND["SUN"][0]) for row in sec.rows]
-    assert not any(r[0] == "missing" for r in rows), "directional lights have no decay"
+    assert ("draw", "light_decay") not in rows, "directional lights have no decay"
 

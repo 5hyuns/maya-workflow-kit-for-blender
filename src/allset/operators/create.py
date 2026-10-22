@@ -18,7 +18,7 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
-from . import naming, prim_history, units
+from . import lights, naming, prim_history, units
 
 HALF_PI = math.pi / 2
 # Maya's Y-up "front" (looking down -Z) is Blender's front (+Y): directional lights,
@@ -83,12 +83,12 @@ KINDS = {
 }
 # Kinds whose data keeps Blender's name (Maya has no "...Shape" node for them).
 NO_SHAPE_NAME = {'JOINT', 'TEXT'}
-# Blender's light_add power (10 W for point / spot / area, checked: ) falls
-# off with the square of the distance in metres; scaled by maya_unit()^2 a light at the same Maya-unit distance
-# lights like in a metre scene. The sun has no falloff (render.md:185-187, PLAN W5).
+# Lights (step 137, operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
+# (x maya_unit()^2, step 54) and is checked so an intensity-1 light lights a surface like Maya's at 10 units;
+# Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
 FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
-LIGHT_NOTICE = ("Blender lights always get darker with the square of the distance (Maya Decay Rate: Quadratic); "
-                "there is no No Decay. Power is scaled to the Maya unit.")
+LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "
+                "the distance (matched to Maya at 10 units).")
 
 MAYA_CAMERA_LENS, MAYA_FILM_MM = 35.0, 36.0
 
@@ -109,10 +109,8 @@ def _scale_data(ob, k):
     elif ob.type == 'LIGHT':
         data.shadow_soft_size *= k
         if data.type == 'AREA':
-            data.size *= k
             data.size_y *= k
-        if data.type in FALLOFF_LIGHTS:
-            data.energy *= k * k
+        lights.maya_defaults(data, k)     # intensity 1, No Decay, spot cone 40, area 2 x 2 units (step 137)
 
 
 def _maya_naming(context):

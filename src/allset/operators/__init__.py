@@ -9,7 +9,7 @@ Operator ids use the ``allset.`` prefix. Each module lists its classes in
 import bpy
 
 from . import (auto_key, bookmarks, component, create, curve_tools, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
-               material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
+               lights, material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, rig_tools, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
@@ -31,6 +31,8 @@ _register_classes, _unregister_classes = bpy.utils.register_classes_factory(clas
 def register():
     _register_classes()
     snap_align.register_props()
+    material.register_props()
+    lights.register_props()
     driven_key.register_props()
     mesh_tools.register_props()
     extrude.register_handlers()
@@ -77,6 +79,8 @@ def unregister():
     pivot_menu.unregister_props()
     taphold.unregister_bindings()
     fx.unregister_props()
+    lights.unregister_props()
+    material.unregister_props()
     uv_tools.unregister_props()
     extrude.unregister_handlers()
     mesh_tools.clear()
