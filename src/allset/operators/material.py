@@ -22,26 +22,52 @@ from .. import compat
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
-# Maya createAndAssignShader kinds on Principled BSDF ():
+# Maya createAndAssignShader kinds on Principled BSDF ().
+# Maya factory values checked  (; lambert: ).
+# Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
+# strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is
+# disabled), so the colour is Maya's attribute value, not color x diffuse (step 100).
+_GREY = (0.5, 0.5, 0.5, 1.0)
+_BLACK = (0.0, 0.0, 0.0, 1.0)
+_COMMON = {"Base Color": _GREY, "Emission Color": _BLACK}
+_SPECULAR = {**_COMMON, "Specular Tint": _GREY}
+MAYA_ECCENTRICITY, MAYA_ROLL_OFF, MAYA_COSINE_POWER = 0.3, 0.7, 20.0
+
+
+def eccentricity_roughness(e):
+    """Principled Roughness for a Maya Blinn eccentricity: Blinn's highlight is the Trowbridge-Reitz distribution
+    with c3 = eccentricity (Blinn 1977 ) = the GGX alpha, and Principled's alpha = roughness^2."""
+    return max(0.0, min(1.0, e)) ** 0.5
+
+
+def cosine_power_roughness(n):
+    """Principled Roughness for a Maya Phong cosine power: exponent n <-> microfacet alpha = sqrt(2 / (n + 2)) ,
+    alpha = roughness^2."""
+    return (2.0 / (max(2.0, n) + 2.0)) ** 0.25
+
+
 # kind -> (Maya node name, UI label, Principled inputs).
 MATERIALS = {
-    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {}),
+    # standardSurface: baseColor 0.8 (= Principled's), specularRoughness 0.4, emissionColor white (checked)
+    'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {"Roughness": 0.4}),
     # Arnold's default material (Maya with mtoa); same Principled stand-in (render.md, step 67)
     'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
-    # Maya lambert defaults (Maya, ): color 0.5 grey; diffuse 0.8 has no Principled input
-    # (its "Weight" socket is disabled), so the colour is Maya's attribute value, not color x diffuse
-    # incandescence 0 = black Emission Color (Principled's default is white at strength 0: the AE showed white)
-    'LAMBERT': ("lambert", "Lambert", {"Base Color": (0.5, 0.5, 0.5, 1.0), "Roughness": 1.0,
-                                       "Specular IOR Level": 0.0, "Emission Color": (0.0, 0.0, 0.0, 1.0)}),
-    'BLINN': ("blinn", "Blinn", {"Roughness": 0.3}),
-    'PHONG': ("phong", "Phong", {"Roughness": 0.15}),
+    'LAMBERT': ("lambert", "Lambert", {**_COMMON, "Roughness": 1.0, "Specular IOR Level": 0.0}),
+    # blinn: eccentricity 0.3, specularRollOff 0.7 (AE row = Specular IOR Level), specularColor 0.5 (#71)
+    'BLINN': ("blinn", "Blinn", {**_SPECULAR, "Roughness": eccentricity_roughness(MAYA_ECCENTRICITY),
+                                 "Specular IOR Level": MAYA_ROLL_OFF}),
+    # phong: cosinePower 20, specularColor 0.5 (#71)
+    'PHONG': ("phong", "Phong", {**_SPECULAR, "Roughness": cosine_power_roughness(MAYA_COSINE_POWER)}),
     'SURFACE': ("surfaceShader", "Surface Shader", {"Emission Strength": 1.0}),
     # Step 105: the rest of Maya's Hypershade Create > Maya > Surface list that Blender can build (Principled stand-ins
     # plus a node or two; )
-    'PHONG_E': ("phongE", "Phong E", {"Roughness": 0.25}),
-    'ANISOTROPIC': ("anisotropic", "Anisotropic", {"Roughness": 0.3, "Anisotropic": 0.5}),
-    'RAMP': ("rampShader", "Ramp Shader", {"Roughness": 0.5}),
-    'LAYERED': ("layeredShader", "Layered Shader", {}),
+    # phongE: roughness 0.5, highlightSize 0.5 (Specular IOR Level), whiteness 0.5 (Specular Tint)
+    'PHONG_E': ("phongE", "Phong E", {**_SPECULAR, "Roughness": 0.5, "Specular IOR Level": 0.5}),
+    # anisotropic: roughness 0.7, angle 0, specularColor 0.5 (spreadX 13 / spreadY 3: Blender's Anisotropic 0.5 stays)
+    'ANISOTROPIC': ("anisotropic", "Anisotropic", {**_SPECULAR, "Roughness": 0.7, "Anisotropic": 0.5,
+                                                   "Anisotropic Rotation": 0.0}),
+    'RAMP': ("rampShader", "Ramp Shader", {"Roughness": 0.5, "Emission Color": _BLACK}),
+    'LAYERED': ("layeredShader", "Layered Shader", {"Emission Color": _BLACK}),
     'USE_BACKGROUND': ("useBackground", "Use Background", {}),
 }
 # Kinds whose look comes from extra nodes around the Principled BSDF (``_build``)
@@ -261,6 +287,62 @@ def _on_depsgraph(scene, depsgraph):
 
 HANDLERS = ((bpy.app.handlers.load_post, _on_load), (bpy.app.handlers.undo_post, _on_undo),
             (bpy.app.handlers.redo_post, _on_undo), (bpy.app.handlers.depsgraph_update_post, _on_depsgraph))
+
+
+# --- Maya attributes stored as Principled inputs (#71) -------------------------------------------------------------
+# The Attribute Editor shows Maya's numbers: Blinn Eccentricity and Phong Cosine Power are read from / written to the
+# Principled Roughness through the conversions above (nothing stored, so a Roughness edit elsewhere shows here).
+
+def _roughness_socket(mat):
+    if mat is None or not compat.material_uses_nodes(mat):
+        return None
+    node = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    return node.inputs.get("Roughness") if node is not None else None
+
+
+def _get_eccentricity(self):
+    sock = _roughness_socket(self)
+    return MAYA_ECCENTRICITY if sock is None else float(sock.default_value) ** 2
+
+
+def _set_eccentricity(self, value):
+    sock = _roughness_socket(self)
+    if sock is not None:
+        sock.default_value = eccentricity_roughness(value)
+
+
+def _get_cosine_power(self):
+    sock = _roughness_socket(self)
+    if sock is None:
+        return MAYA_COSINE_POWER
+    r4 = max(float(sock.default_value), 1e-3) ** 4
+    return max(2.0, 2.0 / r4 - 2.0)
+
+
+def _set_cosine_power(self, value):
+    sock = _roughness_socket(self)
+    if sock is not None:
+        sock.default_value = cosine_power_roughness(value)
+
+
+MATERIAL_PROPS = ("allset_eccentricity", "allset_cosine_power")
+
+
+def register_props():
+    from bpy.props import FloatProperty
+    bpy.types.Material.allset_eccentricity = FloatProperty(
+        name="Eccentricity", min=0.0, max=1.0, precision=3, get=_get_eccentricity, set=_set_eccentricity,
+        description="Maya Blinn eccentricity (size of the highlight); Principled Roughness = sqrt(eccentricity)")
+    bpy.types.Material.allset_cosine_power = FloatProperty(
+        name="Cosine Power", min=2.0, soft_max=100.0, precision=3, get=_get_cosine_power, set=_set_cosine_power,
+        description="Maya Phong cosine power (higher = smaller highlight); Principled Roughness = "
+                    "(2 / (power + 2)) ^ 0.25")
+
+
+def unregister_props():
+    for name in MATERIAL_PROPS:
+        if hasattr(bpy.types.Material, name):
+            delattr(bpy.types.Material, name)
 
 
 def register_handlers():
