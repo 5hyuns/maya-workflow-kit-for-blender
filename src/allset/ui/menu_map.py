@@ -414,7 +414,7 @@ MAP = {
     "Playback/Set Range to/Selected": ("allset.time_set_range", {"mode": "SELECTED"}),
     "Playback/Playback Speed/Real-time": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
                                                                    "value": "FRAME_DROP"}),
-    "Playback/Render Current Frame": "render.render",
+    "Playback/Render Current Frame": "allset.render_current_frame",
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
     "Visualize/Create Editable Motion Trail": "object.paths_calculate",
@@ -460,12 +460,13 @@ MAP = {
     "Render/Render Settings...": "allset.render_settings",
     # Render menu (, restored by tools/gen_menu_data.py PLACEHOLDERS; step 67).
     # Maya renders into the Render View window: render.render INVOKE opens Blender's (Render Result).
+    # Through the active view's camera, else Maya's persp camera made on demand (operators/render_persp.py, step 137).
     "Render/Render Using": ("menu", "ALLSET_MT_render_using"),
-    "Render/Render Current Frame": "render.render",
-    "Render/Redo Previous Render": "render.render",
+    "Render/Render Current Frame": "allset.render_current_frame",
+    "Render/Redo Previous Render": "allset.render_current_frame",
     "Render/IPR Render Current Frame": "allset.ipr_toggle",
     "Render/Redo Previous IPR Render": "allset.ipr_toggle",
-    "Render/Render Sequence": ("render.render", {"animation": True}),
+    "Render/Render Sequence": "allset.render_sequence",
 }
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with
