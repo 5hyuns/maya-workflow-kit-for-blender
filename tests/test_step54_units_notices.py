@@ -1,6 +1,7 @@
 """Step 54: create paths in Maya units (PLAN W5), light power x maya_unit^2, and the shared 「not in Blender」
 notices (PLAN W3). Plan: docs/steps/step_54.md; GUI: tests/gui/gui_step54_units_notices.py."""
 
+import math
 import types
 from importlib import import_module
 
@@ -79,11 +80,14 @@ def test_light_power_scaled_by_maya_unit_squared():
     for setup in SETUPS:
         _fresh()
         k = _units(setup)
-        for kind, base in (('POINT_LIGHT', 10.0), ('SPOT_LIGHT', 10.0), ('AREA_LIGHT', 10.0)):
+        # step 137: Maya intensity 1 / No Decay, power measured against Maya Software renders (operators/lights.py):
+        # still x maya_unit^2, now 4 pi^2 x 100 (point / spot, matched at 10 units) and pi^2 x 9.87 (area)
+        pi2 = math.pi ** 2
+        for kind, base in (('POINT_LIGHT', 4 * pi2 * 100), ('SPOT_LIGHT', 4 * pi2 * 100), ('AREA_LIGHT', pi2 * 9.87)):
             ob = _make(kind)
             assert abs(ob.data.energy - base * k * k) < 1e-5 * base * k * k, (setup, kind, ob.data.energy)
         sun = _make('DIRECTIONAL_LIGHT')
-        assert abs(sun.data.energy - 1.0) < 1e-9, "sun light: no distance falloff, not scaled"
+        assert abs(sun.data.energy - math.pi) < 1e-6, "sun light: no distance falloff, not scaled (Maya 1 = pi)"
 
 
 def test_quick_smoke_domain_in_maya_units():

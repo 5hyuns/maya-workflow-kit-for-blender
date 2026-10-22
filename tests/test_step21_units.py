@@ -114,7 +114,7 @@ def test_other_kinds_scale_with_the_unit():
     assert curve.name == "curve1" and curve.type == 'CURVE', curve.name
     assert max(curve.dimensions) < 0.1, tuple(curve.dimensions)
     area = create.create(bpy.context, 'AREA_LIGHT')
-    assert abs(area.data.size - 0.01) < TOL, area.data.size
+    assert abs(area.data.size - 0.02) < TOL, area.data.size     # Maya area light 2 x 2 units (step 137)
     _set_units("factory")
 
 

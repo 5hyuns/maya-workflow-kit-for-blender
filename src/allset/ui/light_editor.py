@@ -10,7 +10,7 @@ Blender has no Light Editor and Python can't make an editor type, so ``allset.li
 - Enable = ``hide_render`` and ``hide_viewport`` together (Maya: the light's visibility, which also stops it lighting);
 - Isolate = every other light off; their previous values are kept in the scene ID property ``allset_light_isolate``
   and come back when Isolate is pressed again (lights deleted meanwhile are skipped);
-- Intensity = ``energy`` (Watts for point / spot / area, Maya Workflow Kit scales the created power to the Maya unit, step 54);
+- Intensity = Maya intensity ``Light.allset_intensity`` (read from and written to ``energy``, operators/lights.py, step 137);
   Maya's Exposure has no separate value in Blender.
 """
 
@@ -208,7 +208,7 @@ def draw_list(layout, context):
         op.light = ob.name
         rest = split.row(align=True)
         rest.prop(ob.data, "color", text="")
-        rest.prop(ob.data, "energy", text="")
+        rest.prop(ob.data, "allset_intensity", text="")
         on = enabled(ob)
         rest.operator("allset.light_enable", text="", icon='CHECKBOX_HLT' if on else 'CHECKBOX_DEHLT').light = ob.name
         rest.operator("allset.light_isolate", text="", icon='SOLO_ON' if solo == ob.name else 'SOLO_OFF',

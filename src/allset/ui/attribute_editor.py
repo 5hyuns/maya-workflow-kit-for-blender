@@ -357,9 +357,22 @@ def draw_smooth_mesh(layout, context, ob):
         layout.prop(sub, "render_levels", text="Render Levels")
 
 
+def draw_light_decay(layout, context, ob):
+    """Maya Decay Rate (operators/lights.py, step 137); where the render can't follow it, the tooltip says why."""
+    from ..operators import lights
+    from . import notices
+    light = getattr(ob, "data", None)
+    if light is None or not hasattr(light, "allset_decay"):
+        return
+    row = layout.row(align=True)
+    row.prop(light, "allset_decay", text=attr_label(context, "Decay Rate", "decayRate"))
+    notices.tip(row, lights.decay_notice(light))
+
+
 DRAWERS = {"transform_channels": draw_transform_channels, "world_pivot": draw_world_pivot,
            "visibility": draw_visibility, "shading": draw_shading, "smooth_mesh": draw_smooth_mesh,
-           "joint_orient": draw_joint_orient, "joint_stiffness": draw_joint_stiffness}
+           "joint_orient": draw_joint_orient, "joint_stiffness": draw_joint_stiffness,
+           "light_decay": draw_light_decay}
 
 
 def attr_label(context, label, ident):
@@ -386,8 +399,12 @@ def draw_row(layout, context, ob, target, row):
             draw_limit(layout, context, ob, name[6:])
         else:
             DRAWERS[name](layout, context, ob)
-    elif kind == "socket":
-        _k, socket, label = row
+    elif kind in {"socket", "maya"}:
+        if kind == "maya":
+            _k, maya_prop, label, socket = row
+        else:
+            _k, socket, label = row
+            maya_prop = None
         node = principled(target)
         inp = node.inputs.get(socket) if node is not None else None
         if inp is None:
@@ -396,6 +413,8 @@ def draw_row(layout, context, ob, target, row):
         if inp.is_linked:
             source = inp.links[0].from_node
             row.label(text=f"{label}: connected ({source.name})")
+        elif maya_prop is not None and hasattr(target, maya_prop):
+            row.prop(target, maya_prop, text=label)          # Maya's number, converted (#71)
         elif hasattr(inp, "default_value"):
             row.prop(inp, "default_value", text=label)
         else:
