@@ -227,6 +227,25 @@ def material_uses_nodes(mat):
     return mat is not None and mat.node_tree is not None and (MATERIAL_ALWAYS_NODES or mat.use_nodes)
 
 
+# --- Lights ---------------------------------------------------------------------------------
+# 5.1: every light has a node tree; ``Light.use_nodes`` is deprecated (warns when read or set, measured step 137).
+LIGHT_ALWAYS_NODES = VERSION >= (5, 1)
+
+
+def ensure_light_nodes(light):
+    """Turn the light's nodes on; True when this call turned them on (4.5 / 5.0)."""
+    if LIGHT_ALWAYS_NODES or light.use_nodes:
+        return False
+    light.use_nodes = True
+    return True
+
+
+def release_light_nodes(light):
+    """Turn off nodes ``ensure_light_nodes`` turned on (no-op where every light uses nodes)."""
+    if not LIGHT_ALWAYS_NODES:
+        light.use_nodes = False
+
+
 def toolbar_back(theme):
     """The 3D View toolbar / sidebar background of the user's theme (read only — the kit never writes a theme,
     step 130): ``view_3d.space.button`` (4.5), ``regions.sidebars.back`` (5.0 theme migration table)."""

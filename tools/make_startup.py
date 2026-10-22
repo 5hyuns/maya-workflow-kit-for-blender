@@ -50,6 +50,7 @@ EDGE = 3                  # px the area edges take from a split (measured)
 MAYA_LENS = 70.0
 MAYA_FRAME_END = 120      # playback 1-120 (concepts.md §12, PREF:469-470)
 MAYA_RANGE_END = 200      # animation range 1-200 (PREF:471-472; step 20: Range Slider outer fields)
+MAYA_RESOLUTION = (960, 540)   # defaultResolution (= ui/render_settings.py HD 540), step 137
 STRIP_MARKER = ".AllsetStrip"  # = ui/shelf.py MARKER (Status Line row)
 SHELF_MARKER = ".AllsetShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 # Maya lengths are cm (decision 8): 1 Maya unit = 0.01 BU with decision 1's m + cm display.
@@ -367,6 +368,11 @@ def setup_scene():
     scene.use_preview_range = True
     scene.frame_preview_start, scene.frame_preview_end = 1, MAYA_FRAME_END
     scene.render.fps, scene.render.fps_base = 24, 1.0
+    # Maya Render Settings image size: defaultResolution 960 x 540, pixel aspect 1 (mayapy,
+    # research/maya/re/render_defaults_137.md; step 137, #71). Blender's scale stays 100 %.
+    scene.render.resolution_x, scene.render.resolution_y = MAYA_RESOLUTION
+    scene.render.resolution_percentage = 100
+    scene.render.pixel_aspect_x = scene.render.pixel_aspect_y = 1.0
     # Maya tool defaults (research/maya/workflows/pivot_snap.md, docs/steps/step_59.md 「계획」 3):
     # axis mode per tool (Move World, Rotate/Scale Object, P12), the manipulator at the lead
     # object's pivot (P11; edit mode switches to the bbox centre, operators/pivot.py), rotate
