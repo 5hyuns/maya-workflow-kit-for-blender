@@ -110,7 +110,7 @@ def draw_header(layout, context):
     if image is None or image.type != 'RENDER_RESULT':
         return
     row = layout.row(align=True)
-    row.operator("render.render", text="Render", icon='RENDER_STILL')
+    row.operator("allset.render_current_frame", text="Render", icon='RENDER_STILL')   # step 137
     row.operator("allset.render_keep_image", text="Keep Image", icon='PINNED')
     row.operator("allset.render_remove_image", text="Remove Image", icon='X')
     slots = image.render_slots

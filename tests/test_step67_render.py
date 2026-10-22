@@ -71,8 +71,8 @@ def test_render_menu_restored():
     pos = [items.index(w) for w in want]
     assert pos == sorted(pos), items
     assert len(items) > 15, items
-    assert menu_map.MAP["Render/Render Current Frame"] == "render.render"
-    assert menu_map.MAP["Render/Render Sequence"] == ("render.render", {"animation": True})
+    assert menu_map.MAP["Render/Render Current Frame"] == "allset.render_current_frame"   # step 137: persp camera
+    assert menu_map.MAP["Render/Render Sequence"] == "allset.render_sequence"
     assert menu_map.MAP["Render/IPR Render Current Frame"] == "allset.ipr_toggle"
     assert menu_map.MAP["Render/Render Using"] == ("menu", "ALLSET_MT_render_using")
     paths = {p for p, _it in menu_sets.iter_items()}
@@ -312,7 +312,8 @@ def test_keep_image_render_slots():
     # header buttons only for Render Result
     rec = Rec()
     rv.draw_header(rec, types.SimpleNamespace(space_data=types.SimpleNamespace(image=image)))
-    assert [i for i, _p in rec.ops()] == ["render.render", "allset.render_keep_image", "allset.render_remove_image"]
+    assert [i for i, _p in rec.ops()] == ["allset.render_current_frame", "allset.render_keep_image",
+                                      "allset.render_remove_image"]
     rec = Rec()
     rv.draw_header(rec, types.SimpleNamespace(space_data=types.SimpleNamespace(image=None)))
     assert not rec.log
