@@ -913,3 +913,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 135) 펼친 채 두 번째 큐브를 만들거나 다른 오브젝트를 고른 뒤 첫 큐브로 돌아오면 다시 접혀 있는지 (Maya `cb135/d04_first_again.png`). 압출 (polyExtrudeFace1), modifier, 제약 노드도 접힌 채 시작하는지.
 - [ ] (step 135) INPUTS 를 여러 개 펼쳐 Channel Box 가 길어지면: 마지막 줄에 ▲ ▼ 단추, Channel Box 위에서 마우스 휠로 행이 스크롤되고 Layer Editor 위의 휠은 Layer Editor 목록에만 작동하는지. Properties 의 modifier 패널 접힘 (show_expanded) 이 Channel Box 클릭으로 바뀌지 않는지.
 - [ ] (step 135) 독 위 탭 줄: 손잡이 「::::::::」 다음에 탭 세 개가 글자 폭대로 왼쪽부터 놓이고 「…」 가 없는지 (100 / 125 / 150 %).
+
+## Step 136 — marking menus inside the window
+
+- [ ] Cube near the bottom of the view, hold RMB: no list row is cut by the 3D View / Time Slider border; Time Slider numbers don't show on top of the menu.
+- [ ] Same near the left (Outliner) and right (dock) edges, and Shift+RMB / Ctrl+RMB in object, vertex, edge and face mode: everything readable, gestures still go to the right item.
+- [ ] Component mode (F9 / F10 / F11), RMB: Select All / Deselect All / Select Hierarchy / Invert Selection are not greyed and work like the Select menu.
+- [ ] Hover a greyed item (e.g. RMB > Time Editor): its notice appears in the Help Line.
+- [ ] Ctrl+RMB on a mesh in object mode: the convert menu; To Vertices / To Faces select every component of the object in component mode.
+- [ ] Select tool, q hold + LMB (Select options): Camera-Based Selection shows a check box that follows the setting.

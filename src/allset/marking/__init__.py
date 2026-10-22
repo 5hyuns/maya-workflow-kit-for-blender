@@ -137,9 +137,11 @@ def resolve(trigger, context, picked=None):
             return ("pie", idname("contextPolyToolsUVShellMM" if shell else "contextPolyToolsUVMM"))
         return None
     if trigger == "CTRL_RMB":
-        if mode == 'EDIT_MESH':
+        # buildConvertMM.mel:85-106 picks by the lead's shape type, not the mode: a mesh lead gets polyConvertMM in
+        # object mode too (an item then converts the whole object, modal.CONVERT_FROM_OBJECT; step 136)
+        if mode == 'EDIT_MESH' or (mode == 'OBJECT' and ob is not None and ob.type == 'MESH'):
             return ("pie", idname("polyConvertMM"))
-        trigger = "RMB"  # buildConvertMM.mel:85-106: not a mesh -> object menu
+        trigger = "RMB"  # not a mesh -> object menu
     if trigger == "SHIFT_RMB":
         if mode == 'EDIT_MESH':
             vert, edge, face = context.scene.tool_settings.mesh_select_mode

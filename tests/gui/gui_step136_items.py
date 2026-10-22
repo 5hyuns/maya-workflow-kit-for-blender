@@ -1,6 +1,8 @@
 """Step 136 lane ITEMS in a real UI: RMB in component mode — Select All / Deselect All / Invert / Select Hierarchy are
 enabled (#62), a greyed row puts its notice in the Help Line while hovered, releasing on Select All selects every
-vertex and stays in component mode. Screenshot: gui_step136_rmb_component.png."""
+vertex and stays in component mode. Ctrl+RMB on the mesh in object mode opens the convert menu (buildConvertMM picks by
+shape type) and a row converts the whole object in component mode (main session, step 136).
+Screenshot: gui_step136_rmb_component.png."""
 
 import os
 import sys
@@ -117,6 +119,64 @@ def s_result():
     bm = bmesh.from_edit_mesh(ob.data)
     n = sum(v.select for v in bm.verts)
     check(f"Select All selected every vertex ({n})", n == len(bm.verts))
+
+
+@step
+def s_object_mode():
+    area, region = main_view()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.object.mode_set(mode='OBJECT')
+    redraw()
+
+
+@step
+def s_ctrl_press():
+    _area, region = main_view()
+    ob = bpy.data.objects["pCube1"]
+    p = location_3d_to_region_2d(region, region.data, ob.location)
+    x, y = region.x + int(p.x), region.y + int(p.y)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
+    ev('RIGHTMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+
+
+@step
+def s_ctrl_wait():
+    redraw()
+
+
+@step
+def s_ctrl_menu():
+    s = draw().ACTIVE.get("session")
+    check("Ctrl+RMB on a mesh in object mode opens a menu", s is not None)
+    if s is None:
+        return
+    check(f"it is the convert menu ({s.layout.sub.name if hasattr(s.layout.sub, 'name') else '?'})",
+          getattr(s.layout.sub, "name", "") == "polyConvertMM")
+    it = _row(s, "To Shell")
+    check("To Shell is enabled from object mode", it is not None and it.enabled)
+    C["s"] = s
+    C["xy"] = _hover(s, "To Shell")
+
+
+@step
+def s_ctrl_release():
+    x, y = C["xy"]
+    ev('RIGHTMOUSE', 'RELEASE', x=x, y=y, ctrl=True)
+
+
+@step
+def s_ctrl_wait2():
+    redraw()
+
+
+@step
+def s_ctrl_result():
+    ob = bpy.data.objects["pCube1"]
+    check(f"To Shell from object mode goes to component mode ({bpy.context.mode})", bpy.context.mode == 'EDIT_MESH')
+    if bpy.context.mode == 'EDIT_MESH':
+        bm = bmesh.from_edit_mesh(ob.data)
+        n = sum(v.select for v in bm.verts)
+        check(f"the whole object is converted ({n} vertices)", n == len(bm.verts))
 
 
 run()

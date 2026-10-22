@@ -112,16 +112,28 @@ def s_menu_pixels():
     if s is not None and h is not None:
         cx, cy = s.center
         hx0, hy0, hx1, hy1 = h.x, h.y, h.x + h.width, h.y + h.height
+        # The list body (one per column, the rows plus the gaps between them; since step 136 rows step over area
+        # borders, so the HUD may sit in such a gap) drawn over the HUD; sample free body pixels, not text.
+        columns = {}
         for it in s.layout.items:
-            if it.kind != "list" or it is s.hover[0]:
-                continue
-            x0, y0, x1, y1 = (region.x + cx + it.rect[0], region.y + cy + it.rect[1],
-                              region.x + cx + it.rect[2], region.y + cy + it.rect[3])
-            yy = int(y0 + (y1 - y0) * 0.88)        # above the text and the submenu arrow / check box
+            if it.kind == "list":
+                columns.setdefault(round(it.rect[0], 3), []).append(it)
+        for rows in columns.values():
+            x0, x1 = region.x + cx + rows[0].rect[0], region.x + cx + rows[0].rect[2]
             ox0, ox1 = max(x0, hx0), min(x1, hx1)
-            if hy0 + 2 < yy < hy1 - 2 and ox1 - ox0 > 40:
-                points.append((int(ox0 + (ox1 - ox0) * 0.75), yy))
-    check(f"list rows cross the HUD panel ({points})", bool(points))
+            if ox1 - ox0 <= 40:
+                continue
+            for yy in range(int(hy0) + 3, int(hy1) - 2, 3):
+                ry = yy - region.y - cy
+                body = min(r.rect[1] for r in rows) < ry < max(r.rect[3] for r in rows)
+                # free body: inside a row above its text, or in a gap between rows (no divider line there)
+                in_row = next((r for r in rows if r.rect[1] <= ry <= r.rect[3]), None)
+                free = (in_row is not None and in_row is not s.hover[0]
+                        and ry > in_row.rect[1] + (in_row.rect[3] - in_row.rect[1]) * 0.82) or in_row is None
+                lines = [(a.rect[1] + b.rect[3]) / 2 for a, b in zip(rows, rows[1:]) if b.key - a.key > 1]
+                if body and free and all(abs(ry - ly) > 2 for ly in lines):
+                    points.append((int(ox0 + (ox1 - ox0) * 0.75), yy))
+    check(f"the list body covers the HUD panel ({points[:4]})", bool(points))
     if points:
         bg = import_module(MODULE + ".marking.draw").BG[:3]
         img = bpy.data.images.load(shot_path("gui_step91_rmb_over_hud.png"))

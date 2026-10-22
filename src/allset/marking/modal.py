@@ -127,6 +127,10 @@ def run_action(context, action, option=False, path=None):
     return res
 
 
+# Ctrl+RMB convert menu: also opened on a mesh in object mode (marking/__init__.resolve, step 136).
+CONVERT_FROM_OBJECT = "polyConvertMM"
+
+
 # --- marking menu engine --------------------------------------------------------------
 
 class ALLSET_OT_mm_engine(bpy.types.Operator):
@@ -156,8 +160,12 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         # Rows / boxes stay off the area borders Blender draws over every region (step 136).
         bounds = draw.window_bounds(context.window, region)
         edges = draw.window_edges(context.window, region)
+        # Ctrl+RMB on a mesh in object mode (step 136): Maya converts the whole object, so the items are live and
+        # run after entering component mode with everything selected (_finish).
+        self._from_object = self.menu == CONVERT_FROM_OBJECT and context.mode == 'OBJECT'
+        enabled = (lambda a: a is not None and not mm.is_unavailable(a)) if self._from_object else poll_action
         self._session = engine.Session(menu, origin, time.monotonic(),
-                                       draw.measure, _params(), poll_action, bounds, edges)
+                                       draw.measure, _params(), enabled, bounds, edges)
         self._region = region
         self._shown = False
         self._pending = None   # (button, result): click-mode pick waiting for the release
@@ -190,6 +198,9 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
         if verb != "RUN":
             return {'CANCELLED'}
         try:
+            if getattr(self, "_from_object", False) and context.mode == 'OBJECT':
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.select_all(action='SELECT')
             run_action(context, item.action, option)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip())

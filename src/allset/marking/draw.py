@@ -156,6 +156,9 @@ def checked(action):
         if op == "allset.pivot_option":          # pivot edit menu check boxes (step 94)
             from ..operators import pivot_menu
             return pivot_menu.option(props["option"])
+        if op == "allset.mm_camera_based":        # Camera-Based Selection = select-through off (step 136)
+            from .. import preferences
+            return not preferences.get(bpy.context).select_through
         if op == "allset.component_mask":        # Shift+Q check boxes = the mesh select modes (step 93)
             mask = bpy.context.scene.tool_settings.mesh_select_mode
             return bool(mask[engine.MASK_CHECKS.index(props["kind"])])
@@ -217,7 +220,9 @@ def _draw_list_body(lay, cx, cy):
         _rect(body, BG, cx, cy)
         _outline(body, EDGE, cx, cy)
         for a, b in zip(rows, rows[1:]):
-            if a.rect[1] - b.rect[3] > 0.5:   # a divider gap
+            # a Maya divider sits between the rows (their list indices skip it); a gap where a row only stepped over an
+            # area border (step 136) gets no line
+            if isinstance(a.key, int) and isinstance(b.key, int) and b.key - a.key > 1:
                 y = (a.rect[1] + b.rect[3]) / 2 + cy
                 _line([(body[0] + cx + 4, y), (body[2] + cx - 4, y)], DIVIDER, 1.0)
 

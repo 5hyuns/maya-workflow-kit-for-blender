@@ -71,7 +71,7 @@ def _inside(rect, x, y):
 
 
 TOGGLE_OPS = ("wm.context_toggle", "allset.manip_option", "allset.symmetry", "allset.component_mask",
-              "allset.pivot_option")
+              "allset.pivot_option", "allset.mm_camera_based")
 # Shift+Q pick mask: Poly Vertices / Poly Edges / Faces are check boxes, "All Components on" is a command (step 93).
 MASK_CHECKS = ("VERT", "EDGE", "FACE")
 

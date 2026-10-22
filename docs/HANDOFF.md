@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 136 (마킹 메뉴 완성 · 창 안에, #56 #62 #74) 완료 — `docs/steps/step_136.md` (+ `step_136_{bounds,items}.md`). 목록 줄 · 방사 상자가
+  영역 경계 띠를 피함 (`draw.window_edges` → `engine.fit_ring(..., edges)`), 메뉴가 다른 킷 POST_PIXEL 위에 그려짐; 마킹 항목
+  `("item", 메뉴 경로)` = 메인 메뉴 항목 그대로 (컴포넌트 모드 규칙 포함), 회색 128 → 73 (모두 `notices.MARKING` 알림, Help Line),
+  Ctrl+RMB 메시 오브젝트 = 변환 메뉴. 검증 수치는 step 문서.
+  **바로 다음 할 일**: step 137 애니 · 렌더 기본 (#66 #67 #71) → 138 장면 · 파일 (#57 #63 #64 #69) → 139 Edit Mesh / UV (#70 #68 #16) →
+  140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73). backlog.json (`hermes/autodrive_bmk`) 은 사라졌다 — 이슈와 이 목록이 기준.
+  백그라운드 레인을 기다리며 턴을 끝내지 말 것 (step 136: 레인이 중단됐는데 메인이 40 분 알림만 기다림) — 포그라운드로 돌리거나 WIP 커밋 확인.
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 135 (Dock / Channel Box, #55 #60) 완료 — `docs/steps/step_135.md` (+ `step_135_{cb,width,fix}.md`). INPUTS 접힘 + 이름 클릭 펼침,
   Channel Box 부분 스크롤 · Layer Editor 고정 분할, 휠 스크롤 (View2D Buttons List), dock 폭 배율별 (466 / 574 / 672 px). 헤드리스 1060/1060,
   GUI 전체 뒤 실패 파일 수정 → 416/416. 후속 #77 (1.5 배율 메뉴 줄 · SDK), #78 (dock 폭 vs Maya 세로 탭).

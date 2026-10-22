@@ -187,7 +187,8 @@ def test_dispatch_by_context():
         bpy.ops.mesh.primitive_cube_add()
         assert R("RMB", bpy.context) == ("pie", marking.idname("dagMenuProc"))
         assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname("contextPolyToolsObjectMM"))
-        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("dagMenuProc")), "object: RMB menu"
+        # buildConvertMM picks by the lead's shape type: a mesh object gets the convert menu (step 136)
+        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("polyConvertMM")), "mesh object: convert menu"
         bpy.ops.object.mode_set(mode='EDIT')
         ts = bpy.context.scene.tool_settings
         for sel, want in (((True, False, False), "contextPolyToolsVertexMM"),
