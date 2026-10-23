@@ -949,3 +949,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Ctrl+E on edges / a vertex: made at once (no mouse drag), In-View Editor + arrow change Thickness / Length.
 - [ ] Ctrl+B on an edge: bevel at once (Fraction 0.5), Esc keeps it, In-View Editor Fraction / Segments edit it; vertex mode = Chamfer Vertex.
 - [ ] Object mode, UV > Automatic: 6 shells on a cube; UV Editor > Create > Best Plane / Contour Stretch enabled.
+
+## Step 140 — Daily Maya option windows
+
+- [ ] Skeleton > Create Joints ❒: "Joint Tool" window; Create Joints with Secondary Axis World Orientation Z: clicked joints roll to world Z; with Create IK handle on, an IK handle from the first to the last joint.
+- [ ] Skeleton > Create IK Handle ❒ → Single-Chain Solver: the end joint follows the handle's rotation.
+- [ ] Constrain > Aim (plain click and ❒ Add): the constrained cube's red (X) axis points at the target, its top stays up while the target moves around it.
+- [ ] Skin > Paint Skin Weights ❒ → Paint operation Smooth: Blender's Blur tool is active; Opacity / Value reach the brush.
+- [ ] Mesh Tools > Insert Edge Loop ❒ → Multiple edge loops 3: the Loop Cut tool cuts 3 loops.
+- [ ] Key > Paste Keys ❒ → Time offset 10, Copies 2: two copies after the current frame; Key > Scale Keys ❒ → Time scale 2: keys spread from the pivot.
+- [ ] Option window values kept: Apply, close, reopen → same values; plain menu click runs with them; Reset Settings → Maya factory values.

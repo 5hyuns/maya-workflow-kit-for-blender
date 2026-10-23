@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 140 (일상 옵션 창, #32 #33 #35) 완료 — `docs/steps/step_140.md` (+ `step_140_{rig,edit}.md`,
+  `research/maya/re/option_boxes_140.md` · `option_boxes_140_edit.md`). Maya 2022 창 26 개 새로 (Window spec 26 → 50: Joint / IK /
+  IK Spline Tool, Bind / Detach / Copy / Paint Skin Weights, Blend Shape, Aim / Pole Vector / Scale constraint, Delete / Cut / Copy /
+  Paste / Scale / Snap Keys, Parent / Unparent / Ungroup, Duplicate Special, Connect, Circularize, Make Hole, Insert Edge Loop),
+  Aim = Maya (+X 대상, 월드 up Y), Key > Scale Keys 새로. 옵션 상자 window 29 → 60, generic 65 → 47, dead 231 → 229
+  (`python tools/menu_count.py --options`). 헤드리스 1191/1191, GUI step140 9/9 (샷 3 장), GUI 전체 1453 PASS (step63_mtk 흔들림 재실행 통과, step75_input_line 은 140 전에도 멈추는 환경 문제).
+  **사용자 결정 (10-23)**: 0.3.0 버전 고정 = 140 · 141 · 142 끝난 뒤, 그다음 단계 = 0.3.0 출시 준비. #30 #31 #34 는 GitHub
+  마일스톤 0.4.0 으로 옮김 (완료).
+  **바로 다음 할 일**: step 141 키맵 · 선택 묶음 (#65 #72 #73, B4 B6) → 142 UI 마감 → 0.3.0 출시 준비.
+  **진행 규칙 (Hermes 10-23)**: 백그라운드 서브에이전트 · ScheduleWakeup 금지 — 병렬은 포그라운드 동기 Agent 최대 2 개, Blender
+  프로세스 최대 2 개, 레인 마일스톤마다 WIP 커밋, 단계 커밋에 `Fixes #N` 줄.
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 139 (Edit Mesh / UV 를 Maya 결과로, #70 #68 #16) 완료 — `docs/steps/step_139.md` (+ `step_139_{edit,shape,uv}.md`,
   `research/maya/re/edit_mesh_139.md`). Connect / Merge / Smooth / Symmetrize, Ctrl+E 엣지 · 정점, Ctrl+B 가 mayapy 측정과 같은 결과 (바로 실행,
   step 65 처럼 수정 가능), UV > Automatic / Contour Stretch 오브젝트 모드, UV Editor Best Plane / Contour Stretch.
