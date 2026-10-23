@@ -15,6 +15,7 @@ import re
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
+from mathutils import Vector
 
 from ..ui import channel_box as cb
 
@@ -23,7 +24,7 @@ CONSTRAINT_TYPES = (
     ('COPY_LOCATION', "Point", "Maya pointConstraint (Copy Location)"),
     ('COPY_ROTATION', "Orient", "Maya orientConstraint (Copy Rotation)"),
     ('COPY_SCALE', "Scale", "Maya scaleConstraint (Copy Scale)"),
-    ('TRACK_TO', "Aim", "Maya aimConstraint (Track To)"),
+    ('TRACK_TO', "Aim", "Maya aimConstraint (Track To: aims +X at the target, +Y up = Blender +X / +Z)"),
     ('FOLLOW_PATH', "Attach to Motion Path", "Maya motion path (Follow Path)"),
     ('SHRINKWRAP', "Geometry", "Maya geometryConstraint (Shrinkwrap)"),
 )
@@ -67,11 +68,65 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             self.report({'WARNING'}, CONSTRAIN_HINT)
             return {'CANCELLED'}
         con = cons[-1]
+        if self.type == 'TRACK_TO':
+            con = aim(cons, con, bone=arm is not None)     # Maya's factory aim (+X at the target, +Y up)
         target = getattr(con, "target", None)
         sub = getattr(con, "subtarget", "")
         self.report({'INFO'}, f"{label} constraint on {owner}" +
                     (f" (target {target.name}{'.' + sub if sub else ''})" if target else ""))
         return {'FINISHED'}
+
+
+# --- Aim (Maya aimConstraint) -----------------------------------------------------------------------
+
+# Maya aimConstraint factory values (): aim vector +X, up vector +Y, world up
+# type Vector, world up vector (0, 1, 0). Maya is Y-up: an object's Maya X / Y / Z = Blender X / Z / -Y (
+# step 57); a joint's Maya X / Y / Z = the bone's Y / Z / X (the bone's Y points at the child, Maya's primary X).
+AIM_VECTOR, UP_VECTOR, WORLD_UP = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), "Vector"
+WORLD_UP_TYPES = ("Scene up", "Vector", "None")      # the Maya world up types Blender's Track To can do
+
+
+def local_axis(v, bone=False):
+    """Maya local vector -> Blender local vector of an object (X, -Z, Y) or a joint / pose bone (Z, X, Y)."""
+    x, y, z = v
+    return Vector((z, x, y)) if bone else Vector((x, -z, y))
+
+
+def axis_of(v):
+    """('X' | 'Y' | 'Z', +1 | -1) of an axis-aligned vector, None for any other direction."""
+    v = Vector(v)
+    if v.length < 1e-9:
+        return None
+    i = max(range(3), key=lambda k: abs(v[k]))
+    if any(abs(v[k]) > 1e-6 * abs(v[i]) for k in range(3) if k != i):
+        return None
+    return "XYZ"[i], (1 if v[i] > 0 else -1)
+
+
+def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP, bone=False):
+    """Make ``con`` (a Track To just added to ``cons``) Maya's aim: the owner's ``aim_vector`` points at the target,
+    its ``up_vector`` towards the world up (Blender: world Z = Maya Y). World up type None = Damped Track (no up,
+    the shortest turn, like Maya). Raises RuntimeError for vectors Blender's constraints can't take."""
+    a = axis_of(local_axis(aim_vector, bone))
+    if a is None:
+        raise RuntimeError("Blender aims along an axis: the aim vector must be +-X, +-Y or +-Z")
+    track = ("TRACK_" if a[1] > 0 else "TRACK_NEGATIVE_") + a[0]
+    if world_up == "None":
+        damped = cons.new('DAMPED_TRACK')
+        damped.target, damped.subtarget, damped.influence = con.target, con.subtarget, con.influence
+        name = con.name
+        cons.remove(con)
+        damped.name = name
+        damped.track_axis = track
+        return damped
+    u = axis_of(local_axis(up_vector, bone))
+    if u is None or u[1] < 0 or u[0] == a[0]:
+        raise RuntimeError("Blender's Track To needs an up vector along a positive local axis other than the aim "
+                           "vector's")
+    con.track_axis = track
+    con.up_axis = "UP_" + u[0]
+    con.use_target_z = False         # world up = world Z (Maya Y): Maya Scene up / Vector (0, 1, 0)
+    return con
 
 
 # --- Blend Shape ------------------------------------------------------------------------------------
