@@ -172,7 +172,7 @@ class ALLSET_OT_blend_shape(bpy.types.Operator):
         bad = [o for o in targets if len(o.data.vertices) != n
                or (self.check_topology and not same_topology(base, o))]
         good = [o for o in targets if o not in bad]
-        what = "topology" if self.check_topology else "vertex count"
+        what = "topology" if self.check_topology and all(len(o.data.vertices) == n for o in bad) else "vertex count"
         if not good:
             self.report({'ERROR'}, f"Blend Shape: {', '.join(o.name for o in bad)} "
                                    f"has a different {what} than {base.name}")
