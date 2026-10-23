@@ -142,50 +142,13 @@ def delete_keys(context, a, b):
 
 
 def copy_keys(context, a, b):
-    """Animation clipboard: per node, (relative path, index) -> [(offset, value, type, interpolation)]."""
-    copied = []
-    for node in nodes(context):
-        pre = prefix(node)
-        curves = {}
-        for fc, pts in keys_in(node, a, b):
-            curves[(fc.data_path[len(pre):], fc.array_index)] = [
-                (kp.co.x - a, kp.co.y, kp.type, kp.interpolation) for kp in pts]
-        if curves:
-            copied.append(curves)
-    _CLIPBOARD["nodes"], _CLIPBOARD["span"] = copied, b - a
-    return sum(len(v) for c in copied for v in c.values())
+    """Time Slider copy: the nodes' keys in a..b onto the animation clipboard (see ``copy_scope``)."""
+    return copy_scope(context, KeyScope(time_range="Start/End", start=a, end=b))
 
 
 def paste_keys(context, frame):
-    """Paste at ``frame`` onto the nodes: one copied node goes to every node, several in order."""
-    copied = _CLIPBOARD["nodes"]
-    if not copied:
-        return 0
-    targets = nodes(context)
-    n = 0
-    for i, node in enumerate(targets):
-        curves = copied[0] if len(copied) == 1 else (copied[i] if i < len(copied) else None)
-        if curves is None:
-            break
-        pre = prefix(node)
-        ob = node.id_data
-        for (rel, index), keys in curves.items():
-            path = pre + rel
-            fc = _find_curve(node, path, index)
-            if fc is None:
-                try:
-                    ob.keyframe_insert(path, index=index, frame=frame + keys[0][0])
-                except (TypeError, RuntimeError):
-                    continue
-                fc = _find_curve(node, path, index)
-                if fc is None:
-                    continue
-            for off, value, ktype, interp in keys:
-                kp = fc.keyframe_points.insert(frame + off, value, keyframe_type=ktype)
-                kp.interpolation = interp
-                n += 1
-            fc.update()
-    return n
+    """Time Slider paste at ``frame`` (Maya's factory Merge): one copied node goes to every node, several in order."""
+    return paste_scope(context, frame=frame)
 
 
 def _find_curve(node, path, index):
@@ -255,6 +218,156 @@ def key_span(context):
     """(first, last) key frame of the nodes, or None."""
     frames = [kp.co.x for node in nodes(context) for fc in node_fcurves(node) for kp in fc.keyframe_points]
     return (int(round(min(frames))), int(round(max(frames)))) if frames else None
+
+
+# --- Maya Key menu commands with their options (step 140, issue #35) ------------------------------
+# Maya's Key > Delete / Cut / Copy / Paste / Scale / Snap Keys run cutKey / copyKey / pasteKey / scaleKey / snapKey with
+# the option window's values (research/maya/re/option_boxes_140.md; doCutKeyArgList: Time range All = no -time, Time
+# Slider = the playback range, Start/End = the fields). Results measured with mayapy:
+# research/maya/re/option_boxes_140_edit.md. Values (pivots, offsets, multiples) are Maya values: display units for
+# translations, degrees for rotations.
+
+class KeyScope:
+    """The keySetOptionBoxCommon fields: which nodes, channels and times a key command acts on."""
+
+    NAMES = ("objects", "hierarchy", "channels", "driven", "shapes", "time_range", "start", "end")
+
+    def __init__(self, objects="Selected", hierarchy="Selected", channels="All keyable", driven=False, shapes=True,
+                 time_range="All", start=0.0, end=10.0):
+        self.objects, self.hierarchy, self.channels = objects, hierarchy, channels
+        self.driven, self.shapes = driven, shapes
+        self.time_range, self.start, self.end = time_range, start, end
+
+    @classmethod
+    def of(cls, values):
+        return cls(**{k: values[k] for k in cls.NAMES if k in values})
+
+
+class CurveRef:
+    """One F-curve in scope: ``part`` "node" (the node's own), "driver" (a set-driven-key curve), "data" / "shape"
+    (Maya Shapes: the object data's and its shape keys' curves)."""
+
+    def __init__(self, node, part, coll, fc, rel):
+        self.node, self.part, self.coll, self.fc, self.rel = node, part, coll, fc, rel
+
+    @property
+    def key(self):
+        return (self.part, self.rel, self.fc.array_index)
+
+
+def scope_nodes(context, scope):
+    if scope.objects == "All":
+        return [ob for ob in context.scene.objects if ob is not None]
+    ns = nodes(context)
+    if scope.hierarchy != "Below":
+        return ns
+    from .freeze import hierarchy
+    out = []
+    for n in ns:
+        if _cb().is_bone(n):
+            pose = n.id_data.pose
+            chain = [n] + [pose.bones[b.name] for b in n.bone.children_recursive if b.name in pose.bones]
+        else:
+            chain = hierarchy([n])
+        out.extend(x for x in chain if x not in out)
+    return out
+
+
+def _channel_filter(context, node):
+    """{(data path, index)} of the Channel Box's selected channels on ``node`` (From Channel Box), None = all."""
+    cb = _cb()
+    allowed = set()
+    for k in cb.selected_channels(context):
+        try:
+            path, idx, _kind = cb.channel_path(k)
+        except KeyError:
+            continue
+        full = cb.full_path(node, path)
+        if full:
+            allowed.add((full, max(idx, 0)))
+    return allowed or None      # nothing selected in the Channel Box: every channel
+
+
+def scope_curves(context, scope):
+    from .. import compat
+    out, seen = [], set()
+
+    def add(node, part, coll, fc, rel):
+        if fc.as_pointer() not in seen:
+            seen.add(fc.as_pointer())
+            out.append(CurveRef(node, part, coll, fc, rel))
+
+    for node in scope_nodes(context, scope):
+        pre = prefix(node)
+        allowed = _channel_filter(context, node) if scope.channels == "From Channel Box" else None
+        coll = _cb()._fcurves(node)
+        for fc in node_fcurves(node):
+            if allowed is None or (fc.data_path, fc.array_index) in allowed:
+                add(node, "node", coll, fc, fc.data_path[len(pre):])
+        ad = node.id_data.animation_data
+        if scope.driven and ad is not None:
+            for fc in ad.drivers:
+                if len(fc.keyframe_points) and (not pre or fc.data_path.startswith(pre)) and (
+                        allowed is None or (fc.data_path, fc.array_index) in allowed):
+                    add(node, "driver", None, fc, fc.data_path[len(pre):])
+        if scope.shapes and allowed is None and not _cb().is_bone(node):
+            data = getattr(node, "data", None)
+            for part, idb in (("data", data), ("shape", getattr(data, "shape_keys", None))):
+                if idb is None:
+                    continue
+                for fc in compat.id_fcurves(idb):
+                    add(node, part, compat.id_fcurve_collection(idb), fc, fc.data_path)
+    return out
+
+
+def scope_range(context, scope):
+    """(a, b) of a key command, or None = every key (Maya Time range All)."""
+    if scope.time_range == "Start/End":
+        return min(scope.start, scope.end), max(scope.start, scope.end)
+    if scope.time_range == "Time Slider":     # doCutKeyArgList: playbackOptions -min / -max
+        sc = context.scene
+        if sc.use_preview_range:
+            return float(sc.frame_preview_start), float(sc.frame_preview_end)
+        return float(sc.frame_start), float(sc.frame_end)
+    return None
+
+
+EPS = 1e-4
+
+
+def _within(x, rng):
+    return rng is None or rng[0] - EPS <= x <= rng[1] + EPS
+
+
+def value_unit(fc):
+    """Blender value per Maya value of a curve: the display length unit for translations, radians per degree."""
+    import math
+    from . import units
+    path = fc.data_path.rsplit(".", 1)[-1]
+    if path in ("location", "delta_location"):
+        return units.maya_unit()
+    if path in ("rotation_euler", "delta_rotation_euler"):
+        return math.radians(1.0)
+    return 1.0
+
+
+def _remove_points(fc, pts):
+    for kp in sorted(pts, key=lambda p: -p.co.x):
+        fc.keyframe_points.remove(kp, fast=True)
+
+
+def _drop_empty(ref):
+    if ref.part != "driver" and ref.coll is not None and len(ref.fc.keyframe_points) == 0:
+        ref.coll.remove(ref.fc)
+        return
+    if len(ref.fc.keyframe_points):
+        ref.fc.update()
+
+
+def _offset_value(kp, dv):
+    kp.co.y += dv
+    kp.handle_left.y += dv
+    kp.handle_right.y += dv
 
 
 # --- operators ----------------------------------------------------------------------------------

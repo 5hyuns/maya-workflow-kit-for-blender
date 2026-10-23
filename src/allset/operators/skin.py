@@ -12,7 +12,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import BoolProperty, EnumProperty, IntProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras import view3d_utils
 from mathutils import Vector, kdtree
 
@@ -87,7 +87,16 @@ def joint_position(arm, joint):
     return arm.matrix_world @ (pb.tail if joint[1] == 'TAIL' else pb.head)
 
 
-def create_ik(context, arm, start, end):
+# Maya IK Handle Tool factory settings (research/maya/re/option_boxes_140.md): Rotate-Plane solver, solver enabled,
+# weight 1. Blender's IK constraint: RP = plain IK (pole vector: Constrain > Pole Vector), SC = the chain end follows
+# the handle's rotation (``use_rotation``; the handle starts turned like the end joint so nothing jumps).
+IK_SOLVERS = (("RP", "Rotate-Plane Solver", "Maya ikRPsolver: Blender IK, the pole vector (Constrain > Pole Vector) "
+               "turns the chain plane"),
+              ("SC", "Single-Chain Solver", "Maya ikSCsolver: Blender IK whose chain end follows the handle's "
+               "rotation"))
+
+
+def create_ik(context, arm, start, end, solver="RP", solver_enable=True, weight=1.0):
     """IK constraint + ``ikHandleN`` empty at the end joint; returns the handle (None = not a chain)."""
     chain = ik_chain(arm, start, end)
     if chain is None:
@@ -98,12 +107,17 @@ def create_ik(context, arm, start, end):
     naming.apply_maya_name(handle, "ikHandle", rename_data=False)
     handle.empty_display_type = 'PLAIN_AXES'
     handle.empty_display_size = units.maya_unit(context.scene)
+    if solver == "SC":
+        handle.rotation_euler = (arm.matrix_world @ ik_bone.matrix).to_euler()   # the end joint's orientation
     handle.location = joint_position(arm, end)
     con = ik_bone.constraints.new('IK')
     con.name = handle.name
     con.target = handle
     con.chain_count = count
     con.use_tail = True
+    con.use_rotation = solver == "SC"
+    con.weight = max(0.01, weight)               # Blender's IK weight range starts at 0.01
+    con.mute = not solver_enable
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     for ob in context.selected_objects:
@@ -134,6 +148,10 @@ class ALLSET_OT_ik_handle(bpy.types.Operator):
     bl_label = "IK Handle Tool"
     bl_options = {'REGISTER', 'UNDO'}
 
+    solver: EnumProperty(name="Current solver", items=IK_SOLVERS, default="RP")
+    solver_enable: BoolProperty(name="Solver enable", default=True)
+    weight: FloatProperty(name="Weight", default=1.0, min=0.01, max=1.0)
+
     def execute(self, context):
         """Without clicks: the two selected joints (scripts, and invoke when two are selected)."""
         pair = selected_pair(context)
@@ -152,7 +170,7 @@ class ALLSET_OT_ik_handle(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def _make(self, context, arm, start, end):
-        handle = create_ik(context, arm, start, end)
+        handle = create_ik(context, arm, start, end, self.solver, self.solver_enable, self.weight)
         if handle is None:
             self.report({'WARNING'}, "The end joint must be below the start joint in the same skeleton")
             return {'CANCELLED'}
@@ -290,7 +308,28 @@ def armature_modifier(mesh):
     return next((m for m in mesh.modifiers if m.type == 'ARMATURE' and m.object is not None), None)
 
 
-def bind_skin(context, arm, meshes, max_influences=5, only_bones=None):
+# Maya Bind Skin options the kit honours (research/maya/re/option_boxes_140.md): Normalize weights is kept on the
+# mesh (Interactive = Blender's Auto Normalize while painting, step 129), Colorize skeleton = a bone colour per joint
+# (Unbind Skin's "Remove joint colors" takes them away), Remove unused influences = drop joints that weigh nothing.
+NORMALIZE_PROP = "allset_normalize"
+NORMALIZE = (("NONE", "None", "Weights are left as painted"),
+             ("INTERACTIVE", "Interactive", "Painting a joint takes weight from the others (Blender Auto Normalize)"),
+             ("POST", "Post", "Weights are normalised when the skin is used, not while painting"))
+JOINT_COLORS = tuple(f"THEME{i:02d}" for i in range(1, 16))
+
+
+def colorize(arm, on=True):
+    """Maya Colorize skeleton: each joint its own colour (Blender bone colour palettes), or back to none."""
+    for i, bone in enumerate(arm.data.bones):
+        bone.color.palette = JOINT_COLORS[i % len(JOINT_COLORS)] if on else 'DEFAULT'
+
+
+def normalize_mode(mesh):
+    return mesh.get(NORMALIZE_PROP, "INTERACTIVE")
+
+
+def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize="INTERACTIVE",
+              remove_unused=True, colorize_skeleton=True):
     """Smooth bind: automatic weights, the meshes stay where they are in the hierarchy (Maya skinCluster)."""
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -313,6 +352,13 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None):
         if mesh.vertex_groups:
             bpy.ops.object.vertex_group_limit_total(group_select_mode='ALL', limit=max_influences)
             bpy.ops.object.vertex_group_normalize_all(group_select_mode='ALL', lock_active=False)
+        if remove_unused:
+            from .rig_maya import unused_influences
+            for name in unused_influences(mesh):
+                mesh.vertex_groups.remove(mesh.vertex_groups[name])
+        mesh[NORMALIZE_PROP] = normalize
+    if colorize_skeleton:
+        colorize(arm)
     arm.select_set(True)
     return meshes
 
@@ -327,6 +373,9 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
                                                  ("SELECTED", "Selected Joints", "Only the joints selected in "
                                                   "pose mode")), default="HIERARCHY")
     max_influences: IntProperty(name="Max Influences", default=5, min=1, max=30)
+    normalize: EnumProperty(name="Normalize weights", items=NORMALIZE, default="INTERACTIVE")
+    remove_unused: BoolProperty(name="Remove unused influences", default=True)
+    colorize: BoolProperty(name="Colorize skeleton", default=True)
 
     def execute(self, context):
         cb = _cb()
@@ -340,28 +389,63 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
             self.report({'WARNING'}, "Select a skeleton and the meshes to bind")
             return {'CANCELLED'}
         only = set(picked) if self.bind_to == "SELECTED" and picked else None
-        bind_skin(context, arm, meshes, self.max_influences, only)
+        bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize)
         self.report({'INFO'}, f"Bound {len(meshes)} mesh(es) to {arm.name}")
         return {'FINISHED'}
 
 
+# Maya Detach Skin Options (research/maya/re/option_boxes_140.md): History Delete history (default) / Keep history /
+# Bake history, Coloring: Remove joint colors on.
+UNBIND_HISTORY = (("DELETE", "Delete history", "Remove the skin and the joints' weights"),
+                  ("KEEP", "Keep history", "Remove the skin, keep the joints' weights (vertex groups)"),
+                  ("BAKE", "Bake history", "Keep the current deformed shape as the mesh, then remove the skin"))
+
+
+def unbind(context, mesh, history="DELETE"):
+    """Detach one mesh's skin (Armature modifiers); returns the skeletons it was bound to."""
+    arms = []
+    for mod in [m for m in mesh.modifiers if m.type == 'ARMATURE']:
+        arm = mod.object
+        if arm is not None and arm not in arms:
+            arms.append(arm)
+        if history == "BAKE" and arm is not None:
+            with context.temp_override(object=mesh, active_object=mesh):
+                bpy.ops.object.modifier_apply(modifier=mod.name)
+        else:
+            mesh.modifiers.remove(mod)
+        if history != "KEEP" and arm is not None:
+            bones = {b.name for b in arm.data.bones}
+            for vg in [g for g in mesh.vertex_groups if g.name in bones]:
+                mesh.vertex_groups.remove(vg)
+    if NORMALIZE_PROP in mesh:
+        del mesh[NORMALIZE_PROP]
+    return arms
+
+
 class ALLSET_OT_unbind_skin(bpy.types.Operator):
-    """Maya Unbind Skin: remove the Armature modifier and the joint weight groups"""
+    """Maya Unbind Skin: remove the Armature modifier (and, by default, the joint weight groups)"""
     bl_idname = "allset.unbind_skin"
     bl_label = "Unbind Skin"
     bl_options = {'REGISTER', 'UNDO'}
 
+    history: EnumProperty(name="History", items=UNBIND_HISTORY, default="DELETE")
+    remove_colors: BoolProperty(name="Remove joint colors", default=True)
+
     def execute(self, context):
-        n = 0
-        for mesh in [o for o in context.selected_objects if o.type == 'MESH']:
-            for mod in [m for m in mesh.modifiers if m.type == 'ARMATURE']:
-                bones = {b.name for b in mod.object.data.bones} if mod.object else set()
-                for vg in [g for g in mesh.vertex_groups if g.name in bones]:
-                    mesh.vertex_groups.remove(vg)
-                mesh.modifiers.remove(mod)
-                n += 1
-        self.report({'INFO'}, f"Unbound {n} skin(s)")
-        return {'FINISHED'} if n else {'CANCELLED'}
+        meshes = [o for o in context.selected_objects if o.type == 'MESH' and armature_modifier(o)]
+        if meshes and context.active_object is not None and context.active_object.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        arms = []
+        for mesh in meshes:
+            arms += [a for a in unbind(context, mesh, self.history) if a not in arms]
+        if self.remove_colors:
+            for arm in arms:
+                still = any(m.object == arm for o in bpy.data.objects if o.type == 'MESH'
+                            for m in o.modifiers if m.type == 'ARMATURE')
+                if not still:          # Maya removes the colours of joints no skin uses any more
+                    colorize(arm, False)
+        self.report({'INFO'}, f"Unbound {len(meshes)} skin(s)")
+        return {'FINISHED'} if meshes else {'CANCELLED'}
 
 
 # --- Paint Skin Weights --------------------------------------------------------------------------
@@ -382,14 +466,102 @@ def influences(mesh):
     return [vg for vg in mesh.vertex_groups if vg.name in bones]
 
 
+# Maya Paint Skin Weights Tool settings with a Blender meaning (research/maya/re/option_boxes_140.md); the window
+# (operators/option_windows_rig.py) passes them, a plain menu click leaves the brush as the user set it in the dock.
+PAINT_OPERATIONS = (("REPLACE", "Replace", "Blender brush blend Mix"), ("ADD", "Add", "Blender brush blend Add"),
+                    ("SCALE", "Scale", "Blender brush blend Multiply"), ("SMOOTH", "Smooth", "Blender's Blur tool"))
+PAINT_BLEND = {"REPLACE": 'MIX', "ADD": 'ADD', "SCALE": 'MUL'}
+PAINT_PROFILES = (("GAUSSIAN", "Gaussian", "Smooth falloff"), ("SOFT", "Soft", "Sphere falloff"),
+                  ("SOLID", "Solid", "Constant: no falloff"))
+PROFILE_CURVE = {"GAUSSIAN": 'SMOOTH', "SOFT": 'SPHERE', "SOLID": 'CONSTANT'}
+PAINT_FIELDS = ("operation", "profile", "normalize", "opacity", "value", "radius", "screen_projection",
+                "show_wireframe", "xray_joints")
+
+
+def _brush_set(brush, name, value):
+    """Set a weight paint brush setting; False when the brush can't be edited (a linked asset)."""
+    try:
+        setattr(brush, name, value)
+        return True
+    except (AttributeError, TypeError, ValueError, RuntimeError):
+        return False
+
+
+def apply_paint_settings(context, mesh, arm, v):
+    """Maya tool values ``v`` (PAINT_FIELDS) -> the weight paint tool, brush, unified settings and overlays.
+    Returns the names Blender refused (e.g. a brush that is a linked asset)."""
+    ts = context.tool_settings
+    ups = ts.unified_paint_settings
+    refused = []
+    if v["operation"] == "SMOOTH":
+        try:
+            bpy.ops.wm.tool_set_by_id(name="builtin_brush.Blur")
+        except (RuntimeError, TypeError):
+            refused.append("operation")
+    else:
+        try:
+            bpy.ops.wm.tool_set_by_id(name="builtin.brush")
+        except (RuntimeError, TypeError):
+            pass
+    brush = ts.weight_paint.brush
+    if brush is not None:
+        if v["operation"] in PAINT_BLEND and not _brush_set(brush, "blend", PAINT_BLEND[v["operation"]]):
+            refused.append("operation")
+        if not _brush_set(brush, "curve_preset", PROFILE_CURVE[v["profile"]]):
+            refused.append("profile")
+    # Maya Value / Opacity / Radius(U) are tool settings: Blender's unified paint settings hold them for every brush
+    ups.use_unified_weight = ups.use_unified_strength = ups.use_unified_size = True
+    ups.weight = max(0.0, min(1.0, v["value"]))
+    ups.strength = max(0.0, min(1.0, v["opacity"]))
+    if v["screen_projection"]:
+        ups.use_locked_size = 'VIEW'
+    else:
+        ups.use_locked_size = 'SCENE'            # Maya's radius is a world size (cm) unless Screen projection is on
+        ups.unprojected_radius = max(1e-4, v["radius"] * units.maya_unit(context.scene))
+    mesh[NORMALIZE_PROP] = v["normalize"]
+    ts.use_auto_normalize = v["normalize"] == "INTERACTIVE"
+    space = context.space_data
+    if space is not None and space.type == 'VIEW_3D':
+        space.overlay.show_paint_wire = v["show_wireframe"]
+    if arm is not None:
+        arm.show_in_front = v["xray_joints"]
+    return refused
+
+
 class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
     """Maya Paint Skin Weights: weight paint the skinned mesh with its skeleton posable (Ctrl+click picks a joint)"""
     bl_idname = "allset.paint_skin_weights"
     bl_label = "Paint Skin Weights"
     bl_options = {'REGISTER', 'UNDO'}
 
+    operation: EnumProperty(name="Paint operation", items=PAINT_OPERATIONS, default="REPLACE", options={'SKIP_SAVE'})
+    profile: EnumProperty(name="Profile", items=PAINT_PROFILES, default="SOFT", options={'SKIP_SAVE'})
+    normalize: EnumProperty(name="Normalize Weights", items=NORMALIZE, default="INTERACTIVE", options={'SKIP_SAVE'})
+    opacity: FloatProperty(name="Opacity", default=1.0, min=0.0, max=1.0, options={'SKIP_SAVE'})
+    value: FloatProperty(name="Value", default=1.0, min=0.0, max=1.0, options={'SKIP_SAVE'})
+    radius: FloatProperty(name="Radius(U)", default=1.0, min=0.0001, options={'SKIP_SAVE'})
+    screen_projection: BoolProperty(name="Screen projection", default=False, options={'SKIP_SAVE'})
+    show_wireframe: BoolProperty(name="Show wireframe", default=True, options={'SKIP_SAVE'})
+    xray_joints: BoolProperty(name="XRay Joints", default=True, options={'SKIP_SAVE'})
+    settings: BoolProperty(name="Apply Tool Settings", default=False, options={'SKIP_SAVE', 'HIDDEN'},
+                           description="Apply the Maya tool settings above (the option window); a plain click keeps "
+                                       "the brush as it is")
+
+    def _settings(self, context, mesh):
+        if not self.settings:
+            return
+        refused = apply_paint_settings(context, mesh, armature_modifier(mesh).object,
+                                       {k: getattr(self, k) for k in PAINT_FIELDS})
+        if refused:
+            self.report({'WARNING'}, "Blender kept its own " + ", ".join(refused) + " (the brush is a linked asset)")
+
     def execute(self, context):
         if context.mode == 'PAINT_WEIGHT':
+            if self.settings:               # the option window while painting: new settings, stay in the tool
+                mesh = context.active_object
+                if mesh is not None and armature_modifier(mesh):
+                    self._settings(context, mesh)
+                return {'FINISHED'}
             bpy.ops.paint.weight_paint_toggle()          # Maya: leaving the paint tool
             return {'FINISHED'}
         mesh = skinned_mesh(context)
@@ -409,8 +581,10 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
             mesh.vertex_groups.active_index = influences(mesh)[0].index
         # Maya Bind Skin makes the skinCluster with Normalize Weights = Interactive (normalizeWeights 1): painting a
         # joint takes weight from the others so every vertex keeps a total of 1 (#20, step 129). Blender's factory
-        # Auto Normalize is off; Skin > Normalize Weights > Disable still turns it off while painting.
-        context.tool_settings.use_auto_normalize = True
+        # Auto Normalize is off; Skin > Normalize Weights > Disable still turns it off while painting. The skin's own
+        # mode comes from Bind Skin's Normalize weights (step 140).
+        context.tool_settings.use_auto_normalize = normalize_mode(mesh) == "INTERACTIVE"
+        self._settings(context, mesh)
         return {'FINISHED'}
 
 
@@ -437,11 +611,97 @@ class ALLSET_OT_flood_weights(bpy.types.Operator):
 
 # --- Copy / Mirror Skin Weights, Copy / Paste Vertex Weights -----------------------------------------
 
+# Maya Copy Skin Weights Options (research/maya/re/option_boxes_140.md): Surface Association -> Blender Data Transfer
+# vertex mapping; Influence Association 1-3 = how a source joint finds its destination joint when the two meshes use
+# different skeletons (tried in order; one skeleton = every joint is itself).
+SURFACE_ASSOCIATION = (("CLOSEST_POINT", "Closest point on surface", "Interpolated from the nearest face"),
+                       ("RAY_CAST", "Ray cast", "Along the vertex normal onto the source"),
+                       ("CLOSEST_COMPONENT", "Closest component", "The nearest source vertex"))
+VERT_MAPPING = {"CLOSEST_POINT": 'POLYINTERP_NEAREST', "RAY_CAST": 'POLYINTERP_VNORPROJ', "CLOSEST_COMPONENT": 'NEAREST'}
+INFLUENCE_ASSOCIATION = (("CLOSEST_JOINT", "Closest joint", "The destination joint nearest the source joint"),
+                         ("CLOSEST_BONE", "Closest bone", "The destination bone nearest the source joint"),
+                         ("ONE_TO_ONE", "One to one", "The joint at the same place in the hierarchy"),
+                         ("NAME", "Name", "The joint with the same name"),
+                         ("NONE", "None", "No further association"))
+
+
+def _hierarchy_order(arm):
+    out = []
+
+    def walk(bone):
+        out.append(bone.name)
+        for child in bone.children:
+            walk(child)
+    for root in [b for b in arm.data.bones if b.parent is None]:
+        walk(root)
+    return out
+
+
+def _segment_distance(p, a, b):
+    ab = b - a
+    t = 0.0 if ab.length_squared < 1e-12 else max(0.0, min(1.0, (p - a).dot(ab) / ab.length_squared))
+    return (p - (a + ab * t)).length
+
+
+def associate(src_arm, dst_arm, name, modes=("CLOSEST_JOINT",)):
+    """The destination joint for source joint ``name`` (Maya influence association), or None."""
+    if src_arm == dst_arm:
+        return name if name in dst_arm.data.bones else None
+    bone = src_arm.data.bones.get(name)
+    if bone is None:
+        return None
+    head = src_arm.matrix_world @ bone.head_local
+    dst = dst_arm.data.bones
+    for mode in modes:
+        if mode == "NAME" and name in dst:
+            return name
+        if mode == "ONE_TO_ONE":
+            order, other = _hierarchy_order(src_arm), _hierarchy_order(dst_arm)
+            i = order.index(name)
+            if i < len(other):
+                return other[i]
+        if mode == "CLOSEST_JOINT" and len(dst):
+            return min(dst, key=lambda b: (dst_arm.matrix_world @ b.head_local - head).length).name
+        if mode == "CLOSEST_BONE" and len(dst):
+            mw = dst_arm.matrix_world
+            return min(dst, key=lambda b: _segment_distance(head, mw @ b.head_local, mw @ b.tail_local)).name
+    return None
+
+
+def remap_influences(mesh, src_arm, dst_arm, names, modes):
+    """Move the copied weights of source joints ``names`` onto their associated destination joints."""
+    if src_arm == dst_arm:
+        return
+    weights = {}
+    for name in names:
+        vg = mesh.vertex_groups.get(name)
+        if vg is None:
+            continue
+        for v in mesh.data.vertices:
+            for g in v.groups:
+                if g.group == vg.index and g.weight > 0.0:
+                    weights.setdefault(name, []).append((v.index, g.weight))
+        mesh.vertex_groups.remove(vg)
+    for name, pairs in weights.items():
+        target = associate(src_arm, dst_arm, name, modes)
+        if target is None:
+            continue
+        vg = mesh.vertex_groups.get(target) or mesh.vertex_groups.new(name=target)
+        for i, w in pairs:
+            vg.add([i], w, 'ADD')
+
+
 class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
     """Maya Copy Skin Weights: select the source mesh, then the destination"""
     bl_idname = "allset.copy_skin_weights"
     bl_label = "Copy Skin Weights"
     bl_options = {'REGISTER', 'UNDO'}
+
+    surface: EnumProperty(name="Surface Association", items=SURFACE_ASSOCIATION, default="CLOSEST_POINT")
+    influence1: EnumProperty(name="Influence Association 1", items=INFLUENCE_ASSOCIATION, default="CLOSEST_JOINT")
+    influence2: EnumProperty(name="Influence Association 2", items=INFLUENCE_ASSOCIATION, default="NONE")
+    influence3: EnumProperty(name="Influence Association 3", items=INFLUENCE_ASSOCIATION, default="NONE")
+    normalize: BoolProperty(name="Normalize", default=False)
 
     @classmethod
     def poll(cls, context):
@@ -453,13 +713,23 @@ class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
         if dst is None or dst.type != 'MESH' or not srcs:
             self.report({'WARNING'}, "Select the skinned source mesh, then the destination mesh")
             return {'CANCELLED'}
+        src_arm = armature_modifier(srcs[0]).object
         if armature_modifier(dst) is None:
             mod = dst.modifiers.new("Armature", 'ARMATURE')
-            mod.object = armature_modifier(srcs[0]).object
+            mod.object = src_arm
+        dst_arm = armature_modifier(dst).object
+        src_names = [vg.name for vg in influences(srcs[0])]
         bpy.ops.object.data_transfer(use_reverse_transfer=True, data_type='VGROUP_WEIGHTS', use_create=True,
-                                     vert_mapping='POLYINTERP_NEAREST',
+                                     vert_mapping=VERT_MAPPING[self.surface],
                                      # reverse transfer swaps the two layer enums (measured, tmp/probe58/dt.py)
                                      layers_select_src='NAME', layers_select_dst='ALL')
+        if dst_arm != src_arm:
+            modes = [m for m in (self.influence1, self.influence2, self.influence3) if m != "NONE"]
+            # the transfer wrote the weights under the source joints' names: move them to the associated joints
+            remap_influences(dst, src_arm, dst_arm, src_names, modes)
+        if self.normalize:
+            from .rig_maya import normalize
+            normalize(dst)
         self.report({'INFO'}, f"Copied skin weights to {dst.name}")
         return {'FINISHED'}
 
