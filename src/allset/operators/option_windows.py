@@ -214,13 +214,16 @@ def _run_smooth(context, v):
 
 
 def _run_bevel(context, v):
-    k = _k(context)
-    kw = dict(segments=v["segments"], profile=max(0.0, min(1.0, 0.5 * v["depth"])), affect='EDGES')
-    if v["offset_type"].startswith("Fractional"):
-        kw.update(offset_type='PERCENT', offset_pct=max(0.0, min(100.0, v["width"] * 100.0)))
+    # Maya polyBevel3 with the window's values (step 139: allset.bevel, editable afterwards like Ctrl+B)
+    fraction = v["offset_type"].startswith("Fractional")
+    kw = dict(segments=v["segments"], depth=max(-1.0, min(1.0, v["depth"])), offset_as_fraction=fraction)
+    if fraction:
+        kw["fraction"] = max(0.0, min(1.0, v["width"]))
     else:
-        kw.update(offset_type='OFFSET', offset=v["width"] * k)
-    return _components(context, "mesh.bevel", 'EDGE', **kw)
+        kw["offset"] = max(0.0, v["width"])
+    if context.mode == 'EDIT_MESH' and tuple(context.scene.tool_settings.mesh_select_mode) == (True, False, False):
+        bpy.ops.mesh.select_mode(type='EDGE')       # the window bevels edges (Maya: polyBevel3, not Chamfer)
+    return _components(context, "allset.bevel", 'EDGE', **kw)
 
 
 def _run_extrude(context, v):
