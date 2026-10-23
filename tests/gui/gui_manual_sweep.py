@@ -2608,6 +2608,8 @@ def edit_cube(select_faces=None):
     select_only(ob)
     with override():
         bpy.ops.object.mode_set(mode='EDIT')
+    if select_faces:   # faces are a face-mode selection (in vertex mode Maya extrudes the vertices, step 139)
+        bpy.context.scene.tool_settings.mesh_select_mode = (False, False, True)
     bm = bmesh.from_edit_mesh(ob.data)
     for f in bm.faces:
         f.select_set(False)
@@ -2658,15 +2660,21 @@ def _m63_2_components():
     check(f"[M63-2] Add Divisions subdivides the face ({n0} -> {counts(ob)})", counts(ob)[1] > n0[1])
     ob = edit_cube([0])
     move_to(screen(Vector()))
+    C["bevel_n0"] = counts(ob)
     menu("Edit Mesh/Bevel")
     C["bevel_modal"] = [op.bl_idname for op in win().modal_operators]
     tap('ESC')
+    C["bevel_ob"] = ob
 
 
 @named("m63_2_bevel")
 def _m63_2_bevel():
-    check(f"[M63-2] Bevel starts Blender's interactive bevel in the view ({C['bevel_modal']})",
-          "MESH_OT_bevel" in C["bevel_modal"])
+    # step 139 (#16): Maya bevels at once (polyBevel3 factory values) and Esc keeps it; no Blender modal
+    ob_b = C["bevel_ob"]
+    if bpy.context.mode == 'EDIT_MESH':
+        ob_b.update_from_editmode()
+    check(f"[M63-2] Bevel bevels at once, Esc keeps it, no modal ({C['bevel_modal']}, {C['bevel_n0']} -> {counts(ob_b)})",
+          "MESH_OT_bevel" not in C["bevel_modal"] and counts(ob_b) != C["bevel_n0"])
     ob = edit_cube([0, 2])          # two opposite faces
     bm = bmesh.from_edit_mesh(ob.data)
     sel = [f for f in bm.faces if f.select]
@@ -3859,8 +3867,11 @@ def _m65_5_other_check():
 @named("m65_5_edge_check")
 def _m65_5_edge_check():
     modal = [op.bl_idname for op in win().modal_operators]
-    check(f"[M65-5] Ctrl+E on an edge = Blender's extrude + drag ({modal})",
-          any(m.startswith(("TRANSFORM_OT", "MESH_OT_extrude")) for m in modal) and ecounts()[0] > C["n_edge"][0])
+    # step 139 (M4): Ctrl+E on an edge = polyExtrudeEdge at once, no mouse drag
+    rec = mod("operators.extrude").current(OB())
+    check(f"[M65-5] Ctrl+E on an edge = polyExtrudeEdge at once ({modal}, {rec and rec.name}, {C['n_edge']} -> {ecounts()})",
+          not any(m.startswith(("TRANSFORM_OT", "MESH_OT_extrude")) for m in modal) and ecounts()[0] > C["n_edge"][0]
+          and rec is not None and rec.name.startswith("polyExtrudeEdge"))
     tap('RET')
 
 

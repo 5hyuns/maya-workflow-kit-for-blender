@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 139 (Edit Mesh / UV 를 Maya 결과로, #70 #68 #16) 완료 — `docs/steps/step_139.md` (+ `step_139_{edit,shape,uv}.md`,
+  `research/maya/re/edit_mesh_139.md`). Connect / Merge / Smooth / Symmetrize, Ctrl+E 엣지 · 정점, Ctrl+B 가 mayapy 측정과 같은 결과 (바로 실행,
+  step 65 처럼 수정 가능), UV > Automatic / Contour Stretch 오브젝트 모드, UV Editor Best Plane / Contour Stretch.
+  **바로 다음 할 일**: step 140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73). 후보: 조명 없는 장면 렌더에 Maya 기본 조명 (137),
+  Open 의 묻기 문구 (138), Connect 4 점 이상 (Maya 엣지 순서, M11), 구 · 토러스 Automatic 셸 크기 (Maya "Less distortion" 규칙).
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 138 (장면 · 파일, #57 #63 #64 #69) 완료 — `docs/steps/step_138.md` (+ `step_138_{prompt,carry,file_io}.md`). New Scene 에 Maya
   Save / Don't Save / Cancel (`ui/save_prompt.py`), Maya 모드에서 파일을 열면 Maya 레이아웃 (설정 `maya_layout_on_open`), Maya 도구 설정이
   New / Open 을 건너 유지 (`ui/scene_carry.py`), FBX / OBJ / Alembic / USD 가 Maya 와 채널 · 이름 그대로 왕복 (`operators/file_io.py`).

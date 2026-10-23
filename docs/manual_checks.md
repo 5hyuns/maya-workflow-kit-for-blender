@@ -939,3 +939,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Maya mode, File > Open a .blend made in plain Blender: the Maya layout (Status Line, shelf, Tool Box, Channel Box dock, Time Slider) shows; add-on option 「Keep Maya Layout When Opening Files」 off → the file's own layout.
 - [ ] Set Move axis World/Object, step snap, soft select radius, symmetry; New Scene and File > Open keep them.
 - [ ] Export All → FBX / OBJ / Alembic / USD, import in Maya 2022: pCube1 keeps translate / rotate / scale, no extra root / env_light, no Rotate X -90 / Scale 100. Maya → kit import: same channels, names pCube1 / pCubeShape1.
+
+## Step 139 — Edit Mesh / UV with Maya results
+
+- [ ] Cube, F10, two opposite edges, Edit Mesh > Connect: one edge through their midpoints (10/15/7).
+- [ ] Two neighbouring vertices, Edit Mesh > Merge: one vertex at their midpoint (always merge two vertices).
+- [ ] One face, Mesh > Smooth: only that face smoothed (13/20/9), no Subdivision modifier.
+- [ ] Edit Mesh > Symmetrize: waits for an edge click (mesh unchanged), the click mirrors, Esc cancels.
+- [ ] Ctrl+E on edges / a vertex: made at once (no mouse drag), In-View Editor + arrow change Thickness / Length.
+- [ ] Ctrl+B on an edge: bevel at once (Fraction 0.5), Esc keeps it, In-View Editor Fraction / Segments edit it; vertex mode = Chamfer Vertex.
+- [ ] Object mode, UV > Automatic: 6 shells on a cube; UV Editor > Create > Best Plane / Contour Stretch enabled.

@@ -31,3 +31,19 @@ backlog 6 (`step_133_work.md` M1–M4, M9, U1, U2; #16). 측정 = mayapy (MAYA_A
 
 `option_windows.py` · `menu_map.py` 는 레인마다 자기 항목만 (메인이 병합). research 는 레인마다 `research/maya/re/edit_mesh_139_<레인>.md` → 메인이
 `edit_mesh_139.md` 로 합침. 메인: 병합, 헤드리스 전체, 메뉴 경로 GUI, GUI 전체 한 번, 커밋.
+
+## 한 것
+
+레인 3 개 (worktree, 포그라운드 동시). 레인 문서: `step_139_edit.md`, `step_139_shape.md`, `step_139_uv.md`. 측정 명세를 메인이
+`research/maya/re/edit_mesh_139.md` 로 합침 (레인별 `edit_mesh_139_{edit,shape,uv}.md`, mayapy 스크립트 `research/scripts/edit_mesh_139_*`).
+
+- **EDIT** (M1 M2 M3 M9): `operators/poly_maya.py` — Connect (정점 / 엣지 / 면, Maya 경우 20 개 모두 같은 수), Merge (alwaysMergeTwoVertices,
+  중점 / 평균 위치), Smooth (선택 면만 / 전체, 실제 Catmull-Clark, 모디파이어 없음: 1 면 13/20/9, 전체 26/48/24), Symmetrize (엣지 클릭 툴,
+  Esc = 그대로, 오브젝트 모드 = Maya 경고). Smooth 옵션 창은 Division levels 만 (나머지는 회색 알림).
+- **SHAPE** (M4 #16): Ctrl+E 엣지 / 정점 = polyExtrudeEdge / polyExtrudeVertex 바로, Ctrl+B = polyBevel3 바로 (Fraction 0.5, Esc 해도 남음, 정점
+  모드 = Chamfer Vertex). step 65 기록을 노드 종류별로 (In-View Editor, Channel Box INPUTS, AE 기록 탭, Adjust Last Operation 에서 수정, 화살표).
+  측정한 모든 경우 mayapy 와 1e-4 안.
+- **UV** (U1 U2): `allset.uv_automatic` (6 평면 bmesh 투영, 오브젝트 모드 가능; 큐브 · 원기둥 · 평면 셸 수 · UV 수 Maya 와 같음), `allset.uv_contour`,
+  UV Editor > Create > Automatic / Best Plane / Contour Stretch 연결. `menu_item` 순서는 그대로 (새 연산자가 오브젝트 모드를 받음; delegated).
+- **메인**: 병합 (충돌 없음), 마킹 메뉴 (Chamfer Vertex, Merge Vertices, Connect Components ×2, Bevel Edge / Face, UV Automatic) 와 셸프
+  (performBevelOrChamfer, PolyMerge, Automatic Mapping) 가 Blender 연산자 대신 같은 메뉴 항목 `("item", path)` 으로 — 레인 셋이 각각 남긴 것.
