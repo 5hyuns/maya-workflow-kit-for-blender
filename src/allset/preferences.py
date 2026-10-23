@@ -48,6 +48,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="When Blender starts without a file in Maya mode, open a new scene in the Maya layout",
         default=False)
 
+    # Step 138 (#63): Maya's UI doesn't come from the scene file (research/maya/ui_layout.md:15-77): opening a file
+    # shows the Maya layout (ui/scene_carry.py).
+    maya_layout_on_open: bpy.props.BoolProperty(
+        name="Keep Maya Layout When Opening Files",
+        description="In Maya mode, a file opened in another layout is shown in the Maya layout (its own Maya layout "
+                    "workspace when it has one). The file's other workspaces stay",
+        default=True)
+
     lock_ortho_tumble: bpy.props.BoolProperty(
         name="Lock Tumble in Ortho Views",
         description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",
@@ -214,6 +222,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.operator("allset.new_maya_scene", icon='FILE_NEW')
         row.operator("allset.maya_layout_here", icon='WORKSPACE')
         box.prop(self, "start_in_maya_layout")
+        box.prop(self, "maya_layout_on_open")
         col = layout.column()
         col.prop(self, "lock_ortho_tumble")
         col.prop(self, "select_through")
