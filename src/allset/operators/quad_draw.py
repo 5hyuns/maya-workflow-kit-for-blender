@@ -33,7 +33,7 @@ from mathutils.bvhtree import BVHTree
 from . import mesh_tools, multi_cut, poly_draw, preselect
 
 TOOL = "allset.quad_draw_tool"
-DOT_PX = 10.0           # a press this close to a dot grabs it 
+DOT_LAYER = "allset_dot"   # int vertex layer: 1 = a Quad Draw dot (a loose vertex until a face uses it)
 DRAG_PX = 4.0           # a press that moves less than this is a click
 BRUSH_PX = 50.0         # relax brush radius 
 RELAX_STEP = 0.5        # share of the way to the neighbours' average per brush move 
@@ -374,7 +374,7 @@ def _forget(_scene=None, depsgraph=None):
 
 # --- live state -----------------------------------------------------------------------------------------
 
-STATE = {"ob": None, "dots": [], "preview": None, "created": None, "overlays": {}, "timer": False}
+STATE = {"ob": None, "preview": None, "created": None, "overlays": {}, "timer": False}
 
 
 def reset_preview():
@@ -399,71 +399,89 @@ def _screen_xy(region, rv3d, w):
     return (p.x, p.y) if p is not None else None
 
 
-def dot_at(context, region, rv3d, mouse):
-    best = None
-    r = DOT_PX * _ui_scale(context)
-    for j, w in enumerate(STATE["dots"]):
-        xy = _screen_xy(region, rv3d, w)
-        if xy is None:
-            continue
-        d = math.hypot(xy[0] - mouse[0], xy[1] - mouse[1])
-        if d <= r and (best is None or d < best[0]):
-            best = (d, j)
-    return best[1] if best else None
+def dot_layer(bm, create=False):
+    """The int vertex layer that marks Quad Draw dots (made first: a new layer invalidates element references)."""
+    lay = bm.verts.layers.int.get(DOT_LAYER)
+    if lay is None and create:
+        lay = bm.verts.layers.int.new(DOT_LAYER)
+    return lay
+
+
+def dots(bm):
+    """Maya's dots: loose vertices Quad Draw placed (no edge yet). Being vertices, they undo with the mesh."""
+    lay = dot_layer(bm)
+    if lay is None:
+        return []
+    return [v for v in bm.verts if v[lay] and not v.link_edges]
+
+
+def add_dot(bm, co):
+    """A dot at local ``co``; returns the vertex."""
+    lay = dot_layer(bm, create=True)
+    v = bm.verts.new(co)
+    v[lay] = 1
+    v.select = False
+    _indices(bm)
+    return v
+
+
+def clear_dots(bm):
+    """Remove every dot (Clear Dots, leaving the tool). Returns how many went."""
+    gone = dots(bm)
+    for v in gone:
+        bm.verts.remove(v)
+    if gone:
+        _indices(bm)
+    return len(gone)
 
 
 def component_at(context, region, rv3d, mouse, ob, edges_only=False):
-    """('VERT', i) / ('EDGE', i, t) / ('FACE', i, local co) of ``ob`` under the mouse, or None."""
+    """('VERT', i) / ('EDGE', i, t) / ('FACE', i, local co) of ``ob`` under the mouse (dots are vertices), or None."""
     hit = multi_cut.pick(context, region, rv3d, mouse, only=ob.name, edges_only=edges_only)
     return hit[1] if hit is not None else None
 
 
 def fill_candidates(bm):
-    """Mesh vertices a fill can use: on the border or not on any face yet."""
+    """Vertices a fill can use: dots, border vertices and vertices on no face yet."""
     return [v for v in bm.verts if not v.hide and (v.is_boundary or not v.link_faces)]
 
 
 def fill_plan(context, region, rv3d, mouse, ob):
-    """(ring of items, world points) for a Shift+click at ``mouse``: items are ('DOT', j) or ('VERT', index)."""
+    """(ring of vertex indices, world points) for a Shift+click at ``mouse``, or None."""
     bm = bmesh.from_edit_mesh(ob.data)
     mw = ob.matrix_world
-    items, xy = [], []
-    for j, w in enumerate(STATE["dots"]):
-        p = _screen_xy(region, rv3d, w)
-        if p is not None:
-            items.append(('DOT', j))
-            xy.append(p)
+    idx, xy = [], []
     for v in fill_candidates(bm):
         p = _screen_xy(region, rv3d, mw @ v.co)
         if p is not None:
-            items.append(('VERT', v.index))
+            idx.append(v.index)
             xy.append(p)
-    index_of = {it: k for k, it in enumerate(items)}
+    index_of = {i: k for k, i in enumerate(idx)}
     banned = set()
     for f in bm.faces:
-        ks = [index_of.get(('VERT', v.index)) for v in f.verts]
+        ks = [index_of.get(v.index) for v in f.verts]
         if None not in ks:
             banned.add(frozenset(ks))
     ring = fill_order(xy, mouse, banned=banned)
     if ring is None:
         return None
     bm.verts.ensure_lookup_table()
-    pts = [STATE["dots"][items[k][1]] if items[k][0] == 'DOT' else mw @ bm.verts[items[k][1]].co for k in ring]
-    return [items[k] for k in ring], pts
+    return [idx[k] for k in ring], [mw @ bm.verts[idx[k]].co for k in ring]
 
 
 def apply_fill(ob, ring):
-    """Make the fill face of ``ring`` (``fill_plan`` items); used dots become vertices. Returns the face or None."""
+    """Make the fill face through vertex indices ``ring`` (``fill_plan``); its dots become plain vertices. Returns the
+    face or None."""
     bm = bmesh.from_edit_mesh(ob.data)
     bm.verts.ensure_lookup_table()
-    inv = ob.matrix_world.inverted_safe()
-    els = [bm.verts[i] if kind == 'VERT' else inv @ STATE["dots"][i] for kind, i in ring]
-    face = fill_face(bm, els)
+    verts = [bm.verts[i] for i in ring]
+    face = fill_face(bm, verts)
     if face is None:
         return None
-    used = sorted((i for kind, i in ring if kind == 'DOT'), reverse=True)
-    for j in used:
-        STATE["dots"].pop(j)
+    lay = dot_layer(bm)
+    for v in face.verts:
+        if lay is not None:
+            v[lay] = 0
     for el in (*bm.verts, *bm.edges, *bm.faces):
         el.select = False
     bmesh.update_edit_mesh(ob.data)
@@ -527,7 +545,11 @@ def _draw_view():
                     _lines(region, _ring_lines(pts), rgb, LINE_PX * 2 * scale)
             elif kind == 'EXTEND':
                 _lines(region, [tuple(p) for p in data], FILL_RGB, LINE_PX * scale)
-        _points([tuple(w) for w in STATE["dots"]], DOT_RGB, DOT_SIZE * scale)
+        ob = edit_object(context)
+        if ob is not None:
+            mw = ob.matrix_world
+            bm = bmesh.from_edit_mesh(ob.data)     # keep the wrapper alive while its vertices are read
+            _points([tuple(mw @ v.co) for v in dots(bm)], DOT_RGB, DOT_SIZE * scale)
         gpu.state.blend_set('NONE')
     except (ReferenceError, AttributeError, IndexError, ValueError, KeyError):
         pass
@@ -602,10 +624,6 @@ def update_hover(context, region, rv3d, mouse, ctrl, shift, tab=False):
             segs = multi_cut.loop_segments(bmesh.from_edit_mesh(ob.data), comp[1], comp[2])
             mw = ob.matrix_world
             STATE["preview"] = ('LOOP', [(mw @ a, mw @ b) for a, b in segs])
-        return
-    j = dot_at(context, region, rv3d, mouse)
-    if j is not None:
-        STATE["preview"] = ('DELETE' if ctrl else 'HOVER', [STATE["dots"][j]])
         return
     comp = component_at(context, region, rv3d, mouse, ob)
     if comp is not None:
@@ -716,8 +734,12 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
                 if w is None:
                     self.report({'INFO'}, "Quad Draw: click on the live surface")
                     return {'CANCELLED'}
-                STATE["dots"].append(w)
-                self._grab = ('DOT', len(STATE["dots"]) - 1)
+                bm = bmesh.from_edit_mesh(ob.data)
+                v = add_dot(bm, ob.matrix_world.inverted_safe() @ w)
+                bmesh.update_edit_mesh(ob.data)
+                preselect.invalidate()
+                self._depth = w.copy()
+                self._grab = ('MESH', [v.index], [w], w)
                 self._new_dot = True
             else:
                 self._new_dot = False
@@ -728,9 +750,6 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
     # -- grabbing
     def _grab_at(self, context, mouse):
         region, rv3d = context.region, context.region_data
-        j = dot_at(context, region, rv3d, mouse)
-        if j is not None:
-            return ('DOT', j)
         ob = bpy.data.objects[self._ob]
         comp = component_at(context, region, rv3d, mouse, ob)
         if comp is None:
@@ -754,12 +773,6 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
 
     def _drag_to(self, context, mouse):
         region, rv3d = context.region, context.region_data
-        kind = self._grab[0]
-        if kind == 'DOT':
-            w = place_point(context, region, rv3d, mouse, self._refs)
-            if w is not None:
-                STATE["dots"][self._grab[1]] = w
-            return
         _k, idx, starts, start = self._grab
         hit = surface_hit(context, region, rv3d, mouse, self._refs) if self._refs else None
         if hit is None:
@@ -780,12 +793,6 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
     # -- one-shot actions
     def _delete(self, context, mouse):
         region, rv3d = context.region, context.region_data
-        j = dot_at(context, region, rv3d, mouse)
-        if j is not None:
-            STATE["dots"].pop(j)
-            STATE["preview"] = None
-            _redraw(context)
-            return {'FINISHED'}
         ob = bpy.data.objects[self._ob]
         comp = component_at(context, region, rv3d, mouse, ob)
         if comp is None:
@@ -878,10 +885,7 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
                 return {'CANCELLED'}
             _redraw(context)
             return {'FINISHED'}
-        if self._grab[0] == 'DOT':
-            _redraw(context)
-            return {'FINISHED'} if (self._moved or self._new_dot) else {'CANCELLED'}
-        if not self._moved:
+        if not self._moved and not self._new_dot:
             return {'CANCELLED'}
         bm = bmesh.from_edit_mesh(ob.data)
         bm.verts.ensure_lookup_table()
@@ -893,16 +897,17 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
 
     def _cancel(self, context):
         ob = bpy.data.objects.get(self._ob)
-        if self._grab is not None and self._grab[0] == 'MESH' and ob is not None:
+        if self._grab is not None and ob is not None:
             bm = bmesh.from_edit_mesh(ob.data)
             bm.verts.ensure_lookup_table()
-            inv = ob.matrix_world.inverted_safe()
-            for i, w in zip(self._grab[1], self._grab[2]):
-                bm.verts[i].co = inv @ w
+            if getattr(self, "_new_dot", False):
+                bm.verts.remove(bm.verts[self._grab[1][0]])
+                _indices(bm)
+            else:
+                inv = ob.matrix_world.inverted_safe()
+                for i, w in zip(self._grab[1], self._grab[2]):
+                    bm.verts[i].co = inv @ w
             bmesh.update_edit_mesh(ob.data)
-        elif self._grab is not None and self._grab[0] == 'DOT' and getattr(self, "_new_dot", False):
-            if self._grab[1] < len(STATE["dots"]):
-                STATE["dots"].pop(self._grab[1])
         STATE["preview"] = None
         _redraw(context)
         return {'CANCELLED'}
@@ -1061,10 +1066,19 @@ class ALLSET_OT_quad_draw_clear_dots(bpy.types.Operator):
     """Remove every Quad Draw dot (Maya Tool Settings: Clear Dots)"""
     bl_idname = "allset.quad_draw_clear_dots"
     bl_label = "Clear Dots"
-    bl_options = {'INTERNAL'}
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return edit_object(context) is not None
 
     def execute(self, context):
-        STATE["dots"].clear()
+        ob = edit_object(context)
+        bm = bmesh.from_edit_mesh(ob.data)
+        if not clear_dots(bm):
+            return {'CANCELLED'}
+        bmesh.update_edit_mesh(ob.data)
+        preselect.invalidate()
         STATE["preview"] = None
         for area in context.screen.areas if context.screen else ():
             area.tag_redraw()
@@ -1136,8 +1150,8 @@ def _watch():
     except (ReferenceError, AttributeError):
         pass
     _restore_overlays()
-    STATE["dots"].clear()
     STATE["preview"] = None
+    _drop_dots(STATE["ob"])
     name = STATE["created"]
     STATE["created"] = None
     ob = bpy.data.objects.get(name) if name else None
@@ -1148,6 +1162,32 @@ def _watch():
             bpy.data.meshes.remove(me)
     STATE["timer"] = False
     return None
+
+
+def _drop_dots(name):
+    """Leaving Quad Draw clears its dots and the dot layer (Maya's dots live only in the tool) ."""
+    ob = bpy.data.objects.get(name) if name else None
+    if ob is None or ob.type != 'MESH':
+        return
+    me = ob.data
+    if ob.mode == 'EDIT':
+        bm = bmesh.from_edit_mesh(me)
+        clear_dots(bm)
+        lay = dot_layer(bm)
+        if lay is not None:
+            bm.verts.layers.int.remove(lay)
+        bmesh.update_edit_mesh(me)
+        return
+    if DOT_LAYER not in me.attributes:
+        return
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    if clear_dots(bm):
+        bm.to_mesh(me)
+    bm.free()
+    attr = me.attributes.get(DOT_LAYER)
+    if attr is not None:
+        me.attributes.remove(attr)
 
 
 def new_target(context):
@@ -1237,6 +1277,6 @@ def unregister_handlers():
         bpy.app.handlers.depsgraph_update_post.remove(_forget)
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)
-    STATE.update(ob=None, dots=[], preview=None, created=None, timer=False)
+    STATE.update(ob=None, preview=None, created=None, timer=False)
     _restore_overlays()
     _bvh.clear()
