@@ -212,7 +212,9 @@ MAP = {
     f"{UV}/Edit/Invert Pinning": ("uv.pin", {"invert": True}),
     f"{UV}/Edit/Unpin Selection": ("uv.pin", {"clear": True}),
     f"{UV}/Create/Assign Checker Shader": "allset.checker_shader",
-    f"{UV}/Create/Automatic": "uv.smart_project",
+    f"{UV}/Create/Automatic": "allset.uv_automatic",
+    f"{UV}/Create/Best Plane": "allset.uv_planar",          # same actions as the main UV menu (step 139, U2)
+    f"{UV}/Create/Contour Stretch": "allset.uv_contour",
     f"{UV}/Create/Camera-based": ("v3d", "uv.project_from_view", {}),
     f"{UV}/Create/Normal-based": "allset.uv_planar",
     f"{UV}/Create/Cylindrical": ("v3d", "uv.cylinder_project", {}),
