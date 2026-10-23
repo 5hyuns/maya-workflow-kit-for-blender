@@ -17,6 +17,7 @@ data = import_module(kit.MODULE + ".ui.menu_icon_data")
 shelf_icons = import_module(kit.MODULE + ".ui.shelf_icons")
 status_icons = import_module(kit.MODULE + ".ui.status_icons")
 kit_icons = import_module(kit.MODULE + ".ui.kit_icons")
+menu_drawings = import_module(kit.MODULE + ".ui.menu_drawings")
 
 SIZES = (16, 20, 24)            # menu icon px at UI scale 1.0 / 1.25 / 1.5
 # Menus where Maya itself shows one picture on two items (same icon file in the Maya capture)
@@ -51,6 +52,8 @@ def test_every_picture_is_a_kit_drawing():
             assert pic[1] in status_icons.GLYPHS, (path, pic)
         elif kind == "kit":
             assert pic[1] in kit_icons.GLYPHS, (path, pic)
+        elif kind == "menu":            # step 142 (#54): menu-only drawings
+            assert pic[1] in menu_drawings.DRAWINGS, (path, pic)
         else:
             raise AssertionError((path, pic))
 
@@ -73,9 +76,10 @@ def test_icons_are_distinct_within_a_menu():
         seen = {}
         for path, pic in rows:
             key = mi.picture(pic, 16).tobytes()
-            if key in seen and menu not in MAYA_SHARED:
-                raise AssertionError(f"{menu}: {path} looks like {seen[key]}")
-            seen.setdefault(key, path)
+            # step 142: one menu drawing on several items = Maya shows one icon file there (the generator links them)
+            if key in seen and menu not in MAYA_SHARED and not (pic[0] == "menu" and seen[key][1] == pic):
+                raise AssertionError(f"{menu}: {path} looks like {seen[key][0]}")
+            seen.setdefault(key, (path, pic))
 
 
 def _preview(path):
