@@ -15,6 +15,7 @@ import bpy
 from bpy.props import EnumProperty, FloatVectorProperty, IntProperty
 from mathutils import Euler, Quaternion, Vector
 
+from .. import undo_steps
 from . import naming, prim_history
 from .freeze import hierarchy
 from .group import make_group
@@ -113,6 +114,7 @@ class ALLSET_OT_duplicate(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_duplicate_special(bpy.types.Operator):
     """Duplicate with options: copies or instances, number of copies, offsets per
     copy, where to put them (Maya Edit > Duplicate Special)"""

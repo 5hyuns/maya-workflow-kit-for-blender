@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 147 (Undo step · redo 패널, #88 #92 #86) 완료 — `docs/steps/step_147.md`. 메뉴 · 셸프 · 마킹 메뉴 명령이 각자 undo step
+  하나 (전에는 Python 호출이라 step 도 등록도 없었음, 측정), Mesh Tools 도구 항목 뒤 Ctrl+Z 가 편집 모드에 남음, Ctrl+E / Ctrl+B /
+  Joint Tool / IK Handle / 옵션 창 뒤 Adjust Last Operation 없음 (Create Joints 뒤 셸프 클릭이 됨), "redo" 옵션 상자는 이제 정말
+  설정을 보여 줌. 헤드리스 1319/1319, GUI 관련 24 파일 254/254.
+  **바로 다음 할 일**: 148 Channel Box (#87 #85 #83 #95) → 149 와이어 · 이름 · bind (#91 #93 #94) → 150 Graph Editor (#96) →
+  151 매니퓰레이터 · 링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
+  (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 (바탕화면 `MayaWorkflowKit_upload/`).
+
 - Step 146 (옵션 상자 끌기 없이, #82) 완료 — `docs/steps/step_146.md`. ❒ 항목을 0.2 s 누르면 hold 메뉴의 "Option Box ❒" 줄로 포인터가
   옮겨져 그대로 놓으면 옵션 창 (Maya 메뉴는 포인터를 창 끝으로 보냈다 돌려놓아 닫음), Shift / Ctrl + 클릭 = 옵션 상자 (OS 키 상태),
   툴팁 끝에 방법 한 줄. ❒ 부분만 클릭은 Blender 가 위치를 안 줘서 불가 (측정). 헤드리스 1313/1313, GUI 바뀐 모듈 5 파일 51/52

@@ -974,3 +974,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Shift+click and Ctrl+click on Grid / Set Key open the option box instead of running the command (OS key state; event simulation can't test it). If Blender runs nothing on a modifier click, note it here.
 - [ ] Hover Grid with tooltips on: the last tooltip line reads "❒ Option box: press and hold the item, then let go (or Shift / Ctrl+click)".
 - [ ] Hold, then drag away from the Option Box row before letting go → nothing runs, the menu stays (Blender's own cancel).
+
+## Step 147 — Undo steps and no redo panel (#88 #92 #86)
+
+- [ ] Object mode, cube selected: Mesh Tools > Insert Edge Loop, click an edge, Ctrl+Z → the loop goes, you stay in component mode with the tool; Ctrl+Z again → object mode.
+- [ ] Create > Polygon Primitives > Cube from the menu, move it, Ctrl+Z → only the move goes back; Ctrl+Z again → the cube goes. Same from the shelf and from a marking menu (Shift+RMB Create).
+- [ ] Ctrl+E on a face, Ctrl+B on an edge, Skeleton > Create IK Handle, Rigging shelf > Create Joints (4 clicks, Enter): no Adjust Last Operation panel anywhere; G repeats the last Ctrl+E / Ctrl+B.
+- [ ] An option box of the "redo" kind (Create > NURBS Primitives > Circle ❒): Adjust Last Operation shows the circle's settings and changing them edits the circle.

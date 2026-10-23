@@ -15,6 +15,8 @@ import math
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
+from .. import undo_steps
+
 # Maya tangent -> (interpolation, handle type or None); FLAT also levels the handles.
 # (animation.md:14 table; reused by the Graph Editor tangent buttons, step 67)
 TANGENTS = {
@@ -670,6 +672,7 @@ def _redraw(context):
         area.tag_redraw()
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_set_key(bpy.types.Operator):
     """Set a key on every keyable channel of the selection (Maya S); the active keying set if there is one"""
     bl_idname = "allset.set_key"

@@ -12,6 +12,8 @@ Plan: docs/steps/step_10.md 「계획」 4.
 import bpy
 from mathutils import Matrix
 
+from .. import undo_steps
+
 EPS = 1e-6
 
 
@@ -98,6 +100,7 @@ def _mode(context):
         return 'MAYA'
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_parent(bpy.types.Operator):
     """Parent the selected objects under the last selected one, keeping them in place
     (Maya Edit > Parent, P)"""
@@ -135,6 +138,7 @@ class ALLSET_OT_parent(bpy.types.Operator):
         return {'FINISHED'} if done else {'CANCELLED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_unparent(bpy.types.Operator):
     """Move the selected objects to the world, keeping them in place
     (Maya Edit > Unparent, Shift+P)"""

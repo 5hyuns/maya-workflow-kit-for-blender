@@ -16,6 +16,7 @@ here (de Casteljau) with the touched handles pinned.
 import bpy
 from bpy.props import EnumProperty, IntProperty
 
+from .. import undo_steps
 from . import time_keys
 
 CHANNELS = {"TRANSLATE": ("location",),
@@ -263,6 +264,7 @@ INSERT_ITEMS = (("ALL", "Insert Key", "Insert a key on the selected curves witho
                 ("SCALE", "Insert Key on Scale", "Insert a key on the scale curves, keeping their shape (Maya Ctrl+Shift+R)"))
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_insert_key(bpy.types.Operator):
     """Insert a key at the current time on existing curves without changing their shape (Maya Insert Key)"""
     bl_idname = "allset.insert_key"
@@ -285,6 +287,7 @@ class ALLSET_OT_insert_key(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_nudge_keys(bpy.types.Operator):
     """Move the selected keys one frame (Graph Editor / Dope Sheet), else the selection's keys at the current time
     or in the Time Slider range (Maya Shift+( / Shift+))"""
@@ -302,6 +305,7 @@ class ALLSET_OT_nudge_keys(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_select_key(bpy.types.Operator):
     """Go to the next / previous key and select it (Maya Ctrl+Alt+. / Ctrl+Alt+,)"""
     bl_idname = "allset.select_key"

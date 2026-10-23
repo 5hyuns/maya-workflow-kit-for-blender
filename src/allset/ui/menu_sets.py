@@ -16,6 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import undo_steps
 from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
@@ -582,6 +583,7 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_component_command(bpy.types.Operator):
     """A Maya Edit / Select / Modify command in component mode, run the way Maya runs it there
     (``menu_map.EDIT_MODE``)"""
@@ -613,13 +615,14 @@ class ALLSET_OT_component_command(bpy.types.Operator):
             return {'CANCELLED'}
         from ..marking.modal import run_action
         try:
-            if kind == "run":
-                run_action(context, rule[1], path=self.item)
-            elif kind == "object":
-                bpy.ops.object.mode_set(mode='OBJECT')
-                run_action(context, rule[1], path=self.item)
-            elif kind == "owner":
-                _run_on_owners(context, rule[1], self.item)
+            with undo_steps.nested():          # this operator is the undo step (UNDO)
+                if kind == "run":
+                    run_action(context, rule[1], path=self.item)
+                elif kind == "object":
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                    run_action(context, rule[1], path=self.item)
+                elif kind == "owner":
+                    _run_on_owners(context, rule[1], self.item)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}

@@ -15,6 +15,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
+from .. import undo_steps
 from . import naming, units
 
 JOINT_BASE = "joint"
@@ -169,7 +170,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     """Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish"""
     bl_idname = "allset.joint_tool"
     bl_label = "Joint Tool"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     secondary_axis: EnumProperty(name="Secondary Axis", items=SECONDARY_AXES, default="Y")
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
@@ -508,6 +509,7 @@ def walk_bone(bone, direction):
     return sibs[(i + (1 if direction == "RIGHT" else -1)) % len(sibs)]
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_pick_walk_joint(bpy.types.Operator):
     """Walk the joint selection through the skeleton (Maya arrow keys)"""
     bl_idname = "allset.pick_walk_joint"

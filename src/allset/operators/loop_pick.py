@@ -21,6 +21,8 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty
 
+from .. import undo_steps
+
 
 def _continue_edge(edge, vert):
     """The edge after ``edge`` on its loop through ``vert`` (None at a pole / border)."""
@@ -139,6 +141,7 @@ def loop_select_args(extend):
     return {"extend": extend, "deselect": False, "toggle": False}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_loop_pick(bpy.types.Operator):
     """Maya double-click: select the loop under the mouse; Shift: the components between the last pick and
     this one along their loop"""

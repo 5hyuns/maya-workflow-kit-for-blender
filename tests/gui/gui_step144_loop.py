@@ -36,8 +36,9 @@ def override():
 
 
 def menu(path):
+    # undo=True: a menu button calls its operator at undo depth 0 like this (step 147)
     with override():
-        return bpy.ops.allset.menu_item(item=path)
+        return bpy.ops.allset.menu_item('EXEC_DEFAULT', True, item=path)
 
 
 def tool_id():
@@ -110,10 +111,8 @@ def s_insert_click():
     check(f"Insert Edge Loop = edit mode + the kit tool ({bpy.context.mode}, {tool_id()})",
           bpy.context.mode == 'EDIT_MESH' and tool_id() == el().INSERT_TOOL)
     with override():
-        bpy.ops.mesh.select_all(action='DESELECT')
-        # the menu's switch to edit mode pushes no undo step of its own (GitHub #88): push
-        # one here so Ctrl+Z below undoes only the loop
-        bpy.ops.ed.undo_push(message="Edit Mode")
+        # the menu item is its own undo step (#88, step 147): Ctrl+Z below undoes only the loop
+        bpy.ops.mesh.select_all('EXEC_DEFAULT', True, action='DESELECT')
     press((*EDGE, 0.4))
 
 
@@ -139,6 +138,8 @@ def s_inserted():
 @step
 def s_undo():
     check(f"Ctrl+Z = one undo step back to the cube ({len(verts())} verts)", len(verts()) == 8)
+    check(f"#88 Ctrl+Z keeps component mode and the tool ({bpy.context.mode}, {tool_id()})",
+          bpy.context.mode == 'EDIT_MESH' and tool_id() == el().INSERT_TOOL)
     press((*EDGE, 0.4))
 
 

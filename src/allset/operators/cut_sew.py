@@ -151,7 +151,7 @@ class ALLSET_OT_cut_sew_stroke(bpy.types.Operator):
     """Drag along edges to cut their UVs; Ctrl = sew, Shift = select (Maya 3D Cut and Sew UV Tool)"""
     bl_idname = "allset.cut_sew_stroke"
     bl_label = "Cut / Sew UV Stroke"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     action: bpy.props.EnumProperty(items=ACTIONS, name="Action", options={'SKIP_SAVE'})
 

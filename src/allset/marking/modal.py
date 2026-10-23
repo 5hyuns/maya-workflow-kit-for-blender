@@ -80,7 +80,24 @@ def hover_notice(session):
 def run_action(context, action, option=False, path=None):
     """Run a menu action like Maya runs the item (or its option box). An action with an option window
     (``operators/option_windows``) opens it as the option box, and a plain run uses its saved values (Maya runs
-    a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path."""
+    a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path. A finished
+    command is one undo step named after the item (``undo_steps.command``, step 147)."""
+    from .. import undo_steps
+    return undo_steps.command(_label(action, path), lambda: _run_action(context, action, option, path))
+
+
+def _label(action, path):
+    if path:
+        return path.split("#")[0].rsplit("/", 1)[-1]
+    if _is_item(action):
+        return action[1].rsplit("/", 1)[-1]
+    try:
+        return menu_map.normalize(action)[1]
+    except (TypeError, ValueError, IndexError):
+        return "Maya Command"
+
+
+def _run_action(context, action, option, path):
     if _is_item(action):
         # The main-menu item itself (allset.menu_item: component / object mode rules, Maya warnings); its option box
         # is the menu's (option window / dialog for that path), step 136.
@@ -117,9 +134,15 @@ def run_action(context, action, option=False, path=None):
     if option and "option_box" in op.get_rna_type().properties:
         # the operator has its own Maya options window (invoke_props_dialog, step 63)
         return op('INVOKE_DEFAULT', option_box=True, **props)
-    res = op('INVOKE_DEFAULT', **props)
+    if option:
+        # Maya's option box opens the command's settings: Blender's Adjust Last Operation, which needs the operator
+        # registered, so it is called with undo=True (its own undo step; step 147 measured nothing registered before)
+        from .. import undo_steps
+        res = op('INVOKE_DEFAULT', True, **props)
+        undo_steps.mark_pushed()
+    else:
+        res = op('INVOKE_DEFAULT', **props)
     if option and res == {'FINISHED'}:
-        # Maya's option box opens the command's settings: Blender's Adjust Last Operation.
         try:
             bpy.ops.screen.redo_last('INVOKE_DEFAULT')
         except RuntimeError:

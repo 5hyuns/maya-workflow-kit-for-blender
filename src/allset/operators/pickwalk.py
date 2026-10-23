@@ -9,6 +9,8 @@ component pick-walk at the end of this file (step 39).
 
 import bpy
 
+from .. import undo_steps
+
 DIRECTIONS = (
     ("UP", "Up", "Select the parent"),
     ("DOWN", "Down", "Select the first child"),
@@ -42,6 +44,7 @@ def walk(view_layer, ob, direction):
     return sibs[(i + (1 if direction == "RIGHT" else -1)) % len(sibs)]
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_pick_walk(bpy.types.Operator):
     """Walk the selection through the hierarchy (Maya arrow keys)"""
     bl_idname = "allset.pick_walk"
@@ -201,6 +204,7 @@ def view_projector(context, ob):
     return project
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_pick_walk_component(bpy.types.Operator):
     """Walk the component selection to the next vertex / edge / face (Maya arrow keys)"""
     bl_idname = "allset.pick_walk_component"

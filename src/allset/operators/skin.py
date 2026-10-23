@@ -146,7 +146,7 @@ class ALLSET_OT_ik_handle(bpy.types.Operator):
     """Maya IK Handle Tool: click the start joint, then the end joint (or select both joints first)"""
     bl_idname = "allset.ik_handle"
     bl_label = "IK Handle Tool"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     solver: EnumProperty(name="Current solver", items=IK_SOLVERS, default="RP")
     solver_enable: BoolProperty(name="Solver enable", default=True)

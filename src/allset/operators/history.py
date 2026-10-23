@@ -11,6 +11,7 @@ Plan: docs/steps/step_10.md 「계획」 8.
 import bpy
 from bpy.props import BoolProperty, EnumProperty
 
+from .. import undo_steps
 from .display import is_preview
 
 # Modifiers that play the part of Maya deformers (skinCluster, ffd, cluster, wrap,
@@ -177,6 +178,7 @@ def delete_by_type(context, kind, objects):
     return n, []
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_delete_history(bpy.types.Operator):
     """Bake the modifier stack and shape keys into the mesh (Maya Edit > Delete by
     Type > History, Alt+Shift+D)"""

@@ -497,7 +497,7 @@ class ALLSET_OT_insert_edge_loop(bpy.types.Operator):
     """Click an edge to insert an edge loop at that point, drag to slide it along the ring (Maya Insert Edge Loop)"""
     bl_idname = "allset.insert_edge_loop"
     bl_label = "Insert Edge Loop"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     object: StringProperty(name="Object", options={'SKIP_SAVE', 'HIDDEN'})
     edge: IntProperty(name="Edge", default=-1, options={'SKIP_SAVE', 'HIDDEN'})
@@ -579,7 +579,7 @@ class ALLSET_OT_offset_edge_loop(bpy.types.Operator):
     the selected edges"""
     bl_idname = "allset.offset_edge_loop"
     bl_label = "Offset Edge Loop"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     object: StringProperty(name="Object", options={'SKIP_SAVE', 'HIDDEN'})
     edge: IntProperty(name="Edge", default=-1, options={'SKIP_SAVE', 'HIDDEN'},
@@ -697,7 +697,7 @@ class ALLSET_OT_slide_edge(bpy.types.Operator):
     """Middle-drag: slide the selected edges along their neighbouring edges (Maya Slide Edge)"""
     bl_idname = "allset.slide_edge"
     bl_label = "Slide Edge"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     side: IntProperty(name="Side", default=0, min=0, max=1, options={'SKIP_SAVE'})
     factor: FloatProperty(name="Slide", default=0.0, min=0.0, max=1.0, subtype='FACTOR', options={'SKIP_SAVE'},
