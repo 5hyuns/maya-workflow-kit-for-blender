@@ -59,7 +59,10 @@ measure.py`, 원자료 `measure.json`).
 - `-k step103,step101,enable_disable,step140_option_count`: 28 passed, 1 failed — test_step103 제목 검사 (위 delegated).
 - `python tools/menu_count.py --options`: window 29 → 49, generic 65 → 52, redo 148 → 144, tool 14 → 13, dead 231 → 229
   (RIG 레인 창 미포함 — 병합 뒤 다시).
-- 전체 헤드리스: 아래 (마지막 실행).
+- 전체 헤드리스 `python tests/run.py`: 1172 passed, 4 failed (145 files). 실패 = test_step103 제목 검사 (위) + worktree 에
+  `research/` 가 없어서 나는 3 개 (test_keymap_maya::test_mapping_rows_are_bound, test_step107_keys::test_no_unreviewed_rows,
+  test_step108_menu_hotkeys::test_generated_table_is_current — `research/maya/hotkeys_default.json` / `menus.json` 를 읽음).
+  메인 체크아웃에서 병합 뒤 다시 돌릴 것.
 
 ## 남은 것
 
