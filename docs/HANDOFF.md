@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 144 (0.4.0 Maya 모델링 도구 · Deform, #30 #31 #34) 완료 — `docs/steps/step_144.md` (+ `step_144_{poly,loop,deform}.md`,
+  `research/maya/re/{options_144,edge_loops_144}.md`). Quad Draw / Create Polygon / Append, Insert / Offset Edge Loop / Slide Edge 가
+  Maya 클릭 · 수정키 · Tool Settings 의 킷 도구, Deform 메뉴가 Maya 같은 디포머 + 옵션 창 14 + INPUTS + Paint Weights 대상.
+  헤드리스 1307/1307, 관련 GUI 89/89. 새 이슈 #88 (Mesh Tools 의 편집 모드 진입 되돌리기), #89 (Quad Draw 남은 것).
+  **바로 다음 할 일**: 0.4.0 남은 이슈 — #81 (Maya UI 초기화) #82 (옵션 상자 열기) #83 #85 #86 #87 (step 142 후속) #88 #89.
+  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어 업로드 (step 143).
+
 - Step 143 (0.3.0 출시 준비) 완료 — `docs/steps/step_143.md` (+ `step_143_{compat79,user}.md`). 출시 전 사용자 보고 #79 (다른 애드온의
   Render 패널 때문에 Maya 모드 안 켜짐) #84 (5.1/5.2 더블클릭 루프 오류) #80 (Extrude 뒤 이동, F12 UV sync) 고침, #82 원인 댓글 →
   0.4.0. manifest 0.3.0, CHANGELOG [0.3.0], `docs/distribution/release_notes_0.3.0.md`. validate Success, release_check 4.5.4 /
