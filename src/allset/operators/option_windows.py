@@ -199,18 +199,10 @@ def _run_combine(context, v):
 
 
 def _run_smooth(context, v):
-    done = 0
-    for ob in context.selected_objects:
-        if ob.type != 'MESH':
-            continue
-        md = ob.modifiers.new("polySmoothFace", 'SUBSURF')
-        md.levels = md.render_levels = v["levels"]
-        md.uv_smooth = 'PRESERVE_BOUNDARIES' if v["smooth_uvs"] else 'NONE'
-        md.boundary_smooth = 'PRESERVE_CORNERS' if v["boundary"] == "Sharp edges and corners" else 'ALL'
-        done += 1
-    if not done:
+    """Maya Smooth with the window's values: real Catmull-Clark geometry (operators/poly_maya.py, step 139)."""
+    if context.mode != 'EDIT_MESH' and not any(o.type == 'MESH' for o in context.selected_objects):
         raise RuntimeError("Select a mesh first.")
-    return {'FINISHED'}
+    return bpy.ops.allset.smooth('EXEC_DEFAULT', divisions=v["levels"])
 
 
 def _run_bevel(context, v):
@@ -411,12 +403,11 @@ WINDOWS = [
         F("pivot", "Pivot Position:", "enum", "Center", items=("Center", "Last object", "World origin"))],
         _run_combine, missing=("Merge UV Sets", "Combine Skinning")),
     Window("smooth", "Smooth Options", "Smooth", None, [
-        F("levels", "Division levels:", "int", 1, lo=0, hi=6),
-        F("boundary", "Vertex Boundary:", "enum", "Sharp edges and corners",
-          items=("Sharp edges and corners", "Sharp edges")),
-        F("smooth_uvs", "", "bool", True, text="Smooth UVs")], _run_smooth,
+        F("levels", "Division levels:", "int", 1, lo=0, hi=6)], _run_smooth,
+        # the kit always smooths like Maya's factory options (step 139): sharp edges and corners, selection border kept
         paths=("Mesh/Smooth",), missing=("Exponentially / Linearly", "Maya Catmull-Clark", "Propagate Edge Hardness",
-                                        "Map borders", "Preserve: Geometry / Selection borders")),
+                                        "Vertex Boundary: Sharp edges", "Smooth UVs: off", "Map borders",
+                                        "Preserve: Geometry / Selection borders")),
     Window("extrude", "Extrude Face Options", "Extrude", ("allset.extrude", {}), [
         F("divisions", "Divisions:", "int", 1, lo=1, hi=50), F("offset", "Offset:", "float", 0.0),
         F("thickness", "Thickness:", "float", 0.0)], _run_extrude,
@@ -436,7 +427,7 @@ WINDOWS = [
     Window("merge", "Merge Vertices Options", "Merge", None, [
         F("threshold", "Threshold:", "length", 0.01, lo=0.0, hi=1.0),
         F("always_two", "", "bool", True, text="Always merge for two vertices")],
-        lambda c, v: _components(c, "mesh.remove_doubles", 'VERT', threshold=v["threshold"] * _k(c)),
+        lambda c, v: _components(c, "allset.merge", 'VERT', threshold=v["threshold"], always_two=v["always_two"]),
         paths=("Edit Mesh/Merge",)),
     Window("bind_skin", "Bind Skin Options", "Bind Skin", ("allset.bind_skin", {}), [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
