@@ -73,7 +73,8 @@ def test_presets_cm_y_up():
     op, a = file_io.export_args('FBX', k, True)
     assert a["use_selection"] and a["axis_up"] == 'Y' and a["apply_unit_scale"]
     op, a = file_io.export_args('USD', k, False)
-    assert a["export_global_up_selection"] == 'Y' and a["convert_orientation"] and a["meters_per_unit"] == k
+    # step 138: Y up / Maya units are written by file_io.usd_maya_axes after Blender's writer (no root prim)
+    assert a["root_prim_path"] == "" and not a.get("convert_orientation")
     assert abs(file_io.import_args('USD', k)[1]["scale"] - 1.0) < 1e-12
     # Maya Units option (1 BU = 1 cm): OBJ / ABC numbers pass straight
     assert file_io.export_args('OBJ', 1.0, False)[1]["global_scale"] == 1.0
