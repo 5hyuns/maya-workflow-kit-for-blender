@@ -2,7 +2,7 @@
 """Quad Draw, Create Polygon and Append to Polygon as kit tools.
 
 The tools run the modals of operators/quad_draw.py and operators/poly_draw.py; their Maya Tool Settings (fields and
-factory values: ) are drawn here, in Blender's tool header / Tool tab and in the kit's
+factory values:  (Maya 2022 Tool Settings)) are drawn here, in Blender's tool header / Tool tab and in the kit's
 Tool Settings dock (ui/tool_settings.py kinds QUAD_DRAW / CREATE_POLYGON / APPEND_POLYGON).
 """
 
