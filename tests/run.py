@@ -55,6 +55,7 @@ def make_sandbox():
     env["ALLSET_PROJECTS_DIR"] = str(SANDBOX / "projects")
     env["ALLSET_MODULE"] = MODULE
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONUNBUFFERED"] = "1"     # logs survive a timeout kill
     return env
 
 

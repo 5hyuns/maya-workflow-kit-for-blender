@@ -25,13 +25,21 @@ ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE.parent))
 import run as headless  # noqa: E402
 
-TIMEOUT = 180
+# per-file limit: a hung Blender is killed and reported as TIMEOUT, the run goes on with the next file
+TIMEOUT = int(os.environ.get("ALLSET_GUI_TIMEOUT", "180"))
 
 
 def file_timeout(path):
     """A test file may ask for more time with a top-level ``GUI_TIMEOUT = <seconds>`` line (long sweeps)."""
     m = re.search(r"^GUI_TIMEOUT\s*=\s*(\d+)", path.read_text(encoding="utf-8"), re.M)
-    return int(m.group(1)) if m else TIMEOUT
+    return max(int(m.group(1)), TIMEOUT) if m else TIMEOUT
+
+
+def skip_reason(path):
+    """A quarantined file has a top-level ``GUI_SKIP = "<reason>"`` line (step 141): it hangs or fails only for
+    environment reasons; it is left out unless --include-skipped and its checks live in docs/manual_checks.md."""
+    m = re.search(r"^GUI_SKIP\s*=\s*[\"'](.+)[\"']", path.read_text(encoding="utf-8"), re.M)
+    return m.group(1) if m else ""
 
 
 def main(argv=None):
@@ -42,6 +50,7 @@ def main(argv=None):
     ap.add_argument("--ui-scale", type=float, default=0.0, help="view.ui_scale for all tests")
     ap.add_argument("--dir", default=str(HERE), help="folder of gui_*.py files (audit repro scripts: tests/gui/audit128)")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER))
+    ap.add_argument("--include-skipped", action="store_true", help="also run files marked GUI_SKIP")
     args = ap.parse_args(argv)
 
     if args.no_build:
@@ -57,9 +66,15 @@ def main(argv=None):
         Path(args.shots).mkdir(parents=True, exist_ok=True)
         env["ALLSET_GUI_SHOTS"] = str(Path(args.shots).resolve())
 
-    passed = failed = 0
+    env["PYTHONUNBUFFERED"] = "1"     # a Blender killed on timeout keeps what it printed
+    passed = failed = skipped = timeouts = 0
     files = sorted(p for p in Path(args.dir).resolve().glob("gui_*.py") if any(k in p.name for k in args.k.split(",")))
     for path in files:
+        reason = skip_reason(path)
+        if reason and not args.include_skipped:
+            print(f"SKIP  {path.stem}: {reason}")
+            skipped += 1
+            continue
         out = headless.SANDBOX / "results" / f"{path.stem}.json"
         log = headless.SANDBOX / "logs" / f"{path.stem}.log"
         cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("ALLSET_GUI_ARGS", "").split(),
@@ -68,19 +83,23 @@ def main(argv=None):
         with open(log, "w", encoding="utf-8", errors="replace") as fh:
             proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL,
                                     stdout=fh, stderr=subprocess.STDOUT)
+            timed_out = False
             try:
                 proc.wait(timeout=file_timeout(path))
             except subprocess.TimeoutExpired:
                 proc.kill()  # only the Blender we started
+                timed_out = True
+        timeouts += timed_out
         results = json.loads(out.read_text(encoding="utf-8")) if out.exists() else \
-            [{"name": "<no result file>", "ok": False}]
+            [{"name": f"TIMEOUT after {file_timeout(path)} s" if timed_out else "<no result file>", "ok": False}]
         for r in results:
             print(f"{'PASS' if r['ok'] else 'FAIL'}  {path.stem}::{r['name']}")
             passed += r["ok"]
             failed += not r["ok"]
         print(f"      (log: {log.relative_to(ROOT)})")
 
-    print(f"\n{passed} passed, {failed} failed, {len(files)} file(s)")
+    print(f"\n{passed} passed, {failed} failed, {len(files)} file(s)"
+          + (f", {timeouts} timed out" if timeouts else "") + (f", {skipped} skipped (GUI_SKIP)" if skipped else ""))
     return 1 if failed or not files else 0
 
 

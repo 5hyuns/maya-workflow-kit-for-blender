@@ -959,3 +959,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Mesh Tools > Insert Edge Loop ❒ → Multiple edge loops 3: the Loop Cut tool cuts 3 loops.
 - [ ] Key > Paste Keys ❒ → Time offset 10, Copies 2: two copies after the current frame; Key > Scale Keys ❒ → Time scale 2: keys spread from the pivot.
 - [ ] Option window values kept: Apply, close, reopen → same values; plain menu click runs with them; Reset Settings → Maya factory values.
+
+## Step 141 — quarantined GUI tests (run by hand; `python tests/gui/run.py --include-skipped -k ...` still runs them)
+
+- [ ] (gui_step75_input_line) Status Line input line: Absolute X = 10 moves pCube1 to x = 10 cm; Rename field "crate" renames the lead; Select by name "pSph*" selects the spheres.
+- [ ] (gui_step63_mtk) Modeling Toolkit dock: Face icon → edit mode, face selection; Extrude button extrudes one face (polyExtrudeFace1 with its manipulator); Object icon → object mode; Combine → one mesh pCube2; Separate → pCube2 group with two pieces; Mesh > Mirror ❒ opens Mirror Options.
