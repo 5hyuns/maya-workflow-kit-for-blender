@@ -327,8 +327,10 @@ def _run_new_scene(context, v):
         scene.frame_preview_start, scene.frame_preview_end = int(values["play_start"]), int(values["play_end"])
         scene.frame_current = int(values["play_start"])
         return None
-    # never load a file inside a running operator (CLAUDE.md step 42): one tick later
-    bpy.app.timers.register(later, first_interval=0.0)
+    # Maya's Save Changes prompt first (step 138, #57); never load a file inside a running operator (CLAUDE.md
+    # step 42): save_prompt runs it from a timer
+    from ..ui import save_prompt
+    save_prompt.ask(context, later)
     return {'FINISHED'}
 
 
