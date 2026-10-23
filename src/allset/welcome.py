@@ -58,6 +58,9 @@ PARAGRAPHS = (
     "hotbox, marking menus; the Maya layout, menus, Channel Box and shelf.",
     "Your Blender preferences are never changed: the Maya | Blender switch at the top right or Ctrl+Alt+Shift+M "
     "goes back to plain Blender at any time.",
+    # step 141 (B6): the kit may not raise Blender's undo depth itself
+    "Tip: Maya's undo is unlimited, Blender keeps 32 steps by default. Raise Edit > Preferences > System > Undo "
+    "Steps to 256 if you like Maya's long undo.",
 )
 DIALOG_WIDTH = 640      # unscaled px
 ICON_SCALE = 7.0        # template_icon scale = 20 px units

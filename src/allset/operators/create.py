@@ -81,6 +81,11 @@ KINDS = {
                       (0.0, HALF_PI, 0.0)),
     'FIELD_VORTEX': ("Vortex Field", "vortexField", "object.effector_add", {"type": 'VORTEX', "radius": 1.0}, None),
 }
+# Maya Fields/Solvers factory magnitudes (Maya settings / settings, Maya
+# check in ): Gravity 9.8 along Maya -Y (the Wind above is turned to blow down),
+# Newton 5 pulling in (Blender Force: negative strength attracts). An acceleration in Maya units per second squared,
+# so it is scaled by the step 68 simulation scale g = maya_unit() / Space Scale like the nucleus gravity (#72).
+FIELD_MAGNITUDES = {'FIELD_GRAVITY': 9.8, 'FIELD_NEWTON': -5.0}
 # Kinds whose data keeps Blender's name (Maya has no "...Shape" node for them).
 NO_SHAPE_NAME = {'JOINT', 'TEXT'}
 # Lights (step 137, operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
@@ -145,6 +150,11 @@ def create(context, kind, maya_naming=True, overrides=None):
     getattr(getattr(bpy.ops, mod), name)(**kw)
     ob = context.view_layer.objects.active
     _scale_data(ob, k)
+    if kind in FIELD_MAGNITUDES and ob.field is not None:
+        from . import fx
+        g = fx.sim_scale(context.scene) if hasattr(context.scene, "allset_nucleus") else k
+        ob.field.strength = FIELD_MAGNITUDES[kind] * g
+        ob.field.flow = 0.0     # Blender's Wind starts with Flow 1 (a drag towards the wind speed): Maya gravity has none
     if maya_naming:
         naming.apply_maya_name(ob, base, rename_data=kind not in NO_SHAPE_NAME)
     if kind == 'JOINT':

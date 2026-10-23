@@ -96,6 +96,58 @@ class ALLSET_OT_dolly(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
+# --- Alt+RMB dolly in the UV / Image Editor (step 141, B4) ---------------------------------
+# Maya dollies 2D panels with Alt+RMB too (). IC's image.view_zoom reads the drag axis
+# from Blender's Zoom Axis preference (factory Vertical), so like allset.dolly the drag is read here and applied with
+# image.view_zoom exec (centred, like Blender's factory "Zoom to Mouse Position" off; delegated).
+
+
+def dolly_zoom_factor(dx, dy, ui_scale=1.0):
+    """Zoom factor for a drag step of (dx, dy) px: the inverse of ``dolly_distance`` (right / up = in)."""
+    return 2.0 ** ((dx + dy) / (DOLLY_PX_PER_DOUBLING * max(ui_scale, 0.1)))
+
+
+class ALLSET_OT_dolly_2d(bpy.types.Operator):
+    """Zoom the UV / Image Editor in / out with a left / right drag (Maya Alt+RMB dolly)"""
+    bl_idname = "allset.dolly_2d"
+    bl_label = "Dolly 2D"
+    bl_options = {'GRAB_CURSOR', 'BLOCKING'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'IMAGE_EDITOR'
+
+    def invoke(self, context, event):
+        self._last = (event.mouse_x, event.mouse_y)
+        self._zoom0 = tuple(context.space_data.zoom)
+        self.applied = 1.0
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def step(self, context, dx, dy):
+        """Zoom by one drag step (also used by tests: headless there is no modal)."""
+        factor = dolly_zoom_factor(dx, dy, context.preferences.system.ui_scale or 1.0)
+        if abs(factor - 1.0) > 1e-6:
+            bpy.ops.image.view_zoom('EXEC_DEFAULT', factor=factor)
+            self.applied *= factor
+        return factor
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            dx, dy = event.mouse_x - self._last[0], event.mouse_y - self._last[1]
+            self._last = (event.mouse_x, event.mouse_y)
+            self.step(context, dx, dy)
+            context.area.tag_redraw()
+        elif event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
+            return {'FINISHED'}
+        elif event.type == 'ESC' and event.value == 'PRESS':
+            zoom = context.space_data.zoom[0] or 1.0     # zoom limits may have kept some steps out
+            bpy.ops.image.view_zoom('EXEC_DEFAULT', factor=self._zoom0[0] / zoom if self._zoom0[0] else 1.0)
+            context.area.tag_redraw()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
+
+
 # --- Alt+Shift drag: tumble / track locked to one axis (step 39) ---------------------
 #  (): the first dominant drag direction (horizontal or
 # vertical) is kept for the whole drag.  「계획」 2.
@@ -628,7 +680,7 @@ class ALLSET_OT_view_home(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_tumble, ALLSET_OT_dolly, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
+classes = (ALLSET_OT_tumble, ALLSET_OT_dolly, ALLSET_OT_dolly_2d, ALLSET_OT_view_axis_lock, ALLSET_OT_frame, ALLSET_OT_frame_all_views, ALLSET_OT_view_history,
            ALLSET_OT_toggle_quad_view, ALLSET_OT_view_home)
 
 

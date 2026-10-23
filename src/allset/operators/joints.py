@@ -46,9 +46,15 @@ def click_point(region, rv3d, coord):
 
 
 def taken_joint_names():
-    names = {b.name for arm in bpy.data.armatures for b in arm.bones}
+    """Joint names of the skeletons that still exist. Maya names are unique among existing nodes: a deleted
+    skeleton frees ``joint1`` again (#73) — its armature data stays in ``bpy.data`` with no users until a purge,
+    so only armatures an object still uses count."""
+    names = set()
     for ob in bpy.data.objects:
-        if ob.type == 'ARMATURE' and ob.mode == 'EDIT':
+        if ob.type != 'ARMATURE' or ob.users == 0:
+            continue
+        names.update(b.name for b in ob.data.bones)
+        if ob.mode == 'EDIT':
             names.update(eb.name for eb in ob.data.edit_bones)
     return names
 
