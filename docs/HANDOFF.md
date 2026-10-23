@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 138 (장면 · 파일, #57 #63 #64 #69) 완료 — `docs/steps/step_138.md` (+ `step_138_{prompt,carry,file_io}.md`). New Scene 에 Maya
+  Save / Don't Save / Cancel (`ui/save_prompt.py`), Maya 모드에서 파일을 열면 Maya 레이아웃 (설정 `maya_layout_on_open`), Maya 도구 설정이
+  New / Open 을 건너 유지 (`ui/scene_carry.py`), FBX / OBJ / Alembic / USD 가 Maya 와 채널 · 이름 그대로 왕복 (`operators/file_io.py`).
+  **바로 다음 할 일**: step 139 Edit Mesh / UV (#70 #68 #16) → 140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73).
+  후보: 조명 없는 장면 렌더에 Maya 기본 조명 (137), Open 의 묻기 문구를 Maya 로 (킷 Open 브라우저 필요, 138), 도구 설정을 세션 사이에도 (138).
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 137 (애니 · 렌더 기본, #66 #67 #71) 완료 — `docs/steps/step_137.md` (+ `step_137_{graph,render,defaults}.md`). Graph Editor 값 눈금을
   표시 단위로 (`ui/graph_units.py`, draw cursor — 마우스가 곡선 영역에 있을 때만, Blender 한계), Render Current Frame / Sequence = 뷰 카메라 또는
   킷 `persp` 카메라 (`operators/render_persp.py`), Maya 재질 · 조명 기본값 (Blinn / Phong, Intensity / Decay Rate No Decay), 템플릿 960 × 540.

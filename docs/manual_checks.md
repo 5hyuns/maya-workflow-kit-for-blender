@@ -931,3 +931,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Look through a camera (Panels > Perspective > camera) and render: that camera is used.
 - [ ] Assign New Material > Blinn: AE Color grey 0.5, Incandescence black, Eccentricity 0.3, Specular Roll Off 0.7.
 - [ ] Create > Lights > Point Light: AE Intensity 1, Decay Rate No Decay; Cycles render lights a surface 10 units away like Maya.
+
+## Step 138 — scenes and files
+
+- [ ] Cube, Ctrl+N: 「Warning: Scene Not Saved / Save changes to untitled scene?」 Save / Don't Save / Cancel. Save → Save As in the project's scenes folder, the new scene only after saving; cancelling the browser keeps the scene.
+- [ ] Saved scene changed, Ctrl+N: 「Save Changes / Save changes to <path>?」; Save writes the file, then the new scene.
+- [ ] Maya mode, File > Open a .blend made in plain Blender: the Maya layout (Status Line, shelf, Tool Box, Channel Box dock, Time Slider) shows; add-on option 「Keep Maya Layout When Opening Files」 off → the file's own layout.
+- [ ] Set Move axis World/Object, step snap, soft select radius, symmetry; New Scene and File > Open keep them.
+- [ ] Export All → FBX / OBJ / Alembic / USD, import in Maya 2022: pCube1 keeps translate / rotate / scale, no extra root / env_light, no Rotate X -90 / Scale 100. Maya → kit import: same channels, names pCube1 / pCubeShape1.
