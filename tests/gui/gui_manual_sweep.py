@@ -2717,8 +2717,8 @@ def _m63_2_bevel():
     b.location = (0.5 * k(), 0.5 * k(), 0)
     select_only(a)
     menu("Mesh/Smooth")
-    check(f"[M63-2] Smooth = a subdivision modifier ({[m.type for m in a.modifiers]})",
-          any(m.type == 'SUBSURF' for m in a.modifiers))
+    check(f"[M63-2] Smooth = real Catmull-Clark geometry, Maya 24 faces (step 139; {len(a.data.polygons)})",
+          len(a.data.polygons) == 24)
     select_only(a, b)
     menu("Mesh/Booleans/Union")
     meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
