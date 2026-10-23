@@ -1,7 +1,7 @@
 """Step 140 lane EDIT: Maya option windows for the key commands, Parent / Unparent / Ungroup, Duplicate Special,
 Connect, Circularize, Make Hole and Insert Edge Loop (issues #33, #35). Fields / labels / factory defaults:
  (Maya 2022 GUI capture); results: Maya, 
-(raw numbers tmp/m140e/measure.json of ). ,
+(raw numbers  from measure.py there). ,
 """
 
 import math
