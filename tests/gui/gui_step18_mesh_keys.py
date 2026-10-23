@@ -122,11 +122,13 @@ def s_extruded():
 
 @step
 def s_bevel_modal():
+    # Maya polyBevel3 since step 139 (#16): beveled right away, no drag modal
+    ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
+    _o, rec = ex.active(bpy.context)
     mods = [op.bl_idname for op in win().modal_operators]
-    check(f"Ctrl+B: bevel modal right away ({mods})", any("bevel" in m.lower() for m in mods))
+    check(f"Ctrl+B: polyBevel right away, no modal ({rec and rec.name}, {mods})",
+          rec is not None and rec.name.startswith("polyBevel") and not mods)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 60, y=C["y"])
-    ev('LEFTMOUSE', 'PRESS', x=C["x"] + 60, y=C["y"])
-    ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 60, y=C["y"])
 
 
 @step

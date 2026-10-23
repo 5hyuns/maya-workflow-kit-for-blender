@@ -280,7 +280,7 @@ MAP = {
     "Mesh/Smooth Proxy/Subdiv Proxy": _mod('SUBSURF'),
     # --- Edit Mesh ---
     "Edit Mesh/Add Divisions": "mesh.subdivide",
-    "Edit Mesh/Bevel": ("v3d", "mesh.bevel", {}),
+    "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (step 139, #16)
     "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "mesh.vert_connect_path",

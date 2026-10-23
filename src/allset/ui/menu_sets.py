@@ -535,7 +535,6 @@ def _op_description(path):
 # Maya's values for commands it runs on a whole object (mayapy, research/maya/re/menu_honesty.md §2):
 # Bevel fraction 0.5, Chamfer Vertices 0.25 (Blender: percent of the adjacent edge).
 WHOLE_MESH_PROPS = {
-    "Edit Mesh/Bevel": {"offset_type": 'PERCENT', "offset_pct": 50.0},
     "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
     "Edit Mesh/Average Vertices": {"repeat": 10},
     "Edit Mesh/Circularize": {"value": 1.0},
