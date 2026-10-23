@@ -297,13 +297,9 @@ def _run_uv_planar(context, v):
     return {'FINISHED'}
 
 
-PLANES_ANGLE = {"3": 89.0, "4": 80.0, "5": 72.0, "6": 66.0, "8": 55.0, "12": 45.0}
-
-
 def _run_uv_auto(context, v):
-    margin = max(0.0, min(1.0, v["spacing"] / 100.0))
-    return _components(context, "uv.smart_project", 'FACE', angle_limit=math.radians(PLANES_ANGLE[v["planes"]]),
-                       island_margin=margin)
+    # Maya polyAutoProjection in bmesh (operators/uv_tools.auto_project, step 139); handles object mode itself.
+    return bpy.ops.allset.uv_automatic('EXEC_DEFAULT', planes=v["planes"], spacing=v["spacing"])
 
 
 def _run_new_scene(context, v):
@@ -474,7 +470,7 @@ WINDOWS = [
         F("project_from", "Project from:", "enum", "X axis", items=("X axis", "Y axis", "Z axis", "Camera"))],
         _run_uv_planar, paths=("UV/Planar",), missing=("Keep image width/height ratio", "Insert projection before deformers",
                                                        "Create new UV Set")),
-    Window("uv_automatic", "Polygon Automatic Mapping Options", "Project", None, [
+    Window("uv_automatic", "Polygon Automatic Mapping Options", "Project", ("allset.uv_automatic", {}), [
         F("planes", "Planes:", "enum", "6", items=("3", "4", "5", "6", "8", "12")),
         F("spacing", "Percentage space:", "float", 0.2, lo=0.0, hi=5.0)], _run_uv_auto, paths=("UV/Automatic",),
         missing=("Optimize for", "Shell layout / Scale mode / Shell stacking", "Create new UV set")),

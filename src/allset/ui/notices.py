@@ -167,7 +167,8 @@ NOTICES = {
         "as your project."),
     # UV (step 66): Blender cuts / sews UVs in the UV Editor only
     "UV/Auto Seams": (
-        "Smart UV Project", "Blender has no automatic seams: UV > Automatic (Smart UV Project) cuts by angle."),
+        "UV > Automatic", "Blender has no automatic seams: UV > Automatic cuts the mesh into shells by 6 projection "
+        "planes, Smart UV Project (UV Editor) by angle."),
     # Modeling (step 64): the Crease Tool works, with Blender's 0-1 crease underneath
     "Mesh Tools/Crease Tool": (
         "Edge crease", "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that "
@@ -470,9 +471,6 @@ CATEGORIES.update({
         "Unpin Selection."),
     "UV Editor/Edit/Reset UV Editor UI": (
         "Load Factory Settings", "Blender resets editors with File > Defaults > Load Factory Settings."),
-    "UV Editor/Create": (
-        "Unwrap / Project", "Blender has no best-plane or contour-stretch mapping: Create > Automatic (Smart UV "
-        "Project) or Unwrap."),
     "UV Editor/Select": (
         "Select menu", "Blender's UV Select menu has no such filter: Select Linked, Split, Overlap, Pinned and "
         "Shortest Path are there."),

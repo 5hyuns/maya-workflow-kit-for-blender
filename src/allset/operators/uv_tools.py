@@ -296,6 +296,228 @@ def layout(context, ob, padding_px, map_size):
     return len(shells)
 
 
+# --- Automatic / Contour Stretch (step 139, research/maya/re/edit_mesh_139_uv.md) -------------------
+
+def auto_planes(count):
+    """Projection directions of Maya's Automatic mapping (object space). 3 and 6 = the six axis planes (Maya 3 planes
+    also gives 6 shells on a cube / sphere, measured); 4 / 8 / 12 = tetrahedron / octahedron / dodecahedron faces,
+    5 = top, bottom and three around (delegated: only 6 is compared with Maya). Order = Maya X, Y, Z (Blender X, Z, -Y):
+    a face that ties goes to the earlier plane (a Maya cylinder's 45-degree sides go to X, measured)."""
+    count = int(count)
+    if count in (3, 6):
+        return [Vector(d) for d in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, -1, 0), (0, 1, 0))]
+    if count == 4:
+        return [Vector(d).normalized() for d in ((1, 1, 1), (1, -1, -1), (-1, 1, -1), (-1, -1, 1))]
+    if count == 5:
+        ring = [Vector((math.cos(a), math.sin(a), 0.0)) for a in (0.0, 2 * math.pi / 3, 4 * math.pi / 3)]
+        return [Vector((0, 0, 1)), Vector((0, 0, -1))] + ring
+    if count == 8:
+        return [Vector((x, y, z)).normalized() for x in (1, -1) for z in (1, -1) for y in (-1, 1)]
+    g = (1 + math.sqrt(5)) / 2       # 12: icosahedron vertices = dodecahedron face normals
+    dirs = []
+    for a, b in ((1, g), (-1, g), (1, -g), (-1, -g)):
+        dirs += [Vector((0, a, b)), Vector((a, b, 0)), Vector((b, 0, a))]
+    return [d.normalized() for d in dirs]
+
+
+def _basis(d):
+    """(U, V) of a projection plane seen from outside along ``-d``: V = up (Blender Z, Y for the top / bottom)."""
+    up = Vector((0, 0, 1)) if abs(d.z) < 0.9 else Vector((0, 1, 0)) * (1 if d.z > 0 else -1)
+    u = (-d).cross(up).normalized()
+    return u, d.cross(u).normalized()
+
+
+def _shelf(rects, scale, gap):
+    """Shelf layout of ``rects`` (w, h) at ``scale`` in 0-1 with ``gap`` around and between them; (positions, fits)."""
+    x = y = gap
+    row = 0.0
+    pos = [None] * len(rects)
+    for i in sorted(range(len(rects)), key=lambda i: -rects[i][1]):
+        w, h = rects[i][0] * scale, rects[i][1] * scale
+        if x > gap and x + w + gap > 1.0 + 1e-9:
+            x, y, row = gap, y + row + gap, 0.0
+        pos[i] = (x, y)
+        x += w + gap
+        row = max(row, h)
+    return pos, y + row + gap <= 1.0 + 1e-9 and all(w * scale + 2 * gap <= 1.0 + 1e-9 for w, _h in rects)
+
+
+def pack_uniform(rects, gap):
+    """Positions and one scale for every rect so the shells fit 0-1 (Maya Automatic: uniform scale, square layout)."""
+    big = max((max(w, h) for w, h in rects), default=0.0)
+    if big <= 1e-12:
+        return [(gap, gap)] * len(rects), 1.0
+    lo, hi = 0.0, (1.0 - 2 * gap) / big
+    best = _shelf(rects, lo, gap)[0]
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        pos, fits = _shelf(rects, mid, gap)
+        if fits:
+            lo, best = mid, pos
+        else:
+            hi = mid
+    return best, lo
+
+
+def auto_project(bm, uv, faces, planes=6, spacing=0.2):
+    """Maya polyAutoProjection on ``faces`` (object space, -ws 0): every face goes to the plane its normal faces most,
+    connected faces of one plane are one shell projected on it, shells are laid out in 0-1 at one scale with
+    ``spacing`` percent between them (factory 6 planes / 0.2 %, performPolyAutoProj.mel:23-51). Returns the shell count."""
+    dirs = auto_planes(planes)
+    faces = [f for f in faces if not f.hide]
+    which = {}
+    for f in faces:
+        dots = [f.normal.dot(d) for d in dirs]
+        top = max(dots)
+        which[f] = next(i for i, x in enumerate(dots) if x >= top - 1e-6)
+    seen, shells = set(), []
+    for f in faces:
+        if f in seen:
+            continue
+        seen.add(f)
+        group, todo = [], [f]
+        while todo:
+            g = todo.pop()
+            group.append(g)
+            for e in g.edges:
+                for n in e.link_faces:
+                    if n not in seen and n in which and which[n] == which[f]:
+                        seen.add(n)
+                        todo.append(n)
+        shells.append((which[f], group))
+    flat, rects = [], []
+    for k, group in shells:
+        u, v = _basis(dirs[k])
+        pts = {lp: Vector((lp.vert.co.dot(u), lp.vert.co.dot(v))) for g in group for lp in g.loops}
+        lo = Vector((min(p.x for p in pts.values()), min(p.y for p in pts.values())))
+        hi = Vector((max(p.x for p in pts.values()), max(p.y for p in pts.values())))
+        flat.append((pts, lo))
+        rects.append((hi.x - lo.x, hi.y - lo.y))
+    pos, scale = pack_uniform(rects, max(0.0, spacing) / 100.0)
+    for (pts, lo), (x, y) in zip(flat, pos):
+        for lp, p in pts.items():
+            lp[uv].uv = ((p.x - lo.x) * scale + x, (p.y - lo.y) * scale + y)
+    return len(shells)
+
+
+def fit_unit(loops, uv):
+    """Stretch the UVs of ``loops`` to fill 0-1 (Maya Contour Stretch: a strip of faces fills the square, measured)."""
+    pts = [lp[uv].uv.copy() for lp in loops]
+    if not pts:
+        return
+    x0, y0 = min(p.x for p in pts), min(p.y for p in pts)
+    w = (max(p.x for p in pts) - x0) or 1.0
+    h = (max(p.y for p in pts) - y0) or 1.0
+    for lp, p in zip(loops, pts):
+        lp[uv].uv = ((p.x - x0) / w, (p.y - y0) / h)
+
+
+class _ObjectFaces:
+    """From object mode: the selected meshes in edit mode with every face selected (Maya converts an object selection
+    to its faces for UV projections, performPolyProjectionArgList.mel:621-634, performPolyAutoProj.mel:460-464), back to
+    object mode afterwards. In edit mode: nothing."""
+
+    def __init__(self, context):
+        self.context = context
+        self.entered = False
+
+    def __enter__(self):
+        context = self.context
+        if context.mode == 'EDIT_MESH':
+            return [o for o in context.objects_in_mode_unique_data if o.type == 'MESH']
+        meshes = [o for o in context.selected_objects if o.type == 'MESH']
+        if not meshes:
+            return []
+        if context.view_layer.objects.active not in meshes:
+            context.view_layer.objects.active = meshes[0]
+        bpy.ops.object.mode_set(mode='EDIT')
+        self.entered = True
+        bpy.ops.mesh.select_mode(type='FACE')
+        bpy.ops.mesh.select_all(action='SELECT')
+        return [o for o in bpy.context.objects_in_mode_unique_data if o.type == 'MESH']
+
+    def __exit__(self, *exc):
+        if self.entered:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        return False
+
+
+def _mesh_poll(context):
+    if context.mode == 'EDIT_MESH':
+        return True
+    return context.mode == 'OBJECT' and any(o.type == 'MESH' for o in context.selected_objects)
+
+
+PLANE_ITEMS = [(n, n, f"{n} projection planes") for n in ("3", "4", "5", "6", "8", "12")]
+
+
+class ALLSET_OT_uv_automatic(bpy.types.Operator):
+    """Project UVs from several planes at once (Maya UV > Automatic): the selected faces, or every face of the
+    selected meshes in object mode"""
+    bl_idname = "allset.uv_automatic"
+    bl_label = "Automatic"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    planes: EnumProperty(name="Planes", items=PLANE_ITEMS, default="6")
+    spacing: FloatProperty(name="Percentage Space", default=0.2, min=0.0, max=5.0)
+
+    poll = classmethod(lambda cls, context: _mesh_poll(context))
+
+    def execute(self, context):
+        n = 0
+        with _ObjectFaces(context) as obs:
+            for ob in obs:
+                bm = bmesh.from_edit_mesh(ob.data)
+                uv = bm.loops.layers.uv.verify()
+                faces = [f for f in bm.faces if f.select and not f.hide]
+                if faces:
+                    n += auto_project(bm, uv, faces, self.planes, self.spacing)
+                    bmesh.update_edit_mesh(ob.data)
+        if not n:
+            self.report({'WARNING'}, "Select faces (or a mesh) to project.")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_OT_uv_contour(bpy.types.Operator):
+    """Lay the selected faces out along their quad grid and stretch them to fill 0-1 (Maya UV > Contour Stretch;
+    Blender Follow Active Quads): every face of the selected meshes in object mode"""
+    bl_idname = "allset.uv_contour"
+    bl_label = "Contour Stretch"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    poll = classmethod(lambda cls, context: _mesh_poll(context))
+
+    def execute(self, context):
+        done = 0
+        with _ObjectFaces(context) as obs:
+            for ob in obs:
+                bm = bmesh.from_edit_mesh(ob.data)
+                uv = bm.loops.layers.uv.verify()
+                faces = [f for f in bm.faces if f.select and not f.hide]
+                quads = [f for f in faces if len(f.verts) == 4]
+                if not quads:
+                    continue
+                if bm.faces.active not in quads:
+                    bm.faces.active = quads[0]
+                bmesh.update_edit_mesh(ob.data)
+                with context.temp_override(active_object=ob, object=ob, edit_object=ob,
+                                           objects_in_mode=[ob], objects_in_mode_unique_data=[ob]):
+                    try:
+                        _with_faces(context, ob, faces, lambda: bpy.ops.uv.follow_active_quads(mode='LENGTH_AVERAGE'))
+                    except RuntimeError:
+                        continue
+                bm = bmesh.from_edit_mesh(ob.data)
+                uv = bm.loops.layers.uv.verify()
+                fit_unit([lp for f in bm.faces if f.select and not f.hide for lp in f.loops], uv)
+                bmesh.update_edit_mesh(ob.data)
+                done += 1
+        if not done:
+            self.report({'WARNING'}, "Select quad faces (or a mesh) for Contour Stretch.")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 # --- Texel Density -----------------------------------------------------------------------------------
 
 def _uv_area(face, uv):
@@ -558,4 +780,4 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_uv_cut, ALLSET_OT_uv_sew, ALLSET_OT_uv_unfold, ALLSET_OT_uv_layout, ALLSET_OT_uv_texel_get,
-           ALLSET_OT_uv_texel_set, ALLSET_OT_uv_component)
+           ALLSET_OT_uv_texel_set, ALLSET_OT_uv_component, ALLSET_OT_uv_automatic, ALLSET_OT_uv_contour)
