@@ -345,6 +345,36 @@ def s_loop():
     n = mesh_counts(ob)
     check(f"Ctrl+click = an edge loop across the quad ({n}, want 6/7/2)", n == (6, 7, 2))
     check("the new vertices lie on the live surface", all(abs(w.z - 1.0) < 1e-3 for w in edit_verts(ob)))
+    # Ctrl+middle-drag the new loop's edge to the right: the loop slides
+    x, y = to_window((0.0, 0.0, 1.0))
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True)
+    ev('MIDDLEMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+
+
+@step
+def s_slide_move():
+    x, y = to_window((0.3, 0.0, 1.0))
+    ev('MOUSEMOVE', 'NOTHING', x=x - 10, y=y, ctrl=True)
+
+
+@step
+def s_slide_move2():
+    x, y = to_window((0.3, 0.0, 1.0))
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True)
+
+
+@step
+def s_slide_release():
+    ev('MIDDLEMOUSE', 'RELEASE', ctrl=True)
+
+
+@step
+def s_slid():
+    ob = bpy.data.objects[C["ob"]]
+    mids = sorted(round(w.x, 2) for w in edit_verts(ob) if abs(abs(w.x) - 0.6) > 0.05)
+    check(f"Ctrl+middle-drag an edge slides its loop ({mids}, was 0.0)",
+          len(mids) == 2 and all(m > 0.08 for m in mids) and bpy.context.mode == 'EDIT_MESH')
+    shot("gui_step144_slid.png")
     # drag the corner (0.6, 0.6, 1) towards the cube's middle
     press(TOP[2])
 
