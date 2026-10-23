@@ -336,7 +336,7 @@ MAP = {
     "UV/UV Editor": _editor('UV'),
     "UV/Planar": "allset.uv_planar",
     "UV/Normal-Based": "allset.uv_planar",
-    "UV/Automatic": "uv.smart_project",
+    "UV/Automatic": "allset.uv_automatic",      # Maya polyAutoProjection (step 139)
     "UV/Camera-based": ("v3d", "uv.project_from_view", {}),
     "UV/Cylindrical": ("v3d", "uv.cylinder_project", {}),
     "UV/Spherical": ("v3d", "uv.sphere_project", {}),
@@ -674,7 +674,7 @@ MAP.update({
     "UV/UV Set Editor": _props('DATA'),
     "UV/Assign Checker Shader": "allset.checker_shader",
     "UV/Best Plane": "allset.uv_planar",
-    "UV/Contour Stretch": "uv.follow_active_quads",
+    "UV/Contour Stretch": "allset.uv_contour",    # Follow Active Quads + stretch to 0-1 (step 139)
     "UV/Split UVs": "allset.uv_cut",
     # Generate (XGen -> hair curves)
     "Generate/Create Description...": "object.curves_empty_hair_add",
@@ -779,6 +779,10 @@ OBJECT_MODE = {
     "Edit Mesh/Extrude": ('ALL', 'FACE'),
     "Mesh/Fill Hole": ('ALL', 'EDGE'),
     "Mesh/Quadrangulate": ('ALL', 'FACE'),
+    # Step 139 (U1): Maya's UV projections convert an object selection to all its faces
+    # (performPolyProjectionArgList.mel:621-634); Automatic / Contour Stretch / Planar do that in their own operator.
+    "UV/Cylindrical": ('ALL', 'FACE'),
+    "UV/Spherical": ('ALL', 'FACE'),
 }
 
 # Edit / Select / Modify items run in component (mesh edit) mode the way Maya 2022 runs them there (step 129, #39 /
