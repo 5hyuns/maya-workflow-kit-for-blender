@@ -24,7 +24,8 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scene import (ROOT, bg_result, clear_objects, dog_scene, dog_view, floor, frame, lab_scene, look,  # noqa: E402
                    maya_look, maya_mode_on, mod, pack_scene, prefs, rain_scene, redraw, screen_pos, select,
-                   shaders_ready_step, shading, show_bones, template_name, v3d_override, viewport_rects)
+                   shaders_ready_step, shading, show_bones, template_name, theme_unchanged, v3d_override,
+                   viewport_rects)
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
 
@@ -159,7 +160,7 @@ def record(on):
 
 
 def _check_backgrounds():
-    """Every Maya-mode frame must show Maya's gradient viewport background (tools/marketing/bg_check.py, step 125).
+    """Every Maya-mode frame must show Maya's flat #5c5c5c viewport background (tools/marketing/bg_check.py, #41).
     Excluded (``bg`` = "excluded"): plain-Blender frames (Blender mode shows Blender's own UI and theme: the switch
     clip's middle part) and a frame whose picture may still be the other mode (``maya_mode`` in ``_tick``)."""
     E = REC["entries"]
@@ -176,9 +177,10 @@ def _check_backgrounds():
             bad.append(e["img"])
     first = next((e["bg"] for e in E if e["bg"].startswith("FAIL")), "")
     excluded = sum(1 for e in E if e["bg"] == "excluded")
-    check(f"{NAME}: viewport background is Maya's gradient in {n - len(bad)} of {n} Maya-mode frames "
+    check(f"{NAME}: viewport background is Maya's flat grey in {n - len(bad)} of {n} Maya-mode frames "
           f"({excluded} plain-Blender / switch frames excluded){' — first ' + bad[0] + ': ' + first if bad else ''}",
           n > 0 and not bad)
+    check(f"{NAME}: theme untouched (Blender's factory theme, #41)", theme_unchanged())
 
 
 def _write():
@@ -213,7 +215,7 @@ SHADE = {"dog": dict(rotate=40, clip_end=1000.0), "lab": dict(rotate=200), "pack
 
 
 def maya_session(kind="dog", setup_scene=None):
-    """Clean sandbox -> Maya mode -> Maya layout template -> Maya look (gradient) -> the scene of the clip (scene.py)."""
+    """Clean sandbox -> Maya mode -> Maya layout template -> Maya look (flat grey, no theme) -> the scene of the clip (scene.py)."""
     @step
     def s_setup():
         setup()

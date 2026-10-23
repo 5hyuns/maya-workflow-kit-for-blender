@@ -5,13 +5,18 @@ licensed models in research/marketing_assets/ (tools/marketing/assets.json, docs
 Blender Studio's Rain, Pack Bot and Security Bot rigs, the Blender 4.5 splash scene DOGWALK, Cube Diorama props and
 the Poly Haven Studio Small 09 HDRI (step 125; research/marketing_assets/INVENTORY_125.md).
 
-Viewport background (step 125, user instruction 2026-10-20): every Maya-mode 3D View in a promotional capture shows
-Maya's gradient background (research/maya/re/background_120.md: top #889db3, bottom #111315; since step 130 the
-extension has no gradient state — this tool sets it in the sandbox theme). ``maya_look()`` turns it on and a persistent timer
-(``GRADIENT_KEEPER``) keeps every 3D View of every window in that state, so views made later in a session (four-view
-layout, Graph Editor split, switch back from Blender, new windows) are gradient before they are drawn; captures are
-checked afterwards by tools/marketing/bg_check.py (``viewport_rects`` = what to check). Plain Blender (Blender mode)
-keeps Blender's own background: the keeper only acts while Maya mode is on.
+Viewport background (step 142, #41; replaces step 125's theme gradient): the kit ships no theme since step 130 (#40),
+so these captures use Blender's factory theme and never write one (``theme_unchanged`` is checked with every capture).
+Maya's factory viewport is flat #5c5c5c (research/maya/re/background_120.md:33), which without a theme is view / scene
+data: Solid views get the view's own background colour (``View3DShading.background_type = 'VIEWPORT'``, what the
+Maya layout template saves, #45). Material Preview ignores that colour (measured: it draws the theme background), so
+in Maya mode it uses the scene world ``.Allset Marketing World`` = the Studio Small 09 HDRI for lighting and flat
+#5c5c5c for camera rays (Light Path "Is Camera Ray"; measured #5c5c5c with Standard, #5a5a5a with AgX = dE00 < 1).
+``maya_look()`` turns it on and a persistent timer (``LOOK_KEEPER``) keeps every 3D View of every window in that state,
+so views made later in a session (Graph Editor split, switch back from Blender, new windows) are flat Maya grey
+before they are drawn; captures are checked afterwards by tools/marketing/bg_check.py (``viewport_rects`` = what to
+check). Plain Blender (Blender mode) keeps Blender's own background: the keeper puts Material Preview views back on
+the HDRI studio light with background alpha 0 (the factory theme shows).
 """
 
 import math
@@ -369,7 +374,7 @@ def dog_scene(C):
 def dog_view(kind="hero"):
     """Hand-framed views of the DOGWALK set (world metres; the characters stand around x -2 .. 1.3, y -2 .. 0.8)."""
     views = {
-        "hero": ((-0.55, -0.6, 0.8), (87, 0, -8), 5.4),     # horizon ~40 % down: the sky shows Maya's gradient
+        "hero": ((-0.55, -0.6, 0.8), (87, 0, -8), 5.4),     # horizon ~40 % down: Maya's grey above it
         "hotbox": ((-0.5, -0.5, 0.85), (87, 0, -14), 6.2),
         "wide": ((-0.5, -0.3, 0.9), (87, 0, -22), 8.0),
     }
@@ -436,8 +441,13 @@ def rain_keys(rig, frames=(1, 12, 24)):
 
 
 # ------------------------------------------------------------------------------------------------ look-dev
+LOOK = {"rotate": 0.0, "intensity": 1.0}
+WORLD_NAME = ".Allset Marketing World"
+FLAT_SRGB = 0.36            # Maya's factory viewport grey #5c5c5c (operators/key_batch3.FLAT)
+
+
 def studio_light():
-    """The Poly Haven Studio Small 09 HDRI as a Material Preview world (preferences of the sandbox only)."""
+    """The Poly Haven Studio Small 09 HDRI as a Material Preview studio light (Blender-mode views; sandbox prefs)."""
     lights = bpy.context.preferences.studio_lights
     name = HDRI.name
     sl = next((s for s in lights if s.name == name), None)
@@ -446,27 +456,123 @@ def studio_light():
     return sl.name
 
 
+def _lin(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def marketing_world():
+    """The scene world of Maya-mode Material Preview views: the HDRI lights the scene, camera rays see flat Maya
+    grey (Light Path "Is Camera Ray"), so the viewport background is #5c5c5c without a theme."""
+    w = bpy.data.worlds.get(WORLD_NAME)
+    if w is None:
+        w = bpy.data.worlds.new(WORLD_NAME)
+        w.use_fake_user = True
+        w.use_nodes = True
+        nt = w.node_tree
+        nt.nodes.clear()
+        out = nt.nodes.new("ShaderNodeOutputWorld")
+        coord = nt.nodes.new("ShaderNodeTexCoord")
+        mapping = nt.nodes.new("ShaderNodeMapping")
+        mapping.name = "rotate"
+        env = nt.nodes.new("ShaderNodeTexEnvironment")
+        env.image = bpy.data.images.load(str(HDRI), check_existing=True)
+        light = nt.nodes.new("ShaderNodeBackground")
+        light.name = "light"
+        flat = nt.nodes.new("ShaderNodeBackground")
+        flat.inputs[0].default_value = (_lin(FLAT_SRGB),) * 3 + (1.0,)
+        path = nt.nodes.new("ShaderNodeLightPath")
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(coord.outputs["Generated"], mapping.inputs["Vector"])
+        nt.links.new(mapping.outputs[0], env.inputs[0])
+        nt.links.new(env.outputs[0], light.inputs[0])
+        nt.links.new(path.outputs["Is Camera Ray"], mix.inputs[0])
+        nt.links.new(light.outputs[0], mix.inputs[1])
+        nt.links.new(flat.outputs[0], mix.inputs[2])
+        nt.links.new(mix.outputs[0], out.inputs[0])
+    nt = w.node_tree
+    rot = nt.nodes["rotate"].inputs["Rotation"]
+    want = (0.0, 0.0, math.radians(LOOK["rotate"]))
+    if any(abs(a - b) > 1e-5 for a, b in zip(rot.default_value, want)):
+        rot.default_value = want
+    strength = nt.nodes["light"].inputs["Strength"]
+    if abs(strength.default_value - LOOK["intensity"]) > 1e-6:
+        strength.default_value = LOOK["intensity"]
+    sc = bpy.context.scene
+    if sc.world is not w:
+        sc.world = w
+    return w
+
+
+def _material_maya(sh):
+    """A Material Preview view in the Maya look: the marketing world (flat grey to the camera, HDRI light)."""
+    changed = False
+    if not sh.use_scene_world:
+        sh.use_scene_world = True
+        changed = True
+    if sh.use_scene_lights:
+        sh.use_scene_lights = False
+        changed = True
+    return changed
+
+
+def _material_blender(sh, name):
+    """A Material Preview view in plain Blender: the HDRI studio light over Blender's own (theme) background."""
+    changed = False
+    if sh.use_scene_world:
+        sh.use_scene_world = False
+        changed = True
+    if sh.use_scene_lights:
+        sh.use_scene_lights = False
+        changed = True
+    if sh.studio_light != name:
+        sh.studio_light = name
+        changed = True
+    rz = math.radians(LOOK["rotate"])
+    if abs(sh.studiolight_rotate_z - rz) > 1e-5:
+        sh.studiolight_rotate_z = rz
+        changed = True
+    if abs(sh.studiolight_intensity - LOOK["intensity"]) > 1e-5:
+        sh.studiolight_intensity = LOOK["intensity"]
+        changed = True
+    if sh.studiolight_background_alpha != 0.0:
+        sh.studiolight_background_alpha = 0.0
+        sh.studiolight_background_blur = 0.0
+        changed = True
+    return changed
+
+
+def _solid_maya(sh):
+    """A Solid / Wireframe view in the Maya look: its own flat #5c5c5c (view data, like the Maya layout views)."""
+    if sh.background_type == 'VIEWPORT' and all(abs(c - _lin(FLAT_SRGB)) < 1e-4 for c in sh.background_color):
+        return False
+    mod(".operators.key_batch3").set_shading(sh, "GREY")
+    return True
+
+
 def shading(kind='MATERIAL', rotate=0.0, intensity=1.0, clip_end=None):
-    """Material Preview lit by the HDRI (background alpha 0: the viewport keeps Maya's gradient) in every 3D View but
-    the Tool Box column; ``kind`` 'SOLID' = studio-lit solid with material colours."""
-    name = studio_light() if kind == 'MATERIAL' else None
+    """Material Preview lit by the HDRI in every 3D View but the Tool Box column (Maya mode: over flat Maya grey,
+    see the module docstring); ``kind`` 'SOLID' = studio-lit solid with material colours."""
+    LOOK["rotate"], LOOK["intensity"] = rotate, intensity
+    maya = maya_mode_on()
+    name = studio_light() if kind == 'MATERIAL' and not maya else None
+    if kind == 'MATERIAL' and maya:
+        marketing_world()
     for a in win().screen.areas:
         if a.type == 'VIEW_3D' and not mod(".ui.toolbox").is_toolbox(a.spaces.active):
             sp = a.spaces.active
             sh = sp.shading
             sh.type = kind
             if kind == 'MATERIAL':
-                sh.use_scene_world = False
-                sh.use_scene_lights = False
-                sh.studio_light = name
-                sh.studiolight_rotate_z = math.radians(rotate)
-                sh.studiolight_intensity = intensity
-                sh.studiolight_background_alpha = 0.0     # the HDRI lights, the theme gradient stays visible
-                sh.studiolight_background_blur = 0.0
+                if maya:
+                    _material_maya(sh)
+                else:
+                    _material_blender(sh, name)
             else:
                 sh.light = 'STUDIO'
                 sh.color_type = 'MATERIAL'
                 sh.show_cavity = True
+                if maya:
+                    _solid_maya(sh)
             ov = sp.overlay
             ov.show_floor = True
             ov.show_bones = False                    # bones only in the rigging shots
@@ -484,8 +590,8 @@ def show_bones(on):
 
 
 # ------------------------------------------------------------------------------------------------ Maya look
-GRADIENT = {"on": False}
-KEEPER_INTERVAL = 0.05      # s: well inside one recording tick (0.3 - 0.7 s), so a new view is gradient when drawn
+LOOK_STATE = {"on": False, "theme": None}
+KEEPER_INTERVAL = 0.05      # s: well inside one recording tick (0.3 - 0.7 s), so a new view is flat grey when drawn
 
 
 def template_name():
@@ -513,63 +619,93 @@ def maya_mode_on():
         return False
 
 
-# Maya's gradient (research/maya/re/background_120.md). The extension never writes a theme (step 130, #40) and
-# Blender has no per-view gradient, so this marketing tool sets the gradient in the *sandbox's* theme itself — a
-# look any user gets from a theme with a 3D View gradient (the listing's recommended-theme sentence).
-GRADIENT_TOP = (0.535, 0.617, 0.702)
-GRADIENT_BOTTOM = (0.052, 0.052, 0.052)
+def theme_signature():
+    """A hash of every value of the active theme (Blender's factory theme in the sandbox): the captures must never
+    write a theme (step 130, #40; step 142, #41)."""
+    import hashlib
+    out = []
+
+    def walk(struct, prefix, depth):
+        for prop in struct.bl_rna.properties:
+            ident = prop.identifier
+            if ident == "rna_type" or depth > 6:
+                continue
+            value = getattr(struct, ident)
+            if prop.type == 'POINTER':
+                if value is not None:
+                    walk(value, f"{prefix}{ident}.", depth + 1)
+            elif prop.type == 'COLLECTION':
+                for i, item in enumerate(value):
+                    walk(item, f"{prefix}{ident}[{i}].", depth + 1)
+            else:
+                try:
+                    value = tuple(value)
+                except TypeError:
+                    pass
+                out.append((prefix + ident, repr(value)))
+    walk(bpy.context.preferences.themes[0], "", 0)
+    return hashlib.sha1(repr(sorted(out)).encode()).hexdigest()
 
 
-def apply_gradient(force=False):
-    """Maya's gradient in every 3D View but the Tool Box column (sandbox theme gradient + views on THEME), written
-    only where it differs (each write redraws). Returns True when something changed."""
+def theme_unchanged():
+    """True while the theme is the one ``maya_look()`` found (nothing wrote a theme since)."""
+    return LOOK_STATE["theme"] is None or theme_signature() == LOOK_STATE["theme"]
+
+
+def apply_look(force=False):
+    """Maya mode: every 3D View but the Tool Box column flat Maya grey (Solid / Wireframe: the view's colour;
+    Material Preview: the marketing world). Blender mode: Material Preview views back on the studio light (Blender's
+    own background). Writes only what differs (each write redraws). Returns True when something changed."""
     kb = mod(".operators.key_batch3")
+    maya = maya_mode_on()
+    name = None
     changed = False
-    g = bpy.context.preferences.themes[0].view_3d.space.gradients
-    want = (tuple(round(c, 4) for c in GRADIENT_TOP), tuple(round(c, 4) for c in GRADIENT_BOTTOM))
-    have = (tuple(round(c, 4) for c in g.high_gradient), tuple(round(c, 4) for c in g.gradient))
-    if force or g.background_type != 'LINEAR' or have != want:
-        g.background_type = 'LINEAR'
-        g.high_gradient = GRADIENT_TOP           # Blender draws high_gradient at the top (measured, step 120)
-        g.gradient = GRADIENT_BOTTOM
-        changed = True
     for area, space in kb.view_spaces():
         sh = space.shading
-        if force or sh.background_type != 'THEME':
-            sh.background_type = 'THEME'
+        hit = False
+        if sh.type == 'MATERIAL':
+            if maya:
+                marketing_world()
+                hit = _material_maya(sh)
+            else:
+                name = name or studio_light()
+                hit = _material_blender(sh, name)
+        elif maya and sh.type in {'SOLID', 'WIREFRAME'}:
+            hit = _solid_maya(sh)
+        if hit or force:
             area.tag_redraw()
-            changed = True
-        if sh.type in {'MATERIAL', 'RENDERED'} and sh.studiolight_background_alpha != 0.0:
-            sh.studiolight_background_alpha = 0.0    # the HDRI would hide the theme background
             changed = True
     if changed:
         redraw()
     return changed
 
 
-def GRADIENT_KEEPER():
-    if GRADIENT["on"] and maya_mode_on():
+def LOOK_KEEPER():
+    if LOOK_STATE["on"]:
         try:
-            apply_gradient()
+            apply_look()
         except (ReferenceError, AttributeError, KeyError):
             pass
     return KEEPER_INTERVAL
 
 
 def maya_look():
-    """Maya's gradient viewport background (step 125), no tooltips / in-view messages in the pictures. The keeper
-    timer re-applies the gradient to views made later (while Maya mode is on)."""
-    GRADIENT["on"] = True
-    apply_gradient(force=True)
-    if not bpy.app.timers.is_registered(GRADIENT_KEEPER):
-        bpy.app.timers.register(GRADIENT_KEEPER, first_interval=KEEPER_INTERVAL, persistent=True)
+    """Maya's flat #5c5c5c viewport background without a theme (step 142, #41), no tooltips / in-view messages in
+    the pictures. The keeper timer re-applies it to views made later; the theme is remembered so captures can check
+    that nothing wrote it."""
+    if LOOK_STATE["theme"] is None:
+        LOOK_STATE["theme"] = theme_signature()
+    LOOK_STATE["on"] = True
+    apply_look(force=True)
+    if not bpy.app.timers.is_registered(LOOK_KEEPER):
+        bpy.app.timers.register(LOOK_KEEPER, first_interval=KEEPER_INTERVAL, persistent=True)
     bpy.context.preferences.view.show_tooltips = False
     prefs().in_view_messages = False
 
 
 def viewport_rects(window=None):
-    """Top-down window rects of the WINDOW regions of every 3D View that should show the gradient (Tool Box column
-    excluded; quad views give four), largest first — what bg_check.py samples."""
+    """Top-down window rects of the WINDOW regions of every 3D View that should show Maya's flat grey (Tool Box
+    column excluded; quad views give four), largest first — what bg_check.py samples."""
     w = window or win()
     tb = mod(".ui.toolbox")
     out = []
@@ -594,11 +730,13 @@ def bg_result(path, rects, window_size):
 
 
 def check_capture(path, label, rects, window_size):
-    """bg_check.py on a saved capture, recorded as a check (FAIL = a viewport is not Maya's gradient)."""
+    """bg_check.py on a saved capture, recorded as a check (FAIL = a viewport is not Maya's flat grey), plus the
+    no-theme check (FAIL = something wrote the theme since ``maya_look()``)."""
     import bg_check
     from sim import check
     ok, res = bg_result(path, rects, window_size)
     check(bg_check.summary(label, ok, res), ok)
+    check(f"{label}: theme untouched (Blender's factory theme, #41)", theme_unchanged())
     return ok, res
 
 
