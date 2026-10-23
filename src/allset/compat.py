@@ -172,6 +172,20 @@ def uv_edge_selected(loop, uv):
     return loop.uv_select_edge if LOOP_UV_SELECT else loop[uv].select_edge
 
 
+def set_uv_vert_selected(loop, uv, value):
+    if LOOP_UV_SELECT:
+        loop.uv_select_vert = value
+    else:
+        loop[uv].select = value
+
+
+def set_uv_edge_selected(loop, uv, value):
+    if LOOP_UV_SELECT:
+        loop.uv_select_edge = value
+    else:
+        loop[uv].select_edge = value
+
+
 # --- Bone visibility ------------------------------------------------------------------------
 # 4.5: a bone is hidden in pose / object mode by ``Bone.hide``; 5.x moved that to ``PoseBone.hide`` and
 # ``Bone.hide`` only hides the edit bone (step 118, api notes).
