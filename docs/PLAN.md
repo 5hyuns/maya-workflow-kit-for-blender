@@ -751,3 +751,62 @@ ticks, look_compare tool (#75).
    outside the 3D View, Maya Animation / Rigging / UV workspaces, 5.x GUI runs.
 10. Not possible / out of scope (kept): Y-up, separate pivots, MMB on fields, MEL, history beyond the kit's own records, playback
     Once / Oscillate, .ma / .mb files, a shipped theme or preference presets (store rule, decisions 13 / 14).
+
+## 재점검 9차 (step 145, 2026-10-24 — 사용자 지시의 「재점검 8차」)
+
+User request: everything planned is done — dogfood in a clean install, collect what is left, implementation rate, priorities,
+backlog; criterion "default Maya with Blender features attached", differences only. 「재점검 8차」 is step 133, so this one is
+numbered 9 (delegated). Evidence: `docs/steps/step_145.md` + lane files `step_145_ui.md` (live session, look_compare, scored
+differences), `step_145_quant.md` (counts vs step 133), `step_145_remaining.md` (README table, consolidated open work, blindspots,
+manual checks cleanup). New bugs are filed, not fixed: **#90–#100** (found-by-audit, milestone 0.4.0).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **29 (88 %)** | **2** — selection modifiers outside the 3D View; theme (viewport colours kit-drawn, widgets / menus follow the user's theme) | **0** | **2** — separate pivots, Y-up |
+
+Same rate as audit 8: the work since 0.2.1 went into depth (tools, results, option windows), not into new rows.
+
+### Headline numbers (step 133 → now)
+
+| Measure | Step 133 (0.2.1) | Now (0.3.0 + step 144) |
+|---|---|---|
+| Menu leaves working (1318) | 587 (44.5 %) | **596 (45.2 %)** — 52 of them only open a Blender editor / Preferences / web page |
+| Option boxes → Maya window / dialog (distinct) | 29 + 19 (38) | **75 + 22 (80)**; "no settings" 62 → 43; dead 231 → 233 |
+| Marking-menu entries working / greyed | 298 / 128 | **363 / 69** |
+| Shelves working (203) / hotkeys implemented (468) | 151 / 199 | 151 / 199 (unchanged) |
+| Tests | headless 1025, dogfood 48/48 | **headless 1307/1307**, dogfood 48/48, GUI scenario subset 206/206, console errors 0; 5.2.2 headless 1305/1308 (#90) |
+| look_compare (effective 1.0) | viewport 7/12 (step 134) | viewport **11/12**, kit pixels 6/6, rects 5/12, density 5/6, grid ok |
+| Manual checks | 580 items, 70 ticked | **548, 78 ticked** (32 obsolete deleted, 8 ticked by GUI tests) |
+
+Weakest menus (Maya-user impact): Curves 44 %, Skeleton 24 %, Skin (weights in / out), Render 47 %, Surfaces 20 %, Mesh Display 38 %,
+Visualize 20 %.
+
+### Top differences (score = severity × frequency; lanes A + B merged)
+
+| Score | Difference | Issue |
+|---|---|---|
+| 15 | Option box ❒: a click runs the command; Maya windows only on press-and-hold → 97 real windows hidden | #82 |
+| 12 | Mesh Tools items entering edit mode push no undo step; Blender's Adjust Last Operation after kit commands / over the shelf | #88 #92 #86 |
+| 12 | Selection wire stays at the rest shape during skinned / cloth playback | #91 |
+| 12 | Channel Box: channel-name RMB = Blender menu; narrow dock truncation; 1.5 spacing; lattice Scale 0.02; light Power not Intensity | #87 #85 #83 #95 |
+| 9 | Graph Editor: curves in metres, Blender names / row highlight, 46 View / Show items greyed, Key commands on Channel Box nodes | #96 |
+| 9 | RMB ring radius ~80 px (Maya ~55) and text-sized boxes; extrude manipulator is one arrow (Maya 3 axes + planes + centre) | #99, — |
+| 9 | Render: no default light, Render Frame / Sequence boxes "no settings", Batch Render / Test Resolution greyed, no Render Setup | — |
+| 9 | Curves / Surfaces / UV Editor tool gaps (EP Curve, Rebuild, Fillet; Unfold, Move Shell, Stack / Orient) | — |
+| 9 | No "reset Maya UI"; only one workspace | #81 |
+| 8 | Skin weights in / out, Interactive Bind, Joint Labelling greyed; Bind Skin lost an influence on a non-uniformly scaled mesh | #94 |
+| 6 | Re-created cube named pCube2 (zero-user shape left); Blender tooltips / report texts in the status bar | #93 #98 #100 |
+| 6 | Blender 5.x: Paint Skin Weights window raises; 5.0 / 5.1 headless and all 5.x GUI runs owed | #90 |
+| 6 | Theme colours of widgets / menus / Outliner (store rule) | decision 13 |
+
+Blindspots (`step_145_remaining.md`): Maya Preferences window (units / time / undo gathered), Hotkey Editor persistence, grid size
+fixed (Display > Grid ❒ "no settings"), Reference Editor reload / unload / replace, render layers, Outliner Shift+click range.
+
+### Backlog (steps 146+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. Option boxes open on a click (#82). 2. Undo / redo panel hygiene (#88 #92 #86). 3. Channel Box finish (#87 #85 #83 #95 + light
+Intensity). 4. Deformed selection wire + names + bind (#91 #93 #94). 5. Graph Editor in Maya terms (#96 + 2D Ctrl+A). 6. Maya
+manipulator / ring / text details (extrude manipulator, #99 #98 #100). 7. Render basics (default light, render option windows,
+Test Resolution, grid options). 8. Blender 5.x pass (#90, 5.0 / 5.1 headless, 5.x GUI).

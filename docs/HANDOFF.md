@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 145 (재점검 9차 — 사용자 지시의 「재점검 8차」) 완료 — `docs/steps/step_145.md` (+ `step_145_{ui,quant,remaining}.md`), PLAN
+  「재점검 9차」. 헤드리스 1307/1307, dogfood 48/48, look_compare viewport 11/12, 대응표 29/2/0/2 (8차와 같음), 메뉴 작동 45.2 %,
+  옵션 창 80 종, 마킹 메뉴 회색 69. 새 이슈 #90–#100 (0.4.0).
+  **바로 다음 할 일**: backlog.json 8 개 = step 146 옵션 상자 클릭 (#82), 147 되돌리기 · redo 패널 (#88 #92 #86), 148 Channel Box
+  마무리 (#87 #85 #83 #95), 149 변형 선택 와이어 · 이름 · bind (#91 #93 #94), 150 Graph Editor (#96), 151 매니퓰레이터 · 링 · 문구
+  (#98 #99 #100), 152 렌더 · 그리드 기본, 153 Blender 5.x (#90).
+  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어 업로드 (step 143).
+
 - Step 144 (0.4.0 Maya 모델링 도구 · Deform, #30 #31 #34) 완료 — `docs/steps/step_144.md` (+ `step_144_{poly,loop,deform}.md`,
   `research/maya/re/{options_144,edge_loops_144}.md`). Quad Draw / Create Polygon / Append, Insert / Offset Edge Loop / Slide Edge 가
   Maya 클릭 · 수정키 · Tool Settings 의 킷 도구, Deform 메뉴가 Maya 같은 디포머 + 옵션 창 14 + INPUTS + Paint Weights 대상.
