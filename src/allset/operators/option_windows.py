@@ -484,6 +484,15 @@ WINDOWS = [
         F("compressed", "", "bool", False, text="Compressed save")], _run_save, paths=("File/Save Scene",),
         missing=("Limit incremental saves", "Save Thumbnail/Playblast", "USD edits")),
 ]
+
+
+def _extend():
+    # step 140: more windows live in their own modules (they import F / Window from here)
+    from . import option_windows_edit, option_windows_rig
+    WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS)
+
+
+_extend()
 _BY_KEY = {w.key: w for w in WINDOWS}
 
 

@@ -3,6 +3,7 @@
 
     python tools/menu_count.py            # summary
     python tools/menu_count.py --greyed   # list the greyed items without a notice
+    python tools/menu_count.py --options  # + what every option box opens (headless Blender, step 140)
 
 Shared menus are counted per set (the audit's per-set table, 1417 leaves at step 98) and once per path
 (the headline 1251). Runs without Blender: ``bpy`` is stubbed, ``ui/menu_data``, ``menu_map`` and ``notices`` are imported from
@@ -121,6 +122,25 @@ def count(md=None, mm=None, nt=None):
             "unique": (len(unique), sum(unique.values()))}
 
 
+def options():
+    """What every Maya option box opens (window / dialog / tool / redo / generic / dead, step 133 §2): runs
+    tests/test_step140_option_count.py in its own sandbox (needs Blender) and prints its table."""
+    import json
+    import os
+    import subprocess
+    env = dict(os.environ, ALLSET_SANDBOX="option_count")
+    subprocess.run([sys.executable, str(ROOT / "tests" / "run.py"), "-k", "step140_option_count"], env=env,
+                   check=True, stdout=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    data = json.loads((ROOT / "tmp" / "option_count" / "results" / "option_kinds.json").read_text(encoding="utf-8"))
+    kinds = ("window", "dialog", "tool", "redo", "generic", "menu", "dead")
+    print(f"\nOption boxes: {data['total']} (kit option windows: {data['windows']})")
+    print("  " + "  ".join(f"{k} {data['kinds'].get(k, 0)}" for k in kinds))
+    if "--greyed" in sys.argv:
+        for k in ("generic", "dead"):
+            print(f"\n{k}:")
+            print("\n".join("  " + p for p, kind in data["rows"] if kind == k))
+
+
 def main():
     r = count()
     t = r["total"]
@@ -136,6 +156,8 @@ def main():
     print(f"{'unique paths':18} leaves {n:4}  working {w:4} ({100 * w / n:.1f} %)")
     if "--greyed" in sys.argv:
         print("\n".join(r["greyed"]))
+    if "--options" in sys.argv:
+        options()
 
 
 if __name__ == "__main__":
