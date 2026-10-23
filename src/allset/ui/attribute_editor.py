@@ -78,6 +78,7 @@ MODIFIER_NODES = {
     'SIMPLE_DEFORM': "nonLinear", 'CAST': "nonLinear", 'WAVE': "nonLinear", 'DISPLACE': "textureDeformer",
     'SCREW': "polyRevolve", 'EDGE_SPLIT': "polySoftEdge",
     'WEIGHTED_NORMAL': "polyNormalPerVertex", 'NODES': "geometryNodes",
+    'HOOK': "cluster", 'SURFACE_DEFORM': "wrap", 'CURVE': "curveWarp",    # step 144 (operators/deformers.BASES)
 }
 
 
@@ -85,8 +86,12 @@ def modifier_node(ob, md):
     """(Maya node name, Maya node type) of a modifier: a modifier with Blender's automatic name gets Maya's
     (``<type><n>``, numbered per type like Maya: ``polyBevel1``); a named one (kit-made ``polySmoothFace``, the
     user's own) keeps its name."""
+    from ..operators import deformers
+    kit = deformers.node_type(md)     # a kit Maya deformer (step 144: cluster1 = HOOK, wrap1 = SURFACE_DEFORM ...)
+    if kit is not None:
+        return md.name, kit
     mtype = MODIFIER_NODES.get(md.type, md.type.lower())
-    base = re.sub(r"\d+$", "", mtype)          # Maya names polyBevel3 nodes polyBevel1, polyBevel2, ...
+    base = re.sub(r"\d+$", "", mtype)         # Maya names polyBevel3 nodes polyBevel1, polyBevel2, ...
     if not default_name(md):
         return md.name, mtype                  # a name the user / the kit gave it
     same = [m for m in ob.modifiers if MODIFIER_NODES.get(m.type, m.type.lower()) == mtype

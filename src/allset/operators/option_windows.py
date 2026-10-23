@@ -457,8 +457,8 @@ WINDOWS = [
 def _extend():
     # step 140: more windows live in their own modules (they import F / Window from here); Bind Skin and Duplicate
     # Special moved there with every Maya field (option_windows_rig.bind_skin_maya / option_windows_edit)
-    from . import option_windows_edit, option_windows_rig
-    WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS)
+    from . import option_windows_deform, option_windows_edit, option_windows_rig
+    WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS + option_windows_deform.WINDOWS)
 
 
 _extend()

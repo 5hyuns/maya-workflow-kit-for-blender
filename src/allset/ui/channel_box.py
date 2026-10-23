@@ -504,7 +504,41 @@ def _text_set(key):
 # --- rows for custom attributes, SHAPES and INPUTS (step 38) --------------------------------
 
 def _inputs(ob):
-    return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m)]
+    # + the kit deformers a lattice / handle drives: Maya shows ffd1 / bend1 in the INPUTS of ffd1Lattice /
+    # bend1Handle (step 144, )
+    from ..operators import deformers
+    return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m) and not deformers.is_base(m)] \
+        + deformers.driven_modifiers(ob)
+
+
+def _virtual(owner, name):
+    """The Maya attribute behind an INPUTS row ``maya:<key>`` of a kit deformer (operators/deformers.ATTRS)."""
+    if not name.startswith("maya:") or not isinstance(owner, bpy.types.Modifier):
+        return None
+    from ..operators import deformers
+    return deformers.attr(owner, name)
+
+
+def input_label(mod, name):
+    """Channel Box label of INPUTS row ``name`` of modifier ``mod`` (a Maya attribute, else the RNA name)."""
+    v = _virtual(mod, name)
+    if v is not None:
+        return v.label
+    rna = mod.bl_rna.properties.get(name)
+    return rna.name if rna is not None else name
+
+
+# Maya shape attribute labels of SHAPES rows (ffd1LatticeShape: S / T / U Divisions, options_144.md)
+SHAPE_LABELS = {('LATTICE', "points_u"): "S Divisions", ('LATTICE', "points_w"): "T Divisions",
+                ('LATTICE', "points_v"): "U Divisions"}
+
+
+def shape_label(ob, prop):
+    label = SHAPE_LABELS.get((ob.type, prop))
+    if label is None:
+        rna = ob.data.bl_rna.properties.get(prop)
+        label = rna.name if rna is not None else prop
+    return label
 
 
 # --- INPUTS node expansion (step 135, #55;  「계획」) -----------------------------------------
@@ -654,7 +688,7 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
         return data if name in data.bl_rna.properties else None
     if kind == "INPUT":
         mods = [m for m in _inputs(ob) if m.type == mod_type]
-        if nth < len(mods) and name in mods[nth].bl_rna.properties:
+        if nth < len(mods) and (name in mods[nth].bl_rna.properties or _virtual(mods[nth], name) is not None):
             return mods[nth]
     if kind == "CONSTRAINT":
         cons = [c for c in constraints(ob) if c.type == mod_type]
@@ -666,16 +700,26 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
 def _row_kind(owner, kind, name):
     if kind == "CUSTOM":
         return cb_entry.kind_of_value(owner.get(name))
+    v = _virtual(owner, name)
+    if v is not None:
+        return v.kind
     return cb_entry.kind_of_rna(owner.bl_rna.properties[name])
 
 
 def _row_read(owner, kind, name):
-    return owner[name] if kind == "CUSTOM" else getattr(owner, name)
+    if kind == "CUSTOM":
+        return owner[name]
+    v = _virtual(owner, name)
+    return v.get(owner) if v is not None else getattr(owner, name)
 
 
 def _row_write(owner, kind, name, value):
     if kind == "CUSTOM":
         owner[name] = type(owner[name])(value)
+        return
+    v = _virtual(owner, name)
+    if v is not None:
+        v.set(owner, value)
     else:
         setattr(owner, name, value)
 
@@ -1463,8 +1507,13 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
 
 
 def _modifier_props(mod, limit=10):
-    """Editable scalar properties of a modifier, Maya INPUTS-style (channel_box.md:46)."""
-    skip = {"name", "show_expanded", "show_on_cage", "show_in_editmode", "show_render",
+    """Editable scalar properties of a modifier, Maya INPUTS-style (channel_box.md:46); a kit Maya deformer shows
+    its Maya attributes instead (``maya:<key>`` rows, operators/deformers.ATTRS, step 144)."""
+    from ..operators import deformers
+    maya = deformers.attrs(mod)
+    if maya is not None:
+        return [deformers.PREFIX + a.key for a in maya]
+    skip ={"name", "show_expanded", "show_on_cage", "show_in_editmode", "show_render",
             "use_apply_on_spline", "use_pin_to_last", "is_override_data_editable",
             "persistent_uid", "execution_time", "show_viewport"}
     out = []
@@ -1483,6 +1532,7 @@ def _modifier_props(mod, limit=10):
 SHAPE_PROPS = {
     'CAMERA': ("lens", "clip_start", "clip_end"),
     'LIGHT': ("energy", "color", "shadow_soft_size"),
+    'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z), step 144
 }
 
 
@@ -1573,10 +1623,17 @@ def _first_rebuild():
 
 def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, label=None):
     """A SHAPES / INPUTS row: label + text field applied to all selected (else the real prop)."""
-    label = owner.bl_rna.properties[prop].name if label is None else label
+    v = _virtual(owner, prop)
+    if label is None:
+        label = v.label if v is not None else owner.bl_rna.properties[prop].name
     row = row_for(context, ob, kind, prop, mod_type, nth)
     if row is None:
-        layout.prop(owner, prop, text=label)
+        if v is not None:   # a Maya attribute (step 144) has no RNA property to draw until the rows are rebuilt
+            split = layout.row(align=True).split(factor=0.5, align=True)
+            split.label(text=label)
+            split.label(text=cb_entry.format_value(v.get(owner), v.kind, context.scene))
+        else:
+            layout.prop(owner, prop, text=label)
         return
     split = layout.row(align=True).split(factor=0.5, align=True)
     split.label(text=label)
@@ -1787,7 +1844,7 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             if hasattr(data, prop):
                 r = lines.row()
                 if r is not None:
-                    _draw_text_row(r, context, ob, data, prop, "SHAPE")
+                    _draw_text_row(r, context, ob, data, prop, "SHAPE", label=shape_label(ob, prop))
 
     # INPUTS, newest first; every node starts collapsed (cb135/d01_cube.png, pass1/c07_extruded_component.png).
     # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).

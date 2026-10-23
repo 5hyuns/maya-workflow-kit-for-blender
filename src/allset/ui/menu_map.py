@@ -31,6 +31,11 @@ _PRIMS = {label: _create(kind) for label, kind in (
     ("Pyramid", 'PYRAMID'), ("Prism", 'PRISM'))}
 
 
+def _deformer(kind):
+    # Maya Deform menu deformer (operators/deformers.py, step 144)
+    return ("allset.deformer", {"kind": kind})
+
+
 def _del(kind, all_=False):
     return ("allset.delete_by_type", {"type": kind, "all": all_})
 
@@ -346,13 +351,14 @@ MAP = {
     # --- Deform (Modeling, Rigging, Animation share it) ---
     "Deform/Blend Shape": "allset.blend_shape",          # targets, then the base (join_shapes, step 62)
     "Deform/Blend Shape#2/Add": "allset.blend_shape",
-    "Deform/Delta Mush": _mod('CORRECTIVE_SMOOTH'),
-    "Deform/Solidify": _mod('SOLIDIFY'),
-    "Deform/Lattice": _mod('LATTICE'),
-    "Deform/Wrap": _mod('SURFACE_DEFORM'),
-    "Deform/ShrinkWrap": _mod('SHRINKWRAP'),
-    "Deform/Nonlinear/Wave": _mod('WAVE'),
-    "Deform/Texture": _mod('DISPLACE'),
+    # Maya deformers = kit-made modifiers + handles with Maya names and options (step 144, operators/deformers.py);
+    # Solidify (Maya: keeps sections rigid; Blender's Solidify adds thickness) is greyed with a notice
+    "Deform/Delta Mush": _deformer('DELTA_MUSH'),
+    "Deform/Lattice": _deformer('LATTICE'),
+    "Deform/Wrap": _deformer('WRAP'),
+    "Deform/ShrinkWrap": _deformer('SHRINK_WRAP'),
+    "Deform/Nonlinear/Wave": _deformer('WAVE'),
+    "Deform/Texture": _deformer('TEXTURE'),
     "Deform/Paint Weights/Set Membership": "paint.weight_paint_toggle",
     # --- UV ---
     "UV/UV Editor": _editor('UV'),
@@ -682,16 +688,19 @@ MAP.update({
     "Surfaces/Reverse Direction": "curve.switch_direction",
     "Surfaces/Insert Isoparms": "curve.subdivide",
     # Deform
-    "Deform/Curve Warp": _mod('CURVE'),
-    "Deform/Proximity Wrap": _mod('SURFACE_DEFORM'),
-    "Deform/Nonlinear/Bend": ("allset.nonlinear", {"method": 'BEND'}),
-    "Deform/Nonlinear/Flare": ("allset.nonlinear", {"method": 'TAPER'}),
-    "Deform/Nonlinear/Squash": ("allset.nonlinear", {"method": 'STRETCH'}),
-    "Deform/Nonlinear/Sine": _mod('WAVE'),
+    "Deform/Curve Warp": _deformer('CURVE_WARP'),
+    "Deform/Proximity Wrap": _deformer('PROXIMITY_WRAP'),
+    "Deform/Nonlinear/Bend": _deformer('BEND'),
+    "Deform/Nonlinear/Flare": _deformer('FLARE'),
+    "Deform/Nonlinear/Squash": _deformer('SQUASH'),
+    "Deform/Nonlinear/Sine": _deformer('SINE'),
     "Deform/Blend Shape#2/Remove": "object.shape_key_remove",
-    **{f"Deform/Paint Weights/{kind}": "paint.weight_paint_toggle" for kind in (
-        "Blend Shape", "Cluster", "Delta Mush", "Tension", "Proximity Wrap", "Lattice", "ShrinkWrap", "Wire",
-        "Nonlinear", "Jiggle", "Texture Deformer")},
+    # Paint Weights > <deformer>: Weight Paint on that deformer's vertex group (step 144; Maya artAttrToolScript 4
+    # "<type>", ); Tension / Wire / Jiggle have no Blender deformer (greyed)
+    **{f"Deform/Paint Weights/{label}": ("allset.paint_deformer_weights", {"kind": kind}) for label, kind in (
+        ("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),
+        ("Proximity Wrap", "proximityWrap"), ("Lattice", "ffd"), ("ShrinkWrap", "shrinkWrap"),
+        ("Nonlinear", "nonLinear"), ("Texture Deformer", "textureDeformer"))},
     "Deform/Mirror Deformer Weights": "object.vertex_group_mirror",
     # UV
     "UV/UV Set Editor": _props('DATA'),
@@ -873,7 +882,7 @@ MAP.update({
     "Skin/Edit Influences/Remove Influence": "allset.remove_influence",
     "Skin/Edit Influences/Remove Unused Influences": "allset.remove_unused_influences",
     "Deform/Cluster": "allset.cluster",
-    "Deform/Nonlinear/Twist": ("allset.nonlinear", {"method": 'TWIST'}),
+    "Deform/Nonlinear/Twist": ("allset.deformer", {"kind": 'TWIST'}),     # step 144: operators/deformers.py
     "Deform/Soft Modification Tool": "allset.soft_mod",
 })
 
