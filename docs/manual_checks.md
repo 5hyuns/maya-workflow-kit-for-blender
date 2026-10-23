@@ -1002,3 +1002,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Mesh Tools > Offset Edge Loop on a cube's middle loop: click → two loops either side at half the neighbouring edges (Maya's 0.5); click-drag → they start at the edge and spread out with the drag. On a border edge: a warning, nothing happens. Offset Edge Loop ❒ opens "Offset Edge Loop Options" with Enter Tool And Close / Enter Tool / Close.
 - [ ] Mesh Tools > Slide Edge: click / box-select an edge loop with the left button, then middle-drag → it slides along the neighbouring edges towards the drag, catching at the middle (Use Snapping, 1 point, 0.1); Mode Absolute → every vertex slides the same distance.
 - [ ] Shift+RMB edge marking menu ▸ Edge Loop Utilities ▸ To Edge Loop and Duplicate → two offset loops around the selected edges' loops (Maya polyDuplicateEdge).
+## Step 144 — Deform
+
+- [ ] Maya layout, a cube: Deform > Lattice → ffd1Lattice (2 × 5 × 2 points, tall axis = up) exactly around the cube, selected; the Channel Box shows SHAPES ffd1LatticeShape S / T / U Divisions 2 5 2 and INPUTS ffd1 (click it: Envelope 1). Tab into the lattice, move the top points → the cube bends; Tab out, move / scale ffd1Lattice → the cube follows (Maya base lattice).
+- [ ] Edit mode, top faces selected, Deform > Lattice ❒: Lattice Options (Divisions 2 5 2, Center around selection, Auto parent to selection, greyed "Not in Blender" list); Create with 3 3 3 → a lattice around the selected part only; only those points deform.
+- [ ] Deform > Nonlinear > Bend on a tall cylinder: bend1Handle (arrow) at the middle selected; Channel Box INPUTS bend1 Curvature 0, Low Bound -1, High Bound 1; type 1 into Curvature → the cylinder bends; High Bound 0 → only the lower half bends.
+- [ ] Two cubes, the small one selected last: Deform > Wrap → wrap1 on the big cube; edit the small cube's vertices or move the small cube → the big one follows; the small cube is not rendered (F12).
+- [ ] Deform > Cluster on selected vertices → cluster1Handle; Deform > Paint Weights > Cluster with the handle selected → Weight Paint on the mesh with group cluster1 active; painting 0 on some vertices makes them stay when the handle moves.
+- [ ] Deform > Tension / Solidify / Morph / Wire / Wrinkle / Sculpt and Jiggle > Jiggle Deformer are greyed; hovering shows the Blender substitute in the tooltip and the Help Line.

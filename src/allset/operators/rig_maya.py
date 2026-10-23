@@ -458,9 +458,13 @@ class ALLSET_OT_hammer_weights(bpy.types.Operator):
 # --- Cluster / Soft Mod (Hook modifiers + handle empties) ------------------------------------------
 
 def _hook(context, ob, base, centre_world, vertex_indices=None):
-    """Hook modifier ``<base>N`` driven by the empty ``<base>NHandle`` at ``centre_world`` (rest = no change)."""
-    taken = {m.name for o in bpy.data.objects for m in o.modifiers} | {o.name for o in bpy.data.objects}
-    name = f"{base}{naming.next_number(base, taken)}"
+    """Hook modifier ``<base>N`` driven by the empty ``<base>NHandle`` at ``centre_world`` (rest = no change).
+
+    Step 144 (#34): a mesh's points are the vertex group ``<base>N`` (weight 1, Maya's factory deformer weights),
+    which Deform > Paint Weights paints; ``vertex_indices`` None = every point (a Hook with neither a group nor
+    indices moves nothing, measured step 110)."""
+    from . import deformers
+    name = deformers.new_name(base)
     handle = bpy.data.objects.new(f"{name}Handle", None)
     context.view_layer.active_layer_collection.collection.objects.link(handle)
     handle.empty_display_type = 'PLAIN_AXES'
@@ -471,7 +475,12 @@ def _hook(context, ob, base, centre_world, vertex_indices=None):
     md.object = handle
     md.center = ob.matrix_world.inverted() @ centre_world
     md.matrix_inverse = handle.matrix_world.inverted() @ ob.matrix_world
-    if vertex_indices is not None:
+    if ob.type == 'MESH':
+        vg = ob.vertex_groups.new(name=name)
+        vg.add(list(vertex_indices) if vertex_indices is not None else list(range(len(ob.data.vertices))), 1.0,
+               'REPLACE')
+        md.vertex_group = vg.name
+    elif vertex_indices is not None:
         md.vertex_indices_set(vertex_indices)
     return md, handle
 
@@ -511,6 +520,10 @@ class ALLSET_OT_cluster(bpy.types.Operator):
     bl_label = "Cluster"
     bl_options = {'REGISTER', 'UNDO'}
 
+    envelope: bpy.props.FloatProperty(name="Envelope", default=1.0, min=0.0, max=1.0,
+                                      description="Maya cluster envelope = the Hook's strength "
+                                                  "(research/maya/re/options_144.md: Cluster Options)")
+
     @classmethod
     def poll(cls, context):
         ob = context.active_object
@@ -528,7 +541,8 @@ class ALLSET_OT_cluster(bpy.types.Operator):
         mode = ob.mode
         if mode == 'EDIT':
             bpy.ops.object.mode_set(mode='OBJECT')
-        _md, handle = _hook(context, ob, "cluster", centre, idx)
+        md, handle = _hook(context, ob, "cluster", centre, idx)
+        md.strength = self.envelope
         handle.empty_display_type = 'SPHERE'
         _select_handle(context, handle)       # Maya: the new handle is selected
         return {'FINISHED'}
@@ -573,7 +587,7 @@ class ALLSET_OT_soft_mod(bpy.types.Operator):
             self.report({'WARNING'}, "Select components or an object")
             return {'CANCELLED'}
         # a Hook with neither a vertex group nor indices moves nothing (measured): every vertex, weighted by falloff
-        md, handle = _hook(context, ob, "softMod", centre, list(range(len(ob.data.vertices))))
+        md, handle = _hook(context, ob, "softMod", centre, None)
         md.falloff_type = 'CURVE'
         md.falloff_radius = self.radius * units.maya_unit(context.scene)
         cosine_falloff(md.falloff_curve)
