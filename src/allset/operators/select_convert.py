@@ -478,6 +478,7 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
             return {'CANCELLED'}
         if any(r[3] is not None and r[3][0] == 'LOOP' for r in results):
             # a UV selection: Maya's UV component = sync off, every face shown (uv_tools.set_component)
+            uv_tools.forget_mesh_selection()      # a conversion: no F12 selection to bring back (#80)
             uv_tools.set_component(context, 'UV')
             ts.uv_select_mode = 'VERTEX'
             for ob, bm, uv, res in results:

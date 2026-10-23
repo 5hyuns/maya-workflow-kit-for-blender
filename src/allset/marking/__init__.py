@@ -284,6 +284,13 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
             bpy.ops.wm.tool_set_by_id(name=self.tool, space_type='VIEW_3D')
         except RuntimeError:  # e.g. the tool doesn't exist in this mode
             pass
+        # Maya: a tool key after an extrusion / bevel shows that tool's manipulator instead of the extrude one
+        # (issue #80: the hidden Move manipulator left W without a way to move the new faces)
+        from ..operators import extrude
+        if extrude.dismiss(bpy.context):
+            for area in bpy.context.screen.areas if bpy.context.screen else ():
+                if area.type == 'VIEW_3D':
+                    area.tag_redraw()
 
     def tap(self, context):
         # Tapping the key of the active tool again goes back to the centre handle (free MMB
