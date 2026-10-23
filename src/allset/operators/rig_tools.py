@@ -131,11 +131,31 @@ def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP
 
 # --- Blend Shape ------------------------------------------------------------------------------------
 
+# Maya Blend Shape Options with a Blender meaning (): BlendShape node
+# name (= the base's shape key datablock, Maya blendShapeN when empty), Origin Local / World, Check topology, Delete
+# targets. Envelope and In-between have no Blender equivalent (the option window lists them as such).
+BLEND_ORIGINS = (("LOCAL", "Local", "Targets match the base vertex by vertex in object space"),
+                 ("WORLD", "World", "The targets' placement in the scene counts too"))
+
+
+def same_topology(a, b):
+    """Maya Check topology: the same vertex / edge / face counts and the same face corners."""
+    ma, mb = a.data, b.data
+    if (len(ma.vertices), len(ma.edges), len(ma.polygons)) != (len(mb.vertices), len(mb.edges), len(mb.polygons)):
+        return False
+    return all(tuple(pa.vertices) == tuple(pb.vertices) for pa, pb in zip(ma.polygons, mb.polygons))
+
+
 class ALLSET_OT_blend_shape(bpy.types.Operator):
     """Maya Blend Shape: select the target shapes, then the base mesh last (shape keys on the base)"""
     bl_idname = "allset.blend_shape"
     bl_label = "Blend Shape"
     bl_options = {'REGISTER', 'UNDO'}
+
+    node_name: StringProperty(name="BlendShape node", default="")
+    origin: EnumProperty(name="Origin", items=BLEND_ORIGINS, default="LOCAL")
+    check_topology: BoolProperty(name="Check topology", default=True)
+    delete_targets: BoolProperty(name="Delete targets", default=False)
 
     @classmethod
     def poll(cls, context):
@@ -149,18 +169,38 @@ class ALLSET_OT_blend_shape(bpy.types.Operator):
             self.report({'WARNING'}, "Select the target shapes, then the base mesh last")
             return {'CANCELLED'}
         n = len(base.data.vertices)
-        bad = [o for o in targets if len(o.data.vertices) != n]
+        bad = [o for o in targets if len(o.data.vertices) != n
+               or (self.check_topology and not same_topology(base, o))]
         good = [o for o in targets if o not in bad]
+        what = "topology" if self.check_topology else "vertex count"
         if not good:
             self.report({'ERROR'}, f"Blend Shape: {', '.join(o.name for o in bad)} "
-                                   f"has a different vertex count than {base.name} ({n})")
+                                   f"has a different {what} than {base.name}")
             return {'CANCELLED'}
         for o in bad:
             o.select_set(False)
+        new_key = base.data.shape_keys is None
         bpy.ops.object.join_shapes()
-        msg = f"Blend Shape on {base.name}: {', '.join(o.name for o in good)}"
+        key = base.data.shape_keys
+        if self.origin == "WORLD":
+            to_base = base.matrix_world.inverted()
+            for o, kb in zip(good, list(key.key_blocks)[-len(good):]):
+                m = to_base @ o.matrix_world
+                for i, v in enumerate(o.data.vertices):
+                    kb.data[i].co = m @ v.co
+        if self.node_name:
+            key.name = self.node_name
+        elif new_key:
+            from . import naming
+            taken = {k.name for k in bpy.data.shape_keys if k != key}
+            key.name = f"blendShape{naming.next_number('blendShape', taken)}"
+        names = [o.name for o in good]
+        if self.delete_targets:
+            for o in good:
+                bpy.data.objects.remove(o)
+        msg = f"Blend Shape {key.name} on {base.name}: {', '.join(names)}"
         if bad:
-            msg += f" (skipped, different vertex count: {', '.join(o.name for o in bad)})"
+            msg += f" (skipped, different {what}: {', '.join(o.name for o in bad)})"
         self.report({'WARNING'} if bad else {'INFO'}, msg)
         return {'FINISHED'}
 

@@ -261,6 +261,10 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
     bl_label = "Create IK Spline Handle"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # Maya IK Spline Handle Tool "Root on curve" (factory on, ): off lets
+    # the root joint keep its place off the curve = Blender's Chain Offset
+    root_on_curve: bpy.props.BoolProperty(name="Root on curve", default=True)
+
     def execute(self, context):
         from .skin import selected_pair
         pair = selected_pair(context)
@@ -272,6 +276,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
             self.report({'WARNING'}, "The end joint must be below the start joint in the same skeleton")
             return {'CANCELLED'}
         con, curve = res
+        con.use_chain_offset = not self.root_on_curve
         self.report({'INFO'}, f"Created {con.name} with {curve.name} (Spline IK constraint; Blender has no "
                               "effector node)")
         return {'FINISHED'}
