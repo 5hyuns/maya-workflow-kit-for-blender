@@ -998,6 +998,7 @@ def _close_stale_menus():
 @bpy.app.handlers.persistent
 def _on_load(*_args):
     _torn_menus.clear()
+    _drawn.clear()          # area pointers of the old file may be reused
     if not bpy.app.background:
         bpy.app.timers.register(_close_stale_menus, first_interval=0.2)
 

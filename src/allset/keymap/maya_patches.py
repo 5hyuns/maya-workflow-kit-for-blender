@@ -330,7 +330,7 @@ def patch_cb_slider(kd):
     # Maya's vertical tab strip on the dock's right edge (step 142, #78; ui/maya_dock.draw_strip): drawn, not buttons,
     # so a click there reaches the keymaps; first in the region's earliest keymap (its scroller sits on that edge)
     _add(kd, "View2D Buttons List", "allset.dock_strip_click", make_event("LEFTMOUSE"), first=True,
-         shadows=("View2D Buttons List",))
+         shadows=("View2D Buttons List", "Property Editor", "Screen"))   # PASS_THROUGH off the strip
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB ----

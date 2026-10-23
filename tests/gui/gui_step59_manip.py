@@ -171,7 +171,7 @@ def s_shot_move():
 @step
 def s_measure():
     o = screen(ob1().matrix_world.translation)
-    blue = tuple(bpy.context.preferences.themes[0].user_interface.axis_z)
+    blue = mod("ui.manipulator").axis_colours()['Z']     # Maya's Z blue since step 142 (#76), not the theme's
     want = arrow_len_px()
     got = measure(TMP, o, blue, int(want * 1.6))
     check(f"Move Z (Maya Y) arrow at the Maya size ({got:.0f} px drawn, {want:.0f} px = 108 x gizmo/75 x UI)",
