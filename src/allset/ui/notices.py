@@ -476,9 +476,8 @@ CATEGORIES.update({
         "Select menu", "Blender's UV Select menu has no such filter: Select Linked, Split, Overlap, Pinned and "
         "Shortest Path are there."),
     "UV Editor/Select/Convert Selection": (
-        "3D View Select menu", "With Vertex / Edge / Face components (UV Sync Selection on) the UV Editor selection is "
-        "the mesh selection: the 3D View's Select > Convert Selection converts it to edge loops, rings and contained "
-        "components."),
+        "3D View Select menu", "Blender's UV Editor has no loop, ring, connected or contained conversion: with Vertex / Edge / "
+        "Face components (UV Sync Selection on) use the 3D View's Select > Convert Selection."),
     "UV Editor/Cut/Sew": (
         "Seams / Rip", "Blender makes shells from seams (Cut, Unwrap) and splits UVs with the Rip tool; it has no "
         "auto seams or grid shells."),

@@ -964,3 +964,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (gui_step75_input_line) Status Line input line: Absolute X = 10 moves pCube1 to x = 10 cm; Rename field "crate" renames the lead; Select by name "pSph*" selects the spheres.
 - [ ] (gui_step63_mtk) Modeling Toolkit dock: Face icon → edit mode, face selection; Extrude button extrudes one face (polyExtrudeFace1 with its manipulator); Object icon → object mode; Combine → one mesh pCube2; Separate → pCube2 group with two pieces; Mesh > Mirror ❒ opens Mirror Options.
+
+## Step 141 — Select conversions
+
+- [ ] Cube, vertex mode, one vertex: Ctrl+RMB ▸ Grow Selection ▸ Grow Along Loop → the vertex and its 3 neighbours; again on a subdivided plane with two neighbouring vertices → the row grows one vertex at each end.
+- [ ] Plane 4×4, a row of 4 faces: Select > Shrink Along Loop → the 2 middle faces; Select > Grow Along Loop twice → the row reaches both borders.
+- [ ] Face mode, 2×2 faces: Select > Convert Selection > To Vertex Perimeter → 8 vertices around, To Edge Perimeter → 8 edges, To Face Perimeter on a 3×3 block → the 8 outer faces.
+- [ ] One edge selected: Convert Selection > To Face Path → the column of faces across that edge's ring.
+- [ ] Face mode, a face: Convert Selection > To UVs → a UV Editor window opens, UV Sync Selection off, exactly the face's 4 UVs selected; then Ctrl+RMB in the 3D View ▸ To Edges → the face's 4 edges (back in edge mode, sync on).
+- [ ] Plane with a face selected: To UV Shell Border → the border faces; closed cube → nothing (Maya does the same); To Shell Border on an interior face → nothing, on a border face → every border face.
+- [ ] Select > Components > Vertex Face / Convert Selection > To Vertex Faces stay greyed; the tooltip says Blender has no vertex-face component.

@@ -22,8 +22,9 @@ Every rule is Maya 2022 measured with mayapy on a 4 x 4 plane, a 6 x 6 plane and
 - To UVs (PolySelectConvert 4): faces -> their UVs; edges -> their UVs in the faces beside them; vertices -> every UV.
 
 Blender has no UV component in the 3D View: a UV result is the UV Editor's selection with UV Sync Selection off
-(the kit's Maya UV component, operators/uv_tools.set_component, step 66). With sync off the selection *is* the UV
-selection, so a conversion reads it as vertices (the selected UVs' vertices).
+(the kit's Maya UV component, operators/uv_tools.set_component, step 66). In that state the selection *is* the UV
+selection, so a conversion reads it as vertices (the selected UVs' vertices); sync off alone is Blender's factory
+state, so ``uv_source`` decides (delegated, docs/steps/step_141_select.md).
 """
 
 import bmesh
@@ -404,6 +405,22 @@ def uv_border_loops(bm, uv, loops):
     return out
 
 
+def uv_source(context, bm, uv):
+    """Is the selection UVs (the kit's Maya UV component, step 66)? Sync off is also Blender's factory state, so
+    only in the UV Editor, or in the 3D View when every shown face is selected (how uv_tools.set_component shows
+    the UVs) and some but not all UVs are."""
+    if uv is None or context.scene.tool_settings.use_uv_select_sync:
+        return False
+    space = getattr(context, "space_data", None)
+    if space is not None and space.type == 'IMAGE_EDITOR':
+        return True
+    shown = [f for f in bm.faces if not f.hide]
+    if not shown or not all(f.select for f in shown):
+        return False
+    flags = [compat.uv_vert_selected(lp, uv) for f in shown for lp in f.loops]
+    return any(flags) and not all(flags)
+
+
 # --- applying ------------------------------------------------------------------------------------------
 
 def select_loops(bm, uv, loops):
@@ -434,16 +451,18 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
 
     def execute(self, context):
         ts = context.scene.tool_settings
-        uv_mode = not ts.use_uv_select_sync      # the kit's Maya UV component (step 66)
         mode = tuple(ts.mesh_select_mode)
         results = []
+        from_uvs = False
         for ob in context.objects_in_mode_unique_data:
             if ob.type != 'MESH':
                 continue
             bm = bmesh.from_edit_mesh(ob.data)
             uv = bm.loops.layers.uv.active
-            if uv is None and (uv_mode or self.kind in UV_TARGET or self.kind.startswith('UV_')):
+            if uv is None and (self.kind in UV_TARGET or self.kind.startswith('UV_')):
                 continue
+            uv_mode = uv_source(context, bm, uv)
+            from_uvs = from_uvs or uv_mode
             kind_in, elems = selection(bm, mode, uv if uv_mode else None)
             if uv_mode and self.kind == 'UV_SHELL_BORDER':
                 loops = {lp for f in bm.faces if f.select and not f.hide for lp in f.loops
@@ -469,7 +488,7 @@ class ALLSET_OT_select_convert(bpy.types.Operator):
                 bpy.ops.allset.open_editor(ui_type='UV')
             return {'FINISHED'}
         targets = {r[3][0] for r in results if r[3] is not None}
-        if uv_mode and targets:
+        if from_uvs and targets:
             ts.use_uv_select_sync = True
         if len(targets) == 1:
             ts.mesh_select_mode = _MODES[targets.pop()]
