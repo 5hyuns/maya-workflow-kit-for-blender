@@ -449,7 +449,7 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "allset.select_none", make_event("D", alt=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="E", ctrl=True)            # extrude tool
     # Maya polyExtrudeFace: zero-length extrusion + manipulator / In-View Editor (step 65); edges and
-    # vertices fall back to Blender's extrude + normal drag inside allset.extrude.
+    # vertices = polyExtrudeEdge / polyExtrudeVertex at once (step 139). Ctrl+B = polyBevel3 at once.
     _add(kd, "Mesh", "allset.extrude", make_event("E", ctrl=True))
     kd.remove("Mesh", "wm.tool_set_by_id", type="B", ctrl=True)            # bevel tool
     _add(kd, "Mesh", "allset.bevel", make_event("B", ctrl=True))

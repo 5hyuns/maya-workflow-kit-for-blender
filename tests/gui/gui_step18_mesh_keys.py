@@ -122,16 +122,20 @@ def s_extruded():
 
 @step
 def s_bevel_modal():
+    # Maya polyBevel3 since step 139 (#16): beveled right away, no drag modal
+    ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
+    _o, rec = ex.active(bpy.context)
     mods = [op.bl_idname for op in win().modal_operators]
-    check(f"Ctrl+B: bevel modal right away ({mods})", any("bevel" in m.lower() for m in mods))
+    check(f"Ctrl+B: polyBevel right away, no modal ({rec and rec.name}, {mods})",
+          rec is not None and rec.name.startswith("polyBevel") and not mods)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 60, y=C["y"])
-    ev('LEFTMOUSE', 'PRESS', x=C["x"] + 60, y=C["y"])
-    ev('LEFTMOUSE', 'RELEASE', x=C["x"] + 60, y=C["y"])
 
 
 @step
 def s_beveled():
-    check(f"Ctrl+B adds faces ({C['faces']} -> {len(bm().faces)})", len(bm().faces) > C["faces"])
+    # step 139: the cap of a zero-length extrusion bevels into an inset like Maya (12/20/10 stays, cap shrinks)
+    check(f"Ctrl+B on the extruded cap: Maya inset, same face count ({C['faces']} -> {len(bm().faces)})",
+          len(bm().faces) == C["faces"])
     ts().transform_pivot_point = 'MEDIAN_POINT'
     C["tool"] = tool_id()
     C["cursor"] = bpy.context.scene.cursor.location.copy()

@@ -166,12 +166,13 @@ def test_bevel_exec_width_is_in_maya_units():
         bm.edges.ensure_lookup_table()
         bm.edges[0].select = True
         bmesh.update_edit_mesh(ob.data)
-        assert bpy.ops.allset.bevel() == {'FINISHED'}
+        # step 139: Ctrl+B = Maya polyBevel3; an absolute Offset is in Maya units (0.1 cm here, x 0.9999 like Maya)
+        assert bpy.ops.allset.bevel(offset_as_fraction=False, offset=0.1) == {'FINISHED'}
         bm = bmesh.from_edit_mesh(ob.data)
         shortest = min(e.calc_length() for e in bm.edges)
         assert abs(units.maya_unit() - 0.01) < 1e-9
         # chamfer edge of a 0.1 cm bevel = 0.1 cm x sqrt(2); 0.1 BU would clamp at the cube's 0.5 cm
-        assert abs(shortest - 0.001 * 2 ** 0.5) < 1e-4, shortest
+        assert abs(shortest - 0.001 * 2 ** 0.5) < 1e-5, shortest
     finally:
         bpy.ops.object.mode_set(mode='OBJECT')
         us.system, us.length_unit, us.scale_length = before
