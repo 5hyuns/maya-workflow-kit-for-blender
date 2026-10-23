@@ -229,6 +229,11 @@ def patch_camera(kd):
     kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433 (ic_4_5)
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
          shadows=("Image Paint", "Vertex Paint", "Sculpt"))     # their Alt+RMB stencil control stays, as before
+    # UV / Image Editor: the same left / right dolly instead of IC image.view_zoom (Zoom Axis preference; step 141 B4).
+    # Graph Editor / Dope Sheet keep View2D view2d.zoom: it zooms each axis by its own drag (right = in), no
+    # preference involved (delegated, docs/steps/step_141_keys.md).
+    kd.remove("Image", "image.view_zoom", type="RIGHTMOUSE", alt=True)
+    _add(kd, "Image", "allset.dolly_2d", make_event("RIGHTMOUSE", alt=True))
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Step 17: Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);
@@ -386,6 +391,33 @@ def patch_attribute_editor(kd):
     _add(kd, "Object Mode", "object.select_all", make_event("A", ctrl=True, shift=True),
          {"action": 'SELECT'})
     _add(kd, "Object Mode", "object.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
+    # Ctrl+a is a global Maya hotkey (no editor context binds Ctrl+a, hotkeys_default.json): in every component /
+    # pose mode IC's Ctrl+A select-all gives way to the AE / CB swap and Ctrl+Shift+A selects all (#65, step 141).
+    for km, idname in CTRL_A_MODES:
+        kd.remove(km, idname, type="A", ctrl=True)
+        _add(kd, km, "allset.ae_toggle", make_event("A", ctrl=True))
+        if km == "Mesh":                                         # Ctrl+Shift+A: patch_mesh_components
+            continue
+        if km != "Paint Vertex Selection (Weight, Vertex)":     # IC has no Ctrl+Shift+A there
+            kd.remove(km, idname, type="A", ctrl=True, shift=True)
+        _add(kd, km, idname, make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
+    # Alt+d SelectNone: joints are objects in Maya, so pose mode just deselects; component modes clear and go back
+    # to object mode like Mesh (changeSelectMode -object; select -cl, research/maya/interaction.md:75)
+    _add(kd, "Pose", "pose.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
+    for km in ("Curve", "Armature", "Metaball", "Lattice", "Curves", "Point Cloud"):
+        _add(kd, km, "allset.select_none", make_event("D", alt=True))
+
+
+# Keymaps whose Ctrl+A is IC select-all (keymap/ic_4_5.py; same in ic_5_0 – ic_5_2). Text / Console / Font /
+# File Browser keep their text-style select-all; the 2D animation editors are left for later (step_141_keys.md).
+CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curve", "curve.select_all"),
+                ("Armature", "armature.select_all"), ("Metaball", "mball.select_all"),
+                ("Lattice", "lattice.select_all"), ("Particle", "particle.select_all"),
+                ("Curves", "curves.select_all"), ("Sculpt Curves", "curves.select_all"),
+                ("Point Cloud", "pointcloud.select_all"),
+                ("Paint Face Mask (Weight, Vertex, Texture)", "paint.face_select_all"),
+                ("Paint Vertex Selection (Weight, Vertex)", "paint.vert_select_all"),
+                ("UV Editor", "uv.select_all"))
 
 
 # --- 18. Undo / redo, visibility, isolate, invert (docs/steps/step_16.md 「계획」) ------------

@@ -214,6 +214,10 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
             row.operator("allset.switch_mode", text="Maya Mode Only").mode = 'MAYA'
         box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. "
                        "Blender's own preferences are never changed.", icon='INFO')
+        hint = undo_hint(context)
+        if hint:
+            box.label(text="Recommended setup", icon='LOOP_BACK')
+            _wrapped(box, hint)
         if not self.maya_mode:
             return
         box = layout.box()
@@ -266,6 +270,19 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
 
 
 # Step 111 (decision 12, docs/distribution/naming.md, docs/distribution/extensions_audit.md 「필수 고지문」)
+# Undo depth (step 141, B6): Maya's undo queue is infinite (research/maya/interaction.md:222), Blender keeps 32 steps
+# by default and the kit may not write Blender's preferences (step 130), so the kit only tells the user (delegated).
+UNDO_RECOMMENDED = 256      # Blender's maximum
+UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Maya-style sessions raise Edit > "
+             "Preferences > System > Memory & Limits > Undo Steps to 256 (Blender's maximum).")
+
+
+def undo_hint(context=None):
+    """The undo-depth hint while Blender's Undo Steps is below 256, else None (read only, nothing is written)."""
+    steps = (context or bpy.context).preferences.edit.undo_steps
+    return UNDO_HINT.format(steps=steps) if steps < UNDO_RECOMMENDED else None
+
+
 ABOUT = ("Other tools give you one piece at a time: a pivot, a keymap, a shelf, a theme. Maya Workflow Kit brings the whole Maya "
          "workflow into Blender in one install: hotbox and marking menus, Channel Box, Attribute Editor, Outliner, "
          "menu sets, shelves, option windows, Freeze / History concepts, centimetre units and pCube1-style naming.")

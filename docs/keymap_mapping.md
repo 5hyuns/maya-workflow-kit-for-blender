@@ -14,9 +14,9 @@
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
 |---|---|---|---|---|---|---|---|
-| Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 구현 | 편집 모드: mesh.select_all(SELECT) | hotkeySetup.mel:59 |
+| Ctrl+Shift+A | Ctrl+Shift+A | global | SelectAll | Object Mode: `object.select_all` (action='SELECT'); Mesh: `mesh.select_all` (action='SELECT') | 구현 | 편집 / 포즈 / UV 모드: <모드>.select_all(SELECT) (step 141) | hotkeySetup.mel:59 |
 | Ctrl+Shift+C | Ctrl+Shift+C | global | CreateCameraFromView | Object Mode: `allset.camera_from_view` | 구현 | 뷰와 같은 camera1 (렌즈·직교 크기), 뷰는 그대로 | hotkeySetup.mel:60 |
-| Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `allset.select_none` | 구현 | 편집 모드: allset.select_none (해제 + 오브젝트 모드) | hotkeySetup.mel:62 |
+| Alt+d | Alt+D | global | SelectNone | Object Mode: `object.select_all` (action='DESELECT'); Mesh: `allset.select_none` | 구현 | 컴포넌트 모드: allset.select_none (해제 + 오브젝트 모드), 포즈: pose.select_all(DESELECT) (step 141) | hotkeySetup.mel:62 |
 | Ctrl+d | Ctrl+D | global | Duplicate | Object Mode: `allset.duplicate`; Mesh: `allset.component_command` (item='Edit/Duplicate') | 구현 | 제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고, step 129) | hotkeySetup.mel:64 |
 | Ctrl+Shift+D | Ctrl+Shift+D | global | DuplicateSpecial | Object Mode: `allset.duplicate_special` | 구현 | 복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation) | hotkeySetup.mel:65 |
 | z | Z | global | Undo | Screen: `ed.undo` | 구현 | Screen 키맵: 모든 에디터. z 를 가리던 zoom/viewer border 제거 (Shift+B 로 남음) | hotkeySetup.mel:67 |
@@ -118,7 +118,7 @@
 | Insert | INSERT | global | EnterEditMode | Object Mode: `allset.pivot_toggle`; Mesh: `allset.pivot_toggle` | 구현 | 피벗 편집 토글: 오브젝트 모드 = Translate 불변 (step 59); 편집 모드 = 3D 커서 피벗 + 커서 툴, 면 클릭 방향 = Maya Pivot (step 77) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `allset.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `allset.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
-| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `allset.ae_toggle`; Mesh: `mesh.select_all` (action='SELECT') | 구현 | 사이드바 Channel Box 탭 안에서 CB/LE ↔ AE 전환 | hotkeySetup.mel:230 |
+| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `allset.ae_toggle`; Mesh: `allset.ae_toggle` | 구현 | CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, step 141 #65) | hotkeySetup.mel:230 |
 | f | F | global | FrameSelectedWithoutChildren | 3D View: `allset.frame` (selected=True) | 구현 | Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17) | hotkeySetup.mel:231 |
 | Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `allset.frame_all_views` (selected=True) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:232 |
 | Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | 3D View: `allset.frame_all_views` (selected=True, children=True) | 구현 | 자식 포함, 창의 모든 3D 뷰 | hotkeySetup.mel:233 |
