@@ -44,9 +44,12 @@ def _ordered_loops(edges):
     return loops
 
 
-def circularize_loop(verts):
-    """Put an ordered vertex loop on a circle: centre = centroid, radius = mean distance, evenly spaced, keeping the
-    loop's mean angular position (Maya polyCircularize defaults, modeling_rigging_110.md)."""
+def circularize_loop(verts, radial_offset=0.0, twist=0.0, even=True, ref=None):
+    """Put an ordered vertex loop on a circle: centre = centroid, radius = mean distance (+ ``radial_offset``), evenly
+    spaced keeping the loop's mean angular position (Maya polyCircularize defaults, modeling_rigging_110.md).
+    Step 140 options (Maya, ): ``twist`` (radians) turns the loop
+    right-handed about ``ref`` (the faces' normal), ``even`` off keeps each vertex's own angle about the centre.
+    Returns the loop's normal (oriented like ``ref``) or None."""
     from mathutils import Vector
     n = len(verts)
     pts = [v.co.copy() for v in verts]
@@ -56,41 +59,76 @@ def circularize_loop(verts):
         a, b = pts[i], pts[(i + 1) % n]
         normal += Vector(((a.y - b.y) * (a.z + b.z), (a.z - b.z) * (a.x + b.x), (a.x - b.x) * (a.y + b.y)))
     if normal.length < 1e-12:
-        return
+        return None
     normal.normalize()
+    if ref is not None and ref.length > 1e-12 and normal.dot(ref) < 0:
+        normal.negate()
     flat = [p - normal * (p - c).dot(normal) for p in pts]
-    radius = sum((p - c).length for p in flat) / n
+    radius = sum((p - c).length for p in flat) / n + radial_offset
     u = flat[0] - c
     if u.length < 1e-12:
         u = next(((p - c) for p in flat if (p - c).length > 1e-12), None)
         if u is None:
-            return
+            return None
     u.normalize()
     w = normal.cross(u)
     ang = [math.atan2((p - c).dot(w), (p - c).dot(u)) for p in flat]
-    turn = sum(math.remainder(ang[(i + 1) % n] - ang[i], math.tau) for i in range(n))
-    s = 1.0 if turn >= 0 else -1.0
-    step = s * math.tau / n
-    off_x = sum(math.cos(ang[i] - step * i) for i in range(n))
-    off_y = sum(math.sin(ang[i] - step * i) for i in range(n))
-    off = math.atan2(off_y, off_x)
-    for i, v in enumerate(verts):
-        t = off + step * i
+    if even:
+        turn = sum(math.remainder(ang[(i + 1) % n] - ang[i], math.tau) for i in range(n))
+        s = 1.0 if turn >= 0 else -1.0
+        step = s * math.tau / n
+        off_x = sum(math.cos(ang[i] - step * i) for i in range(n))
+        off_y = sum(math.sin(ang[i] - step * i) for i in range(n))
+        off = math.atan2(off_y, off_x)
+        ang = [off + step * i for i in range(n)]
+    for v, t in zip(verts, ang):
+        t += twist
         v.co = c + (u * math.cos(t) + w * math.sin(t)) * radius
+    return normal
 
 
-def circularize_loops(bm, mode):
+def circularize_loops(bm, mode, normal_offset=0.0, radial_offset=0.0, twist=0.0, even=True, divisions=0):
     """The loops Maya circularizes for the current selection: faces -> their border loops, edges / vertices ->
-    closed loops of selected edges; ``mode`` 'ALL' = every border loop of the mesh. Returns the loop count."""
-    if mode == 'ALL':
-        edges = [e for e in bm.edges if e.is_boundary]
-    elif mode == 'FACE':
-        edges = [e for e in bm.edges if sum(f.select for f in e.link_faces) == 1]
-    else:
-        edges = [e for e in bm.edges if e.select]
+    closed loops of selected edges; ``mode`` 'ALL' = every border loop of the mesh. ``divisions`` first splits every
+    loop edge (Maya Add Divisions: a 2-division octagon becomes 24 points, radius = their mean distance);
+    ``normal_offset`` then moves the loop and the selected faces' inner vertices along the normal. Returns the loop
+    count."""
+    from mathutils import Vector
+
+    def loop_edges():
+        if mode == 'ALL':
+            return [e for e in bm.edges if e.is_boundary]
+        if mode == 'FACE':
+            return [e for e in bm.edges if sum(f.select for f in e.link_faces) == 1]
+        return [e for e in bm.edges if e.select]
+    edges = loop_edges()
+    if divisions > 0:
+        loops0 = _ordered_loops(edges)
+        on_loop = {e for lp in loops0 for i, v in enumerate(lp) for e in v.link_edges
+                   if e.other_vert(v) is lp[(i + 1) % len(lp)]}
+        # edge_split only adds vertices to the faces (subdivide_edges would cut corner patterns into them)
+        for e in on_loop:
+            a, b = e.verts
+            cur, prev = e, a
+            for k in range(divisions):
+                _ne, nv = bmesh.utils.edge_split(cur, prev, 1.0 / (divisions + 1 - k))
+                nv.select = True      # the split pieces keep the edge's selection (BM_edge_split copies it)
+                cur = next(x for x in nv.link_edges if x.other_vert(nv) is b)
+                prev = nv
+        edges = loop_edges()
     loops = _ordered_loops(edges)
+    faces = [f for f in bm.faces if f.select] if mode == 'FACE' else (list(bm.faces) if mode == 'ALL' else [])
     for loop in loops:
-        circularize_loop(loop)
+        ref = Vector()
+        for v in loop:
+            for f in v.link_faces:
+                if mode != 'FACE' or f.select:
+                    ref += f.normal
+        normal = circularize_loop(loop, radial_offset, twist, even, ref)
+        if normal is not None and normal_offset:
+            inner = {v for f in faces for v in f.verts} if faces else set()
+            for v in set(loop) | inner:
+                v.co += normal * normal_offset
     return len(loops)
 
 
@@ -99,6 +137,16 @@ class ALLSET_OT_circularize(bpy.types.Operator):
     bl_idname = "allset.circularize"
     bl_label = "Circularize"
     bl_options = {'REGISTER', 'UNDO'}
+
+    # Maya Polygon Circularize Options (), factory values
+    normal_offset: bpy.props.FloatProperty(name="Normal Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
+                                           options={'SKIP_SAVE'})
+    radial_offset: bpy.props.FloatProperty(name="Radial Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
+                                           options={'SKIP_SAVE'})
+    twist: bpy.props.FloatProperty(name="Twist", default=0.0, subtype='ANGLE', options={'SKIP_SAVE'})
+    evenly_distribute: bpy.props.BoolProperty(name="Evenly Distribute", default=True, options={'SKIP_SAVE'})
+    divisions: bpy.props.IntProperty(name="Add Divisions", default=0, min=0, soft_max=10, max=100,
+                                     options={'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
@@ -111,7 +159,9 @@ class ALLSET_OT_circularize(bpy.types.Operator):
         for ob in context.objects_in_mode:
             bm = bmesh.from_edit_mesh(ob.data)
             # the whole mesh selected (object-mode menu run, menu_map.OBJECT_MODE): every border loop
-            total += circularize_loops(bm, 'ALL' if all(e.select for e in bm.edges) else mode)
+            total += circularize_loops(bm, 'ALL' if all(e.select for e in bm.edges) else mode,
+                                       self.normal_offset, self.radial_offset, self.twist, self.evenly_distribute,
+                                       self.divisions)
             bmesh.update_edit_mesh(ob.data)
         if not total:
             self.report({'WARNING'}, "Select a closed loop of edges or vertices, or faces")
@@ -163,9 +213,64 @@ def _opposite_edge(face, edge):
     return loops[(i + len(loops) // 2) % len(loops)].edge
 
 
-def connect(bm, mode):
+def _loop_neighbour(v, e):
+    """The vertex before ``v`` along the edge loop through edge ``e`` (the edge at ``v`` sharing no face with ``e``);
+    None at poles / borders."""
+    faces = set(e.link_faces)
+    cand = [x for x in v.link_edges if x is not e and not faces & set(x.link_faces)]
+    return cand[0].other_vert(v) if len(cand) == 1 else None
+
+
+def _flow_point(a, b, t, adjust, pa=None, pb=None):
+    """A point at ``t`` from ``a`` to ``b`` (BMVerts); with ``adjust`` (Maya Insert with edge flow) it follows a cubic
+    through the loop neighbours: Hermite tangents 0.7 x (next - previous), the deviation from the straight edge times
+    Adjust Edge Flow (fits Maya polyConnectComponents on an 8 x 8 sphere within 1e-4,
+    )."""
+    p1, p2 = a.co.copy(), b.co.copy()
+    lin = p1.lerp(p2, t)
+    if not adjust:
+        return lin
+    p0 = pa.co if pa is not None else 2 * p1 - p2
+    p3 = pb.co if pb is not None else 2 * p2 - p1
+    m1, m2 = 0.7 * (p2 - p0), 0.7 * (p3 - p1)
+    t2, t3 = t * t, t * t * t
+    h = (2 * t3 - 3 * t2 + 1) * p1 + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p2 + (t3 - t2) * m2
+    return lin + (h - lin) * adjust
+
+
+def _orient(jobs, split):
+    """A start vertex per split edge so that the chords of a face pair points from the same side (Connect tool
+    Slide / Segments): in face order, the end of the first edge faces the start of the second."""
+    start, todo = {}, list(jobs)
+    pending = True
+    while pending:
+        pending = False
+        for f, a, b in todo:
+            if not (isinstance(a, bmesh.types.BMEdge) and isinstance(b, bmesh.types.BMEdge)):
+                continue
+            la = next(lp for lp in f.loops if lp.edge is a)
+            lb = next(lp for lp in f.loops if lp.edge is b)
+            pairs = ((la.link_loop_next.vert, lb.vert), (la.vert, lb.link_loop_next.vert))
+            if a in start and b not in start:
+                start[b] = pairs[0][1] if start[a] is pairs[0][0] else pairs[1][1]
+                pending = True
+            elif b in start and a not in start:
+                start[a] = pairs[0][0] if start[b] is pairs[0][1] else pairs[1][0]
+                pending = True
+            elif a not in start and b not in start:
+                start[a] = a.verts[0]
+                start[b] = pairs[0][1] if start[a] is pairs[0][0] else pairs[1][1]
+                pending = True
+    for e in split:
+        start.setdefault(e, e.verts[0])
+    return start
+
+
+def connect(bm, mode, edge_flow=0.0, segments=1, slide=0.5):
     """Maya Connect on the selection (``mode`` 'VERT' / 'EDGE' / 'FACE'). Returns the number of new edges (0 = nothing
-    to connect); the new edges end up selected."""
+    to connect); the new edges end up selected. Step 140 options: ``edge_flow`` = Adjust Edge Flow with Insert with
+    edge flow on (0 = off); Connect tool ``segments`` / ``slide`` (selected edges: n points per edge, centred on
+    Slide)."""
     before = len(bm.edges)
     per_face = {}      # face -> points (BMVert / BMEdge)
     split = set()      # edges cut at their midpoints even without a chord (faces mode)
@@ -194,22 +299,52 @@ def connect(bm, mode):
         for p in (a, b):
             if isinstance(p, bmesh.types.BMEdge):
                 split.add(p)
+    n_pts = max(1, int(segments)) if mode == 'EDGE' else 1
+    fracs = [min(0.98, max(0.02, slide + ((k + 1) / (n_pts + 1) - 0.5))) for k in range(n_pts)] \
+        if mode == 'EDGE' else [0.5]
+    start = _orient(jobs, split)
+    sides = []          # per job: the vertices of a and b on the same side of the face (before any split)
+    for f, a, b in jobs:
+        if isinstance(a, bmesh.types.BMEdge) and isinstance(b, bmesh.types.BMEdge):
+            la = next(lp for lp in f.loops if lp.edge is a)
+            lb = next(lp for lp in f.loops if lp.edge is b)
+            near_a, near_b = la.link_loop_next.vert, lb.vert
+            if start[a] is not near_a:
+                near_a, near_b = la.vert, lb.link_loop_next.vert
+            sides.append((near_a, near_b))
+        else:
+            sides.append(None)
     mids = {}
     for e in sorted(split, key=lambda e: e.index):
-        v0 = e.verts[0]
-        _ne, nv = bmesh.utils.edge_split(e, v0, 0.5)
-        mids[e] = nv
+        a = start[e]
+        b = e.other_vert(a)
+        pa, pb = _loop_neighbour(a, e), _loop_neighbour(b, e)
+        cos = [_flow_point(a, b, t, edge_flow, pa, pb) for t in fracs]
+        pts, cur, done = [], e, 0.0
+        for t, co in zip(fracs, cos):
+            _ne, nv = bmesh.utils.edge_split(cur, a if not pts else pts[-1], (t - done) / (1.0 - done))
+            nv.co = co
+            pts.append(nv)
+            cur = next(x for x in nv.link_edges if x.other_vert(nv) is b)
+            done = t
+        mids[e] = pts           # from the oriented start to the end
     new_edges = []
-    for f, a, b in jobs:
-        va = mids[a] if isinstance(a, bmesh.types.BMEdge) else a
-        vb = mids[b] if isinstance(b, bmesh.types.BMEdge) else b
-        faces = [x for x in set(va.link_faces) & set(vb.link_faces)
-                 if not any(vb in e.verts for e in va.link_edges if e in x.edges)]
-        if not faces:
-            continue
-        _nf, loop = bmesh.utils.face_split(faces[0], va, vb)
-        if loop is not None:
-            new_edges.append(loop.edge)
+    mid = n_pts // 2
+    for (f, a, b), side in zip(jobs, sides):
+        if side is not None:
+            pa_, pb_ = mids[a], mids[b]
+            pairs = list(zip(pa_ if side[0] is start[a] else pa_[::-1], pb_ if side[1] is start[b] else pb_[::-1]))
+        else:
+            pairs = [(mids[a][mid] if isinstance(a, bmesh.types.BMEdge) else a,
+                      mids[b][mid] if isinstance(b, bmesh.types.BMEdge) else b)]
+        for va, vb in pairs:
+            faces = [x for x in set(va.link_faces) & set(vb.link_faces)
+                     if not any(vb in e.verts for e in va.link_edges if e in x.edges)]
+            if not faces:
+                continue
+            _nf, loop = bmesh.utils.face_split(faces[0], va, vb)
+            if loop is not None:
+                new_edges.append(loop.edge)
     made = len(bm.edges) - before
     if made:
         for el in (*bm.verts, *bm.edges, *bm.faces):
@@ -227,6 +362,14 @@ class ALLSET_OT_connect(bpy.types.Operator):
     bl_label = "Connect"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # Maya Connect Components Options () and the Mesh Tools > Connect
+    # tool's Slide / Segments (:252-256); factory values
+    insert_with_edge_flow: bpy.props.BoolProperty(name="Insert with edge flow", default=False, options={'SKIP_SAVE'})
+    adjust_edge_flow: bpy.props.FloatProperty(name="Adjust Edge Flow", default=1.0, soft_min=-1.0, soft_max=2.0,
+                                              options={'SKIP_SAVE'})
+    segments: bpy.props.IntProperty(name="Segments", default=1, min=1, soft_max=10, max=100, options={'SKIP_SAVE'})
+    slide: bpy.props.FloatProperty(name="Slide", default=0.5, min=0.0, max=1.0, options={'SKIP_SAVE'})
+
     @classmethod
     def poll(cls, context):
         return context.mode == 'EDIT_MESH'
@@ -237,7 +380,8 @@ class ALLSET_OT_connect(bpy.types.Operator):
         made = 0
         for ob in context.objects_in_mode:
             bm = bmesh.from_edit_mesh(ob.data)
-            made += connect(bm, mode)
+            made += connect(bm, mode, self.adjust_edge_flow if self.insert_with_edge_flow else 0.0,
+                            self.segments, self.slide)
             bmesh.update_edit_mesh(ob.data)
         if not made:
             self.report({'WARNING'}, CONNECT_WARNING)
@@ -247,9 +391,35 @@ class ALLSET_OT_connect(bpy.types.Operator):
 
 # --- Make Hole ---------------------------------------------------------------------------------
 
-def make_hole(bm, target, stamp):
-    """Cut ``stamp``'s outline into ``target`` (Maya Make Hole, merge mode 6: the stamp keeps its position): both
-    faces go, the two loops are bridged with quads. Returns the new faces."""
+MERGE_MODES = ("First", "Middle", "Second", "Project First", "Project Middle", "Project Second", "None")
+
+
+def _hole_merge(target, stamp, mode):
+    """Maya Make Hole Merge mode (polyMergeFacet -mergeMode, Maya option_boxes_140_edit.md): First / Middle /
+    Second move the stamp, both, or the cut face so their centres meet; Project ... moves along the normal only, onto
+    the first face's plane, the middle plane, or the stamp's plane; None leaves both."""
+    from mathutils import Vector
+    ct, cs = target.calc_center_median(), stamp.calc_center_median()
+    if mode in ("First", "Middle", "Second"):
+        d = cs - ct
+        move_t, move_s = {"First": (Vector(), -d), "Middle": (d / 2, -d / 2), "Second": (d, Vector())}[mode]
+    elif mode in ("Project First", "Project Middle", "Project Second"):
+        n = (target.normal if mode != "Project Second" else stamp.normal).normalized()
+        h = (cs - ct).dot(n)
+        move_t, move_s = {"Project First": (Vector(), -n * h), "Project Middle": (n * h / 2, -n * h / 2),
+                          "Project Second": (n * h, Vector())}[mode]
+    else:
+        return
+    for v in target.verts:
+        v.co += move_t
+    for v in stamp.verts:
+        v.co += move_s
+
+
+def make_hole(bm, target, stamp, merge_mode="None"):
+    """Cut ``stamp``'s outline into ``target`` (Maya Make Hole; factory merge mode None: the stamp keeps its position):
+    both faces go, the two loops are bridged with quads. Returns the new faces."""
+    _hole_merge(target, stamp, merge_mode)
     outer = list(target.edges)
     inner = list(stamp.edges)
     bmesh.ops.delete(bm, geom=[target, stamp], context='FACES_ONLY')
@@ -263,6 +433,9 @@ class ALLSET_OT_make_hole(bpy.types.Operator):
     bl_idname = "allset.make_hole"
     bl_label = "Make Hole"
     bl_options = {'REGISTER', 'UNDO'}
+
+    merge_mode: bpy.props.EnumProperty(name="Merge mode", default="None", options={'SKIP_SAVE'},
+                                       items=[(m, m, "") for m in MERGE_MODES])
 
     @classmethod
     def poll(cls, context):
@@ -280,7 +453,7 @@ class ALLSET_OT_make_hole(bpy.types.Operator):
         if set(target.verts) & set(stamp.verts):
             self.report({'WARNING'}, "The two faces must not share vertices")
             return {'CANCELLED'}
-        new = make_hole(bm, target, stamp)
+        new = make_hole(bm, target, stamp, self.merge_mode)
         for f in new:
             f.select = True
         bmesh.update_edit_mesh(ob.data)
