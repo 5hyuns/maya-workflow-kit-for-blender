@@ -272,7 +272,7 @@ MAP = {
     "Mesh/Fill Hole": "mesh.fill_holes",
     "Mesh/Reduce": _mod('DECIMATE'),
     "Mesh/Remesh": _mod('REMESH'),
-    "Mesh/Smooth": _mod('SUBSURF'),
+    "Mesh/Smooth": "allset.smooth",            # real polySmoothFace geometry (step 139, edit_mesh_139_edit.md)
     "Mesh/Triangulate": _mod('TRIANGULATE'),
     "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
     "Mesh/Mirror": "allset.mirror",                       # applied, world plane; □ = Mirror Options
@@ -283,11 +283,11 @@ MAP = {
     "Edit Mesh/Bevel": ("v3d", "mesh.bevel", {}),
     "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
     "Edit Mesh/Collapse": "mesh.edge_collapse",
-    "Edit Mesh/Connect": "mesh.vert_connect_path",
+    "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect (step 139, edit_mesh_139_edit.md)
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace (step 65)
-    "Edit Mesh/Merge": "mesh.remove_doubles",
+    "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices (step 139, edit_mesh_139_edit.md)
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
-    "Edit Mesh/Symmetrize": "mesh.symmetrize",
+    "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first (step 139, edit_mesh_139_edit.md)
     "Edit Mesh/Average Vertices": "mesh.vertices_smooth",
     "Edit Mesh/Chamfer Vertices": ("v3d", "mesh.bevel", {"affect": 'VERTICES'}),
     "Edit Mesh/Delete Edge/Vertex": "mesh.dissolve_mode",
@@ -770,6 +770,7 @@ OBJECT_MODE = {
     "Edit Mesh/Wedge": "No faces selected to wedge. Select faces and one or more edges from the selected faces "
                        "to wedge about.",
     "Edit Mesh/Connect": "Can't perform polyConnectComponents1 on selection",
+    "Edit Mesh/Symmetrize": "No components selected for Symmetrize.",     # Maya 2022 GUI (step 139)
     "Edit Mesh/Flip Triangle Edge": "Select edges to flip.",
     "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
