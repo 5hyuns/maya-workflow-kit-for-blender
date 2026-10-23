@@ -71,7 +71,8 @@ def test_every_mapped_option_box_opens_something():
 def test_windows_registered_with_maya_titles_and_buttons():
     assert len(ow.WINDOWS) >= 24
     for w in ow.WINDOWS:
-        assert w.title.endswith("Options") and w.action, w.key
+        # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140)
+        assert w.title.endswith(("Options", "Tool")) and w.action, w.key
         rna = getattr(bpy.ops.allset, "opt_" + w.key).get_rna_type()
         for f in w.fields:
             assert f.name in rna.properties, (w.key, f.name)
@@ -84,7 +85,7 @@ def test_windows_registered_with_maya_titles_and_buttons():
     d = ow._BY_KEY
     assert d["poly_plane"].defaults()["width_div"] == 10 and d["poly_sphere"].defaults()["axis_div"] == 20
     assert d["bevel"].defaults()["width"] == 0.5 and d["merge"].defaults()["threshold"] == 0.01
-    assert d["bind_skin"].defaults()["max_influences"] == 5
+    assert d["bind_skin_maya"].defaults()["max_influences"] == 5
     assert d["parent_constraint"].defaults()["maintain_offset"] is True
     assert d["point_constraint"].defaults()["maintain_offset"] is False
 
@@ -164,7 +165,7 @@ def test_edit_commands_and_transforms():
     n0 = len(ob.data.polygons)
     _run("smooth", levels=2)        # real polySmoothFace geometry since step 139: every quad -> 4 x 4 quads
     assert len(ob.data.polygons) == 16 * n0 and not any(m.type == 'SUBSURF' for m in ob.modifiers),         (n0, len(ob.data.polygons), [m.type for m in ob.modifiers])
-    _run("duplicate_special", copies=3, translate=(2.0, 0.0, 0.0))
+    _run("duplicate_special_maya", copies=3, translate=(2.0, 0.0, 0.0))
     assert len([o for o in bpy.context.scene.objects if o.type == 'MESH']) == 4
     ob.location = (0.05, 0.0, 0.0)
     ob.rotation_euler = (0.3, 0.0, 0.0)

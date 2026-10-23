@@ -15,7 +15,6 @@ menu item with its option values).
 """
 
 import json
-import math
 
 import bmesh
 import bpy
@@ -236,17 +235,6 @@ def _run_extrude(context, v):
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
-def _run_bind(context, v):
-    res = bpy.ops.allset.bind_skin('EXEC_DEFAULT', max_influences=v["max_influences"],
-                                     bind_to='SELECTED' if v["bind_to"] == "Selected joints" else 'HIERARCHY')
-    if res == {'FINISHED'}:
-        for ob in context.selected_objects:
-            for md in getattr(ob, "modifiers", ()):
-                if md.type == 'ARMATURE':
-                    md.use_deform_preserve_volume = v["skinning"] == "Dual quaternion"
-    return res
-
-
 def _run_set_key(context, v):
     return _with_hierarchy(context, v["hierarchy"] == "Below", lambda: bpy.ops.allset.set_key('EXEC_DEFAULT'))
 
@@ -374,20 +362,6 @@ WINDOWS = [
         F("width", "Width:", "length", 1.0, lo=0.0001, hi=100), F("height", "Height:", "length", 1.0, lo=0.0001, hi=100),
         F("width_div", "Width divisions:", "int", 10, lo=1, hi=200), F("height_div", "Height divisions:", "int", 10, lo=1, hi=200),
         AXIS, UVS], _primitive('PLANE'), missing=("Preserve aspect ratio",)),
-    Window("duplicate_special", "Duplicate Special Options", "Duplicate Special", ("allset.duplicate_special", {}), [
-        F("geometry_type", "Geometry type:", "enum", "Copy", items=("Copy", "Instance")),
-        F("group_under", "Group under:", "enum", "Parent", items=("Parent", "World", "New group")),
-        F("translate", "Translate:", "vec3", (0.0, 0.0, 0.0)), F("rotate", "Rotate:", "vec3", (0.0, 0.0, 0.0)),
-        F("scale", "Scale:", "vec3", (1.0, 1.0, 1.0)), F("copies", "Number of copies:", "int", 1, lo=1, hi=1000)],
-        lambda c, v: bpy.ops.allset.duplicate_special(
-            'EXEC_DEFAULT', geometry_type=v["geometry_type"].upper(),
-            group_under={"Parent": 'PARENT', "World": 'WORLD', "New group": 'NEW_GROUP'}[v["group_under"]],
-            # Maya X Y Z = Blender X, -Y... (Y up): Maya Y -> Blender Z, Maya Z -> Blender -Y
-            translate=Vector((v["translate"][0], -v["translate"][2], v["translate"][1])) * _k(c),
-            rotate=tuple(math.radians(a) for a in (v["rotate"][0], -v["rotate"][2], v["rotate"][1])),
-            scale=(v["scale"][0], v["scale"][2], v["scale"][1]), copies=v["copies"]),
-        missing=("Smart transform", "Duplicate input graph / connections", "Instance leaf nodes",
-                 "Assign unique name to children nodes")),
     Window("group", "Group Options", "Group", ("allset.group", {}), [
         F("group_under", "Group under:", "enum", "Parent", items=("Parent", "World")),
         F("pivot", "Group pivot:", "enum", "Origin", items=("Center", "Origin"))], _run_group),
@@ -430,12 +404,6 @@ WINDOWS = [
         F("always_two", "", "bool", True, text="Always merge for two vertices")],
         lambda c, v: _components(c, "allset.merge", 'VERT', threshold=v["threshold"], always_two=v["always_two"]),
         paths=("Edit Mesh/Merge",)),
-    Window("bind_skin", "Bind Skin Options", "Bind Skin", ("allset.bind_skin", {}), [
-        F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
-        F("skinning", "Skinning method:", "enum", "Classic linear", items=("Classic linear", "Dual quaternion")),
-        F("max_influences", "Max influences:", "int", 5, lo=1, hi=30)], _run_bind,
-        missing=("Bind method (Blender: automatic weights)", "Normalize weights", "Weight distribution",
-                 "Allow multiple bind poses", "Colorize skeleton")),
     Window("parent_constraint", "Parent Constraint Options", "Add", ("allset.constrain", {"type": 'CHILD_OF'}), [
         F("maintain_offset", "Maintain offset:", "bool", True),
         F("all_t", "Translate:", "bool", True, text="All"), F("tx", "", "bool", False, text="X"),
@@ -487,7 +455,8 @@ WINDOWS = [
 
 
 def _extend():
-    # step 140: more windows live in their own modules (they import F / Window from here)
+    # step 140: more windows live in their own modules (they import F / Window from here); Bind Skin and Duplicate
+    # Special moved there with every Maya field (option_windows_rig.bind_skin_maya / option_windows_edit)
     from . import option_windows_edit, option_windows_rig
     WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS)
 
@@ -659,7 +628,10 @@ def _make(window):
                 col.column(heading=f.label.rstrip(":")).prop(self, f.name, text=f.text or "")
                 continue
             elif f.kind == "enum":
-                col.row().prop(self, f.name, text=f.label.rstrip(":"), expand=len(f.items) <= 4)
+                # an enum without a label is Maya's combo beside the row above (Joint Tool " + "): a drop-down, as
+                # expanded buttons without a label Blender stacks it as empty bars
+                col.row().prop(self, f.name, text=f.label.rstrip(":") or " ",
+                               expand=bool(f.label) and len(f.items) <= 4)
             else:
                 col.prop(self, f.name, text=f.label.rstrip(":"))
         if window.missing:
