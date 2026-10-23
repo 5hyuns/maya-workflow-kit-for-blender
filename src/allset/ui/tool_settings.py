@@ -19,6 +19,8 @@ import math
 import bpy
 
 from ..operators.mesh_tools import CREASE_TOOL, TARGET_WELD_TOOL
+from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
+from ..operators.quad_draw import TOOL as QUAD_DRAW_TOOL
 from .manipulator import KINDS, SLOT, active_tool
 
 # Maya factory axis per tool (pivot_snap.md P12); the same values tools/make_startup.py writes into the template.
@@ -29,8 +31,7 @@ MAYA_ROTATE_STEP = math.radians(15.0)
 TOOL_OPERATORS = {"builtin.move": ("transform.translate",), "builtin.rotate": ("transform.rotate",),
                   "builtin.scale": ("transform.resize",), "builtin.select_box": ("view3d.select_box",),
                   "builtin.select_lasso": ("view3d.select_lasso",), "builtin.select_circle": ("view3d.select_circle",),
-                  "builtin.loop_cut": ("mesh.loopcut_slide",), "builtin.edge_slide": ("transform.edge_slide",),
-                  "builtin.poly_build": ("mesh.polybuild_face_at_cursor_move",)}
+                  "builtin.loop_cut": ("mesh.loopcut_slide",), "builtin.edge_slide": ("transform.edge_slide",)}
 
 # Step 129: the other tools with Maya Tool Settings sections. Maya tool
 # (runTimeCommand in ) -> Blender tool; checked in Maya 2022: 
@@ -38,7 +39,9 @@ TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT',            
          "builtin.select_lasso": 'LASSO', "builtin.select_circle": 'PAINT_SELECT',  # LassoTool, ArtPaintSelectTool
          "builtin.loop_cut": 'INSERT_EDGE_LOOP', "builtin.edge_slide": 'SLIDE_EDGE',  # SplitEdgeRingTool, SlideEdgeTool
          TARGET_WELD_TOOL: 'TARGET_WELD', CREASE_TOOL: 'CREASE',                    # MergeVertexTool, PolyCreaseTool
-         "builtin.poly_build": 'QUAD_DRAW'}         # QuadDrawTool / CreatePolygonTool / AppendToPolygonTool (menu_map)
+         # step 144: the kit's QuadDrawTool / CreatePolygonTool / AppendToPolygonTool (ui/mesh_tools_poly.py)
+         QUAD_DRAW_TOOL: 'QUAD_DRAW', CREATE_TOOL: 'CREATE_POLYGON', APPEND_TOOL: 'APPEND_POLYGON'}
+POLY_KINDS = ('QUAD_DRAW', 'CREATE_POLYGON', 'APPEND_POLYGON')
 KIND_OF = {**KINDS, **TOOLS}
 MANIP = ('TRANSLATE', 'ROTATE', 'RESIZE')
 
@@ -124,6 +127,10 @@ def reset_kind_defaults(context, kind, tool=None):
         props = _op_props(tool or active_tool(context), "view3d.select_circle")
         if props is not None:
             props.mode = 'ADD'
+    elif kind in POLY_KINDS:
+        from ..operators import poly_draw
+        poly_draw.reset_settings(poly_draw.settings(context), {'QUAD_DRAW': 'QUAD_DRAW', 'CREATE_POLYGON': 'CREATE',
+                                                              'APPEND_POLYGON': 'APPEND'}[kind])
     elif kind in ('TARGET_WELD', 'CREASE'):
         from ..operators import mesh_tools
         s = mesh_tools.settings(context)
@@ -176,7 +183,8 @@ TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scal
               # step 129: Maya 2022 Tool Settings titles (contextInfo -t, )
               'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
               'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
-              'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool"}
+              'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool",
+              'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append to Polygon Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
 SELECTING = ('SELECT', 'LASSO')
 # (key, title, open by default: True / False / the kinds where it starts open, kinds that have it). One order for
@@ -193,10 +201,10 @@ SECTIONS = (
     ("attr_maps", "Attribute Maps", False, ('PAINT_SELECT',)),
     ("paint_display", "Display", False, ('PAINT_SELECT',)),
     ("description", "Description", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE')),
-    ("tool", "Settings", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE', 'QUAD_DRAW')),
+    ("tool", "Settings", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE', *POLY_KINDS)),
     ("slide_snap", "Snapping Settings", True, ('SLIDE_EDGE',)),
     ("live", "Live Constraint Options", False, ('QUAD_DRAW',)),
-    ("shortcuts", "Keyboard/Mouse Shortcuts", False, ('TARGET_WELD', 'QUAD_DRAW')),
+    ("shortcuts", "Keyboard/Mouse Shortcuts", False, ('TARGET_WELD', *POLY_KINDS)),
     ("selection", "Common Selection Options", ('SELECT',), (*MANIP, 'SELECT')),
     ("soft", "Soft Selection", False, (*MANIP, *SELECTING)),
     ("symmetry", "Symmetry Settings", False, (*MANIP, *SELECTING)),
@@ -268,12 +276,8 @@ TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
     "Target Weld/MMB": ("Merge To: Center", "Middle-drag isn't bound: set Merge To to Center and drag with the left button"),
     "Crease/Extend to creased components": ("Select Similar",
                                             "Select the creased edges with Select > Select Similar > Crease first"),
-    "Quad Draw/Auto-weld": ("Poly Build", "The kit's Quad Draw is Blender's Poly Build: it welds to existing vertices"),
-    "Quad Draw/Relax": ("Mesh > Smooth Vertices", "Poly Build doesn't relax; smooth the vertices afterwards"),
-    "Quad Draw/Extend": ("Poly Build keys", "Poly Build extends a border edge face by face (Keyboard/Mouse Shortcuts)"),
-    "Quad Draw/Quad Strip Width": ("Poly Build keys", "Poly Build has no quad strips; add the faces one by one"),
-    "Quad Draw/Clear Dots": ("no dots", "Poly Build places vertices, not dots"),
-    "Quad Draw/Live Constraint": ("Snap to Face", "Draw on a live surface with Face snapping (Make Live)"),
+    "Quad Draw/Live Constraint": ("Make Live",
+                                  "The kit draws on the live surface, else on every other visible mesh; no colour options"),
 }.items()})
 
 
@@ -642,20 +646,17 @@ def _draw_crease(layout, context):
           text="Extend to creased components", check=False)
 
 
-def _draw_quad_draw(layout, context):
-    macro = _op_props(active_tool(context), "mesh.polybuild_face_at_cursor_move")
-    _grey(_labelled(layout, "Auto-weld:"), "Quad Draw/Auto-weld", text="10", check=True)
-    _grey(_labelled(layout, "Relax:"), "Quad Draw/Relax", text="Auto-Lock")
-    _grey(_labelled(layout, "Extend:"), "Quad Draw/Extend", text="Edge")
-    _grey(_labelled(layout, "Quad Strip Width:"), "Quad Draw/Quad Strip Width", text="20")
-    _grey(_labelled(layout, ""), "Quad Draw/Clear Dots", text="Clear Dots")
-    if macro is not None:   # Blender's own Poly Build option: new faces from a vertex become quads
-        _labelled(layout, "Quads:").prop(macro.MESH_OT_polybuild_face_at_cursor, "create_quads", text="Create Quads")
+def _draw_poly(kind):
+    def draw(layout, context):     # step 144: the kit tools' Maya fields (ui/mesh_tools_poly.py)
+        from . import mesh_tools_poly as mtp
+        {'QUAD_DRAW': mtp.draw_quad_draw, 'CREATE_POLYGON': mtp.draw_create,
+         'APPEND_POLYGON': mtp.draw_append}[kind](layout, context)
+    return draw
 
 
 def draw_tool(layout, context, kind):
     {'INSERT_EDGE_LOOP': _draw_insert_edge_loop, 'SLIDE_EDGE': _draw_slide_edge, 'TARGET_WELD': _draw_target_weld,
-     'CREASE': _draw_crease, 'QUAD_DRAW': _draw_quad_draw}[kind](layout, context)
+     'CREASE': _draw_crease, **{k: _draw_poly(k) for k in POLY_KINDS}}[kind](layout, context)
 
 
 def draw_slide_snap(layout, context, kind):
@@ -665,10 +666,8 @@ def draw_slide_snap(layout, context, kind):
 
 
 def draw_live(layout, context, kind):
-    _grey(_labelled(layout, ""), "Quad Draw/Live Constraint", text="Wireframe Overlay, Mesh Color / Alpha ...")
-
-
-POLY_BUILD_KEYMAP = "3D View Tool: Edit Mesh, Poly Build"
+    from . import mesh_tools_poly
+    mesh_tools_poly.draw_live(layout, context)
 
 
 def keymap_rows(context, name):
@@ -695,13 +694,9 @@ def draw_shortcuts(layout, context, kind):
         split.label(text="Drag to merge components")
         _grey(layout, "Target Weld/MMB", text="MMB: drag to merge components to center")
         return
-    rows = keymap_rows(context, POLY_BUILD_KEYMAP)
-    if not rows:
-        layout.label(text="Poly Build keys: hover the tool for its tooltip")
-    for keys, label in rows:
-        split = layout.split(factor=0.42)
-        split.label(text=keys)
-        split.label(text=label)
+    from . import mesh_tools_poly as mtp
+    mtp.draw_shortcuts(layout, {'QUAD_DRAW': mtp.QUAD_DRAW_SHORTCUTS, 'CREATE_POLYGON': mtp.CREATE_SHORTCUTS,
+                                'APPEND_POLYGON': mtp.APPEND_SHORTCUTS}[kind])
 
 
 OTHER_SECTIONS = {"lasso": draw_lasso, "brush": draw_brush, "paint_ops": draw_paint_ops, "stroke": draw_stroke,

@@ -73,7 +73,7 @@ BY_COMMAND = {
     "PolygonCollapse": ("mesh.edge_collapse", 'FULLSCREEN_EXIT'),
     "dR_multiCutTool": (("tool", "allset.multi_cut_tool", True), 'SCULPTMODE_HLT'),
     "MergeVertexTool": (("tool", "allset.target_weld_tool", True), 'AUTOMERGE_OFF'),   # Target Weld (step 64)
-    "dR_quadDrawTool": (("tool", "builtin.poly_build", True), 'MESH_DATA'),
+    "dR_quadDrawTool": ("allset.quad_draw_start", 'MESH_DATA'),     # step 144 (#30)
     "TextureViewWindow": (("allset.hb_pane", {"ui_type": 'UV'}), 'UV'),
     "SetCutSewUVTool": ("allset.cut_sew_tool_set", 'UV_EDGESEL'),   # step 79
     # --- Sculpting ---

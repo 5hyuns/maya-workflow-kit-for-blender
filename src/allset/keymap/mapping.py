@@ -274,8 +274,9 @@ ENTRIES = {
     "MultiCutToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "allset.multi_cut_tool"}),
                                   note="kit Multi-Cut 툴 (step 129), 오브젝트 모드면 편집 모드로; 툴 안 Ctrl+클릭 = 엣지 "
                                        "루프 (Ctrl+MMB 가운데), Shift = Snap Step %, Backspace, Enter/RMB 완료"),
-    "QuadDrawToolNameCommand": _e("KIT", (OBJ, "allset.menu_tool", {"tool": "builtin.poly_build"}),
-                                  note="Poly Build, 오브젝트 모드면 편집 모드로"),
+    "QuadDrawToolNameCommand": _e("KIT", (OBJ, "allset.quad_draw_start", {}),
+                                  note="kit Quad Draw 툴 (step 144): 선택한 메시 / 새 polySurfaceN 편집, 라이브 표면 위 점, "
+                                       "Shift+클릭 채우기, Ctrl+클릭 루프, Ctrl+Shift+클릭 지우기, Tab+드래그 연장"),
     "CompleteCurrentTool": _e("NO", note="Blender 모달 툴은 자기 키맵의 Return 으로 확정; 3D 뷰의 IC 이름 바꾸기 팝오버는 제거"),
 
     # --- Not applicable ---
