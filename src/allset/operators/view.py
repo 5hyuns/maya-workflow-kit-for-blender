@@ -99,7 +99,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
 # --- Alt+RMB dolly in the UV / Image Editor (step 141, B4) ---------------------------------
 # Maya dollies 2D panels with Alt+RMB too (). IC's image.view_zoom reads the drag axis
 # from Blender's Zoom Axis preference (factory Vertical), so like allset.dolly the drag is read here and applied with
-# image.view_zoom exec (centred, like Blender's factory "Zoom to Mouse Position" off; delegated).
+# a plain image.view_zoom call with a factor (centred, like Blender's factory "Zoom to Mouse Position" off; delegated).
 
 
 def dolly_zoom_factor(dx, dy, ui_scale=1.0):
@@ -125,7 +125,7 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def step(self, context, dx, dy):
-        """Zoom by one drag step (also used by tests: headless there is no modal)."""
+        """Zoom by one drag step."""
         factor = dolly_zoom_factor(dx, dy, context.preferences.system.ui_scale or 1.0)
         if abs(factor - 1.0) > 1e-6:
             bpy.ops.image.view_zoom('EXEC_DEFAULT', factor=factor)

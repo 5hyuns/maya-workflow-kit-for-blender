@@ -187,6 +187,10 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            # Step 107: paint / sculpt mode keymaps (the mode keymap on top of the 3D View ones).
            **{km: ("Window", "Screen", "Frames", "3D View", "3D View Generic", km, "Object Non-modal")
               for km in ("Weight Paint", "Sculpt")},
+           # Step 141: the other modes where Ctrl+A was IC select-all (Ctrl+A = AE / CB swap there now).
+           **{km: ("Window", "Screen", "Frames", "3D View", "3D View Generic", km, "Object Non-modal")
+              for km in ("Particle", "Point Cloud", "Sculpt Curves", "Paint Face Mask (Weight, Vertex, Texture)",
+                         "Paint Vertex Selection (Weight, Vertex)")},
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 
