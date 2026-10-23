@@ -9,11 +9,15 @@ of it, and the Maya presets — a Maya scene is in cm with Y up, so exchange for
 (``import_args`` / ``export_args``, pure functions the headless tests check) — then runs the format's own operator.
 """
 
+import math
 import os
+import re
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
+from mathutils import Matrix
 
+from .. import compat
 from . import project, units
 
 # (id, Files of type label, extension written, file filter)
@@ -62,11 +66,16 @@ def import_args(fmt, k, maya=True):
     Maya writes centimetres with Y up (): FBX carries its unit and axes and Blender's
     importer converts both itself; OBJ and Alembic have no unit, so their numbers are Maya units (× k) and Y up;
     USD carries metersPerUnit, which Blender converts to metres, so cm files need ×100 to become Maya units.
+    Blender's readers leave that conversion on the objects' channels (Rotate X 90, Scale 0.01, step 133 I2):
+    ``after_import`` moves it into the geometry (step 138; FBX's own ``bake_space_transform`` does it there).
+    Maya writes frame 1 at FBX time 1/24 s, which Blender already reads as frame 1 (no extra offset, checked).
+    OBJ: Maya names the object with ``g`` (no ``o`` line), so groups split the objects.
     """
     if fmt == 'FBX':
-        return "import_scene.fbx", {}
+        return "import_scene.fbx", ({"bake_space_transform": True, "anim_offset": 0.0} if maya else {})
     if fmt == 'OBJ':
-        return "wm.obj_import", ({"global_scale": k, "forward_axis": 'NEGATIVE_Z', "up_axis": 'Y'} if maya else {})
+        return "wm.obj_import", ({"global_scale": k, "forward_axis": 'NEGATIVE_Z', "up_axis": 'Y',
+                                  "use_split_groups": True} if maya else {})
     if fmt == 'ABC':
         return "wm.alembic_import", ({"scale": k} if maya else {})
     if fmt == 'USD':
@@ -78,13 +87,19 @@ def import_args(fmt, k, maya=True):
 
 def export_args(fmt, k, selection, maya=True):
     """(operator id, kwargs) that write ``fmt`` the way Maya reads it back: centimetres (one Maya unit per
-    ``k`` BU), Y up; ``selection`` = only the selected objects (Export Selection)."""
+    ``k`` BU), Y up; ``selection`` = only the selected objects (Export Selection).
+
+    Step 138: Maya must read the same channels the kit shows — no Rotate X -90 / Scale 100 from the axis / unit
+    conversion. FBX bakes it into the geometry itself (``bake_space_transform``) and writes the timeline as one
+    take (the NLA-strip default wrote no animation without strips); OBJ gets ``g`` lines and Alembic / USD are
+    scaled / converted around Blender's writers (``write``, ``after_export``)."""
     if fmt == 'FBX':
         # Blender's FBX writer stores the scene unit (UnitScaleFactor) and Maya converts it to cm on import
         args = {"use_selection": selection}
         if maya:
             args.update(axis_forward='-Z', axis_up='Y', apply_unit_scale=True, global_scale=1.0,
-                        apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_anim_use_all_actions=False)
+                        apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_space_transform=True,
+                        bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False)
         return "export_scene.fbx", args
     if fmt == 'OBJ':
         args = {"export_selected_objects": selection}
@@ -94,17 +109,436 @@ def export_args(fmt, k, selection, maya=True):
     if fmt == 'ABC':
         args = {"selected": selection}
         if maya:
-            args.update(global_scale=1.0 / k)        # Blender's Alembic writer is always Y up
+            # Blender's Alembic writer is always Y up; its global_scale lands on the root transforms, so
+            # ``write`` scales the objects' geometry / offsets around it (_abc_maya_scale)
+            args.update(global_scale=1.0 / k)
         return "wm.alembic_export", args
     if fmt == 'USD':
         args = {"selected_objects_only": selection}
         if maya:
-            args.update(convert_orientation=True, export_global_forward_selection='NEGATIVE_Z',
-                        export_global_up_selection='Y', convert_scene_units='CUSTOM', meters_per_unit=k)
+            # one prim per transform + shape like mayaUsd, no "/root" prim, no world dome light ("env_light");
+            # axes and units: ``usd_maya_axes`` after the write (Blender's own conversion lands on the prims)
+            args.update(root_prim_path="", merge_parent_xform=True, convert_world_material=False)
         return "wm.usd_export", args
     if fmt == 'GLTF':
         return "export_scene.gltf", {"use_selection": selection, "export_yup": True}
     raise ValueError(fmt)
+
+
+# --- step 138: the conversion goes into the geometry, not onto the channels ----------------------------
+#
+# Maya reads its transforms' channels straight from the file, so a Y-up / cm conversion written as a root
+# rotation or scale shows as Rotate X -90 / Scale 100 in Maya ( I1, I3) and Blender's readers
+# leave the reverse on the kit's channels (I2). The kit instead conjugates: a transform M becomes C M C^-1 and
+# geometry p becomes C p (C = axes x units), so channels read the same numbers in both programs (the kit's
+# Z-up axes: Maya translate (1, 2, 3) = kit (1, -3, 2), rotate Y = kit rotate Z). checked :
+# 
+
+_SUFFIX = re.compile(r"^(.*)\.\d{3}$")
+_TRAIL = re.compile(r"^(.*?)(\d*)$")
+SCOPE_NAMES = ("Looks", "_materials", "materials", "mtl")      # USD material scopes (mayaUsd / Blender)
+MAYA_MPU = 0.01        # Maya's internal unit is cm: kit USD files carry Maya-unit numbers with metersPerUnit 0.01
+
+
+def shape_name(name):
+    """Maya's shape name for transform ``name``: pCube1 -> pCubeShape1, box -> boxShape (same rule as
+    ui/input_line.shape_name)."""
+    m = _TRAIL.match(name)
+    return f"{m.group(1)}Shape{m.group(2)}" if m.group(1) and m.group(2) else f"{name}Shape"
+
+
+def maya_free_name(name, used):
+    """Maya's name for an imported node whose name is taken: the trailing number goes up (pCube1 -> pCube2);
+    ``name`` may carry Blender's ``.001`` clash suffix."""
+    m = _SUFFIX.match(name)
+    base = m.group(1) if m else name
+    if base not in used:
+        return base
+    stem, num = _TRAIL.match(base).groups()
+    n = int(num) + 1 if num else 1
+    while f"{stem}{n}" in used:
+        n += 1
+    return f"{stem}{n}"
+
+
+def _axis_matrix(up_y):
+    """File axes -> kit axes: Y up becomes Z up (rotate X 90), as Blender's readers do."""
+    return Matrix.Rotation(math.radians(90.0), 4, 'X') if up_y else Matrix.Identity(4)
+
+
+def _parents_first(obs):
+    obs = list(obs)
+    rank = {}
+
+    def depth(ob):
+        if ob not in rank:
+            rank[ob] = 0 if ob.parent is None else depth(ob.parent) + 1
+        return rank[ob]
+    return sorted(obs, key=depth)
+
+
+def _bakeable(ob):
+    """Objects whose data can take the conversion (others keep the reader's world matrix)."""
+    if ob.type == 'EMPTY':
+        return True
+    if ob.type not in ('MESH', 'CURVE') or ob.data is None:
+        return False
+    if any(m.type in ('MESH_SEQUENCE_CACHE', 'ARMATURE') for m in ob.modifiers):
+        return False
+    return "transform" in ob.data.bl_rna.functions
+
+
+def bake_conversion(context, obs, conv):
+    """Move the reader's conversion ``conv`` (object world = true world @ conv) from the channels of the
+    imported objects ``obs`` into their geometry. Transform Cache constraints (animated Alembic / USD) become
+    keys on every frame of the scene range (the reader sets it to the file's), so the Channel Box shows Maya's
+    numbers; cameras and lights only lose the unit scale (their local axes keep the reader's orientation)."""
+    scene = context.scene
+    obs = _parents_first(obs)
+    if not obs:
+        return
+    scale = conv.to_scale()[0]
+    unscale = Matrix.Scale(1.0 / scale, 4)
+    conv_inv = conv.inverted_safe()
+    users = {}
+    for ob in obs:
+        if ob.data is not None:
+            users.setdefault(ob.data, []).append(ob)
+    bake = {ob for ob in obs if _bakeable(ob)}
+    for data, owners in users.items():          # data shared with an object that can't bake: leave all
+        if data.users != len(owners) or not all(o in bake for o in owners):
+            bake.difference_update(owners)
+    cached = [ob for ob in obs if any(c.type == 'TRANSFORM_CACHE' for c in ob.constraints)]
+    animated = any(ob in bake or ob.type in ('CAMERA', 'LIGHT') for ob in cached)
+    frames = list(range(scene.frame_start, scene.frame_end + 1)) if animated else [scene.frame_current]
+    keep_frame = scene.frame_current
+    worlds = {ob: [] for ob in obs}
+    for f in frames:
+        if len(frames) > 1:
+            scene.frame_set(f)
+        for ob in obs:
+            worlds[ob].append(ob.matrix_world.copy())
+    if len(frames) > 1:
+        scene.frame_set(keep_frame)
+    target = {}
+    for ob in obs:
+        if ob in bake:
+            target[ob] = [w @ conv_inv for w in worlds[ob]]
+        elif ob.type in ('CAMERA', 'LIGHT'):
+            target[ob] = [w @ unscale for w in worlds[ob]]
+    caches = set()
+    for ob in target:
+        for con in [c for c in ob.constraints if c.type == 'TRANSFORM_CACHE']:
+            caches.add(con.cache_file)
+            ob.constraints.remove(con)
+    for cache in caches:
+        if cache is not None and cache.users == 0:
+            bpy.data.batch_remove([cache])       # (CacheFile has no remove())
+    for data in {ob.data for ob in bake if ob.data is not None}:
+        if isinstance(data, bpy.types.Mesh):
+            data.transform(conv, shape_keys=True)
+        else:
+            data.transform(conv)
+    for ob in bake:
+        if ob.type == 'EMPTY':
+            ob.empty_display_size *= scale
+    for ob in obs:
+        if ob not in target:
+            continue
+        par = ob.parent
+        locals_ = []
+        for i, w in enumerate(target[ob]):
+            pw = target[par][i] if par in target else (worlds[par][i] if par in worlds else
+                                                         (par.matrix_world if par else Matrix.Identity(4)))
+            locals_.append(pw.inverted_safe() @ w)
+        ob.matrix_parent_inverse = Matrix.Identity(4)
+        static = all(_close(m, locals_[0]) for m in locals_[1:])
+        if static:
+            ob.matrix_basis = locals_[0]
+            continue
+        _key_matrices(ob, frames, locals_)
+
+
+def _close(a, b, eps=1e-6):
+    return all(abs(a[i][j] - b[i][j]) < eps for i in range(4) for j in range(4))
+
+
+def _key_matrices(ob, frames, mats):
+    """Keys on location / rotation / scale at ``frames`` holding the local matrices ``mats``."""
+    rot_path = {'QUATERNION': "rotation_quaternion", 'AXIS_ANGLE': "rotation_axis_angle"}.get(
+        ob.rotation_mode, "rotation_euler")
+    prev = None
+    for f, m in zip(frames, mats):
+        loc, quat, scl = m.decompose()
+        ob.location, ob.scale = loc, scl
+        if rot_path == "rotation_euler":
+            eul = quat.to_euler(ob.rotation_mode, prev) if prev is not None else quat.to_euler(ob.rotation_mode)
+            ob.rotation_euler = prev = eul
+        elif rot_path == "rotation_quaternion":
+            ob.rotation_quaternion = quat
+        else:
+            axis, angle = quat.to_axis_angle()
+            ob.rotation_axis_angle = (angle, *axis)
+        for path in ("location", rot_path, "scale"):
+            ob.keyframe_insert(path, frame=f)
+
+
+def maya_names(obs, materials, path):
+    """Maya's names for what an import made: clashes count up (pCube1.001 -> pCube2, lambert1.001 ->
+    lambert2), shapes are <transform>Shape (Maya FBX / OBJ / USD files name meshes "Mesh", after the file
+    or after the transform)."""
+    stem = os.path.splitext(os.path.basename(path))[0]
+    used = {o.name for o in bpy.data.objects}
+    for ob in obs:
+        if _SUFFIX.match(ob.name):
+            used.discard(ob.name)
+            ob.name = maya_free_name(ob.name, used)
+            used.add(ob.name)
+    used_data = {d.name for coll in (bpy.data.meshes, bpy.data.curves) for d in coll}
+    for ob in obs:
+        data = ob.data
+        if ob.type not in ('MESH', 'CURVE', 'SURFACE') or data is None or data.users != 1:
+            continue
+        base = _SUFFIX.match(data.name).group(1) if _SUFFIX.match(data.name) else data.name
+        if base in (ob.name, "Mesh", stem, "") or _SUFFIX.match(data.name):
+            want = shape_name(ob.name) if base in (ob.name, "Mesh", stem, "") else base
+            used_data.discard(data.name)
+            data.name = want if want not in used_data else maya_free_name(want, used_data)
+            used_data.add(data.name)
+    used_mats = {m.name for m in bpy.data.materials}
+    for mat in materials:
+        if _SUFFIX.match(mat.name):
+            used_mats.discard(mat.name)
+            mat.name = maya_free_name(mat.name, used_mats)
+            used_mats.add(mat.name)
+
+
+def _usd_stage_info(path):
+    """(up axis is Y, metersPerUnit, Scope prim names) of a USD file; None without pxr."""
+    try:
+        from pxr import Usd, UsdGeom
+    except ImportError:
+        return None
+    stage = Usd.Stage.Open(path)
+    if stage is None:
+        return None
+    scopes = {p.GetName() for p in stage.Traverse() if p.GetTypeName() == "Scope"}
+    return UsdGeom.GetStageUpAxis(stage) == UsdGeom.Tokens.y, UsdGeom.GetStageMetersPerUnit(stage), scopes
+
+
+def after_import(context, fmt, path, obs, materials, args):
+    """Maya channels and names on what a Maya-preset import made (``obs`` = the new objects)."""
+    if fmt == 'OBJ':
+        # OBJ has no transforms: the reader's whole matrix is the conversion
+        for ob in obs:
+            if ob.parent is None and _bakeable(ob):
+                bake_conversion(context, [ob], ob.matrix_world.copy())
+    elif fmt == 'ABC':
+        # Blender's Alembic reader turns Y up into Z up itself; only the scale stays on the channels
+        bake_conversion(context, obs, Matrix.Scale(args.get("scale", 1.0), 4))
+    elif fmt == 'USD':
+        info = _usd_stage_info(path)
+        if info is not None:
+            up_y, mpu, scopes = info
+            c = args.get("scale", 1.0) * (mpu if args.get("apply_unit_conversion_scale", True) else 1.0)
+            for ob in [o for o in obs if o.type == 'EMPTY' and o.name.split(".")[0] in scopes | set(SCOPE_NAMES)
+                       and not o.children]:
+                obs.remove(ob)
+                bpy.data.objects.remove(ob)
+            bake_conversion(context, obs, _axis_matrix(up_y) @ Matrix.Scale(c, 4))
+    maya_names(obs, materials, path)
+
+
+def _write_obj_groups(path):
+    """Maya's OBJ reader names objects after ``g`` lines and ignores ``o``: add ``g <name>`` after every
+    ``o <name>`` Blender writes (step 133 I4: the cube came in as "Mesh")."""
+    with open(path, encoding="utf-8", errors="surrogateescape") as fh:
+        lines = fh.readlines()
+    if any(line.startswith("g ") for line in lines):
+        return
+    out = []
+    for line in lines:
+        out.append(line)
+        if line.startswith("o "):
+            out.append("g " + line[2:])
+    with open(path, "w", encoding="utf-8", errors="surrogateescape") as fh:
+        fh.writelines(out)
+
+
+def _scale_group(s):
+    """Geometry Nodes group that scales the geometry by ``s`` (temporary, Alembic export)."""
+    ng = bpy.data.node_groups.new(".allset_export_scale", 'GeometryNodeTree')
+    ng.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket("Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    gi, go = ng.nodes.new('NodeGroupInput'), ng.nodes.new('NodeGroupOutput')
+    tr = ng.nodes.new('GeometryNodeTransform')
+    tr.inputs["Scale"].default_value = (s, s, s)
+    ng.links.new(gi.outputs[0], tr.inputs["Geometry"])
+    ng.links.new(tr.outputs["Geometry"], go.inputs[0])
+    return ng
+
+
+def _abc_scalable(obs):
+    for ob in obs:
+        if ob.type not in ('MESH', 'EMPTY', 'CAMERA', 'LIGHT') or ob.constraints or ob.parent_type != 'OBJECT':
+            return False
+        if ob.library is not None:            # linked objects can't take the temporary changes
+            return False
+        ad = ob.animation_data
+        if ad is not None and any(fc.data_path == "delta_scale" for fc in
+                                  list(compat.id_fcurves(ob)) + list(ad.drivers)):
+            return False                       # animated delta scale would undo the temporary one
+        if any(m.type == 'ARMATURE' for m in ob.modifiers):
+            return False
+    return True
+
+
+class _AbcMayaScale:
+    """Blender's Alembic writer puts ``global_scale`` s on the root transforms (S M, Scale 100 in Maya). For
+    the export only, every object gets delta scale 1/s and a last Geometry Nodes modifier scaling its mesh by
+    s, and every parent inverse S PI: the world geometry is unchanged, the evaluated worlds are W S^-1, so the
+    writer's roots become S W S^-1 and children (S PI) M S^-1 — Maya's numbers with Scale 1. Scenes it can't
+    do exactly (armatures, constraints, curves ...) keep Blender's root scale."""
+
+    def __init__(self, context, s):
+        self.s = s
+        self.obs = list(context.view_layer.objects)
+        self.on = abs(s - 1.0) > 1e-9 and _abc_scalable(self.obs)
+        self.saved, self.mods, self.group = [], [], None
+
+    def __enter__(self):
+        if not self.on:
+            return self
+        s = self.s
+        self.group = _scale_group(s)
+        smat = Matrix.Scale(s, 4)
+        for ob in self.obs:
+            self.saved.append((ob, ob.delta_scale.copy(), ob.matrix_parent_inverse.copy()))
+            ob.delta_scale = ob.delta_scale / s
+            if ob.parent is not None:
+                ob.matrix_parent_inverse = smat @ ob.matrix_parent_inverse
+            if ob.type == 'MESH':
+                mod = ob.modifiers.new(".allset_export_scale", 'NODES')
+                mod.node_group = self.group
+                mod.show_in_editmode = False
+                self.mods.append((ob, mod))
+        return self
+
+    def __exit__(self, *exc):
+        for ob, mod in self.mods:
+            ob.modifiers.remove(mod)
+        for ob, ds, pi in self.saved:
+            ob.delta_scale = ds
+            ob.matrix_parent_inverse = pi
+        if self.group is not None:
+            bpy.data.node_groups.remove(self.group)
+        return False
+
+
+def usd_maya_axes(path, k):
+    """Rewrite a Blender-written USD (Z up, BU) the Maya way: Y up, Maya units (metersPerUnit 0.01), every
+    transform conjugated (C M C^-1, cameras / lights C M S^-1 so their view axis stays) and every point / normal
+    converted. Returns False (file untouched) when pxr or the stage can't do it (skeletons, usdz)."""
+    try:
+        import numpy as np
+        from pxr import Gf, Usd, UsdGeom, Vt
+    except ImportError:
+        return False
+    if path.lower().endswith(".usdz"):
+        return False
+    stage = Usd.Stage.Open(path)
+    if stage is None or any(p.GetTypeName().startswith("Skel") for p in stage.Traverse()):
+        return False
+    s = 1.0 / k
+    axes = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+    conv = Matrix.Scale(s, 4) @ axes
+    unscale = Matrix.Scale(s, 4)
+    lin = np.array(conv.to_3x3(), dtype=np.float64)
+    rot = np.array(axes.to_3x3(), dtype=np.float64)
+    oriented = ("Camera", "DistantLight", "SphereLight", "RectLight", "DiskLight", "CylinderLight")
+
+    def mat(gf):
+        return Matrix([list(gf.GetRow(i)) for i in range(4)]).transposed()
+
+    def samples(attr):
+        times = attr.GetTimeSamples()
+        return [(t, attr.Get(t)) for t in times] if times else [(Usd.TimeCode.Default(), attr.Get())]
+
+    def convert_array(attr, m3):
+        if not attr or not attr.HasAuthoredValue():
+            return
+        for t, val in samples(attr):
+            if val is None or len(val) == 0:
+                continue
+            arr = np.array(val, dtype=np.float64) @ m3.T
+            attr.Set(type(val).FromNumpy(arr.astype(np.float32)) if hasattr(type(val), "FromNumpy")
+                     else Vt.Vec3fArray.FromNumpy(arr.astype(np.float32)), t)
+
+    for prim in stage.Traverse():
+        typ = prim.GetTypeName()
+        if typ == "Xform" and prim.HasAttribute("faceVertexCounts"):
+            # Blender 4.5 writes a merged transform + mesh as an Xform prim holding the mesh attributes (no
+            # mesh in Maya or Blender, checked): it is the mesh prim mayaUsd writes (Mesh "pCube1")
+            prim.SetTypeName("Mesh")
+            typ = "Mesh"
+        if prim.IsA(UsdGeom.Xformable):
+            xf = UsdGeom.Xformable(prim)
+            ops = xf.GetOrderedXformOps()
+            times = sorted({t for op in ops for t in op.GetAttr().GetTimeSamples()})
+            codes = [Usd.TimeCode(t) for t in times] or [Usd.TimeCode.Default()]
+            pre = unscale if prim.GetParent().GetTypeName() in oriented else conv
+            post = unscale.inverted() if typ in oriented else conv.inverted()
+            mats = [pre @ mat(xf.GetLocalTransformation(c)) @ post for c in codes]
+            for op in ops:
+                prim.RemoveProperty(op.GetName())
+            xf.ClearXformOpOrder()
+            t_op, r_op, s_op = xf.AddTranslateOp(), xf.AddRotateXYZOp(), xf.AddScaleOp()
+            prev = None
+            for c, m in zip(codes, mats):
+                loc, quat, scl = m.decompose()
+                eul = quat.to_euler('XYZ', prev) if prev is not None else quat.to_euler('XYZ')
+                prev = eul
+                t_op.Set(Gf.Vec3d(*loc), c)
+                r_op.Set(Gf.Vec3f(*(math.degrees(a) for a in eul)), c)
+                s_op.Set(Gf.Vec3f(*scl), c)
+        if prim.IsA(UsdGeom.PointBased):
+            pb = UsdGeom.PointBased(prim)
+            convert_array(pb.GetPointsAttr(), lin)
+            convert_array(pb.GetNormalsAttr(), rot)
+            convert_array(pb.GetVelocitiesAttr(), lin)
+            pv = UsdGeom.PrimvarsAPI(prim).GetPrimvar("normals")
+            if pv:
+                convert_array(pv.GetAttr(), rot)
+            ext = pb.GetExtentAttr()
+            if ext and ext.HasAuthoredValue():
+                for t, pts in samples(pb.GetPointsAttr()):
+                    if pts is not None and len(pts):
+                        ext.Set(UsdGeom.PointBased.ComputeExtent(pts), t)
+    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    UsdGeom.SetStageMetersPerUnit(stage, MAYA_MPU)
+    stage.GetRootLayer().Save()
+    return True
+
+
+def write(context, fmt, path, op, args, maya, k):
+    """Run Blender's writer with the Maya preset's pre / post steps (step 138)."""
+    mod, name = op.split(".")
+    run = getattr(getattr(bpy.ops, mod), name)
+    if maya and fmt == 'ABC':
+        with _AbcMayaScale(context, args.get("global_scale", 1.0)):
+            run('EXEC_DEFAULT', filepath=path, **args)
+        return
+    run('EXEC_DEFAULT', filepath=path, **args)
+    if not maya:
+        return
+    if fmt == 'OBJ':
+        _write_obj_groups(path)
+    elif fmt == 'USD' and not usd_maya_axes(path, k):
+        # no pxr / skeletons / usdz: Blender's own conversion (it lands on the top prims' channels)
+        run('EXEC_DEFAULT', filepath=path, **dict(args, convert_orientation=True,
+                                                  export_global_forward_selection='NEGATIVE_Z',
+                                                  export_global_up_selection='Y', convert_scene_units='CUSTOM',
+                                                  meters_per_unit=k))
 
 
 def preset_text(fmt, k, export):
@@ -239,6 +673,12 @@ class _FileDialog:
                     self.report({'INFO'}, f"Imported {len(obs)} object(s) from {os.path.basename(path)}")
                     return {'FINISHED'}
                 op, args = import_args(fmt, k, self.maya_conversion)
+                before, mats = set(bpy.data.objects), set(bpy.data.materials)
+                mod, name = op.split(".")
+                getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', filepath=path, **args)
+                if self.maya_conversion:
+                    after_import(context, fmt, path, [ob for ob in bpy.data.objects if ob not in before],
+                                 [m for m in bpy.data.materials if m not in mats], args)
             else:
                 if self.selection and not context.selected_objects:
                     self.report({'WARNING'}, "Nothing selected to export.")
@@ -250,8 +690,7 @@ class _FileDialog:
                     return {'FINISHED'}
                 op, args = export_args(fmt, k, self.selection, self.maya_conversion)
                 args.update(_animation_args(fmt, self.animation))
-            mod, name = op.split(".")
-            getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', filepath=path, **args)
+                write(context, fmt, path, op, args, self.maya_conversion, k)
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
