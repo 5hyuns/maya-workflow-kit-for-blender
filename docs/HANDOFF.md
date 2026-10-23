@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 142 (UI 모습 · 맞춤, #78 #77 #76 #54 #41) 완료 — `docs/steps/step_142.md` (+ `step_142_{ui,icons,media}.md`). Maya 세로 탭 띠
+  dock (Channel Box 286 px at 1.0, 뷰포트 773 → 954 px), 메뉴 막대 » 넘침 + SDK 1.5 배율, Maya 매니퓰레이터 색 · 와이어 #000460
+  (look_compare viewport 11/12), 메뉴 아이콘 190 → 675, 스토어 미디어 · 홍보 · 클립 · 사이트 미디어를 테마 없이 다시 찍음.
+  헤드리스 1234/1234, 관련 GUI 59 + 32 + 1.5 배율 35 모두 통과. 새 이슈 #83 #85 #86 #87 (0.3.0).
+  **바로 다음 할 일**: step 143 = 0.3.0 출시 준비 (버전 고정, GUI 전체 묶음, release_check, CHANGELOG, #83 #85 #86 #87 중 출시 전
+  고칠 것 결정). 144 = 0.4.0 Maya 모델링 도구 (#30 #31 #34).
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 141 (키맵 · 선택 작은 묶음, #65 #72 #73, B4 B6, quant gap 3) 완료 — `docs/steps/step_141.md` (+ `step_141_{keys,select}.md`,
   `research/maya/re/{fields_141,select_convert_141}.md`). QA 먼저 (776dd37): GUI 실행기 파일당 시간제한 TIMEOUT 보고, `GUI_SKIP` 격리
   (gui_step75_input_line, gui_step63_mtk → manual_checks), unbuffered 로그, 실행당 19 s 고정 비용 → 실패 파일은 한 번의 `-k`.
