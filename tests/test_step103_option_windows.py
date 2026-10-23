@@ -161,8 +161,9 @@ def test_edit_commands_and_transforms():
     _run("extrude", thickness=2.0, divisions=2)
     # every face of a closed cube, faces kept together: the shell moves out by the thickness (no side faces)
     assert abs(_size(ob).x - 5.0) < 1e-3 and bpy.context.mode == 'OBJECT', _size(ob)
-    _run("smooth", levels=2)
-    assert ob.modifiers[-1].type == 'SUBSURF' and ob.modifiers[-1].levels == 2
+    n0 = len(ob.data.polygons)
+    _run("smooth", levels=2)        # real polySmoothFace geometry since step 139: every quad -> 4 x 4 quads
+    assert len(ob.data.polygons) == 16 * n0 and not any(m.type == 'SUBSURF' for m in ob.modifiers),         (n0, len(ob.data.polygons), [m.type for m in ob.modifiers])
     _run("duplicate_special", copies=3, translate=(2.0, 0.0, 0.0))
     assert len([o for o in bpy.context.scene.objects if o.type == 'MESH']) == 4
     ob.location = (0.05, 0.0, 0.0)
