@@ -207,12 +207,39 @@ NOTICES.update({
                                                           "is the closest.")
        for maya, brush in (("Foamy", "Clay"), ("Wax", "Clay Strips"), ("Knife", "Crease Sharp"),
                            ("Amplify", "Sharpen"), ("Freeze", "Mask"))},
-    "Deform/Cluster": ("Hook", "Blender clusters are Hook modifiers on the selected vertices (edit mode)."),
-    "Deform/Nonlinear/Sine": ("Wave modifier", "Blender has no sine deformer: the Wave modifier ripples the surface."),
+    "Deform/Cluster": ("Hook", "Blender's cluster1 is a Hook modifier driven by cluster1Handle; its weights are the "
+                       "vertex group cluster1."),
+    # step 144 (#34, docs/steps/step_144_deform.md): the Deform menu's Blender constructs and the Maya deformers
+    # Blender has none of
+    "Deform/Nonlinear/Sine": ("Wave modifier", "Blender has no sine deformer: sine1 is a Wave modifier along X "
+                              "around sine1Handle (Blender's wave shape, no bounds)."),
+    "Deform/Lattice": ("Lattice modifier", "ffd1Lattice drives the Lattice modifier ffd1; Blender's lattice is its "
+                       "own rest shape (no ffd1Base)."),
+    "Deform/Wrap": ("Surface Deform", "wrap1 is a Surface Deform modifier bound to the influence: it follows the "
+                    "influence's shape, not its transform."),
+    "Deform/Proximity Wrap": ("Surface Deform", "proximityWrap1 is a Surface Deform modifier bound to the driver "
+                              "(Maya's Surface wrap mode)."),
+    "Deform/Tension": ("Corrective Smooth", "Blender has no tension deformer: Delta Mush (a Corrective Smooth "
+                       "modifier, Length Weight) is the closest."),
+    "Deform/Solidify": ("Rigid vertex group", "Blender has no solidify deformer (its Solidify modifier adds "
+                        "thickness): keep sections out of the deformer's vertex group instead."),
+    "Deform/Morph": ("Shape keys", "Blender has no morph deformer: Blend Shape (shape keys) morphs to a target."),
+    "Deform/Jiggle/Jiggle Deformer": ("Soft Body", "Blender has no jiggle deformer: Soft Body physics with a goal "
+                                      "vertex group is the closest."),
+    "Deform/Wire": ("Curve modifier", "Blender has no wire deformer: Curve Warp (a Curve modifier) bends a mesh "
+                    "along a curve; Hooks on the curve's points pull it."),
+    "Deform/Wrinkle": ("Sculpt mode", "Blender has no wrinkle deformer: sculpt the wrinkles (Crease brush) or use a "
+                       "Displace modifier (Deform > Texture)."),
+    "Deform/Sculpt": ("Cast modifier", "Blender has no sculpt (implicit sphere) deformer: the Cast modifier pushes "
+                      "points towards a sphere."),
     **{f"Deform/Paint Weights/{kind}": (
-        "Weight Paint", "Blender deformer weights are vertex groups: pick the modifier's group and paint it.")
-       for kind in ("Blend Shape", "Cluster", "Delta Mush", "Tension", "Proximity Wrap", "Lattice", "ShrinkWrap",
-                    "Wire", "Nonlinear", "Jiggle", "Texture Deformer")},
+        "Weight Paint", "Blender paints the deformer's vertex group in Weight Paint mode (the group of the "
+        "deformer's name).")
+       for kind in ("Blend Shape", "Cluster", "Delta Mush", "Proximity Wrap", "Lattice", "ShrinkWrap",
+                    "Nonlinear", "Texture Deformer")},
+    **{f"Deform/Paint Weights/{kind}": (
+        "Weight Paint", f"Blender has no {kind.lower()} deformer to paint (see Deform > {kind}).")
+       for kind in ("Tension", "Wire", "Jiggle")},
     **{f"Constrain/{item}": ("Shrinkwrap constraint", "Blender sticks an object to a surface with a Shrinkwrap "
                                                      "constraint (Nearest Surface Point).")
        for item in ("Closest Point", "Point On Poly")},

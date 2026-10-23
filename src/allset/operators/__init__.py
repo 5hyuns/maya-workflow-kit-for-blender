@@ -27,6 +27,10 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *poly_maya.classes, *rig_maya.classes, *loop_pick.classes,
            *render_persp.classes, *select_convert.classes, *poly_draw.classes, *quad_draw.classes)
 
+from . import deformers  # noqa: E402  step 144 DEFORM: Maya Deform menu deformers + Paint Weights (#34)
+
+classes += deformers.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
