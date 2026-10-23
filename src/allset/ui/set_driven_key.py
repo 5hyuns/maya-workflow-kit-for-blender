@@ -13,8 +13,35 @@ import bpy
 from ..operators import driven_key as sdk
 
 ROWS = 4
+MIN_ROWS = 2
 BAR = "Driver", "Driven"
 HELP = ("Pose in the Channel Box, then Key",)
+# Step 142 (#77): at UI scale 1.5 the window ran out of the dock under a full Channel Box (Load Driver / Load Driven /
+# Key below the region's bottom, GUI shot). The lists give up rows (down to MIN_ROWS) so the buttons stay in the dock:
+# UI units the window needs besides its list rows (separator, the two bars, the lists' grips and spacing, the 2 x 2
+# button grid; the help line only when there is room), measured on GUI shots at UI scale 1.0 / 1.25 / 1.5.
+FIXED_UNITS = 9.0
+HELP_UNITS = 1.2
+_room = {}          # dock area pointer -> UI units under the Channel Box (maya_dock draw, the same redraw)
+
+
+def remember_room(context, cb_units):
+    """The Channel Box above took ``cb_units`` (its ``body`` estimate) of the dock region: what is left is ours."""
+    area, region = context.area, context.region
+    if area is None or region is None or cb_units is None or region.height <= 1:
+        return
+    from . import channel_box
+    from .toolbar_fit import unit
+    system = context.preferences.system
+    u = unit(system.ui_scale or 1.0, system.pixel_size)
+    _room[area.as_pointer()] = region.height / u - cb_units - channel_box.PANE_TOP
+
+
+def list_rows(room):
+    """Rows of each list when ``room`` UI units are left (None: unknown = Maya's 4)."""
+    if room is None:
+        return ROWS
+    return max(MIN_ROWS, min(ROWS, int((room - FIXED_UNITS) / 2)))
 
 
 class ALLSET_UL_sdk_attrs(bpy.types.UIList):
@@ -52,6 +79,8 @@ def _bar(layout, text):
 
 def draw(layout, context):
     st = sdk.state(context)
+    room = _room.get(context.area.as_pointer()) if context.area is not None else None
+    rows = list_rows(room)
     layout.separator(type='LINE')
     _bar(layout, BAR[0])
     split = layout.split(factor=0.5, align=True)
@@ -60,14 +89,14 @@ def draw(layout, context):
     if drv is not None:
         left.label(text=drv.name)
     split.template_list("ALLSET_UL_sdk_attrs", "driver", st, "driver_items", st, "driver_items_index",
-                        rows=ROWS, maxrows=ROWS)
+                        rows=rows, maxrows=rows)
 
     _bar(layout, BAR[1])
     split = layout.split(factor=0.5, align=True)
     split.template_list("ALLSET_UL_sdk_nodes", "driven_nodes", st, "driven", st, "driven_index",
-                        rows=ROWS, maxrows=ROWS)
+                        rows=rows, maxrows=rows)
     split.template_list("ALLSET_UL_sdk_attrs", "driven", st, "driven_items", st, "driven_items_index",
-                        rows=ROWS, maxrows=ROWS)
+                        rows=rows, maxrows=rows)
 
     # Maya's one button row (Key · Load Driver · Load Driven · Close) as a 2 x 2 grid in the same reading
     # order: four buttons in one sidebar row cut "Load Driver" to "Load Dr..." (GUI shot, step 62).
@@ -76,8 +105,9 @@ def draw(layout, context):
     grid.operator("allset.sdk_load", text="Load Driver").which = 'DRIVER'
     grid.operator("allset.sdk_load", text="Load Driven").which = 'DRIVEN'
     grid.operator("allset.sdk_close", text="Close")
-    from . import chrome
-    chrome.wrapped(layout, HELP, alignment='LEFT')
+    if room is None or room - FIXED_UNITS - 2 * rows >= HELP_UNITS:
+        from . import chrome
+        chrome.wrapped(layout, HELP, alignment='LEFT')
 
 
 classes = (ALLSET_UL_sdk_attrs, ALLSET_UL_sdk_nodes)
@@ -89,5 +119,6 @@ def register():
 
 
 def unregister():
+    _room.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

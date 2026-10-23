@@ -25,7 +25,7 @@ ADDED = []
 PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
-                      "allset.graph_channel_click", "allset.script_run")
+                      "allset.graph_channel_click", "allset.script_run", "allset.dock_strip_click")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -327,6 +327,10 @@ def patch_cb_slider(kd):
         # it first) and scrolls the whole region on the wheel, so the item sits first in that keymap
         _add(kd, "View2D Buttons List", "allset.cb_scroll", make_event(wheel), first=True,
              shadows=("View2D Buttons List",))   # first + PASS_THROUGH over view2d.scroll_up / _down
+    # Maya's vertical tab strip on the dock's right edge (step 142, #78; ui/maya_dock.draw_strip): drawn, not buttons,
+    # so a click there reaches the keymaps; first in the region's earliest keymap (its scroller sits on that edge)
+    _add(kd, "View2D Buttons List", "allset.dock_strip_click", make_event("LEFTMOUSE"), first=True,
+         shadows=("View2D Buttons List",))
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB (docs/steps/step_8.md 「계획」 2-4) ----

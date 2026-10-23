@@ -8,8 +8,8 @@ circle. Maya's (research/maya/workflows/pivot_snap.md M1-M7, shots ``manip_*.png
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
   plane handles (normal-axis colour), the active handle drawn yellow (M2).
 - Rotate: axis rings (front half), a camera ring, a grey trackball — Blender's C rotate gizmo
-  already has this layout, so the Rotate tool keeps it (axis colours of the user's theme, like the Move / Scale
-  handles here: ``_theme_axis`` reads them, the kit never writes a theme).
+  already has this layout, so the Rotate tool keeps it (with the axis colours of the user's theme: the kit never
+  writes a theme). The Move / Scale handles here use Maya's own axis colours (``MAYA_AXIS``, step 142).
 - Scale: axis lines with cubes at the ends, a yellow centre cube, plane handles.
 - Pivot edit mode (D / Insert): Move plus small rings to orient the pivot (M7).
 - Constant screen size, Maya 108 px for the Move Y arrow at manipGlobalScale 1.5 (M3, M4).
@@ -345,9 +345,26 @@ def _has_selection(context):
     return False
 
 
-def _theme_axis():
-    ui = bpy.context.preferences.themes[0].user_interface
-    return {'X': tuple(ui.axis_x), 'Y': tuple(ui.axis_y), 'Z': tuple(ui.axis_z)}
+# Step 142 (#76): kit-fixed Maya axis colours instead of the user's theme gizmo axes (Blender's #ff3653 / #8adb00 /
+# #3b64a5, ΔE00 15 / 8 / 21 from Maya; research/maya/screens/compare_step134_s100/viewport.md). Maya's manipulator as
+# drawn: X #e60000, Y #00e600 (displayRGBColor manipX / manipY, research/maya/colors.json manip_x / manip_y), Z #0000ff
+# (the Z line as rendered, colors.json manip_z_rendered at 02_cube_selected_move.png (799, 484); the displayRGBColor
+# "Zaxis" #4a92ff is the grid / view axis light blue). The active and the hovered handle stay Maya's yellow
+# (displayColor manipCurrent #ffff00; hover = #ffff00, research/maya/screens/compare/delta_e.md gizmo_hi). Gizmo colours
+# are sRGB like the theme values they replace (the gizmo shaders convert). Rotate keeps Blender's C gizmo, whose rings
+# read the theme's axis colours: Python can't recolour it without writing the theme (decision 13), so it keeps the
+# user's theme colours (recorded, docs/steps/step_142_ui.md).
+MAYA_AXIS = {'X': "#e60000", 'Y': "#00e600", 'Z': "#0000ff"}
+
+
+def _srgb(hex_str):
+    h = hex_str.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+
+def axis_colours():
+    """{'X' / 'Y' / 'Z': sRGB (r, g, b)} of the Maya manipulator axes (kit-fixed, whatever the theme is)."""
+    return {axis: _srgb(value) for axis, value in MAYA_AXIS.items()}
 
 
 def _active_handle(kind):
@@ -520,7 +537,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         rv3d = context.region_data
         frame = axes_of(context, otype, rv3d)
         view = rv3d.view_rotation.to_matrix() if rv3d is not None else Matrix.Identity(3)
-        colours = _theme_axis()
+        colours = axis_colours()
         s = scale_basis(context)
         for gz, role, data in self.handles:
             gz.hide = hide

@@ -65,6 +65,18 @@ def dock_region(kind=None):
     return next(r for r in dock_area(kind).regions if r.type == 'WINDOW')
 
 
+def dock_tab_point(kind):
+    """Window point (x, y) in the middle of ``kind``'s tab on the stack's vertical tab strip (step 142: drawn on the
+    right edge, ui/maya_dock.strip_tabs), or None when the strip has no such tab."""
+    md = import_module(MODULE + ".ui.maya_dock")
+    region = dock_region()
+    s = bpy.context.preferences.system.ui_scale
+    for k, x0, y0, x1, y1 in md.strip_tabs(md.stack_tabs(), region.width, region.height, s):
+        if k == kind:
+            return region.x + round((x0 + x1) / 2), region.y + round((y0 + y1) / 2)
+    return None
+
+
 def button_under_mouse(area, region):
     """(data path, Python command) of the button under the mouse in ``region`` ("" when none / not that kind)."""
     wm = bpy.context.window_manager

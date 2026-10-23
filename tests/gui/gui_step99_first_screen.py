@@ -14,7 +14,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_area, ev, find_button, px, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, dock_area, dock_tab_point, ev, run, step, setup, screenshot, view3d, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 os.environ["ALLSET_FIT_WARP"] = "1"   # the cursor fit is off in event-simulated sessions unless asked for
@@ -126,13 +126,10 @@ def s_ae_check():
     redraw()
 
 
-# the user clicks the Modeling Toolkit tab of the stack's top row (step 116: tabs are buttons in the dock area)
-step(find_button(lambda: (dock_area(), dock_region()), lambda _p, cmd: "MODELING_TOOLKIT" in cmd and "dock_tab" in cmd,
-                 C, "mtk_tab", rows=(px(16),)))
-
-
+# the user clicks the Modeling Toolkit tab of the stack (step 142: Maya's vertical tab strip on its right edge)
 @step
 def s_tab_hover():
+    C["mtk_tab"] = dock_tab_point('MODELING_TOOLKIT')
     if C.get("mtk_tab"):
         ev('MOUSEMOVE', 'NOTHING', x=C["mtk_tab"][0], y=C["mtk_tab"][1])
 

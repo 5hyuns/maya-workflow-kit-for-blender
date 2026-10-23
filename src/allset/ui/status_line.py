@@ -605,6 +605,103 @@ def redraw_top_bars():
             del _top_bars[key]
 
 
+# --- menu bar overflow (step 142, #77) -------------------------------------------------------------------------
+# Maya at 150 % in a 1600 px window hides the menus that don't fit behind a » button at the menu bar's right end; the
+# kit's bar ran under the Workspace field instead ("Deform U", GUI shot at UI scale 1.5). Same pattern as the panel
+# toolbar's » (step 132 #52, ui/panel_toolbar.py): Blender's header layout can't report where it put an item, so the
+# widths follow its layout rules (toolbar_fit.unit; a ``ui_units_x = k`` sub-row is floor(k U) wide, measured step 132).
+MENU_LEAD_UNITS = 0.4    # the header region's left padding
+LOGO_UNITS = 1.6         # the Blender logo pulldown (icon only)
+MENU_SET_UNITS = 5.5     # the menu set dropdown (= menu_sets.draw_menu_bar)
+MENU_MORE_UNITS = 1.5    # the » button
+MENU_SLACK_UNITS = 0.5   # kept free before the right-hand region
+_menus_shown = {}        # window pointer -> (menu names in bar order, how many the bar shows)
+
+
+def menu_fit(widths, width, fixed, more):
+    """How many leading menus (px ``widths``) the bar shows in ``width`` px after ``fixed`` px; when they don't all
+    fit, the » button (``more`` px) takes its place at the end."""
+    if fixed + sum(widths) <= width:
+        return len(widths)
+    x = fixed + more
+    n = 0
+    for w in widths:
+        if x + w > width:
+            break
+        x += w
+        n += 1
+    return n
+
+
+def menu_bar_widths(context, names, menu_set):
+    """(px width of each menu of ``names``, fixed px: padding, logo, menu set dropdown, slack, » button)."""
+    from .toolbar_fit import unit
+    system = context.preferences.system
+    u = unit(system.ui_scale or 1.0, system.pixel_size)
+    widths = []
+    for name in names:
+        cls = getattr(bpy.types, menu_sets.menu_idname(name), None)
+        label = cls.bl_label if cls is not None else name
+        widths.append(int(menu_sets.menu_width_units(label, context) * u))
+    fixed = int((MENU_LEAD_UNITS + LOGO_UNITS + MENU_SLACK_UNITS) * u) + (int(MENU_SET_UNITS * u) if menu_set else 0)
+    return widths, fixed, int(MENU_MORE_UNITS * u)
+
+
+def shown_menus(window):
+    """(menu names, how many the menu bar of ``window`` showed when it was last drawn)."""
+    return _menus_shown.get(window.as_pointer(), ((), 0)) if window is not None else ((), 0)
+
+
+def _menu_set_field(layout, prefs):
+    sub = layout.row()
+    sub.ui_units_x = MENU_SET_UNITS
+    sub.prop(prefs, "menu_set", text="")
+
+
+def draw_menu_bar_fit(layout, context, menu_set=True):
+    """``menu_sets.draw_menu_bar`` when every menu fits the region, else the menus that fit and Maya's » overflow."""
+    from .. import preferences
+    prefs = preferences.get(context)
+    names = menu_sets.menus_for_set(prefs.menu_set)
+    region = context.region
+    widths, fixed, more = menu_bar_widths(context, names, menu_set)
+    n = menu_fit(widths, region.width, fixed, more) if region is not None and region.width > 1 else len(names)
+    if context.window is not None:
+        _menus_shown[context.window.as_pointer()] = (tuple(names), n)
+    if n >= len(names):
+        menu_sets.draw_menu_bar(layout, context, menu_set=menu_set)
+        return
+    layout.menu("TOPBAR_MT_blender", text="", icon='BLENDER')
+    common = len(menu_sets._SET_MENUS[menu_sets.COMMON_SET])    # the menu set dropdown follows these
+    for i, name in enumerate(names[:n]):
+        cls = getattr(bpy.types, menu_sets.menu_idname(name), None)
+        sub = layout.row(align=True)
+        sub.ui_units_x = menu_sets.menu_width_units(cls.bl_label if cls else name, context)
+        sub.menu(menu_sets.menu_idname(name))
+        if menu_set and i == common - 1:
+            _menu_set_field(layout, prefs)
+    if menu_set and n < common:
+        _menu_set_field(layout, prefs)
+    sub = layout.row(align=True)
+    sub.ui_units_x = MENU_MORE_UNITS
+    icon = status_icons.icon("pt_more") if "pt_more" in status_icons.EXTRA else 0
+    if icon:
+        sub.menu(ALLSET_MT_menu_more.bl_idname, text="", icon_value=icon)
+    else:
+        sub.menu(ALLSET_MT_menu_more.bl_idname, text="\u00bb")
+
+
+class ALLSET_MT_menu_more(bpy.types.Menu):
+    """More Maya menus: the ones that don't fit the menu bar"""
+    bl_idname = "ALLSET_MT_menu_more"
+    bl_label = "More Menus"
+
+    def draw(self, context):
+        names, n = shown_menus(context.window)
+        for name in names[n:]:
+            self.layout.menu(menu_sets.menu_idname(name))
+
+
 def draw_left(self, context):
     if context.window is not None and context.area is not None:
         _top_bars[context.window.as_pointer()] = context.area
@@ -612,7 +709,7 @@ def draw_left(self, context):
         return bpy.types.TOPBAR_HT_upper_bar.draw_left(self, context)
     layout = self.layout
     if context.area.show_menus:
-        menu_sets.draw_menu_bar(layout.row(align=True), context, menu_set=not status_line_shown(context))
+        draw_menu_bar_fit(layout.row(align=True), context, menu_set=not status_line_shown(context))
     else:
         layout.menu(menu_sets.ALLSET_MT_menu_bar.bl_idname, text="", icon='COLLAPSEMENU')
     if context.screen.show_fullscreen:
@@ -726,7 +823,7 @@ def unpatch_topbar():
     own_draw.restore("TOPBAR_HT_upper_bar", draw_upper_bar)
 
 
-classes = (ALLSET_OT_select_mask, ALLSET_OT_select_mode, ALLSET_OT_snap_toggle, ALLSET_MT_symmetry,
+classes = (ALLSET_OT_select_mask, ALLSET_OT_select_mode, ALLSET_OT_snap_toggle, ALLSET_MT_symmetry, ALLSET_MT_menu_more,
            ALLSET_OT_render_settings, ALLSET_OT_ipr_toggle,
            ALLSET_OT_editor_toggle, ALLSET_OT_status_group)
 
@@ -766,5 +863,6 @@ def unregister():
     _collapsed.clear()
     _collapsed.update(DEFAULT_COLLAPSED)
     _top_bars.clear()
+    _menus_shown.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

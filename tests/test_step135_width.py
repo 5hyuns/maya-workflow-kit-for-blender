@@ -29,14 +29,13 @@ def test_contents_fit_the_width():
     for s in SCALES:
         w = toolbox.dock_width(s)
         need = toolbox.dock_need(s)
-        assert max(need.values()) <= w, (s, w, need)
+        assert need["labels"] <= w, (s, w, need)          # the AE width rule is its own (step 142)
         u = toolbox._unit(s)
         # the label column is half the panel: the longest Maya default channel label fits it with its margins
         longest = max(toolbox.text_px(t, s) for t in toolbox.LONG_LABELS)
         assert (w - 0.8 * u) / 2 >= longest + 0.8 * u, (s, w, longest)
-        # every tab label at its own width, plus the grip, in one row
-        tabs = sum(toolbox.text_px(maya_dock.LABELS[k], s) + u for k in maya_dock.KINDS)
-        assert tabs + toolbox.text_px(maya_dock.HANDLE, s) + 1.5 * u + 2 * u <= w, (s, w, tabs)
+        # step 142 (#78): the content column ends left of Maya's vertical tab strip
+        assert (w - maya_dock.reserved_px(s) - 0.8 * u) / 2 >= longest + 0.8 * u, (s, w, longest)
 
 
 class _Ctx:
@@ -48,8 +47,8 @@ class _Ctx:
 
 def test_ae_menu_bar_is_one_row_at_that_width():
     for s in SCALES:
-        w = toolbox.dock_width(s)
-        assert attribute_editor.fits(_Ctx(w, s), attribute_editor.MENU_BAR), (s, w)
+        w = toolbox.dock_width(s, kind='ATTRIBUTE_EDITOR')     # the stack widens with the AE raised (step 142)
+        assert attribute_editor.fits(_Ctx(w - maya_dock.reserved_px(s), s), attribute_editor.MENU_BAR), (s, w)
         assert not attribute_editor.fits(_Ctx(round(toolbox.DOCK_MAYA_PX * s), s), attribute_editor.MENU_BAR), s
 
 

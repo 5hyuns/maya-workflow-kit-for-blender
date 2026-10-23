@@ -15,6 +15,10 @@ The kit draws the edges itself (POST_VIEW), docs/steps/step_47.md 「실측」:
 - Step 134 (docs/steps/step_134_sel.md): the colours are kit-fixed Maya values (decision 13). Steps 130-133 read the
   user's theme ``object_active`` / ``object_selected``, which is Blender's orange since the kit ships no theme.
   LEAD / OTHER = research/maya/colors.json viewport displayColor lead (19) / active (16).
+- Step 142 (#76): in wireframe shading Maya draws unselected objects in its dormant polymesh wire colour, dark blue
+  #000460 (research/maya/colors.json dormant_polymesh_wire, 04_wire_selected_lead.png); Blender draws them in the
+  theme's wire colour (#181818 here, ΔE00 26). The same pass draws them in DORMANT (the "Selection Wireframe"
+  preference covers both).
 """
 
 import bpy
@@ -24,6 +28,11 @@ TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template (probe)
 LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active), research/maya/colors.json displayColor.lead
 OTHER = "#ffffff"          # Maya other selected objects, displayColor.active
+DORMANT = "#000460"        # Maya unselected polymesh wire in wireframe shading, colors.json dormant_polymesh_wire
+# the 3D View's per-type visibility (the Tool Box column hides every type, ui/toolbox.is_toolbox)
+TYPE_FLAGS = {'MESH': "show_object_viewport_mesh", 'CURVE': "show_object_viewport_curve",
+              'SURFACE': "show_object_viewport_surf", 'FONT': "show_object_viewport_font",
+              'META': "show_object_viewport_meta"}
 
 _batches = {}              # object session_uid -> (batch, edge count)
 _handle = []
@@ -90,6 +99,24 @@ def wire_objects(context):
             if ob.type in TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
 
 
+def dormant_objects(context):
+    """Unselected objects that get Maya's dormant wire: wireframe shading, object mode, drawable types shown in this
+    view (local view, per-type visibility)."""
+    space = context.space_data
+    if space is None or space.type != 'VIEW_3D' or space.shading.type != 'WIREFRAME':
+        return []
+    out = []
+    for ob in context.visible_objects:
+        if ob.type not in TYPES or ob.mode != 'OBJECT' or ob.select_get():
+            continue
+        if not getattr(space, TYPE_FLAGS[ob.type], True):
+            continue
+        if space.local_view is not None and not ob.local_view_get(space):
+            continue
+        out.append(ob)
+    return out
+
+
 def srgb(hex_str):
     """'#rrggbb' -> sRGB floats (r, g, b)."""
     h = hex_str.lstrip("#")
@@ -107,6 +134,11 @@ def wire_colors():
     return _linear(srgb(LEAD)), _linear(srgb(OTHER))
 
 
+def dormant_color():
+    """Maya's dormant wire RGBA in scene linear."""
+    return _linear(srgb(DORMANT))
+
+
 def frame_ms():
     return sum(_times) / len(_times) * 1000.0 if _times else 0.0
 
@@ -117,7 +149,8 @@ def _draw():
     if rv3d is None or not space.overlay.show_overlays or space.shading.type == 'RENDERED' or not _enabled():
         return
     obs = wire_objects(context)
-    if not obs:
+    dormant = dormant_objects(context)
+    if not obs and not dormant:
         return
     import time
     import gpu
@@ -130,11 +163,20 @@ def _draw():
     # callback re-evaluates and broke a timer-set region flag (gui_step11 Ctrl+A sidebar)
     depsgraph = context.view_layer.depsgraph
     sh = _sh()
-    gpu.state.depth_test_set('LESS_EQUAL')
+    # X-ray wireframe (Blender's default in wireframe shading) shows the hidden edges too, like Maya's wireframe
+    xray = space.shading.type == 'WIREFRAME' and space.shading.show_xray_wireframe
+    gpu.state.depth_test_set('NONE' if xray else 'LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     sh.bind()
     sh.uniform_float("bias", DEPTH_BIAS)
     pm = rv3d.perspective_matrix
+    if dormant:
+        sh.uniform_float("color", dormant_color())
+        for ob in dormant:
+            batch = _batch(ob, depsgraph)
+            if batch is not None:
+                sh.uniform_float("mvp", pm @ ob.matrix_world)
+                batch.draw(sh)
     for ob in obs:
         batch = _batch(ob, depsgraph)
         if batch is None:

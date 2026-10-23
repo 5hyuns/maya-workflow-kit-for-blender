@@ -97,7 +97,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Maya wireframe on selected objects over shading (docs/steps/step_47.md).
     maya_selection_wire: bpy.props.BoolProperty(
         name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
-                                                "Maya (lead light green, others white)",
+                                                "Maya (lead light green, others white); in wireframe shading "
+                                                "unselected objects are Maya's dark blue",
         default=True, update=_update_selection_wire)
     # Maya component colours in mesh edit mode (docs/steps/step_134_sel.md).
     maya_component_colors: bpy.props.BoolProperty(

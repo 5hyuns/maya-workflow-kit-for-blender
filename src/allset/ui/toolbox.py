@@ -220,13 +220,16 @@ def column_width(context=None):
     return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
 
 
-# Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md): 280 px with the Channel Box
-# on top (research/maya/screens/01_layout_empty.png x 1320-1600; = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px
-# with the Attribute Editor raised (10_attribute_editor.png x 1120-1600). Maya's tabs are a vertical strip; the kit's are
-# one horizontal row, so the stack is as wide as its tab row, the Channel Box labels and the AE menu bar need at this
-# scale (blf widths), between those two Maya widths (delegated).
+# Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md, step 142 #78): 280 px with the
+# Channel Box raised (research/maya/screens/01_layout_empty.png x 1320-1600 = a 260 px panel + the vertical tab strip;
+# = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px with the Attribute Editor raised (10_attribute_editor.png
+# x 1120-1600; Maya's AE is a wide panel, createGlobalOptVars.mel:218-221). Since step 142 the kit's tabs are Maya's
+# vertical strip too (maya_dock.draw_strip), so the stack is as wide as the raised panel needs: the Channel Box / Modeling
+# Toolkit stack at least Maya's 277 px x the scale (wider when the Channel Box labels need it), the Attribute Editor
+# stack Maya's 480 px x the scale (delegated: Maya resizes the stack when its tab changes, ``tab_changed``).
 DOCK_MAYA_PX = 277
 DOCK_MAX_PX = 480
+WIDE_KINDS = ('ATTRIBUTE_EDITOR',)   # Maya's wide panels (460 px, createGlobalOptVars.mel:218-221)
 # px between neighbouring areas: 3 at UI scale 1.0, 5 at 1.5 (the area edge grows with the scale, measured)
 GAP_PX = 8
 # the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
@@ -258,23 +261,27 @@ def text_px(text, scale):
 
 
 def dock_need(scale, pixel_size=1.0, measure=text_px):
-    """{"tabs", "labels", "ae_menu"}: px the tab stack needs at ``scale`` so nothing is truncated or wraps."""
+    """{"labels", "ae_menu"}: px the tab stack needs at ``scale`` so the Channel Box labels aren't truncated and the
+    AE menu bar is one row, both left of the vertical tab strip (``maya_dock.reserved_px``)."""
     from . import attribute_editor, maya_dock
     u = _unit(scale, pixel_size)
-    tabs = (measure(maya_dock.HANDLE, scale) + 1.5 * u + sum(measure(maya_dock.LABELS[k], scale) + u
-                                                             for k in maya_dock.KINDS) + 2 * u)
+    strip = maya_dock.reserved_px(scale)
     label = max(measure(t, scale) for t in LONG_LABELS)
-    labels = 2 * (label + 0.8 * u) + 0.8 * u
+    # the label column is half the content column (the panel margin 0.8 U each side of it)
+    labels = 2 * (label + 0.8 * u) + 0.8 * u + strip
     # = attribute_editor.fits: the width at which the AE menu bar is drawn on one row
-    ae = (sum(len(text) * 7 + 14 for text, _m in attribute_editor.MENU_BAR) + 20) * scale
-    return {"tabs": math.ceil(tabs), "labels": math.ceil(labels), "ae_menu": math.ceil(ae)}
+    ae = (sum(len(text) * 7 + 14 for text, _m in attribute_editor.MENU_BAR) + 20) * scale + strip
+    return {"labels": math.ceil(labels), "ae_menu": math.ceil(ae)}
 
 
-def dock_width(scale, pixel_size=1.0, measure=text_px):
-    """The tab stack width at ``scale``: what its contents need, at least Maya's Channel Box stack, at most Maya's
-    stack with the Attribute Editor raised."""
-    need = max(dock_need(scale, pixel_size, measure).values())
-    return min(round(DOCK_MAX_PX * scale), max(round(DOCK_MAYA_PX * scale), need))
+def dock_width(scale, pixel_size=1.0, measure=text_px, kind='CHANNEL_BOX'):
+    """The tab stack width at ``scale`` with ``kind`` raised: Maya's Attribute Editor stack for the AE (at least its
+    one-row menu bar), else what the Channel Box needs, at least Maya's Channel Box stack (never above the AE's)."""
+    need = dock_need(scale, pixel_size, measure)
+    top = round(DOCK_MAX_PX * scale)
+    if kind in WIDE_KINDS:
+        return max(top, need["ae_menu"])
+    return min(top, max(round(DOCK_MAYA_PX * scale), need["labels"]))
 
 
 MAX_WARPS = 3        # cursor-warp fits per screen and file load
@@ -317,17 +324,17 @@ def _move_edge(window, area, x, y, delta, edge, pending):
         return bpy.ops.screen.area_move(x=x, y=y, delta=delta) == {'FINISHED'}
 
 
-def _fit_dock(window, scale, pixel_size, pending):
-    """Move the left edge of the Maya tab stack right of the main viewport to ``dock_width`` (#60). True while it is
-    off its fitted place (moved now or pending)."""
+def _dock_target(window, scale, pixel_size, kind):
+    """(stack area, fitted width with ``kind`` raised) for the layout's stack right of the main viewport, or None
+    (torn off, a user layout)."""
     from . import maya_dock
     from .status_line import main_view3d
     screen = window.screen
     dock = maya_dock.find_stack(screen)
     main, _r = main_view3d(screen)
     if dock is None or main is None or abs(main.x + main.width - dock.x) > GAP_PX or dock.x <= 2:
-        return False         # not the layout's stack right of the viewport (torn off, a user layout)
-    want = dock_width(scale, pixel_size)
+        return None
+    want = dock_width(scale, pixel_size, kind=kind)
     # never squeeze the viewport below MIN_VIEW_PX once the column and Outliner left of it are fitted as well (a small
     # window keeps a narrower dock)
     left = 0
@@ -338,12 +345,66 @@ def _fit_dock(window, scale, pixel_size, pending):
                      and abs(a.x + a.width - main.x) <= GAP_PX), None)
         if outl is not None:
             left += round(OUTLINER_PX * scale) - outl.width
-    want = min(want, dock.width + max(0, main.width - left - round(MIN_VIEW_PX * scale)))
+    return dock, min(want, dock.width + max(0, main.width - left - round(MIN_VIEW_PX * scale)))
+
+
+def _fit_dock(window, scale, pixel_size, pending, kind=None):
+    """Move the left edge of the Maya tab stack right of the main viewport to ``dock_width`` for the raised tab
+    (#60, #78). True while it is off its fitted place (moved now or pending)."""
+    from . import maya_dock
+    target = _dock_target(window, scale, pixel_size, kind or maya_dock.current_tab())
+    if target is None:
+        return False
+    dock, want = target
     if abs(dock.width - want) <= 2:
         return False
     y = dock.y + dock.height // 2
     _move_edge(window, dock, dock.x, y, dock.width - want, (dock.x - 1, y), pending)
     return True
+
+
+# Maya resizes its tab stack when another tab is raised (280 px Channel Box, 480 px Attribute Editor; #78). The kit
+# does the same once per tab change, only while the stack still has the kit's width for the tab it showed (a stack the
+# user resized keeps its size) and only right away: the edge moves now when area_move polls, else through the cursor
+# fit (ALLSET_OT_fit_columns) while ``_tab_target`` names the tab, never later (#53).
+_tab_target = {}     # screen name -> kind the stack is being fitted to
+
+
+def tab_changed(window, old, new):
+    """The stack area of ``window`` drew ``new`` after ``old`` (maya_dock.tab_drawn, called while drawing: the
+    resize runs from a timer)."""
+    if (old in WIDE_KINDS) == (new in WIDE_KINDS):
+        return
+    from .. import live_refs
+    ptr = live_refs.pointer(window)
+
+    def later():
+        try:
+            _tab_fit(live_refs.window(ptr), old, new)
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        return None
+    bpy.app.timers.register(later, first_interval=0.0)
+
+
+def _tab_fit(window, old, new):
+    """Resize the stack of ``window`` from the width for ``old`` to the width for ``new`` (see ``tab_changed``)."""
+    if window is None or _running[0]:
+        return
+    context = bpy.context
+    system = context.preferences.system
+    scale, pixel = system.ui_scale, system.pixel_size
+    before = _dock_target(window, scale, pixel, old)
+    if before is None or abs(before[0].width - before[1]) > 3:
+        return            # not the layout's stack, or the user sized it
+    pending = {}
+    if not _fit_dock(window, scale, pixel, pending, new) or not pending or not auto_warp():
+        return
+    _tab_target[window.screen.name] = new
+    _w, edge = pending[window.as_pointer()]
+    with context.temp_override(window=window, screen=window.screen):
+        bpy.ops.allset.fit_columns('INVOKE_DEFAULT', x=edge[0], y=edge[1])
 
 
 def fit_columns(start_fit=True):
@@ -372,7 +433,11 @@ def fit_columns(start_fit=True):
                 needed = True
                 _move_edge(window, row, row.x + row.width // 2, row.y, -d,
                            (row.x + row.width // 2, row.y - 1), pending)
-        if armed and _fit_dock(window, scale, context.preferences.system.pixel_size, pending):
+        tab = _tab_target.get(screen.name)
+        if tab is not None:      # a tab-change resize under way (only while its cursor fit runs)
+            if not _fit_dock(window, scale, context.preferences.system.pixel_size, pending, tab):
+                _tab_target.pop(screen.name, None)
+        elif armed and _fit_dock(window, scale, context.preferences.system.pixel_size, pending):
             needed = True
         column = next((a for a in screen.areas if a.type == 'VIEW_3D' and is_toolbox(a.spaces.active)), None)
         if column is None:
@@ -463,6 +528,7 @@ class ALLSET_OT_fit_columns(bpy.types.Operator):
     def _finish(self, context, event):
         context.window_manager.event_timer_remove(self._timer)
         _running[0] = False
+        _tab_target.clear()        # a tab-change fit is done or given up: never applied later (#53)
         if (event.mouse_x, event.mouse_y) == self._at:   # the user didn't move the mouse meanwhile
             _warp(self._window, *self._back)
         return {'FINISHED'}
@@ -587,6 +653,7 @@ def register():
 
 def unregister():
     _running[0] = False
+    _tab_target.clear()
     if _fit_after_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_fit_after_load)
     if bpy.app.timers.is_registered(_fit_tick):
