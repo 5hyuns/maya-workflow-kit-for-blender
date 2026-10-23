@@ -4,8 +4,9 @@
 Maya 2022 draws the shelf picture of a command beside its menu item (Create > Polygon Primitives, Mesh, Edit Mesh,
 Deform ...: look-only capture ``tmp/maya_icons131/menu_icons.json``). ``menu_icon_data.ICONS`` (tools/gen_menu_icons.py)
 links such an item to the kit's own drawing of the same command: a shelf button (``shelf_icons``), a Status Line
-glyph (``status_icons``) or a Tool Box glyph (``kit_icons``). Items Maya shows without an icon, and items the kit has
-no drawing for, get none (decision 6: nothing of Maya's artwork).
+glyph (``status_icons``), a Tool Box glyph (``kit_icons``) or, for items on no shelf, a menu-only drawing
+(``menu_drawings``, step 142, #54). Items Maya shows without an icon, and items the kit has no drawing for, get none
+(decision 6: nothing of Maya's artwork).
 
 Blender draws a menu item's icon at 16 px x UI scale; each picture is rasterised at exactly that size (the drawings
 hint their edges to the target pixel grid) into a ``bpy.utils.previews`` image. Previews are made from a timer, a
@@ -37,6 +38,9 @@ def picture(pic, n):
     if kind == "kit":
         from . import kit_icons
         return kit_icons.pixels(pic[1], n)
+    if kind == "menu":
+        from . import menu_drawings
+        return menu_drawings.draw(pic[1], n)
     raise KeyError(pic)
 
 

@@ -12,9 +12,11 @@ command as a shelf button:
 2. same command: the menu item's runTimeCommand (``research/maya/menus.json`` "command") is the button's command,
    or ``ui/shelf_map.MENU`` names the item as the button's menu item;
 3. ``GLYPHS`` below: items whose Maya icon is the picture of a Status Line button or a Tool Box tool the kit has
-   drawn (``ui/status_icons.py``, ``ui/kit_icons.py``; docs/steps/step_131_status.md, step_131_toolbox.md).
+   drawn (``ui/status_icons.py``, ``ui/kit_icons.py``; docs/steps/step_131_status.md, step_131_toolbox.md);
+4. menu-only drawings (step 142, #54): the ``@icon(path, ...)`` decorators of ``ui/menu_drawings*.py`` (read with
+   ast) draw items that are on no shelf; an item whose Maya icon file is a drawn item's gets that drawing too.
 
-All three only for items Maya shows with an icon. Only Maya icon file names are compared; none is written to the
+All four only for items Maya shows with an icon. Only Maya icon file names are compared; none is written to the
 output (decision 6). Items whose picture the kit has not drawn stay without an icon.
 """
 
@@ -96,6 +98,24 @@ def _walk(items, prefix, children):
             yield from _walk(kids, path, children)
 
 
+def _drawn():
+    """{Maya menu path: drawing name} from the ``@icon(...)`` decorators of ``ui/menu_drawings*.py`` (the name is
+    the decorator's first path, like ``menu_drawings.icon``)."""
+    out = {}
+    for path in sorted(UI.glob("menu_drawings*.py")):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            for deco in node.decorator_list:
+                if isinstance(deco, ast.Call) and getattr(deco.func, "id", "") == "icon":
+                    paths = [ast.literal_eval(a) for a in deco.args]
+                    for p in paths:
+                        if p in out:
+                            raise SystemExit(f"gen_menu_icons: {p} drawn twice ({path.name})")
+                        out[p] = paths[0]
+    return out
+
+
 def _menu_commands():
     """{kit-style path: runTimeCommand} from research/maya/menus.json (labels that are MEL expressions skipped)."""
     data = json.loads(_research("menus.json").read_text(encoding="utf-8"))["menus"]
@@ -168,6 +188,21 @@ def build():
     stray = sorted(set(GLYPHS) - set(maya_kit))
     if stray:
         raise SystemExit(f"gen_menu_icons: GLYPHS paths that are no Maya icon item of the kit menus: {stray}")
+
+    drawn = _drawn()
+    stray = sorted(set(drawn) - set(maya_kit))
+    if stray:
+        raise SystemExit(f"gen_menu_icons: drawn paths that are no Maya icon item of the kit menus: {stray}")
+    twice = sorted(p for p in drawn if p in icons)
+    if twice:
+        raise SystemExit(f"gen_menu_icons: drawn paths that already have a shelf / glyph picture: {twice}")
+    by_image = {}
+    for path, name in sorted(drawn.items()):
+        icons[path], how[path] = ("menu", name), "drawn"
+        by_image.setdefault(images[path], ("menu", name))
+    for path in maya_kit:          # Maya shows the same picture: the same drawing
+        if path not in icons and images[path] in by_image:
+            icons[path], how[path] = by_image[images[path]], "drawn image"
     return icons, how, images, maya_kit
 
 
@@ -179,7 +214,8 @@ def write(icons):
              'ICONS = {Maya menu path: picture}; picture = ("shelf", shelf file, button label, button index) = that',
              "button's kit drawing (``shelf_icons.draw``), like Maya shows the shelf picture of the same command in its",
              'menus; ("status", glyph) = a ``status_icons`` glyph, ("kit", glyph) = a ``kit_icons`` glyph (the same',
-             'Maya picture on the Status Line / Tool Box). Only items Maya 2022 draws with an icon are listed.',
+             'Maya picture on the Status Line / Tool Box); ("menu", name) = a ``menu_drawings`` drawing (step 142,',
+             '#54: items on no shelf). Only items Maya 2022 draws with an icon are listed.',
              '"""',
              '',
              'ICONS = {']
@@ -192,10 +228,11 @@ def write(icons):
 def main():
     icons, how, images, maya_kit = build()
     write(icons)
-    n = {k: sum(1 for v in how.values() if v == k) for k in ("image", "command", "glyph")}
+    n = {k: sum(1 for v in how.values() if v == k) for k in ("image", "command", "glyph", "drawn", "drawn image")}
     print(f"gen_menu_icons: wrote {OUT.relative_to(ROOT)}: {len(icons)} items with an icon "
           f"({n['image']} same shelf picture, {n['command']} same shelf command, {n['glyph']} Status Line / Tool Box "
-          f"glyph) of {len(maya_kit)} Maya icon items in the kit menus ({len(images)} Maya menu entries with an icon)")
+          f"glyph, {n['drawn']} + {n['drawn image']} menu drawings) of {len(maya_kit)} Maya icon items in the kit "
+          f"menus ({len(images)} Maya menu entries with an icon)")
     if "--report" in sys.argv:
         for path in maya_kit:
             print(("  + " if path in icons else "  - ") + path, how.get(path, ""), icons.get(path, ""))

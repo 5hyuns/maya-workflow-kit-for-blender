@@ -10,6 +10,7 @@ no Maya icon file is copied or traced (decision 6). The sheets are regenerated w
 | `shelf_<Shelf>.png` | every factory shelf button, 2x (64 px) and 1x (32 px), numbered in Maya's shelf order | `src/allset/ui/shelf_icons.py` |
 | `status_line.png` | Status Line and menu-bar glyphs at 48 / 32 / 24 / 16 px | `src/allset/ui/status_icons.py` |
 | `panel_toolbar.png` | viewport panel toolbar glyphs at 48 / 32 / 24 / 16 px | `src/allset/ui/panel_toolbar.py` |
+| `menu_drawings_<group>.png` | Maya menu items that are on no shelf (step 142, #54) at 32 / 24 / 16 px: `deform` (Deform), `mesh` (Mesh, Edit Mesh, Mesh Tools, Mesh Display), `fx` (Effects, Fields, Fluids, nParticles, nConstraint, nHair, nCache, Cache, Curves > Modify), `select` (Select, Modify), `build` (Create, Curves, Surfaces, Skeleton, Skin), `misc` (UV, Windows, Playback, Constrain, Key, Visualize, Edit, Texturing, Toon, Generate, Stereo, Render) | `src/allset/ui/menu_drawings*.py` |
 
 Tool Box tools, quick-layout buttons, Layer Editor buttons and the kit's Outliner rows are drawn by
 `src/allset/ui/kit_icons.py` (sheets of those are produced by its lane, see `docs/steps/step_131_toolbox.md`).
