@@ -8,8 +8,10 @@ bones: bone K runs from click K to click K+1, the last (Maya's end joint) gets a
 previous segment.
 """
 
+import json
+
 import bpy
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
@@ -124,11 +126,75 @@ def view_under(window, x, y):
     return None
 
 
+# Maya Joint Tool settings the kit honours (research/maya/re/option_boxes_140.md:196-206): Secondary Axis Y with
+# Secondary Axis World Orientation +Y (jointCtx secondaryAxisOrient "yup"), Create IK handle off. Blender bones point
+# their Y at the child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
+SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "Y", "The bone's Z axis"),
+                  ("Z", "Z", "The bone's X axis"), ("NONE", "None", "Leave the bone roll as placed"))
+# Maya world axis (Y-up) -> Blender world vector (Z-up: X -> X, Y -> Z, Z -> -Y)
+WORLD_AXES = {"X": Vector((1.0, 0.0, 0.0)), "Y": Vector((0.0, 0.0, 1.0)), "Z": Vector((0.0, -1.0, 0.0))}
+
+
+def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
+    """Roll the new joints so their Maya secondary axis faces the Maya world direction (Joint Tool orientation)."""
+    if secondary == "NONE":
+        return 0
+    if secondary == "X":
+        raise RuntimeError("Secondary axis must differ from the primary axis (X)")
+    d = WORLD_AXES[world] * (1.0 if sign == "+" else -1.0)
+    d = ob.matrix_world.inverted().to_3x3() @ d
+    n = 0
+    with _InEditMode(ob) as ebs:
+        for name in names:
+            eb = ebs.get(name)
+            if eb is None or eb.length < 1e-9:
+                continue
+            y = (eb.tail - eb.head).normalized()
+            # secondary Y = bone Z -> d; secondary Z = bone X -> d, so bone Z = X x Y = d x y
+            z = d if secondary == "Y" else d.cross(y)
+            if z.cross(y).length < 1e-6:
+                continue                    # the bone runs along the world direction: Maya leaves it too
+            eb.align_roll(z)
+            n += 1
+    return n
+
+
 class ALLSET_OT_joint_tool(bpy.types.Operator):
     """Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish"""
     bl_idname = "allset.joint_tool"
     bl_label = "Joint Tool"
     bl_options = {'REGISTER', 'UNDO'}
+
+    secondary_axis: EnumProperty(name="Secondary Axis", items=SECONDARY_AXES, default="Y")
+    secondary_world: EnumProperty(name="Secondary Axis World Orientation",
+                                  items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
+    secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
+    create_ik: BoolProperty(name="Create IK handle", default=False)
+    ik_solver: EnumProperty(name="Current solver",
+                            items=(("RP", "Rotate-Plane Solver", ""), ("SC", "Single-Chain Solver", "")), default="RP")
+    ik_solver_enable: BoolProperty(name="Solver enable", default=True)
+    ik_weight: FloatProperty(name="Weight", default=1.0, min=0.01, max=1.0)
+    points: StringProperty(options={'SKIP_SAVE', 'HIDDEN'},
+                           description="JSON list of world points: place these joints without clicks (scripts)")
+
+    def execute(self, context):
+        """Without clicks: a new skeleton with a joint at each of ``points``."""
+        try:
+            pts = [Vector(p) for p in json.loads(self.points)] if self.points else []
+        except (ValueError, TypeError):
+            pts = []
+        if not pts:
+            self.report({'WARNING'}, "Joint Tool: click in a view to place joints")
+            return {'CANCELLED'}
+        ob = new_skeleton(context)
+        names, parent = [], None
+        for p in pts:
+            name = add_joint(ob, p, parent, length=units.maya_unit(context.scene))
+            if name != parent:
+                names.append(name)
+            parent = name
+        self._names, self._ob = names, ob
+        return self._finish(context)
 
     def invoke(self, context, event):
         if context.window is None:
@@ -190,8 +256,23 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
                     for r in a.regions if r.type == 'WINDOW'), None)
         override = dict(window=context.window, area=hit[0], region=hit[1]) if hit else dict(window=context.window)
         with context.temp_override(**override):
-            finish(context, self._ob, self._names)
-        self.report({'INFO'}, f"Created {len(self._names)} joint(s) in {self._ob.name}")
+            return self._finish(context)
+
+    def _finish(self, context):
+        ob, names = self._ob, self._names
+        try:
+            orient_new(ob, names, self.secondary_axis, self.secondary_world, self.secondary_sign)
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex))
+        finish(context, ob, names)
+        msg = f"Created {len(names)} joint(s) in {ob.name}"
+        if self.create_ik and len(names) >= 2:
+            from .skin import create_ik
+            handle = create_ik(context, ob, (names[0], 'HEAD'), (names[-1], 'HEAD'), self.ik_solver,
+                               self.ik_solver_enable, self.ik_weight)
+            if handle is not None:
+                msg += f" and {handle.name}"
+        self.report({'INFO'}, msg)
         return {'FINISHED'}
 
 
