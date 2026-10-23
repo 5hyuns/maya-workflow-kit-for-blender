@@ -69,22 +69,29 @@ def make_group(context, objects):
     return grp
 
 
-def ungroup(context, groups):
-    """Maya Edit > Ungroup with its default options (performUngroup: ungroupPreserve true,
-    not -world): each group's children move under the group's parent (the world when it
-    has none) keeping their world transform, then the group goes. A selected object that
-    has data of its own (a mesh with children) only loses its children (delegated,
-    docs/steps/step_34.md). Returns the moved children."""
+def ungroup(context, groups, world=False, preserve=True):
+    """Maya Edit > Ungroup (performUngroup; factory Ungroup under Parent, Preserve position on): each group's
+    children move under the group's parent (``world``: to the world; the world when it has none) keeping their world
+    transform, then the group goes. Preserve position off (``ungroup -relative``) folds the group's local transform
+    into each child's local values instead (mayapy: grp t 0 5 0, child t 1 2 3 -> child t 1 7 3,
+    research/maya/re/option_boxes_140_edit.md §6). A selected object that has data of its own (a mesh with
+    children) only loses its children (delegated, docs/steps/step_34.md). Returns the moved children."""
     moved = []
     for grp in groups:
         kids = list(grp.children)
+        target = None if world else grp.parent
         for child in kids:
-            if grp.parent is not None:
-                set_parent_keep_world(child, grp.parent)
+            if not preserve:
+                local = grp.matrix_parent_inverse @ grp.matrix_basis @ child.matrix_parent_inverse @ child.matrix_basis
+                child.parent = target
+                child.matrix_parent_inverse = Matrix.Identity(4)
+                child.matrix_basis = local
+            elif target is not None:
+                set_parent_keep_world(child, target)
             else:
-                world = child.matrix_world.copy()
+                world_m = child.matrix_world.copy()
                 child.parent = None
-                child.matrix_world = world
+                child.matrix_world = world_m
         moved.extend(kids)
         if grp.type == 'EMPTY':
             bpy.data.objects.remove(grp)
@@ -97,6 +104,14 @@ class ALLSET_OT_ungroup(bpy.types.Operator):
     bl_label = "Ungroup"
     bl_options = {'REGISTER', 'UNDO'}
 
+    under: bpy.props.EnumProperty(
+        name="Ungroup Under", options={'SKIP_SAVE'},
+        items=(('PARENT', "Parent", "Under the group's parent (Maya Ungroup Options, factory)"),
+               ('WORLD', "World", "At the top of the hierarchy")))
+    preserve_position: bpy.props.BoolProperty(
+        name="Preserve Position", default=True, options={'SKIP_SAVE'},
+        description="Keep the children where they are (off = the group's transform goes into their local values)")
+
     @classmethod
     def poll(cls, context):
         return context.mode == 'OBJECT' and any(ob.children for ob in context.selected_objects)
@@ -105,7 +120,7 @@ class ALLSET_OT_ungroup(bpy.types.Operator):
         groups = [ob for ob in context.selected_objects if ob.children]
         # Innermost first, so nested selected groups hand their children up step by step.
         groups.sort(key=_depth, reverse=True)
-        moved = ungroup(context, groups)
+        moved = ungroup(context, groups, self.under == 'WORLD', self.preserve_position)
         context.view_layer.update()
         for ob in moved:
             if ob.name in context.view_layer.objects:

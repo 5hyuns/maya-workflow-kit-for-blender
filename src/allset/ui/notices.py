@@ -292,8 +292,6 @@ CATEGORIES = {
     "Key/IK": ("IK constraint Influence", "Blender switches IK / FK by keying the IK constraint's Influence."),
     "Key/Scene Time Warp": ("NLA strip time", "Blender has no scene time warp: remap time per action with an NLA "
                             "strip's Scale / Repeat or a Time Offset modifier."),
-    "Key/Scale Keys": ("Scale in the Graph Editor", "Blender scales keys in the Graph Editor / Dope Sheet: select "
-                       "the keys and press S."),
     "Key/Set Blend Shape Target Weight Keys": ("Shape key Value", "Blender keys a shape key's Value in the Shape "
                                                "Keys panel (I over the field)."),
     "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "
@@ -383,8 +381,6 @@ CATEGORIES = {
              "copies data between objects."),
     **{f"Edit/{sub}": ("Outliner / Purge", "Blender has no node of this type: delete it in the Outliner, or File > "
                        "Clean Up > Purge for unused data.") for sub in ("Delete All by Type", "Delete by Type")},
-    "Edit/Keys": ("Scale in the Graph Editor", "Blender scales keys in the Graph Editor / Dope Sheet: select the keys "
-                  "and press S."),
     "File": ("File menu", "Blender has no offline files, ATOM or After Effects Live Link: move animation with "
              "Append / Link or FBX / Alembic export."),
     "Display": ("Viewport Overlays", "Blender draws this through the Viewport Overlays popover or Object properties > "

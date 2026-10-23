@@ -134,12 +134,16 @@ MAP = {
     "Edit/Cut": "allset.cut",                              # copy + delete (step 90)
     "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
     "Edit/Paste": ("v3d", "allset.paste", {}),
-    # Maya Delete Keys = every key of the selection (step 56; Time Slider RMB Delete = this frame / range)
+    # Maya Delete Keys = every key of the selection (step 56; Time Slider RMB Delete = this frame / range); the
+    # Key menu Cut / Copy / Snap run with Maya's factory options (Time range All, step 140); option boxes and
+    # saved settings: operators/option_windows_edit.py
     "Edit/Keys/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
-    "Edit/Keys/Cut Keys": ("allset.time_keys", {"action": "CUT"}),
-    "Edit/Keys/Copy Keys": ("allset.time_keys", {"action": "COPY"}),
+    "Edit/Keys/Cut Keys": ("allset.time_keys", {"action": "CUT", "time_range": 'ALL'}),
+    "Edit/Keys/Copy Keys": ("allset.time_keys", {"action": "COPY", "time_range": 'ALL'}),
     "Edit/Keys/Paste Keys": ("allset.time_keys", {"action": "PASTE"}),
     "Edit/Keys/Bake Simulation": "nla.bake",
+    # step 140: Maya factory Scale Keys = factor 1 (a no-op), so a plain click opens the window
+    "Edit/Keys/Scale Keys": "allset.opt_scale_keys",
     "Edit/Delete": "object.delete",
     "Edit/Ungroup": "allset.ungroup",                            # step 34
     "Edit/Delete by Type/History": "allset.delete_history",
@@ -388,16 +392,17 @@ MAP = {
     "Key/Set Driven Key/Go to Previous": ("allset.sdk_go", {"direction": 'PREVIOUS'}),
     "Key/Set Driven Key/Go to Next": ("allset.sdk_go", {"direction": 'NEXT'}),
     "Key/Insert Key": ("anim.keyframe_insert_by_name", {"type": "Available"}),
-    "Key/Cut Keys": ("allset.time_keys", {"action": "CUT"}),
-    "Key/Copy Keys": ("allset.time_keys", {"action": "COPY"}),
+    "Key/Cut Keys": ("allset.time_keys", {"action": "CUT", "time_range": 'ALL'}),
+    "Key/Copy Keys": ("allset.time_keys", {"action": "COPY", "time_range": 'ALL'}),
     "Key/Paste Keys": ("allset.time_keys", {"action": "PASTE"}),
-    "Key/Snap Keys": ("allset.time_keys", {"action": "SNAP"}),
+    "Key/Snap Keys": ("allset.time_keys", {"action": "SNAP", "time_range": 'ALL'}),
     "Key/Hold Current Keys": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Set Key on Translate": ("anim.keyframe_insert_by_name", {"type": "Location"}),
     "Key/Set Key on Rotate": ("anim.keyframe_insert_by_name", {"type": "Rotation"}),
     "Key/Set Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
     "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Key/Bake Simulation": "nla.bake",
+    "Key/Scale Keys": "allset.opt_scale_keys",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "allset.playblast", {}),
     "Playback/Play": "screen.animation_play",
@@ -559,7 +564,7 @@ MAP.update({
     "File/Send To Unity": "export_scene.fbx",
     "File/Send To Unreal": "export_scene.fbx",
     # Edit
-    "Edit/Keys/Snap Keys": ("allset.time_keys", {"action": "SNAP"}),
+    "Edit/Keys/Snap Keys": ("allset.time_keys", {"action": "SNAP", "time_range": 'ALL'}),
     "Edit/Delete All by Type/Shading Groups and Materials": "outliner.orphans_purge",
     # Create
     "Create/SVG": "import_curve.svg",

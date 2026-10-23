@@ -45,9 +45,19 @@ def set_parent_maya(child, parent):
     child.matrix_world = world
 
 
-def parent_maya(children, parent):
-    """Parent ``children`` under ``parent`` keeping their world matrices. Returns
-    (parented, skipped cycles)."""
+def set_parent_relative(child, parent):
+    """Maya Parent / Unparent with Preserve position off (``parent -relative``): the child keeps its local values,
+    so it moves with the new parent (mayapy: t 1 2 3 under a parent at 10 0 0 stays t 1 2 3,
+    research/maya/re/option_boxes_140_edit.md §6)."""
+    basis = child.matrix_basis.copy()
+    child.parent = parent
+    child.matrix_parent_inverse = Matrix.Identity(4)
+    child.matrix_basis = basis
+
+
+def parent_maya(children, parent, preserve=True):
+    """Parent ``children`` under ``parent`` keeping their world matrices (``preserve`` off: their local values).
+    Returns (parented, skipped cycles)."""
     done, cycles = [], []
     for ob in children:
         if ob is parent:
@@ -55,15 +65,22 @@ def parent_maya(children, parent):
         if is_ancestor(ob, parent):
             cycles.append(ob)
             continue
-        set_parent_maya(ob, parent)
+        if preserve:
+            set_parent_maya(ob, parent)
+        else:
+            set_parent_relative(ob, parent)
         done.append(ob)
     return done, cycles
 
 
-def unparent(objects):
+def unparent(objects, preserve=True):
     done = 0
     for ob in objects:
         if ob.parent is None:
+            continue
+        if not preserve:
+            set_parent_relative(ob, None)
+            done += 1
             continue
         world = ob.matrix_world.copy()
         ob.parent = None
@@ -88,6 +105,10 @@ class ALLSET_OT_parent(bpy.types.Operator):
     bl_label = "Parent"
     bl_options = {'REGISTER', 'UNDO'}
 
+    preserve_position: bpy.props.BoolProperty(
+        name="Preserve Position", default=True, options={'SKIP_SAVE'},
+        description="Keep the children where they are (Maya Parent Options; off = keep their local values)")
+
     @classmethod
     def poll(cls, context):
         return context.mode == 'OBJECT'
@@ -103,9 +124,11 @@ class ALLSET_OT_parent(bpy.types.Operator):
             if cycles:
                 self.report({'WARNING'}, f"Cannot parent {parent.name} under its own child")
                 return {'CANCELLED'}
+            if not self.preserve_position:
+                return bpy.ops.object.parent_no_inverse_set(keep_transform=False)
             return bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         context.view_layer.update()
-        done, cycles = parent_maya(children, parent)
+        done, cycles = parent_maya(children, parent, self.preserve_position)
         if cycles:
             self.report({'WARNING'}, "Skipped (parent is their descendant): "
                         + ", ".join(ob.name for ob in cycles))
@@ -119,13 +142,17 @@ class ALLSET_OT_unparent(bpy.types.Operator):
     bl_label = "Unparent"
     bl_options = {'REGISTER', 'UNDO'}
 
+    preserve_position: bpy.props.BoolProperty(
+        name="Preserve Position", default=True, options={'SKIP_SAVE'},
+        description="Keep the objects where they are (Maya Unparent Options; off = keep their local values)")
+
     @classmethod
     def poll(cls, context):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
         context.view_layer.update()
-        unparent(context.selected_objects)
+        unparent(context.selected_objects, self.preserve_position)
         return {'FINISHED'}
 
 
