@@ -79,5 +79,6 @@ polySlideEdge), 필드·기본값 `research/maya/re/options_144.md:87-108`, `opt
   메뉴·툴·키맵 등록 해제, Tool Settings 기본값·Reset, 창 필드).
 - GUI `gui_step144_loop` 14/14 (클릭 = z 0.399 에 루프, Ctrl+Z, 드래그 -0.296, offset 클릭 0.5 = -0.648 / 0.352,
   드래그 offset 양쪽 같은 비율, MMB 슬라이드). 스크린샷 tmp/shots144/ 확인.
+- 전체 headless 1290/1290 (155 파일), GUI gui_step129_tool_settings + gui_step140_option_windows 19/19.
 - 남은 것: Auto complete off (여러 번 클릭해 부분 루프), Fix Quads, Start/End vertex offset (측정에서 효과 없음),
   Tool completion "Press enter" 는 greyed + notice. 메뉴로 편집 모드 들어갈 때 undo 단계 없음 → #88.
