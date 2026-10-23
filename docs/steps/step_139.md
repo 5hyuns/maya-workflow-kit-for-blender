@@ -47,3 +47,24 @@ backlog 6 (`step_133_work.md` M1–M4, M9, U1, U2; #16). 측정 = mayapy (MAYA_A
   UV Editor > Create > Automatic / Best Plane / Contour Stretch 연결. `menu_item` 순서는 그대로 (새 연산자가 오브젝트 모드를 받음; delegated).
 - **메인**: 병합 (충돌 없음), 마킹 메뉴 (Chamfer Vertex, Merge Vertices, Connect Components ×2, Bevel Edge / Face, UV Automatic) 와 셸프
   (performBevelOrChamfer, PolyMerge, Automatic Mapping) 가 Blender 연산자 대신 같은 메뉴 항목 `("item", path)` 으로 — 레인 셋이 각각 남긴 것.
+
+## 검증
+
+- 헤드리스 전체 (병합 + 마킹 / 셸프 수정 뒤, PC 비정상 종료로 두 번에 나눠 같은 빌드): 앞 **594 passed, 0 failed**, 나머지 72 파일
+  **572 passed, 0 failed** (합 1166, 0 실패). 레인별: EDIT 82/82, SHAPE 80/80 (+ 넓은 묶음 182/182), UV 91/91.
+- GUI 전체 (커밋 전 한 번; 중간에 PC 가 꺼져 남은 파일 + 실패 파일만 이어 돌림, 같은 빌드): 앞 부분 **834 passed, 4 failed**, 나머지 + 실패
+  파일 75 개 **983 passed, 0 failed**. 실패 4 = `gui_manual_sweep` 의 옛 동작 기대 3 개 (Bevel 이 Blender 모달, Ctrl+E 엣지가 드래그, 그리고
+  `edit_cube` 가 정점 모드에서 면을 골라 Maya 규칙대로 정점 Extrude 가 됨 → 면을 고를 때 면 모드로) 고친 뒤 통과, `gui_step129_time` #37 (Auto
+  Key 타이머) 은 다시 돌리자 통과 (부하 때문의 타이밍).
+- mayapy 숫자 대조: Connect / Merge / Smooth / Symmetrize 표 (`step_139_edit.md`), Extrude edge / vertex · Bevel 모든 경우 1e-4 안
+  (`step_139_shape.md`), Automatic 셸 수 큐브 · 원기둥 · 평면 Maya 와 같음 (`step_139_uv.md`).
+- 그림 직접 확인: `gui_step139_bevel.png` (Ctrl+B 바로 베벨 + polyBevel1 In-View Fraction 0.5 / Segments 1), `gui_step139_uv_editor_create.png`
+  (UV Editor > Create 의 Best Plane · Contour Stretch 활성).
+
+## 남은 것
+
+- Connect: 한 면에 4 점 이상이면 Maya 엣지 순서를 따르는데 킷 큐브 엣지 번호가 Maya 와 다름 (M11) — 결과가 다를 수 있음; 6 면 모두 Connect 미모델.
+- Automatic: 구 · 토러스 셸 크기가 Maya 「Less distortion」 규칙과 다름 (셸 수는 같음, 킷은 「Fast」 규칙). Contour Stretch 는 Follow Active Quads
+  (Maya 네 모서리 곡면 맞춤 아님, 큐브 UV 14 개 vs Maya 8 개).
+- Bevel: Chamfer off · Mitering · Smoothing Angle · Auto Fit 없음, Depth ≠ 0/1 은 Segments 2 에서만 정확. Edge extrude 화살표는 값 하나만 (Maya 의
+  이동 · 회전 · 배율 핸들 없음). Symmetrize 의 클릭한 쪽 / 가림 판정은 미측정. Smooth 의 UV 는 선형 보간 (Maya OpenSubdiv 경계 규칙 아님).
