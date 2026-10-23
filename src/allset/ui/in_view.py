@@ -64,7 +64,7 @@ def record(context):
     if is_toolbox(space):
         return None, None
     ob, rec = extrude.active(context)
-    if rec is None or not extrude.caps_selected(ob, rec):
+    if rec is None or rec.dismissed or not extrude.caps_selected(ob, rec):
         return None, None
     return ob, rec
 

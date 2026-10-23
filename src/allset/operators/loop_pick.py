@@ -133,6 +133,12 @@ def select_run(bm):
     return len(elems)
 
 
+def loop_select_args(extend):
+    """Keywords for ``mesh.loop_select``: only ones every supported Blender has. 5.1+ dropped ``ring`` (ring pick is
+    ``mesh.edgering_select`` there; issue #84: "keyword "ring" unrecognized" on 5.2), and 4.5's default is False."""
+    return {"extend": extend, "deselect": False, "toggle": False}
+
+
 class ALLSET_OT_loop_pick(bpy.types.Operator):
     """Maya double-click: select the loop under the mouse; Shift: the components between the last pick and
     this one along their loop"""
@@ -169,8 +175,7 @@ class ALLSET_OT_loop_pick(bpy.types.Operator):
         # plain double-click, or a second pick on no common loop: Blender's loop pick at the mouse
         # (Shift adds the loop to the selection)
         try:
-            return bpy.ops.mesh.loop_select('INVOKE_DEFAULT', extend=self.between, deselect=False,
-                                            toggle=False, ring=False)
+            return bpy.ops.mesh.loop_select('INVOKE_DEFAULT', **loop_select_args(self.between))
         except RuntimeError:
             return {'PASS_THROUGH'}
 

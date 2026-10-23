@@ -729,10 +729,56 @@ def prepare(context):
     return True
 
 
+# Maya keeps each component type's selection: F12 (UV) and back to F9 / F10 / F11 shows the vertices / edges / faces
+# selected before. Kit UV mode selects every face (sync off draws only selected faces' UVs), so the mesh selection
+# from before it is kept here and put back when a mesh component mode comes back (issue #80).
+_MESH_SELECTION = {}     # object name -> ((verts, edges, faces) counts, selected vert / edge / face indices)
+
+
+def _counts(bm):
+    return len(bm.verts), len(bm.edges), len(bm.faces)
+
+
+def remember_mesh_selection(context):
+    _MESH_SELECTION.clear()
+    for ob in _edit_meshes(context):
+        bm = bmesh.from_edit_mesh(ob.data)
+        _MESH_SELECTION[ob.name] = (_counts(bm), [v.index for v in bm.verts if v.select],
+                                    [e.index for e in bm.edges if e.select], [f.index for f in bm.faces if f.select])
+
+
+def forget_mesh_selection():
+    _MESH_SELECTION.clear()
+
+
+def leave_uv_mode(context):
+    """Maya F9 / F10 / F11 after F12 / Alt+F12: UV Sync Selection back on and the mesh selection from before UV mode
+    back (when the mesh still has the same element counts)."""
+    ts = context.scene.tool_settings
+    if ts.use_uv_select_sync:
+        return
+    ts.use_uv_select_sync = True
+    for ob in _edit_meshes(context):
+        saved = _MESH_SELECTION.get(ob.name)
+        bm = bmesh.from_edit_mesh(ob.data)
+        if saved is None or saved[0] != _counts(bm):
+            continue
+        seqs = (bm.verts, bm.edges, bm.faces)
+        for seq in seqs:      # all off first: a face's / edge's ``select = False`` also drops its vertices
+            for el in seq:
+                el.select = False
+        for seq, chosen in zip(seqs, saved[1:]):
+            seq.ensure_lookup_table()
+            for i in chosen:
+                seq[i].select = True
+        bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
+    _MESH_SELECTION.clear()
+
+
 def set_component(context, mode):
     ts = context.scene.tool_settings
     if mode in ('VERTEX', 'EDGE', 'FACE'):
-        ts.use_uv_select_sync = True
+        leave_uv_mode(context)
         ts.mesh_select_mode = (mode == 'VERTEX', mode == 'EDGE', mode == 'FACE')
     elif mode in ('UV', 'SHELL'):
         ts.use_uv_select_sync = False
@@ -769,13 +815,22 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
                     o.select_set(False)
             target.select_set(True)
             context.view_layer.objects.active = target
+        ts = context.scene.tool_settings
+        # coming from a mesh component mode (or object mode): keep its selection for F9 / F10 / F11 (#80)
+        remember = self.mode in ('UV', 'SHELL') and (context.mode != 'EDIT_MESH' or ts.use_uv_select_sync)
+        if self.mode in ('VERTEX', 'EDGE', 'FACE') and context.mode == 'EDIT_MESH':
+            leave_uv_mode(context)     # before prepare() turns UV Sync Selection on
         if not prepare(context):
             self.report({'WARNING'}, "Select a mesh")
             return {'CANCELLED'}
-        if self.mode != 'OPEN':
-            set_component(context, self.mode)
+        if remember:
+            remember_mesh_selection(context)
+        # open the editor first: its prepare() turns UV Sync Selection on, which undid F12's UV mode the first time
+        # (issue #80)
         if find_uv_editor(context)[1] is None and context.window is not None and not bpy.app.background:
             bpy.ops.allset.open_editor(ui_type='UV')
+        if self.mode != 'OPEN':
+            set_component(context, self.mode)
         return {'FINISHED'}
 
 
