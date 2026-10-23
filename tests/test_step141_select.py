@@ -309,6 +309,14 @@ def test_uv_component_source():
     assert bpy.ops.allset.select_convert(kind='EDGE_PERIMETER') == {'FINISHED'}
     assert ts.use_uv_select_sync and _mode_kind() == 'EDGE'
     assert _result(ob, "plane", 'EDGE') == [11, 12, 13, 16, 21, 25, 29, 31]
+    # Blender's factory state (sync off, a mesh selection): the mesh selection converts, sync stays off
+    ob = _make("plane")
+    ts = bpy.context.scene.tool_settings
+    ts.use_uv_select_sync = False
+    _select(ob, 'VERT', [12])
+    assert bpy.ops.allset.select_convert(kind='GROW_LOOP') == {'FINISHED'}
+    assert not ts.use_uv_select_sync and _mode_kind() == 'VERT'
+    assert _result(ob, "plane", 'VERT') == [7, 11, 12, 13, 17]
 
 
 def test_menu_paths_mapped():
@@ -352,7 +360,7 @@ def test_marking_menu_entries():
     assert _mode_kind() == 'EDGE' and len(_result(ob, "plane", 'EDGE')) == 23, _result(ob, "plane", 'EDGE')
 
 
-def test_menu_item_runs_and_undoes():
+def test_menu_item_runs():
     ob = _make("plane")
     _select(ob, 'EDGE', [13])
     assert bpy.ops.allset.menu_item(item="Select/Convert Selection/To Face Path") == {'FINISHED'}
@@ -361,4 +369,20 @@ def test_menu_item_runs_and_undoes():
     _select(ob, 'VERT', [12])
     assert bpy.ops.allset.menu_item(item="Select/Convert Selection/To Edges") == {'FINISHED'}
     assert _mode_kind() == 'EDGE' and _result(ob, "plane", 'EDGE') == [14, 20, 22, 23]
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_kit_cube_isolated_vertex():
+    """The kit's Maya cube (operators/create.py): an isolated vertex grows along its loops to its 3 neighbours."""
+    _clear()
+    bpy.ops.allset.create(kind='CUBE')
+    ob = bpy.context.active_object
+    if bpy.context.mode != 'EDIT_MESH':
+        bpy.ops.object.mode_set(mode='EDIT')
+    _select(ob, 'VERT', [0])
+    bm = _bm(ob)
+    want = sorted({0} | {e.other_vert(bm.verts[0]).index for e in bm.verts[0].link_edges})
+    print("kit cube", len(bm.verts), [len(v.link_edges) for v in bm.verts], list(ob.modifiers))
+    assert bpy.ops.allset.menu_item(item="Select/Grow Along Loop") == {'FINISHED'}
+    assert _result(ob, "cube", 'VERT') == want, (_result(ob, "cube", 'VERT'), want)
     bpy.ops.object.mode_set(mode='OBJECT')
