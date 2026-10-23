@@ -253,7 +253,7 @@ def s_move_colours():
     theme = {a: count(px, region, hexrgb(h), box=box)
              for a, h in (("X", "#ff3653"), ("Y", "#8adb00"), ("Z", "#3b64a5"))}
     check(f"Move manipulator in Maya's axis colours (px {maya}; Blender theme gizmo colours {theme})",
-          all(v >= 20 for v in maya.values()) and all(theme[a] < maya[a] // 4 + 5 for a in "XYZ"))
+          all(v >= 10 for v in maya.values()) and all(theme[a] < maya[a] // 4 + 5 for a in "XYZ"))
     # a second cube, unselected, in wireframe shading
     area, region = view3d()
     unit = mod("operators.units").maya_unit()

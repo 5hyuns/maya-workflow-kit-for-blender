@@ -974,3 +974,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Face mode, a face: Convert Selection > To UVs → a UV Editor window opens, UV Sync Selection off, exactly the face's 4 UVs selected; then Ctrl+RMB in the 3D View ▸ To Edges → the face's 4 edges (back in edge mode, sync on).
 - [ ] Plane with a face selected: To UV Shell Border → the border faces; closed cube → nothing (Maya does the same); To Shell Border on an interior face → nothing, on a border face → every border face.
 - [ ] Select > Components > Vertex Face / Convert Selection > To Vertex Faces stay greyed; the tooltip says Blender has no vertex-face component.
+
+## Step 142 — UI
+
+- [ ] New Maya scene at UI scale 1.0 / 1.25 / 1.5: the right dock shows Maya's vertical tab strip on its right edge (Channel Box / Layer Editor, Attribute Editor, Modeling Toolkit, reading top to bottom); the stack is about as narrow as Maya's (286 / 346 / 418 px), nothing in the Channel Box is cut ("Subdivisions Height" of a polyCube1 input).
+- [ ] Click Attribute Editor on the strip: the cursor jumps to the dock's left edge for a moment, the stack widens to Maya's AE width (480 / 600 / 720 px, less in a small window), the AE menu bar is one row; Channel Box tab: it narrows again. Ctrl+A does the same. A dock you resized yourself keeps its width.
+- [ ] Hover / click below the last tab or on the strip's empty part: nothing happens; the AE region still scrolls with the wheel.
+- [ ] UI scale 1.5 in a 1600 px window: the menu bar ends with » after the menus that fit; » opens the rest (Deform, UV, Generate, Cache, Help) as submenus that work like the bar's.
+- [ ] UI scale 1.5: Key > Set Driven Key > Set...: the window under the Channel Box shows its lists with fewer rows and Key / Load Driver / Load Driven / Close stay inside the dock.
+- [ ] Move / Scale tool on a selected cube: axes Maya red #e60000, green #00e600, blue #0000ff; the handle under the mouse and the last-used axis yellow. Rotate keeps Blender's ring colours (theme).
+- [ ] Wireframe shading (4): unselected objects draw Maya's dark blue wire, the lead light green, others white; the "Selection Wireframe" preference off brings Blender's own wire colours back.

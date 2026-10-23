@@ -663,7 +663,7 @@ def draw_menu_bar_fit(layout, context, menu_set=True):
     from .. import preferences
     prefs = preferences.get(context)
     names = menu_sets.menus_for_set(prefs.menu_set)
-    region = context.region
+    region = getattr(context, "region", None)
     widths, fixed, more = menu_bar_widths(context, names, menu_set)
     n = menu_fit(widths, region.width, fixed, more) if region is not None and region.width > 1 else len(names)
     if context.window is not None:
