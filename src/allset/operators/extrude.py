@@ -422,6 +422,7 @@ class Record:
         self.states = []            # [(params, signature, selection signature)]
         self.live = False           # a drag is previewing values
         self.mesh_uid = None        # session_uid of the mesh it was made on
+        self.dismissed = False      # Q/W/E/R picked a tool since: Maya shows that tool's manipulator (#80)
 
     def free(self):
         if self.pre is not None:
@@ -564,6 +565,16 @@ def active(context):
     ob = context.edit_object if context is not None else None
     rec = current(ob)
     return (ob, rec) if rec is not None else (None, None)
+
+
+def dismiss(context):
+    """Maya: picking a tool (Q / W / E / R) after an extrusion swaps the extrude manipulator and In-View Editor for
+    that tool's manipulator; the node stays in Channel Box INPUTS (issue #80). True when one was showing."""
+    _ob, rec = active(context)
+    if rec is None or rec.dismissed:
+        return False
+    rec.dismissed = True
+    return True
 
 
 def next_name(scene, spec=None):
