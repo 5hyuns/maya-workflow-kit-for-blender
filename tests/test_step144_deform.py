@@ -186,6 +186,8 @@ def test_lattice_fits_selection_with_maya_divisions():
     assert lat.data.name == "ffd1LatticeShape"
     # Maya divisions S T U = 2 5 2 (Maya Y = Blender Z): points_u / v / w = 2 2 5
     assert (lat.data.points_u, lat.data.points_v, lat.data.points_w) == (2, 2, 5)
+    zs = [p.co.z for p in lat.data.points]
+    assert (min(zs), max(zs)) == (-0.5, 0.5), (min(zs), max(zs))          # the lattice box = the scale
     assert (lat.location - Vector((2, 0, 1))).length < 1e-6                  # Center around selection
     assert (Vector(lat.scale) - Vector((1, 2, 1))).length < 1e-6              # the bounding box
     assert bpy.context.active_object == lat and list(bpy.context.selected_objects) == [lat]   # Maya: ffd1Lattice
@@ -359,7 +361,11 @@ def test_wrap_binds_to_the_influence():
         v.co.x += 1.0
     infl.data.update()
     after = _evaluated(cube)
-    assert all(abs((q - p).x - 1.0) < 1e-3 for p, q in zip(before, after))
+    assert all(abs((q - p).x - 1.0) < 1e-3 for p, q in zip(before, after)), "follows the influence's shape"
+    infl.location.y += 2.0
+    moved = _evaluated(cube)
+    assert all(abs((q - p).y - 2.0) < 1e-3 for p, q in zip(after, moved)), "and its transform (Maya)"
+    assert [m.name for m in cb._inputs(cube)] == ["wrap1"]
     assert _rows(cube, md) == [("Envelope", "1")]
     assert ae.modifier_node(cube, md) == ("wrap1", "wrap")
 
