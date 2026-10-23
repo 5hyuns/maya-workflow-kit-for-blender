@@ -164,7 +164,7 @@ def s_bone_picked():
 
 
 # the joint's rows (pose mode: no object-mode note row above them), looked up by data path (step 116)
-step(find_button(dock, lambda path, _cmd: path.endswith("tx_text"), C, "tx", x_frac=0.8, step_px=6))
+step(find_button(dock, lambda path, _cmd: path.endswith("tx_text"), C, "tx", x_frac=0.7, step_px=6))   # inside the value column of the step-142 narrow dock
 step(find_button(dock, lambda path, cmd: "cb_select_channel" in cmd or path.endswith("tx_sel"), C, "name", y_from="tx"))
 
 
@@ -308,7 +308,7 @@ def _is_w0(path, _cmd):
     return any(r.kind == "CONSTRAINT" and path.endswith(f"rows[{i}].text") for i, r in enumerate(rows))
 
 
-step(find_button(dock, _is_w0, C, "w0", x_frac=0.8, step_px=6))
+step(find_button(dock, _is_w0, C, "w0", x_frac=0.7, step_px=6))
 
 
 @step

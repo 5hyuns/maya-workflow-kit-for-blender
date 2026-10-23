@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 143 (0.3.0 출시 준비) 완료 — `docs/steps/step_143.md` (+ `step_143_{compat79,user}.md`). 출시 전 사용자 보고 #79 (다른 애드온의
+  Render 패널 때문에 Maya 모드 안 켜짐) #84 (5.1/5.2 더블클릭 루프 오류) #80 (Extrude 뒤 이동, F12 UV sync) 고침, #82 원인 댓글 →
+  0.4.0. manifest 0.3.0, CHANGELOG [0.3.0], `docs/distribution/release_notes_0.3.0.md`. validate Success, release_check 4.5.4 /
+  5.2.2 22 / 22, 헤드리스 1249/1249, GUI 전체 1500 + 1 (step55 테스트 좌표 고친 뒤 15/15), 2 격리. v0.3.0 태그 · push ·
+  GitHub 초안 릴리스 (zip 2 개), 바탕화면 `MayaWorkflowKit_upload/` 에 0.3.0 zip + 문구.
+  **바로 다음 할 일**: step 144 = 0.4.0 Maya 모델링 도구 (#30 Quad Draw / Create Polygon / Append, #31 Insert / Offset Edge Loop /
+  Slide Edge, #34 Deform 메뉴). 0.4.0 에 함께: #81 #82 #83 #85 #86 #87.
+  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 확인 후 publish, 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 + release_notes_0.3.0.md.
+
 - Step 142 (UI 모습 · 맞춤, #78 #77 #76 #54 #41) 완료 — `docs/steps/step_142.md` (+ `step_142_{ui,icons,media}.md`). Maya 세로 탭 띠
   dock (Channel Box 286 px at 1.0, 뷰포트 773 → 954 px), 메뉴 막대 » 넘침 + SDK 1.5 배율, Maya 매니퓰레이터 색 · 와이어 #000460
   (look_compare viewport 11/12), 메뉴 아이콘 190 → 675, 스토어 미디어 · 홍보 · 클립 · 사이트 미디어를 테마 없이 다시 찍음.
