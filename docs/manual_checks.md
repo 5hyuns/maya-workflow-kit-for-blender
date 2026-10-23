@@ -30,8 +30,6 @@ Format: `- [ ] (step N) what to do → what you should see`.
 - [ ] (step 2) F8 → 오브젝트 ↔ 에디트 모드 (마지막 컴포넌트 모드 유지).
 - [ ] (step 2) 오브젝트 2개 선택 후 Ctrl+G → `group1` 생성·선택, 오브젝트 제자리, Ctrl+Z 한 번에 되돌림. Outliner 에서 Ctrl+G 도 동일.
 - [ ] (step 2) Space → 아무 일 없음, Alt+V 재생/정지, Alt+Shift+V 시작 프레임.
-- [ ] (step 2) 환경설정 > Keymap 을 Blender 로 바꾸고 재시작 → Blender 유지. 애드온 환경설정의 「Activate Maya Keymap」 → Maya 로 돌아옴.
-- [ ] (step 2) 첫 실행 스플래시 Quick Setup 이 Keymap 을 "Blender" 로 표시 — Continue 해도 Maya 가 유지되는지.
 
 ### Step 3 — 홀드/탭, 피벗, pick-walk
 
@@ -58,19 +56,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 4) 1/2/3 (오브젝트·편집 모드) → 스무스 끔 / 와이어+스무스 / 스무스; 렌더 결과는 그대로.
 - [ ] (step 4) F9/F10/F11/F7 → 정점/엣지/면/멀티 편집, F8 → 오브젝트 모드.
 - [ ] (step 4) Ctrl+Space → UI 숨긴 전체 화면, 다시 → 원래대로.
-- [ ] (step 4) 애드온 환경설정 「Maya Navigation Preferences」 끄기 → Preferences > Navigation 값이 켜기 전으로; 다시 켜기 → Maya 값.
 
 ### Step 5 — 레이아웃·테마
 
-- [ ] (step 5) 애드온 환경설정 「Install Maya Layout」 → File > New 에 Allset 이 보이고, 선택하면 General 레이아웃(좌 Outliner / 가운데 뷰포트 / 우 Layer Editor·Properties / 아래 타임라인)으로 새 파일.
-- [ ] (step 5) 「New File with Maya Layout」 → 확인 창 후 같은 결과. 「Remove Maya Layout」 → File > New 목록에서 사라짐.
-- [ ] (step 5) 「Apply Maya Theme」 → Maya 와 나란히 놓고 회색·선택 색·그라디언트 비교 ([K] 값 조정 필요 여부). 「Restore Previous Theme」 → 원래 테마.
-- [ ] (step 5) Allset 을 끈 상태에서 Allset 템플릿으로 새 파일 → Allset 이 다시 켜짐.
 - [ ] (step 5) 오브젝트 와이어프레임(4) 색: 비선택 짙은 파랑, 선택 초록, 리드 흰색이 Maya 와 비슷한지.
 
 ### Step 6 — Channel Box / Layer Editor
 
-- [ ] (step 6) 사이드바(N)에서 "Channel Box" 탭 한 번 클릭 -> 이후 그 화면은 Channel Box 를 기억 (템플릿에서 자동 지정 불가).
 - [ ] (step 6) 오브젝트 3개 선택 -> Translate X 에 값 입력 -> 셋 다 같은 값; Ctrl+Z 한 번에 되돌림.
 - [ ] (step 6) Translate X 이름 클릭 -> 뷰포트 MMB 좌우 드래그로 값 변화 (Ctrl 느리게, Shift 빠르게), 커서가 화면 끝에서 감겨도 계속; ESC 로 취소. 채널 선택 해제 후 MMB -> Move 툴 드래그.
 - [ ] (step 6) Channels 메뉴: Key Selected -> 타임라인에 키, 필드 붉게; Lock Selected -> 회색·편집 불가; Hide Selected -> 행 사라짐, Show All -> 복귀.
@@ -79,7 +71,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 7 — 메뉴바·메뉴셋, Status Line, 커맨드 라인, Help Line
 
-- [ ] (step 7) 저장한 사용자 환경설정으로 Blender 시작 → File > New > Allset: 활성 키맵이 계속 "Maya" 인지 (GUI 테스트의 `--factory-startup` 에서는 Blender 로 돌아감).
 - [ ] (step 7) 메뉴셋 드롭다운 Modeling → Rigging → Animation → FX → Rendering: 메뉴가 바뀌고 다시 시작해도 마지막 메뉴셋 유지.
 - [ ] (step 7) 각 메뉴의 진한 항목 몇 개 실행 (Create > Polygon Primitives > Cube, Edit Mesh > Bevel 은 마우스로 조절, Mesh Tools > Multi-Cut, Constrain > Parent 를 대상→피구속 순서로 선택 후) — Maya 와 비슷한 결과인지. 회색 항목 툴팁에 Maya 경로.
 - [ ] (step 7) 좁은 창(1280 px)에서 메뉴바가 잘리는 정도; 헤더 우클릭 > Show Menus 끄면 메뉴가 하나로 접힘.
@@ -136,8 +127,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 13 — 배포
 
-- [ ] (step 13) 실제 사용자 설정(새 프로필)에서 zip 을 끌어다 놓아 설치: Maya 키맵·내비게이션 적용, Quick Setup 창에서 Continue 를 눌렀을 때 키맵이 Blender 로 바뀌는지 (바뀌면 Activate Maya Keymap).
-- [ ] (step 13) Install Maya Layout → File > New > Allset → Blender 재시작 뒤에도 레이아웃·키맵 유지, Remove Maya Layout 후 템플릿 목록에서 사라짐.
 - [ ] (step 13) 비활성화 → 키맵·내비게이션·Image Editor 헤더가 원래대로, 다시 활성화.
 
 ### Step 14 — 재점검 1차
@@ -282,16 +271,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 42) 실제 설치 (환경설정 > Get Extensions > Install from Disk 로 zip) 직후 환영 대화상자가 커서 근처에 뜨는지, Blender 스플래시와 겹쳐도 "Make Blender Maya" 를 누를 수 있는지. 누르면 Maya 레이아웃 + 테마, 스플래시 없음.
 - [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Allset 맨 위 버튼으로 할 수 있는지.
 - [ ] (step 42) Blender 를 껐다 켜면 (파일 없이) Maya 레이아웃으로 열리는지; .blend 를 더블클릭해 열면 그 파일이 그대로 열리는지; 세션 중 File > New > General 은 General 인지.
-- [ ] (step 42) Revert Maya Look → 원래 테마·스플래시 설정이 돌아오고 File > New 목록에서 Allset 이 사라지는지. Allset 을 끄면 원래 테마로, 다시 켜면 Maya 테마로 돌아오는지.
 - [ ] (step 42) 다른 애드온 (예: Node Wrangler) 이 Make Blender Maya 전후로 그대로 켜져 있는지.
-
-### Step 44 — Maya 위젯 감각 (평면 위젯·밀도·Segoe UI)
-
-- [ ] (step 44) Make Blender Maya 뒤 글자·행 크기가 같은 모니터의 Maya 2022 와 같아 보이는지 (125 % 화면: Resolution Scale 0.8). 100 %·150 % 모니터에서도 (0.8 이 아니라 1.0 / 0.667 이 되는지).
-- [ ] (step 44) 실제 모니터 배율을 Blender 실행 중에 바꾸면 (노트북 ↔ 외부 모니터) 밀도는 처음 계산한 값 그대로 (delegated: 다시 켜면 새로 계산). 작아서 불편한지.
-- [ ] (step 44) Segoe UI: 한글·특수문자 (°, ×) 가 빠지지 않고 보이는지 (Blender 가 빠진 글자는 기본 글꼴로 채우는지), 마킹 메뉴·핫박스 글자도 Segoe UI 인지.
-- [ ] (step 44) 각진 평면 위젯이 Maya 처럼 읽히는지; 버튼·필드 경계가 너무 안 보이지 않는지 (엠보스 없음). 메뉴 그림자 없음이 어색하지 않은지.
-- [ ] (step 44) Revert Maya Look / Allset 끄기 → Resolution Scale·글꼴·와이어 부드럽게가 원래대로 돌아오는지.
 
 ### Step 45 — Maya 그리드
 
@@ -321,7 +301,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 49) 툴박스: Select·Lasso·Paint Select·Move·Rotate·Scale 가 오브젝트·편집·포즈 모드에서 같은 자리에 있고, 다른 툴 (Multi-Cut 등) 을 쓴 뒤 그 툴이 구분선 아래 마지막 칸에 나오는지. 툴 버튼 더블클릭·길게 누르기가 이상하지 않은지.
 - [ ] (step 49) 툴박스 아래 빈 곳 클릭·드래그 → 선택이 그대로인지. 빠른 레이아웃 Single / Four 버튼, Outliner 버튼 (새 창), Front/Persp 는 회색.
 - [ ] (step 49) Resolution Scale 을 1.0 보다 크게 (Maya Density 끔) 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
-- [ ] (step 49) 사이드바: Channel Box 탭으로 열리고 Tool / View 탭이 없음. 오브젝트를 고르면 Blender 의 Item 탭 (C 패널, 숨길 수 없음) 이 생김 — 거슬리는지. 환경설정 「Channel Box Dock Only」 를 끄면 Item / Tool / View / Outliner 탭이 돌아오는지.
 - [ ] (step 49) Status Line 의 Attribute Editor 버튼 = 도크 AE 전환, Render Settings = Properties 새 창 (Render 탭).
 - [ ] (step 49) 하단 줄: 왼쪽 Help Line (툴 도움말, 없으면 Blender 마우스 힌트·보고·진행), 오른쪽 Command Line. 오류 보고가 Help Line 칸에 보이는지.
 
@@ -345,7 +324,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 52) Space 길게: 위 2 줄 (공통 + Cache/Help, View … Panels), 커서 줄 Recent Commands | Maya | Hotbox Controls, 아래 5 줄 (메뉴 세트 모두), 대각선 4 개. 커서가 사이드바 근처여도 줄이 접히지 않고 Channel Box 위에 그려지는지, 그 위의 메뉴 이름을 눌러 열리는지.
 - [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
 - [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록이 아래로 넘치면 오른쪽 열로 이어지고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
-- [ ] (step 52) Maya Font (Segoe UI) 를 켠 상태에서 마킹 메뉴 하위 메뉴 화살표 (삼각형) 가 글자 옆에 맞게 보이는지.
 
 ### Step 53 — Blender 5.x 와 안전한 설치
 
@@ -415,7 +393,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지. (gui_manual_sweep)
 - [x] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로. (gui_manual_sweep)
 - [ ] (step 60) Maya 모드인 채 Blender 를 닫고 다시 열기 → Maya 모드 그대로, 그다음 Blender 로 → 원래 설정. Maya 모드에서 작업 관리자로 강제 종료 → 다시 열어서 Blender 로 전환 → 원래 설정.
-- [ ] (step 60) Preferences > Extensions 에서 Allset 을 Maya 모드인 채 끄기 / Remove → 키맵·테마·스플래시·UI 크기가 Allset 이전으로. 「Restore Blender Settings」 버튼 = Maya 끔 + Maya 레이아웃 템플릿 제거 + 원래 설정.
 
 ### Step 61 — 배포 경로 (공개 전, 실제 Blender 창에서)
 
@@ -726,15 +703,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 110) 조인트 체인에서 Reroot / Set·Assume Preferred Angle / Create IK Spline Handle (curve1 을 움직이면 체인이 따라오는지), Hammer Skin Weights 를 웨이트 페인트로 확인.
 - [ ] (step 110) Cluster / Soft Modification 핸들을 W 로 움직이는 느낌 (Soft Mod 는 반경 5 안에서 부드럽게), Nonlinear Bend / Twist 값을 Channel Box 나 모디파이어에서 바꿀 때 핸들 기준으로 휘는지.
 
-### Step 111 — 이름 변경 (Allset for Maya Users)
-
-- [ ] (step 111) 깨끗한 설정에 `allset-0.1.0.zip` 을 끌어 놓아 설치: Preferences > Add-ons 에 「Allset for Maya Users」, 맨 위 About 상자 (설명 + 상표 고지문), 환영 창 제목·문구, 스플래시, File > New > Allset, 키맵 이름 「Maya-style」, 테마 이름 「Studio Grey (Maya-inspired)」.
-- [ ] (step 111) 예전 Maya Kit 를 쓰던 설정: `bl_app_templates_user/MayaKit` 이 레이아웃 설치 / 제거 때 지워지는지 (표시 파일 `.maya_kit` 있을 때만).
-
-### Step 112 — 불투명 도크, Tool Box 띠
-
-- [ ] (step 112) 실제 설정 (자기 테마 그대로): Maya 로 전환 → Maya-style 레이아웃에서 오른쪽 Channel Box / Attribute Editor / Modeling Toolkit 탭 배경이 불투명하고 뷰포트가 그 왼쪽에서 끝나는지, 맨 왼쪽 열에 Select / Lasso / Paint / Move / Rotate / Scale 아이콘이 보이고 뷰포트 안에는 도구 줄이 없는지 (125 %, 창 크기 바꿔서도). UV Editor 사이드바도 불투명한지. 환경설정 「Solid Side Panels」를 끄면 Blender 의 Region Overlap 이 돌아오는지, Blender 로 전환해도 돌아오는지.
-
 ### Step 113 — 상단 (메뉴 막대, Status Line, 셸프, 패널 바)
 
 - [ ] (step 113) 실제 125 % 화면, 자기 설정: Maya 로 전환 → 메뉴 막대에 File … Help 가 다 보이고 메뉴셋 드롭다운은 Status Line 맨 왼쪽, 오른쪽 Workspace: 드롭다운으로 작업 공간이 바뀌는지, Maya | Blender 글자가 눈에 덜 띄면서 눌리는지.
@@ -746,7 +714,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 115) 실제 Blender 에서 Get Extensions 로 설치·활성화 → 그 자리에서 환영 창이 뜨고, 그 전에는 키맵·테마·레이아웃이 그대로인지. 「Make Blender feel like Maya」 → 저장 안 한 작업 중 파일이면 그 파일에 Maya-style 작업 공간만 붙고 데이터는 그대로, 새 빈 파일이면 Allset 레이아웃 파일로 바뀌는지. 취소하면 아무것도 안 바뀌고 다시 안 뜨는지 (환경설정의 같은 버튼은 남음).
 - [ ] (step 115) Auto-Save Preferences 를 끈 설정: Maya 로 바꾸고 저장하지 않고 종료 → 다음 시작이 Blender 그대로인지 (킷이 혼자 저장하지 않음).
-- [ ] (step 115) 확장을 끄거나 Remove → `scripts/startup/bl_app_templates_user/Allset` 이 지워지는지, 그냥 종료·재시작·확장 업데이트로는 남는지. File > New > Allset 뒤에도 Maya 키맵인지.
 
 ### Step 116 — Maya 도킹 모델 (패널마다 창, ::::: 핸들)
 
@@ -766,19 +733,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 118) Blender 5.0 / 5.1 / 5.2 실제 화면 (사용자 Blender 5.x 설치본): 확장 설치 → 환영 창 → Make Blender Maya → Allset 레이아웃. 타임라인은 5.x 에서 사이드바가 열리지 않으므로 Range Slider 막대가 머리줄에 있고 재생 버튼 8 개는 그 줄 오른쪽 끝 — 막대 끌기 / 양 끝 핸들 / 더블클릭이 4.5 처럼 되는지.
 - [ ] (step 118) 5.x: 관절 Channel Box Visibility off → 포즈·오브젝트 모드에서 그 본이 정말 숨는지 (5.0 의 `PoseBone.hide`), on → 다시 보이는지.
 - [ ] (step 118) 5.2: 저장 안 된 이미지 (Texture Paint 한 획) 가 있는 채로 Ctrl+S → Blender 5.2 의 「수정된 이미지 저장」 창이 뜨는지.
-- [ ] (step 118) 5.x 의 Maya 테마: 이음매 (빨강) / 날카로운 모서리 (청록) / 주름 (자홍) 색, Graph Editor 핸들 색, Properties 패널 머리·배경이 4.5 와 같은지. Blender 로 전환하면 사용자 테마로 돌아오는지.
-
-### Step 119 — 5.x 색 일치
-
-- [ ] (step 119) Blender 5.0 / 5.1 / 5.2 실제 화면에서 Make Blender Maya 뒤 4.5 와 나란히: 메뉴 막대·Status Line·셸프 (아이콘 밝기 — 5.x 는 `IMAGE_SCENE_LINEAR_TO_REC709_SRGB` 셰이더), Channel Box / AE 패널 배경·머리, 뷰포트 #5c5c5c, 격자 (주 격자선이 따로 밝지 않은지 — `grid_major`), 선택 흰색 / 리드 초록, 매니퓰레이터 축 색이 같은지.
-- [ ] (step 119) 5.x Graph Editor / Dope Sheet: 채널 배경·선택 채널, 키 (보통 / 선택), 핸들 색, 재생 헤드, 미리보기 범위 어둡게가 4.5 Maya 테마와 같은지 (`common.anim.*`, `common.curves.*`).
-- [ ] (step 119) 5.x 위젯 선택 외곽선 (`wcol_*.outline_sel`): 숫자칸·체크박스·메뉴를 눌렀을 때 Blender 기본 강조색 대신 Maya 처럼 외곽선이 그대로인지; Properties / 도크 패널의 활성 패널 표시 (`panel_active`).
-- [ ] (step 119) 5.x Outliner 활성 행 외곽선 (테마 키 없음, 남은 것): Maya 와 얼마나 달라 보이는지 — 거슬리면 보고.
-- [ ] (step 119) 5.x 에서 Blender 로 전환 → 사용자 테마로 돌아오는지, 다시 Maya → 버전 파일 (`studio_grey_5.<m>.xml`) 이 적용되는지 (Preferences > Themes 의 이름 "Maya").
 
 ### Step 120 — Maya 배경 · Alt+B
 
-- [ ] (step 120) Allset 레이아웃 (Maya 테마) 에서 뷰포트 위 Alt+B 를 네 번: 회색 #5c5c5c → 밝은 회색 → 위 청회색·아래 검정 그라데이션 → 검정 → 회색, 네 분할 뷰 (Space 탭) 모두 함께 바뀌는지; Maya 와 나란히 볼 때 그라데이션 가운데가 조금 어두운 것 (ΔE00 ≈ 9, 남은 것) 이 거슬리는지.
 - [ ] (step 120) Windows > Settings/Preferences 가 Maya 처럼 하위 메뉴 (Preferences, Hotkey Editor, Color Settings, Marking Menu Editor, Shelf Editor, Panel Editor, Plug-in Manager) 인지; Color Settings 에서 Background 색을 바꾸고 Apply → 모든 뷰가 그 색, Gradient Background 켜고 Apply → 그라데이션.
 - [ ] (step 120) 자기 테마 (Maya 테마 끔) 로 Maya 모드: Alt+B 가 회색 → 밝은 회색 → 검정 (그라데이션 없음) 이고 Preferences > Themes 가 바뀌지 않는지. Blender 로 전환 → 테마가 사용자 것으로 돌아오는지.
 - [ ] (step 120) Edit Mode 에서 Ctrl+B = Bevel (Maya BevelPolygon) 그대로인지.
@@ -799,7 +756,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 125 — 이름 Maya Workflow Kit · README
 
 - [ ] (step 125) 깨끗한 설정에 `maya-workflow-kit-<ver>.zip` 설치: Preferences > Add-ons 에 「Maya Workflow Kit」, 환영 창 제목 「Welcome to Maya Workflow Kit」, File > New 에 「Maya Workflow Kit」 템플릿, 핫박스 가운데 상자 「Maya Workflow Kit」; 화면 어디에도 「Allset」 글자가 남지 않는지 (내부 id `allset` 은 Get Extensions 의 정보에만).
-- [ ] (step 125) 이전 (Allset) 빌드에서 이 빌드로 업데이트: 같은 id `allset` 이라 업데이트로 보이고, 옛 `bl_app_templates_user/Allset` 템플릿이 남아 File > New 에 두 개가 보이지 않는지.
 - [ ] (step 125) 저장소를 GitHub (`5hyuns/maya-workflow-kit-for-blender`) 에 올린 뒤 README 를 GitHub 화면에서: 히어로 이미지 · GIF 7 개 · 트레일러 MP4 링크가 열리고, 목차 앵커가 맞는 곳으로 가는지 (`tools` 없이 로컬 검사는 경로 존재만 확인).
 - [ ] (step 125) 업로드 전 extensions.blender.org 에서 「Maya Workflow Kit」 와 같은 / 비슷한 이름이 없는지 검색 (다시 확인 안 함). 심사에서 이름이 지적되면 대체 이름 「Workflow Kit for Maya Users」 (결정 12 개정).
 
@@ -934,21 +890,21 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 138 — scenes and files
 
-- [ ] Cube, Ctrl+N: 「Warning: Scene Not Saved / Save changes to untitled scene?」 Save / Don't Save / Cancel. Save → Save As in the project's scenes folder, the new scene only after saving; cancelling the browser keeps the scene.
-- [ ] Saved scene changed, Ctrl+N: 「Save Changes / Save changes to <path>?」; Save writes the file, then the new scene.
-- [ ] Maya mode, File > Open a .blend made in plain Blender: the Maya layout (Status Line, shelf, Tool Box, Channel Box dock, Time Slider) shows; add-on option 「Keep Maya Layout When Opening Files」 off → the file's own layout.
+- [x] Cube, Ctrl+N: 「Warning: Scene Not Saved / Save changes to untitled scene?」 Save / Don't Save / Cancel. Save → Save As in the project's scenes folder, the new scene only after saving; cancelling the browser keeps the scene. (gui_step138_prompt, step 145)
+- [x] Saved scene changed, Ctrl+N: 「Save Changes / Save changes to <path>?」; Save writes the file, then the new scene. (gui_step138_prompt, step 145)
+- [x] Maya mode, File > Open a .blend made in plain Blender: the Maya layout (Status Line, shelf, Tool Box, Channel Box dock, Time Slider) shows; add-on option 「Keep Maya Layout When Opening Files」 off → the file's own layout. (gui_step138_open, step 145)
 - [ ] Set Move axis World/Object, step snap, soft select radius, symmetry; New Scene and File > Open keep them.
 - [ ] Export All → FBX / OBJ / Alembic / USD, import in Maya 2022: pCube1 keeps translate / rotate / scale, no extra root / env_light, no Rotate X -90 / Scale 100. Maya → kit import: same channels, names pCube1 / pCubeShape1.
 
 ## Step 139 — Edit Mesh / UV with Maya results
 
-- [ ] Cube, F10, two opposite edges, Edit Mesh > Connect: one edge through their midpoints (10/15/7).
-- [ ] Two neighbouring vertices, Edit Mesh > Merge: one vertex at their midpoint (always merge two vertices).
-- [ ] One face, Mesh > Smooth: only that face smoothed (13/20/9), no Subdivision modifier.
-- [ ] Edit Mesh > Symmetrize: waits for an edge click (mesh unchanged), the click mirrors, Esc cancels.
+- [x] Cube, F10, two opposite edges, Edit Mesh > Connect: one edge through their midpoints (10/15/7). (gui_step139_edit, step 145)
+- [x] Two neighbouring vertices, Edit Mesh > Merge: one vertex at their midpoint (always merge two vertices). (gui_step139_edit, step 145)
+- [x] One face, Mesh > Smooth: only that face smoothed (13/20/9), no Subdivision modifier. (gui_step139_edit, step 145)
+- [x] Edit Mesh > Symmetrize: waits for an edge click (mesh unchanged), the click mirrors, Esc cancels. (gui_step139_edit, step 145)
 - [ ] Ctrl+E on edges / a vertex: made at once (no mouse drag), In-View Editor + arrow change Thickness / Length.
 - [ ] Ctrl+B on an edge: bevel at once (Fraction 0.5), Esc keeps it, In-View Editor Fraction / Segments edit it; vertex mode = Chamfer Vertex.
-- [ ] Object mode, UV > Automatic: 6 shells on a cube; UV Editor > Create > Best Plane / Contour Stretch enabled.
+- [x] Object mode, UV > Automatic: 6 shells on a cube; UV Editor > Create > Best Plane / Contour Stretch enabled. (gui_step139_uv, step 145)
 
 ## Step 140 — Daily Maya option windows
 
