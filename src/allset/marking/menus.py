@@ -310,7 +310,7 @@ SHIFT_VERTEX = MarkingMenu(
     "contextPolyToolsVertexMM", "Vertex Tools", "research/maya/marking_menus.json contextPolyToolsVertexMM",
     radial={
         "S": ("Extrude Vertex", ("v3d", "mesh.extrude_vertices_move", {})),   # :27
-        "E": ("Chamfer Vertex", ("v3d", "mesh.bevel", {"affect": 'VERTICES'})),  # :43
+        "E": ("Chamfer Vertex", _item("Edit Mesh/Chamfer Vertices")),       # :43 (step 139)
         "SW": ("Delete Vertex", "mesh.dissolve_verts"),                    # :59
         "SE": ("Vertex Normals", Sub(radial={                              # :68
             "S": ("Toggle Vertex Normal Display", _overlay("show_vertex_normals")),
@@ -319,7 +319,7 @@ SHIFT_VERTEX = MarkingMenu(
             "SE": ("Set Normals to Face", "mesh.set_normals_from_faces"),
         }, options={"Average Normals", "Set Normals to Face"})),
         "N": ("Merge Vertices", Sub(radial={                               # :127
-            "NE": ("Merge Vertices", "mesh.remove_doubles"),
+            "NE": ("Merge Vertices", _item("Edit Mesh/Merge")),        # polyMergeVert (step 139)
             "N": ("Merge Vertices To Center", MERGE_CENTER),
             "S": ("Target Weld Tool", TARGET_WELD),
         }, options={"Merge Vertices", "Target Weld Tool"})),
@@ -329,7 +329,7 @@ SHIFT_VERTEX = MarkingMenu(
     },
     items=[
         ("Crease Tool", CREASE),
-        ("Connect Components", "mesh.vert_connect_path"),                  # :225
+        ("Connect Components", _item("Edit Mesh/Connect")),              # :225 (step 139)
         ("Detach Components", _item("Edit Mesh/Detach")),
         ("Connect Tool", MULTI_CUT),
         DIVIDER,
@@ -343,7 +343,7 @@ SHIFT_EDGE = MarkingMenu(
     radial={
         "S": ("Extrude Edge", ("v3d", "mesh.extrude_edges_move", {})),       # :27
         "SW": ("Delete Edge", "mesh.dissolve_edges"),                      # :43
-        "E": ("Bevel Edge", ("v3d", "mesh.bevel", {})),                    # :51
+        "E": ("Bevel Edge", _item("Edit Mesh/Bevel")),                     # :51 (step 139)
         "SE": ("Soften/Harden Edges", SOFT_HARD),                          # :67
         "N": ("Merge/Collapse Edges", Sub(radial={                         # :119
             "NE": ("Merge Border Edges", "mesh.remove_doubles"),
@@ -371,7 +371,7 @@ SHIFT_EDGE = MarkingMenu(
         ("Bridge", "mesh.bridge_edge_loops"),                              # :379
         ("Fill Hole", "mesh.fill_holes"),                                  # :392
         DIVIDER,
-        ("Connect Components", "mesh.subdivide_edgering"),                 # :403
+        ("Connect Components", _item("Edit Mesh/Connect")),              # :403 (step 139)
         ("Detach Components", "mesh.edge_split"),                          # :419
     ],
     options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut', 'Slide Edge Tool'])
@@ -383,7 +383,7 @@ SHIFT_FACE = MarkingMenu(
         "S": ("Extrude Face", ("v3d", "allset.extrude", {})),            # :35 (step 65)
         "SW": ("Wedge Face", _item("Edit Mesh/Wedge")),                    # :51
         "NE": ("Poke Face", "mesh.poke"),                                  # :68
-        "E": ("Bevel Face", ("v3d", "mesh.bevel", {})),                    # :84
+        "E": ("Bevel Face", _item("Edit Mesh/Bevel")),                     # :84 (step 139)
         "SE": ("Face Normals", Sub(radial={                                # :100
             "S": ("Toggle Face Normal Display", _overlay("show_face_normals")),
             "NE": ("Reverse Propagate", _poly('REVERSE_PROPAGATE')),     # polyNormal -normalMode 4
@@ -825,7 +825,7 @@ UV_MAPPING = Sub(radial={
     "S": ("Best Plane", _item("UV/Best Plane")),
     "SW": ("Spherical", ("v3d", "uv.sphere_project", {})),
     "W": ("Contour Stretch", _item("UV/Contour Stretch")),
-    "NW": ("Automatic", "uv.smart_project"),
+    "NW": ("Automatic", _item("UV/Automatic")),               # polyAutoProj (step 139)
 })
 # SetMeshGrabUVTool: Maya grabs UVs from the 3D View; these menus open in the UV Editor, whose Grab tool does it.
 GRAB_UV = _item("UV Editor/Tools/Grab")

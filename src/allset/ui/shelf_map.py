@@ -65,8 +65,8 @@ BY_COMMAND = {
     "PolyRemesh": (_mod('REMESH'), 'MOD_REMESH'),
     "PolyExtrude": (("v3d", "allset.extrude", {}), 'FACESEL'),     # polyExtrudeFace (step 65)
     "performBridgeOrFill": ("mesh.bridge_edge_loops", 'MOD_LATTICE'),
-    "performBevelOrChamfer": (("v3d", "mesh.bevel", {}), 'MOD_BEVEL'),
-    "PolyMerge": ("mesh.remove_doubles", 'AUTOMERGE_OFF'),
+    "performBevelOrChamfer": (("item", "Edit Mesh/Bevel"), 'MOD_BEVEL'),        # step 139
+    "PolyMerge": (("item", "Edit Mesh/Merge"), 'AUTOMERGE_OFF'),               # step 139
     "MergeToCenter": (("mesh.merge", {"type": 'CENTER'}), 'PIVOT_MEDIAN'),
     "FlipTriangleEdge": ("mesh.edge_rotate", 'MOD_TRIANGULATE'),
     "DuplicateFace": (("v3d", "mesh.duplicate_move", {}), 'DUPLICATE'),
@@ -127,7 +127,7 @@ BY_LABEL = {
     "Polygons/Planar Mapping": (("v3d", "uv.project_from_view", {}), 'UV_FACESEL'),
     "Polygons/Cylindrical Mapping": (("v3d", "uv.cylinder_project", {}), 'MESH_CYLINDER'),
     "Polygons/Spherical Mapping": (("v3d", "uv.sphere_project", {}), 'MESH_UVSPHERE'),
-    "Polygons/Automatic Mapping": ("uv.smart_project", 'UV_DATA'),
+    "Polygons/Automatic Mapping": (("item", "UV/Automatic"), 'UV_DATA'),      # step 139
     "Rendering/Standard Surface Material": (_shader('STANDARD_SURFACE'), 'MATERIAL'),
     "Rendering/Lambert Material": (_shader('LAMBERT'), 'SHADING_SOLID'),
     "Rendering/Blinn Material": (_shader('BLINN'), 'SHADING_RENDERED'),
