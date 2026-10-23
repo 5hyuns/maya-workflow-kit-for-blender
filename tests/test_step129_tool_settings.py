@@ -30,8 +30,8 @@ MAYA = {
     'QUAD_DRAW': [("Settings", True), ("Live Constraint Options", False), ("Keyboard/Mouse Shortcuts", False)],
 }
 TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT', "builtin.select_lasso": 'LASSO',
-         "builtin.select_circle": 'PAINT_SELECT', "builtin.loop_cut": 'INSERT_EDGE_LOOP',
-         "builtin.edge_slide": 'SLIDE_EDGE', "allset.target_weld_tool": 'TARGET_WELD',
+         "builtin.select_circle": 'PAINT_SELECT', "allset.insert_edge_loop_tool": 'INSERT_EDGE_LOOP',
+         "allset.slide_edge_tool": 'SLIDE_EDGE', "allset.target_weld_tool": 'TARGET_WELD',   # step 144 LOOP: kit tools
          "allset.crease_tool": 'CREASE', "allset.quad_draw_tool": 'QUAD_DRAW'}     # step 144: the kit Quad Draw
 NAMES = {'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
          'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool", 'TARGET_WELD': "Target Weld Tool",
@@ -51,7 +51,7 @@ def _props(identifier, **values):
     return SimpleNamespace(bl_rna=SimpleNamespace(identifier=identifier), **values)
 
 
-FAKE = ("builtin.loop_cut", "builtin.edge_slide", "allset.quad_draw_tool")
+FAKE = ("allset.insert_edge_loop_tool", "allset.slide_edge_tool", "allset.quad_draw_tool")
 _REAL_ACTIVE = ts_mod.active_tool
 
 
@@ -150,33 +150,39 @@ def test_paint_select_rows_and_options():
     assert props.mode == 'ADD', props.mode      # Maya factory: Select + Add to current selection
 
 
+def _owners(rec):
+    return {(kw["_args"][0].bl_rna.identifier, kw["_args"][1]) for k, _t, kw in rec.log
+            if k == "prop" and len(kw["_args"]) > 1}
+
+
 def test_insert_edge_loop_maintain_position():
-    tool = _set_tool("builtin.loop_cut")
-    macro = tool.operator_properties("mesh.loopcut_slide")
-    cut, slide = macro.MESH_OT_loopcut, macro.TRANSFORM_OT_edge_slide
-    assert ts_mod.edge_loop_position(tool) == 'RELATIVE'
+    """Step 144 LOOP: the rows are the kit Insert Edge Loop tool's settings (Scene.allset_loop_tools)."""
+    _set_tool("allset.insert_edge_loop_tool")
+    s = bpy.context.scene.allset_loop_tools
+    assert ts_mod.edge_loop_position(bpy.context) == 'RELATIVE'
     bpy.ops.allset.ts_option(option="iel_position", value="EQUAL")
-    assert slide.use_even and cut.number_cuts == 1 and ts_mod.edge_loop_position(tool) == 'EQUAL'
+    assert s.iel_position == 'EQUAL'
     bpy.ops.allset.ts_option(option="iel_position", value="MULTIPLE")
-    assert cut.number_cuts == 2 and not slide.use_even       # Maya Number of edge loops 2
-    assert ts_mod.edge_loop_position(tool) == 'MULTIPLE'
+    assert s.iel_position == 'MULTIPLE' and s.iel_loops == 2       # Maya Number of edge loops 2
     rec = _draw('INSERT_EDGE_LOOP')
     assert "Maintain position:" in rec.texts("label")
-    assert ("MESH_OT_loopcut", "number_cuts") in {(kw["_args"][0].bl_rna.identifier, kw["_args"][1])
-                                                  for k, _t, kw in rec.log if k == "prop" and len(kw["_args"]) > 1}
-    bpy.ops.allset.ts_option(option="iel_position", value="RELATIVE")
-    assert cut.number_cuts == 1 and not slide.use_even
+    assert {("ALLSET_PG_loop_tools", n) for n in ("iel_position", "iel_loops", "iel_edge_flow", "iel_smoothing")} \
+        <= _owners(rec)
+    assert bpy.ops.allset.reset_tool() == {'FINISHED'}
+    assert s.iel_position == 'RELATIVE'
 
 
 def test_slide_edge_mode():
-    tool = _set_tool("builtin.edge_slide")
-    props = tool.operator_properties("transform.edge_slide")
+    _set_tool("allset.slide_edge_tool")
+    s = bpy.context.scene.allset_loop_tools
     bpy.ops.allset.ts_option(option="slide_mode", value="ABSOLUTE")
-    assert props.use_even
+    assert s.slide_mode == 'ABSOLUTE'
     bpy.ops.allset.ts_option(option="slide_mode", value="RELATIVE")
-    assert not props.use_even
+    assert s.slide_mode == 'RELATIVE'
     rec = _draw('SLIDE_EDGE')
-    assert "Mode:" in rec.texts("label") and "Relative" in rec.texts("operator")
+    assert "Mode:" in rec.texts("label")
+    assert {("ALLSET_PG_loop_tools", n) for n in ("slide_mode", "slide_snap", "slide_snap_points",
+                                                  "slide_snap_tolerance")} <= _owners(rec)
 
 
 def test_target_weld_and_crease_bind_kit_settings():

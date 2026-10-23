@@ -322,11 +322,11 @@ MAP = {
     # --- Mesh Tools ---
     "Mesh Tools/Show/Hide Modeling Toolkit": ("allset.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
     "Mesh Tools/Create Polygon": "allset.create_polygon_start",       # step 144: kit tool, a new polySurfaceN
-    "Mesh Tools/Insert Edge Loop": ("tool", "builtin.loop_cut", True),
+    "Mesh Tools/Insert Edge Loop": ("tool", "allset.insert_edge_loop_tool", True),   # step 144: click = loop there
     "Mesh Tools/Multi-Cut": ("tool", "allset.multi_cut_tool", True),      # step 129
-    "Mesh Tools/Offset Edge Loop": ("v3d", "mesh.offset_edge_loops_slide", {}),
+    "Mesh Tools/Offset Edge Loop": ("tool", "allset.offset_edge_loop_tool", True),   # step 144: drag = 2 loops
     "Mesh Tools/Quad Draw": "allset.quad_draw_start",                # step 144: kit tool on the live surface
-    "Mesh Tools/Slide Edge": ("tool", "builtin.edge_slide", True),
+    "Mesh Tools/Slide Edge": ("tool", "allset.slide_edge_tool", True),        # step 144: MMB drag slides
     "Mesh Tools/Target Weld": ("tool", "allset.target_weld_tool", True),     # step 64
     "Mesh Tools/Crease Tool": ("tool", "allset.crease_tool", True),
     # --- Mesh Display ---
