@@ -17,6 +17,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Matrix
 
+from .. import compat
 from . import project, units
 
 # (id, Files of type label, extension written, file filter)
@@ -381,6 +382,12 @@ def _abc_scalable(obs):
     for ob in obs:
         if ob.type not in ('MESH', 'EMPTY', 'CAMERA', 'LIGHT') or ob.constraints or ob.parent_type != 'OBJECT':
             return False
+        if ob.library is not None:            # linked objects can't take the temporary changes
+            return False
+        ad = ob.animation_data
+        if ad is not None and any(fc.data_path == "delta_scale" for fc in
+                                  list(compat.id_fcurves(ob)) + list(ad.drivers)):
+            return False                       # animated delta scale would undo the temporary one
         if any(m.type == 'ARMATURE' for m in ob.modifiers):
             return False
     return True
