@@ -155,6 +155,7 @@ def s_created():
         check("the new polygon is selected and active", bpy.context.view_layer.objects.active == ob and ob.select_get())
     check(f"the tool stays ({tool_id()})", tool_id() == "allset.create_polygon_tool")
     shot("gui_step144_created.png")
+    bpy.context.scene.allset_poly_tools.cp_limit_on = True
     bpy.context.scene.allset_poly_tools.cp_limit_points = 3
     press((-2.0, -3.0, 0.0))
 
@@ -182,6 +183,7 @@ def s_limit_done():
     check(f"Limit points 3: the third click completes polySurface2 ({ob and mesh_counts(ob)})",
           ob is not None and mesh_counts(ob) == (3, 3, 1))
     bpy.context.scene.allset_poly_tools.property_unset("cp_limit_points")
+    bpy.context.scene.allset_poly_tools.property_unset("cp_limit_on")
     with override():
         bpy.ops.object.select_all(action='DESELECT')
     bpy.data.objects["polySurface1"].select_set(True)
@@ -345,35 +347,36 @@ def s_loop():
     n = mesh_counts(ob)
     check(f"Ctrl+click = an edge loop across the quad ({n}, want 6/7/2)", n == (6, 7, 2))
     check("the new vertices lie on the live surface", all(abs(w.z - 1.0) < 1e-3 for w in edit_verts(ob)))
-    # Ctrl+middle-drag the new loop's edge to the right: the loop slides
+    # Ctrl+Shift+middle-drag the new loop's edge to the right: the loop moves (Maya "tweak edge loop")
     x, y = to_window((0.0, 0.0, 1.0))
-    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True)
-    ev('MIDDLEMOUSE', 'PRESS', x=x, y=y, ctrl=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True, shift=True)
+    ev('MIDDLEMOUSE', 'PRESS', x=x, y=y, ctrl=True, shift=True)
 
 
 @step
 def s_slide_move():
     x, y = to_window((0.3, 0.0, 1.0))
-    ev('MOUSEMOVE', 'NOTHING', x=x - 10, y=y, ctrl=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x - 10, y=y, ctrl=True, shift=True)
 
 
 @step
 def s_slide_move2():
     x, y = to_window((0.3, 0.0, 1.0))
-    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y, ctrl=True, shift=True)
 
 
 @step
 def s_slide_release():
-    ev('MIDDLEMOUSE', 'RELEASE', ctrl=True)
+    ev('MIDDLEMOUSE', 'RELEASE', ctrl=True, shift=True)
 
 
 @step
 def s_slid():
     ob = bpy.data.objects[C["ob"]]
-    mids = sorted(round(w.x, 2) for w in edit_verts(ob) if abs(abs(w.x) - 0.6) > 0.05)
-    check(f"Ctrl+middle-drag an edge slides its loop ({mids}, was 0.0)",
-          len(mids) == 2 and all(m > 0.08 for m in mids) and bpy.context.mode == 'EDIT_MESH')
+    vs = edit_verts(ob)
+    mids = sorted(round(w.x, 2) for w in vs if abs(abs(w.x) - 0.6) > 0.05)
+    check(f"Ctrl+Shift+middle-drag an edge moves its edge loop on the surface ({mids}, was 0.0)",
+          len(mids) == 2 and all(0.2 < m < 0.4 for m in mids) and all(abs(w.z - 1) < 1e-3 for w in vs))
     shot("gui_step144_slid.png")
     # drag the corner (0.6, 0.6, 1) towards the cube's middle
     press(TOP[2])
@@ -450,6 +453,20 @@ def s_deleted():
     ob = bpy.data.objects[C["ob"]]
     n = mesh_counts(ob)
     check(f"Ctrl+Shift+click a face = it goes ({n}, faces {C['n'][2]})", n[2] == C["n"][2])
+    with override():
+        bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS', show=True)
+
+
+@step
+def s_dock():
+    pass
+
+
+@step
+def s_dock_shot():
+    shot("gui_step144_tool_settings.png")
+    _a, r = view3d()
+    C["x"], C["y"] = r.x + r.width // 2, r.y + r.height // 2
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     tap('ESC')
 

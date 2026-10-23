@@ -289,6 +289,18 @@ def delete_at(bm, kind, index):
     return True
 
 
+def delete_loop(bm, edge_index):
+    """Ctrl+Shift+click an edge: its edge loop goes (inner edges dissolve; a border edge takes its faces)."""
+    bm.edges.ensure_lookup_table()
+    edge = bm.edges[edge_index]
+    if len(edge.link_faces) != 2:
+        return delete_at(bm, 'EDGE', edge_index)
+    loop = [e for e in edge_loop(edge) if len(e.link_faces) == 2]
+    bmesh.ops.dissolve_edges(bm, edges=loop, use_verts=True)
+    _indices(bm)
+    return True
+
+
 def weld_target(xy, moved, mouse_xy, radius, exclude=()):
     """Index of the vertex whose screen point is within ``radius`` of ``mouse_xy`` (closest), not ``moved`` and not
     in ``exclude``; None if none (Auto-weld)."""
@@ -334,12 +346,17 @@ def surface_hit(context, region, rv3d, mouse, refs=None):
     refs = reference_objects(context) if refs is None else refs
     origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse)
     ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse).normalized()
+    backfaces = poly_draw.settings(context).qd_snap_backfaces
     best = None
     for ob in refs:
         _s, tree, mw, inv = _tree(context, ob)
         lo = inv @ origin
         ld = (inv.to_3x3() @ ray).normalized()
-        loc, _n, _i, _d = tree.ray_cast(lo, ld)
+        loc, n, _i, _d = tree.ray_cast(lo, ld)
+        for _k in range(16):        # Snap to Backfaces off (Maya factory): go on through faces turned away
+            if loc is None or backfaces or n.dot(ld) <= 0:
+                break
+            loc, n, _i, _d = tree.ray_cast(loc + ld * 1e-5, ld)
         if loc is None:
             continue
         w = mw @ loc
@@ -736,14 +753,21 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         self._refs = reference_objects(context)
         self._moved = False
         self._grab = None
-        if event.ctrl and self.middle:
-            return self._slide(context, mouse)
-        if event.ctrl and event.shift and not self.middle:
-            return self._delete(context, mouse)
-        if event.ctrl and not self.middle:
-            return self._loop(context, mouse)
-        if event.shift and not self.middle:
-            self._mode = 'SHIFT'
+        # Maya's Keyboard/Mouse Shortcuts (research/maya/screens/options144/quad_draw.png)
+        if event.ctrl and event.shift and self.middle:
+            self._mode = 'MOVE'                 # Ctrl+Shift+MMB: drag an edge = tweak its edge loop
+            self._grab = self._grab_loop(context, mouse)
+            if self._grab is None:
+                return {'PASS_THROUGH'}
+            self._new_dot = False
+        elif event.ctrl and event.shift:
+            self._mode = 'DELETE'               # click / drag across faces = delete; an edge = its edge loop
+            if self._delete(context, mouse) is None:
+                return {'CANCELLED'}
+        elif event.ctrl:
+            return self._loop(context, mouse, center=self.middle)   # Ctrl+MMB = centred loop
+        elif event.shift:
+            self._mode = 'SHIFT'                # click = fill (LMB), drag = relax (MMB: the highlighted points)
         else:
             self._mode = 'MOVE'
             self._grab = self._grab_at(context, mouse)
@@ -811,43 +835,43 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
 
     # -- one-shot actions
-    def _delete(self, context, mouse):
+    def _delete(self, context, mouse, faces_only=False):
+        """Ctrl+Shift+LMB: the dot / vertex / face under the mouse; an edge = its edge loop. While dragging only faces
+        go. Returns what went or None."""
         region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         comp = component_at(context, region, rv3d, mouse, ob)
-        if comp is None:
-            return {'CANCELLED'}
+        if comp is None or (faces_only and comp[0] != 'FACE'):
+            return None
         bm = bmesh.from_edit_mesh(ob.data)
-        delete_at(bm, comp[0], comp[1])
+        if comp[0] == 'EDGE':
+            delete_loop(bm, comp[1])
+        else:
+            delete_at(bm, comp[0], comp[1])
         bmesh.update_edit_mesh(ob.data)
         preselect.invalidate()
+        self._deleted = True
         STATE["preview"] = None
         _redraw(context)
-        return {'FINISHED'}
+        return comp[0]
 
-    def _slide(self, context, mouse):
-        """Ctrl+middle-drag an edge: slide its edge loop (Blender's Edge Slide on the loop, let go to confirm) [K]."""
+    def _grab_loop(self, context, mouse):
         region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         comp = component_at(context, region, rv3d, mouse, ob, edges_only=True)
         if comp is None:
-            return {'PASS_THROUGH'}
+            return None
         bm = bmesh.from_edit_mesh(ob.data)
         bm.edges.ensure_lookup_table()
-        loop = edge_loop(bm.edges[comp[1]])
-        for el in (*bm.verts, *bm.edges, *bm.faces):
-            el.select = False
-        for e in loop:
-            e.select = True
-        bm.select_flush_mode()
-        bmesh.update_edit_mesh(ob.data)
-        try:
-            bpy.ops.transform.edge_slide('INVOKE_DEFAULT', release_confirm=True)
-        except RuntimeError:
-            return {'CANCELLED'}
-        return {'FINISHED'}
+        verts = list({v for e in edge_loop(bm.edges[comp[1]]) for v in e.verts})
+        mw = ob.matrix_world
+        start = surface_hit(context, region, rv3d, mouse, self._refs) if self._refs else None
+        if start is None:
+            start = sum((mw @ v.co for v in verts), Vector()) / len(verts)
+        self._depth = start.copy()
+        return ('MESH', [v.index for v in verts], [mw @ v.co for v in verts], start)
 
-    def _loop(self, context, mouse):
+    def _loop(self, context, mouse, center=False):
         region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         comp = component_at(context, region, rv3d, mouse, ob, edges_only=True)
@@ -856,7 +880,8 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         bm = bmesh.from_edit_mesh(ob.data)
         before = set(bm.verts)
         bm.edges.ensure_lookup_table()
-        mesh_tools.insert_loop(bm, bm.edges[comp[1]], min(max(comp[2], 0.001), 0.999))
+        t = 0.5 if center else min(max(comp[2], 0.001), 0.999)
+        mesh_tools.insert_loop(bm, bm.edges[comp[1]], t)
         if self._refs:
             mw, inv = ob.matrix_world, ob.matrix_world.inverted_safe()
             for v in bm.verts:
@@ -876,10 +901,19 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         mw, inv = ob.matrix_world, ob.matrix_world.inverted_safe()
         r = BRUSH_PX * _ui_scale(context)
         verts = []
-        for v in bm.verts:
-            xy = _screen_xy(region, rv3d, mw @ v.co)
-            if xy is not None and math.hypot(xy[0] - mouse[0], xy[1] - mouse[1]) <= r:
-                verts.append(v)
+        if self.middle:      # Shift+MMB: only the highlighted component's points
+            comp = component_at(context, region, rv3d, mouse, ob)
+            if comp is not None:
+                for kind, seq in (('VERT', bm.verts), ('EDGE', bm.edges), ('FACE', bm.faces)):
+                    if comp[0] == kind:
+                        seq.ensure_lookup_table()
+                        el = seq[comp[1]]
+                        verts = [el] if kind == 'VERT' else list(el.verts)
+        else:
+            for v in bm.verts:
+                xy = _screen_xy(region, rv3d, mw @ v.co)
+                if xy is not None and math.hypot(xy[0] - mouse[0], xy[1] - mouse[1]) <= r:
+                    verts.append(v)
         refs = self._refs
 
         def project(co):
@@ -898,7 +932,9 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
             if not self._moved and math.hypot(mouse[0] - self._press[0], mouse[1] - self._press[1]) >= DRAG_PX:
                 self._moved = True
-            if self._moved:
+            if self._mode == 'DELETE':
+                self._delete(context, mouse, faces_only=True)     # drag across faces
+            elif self._moved:
                 if self._mode == 'SHIFT':
                     self._relax_at(context, mouse)
                 else:
@@ -915,8 +951,12 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         region, rv3d = context.region, context.region_data
         ob = bpy.data.objects[self._ob]
         STATE["preview"] = None
+        if self._mode == 'DELETE':
+            return {'FINISHED'}
         if self._mode == 'SHIFT':
-            if self._moved:
+            if self._moved or self.middle:
+                if not self._moved:
+                    return {'CANCELLED'}
                 preselect.invalidate()
                 _redraw(context)
                 return {'FINISHED'}
@@ -1006,14 +1046,18 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
                 self._update_drag(context, mouse)
             _redraw(context)
             return {'RUNNING_MODAL'}
-        if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+        if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} and event.value == 'PRESS' and self._drag is None:
             ob = bpy.data.objects[self._ob]
             ei = poly_draw.border_edge_at(context, region, rv3d, mouse, ob)
+            if ei is None and event.type == 'MIDDLEMOUSE':
+                return {'RUNNING_MODAL'}        # Maya Tab+MMB in empty space resizes strips: not in the kit
+            self._button = event.type
             if ei is not None:
                 bm = bmesh.from_edit_mesh(ob.data)
                 bm.edges.ensure_lookup_table()
                 edge = bm.edges[ei]
-                loop = border_loop(edge) if poly_draw.settings(context).qd_extend == 'LOOP' else [edge]
+                whole = event.type == 'MIDDLEMOUSE' or poly_draw.settings(context).qd_extend == 'LOOP'
+                loop = border_loop(edge) if whole else [edge]
                 start = surface_hit(context, region, rv3d, mouse, self._refs) if self._refs else None
                 if start is None:
                     mw = ob.matrix_world
@@ -1022,7 +1066,8 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
             else:
                 self._drag = ('STRIP', [mouse])
             return {'RUNNING_MODAL'}
-        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE' and self._drag is not None:
+        if event.type == getattr(self, "_button", 'LEFTMOUSE') and event.value == 'RELEASE' \
+                and self._drag is not None:
             self._commit(context, mouse)
             self._drag = None
             return {'RUNNING_MODAL'}

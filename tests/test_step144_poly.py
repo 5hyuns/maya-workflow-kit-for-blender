@@ -296,6 +296,13 @@ def test_edge_loop_walks_across_quads():
     bm.free()
 
 
+def test_delete_loop():
+    bm = _plane(3)
+    inner = next(e for e in bm.edges if len(e.link_faces) == 2)
+    assert qd.delete_loop(bm, inner.index) and len(bm.faces) == 6, len(bm.faces)    # 9 faces, one loop of 3 gone
+    bm.free()
+
+
 def test_weld_target():
     xy = [(0, 0), (5, 0), (50, 0), None]
     assert qd.weld_target(xy, 0, (0, 0), 10) == 1
@@ -384,7 +391,7 @@ def test_tools_and_keymaps_registered_and_removed():
     assert km is not None
     items = [(k.idname, k.type, k.value, k.any) for k in km.keymap_items]
     assert ("allset.quad_draw", 'LEFTMOUSE', 'PRESS', True) in items, items
-    assert ("allset.quad_draw", 'MIDDLEMOUSE', 'PRESS', False) in items
+    assert ("allset.quad_draw", 'MIDDLEMOUSE', 'PRESS', True) in items, "MMB with Ctrl / Shift / Ctrl+Shift"
     assert ("allset.quad_draw_tab", 'TAB', 'PRESS', False) in items
     assert any(i[:2] == ("allset.quad_draw_hover", 'MOUSEMOVE') for i in items)
     names = [k.name for k in kms]
@@ -407,15 +414,21 @@ def test_tool_settings_kinds_defaults_and_reset():
     s = pd.settings()
     for kind in pd.SETTINGS:
         pd.reset_settings(s, kind)
+    # Maya 2022 factory Tool Settings: research/maya/screens/options144/{quad_draw,create_polygon,append_polygon}.png
     want = {"qd_auto_weld": True, "qd_weld_px": 10, "qd_relax": 'AUTO_LOCK', "qd_extend": 'EDGE',
-            "qd_strip_width": 20,                    # research/maya/workflows/shots/modeling_07_win1.png
-            "cp_divisions": 1, "cp_limit_points": -1, "cp_keep_planar": True, "cp_texture": 'NORMALIZE',
-            "ap_divisions": 1, "ap_limit_points": -1, "ap_keep_planar": True, "ap_texture": 'NORMALIZE'}
+            "qd_strip_width": 20, "qd_snap_backfaces": False,
+            "cp_divisions": 1, "cp_limit_on": False, "cp_limit_points": 4, "cp_keep_planar": False,
+            "cp_texture": 'NORMALIZE',
+            "ap_divisions": 1, "ap_rotation_angle": 0.0, "ap_limit_on": False, "ap_limit_points": 4,
+            "ap_keep_planar": False, "ap_texture": 'NORMALIZE'}
     assert {k: getattr(s, k) for k in want} == want
-    s.qd_strip_width, s.cp_limit_points = 33, 5
+    s.qd_strip_width, s.cp_limit_points, s.cp_limit_on = 33, 5, True
     ts_mod.reset_kind_defaults(bpy.context, 'QUAD_DRAW')
     ts_mod.reset_kind_defaults(bpy.context, 'CREATE_POLYGON')
-    assert (s.qd_strip_width, s.cp_limit_points) == (20, -1)
+    assert (s.qd_strip_width, s.cp_limit_points, s.cp_limit_on) == (20, 4, False)
+    assert [t for _k, t, _o in ts_mod.sections('CREATE_POLYGON')] == ["Description", "Settings",
+                                                                      "Keyboard/Mouse Shortcuts"]
+    assert ts_mod.TOOL_NAMES['APPEND_POLYGON'] == "Append To Polygon Tool"
     titles = [t for _k, t, _o in ts_mod.sections('QUAD_DRAW')]
     assert titles == ["Settings", "Live Constraint Options", "Keyboard/Mouse Shortcuts"], titles
     for key in ui_poly.GREY:

@@ -39,8 +39,8 @@ BORDER_RGB = (0.98, 0.65, 0.2)   # Append: the mesh's border edges [I]
 POINT_PX = 7.0
 LINE_PX = 2.0
 
-TEXTURES = (('NORMALIZE', "Normalize", "UVs: planar projection scaled to fit the 0-1 square"),
-            ('UNITIZE', "Unitize", "UVs: the points spread around the edge of the 0-1 square"),
+TEXTURES = (('NORMALIZE', "Normalize (scale to fit)", "UVs: planar projection scaled to fit the 0-1 square"),
+            ('UNITIZE', "Unitize (use corners and boundary)", "UVs: the points spread around the edge of the 0-1 square"),
             ('NONE', "None", "No UVs"))
 
 
@@ -49,21 +49,25 @@ class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
     # Create Polygon (polyCreateFacetCtx)
     cp_divisions: IntProperty(name="Divisions", default=1, min=1, soft_max=10,
                               description="Each edge of the new polygon is split into this many edges")
-    cp_limit_points: IntProperty(name="Limit points", default=-1, min=-1, soft_max=20,
-                                 description="Complete the polygon at this many points (-1: no limit)")
-    cp_keep_planar: BoolProperty(name="Keep new faces planar", default=True,
+    cp_limit_on: BoolProperty(name="Limit the number of points", default=False,
+                              description="Complete the polygon by itself at Limit points to")
+    cp_limit_points: IntProperty(name="Limit points to", default=4, min=3, soft_max=20,
+                                 description="Number of points that completes the polygon")
+    cp_keep_planar: BoolProperty(name="Keep new faces planar", default=False,
                                  description="Flatten the points onto one plane")
-    cp_texture: EnumProperty(name="Texture", items=TEXTURES, default='NORMALIZE')
+    cp_texture: EnumProperty(name="Texture space", items=TEXTURES, default='NORMALIZE')
     # Append to Polygon (polyAppendFacetCtx)
     ap_divisions: IntProperty(name="Divisions", default=1, min=1, soft_max=10,
                               description="Each new edge of the face is split into this many edges")
     ap_rotation_angle: FloatProperty(name="Rotation angle", default=0.0, min=-360.0, max=360.0,
                                      description="Maya turns new points about the first edge (kept for reference)")
-    ap_limit_points: IntProperty(name="Limit points", default=-1, min=-1, soft_max=20,
-                                 description="Complete the face at this many points (-1: no limit)")
-    ap_keep_planar: BoolProperty(name="Keep new faces planar", default=True,
-                                 description="Flatten the new points onto the face's plane")
-    ap_texture: EnumProperty(name="Texture", items=TEXTURES, default='NORMALIZE')
+    ap_limit_on: BoolProperty(name="Limit the number of points", default=False,
+                              description="Add the face by itself at Limit points to")
+    ap_limit_points: IntProperty(name="Limit points to", default=4, min=3, soft_max=20,
+                                 description="Number of points that completes the face")
+    ap_keep_planar: BoolProperty(name="Keep new faces planar", default=False,
+                                 description="Flatten the new points onto one plane with the face's other points")
+    ap_texture: EnumProperty(name="Texture space", items=TEXTURES, default='NORMALIZE')
     # Quad Draw (nexQuadDrawCtx, research/maya/workflows/shots/modeling_07_win1.png)
     qd_auto_weld: BoolProperty(name="Auto-weld", default=True,
                                description="A vertex moved this close (pixels) to another one is merged with it")
@@ -78,12 +82,14 @@ class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
         ('LOOP', "Loop", "Tab+drag on a border edge adds a quad to every edge of that border")))
     qd_strip_width: IntProperty(name="Quad Strip Width", default=20, min=1, soft_max=100, subtype='PIXEL',
                                 description="Width of the quads Tab+drag draws in empty space (pixels)")
+    qd_snap_backfaces: BoolProperty(name="Snap to Backfaces", default=False,
+                                    description="Dots and moved points may land on surface faces turned away")
 
 
 SETTINGS = {
-    'CREATE': ("cp_divisions", "cp_limit_points", "cp_keep_planar", "cp_texture"),
-    'APPEND': ("ap_divisions", "ap_rotation_angle", "ap_limit_points", "ap_keep_planar", "ap_texture"),
-    'QUAD_DRAW': ("qd_auto_weld", "qd_weld_px", "qd_relax", "qd_extend", "qd_strip_width"),
+    'CREATE': ("cp_divisions", "cp_limit_on", "cp_limit_points", "cp_keep_planar", "cp_texture"),
+    'APPEND': ("ap_divisions", "ap_rotation_angle", "ap_limit_on", "ap_limit_points", "ap_keep_planar", "ap_texture"),
+    'QUAD_DRAW': ("qd_auto_weld", "qd_weld_px", "qd_relax", "qd_extend", "qd_strip_width", "qd_snap_backfaces"),
 }
 
 
@@ -507,7 +513,9 @@ class _PolySession:
 
     def _limit(self, context):
         s = settings(context)
-        return s.cp_limit_points if self.kind == 'CREATE' else s.ap_limit_points
+        if self.kind == 'CREATE':
+            return s.cp_limit_points if s.cp_limit_on else -1
+        return s.ap_limit_points if s.ap_limit_on else -1
 
     def _count(self):
         return len(STATE["items"]) if self.kind == 'CREATE' else len(_world_items(bpy.data.objects.get(STATE["ob"])))

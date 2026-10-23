@@ -11,22 +11,38 @@ import bpy
 from . import notices
 from ..operators import poly_draw, quad_draw
 
+# Maya rows the kit can't honour (Live Constraint Options, research/maya/screens/options144/quad_draw.png):
+# (notice key) -> (substitute, one line)
+_LIVE = "Blender draws the edited mesh with its Retopology overlay (over the surface, theme colours)"
 GREY = {
-    "Quad Draw/Live Constraint": (
-        "Make Live", "The kit draws on the live surface, else on every other visible mesh; no colour options"),
+    "Quad Draw/Wireframe Overlay": ("Retopology overlay", _LIVE),
+    "Quad Draw/Mesh Color": ("Retopology overlay", _LIVE),
+    "Quad Draw/Mesh Alpha": ("Retopology overlay", _LIVE),
+    "Quad Draw/Surface Offset": ("Overlays > Retopology > Offset", "Set the offset in the viewport's Overlays popover"),
+    "Quad Draw/Tab+MMB in empty space": ("Quad Strip Width", "Strips are as wide as Quad Strip Width; change it here"),
+    "Quad Draw/Ctrl+Shift+RMB": ("this Tool Settings dock", "Quad Draw's options marking menu isn't in the kit"),
+    "Append to Polygon/Rotation angle": ("Rotate afterwards", "Maya keeps this field greyed in the tool too"),
 }
 
+# Maya's Keyboard/Mouse Shortcuts section (quad_draw.png), as the kit does them.
 QUAD_DRAW_SHORTCUTS = (
-    ("Click", "place a dot on the live surface"),
-    ("Drag a dot / vertex / edge / face", "move it along the surface (Auto-weld when let go near a vertex)"),
-    ("Shift+click", "fill a quad (or triangle) between the dots / border vertices around the mouse"),
-    ("Shift+drag", "relax the vertices under the brush"),
-    ("Ctrl+click an edge", "insert an edge loop"),
-    ("Ctrl+Shift+click", "delete a dot, vertex, edge or face"),
-    ("Tab+drag a border edge", "extend it by a row of quads"),
-    ("Tab+drag in empty space", "draw a strip of quads"),
-    ("Middle-drag", "move a vertex, edge or face"),
-    ("Ctrl+middle-drag an edge", "slide its edge loop"),
+    ("(outside the quad mesh)", ""),
+    ("LMB", "click to drop dots"),
+    ("LMB / MMB", "drag to tweak dots"),
+    ("Ctrl + Shift + LMB", "delete dots"),
+    ("Tab + LMB", "drag to draw quad strips"),
+    ("Shift + LMB", "click between dots to create geometry"),
+    ("(inside the quad mesh)", ""),
+    ("LMB / MMB", "drag to tweak components"),
+    ("Ctrl + LMB", "click edge to insert loop"),
+    ("Ctrl + MMB", "click edge to insert centred loop"),
+    ("Shift + LMB", "drag to relax points"),
+    ("Shift + MMB", "drag to relax highlighted points"),
+    ("Tab + LMB", "drag to extend border edge (Extend: Loop = the border)"),
+    ("Tab + MMB", "drag to extend border edge loop"),
+    ("Ctrl + Shift + LMB", "click or drag across faces to delete"),
+    ("Ctrl + Shift + LMB", "click edge to delete edge loop"),
+    ("Ctrl + Shift + MMB", "drag edge to tweak edge loop"),
     ("Esc", "leave the tool"),
 )
 CREATE_SHORTCUTS = (
@@ -43,6 +59,11 @@ APPEND_SHORTCUTS = (
     ("Enter", "add the face (the tool stays)"),
     ("Esc", "drop the points; with none, leave the tool"),
 )
+# Description sections (the kit's words for what Maya's say)
+DESCRIPTIONS = {
+    'CREATE_POLYGON': ("Click to place each point of the polygon,", "then press Enter."),
+    'APPEND_POLYGON': ("Click a border edge, then click to place points", "or click more border edges; Enter adds the face."),
+}
 
 
 def _row(layout, label):
@@ -53,10 +74,11 @@ def _row(layout, label):
     return split.row(align=True)
 
 
-def _grey(layout, key, text):
+def _grey(layout, key, text, check=None):
     row = layout.row()
     row.enabled = False
-    row.operator("allset.menu_unavailable", text=text, emboss=False).item = key
+    icon = 'NONE' if check is None else ('CHECKBOX_HLT' if check else 'CHECKBOX_DEHLT')
+    row.operator("allset.menu_unavailable", text=text, icon=icon, emboss=False).item = key
 
 
 def draw_quad_draw(layout, context, header=False):
@@ -78,34 +100,54 @@ def draw_quad_draw(layout, context, header=False):
 
 
 def draw_live(layout, context):
+    """Live Constraint Options (Maya factory: Wireframe Overlay on black, Mesh Color on blue, Mesh Alpha 0.75,
+    Surface Offset off 0, Snap to Backfaces off)."""
+    s = poly_draw.settings(context)
+    _grey(_row(layout, "Wireframe Overlay:"), "Quad Draw/Wireframe Overlay", "on", check=True)
+    _grey(_row(layout, "Mesh Color:"), "Quad Draw/Mesh Color", "on", check=True)
+    _grey(_row(layout, "Mesh Alpha:"), "Quad Draw/Mesh Alpha", "0.7500", check=True)
+    _grey(_row(layout, "Surface Offset:"), "Quad Draw/Surface Offset", "0.0000", check=False)
+    _row(layout, "Snap to Backfaces:").prop(s, "qd_snap_backfaces", text="")
     live = getattr(context.scene, "allset_live", None)
     _row(layout, "Live surface:").label(text=live.name if live is not None else "None (other visible meshes)")
-    _grey(layout, "Quad Draw/Live Constraint", "Wireframe Overlay, Mesh Color / Alpha ...")
+
+
+def _limit(layout, s, prefix):
+    _row(layout, "").prop(s, f"{prefix}_limit_on")
+    row = _row(layout, "Limit points to:")
+    row.active = getattr(s, f"{prefix}_limit_on")
+    row.prop(s, f"{prefix}_limit_points", text="")
 
 
 def draw_create(layout, context, header=False):
     s = poly_draw.settings(context)
     if header:
         layout.prop(s, "cp_divisions")
-        layout.prop(s, "cp_limit_points")
+        layout.prop(s, "cp_keep_planar")
         return
     _row(layout, "Divisions:").prop(s, "cp_divisions", text="")
-    _row(layout, "Limit points:").prop(s, "cp_limit_points", text="")
     _row(layout, "").prop(s, "cp_keep_planar")
-    _row(layout, "Texture:").prop(s, "cp_texture", expand=True)
+    _limit(layout, s, "cp")
+    _row(layout, "Texture space:").column(align=True).prop(s, "cp_texture", expand=True)
 
 
 def draw_append(layout, context, header=False):
     s = poly_draw.settings(context)
     if header:
         layout.prop(s, "ap_divisions")
-        layout.prop(s, "ap_limit_points")
+        layout.prop(s, "ap_keep_planar")
         return
     _row(layout, "Divisions:").prop(s, "ap_divisions", text="")
-    _row(layout, "Rotation angle:").prop(s, "ap_rotation_angle", text="")
-    _row(layout, "Limit points:").prop(s, "ap_limit_points", text="")
+    _grey(_row(layout, "Rotation angle:"), "Append to Polygon/Rotation angle", "0.0000")
     _row(layout, "").prop(s, "ap_keep_planar")
-    _row(layout, "Texture:").prop(s, "ap_texture", expand=True)
+    _limit(layout, s, "ap")
+    _row(layout, "Texture space:").column(align=True).prop(s, "ap_texture", expand=True)
+
+
+def draw_description(layout, kind):
+    col = layout.column(align=True)
+    for line in DESCRIPTIONS.get(kind, ()):
+        col.label(text=line)
 
 
 def draw_shortcuts(layout, rows):
@@ -114,6 +156,9 @@ def draw_shortcuts(layout, rows):
         split = col.split(factor=0.42)
         split.label(text=key)
         split.label(text=what)
+    if rows is QUAD_DRAW_SHORTCUTS:
+        _grey(col, "Quad Draw/Tab+MMB in empty space", "Tab + MMB outside the mesh: drag to resize quad strips")
+        _grey(col, "Quad Draw/Ctrl+Shift+RMB", "Ctrl + Shift + RMB: Quad Draw options")
 
 
 def _hover_items():
@@ -138,8 +183,8 @@ class ALLSET_TL_quad_draw(bpy.types.WorkSpaceTool):
     bl_widget = None
     bl_keymap = (
         ("allset.quad_draw", {"type": 'LEFTMOUSE', "value": 'PRESS', "any": True}, None),
-        ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, {"properties": [("middle", True)]}),
-        ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "ctrl": True},
+        # MMB with any modifiers (Ctrl = centred loop, Shift = relax, Ctrl+Shift = tweak loop); Alt passes through
+        ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "any": True},
          {"properties": [("middle", True)]}),
         ("allset.quad_draw_tab", {"type": 'TAB', "value": 'PRESS'}, None),
         ("allset.quad_draw_exit", {"type": 'ESC', "value": 'PRESS'}, None),

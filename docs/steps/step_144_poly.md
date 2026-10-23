@@ -55,4 +55,47 @@ modifier keys, Tool Settings with Maya fields/defaults) instead of Blender's Pol
 
 ## 한 일
 
-(작성 중)
+- 새 `operators/poly_draw.py` (Create Polygon / Append: 순수 함수 `polygon_points` / `polygon_uvs` / `build_polygon` /
+  `append_face` / `edge_start`, 모달 `allset.create_polygon` / `allset.append_polygon`, 시작 연산자, 설정
+  `Scene.allset_poly_tools`), 새 `operators/quad_draw.py` (순수 함수 `fill_order` / `fill_face` / `extend_edges` /
+  `border_loop` / `edge_loop` / `strip_pairs` / `strip_faces` / `relax` / `delete_at` / `weld_target` / 점 =
+  `add_dot` / `dots` / `clear_dots`; 모달 `allset.quad_draw` (LMB any / MMB / Ctrl+MMB), `allset.quad_draw_tab`,
+  호버 `allset.quad_draw_hover`, `allset.quad_draw_start`, Clear Dots, Exit), 새 `ui/mesh_tools_poly.py`
+  (WorkSpaceTool 4 개: Quad Draw, Create Polygon 오브젝트 / 편집 모드, Append; Tool Settings 그리기 + 단축키 표).
+- 메뉴 세 줄 = 시작 연산자 (`option_box` → 툴 + Tool Settings 독). 셸프 `dR_quadDrawTool`, Ctrl+Shift+Q
+  (`maya_patches.patch_key_batch`, `mapping.QuadDrawToolNameCommand`), Command Line 도움말, `ui/tool_settings.py`
+  의 QUAD_DRAW 종류 (Poly Build 행 / 회색 안내 제거) + CREATE_POLYGON / APPEND_POLYGON 종류, Reset Tool.
+- **점 (dot) = 표시가 붙은 떨어진 정점** (int 레이어 `allset_dot`, 모서리가 생기면 일반 정점): 처음엔 모듈 상태 목록이었으나
+  Ctrl+Z 가 빈 단계만 되돌려 바꿈 → 점도 메시와 함께 언두 (GUI 실측: Ctrl+Z 로 마지막 점 사라짐). 툴을 떠나면 점과 레이어 삭제,
+  면이 하나도 없는 새 polySurfaceN 삭제, Retopology 오버레이 원래대로 (0.5 s `_watch` 타이머, 공간은 `live_refs` 포인터).
+- Maya 근거 추가 확인: CAPTURE 의 `research/maya/screens/options144/_options144.json` `_runtime_commands`:
+  `CreatePolygonToolOptions` / `AppendToPolygonToolOptions` / Quad Draw 상자 = `...; toolPropertyWindow` [O] →
+  옵션 상자 = Tool Settings (독 섹션) 가 Maya 와 같음. `polyCreateFacetCtx -pc \`optionVar -q polyKeepFacetsPlanar\``.
+
+### 위임한 결정 (delegated)
+
+- 옵션 = Tool Settings 독 섹션 (step 140 의 창 대신): Maya 상자가 toolPropertyWindow 를 열고, 킷 툴이 WorkSpaceTool 이라서.
+  `option_windows_poly.py` 없음 → `option_windows._extend()` 변경 없음.
+- Quad Draw 편집 대상 = 선택 / 편집 중인 메시 (라이브 표면이 아니면), 아니면 새 빈 `polySurfaceN`. 기준 표면 = 라이브 표면,
+  없으면 편집 중이 아닌 보이는 메시 전부, 메시가 없으면 구성 평면. 자동 Make Live 는 하지 않음 (스냅 설정을 바꾸므로).
+- Append 의 새 점 = 첫 경계 엣지를 품고 시선에 가장 수직인 평면 위. Create Polygon 점 = Joint Tool 과 같은 구성 평면,
+  X / V 홀드 스냅 반영. 새 다각형 피벗 = 원점.
+- Quad Draw: Shift+클릭 채우기 = 마우스에서 가까운 후보 6 개 중 마우스를 품는 가장 작은 단순 사각형 (없으면 삼각형),
+  화면 반시계 = 카메라 쪽 법선, 이웃 면과 감김이 반대면 뒤집음. Relax 붓 반경 50 px, 한 번에 이웃 평균 쪽 50 %.
+  Ctrl+Shift+클릭 엣지: 안쪽 = 녹여 두 면 → 한 면, 경계 = 그 면 삭제. Ctrl+MMB 드래그 = 루프 Edge Slide (놓으면 확정) [K].
+  Tab = 누르는 동안 도는 모달 (Tab+LMB 를 키맵 수식키로 못 받으므로).
+
+## 검증
+
+- `tests/test_step144_poly.py` 22 개 통과 (순수 함수 + 객체 생성 + 툴 / 키맵 등록 · 해제 + 설정 기본값).
+- 관련 헤드리스 (step64, step129, step54, step101, enable_disable, step130, step35, step136, step140, step108, step109,
+  step106, step133): 268 통과 / 0 실패 (29 파일).
+- GUI `tests/gui/gui_step144_poly.py` 31 통과 / 0 실패 (Create Polygon 5 클릭 + Backspace + Enter, Limit points, Append,
+  Ctrl+Shift+Q, 점 4 개 + Ctrl+Z, Shift 미리보기 + 채우기, Ctrl 루프, Ctrl+MMB 슬라이드, 정점 드래그, Tab 연장,
+  Ctrl+Shift 삭제, Esc, 오버레이 복원). 스크린샷 `tmp/poly144/shots/` 직접 확인.
+
+## 남은 것
+
+- Maya 의 Quad Draw 단축키 표 / 공장값 일부는 [K] (CAPTURE md 확인 후 갱신). Draw Overlay 색 옵션 없음 (회색 + 안내).
+- 채우기에 쓰인 점은 언두해도 점으로 돌아오지만, 점 놓기도 언두 단계 하나씩.
+- Quad Strip / Extend 는 화면 픽셀 폭; Maya 의 정확한 폭 규칙은 미측정.
