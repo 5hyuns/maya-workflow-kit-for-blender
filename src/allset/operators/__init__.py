@@ -12,6 +12,7 @@ from . import (auto_key, bookmarks, component, create, curve_tools, cut_sew, dis
                lights, material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, render_persp, rig_tools, select_convert, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
                time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
 from . import poly_draw, quad_draw  # step 144 POLY: Create Polygon / Append to Polygon / Quad Draw (#30)
+from . import edge_loops  # step 144 LOOP: Insert / Offset Edge Loop, Slide Edge (#31)
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
@@ -25,7 +26,8 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pivot_menu.classes, *sets.classes, *menu_items.classes, *file_io.classes, *option_windows.classes,
            *key_batch3.classes, *bookmarks.classes, *curve_tools.classes,
            *poly_maya.classes, *rig_maya.classes, *loop_pick.classes,
-           *render_persp.classes, *select_convert.classes, *poly_draw.classes, *quad_draw.classes)
+           *render_persp.classes, *select_convert.classes, *poly_draw.classes, *quad_draw.classes,
+           *edge_loops.classes)
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -38,6 +40,7 @@ def register():
     driven_key.register_props()
     mesh_tools.register_props()
     poly_draw.register_props()
+    edge_loops.register_props()
     extrude.register_handlers()
     uv_tools.register_props()
     fx.register_props()
@@ -91,6 +94,8 @@ def unregister():
     uv_tools.unregister_props()
     extrude.unregister_handlers()
     mesh_tools.clear()
+    edge_loops.unregister_props()
+    edge_loops.clear()
     poly_draw.unregister_props()
     mesh_tools.unregister_props()
     driven_key.unregister_props()

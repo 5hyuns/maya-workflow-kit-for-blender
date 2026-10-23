@@ -271,7 +271,7 @@ SHIFT_OBJECT = MarkingMenu(
     "contextPolyToolsObjectMM", "Object Tools", "research/maya/marking_menus.json contextPolyToolsObjectMM",
     radial={
         "S": ("Extrude", _item("Edit Mesh/Extrude")),                      # :26 performPolyExtrude
-        "SW": ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),  # :34
+        "SW": ("Insert Edge Loop Tool", _item("Mesh Tools/Insert Edge Loop")),  # :34
         "E": ("Append to Polygon Tool", _item("Mesh Tools/Append to Polygon")),  # :50
         "NE": ("Fill Holes", _item("Mesh/Fill Hole")),                     # :66 FillHole
         "N": ("Target Weld Tool", TARGET_WELD),                            # :74
@@ -362,8 +362,8 @@ SHIFT_EDGE = MarkingMenu(
     },
     items=[
         ("Crease Tool", CREASE),
-        ("Insert Edge Loop Tool", ("tool", "builtin.loop_cut", True)),     # :302
-        ("Slide Edge Tool", ("tool", "builtin.edge_slide", True)),         # :316
+        ("Insert Edge Loop Tool", _item("Mesh Tools/Insert Edge Loop")),   # :302
+        ("Slide Edge Tool", _item("Mesh Tools/Slide Edge")),               # :316
         ("Circularize Components", CIRCULARIZE),
         ("Edit Edge Flow", _item("Edit Mesh/Edit Edge Flow")),
         DIVIDER,

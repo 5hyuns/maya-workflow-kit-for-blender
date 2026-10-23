@@ -49,8 +49,9 @@ class F:
 
 
 class Window:
-    def __init__(self, key, title, action, match, fields, run, paths=(), missing=(), width=440):
+    def __init__(self, key, title, action, match, fields, run, paths=(), missing=(), width=440, apply_text="Apply"):
         self.key, self.title, self.action = key, title, action
+        self.apply_text = apply_text  # Maya's middle button (Offset Edge Loop: "Enter Tool")
         self.match = match            # (operator id, props subset) of the menu action this window belongs to
         self.fields, self.run, self.paths = fields, run, tuple(paths)
         self.missing = tuple(missing)   # Maya fields Blender has no equivalent for (drawn greyed, one line)
@@ -641,7 +642,7 @@ def _make(window):
             for name in window.missing:
                 sub.label(text="    " + name)
         layout.separator()
-        layout.prop(self, "apply_now", toggle=True)
+        layout.prop(self, "apply_now", toggle=True, text=window.apply_text)
 
     def execute(self, context):
         values = values_of(window, self)

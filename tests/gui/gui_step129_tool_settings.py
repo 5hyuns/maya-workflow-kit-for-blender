@@ -185,7 +185,7 @@ def s_paint():
     check(f"Paint Selection Tool: {titles}", kind == 'PAINT_SELECT' and hidden and titles[:2] == [
         "Brush", "Paint Operations"])
     shot("gui_step129_ts_paint_select.png")
-    in_v3d(bpy.ops.wm.tool_set_by_id, name="builtin.loop_cut")
+    in_v3d(bpy.ops.wm.tool_set_by_id, name="allset.insert_edge_loop_tool")
     redraw()
 
 

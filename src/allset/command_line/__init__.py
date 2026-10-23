@@ -110,6 +110,9 @@ TOOL_HELP = {
     "allset.multi_cut_tool": ("Multi-Cut: click edges / faces to place points, Enter or right-click to cut. "
                               "Ctrl+click: edge loop, Shift: snap step, Backspace: remove the last point"),
     "builtin.loop_cut": "Insert Edge Loop: click an edge to insert a loop, drag to slide it",
+    "allset.insert_edge_loop_tool": "Insert Edge Loop: click an edge to insert a loop there, drag to slide it",
+    "allset.offset_edge_loop_tool": "Offset Edge Loop: click an edge and drag to insert loops on both sides",
+    "allset.slide_edge_tool": "Slide Edge: select edges, then middle-drag to slide them",
     "allset.quad_draw_tool": ("Quad Draw: click to place dots on the live surface, Shift+click to fill a quad, "
                               "drag to move, Shift+drag to relax, Ctrl+click: edge loop, Ctrl+Shift+click: delete, "
                               "Tab+drag: extend"),

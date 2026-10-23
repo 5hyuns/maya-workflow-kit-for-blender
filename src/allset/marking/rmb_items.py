@@ -296,11 +296,8 @@ class ALLSET_OT_mm_poly(bpy.types.Operator):
             bpy.ops.mesh.dissolve_edges(use_verts=True)
             return {'FINISHED'}
         if kind == 'LOOP_DUPLICATE':
-            _loops(False)
-            if context.area is not None and context.area.type == 'VIEW_3D':
-                bpy.ops.mesh.offset_edge_loops_slide('INVOKE_DEFAULT')
-            else:
-                bpy.ops.mesh.offset_edge_loops()
+            _loops(False)      # Maya polyDuplicateEdge on the loops (step 144 LOOP: the kit Offset Edge Loop)
+            bpy.ops.allset.offset_edge_loop('EXEC_DEFAULT')
             return {'FINISHED'}
         if kind == 'RING_SPLIT':
             _loops(True)

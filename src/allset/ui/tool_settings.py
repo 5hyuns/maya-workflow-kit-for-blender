@@ -18,6 +18,7 @@ import math
 
 import bpy
 
+from ..operators.edge_loops import INSERT_TOOL, OFFSET_TOOL, SLIDE_TOOL
 from ..operators.mesh_tools import CREASE_TOOL, TARGET_WELD_TOOL
 from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
 from ..operators.quad_draw import TOOL as QUAD_DRAW_TOOL
@@ -37,11 +38,14 @@ TOOL_OPERATORS = {"builtin.move": ("transform.translate",), "builtin.rotate": ("
 # (runTimeCommand in research/maya/menus.json) -> Blender tool; measured in Maya 2022: research/maya/screens/ts129/.
 TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT',               # SelectTool (Marquee / Tweak)
          "builtin.select_lasso": 'LASSO', "builtin.select_circle": 'PAINT_SELECT',  # LassoTool, ArtPaintSelectTool
-         "builtin.loop_cut": 'INSERT_EDGE_LOOP', "builtin.edge_slide": 'SLIDE_EDGE',  # SplitEdgeRingTool, SlideEdgeTool
+         # SplitEdgeRingTool, SlideEdgeTool, (step 144 LOOP) the kit tools of ui/mesh_tools_loop.py
+         INSERT_TOOL: 'INSERT_EDGE_LOOP', SLIDE_TOOL: 'SLIDE_EDGE', OFFSET_TOOL: 'OFFSET_EDGE_LOOP',
          TARGET_WELD_TOOL: 'TARGET_WELD', CREASE_TOOL: 'CREASE',                    # MergeVertexTool, PolyCreaseTool
          # step 144: the kit's QuadDrawTool / CreatePolygonTool / AppendToPolygonTool (ui/mesh_tools_poly.py)
          QUAD_DRAW_TOOL: 'QUAD_DRAW', CREATE_TOOL: 'CREATE_POLYGON', APPEND_TOOL: 'APPEND_POLYGON'}
 POLY_KINDS = ('QUAD_DRAW', 'CREATE_POLYGON', 'APPEND_POLYGON')
+LOOP_KINDS = ('INSERT_EDGE_LOOP', 'OFFSET_EDGE_LOOP', 'SLIDE_EDGE')     # step 144 LOOP
+_LOOP_SETTINGS = {'INSERT_EDGE_LOOP': 'INSERT', 'OFFSET_EDGE_LOOP': 'OFFSET', 'SLIDE_EDGE': 'SLIDE'}
 KIND_OF = {**KINDS, **TOOLS}
 MANIP = ('TRANSLATE', 'ROTATE', 'RESIZE')
 
@@ -131,6 +135,9 @@ def reset_kind_defaults(context, kind, tool=None):
         from ..operators import poly_draw
         poly_draw.reset_settings(poly_draw.settings(context), {'QUAD_DRAW': 'QUAD_DRAW', 'CREATE_POLYGON': 'CREATE',
                                                               'APPEND_POLYGON': 'APPEND'}[kind])
+    elif kind in LOOP_KINDS:
+        from ..operators import edge_loops
+        edge_loops.reset_settings(edge_loops.settings(context), _LOOP_SETTINGS[kind])
     elif kind in ('TARGET_WELD', 'CREASE'):
         from ..operators import mesh_tools
         s = mesh_tools.settings(context)
@@ -185,7 +192,8 @@ TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scal
               'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
               'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool",
               # step 144: Maya 2022 Tool Settings titles (research/maya/screens/options144)
-              'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append To Polygon Tool"}
+              'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append To Polygon Tool",
+              'OFFSET_EDGE_LOOP': "Offset Edge Loop Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
 SELECTING = ('SELECT', 'LASSO')
 # (key, title, open by default: True / False / the kinds where it starts open, kinds that have it). One order for
@@ -201,9 +209,8 @@ SECTIONS = (
     ("stylus", "Stylus Pressure", False, ('PAINT_SELECT',)),
     ("attr_maps", "Attribute Maps", False, ('PAINT_SELECT',)),
     ("paint_display", "Display", False, ('PAINT_SELECT',)),
-    ("description", "Description", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE',
-                                           'CREATE_POLYGON', 'APPEND_POLYGON')),
-    ("tool", "Settings", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE', *POLY_KINDS)),
+    ("description", "Description", True, (*LOOP_KINDS, 'TARGET_WELD', 'CREASE', 'CREATE_POLYGON', 'APPEND_POLYGON')),
+    ("tool", "Settings", True, (*LOOP_KINDS, 'TARGET_WELD', 'CREASE', *POLY_KINDS)),
     ("slide_snap", "Snapping Settings", True, ('SLIDE_EDGE',)),
     ("live", "Live Constraint Options", False, ('QUAD_DRAW',)),
     ("shortcuts", "Keyboard/Mouse Shortcuts", False, ('TARGET_WELD', *POLY_KINDS)),
@@ -263,18 +270,9 @@ TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
     "Paint/Stylus pressure": ("no pressure", "Blender's paint selection ignores tablet pressure"),
     "Paint/Attribute Maps": ("no attribute maps", "Blender can't paint a selection into or out of an image"),
     "Paint/Draw brush": ("always drawn", "Blender always draws the paint selection circle"),
-    "Insert Edge Loop/Use Equal Multiplier": ("always on", "Blender spaces several new loops evenly"),
-    "Insert Edge Loop/Auto complete": ("always on", "Blender's loop cut always runs around the whole edge ring"),
-    "Insert Edge Loop/Fix Quads": ("Edit Mesh > Connect", "Blender's loop cut stops where the ring isn't quads"),
-    "Insert Edge Loop/Insert with edge flow": ("Edit Mesh > Edit Edge Flow",
-                                               "Blender's loop cut is straight; run Edit Edge Flow on the new loop"),
-    "Insert Edge Loop/Adjust Edge Flow": ("Edit Mesh > Edit Edge Flow",
-                                          "Blender's loop cut is straight; run Edit Edge Flow on the new loop"),
-    "Insert Edge Loop/Smoothing angle": ("Mesh Display > Harden Edge",
-                                         "New loops don't harden by angle; set hard edges afterwards"),
-    "Slide Edge/Use Snapping": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
-    "Slide Edge/Snapping Points": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
-    "Slide Edge/Snapping Tolerance": ("Ctrl while sliding", "Blender snaps a slide with Ctrl, not to fixed points"),
+    "Insert Edge Loop/Use Equal Multiplier": ("always on", "Several new loops are always evenly spaced"),
+    "Insert Edge Loop/Auto complete": ("always on", "The new loop always runs around the whole edge ring"),
+    "Insert Edge Loop/Fix Quads": ("Edit Mesh > Connect", "The new loop stops where the ring isn't quads"),
     "Target Weld/MMB": ("Merge To: Center", "Middle-drag isn't bound: set Merge To to Center and drag with the left button"),
     "Crease/Extend to creased components": ("Select Similar",
                                             "Select the creased edges with Select > Select Similar > Crease first"),
@@ -569,71 +567,36 @@ def draw_description(layout, context, kind):
         from . import mesh_tools_poly
         mesh_tools_poly.draw_description(layout, kind)
         return
+    if kind in LOOP_KINDS:
+        from . import mesh_tools_loop
+        mesh_tools_loop.draw_description(layout, kind)
+        return
     _lines(layout, *DESCRIPTIONS.get(kind, ()))
 
 
-def _loop_props(tool):
-    macro = _op_props(tool, "mesh.loopcut_slide")
-    if macro is None:
-        return None, None
-    return macro.MESH_OT_loopcut, macro.TRANSFORM_OT_edge_slide
-
-
-def edge_loop_position(tool):
-    """Maya Insert Edge Loop "Maintain position" from Blender's loop cut: several cuts = Multiple edge loops, even
-    slide = Equal distance from edge, else Relative distance from edge."""
-    cut, slide = _loop_props(tool)
-    if cut is None:
-        return 'RELATIVE'
-    if cut.number_cuts > 1:
-        return 'MULTIPLE'
-    return 'EQUAL' if slide.use_even else 'RELATIVE'
+def edge_loop_position(context):
+    """Maya Insert Edge Loop "Maintain position" of the kit tool (Scene.allset_loop_tools, step 144 LOOP)."""
+    from ..operators import edge_loops
+    return edge_loops.settings(context).iel_position
 
 
 MAYA_EDGE_LOOPS = 2     # Maya Number of edge loops (ts129 insert_edge_loop)
 
 
-def set_edge_loop_position(tool, value):
-    cut, slide = _loop_props(tool)
-    if cut is None:
+def set_edge_loop_position(context, value):
+    from ..operators import edge_loops
+    if value not in {k for k, _n, _d in edge_loops.INSERT_POSITIONS}:
         return False
-    if value == 'MULTIPLE':
-        slide.use_even = False
-        if cut.number_cuts < 2:
-            cut.number_cuts = MAYA_EDGE_LOOPS
-    else:
-        cut.number_cuts = 1
-        slide.use_even = value == 'EQUAL'
+    edge_loops.settings(context).iel_position = value
     return True
 
 
-def _draw_insert_edge_loop(layout, context):
-    tool = active_tool(context)
-    pos = edge_loop_position(tool)
-    col = _labelled(layout, "Maintain position:").column(align=True)
-    for text, value in (("Relative distance from edge", 'RELATIVE'), ("Equal distance from edge", 'EQUAL'),
-                        ("Multiple edge loops", 'MULTIPLE')):
-        _radio(col, text, pos == value, "iel_position", value)
-    _grey(_labelled(layout, ""), "Insert Edge Loop/Use Equal Multiplier", text="Use Equal Multiplier", check=True)
-    row = _labelled(layout, "Number of edge loops:")
-    cut, _slide = _loop_props(tool)
-    row.active = pos == 'MULTIPLE'
-    if cut is not None:
-        row.prop(cut, "number_cuts", text="")
-    col = _labelled(layout, "").column(align=True)
-    _grey(col, "Insert Edge Loop/Auto complete", text="Auto complete", check=True)
-    _grey(col, "Insert Edge Loop/Fix Quads", text="Fix Quads", check=True)
-    _grey(col, "Insert Edge Loop/Insert with edge flow", text="Insert with edge flow", check=False)
-    _grey(_labelled(layout, "Adjust Edge Flow:"), "Insert Edge Loop/Adjust Edge Flow", text="1.0000")
-    _grey(_labelled(layout, "Smoothing angle:"), "Insert Edge Loop/Smoothing angle", text="30.0000")
-
-
-def _draw_slide_edge(layout, context):
-    props = _op_props(active_tool(context), "transform.edge_slide")
-    absolute = props is not None and props.use_even
-    col = _labelled(layout, "Mode:").column(align=True)
-    _radio(col, "Relative", not absolute, "slide_mode", 'RELATIVE')
-    _radio(col, "Absolute", absolute, "slide_mode", 'ABSOLUTE')
+def _draw_loop(kind):
+    def draw(layout, context):     # step 144 LOOP: the kit tools' Maya fields (ui/mesh_tools_loop.py)
+        from . import mesh_tools_loop as mtl
+        {'INSERT_EDGE_LOOP': mtl.draw_insert, 'OFFSET_EDGE_LOOP': mtl.draw_offset,
+         'SLIDE_EDGE': mtl.draw_slide}[kind](layout, context)
+    return draw
 
 
 def _draw_target_weld(layout, context):
@@ -659,14 +622,13 @@ def _draw_poly(kind):
 
 
 def draw_tool(layout, context, kind):
-    {'INSERT_EDGE_LOOP': _draw_insert_edge_loop, 'SLIDE_EDGE': _draw_slide_edge, 'TARGET_WELD': _draw_target_weld,
-     'CREASE': _draw_crease, **{k: _draw_poly(k) for k in POLY_KINDS}}[kind](layout, context)
+    {'TARGET_WELD': _draw_target_weld, 'CREASE': _draw_crease, **{k: _draw_loop(k) for k in LOOP_KINDS},
+     **{k: _draw_poly(k) for k in POLY_KINDS}}[kind](layout, context)
 
 
 def draw_slide_snap(layout, context, kind):
-    _grey(_labelled(layout, ""), "Slide Edge/Use Snapping", text="Use Snapping", check=True)
-    _grey(_labelled(layout, "Snapping Points:"), "Slide Edge/Snapping Points", text="1")
-    _grey(_labelled(layout, "Snapping Tolerance:"), "Slide Edge/Snapping Tolerance", text="0.1000")
+    from . import mesh_tools_loop
+    mesh_tools_loop.draw_slide_snap(layout, context)
 
 
 def draw_live(layout, context, kind):
@@ -739,12 +701,10 @@ def apply_option(context, option, value):
     if option == "select_all":
         return 'FINISHED' in _select_all(context, value)
     if option == "iel_position":
-        return set_edge_loop_position(tool, value)
+        return set_edge_loop_position(context, value)
     if option == "slide_mode":
-        props = _op_props(tool, "transform.edge_slide")
-        if props is None:
-            return False
-        props.use_even = value == 'ABSOLUTE'
+        from ..operators import edge_loops
+        edge_loops.settings(context).slide_mode = 'ABSOLUTE' if value == 'ABSOLUTE' else 'RELATIVE'
         return True
     return False
 

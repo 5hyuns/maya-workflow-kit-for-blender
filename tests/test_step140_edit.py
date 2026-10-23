@@ -91,7 +91,8 @@ FIELDS = {
     # :239-245
     "insert_edge_loop": ("Insert Edge Loop Tool", "Insert Edge Loop", [
         ("maintain", "Maintain position:", "Relative distance from edge"), ("loops", "Number of edge loops:", 2),
-        ("edge_flow", "", False), ("adjust_edge_flow", "Adjust Edge Flow:", 1.0)]),
+        ("edge_flow", "", False), ("adjust_edge_flow", "Adjust Edge Flow:", 1.0),
+        ("smoothing", "Smoothing angle:", 30.0)]),     # step 144 LOOP: the kit tool honours it
 }
 
 
@@ -597,26 +598,19 @@ def test_make_hole_merge_modes():
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
-def test_insert_edge_loop_values_reach_loop_cut():
+def test_insert_edge_loop_values_reach_the_kit_tool():
+    """Step 144 LOOP: the window's values go to the kit Insert Edge Loop tool (Scene.allset_loop_tools), not to
+    Blender's Loop Cut."""
     w = ow._BY_KEY["insert_edge_loop"]
-    v = {**w.defaults(), "maintain": "Multiple edge loops", "loops": 3, "edge_flow": True, "adjust_edge_flow": 0.5}
-    fake_cut = type("C", (), {})()
-    fake_slide = type("S", (), {})()
-
-    class Tool:
-        idname = "builtin.loop_cut"
-
-        def operator_properties(self, op):
-            assert op == "mesh.loopcut_slide"
-            return type("P", (), {"MESH_OT_loopcut": fake_cut, "TRANSFORM_OT_edge_slide": fake_slide})()
-
-    class Tools:
-        def from_space_view3d_mode(self, mode, create=False):
-            assert mode == 'EDIT_MESH'
-            return Tool()
-    ctx = type("Ctx", (), {"workspace": type("W", (), {"tools": Tools()})()})()
-    assert owe.loop_cut_options(ctx, v) is not None
-    assert (fake_cut.number_cuts, fake_cut.smoothness, fake_slide.use_even) == (3, 0.5, False)
+    v = {**w.defaults(), "maintain": "Multiple edge loops", "loops": 3, "edge_flow": True, "adjust_edge_flow": 0.5,
+         "smoothing": 45.0}
+    s = owe.insert_edge_loop_options(bpy.context, v)
+    assert (s.iel_position, s.iel_loops, s.iel_edge_flow, s.iel_adjust_flow, s.iel_smoothing) == (
+        'MULTIPLE', 3, True, 0.5, 45.0)
     v.update(maintain="Equal distance from edge", edge_flow=False)
-    owe.loop_cut_options(ctx, v)
-    assert (fake_cut.number_cuts, fake_cut.smoothness, fake_slide.use_even) == (1, 0.0, True)
+    owe.insert_edge_loop_options(bpy.context, v)
+    assert (s.iel_position, s.iel_edge_flow) == ('EQUAL', False)
+    s.property_unset("iel_position")
+    for name in ("iel_loops", "iel_edge_flow", "iel_adjust_flow", "iel_smoothing"):
+        s.property_unset(name)
+

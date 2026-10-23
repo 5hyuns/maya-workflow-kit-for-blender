@@ -236,26 +236,46 @@ def _run_make_hole(context, v):
     return bpy.ops.allset.make_hole('EXEC_DEFAULT', merge_mode=v["merge_mode"])
 
 
-def loop_cut_options(context, v):
-    """Put the Insert Edge Loop values on Blender's Loop Cut tool (the active edit-mesh tool): Multiple edge loops =
-    Number of Cuts, Equal distance from edge = Edge Slide Even, Insert with edge flow = Loop Cut Smoothness
-    (Adjust Edge Flow; delegated, docs/steps/step_140_edit.md). Returns the tool's macro properties or None."""
-    tool = context.workspace.tools.from_space_view3d_mode('EDIT_MESH', create=False)
-    if tool is None or tool.idname != "builtin.loop_cut":
-        return None
-    props = tool.operator_properties("mesh.loopcut_slide")
-    cut, slide = props.MESH_OT_loopcut, props.TRANSFORM_OT_edge_slide
-    cut.number_cuts = v["loops"] if v["maintain"] == "Multiple edge loops" else 1
-    cut.smoothness = v["adjust_edge_flow"] if v["edge_flow"] else 0.0
-    slide.use_even = v["maintain"] == "Equal distance from edge"
-    return props
+_MAINTAIN = {"Relative distance from edge": 'RELATIVE', "Equal distance from edge": 'EQUAL',
+             "Multiple edge loops": 'MULTIPLE'}
+
+
+def insert_edge_loop_options(context, v):
+    """Put the Insert Edge Loop window's values on the kit tool's settings (Scene.allset_loop_tools, step 144 LOOP;
+    step 140 put them on Blender's Loop Cut tool). Returns the settings."""
+    from . import edge_loops
+    s = edge_loops.settings(context)
+    s.iel_position = _MAINTAIN[v["maintain"]]
+    s.iel_loops = v["loops"]
+    s.iel_edge_flow = v["edge_flow"]
+    s.iel_adjust_flow = v["adjust_edge_flow"]
+    s.iel_smoothing = v["smoothing"]
+    return s
+
+
+def offset_edge_loop_options(context, v):
+    """The Offset Edge Loop Options values on the kit tool's settings (step 144 LOOP)."""
+    from . import edge_loops
+    s = edge_loops.settings(context)
+    s.oel_delete_edge = v["delete_edge"]
+    s.oel_edge_flow = v["edge_flow"]
+    s.oel_adjust_flow = v["adjust_edge_flow"]
+    s.oel_smoothing = v["smoothing"]
+    s.oel_position = _MAINTAIN[v["maintain"]]
+    return s
 
 
 def _run_insert_edge_loop(context, v):
-    res = bpy.ops.allset.menu_tool('EXEC_DEFAULT', tool="builtin.loop_cut", edit=True)
-    if res == {'FINISHED'}:
-        loop_cut_options(context, v)
-    return res
+    from . import edge_loops
+    insert_edge_loop_options(context, v)
+    return bpy.ops.allset.menu_tool('EXEC_DEFAULT', tool=edge_loops.INSERT_TOOL, edit=True)
+
+
+def _run_offset_edge_loop(context, v):
+    """Maya "Enter Tool": the values go to the tool, then the tool starts (research/maya/re/options_144.md:92-103)."""
+    from . import edge_loops
+    offset_edge_loop_options(context, v)
+    return bpy.ops.allset.menu_tool('EXEC_DEFAULT', tool=edge_loops.OFFSET_TOOL, edit=True)
 
 
 MESH_WINDOWS = [
@@ -284,9 +304,20 @@ MESH_WINDOWS = [
           items=("Relative distance from edge", "Equal distance from edge", "Multiple edge loops")),
         F("loops", "Number of edge loops:", "int", 2, lo=1, hi=100),
         F("edge_flow", "", "bool", False, text="Insert with edge flow"),
-        F("adjust_edge_flow", "Adjust Edge Flow:", "float", 1.0, lo=0.0, hi=1.0)], _run_insert_edge_loop,
+        F("adjust_edge_flow", "Adjust Edge Flow:", "float", 1.0, lo=0.0, hi=1.0),
+        F("smoothing", "Smoothing angle:", "float", 30.0, lo=0.0, hi=180.0)], _run_insert_edge_loop,
         paths=("Mesh Tools/Insert Edge Loop",),
-        missing=("Use Equal Multiplier", "Auto complete", "Fix Quads", "Smoothing angle")),
+        missing=("Use Equal Multiplier (always on)", "Auto complete (always on)", "Fix Quads (always on)")),
+    # step 144 LOOP: Maya's box is a window with Enter Tool And Close / Enter Tool / Close (options_144.md:92-103)
+    Window("offset_edge_loop", "Offset Edge Loop Options", "Enter Tool And Close", None, [
+        F("delete_edge", "", "bool", True, text="Delete edge (maintain 4-sided polygons)"),
+        F("edge_flow", "", "bool", False, text="Insert with edge flow"),
+        F("adjust_edge_flow", "Adjust Edge Flow:", "float", 1.0, lo=0.0, hi=1.0),
+        F("smoothing", "Smoothing angle:", "float", 180.0, lo=0.0, hi=180.0),
+        F("maintain", "Maintain position:", "enum", "Relative distance from edge",
+          items=("Relative distance from edge", "Equal distance from edge"))], _run_offset_edge_loop,
+        paths=("Mesh Tools/Offset Edge Loop",), apply_text="Enter Tool",
+        missing=("Start/End vertex offset (0)", "Tool completion: Press enter (the loops are made on release)")),
 ]
 
 WINDOWS = KEY_WINDOWS + EDIT_WINDOWS + MESH_WINDOWS
