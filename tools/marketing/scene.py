@@ -594,24 +594,6 @@ LOOK_STATE = {"on": False, "theme": None}
 KEEPER_INTERVAL = 0.05      # s: well inside one recording tick (0.3 - 0.7 s), so a new view is flat grey when drawn
 
 
-def template_name():
-    """The installed layout template: "Maya_Workflow_Kit" (step 125; Blender shows "Maya Workflow Kit"), else the
-    pre-125 "Allset" (builds made before the rename)."""
-    names = []
-    try:
-        tid = getattr(mod(".app_template"), "TEMPLATE_ID", None)
-        if tid:
-            names.append(tid)
-    except ImportError:
-        pass
-    names += ["Maya_Workflow_Kit", "Allset"]
-    for name in names:
-        for base in bpy.utils.app_template_paths():
-            if (Path(base) / name).is_dir():
-                return name
-    return names[-1]
-
-
 def maya_mode_on():
     try:
         return mod(".switch").is_on()

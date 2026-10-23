@@ -25,7 +25,7 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scene import (ROOT, area_rect, check_capture, clear_objects, dog_scene, dog_view, floor, frame,  # noqa: E402
                    lab_scene, look, maya_look, maya_mode_on, mod, pack_scene, prefs, rain_keys, rain_scene, redraw,
-                   region_rect, screen_pos, select, shaders_ready_step, shading, show_bones, template_name, to_top,
+                   region_rect, screen_pos, select, shaders_ready_step, shading, show_bones, to_top,
                    v3d_override, viewport_rects)
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, tap, view3d, win  # noqa: E402
@@ -136,8 +136,7 @@ def s_before_shot():
 @step
 def s_opt_in():
     setup()   # opts in to Maya mode (what the dialog's button does)
-    check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
-    bpy.ops.wm.read_homefile(app_template=template_name())
+    sim.load_maya_layout()   # the Maya layout startup.blend in the extension (step 130)
 
 
 # ------------------------------------------------------------------------------------------------ helpers (step 125)
@@ -314,7 +313,7 @@ def s_lab():
     stack = sim.dock_area('CHANNEL_BOX')
     before = set(win().screen.areas[:])
     with bpy.context.temp_override(window=win(), screen=win().screen, area=stack):
-        bpy.ops.screen.area_split(direction='HORIZONTAL', factor=0.55)
+        bpy.ops.screen.area_split(direction='HORIZONTAL', factor=0.62)   # AE on top, room for every CB row
     new = [a for a in win().screen.areas if a not in before]
     C["ae"] = new[0] if new else None
     if C["ae"]:

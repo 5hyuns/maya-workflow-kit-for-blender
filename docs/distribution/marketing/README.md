@@ -1,7 +1,8 @@
 # Marketing kit — Maya Workflow Kit
 
-Everything here is made from real kit sessions in Blender (GUI Blender, clean sandbox, Maya theme; step 125: Maya's
-gradient viewport background, checked by `tools/marketing/bg_check.py` — steps 122–124 used the flat #5c5c5c) with the
+Everything here is made from real kit sessions in Blender (GUI Blender, clean sandbox, **Blender's factory theme** —
+step 142, #41: the kit ships no theme since step 130 and the generators never write one; Maya's flat #5c5c5c viewport
+background is view / scene data, checked by `tools/marketing/bg_check.py`; step 125's gradient needed a theme) with the
 licensed models of `CREDITS.md`. Name and lockup (step 125): "Maya Workflow Kit" + "for Maya users, in Blender"
 (`style.md`, decision 12 revision). Copy: `copy.md`. Visual system: `style.md` (step 124: Maya logo teal + Autodesk Hello Yellow, one lockup rule, motion). Design
 review: `design_review.md` (impeccable critique and what was fixed).

@@ -169,7 +169,7 @@ a video's poster is its first frame. GIFs can only be linked in the description,
 discourages ("no heavy image (.gif images in particular)").
 
 Regenerate with `python tools/make_listing_media.py` (= `tools/marketing/make_marketing.py`: a GUI Blender in a clean
-sandbox with the built zip (until step 130 also the kit's Maya theme — those shots are listed to retake in `docs/steps/step_130_docs.md`), a scene of licensed third-party models — each
+sandbox with the built zip and **Blender's own factory theme** (step 142, #41: the kit ships no theme since step 130, and the generators never write one — `tests/test_step142_media.py`; the visible UI chrome is Blender's default theme, the Maya colours in the viewport — flat #5c5c5c background, green / white selection, component colours, grid, manipulator — are drawn by the kit), a scene of licensed third-party models — each
 credited with its licence in `docs/distribution/marketing/CREDITS.md` — then Pillow captions in the visual system of
 `docs/distribution/marketing/style.md`, copy from `copy.md`). The icon and featured image are kit-made; the scenes use
 the models credited at the end of part B (add the copy.md "Credits line" there when pasting).

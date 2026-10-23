@@ -26,8 +26,8 @@ glyphs in every shot, so the brand read as "Blender add-on" (user feedback 10-20
 | `adsk-yellow` = `highlight` | #ffff00 | **action moments only**: click pulse, key-press flash, the CTA pill |
 | `adsk-black` = `on-accent` / `on-highlight` / `outline` | #000000 | text on teal / yellow, the 2 px edge round callouts |
 
-Selection colours in the shots stay what they are (kit Maya theme: selected white, lead green #43ffa3, highlight blue
-#5285a6) — the teal is none of them (ΔE00 26.3 vs #43ffa3, 23.1 vs #5285a6, 49.7 vs Blender orange #e87d0d; Hello Yellow 41.3), so a callout never reads as a UI state.
+Selection colours in the shots stay what they are (kit-drawn since step 134: selected white, lead green #43ffa3;
+Blender's factory theme for the UI, #41; highlight blue #5285a6) — the teal is none of them (ΔE00 26.3 vs #43ffa3, 23.1 vs #5285a6, 49.7 vs Blender orange #e87d0d; Hello Yellow 41.3), so a callout never reads as a UI state.
 
 ### Where the values come from (colour values only)
 
@@ -132,12 +132,14 @@ Words in images: a title of ≤ 6 words and one line of ≤ 12 words (references
 
 ## Scenes
 
-- Real kit session (GUI Blender 4.5, clean sandbox, Maya theme, Material Preview with the world hidden so the
-  viewport shows the theme background), 1920 × 1080 window at this PC's 125 % UI scale.
+- Real kit session (GUI Blender 4.5, clean sandbox, Blender's factory theme — the kit ships none, #41; Material
+  Preview lit by the HDRI through a scene world whose camera rays see flat #5c5c5c), 1920 × 1080 window at this
+  PC's 125 % UI scale.
 - Licensed models only, each with its licence recorded in `CREDITS.md` (the step 125 scene set replaces step 122's).
-- Viewport background (step 125): every 3D View in a shot or clip shows **Maya's gradient** (Alt+B state, top #889db3
-  → bottom #111315, `research/maya/re/background_120.md`), checked after capture by `tools/marketing/bg_check.py`
-  (a flat background fails). Steps 122–124 used Maya's flat #5c5c5c.
+- Viewport background (step 142, #41): every Maya-mode 3D View in a shot or clip shows **Maya's factory flat #5c5c5c**
+  (`research/maya/re/background_120.md`), checked after capture by `tools/marketing/bg_check.py` (Blender's
+  #3d3d3d or a gradient fails) together with "theme unchanged". Step 125's gradient came from a theme, which the
+  kit no longer has (Blender keeps a gradient only in themes).
 - Bones are shown only in the rigging shot; import helpers (empties) are hidden; glTF quaternion channels converted
   to Rotate X / Y / Z so the Channel Box reads like Maya's.
 - The Blender logo in the top-left corner is painted over (extensions.blender.org terms 2.2).
