@@ -26,6 +26,7 @@ QUAD_DRAW_SHORTCUTS = (
     ("Tab+drag a border edge", "extend it by a row of quads"),
     ("Tab+drag in empty space", "draw a strip of quads"),
     ("Middle-drag", "move a vertex, edge or face"),
+    ("Ctrl+middle-drag an edge", "slide its edge loop"),
     ("Esc", "leave the tool"),
 )
 CREATE_SHORTCUTS = (
@@ -138,6 +139,8 @@ class ALLSET_TL_quad_draw(bpy.types.WorkSpaceTool):
     bl_keymap = (
         ("allset.quad_draw", {"type": 'LEFTMOUSE', "value": 'PRESS', "any": True}, None),
         ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS'}, {"properties": [("middle", True)]}),
+        ("allset.quad_draw", {"type": 'MIDDLEMOUSE', "value": 'PRESS', "ctrl": True},
+         {"properties": [("middle", True)]}),
         ("allset.quad_draw_tab", {"type": 'TAB', "value": 'PRESS'}, None),
         ("allset.quad_draw_exit", {"type": 'ESC', "value": 'PRESS'}, None),
         *_hover_items(),

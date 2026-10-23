@@ -285,6 +285,17 @@ def test_dots_are_flagged_loose_vertices():
     bm.free()
 
 
+def test_edge_loop_walks_across_quads():
+    bm = _plane(3)
+    inner = next(e for e in bm.edges if len(e.link_faces) == 2)
+    loop = qd.edge_loop(inner)
+    assert len(loop) == 3, len(loop)                     # a 3 x 3 grid: the loop crosses it, border to border
+    xs = {round(v.co.x, 4) for e in loop for v in e.verts}
+    ys = {round(v.co.y, 4) for e in loop for v in e.verts}
+    assert len(xs) == 1 or len(ys) == 1, "a straight line"
+    bm.free()
+
+
 def test_weld_target():
     xy = [(0, 0), (5, 0), (50, 0), None]
     assert qd.weld_target(xy, 0, (0, 0), 10) == 1

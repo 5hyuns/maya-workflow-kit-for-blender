@@ -139,6 +139,24 @@ def _indices(bm):
 
 # --- pure: extend / strip -------------------------------------------------------------------------------
 
+def edge_loop(edge):
+    """The edge loop through ``edge``: across each 4-edge vertex to the edge that shares no face with the last one
+    (stops at borders, poles and where it closes)."""
+    out, seen = [edge], {edge}
+    for start in edge.verts:
+        e, cur = edge, start
+        while len(cur.link_edges) == 4:
+            faces = set(e.link_faces)
+            nxt = [x for x in cur.link_edges if x is not e and not set(x.link_faces) & faces]
+            if len(nxt) != 1 or nxt[0] in seen:
+                break
+            e = nxt[0]
+            seen.add(e)
+            out.append(e)
+            cur = e.other_vert(cur)
+    return out
+
+
 def border_loop(edge):
     """Border edges connected to border ``edge`` along the border (one open or closed chain)."""
     out, todo = {edge}, [edge]
@@ -718,6 +736,8 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         self._refs = reference_objects(context)
         self._moved = False
         self._grab = None
+        if event.ctrl and self.middle:
+            return self._slide(context, mouse)
         if event.ctrl and event.shift and not self.middle:
             return self._delete(context, mouse)
         if event.ctrl and not self.middle:
@@ -803,6 +823,28 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         preselect.invalidate()
         STATE["preview"] = None
         _redraw(context)
+        return {'FINISHED'}
+
+    def _slide(self, context, mouse):
+        """Ctrl+middle-drag an edge: slide its edge loop (Blender's Edge Slide on the loop, let go to confirm) ."""
+        region, rv3d = context.region, context.region_data
+        ob = bpy.data.objects[self._ob]
+        comp = component_at(context, region, rv3d, mouse, ob, edges_only=True)
+        if comp is None:
+            return {'PASS_THROUGH'}
+        bm = bmesh.from_edit_mesh(ob.data)
+        bm.edges.ensure_lookup_table()
+        loop = edge_loop(bm.edges[comp[1]])
+        for el in (*bm.verts, *bm.edges, *bm.faces):
+            el.select = False
+        for e in loop:
+            e.select = True
+        bm.select_flush_mode()
+        bmesh.update_edit_mesh(ob.data)
+        try:
+            bpy.ops.transform.edge_slide('INVOKE_DEFAULT', release_confirm=True)
+        except RuntimeError:
+            return {'CANCELLED'}
         return {'FINISHED'}
 
     def _loop(self, context, mouse):
