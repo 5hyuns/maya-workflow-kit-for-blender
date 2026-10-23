@@ -5,6 +5,15 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Changed
+- Quad Draw, Create Polygon and Append to Polygon are Maya-style kit tools with Maya's clicks, modifier keys and Tool
+  Settings instead of Blender's Poly Build (#30).
+- Insert Edge Loop inserts where you click (one click), Offset Edge Loop drags two loops, Slide Edge slides with the
+  middle mouse button; Maya Tool Settings and the Offset Edge Loop window (#31).
+- The Deform menu creates Maya-like deformers (Lattice fitted around the selection, Delta Mush, Wrap, ShrinkWrap,
+  Nonlinear with handles, Cluster, Soft Modification, Texture, Curve Warp) with Maya option windows, Channel Box INPUTS
+  attributes and Paint Weights on the deformer's own weights (#34).
+
 ## [0.3.0] — 2026-10-24
 
 The Maya parity release after the eighth audit (steps 133–143). Blender 4.5 LTS through 5.2.x. Quad Draw, the
