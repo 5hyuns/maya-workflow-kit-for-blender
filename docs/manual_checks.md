@@ -966,3 +966,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Two cubes, the small one selected last: Deform > Wrap → wrap1 on the big cube; edit the small cube's vertices or move the small cube → the big one follows; the small cube is not rendered (F12).
 - [ ] Deform > Cluster on selected vertices → cluster1Handle; Deform > Paint Weights > Cluster with the handle selected → Weight Paint on the mesh with group cluster1 active; painting 0 on some vertices makes them stay when the handle moves.
 - [ ] Deform > Tension / Solidify / Morph / Wire / Wrinkle / Sculpt and Jiggle > Jiggle Deformer are greyed; hovering shows the Blender substitute in the tooltip and the Help Line.
+
+## Step 146 — Option boxes without a drag (#82)
+
+- [ ] Maya layout, Display menu: press and hold Grid ~0.3 s → the pointer jumps onto a tall "Option Box ❒" row under Grid; let go without moving → the Display menu closes (the pointer flicks to the window edge and back) and Grid Options opens where the pointer was.
+- [ ] Same with Key > Set Key (Set Key Options) and Constrain > Parent (Parent Constraint Options); an item whose next row is a submenu (Display > Grid, next row Heads Up Display) leaves no submenu or menu open.
+- [ ] Shift+click and Ctrl+click on Grid / Set Key open the option box instead of running the command (OS key state; event simulation can't test it). If Blender runs nothing on a modifier click, note it here.
+- [ ] Hover Grid with tooltips on: the last tooltip line reads "❒ Option box: press and hold the item, then let go (or Shift / Ctrl+click)".
+- [ ] Hold, then drag away from the Option Box row before letting go → nothing runs, the menu stays (Blender's own cancel).
