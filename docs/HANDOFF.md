@@ -2,6 +2,18 @@
 
 ## 현재 작업
 
+- Step 141 (키맵 · 선택 작은 묶음, #65 #72 #73, B4 B6, quant gap 3) 완료 — `docs/steps/step_141.md` (+ `step_141_{keys,select}.md`,
+  `research/maya/re/{fields_141,select_convert_141}.md`). QA 먼저 (776dd37): GUI 실행기 파일당 시간제한 TIMEOUT 보고, `GUI_SKIP` 격리
+  (gui_step75_input_line, gui_step63_mtk → manual_checks), unbuffered 로그, 실행당 19 s 고정 비용 → 실패 파일은 한 번의 `-k`.
+  Ctrl+A 모든 3D 모드 + UV = AE / Channel Box, UV Alt+RMB = `allset.dolly_2d`, Undo 256 안내 (README + 환경설정 패널 + 환영 창),
+  joint 이름 joint1 부터, Gravity 9.8 아래 / Newton 5 끌어당김, Select / Ctrl+RMB 변환 13 개 (mayapy 규칙). 헤드리스 1212/1212,
+  관련 GUI 54/54, Select 메뉴 작동 39 → 50.
+  **테스트 규칙 (사용자 10-23 / 10-24)**: 단계마다 GUI 전체 묶음 금지 — 기능 테스트 + 헤드리스 전체 + 바뀐 모듈 GUI / 스모크만,
+  GUI 전체는 출시 준비에서만. 격리된 GUI 테스트는 다시 디버깅하지 않는다.
+  **바로 다음 할 일**: step 142 UI 마감 → 0.3.0 출시 준비 (그때 GUI 전체 묶음). 남은 후보: 2D 편집기 Ctrl+A, Node Editor Alt+RMB,
+  다른 필드 기본값 (step_141 「남은 것」).
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 140 (일상 옵션 창, #32 #33 #35) 완료 — `docs/steps/step_140.md` (+ `step_140_{rig,edit}.md`,
   `research/maya/re/option_boxes_140.md` · `option_boxes_140_edit.md`). Maya 2022 창 26 개 새로 (Window spec 26 → 50: Joint / IK /
   IK Spline Tool, Bind / Detach / Copy / Paint Skin Weights, Blend Shape, Aim / Pole Vector / Scale constraint, Delete / Cut / Copy /
