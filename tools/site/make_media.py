@@ -8,10 +8,9 @@ BIN = Path(r"C:\Users\ohnsk\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bi
 FF, FP = str(BIN / "ffmpeg.exe"), str(BIN / "ffprobe.exe")
 MK = ROOT / "docs/distribution/marketing"
 OUT = ROOT / "site/media"
-CLIPS = ["01_hotbox", "02_marking_menu", "03_channel_box_keys", "04_navigation",
-         "05_pivot_snap", "06_rigging", "07_switch"]
-RAW = ["hero", "hotbox", "marking_menus", "channel_box_ae", "menus_shelves", "navigate_select",
-       "pivot_snapping", "animation", "rigging", "modeling_toolkit", "switch_before"]
+# what site/index.html and app.js use (step 142, #41: the full lists left 32 unused files in site/media)
+CLIPS = ["01_hotbox", "03_channel_box_keys", "04_navigation", "05_pivot_snap", "06_rigging"]
+RAW = ["hero", "menus_shelves", "switch_before"]
 VF = "scale=1280:-2:flags=lanczos"
 LOG = []
 
@@ -88,7 +87,7 @@ def main():
         Image.open(MK / "icon/icon_32.png").convert("RGBA").save(OUT / "favicon-32.png", optimize=True)  # hand-hinted 32 px
     files, total = [], 0
     for p in sorted(OUT.iterdir()):
-        if p.name == "media.json" or p.name.startswith("_"): continue
+        if p.name == "media.json" or p.name.startswith("_") or p.suffix == ".json": continue   # *.webp.json = image provenance
         w, h, d = probe(p); b = p.stat().st_size; total += b
         e = {"path": f"media/{p.name}", "bytes": b, "width": w, "height": h}
         if d is not None: e["duration"] = d

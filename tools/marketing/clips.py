@@ -417,7 +417,7 @@ def clip_channel_box_keys():
         redraw()
     settle(2)
     step(sim.find_button(dock, lambda path, _cmd: path.endswith("rz_text"), C, "rz", x_frac=0.8, step_px=6))
-    step(sim.find_button(dock, lambda _path, cmd: "cb_select_channel" in cmd, C, "rz_name", y_from="rz"))
+    step(sim.find_button(dock, lambda path, cmd: path.endswith("rz_sel") or "cb_select_channel" in cmd, C, "rz_name", y_from="rz"))
 
     @step
     def s_found():
@@ -439,18 +439,20 @@ def clip_channel_box_keys():
     type_text("+=90")
     key('RET', 0.25, chips=["+=90", "Enter"])
     settle(2)
-    hold(0.5, "RMB › Key Selected keys only that channel", [])
+    hold(0.5, "Channels › Key Selected keys only that channel", [])
     move(lambda: C["rz_name"], 0.35)
     click('LEFTMOUSE', 0.15, chips=["LMB on Rotate Z"])
     settle(1)
-    click('RIGHTMOUSE', 0.2, chips=["RMB"])
-    settle(3)
 
-    @step
-    def s_menu_at():
-        C["menu_at"] = tuple(sim._pos)
+    def open_channels():
+        # Maya's Channel Box Channels menu (the RMB menu lost its Channels items: #87); a menu opens with its first
+        # item (Key Selected) under the mouse
+        with bpy.context.temp_override(window=win()):
+            bpy.ops.wm.call_menu(name="ALLSET_MT_cb_channels")
+    beat(open_channels, 0.2, chips=["Channels menu"])
+    settle(3)
     hold(0.5)
-    move(lambda: (C["menu_at"][0] + 30, C["menu_at"][1] - int(CONTEXT_KEY_ROW * sim.scale())), 0.3)
+    move(lambda: (sim._pos[0] + 12, sim._pos[1]), 0.2)
     settle(1)
     hold(0.2)
     click('LEFTMOUSE', 0.2, chips=["Key Selected"])
@@ -477,9 +479,6 @@ def clip_channel_box_keys():
         check("other channels keyed only at 1", all(len(fc.keyframe_points) == 1 for fc in others))
 
 
-# Blender's button context menu opens with "Add to Quick Favorites" under the mouse; the kit's "Key Selected" (step 56)
-# is two rows and a separator below it (f0017 of the first take): 45 px at UI scale 1.0
-CONTEXT_KEY_ROW = 45
 
 
 # ------------------------------------------------------------------------------------------------ 4 navigation
@@ -758,10 +757,17 @@ def clip_rigging():
         click('LEFTMOUSE', 0.12)
         beat(bones_in_front)
     key('RET', 0.2, chips=["Enter"])
-    settle(2)
+    settle(1)
+
     hold(0.3, "IK Handle: click the start joint, then the end joint", [])
-    move(shelf_icon(SLOT["ik"]), 0.4)
-    click('LEFTMOUSE', 0.15, chips=["Rigging shelf › IK Handle"])
+
+    def ik_tool():
+        # Skeleton > Create IK Handle (what the shelf button runs): after Create Joints Blender's Adjust Last
+        # Operation panel covers the shelf's first icons (#86), so the clip starts the tool like the menu does
+        with v3d_override():
+            bpy.ops.allset.ik_handle('INVOKE_DEFAULT')
+    move(joint_xy(1), 0.35)
+    beat(ik_tool, 0.2, chips=["Skeleton › Create IK Handle"])
     settle(1)
     for i in (1, 3):
         move(joint_xy(i), 0.25, chips=["LMB × 2"])

@@ -18,25 +18,25 @@ GitHub README, social posts and links from the description.
 
 | File | Use | Size | MB |
 |---|---|---|---|
-| `clips/00_trailer.mp4` | Store gallery item 1 (first frame = key visual title card = the store's poster); YouTube; 80.lv pitch | 1920 × 1080, 33.5 s, 30 fps, H.264, no audio | 11.59 |
-| `clips/01_hotbox.mp4` | Store gallery 2; X / Reddit video | 1920 × 1080, 6.4 s, 30 fps | 3.92 |
-| `clips/02_marking_menu.mp4` | Store gallery 3 | 1920 × 1080, 5.9 s | 2.82 |
-| `clips/03_channel_box_keys.mp4` | Store gallery 4 | 1920 × 1080, 7.2 s | 3.66 |
-| `clips/04_navigation.mp4` | Store gallery 5 | 1920 × 1080, 7.6 s | 3.24 |
-| `clips/05_pivot_snap.mp4` | Store gallery 6 | 1920 × 1080, 6.1 s | 2.82 |
-| `clips/06_rigging.mp4` | Store gallery 7 | 1920 × 1080, 7.0 s | 2.43 |
-| `clips/07_switch.mp4` | Store gallery 8; r/blender lead video | 1920 × 1080, 5.6 s | 2.00 |
-| `gif/01_hotbox.gif` … `gif/07_switch.gif` | GitHub README (`README_marketing.md`), social, description links — **not the store** | 960 or 800 px wide, 10 – 15 fps (stepped down per clip until ≤ 4 MB), looping | 0.54 – 3.97 (all ≤ 4) |
-| `kit/readme_hero.png` | GitHub README top banner | 1920 × 720 | 0.42 |
-| `kit/social_preview.png` | GitHub repository social preview (Settings → Social preview; GitHub: PNG/JPG/GIF < 1 MB, 1280 × 640) | 1280 × 640 | 0.23 |
-| `kit/x_card.png` | X post image (≤ 5 MB) | 1600 × 900 | 0.36 |
-| `kit/reddit_before_after.png` | Reddit / BlenderArtists image: Maya mode next to plain Blender | 1920 × 1080 | 0.57 |
-| `kit/reddit_square.png` | Reddit / Instagram-style square | 1080 × 1080 | 0.37 |
-| `kit/youtube_thumbnail.png` | YouTube thumbnail for the trailer (16:9, ≤ 2 MB) | 1280 × 720 | 0.34 |
-| `key_visual.png` | Store featured image (also `../media/featured.png`), og:image, trailer title card | 1920 × 1080 | 0.67 |
-| `key_visual_square.png` | Square social card | 1080 × 1080 | 0.38 |
+| `clips/00_trailer.mp4` | Store gallery item 1 (first frame = key visual title card = the store's poster); YouTube; 80.lv pitch | 1920 × 1080, 33.5 s, 30 fps, H.264, no audio | 12.31 |
+| `clips/01_hotbox.mp4` | Store gallery 2; X / Reddit video | 1920 × 1080, 6.4 s, 30 fps | 4.71 |
+| `clips/02_marking_menu.mp4` | Store gallery 3 | 1920 × 1080, 5.9 s | 2.65 |
+| `clips/03_channel_box_keys.mp4` | Store gallery 4 | 1920 × 1080, 7.2 s | 3.64 |
+| `clips/04_navigation.mp4` | Store gallery 5 | 1920 × 1080, 7.6 s | 2.74 |
+| `clips/05_pivot_snap.mp4` | Store gallery 6 | 1920 × 1080, 6.1 s | 2.90 |
+| `clips/06_rigging.mp4` | Store gallery 7 | 1920 × 1080, 7.0 s | 2.75 |
+| `clips/07_switch.mp4` | Store gallery 8; r/blender lead video | 1920 × 1080, 5.6 s | 2.66 |
+| `gif/01_hotbox.gif` … `gif/07_switch.gif` | GitHub README (`README_marketing.md`), social, description links — **not the store** | 960 or 800 px wide, 10 – 15 fps (stepped down per clip until ≤ 4 MB), looping | 0.63 – 3.93 (all ≤ 4) |
+| `kit/readme_hero.png` | GitHub README top banner | 1920 × 720 | 0.51 |
+| `kit/social_preview.png` | GitHub repository social preview (Settings → Social preview; GitHub: PNG/JPG/GIF < 1 MB, 1280 × 640) | 1280 × 640 | 0.28 |
+| `kit/x_card.png` | X post image (≤ 5 MB) | 1600 × 900 | 0.43 |
+| `kit/reddit_before_after.png` | Reddit / BlenderArtists image: Maya mode next to plain Blender | 1920 × 1080 | 0.73 |
+| `kit/reddit_square.png` | Reddit / Instagram-style square | 1080 × 1080 | 0.50 |
+| `kit/youtube_thumbnail.png` | YouTube thumbnail for the trailer (16:9, ≤ 2 MB) | 1280 × 720 | 0.41 |
+| `key_visual.png` | Store featured image (also `../media/featured.png`), og:image, trailer title card | 1920 × 1080 | 0.78 |
+| `key_visual_square.png` | Square social card | 1080 × 1080 | 0.49 |
 | `icon_256.png` | Store icon (also `../media/icon.png`) | 256 × 256 | 0.01 |
-| `screens/01–10_*.png` | Captioned feature stills (step 122); `03`, `04` = store gallery 9–10 | 1920 × 1080 | 0.54 – 1.04 |
+| `screens/01–10_*.png` | Captioned feature stills (step 122); `03`, `04` = store gallery 9–10 | 1920 × 1080 | 0.52 – 1.03 |
 | `README_marketing.md` | Draft of the README top with the GIFs | – | – |
 | `posts.md` | Post drafts (r/blender, r/Maya, X, BlenderArtists, 80.lv) + each platform's rules | – | – |
 

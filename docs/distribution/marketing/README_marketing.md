@@ -24,7 +24,7 @@ Free and open source (GPL) · Blender 4.5 – 5.2.
 | ![Hold Space for the hotbox](docs/distribution/marketing/gif/01_hotbox.gif) | ![Right-click marking menus](docs/distribution/marketing/gif/02_marking_menu.gif) |
 | **The hotbox, under the space bar** — tap Space for one or four views, hold it for every menu. | **Right-click marking menus** — Maya's positions, drag to Vertex, back to Object Mode. |
 | ![Key it in the Channel Box](docs/distribution/marketing/gif/03_channel_box_keys.gif) | ![Navigate the Maya way](docs/distribution/marketing/gif/04_navigation.gif) |
-| **Key it in the Channel Box** — S, `+=90`, right-click › Key Selected, scrub. | **Navigate the Maya way** — Alt + LMB / MMB / RMB, F and A to frame. |
+| **Key it in the Channel Box** — S, `+=90`, Channels › Key Selected, scrub. | **Navigate the Maya way** — Alt + LMB / MMB / RMB, F and A to frame. |
 | ![Edit the pivot, snap with V](docs/distribution/marketing/gif/05_pivot_snap.gif) | ![Joints, IK and skin weights](docs/distribution/marketing/gif/06_rigging.gif) |
 | **Edit the pivot, snap with V** — Insert, hold V, rotate around the new pivot. | **Joints, IK and skin weights** — from the Rigging shelf, the way you rig in Maya. |
 

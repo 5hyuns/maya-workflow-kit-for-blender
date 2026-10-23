@@ -143,6 +143,10 @@ def find_button(where, match, store, key, step_px=10, rows=(None,), x_frac=None,
                     return
             else:
                 state["x"] -= step_px
+                if state["x"] < region.x + 2 and "first" in state:
+                    # the button reaches the region's left edge (Channel Box names, step 142): keep its centre
+                    store[key] = ((state["first"] + state["last"]) // 2, state["y"])
+                    return
                 if state["x"] < region.x + 2:
                     state["rows"].pop(0)
                     if not state["rows"]:

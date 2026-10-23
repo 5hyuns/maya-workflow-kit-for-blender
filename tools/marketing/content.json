@@ -191,7 +191,7 @@
    "name": "channel_box_keys",
    "file": "03_channel_box_keys",
    "title": "Key it in the Channel Box",
-   "caption": "S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, right-click > Key Selected keys only that channel, then scrub the Time Slider.",
+   "caption": "S keys every channel and the Channel Box turns red; type +=90 into Rotate Z, Channels > Key Selected keys only that channel, then scrub the Time Slider.",
    "trailer": [
     0.6,
     6.4
