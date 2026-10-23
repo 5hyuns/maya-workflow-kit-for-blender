@@ -133,7 +133,9 @@ def s_bevel_modal():
 
 @step
 def s_beveled():
-    check(f"Ctrl+B adds faces ({C['faces']} -> {len(bm().faces)})", len(bm().faces) > C["faces"])
+    # step 139: the cap of a zero-length extrusion bevels into an inset like Maya (12/20/10 stays, cap shrinks)
+    check(f"Ctrl+B on the extruded cap: Maya inset, same face count ({C['faces']} -> {len(bm().faces)})",
+          len(bm().faces) == C["faces"])
     ts().transform_pivot_point = 'MEDIAN_POINT'
     C["tool"] = tool_id()
     C["cursor"] = bpy.context.scene.cursor.location.copy()

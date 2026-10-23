@@ -8,6 +8,8 @@
   Maya applies is 0.9999 x that (both modes, checked).
 - The profile is Blender's superellipse with ``profile = t^2``, t = 0.5 + Depth x (sqrt(1/2) - 1/2): Depth 1 = the
   round arc (0.5), 0 = straight, -1 = the arc mirrored over the chord (exact for 2 segments, checked).
+- Zero-length slide edges don't count, and what the bevel makes is merged within 0.0001 (Merge Vertices): the
+  cap of a zero-length extrusion bevels into an inset (12/20/10, cap at 0.25), Fraction 1 merges (6/9/5).
 - Faces bevel their edges; Maya leaves nothing selected afterwards. Vertex mode = Chamfer Vertex (performBevelOrChamfer
   -> polyChamfer, 0.25 of each edge, no editable node here).
 """
@@ -18,6 +20,8 @@ import bmesh
 
 from . import extrude
 
+MERGE = 1e-4          # polyBevel3 Merge Vertices on, tolerance 0.0001 (factory, checked)
+ZERO = 1e-6           # zero-length slide edges (a zero-length extrusion) don't limit the fraction (checked,)
 FIT = 0.9999          # Maya's bevel width = 0.9999 x the asked width (offset 0.1 -> 0.09999, fraction 0.5 -> 0.49995)
 CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x 2 box, checked)
 
@@ -31,7 +35,7 @@ def slide_limit(edges):
             for s in v.link_edges:
                 if s is not e:
                     used.setdefault(s, set()).add(v)
-    caps = [s.calc_length() / len(ends) for s, ends in used.items()]
+    caps = [s.calc_length() / len(ends) for s, ends in used.items() if s.calc_length() > ZERO]
     if caps:
         return min(caps)
     return min((e.calc_length() for e in sel), default=0.0)
@@ -59,10 +63,21 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=max(1, int(segments)), profile=profile(depth), affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
+    made = [v for v in ret["verts"] if v.is_valid]
+    near = set(made)
+    for v in made:
+        near.update(e.other_vert(v) for e in v.link_edges)
+    # Maya merges what the bevel made onto coincident vertices (a zero-length extrusion's sides, Fraction 1), at
+    # their midpoint (Fraction 1: 0.49995 between 0.5 and 0.4999, checked)
+    pairs = bmesh.ops.find_doubles(bm, verts=list(near), dist=MERGE * 1.001)["targetmap"]
+    for v, target in pairs.items():
+        target.co = (v.co + target.co) / 2
+    if pairs:
+        bmesh.ops.weld_verts(bm, targetmap=pairs)
     extrude.deselect_all(bm)
     bm.select_flush_mode()
     bm.normal_update()
-    return list(ret["verts"])
+    return [v for v in near if v.is_valid]
 
 
 def chamfer_vertices(bm, verts):
