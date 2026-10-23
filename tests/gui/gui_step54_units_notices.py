@@ -1,9 +1,10 @@
 """Step 54 in a real UI (Maya Workflow Kit template = cm scene, maya_unit 0.01), Maya hand order:
-Create > Lights > Point Light -> power 10 W x maya_unit^2; Fields/Solvers > Gravity -> field 1 Maya unit;
+Create > Lights > Point Light -> intensity 1, No Decay (step 137: power = 4 pi^2 x 10^2 x maya_unit^2); Fields/Solvers > Gravity -> field 1 Maya unit;
 Windows > Animation Editors > Trax Editor under the mouse -> tooltip + Help Line notice.
 Menus are the kit's Maya menus, opened as menus and picked with the keyboard (accelerator / arrows).
 Screenshot: gui_step54_trax_notice.png."""
 
+import math
 import os
 import sys
 from importlib import import_module
@@ -60,10 +61,12 @@ def s_point():
 @step
 def s_point_check():
     ob = bpy.context.view_layer.objects.active
-    want = 10.0 * C["k"] ** 2
+    # Maya intensity 1, Decay Rate No Decay (step 137, ): matches Maya at
+    # 10 units, power = 4 pi^2 k^2 x 10^2 (operators/lights.power_factor); still scales with maya_unit^2 (step 54)
+    want = 4.0 * math.pi ** 2 * C["k"] ** 2 * 100.0
     check(f"Create > Lights > Point Light: {ob and ob.name}, power {ob and ob.data.energy:.6f} W "
-          f"(10 W x maya_unit^2 = {want:.6f})",
-          ob is not None and ob.type == 'LIGHT' and abs(ob.data.energy - want) < 1e-6 * 10)
+          f"(4 pi^2 x 100 x maya_unit^2 = {want:.6f})",
+          ob is not None and ob.type == 'LIGHT' and abs(ob.data.energy - want) < 1e-6 * want + 1e-9)
     open_menu("Fields/Solvers")
 
 
