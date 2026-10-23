@@ -337,11 +337,21 @@ def _module_names(cls):
     return {}
 
 
+def _class_order(cls):
+    """The defining module's ``classes`` sequence, or [] when it isn't a tuple / list. Third-party render panels
+    can come from modules whose global ``classes`` is something else — a submodule (``from . import classes``),
+    a dict, a generator — which made Maya mode fail to switch on (#79, 'module' object is not iterable)."""
+    seq = _module_names(cls).get("classes", ())
+    if not isinstance(seq, (tuple, list)):
+        return []
+    return list(seq)
+
+
 def registration_key(cls):
     """Blender lists panels in registration order, and re-registering moves a panel to the end: re-register them in
     the order they were registered — bl_ui modules in ``bl_ui._modules`` order, each module's ``classes`` tuple
     order, add-ons (Cycles) after them (checked: subclass order put EEVEE's Motion Blur above Sampling)."""
-    seq = list(_module_names(cls).get("classes", ()) or ())
+    seq = _class_order(cls)
     index = seq.index(cls) if cls in seq else len(seq)
     if cls.__module__.startswith("bl_ui."):
         import bl_ui
