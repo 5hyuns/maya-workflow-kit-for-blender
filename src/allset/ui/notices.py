@@ -366,8 +366,13 @@ CATEGORIES = {
     **{f"Select/{sub}": ("Curve edit mode", "Blender selects curve and surface control points in edit mode (Tab); "
                          "hulls, isoparms and edit points aren't separate components.")
        for sub in ("Components#2", "Components#3", "CV Selection Boundary", "Surface Border", "Cluster Curve")},
-    "Select/Convert Selection": ("UV Editor / Select menu", "Blender has no vertex-face or UV components in the 3D "
-                                 "View: UVs are selected in the UV Editor (UV Sync Selection)."),
+    # Step 141: the conversions work (operators/select_convert.py); Blender has no face-corner (vertex face) selection.
+    "Select/Convert Selection": ("Faces / UV Editor", "Blender has no vertex-face component: per-corner normals and "
+                                 "colours follow the selected faces (Mesh > Normals > Set from Faces); single "
+                                 "corners are picked in the UV Editor with Sticky Selection off."),
+    "Select/Components/Vertex Face": ("Faces / UV Editor", "Blender has no vertex-face component: per-corner normals "
+                                      "and colours follow the selected faces (Mesh > Normals > Set from Faces); "
+                                      "single corners are picked in the UV Editor with Sticky Selection off."),
     "Modify": ("Object menu", "Blender has no command by this name: see Object > Transform / Apply / Snap."),
     "Modify/Asset": ("Asset Browser / library overrides", "Blender has no assets with published attributes: mark "
                      "data-blocks as assets, expose values with library overrides or custom properties."),
@@ -471,7 +476,9 @@ CATEGORIES.update({
         "Select menu", "Blender's UV Select menu has no such filter: Select Linked, Split, Overlap, Pinned and "
         "Shortest Path are there."),
     "UV Editor/Select/Convert Selection": (
-        "Select mode", "Blender converts only between vertex, edge, face, UV and shell (the UV Toolkit icons)."),
+        "3D View Select menu", "With Vertex / Edge / Face components (UV Sync Selection on) the UV Editor selection is "
+        "the mesh selection: the 3D View's Select > Convert Selection converts it to edge loops, rings and contained "
+        "components."),
     "UV Editor/Cut/Sew": (
         "Seams / Rip", "Blender makes shells from seams (Cut, Unwrap) and splits UVs with the Rip tool; it has no "
         "auto seams or grid shells."),
@@ -755,16 +762,6 @@ MARKING = {
     **{f"contextPolyToolsDefaultMM/{label}": (
         "Extra Objects add-on", f"Blender has no {label.lower()} primitive by default: the free Extra Objects "
         "extension adds one (Preferences > Get Extensions).") for label in ("Pipe", "Helix", "Gear")},
-    "polyConvertMM/Grow Selection/Grow Along Loop": (
-        "Select Loops", "Blender grows a selection in every direction only: select the edge loop (Select > Select "
-        "Loops) or use Grow."),
-    "polyConvertMM/Shrink Selection/Shrink Selection Along Loop": (
-        "Shrink", "Blender shrinks a selection in every direction only (Select > Shrink)."),
-    "polyConvertMM/To UVs/To UV Perimeter": (
-        "UV Editor", "Blender selects UV island borders in the UV Editor (Select > Select Split / island select), "
-        "not from the 3D View."),
-    "polyConvertMM/To Face Path": (
-        "Shortest Path", "Blender picks a face path with Ctrl+click on the second face (Select > Shortest Edge Path)."),
     "translateMarkingMenuImpl/Snap/Face Center": (
         "Snap to Face", "Blender snaps to faces (Face Project / Face Nearest), not to their centres."),
     "translateMarkingMenuImpl/Keep Spacing": (

@@ -233,6 +233,17 @@ MAP = {
     **{f"{UV}/Select/Convert Selection/{label}": ("allset.uv_component", {"mode": mode})
        for label, mode in (("To Vertices", "VERTEX"), ("To Edges", "EDGE"), ("To Faces", "FACE"), ("To UVs", "UV"),
                            ("To UV Shell", "SHELL"))},
+    # Step 141: the main Select menu's conversions (operators/select_convert.py; with UV Sync Selection off they read
+    # the selected UVs as their vertices)
+    **{f"{UV}/Select/{label}": ("allset.select_convert", {"kind": kind})
+       for label, kind in (("Grow Along Loop", 'GROW_LOOP'), ("Shrink Along Loop", 'SHRINK_LOOP'),
+                           ("Convert Selection/To Vertex Perimeter", 'VERTEX_PERIMETER'),
+                           ("Convert Selection/To Edge Perimeter", 'EDGE_PERIMETER'),
+                           ("Convert Selection/To Face Path", 'FACE_PATH'),
+                           ("Convert Selection/To Face Perimeter", 'FACE_PERIMETER'),
+                           ("Convert Selection/To UV Shell Border", 'UV_SHELL_BORDER'),
+                           ("Convert Selection/To UV Perimeter", 'UV_PERIMETER'),
+                           ("Convert Selection/To UV Edge Loop", 'UV_EDGE_LOOP'))},
     f"{UV}/Cut/Sew/Cut": "allset.uv_cut",
     f"{UV}/Cut/Sew/Sew": "allset.uv_sew",
     f"{UV}/Cut/Sew/Merge": "uv.weld",

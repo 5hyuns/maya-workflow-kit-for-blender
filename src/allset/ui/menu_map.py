@@ -53,6 +53,11 @@ def _con(kind):
     return ("allset.constrain", {"type": kind})
 
 
+def _sel(kind):
+    # Maya Select menu conversions (step 141, operators/select_convert.py)
+    return ("allset.select_convert", {"kind": kind})
+
+
 def _editor(ui_type):
     # A Blender editor in a new window, like a Maya editor window (operators/menu_extras.py).
     return ("allset.open_editor", {"ui_type": ui_type})
@@ -204,14 +209,27 @@ MAP = {
     "Select/Components/Edge": ("allset.component_mode", {"type": 'EDGE'}),
     "Select/Components/Face": ("allset.component_mode", {"type": 'FACE'}),
     "Select/Contiguous Edges": ("allset.select_loops", {"ring": False}),
-    "Select/Convert Selection/To Vertices": ("mesh.select_mode", {"type": 'VERT'}),
-    "Select/Convert Selection/To Edges": ("mesh.select_mode", {"type": 'EDGE', "use_expand": True}),
+    # Step 141 (, Maya): To Vertices / Edges / Faces = the components the
+    # selection touches (Ctrl+F9-F11's operator), the other conversions operators/select_convert.py.
+    "Select/Convert Selection/To Vertices": ("allset.convert_selection", {"type": 'VERT'}),
+    "Select/Convert Selection/To Edges": ("allset.convert_selection", {"type": 'EDGE'}),
     "Select/Convert Selection/To Edge Loop": ("allset.select_loops", {"ring": False}),
     "Select/Convert Selection/To Edge Ring": ("allset.select_loops", {"ring": True}),
-    "Select/Convert Selection/To Edge Perimeter": "mesh.region_to_loop",
-    "Select/Convert Selection/To Faces": ("mesh.select_mode", {"type": 'FACE', "use_expand": True}),
-    "Select/Convert Selection/To Face Perimeter": "mesh.region_to_loop",
+    "Select/Convert Selection/To Edge Perimeter": _sel('EDGE_PERIMETER'),
+    "Select/Convert Selection/To Faces": ("allset.convert_selection", {"type": 'FACE'}),
+    "Select/Convert Selection/To Face Perimeter": _sel('FACE_PERIMETER'),
     "Select/Convert Selection/To Shell": "mesh.select_linked",
+    "Select/Convert Selection/To Vertex Perimeter": _sel('VERTEX_PERIMETER'),
+    "Select/Convert Selection/To Face Path": _sel('FACE_PATH'),
+    "Select/Convert Selection/To UVs": _sel('UVS'),
+    "Select/Convert Selection/To UV Shell Border": _sel('UV_SHELL_BORDER'),
+    "Select/Convert Selection/To UV Perimeter": _sel('UV_PERIMETER'),
+    "Select/Convert Selection/To UV Edge Loop": _sel('UV_EDGE_LOOP'),
+    "Select/Convert Selection/To Shell Border": _sel('SHELL_BORDER'),
+    "Select/Grow Along Loop": _sel('GROW_LOOP'),
+    "Select/Shrink Along Loop": _sel('SHRINK_LOOP'),
+    "Select/Components/UV": ("allset.uv_component", {"mode": 'UV'}),           # the F12 / Alt+F12 keys (step 66)
+    "Select/Components/UV Shell": ("allset.uv_component", {"mode": 'SHELL'}),
     # --- Modify ---
     "Modify/Transformation Tools/Move Tool": ("tool", "builtin.move", False),
     "Modify/Transformation Tools/Rotate Tool": ("tool", "builtin.rotate", False),
