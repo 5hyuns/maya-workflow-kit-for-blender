@@ -24,7 +24,7 @@ from mathutils import Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from scene import (ROOT, bg_result, clear_objects, dog_scene, dog_view, floor, frame, lab_scene, look,  # noqa: E402
                    maya_look, maya_mode_on, mod, pack_scene, prefs, rain_scene, redraw, screen_pos, select,
-                   shaders_ready_step, shading, show_bones, template_name, theme_unchanged, v3d_override,
+                   shaders_ready_step, shading, show_bones, theme_unchanged, v3d_override,
                    viewport_rects)
 import sim  # noqa: E402
 from sim import MODULE, check, ev, run, setup, step, view3d, win  # noqa: E402
@@ -219,8 +219,7 @@ def maya_session(kind="dog", setup_scene=None):
     @step
     def s_setup():
         setup()
-        check("install the Maya layout template", bpy.ops.allset.layout_install() == {'FINISHED'})
-        bpy.ops.wm.read_homefile(app_template=template_name())
+        sim.load_maya_layout()   # the Maya layout startup.blend in the extension (step 130)
 
     @step
     def s_scene():
