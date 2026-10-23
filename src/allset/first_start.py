@@ -83,17 +83,15 @@ class ALLSET_OT_make_maya(bpy.types.Operator):
 
 class ALLSET_OT_new_maya_scene(bpy.types.Operator):
     """Start a new file in the Maya layout (centimetre scene, Maya views, Status Line, shelf, Channel Box).
-    Unsaved changes are lost"""
+    A modified scene asks first: Save / Don't Save / Cancel"""
     bl_idname = "allset.new_maya_scene"
     bl_label = "New Scene in Maya Layout"
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
-        if bpy.data.is_dirty:
-            return context.window_manager.invoke_confirm(
-                self, event, title="New Scene in Maya Layout",
-                message="A new file with the Maya layout replaces the open file (unsaved changes are lost)")
-        return self.execute(context)
+        # Maya's saveChanges dialog before File > New Scene / Ctrl+N (step 138, #57; ui/save_prompt.py)
+        from .ui import save_prompt
+        return save_prompt.ask(context, new_maya_scene)
 
     def execute(self, context):
         open_layout_later()

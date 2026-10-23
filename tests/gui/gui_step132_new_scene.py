@@ -35,9 +35,9 @@ def s_press():
 
 @step
 def s_confirm_if_asked():
-    if bpy.data.is_dirty:      # unsaved changes: the operator asks first (a confirm popup under the mouse)
-        ev('RET', 'PRESS')
-        ev('RET', 'RELEASE')
+    if bpy.data.is_dirty:      # unsaved changes: Maya's Save Changes menu first (step 138): D = Don't Save
+        ev('D', 'PRESS')
+        ev('D', 'RELEASE')
 
 
 @step
