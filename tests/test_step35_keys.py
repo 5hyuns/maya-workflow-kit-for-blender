@@ -27,7 +27,7 @@ def test_bindings():
         knife = _items(km, 'X', shift=True, ctrl=True)
         quad = _items(km, 'Q', shift=True, ctrl=True)
         assert knife == [("allset.menu_tool", {"tool": "allset.multi_cut_tool", "edit": True})], (km, knife)
-        assert quad == [("allset.menu_tool", {"tool": "builtin.poly_build", "edit": True})], (km, quad)
+        assert quad == [("allset.quad_draw_start", {})], (km, quad)      # step 144: the kit Quad Draw
 
 
 def test_f_keys_are_menu_sets_and_view_keys_kept():

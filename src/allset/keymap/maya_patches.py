@@ -658,8 +658,7 @@ def patch_key_batch(kd):
         _add(kd, km, "allset.last_tool", make_event("Y"))
         _add(kd, km, "allset.menu_tool", make_event("X", shift=True, ctrl=True),
              {"tool": "allset.multi_cut_tool", "edit": True})     # step 129: the kit Multi-Cut tool
-        _add(kd, km, "allset.menu_tool", make_event("Q", shift=True, ctrl=True),
-             {"tool": "builtin.poly_build", "edit": True})
+        _add(kd, km, "allset.quad_draw_start", make_event("Q", shift=True, ctrl=True))   # step 144: kit Quad Draw
     kd.remove("3D View", "view3d.view_axis", type="F2")
     kd.remove("3D View", "view3d.view_axis", type="F3")
     kd.remove("3D View", "view3d.view_camera", type="F4")

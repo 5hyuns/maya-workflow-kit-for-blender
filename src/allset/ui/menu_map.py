@@ -321,11 +321,11 @@ MAP = {
     "Edit Mesh/Poke": "mesh.poke",
     # --- Mesh Tools ---
     "Mesh Tools/Show/Hide Modeling Toolkit": ("allset.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
-    "Mesh Tools/Create Polygon": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Create Polygon": "allset.create_polygon_start",       # step 144: kit tool, a new polySurfaceN
     "Mesh Tools/Insert Edge Loop": ("tool", "builtin.loop_cut", True),
     "Mesh Tools/Multi-Cut": ("tool", "allset.multi_cut_tool", True),      # step 129
     "Mesh Tools/Offset Edge Loop": ("v3d", "mesh.offset_edge_loops_slide", {}),
-    "Mesh Tools/Quad Draw": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Quad Draw": "allset.quad_draw_start",                # step 144: kit tool on the live surface
     "Mesh Tools/Slide Edge": ("tool", "builtin.edge_slide", True),
     "Mesh Tools/Target Weld": ("tool", "allset.target_weld_tool", True),     # step 64
     "Mesh Tools/Crease Tool": ("tool", "allset.crease_tool", True),
@@ -648,7 +648,7 @@ MAP.update({
     "Edit Mesh/Wedge": "allset.wedge",
     "Edit Mesh/Split Mesh with Projected Curve": ("v3d", "mesh.knife_project", {}),
     # Mesh Tools (Sculpting Tools -> the essentials brushes, research/maya/menus.md:542-583)
-    "Mesh Tools/Append to Polygon": ("tool", "builtin.poly_build", True),
+    "Mesh Tools/Append to Polygon": "allset.append_polygon_start",   # step 144: border edge + points, Enter
     **{f"Mesh Tools/Sculpting Tools/{maya} Tool": _sculpt(brush) for maya, brush in (
         ("Sculpt", "Draw"), ("Smooth", "Smooth"), ("Relax", "Relax Slide"), ("Grab", "Grab"),
         ("Pinch", "Pinch/Magnify"), ("Flatten", "Flatten/Contrast"), ("Foamy", "Clay"), ("Wax", "Clay Strips"),

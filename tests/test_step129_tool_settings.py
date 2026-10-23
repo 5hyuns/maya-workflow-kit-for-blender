@@ -32,7 +32,7 @@ MAYA = {
 TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT', "builtin.select_lasso": 'LASSO',
          "builtin.select_circle": 'PAINT_SELECT', "builtin.loop_cut": 'INSERT_EDGE_LOOP',
          "builtin.edge_slide": 'SLIDE_EDGE', "allset.target_weld_tool": 'TARGET_WELD',
-         "allset.crease_tool": 'CREASE', "builtin.poly_build": 'QUAD_DRAW'}
+         "allset.crease_tool": 'CREASE', "allset.quad_draw_tool": 'QUAD_DRAW'}     # step 144: the kit Quad Draw
 NAMES = {'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
          'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool", 'TARGET_WELD': "Target Weld Tool",
          'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool"}
@@ -51,7 +51,7 @@ def _props(identifier, **values):
     return SimpleNamespace(bl_rna=SimpleNamespace(identifier=identifier), **values)
 
 
-FAKE = ("builtin.loop_cut", "builtin.edge_slide", "builtin.poly_build")
+FAKE = ("builtin.loop_cut", "builtin.edge_slide", "allset.quad_draw_tool")
 _REAL_ACTIVE = ts_mod.active_tool
 
 
@@ -65,8 +65,6 @@ class FakeTool:
                 MESH_OT_loopcut=_props("MESH_OT_loopcut", number_cuts=1, smoothness=0.0),
                 TRANSFORM_OT_edge_slide=_props("TRANSFORM_OT_edge_slide", use_even=False, correct_uv=True)),
             "transform.edge_slide": _props("TRANSFORM_OT_edge_slide", use_even=False, correct_uv=True),
-            "mesh.polybuild_face_at_cursor_move": SimpleNamespace(
-                MESH_OT_polybuild_face_at_cursor=_props("MESH_OT_polybuild_face_at_cursor", create_quads=True)),
         }
 
     def operator_properties(self, op):
@@ -197,11 +195,17 @@ def test_target_weld_and_crease_bind_kit_settings():
     assert (s.weld_merge_to, s.weld_preserve_uvs, s.crease_mode) == ('TARGET', True, 'ABSOLUTE')
 
 
-def test_quad_draw_placeholder_lists_blender_keys():
-    _set_tool("builtin.poly_build")
+def test_quad_draw_rows_are_live():
+    """Step 144: the kit Quad Draw's Maya rows are real settings now (Scene.allset_poly_tools), not greyed Poly Build
+    stand-ins; the shortcuts section lists Maya's keys."""
+    _set_tool("allset.quad_draw_tool")
     rec = _draw('QUAD_DRAW')
-    assert "Tool Settings/Quad Draw/Auto-weld" in {p.item for p in rec.ops("allset.menu_unavailable")}   # greyed
-    assert len(rec.texts("label")) >= 3                              # Blender Poly Build keys from its keymap
+    greyed = {p.item for p in rec.ops("allset.menu_unavailable")}
+    assert "Tool Settings/Quad Draw/Auto-weld" not in greyed
+    owners = {(kw["_args"][0].bl_rna.identifier, kw["_args"][1]) for k, _t, kw in rec.log
+              if k == "prop" and len(kw["_args"]) > 1}
+    assert {("ALLSET_PG_poly_tools", "qd_auto_weld"), ("ALLSET_PG_poly_tools", "qd_relax")} <= owners, owners
+    assert len(rec.texts("label")) >= 10                             # Keyboard/Mouse Shortcuts rows
 
 
 def test_greyed_rows_have_tooltips():

@@ -2712,7 +2712,7 @@ def _m63_2_bevel():
         bpy.ops.object.mode_set(mode='OBJECT')
     check(f"[M63-2] Connect joins two vertices of a face with an edge ({n0} -> {len(ob.data.edges)} edges)",
           len(ob.data.edges) == n0 + 1)
-    for path, tool in (("Mesh Tools/Multi-Cut", "allset.multi_cut_tool"), ("Mesh Tools/Quad Draw", "builtin.poly_build")):
+    for path, tool in (("Mesh Tools/Multi-Cut", "allset.multi_cut_tool"), ("Mesh Tools/Quad Draw", "allset.quad_draw_tool")):
         select_only(ob)
         menu(path)
         check(f"[M63-2] {path.split('/')[-1]} = edit mode + that tool ({bpy.context.mode}, {tool_id()})",

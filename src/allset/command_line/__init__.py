@@ -110,7 +110,13 @@ TOOL_HELP = {
     "allset.multi_cut_tool": ("Multi-Cut: click edges / faces to place points, Enter or right-click to cut. "
                               "Ctrl+click: edge loop, Shift: snap step, Backspace: remove the last point"),
     "builtin.loop_cut": "Insert Edge Loop: click an edge to insert a loop, drag to slide it",
-    "builtin.poly_build": "Quad Draw: click to place points, Ctrl+click to delete",
+    "allset.quad_draw_tool": ("Quad Draw: click to place dots on the live surface, Shift+click to fill a quad, "
+                              "drag to move, Shift+drag to relax, Ctrl+click: edge loop, Ctrl+Shift+click: delete, "
+                              "Tab+drag: extend"),
+    "allset.create_polygon_tool": ("Create Polygon: click to place points, Enter to complete, Backspace: remove the "
+                                   "last point"),
+    "allset.append_polygon_tool": ("Append to Polygon: click a border edge, then points, Enter to add the face, "
+                                   "Backspace: remove the last point"),
     "allset.target_weld_tool": "Target Weld: drag a vertex or edge onto the target. Selected vertices are merged too",
     "allset.crease_tool": "Crease Tool: select edges or vertices, then middle-drag left to crease less, right for more",
 }
