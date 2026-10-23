@@ -11,8 +11,8 @@ dotted handle tears it off into a floating window. Here:
   in the space's hidden tab flags (``ROLE_FLAGS``: Tool tab + one flag), so it survives saving and ``area_dupli``
   (checked: the copy keeps context, flags and the hidden header). The Tool Settings dock (``tool_dock``) is the
   Tool tab with no role flag.
-- **Stack.** The ``STACK`` area shows a tab row and the selected tab (``WindowManager.allset_dock``); kinds that
-  have a floating window leave the row.
+- **Stack.** The ``STACK`` area shows Maya's vertical tab strip on its right edge (step 142) and the selected tab
+  (``WindowManager.allset_dock``); kinds that have a floating window leave the strip.
 - **Tear off / dock.** The handle row (``ALLSET_OT_dock_handle``) on a docked panel opens a floating window with only
   that panel (``area_dupli`` + role); on a floating panel it offers Dock (close the window, the panel goes back) and
   Close. A floating window closed by its OS button docks back by itself (the stack only hides kinds that float).
@@ -698,6 +698,220 @@ def text_units(context, text, pad):
     return blf.dimensions(0, text)[0] / max(u, 1) + pad
 
 
+# --- vertical tab strip (step 142, #78) ----------------------------------------------------------------------------
+# Maya's stack tabs are a vertical strip on the stack's right edge, so the stack is only as wide as its panel
+# ( strip x 1584-1599 = 16 px; tabs from the content top, y 133:
+# "Channel Box / Layer Editor" 133-294, "Attribute Editor" 297-404, "Modeling Toolkit" 407-520 = the text + about
+# 11 px at each end, 2 px apart; raised tab = the panel colour #444444, lowered tabs #373737, strip #2b2b2b, text
+# #eeeeee / #929292, reading top to bottom). Blender can't lay a button out rotated, so the strip is drawn here
+# (POST_PIXEL, blf rotation) in a column the panel content keeps clear of (``content_layout``), and a click on it goes
+# to ``ALLSET_OT_dock_strip_click`` (first in "View2D Buttons List", like ui/outliner_sets.py's rows). Delegated over
+# a width that follows the raised tab with horizontal tabs: the tab row alone needed 466 px at UI scale 1 (step 135).
+STRIP_PX = 18          # strip width at UI scale 1 (Maya 16; Blender's UI font is a little taller)
+STRIP_GAP_PX = 6       # between the content and the strip
+STRIP_TOP_PX = 4       # first tab below the region's top
+TAB_END_PX = 11        # around a tab's text (Maya: 162 px for a 140 px caption)
+TAB_GAP_PX = 2
+STRIP_SHADE = 0.63     # strip background x the region background (Maya 43 / 68)
+TAB_SHADE = 0.81       # lowered tab x the region background (Maya 55 / 68)
+TEXT_LOWERED = 0.62    # lowered tab text x the theme text colour (Maya 146 / 238)
+PANEL_MARGIN_U = 0.4   # Blender's panel margin on each side of a Properties region, in widget units (checked)
+
+_drawn = {}            # stack area pointer -> the tab drawn last (draw -> tab change -> dock width, toolbox)
+_strip_handle = []
+
+
+def _ui_unit(scale, pixel_size=1.0):
+    from .toolbar_fit import unit
+    return unit(scale, pixel_size)
+
+
+def strip_px(scale):
+    return round(STRIP_PX * scale)
+
+
+def reserved_px(scale):
+    """Region px the stack's content leaves free at the right for the strip (strip + gap)."""
+    return strip_px(scale) + round(STRIP_GAP_PX * scale)
+
+
+def area_reserved_px(context):
+    """``reserved_px`` in a tab-stack area, else 0 (what a content width rule subtracts from ``region.width``)."""
+    if area_role(context) != 'STACK':
+        return 0
+    return reserved_px(context.preferences.system.ui_scale or 1.0)
+
+
+def content_factor(width, scale, pixel_size=1.0):
+    """Split factor of the stack's content column so it ends ``STRIP_GAP_PX`` left of the strip, for a region
+    ``width`` px wide (the panel layout spans the region minus Blender's margin on each side)."""
+    margin = PANEL_MARGIN_U * _ui_unit(scale, pixel_size)
+    span = width - 2 * margin
+    if span <= 1:
+        return 1.0
+    return max(0.0, min(1.0, (width - reserved_px(scale) - margin) / span))
+
+
+class StripClear:
+    """The stack panel's root layout kept left of the strip: every item drawn into it goes into its own split
+    (content | an empty strip column). One split column for everything would move every row: a nested column spaces
+    its items by the style's ``buttonspacey``, the panel's root by ``templatespace`` (checked: the Channel Box rows
+    came 4 px closer each at UI scale 1.5, and the GUI tests' row offsets missed). Attributes go to the root."""
+
+    __slots__ = ("_root", "_factor")
+
+    def __init__(self, root, factor):
+        object.__setattr__(self, "_root", root)
+        object.__setattr__(self, "_factor", factor)
+
+    def __getattr__(self, name):
+        value = getattr(self._root, name)
+        if not callable(value):
+            return value
+
+        def call(*args, **kw):
+            split = self._root.split(factor=self._factor)
+            col = split.column()
+            split.column()             # the strip's column: empty, drawn over by draw_strip
+            return getattr(col, name)(*args, **kw)
+        return call
+
+    def __setattr__(self, name, value):
+        setattr(self._root, name, value)
+
+
+def content_layout(layout, context):
+    """The layout the stack's panel draws into: left of the strip."""
+    region = context.region
+    if region is None or region.width <= 1:
+        return layout
+    system = context.preferences.system
+    f = content_factor(region.width, system.ui_scale or 1.0, system.pixel_size)
+    if f <= 0.2 or f >= 1.0:
+        return layout
+    return StripClear(layout, f)
+
+
+def strip_tabs(kinds, width, height, scale, measure=None):
+    """[(kind, x0, y0, x1, y1)] region rects of the strip's tabs (y up, first tab at the top)."""
+    if measure is None:
+        from .toolbox import text_px as measure
+    x1 = width
+    x0 = width - strip_px(scale)
+    y = height - round(STRIP_TOP_PX * scale)
+    out = []
+    for kind in kinds:
+        length = math.ceil(measure(LABELS[kind], scale) + 2 * TAB_END_PX * scale)
+        out.append((kind, x0, y - length, x1, y))
+        y -= length + round(TAB_GAP_PX * scale)
+    return out
+
+
+def strip_hit(kinds, width, height, scale, x, y, measure=None):
+    """(inside the strip, kind of the tab at region point (x, y) or None)."""
+    if x < width - strip_px(scale) or x > width:
+        return False, None
+    for kind, _x0, y0, _x1, y1 in strip_tabs(kinds, width, height, scale, measure):
+        if y0 <= y <= y1:
+            return True, kind
+    return True, None
+
+
+def tab_drawn(context, kind):
+    """Remember the tab a stack area drew; a change resizes the stack Maya's way (toolbox.tab_changed)."""
+    area = context.area
+    if area is None or kind is None:
+        return
+    key = area.as_pointer()
+    old = _drawn.get(key)
+    _drawn[key] = kind
+    if old is not None and old != kind and context.window is not None:
+        from . import toolbox
+        toolbox.tab_changed(context.window, old, kind)
+
+
+def _strip_colours(context):
+    th = context.preferences.themes[0]
+    try:
+        back = tuple(th.properties.space.back)[:3]
+        text = tuple(th.properties.space.text)[:3]
+    except AttributeError:
+        back, text = (0.19, 0.19, 0.19), (0.9, 0.9, 0.9)
+    return back, text
+
+
+def draw_strip():
+    context = bpy.context
+    area, region = context.area, context.region
+    if region is None or region.type != 'WINDOW' or role(area) != 'STACK':
+        return
+    import blf
+    import gpu
+    scale = context.preferences.system.ui_scale or 1.0
+    current = current_tab(context.window_manager)
+    tabs = strip_tabs(stack_tabs(context.window_manager), region.width, region.height, scale)
+    back, text = _strip_colours(context)
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ALPHA')
+    x0 = region.width - strip_px(scale)
+    _fill(shader, x0, 0, region.width, region.height, (*(c * STRIP_SHADE for c in back), 1.0))
+    blf.size(0, 11.0 * scale)
+    cap = blf.dimensions(0, "X")[1]
+    blf.enable(0, blf.ROTATION)
+    blf.rotation(0, -math.pi / 2)     # clockwise: reads top to bottom, letter tops to the right (Maya)
+    try:
+        for kind, tx0, ty0, tx1, ty1 in tabs:
+            raised = kind == current
+            _fill(shader, tx0, ty0, tx1, ty1, (*(back if raised else tuple(c * TAB_SHADE for c in back)), 1.0))
+            colour = text if raised else tuple(c * TEXT_LOWERED for c in text)
+            blf.color(0, *colour, 1.0)
+            blf.position(0, round((tx0 + tx1) / 2 - cap / 2), ty1 - round(TAB_END_PX * scale), 0)
+            blf.draw(0, LABELS[kind])
+    finally:
+        blf.disable(0, blf.ROTATION)
+        gpu.state.blend_set('NONE')
+
+
+def _fill(shader, x0, y0, x1, y1, rgba):
+    from gpu_extras.batch import batch_for_shader
+    batch = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]},
+                             indices=[(0, 1, 2), (0, 2, 3)])
+    shader.uniform_float("color", rgba)
+    batch.draw(shader)
+
+
+def _strip_callback():
+    try:
+        draw_strip()
+    except Exception:     # a draw error would repeat every redraw
+        import traceback
+        traceback.print_exc()
+
+
+class ALLSET_OT_dock_strip_click(bpy.types.Operator):
+    """Maya tab strip of the dock: click a tab to raise that panel"""
+    bl_idname = "allset.dock_strip_click"
+    bl_label = "Dock Tab Strip"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.region is not None and context.region.type == 'WINDOW' and area_role(context) == 'STACK'
+
+    def invoke(self, context, event):
+        region = context.region
+        wm = context.window_manager
+        inside, kind = strip_hit(stack_tabs(wm), region.width, region.height,
+                                 context.preferences.system.ui_scale or 1.0,
+                                 event.mouse_region_x, event.mouse_region_y)
+        if not inside:
+            return {'PASS_THROUGH'}
+        if kind is not None and kind != current_tab(wm):
+            wm.allset_dock = kind
+            redraw()
+        return {'FINISHED'}
+
+
 class ALLSET_PT_maya_dock(bpy.types.Panel):
     """A Maya panel in its own dock area or floating window (Channel Box / Layer Editor, Attribute Editor, Modeling
     Toolkit, torn-off menus)"""
@@ -719,8 +933,14 @@ class ALLSET_PT_maya_dock(bpy.types.Panel):
             draw_handle(layout)
             draw_torn_menu(layout, context)
             return
-        draw_handle(layout, context, tabs=(r == 'STACK'))
+        if r == 'STACK':
+            # step 142 (#78): Maya's tabs are the vertical strip on the stack's right edge (draw_strip); the content
+            # keeps clear of it
+            layout = content_layout(layout, context)
+        draw_handle(layout, context)
         kind = shown_kind(context)
+        if r == 'STACK':
+            tab_drawn(context, kind)
         if kind is None:
             layout.label(text="Every panel of this tab stack is in its own window")
             return
@@ -728,6 +948,8 @@ class ALLSET_PT_maya_dock(bpy.types.Panel):
         if kind == 'CHANNEL_BOX':
             units = channel_box.ALLSET_PT_channel_box.body(layout, context)
             channel_box.fill_pane(layout, context, units)
+            from . import set_driven_key    # its lists fit the room the Channel Box leaves (step 142, #77)
+            set_driven_key.remember_room(context, units)
             from . import layer_editor      # Maya's Layer Editor under the Channel Box (or the Set Driven Key window)
             layer_editor.ALLSET_PT_layer_editor.draw(_Holder(layout), context)
         elif kind == 'ATTRIBUTE_EDITOR':
@@ -790,13 +1012,14 @@ def close_floating():
 
 
 classes = (ALLSET_OT_dock_handle, ALLSET_OT_dock_back, ALLSET_OT_dock_tab, ALLSET_OT_panel_show,
-           ALLSET_OT_menu_tear_off, ALLSET_PT_maya_dock)
+           ALLSET_OT_menu_tear_off, ALLSET_OT_dock_strip_click, ALLSET_PT_maya_dock)
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.app.handlers.load_post.append(_on_load)
+    _strip_handle.append(bpy.types.SpaceProperties.draw_handler_add(_strip_callback, (), 'WINDOW', 'POST_PIXEL'))
 
 
 def unregister():
@@ -804,6 +1027,9 @@ def unregister():
         bpy.app.handlers.load_post.remove(_on_load)
     if bpy.app.timers.is_registered(_close_stale_menus):
         bpy.app.timers.unregister(_close_stale_menus)
+    while _strip_handle:
+        bpy.types.SpaceProperties.draw_handler_remove(_strip_handle.pop(), 'WINDOW')
+    _drawn.clear()
     _torn_menus.clear()
     _pending.clear()
     for cls in reversed(classes):

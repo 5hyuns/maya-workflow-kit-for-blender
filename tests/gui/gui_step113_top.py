@@ -96,8 +96,14 @@ def s_layout():
               for n in ms.menus_for_set(prefs.menu_set)]
     right = (7 + 4.5 + 6) * 20 * scale     # workspace label + dropdown + switch
     C["menus_px"] = round(sum(widths) + 40 * scale)
-    check(f"all {len(widths)} Maya menus fit a 1600 px window ({C['menus_px']} px + right side {round(right)})",
-          C["menus_px"] + right <= win().width)
+    # step 142 (#77): when they don't (UI scale 1.5), Maya's » overflow holds the rest, like Maya at 150 %
+    names, shown = mod("ui.status_line").shown_menus(win())
+    if C["menus_px"] + right <= win().width:
+        check(f"all {len(widths)} Maya menus fit a 1600 px window ({C['menus_px']} px + right side {round(right)}; "
+              f"shown {shown})", shown == len(names) == len(widths))
+    else:
+        check(f"{len(widths)} Maya menus need {C['menus_px']} px + right side {round(right)}: {shown} shown, the rest "
+              f"behind Maya's » ({names[shown:]})", 10 <= shown < len(names) == len(widths))
     row = shelf_row()
     check("shelf row: no header, tab strip in the WINDOW region",
           row is not None and not row.spaces.active.show_region_header)

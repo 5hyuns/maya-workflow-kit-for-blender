@@ -1,5 +1,6 @@
 """Step 135 lane WIDTH (#60) in a real UI: a new Maya scene fits the Maya tab stack to the running UI scale
-(toolbox.dock_width: tab row, Channel Box labels, AE menu bar; between Maya's 277 and 480 px times the scale) through
+(toolbox.dock_width: Channel Box labels left of the vertical tab strip since step 142; between Maya's 277 and 480 px
+times the scale) through
 ALLSET_OT_fit_columns, the viewport takes the remaining width, the AE menu bar is one row, the longest Channel Box
 label fits its column. Run at the default 1.25, ``--ui-scale 0.8`` (1.0) and ``--ui-scale 1.2`` (1.5).
 Notes: """
@@ -75,16 +76,12 @@ def s_width():
     check(f"the Outliner keeps its fitted width ({outl.width}, want {round(260 * scale)})",
           abs(outl.width - round(260 * scale)) <= 2)
     reg = next(r for r in dock.regions if r.type == 'WINDOW')
-    ae = mod("ui.attribute_editor")
-    check(f"the AE menu bar is one row in the dock ({reg.width} px)", ae.fits(_Ctx(reg), ae.MENU_BAR))
     u = tb._unit(scale, pixel)
     longest = max(tb.text_px(t, scale) for t in tb.LONG_LABELS)
-    check(f"the longest Channel Box label fits its half of the dock ({longest:.0f} px in {(reg.width - 0.8 * u) / 2:.0f})",
-          (reg.width - 0.8 * u) / 2 >= longest + 0.8 * u)
-    md = mod("ui.maya_dock")
-    tabs = tb.text_px(md.HANDLE, scale) + 1.5 * u + sum(tb.text_px(md.LABELS[k], scale) + u
-                                                         for k in md.KINDS) + 2 * u
-    check(f"the tab row at its labels' widths fits ({tabs:.0f} of {reg.width} px)", tabs <= reg.width + 1)
+    content = reg.width - mod("ui.maya_dock").reserved_px(scale)   # left of the vertical tab strip (step 142)
+    check(f"the longest Channel Box label fits its half of the dock ({longest:.0f} px in {(content - 0.8 * u) / 2:.0f})",
+          (content - 0.8 * u) / 2 >= longest + 0.8 * u)
+    # step 142 (#78): the tabs are Maya's vertical strip, the AE gets its own width when raised (gui_step142_ui.py)
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.create(kind='CUBE')
@@ -100,11 +97,19 @@ def s_cb_shot():
     redraw()
 
 
+for _i in range(6):         # step 142: raising the AE widens the stack (tab change -> cursor fit)
+    step(redraw)
+
+
 @step
 def s_ae_shot():
     shot("s135_attribute_editor")
     bpy.context.window_manager.allset_dock = 'CHANNEL_BOX'
     redraw()
+
+
+for _i in range(6):         # ... and the Channel Box narrows it again
+    step(redraw)
 
 
 @step

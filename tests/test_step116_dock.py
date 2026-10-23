@@ -117,8 +117,9 @@ def test_stack_panel_draws_handle_tabs_and_content():
             bpy.types.ALLSET_PT_maya_dock.draw(SimpleNamespace(layout=rec), bpy.context)
         ops = [(t, a[0] if a else "") for k, t, a, _p in rec.log if k == "operator"]
         assert ops[0] == (maya_dock.HANDLE, "allset.dock_handle"), ops[:3]
-        tabs = [t for t, idname in ops if idname == "allset.dock_tab"]
-        assert tabs == ["Channel Box / Layer Editor", "Attribute Editor", "Modeling Toolkit"], tabs
+        # step 142 (#78): the tabs are Maya's vertical strip drawn on the right edge, not a button row
+        assert not [t for t, idname in ops if idname == "allset.dock_tab"], ops[:6]
+        assert maya_dock.stack_tabs(wm) == ['CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT']
         if marker:
             assert any(t == marker for k, t, _a, _p in rec.log if k in ("menu", "label")), (kind, rec.log[:12])
     wm.allset_dock = 'CHANNEL_BOX'

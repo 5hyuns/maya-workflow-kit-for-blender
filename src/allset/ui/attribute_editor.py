@@ -918,7 +918,8 @@ def fits(context, entries):
         return True
     scale = context.preferences.system.ui_scale or 1.0
     need = sum(len(label) * 7 + 14 for label, _m in entries) * scale
-    return need <= region.width - 20 * scale
+    from . import maya_dock     # the dock's vertical tab strip takes the right edge (step 142)
+    return need <= region.width - 20 * scale - maya_dock.area_reserved_px(context)
 
 
 def ae_node(context):
