@@ -922,3 +922,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Hover a greyed item (e.g. RMB > Time Editor): its notice appears in the Help Line.
 - [ ] Ctrl+RMB on a mesh in object mode: the convert menu; To Vertices / To Faces select every component of the object in component mode.
 - [ ] Select tool, q hold + LMB (Select options): Camera-Based Selection shows a check box that follows the setting.
+
+## Step 137 — animation / render basics
+
+- [ ] Maya layout, key Translate X 0 → 5 (cm), Graph Editor, frame all: with the mouse over the curves the value axis reads 0–5; moving the mouse to the channel list shows Blender's 0.00–0.05 again (Blender limit) — is the switch distracting?
+- [ ] Translate + Rotate curves shown together: Blender's numbers stay (no wrong cm labels on degrees).
+- [ ] File > New Scene → Cube → Render > Render Current Frame: Render View opens with the cube framed like the viewport; the Outliner shows persp once.
+- [ ] Look through a camera (Panels > Perspective > camera) and render: that camera is used.
+- [ ] Assign New Material > Blinn: AE Color grey 0.5, Incandescence black, Eccentricity 0.3, Specular Roll Off 0.7.
+- [ ] Create > Lights > Point Light: AE Intensity 1, Decay Rate No Decay; Cycles render lights a surface 10 units away like Maya.

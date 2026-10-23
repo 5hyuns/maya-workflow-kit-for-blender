@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 137 (애니 · 렌더 기본, #66 #67 #71) 완료 — `docs/steps/step_137.md` (+ `step_137_{graph,render,defaults}.md`). Graph Editor 값 눈금을
+  표시 단위로 (`ui/graph_units.py`, draw cursor — 마우스가 곡선 영역에 있을 때만, Blender 한계), Render Current Frame / Sequence = 뷰 카메라 또는
+  킷 `persp` 카메라 (`operators/render_persp.py`), Maya 재질 · 조명 기본값 (Blinn / Phong, Intensity / Decay Rate No Decay), 템플릿 960 × 540.
+  **바로 다음 할 일**: step 138 장면 · 파일 (#57 #63 #64 #69) → 139 Edit Mesh / UV (#70 #68 #16) → 140 옵션 창 (#32 #33 #35) →
+  141 키맵 · 선택 묶음 (#65 #72 #73). 후보 (137 에서 발견): 조명 없는 장면 렌더에 Maya 기본 조명 (default light) 이 없어 물체가 어둡다.
+  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
+
 - Step 136 (마킹 메뉴 완성 · 창 안에, #56 #62 #74) 완료 — `docs/steps/step_136.md` (+ `step_136_{bounds,items}.md`). 목록 줄 · 방사 상자가
   영역 경계 띠를 피함 (`draw.window_edges` → `engine.fit_ring(..., edges)`), 메뉴가 다른 킷 POST_PIXEL 위에 그려짐; 마킹 항목
   `("item", 메뉴 경로)` = 메인 메뉴 항목 그대로 (컴포넌트 모드 규칙 포함), 회색 128 → 73 (모두 `notices.MARKING` 알림, Help Line),
