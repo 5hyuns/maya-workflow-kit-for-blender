@@ -1,8 +1,9 @@
 """Step 143 user reports in a real UI.
 
-- #82: a Maya menu item's option box (Display > Grid): a click on the box mark runs the command (not fixed, 0.4.0);
-  press and hold the item, drag onto the "Option Box" row Blender opens below it and release = the option box
-  (``allset.menu_option_box``).
+- #82: a Maya menu item's option box (Display > Grid): a click on the box mark runs the command (Python can't tell
+  where on the item a click landed); press and hold the item, drag onto the "Option Box" row Blender opens below it
+  and release = the option box (``allset.menu_option_box``). Step 146 makes the hold work without the drag
+  (gui_step146_option_box.py); the drag keeps working.
 - #80: face -> Ctrl+E -> extrude manipulator; W then shows the Move manipulator, and its centre drag moves the new
   faces; F9 / F10 / F11 switch the component mode with the mouse over the viewport.
 - #84: the double-click loop pick (``allset.loop_pick`` invoked at the mouse; event simulation can't send
@@ -145,7 +146,7 @@ def s_clicked_box():
     # #82 (0.4.0): the item is one button (a second button on a menu line staircases the menu, step 103) and Python
     # can't tell where on it the click landed (the operator runs with the opener's region, checked), so a click on
     # the box mark runs the command like a click on the label
-    check(f"#82 today: a click on Grid's box mark runs the command ({C['click']})",
+    check(f"#82 a click on Grid's box mark runs the command ({C['click']})",
           C["click"] == [("item", "Display/Grid")])
     tap('ESC')       # an option window, if one opened
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
@@ -206,7 +207,7 @@ def s_option_box_result():
     shot("143_option_box.png")
     print("GUI143 calls after hold:", C["after_hold"], "after click:", C["calls"], flush=True)
     check(f"#82 press and hold on Grid runs nothing yet ({C['after_hold']})", not C["after_hold"])
-    check(f"#82 hold, drag onto the hold menu's Option Box row, release: the option box ({C['calls']})", ("box", "Display/Grid") in C["calls"])
+    check(f"#82 hold, drag onto the hold menu's Option Box row, release: the option box ({C['calls']})", ("box", "Display/Grid") in C["calls"])     # step 146: box_hold, then box
     tap('ESC')
 
 

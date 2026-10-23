@@ -14,7 +14,7 @@ time. ``menu_idname(maya_name)`` is the public name for other UI (hotbox).
 import json
 
 import bpy
-from bpy.props import BoolProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
 
@@ -241,8 +241,10 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 # A second button on a Blender menu line breaks consecutive lines into a staircase (step 51; checked again in step
 # 103 with row / split / column / grid_flow lines,  「계획」 1), so the item stays one button:
 # its label ends with Maya's box mark, click = the command, press and hold = "Option Box" = the option window
-# (``operators/option_windows.py``) or the command's own settings.
+# (``operators/option_windows.py``) or the command's own settings. Since step 146 (#82) the hold needs no drag:
+# the pointer is put on the hold menu's "Option Box" row, so letting go runs it.
 BOX_MARK = "  ❒"
+BOX_TIP = "❒ Option box: press and hold the item, then let go (or Shift / Ctrl+click)"
 
 
 def _draw_boxed(layout, path, text, icon_value=0):
@@ -493,6 +495,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
             return notices.tooltip(props.item, mapped=False) or \
                 f"Maya: {props.item}\nNo Blender equivalent in Maya Workflow Kit yet"
         text = notices.tooltip(props.item, mapped=True) or _op_description(props.item)
+        if props.item in OPTION_BOXES:
+            text += "\n" + BOX_TIP
         return text
 
     def execute(self, context):
@@ -500,6 +504,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if action is None:
             self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
+        if self.item in OPTION_BOXES and modifier_held():      # Shift / Ctrl+click = the option box (step 146)
+            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
             return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
@@ -644,6 +650,111 @@ def _run_on_owners(context, action, path):
         bpy.ops.object.mode_set(mode='EDIT')
 
 
+# --- opening the option box by holding (step 146, #82;  「계획」) ----------------------------
+# checked (GUI probe; Blender 4.5 source interface_handlers.cc / interface_layout.cc ui_item_menu_hold): a held
+# ``operator_menu_hold`` button opens its hold menu after BUTTON_AUTO_OPEN_THRESH (0.2 s) *below* the button, as a
+# popup of its own; letting go outside it cancels it, so before step 146 the user had to drag onto its row. Python
+# can't tell where on the item a click landed, Shift / Ctrl / Alt+click run nothing in event simulation, and an
+# option window opened from a timer while the menus are open leaves them open under it. So:
+# 1. when the hold menu opens, the pointer goes onto its (taller) "Option Box" row: letting go runs it;
+# 2. the Maya menu the item was in is still open then (Blender closes only the hold menu), so the option box first
+#    moves the pointer to the far side of the window (Blender closes a menu the mouse left, UI_BLOCK_MOVEMOUSE_QUIT;
+#    checked in a normal GUI Blender: event simulation gets no event from a warp), then after AWAY_TICK puts it back
+#    and opens the option window there.
+HOLD_ROW_SCALE = 1.5        # the hold menu's row height in menu rows: room for where the pointer sat on the item
+HOLD_WARP_PX = 28           # pointer move at UI scale 1: item row centre -> hold row centre (23 px + half the taller row)
+HOLD_ROOM_PX = 60           # less room than this under the pointer: Blender opens the hold menu above the item
+AWAY_TICK = 0.05            # s the pointer stays away while Blender closes the menu
+LAST_WARP = []              # the pointer moves of the last hold / close: (move, window x, y), for tests
+_hold = {"t": -1.0, "back": None}
+
+
+def modifier_held():
+    """Shift or Ctrl physically down (the OS key state; Blender gives a menu item no event)."""
+    from ..operators import keystate
+    return any(keystate.is_down(k) for k in ("LEFT_SHIFT", "RIGHT_SHIFT", "LEFT_CTRL", "RIGHT_CTRL"))
+
+
+def _point_at_hold_row_later(context):
+    """After the hold menu opened, put the pointer on its Option Box row (once per hold: a refresh redraws it)."""
+    import time
+    from .. import live_refs
+    win = context.window
+    now = time.monotonic()
+    if win is None or now - _hold["t"] < 0.5:
+        return
+    _hold["t"] = now
+    ptr = win.as_pointer()
+
+    def later():
+        from ..operators import keystate
+        w = live_refs.window(ptr)
+        if w is None or keystate.is_down('LEFTMOUSE') is False:      # already let go: the hold menu is gone
+            return None
+        with bpy.context.temp_override(window=w):
+            bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='HOLD_ROW')
+        return None
+    bpy.app.timers.register(later, first_interval=0.0)
+
+
+def _close_menu_then_open(context, item):
+    """Close the Maya menu still open under the hold menu, then open ``item``'s option box where the pointer was."""
+    from .. import live_refs
+    if context.window is None:
+        return
+    wp = context.window.as_pointer()
+    ap = context.area.as_pointer() if context.area else 0
+    rp = context.region.as_pointer() if context.region else 0
+    # away right now: Blender queues a mouse move after closing the hold menu, built from the pointer position, and
+    # where the pointer was is the Maya menu's next row - a submenu there opens, and Blender never mouse-outs a menu
+    # while a newer one is open (interface_handlers.cc ui_mouse_motion_towards_check "annoying fix")
+    with bpy.context.temp_override(window=context.window):
+        bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='AWAY')
+
+    def later():
+        w = live_refs.window(wp)
+        if w is None:
+            return None
+        with bpy.context.temp_override(window=w):
+            bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='BACK')
+        area = live_refs.area(ap, w)
+        region = live_refs.region(area, rp)
+        with bpy.context.temp_override(window=w, area=area, region=region):
+            bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=item)
+        return None
+    bpy.app.timers.register(later, first_interval=AWAY_TICK)
+
+
+class ALLSET_OT_option_box_point(bpy.types.Operator):
+    """Move the pointer for a held option box: onto the hold menu's row, away (closes the menu) and back"""
+    bl_idname = "allset.option_box_point"
+    bl_label = "Point for Option Box"
+    bl_options = {'INTERNAL'}
+
+    move: EnumProperty(items=[('HOLD_ROW', "Hold Row", ""), ('AWAY', "Away", ""), ('BACK', "Back", "")],
+                       options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):      # called from a timer: the event is the window's latest state
+        win = context.window
+        scale = context.preferences.system.ui_scale or 1.0
+        x, y = event.mouse_x, event.mouse_y
+        if self.move == 'HOLD_ROW':
+            step = round(HOLD_WARP_PX * scale)
+            y = y - step if y >= HOLD_ROOM_PX * scale else y + step
+            LAST_WARP[:] = []
+        elif self.move == 'AWAY':
+            _hold["back"] = (x, y)
+            x = 2 if x > win.width // 2 else win.width - 3     # the far side: outside the menu and its safety margin
+        else:
+            if _hold["back"] is None:
+                return {'CANCELLED'}
+            x, y = _hold["back"]
+            _hold["back"] = None
+        win.cursor_warp(x, y)
+        LAST_WARP.append((self.move, x, y))
+        return {'FINISHED'}
+
+
 class ALLSET_MT_option_box(bpy.types.Menu):
     """The option box of the Maya menu item that was held"""
     bl_idname = "ALLSET_MT_option_box"
@@ -651,7 +762,12 @@ class ALLSET_MT_option_box(bpy.types.Menu):
 
     def draw(self, context):
         props = getattr(context, "button_operator", None)
-        self.layout.operator(ALLSET_OT_menu_option_box.bl_idname, text="Option Box").item = getattr(props, "item", "")
+        layout = self.layout
+        layout.scale_y = HOLD_ROW_SCALE
+        op = layout.operator(ALLSET_OT_menu_option_box.bl_idname, text="Option Box" + BOX_MARK)
+        op.item = getattr(props, "item", "")
+        op.from_hold = True
+        _point_at_hold_row_later(context)
 
 
 class ALLSET_OT_menu_option_box(bpy.types.Operator):
@@ -661,6 +777,7 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     item: StringProperty(options={'SKIP_SAVE'})
+    from_hold: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})     # run from a hold menu: close the Maya menu first
 
     @classmethod
     def description(cls, context, props):
@@ -681,6 +798,9 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
         if action is None:
             self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
+        if self.from_hold and not bpy.app.background:
+            _close_menu_then_open(context, self.item)
+            return {'FINISHED'}
         if option_kind(self.item) == "generic":
             return bpy.ops.allset.option_generic('INVOKE_DEFAULT', item=self.item)
         from ..marking.modal import run_action
@@ -873,7 +993,8 @@ for _editor, _menus in editor_menu_data.EDITORS.items():
         _menu_classes.extend(_make_menu(editor_menu_idname(_editor, _i), _title, f"{_editor}/{_title}", _items))
 
 classes = (ALLSET_OT_menu_unavailable, ALLSET_OT_menu_set_value, ALLSET_OT_menu_item, ALLSET_OT_menu_whole_mesh,
-           ALLSET_OT_component_command, ALLSET_MT_option_box, ALLSET_OT_menu_option_box, ALLSET_OT_menu_run, ALLSET_OT_menu_tool,
+           ALLSET_OT_component_command, ALLSET_MT_option_box, ALLSET_OT_option_box_point,
+           ALLSET_OT_menu_option_box, ALLSET_OT_menu_run, ALLSET_OT_menu_tool,
            ALLSET_MT_ui_elements, ALLSET_MT_menu_bar, *_menu_classes)
 
 
