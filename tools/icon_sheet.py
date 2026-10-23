@@ -116,6 +116,17 @@ def _inside():
         items = [(g.removeprefix("pt_"), [status_icons.image(g, s) for s in (48, 32, 24, 16)]) for g in glyphs]
         canvas, labels = _grid(items, f"{title} — kit-drawn glyphs (48, 32, 24, 16 px)")
         _save(canvas, labels, os.path.join(out, f"{name}.png"))
+    # step 142 (#54): menu-only drawings, one sheet per drawing module (menus drawn at 16 / 20 / 24 px)
+    from allset.ui import menu_drawings
+    by_module = {}
+    for name, fn in menu_drawings.DRAWINGS.items():
+        by_module.setdefault(fn.__module__.rsplit(".", 1)[1], []).append(name)
+    for module, names in sorted(by_module.items()):
+        tops = sorted({n.split("/", 1)[0] for n in names}, key=lambda t: min(names.index(n) for n in names
+                                                                              if n.startswith(t + "/")))
+        items = [(n.split("/", 1)[1], [menu_drawings.draw(n, s) for s in (32, 24, 16)]) for n in names]
+        canvas, labels = _grid(items, f"Menu icons: {', '.join(tops)} — kit-drawn (32, 24, 16 px)")
+        _save(canvas, labels, os.path.join(out, f"{module if '_' in module else module + '_deform'}.png"))
 
 
 if __name__ == "__main__":

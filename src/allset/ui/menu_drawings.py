@@ -390,4 +390,5 @@ def i_wrinkle(cv):
 
 
 # The other menus' drawings live in sibling modules that register through ``icon`` above.
-from . import menu_drawings_mesh, menu_drawings_fx, menu_drawings_select, menu_drawings_build  # noqa: E402,F401
+from . import (menu_drawings_mesh, menu_drawings_fx, menu_drawings_select, menu_drawings_build,  # noqa: E402,F401
+               menu_drawings_misc)

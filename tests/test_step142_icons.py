@@ -72,7 +72,7 @@ PRIORITY_PATHS = [p for line in PRIORITY.strip().splitlines() for p in line.spli
 
 STEP131_ICONS = 190         # menu items with an icon after step 131
 MAYA_ICON_ITEMS = 679       # kit menu items Maya 2022 shows with an icon (tools/gen_menu_icons.py)
-MIN_ICONS = 600             # this step's floor (see  for the count)
+MIN_ICONS = 675             # this step: 675 of 679 (the 4 left have no exported Maya picture to follow)
 
 # Same uniqueness rule as tests/test_step131_icons.py (shelf / Status Line): enough pixels differ clearly.
 MIN_DIFF = 0.04
@@ -167,7 +167,7 @@ def test_drawings_distinct_overall():
     names = sorted(md.DRAWINGS)
     imgs = np.stack([_premul(md.draw(n, 32)).ravel() for n in names])
     bad = []
-    for i in range(len(names)):
+    for i in range(len(names) - 1):
         d = np.abs(imgs[i + 1:] - imgs[i]).reshape(len(names) - i - 1, -1, 4).max(axis=-1)
         share = (d > PIXEL_DIFF).mean(axis=1)
         bad += [(names[i], names[i + 1 + j]) for j in np.nonzero(share < MIN_DIFF)[0]]
