@@ -13,7 +13,19 @@ modifier keys, Tool Settings with Maya fields/defaults) instead of Blender's Pol
   Shift+클릭 = 점 4 개 사이 쿼드, Ctrl+클릭 = 엣지 루프, Shift+드래그 = Relax, Tab+드래그 = 경계 엣지 연장 / 빈 곳 쿼드 띠,
   Ctrl+Shift+클릭 = 지우기, 드래그 / MMB 드래그 = 옮기기 (표면에 붙어서).
 - Make Live: `Scene.allset_live` (step 21 S13, `operators/snap_align.py:240`).
-- Create Polygon / Append to Polygon Tool Settings: CAPTURE 레인의 `research/maya/re/options_144.md` (나오기 전엔 [K]).
+- Maya 2022 Tool Settings 실측 (CAPTURE 레인 화면, `research/maya/screens/options144/`) [O]:
+  - `create_polygon.png`: 제목 "Create Polygon Tool", Description + Settings: Divisions **1** "(vertices added per edge)",
+    Keep new faces planar **끔**, Limit the number of points **끔** + Limit points to **4** (끄면 회색), Texture space
+    **Normalize (scale to fit)** / Unitize (use corners and boundary) / None.
+  - `append_polygon.png`: 제목 "Append To Polygon Tool", 같은 필드 + Rotation angle 0.0000 (회색).
+  - `quad_draw.png`: Auto-weld ✓ 10, Relax Auto-Lock, Extend Edge, Quad Strip Width 20, Clear Dots; Live Constraint Options =
+    Wireframe Overlay ✓ (검정), Mesh Color ✓ (파랑), Mesh Alpha ✓ 0.75, Surface Offset 끔 0, Snap to Backfaces 끔;
+    Keyboard/Mouse Shortcuts 표 (메시 밖: LMB 클릭 점, LMB/MMB 드래그 점 옮기기, Ctrl+Shift+LMB 점 지우기, Tab+LMB 쿼드 띠,
+    Tab+MMB 띠 크기, Shift+LMB 점 사이 클릭 = 면; 메시 안: LMB/MMB 드래그 옮기기, Ctrl+LMB 엣지 클릭 루프, Ctrl+MMB 가운데 루프,
+    Shift+LMB 드래그 relax, Shift+MMB 강조된 점 relax, Tab+LMB 경계 엣지 연장, Tab+MMB 경계 루프 연장, Ctrl+Shift+LMB 클릭 /
+    드래그 면 지우기 · 엣지 클릭 = 엣지 루프 지우기, Ctrl+Shift+MMB 엣지 드래그 = 엣지 루프 옮기기, Ctrl+Shift+RMB 옵션).
+  - `_options144.json` `_runtime_commands`: `CreatePolygonToolOptions` / `AppendToPolygonToolOptions` / Quad Draw 상자 =
+    `...; toolPropertyWindow` → 옵션 상자 = Tool Settings.
 - 재료: step 129 Multi-Cut (`operators/multi_cut.py` `pick` / `loop_segments`, `ui/mesh_tools.py` 툴 등록), step 74
   `preselect.caches`, step 64 `mesh_tools.insert_loop`, step 57 `joints.click_point` (Maya 그리드 / 뷰 평면 위 점),
   step 63 `mesh_maya._maya_rename` (polySurfaceN), step 100 `material.give_default` (lambert1).
@@ -82,8 +94,11 @@ modifier keys, Tool Settings with Maya fields/defaults) instead of Blender's Pol
   X / V 홀드 스냅 반영. 새 다각형 피벗 = 원점.
 - Quad Draw: Shift+클릭 채우기 = 마우스에서 가까운 후보 6 개 중 마우스를 품는 가장 작은 단순 사각형 (없으면 삼각형),
   화면 반시계 = 카메라 쪽 법선, 이웃 면과 감김이 반대면 뒤집음. Relax 붓 반경 50 px, 한 번에 이웃 평균 쪽 50 %.
-  Ctrl+Shift+클릭 엣지: 안쪽 = 녹여 두 면 → 한 면, 경계 = 그 면 삭제. Ctrl+MMB 드래그 = 루프 Edge Slide (놓으면 확정) [K].
-  Tab = 누르는 동안 도는 모달 (Tab+LMB 를 키맵 수식키로 못 받으므로).
+  Ctrl+Shift+클릭 엣지 = 그 엣지 루프를 녹임 (경계 엣지는 그 면 삭제), 정점 = 녹임 / 경계면 삭제 (Maya 표에 정점은 없음).
+  Ctrl+Shift+MMB 드래그 = 엣지 루프 전체를 표면 위로 옮김. Shift+MMB = 마우스 아래 강조 요소의 점만 relax.
+  Tab = 누르는 동안 도는 모달 (Tab+LMB 를 키맵 수식키로 못 받으므로). Tab+LMB 는 Extend 설정 (Edge / Loop), Tab+MMB 는 항상 루프.
+  Divisions N = 변마다 N 개 엣지 (기본 1 = 나눔 없음; Maya 라벨 "vertices added per edge" 의 1 이 새 정점 0 개인지는 [K]).
+- 처음 구현한 Ctrl+MMB = Edge Slide 는 Maya 표 (Ctrl+MMB = 가운데 루프) 를 보고 바꿈.
 
 ## 검증
 
@@ -91,11 +106,14 @@ modifier keys, Tool Settings with Maya fields/defaults) instead of Blender's Pol
 - 관련 헤드리스 (step64, step129, step54, step101, enable_disable, step130, step35, step136, step140, step108, step109,
   step106, step133): 268 통과 / 0 실패 (29 파일).
 - GUI `tests/gui/gui_step144_poly.py` 31 통과 / 0 실패 (Create Polygon 5 클릭 + Backspace + Enter, Limit points, Append,
-  Ctrl+Shift+Q, 점 4 개 + Ctrl+Z, Shift 미리보기 + 채우기, Ctrl 루프, Ctrl+MMB 슬라이드, 정점 드래그, Tab 연장,
-  Ctrl+Shift 삭제, Esc, 오버레이 복원). 스크린샷 `tmp/poly144/shots/` 직접 확인.
+  Ctrl+Shift+Q, 점 4 개 + Ctrl+Z, Shift 미리보기 + 채우기, Ctrl 루프, Ctrl+Shift+MMB 루프 옮기기, 정점 드래그, Tab 연장,
+  Ctrl+Shift 삭제, Tool Settings 독, Esc, 오버레이 복원). 스크린샷 `tmp/poly144/shots/` 직접 확인 (점, 채우기 미리보기,
+  연장 미리보기, Tool Settings 독이 Maya 화면과 같은 순서).
 
 ## 남은 것
 
-- Maya 의 Quad Draw 단축키 표 / 공장값 일부는 [K] (CAPTURE md 확인 후 갱신). Draw Overlay 색 옵션 없음 (회색 + 안내).
+- Live Constraint Options 의 Wireframe Overlay / Mesh Color / Mesh Alpha / Surface Offset, Tab+MMB 빈 곳 띠 크기,
+  Ctrl+Shift+RMB 옵션 메뉴 = 회색 + 안내 (notices.PANEL_NOTICES). 클릭 동작 자체 (점 위치 규칙, 채우기 선택) 는 Maya GUI 에서
+  재지 않음 [K].
 - 채우기에 쓰인 점은 언두해도 점으로 돌아오지만, 점 놓기도 언두 단계 하나씩.
 - Quad Strip / Extend 는 화면 픽셀 폭; Maya 의 정확한 폭 규칙은 미측정.

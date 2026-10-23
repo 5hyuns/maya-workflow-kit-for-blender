@@ -1,6 +1,6 @@
 """Step 144 POLY lane (GitHub #30): Quad Draw, Create Polygon, Append to Polygon as Maya tools.
 Plan: docs/steps/step_144_poly.md; GUI: tests/gui/gui_step144_poly.py. Maya Tool Settings defaults:
-research/maya/re/options_144.md."""
+research/maya/screens/options144/ (Maya 2022 Tool Settings)."""
 
 import math
 from importlib import import_module
