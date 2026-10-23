@@ -268,6 +268,23 @@ def test_delete_at_face_edge_vertex():
     bm.free()
 
 
+def test_dots_are_flagged_loose_vertices():
+    bm = bmesh.new()
+    a = qd.add_dot(bm, Vector((0, 0, 0)))
+    b = qd.add_dot(bm, Vector((1, 0, 0)))
+    bm.verts.new((2, 0, 0))                              # a loose vertex the user made: not a dot
+    assert set(qd.dots(bm)) == {a, b}
+    assert a in qd.fill_candidates(bm)
+    bm.edges.new((a, b))
+    assert qd.dots(bm) == [], "a dot with an edge is a vertex"
+    bm.free()
+    bm = bmesh.new()
+    for x in range(3):
+        qd.add_dot(bm, Vector((x, 0, 0)))
+    assert qd.clear_dots(bm) == 3 and not bm.verts
+    bm.free()
+
+
 def test_weld_target():
     xy = [(0, 0), (5, 0), (50, 0), None]
     assert qd.weld_target(xy, 0, (0, 0), 10) == 1
@@ -305,14 +322,21 @@ def test_quad_draw_target_and_fill_on_an_edit_mesh():
         ob = qd.new_target(bpy.context)
         assert ob.name == "polySurface1" and not ob.data.vertices
         bpy.ops.object.mode_set(mode='EDIT')
-        qd.STATE["dots"][:] = [Vector((0, 0, 0)), Vector((1, 0, 0)), Vector((1, 1, 0)), Vector((0, 1, 0))]
-        face = qd.apply_fill(ob, [('DOT', 0), ('DOT', 1), ('DOT', 2), ('DOT', 3)])
-        assert face is not None and not qd.STATE["dots"], "the dots became the quad's vertices"
+        bm = bmesh.from_edit_mesh(ob.data)
+        ring = [qd.add_dot(bm, Vector(c)).index for c in ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0))]
+        qd.add_dot(bm, Vector((5, 5, 0)))
+        bmesh.update_edit_mesh(ob.data)
+        face = qd.apply_fill(ob, ring)
+        bm = bmesh.from_edit_mesh(ob.data)
+        assert face is not None and len(qd.dots(bm)) == 1, "the 4 dots became the quad's vertices"
+        qd.STATE["ob"] = ob.name
+        qd._drop_dots(ob.name)
         bpy.ops.object.mode_set(mode='OBJECT')
-        assert (len(ob.data.vertices), len(ob.data.polygons)) == (4, 1)
+        assert (len(ob.data.vertices), len(ob.data.polygons)) == (4, 1), "leaving the tool clears the last dot"
+        assert qd.DOT_LAYER not in ob.data.attributes, "and the dot layer"
     finally:
         bpy.context.scene.allset_live = None
-        qd.STATE["dots"].clear()
+        qd.STATE["ob"] = None
 
 
 # --- wiring: menus, shelf, hotkey, tools, settings ------------------------------------------------------
