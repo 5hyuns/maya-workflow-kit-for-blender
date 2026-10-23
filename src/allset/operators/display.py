@@ -252,6 +252,9 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
     def execute(self, context):
         if context.mode != 'EDIT_MESH':
             bpy.ops.object.mode_set(mode='EDIT')
+        # out of Maya UV mode (F12 / Alt+F12: UV Sync Selection off), its mesh selection back (issue #80)
+        from .uv_tools import leave_uv_mode
+        leave_uv_mode(context)
         context.scene.tool_settings.mesh_select_mode = _SELECT_MODE[self.type]
         return {'FINISHED'}
 
