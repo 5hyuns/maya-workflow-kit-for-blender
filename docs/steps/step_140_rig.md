@@ -50,6 +50,11 @@ check_topology / delete_targets. bf15718 에서 이미 된 것 (aim, IK solver, 
   test_windows_registered_with_maya_titles_and_buttons` 만 실패 — 도구 창 제목이 "Options" 로 안 끝남 (메인이
   테스트를 고쳐야 함, 이 레인 파일 아님).
 
+- 전체 `python tests/run.py`: 1170 통과 / 5 실패 — step103 제목 검사 (위), worktree 에 `research/` 가 없어서 3 개
+  (test_keymap_maya, step107, step108), step56 copy/paste/cut (EDIT 레인의 time_keys WIP, bf15718).
+- 옵션 상자 수 (test_step140_option_count 결과): window 29 → 40, generic 65 → 56, redo 148 → 146, dead 231 그대로
+  (dead = 매핑 안 된 경로; 이 레인의 경로는 이미 매핑돼 있었음). Window spec 26 → 37.
+
 ## 남은 것
 
 - 병합 때 메인: `option_windows.py` 의 옛 `bind_skin` Window 삭제 (안 지우면 `find(action)` 마킹 메뉴 / 셸프가 옛 창),
