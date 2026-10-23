@@ -434,52 +434,56 @@ SHIFT_DEFAULT = MarkingMenu(
 
 # --- Ctrl+RMB: polyConvertMM (§5.4, :267-269) -------------------------------------------
 
+_CS = "Select/Convert Selection/"
+
 CTRL_CONVERT = MarkingMenu(
     "polyConvertMM", "Convert Selection", "research/maya/marking_menus.json polyConvertMM",
+    # Every convert entry runs the Select menu item with the same runTimeCommand (step 141: menu and marking menu
+    # agree; research/maya/re/select_convert_141.md); the convert-then-act items stay allset.mm_poly.
     radial={
         "N": ("To Edges", Sub(radial={                                     # :43
-            "N": ("To Edges", ("mesh.select_mode", {"type": 'EDGE', "use_expand": True})),
-            "S": ("To Contained Edges", ("mesh.select_mode", {"type": 'EDGE'})),
-            "NW": ("To Contiguous Edges", ("allset.select_loops", {"ring": False})),
-            "NE": ("To Edge Perimeter", "mesh.region_to_loop"),
+            "N": ("To Edges", _item(_CS + "To Edges")),
+            "S": ("To Contained Edges", _item(_CS + "To Contained Edges")),
+            "NW": ("To Contiguous Edges", _item("Select/Contiguous Edges")),
+            "NE": ("To Edge Perimeter", _item(_CS + "To Edge Perimeter")),
         }, options={"To Contiguous Edges"})),
         "NW": ("Shrink Selection", Sub(radial={                            # :88
-            "NW": ("Shrink", "mesh.select_less"),
-            "N": ("Shrink Selection Along Loop", None),
+            "NW": ("Shrink", _item("Select/Shrink")),
+            "N": ("Shrink Selection Along Loop", _item("Select/Shrink Along Loop")),
         })),
         "E": ("To UVs", Sub(radial={                                       # :109
-            "E": ("To UVs", ("allset.uv_component", {"mode": 'UV'})),       # UV picking = the UV Editor (step 66)
-            "NE": ("To UV Perimeter", None),
+            "E": ("To UVs", _item(_CS + "To UVs")),                         # UV selection = the UV Editor (step 66)
+            "NE": ("To UV Perimeter", _item(_CS + "To UV Perimeter")),
         })),
         "SE": ("Edge Loop Utilities", Sub(radial={                         # :134
-            "SE": ("To Edge Loop", ("allset.select_loops", {"ring": False})),
+            "SE": ("To Edge Loop", _item(_CS + "To Edge Loop")),
             "NE": ("To Edge Loop and Delete", _poly('LOOP_DELETE')),
             "SW": ("To Edge Loop and Duplicate", _poly('LOOP_DUPLICATE')),
         })),
         "SW": ("Edge Ring Utilities", Sub(radial={                         # :165
-            "SW": ("To Edge Ring", ("allset.select_loops", {"ring": True})),
+            "SW": ("To Edge Ring", _item(_CS + "To Edge Ring")),
             "SE": ("To Edge Ring and Split", _poly('RING_SPLIT')),
             "NW": ("To Edge Ring and Collapse", _poly('RING_COLLAPSE')),
         })),
         "S": ("To Faces", Sub(radial={                                     # :198
-            "S": ("To Faces", ("mesh.select_mode", {"type": 'FACE', "use_expand": True})),
-            "N": ("To Contained Faces", ("mesh.select_mode", {"type": 'FACE'})),
-            "SE": ("To Face Perimeter", "mesh.region_to_loop"),
+            "S": ("To Faces", _item(_CS + "To Faces")),
+            "N": ("To Contained Faces", _item(_CS + "To Contained Faces")),
+            "SE": ("To Face Perimeter", _item(_CS + "To Face Perimeter")),
         })),
         "W": ("To Vertices", Sub(radial={                                  # :229
-            "W": ("To Vertices", ("mesh.select_mode", {"type": 'VERT'})),
-            "NW": ("To Vertex Perimeter", _poly('VERTEX_PERIMETER')),
+            "W": ("To Vertices", _item(_CS + "To Vertices")),
+            "NW": ("To Vertex Perimeter", _item(_CS + "To Vertex Perimeter")),
         })),
         "NE": ("Grow Selection", Sub(radial={                              # :254
-            "NE": ("Grow", "mesh.select_more"),
-            "N": ("Grow Along Loop", None),
+            "NE": ("Grow", _item("Select/Grow")),
+            "N": ("Grow Along Loop", _item("Select/Grow Along Loop")),
         })),
     },
     items=[
-        ("To Face Path", None),                                            # :276
-        ("To UV Shell", _item("Select/Convert Selection/To UV Shell")),
-        ("To Shell", "mesh.select_linked"),                                # :288
-        ("To Shell Border", _poly('SHELL_BORDER')),
+        ("To Face Path", _item(_CS + "To Face Path")),                     # :276
+        ("To UV Shell", _item(_CS + "To UV Shell")),
+        ("To Shell", _item(_CS + "To Shell")),                             # :288
+        ("To Shell Border", _item(_CS + "To Shell Border")),
         DIVIDER,
         ("Selection Boundary", "mesh.region_to_loop"),                     # :310
     ])
