@@ -161,7 +161,7 @@ def tap(type):
 
 def check(name, cond):
     results.append({"name": name, "ok": bool(cond)})
-    print("GUI", "PASS" if cond else "FAIL", name)
+    print("GUI", "PASS" if cond else "FAIL", name, flush=True)
 
 
 def screenshot(path):
