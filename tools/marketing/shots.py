@@ -6,7 +6,7 @@ Runs in a GUI Blender on a clean sandbox with the extension installed, with --en
 (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md; recipes in tools/marketing/scene.py): the
 DOGWALK splash set (hero, hotbox), Pack Bot (components, Modeling Toolkit), Security Bot with its battery (Channel Box /
 Attribute Editor, pivot) and Rain (marking menus, menus, skin weights, animation), lit by the Studio Small 09 HDRI in
-Material Preview over Maya's gradient. Each shot is taken one tick after the UI change
+Material Preview over Maya's flat #5c5c5c (no theme, #41). Each shot is taken one tick after the UI change
 (``screen.screenshot`` shows the previous frame). meta.json records UI rects (top-down window pixels) for callouts.
 The approach (event-driven steps, menus opened from mid-window, logo painted over) follows the step 117 listing shot script (removed in step 125: nothing ran it since step 122);
 the aborted 10-19 attempt (git stash) was read for the scene recipes only.
@@ -63,8 +63,8 @@ def rects(extra=None):
 
 
 def shot(name, extra=None, plain_blender=False):
-    """Save a raw shot + its meta. Maya-mode shots are checked for Maya's gradient viewport background
-    (tools/marketing/bg_check.py, step 125); ``plain_blender`` shots show Blender's own UI and theme (excluded)."""
+    """Save a raw shot + its meta. Maya-mode shots are checked for Maya's flat viewport background
+    (tools/marketing/bg_check.py, #41); ``plain_blender`` shots show Blender's own UI and theme (excluded)."""
     RAW.mkdir(parents=True, exist_ok=True)
     path = str(RAW / f"{name}.png")
     sim.screenshot(path)
