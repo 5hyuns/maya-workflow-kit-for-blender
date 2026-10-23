@@ -157,6 +157,26 @@ def test_bevel_matches_maya():
             bm.free()
 
 
+def test_bevel_merges_like_maya():
+    # Fraction 1: the bevel's vertices land on the far corners and Maya merges them (Merge Vertices, 6/9/5)
+    bm = maya_cube()
+    bev.bevel_edges(bm, [bm.edges[0]], fraction=1.0)
+    check(bm, "bevel_e0:frac1")
+    bm.free()
+    # the cap of a zero-length face extrusion (Ctrl+E then Ctrl+B): zero-length sides don't limit the fraction and
+    # are merged away -> an inset cap at 0.25 (mayapy, edit_mesh_139_shape.md §3)
+    bm = maya_cube()
+    caps, _moved = ex.extrude(bm, [bm.faces[1]])
+    bev.bevel_edges(bm, list(caps[0].edges))
+    want = [(-0.5, -0.5, 0.5), (0.5, -0.5, 0.5), (-0.5, 0.5, 0.5), (0.5, 0.5, 0.5), (-0.5, 0.5, -0.5),
+            (0.5, 0.5, -0.5), (-0.5, -0.5, -0.5), (0.5, -0.5, -0.5), (-0.25003, 0.5, 0.25003), (0.25003, 0.5, 0.25003),
+            (0.25003, 0.5, -0.25003), (-0.25003, 0.5, -0.25003)]
+    assert (len(bm.verts), len(bm.edges), len(bm.faces)) == (12, 20, 10), (len(bm.verts), len(bm.edges), len(bm.faces))
+    ok, bad = same_points([tuple(v.co) for v in bm.verts], [b(p) for p in want])
+    assert ok, bad
+    bm.free()
+
+
 def test_bevel_face_is_its_edges():
     bm = maya_cube()
     face = bm.faces[1]
@@ -392,4 +412,8 @@ def test_bindings_and_menus():
     items = [(km.name, ki.idname, ki.type, ki.ctrl) for km in kc.keymaps for ki in km.keymap_items
              if ki.idname in ("allset.extrude", "allset.bevel") and ki.active]
     assert ("Mesh", "allset.extrude", 'E', True) in items and ("Mesh", "allset.bevel", 'B', True) in items, items
-    assert hasattr(bpy.types, "ALLSET_OT_bevel_edit") or "bevel_edit" in dir(bpy.ops.allset)
+    # Adjust Last Operation title = the Maya node of the record (edit operators per node type)
+    names = {op: getattr(bpy.ops.allset, op).get_rna_type().name
+             for op in ("extrude_edit", "extrude_edge_edit", "extrude_vertex_edit", "bevel_edit")}
+    assert names == {"extrude_edit": "polyExtrudeFace", "extrude_edge_edit": "polyExtrudeEdge",
+                     "extrude_vertex_edit": "polyExtrudeVertex", "bevel_edit": "polyBevel"}, names

@@ -11,6 +11,10 @@ Blender keeps no history in edit mode (research/maya/concepts.md:72). The kit re
 its node name (``polyExtrudeFaceN``), the mesh before it and the values; changing a value rebuilds the extrusion from that
 mesh (``allset.extrude_edit``), so it is one undo step and the Adjust Last Operation panel shows the same Maya names.
 The record is valid only while the mesh equals one of the states the kit made (Ctrl+Z / Ctrl+Shift+Z included).
+
+Step 139 (#70 M4, #16): the record is one ``Spec`` per Maya node - polyExtrudeEdge / polyExtrudeVertex here (edges /
+vertices extrude at once, no drag) and polyBevel3 in operators/bevel_maya.py - each with its Maya fields, edit
+operator and arrow field (research/maya/re/edit_mesh_139_shape.md).
 """
 
 import bmesh
@@ -384,12 +388,12 @@ EDGE = add_spec(Spec('EDGE', "polyExtrudeEdge", ("thickness", "local_translate_z
                      {k: LABELS[k] for k in ("thickness", "local_translate_z", "offset", "divisions")},
                      {"thickness": 0.0, "local_translate_z": 0.0, "offset": 0.0, "divisions": 1},
                      {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT"},
-                     "local_translate_z", "extrude_edit", _build_edges))
+                     "local_translate_z", "extrude_edge_edit", _build_edges))
 VERTEX = add_spec(Spec('VERTEX', "polyExtrudeVertex", ("width", "length", "divisions"),
                        {"width": "Width", "length": "Length", "divisions": "Divisions"},
                        {"width": 0.5, "length": 1.0, "divisions": 1},
                        {"width": "NONE", "length": "NONE", "divisions": "INT"},
-                       "length", "extrude_edit", _build_vertices))
+                       "length", "extrude_vertex_edit", _build_vertices))
 
 
 def selection_signature(bm):
@@ -641,7 +645,7 @@ class _ExtrudeProps:
 def _draw_fields(op, context, default=None):
     """Adjust Last Operation shows only the fields of the node the operation made (Maya names)."""
     _ob, rec = active(context)
-    spec = rec.spec if rec is not None and rec.spec.edit_op == "extrude_edit" else (default or FACE)
+    spec = rec.spec if rec is not None and rec.spec.kind in ('FACE', 'EDGE', 'VERTEX') else (default or FACE)
     for k in spec.fields:
         op.layout.prop(op, k, text=spec.labels[k])
 
@@ -699,12 +703,10 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
         return {'FINISHED'} if done else {'CANCELLED'}
 
 
-class ALLSET_OT_extrude_edit(_ExtrudeProps, bpy.types.Operator):
-    """Change the last extrusion (Maya: edit the polyExtrudeFace / Edge / Vertex node). Blender keeps no
-    edit-mode history, so only the last one can be changed"""
-    bl_idname = "allset.extrude_edit"
-    bl_label = "polyExtrudeFace"
+class _ExtrudeEdit(_ExtrudeProps):
+    """Shared body of the edit operators (a registered operator class can't be subclassed: its poll broke)."""
     bl_options = {'REGISTER', 'UNDO'}
+    _op = "extrude_edit"                  # the specs this operator edits (Spec.edit_op)
 
     @classmethod
     def poll(cls, context):
@@ -712,7 +714,7 @@ class ALLSET_OT_extrude_edit(_ExtrudeProps, bpy.types.Operator):
 
     def invoke(self, context, event):
         _ob, rec = active(context)
-        if rec is None or rec.spec.edit_op != "extrude_edit":
+        if rec is None or rec.spec.edit_op != self._op:
             return {'CANCELLED'}
         for k, v in rec.params.items():
             if not self.properties.is_property_set(k):
@@ -720,14 +722,16 @@ class ALLSET_OT_extrude_edit(_ExtrudeProps, bpy.types.Operator):
         return self.execute(context)
 
     def draw(self, context):
-        _draw_fields(self, context)
+        spec = next(s for s in SPECS.values() if s.edit_op == self._op)
+        for k in spec.fields:
+            self.layout.prop(self, k, text=spec.labels[k])
 
     def execute(self, context):
         unit = units.maya_unit(context.scene)
         done = 0
         for ob in context.objects_in_mode_unique_data:
             rec = RECORDS.get(ob.name)
-            if rec is None or rec.pre is None or rec.spec.edit_op != "extrude_edit" or (
+            if rec is None or rec.pre is None or rec.spec.edit_op != self._op or (
                     not rec.live and current(ob) is None):
                 continue
             if run(ob, rec, _params(self, rec.spec), unit):
@@ -736,6 +740,30 @@ class ALLSET_OT_extrude_edit(_ExtrudeProps, bpy.types.Operator):
             self.report({'WARNING'}, "No extrusion to change: " + NOTICE)
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+class ALLSET_OT_extrude_edit(_ExtrudeEdit, bpy.types.Operator):
+    """Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,
+    so only the last one can be changed"""
+    bl_idname = "allset.extrude_edit"
+    bl_label = "polyExtrudeFace"          # the Adjust Last Operation title = the Maya node
+    _op = "extrude_edit"
+
+
+class ALLSET_OT_extrude_edge_edit(_ExtrudeEdit, bpy.types.Operator):
+    """Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,
+    so only the last one can be changed"""
+    bl_idname = "allset.extrude_edge_edit"
+    bl_label = "polyExtrudeEdge"
+    _op = "extrude_edge_edit"
+
+
+class ALLSET_OT_extrude_vertex_edit(_ExtrudeEdit, bpy.types.Operator):
+    """Change the last vertex extrusion (Maya: edit the polyExtrudeVertex node). Blender keeps no edit-mode
+    history, so only the last one can be changed"""
+    bl_idname = "allset.extrude_vertex_edit"
+    bl_label = "polyExtrudeVertex"
+    _op = "extrude_vertex_edit"
 
 
 INT_FIELDS = ("divisions", "segments")
@@ -755,7 +783,7 @@ def set_params(context, **changes):
     return getattr(bpy.ops.allset, rec.spec.edit_op)('EXEC_DEFAULT', True, **params)
 
 
-classes = (ALLSET_OT_extrude, ALLSET_OT_extrude_edit)
+classes = (ALLSET_OT_extrude, ALLSET_OT_extrude_edit, ALLSET_OT_extrude_edge_edit, ALLSET_OT_extrude_vertex_edit)
 
 
 @bpy.app.handlers.persistent
