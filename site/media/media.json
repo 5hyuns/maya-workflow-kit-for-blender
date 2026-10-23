@@ -1,204 +1,240 @@
 {
- "files": [
-  {
-   "path": "media/channel_box_keys.jpg",
-   "bytes": 113867,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/channel_box_keys.mp4",
-   "bytes": 1119124,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.2
-  },
-  {
-   "path": "media/channel_box_keys.webm",
-   "bytes": 753025,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.2
-  },
-  {
-   "path": "media/favicon-180.png",
-   "bytes": 10732,
-   "width": 180,
-   "height": 180
-  },
-  {
-   "path": "media/favicon-32.png",
-   "bytes": 1775,
-   "width": 32,
-   "height": 32
-  },
-  {
-   "path": "media/hotbox.jpg",
-   "bytes": 119031,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/hotbox.mp4",
-   "bytes": 1086354,
-   "width": 1280,
-   "height": 720,
-   "duration": 6.433
-  },
-  {
-   "path": "media/hotbox.webm",
-   "bytes": 816483,
-   "width": 1280,
-   "height": 720,
-   "duration": 6.433
-  },
-  {
-   "path": "media/icon-256.png",
-   "bytes": 14187,
-   "width": 256,
-   "height": 256
-  },
-  {
-   "path": "media/navigation.jpg",
-   "bytes": 85617,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/navigation.mp4",
-   "bytes": 1191929,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.633
-  },
-  {
-   "path": "media/navigation.webm",
-   "bytes": 767346,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.633
-  },
-  {
-   "path": "media/og.png",
-   "bytes": 285190,
-   "width": 1280,
-   "height": 640
-  },
-  {
-   "path": "media/pivot_snap.jpg",
-   "bytes": 113195,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/pivot_snap.mp4",
-   "bytes": 1102136,
-   "width": 1280,
-   "height": 720,
-   "duration": 6.133
-  },
-  {
-   "path": "media/pivot_snap.webm",
-   "bytes": 891661,
-   "width": 1280,
-   "height": 720,
-   "duration": 6.133
-  },
-  {
-   "path": "media/rigging.jpg",
-   "bytes": 78728,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/rigging.mp4",
-   "bytes": 1192982,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.0
-  },
-  {
-   "path": "media/rigging.webm",
-   "bytes": 838865,
-   "width": 1280,
-   "height": 720,
-   "duration": 7.0
-  },
-  {
-   "path": "media/shot-hero-800.webp",
-   "bytes": 38560,
-   "width": 800,
-   "height": 450
-  },
-  {
-   "path": "media/shot-hero.jpg",
-   "bytes": 187525,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/shot-hero.webp",
-   "bytes": 101572,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/shot-menus_shelves-800.webp",
-   "bytes": 29650,
-   "width": 800,
-   "height": 450
-  },
-  {
-   "path": "media/shot-menus_shelves.jpg",
-   "bytes": 158321,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/shot-menus_shelves.webp",
-   "bytes": 83184,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/shot-switch_before-800.webp",
-   "bytes": 23486,
-   "width": 800,
-   "height": 450
-  },
-  {
-   "path": "media/shot-switch_before.jpg",
-   "bytes": 145889,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/shot-switch_before.webp",
-   "bytes": 72192,
-   "width": 1600,
-   "height": 900
-  },
-  {
-   "path": "media/trailer.jpg",
-   "bytes": 86546,
-   "width": 1280,
-   "height": 720
-  },
-  {
-   "path": "media/trailer.mp4",
-   "bytes": 3990343,
-   "width": 1280,
-   "height": 720,
-   "duration": 33.5
-  },
-  {
-   "path": "media/trailer.webm",
-   "bytes": 2828070,
-   "width": 1280,
-   "height": 720,
-   "duration": 33.5
-  }
- ],
- "total_bytes": 18327565,
- "count": 31
+  "files": [
+    {
+      "path": "media/channel_box_keys.jpg",
+      "bytes": 101743,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/channel_box_keys.mp4",
+      "bytes": 1159082,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.133
+    },
+    {
+      "path": "media/channel_box_keys.webm",
+      "bytes": 856397,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.133
+    },
+    {
+      "path": "media/channel_box_keys.webp",
+      "bytes": 54346,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/favicon-180.png",
+      "bytes": 7101,
+      "width": 180,
+      "height": 180
+    },
+    {
+      "path": "media/favicon-32.png",
+      "bytes": 686,
+      "width": 32,
+      "height": 32
+    },
+    {
+      "path": "media/hotbox.jpg",
+      "bytes": 119478,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/hotbox.mp4",
+      "bytes": 1141479,
+      "width": 1280,
+      "height": 720,
+      "duration": 6.433
+    },
+    {
+      "path": "media/hotbox.webm",
+      "bytes": 857673,
+      "width": 1280,
+      "height": 720,
+      "duration": 6.433
+    },
+    {
+      "path": "media/hotbox.webp",
+      "bytes": 68692,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/icon-256.png",
+      "bytes": 10054,
+      "width": 256,
+      "height": 256
+    },
+    {
+      "path": "media/navigation.jpg",
+      "bytes": 80281,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/navigation.mp4",
+      "bytes": 1074639,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.633
+    },
+    {
+      "path": "media/navigation.webm",
+      "bytes": 846642,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.633
+    },
+    {
+      "path": "media/navigation.webp",
+      "bytes": 42962,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/og.png",
+      "bytes": 280775,
+      "width": 1280,
+      "height": 640
+    },
+    {
+      "path": "media/pivot_snap.jpg",
+      "bytes": 103654,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/pivot_snap.mp4",
+      "bytes": 1082463,
+      "width": 1280,
+      "height": 720,
+      "duration": 6.133
+    },
+    {
+      "path": "media/pivot_snap.webm",
+      "bytes": 880283,
+      "width": 1280,
+      "height": 720,
+      "duration": 6.133
+    },
+    {
+      "path": "media/pivot_snap.webp",
+      "bytes": 57296,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/rigging.jpg",
+      "bytes": 76710,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/rigging.mp4",
+      "bytes": 1192600,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.0
+    },
+    {
+      "path": "media/rigging.webm",
+      "bytes": 855366,
+      "width": 1280,
+      "height": 720,
+      "duration": 7.0
+    },
+    {
+      "path": "media/rigging.webp",
+      "bytes": 38186,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/shot-hero-800.webp",
+      "bytes": 39708,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "media/shot-hero.jpg",
+      "bytes": 190134,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/shot-hero.webp",
+      "bytes": 106308,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/shot-menus_shelves-800.webp",
+      "bytes": 26756,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "media/shot-menus_shelves.jpg",
+      "bytes": 143613,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/shot-menus_shelves.webp",
+      "bytes": 73836,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/shot-switch_before-800.webp",
+      "bytes": 24186,
+      "width": 800,
+      "height": 450
+    },
+    {
+      "path": "media/shot-switch_before.jpg",
+      "bytes": 149193,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/shot-switch_before.webp",
+      "bytes": 74790,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "path": "media/trailer.jpg",
+      "bytes": 92596,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "path": "media/trailer.mp4",
+      "bytes": 3951743,
+      "width": 1280,
+      "height": 720,
+      "duration": 33.5
+    },
+    {
+      "path": "media/trailer.webm",
+      "bytes": 2838876,
+      "width": 1280,
+      "height": 720,
+      "duration": 33.5
+    },
+    {
+      "path": "media/trailer.webp",
+      "bytes": 57176,
+      "width": 1280,
+      "height": 720
+    }
+  ],
+  "total_bytes": 18757503,
+  "count": 37
 }
