@@ -136,7 +136,7 @@ def tabs(ob):
         out.append(("S", ob.data.name, node_type(ob)))
     rec = history_record(ob)
     if rec is not None:              # Maya: the newest history node first (CB INPUTS order, step 65)
-        out.append(("H", rec.name, "polyExtrudeFace"))
+        out.append(("H", rec.name, rec.spec.node_type))   # polyExtrudeFace / Edge / Vertex, polyBevel3 (step 139)
     for md in ob.modifiers:
         if display.is_preview(md):   # shape display attribute, drawn in "Smooth Mesh" (step 15)
             continue
@@ -514,17 +514,16 @@ def draw_extra(layout, owner, layout_id):
 
 def draw_extrude_history(layout, context, rec):
     """The polyExtrudeFace tab: Maya's "Poly Extrude Face History" with the kit record's values (the same text
-    proxies as Channel Box INPUTS, ui/in_view.py)."""
-    from ..operators import extrude
+    proxies as Channel Box INPUTS, ui/in_view.py); also polyExtrudeEdge / Vertex and polyBevel3 (step 139)."""
     header, body = layout.panel("allset_ae_history_extrude", default_closed=False)
-    header.label(text=f"{nice_type('polyExtrudeFace')} History")
+    header.label(text=f"{nice_type(rec.spec.node_type)} History")
     if body is None:
         return
     hist = context.window_manager.allset_history
     col = body.column(align=True)
-    for field in extrude.FIELDS:
+    for field in rec.spec.fields:
         split = col.split(factor=0.42, align=True)
-        split.label(text=attr_label(context, extrude.LABELS[field], field))
+        split.label(text=attr_label(context, rec.spec.labels[field], field))
         split.prop(hist, f"{field}_text", text="")
 
 
