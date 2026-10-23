@@ -213,12 +213,12 @@ NOTICES.update({
     # Blender has none of
     "Deform/Nonlinear/Sine": ("Wave modifier", "Blender has no sine deformer: sine1 is a Wave modifier along X "
                               "around sine1Handle (Blender's wave shape, no bounds)."),
-    "Deform/Lattice": ("Lattice modifier", "ffd1Lattice drives the Lattice modifier ffd1; Blender's lattice is its "
-                       "own rest shape (no ffd1Base)."),
-    "Deform/Wrap": ("Surface Deform", "wrap1 is a Surface Deform modifier bound to the influence: it follows the "
-                    "influence's shape, not its transform."),
-    "Deform/Proximity Wrap": ("Surface Deform", "proximityWrap1 is a Surface Deform modifier bound to the driver "
-                              "(Maya's Surface wrap mode)."),
+    "Deform/Lattice": ("Lattice modifier", "Blender: ffd1Lattice drives the Lattice modifier ffd1; the Hook ffd1Base "
+                       "in front of it carries the points when the lattice object moves (Maya's base lattice)."),
+    "Deform/Wrap": ("Surface Deform", "Blender: wrap1 is a Surface Deform modifier bound to the influence (shape), "
+                    "the Hook wrap1Base after it follows the influence's transform."),
+    "Deform/Proximity Wrap": ("Surface Deform", "Blender: proximityWrap1 is a Surface Deform modifier bound to the "
+                              "driver (Maya's Surface wrap mode)."),
     "Deform/Tension": ("Corrective Smooth", "Blender has no tension deformer: Delta Mush (a Corrective Smooth "
                        "modifier, Length Weight) is the closest."),
     "Deform/Solidify": ("Rigid vertex group", "Blender has no solidify deformer (its Solidify modifier adds "

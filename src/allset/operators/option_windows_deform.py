@@ -25,7 +25,7 @@ class FDivisions(F):
         return IntVectorProperty(name=self.label.rstrip(":"), default=self.default, size=3, min=2, soft_max=50)
 
 
-ADVANCED = ("Deformation order (Advanced tab: Blender evaluates the modifier stack top to bottom)",
+ADVANCED = ("Deformation order (Advanced tab; the modifier stack order)",
             "Exclusive / Partition to use / Partition name (Advanced tab)")
 ENVELOPE = "Envelope (the modifier has no strength)"
 
@@ -55,7 +55,7 @@ def _bounds():
             F("high", "High bound:", "float", 1.0, lo=0.0, hi=10.0)]
 
 
-_BOUNDS_NOTE = "Low / High bound beyond the object (Blender's limits stop at the object's ends)"
+_BOUNDS_NOTE = "Bounds beyond the object (Blender limits stop at its ends)"
 
 WINDOWS = [
     # Lattice Options (options_144.md, Lattice row): Divisions 2 5 2, Center around selection on
@@ -64,10 +64,10 @@ WINDOWS = [
         F("center", "", "bool", True, text="Center around selection"),
         F("auto_parent", "", "bool", False, text="Auto parent to selection")], _create('LATTICE'),
         paths=("Deform/Lattice",),
-        missing=("Use local mode / Local divisions 2 2 2 (Blender's lattice is B-spline over all points)",
-                 "Group base and lattice (Blender has no ffd1Base: the lattice is its own rest)",
+        missing=("Use local mode / Local divisions (B-spline over all points)",
+                 "Group base and lattice (ffd1Base is a Hook modifier)",
                  "Freeze geometry", "Bind original geometry",
-                 "Outside lattice / Falloff distance (Blender deforms every point of the vertex group)") + ADVANCED),
+                 "Outside lattice / Falloff distance (all group points move)") + ADVANCED),
     # Delta Mush Options: Smoothing iterations 10, Smoothing step 0.5, Pin border vertices on
     Window("deform_delta_mush", "Delta Mush Options", "Create", _match('DELTA_MUSH'), [
         F("iterations", "Smoothing iterations:", "int", 10, lo=0, hi=50),
@@ -81,8 +81,8 @@ WINDOWS = [
         F("render_influence", "", "bool", False, text="Render influence objects")], _create('WRAP'),
         paths=("Deform/Wrap",),
         missing=("Exclusive bind", "Auto weight threshold / Weight threshold", "Use max distance / Max distance",
-                 "Falloff mode Volume (Blender's Surface Deform binds to the surface)",
-                 "Moving the influence object (Surface Deform follows its shape, not its transform)")),
+                 "Falloff mode Volume (Surface Deform binds to the surface)",
+                 "pCube2Base (the modifier keeps the bound shape)")),
     # Proximity Wrap Options: Wrap mode Surface = Surface Deform; the rest has no Blender setting
     Window("deform_proximity_wrap", "Proximity Wrap Options", "Create", _match('PROXIMITY_WRAP'), [],
            _create('PROXIMITY_WRAP'), paths=("Deform/Proximity Wrap",),
@@ -150,5 +150,5 @@ WINDOWS = [
         F("strength", "Strength:", "float", 1.0, lo=-10.0, hi=10.0),
         F("offset", "Offset:", "float", 0.0, lo=-10.0, hi=10.0)], _create('TEXTURE'), paths=("Deform/Texture",),
         missing=("Vector Strength / Vector Offset", "Vector Space Tangent", ENVELOPE,
-                 "textureDeformerHandle1 (Direction Handle = the object's up axis)")),
+                 "textureDeformerHandle1 (Handle = the object's up axis)")),
 ]

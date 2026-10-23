@@ -51,8 +51,9 @@ def node_type(md):
 
 
 def is_base(md):
-    """The Hook that carries a kit lattice's transform (``ffd1Base``, see ``_lattice``): part of node ffd1."""
-    return md.type == 'HOOK' and re.match(r"^ffd\d+Base$", md.name) is not None
+    """The Hook that carries a kit lattice's / wrap influence's transform (``ffd1Base``, ``wrap1Base``, see
+    ``_base_hook``): part of that node, not an INPUTS node of its own."""
+    return md.type == 'HOOK' and re.match(r"^(ffd|wrap|proximityWrap)\d+Base$", md.name) is not None
 
 
 def _taken():
@@ -280,6 +281,19 @@ def _add(ob, name, mtype, idx):
     return md
 
 
+def _base_hook(ob, name, driver, group):
+    """Hook ``<name>Base``: moves ``ob``'s points of ``group`` by ``driver``'s transform since now (rest = none)."""
+    hk = ob.modifiers.new(f"{name}Base", 'HOOK')
+    hk.object = driver
+    if group:
+        hk.vertex_group = group
+    else:
+        hk.vertex_indices_set(list(range(len(ob.data.vertices))) if ob.type == 'MESH' else [])
+    hk.center = ob.matrix_world.inverted() @ driver.matrix_world.translation
+    hk.matrix_inverse = driver.matrix_world.inverted() @ ob.matrix_world
+    return hk
+
+
 def _link(context, ob):
     context.view_layer.active_layer_collection.collection.objects.link(ob)
     return ob
@@ -311,8 +325,10 @@ def _lattice(context, v):
     name = new_name("ffd")
     lat = bpy.data.lattices.new(f"{name}LatticeShape")
     s, t, u = (max(2, int(x)) for x in v["divisions"])
-    lat.points_u, lat.points_v, lat.points_w = s, u, t           # Maya S T U along X Y Z; Maya Y = Blender Z
+    # the object first: a lattice used by an object keeps its -0.5..0.5 box when its points change, a bare one grows
+    # to (points - 1) units (measured)
     lob = _link(context, bpy.data.objects.new(f"{name}Lattice", lat))
+    lat.points_u, lat.points_v, lat.points_w = s, u, t           # Maya S T U along X Y Z; Maya Y = Blender Z
     size = hi - lo
     big = max(size.x, size.y, size.z, 1e-6)
     lob.scale = tuple(max(c, big * 1e-3) for c in size)
@@ -325,11 +341,7 @@ def _lattice(context, v):
             # Blender's lattice space moves with the lattice object (moving it changes nothing), so a Hook to the
             # lattice in front of the Lattice modifier is that base: it applies the lattice's transform since
             # creation, then the lattice deforms the points in its own (rest) space.
-            hk = ob.modifiers.new(f"{name}Base", 'HOOK')
-            hk.object = lob
-            hk.vertex_group = group
-            hk.center = ob.matrix_world.inverted() @ lob.matrix_world.translation
-            hk.matrix_inverse = lob.matrix_world.inverted() @ ob.matrix_world
+            _base_hook(ob, name, lob, group)
         md = ob.modifiers.new(name, 'LATTICE')
         md.object = lob
         if group:
@@ -374,6 +386,9 @@ def _surface(context, base, render_influence=True, select_driver=True):
         md = _add(ob, name, 'SURFACE_DEFORM', idx)
         md.target = drv
         _bind(ob, md)
+        # Surface Deform follows the influence's shape but not its transform (measured); Maya's wrap follows both.
+        # A Hook to the influence after it carries the points by the influence's transform since creation.
+        _base_hook(ob, md.name, drv, md.vertex_group)
     if not render_influence:
         drv.hide_render = True
     deformed = [ob for ob, _i in items]

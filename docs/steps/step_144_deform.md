@@ -21,9 +21,9 @@ CB · Paint Weights = 「Deformers created with factory options」 표), `resear
 
 | Maya | Blender | 이름 | INPUTS (Maya 속성 = Blender) | 없는 것 (missing / notice) |
 |---|---|---|---|---|
-| Lattice | Lattice 오브젝트 (선택의 월드 bbox 에 맞춤, 분할 S T U = points_u / w / v) + Lattice 모디파이어 | ffd1, ffd1Lattice, 데이터 ffd1LatticeShape | ffd1: Envelope = strength; SHAPES ffd1LatticeShape: S / T / U Divisions | ffd1Base (Blender 는 격자 자체가 기준), Local mode / Local divisions, Group, Freeze, Bind original, Outside lattice, Falloff |
+| Lattice | Lattice 오브젝트 (선택의 월드 bbox 에 맞춤, 분할 S T U = points_u / w / v) + Lattice 모디파이어 | ffd1, ffd1Lattice, 데이터 ffd1LatticeShape | ffd1: Envelope = strength; SHAPES ffd1LatticeShape: S / T / U Divisions | ffd1Base 는 오브젝트가 아니라 Lattice 앞의 Hook `ffd1Base` (격자 오브젝트를 옮기면 점이 따라감 = Maya base), Local mode / Local divisions, Group, Freeze, Bind original, Outside lattice, Falloff |
 | Delta Mush | Corrective Smooth (Simple, rest = 원래 좌표) | deltaMush1 | Smoothing Iterations = iterations, Smoothing Step = factor, Pin Border Vertices = use_pin_boundary | Envelope, Displacement, Inward / Outward constraint, Distance weight, Scale |
-| Wrap | Surface Deform (bind), 영향 = 마지막 선택 | wrap1 | Envelope = strength | wrap1Base, Exclusive bind, weight threshold, max distance, falloff mode; 영향 오브젝트의 이동은 따라가지 않음 (Surface Deform 은 영향 메시 모양만 읽음) |
+| Wrap | Surface Deform (bind), 영향 = 마지막 선택 | wrap1 | Envelope = strength | pCube2Base (모디파이어가 bind 모양을 가짐), Exclusive bind, weight threshold, max distance, falloff mode. Surface Deform 은 영향 메시 모양만 따라가서 (측정) 뒤에 Hook `wrap1Base` 가 영향 오브젝트의 이동을 더함 |
 | Proximity Wrap | Surface Deform, 드라이버 = 마지막 선택 | proximityWrap1 | Envelope = strength | Wrap mode (Surface 만), Max drivers, Falloff scale, Smooth influences / normals |
 | ShrinkWrap | Shrinkwrap 모디파이어, 타깃 = 마지막 선택 | shrinkWrap1 | Offset = offset, Bidirectional, Reverse, Along X / Y / Z | Envelope, Closest If No Intersection, Target Inflation, Bounding Box Center, Axis Reference, Single node; Toward Center |
 | Cluster | Hook + 핸들 empty (step 110) | cluster1, cluster1Handle | Envelope = strength | Relative mode |
