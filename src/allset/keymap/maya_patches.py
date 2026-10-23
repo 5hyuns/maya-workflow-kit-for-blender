@@ -233,7 +233,7 @@ def patch_camera(kd):
     # Graph Editor / Dope Sheet keep View2D view2d.zoom: it zooms each axis by its own drag (right = in), no
     # preference involved (delegated, docs/steps/step_141_keys.md).
     kd.remove("Image", "image.view_zoom", type="RIGHTMOUSE", alt=True)
-    _add(kd, "Image", "allset.dolly_2d", make_event("RIGHTMOUSE", alt=True))
+    _add(kd, "Image", "allset.dolly_2d", make_event("RIGHTMOUSE", alt=True), shadows=("View2D",))  # Image runs first
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Step 17: Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);
