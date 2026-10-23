@@ -655,7 +655,7 @@ def _make(window):
 
     return type(f"ALLSET_OT_opt_{window.key}", (bpy.types.Operator,), {
         "__annotations__": ann, "bl_idname": window.idname, "bl_label": window.title,
-        "bl_description": f"Maya {window.title}", "bl_options": {'REGISTER', 'UNDO'},
+        "bl_description": f"Maya {window.title}", "bl_options": {'UNDO'},    # no redo panel (step 147)
         "invoke": invoke, "draw": draw, "execute": execute})
 
 

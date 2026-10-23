@@ -306,7 +306,7 @@ class ALLSET_OT_snap_together(bpy.types.Operator):
     there and turns so the surfaces face each other (Maya Modify > Snap Together Tool)"""
     bl_idname = "allset.snap_together"
     bl_label = "Snap Together Tool"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     set_orientation: BoolProperty(name="Set Orientation", default=True)
 

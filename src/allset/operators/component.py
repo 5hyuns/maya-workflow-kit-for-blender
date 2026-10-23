@@ -11,6 +11,8 @@ Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 import bmesh
 import bpy
 
+from .. import undo_steps
+
 _MODES = {'VERT': (True, False, False), 'EDGE': (False, True, False), 'FACE': (False, False, True)}
 
 
@@ -64,12 +66,7 @@ def _bevel_params(op):
     return {k: getattr(op, k) for k in BEVEL.fields}
 
 
-def _draw_bevel(op):
-    from .bevel_maya import BEVEL
-    for k in BEVEL.fields:
-        op.layout.prop(op, k, text=BEVEL.labels[k])
-
-
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
     """Bevel the selection now (Maya Ctrl+B, polyBevel3): change Fraction, Segments, Depth in the In-View Editor or
     Channel Box INPUTS; in vertex mode Chamfer Vertex"""
@@ -84,10 +81,6 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
     def invoke(self, context, event):
         # Maya bevels at once (no drag; Esc / no mouse keeps it): #16, 
         return self.execute(context)
-
-    def draw(self, context):
-        if bevel_affect(context.scene.tool_settings.mesh_select_mode) == 'EDGES':
-            _draw_bevel(self)
 
     def execute(self, context):
         from . import bevel_maya, extrude, units
@@ -113,6 +106,7 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_bevel_edit(_BevelProps, bpy.types.Operator):
     """Change the last bevel (Maya: edit the polyBevel node). Blender keeps no edit-mode history, so only the last
     one can be changed"""
@@ -133,9 +127,6 @@ class ALLSET_OT_bevel_edit(_BevelProps, bpy.types.Operator):
             if not self.properties.is_property_set(k):
                 setattr(self, k, v)
         return self.execute(context)
-
-    def draw(self, context):
-        _draw_bevel(self)
 
     def execute(self, context):
         from . import extrude, units
@@ -191,6 +182,7 @@ def select_only(bm, target, elements):
     bm.select_flush_mode()
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_convert_selection(bpy.types.Operator):
     """Convert the selection to the vertices, edges or faces it touches (Maya Ctrl+F9-F11)"""
     bl_idname = "allset.convert_selection"

@@ -14,6 +14,7 @@ Maya behaviour (scripts of the installed Maya 2022, behaviour only):
 
 import bpy
 
+from .. import undo_steps
 from . import display
 
 
@@ -215,6 +216,7 @@ def proxy_action(ob, action):
     return True
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_smooth_proxy(bpy.types.Operator):
     """Maya smooth proxy keys: Ctrl+` toggle cage / smooth, Shift+~ show both, Ctrl+Shift+~ create"""
     bl_idname = "allset.smooth_proxy"

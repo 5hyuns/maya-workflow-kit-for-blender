@@ -12,6 +12,7 @@ import math
 import bpy
 from mathutils import Vector
 
+from .. import undo_steps
 from . import keystate
 
 # --- Alt+A: cycle display (switchDisplayMode) -----------------------------------------------------------------
@@ -121,6 +122,7 @@ def pixel_delta(region, rv3d, center, dx, dy):
     return region_2d_to_location_3d(region, rv3d, p + Vector((dx, dy)), center) - center
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_pixel_move(bpy.types.Operator):
     """Move the selection one pixel in the view plane (Maya Alt+arrow keys)"""
     bl_idname = "allset.pixel_move"

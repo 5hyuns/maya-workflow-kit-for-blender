@@ -72,15 +72,16 @@ def s_scene():
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = cube()
     centre()
-    # Positive control: Shift+H (Show Selected = allset.visibility: REGISTER + UNDO with a property) leaves
-    # its Adjust Last Operation panel (a Python call from a timer, or an operator without properties, shows none).
-    key('H', shift=True)
+    # Positive control: Alt+W (Blender's object.location_clear: REGISTER + UNDO with a property) leaves its Adjust
+    # Last Operation panel (a Python call from a timer, or an operator without properties, shows none). Step 147
+    # took Shift+H (allset.visibility) off the panel.
+    key('W', alt=True)
 
 
 @step
 def s_control():
     h = hud()
-    check(f"Shift+H shows Adjust Last Operation (the detector sees a HUD: {h and (h.x, h.y, h.width, h.height)})",
+    check(f"Alt+W shows Adjust Last Operation (the detector sees a HUD: {h and (h.x, h.y, h.width, h.height)})",
           h is not None)
     centre()
     key('F')                       # frame the cube

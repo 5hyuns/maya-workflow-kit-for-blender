@@ -18,6 +18,7 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import undo_steps
 from .. import compat
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
@@ -482,6 +483,7 @@ class ALLSET_OT_shelf_material(bpy.types.Operator):
         return create_and_assign(self, context, self.kind)
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_assign_new_material(bpy.types.Operator):
     """Pick a material type, create it and assign it to the selected objects or faces
     (Maya Assign New Material, Shift+T)"""

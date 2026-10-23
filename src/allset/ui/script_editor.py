@@ -16,6 +16,8 @@ value of a last expression is the result); the MEL tab gives Maya's warning (: n
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
+from .. import undo_steps
+
 _WINDOWS = set()
 LANG_PROP = "allset_script_lang"        # "MEL" / "Python" on the kit's script texts
 TABS = (("MEL", "MEL"), ("Python", "Python"))     # Maya's two default tabs, Python current (factory: MEL first)
@@ -97,6 +99,7 @@ def run_text(text, code):
     return code, runner.run(code)
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_script_run(bpy.types.Operator):
     """Maya Script Editor: execute the selection, else the whole tab (Ctrl+Enter keeps the input, Execute / numpad
     Enter clears it)"""

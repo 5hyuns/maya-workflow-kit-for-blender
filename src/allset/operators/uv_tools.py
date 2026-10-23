@@ -18,6 +18,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty
 from mathutils import Vector
 
+from .. import undo_steps
 from . import units
 from .. import compat
 
@@ -556,6 +557,7 @@ def _uv_poll(context):
     return context.mode == 'EDIT_MESH'
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_cut(bpy.types.Operator):
     """Cut the UVs along the selected edges (Maya Cut UV Edges): a seam, and the shells separate in place"""
     bl_idname = "allset.uv_cut"
@@ -583,6 +585,7 @@ class ALLSET_OT_uv_cut(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_sew(bpy.types.Operator):
     """Sew the UVs along the selected edges (Maya Sew UV Edges): the smaller shell moves onto the bigger one"""
     bl_idname = "allset.uv_sew"
@@ -625,6 +628,7 @@ class ALLSET_OT_uv_unfold(bpy.types.Operator):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_uv_layout(bpy.types.Operator):
     """Lay the selected UV shells (all when none are selected) out in 0-1 (Maya Layout; Blender Pack Islands)"""
     bl_idname = "allset.uv_layout"

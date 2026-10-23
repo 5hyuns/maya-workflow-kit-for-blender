@@ -22,6 +22,7 @@ import bpy
 from bpy.props import BoolProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
+from .. import undo_steps
 from . import units
 
 NODE = "polyExtrudeFace"
@@ -653,14 +654,7 @@ class _ExtrudeProps:
     __annotations__ = _props()
 
 
-def _draw_fields(op, context, default=None):
-    """Adjust Last Operation shows only the fields of the node the operation made (Maya names)."""
-    _ob, rec = active(context)
-    spec = rec.spec if rec is not None and rec.spec.kind in ('FACE', 'EDGE', 'VERTEX') else (default or FACE)
-    for k in spec.fields:
-        op.layout.prop(op, k, text=spec.labels[k])
-
-
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
     """Extrude the selection now (Maya polyExtrudeFace / polyExtrudeEdge / polyExtrudeVertex by the component
     type): change its values with the manipulator, the In-View Editor or Channel Box INPUTS"""
@@ -675,9 +669,6 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
     def invoke(self, context, event):
         # Maya extrudes edges / vertices at once too (no drag: -2, #70)
         return self.execute(context)
-
-    def draw(self, context):
-        _draw_fields(self, context)
 
     def execute(self, context):
         unit = units.maya_unit(context.scene)
@@ -732,11 +723,6 @@ class _ExtrudeEdit(_ExtrudeProps):
                 setattr(self, k, v)
         return self.execute(context)
 
-    def draw(self, context):
-        spec = next(s for s in SPECS.values() if s.edit_op == self._op)
-        for k in spec.fields:
-            self.layout.prop(self, k, text=spec.labels[k])
-
     def execute(self, context):
         unit = units.maya_unit(context.scene)
         done = 0
@@ -753,6 +739,7 @@ class _ExtrudeEdit(_ExtrudeProps):
         return {'FINISHED'}
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_edit(_ExtrudeEdit, bpy.types.Operator):
     """Change the last extrusion (Maya: edit the polyExtrudeFace node). Blender keeps no edit-mode history,
     so only the last one can be changed"""
@@ -761,6 +748,7 @@ class ALLSET_OT_extrude_edit(_ExtrudeEdit, bpy.types.Operator):
     _op = "extrude_edit"
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_edge_edit(_ExtrudeEdit, bpy.types.Operator):
     """Change the last edge extrusion (Maya: edit the polyExtrudeEdge node). Blender keeps no edit-mode history,
     so only the last one can be changed"""
@@ -769,6 +757,7 @@ class ALLSET_OT_extrude_edge_edit(_ExtrudeEdit, bpy.types.Operator):
     _op = "extrude_edge_edit"
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_extrude_vertex_edit(_ExtrudeEdit, bpy.types.Operator):
     """Change the last vertex extrusion (Maya: edit the polyExtrudeVertex node). Blender keeps no edit-mode
     history, so only the last one can be changed"""

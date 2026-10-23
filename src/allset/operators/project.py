@@ -437,7 +437,7 @@ class ALLSET_OT_create_reference(bpy.types.Operator):
     with the namespace (Maya File > Create Reference; .blend files only)"""
     bl_idname = "allset.create_reference"
     bl_label = "Create Reference"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     filepath: StringProperty(subtype='FILE_PATH')
     filter_glob: StringProperty(default="*.blend", options={'HIDDEN'})

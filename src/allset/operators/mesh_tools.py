@@ -281,7 +281,7 @@ class ALLSET_OT_target_weld(bpy.types.Operator):
     selected vertex with it"""
     bl_idname = "allset.target_weld"
     bl_label = "Target Weld"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     object: StringProperty(name="Object", options={'SKIP_SAVE', 'HIDDEN'})
     element: EnumProperty(name="Element", items=(('VERT', "Vertex", ""), ('EDGE', "Edge", "")),
@@ -446,7 +446,7 @@ class ALLSET_OT_crease_drag(bpy.types.Operator):
     Tool). Values are Maya's (sharp for that many smooth levels); Blender stores 0-1"""
     bl_idname = "allset.crease_drag"
     bl_label = "Crease"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     value: FloatProperty(name="Crease Value", default=0.0, min=-MAYA_CREASE_MAX, max=MAYA_CREASE_MAX,
                          description="Maya crease value (Absolute) or the change (Relative)")
@@ -572,7 +572,7 @@ class ALLSET_OT_multicut_loop(bpy.types.Operator):
     Ctrl+Shift: at a Snap Step)"""
     bl_idname = "allset.multicut_loop"
     bl_label = "Insert Edge Loop"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     object: StringProperty(name="Object", options={'SKIP_SAVE', 'HIDDEN'})
     edge: IntProperty(name="Edge", default=-1, options={'SKIP_SAVE', 'HIDDEN'})

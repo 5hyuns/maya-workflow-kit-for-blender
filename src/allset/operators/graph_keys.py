@@ -13,6 +13,7 @@ Shift+S = ``KeyTangentBinding``: hold + LMB opens the marking menu; a tap does n
 import bpy
 from bpy.props import EnumProperty, FloatVectorProperty
 
+from .. import undo_steps
 from . import keystate, taphold, time_keys
 
 KEY_ACTIONS = [(k, l, d) for k, l, d in time_keys.ACTIONS if k not in {"SNAP", "TANGENT"}]
@@ -76,6 +77,7 @@ def _redraw(context):
             area.tag_redraw()
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_set_tangent(bpy.types.Operator):
     """Set the in and out tangents: the selected keys in the Graph Editor, else the selection's keys at the
     current time (Maya Graph Editor tangent buttons, Shift+S marking menu)"""

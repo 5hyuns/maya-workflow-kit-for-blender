@@ -18,6 +18,8 @@ operator hid.  2.
 import bpy
 from bpy.props import EnumProperty
 
+from .. import undo_steps
+
 KEPT = "allset_kept"              # hidden by h while selected: h / Shift+H bring it back
 LAST = "allset_last_hidden"       # hidden by the latest hide: Ctrl+Shift+H brings it back
 
@@ -97,6 +99,7 @@ def apply(context, action):
     raise ValueError(action)
 
 
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_visibility(bpy.types.Operator):
     """Maya object visibility (h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H)"""
     bl_idname = "allset.visibility"

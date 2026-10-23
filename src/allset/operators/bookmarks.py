@@ -83,7 +83,7 @@ class ALLSET_OT_bookmark_create(bpy.types.Operator):
     """Create a Time Slider bookmark (a timeline marker) at the selected range or the current time"""
     bl_idname = "allset.bookmark_create"
     bl_label = "Create Bookmark"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     name: StringProperty(name="Name", options={'SKIP_SAVE'})
     quick: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'}, description="No dialog (Maya Quick Create)")
@@ -104,7 +104,7 @@ class ALLSET_OT_bookmark_frame(bpy.types.Operator):
     """Set the playback range to a Time Slider bookmark's range (this one, the next or the previous)"""
     bl_idname = "allset.bookmark_frame"
     bl_label = "Frame Bookmark"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     which: EnumProperty(items=(("CURRENT", "Current", ""), ("NEXT", "Next", ""), ("PREVIOUS", "Previous", "")),
                         options={'SKIP_SAVE'})
