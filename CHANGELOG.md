@@ -5,6 +5,47 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-24
+
+The Maya parity release after the eighth audit (steps 133–143). Blender 4.5 LTS through 5.2.x. Quad Draw, the
+edge-loop tools and the Deform menu move to 0.4.0 (#30 #31 #34).
+
+### Changed
+- **Viewport looks like Maya without a theme** (#58 #59 #61 #75 #76): kit-drawn lead green / white selection,
+  Maya component colours, Maya grid, no 3D cursor in the Maya layout, Maya Move / Scale manipulator axis colours and
+  dark-blue dormant wireframe; no redo panel after display / mode keys; Smooth Mesh Preview shades smooth.
+- **Dock and Channel Box** (#55 #60 #78): INPUTS collapsed until clicked, Layer Editor always visible, wheel scroll;
+  Maya's vertical tab strip with a dock as narrow as Maya's (Channel Box) that widens for the Attribute Editor.
+- **Marking menus** (#56 #62 #74): stay inside the window, 128 → 73 greyed entries (the rest explain why), Ctrl+RMB
+  convert menu on meshes.
+- **Animation / render** (#66 #67 #71): Graph Editor values in centimetres, Render Current Frame through the view
+  camera or Maya's persp, Maya Blinn / Phong / light decay and render size defaults.
+- **Scenes and files** (#57 #63 #64 #69): Save / Don't Save / Cancel on New Scene, the Maya layout after Open, tool
+  settings kept across New / Open, FBX / OBJ / Alembic / USD round trips with Maya's axes, scale and names.
+- **Edit Mesh / UV** (#16 #68 #70): Connect, Merge, Symmetrize and Smooth give Maya's results; Ctrl+B and Ctrl+E on
+  edges / vertices act at once and stay editable; UV Automatic / Contour Stretch from object mode.
+- **Maya option windows** (#32 #33 #35): 26 more windows with Maya 2022's fields and factory defaults (Create Joints,
+  IK Handle, Bind / Unbind / Copy / Paint Skin Weights, Blend Shape, Parent, Cut / Copy / Paste / Delete / Snap / Scale
+  Keys, Connect, Circularize, Make Hole, Insert Edge Loop, Aim / Pole Vector / Scale constraints, Duplicate Special);
+  Aim aims +X with world up Y like Maya; Key > Scale Keys is new.
+- **Keys and selection** (#65 #72 #73): Ctrl+A switches Attribute Editor / Channel Box in every mode, UV Editor
+  Alt+RMB dolly, 13 Select / Ctrl+RMB conversions (Grow / Shrink Along Loop, perimeters, To Face Path, To UVs ...),
+  joint names restart at joint1, Gravity / Newton fields with Maya magnitudes; an undo-depth hint (Blender keeps 32
+  steps unless you raise it).
+- **UI fit and icons** (#54 #77): the menu bar folds into » at 150 % UI scale, Set Driven Key fits, 485 more Maya menu
+  icons.
+- Store media, marketing images and clips retaken in Blender's own theme (#41).
+
+### Fixed — reported by users
+- Maya mode failed to switch on when another add-on's Render panel module had a non-list `classes` (#79).
+- Double-click edge loop select raised an error in Blender 5.1 / 5.2 (#84).
+- After extruding, Q / W / E / R bring the Move manipulator back; F12 no longer leaves UV sync on for F9–F11 (#80).
+
+### Known issues
+- Menu option boxes (❒) open on press-and-hold → Option Box, not on a click (#82, 0.4.0).
+- Narrow dock truncates a few labels at 125 % (#85); Channel Box spacing at 150 % (#83); redo panel over the shelf
+  after Create Joints (#86); Channel Box channel-name RMB shows Blender's menu (#87).
+
 ## [0.2.1] — 2026-10-21
 
 A bug-fix and store-compliance release (steps 125–132). Blender 4.5 LTS through 5.2.x.
