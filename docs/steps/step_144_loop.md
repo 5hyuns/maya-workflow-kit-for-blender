@@ -44,3 +44,40 @@ polySlideEdge), 필드·기본값 `research/maya/re/options_144.md:87-108`, `opt
   offset relative / equal / delete edge, slide relative / absolute / snap), 메뉴·툴·키맵 등록/해제, 창 필드.
 - `tests/gui/gui_step144_loop.py`: 실제 뷰에서 클릭 → 루프가 클릭 지점에, 드래그 슬라이드, offset 드래그,
   MMB 슬라이드, 스크린샷.
+
+## 한 일
+
+- `operators/edge_loops.py`: Maya 측정값(edge_loops_144.md)대로 bmesh로 구현. Insert = 링 순서 walk + 각 링 엣지
+  분할(`bmesh.utils.edge_split`) + 면마다 `connect_verts`; Equal 은 d를 최단 링 엣지로 clamp, 닿은 엣지는 그 정점을
+  지남(삼각형). Offset = 루프의 각 정점 옆 엣지(A/B, 면으로 전파)에 새 정점, 경로 끝이 메시 안이면 끝 너머 면을
+  연속 엣지 끝까지 잘라 삼각형 2개 → Delete edge 면 연속 엣지 dissolve(쿼드). Slide = 정점마다 옆 엣지 비율 /
+  Absolute 는 그쪽 최단 옆 엣지 × f 거리, 각 정점은 한 번만 (Maya 명령 polySlideEdge 의 루프 내부 정점 두 번 이동은
+  명령 artefact, 툴은 한 덩어리로 움직임).
+- 모달: Insert / Offset 은 누를 때 메시를 임시 Mesh 로 저장하고 드래그마다 되돌린 뒤 다시 계산 (step 65 restore 방식),
+  RELEASE = 확정(UNDO 한 단계), Esc/RMB = 원래대로. Offset 은 움직이지 않고 떼면 offset 0.5 (Maya optionVar),
+  드래그면 거리 / 눌린 엣지 옆 엣지 최단 화면 길이. Slide 는 MMB, 마우스에 가장 가까운 정점의 A/B 화면 방향에
+  투영.
+- `ui/mesh_tools_loop.py`: 툴 3개 (KEYMAP_FALLBACK: 엣지가 없는 곳 LMB 는 Blender 선택), Tool Settings 필드.
+  `ui/tool_settings.py` INSERT_EDGE_LOOP / SLIDE_EDGE 를 kit 툴로, OFFSET_EDGE_LOOP 추가, Reset Tool = Maya 공장값.
+- 메뉴 세 줄 + Shift+RMB 마킹 메뉴 (Insert / Slide = `_item(path)`), RMB To Edge Loop and Duplicate = kit offset exec.
+- 옵션 박스: Insert ❒ = step 140 창 유지 (delegated: step 140 규칙 "Tool Settings 여는 박스 = 툴 이름 창, 확인 = 툴
+  시작"), 값은 kit 설정으로, Smoothing angle / Insert with edge flow 실제 동작 (menu_items.edge_flow). Offset ❒ =
+  "Offset Edge Loop Options" 창 (Enter Tool And Close / Enter Tool / Close; `Window.apply_text`).
+
+## Delegated
+
+- Equal distance 는 클릭이 가까운 쪽 끝에서 잰다 (Maya 의 direction 플래그를 클릭 위치로 정함).
+- Offset 툴은 클릭한 엣지의 엣지 루프 전체 (선택 무관); 클릭만 하면 0.5, 드래그 거리 → offset.
+- Slide Edge LMB 는 선택 (Maya 설명 "Select edge loop or path and MMB-drag"), 드래그 방향 = 마우스를 따라감.
+- 새 루프는 선택된 상태로 남음.
+- Offset 창의 Delete edge 는 Maya 에서 greyed(켜짐)지만 kit 에선 바꿀 수 있는 체크박스.
+
+## 검증
+
+- headless `test_step144_loop` 18/18 (mayapy 숫자: relative / equal / clamp 삼각형 / multiple / 닫힌 링, offset
+  relative / equal / 내부 끝 22→20 면 / 경계 거부 / 큐브 hard 28 of 36, slide relative / absolute / 루프 / snap,
+  메뉴·툴·키맵 등록 해제, Tool Settings 기본값·Reset, 창 필드).
+- GUI `gui_step144_loop` 14/14 (클릭 = z 0.399 에 루프, Ctrl+Z, 드래그 -0.296, offset 클릭 0.5 = -0.648 / 0.352,
+  드래그 offset 양쪽 같은 비율, MMB 슬라이드). 스크린샷 tmp/shots144/ 확인.
+- 남은 것: Auto complete off (여러 번 클릭해 부분 루프), Fix Quads, Start/End vertex offset (측정에서 효과 없음),
+  Tool completion "Press enter" 는 greyed + notice. 메뉴로 편집 모드 들어갈 때 undo 단계 없음 → #88.
