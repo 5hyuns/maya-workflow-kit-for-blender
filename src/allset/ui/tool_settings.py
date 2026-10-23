@@ -184,7 +184,8 @@ TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scal
               'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
               'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
               'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool",
-              'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append to Polygon Tool"}
+              # step 144: Maya 2022 Tool Settings titles ()
+              'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append To Polygon Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
 SELECTING = ('SELECT', 'LASSO')
 # (key, title, open by default: True / False / the kinds where it starts open, kinds that have it). One order for
@@ -200,7 +201,8 @@ SECTIONS = (
     ("stylus", "Stylus Pressure", False, ('PAINT_SELECT',)),
     ("attr_maps", "Attribute Maps", False, ('PAINT_SELECT',)),
     ("paint_display", "Display", False, ('PAINT_SELECT',)),
-    ("description", "Description", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE')),
+    ("description", "Description", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE',
+                                           'CREATE_POLYGON', 'APPEND_POLYGON')),
     ("tool", "Settings", True, ('INSERT_EDGE_LOOP', 'SLIDE_EDGE', 'TARGET_WELD', 'CREASE', *POLY_KINDS)),
     ("slide_snap", "Snapping Settings", True, ('SLIDE_EDGE',)),
     ("live", "Live Constraint Options", False, ('QUAD_DRAW',)),
@@ -276,8 +278,6 @@ TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
     "Target Weld/MMB": ("Merge To: Center", "Middle-drag isn't bound: set Merge To to Center and drag with the left button"),
     "Crease/Extend to creased components": ("Select Similar",
                                             "Select the creased edges with Select > Select Similar > Crease first"),
-    "Quad Draw/Live Constraint": ("Make Live",
-                                  "The kit draws on the live surface, else on every other visible mesh; no colour options"),
 }.items()})
 
 
@@ -565,6 +565,10 @@ DESCRIPTIONS = {   # the kit's own words for what the tool does here
 
 
 def draw_description(layout, context, kind):
+    if kind in POLY_KINDS:
+        from . import mesh_tools_poly
+        mesh_tools_poly.draw_description(layout, kind)
+        return
     _lines(layout, *DESCRIPTIONS.get(kind, ()))
 
 
