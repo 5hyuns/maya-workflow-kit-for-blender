@@ -129,7 +129,9 @@ def _keys_menu(ed, graph):
 # Maya Show > Objects / Attributes = Blender's dope sheet filters (the Graph Editor and Dope Sheet share them).
 _DS = "space_data.dopesheet"
 SHOW_OBJECTS = {"Geometry": "show_meshes", "Polygon Objects": "show_meshes", "NURBS Objects": "show_curves",
-                "GPU Cache": "show_cache_files", "Cameras": "show_cameras", "Joints": "show_armatures"}
+                "GPU Cache": "show_cache_files", "Cameras": "show_cameras", "Joints": "show_armatures",
+                # step 150 (delegated): a Blender subdivision surface is a mesh with a Subdivision modifier
+                "Subdiv Objects": "show_meshes"}
 # Maya attribute groups -> the channel name filter (Blender names: Location / Rotation / Scale)
 SHOW_ATTRIBUTES = {"Translate": "Location", "Rotate": "Rotation", "Scale": "Scale", "Scale Rotate Translate": "",
                    "Keyable": ""}
@@ -140,6 +142,10 @@ def _list_show_menus(ed):
         f"{ed}/List/Auto Load Selected Objects": _prop(f"{_DS}.show_only_selected"),
         f"{ed}/Show/Invert Shown": _prop(f"{_DS}.use_filter_invert"),
         f"{ed}/Show/Show All": ("wm.context_set_string", {"data_path": f"{_DS}.filter_text", "value": ""}),
+        # step 150: Maya's Clear Below leaves no entry checked = nothing filtered (ui/graph_view.py)
+        f"{ed}/Show/Objects/Clear Below": "allset.graph_show_clear",
+        f"{ed}/Show/Attributes/Clear Below": ("wm.context_set_string",
+                                              {"data_path": f"{_DS}.filter_text", "value": ""}),
     }
     m.update({f"{ed}/Show/Objects/{label}": _prop(f"{_DS}.{attr}") for label, attr in SHOW_OBJECTS.items()})
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_DS}.filter_text", text)
@@ -172,6 +178,12 @@ MAP = {
     f"{GE}/View/Frame/Frame Playback Range": "anim.scene_range_frame",
     f"{GE}/View/Center Current Time": "allset.graph_center_time",
     f"{GE}/View/Infinity": _prop(f"{_SP}.show_extrapolation"),
+    # step 150: kit modes (ui/graph_view.py); Maya factory: Auto Frame on, Auto Frame Time off, Curve Name Never
+    f"{GE}/View/Auto Frame": _prop("addon_prefs.graph_auto_frame"),
+    f"{GE}/View/Auto Frame Time": _prop("addon_prefs.graph_auto_frame_time"),
+    f"{GE}/View/Curve Name/Always": _prop("addon_prefs.graph_curve_names", 'ALWAYS'),
+    f"{GE}/View/Curve Name/Never": _prop("addon_prefs.graph_curve_names", 'NEVER'),
+    f"{GE}/View/Curve Name/Active Only": _prop("addon_prefs.graph_curve_names", 'ACTIVE'),
     # Blender's "Only Selected Curve Keyframes" is a preference (#43): open it, don't write it
     f"{GE}/View/Keys/Always": _PREFS_ANIMATION,
     f"{GE}/View/Keys/Active Only": _PREFS_ANIMATION,

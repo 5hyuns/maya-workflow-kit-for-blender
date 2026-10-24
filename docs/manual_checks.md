@@ -1010,3 +1010,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Two cubes, the small one selected last: Deform > Wrap → wrap1 on the big cube; edit the small cube's vertices or move the small cube → the big one follows; the small cube is not rendered (F12).
 - [ ] Deform > Cluster on selected vertices → cluster1Handle; Deform > Paint Weights > Cluster with the handle selected → Weight Paint on the mesh with group cluster1 active; painting 0 on some vertices makes them stay when the handle moves.
 - [ ] Deform > Tension / Solidify / Morph / Wire / Wrinkle / Sculpt and Jiggle > Jiggle Deformer are greyed; hovering shows the Blender substitute in the tooltip and the Help Line.
+
+## Step 150 — Graph Editor View / Show (lane A)
+
+- [ ] Maya layout, two animated cubes, Graph Editor open: with View > Auto Frame on (Maya factory), clicking the other cube in the viewport or Outliner reframes the Graph Editor on its curves within ~0.25 s; with Auto Frame off and Auto Frame Time on only the time axis follows (the value axis stays, the Range Slider / preview range don't change).
+- [ ] View > Curve Name > Always: "pCube1.translateX" etc. in the curve colours just above each curve's last key (at the right edge when the last key is off screen); Active Only = only the selected curves; Never = none; Normalized View hides the names.
+- [ ] Show > Objects > Clear Below after unticking Polygon Objects / Cameras → every object type is listed again; Show > Attributes > Clear Below clears the channel name filter.
+- [ ] Greyed View items (Undo View Change, Clip Time, Show Results, Show Buffer Curves, Play Range Shades, Keys > Never, Key View, Time Ruler Placement, Simple Toolbar) show their own line in the tooltip / Help Line.

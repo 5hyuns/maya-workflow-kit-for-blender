@@ -478,14 +478,9 @@ def _anim_editor_categories(ed):
 CATEGORIES.update({
     **_anim_editor_categories("Graph Editor"),
     **_anim_editor_categories("Dope Sheet"),
-    "Graph Editor/View": (
-        "View menu", "Blender's Graph Editor has no such display option: see its View menu and the sidebar View tab "
-        "(Blender ▸ menu)."),
     "Graph Editor/View/Theme": (
         "Themes", "Blender's colours come from the theme: Preferences > Themes (install a Maya-like theme there if you want "
         "Maya's colours)."),
-    "Graph Editor/View/Curve Name": (
-        "Channel list", "Blender doesn't write curve names in the graph: they are in the channel list."),
     "Graph Editor/Select": (
         "Select menu", "Blender has no selection mask: it selects keys with their handles (click a handle to pick "
         "it alone)."),
@@ -665,6 +660,63 @@ NOTICES.update({
         "aren't there.")
     for ed in ("Graph Editor", "Dope Sheet") for sub in ("", "In Tangent/", "Out Tangent/")
     for kind in ("Auto Ease", "Auto Mix", "Auto Custom")})
+
+
+# Step 150 (#96): Graph Editor View items Blender can't do, one line each (Maya annotations in
+# research/maya/screens/editors104/_editors104.json); the mapped ones are in ui/editor_menu_map.py + ui/graph_view.py.
+_GE_VIEW = "Graph Editor/View/"
+NOTICES.update({
+    **{_GE_VIEW + item: (
+        "View > Frame", "Blender keeps no history of Graph Editor views: frame again with View > Frame All or "
+        "Frame Selection.") for item in ("Undo View Change", "Redo View Change")},
+    _GE_VIEW + "Clip Time": (
+        "NLA Editor", "Blender has no Trax clip time to switch: a strip's keys show at the strip's time while you "
+        "tweak the strip in the NLA Editor (Tab)."),
+    _GE_VIEW + "Show Results": (
+        "Drivers mode", "Blender draws no curve for a value that isn't keyed: driver curves are in the Graph "
+        "Editor's Drivers mode (header mode menu)."),
+    _GE_VIEW + "Show Buffer Curves": (
+        "Curves > Buffer Curve > Snapshot", "Blender always draws a buffer curve (ghost curve) once Curves > Buffer "
+        "Curve > Snapshot made one, until Blender's Clear Ghost Curves removes it: it can't be hidden and kept."),
+    _GE_VIEW + "Show Play Range Shades": (
+        "Always on", "Blender always darkens the frames outside the playback range in the Graph Editor: the shades "
+        "can't be turned off."),
+    _GE_VIEW + "Lock Play Range Shades": (
+        "Range Slider", "Blender's range shades can't be dragged, so there is nothing to lock: set the range on the "
+        "Range Slider."),
+    _GE_VIEW + "Highlight Affected Curves": (
+        "Selected keys", "Blender highlights the selected keys and their curve, not the curve segment a key or "
+        "tangent affects."),
+    _GE_VIEW + "Keys/Never": (
+        "Keys > Active Only", "Blender always draws the keys of the curves it shows; Keys > Active Only (Preferences "
+        "> Animation > Only Selected Curve Keyframes) is the closest."),
+    **{_GE_VIEW + "Key View/" + item: (
+        "Dope Sheet key types", "Blender draws Graph Editor keys without state marks; key types (breakdown, ...) "
+        "show in the Dope Sheet.") for item in ("Detailed", "Simple")},
+    **{_GE_VIEW + "Time Ruler Placement/" + item: (
+        "Top", "Blender's Graph Editor time ruler is always at the top (the scrubbing area), Maya's factory "
+        "placement.") for item in ("Top", "Bottom")},
+    _GE_VIEW + "Simple Toolbar": (
+        "Graph Editor toolbar", "Blender has one row for the Maya Graph Editor toolbar: there is no simple "
+        "variant."),
+})
+# Show menu items with a specific substitute (Graph Editor and Dope Sheet share the filters)
+NOTICES.update({
+    **{f"{ed}/Show/Attributes/{item}": (
+        "Drivers mode", "Blender lists driven channels in the Graph Editor's Drivers mode (header mode menu), not "
+        "as a filter of the F-Curve list.")
+       for ed in ("Graph Editor", "Dope Sheet")
+       for item in ("Driven by Anim Curve", "Driven by Expression", "Driven by Driven Key")},
+    **{f"{ed}/Show/Attributes/User Defined": (
+        "Name filter", "Blender filters channels by name: type the custom attribute's name in the header search "
+        "field.") for ed in ("Graph Editor", "Dope Sheet")},
+    **{f"{ed}/Show/Objects/Clips": (
+        "NLA Editor", "Blender's clips are NLA strips: they are listed in the NLA Editor, not in this list.")
+       for ed in ("Graph Editor", "Dope Sheet")},
+    **{f"{ed}/Show/Objects/Characters": (
+        "Keying Sets", "Blender has no character sets (Keying Sets group channels for keying): no filter for "
+        "them.") for ed in ("Graph Editor", "Dope Sheet")},
+})
 
 
 # Greyed items of the Hypershade / Render Settings / Script Editor menu bars (step 105, captured in Maya 2022)
