@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 148 (Channel Box 마무리, #87 #85 #83 #95) 완료 — `docs/steps/step_148.md`. Channel Box RMB = Maya Channels 메뉴
+  (Blender 버튼 메뉴는 Python 항목을 C 항목 15 줄 뒤에 붙였다), UI 1.5 / 1.0 에서 Channel Box 가 한 줄 더 (PANE_TOP 재측정 +
+  위젯 단위 반올림 버그: Python round(22.5) = 22), AE 변환 값 = Maya 숫자 (단위 없음), 격자 Scale = Maya 숫자 (delta_scale),
+  조명 SHAPES = Color R / G / B + Intensity. 헤드리스 1324/1324, GUI step148 3 배율 각 6/6 + 관련 파일 통과.
+  **바로 다음 할 일**: 149 와이어 · 이름 · bind (#91 #93 #94; 격자 선택 색도) → 150 Graph Editor (#96) → 151 매니퓰레이터 ·
+  링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
+  (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 (바탕화면 `MayaWorkflowKit_upload/`).
+
 - Step 147 (Undo step · redo 패널, #88 #92 #86) 완료 — `docs/steps/step_147.md`. 메뉴 · 셸프 · 마킹 메뉴 명령이 각자 undo step
   하나 (전에는 Python 호출이라 step 도 등록도 없었음, 측정), Mesh Tools 도구 항목 뒤 Ctrl+Z 가 편집 모드에 남음, Ctrl+E / Ctrl+B /
   Joint Tool / IK Handle / 옵션 창 뒤 Adjust Last Operation 없음 (Create Joints 뒤 셸프 클릭이 됨), "redo" 옵션 상자는 이제 정말

@@ -981,3 +981,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Create > Polygon Primitives > Cube from the menu, move it, Ctrl+Z → only the move goes back; Ctrl+Z again → the cube goes. Same from the shelf and from a marking menu (Shift+RMB Create).
 - [ ] Ctrl+E on a face, Ctrl+B on an edge, Skeleton > Create IK Handle, Rigging shelf > Create Joints (4 clicks, Enter): no Adjust Last Operation panel anywhere; G repeats the last Ctrl+E / Ctrl+B.
 - [ ] An option box of the "redo" kind (Create > NURBS Primitives > Circle ❒): Adjust Last Operation shows the circle's settings and changing them edits the circle.
+
+## Step 148 — Channel Box finish (#87 #85 #83 #95)
+
+- [ ] Channel Box, a keyed object: RMB on a channel name (selected or not) → Maya's Channels menu only (Key Selected, Key All Keyable, Breakdown Selected, Mute ...), no Blender Insert Keyframe / Add Driver rows; Key Selected keys the channel you clicked.
+- [ ] UI 1.5 (and 1.0): a long Channel Box (many custom attributes / expanded INPUTS) fills its pane down to the Layer Editor, no two empty rows; the Layer Editor doesn't jump when INPUTS nodes open.
+- [ ] Attribute Editor, transform tab: Translate / Rotate / Scale read plain Maya numbers (62, -150, 1.5), never "62 c"; typing +=5 works like the Channel Box.
+- [ ] Create a Polygon Sphere, Deform > Lattice: ffd1Lattice Scale X / Y / Z = 2 2 2; moving lattice points still bends the sphere.
+- [ ] Create > Lights > Point Light: SHAPES shows Color R / G / B and Intensity; typing 2 into Intensity brightens the light.
