@@ -112,7 +112,7 @@ def draw_item(layout, path, label, icon_value=0):
 def _has_saved_options(path):
     from ..operators import option_windows
     w = option_windows.find_path(path)
-    return w is not None and option_windows.saved(w.key) is not None
+    return w is not None and w.click_saved and option_windows.saved(w.key) is not None
 
 
 def op_polls(target):
