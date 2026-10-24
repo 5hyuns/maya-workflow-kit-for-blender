@@ -227,9 +227,21 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- isolate (Ctrl+1) ------------------------------------------------------------------------------------
+# --- isolate (Ctrl+1, View > Isolate Select, Select > Filter Selection) -------------------------------------
+#
+# Maya keeps one face set (textureEditorIsolateSelectSet, $M\others\textureEditorIsolateSelect.mel:16-80): Add
+# Selected (mode 1) adds the faces the selection touches (polyListComponentConversion -tf: vertices -> their faces,
+# edges -> the faces beside them, UVs -> the faces using them), Remove Selected (2) takes them out, Remove All (0)
+# empties it for the hilited meshes; the UV Editor shows only the set's faces while the isolate view is on
+# (textureWindowShaderFacesMode 1). Ctrl+1 = Remove All + Add Selected + view on
+# (textureEditorToggleIsolateSelect.mel:29-31). Measured: research/maya/re/uv_select_178.md (Isolate). Kit: the set is
+# ``_iso_sets`` (face indices per object); while the view is on, faces outside it are hidden (UV Sync Selection on:
+# Blender's hide, the 3D View too) or deselected (sync off: the UV Editor draws only selected faces). Filter Selection
+# > Connected / Contained Faces (txtWndRelFacesMode) uses the same state with the faces of the selection at the time
+# it is turned on (delegated: Maya's filter follows later selection changes).
 
-_isolated = {}       # object name -> (synced, faces it hid / deselected, (vert, edge, face) selection before)
+_isolated = {}       # object name -> {synced, gone (face indices the kit hid / deselected), before, count}
+_iso_sets = {}       # object name -> (face count, set of face indices): Maya's textureEditorIsolateSelectSet
 
 
 def _picked_faces(bm, uv, synced):
@@ -240,30 +252,50 @@ def _picked_faces(bm, uv, synced):
     return full or [f for f in shown if any(compat.uv_vert_selected(l, uv) for l in f.loops)]
 
 
-def isolate(ob, synced):
-    """Show only the faces of the selected UVs: with UV Sync Selection the others are hidden (Blender's hide, so
-    the 3D View hides them too), without it they are deselected (the UV Editor then doesn't draw them).
-    Returns how many faces stay shown (0 = nothing selected, nothing changed)."""
+def _selection(bm):
+    return tuple([i for i, el in enumerate(seq) if el.select] for seq in (bm.verts, bm.edges, bm.faces))
+
+
+def _show_only(bm, rec, keep):
+    """Show exactly the faces ``keep`` (indices) of those the kit may touch; the current selection stays."""
+    synced = rec["synced"]
+    cur = _selection(bm)
+    bm.faces.ensure_lookup_table()
+    gone = set(rec["gone"])
+    back = [i for i in gone if i in keep]
+    newly = [f.index for f in bm.faces if not f.hide and f.index not in keep and (synced or f.select)]
+    if synced:
+        for i in back:
+            bm.faces[i].hide_set(False)
+        for i in newly:
+            bm.faces[i].hide_set(True)
+    gone = (gone - set(back)) | set(newly)
+    _restore_selection(bm, cur)
+    if not synced:
+        for i in gone:
+            bm.faces[i].select = False
+        for i in back:
+            bm.faces[i].select = True
+    rec["gone"] = sorted(gone)
+
+
+def isolate(ob, synced, keep=None):
+    """Show only ``keep`` (face indices; default: the faces of the selected UVs): with UV Sync Selection the others
+    are hidden (Blender's hide, so the 3D View hides them too), without it they are deselected (the UV Editor then
+    doesn't draw them). Returns how many faces stay shown (0 = nothing to show, nothing changed)."""
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.active
     if uv is None:
         return 0
-    keep = set(_picked_faces(bm, uv, synced))
+    if keep is None:
+        keep = {f.index for f in _picked_faces(bm, uv, synced)}
+        if keep:
+            _iso_sets[ob.name] = (len(bm.faces), set(keep))      # Ctrl+1 = Remove All + Add Selected
     if not keep:
         return 0
-    before = tuple([i for i, el in enumerate(seq) if el.select] for seq in (bm.verts, bm.edges, bm.faces))
-    gone = [f.index for f in bm.faces if not f.hide and f not in keep and (synced or f.select)]
-    bm.faces.ensure_lookup_table()
-    for i in gone:
-        if synced:
-            bm.faces[i].hide_set(True)
-        else:
-            bm.faces[i].select_set(False)
-    _restore_selection(bm, before)
-    if not synced:
-        for i in gone:
-            bm.faces[i].select = False
-    _isolated[ob.name] = (synced, gone, before, len(bm.faces))
+    rec = {"synced": synced, "gone": [], "before": _selection(bm), "count": len(bm.faces)}
+    _show_only(bm, rec, set(keep))
+    _isolated[ob.name] = rec
     bmesh.update_edit_mesh(ob.data)
     return len(keep)
 
@@ -279,17 +311,79 @@ def unisolate(ob):
     rec = _isolated.pop(ob.name, None)
     if rec is None:
         return False
-    synced, gone, before, count = rec
     bm = bmesh.from_edit_mesh(ob.data)
-    if len(bm.faces) != count:
+    if len(bm.faces) != rec["count"]:
         return False
     bm.faces.ensure_lookup_table()
-    if synced:
-        for i in gone:
+    if rec["synced"]:
+        for i in rec["gone"]:
             bm.faces[i].hide_set(False)
-    _restore_selection(bm, before)
+    _restore_selection(bm, rec["before"])
     bmesh.update_edit_mesh(ob.data)
     return True
+
+
+def iso_set(ob):
+    """Maya's isolate set of ``ob``: sorted face indices (empty when there is none / the mesh changed)."""
+    got = _iso_sets.get(ob.name)
+    if got is None or len(ob.data.polygons) != got[0]:
+        return []
+    return sorted(got[1])
+
+
+def edit_set(ob, action, faces):
+    """View > Isolate Select > Add Selected / Remove Selected / Remove All on ``ob``: ``faces`` = face indices the
+    selection touches. Updates the set and, while the view is on, what the UV Editor shows. Returns the set size."""
+    bm = bmesh.from_edit_mesh(ob.data)
+    got = _iso_sets.get(ob.name)
+    cur = set(got[1]) if got is not None and got[0] == len(bm.faces) else set()
+    if action == 'ADD':
+        cur |= set(faces)
+    elif action == 'REMOVE':
+        cur -= set(faces)
+    else:
+        cur = set()
+    _iso_sets[ob.name] = (len(bm.faces), cur)
+    rec = _isolated.get(ob.name)
+    if rec is not None and rec["count"] == len(bm.faces):
+        _show_only(bm, rec, cur)
+        bmesh.update_edit_mesh(ob.data)
+    return len(cur)
+
+
+def touched_faces(bm, uv, ts):
+    from ..operators import uv_select_178
+    return {f.index for f in uv_select_178.connected_faces(bm, uv, ts)}
+
+
+def set_filter(context, kind, rule):
+    """Select > Filter Selection > Connected / Contained Faces (check items): on = only the faces ``rule(bm, uv)``
+    gives are shown, the same kind again = off. Returns False when turning on found no faces."""
+    wm = context.window_manager
+    obs = _edit_meshes(context)
+    was = wm.allset_uv_filter
+    for ob in obs:
+        unisolate(ob)
+    wm.allset_uv_isolate = False
+    wm.allset_uv_filter = 'NONE'
+    if was == kind:
+        _cache.clear()
+        redraw_uv_editors()
+        return True
+    synced = context.scene.tool_settings.use_uv_select_sync
+    shown = 0
+    for ob in obs:
+        bm = bmesh.from_edit_mesh(ob.data)
+        uv = bm.loops.layers.uv.active
+        if uv is None:
+            continue
+        keep = {f.index for f in rule(bm, uv)}
+        if keep:
+            shown += isolate(ob, synced, keep)
+    wm.allset_uv_filter = kind if shown else 'NONE'
+    _cache.clear()
+    redraw_uv_editors()
+    return bool(shown)
 
 
 class ALLSET_OT_uv_isolate(bpy.types.Operator):
@@ -309,12 +403,51 @@ class ALLSET_OT_uv_isolate(bpy.types.Operator):
             for ob in obs:
                 unisolate(ob)
             wm.allset_uv_isolate = False
+            wm.allset_uv_filter = 'NONE'
         else:
             synced = context.scene.tool_settings.use_uv_select_sync
             if not sum(isolate(ob, synced) for ob in obs):
                 self.report({'WARNING'}, "Select UVs to isolate")
                 return {'CANCELLED'}
             wm.allset_uv_isolate = True
+        _cache.clear()
+        redraw_uv_editors()
+        return {'FINISHED'}
+
+
+ISO_ACTIONS = (('ADD', "Add Selected", "Add the faces of the selected UVs to the isolate select set"),
+               ('REMOVE', "Remove Selected", "Remove the faces of the selected UVs from the isolate select set"),
+               ('CLEAR', "Remove All", "Remove all faces of the selected meshes from the isolate select set"))
+
+
+class ALLSET_OT_uv_isolate_edit(bpy.types.Operator):
+    """Maya UV Editor View > Isolate Select > Add Selected / Remove Selected / Remove All"""
+    bl_idname = "allset.uv_isolate_edit"
+    bl_label = "Isolate Select Set (UV)"
+    bl_options = {'UNDO'}
+
+    action: EnumProperty(items=ISO_ACTIONS, name="Action", default='ADD', options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'EDIT_MESH'
+
+    @classmethod
+    def description(cls, context, props):
+        return next(d for k, _l, d in ISO_ACTIONS if k == props.action)
+
+    def execute(self, context):
+        ts = context.scene.tool_settings
+        total = 0
+        obs = _edit_meshes(context)
+        for ob in obs:
+            bm = bmesh.from_edit_mesh(ob.data)
+            uv = bm.loops.layers.uv.active
+            faces = touched_faces(bm, uv, ts) if self.action != 'CLEAR' else set()
+            total += edit_set(ob, self.action, faces)
+        on = any(ob.name in _isolated for ob in obs)
+        results.result(self, "Isolate select set: %d face%s%s" % (
+            total, "" if total == 1 else "s", "" if on else " (shown with View > Isolate Select > View Selected)"))
         _cache.clear()
         redraw_uv_editors()
         return {'FINISHED'}
@@ -374,16 +507,22 @@ class ALLSET_OT_uv_move_shell(bpy.types.Operator):
 @bpy.app.handlers.persistent
 def _load_pre(*_args):
     _isolated.clear()
+    _iso_sets.clear()
     _hidden_image.clear()
     _cache.clear()
     _shell_tool["on"] = False
     try:
         bpy.context.window_manager.allset_uv_isolate = False
+        bpy.context.window_manager.allset_uv_filter = 'NONE'
     except (AttributeError, RuntimeError):
         pass
 
 
-classes = (ALLSET_OT_uv_display, ALLSET_OT_uv_isolate, ALLSET_OT_uv_move_shell)
+classes = (ALLSET_OT_uv_display, ALLSET_OT_uv_isolate, ALLSET_OT_uv_isolate_edit, ALLSET_OT_uv_move_shell)
+
+FILTER_ITEMS = (('NONE', "None", "All faces shown"),
+                ('CONNECTED', "Connected Faces", "Only the faces connected to the UV selection shown"),
+                ('CONTAINED', "Contained Faces", "Only the faces whose UVs were all selected shown"))
 
 
 def register():
@@ -396,6 +535,9 @@ def register():
                                                 description="Maya UV Editor: UV shell borders drawn thick (9)")
     wm.allset_uv_isolate = BoolProperty(name="Isolate Select", default=False,
                                         description="Maya UV Editor: only the selected UVs' faces shown (Ctrl+1)")
+    wm.allset_uv_filter = EnumProperty(name="Filter Selection", items=FILTER_ITEMS, default='NONE',
+                                       description="Maya UV Editor Select > Filter Selection (Connected / Contained "
+                                                   "Faces)")
     _handle.append(bpy.types.SpaceImageEditor.draw_handler_add(_draw, (), 'WINDOW', 'POST_PIXEL'))
     bpy.app.handlers.depsgraph_update_post.append(_invalidate)
     bpy.app.handlers.load_pre.append(_load_pre)
@@ -411,11 +553,12 @@ def unregister():
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(_handle.pop(), 'WINDOW')
     wm = bpy.types.WindowManager
-    for name in ("allset_uv_isolate", "allset_uv_texture_borders", "allset_uv_shell_borders"):
+    for name in ("allset_uv_filter", "allset_uv_isolate", "allset_uv_texture_borders", "allset_uv_shell_borders"):
         if hasattr(wm, name):
             delattr(wm, name)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     _cache.clear()
     _isolated.clear()
+    _iso_sets.clear()
     _hidden_image.clear()

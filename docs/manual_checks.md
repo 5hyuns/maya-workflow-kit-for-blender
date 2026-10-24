@@ -1171,3 +1171,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] View > Center View of Selection: the selection jumps to the middle without the view turning or zooming (also through a camera: the camera moves).
 - [ ] Hover greyed panel menu rows (Shading > Flat Shade All, Show > Controllers, toolbar Resolution Gate, Status Line Render Setup): tooltip + Help Line show the notice, not "No Blender equivalent".
 
+## Step 178
+
+- [ ] UV Editor > Modify > Map Border / Straighten Border / Layout Along / Stack Similar Shells on your own meshes: the result looks like Maya's (border on the 0-1 square, chains straight, shells in one row, similar shells stacked).
+- [ ] UV Editor > View > Isolate Select > Add / Remove Selected with Ctrl+1 on: the shown faces follow; Remove All shows everything.
+

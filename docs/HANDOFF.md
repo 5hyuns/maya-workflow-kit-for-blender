@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 178 (UV Editor finish, backlog_174 #5) 완료 — `docs/steps/step_178.md`. UV Editor 메뉴 118 → **136 / 172**: Modify 6 개
+  (Map Border, Straighten Border, Match Grid, Layout Along, Stack Similar Shells, Distribute UVs — mayapy 대비 최대 2e-7,
+  `operators/uv_modify.py`), Select / Edit / View 12 개 (Back- / Front-Facing, Texture Borders, Non-Overlapping, Unmapped,
+  Filter Connected / Contained, To Connected Faces, Unpin All, Isolate Add / Remove / Remove All — `operators/uv_select_178.py`,
+  `ui/uv_display.py`). Symmetrize 는 Maya 에서 측정 안 돼 notice. 헤드리스 1649 / 1649, GUI step178 5 / 5.
+  **바로 다음 할 일**: 179 Light Linking (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json` 6 번째),
+  그 뒤 180 Animation Layers, 181 Surfaces.
+
 - Step 177 (Panel menus honesty and twins, backlog_174 #4) 완료 — `docs/steps/step_177.md`. 패널 메뉴 / 툴바 / Status Line 회색이
   이제 `tools/menu_count.py` (패널 줄 3 개), notice 규칙 (`notices.PANEL_MENU` 60, 회색 notice 없음 0), `tools/menu_consistency.py`
   (0 쌍) 안 — 데이터 `ui/panel_menu_data.py`. 연결: Center View of Selection (Maya viewFit -c mayapy 측정), Camera Attribute
