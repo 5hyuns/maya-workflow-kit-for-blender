@@ -996,3 +996,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] View > Curve Name > Always: "pCube1.translateX" etc. in the curve colours just above each curve's last key (at the right edge when the last key is off screen); Active Only = only the selected curves; Never = none; Normalized View hides the names.
 - [ ] Show > Objects > Clear Below after unticking Polygon Objects / Cameras → every object type is listed again; Show > Attributes > Clear Below clears the channel name filter.
 - [ ] Greyed View items (Undo View Change, Clip Time, Show Results, Show Buffer Curves, Play Range Shades, Keys > Never, Key View, Time Ruler Placement, Simple Toolbar) show their own line in the tooltip / Help Line.
+
+## Step 151 — Extrude manipulator (lane B)
+
+- [ ] Cube, top face, Ctrl+E from Maya's persp angle: blue arrow up (normal), red arrow along world X, green along the face's Y, a cube past each cone, three translucent plane squares between the axes, a light-blue centre square; compare with research/maya/workflows/shots/modeling_03.png (Maya also draws a cyan rotate ring and a world / local toggle icon: not in the kit).
+- [ ] Hover each handle ~1 s: it turns yellow, no Blender tooltip appears. Pre-selection doesn't highlight the face under a handle.
+- [ ] Drag the red arrow → the top slides along X; drag a plane square → it slides in that plane; Ctrl+Z once takes each drag back.
+- [ ] Drag the red / green cube outward → the top grows along that axis; drag the blue cube → nothing visible on a flat top (Maya too); drag the centre square right / left → the top grows / shrinks evenly.
+- [ ] Ctrl+E on two adjacent faces (top + side), drag the red arrow → the shared edge moves by the mean of both faces' moves; In-View Editor and Channel Box INPUTS still list only Thickness / Local Translate Z / Offset / Divisions / Keep Faces Together.
+- [ ] Edge and vertex extrusions, bevels: still only their single arrow.

@@ -5,8 +5,13 @@
 - Visible while the active edit object's last kit extrusion is valid and its extruded faces are the selection
   (operators/extrude.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
   (ui/manipulator.py) hides meanwhile.
-- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended, docs/PLAN.md:10): a blue
-  arrow along the faces' normal whose drag (``allset.extrude_drag``) sets Local Translate Z.
+- The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended, docs/PLAN.md:10). Step 151:
+  Maya's polyExtrudeFace manipulator (research/maya/workflows/shots/modeling_03.png) in the faces' local frame - three
+  arrows (Local Translate X red / Y green / Z blue = the normal), a cube past each cone (Local Scale X / Y / Z), three
+  plane handles (two Local Translate values) and a light-blue centre square (uniform Local Scale). Every handle runs
+  ``allset.extrude_drag`` with its ``handle``; release = one undo step (``extrude.set_params``). Edge / vertex
+  extrusions and bevels keep the single arrow of their ``Spec.arrow``. No Blender tooltips (Maya manipulators have
+  none).
 - The In-View Editor box is drawn by a POST_PIXEL handler; 2D gizmos only pick its rows (the shelf's way, step 51).
   Dragging a row sideways changes the value, a click without a drag types it, Keep Faces Together toggles.
 - Channel Box INPUTS: the node and five rows (WindowManager text proxies: a UI edit of a WM property pushes no
@@ -22,12 +27,13 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Matrix, Vector, geometry
 
-from . import cb_entry
+from . import cb_entry, manipulator
 from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec (step 139)
 
 ROW_H = 16          # px at UI scale 1 (Maya In-View rows, modeling_03.png)
 WIDTH = 180
-GAP = (70, -6)      # box top-left from the manipulator centre on screen
+GAP = (150, -6)     # box top-left from the manipulator centre on screen: right of the X / Y handles (step 151;
+                    # Maya modeling_03.png: past the manipulator, 250 px from its centre at a 100 px rotate ring)
 FLOAT_STEP = 0.01   # Maya units per px of a sideways drag
 DIV_PX = 20         # px per division
 KINDS = {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
@@ -43,7 +49,6 @@ BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)
 TEXT = (0.86, 0.86, 0.86, 1.0)
 HOT = (1.0, 1.0, 0.35, 1.0)        # Maya's highlighted attribute name (modeling_03.png)
-ARROW_BLUE = (0.05, 0.25, 1.0)
 YELLOW = (1.0, 1.0, 0.0)
 
 _state = {"hot": 0, "handle": None}
@@ -247,12 +252,173 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
             gz.target_set_operator(ALLSET_OT_inview_drag.bl_idname).row = i
 
 
-# --- the extrude manipulator (3D gizmo) -----------------------------------------------------------
+# --- the extrude manipulator (3D gizmo, step 151) --------------------------------------------------
 
-def _arrow_matrix(frame):
-    centre, n, _k = frame
-    rot = Vector((0, 0, 1)).rotation_difference(n).to_matrix().to_4x4()
-    return Matrix.Translation(centre) @ rot
+# Maya 2022 polyExtrudeFace manipulator measured on research/maya/workflows/shots/modeling_03.png (top face of a cube,
+# local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
+# plane handles centred 0.5 / 0.5 between two axes (half 0.08, translucent with a full-colour rim), hollow centre square
+# half 0.12 (20 px at an 83 px Z arrow) in #64dcff, screen facing. Axis colours = the kit Move manipulator's Maya
+# colours (manipulator.MAYA_AXIS). Not drawn (delegated): Maya's cyan rotate ring (polyExtrudeFace Local Rotate - the
+# kit doesn't model it) and its world / local toggle icon (world mode drives Translate / Rotate / Scale, not modelled).
+CONE_BASE, CONE_TIP, CONE_R = 0.64, 0.86, 0.05
+CUBE_AT, CUBE_HALF = 1.0, 0.07
+PLANE_AT, PLANE_HALF = 0.5, 0.08
+PLANE_FILL = 0.25
+CENTER_HALF = 0.12
+CENTER_COLOUR = (0x64 / 255, 0xdc / 255, 1.0)
+SCALE_PX = 100.0          # px of mouse travel along a scale handle that doubles the scale (delegated)
+# Maya draws the extrude manipulator smaller than its Move one: Z arrow to cube 83 px at a ~27 deg persp elevation
+# (modeling_03.png) = ~93 px against the Move Y arrow's 108 px (manipulator.ARROW_PX)
+SIZE = 0.86
+
+# handle -> (role, axis or plane, the values it drives)
+HANDLES = {
+    "TX": ('ARROW', 'X', ("local_translate_x",)),
+    "TY": ('ARROW', 'Y', ("local_translate_y",)),
+    "TZ": ('ARROW', 'Z', ("local_translate_z",)),
+    "SX": ('CUBE', 'X', ("local_scale_x",)),
+    "SY": ('CUBE', 'Y', ("local_scale_y",)),
+    "SZ": ('CUBE', 'Z', ("local_scale_z",)),
+    "PXY": ('PLANE', 'XY', ("local_translate_x", "local_translate_y")),
+    "PYZ": ('PLANE', 'YZ', ("local_translate_y", "local_translate_z")),
+    "PXZ": ('PLANE', 'XZ', ("local_translate_x", "local_translate_z")),
+    "S": ('CENTER', None, ("local_scale_x", "local_scale_y", "local_scale_z")),
+}
+AXIS_INDEX = {'X': 0, 'Y': 1, 'Z': 2}
+
+
+def handle_fields(rec, handle):
+    """The values ``handle`` drives on ``rec`` (edge / vertex extrusion, bevel: only "TZ" = their arrow field)."""
+    if rec is None or handle not in HANDLES:
+        return ()
+    if rec.spec is not extrude.FACE:
+        return (rec.spec.arrow,) if handle == "TZ" and rec.spec.arrow is not None else ()
+    return HANDLES[handle][2]
+
+
+def manip_frame(ob, rec):
+    """(world centre, 3x3 world unit axes (columns X, Y, Z), world lengths of one mesh unit along X / Y / Z) of the
+    extrude manipulator: Z = the faces' normal, X / Y = polyExtrudeFace's local axes of that normal (world X projected
+    into the face plane, extrude.face_axes). None when there is nothing to show."""
+    frame = cap_frame(ob, rec)
+    if frame is None:
+        return None
+    centre, nw, kz = frame
+    mw3 = ob.matrix_world.to_3x3()
+    inv = mw3.inverted_safe()
+    n_obj = (inv @ nw)
+    n_obj = n_obj.normalized() if n_obj.length > 1e-12 else Vector((0, 0, 1))
+    axes = extrude.mesh_axes(ob)
+    x_obj, y_obj = extrude.face_axes(n_obj, axes["direction"], axes["fallback"])
+    xw, yw = mw3 @ x_obj, mw3 @ y_obj
+    kx, ky = xw.length or 1.0, yw.length or 1.0
+    xw, yw = xw / kx, yw / ky
+    return centre, Matrix((xw, yw, nw)).transposed(), (kx, ky, kz)
+
+
+def unit_px(context):
+    """Screen px of one arrow unit (wm_gizmo: scale_basis x gizmo_size x UI scale at use_draw_scale)."""
+    return (manipulator.scale_basis(context) * SIZE * context.preferences.view.gizmo_size
+            * (context.preferences.system.ui_scale or 1.0))
+
+
+def handles_hit(context, region, rv3d, mouse, reach):
+    """True when ``mouse`` (region px) is within ``reach`` px of a shown handle of the extrude manipulator: the
+    pre-selection gizmo (operators/preselect.py, a 2D test_select that would win over these 3D-picked handles)
+    declines there, like it does on the Move manipulator (step 97)."""
+    ob, rec = record(context)
+    frame = manip_frame(ob, rec) if rec is not None else None
+    if frame is None:
+        return False
+    centre, axes, _k = frame
+    c2 = view3d_utils.location_3d_to_region_2d(region, rv3d, centre)
+    if c2 is None:
+        return False
+    w = view3d_utils.region_2d_to_location_3d(region, rv3d, c2 + Vector((1.0, 0.0)), centre) - centre
+    unit = unit_px(context) * w.length          # world length of one arrow unit at the centre
+    m = Vector(mouse)
+
+    def at(vec):
+        p = view3d_utils.location_3d_to_region_2d(region, rv3d, centre + vec * unit)
+        return p if p is not None else c2
+
+    for handle in HANDLES:
+        if not handle_fields(rec, handle):
+            continue
+        role, data, _f = HANDLES[handle]
+        if role == 'ARROW':
+            a, b = c2, at(axes.col[AXIS_INDEX[data]] * CONE_TIP)
+            ab = b - a
+            t = 0.0 if ab.length_squared < 1e-9 else max(0.0, min(1.0, (m - a).dot(ab) / ab.length_squared))
+            if (a + ab * t - m).length <= reach:
+                return True
+        elif role == 'CUBE':
+            if (at(axes.col[AXIS_INDEX[data]] * CUBE_AT) - m).length <= reach + CUBE_HALF * unit_px(context):
+                return True
+        elif role == 'PLANE':
+            i, j = AXIS_INDEX[data[0]], AXIS_INDEX[data[1]]
+            if (at((axes.col[i] + axes.col[j]) * PLANE_AT) - m).length <= reach + PLANE_HALF * unit_px(context):
+                return True
+        elif (c2 - m).length <= reach + CENTER_HALF * unit_px(context):
+            return True
+    return False
+
+
+def handle_shapes(role):
+    """(draw shapes [(type, verts, fill)], pick shape (type, verts)) of a handle in arrow units: arrows / cubes point
+    along local +Z, plane handles lie in the local XY plane, the centre square faces +Z. Pure (tests run it headless)."""
+    m = manipulator
+    if role == 'ARROW':
+        return ([('LINES', [(0, 0, 0), (0, 0, CONE_BASE)], False), ('TRIS', m._cone(CONE_BASE, CONE_TIP, CONE_R), False)],
+                ('TRIS', m._bar(CENTER_HALF, CONE_BASE, 0.04) + m._cone(CONE_BASE, CONE_TIP, CONE_R * 1.6)))
+    if role == 'CUBE':
+        return ([('LINES', [(0, 0, CONE_TIP), (0, 0, CUBE_AT - CUBE_HALF)], False),
+                 ('TRIS', m._box((0, 0, CUBE_AT), CUBE_HALF), False)],
+                ('TRIS', m._box((0, 0, CUBE_AT), CUBE_HALF * 1.6)))
+    if role == 'PLANE':
+        rim = [(x + PLANE_AT, y + PLANE_AT, z) for x, y, z in m._square_outline(PLANE_HALF)]
+        return ([('TRIS', m._square(PLANE_AT, PLANE_AT, PLANE_HALF), True), ('LINES', rim, False)],
+                ('TRIS', m._square(PLANE_AT, PLANE_AT, PLANE_HALF * 1.3)))
+    if role == 'CENTER':
+        return ([('LINES', m._square_outline(CENTER_HALF), False)], ('TRIS', m._square(0, 0, CENTER_HALF * 1.3)))
+    raise ValueError(role)
+
+
+class ALLSET_GT_extrude_handle(bpy.types.Gizmo):
+    """One handle of the Maya extrude manipulator (custom shapes; plane handles: translucent fill + rim)."""
+    bl_idname = "ALLSET_GT_extrude_handle"
+    __slots__ = ("draw_shapes", "pick_shape", "handle")
+
+    def build(self, handle):
+        self.handle = handle
+        draw, pick = handle_shapes(HANDLES[handle][0])
+        self.draw_shapes = [(self.new_custom_shape(t, v), fill) for t, v, fill in draw]
+        self.pick_shape = self.new_custom_shape(*pick)
+
+    def draw(self, context):
+        colour = self.color_highlight if self.is_highlight else self.color
+        alpha = self.alpha_highlight if self.is_highlight else self.alpha
+        gpu.state.blend_set('ALPHA')
+        gpu.state.line_width_set(self.line_width)
+        for (batch, shader), fill in getattr(self, "draw_shapes", ()):
+            shader.bind()
+            shader.uniform_float("color", (*colour, alpha * PLANE_FILL if fill else alpha))
+            with gpu.matrix.push_pop():
+                gpu.matrix.multiply_matrix(self.matrix_world)
+                batch.draw(shader)
+        gpu.state.line_width_set(1.0)
+        gpu.state.blend_set('NONE')
+
+    def draw_select(self, context, select_id):
+        sh = getattr(self, "pick_shape", None)
+        if sh is not None:
+            self.draw_custom_shape(sh, select_id=select_id)
+
+
+def _no_tooltip(gz):
+    """Maya manipulators have no tooltips; Blender would show the target operator's description (#98)."""
+    if hasattr(gz, "use_tooltip"):
+        gz.use_tooltip = False
 
 
 class ALLSET_GGT_extrude(bpy.types.GizmoGroup):
@@ -268,22 +434,47 @@ class ALLSET_GGT_extrude(bpy.types.GizmoGroup):
         return space is not None and space.type == 'VIEW_3D' and space.show_gizmo and arrow_visible(context)
 
     def setup(self, context):
-        gz = self.gizmos.new("GIZMO_GT_arrow_3d")
-        gz.target_set_operator(ALLSET_OT_extrude_drag.bl_idname)
-        gz.color = ARROW_BLUE
-        gz.color_highlight = YELLOW
-        gz.alpha = gz.alpha_highlight = 1.0
-        gz.line_width = 2.0
-        gz.use_draw_modal = True
-        self.arrow = gz
+        self.handles = {}
+        for handle in HANDLES:
+            gz = self.gizmos.new(ALLSET_GT_extrude_handle.bl_idname)
+            gz.build(handle)
+            gz.target_set_operator(ALLSET_OT_extrude_drag.bl_idname).handle = handle
+            gz.color_highlight = YELLOW
+            gz.alpha = gz.alpha_highlight = 1.0
+            gz.line_width = 1.5
+            gz.use_draw_scale = True
+            gz.use_draw_modal = True
+            _no_tooltip(gz)
+            self.handles[handle] = gz
+        self.arrow = self.handles["TZ"]
 
     def draw_prepare(self, context):
         ob, rec = record(context)
         if rec is None:
             return
-        frame = cap_frame(ob, rec)
-        if frame is not None:
-            self.arrow.matrix_basis = _arrow_matrix(frame)
+        frame = manip_frame(ob, rec)
+        rv3d = context.region_data
+        view = rv3d.view_rotation.to_matrix() if rv3d is not None else Matrix.Identity(3)
+        colours = manipulator.axis_colours()
+        s = manipulator.scale_basis(context) * SIZE
+        for handle, gz in self.handles.items():
+            gz.hide = frame is None or not handle_fields(rec, handle)
+            if gz.hide:
+                continue
+            centre, axes, _k = frame
+            role, data, _fields = HANDLES[handle]
+            gz.scale_basis = s
+            if role in ('ARROW', 'CUBE'):
+                rot = axes @ manipulator._axis_rot(data)
+                gz.color = colours[data]
+            elif role == 'PLANE':
+                _c, normal, local = manipulator.PLANES[data]
+                rot = axes @ local
+                gz.color = colours[normal]
+            else:
+                rot = view
+                gz.color = CENTER_COLOUR
+            gz.matrix_basis = Matrix.Translation(centre) @ rot.to_4x4()
 
 
 # --- operators ---------------------------------------------------------------------------------------
@@ -404,58 +595,117 @@ class ALLSET_OT_inview_type(bpy.types.Operator):
 
 
 class ALLSET_OT_extrude_drag(bpy.types.Operator):
-    """Drag the extrude manipulator: Local Translate Z of the last extrusion (Maya polyExtrudeFace / Edge),
-    Length of a vertex extrusion"""
+    """Drag a handle of the extrude manipulator (Maya polyExtrudeFace Local Translate / Local Scale; Local
+    Translate Z of an edge extrusion, Length of a vertex extrusion)"""
     bl_idname = "allset.extrude_drag"
     bl_label = "Extrude Manipulator"
     bl_options = {'INTERNAL'}
+
+    handle: StringProperty(default="TZ", options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
         rec = extrude.active(context)[1]
         return rec is not None and rec.spec.arrow is not None and context.region_data is not None
 
-    def _along(self, context, event):
+    def _ray(self, context, event):
         region, rv3d = context.region, context.region_data
         co = (event.mouse_region_x, event.mouse_region_y)
-        o = view3d_utils.region_2d_to_origin_3d(region, rv3d, co)
-        d = view3d_utils.region_2d_to_vector_3d(region, rv3d, co)
-        hit = geometry.intersect_line_line(self._c, self._c + self._n, o, o + d)
-        return 0.0 if hit is None else (hit[0] - self._c).dot(self._n)
+        return (view3d_utils.region_2d_to_origin_3d(region, rv3d, co),
+                view3d_utils.region_2d_to_vector_3d(region, rv3d, co))
+
+    def _along(self, context, event, axis):
+        o, d = self._ray(context, event)
+        hit = geometry.intersect_line_line(self._c, self._c + axis, o, o + d)
+        return None if hit is None else (hit[0] - self._c).dot(axis)
+
+    def _on_plane(self, context, event, normal):
+        o, d = self._ray(context, event)
+        return geometry.intersect_line_plane(o, o + d, self._c, normal)
+
+    def _screen_dir(self, context, axis):
+        region, rv3d = context.region, context.region_data
+        p0 = view3d_utils.location_3d_to_region_2d(region, rv3d, self._c)
+        p1 = view3d_utils.location_3d_to_region_2d(region, rv3d, self._c + axis * 1e-3)
+        if p0 is None or p1 is None or (p1 - p0).length < 1e-9:
+            return Vector((1.0, 0.0))
+        return (p1 - p0).normalized()
 
     def invoke(self, context, event):
         ob, rec = extrude.active(context)
-        frame = cap_frame(ob, rec)
+        fields = handle_fields(rec, self.handle)
+        frame = manip_frame(ob, rec) if fields else None
         if frame is None:
             return {'CANCELLED'}
-        self._ob, self._rec = ob, rec
-        self._arrow = rec.spec.arrow
-        self._c, self._n, self._k = frame
-        self._start = dict(rec.params)
+        self._ob, self._rec, self._fields = ob, rec, fields
+        self._c, axes, self._k = frame
+        self._axes = [axes.col[i].copy() for i in range(3)]
+        self._role, data, _f = HANDLES[self.handle]
+        self._idx = [AXIS_INDEX[a] for a in data] if data else []
+        self._start = dict(extrude.DEFAULTS, **rec.params)
         self._unit = units.maya_unit(context.scene)
-        self._t0 = self._along(context, event)
+        self._mouse0 = Vector((event.mouse_region_x, event.mouse_region_y))
+        if self._role == 'ARROW':
+            self._t0 = self._along(context, event, self._axes[self._idx[0]])
+        elif self._role == 'PLANE':
+            normal = self._axes[self._idx[0]].cross(self._axes[self._idx[1]])
+            self._normal = normal
+            self._h0 = self._on_plane(context, event, normal)
+        elif self._role == 'CUBE':
+            self._sdir = self._screen_dir(context, self._axes[self._idx[0]])
+        self._last = {}
         self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} else 'LEFTMOUSE'
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
-    def _ltz(self, context, event):
-        dt = self._along(context, event) - self._t0
-        return round(self._start[self._arrow] + dt / self._k / self._unit, 4)
+    def values(self, context, event):
+        """{field: value} for the mouse at ``event`` (the press values while the drag can't be measured)."""
+        start, out = self._start, {}
+        if self._role == 'ARROW':
+            i = self._idx[0]
+            t = self._along(context, event, self._axes[i])
+            if t is None or self._t0 is None:
+                return dict(self._last)
+            out[self._fields[0]] = round(start[self._fields[0]] + (t - self._t0) / self._k[i] / self._unit, 4)
+        elif self._role == 'PLANE':
+            h = self._on_plane(context, event, self._normal)
+            if h is None or self._h0 is None:
+                return dict(self._last)
+            d = h - self._h0
+            for field, i in zip(self._fields, self._idx):
+                out[field] = round(start[field] + d.dot(self._axes[i]) / self._k[i] / self._unit, 4)
+        else:
+            mouse = Vector((event.mouse_region_x, event.mouse_region_y))
+            if self._role == 'CUBE':
+                dist = (mouse - self._mouse0).dot(self._sdir)
+            else:   # centre: Maya's uniform scale follows the horizontal drag
+                dist = mouse.x - self._mouse0.x
+            factor = 1.0 + dist / (SCALE_PX * (_scale() or 1.0))      # ui_scale reads 0 in background
+            for field in self._fields:
+                out[field] = round(start[field] * factor, 4)
+        self._last = out
+        return dict(out)
 
     def modal(self, context, event):
         if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
-            params = dict(self._start, **{self._arrow: self._ltz(context, event)})
+            params = dict(self._rec.params, **self.values(context, event))
             extrude.preview(self._ob, self._rec, params, self._unit)
-            _state["hot"] = self._rec.spec.fields.index(self._arrow)
+            if self._fields[0] in self._rec.spec.fields:
+                _state["hot"] = self._rec.spec.fields.index(self._fields[0])
             _redraw(context)
             return {'RUNNING_MODAL'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
-            extrude.preview(self._ob, self._rec, self._start, self._unit)
+            extrude.preview(self._ob, self._rec, {k: self._start[k] for k in self._rec.params}, self._unit)
             self._rec.live = False
             _redraw(context)
             return {'CANCELLED'}
         if event.type == self._button and event.value == 'RELEASE':
-            extrude.set_params(context, **{self._arrow: self._ltz(context, event)})
+            changes = self.values(context, event)
+            if changes:
+                extrude.set_params(context, **changes)
+            else:
+                extrude.preview(self._ob, self._rec, {k: self._start[k] for k in self._rec.params}, self._unit)
+                self._rec.live = False
             _redraw(context)
             return {'FINISHED'}
         return {'RUNNING_MODAL'}
@@ -537,7 +787,8 @@ def draw_cb_node(layout, context, rec):
         split.prop(hist, f"{field}_text", text="")
 
 
-classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GGT_extrude,
+classes = (ALLSET_PG_history, ALLSET_GT_in_view_row, ALLSET_GGT_in_view, ALLSET_GT_extrude_handle,
+           ALLSET_GGT_extrude,
            ALLSET_OT_inview_drag, ALLSET_OT_inview_type, ALLSET_OT_extrude_drag)
 
 
