@@ -65,6 +65,10 @@ from . import anim_snapshot  # noqa: E402  step 171: Visualize > Create Animatio
 
 classes += anim_snapshot.classes
 
+from . import repeat_maya  # noqa: E402  step 175: Maya G / Edit > Repeat / Recent Commands for menu commands
+
+classes += repeat_maya.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -106,9 +110,11 @@ def register():
     dag.register_handlers()
     modify_maya.register_props()
     anim_snapshot.register_handlers()
+    repeat_maya.register_handlers()
 
 
 def unregister():
+    repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
     modify_maya.unregister_props()

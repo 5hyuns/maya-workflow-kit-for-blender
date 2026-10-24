@@ -139,8 +139,8 @@ MAP = {
     # --- Edit ---
     "Edit/Undo": "ed.undo",
     "Edit/Redo": "ed.redo",
-    "Edit/Repeat": "screen.repeat_last",
-    "Edit/Recent Commands List": "screen.repeat_history",
+    "Edit/Repeat": "allset.repeat_last",                                  # step 175
+    "Edit/Recent Commands List": ("menu", "ALLSET_MT_recent_commands"),
     "Edit/Cut": "allset.cut",                              # copy + delete (step 90)
     "Edit/Copy": ("v3d", "view3d.copybuffer", {}),
     "Edit/Paste": ("v3d", "allset.paste", {}),

@@ -83,7 +83,13 @@ def run_action(context, action, option=False, path=None):
     a menu item with its option values); ``path`` = the Maya menu path, for windows tied to a path. A finished
     command is one undo step named after the item (``undo_steps.command``, step 147)."""
     from .. import undo_steps
-    return undo_steps.command(_label(action, path), lambda: _run_action(context, action, option, path))
+    outer = undo_steps.depth() == 0
+    label = _label(action, path)
+    res = undo_steps.command(label, lambda: _run_action(context, action, option, path))
+    if outer and not option and isinstance(res, set) and 'FINISHED' in res:
+        from ..operators import repeat_maya       # Maya G / Recent Commands (step 175)
+        repeat_maya.record(label, action, path, context)
+    return res
 
 
 def _label(action, path):
@@ -397,8 +403,8 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
 
     @staticmethod
     def _open_label(key):
-        if key == "RECENT":
-            bpy.ops.screen.repeat_history('INVOKE_DEFAULT')
+        if key == "RECENT":   # Maya HotboxRecentMenu: the repeatLast history (step 175)
+            bpy.ops.wm.call_menu(name="ALLSET_MT_recent_commands")
         elif key == "CONTROLS":
             bpy.ops.wm.call_menu(name=ALLSET_MT_hotbox_controls.bl_idname)
         else:

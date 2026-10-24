@@ -1247,6 +1247,14 @@ def patch_menu_shortcuts(kd):
     kd.remove("Window", "wm.call_menu", type="O", ctrl=True, shift=True)
 
 
+def patch_repeat(kd):
+    """Step 175: G = Maya repeat last, menu / shelf / marking commands too (operators/repeat_maya.py); Blender's
+    screen.repeat_last only knows registered operators. Graph Editor G stays anim.scene_range_frame (step 70)."""
+    kd.remove("Screen", "screen.repeat_last", type="G")
+    _add(kd, "Screen", "allset.repeat_last", make_event("G"),
+         shadows=("Graph Editor", "Grease Pencil Edit Mode"))   # their own G (frame range / grab) win there
+
+
 PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_hold_snap, patch_soft_select, patch_tap_hold_and_pivot, patch_pick_walk,
            patch_camera, patch_view_history, patch_space_tap, patch_smooth_preview,
@@ -1260,7 +1268,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
            patch_graph_outliner, patch_shelf_scroll, patch_script_editor, patch_key_batch_3,
-           patch_menu_shortcuts)
+           patch_menu_shortcuts, patch_repeat)
 
 
 def apply(data):

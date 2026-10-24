@@ -98,7 +98,8 @@ ENTRIES = {
                                        note="Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17)"),
     "SelectAllMarkingMenu": _e("KIT", (V3D, "allset.tap_hold", {"binding": "select_all"}),
                                note="탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9)"),
-    "RepeatLast": _e("IC", ("Screen", "screen.repeat_last", {})),
+    "RepeatLast": _e("KIT", ("Screen", "allset.repeat_last", {}), step=175,
+                     note="메뉴 · 셸프 · 마킹 명령도 반복 (Blender repeat_last 는 등록된 연산자만)"),
     "SetKey": _e("KIT", (OBJ, "allset.set_key", {}),
                   note="키 가능한 모든 채널 (가시성·커스텀 포함, Hide/Nonkeyable 제외), 포즈 모드 = 선택 본; "
                        "활성 Keying Set 이 있으면 그것 (step 56)"),
