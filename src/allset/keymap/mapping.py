@@ -251,7 +251,7 @@ ENTRIES = {
     "DuplicateSpecial": _e("KIT", (OBJ, "allset.duplicate_special", {}),
                            note="복사/인스턴스, 사본 수, 누적 오프셋 (Adjust Last Operation)"),
     "ShowAttributeEditorOrChannelBox": _e("KIT", (OBJ, "allset.ae_toggle", {}),
-                                          note="CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, step 141 #65)"),
+                                          note="CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, step 141 #65), Graph Editor / Dope Sheet / NLA / 채널 목록도 (step 150 #96)"),
     "SelectAll": _e("KIT", (OBJ, "object.select_all", {"action": 'SELECT'}),
                     note="편집 / 포즈 / UV 모드: <모드>.select_all(SELECT) (step 141)"),
     "SelectNone": _e("KIT", (OBJ, "object.select_all", {"action": 'DESELECT'}),

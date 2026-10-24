@@ -25,7 +25,8 @@ ADDED = []
 PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
-                      "allset.graph_channel_click", "allset.script_run", "allset.dock_strip_click")
+                      "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
+                      "allset.dock_strip_click")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -413,7 +414,7 @@ def patch_attribute_editor(kd):
 
 
 # Keymaps whose Ctrl+A is IC select-all (keymap/ic_4_5.py; same in ic_5_0 – ic_5_2). Text / Console / Font /
-# File Browser keep their text-style select-all; the 2D animation editors are left for later (step_141_keys.md).
+# File Browser keep their text-style select-all; the 2D animation editors follow since step 150.
 CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curve", "curve.select_all"),
                 ("Armature", "armature.select_all"), ("Metaball", "mball.select_all"),
                 ("Lattice", "lattice.select_all"), ("Particle", "particle.select_all"),
@@ -421,7 +422,11 @@ CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curv
                 ("Point Cloud", "pointcloud.select_all"),
                 ("Paint Face Mask (Weight, Vertex, Texture)", "paint.face_select_all"),
                 ("Paint Vertex Selection (Weight, Vertex)", "paint.vert_select_all"),
-                ("UV Editor", "uv.select_all"))
+                ("UV Editor", "uv.select_all"),
+                # step 150 (#96): the 2D animation editors too — Maya's Ctrl+a is global (Graph Editor / Dope Sheet
+                # included); IC Ctrl+A there = select all keys / channels, Ctrl+Shift+A = deselect
+                ("Graph Editor", "graph.select_all"), ("Dopesheet", "action.select_all"),
+                ("NLA Editor", "nla.select_all"), ("Animation Channels", "anim.channels_select_all"))
 
 
 # --- 18. Undo / redo, visibility, isolate, invert (docs/steps/step_16.md 「계획」) ------------
@@ -1005,6 +1010,12 @@ def patch_render_slots(kd):
 def patch_graph_outliner(kd):
     _add(kd, "Animation Channels", "allset.graph_channel_click", make_event("LEFTMOUSE", any=True),
          first=True, shadows=("Animation Channels",))
+    # step 150 (#96): the wheel scrolls the kit's rows (ui/editor_chrome.py keeps the offset). In the channel region
+    # the wheel goes to "View2D" and never reaches "Animation Channels" (measured with --debug-handlers), so the items
+    # sit first in View2D; the operator passes through anywhere but a kit Graph Editor's outliner pane.
+    for wheel, delta in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):
+        _add(kd, "View2D", "allset.graph_channel_scroll", make_event(wheel), {"delta": delta}, first=True,
+             shadows=("View2D", "View2D Buttons List"))
 
 
 # --- 48. Script Editor execute (docs/steps/step_105.md 「계획」 3) ---------------------------------------------------

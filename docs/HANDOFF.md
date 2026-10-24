@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 150 (Graph Editor 를 Maya 말로, #96) 완료 — `docs/steps/step_150.md`. 킷 outliner: Visibility 같은 Maya 이름, 고른 줄만
+  파랑, joint / blendShape 노드, 휠 스크롤; View > Auto Frame (켬) / Auto Frame Time / Curve Name, Show > Clear Below 등 연결 (Graph
+  Editor 회색 92 → 84, 나머지는 notice); Graph Editor / Dope Sheet / NLA 에서도 Ctrl+A = AE / Channel Box. 길이 곡선 높이 (미터) 는
+  Blender 에 곡선별 표시 배율이 없어 못 고침 (남은 것). 헤드리스 1345 + 고친 뒤 86/86, GUI 전체 1614 (불안정 1 은 혼자 15/15).
+  **바로 다음 할 일**: 151 매니퓰레이터 · 링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
+  (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+
 - Step 149 (선택 와이어 · 이름 · bind, #91 #93 #94) 완료 — `docs/steps/step_149.md`. 재생 / 프레임 변경 때 변형 물체의 초록
   선택 와이어가 평가된 모양을 따라감 (`frame_change_post`), 선택된 격자도 Maya 초록 / 흰 와이어, Delete 뒤 새 큐브가 다시
   pCube1 (이름을 잡고 있던 users 0 data 를 지움), Bind Skin = Maya Closest distance (mayapy 로 잰 규칙 d^-4, 월드 공간 — 스케일된

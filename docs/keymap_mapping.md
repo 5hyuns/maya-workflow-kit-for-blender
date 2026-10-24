@@ -118,7 +118,7 @@
 | Insert | INSERT | global | EnterEditMode | Object Mode: `allset.pivot_toggle`; Mesh: `allset.pivot_toggle` | 구현 | 피벗 편집 토글: 오브젝트 모드 = Translate 불변 (step 59); 편집 모드 = 3D 커서 피벗 + 커서 툴, 면 클릭 방향 = Maya Pivot (step 77) | hotkeySetup.mel:225 |
 | a | A | global | SelectAllMarkingMenu / SelectAllMarkingMenuPopDown (release) | 3D View: `allset.tap_hold` (binding='select_all') | 구현 | 탭=Frame All, 홀드+클릭=선택 메뉴 (마킹메뉴 엔진은 Step 9) | hotkeySetup.mel:228 |
 | Shift+A | Shift+A | global | FrameAllInAllViews | 3D View: `allset.frame_all_views` (selected=False) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:229 |
-| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `allset.ae_toggle`; Mesh: `allset.ae_toggle` | 구현 | CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, step 141 #65) | hotkeySetup.mel:230 |
+| Ctrl+a | Ctrl+A | global | ShowAttributeEditorOrChannelBox | Object Mode: `allset.ae_toggle`; Mesh: `allset.ae_toggle` | 구현 | CB/LE ↔ AE 전환. 편집 / 포즈 / 페인트 마스크 / UV Editor 모드도 (IC Ctrl+A 전체 선택 제거, step 141 #65), Graph Editor / Dope Sheet / NLA / 채널 목록도 (step 150 #96) | hotkeySetup.mel:230 |
 | f | F | global | FrameSelectedWithoutChildren | 3D View: `allset.frame` (selected=True) | 구현 | Maya 여백 0.95, 사이드바 밑 제외, 선택 없으면 전체 (step 17) | hotkeySetup.mel:231 |
 | Shift+F | Shift+F | global | FrameSelectedWithoutChildrenInAllViews | 3D View: `allset.frame_all_views` (selected=True) | 구현 | 창의 모든 3D 뷰(쿼드 포함) | hotkeySetup.mel:232 |
 | Ctrl+Shift+F | Ctrl+Shift+F | global | FrameSelectedInAllViews | 3D View: `allset.frame_all_views` (selected=True, children=True) | 구현 | 자식 포함, 창의 모든 3D 뷰 | hotkeySetup.mel:233 |

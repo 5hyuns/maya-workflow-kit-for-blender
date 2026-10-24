@@ -191,6 +191,10 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            **{km: ("Window", "Screen", "Frames", "3D View", "3D View Generic", km, "Object Non-modal")
               for km in ("Particle", "Point Cloud", "Sculpt Curves", "Paint Face Mask (Weight, Vertex, Texture)",
                          "Paint Vertex Selection (Weight, Vertex)")},
+           # Step 150: the outliner wheel sits first in View2D (checked before Animation Channels in that region).
+           "View2D": ("Window", "Screen", "Frames", "View2D", "View2D Buttons List", "Animation Channels"),
+           # Step 150: Ctrl+A = AE / CB swap in the NLA Editor too (the other 2D animation editors are above).
+           "NLA Editor": ("Window", "Screen", "Frames", "NLA Editor", "NLA Generic", "View2D"),
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 
