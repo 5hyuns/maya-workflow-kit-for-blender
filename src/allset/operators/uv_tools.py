@@ -270,20 +270,33 @@ def unfold(context, ob):
     shells = target_islands(bm, uv, sync(context))
     faces = [f for isl in shells for f in isl]
     mark_shell_borders(bm, uv, faces)
-    before = [([f.index for f in isl], sum(uv_bounds(isl, uv), Vector((0, 0))) / 2) for isl in shells]
+    # Maya Unfold (Unfold3D) keeps each shell's UV area and the mean of its UVs (research/maya/re/uv_shells_155.md §4
+    # Unfold); its solver turn can't be reproduced, Blender's unwrap orientation stays.
+    before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in shells]
     bmesh.update_edit_mesh(ob.data)
     _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(method='MINIMUM_STRETCH', margin=0.0))
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.ensure_lookup_table()
-    for idx, centre in before:
+    for idx, mean, area in before:
         isl = [bm.faces[i] for i in idx]
-        lo, hi = uv_bounds(isl, uv)
-        d = centre - (lo + hi) / 2
+        now = sum(_uv_area(f, uv) for f in isl)
+        k = math.sqrt(area / now) if now > 1e-12 and area > 1e-12 else 1.0
+        c = _point_mean(isl, uv)
         for loop in _island_loops(isl):
-            loop[uv].uv = loop[uv].uv + d
+            loop[uv].uv = mean + (loop[uv].uv - c) * k
     bmesh.update_edit_mesh(ob.data)
     return len(shells)
+
+
+def _point_mean(island, uv):
+    """Mean of the shell's UV positions, each UV (vertex + coordinate) once."""
+    pts = []
+    for loop in _island_loops(island):
+        p = loop[uv].uv
+        if not any(v is loop.vert and _same(q, p) for v, q in pts):
+            pts.append((loop.vert, p.copy()))
+    return sum((q for _v, q in pts), Vector((0.0, 0.0))) / max(len(pts), 1)
 
 
 def layout(context, ob, padding_px, map_size):
