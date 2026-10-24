@@ -2,6 +2,22 @@
 
 ## 현재 작업
 
+- Step 176 (Selected-face look and dogfood fixes, backlog_174 #3) 완료 — `docs/steps/step_176.md`. 선택 면 주황 = Blender overlay
+  `show_faces` 면 강조가 kit stipple 아래에 깔린 것 (화면 픽셀로 확인) → Maya 레이아웃 뷰에서 kit 이 그리는 동안 끔
+  (`ui/component_colors.py`, 뷰 데이터만), look_compare viewport **12 / 12** (ΔE 40.5 → 2.3). G1 = kit 버그 아님 (dogfood 순서에
+  Alt+Shift+D = Maya Delete History 가 polyCube1 을 지움; GUI 테스트로 남김). G2 = Ctrl+Z / Shift+Z 뒤 결과 칸 `Undo: <명령>` /
+  `Redo: <명령>` (Maya GUI 측정 `research/maya/re/undo_result_176.md`, `command_line/undo_text.py`). 네 뷰 이름표 top -Y / front -Z /
+  side -X. 헤드리스 1621 / 1621, 관련 GUI 통과.
+  **바로 다음 할 일**: 177 Panel menus honesty and twins (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json`
+  4 번째: `ui/panel_menus.py` 회색 28 + `ui/panel_toolbar.py` 8), 그 뒤 178 UV Editor, 179 Light Linking, 180 Animation Layers, 181 Surfaces.
+
+- **체크포인트 2026-10-25 (/sc:save, 175 후)** — 지금 단계: **175 완료 · 커밋됨** (`77a5263`). 171 (`801a18d`), 172 0.4.0 출시
+  (`c8d006c`, push · 태그 v0.4.0 · 초안 릴리스 — Hermes 가 publish), 173 재점검 12차 (`b07f9a7`), 174 (`41e4715`), 175 모두 커밋;
+  173–175 는 push 안 함 (origin 보다 3 개 앞). 진행 중인 레인 · 테스트 없음. 헤드리스 전체 1611 / 1611 (175 끝), GUI 는 단계별 파일만.
+  **바로 다음 할 일**: 176 Selected-face look and dogfood fixes (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`
+  3 번째: look_compare 선택 면 ΔE 40.5, dogfood G1 INPUTS polyCube1 사라짐 · G2 Undo 뒤 결과 칸 · 네 뷰 Maya 축 이름표), 그 뒤 177–181
+  (패널 메뉴, UV Editor, Light Linking, Animation Layers, Surfaces).
+
 - Step 175 (Repeat Last for Maya commands, backlog #2) 완료 — `docs/steps/step_175.md`. Maya GUI 측정
   `research/maya/re/repeat_175.md`. `operators/repeat_maya.py`: G / Edit > Repeat / Recent Commands 가 메뉴 · 셸프 · 마킹 · 옵션 창
   명령도 반복. 헤드리스 1611 / 1611, GUI step175 5 / 5 + 관련 통과.

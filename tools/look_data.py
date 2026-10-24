@@ -137,7 +137,10 @@ def source(name):
 #   mode "tint": selected-face fill only. Maya stipples selected faces; the kit's fill alpha is
 #                measured (kit shot vs the base shot, same view, (2r+1)x(r+1) box at the kit point),
 #                laid over Maya's base shading of the region and compared with Maya's mean there.
-#                Region = (Maya base shot, Maya [x, y, w, h], kit base shot).
+#                Region = (Maya base shot, Maya [x, y, w, h], kit base shot[, kit box offset (dx, dy) px]).
+#                Step 176: since step 174 the Move manipulator stays in component mode (as in Maya's 07), and its Z shaft
+#                runs through the top face centre: the kit box sits (-8, 0) px beside it, as Maya's region sits
+#                beside Maya's manipulator.
 #   mode "best" with a shot name as region: the kit pixels come from that kit shot (step 47: Maya has no
 #                shaded shot with two objects selected; its white wire pixel is taken from 04). The kit base is 03 (same
 #                view, no manipulator): at the Maya density the Move arrow's tip covers the box in 02
@@ -152,7 +155,7 @@ VIEW_SAMPLES = (
      "02b_two_selected_shaded"),
     ("component-mode wire (light blue)", "07_faces_selected", "#64dcff", "pCube1.edges", 3, "best", None),
     ("selected face, top (fill)", "07_faces_selected", None, "pCube1.top_face", 6, "tint",
-     ("02_cube_selected_move", (830, 400, 20, 12), "03_cube_unselected")),
+     ("02_cube_selected_move", (830, 400, 20, 12), "03_cube_unselected", (-8, 0))),
     ("selected vertex (pale yellow)", "08_verts_selected", "#fdff88", "pCube1.sel_verts", 4, "best", None),
     ("unselected vertex (purple)", "08_verts_selected", "#c800c8", "pCube1.verts", 4, "best", None),
     ("manipulator X (red)", "02_cube_selected_move", "#e60000", "pCube1.origin", 120, "best", None),

@@ -15,6 +15,13 @@ BMesh with ``.select_vert/edge/poly`` in ~4 ms; BMesh Python loops cost ~0.4 s. 
 the evaluated mesh is not the cage, so the cage is read from the BMesh, only up to ``BMESH_LIMIT`` vertices
 (bigger meshes keep Blender's drawing). Arrays and GPU batches are cached per object and re-read when a
 depsgraph update names the object or its mesh.
+
+Selected faces (step 176): Blender's own selected-face tint (theme ``face_select``, drawn when the view's overlay
+``show_faces`` is on) sat under the kit stipple and turned Maya's 1-in-4 stipple into a near-opaque orange (kit 07
+pixels between the stipple dots #9d856b where the unselected face is #747577; Maya keeps its base grey #767676: look_compare ΔE00 40.5, step_173_quant.md §5). In a
+Maya layout 3D View, while the kit draws every edited mesh, the view's ``overlay.show_faces`` is switched off (view
+data, not preferences; from a timer, never inside the draw) and switched back when the kit stops drawing there
+(preference off, mesh over ``BMESH_LIMIT``) and on unregister. Views the kit didn't switch are left alone.
 """
 
 import bpy
@@ -34,6 +41,8 @@ DEPTH_BIAS = 0.0005         # relative pull toward the camera (soft_overlay uses
 POINT_BIAS = 0.003          # vertices: Blender's own edit vertices write depth well in front of the surface
 
 _handle = []
+_faces_off = set()          # space pointers whose overlay.show_faces the kit switched off (restored on unregister)
+_pending = {}               # space pointer -> show_faces value the timer writes
 _shader = {}
 _cache = {}                 # (object pointer, mesh pointer) -> _State
 _dirty = set()              # object / mesh names a depsgraph update touched since the last read
@@ -101,6 +110,18 @@ def layers(m, select_mode):
     if face_mode:
         out["tris"] = fan_triangles(m.loop_start, m.loop_total, m.corner_vert, m.fsel & ~m.fhide)
     return out
+
+
+def face_overlay_action(want_off, show_faces, ours):
+    """What to do with a view's ``overlay.show_faces``: (value to write or None, kit owns the switch afterwards).
+
+    ``want_off``: the kit draws the Maya face look in this view; ``ours``: the kit switched it off earlier. Only a
+    switch the kit made is ever undone."""
+    if want_off:
+        return (False if show_faces else None), (ours or show_faces)
+    if ours:
+        return True, False
+    return None, False
 
 
 def use_evaluated(modifiers):
@@ -294,12 +315,47 @@ def state(ob, depsgraph, faces=True):
     return st
 
 
+def _maya_layout(context):
+    from .shelf import strip_area
+    return strip_area(context.screen) is not None
+
+
+def _apply_pending():
+    from .. import live_refs
+    todo = dict(_pending)
+    _pending.clear()
+    for ptr, value in todo.items():
+        _w, area, space = live_refs.find_space(ptr)
+        if space is not None and space.overlay.show_faces != value:
+            space.overlay.show_faces = value
+            area.tag_redraw()
+    return None
+
+
+def _face_overlay(context, space, kit_draws):
+    ptr = space.as_pointer()
+    value, ours = face_overlay_action(kit_draws and _maya_layout(context), space.overlay.show_faces,
+                                      ptr in _faces_off)
+    if ours:
+        _faces_off.add(ptr)
+    else:
+        _faces_off.discard(ptr)
+    if value is not None and _pending.get(ptr) != value:
+        _pending[ptr] = value
+        if not bpy.app.timers.is_registered(_apply_pending):
+            bpy.app.timers.register(_apply_pending, first_interval=0.0)
+
+
 def _draw():
     context = bpy.context
-    if context.mode != 'EDIT_MESH' or not _enabled():
+    if context.mode != 'EDIT_MESH':
         return
     space, rv3d, region = context.space_data, context.region_data, context.region
     if rv3d is None or space is None or region is None or not space.overlay.show_overlays:
+        return
+    if not _enabled():
+        if _faces_off:
+            _face_overlay(context, space, False)
         return
     from . import toolbox
     if toolbox.is_toolbox(space):
@@ -321,6 +377,7 @@ def _draw():
     live = {(ob.as_pointer(), ob.data.as_pointer()) for ob in obs}
     for k in [k for k in _cache if k not in live]:
         del _cache[k]
+    _face_overlay(context, space, len(states) == len(obs))
     if not states:
         return
     scale = context.preferences.system.ui_scale or 1.0
@@ -400,6 +457,13 @@ def unregister():
         lst = getattr(bpy.app.handlers, name)
         if fn in lst:
             lst.remove(fn)
+    if bpy.app.timers.is_registered(_apply_pending):
+        bpy.app.timers.unregister(_apply_pending)
+    _pending.clear()
+    for ptr in list(_faces_off):
+        _pending[ptr] = True
+    _faces_off.clear()
+    _apply_pending()
     _cache.clear()
     _dirty.clear()
     _shader.clear()

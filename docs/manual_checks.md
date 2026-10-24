@@ -284,7 +284,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 46) ViewCube: 마우스를 올리면 진해지고 가리킨 면이 하늘색, 면 클릭 → 그 방향 정사영 뷰 (부드러운 전환). 모서리·꼭짓점 클릭은 아직 없음 (Maya 는 있음) — 아쉬운지.
 - [ ] (step 46) ViewCube 를 드래그해도 뷰가 돌지 않음 (Maya 는 큐브 드래그 = 텀블) — Alt+LMB 로 충분한지.
-- [ ] (step 46) 4 분할: ViewCube 가 마우스가 있는 패널로 옮겨 가는지; 라벨 top -Z / persp / front +Y / side -X 가 각 패널 아래 가운데. Maya 의 "top -Y / front -Z" 와 축 글자가 다른 것 (kit 은 Blender Z-up 축, Channel Box 와 같음, delegated) 이 헷갈리지 않는지.
+- [ ] (step 46) 4 분할: ViewCube 가 마우스가 있는 패널로 옮겨 가는지; 라벨 top -Y / persp / front -Z / side -X 가 각 패널 아래 가운데 (step 176: Maya 카메라 이름 그대로, 축 삼각대는 Blender Z-up 축).
 - [ ] (step 46) 축 삼각이 텀블에 따라 돌고 x/y/z 글자가 Channel Box 축과 맞는지. 카메라 뷰 (Numpad 0) 에서 라벨이 카메라 이름인지.
 - [ ] (step 46) Display > Heads Up Display > Camera Names / View Axis / View Cube 가 모든 뷰에서 켜고 끄는지.
 
@@ -1159,3 +1159,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Mesh > Combine on two cubes, select two other cubes, G: they combine too; Edit menu shows Repeat "Combine".
 - [ ] A shelf button (Poly Cube), then G: another cube; Ctrl+E on faces, then G: extrudes again (the key command is newer).
 - [ ] Hotbox (Space) > Recent Commands: the last commands, newest first; clicking one runs it.
+
+## Step 176
+
+- [ ] 면 모드에서 면 선택: 선택 면이 Maya 처럼 점 무늬만 (주황 덮개 없음), Preferences > Maya Component Colors 끄면 Blender 주황 강조가 돌아옴.
+- [ ] Ctrl+G 뒤 Ctrl+Z → 결과 칸 `Undo: Group`, Shift+Z → `Redo: Group`; 이동 후 Adjust Last Operation 값 바꾸기 → 결과 칸이 `Undo: ...` 로 바뀌지 않음.

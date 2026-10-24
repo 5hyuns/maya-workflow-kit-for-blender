@@ -152,7 +152,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="ViewCube", description="Maya ViewCube in the top right of the view (click a face to look "
                                      "along it)", default=True)
     maya_camera_names: bpy.props.BoolProperty(
-        name="Camera Names", description="Maya camera name (persp, top -Z, ...) at the bottom of the view",
+        name="Camera Names", description="Maya camera name (persp, top -Y, ...) at the bottom of the view",
         default=True)
     def _update_selection_wire(self, context):
         for window in context.window_manager.windows:

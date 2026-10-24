@@ -279,8 +279,10 @@ def viewport_table(geom, kit_img):
             # Selection colour only: the kit's fill (kit 07 vs the same point in kit 02, same view)
             # laid over Maya's base shading, against Maya 07. Base shading (Blender studio light vs
             # Maya default light) is a separate difference (docs/steps/step_43.md).
-            base_shot, mreg, kit_base = region
-            x, y = pts[0]
+            base_shot, mreg, kit_base, *off = region
+            dx, dy = off[0] if off else (0, 0)
+            scale = geom.get("ui_scale", 1.0)        # the manipulator it avoids is drawn x UI scale
+            x, y = pts[0][0] + dx * scale, pts[0][1] + dy * scale
             kbox = (x - r, y - r // 2, 2 * r + 1, r + 1)
             k_sel, k_base = L.mean_colour(kimg, kbox), L.mean_colour(kit_img(kit_base), kbox)
             m = L.mean_colour(mimg, mreg)

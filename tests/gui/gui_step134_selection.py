@@ -263,6 +263,12 @@ def s_face_mode():
     frac = float(near(win_px, EDGE_SEL, 0.09).mean())
     check(f"face mode: selected face is Maya's stipple #e3ac79 ({frac * 100:.0f} % of pixels, ~25 %)",
           0.15 < frac < 0.4)
+    # step 176: the pixels between the stipple dots keep the face's own grey (Blender's face tint is off)
+    rest = win_px[~near(win_px, EDGE_SEL, 0.09)]
+    sat = float((rest.max(axis=-1) - rest.min(axis=-1)).mean()) if len(rest) else 1.0
+    space = view3d()[0].spaces.active
+    check(f"step 176: no Blender face tint under the stipple (show_faces {space.overlay.show_faces}, "
+          f"grey spread {sat:.3f} < 0.05)", not space.overlay.show_faces and sat < 0.05)
     # 100k-vertex mesh in edit mode: frame time with and without the kit component colours
     area, region = view3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
@@ -297,6 +303,8 @@ def frame_ms(n=30):
 @step
 def s_time_off():
     C["off"] = frame_ms()
+    check("step 176: preference off gives Blender's face highlight back (show_faces on)",
+          view3d()[0].spaces.active.overlay.show_faces)
     prefs().maya_component_colors = True
     redraw()
 

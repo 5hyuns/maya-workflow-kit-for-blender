@@ -14,7 +14,8 @@ global like Maya's HUD / ViewCube preferences (add-on preferences ``maya_viewcub
 ``maya_camera_names``, ``maya_view_axis``).
 
 The triad shows Blender's axes (Z up): Maya's Y-up cannot be had (docs/user_decisions.md 5) and the
-letters have to match the Channel Box channels.
+letters have to match the Channel Box channels. The camera labels are Maya's camera names with Maya's
+Y-up view direction ("top -Y", "front -Z"): they name Maya's cameras, not axes (step 176).
 """
 
 import math
@@ -47,8 +48,10 @@ FACES = {
 }
 FACE_NAMES = tuple(FACES)
 
-# Orthographic side views: Maya camera name + the direction it looks, in Blender axes.
-SIDE_LABELS = {(0, 0, -1): "top -Z", (0, 0, 1): "bottom +Z", (0, 1, 0): "front +Y", (0, -1, 0): "back -Y",
+# Orthographic side views (key = the direction the view looks, Blender axes): Maya camera name + that direction
+# in Maya's Y-up axes, as Maya prints it ("top -Y", "front -Z", "side -X": research/maya/screens/16_four_view.png;
+# Blender X/Y/Z = Maya X/-Z/Y, CLAUDE.md step 57). Step 176 (delegated): Maya's own words, not Blender's axes.
+SIDE_LABELS = {(0, 0, -1): "top -Y", (0, 0, 1): "bottom +Y", (0, 1, 0): "front -Z", (0, -1, 0): "back +Z",
                (-1, 0, 0): "side -X", (1, 0, 0): "left +X"}
 
 
@@ -118,7 +121,7 @@ def hit_face(faces, x, y):
 
 
 def label_for(perspective, side_view, view_dir, camera_name=None):
-    """Maya camera label of a view: camera name, "top -Z" ... for side views, else "persp"."""
+    """Maya camera label of a view: camera name, "top -Y" ... for side views, else "persp"."""
     if perspective == 'CAMERA' and camera_name:
         return camera_name
     if perspective == 'ORTHO' and side_view:

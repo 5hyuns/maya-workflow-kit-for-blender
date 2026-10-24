@@ -23,7 +23,9 @@ def push(label):
     try:
         bpy.ops.ed.undo_push(message=label or "Maya Command")
     except RuntimeError:          # no window manager context (a timer in a closing window)
-        pass
+        return
+    from .command_line import undo_text       # Maya's "Undo: <command>" after Ctrl+Z names this step (step 176)
+    undo_text.pushed(label or "Maya Command")
 
 
 def mark_pushed():
