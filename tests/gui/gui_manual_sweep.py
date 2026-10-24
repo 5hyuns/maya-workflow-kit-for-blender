@@ -3969,6 +3969,8 @@ def _m66_1_again_check():
         m = getattr(mm, name)
         if isinstance(m, mm.MarkingMenu) and m.radial.get("E", (None, None))[0] == "UV":
             obj_e = m.radial["E"][1]
+            if isinstance(obj_e, mm.Sub):      # step 151: Maya's UV submenu, UV at E
+                obj_e = obj_e.radial["E"][1]
             break
     check(f"[M66-1] Windows > Modeling Editors > UV Editor and F12 again: still one UV Editor window ({len(uv_windows())}); "
           f"3D RMB E = UV ({obj_e})", len(uv_windows()) == 1 and obj_e == ("allset.uv_component", {"mode": 'UV'}))
