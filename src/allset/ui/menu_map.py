@@ -496,6 +496,12 @@ MAP = {
     "Render/IPR Render Current Frame": "allset.ipr_toggle",
     "Render/Redo Previous IPR Render": "allset.ipr_toggle",
     "Render/Render Sequence": "allset.render_sequence",
+    # step 152 (#101, operators/render_batch.py): Test Resolution = the kit renders' size (Maya's submenu, a check on
+    # the current choice); Batch Render = a separate background Blender on a copy of the scene.
+    "Render/Test Resolution": ("menu", "ALLSET_MT_test_resolution"),
+    "Render/Batch Render": "allset.batch_render",
+    "Render/Cancel Batch Render": "allset.cancel_batch_render",
+    "Render/Show Batch Render": "allset.show_batch_render",
 }
 
 # Items Maya adds at run time, inserted after a data path: {after path: [item]} with

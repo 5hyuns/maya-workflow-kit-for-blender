@@ -64,7 +64,7 @@ def default_entries():
 def default_set_members(name, scene):
     """defaultLightSet = every light in the scene (Maya, step 99); defaultObjectSet is empty in a new scene."""
     if name == "defaultLightSet":
-        return [ob for ob in scene.objects if ob.type == 'LIGHT']
+        return [ob for ob in scene.objects if ob.type == 'LIGHT' and not ob.get("allset_default_light")]  # step 152
     return []
 
 

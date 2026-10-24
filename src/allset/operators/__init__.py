@@ -33,11 +33,16 @@ from . import deformers  # noqa: E402  step 144 DEFORM: Maya Deform menu deforme
 
 classes += deformers.classes
 
+from . import default_light, render_batch  # noqa: E402  step 152 RENDER: default light, Test Resolution, Batch (#101)
+
+classes += render_batch.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
 def register():
     _register_classes()
+    default_light.register()
     snap_align.register_props()
     material.register_props()
     lights.register_props()
@@ -104,4 +109,6 @@ def unregister():
     mesh_tools.unregister_props()
     driven_key.unregister_props()
     snap_align.unregister_props()
+    render_batch.unregister()
+    default_light.unregister()
     _unregister_classes()

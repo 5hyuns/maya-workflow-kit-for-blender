@@ -120,15 +120,28 @@ class _Render:
         return context.scene is not None
 
     def _render(self, context, how):
+        from . import default_light, render_batch
         ob = render_camera(context)
         props = {"animation": self.ANIMATION}
         if self.write_still and not self.ANIMATION:
             props["write_still"] = True
+        # step 152: Maya's default light while the scene has no lights and Maya's Test Resolution, both only for
+        # the duration of this render (an INVOKE render ends later: a timer waits for the render job)
+        default_light.add(context.scene, ob)
+        restore = render_batch.scaled(context)
+        later = False
         try:
             res = bpy.ops.render.render(how, **props)
+            later = how == 'INVOKE_DEFAULT' and 'CANCELLED' not in res
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex))
             return {'CANCELLED'}
+        finally:
+            if later:
+                default_light.after_render(restore)
+            else:
+                restore()
+                default_light.remove_all()
         if 'CANCELLED' in res:
             return {'CANCELLED'}
         self.report({'INFO'}, f"Rendering through {ob.name}")

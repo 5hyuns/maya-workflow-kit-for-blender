@@ -74,6 +74,17 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     snap_time_to_selection: bpy.props.BoolProperty(
         name="Snap Time To Selection",
         description="Selecting keys in the Graph Editor moves the current time to the earliest selected key")
+    # Render > Test Resolution (Maya setting renderViewTestResolution, default Render Settings; step 152,
+    # operators/render_batch.py): the size of Render Current Frame / Render Sequence.
+    test_resolution: bpy.props.EnumProperty(
+        name="Test Resolution",
+        items=(("PANEL", "Camera Panel", "The size of the 3D View"),
+               ("SETTINGS", "Render Settings", "The Render Settings size"),
+               ("10", "10%", ""), ("25", "25%", ""), ("50", "50%", ""), ("75", "75%", ""),
+               ("110", "110%", ""), ("125", "125%", ""), ("150", "150%", "")),
+        default="SETTINGS",
+        description="Maya Render > Test Resolution: the size of Render Current Frame / Render Sequence "
+                    "(batch renders use the Render Settings size)")
 
     # Top UI.
     maya_top_bar: bpy.props.BoolProperty(
