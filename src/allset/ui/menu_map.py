@@ -734,6 +734,22 @@ MAP.update({
         ("Proximity Wrap", "proximityWrap"), ("Lattice", "ffd"), ("ShrinkWrap", "shrinkWrap"),
         ("Nonlinear", "nonLinear"), ("Texture Deformer", "textureDeformer"))},
     "Deform/Mirror Deformer Weights": "object.vertex_group_mirror",
+    # step 169 (research/maya/re/deform_169.md): Wire as a kit deformer + its edit items, ShrinkWrap / Lattice edits,
+    # Prune Membership, Point On Curve
+    "Deform/Wire": _deformer('WIRE'),
+    "Deform/Paint Weights/Wire": ("allset.paint_deformer_weights", {"kind": "wire"}),
+    **{f"Deform/Wire#2/{label}": ("allset.wire_edit", {"action": action}) for label, action in (
+        ("Add", "ADD"), ("Remove", "REMOVE"), ("Reset", "RESET"), ("Show Base Wire", "SHOW_BASE"),
+        ("Parent Base Wire", "PARENT_BASE"))},
+    "Deform/Wire#2/Wire Dropoff Locator": "allset.wire_dropoff_locator",
+    **{f"Deform/ShrinkWrap#2/{label}": ("allset.shrink_wrap_edit", {"action": action}) for label, action in (
+        ("Set Target", "SET_TARGET"), ("Remove Target", "REMOVE_TARGET"), ("Add surfaces", "ADD_SURFACES"),
+        ("Remove surfaces", "REMOVE_SURFACES"))},
+    "Deform/Lattice#2/Reset Lattice": ("allset.lattice_edit", {"action": 'RESET'}),
+    "Deform/Lattice#2/Remove Lattice Tweaks": ("allset.lattice_edit", {"action": 'REMOVE_TWEAKS'}),
+    **{f"Deform/Prune Membership/{label}": ("allset.prune_membership", {"kind": kind}) for label, kind in (
+        ("Cluster", "cluster"), ("Lattice", "ffd"), ("Wire", "wire"))},
+    "Deform/Point On Curve": "allset.point_on_curve",
     # UV
     "UV/UV Set Editor": _props('DATA'),
     "UV/Assign Checker Shader": "allset.checker_shader",

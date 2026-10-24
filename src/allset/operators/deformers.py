@@ -32,6 +32,7 @@ BASES = {
     "squash": ('SIMPLE_DEFORM', "nonLinear"), "flare": ('SIMPLE_DEFORM', "nonLinear"),
     "sine": ('WAVE', "nonLinear"), "wave": ('WAVE', "nonLinear"),
     "textureDeformer": ('DISPLACE', "textureDeformer"), "curveWarp": ('CURVE', "curveWarp"),
+    "wire": ('NODES', "wire"),            # step 169: Geometry Nodes, operators/wire_deformer.py
 }
 _NAME = re.compile(r"^([A-Za-z]+?)(\d+)$")
 
@@ -142,6 +143,18 @@ def _tex_offset_set(md, v):
     md.mid_level = -v / md.strength if abs(md.strength) > 1e-12 else 0.0
 
 
+def _wire_input(name):
+    def get(md):
+        from . import wire_deformer
+        v = wire_deformer.get(md, name)
+        return float(v) if v is not None else 0.0
+
+    def set_(md, v):
+        from . import wire_deformer
+        wire_deformer.set_(md, name, float(v))
+    return get, set_
+
+
 _ENVELOPE = _prop("envelope", "Envelope", "NONE", "strength")
 _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", "High Bound", "NONE", *_limit(1))]
 
@@ -173,6 +186,11 @@ ATTRS = {
     "textureDeformer": [_prop("strength", "Strength", "NONE", "strength"),
                         Attr("offset", "Offset", "NONE", _tex_offset_get, _tex_offset_set)],
     "curveWarp": [],
+    # step 169 (deform_169.md §1): the wire modifier's inputs; Crossing Effect / Tension / Local Influence /
+    # Scale[0] have no form in the kit wire (factory 0 / 1 / 0 / 1 = no effect in the measurements)
+    "wire": [Attr("envelope", "Envelope", "NONE", *_wire_input("Envelope")),
+             Attr("rotation", "Rotation", "NONE", *_wire_input("Rotation")),
+             Attr("dropoffDistance[0]", "Dropoff Distance[0]", "LENGTH", *_wire_input("Dropoff Distance"))],
 }
 PREFIX = "maya:"
 
@@ -443,6 +461,24 @@ def _curve_warp(context, v):
     return items[0][0]
 
 
+def _wire(context, v):
+    """Maya Wire (deform_169.md): the deformed objects, then the wire curve (Maya's Wire Tool picks them in that
+    order); a kit wire per object named like the node, weights = vertex group of that name, base wire = a hidden copy
+    of the curve. Maya selects the curve afterwards."""
+    from . import wire_deformer
+    items, drv = _driver(context)
+    items = [(ob, idx) for ob, idx in items if ob.type == 'MESH']
+    if drv is None or drv.type != 'CURVE' or not items:
+        raise RuntimeError("Select the object(s) to deform, then the wire curve.")
+    name = new_name("wire")
+    dropoff = float(v["dropoff"]) * units.maya_unit(context.scene)
+    for ob, idx in items:
+        group = _weights(ob, name, idx)
+        wire_deformer.add_wire(context, ob, drv, name, group, dropoff, envelope=float(v["envelope"]))
+    _select_only(context, [drv], drv)                                      # Maya: curve1
+    return drv
+
+
 NONLINEAR = {'BEND': ("bend", 'BEND'), 'TWIST': ("twist", 'TWIST'), 'SQUASH': ("squash", 'STRETCH'),
              'FLARE': ("flare", 'TAPER'), 'SINE': ("sine", None), 'WAVE': ("wave", None)}
 
@@ -538,6 +574,7 @@ DEFAULTS = {
     'TEXTURE': {"point_space": "UV", "direction": "Handle", "vector_space": "Object", "strength": 1.0,
                 "offset": 0.0},
     'CURVE_WARP': {},
+    'WIRE': {"envelope": 1.0, "dropoff": 1.0},             # Wire Tool settings (options_144.md "Wire")
 }
 
 
@@ -559,6 +596,8 @@ def create(context, kind, values=None):
         return _texture(context, v)
     if kind == 'CURVE_WARP':
         return _curve_warp(context, v)
+    if kind == 'WIRE':
+        return _wire(context, v)
     return _nonlinear(context, kind, v)
 
 
@@ -602,6 +641,9 @@ def _paint_candidates(context):
             out.append((ob, []))
         for md in driven_modifiers(ob):
             out.append((md.id_data, [md]))
+        if ob.type == 'CURVE':                     # a wire curve: the meshes its kit wires deform (step 169)
+            from . import wire_deformer
+            out.extend((o, [md]) for o, md in wire_deformer.wires_of_curve(ob))
     return out
 
 
@@ -622,8 +664,9 @@ def paint_group(ob, kind, prefer=()):
                 kb.vertex_group = vg.name
         return vg.name
     for md in list(prefer) + list(reversed(ob.modifiers)):
-        if node_type(md) == kind and getattr(md, "vertex_group", "") in ob.vertex_groups:
-            return md.vertex_group
+        group = getattr(md, "vertex_group", "") or (md.name if md.type == 'NODES' else "")   # a kit wire: its name
+        if node_type(md) == kind and group in ob.vertex_groups:
+            return group
     return None
 
 

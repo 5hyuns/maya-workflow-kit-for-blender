@@ -616,8 +616,11 @@ def apply_paint_settings(context, mesh, arm, v):
     else:
         ups.use_locked_size = 'SCENE'            # Maya's radius is a world size (cm) unless Screen projection is on
         compat.set_unprojected_radius(ups, max(1e-4, v["radius"] * units.maya_unit(context.scene)))
-    mesh[NORMALIZE_PROP] = v["normalize"]
-    ts.use_auto_normalize = v["normalize"] == "INTERACTIVE"
+    if v["normalize"] is not None:              # None: deformer weights (step 169), never normalized
+        mesh[NORMALIZE_PROP] = v["normalize"]
+        ts.use_auto_normalize = v["normalize"] == "INTERACTIVE"
+    else:
+        ts.use_auto_normalize = False
     space = context.space_data
     if space is not None and space.type == 'VIEW_3D':
         space.overlay.show_paint_wire = v["show_wireframe"]
