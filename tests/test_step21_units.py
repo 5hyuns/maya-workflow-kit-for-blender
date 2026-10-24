@@ -131,9 +131,11 @@ def test_every_creation_path_uses_allset_create():
                             "Platonic Solid", "Pyramid", "Prism", "Type"}, created   # Type: step 54
     for label, action in created.items():
         assert action[0] == "allset.create" and action[1]["kind"] in create.KINDS, (label, action)
-    for key in ("Create/Curve Tools/CV Curve Tool", "Create/Curve Tools/Bezier Curve Tool"):
-        assert menu_map.MAP[key][0] == "allset.create", key
-    for cmd in ("EPCurveTool", "CreateBezierCurveTool", "CreatePolygonCube"):
+    assert menu_map.MAP["Create/Curve Tools/Bezier Curve Tool"][0] == "allset.create"
+    # step 156: CV / EP Curve Tool are click tools (operators/curve_draw.py; clicked points are already scene units)
+    assert menu_map.MAP["Create/Curve Tools/CV Curve Tool"] == "allset.cv_curve_tool"
+    assert shelf_map.BY_COMMAND["EPCurveTool"][0] == "allset.ep_curve_tool"
+    for cmd in ("CreateBezierCurveTool", "CreatePolygonCube"):
         assert shelf_map.BY_COMMAND[cmd][0][0] == "allset.create", cmd
     # no menu / shelf / marking item adds a Blender primitive behind allset.create's back
     for label, action in list(menu_map.MAP.items()) + [(k, v[0]) for k, v in shelf_map.BY_COMMAND.items()]:

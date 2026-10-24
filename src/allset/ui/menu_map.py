@@ -180,7 +180,10 @@ MAP = {
     "Create/Lights/Spot Light": _create('SPOT_LIGHT'),
     "Create/Lights/Area Light": _create('AREA_LIGHT'),
     "Create/Cameras": _create('CAMERA'),
-    "Create/Curve Tools/CV Curve Tool": _create('CV_CURVE'),
+    "Create/Curve Tools/CV Curve Tool": "allset.cv_curve_tool",            # step 156: operators/curve_draw.py
+    "Create/Curve Tools/EP Curve Tool": "allset.ep_curve_tool",
+    "Create/Curve Tools/Three Point Circular Arc": "allset.arc3_tool",
+    "Create/Curve Tools/Two Point Circular Arc": "allset.arc2_tool",
     "Create/Curve Tools/Bezier Curve Tool": _create('BEZIER_CURVE'),
     "Create/Type": _create('TEXT'),                 # step 54: Maya units (W5)
     "Create/Free Image Plane": _create('IMAGE_PLANE'),
@@ -678,8 +681,13 @@ MAP.update({
                                                      {"data_path": "space_data.shading.color_type",
                                                       "value": 'VERTEX'}),
     # Curves
-    "Curves/Attach": "curve.make_segment",
-    "Curves/Detach": "curve.split",
+    "Curves/Attach": "allset.curve_attach",          # step 156: operators/curves_maya.py (checked)
+    "Curves/Detach": "allset.curve_detach",
+    "Curves/Rebuild": "allset.curve_rebuild",
+    "Curves/Fillet": "allset.curve_fillet",
+    "Curves/Cut": "allset.curve_cut",
+    "Curves/Straighten": "allset.curve_straighten",
+    "Curves/Move Seam": "allset.curve_move_seam",
     "Curves/Extend/Extend Curve": ("v3d", "curve.extrude_move", {}),
     "Curves/Smooth#2": "curve.smooth",
     "Curves/Bezier Curves/Anchor Presets/Bezier": ("curve.handle_type_set", {"type": 'ALIGNED'}),

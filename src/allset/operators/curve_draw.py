@@ -317,7 +317,8 @@ class _CurveDrawTool:
         if ob is None:
             return {'CANCELLED'}
         LAST.update(kind=self.kind, points=[p.copy() for p in pts])
-        self.report({'INFO'}, f"{LABELS[self.kind]}: created {ob.name}")
+        from ..command_line import show_result      # Maya prints the result in the Command Line (step 151)
+        show_result(f"Result: {ob.name}")
         return {'FINISHED'}
 
 
