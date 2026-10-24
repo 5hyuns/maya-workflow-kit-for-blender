@@ -34,6 +34,8 @@ def _first_selected(objects, active):
 
 def _maya_rename(ob, base, also_taken=()):
     """``base<N>`` / ``base Shape<N>`` with names in ``also_taken`` counted as used (Maya keeps them)."""
+    naming.drop_orphans(bpy.data.objects, base)
+    naming.drop_orphans(bpy.data.meshes, f"{base}Shape")
     taken = {o.name for o in bpy.data.objects if o is not ob} | set(also_taken)
     shapes = {m.name for m in bpy.data.meshes if m is not ob.data}
     n = naming.next_number(base, taken, shapes)

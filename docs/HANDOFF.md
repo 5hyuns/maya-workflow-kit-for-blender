@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 149 (선택 와이어 · 이름 · bind, #91 #93 #94) 완료 — `docs/steps/step_149.md`. 재생 / 프레임 변경 때 변형 물체의 초록
+  선택 와이어가 평가된 모양을 따라감 (`frame_change_post`), 선택된 격자도 Maya 초록 / 흰 와이어, Delete 뒤 새 큐브가 다시
+  pCube1 (이름을 잡고 있던 users 0 data 를 지움), Bind Skin = Maya Closest distance (mayapy 로 잰 규칙 d^-4, 월드 공간 — 스케일된
+  mesh 도 모든 joint), Bind Skin Options 에 Bind method (Heat Map = Blender bone heat). 헤드리스 1329/1329 + 격자 뒤 관련 9 파일 53/53,
+  GUI 전체 1595 + 고친 뒤 관련 81/81.
+  **바로 다음 할 일**: 150 Graph Editor (#96) → 151 매니퓰레이터 · 링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 →
+  153 Blender 5.x (#90) (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+
 - Step 148 (Channel Box 마무리, #87 #85 #83 #95) 완료 — `docs/steps/step_148.md`. Channel Box RMB = Maya Channels 메뉴
   (Blender 버튼 메뉴는 Python 항목을 C 항목 15 줄 뒤에 붙였다), UI 1.5 / 1.0 에서 Channel Box 가 한 줄 더 (PANE_TOP 재측정 +
   위젯 단위 반올림 버그: Python round(22.5) = 22), AE 변환 값 = Maya 숫자 (단위 없음), 격자 Scale = Maya 숫자 (delta_scale),
