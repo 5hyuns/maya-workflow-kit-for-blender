@@ -22,6 +22,21 @@ from ..ui import own_draw
 _result = {"text": "", "error": False}
 
 
+def show_result(text, error=False):
+    """Put ``text`` in the Command Line result field (Maya's "// Result: ..." of a command) and redraw it."""
+    _result["text"], _result["error"] = text, error
+    wm = bpy.context.window_manager
+    for window in wm.windows if wm else ():
+        for area in window.screen.areas:
+            if area.type == 'STATUSBAR':
+                area.tag_redraw()
+    try:
+        from ..ui import status_line
+        status_line.redraw_top_bars()
+    except Exception:
+        pass
+
+
 def submit(text):
     """Run a command and keep its result for the result field."""
     res = runner.run(text)
@@ -160,7 +175,10 @@ def draw_help_line(layout, context):
     else:
         layout.template_input_status()
     layout.template_reports_banner()
-    layout.template_running_jobs()
+    # Blender lists playback as a running job ("Anim Player", #100); Maya's Help Line shows progress only for real
+    # work (renders, bakes), so the jobs row is left out while the scene plays
+    if not context.screen or not context.screen.is_animation_playing:
+        layout.template_running_jobs()
 
 
 def draw_command_line(layout, context):
@@ -196,8 +214,9 @@ def draw_status_bar(self, context):
         row = layout.row()
         row.ui_units_x = COMMAND_UNITS
         draw_command_line(row, context)
-    layout.separator_spacer()
-    layout.template_status_info()
+    # No Blender status info (scene statistics, version, "Active object has non-uniform scale" / "negative scale"
+    # warnings from template_status_info, #100): Maya's status row is Help Line + Command Line only; Maya shows
+    # poly counts in the viewport HUD (Display > Heads Up Display).
 
 
 classes = (ALLSET_OT_command_line_exec, ALLSET_OT_command_line_language,

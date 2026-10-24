@@ -20,7 +20,8 @@ from . import naming, units
 
 PICK_RADIUS = 25          # px at UI scale 1.0
 IK_STATUS = "IK Handle Tool: click the start joint, then the end joint (Esc: cancel)"
-EFFECTOR_NOTE = "Blender has no effector node: the IK constraint sits on the bone that ends at the end joint."
+# The kit's IK is an IK constraint on the bone that ends at the end joint (no effector node); Maya answers the
+# ikHandle command with its node names in the Command Line result field (#100: no Blender note in the status bar).
 
 
 def _cb():
@@ -174,7 +175,8 @@ class ALLSET_OT_ik_handle(bpy.types.Operator):
         if handle is None:
             self.report({'WARNING'}, "The end joint must be below the start joint in the same skeleton")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Created {handle.name}. {EFFECTOR_NOTE}")
+        from ..command_line import show_result
+        show_result(f"Result: {handle.name}")
         return {'FINISHED'}
 
     def _pick(self, context, event):

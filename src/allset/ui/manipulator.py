@@ -456,6 +456,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         gz.handle_role, gz.handle_axis = role, axis       # read by operators/manip.py Ctrl+LMB (step 85)
         gz.use_draw_scale = True
         gz.use_draw_modal = True
+        gz.use_tooltip = False                           # Maya manipulators show no tooltip (#98)
         gz.line_width = 1.5
         gz.color_highlight = YELLOW
         gz.alpha = gz.alpha_highlight = ALPHA
@@ -465,6 +466,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         gz = self.gizmos.new("GIZMO_GT_dial_3d")
         gz.use_draw_scale = True
         gz.use_draw_modal = True
+        gz.use_tooltip = False                           # Maya manipulators show no tooltip (#98)
         gz.line_width = 1.5
         gz.color_highlight = YELLOW
         gz.alpha = gz.alpha_highlight = ALPHA

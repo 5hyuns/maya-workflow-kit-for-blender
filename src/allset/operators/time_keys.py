@@ -114,17 +114,26 @@ def keyable_channels(node):
     return [k for k in cb._visible_channels(node) if cb.is_keyable(node, k)]
 
 
-def set_key(context, breakdown=False):
-    """S: key every keyable channel of every node (or the active keying set); count of channels."""
+# Maya SetKeyTranslate / SetKeyRotate / SetKeyScale (Shift+W / E / R, ):
+# setKeyframe on the translate / rotate / scale attributes of the selection only. Channel Box keys.
+CHANNEL_SETS = {"TRANSLATE": ("tx", "ty", "tz"), "ROTATE": ("rx", "ry", "rz"), "SCALE": ("sx", "sy", "sz")}
+
+
+def set_key(context, breakdown=False, channels=""):
+    """S: key every keyable channel of every node (or the active keying set); ``channels`` = one of CHANNEL_SETS
+    (Shift+W / E / R) keys only those. Count of channels keyed."""
     scene = context.scene
     keytype = 'BREAKDOWN' if breakdown else 'KEYFRAME'
-    if scene.keying_sets.active is not None and not breakdown and bpy.ops.anim.keyframe_insert.poll():
+    if (not channels and scene.keying_sets.active is not None and not breakdown
+            and bpy.ops.anim.keyframe_insert.poll()):
         bpy.ops.anim.keyframe_insert()
         return len(scene.keying_sets.active.paths)
+    only = CHANNEL_SETS.get(channels)
     count = 0
     for node in nodes(context):
         for key in keyable_channels(node):
-            count += bool(_cb().keyframe(node, key, keytype))
+            if only is None or key in only:
+                count += bool(_cb().keyframe(node, key, keytype))
     return count
 
 
@@ -681,17 +690,22 @@ class ALLSET_OT_set_key(bpy.types.Operator):
 
     breakdown: BoolProperty(name="Breakdown", description="Set a breakdown key (Maya Set Breakdown Key)",
                             options={'SKIP_SAVE'})
+    channels: EnumProperty(name="Channels", items=(("", "All Keyable", "Every keyable channel"),
+                                                   ("TRANSLATE", "Translate", "Translate X / Y / Z (Maya Shift+W)"),
+                                                   ("ROTATE", "Rotate", "Rotate X / Y / Z (Maya Shift+E)"),
+                                                   ("SCALE", "Scale", "Scale X / Y / Z (Maya Shift+R)")),
+                           default="", options={'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):
         return context.scene.keying_sets.active is not None or _cb().lead(context) is not None
 
     def execute(self, context):
-        n = set_key(context, self.breakdown)
+        n = set_key(context, self.breakdown, self.channels)
         if n == 0:
             self.report({'WARNING'}, "Nothing keyable selected")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"{'Breakdown' if self.breakdown else 'Key'}: {n} channel(s)")
+        # Maya prints nothing for a key (#100: Blender's "Successfully added ... keying set" text is gone too)
         _redraw(context)
         return {'FINISHED'}
 
