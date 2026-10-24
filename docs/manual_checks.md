@@ -1148,3 +1148,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Animate a cube, Visualize > Create Animation Snapshot: snapshot1Group with transform1_1..10 in the Outliner; move a key in the Graph Editor → the copies follow a moment after the drag ends (Fast); type a Scale → nothing until Visualize > Update Snapshot.
 - [ ] Visualize > Ghost Selected: cyan ghosts before, pink after, fading outwards; scrub the Time Slider → ghosts follow (new frames appear a tick after the scrub stops); during playback missing ghost frames are not sampled.
 - [ ] Visualize > Open Ghosting Editor: preset 2s + Apply to All Ghosts spaces the ghosts every other frame; Unghost All removes them.
+
+## Step 174 — One tool across object / component modes
+
+- [ ] W on a cube, F9: the Move manipulator stays on the selected vertices right away (no Select Box flash); F8 back: Move on the object.
+- [ ] E, then RMB > Vertex: Rotate in vertex mode; Shift+RMB > Target Weld from object mode still starts Target Weld.

@@ -106,9 +106,96 @@ def _watch():
         if workspace is not None:
             tool = workspace.tools.from_space_view3d_mode(context.mode, create=False)
             remember(context.mode, tool.idname if tool else None)
+            if context.mode == _mode[0]:
+                for m in CARRY_MODES:
+                    _seen[m] = _tool_of(workspace, m)
+            if _mode[0] is None:
+                _mode[0] = context.mode
+            elif context.mode != _mode[0] and not bpy.app.timers.is_registered(_carry):
+                _carry()   # a mode change no depsgraph update reported
     except (AttributeError, RuntimeError, ReferenceError):
         pass
     return _TICK
+
+
+# --- one tool across object / component modes (step 174) -------------------------------------------
+# Maya's tool is one global context: W then F9 / F10 / F11 / F8 / RMB Vertex keeps moveSuperContext (and E / R / Q / T
+# their own) in either selection mode (research/maya/re/tool_modes_174.md). Blender keeps a tool per mode and a
+# mesh's edit mode starts on Select Box, so after a mode change the new mode takes the previous mode's sacred tool.
+# Only modes that have every sacred tool (paint / sculpt modes keep their own brushes).
+CARRY_MODES = {'OBJECT', 'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_LATTICE', 'EDIT_ARMATURE', 'EDIT_METABALL',
+               'POSE'}
+_mode = [None]      # the last mode the carry saw
+_seen = {}          # mode -> its tool at the last watch tick: a different tool after a switch was picked on purpose
+
+
+def carried_tool(prev_mode, new_mode, prev_tool, new_tool):
+    """The tool idname the new mode should get, or None (bpy-free rule)."""
+    if prev_mode == new_mode or prev_mode not in CARRY_MODES or new_mode not in CARRY_MODES:
+        return None
+    if not prev_tool or not is_sacred(prev_tool):
+        return None
+    if prev_tool == "builtin.transform":
+        # T (Maya ShowManipulators = builtin.transform, keymap/mapping.py) doesn't survive a mode change: Maya goes
+        # back to selectSuperContext (tool_modes_174.md row "F9 vertex (T)")
+        prev_tool = "builtin.select_box"
+    return None if prev_tool == new_tool else prev_tool
+
+
+def _tool_of(workspace, mode):
+    tool = workspace.tools.from_space_view3d_mode(mode, create=False)
+    return tool.idname if tool else None
+
+
+def _carry():
+    """0 s timer after a mode change: give the new mode the previous mode's Q / W / E / R / T tool."""
+    context = bpy.context
+    try:
+        mode, prev, workspace = context.mode, _mode[0], context.workspace
+    except AttributeError:
+        return None
+    _mode[0] = mode
+    if workspace is None:
+        return None
+    from . import hold
+    if hold.COMPONENT.on or hold.COMPONENT.pending_tool:     # the D / Insert pivot edit sets its own tool
+        return None
+    current = _tool_of(workspace, mode)
+    seen = _seen.get(mode)
+    if (seen is not None and seen != current) or (seen is None and current and not is_sacred(current)):
+        # the command that switched modes picked this mode's tool itself (Shift+RMB Target Weld, Multi-Cut ...);
+        # a mode visited for the first time starts on Blender's Select Box, a sacred tool
+        _seen[mode] = current
+        return None
+    tool = carried_tool(prev, mode, _tool_of(workspace, prev) if prev else None, current)
+    if tool is None:
+        return None
+    _seen[mode] = tool
+    from ..ui.status_line import main_view3d
+    window = context.window or (context.window_manager.windows[0] if context.window_manager.windows else None)
+    area, region = main_view3d(window.screen) if window is not None else (None, None)
+    try:
+        if area is not None:
+            with context.temp_override(window=window, area=area, region=region):
+                bpy.ops.wm.tool_set_by_id(name=tool, space_type='VIEW_3D')
+    except (RuntimeError, ReferenceError, TypeError):   # tool unavailable in this mode / no UI
+        pass
+    return None
+
+
+@bpy.app.handlers.persistent
+def _on_depsgraph(_scene, _depsgraph):
+    try:
+        mode = bpy.context.mode
+    except AttributeError:
+        return
+    if mode != _mode[0] and not bpy.app.timers.is_registered(_carry):
+        bpy.app.timers.register(_carry, first_interval=0.0)
+
+
+@bpy.app.handlers.persistent
+def _on_load(*_args):
+    _mode[0] = None
 
 
 class ALLSET_OT_last_tool(bpy.types.Operator):
@@ -188,9 +275,18 @@ classes = (ALLSET_OT_box_zoom, ALLSET_OT_last_tool, ALLSET_OT_menu_set, ALLSET_O
 def register_timer():
     if not bpy.app.timers.is_registered(_watch):
         bpy.app.timers.register(_watch, first_interval=_TICK, persistent=True)  # survives file loads
+    bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
+    bpy.app.handlers.load_post.append(_on_load)
 
 
 def unregister_timer():
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)
+    if bpy.app.timers.is_registered(_carry):
+        bpy.app.timers.unregister(_carry)
+    for lst, fn in ((bpy.app.handlers.depsgraph_update_post, _on_depsgraph), (bpy.app.handlers.load_post, _on_load)):
+        if fn in lst:
+            lst.remove(fn)
     LAST.clear()
+    _seen.clear()
+    _mode[0] = None

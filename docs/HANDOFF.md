@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 174 (Component mode keeps the transform tool, backlog #1) 완료 — `docs/steps/step_174.md`. Maya GUI 측정
+  `research/maya/re/tool_modes_174.md` (Q/W/E/R 유지, T → select). `operators/tool_keys.py` 모드 전환 뒤 도구 넘김. GUI step174
+  21 / 21 (수정 전 8 실패), 관련 GUI 통과, 헤드리스 1603 / 1603.
+  **바로 다음 할 일**: 175 Repeat Last for Maya commands (G) (backlog.json 2 번째).
+
 - Step 173 (재점검 12차, 사용자 지시의 11차) 완료 — `docs/steps/step_173.md` + `step_173_remaining.md` / `step_173_quant.md`, PLAN
   「재점검 12차」. 헤드리스 1600 / 1600, dogfood 48 / 48 (콘솔 오류 0), 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 699 / 1318 (53.0 %), 옵션 창
   104 경로, look_compare 그대로 (선택 면 ΔE 40.5). 새 차이: 컴포넌트 모드 → Select 도구, G 가 메뉴 명령 반복 안 함, 패널 메뉴 회색 36.
