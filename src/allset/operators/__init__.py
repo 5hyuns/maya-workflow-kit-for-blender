@@ -37,6 +37,10 @@ from . import default_light, render_batch  # noqa: E402  step 152 RENDER: defaul
 
 classes += render_batch.classes
 
+from . import curve_draw  # noqa: E402  step 156 lane T: CV / EP Curve Tool, Three / Two Point Circular Arc
+
+classes += curve_draw.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -75,6 +79,7 @@ def register():
 
 
 def unregister():
+    curve_draw.unregister_handlers()
     auto_key.unregister_handlers()
     material.unregister_handlers()
     outliner_drag.unregister_handlers()
