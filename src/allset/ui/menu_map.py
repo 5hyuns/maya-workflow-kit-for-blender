@@ -796,7 +796,17 @@ MAP.update({
     "nParticles/Soft Body#2": _mod('SOFT_BODY'),
     "nParticles/Make Collide": "allset.fx_passive",
     # Rendering
-    "Lighting/Shading/Light Linking Editor": _props('OBJECT'),
+    # step 179: Maya light / shadow linking on Blender light linking (operators/light_links.py,
+    # ); the editor = a kit popover with Maya's two lists (ui/light_link_editor.py)
+    "Lighting/Shading/Light Linking Editor": ("v3d", "allset.light_linking_editor", {}),
+    "Lighting/Shading/Make Light Links": ("allset.light_link", {"kind": "LIGHT", "make": True}),
+    "Lighting/Shading/Break Light Links": ("allset.light_link", {"kind": "LIGHT", "make": False}),
+    "Lighting/Shading/Select Objects Illuminated by Light": ("allset.light_link_select", {"kind": "LIGHT"}),
+    "Lighting/Shading/Select Lights Illuminating Object": ("allset.light_link_select", {"kind": "LIGHT", "lights": True}),
+    "Lighting/Shading/Make Shadow Links": ("allset.light_link", {"kind": "SHADOW", "make": True}),
+    "Lighting/Shading/Break Shadow Links": ("allset.light_link", {"kind": "SHADOW", "make": False}),
+    "Lighting/Shading/Select Objects Shadowed by Light": ("allset.light_link_select", {"kind": "SHADOW"}),
+    "Lighting/Shading/Select Lights Shadowing Object": ("allset.light_link_select", {"kind": "SHADOW", "lights": True}),
     "Toon/Assign Outline": ("v3d", "object.grease_pencil_add", {"type": 'LINEART_OBJECT'}),
     "Stereo/Create/Stereo Camera": "allset.stereo_camera",
     # Cache (Alembic / GPU cache = Alembic files; Geometry Cache = Alembic too, with a notice)
