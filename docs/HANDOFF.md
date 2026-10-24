@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 170 (Selection modifiers outside the 3D View, backlog_164 #7) 완료 — `docs/steps/step_170.md`. GUI Maya QTest 실측
+  `research/maya/re/select_mods_170.md` (Graph Editor: 선택된 키 클릭 = 유지, Ctrl 클릭 = 일반 클릭, Shift 박스 = 토글;
+  Dope Sheet / UV: 토글 / 해제 / 추가; Outliner: Shift = 범위, Ctrl = 토글). `operators/select_2d.py` 첫 자리 PASS_THROUGH
+  연산자 + 키맵 props, README 대응표 행 Done. 헤드리스 1586 / 1586, GUI step170 10/10 + step86 10/10.
+  **바로 다음 할 일**: 171 Animation Snapshot / Ghosting (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json`
+  8 번째 = 마지막 항목), 그 뒤 새 감사 (재점검 12차).
+
 - Step 169 (Deform completion, backlog_164 #6) 완료 — `docs/steps/step_169.md`. mayapy 측정 `research/maya/re/deform_169.md`.
   Wire = 킷 디포머 (Geometry Nodes `wire1` + `curve1BaseWire`, Maya 규칙 그대로: mayapy 대비 최대 1.03e-5), Dropoff
   Locator, Wire > Add / Remove / Reset / Show Base / Parent Base, ShrinkWrap 대상 편집, Lattice Reset / Remove Tweaks,

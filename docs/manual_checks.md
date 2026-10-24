@@ -1123,3 +1123,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Deform > Wire > Wire Dropoff Locator with a CV of the wire selected: a locator appears on the wire; a Percent 2 widens the pull there.
 - [ ] Deform > Wire > Reset puts the curve back; Show Base Wire shows curve1BaseWire; Remove leaves the curve and restores the plane.
 - [ ] Deform > Paint Weights > Wire ❒ (hold): Paint Attributes Tool window; Paint starts Weight Paint on wire1 with the values.
+
+## Step 170 — Selection modifiers outside the 3D View
+
+- [ ] Graph Editor: select keys 1 and 10, Shift+drag a box over 10 and 20 → 1 and 20 selected; Ctrl+drag over 20 → only 1; Ctrl+Shift+click a selected key → nothing removed; click a selected key and drag → all selected keys move.
+- [ ] Dope Sheet: Ctrl+click a selected key deselects it; Shift+box toggles.
+- [ ] UV Editor: Shift+box over selected and unselected UVs toggles each.
+- [ ] Outliner: click A, Shift+click C → A..C; Ctrl+click B → B off; Ctrl+Shift+click E → C..E added.
