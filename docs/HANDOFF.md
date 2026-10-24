@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 164 (Maya DAG rules for parents, backlog #1) 완료 — `docs/steps/step_164.md`. 부모를 숨기면 자손도 안 그려짐 (자손 Visibility
+  채널은 그대로, `operators/dag.py` sync), Delete / Export Selection / Ctrl+1 Isolate 가 선택의 계층을 가져감 (mayapy 측정
+  `research/maya/re/dag_164.md`).
+  **바로 다음 할 일**: 165 Component-mode Channel Box and RMB node submenus (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 2 번째 항목).
+
 - Step 163 (재점검 11차 = 사용자 지시의 「재점검 10차」) 완료 — `docs/steps/step_163.md` (+ `step_163_remaining.md`, `step_163_quant.md`),
   PLAN 「재점검 11차」. 헤드리스 1518/1518, dogfood 48/48 (콘솔 오류 0), 대응표 29/2/0/2 (88 %), 메뉴 649/1318 (49.2 %), 옵션 상자 Maya 창
   85 경로, look_compare 킷 픽셀 6/6, 열린 이슈 20 중 19 코드에서 고쳐짐 (#89 만 열림, 릴리스 때 닫기), manual_checks 620 / 86 ticked.

@@ -1080,3 +1080,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Ctrl+Shift+click a Maya menu item (Create > Polygon Primitives > Cube) on real keys: the item doesn't run, no option box, a Cube button appears at the end of the current shelf tab, the Command Line shows "Cube added to the … shelf"; Shift+click / Ctrl+click still open the option box.
 - [ ] Restart Blender: the added shelf button is still there; click runs the item, Ctrl+click opens its option box, the shelf menu's Edit / Delete reach it (factory tabs too).
 - [ ] Hypershade floating beside the main window: MMB-drag a Browser swatch's name onto an object in the main viewport: the material is assigned; the swatch + name follow the cursor; releasing over empty space or the Outliner does nothing; ESC cancels.
+
+## Step 164 — Maya DAG rules for parents
+- [ ] Group two cubes (Ctrl+G), select the group, press h: both cubes disappear, the cubes' Channel Box Visibility still reads on; h again shows them. Hide one cube on its own first: showing the group leaves that cube hidden.
+- [ ] Select the group, Delete (key, Edit > Delete, Outliner Delete): the group and both cubes are gone; Ctrl+Z brings all three back.
+- [ ] File > Export Selection of the group as FBX, import the file into Maya: group + both cubes.
+- [ ] Select the group, Ctrl+1: the view shows the group's cubes only; Ctrl+1 again shows everything. Put the group in a display layer and turn its V off: the cubes disappear too.
+- [ ] A scene with a few thousand objects: dragging objects stays as fluid as before step 164 (the parent rule runs on every scene update).
