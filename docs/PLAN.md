@@ -810,3 +810,54 @@ fixed (Display > Grid ❒ "no settings"), Reference Editor reload / unload / rep
 Intensity). 4. Deformed selection wire + names + bind (#91 #93 #94). 5. Graph Editor in Maya terms (#96 + 2D Ctrl+A). 6. Maya
 manipulator / ring / text details (extrude manipulator, #99 #98 #100). 7. Render basics (default light, render option windows,
 Test Resolution, grid options). 8. Blender 5.x pass (#90, 5.0 / 5.1 headless, 5.x GUI).
+
+## 재점검 10차 (step 154, 2026-10-24 — 사용자 지시의 「재점검 9차」)
+
+User request: everything planned (backlog 146–153) is done — dogfood in a clean install, collect what is left, implementation rate,
+priorities, backlog; criterion "default Maya with Blender features attached", differences only. 「재점검 9차」 is step 145, so this
+one is numbered 10 (delegated). Evidence: `docs/steps/step_154.md` (main: dogfood shots, scored differences) + lane files
+`step_154_remaining.md` (README table, open work, blindspots, manual checks) and `step_154_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **29 (88 %)** | **2** — selection modifiers outside the 3D View; theme (widgets / menus / Outliner follow the user's theme) | **0** | **2** — separate pivots, Y-up |
+
+Unchanged since audit 9: steps 146–153 deepened done rows (option boxes, undo, Channel Box, Graph Editor, render, 5.x).
+
+### Headline numbers (step 145 → now)
+
+| Measure | Step 145 | Now (e26b969) |
+|---|---|---|
+| Menu leaves working (1318) | 596 (45.2 %) | **600 (45.5 %)** |
+| Editor menu bars working (914) | 506 | **517** |
+| Option boxes → distinct Maya window / dialog | 80 | **83**; 2 regressed redo → "no settings" (step 147 HIDDEN props) |
+| Marking menus working / greyed; shelves; hotkeys | 363 / 69; 151; 199 | 364 / 69; 153; 202 |
+| Tests | headless 1307, dogfood 48/48 | **headless 1398/1398** (4.5; 5.0.1 / 5.1.2 / 5.2.3 also 1398 at step 153), **dogfood 48/48**, console errors 0 |
+| look_compare (effective 1.0) | viewport 11/12, kit pixels 6/6, rects 5/12 | viewport 11/12, kit pixels 5/6 (sample point outside the step-151 ring, re-pick), rects 5/12 |
+| Manual checks | 548, 78 ticked | **579, 81 ticked** |
+| Open GitHub issues | #81–#101 | 20 open, 17 of them fixed in code (close at release); open in code: #81 #89 #97 |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 9 | UV Editor tools: Unfold, shell Move / Stack / Snap Together / Orient, Delete UVs, Shell Borders, UV keys |
+| 9 | Curves 44 % / Surfaces 20 %: EP Curve, arcs, Rebuild, Fillet, Cut, Edit Curve Tool |
+| 9 | Graph Editor Key menu acts on Channel Box nodes, not selected keys; Select / Mute Key / Default Tangent greyed |
+| 9 | #81 no Maya UI reset, one workspace |
+| 8 | Channel Box menus incomplete (RMB / Ctrl+RMB / empty area), light Intensity keys, spot rows, #97 INPUTS "Armature" |
+| 8 | Skin / Skeleton: weight export / import, Interactive Bind, Joint Labelling, IK enable (Skeleton 24 %) |
+| 6 | Kit results as Blender status-bar reports (99 `report INFO`); RMB list splits into columns; four-view ortho panes ~10× zoomed, one header |
+| 6 | Option box regressions (Toggle Show/Hide, Non-Deformer History), Ctrl+Shift+click = add to shelf, Hypershade swatch MMB-drag |
+| 6 | Render: lambert1 1.25× bright, Blender F12 without default light, Render Setup |
+| 5 | Maya Preferences / Hotkey Editor / Reference Editor reload-unload-replace |
+
+### Backlog (steps 155+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. UV Editor shell tools + UV keys. 2. Curves tools (EP / arcs / Rebuild / Fillet / Cut). 3. Graph Editor keys in Maya terms (selected
+keys, Select / Mute / Default Tangent). 4. Channel Box menus complete + #97. 5. Skin weights export / import + Skeleton gaps. 6. Maya UI
+reset + workspaces (#81). 7. Viewport messages and views (Command Line results, RMB list one column, four-view ortho framing / headers,
+wire in a maximized ortho view, look_compare point). 8. Option-box / menu gestures (regressions, Ctrl+Shift+click to shelf, Hypershade
+swatch drag).

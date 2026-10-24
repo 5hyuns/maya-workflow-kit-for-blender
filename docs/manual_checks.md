@@ -127,7 +127,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 13 — 배포
 
-- [ ] (step 13) 비활성화 → 키맵·내비게이션·Image Editor 헤더가 원래대로, 다시 활성화.
+- [ ] (step 13) 비활성화 → 키맵·Image Editor 헤더가 원래대로, 다시 활성화.
 
 ### Step 14 — 재점검 1차
 
@@ -268,8 +268,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 42 — 켜자마자 Maya (환영 대화상자, Make Blender Maya)
 
-- [ ] (step 42) 실제 설치 (환경설정 > Get Extensions > Install from Disk 로 zip) 직후 환영 대화상자가 커서 근처에 뜨는지, Blender 스플래시와 겹쳐도 "Make Blender Maya" 를 누를 수 있는지. 누르면 Maya 레이아웃 + 테마, 스플래시 없음.
-- [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Allset 맨 위 버튼으로 할 수 있는지.
+- [ ] (step 42) 실제 설치 (환경설정 > Get Extensions > Install from Disk 로 zip) 직후 환영 대화상자가 커서 근처에 뜨는지, Blender 스플래시와 겹쳐도 "Make Blender Maya" 를 누를 수 있는지. 누르면 Maya 레이아웃, 스플래시 없음 (테마는 바꾸지 않음, step 130).
+- [ ] (step 42) zip 을 Blender 창으로 끌어 놓아 설치해도 같은지. Cancel 을 누르면 다시 묻지 않고, 환경설정 > Add-ons > Maya Workflow Kit 맨 위 버튼으로 할 수 있는지.
 - [ ] (step 42) Blender 를 껐다 켜면 (파일 없이) Maya 레이아웃으로 열리는지; .blend 를 더블클릭해 열면 그 파일이 그대로 열리는지; 세션 중 File > New > General 은 General 인지.
 - [ ] (step 42) 다른 애드온 (예: Node Wrangler) 이 Make Blender Maya 전후로 그대로 켜져 있는지.
 
@@ -300,7 +300,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 49) Allset 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
 - [ ] (step 49) 툴박스: Select·Lasso·Paint Select·Move·Rotate·Scale 가 오브젝트·편집·포즈 모드에서 같은 자리에 있고, 다른 툴 (Multi-Cut 등) 을 쓴 뒤 그 툴이 구분선 아래 마지막 칸에 나오는지. 툴 버튼 더블클릭·길게 누르기가 이상하지 않은지.
 - [ ] (step 49) 툴박스 아래 빈 곳 클릭·드래그 → 선택이 그대로인지. 빠른 레이아웃 Single / Four 버튼, Outliner 버튼 (새 창), Front/Persp 는 회색.
-- [ ] (step 49) Resolution Scale 을 1.0 보다 크게 (Maya Density 끔) 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
+- [ ] (step 49) Resolution Scale 을 1.0 보다 크게 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
 - [ ] (step 49) Status Line 의 Attribute Editor 버튼 = 도크 AE 전환, Render Settings = Properties 새 창 (Render 탭).
 - [ ] (step 49) 하단 줄: 왼쪽 Help Line (툴 도움말, 없으면 Blender 마우스 힌트·보고·진행), 오른쪽 Command Line. 오류 보고가 Help Line 칸에 보이는지.
 
@@ -328,7 +328,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 53 — Blender 5.x 와 안전한 설치
 
 - [ ] (step 53) 쓰던 Blender (애드온 몇 개, 바꾼 키·탐색 설정) 에 kit 을 설치: 기존 애드온이 그대로 켜져 있고, kit 을 끄면 키맵·탐색·undo 설정이 설치 전과 같은지.
-- [ ] (step 53) Blender 5.0–5.2 에서 kit 을 켜고 Maya 레이아웃: Status Line·셸프·툴박스·Channel Box·핫박스가 4.5 와 같게 보이는지, Range Slider 줄의 재생 버튼, Maya 테마 색 (일부 5.x 전용 색은 Blender 기본).
+- [ ] (step 53) Blender 5.0–5.2 에서 kit 을 켜고 Maya 레이아웃: Status Line·셸프·툴박스·Channel Box·핫박스가 4.5 와 같게 보이는지, Range Slider 줄의 재생 버튼, 킷이 그리는 뷰포트 색 (선택 와이어 · 그리드 · 컴포넌트, step 134; 위젯은 사용자 테마).
 - [ ] (step 53) kit 을 켠 채 Graph Editor (Alt+MMB/Alt+RMB, A/F, 키 클릭), Node Editor, Text Editor (z/h/Space 입력) 가 평소대로인지.
 - [ ] (step 53) Blender 5.3 이상에 설치하면 확장 관리자가 「호환 안 됨」 을 분명히 보여 주는지.
 
@@ -388,7 +388,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 60 — Maya ⇄ Blender 스위치 · 완전 되돌리기
 
-- [ ] (step 60) 상단 바 오른쪽 「Maya | Blender」 스위치가 두 모드 모두에서 보이고, 클릭 한 번에 재시작 없이 바뀌는지 (키맵·메뉴·Status Line·Shelf·Channel Box·테마). 바뀌는 데 걸리는 시간이 거슬리지 않는지.
+- [ ] (step 60) 상단 바 오른쪽 「Maya | Blender」 스위치가 두 모드 모두에서 보이고, 클릭 한 번에 재시작 없이 바뀌는지 (키맵·메뉴·Status Line·Shelf·Channel Box). 바뀌는 데 걸리는 시간이 거슬리지 않는지.
 - [x] (step 60) Ctrl+Alt+Shift+M 로 같은 전환 (어느 에디터 위에서든). Blender 모드에서 F3 (메뉴 검색) 「Switch to Maya」, Maya 모드에서 Windows > Switch to Blender. (gui_manual_sweep — F3 = Blender 메뉴 검색이 찾는 Edit 메뉴 항목으로 확인)
 - [x] (step 60) 작업 중인 파일 (오브젝트·애니메이션·저장 경로) 이 전환 전후 그대로, Blender 로 돌아오면 원래 워크스페이스 (Layout 등) 가 다시 열리고 「Maya」 워크스페이스는 사라짐. 그 파일을 저장해도 Maya 레이아웃이 남지 않는지. (gui_manual_sweep)
 - [x] (step 60) 내 키 수정 (Preferences > Keymap 에서 바꾼 키), 내 테마, 다른 애드온, 회전 방식 등을 바꿔 둔 설정에서 Maya → Blender: 전부 그대로. Maya 모드 중에 바꾼 다른 설정 (Maya 가 건드리지 않는 것) 도 그대로. (gui_manual_sweep)
@@ -628,9 +628,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 99 — 첫 화면 (Outliner 기본 행, Tool Box 125 %, 도크 탭)
 
-- [ ] (step 99) Windows 125 % 에서 Maya Density 를 끈 채 (또는 Preferences > Interface > Resolution Scale 1.0) Allset 새 장면 → 시작 직후 마우스 커서가 Tool Box 열 오른쪽 경계로 잠깐 갔다가 제자리로 돌아오고, Tool Box 열에 Q W E R 툴이 보이며 뷰포트 안에 Blender 툴바가 남지 않는지. 커서가 순간 이동하는 것이 거슬리는지 (로드당 한 번).
+- [ ] (step 99) Windows 125 % 에서 Preferences > Interface > Resolution Scale 1.0 으로 Maya Workflow Kit 새 장면 → 시작 직후 마우스 커서가 Tool Box 열 오른쪽 경계로 잠깐 갔다가 제자리로 돌아오고, Tool Box 열에 Q W E R 툴이 보이며 뷰포트 안에 Blender 툴바가 남지 않는지. 커서가 순간 이동하는 것이 거슬리는지 (로드당 한 번).
 - [ ] (step 99) 새 장면 Outliner = persp / top / front / side (회색, 카메라 그림) → defaultLightSet / defaultObjectSet. persp 클릭 = 선택 해제 + 행 강조, defaultLightSet = 라이트 선택. 큐브를 만들면 카메라 행이 pCube1 **뒤**로 감 (Maya 는 앞) — 거슬리는지.
-- [ ] (step 99) 도크 오른쪽 가장자리 세로 탭 「Channel Box / Layer Editor」「Attribute Editor」「Modeling Toolkit」 클릭 → 각 편집기, Ctrl+A 로도 탭이 바뀜. 오브젝트를 선택하면 Blender 「Item」 탭이 네 번째로 생김 (C 패널, 숨길 수 없음) — 눌러도 되고 다른 탭을 누르면 돌아옴.
 - [ ] (step 99) Layer Editor (Display / Anim 탭) 가 도크 높이의 약 절반에서 시작하고 목록이 아래 끝까지 차는지 (Maya 처럼). 큐브 INPUTS 가 있을 때는 CB 바로 밑에 붙음.
 
 ### Step 101 — 메뉴 정직성 (회색마다 안내, 싼 매핑, 객체 모드에서도 활성)
@@ -755,7 +754,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 125 — 이름 Maya Workflow Kit · README
 
-- [ ] (step 125) 깨끗한 설정에 `maya-workflow-kit-<ver>.zip` 설치: Preferences > Add-ons 에 「Maya Workflow Kit」, 환영 창 제목 「Welcome to Maya Workflow Kit」, File > New 에 「Maya Workflow Kit」 템플릿, 핫박스 가운데 상자 「Maya Workflow Kit」; 화면 어디에도 「Allset」 글자가 남지 않는지 (내부 id `allset` 은 Get Extensions 의 정보에만).
+- [ ] (step 125) 깨끗한 설정에 `maya-workflow-kit-<ver>.zip` 설치: Preferences > Add-ons 에 「Maya Workflow Kit」, 환영 창 제목 「Welcome to Maya Workflow Kit」, 핫박스 가운데 상자 「Maya Workflow Kit」; 화면 어디에도 「Allset」 글자가 남지 않는지 (내부 id `allset` 은 Get Extensions 의 정보에만).
 - [ ] (step 125) 저장소를 GitHub (`5hyuns/maya-workflow-kit-for-blender`) 에 올린 뒤 README 를 GitHub 화면에서: 히어로 이미지 · GIF 7 개 · 트레일러 MP4 링크가 열리고, 목차 앵커가 맞는 곳으로 가는지 (`tools` 없이 로컬 검사는 경로 존재만 확인).
 - [ ] (step 125) 업로드 전 extensions.blender.org 에서 「Maya Workflow Kit」 와 같은 / 비슷한 이름이 없는지 검색 (다시 확인 안 함). 심사에서 이름이 지적되면 대체 이름 「Workflow Kit for Maya Users」 (결정 12 개정).
 
@@ -847,7 +846,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 134 — display keys
 
-- [ ] (step 134, #58) Maya 레이아웃에서 큐브를 만들고 1 / 2 / 3, 4 / 5 / 6 / 7, F8, F9 / F10 / F11, Alt+A, Alt+P 를 실제 키보드로 눌러: 뷰포트 왼쪽 아래에 Adjust Last Operation 패널 (「Component Mode」, 「Smooth Mesh Preview」 등) 이 뜨지 않는지. 다른 연산 (예: Shift+H) 의 패널이 떠 있을 때 3 / F9 를 누르면 그 패널이 닫히는지.
+- [ ] (step 134, #58) Maya 레이아웃에서 큐브를 만들고 1 / 2 / 3, 4 / 5 / 6 / 7, F8, F9 / F10 / F11, Alt+A, Alt+P 를 실제 키보드로 눌러: 뷰포트 왼쪽 아래에 Adjust Last Operation 패널 (「Component Mode」, 「Smooth Mesh Preview」 등) 이 뜨지 않는지. 다른 연산 (예: Alt+W, step 147 뒤 Shift+H 는 패널을 안 엶) 의 패널이 떠 있을 때 3 / F9 를 누르면 그 패널이 닫히는지.
 - [ ] (step 134) F9 → Ctrl+Z 가 오브젝트 모드로 돌아가는지, 3 → 이동 → Ctrl+Z 가 이동만 되돌리고 미리보기는 남는지.
 - [ ] (step 134, #61) Create > Polygon Primitives 의 Cube / Cylinder / Pipe 에 3: 미리보기가 매끈한 음영 (면 경계가 보이지 않음), 1 로 돌아오면 Maya 처럼 각진 hard edge. 0.2.x 에서 3 을 켜고 저장한 파일을 열어 3 을 다시 누르면 매끈해지는지.
 ### Step 134 — selection colours
@@ -859,7 +858,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 135 — dock width
 
-- [ ] (step 135 WIDTH, #60) Windows 100 % / 125 % / 150 % (또는 Preferences > Interface > Resolution Scale 1.0 / 1.25 / 1.5) 에서 새 Maya 장면을 열고 마우스를 가만히 둔다: 오른쪽 탭 스택 폭이 약 466 / 574 / 672 px 로 맞춰지고 (커서가 잠깐 영역 틈으로 갔다 돌아옴), 탭 「Channel Box / Layer Editor」 「Attribute Editor」 「Modeling Toolkit」 이 「…」 없이 보이는지 (레인 CB 의 자연 폭 탭과 병합 뒤), 큐브를 만들면 「Subdivisions Height」 가 잘리지 않는지, AE 탭의 메뉴 줄 (List … Help) 이 한 줄인지. 뷰포트가 아웃라이너와 독 사이 남은 폭을 다 차지하는지.
 - [ ] (step 135) 맞춘 뒤 독 왼쪽 모서리를 직접 끌어 좁히거나 넓혀도 다시 되돌아가지 않는지 (#53 규칙), Tool Settings 를 열고 닫아도 뷰포트 폭이 그대로인지, UI 배율을 바꾸면 다시 맞춰지는지.
 
 ## Step 135 — Channel Box / Layer Editor
@@ -868,21 +866,20 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 135) `polyCube1` 을 클릭 → Width … 행이 그 아래 펼쳐지고, Layer Editor 는 같은 자리에 그대로; 다시 클릭 → 접힘. 펼침은 Ctrl+Z 단계를 남기지 않는지 (Ctrl+Z 가 큐브 생성을 되돌림).
 - [ ] (step 135) 펼친 채 두 번째 큐브를 만들거나 다른 오브젝트를 고른 뒤 첫 큐브로 돌아오면 다시 접혀 있는지 (Maya `cb135/d04_first_again.png`). 압출 (polyExtrudeFace1), modifier, 제약 노드도 접힌 채 시작하는지.
 - [ ] (step 135) INPUTS 를 여러 개 펼쳐 Channel Box 가 길어지면: 마지막 줄에 ▲ ▼ 단추, Channel Box 위에서 마우스 휠로 행이 스크롤되고 Layer Editor 위의 휠은 Layer Editor 목록에만 작동하는지. Properties 의 modifier 패널 접힘 (show_expanded) 이 Channel Box 클릭으로 바뀌지 않는지.
-- [ ] (step 135) 독 위 탭 줄: 손잡이 「::::::::」 다음에 탭 세 개가 글자 폭대로 왼쪽부터 놓이고 「…」 가 없는지 (100 / 125 / 150 %).
 
 ## Step 136 — marking menus inside the window
 
 - [ ] Cube near the bottom of the view, hold RMB: no list row is cut by the 3D View / Time Slider border; Time Slider numbers don't show on top of the menu.
 - [ ] Same near the left (Outliner) and right (dock) edges, and Shift+RMB / Ctrl+RMB in object, vertex, edge and face mode: everything readable, gestures still go to the right item.
 - [ ] Component mode (F9 / F10 / F11), RMB: Select All / Deselect All / Select Hierarchy / Invert Selection are not greyed and work like the Select menu.
-- [ ] Hover a greyed item (e.g. RMB > Time Editor): its notice appears in the Help Line.
+- [x] Hover a greyed item (e.g. RMB > Time Editor): its notice appears in the Help Line. (gui_step136_items, step 154)
 - [ ] Ctrl+RMB on a mesh in object mode: the convert menu; To Vertices / To Faces select every component of the object in component mode.
 - [ ] Select tool, q hold + LMB (Select options): Camera-Based Selection shows a check box that follows the setting.
 
 ## Step 137 — animation / render basics
 
 - [ ] Maya layout, key Translate X 0 → 5 (cm), Graph Editor, frame all: with the mouse over the curves the value axis reads 0–5; moving the mouse to the channel list shows Blender's 0.00–0.05 again (Blender limit) — is the switch distracting?
-- [ ] Translate + Rotate curves shown together: Blender's numbers stay (no wrong cm labels on degrees).
+- [x] Translate + Rotate curves shown together: Blender's numbers stay (no wrong cm labels on degrees). (gui_step137_graph_units, step 154)
 - [ ] File > New Scene → Cube → Render > Render Current Frame: Render View opens with the cube framed like the viewport; the Outliner shows persp once.
 - [ ] Look through a camera (Panels > Perspective > camera) and render: that camera is used.
 - [ ] Assign New Material > Blinn: AE Color grey 0.5, Incandescence black, Eccentricity 0.3, Specular Roll Off 0.7.

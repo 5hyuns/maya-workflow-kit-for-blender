@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 154 (재점검 10차 = 사용자 지시의 「재점검 9차」) 완료 — `docs/steps/step_154.md` (+ `step_154_remaining.md`, `step_154_quant.md`),
+  PLAN 「재점검 10차」. 헤드리스 1398/1398, dogfood 48/48 (콘솔 오류 0), 대응표 29/2/0/2 (88 %, 변화 없음), 메뉴 600/1318 (45.5 %),
+  manual_checks 579 / 81 ticked. 열린 이슈 20 중 17 은 코드에서 고쳐짐 (릴리스 때 닫기), 남은 것 #81 #89 #97.
+  **바로 다음 할 일**: 새 backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8 개 = steps 155–162 (UV 셸 도구,
+  Curves, Graph Editor 키, Channel Box 메뉴 + #97, 스킨 가중치 내보내기, Maya UI 초기화 #81, 뷰 메시지 / 네 뷰, 옵션 상자 몸짓).
+  규칙: GUI 전체 묶음은 단계 끝 한 번, sleep 대기 금지, Blender 동시 2 개.
+
 - Step 153 (Blender 5.x pass, #90) 완료 — `docs/steps/step_153.md`, 결과 표 `docs/compat_5x.md` 「step 153」. Paint Skin Weights ❒ 가
   5.x 에서 `compat.unified_paint_settings` / `set_unprojected_radius` (5.x 는 페인트 모드마다, 크기 = 지름). GUI 전체 5.2.3 의 실패 15 개:
   step 151 뒤 회귀 (넓은 N 상자가 대각선 제스처에서 하위 메뉴를 엶 → 방사 하위 메뉴는 자기 구역에서만 열림; 테스트의 Maya 기하 가정 2 개),
