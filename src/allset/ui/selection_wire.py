@@ -19,12 +19,20 @@ The kit draws the edges itself (POST_VIEW), :
   #000460 ( dormant_polymesh_wire, 04_wire_selected_lead.png); Blender draws them in the
   theme's wire colour (#181818 here, ΔE00 26). The same pass draws them in DORMANT (the "Selection Wireframe"
   preference covers both).
+- Step 149 (#91): a frame change (playback, scrubbing, ``frame_set``) evaluates the depsgraph without a
+  ``depsgraph_update_post``, so a skinned / nCloth mesh kept the wire of the first evaluated frame. ``frame_change_post``
+  drops the batches of objects whose evaluated shape can depend on time (``time_dependent``: modifiers, shape keys,
+  animated data); static meshes keep their batch.
+- Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya's lattice selected colour is
+  displayColor lattice -active 16 = white, lead 19 ( displayColor_index), the
+  same as meshes. Edges = the lattice grid along U / V / W through the evaluated points (``co_deform``).
 """
 
 import bpy
 from bpy.app.handlers import persistent
 
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
+WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
 DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template (probe)
 LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active),  displayColor.lead
 OTHER = "#ffffff"          # Maya other selected objects, displayColor.active
@@ -68,6 +76,8 @@ def edges_of(ob, depsgraph):
     """(vertex positions (N, 3) float32, edge indices (E, 2) int32) of the evaluated object, object space."""
     import numpy as np
     ev = ob.evaluated_get(depsgraph)
+    if ob.type == 'LATTICE':
+        return lattice_edges(ev.data)
     if ob.type == 'MESH':
         me, temp = ev.data, False
     else:
@@ -83,6 +93,19 @@ def edges_of(ob, depsgraph):
     return co.reshape(-1, 3), ed.reshape(-1, 2)
 
 
+def lattice_edges(lat):
+    """(points (N, 3), edges (E, 2)) of a lattice grid: neighbours along U, V and W, index u + v·U + w·U·V."""
+    import numpy as np
+    nu, nv, nw = lat.points_u, lat.points_v, lat.points_w
+    co = np.empty(len(lat.points) * 3, np.float32)
+    lat.points.foreach_get("co_deform", co)
+    idx = np.arange(nu * nv * nw, dtype=np.int32).reshape(nw, nv, nu)
+    pairs = [np.stack((idx[:, :, :-1].ravel(), idx[:, :, 1:].ravel()), 1),
+             np.stack((idx[:, :-1, :].ravel(), idx[:, 1:, :].ravel()), 1),
+             np.stack((idx[:-1, :, :].ravel(), idx[1:, :, :].ravel()), 1)]
+    return co.reshape(-1, 3), np.concatenate(pairs).astype(np.int32).reshape(-1, 2)
+
+
 def _batch(ob, depsgraph):
     key = ob.session_uid
     if key not in _batches:
@@ -96,7 +119,7 @@ def _batch(ob, depsgraph):
 def wire_objects(context):
     """Selected objects that get the wire: object mode, drawable types, visible."""
     return [ob for ob in context.selected_objects
-            if ob.type in TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
+            if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
 
 
 def dormant_objects(context):
@@ -214,12 +237,35 @@ def _on_depsgraph(_scene, depsgraph):
             _batches.pop(update.id.original.session_uid, None)
 
 
+def time_dependent(ob):
+    """Can the evaluated geometry change with the frame? Modifiers (armature / cloth / lattice / nodes ...), shape
+    keys, animated object data. Object transforms don't matter: the batch is drawn with the live matrix."""
+    if ob.modifiers or getattr(ob, "particle_systems", None):
+        return True
+    data = ob.data
+    if data is None:
+        return False
+    if getattr(data, "shape_keys", None) is not None or data.animation_data is not None:
+        return True
+    return False
+
+
+@persistent
+def _on_frame(scene, _depsgraph=None):
+    """Drop the batches of time-dependent objects so the next redraw reads this frame's evaluated mesh (#91)."""
+    if not _batches:
+        return
+    for ob in scene.objects:
+        if ob.session_uid in _batches and time_dependent(ob):
+            del _batches[ob.session_uid]
+
+
 @persistent
 def _on_reload(*_args):
     _batches.clear()
 
 
-_HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("undo_post", _on_reload), ("redo_post", _on_reload),
+_HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("frame_change_post", _on_frame), ("undo_post", _on_reload), ("redo_post", _on_reload),
              ("load_post", _on_reload))
 
 

@@ -328,20 +328,94 @@ def normalize_mode(mesh):
     return mesh.get(NORMALIZE_PROP, "INTERACTIVE")
 
 
+# Maya Bind Skin "Bind method" (option_boxes_140.md:32). Closest distance is Maya's factory method, checked 
+# (, ): weight of joint i on a vertex is
+# distance(world vertex, joint i's segments) ** -dropoff, the segments run from the joint to each child joint (an end
+# joint is a point), dropoff = skinCluster dropoffRate (factory 4), the largest ``max influences`` kept, normalised.
+# World space: an object's non-uniform scale doesn't matter (#94 - Blender's bone heat on a mesh with Scale Y 8 and
+# one height subdivision left joint2 with no weights). Heat Map = Blender's automatic weights (bone heat).
+BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Maya's factory bind: weights fall off with the distance to "
+                 "each joint"),
+                ("HEAT_MAP", "Heat Map", "Blender's automatic weights (bone heat)"))
+DROPOFF = 4.0
+
+
+def joint_segments(arm, bones=None):
+    """{bone name: [(a, b) world segment]}: Maya joint = the bone head, its segments go to each child joint (child
+    bone head); a bone without children is an end joint (a point). ``bones`` limits which joints get weights."""
+    mw = arm.matrix_world
+    out = {}
+    for bone in arm.data.bones:
+        if not bone.use_deform or (bones is not None and bone.name not in bones):
+            continue
+        a = mw @ bone.head_local
+        out[bone.name] = [(a, mw @ c.head_local) for c in bone.children] or [(a, a)]
+    return out
+
+
+def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5):
+    """(names, weights (V, J)) for world ``points`` (V, 3) - the Maya closest-distance rule above."""
+    import numpy as np
+    names = list(segments)
+    pts = np.asarray(points, dtype=np.float64).reshape(-1, 3)
+    dist = np.full((len(pts), len(names)), np.inf)
+    for j, name in enumerate(names):
+        for a, b in segments[name]:
+            a = np.asarray(a, dtype=np.float64)
+            ab = np.asarray(b, dtype=np.float64) - a
+            ll = float(ab @ ab)
+            t = np.clip((pts - a) @ ab / ll, 0.0, 1.0)[:, None] if ll > 0.0 else 0.0
+            dist[:, j] = np.minimum(dist[:, j], np.linalg.norm(pts - (a + t * ab), axis=1))
+    on = dist < 1e-9
+    with np.errstate(divide='ignore'):
+        w = np.where(on.any(axis=1)[:, None], on.astype(np.float64), dist ** -float(dropoff))
+    if 0 < max_influences < len(names):
+        cut = np.argsort(-w, axis=1)[:, max_influences:]
+        np.put_along_axis(w, cut, 0.0, axis=1)
+    total = w.sum(axis=1, keepdims=True)
+    return names, np.divide(w, total, out=np.zeros_like(w), where=total > 0)
+
+
+def _bind_closest(arm, mesh, bones, max_influences):
+    import numpy as np
+    me = mesh.data
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    mw = np.array(mesh.matrix_world)
+    pts = co.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3]
+    names, w = closest_distance_weights(pts, joint_segments(arm, bones), DROPOFF, max_influences)
+    every = list(range(len(me.vertices)))
+    for j, name in enumerate(names):
+        vg = mesh.vertex_groups.get(name) or mesh.vertex_groups.new(name=name)
+        vg.remove(every)
+        for value in np.unique(w[:, j]):
+            if value > 0.0:
+                vg.add(np.flatnonzero(w[:, j] == value).tolist(), float(value), 'REPLACE')
+    md = armature_modifier(mesh)
+    if md is None:
+        md = mesh.modifiers.new("Armature", 'ARMATURE')   # same stack place as Blender's parenting (deformers first)
+    md.object = arm
+    md.use_vertex_groups = True
+
+
 def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize="INTERACTIVE",
-              remove_unused=True, colorize_skeleton=True):
-    """Smooth bind: automatic weights, the meshes stay where they are in the hierarchy (Maya skinCluster)."""
+              remove_unused=True, colorize_skeleton=True, method="CLOSEST_DISTANCE"):
+    """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy."""
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
-    for ob in context.selected_objects:
-        ob.select_set(False)
-    for ob in (*meshes, arm):
-        ob.select_set(True)
-    context.view_layer.objects.active = arm
-    bpy.ops.object.parent_set(type='ARMATURE_AUTO')
-    arm.select_set(False)
-    context.view_layer.objects.active = meshes[-1]
-    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')   # Maya doesn't parent the skin to the joints
+    if method == "HEAT_MAP":
+        for ob in context.selected_objects:
+            ob.select_set(False)
+        for ob in (*meshes, arm):
+            ob.select_set(True)
+        context.view_layer.objects.active = arm
+        bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+        arm.select_set(False)
+        context.view_layer.objects.active = meshes[-1]
+        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')   # Maya doesn't parent the skin to the joints
+    else:
+        for mesh in meshes:
+            _bind_closest(arm, mesh, only_bones, max_influences)
     bones = {b.name for b in arm.data.bones}
     for mesh in meshes:
         if only_bones:
@@ -349,7 +423,7 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
                 if vg.name in bones and vg.name not in only_bones:
                     mesh.vertex_groups.remove(vg)
         context.view_layer.objects.active = mesh
-        if mesh.vertex_groups:
+        if method == "HEAT_MAP" and mesh.vertex_groups:
             bpy.ops.object.vertex_group_limit_total(group_select_mode='ALL', limit=max_influences)
             bpy.ops.object.vertex_group_normalize_all(group_select_mode='ALL', lock_active=False)
         if remove_unused:
@@ -364,7 +438,7 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
 
 
 class ALLSET_OT_bind_skin(bpy.types.Operator):
-    """Maya Bind Skin: the selected skeleton and meshes, in any order (automatic weights, no parenting)"""
+    """Maya Bind Skin: the selected skeleton and meshes, in any order (closest distance weights, no parenting)"""
     bl_idname = "allset.bind_skin"
     bl_label = "Bind Skin"
     bl_options = {'REGISTER', 'UNDO'}
@@ -372,6 +446,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
     bind_to: EnumProperty(name="Bind To", items=(("HIERARCHY", "Joint Hierarchy", "Every joint of the skeleton"),
                                                  ("SELECTED", "Selected Joints", "Only the joints selected in "
                                                   "pose mode")), default="HIERARCHY")
+    bind_method: EnumProperty(name="Bind method", items=BIND_METHODS, default="CLOSEST_DISTANCE")
     max_influences: IntProperty(name="Max Influences", default=5, min=1, max=30)
     normalize: EnumProperty(name="Normalize weights", items=NORMALIZE, default="INTERACTIVE")
     remove_unused: BoolProperty(name="Remove unused influences", default=True)
@@ -389,7 +464,8 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
             self.report({'WARNING'}, "Select a skeleton and the meshes to bind")
             return {'CANCELLED'}
         only = set(picked) if self.bind_to == "SELECTED" and picked else None
-        bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize)
+        bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize,
+                  self.bind_method)
         self.report({'INFO'}, f"Bound {len(meshes)} mesh(es) to {arm.name}")
         return {'FINISHED'}
 

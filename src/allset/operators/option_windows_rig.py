@@ -73,6 +73,8 @@ def _run_ik_spline(context, v):
 def _run_bind(context, v):
     res = bpy.ops.allset.bind_skin('EXEC_DEFAULT', bind_to='SELECTED' if v["bind_to"] == "Selected joints" else
                                    'HIERARCHY', max_influences=v["max_influences"],
+                                   bind_method='HEAT_MAP' if v.get("bind_method") == "Heat Map" else
+                                   'CLOSEST_DISTANCE',
                                    normalize=_NORMALIZE[v["normalize"]], remove_unused=v["remove_unused"],
                                    colorize=v["colorize"])
     if res == {'FINISHED'}:
@@ -211,12 +213,13 @@ WINDOWS = [
     # Skin > Bind Skin (option_boxes_140.md:28-46); replaces option_windows "bind_skin"
     Window("bind_skin_maya", "Bind Skin Options", "Apply and Close", ("allset.bind_skin", {}), [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
+        F("bind_method", "Bind method:", "enum", "Closest distance", items=("Closest distance", "Heat Map")),
         F("skinning", "Skinning method:", "enum", "Classic linear", items=("Classic linear", "Dual quaternion")),
         F("normalize", "Normalize weights:", "enum", "Interactive", items=("None", "Interactive", "Post")),
         F("max_influences", "Max influences:", "int", 5, lo=1, hi=30),
         F("remove_unused", "", "bool", True, text="Remove unused influences"),
         F("colorize", "", "bool", True, text="Colorize skeleton")], _run_bind, paths=("Skin/Bind Skin",),
-        missing=("Bind to: Object hierarchy", "Bind method (Blender: automatic weights)", "Skinning method: Weight "
+        missing=("Bind to: Object hierarchy", "Bind method: Closest in hierarchy / Geodesic Voxel", "Skinning method: Weight "
                  "blended", "Weight distribution", "Allow multiple bind poses", "Maintain max influences",
                  "Include hidden selections on creation", "Deformer node")),
     # Skin > Unbind Skin: "Detach Skin Options" (option_boxes_140.md:48-51)

@@ -72,13 +72,16 @@ def s_scene():
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = cube()
     ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
-    # Shift+H (Show Selected) leaves its Adjust Last Operation panel (the HUD); since step 134 the display keys
-    # (3 = Smooth Mesh Preview) no longer show one (#58).
-    key('H', shift=True)
+    C["place"] = p
+    # Alt+W (Blender's Clear Location, REGISTER + UNDO with a visible property) leaves its Adjust Last Operation panel
+    # (the HUD). Kit display / visibility keys show none since steps 134 / 147 (#58, Maya has no redo panel; Shift+H
+    # was used here before). The cube is put back where it was after the key: a Python edit doesn't close the HUD.
+    key('W', alt=True)
 
 
 @step
 def s_hud():
+    cube().location = C["place"]
     h = hud()
     check(f"the Adjust Last Operation panel is up ({h and (h.x, h.y, h.width, h.height)})", h is not None)
     _a, region = view3d()

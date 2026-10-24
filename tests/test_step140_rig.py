@@ -130,7 +130,8 @@ def test_titles_buttons_fields_defaults_are_maya():
     w = _w("bind_skin_maya")
     assert (w.title, w.action) == ("Bind Skin Options", "Apply and Close")
     assert _fields("bind_skin_maya") == [
-        ("bind_to", "Bind to:", "Joint hierarchy"), ("skinning", "Skinning method:", "Classic linear"),
+        ("bind_to", "Bind to:", "Joint hierarchy"), ("bind_method", "Bind method:", "Closest distance"),
+        ("skinning", "Skinning method:", "Classic linear"),
         ("normalize", "Normalize weights:", "Interactive"), ("max_influences", "Max influences:", 5),
         ("remove_unused", "", True), ("colorize", "", True)]
     # Detach Skin (option_boxes_140.md:48-51)
