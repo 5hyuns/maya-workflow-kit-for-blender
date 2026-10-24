@@ -741,6 +741,11 @@ def patch_time_slider(kd):
     for km in ("Object Mode", "Pose"):
         kd.remove(km, "anim.keyframe_insert_by_name", type="S")
         _add(kd, km, "allset.set_key", make_event("S"))
+        # Shift+W / E / R (step 151, #100): IC's keyframe_insert_by_name reports "Successfully added ... keying set";
+        # the kit keys the Channel Box channels silently like Maya's SetKeyTranslate / Rotate / Scale
+        for key, channels in (("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")):
+            kd.remove(km, "anim.keyframe_insert_by_name", type=key, shift=True)
+            _add(kd, km, "allset.set_key", make_event(key, shift=True), {"channels": channels})
 
 
 # --- 32. Joints: pose-mode pick-walk, P / Shift+P (docs/steps/step_57.md 「계획」 3) ----------------------

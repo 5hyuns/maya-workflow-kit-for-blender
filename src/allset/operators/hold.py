@@ -492,12 +492,10 @@ class ALLSET_OT_pivot_toggle(bpy.types.Operator):
             else:
                 COMPONENT.start(context, toggled=True)
                 watch_component()
-            self.report({'INFO'}, "Pivot edit " + ("on" if COMPONENT.on else "off"))
             return {'FINISHED'}
         ts = context.scene.tool_settings
         set_pivot_mode(ts, not ts.use_transform_data_origin)
         _redraw()
-        self.report({'INFO'}, "Pivot edit " + ("on" if ts.use_transform_data_origin else "off"))
         return {'FINISHED'}
 
 

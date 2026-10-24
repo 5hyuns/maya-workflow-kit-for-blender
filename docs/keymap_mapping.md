@@ -7,8 +7,8 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 199 |
-| IC 일치 | 30 |
+| 구현 | 202 |
+| IC 일치 | 27 |
 | 해당 없음 | 171 |
 | macOS 전용 | 68 |
 
@@ -247,9 +247,9 @@
 | Alt+Shift+Y | Alt+Shift+Y | global | — | — | 해당 없음 | Maya 가 일부러 비워 둔 바인딩 | hotkeySetup.mel:391 |
 | Ctrl+Shift+Y | Ctrl+Shift+Y | global | — | — | 해당 없음 | Maya 가 일부러 비워 둔 바인딩 | hotkeySetup.mel:392 |
 | Ctrl+Alt+Shift+Y | Ctrl+Alt+Shift+Y | global | — | — | 해당 없음 | Maya 가 일부러 비워 둔 바인딩 | hotkeySetup.mel:393 |
-| Shift+W | Shift+W | global | SetKeyTranslate | Object Mode: `anim.keyframe_insert_by_name` (type='Location') | IC 일치 |  | hotkeySetup.mel:394 |
-| Shift+E | Shift+E | global | SetKeyRotate | Object Mode: `anim.keyframe_insert_by_name` (type='Rotation') | IC 일치 |  | hotkeySetup.mel:395 |
-| Shift+R | Shift+R | global | SetKeyScale | Object Mode: `anim.keyframe_insert_by_name` (type='Scaling') | IC 일치 |  | hotkeySetup.mel:396 |
+| Shift+W | Shift+W | global | SetKeyTranslate | Object Mode: `allset.set_key` (channels='TRANSLATE') | 구현 | Translate X / Y / Z 만 키, 보고 문구 없음 (IC keying set 보고 대신, step 151 #100) | hotkeySetup.mel:394 |
+| Shift+E | Shift+E | global | SetKeyRotate | Object Mode: `allset.set_key` (channels='ROTATE') | 구현 | Rotate X / Y / Z 만 키 (step 151 #100) | hotkeySetup.mel:395 |
+| Shift+R | Shift+R | global | SetKeyScale | Object Mode: `allset.set_key` (channels='SCALE') | 구현 | Scale X / Y / Z 만 키 (step 151 #100) | hotkeySetup.mel:396 |
 | Ctrl+i | Ctrl+I | global | SelectNextIntermediatObject | — | 해당 없음 | Blender 에 intermediate object 없음; 3D 모드의 IC Ctrl+I 반전은 제거 (반전은 Maya 처럼 Ctrl+Shift+I) | hotkeySetup.mel:398 |
 | F1 | F1 | global | Help | Window: `wm.doc_view_manual_ui_context` | 구현 | 마우스 아래 버튼의 Blender 설명서; IC 3D View 앞 뷰 / Image 1:1 제거 | hotkeySetup.mel:400 |
 | Cmd+Shift+X | Shift+Oskey+X | global | MultiCutToolNameCommand | — | macOS 전용 | Cmd 키 바인딩 (Windows 해당 없음) | hotkeySetup.mel:403 |

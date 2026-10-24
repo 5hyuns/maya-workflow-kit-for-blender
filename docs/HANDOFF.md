@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 151 (매니퓰레이터 · 링 · 문구, #98 #99 #100) 완료 — `docs/steps/step_151.md`. RMB 링 = Maya 측정 (R 55, 상자 21 px,
+  글자 + 25 px, UV 하위 메뉴 화살표), Ctrl+E = Maya polyExtrudeFace 매니퓰레이터 (세 축 화살표 · 크기 상자 · 평면 · 가운데, Local
+  Translate X/Y · Local Scale 을 mayapy 로 맞춤), 매니퓰레이터 툴팁 없음, 상태 줄의 Blender 문구 (keying set, effector, non-uniform scale,
+  Anim Player, Pivot edit) 없음. 헤드리스 1368/1368, GUI 관련 11 파일 98/98 (GUI 전체 묶음은 안 돌림).
+  **바로 다음 할 일**: 152 렌더 · 그리드 (이슈 먼저 만들기) → 153 Blender 5.x (#90)
+  (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+
 - Step 150 (Graph Editor 를 Maya 말로, #96) 완료 — `docs/steps/step_150.md`. 킷 outliner: Visibility 같은 Maya 이름, 고른 줄만
   파랑, joint / blendShape 노드, 휠 스크롤; View > Auto Frame (켬) / Auto Frame Time / Curve Name, Show > Clear Below 등 연결 (Graph
   Editor 회색 92 → 84, 나머지는 notice); Graph Editor / Dope Sheet / NLA 에서도 Ctrl+A = AE / Channel Box. 길이 곡선 높이 (미터) 는
