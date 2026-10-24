@@ -574,17 +574,140 @@ def category(path):
 
 def greyed_notice(path):
     """The notice a greyed (unmapped) item shows: its own, else its category's (step 101: none without one)."""
-    return NOTICES.get(path) or category(path)
+    return NOTICES.get(path) or PANEL_MENU.get(path) or category(path)
 
 
 # Notices of kit panel rows that are not Maya menu items (e.g. Modeling Toolkit options, step 63),
 # filled by the panels' register(); same (substitute, line) form.
 PANEL_NOTICES = {}
 
+# Greyed rows of the viewport panel menus, the panel toolbar and the Status Line (ui/panel_menu_data.leaves(), step 177):
+# same (substitute, line) form; keys = their ``allset.menu_unavailable`` items. Not Maya main-menu paths, so kept out
+# of NOTICES (test_step54 checks those against menus.json); tests/test_step177_panel_menus.py: every greyed row has one.
+_PM, _PT, _SL = "Panel menu/", "Panel toolbar/", "Status Line/"
+_PER_OBJECT = ("Object Properties > Viewport Display", "Blender sets this per object, not per view: Object Properties > "
+               "Viewport Display > Display As (Bounds / Wire / Solid).")
+_NO_FILTER = ("Show > All / None", "Blender's views filter by object type only (mesh, curve, light, camera, empty ...): "
+              "this Maya node type has no type of its own, so it shows with its object type.")
+PANEL_MENU = {
+    _PM + "View/View Sequence Time": (
+        "Timeline markers", "Blender has no camera sequencer view time: bind scene cameras to timeline markers "
+        "(Ctrl+B in the Timeline) or cut camera strips in the Video Sequencer."),
+    _PM + "View/Camera Tools/2D Pan∕Zoom Tool": (
+        "Camera Shift X / Y", "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y "
+        "(Attribute Editor > Film Offset) or zoom in the camera view (wheel)."),
+    _PM + "View/Camera Tools/Azimuth Elevation Tool": (
+        "Tumble Tool / Alt+LMB", "Blender has no azimuth / elevation camera tool: tumble with Alt+LMB or the Tumble Tool."),
+    _PM + "View/Camera Tools/Yaw-Pitch Tool": (
+        "Walk Tool / Fly Tool", "Blender has no yaw-pitch tool: turn the camera in place with the Walk or Fly Tool."),
+    _PM + "Shading/Smooth Shade Selected Items": (
+        "Smooth Shade All", "Blender shades a whole view one way (Solid / Wireframe), not per selected object."),
+    _PM + "Shading/Flat Shade All": (
+        "Use Flat Lighting", "Blender shades faces from the mesh normals in every view; there is no faceted display mode "
+        "(Lighting > Use Flat Lighting is the nearest view setting)."),
+    _PM + "Shading/Flat Shade Selected Items": (
+        "Use Flat Lighting", "Blender shades faces from the mesh normals in every view; there is no per-object faceted "
+        "display mode."),
+    _PM + "Shading/Bounding Box": _PER_OBJECT,
+    _PM + "Shading/Points": (
+        "Wireframe", "Blender's views have no points-only display mode: Wireframe is the nearest (Object Properties > "
+        "Viewport Display > Display As shows one object as Bounds / Wire)."),
+    _PM + "Shading/X-Ray Active Components": (
+        "X-Ray", "Blender X-rays the whole view (X-Ray), not only the components being edited."),
+    _PM + "Shading/Interactive Shading": (
+        "none", "Blender keeps the view's shading while you tumble (no wireframe fallback): nothing to switch."),
+    _PM + "Shading/Smooth Wireframe": (
+        "none", "Blender always draws anti-aliased wires (a preference: Viewport > Quality > Anti-Aliasing)."),
+    _PM + "Shading/Hardware Fog": (
+        "Mist pass", "Blender's viewport has no fog: the render's Mist pass (View Layer properties) gives depth fog."),
+    _PM + "Lighting/Use Selected Lights": (
+        "Use All Lights + hide lights (h)", "Blender lights a view with every visible scene light and has no per-view "
+        "light list: hide the lights you don't want (h) or use light linking (Object Properties > Shading)."),
+    _PM + "Lighting/Use No Lights": (
+        "Use Flat Lighting", "Blender's views always light the scene (studio, flat or scene lights): Use Flat Lighting "
+        "shows the plain colours."),
+    _PM + "Lighting/Two Sided Lighting": (
+        "none", "Blender always lights both sides of a face in the viewport (Backface Culling hides back faces)."),
+    **{_PM + f"Show/{t}": _NO_FILTER for t in (
+        "Controllers", "NURBS CVs", "NURBS Hulls", "Subdiv Surfaces", "Planes", "Dynamics", "Particle Instancers",
+        "Follicles", "nCloths", "nParticles", "nRigids", "Dynamic Constraints", "Dimensions", "Handles",
+        "Texture Placements", "Strokes", "Plugin Shapes", "Clip Ghosts")},
+    _PM + "Show/Image Planes": (
+        "Show > Locators", "Maya Workflow Kit image planes are Blender image empties: they show / hide with Locators."),
+    _PM + "Show/IK Handles": (
+        "Show > Locators", "Maya Workflow Kit IK handles are empties (IK constraint targets): they show / hide with "
+        "Locators."),
+    _PM + "Show/Hold-Outs": (
+        "Object Properties > Visibility > Holdout", "Blender holdouts are a render setting per object / collection; "
+        "views don't filter them."),
+    _PM + "Renderer/Legacy Default Viewport": (
+        "Viewport 2.0", "Blender has one viewport renderer (Workbench / EEVEE), listed as Viewport 2.0 and the render "
+        "engine."),
+    _PM + "Renderer/Legacy High Quality Viewport": (
+        "Viewport 2.0", "Blender has one viewport renderer (Workbench / EEVEE), listed as Viewport 2.0 and the render "
+        "engine."),
+    _PM + "Panels/Stereo": (
+        "Render Properties > Stereoscopy", "Blender's stereo is a scene setting (Stereoscopy, Views) shown in a stereo "
+        "window mode, not a panel type."),
+    _PM + "Panels/Camera Set": (
+        "Timeline markers", "Blender has no camera sets: bind cameras to timeline markers to switch between them."),
+    _PM + "Panels/Hypergraph Panel": (
+        "Outliner / Node Editor", "Blender has no Hypergraph: hierarchy is in the Outliner, node networks in the Node "
+        "Editor (Panels > Panel)."),
+    _PM + "Panels/Saved Layouts": (
+        "Windows > Workspaces", "Blender saves layouts as workspaces (Windows > Workspaces, the Status Line drop-down)."),
+    _PM + "Panels/Panel Editor...": (
+        "Workspaces", "Blender has no panel editor: split / join areas by their corners and keep layouts as workspaces."),
+    _PT + "Bookmarks": (
+        "Look Through Selected / Undo View Change", "Blender has no camera bookmarks: keep a camera per view (Panels > "
+        "Look Through Selected) or step back with View > Undo View Change."),
+    _PT + "2D Pan∕Zoom": (
+        "Camera Shift X / Y", "Blender has no 2D pan / zoom of the film back: move the camera's Shift X / Y (Attribute "
+        "Editor > Film Offset)."),
+    _PT + "Resolution Gate": (
+        "Camera view frame (always on)", "Blender's camera view always draws the render resolution frame (Maya's "
+        "resolution gate; Maya's factory camera has it off, overscan 1.0, checked , step 177): it can't be "
+        "hidden. Gate Mask dims the outside (Blender passepartout)."),
+    _PT + "Field Chart": (
+        "Safe Action / Safe Title", "Blender has no field chart: the safe areas (Safe Action / Safe Title) are the "
+        "camera guides it draws."),
+    _PT + "Motion Blur": (
+        "Render Properties > Motion Blur", "Blender's viewport doesn't preview motion blur: it is a render setting "
+        "(EEVEE / Cycles Motion Blur)."),
+    _PT + "Multisample Anti-aliasing": (
+        "Preferences > Viewport > Anti-Aliasing", "Blender's viewport anti-aliasing is a preference, not a per-view "
+        "button (the kit doesn't change preferences)."),
+    _PT + "X-Ray Active Components": (
+        "X-Ray", "Blender X-rays the whole view (X-Ray), not only the components being edited."),
+    _SL + "Select by hierarchy": (
+        "Outliner / Select > Hierarchy", "Blender has no hierarchy pick mode: pick roots in the Outliner, Select > "
+        "Hierarchy takes the children."),
+    _SL + "Select by handle object type": (
+        "none", "Blender has no selection handles: pick the object itself."),
+    _SL + "Select by dynamic object type": (
+        "Select by object type", "Blender's simulations are modifiers on meshes (cloth, fluid, particles): pick them "
+        "with the mesh / point types."),
+    _SL + "Snap to projected center": (
+        "Snap to Face Project", "Blender snaps to the face under the mouse (Face Project), not to the centre of the "
+        "object behind it."),
+    _SL + "Snap to view planes": (
+        "Snap to Grid", "Blender has no view planes: snap to the grid or to a vertex."),
+    _SL + "Construction History": (
+        "Edit > Delete by Type > History", "Blender keeps no construction history to switch off: the kit's history "
+        "nodes are modifiers; Delete History (Alt+Shift+D) bakes them."),
+    _SL + "Render Setup": (
+        "View Layers", "Blender's render layers are View Layers (top bar, View Layer properties), with collections "
+        "for overrides."),
+    _SL + "Pause Viewport 2.0": (
+        "none", "Blender's viewport can't be paused: switch to Wireframe or hide heavy objects."),
+    _SL + "Show or hide the Character Controls": (
+        "none", "Blender has no HumanIK character controls: rig with armatures (Skeleton menu)."),
+}
+
 
 def tooltip(path, mapped):
     """Tooltip text for a Maya menu item with a notice (also shows it in the Help Line)."""
-    n = NOTICES.get(path) or PANEL_NOTICES.get(path) or (None if mapped else category(path))
+    n = NOTICES.get(path) or PANEL_NOTICES.get(path) or PANEL_MENU.get(path) or (None if mapped else category(path))
     if n is None:
         return None
     substitute, line = n

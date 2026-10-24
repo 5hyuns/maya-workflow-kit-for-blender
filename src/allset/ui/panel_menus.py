@@ -29,182 +29,9 @@ from ..operators import view as view_ops
 GREY_OP = "allset.menu_unavailable"
 
 
-def _sep(label=""):
-    return ("sep", label)
-
-
-def _grey(label):
-    return ("grey", label)
-
-
-def _run(label, op, **props):
-    return ("run", label, op, props)
-
-
-def _view(label, view):
-    return _run(label, "allset.hb_view", view=view)
-
-
-VIEW = [
-    ("set", "SELECT_CAMERA", "Select Camera"),
-    ("set", "CAMERA_LOCK", "Lock Camera"),
-    _sep(),
-    _run("Undo View Change", "allset.view_history", direction='UNDO'),
-    _run("Redo View Change", "allset.view_history", direction='REDO'),
-    _sep("Tumble Behaviour"),
-    ("set", "TUMBLE_SELECTION", "Around Most Recent Selection"),
-    ("set", "TUMBLE_COI", "Around Center of Interest"),
-    _sep("Change View"),
-    _run("Align Camera To Polygon", "view3d.view_axis", type='TOP', align_active=True),
-    _grey("Center View of Selection"),
-    _run("Default View", "allset.view_home"),
-    _run("Frame All", "allset.frame", selected=False),
-    _run("Frame Selection", "allset.frame", selected=True),
-    ("menu", "View Along Axis", "ALLSET_MT_panel_view_axis"),
-    _sep(),
-    _grey("Camera Attribute Editor..."),
-    ("menu", "Camera Tools", "ALLSET_MT_panel_camera_tools"),
-    _sep(),
-    _grey("View Sequence Time"),
-]
-
-# Maya viewSet -vx = seen from +X (Maya-1203); axis names as Blender's
-# (X = X, Y = Y, Z = Z: , ).
-VIEW_AXIS = [_view("X", 'RIGHT'), _view("Y", 'BACK'), _view("Z", 'TOP'),
-             _view("-X", 'LEFT'), _view("-Y", 'FRONT'), _view("-Z", 'BOTTOM')]
-
-CAMERA_TOOLS = [
-    _grey("Tumble Tool"), _grey("Track Tool"), _grey("Dolly Tool"),
-    _run("Zoom Tool", "view3d.zoom_border"),
-    _grey("2D Pan/Zoom Tool"), _grey("Grease Pencil Tool"),
-    _sep(),
-    _run("Roll Tool", "view3d.view_roll", type='ANGLE', angle=0.2618),
-    _grey("Azimuth Elevation Tool"), _grey("Yaw-Pitch Tool"),
-    _run("Fly Tool", "view3d.fly"),
-    _run("Walk Tool", "view3d.walk"),
-]
-
-SHADING = [
-    ("set", "SHADE_WIRE", "Wireframe"),
-    ("set", "SHADE_SMOOTH", "Smooth Shade All"),
-    _grey("Smooth Shade Selected Items"),
-    _grey("Flat Shade All"),
-    _grey("Flat Shade Selected Items"),
-    _grey("Bounding Box"),
-    _grey("Points"),
-    _sep(),
-    ("set", "DEFAULT_MATERIAL", "Use Default Material"),
-    ("prop", "overlay", "show_wireframes", "Wireframe on Shaded"),
-    ("prop", "shading", "show_xray", "X-Ray"),
-    ("prop", "overlay", "show_xray_bone", "X-Ray Joints"),
-    _grey("X-Ray Active Components"),
-    _sep(),
-    _grey("Interactive Shading"),
-    _sep(),
-    ("prop", "shading", "show_backface_culling", "Backface Culling"),
-    _grey("Smooth Wireframe"),
-    _sep(),
-    ("set", "HW_TEXTURE", "Hardware Texturing"),
-    _grey("Hardware Fog"),
-    ("prop", "shading", "use_dof", "Depth of Field"),
-    _sep(),
-    ("set", "APPLY_ALL", "Apply Current to All"),
-]
-
-LIGHTING = [
-    ("set", "LIGHT_DEFAULT", "Use Default Lighting"),
-    ("set", "LIGHT_ALL", "Use All Lights"),
-    _grey("Use Selected Lights"),
-    ("set", "LIGHT_FLAT", "Use Flat Lighting"),
-    _grey("Use No Lights"),
-    _sep(),
-    _grey("Two Sided Lighting"),
-    ("prop", "shading", "show_shadows", "Shadows"),
-]
-
-# Maya object type -> SpaceView3D.show_object_viewport_<type> (None = no Blender filter).
-SHOW_TYPES = (
-    ("Controllers", None), ("NURBS Curves", "curve"), ("NURBS Surfaces", "surf"),
-    ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
-    ("Planes", None), ("Lights", "light"), ("Cameras", "camera"), ("Image Planes", None),
-    ("Joints", "armature"), ("IK Handles", None), ("Deformers", "lattice"), ("Dynamics", None),
-    ("Particle Instancers", None), ("Fluids", "volume"), ("Hair Systems", "curves"),
-    ("Follicles", None), ("nCloths", None), ("nParticles", None), ("nRigids", None),
-    ("Dynamic Constraints", None), ("Locators", "empty"), ("Dimensions", None),
-    ("Pivots", "@show_object_origins"), ("Handles", None), ("Texture Placements", None),
-    ("Strokes", None), ("Motion Trails", "@show_motion_paths"), ("Plugin Shapes", None),
-    ("Clip Ghosts", None), ("Grease Pencil", "grease_pencil"),
-)
-ALL_TYPES = ("mesh", "curve", "surf", "meta", "font", "curves", "pointcloud", "volume", "armature",
-             "lattice", "empty", "grease_pencil", "camera", "light", "speaker", "light_probe")
-
-
-def _show_row(label, target):
-    if target is None:
-        return _grey(label)
-    if target.startswith("@"):
-        return ("prop", "overlay", target[1:], label)
-    return ("prop", "space", f"show_object_viewport_{target}", label)
-
-
-SHOW = [
-    ("menu", "Isolate Select", "ALLSET_MT_panel_isolate"),
-    _sep(),
-    ("set", "SHOW_ALL", "All"),
-    ("set", "SHOW_NONE", "None"),
-    _sep(),
-    *[_show_row(label, t) for label, t in SHOW_TYPES],
-    _sep(),
-    ("prop", "space", "show_gizmo", "Manipulators"),
-    ("set", "GRID", "Grid"),               # Maya grid (ui/maya_grid.py, step 45)
-    ("prop", "overlay", "show_text", "HUD"),
-    _grey("Hold-Outs"),
-    ("prop", "overlay", "show_outline_selected", "Selection Highlighting"),
-]
-
-ISOLATE = [
-    _run("View Selected", "allset.isolate"),          # step 164: with the children (dag_164.md)
-]
-
-RENDERER = [
-    ("set", "RENDER_VP2", "Viewport 2.0"),
-    _grey("Legacy Default Viewport"),
-    _grey("Legacy High Quality Viewport"),
-    _sep(),
-    ("set", "RENDER_ENGINE", "{engine}"),   # Maya lists render overrides here (Arnold)
-]
-
-PANELS = [
-    ("menu", "Perspective", "ALLSET_MT_panel_perspective"),
-    _grey("Stereo"),
-    ("menu", "Orthographic", "ALLSET_MT_panel_orthographic"),
-    _run("Look Through Selected", "allset.panel_look_through"),
-    _grey("Camera Set"),
-    _sep(),
-    ("menu", "Panel", "ALLSET_MT_panel_panel"),
-    _grey("Hypergraph Panel"),
-    ("menu", "Layouts", "ALLSET_MT_panel_layouts"),
-    _grey("Saved Layouts"),
-    _sep(),
-    _run("Tear Off...", "allset.open_editor", ui_type='VIEW_3D'),
-    _run("Tear Off Copy...", "allset.open_editor", ui_type='VIEW_3D'),
-    _sep(),
-    _grey("Panel Editor..."),
-]
-
-PANEL_TYPES = (("Outliner", 'OUTLINER'), ("Graph Editor", 'FCURVES'), ("Dope Sheet", 'DOPESHEET'),
-               ("Node Editor", 'ShaderNodeTree'), ("UV Editor", 'UV'), ("Model Panel", 'VIEW_3D'),
-               ("Script Editor", 'TEXT_EDITOR'))
-
-LAYOUTS = [
-    ("set", "LAYOUT_SINGLE", "Single Perspective View"),
-    ("set", "LAYOUT_FOUR", "Four View"),
-]
-
-# The menu bar, in Maya's order (Maya-2086).
-BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
-       ("Lighting", "ALLSET_MT_panel_lighting"), ("Show", "ALLSET_MT_panel_show"),
-       ("Renderer", "ALLSET_MT_panel_renderer"), ("Panels", "ALLSET_MT_panel_panels"))
+# Row tables live in panel_menu_data (bpy-free: menu_count / menu_consistency / notice rules walk them, step 177).
+from .panel_menu_data import (_sep, _grey, _run, _tool, _view, VIEW, VIEW_AXIS, CAMERA_TOOLS, SHADING, LIGHTING, SHOW_TYPES, ALL_TYPES,
+                              _show_row, SHOW, ISOLATE, RENDERER, PANELS, PANEL_TYPES, LAYOUTS, BAR, item_path)  # noqa: F401
 
 
 # --- state ---------------------------------------------------------------------------
@@ -560,7 +387,7 @@ class ALLSET_OT_panel_run(bpy.types.Operator):
 
 # --- drawing --------------------------------------------------------------------------
 
-def draw_rows(layout, context, rows):
+def draw_rows(layout, context, rows, idname=""):
     space = _space(context)
     for row in rows:
         kind = row[0]
@@ -571,7 +398,7 @@ def draw_rows(layout, context, rows):
             else:
                 layout.separator()
         elif kind == "grey":
-            layout.operator(GREY_OP, text=row[1]).item = f"Panel menu/{row[1]}"
+            layout.operator(GREY_OP, text=row[1]).item = item_path(idname, row[1])
         elif kind == "prop":
             _k, owner, prop, label = row
             if space is not None:
@@ -598,7 +425,7 @@ def draw_rows(layout, context, rows):
 
 def _menu(idname, label, rows, doc):
     def draw(self, context):
-        draw_rows(self.layout, context, rows)
+        draw_rows(self.layout, context, rows, idname)
     return type(idname, (bpy.types.Menu,), {"bl_idname": idname, "bl_label": label, "__doc__": doc,
                                             "draw": draw})
 
