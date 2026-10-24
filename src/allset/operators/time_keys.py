@@ -154,6 +154,11 @@ def delete_keys(context, a, b):
     return n
 
 
+def _note_kit_copy():
+    from . import graph_key_menu
+    graph_key_menu.note_kit_copy()
+
+
 def copy_keys(context, a, b):
     """Time Slider copy: the nodes' keys in a..b onto the animation clipboard (see ``copy_scope``)."""
     # Time Slider frames are whole: a key within half a frame of the range counts (like ``_in``)
@@ -419,6 +424,7 @@ def copy_scope(context, scope, method="Keys", pad=0.0):
     where the curve crosses the range ends). The clipboard's time origin is the range start, or the first key with
     Time range All (Maya: a copy of 4..12 pasted at 30 puts the key at 5 on 31; option_boxes_140_edit.md).
     Returns the number of keys copied."""
+    _note_kit_copy()
     rng = scope_range(context, scope)
     refs = scope_curves(context, scope)
     per_node, order = {}, []

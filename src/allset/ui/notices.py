@@ -454,12 +454,6 @@ def _anim_editor_categories(ed):
         **{f"{ed}/Curves/{item}": (
             "Bézier handles", "Blender's Bézier handles always have a length (weighted tangents): there is nothing to "
             "convert.") for item in ("Non-weighted Tangents", "Weighted Tangents")},
-        f"{ed}/Keys": (
-            "Channel mute / I key", "Blender mutes whole channels, not single keys, and inserts keys with I or "
-            "Ctrl+right-click."),
-        **{f"{ed}/Tangents/{sub}": (
-            "Preferences > Animation", "Blender has no flat default: new keys get Auto Clamped, Auto, Vector, Aligned "
-            "or Free handles.") for sub in ("Default In Tangent", "Default Out Tangent")},
         **{f"{ed}/Tangents/{item}": (
             "Handle types", "Blender's handles keep their own length: lengths are never locked or freed.")
            for item in ("Lock Tangent Length", "Free Tangent Length")},
@@ -480,9 +474,12 @@ CATEGORIES.update({
     "Graph Editor/View/Theme": (
         "Themes", "Blender's colours come from the theme: Preferences > Themes (install a Maya-like theme there if you want "
         "Maya's colours)."),
-    "Graph Editor/Select": (
-        "Select menu", "Blender has no selection mask: it selects keys with their handles (click a handle to pick "
-        "it alone)."),
+    "Graph Editor/Select/Pre-Select Highlight": (
+        "Hover", "Blender's Graph Editor doesn't highlight the curve under the mouse: the picked curve is drawn "
+        "brighter once selected."),
+    "Graph Editor/Keys/Add Key Tool": (
+        "Keys > Insert Key Tool", "Blender has no tool that adds keys off the curve: Insert Key Tool (I) or "
+        "Ctrl+right-click adds keys."),
     "Dope Sheet/View": (
         "View menu", "Blender's Dope Sheet always draws its ticks and has no scene summary or auto frame."),
     "Dope Sheet/Curves": (

@@ -14,7 +14,7 @@ import bpy
 from bpy.props import EnumProperty, FloatVectorProperty
 
 from .. import undo_steps
-from . import keystate, taphold, time_keys
+from . import graph_key_menu, keystate, taphold, time_keys
 
 KEY_ACTIONS = [(k, l, d) for k, l, d in time_keys.ACTIONS if k not in {"SNAP", "TANGENT"}]
 
@@ -131,6 +131,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
             # the Dope Sheet's own clipboard ops (Maya Dope Sheet Edit menu, step 104)
             if act in {"CUT", "COPY"}:
                 bpy.ops.action.copy()
+                graph_key_menu._clip["from"] = "editor"
             if act == "PASTE":
                 bpy.ops.action.paste()
             elif act in {"CUT", "DELETE"}:
@@ -145,6 +146,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
                 return {'CANCELLED'}
         if act in {"COPY", "CUT"}:
             bpy.ops.graph.copy()
+            graph_key_menu._clip["from"] = "editor"
         if act == "PASTE":
             bpy.ops.graph.paste()
         elif act in {"CUT", "DELETE"}:

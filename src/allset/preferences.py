@@ -89,6 +89,33 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         items=(('ALWAYS', "Always", "Name every curve"), ('NEVER', "Never", "No curve names"),
                ('ACTIVE', "Active Only", "Name the selected curves")))
 
+    # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
+    # Maya-940, operators/graph_key_menu.py, step 157).
+    graph_select_curve: bpy.props.BoolProperty(
+        name="Curve", default=True, description="Clicking or dragging in the Graph Editor can pick curves")
+    graph_select_key: bpy.props.BoolProperty(
+        name="Key", default=True, description="Clicking or dragging in the Graph Editor can pick keys")
+    graph_select_in: bpy.props.BoolProperty(
+        name="In Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick in tangents")
+    graph_select_out: bpy.props.BoolProperty(
+        name="Out Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick out tangents")
+    # Tangents > Default In / Out Tangent (Maya keyTangent -global, factory Auto / Auto, ):
+    # the tangents of the keys the kit sets (S, Shift+W/E/R, Channel Box keys, Auto Key). Blender's own preference
+    # is never written (#40).
+    default_in_tangent: bpy.props.EnumProperty(
+        name="Default In Tangent", default='AUTO',
+        items=(('AUTO', "Auto", "Maya Auto: Blender Auto Clamped"), ('SPLINE', "Spline", "Blender Auto"),
+               ('LINEAR', "Linear", ""), ('CLAMPED', "Clamped", "Blender Auto Clamped"),
+               ('FLAT', "Flat", "Level handles"), ('PLATEAU', "Plateau", "Blender Auto Clamped")),
+        description="In tangent of the keys the kit sets (Maya Tangents > Default In Tangent)")
+    default_out_tangent: bpy.props.EnumProperty(
+        name="Default Out Tangent", default='AUTO',
+        items=(('AUTO', "Auto", "Maya Auto: Blender Auto Clamped"), ('SPLINE', "Spline", "Blender Auto"),
+               ('LINEAR', "Linear", ""), ('CLAMPED', "Clamped", "Blender Auto Clamped"),
+               ('FLAT', "Flat", "Level handles"), ('PLATEAU', "Plateau", "Blender Auto Clamped"),
+               ('STEPPED', "Stepped", "Blender Constant")),
+        description="Out tangent of the keys the kit sets (Maya Tangents > Default Out Tangent)")
+
     # Render > Test Resolution (Maya setting renderViewTestResolution, default Render Settings; step 152,
     # operators/render_batch.py): the size of Render Current Frame / Render Sequence.
     test_resolution: bpy.props.EnumProperty(

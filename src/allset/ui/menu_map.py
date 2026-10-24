@@ -424,9 +424,9 @@ MAP = {
     "Key/Paste Keys": ("allset.time_keys", {"action": "PASTE"}),
     "Key/Snap Keys": ("allset.time_keys", {"action": "SNAP", "time_range": 'ALL'}),
     "Key/Hold Current Keys": ("anim.keyframe_insert_by_name", {"type": "Available"}),
-    "Key/Set Key on Translate": ("anim.keyframe_insert_by_name", {"type": "Location"}),
-    "Key/Set Key on Rotate": ("anim.keyframe_insert_by_name", {"type": "Rotation"}),
-    "Key/Set Key on Scale": ("anim.keyframe_insert_by_name", {"type": "Scaling"}),
+    "Key/Set Key on Translate": ("allset.set_key", {"channels": "TRANSLATE"}),   # step 157: default tangents
+    "Key/Set Key on Rotate": ("allset.set_key", {"channels": "ROTATE"}),   # step 157: default tangents
+    "Key/Set Key on Scale": ("allset.set_key", {"channels": "SCALE"}),   # step 157: default tangents
     "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Key/Bake Simulation": "nla.bake",
     "Key/Scale Keys": "allset.opt_scale_keys",

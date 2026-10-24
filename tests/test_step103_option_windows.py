@@ -13,6 +13,7 @@ import kit
 ow = import_module(kit.MODULE + ".operators.option_windows")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
+editor_menu_data = import_module(kit.MODULE + ".ui.editor_menu_data")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 modal = import_module(kit.MODULE + ".marking.modal")
 
@@ -82,7 +83,8 @@ def test_windows_registered_with_maya_titles_and_buttons():
             assert name in rna.properties
         assert w.paths or w.match, w.key
         for p in w.paths:
-            assert p in menu_data.OPTION_BOXES and p in menu_map.MAP, (w.key, p)
+            # editor menu bars (Graph Editor / Dope Sheet Edit key windows, step 157) have their own boxes
+            assert (p in menu_data.OPTION_BOXES or p in editor_menu_data.OPTION_BOXES) and p in menu_map.MAP, (w.key, p)
     # Maya factory values ()
     d = ow._BY_KEY
     assert d["poly_plane"].defaults()["width_div"] == 10 and d["poly_sphere"].defaults()["axis_div"] == 20

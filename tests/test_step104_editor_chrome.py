@@ -102,7 +102,8 @@ def test_check_items_are_blender_properties():
     menu_sets.set_prop(bpy.context, "preferences.edit.keyframe_new_interpolation_type",
                        {"value": 'LINEAR' if old != 'LINEAR' else 'BEZIER'})
     assert edit.keyframe_new_interpolation_type == old
-    assert menu_map.spec("Graph Editor/Tangents/Default In Tangent/Linear")[1] == "screen.userpref_show"
+    # step 157: Default In / Out Tangent are kit add-on prefs (the kit's own keys use them), not Blender's preference
+    assert menu_map.spec("Graph Editor/Tangents/Default In Tangent/Linear") ==         ("prop", "addon_prefs.default_in_tangent", {"value": 'LINEAR'})
     assert menu_map.spec("Graph Editor/View/Infinity") == ("prop", "space_data.show_extrapolation", {})
 
 
