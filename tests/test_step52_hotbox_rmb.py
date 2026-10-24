@@ -130,7 +130,8 @@ def test_rmb_list_under_the_ring():
         if origin[1] == 600.0:
             assert under, "room under the ring: the list stays there"
         if origin[1] in (450.0, 120.0):
-            assert not under and min(it.rect[0] for it in rows) >= max(x.rect[2] for x in boxes),                 (origin, "no room under the ring: one column right of it")
+            # RMB on a mesh: E = UV (a radial submenu the way to a right column would open), so the column is left
+            assert not under and max(it.rect[2] for it in rows) <= min(x.rect[0] for x in boxes),                 (origin, "no room under the ring: one column beside it, on the side without a submenu")
     # room for everything: one column centred under the ring
     s = engine.Session(mm.RMB_MESH, (800.0, 880.0), 0.0, measure, None, None, (0.0, -2000.0, 1600.0, 900.0))
     rows = [it for it in s.layout.items if it.kind == "list"]

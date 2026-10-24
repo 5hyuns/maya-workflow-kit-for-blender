@@ -17,6 +17,10 @@ from sim import MODULE, check, ev, run, setup, step, win, load_maya_layout  # no
 C = {}
 # rows with an effect the test can see (object mode, one mesh in the scene)
 SAFE_ROWS = ("Select All", "Deselect All", "Invert Selection", "Select")
+# Step 161: the list stays one column (Maya); low in the view it stands beside the ring, slid up from the window
+# bottom, so the rows over the Time Slider are its last ones: the Assign ... Material cascades. Reaching one there
+# opens its cascade (KIT_ROWS); releasing over a cascade row runs nothing and closes the menu.
+KIT_ROWS = ("Assign Favorite Material", "Assign Existing Material")
 
 
 def draw():
@@ -109,6 +113,7 @@ def s_in_timeline():
           s is not None and "closed_south" not in C)
     if s is not None:
         item = s.hover[0]
+        print("GUI-DBG on_row stack", len(s.stack), "hover", item and item.label, "pos", s.pos, flush=True)
         check("factory: south item (Face) highlighted over the timeline", item is not None and item.label == "Face")
 
 
@@ -143,7 +148,7 @@ def s_kit_scene():
 
 def rmb_height():
     """Height over the view's bottom where the RMB list ends with a SAFE_ROWS row over the Time Slider (the
-    engine lays it out the same way: under the ring, more columns down to the window's bottom)."""
+    engine lays it out the same way: one column, beside the ring when it doesn't fit under it, step 161)."""
     engine, modal, mm = (import_module(MODULE + ".marking." + n) for n in ("engine", "modal", "menus"))
     _area, region = main_view()
     tl = timeline()
@@ -153,7 +158,7 @@ def rmb_height():
         s = engine.Session(menu, (region.width / 2, h), 0.0, draw().measure, modal._params(), modal.poll_action, bounds)
         for it in s.layout.items:
             cx, cy = (it.rect[0] + it.rect[2]) / 2 + region.width / 2, (it.rect[1] + it.rect[3]) / 2 + h
-            if it.kind == "list" and it.label in SAFE_ROWS and in_area(tl, region.x + cx, region.y + cy):
+            if it.kind == "list" and it.label in SAFE_ROWS + KIT_ROWS and in_area(tl, region.x + cx, region.y + cy):
                 return h
     return 30
 
@@ -193,7 +198,7 @@ def s_kit_plan():
     rows = [it for it in s.layout.items if it.kind == "list"]
     for it in rows:
         print("GUI-DBG row", it.label, abs_center(s, it))
-    over = [it for it in rows if it.label in SAFE_ROWS and in_area(tl, *abs_center(s, it))]
+    over = [it for it in rows if it.label in SAFE_ROWS + KIT_ROWS and in_area(tl, *abs_center(s, it))]
     paint = next(it for it in rows if it.label == "Paint")
     check("kit: a list row is drawn over the Time Slider", bool(over))
     if not over:
@@ -235,8 +240,11 @@ def s_kit_on_row():
     check("kit: the Paint cascade opened on the way", C.get("paint_seen"))
     if s is not None:
         item = s.hover[0]
+        print("GUI-DBG on_row stack", len(s.stack), "hover", item and item.label, "pos", s.pos, flush=True)
         check(f"kit: the row over the Time Slider ({C.get('target')}) is highlighted",
               item is not None and item.label == C.get("target"))
+        if C.get("target") in KIT_ROWS:
+            check("kit: its cascade opens over the Time Slider", len(s.stack) == 2)
         x, y = abs_center(s, item, len(s.stack) - 1) if item is not None else C["kpress"]
         C["release"] = (x, y)
         C["before"] = [o.select_get() for o in bpy.context.scene.objects]
@@ -253,8 +261,10 @@ def s_kit_released():
     sel = [o.select_get() for o in bpy.context.scene.objects]
     label = C.get("target")
     want = {"Select All": all(sel), "Deselect All": not any(sel), "Select": any(sel),
-            "Invert Selection": sel == [not v for v in C.get("before", [])]}.get(label, False)
-    check(f"kit: release over the Time Slider runs {label}", want and not draw().ACTIVE)
+            "Invert Selection": sel == [not v for v in C.get("before", [])],
+            }.get(label, label in KIT_ROWS and sel == C.get("before"))
+    check(f"kit: release over the Time Slider runs {label} (a cascade row: nothing) and closes the menu",
+          want and not draw().ACTIVE)
 
 
 # --- hotbox ------------------------------------------------------------------------------------------------------------
