@@ -1055,3 +1055,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Point light: click Intensity in SHAPES (scroll the Channel Box), RMB > Key Selected: the row shows the key state; Graph Editor shows a Power curve.
 - [ ] Spot light: Cone Angle 40 / Penumbra Angle 0 rows; typing Penumbra 5 widens the cone softly.
 - [ ] Bind a mesh to a skeleton: INPUTS shows skinCluster1 (a second bound mesh shows skinCluster2).
+
+## Step 159 — Skin weights / Joint Labelling
+- [ ] Skinned mesh selected: Deform > Export Weights... saves `skinCluster1.xml` in the project's data folder; Unbind + Bind again, Deform > Import Weights... brings the painted weights back.
+- [ ] Pose mode, a leg joint chain's top selected: Skeleton > Joint Labelling > Add Joint Labels > Label Left, then the first Label Hip: the chain reads Hip / Knee / Foot / Toe; Show All Labels draws "Hip (L)" etc. in Maya's blue beside each joint; Rename Joints From Labels renames them LeftHip, LeftKnee ...
+- [ ] Label both legs Left / Right, paint the left leg, Skin > Mirror Skin Weights with Influence Association Label: the right leg gets the weights even when its joints are not placed exactly mirrored.
+- [ ] Select an ikHandle, Skeleton > Disable Selected IK Handles: the chain stops following the handle; Enable brings it back.

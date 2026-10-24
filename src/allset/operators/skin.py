@@ -1028,6 +1028,31 @@ class ALLSET_OT_paste_vertex_weights(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
+
+class ALLSET_OT_reset_skin_weights(bpy.types.Operator):
+    """Maya Reset Default Weights: give the skinned mesh its bind weights again (closest distance, the joints it is
+    bound to, at most as many influences as each vertex has now, at least Maya's factory 5)"""
+    bl_idname = "allset.reset_skin_weights"
+    bl_label = "Reset Default Weights"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        mesh = skinned_mesh(context)
+        if mesh is None:
+            self.report({'WARNING'}, "Select a skinned mesh")
+            return {'CANCELLED'}
+        mode = mesh.mode
+        if mode == 'EDIT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        md = armature_modifier(mesh)
+        bones = {vg.name for vg in mesh.vertex_groups if md.object.data.bones.get(vg.name) is not None}
+        most = max((sum(1 for g in v.groups if g.weight > 0) for v in mesh.data.vertices), default=0)
+        _bind_closest(md.object, mesh, bones or None, max(5, most))
+        mesh.data.update()
+        if mode == 'EDIT':
+            bpy.ops.object.mode_set(mode='EDIT')
+        return {'FINISHED'}
+
+classes = (ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
            ALLSET_OT_paint_skin_weights, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
            ALLSET_OT_copy_vertex_weights, ALLSET_OT_paste_vertex_weights)

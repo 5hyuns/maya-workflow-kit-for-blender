@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 159 (Skin weights export / import + Skeleton gaps, backlog_155 #5) 완료 — `docs/steps/step_159.md`. Deform > Export /
+  Import Weights = Maya deformerWeights XML (`operators/deformer_weights.py`), Joint Labelling 전체 + 라벨 그리기 + Mirror Skin
+  Weights Label 모드 (`operators/joint_labels.py`), Enable / Disable IK Handles (influence = Maya ikBlend), Reset Default Weights.
+  Skeleton 13 → 51 / 54, Rigging 59 %.
+  **바로 다음 할 일**: 160 Maya UI reset and workspaces (#81) (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_155.json` 6 번째 항목).
+
 - Step 158 (Channel Box 메뉴 완성 + #97, backlog_155 #4) 완료 — `docs/steps/step_158.md`. RMB 어디서나 (빈 곳 포함) = Maya
   Channels 메뉴, Ctrl+RMB = Edit 메뉴; Channels 메뉴 Maya 항목 전체 (Breakdown / Mute All, Sync Graph Editor / Timeline, Cut /
   Copy / Paste Selected (mayapy 규칙), Freeze, Select Connection, 레이어 알림) — `ui/cb_channels.py`; SHAPES 줄 = 채널 (`sh:`)
