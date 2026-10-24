@@ -2,6 +2,21 @@
 
 ## 현재 작업
 
+- Step 168 (Modify menu and Smooth Mesh Preview to Polygons, backlog_164 #5) 완료 — `docs/steps/step_168.md`. mayapy 측정
+  `research/maya/re/modify_168.md`. Smooth Mesh Preview to Polygons = 킷 preview modifier 만 적용 (`allset.smooth_to_polygons`,
+  skinCluster1 유지, 면 × 4^level), Default Object Manipulator 5 + Show Manipulator Tool, Align Tool (팝업), Position Along
+  Curve (mayapy 값 일치), Geometry to Bounding Box + Maya 옵션 창, Evaluate Nodes 체크 항목 9 + Evaluate / Ignore All
+  (`Scene.allset_eval`). Modify 41 → 62 %, 옵션 상자 window 86 (Modify 회귀 0), 헤드리스 1566 / 1566, GUI step168 + 관련 2 파일 14/14.
+  **바로 다음 할 일**: 169 Deform completion (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json`
+  6 번째 항목), 그 뒤 170 3D View 밖 선택 수정키, 171 Animation Snapshot / Ghosting.
+
+- **체크포인트 2026-10-25 (/sc:save, 167 후)** — 지금 단계: **167 완료 · 커밋됨** (`7078c2a`). 165 (`a00f207`), 166 (`f0873e0`),
+  167 (`7078c2a`) 모두 커밋, 작업 트리 깨끗, 진행 중인 레인 · 테스트 없음, push 안 함. 헤드리스 전체 1554 / 1554 (167 끝).
+  **바로 다음 할 일**: 168 Modify menu and Smooth Mesh Preview to Polygons (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json` 5 번째 항목), 그 뒤 169 Deform, 170 3D View 밖 선택 수정키,
+  171 Animation Snapshot / Ghosting. 알려진 것: `gui_step52_hotbox_rmb` "list under the ring" 2 실패 (step 161 RMB 목록 위치 판단
+  보류와 같은 건), `gui_step129_panel_toolbar` 머리 폭 의존 실패.
+
 - Step 167 (Shelf double-click and overflow, backlog_164 #4) 완료 — `docs/steps/step_167.md`. Maya 측정
   `research/maya/re/shelf_overflow_167.md` (셸프는 줄로 넘김 + 12 px 세로 스크롤 막대, 휠 = 한 줄). 더블클릭 = 버튼의 옵션
   상자 (`allset.menu_option_box`, 첫 클릭은 한 번 실행), 셸프 줄 넘김 + ▲▼ + 휠 (`ui/shelf.py`), 셸프 줄의 navigate gizmo 끔

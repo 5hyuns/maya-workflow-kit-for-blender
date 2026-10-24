@@ -1109,3 +1109,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Double-click Polygon Cube on the shelf: one cube, then Polygon Cube Options opens; double-click a "run + settings" button (e.g. Extrude): one result with Adjust Last Operation.
 - [ ] Window narrower than the Poly Modeling shelf: the shelf shows one row with ▲ / ▼ at the right; the wheel over the icons and the arrows move one row; the last buttons are reachable.
 - [ ] Buttons added with Ctrl+Shift+click past the end of a long shelf are reachable by scrolling.
+
+## Step 168 — Modify menu and Smooth Mesh Preview to Polygons
+
+- [ ] Bind a cube to a joint chain, press 3, Modify > Convert > Smooth Mesh Preview to Polygons: the mesh is dense in edit mode, the skin still bends it when a joint rotates, the Channel Box INPUTS still lists skinCluster1.
+- [ ] Modify > Evaluate Nodes: untick Constraints — a constrained cube stops following its target; tick it again — it follows. Ignore All / Evaluate All tick and untick every item.
+- [ ] Modify > Align Tool with two cubes: the popup's X Min lines the first cube's left side up with the last selected one.
+- [ ] Modify > Convert > Geometry to Bounding Box ❒ (hold): the Maya option window; Keep original keeps the mesh, Convert replaces it with a grey box.
