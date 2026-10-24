@@ -16,6 +16,7 @@ The window state lives on the WindowManager like a Maya window (not undoable, no
 import bpy
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, IntProperty, PointerProperty, StringProperty
 
+from .. import results
 from ..ui import channel_box as cb
 
 VAR = "sdk"          # the kit's driver variable name: marks a Set Driven Key driver
@@ -389,7 +390,7 @@ class ALLSET_OT_sdk_key(bpy.types.Operator):
                     set_key(node, key, drv, st.driver_attr)
                     count += 1
         context.view_layer.update()
-        self.report({'INFO'}, f"Set Driven Key: {count} key(s) at {cb.channel_label(st.driver_attr)} = "
+        results.result(self, f"Set Driven Key: {count} key(s) at {cb.channel_label(st.driver_attr)} = "
                               f"{raw_value(drv, st.driver_attr):g}")
         return {'FINISHED'}
 
@@ -413,7 +414,7 @@ class ALLSET_OT_sdk_go(bpy.types.Operator):
         scale = fcurve_scale(fcs[0])
         x = step_to(key_xs(fcs), raw_value(drv, st.driver_attr) * scale, self.direction)
         if x is None:
-            self.report({'INFO'}, "No more driven keys")
+            results.result(self, "No more driven keys")
             return {'CANCELLED'}
         release_all()
         set_raw_value(drv, st.driver_attr, x / scale)

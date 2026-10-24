@@ -11,6 +11,8 @@ nodes, like Maya.
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from .. import results
+
 # kind -> (Maya node name, Blender node label)
 MAPS = {
     'FILE': ("File", "Image Texture"),
@@ -153,7 +155,7 @@ class ALLSET_OT_ae_map_connect(bpy.types.Operator):
             self.report({'WARNING'}, "No such material attribute")
             return {'CANCELLED'}
         tex = build(mat, self.socket, self.kind)
-        self.report({'INFO'}, f"{tex.name} -> {mat.name}.{_maya_attr(self.socket)}")
+        results.result(self, f"{tex.name} -> {mat.name}.{_maya_attr(self.socket)}")
         return {'FINISHED'}
 
 

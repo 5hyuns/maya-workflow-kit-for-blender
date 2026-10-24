@@ -20,6 +20,8 @@ import bpy
 from bpy.props import BoolProperty
 from mathutils import Matrix, Vector
 
+from .. import results
+
 # Object types whose data can absorb a matrix (``ID.transform``).
 BAKE_TYPES = {'MESH', 'CURVE', 'SURFACE', 'LATTICE', 'META'}
 EPS = 1e-6
@@ -242,7 +244,7 @@ class ALLSET_OT_freeze_transform(_SelectedObjectsOp, bpy.types.Operator):
         msg = f"Froze {count} object(s)"
         if copies:
             msg += f"; {copies} shared data block(s) made single user"
-        self.report({'INFO'}, msg)
+        results.result(self, msg)
         return {'FINISHED'}
 
 

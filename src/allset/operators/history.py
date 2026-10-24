@@ -11,6 +11,7 @@ Plan: docs/steps/step_10.md 「계획」 8.
 import bpy
 from bpy.props import BoolProperty, EnumProperty
 
+from .. import results
 from .. import undo_steps
 from .display import is_preview
 
@@ -197,7 +198,7 @@ class ALLSET_OT_delete_history(bpy.types.Operator):
         baked, notes = delete_history(context, context.selected_objects, self.non_deformer)
         for note in notes:
             self.report({'WARNING'}, note)
-        self.report({'INFO'}, f"Deleted history on {baked} object(s)")
+        results.result(self, f"Deleted history on {baked} object(s)")
         return {'FINISHED'}
 
 
@@ -220,7 +221,7 @@ class ALLSET_OT_delete_by_type(bpy.types.Operator):
         n, notes = delete_by_type(context, self.type, objects)
         for note in notes:
             self.report({'WARNING'}, note)
-        self.report({'INFO'}, f"{self.type.replace('_', ' ').title()}: {n}")
+        results.result(self, f"{self.type.replace('_', ' ').title()}: {n}")
         return {'FINISHED'}
 
 

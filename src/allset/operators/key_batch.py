@@ -12,6 +12,7 @@ import bpy
 from bpy_extras import view3d_utils
 from mathutils import Vector
 
+from .. import results
 from . import create
 
 # Blender's viewport lens is measured on a 72 mm sensor (BKE_camera_params_from_view3d: lens on the 36 mm default
@@ -111,7 +112,7 @@ class ALLSET_OT_camera_from_view(bpy.types.Operator):
                 other.select_set(False)
         ob.select_set(True)
         context.view_layer.objects.active = ob
-        self.report({'INFO'}, f"Created {ob.name} from the view")
+        results.result(self, f"Created {ob.name} from the view")
         return {'FINISHED'}
 
 

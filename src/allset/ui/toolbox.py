@@ -25,7 +25,7 @@ import bpy
 from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 
 from .. import compat
-from ..operators import tool_keys
+from ..operators import tool_keys, view
 
 # toolbox.mel:262-302 order: Select, Lasso, Paint Select, Move, Rotate, Scale.
 MAYA_TOOLS = ("builtin.select_box", "builtin.select_lasso", "builtin.select_circle",
@@ -592,7 +592,7 @@ class ALLSET_OT_quick_layout(bpy.types.Operator):
     @classmethod
     def description(cls, context, props):
         return {
-            "SINGLE": "Single Perspective View", "FOUR": "Four View",
+            "SINGLE": "Single Perspective View", "FOUR": "Four View. " + view.FOUR_VIEW_NOTE,
             "FRONT_PERSP": "Front/Persp: not available (a Blender 3D View splits only into four)"}[props.layout]
 
     def execute(self, context):

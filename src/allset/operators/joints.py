@@ -15,6 +15,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
+from .. import results
 from .. import undo_steps
 from . import naming, units
 
@@ -279,7 +280,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
                                self.ik_solver_enable, self.ik_weight)
             if handle is not None:
                 msg += f" and {handle.name}"
-        self.report({'INFO'}, msg)
+        results.result(self, msg)
         return {'FINISHED'}
 
 
@@ -396,7 +397,7 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
             self.report({'WARNING'}, "Select joints to orient")
             return {'CANCELLED'}
         n = orient(ob, names, self.world, self.children)
-        self.report({'INFO'}, f"Oriented {n} joint(s). {AXIS_NOTE}")
+        results.result(self, f"Oriented {n} joint(s). {AXIS_NOTE}")
         return {'FINISHED'}
 
 
@@ -488,7 +489,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
                 pb = ob.pose.bones.get(name)
                 if pb is not None:
                     pb.rotation_mode = 'XYZ'
-        self.report({'INFO'}, f"Mirrored {len(new)} joint(s)")
+        results.result(self, f"Mirrored {len(new)} joint(s)")
         return {'FINISHED'}
 
 
@@ -576,7 +577,7 @@ class ALLSET_OT_parent_joint(bpy.types.Operator):
         if active is None or not names:
             self.report({'WARNING'}, "Select the child joints, then the parent joint last")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Parented {parent_joints(ob, names, active)} joint(s) to {active}")
+        results.result(self, f"Parented {parent_joints(ob, names, active)} joint(s) to {active}")
         return {'FINISHED'}
 
 
@@ -593,7 +594,7 @@ class ALLSET_OT_unparent_joint(bpy.types.Operator):
     def execute(self, context):
         ob = _armature(context)
         n = parent_joints(ob, selected_joint_names(ob), None)
-        self.report({'INFO'}, f"Unparented {n} joint(s)")
+        results.result(self, f"Unparented {n} joint(s)")
         return {'FINISHED'}
 
 

@@ -14,6 +14,7 @@ runs the entry (``runner.prepare``, step 130).
 import bpy
 from bpy.props import StringProperty
 
+from .. import results
 from . import runner
 from ..ui import own_draw
 
@@ -68,7 +69,7 @@ class ALLSET_OT_command_line_exec(bpy.types.Operator):
         if res.error:
             self.report({'ERROR'}, res.text)
         elif res.text:
-            self.report({'INFO'}, res.text)
+            results.result(self, res.text)
         return {'FINISHED'}
 
 

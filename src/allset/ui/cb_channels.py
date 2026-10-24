@@ -19,6 +19,7 @@ with Sync Timeline Display on, the Time Slider shows only the selected channels'
 import bpy
 from bpy.props import BoolProperty, EnumProperty
 
+from .. import results
 from .. import compat
 
 
@@ -219,7 +220,7 @@ class _AllChannels:
         for ob in cb.targets(context):
             for key in cb.drawn_keys(ob):
                 n += bool(self.act(cb, ob, key))
-        self.report({'INFO'}, f"{self.bl_label}: {n} channel(s)")
+        results.result(self, f"{self.bl_label}: {n} channel(s)")
         return {'FINISHED'}
 
 

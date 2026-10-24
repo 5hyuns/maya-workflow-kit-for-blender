@@ -23,6 +23,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, StringProperty
 
+from .. import results
 from ..names import PRODUCT
 
 # Maya's default project folders (scene_01_win1.png: Scenes, Templates = assets, Images, Source Images, Render Data,
@@ -215,7 +216,7 @@ class ALLSET_OT_set_project(bpy.types.Operator):
         if self.create_folders or is_project(root):
             create_project(root)
         set_current(root, context)
-        self.report({'INFO'}, f"Project: {root}")
+        results.result(self, f"Project: {root}")
         return {'FINISHED'}
 
 
@@ -254,7 +255,7 @@ class ALLSET_OT_project_window(bpy.types.Operator):
             self.report({'ERROR'}, f"Could not create {root}: {exc}")
             return {'CANCELLED'}
         set_current(root, context)
-        self.report({'INFO'}, f"Project {self.name}: {len(made)} folder(s) created in {root}")
+        results.result(self, f"Project {self.name}: {len(made)} folder(s) created in {root}")
         return {'FINISHED'}
 
 
@@ -468,7 +469,7 @@ class ALLSET_OT_create_reference(bpy.types.Operator):
         except (OSError, ValueError, RuntimeError) as exc:
             self.report({'ERROR'}, f"Could not reference {path}: {exc}")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Referenced {os.path.basename(path)} as {group.name}: "
+        results.result(self, f"Referenced {os.path.basename(path)} as {group.name}: "
                               f"{len(group.all_objects)} object(s)")
         return {'FINISHED'}
 

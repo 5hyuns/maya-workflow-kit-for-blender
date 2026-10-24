@@ -490,6 +490,8 @@ class ALLSET_OT_hb_single(bpy.types.Operator):
         if area is None:
             return {'CANCELLED'}
         if area.spaces.active.region_quadviews:
+            from ..operators import view
+            view.remember_ortho(area, area.spaces.active)      # Maya's ortho cameras keep their view (step 161)
             with context.temp_override(area=area, region=region):
                 bpy.ops.screen.region_quadview()
         return {'FINISHED'}

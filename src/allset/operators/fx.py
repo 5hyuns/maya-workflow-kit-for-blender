@@ -20,6 +20,7 @@ NUCLEUS). Kit FX operators create it the first time, like Maya's first nObject c
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty
 
+from .. import results
 from . import naming, units
 
 MAYA_GRAVITY = 9.8          # nucleus1.gravity (mayapy, step 48)
@@ -221,7 +222,7 @@ class ALLSET_OT_fx_emitter(bpy.types.Operator):
         ob.select_set(True)
         context.view_layer.objects.active = ob
         apply(scene)
-        self.report({'INFO'}, f"Created {name}: Blender particles come from a mesh, so the emitter is a one-point mesh")
+        results.result(self, f"Created {name}: Blender particles come from a mesh, so the emitter is a one-point mesh")
         return {'FINISHED'}
 
 
@@ -264,7 +265,7 @@ class ALLSET_OT_fx_ncloth(bpy.types.Operator):
             setup_cloth(ob, md, scene)
             made.append(md.name)
         apply(scene)
-        self.report({'INFO'}, f"nCloth: {', '.join(made) or 'already cloth'} (collision distances in Maya units)")
+        results.result(self, f"nCloth: {', '.join(made) or 'already cloth'} (collision distances in Maya units)")
         return {'FINISHED'}
 
 
@@ -426,7 +427,7 @@ class ALLSET_OT_ncache(bpy.types.Operator):
         if not n:
             self.report({'WARNING'}, "No simulation to cache in the selection")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"{'Baked' if bake else 'Deleted'} {n} cache(s)")
+        results.result(self, f"{'Baked' if bake else 'Deleted'} {n} cache(s)")
         return {'FINISHED'}
 
 

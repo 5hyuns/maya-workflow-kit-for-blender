@@ -11,6 +11,7 @@ Plan: docs/steps/step_18.md 「계획」 2-3, 5; Delete: docs/steps/step_24.md �
 import bmesh
 import bpy
 
+from .. import results
 from .. import undo_steps
 
 _MODES = {'VERT': (True, False, False), 'EDGE': (False, True, False), 'FACE': (False, False, True)}
@@ -269,7 +270,7 @@ class ALLSET_OT_delete_components(bpy.types.Operator):
             self.report({'WARNING'}, f"{skipped} border edge(s) kept (Maya Delete Edge skips borders)")
         if not deleted:
             if not skipped:
-                self.report({'INFO'}, "Nothing selected")
+                results.result(self, "Nothing selected")
             return {'CANCELLED'}
         return {'FINISHED'}
 

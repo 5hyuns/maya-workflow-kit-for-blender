@@ -15,6 +15,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty
 from mathutils import Matrix, Vector
 
+from .. import results
 from . import freeze, naming, parenting, units
 
 # Maya Y-up axis -> Blender (axis index, sign): X -> X, Y -> Z, Z -> -Y (docs/steps/step_57.md)
@@ -263,7 +264,7 @@ class ALLSET_OT_mirror(bpy.types.Operator):
                     coll.objects.link(new)
                 _maya_rename(new, naming.base_name(ob.name))
                 made.append(new.name)
-        self.report({'INFO'}, "Mirror" + (f": new {', '.join(made)}" if made else ""))
+        results.result(self, "Mirror" + (f": new {', '.join(made)}" if made else ""))
         return {'FINISHED'}
 
 
@@ -281,7 +282,7 @@ class ALLSET_OT_combine(bpy.types.Operator):
 
     def execute(self, context):
         ob = combine(context, _mesh_selection(context))
-        self.report({'INFO'}, f"Combine: {ob.name}")
+        results.result(self, f"Combine: {ob.name}")
         return {'FINISHED'}
 
 
@@ -307,7 +308,7 @@ class ALLSET_OT_separate(bpy.types.Operator):
         if not made:
             self.report({'WARNING'}, "Separate: the mesh has only one piece")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Separate: {', '.join(made)}")
+        results.result(self, f"Separate: {', '.join(made)}")
         return {'FINISHED'}
 
 
@@ -337,7 +338,7 @@ class ALLSET_OT_boolean(bpy.types.Operator):
         bpy.data.objects.remove(operand)
         base.select_set(True)
         context.view_layer.objects.active = base
-        self.report({'INFO'}, f"Boolean {self.operation.title()}: {base.name}")
+        results.result(self, f"Boolean {self.operation.title()}: {base.name}")
         return {'FINISHED'}
 
 

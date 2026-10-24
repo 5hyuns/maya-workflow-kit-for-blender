@@ -15,6 +15,7 @@ import re
 import bpy
 from mathutils import Matrix
 
+from .. import results
 from . import units
 
 _GROUP_RE = re.compile(r"^group(\d+)$")
@@ -127,7 +128,7 @@ class ALLSET_OT_ungroup(bpy.types.Operator):
                 ob.select_set(True)
         if moved:
             context.view_layer.objects.active = moved[0]
-        self.report({'INFO'}, f"Ungrouped {len(groups)} group(s)")
+        results.result(self, f"Ungrouped {len(groups)} group(s)")
         return {'FINISHED'}
 
 
@@ -155,7 +156,7 @@ class ALLSET_OT_group(bpy.types.Operator):
             ob.select_set(False)
         grp.select_set(True)
         context.view_layer.objects.active = grp
-        self.report({'INFO'}, f"Grouped {len(objects)} object(s) into {grp.name}")
+        results.result(self, f"Result: {grp.name}")       # Maya: "// Result: group1 //" (the group command's return)
         from ..ui import view_message
         # Maya doGroup.mel:19-38: success, or an empty group with "select objects first".
         view_message.show(context, f"<hl>{grp.name}</hl> grouped." if objects else

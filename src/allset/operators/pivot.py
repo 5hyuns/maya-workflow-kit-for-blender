@@ -25,6 +25,7 @@ import bpy
 from bpy.props import BoolProperty
 from mathutils import Matrix, Quaternion, Vector
 
+from .. import results
 from . import freeze
 
 ORIENT_NAME = "Maya Pivot"
@@ -400,7 +401,7 @@ class ALLSET_OT_bake_pivot(_PivotOp, bpy.types.Operator):
             n += bake_pivot(ob)
         leave_custom_orientation(context.scene, 'LOCAL')   # Maya: axis mode back to Object (P8)
         if not n:
-            self.report({'INFO'}, "No custom pivot orientation to bake")
+            results.result(self, "No custom pivot orientation to bake")
         if _watch["running"]:
             process(context)
         return {'FINISHED'}

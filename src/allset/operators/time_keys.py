@@ -15,6 +15,7 @@ import math
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty
 
+from .. import results
 from .. import undo_steps
 
 # Maya tangent -> (interpolation, handle type or None); FLAT also levels the handles.
@@ -767,7 +768,7 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
                 n = snap_scope(context, scope)
             else:
                 n = delete_scope(context, scope, clipboard=act == "CUT")
-            self.report({'INFO'}, f"{dict((k, l) for k, l, _d in ACTIONS)[act]}: {n} key(s)")
+            results.result(self, f"{dict((k, l) for k, l, _d in ACTIONS)[act]}: {n} key(s)")
             _redraw(context)
             return {'FINISHED'}
         if act == "COPY":
@@ -787,7 +788,7 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
             n = inbetween(context, frame, 1 if act == "ADD_INBETWEEN" else -1)
         else:
             n = set_tangent(context, a, b, self.tangent)
-        self.report({'INFO'}, f"{dict((k, l) for k, l, _d in ACTIONS)[act]}: {n} key(s)")
+        results.result(self, f"{dict((k, l) for k, l, _d in ACTIONS)[act]}: {n} key(s)")
         _redraw(context)
         return {'FINISHED'}
 

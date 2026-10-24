@@ -9,8 +9,13 @@ research/maya/screens/01_layout_empty.png: only the background and #404040 in th
 (docs/steps/step_45.md 「실측」).
 
 Blender's floor is infinite with unit-system steps of x10 (no 5-unit lines, docs/steps/step_25.md), so
-the kit draws its own grid with a POST_VIEW handler in the 3D views that use it. Like Maya, only on
-the ground: top views show it, front / side views (ground edge-on) show none.
+the kit draws its own grid with a POST_VIEW handler in the 3D views that use it: on the ground in perspective and
+user views, ±size.
+
+Step 161: Maya's ortho cameras draw the grid in their own view plane and across the whole panel, not ±size
+(research/maya/screens/16_four_view.png: the top, front and side panels are ~31 units across and gridded edge to edge;
+the step-45 reading "front / side show no grid" was wrong). Axis ortho views (``is_orthographic_side_view``) get
+lines in their plane over the visible span (``span_segments``), in chunks so panning rebuilds the batch rarely.
 
 Per-view state: a 3D View uses the Maya grid when Blender's floor and ortho grid are off and
 ``overlay.grid_lines`` (not used by Blender 4.x, not in its UI) is 0. The grid unit is one Maya length
@@ -22,6 +27,7 @@ grid lines every, subdivisions, the three colours and the Display check boxes ch
 (``settings()``; Maya's factory values = the constants below).
 """
 
+import math
 import time
 
 import bpy
@@ -115,15 +121,42 @@ def plane_points(segs, plane="FLOOR", unit=1.0):
 
 
 def plane_for_view(perspective, side_view, view_dir):
-    """Grid plane of a view: always Maya's ground plane, or None when a view looks at it edge-on.
-
-    Maya's grid lies on the ground only: the top view shows it, the front and side views show no grid
-    (research/maya/screens/16_four_view.png: "front -Z" / "side -X" panels are empty). ``view_dir`` =
-    the view's looking direction in world space (x, y, z).
-    """
-    if perspective == 'ORTHO' and side_view and abs(view_dir[2]) < 1e-6:
-        return None
+    """Grid plane of a view: Maya's ground plane, or the view plane of an axis ortho view (Maya's top / front /
+    side cameras grid their own plane, research/maya/screens/16_four_view.png). ``view_dir`` = the view's looking
+    direction in world space (x, y, z)."""
+    if perspective == 'ORTHO' and side_view:
+        axis = max(range(3), key=lambda k: abs(view_dir[k]))
+        return ("YZ", "XZ", "FLOOR")[axis]
     return "FLOOR"
+
+
+def fills_view(perspective, side_view):
+    """Maya's ortho cameras grid the whole panel; other views stop at ±size."""
+    return perspective == 'ORTHO' and bool(side_view)
+
+
+def span_segments(span_u, span_v, spacing=SPACING, divisions=DIVISIONS):
+    """Grid lines (Maya units, kinds like ``segments``) covering the rectangle ``span_u`` x ``span_v`` (lo, hi):
+    every line of the infinite grid inside it, each across the whole rectangle."""
+    divisions = max(1, int(divisions))
+    step = max(float(spacing), 1e-6) / divisions
+    out = {"minor": [], "major": [], "axis": []}
+    for along, (lo, hi), (olo, ohi) in ((0, span_u, span_v), (1, span_v, span_u)):
+        i0, i1 = math.ceil(lo / step - 1e-9), math.floor(hi / step + 1e-9)
+        if i1 - i0 > 2 * MAX_LINES:
+            continue
+        for i in range(i0, i1 + 1):
+            t = i * step
+            kind = "axis" if i == 0 else "major" if i % divisions == 0 else "minor"
+            out[kind].append(((t, olo), (t, ohi)) if along == 0 else ((olo, t), (ohi, t)))
+    return out
+
+
+def view_span(center, half, chunk):
+    """(lo, hi) around ``center`` covering ±``half``, widened to whole ``chunk``s (a cache key while panning)."""
+    lo = math.floor((center - half) / chunk) * chunk - chunk
+    hi = math.ceil((center + half) / chunk) * chunk + chunk
+    return lo, hi
 
 
 def project(matrix, point, width, height):
@@ -203,15 +236,17 @@ def frame_ms():
     return sum(_times) / len(_times) * 1000.0 if _times else 0.0
 
 
-def _batch_set(plane, unit, opts):
-    key = (plane, round(unit, 9), float(opts["size"]), float(opts["spacing"]), int(opts["divisions"]))
+def _batch_set(plane, unit, opts, span=None):
+    """``span`` = ((u lo, hi), (v lo, hi)) in Maya units for a grid filling an ortho view, else None (±size)."""
+    key = (plane, round(unit, 9), float(opts["size"]), float(opts["spacing"]), int(opts["divisions"]), span)
     if key not in _batches:
         import gpu
         from gpu_extras.batch import batch_for_shader
         if len(_batches) > 16:
             _batches.clear()
         shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
-        segs = segments(opts["size"], opts["spacing"], opts["divisions"])
+        segs = (segments(opts["size"], opts["spacing"], opts["divisions"]) if span is None
+                else span_segments(span[0], span[1], opts["spacing"], opts["divisions"]))
         _batches[key] = (shader, {k: batch_for_shader(shader, 'LINES', {"pos": plane_points(segs[k], plane, unit)})
                                   for k in ("minor", "major", "axis") if segs[k]})
     return _batches[key]
@@ -232,10 +267,18 @@ def _draw():
     import gpu
     from .. operators import units
     plane = _view_plane(rv3d)
-    if plane is None:
-        return
     opts = settings()
-    shader, batches = _batch_set(plane, units.maya_unit(context.scene), opts)
+    unit = units.maya_unit(context.scene)
+    span = None
+    if fills_view(rv3d.view_perspective, rv3d.is_orthographic_side_view):
+        # visible half width along the longer side: view_distance x 72 / lens / 2 (step 161, measured)
+        half = rv3d.view_distance * 36.0 / max(space.lens, 1e-6) / unit
+        ix, iy = {"FLOOR": (0, 1), "XZ": (0, 2), "YZ": (1, 2)}[plane]
+        loc = rv3d.view_location
+        spacing = max(float(opts["spacing"]), 1e-6)
+        chunk = spacing * 2 ** max(0, math.ceil(math.log2(max(half / 2.0 / spacing, 1e-9))))   # few distinct keys
+        span = (view_span(loc[ix] / unit, half, chunk), view_span(loc[iy] / unit, half, chunk))
+    shader, batches = _batch_set(plane, unit, opts, span)
     gpu.state.depth_test_set('LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     gpu.state.blend_set('ALPHA')

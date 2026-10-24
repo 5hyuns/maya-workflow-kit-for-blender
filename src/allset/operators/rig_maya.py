@@ -13,6 +13,7 @@ import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
+from .. import results
 from . import naming, units
 from .joints import _InEditMode
 
@@ -94,7 +95,7 @@ class ALLSET_OT_reroot_skeleton(bpy.types.Operator):
             self.report({'WARNING'}, "Select a joint")
             return {'CANCELLED'}
         if not reroot(arm, act.name):
-            self.report({'INFO'}, f"{act.name} is already a root")
+            results.result(self, f"{act.name} is already a root")
         return {'FINISHED'}
 
 
@@ -165,7 +166,7 @@ class ALLSET_OT_set_preferred_angle(_PoseBones, bpy.types.Operator):
 
     def execute(self, context):
         set_preferred(self.bones(context))
-        self.report({'INFO'}, PREFERRED_NOTE)
+        results.result(self, PREFERRED_NOTE)
         return {'FINISHED'}
 
 
@@ -277,7 +278,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
             return {'CANCELLED'}
         con, curve = res
         con.use_chain_offset = not self.root_on_curve
-        self.report({'INFO'}, f"Created {con.name} with {curve.name} (Spline IK constraint; Blender has no "
+        results.result(self, f"Created {con.name} with {curve.name} (Spline IK constraint; Blender has no "
                               "effector node)")
         return {'FINISHED'}
 
@@ -370,7 +371,7 @@ class ALLSET_OT_add_influence(bpy.types.Operator):
             self.report({'WARNING'}, "Select the skinned mesh and the joints to add")
             return {'CANCELLED'}
         added = [n for m in meshes for n in add_influence(m, names)]
-        self.report({'INFO'}, f"Added {', '.join(added) or 'nothing (already influences)'}")
+        results.result(self, f"Added {', '.join(added) or 'nothing (already influences)'}")
         return {'FINISHED'}
 
 
@@ -406,7 +407,7 @@ class ALLSET_OT_remove_unused_influences(bpy.types.Operator):
             for name in names:
                 m.vertex_groups.remove(m.vertex_groups[name])
             n += len(names)
-        self.report({'INFO'}, f"Removed {n} unused influence(s)")
+        results.result(self, f"Removed {n} unused influence(s)")
         return {'FINISHED'}
 
 

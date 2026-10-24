@@ -13,6 +13,7 @@ Shift+S = ``KeyTangentBinding``: hold + LMB opens the marking menu; a tap does n
 import bpy
 from bpy.props import EnumProperty, FloatVectorProperty
 
+from .. import results
 from .. import undo_steps
 from . import graph_key_menu, keystate, taphold, time_keys
 
@@ -104,7 +105,7 @@ class ALLSET_OT_set_tangent(bpy.types.Operator):
             a, b = time_keys.time_range(context)
             n = time_keys.set_tangent(context, a, b, self.kind)
         if self.kind == "STEPPED_NEXT":
-            self.report({'INFO'}, "Stepped Next isn't available in Blender: Stepped used")
+            results.result(self, "Stepped Next isn't available in Blender: Stepped used")
         elif not n:
             self.report({'WARNING'}, "No keys selected" if in_graph_editor(context) or in_dope_sheet(context)
                         else "No keys at this time")
@@ -190,7 +191,7 @@ class ALLSET_OT_graph_view_mode(bpy.types.Operator):
     def execute(self, context):
         context.space_data.use_normalization = self.mode != "ABSOLUTE"
         if self.mode == "STACKED":
-            self.report({'INFO'}, STACKED_NOTICE)
+            results.result(self, STACKED_NOTICE)
         if context.area is not None:
             context.area.tag_redraw()
         return {'FINISHED'}
@@ -304,7 +305,7 @@ class ALLSET_OT_snap_time_toggle(bpy.types.Operator):
         prefs = preferences.get(context)
         prefs.snap_time_to_selection = not prefs.snap_time_to_selection
         remember_selection(context.scene)
-        self.report({'INFO'}, "Snap Time To Selection: " + ("on" if prefs.snap_time_to_selection else "off"))
+        results.result(self, "Snap Time To Selection: " + ("on" if prefs.snap_time_to_selection else "off"))
         return {'FINISHED'}
 
 
@@ -492,7 +493,7 @@ class ALLSET_OT_curve_infinity(bpy.types.Operator):
             set_infinity(fc, self.side, self.mode)
             fc.update()
         if self.mode in {"LINEAR", "CONSTANT"}:
-            self.report({'INFO'}, f"{self.mode.title()} infinity: Blender extrapolates both ends the same way")
+            results.result(self, f"{self.mode.title()} infinity: Blender extrapolates both ends the same way")
         _redraw(context)
         return {'FINISHED'}
 

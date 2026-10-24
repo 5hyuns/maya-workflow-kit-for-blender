@@ -16,6 +16,7 @@ here (de Casteljau) with the touched handles pinned.
 import bpy
 from bpy.props import EnumProperty, IntProperty
 
+from .. import results
 from .. import undo_steps
 from . import time_keys
 
@@ -282,7 +283,7 @@ class ALLSET_OT_insert_key(bpy.types.Operator):
         if not curves:
             self.report({'WARNING'}, "No animation curves to insert a key on")
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Insert Key: {added} key(s)")
+        results.result(self, f"Insert Key: {added} key(s)")
         _redraw(context)
         return {'FINISHED'}
 
@@ -318,7 +319,7 @@ class ALLSET_OT_select_key(bpy.types.Operator):
 
     def execute(self, context):
         if select_key(context, self.direction) is None:
-            self.report({'INFO'}, "No more keys")
+            results.result(self, "No more keys")
             return {'CANCELLED'}
         _redraw(context)
         return {'FINISHED'}

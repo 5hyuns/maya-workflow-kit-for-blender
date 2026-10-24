@@ -15,6 +15,8 @@ import re
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import results
+
 PROP = "allset_set"
 TEXT = "allset_set_text"
 QUICK = "gCharacterSet"     # Maya's text for Quick Select Sets (research/maya/re/sets.md S6)
@@ -133,7 +135,7 @@ class ALLSET_OT_create_set(bpy.types.Operator):
 
     def execute(self, context):
         coll = create(self.name, _selection(context))
-        self.report({'INFO'}, f"Result: {coll.name}")
+        results.result(self, f"Result: {coll.name}")
         _refresh(context)
         return {'FINISHED'}
 
@@ -151,7 +153,7 @@ class ALLSET_OT_create_quick_select_set(bpy.types.Operator):
 
     def execute(self, context):
         coll = create(self.name.strip() or "Set", _selection(context), text=QUICK)
-        self.report({'INFO'}, f"Created Quick Select Set {coll.name}")
+        results.result(self, f"Created Quick Select Set {coll.name}")
         _refresh(context)
         return {'FINISHED'}
 

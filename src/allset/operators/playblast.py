@@ -14,6 +14,7 @@ import os
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 
+from .. import results
 from .. import compat
 
 MAYA_QUALITY = 70          # Maya Playblast option defaults (animation_08_win1)
@@ -149,7 +150,7 @@ class ALLSET_OT_playblast(bpy.types.Operator):
             a, b = playback_range(scene)
         finally:
             restore_settings(scene, saved)
-        self.report({'INFO'}, f"Playblast frames {a}-{b} in {output_dir()}")
+        results.result(self, f"Playblast frames {a}-{b} in {output_dir()}")
         return {'FINISHED'}
 
 

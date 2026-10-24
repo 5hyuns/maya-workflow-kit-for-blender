@@ -26,6 +26,7 @@ scene has. Measured (tmp/probe137): an unlinked ``scene.camera`` renders and fol
 import bpy
 from bpy.props import BoolProperty, StringProperty
 
+from .. import results
 from . import framing, units
 from .key_batch import VIEW_SENSOR, camera_matrix
 
@@ -170,7 +171,7 @@ class _Render:
                 default_light.remove_all()
         if 'CANCELLED' in res:
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Rendering through {ob.name}")
+        results.result(self, f"Rendering through {ob.name}")
         return {'FINISHED'}
 
     def invoke(self, context, event):

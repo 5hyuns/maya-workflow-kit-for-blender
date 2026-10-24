@@ -16,6 +16,8 @@ wraps ``IMAGE_HT_header.draw`` and calls ``draw_header`` first). ``ALLSET_MT_ren
 
 import bpy
 
+from .. import results
+
 KEPT_PROP = "allset_kept"
 KEEP_TIP = "Maya Keep Image = Blender Render Slot (J / Alt+J to compare)"
 
@@ -65,7 +67,7 @@ Blender: Render Slots, J / Alt+J to compare"""
     def execute(self, context):
         image = render_result()
         index = keep(image)
-        self.report({'INFO'}, f"Kept; next render goes to {image.render_slots[index].name}")
+        results.result(self, f"Kept; next render goes to {image.render_slots[index].name}")
         _redraw(context)
         return {'FINISHED'}
 

@@ -13,6 +13,8 @@ import gpu
 from bpy.props import EnumProperty
 from gpu_extras.batch import batch_for_shader
 
+from .. import results
+
 # --- box zoom ------------------------------------------------------------------------------------
 
 MIN_DRAG = 6  # px: a smaller box is a click, not a zoom
@@ -117,7 +119,7 @@ class ALLSET_OT_last_tool(bpy.types.Operator):
     def execute(self, context):
         tool = LAST.get(context.mode)
         if tool is None:
-            self.report({'INFO'}, "No previous tool in this mode")
+            results.result(self, "No previous tool in this mode")
             return {'CANCELLED'}
         try:
             bpy.ops.wm.tool_set_by_id(name=tool, space_type='VIEW_3D')

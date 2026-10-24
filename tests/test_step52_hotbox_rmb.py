@@ -109,18 +109,28 @@ def test_rmb_list_is_maya_2022():
 
 
 def test_rmb_list_under_the_ring():
-    """The list stays under the ring (Maya); rows that don't fit continue in more columns."""
+    """Maya keeps the list in one column: under the ring when it fits, else beside the ring (step 161, G2: it used to
+    wrap into columns under the ring near the window bottom); never over the ring, never outside the window."""
     b = (0.0, 0.0, 1600.0, 900.0)
-    for origin in ((800.0, 600.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0)):
+    for origin in ((800.0, 600.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0), (800.0, 120.0)):
         s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
         rows = [it for it in s.layout.items if it.kind == "list"]
-        ring_bottom = min(it.rect[1] for it in s.layout.radial.values())
-        assert all(it.rect[3] <= ring_bottom for it in rows), origin
+        assert len({round(it.rect[0], 3) for it in rows}) == 1, (origin, "one column")
+        boxes = list(s.layout.radial.values())
+        assert not any(r.rect[0] < x.rect[2] and x.rect[0] < r.rect[2] and r.rect[1] < x.rect[3] and
+                       x.rect[1] < r.rect[3] for r in rows for x in boxes), (origin, "list over the ring")
         absr = [(it.rect[0] + origin[0], it.rect[1] + origin[1], it.rect[2] + origin[0], it.rect[3] + origin[1])
                 for it in rows]
-        assert all(b[0] - 1e-6 <= r[0] and r[2] <= b[2] + 1e-6 and r[1] >= b[1] - 1e-6 for r in absr), origin
-        firsts = [it for it in rows if it.rect[3] == max(r.rect[3] for r in rows)]
-        assert firsts[0].label == mm.OBJECT_TITLE, "the first column starts with the title"
+        assert all(b[0] - 1e-6 <= r[0] and r[2] <= b[2] + 1e-6 and b[1] - 1e-6 <= r[1] and r[3] <= b[3] + 1e-6
+                   for r in absr), origin
+        top = max(rows, key=lambda it: it.rect[3])
+        assert top.label == mm.OBJECT_TITLE, "the column starts with the title"
+        ring_bottom = min(it.rect[1] for it in boxes)
+        under = all(it.rect[3] <= ring_bottom for it in rows)
+        if origin[1] == 600.0:
+            assert under, "room under the ring: the list stays there"
+        if origin[1] in (450.0, 120.0):
+            assert not under and min(it.rect[0] for it in rows) >= max(x.rect[2] for x in boxes),                 (origin, "no room under the ring: one column right of it")
     # room for everything: one column centred under the ring
     s = engine.Session(mm.RMB_MESH, (800.0, 880.0), 0.0, measure, None, None, (0.0, -2000.0, 1600.0, 900.0))
     rows = [it for it in s.layout.items if it.kind == "list"]

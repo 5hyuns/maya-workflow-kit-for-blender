@@ -14,6 +14,7 @@ Maya behaviour (scripts of the installed Maya 2022, behaviour only):
 
 import bpy
 
+from .. import results
 from .. import undo_steps
 from . import display
 
@@ -56,7 +57,7 @@ class ALLSET_OT_cut(bpy.types.Operator):
             bpy.data.objects.remove(ob)
         # Maya deletes the shape with its transform: drop data left without users, or the paste gets "pCubeShape1.001".
         bpy.data.batch_remove([d for d in datas if d.users == 0])
-        self.report({'INFO'}, f"Cut {len(names)} object(s)")
+        results.result(self, f"Cut {len(names)} object(s)")
         return {'FINISHED'}
 
 
