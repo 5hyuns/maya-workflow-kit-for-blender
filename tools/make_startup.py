@@ -415,6 +415,9 @@ class Builder:
             sp.show_region_tool_header = False
             sp.show_region_ui = False
             sp.show_region_toolbar = False
+            # step 167: no image navigation gizmo — invisible under the kit's drawing, it took clicks at the right
+            # end of the row (the shelf scroll bar)
+            sp.show_gizmo_navigate = False
 
         v3d = a["view3d"].spaces.active
         v3d.show_region_ui = False             # Maya panels are their own areas, not the viewport's sidebar (step 116)
