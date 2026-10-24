@@ -10,7 +10,7 @@ import bpy
 
 from . import (auto_key, bookmarks, component, create, curve_tools, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
                lights, material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, render_persp, rig_tools, select_convert, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
-               time_keys, tool_keys, units, uv_tools, view, view_keys3, visibility)
+               time_keys, tool_keys, units, uv_shells, uv_tools, view, view_keys3, visibility)
 from . import poly_draw, quad_draw  # step 144 POLY: Create Polygon / Append to Polygon / Quad Draw (#30)
 from . import edge_loops  # step 144 LOOP: Insert / Offset Edge Loop, Slide Edge (#31)
 
@@ -21,7 +21,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *marquee.classes, *preselect.classes, *select_priority.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
-           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes, *multi_cut.classes,
+           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *uv_shells.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes, *multi_cut.classes,
            *outliner_drag.classes, *key_insert.classes, *view_keys3.classes, *global_keys4.classes,
            *pivot_menu.classes, *sets.classes, *menu_items.classes, *file_io.classes, *option_windows.classes,
            *key_batch3.classes, *bookmarks.classes, *curve_tools.classes,
