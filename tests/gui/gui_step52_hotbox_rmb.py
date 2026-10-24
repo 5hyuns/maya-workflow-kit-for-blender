@@ -123,13 +123,19 @@ def s_rmb():
     want = ["Select", "Select All", "Deselect All", "Select Hierarchy", "Invert Selection", "Select Similar",
             "Make Live", "DG Traversal", "Inputs", "Outputs", "Paint"]
     check("Maya 2022 rows in order", labels[1:1 + len(want)] == want)
-    ring_bottom = min(it.rect[1] for it in s.layout.radial.values())
-    check("the list is under the ring", all(it.rect[3] <= ring_bottom for it in rows))
+    # step 161 (marking/engine.fit_ring): one column, under the ring when it fits, else beside it on the side
+    # without a radial submenu (RMB on a mesh: E = UV, so the left side); never over the ring
+    boxes = list(s.layout.radial.values())
+    ring_bottom = min(it.rect[1] for it in boxes)
+    under = all(it.rect[3] <= ring_bottom for it in rows)
+    beside = max(it.rect[2] for it in rows) <= min(x.rect[0] for x in boxes)
+    check(f"the list is under the ring or beside it (under {under}, left {beside})", under or beside)
     x0, x1 = min(it.rect[0] for it in rows), max(it.rect[2] for it in rows)
     b = draw().window_bounds(win(), main_view()[1])
     cx = s.center[0]
-    check("the list block is centred under the ring (or slid inside the window)",
-          abs((x0 + x1) / 2) < 1 or abs(x0 + cx - b[0]) < 1 or abs(x1 + cx - b[2]) < 1)
+    check("one column; under the ring it is centred (or slid inside the window)",
+          len({round(it.rect[0], 3) for it in rows}) == 1
+          and (not under or abs((x0 + x1) / 2) < 1 or abs(x0 + cx - b[0]) < 1 or abs(x1 + cx - b[2]) < 1))
 
 
 @step

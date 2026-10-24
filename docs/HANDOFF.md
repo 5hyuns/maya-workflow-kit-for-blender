@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 172 (0.4.0 출시 준비) 완료 — `docs/steps/step_172.md`. version 0.4.0, CHANGELOG, `release_notes_0.4.0.md`; release_check
+  4.5.4 / 5.2.2 각 14 PASS, 헤드리스 1600 / 1600, GUI 전체 1827 검사 (오래된 RMB 목록 테스트 2 파일 고침). master push,
+  #81–#101 닫힘, #89 → 0.5.0, 태그 v0.4.0, 초안 릴리스 + 업로드 폴더.
+  **바로 다음 할 일**: Hermes 가 초안 릴리스 publish · 스토어 업로드; 개발은 새 감사 (재점검 12차).
+
 - Step 171 (Animation Snapshot / ghosting, backlog_164 #8 = 마지막) 완료 — `docs/steps/step_171.md`. 측정
   `research/maya/re/visualize_171.md` (mayapy + GUI 캡처). `operators/anim_snapshot.py` (snapshot1Group / transform1_k,
   Fast / Slow / On demand), `ui/ghosting.py` (Ghost / Unghost, Maya 프레임 규칙 · 색 · 불투명도), Animation Snapshot
