@@ -12,6 +12,7 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
+from .. import results
 from . import preselect, uv_tools
 
 TOOL = "allset.cut_sew_tool"
@@ -223,7 +224,7 @@ class ALLSET_OT_cut_sew_stroke(bpy.types.Operator):
         _border_cache.clear()
         context.area.tag_redraw()
         if not done and self.action == "SEW":
-            self.report({'INFO'}, "No UV shells to sew along these edges")
+            results.result(self, "No UV shells to sew along these edges")
         return {'FINISHED'}
 
 

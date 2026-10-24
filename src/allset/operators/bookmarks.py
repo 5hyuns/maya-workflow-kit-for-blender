@@ -15,6 +15,8 @@ marker (or at the scene end).
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import results
+
 ENDS = "allset_bookmarks"
 
 
@@ -96,7 +98,7 @@ class ALLSET_OT_bookmark_create(bpy.types.Operator):
 
     def execute(self, context):
         marker = create(context, self.name.strip())
-        self.report({'INFO'}, f"Bookmark {marker.name} at frame {marker.frame}")
+        results.result(self, f"Bookmark {marker.name} at frame {marker.frame}")
         return {'FINISHED'}
 
 

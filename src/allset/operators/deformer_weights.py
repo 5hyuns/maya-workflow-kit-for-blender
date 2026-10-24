@@ -23,6 +23,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Matrix, Vector, kdtree
 
+from .. import results
 from . import units
 
 PRECISION = 9          # Maya writes 3 decimals by default (-weightPrecision 3); the kit writes 9 (lossless to 1e-9)
@@ -408,7 +409,7 @@ class ALLSET_OT_export_deformer_weights(bpy.types.Operator):
         except (OSError, RuntimeError) as e:
             self.report({'ERROR'}, str(e))
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Exported deformer weights to '{path.replace(os.sep, '/')}'.")
+        results.result(self, f"Exported deformer weights to '{path.replace(os.sep, '/')}'.")
         return {'FINISHED'}
 
 
@@ -456,7 +457,7 @@ class ALLSET_OT_import_deformer_weights(bpy.types.Operator):
         mesh.update_tag()
         if not applied:
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Imported deformer weights from '{self.filepath.replace(os.sep, '/')}'.")
+        results.result(self, f"Imported deformer weights from '{self.filepath.replace(os.sep, '/')}'.")
         return {'FINISHED'}
 
 

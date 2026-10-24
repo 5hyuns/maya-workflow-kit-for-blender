@@ -17,6 +17,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
 from mathutils import Vector
 
+from .. import results
 from ..ui import channel_box as cb
 
 CONSTRAINT_TYPES = (
@@ -72,7 +73,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             con = aim(cons, con, bone=arm is not None)     # Maya's factory aim (+X at the target, +Y up)
         target = getattr(con, "target", None)
         sub = getattr(con, "subtarget", "")
-        self.report({'INFO'}, f"{label} constraint on {owner}" +
+        results.result(self, f"{label} constraint on {owner}" +
                     (f" (target {target.name}{'.' + sub if sub else ''})" if target else ""))
         return {'FINISHED'}
 
@@ -236,7 +237,7 @@ class ALLSET_OT_quick_rig(bpy.types.Operator):
         if context.mode != 'OBJECT' and context.active_object is not None:
             bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.armature_human_metarig_add()
-        self.report({'INFO'}, QUICK_RIG_TEXT)
+        results.result(self, QUICK_RIG_TEXT)
         return {'FINISHED'}
 
 
@@ -349,7 +350,7 @@ class ALLSET_OT_add_attribute(_AttributeLimits, bpy.types.Operator):
         if not added:
             return {'CANCELLED'}
         cb.rebuild_rows()
-        self.report({'INFO'}, f"Added {cb.nice_name(name)} to {', '.join(added)}")
+        results.result(self, f"Added {cb.nice_name(name)} to {', '.join(added)}")
         return {'FINISHED'}
 
 
@@ -470,7 +471,7 @@ class ALLSET_OT_delete_attribute(bpy.types.Operator):
                 count += 1
         cb.set_selected_channels([k for k in cb.selected_channels(context)
                                   if k[len(cb.CUSTOM_PREFIX):] not in names], context)
-        self.report({'INFO'}, f"Deleted {count} attribute(s)")
+        results.result(self, f"Deleted {count} attribute(s)")
         return {'FINISHED'}
 
 

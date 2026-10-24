@@ -18,6 +18,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty
 from mathutils import Vector
 
+from .. import results
 from .. import undo_steps
 from . import units
 from .. import compat
@@ -640,7 +641,7 @@ class ALLSET_OT_uv_unfold(bpy.types.Operator):
         n = sum(unfold(context, ob) for ob in _edit_meshes(context))
         if not n:
             return {'CANCELLED'}
-        self.report({'INFO'}, NOTICE_UNFOLD)
+        results.result(self, NOTICE_UNFOLD)
         return {'FINISHED'}
 
 
@@ -687,7 +688,7 @@ class ALLSET_OT_uv_texel_get(bpy.types.Operator):
         if wa <= 1e-12:
             return {'CANCELLED'}
         s.texel_density = math.sqrt(uva * s.map_size ** 2 / wa)
-        self.report({'INFO'}, f"Texel density {s.texel_density:.3f} px per unit (map {s.map_size})")
+        results.result(self, f"Texel density {s.texel_density:.3f} px per unit (map {s.map_size})")
         return {'FINISHED'}
 
 

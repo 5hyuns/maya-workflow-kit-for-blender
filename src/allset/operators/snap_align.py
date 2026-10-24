@@ -24,6 +24,8 @@ from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 from bpy_extras import view3d_utils
 from mathutils import Matrix, Vector
 
+from .. import results
+
 EPS = 1e-9
 
 
@@ -273,7 +275,7 @@ class ALLSET_OT_make_live(bpy.types.Operator):
         if ob is not None and (not ob.select_get() or ob.type != 'MESH'):
             ob = None
         make_live(context, ob)
-        self.report({'INFO'}, f"Live surface: {ob.name}" if ob else "No Live Surface")
+        results.result(self, f"Live surface: {ob.name}" if ob else "No Live Surface")
         from ..ui import view_message
         # Maya Maya-1900 (topCenter).
         view_message.show(context, f"{ob.name} is <hl>live</hl>." if ob else "Make Live is <hl>off</hl>.",
@@ -422,7 +424,7 @@ class ALLSET_OT_step_snap(bpy.types.Operator):
 
     def execute(self, context):
         got = set_step_snap(context.scene.tool_settings, self.kind, self.mode)
-        self.report({'INFO'}, f"Step snap {got.lower()}")
+        results.result(self, f"Step snap {got.lower()}")
         for area in context.screen.areas if context.screen else ():
             area.tag_redraw()
         return {'FINISHED'}

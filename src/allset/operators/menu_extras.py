@@ -19,6 +19,7 @@ import bpy
 from bpy.props import EnumProperty, StringProperty
 from mathutils import Vector
 
+from .. import results
 from .. import live_refs
 
 # --- editor windows ----------------------------------------------------------------------------
@@ -206,7 +207,7 @@ class ALLSET_OT_increment_save(bpy.types.Operator):
         while os.path.exists(new):
             new = increment_path(new)
         bpy.ops.wm.save_as_mainfile(filepath=new, copy=False)
-        self.report({'INFO'}, f"Saved {os.path.basename(new)}")
+        results.result(self, f"Saved {os.path.basename(new)}")
         return {'FINISHED'}
 
 

@@ -16,6 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import results
 from .. import compat, undo_steps
 from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
 
@@ -503,7 +504,7 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
         if action is None:
-            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
+            results.result(self, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
         if self.item in OPTION_BOXES and modifier_held():      # Shift / Ctrl+click = the option box (step 146)
             return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)
@@ -610,7 +611,7 @@ class ALLSET_OT_component_command(bpy.types.Operator):
             self.report({'WARNING'}, rule[1])
             return {'CANCELLED'}
         if kind == "none":
-            self.report({'INFO'}, f"{label}: works on objects; in component mode Maya leaves it alone "
+            results.result(self, f"{label}: works on objects; in component mode Maya leaves it alone "
                                   "(F8 = object mode)")
             return {'CANCELLED'}
         from ..marking.modal import run_action
@@ -804,7 +805,7 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
     def execute(self, context):
         action = menu_map.MAP.get(self.item)
         if action is None:
-            self.report({'INFO'}, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
+            results.result(self, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
         if self.from_hold and not bpy.app.background:
             _close_menu_then_open(context, self.item)

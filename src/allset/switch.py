@@ -21,6 +21,7 @@ workspace and deletes the appended one. Scenes and objects are never touched.
 
 import bpy
 
+from . import results
 from . import live_refs
 
 WORKSPACE = "Maya-style"
@@ -401,7 +402,7 @@ class ALLSET_OT_switch_mode(bpy.types.Operator):
     def execute(self, context):
         on = (not is_on()) if self.mode == 'TOGGLE' else self.mode == 'MAYA'
         request(on)
-        self.report({'INFO'}, "Maya mode" if on else "Blender mode")
+        results.result(self, "Maya mode" if on else "Blender mode")
         return {'FINISHED'}
 
 

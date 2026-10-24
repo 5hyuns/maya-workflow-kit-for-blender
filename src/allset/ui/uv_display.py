@@ -30,6 +30,7 @@ import numpy as np
 from bpy.props import BoolProperty, EnumProperty
 from gpu_extras.batch import batch_for_shader
 
+from .. import results
 from .. import compat
 from ..operators import uv_tools
 
@@ -217,7 +218,7 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
         elif self.mode == 'IMAGE':
             had = space.image is not None
             if toggle_image(space, context.view_layer.objects.active) is None and not had:
-                self.report({'INFO'}, "No texture image to show")
+                results.result(self, "No texture image to show")
         elif self.mode == 'SHELL_BORDERS':
             wm.allset_uv_shell_borders = not wm.allset_uv_shell_borders
         else:

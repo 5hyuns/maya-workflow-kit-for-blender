@@ -18,6 +18,7 @@ import math
 
 import bpy
 
+from .. import results
 from ..operators.edge_loops import INSERT_TOOL, OFFSET_TOOL, SLIDE_TOOL
 from ..operators.mesh_tools import CREASE_TOOL, TARGET_WELD_TOOL
 from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
@@ -168,7 +169,7 @@ class ALLSET_OT_reset_tool(bpy.types.Operator):
         got = reset_tool(context)
         if got is None:
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Reset {got[0].split('.')[-1].replace('_', ' ').title()} tool")
+        results.result(self, f"Reset {got[0].split('.')[-1].replace('_', ' ').title()} tool")
         for area in context.screen.areas if context.screen else ():
             area.tag_redraw()
         return {'FINISHED'}

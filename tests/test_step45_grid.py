@@ -36,9 +36,9 @@ def test_plane_points_and_view_planes():
     assert all(p[0] == 0.0 for p in grid.plane_points(segs, "YZ", unit))
     assert grid.plane_for_view('PERSP', False, (0.3, 0.5, -0.8)) == "FLOOR"
     assert grid.plane_for_view('ORTHO', True, (0.0, 0.0, -1.0)) == "FLOOR"   # top
-    # Maya: front / side views show no grid (ground edge-on; screens/16_four_view.png)
-    assert grid.plane_for_view('ORTHO', True, (0.0, 1.0, 0.0)) is None       # front (looks +Y)
-    assert grid.plane_for_view('ORTHO', True, (-1.0, 0.0, 0.0)) is None      # right
+    # Maya's front / side cameras grid their own plane (step 161: screens/16_four_view.png)
+    assert grid.plane_for_view('ORTHO', True, (0.0, 1.0, 0.0)) == "XZ"       # front (looks +Y)
+    assert grid.plane_for_view('ORTHO', True, (-1.0, 0.0, 0.0)) == "YZ"      # right
     assert grid.plane_for_view('ORTHO', False, (0.0, 1.0, 0.0)) == "FLOOR"   # user ortho
 
 
@@ -126,3 +126,16 @@ def test_draw_handler_removed_on_disable():
         assert "toggle_grid" not in dir(bpy.ops.allset)
     finally:
         kit.enable()
+
+
+def test_ortho_grid_fills_the_view():
+    # Step 161: Maya's ortho cameras grid the whole panel (16_four_view.png: ~31 units across, lines edge to edge)
+    assert grid.fills_view('ORTHO', True) and not grid.fills_view('ORTHO', False)
+    assert not grid.fills_view('PERSP', False)
+    segs = grid.span_segments((-20.0, 20.0), (-3.0, 7.0), 5, 5)
+    us = sorted({a[0] for a, b in segs["minor"] + segs["major"] + segs["axis"] if a[0] == b[0]})
+    assert us[0] == -20.0 and us[-1] == 20.0 and len(us) == 41          # beyond the ±12 of the ground grid
+    assert all(a[1] == -3.0 and b[1] == 7.0 for a, b in segs["axis"] if a[0] == b[0])
+    assert ((0.0, -3.0), (0.0, 7.0)) in segs["axis"] and ((5.0, -3.0), (5.0, 7.0)) in segs["major"]
+    lo, hi = grid.view_span(1.3, 15.0, 8.0)
+    assert lo <= 1.3 - 15.0 and hi >= 1.3 + 15.0 and lo % 8 == 0 and hi % 8 == 0

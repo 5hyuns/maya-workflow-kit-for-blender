@@ -24,6 +24,7 @@ animation end). Blender form:
 
 import bpy
 
+from .. import results
 from .. import compat
 from bpy.app.handlers import persistent
 
@@ -349,7 +350,7 @@ class ALLSET_OT_time_range_drag(bpy.types.Operator):
                 return {'CANCELLED'}
             n = self._drag.finish(self._mode, self._f0, self._f)
             scene.frame_set(scene.frame_current)          # re-evaluate at the current time
-            self.report({'INFO'}, f"{'Moved' if self._mode == 'MOVE' else 'Scaled'} {n} key(s)")
+            results.result(self, f"{'Moved' if self._mode == 'MOVE' else 'Scaled'} {n} key(s)")
             _tag(context)
             return {'FINISHED'}
         if event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':

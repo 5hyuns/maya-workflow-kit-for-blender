@@ -24,6 +24,7 @@ from bpy.app.handlers import persistent
 from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProperty, IntProperty,
                        StringProperty)
 
+from .. import results
 from ..operators import auto_key, display
 from .. import compat
 from . import cb_entry, chrome
@@ -1324,7 +1325,7 @@ class _ChannelAction:
         for ob in targets(context):
             for key in self.channel_keys(context, ob):
                 count += bool(self.act(context, ob, key))
-        self.report({'INFO'}, f"{self.bl_label}: {count} channel(s)")
+        results.result(self, f"{self.bl_label}: {count} channel(s)")
         return {'FINISHED'}
 
 

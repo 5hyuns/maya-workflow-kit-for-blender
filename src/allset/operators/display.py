@@ -9,6 +9,8 @@ us that area as ``context.space_data``.
 
 import bpy
 
+from .. import results
+
 MODES = (
     ("WIREFRAME", "Wireframe", "Maya 4: wireframe"),
     ("SHADED", "Shaded", "Maya 5: smooth shaded, no textures"),
@@ -219,7 +221,7 @@ class ALLSET_OT_smooth_level(bpy.types.Operator):
     def execute(self, context):
         levels = [change_smoothing_level(ob, self.delta)
                   for ob in ALLSET_OT_smooth_preview._targets(context) if ob.type == 'MESH']
-        self.report({'INFO'}, f"Smooth preview level {', '.join(map(str, sorted(set(levels))))}")
+        results.result(self, f"Smooth preview level {', '.join(map(str, sorted(set(levels))))}")
         return {'FINISHED'}
 
 

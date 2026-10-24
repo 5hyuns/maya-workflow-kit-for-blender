@@ -389,8 +389,8 @@ def fit_ring(layout, center, bounds, edges=()):
     """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1) without moving its
     centre, the press point the gesture directions are checked from (step 33 「계획」).
 
-    Radial boxes slide inside; the list goes under the ring (Maya), else above it, else
-    beside it (right, then left), else is pushed up from under the ring. ``edges`` = area
+    Radial boxes slide inside; the list goes under the ring (Maya), else beside it in one column (right, then
+    left; step 161), else above it, else is pushed up from under the ring. ``edges`` = area
     border bands (region pixels, step 136): no box or row is left overlapping one."""
     cx, cy = center
     x0, y0, x1, y1 = bounds[0] - cx, bounds[1] - cy, bounds[2] - cx, bounds[3] - cy  # centre-relative
@@ -421,9 +421,12 @@ def fit_ring(layout, center, bounds, edges=()):
         rx0, ry0, rx1, ry1 = _bbox(list(layout.radial.values()))
         rx0, ry0, rx1, ry1 = min(rx0, -r), min(ry0, -r), max(rx1, r), max(ry1, r)
         h, w = ly1 - ly0, lx1 - lx0
-        if ly0 < y0 and ly1 <= y1 and ly1 - y0 >= MIN_COLUMN_ROWS * layout.params.item_h:
-            # Maya keeps the list under the ring (14_marking_menu_object.png, where it runs off the screen);
-            # here the rows that don't fit continue in more columns, still under the ring (step 52).
+        # Maya keeps the list in one column under the ring (14_marking_menu_object.png, where it runs off a
+        # small window) and moves it when the screen ends; it never wraps into columns (step-154 dogfood G2). A
+        # column that doesn't fit under the ring goes beside it (right, then left: moved up it would cover the
+        # ring's S boxes and the gestures), then above it; only a list taller than the window gets more columns,
+        # still under the ring (step 52).
+        if h > y1 - y0 and ly1 - y0 >= MIN_COLUMN_ROWS * layout.params.item_h:
             if edges:
                 _settle_list(rows, ly1, y0, x0, x1, gap_unit, edges, center=0.0)
                 return
@@ -441,21 +444,20 @@ def fit_ring(layout, center, bounds, edges=()):
         left = (rx0 - gap - lx1, -h / 2 - ly0)
         dx = dy = None
         lift = y1           # how high re-flowed rows may go (step 136): not into the ring when under it
-        for cdx, cdy in (below, above):
-            if ly0 + cdy >= y0 and ly1 + cdy <= y1:
-                dx, dy = cdx + _slide(lx0 + cdx, lx1 + cdx, x0, x1), cdy
-                if cdy:
-                    floor = ry1 + gap
-                else:
-                    lift = None
-                break
+        if ly0 >= y0 and ly1 <= y1:
+            dx, dy = _slide(lx0, lx1, x0, x1), 0.0
+            lift = None
         else:
             for cdx, cdy in (right, left):
                 if lx0 + cdx >= x0 and lx1 + cdx <= x1 and h <= y1 - y0:
                     dx, dy = cdx, cdy + _slide(ly0 + cdy, ly1 + cdy, y0, y1)
                     break
             else:
-                dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
+                if ly0 + above[1] >= y0 and ly1 + above[1] <= y1:
+                    dx, dy = _slide(lx0, lx1, x0, x1), above[1]
+                    floor = ry1 + gap
+                else:
+                    dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
         if w > x1 - x0:
             dx = x0 - lx0
     for it in rows:

@@ -15,6 +15,8 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, St
 from bpy_extras.io_utils import ImportHelper
 from mathutils import Vector
 
+from .. import results
+
 
 def _hierarchy(objects):
     """``objects`` and all their descendants, parents first, each once."""
@@ -64,7 +66,7 @@ class ALLSET_OT_prefix_hierarchy(bpy.types.Operator):
         obs = _hierarchy(context.selected_objects)
         for ob in obs:
             _rename(ob, lambda name: self.prefix + name)
-        self.report({'INFO'}, f"Prefixed {len(obs)} name(s)")
+        results.result(self, f"Prefixed {len(obs)} name(s)")
         return {'FINISHED'}
 
 
@@ -100,7 +102,7 @@ class ALLSET_OT_search_replace_names(bpy.types.Operator):
             if self.search in ob.name:
                 _rename(ob, lambda name: name.replace(self.search, self.replace))
                 n += 1
-        self.report({'INFO'}, f"Renamed {n} object(s)")
+        results.result(self, f"Renamed {n} object(s)")
         return {'FINISHED'}
 
 
@@ -651,7 +653,7 @@ class ALLSET_OT_import_audio(bpy.types.Operator, ImportHelper):
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip())
             return {'CANCELLED'}
-        self.report({'INFO'}, f"Imported {strip.name}")
+        results.result(self, f"Imported {strip.name}")
         return {'FINISHED'}
 
 
@@ -666,7 +668,7 @@ class ALLSET_OT_delete_sounds(bpy.types.Operator):
         sounds = [s for s in strips if s.type == 'SOUND'] if strips is not None else []
         for s in sounds:
             strips.remove(s)
-        self.report({'INFO'}, f"Deleted {len(sounds)} sound(s)")
+        results.result(self, f"Deleted {len(sounds)} sound(s)")
         return {'FINISHED'}
 
 
@@ -705,7 +707,7 @@ class ALLSET_OT_menu_note(bpy.types.Operator):
         n = notices.notice(self.item)
         if n:
             notices.show(f"{self.item.rsplit('/', 1)[-1]}: {n[1]}")
-            self.report({'INFO'}, n[1])
+            results.result(self, n[1])
         return {'FINISHED'}
 
 

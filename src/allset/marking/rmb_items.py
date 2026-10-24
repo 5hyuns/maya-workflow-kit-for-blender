@@ -19,6 +19,7 @@ import bmesh
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from .. import results
 from ..ui import menu_map
 
 
@@ -356,7 +357,7 @@ class ALLSET_OT_mm_camera_based(bpy.types.Operator):
         from .. import preferences
         prefs = preferences.get(context)
         prefs.select_through = not prefs.select_through
-        self.report({'INFO'}, f"Camera-Based Selection {'off' if prefs.select_through else 'on'}")
+        results.result(self, f"Camera-Based Selection {'off' if prefs.select_through else 'on'}")
         return {'FINISHED'}
 
 

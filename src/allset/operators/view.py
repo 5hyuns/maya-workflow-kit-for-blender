@@ -10,6 +10,7 @@ Design:  「계획」 2-5. Evidence:
 import bpy
 from mathutils import Vector
 
+from .. import results
 from . import framing, units
 
 # --- tumble -------------------------------------------------------------------
@@ -577,7 +578,7 @@ class ALLSET_OT_view_history(bpy.types.Operator):
         cur = capture(rv3d)
         state = h.step_back(cur) if self.direction == "UNDO" else h.step_forward(cur)
         if state is None:
-            self.report({'INFO'}, "No more view changes")
+            results.result(self, "No more view changes")
             return {'CANCELLED'}
         restore(rv3d, state)
         if context.area:
@@ -588,8 +589,61 @@ class ALLSET_OT_view_history(bpy.types.Operator):
 # --- Space tap: four views <-> single view -------------------------------------
 
 
+# --- Maya's ortho cameras in the four view (step 161, G3) ----------------------------------------------------------
+# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) and keep their own pan / zoom across layout
+# changes ( a 1-unit cube is ~16 px of a ~495 px pane = ~31 units across).
+# Blender gives each new quad pane the single view's location and distance (checked: after F on a 1 cm cube the
+# panes were 3 units across), so entering the four view puts each ortho pane back on its Maya camera: the pan / zoom
+# it had when the four view was last left, else Maya's default (centred on the origin, 30 units across). Blender's
+# viewport ortho width along the longer side = view_distance x 72 / lens (checked, gui_step161_views: distance 3 cm
+# with lens 70 = 3.086 units across).
+MAYA_ORTHO_WIDTH = 30.0
+FOUR_VIEW_NOTE = ("Blender's four view has one header for all four panes (Maya: one per panel): its shading / show "
+                  "settings apply to every pane, view commands to the pane under the mouse")
+_ortho_views = {}          # area pointer -> {pane key: (location, distance)}
+
+
+def ortho_key(rv3d):
+    """'TOP' / 'FRONT' / 'SIDE' (+ '-' for the opposite views) of an axis-aligned ortho pane, else None."""
+    if rv3d is None or rv3d.view_perspective != 'ORTHO':
+        return None
+    d = rv3d.view_rotation @ Vector((0.0, 0.0, -1.0))     # view direction
+    i = max(range(3), key=lambda k: abs(d[k]))
+    if abs(d[i]) < 0.999:
+        return None
+    return ("SIDE", "FRONT", "TOP")[i] + ("-" if d[i] > 0 else "")
+
+
+def maya_ortho_distance(space, scene=None):
+    """view_distance that shows 30 units across an ortho pane of this 3D View."""
+    from .units import maya_unit
+    return MAYA_ORTHO_WIDTH * maya_unit(scene or bpy.context.scene) * space.lens / 72.0
+
+
+def remember_ortho(area, space):
+    """Keep the four view's ortho panes' pan / zoom (Maya's cameras keep theirs)."""
+    store = _ortho_views.setdefault(area.as_pointer(), {})
+    for rv3d in space.region_quadviews:
+        key = ortho_key(rv3d)
+        if key:
+            store[key] = (rv3d.view_location.copy(), rv3d.view_distance)
+
+
+def maya_ortho_panes(area, space):
+    """Each ortho pane of a just-entered four view gets its Maya camera back (or Maya's default one)."""
+    store = _ortho_views.get(area.as_pointer(), {})
+    for rv3d in space.region_quadviews:
+        key = ortho_key(rv3d)
+        if not key:
+            continue
+        loc, dist = store.get(key, (Vector((0.0, 0.0, 0.0)), maya_ortho_distance(space)))
+        rv3d.view_location = loc
+        rv3d.view_distance = dist
+
+
 class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
-    """Toggle four views; leaving it keeps the view under the cursor (Maya Space tap)"""
+    """Toggle four views; leaving it keeps the view under the cursor (Maya Space tap). Blender's four view has one
+    header for all four panes (Maya: one per panel)"""
     bl_idname = "allset.toggle_quad_view"
     bl_label = "Toggle Four Views"
 
@@ -609,8 +663,11 @@ class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
             next(r for r in area.regions if r.type == 'WINDOW')
         if leaving:
             remember_persp(area, space)
+            remember_ortho(area, space)
         with context.temp_override(area=area, region=region):
             bpy.ops.screen.region_quadview()
+        if not leaving:
+            maya_ortho_panes(area, space)
         if hovered is not None:
             restore(space.region_3d, hovered)
             if side:

@@ -36,6 +36,7 @@ import traceback
 import bpy
 from bpy.props import BoolProperty, IntProperty, StringProperty
 
+from .. import results
 from . import own_draw, shelf_data, shelf_icons, shelf_map
 
 MARKER = ".AllsetStrip"
@@ -239,7 +240,7 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
                 n = button_notice(self.shelf, label)
                 text = f"{label}: {n[1]}" if n else f"{label}: not in Blender"
                 notices.show(text)
-                self.report({'INFO'}, text)
+                results.result(self, text)
                 return {'CANCELLED'}
             if i == self.index:
                 from ..marking.modal import run_action

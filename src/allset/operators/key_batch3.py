@@ -13,6 +13,8 @@ Maya commands (, meanings from  annotations):
 import bpy
 from bpy.props import EnumProperty
 
+from .. import results
+
 # Maya background (step 120, ). checked in a running Maya 2022 with factory prefs
 # (, , ):
 # cycleBackgroundColor ($M/scripts/others/Maya) is one global state for every viewport -
@@ -115,7 +117,7 @@ class ALLSET_OT_cycle_background(bpy.types.Operator):
 
     def execute(self, context):
         state = cycle_background(context.space_data.shading)
-        self.report({'INFO'}, f"Background: {state.title()}")
+        results.result(self, f"Background: {state.title()}")
         return {'FINISHED'}
 
 

@@ -11,6 +11,8 @@ import math
 import bmesh
 import bpy
 
+from .. import results
+
 CONNECT_WARNING = "Can't perform polyConnectComponents1 on selection"   # Maya's warning (menu_honesty.md)
 
 
@@ -539,7 +541,7 @@ class ALLSET_OT_merge(bpy.types.Operator):
             done += merge_selection(bm, mode, dist, self.always_two)
             bmesh.update_edit_mesh(ob.data)
         if not done:
-            self.report({'INFO'}, "No vertices were merged")
+            results.result(self, "No vertices were merged")
         return {'FINISHED'}
 
 

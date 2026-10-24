@@ -16,6 +16,7 @@ waits for the transform to end and takes the copy / extrusion back when nothing 
 import bmesh
 import bpy
 
+from .. import results
 from .. import live_refs
 from . import duplicate, keystate
 
@@ -448,7 +449,7 @@ class ALLSET_OT_manip_option(bpy.types.Operator):
         name = OPTIONS[self.option]
         setattr(prefs, name, not getattr(prefs, name))
         label = self.option.replace("_", " ").title()
-        self.report({'INFO'}, f"{label} {'on' if getattr(prefs, name) else 'off'}")
+        results.result(self, f"{label} {'on' if getattr(prefs, name) else 'off'}")
         return {'FINISHED'}
 
 
@@ -473,7 +474,7 @@ class ALLSET_OT_manip_size(bpy.types.Operator):
         if new == size:
             new = max(10, min(200, size + (1 if self.factor > 1 else -1)))
         manipulator.SIZE[0] = new / max(base, 1)
-        self.report({'INFO'}, f"Manipulator size {new} px")
+        results.result(self, f"Manipulator size {new} px")
         for area in context.screen.areas if context.screen else ():
             if area.type == 'VIEW_3D':
                 area.tag_redraw()

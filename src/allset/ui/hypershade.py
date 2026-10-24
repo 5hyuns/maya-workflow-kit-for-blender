@@ -25,6 +25,7 @@ Windows > Rendering Editors > Hypershade, the Status Line icon and the hotbox's 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from .. import results
 from .. import compat, live_refs
 from ..operators import material as material_ops
 from ..operators import menu_extras
@@ -522,7 +523,7 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
                     continue
                 bpy.data.materials.remove(m)
                 n += 1
-            self.report({'INFO'}, f"Deleted {n} material{'s' if n != 1 else ''}")
+            results.result(self, f"Deleted {n} material{'s' if n != 1 else ''}")
         elif act == "SELECT_OBJECTS":
             for o in context.selected_objects:
                 o.select_set(False)

@@ -25,6 +25,7 @@ import re
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
+from .. import results
 from .. import compat, live_refs
 from ..operators import display
 from . import ae_layout
@@ -1142,7 +1143,7 @@ class ALLSET_OT_ae_hide_type(bpy.types.Operator):
             return {'CANCELLED'}
         key = current_tab(context, ob)
         if _kind(key) in ("T", "S", "J"):      # the node itself always keeps its tab
-            self.report({'INFO'}, "The transform and shape tabs stay")
+            results.result(self, "The transform and shape tabs stay")
             return {'CANCELLED'}
         mtype = next((t[2] for t in tabs(ob) if t[0] == key), None)
         wm = context.window_manager

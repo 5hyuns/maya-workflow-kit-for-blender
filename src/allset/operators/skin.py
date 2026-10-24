@@ -16,6 +16,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras import view3d_utils
 from mathutils import Vector, kdtree
 
+from .. import results
 from .. import compat
 from . import naming, units
 
@@ -301,7 +302,7 @@ class ALLSET_OT_pole_vector(bpy.types.Operator):
         pole = poles[0]
         for arm, pb, con in found:
             set_pole(context, arm, pb, con, pole)
-        self.report({'INFO'}, f"{pole.name} is the pole vector of {handle.name}")
+        results.result(self, f"{pole.name} is the pole vector of {handle.name}")
         return {'FINISHED'}
 
 
@@ -487,7 +488,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
         only = set(picked) if self.bind_to == "SELECTED" and picked else None
         bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize,
                   self.bind_method)
-        self.report({'INFO'}, f"Bound {len(meshes)} mesh(es) to {arm.name}")
+        results.result(self, f"Bound {len(meshes)} mesh(es) to {arm.name}")
         return {'FINISHED'}
 
 
@@ -541,7 +542,7 @@ class ALLSET_OT_unbind_skin(bpy.types.Operator):
                             for m in o.modifiers if m.type == 'ARMATURE')
                 if not still:          # Maya removes the colours of joints no skin uses any more
                     colorize(arm, False)
-        self.report({'INFO'}, f"Unbound {len(meshes)} skin(s)")
+        results.result(self, f"Unbound {len(meshes)} skin(s)")
         return {'FINISHED'} if meshes else {'CANCELLED'}
 
 
@@ -827,7 +828,7 @@ class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
         if self.normalize:
             from .rig_maya import normalize
             normalize(dst)
-        self.report({'INFO'}, f"Copied skin weights to {dst.name}")
+        results.result(self, f"Copied skin weights to {dst.name}")
         return {'FINISHED'}
 
 
@@ -960,7 +961,7 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
             self.report({'WARNING'}, "Not all influences could be matched up using the selected association "
                         "options. Weight transfer may be problematic near the unmatched influences.")
         else:
-            self.report({'INFO'}, f"Mirrored the weights of {n} vertices")
+            results.result(self, f"Mirrored the weights of {n} vertices")
         return {'FINISHED'}
 
 
@@ -995,7 +996,7 @@ class ALLSET_OT_copy_vertex_weights(bpy.types.Operator):
         names = {vg.index: vg.name for vg in ob.vertex_groups}
         _VERTEX_CLIPBOARD.clear()
         _VERTEX_CLIPBOARD.update({names[i]: w for i, w in act[layer].items() if i in names})
-        self.report({'INFO'}, f"Copied {len(_VERTEX_CLIPBOARD)} weight(s)")
+        results.result(self, f"Copied {len(_VERTEX_CLIPBOARD)} weight(s)")
         return {'FINISHED'}
 
 
@@ -1024,7 +1025,7 @@ class ALLSET_OT_paste_vertex_weights(bpy.types.Operator):
                     dv[idx[name]] = w
                 n += 1
         bmesh.update_edit_mesh(ob.data)
-        self.report({'INFO'}, f"Pasted weights on {n} vertices")
+        results.result(self, f"Pasted weights on {n} vertices")
         return {'FINISHED'}
 
 

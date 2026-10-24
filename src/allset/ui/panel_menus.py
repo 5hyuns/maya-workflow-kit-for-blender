@@ -24,6 +24,8 @@ import json
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
+from ..operators import view as view_ops
+
 GREY_OP = "allset.menu_unavailable"
 
 
@@ -283,6 +285,7 @@ TIPS = {
     "EXPOSURE": "Exposure: switch between 0 and the last exposure",
     "GAMMA": "Gamma: switch between 1 and the last gamma",
     "CM_ENABLE": "Colour management on / off (off = Blender's Raw view transform)",
+    "LAYOUT_FOUR": "Four View: top, persp, front and side. " + view_ops.FOUR_VIEW_NOTE,
 }
 
 
@@ -460,8 +463,12 @@ def apply(context, key):
         from ..operators import view
         area = context.area
         if bool(space.region_quadviews) != (key == "LAYOUT_FOUR"):
+            if space.region_quadviews:
+                view.remember_ortho(area, space)
             with context.temp_override(area=area, region=main_region(area)):
                 bpy.ops.screen.region_quadview()
+            if space.region_quadviews:
+                view.maya_ortho_panes(area, space)      # Maya's ortho cameras (step 161)
         # Maya: Single Perspective is always the persp camera, Four View's top right panel is persp (#8)
         view.ensure_persp(area, space)
     else:

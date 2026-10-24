@@ -17,6 +17,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from mathutils import Matrix
 
+from .. import results
 from .. import compat
 from . import project, units
 
@@ -670,7 +671,7 @@ class _FileDialog:
                     return {'CANCELLED'}
                 if fmt == 'BLEND':
                     obs = import_blend(context, path)
-                    self.report({'INFO'}, f"Imported {len(obs)} object(s) from {os.path.basename(path)}")
+                    results.result(self, f"Imported {len(obs)} object(s) from {os.path.basename(path)}")
                     return {'FINISHED'}
                 op, args = import_args(fmt, k, self.maya_conversion)
                 before, mats = set(bpy.data.objects), set(bpy.data.materials)
@@ -686,7 +687,7 @@ class _FileDialog:
                 path = bpy.path.ensure_ext(path, _BY_ID[fmt][2]) if format_of(path) != fmt else path
                 if fmt == 'BLEND':
                     export_blend(context, path, self.selection)
-                    self.report({'INFO'}, f"Exported {os.path.basename(path)}")
+                    results.result(self, f"Exported {os.path.basename(path)}")
                     return {'FINISHED'}
                 op, args = export_args(fmt, k, self.selection, self.maya_conversion)
                 args.update(_animation_args(fmt, self.animation))
@@ -695,7 +696,7 @@ class _FileDialog:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
         verb = "Imported" if self.mode == 'IMPORT' else "Exported"
-        self.report({'INFO'}, f"{verb} {os.path.basename(path)}")
+        results.result(self, f"{verb} {os.path.basename(path)}")
         return {'FINISHED'}
 
 
@@ -777,7 +778,7 @@ class ALLSET_OT_file_set_project(bpy.types.Operator):
         project.set_current(folder, context)
         scenes = os.path.join(folder, "scenes", "")
         context.space_data.params.directory = scenes.encode()
-        self.report({'INFO'}, f"Project: {folder}")
+        results.result(self, f"Project: {folder}")
         return {'FINISHED'}
 
 

@@ -26,6 +26,10 @@ The kit draws the edges itself (POST_VIEW), :
 - Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya's lattice selected colour is
   displayColor lattice -active 16 = white, lead 19 ( displayColor_index), the
   same as meshes. Edges = the lattice grid along U / V / W through the evaluated points (``co_deform``).
+- Step 161 (G4): Maya highlights the whole hierarchy under a selected object: every descendant shape is drawn in the
+  colour of its nearest selected ancestor ( group1
+  (selected) -> pCube1 white, pCube2 (lead) -> pCube3 green). Without it a child in front of its selected parent hid
+  the parent's wire (step-154 dogfood 09: side view, pCube2 under pCube1 in front of it) — ``highlighted``.
 """
 
 import bpy
@@ -122,6 +126,26 @@ def wire_objects(context):
             if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
 
 
+def highlighted(context):
+    """[(object, is_lead)]: the selected objects that get the wire plus their descendants (Maya's hierarchy
+    highlight), each in the colour of its nearest selected ancestor (itself when selected)."""
+    active = context.view_layer.objects.active
+    out, seen = [], set()
+
+    def visit(ob, lead):
+        if ob.session_uid in seen:
+            return
+        seen.add(ob.session_uid)
+        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get():
+            out.append((ob, lead))
+        for child in ob.children:
+            if not child.select_get():          # a selected child keeps its own colour (visited as a root)
+                visit(child, lead)
+    for ob in context.selected_objects:
+        visit(ob, ob == active)
+    return out
+
+
 def dormant_objects(context):
     """Unselected objects that get Maya's dormant wire: wireframe shading, object mode, drawable types shown in this
     view (local view, per-type visibility)."""
@@ -171,14 +195,13 @@ def _draw():
     space, rv3d = context.space_data, context.region_data
     if rv3d is None or not space.overlay.show_overlays or space.shading.type == 'RENDERED' or not _enabled():
         return
-    obs = wire_objects(context)
+    obs = highlighted(context)
     dormant = dormant_objects(context)
     if not obs and not dormant:
         return
     import time
     import gpu
     t0 = time.perf_counter()
-    active = context.view_layer.objects.active
     # the colours are sRGB, this shader writes the 3D View's linear framebuffer as is (#43ffa3 drew as
     # #8bffd0 without the conversion; built-in shaders convert by themselves)
     lead, other = wire_colors()
@@ -200,12 +223,12 @@ def _draw():
             if batch is not None:
                 sh.uniform_float("mvp", pm @ ob.matrix_world)
                 batch.draw(sh)
-    for ob in obs:
+    for ob, is_lead in obs:
         batch = _batch(ob, depsgraph)
         if batch is None:
             continue
         sh.uniform_float("mvp", pm @ ob.matrix_world)
-        sh.uniform_float("color", lead if ob == active else other)
+        sh.uniform_float("color", lead if is_lead else other)
         batch.draw(sh)
     gpu.state.depth_test_set('NONE')
     _times.append(time.perf_counter() - t0)

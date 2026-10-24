@@ -24,6 +24,7 @@ import subprocess
 import bpy
 from bpy.props import StringProperty
 
+from .. import results
 from . import default_light, project, render_persp
 
 # key, Maya percentage (None = no scaling / the panel size)
@@ -271,7 +272,7 @@ class ALLSET_OT_batch_render(bpy.types.Operator):
         _batch.update(proc=proc, out=out, copy=copy_path, log=log_path, started=time.time(), cmd=cmd)
         if not bpy.app.timers.is_registered(_watch):
             bpy.app.timers.register(_watch, first_interval=1.0, persistent=True)
-        self.report({'INFO'}, f"Batch render started: {os.path.dirname(out)}")
+        results.result(self, f"Batch render started: {os.path.dirname(out)}")
         return {'FINISHED'}
 
 
@@ -284,7 +285,7 @@ class ALLSET_OT_cancel_batch_render(bpy.types.Operator):
         if not stop():
             self.report({'WARNING'}, "No batch render is running")
             return {'CANCELLED'}
-        self.report({'INFO'}, "Batch render cancelled")
+        results.result(self, "Batch render cancelled")
         return {'FINISHED'}
 
 

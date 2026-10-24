@@ -26,6 +26,7 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector, geometry
 
+from .. import results
 from . import preselect
 
 CREATE_TOOL = "allset.create_polygon_tool"
@@ -630,7 +631,7 @@ class ALLSET_OT_create_polygon(_PolySession, bpy.types.Operator):
                 bpy.ops.wm.tool_set_by_id(name=CREATE_TOOL, space_type='VIEW_3D')
             except RuntimeError:
                 pass
-        self.report({'INFO'}, f"Created {ob.name}")
+        results.result(self, f"Created {ob.name}")
         return {'FINISHED'}
 
 

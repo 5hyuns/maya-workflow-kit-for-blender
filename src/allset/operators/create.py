@@ -18,6 +18,7 @@ import math
 import bpy
 from bpy.props import EnumProperty
 
+from .. import results
 from . import lights, naming, prim_history, units
 
 HALF_PI = math.pi / 2
@@ -191,7 +192,7 @@ class ALLSET_OT_create(bpy.types.Operator):
     def execute(self, context):
         ob = create(context, self.kind, _maya_naming(context))
         note = LIGHT_NOTICE if ob.type == 'LIGHT' and ob.data.type in FALLOFF_LIGHTS else ""
-        self.report({'INFO'}, f"Created {ob.name}" + (f". {note}" if note else ""))
+        results.result(self, f"Created {ob.name}" + (f". {note}" if note else ""))
         return {'FINISHED'}
 
 
