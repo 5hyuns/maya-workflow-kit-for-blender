@@ -53,6 +53,10 @@ from . import modify_maya  # noqa: E402  step 168: Modify menu (Smooth Mesh Prev
 
 classes += modify_maya.classes
 
+from . import deform_edit  # noqa: E402  step 169: Deform > Wire / ShrinkWrap / Lattice edits, Prune, Point On Curve
+
+classes += deform_edit.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

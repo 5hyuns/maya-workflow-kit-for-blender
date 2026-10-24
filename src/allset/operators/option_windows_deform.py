@@ -13,6 +13,7 @@ import bpy
 from bpy.props import IntVectorProperty
 
 from .option_windows import F, Window
+from .option_windows_modify import FString
 
 
 class FDivisions(F):
@@ -53,6 +54,54 @@ def _match(kind):
 def _bounds():
     return [F("low", "Low bound:", "float", -1.0, lo=-10.0, hi=0.0),
             F("high", "High bound:", "float", 1.0, lo=0.0, hi=10.0)]
+
+
+def _wire_edit(action):
+    def run(context, v):
+        return bpy.ops.allset.wire_edit('EXEC_DEFAULT', action=action, node=v["node"] if v["specify"] else "")
+    return run
+
+
+def _dropoff_locator(context, v):
+    return bpy.ops.allset.wire_dropoff_locator('EXEC_DEFAULT', node=v["node"], envelope=float(v["envelope"]),
+                                               percent=float(v["percent"]))
+
+
+def _point_on_curve(context, v):
+    return bpy.ops.allset.point_on_curve('EXEC_DEFAULT', weight=float(v["weight"]))
+
+
+def PAINT_FIELDS():                                         # noqa: N802  (a field list, like _bounds())
+    return [F("operation", "Paint operation:", "enum", "Replace", items=("Replace", "Add", "Scale", "Smooth")),
+            F("profile", "Profile:", "enum", "Soft", items=("Gaussian", "Soft", "Solid")),
+            F("opacity", "Opacity:", "float", 1.0, lo=0.0, hi=1.0), F("value", "Value:", "float", 1.0, lo=0.0, hi=1.0),
+            F("radius", "Radius(U):", "float", 1.0, lo=0.0001, hi=1000.0)]
+
+
+PAINT_MISSING = ("Radius(L) 0.001", "Min/Max value 0 / 1", "Rotate to stroke", "Vector index",
+                 "Stamp spacing / depth", "Stylus pressure")
+
+
+def _paint(kind):
+    """Start painting this deformer's weights (Set Membership: Blender's Weight Paint toggle) with the window's
+    Maya tool values (operators/skin.apply_paint_settings; deformer weights are never normalized)."""
+    def run(context, v):
+        from . import option_windows_rig, skin
+        if kind:
+            res = bpy.ops.allset.paint_deformer_weights('EXEC_DEFAULT', kind=kind)
+        else:
+            res = bpy.ops.paint.weight_paint_toggle('EXEC_DEFAULT') if context.mode != 'PAINT_WEIGHT' else {'FINISHED'}
+        if res != {'FINISHED'}:
+            return res
+        values = {"operation": option_windows_rig._PAINT_OPS[v["operation"]],
+                  "profile": option_windows_rig._PROFILES[v["profile"]], "normalize": None,
+                  "opacity": v["opacity"], "value": v["value"], "radius": v["radius"], "screen_projection": False,
+                  "show_wireframe": True, "xray_joints": False}
+        refused = skin.apply_paint_settings(context, context.active_object, None, values)
+        if refused:
+            raise RuntimeError("Blender kept its brush for: " + ", ".join(refused))
+        return res
+    return run
 
 
 _BOUNDS_NOTE = "Bounds beyond the object (Blender limits stop at its ends)"
@@ -151,4 +200,40 @@ WINDOWS = [
         F("offset", "Offset:", "float", 0.0, lo=-10.0, hi=10.0)], _create('TEXTURE'), paths=("Deform/Texture",),
         missing=("Vector Strength / Vector Offset", "Vector Space Tangent", ENVELOPE,
                  "textureDeformerHandle1 (Handle = the object's up axis)")),
+    # step 169 (): Wire Tool settings (options_144.md "Wire") = a window titled with
+    # the tool name whose button makes the wire (select the objects, then the curve)
+    Window("deform_wire", "Wire Tool", "Create", _match('WIRE'), [
+        F("envelope", "Envelope:", "float", 1.0, lo=0.0, hi=1.0),
+        F("dropoff", "Dropoff distance:", "float", 1.0, lo=0.0, hi=100.0)], _create('WIRE'), paths=("Deform/Wire",),
+        missing=("Holders (Deform > Wire > Add Holder)", "Crossing effect 0 / Local influence 0 (the factory "
+                 "values: no effect)", "Grouping: Group wire(s) and base wire(s) (Wire > Parent Base Wire)")
+        + ADVANCED[:1]),
+    *[Window(f"wire_{key.lower()}", title, "Apply and Close", None, [
+        F("specify", "Specify node:", "bool", False, text=""),
+        FString("node", "Wire node:")], _wire_edit(key), paths=(f"Deform/Wire#2/{label}",),
+        missing=("Existing nodes: (type the wire node's name)",))
+      for key, label, title in (("ADD", "Add", "Add Wire Options"), ("REMOVE", "Remove", "Remove Wire Options"),
+                                ("RESET", "Reset", "Reset Wire Options"),
+                                ("PARENT_BASE", "Parent Base Wire", "Parent Base Wire Options"))],
+    Window("wire_dropoff_locator", "Wire Dropoff Locator Options", "Apply and Close",
+           ("allset.wire_dropoff_locator", {}), [
+               FString("node", "Wire node:"),
+               F("envelope", "Envelope:", "float", 1.0, lo=0.0, hi=1.0),
+               F("percent", "Percent:", "float", 1.0, lo=0.0, hi=10.0)], _dropoff_locator,
+           paths=("Deform/Wire#2/Wire Dropoff Locator",), missing=("Existing wire nodes: (type the name)",)),
+    # Point On Curve Options (options_144.md): Keep original off, Point weight 1
+    Window("point_on_curve", "Point On Curve Options", "Create", ("allset.point_on_curve", {}), [
+        F("weight", "Point weight:", "float", 1.0, lo=0.0, hi=1.0)], _point_on_curve,
+        paths=("Deform/Point On Curve",),
+        missing=("Keep original (the curve is always the original)",
+                 "Least-squares fit through the point (Blender hooks the selected control point)")),
+    # Paint Weights > <deformer> boxes = the Paint Attributes Tool settings (options_144.md "Paint tool factory
+    # brush"; Blend Shape: Paint Blend Shape Weights Tool), the button starts painting with them
+    *[Window(f"paint_weights_{(kind or 'membership').lower()}", "Paint Blend Shape Weights Tool" if kind == "blendShape" else
+             "Paint Attributes Tool", "Paint", None, PAINT_FIELDS(), _paint(kind),
+             paths=(f"Deform/Paint Weights/{label}",), missing=PAINT_MISSING)
+      for label, kind in (("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),
+                          ("Proximity Wrap", "proximityWrap"), ("Lattice", "ffd"), ("ShrinkWrap", "shrinkWrap"),
+                          ("Wire", "wire"), ("Nonlinear", "nonLinear"), ("Texture Deformer", "textureDeformer"),
+                          ("Set Membership", ""))],
 ]
