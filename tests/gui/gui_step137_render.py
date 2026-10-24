@@ -87,6 +87,9 @@ def s_render():
     area, region = v3d()
     with bpy.context.temp_override(window=win(), area=area, region=region):
         C["ret"] = bpy.ops.allset.menu_item('INVOKE_DEFAULT', item="Render/Render Current Frame")
+    # step 152: Maya's default light exists while the render job runs (the scene has no lights)
+    C["light_during"] = ([o.name for o in bpy.context.scene.objects if o.get("allset_default_light")],
+                         bpy.app.is_job_running('RENDER'))
 
 
 @step
@@ -121,6 +124,8 @@ def s_rendered():
         cx = sum(x for x, _y in hits) / len(hits) / wd if hits else 1.0
         cy = sum(y for _x, y in hits) / len(hits) / ht if hits else 1.0
         stats = (wd, ht, len(hits), cx, cy)
+        C["cube_mean"] = (sum(max(px[4 * (y * wd + x) + c] for c in range(3)) for x, y in hits) / len(hits)
+                          if hits else 0.0)
         bpy.data.images.remove(img)
     # The template view looks at the origin from Maya's persp distance (cm scene), so the 2 cm cube is small and in the
     # middle of the frame, like in the viewport.
@@ -128,6 +133,9 @@ def s_rendered():
           f"{stats[2]} cube pixels, centre at {stats[3]:.2f} / {stats[4]:.2f} of the frame{C.get('err', '')})",
           ok and stats[0] > 0 and 30 < stats[2] < stats[0] * stats[1] // 2
           and abs(stats[3] - 0.5) < 0.1 and abs(stats[4] - 0.5) < 0.1)
+    names, job = C["light_during"]
+    check(f"step 152: the default light lit the render ({names} while the job ran {job}; cube mean "
+          f"{C.get('cube_mean', 0):.3f} > 0.15)", names == ["defaultLight"] and job and C.get("cube_mean", 0) > 0.15)
     C["rv"] = (w, a)
     redraw_all()
 
@@ -159,6 +167,9 @@ def s_again():
 def s_closed():
     check(f"render windows closed ({len(bpy.context.window_manager.windows)} window left)",
           len(bpy.context.window_manager.windows) == 1)
+    left = [o.name for o in bpy.data.objects if o.get("allset_default_light")] + \
+        [d.name for d in bpy.data.lights if d.get("allset_default_light")]
+    check(f"step 152: no default light left after the renders ({left})", not left)
 
 
 run()

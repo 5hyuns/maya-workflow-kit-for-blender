@@ -1010,3 +1010,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Two cubes, the small one selected last: Deform > Wrap → wrap1 on the big cube; edit the small cube's vertices or move the small cube → the big one follows; the small cube is not rendered (F12).
 - [ ] Deform > Cluster on selected vertices → cluster1Handle; Deform > Paint Weights > Cluster with the handle selected → Weight Paint on the mesh with group cluster1 active; painting 0 on some vertices makes them stay when the handle moves.
 - [ ] Deform > Tension / Solidify / Morph / Wire / Wrinkle / Sculpt and Jiggle > Jiggle Deformer are greyed; hovering shows the Blender substitute in the tooltip and the Help Line.
+
+## Step 152 lane B — default light, Test Resolution, Batch Render (#101)
+
+- [x] New Maya scene, a cube, no lights: Render > Render Current Frame renders the cube lit from the camera's upper left (not black); the Outliner never shows `defaultLight`, and it is gone after the render. (gui_step137_render)
+- [ ] Render Settings > Common > Render Options > Enable Default Light off → Render Current Frame renders the lightless scene dark (world light only); on again → lit. Create > Lights > any light → only that light lights the render.
+- [ ] Render > Test Resolution: the submenu shows Camera Panel / Render Settings (960x540) / 10% … 150% Settings with a check on Render Settings; pick 50% → the next Render Current Frame is 480 x 270, Render Settings still says 960 x 540; Camera Panel → the render has the viewport's size.
+- [ ] Render > Batch Render on a saved and on an untitled scene: the Help Line reports the output folder, Blender stays usable while a background Blender renders; Render > Show Batch Render opens the image in a new Image Editor window; Batch Render again while one runs warns; Cancel Batch Render on a long sequence stops it.
