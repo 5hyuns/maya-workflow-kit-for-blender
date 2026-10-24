@@ -16,6 +16,13 @@ from .. import live_refs
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
+    # step 159
+    **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
+                        "closest-distance weights, then paint them (Skin > Paint Skin Weights).")
+       for item in ("Interactive Bind Skin", "Interactive Bind Skin Tool")},
+    **{f"Skin/{item}": ("Deform > Export / Import Weights", "Maya's image weight maps aren't in Blender: Deform > Export / "
+                        "Import Weights saves and loads the skin weights as Maya's deformer weight XML.")
+       for item in ("Export Weight Maps...", "Import Weights Maps...")},
     # Windows > Settings/Preferences (step 120)
     "Windows/Settings/Preferences/Marking Menu Editor": (
         "Marking menus", "The marking menus are the kit's Maya layouts; Blender has no editor for them "
@@ -324,8 +331,6 @@ CATEGORIES = {
                                                "Keys panel (I over the field)."),
     "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "
                  "joints are bone heads edited in armature edit mode."),
-    "Skeleton/Joint Labelling": ("Bone names (.L / .R)", "Blender has no joint labels: side and role come from bone "
-                                 "names (.L / .R suffixes drive mirroring and Symmetrize)."),
     "Skin": ("Vertex groups / Weight Paint", "Blender skin weights are vertex groups edited in Weight Paint mode "
              "(Weights menu: Normalize, Mirror, Clean, Limit Total); no influence objects or interactive bind."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
