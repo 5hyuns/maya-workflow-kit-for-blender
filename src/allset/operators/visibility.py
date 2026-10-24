@@ -13,6 +13,12 @@ attribute (docs/steps/step_129_cb.md 「계획」 #26). A display layer's V uses
 A hidden object can't stay selected in Blender, so Maya's "hidden but still selected" is kept
 as an ID property on the object (``KEPT``). ``LAST`` marks what the latest hide of this
 operator hid. Plan: docs/steps/step_16.md 2.
+
+Step 162: Toggle Show/Hide (h) follows Maya's "Toggle Visibility Options" (optionVar
+toggleVisibilityAndKeepSelectionBehaviour, measured with mayapy, research/maya/re/options_162.md): the toggled set is
+the selection = the visible selected objects plus the hidden-but-selected ones (``KEPT``). First Selection Independent
+(factory, 1) flips each object; Dependent (2) gives every one the opposite of the first selected object's visibility.
+The saved window value (option_windows.saved("toggle_show_hide")) applies to h and the menu click alike.
 """
 
 import bpy
@@ -20,6 +26,7 @@ from bpy.props import EnumProperty
 
 from .. import undo_steps
 
+TOGGLE_KEY = "toggle_show_hide"   # option window key (operators/option_windows_display.py)
 KEPT = "allset_kept"              # hidden by h while selected: h / Shift+H bring it back
 LAST = "allset_last_hidden"       # hidden by the latest hide: Ctrl+Shift+H brings it back
 
@@ -75,16 +82,50 @@ def _show(objects, view_layer, select=True):
     return shown
 
 
-def apply(context, action):
+def toggle_dependent():
+    """The saved First Selection of Maya's Toggle Visibility Options: True = Dependent (factory Independent)."""
+    from . import option_windows
+    v = option_windows.saved(TOGGLE_KEY) or {}
+    return v.get("first_selection") == "Dependent"
+
+
+def _first(objects, active):
+    from .mesh_maya import _first_selected
+    return _first_selected(objects, active)
+
+
+def toggle(context, dependent=False):
+    """Maya toggleVisibilityAndKeepSelection on the selection (visible selected + hidden kept). Returns the count."""
+    vl = context.view_layer
+    objs = list(vl.objects)
+    selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
+    kept = [ob for ob in objs if ob.hide_viewport and KEPT in ob]
+    members = selected + [ob for ob in kept if ob not in selected]
+    if not members:
+        return 0
+    if dependent:
+        first = _first(members, vl.objects.active if vl.objects.active in members else None)
+        show = first.hide_viewport            # every member gets the opposite of the first one's visibility
+        to_hide = [] if show else members
+        to_show = members if show else []
+    else:
+        to_hide = [ob for ob in members if not ob.hide_viewport]
+        to_show = [ob for ob in members if ob.hide_viewport]
+    if to_hide:
+        _hide(to_hide, objs, kept=True)
+    if to_show:                               # hidden by h while selected: they come back still selected
+        _show([ob for ob in to_show if ob.hide_viewport], vl)
+    return len(members)
+
+
+def apply(context, action, dependent=None):
     """Run ``action`` on the view layer; returns the number of objects changed."""
     vl = context.view_layer
     objs = list(vl.objects)
     selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]
     hidden = [ob for ob in objs if ob.hide_viewport]
     if action == 'TOGGLE':
-        if selected:
-            return _hide(selected, objs, kept=True)
-        return _show([ob for ob in hidden if KEPT in ob], vl)
+        return toggle(context, toggle_dependent() if dependent is None else dependent)
     if action == 'HIDE':
         return _hide(selected, objs)
     if action == 'HIDE_UNSELECTED':
@@ -107,6 +148,9 @@ class ALLSET_OT_visibility(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     action: EnumProperty(name="Action", items=ACTIONS, default='TOGGLE')
+    # Toggle: Maya's First Selection (step 162); SAVED = the Toggle Visibility Options window's value
+    behaviour: EnumProperty(name="First Selection", options={'SKIP_SAVE', 'HIDDEN'}, default='SAVED', items=(
+        ('SAVED', "Saved", ""), ('INDEPENDENT', "Independent", ""), ('DEPENDENT', "Dependent", "")))
 
     @classmethod
     def description(cls, context, props):
@@ -119,7 +163,8 @@ class ALLSET_OT_visibility(bpy.types.Operator):
     def execute(self, context):
         vl = context.view_layer
         had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
-        changed = apply(context, self.action)
+        changed = apply(context, self.action,
+                        None if self.behaviour == 'SAVED' else self.behaviour == 'DEPENDENT')
         text = message(self.action, had_selection, changed)
         if text:
             from ..ui import view_message

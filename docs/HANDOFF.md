@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 162 (Option box and menu gestures, backlog_155 #8 — 마지막 항목) 완료 — `docs/steps/step_162.md`. Toggle Show/Hide ❒ /
+  Non-Deformer History ❒ = Maya 옵션 창 (GUI Maya 캡처 + mayapy 측정 `research/maya/re/options_162.md`; Non-Deformer 기본이 이제
+  Maya 의 All), Ctrl+Shift+메뉴 클릭 = 현재 셸프에 버튼 (`shelves.json`, 팩토리 탭은 Maya 슬롯 뒤), Hypershade 스와치 MMB 드래그 →
+  물체에 재질 (`ui/hs_drag.py`). 옵션 상자 window 78 → 85, 회귀 0.
+  **바로 다음 할 일**: backlog_155 는 162 가 마지막 — 새 감사 (step 154 방식: dogfood · 열린 이슈 · manual_checks · 메뉴 / 옵션
+  상자 수) 로 새 backlog 를 만들거나 사용자 지시. 알려진 것: `gui_step129_panel_toolbar` 머리 폭 의존 실패, Modeling - Expert
+  뷰포트 머리줄 Blender 위젯, 긴 팩토리 셸프 탭의 추가 버튼이 화면 밖 (셸프 스크롤 없음).
+
 - Step 161 (Viewport messages and views, backlog_155 #7 = step-154 dogfood G1–G4) 완료 — `docs/steps/step_161.md`.
   킷 명령 결과 = Command Line 결과 칸 (`results.result`, INFO 보고 99 곳; 상태 줄 폭을 창에 맞춰 나눠 결과 칸이 이제 보임),
   RMB 목록 한 열 (안 들어가면 하위 메뉴 없는 쪽 링 옆), Space 네 뷰 정사영 칸 = Maya 카메라 (30 단위, 칸마다 줌 기억, 자기 평면

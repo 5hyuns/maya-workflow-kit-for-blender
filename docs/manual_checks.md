@@ -1073,3 +1073,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30.
 - [ ] Tooltip of Panels > Layouts > Four View (or the Tool Box Four View button) says Blender's four view has one header for all panes.
 - [ ] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight).
+
+## Step 162 — Option boxes and menu gestures
+- [ ] Display > Toggle Show/Hide ❒ opens "Toggle Visibility Options" (First Selection Independent / Dependent). Pick Dependent, Apply and Close; select a hidden-but-selected object first and two visible ones: h shows all three.
+- [ ] Edit > Delete by Type > Non-Deformer History ❒ = "Delete Non Deformer History Options"; with a Bevel after an Armature on a mesh, Delete (All) bakes the bevel and keeps only the armature; "History before deformers only" keeps the bevel.
+- [ ] Ctrl+Shift+click a Maya menu item (Create > Polygon Primitives > Cube) on real keys: the item doesn't run, no option box, a Cube button appears at the end of the current shelf tab, the Command Line shows "Cube added to the … shelf"; Shift+click / Ctrl+click still open the option box.
+- [ ] Restart Blender: the added shelf button is still there; click runs the item, Ctrl+click opens its option box, the shelf menu's Edit / Delete reach it (factory tabs too).
+- [ ] Hypershade floating beside the main window: MMB-drag a Browser swatch's name onto an object in the main viewport: the material is assigned; the swatch + name follow the cursor; releasing over empty space or the Outliner does nothing; ESC cancels.
