@@ -81,10 +81,18 @@ def s_scene():
 
 @step
 def s_hud():
-    cube().location = C["place"]
     h = hud()
     check(f"the Adjust Last Operation panel is up ({h and (h.x, h.y, h.width, h.height)})", h is not None)
     _a, region = view3d()
+    if h is not None:
+        # step 161: with no room under the ring the list is one column left of it (RMB on a mesh: E = UV), its right
+        # edge ~190 px left of the press point, ~215 px wide (it goes right when the left has no room); press ~300 px right of
+        # the HUD so that column runs over the HUD panel
+        target = (h.x + h.width - region.x + 300, region.height * 0.42)
+        p = region_2d_to_location_3d(region, region.data, target, (0.0, 0.0, 0.0))
+        p.z = 0.0
+        C["place"] = p
+    cube().location = C["place"]
     bpy.context.view_layer.update()
     sp = location_3d_to_region_2d(region, region.data, cube().matrix_world.translation)
     C["press"] = (int(region.x + sp.x), int(region.y + sp.y))

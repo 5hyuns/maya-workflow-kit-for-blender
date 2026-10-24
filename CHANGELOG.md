@@ -5,14 +5,57 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-25
+
+The release after audits 10 and 11 (steps 144–171). Blender 4.5 LTS through 5.2.x. Quad Draw leftovers (#89) move to
+0.5.0.
+
+### Added
+- **Modeling tools** (#30 #31): Quad Draw, Create Polygon and Append to Polygon are Maya-style kit tools with Maya's
+  clicks, modifier keys and Tool Settings; Insert Edge Loop inserts where you click, Offset Edge Loop drags two loops,
+  Slide Edge slides with the middle mouse button.
+- **Deform menu** (#34): Maya-like deformers (Lattice fitted around the selection, Delta Mush, Wrap, ShrinkWrap,
+  Nonlinear with handles, Cluster, Soft Modification, Texture, Curve Warp, Wire with dropoff locators) with Maya option
+  windows, Channel Box INPUTS attributes, Paint Weights on the deformer's own weights, Wire / ShrinkWrap / Lattice
+  edit items, Prune Membership, Point On Curve; Export / Import Deformer Weights (Maya XML).
+- **UV Editor shell tools**: Stack, Orient, Snap, Distribute, Normalize, Move and Sew, Create Shell, Delete UVs,
+  Unstack with Maya's results; display keys, shell / texture borders, Ctrl+1 isolate, Move UV Shell.
+- **Curves**: CV / EP Curve Tool, three / two point arcs, Rebuild, Attach, Detach, Cut, Fillet, Straighten, Move Seam
+  with Maya's results.
+- **Skeleton / skin**: joint labelling (Left / Right / types, Label pairs for mirroring), Enable / Disable IK Handles,
+  closest-distance Bind Skin like Maya (#94).
+- **Workspaces** (#81): Maya's factory workspaces (Maya Classic, Modeling, Sculpting, UV Editing, Rigging, Animation,
+  Rendering) in Windows > Workspaces and the Status Line dropdown, Reset Current Workspace.
+- **Render and display** (#101): Maya's default light for kit renders, Render Sequence / Batch Render windows, Test
+  Resolution, Batch Render in the background, Display > Grid options.
+- **Visualize**: Create Animation Snapshot / Update Snapshot and Maya ghosting (Ghost Selected / Unghost Selected /
+  Unghost All, Ghosting Editor) with Maya's frames, colours and opacity.
+- **Modify menu**: Smooth Mesh Preview to Polygons keeps skinning, Default Object Manipulator, Align Tool, Position
+  Along Curve, Geometry to Bounding Box, Evaluate Nodes.
+- **Shelves and menus**: Ctrl+Shift+click adds a menu item to the shelf, double-click a shelf button opens its option
+  box, shelves wrap into rows with Maya's scroll bar; Hypershade swatch middle-drag assigns a material; option windows
+  for Toggle Show/Hide and Non-Deformer History.
+
 ### Changed
-- Quad Draw, Create Polygon and Append to Polygon are Maya-style kit tools with Maya's clicks, modifier keys and Tool
-  Settings instead of Blender's Poly Build (#30).
-- Insert Edge Loop inserts where you click (one click), Offset Edge Loop drags two loops, Slide Edge slides with the
-  middle mouse button; Maya Tool Settings and the Offset Edge Loop window (#31).
-- The Deform menu creates Maya-like deformers (Lattice fitted around the selection, Delta Mush, Wrap, ShrinkWrap,
-  Nonlinear with handles, Cluster, Soft Modification, Texture, Curve Warp) with Maya option windows, Channel Box INPUTS
-  attributes and Paint Weights on the deformer's own weights (#34).
+- **Option boxes open with a click** (#82): the ❒ part of a menu item opens the Maya window without a hold.
+- **One undo step per Maya command, no Blender redo panel** (#86 #88 #92).
+- **Channel Box** (#83 #85 #87 #95 #97): Maya's Channels / Edit menus on RMB anywhere in the Channel Box, rows that fit
+  the narrow dock, Maya numbers (lattice Scale, light Intensity / Color), skinCluster names, SHAPES channels, component
+  mode shows the shape and CVs; RMB node submenus (Inputs / Outputs / DG Traversal).
+- **Graph Editor in Maya terms** (#96): Maya channel names, joint / blend shape nodes, highlight, scroll, View / Show
+  items, Maya key commands (mute, select masks, default tangents), Maya selection modifiers in the Graph Editor, Dope
+  Sheet, UV Editor and Outliner.
+- **Marking menus and manipulators** (#98 #99 #100): Maya's ring size, Maya's extrude manipulator, no Blender tooltips
+  on manipulators, no Blender report texts in the status bar; results go to the Command Line field.
+- **Views**: Maya orthographic cameras and grid in the four-view layout, hierarchy highlight, one-column RMB list.
+- **Parents act like Maya** (DAG): hiding a parent hides its children, Delete / Export Selection / Isolate take the
+  hierarchy.
+- Greyed menu items that work elsewhere under the same name now work everywhere.
+
+### Fixed
+- The selection wire follows skinned / simulated meshes while playing (#91).
+- A new cube after Delete is pCube1 again (#93).
+- Paint Skin Weights option window on Blender 5.x (#90).
 
 ## [0.3.0] — 2026-10-24
 
