@@ -436,7 +436,8 @@ class ALLSET_OT_geometry_to_bbox(bpy.types.Operator):
 # Maya: check items calling setState <type> on / off for every node of that type. Kit: Scene.allset_eval (saved with
 # the file), each switch mutes / unmutes the Blender data standing for that Maya node type.
 
-KINDS = ("iksolver", "constraint", "expression", "fluid", "ncloth", "nparticle", "nrigid", "particle", "rigidbody")
+KINDS = ("iksolver", "constraint", "expression", "fluid", "ncloth", "nparticle", "nrigid", "particle", "rigidbody",
+         "snapshot")   # step 171: snapshot = the kit snapshots' automatic updates (operators/anim_snapshot.evaluating)
 _IK_MUTED = "allset_eval_ik_muted"          # scene ID prop: IK constraints the kit muted (IK Solvers off)
 _IK_TYPES = {'IK', 'SPLINE_IK'}
 
@@ -538,7 +539,8 @@ def _set_rigidbody(scene, on):
 
 APPLY = {"iksolver": _set_ik, "constraint": _set_constraints, "expression": _set_expressions, "fluid": _set_fluid,
          "ncloth": _set_cloth, "nparticle": lambda s, on: _set_particles(s, on, True), "nrigid": _set_nrigid,
-         "particle": lambda s, on: _set_particles(s, on, False), "rigidbody": _set_rigidbody}
+         "particle": lambda s, on: _set_particles(s, on, False), "rigidbody": _set_rigidbody,
+         "snapshot": lambda s, on: None}   # read by anim_snapshot when a source changes
 
 
 def _update(kind):
@@ -560,6 +562,7 @@ class ALLSET_PG_evaluate_nodes(bpy.types.PropertyGroup):
     nrigid: BoolProperty(name="nRigids", default=True, update=_update("nrigid"))
     particle: BoolProperty(name="Particles", default=True, update=_update("particle"))
     rigidbody: BoolProperty(name="Rigid Bodies", default=True, update=_update("rigidbody"))
+    snapshot: BoolProperty(name="Snapshots", default=True, update=_update("snapshot"))
 
 
 def set_all(scene, on):

@@ -463,10 +463,11 @@ def _extend():
     # step 140: more windows live in their own modules (they import F / Window from here); Bind Skin and Duplicate
     # Special moved there with every Maya field (option_windows_rig.bind_skin_maya / option_windows_edit)
     from . import (option_windows_curves, option_windows_deform, option_windows_display, option_windows_edit,
-                   option_windows_modify, option_windows_render, option_windows_rig)
+                   option_windows_modify, option_windows_render, option_windows_rig, option_windows_visualize)
     WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS + option_windows_deform.WINDOWS
                    + option_windows_display.WINDOWS + option_windows_render.WINDOWS + option_windows_curves.WINDOWS
-                   + option_windows_modify.WINDOWS)     # step 168
+                   + option_windows_modify.WINDOWS     # step 168
+                   + option_windows_visualize.WINDOWS)  # step 171
 
 
 _extend()
@@ -562,7 +563,11 @@ def _apply_update(window):
     def update(self, context):
         if not self.apply_now:
             return
-        res = run(window, context, values_of(window, self))
+        apply_run = getattr(window, "apply_run", None)   # a window whose Apply isn't its command (step 171)
+        if apply_run is not None:
+            res = apply_run(context, {**window.defaults(), **values_of(window, self)})
+        else:
+            res = run(window, context, values_of(window, self))
         store(window.key, values_of(window, self))
         self.apply_now = False
         if isinstance(res, str):

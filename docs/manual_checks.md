@@ -1130,3 +1130,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Dope Sheet: Ctrl+click a selected key deselects it; Shift+box toggles.
 - [ ] UV Editor: Shift+box over selected and unselected UVs toggles each.
 - [ ] Outliner: click A, Shift+click C → A..C; Ctrl+click B → B off; Ctrl+Shift+click E → C..E added.
+
+## Step 171 — Animation Snapshot / ghosting
+
+- [ ] Animate a cube, Visualize > Create Animation Snapshot: snapshot1Group with transform1_1..10 in the Outliner; move a key in the Graph Editor → the copies follow a moment after the drag ends (Fast); type a Scale → nothing until Visualize > Update Snapshot.
+- [ ] Visualize > Ghost Selected: cyan ghosts before, pink after, fading outwards; scrub the Time Slider → ghosts follow (new frames appear a tick after the scrub stops); during playback missing ghost frames are not sampled.
+- [ ] Visualize > Open Ghosting Editor: preset 2s + Apply to All Ghosts spaces the ghosts every other frame; Unghost All removes them.

@@ -375,11 +375,11 @@ def test_evaluate_nodes_switches():
 
 def test_evaluate_nodes_menu_items():
     for label in ("IK Solvers", "Constraints", "Expressions", "Fluids", "nCloths", "nParticles", "nRigids",
-                  "Particles", "Rigid Bodies"):
+                  "Particles", "Rigid Bodies", "Snapshots"):       # Snapshots: step 171
         kind, target, _props = menu_map.normalize(menu_map.MAP[f"Modify/Evaluate Nodes/{label}"])
         assert kind == "prop" and target.startswith("scene.allset_eval."), (label, target)
     assert menu_map.MAP["Modify/Evaluate Nodes/Ignore All"] == ("allset.evaluate_all", {"on": False})
-    for label in ("Dynamic Constraints", "Global Stitch", "Snapshots", "nucleuses"):
+    for label in ("Dynamic Constraints", "Global Stitch", "nucleuses"):
         path = f"Modify/Evaluate Nodes/{label}"
         assert path not in menu_map.MAP and notices.greyed_notice(path), path
 

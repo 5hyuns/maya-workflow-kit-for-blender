@@ -456,6 +456,13 @@ MAP = {
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
     "Visualize/Create Editable Motion Trail": "object.paths_calculate",
+    # step 171 (research/maya/re/visualize_171.md): snapshots + ghosting
+    "Visualize/Create Animation Snapshot": "allset.animation_snapshot",
+    "Visualize/Update Snapshot": "allset.update_snapshot",
+    "Visualize/Open Ghosting Editor": "allset.opt_ghosting_editor",
+    "Visualize/Ghost Selected": ("allset.ghost", {"action": "GHOST"}),
+    "Visualize/Unghost Selected": ("allset.ghost", {"action": "UNGHOST"}),
+    "Visualize/Unghost All": ("allset.ghost", {"action": "UNGHOST_ALL"}),
     # --- FX ---
     # step 68 (operators/fx.py, research/maya/workflows/fx.md §4): Maya units + nucleus, every selected mesh
     "nParticles/Create Emitter": "allset.fx_emitter",
@@ -632,7 +639,8 @@ MAP.update({
     **{f"Modify/Evaluate Nodes/{label}": ("prop", f"scene.allset_eval.{kind}", {})
        for label, kind in (("IK Solvers", "iksolver"), ("Constraints", "constraint"), ("Expressions", "expression"),
                            ("Fluids", "fluid"), ("nCloths", "ncloth"), ("nParticles", "nparticle"),
-                           ("nRigids", "nrigid"), ("Particles", "particle"), ("Rigid Bodies", "rigidbody"))},
+                           ("nRigids", "nrigid"), ("Particles", "particle"), ("Rigid Bodies", "rigidbody"),
+                           ("Snapshots", "snapshot"))},
     **{f"Modify/Transformation Tools/Default Object Manipulator/{label}": ("allset.default_manip", {"value": i})
        for i, label in enumerate(("None", "Move", "Rotate", "Scale", "Transform"))},
     "Modify/Transformation Tools/Show Manipulator Tool": ("v3d", "allset.show_manipulator", {}),

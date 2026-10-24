@@ -2,6 +2,20 @@
 
 ## 현재 작업
 
+- Step 171 (Animation Snapshot / ghosting, backlog_164 #8 = 마지막) 완료 — `docs/steps/step_171.md`. 측정
+  `research/maya/re/visualize_171.md` (mayapy + GUI 캡처). `operators/anim_snapshot.py` (snapshot1Group / transform1_k,
+  Fast / Slow / On demand), `ui/ghosting.py` (Ghost / Unghost, Maya 프레임 규칙 · 색 · 불투명도), Animation Snapshot
+  Options / Ghosting Editor 창. Visualize 2 → 8 / 10 (80 %). 헤드리스 1600 / 1600, GUI step171 13/13 + 관련 17/17.
+  **바로 다음 할 일**: backlog_164 끝 → 새 감사 (재점검 12차).
+
+- **체크포인트 2026-10-25 (/sc:save, 170 후)** — 지금 단계: **170 완료 · 커밋됨** (`5bc798e`). 168 (`e899ecb`), 169 (`d063740`),
+  170 (`bd0fb00` WIP + `5bc798e`) 모두 커밋, 진행 중인 레인 · 테스트 없음, push 안 함. 헤드리스 전체 1586 / 1586 (170 끝),
+  GUI 는 단계별 파일만 (전체 묶음 안 돌림).
+  **바로 다음 할 일**: 171 Animation Snapshot / Ghosting (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json`
+  8 번째 = 마지막 항목; Visualize 메뉴 20 %), 그 뒤 새 감사 (재점검 12차). 알려진 것: `gui_step52_hotbox_rmb` "list under the ring"
+  2 실패 (step 161 보류 건), `gui_step129_panel_toolbar` 머리 폭 의존 실패, GUI 시뮬레이션은 Shift / Ctrl 드래그를 못 만든다
+  (step 170, CLAUDE.md).
+
 - Step 170 (Selection modifiers outside the 3D View, backlog_164 #7) 완료 — `docs/steps/step_170.md`. GUI Maya QTest 실측
   `research/maya/re/select_mods_170.md` (Graph Editor: 선택된 키 클릭 = 유지, Ctrl 클릭 = 일반 클릭, Shift 박스 = 토글;
   Dope Sheet / UV: 토글 / 해제 / 추가; Outliner: Shift = 범위, Ctrl = 토글). `operators/select_2d.py` 첫 자리 PASS_THROUGH
