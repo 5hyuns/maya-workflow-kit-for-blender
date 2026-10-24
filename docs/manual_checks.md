@@ -90,7 +90,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 9) RMB 누른 채 가만히: 약 0.15 s 뒤 메뉴가 뜬다; 빠르게 그어 놓으면 메뉴 없이 그 방향 항목 (Maya "mark" 와 비교).
 - [ ] (step 9) Shift+RMB 엣지 모드: 위로 끌어 Merge/Collapse ▸ 가 그 자리에서 열리고 이어서 오른쪽 = Collapse Edge. 위→오른쪽 지그재그 한 번에도 같은 결과.
-- [ ] (step 9) 옵션 박스 `[]` 위에서 놓기 → 실행 후 Adjust Last Operation 팝업 (예: Face 모드 Poke Face `[]`); 툴(Multi-Cut `[]`) → 툴 + Tool Settings 팝업. 베벨처럼 모달인 것은 팝업 없이 모달.
+- [ ] (step 9) 옵션 박스 `[]` 위에서 놓기 → 그 항목의 옵션 상자 (step 103 / 147 뒤: Maya 창 종류는 Maya 옵션 창, "redo" 종류만 Adjust Last Operation — `menu_sets.option_kind`; 예: Face 모드 Poke Face `[]`); 툴(Multi-Cut `[]`) → 툴 + Tool Settings 팝업. 베벨처럼 모달인 것은 팝업 없이 모달.
 - [ ] (step 9) 짧은 RMB 클릭 → 메뉴가 남음, 항목 클릭/ESC/가운데 클릭 = 취소.
 - [ ] (step 9) Space 홀드 → 핫박스 행(Recent Commands, Hotbox Controls, File…, 메뉴셋 메뉴), 이름 클릭 → 메뉴. 가운데/위/아래/좌/우 클릭 → 뷰/레이아웃/패널 종류/마스크/UI 마킹메뉴. Space 짧게 = 4분할↔단일 (다른 에디터는 최대화), 오래 누르고 그냥 놓기 = 아무것도 안 함.
 - [ ] (step 9) S 존으로 3D 뷰를 Outliner/Graph 로 바꾼 뒤 거기서 Space → 가운데 Perspective 로 3D 뷰 복귀.
@@ -119,8 +119,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 12 — 셸프
 
-- [ ] (step 12) Allset 레이아웃: 메뉴바 아래 Status Line, 그 아래 셸프 (Maya 와 같은 순서), 창 크기를 바꿔도 띠가 두 줄 높이로 남는지.
-- [ ] (step 12) Poly Modeling 큐브 버튼 클릭 → pCube1, **더블클릭** → 큐브 하나 + Adjust Last Operation 팝업 (두 개 생기지 않음), Ctrl+클릭 → 옵션.
+- [ ] (step 12) Maya Workflow Kit 레이아웃: 메뉴바 아래 Status Line, 그 아래 셸프 (Maya 와 같은 순서), 창 크기를 바꿔도 띠가 두 줄 높이로 남는지.
+- [ ] (step 12) Poly Modeling 큐브 버튼 클릭 → pCube1, **더블클릭** → 큐브 하나 + 그 큐브의 옵션 (두 개 생기지 않음), Ctrl+클릭 → 옵션. 주의 (step 163): 더블클릭은 아직 `screen.redo_last` (`ui/shelf.py:278,286`) 인데 step 147 뒤 셸프 명령은 등록되지 않아 패널이 안 뜨거나 다른 연산의 패널이 뜰 수 있음 — 본 결과를 적을 것.
 - [ ] (step 12) 탭 드롭다운 / ◀ ▶ 로 Rigging·Animation·Rendering 전환, 다시 시작해도 마지막 탭 유지 (환경설정 저장 시).
 - [ ] (step 12) 톱니 > New Shelf → Add Button(스크립트 한 줄, 아이콘 이름) → 클릭 실행, Edit/Delete Button, Add Last Command (커맨드 라인 실행 후), 다시 시작해도 사용자 셸프가 남음.
 - [ ] (step 12) 팩토리 레이아웃에서 Windows > UI Elements > Shelf 로 띠 추가/제거, 다른 Image Editor 는 평소처럼 보임.
@@ -166,7 +166,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 21 — 단위
 
-- [ ] (step 21) Allset 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
+- [ ] (step 21) Maya Workflow Kit 레이아웃 새 씬에서 Create > Polygon Primitives > Cube 의 화면 크기를 Maya 2022 새 씬 기본 persp 와 비교 (뷰 거리·클립은 Maya 값이지만 Blender 뷰포트 렌즈 화각이 다를 수 있음). 1 cm 큐브를 가까이 텀블·돌리·W 이동 했을 때 클립 잘림·그리드(cm 간격)·매니퓰레이터 감각.
 - [ ] (step 21) Maya 에서 내보낸 FBX(cm)를 File > Import 로 가져와 Create 큐브와 같은 크기인지, Maya Units 켬/끔 둘 다.
 
 ### Step 22 — 매니퓰레이터 Shift+드래그 복제
@@ -181,7 +181,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 25 — cm 그리드·스냅
 
-- [ ] (step 25) Allset 레이아웃에서 확대/축소하며 그리드 단계(1 cm → 10 cm → 1 m)가 바뀔 때 X 홀드 스냅 간격이 따라 바뀌는지, Maya 2022 그리드 스냅 감각과 비교.
+- [ ] (step 25) Maya Workflow Kit 레이아웃에서 확대/축소하며 그리드 단계(1 cm → 10 cm → 1 m)가 바뀔 때 X 홀드 스냅 간격이 따라 바뀌는지, Maya 2022 그리드 스냅 감각과 비교.
 
 ### Step 26 — Smart Extrude
 
@@ -190,7 +190,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 27 — 매니퓰레이터 크기·뷰 키
 
-- [ ] (step 27) = / - 몇 번 눌러 매니퓰레이터 크기 변화 폭을 Maya 2022 와 비교; 애드온을 껐다 켜면 원래 크기. Home 이 Maya 기본 뷰처럼 느껴지는지 (Allset 레이아웃 cm 장면에서). PgUp/PgDn 단계 변화를 3 모드에서 비교.
+- [ ] (step 27) = / - 몇 번 눌러 매니퓰레이터 크기 변화 폭을 Maya 2022 와 비교; 애드온을 껐다 켜면 원래 크기. Home 이 Maya 기본 뷰처럼 느껴지는지 (Maya Workflow Kit 레이아웃 cm 장면에서). PgUp/PgDn 단계 변화를 3 모드에서 비교.
 
 ### Step 28 — MMB 활성 핸들
 
@@ -210,7 +210,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 31 — 레이아웃 다듬기
 
-- [ ] (step 31) Allset 레이아웃 왼쪽 Outliner 에서 긴 이름(pCylinder12, group3 아래 3 단계)이 잘리지 않는지, 컬렉션 행 없이 오브젝트만 보이는 것이 Maya Outliner 처럼 느껴지는지. 새 컬렉션을 만든 경우 Layer Editor 쪽에서만 보이는 것이 혼란스럽지 않은지.
+- [ ] (step 31) Maya Workflow Kit 레이아웃 왼쪽 Outliner 에서 긴 이름(pCylinder12, group3 아래 3 단계)이 잘리지 않는지, 컬렉션 행 없이 오브젝트만 보이는 것이 Maya Outliner 처럼 느껴지는지. 새 컬렉션을 만든 경우 Layer Editor 쪽에서만 보이는 것이 혼란스럽지 않은지.
 - [ ] (step 31) Space 탭 4분할 → top/front/side 위에서 다시 Space 탭 → 헤더가 "Top/Front/Right Orthographic" 으로 남는지.
 - [ ] (step 31) W/E/R 홀드 메뉴 체크 상자 켜짐/꺼짐이 한눈에 구분되는지 (엔진, 환경설정 Blender Pies 둘 다).
 - [ ] (step 31) 타임라인 현재 프레임 상자가 옆 눈금 숫자를 가리는 것 (Blender C 그리기, 고치지 못함) 이 Maya 사용자에게 거슬리는지.
@@ -252,7 +252,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 38 — Channel Box 다중 선택·상대값, AE 재질 라벨
 
-- [ ] (step 38) Channel Box 값 필드를 클릭해 숫자 입력 → Enter: Maya 처럼 바로 적용되는지. `+=5`, `-=2`, `*=2`, `/=2` 가 여러 오브젝트에서 오브젝트마다 자기 값 기준으로 적용되는지. 단위 없는 숫자 = cm (Allset 템플릿), `5 m` 도 되는지.
+- [ ] (step 38) Channel Box 값 필드를 클릭해 숫자 입력 → Enter: Maya 처럼 바로 적용되는지. `+=5`, `-=2`, `*=2`, `/=2` 가 여러 오브젝트에서 오브젝트마다 자기 값 기준으로 적용되는지. 단위 없는 숫자 = cm (Maya Workflow Kit 레이아웃), `5 m` 도 되는지.
 - [ ] (step 38) 채널 이름 여러 개 (Rotate X/Y/Z) 를 고르고 하나에 입력 → 고른 채널 모두에 적용; 고르지 않은 채널에 입력하면 그 채널만.
 - [ ] (step 38) 필드 숫자가 단위 없이 보이는 것 (Maya 처럼 "1.5"), 필드 Ctrl+휠·드래그가 없어진 것 (값 끌기는 뷰포트 MMB 가상 슬라이더) 이 Maya 사용자에게 자연스러운지; Blender 사용자는 불편할 수 있음.
 - [ ] (step 38) 여러 오브젝트에 같은 Bevel/Subdivision 모디파이어가 있을 때 INPUTS 값 입력이 모두에 적용되는지, 카메라 여러 개 선택 후 SHAPES Focal Length, 사용자 속성. 그 뒤 Ctrl+Z 한 번에 모두 되돌아가는지.
@@ -275,8 +275,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 45 — Maya 그리드
 
-- [ ] (step 45) Allset 레이아웃 persp: 그리드가 ±12 cm 에서 끝나고 5 cm 마다 굵은 선, 축선도 굵은 회색 (빨강/초록 아님). 확대·축소·텀블해도 깜빡이거나 끊기지 않는지, 큐브가 그리드 뒤를 가리는지.
-- [ ] (step 45) 4 분할: top 에만 그리드, front / side 에는 그리드 없음 (Maya 와 같음). 사용자 정사영 (Numpad 5 로 바꾼 비스듬한 뷰) 에서는 바닥 그리드.
+- [ ] (step 45) Maya Workflow Kit 레이아웃 persp: 그리드가 ±12 cm 에서 끝나고 5 cm 마다 굵은 선, 축선도 굵은 회색 (빨강/초록 아님). 확대·축소·텀블해도 깜빡이거나 끊기지 않는지, 큐브가 그리드 뒤를 가리는지.
+- [ ] (step 45) 사용자 정사영 (Numpad 5 로 바꾼 비스듬한 뷰) 에서는 바닥 그리드. (4 분할의 top / front / side 는 step 161 부터 각자 평면에 칸 끝까지 격자 — Maya 와 같음, `gui_step161_views`.)
 - [ ] (step 45) X 홀드 + 이동: 그리드 안에서 사본이 그리드선에 붙는지; 멀리 축소하면 Blender 가 10 cm 단계로 붙는데 (Blender 그리드 단계) 그것도 그리드선 (10 의 배수) 인지. 정사영에서 아주 크게 확대하면 1 cm 보다 잘게 붙을 수 있음 — Maya 사용자에게 괜찮은지.
 - [ ] (step 45) Show > Grid / Display > Grid: 끄면 그리드 없음, 다시 켜면 Maya 그리드. 오버레이 팝오버에서 Blender Floor 를 켜면 Blender 그리드로 바뀌는 것 (delegated) 이 헷갈리지 않는지.
 
@@ -297,7 +297,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 49 — 레이아웃 동등화
 
-- [ ] (step 49) Allset 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
+- [ ] (step 49) Maya Workflow Kit 레이아웃: 위에서 아래로 메뉴바 / Status Line / Shelf / [툴박스 | Outliner | 뷰 | Channel Box 도크] / Time Slider / Range Slider / Help Line + Command Line 한 줄. Maya 를 옆에 띄워 놓고 배치가 같게 읽히는지.
 - [ ] (step 49) 툴박스: Select·Lasso·Paint Select·Move·Rotate·Scale 가 오브젝트·편집·포즈 모드에서 같은 자리에 있고, 다른 툴 (Multi-Cut 등) 을 쓴 뒤 그 툴이 구분선 아래 마지막 칸에 나오는지. 툴 버튼 더블클릭·길게 누르기가 이상하지 않은지.
 - [ ] (step 49) 툴박스 아래 빈 곳 클릭·드래그 → 선택이 그대로인지. 빠른 레이아웃 Single / Four 버튼, Outliner 버튼 (새 창), Front/Persp 는 회색.
 - [ ] (step 49) Resolution Scale 을 1.0 보다 크게 하면: 툴박스 열이 한 열 폭으로 맞춰지거나 (마우스가 영역 경계를 지날 때) 그동안 메인 뷰에 툴바가 보이는지; Status Line·Shelf 두 줄이 잘리지 않는지.
@@ -313,7 +313,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 51 — 메뉴 옵션 박스·셸프 줄
 
-- [ ] (step 51) Maya 메뉴 (Create, Edit Mesh 등) 에서 옵션 박스가 있는 항목 오른쪽의 창 아이콘: 클릭 = 명령, 길게 누르기 = 「Option Box」 → 실행 뒤 Adjust Last Operation 이 열리는지. Maya 의 □ 클릭 습관과 비교해 길게 누르기가 불편하지 않은지 (같은 줄 버튼 두 개는 메뉴가 계단처럼 깨져 못 씀).
+- [ ] (step 51) Maya 메뉴 (Create, Edit Mesh 등) 에서 라벨 끝에 ❒ 가 있는 항목: 클릭 = 명령, 길게 누르기 → 「Option Box ❒」 줄 → 그 항목의 옵션 창 (step 103 / 146; "redo" 종류만 Adjust Last Operation). Maya 의 □ 클릭 습관과 비교해 길게 누르기가 불편하지 않은지 (같은 줄 버튼 두 개는 메뉴가 계단처럼 깨져 못 씀).
 - [ ] (step 51) 셸프 줄 = 탭 줄 (어두운 #373737, 고른 탭 밝게) + 32 px 컬러 아이콘 줄. 아이콘에 마우스 = 칸 강조 + 툴팁, 클릭 = 명령, 0.35 s 안 두 번째 클릭·Ctrl+클릭 = 옵션. 탭 바꾸기, 톱니 = 셸프 설정 (새 셸프·버튼 추가·마지막 명령 추가).
 - [ ] (step 51) kit 아이콘이 무엇인지 읽히는지 (기본 도형·도구 기호, 기호 없는 버튼은 셸프 색 + 글자 두 개). Maya 아이콘과 헷갈릴 만큼 비슷하지 않은지 (결정 6).
 - [ ] (step 51) Resolution Scale 을 바꾼 뒤 마우스가 셸프 줄 아래 경계를 지나면 셸프 줄이 64 px × 배율로 돌아오는지.
@@ -323,7 +323,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 52) Space 길게: 위 2 줄 (공통 + Cache/Help, View … Panels), 커서 줄 Recent Commands | Maya | Hotbox Controls, 아래 5 줄 (메뉴 세트 모두), 대각선 4 개. 커서가 사이드바 근처여도 줄이 접히지 않고 Channel Box 위에 그려지는지, 그 위의 메뉴 이름을 눌러 열리는지.
 - [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
-- [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록이 아래로 넘치면 오른쪽 열로 이어지고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
+- [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록은 한 열 (아래에 안 들어가면 링 옆, 창보다 길 때만 여러 열 — step 161) 이고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
 
 ### Step 53 — Blender 5.x 와 안전한 설치
 
@@ -334,8 +334,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 54 — 단위 생성 경로·조명 세기·「Blender 에 없음」 안내
 
-- [ ] (step 54) Allset 템플릿에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
-- [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 m 장면의 같은 배치와 비슷한지 (역제곱 미터 보정). 상태 표시줄 보고에 감쇠 안내.
+- [ ] (step 54) Maya Workflow Kit 레이아웃에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
+- [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 Maya 의 No Decay 기본 (step 137: Cycles 정확, EEVEE · 뷰포트는 10 단위에서 맞춤) 과 비슷한지. 감쇠 안내는 Command Line 결과 칸에 "Created pointLight1. …" (step 161).
 - [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Animation Layers / Character Sets, Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
 - [ ] (step 54) Fluids > 3D Container / Effects > Smoke 를 메시 선택 후: 도메인이 메시 둘레에 Maya 단위로 알맞게 (cm 템플릿에서 2 m 상자가 아님).
 
@@ -350,7 +350,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 56 — Time Slider·키 감각
 
-- [ ] (step 56) Allset 레이아웃 Time Slider 아무 곳 LMB 클릭·드래그 = 시간 이동 (키를 집어 옮기지 않음), Dope Sheet 창 본문 LMB 는 여전히 키 선택.
+- [ ] (step 56) Maya Workflow Kit 레이아웃 Time Slider 아무 곳 LMB 클릭·드래그 = 시간 이동 (키를 집어 옮기지 않음), Dope Sheet 창 본문 LMB 는 여전히 키 선택.
 - [ ] (step 56) Time Slider Shift+LMB 드래그 = 빨간 범위 띠; 그 상태로 RMB > Copy / Delete 가 범위의 키에, 보통 클릭으로 띠가 사라지는지. 범위 띠가 Maya 처럼 읽히는지 (색·투명도).
 - [ ] (step 56) Time Slider RMB 메뉴: Cut/Copy/Paste ▸/Delete/Snap/Keys ▸/Tangents ▸/Playback Speed ▸/Playback Looping ▸/Set Range to ▸/Playblast... 순서, 회색 항목 (Paste Connect, Free, Once/Oscillate) 툴팁 안내. 현재 프레임 Copy → 다른 프레임 Paste.
 - [ ] (step 56) K 누른 채 뷰 (또는 Graph Editor) 에서 LMB 드래그 = 시간 이동, 속도가 너무 빠르거나 느리지 않은지 (영역 폭 = 재생 범위), 놓은 뒤 선택 그대로. 편집 모드 K 가 더 이상 Knife 가 아님 (Multi-Cut = Ctrl+Shift+X).
@@ -454,7 +454,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 68 — FX (시뮬레이션 스케일 · nucleus · 이미터 · nCloth · nCache)
 
-- [ ] (step 68) Allset 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
+- [ ] (step 68) Maya Workflow Kit 레이아웃에서 F5 → nParticles > Create Emitter: 아웃라이너에 emitter1, 재생 (Alt+V) → 원점에서 점들이 나와 떨어지는 빠르기가 Maya (fx_01.png) 와 비슷한지 (1 초에 약 5 유닛). 점이 큰 공이 아니라 작은 점으로 보이는지.
 - [x] (step 68) 메시 둘 선택 → Emit from Object: 둘 다 정점에서 방출. Shelf FX 「Emitter」 = Create Emitter, 「Add Emitter」 = Emit from Object. (gui_manual_sweep)
 - [ ] (step 68) Create > Plane (위로 올림) → nCloth > Create nCloth → 처음 프레임부터 재생: Maya fx_02→03 처럼 1 m 천 같은 빠르기로 떨어지고 주름. 바닥 평면 Create Passive Collider 위에서 0.2 유닛 정도 위에 멈춤 (1.5 유닛 위에 뜨지 않음). 두 평면을 같이 선택하면 둘 다 천.
 - [x] (step 68) AE 「nucleus1」 탭 (천·파티클·콜라이더·강체 오브젝트): Gravity 19.6 → 더 빨리 떨어짐, Space Scale 0.01 → 실제 1 cm 물리 (아주 빠르고 뻣뻣), Substeps 6 → 천 품질 10. 안내 글. (gui_manual_sweep)
@@ -481,7 +481,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [x] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜. (gui_manual_sweep)
 - [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
-- [x] (step 72) Allset 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
+- [x] (step 72) Maya Workflow Kit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
 - [x] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만. (gui_manual_sweep)
 
 ### Step 73 — 타임 슬라이더 키 틱 · Range Slider 드래그
@@ -525,7 +525,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] (step 78) Ctrl+Alt+← / → 로 선택 엣지가 돌아감 (Spin Edge Backward / Forward, 메뉴와 같은 방향). (gui_manual_sweep)
 - [x] (step 78) 큐브를 만든 뒤 Shift+G 를 그리드 여러 곳에서 = 그 자리마다 큐브. 옆 직교 뷰에서도 원점 깊이의 마우스 자리. (gui_manual_sweep)
 - [x] (step 78) Ctrl+Shift+C = 지금 뷰 그대로의 camera1 (Look Through 하면 같은 화면; 직교 뷰는 크기 [I]). (gui_manual_sweep)
-- [x] (step 78) Graph Editor 1 / 2 / 3: 2 는 Help Line 에 Stacked 없음 안내 + Normalized. (gui_manual_sweep — 안내는 연산자 INFO report (상태 표시줄))
+- [x] (step 78) Graph Editor 1 / 2 / 3: 2 는 Help Line 에 Stacked 없음 안내 + Normalized. (gui_manual_sweep — 안내는 step 161 부터 Command Line 결과 칸 `results.result`, 상태 표시줄 보고 아님)
 
 ### Step 79 — 3D Cut and Sew UV Tool
 
@@ -536,7 +536,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 81 — Maya persp 화각
 
-- [ ] (step 81) 새 장면 (Allset 템플릿) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
+- [ ] (step 81) 새 장면 (Maya Workflow Kit 레이아웃) 의 persp 가 Maya 새 장면과 같은 화각: 그리드 마름모 크기·원근, pCube1 크기를 Maya 와 나란히 비교. Four View 의 persp 사분면도.
 - [ ] (step 81) Create > Cameras > Camera = Focal Length 35 (AE / CB), Ctrl+Shift+C 카메라로 Look Through 하면 뷰와 같은 화면.
 - [ ] (step 81) 큐브를 화면 가득 확대한 상태에서 W + V + 가운데 핸들로 다른 큐브 정점에 붙이기 → 붙음 (step 95: 시뮬레이션 실패는 확대 탓이 아니라 Blender 의 10 ms 스냅 스로틀 + 한 틱에 몰아 보낸 이동 탓, `gui_step95_v_snap` 은 확대 / 기본 모두 통과).
 
@@ -594,7 +594,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 91 — 뷰 표시
 
-- [ ] (step 91) Allset 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
+- [ ] (step 91) Maya Workflow Kit 레이아웃에서 자식을 부모에서 떨어뜨려도 (Ctrl+G, P) 부모–자식 점선이 없음. Blender 로 전환하면 원래 워크스페이스의 뷰는 예전 그대로 (점선 있음).
 - [ ] (step 91) 아무 작업 뒤 Adjust Last Operation 패널이 떠 있을 때 RMB / Space 메뉴가 그 패널 위에 그려짐 (UI 배율 0.8 / 1.25 에서도).
 
 ### Step 92 — Graph Editor 키
@@ -643,7 +643,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 102 — Maya 파일 대화상자, 기본 프로젝트
 
-- [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/allset/projects/default/scenes` 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
+- [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/Maya Workflow Kit/projects/default/scenes` (step 111 / 125 이름) 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
 - [ ] (step 102) File > Export Selection... → 오른쪽 Files of type 을 OBJ → FBX 로 바꾸면 파일 이름 확장자가 따라 바뀌는지, 시작 폴더 (OBJ = data, FBX = scenes) 가 Maya 와 같다고 느껴지는지.
 - [ ] (step 102) 실제 Maya 2022 GUI 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지 (mayapy 로는 확인됨). Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
 - [ ] (step 102) Import 대화상자에 .ma 파일을 고르면 「.ma / .mb can't be read: export FBX from Maya」 오류.
@@ -711,7 +711,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 115 — opt-in, 템플릿 정리
 
-- [ ] (step 115) 실제 Blender 에서 Get Extensions 로 설치·활성화 → 그 자리에서 환영 창이 뜨고, 그 전에는 키맵·테마·레이아웃이 그대로인지. 「Make Blender feel like Maya」 → 저장 안 한 작업 중 파일이면 그 파일에 Maya-style 작업 공간만 붙고 데이터는 그대로, 새 빈 파일이면 Allset 레이아웃 파일로 바뀌는지. 취소하면 아무것도 안 바뀌고 다시 안 뜨는지 (환경설정의 같은 버튼은 남음).
+- [ ] (step 115) 실제 Blender 에서 Get Extensions 로 설치·활성화 → 그 자리에서 환영 창이 뜨고, 그 전에는 키맵·테마·레이아웃이 그대로인지. 「Make Blender feel like Maya」 → 저장 안 한 작업 중 파일이면 그 파일에 Maya-style 작업 공간만 붙고 데이터는 그대로, 새 빈 파일이면 Maya Workflow Kit 레이아웃 파일로 바뀌는지. 취소하면 아무것도 안 바뀌고 다시 안 뜨는지 (환경설정의 같은 버튼은 남음).
 - [ ] (step 115) Auto-Save Preferences 를 끈 설정: Maya 로 바꾸고 저장하지 않고 종료 → 다음 시작이 Blender 그대로인지 (킷이 혼자 저장하지 않음).
 
 ### Step 116 — Maya 도킹 모델 (패널마다 창, ::::: 핸들)
@@ -729,7 +729,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 118 — Blender 5.x 호환
 
-- [ ] (step 118) Blender 5.0 / 5.1 / 5.2 실제 화면 (사용자 Blender 5.x 설치본): 확장 설치 → 환영 창 → Make Blender Maya → Allset 레이아웃. 타임라인은 5.x 에서 사이드바가 열리지 않으므로 Range Slider 막대가 머리줄에 있고 재생 버튼 8 개는 그 줄 오른쪽 끝 — 막대 끌기 / 양 끝 핸들 / 더블클릭이 4.5 처럼 되는지.
+- [ ] (step 118) Blender 5.0 / 5.1 / 5.2 실제 화면 (사용자 Blender 5.x 설치본): 확장 설치 → 환영 창 → Make Blender Maya → Maya Workflow Kit 레이아웃. 타임라인은 5.x 에서 사이드바가 열리지 않으므로 Range Slider 막대가 머리줄에 있고 재생 버튼 8 개는 그 줄 오른쪽 끝 — 막대 끌기 / 양 끝 핸들 / 더블클릭이 4.5 처럼 되는지.
 - [ ] (step 118) 5.x: 관절 Channel Box Visibility off → 포즈·오브젝트 모드에서 그 본이 정말 숨는지 (5.0 의 `PoseBone.hide`), on → 다시 보이는지.
 - [ ] (step 118) 5.2: 저장 안 된 이미지 (Texture Paint 한 획) 가 있는 채로 Ctrl+S → Blender 5.2 의 「수정된 이미지 저장」 창이 뜨는지.
 
@@ -1034,7 +1034,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ## Step 156 — Curves tools
 
 - [ ] Create > Curve Tools > EP Curve Tool in persp: clicks on the grid add edit points (preview), the curve passes through every click after Enter; Backspace removes the last point, Esc cancels; holding X snaps to the grid.
-- [ ] CV Curve Tool: Enter with 3 clicks keeps waiting (degree 3 needs 4), after the 4th click Enter makes the curve; its CVs are the clicks.
+- [x] CV Curve Tool: Enter with 3 clicks keeps waiting (degree 3 needs 4), after the 4th click Enter makes the curve; its CVs are the clicks. (gui_step156_curves)
 - [ ] Three Point Circular Arc: start, through, end clicks give a smooth arc through all three; Two Point Circular Arc gives a half circle on the ground.
 - [ ] Two curves meeting at a corner: Curves > Fillet makes a round corner curve (filletedCurve1) of radius 1 cm; Curves > Attach joins two curves into curveAattachedCurve1 (both originals kept); Curves > Cut on two crossing curves leaves four pieces.
 - [ ] Curves > Rebuild on a hand-drawn curve: 4 spans, the ends stay where they were; Rebuild ❒ opens Rebuild Curve Options with Number of spans 4.
@@ -1049,7 +1049,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Keys selected in the Graph Editor, Edit > Delete ❒ > Delete Keys: only those keys go; with nothing selected the same window deletes the selected objects' keys (Maya).
 
 ## Step 158 — Channel Box menus complete
-- [ ] RMB on the empty space under the Channel Box rows (above the Layer Editor) opens Maya's Channels menu, not Blender's; Ctrl+RMB there or on a channel opens the Edit menu.
+- [x] RMB on the empty space under the Channel Box rows (above the Layer Editor) opens Maya's Channels menu, not Blender's; Ctrl+RMB there or on a channel opens the Edit menu. (gui_step158_cb_menus)
 - [ ] Copy Selected on a keyed Translate X, select Translate Y, go to frame 15, Paste Selected: the copied curve starts at 15 and joins Translate Y's curve there; later Translate Y keys move right.
 - [ ] Channels > Sync Selection in Graph Editor on: clicking a channel selects its curve in the Graph Editor; S keys only the selected channels. Sync Timeline Display on: the Time Slider ticks show only the selected channels' keys.
 - [ ] Point light: click Intensity in SHAPES (scroll the Channel Box), RMB > Key Selected: the row shows the key state; Graph Editor shows a Power curve.
@@ -1065,14 +1065,14 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ## Step 160 — Maya workspaces / Reset (#81)
 - [ ] Status Line "Workspace:" dropdown lists Maya Classic, Modeling - Standard, Modeling - Expert, Sculpting, UV Editing, Rigging, Animation, Rendering - Standard, then the file's other workspaces; picking Animation switches the menu set to Animation and shows the Graph Editor under the viewport.
 - [ ] In a Blender file (Maya mode switched on), Windows > Workspaces > UV Editing appends the Maya UV Editing layout once; picking it again reuses it.
-- [ ] Mess up a Maya workspace (close the Outliner, resize areas), Windows > Workspaces > Reset "…" to Factory Default: the layout comes back, the workspace keeps its name.
+- [x] Mess up a Maya workspace (close the Outliner, resize areas), Windows > Workspaces > Reset "…" to Factory Default: the layout comes back, the workspace keeps its name. (gui_step160_workspaces)
 
 ## Step 161 — Viewport messages and views
 - [ ] Select two objects, Ctrl+G: no Blender ⓘ banner in the status bar; the Command Line result field (right of the Python field) reads "Result: group1". Create > Polygon Primitives > Cube: "Created pCube1".
 - [ ] RMB on an object near the bottom of the viewport: the list stays one column, left of the ring (E = UV is a submenu), never wrapping into columns; dragging from the ring left onto a row and releasing runs it.
-- [ ] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30.
+- [x] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30. (gui_step161_views)
 - [ ] Tooltip of Panels > Layouts > Four View (or the Tool Box Four View button) says Blender's four view has one header for all panes.
-- [ ] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight).
+- [x] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight). (gui_step161_views)
 
 ## Step 162 — Option boxes and menu gestures
 - [ ] Display > Toggle Show/Hide ❒ opens "Toggle Visibility Options" (First Selection Independent / Dependent). Pick Dependent, Apply and Close; select a hidden-but-selected object first and two visible ones: h shows all three.

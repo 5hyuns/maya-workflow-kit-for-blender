@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 163 (재점검 11차 = 사용자 지시의 「재점검 10차」) 완료 — `docs/steps/step_163.md` (+ `step_163_remaining.md`, `step_163_quant.md`),
+  PLAN 「재점검 11차」. 헤드리스 1518/1518, dogfood 48/48 (콘솔 오류 0), 대응표 29/2/0/2 (88 %), 메뉴 649/1318 (49.2 %), 옵션 상자 Maya 창
+  85 경로, look_compare 킷 픽셀 6/6, 열린 이슈 20 중 19 코드에서 고쳐짐 (#89 만 열림, 릴리스 때 닫기), manual_checks 620 / 86 ticked.
+  **바로 다음 할 일**: 새 backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8 개 = steps 164–171 (Maya DAG 상속,
+  컴포넌트 모드 Channel Box + RMB Inputs / Outputs, 메뉴 어긋남, 셸프 더블클릭 / 넘침, Modify + Smooth Mesh Preview to Polygons, Deform,
+  3D View 밖 선택 수정키, Animation Snapshot / Ghosting). 규칙: GUI 전체 묶음은 릴리스 준비 때만, sleep 대기 금지, Blender 동시 2 개.
+
 - Step 162 (Option box and menu gestures, backlog_155 #8 — 마지막 항목) 완료 — `docs/steps/step_162.md`. Toggle Show/Hide ❒ /
   Non-Deformer History ❒ = Maya 옵션 창 (GUI Maya 캡처 + mayapy 측정 `research/maya/re/options_162.md`; Non-Deformer 기본이 이제
   Maya 의 All), Ctrl+Shift+메뉴 클릭 = 현재 셸프에 버튼 (`shelves.json`, 팩토리 탭은 Maya 슬롯 뒤), Hypershade 스와치 MMB 드래그 →

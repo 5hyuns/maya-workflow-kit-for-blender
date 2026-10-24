@@ -861,3 +861,50 @@ keys, Select / Mute / Default Tangent). 4. Channel Box menus complete + #97. 5. 
 reset + workspaces (#81). 7. Viewport messages and views (Command Line results, RMB list one column, four-view ortho framing / headers,
 wire in a maximized ortho view, look_compare point). 8. Option-box / menu gestures (regressions, Ctrl+Shift+click to shelf, Hypershade
 swatch drag).
+
+## 재점검 11차 (step 163, 2026-10-24 — 사용자 지시의 「재점검 10차」)
+
+User request: everything planned (backlog_155, steps 155–162) is done — dogfood in a clean install, collect what is left,
+implementation rate, priorities, backlog; criterion "default Maya with Blender features attached", differences only. 「재점검 10차」 is
+step 154, so this one is numbered 11 (delegated). Evidence: `docs/steps/step_163.md` (main: dogfood shots, scored differences) + lane
+files `step_163_remaining.md` (README table, open work, issues, blindspots, manual checks) and `step_163_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **29 (88 %)** | **2** — selection modifiers outside the 3D View; theme | **0** | **2** — separate pivots, Y-up |
+
+Unchanged since audit 10; steps 155–162 deepened done rows. New concept gap behind the done "Group" row: no DAG inheritance (BS1).
+
+### Headline numbers (step 154 → now)
+
+| Measure | Step 154 | Now (2cd3406) |
+|---|---|---|
+| Menu leaves working (1318) | 600 (45.5 %) | **649 (49.2 %)** |
+| Editor menu bars working (914) | 517 | **545** |
+| Option boxes → kit Maya window (paths / distinct) | 78 / 83 | **85 / 90**; dead 232 → 225, generic 43 → 44, regressions 0 |
+| Marking menus working / greyed; shelves; hotkeys | 364 / 69; 153; 202 | 368 / 65; 155; 209 |
+| Tests | headless 1398, dogfood 48/48 | **headless 1518/1518**, **dogfood 48/48**, console errors 0 |
+| look_compare (effective 1.0) | viewport 11/12, kit pixels 5/6, rects 5/12 | viewport 11/12, **kit pixels 6/6**, rects 5/12 |
+| Manual checks | 579, 81 ticked | 620, 86 ticked |
+| Open GitHub issues | 20 (17 fixed in code) | 20 (**19 fixed in code**, close at release); open in code: #89 |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 9 | No DAG inheritance: hiding / deleting / exporting / isolating a parent leaves its descendants alone |
+| 7 | Component-mode Channel Box shows transform rows; RMB DG Traversal / Inputs / Outputs greyed |
+| 6 | Same items greyed in one menu and working in another (UV Editor Tools, Dope Sheet Curves, IK Handles / Clusters by type) |
+| 6 | Shelf double-click = redo_last, long shelf tabs don't scroll |
+| 6 | Modify 41 %, Smooth Mesh Preview to Polygons bakes the skinCluster; Deform 41 % (Wire, ShrinkWrap edit, Paint Weights boxes) |
+| 6 | Selection modifiers outside the 3D View; Visualize 20 % (snapshot / ghosting) for the fourth audit |
+| 6 | UV Editor / Graph Editor remainders, Surfaces 8 / 41, Curves remainder |
+| 5 | Option box ❒ click = window (#82, C wall measured; hold / Shift / Ctrl remain) |
+
+### Backlog (steps 164+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. Maya DAG semantics for parents. 2. Component-mode Channel Box + RMB node submenus. 3. Menu consistency (same item greyed in one menu,
+working in another). 4. Shelf double-click and overflow. 5. Modify menu + Smooth Mesh Preview to Polygons. 6. Deform completion.
+7. Selection modifiers outside the 3D View. 8. Animation snapshot and ghosting (Visualize).
