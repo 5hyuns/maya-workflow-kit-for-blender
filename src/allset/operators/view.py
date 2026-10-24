@@ -78,6 +78,8 @@ class ALLSET_OT_dolly(bpy.types.Operator):
             return {'FINISHED'}
         self._start = (event.mouse_x, event.mouse_y)
         self._d0 = rv3d.view_distance
+        # the button that started it: RMB for Alt+RMB, LMB for the Dolly Tool (ui/camera_tools.py, step 177)
+        self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'} else 'RIGHTMOUSE'
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
@@ -88,7 +90,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
             dy = event.mouse_y - self._start[1]
             rv3d.view_distance = dolly_distance(self._d0, dx, dy, context.preferences.system.ui_scale or 1.0)
             context.area.tag_redraw()
-        elif event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
+        elif event.type == self._button and event.value == 'RELEASE':
             return {'FINISHED'}
         elif event.type == 'ESC' and event.value == 'PRESS':
             rv3d.view_distance = self._d0
@@ -139,7 +141,7 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
             self._last = (event.mouse_x, event.mouse_y)
             self.step(context, dx, dy)
             context.area.tag_redraw()
-        elif event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
+        elif event.type == self._button and event.value == 'RELEASE':
             return {'FINISHED'}
         elif event.type == 'ESC' and event.value == 'PRESS':
             zoom = context.space_data.zoom[0] or 1.0     # zoom limits may have kept some steps out

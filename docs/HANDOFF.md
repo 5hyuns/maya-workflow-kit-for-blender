@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 177 (Panel menus honesty and twins, backlog_174 #4) 완료 — `docs/steps/step_177.md`. 패널 메뉴 / 툴바 / Status Line 회색이
+  이제 `tools/menu_count.py` (패널 줄 3 개), notice 규칙 (`notices.PANEL_MENU` 60, 회색 notice 없음 0), `tools/menu_consistency.py`
+  (0 쌍) 안 — 데이터 `ui/panel_menu_data.py`. 연결: Center View of Selection (Maya viewFit -c mayapy 측정), Camera Attribute
+  Editor / Camera Attributes (+ persp 팝오버), Tumble / Track / Dolly Tool (`ui/camera_tools.py`), Grease Pencil Tool. 헤드리스
+  1628 / 1628, GUI step177 9 / 9.
+  **바로 다음 할 일**: 178 UV Editor finish (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json` 5 번째:
+  UV Editor 메뉴 118 / 172, mayapy 측정), 그 뒤 179 Light Linking, 180 Animation Layers, 181 Surfaces.
+
 - Step 176 (Selected-face look and dogfood fixes, backlog_174 #3) 완료 — `docs/steps/step_176.md`. 선택 면 주황 = Blender overlay
   `show_faces` 면 강조가 kit stipple 아래에 깔린 것 (화면 픽셀로 확인) → Maya 레이아웃 뷰에서 kit 이 그리는 동안 끔
   (`ui/component_colors.py`, 뷰 데이터만), look_compare viewport **12 / 12** (ΔE 40.5 → 2.3). G1 = kit 버그 아님 (dogfood 순서에

@@ -166,6 +166,20 @@ def marking_leaves(entries):
     return out
 
 
+def panel_leaves(pmd):
+    """[(path, signature, working)] of the viewport panel menus / panel toolbar / greyed Status Line widgets
+    (ui/panel_menu_data, step 177): a row with a Maya runTimeCommand compares on its annotation, the others on their
+    label within the panel family ("panel:<label>", e.g. a toolbar button and the menu row of the same name)."""
+    notes = annotations()
+    out = []
+    for _family, path, ok in pmd.leaves():
+        label = base_label(path)
+        rtc = pmd.COMMANDS.get(label)
+        sig = _norm(notes.get(rtc)) if rtc and notes.get(rtc) else "panel:" + _norm(label)
+        out.append((path, sig, ok))
+    return out
+
+
 RESEARCH_PROC = {"buildObjectMenuItemsNow_pivot": "buildObjectMenuItemsNow", "dagMenuProc_curve": "dagMenuProc"}
 
 
@@ -203,10 +217,10 @@ def main():
         for title, items in menus:
             paths += [(p, p in mm.MAP) for p, _it in menu_count.leaves(md, mm, items, f"{editor}/{title}")]
     mk = _marking()
-    found = pairs(menu_leaves(sorted(set(paths))) + marking_leaves(marking_entries(mk, mm.MAP)))
+    found = pairs(menu_leaves(sorted(set(paths))) + marking_leaves(marking_entries(mk, mm.MAP)) + panel_leaves(md.PANEL))
     for greyed, ok in found:
         print(f"{greyed}  (works as {ok})")
-    print(f"menu_consistency: {len(found)} greyed item(s) with a working twin (main / editor / marking menus)")
+    print(f"menu_consistency: {len(found)} greyed item(s) with a working twin (main / editor / marking / panel menus)")
     return 1 if found else 0
 
 

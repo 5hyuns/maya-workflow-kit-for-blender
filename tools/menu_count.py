@@ -9,7 +9,8 @@ Shared menus are counted per set (the audit's per-set table, 1417 leaves at step
 (the headline 1251). Runs without Blender: ``bpy`` is stubbed, ``ui/menu_data``, ``menu_map`` and ``notices`` are imported from
 src/. A leaf = a drawn item that is not a submenu (a mapped submenu entry counts once). Shared menus
 (Deform, Constrain) count once per set that shows them, like the audit. Step 101 target: working >= 40 %,
-greyed without a notice = 0. The Graph Editor / Dope Sheet / UV Editor menu bars (step 104) are listed after the totals.
+greyed without a notice = 0. The Graph Editor / Dope Sheet / UV Editor menu bars (step 104) are listed after the totals,
+then the viewport panel menus, panel toolbar and greyed Status Line widgets (ui/panel_menu_data.py, step 177).
 """
 
 import collections
@@ -50,6 +51,7 @@ def _load():
     try:
         mods = tuple(importlib.import_module(f"mk.ui.{m}") for m in ("menu_data", "menu_map", "notices"))
         mods[0].EDITORS = importlib.import_module("mk.ui.editor_menu_data").EDITORS   # step 104 editor menu bars
+        mods[0].PANEL = importlib.import_module("mk.ui.panel_menu_data")   # step 177 panel menus / toolbar / Status Line
         return mods
     finally:
         for name, mod in saved.items():
@@ -118,7 +120,19 @@ def count(md=None, mm=None, nt=None):
                     c["greyed"] += 1
                     greyed.append(path)
         editors[editor] = c
-    return {"sets": out, "total": total, "greyed": sorted(set(greyed)), "editors": editors,
+    panels = collections.OrderedDict()      # viewport panel menus, panel toolbar, Status Line widgets (step 177)
+    if getattr(md, "PANEL", None) is not None:
+        for family, path, working in md.PANEL.leaves():
+            c = panels.setdefault(family, collections.Counter())
+            c["leaves"] += 1
+            if working:
+                c["working"] += 1
+            elif nt.greyed_notice(path):
+                c["greyed+notice"] += 1
+            else:
+                c["greyed"] += 1
+                greyed.append(path)
+    return {"sets": out, "total": total, "greyed": sorted(set(greyed)), "editors": editors, "panels": panels,
             "unique": (len(unique), sum(unique.values()))}
 
 
@@ -152,6 +166,9 @@ def main():
     for label, c in r["editors"].items():
         print(f"{label:18} leaves {c['leaves']:4}  working {c['working']:4} ({100 * c['working'] / max(c['leaves'], 1):.0f} %)"
               f"  greyed+notice {c['greyed+notice']:4}  greyed {c['greyed']:4}  (editor menu bar)")
+    for label, c in r.get("panels", {}).items():
+        print(f"{label:18} leaves {c['leaves']:4}  working {c['working']:4} ({100 * c['working'] / max(c['leaves'], 1):.0f} %)"
+              f"  greyed+notice {c['greyed+notice']:4}  greyed {c['greyed']:4}  (viewport panel / Status Line)")
     n, w = r["unique"]
     print(f"{'unique paths':18} leaves {n:4}  working {w:4} ({100 * w / n:.1f} %)")
     if "--greyed" in sys.argv:

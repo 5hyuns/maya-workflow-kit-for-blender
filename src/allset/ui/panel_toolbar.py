@@ -310,44 +310,9 @@ GLYPHS = {name[2:]: fn for name, fn in globals().items() if name.startswith("g_"
 
 # --- the toolbar (Maya 2022 order, research/maya/screens/top113/_top113.json panel icons x 328-1068) -----
 
-# (glyph, kind, data, label): kind "set" = panel_menus.ALLSET_OT_panel_set key, "prop" = (owner, prop) on the view,
-# "run" = (operator, props) run in the view, "grey" = no Blender equivalent (the label explains it).
-#
-# Step 129 (#10): every Maya toggle (iconTextCheckBox, createModelPanelBar.mel; ``checkable`` in _top113.json) is a
-# toggle here too — "set" keys are drawn with ``toggle=True`` so Wireframe / Smooth Shade All / Use All Lights turn
-# off to Maya's off state (panel_menus.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
-# disabled in Blender's persp / ortho views (Maya disables Lock Camera there too). Table: docs/steps/step_129_viewport.md.
-TOOLBAR = (
-    (("cam_select", "set", "SELECT_CAMERA", "Select Camera"),
-     ("cam_lock", "set", "CAMERA_LOCK", "Lock Camera"),
-     ("cam_attr", "grey", None, "Camera Attributes"),
-     ("bookmark", "grey", None, "Bookmarks"),
-     ("image_plane", "run", ("allset.create", {"kind": 'IMAGE_PLANE'}), "Image Plane"),
-     ("pan_zoom", "grey", None, "2D Pan/Zoom"),
-     ("grease", "run", ("wm.tool_set_by_id", {"name": "builtin.annotate"}), "Grease Pencil (Blender: Annotate tool)")),
-    (("grid", "set", "GRID", "Grid"),
-     ("film_gate", "set", "FILM_GATE", "Film Gate"),
-     ("res_gate", "grey", None, "Resolution Gate"),
-     ("gate_mask", "set", "GATE_MASK", "Gate Mask"),
-     ("field_chart", "grey", None, "Field Chart"),
-     ("safe_action", "set", "SAFE_ACTION", "Safe Action"),
-     ("safe_title", "set", "SAFE_TITLE", "Safe Title")),
-    (("wire", "set", "SHADE_WIRE", "Wireframe"),
-     ("smooth", "set", "SHADE_SMOOTH", "Smooth Shade All"),
-     ("default_mat", "set", "DEFAULT_MATERIAL", "Use Default Material"),
-     ("wire_on_shaded", "prop", ("overlay", "show_wireframes"), "Wireframe on Shaded"),
-     ("textured", "set", "HW_TEXTURE", "Textured"),
-     ("all_lights", "set", "LIGHT_ALL", "Use All Lights"),
-     ("shadows", "prop", ("shading", "show_shadows"), "Shadows")),
-    (("ssao", "prop", ("shading", "show_cavity"), "Screen Space Ambient Occlusion (Blender: cavity)"),
-     ("motion_blur", "grey", None, "Motion Blur"),
-     ("aa", "grey", None, "Multisample Anti-aliasing"),
-     ("dof", "prop", ("shading", "use_dof"), "Depth of Field")),
-    (("isolate", "set", "ISOLATE", "Isolate Select"),
-     ("xray", "prop", ("shading", "show_xray"), "X-Ray"),
-     ("xray_comp", "grey", None, "X-Ray Active Components"),
-     ("xray_joints", "prop", ("overlay", "show_xray_bone"), "X-Ray Joints")),
-)
+# The toolbar rows: ui/panel_menu_data.TOOLBAR (bpy-free, counted by tools/menu_count.py since step 177).
+from . import panel_menu_data  # noqa: E402
+from .panel_menu_data import TOOLBAR  # noqa: E402
 
 
 def _flat(layout, on, left=False):
@@ -398,7 +363,7 @@ def _draw_item(row, context, item, text=""):
         op.props = json.dumps(data[1])
     else:
         op = _flat(row, False, bool(text)).operator(GREY_OP, text=text, icon_value=_icon(glyph))
-        op.item = f"Panel toolbar/{label}"
+        op.item = panel_menu_data.toolbar_path(label)
 
 
 def _bar(layout):

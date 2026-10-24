@@ -1164,3 +1164,10 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 - [ ] 면 모드에서 면 선택: 선택 면이 Maya 처럼 점 무늬만 (주황 덮개 없음), Preferences > Maya Component Colors 끄면 Blender 주황 강조가 돌아옴.
 - [ ] Ctrl+G 뒤 Ctrl+Z → 결과 칸 `Undo: Group`, Shift+Z → `Redo: Group`; 이동 후 Adjust Last Operation 값 바꾸기 → 결과 칸이 `Undo: ...` 로 바뀌지 않음.
+
+## Step 177
+
+- [ ] View > Camera Tools > Tumble / Track / Dolly Tool: plain LMB drag tumbles / tracks / dollies like Alt+LMB / MMB / RMB; Q / W / E / R leaves the tool; a click doesn't select.
+- [ ] View > Center View of Selection: the selection jumps to the middle without the view turning or zooming (also through a camera: the camera moves).
+- [ ] Hover greyed panel menu rows (Shading > Flat Shade All, Show > Controllers, toolbar Resolution Gate, Status Line Render Setup): tooltip + Help Line show the notice, not "No Blender equivalent".
+
