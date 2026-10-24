@@ -108,9 +108,9 @@ PATHS = {
     "deform_sine": "Deform/Nonlinear/Sine", "deform_squash": "Deform/Nonlinear/Squash",
     "deform_twist": "Deform/Nonlinear/Twist", "deform_wave": "Deform/Nonlinear/Wave", "deform_texture": "Deform/Texture",
 }
-GREYED = ("Deform/Tension", "Deform/Solidify", "Deform/Morph", "Deform/Jiggle/Jiggle Deformer", "Deform/Wire",
-          "Deform/Wrinkle", "Deform/Sculpt", "Deform/Paint Weights/Tension", "Deform/Paint Weights/Wire",
-          "Deform/Paint Weights/Jiggle")
+# Wire / Paint Weights > Wire work since step 169 (tests/test_step169_deform.py)
+GREYED = ("Deform/Tension", "Deform/Solidify", "Deform/Morph", "Deform/Jiggle/Jiggle Deformer",
+          "Deform/Wrinkle", "Deform/Sculpt", "Deform/Paint Weights/Tension", "Deform/Paint Weights/Jiggle")
 
 
 def test_menu_items_are_kit_deformers_with_windows():
