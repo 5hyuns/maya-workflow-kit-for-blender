@@ -110,7 +110,7 @@ def _run_action(context, action, option, path):
         if option:
             mod, name = window.idname.split(".")
             return getattr(getattr(bpy.ops, mod), name)('INVOKE_DEFAULT')
-        if option_windows.saved(window.key) is not None:
+        if window.click_saved and option_windows.saved(window.key) is not None:
             res = option_windows.run_saved(window, context)
             if isinstance(res, str):
                 raise RuntimeError(res)
