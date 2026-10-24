@@ -46,8 +46,8 @@ def test_hit_face_and_top_view_shows_top_only():
 def test_labels():
     assert vf.label_for('PERSP', False, (0.5, 0.5, -0.7)) == "persp"
     assert vf.label_for('ORTHO', False, (0.5, 0.5, -0.7)) == "persp"
-    assert vf.label_for('ORTHO', True, (0.0, 0.0, -1.0)) == "top -Z"
-    assert vf.label_for('ORTHO', True, (0.0, 1.0, 0.0)) == "front +Y"
+    assert vf.label_for('ORTHO', True, (0.0, 0.0, -1.0)) == "top -Y"
+    assert vf.label_for('ORTHO', True, (0.0, 1.0, 0.0)) == "front -Z"
     assert vf.label_for('ORTHO', True, (-1.0, 0.0, 0.0)) == "side -X"
     assert vf.label_for('CAMERA', False, (0, 0, -1), "camera1") == "camera1"
 

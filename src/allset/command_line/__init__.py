@@ -15,7 +15,7 @@ import bpy
 from bpy.props import StringProperty
 
 from .. import results
-from . import runner
+from . import runner, undo_text
 from ..ui import own_draw
 
 # --- state shown in the status bar --------------------------------------------------
@@ -54,6 +54,7 @@ def _on_command(self, context):
     # An operator called from a property update doesn't push an undo step
     # (checked in the GUI test), so push one: one command = one Ctrl+Z.
     bpy.ops.ed.undo_push(message=f"Command: {text[:40]}")
+    undo_text.pushed(text.strip())        # Maya names a typed command's chunk by its text ("Undo: move -r 0 0 2")
 
 
 class ALLSET_OT_command_line_exec(bpy.types.Operator):
@@ -261,9 +262,11 @@ def register():
         options={'SKIP_SAVE'}, update=_on_command)
     # Only Blender's own status bar draw is swapped: other add-ons' appended items keep drawing (step 115).
     own_draw.swap("STATUSBAR_HT_header", draw_status_bar)
+    undo_text.register()
 
 
 def unregister():
+    undo_text.unregister()
     own_draw.restore("STATUSBAR_HT_header", draw_status_bar)
     del bpy.types.WindowManager.allset_cmd
     for cls in reversed(classes):
