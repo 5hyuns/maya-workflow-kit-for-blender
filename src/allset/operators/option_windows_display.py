@@ -65,7 +65,23 @@ def _run_grid(context, v):
     return {'FINISHED'}
 
 
+# --- Display > Toggle Show/Hide ❒ (step 162) ----------------------------------------------------------------------
+# Maya 2022 "Toggle Visibility Options" (GUI capture , behaviour
+# checked , ): First Selection: Independent (factory, setting
+# toggleVisibilityAndKeepSelectionBehaviour 1) / Dependent (2); buttons Apply and Close / Apply / Close. The plain
+# click and h run with the saved value (operators/visibility.toggle_dependent).
+TOGGLE_KEY = "toggle_show_hide"
+
+
+def _run_toggle(context, v):
+    return bpy.ops.allset.visibility('EXEC_DEFAULT', action='TOGGLE',
+                                     behaviour='DEPENDENT' if v["first_selection"] == "Dependent" else 'INDEPENDENT')
+
+
 WINDOWS = [
+    Window(TOGGLE_KEY, "Toggle Visibility Options", "Apply and Close", None, [
+        F("first_selection", "First Selection:", "enum", "Independent", items=("Independent", "Dependent"))],
+        _run_toggle, paths=("Display/Toggle Show/Hide",)),
     Window(KEY, "Grid Options", "Apply and Close", None, FIELDS, _run_grid, paths=("Display/Grid",),
            missing=("Perspective grid numbers: Hide / On Axes / Along Edge (factory Hide)",
                     "Orthographic grid numbers: Hide / On Axes / Along Edge (factory Hide)"),

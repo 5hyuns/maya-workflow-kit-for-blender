@@ -137,6 +137,8 @@ def s_scene():
         mat.use_fake_user = True
         C[kind] = mat.name
     bpy.context.window_manager.allset_hs_swatch = 'SMALL'   # the swatch names fit the Browser of a small window
+    # the Python calls above push no undo step: push one, so undoing the drop goes back to this scene
+    bpy.ops.ed.undo_push(message="test scene")
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.hypershade()
 

@@ -360,4 +360,22 @@ MESH_WINDOWS = [
         missing=("Start/End vertex offset (0)", "Tool completion: Press enter (the loops are made on release)")),
 ]
 
-WINDOWS = KEY_WINDOWS + EDIT_WINDOWS + MESH_WINDOWS
+# --- Edit > Delete by Type > Non-Deformer History ❒ (step 162) ---------------------------------------------------
+# Maya 2022 "Delete Non Deformer History Options" (GUI capture ,
+# ): Delete: All non-deformer history (factory, setting bakePreDefHistory 0) /
+# History before deformers only; buttons Delete / Apply / Close.
+NONDEF_ALL = "All non-deformer history"
+NONDEF_PRE = "History before deformers only"
+
+
+def _run_non_deformer(context, v):
+    return bpy.ops.allset.delete_history('EXEC_DEFAULT', non_deformer=True, before_only=v["delete"] == NONDEF_PRE)
+
+
+HISTORY_WINDOWS = [
+    Window("non_deformer_history", "Delete Non Deformer History Options", "Delete", None, [
+        F("delete", "Delete:", "enum", NONDEF_ALL, items=(NONDEF_ALL, NONDEF_PRE))], _run_non_deformer,
+        paths=("Edit/Delete by Type/Non-Deformer History",)),
+]
+
+WINDOWS = KEY_WINDOWS + EDIT_WINDOWS + MESH_WINDOWS + HISTORY_WINDOWS

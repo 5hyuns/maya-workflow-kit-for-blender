@@ -50,8 +50,15 @@ def _bake(context, ob, keep):
     mesh.name = name
 
 
-def delete_history(context, objects, non_deformer=False):
-    """Bake history on mesh ``objects``. Returns (baked, notes)."""
+def delete_history(context, objects, non_deformer=False, before_only=False):
+    """Bake history on mesh ``objects``. Returns (baked, notes).
+
+    ``non_deformer``: Maya Delete Non-Deformer History keeps the deformers. Its option window (step 162, checked
+    , ): "All non-deformer history" (factory, ``bakePartialHistory
+    -prePostDeformers``) also removes the non-deformer nodes *after* a deformer — polyCube / extrude / bend / bevel
+    keeps only bend — so every non-deformer modifier is baked into the mesh under the deformers;
+    ``before_only`` = "History before deformers only" (``-preDeformers``) bakes only the modifiers above the first
+    deformer (the kit's rule before step 162)."""
     from . import prim_history
     baked, notes = 0, []
     for ob in objects:
@@ -71,6 +78,16 @@ def delete_history(context, objects, non_deformer=False):
             continue
         if not non_deformer:
             _bake(context, ob, keep=preview)
+            baked += 1
+            continue
+        if not before_only:
+            deformers = {md.name for md in history if md.type in DEFORMERS}
+            if len(deformers) == len(history):
+                continue
+            if ob.data.shape_keys:
+                notes.append(f"{ob.name}: has shape keys, modelling modifiers kept")
+                continue
+            _bake(context, ob, keep=deformers | preview)
             baked += 1
             continue
         prefix = []
@@ -189,13 +206,16 @@ class ALLSET_OT_delete_history(bpy.types.Operator):
 
     non_deformer: BoolProperty(name="Non-Deformer Only",
                                description="Keep deformers (Armature, Lattice, ...) and shape keys")
+    # Maya's option window "Delete: History before deformers only" (step 162); off = All non-deformer history
+    before_only: BoolProperty(name="Before Deformers Only", options={'SKIP_SAVE'},
+                              description="Bake only the modelling modifiers above the first deformer")
 
     @classmethod
     def poll(cls, context):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        baked, notes = delete_history(context, context.selected_objects, self.non_deformer)
+        baked, notes = delete_history(context, context.selected_objects, self.non_deformer, self.before_only)
         for note in notes:
             self.report({'WARNING'}, note)
         results.result(self, f"Deleted history on {baked} object(s)")
