@@ -138,9 +138,14 @@ def draw_range_slider(layout, context):
     key = row.row(align=True)
     key.alert = on
     key.prop(scene, "allset_auto_key", text="", toggle=True, icon='KEY_HLT' if on else 'KEY_DEHLT')
-    for text in ("No Character Set", "No Anim Layer"):   # Maya character sets / anim layers: none in Blender
+    # Maya: the current character set (none in Blender) and the current animation layer (step 180: the selected
+    # layer of operators/anim_layers; "No Anim Layer" while the scene has only BaseAnimation)
+    from ..operators import anim_layers
+    ls = getattr(context.scene, "allset_anim_layers", ())
+    sel = anim_layers.selected(context.scene) if len(ls) > 1 else None
+    for text, on in (("No Character Set", False), (sel.name if sel is not None else "No Anim Layer", sel is not None)):
         sub = layout.row()
-        sub.enabled = False
+        sub.enabled = on
         sub.ui_units_x = 6
         sub.label(text=text, icon='DOWNARROW_HLT')
     row = layout.row()

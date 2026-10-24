@@ -447,12 +447,27 @@ def draw_layer_items(layout):
             setattr(op, k, v)
 
 
+def draw_anim_layer_mode(layout, context):
+    """Maya's Override / Additive choice for the selected layer (its layer menu), as two check items."""
+    from ..operators import anim_layers
+    sel = anim_layers.selected(context.scene)
+    if sel is None or sel.name == anim_layers.BASE:
+        return
+    layout.separator()
+    layout.prop(sel, "override", text="Override")
+    layout.prop(sel, "override", text="Additive", invert_checkbox=True)
+
+
 class ALLSET_MT_le_layers(bpy.types.Menu):
     """Maya Layer Editor Layers menu (layerEditorBuildDisplayLayerMenu, )"""
     bl_label = "Layers"
 
     def draw(self, context):
         lay = self.layout
+        if context.window_manager.allset_le_tab == 'ANIM':
+            draw_anim_layer_items(lay)
+            draw_anim_layer_mode(lay, context)
+            return
         lay.operator("allset.layer_new", text="Create Empty Layer").selected = False
         lay.operator("allset.layer_new", text="Create Layer from Selected").selected = True
         lay.separator()
@@ -498,7 +513,89 @@ HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/coll
 # (:5082-5098), toolbar on the right (:5100-5111); 
 TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
 MENU_BAR = (("Layers", "ALLSET_MT_le_layers"), ("Options", "ALLSET_MT_le_options"), ("Help", "ALLSET_MT_le_help"))
-ANIM_TEXT = ("Blender has no animation layers:", "layer actions in the Nonlinear Animation editor.")
+
+# Maya Anim tab Layers menu (layerEditorBuildAnimLayerMenu): the items the kit's NLA layers carry (step 180,
+# operators/anim_layers.py)
+ANIM_LAYER_MENU = (
+    ("allset.anim_layer_create", "Create Empty Layer", {"from_selected": False}),
+    ("allset.anim_layer_create", "Create Layer from Selected", {"from_selected": True}),
+    None,
+    ("allset.anim_layer_members", "Add Selected Objects", {"add": True}),
+    ("allset.anim_layer_members", "Remove Selected Objects", {"add": False}),
+    None,
+    ("allset.anim_layer_delete", "Delete Layer", {}),
+)
+# Maya's row buttons, left of the name: Lock, Solo, Mute (, _anim180_pixels.json:
+# 24 px pitch, BaseAnimation only Lock); icons (off, on) instead of Maya's padlock / rectangle / circle-slash images
+ANIM_TOGGLES = (("lock", ('UNLOCKED', 'LOCKED')), ("solo", ('SOLO_OFF', 'SOLO_ON')),
+                ("mute", ('MUTE_IPO_OFF', 'MUTE_IPO_ON')))
+
+
+def draw_anim_layer_items(layout):
+    for entry in ANIM_LAYER_MENU:
+        if entry is None:
+            layout.separator()
+            continue
+        idname, text, props = entry
+        op = layout.operator(idname, text=text)
+        for k, v in props.items():
+            setattr(op, k, v)
+
+
+def draw_anim_layer_mode(layout, context):
+    """Maya's Override / Additive choice for the selected layer (its layer menu), as two check items."""
+    from ..operators import anim_layers
+    sel = anim_layers.selected(context.scene)
+    if sel is None or sel.name == anim_layers.BASE:
+        return
+    layout.separator()
+    layout.prop(sel, "override", text="Override")
+    layout.prop(sel, "override", text="Additive", invert_checkbox=True)
+
+
+def anim_display_order(scene):
+    """Indices of ``Scene.allset_anim_layers`` as Maya lists them: top layer first, BaseAnimation last."""
+    return list(reversed(range(len(getattr(scene, "allset_anim_layers", ())))))
+
+
+def draw_anim_tab(layout, context):
+    """Maya's Anim tab: toolbar (Create Empty Layer, Create Layer from Selected), the layer rows (name = select,
+    M / S / L), then Weight and Additive / Override of the selected layer. Draw only: nothing is written here
+    (the list gets BaseAnimation from the operators)."""
+    from ..operators import anim_layers
+    from .kit_icons import button
+    scene = context.scene
+    row = layout.row(align=True)
+    row.alignment = 'RIGHT'
+    row.emboss = 'NONE'
+    button(row, "allset.anim_layer_create", "layer:NEW_EMPTY", 'ADD', text="").from_selected = False
+    button(row, "allset.anim_layer_create", "layer:NEW_SELECTED", 'COLLECTION_NEW', text="").from_selected = True
+    ls = anim_layers.layers(scene)
+    if not len(ls):
+        return
+    sel = anim_layers.selected(scene)
+    col = layout.column(align=True)
+    for i in anim_display_order(scene):
+        e = ls[i]
+        line = col.row(align=True)
+        base = e.name == anim_layers.BASE
+        for attr, icons in ANIM_TOGGLES:
+            cell = line.row(align=True)
+            if base and attr != "lock":            # Maya: BaseAnimation has only Lock (empty Solo / Mute slots)
+                cell.label(text="", icon='BLANK1')
+                continue
+            cell.prop(e, attr, text="", icon=icons[bool(getattr(e, attr))], toggle=True)
+        name = line.row(align=True)
+        name.active = not e.mute                 # a muted layer's name reads greyed (#666666)
+        name.operator("allset.anim_layer_select", text=e.name, depress=e == sel).index = i
+    if sel is None:
+        return
+    layout.separator(factor=0.5)
+    # Maya's bottom row: "Weight" field + slider, greyed while BaseAnimation is selected (anim180 state d);
+    # Additive / Override is Maya's layer menu choice (Layers menu here)
+    w = layout.row(align=True)
+    w.enabled = sel.name != anim_layers.BASE
+    w.prop(sel, "weight", slider=True)
 
 
 class ALLSET_PT_layer_editor(bpy.types.Panel):
@@ -528,8 +625,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             tabs.prop_enum(wm, "allset_le_tab", ident, text=f"  {label}  ")
         chrome.menu_bar(layout, MENU_BAR)
         if wm.allset_le_tab == 'ANIM':
-            chrome.wrapped(layout, ANIM_TEXT, alignment='LEFT')
-            layout.operator("allset.open_editor", text="Nonlinear Animation").ui_type = 'NLA_EDITOR'
+            draw_anim_tab(layout, context)    # step 180: Maya animation layers on NLA tracks
             return
         # Maya's toolbar, right-aligned, frameless icon buttons in Maya's order: move up, move down, create
         # empty layer, create layer from selected (Maya-5111)
