@@ -134,6 +134,31 @@ def graph_editors():
     return out
 
 
+def dope_sheets():
+    """[(window, area, WINDOW region)] of every Dope Sheet (its Dope Sheet / Action modes; not the Timeline)."""
+    out = []
+    for w in live_refs.windows():
+        screen = w.screen
+        if screen is None:
+            continue
+        for a in screen.areas:
+            if a.type != 'DOPESHEET_EDITOR' or a.spaces.active.mode == 'TIMELINE':
+                continue
+            reg = next((r for r in a.regions if r.type == 'WINDOW'), None)
+            if reg is not None:
+                out.append((w, a, reg))
+    return out
+
+
+def frame_dope_sheet(window, area, region):
+    """Maya Dope Sheet Auto Frame: Blender's View All in this Dope Sheet."""
+    with bpy.context.temp_override(window=window, area=area, region=region):
+        try:
+            return 'FINISHED' in bpy.ops.action.view_all()
+        except RuntimeError:
+            return False
+
+
 def visible_curves(window, area, region):
     with bpy.context.temp_override(window=window, area=area, region=region):
         return list(getattr(bpy.context, "visible_fcurves", None) or ())
@@ -172,18 +197,24 @@ def frame_time(window, area, region, scene):
 def auto_frame(scene, prefs):
     """Frame every Graph Editor the Maya way for the current settings; the number of editors framed."""
     n = 0
-    for w, a, r in graph_editors():
-        if prefs.graph_auto_frame:
-            n += frame_all(w, a, r)
-        elif prefs.graph_auto_frame_time:
-            n += frame_time(w, a, r, scene)
+    if prefs.graph_auto_frame or prefs.graph_auto_frame_time:
+        for w, a, r in graph_editors():
+            if prefs.graph_auto_frame:
+                n += frame_all(w, a, r)
+            else:
+                n += frame_time(w, a, r, scene)
+    if getattr(prefs, "dope_auto_frame", False):
+        for w, a, r in dope_sheets():
+            n += frame_dope_sheet(w, a, r)
     return n
 
 
 def step(context, prefs):
     """One poll: frame when the selection changed since the last poll (and a Graph Editor shows). Returns the number
     of editors framed. The first poll after a Graph Editor opens only takes the baseline."""
-    if not (prefs.graph_auto_frame or prefs.graph_auto_frame_time) or not graph_editors():
+    graph = (prefs.graph_auto_frame or prefs.graph_auto_frame_time) and graph_editors()
+    dope = getattr(prefs, "dope_auto_frame", False) and dope_sheets()
+    if not (graph or dope):
         _state["sig"] = None
         return 0
     sig = selection_signature(getattr(context, "view_layer", None))

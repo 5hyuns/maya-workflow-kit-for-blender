@@ -554,7 +554,68 @@ class ALLSET_OT_graph_select_type(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_graph_select_type)
+# --- Dope Sheet Curves items that are Graph Editor commands (step 166) -----------------------------------------
+# Maya's Dope Sheet Curves menu runs the Graph Editor's curve commands (Euler Filter, Smooth Filter, Resample, Isolate;
+# same annotations in research/maya/screens/editors104/_editors104.json) on the curves of the selected keys. Blender's
+# graph.* operators only run in a Graph Editor, so the Dope Sheet area turns into one for the call and back.
+
+DOPE_GRAPH_OPS = {"EULER": ("graph.euler_filter", {}), "BUTTERWORTH": ("graph.butterworth_smooth", {}),
+                  "GAUSSIAN": ("graph.gaussian_smooth", {}), "RESAMPLE": ("graph.bake_keys", {}),
+                  "ISOLATE": ("graph.hide", {"unselected": True})}
+
+
+def curves_with_selected_keys(fcurves):
+    return [fc for fc in fcurves if any(k.select_control_point for k in fc.keyframe_points)]
+
+
+class ALLSET_OT_dope_graph_op(bpy.types.Operator):
+    """Run this Graph Editor curve command on the curves of the selected keys (Maya Dope Sheet > Curves)"""
+    bl_idname = "allset.dope_graph_op"
+    bl_label = "Curve Command"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    command: EnumProperty(items=[(k, k.title(), "") for k in DOPE_GRAPH_OPS], options={'HIDDEN', 'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        area = context.area
+        return area is not None and area.type in {'DOPESHEET_EDITOR', 'GRAPH_EDITOR'}
+
+    def execute(self, context):
+        idname, props = DOPE_GRAPH_OPS[self.command]
+        mod, name = idname.split(".")
+        op = getattr(getattr(bpy.ops, mod), name)
+        area = context.area
+        if area.type == 'GRAPH_EDITOR':
+            return op('EXEC_DEFAULT', **props)
+        fcurves = list(getattr(context, "editable_fcurves", None) or getattr(context, "visible_fcurves", None) or ())
+        picked = curves_with_selected_keys(fcurves)
+        if not picked:
+            self.report({'WARNING'}, "Select keys of the curves to filter.")
+            return {'CANCELLED'}
+        saved = {fc: fc.select for fc in fcurves}
+        for fc in fcurves:
+            fc.select = fc in picked              # the Graph Editor commands act on the selected curves
+        old = area.ui_type
+        try:
+            area.ui_type = 'FCURVES'
+            region = next(r for r in area.regions if r.type == 'WINDOW')
+            with context.temp_override(area=area, region=region, space_data=area.spaces.active):
+                res = op('EXEC_DEFAULT', **props)
+        except (RuntimeError, StopIteration) as ex:
+            self.report({'WARNING'}, str(ex).strip() or "The curve command did not run")
+            res = {'CANCELLED'}
+        finally:
+            area.ui_type = old
+            for fc, sel in saved.items():
+                try:
+                    fc.select = sel
+                except ReferenceError:      # Resample can replace curves
+                    pass
+        return res
+
+
+classes = (ALLSET_OT_mute_key, ALLSET_OT_graph_inbetween, ALLSET_OT_graph_select_type, ALLSET_OT_dope_graph_op)
 
 
 def register_bindings():

@@ -144,14 +144,15 @@ TYPES = (
     ('CAMERAS', "Cameras", "Delete cameras"),
     ('LIGHTS', "Lights", "Delete lights"),
     ('IMAGE_PLANES', "Image Planes", "Delete image empties"),
-    ('CLUSTERS', "Clusters", "Remove Hook modifiers"),
+    ('CLUSTERS', "Clusters", "Remove the clusters (Hook modifiers) and their handles"),
+    ('IK_HANDLES', "IK Handles", "Remove the IK constraints and their handle empties"),
     ('NONLINEARS', "Nonlinears", "Remove Simple Deform / Wave / Cast modifiers"),
     ('PARTICLES', "Particles", "Remove particle systems"),
 )
 _DELETE_OBJECTS = {'JOINTS': lambda o: o.type == 'ARMATURE', 'LATTICES': lambda o: o.type == 'LATTICE',
                    'CAMERAS': lambda o: o.type == 'CAMERA', 'LIGHTS': lambda o: o.type == 'LIGHT',
                    'IMAGE_PLANES': lambda o: o.type == 'EMPTY' and o.empty_display_type == 'IMAGE'}
-_REMOVE_MODIFIERS = {'CLUSTERS': CLUSTERS, 'NONLINEARS': NONLINEARS, 'PARTICLES': {'PARTICLE_SYSTEM'}}
+_REMOVE_MODIFIERS = {'NONLINEARS': NONLINEARS, 'PARTICLES': {'PARTICLE_SYSTEM'}}
 
 
 def delete_by_type(context, kind, objects):
@@ -160,6 +161,11 @@ def delete_by_type(context, kind, objects):
     if kind in ('HISTORY', 'NON_DEFORMER_HISTORY'):
         return delete_history(context, objects, kind == 'NON_DEFORMER_HISTORY')
     n = 0
+    if kind in ('CLUSTERS', 'IK_HANDLES'):     # the kit's cluster / IK handle nodes with their handles (step 166)
+        from . import by_type
+        if kind == 'CLUSTERS':
+            return by_type.delete_clusters(context.scene, objects), []
+        return by_type.delete_ik_handles(context.scene), []
     if kind in _DELETE_OBJECTS:
         for ob in [o for o in objects if _DELETE_OBJECTS[kind](o)]:
             bpy.data.objects.remove(ob)

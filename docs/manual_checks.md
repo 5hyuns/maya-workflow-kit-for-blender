@@ -1096,3 +1096,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] RMB on an object > Inputs: Select / Enable / Disable All Inputs, the nodes (Poly Cube ...), All Inputs...; pick a node: the Channel Box scrolls to it, open; its ❒: the Attribute Editor on that node.
 - [ ] Disable All Inputs on a cube with a bend: the bend stops deforming; Enable All brings it back.
 - [ ] RMB > Outputs on a locator used by a constraint lists the constraint; RMB > DG Traversal > pCubeShape1 > Select pCubeShape1 shows the shape in the Attribute Editor.
+
+## Step 166 — Menu consistency
+
+- [ ] Dope Sheet: select keys of a rotation curve with a 350° jump, Curves > Euler Filter: the jump is gone; the area stays a Dope Sheet and keeps its view.
+- [ ] Dope Sheet View > Auto Frame on: selecting another animated object frames the Dope Sheet.
+- [ ] Select > All by Type > IK Handles / Clusters selects the kit's ikHandle / clusterHandle empties; Edit > Delete All by Type > IK Handles / Clusters removes them with their constraints / hooks.
+- [ ] UV Editor Tools > Unfold / Cut / Sew / Pin act on the selection like Modify > Unfold, Cut/Sew > Cut / Sew, Edit > Pin Selection.

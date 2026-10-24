@@ -45,6 +45,10 @@ from . import dag  # noqa: E402  step 164: Maya DAG rules for parents (hide / de
 
 classes += dag.classes
 
+from . import by_type  # noqa: E402  step 166: Select All by Type for the kit's IK handles / clusters / particles
+
+classes += by_type.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

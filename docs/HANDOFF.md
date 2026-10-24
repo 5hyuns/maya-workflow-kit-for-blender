@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 166 (Menu consistency, backlog_164 #3) 완료 — `docs/steps/step_166.md`. `tools/menu_consistency.py` (이름 + Maya 명령이
+  같은데 한쪽만 회색인 항목: 10 → 0), `menu_map.TWINS`, Dope Sheet Curves 명령 = Graph Editor 명령 (`allset.dope_graph_op`),
+  Dope Sheet Auto Frame (`dope_auto_frame`), Select / Delete All by Type > IK Handles / Clusters (`operators/by_type.py`).
+  Dope Sheet 124 → 130, UV Editor 110 → 118. 헤드리스 1548 / 1548, GUI step166 7/7 + 관련 5 파일 32/32.
+  **바로 다음 할 일**: 167 Shelf double-click and overflow (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json` 4 번째 항목), 그 뒤 168 Modify + Smooth Mesh Preview
+  to Polygons, 169 Deform.
+
 - Step 165 (Component-mode Channel Box and RMB node submenus, backlog_164 #2) 완료 — `docs/steps/step_165.md`. Maya 측정
   `research/maya/re/cb_component_164.md` (GUI Maya, `research/scripts/maya_cb165/`). 편집 모드 Channel Box = shape 이름 +
   `CVs (click to show)` (선택 점 표, `ui/cb_points.py`) + INPUTS, 선택 없음 = 빈 안내; RMB DG Traversal / Inputs / Outputs =

@@ -79,6 +79,11 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     graph_auto_frame: bpy.props.BoolProperty(
         name="Auto Frame", default=True,
         description="When the selection changes, the Graph Editor frames the curves it shows (Maya View > Auto Frame)")
+    # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, factory off in the Dope Sheet: _editors104.json; step 166)
+    dope_auto_frame: bpy.props.BoolProperty(
+        name="Dope Sheet Auto Frame",
+        description="When the selection changes, the Dope Sheet frames all the keys it shows (Maya Dope Sheet "
+                    "View > Auto Frame)")
     graph_auto_frame_time: bpy.props.BoolProperty(
         name="Auto Frame Time",
         description="When the selection changes, the Graph Editor frames the keys along the time axis only "
