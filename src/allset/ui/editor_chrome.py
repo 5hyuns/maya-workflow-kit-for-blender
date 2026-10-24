@@ -862,6 +862,13 @@ class ALLSET_OT_graph_channel_scroll(bpy.types.Operator):
         region.tag_redraw()
         return {'FINISHED'}
 
+    def invoke(self, context, event):
+        # a wheel item: only over the outliner pane itself (the curve area keeps Blender's zoom)
+        region = getattr(context, "region", None)
+        if region is None or region.type != 'CHANNELS':
+            return {'PASS_THROUGH'}
+        return self.execute(context)
+
 
 # --- header draws ------------------------------------------------------------------------------------------------
 
