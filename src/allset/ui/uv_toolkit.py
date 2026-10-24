@@ -30,12 +30,8 @@ GREY = {
         "Select Overlap", "Blender can't select back-facing UVs directly: Select Overlap finds stacked shells."),
     "UV Toolkit/Select By Type/Texture Borders": (
         "Seams", "Shell borders are seams in Blender: Select > Select Linked, or mark seams from islands."),
-    "UV Toolkit/Cut and Sew/Create UV Shell": (
-        "Cut", "Blender can't make a shell from a selection border: select its border edges and Cut."),
     "UV Toolkit/Unfold/Straighten": (
         "Follow Active Quads", "Blender straightens a grid of quads from the active one: UV > Follow Active Quads."),
-    "UV Toolkit/Arrange and Layout/Distribute": (
-        "Layout", "Blender has no distribute: Layout packs the shells instead."),
 }
 
 
@@ -160,7 +156,9 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             row = body.row(align=True)
             row.operator("allset.uv_cut", text="Cut")
             row.operator("allset.uv_sew", text="Sew")
-            _grey(body, "UV Toolkit/Cut and Sew/Create UV Shell", "Create UV Shell")
+            row = body.row(align=True)
+            row.operator("allset.uv_create_shell", text="Create UV Shell")    # step 155
+            row.operator("allset.uv_move_sew", text="Move and Sew")
             body.operator("allset.cut_sew_tool_set", text="3D Cut and Sew Tool")
         body = _section(layout, "ALLSET_uvtk_unfold", "Unfold", default_closed=False)
         if body:
@@ -173,12 +171,22 @@ class ALLSET_PT_uv_toolkit(bpy.types.Panel):
             row = body.row(align=True)
             row.operator("uv.align", text="Align U").axis = 'ALIGN_X'
             row.operator("uv.align", text="Align V").axis = 'ALIGN_Y'
+            row = body.row(align=True)
+            row.operator("allset.uv_snap_together", text="Snap Together")
+            row.operator("allset.uv_snap_stack", text="Snap and Stack")
         body = _section(layout, "ALLSET_uvtk_layout", "Arrange and Layout", default_closed=False)
         if body:
             body.operator("allset.uv_layout", text="Layout")
             body.prop(s, "shell_padding", text="Shell Padding (px)")
-            body.operator("uv.align_rotation", text="Orient Shells")
-            _grey(body, "UV Toolkit/Arrange and Layout/Distribute", "Distribute")
+            row = body.row(align=True)        # step 155 ()
+            row.operator("allset.uv_orient_shells", text="Orient Shells")
+            row.operator("allset.uv_orient_edges", text="Orient to Edges")
+            row = body.row(align=True)
+            row.operator("allset.uv_stack", text="Stack")
+            row.operator("allset.uv_unstack", text="Unstack")
+            row = body.row(align=True)
+            row.operator("allset.uv_distribute", text="Distribute")
+            row.operator("allset.uv_normalize", text="Normalize")
         ob = context.edit_object
         body = _section(layout, "ALLSET_uvtk_sets", "UV Sets")
         if body and ob is not None and ob.type == 'MESH':

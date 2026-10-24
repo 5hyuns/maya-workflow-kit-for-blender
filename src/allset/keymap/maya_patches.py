@@ -1163,7 +1163,19 @@ def patch_key_batch_3(kd):
 
     # UV Editor display toggles
     _add(kd, "UV Editor", "wm.context_toggle", make_event("SEVEN"), {"data_path": "space_data.uv_editor.show_stretch"})
-    _add(kd, "UV Editor", "wm.context_toggle", make_event("FIVE"), {"data_path": "space_data.uv_editor.show_faces"})
+    # step 155 (Maya-530; ui/uv_display.py, operators/uv_shells.py). IC's UV Editor 4 (island select
+    # mode) and Ctrl+1 (vertex select mode) go: Maya's UV component keys are F9-F12 (Maya-258).
+    if kd.find("UV Editor", "uv.select_mode", type="FOUR"):
+        kd.remove("UV Editor", "uv.select_mode", type="FOUR")
+    else:       # 5.x IC: island picking is a toggle of tool_settings.use_uv_select_island on the same key
+        kd.remove("UV Editor", "wm.context_toggle", type="FOUR")
+    kd.remove("UV Editor", "mesh.select_mode", type="ONE", ctrl=True)
+    for key, mode in (("FOUR", 'WIREFRAME'), ("FIVE", 'SHADED'), ("SIX", 'IMAGE'), ("EIGHT", 'SHELL_BORDERS'),
+                      ("NINE", 'TEXTURE_BORDERS')):
+        _add(kd, "UV Editor", "allset.uv_display", make_event(key), {"mode": mode})
+    _add(kd, "UV Editor", "allset.uv_isolate", make_event("ONE", ctrl=True))
+    _add(kd, "UV Editor", "allset.uv_delete", make_event("DEL"))
+    _add(kd, "UV Editor", "allset.uv_create_shell", make_event("X", ctrl=True, shift=True))
 
 
 # --- 50. Menu shortcuts --------------------------------------------------------

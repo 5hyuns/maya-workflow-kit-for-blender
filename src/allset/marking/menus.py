@@ -836,7 +836,7 @@ UV_MAPPING = Sub(radial={
 })
 # SetMeshGrabUVTool: Maya grabs UVs from the 3D View; these menus open in the UV Editor, whose Grab tool does it.
 GRAB_UV = _item("UV Editor/Tools/Grab")
-_UV_TAIL = [("Texture Borders", None), DIVIDER, ("UV Editor", ("allset.uv_component", {"mode": 'OPEN'})),
+_UV_TAIL = [("Texture Borders", ("allset.uv_display", {"mode": 'TEXTURE_BORDERS'})), DIVIDER, ("UV Editor", ("allset.uv_component", {"mode": 'OPEN'})),
             ("UV Set Editor", _item("UV/UV Set Editor"))]
 
 SHIFT_UV = MarkingMenu(
@@ -845,9 +845,9 @@ SHIFT_UV = MarkingMenu(
         "N": ("Mapping", UV_MAPPING),                                      # :25
         "NE": ("3D Grab UV Tool", GRAB_UV),                                # :38
         "E": ("Sew UVs", "allset.uv_sew"),                               # :54
-        "SE": ("Create UV Shell", None),                                   # :64
+        "SE": ("Create UV Shell", "allset.uv_create_shell"),             # :64 (step 155)
         "S": ("Merge UVs", "uv.weld"),                                     # :74
-        "SW": ("Delete UVs", None),                                        # :89
+        "SW": ("Delete UVs", "allset.uv_delete"),                        # :89 (step 155)
         "W": ("Cut UVs", "allset.uv_cut"),                               # :99
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),     # :108 (step 79)
     },

@@ -213,7 +213,7 @@ def test_other_keys():
     _one("Screen", 'F', "wm.search_menu", ctrl=True)
     _one("3D View", 'FIVE', "allset.panel_set", {"key": 'DEFAULT_MATERIAL'}, ctrl=True, shift=True)
     _one("UV Editor", 'SEVEN', "wm.context_toggle", {"data_path": "space_data.uv_editor.show_stretch"})
-    _one("UV Editor", 'FIVE', "wm.context_toggle", {"data_path": "space_data.uv_editor.show_faces"})
+    _one("UV Editor", 'FIVE', "allset.uv_display", {"mode": 'SHADED'})     # step 155: Maya 5 = shaded (set, not toggle)
     assert "show_faces" in bpy.types.SpaceUVEditor.bl_rna.properties
     assert "show_stretch" in bpy.types.SpaceUVEditor.bl_rna.properties
 
