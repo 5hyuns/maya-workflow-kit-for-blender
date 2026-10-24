@@ -202,8 +202,28 @@ NOTICES.update({
         "Purge Unused Data", "Blender removes unused materials (and other unused data) with File > Clean Up > Purge."),
     "Modify/Replace Objects": (
         "Link Object Data", "Blender gives the selected objects the active object's mesh (Object > Link/Transfer Data)."),
-    "Modify/Evaluate Nodes/Evaluate All": (
-        "Always evaluated", "Blender always evaluates every modifier and constraint: nothing to switch on."),
+    # step 168: Evaluate Nodes items stand for Blender data ()
+    "Modify/Evaluate Nodes/IK Solvers": (
+        "IK constraints", "Blender mutes the IK constraints (Maya switches the IK solve off); on again unmutes them."),
+    "Modify/Evaluate Nodes/Expressions": (
+        "Drivers", "Blender mutes its drivers (Maya expressions); Set Driven Key curves keep working."),
+    "Modify/Evaluate Nodes/nRigids": ("Collision", "Blender switches the colliders' Collision off."),
+    "Modify/Evaluate Nodes/Rigid Bodies": ("Rigid Body World", "Blender switches the scene's Rigid Body World off."),
+    "Modify/Evaluate Nodes/Dynamic Constraints": (
+        "No nConstraints", "Blender has no nucleus constraints: rigid body constraints switch off with Rigid Bodies."),
+    "Modify/Evaluate Nodes/Global Stitch": ("No stitching", "Blender has no NURBS surface stitching to switch off."),
+    "Modify/Evaluate Nodes/Snapshots": (
+        "No snapshot nodes", "Blender has no animation snapshot nodes: Visualize > Create Animation Snapshot is "
+        "not in Blender yet."),
+    "Modify/Transformation Tools/Show Manipulator Tool": (
+        "Default Object Manipulator", "Blender has no per-node manipulators: the object's Default Object "
+        "Manipulator tool, else the Transform tool."),
+    "Modify/Align Tool": (
+        "Align popup", "Blender draws no align icons on the bounding box: pick the axis and Min / Mid / Max in a "
+        "popup; the last selected object stays."),
+    "Modify/Convert/Smooth Mesh Preview to Polygons": (
+        "Apply the preview", "Blender applies the smooth preview Subsurf to the base mesh: deformers before it (skin, "
+        "lattice) keep working on the denser mesh."),
     "Playback/Playback Looping/Continuous": (
         "Continuous", "Blender playback always loops: Continuous is already on."),
     **{f"Display/Heads Up Display/{item} Details": (
@@ -407,12 +427,10 @@ CATEGORIES = {
     "Modify": ("Object menu", "Blender has no command by this name: see Object > Transform / Apply / Snap."),
     "Modify/Asset": ("Asset Browser / library overrides", "Blender has no assets with published attributes: mark "
                      "data-blocks as assets, expose values with library overrides or custom properties."),
-    "Modify/Evaluate Nodes": ("Always evaluated", "Blender always evaluates every modifier and constraint; switch "
-                              "one off with its Show in Viewport toggle."),
     "Modify/Convert": ("Object > Convert", "Blender converts curves, text, meshes and Grease Pencil; subdiv surfaces, "
                        "Paint Effects, displacement and fluids aren't separate types."),
-    "Modify/Transformation Tools": ("Toolbar transform tools", "Blender's default manipulator is the active tool's "
-                                    "gizmo: there is no Show Manipulator, Type or Default Object Manipulator."),
+    "Modify/Transformation Tools": ("Toolbar transform tools", "Blender's manipulator is the active tool's gizmo: "
+                                    "there is no Type Manipulator."),
     "Edit": ("Edit menu", "Blender has no LOD groups, fur or attribute-value transfer: Object > Link/Transfer Data "
              "copies data between objects."),
     **{f"Edit/{sub}": ("Outliner / Purge", "Blender has no node of this type: delete it in the Outliner, or File > "

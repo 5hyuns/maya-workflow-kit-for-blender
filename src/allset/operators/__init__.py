@@ -49,6 +49,10 @@ from . import by_type  # noqa: E402  step 166: Select All by Type for the kit's 
 
 classes += by_type.classes
 
+from . import modify_maya  # noqa: E402  step 168: Modify menu (Smooth Mesh Preview to Polygons, Evaluate Nodes, ...)
+
+classes += modify_maya.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -88,9 +92,11 @@ def register():
     material.register_handlers()
     auto_key.register_handlers()
     dag.register_handlers()
+    modify_maya.register_props()
 
 
 def unregister():
+    modify_maya.unregister_props()
     dag.unregister_handlers()
     curve_draw.unregister_handlers()
     auto_key.unregister_handlers()

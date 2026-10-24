@@ -269,7 +269,9 @@ MAP = {
     "Modify/Delete Attribute...": "allset.delete_attribute",
     "Windows/Switch to Blender": ("allset.switch_mode", {"mode": 'BLENDER'}),
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
-    "Modify/Convert/Smooth Mesh Preview to Polygons": ("object.convert", {"target": 'MESH'}),
+    # step 168: only the kit's smooth-preview modifiers are applied (Maya keeps skinCluster1 etc.,
+    # ); object.convert baked every modifier
+    "Modify/Convert/Smooth Mesh Preview to Polygons": "allset.smooth_to_polygons",
     "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
     "Modify/Convert/Type to Curves": ("object.convert", {"target": 'CURVE'}),
     "Modify/Convert/Instance to Object": "object.duplicates_make_real",
@@ -624,7 +626,19 @@ MAP.update({
     "Modify/Replace Objects": ("object.make_links_data", {"type": 'OBDATA'}),
     "Modify/Convert/NURBS Curve to Bezier": ("curve.spline_type_set", {"type": 'BEZIER'}),
     "Modify/Convert/Bezier Curve to NURBS": ("curve.spline_type_set", {"type": 'NURBS'}),
-    "Modify/Evaluate Nodes/Evaluate All": ("allset.menu_note", {"item": "Modify/Evaluate Nodes/Evaluate All"}),
+    # step 168 (): Modify leaves
+    "Modify/Evaluate Nodes/Evaluate All": ("allset.evaluate_all", {"on": True}),
+    "Modify/Evaluate Nodes/Ignore All": ("allset.evaluate_all", {"on": False}),
+    **{f"Modify/Evaluate Nodes/{label}": ("prop", f"scene.allset_eval.{kind}", {})
+       for label, kind in (("IK Solvers", "iksolver"), ("Constraints", "constraint"), ("Expressions", "expression"),
+                           ("Fluids", "fluid"), ("nCloths", "ncloth"), ("nParticles", "nparticle"),
+                           ("nRigids", "nrigid"), ("Particles", "particle"), ("Rigid Bodies", "rigidbody"))},
+    **{f"Modify/Transformation Tools/Default Object Manipulator/{label}": ("allset.default_manip", {"value": i})
+       for i, label in enumerate(("None", "Move", "Rotate", "Scale", "Transform"))},
+    "Modify/Transformation Tools/Show Manipulator Tool": ("v3d", "allset.show_manipulator", {}),
+    "Modify/Align Tool": "allset.align_tool",
+    "Modify/Snap Align Objects/Position Along Curve": "allset.position_along_curve",
+    "Modify/Convert/Geometry to Bounding Box": "allset.geometry_to_bbox",
     # Display
     # Blender's playback frame rate display is a preference (#43): open it, don't write it
     "Display/Heads Up Display/Frame Rate": ("screen.userpref_show", {"section": 'VIEWPORT'}),
