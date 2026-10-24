@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 179 (Light Linking, backlog_174 #6) 완료 — `docs/steps/step_179.md`. Lighting/Shading 의 Make / Break Light · Shadow Links,
+  Select Objects / Lights 4 개, Light Linking Editor (kit 팝오버) = Blender light linking 컬렉션 (`operators/light_links.py`,
+  `ui/light_link_editor.py`; Maya mayapy 규칙 `research/maya/re/light_links_179.md`). Lighting/Shading 5 → 13 / 14. 헤드리스 1653 / 1653,
+  Cycles 프로브 (끊은 큐브 0.004), GUI step179 3 / 3.
+  **바로 다음 할 일**: 180 Animation Layers on NLA (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json`
+  7 번째), 그 뒤 181 Surfaces.
+
 - Step 178 (UV Editor finish, backlog_174 #5) 완료 — `docs/steps/step_178.md`. UV Editor 메뉴 118 → **136 / 172**: Modify 6 개
   (Map Border, Straighten Border, Match Grid, Layout Along, Stack Similar Shells, Distribute UVs — mayapy 대비 최대 2e-7,
   `operators/uv_modify.py`), Select / Edit / View 12 개 (Back- / Front-Facing, Texture Borders, Non-Overlapping, Unmapped,

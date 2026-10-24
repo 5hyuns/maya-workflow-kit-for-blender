@@ -1176,3 +1176,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] UV Editor > Modify > Map Border / Straighten Border / Layout Along / Stack Similar Shells on your own meshes: the result looks like Maya's (border on the 0-1 square, chains straight, shells in one row, similar shells stacked).
 - [ ] UV Editor > View > Isolate Select > Add / Remove Selected with Ctrl+1 on: the shown faces follow; Remove All shows everything.
 
+## Step 179
+
+- [ ] Lighting/Shading > Break Light Links on a selected light + object, render (Cycles / EEVEE): the object goes dark for that light; Make Light Links brings it back.
+- [ ] Light Linking Editor: pick a light on the left, click objects on the right to toggle; Object Centric / Shadow Links switch the lists.
+

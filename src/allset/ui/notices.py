@@ -372,8 +372,8 @@ CATEGORIES = {
                "diagnostics, Backburner and NURBS tessellation have no counterpart."),
     "Texturing": ("Shader Editor / Texture Paint", "Blender has no PSD networks or texture reference objects: "
                   "textures are image nodes in the Shader Editor, painted in Texture Paint mode."),
-    "Lighting/Shading": ("Light Linking", "Blender light / shadow linking is a collection per light (Object "
-                         "properties > Shading > Light Linking); Transfer Maps = Cycles Bake."),
+    "Lighting/Shading": ("Cycles Bake", "Blender transfers maps between meshes with Cycles Bake (Render "
+                         "properties > Bake, Selected to Active)."),
     # modeling
     "UV": ("UV Editor", "Blender: grab UVs with G in the UV Editor, delete UVs by removing the UV map (Data "
            "properties > UV Maps)."),
