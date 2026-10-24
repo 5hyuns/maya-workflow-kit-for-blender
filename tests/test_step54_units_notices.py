@@ -163,11 +163,12 @@ def test_notice_in_tooltip_and_help_line():
     assert "NLA" in notices.current(), "the Help Line shows the notice while the tooltip is up"
     # a greyed item keeps allset.menu_unavailable, tooltip with the notice
     rec = _Rec()
-    menu_sets.draw_item(rec, "Render/Batch Render", "Batch Render")     # step 67 (Light Editor is mapped now)
-    assert rec.log[0][0] == "allset.menu_unavailable"
-    tip = menu_sets.ALLSET_OT_menu_unavailable.description(
-        bpy.context, types.SimpleNamespace(item="Render/Batch Render"))
-    assert "Batch Render" in tip and "blender -b" in tip, tip
+    # (Batch Render until step 152, which maps it)
+    path = "Windows/General Editors/Namespace Editor"
+    menu_sets.draw_item(rec, path, "Namespace Editor")
+    assert rec.log[0][0] == "allset.menu_unavailable", rec.log
+    tip = menu_sets.ALLSET_OT_menu_unavailable.description(bpy.context, types.SimpleNamespace(item=path))
+    assert "Namespace Editor" in tip and "namespaces" in tip, tip
     # items without a notice run the same action through allset.menu_item (step 108: Blender prints no shortcut
     # of its own beside it)
     rec = _Rec()

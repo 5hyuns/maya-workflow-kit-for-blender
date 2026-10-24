@@ -4367,8 +4367,9 @@ def _m67_4_menu():
     using = next(x for kind, t, x in rec.out if t == "Render Using")
     batch = next(x for kind, t, x in rec.out if t == "Batch Render" and kind == "op")
     tip = mod("ui.notices").tooltip("Render/Batch Render", False)
-    check(f"[M67-4] Render Using = engine list ({using}), Batch Render greyed ({batch[0]}) with "
-          f"in its tooltip", using == "ALLSET_MT_render_using" and batch[0] == "allset.menu_unavailable"
+    # step 152: Batch Render runs (a background Blender), its tooltip says so
+    check(f"[M67-4] Render Using = engine list ({using}), Batch Render runs ({batch[0]}) with "
+          f"in its tooltip", using == "ALLSET_MT_render_using" and batch[0] == "allset.menu_item"
           and "blender -b" in tip)
     menu("Render/Render Current Frame")
 

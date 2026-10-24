@@ -69,9 +69,10 @@ NOTICES = {
     "Windows/Rendering Editors/Hypershade": (
         "Shader Editor + kit list", "Blender has no Hypershade: the Shader Editor is the graph, its Hypershade sidebar "
         "tab the browser (add nodes with Shift+A)."),
-    **{f"Render/{item}": (
-        "Command line", "Blender has no batch render queue: render frames with blender -b file.blend -a "
-        "(or Render Sequence here).") for item in ("Batch Render", "Cancel Batch Render", "Show Batch Render")},
+    # step 152: mapped (operators/render_batch.py); the tooltip says how Blender does it
+    "Render/Batch Render": (
+        "Background Blender", "Blender has no batch render queue: Maya Workflow Kit renders a copy of the scene in "
+        "a separate background Blender (blender -b ... -a)."),
     # step 109: mapped items whose Blender result differs
     "Create/NURBS Primitives/Square": (
         "Four NURBS curves", "Blender has no NURBS square: four straight NURBS curves under an empty, like Maya's group."),

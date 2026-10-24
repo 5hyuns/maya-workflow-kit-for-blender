@@ -45,7 +45,8 @@ def is_light_editor(context):
 
 def lights(context):
     # scene.objects: view_layer.objects lags behind objects linked since the last depsgraph sync ( step 11)
-    return sorted((o for o in context.scene.objects if o.type == 'LIGHT'), key=lambda o: o.name.lower())
+    return sorted((o for o in context.scene.objects if o.type == 'LIGHT' and not o.get("allset_default_light")),
+                  key=lambda o: o.name.lower())     # step 152: not the render-time default light
 
 
 def enabled(ob):
