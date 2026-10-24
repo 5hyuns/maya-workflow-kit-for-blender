@@ -128,6 +128,18 @@ def _text(x, y, s, color):
         batch.draw(sh)
 
 
+def _ring_arrow(rect, color, k, ox, oy):
+    """Maya's submenu triangle of a radial box: in the right padding, base 13 px and tip 9 px left of the
+    box's right side, 7 px tall, tip on the box's vertical centre (research/maya/re/marking_ring_151.md)."""
+    x1 = rect[2] + ox
+    yc = (rect[1] + rect[3]) / 2 + oy
+    sh = _sh()
+    batch = batch_for_shader(sh, 'TRIS', {"pos": ((x1 - 13 * k, yc - 3.5 * k), (x1 - 13 * k, yc + 3.5 * k),
+                                                  (x1 - 9 * k, yc))})
+    sh.uniform_float("color", color)
+    batch.draw(sh)
+
+
 def _circle(cx, cy, r, color, segments=24):
     import math
     pts = [(cx + r * math.cos(2 * math.pi * i / segments), cy + r * math.sin(2 * math.pi * i / segments))
@@ -187,16 +199,25 @@ def _draw_layout(lay, cx, cy, hover):
         on = it is hover
         if it.kind == "radial" or (on and not hover_opt and it.enabled):
             _rect(it.rect, BG_HOVER if on and not hover_opt and it.enabled else BG, cx, cy)
-        if it.kind == "radial":
-            _outline(it.rect, EDGE, cx, cy)
-        text = engine.Layout._text(it.label, it.action)
-        _text(cx + it.rect[0] + pad, cy + it.rect[1] + (it.rect[3] - it.rect[1]) * 0.3, text,
-              TEXT if it.enabled else TEXT_OFF)
+        color = TEXT if it.enabled else TEXT_OFF
+        radial = it.kind == "radial"
+        if radial:
+            # the 1 px border on the box's outer pixels: a line on the rect's sides drew a box 1 px too tall / wide
+            # (22 px for Maya's 21, step 151 shot)
+            r = it.rect
+            _outline((r[0] + 0.5, r[1] + 0.5, r[2] - 0.5, r[3] - 0.5), EDGE, cx, cy)
+            text = engine.Layout.ring_text(it.label, it.action)
+            if engine.Layout.has_arrow(it.action):
+                _ring_arrow(it.rect, color, lay.params.ring_pad / 25.0, cx, cy)
+        else:
+            text = engine.Layout._text(it.label, it.action)
+        tpad = lay.params.ring_pad if radial else pad
+        _text(cx + it.rect[0] + tpad, cy + it.rect[1] + (it.rect[3] - it.rect[1]) * 0.3, text, color)
         state = checked(it.action)
         if state is not None:
             right = it.opt_rect[0] if it.opt_rect else it.rect[2]
             size = (it.rect[3] - it.rect[1]) * 0.42
-            x1 = right - pad
+            x1 = right - tpad
             y0 = it.rect[1] + (it.rect[3] - it.rect[1] - size) / 2
             box = (x1 - size, y0, x1, y0 + size)
             _outline(box, TEXT if it.enabled else TEXT_OFF, cx, cy)

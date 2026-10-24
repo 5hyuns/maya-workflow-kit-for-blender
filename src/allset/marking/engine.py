@@ -23,18 +23,28 @@ _UNIT = {name: (math.cos(math.radians(45 * i)), math.sin(math.radians(45 * i)))
 
 class Params:
     """Sizes in pixels at UI scale 1 (``scaled`` multiplies them)."""
-    radius = 80.0          # centre -> radial item anchor
+    # Radial ring = Maya 2022 measured (research/maya/re/marking_ring_151.md, 14/15_marking_menu_*.png, #99):
+    # N / S box centres and E / W near sides ``radius`` from the press point, diagonal boxes with their corner at
+    # (±d, ±d), d = radius·cos 45°; boxes 21 px high, text + 2 × 25 px wide (+ 5 with an option box).
+    radius = 55.0          # centre -> radial item anchor
     dead = 12.0            # no direction inside this (= Blender pie_menu_threshold)
-    item_h = 22.0
-    pad = 8.0              # text padding inside an item
+    item_h = 22.0          # list rows
+    pad = 8.0              # text padding inside a list row / hotbox label
     opt_w = 16.0           # option box square
     list_gap = 10.0
+    ring_h = 21.0          # radial box height
+    ring_pad = 25.0        # text padding inside a radial box (a submenu arrow sits in the right one)
+    ring_opt = 5.0         # extra radial box width for an option box
+    ring_list_gap = 21.0   # ring bottom -> list top
     show_delay = 0.15      # s before the menu is drawn: faster strokes are "marks" [K]
     click_time = 0.25      # s: a shorter press-release in the dead zone = click mode [K]
 
+    SIZES = ("radius", "dead", "item_h", "pad", "opt_w", "list_gap", "ring_h", "ring_pad", "ring_opt",
+             "ring_list_gap")
+
     def scaled(self, k):
         p = Params()
-        for name in ("radius", "dead", "item_h", "pad", "opt_w", "list_gap"):
+        for name in self.SIZES:
             setattr(p, name, getattr(self, name) * k)
         p.show_delay, p.click_time = self.show_delay, self.click_time
         return p
@@ -98,17 +108,9 @@ class Layout:
                 continue
             label, action = sub.radial[key]
             opt = label in sub.options and action is not None and not isinstance(action, mm.Sub)
-            w = measure(self._text(label, action)) + 2 * p.pad + (p.opt_w if opt else 0)
-            ux, uy = _UNIT[key]
-            ax, ay = ux * p.radius, uy * p.radius
-            if key in ("N", "S"):
-                x0 = ax - w / 2
-            elif key in ("E", "NE", "SE"):
-                x0 = ax
-            else:
-                x0 = ax - w
-            rect = (x0, ay - h / 2, x0 + w, ay + h / 2)
-            item = Item(label, action, "radial", key, rect, self._opt(rect, opt), enabled(action), opt)
+            item = Item(label, action, "radial", key, self.ring_rect(key, measure(self.ring_text(label, action)), opt),
+                        None, enabled(action), opt)
+            item.opt_rect = self._opt(item.rect, opt)
             self.radial[key] = item
             self.items.append(item)
         # Linear list under the ring (or from the centre when there is no ring).
@@ -117,7 +119,7 @@ class Layout:
             widths = [measure(self._text(e[0], e[1])) for e in rows if e != mm.DIVIDER]
             w = max(widths or [0]) + 2 * p.pad + p.opt_w
             if self.radial:
-                top = min([it.rect[1] for it in self.radial.values()] + [-p.radius]) - p.list_gap
+                top = min([it.rect[1] for it in self.radial.values()] + [-p.radius]) - p.ring_list_gap
                 x0 = -w / 2
             else:
                 top = h / 2
@@ -134,12 +136,40 @@ class Layout:
                                        enabled(action), opt))
                 y -= h
 
+    def ring_rect(self, key, text_w, opt=False):
+        """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya 2022's placement
+        (research/maya/re/marking_ring_151.md). y is up here, so N is +y."""
+        p = self.params
+        r, h = p.radius, p.ring_h
+        d = r * math.cos(math.radians(45.0))
+        w = text_w + 2 * p.ring_pad + (p.ring_opt if opt else 0.0)
+        if key in ("N", "S"):
+            x0 = -w / 2
+            cy = r if key == "N" else -r
+            return (x0, cy - h / 2, x0 + w, cy + h / 2)
+        x0 = r if key == "E" else -r - w if key == "W" else d if key in ("NE", "SE") else -d - w
+        if key in ("E", "W"):
+            y0 = -h / 2
+        else:   # diagonal: the outer side on the diagonal anchor, the box hanging towards the horizontal axis
+            y0 = d - h if key in ("NE", "NW") else -d
+        return (x0, y0, x0 + w, y0 + h)
+
+    @staticmethod
+    def has_arrow(action):
+        """A submenu item: Maya draws a ▸ at the box / row's right (a Blender ("menu", id) opens as one too)."""
+        return isinstance(action, mm.Sub) or (isinstance(action, tuple) and action[0] == "menu")
+
+    @staticmethod
+    def ring_text(label, action):
+        """Text measured for a radial box width: the arrow lives in Maya's right padding (marking_ring_151.md),
+        toggles keep room for their check box."""
+        return label + ("    " if is_toggle(action) and not Layout.has_arrow(action) else "")
+
     @staticmethod
     def _text(label, action):
         # Toggles keep room on the right for their check box (draw.py, step 26).
         # A Blender menu ("menu", id) opens as a submenu too (e.g. Assign Existing Material).
-        sub = isinstance(action, mm.Sub) or (isinstance(action, tuple) and action[0] == "menu")
-        return label + (" ▸" if sub else "    " if is_toggle(action) else "")
+        return label + (" ▸" if Layout.has_arrow(action) else "    " if is_toggle(action) else "")
 
     def _opt(self, rect, on):
         if not on:
@@ -283,6 +313,9 @@ def _off_bands(rect, edges, x0, y0, x1, y1, others=()):
             ys.update((b[1] - rect[3], b[3] - rect[1]))
         else:
             xs.update((b[0] - rect[2], b[2] - rect[0]))
+    for o in others:      # beside / above / below a box already placed (or the list's column, step 151)
+        xs.update((o[0] - rect[2], o[2] - rect[0]))
+        ys.update((o[1] - rect[3], o[3] - rect[1]))
     xs.update((x0 - rect[0], x1 - rect[2]))
     ys.update((y0 - rect[1], y1 - rect[3]))
     mx, my = (rect[0] + rect[2]) / 2, (rect[1] + rect[3]) / 2
@@ -363,6 +396,12 @@ def fit_ring(layout, center, bounds, edges=()):
     x0, y0, x1, y1 = bounds[0] - cx, bounds[1] - cy, bounds[2] - cx, bounds[3] - cy  # centre-relative
     edges = _rel_edges(edges, cx, cy)
     placed = []
+    rows = [it for it in layout.items if it.kind == "list"]
+    if rows and edges:
+        # Maya's ring is compact (radius 55, step 151): a box moved off a border must not land in the column the
+        # list takes under the ring, or the list is drawn over it.
+        lx0, _ly0, lx1, ly1 = _bbox(rows)
+        placed.append((lx0, y0 - 1.0, lx1, ly1))
     for it in layout.radial.values():
         _move(it, _slide(it.rect[0], it.rect[2], x0, x1), _slide(it.rect[1], it.rect[3], y0, y1))
         if edges:
