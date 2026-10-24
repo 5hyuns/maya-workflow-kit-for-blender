@@ -186,6 +186,16 @@ def set_uv_edge_selected(loop, uv, value):
         loop[uv].select_edge = value
 
 
+def set_uv_face_selected(face, uv, value):
+    """A face's UVs picked / unpicked with UV Sync Selection off: its loops, and 5.x's own face flag
+    (``BMFace.uv_select``, which a UV select-mode change flushes back to the loops — step 155)."""
+    for loop in face.loops:
+        set_uv_vert_selected(loop, uv, value)
+        set_uv_edge_selected(loop, uv, value)
+    if hasattr(face, "uv_select"):
+        face.uv_select = value
+
+
 # --- Bone visibility ------------------------------------------------------------------------
 # 4.5: a bone is hidden in pose / object mode by ``Bone.hide``; 5.x moved that to ``PoseBone.hide`` and
 # ``Bone.hide`` only hides the edit bone (step 118, api notes).

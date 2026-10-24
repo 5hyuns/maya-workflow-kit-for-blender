@@ -7,9 +7,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 202 |
+| 구현 | 209 |
 | IC 일치 | 27 |
-| 해당 없음 | 171 |
+| 해당 없음 | 164 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -320,21 +320,21 @@
 | i | I | nodeEditorPanel | NodeEditorDiveIntoCompound | — | 해당 없음 | Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로) | hotkeySetup.mel:511 |
 | u | U | nodeEditorPanel | NodeEditorBackToParent | — | 해당 없음 | Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로) | hotkeySetup.mel:512 |
 | Return | RET | nodeEditorPanel | NodeEditorDiveIntoCompound | Node Generic: `wm.call_panel` (name='TOPBAR_PT_name', keep_open=False); Screen: `file.execute` | 해당 없음 | Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로) | hotkeySetup.mel:513 |
-| Delete | DEL | polyTexturePlacementPanel | DeleteUVs | — | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:516 |
+| Delete | DEL | polyTexturePlacementPanel | DeleteUVs | UV Editor: `allset.uv_delete` | 구현 | step 155 | hotkeySetup.mel:516 |
 | Ctrl+c | Ctrl+C | polyTexturePlacementPanel | CopyUVs | UV Editor: `uv.copy` | IC 일치 |  | hotkeySetup.mel:517 |
 | Ctrl+v | Ctrl+V | polyTexturePlacementPanel | PasteUVs | UV Editor: `uv.paste` | IC 일치 |  | hotkeySetup.mel:518 |
 | Ctrl+l | Ctrl+L | polyTexturePlacementPanel | LayoutUV | UV Editor: `allset.uv_layout` | 구현 | Pack Islands, 셸 패딩 px / 맵 크기 (IC select_linked 제거) | hotkeySetup.mel:519 |
 | Ctrl+u | Ctrl+U | polyTexturePlacementPanel | UnfoldUV | UV Editor: `allset.uv_unfold` | 구현 | Blender Unwrap (Minimum Stretch), 셸 경계·자리 유지 (Unfold3D 아님) | hotkeySetup.mel:520 |
 | Shift+x | Shift+X | polyTexturePlacementPanel | CutUVs | UV Editor: `allset.uv_cut` | 구현 | 솔기 + 작은 쪽 셸을 0.2 px 떼어 그 자리에서 분리 (IC 스냅 파이 제거) | hotkeySetup.mel:521 |
 | Shift+s | Shift+S | polyTexturePlacementPanel | SewUVs | UV Editor: `allset.uv_sew` | 구현 | 솔기 지움 + 작은 셸을 엣지에 맞춰 옮김 | hotkeySetup.mel:522 |
-| Ctrl+Shift+x | Ctrl+Shift+X | polyTexturePlacementPanel | CreateUVShellAlongBorder | — | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:523 |
-| 4 | FOUR | polyTexturePlacementPanel | DisplayUVWireframe | UV Editor: `uv.select_mode` (type='ISLAND') | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:524 |
-| 5 | FIVE | polyTexturePlacementPanel | DisplayUVShaded | UV Editor: `wm.context_toggle` (data_path='space_data.uv_editor.show_faces') | 구현 | UV 면 표시 켬/끔 | hotkeySetup.mel:525 |
+| Ctrl+Shift+x | Ctrl+Shift+X | polyTexturePlacementPanel | CreateUVShellAlongBorder | UV Editor: `allset.uv_create_shell` | 구현 | step 155 | hotkeySetup.mel:523 |
+| 4 | FOUR | polyTexturePlacementPanel | DisplayUVWireframe | UV Editor: `allset.uv_display` (mode='WIREFRAME') | 구현 | step 155 | hotkeySetup.mel:524 |
+| 5 | FIVE | polyTexturePlacementPanel | DisplayUVShaded | UV Editor: `allset.uv_display` (mode='SHADED') | 구현 | UV 면 표시 켬 (step 155) | hotkeySetup.mel:525 |
 | 7 | SEVEN | polyTexturePlacementPanel | ToggleUVDistortion | UV Editor: `wm.context_toggle` (data_path='space_data.uv_editor.show_stretch') | 구현 |  | hotkeySetup.mel:526 |
-| 8 | EIGHT | polyTexturePlacementPanel | ToggleUVShellBorder | — | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:527 |
-| 9 | NINE | polyTexturePlacementPanel | UVEditorToggleTextureBorderDisplay | — | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:528 |
-| 6 | SIX | polyTexturePlacementPanel | ToggleUVTextureImage | — | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:529 |
-| Ctrl+1 | Ctrl+ONE | polyTexturePlacementPanel | ToggleUVIsolateViewSelected | UV Editor: `mesh.select_mode` (use_expand=True, type='VERT') | 해당 없음 | UV Editor 표시 (Blender 에 같은 표시 없음 / Blender 키 그대로) | hotkeySetup.mel:530 |
+| 8 | EIGHT | polyTexturePlacementPanel | ToggleUVShellBorder | UV Editor: `allset.uv_display` (mode='SHELL_BORDERS') | 구현 | step 155 | hotkeySetup.mel:527 |
+| 9 | NINE | polyTexturePlacementPanel | UVEditorToggleTextureBorderDisplay | UV Editor: `allset.uv_display` (mode='TEXTURE_BORDERS') | 구현 | step 155 | hotkeySetup.mel:528 |
+| 6 | SIX | polyTexturePlacementPanel | ToggleUVTextureImage | UV Editor: `allset.uv_display` (mode='IMAGE') | 구현 | step 155 | hotkeySetup.mel:529 |
+| Ctrl+1 | Ctrl+ONE | polyTexturePlacementPanel | ToggleUVIsolateViewSelected | UV Editor: `allset.uv_isolate` | 구현 | step 155 | hotkeySetup.mel:530 |
 | f | F | polyTexturePlacementPanel | UVEditorFrameSelected | Image: `image.view_selected` | IC 일치 |  | hotkeySetup.mel:531 |
 | a | A | polyTexturePlacementPanel | UVEditorFrameAll | Image: `image.view_all` | IC 일치 |  | hotkeySetup.mel:532 |
 | q | Q | polyTexturePlacementPanel | SelectUVTool | UV Editor: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True); Image: `wm.tool_set_by_id` (name='builtin.select_box', cycle=True) | IC 일치 |  | hotkeySetup.mel:533 |

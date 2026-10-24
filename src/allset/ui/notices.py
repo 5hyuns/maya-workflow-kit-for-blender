@@ -879,18 +879,9 @@ MARKING = {
     "HotboxWestMenu/Dynamics Mask": (
         "Object types filter", "Blender's dynamics are modifiers and physics settings on ordinary objects, so they "
         "have no selection mask of their own."),
-    "contextPolyToolsUVMM/Create UV Shell": (
-        "Unwrap", "Blender makes a UV island by unwrapping the selected faces (UV > Unwrap) or by cutting along "
-        "seams."),
-    "contextPolyToolsUVMM/Delete UVs": (
-        "Unwrap / Reset", "Blender meshes keep UVs for every face: re-unwrap or Reset them (UV > Reset) instead of "
-        "deleting."),
     **{f"{menu}/Auto Seams": (
         "Smart UV Project", "Blender has no automatic seam placement: Smart UV Project cuts by angle, or mark seams "
         "and Unwrap.") for menu in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM")},
-    **{f"{menu}/Texture Borders": (
-        "Seams overlay", "Blender's UV Editor draws island borders itself; the 3D View shows seams (Overlays > "
-        "Seams).") for menu in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM")},
     "doSelectComponentMM/All Components off": (
         "Mesh select mode", "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11."),
     "doSelectComponentMM/Save to shelf": (

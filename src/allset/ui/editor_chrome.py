@@ -189,17 +189,17 @@ DOPE_ICONS = (
 
 _UVE = "space_data.uv_editor"
 UV_ICONS = (
-    ("viewUVWireframeButton", 'SHADING_WIRE', ("prop", f"{_UVE}.uv_face_opacity", {"value": 0.0}),
+    ("viewUVWireframeButton", 'SHADING_WIRE', ("prop", f"{_UVE}.show_faces", {"value": False}),
      "Display the UVs as wireframe"),
-    ("viewShadeUVButton", 'SHADING_SOLID', ("prop", f"{_UVE}.uv_face_opacity", {"value": 1.0}),
+    ("viewShadeUVButton", 'SHADING_SOLID', ("prop", f"{_UVE}.show_faces", {"value": True}),
      "Shade the UV shells"),
     ("distortionButton", 'MOD_UVPROJECT', ("prop", f"{_UVE}.show_stretch", {}), "Display UV distortion"),
     "|",
-    ("toggleTextureBorderButton", 'MOD_EDGESPLIT', None, "Display texture borders"),
-    ("toggleShellBorderButton", 'MESH_DATA', None, "Display shell borders"),
+    ("toggleTextureBorderButton", 'MOD_EDGESPLIT', ("prop", "window_manager.allset_uv_texture_borders", {}), "Display texture borders"),
+    ("toggleShellBorderButton", 'MESH_DATA', ("prop", "window_manager.allset_uv_shell_borders", {}), "Display shell borders"),
     "|",
     ("gridDisplayButton", 'GRID', ("prop", "space_data.overlay.show_grid_background", {}), "Display the grid"),
-    ("isolateViewSelectButton", 'HIDE_OFF', None, "Isolate select"),
+    ("isolateViewSelectButton", 'HIDE_OFF', "allset.uv_isolate", "Isolate select"),
     "|",
     ("snapShotButton", 'IMAGE_DATA', "uv.export_layout", "UV snapshot"),
     "|",

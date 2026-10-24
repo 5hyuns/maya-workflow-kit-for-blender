@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 155 (UV Editor 셸 도구, backlog 154 #1) 완료 — `docs/steps/step_155.md`. Maya 셸 명령 12 개 (mayapy 정답
+  `research/maya/re/uv_shells_155.json` 과 1e-4 / Orient 6e-4 일치, `operators/uv_shells.py`), Unfold 가 넓이 · UV 평균 유지, UV Editor
+  키 4 5 6 8 9 Ctrl+1 Delete Ctrl+Shift+X, 셸 / 텍스처 테두리 그리기, Move UV Shell (`ui/uv_display.py`). UV Editor 메뉴 95 → 110 / 172.
+  **바로 다음 할 일**: 156 Curves 도구 (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`).
+
 - Step 154 (재점검 10차 = 사용자 지시의 「재점검 9차」) 완료 — `docs/steps/step_154.md` (+ `step_154_remaining.md`, `step_154_quant.md`),
   PLAN 「재점검 10차」. 헤드리스 1398/1398, dogfood 48/48 (콘솔 오류 0), 대응표 29/2/0/2 (88 %, 변화 없음), 메뉴 600/1318 (45.5 %),
   manual_checks 579 / 81 ticked. 열린 이슈 20 중 17 은 코드에서 고쳐짐 (릴리스 때 닫기), 남은 것 #81 #89 #97.

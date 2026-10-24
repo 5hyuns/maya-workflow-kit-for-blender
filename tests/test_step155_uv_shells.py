@@ -65,25 +65,22 @@ def select(ob, m, selection):
     uv = bm.loops.layers.uv.verify()
     bm.faces.ensure_lookup_table()
     edges = _maya_edges(m["faces"])
+    kinds = {name.split(".", 1)[1].split("[")[0] for name in selection}
+    # the mode first: a UV select-mode change flushes the selection (5.x: from the faces' own uv_select flags)
+    ts.uv_select_mode = 'FACE' if kinds == {"f"} else 'EDGE' if kinds == {"e"} else 'VERTEX'
     for f in bm.faces:
         f.select = True
-        for l in f.loops:
-            compat.set_uv_vert_selected(l, uv, False)
-            compat.set_uv_edge_selected(l, uv, False)
-    kinds = set()
+        compat.set_uv_face_selected(f, uv, False)
     for name in selection:
         comp = name.split(".", 1)[1]
         kind, idx = comp.split("[")[0], int(comp.split("[")[1].rstrip("]"))
-        kinds.add(kind)
         if kind == "map":
             for f, ids in enumerate(m["face_uv_ids"]):
                 for k, i in enumerate(ids):
                     if i == idx:
                         compat.set_uv_vert_selected(bm.faces[f].loops[k], uv, True)
         elif kind == "f":
-            for l in bm.faces[idx].loops:
-                compat.set_uv_vert_selected(l, uv, True)
-                compat.set_uv_edge_selected(l, uv, True)
+            compat.set_uv_face_selected(bm.faces[idx], uv, True)
         elif kind == "e":
             a, b = edges[idx]
             for f in bm.faces:
@@ -92,7 +89,6 @@ def select(ob, m, selection):
                         compat.set_uv_edge_selected(l, uv, True)
                         compat.set_uv_vert_selected(l, uv, True)
                         compat.set_uv_vert_selected(l.link_loop_next, uv, True)
-    ts.uv_select_mode = 'FACE' if kinds == {"f"} else 'EDGE' if kinds == {"e"} else 'VERTEX'
     bmesh.update_edit_mesh(ob.data)
 
 

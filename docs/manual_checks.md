@@ -1021,3 +1021,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Blender 5.0+ (portable 5.2.3): bind a mesh, Skin > Paint Skin Weights ❒ → the window opens without an error; Value 0.25 / Opacity 0.5 / Radius(U) 3 → Weight Paint with weight 0.25, strength 0.5 and a brush of radius 3 cm (Blender shows the size as a diameter, 6 cm).
 - [ ] Blender 5.x: hold a Maya menu item with an option box (Display > Grid) → the pointer goes onto the Option Box row, letting go opens Grid Options with the Display menu still open under it (5.0 menus stay open until a click); Esc / a click closes it. With Preferences > Interface > "Close menus when the mouse is moved out" on, the menu closes first like in 4.5.
 - [ ] 4.5 and 5.x: W hold + a quick drag to the upper left / upper right through the wide Symmetry box → Object / Component (the Symmetry submenu doesn't open); a slow drag straight up still opens Symmetry.
+
+## Step 155 — UV Editor shell tools
+
+- [ ] UV Editor on a mesh with several shells: select one UV on each of three shells, Modify > Stack Shells → they sit on one centre; Modify > Orient Shells → a turned rectangle stands upright (counter-clockwise turn); Modify > Distribute Shells → widest first, touching, to the right.
+- [ ] Select two UVs on two shells, Modify > Snap Together → the first shell's UV lands on the second (pick order doesn't matter, like Maya).
+- [ ] Select the seam edges between a small and a big shell, Cut/Sew > Move and Sew → the small shell turns / moves onto the big one without scaling and the seam merges.
+- [ ] Select faces inside a shell, Ctrl+Shift+X → a new shell (Select > Shell picks only those faces); Delete → their UVs collapse to the 0,0 corner.
+- [ ] Keys in the UV Editor: 4 wireframe / 5 shaded, 6 hides and shows the texture image, 8 blue shell borders, 9 thick texture borders, Ctrl+1 shows only the selected UVs and again everything with the old selection.
+- [ ] Tools > Move UV Shell: a click on a UV picks its shell, dragging moves it; choosing another UV tool goes back to UV picking.

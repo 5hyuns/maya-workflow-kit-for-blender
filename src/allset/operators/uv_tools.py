@@ -278,10 +278,13 @@ def unfold(context, ob):
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.ensure_lookup_table()
-    for idx, mean, area in before:
+    # one factor for all unfolded shells: the measured rule keeps the *total* area (one-shell cases), and a common
+    # factor keeps the even texel density Blender's unwrap gives the shells (sweep M66-3: Unfold then Layout)
+    area = sum(a for _i, _m, a in before)
+    now = sum(_uv_area(bm.faces[i], uv) for idx, _m, _a in before for i in idx)
+    k = math.sqrt(area / now) if now > 1e-12 and area > 1e-12 else 1.0
+    for idx, mean, _area in before:
         isl = [bm.faces[i] for i in idx]
-        now = sum(_uv_area(f, uv) for f in isl)
-        k = math.sqrt(area / now) if now > 1e-12 and area > 1e-12 else 1.0
         c = _point_mean(isl, uv)
         for loop in _island_loops(isl):
             loop[uv].uv = mean + (loop[uv].uv - c) * k
