@@ -152,8 +152,17 @@ def unavailable():
     return Sub()
 
 
+class NodeList(Sub):
+    """DG Traversal / Inputs / Outputs: filled from the object when the menu opens (``with_nodes``; Maya fills them in
+    their postMenuCommands, Maya-2640). Never greyed: Maya shows the header rows even with no node."""
+
+    def __init__(self, kind):
+        super().__init__()
+        self.kind = kind        # TRAVERSAL / INPUTS / OUTPUTS
+
+
 def is_unavailable(action):
-    return isinstance(action, Sub) and not action.radial and not action.items
+    return isinstance(action, Sub) and not isinstance(action, NodeList) and not action.radial and not action.items
 
 
 def _object_items():
@@ -172,9 +181,9 @@ def _object_items():
         DIVIDER,
         ("Make Live", _on_object("Modify/Make Live")),                # makeLive $object (:2619)
         DIVIDER,
-        ("DG Traversal", unavailable()),
-        ("Inputs", unavailable()),
-        ("Outputs", unavailable()),
+        ("DG Traversal", NodeList("TRAVERSAL")),
+        ("Inputs", NodeList("INPUTS")),
+        ("Outputs", NodeList("OUTPUTS")),
         ("Paint", Sub(items=[("Paint Skin Weights", ("paint.weight_paint_toggle", {}))])),
         ("Metadata", unavailable()),
         ("Actions", Sub(items=[                                          # createActionsMenuItems :1851-1854
@@ -226,6 +235,86 @@ def with_object_name(menu, name):
     """A copy of ``menu`` whose ``OBJECT_TITLE`` row shows ``name`` (Maya: "pCube1...")."""
     items = [(f"{name}...", e[1]) if e != DIVIDER and e[0] == OBJECT_TITLE else e for e in menu.items]
     if items == menu.items:
+        return menu
+    return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
+
+
+# --- DG Traversal / Inputs / Outputs (step 165, ) ------------------------
+# ``nodes`` (marking/rmb_nodes.py builds it, bpy-free here): {"object": name, "inputs": [(type label, owner, key)],
+# "outputs": [...], "history": [(node name, owner, key)], "future": [...]}; owner = the object holding the node,
+# key = its Attribute Editor tab key. Maya: Select / Enable / Disable All, the nodes by type nice name
+# (option box = showEditor = Attribute Editor), All Inputs... (detachHistoryTable); Maya:
+# Select <object>, then History / Future node names, each a submenu.
+
+TITLE_ROW = ("allset.mm_node_label", {})     # Maya's "History" / "Future" rows: plain items without a command
+
+
+def _pick(owner, key, replace=False):
+    return ("allset.mm_node", {"object": owner, "key": key, "replace": replace})
+
+
+def _node_lines(entries):
+    """(items, option labels) of node rows."""
+    return [(label, _pick(owner, key)) for label, owner, key in entries], {e[0] for e in entries}
+
+
+def _history_sub(nodes, future):
+    word = "Outputs" if future else "Inputs"
+    obj = nodes["object"]
+    entries = nodes["outputs" if future else "inputs"]
+    rows, options = _node_lines(entries)
+    every = ("allset.mm_node_all", {"object": obj, "future": future})
+    items = [(f"Select All {word}", (every[0], {**every[1], "action": 'SELECT'})),
+             (f"Enable All {word}", (every[0], {**every[1], "action": 'ENABLE'})),
+             (f"Disable All {word}", (every[0], {**every[1], "action": 'DISABLE'})),
+             DIVIDER, *rows]
+    if rows:
+        items.append(DIVIDER)
+    items.append((f"All {word}...", ("allset.mm_node_table", {"object": obj, "future": future})))
+    return Sub(items=items, options=options)
+
+
+def _traversal_node(name, owner, key, nodes):
+    """A node's own traversal submenu: Select <node>; the shape also lists its neighbours (one level)."""
+    items = [(f"Select {name}", _pick(owner, key, replace=True))]
+    if key == "S":
+        for title, entries in (("History", nodes["inputs_named"]), ("Future", nodes["future"][1:])):
+            if entries:
+                items += [DIVIDER, (title, TITLE_ROW)] + [(n, _pick(o, k, replace=True)) for n, o, k in entries]
+    return Sub(items=items)
+
+
+def _traversal_sub(nodes):
+    obj = nodes["object"]
+    items = [(f"Select {obj}", _pick(obj, "T", replace=True))]
+    for title, entries in (("History", nodes["history"]), ("Future", nodes["future"])):
+        if entries:
+            items += [DIVIDER, (title, TITLE_ROW)]
+            items += [(n, _traversal_node(n, o, k, nodes)) for n, o, k in entries]
+    return Sub(items=items)
+
+
+def fill(kind, nodes):
+    """The filled submenu of NodeList ``kind`` from ``nodes``."""
+    nodes = {"inputs": [], "outputs": [], "history": [], "future": [], "inputs_named": [], **nodes}
+    if kind == "TRAVERSAL":
+        return _traversal_sub(nodes)
+    return _history_sub(nodes, kind == "OUTPUTS")
+
+
+def with_nodes(menu, nodes):
+    """A copy of ``menu`` with its NodeList submenus filled from ``nodes`` (None: unchanged)."""
+    if not nodes:
+        return menu
+    items = []
+    changed = False
+    for e in menu.items:
+        if e != DIVIDER and isinstance(e[1], NodeList):
+            items.append((e[0], fill(e[1].kind, nodes)))
+            changed = True
+        else:
+            items.append(e)
+    if not changed:
         return menu
     return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
 

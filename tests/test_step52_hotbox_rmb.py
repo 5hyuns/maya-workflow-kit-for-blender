@@ -98,8 +98,9 @@ def test_rmb_list_is_maya_2022():
     actions = {e[0]: e[1] for e in menu.items if e != mm.DIVIDER}
     # a Sub or a Blender menu (step 136: UV Sets / Color Sets list the mesh's sets) — both show ▸
     assert all(isinstance(actions[n], mm.Sub) or actions[n][0] == "menu" for n in SUBMENUS), "submenus show ▸"
-    assert not mm.is_unavailable(actions["Paint"]) and mm.is_unavailable(actions["Inputs"])
-    assert modal.poll_action(actions["Inputs"]) is False
+    assert not mm.is_unavailable(actions["Paint"]) and mm.is_unavailable(actions["Metadata"])
+    assert modal.poll_action(actions["Metadata"]) is False
+    assert isinstance(actions["Inputs"], mm.NodeList) and modal.poll_action(actions["Inputs"])   # step 165
     assert actions["Make Live"] == ("allset.mm_object_item", {"item": "Modify/Make Live"})   # step 136
     assert "Select Similar" in menu.options, "Maya option box"
     assert mm.RMB_MESH.items[0][0] == mm.OBJECT_TITLE, "the shared definition keeps the placeholder"
