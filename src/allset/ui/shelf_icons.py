@@ -2314,10 +2314,14 @@ def draw(label, shelf=None, greyed=False, size=32, index=None):
     else:
         fn(cv)
     px = cv.result()
-    if greyed:
-        lum = px[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
-        px[..., :3] = (lum * 0.8)[..., None]
-        px[..., 3] *= GREYED_ALPHA
+    return grey(px) if greyed else px
+
+
+def grey(px):
+    """A greyed button's picture: grey and faded, like a disabled Maya control (in place; returns ``px``)."""
+    lum = px[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
+    px[..., :3] = (lum * 0.8)[..., None]
+    px[..., 3] *= GREYED_ALPHA
     return px
 
 
@@ -2336,14 +2340,29 @@ def texture(label, shelf=None, greyed=False, size=32, index=None):
     key = (label, shelf, greyed, size, index)
     tex = _textures.get(key)
     if tex is None:
-        import gpu
-        px = draw(label, shelf, greyed, size, index)[::-1].copy()   # GPU rows go bottom-up
-        # the palette is sRGB; the image editor draws in linear and converts for display
-        rgb = px[..., :3]
-        px[..., :3] = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
-        buf = gpu.types.Buffer('FLOAT', size * size * 4, px.ravel().tolist())
-        tex = _textures[key] = gpu.types.GPUTexture((size, size), format='RGBA32F', data=buf)
+        tex = _textures[key] = _upload(draw(label, shelf, greyed, size, index), size)
     return tex
+
+
+def texture_of(key, make, greyed=False, size=32):
+    """Cached GPU texture of another kit picture on the shelf (step 162: a menu item's drawing): ``make(n)`` gives
+    the (n, n, 4) picture, top row first; ``key`` names it."""
+    full = ("picture", key, greyed, size)
+    tex = _textures.get(full)
+    if tex is None:
+        px = np.array(make(size), dtype=np.float32)
+        tex = _textures[full] = _upload(grey(px) if greyed else px, size)
+    return tex
+
+
+def _upload(px, size):
+    import gpu
+    px = px[::-1].copy()   # GPU rows go bottom-up
+    # the palette is sRGB; the image editor draws in linear and converts for display
+    rgb = px[..., :3]
+    px[..., :3] = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    buf = gpu.types.Buffer('FLOAT', size * size * 4, px.ravel().tolist())
+    return gpu.types.GPUTexture((size, size), format='RGBA32F', data=buf)
 
 
 def clear():
