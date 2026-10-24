@@ -196,7 +196,10 @@ RMB_MESH = MarkingMenu(
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        "E": ("UV", ("allset.uv_component", {"mode": 'UV'})),   # opens the UV Editor (step 66)
+        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya-1006,
+        # ); both open the UV Editor (step 66).
+        "E": ("UV", Sub(radial={"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
+                                "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))})),
         "SW": ("Vertex Face", None),
         "SE": ("Multi", _comp('MULTI')),
         "NE": ("Object Mode", ("object.mode_set", {"mode": 'OBJECT'})),
