@@ -381,8 +381,6 @@ CATEGORIES = {
                                  "Mesh to Volume modifier."),
     "Create/Lights": ("World / volume shader", "Blender has no ambient or volume light: World lighting (ambient) or "
                       "a light with a volume shader."),
-    "Create/Curve Tools": ("Curve Draw tool", "Blender draws curves with the Draw tool in curve edit mode; EP and "
-                           "arc tools aren't built in."),
     "Create/Measure Tools": ("Measure tool", "Blender's Measure tool measures distances and angles; parameter and "
                              "arc length tools aren't built in."),
     "Create/Asset": ("Asset Browser", "Blender assets are data-blocks marked as assets (Asset Browser), not "

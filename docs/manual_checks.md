@@ -1030,3 +1030,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Select faces inside a shell, Ctrl+Shift+X → a new shell (Select > Shell picks only those faces); Delete → their UVs collapse to the 0,0 corner.
 - [ ] Keys in the UV Editor: 4 wireframe / 5 shaded, 6 hides and shows the texture image, 8 blue shell borders, 9 thick texture borders, Ctrl+1 shows only the selected UVs and again everything with the old selection.
 - [ ] Tools > Move UV Shell: a click on a UV picks its shell, dragging moves it; choosing another UV tool goes back to UV picking.
+
+## Step 156 — Curves tools
+
+- [ ] Create > Curve Tools > EP Curve Tool in persp: clicks on the grid add edit points (preview), the curve passes through every click after Enter; Backspace removes the last point, Esc cancels; holding X snaps to the grid.
+- [ ] CV Curve Tool: Enter with 3 clicks keeps waiting (degree 3 needs 4), after the 4th click Enter makes the curve; its CVs are the clicks.
+- [ ] Three Point Circular Arc: start, through, end clicks give a smooth arc through all three; Two Point Circular Arc gives a half circle on the ground.
+- [ ] Two curves meeting at a corner: Curves > Fillet makes a round corner curve (filletedCurve1) of radius 1 cm; Curves > Attach joins two curves into curveAattachedCurve1 (both originals kept); Curves > Cut on two crossing curves leaves four pieces.
+- [ ] Curves > Rebuild on a hand-drawn curve: 4 spans, the ends stay where they were; Rebuild ❒ opens Rebuild Curve Options with Number of spans 4.
+- [ ] Curve edit mode, select one CV, Curves > Detach: the curve splits near that CV into two objects.

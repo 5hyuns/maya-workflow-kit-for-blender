@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 156 (Curves 도구, backlog 154 #2) 완료 — `docs/steps/step_156.md`. CV / EP Curve Tool · 3 / 2 점 원호 = 클릭 도구
+  (`operators/curve_draw.py`), Maya 곡선 수학 `operators/curves_math.py` (EP · 원호 · Attach · Detach · Cut · Fillet · Straighten · Move
+  Seam 이 mayapy 정답 `research/maya/re/curves_156.json` 과 1e-6, Rebuild 는 모양 0.6 %), Blender 표현 `operators/curves_maya.py`
+  (Endpoint NURBS / cyclic / POLY / Bezier), 옵션 창 5 개. Curves 메뉴 16 → 21 / 36.
+  **바로 다음 할 일**: 157 Graph Editor 키 (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`).
+
 - Step 155 (UV Editor 셸 도구, backlog 154 #1) 완료 — `docs/steps/step_155.md`. Maya 셸 명령 12 개 (mayapy 정답
   `research/maya/re/uv_shells_155.json` 과 1e-4 / Orient 6e-4 일치, `operators/uv_shells.py`), Unfold 가 넓이 · UV 평균 유지, UV Editor
   키 4 5 6 8 9 Ctrl+1 Delete Ctrl+Shift+X, 셸 / 텍스처 테두리 그리기, Move UV Shell (`ui/uv_display.py`). UV Editor 메뉴 95 → 110 / 172.
