@@ -154,7 +154,7 @@ MAP = {
     "Edit/Keys/Bake Simulation": "nla.bake",
     # step 140: Maya factory Scale Keys = factor 1 (a no-op), so a plain click opens the window
     "Edit/Keys/Scale Keys": "allset.opt_scale_keys",
-    "Edit/Delete": "object.delete",
+    "Edit/Delete": "allset.delete",                              # step 164: with the hierarchy (dag_164.md)
     "Edit/Ungroup": "allset.ungroup",                            # step 34
     "Edit/Delete by Type/History": "allset.delete_history",
     "Edit/Delete by Type/Non-Deformer History": ("allset.delete_history", {"non_deformer": True}),
@@ -762,13 +762,14 @@ MAP.update({
     "Cache/Alembic Cache/Reference Alembic...": "wm.alembic_import",
     "Cache/Alembic Cache/Import Alembic...": "wm.alembic_import",
     "Cache/Alembic Cache/Export All to Alembic...": ("wm.alembic_export", {"selected": False}),
-    "Cache/Alembic Cache/Export Selection to Alembic...": ("wm.alembic_export", {"selected": True}),
+    # step 164: the kit's Export Selection dialog (Maya preset + the selection's descendants, dag_164.md)
+    "Cache/Alembic Cache/Export Selection to Alembic...": ("allset.file_export_selection", {"export_type": 'ABC'}),
     "Cache/Geometry Cache/Create New Cache": ("wm.alembic_export", {"selected": True}),
     "Cache/Geometry Cache/Import Cache...": "wm.alembic_import",
     "Cache/Geometry Cache/Export Cache": ("wm.alembic_export", {"selected": True}),
     "Cache/GPU Cache/Import...": "wm.alembic_import",
     "Cache/GPU Cache/Export All...": ("wm.alembic_export", {"selected": False}),
-    "Cache/GPU Cache/Export Selection...": ("wm.alembic_export", {"selected": True}),
+    "Cache/GPU Cache/Export Selection...": ("allset.file_export_selection", {"export_type": 'ABC'}),
     # Help -> Blender's documentation and community
     "Help/Search": _url(_MANUAL),
     "Help/Find Menu": "wm.search_menu",

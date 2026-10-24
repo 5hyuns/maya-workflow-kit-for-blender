@@ -1553,7 +1553,7 @@ class ALLSET_MT_cb_edit(bpy.types.Menu):
         lay.operator("allset.delete_attribute", text="Delete Attributes")
         lay.separator()
         lay.operator(ALLSET_OT_cb_make_lead.bl_idname, text="Select Node").only = True
-        lay.operator("object.delete", text="Delete Node").use_global = False
+        lay.operator("allset.delete", text="Delete Node")
         lay.operator("allset.delete_history", text="Delete History")
         lay.separator()
         lay.menu("ALLSET_MT_cb_settings", text="Settings")

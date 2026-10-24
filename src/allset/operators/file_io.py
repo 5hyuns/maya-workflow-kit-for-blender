@@ -574,7 +574,8 @@ def export_blend(context, path, selection):
     if not selection:
         bpy.ops.wm.save_as_mainfile(filepath=path, copy=True)
         return
-    obs = set(context.selected_objects)
+    from . import dag
+    obs = set(dag.hierarchy(context.selected_objects))     # Maya: the selection with its descendants (step 164)
     bpy.data.libraries.write(path, obs, fake_user=False, compress=False)
 
 
@@ -691,7 +692,14 @@ class _FileDialog:
                     return {'FINISHED'}
                 op, args = export_args(fmt, k, self.selection, self.maya_conversion)
                 args.update(_animation_args(fmt, self.animation))
-                write(context, fmt, path, op, args, self.maya_conversion, k)
+                # Maya Export Selection writes the selected nodes with everything below them (step 164,
+                # research/maya/re/dag_164.md); Blender's writers take only the selected objects
+                from . import dag
+                if self.selection:
+                    with dag.selected_hierarchy(context):
+                        write(context, fmt, path, op, args, self.maya_conversion, k)
+                else:
+                    write(context, fmt, path, op, args, self.maya_conversion, k)
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}

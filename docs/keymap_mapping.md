@@ -208,7 +208,7 @@
 | 6 | SIX | global | DisplayShadedAndTextured | 3D View: `allset.display_mode` (mode='TEXTURED') | 구현 |  | hotkeySetup.mel:343 |
 | 7 | SEVEN | global | DisplayLight | 3D View: `allset.display_mode` (mode='LIGHTS') | 구현 | Material Preview + 씬 라이트 (근사) | hotkeySetup.mel:344 |
 | Ctrl+Shift+% | Ctrl+Shift+FIVE | global | ToggleUseDefaultMaterial | 3D View: `allset.panel_set` (key='DEFAULT_MATERIAL') | 구현 | Shading > Use Default Material 과 같음 | hotkeySetup.mel:345 |
-| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | 3D View: `view3d.localview` (frame_selected=False) | 구현 | 로컬 뷰 (카메라 그대로), 다시 누르면 해제 | hotkeySetup.mel:346 |
+| Ctrl+1 | Ctrl+ONE | global | ToggleIsolateSelect | 3D View: `allset.isolate` | 구현 | 로컬 뷰 (카메라 그대로, 선택의 자손 포함 — step 164), 다시 누르면 해제 | hotkeySetup.mel:346 |
 | Alt+a | Alt+A | global | CycleDisplayMode | 3D View: `allset.cycle_display` | 구현 | X-ray 조인트 (아마추어 In Front) → 전부 → 메시만 (조인트·커브 숨김) 순환 | hotkeySetup.mel:347 |
 | Shift+I | Shift+I | global | SelectIsolate | 3D View: `view3d.localview` | IC 일치 | 로컬 뷰 토글 (프레이밍 포함) | hotkeySetup.mel:351 |
 | Space | SPACE | global | ShowHotbox / HideHotbox (release) | 3D View: `allset.hotbox` | 구현 | 홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V | hotkeySetup.mel:352 |
@@ -393,7 +393,7 @@
 | Shift+U | Shift+U | sculptMeshCache | SculptMeshUnfreezeAll | Sculpt: `paint.mask_flood_fill` (mode='VALUE', value=0.0) | 구현 | 마스크 지움 | hotkeySetup.mel:604 |
 | Ctrl+Shift+I | Ctrl+Shift+I | sculptMeshCache | SculptMeshInvertFreeze | Sculpt: `paint.mask_flood_fill` (mode='INVERT') | 구현 | 마스크 반전 | hotkeySetup.mel:605 |
 | Ctrl+0 | Ctrl+ZERO | sculptMeshCache | SetMeshFreezeTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Mask') | 구현 | Mask 브러시 | hotkeySetup.mel:607 |
-| Ctrl+1 | Ctrl+ONE | sculptMeshCache | SetMeshSculptTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Draw'); 3D View: `view3d.localview` (frame_selected=False) | 구현 | Draw (IC 의 Ctrl+0–5 multires 단계 대체) | hotkeySetup.mel:608 |
+| Ctrl+1 | Ctrl+ONE | sculptMeshCache | SetMeshSculptTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Draw'); 3D View: `allset.isolate` | 구현 | Draw (IC 의 Ctrl+0–5 multires 단계 대체) | hotkeySetup.mel:608 |
 | Ctrl+2 | Ctrl+TWO | sculptMeshCache | SetMeshSmoothTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Smooth') | 구현 | Smooth | hotkeySetup.mel:609 |
 | Ctrl+3 | Ctrl+THREE | sculptMeshCache | SetMeshRelaxTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Relax Slide') | 구현 | Relax Slide | hotkeySetup.mel:610 |
 | Ctrl+4 | Ctrl+FOUR | sculptMeshCache | SetMeshGrabTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Grab') | 구현 | Grab | hotkeySetup.mel:611 |
