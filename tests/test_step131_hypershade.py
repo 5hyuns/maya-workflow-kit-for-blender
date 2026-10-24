@@ -6,7 +6,7 @@ from importlib import import_module
 import bpy
 
 import kit
-from test_step67_render import Rec, _clear, _sphere
+from test_step67_render import Rec, _clear, _sphere, swatches
 
 hs = import_module(kit.MODULE + ".ui.hypershade")
 layout = import_module(kit.MODULE + ".ui.hypershade_layout")
@@ -67,11 +67,11 @@ def test_pane_content():
     greyed = [p.item for i, p in rec.ops() if i == "allset.menu_unavailable"]
     for t in hs.MAYA_ONLY_TABS:
         assert f"Hypershade/Browser/{t}" in greyed
-    assert {p.material for i, p in rec.ops() if i == "allset.hs_pick"} >= {blinn.name}
+    assert swatches(rec) >= {blinn.name}
     wm.allset_hs_filter = "blin"
     rec = Rec()
     hs.draw_browser(rec, bpy.context)
-    assert {p.material for i, p in rec.ops() if i == "allset.hs_pick"} == {blinn.name}
+    assert swatches(rec) == {blinn.name}
     wm.allset_hs_filter = ""
     # Create: Maya's categories -> Hypershade Create menu items (mapped ones run, the rest greyed)
     for key, label, _subs in hs.CREATE_CATEGORIES:

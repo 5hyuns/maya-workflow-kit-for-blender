@@ -398,6 +398,24 @@ class ALLSET_OT_hs_pick(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Browser material swatch = a toggle on this Material property: on = the Hypershade's current material; a click
+# picks it like ``allset.hs_pick`` (clicking the picked one keeps it picked). Nothing is stored (get / set).
+PICK_PROP = "allset_hs_pick"
+
+
+def _get_pick(mat):
+    try:
+        return current(bpy.context) == mat
+    except (AttributeError, ReferenceError):
+        return False
+
+
+def _set_pick(mat, _value):
+    context = bpy.context
+    show(context, mat, getattr(context, "space_data", None))
+    _redraw(context)
+
+
 class ALLSET_OT_hs_item(bpy.types.Operator):
     """Maya Hypershade Browser swatch: a light / camera = select it; a texture / utility = show it in its graph;
     a world = the scene's environment"""
@@ -696,6 +714,13 @@ def _item_button(layout, tab, key, label, icon, cur, list_row=False):
     picked = (tab in {'MATERIALS', 'SHADING_GROUPS'} and cur is not None and key == cur.name)
     if tab == 'MATERIALS':
         kw = {"icon_value": layout.icon(icon)} if list_row else {}
+        mat = bpy.data.materials.get(key)
+        if mat is not None and mat.library is None:
+            # a property button, not an operator one: the hovered property is the only button a keymap operator
+            # can read (``context.property``; ``button_operator`` and ``context_pointer_set`` don't reach keymap
+            # handlers, measured step 162) -- the MMB swatch drag (ui/hs_drag.py) needs to know the swatch
+            layout.prop(mat, PICK_PROP, text=label, toggle=True, **kw)
+            return
         op = layout.operator("allset.hs_pick", text=label, depress=picked, **kw)
         op.material = key
         return
@@ -1010,6 +1035,9 @@ def register():
     wm.allset_hs_create_filter = StringProperty(name="Search Node Types",
                                                  description="List the node types whose name has this text",
                                                  options={'SKIP_SAVE', 'TEXTEDIT_UPDATE'})
+    bpy.types.Material.allset_hs_pick = BoolProperty(
+        name="Pick Material", description=ALLSET_OT_hs_pick.__doc__, get=_get_pick, set=_set_pick,
+        options={'SKIP_SAVE'})
     for cls in classes:
         bpy.utils.register_class(cls)
     patch_header()
@@ -1030,3 +1058,4 @@ def unregister():
         bpy.utils.unregister_class(cls)
     for name in _WM_PROPS:
         delattr(bpy.types.WindowManager, name)
+    del bpy.types.Material.allset_hs_pick
