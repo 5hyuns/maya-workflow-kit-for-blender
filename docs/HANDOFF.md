@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 152 (렌더 · 그리드 기본, #101 — 이슈 새로 만듦) 완료 — `docs/steps/step_152.md`. 조명 없는 장면은 Maya 기본 조명으로
+  렌더 (킷 렌더 동안만 카메라 자식 Sun, Enable Default Light), Test Resolution / Batch Render 연결, Render Sequence ❒ / Batch Render ❒ =
+  Maya 창, Render Current Frame ❒ = Maya 경고, Display > Grid ❒ = Maya Grid Options (격자가 따름). 헤드리스 1394/1394, GUI 관련
+  3 파일 21/21. 남은 것: 킷 lambert1 이 Maya 보다 1.25 배 밝음 (Diffuse 0.8 없음).
+  **바로 다음 할 일**: 153 Blender 5.x (#90) (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
+
 - Step 151 (매니퓰레이터 · 링 · 문구, #98 #99 #100) 완료 — `docs/steps/step_151.md`. RMB 링 = Maya 측정 (R 55, 상자 21 px,
   글자 + 25 px, UV 하위 메뉴 화살표), Ctrl+E = Maya polyExtrudeFace 매니퓰레이터 (세 축 화살표 · 크기 상자 · 평면 · 가운데, Local
   Translate X/Y · Local Scale 을 mayapy 로 맞춤), 매니퓰레이터 툴팁 없음, 상태 줄의 Blender 문구 (keying set, effector, non-uniform scale,

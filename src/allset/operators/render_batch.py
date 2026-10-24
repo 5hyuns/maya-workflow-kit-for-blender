@@ -160,8 +160,10 @@ def frame_args(scene):
     return ["-f", str(scene.frame_current)]
 
 
-def command(copy_path, out, frames):
-    return [bpy.app.binary_path, "-b", copy_path, "-o", out, *frames]
+def command(copy_path, out, frames, threads=0):
+    """The background Blender command; ``threads`` > 0 = Maya's "Number of processors to use" (Blender ``-t``)."""
+    extra = ["-t", str(threads)] if threads > 0 else []
+    return [bpy.app.binary_path, "-b", copy_path, *extra, "-o", out, *frames]
 
 
 def write_copy(context, scene):
@@ -243,6 +245,9 @@ class ALLSET_OT_batch_render(bpy.types.Operator):
     bl_label = "Batch Render"
     bl_options = {'REGISTER'}
 
+    threads: bpy.props.IntProperty(name="Processors", default=0, min=0, options={'SKIP_SAVE', 'HIDDEN'},
+                                   description="Number of processors to use (0 = all, Maya Batch Render Frame)")
+
     def execute(self, context):
         import time
         if running():
@@ -256,7 +261,7 @@ class ALLSET_OT_batch_render(bpy.types.Operator):
         except (RuntimeError, OSError) as ex:
             self.report({'ERROR'}, f"Batch Render: the scene copy could not be saved ({ex})")
             return {'CANCELLED'}
-        cmd = command(copy_path, out, frame_args(scene))
+        cmd = command(copy_path, out, frame_args(scene), self.threads)
         log_path = os.path.splitext(copy_path)[0] + ".log"
         try:
             proc = start(cmd, log_path)

@@ -24,7 +24,7 @@ scene has. Measured (tmp/probe137): an unlinked ``scene.camera`` renders and fol
 """
 
 import bpy
-from bpy.props import BoolProperty
+from bpy.props import BoolProperty, StringProperty
 
 from . import framing, units
 from .key_batch import VIEW_SENSOR, camera_matrix
@@ -108,12 +108,32 @@ def render_camera(context):
     return ob
 
 
+def _alternate_output(scene, folder):
+    """Render into ``folder`` for this render only (Maya Alternate Output File Location): the old output path comes
+    back when the render completes or is cancelled."""
+    import os
+    old = scene.render.filepath
+    scene.render.filepath = os.path.join(bpy.path.abspath(folder), bpy.path.basename(old) or "")
+
+    def restore(*_args):
+        scene.render.filepath = old
+        for lst in (bpy.app.handlers.render_complete, bpy.app.handlers.render_cancel):
+            if restore in lst:
+                lst.remove(restore)
+    bpy.app.handlers.render_complete.append(restore)
+    bpy.app.handlers.render_cancel.append(restore)
+
+
 class _Render:
     """Shared by the two render operators (a registered operator class can't be subclassed into another one)."""
     ANIMATION = False
     bl_options = {'REGISTER'}
 
     write_still: BoolProperty(name="Write Image", default=False, options={'SKIP_SAVE', 'HIDDEN'})
+    # Render Sequence Options (step 152): Current Camera (empty = persp / the view's camera) and Alternate Output
+    # File Location (a folder used for this render only)
+    camera: StringProperty(name="Camera", default="", options={'SKIP_SAVE', 'HIDDEN'})
+    output: StringProperty(name="Output", default="", options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
@@ -121,7 +141,13 @@ class _Render:
 
     def _render(self, context, how):
         from . import default_light, render_batch
-        ob = render_camera(context)
+        picked = bpy.data.objects.get(self.camera) if self.camera else None
+        if picked is not None and picked.type == 'CAMERA':
+            context.scene.camera = ob = picked
+        else:
+            ob = render_camera(context)
+        if self.output:
+            _alternate_output(context.scene, self.output)
         props = {"animation": self.ANIMATION}
         if self.write_still and not self.ANIMATION:
             props["write_still"] = True

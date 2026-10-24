@@ -1012,3 +1012,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Render Settings > Common > Render Options > Enable Default Light off → Render Current Frame renders the lightless scene dark (world light only); on again → lit. Create > Lights > any light → only that light lights the render.
 - [ ] Render > Test Resolution: the submenu shows Camera Panel / Render Settings (960x540) / 10% … 150% Settings with a check on Render Settings; pick 50% → the next Render Current Frame is 480 x 270, Render Settings still says 960 x 540; Camera Panel → the render has the viewport's size.
 - [ ] Render > Batch Render on a saved and on an untitled scene: the Help Line reports the output folder, Blender stays usable while a background Blender renders; Render > Show Batch Render opens the image in a new Image Editor window; Batch Render again while one runs warns; Cancel Batch Render on a long sequence stops it.
+
+## Step 152 — Render option windows (main)
+
+- [ ] Render > Render Sequence ❒: "Render Sequence (Current Frame)" with Current Camera (persp + scene cameras) and Alternate Output File Location; pick a folder, Render Sequence → images land there and the Render Settings output path is unchanged afterwards.
+- [ ] Render > Batch Render ❒: "Batch Render Frame"; untick Use all available processors, 2 processors → the background Blender runs with `-t 2` (Task Manager).
+- [ ] Render > Render Current Frame ❒: no window, the Help Line warns 'Renderer "EEVEE" does not provide render options.'

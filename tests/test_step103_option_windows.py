@@ -71,8 +71,10 @@ def test_every_mapped_option_box_opens_something():
 def test_windows_registered_with_maya_titles_and_buttons():
     assert len(ow.WINDOWS) >= 24
     for w in ow.WINDOWS:
-        # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140)
-        assert w.title.endswith(("Options", "Tool")) and w.action, w.key
+        # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140);
+        # two Render windows carry Maya's own titles (step 152, research/maya/re/render_grid_152.md)
+        assert (w.title.endswith(("Options", "Tool"))
+                or w.title in ("Render Sequence (Current Frame)", "Batch Render Frame")) and w.action, w.key
         rna = getattr(bpy.ops.allset, "opt_" + w.key).get_rna_type()
         for f in w.fields:
             assert f.name in rna.properties, (w.key, f.name)
