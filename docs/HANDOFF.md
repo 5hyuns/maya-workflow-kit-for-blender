@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 167 (Shelf double-click and overflow, backlog_164 #4) 완료 — `docs/steps/step_167.md`. Maya 측정
+  `research/maya/re/shelf_overflow_167.md` (셸프는 줄로 넘김 + 12 px 세로 스크롤 막대, 휠 = 한 줄). 더블클릭 = 버튼의 옵션
+  상자 (`allset.menu_option_box`, 첫 클릭은 한 번 실행), 셸프 줄 넘김 + ▲▼ + 휠 (`ui/shelf.py`), 셸프 줄의 navigate gizmo 끔
+  (템플릿 재생성). 헤드리스 1554 / 1554, GUI step167 9/9 + 관련 5 파일 40/40.
+  **바로 다음 할 일**: 168 Modify menu and Smooth Mesh Preview to Polygons (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json` 5 번째 항목), 그 뒤 169 Deform, 170 3D View 밖 선택 수정키.
+
 - Step 166 (Menu consistency, backlog_164 #3) 완료 — `docs/steps/step_166.md`. `tools/menu_consistency.py` (이름 + Maya 명령이
   같은데 한쪽만 회색인 항목: 10 → 0), `menu_map.TWINS`, Dope Sheet Curves 명령 = Graph Editor 명령 (`allset.dope_graph_op`),
   Dope Sheet Auto Frame (`dope_auto_frame`), Select / Delete All by Type > IK Handles / Clusters (`operators/by_type.py`).

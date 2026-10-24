@@ -1103,3 +1103,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Dope Sheet View > Auto Frame on: selecting another animated object frames the Dope Sheet.
 - [ ] Select > All by Type > IK Handles / Clusters selects the kit's ikHandle / clusterHandle empties; Edit > Delete All by Type > IK Handles / Clusters removes them with their constraints / hooks.
 - [ ] UV Editor Tools > Unfold / Cut / Sew / Pin act on the selection like Modify > Unfold, Cut/Sew > Cut / Sew, Edit > Pin Selection.
+
+## Step 167 — Shelf double-click and overflow
+
+- [ ] Double-click Polygon Cube on the shelf: one cube, then Polygon Cube Options opens; double-click a "run + settings" button (e.g. Extrude): one result with Adjust Last Operation.
+- [ ] Window narrower than the Poly Modeling shelf: the shelf shows one row with ▲ / ▼ at the right; the wheel over the icons and the arrows move one row; the last buttons are reachable.
+- [ ] Buttons added with Ctrl+Shift+click past the end of a long shelf are reachable by scrolling.

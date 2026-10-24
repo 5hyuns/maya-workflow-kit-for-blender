@@ -254,6 +254,7 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
     shelf: StringProperty()
     index: IntProperty()
     option: BoolProperty(options={'SKIP_SAVE'})
+    double: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})     # the option box of a double-click (first click ran)
 
     @classmethod
     def description(cls, context, props):
@@ -270,23 +271,18 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         now = time.monotonic()
         last = _last_click.get("key"), _last_click.get("time", -1.0)
         _last_click.update(key=key, time=now)
-        if last[0] == key and now - last[1] <= DOUBLE_CLICK_S and event.value != 'DOUBLE_CLICK':
-            # Second click on the same icon (the gizmo sees two presses, not a double click):
-            # the first one ran the command, open its options.
+        limit = getattr(context.preferences.inputs, "mouse_double_click_time", DOUBLE_CLICK_S * 1000) / 1000.0
+        second = last[0] == key and now - last[1] <= limit
+        if event.value == 'DOUBLE_CLICK' or second:
+            # Maya doubleClickCommand (research/maya/shelves.md:14-16) = the item's option box; the first click
+            # already ran the command once (step 167: was screen.redo_last, which shows nothing since shelf runs
+            # stopped being registered in step 147). The gizmo may see two presses instead of a double click.
             _last_click.clear()
-            try:
-                return bpy.ops.screen.redo_last('INVOKE_DEFAULT')
-            except RuntimeError:
-                return {'CANCELLED'}
-        if event.value == 'DOUBLE_CLICK' or event.ctrl:
-            # The first click already ran the command: open its options (Maya
-            # doubleClickCommand = "...Options", shelves.md:14-16).
-            if event.value == 'DOUBLE_CLICK':
-                try:
-                    return bpy.ops.screen.redo_last('INVOKE_DEFAULT')
-                except RuntimeError:
-                    return {'CANCELLED'}
             self.option = True
+            self.double = True
+            return self.execute(context)
+        if event.ctrl:
+            self.option = True          # Ctrl+click: the option box without running first
         return self.execute(context)
 
     def execute(self, context):
@@ -294,6 +290,8 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         if b is not None and b.get("menu"):
             return self._run_menu(context, b)
         if b is not None:
+            if self.option:
+                return {'CANCELLED'}     # a script button has no double-click command (Maya: nothing more runs)
             ok, msg = run_script(context, b["label"], b["script"])
             if not ok:
                 self.report({'ERROR'}, msg)
@@ -313,7 +311,9 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
             if i == self.index:
                 from ..marking.modal import run_action
                 try:
-                    run_action(context, action, self.option)
+                    if self.option:
+                        return option_box(context, self.shelf, label, action, self.double)
+                    run_action(context, action, False)
                 except RuntimeError as ex:
                     self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
                     return {'CANCELLED'}
@@ -334,6 +334,8 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
             return {'CANCELLED'}
         try:
             if self.option:                 # the menu's option box, as Shift / Ctrl+click in the menu
+                if self.double:
+                    take_back_run(path)
                 bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=path)
             else:
                 run_action(context, ("item", path))
@@ -341,6 +343,50 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+_by_action = {}
+
+
+def menu_path_of(shelf, label, action):
+    """The Maya main-menu item a factory button runs: ``shelf_map.MENU``, else the first main menu item mapped to the
+    same action (Create > Polygon Primitives > Cube for the Cube button), else None."""
+    path = shelf_map.menu_path(shelf, label)
+    if path:
+        return path
+    if not _by_action:
+        from . import menu_map, menu_data
+        main = {m[0] for m in menu_data.MENUS.values()}
+        for p, a in menu_map.MAP.items():
+            if p.split("/", 1)[0] in main:
+                _by_action.setdefault(repr(a), p)
+    return _by_action.get(repr(action))
+
+
+def take_back_run(path):
+    """Undo the first click of a double-click when the option box runs the command again with its settings
+    ("redo" kind: run + Adjust Last Operation); option windows / tools / dialogs don't run it again."""
+    from . import menu_sets
+    if (menu_sets.option_kind(path) if path else "redo") == "redo":
+        try:
+            bpy.ops.ed.undo()
+        except RuntimeError:
+            pass
+
+
+def option_box(context, shelf, label, action, double=False):
+    """A factory button's option box = its menu item's (``allset.menu_option_box``, like Shift / Ctrl+click in the
+    menu): an option window, the tool + Tool Settings, or run + Adjust Last Operation. After a double-click the first
+    click already ran the command, so a "run + settings" box takes that run back first (one result, like Maya)."""
+    from ..marking.modal import run_action
+    from . import menu_sets
+    path = menu_path_of(shelf, label, action)
+    if double:
+        take_back_run(path)
+    if path:
+        return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=path)
+    run_action(context, action, True)
+    return {'FINISHED'}
 
 
 class ALLSET_OT_shelf_select(bpy.types.Operator):
@@ -803,15 +849,91 @@ def _gaps():
     return () if cur.startswith(USER_PREFIX) else shelf_data.GAPS.get(cur, ())
 
 
-def icon_rect(region, slot, scale):
+# Step 167: Maya's shelf is a flow of rows one row high — buttons that don't fit wrap to the next row, a 12 px
+# vertical scroll bar with up / down arrows sits at the right, the wheel over the icons moves one row
+# (research/maya/re/shelf_overflow_167.md: shelf167/_shelf167.json, scroll bar page = single row 35 px, wheel = 1 row).
+SCROLL_PX = 12
+SCROLL_RIGHT_PX = 16     # gap between the scroll bar and the area's right edge
+_row = {}      # shelf id -> first row shown
+
+
+def row_layout(width, count, scale, gaps=(), left=STRIP_LEFT_PX):
+    """[(row, x)] for ``count`` slots in a row ``width`` px wide (scroll bar excluded): Maya's flow — a slot that
+    would cross the right edge starts the next row; a separator gap before it counts only inside a row."""
+    out = []
+    x0 = left * scale
+    limit = width - (SCROLL_PX + SCROLL_RIGHT_PX + 2) * scale
+    row, x = 0, x0
+    gaps = set(gaps)
+    for slot in range(count):
+        if slot in gaps and x > x0:
+            x += SEP_PX * scale
+        if x > x0 and x + ICON_PX * scale > limit:
+            row, x = row + 1, x0
+        out.append((row, x))
+        x += PITCH_PX * scale
+    return out
+
+
+def _layout(region, scale):
     space = _space_of(region)
     tabs = tabs_in_window(space)
+    cur, buttons = icon_buttons(bpy.context)
+    lay = row_layout(getattr(region, "width", 10 ** 6), len(buttons), scale, _gaps() if tabs else (),
+                     STRIP_LEFT_PX if tabs else LEFT_PX)
+    return cur, tabs, lay
+
+
+def rows_of(region, scale):
+    """(rows, first row shown) of the current shelf in ``region``."""
+    cur, _tabs, lay = _layout(region, scale)
+    rows = (lay[-1][0] + 1) if lay else 1
+    first = max(0, min(_row.get(cur, 0), rows - 1))
+    return rows, first
+
+
+def scroll_shelf(context, delta):
+    """Move the current shelf ``delta`` rows (clamped); True when it moved."""
+    region = context.region
+    cur = current(context)
+    rows, first = rows_of(region, context.preferences.system.ui_scale or 1.0)
+    new = max(0, min(first + delta, rows - 1))
+    _row[cur] = new
+    region.tag_redraw()
+    return new != first
+
+
+def icon_rect(region, slot, scale):
+    """(x, y, size) of ``slot`` in region pixels; a slot on another row than the one shown is placed past the right
+    edge (not drawn, not picked)."""
+    cur, tabs, lay = _layout(region, scale)
     top = round(TAB_PX * scale) if tabs else 0
     size = min(ICON_PX * scale, region.height - top - 4)
-    left = STRIP_LEFT_PX if tabs else LEFT_PX
-    seps = sum(1 for g in _gaps() if g <= slot) if tabs else 0
-    x = left * scale + slot * PITCH_PX * scale + seps * SEP_PX * scale
-    return x, (region.height - top - size) / 2, size
+    y = (region.height - top - size) / 2
+    off = getattr(region, "width", 0) + 10 ** 6
+    if slot >= len(lay):           # past the last button (tests ask for empty slots)
+        return off, y, size
+    row, x = lay[slot]
+    rows = lay[-1][0] + 1
+    if row != max(0, min(_row.get(cur, 0), rows - 1)):
+        return off, y, size
+    return x, y, size
+
+
+def scroll_rects(region, scale):
+    """(up, down) rects (x0, y0, x1, y1) of the scroll bar's arrows, or () when every button fits in one row."""
+    rows, _first = rows_of(region, scale)
+    if rows <= 1:
+        return ()
+    tabs = tabs_in_window(_space_of(region))
+    top = round(TAB_PX * scale) if tabs else 0
+    # off the area's top-right corner: Blender's split / join action zone there takes the click before any region
+    # (measured with --debug-handlers: only "Screen Editing" saw the press)
+    x1 = region.width - round(SCROLL_RIGHT_PX * scale)
+    x0 = x1 - round(SCROLL_PX * scale)
+    y0, y1 = round(2 * scale), region.height - top - round(2 * scale)
+    mid = (y0 + y1) // 2
+    return ((x0, mid, x1, y1), (x0, y0, x1, mid))
 
 
 def _draw_rect(x, y, w, h, colour, texture=None):
@@ -994,7 +1116,7 @@ def draw_row():
     for slot, (index, label, colour_key, mapped) in enumerate(buttons[:SLOTS]):
         x, y, size = icon_rect(region, slot, s)
         if x > region.width:
-            break
+            continue                  # another row (step 167)
         shown = slot + 1
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
@@ -1010,6 +1132,37 @@ def draw_row():
         for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
             _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, dark)
             _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, light)
+    _draw_scroll_bar(region, s, base)
+
+
+def _triangle(cx, cy, half, up, colour):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    pts = ((cx - half, cy - half / 2), (cx + half, cy - half / 2), (cx, cy + half / 2)) if up else \
+        ((cx - half, cy + half / 2), (cx + half, cy + half / 2), (cx, cy - half / 2))
+    sh = gpu.shader.from_builtin('UNIFORM_COLOR')
+    batch = batch_for_shader(sh, 'TRIS', {"pos": pts})
+    gpu.state.blend_set('ALPHA')
+    sh.uniform_float("color", colour)
+    batch.draw(sh)
+    gpu.state.blend_set('NONE')
+
+
+def _draw_scroll_bar(region, s, base):
+    """Maya's shelf scroll bar (12 px, ▲ / ▼, shelf167/narrow_1000.png) while the shelf has more than one row; an
+    arrow is dimmed at its end."""
+    rects = scroll_rects(region, s)
+    if not rects:
+        return
+    rows, first = rows_of(region, s)
+    up, down = rects
+    _draw_rect(up[0], down[1], up[2] - up[0], up[3] - down[1], tuple(max(0.0, c - 0.06) for c in base[:3]) + (1.0,))
+    hover = _hover.get(region.as_pointer())
+    for i, (r, on) in enumerate(((up, first > 0), (down, first < rows - 1))):
+        if hover == ("scroll", i) and on:
+            _draw_rect(r[0], r[1], r[2] - r[0], r[3] - r[1], _hover_colour(base, True))
+        grey = 0.75 if on else 0.4
+        _triangle((r[0] + r[2]) / 2, (r[1] + r[3]) / 2, 3.5 * s, i == 0, (grey, grey, grey, 1.0))
 
 
 def _user_texture(shelf_id, index, label, greyed, size):
@@ -1130,6 +1283,57 @@ class ALLSET_GT_shelf_icon(bpy.types.Gizmo):
         return -1
 
 
+class ALLSET_GT_shelf_scroll(bpy.types.Gizmo):
+    """The shelf scroll bar's up (slot 0) / down (slot 1) arrow: picking only, drawn by ``draw_row``. Gizmos come
+    before the image editor's tool keymap (its Sample tool took plain clicks, measured with --debug-handlers)."""
+    bl_idname = "ALLSET_GT_shelf_scroll"
+    __slots__ = ("slot",)
+
+    def setup(self):
+        self.slot = 0
+
+    def draw(self, context):
+        pass
+
+    def test_select(self, context, location):
+        key = context.region.as_pointer()
+        rects = scroll_rects(context.region, context.preferences.system.ui_scale or 1.0)
+        r = rects[self.slot] if rects else None
+        tag = ("scroll", self.slot)
+        if r is not None and r[0] <= location[0] <= r[2] and r[1] <= location[1] <= r[3]:
+            if _hover.get(key) != tag:
+                _hover[key] = tag
+                context.region.tag_redraw()
+            return 0
+        if _hover.get(key) == tag:
+            _hover.pop(key, None)
+            context.region.tag_redraw()
+        return -1
+
+
+class ALLSET_OT_shelf_scroll(bpy.types.Operator):
+    """Scroll the shelf one row (Maya: the shelf's scroll bar / the mouse wheel over the icons)"""
+    bl_idname = "allset.shelf_scroll"
+    bl_label = "Scroll Shelf"
+    bl_options = {'INTERNAL'}
+
+    delta: IntProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        if not is_shelf_row(getattr(context, "space_data", None)) or context.region is None \
+                or context.region.type != 'WINDOW':
+            return {'PASS_THROUGH'}        # the items sit first in "Image": any other image editor zooms / samples
+        if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'} and (event.ctrl or event.shift or event.alt):
+            return {'PASS_THROUGH'}
+        return self.execute(context)
+
+    def execute(self, context):
+        if context.region is None:
+            return {'CANCELLED'}
+        scroll_shelf(context, self.delta)
+        return {'FINISHED'}
+
+
 SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 43)
 
 
@@ -1153,6 +1357,10 @@ class ALLSET_GGT_shelf(bpy.types.GizmoGroup):
             gz = self.gizmos.new(ALLSET_GT_shelf_tab.bl_idname)
             gz.slot = slot
             gz.target_set_operator(ALLSET_OT_shelf_tab.bl_idname).slot = slot
+        for slot, delta in ((0, -1), (1, 1)):          # step 167: the scroll bar's arrows
+            gz = self.gizmos.new(ALLSET_GT_shelf_scroll.bl_idname)
+            gz.slot = slot
+            gz.target_set_operator(ALLSET_OT_shelf_scroll.bl_idname).delta = delta
 
 
 def _draw_image_header(self, context):
@@ -1194,10 +1402,35 @@ classes = (ALLSET_OT_shelf_button, ALLSET_OT_shelf_select, ALLSET_OT_shelf_step,
            ALLSET_OT_shelf_edit_button, ALLSET_OT_shelf_remove_button,
            ALLSET_OT_shelf_add_last_command,
            ALLSET_OT_shelf_strip_toggle, ALLSET_MT_shelf_tabs, ALLSET_MT_shelf_settings,
-           ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab, ALLSET_GGT_shelf)
+           ALLSET_OT_shelf_slot, ALLSET_GT_shelf_icon, ALLSET_GT_shelf_tab, ALLSET_OT_shelf_tab,
+           ALLSET_GT_shelf_scroll, ALLSET_OT_shelf_scroll, ALLSET_GGT_shelf)
 
 
 _handle = []
+
+
+def settle_rows():
+    """Shelf rows of files made before step 167: switch the image navigation gizmo off (it sat, undrawn, under the
+    scroll bar and took its clicks). Run from a timer / load_post, never from drawing."""
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            space = area.spaces.active
+            if area.type == 'IMAGE_EDITOR' and is_shelf_row(space) and space.show_gizmo_navigate:
+                space.show_gizmo_navigate = False
+
+
+def _settle_later():
+    try:
+        settle_rows()
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
+    return None
+
+
+@bpy.app.handlers.persistent
+def _on_load(_dummy):
+    if not bpy.app.timers.is_registered(_settle_later):
+        bpy.app.timers.register(_settle_later, first_interval=0.1)
 
 
 def register():
@@ -1207,9 +1440,15 @@ def register():
     _handle.append((bpy.types.SpaceImageEditor.draw_handler_add(draw_row, (), 'WINDOW', 'POST_PIXEL'), 'WINDOW'))
     _handle.append((bpy.types.SpaceImageEditor.draw_handler_add(draw_tab_row, (), 'HEADER', 'POST_PIXEL'),
                     'HEADER'))
+    bpy.app.handlers.load_post.append(_on_load)
+    bpy.app.timers.register(_settle_later, first_interval=0.1)
 
 
 def unregister():
+    if _on_load in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_on_load)
+    if bpy.app.timers.is_registered(_settle_later):
+        bpy.app.timers.unregister(_settle_later)
     while _handle:
         bpy.types.SpaceImageEditor.draw_handler_remove(*_handle.pop())
     shelf_icons.clear()
@@ -1218,6 +1457,8 @@ def unregister():
     _tab_rects.clear()
     _gear_tex.clear()
     _last_click.clear()
+    _by_action.clear()
+    _row.clear()
     unpatch_image_headers()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

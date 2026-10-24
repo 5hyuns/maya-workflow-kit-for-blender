@@ -27,7 +27,7 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag")
+                      "allset.hs_swatch_drag", "allset.shelf_scroll")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1035,6 +1035,14 @@ def patch_graph_outliner(kd):
              shadows=("View2D", "View2D Buttons List"))
 
 
+def patch_shelf_scroll(kd):
+    # step 167: Maya's wheel over the shelf icons scrolls one row (research/maya/re/shelf_overflow_167.md); the shelf
+    # row is an Image Editor, so the items sit first in "Image" and pass through in every other image editor
+    for wheel, delta in (("WHEELUPMOUSE", -1), ("WHEELDOWNMOUSE", 1)):
+        _add(kd, "Image", "allset.shelf_scroll", make_event(wheel), {"delta": delta}, first=True,
+             shadows=("Image", "View2D"))     # both pass through outside their own region
+
+
 # --- 48. Script Editor execute (docs/steps/step_105.md 「계획」 3) ---------------------------------------------------
 # Maya: Ctrl+Enter executes (input kept), numpad Enter executes the whole tab and clears it. Only in the kit's Script
 # Editor window (ui/script_editor.py); elsewhere the Text Editor's own keys stay (PASS_THROUGH).
@@ -1211,7 +1219,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
-           patch_graph_outliner, patch_script_editor, patch_key_batch_3,
+           patch_graph_outliner, patch_shelf_scroll, patch_script_editor, patch_key_batch_3,
            patch_menu_shortcuts)
 
 
