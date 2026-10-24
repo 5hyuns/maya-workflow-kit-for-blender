@@ -16,6 +16,10 @@ Per-view state: a 3D View uses the Maya grid when Blender's floor and ortho grid
 ``overlay.grid_lines`` (not used by Blender 4.x, not in its UI) is 0. The grid unit is one Maya length
 (``units.maya_unit``, ), which ``units.grid_scale`` also makes Blender's finest perspective
 grid step, so X-hold grid snapping lands on these lines.
+
+Step 152 (#101): Display > Grid ❒ = Maya's Grid Options (operators/option_windows_display.py): length and width,
+grid lines every, subdivisions, the three colours and the Display check boxes change what is drawn here
+(``settings()``; Maya's factory values = the constants below).
 """
 
 import time
@@ -42,26 +46,54 @@ _times = []
 
 # --- maths (no bpy) ----------------------------------------------------------------------
 
+MAX_LINES = 2000          # per direction and side: a tiny spacing must not build a huge batch
+
+
 def segments(size=SIZE, spacing=SPACING, divisions=DIVISIONS):
     """Grid lines in Maya units on a plane (u, v): {"minor"|"major"|"axis": [((u0, v0), (u1, v1)), ...]}.
 
-    One line every ``spacing / divisions`` unit from -size to +size in both directions; lines at
-    multiples of ``spacing`` are major, the two through the origin are the axes.
+    One line every ``spacing / divisions`` unit from -size to +size in both directions (Maya Grid Options: Length
+    and width, Grid lines every, Subdivisions); every ``divisions``-th line is major, the two through the origin
+    are the axes. Lines stop at ±size; a last step that doesn't fit is left out.
     """
-    step = spacing / divisions
-    n = int(round(size / step))
+    size = max(float(size), 1e-6)
+    divisions = max(1, int(divisions))
+    step = max(float(spacing), 1e-6) / divisions
+    n = min(int(size / step + 1e-9), MAX_LINES)
     out = {"minor": [], "major": [], "axis": []}
     for i in range(-n, n + 1):
         t = i * step
         if i == 0:
             kind = "axis"
-        elif abs(t / spacing - round(t / spacing)) < 1e-9:
+        elif i % divisions == 0:
             kind = "major"
         else:
             kind = "minor"
         out[kind].append(((t, -size), (t, size)))     # along v
         out[kind].append(((-size, t), (size, t)))     # along u
     return out
+
+
+def styles(opts):
+    """What each kind of line is drawn as for Maya Grid Options ``opts`` (``settings()``): {kind: (width px, rgb)}
+    for the kinds shown. Axes off = the origin lines are ordinary grid lines; Thicker line for axes off = axes as
+    thin as subdivision lines (step 152, delegated: not checked in Maya)."""
+    out = {}
+    if opts["show_divisions"]:
+        out["minor"] = (WIDTHS[0], tuple(opts["division_color"]))
+    if opts["show_lines"]:
+        out["major"] = (WIDTHS[1], tuple(opts["line_color"]))
+    if opts["show_axes"]:
+        out["axis"] = (WIDTHS[2] if opts["thick_axes"] else WIDTHS[0], tuple(opts["axis_color"]))
+    elif opts["show_lines"]:
+        out["axis"] = out["major"]
+    return out
+
+
+def settings():
+    """The applied Maya Grid Options (Maya units, factory values until the window applied others)."""
+    from ..operators import option_windows_display
+    return option_windows_display.grid_settings()
 
 
 # plane -> how (u, v) map to Blender (x, y, z). Maya is Y-up: its ground XZ is Blender's XY.
@@ -104,10 +136,10 @@ def project(matrix, point, width, height):
     return (width / 2 + width / 2 * v[0] / v[3], height / 2 + height / 2 * v[1] / v[3])
 
 
-def corners(plane="FLOOR", unit=1.0, size=SIZE):
+def corners(plane="FLOOR", unit=1.0, size=None):
     """The grid's four corners in Blender units (for the projection checks)."""
     f = PLANES[plane]
-    s = size * unit
+    s = (SIZE if size is None else size) * unit
     return [f(-s, -s), f(s, -s), f(s, s), f(-s, s)]
 
 
@@ -141,7 +173,7 @@ def toggle(space):
 
 
 class ALLSET_OT_toggle_grid(bpy.types.Operator):
-    """Show or hide the grid in this view (Maya grid: 12 units, a thicker line every 5)"""
+    """Show or hide the grid in this view (Maya grid: Display > Grid options set its size, lines and colours)"""
     bl_idname = "allset.toggle_grid"
     bl_label = "Grid"
     bl_options = {'REGISTER'}
@@ -161,8 +193,9 @@ class ALLSET_OT_toggle_grid(bpy.types.Operator):
 # --- drawing -------------------------------------------------------------------------------
 
 def line_colour():
-    """RGBA of every grid line (display space, drawn as is like Blender's overlay colours)."""
-    return (*LINE_RGB, 1.0)
+    """RGBA of the grid lines (Grid lines & numbers colour; display space, drawn as is like Blender's overlay
+    colours)."""
+    return (*settings()["line_color"], 1.0)
 
 
 def frame_ms():
@@ -170,15 +203,17 @@ def frame_ms():
     return sum(_times) / len(_times) * 1000.0 if _times else 0.0
 
 
-def _batch_set(plane, unit):
-    key = (plane, round(unit, 9))
+def _batch_set(plane, unit, opts):
+    key = (plane, round(unit, 9), float(opts["size"]), float(opts["spacing"]), int(opts["divisions"]))
     if key not in _batches:
         import gpu
         from gpu_extras.batch import batch_for_shader
+        if len(_batches) > 16:
+            _batches.clear()
         shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
-        segs = segments()
-        _batches[key] = (shader, [batch_for_shader(shader, 'LINES', {"pos": plane_points(segs[k], plane, unit)})
-                                  for k in ("minor", "major", "axis")])
+        segs = segments(opts["size"], opts["spacing"], opts["divisions"])
+        _batches[key] = (shader, {k: batch_for_shader(shader, 'LINES', {"pos": plane_points(segs[k], plane, unit)})
+                                  for k in ("minor", "major", "axis") if segs[k]})
     return _batches[key]
 
 
@@ -199,17 +234,20 @@ def _draw():
     plane = _view_plane(rv3d)
     if plane is None:
         return
-    shader, batches = _batch_set(plane, units.maya_unit(context.scene))
+    opts = settings()
+    shader, batches = _batch_set(plane, units.maya_unit(context.scene), opts)
     gpu.state.depth_test_set('LESS_EQUAL')
     gpu.state.depth_mask_set(False)
     gpu.state.blend_set('ALPHA')
     shader.bind()
     shader.uniform_float("viewportSize", (region.width, region.height))
-    shader.uniform_float("color", line_colour())
     shader.uniform_bool("lineSmooth", False)
-    for width, batch in zip(WIDTHS, batches):
+    for kind, (width, rgb) in styles(opts).items():
+        if kind not in batches:
+            continue
+        shader.uniform_float("color", (*rgb, 1.0))
         shader.uniform_float("lineWidth", width)
-        batch.draw(shader)
+        batches[kind].draw(shader)
     gpu.state.blend_set('NONE')
     gpu.state.depth_test_set('NONE')
     _times.append(time.perf_counter() - t0)
