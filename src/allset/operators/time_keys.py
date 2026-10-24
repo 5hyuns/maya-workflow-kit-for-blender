@@ -129,10 +129,13 @@ def set_key(context, breakdown=False, channels=""):
         bpy.ops.anim.keyframe_insert()
         return len(scene.keying_sets.active.paths)
     only = CHANNEL_SETS.get(channels)
+    from ..ui import cb_channels
     count = 0
     for node in nodes(context):
-        for key in keyable_channels(node):
-            if only is None or key in only:
+        # Channel Box Sync Selection in Graph Editor on: S keys the selected channels (step 158, Maya setKeyframeWhich 1)
+        synced = None if only is not None else cb_channels.synced_keys(context, node)
+        for key in synced if synced is not None else keyable_channels(node):
+            if (only is None or key in only) and _cb().is_keyable(node, key):
                 count += bool(_cb().keyframe(node, key, keytype))
     return count
 
@@ -297,6 +300,8 @@ def _channel_filter(context, node):
     cb = _cb()
     allowed = set()
     for k in cb.selected_channels(context):
+        if cb.is_shape_key(k):      # a SHAPES channel's curves live on the object data, not the node
+            continue
         try:
             path, idx, _kind = cb.channel_path(k)
         except KeyError:

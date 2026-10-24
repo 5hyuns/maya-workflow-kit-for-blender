@@ -151,14 +151,14 @@ def s_menu_open():
     shot("rmb_menu")
     sel = mod("ui.channel_box").selected_channels()
     check(f"#87 RMB on an unselected name selects it for the menu ({sel})", sel == ["rz"])
-    x, y = C["rz_name"]
-    ev('MOUSEMOVE', 'NOTHING', x=x + 2, y=y)     # Blender opens the menu with its first row under the mouse
+
 
 
 @step
 def s_pick():
-    ev('LEFTMOUSE', 'PRESS')
-    ev('LEFTMOUSE', 'RELEASE')
+    # step 158: the complete Channels menu is taller than the space under the mouse and slides up, so Key Selected
+    # is picked by its underlined letter
+    tap('K')
 
 
 @step
@@ -168,7 +168,7 @@ def s_picked():
     curves = import_module(MODULE + ".compat").id_fcurves(ob) if ad and ad.action else []   # 5.0: no Action.fcurves
     keyed = [fc.array_index for fc in curves
              if fc.data_path == "rotation_euler" and any(abs(k.co[0] - 12) < 1e-6 for k in fc.keyframe_points)]
-    check(f"#87 the Channels menu's first row = Key Selected: Rotate Z keyed at 12 ({keyed})", keyed == [2])
+    check(f"#87 the Channels menu's Key Selected: Rotate Z keyed at 12 ({keyed})", keyed == [2])
     tap('ESC')
     mod("ui.channel_box").set_selected_channels([])
     redraw()

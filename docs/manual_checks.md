@@ -1047,3 +1047,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Current time 10, Keys > Add Inbetween: every key at or after 10 on the shown curves moves one frame later; Remove Inbetween moves them back.
 - [ ] Tangents > Default Out Tangent > Stepped, then S on a new frame: the new key is stepped; Default In Tangent > Flat: its incoming handle is level. Back to Auto: new keys are Blender's Auto Clamped again.
 - [ ] Keys selected in the Graph Editor, Edit > Delete ❒ > Delete Keys: only those keys go; with nothing selected the same window deletes the selected objects' keys (Maya).
+
+## Step 158 — Channel Box menus complete
+- [ ] RMB on the empty space under the Channel Box rows (above the Layer Editor) opens Maya's Channels menu, not Blender's; Ctrl+RMB there or on a channel opens the Edit menu.
+- [ ] Copy Selected on a keyed Translate X, select Translate Y, go to frame 15, Paste Selected: the copied curve starts at 15 and joins Translate Y's curve there; later Translate Y keys move right.
+- [ ] Channels > Sync Selection in Graph Editor on: clicking a channel selects its curve in the Graph Editor; S keys only the selected channels. Sync Timeline Display on: the Time Slider ticks show only the selected channels' keys.
+- [ ] Point light: click Intensity in SHAPES (scroll the Channel Box), RMB > Key Selected: the row shows the key state; Graph Editor shows a Power curve.
+- [ ] Spot light: Cone Angle 40 / Penumbra Angle 0 rows; typing Penumbra 5 widens the cone softly.
+- [ ] Bind a mesh to a skeleton: INPUTS shows skinCluster1 (a second bound mesh shows skinCluster2).

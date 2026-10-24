@@ -401,6 +401,22 @@ def _bind_closest(arm, mesh, bones, max_influences):
     md.use_vertex_groups = True
 
 
+def name_skin_cluster(mesh):
+    """Maya names each bind's deformer skinCluster1, skinCluster2 ... scene-wide (mayapy: two binds give skinCluster1 /
+    skinCluster2, step 158 #97): a skin modifier with Blender's automatic name gets the next free number."""
+    md = armature_modifier(mesh)
+    if md is None or md.name.startswith("skinCluster"):
+        return md
+    import re
+    used = {int(m.group(1)) for ob in bpy.data.objects for mod in getattr(ob, "modifiers", ())
+            for m in [re.fullmatch(r"skinCluster(\d+)", mod.name)] if m}
+    n = 1
+    while n in used:
+        n += 1
+    md.name = f"skinCluster{n}"
+    return md
+
+
 def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize="INTERACTIVE",
               remove_unused=True, colorize_skeleton=True, method="CLOSEST_DISTANCE"):
     """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy."""
@@ -419,6 +435,8 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
     else:
         for mesh in meshes:
             _bind_closest(arm, mesh, only_bones, max_influences)
+    for mesh in meshes:
+        name_skin_cluster(mesh)
     bones = {b.name for b in arm.data.bones}
     for mesh in meshes:
         if only_bones:

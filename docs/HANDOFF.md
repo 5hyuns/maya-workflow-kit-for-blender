@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 158 (Channel Box 메뉴 완성 + #97, backlog_155 #4) 완료 — `docs/steps/step_158.md`. RMB 어디서나 (빈 곳 포함) = Maya
+  Channels 메뉴, Ctrl+RMB = Edit 메뉴; Channels 메뉴 Maya 항목 전체 (Breakdown / Mute All, Sync Graph Editor / Timeline, Cut /
+  Copy / Paste Selected (mayapy 규칙), Freeze, Select Connection, 레이어 알림) — `ui/cb_channels.py`; SHAPES 줄 = 채널 (`sh:`)
+  이라 조명 Intensity / Color 키 가능, spot Cone / Penumbra 줄; #97 Bind Skin → skinCluster1 / 2.
+  **바로 다음 할 일**: 159 Skin weights export / import + Skeleton gaps (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_155.json` 5 번째 항목).
+
 - Step 157 (Graph Editor 키를 Maya 식으로, backlog_155 #3) 완료 — `docs/steps/step_157.md`. 편집기 Edit 메뉴의 키 창이
   선택 키에 (Maya fromGraphEditor), Add / Remove Inbetween = 편집기 곡선, 키별 Mute / Unmute = Stepped F-modifier
   "Maya mute" (mayapy 값과 같음), Select 마스크 (All / Only Curve / Curve / Key / In / Out), Default In / Out Tangent =
