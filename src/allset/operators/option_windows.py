@@ -462,9 +462,10 @@ WINDOWS = [
 def _extend():
     # step 140: more windows live in their own modules (they import F / Window from here); Bind Skin and Duplicate
     # Special moved there with every Maya field (option_windows_rig.bind_skin_maya / option_windows_edit)
-    from . import option_windows_deform, option_windows_display, option_windows_edit, option_windows_rig
+    from . import (option_windows_deform, option_windows_display, option_windows_edit, option_windows_render,
+                   option_windows_rig)
     WINDOWS.extend(option_windows_rig.WINDOWS + option_windows_edit.WINDOWS + option_windows_deform.WINDOWS
-                   + option_windows_display.WINDOWS)
+                   + option_windows_display.WINDOWS + option_windows_render.WINDOWS)
 
 
 _extend()
@@ -674,6 +675,11 @@ class ALLSET_OT_option_generic(bpy.types.Operator):
     item: bpy.props.StringProperty(options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
+        from .option_windows_render import no_options_text
+        text = no_options_text(self.item, context.scene)
+        if text:                    # Maya opens no window for these: its Help Line warning (step 152)
+            self.report({'WARNING'}, text)
+            return {'CANCELLED'}
         label = self.item.rsplit("/", 1)[-1].rstrip(".").split("#")[0]
         return context.window_manager.invoke_props_dialog(self, width=400, title=f"{label} Options",
                                                           confirm_text=label)
