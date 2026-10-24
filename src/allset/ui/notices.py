@@ -212,9 +212,6 @@ NOTICES.update({
     "Modify/Evaluate Nodes/Dynamic Constraints": (
         "No nConstraints", "Blender has no nucleus constraints: rigid body constraints switch off with Rigid Bodies."),
     "Modify/Evaluate Nodes/Global Stitch": ("No stitching", "Blender has no NURBS surface stitching to switch off."),
-    "Modify/Evaluate Nodes/Snapshots": (
-        "No snapshot nodes", "Blender has no animation snapshot nodes: Visualize > Create Animation Snapshot is "
-        "not in Blender yet."),
     "Modify/Transformation Tools/Show Manipulator Tool": (
         "Default Object Manipulator", "Blender has no per-node manipulators: the object's Default Object "
         "Manipulator tool, else the Transform tool."),
@@ -366,8 +363,8 @@ CATEGORIES = {
                   "Proximity Pin = vertex parenting; targets are edited in the Constraints tab."),
     "Constrain/Motion Paths": ("Follow Path constraint", "Blender follows a curve with a Follow Path constraint "
                                "(animate its Offset); there are no flow path lattices or motion path keys."),
-    "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); object ghosting, "
-                  "snapshots and turntables aren't built in (Grease Pencil has onion skinning)."),
+    "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "
+                  "camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting)."),
     "Playback": ("Timeline Playback popover", "Blender's playback options are in the Timeline's Playback popover; "
                  "there is no cached-playback toggle or stepped preview."),
     # rendering

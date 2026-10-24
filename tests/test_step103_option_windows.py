@@ -71,7 +71,11 @@ def test_every_mapped_option_box_opens_something():
 
 def test_windows_registered_with_maya_titles_and_buttons():
     assert len(ow.WINDOWS) >= 24
+    panels = ("ghosting_editor",)     # step 171: Maya's Ghosting Editor is a panel (menu item, no option box)
     for w in ow.WINDOWS:
+        if w.key in panels:
+            assert getattr(bpy.ops.allset, "opt_" + w.key) and w.action, w.key
+            continue
         # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140);
         # two Render windows carry Maya's own titles (step 152, )
         assert (w.title.endswith(("Options", "Tool"))

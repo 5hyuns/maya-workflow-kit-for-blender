@@ -61,6 +61,10 @@ from . import select_2d  # noqa: E402  step 170: Maya click / marquee modifiers 
 
 classes += select_2d.classes
 
+from . import anim_snapshot  # noqa: E402  step 171: Visualize > Create Animation Snapshot / Update Snapshot
+
+classes += anim_snapshot.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -101,9 +105,11 @@ def register():
     auto_key.register_handlers()
     dag.register_handlers()
     modify_maya.register_props()
+    anim_snapshot.register_handlers()
 
 
 def unregister():
+    anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
     modify_maya.unregister_props()
     dag.unregister_handlers()
