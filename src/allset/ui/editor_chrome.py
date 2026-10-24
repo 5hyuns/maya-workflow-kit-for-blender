@@ -20,7 +20,7 @@ stay in a 「Blender」 menu at the end of the bar.
 import blf
 import bpy
 import gpu
-from bpy.props import StringProperty
+from bpy.props import IntProperty, StringProperty
 from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
@@ -454,10 +454,18 @@ def _stats_set(field):
     return set_
 
 
-# --- Graph Editor channel list (Maya outliner pane: object rows, "Translate X" rows) ------------------------------
+# --- Graph Editor channel list (Maya outliner pane: node rows, "Translate X" rows) --------------------------------
+# Maya lists DAG nodes with their animated attributes under them (research/maya/screens/audit7/maya/
+# e02_graph_editor_win1.png, research/maya/screens/graph/graph_00_frame_all_ge.png): objects, joints (= pose bones,
+# CLAUDE.md step 55; their curves live on the armature object as ``pose.bones["joint1"].location``) and the
+# blendShape node of a mesh (= its shape-key datablock, ``rig_tools`` names it blendShapeN; its curves are the Key
+# ID's ``key_blocks["smile"].value``, one row per target, Maya's attribute = the target name). Step 150, #96.
 
 MAYA_ATTR = {"location": "Translate", "rotation_euler": "Rotate", "scale": "Scale", "rotation_quaternion": "Rotate",
              "delta_location": "Delta Translate", "delta_rotation_euler": "Delta Rotate", "delta_scale": "Delta Scale"}
+# One-value attributes: Maya visibility = hide_viewport (CLAUDE.md step 129); hide_render has no transform attribute
+# in Maya, the closest is the shape's render stat Primary Visibility (step 150, delegated).
+MAYA_SCALAR = {"hide_render": "Primary Visibility"}
 AXES = "XYZ"
 # Maya's default attribute name colours in the Graph Editor outliner (graph_editor_win1.png: Translate X red,
 # Translate Y green; Z blue by the same rule as the manipulator / theme axis colours), other attributes light grey.
@@ -465,17 +473,42 @@ AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0,
 TEXT = (0.85, 0.85, 0.85, 1.0)
 BACK = (0.267, 0.267, 0.267, 1.0)        # Maya outliner pane #444444 (colors.json ui_samples)
 SELECT = (0.322, 0.522, 0.651, 1.0)      # Maya selection blue #5285a6 (kit-drawn pane: Maya's colours, any theme)
-_expanded = {}                           # object name -> bool (Maya shows attributes expanded)
+THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (e02_graph_editor_win1.png, right of the rows)
+_expanded = {}                           # node key -> bool (Maya shows attributes expanded)
+_scroll = {}                             # area pointer -> first row shown
+# Rows the user picked in this outliner (Maya highlights only those, not every attribute of a selected node), valid
+# while the scene selection is the one they were picked under.
+_picked = {"ids": set(), "sig": None}
+_BONES = 'pose.bones["'
+_SHAPES = 'key_blocks["'
+
+
+def _maya_names():
+    """Attribute -> Maya name: the Channel Box's names first (one table), then MAYA_ATTR / MAYA_SCALAR."""
+    from . import channel_box
+    names, scalar = dict(MAYA_ATTR), dict(MAYA_SCALAR)
+    for _key, label, path, idx, _kind in channel_box.MAIN:
+        if idx < 0:
+            scalar[path] = label
+        else:
+            names.setdefault(path, label.rsplit(" ", 1)[0])
+    return names, scalar
 
 
 def attr_label(fc):
-    """Maya name of an F-curve's attribute: "Translate X", custom properties by name."""
+    """Maya name of an F-curve's attribute: "Translate X", "Visibility", custom properties and blend shape targets
+    by name."""
     path, idx = fc.data_path, fc.array_index
+    if path.startswith(_SHAPES) and path.endswith('"].value'):
+        return bpy.utils.unescape_identifier(path[len(_SHAPES):-len('"].value')])
     if path.endswith("]") and '["' in path:
         return path.rsplit('["', 1)[1].rstrip('"]')
     tail = path.rsplit(".", 1)[-1]
-    if tail in MAYA_ATTR:
-        name = MAYA_ATTR[tail]
+    names, scalar = _maya_names()
+    if tail in scalar:
+        return scalar[tail]
+    if tail in names:
+        name = names[tail]
         if tail == "rotation_quaternion":
             return f"{name} {'WXYZ'[idx]}"
         return f"{name} {AXES[idx]}" if idx < 3 else name
@@ -495,10 +528,67 @@ def object_curves(ob):
     return compat.id_fcurves(ob)
 
 
+def shape_key(ob):
+    """The object's shape-key datablock (Maya blendShape node) when it is animated, else None."""
+    from .. import compat
+    key = getattr(getattr(ob, "data", None), "shape_keys", None)
+    return key if key is not None and compat.id_fcurves(key) else None
+
+
+def _bone_name(path):
+    """``pose.bones["joint1"].location`` -> "joint1" (None for other paths)."""
+    if not path.startswith(_BONES):
+        return None
+    end = path.find('"]', len(_BONES))
+    while end > 0 and path[end - 1] == "\\":      # an escaped quote inside the name
+        end = path.find('"]', end + 1)
+    return bpy.utils.unescape_identifier(path[len(_BONES):end]) if end > 0 else None
+
+
+def split_object_curves(ob):
+    """(the object's own curves, [(pose bone, its curves)] in the armature's bone order): joints are Maya nodes."""
+    own, by_bone = [], {}
+    bones = ob.pose.bones if ob.type == 'ARMATURE' and ob.pose is not None else None
+    for fc in object_curves(ob):
+        name = _bone_name(fc.data_path) if bones is not None else None
+        pb = bones.get(name) if name is not None else None
+        if pb is None:
+            own.append(fc)
+        else:
+            by_bone.setdefault(pb.name, []).append(fc)
+    return own, [(pb, by_bone[pb.name]) for pb in (bones or ()) if pb.name in by_bone]
+
+
+def node_curves(node):
+    """F-curves of one outliner node: an object (without its joints'), a pose bone or a shape-key datablock."""
+    from .. import compat
+    if isinstance(node, bpy.types.PoseBone):
+        return dict((pb.name, c) for pb, c in split_object_curves(node.id_data)[1]).get(node.name, [])
+    if isinstance(node, bpy.types.Key):
+        return compat.id_fcurves(node)
+    return split_object_curves(node)[0]
+
+
+def node_key(node):
+    """Identity of a node row (``_expanded`` / picks): object name, ("JOINT", armature, bone), ("SHAPES", key)."""
+    if isinstance(node, bpy.types.PoseBone):
+        return ("JOINT", node.id_data.name, node.name)
+    if isinstance(node, bpy.types.Key):
+        return ("SHAPES", node.name)
+    return node.name
+
+
+def row_id(row):
+    kind, node, fc = row
+    return node_key(node) if kind != "ATTR" else (node_key(node), fc.data_path, fc.array_index)
+
+
 def listed_objects(context, space):
-    """Objects Blender's Graph Editor lists (animated; only the selected with Only Show Selected), by name."""
+    """Objects Blender's Graph Editor lists (animated, also by shape keys; only the selected with Only Show
+    Selected), by name."""
     ds = space.dopesheet
-    obs = [ob for ob in context.scene.objects if ob.animation_data and ob.animation_data.action]
+    obs = [ob for ob in context.scene.objects
+           if (ob.animation_data and ob.animation_data.action) or shape_key(ob) is not None]
     if ds.show_only_selected:
         obs = [ob for ob in obs if ob.select_get()]
     if not ds.show_hidden:
@@ -506,32 +596,129 @@ def listed_objects(context, space):
     return sorted(obs, key=lambda o: o.name)
 
 
+# Maya lists a node's attributes in its attribute order (translate, rotate, scale, visibility, then the rest, e.g.
+# custom attributes / blend shape targets), not in the order they were keyed (step 150, delegated).
+ATTR_ORDER = ("location", "rotation_euler", "rotation_quaternion", "scale", "hide_viewport", "hide_render")
+
+
+def maya_order(curves):
+    def key(fc):
+        tail = fc.data_path.rsplit(".", 1)[-1]
+        return (ATTR_ORDER.index(tail) if tail in ATTR_ORDER else len(ATTR_ORDER), fc.array_index)
+    return sorted(curves, key=key)      # stable: other attributes keep Blender's order
+
+
+def listed_nodes(context, space):
+    """[(kind, node, curves)]: per listed object its own row (when it has curves of its own), its joints (with Only
+    Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
+    then — measured in gui_step150_outliner), its blendShape node."""
+    from . import channel_box
+    ds = space.dopesheet
+    out = []
+    for ob in listed_objects(context, space):
+        own, joints = split_object_curves(ob)
+        if own:
+            out.append(("OBJECT", ob, maya_order(own)))
+        for pb, curves in joints:
+            if ds.show_only_selected and not channel_box.bone_selected(pb):
+                continue
+            out.append(("JOINT", pb, maya_order(curves)))
+        key = shape_key(ob)
+        if key is not None:
+            out.append(("SHAPES", key, object_curves(key)))
+    return out
+
+
 def rows(context, space):
-    """[(kind, object, fcurve)] of the Maya list: an OBJECT row, then its ATTR rows while expanded."""
+    """[(kind, node, fcurve)] of the Maya list: a node row (OBJECT / JOINT / SHAPES), then its ATTR rows while
+    expanded."""
     out = []
     flt = (space.dopesheet.filter_text or "").lower()
-    for ob in listed_objects(context, space):
-        out.append(("OBJECT", ob, None))
-        if _expanded.get(ob.name, True):
-            for fc in object_curves(ob):
+    for kind, node, curves in listed_nodes(context, space):
+        out.append((kind, node, None))
+        if _expanded.get(node_key(node), True):
+            for fc in curves:
                 if flt and flt not in fc.data_path.lower() and flt not in attr_label(fc).lower():
                     continue
-                out.append(("ATTR", ob, fc))
+                out.append(("ATTR", node, fc))
     return out
+
+
+def listed_curves(context, space):
+    return [fc for _kind, _node, curves in listed_nodes(context, space) for fc in curves]
+
+
+def node_selected(context, kind, node):
+    """Is the row's node selected in the scene (Maya loads the selection into the Graph Editor highlighted)?"""
+    from . import channel_box
+    if kind == "JOINT":
+        arm = node.id_data
+        return channel_box.bone_selected(node) if arm.mode == 'POSE' else arm.select_get()
+    if kind == "SHAPES":
+        return any(o.select_get() for o in context.scene.objects
+                   if getattr(getattr(o, "data", None), "shape_keys", None) == node)
+    return node.select_get()
+
+
+def selection_sig(context):
+    """Scene selection (objects + pose-mode joints) the outliner picks belong to."""
+    from . import channel_box
+    sig = []
+    for ob in context.scene.objects:
+        if ob.select_get():
+            sig.append(ob.name)
+        if ob.type == 'ARMATURE' and ob.mode == 'POSE' and ob.pose is not None:
+            sig += [(ob.name, pb.name) for pb in ob.pose.bones if channel_box.bone_selected(pb)]
+    return tuple(sig)
+
+
+def picked_ids(context, all_rows):
+    """The user's picks that still name a listed row, or an empty set (none yet / the scene selection changed)."""
+    if _picked["sig"] != selection_sig(context):
+        return set()
+    return _picked["ids"] & {row_id(r) for r in all_rows}
+
+
+def highlighted(kind, rid, selected, picked):
+    """Maya: once rows were picked in the outliner exactly those are highlighted; before that the selected nodes
+    (never their attribute rows — Blender selects every F-curve of a selected object, so ``fc.select`` is not
+    the highlight). Clicking an attribute un-highlights its node like Maya's outliner (step 150, delegated)."""
+    if picked:
+        return rid in picked
+    return kind != "ATTR" and selected
 
 
 def metrics(region):
     """(top of the first row, row height) in region pixels: Blender keeps its search field at the top."""
-    s = bpy.context.preferences.system.ui_scale
+    s = bpy.context.preferences.system.ui_scale or 1.0     # 0 in background (step 68)
     return region.height - round(24 * s), round(20 * s)
+
+
+def visible_rows(region):
+    top, h = metrics(region)
+    return max(1, int(top // h)) if h > 0 else 1
+
+
+def clamp_scroll(offset, n_rows, n_visible):
+    """First row shown: 0 .. the last full page (a list that fits doesn't scroll)."""
+    return max(0, min(int(offset), n_rows - n_visible))
+
+
+def _area_ptr(context):
+    area = getattr(context, "area", None)
+    return area.as_pointer() if area is not None else 0
+
+
+def scroll_offset(context, region, n_rows):
+    return clamp_scroll(_scroll.get(_area_ptr(context), 0), n_rows, visible_rows(region))
 
 
 def row_at(context, region, y):
     top, h = metrics(region)
     if y > top:
         return None
-    k = int((top - y) // h)
     rs = rows(context, context.space_data)
+    k = int((top - y) // h) + scroll_offset(context, region, len(rs))
     return rs[k] if 0 <= k < len(rs) else None
 
 
@@ -553,40 +740,68 @@ def draw_channels():
     _rect(0, 0, region.width, top, BACK)
     font = 0
     blf.size(font, 12 * s)
+    all_rows = rows(context, space)
+    picked = picked_ids(context, all_rows)
+    first = scroll_offset(context, region, len(all_rows))
     y = top
-    for kind, ob, fc in rows(context, space):
+    for row in all_rows[first:]:
         if y < 0:
             break
-        sel = (fc.select if fc is not None else ob.select_get())
+        kind, node, fc = row
+        sel = highlighted(kind, row_id(row), kind != "ATTR" and node_selected(context, kind, node), picked)
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
-        if kind == "OBJECT":
-            sign = "−" if _expanded.get(ob.name, True) else "+"
+        if kind != "ATTR":
+            sign = "−" if _expanded.get(node_key(node), True) else "+"
             blf.color(font, *TEXT)
             blf.position(font, 6 * s, y - h + 6 * s, 0)
             blf.draw(font, sign)
             blf.position(font, 22 * s, y - h + 6 * s, 0)
-            blf.draw(font, ob.name)
+            blf.draw(font, node.name)
         else:
             blf.color(font, *attr_color(fc))
             blf.position(font, 44 * s, y - h + 6 * s, 0)
             blf.draw(font, attr_label(fc))
         y -= h
+    n_vis = visible_rows(region)
+    if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
+        span = top / len(all_rows)
+        x1 = region.width - 2 * s
+        _rect(x1 - 6 * s, top - (first + n_vis) * span, x1, top - first * span, THUMB)
     gpu.state.blend_set('NONE')
 
 
 def show_rows(context, chosen):
     """Maya: the curves of the selected outliner rows are shown and selected, the others hidden."""
+    for fc in listed_curves(context, context.space_data):
+        on = fc in chosen
+        fc.select = on
+        fc.hide = not on
+
+
+def pick_row(context, row, ctrl=False, shift=False):
+    """A click on an outliner row: remember the picked rows (the highlight) and show / select their curves. Ctrl
+    toggles, Shift adds, a plain click replaces."""
     space = context.space_data
-    for ob in listed_objects(context, space):
-        for fc in object_curves(ob):
-            on = fc in chosen
-            fc.select = on
-            fc.hide = not on
+    all_rows = rows(context, space)
+    kind, node, fc = row
+    rid = row_id(row)
+    picked = set(node_curves(node) if kind != "ATTR" else [fc])
+    current = {c for c in listed_curves(context, space) if c.select and not c.hide}
+    ids = picked_ids(context, all_rows)
+    if ctrl:
+        chosen, ids = current ^ picked, ids ^ {rid}
+    elif shift:
+        chosen, ids = current | picked, ids | {rid}
+    else:
+        chosen, ids = picked, {rid}
+    _picked["ids"], _picked["sig"] = ids, selection_sig(context)
+    show_rows(context, chosen)
+    return chosen
 
 
 class ALLSET_OT_graph_channel_click(bpy.types.Operator):
-    """Maya Graph Editor outliner: click an object (all its curves) or an attribute (that curve); Ctrl toggles,
+    """Maya Graph Editor outliner: click a node (all its curves) or an attribute (that curve); Ctrl toggles,
     Shift adds; the +/- sign folds the attributes"""
     bl_idname = "allset.graph_channel_click"
     bl_label = "Graph Editor Outliner Click"
@@ -605,25 +820,46 @@ class ALLSET_OT_graph_channel_click(bpy.types.Operator):
         row = row_at(context, region, event.mouse_region_y)
         if row is None:
             return {'FINISHED'}
-        kind, ob, fc = row
+        kind, node, _fc = row
         s = context.preferences.system.ui_scale
-        if kind == "OBJECT" and event.mouse_region_x < 18 * s:
-            _expanded[ob.name] = not _expanded.get(ob.name, True)
+        if kind != "ATTR" and event.mouse_region_x < 18 * s:
+            key = node_key(node)
+            _expanded[key] = not _expanded.get(key, True)
             region.tag_redraw()
             return {'FINISHED'}
-        picked = set(object_curves(ob)) if kind == "OBJECT" else {fc}
-        current = {c for o in listed_objects(context, context.space_data) for c in object_curves(o)
-                   if c.select and not c.hide}
-        if event.ctrl:
-            chosen = current ^ picked
-        elif event.shift:
-            chosen = current | picked
-        else:
-            chosen = picked
-        show_rows(context, chosen)
+        pick_row(context, row, ctrl=event.ctrl, shift=event.shift)
         for area in context.screen.areas:
             if area.type == 'GRAPH_EDITOR':
                 area.tag_redraw()
+        return {'FINISHED'}
+
+
+def _channels_region(context):
+    region = getattr(context, "region", None)
+    if region is not None and region.type == 'CHANNELS':
+        return region
+    area = getattr(context, "area", None)
+    return next((r for r in area.regions if r.type == 'CHANNELS'), None) if area is not None else None
+
+
+class ALLSET_OT_graph_channel_scroll(bpy.types.Operator):
+    """Scroll the Maya Graph Editor outliner by rows (positive = down the list)"""
+    bl_idname = "allset.graph_channel_scroll"
+    bl_label = "Graph Editor Outliner Scroll"
+
+    delta: IntProperty(name="Rows", description="Rows to scroll, positive = down the list", default=3,
+                       options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        space = getattr(context, "space_data", None)
+        region = _channels_region(context)
+        if not (is_graph(space) and enabled(context)) or region is None:
+            return {'PASS_THROUGH'}     # no Maya Graph Editor here: Blender's own channel scrolling
+        n = len(rows(context, space))
+        ptr = _area_ptr(context)
+        old = scroll_offset(context, region, n)
+        _scroll[ptr] = clamp_scroll(old + self.delta, n, visible_rows(region))
+        region.tag_redraw()
         return {'FINISHED'}
 
 
@@ -769,6 +1005,7 @@ def prepare_later(window, ui_type, tries=60):
 # --- registration --------------------------------------------------------------------------------------------------
 
 classes = (ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable, ALLSET_OT_graph_channel_click,
+           ALLSET_OT_graph_channel_scroll,
            *_BLENDER.values(), *_BAR.values())
 _handle = []
 
@@ -793,5 +1030,7 @@ def unregister():
     del bpy.types.Scene.allset_key_time
     del bpy.types.Scene.allset_key_value
     _expanded.clear()
+    _scroll.clear()
+    _picked["ids"], _picked["sig"] = set(), None
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
