@@ -62,6 +62,28 @@ MAYA_BG_LINEAR = round(((92 / 255 + 0.055) / 1.055) ** 2.4, 5)
 MAYA_CLIP = (0.1, 10000.0)        # cm,  (= operators/units.py CLIP)
 MAYA_PERSP_EYE = (28.0, -28.0, 21.0)  # cm, Maya persp (28, 21, 28) Y-up  (= units.PERSP_EYE)
 
+# Maya 2022 factory workspaces the template carries (step 160, #81): Windows > Workspaces / the Status Line dropdown
+# (= src/allset/ui/workspaces.py MAYA_WORKSPACES). Layouts from resources/workspaces/*.json
+# (, ); "General" is shown as "Maya Classic".
+# name -> (menu set linkedMenu, raised tab of the right tab stack, recipe)
+MAYA_WORKSPACES = {
+    "General": ("", 'CHANNEL_BOX', ()),
+    "Modeling - Standard": ("modelingMenuSet", 'MODELING_TOOLKIT', ("no_outliner", "no_timeline")),
+    "Modeling - Expert": ("modelingMenuSet", 'MODELING_TOOLKIT',
+                          ("no_outliner", "no_timeline", "no_dock", "no_toolbox", "no_strip", "no_toolheader")),
+    "Sculpting": ("modelingMenuSet", 'CHANNEL_BOX', ("no_outliner", "no_timeline", "tool_settings")),
+    "UV Editing": ("modelingMenuSet", 'ATTRIBUTE_EDITOR', ("no_outliner", "no_timeline", "uv_editor")),
+    "Rigging": ("riggingMenuSet", 'CHANNEL_BOX', ("shape_editor",)),
+    "Animation": ("animationMenuSet", 'CHANNEL_BOX', ("graph_editor",)),
+    "Rendering - Standard": ("renderingMenuSet", 'ATTRIBUTE_EDITOR', ("render_column", "script_editor")),
+}
+# fractions of the main view (Maya control sizes in the .json files)
+ANIMATION_GRAPH = 300 / (637 + 300)        # Animation.json graphEditor1Window under MainPane
+RIGGING_EDITOR = 279 / (633 + 279)         # Rigging.json nodeEditor / shapePanel under MainPane
+UV_EDITOR = 842 / (626 + 842)              # UV_Editing.json polyTexturePlacementPanel1Window beside MainPane
+RENDER_SCRIPT = 231 / (494 + 231)          # Rendering_-_Standard.json scriptEditorPanel1Window under MainPane
+RENDER_COLUMN_PX = 346                     # Render Setup / Property Editor column
+
 
 def run_outside_blender():
     import subprocess
@@ -201,12 +223,131 @@ class Builder:
         # 6. The timeline's sidebar = the Time Slider's current frame field and transport buttons (step 50): drag
         #    its left edge (region size has no API).
         yield from self.drag_region_edge(timeline, TIME_CONTROLS_PX)
+        yield from self.maya_workspaces()
         self.report()
         shot = os.environ.get("MAKE_STARTUP_SHOT")
         if shot:
             with bpy.context.temp_override(window=self.win):
                 bpy.ops.screen.screenshot(filepath=shot)
         self.save()
+
+    def find(self, kind):
+        """An area of the active screen by role (strip / shelf / timeline / toolbox / outliner / dock / view3d)."""
+        areas = list(self.scr.areas)
+        if kind in ("strip", "shelf"):
+            rows = sorted((a for a in areas if a.type == 'IMAGE_EDITOR' and a.spaces.active.mask is not None),
+                          key=lambda a: -a.y)
+            return rows[0 if kind == "strip" else 1] if len(rows) > (kind == "shelf") else None
+        if kind == "timeline":
+            return next((a for a in areas if a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE'), None)
+        if kind == "toolbox":
+            return next((a for a in areas if a.type == 'VIEW_3D' and is_toolbox_space(a.spaces.active)), None)
+        if kind == "outliner":
+            return next((a for a in areas if a.type == 'OUTLINER'), None)
+        if kind == "dock":
+            return next((a for a in areas if a.type == 'PROPERTIES' and getattr(a.spaces.active, STACK_FLAG, False)),
+                        None)
+        views = [a for a in areas if a.type == 'VIEW_3D' and not is_toolbox_space(a.spaces.active)]
+        return max(views, key=lambda a: a.width * a.height) if views else None
+
+    def close(self, kind):
+        area = self.find(kind)
+        if area is None:
+            return
+        with self.ov(area):
+            assert self.bpy.ops.screen.area_close() == {'FINISHED'}, kind
+        yield
+
+    def maya_workspaces(self):
+        """Maya's factory workspaces (step 160, #81): each is a copy of the finished General layout with Maya's
+        changes (closed panels, an editor beside / under the viewport, the raised tab), marked with its template name
+        so the kit can list, append and reset it (src/allset/ui/workspaces.py). Blender's factory workspaces go:
+        a Maya scene lists Maya's workspaces (delegated, )."""
+        bpy = self.bpy
+        general = bpy.data.workspaces["General"]
+        for ws in [w for w in bpy.data.workspaces if w != general]:
+            bpy.data.batch_remove(ids=[ws])
+        yield
+        for name, (menu_set, tab, recipe) in MAYA_WORKSPACES.items():
+            if name == "General":
+                ws = general
+            else:
+                self.win.workspace = general
+                yield
+                before = set(bpy.data.workspaces)
+                with bpy.context.temp_override(window=self.win, screen=self.scr):
+                    assert bpy.ops.workspace.duplicate() == {'FINISHED'}
+                yield
+                ws = next(w for w in bpy.data.workspaces if w not in before)
+                ws.name = name
+                self.win.workspace = ws
+                yield
+                yield from self.apply_recipe(recipe)
+            ws["allset_template"] = name
+            ws["allset_menu_set"] = menu_set
+            ws["allset_dock_tab"] = tab
+            log("workspace", name, [(a.ui_type, a.width, a.height) for a in ws.screens[0].areas])
+        self.win.workspace = general
+        maya_views()
+        yield
+
+    def apply_recipe(self, recipe):
+        bpy = self.bpy
+        for step in recipe:
+            if step.startswith("no_") and step != "no_toolheader":
+                kind = step[3:]
+                if kind == "strip":
+                    yield from self.close("shelf")
+                yield from self.close(kind)
+            elif step == "no_toolheader":
+                # Modeling - Expert: Status Line and Shelf closed; the panel toolbar row goes with them
+                self.find("view3d").spaces.active.show_region_tool_header = False
+            elif step == "tool_settings":
+                # Sculpting.json: Tool Settings on the right (the kit's Tool Settings dock = Tool tab, no role flag)
+                dock = self.find("dock")
+                setattr(dock.spaces.active, STACK_FLAG, False)
+            elif step == "uv_editor":
+                view = self.find("view3d")
+                uv = yield from self.split(view, 'VERTICAL', round(view.width * UV_EDITOR), 'RIGHT')
+                uv.type = 'IMAGE_EDITOR'
+                uv.ui_type = 'UV'
+                yield
+            elif step == "graph_editor":
+                view = self.find("view3d")
+                ge = yield from self.split(view, 'HORIZONTAL', round(view.height * ANIMATION_GRAPH), 'BOTTOM')
+                ge.type = 'GRAPH_EDITOR'
+                ge.ui_type = 'FCURVES'
+                yield
+            elif step == "shape_editor":
+                # Rigging.json: Node Editor / Shape Editor tabs under the viewport; Blender's rig data has no node
+                # graph, its Shape Key Editor is the Shape Editor (delegated)
+                view = self.find("view3d")
+                se = yield from self.split(view, 'HORIZONTAL', round(view.height * RIGGING_EDITOR), 'BOTTOM')
+                se.type = 'DOPESHEET_EDITOR'
+                se.ui_type = 'DOPESHEET'
+                se.spaces.active.mode = 'SHAPEKEY'
+                yield
+            elif step == "script_editor":
+                view = self.find("view3d")
+                te = yield from self.split(view, 'HORIZONTAL', round(view.height * RENDER_SCRIPT), 'BOTTOM')
+                te.type = 'TEXT_EDITOR'
+                yield
+            elif step == "render_column":
+                # Render Setup + Property Editor column = Blender's Render properties
+                view = self.find("view3d")
+                col = yield from self.split(view, 'VERTICAL', RENDER_COLUMN_PX, 'LEFT')
+                col.type = 'PROPERTIES'
+                yield
+                for _i in range(20):
+                    try:
+                        col.spaces.active.context = 'RENDER'
+                        break
+                    except TypeError:
+                        col.tag_redraw()
+                        yield
+            else:
+                raise ValueError(step)
+        yield
 
     def drag_region_edge(self, area, width):
         ui = _region(area, 'UI')

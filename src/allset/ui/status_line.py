@@ -757,35 +757,23 @@ def status_line_shown(context):
     return area is not None and area.spaces.active.show_region_tool_header
 
 
-# The workspace dropdown (Maya's "Workspace:" combo): items are the file's workspaces. Blender keeps pointers into
-# the item strings of earlier calls, so an item list is never freed while the add-on runs: one list per set of
-# names, cached (a rebuilt list per draw crashed Blender in Maya, step 113).
-_workspace_items = {}
+# The workspace dropdown (Maya's "Workspace:" combo) lists Maya's workspaces, then the file's others (ui/workspaces.py,
+# step 160, #81).
 
 
 def _workspaces(self, context):
-    names = tuple(ws.name for ws in bpy.data.workspaces)
-    items = _workspace_items.get(names)
-    if items is None:
-        items = [(str(i), n, "Switch to this workspace") for i, n in enumerate(names)] or [("0", "-", "")]
-        _workspace_items[names] = items
-    return items
+    from . import workspaces
+    return workspaces.dropdown_items(self, context)
 
 
 def _get_workspace(self):
-    window = bpy.context.window
-    if window is None:
-        return 0
-    for i, ws in enumerate(bpy.data.workspaces):
-        if ws == window.workspace:
-            return i
-    return 0
+    from . import workspaces
+    return workspaces.dropdown_get(self)
 
 
 def _set_workspace(self, value):
-    window = bpy.context.window
-    if window is not None and 0 <= value < len(bpy.data.workspaces):
-        window.workspace = bpy.data.workspaces[value]
+    from . import workspaces
+    workspaces.dropdown_set(self, value)
 
 
 def draw_tool_header(self, context):
@@ -859,7 +847,6 @@ def unregister():
     del bpy.types.WindowManager.allset_workspace
     del bpy.types.Scene.allset_live_text
     del bpy.types.Scene.allset_symmetry_text
-    _workspace_items.clear()
     _collapsed.clear()
     _collapsed.update(DEFAULT_COLLAPSED)
     _top_bars.clear()
