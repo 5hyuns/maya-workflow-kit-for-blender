@@ -48,6 +48,11 @@ class Rec:
         return [(e[1][0], e[3]) for e in self.log if e[0] == "operator"]
 
 
+def swatches(rec):
+    """Materials of the Browser swatch buttons a draw made (step 162: ``Material.allset_hs_pick`` toggles)."""
+    return {e[1][0].name for e in rec.log if e[0] == "prop" and e[1][1:2] == ("allset_hs_pick",)}
+
+
 def _clear():
     if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -207,7 +212,7 @@ def test_hypershade_browser_create_assign():
         # panels draw: browser buttons for every material, Create kinds, Property Editor = AE material sections
         rec = Rec()
         hs.draw_browser(rec, bpy.context)
-        assert {p.material for i, p in rec.ops() if i == "allset.hs_pick"} == {mat.name, other.name, "lambert1"}
+        assert swatches(rec) == {mat.name, other.name, "lambert1"}
         rec = Rec()
         wm.allset_hs_create_cat = 'SURFACE'          # step 131: Create pane = Maya's category tree + node list
         hs.draw_create(rec, bpy.context)

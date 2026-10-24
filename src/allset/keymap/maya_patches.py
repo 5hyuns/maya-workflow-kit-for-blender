@@ -26,7 +26,8 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
-                      "allset.dock_strip_click")
+                      "allset.dock_strip_click",
+                      "allset.hs_swatch_drag")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -332,6 +333,11 @@ def patch_cb_slider(kd):
     # so a click there reaches the keymaps; first in the region's earliest keymap (its scroller sits on that edge)
     _add(kd, "View2D Buttons List", "allset.dock_strip_click", make_event("LEFTMOUSE"), first=True,
          shadows=("View2D Buttons List", "Property Editor", "Screen"))   # PASS_THROUGH off the strip
+    # Hypershade Browser: MMB-drag a material swatch onto an object = assign it (step 162, ui/hs_drag.py); the region's
+    # view2d.pan / scroller_activate take MMB PRESS in this keymap, so the item goes first and passes through off a
+    # swatch
+    _add(kd, "View2D Buttons List", "allset.hs_swatch_drag", make_event("MIDDLEMOUSE"), first=True,
+         shadows=("View2D Buttons List",))
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB ----
