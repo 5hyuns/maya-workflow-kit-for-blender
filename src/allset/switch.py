@@ -58,7 +58,7 @@ def is_maya_workspace(ws):
     """A workspace that already is the Maya layout (appended by the switch or a Maya Workflow Kit file)."""
     if ws is None:
         return False
-    if PREV_KEY in ws:
+    if PREV_KEY in ws or TEMPLATE_KEY in ws:     # TEMPLATE_KEY: any Maya workspace of the template (step 160)
         return True
     for screen in ws.screens:
         for area in screen.areas:
@@ -97,7 +97,9 @@ def enter_layout(window):
     """Append and activate the Maya layout workspace in ``window`` (unless it already is one)."""
     if window is None or is_maya_workspace(window.workspace):
         return None
-    own = next((ws for ws in bpy.data.workspaces if PREV_KEY not in ws and is_maya_workspace(ws)), None)
+    own = [ws for ws in bpy.data.workspaces if PREV_KEY not in ws and is_maya_workspace(ws)]
+    own.sort(key=lambda ws: template_of(ws) != TEMPLATE_WORKSPACE)     # Maya Classic first (step 160)
+    own = own[0] if own else None
     if own is not None:
         # the file's own Maya layout (a Maya Workflow Kit template file left by a switch to Blender): back to it,
         # nothing appended twice (#19, step 129)
