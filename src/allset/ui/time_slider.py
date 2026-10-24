@@ -560,9 +560,12 @@ BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
 def key_frames(nodes):
     """Sorted [(frame, is_breakdown)] of the nodes' keys; a frame with any regular key is a regular key."""
     from ..operators import time_keys
+    from . import cb_channels
     frames = {}
     for node in nodes:
-        for fc in time_keys.node_fcurves(node):
+        # Channel Box Sync Timeline Display: only the selected channels' keys (step 158)
+        curves = cb_channels.timeline_curves(bpy.context, node)
+        for fc in curves if curves is not None else time_keys.node_fcurves(node):
             for kp in fc.keyframe_points:
                 f = round(kp.co.x, 3)
                 frames[f] = frames.get(f, True) and kp.type == 'BREAKDOWN'

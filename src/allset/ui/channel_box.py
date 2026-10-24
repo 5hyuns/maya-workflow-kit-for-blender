@@ -72,6 +72,7 @@ _LOCK_PROP = {"LOC": "lock_location", "ROT": "lock_rotation", "SCALE": "lock_sca
 HIDDEN_PROP = "allset_cb_hidden"
 NONKEYABLE_PROP = "allset_cb_nonkeyable"
 CUSTOM_PREFIX = "cp:"
+SHAPE_PREFIX = "sh:"     # a SHAPES row as a channel (step 158): light Intensity / Color, camera Focal Length ...
 
 # MMB slider: value change per pixel at speed Medium ( 「계획」 ).
 SLIDER_STEP = {"LOC": 0.01, "ROT": math.radians(0.5), "SCALE": 0.01, "CUSTOM": 0.01}
@@ -217,10 +218,47 @@ def custom_keys(ob):
     return sorted(out)
 
 
+def is_shape_key(key):
+    return key.startswith(SHAPE_PREFIX)
+
+
+def shape_owner(ob, key):
+    """The object data holding SHAPES channel ``key`` (None: ``ob`` has no such row)."""
+    if not is_shape_key(key) or is_bone(ob):
+        return None
+    name = key[len(SHAPE_PREFIX):]
+    if name not in SHAPE_PROPS.get(getattr(ob, "type", ""), ()):
+        return None
+    return row_owner(ob, "SHAPE", name)
+
+
+def shape_paths(owner, key):
+    """[(Blender data path, index)] a key / mute / delete on a SHAPES channel acts on (step 158): a Maya attribute
+    kept differently in Blender keys its Blender properties (Light Intensity = power, Color R = color[0], spot Cone /
+    Penumbra = spot_size + spot_blend)."""
+    name = key[len(SHAPE_PREFIX):]
+    v = _virtual(owner, name)
+    if v is not None:
+        return list(getattr(v, "paths", ()))
+    if isinstance(owner, bpy.types.Light):
+        from ..operators import lights
+        if name in lights.KEY_PATHS:
+            return list(lights.KEY_PATHS[name])
+    rna = owner.bl_rna.properties.get(name)
+    return [(name, -1)] if rna is not None and rna.is_animatable else []
+
+
+def curve_owner(ob, key):
+    """The ID whose animation holds channel ``key``'s curves."""
+    return shape_owner(ob, key) if is_shape_key(key) else ob.id_data
+
+
 def channel_path(key):
     """(data path, index, kind) for a channel key."""
     if key.startswith(CUSTOM_PREFIX):
         return f'["{key[len(CUSTOM_PREFIX):]}"]', -1, "CUSTOM"
+    if is_shape_key(key):
+        return key[len(SHAPE_PREFIX):], -1, "SHAPE"
     c = MAIN_BY_KEY[key]
     return c[2], c[3], c[4]
 
@@ -236,18 +274,26 @@ def nice_name(name):
 def channel_label(key):
     if key.startswith(CUSTOM_PREFIX):
         return nice_name(key[len(CUSTOM_PREFIX):])
+    if is_shape_key(key):
+        ob = lead()
+        name = key[len(SHAPE_PREFIX):]
+        return shape_label(ob, name) if ob is not None and shape_owner(ob, key) is not None else nice_name(name)
     return MAIN_BY_KEY[key][1]
 
 
 def has_channel(ob, key):
     if key.startswith(CUSTOM_PREFIX):
         return key[len(CUSTOM_PREFIX):] in ob.keys()
+    if is_shape_key(key):
+        return shape_owner(ob, key) is not None
     kind = MAIN_BY_KEY[key][4]
     return kind != "ROT" or ob.rotation_mode in {'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'}
 
 
 def get_value(ob, key):
     path, idx, kind = channel_path(key)
+    if kind == "SHAPE":
+        return _row_read(shape_owner(ob, key), "SHAPE", path)
     if kind == "CUSTOM":
         return ob[key[len(CUSTOM_PREFIX):]]
     if kind == "VIS":
@@ -264,6 +310,9 @@ def set_value(ob, key, value):
     for hook in WRITE_HOOKS:
         hook(ob, key)
     path, idx, kind = channel_path(key)
+    if kind == "SHAPE":
+        _row_write(shape_owner(ob, key), "SHAPE", path, value)
+        return
     if kind == "CUSTOM":
         name = key[len(CUSTOM_PREFIX):]
         cur = ob[name]
@@ -289,6 +338,20 @@ def keyframe(ob, key, keytype='KEYFRAME'):
     path, idx, kind = channel_path(key)
     if kind == "VIS" and is_bone(ob):
         return False
+    if kind == "SHAPE":
+        owner = shape_owner(ob, key)
+        if owner is None:
+            return False
+        from ..operators import graph_key_menu
+        done = False
+        for p, i in shape_paths(owner, key):
+            try:
+                if owner.keyframe_insert(p, index=i, keytype=keytype):
+                    graph_key_menu.after_insert(owner, p, i, bpy.context.scene.frame_current)
+                    done = True
+            except (TypeError, RuntimeError):
+                pass
+        return done
     ok = ob.keyframe_insert(path, index=idx, keytype=keytype)
     if ok:      # Maya Tangents > Default In / Out Tangent (step 157)
         from ..operators import graph_key_menu
@@ -303,7 +366,25 @@ def _fcurves(ob):
     return compat.id_fcurve_collection(ob.id_data)
 
 
+def shape_fcurves(ob, key):
+    owner = shape_owner(ob, key)
+    if owner is None:
+        return []
+    fcs = compat.id_fcurve_collection(owner)
+    if fcs is None:
+        return []
+    out = []
+    for p, i in shape_paths(owner, key):
+        fc = fcs.find(p, index=max(i, 0))
+        if fc is not None:
+            out.append(fc)
+    return out
+
+
 def fcurve(ob, key):
+    if is_shape_key(key):
+        fcs = shape_fcurves(ob, key)
+        return fcs[0] if fcs else None
     fcs = _fcurves(ob)
     if fcs is None:
         return None
@@ -312,7 +393,27 @@ def fcurve(ob, key):
     return None if path is None else fcs.find(path, index=max(idx, 0))
 
 
+def channel_fcurves(ob, key):
+    """Every F-curve behind a channel (a SHAPES channel can have several: spot Cone Angle = size + blend)."""
+    if is_shape_key(key):
+        return shape_fcurves(ob, key)
+    fc = fcurve(ob, key)
+    return [fc] if fc is not None else []
+
+
+def remove_channel_curves(ob, key):
+    """Delete the channel's animation curves (Maya cutKey -clear on the whole curve). True if any."""
+    owner = curve_owner(ob, key)
+    fcs = compat.id_fcurve_collection(owner) if owner is not None else None
+    curves = channel_fcurves(ob, key)
+    for fc in curves:
+        fcs.remove(fc)
+    return bool(curves)
+
+
 def driver(ob, key):
+    if is_shape_key(key):
+        return None
     ad = ob.id_data.animation_data
     if ad is None:
         return None
@@ -322,12 +423,15 @@ def driver(ob, key):
 
 
 def channel_state(ob, key, frame=None):
-    """'DRIVEN', 'KEYED' (key on this frame), 'ANIMATED' or None (channel_box.md:138-139)."""
+    """'DRIVEN', 'MUTED', 'KEYED' (key on this frame), 'ANIMATED' or None (channel_box.md:138-139; Maya muted =
+    brown, step 158: Blender's UI has no brown, the mute icon marks it)."""
     if driver(ob, key) is not None:
         return 'DRIVEN'
     fc = fcurve(ob, key)
     if fc is None:
         return None
+    if fc.mute:
+        return 'MUTED'
     frame = bpy.context.scene.frame_current if frame is None else frame
     if any(abs(kp.co[0] - frame) < 0.5 for kp in fc.keyframe_points):
         return 'KEYED'
@@ -344,6 +448,8 @@ def selected_channels(context=None):
 def set_selected_channels(keys, context=None):
     wm = (context or bpy.context).window_manager
     wm.allset_cb_selected = ",".join(dict.fromkeys(keys))
+    from . import cb_channels       # Sync Selection in Graph Editor (step 158)
+    cb_channels.after_selection(context or bpy.context)
 
 
 def select_channel(key, mode="SET", context=None):
@@ -362,9 +468,12 @@ def select_channel(key, mode="SET", context=None):
 # --- channel ranges (drag over the rows, step 129 #6) -------------------------------------------------------------
 
 def drawn_keys(ob):
-    """Channel keys in the order the Channel Box draws them (main channels, then custom attributes)."""
+    """Channel keys in the order the Channel Box draws them (main channels, custom attributes, SHAPES rows)."""
     keys = [c[0] for c in MAIN if not is_hidden(ob, c[0]) and has_channel(ob, c[0])]
-    return keys + [CUSTOM_PREFIX + n for n in custom_keys(ob) if not is_hidden(ob, CUSTOM_PREFIX + n)]
+    keys += [CUSTOM_PREFIX + n for n in custom_keys(ob) if not is_hidden(ob, CUSTOM_PREFIX + n)]
+    keys += [SHAPE_PREFIX + n for n in SHAPE_PROPS.get(getattr(ob, "type", ""), ())
+             if has_channel(ob, SHAPE_PREFIX + n) and not is_hidden(ob, SHAPE_PREFIX + n)]
+    return keys
 
 
 def channel_range(ob, first, last):
@@ -411,8 +520,9 @@ def cell_key(path, scene=None):
     if m and scene is not None:
         rows = scene.allset_cb.rows
         i = int(m.group(1))
-        if i < len(rows) and rows[i].kind == "CUSTOM":
-            return CUSTOM_PREFIX + rows[i].name, ("VALUE" if m.group(2) == "text" else "NAME")
+        if i < len(rows) and rows[i].kind in ("CUSTOM", "SHAPE"):
+            prefix = CUSTOM_PREFIX if rows[i].kind == "CUSTOM" else SHAPE_PREFIX
+            return prefix + rows[i].name, ("VALUE" if m.group(2) == "text" else "NAME")
     return None
 
 
@@ -456,6 +566,8 @@ _KIND_ENTRY = {"LOC": "LENGTH", "ROT": "ROTATION", "SCALE": "NONE", "VIS": "BOOL
 def entry_kind(ob, key):
     if key.startswith(CUSTOM_PREFIX):
         return cb_entry.kind_of_value(ob.get(key[len(CUSTOM_PREFIX):]))
+    if is_shape_key(key):
+        return _row_kind(shape_owner(ob, key), "SHAPE", key[len(SHAPE_PREFIX):])
     return _KIND_ENTRY[MAIN_BY_KEY[key][4]]
 
 
@@ -522,7 +634,7 @@ def _virtual(owner, name):
         return None
     if isinstance(owner, bpy.types.Light):
         from ..operators import lights
-        return lights.channel_attr(name)
+        return lights.channel_attr(name, owner)
     if not isinstance(owner, bpy.types.Modifier):
         return None
     from ..operators import deformers
@@ -777,13 +889,18 @@ def _row_set(self, text):
     apply_row_entry(self, text)
 
 
+_ROW_PREFIX = {"CUSTOM": CUSTOM_PREFIX, "SHAPE": SHAPE_PREFIX}
+
+
 def _row_sel_get(self):
-    return self.kind == "CUSTOM" and CUSTOM_PREFIX + self.name in selected_channels()
+    prefix = _ROW_PREFIX.get(self.kind)
+    return prefix is not None and prefix + self.name in selected_channels()
 
 
 def _row_sel_set(self, value):
-    if self.kind == "CUSTOM":
-        _sel_set(CUSTOM_PREFIX + self.name)(self, value)
+    prefix = _ROW_PREFIX.get(self.kind)
+    if prefix is not None:
+        _sel_set(prefix + self.name)(self, value)
 
 
 class ALLSET_PG_cb_row(bpy.types.PropertyGroup):
@@ -984,7 +1101,9 @@ class ALLSET_OT_cb_hover(bpy.types.Operator):
             return {'PASS_THROUGH'}
         hit = _hovered_cell(context)
         _hover[window.as_pointer()] = hit
-        if hit is not None and window.as_pointer() not in _watching and context.region is not None:
+        # also over the Channel Box part's empty space / headers: RMB there is Maya's Channels menu (step 158)
+        if ((hit is not None or in_channel_part(context, event)) and window.as_pointer() not in _watching
+                and context.region is not None):
             bpy.ops.allset.cb_channel_drag('INVOKE_DEFAULT')
         return {'PASS_THROUGH'}
 
@@ -1005,6 +1124,10 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         self._rect = (region.x, region.y, region.x + region.width, region.y + region.height)
         self._pitch = row_pitch(context)
         self._press = None
+        # the Channel Box part of a Maya dock: from the region top down to the Layer Editor split (None: no dock)
+        self._cb_bottom = None
+        if _is_cb_dock(context):
+            self._cb_bottom = region.y + region.height - cb_share(region, _unit(context)) * region.height
         _watching.add(self._win)
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
@@ -1032,8 +1155,9 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                     return self._on_press(context, event, hit)
             if event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event):
                 hit = _hover.get(self._win)
-                if hit is not None and not (event.shift or event.ctrl or event.alt):
-                    return self._on_rmb(context, hit)
+                in_part = hit is not None or (self._cb_bottom is not None and event.mouse_y >= self._cb_bottom)
+                if in_part and not (event.shift or event.alt):
+                    return self._on_rmb(context, hit, edit=event.ctrl)
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
             self._on_move(context, event)
@@ -1047,16 +1171,20 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
 
-    def _on_rmb(self, context, hit):
+    def _on_rmb(self, context, hit, edit=False):
         """Maya: RMB in the Channel Box = the Channels menu (). Blender's button
         context menu draws its C items first and a Python menu only after them (step 148, #87: the Channels items
         sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
         that isn't selected becomes the selection first (delegated), so Key Selected keys the clicked channel."""
-        key, _part = hit
-        if key not in selected_channels(context):
-            set_selected_channels([key], context)
-            _anchor["key"] = key
-            _redraw(self._window)
+        if edit:     # Ctrl+RMB = the Edit menu (Maya-539, channel_box.md:35), selection kept
+            bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
+            return {'RUNNING_MODAL'}
+        if hit is not None:
+            key, _part = hit
+            if key not in selected_channels(context):
+                set_selected_channels([key], context)
+                _anchor["key"] = key
+                _redraw(self._window)
         bpy.ops.wm.call_menu(name=ALLSET_MT_cb_channels.__name__)
         return {'RUNNING_MODAL'}
 
@@ -1216,17 +1344,14 @@ def _act_breakdown(self, context, ob, key):
 
 
 def _act_mute(self, context, ob, key):
-    fc = fcurve(ob, key)
-    if fc is not None:
+    curves = channel_fcurves(ob, key)
+    for fc in curves:
         fc.mute = self.mute
-    return fc is not None
+    return bool(curves)
 
 
 def _act_delete(self, context, ob, key):
-    fc = fcurve(ob, key)
-    if fc is not None:
-        _fcurves(ob).remove(fc)
-    return fc is not None
+    return remove_channel_curves(ob, key)
 
 
 def _act_break(self, context, ob, key):
@@ -1303,20 +1428,37 @@ class ALLSET_OT_cb_show_all(bpy.types.Operator):
 # --- menus -------------------------------------------------------------------------------------------
 
 class ALLSET_MT_cb_channels(bpy.types.Menu):
+    """Maya Channel Box Channels menu (RMB anywhere in the Channel Box; Maya-178,
+    ; step 158 completes it)"""
     bl_label = "Channels"
 
     def draw(self, context):
+        from .. import preferences
+        from . import cb_channels, menu_sets
         lay = self.layout
         lay.operator("allset.cb_key_selected")
         lay.operator("allset.cb_key_all")
         lay.operator("allset.cb_breakdown_selected")
+        lay.operator("allset.cb_breakdown_all")
         lay.operator("allset.cb_mute", text="Mute Selected").mute = True
+        lay.operator("allset.cb_mute_all", text="Mute All").mute = True
         lay.operator("allset.cb_mute", text="Unmute Selected").mute = False
+        lay.operator("allset.cb_mute_all", text="Unmute All").mute = False
         lay.separator()
+        prefs = preferences.get(context)
+        lay.prop(prefs, "cb_sync_graph", text="Sync Selection in Graph Editor")
+        lay.prop(prefs, "cb_sync_timeline", text="Sync Timeline Display")
+        lay.separator()
+        lay.operator("allset.cb_clipboard", text="Cut Selected").action = "CUT"
+        lay.operator("allset.cb_clipboard", text="Copy Selected").action = "COPY"
+        lay.operator("allset.cb_clipboard", text="Paste Selected").action = "PASTE"
         lay.operator("allset.cb_delete_keys")
-        lay.operator("allset.cb_break_connections")
         lay.separator()
         lay.operator("allset.cb_duplicate_values")
+        lay.menu(ALLSET_MT_cb_freeze.__name__)
+        lay.separator()
+        lay.operator("allset.cb_break_connections")
+        lay.operator("allset.cb_select_connection")
         lay.separator()
         lay.operator("allset.cb_lock", text="Lock Selected").lock = True
         lay.operator("allset.cb_lock", text="Unlock Selected").lock = False
@@ -1326,7 +1468,22 @@ class ALLSET_MT_cb_channels(bpy.types.Menu):
         lay.operator("allset.cb_keyable", text="Make Selected Nonkeyable").keyable = False
         lay.operator("allset.cb_keyable", text="Make Selected Keyable").keyable = True
         lay.separator()
+        for label in cb_channels.LAYER_ITEMS:
+            lay.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text=label).item = cb_channels.LAYER_PATH + label
+        lay.separator()
         lay.operator("allset.cb_deselect_channels")
+
+
+class ALLSET_MT_cb_freeze(bpy.types.Menu):
+    """Maya Channels > Freeze (makeIdentity -apply, Maya -freezeTranslate ...)"""
+    bl_label = "Freeze"
+
+    def draw(self, context):
+        lay = self.layout
+        for text, t, r, sc in (("Translate", True, False, False), ("Rotate", False, True, False),
+                               ("Scale", False, False, True), ("All", True, True, True)):
+            op = lay.operator("allset.freeze_transform", text=text)
+            op.translate, op.rotate, op.scale = t, r, sc
 
 
 def is_cb_button(context):
@@ -1503,7 +1660,8 @@ def draw_empty(layout):
 
 # --- panel ---------------------------------------------------------------------------------------------
 
-_STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DRIVEN': 'DECORATE_DRIVER'}
+_STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DRIVEN': 'DECORATE_DRIVER',
+               'MUTED': 'MUTE_IPO_ON'}
 
 
 def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
@@ -1569,7 +1727,8 @@ SHAPE_PROPS = {
     'CAMERA': ("lens", "clip_start", "clip_end"),
     # Maya light shapes: Color R / G / B, Intensity first (Maya listAttr -keyable, step 148); Intensity is the
     # Maya value over Blender's Power (operators/lights.py, step 137)
-    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity"),
+    # + spot Cone Angle / Penumbra Angle (step 158, Maya spotLight listAttr -keyable)
+    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity", "maya:coneAngle", "maya:penumbraAngle"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z), step 144
 }
 
@@ -1669,6 +1828,17 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
     # icon's column, so SHAPES / INPUTS values line up under Translate X ... (Maya: one value column, step 148)
     line = layout.row(align=True)
     split = line.split(factor=0.5, align=True)
+    if kind == "SHAPE" and row is not None:
+        # a SHAPES row is a channel (step 158): selectable name, keyed / animated state like Translate X
+        key = SHAPE_PREFIX + prop
+        sub = split.row(align=True)
+        sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
+        right = split.row(align=True)
+        state = channel_state(ob, key)
+        right.alert = state is not None
+        right.prop(row, "text", text="")
+        line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
+        return
     name = split.row(align=True)
     name.alignment = 'CENTER'
     name.label(text=label)
@@ -1788,6 +1958,23 @@ class ALLSET_OT_cb_node_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _is_cb_dock(context):
+    area, region = context.area, context.region
+    if area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW':
+        return False
+    from . import maya_dock
+    return maya_dock.shown_kind(context) == 'CHANNEL_BOX'
+
+
+def in_channel_part(context, event):
+    """The mouse is over the Channel Box part of a Maya dock (above the Layer Editor), cells or not."""
+    if not _is_cb_dock(context):
+        return False
+    region = context.region
+    from_top = region.height - event.mouse_region_y
+    return 0 <= from_top <= cb_share(region, _unit(context)) * region.height
+
+
 def over_pane(context, event):
     """The mouse is over an overflowing Channel Box part of a Maya dock."""
     area, region = context.area, context.region
@@ -1904,8 +2091,14 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
         r.label(text="INPUTS")
     if last is not None:
         in_view.draw_cb_node(lines, context, last)
+    from . import attribute_editor
     for mod in inputs:
-        row, opened = node_row(lines, ob, mod_node(mod), mod.name)
+        # the Maya node name the Attribute Editor shows (Blender's automatic "Armature" = skinCluster1, #97)
+        try:
+            label = attribute_editor.modifier_node(ob, mod)[0]
+        except ValueError:      # a deformer on another object (lattice / handle INPUTS, step 144)
+            label = mod.name
+        row, opened = node_row(lines, ob, mod_node(mod), label)
         if row is not None:
             row.prop(mod, "show_viewport", text="")
         if opened:
@@ -2048,7 +2241,7 @@ classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider,
            ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag,
            ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, *CHANNEL_OPS,
            ALLSET_OT_cb_show_all,
-           ALLSET_MT_cb_channels, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
+           ALLSET_MT_cb_channels, ALLSET_MT_cb_freeze, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
            ALLSET_MT_cb_object, ALLSET_MT_cb_show)
 # ALLSET_PT_channel_box / _dock_attribute_editor / _dock_modeling_toolkit are no longer registered as 3D View sidebar

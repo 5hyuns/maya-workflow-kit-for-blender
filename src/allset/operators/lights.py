@@ -191,18 +191,78 @@ def _color(i):
     return get, set_
 
 
-def channel_attrs():
-    """Maya light shape channels Blender keeps as one colour vector (Color R / G / B, Maya listAttr -keyable,
-    step 148): Channel Box SHAPES rows ``maya:colorR`` ... (ui/channel_box._virtual)."""
+PENUMBRA_PROP = "allset_penumbra"     # Maya penumbra angle (degrees) last written: tells a negative penumbra apart
+
+
+def cone_penumbra(light):
+    """(Maya coneAngle, penumbraAngle) in degrees from Blender's spot (step 158): a positive penumbra widens the
+    cone outward (size = cone + 2p, blend = 2p / size), a negative one softens inward (size = cone, blend = 2|p| / cone)."""
+    size = math.degrees(light.spot_size)
+    soft = light.spot_blend * size / 2.0
+    p = light.get(PENUMBRA_PROP)
+    if isinstance(p, (int, float)) and p < 0 and abs(abs(p) - soft) < 1e-3:
+        return size, float(p)
+    return size - 2.0 * soft, soft
+
+
+def set_cone_penumbra(light, cone=None, penumbra=None):
+    c0, p0 = cone_penumbra(light)
+    cone = c0 if cone is None else max(0.006, float(cone))
+    p = p0 if penumbra is None else float(penumbra)
+    size = cone + 2.0 * max(p, 0.0)
+    size = min(180.0, max(1.0, size))
+    light.spot_size = math.radians(size)
+    light.spot_blend = min(1.0, 2.0 * abs(p) / size) if size > 0 else 0.0
+    light[PENUMBRA_PROP] = p
+
+
+def _cone():
+    def get(light):
+        return cone_penumbra(light)[0]
+
+    def set_(light, v):
+        set_cone_penumbra(light, cone=v)
+    return get, set_
+
+
+def _penumbra():
+    def get(light):
+        return cone_penumbra(light)[1]
+
+    def set_(light, v):
+        set_cone_penumbra(light, penumbra=v)
+    return get, set_
+
+
+def channel_attrs(light=None):
+    """Maya light shape channels Blender keeps differently (Maya listAttr -keyable, steps 148 / 158): Color R / G / B
+    (one colour vector), spot Cone Angle / Penumbra Angle (``spot_size`` + ``spot_blend``) — Channel Box SHAPES rows
+    ``maya:colorR`` ... (ui/channel_box._virtual). ``paths`` = the Blender properties a key on the row keys."""
     from .deformers import Attr
-    return [Attr(f"color{c}", f"Color {c}", "NONE", *_color(i)) for i, c in enumerate("RGB")]
+    out = []
+    for i, c in enumerate("RGB"):
+        a = Attr(f"color{c}", f"Color {c}", "NONE", *_color(i))
+        a.paths = (("color", i),)
+        out.append(a)
+    for key, label, fns in (("coneAngle", "Cone Angle", _cone()), ("penumbraAngle", "Penumbra Angle", _penumbra())):
+        a = Attr(key, label, "NONE", *fns)
+        a.paths = (("spot_size", -1), ("spot_blend", -1))
+        a.spot_only = True
+        out.append(a)
+    return out
 
 
-def channel_attr(name):
+def channel_attr(name, light=None):
     for a in channel_attrs():
         if name == "maya:" + a.key:
+            if getattr(a, "spot_only", False) and light is not None and light.type != 'SPOT':
+                return None
             return a
     return None
+
+
+# Blender properties a key on a Light row keys: Maya Intensity is read from the power (step 137)
+KEY_PATHS = {"allset_intensity": (("energy", -1),)}
 
 
 def register_props():
