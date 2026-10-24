@@ -52,10 +52,8 @@ def test_visibility_keys():
 
 def test_isolate_and_invert_keys():
     got = _items("3D View", "ONE", ctrl=True)
-    assert [g[0] for g in got] == ["view3d.localview"], got
-    km = kit.maya_kc().keymaps["3D View"]
-    kmi = next(k for k in km.keymap_items if k.idname == "view3d.localview" and k.ctrl and k.type == 'ONE')
-    assert kmi.properties.frame_selected is False, "isolate keeps the camera"
+    # step 164: allset.isolate = local view without framing (keeps the camera) with the selection's descendants
+    assert [g[0] for g in got] == ["allset.isolate"], got
     assert _items("Mesh", "ONE", ctrl=True) == [], "Mesh Ctrl+1 vertex mode removed"
     assert [g[0] for g in _items("Object Mode", "I", ctrl=True, shift=True)] == ["object.select_all"]
     assert [g[0] for g in _items("Mesh", "I", ctrl=True, shift=True)] == ["mesh.select_all"]

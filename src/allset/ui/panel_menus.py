@@ -163,7 +163,7 @@ SHOW = [
 ]
 
 ISOLATE = [
-    _run("View Selected", "view3d.localview", frame_selected=False),
+    _run("View Selected", "allset.isolate"),          # step 164: with the children (dag_164.md)
 ]
 
 RENDERER = [
@@ -456,7 +456,7 @@ def apply(context, key):
         if space.local_view is None and not any(ob.select_get() for ob in context.view_layer.objects if ob):
             return False
         with context.temp_override(area=area, region=main_region(area)):
-            bpy.ops.view3d.localview(frame_selected=False)
+            bpy.ops.allset.isolate()        # step 164: isolating a group shows its children
     elif key in ("EXPOSURE", "GAMMA", "CM_ENABLE"):
         _toggle_colour(context.scene, key)
     elif key in ("LAYOUT_SINGLE", "LAYOUT_FOUR"):

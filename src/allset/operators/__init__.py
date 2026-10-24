@@ -41,6 +41,10 @@ from . import curve_draw  # noqa: E402  step 156 lane T: CV / EP Curve Tool, Thr
 
 classes += curve_draw.classes
 
+from . import dag  # noqa: E402  step 164: Maya DAG rules for parents (hide / delete / export / isolate)
+
+classes += dag.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -79,9 +83,11 @@ def register():
     outliner_drag.register_handlers()
     material.register_handlers()
     auto_key.register_handlers()
+    dag.register_handlers()
 
 
 def unregister():
+    dag.unregister_handlers()
     curve_draw.unregister_handlers()
     auto_key.unregister_handlers()
     material.unregister_handlers()

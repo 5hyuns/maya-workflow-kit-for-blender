@@ -129,7 +129,17 @@ def apply(context, action, dependent=None):
     if action == 'HIDE':
         return _hide(selected, objs)
     if action == 'HIDE_UNSELECTED':
-        return _hide([ob for ob in objs if ob.visible_get() and not ob.select_get()], objs)
+        # step 164: the selection's own hierarchy stays (its children aren't "unselected" objects, and hiding a
+        # selected object's parent would hide the selection: Maya draws a node only under visible parents)
+        from .dag import hierarchy
+        keep = {o.session_uid for o in hierarchy(selected)}
+        for ob in selected:
+            p = ob.parent
+            while p is not None:
+                keep.add(p.session_uid)
+                p = p.parent
+        return _hide([ob for ob in objs if ob.visible_get() and not ob.select_get() and ob.session_uid not in keep],
+                     objs)
     if action == 'SHOW_SELECTED':
         act = vl.objects.active
         return _show([ob for ob in hidden if KEPT in ob or ob == act], vl)
@@ -165,6 +175,8 @@ class ALLSET_OT_visibility(bpy.types.Operator):
         had_selection = any(ob.visible_get() and ob.select_get() for ob in vl.objects)
         changed = apply(context, self.action,
                         None if self.behaviour == 'SAVED' else self.behaviour == 'DEPENDENT')
+        from . import dag
+        dag.sync(context.scene, vl)          # a hidden parent hides its children (Maya, step 164)
         text = message(self.action, had_selection, changed)
         if text:
             from ..ui import view_message

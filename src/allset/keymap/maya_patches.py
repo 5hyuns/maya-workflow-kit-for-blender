@@ -471,8 +471,14 @@ def patch_undo_visibility(kd):
 
     # Ctrl+1 isolate select: local view without moving the camera; again = back.
     kd.remove("Mesh", "mesh.select_mode", type="ONE", ctrl=True)
-    _add(kd, "3D View", "view3d.localview", make_event("ONE", ctrl=True), {"frame_selected": False},
-         shadows=("Sculpt",))
+    # step 164: isolating a group shows its children (Maya isolate select, )
+    _add(kd, "3D View", "allset.isolate", make_event("ONE", ctrl=True), shadows=("Sculpt",))
+    # Maya Delete takes the selected hierarchy with it (dag_164.md "Delete"); Blender's leaves the children
+    for key in ("DEL", "BACK_SPACE"):
+        kd.remove("Object Mode", "object.delete", type=key)
+        _add(kd, "Object Mode", "allset.delete", make_event(key))
+        kd.remove("Outliner", "outliner.delete", type=key)
+        _add(kd, "Outliner", "outliner.delete", make_event(key), {"hierarchy": True})
 
     _add(kd, "Object Mode", "object.select_all", make_event("I", ctrl=True, shift=True),
          {"action": 'INVERT'})

@@ -148,6 +148,8 @@ def apply_object(ob, layer):
 def apply_layer(coll):
     for ob in coll.objects:
         apply_object(ob, coll)
+    from ..operators import dag
+    dag.sync()                      # a hidden layer hides its members' children too (Maya, step 164)
 
 
 def new_layer(scene, objects=()):
