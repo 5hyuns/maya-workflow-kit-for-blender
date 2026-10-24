@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 173 (재점검 12차, 사용자 지시의 11차) 완료 — `docs/steps/step_173.md` + `step_173_remaining.md` / `step_173_quant.md`, PLAN
+  「재점검 12차」. 헤드리스 1600 / 1600, dogfood 48 / 48 (콘솔 오류 0), 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 699 / 1318 (53.0 %), 옵션 창
+  104 경로, look_compare 그대로 (선택 면 ΔE 40.5). 새 차이: 컴포넌트 모드 → Select 도구, G 가 메뉴 명령 반복 안 함, 패널 메뉴 회색 36.
+  **바로 다음 할 일**: backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8 개 = steps 174–181 (첫째: 컴포넌트
+  모드에서 변환 도구 유지).
+
 - Step 172 (0.4.0 출시 준비) 완료 — `docs/steps/step_172.md`. version 0.4.0, CHANGELOG, `release_notes_0.4.0.md`; release_check
   4.5.4 / 5.2.2 각 14 PASS, 헤드리스 1600 / 1600, GUI 전체 1827 검사 (오래된 RMB 목록 테스트 2 파일 고침). master push,
   #81–#101 닫힘, #89 → 0.5.0, 태그 v0.4.0, 초안 릴리스 + 업로드 폴더.

@@ -120,7 +120,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 12 — 셸프
 
 - [ ] (step 12) Maya Workflow Kit 레이아웃: 메뉴바 아래 Status Line, 그 아래 셸프 (Maya 와 같은 순서), 창 크기를 바꿔도 띠가 두 줄 높이로 남는지.
-- [ ] (step 12) Poly Modeling 큐브 버튼 클릭 → pCube1, **더블클릭** → 큐브 하나 + 그 큐브의 옵션 (두 개 생기지 않음), Ctrl+클릭 → 옵션. 주의 (step 163): 더블클릭은 아직 `screen.redo_last` (`ui/shelf.py:278,286`) 인데 step 147 뒤 셸프 명령은 등록되지 않아 패널이 안 뜨거나 다른 연산의 패널이 뜰 수 있음 — 본 결과를 적을 것.
+- [ ] (step 12) Poly Modeling 큐브 버튼 클릭 → pCube1, **더블클릭** → 큐브 하나 + 그 큐브의 옵션 (두 개 생기지 않음), Ctrl+클릭 → 옵션. step 167 부터 더블클릭 = 그 버튼의 Maya 메뉴 항목 옵션 상자 (`allset.menu_option_box`, Polygon Cube 는 `gui_step167_shelf` 가 확인) — 실제 마우스의 더블클릭 간격에서도 큐브가 하나인지 볼 것.
 - [ ] (step 12) 탭 드롭다운 / ◀ ▶ 로 Rigging·Animation·Rendering 전환, 다시 시작해도 마지막 탭 유지 (환경설정 저장 시).
 - [ ] (step 12) 톱니 > New Shelf → Add Button(스크립트 한 줄, 아이콘 이름) → 클릭 실행, Edit/Delete Button, Add Last Command (커맨드 라인 실행 후), 다시 시작해도 사용자 셸프가 남음.
 - [ ] (step 12) 팩토리 레이아웃에서 Windows > UI Elements > Shelf 로 띠 추가/제거, 다른 Image Editor 는 평소처럼 보임.
@@ -323,7 +323,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 52) Space 길게: 위 2 줄 (공통 + Cache/Help, View … Panels), 커서 줄 Recent Commands | Maya | Hotbox Controls, 아래 5 줄 (메뉴 세트 모두), 대각선 4 개. 커서가 사이드바 근처여도 줄이 접히지 않고 Channel Box 위에 그려지는지, 그 위의 메뉴 이름을 눌러 열리는지.
 - [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
-- [ ] (step 52) 오브젝트 위 RMB: 링 아래 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = Adjust Last Operation), 회색 ▸ 항목들, 재질 항목. 목록은 한 열 (아래에 안 들어가면 링 옆, 창보다 길 때만 여러 열 — step 161) 이고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
+- [ ] (step 52) 오브젝트 위 RMB: 링 아래 (자리가 없으면 옆) 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = `menu_sets.option_kind` 에 따름, step 103 / 147), DG Traversal / Inputs / Outputs ▸ = 노드 목록 (step 165, 회색 아님), 재질 항목. 목록은 한 열 (아래에 안 들어가면 링 옆, 창보다 길 때만 여러 열 — step 161) 이고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
 
 ### Step 53 — Blender 5.x 와 안전한 설치
 
@@ -1028,7 +1028,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Select two UVs on two shells, Modify > Snap Together → the first shell's UV lands on the second (pick order doesn't matter, like Maya).
 - [ ] Select the seam edges between a small and a big shell, Cut/Sew > Move and Sew → the small shell turns / moves onto the big one without scaling and the seam merges.
 - [ ] Select faces inside a shell, Ctrl+Shift+X → a new shell (Select > Shell picks only those faces); Delete → their UVs collapse to the 0,0 corner.
-- [ ] Keys in the UV Editor: 4 wireframe / 5 shaded, 6 hides and shows the texture image, 8 blue shell borders, 9 thick texture borders, Ctrl+1 shows only the selected UVs and again everything with the old selection.
+- [x] Keys in the UV Editor: 4 wireframe, 8 blue shell borders on, 9 texture borders off / on, Ctrl+1 shows only the selected UVs and Ctrl+1 again every face. (gui_step155_uv)
+- [ ] Keys in the UV Editor: 5 shaded, 6 hides and shows the texture image; Ctrl+1 out of isolation gives back the old UV selection.
 - [ ] Tools > Move UV Shell: a click on a UV picks its shell, dragging moves it; choosing another UV tool goes back to UV picking.
 
 ## Step 156 — Curves tools
@@ -1068,24 +1069,30 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] Mess up a Maya workspace (close the Outliner, resize areas), Windows > Workspaces > Reset "…" to Factory Default: the layout comes back, the workspace keeps its name. (gui_step160_workspaces)
 
 ## Step 161 — Viewport messages and views
-- [ ] Select two objects, Ctrl+G: no Blender ⓘ banner in the status bar; the Command Line result field (right of the Python field) reads "Result: group1". Create > Polygon Primitives > Cube: "Created pCube1".
-- [ ] RMB on an object near the bottom of the viewport: the list stays one column, left of the ring (E = UV is a submenu), never wrapping into columns; dragging from the ring left onto a row and releasing runs it.
+- [x] Edit > Group on two objects: no Blender ⓘ banner in the Help Line; the Command Line result field (right of the Python field) shows Maya's result "group1", drawn inside the window. (gui_step161_messages G1)
+- [ ] The same with the Ctrl+G key on real keys; Create > Polygon Primitives > Cube: "Created pCube1" in the result field.
+- [x] RMB on an object near the bottom of the viewport: the list stays one column, left of the ring (E = UV is a submenu), never wrapping into columns, not over the ring, every row inside the window. (gui_step161_messages G2)
+- [ ] RMB list beside the ring: dragging from the ring left onto a row and releasing runs it (step 161 rule kept at the 0.4.0 release, step 172: Maya puts the list under the ring and lets it run off the window — decide by hand whether "beside" feels wrong).
 - [x] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30. (gui_step161_views)
 - [ ] Tooltip of Panels > Layouts > Four View (or the Tool Box Four View button) says Blender's four view has one header for all panes.
 - [x] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight). (gui_step161_views)
 
 ## Step 162 — Option boxes and menu gestures
 - [ ] Display > Toggle Show/Hide ❒ opens "Toggle Visibility Options" (First Selection Independent / Dependent). Pick Dependent, Apply and Close; select a hidden-but-selected object first and two visible ones: h shows all three.
-- [ ] Edit > Delete by Type > Non-Deformer History ❒ = "Delete Non Deformer History Options"; with a Bevel after an Armature on a mesh, Delete (All) bakes the bevel and keeps only the armature; "History before deformers only" keeps the bevel.
+- [x] Edit > Delete by Type > Non-Deformer History ❒ = a Maya window; Delete with the factory All bakes the non-deformer history and keeps only the deformer. (gui_step162_option_windows)
+- [ ] Non-Deformer History ❒ with a Bevel after an Armature: "History before deformers only" keeps the bevel (the GUI test only runs All).
 - [ ] Ctrl+Shift+click a Maya menu item (Create > Polygon Primitives > Cube) on real keys: the item doesn't run, no option box, a Cube button appears at the end of the current shelf tab, the Command Line shows "Cube added to the … shelf"; Shift+click / Ctrl+click still open the option box.
 - [ ] Restart Blender: the added shelf button is still there; click runs the item, Ctrl+click opens its option box, the shelf menu's Edit / Delete reach it (factory tabs too).
-- [ ] Hypershade floating beside the main window: MMB-drag a Browser swatch's name onto an object in the main viewport: the material is assigned; the swatch + name follow the cursor; releasing over empty space or the Outliner does nothing; ESC cancels.
+- [x] Hypershade floating beside the main window: MMB-drag a Browser swatch's name onto an object in the main viewport: the material is assigned (one undo step); releasing over empty space does nothing; ESC cancels; a plain LMB click still picks the swatch. (gui_step162_hs_drag)
+- [ ] The same drag on a real mouse: the swatch + name follow the cursor; releasing over the Outliner does nothing.
 
 ## Step 164 — Maya DAG rules for parents
-- [ ] Group two cubes (Ctrl+G), select the group, press h: both cubes disappear, the cubes' Channel Box Visibility still reads on; h again shows them. Hide one cube on its own first: showing the group leaves that cube hidden.
+- [x] Select a group, press h: its cube is not drawn, the cube's own Visibility stays on; h again shows it. (gui_step164_dag)
+- [ ] Group two cubes (Ctrl+G), hide one cube on its own first, then h twice on the group: that cube stays hidden (Maya); the other comes back.
 - [ ] Select the group, Delete (key, Edit > Delete, Outliner Delete): the group and both cubes are gone; Ctrl+Z brings all three back.
 - [ ] File > Export Selection of the group as FBX, import the file into Maya: group + both cubes.
-- [ ] Select the group, Ctrl+1: the view shows the group's cubes only; Ctrl+1 again shows everything. Put the group in a display layer and turn its V off: the cubes disappear too.
+- [x] Select the group, Ctrl+1: the view shows the group's cube with it, other objects disappear; Ctrl+1 again leaves the isolation. (gui_step164_dag)
+- [ ] Put the group in a display layer and turn its V off: the cubes disappear too (headless test only).
 - [ ] A scene with a few thousand objects: dragging objects stays as fluid as before step 164 (the parent rule runs on every scene update).
 
 ## Step 165 — Component-mode Channel Box and RMB node submenus
@@ -1099,15 +1106,18 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 166 — Menu consistency
 
-- [ ] Dope Sheet: select keys of a rotation curve with a 350° jump, Curves > Euler Filter: the jump is gone; the area stays a Dope Sheet and keeps its view.
+- [x] Dope Sheet: select keys of a rotation curve with a 350° jump, Curves > Euler Filter: the jump is gone, curves without selected keys are left alone, the area is a Dope Sheet again; Resample Curve keys every frame. (gui_step166_dope_curves)
+- [ ] After Dope Sheet Curves > Euler Filter the Dope Sheet keeps its scroll / zoom (no flicker from the Graph Editor switch).
 - [ ] Dope Sheet View > Auto Frame on: selecting another animated object frames the Dope Sheet.
 - [ ] Select > All by Type > IK Handles / Clusters selects the kit's ikHandle / clusterHandle empties; Edit > Delete All by Type > IK Handles / Clusters removes them with their constraints / hooks.
 - [ ] UV Editor Tools > Unfold / Cut / Sew / Pin act on the selection like Modify > Unfold, Cut/Sew > Cut / Sew, Edit > Pin Selection.
 
 ## Step 167 — Shelf double-click and overflow
 
-- [ ] Double-click Polygon Cube on the shelf: one cube, then Polygon Cube Options opens; double-click a "run + settings" button (e.g. Extrude): one result with Adjust Last Operation.
-- [ ] Window narrower than the Poly Modeling shelf: the shelf shows one row with ▲ / ▼ at the right; the wheel over the icons and the arrows move one row; the last buttons are reachable.
+- [x] Double-click Polygon Cube on the shelf: one cube, then Polygon Cube Options opens. (gui_step167_shelf)
+- [ ] Double-click a "run + settings" button (e.g. Extrude) on a real mouse: one result (the first click's run is taken back) with Adjust Last Operation.
+- [x] Window narrower than the Poly Modeling shelf (1600 px, UI 1.25): two rows, one shown, scroll bar drawn; the wheel over the icons shows the next row with the last button on screen; ▲ shows row 0 again. (gui_step167_shelf)
+- [ ] The ▼ arrow moves one row down and the arrow at the end of the range is dimmed.
 - [ ] Buttons added with Ctrl+Shift+click past the end of a long shelf are reachable by scrolling.
 
 ## Step 168 — Modify menu and Smooth Mesh Preview to Polygons
@@ -1125,6 +1135,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Deform > Paint Weights > Wire ❒ (hold): Paint Attributes Tool window; Paint starts Weight Paint on wire1 with the values.
 
 ## Step 170 — Selection modifiers outside the 3D View
+
+Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl CLICK, so `gui_step170_select_mods` drives those cases through the operators — these items stay open until checked by hand.
 
 - [ ] Graph Editor: select keys 1 and 10, Shift+drag a box over 10 and 20 → 1 and 20 selected; Ctrl+drag over 20 → only 1; Ctrl+Shift+click a selected key → nothing removed; click a selected key and drag → all selected keys move.
 - [ ] Dope Sheet: Ctrl+click a selected key deselects it; Shift+box toggles.

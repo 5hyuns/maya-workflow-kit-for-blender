@@ -908,3 +908,49 @@ Unchanged since audit 10; steps 155–162 deepened done rows. New concept gap be
 1. Maya DAG semantics for parents. 2. Component-mode Channel Box + RMB node submenus. 3. Menu consistency (same item greyed in one menu,
 working in another). 4. Shelf double-click and overflow. 5. Modify menu + Smooth Mesh Preview to Polygons. 6. Deform completion.
 7. Selection modifiers outside the 3D View. 8. Animation snapshot and ghosting (Visualize).
+
+## 재점검 12차 (step 173, 2026-10-25 — 사용자 지시의 「재점검 11차」)
+
+User request: everything planned (backlog_164, steps 164–171, release 0.4.0 step 172) is done — dogfood in a clean install, collect
+what is left, implementation rate, priorities, backlog; criterion "default Maya with Blender features attached", differences only.
+「재점검 11차」 is step 163, so this one is numbered 12 (delegated). Evidence: `docs/steps/step_173.md` (main: dogfood shots, scored
+differences) + lane files `step_173_remaining.md` (README table, open work, issues, blindspots, manual checks) and `step_173_quant.md`
+(counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **30 (91 %)** | **1** — theme (store compliance, decision 13) | **0** | **2** — separate pivots, Y-up |
+
+Moved since audit 11: selection modifiers outside the 3D View Partial → Done (step 170).
+
+### Headline numbers (step 163 → now)
+
+| Measure | Step 163 | Now (c8d006c, 0.4.0) |
+|---|---|---|
+| Menu leaves working (1318) | 649 (49.2 %) | **699 (53.0 %)** — Modify 63 %, Deform 65 %, Visualize 80 % |
+| Editor menu bars working (914) | 545 | **560** |
+| Option boxes → kit Maya window (paths) | 85 | **104**; dead 225 → 214, generic 44 → 36 |
+| Marking menus working / greyed; shelves; hotkeys | 368 / 65; 155; 209 | unchanged |
+| Tests | headless 1518, dogfood 48/48 | **headless 1600/1600**, **dogfood 48/48**, console errors 0; full GUI suite 1827 checks at step 172 |
+| look_compare (effective 1.0) | viewport 11/12, kit pixels 6/6, rects 5/12 | byte-identical (selected-face fill ΔE 40.5, fifth audit) |
+| Manual checks | 620, 86 ticked | 663, 96 ticked |
+| Open GitHub issues | 20 (19 fixed in code) | **1** (#89, milestone 0.5.0) |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 9 | Entering component mode switches the tool to Select (Maya keeps Move / Rotate / Scale) |
+| 9 | G (Repeat Last) doesn't repeat menu / shelf / marking-menu commands |
+| 6 | Selected faces near-opaque orange (ΔE 40.5); Channel Box INPUTS lost after a dogfood undo sequence; stale result text after undo |
+| 6 | 36 greyed panel-menu / panel-toolbar items outside the counts and notice rules, some with kit counterparts |
+| 6 | UV Editor 69 %, Light Links greyed although Blender has light linking, no Animation Layers, Surfaces 8 / 41 (fifth audit) |
+| 5 | Option box ❒ click = command (#82, C wall; hold / Shift / Ctrl) |
+| 4 | RMB list beside the ring (delegated, step 161), four-view labels, Transform Display, Character Sets, Mesh Display, extra primitives, render brightness, Preferences |
+
+### Backlog (steps 174+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. Component mode keeps the transform tool. 2. Repeat Last for Maya commands (G). 3. Selected-face look and dogfood fixes.
+4. Panel menus honesty and twins. 5. UV Editor finish. 6. Light Linking. 7. Animation Layers on NLA. 8. Surfaces basics.
