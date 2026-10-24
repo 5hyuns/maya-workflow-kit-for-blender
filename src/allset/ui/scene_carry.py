@@ -208,7 +208,7 @@ def maya_workspace():
     """A Maya layout workspace already in the file (its own template one first, then one a switch appended)."""
     from .. import switch
     found = [ws for ws in bpy.data.workspaces if switch.is_maya_workspace(ws)]
-    found.sort(key=lambda ws: switch.PREV_KEY in ws)
+    found.sort(key=lambda ws: (switch.PREV_KEY in ws, switch.template_of(ws) != switch.TEMPLATE_WORKSPACE))
     return found[0] if found else None
 
 

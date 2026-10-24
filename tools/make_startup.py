@@ -317,6 +317,7 @@ class Builder:
                 ge = yield from self.split(view, 'HORIZONTAL', round(view.height * ANIMATION_GRAPH), 'BOTTOM')
                 ge.type = 'GRAPH_EDITOR'
                 ge.ui_type = 'FCURVES'
+                ge.spaces.active.show_region_ui = False     # Maya's Graph Editor has no side panel (step 104)
                 yield
             elif step == "shape_editor":
                 # Rigging.json: Node Editor / Shape Editor tabs under the viewport; Blender's rig data has no node

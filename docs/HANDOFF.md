@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 160 (Maya UI reset and workspaces, #81, backlog_155 #6) 완료 — `docs/steps/step_160.md`. 템플릿에 Maya 작업 공간 8 개
+  (Maya Classic, Modeling - Standard / Expert, Sculpting, UV Editing, Rigging, Animation, Rendering - Standard), Windows >
+  Workspaces 메뉴 + Status Line 드롭다운 (없으면 템플릿에서 덧붙임, 메뉴 세트 · 탭 적용), Reset Current Workspace
+  (`switch.reset_workspace`, `ui/workspaces.py`).
+  **바로 다음 할 일**: 161 Viewport messages and views (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_155.json` 7 번째 항목).
+
 - Step 159 (Skin weights export / import + Skeleton gaps, backlog_155 #5) 완료 — `docs/steps/step_159.md`. Deform > Export /
   Import Weights = Maya deformerWeights XML (`operators/deformer_weights.py`), Joint Labelling 전체 + 라벨 그리기 + Mirror Skin
   Weights Label 모드 (`operators/joint_labels.py`), Enable / Disable IK Handles (influence = Maya ikBlend), Reset Default Weights.

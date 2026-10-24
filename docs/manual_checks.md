@@ -1061,3 +1061,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Pose mode, a leg joint chain's top selected: Skeleton > Joint Labelling > Add Joint Labels > Label Left, then the first Label Hip: the chain reads Hip / Knee / Foot / Toe; Show All Labels draws "Hip (L)" etc. in Maya's blue beside each joint; Rename Joints From Labels renames them LeftHip, LeftKnee ...
 - [ ] Label both legs Left / Right, paint the left leg, Skin > Mirror Skin Weights with Influence Association Label: the right leg gets the weights even when its joints are not placed exactly mirrored.
 - [ ] Select an ikHandle, Skeleton > Disable Selected IK Handles: the chain stops following the handle; Enable brings it back.
+
+## Step 160 — Maya workspaces / Reset (#81)
+- [ ] Status Line "Workspace:" dropdown lists Maya Classic, Modeling - Standard, Modeling - Expert, Sculpting, UV Editing, Rigging, Animation, Rendering - Standard, then the file's other workspaces; picking Animation switches the menu set to Animation and shows the Graph Editor under the viewport.
+- [ ] In a Blender file (Maya mode switched on), Windows > Workspaces > UV Editing appends the Maya UV Editing layout once; picking it again reuses it.
+- [ ] Mess up a Maya workspace (close the Outliner, resize areas), Windows > Workspaces > Reset "…" to Factory Default: the layout comes back, the workspace keeps its name.
