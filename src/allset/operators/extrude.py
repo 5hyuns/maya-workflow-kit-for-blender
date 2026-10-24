@@ -15,6 +15,13 @@ The record is valid only while the mesh equals one of the states the kit made (C
 Step 139 (#70 M4, #16): the record is one ``Spec`` per Maya node - polyExtrudeEdge / polyExtrudeVertex here (edges /
 vertices extrude at once, no drag) and polyBevel3 in operators/bevel_maya.py - each with its Maya fields, edit
 operator and arrow field ().
+
+Step 151 (lane B): the extrude manipulator's other handles drive polyExtrudeFace Local Translate X / Y and Local
+Scale X / Y / Z (Maya 2022 Maya, data in tests/test_step151_extrude_manip.py): every extruded face has its own frame
+- Z = its normal, X = Maya world X (``localDirection`` 1 0 0, checked in world space) projected into the face plane
+(Maya world Z = Blender -Y when the face faces X), Y = Z x X; Local Translate moves the face along X / Y, Local Scale scales it about its vertex mean along its X / Y / Z
+(Z does nothing on a flat face); a vertex shared by several extruded faces takes the mean of their moves (Keep Faces
+Together), the rings between take the level fraction, and Offset adds after the scale.
 """
 
 import bmesh
@@ -31,6 +38,15 @@ FIELDS = ("thickness", "local_translate_z", "offset", "divisions", "keep_faces_t
 LABELS = {"thickness": "Thickness", "local_translate_z": "Local Translate Z", "offset": "Offset",
           "divisions": "Divisions", "keep_faces_together": "Keep Faces Together"}
 DEFAULTS = {"thickness": 0.0, "local_translate_z": 0.0, "offset": 0.0, "divisions": 1, "keep_faces_together": True}
+# polyExtrudeFace attributes only the manipulator handles set (step 151): not In-View / Channel Box rows
+MANIP_FIELDS = ("local_translate_x", "local_translate_y", "local_scale_x", "local_scale_y", "local_scale_z")
+MANIP_LABELS = {"local_translate_x": "Local Translate X", "local_translate_y": "Local Translate Y",
+                "local_scale_x": "Local Scale X", "local_scale_y": "Local Scale Y", "local_scale_z": "Local Scale Z"}
+MANIP_DEFAULTS = {"local_translate_x": 0.0, "local_translate_y": 0.0, "local_scale_x": 1.0, "local_scale_y": 1.0,
+                  "local_scale_z": 1.0}
+DEFAULTS.update(MANIP_DEFAULTS)
+# Maya world X / Z in Blender world (Y-up -> Z-up: Maya Z = Blender -Y)
+WORLD_X, MAYA_Z = Vector((1.0, 0.0, 0.0)), Vector((0.0, -1.0, 0.0))
 NOTICE = "Edit-mode operations have no history in Blender: only the last one can be changed here."
 
 
@@ -41,11 +57,17 @@ class Spec:
     In-View manipulator arrow drags (None: no arrow); ``edit_op`` = the operator that rebuilds the node with new
     values (one undo step); ``build(bm, params, unit)`` (not FACE) -> the vertices to track."""
 
-    def __init__(self, kind, node, fields, labels, defaults, kinds, arrow, edit_op, build=None, node_type=None):
+    def __init__(self, kind, node, fields, labels, defaults, kinds, arrow, edit_op, build=None, node_type=None,
+                 manip=()):
         self.node_type = node_type or node     # Maya node type (the AE history tab title)
         self.kind, self.node, self.fields, self.labels = kind, node, tuple(fields), dict(labels)
+        self.manip = tuple(manip)              # values only the manipulator sets (step 151): not shown as rows
         self.defaults, self.kinds, self.arrow, self.edit_op, self.build = dict(defaults), dict(kinds), arrow, \
             edit_op, build
+
+    @property
+    def all_fields(self):
+        return self.fields + self.manip
 
     @property
     def counter(self):
@@ -60,9 +82,10 @@ def add_spec(spec):
     return spec
 
 
-FACE = add_spec(Spec('FACE', NODE, FIELDS, LABELS, DEFAULTS,
-                     {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
-                      "keep_faces_together": "BOOL"}, "local_translate_z", "extrude_edit"))
+FACE = add_spec(Spec('FACE', NODE, FIELDS, dict(LABELS, **MANIP_LABELS), DEFAULTS,
+                     dict({"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
+                           "keep_faces_together": "BOOL"}, **{k: "NONE" for k in MANIP_FIELDS}),
+                     "local_translate_z", "extrude_edit", manip=MANIP_FIELDS))
 
 
 # --- geometry (bmesh only) -------------------------------------------------------------------------
@@ -97,9 +120,34 @@ def _offset_dir(perps):
     return Vector()
 
 
-def _vectors(faces, together):
-    """{key: (base co, T, L, O)} per extruded vertex (key = vertex index, or (face index, vertex index) for
-    faces extruded one by one), from the faces before the extrusion."""
+def face_axes(normal, direction=WORLD_X, fallback=MAYA_Z):
+    """Maya's local X / Y of an extruded face (polyExtrudeFace ``localDirection`` 1 0 0, Maya step 151): the
+    direction projected into the face plane, ``fallback`` (Maya world Z) when the face looks along it; Y = Z x X."""
+    n = normal.normalized() if normal.length > 1e-12 else Vector((0.0, 0.0, 1.0))
+    for d in (direction, fallback, Vector((0.0, 1.0, 0.0))):
+        x = d - n * d.dot(n)
+        if x.length > 1e-6:
+            x = x.normalized()
+            return x, n.cross(x).normalized()
+    return Vector((1.0, 0.0, 0.0)), Vector((0.0, 1.0, 0.0))
+
+
+def _face_parts(f, v, direction, fallback):
+    """(X, Y, SX, SY, SZ) of vertex ``v`` in face ``f``: the face's local X / Y and the move of ``v`` per unit of
+    Local Scale - 1 along X / Y / Z about the face's vertex mean (step 151)."""
+    n = f.normal.normalized()
+    x, y = face_axes(n, direction, fallback)
+    r = v.co - f.calc_center_median()
+    return x, y, x * r.dot(x), y * r.dot(y), n * r.dot(n)
+
+
+def _mean(vectors):
+    return sum(vectors, Vector()) / len(vectors)
+
+
+def _vectors(faces, together, direction=WORLD_X, fallback=MAYA_Z):
+    """{key: (base co, T, L, O, X, Y, SX, SY, SZ)} per extruded vertex (key = vertex index, or (face index, vertex
+    index) for faces extruded one by one), from the faces before the extrusion."""
     sel = set(faces)
     out = {}
     if together:
@@ -114,14 +162,17 @@ def _vectors(faces, together):
                     ef = [g for g in e.link_faces if g in sel]
                     if len(ef) == 1:              # a border edge of the extruded region
                         perps.append(_inward(ef[0], e))
+                parts = [_face_parts(g, v, direction, fallback) for g in vf]
                 out[v.index] = (v.co.copy(), _thickness_dir(normals),
-                                sum(normals, Vector()) / len(normals), _offset_dir(perps))
+                                sum(normals, Vector()) / len(normals), _offset_dir(perps),
+                                *(_mean([p[i] for p in parts]) for i in range(5)))
     else:
         for f in faces:
             n = f.normal.copy()
             for v in f.verts:
                 perps = [_inward(f, e) for e in v.link_edges if f in e.link_faces]
-                out[(f.index, v.index)] = (v.co.copy(), n.copy(), n.copy(), _offset_dir(perps))
+                out[(f.index, v.index)] = (v.co.copy(), n.copy(), n.copy(), _offset_dir(perps),
+                                           *_face_parts(f, v, direction, fallback))
     return out
 
 
@@ -144,13 +195,13 @@ def _region(bm, faces):
     return caps
 
 
-def extrude_topology(bm, faces, divisions=1, together=True):
+def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, fallback=MAYA_Z):
     """Zero-length extrusion of ``faces``, ``divisions`` times. Returns (caps, levels, vectors) where
     levels[k-1] maps a vertex key to the level-k vertex (level ``divisions`` = the caps)."""
     bm.verts.index_update()
     bm.faces.index_update()
     faces = [f for f in faces if f.is_valid]
-    vectors = _vectors(faces, together)
+    vectors = _vectors(faces, together, direction, fallback)
     if together:
         by_co = {_key(co): k for k, (co, *_r) in vectors.items()}
     else:
@@ -198,28 +249,43 @@ def _match_face(caps, keys):
 
 
 def moved_vertices(levels, vectors, unit=1.0):
-    """[(vertex, P0, T, L, O)] with the level fraction and the Maya unit folded into T, L, O."""
+    """[(vertex, P0, T, L, O, X, Y, SX, SY, SZ)] with the level fraction folded into every vector and the Maya unit
+    into the length ones (T, L, O, X, Y; the scale moves SX / SY / SZ are already mesh lengths)."""
     n = len(levels)
     out = []
     for k, found in enumerate(levels, 1):
-        f = k / n * unit
+        frac = k / n
+        f = frac * unit
         for key, v in found.items():
-            co, t, l, o = vectors[key]
-            out.append((v, co.copy(), t * f, l * f, o * f))
+            co, t, l, o, x, y, sx, sy, sz = vectors[key]
+            out.append((v, co.copy(), t * f, l * f, o * f, x * f, y * f, sx * frac, sy * frac, sz * frac))
     return out
 
 
-def place(moved, thickness, ltz, offset):
-    for v, p0, t, l, o in moved:
-        v.co = p0 + t * thickness + l * ltz + o * offset
+def position(p0, vecs, params):
+    """Where a moved vertex goes for ``params`` (vecs = T, L, O, X, Y, SX, SY, SZ of ``moved_vertices``)."""
+    t, l, o, x, y, sx, sy, sz = vecs
+    g = params.get
+    return (p0 + t * g("thickness", 0.0) + l * g("local_translate_z", 0.0) + o * g("offset", 0.0)
+            + x * g("local_translate_x", 0.0) + y * g("local_translate_y", 0.0)
+            + sx * (g("local_scale_x", 1.0) - 1.0) + sy * (g("local_scale_y", 1.0) - 1.0)
+            + sz * (g("local_scale_z", 1.0) - 1.0))
+
+
+def place(moved, thickness=0.0, ltz=0.0, offset=0.0, **manip):
+    params = dict(manip, thickness=thickness, local_translate_z=ltz, offset=offset)
+    for v, p0, *vecs in moved:
+        v.co = position(p0, vecs, params)
 
 
 def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisions=1, keep_faces_together=True,
-            unit=1.0):
-    """Maya polyExtrudeFace on ``faces`` (bmesh). Returns (caps, moved); the caps end up selected."""
-    caps, levels, vectors = extrude_topology(bm, faces, divisions, keep_faces_together)
+            unit=1.0, direction=WORLD_X, fallback=MAYA_Z, **manip):
+    """Maya polyExtrudeFace on ``faces`` (bmesh). Returns (caps, moved); the caps end up selected. ``manip`` =
+    Local Translate X / Y and Local Scale X / Y / Z (MANIP_FIELDS); ``direction`` / ``fallback`` = world X / Z
+    in mesh space (the faces' local X, step 151)."""
+    caps, levels, vectors = extrude_topology(bm, faces, divisions, keep_faces_together, direction, fallback)
     moved = moved_vertices(levels, vectors, unit)
-    place(moved, thickness, local_translate_z, offset)
+    place(moved, thickness, local_translate_z, offset, **manip)
     for f in bm.faces:
         f.select = False
     for e in bm.edges:
@@ -418,7 +484,7 @@ class Record:
         self.cap_verts = []         # vertex indices whose positions identify the kit's state
         self.sel = None             # selection signature the operation left (not FACE)
         self.topology = None        # (divisions, together) of ``moved``
-        self.moved = []             # [(vertex index, P0, T, L, O)]
+        self.moved = []             # [(vertex index, P0, T, L, O, X, Y, SX, SY, SZ)]
         self.cap_faces = []         # face indices
         self.states = []            # [(params, signature, selection signature)]
         self.live = False           # a drag is previewing values
@@ -452,7 +518,7 @@ def _store(rec, bm, caps, moved, params):
     bm.faces.index_update()
     rec.params = dict(params)
     rec.topology = (params["divisions"], params["keep_faces_together"])
-    rec.moved = [(v.index, p0, t, l, o) for v, p0, t, l, o in moved]
+    rec.moved = [(v.index, p0, *vecs) for v, p0, *vecs in moved]
     rec.cap_faces = [f.index for f in caps]
     cap_verts = sorted({v.index for f in caps for v in f.verts})
     rec.cap_verts = cap_verts
@@ -493,10 +559,16 @@ def run(ob, rec, params, unit):
         bmesh.update_edit_mesh(ob.data)
         return bool(tracked)
     faces = [f for f in bm.faces if f.select]
-    caps, moved = extrude(bm, faces, unit=unit, **params)
+    caps, moved = extrude(bm, faces, unit=unit, **params, **mesh_axes(ob))
     _store(rec, bm, caps, moved, params)
     bmesh.update_edit_mesh(ob.data)
     return bool(caps)
+
+
+def mesh_axes(ob):
+    """Maya world X / Z in ``ob``'s mesh space (Maya measures ``localDirection`` in world space, step 151)."""
+    m = ob.matrix_world.to_3x3().inverted_safe()
+    return {"direction": m @ WORLD_X, "fallback": m @ MAYA_Z}
 
 
 def preview(ob, rec, params, unit):
@@ -511,8 +583,8 @@ def preview(ob, rec, params, unit):
     if topo != rec.topology or any(i >= len(bm.verts) for i, *_r in rec.moved):
         run(ob, rec, params, unit)
     else:
-        for i, p0, t, l, o in rec.moved:
-            bm.verts[i].co = p0 + t * params["thickness"] + l * params["local_translate_z"] + o * params["offset"]
+        for i, p0, *vecs in rec.moved:
+            bm.verts[i].co = position(p0, vecs, params)
         bm.normal_update()
         bmesh.update_edit_mesh(ob.data, loop_triangles=True, destructive=False)
         rec.params = dict(params)
@@ -638,6 +710,17 @@ def _props():
                                  description="Segments along the extruded sides"),
         "keep_faces_together": BoolProperty(name="Keep Faces Together", default=True,
                                             description="Extrude adjacent faces as one piece (off: each face alone)"),
+        # polyExtrudeFace values of the manipulator handles (step 151)
+        "local_translate_x": FloatProperty(name="Local Translate X", default=0.0, options={'SKIP_SAVE'},
+                                           description="Move the extruded faces along their local X (Maya units)"),
+        "local_translate_y": FloatProperty(name="Local Translate Y", default=0.0, options={'SKIP_SAVE'},
+                                           description="Move the extruded faces along their local Y (Maya units)"),
+        "local_scale_x": FloatProperty(name="Local Scale X", default=1.0, options={'SKIP_SAVE'},
+                                       description="Scale the extruded faces along their local X"),
+        "local_scale_y": FloatProperty(name="Local Scale Y", default=1.0, options={'SKIP_SAVE'},
+                                       description="Scale the extruded faces along their local Y"),
+        "local_scale_z": FloatProperty(name="Local Scale Z", default=1.0, options={'SKIP_SAVE'},
+                                       description="Scale the extruded faces along their normal"),
         # polyExtrudeVertex (step 139)
         "width": FloatProperty(name="Width", default=0.5, soft_min=0.0, soft_max=1.0, options={'SKIP_SAVE'},
                                description="Base of the extruded vertex as a fraction of each of its edges"),
@@ -647,7 +730,7 @@ def _props():
 
 
 def _params(op, spec=None):
-    return {k: getattr(op, k) for k in (spec or FACE).fields}
+    return {k: getattr(op, k) for k in (spec or FACE).all_fields}
 
 
 class _ExtrudeProps:
@@ -697,7 +780,7 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
                 old.free()
             rec = Record(name or next_name(context.scene), bm.copy(), params)
             rec.mesh_uid = ob.data.session_uid
-            caps, moved = extrude(bm, faces, unit=unit, **params)
+            caps, moved = extrude(bm, faces, unit=unit, **params, **mesh_axes(ob))
             _store(rec, bm, caps, moved, params)
             RECORDS[ob.name] = rec
             bmesh.update_edit_mesh(ob.data)

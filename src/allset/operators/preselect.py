@@ -296,20 +296,8 @@ def _extrude_block(context, region, rv3d, mouse):
     if lay is not None and any(x0 <= mouse[0] <= x1 and y0 <= mouse[1] <= y1
                                for x0, y0, x1, y1 in (lay["box"], lay["title"])):
         return True
-    centre, n, _k = frame
-    c2 = view3d_utils.location_3d_to_region_2d(region, rv3d, centre)
-    if c2 is None:
-        return False
-    scale = context.preferences.system.ui_scale or 1.0
-    right = rv3d.view_rotation @ Vector((1.0, 0.0, 0.0))
-    p1 = view3d_utils.location_3d_to_region_2d(region, rv3d, centre + right)
-    px_per_world = (p1 - c2).length if p1 is not None else 0.0
-    if px_per_world < 1e-9:
-        return False
-    # GIZMO_GT_arrow_3d at draw scale: about 1.2 x the gizmo size long (checked on a screenshot, step 97)
-    length_px = 1.2 * context.preferences.view.gizmo_size * scale
-    tip = view3d_utils.location_3d_to_region_2d(region, rv3d, centre + n * (length_px / px_per_world))
-    return tip is not None and near_handles(mouse, (c2.x, c2.y), [(tip.x, tip.y)], 0.0, HANDLE_PX * scale)
+    # step 151: every handle of Maya's extrude manipulator (arrows, scale cubes, plane handles, centre square)
+    return in_view.handles_hit(context, region, rv3d, mouse, HANDLE_PX * (context.preferences.system.ui_scale or 1.0))
 
 
 def pick(context, region, rv3d, mouse):
