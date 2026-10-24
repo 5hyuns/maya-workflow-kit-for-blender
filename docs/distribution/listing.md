@@ -127,6 +127,9 @@ The kit leaves these to you. Maya users usually like:
   `Documents/Maya Workflow Kit/projects/default` is made the first time a project-aware dialog opens; Set Project / Project
   Window make folders only where you choose.
 - Playblast writes its movie to Blender's temporary folder; exports and saves go where you choose.
+- Render > Batch Render writes a copy of the open scene to Blender's temporary folder and starts a separate background
+  Blender (`blender -b <copy> -o <output> -a`) on it; images go to the scene's render output (the project's `images`
+  folder while that is still Blender's default). Cancel Batch Render stops that process.
 
 ### Technical notes
 

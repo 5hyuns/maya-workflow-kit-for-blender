@@ -161,7 +161,7 @@ def test_maya_render_items_use_the_persp_operators():
     assert m["Playback/Render Current Frame"] == "allset.render_current_frame"
     assert m["Render/Render Sequence"] == "allset.render_sequence"
     assert shelf_map.BY_COMMAND["RenderSequence"][0] == "allset.render_sequence"
-    assert shelf_map.BY_COMMAND["BatchRender"][0] == "allset.render_sequence"
+    assert shelf_map.BY_COMMAND["BatchRender"][0] == "allset.batch_render"     # step 152: a background process
     # no Maya render item renders through Blender's render.render directly any more
     for path, action in m.items():
         if path.startswith(("Render/", "Playback/Render")):

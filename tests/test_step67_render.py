@@ -79,7 +79,7 @@ def test_render_menu_restored():
     for path in ("Render/Render Current Frame", "Render/Batch Render", "Render/Render Using"):
         assert path in paths, path
     assert "blender -b" in notices.NOTICES["Render/Batch Render"][1]
-    assert "Render/Batch Render" not in menu_map.MAP
+    assert menu_map.MAP["Render/Batch Render"] == "allset.batch_render"      # step 152 (#101)
     # the Render Using menu lists the engines
     rec = Rec()
     rv.ALLSET_MT_render_using.draw(types.SimpleNamespace(layout=rec), bpy.context)

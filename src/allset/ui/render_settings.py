@@ -253,6 +253,12 @@ def draw_common(layout, context):
         row = body.row(align=True)
         row.prop(r, "pixel_aspect_x", text="Pixel aspect X")
         row.prop(r, "pixel_aspect_y", text="Y")
+    # Maya Common > Render Options (step 152): Enable Default Light, factory on (operators/default_light.py)
+    header, body = layout.panel("ALLSET_rs_options", default_closed=False)
+    header.label(text="Render Options")
+    if body and hasattr(scene, "allset_default_light"):
+        body.use_property_split = True
+        body.prop(scene, "allset_default_light", text="Enable Default Light")
 
 
 class ALLSET_OT_rs_defaults(bpy.types.Operator):
