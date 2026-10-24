@@ -79,8 +79,11 @@ def _fit_views(ws, scene):
                 if space.type != 'VIEW_3D':
                     continue
                 # The tool header is Maya's panel toolbar in views with a header (step 113); the Tool Box column has
-                # neither. Set it explicitly: an appended screen came back with it shown (measured, step 60).
-                space.show_region_tool_header = space.show_region_header
+                # neither. Set it explicitly: an appended screen came back with it shown (measured, step 60). Only a
+                # change is written (Modeling - Expert keeps a header without the toolbar row, step 160; writing a
+                # region flag of a screen no window shows crashes Blender in ED_area_init, measured in -b).
+                if space.show_region_tool_header and not space.show_region_header:
+                    space.show_region_tool_header = False
                 for key, value in units.clip(scene).items():
                     setattr(space, key, value)
                 space.overlay.grid_scale = units.grid_scale(scene)
@@ -101,16 +104,71 @@ def enter_layout(window):
         window.workspace = own
         return own
     prev = window.workspace.name
-    before = set(bpy.data.workspaces)
-    with bpy.context.temp_override(**_window_override(window)):
-        bpy.ops.workspace.append_activate(idname=TEMPLATE_WORKSPACE, filepath=_template_blend())
-    new = [ws for ws in bpy.data.workspaces if ws not in before]
-    ws = new[0] if new else window.workspace
+    ws = append_workspace(window, TEMPLATE_WORKSPACE)
+    if ws is None:
+        return None
     ws[PREV_KEY] = prev
     ws.name = WORKSPACE
+    return ws
+
+
+TEMPLATE_KEY = "allset_template"      # the template workspace a Maya workspace was made from (step 160)
+
+
+def append_workspace(window, template_name):
+    """Append the template workspace ``template_name`` (General, Animation, ... tools/make_startup.MAYA_WORKSPACES) into
+    the open file and show it in ``window``: its Status Line / Shelf masks and cm views are set up (step 160, #81)."""
+    before = set(bpy.data.workspaces)
+    with bpy.context.temp_override(**_window_override(window)):
+        bpy.ops.workspace.append_activate(idname=template_name, filepath=_template_blend())
+    new = [ws for ws in bpy.data.workspaces if ws not in before]
+    if not new:
+        return None
+    ws = new[0]
+    ws[TEMPLATE_KEY] = template_name
     window.workspace = ws
-    _mark_strips(ws)
-    _fit_views(ws, window.scene)
+    # region flag writes call ED_area_init, which reads the context window's workspace (None after a file load in
+    # -b crashed Blender, measured)
+    with bpy.context.temp_override(**_window_override(window)):
+        _mark_strips(ws)
+        _fit_views(ws, window.scene)
+    return ws
+
+
+def template_of(ws):
+    """The template name of a Maya workspace (None: not one of the kit's Maya workspaces)."""
+    if ws is None:
+        return None
+    name = ws.get(TEMPLATE_KEY)
+    if isinstance(name, str) and name:
+        return name
+    return TEMPLATE_WORKSPACE if is_maya_workspace(ws) else None
+
+
+def reset_workspace(window, ws=None):
+    """Maya Windows > Workspaces > Reset Current Workspace (#81): the current Maya workspace is replaced by a fresh
+    copy from the bundled template (same name, same way back to Blender's layout); the old one is deleted once the
+    window shows the new one. Returns the new workspace (None: not a Maya workspace)."""
+    if window is None:
+        return None
+    old = ws or window.workspace
+    template = template_of(old)
+    if template is None:
+        return None
+    name, prev = old.name, old.get(PREV_KEY)
+    old.name = name + " (old)"
+    ws = append_workspace(window, template)
+    if ws is None:
+        old.name = name
+        return None
+    ws.name = name
+    if prev is not None:
+        ws[PREV_KEY] = prev
+    gone = old.name
+    if window.workspace == old:
+        _delete_later(window, gone, [])
+    else:
+        _delete_workspace(window, gone, [])
     return ws
 
 

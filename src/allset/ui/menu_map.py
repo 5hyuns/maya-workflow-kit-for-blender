@@ -280,7 +280,7 @@ MAP = {
     "Display/Frame Selection with Children in All Views": ("allset.frame_all_views",
                                                            {"selected": True, "children": True}),
     # --- Windows ---
-    "Windows/Workspaces": ("menu", "TOPBAR_MT_workspace_menu"),
+    "Windows/Workspaces": ("menu", "ALLSET_MT_maya_workspaces"),     # step 160: Maya's workspaces + Reset (#81)
     # Maya raises a docked Outliner, else opens a floating one (ui/maya_dock.py, step 116)
     "Windows/Outliner": ("allset.panel_show", {"panel": 'OUTLINER'}),
     "Windows/Node Editor": _editor('ShaderNodeTree'),
