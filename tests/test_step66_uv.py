@@ -224,7 +224,10 @@ def test_uv_editor_marking_menus():
     assert marking.resolve("RMB", _ctx(space_mode='VIEW')) is None, "image viewing: no UV menu"
     rmb = mm.UV_EDITOR_RMB.radial
     assert {p: l for p, (l, _a) in rmb.items()} == {"S": "Face", "N": "Edge", "E": "UV", "W": "Vertex", "NW": "UV Shell"}
-    assert mm.RMB_MESH.radial["E"] == ("UV", ("allset.uv_component", {"mode": 'UV'}))
+    # step 151: Maya's UV is a submenu (E UV, S UV Shell; Maya-1006)
+    label, sub = mm.RMB_MESH.radial["E"]
+    assert label == "UV" and sub.radial == {"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
+                                            "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))}
 
 
 def _items(km_name, etype, shift=False, ctrl=False, alt=False):
