@@ -1039,3 +1039,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Two curves meeting at a corner: Curves > Fillet makes a round corner curve (filletedCurve1) of radius 1 cm; Curves > Attach joins two curves into curveAattachedCurve1 (both originals kept); Curves > Cut on two crossing curves leaves four pieces.
 - [ ] Curves > Rebuild on a hand-drawn curve: 4 spans, the ends stay where they were; Rebuild ❒ opens Rebuild Curve Options with Number of spans 4.
 - [ ] Curve edit mode, select one CV, Curves > Detach: the curve splits near that CV into two objects.
+
+## Step 157 — Graph Editor keys in Maya terms
+- [ ] Graph Editor Select > Only Curve, click a key: the whole curve's keys light up; box-drag over two keys of another curve picks that whole curve too. Select > All, click a key: only that key.
+- [ ] Select > Key off (In / Out Tangent on), click a key with handles shown: the key is not picked; clicking a handle still picks it. The highlight drops within a blink (≤ 50 ms), never stays.
+- [ ] Select a key in the middle of a curve, Keys > Mute Key: the curve goes flat from that key to the next one, then continues; Keys > Unmute Key on it restores the curve. The F-Curve sidebar Modifiers tab lists "Maya mute".
+- [ ] Current time 10, Keys > Add Inbetween: every key at or after 10 on the shown curves moves one frame later; Remove Inbetween moves them back.
+- [ ] Tangents > Default Out Tangent > Stepped, then S on a new frame: the new key is stepped; Default In Tangent > Flat: its incoming handle is level. Back to Auto: new keys are Blender's Auto Clamped again.
+- [ ] Keys selected in the Graph Editor, Edit > Delete ❒ > Delete Keys: only those keys go; with nothing selected the same window deletes the selected objects' keys (Maya).

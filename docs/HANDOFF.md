@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 157 (Graph Editor 키를 Maya 식으로, backlog_155 #3) 완료 — `docs/steps/step_157.md`. 편집기 Edit 메뉴의 키 창이
+  선택 키에 (Maya fromGraphEditor), Add / Remove Inbetween = 편집기 곡선, 키별 Mute / Unmute = Stepped F-modifier
+  "Maya mute" (mayapy 값과 같음), Select 마스크 (All / Only Curve / Curve / Key / In / Out), Default In / Out Tangent =
+  add-on pref 로 킷 키에 적용 (`operators/graph_key_menu.py`). Graph Editor 메뉴 145 → 154 / 229, Dope Sheet 120 → 124.
+  **바로 다음 할 일**: 158 Channel Box 메뉴 + #97 (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_155.json`
+  4 번째 항목) — Mute 색 표시도 거기서. 알려진 것: `gui_step129_panel_toolbar` 폭 의존 실패 (아직).
+
 - Step 156 (Curves 도구, backlog 154 #2) 완료 — `docs/steps/step_156.md`. CV / EP Curve Tool · 3 / 2 점 원호 = 클릭 도구
   (`operators/curve_draw.py`), Maya 곡선 수학 `operators/curves_math.py` (EP · 원호 · Attach · Detach · Cut · Fillet · Straighten · Move
   Seam 이 mayapy 정답 `research/maya/re/curves_156.json` 과 1e-6, Rebuild 는 모양 0.6 %), Blender 표현 `operators/curves_maya.py`

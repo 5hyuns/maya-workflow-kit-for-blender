@@ -55,22 +55,50 @@ def _done(context):
     return {'FINISHED'}
 
 
+def _gkm():
+    from . import graph_key_menu
+    return graph_key_menu
+
+
+def _on_selected(context, v):
+    """Maya fromGraphEditor rule (doCutKeyArgList.mel & co.): a key window opened from a Graph Editor / Dope Sheet
+    menu with keys selected and Method Keys acts on those keys, not on the nodes' time range (step 157)."""
+    g = _gkm()
+    return g.in_key_editor(context) and v.get("method", "Keys") == "Keys" and g.has_selected_keys(context)
+
+
 def _run_delete(context, v):
+    if _on_selected(context, v):
+        _gkm().delete_selected(context)
+        return _done(context)
     _tk().delete_scope(context, _scope(context, v), v["method"], v["adjustment"], v["connect"])
     return _done(context)
 
 
 def _run_cut(context, v):
+    if _on_selected(context, v):
+        _gkm().cut_selected(context)
+        return _done(context)
     _tk().delete_scope(context, _scope(context, v), v["method"], v["adjustment"], v["connect"], clipboard=True)
     return _done(context)
 
 
 def _run_copy(context, v):
+    if _on_selected(context, v):
+        _gkm().copy_selected(context)
+        return _done(context)
     _tk().copy_scope(context, _scope(context, v), v["method"])
     return _done(context)
 
 
 def _run_paste(context, v):
+    g = _gkm()
+    if g.in_key_editor(context) and g.editor_clipboard():
+        # the editor's own key buffer (Edit > Copy / Cut there); Start / Start/End paste at the current time too
+        if not g.paste_editor(context, time_range=v["time_range"], time_offset=v["time_offset"],
+                              value_offset=v["value_offset"], copies=v["copies"], method=v["method"]):
+            raise RuntimeError("Nothing to paste: copy or cut keys first.")
+        return _done(context)
     tk = _tk()
     if not tk._CLIPBOARD.get("nodes"):
         raise RuntimeError("The animation clipboard is empty: copy or cut keys first.")
@@ -83,14 +111,26 @@ def _run_paste(context, v):
 
 
 def _run_scale(context, v):
+    if _gkm().in_key_editor(context) and _gkm().has_selected_keys(context):
+        _gkm().scale_selected(context, v["method"], v["time_scale"], v["time_pivot"], v["value_scale"],
+                              v["value_pivot"], v["new_start"], v["new_end"])
+        return _done(context)
     _tk().scale_scope(context, _scope(context, v), v["method"], v["only_specified"], v["time_scale"], v["time_pivot"],
                       v["value_scale"], v["value_pivot"], v["new_start"], v["new_end"])
     return _done(context)
 
 
 def _run_snap(context, v):
+    if _gkm().in_key_editor(context) and _gkm().has_selected_keys(context):
+        _gkm().snap_selected(context, v["snap"], v["time_multiple"], v["value_multiple"])
+        return _done(context)
     _tk().snap_scope(context, _scope(context, v), v["snap"], v["time_multiple"], v["value_multiple"])
     return _done(context)
+
+
+def _paths(command, edit):
+    """Main-menu paths of a key window + the Graph Editor / Dope Sheet Edit menu box (step 157)."""
+    return (f"Key/{command}", f"Edit/Keys/{command}", f"Graph Editor/Edit/{edit}", f"Dope Sheet/Edit/{edit}")
 
 
 _DELETE_TAIL = [
@@ -101,15 +141,15 @@ _DELETE_TAIL = [
 KEY_WINDOWS = [
     # option_boxes_140.md:77-90
     Window("delete_keys", "Delete Keys Options", "Delete Keys", None, _scope_fields() + _DELETE_TAIL, _run_delete,
-           paths=("Key/Delete Keys", "Edit/Keys/Delete Keys"), missing=(_CONTROL_POINTS,)),
+           paths=_paths("Delete Keys", "Delete"), missing=(_CONTROL_POINTS,)),
     # :92-95
     Window("cut_keys", "Cut Keys Options", "Cut Keys", None, _scope_fields(objects=False) + _DELETE_TAIL, _run_cut,
-           paths=("Key/Cut Keys", "Edit/Keys/Cut Keys"),
+           paths=_paths("Cut Keys", "Cut"),
            missing=(_CONTROL_POINTS, "Method: Range (mayapy cutKey has no area option)")),
     # :97-99
     Window("copy_keys", "Copy Keys Options", "Copy Keys", None, _scope_fields(objects=False) + [
         F("method", "Method:", "enum", "Keys", items=("Keys", "Segments"))], _run_copy,
-        paths=("Key/Copy Keys", "Edit/Keys/Copy Keys"),
+        paths=_paths("Copy Keys", "Copy"),
         missing=(_CONTROL_POINTS, "Method: Range (mayapy copyKey has no area option)")),
     # :101-113
     Window("paste_keys", "Paste Keys Options", "Paste Keys", None, [
@@ -120,7 +160,7 @@ KEY_WINDOWS = [
         F("copies", "Copies:", "int", 1, lo=1, hi=100),
         F("method", "Paste method:", "enum", "Merge", items=("Insert", "Replace", "Merge")),
         F("replace_region", "Replace region:", "enum", "Time range", items=("Time range", "Entire curve"))],
-        _run_paste, paths=("Key/Paste Keys", "Edit/Keys/Paste Keys"),
+        _run_paste, paths=_paths("Paste Keys", "Paste"),
         missing=("Selected keys override specified time range", "Clipboard adjustment: Scale / Fit (Preserve only)",
                  "Connect")),
     # :115-118
@@ -133,13 +173,13 @@ KEY_WINDOWS = [
         F("value_pivot", "Value pivot:", "float", 0.0, lo=-1e6, hi=1e6),
         F("new_start", "New start time:", "float", 1.0, lo=-1e6, hi=1e6),
         F("new_end", "New end time:", "float", 10.0, lo=-1e6, hi=1e6)], _run_scale,
-        paths=("Key/Scale Keys", "Edit/Keys/Scale Keys"), missing=(_CONTROL_POINTS,)),
+        paths=_paths("Scale Keys", "Scale"), missing=(_CONTROL_POINTS,)),
     # :120-123
     Window("snap_keys", "Snap Keys Options", "Snap Keys", None, _scope_fields() + [
         F("snap", "Snap:", "enum", "Times", items=("Times", "Values", "Both")),
         F("time_multiple", "Snap times to multiple of:", "float", 1.0, lo=0.0, hi=1000.0),
         F("value_multiple", "Snap values to multiple of:", "float", 1.0, lo=0.0, hi=1000.0)], _run_snap,
-        paths=("Key/Snap Keys", "Edit/Keys/Snap Keys"), missing=(_CONTROL_POINTS,)),
+        paths=_paths("Snap Keys", "Snap"), missing=(_CONTROL_POINTS,)),
 ]
 
 

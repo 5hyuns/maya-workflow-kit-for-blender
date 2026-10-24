@@ -289,7 +289,11 @@ def keyframe(ob, key, keytype='KEYFRAME'):
     path, idx, kind = channel_path(key)
     if kind == "VIS" and is_bone(ob):
         return False
-    return ob.keyframe_insert(path, index=idx, keytype=keytype)
+    ok = ob.keyframe_insert(path, index=idx, keytype=keytype)
+    if ok:      # Maya Tangents > Default In / Out Tangent (step 157)
+        from ..operators import graph_key_menu
+        graph_key_menu.after_insert(ob, path, idx, bpy.context.scene.frame_current)
+    return ok
 
 
 # --- animation state ---------------------------------------------------------------------

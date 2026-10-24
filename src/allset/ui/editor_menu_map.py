@@ -46,10 +46,11 @@ TANGENT_KINDS = {"Spline": "SPLINE", "Linear": "LINEAR", "Clamped": "CLAMPED", "
                  "Stepped Next": "STEPPED_NEXT", "Flat": "FLAT", "Fixed": "FIXED", "Plateau": "PLATEAU"}
 AUTO_KINDS = ("Auto Span (Legacy)", "Auto Ease", "Auto Mix", "Auto Custom")
 
-# Default In / Out Tangent: Blender keeps the default for new keys in Preferences > Animation > F-Curves. The kit
-# writes no preference (store review, #40 / #43): the items open that page and the user picks the value there.
+# Default In / Out Tangent (step 157): kit add-on prefs the kit's own keys use (operators/graph_key_menu.after_insert);
+# Blender's preference is never written (store review, #40 / #43). Maya's Auto variants are one Auto.
 _PREFS_ANIMATION = ("screen.userpref_show", {"section": 'ANIMATION'})
-DEFAULT_TANGENT_LABELS = (*AUTO_KINDS, "Spline", "Clamped", "Plateau", "Linear", "Stepped")
+DEFAULT_TANGENT_LABELS = {**{label: 'AUTO' for label in AUTO_KINDS}, "Spline": 'SPLINE', "Clamped": 'CLAMPED',
+                          "Plateau": 'PLATEAU', "Linear": 'LINEAR', "Flat": 'FLAT', "Stepped": 'STEPPED'}
 
 
 def _tangents_menu(ed):
@@ -58,8 +59,9 @@ def _tangents_menu(ed):
     for side, sub in (("IN", "In Tangent"), ("OUT", "Out Tangent")):
         m.update({f"{ed}/Tangents/{sub}/Auto/{label}": _tangent("AUTO", side) for label in AUTO_KINDS})
         m.update({f"{ed}/Tangents/{sub}/{label}": _tangent(kind, side) for label, kind in TANGENT_KINDS.items()})
-    for sub in ("Default In Tangent", "Default Out Tangent"):
-        m.update({f"{ed}/Tangents/{sub}/{label}": _PREFS_ANIMATION for label in DEFAULT_TANGENT_LABELS
+    for sub, pref in (("Default In Tangent", "default_in_tangent"), ("Default Out Tangent", "default_out_tangent")):
+        m.update({f"{ed}/Tangents/{sub}/{label}": _prop(f"addon_prefs.{pref}", kind)
+                  for label, kind in DEFAULT_TANGENT_LABELS.items()
                   if not (label == "Stepped" and sub == "Default In Tangent")})   # Maya has no stepped in-tangent
     m[f"{ed}/Tangents/Break Tangents"] = _tangent("BREAK")
     m[f"{ed}/Tangents/Unify Tangents"] = _tangent("UNIFY")
@@ -118,8 +120,11 @@ def _keys_menu(ed, graph):
         f"{ed}/Keys/Convert to Key": _key("TO_KEY") if graph else ("action.keyframe_type", {"type": 'KEYFRAME'}),
         f"{ed}/Keys/Convert to Breakdown": _key("TO_BREAKDOWN") if graph else
         ("action.keyframe_type", {"type": 'BREAKDOWN'}),
-        f"{ed}/Keys/Add Inbetween": _key("ADD_INBETWEEN"),
-        f"{ed}/Keys/Remove Inbetween": _key("REMOVE_INBETWEEN"),
+        # step 157: the editor's curves after the current time (Maya doKeyEdit), per-key mute = graph_key_menu
+        f"{ed}/Keys/Add Inbetween": ("allset.graph_inbetween", {"delta": "ADD"}),
+        f"{ed}/Keys/Remove Inbetween": ("allset.graph_inbetween", {"delta": "REMOVE"}),
+        f"{ed}/Keys/Mute Key": ("allset.mute_key", {"mute": True}),
+        f"{ed}/Keys/Unmute Key": ("allset.mute_key", {"mute": False}),
     }
     if graph:
         m[f"{ed}/Keys/Insert Key Tool"] = "allset.insert_key_tool"
@@ -195,7 +200,13 @@ MAP = {
     f"{GE}/View/Stacked View": ("allset.graph_view_mode", {"mode": "STACKED"}),
     f"{GE}/View/Normalized View": _prop(f"{_SP}.use_normalization", True),
     f"{GE}/View/Renormalize": _prop(f"{_SP}.use_auto_normalization"),
-    f"{GE}/Select/All": ("graph.select_all", {"action": 'SELECT'}),
+    # step 157: Maya's Select menu sets what a click / drag picks (selectType, graphEditorPanel.mel:903-940)
+    f"{GE}/Select/All": ("allset.graph_select_type", {"preset": "ALL"}),
+    f"{GE}/Select/Only Curve": ("allset.graph_select_type", {"preset": "ONLY_CURVE"}),
+    f"{GE}/Select/Curve": _prop("addon_prefs.graph_select_curve"),
+    f"{GE}/Select/Key": _prop("addon_prefs.graph_select_key"),
+    f"{GE}/Select/In Tangent": _prop("addon_prefs.graph_select_in"),
+    f"{GE}/Select/Out Tangent": _prop("addon_prefs.graph_select_out"),
     f"{GE}/Select/Snap time to selection": _prop("addon_prefs.snap_time_to_selection"),
     **_curves_menu(GE, True),
     **_keys_menu(GE, True),

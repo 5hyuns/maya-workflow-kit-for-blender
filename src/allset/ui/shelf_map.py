@@ -17,6 +17,10 @@ from .menu_map import MAP as _MENU_MAP, _con, _create, _dock, _mod
 
 
 def _key(kind):
+    # step 157: Translate / Rotate / Scale keys go through the kit's Set Key (Maya default tangents apply)
+    channels = {"Location": "TRANSLATE", "Rotation": "ROTATE", "Scaling": "SCALE"}.get(kind)
+    if channels:
+        return ("allset.set_key", {"channels": channels})
     return ("anim.keyframe_insert_by_name", {"type": kind})
 
 

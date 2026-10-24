@@ -8,7 +8,7 @@ Operator ids use the ``allset.`` prefix. Each module lists its classes in
 
 import bpy
 
-from . import (auto_key, bookmarks, component, create, curve_tools, curves_maya, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
+from . import (auto_key, bookmarks, component, create, curve_tools, curves_maya, cut_sew, display, driven_key, duplicate, extrude, file_io, freeze, option_windows, fx, global_keys4, graph_keys, graph_key_menu, group, history, hold, joints, pivot_menu, key_batch, key_batch3, key_insert, loop_pick, manip, marquee,
                lights, material, menu_extras, menu_items, mesh_maya, multi_cut, poly_maya, rig_maya, mesh_tools, outliner_drag, parenting, pickwalk, pivot, playblast, preselect, project, render_persp, rig_tools, select_convert, select_priority, sets, shading_maps, skin, snap_align, soft_select, symmetry, taphold,
                time_keys, tool_keys, units, uv_shells, uv_tools, view, view_keys3, visibility)
 from . import poly_draw, quad_draw  # step 144 POLY: Create Polygon / Append to Polygon / Quad Draw (#30)
@@ -21,7 +21,7 @@ classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *marquee.classes, *preselect.classes, *select_priority.classes, *menu_extras.classes,
            *tool_keys.classes, *symmetry.classes, *pivot.classes, *snap_align.classes, *time_keys.classes,
            *joints.classes, *skin.classes, *driven_key.classes, *rig_tools.classes, *mesh_maya.classes,
-           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *uv_shells.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes, *multi_cut.classes,
+           *mesh_tools.classes, *extrude.classes, *uv_tools.classes, *uv_shells.classes, *shading_maps.classes, *fx.classes, *project.classes, *graph_keys.classes, *graph_key_menu.classes, *playblast.classes, *key_batch.classes, *cut_sew.classes, *multi_cut.classes,
            *outliner_drag.classes, *key_insert.classes, *view_keys3.classes, *global_keys4.classes,
            *pivot_menu.classes, *sets.classes, *menu_items.classes, *file_io.classes, *option_windows.classes,
            *key_batch3.classes, *bookmarks.classes, *curve_tools.classes, *curves_maya.classes,
@@ -59,6 +59,7 @@ def register():
     fx.register_props()
     taphold.register_bindings()
     graph_keys.register_bindings()
+    graph_key_menu.register_bindings()
     pivot_menu.register_props()
     sets.register_props()
     view.register_timer()
@@ -98,6 +99,7 @@ def unregister():
     duplicate.PAIRS.clear()
     view.unregister_timer()
     hold.unregister_cleanup()
+    graph_key_menu.unregister_bindings()
     graph_keys.unregister_bindings()
     sets.unregister_props()
     pivot_menu.unregister_props()
