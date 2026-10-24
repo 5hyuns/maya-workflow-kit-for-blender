@@ -38,7 +38,7 @@ Backlog `autodrive_bmk/backlog.json` #1 (audit 11, `docs/steps/step_163_remainin
   숨긴 자식 (Maya 처럼 남음); Ctrl+H 선택 해제 + 되돌림; Alt+H 가 선택 계층을 남김; 레이어 V; Delete → pCube1 · pCubeShape1 없음 +
   메뉴 · Delete 키; FBX Export Selection 다시 가져오기 = 2 오브젝트 (group1, pCube1), 선택 되돌림; isolate 선택 범위 + Ctrl+1 키;
   끌 때 `release_all`. 관련 (keymap / step16 / step10 / step129 CB / file I/O / step161) 101/103 → 실패 2 (Ctrl+1 매핑 행과 옛
-  step16 기대값) 고침. 헤드리스 전체: 아래 「최종」.
+  step16 기대값) 고침. 헤드리스 전체 **1527 / 1527**.
 - GUI `gui_step164_dag` 9/9: 키 Ctrl+1 이 로컬 뷰 + pCube1 픽셀 그대로 (차 0.000) · pCube2 사라짐 (0.188), Ctrl+1 다시 = 해제, 키
   h → group1 숨김 + pCube1 안 그려짐 + 채널 켜짐, h 다시 → 보임. 관련 `gui_step16_undo_visibility`, `gui_step129_views`,
   `gui_step161_views` 통과 (44/45 에서 step164 파일만 고침). 스크린샷 `tmp/s164/gui_step164_isolate.png` 직접 봄 (pCube1 만 남음).
