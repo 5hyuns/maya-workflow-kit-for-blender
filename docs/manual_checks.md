@@ -989,3 +989,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Attribute Editor, transform tab: Translate / Rotate / Scale read plain Maya numbers (62, -150, 1.5), never "62 c"; typing +=5 works like the Channel Box.
 - [ ] Create a Polygon Sphere, Deform > Lattice: ffd1Lattice Scale X / Y / Z = 2 2 2; moving lattice points still bends the sphere.
 - [ ] Create > Lights > Point Light: SHAPES shows Color R / G / B and Intensity; typing 2 into Intensity brightens the light.
+
+## Step 150 — Graph Editor View / Show (lane A)
+
+- [ ] Maya layout, two animated cubes, Graph Editor open: with View > Auto Frame on (Maya factory), clicking the other cube in the viewport or Outliner reframes the Graph Editor on its curves within ~0.25 s; with Auto Frame off and Auto Frame Time on only the time axis follows (the value axis stays, the Range Slider / preview range don't change).
+- [ ] View > Curve Name > Always: "pCube1.translateX" etc. in the curve colours just above each curve's last key (at the right edge when the last key is off screen); Active Only = only the selected curves; Never = none; Normalized View hides the names.
+- [ ] Show > Objects > Clear Below after unticking Polygon Objects / Cameras → every object type is listed again; Show > Attributes > Clear Below clears the channel name filter.
+- [ ] Greyed View items (Undo View Change, Clip Time, Show Results, Show Buffer Curves, Play Range Shades, Keys > Never, Key View, Time Ruler Placement, Simple Toolbar) show their own line in the tooltip / Help Line.
