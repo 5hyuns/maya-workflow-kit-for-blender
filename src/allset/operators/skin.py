@@ -841,23 +841,68 @@ def _reflect(v, axis):
     return v
 
 
-def mirror_group_names(arm, axis, tol=1e-3):
-    """Joint name -> the joint at the mirrored place (itself for joints on the plane)."""
+# Maya Mirror Skin Weights Options (performMirrorSkinWeights): Influence Association 1 = Closest joint / One to one /
+# Label (factory Closest joint), 2 = None / the same (factory None). One to one pairs a joint with itself inside one
+# skeleton, so the kit offers Closest joint and Label (research/maya/re/joint_labels_159.md §7).
+MIRROR_INFLUENCE = (("CLOSEST_JOINT", "Closest joint", "The joint nearest the mirrored place of the joint"),
+                    ("LABEL", "Label", "The joint with the same type label on the other side (Skeleton > Joint "
+                     "Labelling): Left <-> Right"))
+MIRROR_INFLUENCE_2 = (("NONE", "None", "No further association"),) + MIRROR_INFLUENCE
+
+
+def _mirror_label_partner(arm, bone, reflected, labels):
+    """Label association: the bone on the other side with the same type (Other: same other type); several = the one
+    nearest the mirrored place (mayapy: fingers of one type pair by place). Center / None side = the joint itself.
+    None = no label to match."""
+    side, typ, other, _d = labels.get_label(bone)
+    if typ == labels.T_NONE:
+        return None
+    if side in (labels.CENTER, labels.NO_SIDE):
+        return bone.name
+    want = labels.RIGHT if side == labels.LEFT else labels.LEFT
     mw = arm.matrix_world
-    bones = [(b.name, mw @ b.head_local, mw @ b.tail_local) for b in arm.data.bones]
-    scale = max(max((h - t).length for _n, h, t in bones), 1e-6) if bones else 1.0
+    cands = [b for b in arm.data.bones
+             if labels.get_label(b)[:2] == (want, typ) and (typ != labels.T_OTHER or labels.get_label(b)[2] == other)]
+    if not cands:
+        return None
+    return min(cands, key=lambda b: (mw @ b.head_local - reflected).length).name
+
+
+def mirror_group_names(arm, axis, tol=1e-3, modes=("CLOSEST_JOINT",), unmatched=None):
+    """Joint name -> its partner on the other side, by Maya influence association ``modes`` tried in order.
+
+    Closest joint = the joint whose head is nearest the mirrored head (mayapy: no tolerance, an unmirrored skeleton
+    still pairs; a joint on the plane pairs with itself). Label = ``_mirror_label_partner``. A joint no mode pairs
+    falls back to Closest joint and is added to ``unmatched`` (Maya warns "Not all influences could be matched")."""
+    from . import joint_labels as labels
+    mw = arm.matrix_world
+    bones = list(arm.data.bones)
+    heads = {b.name: mw @ b.head_local for b in bones}
+    tails = {b.name: mw @ b.tail_local for b in bones}
     out = {}
-    for name, h, t in bones:
-        rh, rt = _reflect(h, axis), _reflect(t, axis)
-        out[name] = next((n for n, h2, t2 in bones if (h2 - rh).length < tol * scale and (t2 - rt).length < tol * scale),
-                         name)
+    for b in bones:
+        rh, rt = _reflect(heads[b.name], axis), _reflect(tails[b.name], axis)
+        closest = min(bones, key=lambda o: ((heads[o.name] - rh).length, (tails[o.name] - rt).length)).name
+        partner = None
+        for mode in modes:
+            if mode == "CLOSEST_JOINT":
+                partner = closest
+            elif mode == "LABEL":
+                partner = _mirror_label_partner(arm, b, rh, labels)
+            if partner is not None:
+                break
+        if partner is None:
+            partner = closest
+            if unmatched is not None:
+                unmatched.append(b.name)
+        out[b.name] = partner
     return out
 
 
-def mirror_weights(mesh, axis=0, positive_to_negative=True):
+def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOINT",), unmatched=None):
     """Copy the weights of one side onto the other (Maya Mirror Skin Weights); count of vertices written."""
     mod = armature_modifier(mesh)
-    pair = mirror_group_names(mod.object, axis) if mod else {}
+    pair = mirror_group_names(mod.object, axis, modes=modes, unmatched=unmatched) if mod and mod.object else {}
     mw = mesh.matrix_world
     verts = mesh.data.vertices
     world = [mw @ v.co for v in verts]
@@ -895,6 +940,8 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
 
     plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="YZ")
     positive_to_negative: BoolProperty(name="Direction: Positive to Negative", default=True)
+    influence1: EnumProperty(name="Influence Association 1", items=MIRROR_INFLUENCE, default="CLOSEST_JOINT")
+    influence2: EnumProperty(name="Influence Association 2", items=MIRROR_INFLUENCE_2, default="NONE")
 
     @classmethod
     def poll(cls, context):
@@ -905,9 +952,15 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
         if mesh is None:
             self.report({'WARNING'}, "Select a skinned mesh")
             return {'CANCELLED'}
-        n = mirror_weights(mesh, PLANE_AXIS[self.plane], self.positive_to_negative)
+        modes = [m for m in (self.influence1, self.influence2) if m != "NONE"]
+        unmatched = []
+        n = mirror_weights(mesh, PLANE_AXIS[self.plane], self.positive_to_negative, modes, unmatched)
         mesh.data.update()
-        self.report({'INFO'}, f"Mirrored the weights of {n} vertices")
+        if unmatched:
+            self.report({'WARNING'}, "Not all influences could be matched up using the selected association "
+                        "options. Weight transfer may be problematic near the unmatched influences.")
+        else:
+            self.report({'INFO'}, f"Mirrored the weights of {n} vertices")
         return {'FINISHED'}
 
 
