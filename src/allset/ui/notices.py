@@ -512,17 +512,11 @@ CATEGORIES.update({
     "Dope Sheet/Curves": (
         "Graph Editor", "This curve filter is in Blender's Graph Editor only (Windows > Animation Editors > Graph "
         "Editor)."),
-    "UV Editor/Edit": (
-        "Select All + Unpin", "Blender's UVs can't be deleted (every face has them); Unpin All = Select > All, then "
-        "Unpin Selection."),
     "UV Editor/Edit/Reset UV Editor UI": (
         "Load Factory Settings", "Blender resets editors with File > Defaults > Load Factory Settings."),
     "UV Editor/Select": (
-        "Select menu", "Blender's UV Select menu has no such filter: Select Linked, Split, Overlap, Pinned and "
-        "Shortest Path are there."),
-    "UV Editor/Select/Convert Selection": (
-        "3D View Select menu", "Blender's UV Editor has no loop, ring, connected or contained conversion: with Vertex / Edge / "
-        "Face components (UV Sync Selection on) use the 3D View's Select > Convert Selection."),
+        "Select menu", "Blender's UV Editor shows one image, so there is no per-image face filter: Select Linked, "
+        "Overlapping and the face filters (Connected / Contained Faces) are there."),
     "UV Editor/Cut/Sew": (
         "Seams / Rip", "Blender makes shells from seams (Cut, Unwrap) and splits UVs with the Rip tool; it has no "
         "auto seams or grid shells."),
@@ -535,7 +529,16 @@ CATEGORIES.update({
     "UV Editor/View": (
         "Overlays", "Blender's UV Editor has no such display option: see its Overlays popover and View menu."),
     "UV Editor/View/Isolate Select": (
-        "Hide", "Blender isolates UVs by hiding the rest: UV > Show/Hide Faces (H / Shift+H)."),
+        "Add Selected / Remove Selected", "Blender has no saved quick-select sets to load into the isolate view: "
+        "build it with Add Selected / Remove Selected (Ctrl+1 isolates the selection)."),
+    # step 178: Maya's symmetrizeUV only works after the Symmetrize UV brush's own seam pick in Maya (5 GUI
+    # sessions changed no UV, ): no checked rule to copy.
+    "UV Editor/Modify/Symmetrize": (
+        "UV > Mirror / Snap", "Blender has no UV symmetrize: mirror the UVs (Modify > Flip) and weld them (Match UVs), "
+        "or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
+    "UV Editor/Tools/Symmetrize": (
+        "UV > Mirror / Snap", "Blender has no UV symmetrize brush: mirror the UVs (Modify > Flip) and weld them "
+        "(Match UVs), or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
     "UV Editor/Image": (
         "Image field", "Blender shows one image (header image field): no dimming, PSD networks, bake preview or pixel "
         "ruler."),
