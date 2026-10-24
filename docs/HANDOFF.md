@@ -2,6 +2,21 @@
 
 ## 현재 작업
 
+- Step 165 (Component-mode Channel Box and RMB node submenus, backlog_164 #2) 완료 — `docs/steps/step_165.md`. Maya 측정
+  `research/maya/re/cb_component_164.md` (GUI Maya, `research/scripts/maya_cb165/`). 편집 모드 Channel Box = shape 이름 +
+  `CVs (click to show)` (선택 점 표, `ui/cb_points.py`) + INPUTS, 선택 없음 = 빈 안내; RMB DG Traversal / Inputs / Outputs =
+  노드 목록 (`marking/rmb_nodes.py`, `menus.NodeList`), 노드 고르기 = Channel Box 에서 열고 스크롤 + AE 탭, Enable / Disable All,
+  All Inputs... 창. 헤드리스 1540 / 1540, GUI step165 9/9 + 관련 7 파일 (gui_step52 "list under the ring" 2 실패는 165 이전부터).
+  **바로 다음 할 일**: 166 Menu consistency (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json`
+  3 번째 항목), 그 뒤 167 셸프 더블클릭 / 넘침, 168 Modify + Smooth Mesh Preview to Polygons.
+
+- **체크포인트 2026-10-24 (/sc:save, 164 후)** — 지금 단계: **164 완료 · 커밋됨** (`40ee970` + 문서 `22dafe3`). 161 (`99eedfa`),
+  162 (`2cd3406`), 163 재점검 11차 (`416563f`), 164 (`40ee970`) 모두 커밋, 진행 중인 레인 · 테스트 없음, push 안 함. 헤드리스 전체
+  1527 / 1527 (164 끝).
+  **바로 다음 할 일**: 165 Component-mode Channel Box and RMB node submenus (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 2 번째 항목), 그 뒤 166 메뉴 어긋남, 167 셸프 더블클릭 / 넘침.
+  알려진 것: `gui_step129_panel_toolbar` 머리 폭 의존 실패, RMB 목록 위치 (링 옆 vs Maya 아래 + 잘림) 판단 보류 (manual_checks Step 161).
+
 - Step 164 (Maya DAG rules for parents, backlog #1) 완료 — `docs/steps/step_164.md`. 부모를 숨기면 자손도 안 그려짐 (자손 Visibility
   채널은 그대로, `operators/dag.py` sync), Delete / Export Selection / Ctrl+1 Isolate 가 선택의 계층을 가져감 (mayapy 측정
   `research/maya/re/dag_164.md`).

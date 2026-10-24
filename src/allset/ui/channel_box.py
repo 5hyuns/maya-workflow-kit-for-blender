@@ -27,7 +27,7 @@ from bpy.props import (BoolProperty, CollectionProperty, EnumProperty, FloatProp
 from .. import results
 from ..operators import auto_key, display
 from .. import compat
-from . import cb_entry, chrome
+from . import cb_entry, cb_points, chrome
 
 # Maya's dock is one tab stack with vertical tabs on its right edge (research/maya/ui_layout.md:121-128): the
 # kit's sidebar categories carry Maya's tab names (step 99)
@@ -1861,6 +1861,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
 # (docs/steps/step_135_cb.md 「계획」 2c).
 
 _scroll = {}    # area pointer -> first line shown
+_reveal = {"node": None}    # an INPUTS node key to scroll into view at the next draw (``reveal``)
 _last = {}      # area pointer -> (first, total, limit) of the last draw (limit None: every line fits)
 WHEEL_LINES = 2
 BUTTON_LINES = 3
@@ -1875,6 +1876,7 @@ class Lines:
         self.limit = limit
         self.n = 0
         self.shown = 0
+        self.marks = {}     # INPUTS node key -> its line index (``reveal``)
 
     def row(self):
         i = self.n
@@ -1883,6 +1885,11 @@ class Lines:
             return None
         self.shown += 1
         return self.layout.row(align=True)
+
+
+def reveal(node):
+    """Scroll the Channel Box to INPUTS node ``node`` at its next draw."""
+    _reveal["node"] = node
 
 
 def as_lines(layout):
@@ -1924,6 +1931,8 @@ def pane_room(context, units):
 def node_row(lines, ob, node, label, tip="", active=True):
     """An INPUTS node name: Maya's indented, flat, click-to-expand row. Returns (row or None, expanded)."""
     opened = is_open(ob, node)
+    if isinstance(lines, Lines):
+        lines.marks[node] = lines.n
     row = lines.row()
     if row is not None:
         name = row.row(align=True)
@@ -2027,6 +2036,21 @@ def _scroll_row(col, first, limit, total):
         sub.operator(ALLSET_OT_cb_scroll.bl_idname, text="", icon=icon, emboss=False).lines = lines
 
 
+COMPONENT_TYPES = {'MESH', 'CURVE', 'SURFACE', 'LATTICE'}
+
+
+def component_mode(ob):
+    """Maya component mode on the lead: a mesh / curve / surface / lattice object in edit mode (armature edit mode is
+    joint placement, PLACING_TEXT)."""
+    return ob is not None and not is_bone(ob) and ob.type in COMPONENT_TYPES and ob.mode == 'EDIT'
+
+
+def _draw_component_lines(lines, context, ob):
+    """Component mode under the shape's name: the CVs line / table (points selected), then INPUTS."""
+    cb_points.draw(lines, context, ob)
+    draw_inputs(lines, context, ob)
+
+
 def _draw_lines(lines, context, ob, cb, sel, blue):
     """Every Channel Box line under the lead's name: channels, SHAPES, INPUTS (collapsed nodes, step 135)."""
     for key, _label, _path, _idx, kind in MAIN:
@@ -2077,8 +2101,12 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
                 if r is not None:
                     _draw_text_row(r, context, ob, data, prop, "SHAPE", label=shape_label(ob, prop))
 
-    # INPUTS, newest first; every node starts collapsed (cb135/d01_cube.png, pass1/c07_extruded_component.png).
-    # Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15).
+    draw_inputs(lines, context, ob)
+
+
+def draw_inputs(lines, context, ob):
+    """INPUTS, newest first; every node starts collapsed (cb135/d01_cube.png, pass1/c07_extruded_component.png).
+    Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15)."""
     inputs = _inputs(ob)
     cons = constraints(ob)
     from . import in_view
@@ -2151,14 +2179,25 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)
             return units + 0.5 + len(PLACING_TEXT)
         ob = lead(context)
-        if ob is None:
+        comp = component_mode(ob)
+        if ob is None or (comp and not cb_points.has_selection(ob)):
+            # Maya: component mode with nothing selected = the empty Channel Box too (cb165/cb_vtx_none.png)
             draw_empty(layout)
             return units + 4.2 + len(EMPTY_TEXT)
         units += 1.0
         cb = context.scene.allset_cb
         sel = set(selected_channels(context))
         head = layout.row(align=True)
-        head.prop(ob, "name", text="", emboss=False)   # Maya: the lead's name as plain text
+        if comp:
+            # Maya component mode: the shape node, then INPUTS — no transform channels, no SHAPES header
+            # (research/maya/re/cb_component_164.md §1)
+            head.prop(ob.data, "name", text="", emboss=False)
+            args = (context, ob)
+            draw = _draw_component_lines
+        else:
+            head.prop(ob, "name", text="", emboss=False)   # Maya: the lead's name as plain text
+            args = (context, ob, cb, sel, constrained_keys(ob))
+            draw = _draw_lines
         n = len(targets(context))
         if n > 1:
             head.label(text=f"+{n - 1}")
@@ -2167,12 +2206,17 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
             hint.active = False
             hint.label(text=POSE_HINT)
             units += 1.0
-        args = (context, ob, cb, sel, constrained_keys(ob))
         count = Lines(None)
-        _draw_lines(count, *args)      # first pass: how many lines (also resets the expansion on a new lead)
+        draw(count, *args)      # first pass: how many lines (also resets the expansion on a new lead)
         area = context.area
         ptr = area.as_pointer() if area is not None else 0
-        first, limit, over = window_lines(count.n, pane_room(context, units), _scroll.get(ptr, 0))
+        start = _scroll.get(ptr, 0)
+        if _reveal["node"] in count.marks:
+            # a node picked from the RMB Inputs / Outputs list (step 165): scroll it to the top of the Channel Box
+            # part, like Maya shows the selected node's attributes
+            start = count.marks[_reveal["node"]]
+            _reveal["node"] = None
+        first, limit, over = window_lines(count.n, pane_room(context, units), start)
         if over:
             _scroll[ptr] = first
         col = layout.column(align=True)
@@ -2180,7 +2224,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         # screens/11b_channel_box_crop.png); Blender rows are 20 px at scale 1.0 (step 44).
         col.scale_y = ROW_SCALE
         lines = Lines(col, first, limit)
-        _draw_lines(lines, *args)
+        draw(lines, *args)
         shown = lines.shown
         if over:
             _scroll_row(head, first, limit, count.n)
@@ -2263,6 +2307,7 @@ def register():
 
 
 def unregister():
+    _reveal["node"] = None
     _watching.clear()
     _hover.clear()
     reset_open()

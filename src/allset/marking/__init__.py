@@ -19,7 +19,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from ..operators import taphold
 from ..ui import menu_map, menu_sets
-from . import draw, modal, rmb_items
+from . import draw, modal, rmb_items, rmb_nodes
 from . import menus as mm
 
 # Blender fills a pie in this order (UILayout.menu_pie).
@@ -97,6 +97,22 @@ def _make(sub, name, label, path, is_pie):
     if is_pie:
         def draw(self, context):
             draw_pie(self.layout.menu_pie(), sub, path)
+    elif isinstance(sub, mm.NodeList):
+        def draw(self, context):
+            # filled from the object now (step 165); a node's own traversal submenu = its first row (Select <node>)
+            from . import rmb_nodes
+            from . import rmb_items
+            data = rmb_nodes.nodes(rmb_items.target(context))
+            if not data:
+                return
+            for entry in mm.fill(sub.kind, data).items:
+                if entry == mm.DIVIDER:
+                    self.layout.separator()
+                    continue
+                label, action = entry
+                if isinstance(action, mm.Sub):
+                    action = action.items[0][1]
+                menu_sets.draw_spec(self.layout, label, menu_map.normalize(action), f"Marking menu {path}/{label}")
     else:
         def draw(self, context):
             for pos in mm.RADIALS:  # a list submenu shows radial entries first
@@ -373,7 +389,7 @@ SELECT_BINDINGS = (SelectComponentBinding, SelectPolygonBinding)
 
 
 classes = (ALLSET_OT_marking_menu, ALLSET_OT_mm_component, ALLSET_OT_mm_clear_selection,
-           *rmb_items.classes, *modal.classes, *_classes)
+           *rmb_items.classes, *rmb_nodes.classes, *modal.classes, *_classes)
 
 
 def register():

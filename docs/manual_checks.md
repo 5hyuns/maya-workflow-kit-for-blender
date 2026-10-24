@@ -1087,3 +1087,12 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] File > Export Selection of the group as FBX, import the file into Maya: group + both cubes.
 - [ ] Select the group, Ctrl+1: the view shows the group's cubes only; Ctrl+1 again shows everything. Put the group in a display layer and turn its V off: the cubes disappear too.
 - [ ] A scene with a few thousand objects: dragging objects stays as fluid as before step 164 (the parent rule runs on every scene update).
+
+## Step 165 — Component-mode Channel Box and RMB node submenus
+
+- [ ] Edit mode on a cube, select 3 vertices: the Channel Box shows pCubeShape1, "CVs (click to show)", INPUTS polyCube1 — no Translate / Rotate / Scale rows.
+- [ ] Click "CVs (click to show)": a row per selected vertex with X / Y / Z; type `+=1` in X: the vertex moves, Ctrl+Z undoes it.
+- [ ] Select an edge / a face: no CVs line; deselect all: the empty Channel Box text.
+- [ ] RMB on an object > Inputs: Select / Enable / Disable All Inputs, the nodes (Poly Cube ...), All Inputs...; pick a node: the Channel Box scrolls to it, open; its ❒: the Attribute Editor on that node.
+- [ ] Disable All Inputs on a cube with a bend: the bend stops deforming; Enable All brings it back.
+- [ ] RMB > Outputs on a locator used by a constraint lists the constraint; RMB > DG Traversal > pCubeShape1 > Select pCubeShape1 shows the shape in the Attribute Editor.

@@ -801,12 +801,7 @@ CATEGORIES.update({
 # menu hovers a greyed entry, marking/modal.py puts its line in the Help Line. tests/test_step136_items.py checks that
 # every greyed entry has one and every key is a greyed entry.
 _RMB_LIST = {
-    "DG Traversal": ("Modifier stack", "Blender has no dependency graph to walk: an object's history is its modifier "
-                     "stack (Channel Box INPUTS, Properties > Modifiers)."),
-    "Inputs": ("Channel Box INPUTS", "Blender has no input nodes to list here: the object's modifiers and constraints "
-               "are its INPUTS in the Channel Box."),
-    "Outputs": ("Outliner", "Blender has no output connections to list: what uses this object shows in the Outliner "
-                "(Blender File view)."),
+    # DG Traversal / Inputs / Outputs list the object's nodes since step 165 (marking/rmb_nodes.py)
     "Metadata": ("Custom properties", "Blender has no component metadata: store values as custom properties (Attribute "
                  "Editor Extra Attributes) or mesh attributes."),
     "Time Editor": ("NLA Editor", "Blender's clip-based animation editor is the NLA Editor (Windows > Animation "
