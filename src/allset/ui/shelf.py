@@ -26,6 +26,10 @@ scripts, drawn under the Status Line in a thin "Maya strip" area.
 - Step 109: every factory button keeps its Maya slot. Buttons without a
   Blender action are drawn greyed; their tooltip and a click show the notice (``button_notice``) in the
   Help Line, like greyed Maya menu items (step 101).
+- Step 162: Ctrl+Shift+click on a Maya menu item adds a button for it to the shelf shown (Maya menuItemToShelf,
+  ), factory tabs included. A menu button is ``{"label", "icon", "script": "", "menu":
+  <Maya menu path>}`` and runs that path like the menu; on a factory tab it is stored in ``shelves.json``
+  ``"extra"[<shelf id>]`` and drawn after the factory slots, so every factory button keeps its Maya slot.
 """
 
 import json
@@ -92,6 +96,71 @@ def reload_user():
 
 def user_shelf(name):
     return next((s for s in user_data()["shelves"] if s["name"] == name), None)
+
+
+def factory_extras(shelf_id, create=False):
+    """Buttons added to factory shelf ``shelf_id`` (step 162: after its Maya slots); None if there are none and
+    ``create`` is off."""
+    extra = user_data().get("extra")
+    if not isinstance(extra, dict):
+        if not create:
+            return None
+        extra = user_data()["extra"] = {}
+    if create:
+        return extra.setdefault(shelf_id, [])
+    return extra.get(shelf_id)
+
+
+def editable_buttons(shelf_id, create=False):
+    """The list of user-made buttons of a shelf: a user shelf's buttons, or a factory shelf's added ones."""
+    if shelf_id.startswith(USER_PREFIX):
+        s = user_shelf(shelf_id[len(USER_PREFIX):])
+        return s["buttons"] if s is not None else None
+    if not any(name == shelf_id for name, _l, _b in shelf_data.SHELVES):
+        return None
+    return factory_extras(shelf_id, create)
+
+
+def button_record(shelf_id, index):
+    """The stored dict of the user-made button at ``index`` in the shelf's slot order (None for a factory one)."""
+    buttons = editable_buttons(shelf_id) or []
+    if not shelf_id.startswith(USER_PREFIX):
+        index -= len(all_buttons(shelf_id))
+    return buttons[index] if 0 <= index < len(buttons) else None
+
+
+def menu_label(path):
+    """The Maya menu item's label (the path's last part, without a "#n" duplicate suffix)."""
+    return path.split("#")[0].rsplit("/", 1)[-1]
+
+
+def add_menu_item(context, path, shelf_id=None):
+    """Append a button that runs Maya menu item ``path`` to the shelf shown (Maya menuItemToShelf); saved at once.
+    Returns (shelf id, tab label, button)."""
+    shelf_id = shelf_id or current(context)
+    buttons = editable_buttons(shelf_id, create=True)
+    if buttons is None:                       # a stale id: the shelf Maya shows by default
+        shelf_id = shelf_data.DEFAULT
+        buttons = editable_buttons(shelf_id, create=True)
+    button = {"label": menu_label(path), "icon": 'SCRIPT', "script": "", "menu": path}
+    buttons.append(button)
+    save_user()
+    for win in context.window_manager.windows:
+        for area in win.screen.areas:
+            area.tag_redraw()
+    return shelf_id, dict(shelves()).get(shelf_id, shelf_id), button
+
+
+def record_tooltip(b):
+    """Tooltip of a user-made button: a menu button names its Maya menu path (Maya: the item's annotation)."""
+    path = b.get("menu")
+    if not path:
+        return f"{b['label']}\n{b['script'][:200]}"
+    from . import menu_map
+    where = "Maya menu: " + path.split("#")[0].replace("/", " > ")
+    if path not in menu_map.MAP:
+        return f"{b['label']} (greyed: no Blender equivalent in Maya Workflow Kit)\n{where}"
+    return f"{b['label']}\n{where}\nDouble-click or Ctrl+click: options"
 
 
 # --- shelves and buttons -------------------------------------------------------------------------
@@ -191,11 +260,9 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         for i, label, action, _icon in all_buttons(props.shelf):
             if i == props.index:
                 return button_tooltip(props.shelf, label, action is not None)
-        if props.shelf.startswith(USER_PREFIX):
-            s = user_shelf(props.shelf[len(USER_PREFIX):])
-            if s and 0 <= props.index < len(s["buttons"]):
-                b = s["buttons"][props.index]
-                return f"{b['label']}\n{b['script'][:200]}"
+        b = button_record(props.shelf, props.index)
+        if b is not None:
+            return record_tooltip(b)
         return "Shelf button"
 
     def invoke(self, context, event):
@@ -223,16 +290,17 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        if self.shelf.startswith(USER_PREFIX):
-            s = user_shelf(self.shelf[len(USER_PREFIX):])
-            if s is None or not 0 <= self.index < len(s["buttons"]):
-                return {'CANCELLED'}
-            b = s["buttons"][self.index]
+        b = button_record(self.shelf, self.index)
+        if b is not None and b.get("menu"):
+            return self._run_menu(context, b)
+        if b is not None:
             ok, msg = run_script(context, b["label"], b["script"])
             if not ok:
                 self.report({'ERROR'}, msg)
                 return {'CANCELLED'}
             return {'FINISHED'}
+        if self.shelf.startswith(USER_PREFIX):
+            return {'CANCELLED'}
         for i, label, action, _icon in all_buttons(self.shelf):
             if i == self.index and action is None:
                 # Greyed: Maya's button has no Blender counterpart; say what Blender has instead.
@@ -251,6 +319,28 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
                     return {'CANCELLED'}
                 return {'FINISHED'}
         return {'CANCELLED'}
+
+    def _run_menu(self, context, b):
+        """A menu button (step 162): the Maya menu item run like the menu (``allset.menu_item`` rules, saved option
+        window values, one undo step named after it); Ctrl+click = its option box."""
+        from . import menu_map
+        from ..marking.modal import run_action
+        path = b["menu"]
+        if path not in menu_map.MAP:
+            from . import notices
+            text = f"{b['label']}: no Blender equivalent in Maya Workflow Kit"
+            notices.show(text)
+            results.result(self, text)
+            return {'CANCELLED'}
+        try:
+            if self.option:                 # the menu's option box, as Shift / Ctrl+click in the menu
+                bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=path)
+            else:
+                run_action(context, ("item", path))
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            return {'CANCELLED'}
+        return {'FINISHED'}
 
 
 class ALLSET_OT_shelf_select(bpy.types.Operator):
@@ -389,20 +479,23 @@ class ALLSET_OT_shelf_edit_button(_ButtonProps, bpy.types.Operator):
     index: IntProperty()
 
     def invoke(self, context, event):
-        s = _current_user_shelf(context)
-        if s is None or not 0 <= self.index < len(s["buttons"]):
+        buttons = editable_buttons(current(context)) or []
+        if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
-        b = s["buttons"][self.index]
+        b = buttons[self.index]
         self.label, self.icon, self.script = b["label"], b["icon"], b["script"]
         return context.window_manager.invoke_props_dialog(self, width=420)
 
     def execute(self, context):
-        s = _current_user_shelf(context)
-        if s is None or not 0 <= self.index < len(s["buttons"]):
+        buttons = editable_buttons(current(context)) or []
+        if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
         source = self._source(context)
-        s["buttons"][self.index] = {"label": self.label, "icon": _valid_icon(self.icon),
-                                    "script": source or s["buttons"][self.index]["script"]}
+        old = buttons[self.index]
+        new = {"label": self.label, "icon": _valid_icon(self.icon), "script": source or old["script"]}
+        if old.get("menu"):            # a menu button stays one (step 162): only its label / icon change
+            new["menu"], new["script"] = old["menu"], ""
+        buttons[self.index] = new
         save_user()
         _redraw(context)
         return {'FINISHED'}
@@ -417,10 +510,10 @@ class ALLSET_OT_shelf_remove_button(bpy.types.Operator):
     index: IntProperty()
 
     def execute(self, context):
-        s = _current_user_shelf(context)
-        if s is None or not 0 <= self.index < len(s["buttons"]):
+        buttons = editable_buttons(current(context)) or []
+        if not 0 <= self.index < len(buttons):
             return {'CANCELLED'}
-        del s["buttons"][self.index]
+        del buttons[self.index]
         save_user()
         _redraw(context)
         return {'FINISHED'}
@@ -563,15 +656,15 @@ class ALLSET_MT_shelf_settings(bpy.types.Menu):
         layout.separator()
         layout.operator(ALLSET_OT_shelf_add_button.bl_idname, icon='SCRIPT')
         layout.operator(ALLSET_OT_shelf_add_last_command.bl_idname, icon='CONSOLE')
-        s = _current_user_shelf(context)
-        if s and s["buttons"]:
+        buttons = editable_buttons(current(context))      # a factory tab's added menu buttons too (step 162)
+        if buttons:
             layout.separator()
-            for i, b in enumerate(s["buttons"]):
+            for i, b in enumerate(buttons):
                 row = layout.row()
                 row.operator(ALLSET_OT_shelf_edit_button.bl_idname, text=f"Edit {b['label']}",
                              icon='GREASEPENCIL').index = i
             layout.separator()
-            for i, b in enumerate(s["buttons"]):
+            for i, b in enumerate(buttons):
                 layout.operator(ALLSET_OT_shelf_remove_button.bl_idname, text=f"Delete {b['label']}",
                                 icon='X').index = i
 
@@ -621,10 +714,21 @@ def icon_buttons(context):
     cur = current(context)
     if cur.startswith(USER_PREFIX):
         s = user_shelf(cur[len(USER_PREFIX):]) or {"buttons": []}
-        return cur, [(i, b["label"], None, True) for i, b in enumerate(s["buttons"])]
+        return cur, [(i, b["label"], None, _record_mapped(b)) for i, b in enumerate(s["buttons"])]
     if cur not in _factory_cache:
         _factory_cache[cur] = [(i, label, cur, action is not None) for i, label, action, _icon in all_buttons(cur)]
-    return cur, _factory_cache[cur]
+    extras = factory_extras(cur)
+    if not extras:
+        return cur, _factory_cache[cur]
+    n = len(_factory_cache[cur])          # added buttons after the Maya slots (step 162)
+    return cur, _factory_cache[cur] + [(n + k, b["label"], None, _record_mapped(b)) for k, b in enumerate(extras)]
+
+
+def _record_mapped(b):
+    if not b.get("menu"):
+        return True
+    from . import menu_map
+    return b["menu"] in menu_map.MAP
 
 
 def slot_button(context, slot):
@@ -645,7 +749,10 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
         cur, b = slot_button(context, props.slot)
         if b is None:
             return ""
-        if cur.startswith(USER_PREFIX):
+        rec = button_record(cur, b[0])
+        if rec is not None and rec.get("menu"):
+            return record_tooltip(rec)
+        if cur.startswith(USER_PREFIX) or rec is not None:
             return f"{b[1]} (shelf)"
         return button_tooltip(cur, b[1], b[3])
 
@@ -892,14 +999,34 @@ def draw_row():
         if slot == hover:
             _draw_rect(x - 2, y - 2, size + 4, size + 4, _hover_colour(base, mapped))
         # step 131: the 2x (64 px) picture once the icon is drawn wider than 32 px (UI scale >= 1.25)
-        tex = shelf_icons.texture(label, colour_key, greyed=not mapped, size=shelf_icons.texture_size(size),
-                                  index=index if colour_key else None)
+        if colour_key is None:
+            tex = _user_texture(_cur, index, label, not mapped, shelf_icons.texture_size(size))
+        else:
+            tex = shelf_icons.texture(label, colour_key, greyed=not mapped, size=shelf_icons.texture_size(size),
+                                      index=index)
         _draw_rect(x, y, size, size, None, tex)
     if tabs:
         dark, light = _separator_colours(base)
         for x in _separators(region, s, shown):   # Maya: a raised vertical rule in a 12 px gap
             _draw_rect(x - s, round(4 * s), max(1.0, s), size + 2 * s, dark)
             _draw_rect(x, round(4 * s), max(1.0, s), size + 2 * s, light)
+
+
+def _user_texture(shelf_id, index, label, greyed, size):
+    """Icon of a user-made button. A menu button (step 162) shows the menu item's kit picture (``menu_icon_data``:
+    the same command's shelf drawing, else its Status Line / Tool Box / menu drawing), else Maya's command button
+    with the label's initials (Maya menuItemToShelf: the item's image, else commandButton + imageOverlayLabel)."""
+    rec = button_record(shelf_id, index)
+    path = rec.get("menu") if rec else None
+    if path:
+        from . import menu_icon_data, menu_icons
+        pic = menu_icon_data.ICONS.get(path)
+        if pic is not None and pic[0] == "shelf":
+            return shelf_icons.texture(pic[2], pic[1], greyed=greyed, size=size, index=pic[3])
+        if pic is not None:
+            return shelf_icons.texture_of(("menu",) + tuple(pic), lambda n: menu_icons.picture(pic, n),
+                                          greyed=greyed, size=size)
+    return shelf_icons.texture(label, None, greyed=greyed, size=size)
 
 
 class ALLSET_GT_shelf_tab(bpy.types.Gizmo):

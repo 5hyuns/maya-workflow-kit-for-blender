@@ -105,7 +105,8 @@ def draw_item(layout, path, label, icon_value=0):
     # no key runs, so only the Maya hotkey drawn into the label shows (step 108 「계획」 3).
     if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
             notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
-        layout.operator(ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value).item = path
+        op = layout.operator(ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value)
+        op.item, op.clicked = path, True
         return
     draw_spec(layout, label, s, path, icon_value=icon_value)
 
@@ -164,10 +165,12 @@ def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
         op = layout.operator(ALLSET_OT_menu_tool.bl_idname, text=label, **iv)
         op.tool = target
         op.edit = props["edit"]
+        op.item = path              # Ctrl+Shift+click: to the shelf (step 162)
     elif kind == "v3d":
         op = layout.operator(ALLSET_OT_menu_run.bl_idname, text=label, **iv)
         op.op = target
         op.props = json.dumps(props)
+        op.item = path
     else:
         op = layout.operator(target, text=label, **iv)
         for key, value in props.items():
@@ -257,7 +260,7 @@ def _draw_boxed(layout, path, text, icon_value=0):
         return
     op = layout.operator_menu_hold(ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value,
                                    menu=ALLSET_MT_option_box.bl_idname)
-    op.item = path
+    op.item, op.clicked = path, True
 
 
 # --- Maya hotkey column -----------------------------------------------------
@@ -486,6 +489,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     item: StringProperty(options={'SKIP_SAVE'})
+    # drawn in a Maya menu (not run from Python / a marking menu): Ctrl+Shift+click adds it to the shelf (step 162)
+    clicked: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
@@ -506,6 +511,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if action is None:
             results.result(self, f"Maya: {self.item} has no Blender equivalent in Maya Workflow Kit yet")
             return {'CANCELLED'}
+        if self.clicked and add_to_shelf_if_asked(self, context, self.item):     # before Shift / Ctrl alone
+            return {'FINISHED'}
         if self.item in OPTION_BOXES and modifier_held():      # Shift / Ctrl+click = the option box (step 146)
             return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
@@ -677,6 +684,32 @@ def modifier_held():
     """Shift or Ctrl physically down (the OS key state; Blender gives a menu item no event)."""
     from ..operators import keystate
     return any(keystate.is_down(k) for k in ("LEFT_SHIFT", "RIGHT_SHIFT", "LEFT_CTRL", "RIGHT_CTRL"))
+
+
+# --- Ctrl+Shift+click: the item to the current shelf (step 162) -------------------------------------------------
+# Maya: Shift+Ctrl+click on a menu item adds it to the current shelf (); Maya's
+# menuItemToShelf appends a shelfButton with the item's label / annotation / image (the item's command as -command)
+# to the shelf tab shown, factory tabs included, and prints nothing (it runs under catchQuiet). The kit button runs
+# the path like the menu (``shelf.add_menu_item``, ``marking.modal.run_action(("item", path))``).
+
+def ctrl_shift_held():
+    """Ctrl and Shift both physically down (OS key state; unknown = not held)."""
+    from ..operators import keystate
+
+    def down(keys):
+        return any(keystate.is_down(k) for k in keys)
+    return down(("LEFT_SHIFT", "RIGHT_SHIFT")) and down(("LEFT_CTRL", "RIGHT_CTRL"))
+
+
+def add_to_shelf_if_asked(op, context, path):
+    """With Ctrl+Shift held, put a button for Maya menu item ``path`` on the current shelf instead of running it;
+    True if it did. Only mapped Maya menu paths (marking-menu pies pass their own labels)."""
+    if not path or path not in menu_map.MAP or not ctrl_shift_held():
+        return False
+    from . import shelf
+    _shelf_id, tab, button = shelf.add_menu_item(context, path)
+    results.result(op, f"{button['label']} added to the {tab} shelf")
+    return True
 
 
 def _point_at_hold_row_later(context):
@@ -860,6 +893,7 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
 
     op: StringProperty(options={'SKIP_SAVE'})
     props: StringProperty(default="{}", options={'SKIP_SAVE'})
+    item: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})       # the Maya menu path (drawn in a menu, step 162)
 
     @classmethod
     def description(cls, context, props):
@@ -870,6 +904,8 @@ class ALLSET_OT_menu_run(bpy.types.Operator):
             return ""
 
     def execute(self, context):
+        if add_to_shelf_if_asked(self, context, self.item):
+            return {'FINISHED'}
         from .status_line import main_view3d
         area, region = main_view3d(context.window.screen if context.window else None)
         if area is None:
@@ -894,8 +930,11 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
 
     tool: StringProperty(options={'SKIP_SAVE'})
     edit: BoolProperty(description="Enter mesh edit (component) mode first", options={'SKIP_SAVE'})
+    item: StringProperty(options={'SKIP_SAVE', 'HIDDEN'})       # the Maya menu path (drawn in a menu, step 162)
 
     def execute(self, context):
+        if add_to_shelf_if_asked(self, context, self.item):
+            return {'FINISHED'}
         ob = context.active_object
         if self.edit:
             if ob is None or ob.type != 'MESH':
