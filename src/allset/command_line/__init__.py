@@ -162,6 +162,30 @@ def help_text(context):
 # at 1600 px) in UI units (20 px at effective scale 1.0).
 HELP_UNITS = 33.75
 COMMAND_UNITS = 45.75
+# Inside the Command Line (research/maya/screens/16_four_view.png, 1600 px window): language button ~35 px, input
+# ~335 px, result field ~485 px, Script Editor button. Step 161: the row is shared out as a fraction of the status bar
+# like Maya's (the fixed UI units ran 1988 px wide at UI scale 1.25 in a 1600 px window, so the result field was drawn
+# off the right edge and a command's result never showed).
+INPUT_SHARE = 335 / 915
+LANG_UNITS = 3.5          # "Python" button (Maya's "MEL" is 35 px; "Python" needs more)
+MAYA_WINDOW_PX = 1600
+
+
+def units_for(width_px, ui_scale):
+    """(help, command, input) widths in UI units for a status bar ``width_px`` wide: Maya's 675 / 915 / 335 px of a
+    1600 px window, scaled to the bar (at most Maya's sizes in UI units: a wide window keeps them)."""
+    unit = 20.0 * max(ui_scale, 1e-3)
+    f = min(1.0, width_px / unit / (MAYA_WINDOW_PX / 20.0))
+    command = COMMAND_UNITS * f
+    return HELP_UNITS * f, command, command * INPUT_SHARE
+
+
+def row_units(context):
+    """``units_for`` this status bar region (the window's width when there is no region)."""
+    region = getattr(context, "region", None)
+    scale = context.preferences.system.ui_scale
+    width = region.width if region is not None and region.width > 1 else MAYA_WINDOW_PX * scale
+    return units_for(width, scale)
 
 
 def draw_help_line(layout, context):
@@ -184,12 +208,17 @@ def draw_help_line(layout, context):
 
 def draw_command_line(layout, context):
     wm = context.window_manager
+    _help, command, input_units = row_units(context)
     row = layout.row(align=True)
-    row.operator(ALLSET_OT_command_line_language.bl_idname, text="Python")
     sub = row.row(align=True)
-    sub.ui_units_x = 16
+    sub.ui_units_x = LANG_UNITS
+    sub.operator(ALLSET_OT_command_line_language.bl_idname, text="Python")
+    sub = row.row(align=True)
+    sub.ui_units_x = input_units
     sub.prop(wm, "allset_cmd", text="", placeholder="Python  (cmds.polyCube(), C.object ...)")
+    # a fixed result field: its text must not push the other buttons around
     sub = row.box().row()
+    sub.ui_units_x = max(2.0, command - input_units - LANG_UNITS - 2.5)
     sub.alert = _result["error"]
     sub.label(text=_result["text"] or " ")
     row.menu(ALLSET_MT_command_history.bl_idname, text="", icon='RECOVER_LAST')
@@ -209,11 +238,11 @@ def draw_status_bar(self, context):
     layout = self.layout
     if prefs.show_help_line:
         row = layout.row()
-        row.ui_units_x = HELP_UNITS
+        row.ui_units_x = row_units(context)[0]
         draw_help_line(row, context)
     if prefs.show_command_line:
         row = layout.row()
-        row.ui_units_x = COMMAND_UNITS
+        row.ui_units_x = row_units(context)[1]
         draw_command_line(row, context)
     # No Blender status info (scene statistics, version, "Active object has non-uniform scale" / "negative scale"
     # warnings from template_status_info, #100): Maya's status row is Help Line + Command Line only; Maya shows

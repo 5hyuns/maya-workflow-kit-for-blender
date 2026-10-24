@@ -83,7 +83,8 @@ def s_menu_open():
     C["n0"] = len(bpy.data.objects)
     cl = import_module(MODULE + ".command_line")
     s = bpy.context.preferences.system.ui_scale
-    x = round(cl.HELP_UNITS * 20 * s + 200 * s)
+    k = min(s, win().width / cl.MAYA_WINDOW_PX)     # step 161: the row is shared out by the window width
+    x = round(cl.HELP_UNITS * 20 * k + 60 * s + 150 * k)
     ev('MOUSEMOVE', 'NOTHING', x=x, y=12)  # hover first, so the field is the active button
     ev('LEFTMOUSE', 'PRESS', x=x, y=12)
     ev('LEFTMOUSE', 'RELEASE', x=x, y=12)

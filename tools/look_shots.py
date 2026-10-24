@@ -110,10 +110,11 @@ def anchor_rects():
     bottom = max(r[1] + r[3] for r in tops)
     rects["topbar"] = [0, 0, win().width, top]
     rects["statusbar"] = [0, bottom, win().width, win().height - bottom]
-    # Help Line | Command Line: fixed-width rows of the status bar (command_line.draw_status_bar, step 49)
+    # Help Line | Command Line: rows of the status bar shared out by its width (command_line.units_for, step 161)
     cl = import_module(MODULE + ".command_line")
     unit = 20 * bpy.context.preferences.system.ui_scale
-    help_w, cmd_w = cl.HELP_UNITS * unit, cl.COMMAND_UNITS * unit
+    help_u, cmd_u, _input_u = cl.units_for(win().width, bpy.context.preferences.system.ui_scale)
+    help_w, cmd_w = help_u * unit, cmd_u * unit
     rects["statusbar.help"] = [0, bottom, help_w, win().height - bottom]
     rects["statusbar.command"] = [help_w, bottom, cmd_w, win().height - bottom]
     rects["window"] = [0, 0, win().width, win().height]

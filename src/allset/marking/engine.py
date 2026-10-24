@@ -423,8 +423,8 @@ def fit_ring(layout, center, bounds, edges=()):
         h, w = ly1 - ly0, lx1 - lx0
         # Maya keeps the list in one column under the ring (14_marking_menu_object.png, where it runs off a
         # small window) and moves it when the screen ends; it never wraps into columns (step-154 dogfood G2). A
-        # column that doesn't fit under the ring goes beside it (right, then left: moved up it would cover the
-        # ring's S boxes and the gestures), then above it; only a list taller than the window gets more columns,
+        # column that doesn't fit under the ring goes beside it (the side with no radial submenu on the way, else
+        # right; moved up it would cover the ring's S boxes and the gestures), then above it; only a list taller than the window gets more columns,
         # still under the ring (step 52).
         if h > y1 - y0 and ly1 - y0 >= MIN_COLUMN_ROWS * layout.params.item_h:
             if edges:
@@ -448,16 +448,29 @@ def fit_ring(layout, center, bounds, edges=()):
             dx, dy = _slide(lx0, lx1, x0, x1), 0.0
             lift = None
         else:
-            for cdx, cdy in (right, left):
+            # the way to the column crosses the ring's E (or W) side: take the side without a radial submenu there
+            # (RMB on a mesh: E = UV opens on the way, W = Vertex doesn't)
+            def opens(names):
+                return any(layout.radial.get(n) is not None and layout.radial[n].sub is not None for n in names)
+            sides = (left, right) if opens(("E", "NE", "SE")) and not opens(("W", "NW", "SW")) else (right, left)
+            boxes = [it.rect for it in layout.radial.values()]
+            start = [(it.rect, it.opt_rect) for it in rows]
+            for cdx, cdy in sides:
                 if lx0 + cdx >= x0 and lx1 + cdx <= x1 and h <= y1 - y0:
-                    dx, dy = cdx, cdy + _slide(ly0 + cdy, ly1 + cdy, y0, y1)
-                    break
+                    ddy = cdy + _slide(ly0 + cdy, ly1 + cdy, y0, y1)
+                    for it in rows:
+                        _move(it, cdx, ddy)
+                    if edges:   # moved off an area border, the column must still stand clear of the ring
+                        _settle_list(rows, max(it.rect[3] for it in rows), y0, x0, x1, gap_unit, edges, lift=y1)
+                    if not any(_overlaps(it.rect, b) for it in rows for b in boxes):
+                        return
+                    for it, (r, o) in zip(rows, start):
+                        it.rect, it.opt_rect = r, o
+            if ly0 + above[1] >= y0 and ly1 + above[1] <= y1:
+                dx, dy = _slide(lx0, lx1, x0, x1), above[1]
+                floor = ry1 + gap
             else:
-                if ly0 + above[1] >= y0 and ly1 + above[1] <= y1:
-                    dx, dy = _slide(lx0, lx1, x0, x1), above[1]
-                    floor = ry1 + gap
-                else:
-                    dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
+                dx, dy = _slide(lx0, lx1, x0, x1), _slide(ly0, ly1, y0, y1)
         if w > x1 - x0:
             dx = x0 - lx0
     for it in rows:

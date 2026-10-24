@@ -1066,3 +1066,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Status Line "Workspace:" dropdown lists Maya Classic, Modeling - Standard, Modeling - Expert, Sculpting, UV Editing, Rigging, Animation, Rendering - Standard, then the file's other workspaces; picking Animation switches the menu set to Animation and shows the Graph Editor under the viewport.
 - [ ] In a Blender file (Maya mode switched on), Windows > Workspaces > UV Editing appends the Maya UV Editing layout once; picking it again reuses it.
 - [ ] Mess up a Maya workspace (close the Outliner, resize areas), Windows > Workspaces > Reset "…" to Factory Default: the layout comes back, the workspace keeps its name.
+
+## Step 161 — Viewport messages and views
+- [ ] Select two objects, Ctrl+G: no Blender ⓘ banner in the status bar; the Command Line result field (right of the Python field) reads "Result: group1". Create > Polygon Primitives > Cube: "Created pCube1".
+- [ ] RMB on an object near the bottom of the viewport: the list stays one column, left of the ring (E = UV is a submenu), never wrapping into columns; dragging from the ring left onto a row and releasing runs it.
+- [ ] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30.
+- [ ] Tooltip of Panels > Layouts > Four View (or the Tool Box Four View button) says Blender's four view has one header for all panes.
+- [ ] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight).

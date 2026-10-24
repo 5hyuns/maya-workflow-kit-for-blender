@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 161 (Viewport messages and views, backlog_155 #7 = step-154 dogfood G1–G4) 완료 — `docs/steps/step_161.md`.
+  킷 명령 결과 = Command Line 결과 칸 (`results.result`, INFO 보고 99 곳; 상태 줄 폭을 창에 맞춰 나눠 결과 칸이 이제 보임),
+  RMB 목록 한 열 (안 들어가면 하위 메뉴 없는 쪽 링 옆), Space 네 뷰 정사영 칸 = Maya 카메라 (30 단위, 칸마다 줌 기억, 자기 평면
+  격자 가장자리까지, 머리줄 하나 알림), 선택 와이어 = Maya 계층 강조 (side 뷰에서 lead 초록이 사라지던 원인), look_compare
+  marking 표본 다시 고름 (kit-drawn 6/6, 실제 상자 색).
+  **바로 다음 할 일**: 162 Option box and menu gestures (backlog
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_155.json` 8 번째 항목).
+  알려진 것: `gui_step129_panel_toolbar` 머리 폭 의존 실패, Modeling - Expert 뷰포트 머리줄에 Blender 위젯이 남음.
+
 - Step 160 (Maya UI reset and workspaces, #81, backlog_155 #6) 완료 — `docs/steps/step_160.md`. 템플릿에 Maya 작업 공간 8 개
   (Maya Classic, Modeling - Standard / Expert, Sculpting, UV Editing, Rigging, Animation, Rendering - Standard), Windows >
   Workspaces 메뉴 + Status Line 드롭다운 (없으면 템플릿에서 덧붙임, 메뉴 세트 · 탭 적용), Reset Current Workspace

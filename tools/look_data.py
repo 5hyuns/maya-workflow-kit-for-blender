@@ -104,12 +104,16 @@ KIT_POINTS = {
     "range_slider_bar": ("02_cube_selected_move", "timeline.HEADER", 340, 13, 2, "Range Slider bar (ui/range_bar.py, step 73)"),
     "range_slider_handle": ("02_cube_selected_move", "timeline.HEADER", 243, 13, 1, "Range Slider start handle"),
     "bottom_bars_bg": ("11_channel_box", "timeline.HEADER", 810, 13, 2, "timeline header right of the range fields"),
-    "command_line_field": ("11_channel_box", "statusbar.command", 450, 12, 2, "Python command field, right of the text"),
-    "command_result_field": (None, "no result field"),
-    "help_line_bg": ("11_channel_box", "statusbar.help", 600, 12, 2, "Help Line background"),
+    "command_line_field": ("11_channel_box", "statusbar.command", 300, 12, 2, "Python command field, right of the text"),
+    "command_result_field": ("02_cube_selected_move", "statusbar.command", -60, 12, 2,
+                             "result field (step 161), right end"),
+    "help_line_bg": ("11_channel_box", "statusbar.help", 530, 12, 2, "Help Line background, right of the text"),
     "menu_popup_bg": ("12_create_menu", "topbar", 300, 148, 2, "Create menu body, right of Cameras"),
-    "marking_menu_box": ("14_marking_menu_object", "press", -19, -79, 1, "radial box Edge, left padding"),
-    "marking_menu_list_bg": ("14_marking_menu_object", "press", -25, 164, 1, "list body right of Select Hierarchy"),
+    # step 161: re-picked for the step-151 ring (N box centre 55 above the press, Edge box 78 px wide) and the
+    # one-column list, which no longer fits under the ring in the kit shot and stands left of it (E = UV submenu)
+    "marking_menu_box": ("14_marking_menu_object", "press", -33, -55, 1, "radial box Edge, left padding"),
+    "marking_menu_list_bg": ("14_marking_menu_object", "press", -200, -141, 1,
+                             "list body right of Select Hierarchy (kit: the column left of the ring)"),
     "hotbox_row_bg": ("13_hotbox", "press", -265, 29, 1, "hotbox row Mesh, left padding (over the view background)"),
 }
 
