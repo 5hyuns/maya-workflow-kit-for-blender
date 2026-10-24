@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 180 (Animation Layers on NLA, backlog_174 #7) 완료 — `docs/steps/step_180.md`. Maya 측정 (`research/maya/re/anim_layers_180.md`) +
+  Blender 프로브: NLA COMBINE / REPLACE / influence = Maya Additive / Override / weight (4e-6). `operators/anim_layers.py` (레이어 목록 →
+  NLA 트랙, 선택 레이어 키 = Maya 식 역산), Layer Editor Anim 탭 (Lock / Solo / Mute, Weight, Layers 메뉴), Maya Anim 탭 캡처
+  `research/maya/screens/anim180/`. 헤드리스 1658 / 1658, GUI step180 9 / 9.
+  **바로 다음 할 일**: 181 Surfaces basics (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json` 8 번째 = 마지막),
+  그 뒤 새 감사 (재점검 13차).
+
 - Step 179 (Light Linking, backlog_174 #6) 완료 — `docs/steps/step_179.md`. Lighting/Shading 의 Make / Break Light · Shadow Links,
   Select Objects / Lights 4 개, Light Linking Editor (kit 팝오버) = Blender light linking 컬렉션 (`operators/light_links.py`,
   `ui/light_link_editor.py`; Maya mayapy 규칙 `research/maya/re/light_links_179.md`). Lighting/Shading 5 → 13 / 14. 헤드리스 1653 / 1653,

@@ -1181,3 +1181,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Lighting/Shading > Break Light Links on a selected light + object, render (Cycles / EEVEE): the object goes dark for that light; Make Light Links brings it back.
 - [ ] Light Linking Editor: pick a light on the left, click objects on the right to toggle; Object Centric / Shadow Links switch the lists.
 
+## Step 180
+
+- [ ] Layer Editor > Anim: Create Layer from Selected on an animated object, select the layer, move it in the viewport and press S: the motion plays as base + layer; Mute / Solo / Weight change the result like Maya.
+- [ ] Keys on the selected layer keep what you see (the layer stores the difference); BaseAnimation selected keys the base.
+

@@ -353,6 +353,10 @@ def keyframe(ob, key, keytype='KEYFRAME'):
             except (TypeError, RuntimeError):
                 pass
         return done
+    from ..operators import anim_layers
+    if isinstance(ob, bpy.types.Object) and anim_layers.has_layers(ob):
+        # Maya animation layers (step 180): the key goes to the selected layer, solved so the result is the value
+        return anim_layers.key(ob, path, idx)
     ok = ob.keyframe_insert(path, index=idx, keytype=keytype)
     if ok:      # Maya Tangents > Default In / Out Tangent (step 157)
         from ..operators import graph_key_menu
