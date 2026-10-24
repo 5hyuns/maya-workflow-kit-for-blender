@@ -12,10 +12,11 @@ from . import (attribute_editor, editor_chrome, file_project, render_settings, s
                tool_settings, toolbox, view_furniture, view_message, range_bar, status_icons, kit_icons, panel_toolbar, maya_dock, soft_overlay, save_prompt, scene_carry)
 from . import mesh_tools_poly  # step 144 POLY (#30)
 from . import mesh_tools_loop  # step 144 LOOP (#31)
+from . import uv_display  # step 155 UV Editor display keys / Move UV Shell
 
 _modules = (status_icons, kit_icons, notices, input_line, channel_box, creation_inputs, layer_editor, attribute_editor, outliner, menu_sets, file_project, status_line, shelf,
             time_slider, panel_menus, panel_toolbar, maya_grid, view_furniture, selection_wire, component_colors, toolbox, dock_tabs, maya_outliner, outliner_sets,
-            paint_weights, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, hypershade, light_editor, render_view, graph_editor, graph_units, graph_view, editor_chrome, render_settings, script_editor,
+            paint_weights, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, uv_display, hypershade, light_editor, render_view, graph_editor, graph_units, graph_view, editor_chrome, render_settings, script_editor,
             view_message, range_bar, tool_settings, maya_dock, soft_overlay, save_prompt, scene_carry)
 
 
