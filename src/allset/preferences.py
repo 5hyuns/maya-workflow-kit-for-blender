@@ -74,6 +74,20 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     snap_time_to_selection: bpy.props.BoolProperty(
         name="Snap Time To Selection",
         description="Selecting keys in the Graph Editor moves the current time to the earliest selected key")
+    # Graph Editor View > Auto Frame / Auto Frame Time / Curve Name (Maya factory: on / off / Never;
+    # , ui/graph_view.py, step 150).
+    graph_auto_frame: bpy.props.BoolProperty(
+        name="Auto Frame", default=True,
+        description="When the selection changes, the Graph Editor frames the curves it shows (Maya View > Auto Frame)")
+    graph_auto_frame_time: bpy.props.BoolProperty(
+        name="Auto Frame Time",
+        description="When the selection changes, the Graph Editor frames the keys along the time axis only "
+                    "(Maya View > Auto Frame Time; Auto Frame wins when both are on)")
+    graph_curve_names: bpy.props.EnumProperty(
+        name="Curve Name", default='NEVER',
+        description="Write each curve's Maya name (pCube1.translateX) beside its last key in the Graph Editor",
+        items=(('ALWAYS', "Always", "Name every curve"), ('NEVER', "Never", "No curve names"),
+               ('ACTIVE', "Active Only", "Name the selected curves")))
 
     # Top UI.
     maya_top_bar: bpy.props.BoolProperty(
