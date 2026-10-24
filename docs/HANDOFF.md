@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 175 (Repeat Last for Maya commands, backlog #2) 완료 — `docs/steps/step_175.md`. Maya GUI 측정
+  `research/maya/re/repeat_175.md`. `operators/repeat_maya.py`: G / Edit > Repeat / Recent Commands 가 메뉴 · 셸프 · 마킹 · 옵션 창
+  명령도 반복. 헤드리스 1611 / 1611, GUI step175 5 / 5 + 관련 통과.
+  **바로 다음 할 일**: 176 Selected-face look and dogfood fixes (backlog.json 3 번째).
+
 - Step 174 (Component mode keeps the transform tool, backlog #1) 완료 — `docs/steps/step_174.md`. Maya GUI 측정
   `research/maya/re/tool_modes_174.md` (Q/W/E/R 유지, T → select). `operators/tool_keys.py` 모드 전환 뒤 도구 넘김. GUI step174
   21 / 21 (수정 전 8 실패), 관련 GUI 통과, 헤드리스 1603 / 1603.

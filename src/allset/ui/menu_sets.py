@@ -344,8 +344,20 @@ def item_texts(rows, size=None):
     return {row[0]: text for row, text in zip(rows, aligned(entries, size))}
 
 
+def _dynamic_label(path, label):
+    """Maya labels built when the menu opens: Edit > Repeat = 'Repeat "<last command>"' (buildEditMenu.mel:83-93)."""
+    if path == "Edit/Repeat":
+        from ..operators import repeat_maya
+        try:
+            return repeat_maya.label(bpy.context)
+        except (AttributeError, ReferenceError):
+            return label
+    return label
+
+
 def _draw_items(layout, items, prefix, submenus):
-    kids = list(children(items, prefix))
+    kids = [(path, ((_dynamic_label(path, it[0]),) + tuple(it[1:])) if path is not None else it)
+            for path, it in children(items, prefix)]
     texts = item_texts([(path, it[0], path in OPTION_BOXES) for path, it in kids
                         if path is not None and not (sub_items(path, it) and path not in menu_map.MAP)])
     for path, it in kids:

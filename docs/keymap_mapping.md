@@ -7,8 +7,8 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 209 |
-| IC 일치 | 27 |
+| 구현 | 210 |
+| IC 일치 | 26 |
 | 해당 없음 | 164 |
 | macOS 전용 | 68 |
 
@@ -57,7 +57,7 @@
 | o | O | timeEditorPanel | TimeEditorCreateClip | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:115 |
 | p | P | timeEditorPanel | TimeEditorCreatePoseClip | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:116 |
 | u | U | timeEditorPanel | TimeEditorRippleEditTogglePress / TimeEditorRippleEditToggleRelease (release) | NLA Editor: `nla.make_single_user` | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:117 |
-| g | G | timeEditorPanel | TimeEditorClipTrimStart | Screen: `screen.repeat_last` | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:118 |
+| g | G | timeEditorPanel | TimeEditorClipTrimStart | Screen: `allset.repeat_last` | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:118 |
 | h | H | timeEditorPanel | TimeEditorClipTrimEnd | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:119 |
 | Shift+G | Shift+G | timeEditorPanel | TimeEditorClipScaleStart | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:120 |
 | Shift+H | Shift+H | timeEditorPanel | TimeEditorClipScaleEnd | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:121 |
@@ -69,12 +69,12 @@
 | Ctrl+v | Ctrl+V | timeEditorPanel | TimeEditorPasteClips | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:129 |
 | a | A | timeEditorPanel | TimeEditorFrameAll | NLA Editor: `nla.view_all` | IC 일치 | Maya Time Editor = kit 의 NLA (step 34) | hotkeySetup.mel:134 |
 | f | F | timeEditorPanel | TimeEditorFrameSelected | NLA Editor: `nla.view_selected` | IC 일치 |  | hotkeySetup.mel:135 |
-| g | G | timeEditorPanel | TimeEditorFramePlaybackRange | Screen: `screen.repeat_last` | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:136 |
+| g | G | timeEditorPanel | TimeEditorFramePlaybackRange | Screen: `allset.repeat_last` | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:136 |
 | y | Y | timeEditorPanel | TimeEditorFrameCenterView | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:137 |
 | x | X | timeEditorPanel | TimeEditorToggleSnapToClipPress / TimeEditorToggleSnapToClipRelease (release) | — | 해당 없음 | Maya Time Editor 클립 편집 (kit Time Editor = NLA, 그 키는 Blender 그대로) | hotkeySetup.mel:138 |
 | a | A | graphEditor | GraphEditorFrameAll | Graph Editor: `graph.view_all` | IC 일치 |  | hotkeySetup.mel:144 |
 | f | F | graphEditor | GraphEditorFrameSelected | Graph Editor: `graph.view_selected` | IC 일치 |  | hotkeySetup.mel:145 |
-| g | G | graphEditor | GraphEditorFramePlaybackRange | Graph Editor: `anim.scene_range_frame`; Screen: `screen.repeat_last` | 구현 | 재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤 | hotkeySetup.mel:146 |
+| g | G | graphEditor | GraphEditorFramePlaybackRange | Graph Editor: `anim.scene_range_frame`; Screen: `allset.repeat_last` | 구현 | 재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤 | hotkeySetup.mel:146 |
 | t | T | graphEditor | GraphEditorFrameCenterView | Graph Editor: `allset.graph_center_time` | 구현 | 현재 시간을 가운데로 (가로만, 확대 그대로) | hotkeySetup.mel:147 |
 | 1 | ONE | graphEditor | GraphEditorAbsoluteView | Graph Editor: `allset.graph_view_mode` (mode='ABSOLUTE') | 구현 | Normalize 끔 | hotkeySetup.mel:148 |
 | 2 | TWO | graphEditor | GraphEditorStackedView | Graph Editor: `allset.graph_view_mode` (mode='STACKED') | 구현 | Blender 에 Stacked 없음: Normalized 로 + 안내 | hotkeySetup.mel:149 |
@@ -221,7 +221,7 @@
 | Alt+, | Alt+COMMA | global | PreviousFrame | Frames: `screen.frame_offset` (delta=-1) | 구현 |  | hotkeySetup.mel:359 |
 | . | PERIOD | global | NextKey | Frames: `screen.keyframe_jump` (next=True) | 구현 | Frames 키맵 (대부분 에디터); 3D View 피벗 파이는 헤더로 | hotkeySetup.mel:360 |
 | Alt+. | Alt+PERIOD | global | NextFrame | Frames: `screen.frame_offset` (delta=1) | 구현 | 누르고 있으면 반복 | hotkeySetup.mel:361 |
-| g | G | global | RepeatLast | Screen: `screen.repeat_last` | IC 일치 |  | hotkeySetup.mel:362 |
+| g | G | global | RepeatLast | Screen: `allset.repeat_last` | 구현 | 메뉴 · 셸프 · 마킹 명령도 반복 (Blender repeat_last 는 등록된 연산자만) | hotkeySetup.mel:362 |
 | Shift+G | Shift+G | global | RepeatLastActionAtMousePosition | 3D View: `allset.repeat_at_mouse` | 구현 | 마지막 동작 반복 → 선택을 마우스 아래 바닥 (Z=0) 으로 | hotkeySetup.mel:363 |
 | Up | UP_ARROW | global | PickWalkUp | Object Mode: `allset.pick_walk` (direction='UP'); Mesh: `allset.pick_walk_component` (direction='UP') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 위쪽 이웃 (step 39); 포즈 모드: 부모 조인트 (step 57) | hotkeySetup.mel:364 |
 | Down | DOWN_ARROW | global | PickWalkDown | Object Mode: `allset.pick_walk` (direction='DOWN'); Mesh: `allset.pick_walk_component` (direction='DOWN') | 구현 | 편집 모드: 엣지 = 링, 정점·면 = 화면 아래쪽 이웃 (step 39); 포즈 모드: 첫 자식 조인트 (step 57) | hotkeySetup.mel:365 |

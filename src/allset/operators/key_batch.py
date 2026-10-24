@@ -70,10 +70,14 @@ class ALLSET_OT_repeat_at_mouse(bpy.types.Operator):
         if region is None or region.type != 'WINDOW' or rv3d is None:
             return {'PASS_THROUGH'}
         point = mouse_point(region, rv3d, (event.mouse_region_x, event.mouse_region_y))
+        from . import repeat_maya
         try:
-            bpy.ops.screen.repeat_last()
+            res = repeat_maya.repeat(context, inside_undo_op=True)   # Maya repeatLast, menu commands too (step 175)
         except RuntimeError as ex:
             self.report({'WARNING'}, f"Nothing to repeat ({ex})")
+            return {'CANCELLED'}
+        if res is None:
+            self.report({'WARNING'}, "Nothing to repeat")
             return {'CANCELLED'}
         if context.mode == 'OBJECT' and context.selected_objects:
             move_to(list(context.selected_objects), point)

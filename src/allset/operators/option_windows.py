@@ -559,6 +559,32 @@ def run_saved(window, context):
 
 # --- the operators --------------------------------------------------------------------------------
 
+_PATHS = {}
+
+
+def _menu_path(window):
+    """The first main-menu path whose action opens ``window`` (windows bound by action, not by path)."""
+    if window.key not in _PATHS:
+        from ..ui import menu_map
+        _PATHS[window.key] = next((p for p, a in menu_map.MAP.items()
+                                   if not p.startswith(("Graph Editor/", "Dope Sheet/", "UV Editor/"))
+                                   and find(a) is window), None)
+    return _PATHS[window.key]
+
+
+def _record(window, context, res):
+    """A window command that ran is Maya's last command (G repeats it with the saved values, step 175)."""
+    if not window.click_saved or isinstance(res, str) or not (isinstance(res, set) and 'FINISHED' in res):
+        return
+    from ..ui import menu_map
+    path = window.paths[0] if window.paths else _menu_path(window)
+    action = menu_map.MAP.get(path) if path else window.match
+    if action is None:
+        return
+    from . import repeat_maya
+    repeat_maya.record(path.rsplit("/", 1)[-1] if path else window.title, action, path, context)
+
+
 def _apply_update(window):
     def update(self, context):
         if not self.apply_now:
@@ -569,6 +595,8 @@ def _apply_update(window):
         else:
             res = run(window, context, values_of(window, self))
         store(window.key, values_of(window, self))
+        if apply_run is None:
+            _record(window, context, res)
         self.apply_now = False
         if isinstance(res, str):
             from ..ui import notices
@@ -663,6 +691,7 @@ def _make(window):
         if isinstance(res, str):
             self.report({'WARNING'}, res)
             return {'CANCELLED'}
+        _record(window, context, res)
         return {'FINISHED'} if res is None or 'FINISHED' in res else {'CANCELLED'}
 
     return type(f"ALLSET_OT_opt_{window.key}", (bpy.types.Operator,), {

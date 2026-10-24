@@ -1153,3 +1153,9 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 - [ ] W on a cube, F9: the Move manipulator stays on the selected vertices right away (no Select Box flash); F8 back: Move on the object.
 - [ ] E, then RMB > Vertex: Rotate in vertex mode; Shift+RMB > Target Weld from object mode still starts Target Weld.
+
+## Step 175 — G repeats Maya commands
+
+- [ ] Mesh > Combine on two cubes, select two other cubes, G: they combine too; Edit menu shows Repeat "Combine".
+- [ ] A shelf button (Poly Cube), then G: another cube; Ctrl+E on faces, then G: extrudes again (the key command is newer).
+- [ ] Hotbox (Space) > Recent Commands: the last commands, newest first; clicking one runs it.
