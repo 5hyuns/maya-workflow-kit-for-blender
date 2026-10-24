@@ -27,7 +27,8 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
-                      "allset.hs_swatch_drag", "allset.shelf_scroll")
+                      "allset.hs_swatch_drag", "allset.shelf_scroll",
+                      "allset.select_2d_click", "allset.select_2d_box")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -49,18 +50,28 @@ def _click(plain, toggle, deselect, add):
 _CLICK_EXACT = _click({"deselect_all": True}, {"toggle": True},
                       {"deselect": True}, {"extend": True})
 
-# outliner.item_activate / graph.clickselect have no ``deselect`` option, so
-# Ctrl and Ctrl+Shift fall back to toggle (workaround, docs/steps/step_2.md).
-_OUTLINER_CLICK = _click({"extend": False, "deselect_all": True},
-                         {"extend": True, "deselect_all": True},
-                         {"extend": True, "deselect_all": True},
-                         {"extend": True, "deselect_all": True})
+# Step 170 (GUI-measured, research/maya/re/select_mods_170.md): Maya's Outliner is a Qt list — plain = replace,
+# Shift = range from the anchor, Ctrl = toggle, Ctrl+Shift = add the range. Blender's item_activate does that with
+# extend / extend_range (the anchor is Blender's active element).
+_OUTLINER_CLICK = _click({"extend": False, "extend_range": False, "deselect_all": True},
+                         {"extend": False, "extend_range": True, "deselect_all": True},
+                         {"extend": True, "extend_range": False, "deselect_all": True},
+                         {"extend": True, "extend_range": True, "deselect_all": True})
+# Graph Editor (measured): Shift toggles; Ctrl+click acts like a plain click; Ctrl+Shift adds — the plain / Ctrl /
+# Ctrl+Shift rules that Blender's clickselect lacks are applied by allset.select_2d_click placed first (patch below);
+# these items are what runs if that operator passes through.
 _GRAPH_CLICK = _click({"extend": False, "deselect_all": True},
-                      {"extend": True}, {"extend": True}, {"extend": True})
+                      {"extend": True}, {"extend": False, "deselect_all": True}, {"extend": True})
+# NLA (not measured in step 170): the step 2 rule, every modifier toggles
+_NLA_CLICK = _click({"extend": False, "deselect_all": True}, {"extend": True}, {"extend": True}, {"extend": True})
+# Dope Sheet (measured): Shift toggles, Ctrl deselects, Ctrl+Shift adds (select_2d_click)
+_DOPE_CLICK = _click({"extend": False, "deselect_all": True},
+                     {"extend": True}, {"extend": True}, {"extend": True})
 
 _BOX = _click({"mode": "SET"}, {"mode": "XOR"}, {"mode": "SUB"}, {"mode": "ADD"})
-# uv/outliner/graph select_box only have SET/ADD/SUB (no XOR): Shift adds
-# instead of toggling (workaround, docs/steps/step_2.md).
+# uv / graph / action select_box have no XOR: their Shift box runs as SET and allset.select_2d_box (first, PASS_THROUGH)
+# toggles what it caught against the selection before (step 170). Outliner / NLA keep Shift = add.
+_BOX_SET_XOR = _click({"mode": "SET"}, {"mode": "SET"}, {"mode": "SUB"}, {"mode": "ADD"})
 _BOX_NO_XOR = _click({"mode": "SET"}, {"mode": "ADD"}, {"mode": "SUB"}, {"mode": "ADD"})
 
 # node.select has a real deselect / toggle (measured 4.5): Maya exactly. Node Ctrl+drag stays Blender's node.link
@@ -78,14 +89,14 @@ SELECT_RULES = (
     ("outliner.item_activate", "CLICK", _OUTLINER_CLICK, ()),
     ("graph.clickselect", "PRESS", _GRAPH_CLICK, ("column", "curves")),
     ("view3d.select_box", "CLICK_DRAG", _BOX, ("tweak",)),
-    ("uv.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak",)),
+    ("uv.select_box", "CLICK_DRAG", _BOX_SET_XOR, ("tweak",)),
     ("outliner.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak",)),
-    ("graph.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range")),
+    ("graph.select_box", "CLICK_DRAG", _BOX_SET_XOR, ("tweak", "axis_range")),
     # step 86 (docs/steps/step_86.md 「계획」 1): Dope Sheet, NLA, Node Editor
-    ("action.clickselect", "PRESS", _GRAPH_CLICK, ("column", "channel")),
-    ("nla.click_select", "PRESS", _GRAPH_CLICK, ()),
+    ("action.clickselect", "PRESS", _DOPE_CLICK, ("column", "channel")),
+    ("nla.click_select", "PRESS", _NLA_CLICK, ()),
     ("node.select", "PRESS", _NODE_CLICK, ()),
-    ("action.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range", "wait_for_input")),
+    ("action.select_box", "CLICK_DRAG", _BOX_SET_XOR, ("tweak", "axis_range", "wait_for_input")),
     ("nla.select_box", "CLICK_DRAG", _BOX_NO_XOR, ("tweak", "axis_range", "wait_for_input")),
     ("node.select_box", "CLICK_DRAG", _NODE_BOX, ("tweak",)),
 )
@@ -112,7 +123,36 @@ def patch_selection(kd):
                 continue
             raise LookupError(f"selection patch: {idname} {value} not found in IC data")
         touched[(idname, value)] = kms
+    patch_select_2d(kd, touched)
     return touched
+
+
+# Step 170: first-place operators that apply the measured Maya rule around Blender's own selection
+# (operators/select_2d.py). (keymap family key, editor, [(shift, ctrl, rule)]) for clicks; boxes: Shift = XOR.
+SELECT_2D_CLICKS = ((("graph.clickselect", "PRESS"), 'GRAPH', ((False, False, 'KEEP'), (False, True, 'CTRL'),
+                                                               (True, True, 'ADD'))),
+                    (("action.clickselect", "PRESS"), 'DOPE', ((False, True, 'DESELECT'), (True, True, 'ADD'))),
+                    (("outliner.item_activate", "CLICK"), 'OUTLINER', ((False, True, 'TOGGLE'),)))
+SELECT_2D_BOXES = ((("graph.select_box", "CLICK_DRAG"), 'GRAPH'), (("action.select_box", "CLICK_DRAG"), 'DOPE'),
+                   (("uv.select_box", "CLICK_DRAG"), 'UV'))
+
+
+SELECT_2D_KEYMAPS = set()      # keymaps that got a select_2d box item (tests: their shadowing stacks)
+
+
+def patch_select_2d(kd, touched):
+    for key, editor, variants in SELECT_2D_CLICKS:
+        for km in touched.get(key, ()):
+            if km not in ("Graph Editor", "Dopesheet", "Outliner"):          # tool keymaps keep Blender's items
+                continue
+            for shift, ctrl, rule in variants:
+                _add(kd, km, "allset.select_2d_click", make_event("LEFTMOUSE", key[1], shift=shift, ctrl=ctrl),
+                     {"editor": editor, "rule": rule}, shadows=(km, "Screen", "View2D"), first=True)
+    for key, editor in SELECT_2D_BOXES:
+        for km in touched.get(key, ()):
+            _add(kd, km, "allset.select_2d_box", make_event("LEFTMOUSE", "CLICK_DRAG", shift=True),
+                 {"editor": editor}, shadows=(km,), first=True)
+            SELECT_2D_KEYMAPS.add(km)
 
 
 # --- 2. 4/5/6/7 display modes ---------------------------------------------

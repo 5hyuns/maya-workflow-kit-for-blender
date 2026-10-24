@@ -46,7 +46,8 @@ def test_node_clicks():
 
 
 def test_boxes():
-    for km, idname, want in (("Dopesheet", "action.select_box", {(False, False): 'SET', (True, False): 'ADD',
+    # step 170: the Dope Sheet Shift box runs as SET, allset.select_2d_box (first) makes it Maya's toggle
+    for km, idname, want in (("Dopesheet", "action.select_box", {(False, False): 'SET', (True, False): 'SET',
                                                                   (False, True): 'SUB', (True, True): 'ADD'}),
                              ("NLA Editor", "nla.select_box", {(False, False): 'SET', (True, False): 'ADD',
                                                                (False, True): 'SUB', (True, True): 'ADD'}),

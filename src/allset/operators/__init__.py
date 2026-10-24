@@ -57,6 +57,10 @@ from . import deform_edit  # noqa: E402  step 169: Deform > Wire / ShrinkWrap / 
 
 classes += deform_edit.classes
 
+from . import select_2d  # noqa: E402  step 170: Maya click / marquee modifiers in Graph / Dope Sheet / UV
+
+classes += select_2d.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -100,6 +104,7 @@ def register():
 
 
 def unregister():
+    select_2d.unregister_timers()
     modify_maya.unregister_props()
     dag.unregister_handlers()
     curve_draw.unregister_handlers()

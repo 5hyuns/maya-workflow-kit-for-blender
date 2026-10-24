@@ -71,14 +71,16 @@ def test_uv_click_select():
 
 def test_box_select_modes():
     exact = {(False, False): "SET", (True, False): "XOR", (False, True): "SUB", (True, True): "ADD"}
-    # uv/outliner/graph select_box have no XOR mode: Shift adds (workaround).
+    # outliner select_box has no XOR mode: Shift adds (workaround). uv / graph run the Shift box as SET and
+    # allset.select_2d_box (first) toggles it Maya's way (step 170, tests/test_step170_select_mods.py).
     no_xor = {**exact, (True, False): "ADD"}
+    set_xor = {**exact, (True, False): "SET"}
     cases = (("3D View Tool: Select Box", "view3d.select_box", exact),
              ("3D View Tool: Select Box (fallback)", "view3d.select_box", exact),
-             ("Image Editor Tool: Uv, Select Box", "uv.select_box", no_xor),
-             ("Image Editor Tool: Uv, Select Box (fallback)", "uv.select_box", no_xor),
+             ("Image Editor Tool: Uv, Select Box", "uv.select_box", set_xor),
+             ("Image Editor Tool: Uv, Select Box (fallback)", "uv.select_box", set_xor),
              ("Outliner", "outliner.select_box", no_xor),
-             ("Graph Editor", "graph.select_box", no_xor))
+             ("Graph Editor", "graph.select_box", set_xor))
     for km, idname, want in cases:
         for (shift, ctrl), mode in want.items():
             kmi = _one(km, idname, "LEFTMOUSE", "CLICK_DRAG", shift=shift, ctrl=ctrl)
@@ -86,12 +88,15 @@ def test_box_select_modes():
 
 
 def test_outliner_and_graph_click_select():
-    # No 'deselect' option on these operators: Ctrl / Ctrl+Shift approximate with toggle.
-    for shift, ctrl in ((True, False), (False, True), (True, True)):
-        assert _one("Outliner", "outliner.item_activate", "LEFTMOUSE", "CLICK",
-                    shift=shift, ctrl=ctrl).properties.extend
+    # Step 170 (measured in Maya): Outliner Shift = range, Ctrl = toggle, Ctrl+Shift = add range; Graph Editor
+    # Shift / Ctrl+Shift toggle in Blender's item (Ctrl+Shift "add only" by allset.select_2d_click), Ctrl = plain
+    for (shift, ctrl), (extend, rng) in (((True, False), (False, True)), ((False, True), (True, False)),
+                                         ((True, True), (True, True))):
+        p = _one("Outliner", "outliner.item_activate", "LEFTMOUSE", "CLICK", shift=shift, ctrl=ctrl).properties
+        assert (p.extend, p.extend_range) == (extend, rng), (shift, ctrl)
+    for shift, ctrl, extend in ((True, False, True), (False, True, False), (True, True, True)):
         assert _one("Graph Editor", "graph.clickselect", "LEFTMOUSE", "PRESS",
-                    shift=shift, ctrl=ctrl).properties.extend
+                    shift=shift, ctrl=ctrl).properties.extend == extend, (shift, ctrl)
     assert not _one("Outliner", "outliner.item_activate", "LEFTMOUSE", "CLICK").properties.extend
     assert not _one("Graph Editor", "graph.clickselect", "LEFTMOUSE", "PRESS").properties.extend
 
@@ -202,8 +207,10 @@ def test_added_bindings_not_shadowed():
     data = maya_patches.apply(ic_data.generate())
     assert maya_patches.ADDED, "no added bindings recorded"
     problems = []
+    # step 170: select tool keymaps that got a Maya marquee item are only active with that tool (own stack)
+    stacks = {**_STACKS, **{km: (km,) for km in maya_patches.SELECT_2D_KEYMAPS if km not in _STACKS}}
     for km, idname, ev, _props, shadows in maya_patches.ADDED:
-        stack = _STACKS[km]
+        stack = stacks[km]
         k = patch.event_key(ev)
         for km_name, args, content in data:
             if args.get("modal") or (stack is not None and km_name not in stack):
