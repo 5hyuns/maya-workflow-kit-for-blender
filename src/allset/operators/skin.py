@@ -16,6 +16,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy_extras import view3d_utils
 from mathutils import Vector, kdtree
 
+from .. import compat
 from . import naming, units
 
 PICK_RADIUS = 25          # px at UI scale 1.0
@@ -569,7 +570,7 @@ def apply_paint_settings(context, mesh, arm, v):
     """Maya tool values ``v`` (PAINT_FIELDS) -> the weight paint tool, brush, unified settings and overlays.
     Returns the names Blender refused (e.g. a brush that is a linked asset)."""
     ts = context.tool_settings
-    ups = ts.unified_paint_settings
+    ups = compat.unified_paint_settings(ts, "weight_paint")
     refused = []
     if v["operation"] == "SMOOTH":
         try:
@@ -595,7 +596,7 @@ def apply_paint_settings(context, mesh, arm, v):
         ups.use_locked_size = 'VIEW'
     else:
         ups.use_locked_size = 'SCENE'            # Maya's radius is a world size (cm) unless Screen projection is on
-        ups.unprojected_radius = max(1e-4, v["radius"] * units.maya_unit(context.scene))
+        compat.set_unprojected_radius(ups, max(1e-4, v["radius"] * units.maya_unit(context.scene)))
     mesh[NORMALIZE_PROP] = v["normalize"]
     ts.use_auto_normalize = v["normalize"] == "INTERACTIVE"
     space = context.space_data

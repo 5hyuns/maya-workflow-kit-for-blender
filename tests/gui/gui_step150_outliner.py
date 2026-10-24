@@ -79,7 +79,7 @@ def s_scene():
             eb.head, eb.tail = (0, 0, i * k), (0, 0, (i + 1) * k)
         bpy.ops.object.mode_set(mode='OBJECT')
         for pb in arm.pose.bones:
-            pb.bone.select = True         # Only Show Selected: Blender draws curves of selected bones only
+            mod(".ui.channel_box").set_bone_selected(pb, True)   # Only Show Selected: curves of selected bones (5.x: no Bone.select)
             pb.rotation_mode = 'XYZ'
             for frame, z in ((1, 0.0), (24, 0.5)):
                 pb.rotation_euler.z = z

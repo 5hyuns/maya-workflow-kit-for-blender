@@ -165,7 +165,8 @@ def s_pick():
 def s_picked():
     ob = bpy.data.objects["pCube1"]
     ad = ob.animation_data
-    keyed = [fc.array_index for fc in (ad.action.fcurves if ad and ad.action else [])
+    curves = import_module(MODULE + ".compat").id_fcurves(ob) if ad and ad.action else []   # 5.0: no Action.fcurves
+    keyed = [fc.array_index for fc in curves
              if fc.data_path == "rotation_euler" and any(abs(k.co[0] - 12) < 1e-6 for k in fc.keyframe_points)]
     check(f"#87 the Channels menu's first row = Key Selected: Rotate Z keyed at 12 ({keyed})", keyed == [2])
     tap('ESC')

@@ -222,6 +222,9 @@ def s_offset_dragged():
     b = bmesh.from_edit_mesh(cube().data)        # select the middle loop (the one inserted first)
     for e in b.edges:
         e.select = False
+    zs = {round(v.co.z, 6) for v in b.verts}
+    z = min(zs, key=lambda h: abs(h - z))       # the click lands a hair apart per version (5.2.3: -0.2962)
+    C["z"] = z
     for v in b.verts:
         v.select = abs(v.co.z - z) < 1e-4
     for e in b.edges:

@@ -601,7 +601,10 @@ class Session:
             return
         # Dragging onto a submenu opens it in place (also the second stroke of a
         # zig-zag mark): radial once the pointer reaches the ring, list on hover.
-        if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius:
+        # A radial one only from its own sector: Maya-wide N / S boxes (step 151) reach into the diagonal
+        # sectors, and a quick NE / NW gesture crossing them must not open the N submenu (step 153).
+        if item.kind == "radial" and math.hypot(dx, dy) >= self.params.radius \
+                and direction(dx, dy, self.params.dead) == item.key:
             self._push(item, (x, y))
         elif item.kind == "list" and _inside(item.rect, dx, dy):
             self._push(item, (self.center[0] + item.rect[2], self.center[1] + item.rect[3]), cascade=True)

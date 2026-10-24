@@ -144,10 +144,11 @@ def s_auto_shot():
 def s_auto_check():
     # step 130: the kit's Maya Auto Key keys from a short timer after the change (Blender's own keyed at once)
     ob = bpy.data.objects["pCube1"]
-    fc = ob.animation_data.action.fcurves.find("location", index=0)
+    curves = import_module(MODULE + ".compat").id_fcurve_collection(ob)     # 5.0: no Action.fcurves
+    fc = curves.find("location", index=0)
     frames = sorted(round(k.co.x) for k in fc.keyframe_points) if fc else []
     check(f"#37: moving the keyed cube at frame 20 with Auto Key on keys it there ({frames})", 20 in frames)
-    sx = ob.animation_data.action.fcurves.find("scale", index=0)
+    sx = curves.find("scale", index=0)
     check("#37: the moved channels are keyed, scale keeps its one key",
           sx is not None and len(sx.keyframe_points) == 1)
 

@@ -46,6 +46,11 @@ def open_menu(name):
         bpy.ops.wm.call_menu(name=mod(".ui.menu_sets").menu_idname(name))
 
 
+def closes():
+    """Blender closes a menu the mouse left (4.5; 5.x only with Preferences > menu_close_leave)."""
+    return mod(".ui.menu_sets").compat.menus_close_on_leave(bpy.context.preferences)
+
+
 def dark_share(point, half=None):
     """Share of dark pixels (menu background, < 45 / 255) in a box around a window point: a screenshot read back."""
     import tempfile
@@ -133,8 +138,9 @@ def hold_case(menu, path):
         # cursor_warp sends no event under --enable-event-simulate (a real session gets the OS move: checked in a
         # normal GUI Blender, ), so queue the move the option box's away warp makes, right
         # behind the release like Blender's own move after the hold menu closes
-        away_x = 2 if x > win().width // 2 else win().width - 3
-        ev('MOUSEMOVE', 'NOTHING', x=away_x, y=y)
+        if closes():
+            away_x = 2 if x > win().width // 2 else win().width - 3
+            ev('MOUSEMOVE', 'NOTHING', x=away_x, y=y)
 
     def s_away():
         pass
@@ -158,16 +164,24 @@ def hold_case(menu, path):
               f"({C['calls']})", C["calls"] == [("box_hold", path), ("box", path)])
         # (simulated events update the window's event state when queued, so here AWAY starts from the far point the
         # test queued behind the release and BACK returns there; in a real session BACK = the hold row)
-        check(f"{path}: the pointer went away (closes the Maya menu) and came back ({moves})",
-              [m[0] for m in moves] == ['HOLD_ROW', 'AWAY', 'BACK'])
+        if closes():
+            check(f"{path}: the pointer went away (closes the Maya menu) and came back ({moves})",
+                  [m[0] for m in moves] == ['HOLD_ROW', 'AWAY', 'BACK'])
+        else:
+            check(f"{path}: 5.x menus stay open until a click: no away / back warp ({moves})",
+                  [m[0] for m in moves] == ['HOLD_ROW'])
         tap('ESC')
 
     def s_after_esc():
         shot(f"146_{tag}_after_esc.png")
         mod(".ui.menu_sets").AWAY_TICK = 0.05
         share = dark_share((C["row"][0] - px(200), C["row"][1]), px(20))
-        check(f"{path}: the Maya menu is closed after the option window (dark share {share:.2f} at the item)",
-              share < 0.3)
+        if closes():
+            check(f"{path}: the Maya menu is closed after the option window (dark share {share:.2f} at the item)",
+                  share < 0.3)
+        else:   # Blender 5.x default (menu_close_leave off): no Python call closes it (compat.menus_close_on_leave)
+            check(f"{path}: 5.x: the Maya menu stays open under the option window until a click / Esc "
+                  f"(dark share {share:.2f} at the item)", share > 0.5)
 
     def s_close():
         shot(f"146_{tag}_after_esc2.png")

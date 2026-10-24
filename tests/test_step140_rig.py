@@ -19,6 +19,7 @@ cb = import_module(kit.MODULE + ".ui.channel_box")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
+compat = import_module(kit.MODULE + ".compat")
 
 PATHS = {
     "joint_tool": ("Skeleton/Create Joints",), "ik_handle_tool": ("Skeleton/Create IK Handle",),
@@ -352,9 +353,9 @@ def test_paint_skin_weights_tool_settings():
     _select(cyl)
     _run("paint_skin_weights", value=0.25, opacity=0.5, radius=3.0, normalize="Off", xray_joints=False)
     assert bpy.context.mode == 'PAINT_WEIGHT'
-    ups = bpy.context.tool_settings.unified_paint_settings
+    ups = compat.unified_paint_settings(bpy.context.tool_settings)       # 5.0+: per paint mode (#90)
     assert abs(ups.weight - 0.25) < 1e-6 and abs(ups.strength - 0.5) < 1e-6
-    assert abs(ups.unprojected_radius - 3.0) < 1e-6          # Maya cm x maya_unit() (1 in a factory m scene)
+    assert abs(compat.unprojected_radius(ups) - 3.0) < 1e-6          # Maya cm x maya_unit() (1 in a factory m scene)
     assert not bpy.context.tool_settings.use_auto_normalize and not arm.show_in_front
     bpy.ops.object.mode_set(mode='OBJECT')
 

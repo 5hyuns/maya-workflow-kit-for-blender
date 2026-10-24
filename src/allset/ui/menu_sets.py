@@ -16,7 +16,7 @@ import json
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
-from .. import undo_steps
+from .. import compat, undo_steps
 from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
 
 COMMON_SET = "commonMenuSet"
@@ -710,16 +710,21 @@ def _close_menu_then_open(context, item):
     rp = context.region.as_pointer() if context.region else 0
     # away right now: Blender queues a mouse move after closing the hold menu, built from the pointer position, and
     # where the pointer was is the Maya menu's next row - a submenu there opens, and Blender never mouse-outs a menu
-    # while a newer one is open (interface_handlers.cc ui_mouse_motion_towards_check "annoying fix")
-    with bpy.context.temp_override(window=context.window):
-        bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='AWAY')
+    # while a newer one is open (interface_handlers.cc ui_mouse_motion_towards_check "annoying fix").
+    # Blender 5.x (menu_close_leave off, its default) closes menus only on a click: no warp, the option window
+    # opens over the Maya menu (compat.menus_close_on_leave, step 153).
+    away = compat.menus_close_on_leave(context.preferences)
+    if away:
+        with bpy.context.temp_override(window=context.window):
+            bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='AWAY')
 
     def later():
         w = live_refs.window(wp)
         if w is None:
             return None
-        with bpy.context.temp_override(window=w):
-            bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='BACK')
+        if away:
+            with bpy.context.temp_override(window=w):
+                bpy.ops.allset.option_box_point('INVOKE_DEFAULT', move='BACK')
         area = live_refs.area(ap, w)
         region = live_refs.region(area, rp)
         with bpy.context.temp_override(window=w, area=area, region=region):
