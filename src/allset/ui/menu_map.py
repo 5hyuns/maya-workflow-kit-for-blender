@@ -45,7 +45,7 @@ _DELETE_BY_TYPE = {"History": 'HISTORY', "Non-Deformer History": 'NON_DEFORMER_H
                    "Constraints": 'CONSTRAINTS', "Motion Paths": 'MOTION_PATHS',
                    "Rigid Bodies": 'RIGID_BODIES'}
 _DELETE_ALL_ONLY = {"Joints": 'JOINTS', "Lattices": 'LATTICES', "Cameras": 'CAMERAS',
-                    "Lights": 'LIGHTS', "Image Planes": 'IMAGE_PLANES', "Clusters": 'CLUSTERS',
+                    "Lights": 'LIGHTS', "Image Planes": 'IMAGE_PLANES', "Clusters": 'CLUSTERS', "IK Handles": 'IK_HANDLES',
                     "Nonlinears": 'NONLINEARS', "Particles": 'PARTICLES'}
 
 
@@ -197,6 +197,10 @@ MAP = {
     "Select/All": ("object.select_all", {"action": 'SELECT'}),
     "Select/Quick Select Sets": ("menu", "ALLSET_MT_quick_select_sets"),   # step 96
     "Select/All by Type/Joints": ("object.select_by_type", {"type": 'ARMATURE'}),
+    # step 166: the kit's own IK handles / clusters (operators/by_type.py), particle systems, rigid bodies
+    **{f"Select/All by Type/{label}": ("allset.select_all_by_type", {"type": kind})
+       for label, kind in (("IK Handles", 'IK_HANDLES'), ("Clusters", 'CLUSTERS'), ("Particles", 'PARTICLES'),
+                           ("Rigid Bodies", 'RIGID_BODIES'))},
     "Select/All by Type/Lattices": ("object.select_by_type", {"type": 'LATTICE'}),
     "Select/All by Type/Transforms": ("object.select_by_type", {"type": 'EMPTY'}),
     "Select/All by Type/Geometry": ("object.select_by_type", {"type": 'MESH'}),
@@ -959,6 +963,24 @@ BLENDER_MENU = {
 from .editor_menu_map import MAP as _EDITOR_MAP  # noqa: E402
 
 MAP.update(_EDITOR_MAP)
+
+# Step 166 (audit 11 BS4 / #9 #10): the same Maya command greyed in one menu while it works in another
+# (tools/menu_consistency.py finds them: label + runTimeCommand / annotation) gets the working item's action.
+# UV Editor Tools > Unfold / Cut / Sew / Pin are Maya's brush tools; the kit runs the command on the selection
+# (Blender's UV editor has no unfold / cut / sew brush) [delegated].
+TWINS = {
+    "Key/Create Character Set": "Control/Create Character Set",
+    "Hypershade/Edit/Select All by Type/Lights": "Select/All by Type/Lights",
+    **{f"UV Editor/Select/Convert Selection/{label}": f"Select/Convert Selection/{label}"
+       for label in ("To Contained Edges", "To Contained Faces", "To Edge Loop", "To Edge Ring")},
+    "UV Editor/Tools/Unfold": "UV Editor/Modify/Unfold",
+    "UV Editor/Tools/Cut": "UV Editor/Cut/Sew/Cut",
+    "UV Editor/Tools/Sew": "UV Editor/Cut/Sew/Sew",
+    "UV Editor/Tools/Pin": "UV Editor/Edit/Pin Selection",
+}
+for _twin, _source in TWINS.items():
+    if _twin not in MAP and _source in MAP:
+        MAP[_twin] = MAP[_source]
 
 
 def spec(path):

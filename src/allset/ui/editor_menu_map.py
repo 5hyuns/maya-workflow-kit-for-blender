@@ -92,6 +92,11 @@ def _curves_menu(ed, graph):
             f"{ed}/Curves/Resample Curve": "graph.bake_keys",
             f"{ed}/Curves/Buffer Curve/Snapshot": "graph.ghost_curves_create",
         })
+    else:
+        # step 166: Maya's Dope Sheet runs the Graph Editor's curve commands (same annotations, _editors104.json)
+        m.update({f"{ed}/Curves/{label}": ("allset.dope_graph_op", {"command": cmd}) for label, cmd in (
+            ("Isolate Curve", 'ISOLATE'), ("Smooth Filter (Butterworth)", 'BUTTERWORTH'),
+            ("Smooth Filter (Gaussian)", 'GAUSSIAN'), ("Euler Filter", 'EULER'), ("Resample Curve", 'RESAMPLE'))})
     return m
 
 
@@ -186,6 +191,7 @@ MAP = {
     # step 150: kit modes (ui/graph_view.py); Maya factory: Auto Frame on, Auto Frame Time off, Curve Name Never
     f"{GE}/View/Auto Frame": _prop("addon_prefs.graph_auto_frame"),
     f"{GE}/View/Auto Frame Time": _prop("addon_prefs.graph_auto_frame_time"),
+    f"Dope Sheet/View/Auto Frame": _prop("addon_prefs.dope_auto_frame"),      # step 166 (Maya factory off)
     f"{GE}/View/Curve Name/Always": _prop("addon_prefs.graph_curve_names", 'ALWAYS'),
     f"{GE}/View/Curve Name/Never": _prop("addon_prefs.graph_curve_names", 'NEVER'),
     f"{GE}/View/Curve Name/Active Only": _prop("addon_prefs.graph_curve_names", 'ACTIVE'),
