@@ -331,7 +331,11 @@ def _lattice(context, v):
     lat.points_u, lat.points_v, lat.points_w = s, u, t           # Maya S T U along X Y Z; Maya Y = Blender Z
     size = hi - lo
     big = max(size.x, size.y, size.z, 1e-6)
-    lob.scale = tuple(max(c, big * 1e-3) for c in size)
+    # Maya's ffd1Lattice Scale = the box size in Maya units (2 around a radius 1 sphere, #95): the cm factor goes in
+    # delta_scale, so the Channel Box / AE Scale reads Maya's number and the world size stays the box
+    u = units.maya_unit(context.scene)
+    lob.delta_scale = (u, u, u)
+    lob.scale = tuple(max(c, big * 1e-3) / u for c in size)
     lob.location = (lo + hi) / 2 if v["center"] else Vector()
     context.view_layer.update()
     for ob, idx in items:

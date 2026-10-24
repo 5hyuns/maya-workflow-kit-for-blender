@@ -344,7 +344,9 @@ def test_ae_draws_every_tab():
             panels = [e for e in lay.log if e[0] == "panel"]
             assert panels, (target.name, key)
             if key == "T":
-                assert ("prop", target, "location", "") in lay.log
+                # the lead and only selected node: Maya number fields (Channel Box text proxies, step 148 #85)
+                assert (("prop", target, "location", "") in lay.log or
+                        ("prop", bpy.context.scene.allset_cb, "tx_text", "") in lay.log), lay.log[:12]
                 assert ("label", "Translate") in lay.log
                 assert any(e[0] == "panel" and e[1].endswith("Transform Attributes") and not e[2]
                            for e in lay.log)   # open, as in Maya

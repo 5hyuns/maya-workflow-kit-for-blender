@@ -274,7 +274,29 @@ def _vector_row(layout, owner, attr, label):
     split.row(align=True).prop(owner, attr, text="")
 
 
+def _maya_number_rows(layout, context, ob):
+    """Translate / Rotate / Scale as Maya number fields (no unit, never cut to "62 c", #85): the Channel Box text
+    proxies, when ``ob`` is the lead and the only selected node (the proxies type into every selected node, the AE
+    edits one). False when that doesn't apply."""
+    if channel_box.is_bone(ob) or ob is not channel_box.lead(context) or len(channel_box.targets(context)) != 1:
+        return False
+    if ob.rotation_mode in {'QUATERNION', 'AXIS_ANGLE'}:
+        return False
+    cb = context.scene.allset_cb
+    col = layout.column(align=True)
+    for label, keys in (("Translate", ("tx", "ty", "tz")), ("Rotate", ("rx", "ry", "rz")),
+                        ("Scale", ("sx", "sy", "sz"))):
+        split = col.split(factor=0.3, align=True)
+        split.label(text=label)
+        row = split.row(align=True)
+        for key in keys:
+            row.prop(cb, key + "_text", text="")
+    return True
+
+
 def draw_transform_channels(layout, context, ob):
+    if _maya_number_rows(layout, context, ob):
+        return
     col = layout.column(align=True)
     _vector_row(col, ob, "location", "Translate")
     if ob.rotation_mode == 'QUATERNION':

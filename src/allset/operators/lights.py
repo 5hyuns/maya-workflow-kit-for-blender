@@ -182,6 +182,29 @@ def _set_decay(self, value):
 PROPS = ("allset_intensity", "allset_decay")
 
 
+def _color(i):
+    def get(light):
+        return light.color[i]
+
+    def set_(light, v):
+        light.color[i] = max(0.0, float(v))
+    return get, set_
+
+
+def channel_attrs():
+    """Maya light shape channels Blender keeps as one colour vector (Color R / G / B, Maya listAttr -keyable,
+    step 148): Channel Box SHAPES rows ``maya:colorR`` ... (ui/channel_box._virtual)."""
+    from .deformers import Attr
+    return [Attr(f"color{c}", f"Color {c}", "NONE", *_color(i)) for i, c in enumerate("RGB")]
+
+
+def channel_attr(name):
+    for a in channel_attrs():
+        if name == "maya:" + a.key:
+            return a
+    return None
+
+
 def register_props():
     bpy.types.Light.allset_intensity = FloatProperty(
         name="Intensity", min=0.0, soft_max=10.0, precision=3, get=_get_intensity, set=_set_intensity,

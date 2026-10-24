@@ -512,8 +512,14 @@ def _inputs(ob):
 
 
 def _virtual(owner, name):
-    """The Maya attribute behind an INPUTS row ``maya:<key>`` of a kit deformer (operators/deformers.ATTRS)."""
-    if not name.startswith("maya:") or not isinstance(owner, bpy.types.Modifier):
+    """The Maya attribute behind an INPUTS row ``maya:<key>`` of a kit deformer (operators/deformers.ATTRS), or a
+    SHAPES row of a light (Color R / G / B, operators/lights.channel_attrs, step 148)."""
+    if not name.startswith("maya:"):
+        return None
+    if isinstance(owner, bpy.types.Light):
+        from ..operators import lights
+        return lights.channel_attr(name)
+    if not isinstance(owner, bpy.types.Modifier):
         return None
     from ..operators import deformers
     return deformers.attr(owner, name)
@@ -535,6 +541,9 @@ SHAPE_LABELS = {('LATTICE', "points_u"): "S Divisions", ('LATTICE', "points_w"):
 
 def shape_label(ob, prop):
     label = SHAPE_LABELS.get((ob.type, prop))
+    v = _virtual(ob.data, prop)
+    if label is None and v is not None:
+        label = v.label
     if label is None:
         rna = ob.data.bl_rna.properties.get(prop)
         label = rna.name if rna is not None else prop
@@ -685,7 +694,7 @@ def row_owner(ob, kind, name, mod_type="", nth=0, lead_ob=None):
         data = getattr(ob, "data", None)
         if data is None or (lead_ob is not None and ob.type != lead_ob.type):
             return None
-        return data if name in data.bl_rna.properties else None
+        return data if name in data.bl_rna.properties or _virtual(data, name) is not None else None
     if kind == "INPUT":
         mods = [m for m in _inputs(ob) if m.type == mod_type]
         if nth < len(mods) and (name in mods[nth].bl_rna.properties or _virtual(mods[nth], name) is not None):
@@ -934,10 +943,16 @@ _watching = set()
 _anchor = {"key": None}
 
 
+def _round_half_up(x):
+    """C roundf for UI sizes (UI_UNIT_Y = roundf(18 x scale) + 2 x pixel size): Python's round(22.5) is 22, Blender's 23,
+    so at UI 1.25 the unit was 24 px instead of 25 and every 0.8 U row 0.8 px short (step 148, #83)."""
+    return int(x + 0.5)
+
+
 def row_pitch(context):
     """Channel row height in px (ROW_SCALE x Blender's widget unit)."""
     system = context.preferences.system
-    unit = round(18.0 * system.ui_scale) + 2 * system.pixel_size
+    unit = _round_half_up(18.0 * system.ui_scale) + 2 * system.pixel_size
     return max(1.0, unit * ROW_SCALE)
 
 
@@ -1011,6 +1026,10 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                 hit = _hover.get(self._win)
                 if hit is not None:
                     return self._on_press(context, event, hit)
+            if event.type == 'RIGHTMOUSE' and event.value == 'PRESS' and self._inside(event):
+                hit = _hover.get(self._win)
+                if hit is not None and not (event.shift or event.ctrl or event.alt):
+                    return self._on_rmb(context, hit)
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
             self._on_move(context, event)
@@ -1023,6 +1042,19 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
             _redraw(self._window)
             return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
+
+    def _on_rmb(self, context, hit):
+        """Maya: RMB in the Channel Box = the Channels menu (). Blender's button
+        context menu draws its C items first and a Python menu only after them (step 148, #87: the Channels items
+        sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
+        that isn't selected becomes the selection first (delegated), so Key Selected keys the clicked channel."""
+        key, _part = hit
+        if key not in selected_channels(context):
+            set_selected_channels([key], context)
+            _anchor["key"] = key
+            _redraw(self._window)
+        bpy.ops.wm.call_menu(name=ALLSET_MT_cb_channels.__name__)
+        return {'RUNNING_MODAL'}
 
     def _on_press(self, context, event, hit):
         ob = lead(context)
@@ -1531,7 +1563,9 @@ def _modifier_props(mod, limit=10):
 
 SHAPE_PROPS = {
     'CAMERA': ("lens", "clip_start", "clip_end"),
-    'LIGHT': ("energy", "color", "shadow_soft_size"),
+    # Maya light shapes: Color R / G / B, Intensity first (Maya listAttr -keyable, step 148); Intensity is the
+    # Maya value over Blender's Power (operators/lights.py, step 137)
+    'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z), step 144
 }
 
@@ -1543,7 +1577,7 @@ def wanted_rows(ob):
     if data is not None:
         for prop in SHAPE_PROPS.get(ob.type, ()):
             rna = data.bl_rna.properties.get(prop)
-            if rna is not None and cb_entry.kind_of_rna(rna):
+            if (rna is not None and cb_entry.kind_of_rna(rna)) or _virtual(data, prop) is not None:
                 out.append(("SHAPE", prop, "", 0))
     for mod in _inputs(ob):
         if is_open(ob, mod_node(mod)):
@@ -1627,17 +1661,22 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
     if label is None:
         label = v.label if v is not None else owner.bl_rna.properties[prop].name
     row = row_for(context, ob, kind, prop, mod_type, nth)
+    # the channel rows' geometry (draw_channel_row): the name centred in the left half, the field, then the state
+    # icon's column, so SHAPES / INPUTS values line up under Translate X ... (Maya: one value column, step 148)
+    line = layout.row(align=True)
+    split = line.split(factor=0.5, align=True)
+    name = split.row(align=True)
+    name.alignment = 'CENTER'
+    name.label(text=label)
+    right = split.row(align=True)
     if row is None:
         if v is not None:   # a Maya attribute (step 144) has no RNA property to draw until the rows are rebuilt
-            split = layout.row(align=True).split(factor=0.5, align=True)
-            split.label(text=label)
-            split.label(text=cb_entry.format_value(v.get(owner), v.kind, context.scene))
+            right.label(text=cb_entry.format_value(v.get(owner), v.kind, context.scene))
         else:
-            layout.prop(owner, prop, text=label)
-        return
-    split = layout.row(align=True).split(factor=0.5, align=True)
-    split.label(text=label)
-    split.prop(row, "text", text="")
+            right.prop(owner, prop, text="")
+    else:
+        right.prop(row, "text", text="")
+    line.label(text="", icon='BLANK1')
 
 
 # --- lines: the Channel Box below its name row is a fixed pane that scrolls (step 135, #55) ---------------------------
@@ -1686,7 +1725,7 @@ def window_lines(total, room, first):
 
 def _unit(context):
     system = context.preferences.system
-    return round(18.0 * system.ui_scale) + 2 * system.pixel_size
+    return _round_half_up(18.0 * system.ui_scale) + 2 * system.pixel_size
 
 
 def _split_off(context):
@@ -1841,7 +1880,7 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             r.separator(factor=1.5)
             r.prop(data, "name", text="", emboss=False)
         for prop in SHAPE_PROPS.get(ob.type, ()):
-            if hasattr(data, prop):
+            if hasattr(data, prop) or _virtual(data, prop) is not None:
                 r = lines.row()
                 if r is not None:
                     _draw_text_row(r, context, ob, data, prop, "SHAPE", label=shape_label(ob, prop))
@@ -1967,7 +2006,10 @@ def fill_pane(layout, context, units):
         col.label(text="")
 
 
-PANE_TOP = 2.2   # panel margins, row spacing and the Layer Editor's splitter, in UI units (screenshots, step 99)
+# panel margins, row spacing and the Layer Editor's splitter, in UI units. Step 99 checked 2.2 in the 3D View sidebar;
+# the dock's Properties region draws them 0.6-0.7 U shorter (step 148 shots at UI 1.0 / 1.25 / 1.5: 4.9 / 4.8 / 4.8 U of
+# fixed rows against the 5.5 the model assumed), which cost a line and left 1.5 rows empty above the Layer Editor (#83)
+PANE_TOP = 1.6
 
 
 class ALLSET_PT_dock_attribute_editor(bpy.types.Panel):
