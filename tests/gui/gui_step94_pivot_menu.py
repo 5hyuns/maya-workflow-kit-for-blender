@@ -66,20 +66,24 @@ def s_menu_shot():
     check(f"RMB shows the pivot menu ({labels})", "Reset Pivot" in labels and "Pin Component Pivot" in labels)
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step94_pivot_menu.png"))
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] - DRAG // 2)
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] - DRAG)
+    # release on the S box: since step 151 Maya's list starts 87 px x scale under the press point, so a longer
+    # drag south ends on the list's first row (step 153)
+    r = s.layout.radial["S"].rect if s and "S" in s.layout.radial else (0, -DRAG, 0, -DRAG)
+    C["dy"] = int(round((r[1] + r[3]) / 2))
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] + C["dy"] // 2)
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] + C["dy"])
 
 
 @step
 def s_release_rmb():
-    ev('RIGHTMOUSE', 'RELEASE', x=C["x"], y=C["y"] - DRAG)
+    ev('RIGHTMOUSE', 'RELEASE', x=C["x"], y=C["y"] + C["dy"])
 
 
 @step
 def s_release_d():
     bpy.context.view_layer.update()
     C["delta1"] = Vector(cube().delta_location).length
-    ev('D', 'RELEASE', x=C["x"], y=C["y"] - DRAG)
+    ev('D', 'RELEASE', x=C["x"], y=C["y"] + C["dy"])
 
 
 @step

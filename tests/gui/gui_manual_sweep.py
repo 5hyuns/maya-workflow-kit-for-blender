@@ -4897,7 +4897,7 @@ def _m69_5_editor():
 #             timeline = the selection's keys at the current frame (the Time Slider range when there is one); Shift+S
 #             tap does nothing; Stepped Next = Stepped + a notice ------------------------------------------------------
 
-MM_D = 110      # px past the marking menu ring (radius 80 x UI scale)
+MM_D = 110      # px past the marking menu ring (Maya radius 55 x UI scale since step 151)
 VEC = {"N": (0, 1), "E": (1, 0), "S": (0, -1), "W": (-1, 0), "SW": (-0.7071, -0.7071)}
 
 
@@ -4920,7 +4920,8 @@ def mm2(name, d1, d2, centre):
     def _drag1():
         c, d = pts["c"], MM_D * bpy.context.preferences.system.ui_scale
         v = VEC[d1]
-        for f in (1 / 3, 2 / 3, 1.0):
+        # only the last sample is past the ring: a radial submenu opens centred where the pointer first passes it
+        for f in (0.2, 0.4, 1.0):
             ev('MOUSEMOVE', 'NOTHING', x=int(c.x + v[0] * d * f), y=int(c.y + v[1] * d * f), shift=True)
         pts["sub"] = Vector((c.x + v[0] * d, c.y + v[1] * d))
 

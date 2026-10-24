@@ -274,3 +274,37 @@ def toolbar_back(theme):
 # from 5.0 'IMAGE' draws the values as they are and the converting shader is
 # 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB' (5.0 Python API notes, GPU; seen as darker shelf icons, step 119).
 LINEAR_IMAGE_SHADER = 'IMAGE' if VERSION < (5, 0) else 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB'
+
+
+# --- Unified paint settings -----------------------------------------------------------------
+# 4.5: one ``ToolSettings.unified_paint_settings`` with ``unprojected_radius`` (a radius). 5.0+: each paint mode
+# has its own (``tool_settings.weight_paint.unified_paint_settings``) and the scene size is ``unprojected_size``,
+# a diameter (measured on 5.0.1 / 5.2.3: "Diameter of brush in Blender units", step 153, #90).
+def unified_paint_settings(ts, paint="weight_paint"):
+    """The unified paint settings that apply to paint mode ``paint`` (a ToolSettings member name)."""
+    mode = getattr(ts, paint, None)
+    ups = getattr(mode, "unified_paint_settings", None)
+    return ups if ups is not None else ts.unified_paint_settings
+
+
+def unprojected_radius(ups):
+    """The brush radius in scene units."""
+    if "unprojected_radius" in ups.bl_rna.properties:
+        return ups.unprojected_radius
+    return ups.unprojected_size / 2.0
+
+
+def set_unprojected_radius(ups, radius):
+    if "unprojected_radius" in ups.bl_rna.properties:
+        ups.unprojected_radius = radius
+    else:
+        ups.unprojected_size = radius * 2.0
+
+
+# --- Menus closing when the mouse leaves ----------------------------------------------------
+# 4.5 closes a menu the mouse moved away from; 5.0 keeps menus and popups open until a click, with the preference
+# ``PreferencesView.menu_close_leave`` (default off) for the old behaviour (5.0 release notes, user interface,
+# 5953ff318c; measured on 5.2.3). Python has no call that closes a popup and the kit never writes preferences
+# (step 130), so with the 5.x default a held option box can't close the Maya menu under it (step 153).
+def menus_close_on_leave(prefs):
+    return getattr(prefs.view, "menu_close_leave", True)

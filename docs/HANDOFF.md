@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 153 (Blender 5.x pass, #90) 완료 — `docs/steps/step_153.md`, 결과 표 `docs/compat_5x.md` 「step 153」. Paint Skin Weights ❒ 가
+  5.x 에서 `compat.unified_paint_settings` / `set_unprojected_radius` (5.x 는 페인트 모드마다, 크기 = 지름). GUI 전체 5.2.3 의 실패 15 개:
+  step 151 뒤 회귀 (넓은 N 상자가 대각선 제스처에서 하위 메뉴를 엶 → 방사 하위 메뉴는 자기 구역에서만 열림; 테스트의 Maya 기하 가정 2 개),
+  테스트의 5.x API 직접 사용, Blender 5.0 「메뉴는 클릭할 때까지 열림」 (`compat.menus_close_on_leave`, 옵션 상자 뒤 Maya 메뉴가 열린 채).
+  헤드리스 4.5 / 5.0.1 / 5.1.2 / 5.2.3 = 1398 (4.5 는 1394 + 새 4), GUI 5.2.3 실패 7 파일 재실행 전부 통과.
+  **바로 다음 할 일**: backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json` 은 153 이 마지막 — 다음은 새 감사
+  (열린 이슈 · manual_checks 정리) 로 새 backlog 를 만들거나 사용자 지시.
+  규칙: GUI 전체 묶음은 단계 끝 한 번 (관련 파일 `-k`), sleep 대기 금지, Blender 동시 2 개.
+
 - Step 152 (렌더 · 그리드 기본, #101 — 이슈 새로 만듦) 완료 — `docs/steps/step_152.md`. 조명 없는 장면은 Maya 기본 조명으로
   렌더 (킷 렌더 동안만 카메라 자식 Sun, Enable Default Light), Test Resolution / Batch Render 연결, Render Sequence ❒ / Batch Render ❒ =
   Maya 창, Render Current Frame ❒ = Maya 경고, Display > Grid ❒ = Maya Grid Options (격자가 따름). 헤드리스 1394/1394, GUI 관련

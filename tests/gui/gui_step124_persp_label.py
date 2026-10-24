@@ -98,9 +98,15 @@ def s_check():
 @step
 def s_unregister():
     vf = import_module(MODULE + ".ui.view_furniture")
+    hid = bool(vf._HIDDEN)
     vf._show_strips()
     header = region('ASSET_SHELF_HEADER')
-    check(f"unregister gives the strip back ({header and header.height} px)", header is not None and header.height > 1)
+    if hid:
+        check(f"unregister gives the strip back ({header and header.height} px)",
+              header is not None and header.height > 1)
+    else:   # 5.2.3 (measured, step 153): Blender keeps the collapsed shelf's header at 1 px itself, the kit hid nothing
+        check(f"the kit hid no strip, so unregister has nothing to give back ({header and header.height} px)",
+              header is not None and header.height <= 1)
 
 
 run()

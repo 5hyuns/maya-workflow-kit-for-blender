@@ -1,4 +1,4 @@
-# Blender 5.x 호환 (step 118)
+# Blender 5.x 호환 (step 118, 153)
 
 대상은 그대로 Blender 4.5 LTS (결정 4). 이 문서는 5.0 / 5.1 / 5.2 에서 바뀐 Python API 가 킷에 주는 영향, 대응, 버전별
 측정 결과를 적는다. **버전 분기는 한 곳 — `src/allset/compat.py`** (`test_step118_compat.test_version_checks_only_in_compat`
@@ -32,6 +32,8 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | `np.array(Matrix)` 가 float32 | 선택 우선순위 화면 거리 | 정밀도 | `dtype=np.float64` (분기 불필요) |
 | `Material.use_nodes` 폐기 예정 (항상 노드, 쓰면 경고) | 재질 만들기, Hypershade, AE | 경고 | `ensure_material_nodes` / `material_uses_nodes` |
 | IC 키맵: Ctrl+G 가 메뉴 호출 | 키맵 패치 | (step 53 에서 이벤트로 제거) | `keymap/patch.STRICT` = `compat.IS_TARGET` |
+| 메뉴 · 팝업이 클릭할 때까지 열림 (`PreferencesView.menu_close_leave` 기본 꺼짐, 5953ff318c) | 옵션 상자를 누르고 있다 열기 (step 146: 포인터를 멀리 보내 Maya 메뉴를 닫음) | 동작: Maya 메뉴가 옵션 창 아래 열린 채 | `menus_close_on_leave` (읽기만, 킷은 환경설정을 안 씀): 꺼져 있으면 멀리 보내기를 건너뜀, 메뉴는 클릭 / Esc 로 닫힘 (step 153) |
+| `ToolSettings.unified_paint_settings` → 페인트 모드마다 (`tool_settings.weight_paint.unified_paint_settings`), `unprojected_radius` (반지름) → `unprojected_size` (**지름**, 「Diameter of brush in Blender units」 실측 5.0.1 / 5.2.3) | Skin > Paint Skin Weights ❒ (Value / Opacity / Radius(U)) | **깨짐**: `AttributeError`, 메시가 Maya 설정 없이 Weight Paint 에 남음 (#90, step 153) | `unified_paint_settings(ts, paint)` / `unprojected_radius` / `set_unprojected_radius` (5.x 는 지름 = 2 × Maya 반지름) |
 | BGL 제거, GLSL 소스 셰이더 제거, EEVEE id, Alembic/USD 인자, 브러시 이름 | — | 없음 (안 씀; 키맵 브러시 속성은 설치된 IC 에서 복사) | — |
 
 ### 5.1
@@ -56,6 +58,26 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | GN 모디파이어 입력 API, 조각 자동 마스킹, `template_palette(color=)` | — | 없음 | — |
 
 ## 버전별 결과
+
+### step 153 (2026-10-24, 최신 전체)
+
+헤드리스 = `ALLSET_SANDBOX=<ver> python tests/run.py --blender <exe>` 전체 169 파일 (수정 뒤), GUI = `tests/gui/run.py` 전체 146 파일
+(2 개 GUI_SKIP) 한 번 + 실패 파일 `-k` 재실행 (`docs/steps/step_153.md`). 5.2.x 는 최신 패치 5.2.3 으로 잼 (5.2.2 대체).
+
+| Blender | 헤드리스 | GUI 전체 (첫 실행) | GUI 실패 파일 재실행 (수정 뒤) |
+|---|---|---|---|
+| 4.5.4 LTS (대상) | **1398 / 1398** (1394 + `test_step153_compat` 4) | 1641 / 1644 (수정 뒤; 3 = `gui_step129_panel_toolbar`, 부하 중) | panel_toolbar 혼자 **36 / 36**, sweep 19 / 19 |
+| 5.0.1 | **1398 / 1398** | — (5.x GUI 는 5.2.x 로 대표) | — |
+| 5.1.2 | **1398 / 1398** | — | — |
+| 5.2.3 LTS | **1398 / 1398** | 1622 통과 / 15 실패 | **7 파일 전부 통과** (16 / 16 + 69 / 69) |
+
+- 15 실패 = #90 이 아닌 것들: 4.5 에서도 나는 step 151 이후 회귀 (마킹 메뉴 하위 메뉴가 넓은 N 상자로 열림 — 킷 수정, 테스트의
+  Maya 기하 가정 2 개), 테스트의 5.x API 직접 사용 (`Action.fcurves`, `Bone.select`), 5.2.3 의 클릭 위치 · asset shelf 머리 띠 차이,
+  그리고 **Blender 5.0 의 「메뉴는 클릭할 때까지 열림」** (`menu_close_leave`, 위 5.0 표).
+- 첫 실행 (#90 수정만, step 153 처음): 네 버전 모두 헤드리스 1394 / 1394 (step 145 의 5.2.2 1305 / 1308 → 실패 3 개 = #90).
+
+### step 118 (2026-10-19)
+
 
 아래 표 = **step 118 측정 (2026-10-19, 그때의 코드)** — 네 버전을 모두 같은 날 잰 마지막 전체 비교. 그 뒤 단계에서 테스트가 늘어 숫자는
 지금 전체와 다르다: 최신 실행은 **4.5.4, step 124 (2026-10-20): 헤드리스 890 / 890, GUI 1142 / 1142**; 5.x 는 그 뒤 단계마다 바뀐 기능의

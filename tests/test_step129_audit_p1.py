@@ -172,7 +172,7 @@ def test_paint_skin_weights_normalizes_interactively():
     assert ts.use_auto_normalize, "Maya Paint Skin Weights normalizes interactively (skinCluster normalizeWeights 1)"
     cyl.vertex_groups.active_index = cyl.vertex_groups["joint3"].index
     paint_weights = _mod("ui.paint_weights")
-    ts.unified_paint_settings.weight = 1.0
+    _mod("compat").unified_paint_settings(ts).weight = 1.0
     ts.weight_paint.brush.weight = 1.0
     ts.weight_paint.brush.blend = 'MIX'
     mod, name = paint_weights.FLOOD_OP.split(".")
@@ -190,7 +190,7 @@ def test_flood_keeps_blender_choice_without_normalization():
     ts = bpy.context.scene.tool_settings
     ts.use_auto_normalize = False
     cyl.vertex_groups.active_index = cyl.vertex_groups["joint3"].index
-    ts.unified_paint_settings.weight = 1.0
+    _mod("compat").unified_paint_settings(ts).weight = 1.0
     ts.weight_paint.brush.weight = 1.0
     ts.weight_paint.brush.blend = 'MIX'
     mod, name = _mod("ui.paint_weights").FLOOD_OP.split(".")

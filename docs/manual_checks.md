@@ -1018,3 +1018,9 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Render > Render Sequence ❒: "Render Sequence (Current Frame)" with Current Camera (persp + scene cameras) and Alternate Output File Location; pick a folder, Render Sequence → images land there and the Render Settings output path is unchanged afterwards.
 - [ ] Render > Batch Render ❒: "Batch Render Frame"; untick Use all available processors, 2 processors → the background Blender runs with `-t 2` (Task Manager).
 - [ ] Render > Render Current Frame ❒: no window, the Help Line warns 'Renderer "EEVEE" does not provide render options.'
+
+## Step 153 — Blender 5.x pass (#90)
+
+- [ ] Blender 5.0+ (portable 5.2.3): bind a mesh, Skin > Paint Skin Weights ❒ → the window opens without an error; Value 0.25 / Opacity 0.5 / Radius(U) 3 → Weight Paint with weight 0.25, strength 0.5 and a brush of radius 3 cm (Blender shows the size as a diameter, 6 cm).
+- [ ] Blender 5.x: hold a Maya menu item with an option box (Display > Grid) → the pointer goes onto the Option Box row, letting go opens Grid Options with the Display menu still open under it (5.0 menus stay open until a click); Esc / a click closes it. With Preferences > Interface > "Close menus when the mouse is moved out" on, the menu closes first like in 4.5.
+- [ ] 4.5 and 5.x: W hold + a quick drag to the upper left / upper right through the wide Symmetry box → Object / Component (the Symmetry submenu doesn't open); a slow drag straight up still opens Symmetry.
