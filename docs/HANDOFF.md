@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 169 (Deform completion, backlog_164 #6) 완료 — `docs/steps/step_169.md`. mayapy 측정 `research/maya/re/deform_169.md`.
+  Wire = 킷 디포머 (Geometry Nodes `wire1` + `curve1BaseWire`, Maya 규칙 그대로: mayapy 대비 최대 1.03e-5), Dropoff
+  Locator, Wire > Add / Remove / Reset / Show Base / Parent Base, ShrinkWrap 대상 편집, Lattice Reset / Remove Tweaks,
+  Prune Membership, Point On Curve, Paint Weights 상자 10 = Paint Attributes Tool 창. Deform 41 → 65 %, generic 9 → 0,
+  dead 20 → 12, 옵션 상자 window 103. 헤드리스 1579 / 1579, GUI step169 + step144_deform 13/13.
+  **바로 다음 할 일**: 170 3D View 밖 선택 수정키 (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_164.json`
+  7 번째 항목), 그 뒤 171 Animation Snapshot / Ghosting.
+
 - Step 168 (Modify menu and Smooth Mesh Preview to Polygons, backlog_164 #5) 완료 — `docs/steps/step_168.md`. mayapy 측정
   `research/maya/re/modify_168.md`. Smooth Mesh Preview to Polygons = 킷 preview modifier 만 적용 (`allset.smooth_to_polygons`,
   skinCluster1 유지, 면 × 4^level), Default Object Manipulator 5 + Show Manipulator Tool, Align Tool (팝업), Position Along

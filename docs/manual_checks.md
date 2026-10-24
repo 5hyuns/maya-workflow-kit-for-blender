@@ -1116,3 +1116,10 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Modify > Evaluate Nodes: untick Constraints — a constrained cube stops following its target; tick it again — it follows. Ignore All / Evaluate All tick and untick every item.
 - [ ] Modify > Align Tool with two cubes: the popup's X Min lines the first cube's left side up with the last selected one.
 - [ ] Modify > Convert > Geometry to Bounding Box ❒ (hold): the Maya option window; Keep original keeps the mesh, Convert replaces it with a grey box.
+
+## Step 169 — Deform completion
+
+- [ ] Select a plane, then a curve, Deform > Wire: moving / bending the curve (edit its CVs) pulls the plane within the dropoff; twisting the curve object does nothing (Maya).
+- [ ] Deform > Wire > Wire Dropoff Locator with a CV of the wire selected: a locator appears on the wire; a Percent 2 widens the pull there.
+- [ ] Deform > Wire > Reset puts the curve back; Show Base Wire shows curve1BaseWire; Remove leaves the curve and restores the plane.
+- [ ] Deform > Paint Weights > Wire ❒ (hold): Paint Attributes Tool window; Paint starts Weight Paint on wire1 with the values.
