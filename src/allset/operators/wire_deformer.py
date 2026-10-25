@@ -195,14 +195,16 @@ def ident(md, name):
 
 
 def get(md, name):
+    from .. import compat
     key = ident(md, name)
-    return md[key] if key is not None and key in md else None
+    return compat.gn_input_get(md, key) if key is not None else None
 
 
 def set_(md, name, value):
+    from .. import compat
     key = ident(md, name)
     if key is not None:
-        md[key] = value
+        compat.gn_input_set(md, key, value)      # 5.2 moved the inputs off the modifier's ID properties
         md.id_data.update_tag()
 
 
@@ -254,8 +256,8 @@ def add_wire(context, ob, curve, name, group_name, dropoff, envelope=1.0, rotati
     set_(md, "Rotation", float(rotation))
     key = ident(md, "Weight")
     if group_name:
-        md[f"{key}_use_attribute"] = True
-        md[f"{key}_attribute_name"] = group_name
+        from .. import compat
+        compat.gn_input_attribute(md, key, group_name)
     names = [n for n in curve.get(WIRE_PROP, "").split(",") if n]
     curve[WIRE_PROP] = ",".join(names + [name])
     return md
