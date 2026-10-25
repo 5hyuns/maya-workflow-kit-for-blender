@@ -94,6 +94,8 @@ from . import constrain_199, skin_tools_199  # noqa: E402  step 199: Skin and Co
 classes += skin_tools_199.classes + constrain_199.classes
 from . import graph_curves_203  # noqa: E402  step 203: Graph Editor curve commands
 classes += graph_curves_203.classes
+from . import anim_layers_204  # noqa: E402  step 204: animation layers 4
+classes += anim_layers_204.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
