@@ -94,6 +94,25 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         items=(('ALWAYS', "Always", "Name every curve"), ('NEVER', "Never", "No curve names"),
                ('ACTIVE', "Active Only", "Name the selected curves")))
 
+    # Graph Editor depth 2 (step 198, research/maya/re/graph_editor_193.md): View > Show Buffer Curves (factory off),
+    # Curves > Default Tangent Weight (factory Non-weighted), Retime Tool Snap On Frame (factory off), Edit > Set Curve
+    # Colors... rules (Maya curveRGBColor: attribute name -> colour; JSON list of [attribute, r, g, b]).
+    graph_show_buffers: bpy.props.BoolProperty(
+        name="Show Buffer Curves",
+        description="Draw each buffered curve's snapshot behind it in the Graph Editor (Maya View > Show Buffer Curves)")
+    default_tangent_weight: bpy.props.EnumProperty(
+        name="Default Tangent Weight", default='NON_WEIGHTED',
+        items=(('NON_WEIGHTED', "Non-weighted Tangents", "New curves the kit keys keep every tangent a third of "
+                "the way to the next key"),
+               ('WEIGHTED', "Weighted Tangents", "New curves the kit keys have tangents whose length can change")),
+        description="Tangent weight of the curves the kit creates (Maya Curves > Default Tangent Weight)")
+    retime_snap_on_frame: bpy.props.BoolProperty(
+        name="Snap On Frame",
+        description="Retime markers and their drags land on whole frames (Maya Retime Tool setting)")
+    curve_color_rules: bpy.props.StringProperty(
+        name="Curve Colors", default="",
+        description="Colour rules by attribute name (Maya Edit > Set Curve Colors...)")
+
     # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (Maya optionVars, factory off;
     # generateChannelMenu.mel:43-85, ui/cb_channels.py, step 158).
     cb_sync_graph: bpy.props.BoolProperty(
