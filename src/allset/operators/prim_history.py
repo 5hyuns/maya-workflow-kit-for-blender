@@ -153,10 +153,8 @@ def _next_name(node_type):
         for idb in coll:
             if idb.users and KEY in idb:
                 taken.add(idb[KEY].get("name", ""))
-    n = 1
-    while f"{node_type}{n}" in taken:
-        n += 1
-    return f"{node_type}{n}"
+    from . import naming
+    return f"{node_type}{naming.next_number(node_type, taken)}"   # Maya: one past the highest (step 208)
 
 
 def drop(ob):

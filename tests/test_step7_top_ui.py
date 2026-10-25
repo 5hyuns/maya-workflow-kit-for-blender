@@ -590,10 +590,10 @@ def test_cmds_select_ls_scene():
     cmds.select(cl=True)
     assert cmds.ls(sl=True) == []
     assert sorted(cmds.ls(type="mesh")) == ["pCubeShape1", "pCubeShape2"]
-    assert sorted(cmds.ls()) == [a, b]
-    assert cmds.listRelatives(a) is None
+    assert sorted(cmds.ls()) == [a, b, "pCubeShape1", "pCubeShape2"]   # Maya ls lists shapes too (step 208)
+    assert cmds.listRelatives(a) == ["pCubeShape1"], "Maya: the shape is a child"
     bpy.data.objects[b].parent = bpy.data.objects[a]
-    assert cmds.listRelatives(a, c=True) == [b] and cmds.listRelatives(b, p=True) == [a]
+    assert cmds.listRelatives(a, c=True) == ["pCubeShape1", b] and cmds.listRelatives(b, p=True) == [a]
     assert cmds.listRelatives(a, s=True) == ["pCubeShape1"]
     assert cmds.ls(b, long=True) == [f"|{a}|{b}"]
     assert cmds.rename(b, "child") == "child" and cmds.objExists("child")

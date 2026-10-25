@@ -25,9 +25,13 @@ def base_name(name):
 
 
 def next_number(base, taken, shape_taken=(), shape_base=None):
-    """Lowest N >= 1 with ``base+N`` not in ``taken`` and ``shape_base+N`` not in ``shape_taken``."""
+    """Maya's ``<base>#`` number: one more than the highest N of a taken name that starts with ``base`` + digits, then
+    up past any ``shape_base+N`` already taken. Maya doesn't fill gaps (step 208, Maya: pCube2 / pCube3 left ->
+    pCube4; pCube10 -> pCube11; pCube1x -> pCube2; a renamed shape pCubeShape6 doesn't count,
+    )."""
     shape_base = shape_base or f"{base}Shape"
-    n = 1
+    pattern = re.compile(re.escape(base) + r"(\d+)")
+    n = 1 + max((int(m.group(1)) for name in taken if (m := pattern.match(name))), default=0)
     while f"{base}{n}" in taken or f"{shape_base}{n}" in shape_taken:
         n += 1
     return n

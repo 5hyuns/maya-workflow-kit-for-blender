@@ -126,11 +126,14 @@ class ALLSET_OT_script_run(bpy.types.Operator):
         code = part or text.as_string()
         if not code.strip():
             return {'CANCELLED'}
+        name, loads = text.name, _carry["loads"]
         echo, res = run_text(text, code)
         self.report({'INFO'}, echo.rstrip())
         if res.text:
             self.report({'ERROR'} if res.error else {'INFO'}, res.text)
-        if self.clear and not part and not res.error:
+        if _carry["loads"] != loads:      # the script loaded a file (cmds.file): the old Text is gone, use its copy
+            text = bpy.data.texts.get(name)
+        if self.clear and not part and not res.error and text is not None:
             text.clear()
         return {'FINISHED'}
 
@@ -234,6 +237,45 @@ def _text_header(self, context):
     layout.operator(ALLSET_OT_script_run.bl_idname, text="Execute", icon='PLAY').clear = True
 
 
+# --- the tabs survive File > New / Open (Maya keeps the Script Editor's input; step 208, ``cmds.file``) ----------
+
+_carry = {"texts": [], "shown": {}, "loads": 0}
+
+
+@bpy.app.handlers.persistent
+def _load_pre(*_args):
+    _carry["texts"] = [(t.name, t[LANG_PROP], t.as_string()) for t in script_texts()]
+    shown = {}
+    for wm in bpy.data.window_managers:
+        for window in wm.windows:
+            if window.as_pointer() in _WINDOWS:
+                _info, area = areas(window)
+                text = area.spaces.active.text if area is not None else None
+                shown[window.as_pointer()] = text.name if text is not None else None
+    _carry["shown"] = shown
+
+
+@bpy.app.handlers.persistent
+def _load_post(*_args):
+    _carry["loads"] += 1
+    made = {}
+    for name, lang, body in _carry["texts"]:
+        t = bpy.data.texts.get(name)
+        if t is None or t.get(LANG_PROP) != lang:
+            t = bpy.data.texts.new(name)
+            t[LANG_PROP] = lang
+            t.write(body)
+        made[name] = t
+    for wm in bpy.data.window_managers:
+        for window in wm.windows:
+            name = _carry["shown"].get(window.as_pointer())
+            if name in made:
+                _info, area = areas(window)
+                if area is not None:
+                    area.spaces.active.text = made[name]
+    _carry["texts"], _carry["shown"] = [], {}
+
+
 _orig = {}
 HEADERS = (("info", "INFO_HT_header", _info_header), ("text", "TEXT_HT_header", _text_header))
 
@@ -247,9 +289,14 @@ def register():
         funcs = getattr(bpy.types, name)._dyn_ui_initialize()
         _orig[key] = funcs[0]
         funcs[0] = fn
+    bpy.app.handlers.load_pre.append(_load_pre)
+    bpy.app.handlers.load_post.append(_load_post)
 
 
 def unregister():
+    for handlers, fn in ((bpy.app.handlers.load_pre, _load_pre), (bpy.app.handlers.load_post, _load_post)):
+        if fn in handlers:
+            handlers.remove(fn)
     for key, name, _fn in HEADERS:
         if key in _orig:
             getattr(bpy.types, name)._dyn_ui_initialize()[0] = _orig.pop(key)
