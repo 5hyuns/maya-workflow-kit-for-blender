@@ -1221,3 +1221,7 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 - [ ] Edit mode on a Maya cube (Edge mode), select two edges with a real mouse: thin light-blue wire, the selected edges crisp orange (no cyan band around them); Display > hard edges no longer teal in the Maya layout views; turn the kit's Maya component colours off in the preferences = Blender's sharp-edge colour comes back.
 - [ ] Move tool (W) on an object: three plane squares (rim + translucent fill) a little larger and farther out than before, the centre square pale yellow; drag the X arrow = X yellow, centre light blue; Scale (R) the same with the centre cube. Hover = bright yellow.
+
+## Step 186
+
+- [ ] Maya layout Time Slider: small grey labels with a tick under each (1-120 = every 5 frames), the current frame's cell lit with its white number (Blender's blue current-frame box still sits on top); widen / narrow the window and change the range (1-24, 1-1000): the step changes like Maya's; Alt+T bookmark = red bar in a strip on top; keys = red lines on the ticks.

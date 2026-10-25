@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 186 (Time Slider ticks and playhead, backlog_183.json #4) 완료 — `docs/steps/step_186.md`, Maya 측정
+  `research/maya/re/time_slider_186.md` (GUI Maya 43 경우 + 북마크 · 키). Maya 레이아웃 Time Slider 를 kit 이 Maya 자로 그림
+  (`ui/time_slider._draw_ruler`: 배경, step 눈금 + 회색 라벨, 흰 25 % 현재 칸 + 번호, 북마크 띠, 키 = 눈금 자리). Blender 의 파란 현재
+  프레임 상자는 C overlay 라 못 숨김 (기록). step 규칙 32 / 43 일치 [U]. 헤드리스 1696 / 1696, GUI step56 · 73 17 / 17.
+  **바로 다음 할 일**: 187 Character Sets on Keying Sets (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  5 번째).
+
 - Step 185 (Selected edges and manipulator look, backlog_183.json #3) 완료 — `docs/steps/step_185.md`. 「두꺼운 하늘색」 = Blender 의
   sharp 엣지 색 3 px (kit 큐브는 모든 엣지 sharp) → Maya 레이아웃 뷰에서 `show_edge_sharp` 도 끔, 와이어 1.5 px · bias 0.002, 선택 엣지
   2 px · bias 0.003; manipulator 평면 0.52–0.68 (Maya 02 측정) 테두리 + 채움, 활성 / 가운데 #fdff88 (축 활성 때 가운데 #64dcff).

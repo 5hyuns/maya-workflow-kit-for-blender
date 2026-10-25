@@ -83,7 +83,9 @@ def s_wait():
 @step
 def s_ticks():
     _area, r, _h = timeline()
-    C["tick_x"] = {f: r.x + int(r.view2d.view_to_region(f, 0, clip=False)[0]) for f in (12, 20)}
+    # step 186: in the Maya layout a key tick sits on the frame's Maya tick, the left edge of its cell
+    ts = import_module(MODULE + ".ui.time_slider")
+    C["tick_x"] = {f: r.x + int(ts.key_x(r, f, True)) for f in (12, 20)}
     C["tick_y"] = r.y + r.height // 2
     redraw()
 

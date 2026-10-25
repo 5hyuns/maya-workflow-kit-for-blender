@@ -124,7 +124,8 @@ KIT_POINTS = {
 # colours (marking menus / hotbox: marking/draw.py, Range Slider: ui/range_bar.py) or set by the Maya layout file
 # (viewport background). Shelf strip colours are derived from the theme's Image Editor header (ui/shelf.py): theme.
 KIT_DRAWN = frozenset({"viewport_bg", "range_slider_bar", "range_slider_handle", "marking_menu_box",
-                       "marking_menu_list_bg", "hotbox_row_bg"})
+                       "marking_menu_list_bg", "hotbox_row_bg",
+                       "time_slider_bg"})   # step 186: the Maya ruler in the Maya layout's Time Slider
 
 
 def source(name):
