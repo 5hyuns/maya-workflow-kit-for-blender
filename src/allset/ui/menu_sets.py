@@ -18,7 +18,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
 from .. import compat, undo_steps
-from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices
+from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices, option_click
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -249,7 +249,7 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
 # (``operators/option_windows.py``) or the command's own settings. Since step 146 (#82) the hold needs no drag:
 # the pointer is put on the hold menu's "Option Box" row, so letting go runs it.
 BOX_MARK = "  ❒"
-BOX_TIP = "❒ Option box: press and hold the item, then let go (or Shift / Ctrl+click)"
+BOX_TIP = "❒ Option box: click the box, or press and hold the item (or Shift / Ctrl+click)"
 
 
 def _draw_boxed(layout, path, text, icon_value=0):
@@ -462,6 +462,8 @@ def _menu_class(idname, label, prefix, items, submenus, top_label=None):
         layout = self.layout
         from . import maya_dock
         maya_dock.draw_tear_line(layout, idname)    # Maya's dotted tear-off line (step 116)
+        if top_label:
+            option_click.note_draw(context, top_label)    # opened from the Maya menu bar? (step 183)
         _draw_items(layout, items, prefix, submenus)
         if blender:
             layout.separator()
@@ -527,6 +529,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
             return {'FINISHED'}
         if self.item in OPTION_BOXES and modifier_held():      # Shift / Ctrl+click = the option box (step 146)
             return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)
+        if self.clicked and self.item in OPTION_BOXES and option_click.on_box(context, self.item):
+            return bpy.ops.allset.menu_option_box('INVOKE_DEFAULT', item=self.item)    # a click on ❒ (step 183)
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
             return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
@@ -1055,7 +1059,7 @@ for _editor, _menus in editor_menu_data.EDITORS.items():
 classes = (ALLSET_OT_menu_unavailable, ALLSET_OT_menu_set_value, ALLSET_OT_menu_item, ALLSET_OT_menu_whole_mesh,
            ALLSET_OT_component_command, ALLSET_MT_option_box, ALLSET_OT_option_box_point,
            ALLSET_OT_menu_option_box, ALLSET_OT_menu_run, ALLSET_OT_menu_tool,
-           ALLSET_MT_ui_elements, ALLSET_MT_menu_bar, *_menu_classes)
+           ALLSET_MT_ui_elements, ALLSET_MT_menu_bar, *option_click.classes, *_menu_classes)
 
 
 def register():
