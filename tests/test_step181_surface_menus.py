@@ -147,6 +147,8 @@ def test_windows_bound_with_maya_titles_and_factory_values():
             props = getattr(bpy.ops.allset, op).get_rna_type().properties
             for k, v in kw.items():
                 assert k in props, (op, k)
+                if k == "kind":         # Boundary / Square share allset.surface_boundary: the window picks the kind
+                    continue
                 d = props[k]
                 default = tuple(d.default_array) if getattr(d, "is_array", False) else d.default
                 assert default == v or (isinstance(v, float) and abs(default - v) < 1e-6), (op, k, default, v)
