@@ -436,21 +436,16 @@ CATEGORIES = {
 
 def _anim_editor_categories(ed):
     """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104, menus captured in Maya 2022)."""
-    return {
+    m = {
         f"{ed}/Edit/Transformation Tools": (
             "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice or "
             "region key tool (the Retime Tool is the kit's)."),
-        f"{ed}/Edit/Select Curve Nodes": (
-            "F-curves", "Blender's curves are F-curves inside an Action, not scene nodes you can select."),
         f"{ed}/Edit/Scene Time Warp": (
             "Time Stretching", "Blender has no time warp curve: Output Properties > Frame Range > Time Stretching "
             "remaps the whole scene."),
         f"{ed}/Curves": (
             "Graph Editor Key / Channel menus", "Blender has no such curve command: its curve tools are in the Graph "
             "Editor's Key and Channel menus (Smooth, Decimate, Clean, Bake, Euler Filter)."),
-        f"{ed}/Curves/Change Rotation Interp": (
-            "Rotation Mode", "Blender interpolates each rotation channel on its own; Euler / Quaternion is the "
-            "object's Rotation Mode (sidebar Item tab)."),
         f"{ed}/Curves/Spreadsheet...": (
             "Sidebar F-Curve tab", "Blender edits key values in the sidebar (F-Curve > Active Keyframe), not in a "
             "spreadsheet."),
@@ -463,6 +458,10 @@ def _anim_editor_categories(ed):
         f"{ed}/Help/What's New/Highlight What's New": (
             "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
     }
+    if ed != "Graph Editor":
+        # step 203: the Dope Sheet's last greyed curve filters (Key Sync / Peak Removal) are mapped
+        m.pop(f"{ed}/Curves", None)
+    return m
 
 
 CATEGORIES.update({
@@ -476,9 +475,6 @@ CATEGORIES.update({
         "brighter once selected."),
     "Dope Sheet/View": (
         "View menu", "Blender's Dope Sheet always draws its ticks and has no scene summary or auto frame."),
-    "Dope Sheet/Curves": (
-        "Graph Editor", "This curve filter is in Blender's Graph Editor only (Windows > Animation Editors > Graph "
-        "Editor)."),
     "UV Editor/Edit/Reset UV Editor UI": (
         "Load Factory Settings", "Blender resets editors with File > Defaults > Load Factory Settings."),
     "UV Editor/Select": (

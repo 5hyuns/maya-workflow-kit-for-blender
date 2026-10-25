@@ -1,7 +1,7 @@
 """Step 203 lane B (#110): Graph Editor / Dope Sheet List > Load / Add Selected Objects with Auto Load, Curves > Pin /
 Unpin Channel, Show > Attributes filters (Hidden, Driven by Anim Curve / Expression / Driven Key, User Defined),
 Show > Objects > IkHandles / Sets / Characters, List > Show Upstream Curves / Hierarchy Below (ui/editor_chrome.py).
-Maya behaviour from its documentation  (the lane M checked confirms it later)."""
+Maya behaviour checked in Maya 2022: -5."""
 
 import types
 from importlib import import_module
@@ -32,7 +32,7 @@ def _clear():
     chrome._kit_hidden.clear()
     wm = bpy.context.window_manager
     for name, _label, _tip in chrome.FLAGS:
-        setattr(wm, name, False)
+        setattr(wm, name, name in chrome.FLAGS_ON)       # Maya factory state
     wm.allset_show_characters = False
 
 
@@ -99,16 +99,34 @@ def test_add_selected_adds_to_the_list():
     assert _names(sp) == ["pCube3"]
 
 
-def test_add_without_a_list_starts_from_what_is_shown():
+def test_auto_load_off_freezes_the_list_and_add_appends():
+    # Maya: unchecking Auto Load freezes the list shown (selecting others no longer changes it); Add appends
     _clear()
     a, b = _cube("pCube1"), _cube("pCube2")
     sp = _space()
     _select(a)
-    chrome.load_selected(bpy.context, sp, add=True)
-    assert _names(sp) == ["pCube1"]
+    chrome.set_auto_load(bpy.context, sp, False)
+    assert not chrome.auto_load(sp) and _names(sp) == ["pCube1"]
     _select(b)
+    assert _names(sp) == ["pCube1"]
     chrome.load_selected(bpy.context, sp, add=True)
+    assert _names(sp) == ["pCube1", "pCube2"] and not chrome.auto_load(sp)
+    chrome.set_auto_load(bpy.context, sp, False)          # already off: nothing changes
     assert _names(sp) == ["pCube1", "pCube2"]
+
+
+def test_load_and_add_greyed_while_auto_load_is_on():
+    # Maya: Load / Add Selected Objects are disabled while Auto Load Selected Objects is checked (factory)
+    _clear()
+    a = _cube("pCube1")
+    sp = _space()
+    _select(a)
+    op = bpy.types.ALLSET_OT_graph_list
+    ctx = types.SimpleNamespace(space_data=sp)
+    assert chrome.auto_load(sp) and not op.poll(ctx)
+    chrome.set_auto_load(bpy.context, sp, False)
+    assert op.poll(ctx)
+    assert bpy.context.window_manager.bl_rna.properties["allset_show_upstream"].default
 
 
 def test_load_with_nothing_selected_empties_the_list():
@@ -132,8 +150,8 @@ def test_auto_load_on_drops_the_loaded_list():
     # Blender's own filter again: Only Show Selected, no collection filter, kit list removed
     assert sp.dopesheet.show_only_selected and sp.dopesheet.filter_collection is None
     assert not [c for c in bpy.data.collections if c.get(chrome.LIST_MARK)]
-    chrome.set_auto_load(bpy.context, sp, False)
-    assert not chrome.auto_load(sp) and _names(sp) == ["pCube1", "pCube2"]
+    chrome.set_auto_load(bpy.context, sp, False)        # freezes the selection (Maya's locked copy)
+    assert not chrome.auto_load(sp) and _names(sp) == ["pCube2"]
 
 
 def test_loaded_joints_only():
@@ -167,9 +185,10 @@ def test_pinned_channel_stays_when_the_selection_changes():
     a, b = _cube("pCube1"), _cube("pCube2")
     sp = _space()
     _select(a)
-    for fc in chrome.listed_curves(bpy.context, sp):
-        fc.select = fc.array_index == 0
-        fc.hide = False
+    # nothing picked: the selected node's row is highlighted = all its channels (Maya, a node row)
+    assert [(n.name, fc.array_index) for n, fc in chrome._target_rows(bpy.context, sp)] == [("pCube1", 0),
+                                                                                             ("pCube1", 1)]
+    _pick(("pCube1", "location", 0))                       # the Translate X row highlighted
     targets = chrome._target_rows(bpy.context, sp)
     assert [(n.name, fc.array_index) for n, fc in targets] == [("pCube1", 0)]
     chrome._pinned.update((chrome.node_key(n), fc.data_path, fc.array_index) for n, fc in targets)
@@ -193,6 +212,23 @@ def test_pinned_channel_stays_when_the_selection_changes():
     assert sp.dopesheet.show_only_selected and sp.dopesheet.filter_collection is None
     assert not ty.hide and not chrome._kit_hidden
     assert _names(sp) == ["pCube2"]
+
+
+def _pick(*ids):
+    chrome._picked["ids"], chrome._picked["sig"] = set(ids), chrome.selection_sig(bpy.context)
+
+
+def test_pin_with_nothing_highlighted_pins_nothing():
+    # Maya (b15): nothing highlighted -> nothing pinned, "no channels selected"
+    _clear()
+    a = _cube("pCube1")
+    sp = _space()
+    _select(a)
+    chrome.set_auto_load(bpy.context, sp, False)          # pCube1 stays listed ...
+    _select()                                             # ... but is no longer selected: no highlight
+    assert _names(sp) == ["pCube1"] and chrome._target_rows(bpy.context, sp) == []
+    _pick("pCube1")                                       # its node row picked: all its channels
+    assert len(chrome._target_rows(bpy.context, sp)) == 2
 
 
 def test_picks_never_hide_a_pinned_curve():
@@ -247,9 +283,10 @@ def test_attribute_filters():
     _attr_rig()
     sp = _space()
     wm = bpy.context.window_manager
-    assert _attr_labels(sp) == ["Translate X", "Translate Y", "speed"], _attr_labels(sp)
+    # Maya: unfiltered = keyed and driven channels (expression Translate Z, driven key Scale X)
+    assert _attr_labels(sp) == ["Translate X", "Translate Y", "Translate Z", "Scale X", "speed"], _attr_labels(sp)
     cases = (("allset_attr_hidden", ["Translate Y"]),
-             ("allset_attr_anim_curve", ["Translate X", "Translate Y", "speed"]),
+             ("allset_attr_anim_curve", ["Translate X", "Translate Y", "Scale X", "speed"]),
              ("allset_attr_expression", ["Translate Z"]),
              ("allset_attr_driven_key", ["Scale X"]),
              ("allset_attr_user_defined", ["speed"]))
@@ -263,6 +300,18 @@ def test_attribute_filters():
     wm.allset_attr_user_defined = True
     assert _attr_labels(sp) == ["Translate Y", "speed"]          # checked filters add up
     wm.allset_attr_hidden = wm.allset_attr_user_defined = False
+
+
+def test_character_member_is_not_driven_by_anim_curve():
+    # Maya: a character member's curve feeds the character node first -> not "Driven by Anim Curve"
+    _clear()
+    a = _cube("pCube1")
+    ks = bpy.context.scene.keying_sets.new(idname="character1", name="character1")
+    ks.paths.add(a, "location", index=1)
+    sp = _space()
+    _select(a)
+    bpy.context.window_manager.allset_attr_anim_curve = True
+    assert _attr_labels(sp) == ["Translate X"], _attr_labels(sp)
 
 
 def test_attribute_filter_hides_unlisted_curves_and_clear_shows_them():
@@ -310,14 +359,19 @@ def test_sets_are_listed_as_nodes():
     sets = import_module(kit.MODULE + ".operators.sets")
     a, b = _cube("pCube1"), _cube("pCube2")
     sets.create("set1", [b])
+    ks = bpy.context.scene.keying_sets.new(idname="character1", name="character1")
+    ks.paths.add(a, "location", index=0)
     sp = _space()
     _select(a)
     bpy.context.window_manager.allset_show_sets = True
-    nodes = [(k, chrome.node_name(n)) for k, n, _c in chrome.listed_nodes(bpy.context, sp)]
-    assert nodes == [("SET", "set1"), ("OBJECT", "pCube1")], nodes
-    assert set(chrome.drawn_objects(bpy.context, sp)) == {a, b}
-    ds_space = _space('DOPESHEET_EDITOR')                 # the Dope Sheet draws the members (Blender's list)
-    assert set(chrome.drawn_objects(bpy.context, ds_space)) == {a, b}
+    # Maya: Sets lists only set nodes, a character is a set; a set row has no channels
+    nodes = [(k, chrome.node_name(n), len(c)) for k, n, c in chrome.listed_nodes(bpy.context, sp)]
+    assert nodes == [("CHARACTER", "character1", 1), ("SET", "set1", 0)], nodes
+    assert chrome.drawn_objects(bpy.context, sp) == [a]          # the character's member
+    assert [k for k, _n, _f in chrome.rows(bpy.context, sp)] == ["CHARACTER", "ATTR", "SET"]
+    ds_space = _space('DOPESHEET_EDITOR')
+    assert chrome.drawn_objects(bpy.context, ds_space) == [a]
+    _ = b
 
 
 def test_dope_sheet_characters_draw_members():
@@ -328,27 +382,78 @@ def test_dope_sheet_characters_draw_members():
     sp = _space('DOPESHEET_EDITOR')
     _select(a)
     assert chrome.drawn_objects(bpy.context, sp) == [a]
-    bpy.context.window_manager.allset_show_characters = True
-    assert set(chrome.drawn_objects(bpy.context, sp)) == {a, b}
+    bpy.context.window_manager.allset_show_characters = True      # Maya: only the character's channels
+    assert chrome.drawn_objects(bpy.context, sp) == [b]
     chrome.sync_space(bpy.context, sp)
-    assert set(sp.dopesheet.filter_collection.objects) == {a, b}
+    assert list(sp.dopesheet.filter_collection.objects) == [b]
 
 
-def test_hierarchy_below_and_upstream():
+def test_hierarchy_below():
+    # Maya: descendants' keys show in the object's rows; Blender's Dope Sheet can't merge them, the kit lists
+    # the descendants (delegated). Graph Editor: no effect.
     _clear()
-    a, child, target = _cube("pCube1"), _cube("pCube2"), _cube("pCube3")
+    a, child = _cube("pCube1"), _cube("pCube2")
     child.parent = a
-    con = a.constraints.new('COPY_LOCATION')
-    con.target = target
     _select(a)
     wm = bpy.context.window_manager
     ds_space, ge_space = _space('DOPESHEET_EDITOR'), _space()
+    assert not wm.allset_hierarchy_below                  # Maya factory off
     wm.allset_hierarchy_below = True
     assert _names(ds_space) == ["pCube1", "pCube2"] and _names(ge_space) == ["pCube1"]
-    wm.allset_hierarchy_below = False
-    wm.allset_show_upstream = True
-    assert _names(ge_space) == ["pCube1", "pCube3"] and _names(ds_space) == ["pCube1"]
+
+
+def _sdk_rig():
+    _clear()
+    cube = _cube("pCube1", keys=())
+    cube["userA"] = 0.0
+    cube.keyframe_insert('["userA"]', frame=1)
+    cube.keyframe_insert("location", index=0, frame=1)
+    sphere = _cube("pSphere1", keys=())
+    sphere.keyframe_insert("location", index=1, frame=1)
+    fc = sphere.driver_add("scale", 0)                    # kit SDK driver: variable "sdk" reading pCube1.userA
+    fc.driver.type = 'AVERAGE'
+    v = fc.driver.variables.new()
+    v.name = "sdk"
+    v.type = 'SINGLE_PROP'
+    v.targets[0].id = cube
+    v.targets[0].data_path = '["userA"]'
+    _select(sphere)
+    return cube, sphere
+
+
+def test_show_upstream_curves():
+    # Maya (grab 40): on (factory) = under the driven-key channel "> pCube1.User A" (the SDK curve) and
+    # "pCube1.User A" (the driver's own curve); off = only the channel's own rows
+    cube, sphere = _sdk_rig()
+    sp = _space()
+    wm = bpy.context.window_manager
+    assert wm.allset_show_upstream
+    rows = chrome.rows(bpy.context, sp)
+    got = [(k, chrome._up_label.get((k, fc.as_pointer())) if k.startswith("UP") else
+            (n.name if k != "ATTR" else chrome.attr_label(fc))) for k, n, fc in rows]
+    assert got == [("OBJECT", "pSphere1"), ("ATTR", "Translate Y"), ("ATTR", "Scale X"),
+                   ("UP_SDK", "> pCube1.userA"), ("UP_CURVE", "pCube1.userA")], got
+    up_curve = rows[-1][2]
+    assert up_curve.data_path == '["userA"]'
+    # Blender has to draw pCube1's userA curve, but not its Translate X
+    assert set(chrome.drawn_objects(bpy.context, sp)) == {cube, sphere}
+    assert up_curve in chrome.listed_curves(bpy.context, sp)
+    chrome.sync_space(bpy.context, sp)                    # a kit list: pSphere1 + pCube1, Auto Load kept on
+    assert set(sp.dopesheet.filter_collection.objects) == {cube, sphere} and chrome.auto_load(sp)
+    chrome.sync_hidden(bpy.context, [sp])
+    tx = next(fc for fc in chrome.object_curves(cube) if fc.data_path == "location")
+    assert tx.hide and not up_curve.hide
+    # Driven by Anim Curve hides the upstream rows, Driven by Driven Key keeps them
+    wm.allset_attr_anim_curve = True
+    assert not [r for r in chrome.rows(bpy.context, sp) if r[0].startswith("UP")]
+    wm.allset_attr_anim_curve = False
+    wm.allset_attr_driven_key = True
+    assert [r[0] for r in chrome.rows(bpy.context, sp)] == ["OBJECT", "ATTR", "UP_SDK", "UP_CURVE"]
+    wm.allset_attr_driven_key = False
     wm.allset_show_upstream = False
+    assert [r[0] for r in chrome.rows(bpy.context, sp)] == ["OBJECT", "ATTR", "ATTR"]
+    assert chrome.drawn_objects(bpy.context, sp) == [sphere]
+    wm.allset_show_upstream = True
 
 
 # --- menus, notices, unregister ----------------------------------------------------------------------------------
