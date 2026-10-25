@@ -387,9 +387,8 @@ CATEGORIES = {
     # common menus
     "Create": ("Add menu (Shift+A)", "Blender doesn't have this built in; Add (Shift+A) and the Extra Objects "
                "extension have the closest shapes."),
-    "Create/Polygon Primitives": ("Extra Objects extension", "Blender has no pipe, helix, gear, soccer ball or "
-                                  "super ellipse built in (the Extra Objects extension has them); creation is "
-                                  "never interactive."),
+    "Create/Polygon Primitives": ("Create at the origin", "The kit creates primitives at the origin at once; "
+                                  "Blender has no interactive (drag to size) creation."),
     "Create/NURBS Primitives": ("Add > Surface", "Blender's NURBS primitives are in Add > Surface (no cube, cone or "
                                 "square); objects are created at once, never interactively."),
     "Create/Subdiv Primitives": ("Subdivision Surface modifier", "Blender has no subdiv surface type: a polygon "
@@ -965,9 +964,6 @@ MARKING = {
     "contextPolyToolsFaceMM/Assign Invisible Faces": (
         "Delete faces / Hide", "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them "
         "(Display > Hide)."),
-    **{f"contextPolyToolsDefaultMM/{label}": (
-        "Extra Objects add-on", f"Blender has no {label.lower()} primitive by default: the free Extra Objects "
-        "extension adds one (Preferences > Get Extensions).") for label in ("Pipe", "Helix", "Gear")},
     "translateMarkingMenuImpl/Snap/Face Center": (
         "Snap to Face", "Blender snaps to faces (Face Project / Face Nearest), not to their centres."),
     "translateMarkingMenuImpl/Keep Spacing": (

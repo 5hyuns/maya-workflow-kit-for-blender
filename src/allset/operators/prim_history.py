@@ -28,11 +28,17 @@ KIND_NODES = {
     'CONE': ("polyCone", "pCone"), 'TORUS': ("polyTorus", "pTorus"), 'PLANE': ("polyPlane", "pPlane"),
     'DISC': ("polyDisc", "pDisc"), 'PLATONIC': ("polyPlatonic", "pPlatonic"), 'PYRAMID': ("polyPyramid", "pPyramid"),
     'PRISM': ("polyPrism", "pPrism"),
+    # step 190 ()
+    'PIPE': ("polyPipe", "pPipe"), 'HELIX': ("polyHelix", "pHelix"), 'GEAR': ("polyGear", "pGear"),
+    'SOCCER_BALL': ("polyPrimitiveMisc", "pSolid"), 'SUPER_ELLIPSE': ("polySuperShape", "pSuperShape"),
+    'SPHERICAL_HARMONICS': ("polySuperShape", "pSuperShape"), 'ULTRA_SHAPE': ("polySuperShape", "pSuperShape"),
     'NURBS_SPHERE': ("makeNurbSphere", "nurbsSphere"), 'NURBS_CYLINDER': ("makeNurbCylinder", "nurbsCylinder"),
     'NURBS_CONE': ("makeNurbCone", "nurbsCone"), 'NURBS_PLANE': ("makeNurbPlane", "nurbsPlane"),
     'NURBS_TORUS': ("makeNurbTorus", "nurbsTorus"), 'NURBS_CIRCLE': ("makeNurbCircle", "nurbsCircle"),
     'NURBS_SQUARE': ("makeNurbsSquare", "nurbsSquare"), 'NURBS_CUBE': ("makeNurbCube", "nurbsCube"),
 }
+# Create menu items that share a node type but start from other values (polySuperShape -shape, step 190)
+KIND_VALUES = {'SUPER_ELLIPSE': {"shape": 0}, 'SPHERICAL_HARMONICS': {"shape": 1}, 'ULTRA_SHAPE': {"shape": 2}}
 GROUPS = {"makeNurbsSquare", "makeNurbCube"}
 SURFACES = {"makeNurbSphere", "makeNurbCylinder", "makeNurbCone", "makeNurbPlane", "makeNurbTorus", "makeNurbCube"}
 
@@ -324,7 +330,7 @@ def create_object(context, kind, values=None, maya_naming=True, create_uvs=True)
         from .create import KINDS
         base = KINDS[kind][0].replace(" ", "")
     vals = prim_shapes.defaults(node_type)
-    for name, v in (values or {}).items():
+    for name, v in {**KIND_VALUES.get(kind, {}), **(values or {})}.items():
         if name in vals:
             vals[name] = prim_shapes.clamp(node_type, name, v)
     k = units.maya_unit(context.scene)

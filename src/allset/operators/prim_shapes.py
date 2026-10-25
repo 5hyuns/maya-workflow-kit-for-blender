@@ -1051,3 +1051,13 @@ def build(node_type, attrs):
     if node_type in POLY:
         return POLY[node_type](a)
     return NURBS_BUILD[node_type](a)
+
+
+# Step 190: Pipe / Helix / Gear / Soccer Ball (prim_shapes_more) and Super Ellipse / Spherical Harmonics / Ultra Shape
+# (prim_supershape, one polySuperShape node) join the tables; both modules import this one, so they come last
+# ().
+from . import prim_shapes_more, prim_supershape  # noqa: E402
+
+for _mod in (prim_shapes_more, prim_supershape):
+    NODES.update(_mod.NODES)
+    POLY.update(_mod.POLY)

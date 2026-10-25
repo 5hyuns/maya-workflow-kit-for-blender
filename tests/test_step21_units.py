@@ -128,7 +128,8 @@ def test_every_creation_path_uses_allset_create():
     created = {label: action for label, action in actions(mm.SHIFT_DEFAULT)
                if isinstance(action, tuple) and action and str(action[0]).startswith(("mesh.", "allset.create"))}
     assert set(created) == {"Disc", "Sphere", "Torus", "Cube", "Cone", "Cylinder", "Plane",
-                            "Platonic Solid", "Pyramid", "Prism", "Type"}, created   # Type: step 54
+                            "Platonic Solid", "Pyramid", "Prism", "Pipe", "Helix", "Gear",
+                            "Type"}, created   # Type: step 54; Pipe / Helix / Gear: step 190
     for label, action in created.items():
         assert action[0] == "allset.create" and action[1]["kind"] in create.KINDS, (label, action)
     assert menu_map.MAP["Create/Curve Tools/Bezier Curve Tool"][0] == "allset.create"

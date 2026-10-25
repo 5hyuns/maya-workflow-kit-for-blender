@@ -517,7 +517,7 @@ SHIFT_DEFAULT = MarkingMenu(
         ("Platonic Solid", _create('PLATONIC')),  # :185
         ("Pyramid", _create('PYRAMID')),         # :198
         ("Prism", _create('PRISM')),       # :212
-        ("Pipe", None), ("Helix", None), ("Gear", None),
+        ("Pipe", _create('PIPE')), ("Helix", _create('HELIX')), ("Gear", _create('GEAR')),   # step 190
         DIVIDER,
         ("Type", _create('TEXT')),                                       # :308
         ("Quad Draw Tool", _item("Mesh Tools/Quad Draw")),
