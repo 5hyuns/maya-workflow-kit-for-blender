@@ -14,6 +14,7 @@ Anything else raises AttributeError.
 """
 
 import fnmatch
+import functools
 import math
 import re
 
@@ -851,3 +852,21 @@ from .cmds_dag import (delete, rename, objExists, listRelatives, parent, group, 
                        spaceLocator)
 from .cmds_anim import currentTime, setKeyframe, cutKey, keyframe, playbackOptions  # noqa: E402
 from .cmds_file import file  # noqa: E402,A001
+
+
+def _guarded(fn):
+    """Run a command in the script's window when a ``cmds.file`` load left the context without one."""
+    @functools.wraps(fn)
+    def command(*args, **kwargs):
+        from .cmds_file import script_window
+        win = script_window()
+        if win is None:
+            return fn(*args, **kwargs)
+        with bpy.context.temp_override(window=win, screen=win.screen):
+            return fn(*args, **kwargs)
+    return command
+
+
+for _name in __all__:
+    globals()[_name] = _guarded(globals()[_name])
+del _name

@@ -2,6 +2,24 @@
 
 ## 현재 작업
 
+- Step 208 (maya.cmds look-alike 2, backlog #7, Issue #115) 완료 — `docs/steps/step_208.md`, Maya 측정
+  `research/maya/re/cmds_201.md` (mayapy 23 경우 + 탐침 4). cmds 에 parent / group / duplicate / spaceLocator / setKeyframe /
+  cutKey / keyframe / playbackOptions / file / addAttr 추가, delete / rename / objExists / listRelatives / ls / xform /
+  getAttr / setAttr 확장 (17 → 27 함수, `command_line/cmds_dag.py` · `cmds_anim.py` · `cmds_file.py`). Maya 이름 규칙 = 가장 큰
+  번호 + 1 (빈 번호 안 채움) → `naming.next_number` 전체 (생성 · 그룹 · 관절 · 히스토리 노드). Script Editor 탭이 File New / Open
+  뒤에도 남음. 헤드리스 step208 7 / 7 (mayapy 23 / 23, 차이 7 개는 이유와 함께 기록), 전체 2006 / 2006, GUI 관련 + 스모크
+  90 / 90 (Script Editor GUI 9 / 9). 남은 것: makeIdentity · 제약 · joint · connectAttr 등 다른 cmds.
+  **바로 다음 할 일**: step 209 = backlog #8 「Reference Editor」 (Issue #116) — 감사 15 backlog 마지막.
+
+- **체크포인트 2026-10-26 (/sc:save, 207 후)** — 지금 단계: **207 완료 · 커밋 877c5d7** (Fixes #114, push 안 함). 이번 세션에 206
+  (e58c27d, #113 UV Editor depth 2) · 207 (877c5d7, #114 Curves 3) 커밋. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ ·
+  .impeccable/ 추적 안 함). 숫자: 헤드리스 전체 1998 / 1999 (207 첫 실행, 실패 1 = nHair 쌍둥이 → 고친 뒤 메뉴 규칙 60 / 60),
+  UV Editor 146 / 172, Curves 32 / 36, 메뉴 세트 합 939 / 1486, unique 801.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#114 닫힘; 에이전트 worktree 정리 여부.
+  **바로 다음 할 일**: step 208 = backlog #7 「maya.cmds look-alike 2」 (Issue #115) — `src/allset/command_line/cmds_shim.py` (17 함수)에
+  parent / group / duplicate / setKeyframe / playbackOptions / spaceLocator / file 등, 같은 스크립트 mayapy vs 킷 헤드리스 결과 대조.
+  그다음 209 Reference Editor (#116).
+
 - Step 207 (Curves 3, backlog #6, Issue #114) 완료 — `docs/steps/step_207.md`, Maya 측정 `research/maya/re/curves_201.md`
   (mayapy 116 경우). Curves > Bend / Curl / Scale Curvature (Maya MEL modifySelectedCurves 그대로, Y-up 프레임 + Maya 단위,
   옵션 창 3), Lock / Unlock Length (CV 다리 길이 유지, delegated), CV Hardness, Fit B-spline, Align, Duplicate Surface Curves,
