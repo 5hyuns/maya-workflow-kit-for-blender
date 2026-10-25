@@ -134,7 +134,8 @@ def shape_type(ob):
     if is_locator(ob):
         return "locator"
     if ob.type == 'LIGHT' and ob.data is not None:
-        return _LIGHT_TYPES.get(ob.data.type, "light")
+        kind = ob.data.get("allset_light_kind")     # step 214: Maya Ambient / Volume Light (operators/maya_lights.py)
+        return kind if kind in ("ambientLight", "volumeLight") else _LIGHT_TYPES.get(ob.data.type, "light")
     return _OBJECT_SHAPE.get(ob.type) if ob.data is not None else None
 
 

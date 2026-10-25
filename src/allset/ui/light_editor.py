@@ -24,8 +24,8 @@ CATEGORY = "Light Editor"
 NOTICE = "Light Editor (kit): Blender has no Light Editor, Maya Workflow Kit lists the scene lights. Exposure is part of Intensity."
 ISOLATE_PROP = "allset_light_isolate"
 # Maya Light Editor toolbar order (render_03_win1): create light buttons
-CREATE = (("DIRECTIONAL_LIGHT", 'LIGHT_SUN'), ("POINT_LIGHT", 'LIGHT_POINT'), ("SPOT_LIGHT", 'LIGHT_SPOT'),
-          ("AREA_LIGHT", 'LIGHT_AREA'))
+CREATE = (("AMBIENT_LIGHT", 'WORLD'), ("DIRECTIONAL_LIGHT", 'LIGHT_SUN'), ("POINT_LIGHT", 'LIGHT_POINT'),
+          ("SPOT_LIGHT", 'LIGHT_SPOT'), ("AREA_LIGHT", 'LIGHT_AREA'), ("VOLUME_LIGHT", 'MESH_UVSPHERE'))
 
 _SPACES = set()     # (window pointer, space pointer) of Light Editor windows
 
@@ -204,7 +204,8 @@ def draw_list(layout, context):
     for ob in obs:
         row = col.row(align=True)
         split = row.split(factor=0.45, align=True)
-        icon = 'LIGHT_' + {'POINT': 'POINT', 'SUN': 'SUN', 'SPOT': 'SPOT', 'AREA': 'AREA'}[ob.data.type]
+        icon = {"ambientLight": 'WORLD', "volumeLight": 'MESH_UVSPHERE'}.get(
+            ae_layout.light_kind(ob.data), 'LIGHT_' + {'POINT': 'POINT', 'SUN': 'SUN', 'SPOT': 'SPOT', 'AREA': 'AREA'}[ob.data.type])
         op = split.operator("allset.light_select", text=ob.name, icon=icon, depress=ob.select_get())
         op.light = ob.name
         rest = split.row(align=True)
@@ -223,13 +224,14 @@ def draw_property_editor(layout, context):
         layout.label(text="Select a light")
         return
     head = layout.row(align=True)
-    head.label(text=f"{ae_layout.LIGHT_TYPE.get(ob.data.type, 'light')}:")
+    head.label(text=f"{ae_layout.light_type(ob.data)}:")
     head.prop(ob, "name", text="")
     row = layout.row(align=True)
     row.operator("allset.light_enable", text="Enable", depress=enabled(ob)).light = ob.name
     row.operator("allset.light_isolate", text="Isolate", depress=isolated(context.scene) == ob.name).light = ob.name
-    sections = ae_layout.BY_KIND.get(ob.data.type, ([], None))[0]
-    attribute_editor.draw_sections(layout, context, ob, ob.data, sections, f"le_{ob.data.type.lower()}")
+    sub = ae_layout.light_kind(ob.data) or ob.data.type
+    sections = ae_layout.BY_KIND.get(sub, ([], None))[0]
+    attribute_editor.draw_sections(layout, context, ob, ob.data, sections, f"le_{sub.lower()}")
     attribute_editor.draw_transform_channels(layout.column(), context, ob)
 
 

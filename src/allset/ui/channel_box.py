@@ -244,7 +244,7 @@ def shape_paths(owner, key):
     if isinstance(owner, bpy.types.Light):
         from ..operators import lights
         if name in lights.KEY_PATHS:
-            return list(lights.KEY_PATHS[name])
+            return lights.key_paths(owner, name)
     rna = owner.bl_rna.properties.get(name)
     return [(name, -1)] if rna is not None and rna.is_animatable else []
 

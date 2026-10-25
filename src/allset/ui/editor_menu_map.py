@@ -421,7 +421,7 @@ _HS_MATERIALS = {"Anisotropic": 'ANISOTROPIC', "Blinn": 'BLINN', "Lambert": 'LAM
                  "Phong": 'PHONG', "Phong E": 'PHONG_E', "Ramp Shader": 'RAMP', "Standard Surface": 'STANDARD_SURFACE',
                  "Surface Shader": 'SURFACE', "Use Background": 'USE_BACKGROUND'}
 _HS_LIGHTS = {"Directional Light": 'DIRECTIONAL_LIGHT', "Point Light": 'POINT_LIGHT', "Spot Light": 'SPOT_LIGHT',
-              "Area Light": 'AREA_LIGHT'}
+              "Area Light": 'AREA_LIGHT', "Ambient Light": 'AMBIENT_LIGHT', "Volume Light": 'VOLUME_LIGHT'}
 
 
 def _hs_edit(action):

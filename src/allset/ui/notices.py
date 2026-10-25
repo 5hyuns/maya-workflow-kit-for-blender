@@ -138,6 +138,13 @@ NOTICES = {
         "square of the distance, the power matching Maya intensity 1 at 10 units.") for kind in ("Point", "Spot")},
     "Create/Lights/Area Light": (
         "Area light", "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units)."),
+    # step 214 (operators/maya_lights.py, -4)
+    "Create/Lights/Ambient Light": (
+        "World + point light", "Blender has no ambient light: the World colour gives the flat part and a point light "
+        "the Ambient Shade part; surfaces turned away from the light get more light than in Maya."),
+    "Create/Lights/Volume Light": (
+        "Point light cut at the sphere", "Blender has no volume light: a point light at the centre cut at the "
+        "sphere (the object's scale); Cycles renders Maya's falloff, EEVEE and the viewport approximate it."),
     # Rigging (W3: HumanIK / Quick Rig -> Rigify)
     **{path: ("Rigify", "Blender has no HumanIK / Quick Rig: the bundled Rigify add-on builds a rig from a "
                         "meta-rig fitted to the mesh (Generate Rig).")
@@ -371,8 +378,6 @@ CATEGORIES = {
                                  "primitive with a Subdivision Surface modifier (3 = smooth preview)."),
     "Create/Volume Primitives": ("Volume / Mesh to Volume", "Blender has no volume primitives: a Volume object or a "
                                  "Mesh to Volume modifier."),
-    "Create/Lights": ("World / volume shader", "Blender has no ambient or volume light: World lighting (ambient) or "
-                      "a light with a volume shader."),
     "Create/Measure Tools": ("Measure tool", "Blender's Measure tool measures distances and angles; parameter and "
                              "arc length tools aren't built in."),
     "Create/Asset": ("Asset Browser", "Blender assets are data-blocks marked as assets (Asset Browser), not "
@@ -813,8 +818,6 @@ CATEGORIES.update({
     "Hypershade/Create/Volumetric Materials": (
         "Volume shaders", "Blender's volumes are shaders on the material's Volume output (Principled Volume) or the "
         "World's: add them with Shift+A > Volume."),
-    "Hypershade/Create/Lights": (
-        "World light", "Blender has no ambient or volume light: light the scene with the World colour."),
     "Hypershade/Create/Image Plane": (
         "Image Plane", "Blender's image planes are made in the 3D View (Create > Free Image Plane)."),
     "Hypershade/Create/Rendering": (

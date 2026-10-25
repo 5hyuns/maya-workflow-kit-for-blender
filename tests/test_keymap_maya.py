@@ -200,6 +200,8 @@ _STACKS = {"3D View": _VIEW3D_STACK, "Object Mode": _OBJECT_MODE_STACK,
            "View2D": ("Window", "Screen", "Frames", "View2D", "View2D Buttons List", "Animation Channels"),
            # Step 150: Ctrl+A = AE / CB swap in the NLA Editor too (the other 2D animation editors are above).
            "NLA Editor": ("Window", "Screen", "Frames", "NLA Editor", "NLA Generic", "View2D"),
+           # Step 214: IC's window-level render keys (checked before every editor keymap)
+           "Screen Editing": None,
            "Frames": None}  # None = every non-modal keymap (Frames is in most editors)
 
 

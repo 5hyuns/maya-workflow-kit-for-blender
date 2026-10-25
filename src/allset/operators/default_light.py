@@ -16,9 +16,17 @@ removed with its data when the render ends (EXEC: right after; INVOKE: a timer w
 marked lights (an undo step pushed while a render ran, a file saved during a render) are removed after undo / redo /
 load. The kit Outliner, defaultLightSet and the Light Editor skip it; a marked light never counts as a scene light.
 
-Not for Blender's own ``render.render`` (delegated, step 152): Python ``render_pre`` handlers of a UI render run on
-the render job's thread, where adding / removing objects is unsafe , and Maya mode binds no F12 (IC renders on
-Ctrl+Alt+Enter only, step 105) — Maya's render commands are the kit's.
+Blender's own render keys (step 214, #120): every ``bpy.app.handlers.render_*`` callback of a UI (INVOKE) render
+runs on the render job's thread, not the main one ( tmp/f214m/m1_out.json from m1_threads.py, factory 4.5.4 GUI:
+render_init / render_pre / render_post / render_complete all off ``threading.main_thread()``), and the engine builds
+its depsgraph there, so a render_init handler can't add the light safely: no handler fallback. Instead Maya mode wraps
+the render keys with ``allset.render_blender``: its invoke adds the light on the main thread, then starts
+``render.render`` INVOKE (the Render window opens as with F12;  same file: the wrapped render lit the cube 0.66 at
+the centre, the plain one 0.0, and the timer removed the light once the job ended). Keys (keymap/maya_patches.py
+``patch_blender_render``): F12 = Render Image and Ctrl+F12 = Render Animation in "Screen" (Blender's default keys,
+whose own items are switched off in Maya mode; F12 over a 3D View in object / edit-mesh mode or over a UV Editor stays
+Maya's UV selection mask, Maya), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >
+Render Image / Render Animation (the kit's "Blender Render" menu) still runs ``render.render`` itself: no light.
 """
 
 import math
@@ -27,6 +35,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty
 
+from .. import results
 from . import lights
 
 MARK = "allset_default_light"
@@ -129,14 +138,71 @@ def _stray(*_args):
         remove_all()
 
 
+# --- Blender's render keys with the default light (step 214) -----------------------------------------------------
+
+class ALLSET_OT_render_blender(bpy.types.Operator):
+    """Render with Blender's own render command (F12 / Ctrl+F12 in Maya mode), lit by Maya's default light while the
+    scene has no lights"""
+    bl_idname = "allset.render_blender"
+    bl_label = "Render"
+    bl_options = set()            # no Adjust Last Operation (step 147)
+
+    animation: BoolProperty(name="Animation", default=False, options={'SKIP_SAVE'})
+    use_viewport: BoolProperty(name="Use 3D Viewport", default=False, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene is not None
+
+    def _props(self):
+        return {"animation": self.animation, "use_viewport": self.use_viewport}
+
+    def invoke(self, context, event):
+        if context.window is None or bpy.app.background:
+            return self.execute(context)
+        if _render_running():          # a render is already on: its light stays, Blender reports the busy render
+            return bpy.ops.render.render('INVOKE_DEFAULT', **self._props())
+        scene = context.scene
+        lit = add(scene, scene.camera) is not None
+        try:
+            res = bpy.ops.render.render('INVOKE_DEFAULT', **self._props())
+        except RuntimeError as ex:
+            remove_all()
+            self.report({'ERROR'}, str(ex))
+            return {'CANCELLED'}
+        if lit:
+            if 'CANCELLED' in res or not _render_running():
+                remove_all()
+            else:
+                after_render()
+        return {'FINISHED'} if 'CANCELLED' not in res else {'CANCELLED'}
+
+    def execute(self, context):
+        scene = context.scene
+        add(scene, scene.camera)
+        try:
+            res = bpy.ops.render.render('EXEC_DEFAULT', **self._props())
+        except RuntimeError as ex:
+            self.report({'ERROR'}, str(ex))
+            return {'CANCELLED'}
+        finally:
+            remove_all()
+        if 'CANCELLED' in res:
+            return {'CANCELLED'}
+        if scene.camera is not None:
+            results.result(self, f"Rendered through {scene.camera.name}")
+        return {'FINISHED'}
+
+
 HANDLERS = ("undo_post", "redo_post", "load_post")
 
 
 def register():
+    bpy.utils.register_class(ALLSET_OT_render_blender)
     bpy.types.Scene.allset_default_light = BoolProperty(
         name="Enable Default Light", default=True,
         description="Maya Enable Default Light: a scene without lights renders lit by a light from the camera "
-                    "(Maya Workflow Kit renders only)")
+                    "(Maya Workflow Kit renders and render keys only)")
     for name in HANDLERS:
         getattr(bpy.app.handlers, name).append(_stray)
 
@@ -154,3 +220,4 @@ def unregister():
     except AttributeError:          # restricted context (no bpy.data) while Blender quits
         _after.clear()
     del bpy.types.Scene.allset_default_light
+    bpy.utils.unregister_class(ALLSET_OT_render_blender)
