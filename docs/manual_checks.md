@@ -1207,3 +1207,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Hotbox right after F8: the in-view message ("Object selection on…") doesn't cover the hotbox rows.
 - [ ] Undo then P / Shift+P: the Command Line result field shows the new command's result, not the old "Undo: …".
 - [ ] Attribute Editor tab in a real (non-simulated) session: the dock widens so AE tabs / menus are not cut ("Sele…", "pCub…").
+
+## Step 183
+
+- [ ] Real mouse, Maya menu bar: Edit Mesh > Bevel — click the ❒ = Bevel Options window, click the label = bevel; Create > Polygon Primitives > Cube ❒ = Polygon Cube Options. Try UI scale 1.0, 1.25, 1.5.
+- [ ] The same items from the hotbox / Shift+RMB menus still need press-and-hold or Shift / Ctrl+click (no ❒ click there yet).

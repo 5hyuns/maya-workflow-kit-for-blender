@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 183 (Option box click opens the window, backlog.json #1, #82) 완료 — `docs/steps/step_183.md`, `research/blender/menu_click_183.md`.
+  메뉴 바에서 연 Maya 메뉴 (와 서브메뉴) 에서 ❒ 클릭 = 옵션 창 (`ui/option_click.py`: execute 안 INVOKE 로 클릭 x, kit 메뉴 배치 모델로
+  ❒ 칸), 라벨 클릭 = 명령; 핫박스 · 마킹 · 편집기 메뉴는 hold 그대로. GUI step183 24 / 24 (UI 1.0 · 1.25), 관련 GUI 61 / 61.
+  **바로 다음 할 일**: 184 RMB list under the ring (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 2 번째).
+
 - Step 182 (재점검 13차 = 사용자 지시의 「재점검 12차」) 완료 — `docs/steps/step_182.md` (+ `_remaining.md`, `_quant.md`), PLAN
   「재점검 13차」. 헤드리스 1683 / 1683, dogfood 48 / 48 (콘솔 오류 0), 메뉴 714 / 1318, 대응표 30 / 1 / 0 / 2, look_compare 뷰포트 12 / 12.
   **바로 다음 할 일**: backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8 개 = steps 183–190 (첫째: Option box
