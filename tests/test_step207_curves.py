@@ -387,3 +387,25 @@ def test_undo_and_menu():
 
 def test_report_worst():
     print("WORST", json.dumps({k: v for k, v in sorted(WORST.items())}, indent=0, default=str))
+
+
+def test_modify_in_a_cm_scene_uses_maya_units():
+    """Maya Bend / Curl amounts are lengths: in a cm scene (Maya Workflow Kit template) 1 Maya unit = 0.01 BU, so the
+    same Maya curve scaled by 0.01 bends to the Maya result scaled by 0.01 ()."""
+    if data() is None:
+        return
+    _clear()
+    us = bpy.context.scene.unit_settings
+    us.system, us.length_unit, us.scale_length = 'METRIC', 'CENTIMETERS', 1.0
+    try:
+        for key in ("bend_A3D_0.5_0.5", "curl_A3D_1_2.5"):
+            c = case(key)
+            op, a1, a2 = _modify_args(key, c)
+            ob = _curve("curveA", [cm.mul(p, 0.01) for p in c["before"][0]["cvs_local"]])
+            _sel(ob)
+            assert bpy.ops.allset.curve_modify(kind=KIND[op], amount=a1, second=a2) == {'FINISHED'}
+            want = _bl([cm.mul(p, 0.01) for p in named(c, "curveA")["cvs_local"]])
+            assert err(_cvs(ob), want) < 1e-8, key
+            _clear()
+    finally:
+        us.length_unit, us.system = 'METERS', 'METRIC'
