@@ -1366,3 +1366,10 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skin a cylinder, select a few vertices, Windows > General Editors > Component Editor: Smooth Skins shows the joints + Total; type 0.5 in a joint cell — the other joints share the rest proportionally (Total stays 1.000); set a Hold to on and edit again: the held column stays. Polygons tab: type a new vertex.y and see the vertex move; Ctrl+Z undoes it.
 - [ ] Windows > Animation Editors > Shape Editor on pCube1: Create Blend Shape, Add Target (pCube2, red Edit), move vertices in Edit Mode, turn Edit off, drag the weight slider: the shape blends; Shapes > Key keys the weight; Reset sets 0.
 - [ ] Windows > General Editors > Connection Editor with two objects selected: pick translate on the left, translate on the right: the right object follows the left; pick the right translate again: the connection breaks and the object stays where it was.
+
+## Step 214 — Render parity 2
+
+- [ ] Create > Lights > Ambient Light in a scene with a cube, Render > Render Current Frame (Cycles): the cube is lit from all sides, the background stays as before; Attribute Editor shows Ambient Light Attributes (Color, Intensity, Ambient Shade 0.45).
+- [ ] Create > Lights > Volume Light, scale it to 5 around the cube, render (Cycles): faces nearer the centre are brighter, nothing lit outside the sphere.
+- [ ] Attribute Editor of lambert1: Diffuse 0.8; set it to 1 and render — the cube gets brighter by 1.25 x.
+- [ ] In Maya mode with the mouse over the Outliner, F12 opens Blender's Render window with the cube lit (no lights in the scene); over the 3D View F12 stays Maya's UV selection mask.

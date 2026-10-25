@@ -2,6 +2,27 @@
 
 ## 현재 작업
 
+- Step 214 (Render parity 2, backlog #4, Issue #120) 완료 — `docs/steps/step_214.md`, Maya 측정 `research/maya/re/render_parity_214.md`
+  (mayapy, Maya Software). lambert 계열 + lambert1 = 「Maya Diffuse」 노드 (Base Color = diffuse 0.8 × Color, AE Diffuse 행, 킷
+  내보내기는 `diffuse_bypass`) → 기본 조명 큐브가 Maya 와 0.6 / 255 이내 (EEVEE · Cycles, 전에는 1.25 배). Create > Lights > Ambient
+  Light (점광원 s·I + World 「Maya Ambient」 (1 − s)·I, 카메라 배경은 그대로) / Volume Light (점광원, Cycles 는 (1 − r/R) 정확, EEVEE 는
+  R/2 에 맞춘 역제곱) — 메뉴 · 셸프 · Hypershade · Light Editor · AE · CB. F12: render_* 핸들러는 모두 렌더 스레드 (측정) → Maya 모드
+  Screen F12 / Ctrl+F12 / Ctrl+Alt+Enter = `allset.render_blender` (기본 라이트 붙이고 render.render INVOKE, 끝나면 제거; 3D View ·
+  UV Editor 의 F12 는 Maya UV 마스크 키 그대로). 메뉴 unique 804 → 806. 헤드리스 전체 2086 / 2086, GUI 관련 + 스모크 90 / 92 (실패 2 =
+  `gui_step29_materials` blinn6, step 213 커밋에서도 같은 실패 — 기존).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#120 닫힘; 에이전트 worktree 정리 여부.
+  **바로 다음 할 일**: step 215 = backlog 「Maya Preferences window and Hotkey Editor」 (Issue #121). 남은 렌더 일: 템플릿 World 회색
+  (5.6 / 255 ambient, `make_startup.py`), Blender Render 메뉴의 render.render, `gui_step29_materials` 기존 실패.
+
+- **체크포인트 2026-10-26 (/sc:save, 213 후)** — 지금 단계: **213 완료 · 커밋 2896386** (Fixes #119, push 안 함). 이번 세션에 211
+  (63fec1d, #117 audit 16 fix batch) · 212 (2a81357, #118 Blender 5.x test pass 3) · 213 (2896386, #119 Component / Shape /
+  Connection Editors; 레인 커밋 9a2f7a6 · d8d4e4f · 6c2ec6a · d1c9fa1) 커밋. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ ·
+  .impeccable/ 추적 안 함). 숫자: 헤드리스 2061 / 2061 (4.5.4), 5.x 헤드리스 2032 / 2032 (step 212), 편집기 메뉴 720 / 1036, 메뉴
+  unique 804 / 1319, dogfood 48 / 48 (step 211).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#119 닫힘; 에이전트 worktree 정리 여부 (step 213 레인 2 개 추가).
+  **바로 다음 할 일**: step 214 = backlog #4 「Render parity 2」 (Issue #120) — 킷 lambert1 이 Maya 보다 1.25 배 밝음 (Principled 에
+  Diffuse 0.8 입력 없음) 등, 근거 docs/steps/step_210_remaining.md §8 #1. 그다음 215 Maya Preferences window and Hotkey Editor (#121).
+
 - Step 213 (Component, Shape and Connection Editors, backlog #3, Issue #119) 완료 — `docs/steps/step_213.md`, Maya 측정
   `research/maya/re/editors_213.md` (GUI Maya 캡처 `research/maya/screens/editors212/` + mayapy). Windows 메뉴 세 항목이 Blender
   기본 편집기 대신 킷 창을 엶 (`ui/marked_window.py`: Properties Tool 탭 + 숨은 플래그 쌍): Component Editor (Smooth Skins = 관절 열 +
