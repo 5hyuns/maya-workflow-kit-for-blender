@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 185 (Selected edges and manipulator look, backlog_183.json #3) 완료 — `docs/steps/step_185.md`. 「두꺼운 하늘색」 = Blender 의
+  sharp 엣지 색 3 px (kit 큐브는 모든 엣지 sharp) → Maya 레이아웃 뷰에서 `show_edge_sharp` 도 끔, 와이어 1.5 px · bias 0.002, 선택 엣지
+  2 px · bias 0.003; manipulator 평면 0.52–0.68 (Maya 02 측정) 테두리 + 채움, 활성 / 가운데 #fdff88 (축 활성 때 가운데 #64dcff).
+  look_compare viewport 20 / 20 (1.0 · 1.25, 새 flank / area 샘플은 옛 kit 에서 ✗), 헤드리스 1693 / 1693.
+  **바로 다음 할 일**: 186 Time Slider ticks and playhead (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  4 번째; 이전 메모의 `backlog.json` 경로는 `backlog_183.json` 이 맞음).
+
+- **체크포인트 2026-10-25 (/sc:save, 184 후)** — 지금 단계: **184 완료 · 커밋됨** (`aa66c56`). 181 (`326f12f`), 182 재점검 13차
+  (`3fad2f5`), 183 (`8b34806`, Fixes #82), 184 모두 커밋; push 안 함. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ 추적 안 함).
+  헤드리스 전체 1690 / 1690 (184 끝), GUI 는 단계별 파일만.
+  **바로 다음 할 일**: 185 Selected edges and manipulator look (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`
+  3 번째: `ui/component_colors.py` 선택 edge, `ui/manipulator.py` 평면 핸들 · 가운데 색, look_data 샘플), 그 뒤 186–190.
+
 - Step 184 (RMB list under the ring, backlog.json #2) 완료 — `docs/steps/step_184.md`, Maya 측정 `research/maya/re/rmb_list_184.md`:
   Maya 는 목록을 자르지도 옆으로 옮기지도 않고 메뉴 전체를 위로 그림 → `marking/engine.py` `lift_up` / `fit_ring` (창이 경계). 헤드리스 마킹
   76 / 76, GUI 관련 통과 (65 + 고친 27).

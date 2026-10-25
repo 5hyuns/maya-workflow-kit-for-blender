@@ -109,11 +109,12 @@ KIT_POINTS = {
                              "result field (step 161), right end"),
     "help_line_bg": ("11_channel_box", "statusbar.help", 530, 12, 2, "Help Line background, right of the text"),
     "menu_popup_bg": ("12_create_menu", "topbar", 300, 148, 2, "Create menu body, right of Cameras"),
-    # step 161: re-picked for the step-151 ring (N box centre 55 above the press, Edge box 78 px wide) and the
-    # one-column list, which no longer fits under the ring in the kit shot and stands left of it (E = UV submenu)
-    "marking_menu_box": ("14_marking_menu_object", "press", -33, -55, 1, "radial box Edge, left padding"),
-    "marking_menu_list_bg": ("14_marking_menu_object", "press", -200, -141, 1,
-                             "list body right of Select Hierarchy (kit: the column left of the ring)"),
+    # step 161: re-picked for the step-151 ring (N box centre 55 above the press, Edge box 78 px wide). Step 185: the
+    # anchor is the drawn ring centre ("mm_centre"), since step 184 lifts the whole menu near the window bottom and
+    # keeps the list under the ring like Maya; the list sample sits where Maya's does (13 px left, 141 px below)
+    "marking_menu_box": ("14_marking_menu_object", "mm_centre", -33, -55, 1, "radial box Edge, left padding"),
+    "marking_menu_list_bg": ("14_marking_menu_object", "mm_centre", -13, 141, 1,
+                             "list body right of Select Hierarchy (under the ring, steps 184 / 185)"),
     "hotbox_row_bg": ("13_hotbox", "press", -265, 29, 1, "hotbox row Mesh, left padding (over the view background)"),
 }
 
@@ -161,7 +162,22 @@ VIEW_SAMPLES = (
     ("manipulator X (red)", "02_cube_selected_move", "#e60000", "pCube1.origin", 120, "best", None),
     ("manipulator Y (green)", "02_cube_selected_move", "#00e600", "pCube1.origin", 120, "best", None),
     ("manipulator Z (blue)", "02_cube_selected_move", "#0000ff", "pCube1.origin", 120, "best", None),
+    # step 185 (audit 13 #3 / #7): selected edges must read as Maya's crisp orange lines, not slivers inside a thick
+    # cyan band ("flank" = share of the orange pixels with cyan within 2 px, radius field = ΔE00 limit), and the
+    # Move / Scale manipulator's plane handles and centre must match Maya's (Maya 02 / 06 pixels, step_185.md)
+    ("selected edge (orange)", "09_edges_selected", "#e3ac79", "pCube1.sel_edges", 3, "best", None),
+    ("component-mode wire, edge mode (light blue)", "09_edges_selected", "#64dcff", "pCube1.edges", 3, "best", None),
+    ("selected edge not inside a cyan band", "09_edges_selected", "#e3ac79", None, 12, "flank", None),
+    ("Move centre square (active, pale yellow)", "02_cube_selected_move", "#fdff88", "pCube1.origin", 30, "best",
+     None),
+    ("Scale centre cube (active, pale yellow)", "06_scale_manip", "#fdff88", "pCube1.origin", 30, "best", None),
+    ("Move plane handle fill (red, YZ)", "02_cube_selected_move", "#b6655f", "pCube1.origin", 120, "best", None),
+    ("Move plane handle fill (blue, Maya XY)", "02_cube_selected_move", "#5f63db", "pCube1.origin", 120, "best",
+     None),
+    ("Move plane handle area (red, YZ)", "02_cube_selected_move", "#b6655f", None, 10, "area", None),
 )
+FLANK_TOL = 0.15                # "flank" rows: kit at most Maya + this
+AREA_RANGE = (0.6, 1.6)         # "area" rows: kit area / Maya area (both at UI scale 1.0)
 
 
 def best_pixel(img, hex_colour, rect, keep=1):

@@ -1216,3 +1216,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 ## Step 184
 
 - [ ] RMB on an object near the bottom of the viewport: the whole marking menu is drawn higher, the list hangs under the ring to the window bottom (Maya); drag onto rows and the ring boxes as drawn; a quick RMB click keeps the menu open (no row runs).
+
+## Step 185
+
+- [ ] Edit mode on a Maya cube (Edge mode), select two edges with a real mouse: thin light-blue wire, the selected edges crisp orange (no cyan band around them); Display > hard edges no longer teal in the Maya layout views; turn the kit's Maya component colours off in the preferences = Blender's sharp-edge colour comes back.
+- [ ] Move tool (W) on an object: three plane squares (rim + translucent fill) a little larger and farther out than before, the centre square pale yellow; drag the X arrow = X yellow, centre light blue; Scale (R) the same with the centre cube. Hover = bright yellow.

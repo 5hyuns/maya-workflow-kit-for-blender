@@ -46,14 +46,23 @@ ARROW_PX = 108.0
 CENTER_HALF = 0.083      # hollow centre square: 18 px
 CONE_LEN, CONE_R = 0.13, 0.045
 LINE_START = 0.0
-PLANE_AT, PLANE_HALF = 0.55, 0.055
+# Plane handles (step 185): Maya's YZ / XY squares in research/maya/screens/02_cube_selected_move.png span 0.52-0.68
+# arrow units along both axes (pixels solved into axis coordinates, tmp probe docs/steps/step_185.md): a 1 px rim in the
+# axis colour around a translucent fill (pixels over the #767676 top face: red #b6655f, blue #5f63db).
+PLANE_AT, PLANE_HALF = 0.60, 0.08
 CUBE_AT, CUBE_HALF = 0.85, 0.05
 CENTER_CUBE_HALF = 0.06
 PIVOT_RING_R = 0.32      # pivot orientation rings (M7, offset 50)
 PICK_R = 0.05            # half width of the invisible pick shape around a thin line
-YELLOW = (1.0, 1.0, 0.0)
+YELLOW = (1.0, 1.0, 0.0)  # hovered handle (displayColor manipCurrent #ffff00)
+# Active handle and centre as Maya draws them on screen (step 185): #fdff88 for the active handle, the centre
+# light blue #64dcff while an axis is active (research/maya/workflows/pivot_snap/shots/manip_move_active_center.png,
+# manip_move_active_x.png, 02_cube_selected_move.png, 06_scale_manip.png: 81 px of #fdff88 / #64dcff in the square).
+ACTIVE = (0xfd / 255, 1.0, 0x88 / 255)
+CENTER_IDLE = (0x64 / 255, 0xdc / 255, 1.0)
 ALPHA = 1.0
-PLANE_ALPHA = 0.55
+PLANE_FILL = 0.65         # fill alpha; the fill colour is the axis colour lightened toward white by PLANE_LIGHTEN
+PLANE_LIGHTEN = 0.35
 
 AXES = {'X': Vector((1, 0, 0)), 'Y': Vector((0, 1, 0)), 'Z': Vector((0, 0, 1))}
 
@@ -155,8 +164,9 @@ def shapes(kind):
         return ([('LINES', [(0, 0, LINE_START), (0, 0, CUBE_AT - CUBE_HALF)]),
                  ('TRIS', _box((0, 0, CUBE_AT), CUBE_HALF))],
                 ('TRIS', _bar(CENTER_HALF, CUBE_AT, PICK_R) + _box((0, 0, CUBE_AT), CUBE_HALF * 1.6)))
-    if kind == 'PLANE':
-        return ([('TRIS', _square(PLANE_AT, PLANE_AT, PLANE_HALF))],
+    if kind == 'PLANE':      # fill first, then the rim (ALLSET_GT_maya_handle.draw)
+        rim = [(x + PLANE_AT, y + PLANE_AT, z) for x, y, z in _square_outline(PLANE_HALF)]
+        return ([('TRIS', _square(PLANE_AT, PLANE_AT, PLANE_HALF)), ('LINES', rim)],
                 ('TRIS', _square(PLANE_AT, PLANE_AT, PLANE_HALF * 1.4)))
     if kind == 'CENTER':
         return ([('LINES', _square_outline(CENTER_HALF))], ('TRIS', _square(0, 0, CENTER_HALF * 1.2)))
@@ -367,6 +377,11 @@ def axis_colours():
     return {axis: _srgb(value) for axis, value in MAYA_AXIS.items()}
 
 
+def plane_fill(colour):
+    """Fill colour of a plane handle: the rim colour lightened toward white (Maya 02: red rim, pinkish fill)."""
+    return tuple(c + (1.0 - c) * PLANE_LIGHTEN for c in colour[:3])
+
+
 def _active_handle(kind):
     """The remembered handle of ``kind`` (operators/manip.HANDLES, step 28): None = centre."""
     from ..operators import manip
@@ -393,8 +408,28 @@ class ALLSET_GT_maya_handle(Gizmo):
         self.pick_shape = self.new_custom_shape(*pick)
 
     def draw(self, context):
+        if getattr(self, "handle_kind", None) == 'PLANE':
+            self._draw_plane()
+            return
         for sh in getattr(self, "draw_shapes", ()):
             self.draw_custom_shape(sh)
+
+    def _draw_plane(self):
+        """Maya plane handle: translucent lightened fill + solid rim (draw_custom_shape takes one colour)."""
+        import gpu
+        colour = self.color_highlight if self.is_highlight else self.color
+        alpha = self.alpha_highlight if self.is_highlight else self.alpha
+        fill = plane_fill(colour)
+        gpu.state.blend_set('ALPHA')
+        gpu.state.line_width_set(self.line_width)
+        for i, (batch, shader) in enumerate(getattr(self, "draw_shapes", ())):
+            shader.bind()
+            shader.uniform_float("color", (*fill, alpha * PLANE_FILL) if i == 0 else (*colour, alpha))
+            with gpu.matrix.push_pop():
+                gpu.matrix.multiply_matrix(self.matrix_world)
+                batch.draw(shader)
+        gpu.state.line_width_set(1.0)
+        gpu.state.blend_set('NONE')
 
     def draw_select(self, context, select_id):
         sh = getattr(self, "pick_shape", None)
@@ -549,20 +584,16 @@ class ALLSET_GGT_xform(GizmoGroup):
             if role == 'AXIS':
                 rot = frame @ _axis_rot(data)
                 active = _is_active(kind, tuple(a == data for a in 'XYZ'))
-                gz.color = YELLOW if active else colours[data]
+                gz.color = ACTIVE if active else colours[data]
             elif role == 'PLANE':
                 axes, normal, local = PLANES[data]
                 rot = frame @ local
-                gz.color = YELLOW if _is_active(kind, axes) else colours[normal]
-                gz.alpha = PLANE_ALPHA
+                gz.color = ACTIVE if _is_active(kind, axes) else colours[normal]
             elif role == 'CENTER':
-                rot = view
-                # Maya draws the free-move square light even when it is the active handle
-                # (shots/manip_move_active_center.png), unlike the axes (manip_move_active_x.png).
-                gz.color = (0.85, 0.85, 0.85)
-                if kind == 'RESIZE':
-                    rot = frame
-                    gz.color = YELLOW
+                # Maya: the centre (free move / uniform scale) is the active handle by default, drawn #fdff88;
+                # light blue while an axis or plane is active (step 185)
+                rot = frame if kind == 'RESIZE' else view
+                gz.color = ACTIVE if _is_active(kind, None) else CENTER_IDLE
             else:   # PIVOT_RING
                 rot = axes_of(context, 'LOCAL', rv3d) @ _axis_rot(data)
                 gz.color = colours[data]

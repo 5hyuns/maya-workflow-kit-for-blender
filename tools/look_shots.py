@@ -454,7 +454,7 @@ def edit_select(mode, verts=(), edges=(), faces=()):
         bpy.ops.mesh.select_mode(type=mode)
 
 
-def record_points(name, sel_verts=()):
+def record_points(name, sel_verts=(), sel_edges=()):
     """Projected points the viewport pixel table samples around (look_data.VIEW_SAMPLES)."""
     from bpy_extras.view3d_utils import location_3d_to_region_2d
     area, region = view3d()
@@ -481,12 +481,15 @@ def record_points(name, sel_verts=()):
                   if me.vertices[i].co.x < 0 and me.vertices[i].co.y > 0)
     pts["pCube1.top_face"] = [img(mw @ ((top.center + corner) / 2))]
     pts["pCube1.sel_verts"] = [img(mw @ maya_vertex(me, i).co) for i in sel_verts]
+    pts["pCube1.sel_edges"] = [img(mw @ ((me.vertices[e.vertices[0]].co + me.vertices[e.vertices[1]].co) / 2))
+                               for e in (maya_edge(me, i) for i in sel_edges)]
     GEOM.setdefault("points", {})[name] = {k: [p for p in v if p] for k, v in pts.items()}
 
 
 @step
 def s_scale():
     shot("06_scale_manip")
+    record_points("06_scale_manip")
     with v3d_override():
         bpy.ops.wm.tool_set_by_id(name="builtin.move")
     edit_select('FACE', faces=(1, 4))        # Maya: pCube1.f[1], f[4]
@@ -528,6 +531,7 @@ def s_wait9():
 @step
 def s_edges():
     shot("09_edges_selected")
+    record_points("09_edges_selected", sel_edges=(0, 5))
     bpy.ops.object.mode_set(mode='OBJECT')
     select_only("pCube1")
     redraw()
@@ -596,6 +600,13 @@ def s_mm():
     shot("14_marking_menu_object")
     x, y = C["rmb"]
     record_press("14_marking_menu_object", x, y)
+    # step 185: the drawn ring centre (step 184 draws the whole menu higher near the window bottom; the press stays)
+    act = import_module(MODULE + ".marking.draw").ACTIVE
+    sess = act.get("session")
+    if sess is not None:
+        ox, oy = act["origin"]
+        GEOM["rects"]["14_marking_menu_object"]["mm_centre"] = [ox + sess.center[0], win().height - (oy + sess.center[1]),
+                                                               0, 0]
     ev('RIGHTMOUSE', 'RELEASE', x=x, y=y)
     ev('ESC', 'PRESS')
     ev('ESC', 'RELEASE')
