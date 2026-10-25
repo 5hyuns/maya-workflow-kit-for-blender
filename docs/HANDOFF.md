@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 210 (재점검 16차 = 사용자 지시의 「재점검 15차」, 감사 — src 변경 없음) 완료 — `docs/steps/step_210.md` (+ `step_210_remaining.md`,
+  `step_210_quant.md`), PLAN 「재점검 16차」. 헤드리스 2018 / 2018, dogfood 48 / 48, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 803 / 1318
+  (60.9 %), 편집기 메뉴 676 / 952, 옵션 창 176, look_compare kit-drawn 1.0 / 1.25 모두 12 / 12. backlog 8 개 (steps 211–218)
+  `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 이슈 #117–#124 (마일스톤 0.5.0), #108 표 갱신.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#116 닫힘; 에이전트 worktree 64 개 정리 여부.
+  **바로 다음 할 일**: step 211 = backlog #1 「Audit 16 fix batch」 (Issue #117) — Light Linking 메뉴, 빈 번호 채우기 남은 곳 +
+  `pasted__` (mayapy 먼저), Outliner 카메라 순서, AE 가로 탭 + dock 폭, nHair 옵션 상자.
+
 - Step 209 (Reference Editor, backlog #8 = 감사 15 backlog 마지막, Issue #116) 완료 — `docs/steps/step_209.md`, Maya 측정
   `research/maya/re/refs_209.md` (mayapy + GUI Maya 창 캡처). File > Reference Editor = 킷 창 (Maya 메뉴 바 File / Reference /
   Proxy / View / Help, 아이콘 줄, File Particulars, 목록 = 로드 체크 + `propRN srcA.blend`), Reload (Library.reload, 편집 유지),

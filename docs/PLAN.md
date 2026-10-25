@@ -1091,3 +1091,50 @@ No row moved (fourth audit in a row); 16 items of the step 192 list finished by 
 1. Audit 15 fix batch (#109). 2. Graph Editor depth 3 (#110). 3. Animation layers 4 (#111). 4. Deform 2 (#112). 5. UV Editor
 depth 2 (#113). 6. Curves 3 (#114). 7. maya.cmds look-alike 2 (#115). 8. Reference Editor (#116). Next in line: Maya Preferences
 window, render parity 2, FX menus, Surfaces.
+
+## 재점검 16차 (step 210, 2026-10-26 — 사용자 지시의 「재점검 15차」)
+
+User request: everything planned (audit 15 backlog, steps 202–209) is done — dogfood in a clean install, collect what is
+left, implementation rate, priorities, backlog + one roadmap issue per item, #108 table; criterion "default Maya with Blender
+features attached", differences only. 「재점검 15차」 is step 201, so this one is numbered 16 (delegated). Evidence:
+`docs/steps/step_210.md` (main: dogfood, GUI differences) + lane files `step_210_remaining.md` (README table, open work,
+blindspots NB12–NB17, manual checks) and `step_210_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **30 (91 %)** | **1** — theme (store compliance, decision 13) | **0** | **2** — separate pivots, Y-up |
+
+No row moved (fifth audit in a row); of the step 201 list (42) 3 finished, 7 partly, 32 unchanged — the work of steps 202–209
+went into rows already counted done (menus, editors, depth).
+
+### Headline numbers (step 201 → now)
+
+| Measure | Step 201 | Now (4dd0b14) |
+|---|---|---|
+| Menu leaves working, unique (1318) | 762 (57.8 %) | **803 (60.9 %)** — Curves 89 %, Deform 81 %, Constrain 90 %, UV 95 %; FX 21 % (nConstraint 0 / 19, ninth audit) |
+| Editor menu bars working | 600 / 914 | **649 / 914** + Reference Editor 27 / 38 = **676 / 952** |
+| Option boxes → kit Maya window; redo; generic; dead | 164; 104; 19; 187 | **176; 104; 28 (worse); 164** |
+| Shelves; hotkeys; marking menus working / greyed | 160; 210; 371 / 52 | 160; 210 (fifth audit unchanged); **373 / 50** |
+| Tests | headless 1844 / 1844, dogfood 48 / 48 | **headless 2018 / 2018** (4.5; 5.x last run step 200), **dogfood 48 / 48**, console errors 0 |
+| look_compare kit-drawn (1.0 / 1.25) | 12 / 12 / 11 / 12 | **12 / 12 / 12 / 12** (theme items 19 / 25 over ΔE 5: kit ships no theme) |
+| Manual checks | 731, 107 ticked | 757, 106 ticked |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 4 | Render defaults: lambert1 1.25x brighter, no Ambient / Volume Light, Blender F12 has no Maya default light (fifth audit) |
+| 4 | Windows editors that only open plain Blender editors: Component / Shape / Connection Editor (NB12) |
+| 4 | Maya Preferences window / Hotkey Editor (sixth audit); `maya.cmds` rest + Script Editor History 0 / 13 |
+| 4 | NURBS components can't be picked / shown (Select 8 items, Show NURBS); Surfaces 15 / 41 |
+| 3 | AE tabs stacked as buttons in a Channel-Box-wide dock (G1); Outliner lists objects before the cameras (G2); naming leftovers (sets, layers, `.001` paste) |
+| 2 | FX 21 % (nConstraint 0, nCache 3 / 20); 202–209 not run on Blender 5.x (NB16); Arnold menus not in the data [U] |
+
+### Backlog (steps 211+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, milestone 0.5.0)
+
+1. Audit 16 fix batch (#117). 2. Blender 5.x test pass 3 (#118). 3. Component, Shape and Connection Editors (#119). 4. Render
+parity 2 (#120). 5. Maya Preferences window and Hotkey Editor (#121). 6. maya.cmds look-alike 3 (#122). 7. NURBS components and
+Surfaces 2 (#123). 8. FX menus: nConstraint and nCache (#124). Next in line: Arnold menus (measure first), Channel Box look 2,
+Hypershade depth 2, Namespace Editor.

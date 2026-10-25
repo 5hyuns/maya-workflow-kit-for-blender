@@ -467,7 +467,6 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] (step 69) 프로젝트가 있을 때 Ctrl+O / Ctrl+Shift+S / 처음 Ctrl+S / Status Line 열기·저장 아이콘 / File 메뉴: 파일 창이 `<프로젝트>/scenes` 에서 열림. 프로젝트 안에 저장하면 Render 출력 = `//../images/` (사용자가 바꾼 경로는 그대로). 다른 컴퓨터로 옮긴 프로젝트의 scenes 안 파일을 열면 그 프로젝트가 현재 프로젝트가 됨. (gui_manual_sweep — 다른 컴퓨터 = 프로젝트 폴더를 다른 곳에 복사)
 - [x] (step 69) Ctrl+Alt+S (= File > Increment and Save): `shot_v001.blend` → `shot_v001.0001.blend` 로 저장하고 그 파일에서 계속 (원본 유지, 상태 표시줄 "Saved …"). (gui_manual_sweep — 상태 표시줄 「Saved」 문구는 Blender 저장 report (Python 에서 읽을 수 없음))
 - [x] (step 69) Ctrl+R (= File > Create Reference…): 파일 창 (scenes 에서 시작, 오른쪽 옵션 Namespace / Editable) → `prop:pCube1` 등이 `prop` 컬렉션 아래에, 옮기기·키 가능 (원본 파일 그대로), 같은 파일 다시 = `prop1:`. 파일 브라우저·이미지 에디터·시퀀서에서는 Ctrl+R 이 원래 새로고침. (gui_manual_sweep)
-- [x] (step 69) File > Reference Editor: Outliner 새 창 Blender File 보기, 레퍼런스 파일 행 우클릭 Reload / Relocate. (gui_manual_sweep — 행 RMB 메뉴는 Blender 그대로 — Reload 동작으로 확인)
 
 ### Step 70 — Graph Editor 툴바 · Shift+S · G · Auto Key · Playblast
 
@@ -962,7 +961,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Deform > Nonlinear > Bend on a tall cylinder: bend1Handle (arrow) at the middle selected; Channel Box INPUTS bend1 Curvature 0, Low Bound -1, High Bound 1; type 1 into Curvature → the cylinder bends; High Bound 0 → only the lower half bends.
 - [ ] Two cubes, the small one selected last: Deform > Wrap → wrap1 on the big cube; edit the small cube's vertices or move the small cube → the big one follows; the small cube is not rendered (F12).
 - [ ] Deform > Cluster on selected vertices → cluster1Handle; Deform > Paint Weights > Cluster with the handle selected → Weight Paint on the mesh with group cluster1 active; painting 0 on some vertices makes them stay when the handle moves.
-- [ ] Deform > Tension / Solidify / Morph / Wire / Wrinkle / Sculpt and Jiggle > Jiggle Deformer are greyed; hovering shows the Blender substitute in the tooltip and the Help Line.
+- [ ] Deform > Wrinkle / Muscle / Pose Space Deformation > Create Pose Interpolator are greyed; hovering shows the Blender substitute in the tooltip and the Help Line. (Tension / Solidify / Morph / Sculpt / Jiggle work since step 205, Wire since step 169.)
 
 ## Step 146 — Option boxes without a drag (#82)
 
@@ -1290,12 +1289,12 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). Steps 194 / 196
 
 ## Step 201
 
-Blindspots of audit 15 (`docs/steps/step_201_remaining.md` §4) — expected to show a difference today — and manual-only checks
-that steps 199 / 200 left without a group.
+Blindspots of audit 15 (`docs/steps/step_201_remaining.md` §4) — step 202 fixed the first three (audit 16,
+`docs/steps/step_210_remaining.md` §2): they should now pass — and manual-only checks that steps 199 / 200 left without a group.
 
-- [ ] A cube with an extrude and a kit Wire deformer (Deform > Wire), Edit > Delete by Type > Non-Deformer History: Maya keeps wire1 (moving the curve still deforms the cube). Today the kit bakes the wire's Geometry Nodes modifier into the mesh and removes it. Same with a skin on Skin > Normalize Weights > Disable Weight Normalization: the mode must survive.
-- [ ] Constrain > Normal (or Tangent) on a cube to a sphere, then Delete the cube (or Edit > Delete by Type > Constraints): no hidden `pCube1_normalConstraint1Aim` empty must stay in Blender's Outliner (View Layer, hidden objects shown). Today it stays.
-- [ ] With a kit wire deformer / nCloth / nParticles in the scene, hover Select > All by Type > Wires / nCloths / nParticles and Edit > Delete All by Type > Wires: Maya selects / deletes them. Today they are greyed with "Blender has no node of this type".
+- [ ] A cube with an extrude and a kit Wire deformer (Deform > Wire), Edit > Delete by Type > Non-Deformer History: Maya keeps wire1 (moving the curve still deforms the cube). Before step 202 the kit baked the wire's Geometry Nodes modifier into the mesh. Same with a skin on Skin > Normalize Weights > Disable Weight Normalization: the mode must survive.
+- [ ] Constrain > Normal (or Tangent) on a cube to a sphere, then Delete the cube (or Edit > Delete by Type > Constraints): no hidden `pCube1_normalConstraint1Aim` empty must stay in Blender's Outliner (View Layer, hidden objects shown). Fixed in step 202 for kit Delete / Edit > Delete / Delete by Type; Blender's own Outliner Delete and X still leave it (step_202.md 「남은 것」).
+- [ ] With a kit wire deformer / nCloth / nParticles in the scene, hover Select > All by Type > Wires / nCloths / nParticles and Edit > Delete All by Type > Wires: Maya selects / deletes them (step 202; Wires select the curve, not a wire node). Fluids stay greyed.
 - [ ] (step 199) Constrain > Normal: drag the constrained cube over a sphere with a real mouse — it turns to the surface at once, no lag; Skin > Normalize Weights > Disable Weight Normalization, then paint one joint's weight down: that part of the mesh pulls toward the world origin like Maya.
 - [ ] (step 200) Blender 5.2, Maya Workflow Kit layout: dock grey (#444444, Layer Editor list dark), Graph Editor Retime Tool lines / handle, buffer curves and a layered cube's layer curves draw like on 4.5 (step 200 ran 5.x GUI step183 / 187 only).
 
@@ -1337,6 +1336,19 @@ that steps 199 / 200 left without a group.
 - [ ] Curves > Lock Length 뒤 편집 모드에서 CV 하나를 Move 툴로 끌기: 다른 CV 가 따라와 길이가 유지되는지 (끄는 동안 튀지 않는지), Unlock 뒤에는 따라오지 않는지.
 - [ ] CV 하나 선택 → CV Hardness: 그 CV 에서 커브가 꺾이며 지나감; 끝 CV 는 아무 일 없음.
 - [ ] NURBS Plane 선택 → Duplicate Surface Curves: 보이는 isoparm 마다 커브 (2×2 스팬이면 6 개).
-- [ ] Step 209 Reference Editor: File > Reference Editor with two references — click a row (selected highlight), the
+
+### Step 209 — Reference Editor
+
+- [ ] File > Reference Editor with two references — click a row (selected highlight), the
       load check box unloads / loads the objects in the viewport, Reference > Replace Reference opens the file browser
       at the current file, the Namespace field renames the `ns:` objects in the Outliner, Read Only blocks moving them.
+
+### Step 210 — Audit 16 blindspots
+
+Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to show a difference today.
+
+- [ ] Skin a cylinder to two joints, select some vertices, Windows > General Editors > Component Editor: Maya shows an editable skinCluster weight table (type 0.5 in a cell). Today it opens Blender's Spreadsheet (read-only, no skin weights tab); Shape Editor opens the Properties Data tab, Connection Editor / Expression Editor the Drivers editor (NB12).
+- [ ] Windows > Relationship Editors > Light Linking: Maya opens the Light Linking editor like Lighting/Shading > Light Linking Editor does. Today it opens the Properties Object tab instead of the kit's step 179 editor (NB13).
+- [ ] After two Create References with namespaces `prop` / `prop1`, Windows > General Editors > Namespace Editor: Maya lists `:`, `prop`, `prop1` and can rename / merge them. Today the item is greyed (NB14).
+- [ ] pCube1 selected, Ctrl+C then Ctrl+V: Maya pastes `pasted__pCube1`. Today the copy is `pCube1.001` with a `.001` shape (NB15). Also: Create > Sets > Set three times, delete set2, make another set → `set4` if Maya's one-past-the-highest rule (research/maya/re/cmds_201.md §2, measured on transforms / joints / history nodes, not on sets) holds; the kit makes `set2` again. Same for display layers (`layer`N) and animation layers.
+- [ ] Blender 5.2 (and 5.0), Maya Workflow Kit layout: Reference Editor window, Graph Editor pin / kit list, Layer Editor two selected anim layers (dimmed curves), Deform > Tension / Jiggle, UV Editor HUDs, Script Editor `cmds.file(new=True, f=True)` work like on 4.5 — steps 202–209 ran no 5.x headless or GUI files (NB16).
