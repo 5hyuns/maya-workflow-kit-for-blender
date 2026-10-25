@@ -107,6 +107,10 @@ from . import uv_206  # noqa: E402  step 206: UV Editor Cycle / Split / Create S
 
 classes += uv_206.classes
 
+from . import curves_207  # noqa: E402  step 207: Curves > Bend / Curl / Scale Curvature / Lock Length / CV Hardness ...
+
+classes += curves_207.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -162,9 +166,11 @@ def register():
     pins_205.register_handlers()
     deformers_205b.register_handlers()
     deformers_205a.register_handlers()
+    curves_207.register_handlers()
 
 
 def unregister():
+    curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()
     deformers_205b.unregister_handlers()
     pins_205.unregister_handlers()

@@ -963,3 +963,27 @@ def from_blender_grid(rows, order_u, order_v, cyclic_u=False, cyclic_v=False, en
     if pu:
         cvs = cvs + cvs[:du]
     return Surf(cvs, ku, kv, du, dv, pu, pv)
+
+
+# --- Duplicate Surface Curves (curves_201.md §4) --------------------------------------------------------------------
+
+def isoparm(s, direction, t):
+    """The isoparm of ``s`` as a curve: direction "U" = Maya ``u[t]`` (runs along V: CV j = column j's U-curve at t,
+    knots / degree of V), "V" = ``v[t]`` (runs along U). Exact for non-rational surfaces."""
+    nu = len(s.cvs)
+    nv = len(s.cvs[0])
+    if direction == "U":
+        cvs = [cm.evaluate([s.cvs[i][j] for i in range(nu)], s.knots_u, s.degree_u, t) for j in range(nv)]
+        return Crv(cvs, list(s.knots_v), s.degree_v, s.periodic_v)
+    cvs = [cm.evaluate(list(s.cvs[i]), s.knots_v, s.degree_v, t) for i in range(nu)]
+    return Crv(cvs, list(s.knots_u), s.degree_u, s.periodic_u)
+
+
+def visible_isoparms(s):
+    """Maya "Visible surface isoparms" (factory) with the surface selected: every span boundary, ends included, U first."""
+    out = []
+    for direction, knots, degree in (("U", s.knots_u, s.degree_u), ("V", s.knots_v, s.degree_v)):
+        lo, hi = knots[degree - 1], knots[len(knots) - degree]
+        for t in sorted({round(k, 12) for k in knots if lo - 1e-12 <= k <= hi + 1e-12}):
+            out.append((direction, t))
+    return out
