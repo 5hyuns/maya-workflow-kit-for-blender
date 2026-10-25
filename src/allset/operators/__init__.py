@@ -103,6 +103,10 @@ classes += deformers_205b.classes
 from . import deformers_205a  # noqa: E402  step 205 lane A: Tension / Solidify / Sculpt deformers
 classes += deformers_205a.classes
 
+from . import uv_206  # noqa: E402  step 206: UV Editor Cycle / Split / Create Shell (Grid) / Auto Seams / UV sets
+
+classes += uv_206.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

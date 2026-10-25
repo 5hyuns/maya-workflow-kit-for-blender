@@ -400,6 +400,17 @@ MAP = {
     f"{UV}/UV Sets/Copy UVs to UV Set/Copy into New UV Set": "mesh.uv_texture_add",
     f"{UV}/UV Sets/Create Empty UV Set": "mesh.uv_texture_add",
     f"{UV}/UV Sets/Delete Current UV Set": "mesh.uv_texture_remove",
+    # step 206 (; operators/uv_206.py, ui/uv_hud.py)
+    f"{UV}/Cut/Sew/Auto Seams": "allset.uv_auto_seams",
+    f"{UV}/Cut/Sew/Create Shell (Grid)": "allset.uv_grid_shell",
+    f"{UV}/Cut/Sew/Split": "allset.uv_split",
+    f"{UV}/Modify/Cycle": "allset.uv_cycle",
+    f"{UV}/View/Heads-Up Display/Isolate Select": _prop("window_manager.allset_uv_hud_isolate"),
+    f"{UV}/View/Heads-Up Display/UV Position": _prop("window_manager.allset_uv_hud_position"),
+    f"{UV}/View/Heads-Up Display/UV Statistics": _prop("window_manager.allset_uv_hud_statistics"),
+    f"{UV}/UV Sets/Rename Current UV Set...": "allset.uv_set_rename",
+    f"{UV}/UV Sets/Copy UVs to UV Set/map1": ("allset.uv_set_copy_to", {"target": "map1"}),
+    f"{UV}/UV Sets/map1": ("allset.uv_set_current", {"target": "map1"}),
     **_help_menu(UV, "editors/uv/index.html"),
     "UV Toolkit/Help/Help on UV Toolkit": _url(_MANUAL + "modeling/meshes/uv/index.html"),
 }
