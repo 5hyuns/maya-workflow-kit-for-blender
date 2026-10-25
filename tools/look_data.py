@@ -91,14 +91,17 @@ KIT_POINTS = {
     "viewport_border": ("02_cube_selected_move", "gap.outliner_view", 1, 378, 0, "editor gap Outliner | view"),
     "cb_bg": ("11_channel_box", "dock", -75, 303, 2, "Channel Box background right of INPUTS"),
     "cb_field": ("11_channel_box", "dock", -60, 91, 2, "Translate X value field"),
-    "cb_shape_row": ("11_channel_box", "dock", -75, 278, 2, "SHAPES row pCubeShape1 (no row bar: background)"),
-    "cb_input_row": ("11_channel_box", "dock", -60, 343, 2,
-                     "polyCube1 Width field (the kit shows the INPUTS node expanded, Maya a collapsed bar)"),
+    "cb_shape_row": ("11_channel_box", "dock", -75, 267, 2, "SHAPES row pCubeShape1 (step 195: its rename field)"),
+    # Maya's dark bar under polyCube1 is the Channel Box's horizontal scroll bar (#2b2b2b): the kit's Channel Box
+    # never scrolls sideways (step 195; before, the sample hit the theme background next to it)
+    "cb_input_row": (None, "Channel Box horizontal scroll bar under INPUTS (the kit has none)"),
     "layer_editor_list": ("11_channel_box", "dock", 128, -52, 2, "Layer Editor list"),
     "layer_tab_active": ("02_cube_selected_move", "dock", 14, 538, 1, "Display tab (active), left padding"),
     "dock_side_tab_strip": ("11_channel_box", "dock", 0.622, 25, 1,
                             "dock tab row, Attribute Editor tab (kit: tabs on top, Maya: a vertical strip)"),
     "time_slider_bg": ("11_channel_box", "timeline.WINDOW", 0.554, 25, 2, "timeline ruler between two ticks, lower band"),
+    "time_slider_current": ("11_channel_box", "timeline.WINDOW", 32, 28, 1,
+                            "current-time block on frame 1, left of its number, under Blender's frame box (step 195)"),
     "time_field": ("11_channel_box", "timeline.UI", 30, 18, 2, "current frame field (Time Slider row), left of the text"),
     "range_slider_field": ("11_channel_box", "timeline.HEADER", 60, 13, 2, "start frame field, left of the text"),
     "range_slider_bar": ("02_cube_selected_move", "timeline.HEADER", 340, 13, 2, "Range Slider bar (ui/range_bar.py, step 73)"),
@@ -125,7 +128,10 @@ KIT_POINTS = {
 # (viewport background). Shelf strip colours are derived from the theme's Image Editor header (ui/shelf.py): theme.
 KIT_DRAWN = frozenset({"viewport_bg", "range_slider_bar", "range_slider_handle", "marking_menu_box",
                        "marking_menu_list_bg", "hotbox_row_bg",
-                       "time_slider_bg"})   # step 186: the Maya ruler in the Maya layout's Time Slider
+                       "time_slider_bg",    # step 186: the Maya ruler in the Maya layout's Time Slider
+                       "time_slider_current",
+                       # step 195: the Maya docks are lifted to Maya's grey by an additive pass (ui/maya_dock.draw_tint)
+                       "cb_bg", "cb_field", "cb_shape_row", "layer_editor_list"})
 
 
 def source(name):

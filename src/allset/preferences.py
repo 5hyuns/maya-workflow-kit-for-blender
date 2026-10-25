@@ -160,6 +160,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                 if area.type == 'VIEW_3D':
                     area.tag_redraw()
 
+    def _update_dock_colors(self, context):
+        for window in context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'PROPERTIES':
+                    area.tag_redraw()
+
     # Maya wireframe on selected objects over shading (docs/steps/step_47.md).
     maya_selection_wire: bpy.props.BoolProperty(
         name="Selection Wireframe", description="Selected objects show their wireframe over shading, like "
@@ -171,6 +177,11 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Component Colors", description="Mesh edit mode shows Maya's component colors: light blue edges, "
                                               "purple / yellow vertices, orange edges and stippled faces",
         default=True, update=_update_selection_wire)
+    # Maya grey docks (step 195): the dock areas are lifted from the theme's Properties grey to Maya's #444444
+    maya_dock_colors: bpy.props.BoolProperty(
+        name="Dock Colors", description="The Channel Box / Attribute Editor / Modeling Toolkit docks are drawn "
+                                        "in Maya's lighter grey",
+        default=True, update=_update_dock_colors)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
     # Maya in-view messages (inViewMessageEnable 1, research/maya/interaction.md:30; docs/steps/step_72.md).
@@ -333,6 +344,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_view_axis")
         row.prop(self, "maya_selection_wire")
         row.prop(self, "maya_component_colors")
+        box.prop(self, "maya_dock_colors")
         box.prop(self, "in_view_messages")
 
 

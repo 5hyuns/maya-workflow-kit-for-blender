@@ -1261,3 +1261,8 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 
 - [ ] Layered cube (Create Layer from Selected, keys on the layer): clicking AnimLayer1 / BaseAnimation in the Anim tab switches the Graph Editor, Dope Sheet and Time Slider ticks to that layer's keys at once, the cube does not move; layer members show the NLA icon in the Channel Box (Maya teal), channels outside the layer keep red / pink.
 - [ ] Layers > Zero Key Layer and Merge Layers from the Anim tab menu: the cube's motion is unchanged after Merge, undo brings the layer back.
+
+## Step 195
+
+- [ ] Channel Box / Attribute Editor / Modeling Toolkit docks are Maya's lighter grey (#444444) with darker value fields; the Layer Editor list stays dark; hovering / clicking fields, dragging channels and scrolling look right (no grey veil over highlighted rows); Preferences > Dock Colors off brings Blender's grey back.
+- [ ] A custom (lighter or coloured) Blender theme: the docks are not lifted when the theme's Properties grey is already as light as Maya's.

@@ -2,10 +2,15 @@
 
 ## 현재 작업
 
+- Step 195 (Channel Box and Time Slider look, backlog #3) 완료 — `docs/steps/step_195.md`. dock 를 Maya #444444 로 (ADDITIVE 한 겹,
+  Layer Editor 목록 몸통 제외, 설정 `maya_dock_colors`), shape 이름 줄 필드, Time Slider 현재 칸 #525252 (18.4 %). look_compare 1.0
+  kit-drawn 12 / 12 (cb_bg 6.5 → 0.0), 헤드리스 1740 / 1740, GUI 관련 75 / 75, dogfood 48 / 48. **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: step 196 = backlog #4 「Maya option windows for primitives and character sets」.
+
 - Step 194 (Animation layers: keys stay visible, backlog #2) 완료 — `docs/steps/step_194.md`, Maya 측정
   `research/maya/re/anim_layers_193.md`. 레이어 오브젝트의 활성 액션 = 선택 레이어 strip 액션 (influence 0, 평가 차이 0) → Graph
   Editor / Dope Sheet / Time Slider / CB 가 Maya 처럼 선택 레이어를 보임; CB 레이어 멤버 = LAYERED; Zero Key Layer · Merge Layers.
-  헤드리스 1736 / 1736, GUI 관련 33 / 33. **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  헤드리스 1736 / 1736, GUI 관련 33 / 33.
   **바로 다음 할 일**: step 195 = backlog #3 「Channel Box and Time Slider look」 (CB teal 레이어 바탕도).
 
 - Step 193 (RMB flick works when the menu is lifted, backlog #1) 완료 — `docs/steps/step_193.md`. 마킹 메뉴 링은 언제나 누른 점
