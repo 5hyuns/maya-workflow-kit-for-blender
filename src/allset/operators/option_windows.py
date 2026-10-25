@@ -475,6 +475,8 @@ def _extend():
     WINDOWS.extend(option_windows_prims.WINDOWS + option_windows_misc196.WINDOWS)      # step 196
     from . import option_windows_197
     WINDOWS.extend(option_windows_197.WINDOWS)      # step 197: Mesh > Cleanup...
+    from . import option_windows_199
+    WINDOWS.extend(option_windows_199.WINDOWS)      # step 199: Skin / Constrain tools 2
 
 
 _extend()

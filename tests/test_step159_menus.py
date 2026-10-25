@@ -30,9 +30,9 @@ def test_menu_paths_mapped():
     assert m["Deform/Export Weights..."] == "allset.export_deformer_weights"
     assert m["Deform/Import Weights..."] == "allset.import_deformer_weights"
     assert m["Skin/Reset Default Weights"] == "allset.reset_skin_weights"
-    for path in ("Skin/Interactive Bind Skin", "Skin/Export Weight Maps..."):
-        assert path not in m and notices.greyed_notice(path)[0] in ("Bind Skin / Paint Skin Weights",
-                                                                    "Deform > Export / Import Weights")
+    path = "Skin/Interactive Bind Skin"
+    assert path not in m and notices.greyed_notice(path)[0] == "Bind Skin / Paint Skin Weights"
+    assert m["Skin/Export Weight Maps..."] == "allset.export_weight_maps"      # step 199
 
 
 def test_reset_default_weights():
