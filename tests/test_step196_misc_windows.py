@@ -465,8 +465,9 @@ def test_add_influence_window_follows_mayapy():
         ob = _skinned()
         assert run("add_influence", **values) == {'FINISHED'}
         g1, g3 = ob.vertex_groups["joint1"], ob.vertex_groups["joint3"]
-        if case is None:                     # the plain item: weight 0, unlocked (kit; Maya's dropoff not modelled)
-            assert all(g3.weight(i) == 0.0 for i in range(9)) and not g3.lock_weight
+        if case is None:                     # the plain item: weights by distance, unlocked (step 202 checks numbers)
+            ws = [next((g.weight for g in ob.data.vertices[i].groups if g.group == g3.index), 0.0) for i in range(9)]
+            assert max(ws) > 0.5 and not g3.lock_weight, ws
             continue
         w = maya()["mayapy"]["cases"][case]
         assert g3.lock_weight == w["lock_j3"]

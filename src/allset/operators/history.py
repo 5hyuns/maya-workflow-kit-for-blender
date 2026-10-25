@@ -25,6 +25,18 @@ CLUSTERS = {'HOOK'}
 NONLINEARS = {'SIMPLE_DEFORM', 'WAVE', 'CAST'}
 
 
+def is_deformer(md):
+    """``md`` plays a Maya deformer: a DEFORMERS modifier, or a kit Geometry Nodes deformer — the wire
+    (operators/wire_deformer.py, Maya wire) and the skin's weight sum (operators/skin_tools_199.py, part of the
+    skinCluster). Non-Deformer History keeps both like Maya (research/maya/re/options_162.md, step 202 / #109)."""
+    if md.type in DEFORMERS:
+        return True
+    if md.type != 'NODES':
+        return False
+    from . import skin_tools_199, wire_deformer
+    return wire_deformer.is_wire(md) or skin_tools_199.is_part(md)
+
+
 def _bake(context, ob, keep):
     """Replace ``ob``'s mesh with its evaluated result, with the modifiers in ``keep``
     (names) switched off for the evaluation and kept afterwards."""
@@ -81,7 +93,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             baked += 1
             continue
         if not before_only:
-            deformers = {md.name for md in history if md.type in DEFORMERS}
+            deformers = {md.name for md in history if is_deformer(md)}
             if len(deformers) == len(history):
                 continue
             if ob.data.shape_keys:
@@ -92,7 +104,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             continue
         prefix = []
         for md in history:
-            if md.type in DEFORMERS:
+            if is_deformer(md):
                 break
             prefix.append(md.name)
         if not prefix:
@@ -101,7 +113,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             notes.append(f"{ob.name}: has shape keys, modelling modifiers kept")
             continue
         rest = [md.name for md in history if md.name not in prefix]
-        if any(ob.modifiers[n].type not in DEFORMERS for n in rest):
+        if any(not is_deformer(ob.modifiers[n]) for n in rest):
             notes.append(f"{ob.name}: modifiers after a deformer kept")
         _bake(context, ob, keep=set(rest) | preview)
         baked += 1
@@ -148,6 +160,11 @@ TYPES = (
     ('IK_HANDLES', "IK Handles", "Remove the IK constraints and their handle empties"),
     ('NONLINEARS', "Nonlinears", "Remove Simple Deform / Wave / Cast modifiers"),
     ('PARTICLES', "Particles", "Remove particle systems"),
+    # step 202 (#109): the kit's wire / nCloth / nParticle / nRigid nodes (operators/by_type.py)
+    ('WIRES', "Wires", "Remove the kit wire deformers and their base wires (the curves stay)"),
+    ('NCLOTHS', "nCloths", "Remove the cloth from the meshes (the meshes stay)"),
+    ('NPARTICLES', "nParticles", "Remove the nParticle systems (the emitters stay)"),
+    ('NRIGIDS', "nRigids", "Remove the passive colliders (the meshes stay)"),
 )
 _DELETE_OBJECTS = {'JOINTS': lambda o: o.type == 'ARMATURE', 'LATTICES': lambda o: o.type == 'LATTICE',
                    'CAMERAS': lambda o: o.type == 'CAMERA', 'LIGHTS': lambda o: o.type == 'LIGHT',
@@ -166,6 +183,9 @@ def delete_by_type(context, kind, objects):
         if kind == 'CLUSTERS':
             return by_type.delete_clusters(context.scene, objects), []
         return by_type.delete_ik_handles(context.scene), []
+    if kind in ('WIRES', 'NCLOTHS', 'NPARTICLES', 'NRIGIDS'):
+        from . import by_type
+        return by_type.DELETERS[kind](objects), []
     if kind in _DELETE_OBJECTS:
         for ob in [o for o in objects if _DELETE_OBJECTS[kind](o)]:
             bpy.data.objects.remove(ob)
@@ -183,9 +203,14 @@ def delete_by_type(context, kind, objects):
     elif kind == 'STATIC_CHANNELS':
         n = sum(delete_static_channels(ob) for ob in objects)
     elif kind == 'CONSTRAINTS':
+        from . import constrain_199
+        helpers = []
         for ob in objects:
+            # a kit Normal / Tangent constraint's hidden helper empty is part of the constraint node (step 202, #109)
+            helpers += [h for h in (constrain_199.helper_of(c) for c in ob.constraints) if h is not None]
             n += len(ob.constraints)
             ob.constraints.clear()
+        constrain_199.remove_helpers(helpers)
     elif kind == 'MOTION_PATHS':
         targets = [ob for ob in objects if ob.motion_path is not None]
         if targets:

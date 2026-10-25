@@ -51,17 +51,110 @@ def cluster_handles(scene):
     return [ob for ob in scene.objects if ob in handles]
 
 
+# --- step 202 (#109, audit 15 NB9): wires, nCloths, nParticles, nRigids -----------------------------------------
+# Maya (research/maya/runtime_commands.json SelectAllWires:2444 / SelectAllNCloths:2624 / SelectAllNParticles:2637 /
+# SelectAllNRigids:2650, DeleteAllWires:2121 / DeleteAllNCloths:2676 / DeleteAllNParticles:2689 /
+# DeleteAllNRigids:2702): select the wire nodes / the nCloth, nParticle, nRigid transforms; delete the wire nodes,
+# Remove nCloth / nRigid (performRemoveNCloth: the meshes stay) and the nParticle shapes. The kit's nodes:
+# - wire = a kit wire Geometry Nodes modifier (operators/wire_deformer.py); it has no object, so Select picks the
+#   wire curves that drive one (delegated: the curve is what a Maya user grabs to work the wire), Delete removes the
+#   modifiers with their base wires and weights (wire_deformer.remove: the curve stays, measured in step 169);
+# - nCloth = a Cloth modifier, nRigid = a Collision modifier (operators/fx.py ALLSET_OT_fx_ncloth / fx_passive; the
+#   same rule as Modify > Evaluate Nodes, operators/modify_maya.py _set_cloth / _set_nrigid): the meshes carrying one;
+# - nParticle = a particle system whose settings are named ``nParticleN`` (fx._particle_name; modify_maya
+#   _is_nparticle). Maya ``-type particle`` includes nParticles, so Particles keeps finding every particle system.
+
+def _modifiers_of(objects, test):
+    return [(o, m) for o in objects for m in getattr(o, "modifiers", ()) if test(m)]
+
+
+def _carriers(scene, test):
+    return [o for o in scene.objects if any(test(m) for m in getattr(o, "modifiers", ()))]
+
+
+def _is_wire(md):
+    from . import wire_deformer
+    return wire_deformer.is_wire(md)
+
+
+def is_ncloth(md):
+    return md.type == 'CLOTH'
+
+
+def is_nrigid(md):
+    return md.type == 'COLLISION'
+
+
+def is_nparticle(md):
+    ps = getattr(md, "particle_system", None) if md.type == 'PARTICLE_SYSTEM' else None
+    return ps is not None and ps.settings is not None and ps.settings.name.startswith("nParticle")
+
+
+def wire_curves(scene):
+    from . import wire_deformer
+    curves = {wire_deformer.get(md, "Wire") for _o, md in _modifiers_of(scene.objects, _is_wire)}
+    return [ob for ob in scene.objects if ob in curves]
+
+
+def delete_wires(objects):
+    from . import wire_deformer
+    pairs = _modifiers_of(list(objects), _is_wire)
+    for _ob, md in pairs:
+        wire_deformer.remove(md)
+    return len(pairs)
+
+
+def delete_nclothes(objects):
+    from . import fx
+    pairs = _modifiers_of(list(objects), is_ncloth)
+    for ob, md in pairs:
+        ob.modifiers.remove(md)
+        if fx.CLOTH_G_PROP in ob:
+            del ob[fx.CLOTH_G_PROP]
+    return len(pairs)
+
+
+def delete_nrigids(objects):
+    pairs = _modifiers_of(list(objects), is_nrigid)
+    for ob, md in pairs:
+        ob.modifiers.remove(md)
+    return len(pairs)
+
+
+def delete_nparticles(objects):
+    pairs = _modifiers_of(list(objects), is_nparticle)
+    settings = {md.particle_system.settings for _o, md in pairs}
+    for ob, md in pairs:
+        ob.modifiers.remove(md)
+    for s in settings:
+        if s.users == 0:
+            bpy.data.particles.remove(s)
+    return len(pairs)
+
+
+DELETERS = {'WIRES': delete_wires, 'NCLOTHS': delete_nclothes, 'NPARTICLES': delete_nparticles,
+            'NRIGIDS': delete_nrigids}
+
+
 SELECTORS = {
     'IK_HANDLES': ik_handles,
     'CLUSTERS': cluster_handles,
     'PARTICLES': lambda scene: [o for o in scene.objects
                                 if any(m.type == 'PARTICLE_SYSTEM' for m in getattr(o, "modifiers", ()))],
     'RIGID_BODIES': lambda scene: [o for o in scene.objects if o.rigid_body is not None],
+    'WIRES': wire_curves,
+    'NCLOTHS': lambda scene: _carriers(scene, is_ncloth),
+    'NPARTICLES': lambda scene: _carriers(scene, is_nparticle),
+    'NRIGIDS': lambda scene: _carriers(scene, is_nrigid),
 }
 KINDS = (('IK_HANDLES', "IK Handles", "Every IK handle (the empties IK constraints follow)"),
          ('CLUSTERS', "Clusters", "Every cluster handle"),
          ('PARTICLES', "Particles", "Every object with a particle system"),
-         ('RIGID_BODIES', "Rigid Bodies", "Every rigid body"))
+         ('RIGID_BODIES', "Rigid Bodies", "Every rigid body"),
+         ('WIRES', "Wires", "Every curve that drives a wire deformer"),
+         ('NCLOTHS', "nCloths", "Every mesh with cloth"),
+         ('NPARTICLES', "nParticles", "Every object with an nParticle system"),
+         ('NRIGIDS', "nRigids", "Every passive collider"))
 
 
 def select_all(context, kind):

@@ -48,7 +48,9 @@ _DELETE_BY_TYPE = {"History": 'HISTORY', "Non-Deformer History": 'NON_DEFORMER_H
                    "Rigid Bodies": 'RIGID_BODIES'}
 _DELETE_ALL_ONLY = {"Joints": 'JOINTS', "Lattices": 'LATTICES', "Cameras": 'CAMERAS',
                     "Lights": 'LIGHTS', "Image Planes": 'IMAGE_PLANES', "Clusters": 'CLUSTERS', "IK Handles": 'IK_HANDLES',
-                    "Nonlinears": 'NONLINEARS', "Particles": 'PARTICLES'}
+                    "Nonlinears": 'NONLINEARS', "Particles": 'PARTICLES',
+                    # step 202 (#109): the kit's wire / nCloth / nParticle / nRigid nodes (operators/by_type.py)
+                    "Wires": 'WIRES', "nCloths": 'NCLOTHS', "nParticles": 'NPARTICLES', "nRigids": 'NRIGIDS'}
 
 
 def _mod(kind):
@@ -205,7 +207,8 @@ MAP = {
     # step 166: the kit's own IK handles / clusters (operators/by_type.py), particle systems, rigid bodies
     **{f"Select/All by Type/{label}": ("allset.select_all_by_type", {"type": kind})
        for label, kind in (("IK Handles", 'IK_HANDLES'), ("Clusters", 'CLUSTERS'), ("Particles", 'PARTICLES'),
-                           ("Rigid Bodies", 'RIGID_BODIES'))},
+                           ("Rigid Bodies", 'RIGID_BODIES'), ("Wires", 'WIRES'), ("nCloths", 'NCLOTHS'),
+                           ("nParticles", 'NPARTICLES'), ("nRigids", 'NRIGIDS'))},      # step 202: the last four
     "Select/All by Type/Lattices": ("object.select_by_type", {"type": 'LATTICE'}),
     "Select/All by Type/Transforms": ("object.select_by_type", {"type": 'EMPTY'}),
     "Select/All by Type/Geometry": ("object.select_by_type", {"type": 'MESH'}),
