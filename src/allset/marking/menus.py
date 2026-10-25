@@ -935,7 +935,7 @@ SHIFT_UV = MarkingMenu(
         "NE": ("3D Grab UV Tool", GRAB_UV),                                # :38
         "E": ("Sew UVs", "allset.uv_sew"),                               # :54
         "SE": ("Create UV Shell", "allset.uv_create_shell"),             # :64 (step 155)
-        "S": ("Merge UVs", "uv.weld"),                                     # :74
+        "S": ("Merge UVs", "allset.uv_merge"),                                     # :74
         "SW": ("Delete UVs", "allset.uv_delete"),                        # :89 (step 155)
         "W": ("Cut UVs", "allset.uv_cut"),                               # :99
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),     # :108 (step 79)

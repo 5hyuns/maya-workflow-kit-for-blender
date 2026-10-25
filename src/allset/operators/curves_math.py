@@ -510,13 +510,46 @@ def fillet_lines(p0, d0, p1, d1, radius):
     return t1, t2, centre
 
 
-def straighten(cvs):
-    """Maya Straighten: every CV leg keeps its length, laid along the CV0 -> CV1 line."""
+def straighten(cvs, straightness=1.0, preserve_length=True):
+    """Maya Straighten (modifySelectedCurves straighten, ): with Preserve length
+    every CV leg keeps its length and turns towards the CV0 -> CV1 direction by ``straightness`` (1 = on that line);
+    without it each CV moves by ``straightness`` towards the evenly spaced line CV0 -> last CV. Straightness 0 or fewer
+    than 3 CVs (Maya: nothing to do) keep the CVs; with 1 and Preserve length 2 CVs stay as they are too."""
+    cvs = [tuple(c) for c in cvs]
+    if straightness == 0.0 or (len(cvs) < 3 and not (straightness == 1.0 and preserve_length)):
+        return cvs
+    if not preserve_length:
+        n = len(cvs) - 1
+        step = mul(sub(cvs[-1], cvs[0]), 1.0 / n)
+        return [add(mul(add(cvs[0], mul(step, i)), straightness), mul(c, 1.0 - straightness))
+                for i, c in enumerate(cvs)]
     d = unit(sub(cvs[1], cvs[0]))
-    out = [tuple(cvs[0])]
+    out = [cvs[0]]
     for a, b in zip(cvs, cvs[1:]):
-        out.append(add(out[-1], mul(d, norm(sub(b, a)))))
+        leg = sub(b, a)
+        length = norm(leg)
+        if straightness == 1.0 or length < 1e-12:
+            out.append(add(out[-1], mul(d, length)))
+            continue
+        new_dir = add(mul(d, straightness), mul(leg, (1.0 - straightness) / length))
+        k = norm(new_dir)
+        out.append(add(out[-1], mul(new_dir, length / k if k > 1e-12 else 0.0)))
     return out
+
+
+def smooth_cvs(cvs, factor=4):
+    """Maya Curves > Smooth (Modify section; modifySelectedCurves smooth, options_196_misc.md): ``factor`` + 1 passes,
+    each interior CV <- 0.4 x itself + 0.3 x (its neighbours before this pass); the end CVs stay."""
+    pts = [tuple(c) for c in cvs]
+    if len(pts) < 3:
+        return pts
+    for _ in range(int(factor + 1.0)):
+        prev, cur = pts[0], pts[1]
+        for i in range(1, len(pts) - 1):
+            nxt = pts[i + 1]
+            pts[i] = add(mul(cur, 0.4), mul(add(nxt, prev), 0.3))
+            prev, cur = cur, nxt
+    return pts
 
 
 def move_seam(cvs, knots, degree, u):
@@ -614,15 +647,29 @@ def fillet_curves(ca, cb, radius=1.0):
     return fillet(*res)
 
 
-def cut_all(curves):
+def piece_length(cvs, knots, degree, weights=None, n=200):
+    """Polyline length of ``n`` parameter-even samples (picks the longest Cut piece)."""
+    a, b = knots[0], knots[-1]
+    pts = [evaluate(cvs, knots, degree, a + (b - a) * i / n, weights) for i in range(n + 1)]
+    return sum(norm(sub(q, p)) for p, q in zip(pts, pts[1:]))
+
+
+def cut_all(curves, last_only=False, keep_longest=False):
     """Maya Cut (factory: keep all pieces): every curve is split at each crossing with the others.
-    ``curves`` = list of (cvs, knots, degree, weights) -> list per input of its pieces (cvs, knots)."""
+    ``curves`` = list of (cvs, knots, degree, weights) -> list per input of its pieces (cvs, knots).
+    Cut Options (, curves_156.md): ``last_only`` = "Using last curve" (only
+    the crossings with the last curve; the last curve itself stays whole), ``keep_longest`` = "Longest segments" (one
+    piece per curve)."""
     params = [[] for _ in curves]
+    last = len(curves) - 1
     for i in range(len(curves)):
         for j in range(i + 1, len(curves)):
+            if last_only and j != last:
+                continue
             for ua, ub in intersections(curves[i], curves[j], tol=1e-5):
                 params[i].append(ua)
-                params[j].append(ub)
+                if not last_only:
+                    params[j].append(ub)
     result = []
     for (cvs, knots, deg, _w), us in zip(curves, params):
         pieces = []
@@ -633,5 +680,7 @@ def cut_all(curves):
             a, cur = split(cur[0], cur[1], deg, u)
             pieces.append(a)
         pieces.append(cur)
+        if keep_longest and len(pieces) > 1:
+            pieces = [max(pieces, key=lambda p: piece_length(p[0], p[1], deg))]
         result.append(pieces)
     return result

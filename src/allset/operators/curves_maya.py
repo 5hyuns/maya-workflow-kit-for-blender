@@ -9,7 +9,7 @@ curve point) = an exact Bezier decomposition. Blender Bezier input = a cubic B-s
 """
 
 import bpy
-from bpy.props import EnumProperty, FloatProperty, IntProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
 from mathutils import Vector
 
 from .. import undo_steps
@@ -313,17 +313,31 @@ class ALLSET_OT_curve_cut(_CurveOp, bpy.types.Operator):
     bl_idname = "allset.curve_cut"
     bl_label = "Cut Curve"
 
+    # Cut Curve Options (step 196, ): Cut "Using last curve" / Keep "Longest
+    # segments"; the last curve = the active one (Maya's last selected)
+    last_only: BoolProperty(name="Using last curve", default=False, options={'SKIP_SAVE'})
+    keep_longest: BoolProperty(name="Longest segments", default=False, options={'SKIP_SAVE'})
+
     def execute(self, context):
         self._object_mode(context)
         obs = _curves_selected(context)
         if len(obs) < 2:
             self.report({'WARNING'}, "Select two or more crossing curves")
             return {'CANCELLED'}
+        active = context.view_layer.objects.active
+        if self.last_only and active in obs:
+            obs.remove(active)
+            obs.append(active)
         world = [read_spline(o.data.splines[0], o.matrix_world) for o in obs]
-        res = cm.cut_all([c.math() for c in world])
+        res = cm.cut_all([c.math() for c in world], last_only=self.last_only, keep_longest=self.keep_longest)
         cuts = 0
         for ob, c, pieces in zip(obs, world, res):
             if len(pieces) < 2:
+                if self.keep_longest and pieces and (abs(pieces[0][1][0] - c.knots[0]) > 1e-9
+                                                     or abs(pieces[0][1][-1] - c.knots[-1]) > 1e-9):  # longest kept
+                    cuts += 1
+                    ob.data.splines.clear()
+                    write_spline(ob.data, MCurve(*pieces[0], c.degree), ob.matrix_world.inverted())
                 continue
             cuts += len(pieces) - 1
             inv = ob.matrix_world.inverted()
@@ -370,6 +384,10 @@ class ALLSET_OT_curve_straighten(_CurveOp, bpy.types.Operator):
     bl_idname = "allset.curve_straighten"
     bl_label = "Straighten Curve"
 
+    # Straighten Curves Options (step 196): factory Straightness 1, Preserve length on
+    straightness: FloatProperty(name="Straightness", default=1.0, soft_min=0.0, soft_max=2.0, options={'SKIP_SAVE'})
+    preserve_length: BoolProperty(name="Preserve length", default=True, options={'SKIP_SAVE'})
+
     def execute(self, context):
         self._object_mode(context)
         for ob in _curves_selected(context):
@@ -377,7 +395,30 @@ class ALLSET_OT_curve_straighten(_CurveOp, bpy.types.Operator):
             for sp in ob.data.splines:
                 c = read_spline(sp)
                 if not c.periodic and len(c.cvs) >= 2:
-                    c = MCurve(cm.straighten(c.cvs), c.knots, c.degree, c.weights)
+                    c = MCurve(cm.straighten(c.cvs, self.straightness, self.preserve_length), c.knots, c.degree,
+                               c.weights)
+                out.append(c)
+            _replace_splines(ob, out)
+        return {'FINISHED'}
+
+
+@undo_steps.no_redo_panel
+class ALLSET_OT_curve_smooth_curves(_CurveOp, bpy.types.Operator):
+    """Smooth the CVs of the selected curves, ends kept (Maya Curves > Smooth in the Modify section, nHair > Modify
+    Curves > Smooth; factory Smooth factor 4)"""
+    bl_idname = "allset.curve_smooth_curves"
+    bl_label = "Smooth Curves"
+
+    factor: IntProperty(name="Smooth factor", default=4, min=0, soft_min=1, soft_max=100, options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        self._object_mode(context)
+        for ob in _curves_selected(context):
+            out = []
+            for sp in ob.data.splines:
+                c = read_spline(sp)
+                if not c.periodic and len(c.cvs) >= 3:
+                    c = MCurve(cm.smooth_cvs(c.cvs, self.factor), c.knots, c.degree, c.weights)
                 out.append(c)
             _replace_splines(ob, out)
         return {'FINISHED'}
@@ -415,4 +456,5 @@ class ALLSET_OT_curve_move_seam(_CurveOp, bpy.types.Operator):
 
 
 classes = (ALLSET_OT_curve_rebuild, ALLSET_OT_curve_attach, ALLSET_OT_curve_detach, ALLSET_OT_curve_cut,
-           ALLSET_OT_curve_fillet, ALLSET_OT_curve_straighten, ALLSET_OT_curve_move_seam)
+           ALLSET_OT_curve_fillet, ALLSET_OT_curve_straighten, ALLSET_OT_curve_move_seam,
+           ALLSET_OT_curve_smooth_curves)

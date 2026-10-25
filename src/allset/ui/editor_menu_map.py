@@ -275,7 +275,7 @@ MAP = {
                            ("Convert Selection/To UV Edge Loop", 'UV_EDGE_LOOP'))},
     f"{UV}/Cut/Sew/Cut": "allset.uv_cut",
     f"{UV}/Cut/Sew/Sew": "allset.uv_sew",
-    f"{UV}/Cut/Sew/Merge": "uv.weld",
+    f"{UV}/Cut/Sew/Merge": "allset.uv_merge",     # step 196: Maya polyMergeUV
     f"{UV}/Cut/Sew/Move and Sew": "allset.uv_move_sew",      # step 155: 
     f"{UV}/Cut/Sew/Create UV Shell": "allset.uv_create_shell",
     f"{UV}/Cut/Sew/Stitch Together": "uv.stitch",

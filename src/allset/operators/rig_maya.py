@@ -11,6 +11,7 @@ import math
 
 import bmesh
 import bpy
+from bpy.props import BoolProperty, FloatProperty
 from mathutils import Matrix, Vector
 
 from .. import results
@@ -129,16 +130,17 @@ def _with_children(bones):
     return out
 
 
-def set_preferred(bones):
-    """Maya ``joint -e -spa -ch``: preferredAngle = the current rotation, on the joints and their children."""
-    for pb in _with_children(bones):
+def set_preferred(bones, hierarchy=True):
+    """Maya ``joint -e -spa -ch``: preferredAngle = the current rotation, on the joints and their children (option
+    window Options: Selected joint = ``hierarchy`` False, no ``-ch``; )."""
+    for pb in (_with_children(bones) if hierarchy else bones):
         pb[PREFERRED_PROP] = [math.degrees(a) for a in _euler(pb)]
 
 
-def assume_preferred(bones):
+def assume_preferred(bones, hierarchy=True):
     """Maya ``joint -e -apa -ch``: rotation = preferredAngle (joints without one keep their rotation)."""
     from mathutils import Euler
-    for pb in _with_children(bones):
+    for pb in (_with_children(bones) if hierarchy else bones):
         if PREFERRED_PROP in pb:
             d = pb[PREFERRED_PROP]
             _set_euler(pb, Euler([math.radians(a) for a in d], _euler(pb).order))
@@ -164,8 +166,10 @@ class ALLSET_OT_set_preferred_angle(_PoseBones, bpy.types.Operator):
     bl_label = "Set Preferred Angle"
     bl_options = {'REGISTER', 'UNDO'}
 
+    hierarchy: BoolProperty(name="Hierarchy", default=True, options={'SKIP_SAVE', 'HIDDEN'})    # Maya factory
+
     def execute(self, context):
-        set_preferred(self.bones(context))
+        set_preferred(self.bones(context), self.hierarchy)
         results.result(self, PREFERRED_NOTE)
         return {'FINISHED'}
 
@@ -176,8 +180,10 @@ class ALLSET_OT_assume_preferred_angle(_PoseBones, bpy.types.Operator):
     bl_label = "Assume Preferred Angle"
     bl_options = {'REGISTER', 'UNDO'}
 
+    hierarchy: BoolProperty(name="Hierarchy", default=True, options={'SKIP_SAVE', 'HIDDEN'})
+
     def execute(self, context):
-        assume_preferred(self.bones(context))
+        assume_preferred(self.bones(context), self.hierarchy)
         return {'FINISHED'}
 
 
@@ -311,15 +317,25 @@ def normalize(mesh, groups=None):
                 g.weight /= total
 
 
-def add_influence(mesh, bone_names):
-    """Each joint becomes an influence with weight 0 on every vertex (Maya Add Influence default)."""
+def add_influence(mesh, bone_names, lock=False, weight=0.0):
+    """Each joint becomes an influence with weight 0 on every vertex (Maya Add Influence default). Option window
+    Lock weights (step 196, , Maya): the new influence weighs ``weight`` on every
+    vertex, the other influences are scaled by 1 - weight, and it is locked (Blender's vertex group lock)."""
     added = []
     all_verts = [v.index for v in mesh.data.vertices]
+    w = min(max(weight, 0.0), 1.0) if lock else 0.0
     for name in bone_names:
         if name in mesh.vertex_groups:
             continue
+        if w > 0.0:
+            idx = {g.index for g in _influence_groups(mesh)}
+            for v in mesh.data.vertices:
+                for g in v.groups:
+                    if g.group in idx:
+                        g.weight *= 1.0 - w
         g = mesh.vertex_groups.new(name=name)
-        g.add(all_verts, 0.0, 'REPLACE')
+        g.add(all_verts, w, 'REPLACE')
+        g.lock_weight = lock
         added.append(name)
     return added
 
@@ -365,12 +381,16 @@ class ALLSET_OT_add_influence(bpy.types.Operator):
     bl_label = "Add Influence"
     bl_options = {'REGISTER', 'UNDO'}
 
+    lock_weights: BoolProperty(name="Lock weights", default=False, options={'SKIP_SAVE', 'HIDDEN'})
+    default_weight: FloatProperty(name="Default weight", default=0.0, min=0.0, max=1.0,
+                                  options={'SKIP_SAVE', 'HIDDEN'})
+
     def execute(self, context):
         meshes, names = _skinned(context), _selected_bone_names(context)
         if not meshes or not names:
             self.report({'WARNING'}, "Select the skinned mesh and the joints to add")
             return {'CANCELLED'}
-        added = [n for m in meshes for n in add_influence(m, names)]
+        added = [n for m in meshes for n in add_influence(m, names, self.lock_weights, self.default_weight)]
         results.result(self, f"Added {', '.join(added) or 'nothing (already influences)'}")
         return {'FINISHED'}
 

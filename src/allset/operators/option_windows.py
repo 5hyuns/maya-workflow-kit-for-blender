@@ -471,6 +471,8 @@ def _extend():
                    + option_windows_visualize.WINDOWS   # step 171
                    + option_windows_surfaces.WINDOWS    # step 181
                    + option_windows_mesh_display.WINDOWS)   # step 189
+    from . import option_windows_misc196, option_windows_prims
+    WINDOWS.extend(option_windows_prims.WINDOWS + option_windows_misc196.WINDOWS)      # step 196
 
 
 _extend()

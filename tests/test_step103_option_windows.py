@@ -77,8 +77,9 @@ def test_windows_registered_with_maya_titles_and_buttons():
             assert getattr(bpy.ops.allset, "opt_" + w.key) and w.action, w.key
             continue
         # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140);
-        # two Render windows carry Maya's own titles (step 152, )
-        assert (w.title.endswith(("Options", "Tool"))
+        # two Render windows carry Maya's own titles (step 152, ); the arc tools'
+        # boxes open Maya's Tool Settings "Three / Two Point Arc Settings" (step 196, )
+        assert (w.title.endswith(("Options", "Tool", "Arc Settings"))
                 or w.title in ("Render Sequence (Current Frame)", "Batch Render Frame")) and w.action, w.key
         rna = getattr(bpy.ops.allset, "opt_" + w.key).get_rna_type()
         for f in w.fields:
