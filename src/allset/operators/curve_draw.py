@@ -90,17 +90,20 @@ class Drawing:
         return len(self.points) >= needed(self.kind, self.degree)
 
 
-def make(context, kind, points, degree=3):
-    """Make the Maya curve for the clicked ``points`` through curves_maya; named ``curveN``."""
+def make(context, kind, points, degree=3, sections=8):
+    """Make the Maya curve for the clicked ``points`` through curves_maya; named ``curveN``. Arcs: Maya's Arc
+    Settings degree 1 / 3 and sections (factory 3 / 8, research/maya/re/options_196_misc.md)."""
     pts = [Vector(p) for p in points]
     if kind == CV:
         ob = curves_maya.make_cv_curve(context, pts, degree)
     elif kind == EP:
         ob = curves_maya.make_ep_curve(context, pts, degree)
-    elif kind == ARC3:
-        ob = curves_maya.make_arc3(context, pts[0], pts[1], pts[2])
     else:
-        ob = curves_maya.make_arc2(context, pts[0], pts[1])
+        kw = {} if (degree, sections) == (3, 8) else {"sections": sections, "degree": degree}   # factory: as before
+        if kind == ARC3:
+            ob = curves_maya.make_arc3(context, pts[0], pts[1], pts[2], **kw)
+        else:
+            ob = curves_maya.make_arc2(context, pts[0], pts[1], **kw)
     if ob is not None:
         naming.apply_maya_name(ob, "curve")
     return ob
@@ -205,6 +208,9 @@ class _CurveDrawTool:
     def _degree(self):
         return 3
 
+    def _sections(self):
+        return 8
+
     def execute(self, context):
         """Without clicks (scripts; a background INVOKE runs this): the curve through ``points`` (JSON world points)."""
         try:
@@ -216,7 +222,8 @@ class _CurveDrawTool:
             return {'CANCELLED'}
         if context.active_object is not None and context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
-        ob = make(context, self.kind, pts[:needed(self.kind)] if auto_finish(self.kind) else pts, self._degree())
+        ob = make(context, self.kind, pts[:needed(self.kind)] if auto_finish(self.kind) else pts, self._degree(),
+                  self._sections())
         return {'FINISHED'} if ob is not None else {'CANCELLED'}
 
     def invoke(self, context, event):
@@ -313,7 +320,7 @@ class _CurveDrawTool:
         with context.temp_override(**override):
             if context.active_object is not None and context.mode != 'OBJECT':
                 bpy.ops.object.mode_set(mode='OBJECT')
-            ob = make(context, self.kind, pts, d.degree)
+            ob = make(context, self.kind, pts, d.degree, self._sections())
         if ob is None:
             return {'CANCELLED'}
         LAST.update(kind=self.kind, points=[p.copy() for p in pts])
@@ -355,6 +362,15 @@ class ALLSET_OT_arc3_tool(_CurveDrawTool, bpy.types.Operator):
     bl_options = {'UNDO'}
     kind = ARC3
 
+    degree: IntProperty(name="Circular arc degree", default=3, min=1, max=3)   # Maya: 1 Linear / 3
+    sections: IntProperty(name="Sections", default=8, min=4, max=200)
+
+    def _degree(self):
+        return 1 if self.degree < 3 else 3
+
+    def _sections(self):
+        return self.sections
+
 
 class ALLSET_OT_arc2_tool(_CurveDrawTool, bpy.types.Operator):
     """Maya Two Point Circular Arc: click the start and the end"""
@@ -362,6 +378,15 @@ class ALLSET_OT_arc2_tool(_CurveDrawTool, bpy.types.Operator):
     bl_label = "Two Point Circular Arc"
     bl_options = {'UNDO'}
     kind = ARC2
+
+    degree: IntProperty(name="Circular arc degree", default=3, min=1, max=3)
+    sections: IntProperty(name="Sections", default=8, min=4, max=200)
+
+    def _degree(self):
+        return 1 if self.degree < 3 else 3
+
+    def _sections(self):
+        return self.sections
 
 
 classes = (ALLSET_OT_cv_curve_tool, ALLSET_OT_ep_curve_tool, ALLSET_OT_arc3_tool, ALLSET_OT_arc2_tool)

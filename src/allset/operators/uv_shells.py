@@ -12,7 +12,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, FloatProperty
 from mathutils import Vector
 
 from .. import compat, undo_steps
@@ -597,6 +597,65 @@ class ALLSET_OT_uv_delete(_ShellOp, bpy.types.Operator):
         return delete_uvs(delete_faces(bm, uv, synced, context.scene.tool_settings.uv_select_mode), uv)
 
 
-classes = (ALLSET_OT_uv_stack, ALLSET_OT_uv_orient_shells, ALLSET_OT_uv_orient_edges, ALLSET_OT_uv_snap_stack,
+def merge_points(pts, uv, distance):
+    """Maya Merge UVs (polyMergeUV -d, research/maya/re/options_196_misc.md, mayapy): among the given UVs (lists of
+    loops), UVs **of the same vertex** closer than ``distance`` (chains included) move to their average; UVs of
+    different vertices never merge. Returns how many UVs went away."""
+    by_vert = {}
+    for pt in pts:
+        by_vert.setdefault(pt[0].vert.index, []).append(pt)
+    gone = 0
+    for group in by_vert.values():
+        if len(group) < 2:
+            continue
+        cos = [pt[0][uv].uv.copy() for pt in group]
+        parent = list(range(len(group)))
+
+        def root(i):
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                if (cos[i] - cos[j]).length <= distance + 1e-12:
+                    parent[root(i)] = root(j)
+        clusters = {}
+        for i in range(len(group)):
+            clusters.setdefault(root(i), []).append(i)
+        for members in clusters.values():
+            if len(members) < 2:
+                continue
+            mean = sum((cos[i] for i in members), Vector((0.0, 0.0))) / len(members)
+            for i in members:
+                _set_pt(group[i], uv, mean)
+            gone += len(members) - 1
+    return gone
+
+
+def _set_pt(pt, uv, p):
+    for loop in pt:
+        loop[uv].uv = p
+
+
+@undo_steps.no_redo_panel
+class ALLSET_OT_uv_merge(_ShellOp, bpy.types.Operator):
+    """Merge the selected UVs of each vertex that lie within the threshold (Maya UV > Merge UVs; factory 0.01)"""
+    bl_idname = "allset.uv_merge"
+    bl_label = "Merge UVs"
+    empty = "Select UVs to merge"
+
+    distance: FloatProperty(name="Threshold", default=0.01, min=0.0, soft_max=1.0, options={'SKIP_SAVE'})
+
+    def run(self, context, bm, uv, synced):
+        pts = selected_points(bm, uv, synced)
+        if not pts:
+            return 0
+        merge_points(pts, uv, self.distance)
+        return len(pts)
+
+
+classes = (ALLSET_OT_uv_merge, ALLSET_OT_uv_stack, ALLSET_OT_uv_orient_shells, ALLSET_OT_uv_orient_edges, ALLSET_OT_uv_snap_stack,
            ALLSET_OT_uv_snap_together, ALLSET_OT_uv_distribute, ALLSET_OT_uv_normalize, ALLSET_OT_uv_unstack,
            ALLSET_OT_uv_move_sew, ALLSET_OT_uv_create_shell, ALLSET_OT_uv_delete)

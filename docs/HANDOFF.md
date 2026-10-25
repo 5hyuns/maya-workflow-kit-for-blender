@@ -2,9 +2,15 @@
 
 ## 현재 작업
 
+- Step 196 (Maya option windows for primitives and character sets, backlog #4, Issue #103) 완료 — `docs/steps/step_196.md`.
+  새 Maya 옵션 창 34 개 (`option_windows_prims.py` 19: Polygon 11 + NURBS 8, `option_windows_misc196.py` 15: Character Set, Curves, arc,
+  Merge UVs, Contour Stretch, Preferred Angle, Add Influence), Curves > Smooth / Merge UVs 그냥 클릭도 Maya 규칙. window 120 → 158,
+  redo 127 → 104, generic 34 → 19. 헤드리스 1763 + 고친 파일 34 / 34, GUI 관련 65 / 65. **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: step 197 = backlog #5 「Small Maya polish batch」 (Issue #104).
+
 - Step 195 (Channel Box and Time Slider look, backlog #3) 완료 — `docs/steps/step_195.md`. dock 를 Maya #444444 로 (ADDITIVE 한 겹,
   Layer Editor 목록 몸통 제외, 설정 `maya_dock_colors`), shape 이름 줄 필드, Time Slider 현재 칸 #525252 (18.4 %). look_compare 1.0
-  kit-drawn 12 / 12 (cb_bg 6.5 → 0.0), 헤드리스 1740 / 1740, GUI 관련 75 / 75, dogfood 48 / 48. **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  kit-drawn 12 / 12 (cb_bg 6.5 → 0.0), 헤드리스 1740 / 1740, GUI 관련 75 / 75, dogfood 48 / 48.
   **바로 다음 할 일**: step 196 = backlog #4 「Maya option windows for primitives and character sets」.
 
 - Step 194 (Animation layers: keys stay visible, backlog #2) 완료 — `docs/steps/step_194.md`, Maya 측정

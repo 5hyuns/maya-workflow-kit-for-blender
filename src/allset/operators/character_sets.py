@@ -20,7 +20,7 @@ picked (6).
 """
 
 import bpy
-from bpy.props import BoolProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
 
@@ -156,15 +156,25 @@ def node_paths(node, keys):
             yield node.id_data, full, idx
 
 
-def create_keys(node):
-    """Maya factory Create Character Set attributes of one node: keyable, not Scale / Visibility."""
+def create_keys(node, excluded=EXCLUDED_KINDS):
+    """Maya Create Character Set attributes of one node: keyable, not the ``excluded`` kinds (factory: Scale /
+    Visibility; the option window's All keyable except: LOC / ROT / SCALE / VIS / CUSTOM = Dynamic, step 196)."""
     cb = _cb()
     keys = []
     for key in cb._visible_channels(node):
         kind = cb.MAIN_BY_KEY[key][4] if key in cb.MAIN_BY_KEY else "CUSTOM"
-        if kind not in EXCLUDED_KINDS and cb.is_keyable(node, key):
+        if kind not in excluded and cb.is_keyable(node, key):
             keys.append(key)
     return keys
+
+
+def unique_name(taken, name, base):
+    """Maya node naming for the window's Name: the name itself while free, else its stem counting up from 1
+    (``hero`` -> ``hero1``, ``character1`` -> ``character2``; research/maya/re/options_196_misc.md)."""
+    name = name.strip() or f"{base}1"
+    if name not in taken:
+        return name
+    return next_name(taken, name.rstrip("0123456789") or base)
 
 
 def _has(ks, idb, data_path, index):
@@ -188,13 +198,27 @@ def remove_members(ks, triples):
     return len(gone)
 
 
-def new_character(scene, base, nodes):
-    name = next_name({ks.bl_label for ks in scene.keying_sets}, base)
+def new_character(scene, base, nodes, name="", keys_of=None):
+    """A new character set ``name`` (empty = ``<base>N``) of ``nodes``; ``keys_of(node)`` -> Channel Box keys
+    (default: the factory attribute rule)."""
+    taken = {ks.bl_label for ks in scene.keying_sets}
+    name = unique_name(taken, name, base) if name else next_name(taken, base)
     ks = scene.keying_sets.new(idname="", name=name)
     ks.bl_label = name
     for node in nodes:
-        add_members(ks, node_paths(node, create_keys(node)))
+        add_members(ks, node_paths(node, (keys_of or create_keys)(node)))
     return ks
+
+
+def _hierarchy(nodes):
+    """Maya Include: Hierarchy below selected node — the nodes and everything under them, each once."""
+    out, seen = [], set()
+    for node in nodes:
+        for n in (node, *getattr(node, "children_recursive", ())):
+            if n.as_pointer() not in seen:
+                seen.add(n.as_pointer())
+                out.append(n)
+    return out
 
 
 def picked(context):
@@ -254,6 +278,31 @@ class ALLSET_OT_character_create(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     sub: BoolProperty(name="Subcharacter", default=False, options={'SKIP_SAVE'})
+    # Create (Sub)character Set Options (step 196, research/maya/re/options_196_misc.md); defaults = Maya factory
+    character_name: StringProperty(name="Name", default="", options={'SKIP_SAVE'},
+                         description="Empty: character1 / subCharacter1, counting up")
+    attributes: EnumProperty(name="Include", items=[('ALL', "All keyable", ""),
+                                                    ('CHANNEL_BOX', "From Channel Box", ""),
+                                                    ('EXCEPT', "All keyable except", "")],
+                             default='EXCEPT', options={'SKIP_SAVE'})
+    exclude_translate: BoolProperty(name="Translate", default=False, options={'SKIP_SAVE'})
+    exclude_rotate: BoolProperty(name="Rotate", default=False, options={'SKIP_SAVE'})
+    exclude_scale: BoolProperty(name="Scale", default=True, options={'SKIP_SAVE'})
+    exclude_visibility: BoolProperty(name="Visibility", default=True, options={'SKIP_SAVE'})
+    exclude_dynamic: BoolProperty(name="Dynamic", default=False, options={'SKIP_SAVE'})
+    hierarchy: BoolProperty(name="Hierarchy below selected node", default=False, options={'SKIP_SAVE'})
+
+    def _keys_of(self, context):
+        if self.attributes == 'CHANNEL_BOX':
+            cb = _cb()
+            picked = cb.selected_channels(context)
+            return lambda node: [k for k in picked if cb.has_channel(node, k)]
+        excluded = ()
+        if self.attributes == 'EXCEPT':
+            excluded = tuple(kind for kind, on in (("LOC", self.exclude_translate), ("ROT", self.exclude_rotate),
+                                                   ("SCALE", self.exclude_scale), ("VIS", self.exclude_visibility),
+                                                   ("CUSTOM", self.exclude_dynamic)) if on)
+        return lambda node: create_keys(node, excluded)
 
     def execute(self, context):
         scene = context.scene
@@ -263,7 +312,10 @@ class ALLSET_OT_character_create(bpy.types.Operator):
                 self.report({'ERROR'}, MSG_SUB_NEED)
                 return {'CANCELLED'}
         nodes = selected_nodes(context)
-        ks = new_character(scene, "subCharacter" if self.sub else "character", nodes)
+        if self.hierarchy and self.attributes != 'CHANNEL_BOX':     # Maya: hierarchy is off with From Channel Box
+            nodes = _hierarchy(nodes)
+        ks = new_character(scene, "subCharacter" if self.sub else "character", nodes, self.character_name,
+                           self._keys_of(context))
         if self.sub:
             _set_parent(scene, ks.bl_label, cur.bl_label)
             set_current(scene, cur)          # keying_sets.new() makes the new set active; Maya keeps the current

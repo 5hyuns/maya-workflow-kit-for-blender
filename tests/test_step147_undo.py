@@ -78,7 +78,7 @@ def test_shelf_and_marking_runs_are_undo_steps_too():
 def test_redo_option_box_registers_its_operator():
     # option box kind "redo" = run + Adjust Last Operation: the operator must be registered for the panel
     menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
-    path = "Create/NURBS Primitives/Circle"
+    path = "Create/Lights/Point Light"      # step 196: the NURBS primitives open Maya windows now
     assert menu_sets.option_kind(path) == "redo"
     _start()
     before = _names()

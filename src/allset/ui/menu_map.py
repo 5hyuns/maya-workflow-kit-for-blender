@@ -359,7 +359,7 @@ MAP = {
     # --- Curves ---
     "Curves/Open/Close": "curve.cyclic_toggle",
     "Curves/Insert Knot": "curve.subdivide",
-    "Curves/Smooth": "curve.smooth",
+    "Curves/Smooth": "allset.curve_smooth_curves",    # Maya smoothCurve on CVs, ends kept (step 196)
     "Curves/Reverse Direction": "curve.switch_direction",
     # --- Deform (Modeling, Rigging, Animation share it) ---
     "Deform/Blend Shape": "allset.blend_shape",          # targets, then the base (join_shapes, step 62)
@@ -384,7 +384,7 @@ MAP = {
     "UV/Cut UV Edges": "allset.uv_cut",          # seam + shells apart in place (step 66)
     "UV/Sew UV Edges": "allset.uv_sew",
     "UV/3D Cut and Sew UV Tool": "allset.cut_sew_tool_set",   # step 79          # seam cleared + the smaller shell moved onto the edge
-    "UV/Merge UVs": "uv.weld",
+    "UV/Merge UVs": "allset.uv_merge",     # Maya polyMergeUV: per vertex within 0.01 (step 196)
     # --- Skeleton (Rigging) ---
     # step 187: Maya Character Sets on Blender Keying Sets (operators/character_sets.py)
     "Control/Create Character Set": "allset.character_create",

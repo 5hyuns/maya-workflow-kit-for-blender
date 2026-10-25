@@ -1266,3 +1266,8 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 
 - [ ] Channel Box / Attribute Editor / Modeling Toolkit docks are Maya's lighter grey (#444444) with darker value fields; the Layer Editor list stays dark; hovering / clicking fields, dragging channels and scrolling look right (no grey veil over highlighted rows); Preferences > Dock Colors off brings Blender's grey back.
 - [ ] A custom (lighter or coloured) Blender theme: the docks are not lifted when the theme's Properties grey is already as light as Maya's.
+
+## Step 196
+
+- [ ] Create > Polygon Primitives > Gear / Pipe / Super Ellipse ❒ and NURBS Primitives > Sphere ❒: Maya's window opens, Create / Apply build the shape with the typed values, Save Settings makes the plain menu click use them; Control > Create Character Set ❒ names the set and its attributes.
+- [ ] Curves > Smooth and UV > Merge UVs from the menu feel like Maya (ends kept / UVs of one vertex merged, not every UV to one point).
