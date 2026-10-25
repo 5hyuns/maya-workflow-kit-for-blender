@@ -125,10 +125,11 @@ def set_key(context, breakdown=False, channels=""):
     (Shift+W / E / R) keys only those. Count of channels keyed."""
     scene = context.scene
     keytype = 'BREAKDOWN' if breakdown else 'KEYFRAME'
-    if (not channels and scene.keying_sets.active is not None and not breakdown
-            and bpy.ops.anim.keyframe_insert.poll()):
-        bpy.ops.anim.keyframe_insert()
-        return len(scene.keying_sets.active.paths)
+    if not channels and not breakdown and scene.keying_sets.active is not None:
+        # Maya: with a current character set, S keys that character's attributes (and its subcharacters'),
+        # whatever is selected (step 187,  rule 3)
+        from . import character_sets
+        return character_sets.key_current(context, keytype)
     only = CHANNEL_SETS.get(channels)
     from ..ui import cb_channels
     count = 0

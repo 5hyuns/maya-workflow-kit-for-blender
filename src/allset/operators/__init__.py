@@ -73,6 +73,10 @@ from . import surfaces_maya  # noqa: E402  step 181: Maya Surfaces menu on NURBS
 
 classes += surfaces_maya.classes
 
+from . import character_sets  # noqa: E402  step 187: Maya Character Sets on Keying Sets
+
+classes += character_sets.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -117,9 +121,11 @@ def register():
     modify_maya.register_props()
     anim_snapshot.register_handlers()
     repeat_maya.register_handlers()
+    character_sets.register_props()
 
 
 def unregister():
+    character_sets.unregister_props()
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
