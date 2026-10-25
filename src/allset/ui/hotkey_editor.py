@@ -459,7 +459,7 @@ def _details(layout, context, row):
         col.label(text=f"Kit: {idname}" + (f"({args})" if args else "") + f"  in  {km_name}")
     else:
         col.label(text=f"Kit: {row['status_text']}" + (f" (step {row['step']})" if row["step"] else ""))
-    if row["note"]:
+    if row["note"] and row["note"].isascii():     # mapping.py notes are partly Korean dev notes: not shown
         col.label(text=row["note"])
     if not row["editable"]:
         return

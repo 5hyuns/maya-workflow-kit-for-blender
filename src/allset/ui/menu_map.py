@@ -305,7 +305,7 @@ MAP = {
     **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "ALLSET_MT_ui_elements"),
     # Settings/Preferences submenu ($M/scripts/startup/WindowMenu.mel:741 buildSettingsMenu; step 120)
-    "Windows/Settings/Preferences/Preferences": "screen.userpref_show",
+    "Windows/Settings/Preferences/Preferences": "allset.maya_preferences",   # step 215: kit window
     "Windows/Settings/Preferences/Hotkey Editor": "allset.hotkey_editor",   # step 215: Maya list + kit keys
     "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
     "Windows/Settings/Preferences/Plug-in Manager": ("screen.userpref_show", {"section": 'ADDONS'}),
