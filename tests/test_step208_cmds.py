@@ -129,6 +129,9 @@ def snapshot():
             "history": history}
 
 
+_BG_DIRTY = [True]
+
+
 def run_case(name):
     """(R, scene snapshot, error text) of one case run through the Command Line runner."""
     runner.reset()
@@ -139,6 +142,8 @@ def run_case(name):
     ns = runner.namespace()
     ns["TMP"] = TMP.as_posix()
     ns.pop("R", None)
+    if name == "new_scene_unsaved":
+        _BG_DIRTY[0] = bool(bpy.data.is_dirty)        # what this Blender's -b says right after File > New
     res = runner.run(truth.CASES[name], remember=False)
     return _plain(runner.namespace().get("R")), snapshot(), (res.text if res.error else "")
 
@@ -155,6 +160,10 @@ def compare(name):
         if f"R{i}" in dev:
             expected[i] = dev[f"R{i}"]
     skip = set(dev.get("skip", ()))
+    if name == "new_scene_unsaved" and not _BG_DIRTY[0]:
+        # Blender 5.2 in -b reports neither the home file nor scripted edits as modified (step 212), so -new raises
+        # nothing here; the unsaved-changes rule is checked in the GUI (gui_step208_script_editor)
+        skip |= {"R0", "R1"}
     fix = dev.get("map", lambda v: v)
     for i, (a, b) in enumerate(zip(expected, R or [])):
         if f"R{i}" in skip:
@@ -239,7 +248,7 @@ def test_errors_like_maya():
             (lambda: cmds.parent(a), RuntimeError, "Not enough"),
             (lambda: cmds.group(a, bogus=1), TypeError, "Invalid flag"),
             (lambda: cmds.file("nope.ma", open=True, force=True), RuntimeError, "not found"),
-            (lambda: cmds.file(new=True), RuntimeError, "Unsaved changes"),
+            *([(lambda: cmds.file(new=True), RuntimeError, "Unsaved changes")] if bpy.data.is_dirty else []),
             (lambda: cmds.playbackOptions(q=True), TypeError, "needs"),
             (lambda: cmds.addAttr(a, ln="w", at="matrix"), RuntimeError, "not supported")):
         try:

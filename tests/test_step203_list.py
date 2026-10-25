@@ -167,12 +167,13 @@ def test_loaded_joints_only():
     for name in ("joint1", "joint2"):
         arm.pose.bones[name].keyframe_insert("location", index=0, frame=1)
     _select(arm)
+    cb = import_module(kit.MODULE + ".ui.channel_box")      # Bone.select is gone in 5.x: the kit shim
     for pb in arm.pose.bones:
-        pb.bone.select = pb.name == "joint1"
+        cb.set_bone_selected(pb, pb.name == "joint1")
     sp = _space()
     chrome.load_selected(bpy.context, sp)
     for pb in arm.pose.bones:
-        pb.bone.select = pb.name == "joint2"
+        cb.set_bone_selected(pb, pb.name == "joint2")
     joints = [n.name for k, n, _c in chrome.listed_nodes(bpy.context, sp) if k == "JOINT"]
     bpy.ops.object.mode_set(mode='OBJECT')
     assert joints == ["joint1"], joints
