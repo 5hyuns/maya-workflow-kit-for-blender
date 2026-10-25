@@ -96,6 +96,8 @@ from . import graph_curves_203  # noqa: E402  step 203: Graph Editor curve comma
 classes += graph_curves_203.classes
 from . import anim_layers_204  # noqa: E402  step 204: animation layers 4
 classes += anim_layers_204.classes
+from . import pins_205  # noqa: E402  step 205 lane P: UV / Proximity Pin, intermediate objects, wrap influences
+classes += pins_205.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -149,9 +151,11 @@ def register():
     skin_tools_199.register_handlers()
     constrain_199.register_handlers()
     graph_curves_203.register_handlers()
+    pins_205.register_handlers()
 
 
 def unregister():
+    pins_205.unregister_handlers()
     graph_curves_203.unregister_handlers()
     constrain_199.unregister_handlers()
     skin_tools_199.unregister_handlers()

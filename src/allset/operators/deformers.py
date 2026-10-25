@@ -53,8 +53,12 @@ def node_type(md):
 
 def is_base(md):
     """The Hook that carries a kit lattice's / wrap influence's transform (``ffd1Base``, ``wrap1Base``, see
-    ``_base_hook``): part of that node, not an INPUTS node of its own."""
-    return md.type == 'HOOK' and re.match(r"^(ffd|wrap|proximityWrap)\d+Base$", md.name) is not None
+    ``_base_hook``), or a wrap's extra influence ``wrap1Influence2`` + its Hook ``wrap1Influence2Base`` (step 205,
+    operators/pins_205.py): part of that node, not an INPUTS node of its own."""
+    if md.type == 'SURFACE_DEFORM':
+        return re.match(r"^wrap\d+Influence\d+$", md.name) is not None
+    return md.type == 'HOOK' and re.match(r"^((ffd|wrap|proximityWrap)\d+|wrap\d+Influence\d+)Base$",
+                                          md.name) is not None
 
 
 def _taken():
