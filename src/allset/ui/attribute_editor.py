@@ -555,11 +555,46 @@ def draw_extrude_history(layout, context, rec):
         split.prop(hist, f"{field}_text", text="")
 
 
+BUTTON_PAD = 16     # px a button adds around its text at UI scale 1 (Blender's widget padding, checked on shots)
+
+
+def wrap_rows(context, labels):
+    """``labels`` split into rows that each fit the region, so no tab / button text is cut ("pCubeS...", step 192
+    dogfood, #104). Maya's AE is wider (460 px) and scrolls its tab bar; the kit dock can be narrower (event-simulated
+    sessions don't fit it, users can drag it): the row wraps like the menu bar above (delegated). Without a region
+    (tests with a fake layout) one row."""
+    region = getattr(context, "region", None)
+    if region is None or region.width <= 1 or not labels:
+        return [list(range(len(labels)))]
+    scale = context.preferences.system.ui_scale or 1.0
+    from . import maya_dock
+    avail = region.width - 20 * scale - maya_dock.area_reserved_px(context)
+    try:
+        import blf
+        blf.size(0, 11 * scale)
+        widths = [blf.dimensions(0, t)[0] + BUTTON_PAD * scale for t in labels]
+    except Exception:
+        widths = [(len(t) * 7 + BUTTON_PAD) * scale for t in labels]
+    rows, cur, used = [], [], 0.0
+    for i, w in enumerate(widths):
+        if cur and used + w > avail:
+            rows.append(cur)
+            cur, used = [], 0.0
+        cur.append(i)
+        used += w
+    rows.append(cur)
+    return rows
+
+
 def draw_tab_strip(layout, context, ob, current):
-    row = layout.row(align=True)
-    for key, label, _type in tabs(ob):
-        op = row.operator("allset.ae_tab", text=label, depress=(key == current))
-        op.key = key
+    items = tabs(ob)
+    col = layout.column(align=True)
+    for idx in wrap_rows(context, [label for _k, label, _t in items]):
+        row = col.row(align=True)
+        for i in idx:
+            key, label, _type = items[i]
+            op = row.operator("allset.ae_tab", text=label, depress=(key == current))
+            op.key = key
 
 
 def draw(layout, context, ob):
@@ -591,7 +626,7 @@ def draw(layout, context, ob):
         if isinstance(target, (bpy.types.ID, bpy.types.PoseBone)):
             draw_extra(layout, target, layout_id or "data")
     draw_notes(layout, context, ob, key, entry)
-    draw_bottom(layout)
+    draw_bottom(layout, context)
 
 
 def draw_head(layout, context, ob, key, target, entry):
@@ -674,13 +709,18 @@ def draw_notes(layout, context, ob, key, entry):
     layout.prop(context.scene, "allset_ae_notes", text="")
 
 
-def draw_bottom(layout):
-    """Maya's bottom buttons: Select, Load Attributes, Copy Tab."""
+BOTTOM = (("allset.ae_select", "Select"), ("allset.ae_load", "Load Attributes"), ("allset.ae_copy_tab", "Copy Tab"))
+
+
+def draw_bottom(layout, context=None):
+    """Maya's bottom buttons: Select, Load Attributes, Copy Tab (wrapped when the dock is too narrow, step 197)."""
     layout.separator()
-    row = layout.row(align=True)
-    row.operator("allset.ae_select", text="Select")
-    row.operator("allset.ae_load", text="Load Attributes")
-    row.operator("allset.ae_copy_tab", text="Copy Tab")
+    col = layout.column(align=True)
+    groups = wrap_rows(context, [t for _o, t in BOTTOM]) if context is not None else [list(range(len(BOTTOM)))]
+    for idx in groups:
+        row = col.row(align=True)
+        for i in idx:
+            row.operator(BOTTOM[i][0], text=BOTTOM[i][1])
 
 
 def draw_shading_group(layout, key, mat):

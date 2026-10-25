@@ -40,13 +40,11 @@ NOTICES = {
     "Modify/Bake Pivot": (
         "Pivot orientation", "Blender has one pivot (the origin), so only the pivot orientation is baked into "
         "Rotate; the position already is the object's pivot."),
-    # Animation (W3: Character Sets -> Keying Sets, Time Editor / Trax -> NLA; Animation Layers real since step 188)
+    # Animation (W3: Time Editor / Trax -> NLA; Animation Layers real since step 188, Character Sets since step 187)
     "Windows/Animation Editors/Trax Editor": (
         "NLA Editor", "Blender has no Trax: clips are actions laid out as NLA strips."),
     "Windows/Animation Editors/Time Editor": (
         "NLA Editor", "Blender has no Time Editor: clips are actions laid out as NLA strips."),
-    "Windows/Relationship Editors/Character Sets": (
-        "Keying Sets", "Blender has no character sets: a Keying Set (Scene properties) keys a chosen set of channels."),
     # Playback (step 56): Blender playback always loops
     **{f"Playback/Playback Looping/{kind}": (
         "Continuous", "Blender playback always loops (no Once / Oscillate).") for kind in ("Once", "Oscillate")},
@@ -333,11 +331,12 @@ CATEGORIES = {
                         "Cache File properties."),
     "Help": ("Blender Help menu", "Blender has no Autodesk account, product research or analytics services; "
              "Blender's Help menu has the manual and bug reports."),
-    "Control": ("Keying Sets / bone collections", "Blender has no character sets or controller tags: Keying Sets key "
-                "a chosen set of channels, bone collections group the controls."),
+    # step 197: character sets are real (operators/character_sets.py); what is left is HumanIK / controller tags
+    "Control": ("Bone collections", "Blender has no controller tags, HumanIK control rigs, character mapping or "
+                "redirection: bone collections group the controls. Character sets: Control > Create Character Set."),
     # rigging / animation
-    "Key": ("Keying Sets", "Blender has no character sets: a Keying Set (Scene properties) keys a chosen set of "
-            "channels; the Attribute Editor is the Properties editor."),
+    "Key": ("Copy Transforms constraints", "Blender has no character mapping or redirection: retarget with Copy "
+            "Transforms constraints. Character sets: Key > Create Character Set."),
     "Key/IK": ("IK constraint Influence", "Blender switches IK / FK by keying the IK constraint's Influence."),
     "Key/Scene Time Warp": ("NLA strip time", "Blender has no scene time warp: remap time per action with an NLA "
                             "strip's Scale / Repeat or a Time Offset modifier."),
@@ -622,6 +621,8 @@ PANEL_MENU = {
         "Controllers", "Subdiv Surfaces", "Planes", "Dynamics", "Particle Instancers",
         "Follicles", "nCloths", "nParticles", "nRigids", "Dynamic Constraints", "Dimensions", "Handles",
         "Texture Placements", "Strokes", "Plugin Shapes", "Clip Ghosts")},
+    # step 197 (#104) re-checked in a GUI 4.5: overlay display_handle NONE and vertex_opacity 0 change no pixel of a
+    # NURBS surface / curve hull or CVs in Edit Mode (tmp/p197 probe), so no overlay toggle can stand in for these
     **{_PM + f"Show/{t}": (
         "Edit Mode", "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit "
         "Mode, and always there: they can't be shown in Object Mode or hidden per view.") for t in (
@@ -845,9 +846,10 @@ NOTICES.update({
     **{f"{ed}/Show/Objects/Clips": (
         "NLA Editor", "Blender's clips are NLA strips: they are listed in the NLA Editor, not in this list.")
        for ed in ("Graph Editor", "Dope Sheet")},
-    **{f"{ed}/Show/Objects/Characters": (
-        "Keying Sets", "Blender has no character sets (Keying Sets group channels for keying): no filter for "
-        "them.") for ed in ("Graph Editor", "Dope Sheet")},
+    # step 197: the Graph Editor lists character nodes in the kit outliner; the Dope Sheet's channel list is Blender's
+    "Dope Sheet/Show/Objects/Characters": (
+        "Graph Editor", "Blender's Dope Sheet channel list can't show character set nodes: the Graph Editor's Show > "
+        "Objects > Characters lists them with their member attributes."),
 })
 
 

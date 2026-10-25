@@ -178,6 +178,9 @@ def draw():
     region = context.region
     if not _state["text"] or region is None or region.as_pointer() != _state["region"]:
         return
+    from ..marking import draw as marking_draw
+    if marking_draw.menu_up():   # Maya's hotbox / marking menus cover in-view messages (step 197)
+        return
     a = alpha(time.monotonic() - _state["start"])
     if a <= 0.0:
         return
