@@ -35,6 +35,7 @@ MODULE = f"bl_ext.{REPO_ID}.{PKG_ID}"
 TIMEOUT = 300
 
 sys.path.insert(0, str(ROOT / "tools"))
+import blender_slots  # noqa: E402
 import build  # noqa: E402
 
 
@@ -56,12 +57,16 @@ def make_sandbox():
     env["ALLSET_MODULE"] = MODULE
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["PYTHONUNBUFFERED"] = "1"     # logs survive a timeout kill
+    # a Blender started from inside a test's Blender (lifecycle / switch tests) rides on the parent's slot
+    env["ALLSET_NO_SLOTS"] = "1"
     return env
 
 
 def blender_run(blender, args, env, log):
     # stdin=DEVNULL: `blender --command ...` hangs when it inherits a console stdin.
-    with open(log, "w", encoding="utf-8", errors="replace") as fh:
+    # one of the machine-wide Blender slots (tools/blender_slots.py, user decision 10-25) while it runs
+    with blender_slots.slot(f"tests/run.py {Path(log).stem}"), \
+            open(log, "w", encoding="utf-8", errors="replace") as fh:
         r = subprocess.run([blender, *args], env=env, stdin=subprocess.DEVNULL,
                            stdout=fh, stderr=subprocess.STDOUT, timeout=TIMEOUT)
     return r.returncode

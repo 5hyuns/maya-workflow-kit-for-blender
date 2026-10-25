@@ -30,6 +30,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+import blender_slots  # noqa: E402
 import build  # noqa: E402
 
 SANDBOX = ROOT / "tmp" / "release_env"
@@ -54,9 +55,17 @@ def sandbox_env(sandbox=SANDBOX):
     return env
 
 
+def _nothing():
+    import contextlib
+    return contextlib.nullcontext()
+
+
 def run(cmd, env, timeout=TIMEOUT):
-    r = subprocess.run(cmd, env=env, stdin=subprocess.DEVNULL, capture_output=True,
-                       text=True, encoding="utf-8", errors="replace", timeout=timeout)
+    # a Blender holds one machine-wide slot while it runs (tools/blender_slots.py, user decision 10-25)
+    is_blender = "blender" in Path(cmd[0]).name.lower()
+    with blender_slots.slot(f"release_check {' '.join(map(str, cmd[1:4]))}") if is_blender else _nothing():
+        r = subprocess.run(cmd, env=env, stdin=subprocess.DEVNULL, capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=timeout)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -199,7 +208,7 @@ def main(argv=None):
     env["ALLSET_NO_WELCOME"] = "1"   # release_shots.py drives the first start itself
     cmd = [args.blender, "--enable-event-simulate", "--window-geometry", "0", "0", "1600", "900",
            "--python", str(ROOT / "tools" / "release_shots.py"), "--", str(result)]
-    with open(log, "w", encoding="utf-8", errors="replace") as fh:
+    with blender_slots.slot("release_check shots"), open(log, "w", encoding="utf-8", errors="replace") as fh:
         proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL, stdout=fh,
                                 stderr=subprocess.STDOUT)
         try:
