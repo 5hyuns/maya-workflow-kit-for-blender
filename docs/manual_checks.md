@@ -1271,3 +1271,11 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 
 - [ ] Create > Polygon Primitives > Gear / Pipe / Super Ellipse ❒ and NURBS Primitives > Sphere ❒: Maya's window opens, Create / Apply build the shape with the typed values, Save Settings makes the plain menu click use them; Control > Create Character Set ❒ names the set and its attributes.
 - [ ] Curves > Smooth and UV > Merge UVs from the menu feel like Maya (ends kept / UVs of one vertex merged, not every UV to one point).
+
+## Step 197
+
+- [ ] Show an in-view message (F8) or the In-View Editor (Ctrl+E on faces), then hold Space: the hotbox covers them (they come back when it closes).
+- [ ] Ctrl+Z after Group, then P / Delete / Ctrl+E: the result field no longer reads `Undo: Group`.
+- [ ] Narrow the dock on the Attribute Editor: tabs / menus / Select-Load Attributes-Copy Tab wrap instead of showing "…".
+- [ ] Mesh > Cleanup… opens no submenu; its ❒ opens Cleanup Options; Select matching polygons with 4-sided faces selects every quad.
+- [ ] Windows > Relationship Editors > Character Sets lists the sets; Graph Editor Show > Objects > Characters lists character rows.

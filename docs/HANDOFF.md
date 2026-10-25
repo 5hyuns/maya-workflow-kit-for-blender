@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 197 (Small Maya polish batch, backlog #5, Issue #104) 완료 — `docs/steps/step_197.md`. 핫박스 / 마킹 메뉴가 떠 있는 동안
+  in-view 메시지 · In-View Editor 안 그림, 결과 칸의 옛 `Undo: …` 를 새 명령이 지움 (F8 포함), AE 탭 · 메뉴 · 버튼 줄을 잰 폭으로 줄바꿈
+  (잘린 글자 0), Mesh > Cleanup… = Maya 명령 `allset.poly_cleanup` + Cleanup Options 창, character set 옛 문구 제거 + Relationship
+  Editors > Character Sets 팝업 + Graph Editor Show > Objects > Characters (kit outliner CHARACTER 줄), NURBS CVs / Hulls 는 측정상
+  Blender 에 스위치가 없어 회색 유지 (delegated). 헤드리스 1778 / 1778, GUI 관련 138 / 138, dogfood 48 / 48, 메뉴 unique 751.
+  **바로 다음 할 일**: step 198 = backlog #6 「Graph Editor depth 2」 (Issue #105). 그다음 199 (#106) · 200 (#107).
+
+- **체크포인트 2026-10-25 (/sc:save, 196 후)** — 지금 단계: **196 완료 · 커밋 38a88d1** (Fixes #103, push 안 함). 193 (761a1aa),
+  194 (8b78985), 195 (586eda2, #102 손으로 닫음) 도 커밋됨. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ 추적 안 함).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: step 197 = backlog #5 「Small Maya polish batch」 (Issue #104) — 핫박스를 덮는 in-view 메시지 · In-View Editor,
+  결과 칸 "Undo:" 고정, AE 탭 잘림, Mesh > Cleanup… ▸, 옛 "no character sets" 문구, NURBS CVs / Hulls 회색. 그다음 198 (#105) · 199 (#106) · 200 (#107).
+
 - Step 196 (Maya option windows for primitives and character sets, backlog #4, Issue #103) 완료 — `docs/steps/step_196.md`.
   새 Maya 옵션 창 34 개 (`option_windows_prims.py` 19: Polygon 11 + NURBS 8, `option_windows_misc196.py` 15: Character Set, Curves, arc,
   Merge UVs, Contour Stretch, Preferred Angle, Add Influence), Curves > Smooth / Merge UVs 그냥 클릭도 Maya 규칙. window 120 → 158,

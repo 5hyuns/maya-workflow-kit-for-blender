@@ -638,7 +638,7 @@ def listed_nodes(context, space):
     from . import channel_box
     ds = space.dopesheet
     out = []
-    if getattr(context.window_manager, "allset_show_characters", False):
+    if getattr(bpy.context.window_manager, "allset_show_characters", False):
         # Show > Objects > Characters (step 197, #104): Maya lists the character nodes, their member attributes below
         from ..operators import character_sets
         for ks in character_sets.characters(context.scene):

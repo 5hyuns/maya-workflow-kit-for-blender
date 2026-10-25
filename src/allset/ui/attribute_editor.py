@@ -555,33 +555,52 @@ def draw_extrude_history(layout, context, rec):
         split.prop(hist, f"{field}_text", text="")
 
 
-BUTTON_PAD = 16     # px a button adds around its text at UI scale 1 (Blender's widget padding, measured on shots)
-
-
-def wrap_rows(context, labels):
-    """``labels`` split into rows that each fit the region, so no tab / button text is cut ("pCubeS...", step 192
-    dogfood, #104). Maya's AE is wider (460 px) and scrolls its tab bar; the kit dock can be narrower (event-simulated
-    sessions don't fit it, users can drag it): the row wraps like the menu bar above (delegated). Without a region
-    (tests with a fake layout) one row."""
+def content_width(context):
+    """Px the dock's panel content spans: region minus Blender's panel margins and the Maya tab strip (step 142)."""
     region = getattr(context, "region", None)
-    if region is None or region.width <= 1 or not labels:
-        return [list(range(len(labels)))]
-    scale = context.preferences.system.ui_scale or 1.0
+    if region is None or region.width <= 1:
+        return None
     from . import maya_dock
-    avail = region.width - 20 * scale - maya_dock.area_reserved_px(context)
+    scale = context.preferences.system.ui_scale or 1.0
+    unit = maya_dock._ui_unit(scale, context.preferences.system.pixel_size or 1.0)
+    return region.width - 2 * maya_dock.PANEL_MARGIN_U * unit - maya_dock.area_reserved_px(context) - 4 * scale
+
+
+def text_widths(context, labels, extra_units=None):
+    """Px a button needs for each label: the text (Blender's UI font size) plus its margins (0.4 widget unit a side)
+    and ``extra_units`` widget units (a menu's arrow)."""
+    from . import maya_dock
+    scale = context.preferences.system.ui_scale or 1.0
+    unit = maya_dock._ui_unit(scale, context.preferences.system.pixel_size or 1.0)
+    extra_units = extra_units or [0.0] * len(labels)
     try:
         import blf
         blf.size(0, 11 * scale)
-        widths = [blf.dimensions(0, t)[0] + BUTTON_PAD * scale for t in labels]
+        text = [blf.dimensions(0, t)[0] for t in labels]
     except Exception:
-        widths = [(len(t) * 7 + BUTTON_PAD) * scale for t in labels]
-    rows, cur, used = [], [], 0.0
-    for i, w in enumerate(widths):
-        if cur and used + w > avail:
+        text = [len(t) * 7 * scale for t in labels]
+    return [w + (1.0 + e) * unit for w, e in zip(text, extra_units)]
+
+
+def wrap_rows(context, labels, equal=True, extra_units=None):
+    """``labels`` split into rows that each fit the dock, so no tab / button / menu text is cut ("pCubeS...",
+    "Sele...", step 192 dogfood, #104). Maya's AE is wider (460 px) and scrolls its tab bar; the kit dock can be
+    narrower (event-simulated sessions don't fit it, users drag it): rows wrap like a narrow Qt bar (delegated).
+    ``equal``: an aligned row gives every button the same width, so a row needs n × its widest label; else the
+    labels keep their natural widths (left / right aligned rows). Without a region (tests with a fake layout) one
+    row."""
+    avail = content_width(context) if labels else None
+    if avail is None:
+        return [list(range(len(labels)))]
+    widths = text_widths(context, labels, extra_units)
+    rows, cur = [], []
+    for i in range(len(labels)):
+        trial = cur + [i]
+        need = len(trial) * max(widths[j] for j in trial) if equal else sum(widths[j] for j in trial)
+        if cur and need > avail:
             rows.append(cur)
-            cur, used = [], 0.0
-        cur.append(i)
-        used += w
+            trial = [i]
+        cur = trial
     rows.append(cur)
     return rows
 
@@ -651,12 +670,18 @@ def draw_head(layout, context, ob, key, target, entry):
         sub.operator("allset.ae_step", text="", icon='TRIA_RIGHT').forward = True
     # Maya puts Focus / Presets and Show / Hide right of the name field; the narrow dock gets them as one row
     # under it, right-aligned (delegated)
-    row = layout.row(align=True)
-    row.alignment = 'RIGHT'
-    row.operator("allset.ae_focus", text="Focus")
-    row.menu("ALLSET_MT_ae_presets", text="Presets")
-    row.operator("allset.ae_show_types", text="Show")
-    row.operator("allset.ae_hide_type", text="Hide")
+    buttons = (("op", "allset.ae_focus", "Focus"), ("menu", "ALLSET_MT_ae_presets", "Presets"),
+               ("op", "allset.ae_show_types", "Show"), ("op", "allset.ae_hide_type", "Hide"))
+    for idx in wrap_rows(context, [b[2] for b in buttons], equal=False,
+                         extra_units=[1.0 if b[0] == "menu" else 0.0 for b in buttons]):
+        row = layout.row(align=True)
+        row.alignment = 'RIGHT'
+        for i in idx:
+            kind, ident, text = buttons[i]
+            if kind == "menu":
+                row.menu(ident, text=text)
+            else:
+                row.operator(ident, text=text)
     return head
 
 
@@ -949,11 +974,9 @@ def draw_panel(layout, context):
         chrome.wrapped(layout, channel_box.PLACING_TEXT)
         return
     from . import chrome
-    if fits(context, MENU_BAR):
-        chrome.menu_bar(layout, MENU_BAR)
-    else:     # the dock is narrower than Maya's 460 px AE: the bar wraps (delegated)
-        chrome.menu_bar(layout, MENU_BAR[:4])
-        chrome.menu_bar(layout, MENU_BAR[4:])
+    # the dock is narrower than Maya's 460 px AE: the bar wraps where it would cut a menu name (delegated)
+    for idx in wrap_rows(context, [label for label, _m in MENU_BAR], equal=False):
+        chrome.menu_bar(layout, [MENU_BAR[i] for i in idx])
     ob = ae_node(context)
     if ob is None:
         layout.label(text="make a selection")
