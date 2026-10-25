@@ -479,6 +479,8 @@ def _extend():
     WINDOWS.extend(deformers_205a.windows() + deformers_205b.windows() + pins_205.windows())   # step 205
     from . import option_windows_199
     WINDOWS.extend(option_windows_199.WINDOWS)      # step 199: Skin / Constrain tools 2
+    from . import option_windows_curves207
+    WINDOWS.extend(option_windows_curves207.WINDOWS)    # step 207: Bend / Curl / Scale Curvature
 
 
 _extend()
