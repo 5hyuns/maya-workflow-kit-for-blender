@@ -184,10 +184,12 @@ MAP = {
     "Create/NURBS Primitives/Plane": _create('NURBS_PLANE'),
     "Create/NURBS Primitives/Torus": _create('NURBS_TORUS'),
     "Create/NURBS Primitives/Circle": _create('NURBS_CIRCLE'),
+    "Create/Lights/Ambient Light": _create('AMBIENT_LIGHT'),        # step 214: operators/maya_lights.py
     "Create/Lights/Directional Light": _create('DIRECTIONAL_LIGHT'),
     "Create/Lights/Point Light": _create('POINT_LIGHT'),
     "Create/Lights/Spot Light": _create('SPOT_LIGHT'),
     "Create/Lights/Area Light": _create('AREA_LIGHT'),
+    "Create/Lights/Volume Light": _create('VOLUME_LIGHT'),
     "Create/Cameras": _create('CAMERA'),
     "Create/Curve Tools/CV Curve Tool": "allset.cv_curve_tool",            # step 156: operators/curve_draw.py
     "Create/Curve Tools/EP Curve Tool": "allset.ep_curve_tool",

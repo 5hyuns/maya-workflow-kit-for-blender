@@ -251,6 +251,24 @@ def material_uses_nodes(mat):
     return mat is not None and mat.node_tree is not None and (MATERIAL_ALWAYS_NODES or mat.use_nodes)
 
 
+# --- Worlds ---------------------------------------------------------------------------------
+# Assumed like materials (5.0: ``use_nodes`` deprecated, every World has its tree; step 214, not measured on 5.x).
+WORLD_ALWAYS_NODES = MATERIAL_ALWAYS_NODES
+
+
+def ensure_world_nodes(world):
+    """Turn the World's nodes on; True when this call turned them on."""
+    if WORLD_ALWAYS_NODES or (world.use_nodes and world.node_tree is not None):
+        return False
+    world.use_nodes = True
+    return True
+
+
+def release_world_nodes(world):
+    if not WORLD_ALWAYS_NODES:
+        world.use_nodes = False
+
+
 # --- Lights ---------------------------------------------------------------------------------
 # 5.1: every light has a node tree; ``Light.use_nodes`` is deprecated (warns when read or set, measured step 137).
 LIGHT_ALWAYS_NODES = VERSION >= (5, 1)

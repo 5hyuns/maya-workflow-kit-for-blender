@@ -139,14 +139,14 @@
 | F9 | F9 | global | SelectVertexMask | Object Non-modal: `allset.component_mode` (type='VERT') | 구현 |  | hotkeySetup.mel:253 |
 | F10 | F10 | global | SelectEdgeMask | Object Non-modal: `allset.component_mode` (type='EDGE') | 구현 |  | hotkeySetup.mel:254 |
 | F11 | F11 | global | SelectFacetMask | Object Non-modal: `allset.component_mode` (type='FACE') | 구현 |  | hotkeySetup.mel:255 |
-| F12 | F12 | global | SelectUVMask | Object Mode: `allset.uv_component` (mode='UV'); Mesh: `allset.uv_component` (mode='UV') | 구현 | UV Editor 를 열고 (편집 모드) UV 선택 = UV Sync 끔 + UV 정점 (step 66) | hotkeySetup.mel:256 |
+| F12 | F12 | global | SelectUVMask | Object Mode: `allset.uv_component` (mode='UV'); Mesh: `allset.uv_component` (mode='UV'); Screen: `allset.render_blender` (use_viewport=True) | 구현 | UV Editor 를 열고 (편집 모드) UV 선택 = UV Sync 끔 + UV 정점 (step 66). 3D 뷰 오브젝트·메시 편집 밖의 F12 = Blender Render Image + Maya 기본 라이트 (allset.render_blender, step 214) | hotkeySetup.mel:256 |
 | Alt+F9 | Alt+F9 | global | SelectVertexFaceMask | — | 해당 없음 | Blender 에 vertex-face 컴포넌트 없음 | hotkeySetup.mel:257 |
 | Alt+F12 | Alt+F12 | global | SelectMeshUVShell | Object Mode: `allset.uv_component` (mode='SHELL'); Mesh: `allset.uv_component` (mode='SHELL') | 구현 | UV Editor 를 열고 UV Shell = Blender UV 섬 모드 (step 66) | hotkeySetup.mel:258 |
 | F7 | F7 | global | SelectMultiComponentMask | Object Non-modal: `allset.component_mode` (type='MULTI') | 구현 | 정점·엣지·면 동시 선택 모드 | hotkeySetup.mel:259 |
 | Ctrl+F9 | Ctrl+F9 | global | ConvertSelectionToVertices | Mesh: `allset.convert_selection` (type='VERT') | 구현 |  | hotkeySetup.mel:262 |
 | Ctrl+F10 | Ctrl+F10 | global | ConvertSelectionToEdges | Mesh: `allset.convert_selection` (type='EDGE') | 구현 | 닿는 엣지 (면 -> 테두리 엣지) | hotkeySetup.mel:263 |
 | Ctrl+F11 | Ctrl+F11 | global | ConvertSelectionToFaces | Mesh: `allset.convert_selection` (type='FACE') | 구현 | 닿는 면 (Blender 모드 전환은 포함된 면만) | hotkeySetup.mel:264 |
-| Ctrl+F12 | Ctrl+F12 | global | ConvertSelectionToUVs | — | 해당 없음 | 3D 뷰 UV 컴포넌트 없음 (UV Editor 사용) | hotkeySetup.mel:265 |
+| Ctrl+F12 | Ctrl+F12 | global | ConvertSelectionToUVs | Screen: `allset.render_blender` (animation=True, use_viewport=True) | 해당 없음 | 3D 뷰 UV 컴포넌트 없음 (UV Editor 사용). Ctrl+F12 = Blender Render Animation + Maya 기본 라이트 (allset.render_blender, step 214) | hotkeySetup.mel:265 |
 | Shift+> | Shift+PERIOD | global | GrowPolygonSelectionRegion | Mesh: `mesh.select_more` | 구현 |  | hotkeySetup.mel:266 |
 | Ctrl+Shift+> | Ctrl+Shift+PERIOD | global | GrowLoopPolygonSelectionRegion | Mesh: `mesh.select_next_item` | 구현 | 선택 순서 따라 한 칸 (루프 확장 근사) | hotkeySetup.mel:267 |
 | Shift+< | Shift+COMMA | global | ShrinkPolygonSelectionRegion | Mesh: `mesh.select_less` | 구현 |  | hotkeySetup.mel:268 |

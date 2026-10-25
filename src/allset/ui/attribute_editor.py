@@ -63,7 +63,7 @@ def material_type(material):
 
 def node_type(ob):
     if ob.type == 'LIGHT':
-        return ae_layout.LIGHT_TYPE.get(ob.data.type, "light")
+        return ae_layout.light_type(ob.data)
     return ae_layout.NODE_TYPE.get(ob.type, ob.type.lower())
 
 
@@ -230,7 +230,7 @@ def sections_for(ob, key):
     if kind == "J":
         return ae_layout.BY_KIND["joint"][0], "joint"
     if kind == "S":
-        sub = ob.data.type if ob.type == 'LIGHT' else ob.type
+        sub = (ae_layout.light_kind(ob.data) or ob.data.type) if ob.type == 'LIGHT' else ob.type
         return ae_layout.BY_KIND.get(sub, ([], None))[0], sub.lower()
     if kind == "MAT":
         mat = tab_target(ob, key)

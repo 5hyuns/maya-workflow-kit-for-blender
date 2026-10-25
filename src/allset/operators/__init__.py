@@ -115,6 +115,8 @@ from . import references  # noqa: E402  step 209: Reference Editor commands (rel
 
 classes += references.classes
 
+from . import maya_lights  # noqa: E402  step 214: Maya Ambient / Volume Light (no classes: props + handlers)
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -124,6 +126,7 @@ def register():
     snap_align.register_props()
     material.register_props()
     lights.register_props()
+    maya_lights.register()
     light_links.register_props()
     anim_layers.register_props()
     driven_key.register_props()
@@ -220,6 +223,7 @@ def unregister():
     fx.unregister_props()
     anim_layers.unregister_props()
     light_links.unregister_props()
+    maya_lights.unregister()
     lights.unregister_props()
     material.unregister_props()
     uv_tools.unregister_props()
