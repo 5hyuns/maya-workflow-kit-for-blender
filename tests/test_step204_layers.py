@@ -135,7 +135,9 @@ def test_extract_selected_objects_keeps_the_result():
     _undo_restores([al.BASE, "AnimLayer1"], {"AnimLayer1": ["pCube1", "pSphere1"]})
 
 
-def test_extract_keeps_settings_and_weight_keys():
+def test_extract_keeps_mode_not_weight():
+    """Maya (anim_layers_201.md): the extract layer keeps Additive / Override but has weight 1.0 without L's
+    weight keys, so the result changes when L's weight isn't 1 (checked, extract_l2_cube)."""
     sc, cube, sphere = _layered()
     e = sc.allset_anim_layers[1]
     e.override = True
@@ -145,10 +147,12 @@ def test_extract_keeps_settings_and_weight_keys():
     _select(sc, [cube])
     a4.extract(sc, [cube], "AnimLayer1")
     new = sc.allset_anim_layers["AnimLayer1_extract"]
-    assert new.override and abs(new.weight - 0.25) < 1e-6, (new.override, new.weight)
+    assert new.override and abs(new.weight - 1.0) < 1e-9, (new.override, new.weight)
     st = al._strip(al.tracks(cube)["AnimLayer1_extract"])
+    assert not st.use_animated_influence or abs(st.influence - 1.0) < 1e-9     # full weight, no keys
+    st = al._strip(al.tracks(sphere)["AnimLayer1"])         # L keeps its weight keys for its other members
     assert st.use_animated_influence and len(st.fcurves.find("influence").keyframe_points) == 1
-    _same(_evaluated(sc, cube), before)
+    assert before != _evaluated(sc, cube)
     _check_kit_is_nla(sc, cube)
 
 
@@ -198,19 +202,49 @@ def test_duplicate_layer_adds_it_again():
 
 
 def test_duplicate_layer_no_animation():
+    """Maya: an additive copy without animation adds nothing; an override one holds L's value at the current time
+    (anim_layers_201.md, copy_noanim_l1 / l2)."""
     sc, cube, sphere = _layered()
     before = _evaluated(sc, cube)
-    sc.allset_anim_layers[1].override = True
-    before_override = _evaluated(sc, cube)
     assert _op("anim_layer_duplicate", no_animation=True) == {'FINISHED'}
     sc = bpy.context.scene
     cube = bpy.data.objects["pCube1"]
-    copy = sc.allset_anim_layers["AnimLayer1_copy"]
-    assert copy.override
     assert al.layer_curves(cube, "AnimLayer1_copy") == []
-    assert sorted(o.name for o in al.members(sc, "AnimLayer1_copy")) == ["pCube1", "pSphere1"]
-    _same(_evaluated(sc, cube), before_override)       # an override layer without curves passes the lower result
-    assert before != before_override
+    _same(_evaluated(sc, cube), before)
+    sc.allset_anim_layer_index = 1
+    sc.allset_anim_layers[1].override = True
+    sc.frame_set(9)
+    a4.duplicate(sc, "AnimLayer1", with_curves=False)
+    copy = sc.allset_anim_layers["AnimLayer1_copy1"]
+    assert copy.override and copy.weight == 1.0
+    assert sorted(o.name for o in al.members(sc, "AnimLayer1_copy1")) == ["pCube1", "pSphere1"]
+    held = {(fc.data_path, fc.array_index): fc for fc in al.layer_curves(cube, "AnimLayer1_copy1")}
+    assert set(held) == {("location", 0), ("location", 1)}, set(held)
+    for (path, idx), fc in held.items():
+        assert len(fc.keyframe_points) == 1 and fc.keyframe_points[0].interpolation == 'CONSTANT'
+        assert abs(fc.keyframe_points[0].co.y - _value(cube, "AnimLayer1", path, idx, 9)) < TOL
+    ev = _evaluated(sc, cube)
+    assert all(abs(r[0] - _value(cube, "AnimLayer1", "location", 0, 9)) < TOL for r in ev)
+    _check_kit_is_nla(sc, cube)
+
+
+def test_duplicate_base_animation():
+    """Maya (copy_base): an Override BaseAnimation_copy on top; members = the layered attributes, curves = copies of
+    the base curves; it overrides every layer below."""
+    sc, cube, sphere = _layered()
+    sc.allset_anim_layer_index = 0
+    assert _op("anim_layer_duplicate") == {'FINISHED'}
+    sc = bpy.context.scene
+    cube = bpy.data.objects["pCube1"]
+    assert _names(sc) == [al.BASE, "AnimLayer1", "BaseAnimation_copy"], _names(sc)
+    copy = sc.allset_anim_layers["BaseAnimation_copy"]
+    assert copy.override and copy.weight == 1.0
+    tx = al._fcurve(al._strip(al.tracks(cube)["BaseAnimation_copy"]).action, "location", 0)
+    assert [kp.co[:] for kp in tx.keyframe_points] == [kp.co[:] for kp in al.base_curve(cube, "location", 0)
+                                                       .keyframe_points]
+    for f, r in zip(FRAMES, _evaluated(sc, cube)):
+        assert abs(r[0] - al.base_curve(cube, "location", 0).evaluate(f)) < TOL, (f, r)
+    _check_kit_is_nla(sc, cube)
 
 
 # --- Empty / Delete Empty Layers ----------------------------------------------------------------------------------
@@ -276,10 +310,42 @@ def test_zero_and_full_weight_keys():
     assert not st.use_animated_influence or not len(st.fcurves.find("influence").keyframe_points)
 
 
-def test_weight_keys_skip_base_animation():
+def test_weight_keys_on_base_animation():
+    """Maya (zero_weight_base): BaseAnimation's weight isn't changed but keyed; the kit keys its strips at 1.0."""
     sc, cube, sphere = _layered()
     sc.allset_anim_layer_index = 0
-    assert bpy.ops.allset.anim_layer_key_weight(weight=0.0) == {'CANCELLED'}
+    before = _evaluated(sc, cube)
+    sc.frame_set(10)
+    assert bpy.ops.allset.anim_layer_key_weight(weight=0.0) == {'FINISHED'}
+    st = al._strip(al.tracks(cube)[al.BASE])
+    fc = st.fcurves.find("influence")
+    assert [tuple(kp.co) for kp in fc.keyframe_points] == [(10.0, 1.0)], [tuple(kp.co) for kp in fc.keyframe_points]
+    _same(_evaluated(sc, cube), before)
+    # the Weight row's K button keys the current weight
+    sc.allset_anim_layer_index = 1
+    sc.allset_anim_layers[1].weight = 0.5
+    sc.frame_set(10)
+    assert bpy.ops.allset.anim_layer_key_weight(current=True) == {'FINISHED'}
+    fc = al._strip(al.tracks(cube)["AnimLayer1"]).fcurves.find("influence")
+    assert [tuple(kp.co) for kp in fc.keyframe_points] == [(10.0, 0.5)]
+
+
+def test_menu_greys_with_base_animation():
+    """Maya greys Add / Remove Selected Objects, Delete, Empty, Delete Empty Layers while BaseAnimation is among the
+    selected layers; Extract / Duplicate / Merge stay enabled."""
+    sc, cube, sphere = _layered()
+    bpy.ops.allset.anim_layer_select(index=1)
+    assert not a4.base_selected(sc)
+    bpy.ops.allset.anim_layer_select(index=0, toggle=True)
+    assert a4.base_selected(sc)
+    assert set(le.GREY_WITH_BASE) <= {e[1] for e in le.ANIM_LAYER_MENU if e is not None}
+    for label in ("Extract Selected Objects", "Duplicate Layer", "Merge Layers", "Zero Key Layer"):
+        assert label not in le.GREY_WITH_BASE
+    # row right-click menu: an unselected row acts on that row only
+    a4.pick(sc, 1)
+    assert _op("anim_layer_duplicate", layer=al.BASE) == {'FINISHED'}
+    sc = bpy.context.scene
+    assert "BaseAnimation_copy" in _names(sc) and "AnimLayer1_copy" not in _names(sc), _names(sc)
 
 
 # --- Layer Editor multi-selection ---------------------------------------------------------------------------------
@@ -373,3 +439,12 @@ def test_normalized_lines_span_minus_one_to_one():
     for _rgba, _ob, _n, pts in items:
         ys = [y for _x, y in pts]
         assert min(ys) >= -1.0001 and max(ys) <= 1.0001, (min(ys), max(ys))
+
+
+def test_layer_curves_use_axis_colours():
+    """A layer's transform curves draw X / Y / Z red / green / blue like Maya (step 204 GUI found AUTO_RAINBOW)."""
+    sc, cube, _sphere = _layered()
+    act = al._strip(al.tracks(cube)["AnimLayer1"]).action
+    for idx in (0, 1):
+        fc = al._fcurve(act, "location", idx)
+        assert fc is not None and fc.color_mode == 'AUTO_RGB', (idx, fc and fc.color_mode)

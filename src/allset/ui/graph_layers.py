@@ -123,11 +123,13 @@ def dim(rgba):
 
 
 def lines(scene, obs, x0, x1, n, normalize=False):
-    """[(rgba, object, layer, points)] of every other selected layer's curves of ``obs``."""
+    """[(rgba, object, layer, points)] of every other selected layer's curves of ``obs``, in stack order bottom first
+    (drawn in that order: an upper layer's curve lies over a lower one's)."""
     from .editor_chrome import attr_color
     out = []
     for ob in obs:
-        for name, fc in extra_curves(scene, ob):
+        al = _al()
+        for name, fc in [(n_, f) for n_ in reversed(extra_layers(scene, ob)) for f in al.layer_curves(ob, n_)]:
             if not len(fc.keyframe_points):
                 continue
             off, k = normalization(fc) if normalize else (0.0, value_factor(scene, fc))

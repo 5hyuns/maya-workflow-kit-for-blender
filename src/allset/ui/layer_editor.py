@@ -465,7 +465,7 @@ class ALLSET_MT_le_layers(bpy.types.Menu):
     def draw(self, context):
         lay = self.layout
         if context.window_manager.allset_le_tab == 'ANIM':
-            draw_anim_layer_items(lay)
+            draw_anim_layer_items(lay, context)
             draw_anim_layer_mode(lay, context)
             return
         lay.operator("allset.layer_new", text="Create Empty Layer").selected = False
@@ -485,6 +485,11 @@ def is_layer_button(context):
 
 def draw_button_menu(self, context):
     """Maya's layer RMB menu on top of Blender's button context menu (a C menu, not a keymap item)."""
+    row = anim_layer_row(context)
+    if row is not None:
+        draw_anim_row_menu(self.layout, context, row)
+        self.layout.separator()
+        return
     if not is_layer_button(context):
         return
     draw_layer_items(self.layout)
@@ -550,26 +555,119 @@ ANIM_TOGGLES = (("lock", ('UNLOCKED', 'LOCKED')), ("solo", ('SOLO_OFF', 'SOLO_ON
                 ("mute", ('MUTE_IPO_OFF', 'MUTE_IPO_ON')))
 
 
-def draw_anim_layer_items(layout):
+# Maya greys these Layers menu items while BaseAnimation is among the selected layers ($M:485-557,
+# : Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
+# Export, Membership, Attribute Editor, Delete, Empty, Delete Empty Layers, Layer Mode). With no layer selected Maya
+# enables everything; the kit always has a selected layer (delegated).
+GREY_WITH_BASE = ("Add Selected Objects", "Remove Selected Objects", "Delete", "Empty", "Delete Empty Layers")
+# Layer row right-click menu (layerEditorBuildPopupMenu $M:1901-2165, anim_layers_201.md): the Layers menu without
+# the Create / Extract Non-Layered items, plus Lock / Mute / Solo; on BaseAnimation only Extract, Duplicate x2, Merge
+# and Lock stay enabled. Exclusive solo, Select Objects / All / Branch / Layer Node, Export, Membership and Attribute
+# Editor are not in the kit (remaining).
+ANIM_ROW_MENU = (
+    ("allset.anim_layer_members", "Add Selected Objects", {"add": True}),
+    ("allset.anim_layer_members", "Remove Selected Objects", {"add": False}),
+    ("allset.anim_layer_extract", "Extract Selected Objects", {}),
+    None,
+    ("allset.anim_layer_duplicate", "Duplicate Layer", {"no_animation": False}),
+    ("allset.anim_layer_duplicate", "Duplicate Layer (No Animation)", {"no_animation": True}),
+    ("allset.anim_layer_merge", "Merge Layers", {}),
+    None,
+    ("lock", "Lock", None),
+    ("mute", "Mute", None),
+    ("solo", "Solo", None),
+    None,
+    ("allset.anim_layer_delete", "Delete", {}),
+    ("allset.anim_layer_empty", "Empty", {}),
+    ("allset.anim_layer_delete_empty", "Delete Empty Layers", {}),
+)
+ROW_ON_BASE = ("Extract Selected Objects", "Duplicate Layer", "Duplicate Layer (No Animation)", "Merge Layers", "Lock")
+
+
+def _base_selected(context):
+    from ..operators import anim_layers_204
+    return anim_layers_204.base_selected(context.scene)
+
+
+def draw_anim_layer_items(layout, context=None):
+    grey = context is not None and _base_selected(context)
     for entry in ANIM_LAYER_MENU:
         if entry is None:
             layout.separator()
             continue
         idname, text, props = entry
-        op = layout.operator(idname, text=text)
+        line = layout
+        if grey and text in GREY_WITH_BASE:
+            line = layout.row()
+            line.enabled = False
+        op = line.operator(idname, text=text)
         for k, v in props.items():
             setattr(op, k, v)
 
 
 def draw_anim_layer_mode(layout, context):
-    """Maya's Override / Additive choice for the selected layer (its layer menu), as two check items."""
+    """Maya's Override / Additive choice for the selected layer (its layer menu), as two check items (greyed while
+    BaseAnimation is among the selected layers)."""
     from ..operators import anim_layers
     sel = anim_layers.selected(context.scene)
     if sel is None or sel.name == anim_layers.BASE:
         return
     layout.separator()
-    layout.prop(sel, "override", text="Override")
-    layout.prop(sel, "override", text="Additive", invert_checkbox=True)
+    col = layout.column()
+    col.enabled = not _base_selected(context)
+    col.prop(sel, "override", text="Override")
+    col.prop(sel, "override", text="Additive", invert_checkbox=True)
+
+
+def anim_layer_row(context):
+    """The animation layer entry whose Layer Editor row is under the mouse (name button or its Lock / Solo / Mute
+    toggle), for the row's right-click menu; None elsewhere."""
+    scene = getattr(context, "scene", None)
+    ls = getattr(scene, "allset_anim_layers", None)
+    if ls is None or not len(ls):
+        return None
+    op = getattr(context, "button_operator", None)
+    if op is not None and op.bl_rna.identifier == "ALLSET_OT_anim_layer_select":
+        i = op.index
+        return ls[i] if 0 <= i < len(ls) else None
+    ptr = getattr(context, "button_pointer", None)
+    if ptr is not None and getattr(ptr, "bl_rna", None) is not None and \
+            ptr.bl_rna.identifier == "ALLSET_PG_anim_layer":
+        return next((e for e in ls if e.name == ptr.name), None)
+    return None
+
+
+def draw_anim_row_menu(layout, context, entry):
+    """Maya's layer right-click menu: the selected layers when the clicked row is selected, else that row only."""
+    from ..operators import anim_layers
+    picked = {e.name for e in anim_layers.selected_layers(context.scene)}
+    layer = "" if entry.name in picked else entry.name
+    base = entry.name == anim_layers.BASE
+    grey_base = anim_layers.BASE in (picked if not layer else {layer})
+    for item in ANIM_ROW_MENU:
+        if item is None:
+            layout.separator()
+            continue
+        idname, text, props = item
+        line = layout.row()
+        if (base or grey_base) and text not in ROW_ON_BASE:
+            line.enabled = False
+        if props is None:                   # Lock / Mute / Solo of the clicked row
+            if base and idname != "lock":
+                line.enabled = False
+            line.prop(entry, idname, text=text)
+            continue
+        op = line.operator(idname, text=text)
+        for k, v in props.items():
+            setattr(op, k, v)
+        if layer and idname != "allset.anim_layer_delete_empty":
+            op.layer = layer
+    if not base:
+        layout.separator()
+        col = layout.column()
+        col.enabled = not grey_base
+        col.prop(entry, "override", text="Override")
+        col.prop(entry, "override", text="Additive", invert_checkbox=True)
 
 
 def anim_display_order(scene):
@@ -621,9 +719,12 @@ def draw_anim_tab(layout, context):
     layout.separator(factor=0.5)
     # Maya's bottom row: "Weight" field + slider, greyed while BaseAnimation is selected (anim180 state d);
     # Additive / Override is Maya's layer menu choice (Layers menu here)
-    w = layout.row(align=True)
-    w.enabled = sel.name != anim_layers.BASE
-    w.prop(sel, "weight", slider=True)
+    # Maya's K is a small square button right of the slider (), not half the row
+    w = layout.split(factor=0.88, align=True)
+    slider = w.row(align=True)
+    slider.enabled = sel.name != anim_layers.BASE
+    slider.prop(sel, "weight", slider=True)
+    w.operator("allset.anim_layer_key_weight", text="K").current = True     # Maya's K: key the weight 
 
 
 class ALLSET_PT_layer_editor(bpy.types.Panel):

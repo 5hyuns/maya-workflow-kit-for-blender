@@ -28,7 +28,7 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
-                      "allset.select_2d_click", "allset.select_2d_box")
+                      "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1073,6 +1073,11 @@ def patch_graph_outliner(kd):
     for wheel, delta in (("WHEELUPMOUSE", -3), ("WHEELDOWNMOUSE", 3)):
         _add(kd, "View2D", "allset.graph_channel_scroll", make_event(wheel), {"delta": delta}, first=True,
              shadows=("View2D", "View2D Buttons List"))
+    # step 204: a click on a curve the kit draws for another selected animation layer (ui/graph_layers.py) makes that
+    # layer the editable one (Maya edits every selected layer's curves; Blender one action per object); it passes
+    # through when no such curve is under the mouse
+    _add(kd, "Graph Editor", "allset.graph_layer_pick", make_event("LEFTMOUSE"), first=True,
+         shadows=("Graph Editor", "Screen", "View2D"))
 
 
 def patch_shelf_scroll(kd):
