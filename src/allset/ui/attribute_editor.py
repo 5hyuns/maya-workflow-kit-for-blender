@@ -611,15 +611,64 @@ def wrap_rows(context, labels, equal=True, extra_units=None):
     return rows
 
 
+def tab_window(widths, avail, current, arrows):
+    """Maya's AE tab bar is one Qt tab row that scrolls (; audit 16 G1): the tabs
+    [a, b) shown, ``current`` among them, as many as fit in ``avail`` px; when not all fit, ``arrows`` px are kept
+    for the ◀ ▶ buttons. Returns (a, b, overflow). Pure (tests/test_step211_fix_batch.py)."""
+    n = len(widths)
+    if avail is None or sum(widths) <= avail:
+        return 0, n, False
+    room = avail - arrows
+    a = b = min(max(current, 0), n - 1)
+    used = widths[a]
+    b += 1
+    while True:
+        grew = False
+        if b < n and used + widths[b] <= room:
+            used += widths[b]
+            b += 1
+            grew = True
+        if a > 0 and used + widths[a - 1] <= room:
+            a -= 1
+            used += widths[a]
+            grew = True
+        if not grew:
+            return a, b, True
+
+
 def draw_tab_strip(layout, context, ob, current):
+    """One row of tabs at their text width, left-aligned like Maya's; a dock too narrow for all of them shows the
+    ones around the current tab with ◀ ▶ (previous / next tab, delegated: Qt's arrows only scroll)."""
     items = tabs(ob)
-    col = layout.column(align=True)
-    for idx in wrap_rows(context, [label for _k, label, _t in items]):
-        row = col.row(align=True)
-        for i in idx:
-            key, label, _type = items[i]
-            op = row.operator("allset.ae_tab", text=label, depress=(key == current))
-            op.key = key
+    labels = [label for _k, label, _t in items]
+    keys = [k for k, _l, _t in items]
+    cur = keys.index(current) if current in keys else 0
+    avail = content_width(context) if labels else None
+    if avail is None:
+        a, b, over = 0, len(items), False
+        widths = None
+    else:
+        from . import maya_dock
+        scale = context.preferences.system.ui_scale or 1.0
+        unit = maya_dock._ui_unit(scale, context.preferences.system.pixel_size or 1.0)
+        widths = text_widths(context, labels)
+        a, b, over = tab_window(widths, avail, cur, 2 * unit)
+    row = layout.row(align=True)
+    if widths is not None:
+        row.alignment = 'LEFT'
+    if over:
+        prev = row.row(align=True)
+        prev.enabled = cur > 0
+        prev.operator("allset.ae_tab", text="", icon='TRIA_LEFT').key = keys[max(cur - 1, 0)]
+    for i in range(a, b):
+        cell = row.row(align=True)
+        if widths is not None:
+            cell.ui_units_x = widths[i] / unit
+        cell.operator("allset.ae_tab", text=labels[i], depress=(keys[i] == current)).key = keys[i]
+    if over:
+        nxt = row.row(align=True)
+        nxt.enabled = cur < len(keys) - 1
+        nxt.operator("allset.ae_tab", text="", icon='TRIA_RIGHT').key = keys[min(cur + 1, len(keys) - 1)]
 
 
 def draw(layout, context, ob):

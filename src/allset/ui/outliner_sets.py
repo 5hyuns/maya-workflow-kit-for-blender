@@ -15,7 +15,9 @@ Maya, : defaultLightSet = every light, selecting it selects them; defaultObjectS
 selecting persp selects the hidden camera). The kit has no camera objects behind them (Blender's user views aren't
 cameras; real objects would render, export and sort among the user's objects), so they are drawn rows too: the
 cameras first, then the default sets, then the kit sets. Blender's rows can't be pushed down, so with objects in
-the scene the cameras follow the DAG rows instead of leading them (delegated, step 99).
+the scene the cameras follow the DAG rows instead of leading them (delegated, step 99). Step 211 (#117): a kit new
+Maya scene has real hidden startup cameras (operators/startup_cameras.py) that are Blender's first rows
+(ui/outliner_order.py); only scenes without them still get drawn camera rows.
 
 Blender row geometry (checked, step 96): row height = UI_UNIT_Y = round(18 x scale) + 2 x pixel size,
 row k spans view y [-(k + 1)·U, -k·U]; a depth-0 row draws its disclosure triangle at ~1.6 U, the icon
@@ -56,9 +58,14 @@ DEFAULT_SETS = ("defaultLightSet", "defaultObjectSet")
 _picked = {"camera": ""}   # camera row clicked last (highlighted while no object is selected)
 
 
-def default_entries():
-    """Maya's default Outliner rows the kit draws: [(kind, name, "")]."""
-    return [('CAMERA', n, "") for n in CAMERAS] + [('DEFAULT_SET', n, "") for n in DEFAULT_SETS]
+def default_entries(scene=None):
+    """Maya's default Outliner rows the kit draws: [(kind, name, "")]. Startup cameras the scene really has (a kit
+    new Maya scene, operators/startup_cameras.py, step 211) are Blender's own rows at the top instead."""
+    real = set()
+    if scene is not None:
+        from ..operators import startup_cameras
+        real = startup_cameras.names(scene)
+    return [('CAMERA', n, "") for n in CAMERAS if n not in real] + [('DEFAULT_SET', n, "") for n in DEFAULT_SETS]
 
 
 def default_set_members(name, scene):
@@ -135,7 +142,7 @@ def draw():
     space, region = context.space_data, context.region
     if region is None or not _is_maya(space):
         return
-    found = default_entries() + entries(context.scene)
+    found = default_entries(context.scene) + entries(context.scene)
     key = region.as_pointer()
     import blf
     import gpu

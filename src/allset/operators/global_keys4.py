@@ -3,6 +3,8 @@
 Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X walk is Blender's view3d.walk.
 
 Maya behaviour (scripts of the installed Maya 2022, behaviour only):
+- PasteSelected = cutCopyPaste "paste" -> pasteScene: import the clipboard file with every node renamed
+  ``pasted__<name>``, grouped under a new ``group`` (startup/Maya-58, ).
 - CutSelected = cutCopyPaste "cut": export the selection (with its hierarchy) to the clipboard file, then delete it
   (startup/Maya-1139; ).
 - PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya-20634).
@@ -12,11 +14,15 @@ Maya behaviour (scripts of the installed Maya 2022, behaviour only):
   performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (others/Maya; hotkeys_and_menus.md:121).
 """
 
+import re
+
 import bpy
 
 from .. import results
 from .. import undo_steps
 from . import display
+from . import group
+from . import naming
 
 
 # --- Ctrl+X ---------------------------------------------------------------------------------------------
@@ -61,17 +67,64 @@ class ALLSET_OT_cut(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def first_pasted(before, objects):
-    """Maya pasteScene selects the new nodes and then only the first (others/Maya-41): the lead.
-    Of the new objects, the first top node (no parent among the new ones), by name for a stable order."""
+PASTE_PREFIX = "pasted__"
+
+
+def pasted_roots(before, objects):
+    """The new objects' top nodes (no parent among the new ones), by name for a stable order."""
     new = [o for o in objects if o.name not in before]
     names = {o.name for o in new}
-    roots = sorted((o for o in new if o.parent is None or o.parent.name not in names), key=lambda o: o.name)
-    return roots[0] if roots else None
+    return sorted((o for o in new if o.parent is None or o.parent.name not in names), key=lambda o: o.name)
+
+
+def _unsuffixed(name):
+    """``pCube1.001`` -> ``pCube1`` (Blender's clash suffix)."""
+    return re.sub(r"\.\d{3,}$", "", name)
+
+
+def pasted_name(orig, taken):
+    """Maya pasteScene imports with ``-renameAll -renamingPrefix "pasted_"``: every node becomes ``pasted__<name>``
+    ( P1). Maya keeps a clashing short name under another group; Blender names are
+    unique, so a taken one counts up like a new node (``pasted__pCube2``, delegated)."""
+    name = PASTE_PREFIX + orig
+    if name not in taken:
+        return name
+    base = naming.base_name(name)
+    return f"{base}{naming.next_number(base, taken)}"
+
+
+def paste_group_name(taken):
+    """``-groupReference`` puts the pasted nodes under ``group``, then ``group1``, ``group2`` (naming_211.md P2)."""
+    if "group" not in taken:
+        return "group"
+    return f"group{naming.next_number('group', taken)}"
+
+
+def rename_pasted(new_objects):
+    """Blender's pastebuffer names clashing objects / data ``pCube1.001``: give them Maya's ``pasted__`` names, the
+    shape numbered like its transform (``pasted__pCube2`` / ``pasted__pCubeShape2``)."""
+    for ob in sorted(new_objects, key=lambda o: o.name):
+        orig = _unsuffixed(ob.name)
+        ob.name = pasted_name(orig, {o.name for o in bpy.data.objects if o is not ob})
+        data = ob.data
+        if data is None or data.users != 1 or data.library is not None:
+            continue
+        coll = naming._collection_for(data)
+        if coll is None:
+            continue
+        dorig = _unsuffixed(data.name)
+        dtaken = {d.name for d in coll if d is not data}
+        obase, nbase = naming.base_name(orig), naming.base_name(ob.name)
+        if orig != obase and dorig == f"{obase}Shape{orig[len(obase):]}":
+            want = f"{nbase}Shape{ob.name[len(nbase):]}"      # the shape follows its transform's number
+            if want not in dtaken:
+                data.name = want
+                continue
+        data.name = pasted_name(dorig, dtaken)
 
 
 class ALLSET_OT_paste(bpy.types.Operator):
-    """Paste the clipboard objects (Maya Ctrl+V): the pasted objects stay selected and the first one becomes the lead"""
+    """Paste the clipboard objects (Maya Ctrl+V): pasted__ names, under a new group that stays selected"""
     bl_idname = "allset.paste"
     bl_label = "Paste"
     bl_options = {'REGISTER', 'UNDO'}
@@ -81,12 +134,22 @@ class ALLSET_OT_paste(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
+        # Maya pasteScene (startup/Maya-58; Maya + Maya,  P1-P3):
+        # every node renamed pasted__<name>, the top nodes under a new group at the origin, only the group selected.
         before = set(bpy.data.objects.keys())
         if bpy.ops.view3d.pastebuffer() != {'FINISHED'}:
             return {'CANCELLED'}
-        lead = first_pasted(before, context.scene.objects)
-        if lead is not None:
-            context.view_layer.objects.active = lead
+        roots = pasted_roots(before, context.scene.objects)
+        if not roots:
+            return {'FINISHED'}
+        rename_pasted([o for o in context.scene.objects if o.name not in before])
+        grp = group.make_group(context, roots)
+        grp.name = paste_group_name({o.name for o in bpy.data.objects if o is not grp})
+        for o in context.scene.objects:
+            if o.select_get():
+                o.select_set(False)
+        grp.select_set(True)
+        context.view_layer.objects.active = grp
         return {'FINISHED'}
 
 

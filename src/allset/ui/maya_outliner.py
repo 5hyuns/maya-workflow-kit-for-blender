@@ -32,6 +32,7 @@ def setup(space):
     space.show_restrict_column_render = False
     space.show_restrict_column_hide = False
     space.show_mode_column = False      # Maya has no mode column (step 202: Blender shows it in edit mode)
+    space.use_sort_alpha = False        # Maya lists the DAG in creation order, startup cameras first (step 211)
 
 
 class ALLSET_MT_outliner_display(bpy.types.Menu):

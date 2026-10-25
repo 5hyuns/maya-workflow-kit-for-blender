@@ -65,10 +65,14 @@ def s_cut():
 
 @step
 def s_paste():
-    check(f"Ctrl+V pastes it back as pCube1 ({sorted(bpy.data.objects.keys())})", "pCube1" in bpy.data.objects)
+    # step 211: Maya pasteScene = pasted__pCube1 under a new group, the group selected ()
+    objs = bpy.data.objects
+    check(f"Ctrl+V pastes it back as pasted__pCube1 under group ({sorted(objs.keys())})",
+          "pasted__pCube1" in objs and objs["pasted__pCube1"].parent == objs.get("group"))
     act = bpy.context.view_layer.objects.active
-    check(f"the pasted cube is the lead (Channel Box shows it; active {act and act.name})", act is not None and act.name == "pCube1")
-    check(f"its shape keeps its name ({act and act.data.name})", act is not None and not act.data.name.endswith(".001"))
+    check(f"the paste group is the lead (Channel Box shows it; active {act and act.name})", act is not None and act.name == "group")
+    pasted = objs.get("pasted__pCube1")
+    check(f"its shape is pasted__ too ({pasted and pasted.data.name})", pasted is not None and pasted.data.name == "pasted__pCubeShape1")
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step90_paste.png"))
     hover()

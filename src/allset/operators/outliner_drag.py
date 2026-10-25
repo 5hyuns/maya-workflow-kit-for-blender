@@ -341,10 +341,18 @@ class ALLSET_OT_outliner_drag(bpy.types.Operator):
         if cycles:
             self.report({'WARNING'}, "Skipped (the drop target is their descendant): "
                         + ", ".join(ob.name for ob in cycles))
+        from ..ui import outliner_order
+        if done and not context.space_data.use_filter_collection:
+            outliner_order.to_end(done, context.scene)      # Maya: last among the new siblings (step 211)
         ordered = False
         if target is not None and where != 'ON' and not context.space_data.use_sort_alpha:
-            ordered = reorder(context.view_layer, [ob for ob in movers if ob not in cycles], target, where == 'AFTER',
-                              by_collection=context.space_data.use_filter_collection)
+            keep = [ob for ob in movers if ob not in cycles]
+            # step 211: the Maya Outliner's order = creation order numbers (ui/outliner_order.py)
+            ordered = not context.space_data.use_filter_collection and outliner_order.place(
+                context.scene, context.view_layer, keep, target, where == 'AFTER', reordered)
+            if not ordered:
+                ordered = reorder(context.view_layer, keep, target, where == 'AFTER',
+                                  by_collection=context.space_data.use_filter_collection)
         return {'FINISHED'} if done or ordered else {'CANCELLED'}
 
 
@@ -371,9 +379,11 @@ class ALLSET_OT_outliner_reparent(bpy.types.Operator):
         groups = {}
         for child, parent in changes.items():
             groups.setdefault(parent, []).append(child)
+        from ..ui import outliner_order
         for parent, children in groups.items():
             obs = [bpy.data.objects[n] for n in children if n in bpy.data.objects]
-            reparent(obs, bpy.data.objects.get(parent) if parent else None, mode='MAYA')
+            moved, _skipped = reparent(obs, bpy.data.objects.get(parent) if parent else None, mode='MAYA')
+            outliner_order.to_end(moved, context.scene)      # Maya: last among the new siblings (step 211)
         if self.select:
             _restore_selection(context, (json.loads(self.select), self.active or None,
                                          context.view_layer.active_layer_collection))

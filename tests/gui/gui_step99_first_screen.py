@@ -103,13 +103,16 @@ def s_toolbox():
           abs(outl_area.width - wo) <= 2)
     r = rows()
     names = [(x[2], x[3]) for x in r]
-    want_rows = [('CAMERA', n) for n in ("persp", "top", "front", "side")] + \
-        [('DEFAULT_SET', "defaultLightSet"), ('DEFAULT_SET', "defaultObjectSet")]
-    check(f"Outliner lists Maya's default rows ({names})", names == want_rows)
+    # step 211: persp / top / front / side are Maya's startup cameras = Blender's first four rows; the kit draws the
+    # default sets right under them
+    want_rows = [('DEFAULT_SET', "defaultLightSet"), ('DEFAULT_SET', "defaultObjectSet")]
+    check(f"Outliner draws Maya's default sets ({names})", names == want_rows)
     _a, reg = outl()
     u = mod("ui.outliner_sets").unit(bpy.context.preferences)
-    check(f"persp is the first row, at the top of the Outliner (y1 {r and r[0][1]} of {reg.height})",
-          bool(r) and abs(r[0][1] - reg.height) <= u)
+    cams = [o.name for o in mod("operators.startup_cameras").cameras(bpy.context.scene)]
+    check(f"persp / top / front / side are the first four rows, the sets under them (cameras {cams}, y1 "
+          f"{r and r[0][1]} of {reg.height})",
+          cams == ["persp", "top", "front", "side"] and bool(r) and abs(r[0][1] - (reg.height - 4 * u)) <= u)
     check(f"dock opens on the {CB!r} tab ({tab()})", tab() == 'CHANNEL_BOX')
     shot("s99_first_screen")
 
@@ -159,9 +162,9 @@ def s_tab_check():
 def s_rows_after():
     r = rows()
     kinds = [x[2] for x in r]
+    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
     check(f"with objects the default rows follow Blender's DAG rows ({kinds})",
-          kinds[:6] == ['CAMERA'] * 4 + ['DEFAULT_SET'] * 2 and r[0][1] < outl()[1].height - 1.5 *
-          mod("ui.outliner_sets").unit(bpy.context.preferences))
+          kinds[:2] == ['DEFAULT_SET'] * 2 and abs(r[0][1] - (outl()[1].height - 6 * u)) <= u)
     shot("s99_cube_selected")
     C["light"] = next(o.name for o in bpy.context.scene.objects if o.type == 'LIGHT')
     click_row(next(x for x in r if x[3] == "defaultLightSet"))
@@ -171,13 +174,17 @@ def s_rows_after():
 def s_lightset():
     sel = sorted(o.name for o in bpy.context.selected_objects)
     check(f"defaultLightSet selects the lights ({sel})", sel == [C["light"]])
-    click_row(next(x for x in rows() if x[3] == "persp"))
+    h = outl()[1].height
+    u = mod("ui.outliner_sets").unit(bpy.context.preferences)
+    click_row((h - u, h))                     # Blender's first row = the startup persp camera (step 211)
 
 
 @step
 def s_persp():
     sel = sorted(o.name for o in bpy.context.selected_objects)
-    check(f"persp row clears the object selection (no camera object behind it) ({sel})", sel == [])
+    act = bpy.context.view_layer.objects.active
+    check(f"the persp row makes the hidden persp camera the lead, no object selected (Maya) ({sel}, "
+          f"{act and act.name})", sel == [] and act is not None and act.name == "persp")
     redraw()
 
 

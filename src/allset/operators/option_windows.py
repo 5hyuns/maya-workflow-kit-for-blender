@@ -507,11 +507,17 @@ def find(action):
 
 
 def find_path(path):
-    """The option window of a Maya menu path (explicit ``paths`` first, then its action)."""
+    """The option window of a Maya menu path (explicit ``paths`` first, then its menu twin's, then its action). A twin
+    (``menu_map.TWINS``) runs the same Maya command, so its box opens the same window (step 211: nHair > Modify Curves
+    Bend / Curl / Scale Curvature = the Curves windows, audit 16 quant)."""
+    from ..ui import menu_map
+    source = menu_map.TWINS.get(path)
     for w in WINDOWS:
         if path in w.paths:
             return w
-    from ..ui import menu_map
+    for w in WINDOWS:
+        if source is not None and source in w.paths:
+            return w
     return find(menu_map.MAP.get(path)) if path in menu_map.MAP else None
 
 

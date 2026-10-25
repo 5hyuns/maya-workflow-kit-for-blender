@@ -72,11 +72,21 @@ def parent_maya(children, parent, preserve=True):
         else:
             set_parent_relative(ob, parent)
         done.append(ob)
+    _to_end(done)
     return done, cycles
+
+
+def _to_end(objects):
+    """Maya lists a re-parented node last among its new siblings (Outliner order, ui/outliner_order.py, step 211)."""
+    if objects and bpy.context.scene is not None:
+        from ..ui import outliner_order
+        outliner_order.to_end(objects, bpy.context.scene)
 
 
 def unparent(objects, preserve=True):
     done = 0
+    moved = [ob for ob in objects if ob.parent is not None]
+    _to_end(moved)
     for ob in objects:
         if ob.parent is None:
             continue

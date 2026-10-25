@@ -584,6 +584,7 @@ CHILDREN = {
         ("Animation Layers",), ("Camera Sets",), ("Character Sets",), ("Deformer Sets",),
         ("Display Layers",), ("Dynamic Relationships",), ("Light Linking",), ("Partitions",),
         ("Render Layers",), ("Render Pass Sets",), ("Sets",), ("UV Linking",)],
+    "Windows/Relationship Editors/Light Linking": [("Light-Centric",), ("Object-Centric",)],
     # Display > Heads Up Display: Maya lists every HUD item at run time ; the ones Blender's
     # viewport overlay can show are mapped (Poly Count = scene statistics).
     "Display/Heads Up Display": [
@@ -690,7 +691,12 @@ MAP.update({
     "Windows/Animation Editors/Shape Editor": _props('DATA'),
     "Windows/Rendering Editors/Render Layer Editor": _props('VIEW_LAYER'),
     "Windows/Relationship Editors/Render Layers": _props('VIEW_LAYER'),
-    "Windows/Relationship Editors/Light Linking": _props('OBJECT'),
+    # Maya's Light Linking submenu (startup/Maya-612 Maya): the step 179 kit editor
+    # in light- / object-centric mode, like Lighting/Shading > Light Linking Editor (step 211, audit 16 NB13).
+    "Windows/Relationship Editors/Light Linking/Light-Centric": ("v3d", "allset.light_linking_editor",
+                                                                 {"mode": 'LIGHT_CENTRIC'}),
+    "Windows/Relationship Editors/Light Linking/Object-Centric": ("v3d", "allset.light_linking_editor",
+                                                                  {"mode": 'OBJECT_CENTRIC'}),
     "Windows/Relationship Editors/Sets": _editor('OUTLINER'),
     "Windows/Content Browser": _editor('ASSETS'),
     # Mesh

@@ -2,8 +2,10 @@
 """Maya-style names: ``pCube1`` / ``pCubeShape1`` ().
 
 Maya numbers a new node with a trailing integer and renames the shape to match
-the transform. Blender names are unique per datablock type, so the number is
-the lowest one free for both the object and its data.
+the transform. The number is one past the highest ``<base>N`` that exists, gaps are not filled (step 208,
+; sets / layers / anim layers / characters / bookmarks too, step 211,
+); Blender names are unique per datablock type, so it must be free for both the
+object and its data.
 
 Step 149 (#93): Maya names are unique among nodes that exist. Deleting a Blender object leaves its mesh with zero
 users until the file is saved or purged, so that orphan held ``pCubeShape1`` and the next cube became ``pCube2``.
