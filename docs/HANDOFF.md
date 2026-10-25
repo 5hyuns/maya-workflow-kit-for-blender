@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 200 (Blender 5.x test pass 2, backlog #8 = 마지막, Issue #107) 완료 — `docs/steps/step_200.md`, `docs/compat_5x.md`
+  「step 200」. 헤드리스 전체 4.5.4 / 5.0.1 / 5.1.2 / 5.2.3 모두 **1844 / 1844** (첫 실행 1841 / 1840 / 1834). 고친 것 (compat):
+  5.2 GN 모디파이어 입력 (`gn_input_*`, Wire), 5.x 메뉴 바 첫 메뉴 위치 (`MENU_BAR_LEAD_UNITS`, ❒ 클릭), `Bone.select` 직접
+  읽기 2 곳 → shim. GUI 5.2.3 step183 / 187 28 / 28.
+  **바로 다음 할 일**: backlog 8 (steps 193–200) 끝 — 새 감사 (재점검 15차) 로 새 backlog + 이슈 (#108 표 갱신), 또는 0.5.0 출시 준비.
+
 - Step 199 (Skin and Constrain tools 2, backlog #7, Issue #106) 완료 — `docs/steps/step_199.md`, mayapy 명세
   `research/maya/re/skin_tools_199.md` · `constrain_199.md`. Move Weights to Influences, Normalize 세 모드 (Post 포함), Weight Maps
   내보내기 / 가져오기, Substitute Geometry, Bake Deformation, Constrain Normal / Tangent / Remove Target / Set Rest Position /

@@ -34,6 +34,9 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | IC 키맵: Ctrl+G 가 메뉴 호출 | 키맵 패치 | (step 53 에서 이벤트로 제거) | `keymap/patch.STRICT` = `compat.IS_TARGET` |
 | 메뉴 · 팝업이 클릭할 때까지 열림 (`PreferencesView.menu_close_leave` 기본 꺼짐, 5953ff318c) | 옵션 상자를 누르고 있다 열기 (step 146: 포인터를 멀리 보내 Maya 메뉴를 닫음) | 동작: Maya 메뉴가 옵션 창 아래 열린 채 | `menus_close_on_leave` (읽기만, 킷은 환경설정을 안 씀): 꺼져 있으면 멀리 보내기를 건너뜀, 메뉴는 클릭 / Esc 로 닫힘 (step 153) |
 | `ToolSettings.unified_paint_settings` → 페인트 모드마다 (`tool_settings.weight_paint.unified_paint_settings`), `unprojected_radius` (반지름) → `unprojected_size` (**지름**, 「Diameter of brush in Blender units」 실측 5.0.1 / 5.2.3) | Skin > Paint Skin Weights ❒ (Value / Opacity / Radius(U)) | **깨짐**: `AttributeError`, 메시가 Maya 설정 없이 Weight Paint 에 남음 (#90, step 153) | `unified_paint_settings(ts, paint)` / `unprojected_radius` / `set_unprojected_radius` (5.x 는 지름 = 2 × Maya 반지름) |
+| `Bone.select` 제거 (선택 = `PoseBone.select`) — step 110 / 199 코드가 직접 읽음 | Skin > Move Weights to Influences (선택 관절), 영향 관절 목록 (`rig_maya`) | **깨짐**: `AttributeError` (step 200) | 이미 있던 shim `channel_box.bone_selected` / `set_bone_selected` 로 (테스트도) |
+| 새 World 가 항상 노드 (Background 기본 회색이 장면을 밝힘) | 테스트의 Cycles 조명 링크 탐침 | 테스트만: 링크 안 된 큐브가 0.149 | 테스트가 Background Strength 0 |
+| 상단 바 첫 메뉴 위치: 영역 왼쪽 → 첫 Maya 메뉴 1.48 u → **1.25 u** (UI 1.0: 25 px, 1.25: 31 px; 5.0.1 / 5.1.2 / 5.2.3 같음) | 옵션 상자 ❒ 클릭 모델 (`ui/option_click`, step 183) | 동작: 메뉴 바에서 연 메뉴의 ❒ 칸이 6 px 오른쪽 → ❒ 클릭이 라벨 클릭으로 | `MENU_BAR_LEAD_UNITS` (step 200) |
 | BGL 제거, GLSL 소스 셰이더 제거, EEVEE id, Alembic/USD 인자, 브러시 이름 | — | 없음 (안 씀; 키맵 브러시 속성은 설치된 IC 에서 복사) | — |
 
 ### 5.1
@@ -55,9 +58,27 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | 「Only Insert Available」 공장값 켜짐 | Maya Auto Key 프리셋 | 없음 (이미 켜져 있으면 프리셋이 아무것도 안 바꿈, 끄면 공장값으로) | 테스트만 공장값 기준 |
 | IC Ctrl+S 계열에 `show_save_modified_images_dialog=True` | 킷의 Save Scene / Save Scene As | 동작: 저장 안 된 이미지 확인 창이 안 뜸 | `save_dialog_args` |
 | 가장자리 맞붙은 영역이 같이 안 움직임, 사이드바 탭 항상 보임 | Tool Box 열 맞춤, 뷰포트 사이드바 | GUI 확인 항목 | 아래 시각 확인 |
-| GN 모디파이어 입력 API, 조각 자동 마스킹, `template_palette(color=)` | — | 없음 | — |
+| GN 모디파이어 입력이 ID 속성 (`md["Socket_1"]`, `_use_attribute` / `_attribute_name`) 에서 `md.properties.inputs.Socket_1.value` / `.type` ('VALUE' / 'ATTRIBUTE') / `.attribute_name` 로 (옛 쓰기는 `TypeError`) | Deform > Wire (`wire_deformer`, step 169) | **깨짐**: Wire 만들기 실패 (step169 8 테스트, step 200) | `GN_INPUT_STRUCT`, `gn_input_get` / `gn_input_set` / `gn_input_attribute` |
+| 조각 자동 마스킹, `template_palette(color=)` | — | 없음 | — |
 
 ## 버전별 결과
+
+### step 200 (2026-10-25, 최신 전체)
+
+헤드리스 = `ALLSET_SANDBOX=<ver> python tests/run.py --no-build --blender <exe>` 전체 226 파일 (zip 은 4.5 로 한 번 빌드),
+한 번에 Blender 둘. GUI = 5.2.3 에서 `-k step183,step186,step187` (step186 은 GUI 파일 없음 → 2 파일) + step183 UI 1.0.
+step 153 이후 (step 154–199) 의 버전 민감 코드 첫 5.x 통과 (`docs/steps/step_200.md`).
+
+| Blender | 헤드리스 첫 실행 | 헤드리스 (수정 뒤) | GUI |
+|---|---|---|---|
+| 4.5.4 LTS (대상) | (step 199: 1841 / 1841) | **1844 / 1844** | step183 **24 / 24** |
+| 5.0.1 | 1841 / 1844 (Bone.select 2, Cycles 탐침) | **1844 / 1844** | step183: 첫 메뉴 6 px (수정 전 확인) |
+| 5.1.2 | 1840 / 1844 (+ USD 왕복 = 동시 실행이 `tmp/file_io` 공유) | **1844 / 1844** | 〃 |
+| 5.2.3 LTS | 1834 / 1844 (+ Wire 8: GN 입력 API) | **1844 / 1844** | step183 / 187 **28 / 28**, step183 UI 1.0 **24 / 24** |
+
+- 고친 것: `compat.gn_input_*` (5.2 GN 입력), `compat.MENU_BAR_LEAD_UNITS` (5.x 메뉴 바), `Bone.select` 직접 읽기 2 곳 → shim,
+  테스트 3 개 (Bone.select, 5.0 World 노드, `tmp/<sandbox>/file_io` 로 분리), step183 GUI 의 메뉴 가장자리 측정 (5.x 는 옆 영역이
+  메뉴 배경색과 같아 넓게만 잴 수 있음 — ❒ 칸 검사는 그대로 엄격).
 
 ### step 153 (2026-10-24, 최신 전체)
 
