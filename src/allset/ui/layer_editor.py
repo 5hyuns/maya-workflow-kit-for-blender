@@ -514,19 +514,35 @@ HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/coll
 TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
 MENU_BAR = (("Layers", "ALLSET_MT_le_layers"), ("Options", "ALLSET_MT_le_options"), ("Help", "ALLSET_MT_le_help"))
 
-# Maya Anim tab Layers menu (layerEditorBuildAnimLayerMenu): the items the kit's NLA layers carry (step 180,
-# operators/anim_layers.py)
+# Maya Anim tab Layers menu (layerEditorBuildAnimLayerMenu, Maya order; labels m_layerEditor.*): the items the kit's
+# NLA layers carry (step 180 operators/anim_layers.py, step 204 operators/anim_layers_204.py). Zero Key Layer is a Maya
+# toolbar button (also on the kit toolbar), kept here after Merge Layers since step 194.
 ANIM_LAYER_MENU = (
     ("allset.anim_layer_create", "Create Empty Layer", {"from_selected": False}),
     ("allset.anim_layer_create", "Create Layer from Selected", {"from_selected": True}),
     None,
     ("allset.anim_layer_members", "Add Selected Objects", {"add": True}),
     ("allset.anim_layer_members", "Remove Selected Objects", {"add": False}),
+    ("allset.anim_layer_extract", "Extract Selected Objects", {}),
     None,
+    ("allset.anim_layer_duplicate", "Duplicate Layer", {"no_animation": False}),
+    ("allset.anim_layer_duplicate", "Duplicate Layer (No Animation)", {"no_animation": True}),
     ("allset.anim_layer_merge", "Merge Layers", {}),
     ("allset.anim_layer_zero_key", "Zero Key Layer", {}),
     None,
-    ("allset.anim_layer_delete", "Delete Layer", {}),
+    ("allset.anim_layer_extract", "Extract Non-Layered Animation for Selected Objects", {"base": True}),
+    ("allset.anim_layer_extract", "Extract Non-Layered Animation for All Objects", {"all_objects": True}),
+    None,
+    ("allset.anim_layer_delete", "Delete", {}),
+    ("allset.anim_layer_empty", "Empty", {}),
+    ("allset.anim_layer_delete_empty", "Delete Empty Layers", {}),
+)
+# Maya's Anim tab toolbar, left part (createAnimLayerEditor: zeroKey / keyZeroWeight / keyFullWeight buttons;
+# Blender icons until kit glyphs are drawn)
+ANIM_TOOLBAR = (
+    ("allset.anim_layer_zero_key", 'KEYFRAME', {}),
+    ("allset.anim_layer_key_weight", 'KEY_DEHLT', {"weight": 0.0}),
+    ("allset.anim_layer_key_weight", 'KEY_HLT', {"weight": 1.0}),
 )
 # Maya's row buttons, left of the name: Lock, Solo, Mute (, _anim180_pixels.json:
 # 24 px pitch, BaseAnimation only Lock); icons (off, on) instead of Maya's padlock / rectangle / circle-slash images
@@ -568,7 +584,15 @@ def draw_anim_tab(layout, context):
     from ..operators import anim_layers
     from .kit_icons import button
     scene = context.scene
-    row = layout.row(align=True)
+    bar = layout.row(align=True)
+    left = bar.row(align=True)
+    left.alignment = 'LEFT'
+    left.emboss = 'NONE'
+    for idname, icon, props in ANIM_TOOLBAR:
+        op = left.operator(idname, text="", icon=icon)
+        for k, v in props.items():
+            setattr(op, k, v)
+    row = bar.row(align=True)
     row.alignment = 'RIGHT'
     row.emboss = 'NONE'
     button(row, "allset.anim_layer_create", "layer:NEW_EMPTY", 'ADD', text="").from_selected = False
@@ -577,6 +601,7 @@ def draw_anim_tab(layout, context):
     if not len(ls):
         return
     sel = anim_layers.selected(scene)
+    picked = {e.name for e in anim_layers.selected_layers(scene)}     # Ctrl / Shift selection (step 204)
     col = layout.column(align=True)
     for i in anim_display_order(scene):
         e = ls[i]
@@ -590,7 +615,7 @@ def draw_anim_tab(layout, context):
             cell.prop(e, attr, text="", icon=icons[bool(getattr(e, attr))], toggle=True)
         name = line.row(align=True)
         name.active = not e.mute                 # a muted layer's name reads greyed (#666666)
-        name.operator("allset.anim_layer_select", text=e.name, depress=e == sel).index = i
+        name.operator("allset.anim_layer_select", text=e.name, depress=e.name in picked).index = i
     if sel is None:
         return
     layout.separator(factor=0.5)

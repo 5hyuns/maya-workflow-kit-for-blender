@@ -27,7 +27,7 @@ from bpy.props import BoolProperty, IntProperty, StringProperty
 from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
-from . import editor_menu_data, menu_map, menu_sets
+from . import editor_menu_data, graph_layers, menu_map, menu_sets
 
 GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
 
@@ -602,6 +602,8 @@ def node_key(node):
 
 def row_id(row):
     kind, node, fc = row
+    if kind in graph_layers.KINDS:
+        return graph_layers.row_id(row)
     if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows (step 203): one per label under the node
         return (node_key(node), kind, fc.data_path, fc.array_index, _up_label.get((kind, fc.as_pointer()), ""))
     return node_key(node) if kind != "ATTR" else (node_key(node), fc.data_path, fc.array_index)
@@ -1148,6 +1150,8 @@ def rows(context, space):
                     for kind2, ufc, label in upstream_rows(node, fc):
                         _up_label[(kind2, ufc.as_pointer())] = label
                         out.append((kind2, node, ufc))
+            if kind == "OBJECT":         # step 204: the other selected animation layers' rows
+                out += graph_layers.outliner_rows(context.scene, node)
     return out
 
 
@@ -1305,6 +1309,10 @@ def draw_channels():
         if y < 0:
             break
         kind, node, fc = row
+        if kind in graph_layers.KINDS:          # step 204: another selected animation layer (ui/graph_layers.py)
+            graph_layers.draw_row(row, y, h, s, font, region.width)
+            y -= h
+            continue
         sel = highlighted(kind, row_id(row), kind not in ATTR_KINDS and node_selected(context, kind, node), picked)
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
@@ -1391,6 +1399,9 @@ class ALLSET_OT_graph_channel_click(bpy.types.Operator):
         if row is None:
             return {'FINISHED'}
         kind, node, _fc = row
+        if kind in graph_layers.KINDS:          # step 204: that layer becomes the last picked one
+            graph_layers.activate_row(context, row)
+            return {'FINISHED'}
         s = context.preferences.system.ui_scale
         if kind not in ATTR_KINDS and event.mouse_region_x < 18 * s:
             key = node_key(node)
@@ -1861,9 +1872,11 @@ def register():
         "Selected Objects keep a fixed list)", get=_auto_get, set=_auto_set, options={'SKIP_SAVE'})
     patch_headers()
     _handle.append(bpy.types.SpaceGraphEditor.draw_handler_add(draw_channels, (), 'CHANNELS', 'POST_PIXEL'))
+    graph_layers.register()
 
 
 def unregister():
+    graph_layers.unregister()
     while _handle:
         bpy.types.SpaceGraphEditor.draw_handler_remove(_handle.pop(), 'CHANNELS')
     unpatch_headers()

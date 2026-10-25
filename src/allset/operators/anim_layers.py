@@ -57,6 +57,18 @@ def selected(scene):
     return ls[i] if 0 <= i < len(ls) else (ls[0] if len(ls) else None)
 
 
+def selected_layers(scene):
+    """Maya's selected layers (Layer Editor Ctrl / Shift click, step 204), list order: the ``picked`` entries while
+    they include the last picked one (``allset_anim_layer_index``), else only that one (any direct index write is a
+    plain single selection)."""
+    cur = selected(scene)
+    if cur is None:
+        return []
+    if not cur.picked:
+        return [cur]
+    return [e for e in layers(scene) if e.picked]
+
+
 def unique_name(scene, base="AnimLayer"):
     names = {e.name for e in layers(scene)}
     n = 1
@@ -172,12 +184,62 @@ def order_tracks(ob, names):
     kit = [tr for tr in ad.nla_tracks if tr.name in have]
     if [tr.name for tr in kit] == want:
         return
-    data = {n: (_strip(have[n]).action, have[n].mute) for n in want}
+    data = {n: (_strip(have[n]).action, have[n].mute, strip_state(_strip(have[n]))) for n in want}
     for tr in kit:
         ad.nla_tracks.remove(tr)
     for n in want:
         tr = _add_track(ob, n, data[n][0])
         tr.mute = data[n][1]
+        restore_strip_state(_strip(tr), data[n][2])      # a keyed weight (step 204) survives the rebuild
+
+
+def strip_state(st):
+    """(animated?, influence, influence keys) of a layer strip: Maya's layer weight and its keys."""
+    keys = []
+    fc = st.fcurves.find("influence") if st.use_animated_influence else None
+    if fc is not None:
+        keys = [(tuple(kp.co), tuple(kp.handle_left), tuple(kp.handle_right), kp.interpolation,
+                 kp.handle_left_type, kp.handle_right_type) for kp in fc.keyframe_points]
+    return st.use_animated_influence, st.influence, keys
+
+
+def restore_strip_state(st, state):
+    animated, influence, keys = state
+    if not animated:
+        return
+    fc = weight_curve(st)
+    if fc is None:
+        return
+    fc.keyframe_points.clear()
+    for co, hl, hr, interp, tl, tr in keys:
+        kp = fc.keyframe_points.insert(co[0], co[1], options={'FAST'})
+        kp.interpolation = interp
+        kp.handle_left_type, kp.handle_right_type = tl, tr
+        kp.handle_left, kp.handle_right = hl, hr
+    fc.update()
+    st.influence = influence
+
+
+def weight_curve(st):
+    """The strip's influence F-curve (Maya's keyed layer weight), made without Blender's automatic first key."""
+    if not st.use_animated_influence:
+        keep = st.influence
+        st.use_animated_influence = True      # Blender keys influence when it turns this on: drop that key
+        fc = st.fcurves.find("influence")
+        if fc is not None:
+            fc.keyframe_points.clear()
+        st.influence = keep
+    return st.fcurves.find("influence")
+
+
+def strip_weight(st, frame):
+    """The strip's weight at ``frame`` (its influence curve when keyed)."""
+    if not st.use_animated_influence:
+        return 1.0
+    fc = st.fcurves.find("influence")
+    if fc is not None and len(fc.keyframe_points):
+        return fc.evaluate(frame)
+    return st.influence
 
 
 def members(scene, layer):
@@ -213,7 +275,13 @@ def display_layer(scene, ob):
     """The layer whose keys ``ob`` shows: the selected layer when the object is in it, else BaseAnimation."""
     e = selected(scene)
     name = e.name if e is not None else BASE
-    return name if name in tracks(ob) else BASE
+    have = tracks(ob)
+    if name in have:
+        return name
+    for x in reversed(selected_layers(scene)):     # step 204: another selected layer the object is in (top first)
+        if x.name in have:
+            return x.name
+    return BASE
 
 
 def show(scene):
@@ -300,7 +368,7 @@ def _steps(ob, path, index, frame, scene):
             continue
         st = _strip(tr)
         fc = _fcurve(st.action, path, index)
-        w = st.influence if st.use_animated_influence else 1.0
+        w = strip_weight(st, frame)
         if st.blend_type == 'REPLACE':
             mode = 'REPLACE'
         elif st.blend_type == 'COMBINE' and path in SCALE_PATHS:
@@ -531,6 +599,8 @@ class ALLSET_PG_anim_layer(bpy.types.PropertyGroup):
     lock: BoolProperty(name="Lock", update=_sync_update, description="Lock layer: no keys")
     override: BoolProperty(name="Override", update=_sync_update,
                            description="Override the layers below (else Additive)")
+    picked: BoolProperty(name="Selected", options={'HIDDEN'},
+                         description="Selected in the Layer Editor (Ctrl / Shift click, step 204)")
 
 
 def _layer_objects(context):
@@ -762,15 +832,27 @@ class ALLSET_OT_anim_layer_merge(bpy.types.Operator):
 
 
 class ALLSET_OT_anim_layer_select(bpy.types.Operator):
-    """Make this the selected layer: keys go to it (Maya click on a layer)"""
+    """Make this the selected layer: keys go to it (Maya click on a layer; Ctrl+click adds / removes, Shift+click
+    selects a range)"""
     bl_idname = "allset.anim_layer_select"
     bl_label = "Select Animation Layer"
     bl_options = {'INTERNAL'}
 
     index: IntProperty(options={'SKIP_SAVE'})
+    toggle: BoolProperty(options={'SKIP_SAVE'}, description="Ctrl: add / remove this layer")
+    extend_range: BoolProperty(options={'SKIP_SAVE'}, description="Shift: select the range up to this layer")
+
+    def invoke(self, context, event):
+        from . import keystate
+        self.toggle = event.ctrl or any(keystate.is_down(k) for k in ("LEFT_CTRL", "RIGHT_CTRL"))
+        self.extend_range = not self.toggle and (
+            event.shift or any(keystate.is_down(k) for k in ("LEFT_SHIFT", "RIGHT_SHIFT")))
+        return self.execute(context)
 
     def execute(self, context):
-        context.scene.allset_anim_layer_index = self.index
+        from . import anim_layers_204
+        anim_layers_204.pick(context.scene, self.index, toggle=self.toggle, extend=self.extend_range)
+        anim_layers_204.redraw(context)
         return {'FINISHED'}
 
 
