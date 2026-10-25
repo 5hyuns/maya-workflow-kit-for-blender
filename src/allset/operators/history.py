@@ -34,7 +34,10 @@ def is_deformer(md):
     if md.type != 'NODES':
         return False
     from . import skin_tools_199, wire_deformer
-    return wire_deformer.is_wire(md) or skin_tools_199.is_part(md)
+    if wire_deformer.is_wire(md) or skin_tools_199.is_part(md):
+        return True
+    from . import deformers                       # step 205: every kit GN deformer of deformers.BASES (morph1, ...)
+    return deformers.base_of(md) is not None
 
 
 def _bake(context, ob, keep):
