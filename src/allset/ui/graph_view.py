@@ -38,6 +38,9 @@ LABEL_DY = 4.0                    # baseline px above the curve (x UI scale)
 # Show > Objects > Clear Below turns these type filters back on (the ones the Show > Objects items map to)
 OBJECT_FILTERS = ("show_meshes", "show_curves", "show_cache_files", "show_cameras", "show_armatures")
 
+# ... and the kit's own Show > Objects items (WindowManager flags, ui/editor_chrome.py) off
+KIT_OBJECT_FILTERS = ("allset_show_ik_handles", "allset_show_sets", "allset_show_characters")
+
 _state = {"sig": None}
 _handles = []
 
@@ -259,6 +262,8 @@ def _tick():
         from .. import preferences
         step(bpy.context, preferences.get())
         hide_sidebars(bpy.context)
+        from . import editor_chrome
+        editor_chrome.sync(bpy.context)                   # step 203: loaded lists, pins, Show filters
         from ..operators import graph_weights
         watch = getattr(graph_weights, "watch", None)     # step 198: non-weighted / locked tangent lengths
         if watch is not None:
@@ -373,6 +378,10 @@ class ALLSET_OT_graph_show_clear(bpy.types.Operator):
         ds = context.space_data.dopesheet
         for attr in OBJECT_FILTERS:
             setattr(ds, attr, True)
+        wm = context.window_manager
+        for attr in KIT_OBJECT_FILTERS:      # step 203: the kit's Show > Objects check items
+            if getattr(wm, attr, False):
+                setattr(wm, attr, False)
         return {'FINISHED'}
 
 

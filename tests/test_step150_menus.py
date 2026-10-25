@@ -32,10 +32,9 @@ GREYED_VIEW = ("Undo View Change", "Redo View Change", "Clip Time", "Show Result
                "Key View/Detailed", "Key View/Simple", "Time Ruler Placement/Top", "Time Ruler Placement/Bottom",
                "Theme/Dark", "Theme/Light", "Theme/TRS Distinct", "Theme/Colorblind Compatible", "Theme/Classic",
                "Theme/Export Current Theme", "Simple Toolbar")
-GREYED_SHOW = ("Objects/Asset", "Objects/IkHandles", "Objects/Characters", "Objects/Clips", "Objects/Sets",
-               "Objects/MASH", "Attributes/Hidden", "Attributes/Driven by Anim Curve",
-               "Attributes/Driven by Expression", "Attributes/Driven by Driven Key", "Attributes/User Defined",
-               "Attributes/Published", "Show Selected Type(s)", "Select Attributes...", "Create Entry...",
+# step 203: IkHandles / Sets / Characters and the Hidden / Driven by / User Defined filters work (test_step203_list)
+GREYED_SHOW = ("Objects/Asset", "Objects/Characters", "Objects/Clips",
+               "Objects/MASH", "Attributes/Published", "Show Selected Type(s)", "Select Attributes...", "Create Entry...",
                "Delete Entry...", "Show Auxiliary Nodes", "Auxiliary Nodes...")
 
 
@@ -114,8 +113,7 @@ def test_view_items_mapped_to_kit_modes():
 def test_show_items_mapped():
     for ed in ("Graph Editor", "Dope Sheet"):
         assert menu_map.spec(f"{ed}/Show/Objects/Clear Below")[1] == "allset.graph_show_clear"
-        assert menu_map.spec(f"{ed}/Show/Attributes/Clear Below") == (
-            "op", "wm.context_set_string", {"data_path": "space_data.dopesheet.filter_text", "value": ""})
+        assert menu_map.spec(f"{ed}/Show/Attributes/Clear Below")[1] == "allset.graph_attr_clear"   # step 203
         assert menu_map.spec(f"{ed}/Show/Objects/Subdiv Objects") == (
             "prop", "space_data.dopesheet.show_meshes", {})
 
@@ -243,6 +241,7 @@ def test_still_greyed_items_have_a_notice():
     paths = [f"{GE}/View/{i}" for i in GREYED_VIEW] + [f"{ed}/Show/{i}" for ed in (GE, "Dope Sheet")
                                                          for i in GREYED_SHOW]
     paths.remove(f"{GE}/Show/Objects/Characters")      # step 197: character nodes in the kit Graph Editor outliner
+    paths.remove("Dope Sheet/Show/Objects/Characters")  # step 203: their members in the Dope Sheet
     leaves = {p for p, _it in menu_sets.iter_items()}
     for path in paths:
         assert path in leaves, path

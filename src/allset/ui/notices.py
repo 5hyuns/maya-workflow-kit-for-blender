@@ -813,21 +813,9 @@ NOTICES.update({
 })
 # Show menu items with a specific substitute (Graph Editor and Dope Sheet share the filters)
 NOTICES.update({
-    **{f"{ed}/Show/Attributes/{item}": (
-        "Drivers mode", "Blender lists driven channels in the Graph Editor's Drivers mode (header mode menu), not "
-        "as a filter of the F-Curve list.")
-       for ed in ("Graph Editor", "Dope Sheet")
-       for item in ("Driven by Anim Curve", "Driven by Expression", "Driven by Driven Key")},
-    **{f"{ed}/Show/Attributes/User Defined": (
-        "Name filter", "Blender filters channels by name: type the custom attribute's name in the header search "
-        "field.") for ed in ("Graph Editor", "Dope Sheet")},
     **{f"{ed}/Show/Objects/Clips": (
         "NLA Editor", "Blender's clips are NLA strips: they are listed in the NLA Editor, not in this list.")
        for ed in ("Graph Editor", "Dope Sheet")},
-    # step 197: the Graph Editor lists character nodes in the kit outliner; the Dope Sheet's channel list is Blender's
-    "Dope Sheet/Show/Objects/Characters": (
-        "Graph Editor", "Blender's Dope Sheet channel list can't show character set nodes: the Graph Editor's Show > "
-        "Objects > Characters lists them with their member attributes."),
 })
 
 

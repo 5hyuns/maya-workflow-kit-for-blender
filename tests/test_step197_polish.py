@@ -181,7 +181,7 @@ def test_no_stale_character_set_notices():
     assert "Windows/Relationship Editors/Character Sets" not in notices.NOTICES
     assert menu_map.MAP["Windows/Relationship Editors/Character Sets"][1] == "allset.character_editor"
     assert "Graph Editor/Show/Objects/Characters" not in notices.NOTICES
-    assert "Dope Sheet/Show/Objects/Characters" in notices.NOTICES       # Blender's own channel list
+    assert "Dope Sheet/Show/Objects/Characters" not in notices.NOTICES   # step 203: members in the Dope Sheet
 
 
 def test_graph_outliner_lists_character_nodes():

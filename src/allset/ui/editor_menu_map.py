@@ -146,19 +146,39 @@ SHOW_ATTRIBUTES = {"Translate": "Location", "Rotate": "Rotation", "Scale": "Scal
                    "Keyable": ""}
 
 
+# step 203 (#110): the kit's Show / List check items (WindowManager flags, ui/editor_chrome.FLAGS)
+SHOW_ATTRIBUTE_FLAGS = {"Hidden": "hidden", "Driven by Anim Curve": "anim_curve",
+                        "Driven by Expression": "expression", "Driven by Driven Key": "driven_key",
+                        "User Defined": "user_defined"}
+_WM = "window_manager"
+
+
 def _list_show_menus(ed):
     m = {
-        f"{ed}/List/Auto Load Selected Objects": _prop(f"{_DS}.show_only_selected"),
+        # step 203: Auto Load = Blender's Only Show Selected unless the kit keeps the list (ui/editor_chrome.py)
+        f"{ed}/List/Auto Load Selected Objects": _prop(f"{_WM}.allset_auto_load"),
+        f"{ed}/List/Load Selected Objects": ("allset.graph_list", {"action": "LOAD"}),
+        f"{ed}/List/Add Selected Objects": ("allset.graph_list", {"action": "ADD"}),
+        f"{ed}/Show/Objects/IkHandles": _prop(f"{_WM}.allset_show_ik_handles"),
+        f"{ed}/Show/Objects/Sets": _prop(f"{_WM}.allset_show_sets"),
+        f"{ed}/Show/Objects/Characters": _prop(f"{_WM}.allset_show_characters"),
         f"{ed}/Show/Invert Shown": _prop(f"{_DS}.use_filter_invert"),
         f"{ed}/Show/Show All": ("wm.context_set_string", {"data_path": f"{_DS}.filter_text", "value": ""}),
         # step 150: Maya's Clear Below leaves no entry checked = nothing filtered (ui/graph_view.py)
         f"{ed}/Show/Objects/Clear Below": "allset.graph_show_clear",
-        f"{ed}/Show/Attributes/Clear Below": ("wm.context_set_string",
-                                              {"data_path": f"{_DS}.filter_text", "value": ""}),
+        f"{ed}/Show/Attributes/Clear Below": "allset.graph_attr_clear",
     }
     m.update({f"{ed}/Show/Objects/{label}": _prop(f"{_DS}.{attr}") for label, attr in SHOW_OBJECTS.items()})
-    if ed == "Graph Editor":    # step 197 (#104): character nodes in the kit outliner (ui/editor_chrome.py)
-        m[f"{ed}/Show/Objects/Characters"] = _prop("window_manager.allset_show_characters")
+    # step 203: the Graph Editor's kit outliner filters its rows; Blender's Dope Sheet channel list can't drop single
+    # channels, so there they keep the objects with such an attribute (ui/editor_chrome.row_objects)
+    m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_WM}.allset_attr_{flag}")
+              for label, flag in SHOW_ATTRIBUTE_FLAGS.items()})
+    if ed == "Graph Editor":
+        m[f"{ed}/List/Show Upstream Curves"] = _prop(f"{_WM}.allset_show_upstream")
+        m[f"{ed}/Curves/Pin Channel"] = ("allset.graph_pin", {"pin": True})
+        m[f"{ed}/Curves/Unpin Channel"] = ("allset.graph_pin", {"pin": False})
+    else:
+        m[f"{ed}/List/Hierarchy Below"] = _prop(f"{_WM}.allset_hierarchy_below")
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_DS}.filter_text", text)
               for label, text in SHOW_ATTRIBUTES.items()})
     return m

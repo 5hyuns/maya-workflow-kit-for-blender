@@ -108,7 +108,6 @@ def _inf(side, mode):
     return ("allset.curve_infinity", {"side": side, "mode": mode})
 
 
-_DSF = "space_data.dopesheet"
 GRAPH_ICONS = (
     ("directKeyTool", 'RESTRICT_SELECT_OFF', None, "Move Nearest Picked Key Tool"),
     ("insertKeyTool", 'KEY_HLT', "allset.insert_key_tool", "Insert Keys Tool"),
@@ -142,9 +141,9 @@ GRAPH_ICONS = (
     ("freeTanButton", 'UNLOCKED', ("allset.tangent_weight_lock", {"lock": False}), "Free tangent length"),
     ("lockTanButton", 'LOCKED', ("allset.tangent_weight_lock", {"lock": True}), "Lock tangent length"),
     "|",
-    ("OutlineEdloadToggleButton", 'RESTRICT_SELECT_OFF', ("prop", f"{_DSF}.show_only_selected", {}),
+    ("OutlineEdloadToggleButton", 'RESTRICT_SELECT_OFF', ("prop", "window_manager.allset_auto_load", {}),
      "Auto load Graph Editor on selection"),
-    ("OutlineEdreloadButton", 'FILE_REFRESH', None, "Load the selected objects"),
+    ("OutlineEdreloadButton", 'FILE_REFRESH', ("allset.graph_list", {"action": "LOAD"}), "Load the selected objects"),
     "|",
     ("timeSnapButton", 'SNAP_ON', ("prop", "tool_settings.use_snap_anim", {}), "Time snap"),
     ("valueSnapButton", 'SNAP_INCREMENT', None, "Value snap"),
@@ -177,11 +176,11 @@ DOPE_ICONS = (
     ("frameRangeButton", 'PREVIEW_RANGE', "anim.scene_range_frame", "Frame playback range"),
     ("centerCurrentTimeButton", 'TIME', "action.view_frame", "Center the view about the current time"),
     "|",
-    ("hierButton", 'OUTLINER', None, "Show the hierarchy below"),
+    ("hierButton", 'OUTLINER', ("prop", "window_manager.allset_hierarchy_below", {}), "Show the hierarchy below"),
     "|",
-    ("OutlineEdloadToggleButton", 'RESTRICT_SELECT_OFF', ("prop", f"{_DSF}.show_only_selected", {}),
+    ("OutlineEdloadToggleButton", 'RESTRICT_SELECT_OFF', ("prop", "window_manager.allset_auto_load", {}),
      "Auto load Dope Sheet on selection"),
-    ("OutlineEdreloadButton", 'FILE_REFRESH', None, "Load the selected objects"),
+    ("OutlineEdreloadButton", 'FILE_REFRESH', ("allset.graph_list", {"action": "LOAD"}), "Load the selected objects"),
     "|",
     ("getGraphEditorButton", 'GRAPH', ("allset.open_editor", {"ui_type": 'FCURVES'}), "Open the Graph Editor"),
     ("getTraxButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),
@@ -246,10 +245,7 @@ NOTICES = {
                       "drag it: no tool to pick."),
     "selectKeyTool": ("Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
     "latticeDeformKeyTool": ("Scale (S)", "Blender has no lattice for keys: scale the selected keys with S."),
-    "OutlineEdreloadButton": ("Only Show Selected", "Blender lists the selected objects' channels as you select "
-                              "(the auto load button)."),
     "valueSnapButton": ("Snap", "Blender snaps keys to frames only (Edit > Snap, time snap button)."),
-    "hierButton": ("Channel filters", "Blender lists child objects only when they are selected too."),
     "toggleTextureBorderButton": ("Seams", "Blender draws seams in the 3D View, not texture borders here."),
     "toggleShellBorderButton": ("Select Linked", "Blender doesn't draw shell borders in the UV Editor: select a "
                                 "shell with Select > Select Linked."),
@@ -578,6 +574,9 @@ def node_curves(node):
     from .. import compat
     if isinstance(node, bpy.types.KeyingSet):
         return character_curves(bpy.context.scene, node)
+    if isinstance(node, bpy.types.Collection):       # a kit set (Show > Objects > Sets, step 203)
+        from ..operators import sets
+        return [fc for ob in sets.members(node, bpy.context.scene) for fc in maya_order(split_object_curves(ob)[0])]
     if isinstance(node, bpy.types.PoseBone):
         return dict((pb.name, c) for pb, c in split_object_curves(node.id_data)[1]).get(node.name, [])
     if isinstance(node, bpy.types.Key):
@@ -593,6 +592,8 @@ def node_key(node):
         return ("SHAPES", node.name)
     if isinstance(node, bpy.types.KeyingSet):
         return ("CHARACTER", node.bl_label)
+    if isinstance(node, bpy.types.Collection):
+        return ("SET", node.name)
     return node.name
 
 
@@ -602,16 +603,415 @@ def row_id(row):
 
 
 def listed_objects(context, space):
-    """Objects Blender's Graph Editor lists (animated, also by shape keys; only the selected with Only Show
-    Selected), by name."""
+    """Objects the Maya list shows as rows (animated, also by shape keys): the loaded list, else the selection with
+    Auto Load, else all; plus Hierarchy Below / Show Upstream Curves, narrowed by Show > Objects > IkHandles (step
+    203), by name."""
     ds = space.dopesheet
     obs = [ob for ob in context.scene.objects
            if (ob.animation_data and ob.animation_data.action) or shape_key(ob) is not None]
-    if ds.show_only_selected:
-        obs = [ob for ob in obs if ob.select_get()]
+    base = row_objects(context, space)
+    if base is not None:
+        base = set(base)
+        obs = [ob for ob in obs if ob in base]
     if not ds.show_hidden:
         obs = [ob for ob in obs if ob.visible_get()]
     return sorted(obs, key=lambda o: o.name)
+
+
+# --- List > Load / Add Selected Objects, Auto Load, Pin Channel, Show filters (step 203, #110) --------------------
+# Maya [K] (Graph Editor / Dope Sheet List menu, graphEditorPanel.mel / dopeSheetPanel.mel annotations in
+# research/maya/screens/editors104/_editors104.json): Load Selected Objects puts the selection into the editor's
+# outliner and turns Auto Load off, so the list stays when the selection changes; Add Selected Objects adds the
+# selection to it; Auto Load on = the list follows the selection again. Pin Channel keeps the selected curves shown
+# whatever is selected later. Show > Objects / Attributes check items list only the checked kinds.
+#
+# Blender: a Graph Editor / Dope Sheet draws the objects its own filters let through (Only Show Selected, the
+# Collection filter ``dopesheet.filter_collection``). A list Blender's selection filter can't express (loaded, plus
+# pinned owners / hierarchy / upstream nodes / set and character members, only IK handles) is a kit collection
+# (ID prop ``allset_list``, no scene, fake user: one per editor, saved with the file like Maya's panel state) set as
+# that editor's Collection filter, Only Show Selected off; its members follow the rules from graph_view's 0.25 s
+# timer (``sync``). Curves Blender then draws that the Maya list doesn't show (unpinned curves of a pinned curve's
+# node, joints not loaded, attributes filtered out) are hidden (``fc.hide``) and shown again when they're listed
+# (``_kit_hidden``). Attribute filters list driver curves too (Driven by Expression / Driven Key): Blender draws
+# drivers only in the Graph Editor's Drivers mode, so those rows have no curve in F-Curve mode (delegated).
+
+LIST_MARK = "allset_list"      # kit list collection marker
+LOADED = "allset_loaded"       # loaded object names (absent = no loaded list)
+BONES = "allset_bones"         # loaded joints "armature\tbone" (an armature without entries = all its joints)
+AUTO = "allset_auto"           # Auto Load state while Only Show Selected is off for the kit list
+ATTR_FILTERS = ("hidden", "anim_curve", "expression", "driven_key", "user_defined")
+_pinned = set()                # ATTR row ids of pinned channels (Maya Pin Channel; session state, delegated)
+_kit_hidden = set()            # (id kind, id name, data path, index) of curves the kit hid
+
+
+def _ds(space):
+    return getattr(space, "dopesheet", None)
+
+
+def _is_dope_space(space):
+    return getattr(space, "type", "") == 'DOPESHEET_EDITOR'
+
+
+def kit_list(space):
+    """The editor's kit list collection, or None (Blender's own filters)."""
+    coll = getattr(_ds(space), "filter_collection", None)
+    return coll if coll is not None and coll.get(LIST_MARK) else None
+
+
+def loaded_names(space):
+    coll = kit_list(space)
+    names = coll.get(LOADED) if coll is not None else None
+    return None if names is None else list(names)
+
+
+def auto_load(space):
+    """Maya Auto Load Selected Objects: Blender's Only Show Selected, or the kit list's remembered state."""
+    ds = _ds(space)
+    if ds is None:
+        return False
+    if ds.show_only_selected:
+        return True
+    coll = kit_list(space)
+    return bool(coll is not None and coll.get(LOADED) is None and coll.get(AUTO, False))
+
+
+def _wm_flag(name):
+    return bool(getattr(bpy.context.window_manager, name, False))
+
+
+def attr_filters():
+    """The checked Show > Attributes filters (Maya: none checked = every animated attribute)."""
+    return {f for f in ATTR_FILTERS if _wm_flag("allset_attr_" + f)}
+
+
+def _selected_objects(context):
+    return [ob for ob in context.scene.objects if ob.select_get()]
+
+
+def _descendants(obs):
+    out, seen = [], set()
+    for ob in obs:
+        for child in ob.children_recursive:
+            if child not in seen:
+                seen.add(child)
+                out.append(child)
+    return out
+
+
+def upstream_objects(obs):
+    """Objects the given ones read from (Maya upstream nodes): constraint targets (also on joints) and driver
+    variable targets."""
+    out = []
+
+    def add(ob):
+        if isinstance(ob, bpy.types.Object) and ob not in obs and ob not in out:
+            out.append(ob)
+    for ob in obs:
+        cons = list(ob.constraints)
+        if ob.type == 'ARMATURE' and ob.pose is not None:
+            for pb in ob.pose.bones:
+                cons += list(pb.constraints)
+        for con in cons:
+            add(getattr(con, "target", None))
+        ad = ob.animation_data
+        for fc in (ad.drivers if ad is not None else ()):
+            for var in fc.driver.variables:
+                for t in var.targets:
+                    add(t.id)
+    return out
+
+
+def row_objects(context, space):
+    """Objects the Maya list is made of (None = every object): loaded, else selected with Auto Load, plus
+    Hierarchy Below (Dope Sheet) / Show Upstream Curves (Graph Editor); Show > Objects > IkHandles keeps only IK
+    handles (kit IK handles = IK constraint targets, operators/by_type.py)."""
+    names = loaded_names(space)
+    if names is not None:
+        obs = [ob for ob in (bpy.data.objects.get(n) for n in names) if ob is not None]
+    elif auto_load(space):
+        obs = _selected_objects(context)
+    else:
+        obs = None
+    if obs is not None:
+        if _is_dope_space(space) and _wm_flag("allset_hierarchy_below"):
+            obs = obs + [o for o in _descendants(obs) if o not in obs]
+        if not _is_dope_space(space) and _wm_flag("allset_show_upstream"):
+            obs = obs + upstream_objects(obs)
+    if _wm_flag("allset_show_ik_handles"):
+        from ..operators import by_type
+        handles = by_type.ik_handles(context.scene)
+        obs = handles if obs is None else [o for o in obs if o in handles]
+    flt = attr_filters()
+    if flt and _is_dope_space(space):
+        # Blender's Dope Sheet channel list can't drop single channels (fc.hide is Graph Editor only, drivers are
+        # no Dope Sheet channels): the attribute filters keep the objects with a matching attribute (delegated)
+        obs = [o for o in (context.scene.objects if obs is None else obs) if _has_attr(o, flt)]
+    if obs is not None:
+        in_scene = set(context.scene.objects)
+        obs = [o for o in obs if o in in_scene]
+    return obs
+
+
+def _has_attr(ob, flt):
+    own, joints = split_object_curves(ob)
+    if filter_curves(ob, own, flt):
+        return True
+    if any(filter_curves(pb, curves, flt) for pb, curves in joints):
+        return True
+    key = shape_key(ob)
+    return bool(key is not None and filter_curves(key, object_curves(key), flt))
+
+
+def _set_members(context):
+    from ..operators import sets
+    return [ob for coll in sets.all_sets() for ob in sets.members(coll, context.scene)]
+
+
+def _character_members(context):
+    from ..operators import character_sets
+    out = []
+    for ks in character_sets.characters(context.scene):
+        for p in character_sets.all_paths(context.scene, ks):
+            if isinstance(p.id, bpy.types.Object) and p.id not in out:
+                out.append(p.id)
+    return out
+
+
+def drawn_objects(context, space):
+    """Objects Blender must draw for this editor (None = every object): the list's objects plus the owners of
+    pinned curves and the members of listed set / character nodes."""
+    obs = row_objects(context, space)
+    if obs is None:
+        return None
+    extra = []
+    if not _is_dope_space(space):
+        extra += [n.id_data if isinstance(n, bpy.types.PoseBone) else n for n in _pinned_nodes()
+                  if isinstance(n, (bpy.types.Object, bpy.types.PoseBone))]
+    if _wm_flag("allset_show_sets"):
+        extra += _set_members(context)
+    if _wm_flag("allset_show_characters"):
+        extra += _character_members(context)
+    in_scene = set(context.scene.objects)
+    return obs + [o for o in dict.fromkeys(extra) if o not in obs and o in in_scene]
+
+
+def needs_kit_list(context, space):
+    """Can Blender's own filters show this list (all, or exactly the selection)? Else the kit list."""
+    if loaded_names(space) is not None or _wm_flag("allset_show_ik_handles"):
+        return True
+    obs = drawn_objects(context, space)
+    return obs is not None and (not auto_load(space) or set(obs) != set(_selected_objects(context)))
+
+
+def _new_list():
+    coll = bpy.data.collections.new(".AllsetList")
+    coll.use_fake_user = True          # in no scene: kept in the file like Maya's editor panel state
+    coll[LIST_MARK] = 1
+    return coll
+
+
+def _drop_list(coll):
+    if coll is not None and coll.get(LIST_MARK) and coll.users <= 1:
+        bpy.data.collections.remove(coll)
+
+
+def sync_space(context, space):
+    """Put Blender's filters of one Graph Editor / Dope Sheet in step with its Maya list; True when changed."""
+    ds = _ds(space)
+    if ds is None:
+        return False
+    coll = kit_list(space)
+    if coll is None and getattr(ds, "filter_collection", None) is not None:
+        return False                   # the user's own Collection filter: left alone
+    if not needs_kit_list(context, space):
+        if coll is None:
+            return False
+        auto = coll.get(LOADED) is None and bool(coll.get(AUTO, False))
+        ds.filter_collection = None
+        ds.show_only_selected = auto
+        _drop_list(coll)
+        return True
+    changed = False
+    if coll is None:
+        auto = bool(ds.show_only_selected)
+        coll = _new_list()
+        coll[AUTO] = auto
+        ds.filter_collection = coll
+        changed = True
+    if ds.show_only_selected:
+        if coll.get(LOADED) is None:
+            coll[AUTO] = True
+        ds.show_only_selected = False
+        changed = True
+    obs = drawn_objects(context, space)
+    want = set(context.scene.objects if obs is None else obs)
+    have = set(coll.objects)
+    for ob in have - want:
+        coll.objects.unlink(ob)
+    for ob in want - have:
+        coll.objects.link(ob)
+    return changed or want != have
+
+
+def set_auto_load(context, space, on):
+    """Maya Auto Load on: the list follows the selection (a loaded list is dropped); off: the list stays."""
+    ds = _ds(space)
+    if ds is None:
+        return
+    coll = kit_list(space)
+    if coll is not None:
+        if LOADED in coll:
+            del coll[LOADED]
+        if BONES in coll:
+            del coll[BONES]
+        coll[AUTO] = bool(on)
+        ds.show_only_selected = False
+    else:
+        ds.show_only_selected = bool(on)
+    sync_space(context, space)
+
+
+def _selected_bones(context):
+    from . import channel_box
+    out = []
+    for ob in _selected_objects(context):
+        if ob.type == 'ARMATURE' and ob.mode == 'POSE' and ob.pose is not None:
+            out += [f"{ob.name}\t{pb.name}" for pb in ob.pose.bones if channel_box.bone_selected(pb)]
+    return out
+
+
+def load_selected(context, space, add=False):
+    """Maya List > Load Selected Objects (``add`` = Add Selected Objects): a fixed list, Auto Load off."""
+    ds = _ds(space)
+    if ds is None:
+        return []
+    names = loaded_names(space)
+    bones = list(kit_list(space).get(BONES, ())) if names is not None else []
+    if add and names is None:          # adding to the list shown now
+        names = [ob.name for ob in listed_objects(context, space)]
+    if not add or names is None:
+        names, bones = [], []
+    sel = _selected_objects(context)
+    names += [ob.name for ob in sel if ob.name not in names]
+    bones += [b for b in _selected_bones(context) if b not in bones]
+    if not add:
+        bones = _selected_bones(context)
+    coll = kit_list(space) or _new_list()
+    coll[LOADED] = names
+    coll[BONES] = bones
+    coll[AUTO] = False
+    ds.filter_collection = coll
+    ds.show_only_selected = False
+    sync_space(context, space)
+    return names
+
+
+def _bone_loaded(space, pb):
+    """Is this joint in the loaded list (an armature loaded without joints: all of them)?"""
+    coll = kit_list(space)
+    if coll is None or coll.get(LOADED) is None:
+        return True
+    bones = list(coll.get(BONES, ()))
+    arm = pb.id_data.name
+    mine = [b for b in bones if b.split("\t", 1)[0] == arm]
+    return not mine or f"{arm}\t{pb.name}" in mine
+
+
+def _node_of_key(key):
+    """Node of a row id's node key (objects / joints / blendShape nodes), None when gone."""
+    if isinstance(key, str):
+        return bpy.data.objects.get(key)
+    if key[0] == "JOINT":
+        arm = bpy.data.objects.get(key[1])
+        return arm.pose.bones.get(key[2]) if arm is not None and arm.pose is not None else None
+    if key[0] == "SHAPES":
+        return bpy.data.shape_keys.get(key[1])
+    return None
+
+
+def _in_scene(node):
+    ob = node.id_data if isinstance(node, bpy.types.PoseBone) else node
+    return not isinstance(ob, bpy.types.Object) or ob.name in bpy.context.scene.objects
+
+
+def _pinned_nodes():
+    out = []
+    for key in dict.fromkeys(rid[0] for rid in _pinned):
+        node = _node_of_key(key)
+        if node is not None and _in_scene(node):
+            out.append(node)
+    return out
+
+
+def is_pinned(node, fc):
+    return (node_key(node), fc.data_path, fc.array_index) in _pinned
+
+
+# Show > Attributes kinds of a curve (Maya attribute filters [K]): keyed curves are "Driven by Anim Curve", kit SDK
+# drivers (variable ``sdk``) "Driven by Driven Key", scripted drivers "Driven by Expression", custom properties
+# "User Defined", Channel Box hidden channels (Channel Control / Hide Selected, ``channel_box.HIDDEN_PROP``) "Hidden".
+
+def _channel_tail(node, fc):
+    path = fc.data_path
+    if isinstance(node, bpy.types.PoseBone):
+        head = node.path_from_id()
+        path = path[len(head):].lstrip(".") if path.startswith(head) else path
+    return path
+
+
+def curve_kinds(node, fc, driver=False):
+    from . import channel_box
+    kinds = set()
+    if driver:
+        from ..operators import driven_key
+        if any(v.name == driven_key.VAR for v in fc.driver.variables):
+            kinds.add("driven_key")
+        elif fc.driver.type == 'SCRIPTED':
+            kinds.add("expression")
+    else:
+        kinds.add("anim_curve")
+    tail = _channel_tail(node, fc)
+    key = None
+    if tail.startswith('["') and tail.endswith('"]'):
+        kinds.add("user_defined")
+        key = channel_box.CUSTOM_PREFIX + bpy.utils.unescape_identifier(tail[2:-2])
+    else:
+        key = next((c[0] for c in channel_box.MAIN if c[2] == tail and (c[3] < 0 or c[3] == fc.array_index)), None)
+    owner = node if isinstance(node, (bpy.types.Object, bpy.types.PoseBone)) else None
+    if key is not None and owner is not None and channel_box.is_hidden(owner, key):
+        kinds.add("hidden")
+    return kinds
+
+
+def node_drivers(node):
+    """Driver curves of a node (Maya attributes driven by an expression / driven key)."""
+    if isinstance(node, bpy.types.KeyingSet):
+        return []
+    owner = node.id_data if isinstance(node, bpy.types.PoseBone) else node
+    ad = getattr(owner, "animation_data", None)
+    if ad is None:
+        return []
+    out = []
+    for fc in ad.drivers:
+        name = _bone_name(fc.data_path) if isinstance(owner, bpy.types.Object) else None
+        if isinstance(node, bpy.types.PoseBone):
+            if name == node.name:
+                out.append(fc)
+        elif name is None or owner.type != 'ARMATURE':
+            out.append(fc)
+    return out
+
+
+def filter_curves(node, curves, flt=None):
+    """The node's curves the checked attribute filters list (pinned curves always), driver curves added when a
+    Driven by Expression / Driven Key filter is on."""
+    flt = attr_filters() if flt is None else flt
+    if not flt:
+        return list(curves)
+    out = [fc for fc in curves if is_pinned(node, fc) or curve_kinds(node, fc) & flt]
+    if flt & {"expression", "driven_key", "hidden", "user_defined"}:
+        out += [fc for fc in node_drivers(node) if curve_kinds(node, fc, driver=True) & flt]
+    return out
 
 
 # Maya lists a node's attributes in its attribute order (translate, rotate, scale, visibility, then the rest, e.g.
@@ -631,8 +1031,8 @@ def listed_nodes(context, space):
     Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
     then — measured in gui_step150_outliner), its blendShape node."""
     from . import channel_box
-    ds = space.dopesheet
     out = []
+    flt = attr_filters()
     if getattr(bpy.context.window_manager, "allset_show_characters", False):
         # Show > Objects > Characters (step 197, #104): Maya lists the character nodes, their member attributes below
         from ..operators import character_sets
@@ -640,17 +1040,39 @@ def listed_nodes(context, space):
             curves = character_curves(context.scene, ks)
             if curves:
                 out.append(("CHARACTER", ks, curves))
+    if _wm_flag("allset_show_sets"):
+        # Show > Objects > Sets (step 203): kit sets as nodes, their members' attributes below (like characters)
+        from ..operators import sets
+        for coll in sets.all_sets():
+            curves = [fc for ob in sets.members(coll, context.scene) for fc in maya_order(split_object_curves(ob)[0])]
+            if curves:
+                out.append(("SET", coll, curves))
+    auto = auto_load(space)
+
+    def add(kind, node, curves):
+        curves = filter_curves(node, curves, flt)
+        if curves:
+            out.append((kind, node, curves))
     for ob in listed_objects(context, space):
         own, joints = split_object_curves(ob)
-        if own:
-            out.append(("OBJECT", ob, maya_order(own)))
+        add("OBJECT", ob, maya_order(own))
         for pb, curves in joints:
-            if ds.show_only_selected and not channel_box.bone_selected(pb):
+            if auto and not channel_box.bone_selected(pb) or not _bone_loaded(space, pb):
                 continue
-            out.append(("JOINT", pb, maya_order(curves)))
+            add("JOINT", pb, maya_order(curves))
         key = shape_key(ob)
         if key is not None:
-            out.append(("SHAPES", key, object_curves(key)))
+            add("SHAPES", key, object_curves(key))
+    # pinned channels stay listed whatever the list / selection is now (Maya Pin Channel [K])
+    shown = {node_key(n) for _k, n, _c in out}
+    for node in _pinned_nodes():
+        if node_key(node) in shown:
+            continue
+        curves = [fc for fc in node_curves(node) if is_pinned(node, fc)]
+        if curves:
+            kind = "JOINT" if isinstance(node, bpy.types.PoseBone) else \
+                "SHAPES" if isinstance(node, bpy.types.Key) else "OBJECT"
+            out.append((kind, node, curves))
     return out
 
 
@@ -685,6 +1107,8 @@ def node_selected(context, kind, node):
     if kind == "SHAPES":
         return any(o.select_get() for o in context.scene.objects
                    if getattr(getattr(o, "data", None), "shape_keys", None) == node)
+    if kind == "SET":
+        return False            # a set node is highlighted only when picked in the list
     return node.select_get()
 
 
@@ -757,6 +1181,15 @@ def _rect(x0, y0, x1, y1, color):
     batch.draw(shader)
 
 
+PIN = (0.85, 0.85, 0.85, 1.0)
+
+
+def _draw_pin(x, y, s):
+    """Maya's pin mark at the right end of a pinned channel row: a head and a needle."""
+    _rect(x - 3 * s, y, x + 3 * s, y + 5 * s, PIN)
+    _rect(x - 0.5 * s, y - 5 * s, x + 0.5 * s, y, PIN)
+
+
 def draw_channels():
     context = bpy.context
     space, region = context.space_data, context.region
@@ -790,6 +1223,8 @@ def draw_channels():
             blf.color(font, *attr_color(fc))
             blf.position(font, 44 * s, y - h + 6 * s, 0)
             blf.draw(font, attr_label(fc))
+            if is_pinned(node, fc):
+                _draw_pin(region.width - 18 * s, y - h / 2, s)
         y -= h
     n_vis = visible_rows(region)
     if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
@@ -800,11 +1235,13 @@ def draw_channels():
 
 
 def show_rows(context, chosen):
-    """Maya: the curves of the selected outliner rows are shown and selected, the others hidden."""
-    for fc in listed_curves(context, context.space_data):
-        on = fc in chosen
-        fc.select = on
-        fc.hide = not on
+    """Maya: the curves of the selected outliner rows are shown and selected, the others hidden (pinned curves stay
+    shown, step 203)."""
+    for _kind, node, curves in listed_nodes(context, context.space_data):
+        for fc in curves:
+            on = fc in chosen
+            fc.select = on
+            fc.hide = not (on or is_pinned(node, fc))
 
 
 def pick_row(context, row, ctrl=False, shift=False):
@@ -814,7 +1251,8 @@ def pick_row(context, row, ctrl=False, shift=False):
     all_rows = rows(context, space)
     kind, node, fc = row
     rid = row_id(row)
-    picked = set(node_curves(node) if kind != "ATTR" else [fc])
+    listed = {node_key(n): c for _k, n, c in listed_nodes(context, space)}
+    picked = set(listed.get(node_key(node), ()) if kind != "ATTR" else [fc])
     current = {c for c in listed_curves(context, space) if c.select and not c.hide}
     ids = picked_ids(context, all_rows)
     if ctrl:
@@ -896,6 +1334,252 @@ class ALLSET_OT_graph_channel_scroll(bpy.types.Operator):
         if region is None or region.type != 'CHANNELS':
             return {'PASS_THROUGH'}
         return self.execute(context)
+
+
+# --- step 203: keeping Blender's drawing in step with the Maya list ------------------------------------------------
+
+def editor_spaces(context):
+    """[(window, area, space)] of every Maya Graph Editor (F-Curves) and Dope Sheet (not the Timeline)."""
+    out = []
+    for w in context.window_manager.windows:
+        if w.screen is None:
+            continue
+        for a in w.screen.areas:
+            sp = a.spaces.active
+            if is_graph(sp) or is_dope(sp):
+                out.append((w, a, sp))
+    return out
+
+
+def _curve_key(owner, fc):
+    return ("KEY" if isinstance(owner, bpy.types.Key) else "OBJECT", owner.name, fc.data_path, fc.array_index)
+
+
+def _resolve_curve(key):
+    kind, name, path, idx = key
+    owner = (bpy.data.shape_keys if kind == "KEY" else bpy.data.objects).get(name)
+    if owner is None:
+        return None
+    return next((fc for fc in object_curves(owner) if fc.data_path == path and fc.array_index == idx), None)
+
+
+def _drawn_curves(context, space):
+    """{curve key: fcurve} Blender draws in this Graph Editor (by object; joints only selected ones while Blender's
+    Only Show Selected filters them)."""
+    from . import channel_box
+    obs = drawn_objects(context, space)
+    if obs is None:
+        obs = list(context.scene.objects)
+    native_auto = bool(_ds(space).show_only_selected)
+    out = {}
+    for ob in obs:
+        for fc in object_curves(ob):
+            if native_auto and ob.type == 'ARMATURE' and ob.pose is not None:
+                name = _bone_name(fc.data_path)
+                pb = ob.pose.bones.get(name) if name is not None else None
+                if pb is not None and not channel_box.bone_selected(pb):
+                    continue
+            out[_curve_key(ob, fc)] = fc
+        key = shape_key(ob)
+        if key is not None:
+            for fc in object_curves(key):
+                out[_curve_key(key, fc)] = fc
+    return out
+
+
+def sync_hidden(context, spaces):
+    """Hide the curves Blender draws that no Maya list shows; show again the ones the kit hid once listed. Only
+    while a kit list, an attribute filter or a pin is in play (or the kit still has curves hidden)."""
+    graphs = [sp for sp in spaces if is_graph(sp)]
+    active = _pinned or attr_filters() or any(kit_list(sp) is not None for sp in graphs)
+    if not (active or _kit_hidden):
+        return 0
+    want, listed = {}, set()
+    for sp in graphs if active else ():
+        drawn = _drawn_curves(context, sp)
+        shown = {fc.as_pointer() for fc in listed_curves(context, sp)}
+        for key, fc in drawn.items():
+            if fc.as_pointer() in shown:
+                listed.add(key)
+            else:
+                want[key] = fc
+    n = 0
+    for key, fc in want.items():
+        if key not in listed and not fc.hide:
+            fc.hide = True
+            _kit_hidden.add(key)
+            n += 1
+    for key in list(_kit_hidden):
+        if key in want and key not in listed:
+            continue
+        _kit_hidden.discard(key)
+        fc = _resolve_curve(key)
+        if fc is not None and fc.hide:
+            fc.hide = False
+            n += 1
+    return n
+
+
+def sync(context):
+    """Every Graph Editor / Dope Sheet: Blender's filters follow its Maya list (graph_view's timer, menu items)."""
+    if not enabled(context):
+        return
+    spaces = [sp for _w, _a, sp in editor_spaces(context)]
+    changed = False
+    for sp in spaces:
+        changed |= sync_space(context, sp)
+    changed |= bool(sync_hidden(context, spaces))
+    if changed:
+        _redraw_editors(context)
+
+
+def _redraw_editors(context):
+    for win in context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type in {'GRAPH_EDITOR', 'DOPESHEET_EDITOR'}:
+                area.tag_redraw()
+
+
+def release_all():
+    """Disable: every editor back to Blender's own filters, kit lists removed, hidden curves shown, pins dropped."""
+    try:
+        spaces = [sp for _w, _a, sp in editor_spaces(bpy.context)]
+    except (AttributeError, ReferenceError):
+        spaces = []
+    for sp in spaces:
+        coll = kit_list(sp)
+        if coll is not None:
+            auto = coll.get(LOADED) is None and bool(coll.get(AUTO, False))
+            sp.dopesheet.filter_collection = None
+            sp.dopesheet.show_only_selected = auto
+    for coll in [c for c in bpy.data.collections if c.get(LIST_MARK)]:
+        bpy.data.collections.remove(coll)
+    for key in _kit_hidden:
+        fc = _resolve_curve(key)
+        if fc is not None:
+            fc.hide = False
+    _kit_hidden.clear()
+    _pinned.clear()
+
+
+class ALLSET_OT_graph_list(bpy.types.Operator):
+    """Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays
+    when the selection changes (Auto Load off)"""
+    bl_idname = "allset.graph_list"
+    bl_label = "Load Selected Objects"
+    bl_options = {'UNDO'}
+
+    action: bpy.props.EnumProperty(items=(("LOAD", "Load", "Load the selected objects"),
+                                          ("ADD", "Add", "Add the selected objects")),
+                                   default="LOAD", options={'SKIP_SAVE', 'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        return _ds(getattr(context, "space_data", None)) is not None
+
+    def execute(self, context):
+        load_selected(context, context.space_data, add=self.action == "ADD")
+        _redraw_editors(context)
+        return {'FINISHED'}
+
+
+def _target_rows(context, space):
+    """[(node, fcurve)] a channel command acts on: the rows picked in the list, else the selected shown curves."""
+    nodes = listed_nodes(context, space)
+    all_rows = rows(context, space)
+    picked = picked_ids(context, all_rows)
+    out = []
+    for _kind, node, curves in nodes:
+        nk = node_key(node)
+        for fc in curves:
+            rid = (nk, fc.data_path, fc.array_index)
+            if picked:
+                if rid in picked or nk in picked:
+                    out.append((node, fc))
+            elif fc.select and not fc.hide:
+                out.append((node, fc))
+    return out
+
+
+class ALLSET_OT_graph_pin(bpy.types.Operator):
+    """Maya Curves > Pin Channel / Unpin Channel: pinned curves stay listed and drawn whatever is selected"""
+    bl_idname = "allset.graph_pin"
+    bl_label = "Pin Channel"
+    bl_options = {'UNDO'}
+
+    pin: BoolProperty(default=True, options={'SKIP_SAVE', 'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        return is_graph(getattr(context, "space_data", None))
+
+    def execute(self, context):
+        targets = _target_rows(context, context.space_data)
+        if not targets:
+            self.report({'WARNING'}, "No channels selected.")
+            return {'CANCELLED'}
+        ids = {(node_key(n), fc.data_path, fc.array_index) for n, fc in targets}
+        if self.pin:
+            _pinned.update(ids)
+        else:
+            _pinned.difference_update(ids)
+        sync(context)
+        _redraw_editors(context)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_graph_attr_clear(bpy.types.Operator):
+    """Clear the attribute filters: every animated attribute is listed again (Maya Show > Attributes > Clear
+    Below)"""
+    bl_idname = "allset.graph_attr_clear"
+    bl_label = "Clear Below"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return _ds(getattr(context, "space_data", None)) is not None
+
+    def execute(self, context):
+        context.space_data.dopesheet.filter_text = ""
+        wm = context.window_manager
+        for f in ATTR_FILTERS:
+            setattr(wm, "allset_attr_" + f, False)
+        return {'FINISHED'}
+
+
+def _auto_get(_wm):
+    return auto_load(getattr(bpy.context, "space_data", None))
+
+
+def _auto_set(_wm, value):
+    space = getattr(bpy.context, "space_data", None)
+    if _ds(space) is not None:
+        set_auto_load(bpy.context, space, value)
+        _redraw_editors(bpy.context)
+
+
+def _filters_changed(_self, context):
+    try:
+        sync(context)
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
+    _redraw_editors(context)
+
+
+# (WindowManager property, label, Maya annotation) of the step 203 Show / List check items
+FLAGS = (
+    ("allset_attr_hidden", "Hidden", "List only hidden attributes (Channel Box hidden channels)"),
+    ("allset_attr_anim_curve", "Driven by Anim Curve", "List only keyed attributes"),
+    ("allset_attr_expression", "Driven by Expression", "List only attributes driven by an expression (scripted "
+     "driver)"),
+    ("allset_attr_driven_key", "Driven by Driven Key", "List only attributes driven by a Set Driven Key"),
+    ("allset_attr_user_defined", "User Defined", "List only user-defined attributes (custom properties)"),
+    ("allset_show_ik_handles", "IkHandles", "List only IK handles"),
+    ("allset_show_sets", "Sets", "List the sets with their members' attributes"),
+    ("allset_show_upstream", "Show Upstream Curves", "Also list the nodes the listed objects read from "
+     "(constraint and driver targets)"),
+    ("allset_hierarchy_below", "Hierarchy Below", "Also list the children of the listed objects"),
+)
 
 
 # --- header draws ------------------------------------------------------------------------------------------------
@@ -1040,7 +1724,7 @@ def prepare_later(window, ui_type, tries=60):
 # --- registration --------------------------------------------------------------------------------------------------
 
 classes = (ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable, ALLSET_OT_graph_channel_click,
-           ALLSET_OT_graph_channel_scroll,
+           ALLSET_OT_graph_channel_scroll, ALLSET_OT_graph_list, ALLSET_OT_graph_pin, ALLSET_OT_graph_attr_clear,
            *_BLENDER.values(), *_BAR.values())
 _handle = []
 
@@ -1064,6 +1748,12 @@ def register():
     bpy.types.WindowManager.allset_show_characters = BoolProperty(
         name="Characters", description="List the character sets with their member attributes (Maya Show > Objects > "
         "Characters)", default=False, options={'SKIP_SAVE'}, update=lambda self, context: _redraw_graphs(context))
+    for name, label, tip in FLAGS:
+        setattr(bpy.types.WindowManager, name, BoolProperty(
+            name=label, description=f"Maya: {tip}", default=False, options={'SKIP_SAVE'}, update=_filters_changed))
+    bpy.types.WindowManager.allset_auto_load = BoolProperty(
+        name="Auto Load Selected Objects", description="Maya: the list follows the selection (off: Load / Add "
+        "Selected Objects keep a fixed list)", get=_auto_get, set=_auto_set, options={'SKIP_SAVE'})
     patch_headers()
     _handle.append(bpy.types.SpaceGraphEditor.draw_handler_add(draw_channels, (), 'CHANNELS', 'POST_PIXEL'))
 
@@ -1075,6 +1765,10 @@ def unregister():
     del bpy.types.Scene.allset_key_time
     del bpy.types.Scene.allset_key_value
     del bpy.types.WindowManager.allset_show_characters
+    release_all()
+    for name, _label, _tip in FLAGS:
+        delattr(bpy.types.WindowManager, name)
+    del bpy.types.WindowManager.allset_auto_load
     _expanded.clear()
     _scroll.clear()
     _picked["ids"], _picked["sig"] = set(), None
