@@ -141,7 +141,9 @@ def test_two_additive_layers_match_maya():
                 assert abs(gt - wt) < 1e-6 and abs(gv - wv) < TOL, (layer, attr, got, keys)
     assert_values("two_additive", values(sc, ob, frames), want["values"])
     ad = ob.animation_data
-    assert ad.action is None and [t.name for t in ad.nla_tracks] == ["BaseAnimation", "AnimLayer1", "AnimLayer2"]
+    # step 194: the active action is the selected layer's strip action at influence 0 (shown, not applied twice)
+    assert ad.action is not None and ad.action.get(al.MARK) in al.tracks(ob) and ad.action_influence == 0.0
+    assert [t.name for t in ad.nla_tracks] == ["BaseAnimation", "AnimLayer1", "AnimLayer2"]
     # weight 0.5, mute, solo
     sc.allset_anim_layers["AnimLayer1"].weight = 0.5
     assert_values("weight_half", values(sc, ob, frames), d["cases"]["weight_half"]["values"])

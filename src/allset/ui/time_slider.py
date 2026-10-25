@@ -734,7 +734,13 @@ def key_frames(nodes):
     for node in nodes:
         # Channel Box Sync Timeline Display: only the selected channels' keys (step 158)
         curves = cb_channels.timeline_curves(bpy.context, node)
-        for fc in curves if curves is not None else time_keys.node_fcurves(node):
+        if curves is None:
+            curves = time_keys.node_fcurves(node)
+            if isinstance(node, bpy.types.Object):
+                # step 194: the shown layer's keys + BaseAnimation keys of channels not in that layer (Maya)
+                from ..operators import anim_layers
+                curves = list(curves) + anim_layers.hidden_base_curves(node, bpy.context.scene)
+        for fc in curves:
             for kp in fc.keyframe_points:
                 f = round(kp.co.x, 3)
                 frames[f] = frames.get(f, True) and kp.type == 'BREAKDOWN'

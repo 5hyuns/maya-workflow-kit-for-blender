@@ -523,6 +523,9 @@ ANIM_LAYER_MENU = (
     ("allset.anim_layer_members", "Add Selected Objects", {"add": True}),
     ("allset.anim_layer_members", "Remove Selected Objects", {"add": False}),
     None,
+    ("allset.anim_layer_merge", "Merge Layers", {}),
+    ("allset.anim_layer_zero_key", "Zero Key Layer", {}),
+    None,
     ("allset.anim_layer_delete", "Delete Layer", {}),
 )
 # Maya's row buttons, left of the name: Lock, Solo, Mute (, _anim180_pixels.json:
