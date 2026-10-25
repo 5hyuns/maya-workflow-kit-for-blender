@@ -837,7 +837,121 @@ def _strip_colours(context):
         text = tuple(th.properties.space.text)[:3]
     except AttributeError:
         back, text = (0.19, 0.19, 0.19), (0.9, 0.9, 0.9)
-    return back, text
+    lift = dock_lift(context)
+    return tuple(min(1.0, c + lift) for c in back), text
+
+
+# Maya's dock grey ( cb_bg #444444; Blender's factory Properties grey is #303030). The kit
+# ships no theme (step 130), so the dock areas are lifted by the difference after drawing: an additive grey over the
+# region raises the background to Maya's and the value fields with it (#1d1d1d -> #313131, #2b2b2b); text stays
+# near white (step 195). Only a theme darker than Maya's is lifted, never a light one.
+MAYA_DOCK_GREY = 0x44 / 255.0
+TINTED_ROLES = {'STACK', 'CHANNEL_BOX', 'ATTRIBUTE_EDITOR', 'MODELING_TOOLKIT'}
+
+
+def dock_lift(context):
+    """The sRGB grey added over a Maya dock (0 when the preference is off or the theme is already as light)."""
+    from .. import preferences
+    try:
+        on = preferences.get().maya_dock_colors
+    except Exception:
+        on = True
+    if not on:
+        return 0.0
+    th = context.preferences.themes[0]
+    try:
+        back = tuple(th.properties.space.back)[:3]
+    except AttributeError:
+        return 0.0
+    d = MAYA_DOCK_GREY - max(back)
+    return d if 0.0 < d <= 0.2 else 0.0
+
+
+def draw_tint():
+    """Lift a Maya dock area to Maya's grey (``dock_lift``): one additive quad over the WINDOW region."""
+    context = bpy.context
+    area, region = context.area, context.region
+    if region is None or region.type != 'WINDOW' or role(area) not in TINTED_ROLES:
+        return
+    d = dock_lift(context)
+    if d <= 0.0:
+        return
+    import gpu
+    w, h = region.width, region.height
+    hole = _list_hole(context, region) if shown_kind(context) == 'CHANNEL_BOX' else None
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+    gpu.state.blend_set('ADDITIVE')
+    try:
+        for x0, y0, x1, y1 in _around(hole, w, h):
+            _fill(shader, x0, y0, x1, y1, (d, d, d, 1.0))
+    finally:
+        gpu.state.blend_set('NONE')
+
+
+def _around(hole, w, h):
+    """Rects covering (0, 0, w, h) except ``hole`` (x0, y0, x1, y1)."""
+    if hole is None:
+        return [(0, 0, w, h)]
+    x0, y0, x1, y1 = hole
+    return [r for r in ((0, 0, w, y0), (0, y1, w, h), (0, y0, x0, y1), (x1, y0, w, y1)) if r[2] > r[0] and r[3] > r[1]]
+
+
+def dark_span(values, limit):
+    """(first, last) index of the values below ``limit`` (0-255), or None."""
+    idx = [i for i, v in enumerate(values) if v < limit]
+    return (idx[0], idx[-1]) if idx else None
+
+
+def dark_top(values, start, limit, gap):
+    """Highest index from ``start`` upward still in the dark block: dark values with no run of more than ``gap``
+    lighter ones between them and ``start`` (a selected layer row inside the list doesn't end it)."""
+    top, light = start, 0
+    for i in range(start, len(values)):
+        if values[i] < limit:
+            top, light = i, 0
+        else:
+            light += 1
+            if light > gap:
+                break
+    return top
+
+
+def _list_hole(context, region):
+    """The Layer Editor list body (#2a2a2a, Blender's list grey is as dark): left unlifted. Found in the drawn
+    pixels — one row near the region bottom for its sides, one column inside its left edge for its top."""
+    import gpu
+    scale = context.preferences.system.ui_scale or 1.0
+    try:
+        back = max(tuple(context.preferences.themes[0].properties.space.back)[:3])
+    except AttributeError:
+        return None
+    limit = back * 255.0 - 4.0
+    from . import channel_box
+    le_top = int(region.height * (1.0 - channel_box.cb_share(region, channel_box._unit(context))))
+    ys = max(1, round(14 * scale))
+    if le_top <= ys + 10:
+        return None
+    try:
+        fb = gpu.state.active_framebuffer_get()
+        row = fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE').to_list()
+    except ValueError:
+        return None
+    span = dark_span([px[0] for px in row[0]], limit)
+    if span is None or span[1] - span[0] < 40 * scale:
+        return None
+    x0, x1 = span
+    try:
+        col = fb.read_color(x0 + 1, 0, 1, le_top, 4, 0, 'UBYTE').to_list()
+    except ValueError:
+        return None
+    values = [c[0][0] for c in col]
+    if values[ys] >= limit:
+        return None
+    top = dark_top(values, ys, limit, round(30 * scale))
+    bottom = ys
+    while bottom > 0 and values[bottom - 1] < limit:
+        bottom -= 1
+    return (x0, bottom, x1 + 1, top + 1)
 
 
 def draw_strip():
@@ -882,6 +996,7 @@ def _fill(shader, x0, y0, x1, y1, rgba):
 
 def _strip_callback():
     try:
+        draw_tint()
         draw_strip()
     except Exception:     # a draw error would repeat every redraw
         import traceback

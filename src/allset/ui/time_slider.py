@@ -569,7 +569,8 @@ def _draw_range():
 # tick + label per step (Maya picks the smallest step whose spacing fits the labels), the bottom band and the
 # translucent current-time block with its white frame number. checked in a Maya 2022 at UI scale 1.0
 # (*/, 1292 x 32 px widget): rows 1-8 labels #757575, ticks rows 13-27 #7c7c7c, rows 29-31
-# #373737, background #2b2b2b, current time = white at 25 % over the frame's cell, its number white in rows 16-23.
+# #373737, background #2b2b2b, current time = white at 18.4 % over the frame's cell (step 195), its number white in
+# rows 16-23.
 # Blender draws its own current-frame box in the region overlay after every Python handler (probe tmp/probe186:
 # a full-region POST_PIXEL fill hides everything else of Blender's) and no RNA / theme-free switch hides it, so
 # that box stays on top (recorded, step 186).
@@ -578,7 +579,9 @@ RULER_BG = (0x2b / 255, 0x2b / 255, 0x2b / 255, 1.0)
 RULER_BAND = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 RULER_TICK = (0x7c / 255, 0x7c / 255, 0x7c / 255, 1.0)
 RULER_LABEL = (0x75 / 255, 0x75 / 255, 0x75 / 255, 1.0)
-RULER_CURRENT = (1.0, 1.0, 1.0, 0.25)
+# step 195: Maya's current-time block checked #525252 over the #2b2b2b ruler (
+# (22, 800)) = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %, not the 25 % estimated in step 186
+RULER_CURRENT = (1.0, 1.0, 1.0, (0x52 - 0x2b) / (0xff - 0x2b))
 RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
 # (top row, bottom row) of 32 px widget, scaled to the kit region's height. With Time Slider bookmarks
 # (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down

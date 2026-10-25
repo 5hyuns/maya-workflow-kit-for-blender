@@ -2110,8 +2110,10 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             r.label(text="SHAPES")
         r = lines.row()
         if r is not None:
+            # Maya draws the shape row as a darker full-width bar (its rename field, 
+            # cb_shape_row #373737; step 195): an embossed field
             r.separator(factor=1.5)
-            r.prop(data, "name", text="", emboss=False)
+            r.prop(data, "name", text="")
         for prop in SHAPE_PROPS.get(ob.type, ()):
             if hasattr(data, prop) or _virtual(data, prop) is not None:
                 r = lines.row()
