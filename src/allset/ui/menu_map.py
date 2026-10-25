@@ -683,12 +683,13 @@ MAP.update({
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
     "Display/Wireframe Color...": _props('OBJECT'),
     # Windows
-    "Windows/General Editors/Component Editor": _editor('SPREADSHEET'),
-    "Windows/General Editors/Connection Editor": _editor('DRIVERS'),
+    # step 213 (#119, audit 16 NB12): the kit's Maya windows instead of Blender's Spreadsheet / Drivers editors
+    "Windows/General Editors/Component Editor": ("allset.component_editor", {}),
+    "Windows/General Editors/Connection Editor": ("allset.connection_editor", {}),
     "Windows/General Editors/File Path Editor": ("allset.open_editor", {"ui_type": 'OUTLINER',
                                                                           "display_mode": 'LIBRARIES'}),
     "Windows/General Editors/Command Shell": _editor('CONSOLE'),
-    "Windows/Animation Editors/Shape Editor": _props('DATA'),
+    "Windows/Animation Editors/Shape Editor": ("allset.shape_editor", {}),
     "Windows/Rendering Editors/Render Layer Editor": _props('VIEW_LAYER'),
     "Windows/Relationship Editors/Render Layers": _props('VIEW_LAYER'),
     # Maya's Light Linking submenu (startup/WindowMenu.mel:597-612 buildLightLinkingEdMenu): the step 179 kit editor

@@ -573,6 +573,18 @@ MAP.update({
 MAP.update(_hs_nodes())
 
 
+# step 213: Component / Shape / Connection Editor windows (ui/component_editor.py, shape_editor.py,
+# connection_editor.py; research/maya/re/editors_213.md; literal: no bpy imports)
+CN = "Connection Editor"
+MAP.update({
+    f"{CN}/Options/Auto-connect": _prop("window_manager.allset_cn_auto"),
+    f"{CN}/Options/Channel Names/Nice": _prop("window_manager.allset_cn_names", "NICE"),
+    f"{CN}/Options/Channel Names/Long": _prop("window_manager.allset_cn_names", "LONG"),
+    f"{CN}/Options/Channel Names/Short": _prop("window_manager.allset_cn_names", "SHORT"),
+    **_help_menu(CN, "animation/drivers/index.html"),
+})
+
+
 # step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py,
 # research/maya/re/graph_editor_201.md §6-8), both editors
 # (literal here: tools/menu_count.py loads the menu maps without bpy)
