@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 192 (재점검 14차 = 사용자 지시의 「재점검 13차」, 감사 — src 변경 없음) 완료 — `docs/steps/step_192.md` (+ `step_192_remaining.md`,
+  `step_192_quant.md`), PLAN 「재점검 14차」. 헤드리스 1731 / 1731, dogfood 47 / 48 (RMB 서쪽 flick → Vertex 실패 = step 184 lift 회귀,
+  처음 실행은 연쇄로 43 / 48), 추가 세션 2 / 2, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 750 / 1318 (56.9 %), 옵션 창 120 경로,
+  look_compare 뷰포트 20 / 20. backlog 8 개 (steps 193–200) `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`.
+  **사용자 할 일**: 스토어에 0.4.1 zip (`dist/maya-workflow-kit-0.4.1.zip`) 업로드.
+  **바로 다음 할 일**: step 193 = backlog #1 「RMB flick works when the menu is lifted」 (계획 먼저 `docs/steps/step_193.md`).
+  남은 정리: 옛 worktree 2 개 (`.claude/worktrees/agent-a1d69614…`, `agent-aed8f880…`, 내용 반영됨, 삭제는 훅이 막음).
+
 - Step 191 (0.4.1 출시 준비) 완료 — `docs/steps/step_191.md`. version 0.4.1, CHANGELOG [0.4.1], `release_notes_0.4.1.md`;
   release_check 4.5.4 / 5.2.2 각 14 PASS, 헤드리스 전체 1731 / 1731, GUI 전체 묶음 한 번 (15 덩어리) → 킷 버그 2 개 고침 (UV / Image Alt+RMB
   줌 = step 177 회귀, 위로 그린 마킹 메뉴의 그려지기 전 flick) + 옛 기대 GUI 테스트 갱신. master push, 태그 v0.4.1, 초안 릴리스.
@@ -158,7 +166,7 @@
 - Step 172 (0.4.0 출시 준비) 완료 — `docs/steps/step_172.md`. version 0.4.0, CHANGELOG, `release_notes_0.4.0.md`; release_check
   4.5.4 / 5.2.2 각 14 PASS, 헤드리스 1600 / 1600, GUI 전체 1827 검사 (오래된 RMB 목록 테스트 2 파일 고침). master push,
   #81–#101 닫힘, #89 → 0.5.0, 태그 v0.4.0, 초안 릴리스 + 업로드 폴더.
-  **바로 다음 할 일**: Hermes 가 초안 릴리스 publish · 스토어 업로드; 개발은 새 감사 (재점검 12차).
+  **바로 다음 할 일**: 새 감사 (재점검 12차).
 
 - Step 171 (Animation Snapshot / ghosting, backlog_164 #8 = 마지막) 완료 — `docs/steps/step_171.md`. 측정
   `research/maya/re/visualize_171.md` (mayapy + GUI 캡처). `operators/anim_snapshot.py` (snapshot1Group / transform1_k,
@@ -354,7 +362,6 @@
   **바로 다음 할 일**: 149 와이어 · 이름 · bind (#91 #93 #94; 격자 선택 색도) → 150 Graph Editor (#96) → 151 매니퓰레이터 ·
   링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
   (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 (바탕화면 `MayaWorkflowKit_upload/`).
 
 - Step 147 (Undo step · redo 패널, #88 #92 #86) 완료 — `docs/steps/step_147.md`. 메뉴 · 셸프 · 마킹 메뉴 명령이 각자 undo step
   하나 (전에는 Python 호출이라 step 도 등록도 없었음, 측정), Mesh Tools 도구 항목 뒤 Ctrl+Z 가 편집 모드에 남음, Ctrl+E / Ctrl+B /
@@ -363,7 +370,6 @@
   **바로 다음 할 일**: 148 Channel Box (#87 #85 #83 #95) → 149 와이어 · 이름 · bind (#91 #93 #94) → 150 Graph Editor (#96) →
   151 매니퓰레이터 · 링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
   (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 (바탕화면 `MayaWorkflowKit_upload/`).
 
 - Step 146 (옵션 상자 끌기 없이, #82) 완료 — `docs/steps/step_146.md`. ❒ 항목을 0.2 s 누르면 hold 메뉴의 "Option Box ❒" 줄로 포인터가
   옮겨져 그대로 놓으면 옵션 창 (Maya 메뉴는 포인터를 창 끝으로 보냈다 돌려놓아 닫음), Shift / Ctrl + 클릭 = 옵션 상자 (OS 키 상태),
@@ -372,7 +378,6 @@
   **바로 다음 할 일**: 147 되돌리기 · redo 패널 (#88 #92 #86) → 148 Channel Box (#87 #85 #83 #95) → 149 와이어 · 이름 · bind
   (#91 #93 #94) → 150 Graph Editor (#96) → 151 매니퓰레이터 · 링 · 문구 (#98 #99 #100) → 152 렌더 · 그리드 → 153 Blender 5.x (#90)
   (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_146.json`).
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 (바탕화면 `MayaWorkflowKit_upload/`).
 
 - Step 145 (재점검 9차 — 사용자 지시의 「재점검 8차」) 완료 — `docs/steps/step_145.md` (+ `step_145_{ui,quant,remaining}.md`), PLAN
   「재점검 9차」. 헤드리스 1307/1307, dogfood 48/48, look_compare viewport 11/12, 대응표 29/2/0/2 (8차와 같음), 메뉴 작동 45.2 %,
@@ -380,14 +385,12 @@
   **바로 다음 할 일**: backlog.json 8 개 = step 146 옵션 상자 클릭 (#82), 147 되돌리기 · redo 패널 (#88 #92 #86), 148 Channel Box
   마무리 (#87 #85 #83 #95), 149 변형 선택 와이어 · 이름 · bind (#91 #93 #94), 150 Graph Editor (#96), 151 매니퓰레이터 · 링 · 문구
   (#98 #99 #100), 152 렌더 · 그리드 기본, 153 Blender 5.x (#90).
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어 업로드 (step 143).
 
 - Step 144 (0.4.0 Maya 모델링 도구 · Deform, #30 #31 #34) 완료 — `docs/steps/step_144.md` (+ `step_144_{poly,loop,deform}.md`,
   `research/maya/re/{options_144,edge_loops_144}.md`). Quad Draw / Create Polygon / Append, Insert / Offset Edge Loop / Slide Edge 가
   Maya 클릭 · 수정키 · Tool Settings 의 킷 도구, Deform 메뉴가 Maya 같은 디포머 + 옵션 창 14 + INPUTS + Paint Weights 대상.
   헤드리스 1307/1307, 관련 GUI 89/89. 새 이슈 #88 (Mesh Tools 의 편집 모드 진입 되돌리기), #89 (Quad Draw 남은 것).
   **바로 다음 할 일**: 0.4.0 남은 이슈 — #81 (Maya UI 초기화) #82 (옵션 상자 열기) #83 #85 #86 #87 (step 142 후속) #88 #89.
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 publish + 스토어 업로드 (step 143).
 
 - Step 143 (0.3.0 출시 준비) 완료 — `docs/steps/step_143.md` (+ `step_143_{compat79,user}.md`). 출시 전 사용자 보고 #79 (다른 애드온의
   Render 패널 때문에 Maya 모드 안 켜짐) #84 (5.1/5.2 더블클릭 루프 오류) #80 (Extrude 뒤 이동, F12 UV sync) 고침, #82 원인 댓글 →
@@ -396,7 +399,6 @@
   GitHub 초안 릴리스 (zip 2 개), 바탕화면 `MayaWorkflowKit_upload/` 에 0.3.0 zip + 문구.
   **바로 다음 할 일**: step 144 = 0.4.0 Maya 모델링 도구 (#30 Quad Draw / Create Polygon / Append, #31 Insert / Offset Edge Loop /
   Slide Edge, #34 Deform 메뉴). 0.4.0 에 함께: #81 #82 #83 #85 #86 #87.
-  **사용자 / Hermes 할 일**: v0.3.0 초안 릴리스 확인 후 publish, 스토어에 `maya-workflow-kit-0.3.0.zip` 업로드 + release_notes_0.3.0.md.
 
 - Step 142 (UI 모습 · 맞춤, #78 #77 #76 #54 #41) 완료 — `docs/steps/step_142.md` (+ `step_142_{ui,icons,media}.md`). Maya 세로 탭 띠
   dock (Channel Box 286 px at 1.0, 뷰포트 773 → 954 px), 메뉴 막대 » 넘침 + SDK 1.5 배율, Maya 매니퓰레이터 색 · 와이어 #000460
@@ -404,7 +406,6 @@
   헤드리스 1234/1234, 관련 GUI 59 + 32 + 1.5 배율 35 모두 통과. 새 이슈 #83 #85 #86 #87 (0.3.0).
   **바로 다음 할 일**: step 143 = 0.3.0 출시 준비 (버전 고정, GUI 전체 묶음, release_check, CHANGELOG, #83 #85 #86 #87 중 출시 전
   고칠 것 결정). 144 = 0.4.0 Maya 모델링 도구 (#30 #31 #34).
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 141 (키맵 · 선택 작은 묶음, #65 #72 #73, B4 B6, quant gap 3) 완료 — `docs/steps/step_141.md` (+ `step_141_{keys,select}.md`,
   `research/maya/re/{fields_141,select_convert_141}.md`). QA 먼저 (776dd37): GUI 실행기 파일당 시간제한 TIMEOUT 보고, `GUI_SKIP` 격리
@@ -416,7 +417,6 @@
   GUI 전체는 출시 준비에서만. 격리된 GUI 테스트는 다시 디버깅하지 않는다.
   **바로 다음 할 일**: step 142 UI 마감 → 0.3.0 출시 준비 (그때 GUI 전체 묶음). 남은 후보: 2D 편집기 Ctrl+A, Node Editor Alt+RMB,
   다른 필드 기본값 (step_141 「남은 것」).
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 140 (일상 옵션 창, #32 #33 #35) 완료 — `docs/steps/step_140.md` (+ `step_140_{rig,edit}.md`,
   `research/maya/re/option_boxes_140.md` · `option_boxes_140_edit.md`). Maya 2022 창 26 개 새로 (Window spec 26 → 50: Joint / IK /
@@ -429,28 +429,24 @@
   **바로 다음 할 일**: step 141 키맵 · 선택 묶음 (#65 #72 #73, B4 B6) → 142 UI 마감 → 0.3.0 출시 준비.
   **진행 규칙 (Hermes 10-23)**: 백그라운드 서브에이전트 · ScheduleWakeup 금지 — 병렬은 포그라운드 동기 Agent 최대 2 개, Blender
   프로세스 최대 2 개, 레인 마일스톤마다 WIP 커밋, 단계 커밋에 `Fixes #N` 줄.
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 139 (Edit Mesh / UV 를 Maya 결과로, #70 #68 #16) 완료 — `docs/steps/step_139.md` (+ `step_139_{edit,shape,uv}.md`,
   `research/maya/re/edit_mesh_139.md`). Connect / Merge / Smooth / Symmetrize, Ctrl+E 엣지 · 정점, Ctrl+B 가 mayapy 측정과 같은 결과 (바로 실행,
   step 65 처럼 수정 가능), UV > Automatic / Contour Stretch 오브젝트 모드, UV Editor Best Plane / Contour Stretch.
   **바로 다음 할 일**: step 140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73). 후보: 조명 없는 장면 렌더에 Maya 기본 조명 (137),
   Open 의 묻기 문구 (138), Connect 4 점 이상 (Maya 엣지 순서, M11), 구 · 토러스 Automatic 셸 크기 (Maya "Less distortion" 규칙).
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 138 (장면 · 파일, #57 #63 #64 #69) 완료 — `docs/steps/step_138.md` (+ `step_138_{prompt,carry,file_io}.md`). New Scene 에 Maya
   Save / Don't Save / Cancel (`ui/save_prompt.py`), Maya 모드에서 파일을 열면 Maya 레이아웃 (설정 `maya_layout_on_open`), Maya 도구 설정이
   New / Open 을 건너 유지 (`ui/scene_carry.py`), FBX / OBJ / Alembic / USD 가 Maya 와 채널 · 이름 그대로 왕복 (`operators/file_io.py`).
   **바로 다음 할 일**: step 139 Edit Mesh / UV (#70 #68 #16) → 140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73).
   후보: 조명 없는 장면 렌더에 Maya 기본 조명 (137), Open 의 묻기 문구를 Maya 로 (킷 Open 브라우저 필요, 138), 도구 설정을 세션 사이에도 (138).
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 137 (애니 · 렌더 기본, #66 #67 #71) 완료 — `docs/steps/step_137.md` (+ `step_137_{graph,render,defaults}.md`). Graph Editor 값 눈금을
   표시 단위로 (`ui/graph_units.py`, draw cursor — 마우스가 곡선 영역에 있을 때만, Blender 한계), Render Current Frame / Sequence = 뷰 카메라 또는
   킷 `persp` 카메라 (`operators/render_persp.py`), Maya 재질 · 조명 기본값 (Blinn / Phong, Intensity / Decay Rate No Decay), 템플릿 960 × 540.
   **바로 다음 할 일**: step 138 장면 · 파일 (#57 #63 #64 #69) → 139 Edit Mesh / UV (#70 #68 #16) → 140 옵션 창 (#32 #33 #35) →
   141 키맵 · 선택 묶음 (#65 #72 #73). 후보 (137 에서 발견): 조명 없는 장면 렌더에 Maya 기본 조명 (default light) 이 없어 물체가 어둡다.
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 136 (마킹 메뉴 완성 · 창 안에, #56 #62 #74) 완료 — `docs/steps/step_136.md` (+ `step_136_{bounds,items}.md`). 목록 줄 · 방사 상자가
   영역 경계 띠를 피함 (`draw.window_edges` → `engine.fit_ring(..., edges)`), 메뉴가 다른 킷 POST_PIXEL 위에 그려짐; 마킹 항목
@@ -459,7 +455,6 @@
   **바로 다음 할 일**: step 137 애니 · 렌더 기본 (#66 #67 #71) → 138 장면 · 파일 (#57 #63 #64 #69) → 139 Edit Mesh / UV (#70 #68 #16) →
   140 옵션 창 (#32 #33 #35) → 141 키맵 · 선택 묶음 (#65 #72 #73). backlog.json (`hermes/autodrive_bmk`) 은 사라졌다 — 이슈와 이 목록이 기준.
   백그라운드 레인을 기다리며 턴을 끝내지 말 것 (step 136: 레인이 중단됐는데 메인이 40 분 알림만 기다림) — 포그라운드로 돌리거나 WIP 커밋 확인.
-  사용자 할 일 (그대로): 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub v0.2.1 초안 publish.
 
 - Step 135 (Dock / Channel Box, #55 #60) 완료 — `docs/steps/step_135.md` (+ `step_135_{cb,width,fix}.md`). INPUTS 접힘 + 이름 클릭 펼침,
   Channel Box 부분 스크롤 · Layer Editor 고정 분할, 휠 스크롤 (View2D Buttons List), dock 폭 배율별 (466 / 574 / 672 px). 헤드리스 1060/1060,
@@ -476,12 +471,10 @@
   (step 98 29.6 %), 알림 없는 회색 0, 마킹 메뉴 회색 112 그대로. 새 이슈 #55–#75 (0.3.0).
   **바로 다음 할 일**: backlog.json 8 개 = step 134 Maya 뷰포트 모습 (선택 색 · 그리드 · HUD · 부드러운 미리보기), 135 Dock / Channel Box,
   136 마킹 메뉴, 137 애니 · 렌더 기본, 138 장면 · 파일, 139 Edit Mesh / UV 결과, 140 옵션 창, 141 키맵 · 선택 묶음.
-  사용자 할 일 (그대로): 스토어에 0.2.1 zip 업로드 + GitHub 초안 publish.
 
 - Step 132 (0.2.1 출시 준비) 완료 — `docs/steps/step_132.md` (+ `step_132_fix{44,52,53}.md`). #44 Ctrl+N = Maya 새 장면, #52 패널 툴바 »
   넘침 메뉴, #53 1.25 배율 레이아웃 재맞춤 수정; manifest 0.2.1, CHANGELOG, 스토어 릴리스 노트 `docs/distribution/release_notes_0.2.1.md`,
   GitHub 초안 릴리스 v0.2.1 (zip 2 개). validate PASS, release_check 4.5 22/22 · 5.2.2 14/14 (잔여 0), 헤드리스 1025/1025, GUI 1302/1302.
-  **사용자 할 일**: 스토어에 `dist/maya-workflow-kit-0.2.1.zip` 업로드 + GitHub 초안 publish.
   **바로 다음 할 일**: 0.3.0 — #16 #30–#35 (Maya 옵션 창 · 도구), #41 (테마 없이 스토어 미디어 다시 찍기), #54 (남은 아이콘).
 
 - Step 131 (아이콘 #23 + Hypershade #25) 완료 — `docs/steps/step_131.md` (+ `step_131_{icons,shelf,status,toolbox,menu,hypershade}.md`).

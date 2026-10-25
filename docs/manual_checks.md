@@ -323,7 +323,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 52) Space 길게: 위 2 줄 (공통 + Cache/Help, View … Panels), 커서 줄 Recent Commands | Maya | Hotbox Controls, 아래 5 줄 (메뉴 세트 모두), 대각선 4 개. 커서가 사이드바 근처여도 줄이 접히지 않고 Channel Box 위에 그려지는지, 그 위의 메뉴 이름을 눌러 열리는지.
 - [ ] (step 52) Hotbox Controls 에서 「Show All Menu Sets」 를 끄면 현재 세트 줄만 나오는지.
-- [ ] (step 52) 오브젝트 위 RMB: 링 아래 (자리가 없으면 옆) 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = `menu_sets.option_kind` 에 따름, step 103 / 147), DG Traversal / Inputs / Outputs ▸ = 노드 목록 (step 165, 회색 아님), 재질 항목. 목록은 한 열 (아래에 안 들어가면 링 옆, 창보다 길 때만 여러 열 — step 161) 이고 모든 항목에 닿는지; 목록이 타임라인 위로 그려져도 어색하지 않은지.
+- [ ] (step 52) 오브젝트 위 RMB: 링 아래 (자리가 없으면 옆) 목록 첫 줄 「pCube1...」 (누르면 AE 도크에 그 오브젝트), Select … Invert Selection, Select Similar □ (옵션 = `menu_sets.option_kind` 에 따름, step 103 / 147), DG Traversal / Inputs / Outputs ▸ = 노드 목록 (step 165, 회색 아님), 재질 항목. 목록은 한 열로 링 아래 (창 아래를 넘으면 메뉴 전체가 위로 그려짐 — step 184 규칙, step 192 에서 문구 고침) 이고 모든 항목에 닿는지.
 
 ### Step 53 — Blender 5.x 와 안전한 설치
 
@@ -336,7 +336,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 54) Maya Workflow Kit 레이아웃에서 Skeleton > Create Joints, Create > Type, Create > Free Image Plane, Fields/Solvers 필드들이 pCube1 (1 단위) 과 같은 크기 감으로 원점에 생기는지. Gravity 필드 화살표가 아래를 향하는지.
 - [ ] (step 54) Create > Lights > Point/Spot/Area 를 pCube1 에서 Maya 습관 거리 (5–10 단위) 에 두고 렌더 미리보기 밝기가 Maya 의 No Decay 기본 (step 137: Cycles 정확, EEVEE · 뷰포트는 10 단위에서 맞춤) 과 비슷한지. 감쇠 안내는 Command Line 결과 칸에 "Created pointLight1. …" (step 161).
-- [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Animation Layers / Character Sets, Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
+- [ ] (step 54) Windows > Animation Editors > Trax / Time Editor, Relationship Editors > Character Sets (Animation Layers 는 step 188 부터 Layer Editor Anim 탭 — step 192 에서 문구 고침), Windows > Node Editor, Rendering Editors > Light Editor, Skeleton > HumanIK / Quick Rig, File > Create Reference / Set Project 위에 마우스: 툴팁과 Help Line 의 안내 문구가 이해되는지, 대체 항목은 눌렀을 때 대체 편집기가 열리는지.
 - [ ] (step 54) Fluids > 3D Container / Effects > Smoke 를 메시 선택 후: 도메인이 메시 둘레에 Maya 단위로 알맞게 (cm 템플릿에서 2 m 상자가 아님).
 
 ### Step 55 — 포즈 본 = Maya 조인트 (CB·Outliner·AE·제약 가중치)
@@ -826,7 +826,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 131, #23) Create > Polygon Primitives / NURBS Primitives, Mesh, Edit Mesh, Mesh Tools, Deform, Constrain, Key, Windows > General Editors 를 실제 마우스로 열어 Maya 2022 메뉴 (`tmp/maya_icons131/grab`) 와 나란히: 아이콘이 있는 줄이 Maya 와 같은 명령인지, 16 px 에서 한눈에 구분되는지 (같은 메뉴 안에서 서로 다른 그림).
 - [ ] (step 131) 아이콘이 있는 줄 / 없는 줄의 글자가 한 열에서 시작하는지, Maya 단축키 (Ctrl+B, Ctrl+Shift+X …) 와 ❒ 옵션 상자 열이 그대로 오른쪽에 맞는지 — 100 % 와 125 % UI 배율, 그리고 Preferences 에서 Resolution Scale 을 바꾼 직후 (잠깐 이전 크기 그림이 쓰이다가 새 크기로 바뀜).
-- [ ] (step 131) Maya 모드를 켠 직후 처음 여는 메뉴에도 아이콘이 있는지 (미리 만들어 둠), 회색 항목 (Super Ellipse 등) 의 아이콘이 흐리게 보이는지.
+- [ ] (step 131) Maya 모드를 켠 직후 처음 여는 메뉴에도 아이콘이 있는지 (미리 만들어 둠), 회색 항목 (Surfaces > Trim Tool 등; Super Ellipse 는 step 190 부터 작동 — step 192 에서 문구 고침) 의 아이콘이 흐리게 보이는지.
 
 ## Step 131 — icons
 
@@ -1071,8 +1071,8 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ## Step 161 — Viewport messages and views
 - [x] Edit > Group on two objects: no Blender ⓘ banner in the Help Line; the Command Line result field (right of the Python field) shows Maya's result "group1", drawn inside the window. (gui_step161_messages G1)
 - [ ] The same with the Ctrl+G key on real keys; Create > Polygon Primitives > Cube: "Created pCube1" in the result field.
-- [x] RMB on an object near the bottom of the viewport: the list stays one column, left of the ring (E = UV is a submenu), never wrapping into columns, not over the ring, every row inside the window. (gui_step161_messages G2)
-- [ ] RMB list beside the ring: dragging from the ring left onto a row and releasing runs it (step 161 rule kept at the 0.4.0 release, step 172: Maya puts the list under the ring and lets it run off the window — decide by hand whether "beside" feels wrong).
+- [x] RMB on an object near the bottom of the viewport: the list stays one column under the ring (the whole menu drawn higher, step 184 rule), never wrapping into columns, every row inside the window. (gui_step161_messages G2, updated in step 184; wording fixed in step 192)
+- [ ] (superseded by Step 184: the list is under the ring now, the "beside" question is closed) RMB list under a lifted ring: dragging from the ring down onto a row and releasing runs it.
 - [x] Space tap: the top / front / side panes show about 30 units across (a 1-unit cube is a small square), each gridded edge to edge in its own plane; zoom the side pane, Space-tap out and back in: the side pane keeps its zoom, the others stay at 30. (gui_step161_views)
 - [ ] Tooltip of Panels > Layouts > Four View (or the Tool Box Four View button) says Blender's four view has one header for all panes.
 - [x] Select a parent whose child sits in front of it (side view): the child is drawn in the parent's green / white wire too (Maya hierarchy highlight). (gui_step161_views)
@@ -1242,3 +1242,12 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 ## Step 190
 
 - [ ] Create > Polygon Primitives > Pipe / Helix / Gear / Soccer Ball / Super Ellipse / Spherical Harmonics / Ultra Shape: each appears at the origin with Maya's name (pPipe1 …), Channel Box INPUTS shows polyPipe1 … — change Subdivisions Axis / Coils / Sides / Ellipse 0 / Ultra 1 there and the shape rebuilds; Shift+RMB Create marking menu Pipe / Helix / Gear work.
+
+## Step 192
+
+Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expected to show a difference today.
+
+- [ ] Animate a cube (keys at 1 and 24), Layer Editor > Anim > Create Layer from Selected: the Time Slider still shows the red key ticks, the Channel Box Translate fields stay red on a key frame, the Graph Editor still lists the cube's curves (Maya shows the selected layer's / base keys). Today the cube's active action moves into the NLA strip, so all three go blank.
+- [ ] Create > Polygon Primitives > Pipe (also Helix, Gear, Platonic Solid, NURBS Primitives > Sphere) ❒ click: a Maya "Polygon Pipe Options" window opens like Cube ❒ does, not Blender's Adjust Last Operation panel.
+- [ ] Key > Create Character Set, then hover Windows > Relationship Editors > Character Sets and Graph Editor Show > Objects > Characters: the tooltip / Help Line must not say "Blender has no character sets".
+- [ ] Blender 5.2, Maya Workflow Kit layout: the Time Slider ruler (grey labels, ticks, lit cell) and the character set field show like on 4.5; Create > Polygon Primitives ❒ click from the menu bar opens the option window.

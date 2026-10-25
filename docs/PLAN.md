@@ -1001,3 +1001,49 @@ No row moved; hidden differences under Done rows fixed by steps 174–181 (tool 
 1. Option box click opens the window. 2. RMB list under the ring. 3. Selected edges and manipulator look. 4. Time Slider ticks and
 playhead. 5. Character Sets on Keying Sets. 6. Animation layer follow-ups. 7. Mesh Display and greyed twins. 8. Seven Polygon Primitives.
 
+
+## 재점검 14차 (step 192, 2026-10-25 — 사용자 지시의 「재점검 13차」)
+
+User request: everything planned (backlog_183, steps 183–190, release 0.4.1 = 191) is done — dogfood in a clean install, collect
+what is left, implementation rate, priorities, backlog; criterion "default Maya with Blender features attached", differences only.
+「재점검 13차」 is step 182, so this one is numbered 14 (delegated). Evidence: `docs/steps/step_192.md` (main: dogfood, GUI
+differences, priorities) + lane files `step_192_remaining.md` (README table, open work, blindspots, manual checks) and
+`step_192_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **30 (91 %)** | **1** — theme (store compliance, decision 13) | **0** | **2** — separate pivots, Y-up |
+
+No row moved (third audit in a row); 13 items of the step 182 list finished by steps 183–191.
+
+### Headline numbers (step 182 → now)
+
+| Measure | Step 182 | Now (13d2153) |
+|---|---|---|
+| Menu leaves working (1318) | 714 (54.2 %) | **750 (56.9 %)** — Key 73 %, Control 64 %, Mesh Display 64 %, Create 67 % |
+| Editor menu bars working (914) | 578 | 578 |
+| Option boxes → kit Maya window (paths); dead | 114; 207 | **120; 193** |
+| Shelves; hotkeys; marking menus working / greyed | 159; 210; 368 / 55 | 160; 210; **371 / 52** |
+| Tests | headless 1683/1683, dogfood 48/48 | **headless 1731/1731**, **dogfood 47/48** (RMB flick, step 184 regression), console errors 0 |
+| look_compare (effective 1.0) | viewport 12/12, kit pixels 6/6, rects 5/12 | viewport **20/20** (8 new samples), **7/7**, 5/12 |
+| Manual checks | 694, 107 ticked | 709, 107 ticked |
+| Open GitHub issues | 1 (#89) | 1 (#89, 0.5.0) |
+
+### Top differences (score = severity × frequency, 1–3 each)
+
+| Score | Difference |
+|---|---|
+| 9 | RMB radial flick dead when the menu is lifted (window-bounded lift of step 184; Maya lifts only at the screen edge) |
+| 6 | Keys of objects on an animation layer vanish from Channel Box / Time Slider / Graph Editor |
+| 6 | Channel Box look; Time Slider current frame = Blender's blue bubble |
+| 6 | Primitive / Character Set / Curves option boxes = Blender redo panel or generic (Maya windows) |
+| 6 | Graph Editor 154 / 229 + Blender sidebar; Skin 68 % / Constrain 55 %; FX 19 % (seventh audit) |
+| 4 | Hotbox covered by in-view message / In-View Editor, stuck "Undo:" result, AE tabs cut, Cleanup… arrow, stale character-set notices, NURBS CVs / Hulls greyed; 5.x headless not run since step 153 |
+
+### Backlog (steps 193+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. RMB flick works when the menu is lifted. 2. Animation layers: keys stay visible. 3. Channel Box and Time Slider look. 4. Maya
+option windows for primitives and character sets. 5. Small Maya polish batch. 6. Graph Editor depth 2. 7. Skin and Constrain tools 2.
+8. Blender 5.x test pass 2.
