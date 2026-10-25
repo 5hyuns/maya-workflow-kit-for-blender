@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 203 (Graph Editor depth 3, backlog #2, Issue #110) 완료 — `docs/steps/step_203.md`, Maya 측정 `research/maya/re/graph_editor_201.md`.
+  먼저 공용 Blender 슬롯 잠금 `tools/blender_slots.py` (a162a62 「QA: blender slots」, 사용자 결정 10-25: 레인 ≤ 4, Blender ≤ 2).
+  List Load / Add (Auto Load 동안 회색) · Pin / Unpin · Show > Attributes / Objects 필터 · Upstream / Hierarchy Below · Change Rotation
+  Interp 5 · Key Sync / Peak Removal · Select Curve Nodes. Graph Editor 187 / 229, Dope Sheet 158 / 181. 헤드리스 전체 + GUI 관련 통과.
+  **바로 다음 할 일**: step 204 = backlog #3 「Animation layers 4」 (Issue #111). 그다음 205 (#112) · 206 (#113).
+
 - Step 202 (Audit 15 fix batch, backlog #1, Issue #109) 완료 — `docs/steps/step_202.md`, mayapy 명세 `research/maya/re/add_influence_202.md`.
   Non-Deformer History 가 킷 Wire / weight-sum 을 남김, 제약 helper 삭제, All by Type Wires / nCloths / nParticles / nRigids, Add Influence
   Maya 거리 가중치 (mayapy 8.1e-7), Time Slider 높이 UI scale 맞춤 (1.25 현재 칸 ΔE 13.8 → 0.3), CB 메뉴 바 줄바꿈, Outliner 모드 열

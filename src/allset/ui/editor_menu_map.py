@@ -163,7 +163,8 @@ def _list_show_menus(ed):
         f"{ed}/Show/Objects/Sets": _prop(f"{_WM}.allset_show_sets"),
         f"{ed}/Show/Objects/Characters": _prop(f"{_WM}.allset_show_characters"),
         f"{ed}/Show/Invert Shown": _prop(f"{_DS}.use_filter_invert"),
-        f"{ed}/Show/Show All": ("wm.context_set_string", {"data_path": f"{_DS}.filter_text", "value": ""}),
+        # step 203: Maya's Show All also unchecks every attribute filter (research/maya/re/graph_editor_201.md §4)
+        f"{ed}/Show/Show All": "allset.graph_attr_clear",
         # step 150: Maya's Clear Below leaves no entry checked = nothing filtered (ui/graph_view.py)
         f"{ed}/Show/Objects/Clear Below": "allset.graph_show_clear",
         f"{ed}/Show/Attributes/Clear Below": "allset.graph_attr_clear",
@@ -528,3 +529,21 @@ MAP.update({
     f"{SE}/Help/Help on Python": _url(_API + "info_quickstart.html"),
 })
 MAP.update(_hs_nodes())
+
+
+# step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py,
+# research/maya/re/graph_editor_201.md §6-8), both editors
+# (literal here: tools/menu_count.py loads the menu maps without bpy)
+_ROT_MODES = {"Independent Euler": "NONE", "Synchronized Euler": "EULER", "Quaternion Slerp": "SLERP",
+              "Quaternion Cubic": "SQUAD", "Quaternion Tangent Dependent": "TANGENT"}
+for _ed in (GE, DS):
+    MAP.update({f"{_ed}/Curves/Change Rotation Interp/{label}": ("allset.rotation_interp", {"mode": mode})
+                for label, mode in _ROT_MODES.items()})
+    MAP[f"{_ed}/Curves/Key Sync Filter"] = "allset.key_sync_filter"
+    MAP[f"{_ed}/Curves/Peak Removal Filter"] = "allset.peak_removal_filter"
+    MAP[f"{_ed}/Edit/Select Curve Nodes"] = "allset.select_curve_nodes"
+
+# Maya greys these while their state forbids them (List > Load / Add Selected Objects while Auto Load is on,
+# graph_editor_201.md §1): menu_sets.draw_item draws them with Blender's poll instead of the always-enabled
+# allset.menu_item route
+GREY_ON_POLL = {f"{ed}/List/{label}" for ed in (GE, DS) for label in ("Load Selected Objects", "Add Selected Objects")}

@@ -103,6 +103,9 @@ def draw_item(layout, path, label, icon_value=0):
     # Blender draws, right-aligned, a shortcut it finds in the keymaps for the very operator + properties of an
     # item (Increment and Save "Ctrl Alt S", Exit "Ctrl Q"): operator items go through ``allset.menu_item``, which
     # no key runs, so only the Maya hotkey drawn into the label shows (step 108 「계획」 3).
+    if s is not None and s[0] == "op" and path in menu_map.GREY_ON_POLL and not op_polls(s[1]):
+        draw_spec(layout, label, s, path, icon_value=icon_value)    # Maya greys it in this state (step 203)
+        return
     if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
             notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
         op = layout.operator(ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value)

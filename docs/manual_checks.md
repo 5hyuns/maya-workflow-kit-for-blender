@@ -1304,3 +1304,9 @@ that steps 199 / 200 left without a group.
 - [ ] Windows 125 % (UI 1.25), Maya Workflow Kit layout 새로 열기: Time Slider ruler 가 1.0 때와 같은 비율로 높아지고 (header 아래 ~45 px), 현재 프레임 칸 회색 (#525252) 이 Blender 파란 상자 아래로 보임; 직접 Time Slider 높이를 바꾼 뒤엔 다시 맞추지 않음.
 - [ ] Channel Box dock 을 손으로 좁히면 메뉴 바가 "Channels Edit Object" / "Show" 두 줄로 (글자 잘림 없음), 넓히면 한 줄.
 - [ ] 큐브 RMB > Vertex: 왼쪽 Outliner 에 모드 아이콘 / 점 열이 없고, persp / top / defaultLightSet 행 아이콘이 pCube1 아이콘과 같은 x.
+
+### Step 203 — Graph Editor depth 3
+
+- [ ] Graph Editor: List > Auto Load Selected Objects 켜진 동안 Load / Add Selected Objects 줄이 회색; 끄고 Load → 다른 오브젝트를 선택해도 목록 그대로; Auto Load 다시 켜면 선택을 따라감.
+- [ ] 채널 행을 하이라이트 → Curves > Pin Channel: 다른 오브젝트를 선택해도 그 채널 행과 커브가 남고 똑바른 핀 아이콘, Unpin 하면 사라짐.
+- [ ] 회전 키가 X / Y / Z 다른 시각에 있는 큐브: Curves > Change Rotation Interp > Synchronized Euler → 세 채널에 같은 시각 키, Rotate X 키를 끌면 Y / Z 키도 같이 움직임; Quaternion Slerp → 뷰포트 회전이 최단 경로, Independent Euler 로 되돌리면 원래 커브.

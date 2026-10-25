@@ -17,6 +17,9 @@ the icon row follows the menus on it; the UV Editor's tool header is Maya's seco
 stay in a 「Blender」 menu at the end of the bar.
 """
 
+import re
+import types
+
 import blf
 import bpy
 import gpu
@@ -599,16 +602,20 @@ def node_key(node):
 
 def row_id(row):
     kind, node, fc = row
+    if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows (step 203): one per label under the node
+        return (node_key(node), kind, fc.data_path, fc.array_index, _up_label.get((kind, fc.as_pointer()), ""))
     return node_key(node) if kind != "ATTR" else (node_key(node), fc.data_path, fc.array_index)
 
 
 def listed_objects(context, space):
     """Objects the Maya list shows as rows (animated, also by shape keys): the loaded list, else the selection with
-    Auto Load, else all; plus Hierarchy Below / Show Upstream Curves, narrowed by Show > Objects > IkHandles (step
-    203), by name."""
+    Auto Load, else all; plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects (step 203), by name. Driven
+    channels count like keyed ones (Maya lists a driven-key / expression channel, research/maya/re/
+    graph_editor_201.md §3-4)."""
     ds = space.dopesheet
     obs = [ob for ob in context.scene.objects
-           if (ob.animation_data and ob.animation_data.action) or shape_key(ob) is not None]
+           if (ob.animation_data and (ob.animation_data.action or ob.animation_data.drivers))
+           or shape_key(ob) is not None]
     base = row_objects(context, space)
     if base is not None:
         base = set(base)
@@ -619,21 +626,25 @@ def listed_objects(context, space):
 
 
 # --- List > Load / Add Selected Objects, Auto Load, Pin Channel, Show filters (step 203, #110) --------------------
-# Maya [K] (Graph Editor / Dope Sheet List menu, graphEditorPanel.mel / dopeSheetPanel.mel annotations in
-# research/maya/screens/editors104/_editors104.json): Load Selected Objects puts the selection into the editor's
-# outliner and turns Auto Load off, so the list stays when the selection changes; Add Selected Objects adds the
-# selection to it; Auto Load on = the list follows the selection again. Pin Channel keeps the selected curves shown
-# whatever is selected later. Show > Objects / Attributes check items list only the checked kinds.
+# Maya, measured in GUI Maya 2022 (research/maya/re/graph_editor_201.md §1-5): Auto Load Selected Objects is on by
+# default and the list follows the selection; unchecking it freezes the list shown then; Load / Add Selected Objects
+# are greyed while Auto Load is on (the kit's poll fails) and replace / append the frozen list (nothing selected =
+# empty list), Auto Load stays off. Maya's first Add right after a Load drops the loaded objects — the kit appends
+# (looks like a Maya bug; delegated). Pin Channel pins the highlighted rows (a node row = all its channels; nothing
+# highlighted = nothing pinned); pinned channels stay listed under their node, below the listed nodes. Show >
+# Attributes / Objects check items list only the checked kinds (several = union). Show Upstream Curves (on by default)
+# lists a driven-key channel's SDK curve and the driver's own curve under it. Pins / filters are one state for every
+# editor (Maya keeps pins per editor [I]; delegated).
 #
 # Blender: a Graph Editor / Dope Sheet draws the objects its own filters let through (Only Show Selected, the
 # Collection filter ``dopesheet.filter_collection``). A list Blender's selection filter can't express (loaded, plus
-# pinned owners / hierarchy / upstream nodes / set and character members, only IK handles) is a kit collection
+# pinned owners / hierarchy / upstream curve owners / character members, only IK handles) is a kit collection
 # (ID prop ``allset_list``, no scene, fake user: one per editor, saved with the file like Maya's panel state) set as
 # that editor's Collection filter, Only Show Selected off; its members follow the rules from graph_view's 0.25 s
 # timer (``sync``). Curves Blender then draws that the Maya list doesn't show (unpinned curves of a pinned curve's
 # node, joints not loaded, attributes filtered out) are hidden (``fc.hide``) and shown again when they're listed
-# (``_kit_hidden``). Attribute filters list driver curves too (Driven by Expression / Driven Key): Blender draws
-# drivers only in the Graph Editor's Drivers mode, so those rows have no curve in F-Curve mode (delegated).
+# (``_kit_hidden``). Driven channels (driver curves: Maya driven key / expression) are listed like keyed ones: Blender
+# draws drivers only in the Graph Editor's Drivers mode, so those rows have no curve in F-Curve mode (delegated).
 
 LIST_MARK = "allset_list"      # kit list collection marker
 LOADED = "allset_loaded"       # loaded object names (absent = no loaded list)
@@ -698,33 +709,54 @@ def _descendants(obs):
     return out
 
 
-def upstream_objects(obs):
-    """Objects the given ones read from (Maya upstream nodes): constraint targets (also on joints) and driver
-    variable targets."""
-    out = []
+def _path_index(path):
+    """``location[0]`` -> ("location", 0); other paths keep index 0 (custom properties end in ``"]``)."""
+    m = re.match(r"^(.*)\[(\d+)\]$", path)
+    return (m.group(1), int(m.group(2))) if m else (path, 0)
 
-    def add(ob):
-        if isinstance(ob, bpy.types.Object) and ob not in obs and ob not in out:
-            out.append(ob)
-    for ob in obs:
-        cons = list(ob.constraints)
-        if ob.type == 'ARMATURE' and ob.pose is not None:
-            for pb in ob.pose.bones:
-                cons += list(pb.constraints)
-        for con in cons:
-            add(getattr(con, "target", None))
-        ad = ob.animation_data
-        for fc in (ad.drivers if ad is not None else ()):
-            for var in fc.driver.variables:
-                for t in var.targets:
-                    add(t.id)
+
+def sdk_target(fc):
+    """(driver ID, its data path, index) a kit SDK driver curve reads (variable ``sdk``), else None."""
+    from ..operators import driven_key
+    if isinstance(fc.id_data, bpy.types.Action):
+        return None
+    var = next((v for v in fc.driver.variables if v.name == driven_key.VAR), None)
+    if var is None or not var.targets or var.targets[0].id is None:
+        return None
+    t = var.targets[0]
+    path, idx = _path_index(t.data_path)
+    return t.id, path, idx
+
+
+def upstream_rows(node, fc):
+    """Maya Show Upstream Curves rows under a driven-key channel (graph_editor_201.md §3, grab 40): the SDK curve
+    labelled by its input ("> pCube1.User A") = the driver curve itself, then the driver attribute's own anim curve
+    ("pCube1.User A") when it is keyed. [(kind, fcurve, label)]."""
+    tgt = sdk_target(fc)
+    if tgt is None:
+        return []
+    owner, path, idx = tgt
+    label = attr_label(types.SimpleNamespace(data_path=path, array_index=idx))
+    bone = _bone_name(path)
+    name = f"{bone if bone is not None else owner.name}.{label}"
+    out = [("UP_SDK", fc, "> " + name)]
+    own = next((c for c in object_curves(owner) if c.data_path == path and c.array_index == idx), None)
+    if own is not None:
+        out.append(("UP_CURVE", own, name))
     return out
 
 
+def _object_kinds():
+    """The checked kit Show > Objects items (Maya: checked = only nodes of those types)."""
+    return {k for k, flag in (("ik", "allset_show_ik_handles"), ("sets", "allset_show_sets"),
+                              ("characters", "allset_show_characters")) if _wm_flag(flag)}
+
+
 def row_objects(context, space):
-    """Objects the Maya list is made of (None = every object): loaded, else selected with Auto Load, plus
-    Hierarchy Below (Dope Sheet) / Show Upstream Curves (Graph Editor); Show > Objects > IkHandles keeps only IK
-    handles (kit IK handles = IK constraint targets, operators/by_type.py)."""
+    """Objects the Maya list is made of (None = every object): loaded, else selected with Auto Load, plus Hierarchy
+    Below (Dope Sheet). A checked Show > Objects item lists only nodes of that type (graph_editor_201.md §5):
+    IkHandles keeps the IK handles (kit IK handles = IK constraint targets, operators/by_type.py), Sets / Characters
+    alone list no objects (their nodes come from ``listed_nodes``)."""
     names = loaded_names(space)
     if names is not None:
         obs = [ob for ob in (bpy.data.objects.get(n) for n in names) if ob is not None]
@@ -732,15 +764,17 @@ def row_objects(context, space):
         obs = _selected_objects(context)
     else:
         obs = None
-    if obs is not None:
-        if _is_dope_space(space) and _wm_flag("allset_hierarchy_below"):
-            obs = obs + [o for o in _descendants(obs) if o not in obs]
-        if not _is_dope_space(space) and _wm_flag("allset_show_upstream"):
-            obs = obs + upstream_objects(obs)
-    if _wm_flag("allset_show_ik_handles"):
+    if obs is not None and _is_dope_space(space) and _wm_flag("allset_hierarchy_below"):
+        # Maya shows the descendants' keys in the object's own rows without listing them; Blender's C Dope Sheet
+        # list can't merge another object's keys into a row, so the kit lists the descendants (delegated)
+        obs = obs + [o for o in _descendants(obs) if o not in obs]
+    kinds = _object_kinds()
+    if "ik" in kinds:
         from ..operators import by_type
         handles = by_type.ik_handles(context.scene)
         obs = handles if obs is None else [o for o in obs if o in handles]
+    elif kinds:
+        obs = []
     flt = attr_filters()
     if flt and _is_dope_space(space):
         # Blender's Dope Sheet channel list can't drop single channels (fc.hide is Graph Editor only, drivers are
@@ -754,17 +788,12 @@ def row_objects(context, space):
 
 def _has_attr(ob, flt):
     own, joints = split_object_curves(ob)
-    if filter_curves(ob, own, flt):
+    if filter_curves(ob, own + node_drivers(ob), flt):
         return True
-    if any(filter_curves(pb, curves, flt) for pb, curves in joints):
+    if any(filter_curves(pb, curves + node_drivers(pb), flt) for pb, curves in joints):
         return True
     key = shape_key(ob)
-    return bool(key is not None and filter_curves(key, object_curves(key), flt))
-
-
-def _set_members(context):
-    from ..operators import sets
-    return [ob for coll in sets.all_sets() for ob in sets.members(coll, context.scene)]
+    return bool(key is not None and filter_curves(key, object_curves(key) + node_drivers(key), flt))
 
 
 def _character_members(context):
@@ -779,7 +808,8 @@ def _character_members(context):
 
 def drawn_objects(context, space):
     """Objects Blender must draw for this editor (None = every object): the list's objects plus the owners of
-    pinned curves and the members of listed set / character nodes."""
+    pinned curves, of upstream curves (Graph Editor) and the members of listed character nodes (a set node has no
+    channels, graph_editor_201.md §5)."""
     obs = row_objects(context, space)
     if obs is None:
         return None
@@ -787,9 +817,8 @@ def drawn_objects(context, space):
     if not _is_dope_space(space):
         extra += [n.id_data if isinstance(n, bpy.types.PoseBone) else n for n in _pinned_nodes()
                   if isinstance(n, (bpy.types.Object, bpy.types.PoseBone))]
-    if _wm_flag("allset_show_sets"):
-        extra += _set_members(context)
-    if _wm_flag("allset_show_characters"):
+        extra += [owner for owner, _fc in upstream_curves(context, space) if isinstance(owner, bpy.types.Object)]
+    if _object_kinds() & {"sets", "characters"}:
         extra += _character_members(context)
     in_scene = set(context.scene.objects)
     return obs + [o for o in dict.fromkeys(extra) if o not in obs and o in in_scene]
@@ -797,7 +826,7 @@ def drawn_objects(context, space):
 
 def needs_kit_list(context, space):
     """Can Blender's own filters show this list (all, or exactly the selection)? Else the kit list."""
-    if loaded_names(space) is not None or _wm_flag("allset_show_ik_handles"):
+    if loaded_names(space) is not None or "ik" in _object_kinds():
         return True
     obs = drawn_objects(context, space)
     return obs is not None and (not auto_load(space) or set(obs) != set(_selected_objects(context)))
@@ -854,9 +883,14 @@ def sync_space(context, space):
 
 
 def set_auto_load(context, space, on):
-    """Maya Auto Load on: the list follows the selection (a loaded list is dropped); off: the list stays."""
+    """Maya Auto Load on: the list follows the selection (a loaded list is dropped); off: the list shown now is
+    frozen (Maya's locked copy, graph_editor_201.md §1: selecting other objects no longer changes it)."""
     ds = _ds(space)
     if ds is None:
+        return
+    if not on:
+        if auto_load(space):
+            load_selected(context, space)
         return
     coll = kit_list(space)
     if coll is not None:
@@ -959,16 +993,38 @@ def _channel_tail(node, fc):
     return path
 
 
-def curve_kinds(node, fc, driver=False):
+def is_driver(fc):
+    """A driver curve (Maya: an attribute driven by a driven key / expression), not an action's keyed curve."""
+    return not isinstance(fc.id_data, bpy.types.Action)
+
+
+def _character_routed(node):
+    """{(data path, index)} of the node's channels that are character members (index -1 = whole array): Maya routes
+    a character member's curve through the character node, so it is not "Driven by Anim Curve" (§4)."""
+    from ..operators import character_sets
+    owner = node.id_data if isinstance(node, bpy.types.PoseBone) else node
+    scene = bpy.context.scene
+    out = set()
+    for ks in character_sets.characters(scene):
+        for p in ks.paths:
+            if p.id == owner:
+                out.add((p.data_path, -1 if p.use_entire_array else p.array_index))
+    return out
+
+
+def curve_kinds(node, fc, driver=None, routed=()):
+    """Maya Show > Attributes kinds of a curve (graph_editor_201.md §4): a keyed curve is "anim_curve" unless it is
+    a character member (``routed``); a kit SDK driver is "driven_key" and "anim_curve" (its input is the SDK anim
+    curve), another scripted driver "expression"."""
     from . import channel_box
     kinds = set()
-    if driver:
+    if is_driver(fc) if driver is None else driver:
         from ..operators import driven_key
         if any(v.name == driven_key.VAR for v in fc.driver.variables):
-            kinds.add("driven_key")
+            kinds |= {"driven_key", "anim_curve"}
         elif fc.driver.type == 'SCRIPTED':
             kinds.add("expression")
-    else:
+    elif (fc.data_path, fc.array_index) not in routed and (fc.data_path, -1) not in routed:
         kinds.add("anim_curve")
     tail = _channel_tail(node, fc)
     key = None
@@ -1003,15 +1059,13 @@ def node_drivers(node):
 
 
 def filter_curves(node, curves, flt=None):
-    """The node's curves the checked attribute filters list (pinned curves always), driver curves added when a
-    Driven by Expression / Driven Key filter is on."""
+    """The node's curves (keyed and driver curves) the checked attribute filters list: none checked = all, several
+    = their union (Maya, graph_editor_201.md §4); pinned curves always."""
     flt = attr_filters() if flt is None else flt
     if not flt:
         return list(curves)
-    out = [fc for fc in curves if is_pinned(node, fc) or curve_kinds(node, fc) & flt]
-    if flt & {"expression", "driven_key", "hidden", "user_defined"}:
-        out += [fc for fc in node_drivers(node) if curve_kinds(node, fc, driver=True) & flt]
-    return out
+    routed = _character_routed(node) if "anim_curve" in flt and not isinstance(node, bpy.types.KeyingSet) else ()
+    return [fc for fc in curves if is_pinned(node, fc) or curve_kinds(node, fc, routed=routed) & flt]
 
 
 # Maya lists a node's attributes in its attribute order (translate, rotate, scale, visibility, then the rest, e.g.
@@ -1029,24 +1083,24 @@ def maya_order(curves):
 def listed_nodes(context, space):
     """[(kind, node, curves)]: per listed object its own row (when it has curves of its own), its joints (with Only
     Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
-    then — measured in gui_step150_outliner), its blendShape node."""
+    then — measured in gui_step150_outliner), its blendShape node. A node's curves are its keyed and its driven
+    (driver) channels: Maya lists a driven-key / expression channel too (graph_editor_201.md §3-4). A checked Show >
+    Objects > Sets / Characters lists only those nodes (§5): kit sets as rows without channels (a Maya set row has
+    none), character sets (a character is a set) with their member channels; kit sets and characters can't be
+    selected like Maya's, so every one is listed (delegated)."""
     from . import channel_box
     out = []
     flt = attr_filters()
-    if getattr(bpy.context.window_manager, "allset_show_characters", False):
-        # Show > Objects > Characters (step 197, #104): Maya lists the character nodes, their member attributes below
+    kinds = _object_kinds()
+    if kinds & {"sets", "characters"}:
         from ..operators import character_sets
         for ks in character_sets.characters(context.scene):
-            curves = character_curves(context.scene, ks)
+            curves = filter_curves(ks, character_curves(context.scene, ks), flt)
             if curves:
                 out.append(("CHARACTER", ks, curves))
-    if _wm_flag("allset_show_sets"):
-        # Show > Objects > Sets (step 203): kit sets as nodes, their members' attributes below (like characters)
+    if "sets" in kinds:
         from ..operators import sets
-        for coll in sets.all_sets():
-            curves = [fc for ob in sets.members(coll, context.scene) for fc in maya_order(split_object_curves(ob)[0])]
-            if curves:
-                out.append(("SET", coll, curves))
+        out += [("SET", coll, []) for coll in sets.all_sets()]
     auto = auto_load(space)
 
     def add(kind, node, curves):
@@ -1055,15 +1109,16 @@ def listed_nodes(context, space):
             out.append((kind, node, curves))
     for ob in listed_objects(context, space):
         own, joints = split_object_curves(ob)
-        add("OBJECT", ob, maya_order(own))
+        add("OBJECT", ob, maya_order(own + node_drivers(ob)))
         for pb, curves in joints:
             if auto and not channel_box.bone_selected(pb) or not _bone_loaded(space, pb):
                 continue
-            add("JOINT", pb, maya_order(curves))
+            add("JOINT", pb, maya_order(curves + node_drivers(pb)))
         key = shape_key(ob)
         if key is not None:
-            add("SHAPES", key, object_curves(key))
-    # pinned channels stay listed whatever the list / selection is now (Maya Pin Channel [K])
+            add("SHAPES", key, object_curves(key) + node_drivers(key))
+    # pinned channels stay listed under their node whatever the list / selection is now, the node below the listed
+    # ones (Maya Pin Channel, graph_editor_201.md §2)
     shown = {node_key(n) for _k, n, _c in out}
     for node in _pinned_nodes():
         if node_key(node) in shown:
@@ -1077,10 +1132,11 @@ def listed_nodes(context, space):
 
 
 def rows(context, space):
-    """[(kind, node, fcurve)] of the Maya list: a node row (OBJECT / JOINT / SHAPES), then its ATTR rows while
-    expanded."""
+    """[(kind, node, fcurve)] of the Maya list: a node row (OBJECT / JOINT / SHAPES / CHARACTER / SET), then its
+    ATTR rows while expanded; under a driven-key ATTR row its Show Upstream Curves rows (UP_SDK, UP_CURVE)."""
     out = []
     flt = (space.dopesheet.filter_text or "").lower()
+    up = shows_upstream(space)
     for kind, node, curves in listed_nodes(context, space):
         out.append((kind, node, None))
         if _expanded.get(node_key(node), True):
@@ -1088,11 +1144,43 @@ def rows(context, space):
                 if flt and flt not in fc.data_path.lower() and flt not in attr_label(fc).lower():
                     continue
                 out.append(("ATTR", node, fc))
+                if up and is_driver(fc):
+                    for kind2, ufc, label in upstream_rows(node, fc):
+                        _up_label[(kind2, ufc.as_pointer())] = label
+                        out.append((kind2, node, ufc))
+    return out
+
+
+ATTR_KINDS = ("ATTR", "UP_SDK", "UP_CURVE")      # channel rows (the rest are node rows)
+_up_label = {}                                   # (row kind, fcurve pointer) -> upstream row label
+
+
+def shows_upstream(space, flt=None):
+    """Graph Editor List > Show Upstream Curves (Maya factory on): upstream rows show unless an attribute filter
+    other than Driven by Driven Key is checked (Driven by Anim Curve hides them, graph_editor_201.md §4)."""
+    flt = attr_filters() if flt is None else flt
+    return (not _is_dope_space(space) and _wm_flag("allset_show_upstream")
+            and (not flt or "driven_key" in flt))
+
+
+def upstream_curves(context, space):
+    """[(driver ID, its keyed curve)] the listed driven-key channels' upstream rows show (Blender must draw them)."""
+    if not shows_upstream(space):
+        return []
+    out = []
+    for _kind, node, curves in listed_nodes(context, space):
+        for fc in curves:
+            if is_driver(fc):
+                tgt = sdk_target(fc)
+                for kind2, ufc, _label in upstream_rows(node, fc):
+                    if kind2 == "UP_CURVE" and tgt is not None:
+                        out.append((tgt[0], ufc))
     return out
 
 
 def listed_curves(context, space):
-    return [fc for _kind, _node, curves in listed_nodes(context, space) for fc in curves]
+    return [fc for _kind, _node, curves in listed_nodes(context, space) for fc in curves] + \
+        [fc for _owner, fc in upstream_curves(context, space)]
 
 
 def node_selected(context, kind, node):
@@ -1137,7 +1225,7 @@ def highlighted(kind, rid, selected, picked):
     the highlight). Clicking an attribute un-highlights its node like Maya's outliner (step 150, delegated)."""
     if picked:
         return rid in picked
-    return kind != "ATTR" and selected
+    return kind not in ATTR_KINDS and selected
 
 
 def metrics(region):
@@ -1182,12 +1270,20 @@ def _rect(x0, y0, x1, y1, color):
 
 
 PIN = (0.85, 0.85, 0.85, 1.0)
+PIN_OFF = (0.55, 0.55, 0.55, 1.0)
 
 
-def _draw_pin(x, y, s):
-    """Maya's pin mark at the right end of a pinned channel row: a head and a needle."""
-    _rect(x - 3 * s, y, x + 3 * s, y + 5 * s, PIN)
-    _rect(x - 0.5 * s, y - 5 * s, x + 0.5 * s, y, PIN)
+def _draw_pin(x, y, s, pinned):
+    """Maya's pin icon left of a channel row's name (graph_editor_201.md §2, grab 22): an upright push-pin on a
+    pinned row (head, plate, needle), a grey sideways one on the others."""
+    if pinned:
+        _rect(x - 2 * s, y + 1 * s, x + 2 * s, y + 6 * s, PIN)
+        _rect(x - 4 * s, y, x + 4 * s, y + 1.5 * s, PIN)
+        _rect(x - 0.5 * s, y - 5 * s, x + 0.5 * s, y, PIN)
+    else:
+        _rect(x - 6 * s, y - 2 * s, x - 1 * s, y + 2 * s, PIN_OFF)
+        _rect(x - 1 * s, y - 3.5 * s, x + 0.5 * s, y + 3.5 * s, PIN_OFF)
+        _rect(x + 0.5 * s, y - 0.5 * s, x + 6 * s, y + 0.5 * s, PIN_OFF)
 
 
 def draw_channels():
@@ -1209,10 +1305,15 @@ def draw_channels():
         if y < 0:
             break
         kind, node, fc = row
-        sel = highlighted(kind, row_id(row), kind != "ATTR" and node_selected(context, kind, node), picked)
+        sel = highlighted(kind, row_id(row), kind not in ATTR_KINDS and node_selected(context, kind, node), picked)
         if sel:
             _rect(0, y - h, region.width, y, SELECT)
-        if kind != "ATTR":
+        if kind in ("UP_SDK", "UP_CURVE"):       # Show Upstream Curves rows, indented under their channel
+            blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else TEXT))
+            blf.position(font, 66 * s, y - h + 6 * s, 0)
+            blf.draw(font, _up_label.get((kind, fc.as_pointer()), ""))
+            _draw_pin(56 * s, y - h / 2, s, False)
+        elif kind != "ATTR":
             sign = "−" if _expanded.get(node_key(node), True) else "+"
             blf.color(font, *TEXT)
             blf.position(font, 6 * s, y - h + 6 * s, 0)
@@ -1223,8 +1324,7 @@ def draw_channels():
             blf.color(font, *attr_color(fc))
             blf.position(font, 44 * s, y - h + 6 * s, 0)
             blf.draw(font, attr_label(fc))
-            if is_pinned(node, fc):
-                _draw_pin(region.width - 18 * s, y - h / 2, s)
+            _draw_pin(34 * s, y - h / 2, s, is_pinned(node, fc))
         y -= h
     n_vis = visible_rows(region)
     if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
@@ -1242,6 +1342,10 @@ def show_rows(context, chosen):
             on = fc in chosen
             fc.select = on
             fc.hide = not (on or is_pinned(node, fc))
+    for _owner, fc in upstream_curves(context, context.space_data):
+        on = fc in chosen
+        fc.select = on
+        fc.hide = not on
 
 
 def pick_row(context, row, ctrl=False, shift=False):
@@ -1252,7 +1356,7 @@ def pick_row(context, row, ctrl=False, shift=False):
     kind, node, fc = row
     rid = row_id(row)
     listed = {node_key(n): c for _k, n, c in listed_nodes(context, space)}
-    picked = set(listed.get(node_key(node), ()) if kind != "ATTR" else [fc])
+    picked = set(listed.get(node_key(node), ()) if kind not in ATTR_KINDS else [fc])
     current = {c for c in listed_curves(context, space) if c.select and not c.hide}
     ids = picked_ids(context, all_rows)
     if ctrl:
@@ -1288,7 +1392,7 @@ class ALLSET_OT_graph_channel_click(bpy.types.Operator):
             return {'FINISHED'}
         kind, node, _fc = row
         s = context.preferences.system.ui_scale
-        if kind != "ATTR" and event.mouse_region_x < 18 * s:
+        if kind not in ATTR_KINDS and event.mouse_region_x < 18 * s:
             key = node_key(node)
             _expanded[key] = not _expanded.get(key, True)
             region.tag_redraw()
@@ -1464,7 +1568,7 @@ def release_all():
 
 class ALLSET_OT_graph_list(bpy.types.Operator):
     """Maya List > Load Selected Objects (replace the list) / Add Selected Objects (add to it): the list stays
-    when the selection changes (Auto Load off)"""
+    when the selection changes (only while Auto Load Selected Objects is off)"""
     bl_idname = "allset.graph_list"
     bl_label = "Load Selected Objects"
     bl_options = {'UNDO'}
@@ -1475,7 +1579,14 @@ class ALLSET_OT_graph_list(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _ds(getattr(context, "space_data", None)) is not None
+        # Maya greys Load / Add Selected Objects while Auto Load is on (graph_editor_201.md §1)
+        space = getattr(context, "space_data", None)
+        if _ds(space) is None:
+            return False
+        if auto_load(space):
+            cls.poll_message_set("Auto Load Selected Objects is on")
+            return False
+        return True
 
     def execute(self, context):
         load_selected(context, context.space_data, add=self.action == "ADD")
@@ -1484,19 +1595,17 @@ class ALLSET_OT_graph_list(bpy.types.Operator):
 
 
 def _target_rows(context, space):
-    """[(node, fcurve)] a channel command acts on: the rows picked in the list, else the selected shown curves."""
-    nodes = listed_nodes(context, space)
+    """[(node, fcurve)] a channel command (Pin / Unpin Channel) acts on: the highlighted outliner rows, a node row =
+    all its channels; nothing highlighted = nothing (Maya, graph_editor_201.md §2). The highlight is the one drawn:
+    the rows picked in the list, else the selected nodes' rows."""
     all_rows = rows(context, space)
     picked = picked_ids(context, all_rows)
     out = []
-    for _kind, node, curves in nodes:
+    for kind, node, curves in listed_nodes(context, space):
         nk = node_key(node)
+        whole = highlighted(kind, nk, node_selected(context, kind, node), picked)
         for fc in curves:
-            rid = (nk, fc.data_path, fc.array_index)
-            if picked:
-                if rid in picked or nk in picked:
-                    out.append((node, fc))
-            elif fc.select and not fc.hide:
+            if whole or (nk, fc.data_path, fc.array_index) in picked:
                 out.append((node, fc))
     return out
 
@@ -1575,11 +1684,13 @@ FLAGS = (
     ("allset_attr_driven_key", "Driven by Driven Key", "List only attributes driven by a Set Driven Key"),
     ("allset_attr_user_defined", "User Defined", "List only user-defined attributes (custom properties)"),
     ("allset_show_ik_handles", "IkHandles", "List only IK handles"),
-    ("allset_show_sets", "Sets", "List the sets with their members' attributes"),
-    ("allset_show_upstream", "Show Upstream Curves", "Also list the nodes the listed objects read from "
-     "(constraint and driver targets)"),
-    ("allset_hierarchy_below", "Hierarchy Below", "Also list the children of the listed objects"),
+    ("allset_show_sets", "Sets", "List only the sets and character sets"),
+    ("allset_show_upstream", "Show Upstream Curves", "Under a driven-key channel also list its driven key curve "
+     "and the driver's own curve"),
+    ("allset_hierarchy_below", "Hierarchy Below", "Also show the keys of the listed objects' children (the kit lists "
+     "them as rows)"),
 )
+FLAGS_ON = {"allset_show_upstream"}      # Maya factory: Show Upstream Curves checked (graph_editor_201.md §3)
 
 
 # --- header draws ------------------------------------------------------------------------------------------------
@@ -1729,13 +1840,6 @@ classes = (ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable, ALLSET_OT_g
 _handle = []
 
 
-def _redraw_graphs(context):
-    for win in context.window_manager.windows:
-        for area in win.screen.areas:
-            if area.type == 'GRAPH_EDITOR':
-                area.tag_redraw()
-
-
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -1746,11 +1850,12 @@ def register():
         name="Key Value", description="Maya Stats: the selected keys' value (display units, +=5 / *=2 work)",
         get=_stats_get("value"), set=_stats_set("value"))
     bpy.types.WindowManager.allset_show_characters = BoolProperty(
-        name="Characters", description="List the character sets with their member attributes (Maya Show > Objects > "
-        "Characters)", default=False, options={'SKIP_SAVE'}, update=lambda self, context: _redraw_graphs(context))
+        name="Characters", description="List only the character sets with their member attributes (Maya Show > "
+        "Objects > Characters)", default=False, options={'SKIP_SAVE'}, update=_filters_changed)
     for name, label, tip in FLAGS:
         setattr(bpy.types.WindowManager, name, BoolProperty(
-            name=label, description=f"Maya: {tip}", default=False, options={'SKIP_SAVE'}, update=_filters_changed))
+            name=label, description=f"Maya: {tip}", default=name in FLAGS_ON, options={'SKIP_SAVE'},
+            update=_filters_changed))
     bpy.types.WindowManager.allset_auto_load = BoolProperty(
         name="Auto Load Selected Objects", description="Maya: the list follows the selection (off: Load / Add "
         "Selected Objects keep a fixed list)", get=_auto_get, set=_auto_set, options={'SKIP_SAVE'})
@@ -1770,6 +1875,7 @@ def unregister():
         delattr(bpy.types.WindowManager, name)
     del bpy.types.WindowManager.allset_auto_load
     _expanded.clear()
+    _up_label.clear()
     _scroll.clear()
     _picked["ids"], _picked["sig"] = set(), None
     for cls in reversed(classes):

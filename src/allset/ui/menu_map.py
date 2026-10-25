@@ -1056,6 +1056,7 @@ BLENDER_MENU = {
 
 # Graph Editor / Dope Sheet / UV Editor / UV Toolkit menu bars (step 104): their own module, same forms.
 from .editor_menu_map import MAP as _EDITOR_MAP  # noqa: E402
+from .editor_menu_map import GREY_ON_POLL  # noqa: E402,F401  (menu_sets.draw_item, step 203)
 
 MAP.update(_EDITOR_MAP)
 
