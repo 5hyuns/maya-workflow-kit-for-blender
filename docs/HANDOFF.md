@@ -2,6 +2,23 @@
 
 ## 현재 작업
 
+- Step 206 (UV Editor depth 2, backlog #5, Issue #113) 완료 — `docs/steps/step_206.md`, Maya 측정 `research/maya/re/uv_201.md`
+  (mayapy 4 패스 125 경우 + GUI Maya 3 세션). Modify > Cycle (Maya edge id 순서 걷기), Cut/Sew > Split (polyMapCut 부채꼴),
+  Create Shell (Grid) (polyUVRectangle: 원점 = 낮은 정점 번호, U = 원점을 가진 첫 면 엣지), Auto Seams (가지치기한 cut graph,
+  닫힌 genus 0 = 가장 먼 두 정점 최단 경로 — Maya 와 엣지 수 같음; Unfold3D 정확한 선택은 [U]), UV Editor HUD 셋 (UV Statistics /
+  UV Position / Isolated Selection, Maya 공장값 켬), UV Sets Rename / Copy to map1 / map1, Warp Image notice; 메인 UV > Auto Seams ·
+  Split UVs 와 UV 마킹 메뉴 Auto Seams 도 같은 명령. UV Editor 136 → **146 / 172**, unique 785. Cycle · Grid mayapy 2e-7 안
+  (최대 5e-10), Split NUDGE 안 + UV · 셸 수 같음. 헤드리스 step206 17 / 17, 전체 1981 / 1981, GUI 관련 + 스모크 81 / 81.
+  **바로 다음 할 일**: step 207 = backlog #6 「Curves 3」 (Issue #114). 그다음 208 (#115) · 209 (#116).
+
+- **체크포인트 2026-10-26 (/sc:save, 205 후)** — 지금 단계: **205 완료 · 커밋 9d4c1c6** (Fixes #112, push 안 함). 이번 세션에 201 (ac5ea5d,
+  감사 15) · 202 (fd1ad61, #109) · 203 (a162a62 Blender 슬롯 + b19ab5b, #110) · 204 (0147e5c, #111) · 205 (9d4c1c6, #112) 커밋. 진행 중인
+  레인 · 테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ 추적 안 함). 숫자: 헤드리스 1964 / 1964, 메뉴 세트 합 922 / 1486 (62.0 %),
+  Graph Editor 187 / 229, Dope Sheet 158 / 181, Deform 60 / 74, Constrain 18 / 20.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#112 닫힘; 에이전트 worktree 63 개 정리 여부.
+  **바로 다음 할 일**: step 206 = backlog #5 「UV Editor depth 2」 (Issue #113) — 측정 레인 (mayapy) + [K] 구현 레인 동시, 그다음 맞춤 레인 +
+  GUI 테스트 레인 (step 203–205 방식). 그다음 207 (#114) · 208 (#115) · 209 (#116).
+
 - Step 205 (Deform 2, backlog #4, Issue #112) 완료 — `docs/steps/step_205.md`, Maya 측정 `research/maya/re/deform_205.md`. Tension · Solidify ·
   Sculpt · Morph · Jiggle (GN 디포머, Maya 이름 · INPUTS · AE · 옵션 창 · Paint Weights · Non-Deformer History 에서 남음), UV Pin · Proximity
   Pin, Display / Hide Intermediate Objects, Wrap Add / Remove Influence. mayapy O 경우 모두 1e-4 안 (최대 2.3e-6), Deform 60 / 74, 헤드리스

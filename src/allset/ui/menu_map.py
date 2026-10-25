@@ -807,7 +807,8 @@ MAP.update({
     "UV/Assign Checker Shader": "allset.checker_shader",
     "UV/Best Plane": "allset.uv_planar",
     "UV/Contour Stretch": "allset.uv_contour",    # Follow Active Quads + stretch to 0-1 (step 139)
-    "UV/Split UVs": "allset.uv_cut",
+    "UV/Split UVs": "allset.uv_split",        # SplitUV = polySplitTextureUV, like UV Editor Cut/Sew > Split (step 206)
+    "UV/Auto Seams": "allset.uv_auto_seams",  # performPolyAutoSeamUV 0 (step 206, research/maya/re/uv_201.md §4)
     # Generate (XGen -> hair curves)
     "Generate/Create Description...": "object.curves_empty_hair_add",
     "Generate/Create Interactive Groom Splines": "object.curves_empty_hair_add",

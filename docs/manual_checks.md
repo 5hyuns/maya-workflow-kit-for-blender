@@ -1322,3 +1322,11 @@ that steps 199 / 200 left without a group.
 - [ ] 스킨 바인드한 실린더에 Deform > Tension: 관절을 굽히면 접힌 쪽 면이 덜 찌그러짐 (Maya 처럼), AE tension1 탭의 Smoothing Iterations 를 바꾸면 바로 반영.
 - [ ] Deform > Jiggle 뒤 큐브를 키로 움직이고 재생: 멈출 때 출렁임, 처음 프레임으로 되감으면 다시 원래 모양.
 - [ ] Constrain > UV Pin 으로 Locator 를 변형되는 메시에 붙이기: 메시가 휘면 Locator 가 표면을 따라감, Channel Box 의 Translate / Rotate 는 0.
+
+### Step 206 — UV Editor depth 2
+
+- [ ] UV Editor에서 면 하나 선택 → Modify > Cycle 을 여러 번: UV 가 한 꼭짓점씩 돌고, 4 번이면 (사각형) 원래 자리.
+- [ ] pPlane 4x4 의 두 꼭짓점 (사각형의 마주보는 모서리) 선택 → Cut/Sew > Create Shell (Grid): 그 사이 면들이 0-1 격자 셸이 됨, 나머지와 분리.
+- [ ] 구를 Planar 로 펼친 뒤 Cut/Sew > Auto Seams → Modify > Unfold: 극을 지나는 한 줄 이음새로 한 셸로 펼쳐짐.
+- [ ] UV 하나 선택 → Cut/Sew > Split → Move 툴로 끌면 면마다 따로 움직임.
+- [ ] 아래 왼쪽 U / V, 아래 오른쪽 셸 · 겹친 UV · 뒤집힌 UV 수가 선택을 바꿀 때 바로 갱신되는지 (0.25 초 안), View > Heads-Up Display 로 끄고 켜기.

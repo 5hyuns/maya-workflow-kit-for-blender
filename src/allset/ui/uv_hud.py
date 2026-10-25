@@ -7,7 +7,8 @@ the view's left / right edge, baseline 7 px above its bottom; a second line 20 p
 
 - UV Statistics, bottom right: "(a/b) UV shells, (c/d) overlapping UVs, (e/f) reversed UVs" — first number = among
   the selected components, second = over the objects (Maya counts objects selected as objects; Blender's edit-mode
-  objects are always selected, so the kit always shows the totals, delegated). Overlapping UVs = UVs lying exactly on
+  objects are always selected, so the kit always shows the totals, delegated). Shells are Maya's: faces sharing
+  any UV, a corner is enough. Overlapping UVs = UVs lying exactly on
   a UV of another shell (stacked shells counted 8, a partly overlapping shell 0 — measured), reversed UVs = UVs of
   faces whose UV winding is clockwise.
 - UV Position, bottom left: "U:  <u> V:  <v>" = centre of the selected UVs' bounding box (UVs 0.1 0.1 0.3 0.5 ->
@@ -22,7 +23,7 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty
 
-from ..operators import uv_shells, uv_tools
+from ..operators import uv_shells
 from .. import compat
 
 TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (measured core pixels 203-207)
@@ -69,15 +70,34 @@ def _signed_area(face, uv):
     return a * 0.5
 
 
+def maya_shells(faces, pts):
+    """{face: shell id} the way Maya counts shells (polyEvaluate -uvShell, measured on the cube in uv_201.md §3):
+    faces sharing any UV are one shell, a shared corner is enough (Blender's islands need a shared edge)."""
+    parent = {f: f for f in faces}
+
+    def find(x):
+        while parent[x] is not x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for p in pts:
+        for l in p[1:]:
+            a, b = find(p[0].face), find(l.face)
+            if a is not b:
+                parent[b] = a
+    roots = {}
+    return {f: roots.setdefault(find(f), len(roots)) for f in faces}
+
+
 def mesh_statistics(bm, uv, synced):
     """(shells, selected shells, overlapping UVs, selected, reversed UVs, selected, selected UV coordinates)."""
     faces = [f for f in bm.faces if not f.hide and (synced or f.select)]
     if not faces:
         return 0, 0, 0, 0, 0, 0, []
     uv_shells._index_loops(bm)
-    groups = uv_tools.islands(bm, uv, faces)
-    owner = {f: i for i, g in enumerate(groups) for f in g}
     pts = uv_shells.uv_points(bm, uv, [l for f in faces for l in f.loops])
+    owner = maya_shells(faces, pts)
 
     def picked(l):
         return l.vert.select if synced else compat.uv_vert_selected(l, uv)
@@ -96,7 +116,7 @@ def mesh_statistics(bm, uv, synced):
     rev_faces = {f for f in faces if _signed_area(f, uv) < 0.0}
     rev = {i for i, p in enumerate(pts) if any(l.face in rev_faces for l in p)}
     coords = [tuple(p[0][uv].uv) for p, s in zip(pts, sel) if s]
-    return (len(groups), len(shells_sel), len(over), sum(1 for i in over if sel[i]), len(rev),
+    return (len(set(owner.values())), len(shells_sel), len(over), sum(1 for i in over if sel[i]), len(rev),
             sum(1 for i in rev if sel[i]), coords)
 
 
@@ -142,7 +162,7 @@ def _draw():
             return
         scale = context.preferences.system.ui_scale or 1.0
         font = 0
-        blf.size(font, FONT_PX * scale * 1.3)
+        blf.size(font, FONT_PX * scale * 1.15)
         blf.color(font, *TEXT_RGB, 1.0)
         base = BASELINE_PX * scale
         margin = MARGIN_PX * scale
