@@ -242,6 +242,7 @@ def test_curve_names_drawn_per_mode():
 def test_still_greyed_items_have_a_notice():
     paths = [f"{GE}/View/{i}" for i in GREYED_VIEW] + [f"{ed}/Show/{i}" for ed in (GE, "Dope Sheet")
                                                          for i in GREYED_SHOW]
+    paths.remove(f"{GE}/Show/Objects/Characters")      # step 197: character nodes in the kit Graph Editor outliner
     leaves = {p for p, _it in menu_sets.iter_items()}
     for path in paths:
         assert path in leaves, path
