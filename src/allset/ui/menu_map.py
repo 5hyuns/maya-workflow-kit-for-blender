@@ -722,11 +722,19 @@ MAP.update({
     "Curves/Bezier Curves/Tangent Options/Smooth Anchor Tangents": ("curve.handle_type_set", {"type": 'ALIGNED'}),
     "Curves/Bezier Curves/Tangent Options/Break Anchor Tangents": ("curve.handle_type_set", {"type": 'FREE_ALIGN'}),
     "Curves/Bezier Curves/Tangent Options/Even Anchor Tangents": ("curve.handle_type_set", {"type": 'AUTOMATIC'}),
-    # Surfaces
-    "Surfaces/Revolve": _mod('SCREW'),
+    # Surfaces: Maya NURBS surfaces as Blender NURBS surfaces (step 181, operators/surfaces_maya.py; mayapy rules
+    # research/maya/re/surfaces_181.md §4; option windows operators/option_windows_surfaces.py)
+    "Surfaces/Revolve": "allset.revolve",
+    "Surfaces/Birail/Birail 1 Tool": "allset.birail1",
+    "Surfaces/Boundary": ("allset.surface_boundary", {"kind": 'BOUNDARY'}),
+    "Surfaces/Square": ("allset.surface_boundary", {"kind": 'SQUARE'}),
+    "Surfaces/Duplicate NURBS Patch": "allset.duplicate_nurbs_patch",
+    "Surfaces/Attach": "allset.surface_attach",
+    "Surfaces/Detach": "allset.surface_detach",
     "Surfaces/Open/Close": "curve.cyclic_toggle",
-    "Surfaces/Reverse Direction": "curve.switch_direction",
-    "Surfaces/Insert Isoparms": "curve.subdivide",
+    "Surfaces/Insert Isoparms": "allset.surface_insert_isoparm",
+    "Surfaces/Rebuild": "allset.surface_rebuild",
+    "Surfaces/Reverse Direction": "allset.surface_reverse",
     # Deform
     "Deform/Curve Warp": _deformer('CURVE_WARP'),
     "Deform/Proximity Wrap": _deformer('PROXIMITY_WRAP'),
@@ -920,9 +928,9 @@ MAP.update({
     "Create/Sweep Mesh": "allset.sweep_mesh",
     "Curves/Add Points Tool": ("v3d", "allset.add_points", {}),
     "Curves/Offset/Offset Curve": "allset.offset_curve",
-    "Surfaces/Loft": "allset.loft",
+    "Surfaces/Loft": "allset.loft",                 # step 181: a NURBS loft (was a mesh)
     "Surfaces/Planar": "allset.surface_planar",
-    "Surfaces/Extrude": "allset.surface_extrude",
+    "Surfaces/Extrude": "allset.surface_extrude",   # step 181: a NURBS extrude (was a curve bevel)
     "Surfaces/Bevel Plus": "allset.bevel_plus",
     # Sculpting stamps Blender lacks: the keymap's step-107 substitutes (sculpt Ctrl+8 / Ctrl+9)
     "Mesh Tools/Sculpting Tools/Spray Tool": _sculpt("Draw Sharp"),
