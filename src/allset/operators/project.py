@@ -463,12 +463,18 @@ class ALLSET_OT_create_reference(bpy.types.Operator):
             self.report({'ERROR'}, "A scene can't reference itself")
             return {'CANCELLED'}
         ns = (self.namespace.strip() or os.path.splitext(os.path.basename(path))[0]).replace(":", "_")
+        from . import references
+        node = references.new_node_name(ns, context.scene)       # Maya: propRN, then propRN1 (step 209, Maya)
+        order = references.next_order(context.scene)
         ns = unique_namespace(ns, context.scene)
         try:
             group = reference(path, ns, context, self.editable)
         except (OSError, ValueError, RuntimeError) as exc:
             self.report({'ERROR'}, f"Could not reference {path}: {exc}")
             return {'CANCELLED'}
+        group[references.NODE], group[references.ORDER] = node, order
+        if hasattr(context.window_manager, "allset_ref_current"):
+            context.window_manager.allset_ref_current = group.name
         results.result(self, f"Referenced {os.path.basename(path)} as {group.name}: "
                               f"{len(group.all_objects)} object(s)")
         return {'FINISHED'}

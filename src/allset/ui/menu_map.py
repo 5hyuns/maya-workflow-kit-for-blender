@@ -137,7 +137,9 @@ MAP = {
     "File/Export All...": "allset.file_export_all",
     "File/Export Selection...": "allset.file_export_selection",
     "File/Create Reference...": "allset.create_reference",           # step 69 (link + override + ns:)
-    "File/Reference Editor": ("allset.open_editor", {"ui_type": 'OUTLINER', "display_mode": 'LIBRARIES'}),
+    "File/Reference Editor": "allset.reference_editor",              # step 209 (ui/reference_editor.py)
+    "File/Export to Offline File...": ("allset.reference_offline", {"mode": "EXPORT"}),   # step 209: edits -> JSON
+    "File/Assign Offline File...": ("allset.reference_offline", {"mode": "ASSIGN"}),
     "File/Project Window": "allset.project_window",
     "File/Set Project...": "allset.set_project",
     "File/Recent Projects": ("menu", "ALLSET_MT_recent_projects"),
