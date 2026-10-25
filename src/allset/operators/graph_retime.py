@@ -172,15 +172,26 @@ def _draw():
     gpu.state.blend_set('NONE')
 
 
+# Maya's Retime Tool works in the Graph Editor and the Dope Sheet (both Edit menus, _editors104.json; step 198)
+SPACES = ("SpaceGraphEditor", "SpaceDopeSheetEditor")
+AREA_TYPES = {'GRAPH_EDITOR', 'DOPESHEET_EDITOR'}
+
+
 def _ensure_draw():
     if _HANDLE["draw"] is None:
-        _HANDLE["draw"] = bpy.types.SpaceGraphEditor.draw_handler_add(_draw, (), 'WINDOW', 'POST_PIXEL')
+        _HANDLE["draw"] = [(name, getattr(bpy.types, name).draw_handler_add(_draw, (), 'WINDOW', 'POST_PIXEL'))
+                           for name in SPACES]
+
+
+def _remove_draw():
+    for name, h in _HANDLE["draw"] or ():
+        getattr(bpy.types, name).draw_handler_remove(h, 'WINDOW')
+    _HANDLE["draw"] = None
 
 
 def _drop_draw():
     if _HANDLE["draw"] is not None and not _MARKERS:
-        bpy.types.SpaceGraphEditor.draw_handler_remove(_HANDLE["draw"], 'WINDOW')
-        _HANDLE["draw"] = None
+        _remove_draw()
 
 
 def hit(marks, xs, x, y, height, scale):
@@ -219,7 +230,7 @@ class ALLSET_OT_retime_tool(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         area = getattr(context, "area", None)
-        return area is not None and area.type == 'GRAPH_EDITOR' and context.window is not None
+        return area is not None and area.type in AREA_TYPES and context.window is not None
 
     def invoke(self, context, event):
         return self._start(context)
@@ -381,5 +392,4 @@ def unregister_handlers():
     _MARKERS.clear()
     _DRAG.clear()
     if _HANDLE["draw"] is not None:
-        bpy.types.SpaceGraphEditor.draw_handler_remove(_HANDLE["draw"], 'WINDOW')
-        _HANDLE["draw"] = None
+        _remove_draw()

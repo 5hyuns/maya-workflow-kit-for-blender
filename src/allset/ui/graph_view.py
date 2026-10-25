@@ -263,6 +263,8 @@ def _tick():
         watch = getattr(graph_weights, "watch", None)     # step 198: non-weighted / locked tangent lengths
         if watch is not None:
             watch(bpy.context)
+        from ..operators import graph_menu_198
+        graph_menu_198.watch(bpy.context)                 # step 198: Set Curve Colors rules on new curves
     except (KeyError, AttributeError, ReferenceError, RuntimeError):
         pass
     return POLL

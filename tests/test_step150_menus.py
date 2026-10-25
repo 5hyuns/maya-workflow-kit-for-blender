@@ -27,7 +27,7 @@ MAPPED = {
     f"{GE}/View/Curve Name/Never": ("prop", "addon_prefs.graph_curve_names", {"value": 'NEVER'}),
     f"{GE}/View/Curve Name/Active Only": ("prop", "addon_prefs.graph_curve_names", {"value": 'ACTIVE'}),
 }
-GREYED_VIEW = ("Undo View Change", "Redo View Change", "Clip Time", "Show Results", "Show Buffer Curves",
+GREYED_VIEW = ("Undo View Change", "Redo View Change", "Clip Time", "Show Results",  # step 198: Show Buffer Curves works
                "Show Play Range Shades", "Lock Play Range Shades", "Highlight Affected Curves", "Keys/Never",
                "Key View/Detailed", "Key View/Simple", "Time Ruler Placement/Top", "Time Ruler Placement/Bottom",
                "Theme/Dark", "Theme/Light", "Theme/TRS Distinct", "Theme/Colorblind Compatible", "Theme/Classic",
@@ -253,4 +253,4 @@ def test_still_greyed_items_have_a_notice():
     for item in GREYED_VIEW:
         if not item.startswith("Theme/"):
             assert f"{GE}/View/{item}" in notices.NOTICES, item
-    assert "Snapshot" in notices.NOTICES[f"{GE}/View/Show Buffer Curves"][1]
+    assert f"{GE}/View/Show Buffer Curves" in menu_map.MAP      # step 198: kit buffer curves

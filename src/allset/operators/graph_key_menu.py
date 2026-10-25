@@ -346,15 +346,28 @@ def _default_side(kp, kind, side):
         (kp.handle_left if side == "IN" else kp.handle_right).y = kp.co.y
 
 
+def _new_curve_weights(idd, full, index):
+    from . import graph_weights
+    from .. import compat
+    try:
+        for fc in compat.id_fcurves(idd):
+            if fc.data_path == full and (index is None or index < 0 or fc.array_index == index)                     and len(fc.keyframe_points) == 1:
+                graph_weights.apply_default(fc)
+    except (AttributeError, TypeError, ReferenceError):
+        pass
+
+
 def after_insert(owner, path, index, frame):
     """Apply the default tangents to the keys ``owner.keyframe_insert(path, index=index, frame=frame)`` made.
-    ``owner`` is an ID or a struct inside one (pose bone)."""
-    tin, tout = default_tangents()
-    if tin == "AUTO" and tout == "AUTO":
-        return 0
+    ``owner`` is an ID or a struct inside one (pose bone). A curve this insert created gets the Default Tangent
+    Weight (step 198, operators/graph_weights.apply_default)."""
     from .. import compat
     idd = owner.id_data
     full = path if owner == idd else owner.path_from_id(path)
+    _new_curve_weights(idd, full, index)
+    tin, tout = default_tangents()
+    if tin == "AUTO" and tout == "AUTO":
+        return 0
     n = 0
     for fc in compat.id_fcurves(idd):
         if fc.data_path != full or (index is not None and index >= 0 and fc.array_index != index):

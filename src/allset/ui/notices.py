@@ -441,14 +441,10 @@ def _anim_editor_categories(ed):
     """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104, menus captured in Maya 2022)."""
     return {
         f"{ed}/Edit/Transformation Tools": (
-            "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice, region "
-            "or retime key tool."),
-        f"{ed}/Edit/Select Unsnapped": (
-            "Snap", "Blender can't select the keys off whole frames: Edit > Snap puts the selected keys on frames."),
+            "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice or "
+            "region key tool (the Retime Tool is the kit's)."),
         f"{ed}/Edit/Select Curve Nodes": (
             "F-curves", "Blender's curves are F-curves inside an Action, not scene nodes you can select."),
-        f"{ed}/Edit/Set Curve Colors...": (
-            "Change Curve Color", "Blender colours curves one selection at a time: Edit > Change Curve Color."),
         f"{ed}/Edit/Scene Time Warp": (
             "Time Stretching", "Blender has no time warp curve: Output Properties > Frame Range > Time Stretching "
             "remaps the whole scene."),
@@ -461,15 +457,6 @@ def _anim_editor_categories(ed):
         f"{ed}/Curves/Spreadsheet...": (
             "Sidebar F-Curve tab", "Blender edits key values in the sidebar (F-Curve > Active Keyframe), not in a "
             "spreadsheet."),
-        f"{ed}/Curves/Default Tangent Weight": (
-            "Bézier handles", "Blender's Bézier handles always have a length (weighted tangents): there is no "
-            "non-weighted mode."),
-        **{f"{ed}/Curves/{item}": (
-            "Bézier handles", "Blender's Bézier handles always have a length (weighted tangents): there is nothing to "
-            "convert.") for item in ("Non-weighted Tangents", "Weighted Tangents")},
-        **{f"{ed}/Tangents/{item}": (
-            "Handle types", "Blender's handles keep their own length: lengths are never locked or freed.")
-           for item in ("Lock Tangent Length", "Free Tangent Length")},
         f"{ed}/List": (
             "Only Show Selected", "Blender lists the selected objects' channels (List > Auto Load Selected Objects); "
             "it has no bookmarks or manual loading."),
@@ -490,9 +477,6 @@ CATEGORIES.update({
     "Graph Editor/Select/Pre-Select Highlight": (
         "Hover", "Blender's Graph Editor doesn't highlight the curve under the mouse: the picked curve is drawn "
         "brighter once selected."),
-    "Graph Editor/Keys/Add Key Tool": (
-        "Keys > Insert Key Tool", "Blender has no tool that adds keys off the curve: Insert Key Tool (I) or "
-        "Ctrl+right-click adds keys."),
     "Dope Sheet/View": (
         "View menu", "Blender's Dope Sheet always draws its ticks and has no scene summary or auto frame."),
     "Dope Sheet/Curves": (
@@ -808,9 +792,6 @@ NOTICES.update({
     _GE_VIEW + "Show Results": (
         "Drivers mode", "Blender draws no curve for a value that isn't keyed: driver curves are in the Graph "
         "Editor's Drivers mode (header mode menu)."),
-    _GE_VIEW + "Show Buffer Curves": (
-        "Curves > Buffer Curve > Snapshot", "Blender always draws a buffer curve (ghost curve) once Curves > Buffer "
-        "Curve > Snapshot made one, until Blender's Clear Ghost Curves removes it: it can't be hidden and kept."),
     _GE_VIEW + "Show Play Range Shades": (
         "Always on", "Blender always darkens the frames outside the playback range in the Graph Editor: the shades "
         "can't be turned off."),

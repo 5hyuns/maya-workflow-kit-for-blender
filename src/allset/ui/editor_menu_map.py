@@ -90,7 +90,6 @@ def _curves_menu(ed, graph):
             f"{ed}/Curves/Smooth Filter (Gaussian)": "graph.gaussian_smooth",
             f"{ed}/Curves/Euler Filter": "graph.euler_filter",
             f"{ed}/Curves/Resample Curve": "graph.bake_keys",
-            f"{ed}/Curves/Buffer Curve/Snapshot": "graph.ghost_curves_create",
         })
     else:
         # step 166: Maya's Dope Sheet runs the Graph Editor's curve commands (same annotations, _editors104.json)
@@ -165,6 +164,23 @@ def _list_show_menus(ed):
     return m
 
 
+def _depth2(ed):
+    """Step 198: items Maya has in both the Graph Editor and the Dope Sheet menus (same annotations)."""
+    return {
+        f"{ed}/Edit/Transformation Tools/Retime Tool": "allset.retime_tool",
+        f"{ed}/Edit/Select Unsnapped": "allset.select_unsnapped",
+        f"{ed}/Edit/Set Curve Colors...": "allset.curve_colors",
+        f"{ed}/Curves/Default Tangent Weight/Non-weighted Tangents": _prop("addon_prefs.default_tangent_weight",
+                                                                         'NON_WEIGHTED'),
+        f"{ed}/Curves/Default Tangent Weight/Weighted Tangents": _prop("addon_prefs.default_tangent_weight",
+                                                                     'WEIGHTED'),
+        f"{ed}/Curves/Non-weighted Tangents": ("allset.curve_weights", {"weighted": False}),
+        f"{ed}/Curves/Weighted Tangents": ("allset.curve_weights", {"weighted": True}),
+        f"{ed}/Tangents/Lock Tangent Length": ("allset.tangent_weight_lock", {"lock": True}),
+        f"{ed}/Tangents/Free Tangent Length": ("allset.tangent_weight_lock", {"lock": False}),
+    }
+
+
 def _help_menu(ed, page):
     return {
         f"{ed}/Help/Search": _url(_MANUAL),
@@ -216,6 +232,12 @@ MAP = {
     f"{GE}/Select/In Tangent": _prop("addon_prefs.graph_select_in"),
     f"{GE}/Select/Out Tangent": _prop("addon_prefs.graph_select_out"),
     f"{GE}/Select/Snap time to selection": _prop("addon_prefs.snap_time_to_selection"),
+    # step 198 (#105, research/maya/re/graph_editor_193.md): Graph Editor depth 2 (Dope Sheet twins below)
+    **_depth2(GE),
+    f"{GE}/View/Show Buffer Curves": _prop("addon_prefs.graph_show_buffers"),
+    f"{GE}/Curves/Buffer Curve/Snapshot": "allset.buffer_snapshot",
+    f"{GE}/Curves/Swap Buffer Curve": "allset.buffer_swap",
+    f"{GE}/Keys/Add Key Tool": "allset.add_key_tool",
     **_curves_menu(GE, True),
     **_keys_menu(GE, True),
     **_tangents_menu(GE),
@@ -234,6 +256,7 @@ MAP = {
     **_keys_menu(DS, False),
     **_tangents_menu(DS),
     **_list_show_menus(DS),
+    **_depth2(DS),
     **_help_menu(DS, "editors/dope_sheet/index.html"),
 
     # --- UV Editor (textureWindow menus, captured); kit UV commands from step 66 ---
