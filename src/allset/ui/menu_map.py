@@ -1109,6 +1109,11 @@ TWINS = {
     # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (ModifyCurvesSubMenu.mel:39, 51)
     "nHair/Modify Curves/Smooth": "Curves/Smooth",
     "nHair/Modify Curves/Straighten": "Curves/Straighten",
+    "nHair/Modify Curves/Lock Length": "Curves/Lock Length",          # step 207
+    "nHair/Modify Curves/Unlock Length": "Curves/Unlock Length",          # step 207
+    "nHair/Modify Curves/Bend": "Curves/Bend",          # step 207
+    "nHair/Modify Curves/Curl": "Curves/Curl",          # step 207
+    "nHair/Modify Curves/Scale Curvature": "Curves/Scale Curvature",          # step 207
 }
 MAP.setdefault("UV/Delete UVs", "allset.uv_delete")   # step 189 (audit 13 BS1): main menu twin of the UV marking menu
 for _twin, _source in TWINS.items():

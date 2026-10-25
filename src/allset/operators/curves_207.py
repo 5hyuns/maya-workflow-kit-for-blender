@@ -22,7 +22,7 @@ from mathutils import Matrix, Vector
 
 from .. import results, undo_steps
 from . import curves_math as cm
-from . import naming
+from . import naming, units
 from .curves_maya import MCurve, _curves_selected, _new_curve_object, _replace_splines, read_spline
 from .modify_maya import selection_order
 
@@ -114,8 +114,10 @@ class ALLSET_OT_curve_modify(bpy.types.Operator):
                 if count < 3:
                     out.append(c)
                     continue
-                pts = modify_points(self.kind, [to_maya(p) for p in c.cvs], a1, a2, start, count)
-                out.append(MCurve([from_maya(p) for p in pts], c.knots, c.degree, c.weights))
+                # Maya numbers are Maya lengths (Bend / Curl amounts are offsets): 1 = one Maya unit (decision 8)
+                u = units.maya_unit()
+                pts = modify_points(self.kind, [cm.mul(to_maya(p), 1.0 / u) for p in c.cvs], a1, a2, start, count)
+                out.append(MCurve([from_maya(cm.mul(p, u)) for p in pts], c.knots, c.degree, c.weights))
                 done += 1
             _replace_splines(ob, out)
             remember(ob)

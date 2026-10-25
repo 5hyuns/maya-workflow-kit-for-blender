@@ -2,6 +2,14 @@
 
 ## 현재 작업
 
+- Step 207 (Curves 3, backlog #6, Issue #114) 완료 — `docs/steps/step_207.md`, Maya 측정 `research/maya/re/curves_201.md`
+  (mayapy 116 경우). Curves > Bend / Curl / Scale Curvature (Maya MEL modifySelectedCurves 그대로, Y-up 프레임 + Maya 단위,
+  옵션 창 3), Lock / Unlock Length (CV 다리 길이 유지, delegated), CV Hardness, Fit B-spline, Align, Duplicate Surface Curves,
+  Intersect (locator), Uneven Anchor Tangents; nHair > Modify Curves 쌍둥이 5. Curves 21 → **32 / 36**, 메뉴 세트 합 939 / 1486,
+  unique 801. mayapy 대조 99 결과 최대 5.8e-7. 헤드리스 step207 18 / 18, 전체 1998 / 1999 → 쌍둥이 고친 뒤 메뉴 규칙 60 / 60,
+  GUI 관련 + 스모크 97 / 97. 남은 것: Edit Curve Tool, Project Tangent, Extend / Offset On Surface.
+  **바로 다음 할 일**: step 208 = backlog #7 「maya.cmds look-alike 2」 (Issue #115). 그다음 209 (#116).
+
 - Step 206 (UV Editor depth 2, backlog #5, Issue #113) 완료 — `docs/steps/step_206.md`, Maya 측정 `research/maya/re/uv_201.md`
   (mayapy 4 패스 125 경우 + GUI Maya 3 세션). Modify > Cycle (Maya edge id 순서 걷기), Cut/Sew > Split (polyMapCut 부채꼴),
   Create Shell (Grid) (polyUVRectangle: 원점 = 낮은 정점 번호, U = 원점을 가진 첫 면 엣지), Auto Seams (가지치기한 cut graph,

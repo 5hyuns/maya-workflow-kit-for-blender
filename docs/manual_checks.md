@@ -1330,3 +1330,10 @@ that steps 199 / 200 left without a group.
 - [ ] 구를 Planar 로 펼친 뒤 Cut/Sew > Auto Seams → Modify > Unfold: 극을 지나는 한 줄 이음새로 한 셸로 펼쳐짐.
 - [ ] UV 하나 선택 → Cut/Sew > Split → Move 툴로 끌면 면마다 따로 움직임.
 - [ ] 아래 왼쪽 U / V, 아래 오른쪽 셸 · 겹친 UV · 뒤집힌 UV 수가 선택을 바꿀 때 바로 갱신되는지 (0.25 초 안), View > Heads-Up Display 로 끄고 켜기.
+
+### Step 207 — Curves 3
+
+- [ ] CV 커브를 그린 뒤 Curves > Bend / Curl / Scale Curvature (❒ 옵션 창 값 바꿔서도): Maya 처럼 휘고 감기는지, 편집 모드에서 CV 범위만 골라도 그 뒤 CV 가 따라가는지.
+- [ ] Curves > Lock Length 뒤 편집 모드에서 CV 하나를 Move 툴로 끌기: 다른 CV 가 따라와 길이가 유지되는지 (끄는 동안 튀지 않는지), Unlock 뒤에는 따라오지 않는지.
+- [ ] CV 하나 선택 → CV Hardness: 그 CV 에서 커브가 꺾이며 지나감; 끝 CV 는 아무 일 없음.
+- [ ] NURBS Plane 선택 → Duplicate Surface Curves: 보이는 isoparm 마다 커브 (2×2 스팬이면 6 개).
