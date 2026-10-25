@@ -96,6 +96,9 @@ KINDS = {
 FIELD_MAGNITUDES = {'FIELD_GRAVITY': 9.8, 'FIELD_NEWTON': -5.0}
 # Kinds whose data keeps Blender's name (Maya has no "...Shape" node for them).
 NO_SHAPE_NAME = {'JOINT', 'TEXT'}
+# A Maya locator (Create > Locator, cmds.spaceLocator): an Empty with this flag; cmds_shim gives it a shape name
+# ``locatorShapeN`` (step 208, research/maya/re/cmds_201.md)
+LOCATOR_PROP = "allset_locator"
 # Lights (step 137, operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
 # (x maya_unit()^2, step 54) and is measured so an intensity-1 light lights a surface like Maya's at 10 units;
 # Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
@@ -165,6 +168,8 @@ def create(context, kind, maya_naming=True, overrides=None):
         ob.field.flow = 0.0     # Blender's Wind starts with Flow 1 (a drag towards the wind speed): Maya gravity has none
     if maya_naming:
         naming.apply_maya_name(ob, base, rename_data=kind not in NO_SHAPE_NAME)
+    if kind == 'LOCATOR':
+        ob[LOCATOR_PROP] = True
     if kind == 'JOINT':
         _first_joint(ob, maya_naming)
     if maya_naming:

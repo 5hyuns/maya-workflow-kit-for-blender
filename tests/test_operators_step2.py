@@ -118,7 +118,7 @@ def test_group_under_common_parent():
 
 def test_group_naming_and_empty_selection():
     _clear_groups()
-    assert group.next_group_name(["group1", "group3", "pCube1", "group", "group02x"]) == "group2"
+    assert group.next_group_name(["group1", "group3", "pCube1", "group", "group02x"]) == "group4"  # step 208
     assert group.next_group_name([]) == "group1"
     _select([])
     bpy.ops.allset.group()
@@ -131,7 +131,7 @@ def test_group_naming_and_empty_selection():
     bpy.data.objects.remove(first)
     _select([])
     bpy.ops.allset.group()
-    assert bpy.context.view_layer.objects.active.name == "group1"  # lowest free number
+    assert bpy.context.view_layer.objects.active.name == "group3"  # Maya: one past the highest (step 208, mayapy)
 
 
 def test_group_is_undoable_operator():

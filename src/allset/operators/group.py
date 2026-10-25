@@ -10,24 +10,17 @@ way (docs/user_decisions.md #2): world transform kept, ``matrix_parent_inverse``
 left at identity so the child's local values are relative to the group.
 """
 
-import re
-
 import bpy
 from mathutils import Matrix
 
 from .. import results
 from . import units
 
-_GROUP_RE = re.compile(r"^group(\d+)$")
-
 
 def next_group_name(names):
-    """Lowest unused ``groupN`` (N >= 1) given existing object names."""
-    used = {int(m.group(1)) for n in names if (m := _GROUP_RE.match(n))}
-    n = 1
-    while n in used:
-        n += 1
-    return f"group{n}"
+    """Maya's next ``groupN`` given existing object names: one past the highest (no gap filling, step 208)."""
+    from . import naming
+    return f"group{naming.next_number('group', set(names))}"
 
 
 def common_parent(objects):

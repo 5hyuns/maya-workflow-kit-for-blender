@@ -414,7 +414,7 @@ def test_naming_helpers():
     assert naming.base_name("pCube12") == "pCube"
     assert naming.base_name("Cube.001") == "Cube"
     assert naming.base_name("foo") == "foo"
-    assert naming.next_number("pCube", {"pCube1", "pCube3"}) == 2
+    assert naming.next_number("pCube", {"pCube1", "pCube3"}) == 4   # Maya: one past the highest (step 208)
     assert naming.next_number("pCube", {"pCube1"}, {"pCubeShape2"}) == 3
 
 
@@ -448,7 +448,7 @@ def test_create_numbers_and_other_kinds():
     bpy.data.objects.remove(bpy.data.objects["pCube1"])
     bpy.data.meshes.remove(bpy.data.meshes["pCubeShape1"])
     bpy.ops.allset.create(kind='CUBE')
-    assert bpy.context.view_layer.objects.active.name == "pCube1"   # lowest free number
+    assert bpy.context.view_layer.objects.active.name == "pCube3"   # Maya: one past the highest (step 208, mayapy)
     for kind, name in (('POINT_LIGHT', "pointLight1"), ('DIRECTIONAL_LIGHT', "directionalLight1"),
                        ('CAMERA', "camera1"), ('LOCATOR', "locator1"), ('EMPTY_GROUP', "null1"),
                        ('NURBS_SPHERE', "nurbsSphere1"), ('NURBS_CIRCLE', "nurbsCircle1")):
