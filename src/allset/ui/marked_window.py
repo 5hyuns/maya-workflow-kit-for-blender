@@ -121,3 +121,42 @@ def draw_menu_bar(layout, context, editor):
     bar.alignment = 'LEFT'
     bar.emboss = 'PULLDOWN_MENU'
     editor_chrome.draw_menu_bar(bar, context, editor)
+
+
+def close_later(window):
+    """Close ``window`` from a timer (closing the window an operator runs in, from inside it, is unsafe; step 116)."""
+    ptr = window.as_pointer()
+
+    def tick():
+        win = live_refs.window(ptr)
+        if win is not None:
+            with bpy.context.temp_override(window=win):
+                bpy.ops.wm.window_close()
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
+
+
+class ALLSET_OT_marked_window_close(bpy.types.Operator):
+    """Close this window (Maya's Close button)"""
+    bl_idname = "allset.marked_window_close"
+    bl_label = "Close"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        if context.window is None or context.window == context.window_manager.windows[0]:
+            return {'CANCELLED'}
+        close_later(context.window)
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_marked_window_close,)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)

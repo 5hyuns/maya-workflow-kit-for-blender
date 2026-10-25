@@ -877,6 +877,18 @@ CATEGORIES.update({
         "linked file."),
     "Reference Editor/Help/What's New/Highlight What's New": (
         "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    # step 213: the Connection Editor's menu bar (ui/connection_editor.py)
+    "Connection Editor/Options/Attribute Order": (
+        "Maya list order", "The kit lists visibility, translate, rotate, scale, then custom attributes (no other "
+        "order)."),
+    "Connection Editor/Left Display": (
+        "Transform and custom attributes", "The kit lists only attributes Blender has: transform channels, "
+        "visibility and custom attributes (no hidden / published / output-only filters)."),
+    "Connection Editor/Right Display": (
+        "Transform and custom attributes", "The kit lists only attributes Blender has: transform channels, "
+        "visibility and custom attributes (no hidden / published / output-only filters)."),
+    "Connection Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
 })
 
 
