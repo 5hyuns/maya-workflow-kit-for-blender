@@ -5,13 +5,15 @@ Maya: the checker button next to an attribute -> Create Render Node -> File / Ra
 attribute's button goes to the connected node, RMB > Break Connection unlinks it (,
  A2). Blender: the texture node is added to the material's node tree, left of the Principled BSDF, and linked to
 the input; a Normal input goes through a Bump node (Maya's bump2d). Break Connection removes the link and keeps the
-nodes, like Maya.
+nodes, like Maya. Lambert-family Color = the "Maya Diffuse" node's B input (``material.maya_input``, step 214), so a
+colour texture is multiplied by diffuse like Maya's.
 """
 
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
 from .. import results
+from . import material as _material
 
 # kind -> (Maya node name, Blender node label)
 MAPS = {
@@ -40,12 +42,12 @@ def _uv(nodes, links, x, y):
 
 def build(mat, socket_name, kind):
     """Add the ``kind`` texture network and link it to the Principled input ``socket_name``; the texture node."""
-    node = principled(mat)
-    inp = node.inputs[socket_name]
+    inp = _material.maya_input(mat, socket_name)
+    owner = inp.node
     tree = mat.node_tree
     nodes, links = tree.nodes, tree.links
-    index = list(node.inputs).index(inp)
-    x, y = node.location.x - 360, node.location.y - 40 * index
+    index = list(owner.inputs).index(inp) if owner.type == 'BSDF_PRINCIPLED' else 0
+    x, y = owner.location.x - 360, owner.location.y - 40 * index
     if kind == 'FILE':
         tex = nodes.new("ShaderNodeTexImage")
         out = tex.outputs["Color"]
@@ -84,8 +86,7 @@ def build(mat, socket_name, kind):
 
 
 def break_connection(mat, socket_name):
-    node = principled(mat)
-    inp = node.inputs[socket_name] if node is not None else None
+    inp = _material.maya_input(mat, socket_name)
     if inp is None:
         return False
     for link in list(inp.links):
@@ -117,10 +118,9 @@ class ALLSET_OT_ae_map(bpy.types.Operator):
 
     def invoke(self, context, event):
         mat = bpy.data.materials.get(self.material)
-        node = principled(mat)
-        if node is None or self.socket not in node.inputs:
+        inp = _material.maya_input(mat, self.socket)
+        if inp is None:
             return {'CANCELLED'}
-        inp = node.inputs[self.socket]
         material, socket = self.material, self.socket
 
         def draw(menu, _context):
@@ -150,8 +150,7 @@ class ALLSET_OT_ae_map_connect(bpy.types.Operator):
 
     def execute(self, context):
         mat = bpy.data.materials.get(self.material)
-        node = principled(mat)
-        if node is None or self.socket not in node.inputs:
+        if _material.maya_input(mat, self.socket) is None:
             self.report({'WARNING'}, "No such material attribute")
             return {'CANCELLED'}
         tex = build(mat, self.socket, self.kind)

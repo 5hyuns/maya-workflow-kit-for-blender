@@ -436,9 +436,12 @@ def draw_row(layout, context, ob, target, row):
         else:
             _k, socket, label = row
             maya_prop = None
-        node = principled(target)
-        inp = node.inputs.get(socket) if node is not None else None
+        from ..operators import material as _material
+        # "Base Color" of a lambert-family material = its Maya Diffuse node's B (Maya Color, step 214)
+        inp = _material.maya_input(target, socket)
         if inp is None:
+            if maya_prop is not None and principled(target) is not None and hasattr(target, maya_prop):
+                layout.prop(target, maya_prop, text=label)   # e.g. Diffuse 1.0 without the node; editing adds it
             return
         row = layout.row(align=True)
         if inp.is_linked:

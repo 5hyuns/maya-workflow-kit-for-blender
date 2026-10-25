@@ -327,8 +327,8 @@ def _bbox_material(colour):
     taken = {m.name for m in bpy.data.materials}
     mat = material.new_material('LAMBERT')
     mat.name = f"BBoxLambert{naming.next_number('BBoxLambert', taken)}"
-    node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
-    node.inputs["Base Color"].default_value = (*colour, 1.0)
+    material.color_socket(mat).default_value = (*colour, 1.0)     # Maya Color; diffuse 0.8 stays (step 214)
+    material._sync_base(mat)
     material.sync_display(mat)
     return mat
 

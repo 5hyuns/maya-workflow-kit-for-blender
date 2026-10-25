@@ -196,11 +196,13 @@ STANDARD_SURFACE_ATTRS = (
 MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
 # --- lambert (Maya -> Maya; attribute_editor.md:137-140) ---
 # Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
-# Normal, diffuse -> Weight, translucence -> Subsurface; refractions -> Transmission.
+# Normal, diffuse -> the "Maya Diffuse" node factor (Base Color = Color x Diffuse, operators/material.py step 214;
+# Color = that node's B input), translucence -> Subsurface; refractions -> Transmission.
 _LAMBERT_COMMON = S("Common Material Attributes", True,
                     ("socket", "Base Color", "Color"), ("socket", "Alpha", "Opacity"),
                     ("socket", "Emission Color", "Incandescence"), ("socket", "Normal", "Bump Mapping"),
-                    ("socket", "Weight", "Diffuse"), ("socket", "Subsurface Weight", "Translucence"))
+                    ("maya", "allset_diffuse", "Diffuse", "Diffuse"),
+                    ("socket", "Subsurface Weight", "Translucence"))
 _RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refractions"),
               ("socket", "IOR", "Refractive Index"))
 LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
@@ -232,7 +234,8 @@ ANISOTROPIC = [_LAMBERT_COMMON,
                  ("socket", "Specular Tint", "Specular Color")),
                _RAYTRACE]
 RAMP_SHADER = [
-    S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)")),
+    S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)"),
+      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # rampShader diffuse 0.8 (render_defaults_137.md)
     S("Specular Shading", True, ("socket", "Roughness", "Specularity")),
     S("Incandescence", False, ("socket", "Emission Color", "Incandescence")),
 ]

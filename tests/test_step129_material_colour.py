@@ -55,7 +55,8 @@ def test_colour_edit_reaches_viewport_colour():
     ob.data.materials.clear()
     ob.data.materials.append(mat)
     bsdf = _principled(mat)
-    bsdf.inputs["Base Color"].default_value = (0.9, 0.1, 0.05, 1.0)    # = AE Color / Blender's material panel
+    # = AE Color (since step 214 the Maya Diffuse node's B input; Blender's panel shows Base Color as linked)
+    material.color_socket(mat).default_value = (0.9, 0.1, 0.05, 1.0)
     bsdf.inputs["Alpha"].default_value = 0.4                           # = AE Transparency
     bpy.context.view_layer.update()
     got = tuple(mat.diffuse_color)

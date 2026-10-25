@@ -528,9 +528,9 @@ class ALLSET_OT_checker_shader(bpy.types.Operator):
         tree = mat.node_tree
         node = tree.nodes.new("ShaderNodeTexImage")
         node.image = img
-        node.location = (-350, 300)
-        bsdf = next(nd for nd in tree.nodes if nd.type == 'BSDF_PRINCIPLED')
-        tree.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
+        node.location = (-570, 300)
+        # Maya Color (the diffuse node's B): a Maya lambert multiplies its texture by diffuse 0.8 (step 214)
+        tree.links.new(node.outputs["Color"], material.color_socket(mat))
         material.assign(context, mat, obs)
         return {'FINISHED'}
 
@@ -566,10 +566,11 @@ def _checker_material():
     tree = mat.node_tree
     node = tree.nodes.new("ShaderNodeTexImage")
     node.image = img
-    node.location = (-350, 300)
+    node.location = (-570, 300)
     tree.nodes.active = node
-    bsdf = next(nd for nd in tree.nodes if nd.type == 'BSDF_PRINCIPLED')
-    tree.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
+    tree.links.new(node.outputs["Color"], material.color_socket(mat))
+    # a display aid, not a Maya shader: the checker shows at full brightness (diffuse 1, step 214, delegated)
+    material.ensure_diffuse(mat, 1.0)
     return mat
 
 

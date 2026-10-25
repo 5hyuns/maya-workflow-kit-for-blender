@@ -522,7 +522,14 @@ def usd_maya_axes(path, k):
 
 
 def write(context, fmt, path, op, args, maya, k):
-    """Run Blender's writer with the Maya preset's pre / post steps (step 138)."""
+    """Run Blender's writer with the Maya preset's pre / post steps (step 138); lambert-family Base Color is linked
+    straight to the Maya colour / texture while it writes (``material.diffuse_bypass``, step 214)."""
+    from . import material
+    with material.diffuse_bypass():
+        _write(context, fmt, path, op, args, maya, k)
+
+
+def _write(context, fmt, path, op, args, maya, k):
     mod, name = op.split(".")
     run = getattr(getattr(bpy.ops, mod), name)
     if maya and fmt == 'ABC':

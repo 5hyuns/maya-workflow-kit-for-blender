@@ -14,6 +14,8 @@ or to the object the RMB menu was opened on when nothing is selected.
   lambert1) so the other faces keep it ().
 """
 
+import contextlib
+
 import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
@@ -27,7 +29,7 @@ SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 # Maya factory values checked  (; lambert: ).
 # Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
 # strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is
-# disabled), so the colour is Maya's attribute value, not color x diffuse (step 100).
+# disabled), so since step 214 a "Maya Diffuse" Mix node (``ensure_diffuse``) puts color x diffuse into Base Color.
 _GREY = (0.5, 0.5, 0.5, 1.0)
 _BLACK = (0.0, 0.0, 0.0, 1.0)
 _COMMON = {"Base Color": _GREY, "Emission Color": _BLACK}
@@ -105,8 +107,141 @@ def new_material(kind):
         node.inputs["Emission Color"].default_value = node.inputs["Base Color"].default_value
     if kind in BUILT:
         _build(mat, node, kind)
+    if kind in DIFFUSE_KINDS:
+        ensure_diffuse(mat)
     sync_display(mat)
     return mat
+
+
+# --- Maya diffuse (step 214, #120) ---------------------------------------------------------------------------------
+# Maya's lambert family renders color x diffuse x light ( diffuse 0.8 for
+# lambert / blinn / phong / phongE / anisotropic / rampShader, "rendered value = color x diffuse x intensity");
+# a texture connected to color is multiplied by diffuse as well. Principled has no diffuse weight, so a Mix node
+# (RGBA, MIX, factor = diffuse, A = black, B = the Maya colour) feeds Base Color: Base Color = diffuse x colour while
+# specular / emission / alpha stay untouched and the Principled BSDF stays linked straight to the output (Blender's
+# PrincipledBSDFWrapper needs that, $S\modules\bpy_extras\node_shader_utils.py:192-229). standardSurface has base 1 x
+# baseColor 0.8 and gets no node. The Principled Base Color default keeps the Maya colour too (sync), so readers that
+# skip links (Blender's own exporters) see the colour. Materials without the node read diffuse 1.0 (old files,
+# Blender-made materials: no migration, delegated).
+
+DIFFUSE_NODE = "Maya Diffuse"
+DIFFUSE_SOCKET = "Diffuse"       # AE / map-button name of the diffuse factor (operators/shading_maps.py)
+MAYA_DIFFUSE = 0.8
+DIFFUSE_KINDS = {'LAMBERT', 'BLINN', 'PHONG', 'PHONG_E', 'ANISOTROPIC', 'RAMP'}
+
+
+def _principled(mat):
+    if mat is None or mat.node_tree is None:
+        return None
+    return next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+
+
+def _ident(sockets, ident):
+    return next((s for s in sockets if s.identifier == ident), None)
+
+
+def diffuse_node(mat):
+    """The material's "Maya Diffuse" Mix node, or None."""
+    if mat is None or mat.node_tree is None:
+        return None
+    node = mat.node_tree.nodes.get(DIFFUSE_NODE)
+    return node if node is not None and node.type == 'MIX' else None
+
+
+def color_socket(mat):
+    """The socket that is Maya's Color: the diffuse node's B colour when the material has one, else Principled Base
+    Color (None without a Principled BSDF)."""
+    node = diffuse_node(mat)
+    if node is not None:
+        return _ident(node.inputs, "B_Color")
+    bsdf = _principled(mat)
+    return bsdf.inputs.get("Base Color") if bsdf is not None else None
+
+
+def maya_input(mat, name):
+    """A material input by its AE / map-button name: "Base Color" = Maya Color (``color_socket``), DIFFUSE_SOCKET =
+    the diffuse factor, else the Principled input of that name."""
+    bsdf = _principled(mat)
+    if bsdf is None:
+        return None
+    if name == "Base Color":
+        return color_socket(mat)
+    if name == DIFFUSE_SOCKET:
+        node = diffuse_node(mat)
+        return _ident(node.inputs, "Factor_Float") if node is not None else None
+    return bsdf.inputs.get(name)
+
+
+def ensure_diffuse(mat, value=MAYA_DIFFUSE):
+    """Give a Principled material the Maya Diffuse node (whatever fed Base Color moves to its B input) and set the
+    diffuse to ``value``; the node, or None without a Principled BSDF."""
+    bsdf = _principled(mat)
+    if bsdf is None:
+        return None
+    node = diffuse_node(mat)
+    if node is None:
+        tree = mat.node_tree
+        base = bsdf.inputs["Base Color"]
+        node = tree.nodes.new('ShaderNodeMix')
+        node.name = node.label = DIFFUSE_NODE
+        node.data_type, node.blend_type, node.clamp_result = 'RGBA', 'MIX', False
+        node.location = (bsdf.location.x - 220, bsdf.location.y - 60)
+        _ident(node.inputs, "A_Color").default_value = _BLACK
+        b = _ident(node.inputs, "B_Color")
+        b.default_value = base.default_value
+        for link in list(base.links):
+            tree.links.new(link.from_socket, b)
+            tree.links.remove(link)
+        tree.links.new(_ident(node.outputs, "Result_Color"), base)
+    _ident(node.inputs, "Factor_Float").default_value = value
+    return node
+
+
+def _sync_base(mat):
+    """Keep the Principled Base Color default equal to the Maya colour (B) of a diffuse node; True when written."""
+    node, bsdf = diffuse_node(mat), _principled(mat)
+    if node is None or bsdf is None:
+        return False
+    b, base = _ident(node.inputs, "B_Color"), bsdf.inputs["Base Color"]
+    if all(abs(x - y) < 1e-6 for x, y in zip(base.default_value, b.default_value)):
+        return False
+    base.default_value = b.default_value
+    return True
+
+
+@contextlib.contextmanager
+def diffuse_bypass():
+    """Exchange-format writers (FBX / OBJ / glTF ...) read Base Color's default or an image node linked straight to
+    it: for the duration, link whatever feeds each diffuse node's B directly to Base Color (default = the B colour),
+    then put the diffuse node back (kit File > Export, operators/file_io.write; Blender's own File > Export menu is
+    not wrapped)."""
+    saved = []
+    for mat in bpy.data.materials:
+        node, bsdf = diffuse_node(mat), _principled(mat)
+        if node is None or bsdf is None or mat.library is not None:
+            continue
+        base = bsdf.inputs["Base Color"]
+        if not base.is_linked or base.links[0].from_node != node:
+            continue
+        tree, b = mat.node_tree, _ident(node.inputs, "B_Color")
+        old = tuple(base.default_value)
+        tree.links.remove(base.links[0])
+        if b.is_linked:
+            tree.links.new(b.links[0].from_socket, base)
+        base.default_value = b.default_value
+        saved.append((mat, old))
+    try:
+        yield len(saved)
+    finally:
+        for mat, old in saved:
+            node, bsdf = diffuse_node(mat), _principled(mat)
+            if node is None or bsdf is None:
+                continue
+            base = bsdf.inputs["Base Color"]
+            for link in list(base.links):
+                mat.node_tree.links.remove(link)
+            mat.node_tree.links.new(_ident(node.outputs, "Result_Color"), base)
+            base.default_value = old
 
 
 # --- viewport colour (issue #14) ---------------------------------------------------------------
@@ -123,7 +258,7 @@ def _maya_colour(mat):
     bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
     if bsdf is None:
         return None
-    sock = bsdf.inputs.get("Emission Color" if mat.get(TYPE_PROP) == "surfaceShader" else "Base Color")
+    sock = bsdf.inputs.get("Emission Color") if mat.get(TYPE_PROP) == "surfaceShader" else color_socket(mat)
     if sock is None:
         return None
     if sock.is_linked:
@@ -158,8 +293,8 @@ def _build(mat, bsdf, kind):
     if kind == 'RAMP':
         facing = nodes.new('ShaderNodeLayerWeight')
         ramp = nodes.new('ShaderNodeValToRGB')
-        facing.location = (bsdf.location.x - 560, bsdf.location.y)
-        ramp.location = (bsdf.location.x - 300, bsdf.location.y)
+        facing.location = (bsdf.location.x - 780, bsdf.location.y)
+        ramp.location = (bsdf.location.x - 520, bsdf.location.y)
         for el in ramp.color_ramp.elements:      # Maya's default ramp: one 0.5 grey entry
             el.color = (0.5, 0.5, 0.5, 1.0)
         links.new(facing.outputs["Facing"], ramp.inputs["Fac"])
@@ -200,6 +335,7 @@ def default_material(create=True):
     node = next(nd for nd in mat.node_tree.nodes if nd.type == 'BSDF_PRINCIPLED')
     for socket, value in MATERIALS['LAMBERT'][2].items():
         node.inputs[socket].default_value = value
+    ensure_diffuse(mat)                      # Maya lambert1 diffuse 0.8 (step 214)
     sync_display(mat)
     return mat
 
@@ -267,6 +403,8 @@ def _on_depsgraph(scene, depsgraph):
             for mat in bpy.data.materials:
                 if mat.library is None and mat.get(TYPE_PROP):
                     sync_display(mat)
+                if mat.library is None:
+                    _sync_base(mat)
         finally:
             _busy[0] = False
     if not depsgraph.id_type_updated('OBJECT'):
@@ -326,7 +464,17 @@ def _set_cosine_power(self, value):
         sock.default_value = cosine_power_roughness(value)
 
 
-MATERIAL_PROPS = ("allset_eccentricity", "allset_cosine_power")
+def _get_diffuse(self):
+    sock = maya_input(self, DIFFUSE_SOCKET)
+    return 1.0 if sock is None else float(sock.default_value)
+
+
+def _set_diffuse(self, value):
+    if compat.material_uses_nodes(self):
+        ensure_diffuse(self, max(0.0, min(1.0, value)))
+
+
+MATERIAL_PROPS = ("allset_eccentricity", "allset_cosine_power", "allset_diffuse")
 
 
 def register_props():
@@ -338,6 +486,10 @@ def register_props():
         name="Cosine Power", min=2.0, soft_max=100.0, precision=3, get=_get_cosine_power, set=_set_cosine_power,
         description="Maya Phong cosine power (higher = smaller highlight); Principled Roughness = "
                     "(2 / (power + 2)) ^ 0.25")
+    bpy.types.Material.allset_diffuse = FloatProperty(
+        name="Diffuse", min=0.0, max=1.0, precision=3, get=_get_diffuse, set=_set_diffuse,
+        description="Maya diffuse: the share of the colour reflected (Base Color = Color x Diffuse through the "
+                    "Maya Diffuse node)")
 
 
 def unregister_props():
