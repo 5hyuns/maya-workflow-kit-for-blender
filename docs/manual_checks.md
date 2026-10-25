@@ -1238,3 +1238,7 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 - [ ] Status Line: open the Construction History group (▶ after Symmetry), click the button off, Create > Polygon Primitives > Cube = no polyCube1 in Channel Box INPUTS; Ctrl+E on a face = no In-View Editor / polyExtrudeFace; click it on again and both come back. File > New keeps it off.
 - [ ] Mesh Display: select two cube vertices, Set Vertex Normal ❒ Y = 1 → the shading turns at those corners; Unlock Normals on one of them = back to the hard face shading. Apply Color on faces in face mode colours only those faces (Solid view > Attribute colour); Modify Current Set with Value 2 brightens; Prelight with a sun bakes lit colours (Cycles). Panel Show > IK Handles hides / shows ikHandle empties; Image Planes too.
+
+## Step 190
+
+- [ ] Create > Polygon Primitives > Pipe / Helix / Gear / Soccer Ball / Super Ellipse / Spherical Harmonics / Ultra Shape: each appears at the origin with Maya's name (pPipe1 …), Channel Box INPUTS shows polyPipe1 … — change Subdivisions Axis / Coils / Sides / Ellipse 0 / Ultra 1 there and the shape rebuilds; Shift+RMB Create marking menu Pipe / Helix / Gear work.

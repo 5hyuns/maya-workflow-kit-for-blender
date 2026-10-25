@@ -214,8 +214,10 @@ def test_menu_items_active_or_grey():
     # allset.menu_item button (press and hold = option box) running the item's mapped action.
     assert _action(ops["Cube"]) == ("op", "allset.create", {"kind": 'CUBE'}), ops["Cube"]
     assert _action(ops["Pyramid"]) == ("op", "allset.create", {"kind": 'PYRAMID'})
-    assert ops["Pipe"][1] == "allset.menu_unavailable", ops["Pipe"]
-    assert ops["Pipe"][3].item == "Create/Polygon Primitives/Pipe"
+    assert _action(ops["Pipe"]) == ("op", "allset.create", {"kind": 'PIPE'})          # step 190
+    grey = ops["Interactive Creation"]                                                  # still not in Blender
+    assert grey[1] == "allset.menu_unavailable", grey
+    assert grey[3].item == "Create/Polygon Primitives/Interactive Creation"
     assert not menu_sets.ALLSET_OT_menu_unavailable.poll(bpy.context)
     # Blender's own menu at the end of File; v3d / tool / menu kinds.
     file_log = _draw_menu(menu_sets.menu_idname("mainFileMenu"))

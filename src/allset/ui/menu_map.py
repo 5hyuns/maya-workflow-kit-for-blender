@@ -28,7 +28,9 @@ def _create(kind):
 _PRIMS = {label: _create(kind) for label, kind in (
     ("Sphere", 'SPHERE'), ("Cube", 'CUBE'), ("Cylinder", 'CYLINDER'), ("Cone", 'CONE'),
     ("Torus", 'TORUS'), ("Plane", 'PLANE'), ("Disc", 'DISC'), ("Platonic Solid", 'PLATONIC'),
-    ("Pyramid", 'PYRAMID'), ("Prism", 'PRISM'))}
+    ("Pyramid", 'PYRAMID'), ("Prism", 'PRISM'), ("Pipe", 'PIPE'), ("Helix", 'HELIX'), ("Gear", 'GEAR'),
+    ("Soccer Ball", 'SOCCER_BALL'), ("Super Ellipse", 'SUPER_ELLIPSE'), ("Spherical Harmonics", 'SPHERICAL_HARMONICS'),
+    ("Ultra Shape", 'ULTRA_SHAPE'))}   # step 190: the last seven
 
 
 def _deformer(kind):

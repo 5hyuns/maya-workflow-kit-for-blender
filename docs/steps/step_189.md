@@ -47,7 +47,7 @@ mayapy 측정 → 구현 순서는 레인 안에서만 순차 (측정값이 구�
   image empty 표시 플래그) 작동. NURBS CVs / Hulls 는 Blender 가 Edit Mode 에서만, 늘 그리므로 회색 유지 (구체 notice).
   패널 메뉴 67 → 69 / 111.
 - Surfaces > Insert Isoparms ❒ = Maya 창 (Insert location At selection / Between selections, Multiplicity Set / Increase,
-  개수, Keep original — insertKnotSetOptionVars.mel:50-66); 옵션 상자 generic 0.
+  개수, Keep original — insertKnotSetOptionVars.mel:50-66); 옵션 상자 generic 목록에서 빠짐.
 
 ### Construction History (BS5)
 
@@ -60,7 +60,7 @@ mayapy 측정 → 구현 순서는 레인 안에서만 순차 (측정값이 구�
 ## 검증
 
 - `tools/menu_count.py`: Mesh Display 25 / 39 (64 %), Modeling 192 → 203 (58 %), 전체 837 → 850 / 1486 (57.2 %), 회색 notice 없음 0;
-  패널 메뉴 69 / 111, Status Line 회색 9 → 8. `--options`: generic 0 (Insert Isoparms 창), kit 옵션 창 110 + Prelight.
+  패널 메뉴 69 / 111, Status Line 회색 9 → 8. `--options`: Insert Isoparms 는 generic 이 아님 (창), kit 옵션 창 110 + Prelight. (정정, step 190: 처음 적은 "generic 0" 은 출력 필터 실수 — generic 전체는 34.)
 - `tools/menu_consistency.py`: 0 (별칭 포함; 별칭 전에는 3).
 - 헤드리스: 새 test_step189_{normals,colors,twins,history} 20 / 20 (노멀 66 mayapy 경우, 색 Apply 14 / Modify 13 경우);
   전체 1725 / 1727 → 실패 2 (step177 / step75: 회색 Construction History 가정) 고친 뒤 마지막 전체 1727 / 1727.

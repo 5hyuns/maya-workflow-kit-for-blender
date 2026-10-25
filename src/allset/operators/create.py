@@ -40,6 +40,13 @@ KINDS = {
     'PLATONIC': ("Platonic Solid", "pPlatonic", None, {}, None),
     'PYRAMID': ("Pyramid", "pPyramid", None, {}, None),
     'PRISM': ("Prism", "pPrism", None, {}, None),
+    'PIPE': ("Pipe", "pPipe", None, {}, None),                      # step 190
+    'HELIX': ("Helix", "pHelix", None, {}, None),
+    'GEAR': ("Gear", "pGear", None, {}, None),
+    'SOCCER_BALL': ("Soccer Ball", "pSolid", None, {}, None),
+    'SUPER_ELLIPSE': ("Super Ellipse", "pSuperShape", None, {}, None),
+    'SPHERICAL_HARMONICS': ("Spherical Harmonics", "pSuperShape", None, {}, None),
+    'ULTRA_SHAPE': ("Ultra Shape", "pSuperShape", None, {}, None),
     'NURBS_SPHERE': ("NURBS Sphere", "nurbsSphere", None, {}, None),
     'NURBS_CYLINDER': ("NURBS Cylinder", "nurbsCylinder", None, {}, None),
     'NURBS_PLANE': ("NURBS Plane", "nurbsPlane", None, {}, None),

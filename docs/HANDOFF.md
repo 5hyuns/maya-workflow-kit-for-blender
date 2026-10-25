@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 190 (Seven Polygon Primitives, backlog_183.json #8 = 마지막) 완료 — `docs/steps/step_190.md`, mayapy
+  `research/maya/re/poly_prims_185.md`. Pipe / Helix / Gear / Soccer Ball (`operators/prim_shapes_more.py`) + Super Ellipse /
+  Spherical Harmonics / Ultra Shape (`operators/prim_supershape.py`, polySuperShape 하나) 를 Maya 와 같은 정점 / 면 순서 / UV /
+  딱딱한 엣지로 (순수 python 비교 89 / 90 + 253 / 253), `prim_history` 로 생성 + INPUTS 편집. Create 57 → 67 %.
+  헤드리스 전체 1730 / 1730, GUI step190 2 / 2 + 샷.
+  **바로 다음 할 일**: backlog_183 끝 — 새 감사 (재점검 14차) 로 새 backlog (step 191).
+
 - Step 189 (Mesh Display and greyed twins, backlog_183.json #7) 완료 — `docs/steps/step_189.md`, mayapy
   `research/maya/re/mesh_display_184.md` (노멀 + Construction History) / `mesh_display_184_colors.md`. Mesh Display 15 → 25 / 39
   (64 %: Set Vertex Normal, 선택만 Lock / Unlock, Maya 거리 Average, Set to Face, Apply Color, Rename / Modify Current Set,
