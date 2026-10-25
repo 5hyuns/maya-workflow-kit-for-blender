@@ -212,6 +212,14 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
 TOOLBAR_PX = 56
 SHELF_PX = 64        # = tools/make_startup.py SHELF_PX
 OUTLINER_PX = 260    # Maya's narrow panel width () = the template Outliner at scale 1
+TIME_SLIDER_PX = 36  # = tools/make_startup.py TIME_SLIDER_PX (the Time Slider ruler at scale 1)
+
+
+def time_slider_area(screen):
+    """The Maya Workflow Kit layout's Time Slider: a Timeline with the Time Slider buttons in its sidebar."""
+    from .time_slider import has_slider_panel
+    return next((a for a in screen.areas if a.type == 'DOPESHEET_EDITOR' and a.ui_type == 'TIMELINE'
+                 and has_slider_panel(a.spaces.active, a)), None)
 _FIT_TICK = 0.5
 _fallback = set()   # screens whose main view shows its toolbar because the column is too narrow
 
@@ -433,6 +441,18 @@ def fit_columns(start_fit=True):
                 needed = True
                 _move_edge(window, row, row.x + row.width // 2, row.y, -d,
                            (row.x + row.width // 2, row.y - 1), pending)
+        # the Time Slider (step 202, #109): its ruler keeps 36 px times the UI scale. The template area has a
+        # fixed height, so at UI 1.25 the taller header left a 29 px ruler that Blender's current-frame box filled
+        # (look_compare time_slider_current, ): grow it upwards
+        slider = time_slider_area(screen)
+        if slider is not None:
+            hdr = next((r.height for r in slider.regions if r.type == 'HEADER'), 0)
+            d = round(TIME_SLIDER_PX * scale) + hdr - slider.height
+            if abs(d) > 2 and armed:
+                needed = True
+                top = slider.y + slider.height
+                _move_edge(window, slider, slider.x + slider.width // 2, top, d,
+                           (slider.x + slider.width // 2, top + 1), pending)
         tab = _tab_target.get(screen.name)
         if tab is not None:      # a tab-change resize under way (only while its cursor fit runs)
             if not _fit_dock(window, scale, context.preferences.system.pixel_size, pending, tab):

@@ -24,13 +24,14 @@ def is_maya_outliner(space):
 
 
 def setup(space):
-    """Maya Outliner filters (DAG only, from the world; no eye column: Maya hides with H)."""
+    """Maya Outliner filters (DAG only, from the world; no eye / mode column: Maya hides with H)."""
     space.display_mode = 'VIEW_LAYER'
     space.use_filter_object_content = False
     space.use_filter_collection = False
     space.use_filter_children = True
     space.show_restrict_column_render = False
     space.show_restrict_column_hide = False
+    space.show_mode_column = False      # Maya has no mode column (step 202: Blender shows it in edit mode)
 
 
 class ALLSET_MT_outliner_display(bpy.types.Menu):

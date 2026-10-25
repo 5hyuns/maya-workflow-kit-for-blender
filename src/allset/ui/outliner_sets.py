@@ -19,7 +19,7 @@ the scene the cameras follow the DAG rows instead of leading them (delegated, st
 
 Blender row geometry (checked, step 96): row height = UI_UNIT_Y = round(18 x scale) + 2 x pixel size,
 row k spans view y [-(k + 1)·U, -k·U]; a depth-0 row draws its disclosure triangle at ~1.6 U, the icon
-at ~2.5 U and the name from ~3.25 U.
+at ~2.5 U and the name from ~3.25 U (1 U less without the mode column, step 202).
 """
 
 import math
@@ -166,6 +166,9 @@ def draw():
     else:
         k0 = empty
     selected = set(context.selected_objects) if context.mode == 'OBJECT' else set()
+    # Blender keeps one unit for its mode column while it is on (any mode); the Maya Outliner has none (step 202), so
+    # the drawn rows line up with Blender's object rows one unit further left
+    lead = 0.0 if not getattr(context.space_data, "show_mode_column", True) else u
     blf.size(0, 11.0 * prefs.system.ui_scale)
     rows = []
     for i, (kind, name, member) in enumerate(found):
@@ -182,10 +185,10 @@ def draw():
                 _rect(shader, 0, y0, region.width, y1, (*th.outliner.selected_highlight[:3], 1.0))
             # Maya greys hidden nodes: the startup cameras are hidden
             rgb = text_rgb[:3] if kind == 'DEFAULT_SET' or hl else tuple(c * 0.62 for c in text_rgb[:3])
-            row_icon("outliner:CAMERA" if kind == 'CAMERA' else "outliner:SET", 2.5 * u, cy, prefs,
+            row_icon("outliner:CAMERA" if kind == 'CAMERA' else "outliner:SET", lead + 1.5 * u, cy, prefs,
                      greyed=kind == 'CAMERA' and not hl)
             blf.color(0, *rgb, 1.0)
-            blf.position(0, 3.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
+            blf.position(0, lead + 2.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
             blf.draw(0, name)
             rows.append((y0, y1, kind, name, "", 0))
             continue
@@ -202,15 +205,15 @@ def draw():
             _rect(shader, 0, y0, region.width, y1, (*th.outliner.selected_highlight[:3], 1.0))
         tri_x1 = 0
         if kind == 'SET' and mem:
-            _tri(shader, 1.6 * u, cy, u * 0.17, coll.allset_expanded, (*text_rgb[:3], 0.8))
-            tri_x1 = 2.05 * u
+            _tri(shader, lead + 0.6 * u, cy, u * 0.17, coll.allset_expanded, (*text_rgb[:3], 0.8))
+            tri_x1 = lead + 1.05 * u
         if kind == 'SET':
-            row_icon("outliner:SET", 2.5 * u, cy, prefs)
+            row_icon("outliner:SET", lead + 1.5 * u, cy, prefs)
         else:
-            _rect(shader, indent + 2.5 * u - u * 0.12, cy - u * 0.12, indent + 2.5 * u + u * 0.12, cy + u * 0.12,
-                  (*text_rgb[:3], 0.7))
+            ix = indent + lead + 1.5 * u
+            _rect(shader, ix - u * 0.12, cy - u * 0.12, ix + u * 0.12, cy + u * 0.12, (*text_rgb[:3], 0.7))
         blf.color(0, *text_rgb[:3], 1.0)
-        blf.position(0, indent + 3.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
+        blf.position(0, indent + lead + 2.25 * u, cy - 0.32 * blf.dimensions(0, "Xg")[1] - 1, 0)
         blf.draw(0, name if kind == 'SET' else member)
         rows.append((y0, y1, kind, name, member, tri_x1))
     gpu.state.blend_set('NONE')

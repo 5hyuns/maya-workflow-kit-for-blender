@@ -24,7 +24,8 @@ def row_xy(i, frac=0.5):
     _a, r = outl()
     h = 20 * bpy.context.preferences.system.ui_scale
     _x, y = r.view2d.view_to_region(0, -(i + frac) * h, clip=False)
-    return r.x + 90, r.y + int(y)
+    # on the row's (one-letter) name: from ~2.25 units without the mode column (step 202; it was ~3.25 with it)
+    return r.x + int(2.5 * h), r.y + int(y)
 
 
 def empty_xy():

@@ -916,6 +916,9 @@ def dark_top(values, start, limit, gap):
     return top
 
 
+_hole_row = {}    # region pointer -> framebuffer row that last crossed the list body
+
+
 def _list_hole(context, region):
     """The Layer Editor list body (#2a2a2a, Blender's list grey is as dark): left unlifted. Found in the drawn
     pixels — one row near the region bottom for its sides, one column inside its left edge for its top."""
@@ -928,17 +931,28 @@ def _list_hole(context, region):
     limit = back * 255.0 - 4.0
     from . import channel_box
     le_top = int(region.height * (1.0 - channel_box.cb_share(region, channel_box._unit(context))))
-    ys = max(1, round(14 * scale))
-    if le_top <= ys + 10:
+    # the list ends 14 px x scale above the region bottom in a tall dock, higher in a shorter one (step 202: the
+    # Time Slider grew at UI 1.25 and the list bottom left the checked row): probe upwards, the last hit first
+    fb = gpu.state.active_framebuffer_get()
+    key = region.as_pointer()
+    first = max(1, round(14 * scale))
+    rows = [_hole_row.get(key)] + list(range(first, round(64 * scale), max(1, round(4 * scale))))
+    span, ys = None, first
+    for ys in rows:
+        if ys is None or le_top <= ys + 10:
+            continue
+        try:
+            row = fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE').to_list()
+        except ValueError:
+            return None
+        span = dark_span([px[0] for px in row[0]], limit)
+        if span is not None and span[1] - span[0] >= 40 * scale:
+            break
+        span = None
+    if span is None:
+        _hole_row.pop(key, None)
         return None
-    try:
-        fb = gpu.state.active_framebuffer_get()
-        row = fb.read_color(0, ys, region.width, 1, 4, 0, 'UBYTE').to_list()
-    except ValueError:
-        return None
-    span = dark_span([px[0] for px in row[0]], limit)
-    if span is None or span[1] - span[0] < 40 * scale:
-        return None
+    _hole_row[key] = ys
     x0, x1 = span
     try:
         col = fb.read_color(x0 + 1, 0, 1, le_top, 4, 0, 'UBYTE').to_list()
