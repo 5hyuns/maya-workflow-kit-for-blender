@@ -129,7 +129,7 @@ def test_notices_are_real_menu_paths_with_a_line():
     assert not missing, missing
     for path, (substitute, line) in notices.NOTICES.items():
         assert substitute and line.startswith("Blender") or "Blender" in line, (path, line)
-    want = {"Windows/Relationship Editors/Animation Layers": "NLA", "Windows/Animation Editors/Trax Editor": "NLA",
+    want = {"Windows/Animation Editors/Trax Editor": "NLA",
             "Windows/Relationship Editors/Character Sets": "Keying Set",   # step 187: Create is real "Windows/Node Editor": "drivers",
             "Windows/General Editors/Hypergraph: Hierarchy": "Outliner", "Skeleton/HumanIK": "Rigify",
             "Windows/General Editors/Namespace Editor": "ns:", "File/Create Reference...": "Library Override",

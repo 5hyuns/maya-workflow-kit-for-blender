@@ -40,9 +40,7 @@ NOTICES = {
     "Modify/Bake Pivot": (
         "Pivot orientation", "Blender has one pivot (the origin), so only the pivot orientation is baked into "
         "Rotate; the position already is the object's pivot."),
-    # Animation (W3: Animation Layers -> NLA, Character Sets -> Keying Sets, Time Editor / Trax -> NLA)
-    "Windows/Relationship Editors/Animation Layers": (
-        "NLA Editor", "Blender has no animation layers: stack actions as NLA tracks (blend mode per strip)."),
+    # Animation (W3: Character Sets -> Keying Sets, Time Editor / Trax -> NLA; Animation Layers real since step 188)
     "Windows/Animation Editors/Trax Editor": (
         "NLA Editor", "Blender has no Trax: clips are actions laid out as NLA strips."),
     "Windows/Animation Editors/Time Editor": (

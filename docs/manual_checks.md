@@ -1229,3 +1229,7 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 ## Step 187
 
 - [ ] Select a cube, Key > Create Character Set: the Time Slider field reads "character1"; select another object (or nothing) and press S = only character1's channels get keys; the field's dropdown > None, then S keys the selection again. Key > Select Character Set Members > character1 selects the cube; Channel Box select Translate X of another object + Key > Add to Character Set adds it.
+
+## Step 188
+
+- [ ] Object in AnimLayer1 with a key on the layer, Auto Key on: move it at another frame = a key on AnimLayer1 (Graph Editor), the pose stays after scrubbing; Channel Box select Translate Y + Channels > Remove From Selected Layers = its layer curve gone; Windows > Relationship Editors > Animation Layers raises the Layer Editor's Anim tab.

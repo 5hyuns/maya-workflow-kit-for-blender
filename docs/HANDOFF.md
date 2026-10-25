@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 188 (Animation layer follow-ups, backlog_183.json #6) 완료 — `docs/steps/step_188.md`, mayapy `research/maya/re/anim_layers_188.md`.
+  kit Auto Key 가 레이어 오브젝트를 Maya 처럼 (선택 레이어에 키가 있는 속성만, 푼 값), Channels > Add to / Remove From Selected Layers
+  (속성 멤버 `allset_layer_attrs`, 비멤버 키 = Base), Relationship Editors > Animation Layers = Layer Editor Anim 탭. 헤드리스 1707 / 1707,
+  GUI step180 · 158 14 / 14.
+  **바로 다음 할 일**: 189 Mesh Display and greyed twins (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  7 번째).
+
 - Step 187 (Character Sets on Keying Sets, backlog_183.json #5) 완료 — `docs/steps/step_187.md`, Maya 측정
   `research/maya/re/character_sets_183.md` (mayapy + GUI Maya 2 회). 모든 Keying Set = kit character set (current = active),
   S = current 캐릭터 멤버 키, Create / Subcharacter / Add / Remove / Merge / Select / Set Current / AE 팝업, Time Slider 드롭다운.

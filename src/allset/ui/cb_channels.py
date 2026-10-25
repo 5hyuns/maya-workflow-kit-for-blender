@@ -196,12 +196,10 @@ def connection(ob, key):
     return None
 
 
-# --- Add to / Remove From Selected Layers: animation layers ---
+# --- Add to / Remove From Selected Layers: real since step 188 (operators/anim_layers.ALLSET_OT_anim_layer_attrs) ---
 LAYER_PATH = "Channel Box/Channels/"
 LAYER_ITEMS = ("Add to Selected Layers", "Remove From Selected Layers")
-NOTICES = {LAYER_PATH + label: (
-    "NLA tracks", "Blender 4.5 has no animation layers: stack actions as NLA tracks (Nonlinear Animation editor) "
-    "to layer animation.") for label in LAYER_ITEMS}
+NOTICES = {}
 
 
 # --- operators -----------------------------------------------------------------------------------------------

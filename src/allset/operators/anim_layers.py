@@ -283,11 +283,117 @@ def solve(steps, target, layer, start=0.0):
     return (acc - below) / w
 
 
-def target_layer(scene, ob):
-    """The layer a key on ``ob`` goes to: the selected layer when ``ob`` is in it, else BaseAnimation."""
+# --- attribute membership (step 188, research/maya/re/anim_layers_188.json) ---------------------------------------
+# Maya layer members are attributes (animLayer -attribute): Channel Box > Channels > Add to / Remove From Selected
+# Layers edits them, a key on a non-member attribute goes to BaseAnimation, removing a keyed attribute deletes its
+# layer curve. The kit's members are objects (one NLA track each, Add Selected Objects = every attribute); an object's
+# attribute list is kept in the object ID property ATTRS {layer: "tx,ry,..."} only once Add / Remove edited it.
+ATTRS = "allset_layer_attrs"
+
+
+def _attr_record(ob):
+    raw = ob.get(ATTRS)
+    return {str(k): [x for x in str(v).split(",") if x] for k, v in raw.items()} if raw else {}
+
+
+def _set_attr_record(ob, layer, keys):
+    d = _attr_record(ob)
+    if keys is None:
+        d.pop(layer, None)
+    else:
+        d[layer] = list(dict.fromkeys(keys))
+    if d:
+        ob[ATTRS] = {k: ",".join(v) for k, v in d.items()}
+    elif ATTRS in ob:
+        del ob[ATTRS]
+
+
+def channel_key(path, index):
+    from . import character_sets
+    return character_sets.channel_key_of(path, index)
+
+
+def is_member(ob, layer, path=None, index=-1):
+    """``ob``'s channel (``path``, ``index``) is in ``layer`` (no path: the object is a member at all)."""
+    if layer == BASE:
+        return True
+    if layer not in tracks(ob):
+        return False
+    rec = _attr_record(ob).get(layer)
+    if rec is None or path is None:
+        return True
+    return channel_key(path, index) in rec
+
+
+def member_keys(ob, layer):
+    """Channel Box keys of ``ob`` in ``layer`` (all keyable shown channels when no list was edited)."""
+    rec = _attr_record(ob).get(layer)
+    if rec is not None:
+        return list(rec)
+    from ..ui import channel_box as cb
+    return [k for k in cb._visible_channels(ob) if cb.is_keyable(ob, k)] if layer in tracks(ob) else []
+
+
+def add_attrs(scene, ob, layer, keys):
+    """Maya Add to Selected Layers: the object joins ``layer`` with only these attributes, or gains them."""
+    new = layer not in tracks(ob)
+    if new:
+        add_object(scene, ob, layer)
+        _set_attr_record(ob, layer, keys)
+    elif layer in _attr_record(ob):
+        _set_attr_record(ob, layer, _attr_record(ob)[layer] + list(keys))
+
+
+def remove_attrs(scene, ob, layer, keys):
+    """Maya Remove From Selected Layers: the attributes leave ``layer`` and their layer curves are deleted; an object
+    left without attributes leaves the layer."""
+    if layer == BASE or layer not in tracks(ob):
+        return
+    left = [k for k in member_keys(ob, layer) if k not in keys]
+    act = _strip(tracks(ob)[layer]).action
+    from ..ui import channel_box as cb
+    for k in keys:
+        path, idx, _kind = cb.channel_path(k)
+        fc = _fcurve(act, path, max(idx, 0))
+        if fc is not None:
+            for owner in compat.fcurve_owners(act):
+                if any(f == fc for f in owner.fcurves):
+                    owner.fcurves.remove(fc)
+                    break
+    if left:
+        _set_attr_record(ob, layer, left)
+    else:
+        _set_attr_record(ob, layer, None)
+        remove_object(scene, ob, layer)
+    ob.update_tag(refresh={'TIME'})
+
+
+def target_layer(scene, ob, path=None, index=-1):
+    """The layer a key on ``ob`` goes to: the selected layer when the object (and with ``path`` that channel) is in
+    it, else BaseAnimation (Maya: a non-member attribute is keyed on BaseAnimation)."""
     e = selected(scene)
     name = e.name if e is not None else BASE
-    return name if name in tracks(ob) else BASE
+    return name if is_member(ob, name, path, index) else BASE
+
+
+def result(ob, path, index, frame=None, scene=None):
+    """The value the layers give a channel at ``frame`` (None when no layer has a curve for it)."""
+    scene = scene or bpy.context.scene
+    frame = scene.frame_current if frame is None else frame
+    steps = _steps(ob, path, max(index, 0), frame, scene)
+    known = [(m, w, x) for _n, m, w, x in steps if x is not None]
+    if not known:
+        return None
+    return compose(known, 1.0 if path in SCALE_PATHS else 0.0)
+
+
+def layer_curves(ob, layer):
+    """F-curves of ``ob`` on ``layer``."""
+    tr = tracks(ob).get(layer)
+    if tr is None:
+        return []
+    act = _strip(tr).action
+    return list(compat.action_fcurves(act, _slot(act))) if act is not None else []
 
 
 def key(ob, path, index, frame=None, value=None, scene=None):
@@ -298,8 +404,8 @@ def key(ob, path, index, frame=None, value=None, scene=None):
     if value is None:
         v = ob.path_resolve(path)
         value = float(v[index] if index >= 0 else v)
+    layer = target_layer(scene, ob, path, index)
     index = max(index, 0)
-    layer = target_layer(scene, ob)
     info = {e.name: e for e in layers(scene)}
     if layer in info and info[layer].lock:
         return False
@@ -404,6 +510,35 @@ class ALLSET_OT_anim_layer_members(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_OT_anim_layer_attrs(bpy.types.Operator):
+    """Add the Channel Box's selected channels to the selected animation layer, or remove them (Maya Channel Box >
+    Channels > Add to / Remove From Selected Layers)"""
+    bl_idname = "allset.anim_layer_attrs"
+    bl_label = "Selected Layers"
+    bl_options = {'UNDO'}
+
+    add: BoolProperty(default=True, options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        from ..ui import channel_box as cb
+        scene = context.scene
+        e = selected(scene)
+        if e is None or e.name == BASE:
+            self.report({'WARNING'}, "Select an animation layer")
+            return {'CANCELLED'}
+        keys = cb.selected_channels(context)
+        obs = [ob for ob in _layer_objects(context)]
+        if not keys or not obs:
+            self.report({'WARNING'}, "Select attributes in the Channel Box")
+            return {'CANCELLED'}
+        for ob in obs:
+            mine = [k for k in keys if cb.has_channel(ob, k)]
+            if mine:
+                (add_attrs if self.add else remove_attrs)(scene, ob, e.name, mine)
+        sync(scene)
+        return {'FINISHED'}
+
+
 class ALLSET_OT_anim_layer_delete(bpy.types.Operator):
     """Delete the selected animation layer and its keys (Maya Delete Layer)"""
     bl_idname = "allset.anim_layer_delete"
@@ -439,7 +574,7 @@ class ALLSET_OT_anim_layer_select(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_PG_anim_layer, ALLSET_OT_anim_layer_create, ALLSET_OT_anim_layer_members,
+classes = (ALLSET_PG_anim_layer, ALLSET_OT_anim_layer_create, ALLSET_OT_anim_layer_members, ALLSET_OT_anim_layer_attrs,
            ALLSET_OT_anim_layer_delete, ALLSET_OT_anim_layer_select)
 
 

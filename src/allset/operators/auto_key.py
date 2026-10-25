@@ -71,8 +71,52 @@ def changed_curves(ob, frame):
     return out
 
 
+def _value(ob, path, index):
+    try:
+        v = ob.path_resolve(path)
+    except ValueError:
+        return None
+    if not isinstance(v, (int, float, bool)):
+        try:
+            v = v[index]
+        except (TypeError, IndexError, KeyError):
+            return None
+    return float(v) if isinstance(v, (int, float, bool)) else None
+
+
+def changed_layer_channels(ob, frame, scene=None):
+    """(path, index, value) of a layered object's channels that have keys on the layer a key would go to and whose
+    value differs from the layers' result (step 188: Maya Auto Key keys the selected layer only where that attribute
+    already has keys on it, research/maya/re/anim_layers_188.json "autokey" / "autokey_layer_keyed")."""
+    from . import anim_layers
+    scene = scene or bpy.context.scene
+    seen, out = set(), []
+    for layer in anim_layers.tracks(ob):
+        for fc in anim_layers.layer_curves(ob, layer):
+            ch = (fc.data_path, fc.array_index)
+            if ch in seen or fc.mute or len(fc.keyframe_points) == 0:
+                continue
+            seen.add(ch)
+            target = anim_layers.target_layer(scene, ob, *ch)
+            if not any((c.data_path, c.array_index) == ch and len(c.keyframe_points)
+                       for c in anim_layers.layer_curves(ob, target)):
+                continue
+            value = _value(ob, *ch)
+            res = anim_layers.result(ob, ch[0], ch[1], frame, scene)
+            if value is None or res is None:
+                continue
+            if abs(value - res) > EPS * max(1.0, abs(value)):
+                out.append((ch[0], ch[1], value))
+    return out
+
+
 def key_changed(ob, frame):
     """Key the changed keyed channels of ``ob`` at ``frame``; returns how many keys were set."""
+    from . import anim_layers
+    if anim_layers.has_layers(ob):
+        # Maya animation layers (step 188): solved onto the target layer like the kit's S key
+        return sum(bool(anim_layers.key(ob, path, index, frame, value))
+                   for path, index, value in changed_layer_channels(ob, frame))
     count = 0
     for fc, _value in changed_curves(ob, frame):
         group = fc.group.name if fc.group is not None else ""
@@ -116,7 +160,9 @@ def _on_depsgraph(scene, depsgraph):
     found = False
     for update in depsgraph.updates:
         ob = update.id.original if isinstance(update.id, bpy.types.Object) else None
-        if ob is None or ob.animation_data is None or ob.animation_data.action is None:
+        if ob is None or ob.animation_data is None:
+            continue
+        if ob.animation_data.action is None and not ob.animation_data.nla_tracks:
             continue
         _pending[ob.name] = scene.frame_current
         found = True
