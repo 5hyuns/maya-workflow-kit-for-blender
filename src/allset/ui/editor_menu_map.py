@@ -539,6 +539,37 @@ MAP.update({
     f"{SE}/Help/Help on MEL": _url(_API),
     f"{SE}/Help/Help on Python": _url(_API + "info_quickstart.html"),
 })
+
+
+# step 209: the Reference Editor (operators/references.py, research/maya/re/refs_209.md; literal: no bpy imports)
+RE = "Reference Editor"
+
+
+def _ref(action):
+    return ("allset.reference_cmd", {"action": action})
+
+
+MAP.update({
+    f"{RE}/File/Create Reference...": "allset.create_reference",
+    f"{RE}/File/Import Objects from Reference": _ref("IMPORT"),
+    f"{RE}/File/Export Selection ...": "allset.file_export_selection",
+    f"{RE}/File/Export to Offline File...": ("allset.reference_offline", {"mode": "EXPORT"}),
+    f"{RE}/File/Assign Offline File...": ("allset.reference_offline", {"mode": "ASSIGN"}),
+    f"{RE}/File/List Reference Edits...": _ref("LIST"),
+    f"{RE}/File/Clean Up Reference": _ref("CLEAN"),
+    f"{RE}/File/Select File Contents": _ref("SELECT"),
+    f"{RE}/Reference/Reload Reference": _ref("RELOAD"),
+    f"{RE}/Reference/Unload Reference": _ref("UNLOAD"),
+    f"{RE}/Reference/Load Related References": _ref("LOAD_RELATED"),
+    f"{RE}/Reference/Unload Related References": _ref("UNLOAD_RELATED"),
+    f"{RE}/Reference/Duplicate Reference": _ref("DUPLICATE"),
+    f"{RE}/Reference/Replace Reference": "allset.reference_replace",
+    f"{RE}/Reference/Recently Replaced Files": ("menu", "ALLSET_MT_reference_recent"),
+    f"{RE}/Reference/Remove Reference": _ref("REMOVE"),
+    f"{RE}/Reference/Lock Reference": _ref("LOCK"),
+    f"{RE}/Reference/Unlock Reference": _ref("UNLOCK"),
+    **_help_menu(RE, "files/linked_libraries/index.html"),
+})
 MAP.update(_hs_nodes())
 
 

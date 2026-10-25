@@ -111,6 +111,10 @@ from . import curves_207  # noqa: E402  step 207: Curves > Bend / Curl / Scale C
 
 classes += curves_207.classes
 
+from . import references  # noqa: E402  step 209: Reference Editor commands (reload / unload / replace / import ...)
+
+classes += references.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

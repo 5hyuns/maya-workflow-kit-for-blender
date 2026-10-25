@@ -148,9 +148,6 @@ NOTICES = {
     "File/Create Reference...": (
         "Link + Library Override", "Blender references are linked .blend files: Maya Workflow Kit makes them editable "
         "(library override) and prefixes the names with the namespace (ns:name)."),
-    "File/Reference Editor": (
-        "Outliner: Blender File", "Linked files are listed in the Outliner's Blender File view (right-click: "
-        "Reload / Relocate)."),
     "File/Set Project...": (
         "Maya Workflow Kit project", "Blender has no projects: Maya Workflow Kit keeps this folder, opens file dialogs in its scenes "
         "folder and renders to its images folder."),
@@ -405,7 +402,7 @@ CATEGORIES = {
              "copies data between objects."),
     **{f"Edit/{sub}": ("Outliner / Purge", "Blender has no node of this type: delete it in the Outliner, or File > "
                        "Clean Up > Purge for unused data.") for sub in ("Delete All by Type", "Delete by Type")},
-    "File": ("File menu", "Blender has no offline files, ATOM or After Effects Live Link: move animation with "
+    "File": ("File menu", "Blender has no ATOM files or After Effects Live Link: move animation with "
              "Append / Link or FBX / Alembic export."),
     "Display": ("Viewport Overlays", "Blender draws this through the Viewport Overlays popover or Object properties > "
                 "Viewport Display; there is no per-camera visibility."),
@@ -864,6 +861,21 @@ CATEGORIES.update({
         "Python API", "Blender has no help on a selected command: see the Python API reference (Help > Python "
         "Command Reference)."),
     "Script Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    # step 209: the Reference Editor's menu bar (ui/reference_editor.py)
+    "Reference Editor/File/Save Reference Edits": (
+        "Open the source .blend", "Blender can't write into a linked file from here: open the referenced .blend, make "
+        "the change there and save it (Reload shows it)."),
+    "Reference Editor/File/List Unknown Edits...": (
+        "Library overrides", "Blender drops an override whose source data is gone: there are no unknown edits to "
+        "list."),
+    "Reference Editor/Proxy": (
+        "Replace Reference", "Blender has no reference proxies: use Replace Reference to switch the file (its edits "
+        "are applied again by name)."),
+    "Reference Editor/View": (
+        "Outliner: Blender File", "Blender keeps no reference view sets: the Outliner's Blender File view lists every "
+        "linked file."),
+    "Reference Editor/Help/What's New/Highlight What's New": (
         "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
 })
 
