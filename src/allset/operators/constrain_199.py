@@ -443,6 +443,30 @@ def helper_of(con):
     return t if t is not None and t.get(KIND) in LABEL else None
 
 
+def helpers_owned_by(objects):
+    """Helper empties of the kit normal / tangent constraints on ``objects``."""
+    owners = set(objects)
+    return [h for h in helpers() if h.get(OWNER) in owners]
+
+
+def remove_helpers(objs):
+    """Delete helper empties (each once; objects already gone are skipped). Maya's normal / tangent constraint is a
+    DAG child of the constrained object, so it goes with the object and with Delete by Type > Constraints 
+    (step 202, #109; Remove Target already did this, ``remove_targets``)."""
+    seen = set()
+    for h in objs:
+        try:
+            if h.as_pointer() in seen or h.get(KIND) not in LABEL:
+                continue
+        except ReferenceError:
+            continue
+        seen.add(h.as_pointer())
+        bpy.data.objects.remove(h, do_unlink=True)
+    if seen:
+        _rescan()
+    return len(seen)
+
+
 def surface_of(con):
     h = helper_of(con)
     return h.get(SURFACE) if h is not None else None

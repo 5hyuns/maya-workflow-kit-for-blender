@@ -112,11 +112,16 @@ def _on_load(*_args):
 
 def delete_hierarchy(context, objects):
     """Maya delete of transforms: the nodes and every descendant, with their now unused data. Returns the count."""
+    from . import constrain_199
     obs = hierarchy(objects)
+    # Maya's normal / tangent constraint node is a child of the constrained object: its kit helper empty goes too
+    # (step 202, #109; the helper has no parent — constrain_199.update clears it — so hierarchy() misses it)
+    helpers = [h for h in constrain_199.helpers_owned_by(obs) if h not in obs]
     datas = {ob.data for ob in obs if ob.data is not None}
     n = len(obs)
     for ob in reversed(obs):              # children first
         bpy.data.objects.remove(ob, do_unlink=True)
+    constrain_199.remove_helpers(helpers)
     for data in datas:
         try:
             if data.users == 0:

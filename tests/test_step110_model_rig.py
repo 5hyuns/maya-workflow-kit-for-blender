@@ -320,7 +320,8 @@ def test_add_remove_unused_influence():
     ob, _arm, g1, g2 = _skinned_plane()
     g1.add(list(range(25)), 0.8, 'REPLACE')
     g2.add(list(range(25)), 0.2, 'REPLACE')
-    assert rig.add_influence(ob, ["joint3"]) == ["joint3"]
+    # Lock weights, Default weight 0 (the factory add recomputes the weights by distance: test_step202_add_influence)
+    assert rig.add_influence(ob, ["joint3"], lock=True) == ["joint3"]
     g3 = ob.vertex_groups["joint3"]
     assert all(g3.weight(i) == 0.0 for i in range(25))                     # Maya: weight 0
     assert abs(g1.weight(0) - 0.8) < 1e-6                                   # others unchanged
