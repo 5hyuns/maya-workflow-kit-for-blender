@@ -33,6 +33,21 @@ def obj_mode():
         bpy.ops.object.mode_set(mode='OBJECT')
 
 
+def box(key):
+    """Window point of the drawn radial box ``key``: near the window bottom the whole menu is drawn higher than
+    the press point (step 184), so a drag aims at the box as drawn (step 191)."""
+    s = C["draw"].ACTIVE["session"]
+    it = s.layout.radial[key]
+    return (C["x"] + int(s.center[0] - s.press[0] + (it.rect[0] + it.rect[2]) / 2),
+            C["y"] + int(s.center[1] - s.press[1] + (it.rect[1] + it.rect[3]) / 2))
+
+
+def glide(x1, y1):
+    x, y = C["x"], C["y"]
+    for f in (1, 2, 3):
+        ev('MOUSEMOVE', 'NOTHING', x=x + (x1 - x) * f // 3, y=y + (y1 - y) * f // 3)
+
+
 def drag_to(dx, dy):
     x, y = C["x"], C["y"]
     ev('MOUSEMOVE', 'NOTHING', x=x + dx // 3, y=y + dy // 3)
@@ -59,12 +74,13 @@ def s_drag_shown():
 @step
 def s_drag_shown2():
     shot("gui_step9_rmb_engine.png")
-    drag_to(0, D)
+    C["at"] = box("N")
+    glide(*C["at"])
 
 
 @step
 def s_drag_release():
-    ev('RIGHTMOUSE', 'RELEASE', x=C["x"], y=C["y"] + D)
+    ev('RIGHTMOUSE', 'RELEASE', x=C["at"][0], y=C["at"][1])
 
 
 @step
@@ -82,10 +98,11 @@ def s_drag_done():
 def s_click_mode():
     check("quick RMB click keeps the menu open (click mode)",
           "session" in C["draw"].ACTIVE and C["draw"].ACTIVE["session"].mode == "CLICK")
-    drag_to(-D, 0)
+    x, y = box("W")
+    glide(x, y)
     shot("gui_step9_click_mode.png")
-    ev('LEFTMOUSE', 'PRESS', x=C["x"] - D, y=C["y"])
-    ev('LEFTMOUSE', 'RELEASE', x=C["x"] - D, y=C["y"])
+    ev('LEFTMOUSE', 'PRESS', x=x, y=y)
+    ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
 
 
 @step
@@ -111,23 +128,30 @@ def s_flick_done():
 
 
 @step
+def s_sub_wait():
+    pass        # past the show delay: the convert menu is drawn (higher, when it would run off the bottom)
+
+
+@step
 def s_sub_open():
-    drag_to(-D, 0)
+    C["at"] = box("W")
+    x, y = C["at"]
+    glide(x - 30, y)
 
 
 @step
 def s_sub_shown():
     s = C["draw"].ACTIVE.get("session")
     check("dragging onto 'To Vertices' opens its submenu in place", s is not None and len(s.stack) == 2)
-    x0 = C["x"] - D
-    ev('MOUSEMOVE', 'NOTHING', x=x0 - 40, y=C["y"])
-    ev('MOUSEMOVE', 'NOTHING', x=x0 - 80, y=C["y"])
+    x0, y0 = C["at"][0] - 30, C["at"][1]
+    ev('MOUSEMOVE', 'NOTHING', x=x0 - 40, y=y0)
+    ev('MOUSEMOVE', 'NOTHING', x=x0 - 80, y=y0)
     shot("gui_step9_submenu.png")
 
 
 @step
 def s_sub_release():
-    ev('RIGHTMOUSE', 'RELEASE', x=C["x"] - D - 80, y=C["y"], ctrl=True)
+    ev('RIGHTMOUSE', 'RELEASE', x=C["at"][0] - 30 - 80, y=C["at"][1], ctrl=True)
 
 
 @step

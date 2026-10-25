@@ -34,16 +34,29 @@ def s_setup():
     ev('RIGHTMOUSE', 'PRESS', x=C["x"], y=C["y"])  # over the cube (factory scene, centred)
 
 
+def _drawn(key="N", dx=0, dy=DRAG):
+    """The radial box ``key`` as drawn: a menu whose list would run off the bottom is drawn higher (step 184), so
+    the drag aims at the box on screen (step 191); otherwise (dx, dy) from the press."""
+    from importlib import import_module
+    s = import_module(sys.modules["sim"].MODULE + ".marking.draw").ACTIVE.get("session")
+    if s is None or s.layout.lifted is None:
+        return C["x"] + dx, C["y"] + dy
+    it = s.layout.radial[key]
+    return (C["x"] + int(s.center[0] - s.press[0] + (it.rect[0] + it.rect[2]) / 2),
+            C["y"] + int(s.center[1] - s.press[1] + (it.rect[1] + it.rect[3]) / 2))
+
+
 @step
 def s_rmb_open():
     shot("gui_step8_rmb_object.png")
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] + DRAG // 2)
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"] + DRAG)
+    C["at"] = x, y = _drawn()
+    ev('MOUSEMOVE', 'NOTHING', x=(C["x"] + x) // 2, y=(C["y"] + y) // 2)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
 
 
 @step
 def s_rmb_release():
-    ev('RIGHTMOUSE', 'RELEASE', x=C["x"], y=C["y"] + DRAG)
+    ev('RIGHTMOUSE', 'RELEASE', x=C["at"][0], y=C["at"][1])
 
 
 @step
@@ -83,14 +96,20 @@ def s_ctrl_esc():
 
 
 @step
+def s_back_wait():
+    pass        # the component menu is drawn (maybe higher, step 184) before the drag aims at its NE box
+
+
+@step
 def s_back_drag():
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"] + DRAG // 2, y=C["y"] + DRAG // 2)
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"] + DRAG, y=C["y"] + DRAG)
+    C["at"] = x, y = _drawn("NE", DRAG, DRAG)
+    ev('MOUSEMOVE', 'NOTHING', x=(C["x"] + x) // 2, y=(C["y"] + y) // 2)
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
 
 
 @step
 def s_back_release():
-    ev('RIGHTMOUSE', 'RELEASE', x=C["x"] + DRAG, y=C["y"] + DRAG)
+    ev('RIGHTMOUSE', 'RELEASE', x=C["at"][0], y=C["at"][1])
 
 
 @step

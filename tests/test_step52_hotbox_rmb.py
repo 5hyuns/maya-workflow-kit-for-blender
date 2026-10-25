@@ -165,6 +165,23 @@ def test_lifted_menu_picks_like_maya():
     assert s.release(800.0, 120.0, 0.1) is None and s.mode == "CLICK"
 
 
+def test_lifted_menu_marks_read_from_the_press():
+    """Step 191: a mark (released before the menu is drawn) on a menu that would be drawn higher is read from the
+    press point — the user never saw the lifted menu. After the show delay the drawn boxes count again."""
+    b = (0.0, 0.0, 1600.0, 900.0)
+    for key, (dx, dy) in (("N", (0.0, 70.0)), ("S", (0.0, -70.0)), ("W", (-70.0, 0.0))):
+        s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
+        assert s.layout.lifted is not None and s.center[1] > 120.0
+        s.move(800.0 + dx / 2, 120.0 + dy / 2, 0.03)
+        res = s.release(800.0 + dx, 120.0 + dy, 0.06)
+        assert res is not None and res[0] == "RUN" and res[1] is s.layout.radial[key], (key, res)
+    # drawn (after the delay): straight up from the press is not the N box of the lifted ring
+    s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
+    north = s.layout.radial["N"]
+    s.move(800.0, 190.0, 0.5)
+    assert s.hover[0] is not north, s.hover
+
+
 def test_window_bounds_and_cover_handlers():
     region = type("R", (), {"x": 300, "y": 100, "width": 800, "height": 600})()
     area = lambda x, y, w, h: type("A", (), {"x": x, "y": y, "width": w, "height": h})()  # noqa: E731
