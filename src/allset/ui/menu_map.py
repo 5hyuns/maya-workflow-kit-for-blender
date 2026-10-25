@@ -306,7 +306,7 @@ MAP = {
     "Windows/UI Elements": ("menu", "ALLSET_MT_ui_elements"),
     # Settings/Preferences submenu ($M/scripts/startup/Maya Maya; step 120)
     "Windows/Settings/Preferences/Preferences": "screen.userpref_show",
-    "Windows/Settings/Preferences/Hotkey Editor": ("screen.userpref_show", {"section": 'KEYMAP'}),
+    "Windows/Settings/Preferences/Hotkey Editor": "allset.hotkey_editor",   # step 215: Maya list + kit keys
     "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
     "Windows/Settings/Preferences/Plug-in Manager": ("screen.userpref_show", {"section": 'ADDONS'}),
     "Windows/Playblast": ("v3d", "allset.playblast", {}),              # step 70: temp movie + player
