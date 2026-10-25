@@ -5,6 +5,44 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-25
+
+The release after audits 12 and 13 (steps 173–190). Blender 4.5 LTS through 5.2.x. Quad Draw leftovers (#89) stay in
+0.5.0.
+
+### Added
+- **Polygon primitives**: Pipe, Helix, Gear, Soccer Ball, Super Ellipse, Spherical Harmonics and Ultra Shape with
+  Maya's geometry, names and Channel Box INPUTS.
+- **Surfaces menu** on Blender NURBS surfaces: Loft, Revolve, Extrude, Birail 1, Boundary, Square, Attach, Detach,
+  Insert Isoparms, Duplicate NURBS Patch, Reverse Direction, Rebuild, with Maya option windows.
+- **UV Editor**: Map / Straighten Border, Match Grid, Layout Along, Stack Similar Shells, Distribute UVs; Back- /
+  Front-Facing, Texture Borders, Non-Overlapping and Unmapped selection, Filter Connected / Contained, Isolate Add /
+  Remove.
+- **Light Linking**: Make / Break Light and Shadow Links, Select Objects / Lights, Light Linking Editor.
+- **Animation Layers** on NLA tracks with the Layer Editor's Anim tab (Lock / Solo / Mute, Weight, Add to / Remove
+  From Selected Layers, layered Auto Key).
+- **Character Sets** on Keying Sets: create, add / remove members, merge, select, set current; S keys the current
+  character; Time Slider character field.
+- **Mesh Display**: Set Vertex Normal, Lock / Unlock Normals on the selection, Maya's Average and Set to Face, Apply
+  Color, Rename / Modify Current Set, colour keys, Prelight with vertex bake sets, Select Shared Instances.
+- **Status Line**: Construction History toggle (off = new primitives, extrusions and bevels keep no history node).
+- Repeat Last (G) repeats menu, shelf, marking-menu and option-window commands too.
+
+### Changed
+- Component mode keeps the transform tool (Q / W / E / R) like Maya.
+- Maya Time Slider ruler (ticks, labels, current frame) in the Maya layout.
+- Selected faces / edges and manipulator planes look like Maya; four-view camera labels.
+- The RMB marking menu list stays under the ring; near the window bottom the whole menu moves up.
+- Undo / Redo show what they undid in the Command Line result field.
+- Viewport panel Show menu: IK Handles and Image Planes work; more panel items explained or connected.
+- Main UV > Delete UVs and nHair > Modify Curves Smooth / Straighten work like their twins elsewhere.
+
+### Fixed
+- Clicking a Maya menu item's option box (❒) opens its window (#82).
+- Insert Isoparms' option box opens Maya's window instead of a generic one.
+- Alt+RMB zoom in the UV / Image Editor works again (broken since the camera tools change).
+- A quick marking-menu flick near the window bottom picks the direction you flicked, not the higher-drawn box.
+
 ## [0.4.0] — 2026-10-25
 
 The release after audits 10 and 11 (steps 144–171). Blender 4.5 LTS through 5.2.x. Quad Draw leftovers (#89) move to

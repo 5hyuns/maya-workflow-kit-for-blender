@@ -101,7 +101,9 @@ def s_tick_shot():
 def s_other_frame_shot():
     path = shot("gui_step129_key_other.png")
     _a, r, _h = timeline()
-    x = frame_x(10)
+    # step 186: Maya draws a key tick on the frame's tick = the left edge of its cell (time_slider.key_x)
+    ts = import_module(MODULE + ".ui.time_slider")
+    x = r.x + int(ts.key_x(r, 10, True))
     n = red_in(path, x - 3, x + 4, r.y, r.y + r.height)
     check(f"#38: the key at frame 10 shows a red tick while the time is 20 ({n} red px)", n >= 15)
 

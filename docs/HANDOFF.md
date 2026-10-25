@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 191 (0.4.1 출시 준비) 완료 — `docs/steps/step_191.md`. version 0.4.1, CHANGELOG [0.4.1], `release_notes_0.4.1.md`;
+  release_check 4.5.4 / 5.2.2 각 14 PASS, 헤드리스 전체 1731 / 1731, GUI 전체 묶음 한 번 (15 덩어리) → 킷 버그 2 개 고침 (UV / Image Alt+RMB
+  줌 = step 177 회귀, 위로 그린 마킹 메뉴의 그려지기 전 flick) + 옛 기대 GUI 테스트 갱신. master push, 태그 v0.4.1, 초안 릴리스.
+  **바로 다음 할 일**: Hermes 가 초안 릴리스 v0.4.1 publish · 스토어 업로드; 개발은 새 감사 (재점검 14차) 로 새 backlog (step 192).
+
 - Step 190 (Seven Polygon Primitives, backlog_183.json #8 = 마지막) 완료 — `docs/steps/step_190.md`, mayapy
   `research/maya/re/poly_prims_185.md`. Pipe / Helix / Gear / Soccer Ball (`operators/prim_shapes_more.py`) + Super Ellipse /
   Spherical Harmonics / Ultra Shape (`operators/prim_supershape.py`, polySuperShape 하나) 를 Maya 와 같은 정점 / 면 순서 / UV /

@@ -122,6 +122,8 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
 
     def invoke(self, context, event):
         self._last = (event.mouse_x, event.mouse_y)
+        # the button that started it ends it (step 177 made modal() read this; it was never set here: step 191 fix)
+        self._button = event.type if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE', 'RIGHTMOUSE'} else 'RIGHTMOUSE'
         self._zoom0 = tuple(context.space_data.zoom)
         self.applied = 1.0
         context.window_manager.modal_handler_add(self)

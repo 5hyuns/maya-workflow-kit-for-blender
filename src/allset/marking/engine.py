@@ -659,6 +659,14 @@ class Session:
                 return
             self._pop_to(level)   # another row of a menu under the cascade: the cascade closes
         dx, dy = self._rel(x, y)
+        if self.mode == "PRESS" and len(self.stack) == 1 and self.layout.lifted is not None \
+                and not self.visible(t):
+            # A mark made before the menu is drawn (step 191): the user never saw the menu drawn higher (step 184),
+            # so the stroke is read from the press point like any Maya mark — not against the unseen lifted boxes.
+            px, py = self.press
+            d = direction(x - px, y - py, self.params.dead)
+            item, opt = (self.layout.radial.get(d), False) if d else (None, False)
+            dx, dy = x - px, y - py
         self.hover = (item, opt)
         if item is None or item.sub is None or not item.enabled:
             return

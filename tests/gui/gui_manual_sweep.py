@@ -293,7 +293,8 @@ def m70_3_a():
     check(f"[M70-3] A frames all keys (5..30 in view {x0:.1f}..{x1:.1f})", x0 < 5 and x1 > 30)
     kc = sys.modules["sim"].maya_kc()
     rep = [km.name for km in kc.keymaps for it in km.keymap_items
-           if it.active and it.idname == "screen.repeat_last" and it.type == 'G' and not (it.shift or it.ctrl or it.alt)]
+           if it.active and it.idname in ("screen.repeat_last", "allset.repeat_last")   # step 175: Maya G
+           and it.type == 'G' and not (it.shift or it.ctrl or it.alt)]
     v3d_g = [it.idname for km_name in ("3D View", "Object Mode", "3D View Generic")
              for it in kc.keymaps[km_name].keymap_items if it.active and it.type == 'G' and it.value == 'PRESS'
              and not (it.shift or it.ctrl or it.alt)]
@@ -443,11 +444,15 @@ def m75_4():
     check(f"[M75-4] a missing name: Help Line message, the text stays ({notice()!r}, {inp().text!r})",
           bool(notice()) and inp().text == "nothing*")
     il = mod("ui.input_line")
-    um = mod("ui.menu_sets").ALLSET_OT_menu_unavailable
-    props = type("P", (), {"item": il.HISTORY_PATH})()
-    tip = um.description(bpy.context, props) or ""
-    check(f"[M75-4] the grey History button's tooltip says Blender keeps no construction history ({tip[-80:]!r})",
-          "no construction history" in tip.lower())
+    # step 189: Construction History is Maya's real toggle now (no grey button, no notice)
+    on = bpy.context.window_manager.allset_construction_history
+    with bpy.context.temp_override(window=win()):
+        bpy.ops.allset.construction_history()
+    flipped = bpy.context.window_manager.allset_construction_history
+    with bpy.context.temp_override(window=win()):
+        bpy.ops.allset.construction_history()
+    check(f"[M75-4] the History button toggles Construction History ({on} -> {flipped})",
+          on is True and flipped is False and il.HISTORY_PATH not in mod("ui.notices").PANEL_NOTICES)
     inp().mode = 'ABS'
 
 
