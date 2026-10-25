@@ -529,8 +529,9 @@ def draw_status_line(layout, context, compact=False):
         _field(row, context.scene, "allset_symmetry_text", 5)
         _group_end(layout, "SYMMETRY")
 
-    if _group(layout, "HISTORY"):   # Maya statusLine.mel:3017-3032; Blender keeps no history (step 75)
-        _grey(layout, "history", input_line.HISTORY_PATH)
+    if _group(layout, "HISTORY"):   # Maya statusLine.mel:3017-3032; toggle since step 189 (input_line.draw_history)
+        _flat(layout, input_line.ALLSET_OT_construction_history.bl_idname, "history",
+              depress=context.window_manager.allset_construction_history)
         _group_end(layout, "HISTORY")
 
     if _group(layout, "RENDER"):

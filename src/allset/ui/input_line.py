@@ -21,7 +21,7 @@ import fnmatch
 import re
 
 import bpy
-from bpy.props import EnumProperty, PointerProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, PointerProperty, StringProperty
 from mathutils import Euler, Matrix, Vector
 
 MODES = (
@@ -36,10 +36,7 @@ TOOLS = {"builtin.move": 'MOVE', "builtin.rotate": 'ROTATE', "builtin.scale": 'S
 NAME_RULE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")   # renameSelectionList.mel:81
 _TRAIL = re.compile(r"^(.*?)(\d+)$")
 HISTORY_PATH = "Status Line/Construction History"
-HISTORY_NOTICE = (
-    "Modifiers / the kit's last extrude",
-    "Blender keeps no construction history: modifiers are the live, editable part; the kit remembers only "
-    "its last extrude (In-View Editor).")
+
 
 
 def _say(text):
@@ -290,10 +287,10 @@ class ALLSET_PG_input_line(bpy.types.PropertyGroup):
 
 # --- drawing ------------------------------------------------------------------------------------------
 
-def draw_history(layout):
-    from . import menu_sets
-    layout.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text="",
-                    icon='RECOVER_LAST').item = HISTORY_PATH
+def draw_history(layout, context):
+    """Maya's Construction History toggle (statusLine.mel:3017-3032; step 189): pressed = on."""
+    layout.operator(ALLSET_OT_construction_history.bl_idname, text="", icon='RECOVER_LAST',
+                    depress=context.window_manager.allset_construction_history)
 
 
 def draw(layout, context):
@@ -316,20 +313,36 @@ def draw(layout, context):
         cell.prop(inp, "text", text="", icon='NONE')
 
 
-classes = (ALLSET_PG_input_line,)
+class ALLSET_OT_construction_history(bpy.types.Operator):
+    """Toggle construction history on / off (Maya Status Line): off = new primitives, extrusions and bevels keep no
+    history node"""
+    bl_idname = "allset.construction_history"
+    bl_label = "Construction History"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        wm = context.window_manager
+        wm.allset_construction_history = not wm.allset_construction_history
+        from . import status_line
+        status_line.redraw_top_bars()
+        return {'FINISHED'}
+
+
+classes = (ALLSET_PG_input_line, ALLSET_OT_construction_history)
 
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.allset_input = PointerProperty(type=ALLSET_PG_input_line)
-    from . import notices
-    notices.PANEL_NOTICES[HISTORY_PATH] = HISTORY_NOTICE
+    bpy.types.WindowManager.allset_construction_history = BoolProperty(
+        name="Construction History", default=True,
+        description="Maya Construction History: off = new primitives, extrusions and bevels keep no history node "
+                    "(Channel Box INPUTS / In-View Editor), like Maya's -ch 0")
 
 
 def unregister():
-    from . import notices
-    notices.PANEL_NOTICES.pop(HISTORY_PATH, None)
+    del bpy.types.WindowManager.allset_construction_history
     del bpy.types.Scene.allset_input
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

@@ -77,6 +77,10 @@ from . import character_sets  # noqa: E402  step 187: Maya Character Sets on Key
 
 classes += character_sets.classes
 
+from . import color_sets_maya, normals_maya  # noqa: E402  step 189: Mesh Display normals and colour sets
+
+classes += normals_maya.classes + color_sets_maya.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

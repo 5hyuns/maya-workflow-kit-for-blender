@@ -10,6 +10,13 @@ A leaf's identity = its label (without the "#n" of repeated labels) + the Maya c
 A main-menu command is turned into its annotation through research/maya/runtime_commands.json, so a main item and
 an editor item compare on the same text. Leaves without a known command are skipped (no claim).
 
+Aliases (step 189): a leaf's signature is a set of keys, two leaves are twins when their labels match and the sets meet.
+A runTimeCommand gives its annotation and its underlying command string ("cmd:<command>"), a raw command gives itself,
+"cmd:<command>" and the annotation of every runTimeCommand whose command string is exactly it; a name ending in
+"WithoutHotkey" also stands for the name without that suffix (Maya defines DeleteUVsWithoutHotkey next to the
+hotkeyed DeleteUVs for the menus: same command, same annotation). So the main UV > Delete UVs
+(polyPerformAction polyMapDel f 0) and the UV marking menu's DeleteUVs are one command.
+
 ``pairs(leaves)`` is pure: tests/test_step166_menu_consistency.py feeds it the live kit (``working`` from
 menu_map.MAP / the marking engine's rules); ``main()`` builds the leaves without Blender (tools/menu_count._load).
 """
@@ -37,8 +44,51 @@ def _norm(text):
 
 def annotations():
     """{runTimeCommand name: annotation} (research/maya/runtime_commands.json)."""
-    data = _json(RESEARCH / "runtime_commands.json")["runtime_commands"]
-    return {r["name"]: r.get("annotation") or "" for r in data}
+    return {name: ann for name, (ann, _cmd) in runtime_table().items()}
+
+
+_TABLE = {}
+
+
+def runtime_table():
+    """{runTimeCommand name: (annotation, command string)} (research/maya/runtime_commands.json), cached."""
+    if not _TABLE:
+        for r in _json(RESEARCH / "runtime_commands.json")["runtime_commands"]:
+            _TABLE[r["name"]] = (r.get("annotation") or "", r.get("command") or "")
+    return _TABLE
+
+
+def _alias(name):
+    return name[:-len("WithoutHotkey")] if name.endswith("WithoutHotkey") else name
+
+
+def rtc_keys(name):
+    """Signature keys of a runTimeCommand (and its WithoutHotkey alias): annotation + "cmd:<command>"."""
+    table = runtime_table()
+    keys = set()
+    for n in {name, _alias(name)}:
+        ann, cmd = table.get(n, ("", ""))
+        if ann:
+            keys.add(_norm(ann))
+        if cmd and "$" not in cmd:
+            keys.add("cmd:" + _cmd(cmd))
+    return frozenset(keys)
+
+
+def _cmd(text):
+    return _norm(text).rstrip(";").strip()
+
+
+_BY_COMMAND = {}
+
+
+def _by_command():
+    """{normalised command string: {annotations of the runTimeCommands running exactly it}}."""
+    if not _BY_COMMAND:
+        for ann, cmd in runtime_table().values():
+            if cmd and ann:
+                _BY_COMMAND.setdefault(_cmd(cmd), set()).add(_norm(ann))
+    return _BY_COMMAND
 
 
 def by_category():
@@ -115,25 +165,41 @@ def marking_commands():
     return out
 
 
-def signature(command, notes):
-    """Comparable text of a Maya command: its runTimeCommand's annotation when it is one, else the command."""
+def signature(command, notes=None):
+    """Comparable keys of a Maya command (frozenset; see the module doc): a runTimeCommand -> its annotation +
+    command string, a raw command -> itself + the annotations of the runTimeCommands that run exactly it."""
     if not command or "$" in command or "<" in command:
         return None                     # built at run time ($cmd): nothing to compare
     word = command.split()[0].rstrip(";")
-    if word in notes and notes[word]:
-        return _norm(notes[word])
-    return _norm(command)
+    table = runtime_table()
+    if word in table or _alias(word) in table:
+        return rtc_keys(word) or None
+    c = _cmd(command)
+    return frozenset({c, "cmd:" + c} | _by_command().get(c, set()))
+
+
+def _keys(sig):
+    if not sig:
+        return ()
+    return (sig,) if isinstance(sig, str) else tuple(sig)
 
 
 def pairs(leaves):
-    """``leaves`` = [(path, signature, working)]; [(greyed path, working path)] for every greyed leaf whose
-    label + signature equals a working leaf's."""
+    """``leaves`` = [(path, signature, working)] (signature = a string or a set of keys); [(greyed path, working
+    path)] for every greyed leaf whose label + one signature key equals a working leaf's."""
     working = {}
     for path, sig, ok in leaves:
-        if sig and ok:
-            working.setdefault((base_label(path), sig), path)
-    return sorted({(path, working[(base_label(path), sig)]) for path, sig, ok in leaves
-                   if sig and not ok and (base_label(path), sig) in working})
+        if ok:
+            for key in _keys(sig):
+                working.setdefault((base_label(path), key), path)
+    out = set()
+    for path, sig, ok in leaves:
+        if ok:
+            continue
+        hits = sorted(working[(base_label(path), key)] for key in _keys(sig) if (base_label(path), key) in working)
+        if hits:
+            out.add((path, hits[0]))
+    return sorted(out)
 
 
 def menu_leaves(paths_working):
@@ -145,12 +211,12 @@ def menu_leaves(paths_working):
     out = []
     for path, ok in paths_working:
         if path in eds:
-            sig = _norm(eds[path])
+            sig = frozenset({_norm(eds[path])})
         else:
             sig = signature(main.get(path), notes)
             if sig is None:
                 rtc = cats.get((path.rsplit("/", 1)[0], base_label(path)))
-                sig = _norm(notes.get(rtc)) if rtc else None
+                sig = (rtc_keys(rtc) or None) if rtc else None
         out.append((path, sig, ok))
     return out
 
@@ -175,7 +241,7 @@ def panel_leaves(pmd):
     for _family, path, ok in pmd.leaves():
         label = base_label(path)
         rtc = pmd.COMMANDS.get(label)
-        sig = _norm(notes.get(rtc)) if rtc and notes.get(rtc) else "panel:" + _norm(label)
+        sig = (rtc_keys(rtc) if rtc and notes.get(rtc) else None) or frozenset({"panel:" + _norm(label)})
         out.append((path, sig, ok))
     return out
 

@@ -1233,3 +1233,8 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 ## Step 188
 
 - [ ] Object in AnimLayer1 with a key on the layer, Auto Key on: move it at another frame = a key on AnimLayer1 (Graph Editor), the pose stays after scrubbing; Channel Box select Translate Y + Channels > Remove From Selected Layers = its layer curve gone; Windows > Relationship Editors > Animation Layers raises the Layer Editor's Anim tab.
+
+## Step 189
+
+- [ ] Status Line: open the Construction History group (▶ after Symmetry), click the button off, Create > Polygon Primitives > Cube = no polyCube1 in Channel Box INPUTS; Ctrl+E on a face = no In-View Editor / polyExtrudeFace; click it on again and both come back. File > New keeps it off.
+- [ ] Mesh Display: select two cube vertices, Set Vertex Normal ❒ Y = 1 → the shading turns at those corners; Unlock Normals on one of them = back to the hard face shading. Apply Color on faces in face mode colours only those faces (Solid view > Attribute colour); Modify Current Set with Value 2 brightens; Prelight with a sun bakes lit colours (Cycles). Panel Show > IK Handles hides / shows ikHandle empties; Image Planes too.

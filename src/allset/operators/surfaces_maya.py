@@ -506,6 +506,16 @@ class ALLSET_OT_surface_insert_isoparm(_SurfOp, bpy.types.Operator):
     bl_idname = "allset.surface_insert_isoparm"
     bl_label = "Insert Isoparms"
 
+    # Maya option box (performInsertKnot.mel:239-262; insertKnotSetOptionVars.mel:50-66 factory: At selection,
+    # Increase, 1, Keep original off) — step 189
+    between: BoolProperty(name="Between selections", default=False, options={'SKIP_SAVE'},
+                          description="Insert evenly between the selected rows / columns instead of at them")
+    increase: BoolProperty(name="Increase", default=True, options={'SKIP_SAVE'},
+                           description="Multiplicity: on = increase it by the count, off = set it to the count")
+    count: IntProperty(name="Count", default=1, min=1, max=7, options={'SKIP_SAVE'},
+                       description="Multiplicity (at selection) or isoparms to insert (between selections)")
+    keep_original: BoolProperty(name="Keep original", default=False, options={'SKIP_SAVE'})
+
     def execute(self, context):
         picked = _picked_lines(context)
         if picked is None:
@@ -513,13 +523,38 @@ class ALLSET_OT_surface_insert_isoparm(_SurfOp, bpy.types.Operator):
             return {'CANCELLED'}
         ob, s, direction, ts, *_rest = picked
         ts = _interior(s, direction, ts)
+        if self.between:
+            ts = between_params(ts, self.count)
+            if not ts:
+                self.report({'WARNING'}, "Select two rows or columns of surface CVs to insert isoparms between.")
+                return {'CANCELLED'}
         if not ts:
             self.report({'WARNING'}, "Pick CVs inside the surface, not on its border.")
             return {'CANCELLED'}
         for t in ts:
-            s = sm.insert_knot(s, direction, t)
+            times = 1 if self.between else insert_times(s, direction, t, self.count, self.increase)
+            if times:
+                s = sm.insert_knot(s, direction, t, times)
+        if self.keep_original:
+            return _done(self, context, [new_surface(context, f"{ob.name}insertedSurface", s, select=False)])
         replace_surface(context, ob, s)
         return _done(self, context, [ob])
+
+
+def between_params(ts, count):
+    """Maya Insert location Between selections: ``count`` parameters evenly inside each pair of picked ones."""
+    ts = sorted(ts)
+    return [a + (b - a) * k / (count + 1) for a, b in zip(ts, ts[1:]) for k in range(1, count + 1)]
+
+
+def insert_times(s, direction, t, count, increase):
+    """How many knots to insert at ``t``: Increase = ``count``; Set = up to multiplicity ``count`` (nothing when it
+    is already that high); never past the degree (a full-multiplicity knot)."""
+    knots = s.knots_u if direction == "U" else s.knots_v
+    degree = s.degree_u if direction == "U" else s.degree_v
+    have = sum(1 for k in knots if abs(k - t) < 1e-9)
+    want = have + count if increase else count
+    return max(0, min(want, degree) - have)
 
 
 def _span(knots, lo, hi):

@@ -345,10 +345,11 @@ MAP = {
     "Mesh Tools/Target Weld": ("tool", "allset.target_weld_tool", True),     # step 64
     "Mesh Tools/Crease Tool": ("tool", "allset.crease_tool", True),
     # --- Mesh Display ---
-    "Mesh Display/Average": "mesh.average_normals",
+    "Mesh Display/Average": "allset.average_normals",     # step 189: Maya distance rule (normals_maya.py)
     "Mesh Display/Conform": "mesh.normals_make_consistent",
     "Mesh Display/Reverse": "mesh.flip_normals",
-    "Mesh Display/Set to Face": "mesh.set_normals_from_faces",
+    "Mesh Display/Set to Face": "allset.set_to_face_normal",
+    "Mesh Display/Set Vertex Normal": "allset.set_vertex_normal",
     # Maya polySoftEdge: edges selected = those, object = every edge (step 101, mayapy)
     "Mesh Display/Harden Edge": ("allset.soften_harden", {"angle": 0.0}),
     "Mesh Display/Soften Edge": ("allset.soften_harden", {"angle": 180.0}),
@@ -707,11 +708,21 @@ MAP.update({
         ("Bulge", "Inflate/Deflate"), ("Amplify", "Sharpen"), ("Freeze", "Mask"))},
     # Mesh Display
     "Mesh Display/Soften/Harden Edges": "allset.soften_harden",
-    "Mesh Display/Lock Normals": "mesh.customdata_custom_splitnormals_add",
-    "Mesh Display/Unlock Normals": "mesh.customdata_custom_splitnormals_clear",
+    "Mesh Display/Lock Normals": "allset.lock_normals",     # step 189: only the selection (Maya)
+    "Mesh Display/Unlock Normals": ("allset.lock_normals", {"unlock": True}),
     "Mesh Display/Vertex Normal Edit Tool": ("v3d", "transform.rotate_normal", {}),
     "Mesh Display/Create Empty Set": "geometry.color_attribute_add",
     "Mesh Display/Delete Current Set": "geometry.color_attribute_remove",
+    # step 189: Maya colour commands (operators/color_sets_maya.py, research/maya/re/mesh_display_184_colors.md)
+    "Mesh Display/Apply Color": "allset.apply_color",
+    "Mesh Display/Rename Current Set...": "allset.color_set_rename",
+    "Mesh Display/Modify Current Set": "allset.color_set_modify",
+    "Mesh Display/Set Keyframe for Vertex Color": "allset.color_keyframe",
+    "Mesh Display/Prelight (Maya)": "allset.prelight",
+    "Mesh Display/Assign New Set": "allset.bake_set_assign_new",
+    "Mesh Display/Assign Existing Set": "allset.bake_set_assign",
+    "Mesh Display/Edit Assigned Set": "allset.bake_set_edit",
+    "Mesh Display/Per Instance Sharing/Select Shared Instances": "allset.select_shared_instances",
     "Mesh Display/Color Set Editor": _props('DATA'),
     "Mesh Display/Toggle Display Colors Attribute": ("v3d", "wm.context_set_enum",
                                                      {"data_path": "space_data.shading.color_type",
@@ -1046,7 +1057,13 @@ TWINS = {
     "UV Editor/Tools/Cut": "UV Editor/Cut/Sew/Cut",
     "UV Editor/Tools/Sew": "UV Editor/Cut/Sew/Sew",
     "UV Editor/Tools/Pin": "UV Editor/Edit/Pin Selection",
+    # step 189: runTimeCommand aliases (tools/menu_consistency.py module doc) — the main UV > Delete UVs runs
+    # DeleteUVsWithoutHotkey = the marking menu's DeleteUVs (polyPerformAction polyMapDel f 0, ModelingUVMenu.mel:208);
+    # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (ModifyCurvesSubMenu.mel:39, 51)
+    "nHair/Modify Curves/Smooth": "Curves/Smooth",
+    "nHair/Modify Curves/Straighten": "Curves/Straighten",
 }
+MAP.setdefault("UV/Delete UVs", "allset.uv_delete")   # step 189 (audit 13 BS1): main menu twin of the UV marking menu
 for _twin, _source in TWINS.items():
     if _twin not in MAP and _source in MAP:
         MAP[_twin] = MAP[_source]

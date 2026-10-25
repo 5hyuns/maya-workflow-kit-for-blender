@@ -2,6 +2,23 @@
 
 ## 현재 작업
 
+- Step 189 (Mesh Display and greyed twins, backlog_183.json #7) 완료 — `docs/steps/step_189.md`, mayapy
+  `research/maya/re/mesh_display_184.md` (노멀 + Construction History) / `mesh_display_184_colors.md`. Mesh Display 15 → 25 / 39
+  (64 %: Set Vertex Normal, 선택만 Lock / Unlock, Maya 거리 Average, Set to Face, Apply Color, Rename / Modify Current Set,
+  색 키, Prelight + bake sets, Select Shared Instances), `menu_consistency` runtime 별칭 (메인 UV > Delete UVs, nHair Smooth /
+  Straighten 연결 → 0), 패널 Show IK Handles / Image Planes, Insert Isoparms Maya 창, Status Line Construction History 실제 토글.
+  헤드리스 전체 1727 / 1727, GUI step177 9 / 9 + step189 3 / 3.
+  **바로 다음 할 일**: 190 Seven Polygon Primitives (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  8 번째 = 마지막: Pipe, Helix, Gear, Soccer Ball, Super Ellipse, Spherical Harmonics, Ultra Shape — mayapy 측정,
+  `operators/prim_shapes.py` / `prim_history.KIND_NODES`), 그 뒤 새 감사 (재점검 14차).
+
+- **체크포인트 2026-10-25 (/sc:save, 188 후)** — 지금 단계: **188 완료 · 커밋됨** (`71ad1bc`). 185 (`cb2bacb`), 186 (`bff9a3b`),
+  187 (`c724160`), 188 모두 커밋; push 안 함. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ 추적 안 함).
+  헤드리스 전체 1707 / 1707 (188 끝), GUI 는 단계별 파일만.
+  **바로 다음 할 일**: 189 Mesh Display and greyed twins (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  7 번째: Mesh Display 15 / 39 — Set Vertex Normal, Lock / Unlock / Average Normals 등 + 회색 쌍둥이), 그 뒤 190 Seven Polygon
+  Primitives (8 번째 = backlog_183 마지막).
+
 - Step 188 (Animation layer follow-ups, backlog_183.json #6) 완료 — `docs/steps/step_188.md`, mayapy `research/maya/re/anim_layers_188.md`.
   kit Auto Key 가 레이어 오브젝트를 Maya 처럼 (선택 레이어에 키가 있는 속성만, 푼 값), Channels > Add to / Remove From Selected Layers
   (속성 멤버 `allset_layer_attrs`, 비멤버 키 = Base), Relationship Editors > Animation Layers = Layer Editor Anim 탭. 헤드리스 1707 / 1707,
