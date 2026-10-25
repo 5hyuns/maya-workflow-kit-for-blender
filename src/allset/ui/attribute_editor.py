@@ -499,7 +499,8 @@ def draw_history(layout, context, ob, md):
     if body is not None:
         col = body.column()
         col.prop(md, "show_viewport", text="Enabled (Node State)")
-        for ident in modifier_props(md):
+        from ..operators import deformers_205b
+        for ident in ([] if deformers_205b.draw_ae(col, md) else modifier_props(md)):   # step 205: Morph / Jiggle
             col.prop(md, ident, text=attr_label(context, md.bl_rna.properties[ident].name, ident))
     row = layout.row(align=True)
     op = row.operator("allset.ae_modifier", text="Delete History")

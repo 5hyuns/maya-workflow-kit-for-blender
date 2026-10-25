@@ -18,16 +18,17 @@ internal, $M = scripts):
   transform a ``pinInput`` locator holding the transform's matrix relative to the geometry, the transform cleared and
   driven by the node. Components setup: "Not yet implemented...".
 
-The kit (delegated, no Maya checked yet —  will hold the Maya check): a pinned
-transform gets a Copy Transforms constraint named like the Maya node (``uvPin1``) in mode Before Original (Full) —
-world = pin matrix @ own channels, Maya's offsetParentMatrix — targeting a hidden helper empty that a depsgraph /
-frame handler keeps at the pin matrix (the pattern of operators/constrain_199.py). The pin matrix is computed on the
-geometry's *deformed* points (evaluated mesh when its topology equals the mesh's, else the deform-only cage, so the
-kit's display-only smooth preview never moves a pin): UV Pin = the triangle containing the stored UV, Proximity Pin =
-the point of the *original* mesh closest to pinInput, carried to the same triangle / barycentric point of the deformed
-mesh, times the creation offset (Maintain offset). Assumptions to confirm against Maya : the frame's normal is the
-barycentric mix of vertex normals, the tangent is dP/du of the triangle (UV) or its edge nearest the point (Edge),
-orthonormalised, no scale.
+The kit: a pinned transform gets a Copy Transforms constraint named like the Maya node (``uvPin1``) in mode Before
+Original (Full) — world = pin matrix @ own channels, Maya's offsetParentMatrix with inheritsTransform off (the
+"Inherit transform has been turned off" warning lists every pinned existing transform, like Maya) — targeting a hidden
+helper empty that a depsgraph / frame handler keeps at the pin matrix (the pattern of operators/constrain_199.py). The
+pin matrix follows Maya's checked rules (, checked within 1e-4 against Maya by
+tests/test_step205_pins_maya.py): quad locations are bilinear (s, t), normal = blend of Maya vertex normals (unit
+face-normal average), tangent = dP/du of the face's first triangle; UV Pin = the frame at the stored UV on the deformed
+mesh; Proximity Pin = the closest point of the *original* mesh to pinInput at every evaluation, output = F1 · F0⁻¹ ·
+input (Offset Translation 0 = on the surface, Offset Orientation 0 = Edge / UV orientation, Envelope = slerp / lerp
+towards the input). Deformed points = the evaluated mesh when its topology equals the mesh's (the smooth preview: its
+first vertices).
 
 Intermediate objects ($M/others/Maya-410): Maya's intermediate object of a deformed shape is its
 ``<shape>Orig`` (every mesh deformer adds one, ); Display sets intermediateObject 0
@@ -61,7 +62,10 @@ GEOM = "allset_pin_geometry"         # helper empty: the geometry (mesh object)
 UV = "allset_pin_uv"                 # uvPin helper: (u, v)
 INPUT = "allset_pin_input"           # proximityPin helper: pinInput object (None = stored matrix INPUT_MATRIX)
 INPUT_MATRIX = "allset_pin_input_matrix"
-OFFSET = "allset_pin_offset"         # proximityPin helper: maintain offset
+OFFSET = "allset_pin_offset"         # proximityPin helper: maintain offset (the default of the two below)
+OFFSET_T = "allset_pin_offset_translation"   # proximityPin helper: Maya offsetTranslation (0..1)
+OFFSET_O = "allset_pin_offset_orientation"   # proximityPin helper: Maya offsetOrientation (0..1)
+ENVELOPE = "allset_pin_envelope"     # proximityPin helper: Maya envelope (0..1)
 MODE = "allset_pin_mode"             # "edge" | "uv" (coordinate system of the tangent)
 AXES = "allset_pin_axes"             # (normal axis, tangent axis), 0..5 = X Y Z -X -Y -Z
 INTERMEDIATE_OF = "allset_intermediate_of"
@@ -90,6 +94,13 @@ MSG_NO_WRAP = "No wrap deformer is associated with surface {0}."
 
 
 # --- geometry: original and deformed points of one mesh -------------------------------------------------------
+#
+# Maya's pin surface frame, checked (, pins_model.py; every "O" case within 1.4e-7):
+# a location is (face, weights over its corners) — on a quad the bilinear (s, t) of its corners f0 f1 f2 f3, found
+# from the UV (UV Pin) or the closest point (Proximity Pin); position = the same blend of the corner points, normal =
+# the same blend of Maya vertex normals (normalised sum of the unit face normals around the vertex), tangent = dP/du
+# of the face's FIRST Maya triangle (f0, f1, f[-1]) made orthogonal to the normal; the normal / tangent go to the
+# chosen axes and the third axis completes a right-handed frame. N-gons / triangles use the triangle barycentrics .
 
 def _vec_array(coll, attr, n, dim=3):
     a = np.empty(n * dim, dtype=np.float64)
@@ -97,8 +108,38 @@ def _vec_array(coll, attr, n, dim=3):
     return a.reshape(n, dim)
 
 
+def _int_array(coll, attr, n):
+    a = np.empty(n, dtype=np.int64)
+    coll.foreach_get(attr, a)
+    return a
+
+
+def _unit_rows(a):
+    n = np.linalg.norm(a, axis=1)
+    return a / np.where(n > 1e-30, n, 1.0)[:, None]
+
+
+def _inv_bilinear(q, x):
+    """(s, t) in [0, 1]² with (1-s)(1-t)q0 + s(1-t)q1 + st q2 + (1-s)t q3 closest to ``x`` (Gauss-Newton; exact on a
+    UV rectangle / planar quad)."""
+    s = t = 0.5
+    for _i in range(40):
+        b = (1 - s) * (1 - t) * q[0] + s * (1 - t) * q[1] + s * t * q[2] + (1 - s) * t * q[3]
+        bs = (1 - t) * (q[1] - q[0]) + t * (q[2] - q[3])
+        bt = (1 - s) * (q[3] - q[0]) + s * (q[2] - q[1])
+        j = np.stack([bs, bt], axis=1)
+        jtj = j.T @ j
+        if abs(np.linalg.det(jtj)) < 1e-30:
+            break
+        d = np.linalg.solve(jtj, j.T @ (x - b))
+        s, t = s + d[0], t + d[1]
+        if abs(d[0]) + abs(d[1]) < 1e-15:
+            break
+    return min(max(s, 0.0), 1.0), min(max(t, 0.0), 1.0)
+
+
 class Geo:
-    """A mesh's triangles (original topology), UVs and its original (local) / deformed (local) points + normals."""
+    """A mesh's faces / triangles (original topology), UVs and its original (local) / deformed (local) points."""
 
     def __init__(self, ob, depsgraph):
         me = ob.data
@@ -107,45 +148,69 @@ class Geo:
         self.ok = nt > 0
         if not self.ok:
             return
-        self.tv = np.empty(nt * 3, dtype=np.int64)
-        tris.foreach_get("vertices", self.tv)
-        self.tv = self.tv.reshape(nt, 3)
-        tl = np.empty(nt * 3, dtype=np.int64)
-        tris.foreach_get("loops", tl)
-        tl = tl.reshape(nt, 3)
-        self.tp = np.empty(nt, dtype=np.int64)
-        tris.foreach_get("polygon_index", self.tp)
+        self.tv = _int_array(tris, "vertices", nt * 3).reshape(nt, 3)
+        self.tl = _int_array(tris, "loops", nt * 3).reshape(nt, 3)
+        self.tp = _int_array(tris, "polygon_index", nt)
+        npoly, nl = len(me.polygons), len(me.loops)
+        self.ls = _int_array(me.polygons, "loop_start", npoly)
+        self.lt = _int_array(me.polygons, "loop_total", npoly)
+        self.lv = _int_array(me.loops, "vertex_index", nl)
         uvl = me.uv_layers.active
-        if uvl is not None:
-            uv = _vec_array(uvl.uv, "vector", len(me.loops), 2)
-            self.tuv = uv[tl]
-        else:
-            self.tuv = None
+        self.luv = _vec_array(uvl.uv, "vector", nl, 2) if uvl is not None else None
+        self.tuv = self.luv[self.tl] if self.luv is not None else None
         nv = len(me.vertices)
         self.co0 = _vec_array(me.vertices, "co", nv)
-        self.no0 = _vec_array(me.vertex_normals, "vector", nv)
         ev = ob.evaluated_get(depsgraph) if depsgraph is not None else ob
         self.mw = np.array(ev.matrix_world, dtype=np.float64)
         em = ev.data
-        if len(em.vertices) == nv and len(em.polygons) == len(me.polygons):
+        if len(em.vertices) == nv and len(em.polygons) == npoly:
             self.co = _vec_array(em.vertices, "co", nv)
-            self.no = _vec_array(em.vertex_normals, "vector", nv)
         elif len(em.vertices) > nv:
             # a subdivided result (the kit's smooth preview): Blender's subdivision writes the mesh's own vertices
             # first (checked, 4.5), at their smoothed place — the pin rides the displayed surface. Maya's preview is
             # display only (the pin keeps the unsmoothed shape) [delegated]: Blender can't give the deformed,
             # unsubdivided points here (BMesh.from_object(cage=True) applies deform modifiers twice, checked).
             self.co = _vec_array(em.vertices, "co", len(em.vertices))[:nv]
-            self.no = _vec_array(em.vertex_normals, "vector", len(em.vertices))[:nv]
         else:
-            self.co, self.no = self.co0, self.no0
+            self.co = self.co0
+        self._normals = {}
 
     def world_points(self):
         m = self.mw
         return self.co @ m[:3, :3].T + m[:3, 3]
 
+    def normals(self, deformed=True):
+        """Maya vertex normals (local): normalised sum of the unit (Newell) face normals around each vertex."""
+        got = self._normals.get(deformed)
+        if got is None:
+            co = self.co if deformed else self.co0
+            npoly, nl = len(self.ls), len(self.lv)
+            poly = np.repeat(np.arange(npoly), self.lt)
+            nxt = np.arange(1, nl + 1)
+            nxt[self.ls + self.lt - 1] = self.ls
+            fn = np.zeros((npoly, 3))
+            np.add.at(fn, poly, np.cross(co[self.lv], co[self.lv[nxt]]))
+            vn = np.zeros_like(co)
+            np.add.at(vn, self.lv, _unit_rows(fn)[poly])
+            got = self._normals[deformed] = _unit_rows(vn)
+        return got
+
+    def _loc(self, t, bw, coords):
+        """Location (face, corner weights) from triangle t / barycentric bw; quads get Maya's bilinear (s, t) of the
+        point ``coords[corners]`` blend (UVs or points)."""
+        p = int(self.tp[t])
+        ls, lt = int(self.ls[p]), int(self.lt[p])
+        if lt == 4:
+            q = coords[ls:ls + 4]
+            s, tt = _inv_bilinear(q, np.asarray(bw) @ coords[self.tl[t]])
+            return p, np.array([(1 - s) * (1 - tt), s * (1 - tt), s * tt, (1 - s) * tt])
+        w = np.zeros(lt)
+        for k in range(3):
+            w[int(self.tl[t][k]) - ls] += bw[k]
+        return p, w
+
     def closest(self, p, original=False, world=True):
-        """(triangle, barycentric) of the closest point to ``p`` on the deformed (world) / original (local) mesh."""
+        """Location of the closest point to ``p`` on the deformed (world) / original (local) mesh."""
         from mathutils.bvhtree import BVHTree
         pts = self.co0 if original else (self.world_points() if world else self.co)
         bvh = BVHTree.FromPolygons([tuple(x) for x in pts.tolist()], self.tv.tolist())
@@ -153,10 +218,10 @@ class Geo:
         if hit is None or hit[2] is None:
             return None
         t = int(hit[2])
-        return t, _bary(np.array(hit[0], dtype=np.float64), pts[self.tv[t]])
+        return self._loc(t, _bary(np.array(hit[0], dtype=np.float64), pts[self.tv[t]]), pts[self.lv])
 
     def at_uv(self, uv):
-        """(triangle, barycentric) of the triangle whose UVs contain ``uv`` (else the nearest one, clamped)."""
+        """Location of ``uv`` (the triangle whose UVs contain it, else the nearest one, clamped)."""
         if self.tuv is None:
             return None
         a, b, c = self.tuv[:, 0], self.tuv[:, 1], self.tuv[:, 2]
@@ -178,16 +243,22 @@ class Geo:
         t = int(np.argmax(worst))
         w = np.clip(np.array([w0[t], w1[t], w2[t]]), 0.0, None)
         s = w.sum()
-        return t, (w / s if s > 0 else np.array([1 / 3, 1 / 3, 1 / 3]))
+        return self._loc(t, w / s if s > 0 else np.array([1 / 3, 1 / 3, 1 / 3]), self.luv)
 
-    def uv_at(self, t, w):
-        return tuple((self.tuv[t] * np.asarray(w)[:, None]).sum(0)) if self.tuv is not None else None
+    def uv_at(self, loc):
+        if self.luv is None or loc is None:
+            return None
+        p, w = loc
+        ls = int(self.ls[p])
+        return tuple((self.luv[ls:ls + len(w)] * np.asarray(w)[:, None]).sum(0))
 
-    def frame(self, t, w, mode, axes, deformed=True, world=True):
-        """4x4 pin frame (numpy) at triangle t / barycentric w: deformed points in world space, or original local."""
-        co, no = (self.co, self.no) if deformed else (self.co0, self.no0)
-        idx = self.tv[t]
-        P, N = co[idx], no[idx]
+    def frame(self, loc, axes=(0, 1), deformed=True, world=True):
+        """4x4 Maya pin frame (numpy, column vectors) at ``loc``: deformed points in world space, or original local."""
+        p, w = loc
+        ls, lt = int(self.ls[p]), int(self.lt[p])
+        vs = self.lv[ls:ls + lt]
+        P = (self.co if deformed else self.co0)[vs]
+        N = self.normals(deformed)[vs]
         if world:
             m3, tr = self.mw[:3, :3], self.mw[:3, 3]
             P = P @ m3.T + tr
@@ -196,24 +267,20 @@ class Geo:
             except np.linalg.LinAlgError:
                 pass
         w = np.asarray(w, dtype=np.float64)
-        pos = (P * w[:, None]).sum(0)
-        n = (N * w[:, None]).sum(0)
-        fn = np.cross(P[1] - P[0], P[2] - P[0])
+        pos = w @ P
+        n = w @ N
         if np.linalg.norm(n) < 1e-12:
-            n = fn
+            n = np.cross(P[1] - P[0], P[-1] - P[0])
         n = n / (np.linalg.norm(n) or 1.0)
         tan = None
-        if mode == "uv" and self.tuv is not None:
-            uv = self.tuv[t]
-            e1, e2 = P[1] - P[0], P[2] - P[0]
-            du1, dv1 = uv[1] - uv[0]
-            du2, dv2 = uv[2] - uv[0]
-            den = du1 * dv2 - du2 * dv1
-            if abs(den) > 1e-18:
-                tan = (e1 * dv2 - e2 * dv1) / den
+        e = np.stack([P[1] - P[0], P[-1] - P[0]], axis=1)          # the first Maya triangle f0, f1, f[-1]
+        if self.luv is not None:
+            uv = self.luv[ls:ls + lt]
+            a = np.stack([uv[1] - uv[0], uv[-1] - uv[0]], axis=1)
+            if abs(np.linalg.det(a)) > 1e-18:
+                tan = (e @ np.linalg.inv(a))[:, 0]                  # dP/du
         if tan is None:
-            k = int(np.argmin(w))                     # the triangle edge nearest the point
-            tan = P[(k + 2) % 3] - P[(k + 1) % 3]
+            tan = e[:, 0]                                           # no UVs: the edge f0 -> f1 [delegated]
         tan = tan - n * float(np.dot(tan, n))
         if np.linalg.norm(tan) < 1e-12:
             tan = np.cross(n, (1.0, 0.0, 0.0))
@@ -309,28 +376,72 @@ def _input_matrix(h):
     return None
 
 
+def offsets(h):
+    """(Offset Translation, Offset Orientation, Envelope) of a proximityPin helper (Maya keyable attributes; Maintain
+    offset on = 1 / 1, off = 0 / 0)."""
+    on = 1.0 if h.get(OFFSET, True) else 0.0
+    return (float(h.get(OFFSET_T, on)), float(h.get(OFFSET_O, on)), float(h.get(ENVELOPE, 1.0)))
+
+
+def _rot_blend(a, b, f):
+    """3x3 rotation slerp a -> b by f (the scale of ``a`` kept)."""
+    qa = Matrix(a.tolist()).to_quaternion()
+    qb = Matrix(b.tolist()).to_quaternion()
+    m = qa.slerp(qb, f).to_matrix()
+    sc = np.linalg.norm(a, axis=0)
+    return np.array(m, dtype=np.float64) * sc[None, :]
+
+
+def _orientation_base(inp, geo, loc, mode, axes):
+    """Offset Orientation 0 (deform_205.md): Edge = the input turned by the minimal rotation taking its normal axis
+    onto the rest normal n0; UV = the rest frame on the normal / tangent options."""
+    if mode == "uv":
+        return geo.frame(loc, axes, deformed=False, world=False)[:3, :3]
+    na = axes[0]
+    r = inp[:3, :3]
+    ax = Vector(r[:, na % 3] * (1.0 if na < 3 else -1.0))
+    n0 = Vector(geo.frame(loc, (0, 1), deformed=False, world=False)[:3, 0])
+    if ax.length < 1e-12:
+        return r
+    turn = np.array(ax.normalized().rotation_difference(n0).to_matrix(), dtype=np.float64)
+    return turn @ r
+
+
 def pin_matrix(h, geo):
-    """World matrix (numpy 4x4) the pin puts its output at, or None."""
+    """World matrix (numpy 4x4) the pin puts its output at, or None ()."""
     axes = tuple(h.get(AXES, (0, 1)))
-    mode = h.get(MODE, "uv" if h.get(KIND) == "uvPin" else "edge")
     if h.get(KIND) == "uvPin":
+        # UV Pin: the frame at the stored UV on the deformed mesh (the target's own rotation is dropped)
         uv = h.get(UV)
-        hit = geo.at_uv(tuple(uv)) if uv is not None else None
-        if hit is None:
-            return None
-        return geo.frame(hit[0], hit[1], mode, axes)
+        loc = geo.at_uv(tuple(uv)) if uv is not None else None
+        return geo.frame(loc, axes) if loc is not None else None
+    # Proximity Pin: each evaluation the closest point to the input on the ORIGINAL mesh (moving pinInput moves the
+    # pin); output = F1 · F0⁻¹ · wanted (Maya row vectors: M · F0⁻¹ · F1), F0 / F1 = rest / deformed frames (X, Y).
+    mode = h.get(MODE, "edge")
     inp = _input_matrix(h)
     if inp is None:
         return None
-    hit = geo.closest(inp[:3, 3], original=True)
-    if hit is None:
+    loc = geo.closest(inp[:3, 3], original=True)
+    if loc is None:
         return None
-    t, w = hit
-    deformed = geo.frame(t, w, mode, axes)
-    if not h.get(OFFSET, True):
-        return deformed
-    orig = geo.frame(t, w, mode, axes, deformed=False, world=False)
-    return deformed @ np.linalg.inv(orig) @ inp
+    off_t, off_o, env = offsets(h)
+    f0 = geo.frame(loc, (0, 1), deformed=False, world=False)
+    f1 = geo.frame(loc, (0, 1))
+    want = inp.copy()
+    if off_t != 1.0:
+        want[:3, 3] = off_t * inp[:3, 3] + (1.0 - off_t) * f0[:3, 3]      # 0 = on the surface
+    if off_o != 1.0:
+        base = _orientation_base(inp, geo, loc, mode, axes)
+        want[:3, :3] = base if off_o == 0.0 else _rot_blend(base, inp[:3, :3], off_o)   # between 0 and 1 [delegated]
+    out = f1 @ np.linalg.inv(f0) @ want
+    if env != 1.0:
+        # Envelope: rotation slerp(input, pinned, e), translation lerp (the input as the geometry carries it at rest)
+        src = geo.mw @ inp
+        res = np.identity(4)
+        res[:3, :3] = _rot_blend(src[:3, :3], out[:3, :3], env)
+        res[:3, 3] = (1.0 - env) * src[:3, 3] + env * out[:3, 3]
+        out = res
+    return out
 
 
 def update(depsgraph=None):
@@ -549,11 +660,11 @@ def uv_pin(context, setup='TRANSFORMS', output='CURRENT', normal_axis="X", tange
             hit = geo.closest(np.array(target.matrix_world.translation, dtype=np.float64))
             if hit is None:
                 continue
-            uv = geo.uv_at(*hit)
+            uv = geo.uv_at(hit)
         if output != 'CURRENT':
             target = _empty(context, "pinOutput", geom, size=None if output == 'LOCATOR' else 0.0)
-        elif target.parent is not None:
-            inherit.append(target.name)
+        else:
+            inherit.append(target.name)          # Maya turns inheritsTransform off on every pinned transform
         _pin_output(context, "uvPin", node, i, target, geom, {UV: list(uv), AXES: axes, MODE: "uv"})
         pinned.append(target)
     update(depsgraph)
@@ -585,7 +696,9 @@ def proximity_pin(context, setup='TRANSFORMS', output='CURRENT', input_='LOCATOR
     pinned, inputs, inherit = [], [], []
     for i, target in enumerate(targets):
         rel = gm @ target.matrix_world          # Maya matchTransform to the geometry: the input in geometry space
-        props = {OFFSET: bool(maintain_offset), AXES: axes, MODE: "uv" if mode == 'UV' else "edge"}
+        on = 1.0 if maintain_offset else 0.0
+        props = {OFFSET: bool(maintain_offset), OFFSET_T: on, OFFSET_O: on, ENVELOPE: 1.0, AXES: axes,
+                 MODE: "uv" if mode == 'UV' else "edge"}
         if input_ == 'MATRIX':
             props[INPUT_MATRIX] = [x for row in rel for x in row]
         else:
@@ -595,8 +708,8 @@ def proximity_pin(context, setup='TRANSFORMS', output='CURRENT', input_='LOCATOR
             inputs.append(inp)
         if output != 'CURRENT':
             target = _empty(context, "pinOutput", geom, size=None if output == 'LOCATOR' else 0.0)
-        elif target.parent is not None:
-            inherit.append(target.name)
+        else:
+            inherit.append(target.name)          # Maya turns inheritsTransform off on every pinned transform
         _pin_output(context, "proximityPin", node, i, target, geom, props)
         pinned.append(target)
     update(depsgraph)

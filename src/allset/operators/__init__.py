@@ -98,6 +98,10 @@ from . import anim_layers_204  # noqa: E402  step 204: animation layers 4
 classes += anim_layers_204.classes
 from . import pins_205  # noqa: E402  step 205 lane P: UV / Proximity Pin, intermediate objects, wrap influences
 classes += pins_205.classes
+from . import deformers_205b  # noqa: E402  step 205 lane B: Morph / Jiggle deformers
+classes += deformers_205b.classes
+from . import deformers_205a  # noqa: E402  step 205 lane A: Tension / Solidify / Sculpt deformers
+classes += deformers_205a.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -152,9 +156,13 @@ def register():
     constrain_199.register_handlers()
     graph_curves_203.register_handlers()
     pins_205.register_handlers()
+    deformers_205b.register_handlers()
+    deformers_205a.register_handlers()
 
 
 def unregister():
+    deformers_205a.unregister_handlers()
+    deformers_205b.unregister_handlers()
     pins_205.unregister_handlers()
     graph_curves_203.unregister_handlers()
     constrain_199.unregister_handlers()

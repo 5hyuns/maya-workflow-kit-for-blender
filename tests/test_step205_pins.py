@@ -129,8 +129,9 @@ def test_uv_pin_follows_a_bent_mesh_by_uv_not_by_position():
     _settle()
     dg = bpy.context.evaluated_depsgraph_get()
     geo = pins.Geo(plane, dg)
-    t, w = geo.at_uv((0.75, 0.5))
-    expect = sum((Vector(geo.world_points()[i]) * float(w[k]) for k, i in enumerate(geo.tv[t])), Vector())
+    p, w = geo.at_uv((0.75, 0.5))                  # Maya: face + bilinear corner weights
+    ls = int(geo.ls[p])
+    expect = sum((Vector(geo.world_points()[geo.lv[ls + k]]) * float(w[k]) for k in range(len(w))), Vector())
     _close(_world(loc).translation, expect, what="bent surface point")
     assert (_world(loc).translation - Vector((0.5, 0.0, 0.0))).length > 1e-3     # the bend really moved it
 
