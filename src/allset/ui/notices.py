@@ -344,9 +344,7 @@ CATEGORIES = {
     "Skin": ("Vertex groups / Weight Paint", "Blender skin weights are vertex groups edited in Weight Paint mode "
              "(Weights menu: Normalize, Mirror, Clean, Limit Total); no influence objects or interactive bind."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
-               "deformer sets, intermediate objects or tweak nodes."),
-    "Constrain": ("Object / bone constraints", "Blender: UV Pin / Proximity Pin = vertex parenting; targets are "
-                  "edited in the Constraints tab."),
+               "deformer sets or tweak nodes."),
     "Constrain/Motion Paths": ("Follow Path constraint", "Blender follows a curve with a Follow Path constraint "
                                "(animate its Offset); there are no flow path lattices or motion path keys."),
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "

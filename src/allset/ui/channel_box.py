@@ -767,7 +767,13 @@ def _nth_constraint(node, con):
 
 def maya_constraint_type(con, default=None):
     """Maya node type of a kit constraint: normal / tangent constraints are a Track To on a helper (step 199,
-    operators/constrain_199.maya_type), the rest by Blender type."""
+    operators/constrain_199.maya_type), UV / Proximity Pins a Copy Transforms on a helper (step 205,
+    operators/pins_205.pin_type), the rest by Blender type."""
+    if con.type == 'COPY_TRANSFORMS':
+        from ..operators import pins_205
+        kind = pins_205.pin_type(con)
+        if kind is not None:
+            return kind
     if con.type in _AIM:
         from ..operators import constrain_199
         kind = constrain_199.maya_type(con)
@@ -781,6 +787,10 @@ def constraint_node_name(node, con):
     mtype = maya_constraint_type(con)
     if mtype is None:
         return con.name
+    from ..operators import pins_205
+    pin = pins_205.node_name(con)          # a pin node keeps its own name (uvPin1, step 205)
+    if pin is not None:
+        return pin
     same = [c for c in constraints(node) if maya_constraint_type(c) == mtype]
     return f"{node.name}_{mtype}{same.index(con) + 1}"
 
@@ -788,7 +798,10 @@ def constraint_node_name(node, con):
 def weight_name(con):
     """Maya target weight attribute: ``<target>W0`` (one target per Blender constraint; normal / tangent
     constraints name their surface / curve, step 199)."""
-    from ..operators import constrain_199
+    from ..operators import constrain_199, pins_205
+    geometry = pins_205.geometry_of(con)   # UV / Proximity Pin: the pinned-to geometry (step 205)
+    if geometry is not None:
+        return f"{geometry.name}W0"
     surface, _sub = constrain_199.maya_target(con)
     if surface is not None and surface is not getattr(con, "target", None):
         return f"{surface.name}W0"

@@ -1042,6 +1042,13 @@ MAP.update({
     "Deform/Cluster": "allset.cluster",
     "Deform/Nonlinear/Twist": ("allset.deformer", {"kind": 'TWIST'}),     # step 144: operators/deformers.py
     "Deform/Soft Modification Tool": "allset.soft_mod",
+    # step 205 lane P (operators/pins_205.py): Maya 2020+ matrix constraints, intermediate objects, wrap influences
+    "Constrain/UV Pin": "allset.uv_pin",
+    "Constrain/Proximity Pin": "allset.proximity_pin",
+    "Deform/Display Intermediate Objects": ("allset.intermediate_objects", {"show": True}),
+    "Deform/Hide Intermediate Objects": ("allset.intermediate_objects", {"show": False}),
+    "Deform/Wrap#2/Add Influence": ("allset.wrap_influence", {"action": 'ADD'}),
+    "Deform/Wrap#2/Remove Influence": ("allset.wrap_influence", {"action": 'REMOVE'}),
 })
 
 # Blender's own menu kept at the end of the Maya menu with the same role.
