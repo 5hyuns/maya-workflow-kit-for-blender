@@ -471,7 +471,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 70 — Graph Editor 툴바 · Shift+S · G · Auto Key · Playblast
 
-- [ ] (step 70) Graph Editor 헤더 오른쪽 아이콘 줄: Auto / Spline / Clamped / Linear / Flat / Stepped / Plateau | Break / Unify | 고스트 커브 (Buffer Curve). 툴팁 = Maya 이름 + Blender 대응. 키 선택 후 클릭 → 커브 모양이 animation_02_win1 의 툴바와 같은 뜻으로 바뀌는지.
+- [ ] (step 70) Graph Editor 헤더 오른쪽 아이콘 줄: Auto / Spline / Clamped / Linear / Flat / Stepped / Plateau | Break / Unify | Buffer Curve Snapshot / Swap (step 198 부터 Maya 버퍼 커브, 전에는 Blender 고스트 커브). 툴팁 = Maya 이름 + Blender 대응. 키 선택 후 클릭 → 커브 모양이 animation_02_win1 의 툴바와 같은 뜻으로 바뀌는지.
 - [x] (step 70) Shift+S 누른 채 LMB: Keys (W) / Tangents (E) 마킹 메뉴 — Graph Editor 에서는 선택 키, 3D View · 타임라인에서는 선택 오브젝트의 현재 프레임 키 (Time Slider 범위가 있으면 그 범위). Shift+S 탭은 아무 일 없음. Stepped Next 는 Stepped + 안내. (gui_manual_sweep — Stepped Next 안내는 연산자 INFO report (상태 표시줄))
 - [x] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = kit Repeat Last, step 175), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체. (gui_manual_sweep)
 - [x] (step 70) Auto Key 켬: 키가 있는 채널만 값 바꿀 때 키 (이동 키만 있는 큐브를 회전 → 회전 키 안 생김; Channel Box 입력도 같음). 환경설정 「Maya Auto Key」 끄면 Blender 처럼 모든 채널. (gui_manual_sweep)
@@ -977,7 +977,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Object mode, cube selected: Mesh Tools > Insert Edge Loop, click an edge, Ctrl+Z → the loop goes, you stay in component mode with the tool; Ctrl+Z again → object mode.
 - [ ] Create > Polygon Primitives > Cube from the menu, move it, Ctrl+Z → only the move goes back; Ctrl+Z again → the cube goes. Same from the shelf and from a marking menu (Shift+RMB Create).
 - [ ] Ctrl+E on a face, Ctrl+B on an edge, Skeleton > Create IK Handle, Rigging shelf > Create Joints (4 clicks, Enter): no Adjust Last Operation panel anywhere; G repeats the last Ctrl+E / Ctrl+B.
-- [ ] An option box of the "redo" kind (Create > NURBS Primitives > Circle ❒): Adjust Last Operation shows the circle's settings and changing them edits the circle.
+- [ ] An option box of the "redo" kind (Create > Lights > Point Light ❒; NURBS Primitives > Circle ❒ is a Maya window since step 196): Adjust Last Operation shows the light's settings and changing them edits the light.
 
 ## Step 148 — Channel Box finish (#87 #85 #83 #95)
 
@@ -992,7 +992,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] Maya layout, two animated cubes, Graph Editor open: with View > Auto Frame on (Maya factory), clicking the other cube in the viewport or Outliner reframes the Graph Editor on its curves within ~0.25 s; with Auto Frame off and Auto Frame Time on only the time axis follows (the value axis stays, the Range Slider / preview range don't change).
 - [ ] View > Curve Name > Always: "pCube1.translateX" etc. in the curve colours just above each curve's last key (at the right edge when the last key is off screen); Active Only = only the selected curves; Never = none; Normalized View hides the names.
 - [ ] Show > Objects > Clear Below after unticking Polygon Objects / Cameras → every object type is listed again; Show > Attributes > Clear Below clears the channel name filter.
-- [ ] Greyed View items (Undo View Change, Clip Time, Show Results, Show Buffer Curves, Play Range Shades, Keys > Never, Key View, Time Ruler Placement, Simple Toolbar) show their own line in the tooltip / Help Line.
+- [ ] Greyed View items (Undo View Change, Clip Time, Show Results, Play Range Shades, Keys > Never, Key View, Time Ruler Placement, Simple Toolbar) show their own line in the tooltip / Help Line.
 
 ## Step 151 — Extrude manipulator (lane B)
 
@@ -1204,9 +1204,9 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 ## Step 182
 
-- [ ] Hotbox right after F8: the in-view message ("Object selection on…") doesn't cover the hotbox rows.
-- [ ] Undo then P / Shift+P: the Command Line result field shows the new command's result, not the old "Undo: …".
-- [ ] Attribute Editor tab in a real (non-simulated) session: the dock widens so AE tabs / menus are not cut ("Sele…", "pCub…").
+- [ ] (step 197 fixed it — same check as Step 197) Hotbox right after F8: the in-view message ("Object selection on…") doesn't cover the hotbox rows.
+- [ ] (step 197 fixed it — same check as Step 197) Undo then P / Shift+P: the Command Line result field shows the new command's result, not the old "Undo: …".
+- [ ] (step 197: tabs / menus now wrap — same check as Step 197) Attribute Editor tab in a real (non-simulated) session: the dock widens so AE tabs / menus are not cut ("Sele…", "pCub…").
 
 ## Step 183
 
@@ -1245,12 +1245,13 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 ## Step 192
 
-Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expected to show a difference today.
+Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). Steps 194 / 196 / 197 / 200 addressed all four (audit 15,
+`docs/steps/step_201_remaining.md` §2): they should now pass.
 
-- [ ] Animate a cube (keys at 1 and 24), Layer Editor > Anim > Create Layer from Selected: the Time Slider still shows the red key ticks, the Channel Box Translate fields stay red on a key frame, the Graph Editor still lists the cube's curves (Maya shows the selected layer's / base keys). Today the cube's active action moves into the NLA strip, so all three go blank.
+- [ ] Animate a cube (keys at 1 and 24), Layer Editor > Anim > Create Layer from Selected: the Time Slider still shows the red key ticks, the Channel Box Translate fields stay red on a key frame, the Graph Editor still lists the cube's curves (Maya shows the selected layer's / base keys). Before step 194 all three went blank.
 - [ ] Create > Polygon Primitives > Pipe (also Helix, Gear, Platonic Solid, NURBS Primitives > Sphere) ❒ click: a Maya "Polygon Pipe Options" window opens like Cube ❒ does, not Blender's Adjust Last Operation panel.
 - [ ] Key > Create Character Set, then hover Windows > Relationship Editors > Character Sets and Graph Editor Show > Objects > Characters: the tooltip / Help Line must not say "Blender has no character sets".
-- [ ] Blender 5.2, Maya Workflow Kit layout: the Time Slider ruler (grey labels, ticks, lit cell) and the character set field show like on 4.5; Create > Polygon Primitives ❒ click from the menu bar opens the option window.
+- [ ] Blender 5.2, Maya Workflow Kit layout: the Time Slider ruler (grey labels, ticks, lit cell) and the character set field show like on 4.5; Create > Polygon Primitives ❒ click from the menu bar opens the option window. (Step 200 ran 5.2 GUI step183 / 187 only — no Time Slider ruler GUI file.)
 
 ## Step 193
 
@@ -1286,3 +1287,14 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 - [ ] Curves > Buffer Curve > Snapshot, edit a key, View > Show Buffer Curves: the grey snapshot shows; Swap Buffer Curve swaps.
 - [ ] Curves > Non-weighted Tangents, then drag a tangent handle: after release the handle length goes back to a third of the interval.
 - [ ] Switch the big view to the Graph Editor: no Blender sidebar; N still opens it.
+
+## Step 201
+
+Blindspots of audit 15 (`docs/steps/step_201_remaining.md` §4) — expected to show a difference today — and manual-only checks
+that steps 199 / 200 left without a group.
+
+- [ ] A cube with an extrude and a kit Wire deformer (Deform > Wire), Edit > Delete by Type > Non-Deformer History: Maya keeps wire1 (moving the curve still deforms the cube). Today the kit bakes the wire's Geometry Nodes modifier into the mesh and removes it. Same with a skin on Skin > Normalize Weights > Disable Weight Normalization: the mode must survive.
+- [ ] Constrain > Normal (or Tangent) on a cube to a sphere, then Delete the cube (or Edit > Delete by Type > Constraints): no hidden `pCube1_normalConstraint1Aim` empty must stay in Blender's Outliner (View Layer, hidden objects shown). Today it stays.
+- [ ] With a kit wire deformer / nCloth / nParticles in the scene, hover Select > All by Type > Wires / nCloths / nParticles and Edit > Delete All by Type > Wires: Maya selects / deletes them. Today they are greyed with "Blender has no node of this type".
+- [ ] (step 199) Constrain > Normal: drag the constrained cube over a sphere with a real mouse — it turns to the surface at once, no lag; Skin > Normalize Weights > Disable Weight Normalization, then paint one joint's weight down: that part of the mesh pulls toward the world origin like Maya.
+- [ ] (step 200) Blender 5.2, Maya Workflow Kit layout: dock grey (#444444, Layer Editor list dark), Graph Editor Retime Tool lines / handle, buffer curves and a layered cube's layer curves draw like on 4.5 (step 200 ran 5.x GUI step183 / 187 only).
