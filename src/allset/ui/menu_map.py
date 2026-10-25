@@ -93,7 +93,7 @@ _WINDOW_EDITORS = {
     "General Editors/Layer Editor": _dock('CHANNEL_BOX'),
     "General Editors/Tool Settings": ("allset.editor_toggle", {"editor": 'TOOL_SETTINGS'}),
     "General Editors/Attribute Spread Sheet": _editor('SPREADSHEET'),
-    "General Editors/Display Layer Editor": _dock('CHANNEL_BOX'),
+    "General Editors/Display Layer Editor": ("v3d", "allset.dock_show", {"dock": 'CHANNEL_BOX', "le_tab": 'DISPLAY'}),
     "General Editors/Script Editor": "allset.script_editor",
     "Modeling Editors/UV Editor": _editor('UV'),
     "Modeling Editors/Modeling Toolkit": _dock('MODELING_TOOLKIT'),          # step 63
@@ -104,7 +104,8 @@ _WINDOW_EDITORS = {
     "Animation Editors/Dope Sheet": _editor('DOPESHEET'),
     "Animation Editors/Expression Editor": _editor('DRIVERS'),
     # step 54: near substitutes with a notice (ui/notices.py, PLAN W3)
-    "Relationship Editors/Animation Layers": _editor('NLA_EDITOR'),
+    # step 188: Maya's Animation Layers relationship editor = the Layer Editor's Anim tab (kit NLA layers)
+    "Relationship Editors/Animation Layers": ("v3d", "allset.dock_show", {"dock": 'CHANNEL_BOX', "le_tab": 'ANIM'}),
     "General Editors/Hypergraph: Hierarchy": _editor('OUTLINER'),
     "General Editors/Hypergraph: Connections": _editor('DRIVERS'),
     "Rendering Editors/Hypershade": "allset.hypershade",                 # step 67: browser + graph + AE

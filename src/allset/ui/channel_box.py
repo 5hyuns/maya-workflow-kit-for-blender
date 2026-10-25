@@ -1473,8 +1473,9 @@ class ALLSET_MT_cb_channels(bpy.types.Menu):
         lay.operator("allset.cb_keyable", text="Make Selected Nonkeyable").keyable = False
         lay.operator("allset.cb_keyable", text="Make Selected Keyable").keyable = True
         lay.separator()
-        for label in cb_channels.LAYER_ITEMS:
-            lay.operator(menu_sets.ALLSET_OT_menu_unavailable.bl_idname, text=label).item = cb_channels.LAYER_PATH + label
+        # step 188: the selected animation layer's attributes (operators/anim_layers.py, Maya animLayer -attribute)
+        lay.operator("allset.anim_layer_attrs", text="Add to Selected Layers").add = True
+        lay.operator("allset.anim_layer_attrs", text="Remove From Selected Layers").add = False
         lay.separator()
         lay.operator("allset.cb_deselect_channels")
 

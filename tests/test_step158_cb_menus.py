@@ -84,9 +84,9 @@ def test_channels_menu_has_every_maya_item_in_order():
     assert got == want, got
     assert props == ["Sync Selection in Graph Editor", "Sync Timeline Display"], props
     assert menus == ["ALLSET_MT_cb_freeze"]
-    for label in cbc.LAYER_ITEMS:
-        tip = notices.tooltip(cbc.LAYER_PATH + label, mapped=False)
-        assert tip and "NLA" in tip, tip
+    # step 188: Add to / Remove From Selected Layers run allset.anim_layer_attrs (no notice any more)
+    ops = [e[1][0] for e in log if e[0] == "operator"]
+    assert ops.count("allset.anim_layer_attrs") == 2, ops
 
 
 def test_freeze_submenu():
