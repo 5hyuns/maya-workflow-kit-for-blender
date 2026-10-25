@@ -224,10 +224,45 @@ def step(context, prefs):
     return auto_frame(context.scene, prefs)
 
 
+_sidebar_done = set()       # Graph Editor areas whose sidebar the kit already closed once
+
+
+def hide_sidebars(context):
+    """Maya's Graph Editor has no side panel (step 198, #105; audit 14 b04_graph_editor.png showed Blender's Active
+    F-Curve / "RNA Array Index" sidebar in a Graph Editor shown in a main pane). Close it once per Graph Editor area
+    while the kit's editor chrome is on; N opens it again and stays open."""
+    from . import editor_chrome
+    if not editor_chrome.enabled(context):
+        return
+    live = set()
+    for window in context.window_manager.windows:
+        screen = window.screen
+        if screen is None:
+            continue
+        for area in screen.areas:
+            if area.type != 'GRAPH_EDITOR':
+                continue
+            ptr = area.as_pointer()
+            live.add(ptr)
+            space = area.spaces.active
+            if ptr in _sidebar_done or space.mode != 'FCURVES':
+                continue
+            _sidebar_done.add(ptr)
+            if space.show_region_ui:
+                with context.temp_override(window=window, area=area):
+                    space.show_region_ui = False
+    _sidebar_done.intersection_update(live)     # freed area pointers are reused ( step 9)
+
+
 def _tick():
     try:
         from .. import preferences
         step(bpy.context, preferences.get())
+        hide_sidebars(bpy.context)
+        from ..operators import graph_weights
+        watch = getattr(graph_weights, "watch", None)     # step 198: non-weighted / locked tangent lengths
+        if watch is not None:
+            watch(bpy.context)
     except (KeyError, AttributeError, ReferenceError, RuntimeError):
         pass
     return POLL
