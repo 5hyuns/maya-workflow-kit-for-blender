@@ -1337,3 +1337,6 @@ that steps 199 / 200 left without a group.
 - [ ] Curves > Lock Length 뒤 편집 모드에서 CV 하나를 Move 툴로 끌기: 다른 CV 가 따라와 길이가 유지되는지 (끄는 동안 튀지 않는지), Unlock 뒤에는 따라오지 않는지.
 - [ ] CV 하나 선택 → CV Hardness: 그 CV 에서 커브가 꺾이며 지나감; 끝 CV 는 아무 일 없음.
 - [ ] NURBS Plane 선택 → Duplicate Surface Curves: 보이는 isoparm 마다 커브 (2×2 스팬이면 6 개).
+- [ ] Step 209 Reference Editor: File > Reference Editor with two references — click a row (selected highlight), the
+      load check box unloads / loads the objects in the viewport, Reference > Replace Reference opens the file browser
+      at the current file, the Namespace field renames the `ns:` objects in the Outliner, Read Only blocks moving them.

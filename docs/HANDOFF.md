@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 209 (Reference Editor, backlog #8 = 감사 15 backlog 마지막, Issue #116) 완료 — `docs/steps/step_209.md`, Maya 측정
+  `research/maya/re/refs_209.md` (mayapy + GUI Maya 창 캡처). File > Reference Editor = 킷 창 (Maya 메뉴 바 File / Reference /
+  Proxy / View / Help, 아이콘 줄, File Particulars, 목록 = 로드 체크 + `propRN srcA.blend`), Reload (Library.reload, 편집 유지),
+  Unload / Load (편집 유지), Replace (이름으로 편집 재적용), Import Objects (로컬), Remove, Duplicate, Lock, Clean Up, 편집 목록,
+  Offline File 내보내기 / 적용 (JSON). 메인 File 24 → 26 / 30, Reference Editor 메뉴 27 / 38, 메뉴 세트 합 941 / 1486.
+  헤드리스 step209 12 / 12, 전체 2018 / 2018, GUI 관련 + 스모크 99 / 99 (창 샷 확인).
+  **바로 다음 할 일**: 감사 15 backlog (202–209) 끝 → 새 감사 (재점검 16차: dogfood · 대응표 · 메뉴 수 → 새 backlog 단계마다
+  GitHub 이슈, #108 표 / Planned next 갱신) 또는 0.5.0 출시 준비 (그때만 GUI 전체 묶음).
+
 - Step 208 (maya.cmds look-alike 2, backlog #7, Issue #115) 완료 — `docs/steps/step_208.md`, Maya 측정
   `research/maya/re/cmds_201.md` (mayapy 23 경우 + 탐침 4). cmds 에 parent / group / duplicate / spaceLocator / setKeyframe /
   cutKey / keyframe / playbackOptions / file / addAttr 추가, delete / rename / objExists / listRelatives / ls / xform /

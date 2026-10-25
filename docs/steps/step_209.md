@@ -32,3 +32,43 @@ list (load check box, `<RN> <file>`, selected row). Main File menu: Reference Ed
 File / Assign Offline File → the same commands (+2 main File items; the Reference Editor's own menus count as an
 editor menu bar).
 Sequential on purpose: the window and menus need the model's operators, and Blender runs share two slots.
+
+## Done
+
+- `operators/references.py`: Reload (`Library.reload`), Unload / Load / toggle (layer collection exclude), Import
+  Objects from Reference (overrides → local in place, linked meshes copied per reference, materials local, library
+  removed when unused), Remove, Duplicate (prop1 / propRN1), Replace + Recently Replaced Files (edits re-applied by
+  source name), Lock / Unlock (`is_system_override`), Clean Up (`reset`, unloaded only like Maya), Select File
+  Contents, Load / Unload Related, List Reference Edits (popup + result), Export / Assign Offline File (JSON).
+- Create Reference now names the reference node Maya's way (`NODE`: propRN, propRN1) and keeps creation order.
+- `ui/reference_editor.py`: File > Reference Editor = a new window, one Properties area on the Tool tab marked by
+  `MARK` (world + physics + constraints flags: not a Maya dock role, not Tool Settings, not a Hypershade pane;
+  `dock_tabs` / `tool_settings.in_dock` leave it alone); Maya's menu bar flat (`emboss = 'PULLDOWN_MENU'`), icon row,
+  File Particulars (Unresolved / Resolved name, Reload, Read Only = lock, editable Namespace = renames `ns:` nodes,
+  Sharing), list rows = load check box + "<node> <file>".
+- Menus: the Reference Editor menu bar joins `ui/editor_menu_data.py` (from the GUI capture), 27 / 38 working
+  (File 8 / 10, Reference 11 / 11); main File menu 24 → 26 / 30 (Reference Editor, Export to Offline File, Assign
+  Offline File); notices for Save Reference Edits, List Unknown Edits, Proxy, View. Main menu total 939 → 941.
+
+## Verification
+
+- `tests/test_step209_references.py` 12 / 12: Maya names (prop / propRN, prop1 / propRN1), source edited in another
+  Blender + Reload = source change seen and the override edit kept, Unload / Load keep edits, edits list + offline
+  file export / Clean Up / assign, Lock / Read Only, Replace with B (edit applied by name, history), Import (local, no
+  library left), Import leaves a second reference of the file alone, Remove / Duplicate, Select / Related / Namespace
+  rename / save + reopen, menus mapped to real operators, pane flags unique.
+- Full headless 2018 / 2018 (first run 2017 / 2018: `test_step69_scene` expected the old Outliner mapping — updated).
+- GUI `gui_step209_reference_editor.py` 5 / 5 + shot checked (flat Maya menu bar, one icon row, File Particulars, list
+  `propRN srcA.blend` checked / `propRN1` unchecked); related GUI + smoke (step105 windows, 106 / 129 Tool Settings,
+  131 Hypershade, 116 dock, 69 scene, 60 switch, 49 layout, 209) 99 / 99 after the step-69 check was updated.
+
+## Deviations (delegated)
+
+- Unload keeps the data in memory (Blender has no unloaded reference state); Blender references `.blend` files only.
+- Offline files are kit JSON (`.json`), not Maya `.editMA`.
+- Recently Replaced Files keeps the last 10 paths on the namespace collection.
+
+## Left
+
+- Save Reference Edits (write into the source .blend), List Unknown Edits, Proxy and View menus: notices.
+- The Maya search field above the list and nested references (a referenced file's own references) are not shown.

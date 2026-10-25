@@ -195,11 +195,11 @@ def _row_label(split, text):
 
 
 def draw_icons(layout):
-    row = layout.row(align=True)
+    line = layout.row()
+    row = line.row(align=True)
     for it in ICONS:
         if it == "|":
-            row.separator()
-            row = layout.row(align=True)
+            row = line.row(align=True)
             continue
         icon, idname, props, _tip = it
         op = row.operator(idname, text="", icon=icon)
@@ -213,6 +213,7 @@ def draw_particulars(layout, context):
     wm = context.window_manager
     box = layout.box()
     head = box.row()
+    head.alignment = 'LEFT'
     head.prop(wm, "allset_ref_particulars", text="File Particulars", emboss=False,
               icon='TRIA_DOWN' if wm.allset_ref_particulars else 'TRIA_RIGHT')
     if not wm.allset_ref_particulars:
@@ -256,8 +257,10 @@ def draw_list(layout, context):
                           emboss=False)
         op.action, op.reference = "TOGGLE", ref.name
         lock = " (locked)" if refs.is_locked(ref) else ""
-        pick = row.operator("allset.reference_pick", text=f"{refs.node_name(ref)}  {refs.file_label(ref)}{lock}",
-                            depress=cur is not None and cur == ref, emboss=cur is not None and cur == ref)
+        name = row.row(align=True)
+        name.alignment = 'LEFT'           # Maya: "propRN prop_src.ma" from the left
+        pick = name.operator("allset.reference_pick", text=f"{refs.node_name(ref)}  {refs.file_label(ref)}{lock}",
+                             depress=cur is not None and cur == ref, emboss=cur is not None and cur == ref)
         pick.reference = ref.name
 
 
@@ -277,7 +280,10 @@ class ALLSET_PT_reference_editor(bpy.types.Panel):
     def draw(self, context):
         from . import editor_chrome
         layout = self.layout
-        editor_chrome.draw_menu_bar(layout.row(align=True), context, EDITOR)
+        bar = layout.row(align=True)
+        bar.alignment = 'LEFT'
+        bar.emboss = 'PULLDOWN_MENU'          # Maya's flat menu bar titles
+        editor_chrome.draw_menu_bar(bar, context, EDITOR)
         draw_icons(layout)
         draw_particulars(layout, context)
         draw_list(layout, context)
