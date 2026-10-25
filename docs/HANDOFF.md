@@ -2,6 +2,19 @@
 
 ## 현재 작업
 
+- Step 181 (Surfaces basics, backlog_174 #8 = 마지막) 완료 — `docs/steps/step_181.md`. Maya 측정 (`research/maya/re/surfaces_181.md/.json`,
+  97 경우) + Blender 프로브 (`research/blender/nurbs_surface_181.md`): Maya NURBS 표면 = Blender 레거시 NURBS 표면 (균일 = Endpoint / Cyclic
+  정확, 비균일 = Bezier 분해). `operators/surfaces_math.py` (bpy 없음, mayapy 대비 ≤ 1.2e-7) + `operators/surfaces_maya.py` (Loft, Revolve,
+  Extrude, Birail 1, Boundary / Square, Attach, Detach, Insert Isoparms, Duplicate NURBS Patch, Reverse, Rebuild) + Maya 옵션 창 10
+  (`operators/option_windows_surfaces.py`). Surfaces 메뉴 8 → **15 / 41**. 헤드리스 1683 / 1683, GUI step181 10 / 10 (+ 관련 50 / 50).
+  **바로 다음 할 일**: backlog_174 끝 — 새 감사 (재점검 13차) 로 새 backlog (step 182).
+
+- **체크포인트 2026-10-25 (/sc:save, 180 후)** — 지금 단계: **180 완료 · 커밋됨** (`f8113e7`). 176 (`722fa48`), 177 (`d462e16`),
+  178 (`09b2d0a`), 179 (`b4fb15d`), 180 모두 커밋; 173–180 은 push 안 함. 진행 중인 레인 · 테스트 없음, 작업 트리 깨끗 (research/ 는 추적 안 함).
+  헤드리스 전체 1658 / 1658 (180 끝), GUI 는 단계별 파일만 (전체 묶음 안 돌림; `gui_step129_panel_toolbar` 3 실패는 전부터, git stash 로 확인).
+  **바로 다음 할 일**: 181 Surfaces basics (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_174.json` 8 번째 = 마지막:
+  Surfaces 8 / 41, mayapy 측정 `research/maya/re/surfaces_181.md` — Loft, Planar, …), 그 뒤 새 감사 (재점검 13차) 로 새 backlog.
+
 - Step 180 (Animation Layers on NLA, backlog_174 #7) 완료 — `docs/steps/step_180.md`. Maya 측정 (`research/maya/re/anim_layers_180.md`) +
   Blender 프로브: NLA COMBINE / REPLACE / influence = Maya Additive / Override / weight (4e-6). `operators/anim_layers.py` (레이어 목록 →
   NLA 트랙, 선택 레이어 키 = Maya 식 역산), Layer Editor Anim 탭 (Lock / Solo / Mute, Weight, Layers 메뉴), Maya Anim 탭 캡처

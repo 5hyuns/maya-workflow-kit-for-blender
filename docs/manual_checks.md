@@ -1186,3 +1186,9 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Layer Editor > Anim: Create Layer from Selected on an animated object, select the layer, move it in the viewport and press S: the motion plays as base + layer; Mute / Solo / Weight change the result like Maya.
 - [ ] Keys on the selected layer keep what you see (the layer stores the difference); BaseAnimation selected keys the base.
 
+
+## Step 181
+
+- [ ] Surfaces > Loft on three curves picked in order (last picked = active): the surface passes through them in that order; CV edits in surface edit mode reshape it like Maya CVs.
+- [ ] Surfaces > Birail > Birail 1 Tool with a profile touching two rails: the sweep follows both rails whatever order the three curves were picked in.
+- [ ] Surfaces > Detach / Insert Isoparms: select a CV row or column in surface edit mode, run the item: the split / new isoparm is at that row; Duplicate NURBS Patch copies the patch around the selected CVs.
