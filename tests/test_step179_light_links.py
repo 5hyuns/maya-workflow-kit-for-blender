@@ -168,6 +168,9 @@ def test_cycles_render_probe():
     sc.render.resolution_x, sc.render.resolution_y = 64, 32
     sc.world = bpy.data.worlds.new("black")
     sc.world.color = (0, 0, 0)
+    for node in (sc.world.node_tree.nodes if sc.world.node_tree else ()):    # 5.0+: worlds always have nodes
+        if node.type == 'BACKGROUND':                                          # whose Background lights the scene
+            node.inputs["Strength"].default_value = 0.0
     cubes = []
     for i, x in enumerate((-1.5, 1.5)):
         me = bpy.data.meshes.new(f"probe{i}")

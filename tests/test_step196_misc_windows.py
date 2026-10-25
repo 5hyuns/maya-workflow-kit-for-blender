@@ -452,8 +452,9 @@ def _skinned():
     md.object = arm
     ob.vertex_groups.new(name="joint1").add(list(range(9)), 1.0, 'REPLACE')
     ob.vertex_groups.new(name="joint2").add(list(range(9)), 0.0, 'REPLACE')
+    cbm = import_module(kit.MODULE + ".ui.channel_box")       # Bone.select is gone in 5.x (step 200)
     for b in data.bones:
-        b.select = b.name == "joint3"
+        cbm.set_bone_selected(arm.pose.bones[b.name], b.name == "joint3")
     _sel(ob, arm)
     return ob
 

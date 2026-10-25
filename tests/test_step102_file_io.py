@@ -20,7 +20,9 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 
 ROOT = Path(__file__).resolve().parent.parent
-IO = ROOT / "tmp" / "file_io"
+# per sandbox: version runs in parallel (step 200) must not share the exported files
+IO = ROOT / "tmp" / os.environ.get("ALLSET_SANDBOX", "test_env") / "file_io"
+MAYA_IO = ROOT / "tmp" / "file_io"        # Maya-written files from research/scripts/file_io_mayapy.py (read only)
 # pCube1 for the round trip: 10 x 20 x 5 Maya units (cm), the 20 along Maya's up axis.
 SIZE = (10.0, 20.0, 5.0)
 
@@ -180,7 +182,7 @@ def test_maya_written_files_import_at_maya_size():
     """tmp/file_io/maya_cube.* come from research/scripts/file_io_mayapy.py (polyCube 10 x 20 x 5 cm)."""
     found = 0
     for ext in (".fbx", ".obj", ".abc", ".usd"):
-        path = IO / f"maya_cube{ext}"
+        path = MAYA_IO / f"maya_cube{ext}"
         if not path.exists():
             continue
         found += 1
