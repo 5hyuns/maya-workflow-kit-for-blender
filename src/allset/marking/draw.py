@@ -375,6 +375,12 @@ def window_bounds(window, region):
     return (x0 - region.x, y0 - region.y, x1 - region.x, y1 - region.y)
 
 
+def menu_up():
+    """True while a marking menu or the hotbox is drawn (step 197, #104): kit overlays that Maya's hotbox covers
+    (in-view messages, the In-View Editor box) skip their draw then."""
+    return bool(ACTIVE)
+
+
 def redraw():
     """Redraw every editor of the menu's window (the picture spans regions)."""
     ptr = ACTIVE.get("window", _window["ptr"])

@@ -494,6 +494,60 @@ class ALLSET_PT_character_set(bpy.types.Panel):
                 col.label(text="(no attributes)")
 
 
+class ALLSET_PT_character_editor(bpy.types.Panel):
+    """Windows > Relationship Editors > Character Sets (step 197, #104): Maya's Relationship Editor in character mode
+    lists the character sets, highlights the current one and edits its members from the selection — here a popup over
+    the kit character sets (= scene Keying Sets)."""
+    bl_idname = "ALLSET_PT_character_editor"
+    bl_label = "Relationship Editor: Character Sets"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'WINDOW'
+    bl_ui_units_x = 16
+
+    def draw(self, context):
+        lay = self.layout
+        scene = context.scene
+        lay.label(text=self.bl_label)
+        sets = characters(scene)
+        cur = current(scene)
+        if not sets:
+            row = lay.row()
+            row.enabled = False
+            row.label(text=_CharacterList.empty)
+        col = lay.column(align=True)
+        for ks in sets:
+            op = col.operator(ALLSET_OT_character_set_current.bl_idname, text=ks.bl_label, icon='KEYINGSET',
+                              depress=ks == cur)
+            op.name = ks.bl_label
+        row = lay.row(align=True)
+        row.operator(ALLSET_OT_character_create.bl_idname, text="Create Character Set")
+        if cur is None:
+            return
+        box = lay.box()
+        box.label(text=f"{cur.bl_label} members")
+        mcol = box.column(align=True)
+        for i, p in enumerate(cur.paths):
+            r = mcol.row(align=True)
+            r.label(text=member_name(p))
+            op = r.operator(ALLSET_OT_character_remove_member.bl_idname, text="", icon='X', emboss=False)
+            op.name, op.index = cur.bl_label, i
+        if not cur.paths:
+            mcol.label(text="(no attributes)")
+        r = box.row(align=True)
+        r.operator(ALLSET_OT_character_edit.bl_idname, text="Add Selected").add = True
+        r.operator(ALLSET_OT_character_edit.bl_idname, text="Remove Selected").add = False
+
+
+class ALLSET_OT_character_editor(bpy.types.Operator):
+    """List the character sets and edit the current one's members (Maya Relationship Editor: Character Sets)"""
+    bl_idname = "allset.character_editor"
+    bl_label = "Character Sets"
+
+    def execute(self, context):
+        bpy.ops.wm.call_panel(name=ALLSET_PT_character_editor.bl_idname, keep_open=True)
+        return {'FINISHED'}
+
+
 class _CharacterList:
     """Shared: one row per character set (Maya: the menu is built when it opens)."""
     op_props = {}
@@ -562,7 +616,8 @@ def _redraw(context):
 classes = (ALLSET_OT_character_create, ALLSET_OT_character_edit, ALLSET_OT_character_merge,
            ALLSET_OT_character_set_current, ALLSET_OT_character_select, ALLSET_OT_character_attributes,
            ALLSET_OT_character_remove_member, ALLSET_PT_character_set, ALLSET_MT_character_select_node,
-           ALLSET_MT_character_select_members, ALLSET_MT_character_set_current)
+           ALLSET_MT_character_select_members, ALLSET_MT_character_set_current, ALLSET_PT_character_editor,
+           ALLSET_OT_character_editor)
 
 
 def register_props():

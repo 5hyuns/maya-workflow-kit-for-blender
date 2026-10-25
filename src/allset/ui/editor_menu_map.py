@@ -158,6 +158,8 @@ def _list_show_menus(ed):
                                               {"data_path": f"{_DS}.filter_text", "value": ""}),
     }
     m.update({f"{ed}/Show/Objects/{label}": _prop(f"{_DS}.{attr}") for label, attr in SHOW_OBJECTS.items()})
+    if ed == "Graph Editor":    # step 197 (#104): character nodes in the kit outliner (ui/editor_chrome.py)
+        m[f"{ed}/Show/Objects/Characters"] = _prop("window_manager.allset_show_characters")
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_DS}.filter_text", text)
               for label, text in SHOW_ATTRIBUTES.items()})
     return m

@@ -49,11 +49,22 @@ def reset():
 
 
 def _add(name):
+    _new_command()
     del _stack[_pos[0] + 1:]
     _stack.append(name or "")
     if len(_stack) > MAX_STEPS:
         del _stack[:len(_stack) - MAX_STEPS]
     _pos[0] = len(_stack) - 1
+
+
+def _new_command():
+    """A new undoable command ran: Maya's result field no longer shows the last ``Undo: <name>`` / ``Redo: <name>``
+    (step 192 G4, #104 — ``Undo: Group`` stayed through P / Delete / Ctrl+E). A command with a result writes it right
+    after (``results.result``); one without leaves the field empty (delegated: Maya clears it for commands that return
+    nothing)."""
+    from . import _result, show_result
+    if _result["text"].startswith(("Undo: ", "Redo: ")) or _result["text"] in ("Undo:", "Redo:"):
+        show_result("")
 
 
 def _registered():

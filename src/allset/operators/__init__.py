@@ -81,6 +81,10 @@ from . import color_sets_maya, normals_maya  # noqa: E402  step 189: Mesh Displa
 
 classes += normals_maya.classes + color_sets_maya.classes
 
+from . import poly_cleanup  # noqa: E402  step 197: Mesh > Cleanup... (Maya polyCleanup)
+
+classes += poly_cleanup.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

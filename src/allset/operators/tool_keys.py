@@ -266,6 +266,10 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
         else:
             text = "Component selection <hl>on</hl>.\nF8 goes back to objects."
         view_message.show(context, text, 'TOP_CENTER')
+        # UNDO-only (no redo panel): Blender never registers it, so name its undo step here — that also clears a
+        # stale "Undo: ..." in the result field (step 197, #104)
+        from ..command_line import undo_text
+        undo_text.operator_step(self)
         return {'FINISHED'}
 
 

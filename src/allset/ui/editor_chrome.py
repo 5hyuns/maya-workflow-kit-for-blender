@@ -20,7 +20,7 @@ stay in a 「Blender」 menu at the end of the bar.
 import blf
 import bpy
 import gpu
-from bpy.props import IntProperty, StringProperty
+from bpy.props import BoolProperty, IntProperty, StringProperty
 from gpu_extras.batch import batch_for_shader
 
 from .. import live_refs
@@ -559,9 +559,30 @@ def split_object_curves(ob):
     return own, [(pb, by_bone[pb.name]) for pb in (bones or ()) if pb.name in by_bone]
 
 
-def node_curves(node):
-    """F-curves of one outliner node: an object (without its joints'), a pose bone or a shape-key datablock."""
+def character_curves(scene, ks):
+    """F-curves a character set's members (its own and its subcharacters' attributes) have (step 197, #104)."""
     from .. import compat
+    from ..operators import character_sets
+    out = []
+    for p in character_sets.all_paths(scene, ks):
+        if p.id is None:
+            continue
+        for fc in compat.id_fcurves(p.id):
+            if fc.data_path == p.data_path and (p.use_entire_array or fc.array_index == p.array_index)                     and fc not in out:
+                out.append(fc)
+    return out
+
+
+def node_name(node):
+    return node.bl_label if isinstance(node, bpy.types.KeyingSet) else node.name
+
+
+def node_curves(node):
+    """F-curves of one outliner node: an object (without its joints'), a pose bone, a shape-key datablock or a
+    character set."""
+    from .. import compat
+    if isinstance(node, bpy.types.KeyingSet):
+        return character_curves(bpy.context.scene, node)
     if isinstance(node, bpy.types.PoseBone):
         return dict((pb.name, c) for pb, c in split_object_curves(node.id_data)[1]).get(node.name, [])
     if isinstance(node, bpy.types.Key):
@@ -575,6 +596,8 @@ def node_key(node):
         return ("JOINT", node.id_data.name, node.name)
     if isinstance(node, bpy.types.Key):
         return ("SHAPES", node.name)
+    if isinstance(node, bpy.types.KeyingSet):
+        return ("CHARACTER", node.bl_label)
     return node.name
 
 
@@ -615,6 +638,13 @@ def listed_nodes(context, space):
     from . import channel_box
     ds = space.dopesheet
     out = []
+    if getattr(context.window_manager, "allset_show_characters", False):
+        # Show > Objects > Characters (step 197, #104): Maya lists the character nodes, their member attributes below
+        from ..operators import character_sets
+        for ks in character_sets.characters(context.scene):
+            curves = character_curves(context.scene, ks)
+            if curves:
+                out.append(("CHARACTER", ks, curves))
     for ob in listed_objects(context, space):
         own, joints = split_object_curves(ob)
         if own:
@@ -654,6 +684,9 @@ def node_selected(context, kind, node):
     if kind == "JOINT":
         arm = node.id_data
         return channel_box.bone_selected(node) if arm.mode == 'POSE' else arm.select_get()
+    if kind == "CHARACTER":
+        from ..operators import character_sets
+        return node in character_sets.picked(context)
     if kind == "SHAPES":
         return any(o.select_get() for o in context.scene.objects
                    if getattr(getattr(o, "data", None), "shape_keys", None) == node)
@@ -757,7 +790,7 @@ def draw_channels():
             blf.position(font, 6 * s, y - h + 6 * s, 0)
             blf.draw(font, sign)
             blf.position(font, 22 * s, y - h + 6 * s, 0)
-            blf.draw(font, node.name)
+            blf.draw(font, node_name(node))
         else:
             blf.color(font, *attr_color(fc))
             blf.position(font, 44 * s, y - h + 6 * s, 0)
@@ -1017,6 +1050,13 @@ classes = (ALLSET_OT_editor_icon, ALLSET_OT_editor_icon_unavailable, ALLSET_OT_g
 _handle = []
 
 
+def _redraw_graphs(context):
+    for win in context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type == 'GRAPH_EDITOR':
+                area.tag_redraw()
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -1026,6 +1066,9 @@ def register():
     bpy.types.Scene.allset_key_value = StringProperty(
         name="Key Value", description="Maya Stats: the selected keys' value (display units, +=5 / *=2 work)",
         get=_stats_get("value"), set=_stats_set("value"))
+    bpy.types.WindowManager.allset_show_characters = BoolProperty(
+        name="Characters", description="List the character sets with their member attributes (Maya Show > Objects > "
+        "Characters)", default=False, options={'SKIP_SAVE'}, update=lambda self, context: _redraw_graphs(context))
     patch_headers()
     _handle.append(bpy.types.SpaceGraphEditor.draw_handler_add(draw_channels, (), 'CHANNELS', 'POST_PIXEL'))
 
@@ -1036,6 +1079,7 @@ def unregister():
     unpatch_headers()
     del bpy.types.Scene.allset_key_time
     del bpy.types.Scene.allset_key_value
+    del bpy.types.WindowManager.allset_show_characters
     _expanded.clear()
     _scroll.clear()
     _picked["ids"], _picked["sig"] = set(), None

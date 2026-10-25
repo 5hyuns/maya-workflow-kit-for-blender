@@ -190,6 +190,9 @@ def draw_box():
     rec, lay = current_layout(context)
     if rec is None:
         return
+    from ..marking import draw as marking_draw
+    if marking_draw.menu_up():   # Maya's hotbox / marking menus cover the In-View Editor (step 197)
+        return
     s = _scale()
     size = 11 * s
     pad = 5 * s
