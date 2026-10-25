@@ -307,7 +307,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 50 — 에디터 크롬
 
 - [ ] (step 50) Channel Box 메뉴 줄 Channels / Edit / Object / Show 가 열리고 항목이 동작하는지 (Edit > Settings ▸ 속도, Object 에서 리드 바꾸기, Show > All). 선택 없음 = Maya 문구.
-- [ ] (step 50) Layer Editor: Display / Anim 탭, Layers 메뉴로 레이어 만들기·추가·삭제, 아이콘 버튼이 오른쪽. Anim 탭 안내가 헷갈리지 않는지.
+- [ ] (step 50) Layer Editor: Display / Anim 탭, Layers 메뉴로 레이어 만들기·추가·삭제, 아이콘 버튼이 오른쪽. (step 182: Anim 탭은 글이 아니라 Maya 애니메이션 레이어 목록 — 손 확인은 「Step 180」 절.)
 - [ ] (step 50) Outliner 머리 Display / Show / Help: Show 의 종류 필터, Display > Shapes 를 켜면 Blender Outliner 머리로 돌아오는 것 (delegated) 이 괜찮은지. 눈 열이 없는 것 (H 로 숨김) 이 불편하지 않은지.
 - [ ] (step 50) Time Slider 오른쪽 현재 프레임 칸 + 재생 버튼 8 개, Range Slider 줄 순서가 Maya 와 같게 읽히는지; 범위 막대를 누르면 타임라인이 재생 범위에 맞춰지는지; 오른쪽 끝 톱니 = Playback / Keying / View / Marker.
 
@@ -473,7 +473,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 70) Graph Editor 헤더 오른쪽 아이콘 줄: Auto / Spline / Clamped / Linear / Flat / Stepped / Plateau | Break / Unify | 고스트 커브 (Buffer Curve). 툴팁 = Maya 이름 + Blender 대응. 키 선택 후 클릭 → 커브 모양이 animation_02_win1 의 툴바와 같은 뜻으로 바뀌는지.
 - [x] (step 70) Shift+S 누른 채 LMB: Keys (W) / Tangents (E) 마킹 메뉴 — Graph Editor 에서는 선택 키, 3D View · 타임라인에서는 선택 오브젝트의 현재 프레임 키 (Time Slider 범위가 있으면 그 범위). Shift+S 탭은 아무 일 없음. Stepped Next 는 Stepped + 안내. (gui_manual_sweep — Stepped Next 안내는 연산자 INFO report (상태 표시줄))
-- [x] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = Repeat Last 그대로), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체. (gui_manual_sweep)
+- [x] (step 70) Graph Editor 위 G = 재생 범위로 가로 맞춤 (3D View 의 G = kit Repeat Last, step 175), D = 선택 키 Auto 탄젠트, F / A = 선택 / 전체. (gui_manual_sweep)
 - [x] (step 70) Auto Key 켬: 키가 있는 채널만 값 바꿀 때 키 (이동 키만 있는 큐브를 회전 → 회전 키 안 생김; Channel Box 입력도 같음). 환경설정 「Maya Auto Key」 끄면 Blender 처럼 모든 채널. (gui_manual_sweep)
 - [ ] (step 70) Windows > Playblast (Playback > Playblast, 셸프) → 재생 범위 동영상 → Blender 플레이어 창이 열림. □ (길게) = Playblast Options (Time Range / View / Format / Quality / Scale) — animation_08_win1 비교. 끝나면 장면의 렌더 설정 (출력 경로·형식·해상도 %) 은 그대로.
 
@@ -634,7 +634,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ### Step 101 — 메뉴 정직성 (회색마다 안내, 싼 매핑, 객체 모드에서도 활성)
 
-- [ ] (step 101) 아무 회색 메뉴 항목 (예: Surfaces > Loft, Generate > XGen Editor, Skeleton > Joint Labelling > Label Left) 에 마우스를 올리면 툴팁에 「(greyed) → 가장 가까운 Blender 기능」 과 한 줄 안내, Help Line 에도 같은 줄. 문장이 Maya 사용자에게 이해되는지.
+- [ ] (step 101) 아무 회색 메뉴 항목 (예: Surfaces > Trim Tool, Generate > XGen Editor, Skeleton > Joint Labelling > Label Left) 에 마우스를 올리면 툴팁에 「(greyed) → 가장 가까운 Blender 기능」 과 한 줄 안내, Help Line 에도 같은 줄. 문장이 Maya 사용자에게 이해되는지.
 - [ ] (step 101) 큐브를 객체 모드로 선택하고 Edit Mesh > Poke / Merge / Bevel → 큐브 전체에 적용되고 객체 모드 그대로 (Maya 처럼), Ctrl+Z 한 번에 원래대로. Bridge / Detach / Wedge → 상태 표시줄에 Maya 경고 문장, 모양 그대로.
 - [ ] (step 101) Edit Mesh > Wedge: 면 몇 개 + 그 테두리 모서리를 활성으로 (Shift+클릭 마지막) → 그 모서리 축으로 90° 4 단 회전 압출. Maya 결과와 방향이 같은지 (반대면 축 부호 확인).
 - [ ] (step 101) Edit Mesh > Edit Edge Flow: 굽은 면 위 가운데 루프를 평평하게 눌러 둔 뒤 실행 → 주변 곡률을 따라 다시 볼록해지는지 (Maya polyEditEdgeFlow 1.0 과 비교).
@@ -693,7 +693,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 109) 실제 마우스로 셸프 탭 8 개를 돌며 버튼 수가 Maya 공장 셸프와 같은지 (38 / 43 / 26 / 18 / 14 / 25 / 29 / 10), 회색 아이콘 위에 머물면 「(Maya shelf, greyed) → 대체」 툴팁과 Help Line 글이 뜨는지, 누르면 아무것도 안 되고 안내만 나오는지.
 - [ ] (step 109) Sculpting 셸프: 메시를 고르고 Smooth / Grab / Bulge / Freeze 를 차례로 눌러 조각 모드 + Smooth / Grab / Inflate/Deflate / Mask 브러시가 되는지 (세션 첫 클릭도 — 에셋 라이브러리 로딩 뒤 재시도), 드래그 느낌이 Maya 툴과 납득되는지.
-- [ ] (step 109) Curves / Surfaces: 원 두 개 → Loft, 닫힌 커브 → Planar / Bevel Plus, 프로필 + 경로 → Extrude, 커브 → Offset Curve / Sweep Mesh, Pencil Curve Tool 로 그리기, Add Points Tool 로 끝점 연장이 Maya 손에 맞는지.
+- [ ] (step 109) Curves / Surfaces: 원 두 개 → Loft (step 181 부터 NURBS 표면), 닫힌 커브 → Planar / Bevel Plus, 프로필 + 경로 → Extrude, 커브 → Offset Curve / Sweep Mesh, Pencil Curve Tool 로 그리기, Add Points Tool 로 끝점 연장이 Maya 손에 맞는지.
 - [ ] (step 109) 아이콘 모양 (셸프마다 Maya 색, 도구 부분 회색) 이 125 % 와 100 % 에서 Maya 셸프와 같은 인상인지 (`research/maya/screens/step109/`).
 
 ### Step 110 — 모델링·리깅 기능
@@ -1151,44 +1151,53 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 ## Step 174 — One tool across object / component modes
 
-- [ ] W on a cube, F9: the Move manipulator stays on the selected vertices right away (no Select Box flash); F8 back: Move on the object.
-- [ ] E, then RMB > Vertex: Rotate in vertex mode; Shift+RMB > Target Weld from object mode still starts Target Weld.
+- [x] W on a cube, F9: Move + kit manipulator in vertex mode; F8 back: Move on the object; E / F10, R / F11, Q / F9 the same. (gui_step174_tool_modes)
+- [ ] ... and no Select Box flash between the key and the Move manipulator (feel; the test reads the tool after the switch).
+- [x] E, then RMB > Vertex: Rotate in vertex mode; Shift+RMB > Target Weld from object mode still starts Target Weld. (gui_step174_tool_modes, gui_step64)
 
 ## Step 175 — G repeats Maya commands
 
+- [x] Menu Create > Polygon Primitives > Cube, then the real G key: pCube2; Edit > Repeat label `Repeat "Cube"`; Ctrl+D then G duplicates again (key command newer). (gui_step175_repeat)
 - [ ] Mesh > Combine on two cubes, select two other cubes, G: they combine too; Edit menu shows Repeat "Combine".
 - [ ] A shelf button (Poly Cube), then G: another cube; Ctrl+E on faces, then G: extrudes again (the key command is newer).
 - [ ] Hotbox (Space) > Recent Commands: the last commands, newest first; clicking one runs it.
 
 ## Step 176
 
-- [ ] 면 모드에서 면 선택: 선택 면이 Maya 처럼 점 무늬만 (주황 덮개 없음), Preferences > Maya Component Colors 끄면 Blender 주황 강조가 돌아옴.
-- [ ] Ctrl+G 뒤 Ctrl+Z → 결과 칸 `Undo: Group`, Shift+Z → `Redo: Group`; 이동 후 Adjust Last Operation 값 바꾸기 → 결과 칸이 `Undo: ...` 로 바뀌지 않음.
+- [x] 면 모드에서 면 선택: 선택 면이 Maya 처럼 점 무늬만 (주황 덮개 없음), Preferences > Maya Component Colors 끄면 Blender 주황 강조가 돌아옴. (gui_step134_selection: `show_faces` 꺼짐, 점 사이 회색, 설정 끄면 다시 켜짐)
+- [x] Ctrl+G 뒤 Ctrl+Z → 결과 칸 `Undo: Group`. (gui_step176_inputs_undo G2, gui_step161_messages)
+- [ ] Shift+Z → `Redo: Group`; 이동 후 Adjust Last Operation 값 바꾸기 → 결과 칸이 `Undo: ...` 로 바뀌지 않음.
 
 ## Step 177
 
-- [ ] View > Camera Tools > Tumble / Track / Dolly Tool: plain LMB drag tumbles / tracks / dollies like Alt+LMB / MMB / RMB; Q / W / E / R leaves the tool; a click doesn't select.
-- [ ] View > Center View of Selection: the selection jumps to the middle without the view turning or zooming (also through a camera: the camera moves).
+- [x] View > Camera Tools > Tumble / Dolly Tool: plain LMB drag tumbles / dollies, the selection stays, Dolly ends on the LMB release, W leaves the tool. (gui_step177_panel_menus)
+- [ ] Track Tool LMB drag tracks like Alt+MMB; Q / E / R leave the tool; a plain click (no drag) doesn't select.
+- [x] View > Center View of Selection in persp: centre on the selection, rotation kept, distance = eye to selection (Maya viewFit -c). (gui_step177_panel_menus)
+- [ ] ... the same through a camera (the camera moves), and it doesn't feel like a zoom.
 - [ ] Hover greyed panel menu rows (Shading > Flat Shade All, Show > Controllers, toolbar Resolution Gate, Status Line Render Setup): tooltip + Help Line show the notice, not "No Blender equivalent".
 
 ## Step 178
 
+- [x] UV Editor > Modify > Map Border on a shrunk / turned pPlane: every border UV on the 0-1 square, corners 4; Texture Borders / Back-Facing / Match Grid run from the menu. (gui_step178_uv_map_border)
 - [ ] UV Editor > Modify > Map Border / Straighten Border / Layout Along / Stack Similar Shells on your own meshes: the result looks like Maya's (border on the 0-1 square, chains straight, shells in one row, similar shells stacked).
 - [ ] UV Editor > View > Isolate Select > Add / Remove Selected with Ctrl+1 on: the shown faces follow; Remove All shows everything.
 
 ## Step 179
 
-- [ ] Lighting/Shading > Break Light Links on a selected light + object, render (Cycles / EEVEE): the object goes dark for that light; Make Light Links brings it back.
-- [ ] Light Linking Editor: pick a light on the left, click objects on the right to toggle; Object Centric / Shadow Links switch the lists.
+- [x] Lighting/Shading > Break Light Links from the menu on a light + pCube2: the light no longer lights pCube2, still lights pCube1; Light Linking Editor opens light-centric on the selected light. (gui_step179_light_linking)
+- [ ] ... render (Cycles / EEVEE): the object goes dark for that light; Make Light Links brings it back.
+- [ ] Light Linking Editor: click objects on the right to toggle; Object Centric / Shadow Links switch the lists.
 
 ## Step 180
 
+- [x] Layer Editor > Anim: two layers from selected, top layer listed first and BaseAnimation last, row click selects, Mute = NLA track muted, Weight 0.4 = strip influence, Additive = COMBINE. (gui_step180_anim_layers)
 - [ ] Layer Editor > Anim: Create Layer from Selected on an animated object, select the layer, move it in the viewport and press S: the motion plays as base + layer; Mute / Solo / Weight change the result like Maya.
 - [ ] Keys on the selected layer keep what you see (the layer stores the difference); BaseAnimation selected keys the base.
 
 
 ## Step 181
 
+- [x] Surfaces > Loft on three EP curves: loftedSurface1 is a NURBS surface (5 x 6 CVs) through the three curves, selected lead, lambert1; Revolve = 8 segments, cyclic. (gui_step181_surfaces)
 - [ ] Surfaces > Loft on three curves picked in order (last picked = active): the surface passes through them in that order; CV edits in surface edit mode reshape it like Maya CVs.
 - [ ] Surfaces > Birail > Birail 1 Tool with a profile touching two rails: the sweep follows both rails whatever order the three curves were picked in.
 - [ ] Surfaces > Detach / Insert Isoparms: select a CV row or column in surface edit mode, run the item: the split / new isoparm is at that row; Duplicate NURBS Patch copies the patch around the selected CVs.
