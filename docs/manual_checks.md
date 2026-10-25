@@ -1212,3 +1212,7 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 
 - [ ] Real mouse, Maya menu bar: Edit Mesh > Bevel — click the ❒ = Bevel Options window, click the label = bevel; Create > Polygon Primitives > Cube ❒ = Polygon Cube Options. Try UI scale 1.0, 1.25, 1.5.
 - [ ] The same items from the hotbox / Shift+RMB menus still need press-and-hold or Shift / Ctrl+click (no ❒ click there yet).
+
+## Step 184
+
+- [ ] RMB on an object near the bottom of the viewport: the whole marking menu is drawn higher, the list hangs under the ring to the window bottom (Maya); drag onto rows and the ring boxes as drawn; a quick RMB click keeps the menu open (no row runs).
