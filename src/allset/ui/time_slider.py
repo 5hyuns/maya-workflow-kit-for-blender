@@ -523,7 +523,10 @@ def _draw_range():
     if not _is_timeline(context):
         return
     region = context.region
-    _draw_keys(context, region)
+    maya = has_slider_panel(context.space_data)
+    if maya:
+        _draw_ruler(context, region)
+    _draw_keys(context, region, maya)
     if not getattr(wm, "allset_time_range_on", False):
         return
     import gpu
@@ -553,6 +556,160 @@ def _draw_range():
     shader.uniform_float("color", RANGE_ARROW_COLOR)
     batch.draw(shader)
     gpu.state.blend_set('NONE')
+
+
+# --- Maya ruler -----------------------------
+# The Maya Workflow Kit layout's Time Slider is painted over Blender's timeline drawing: Maya's background, one 2 px
+# tick + label per step (Maya picks the smallest step whose spacing fits the labels), the bottom band and the
+# translucent current-time block with its white frame number. checked in a Maya 2022 at UI scale 1.0
+# (*/, 1292 x 32 px widget): rows 1-8 labels #757575, ticks rows 13-27 #7c7c7c, rows 29-31
+# #373737, background #2b2b2b, current time = white at 25 % over the frame's cell, its number white in rows 16-23.
+# Blender draws its own current-frame box in the region overlay after every Python handler (probe tmp/probe186:
+# a full-region POST_PIXEL fill hides everything else of Blender's) and no RNA / theme-free switch hides it, so
+# that box stays on top (recorded, step 186).
+MAYA_RULER_H = 32.0
+RULER_BG = (0x2b / 255, 0x2b / 255, 0x2b / 255, 1.0)
+RULER_BAND = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
+RULER_TICK = (0x7c / 255, 0x7c / 255, 0x7c / 255, 1.0)
+RULER_LABEL = (0x75 / 255, 0x75 / 255, 0x75 / 255, 1.0)
+RULER_CURRENT = (1.0, 1.0, 1.0, 0.25)
+RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
+# (top row, bottom row) of 32 px widget, scaled to the kit region's height. With Time Slider bookmarks
+# (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down
+# (): strip #454545 rows 0-8, each bookmark's colour at 80 % over
+# it in rows 0-4 with a solid 1 px left edge over the strip height.
+ROWS = {"label": (1, 8), "tick": (13, 27), "current_label": (16, 23), "band": (29, 31)}
+ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26), "band": (29, 31),
+                  "strip": (0, 8), "bookmark": (0, 4)}
+BOOKMARK_STRIP = (0x45 / 255, 0x45 / 255, 0x45 / 255, 1.0)
+BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # the bookmark colour checked (Maya picks one per bookmark)
+TICK_PX = 2.0
+NICE_STEPS = tuple(m * 10 ** e for e in range(8) for m in (1, 2, 5))
+
+
+# Maya cases (widget px, first, last frame) this model doesn't reproduce (tests/test_step186_time_slider.py; 32 of 43
+# match, the default 1-120 and the short ranges exactly): Maya's threshold also moves with the widget width and the
+# step, and uses steps of 4 / 400 / 4000 with wide labels  (). A grid search over
+# "max(a, b x digits)" thresholds with 1-2-4 steps matched 33 but drew 1-120 every 4 frames: not taken (delegated).
+STEP_MATCHES = 32
+STEP_DEVIATIONS = ((1292, 1, 10000), (692, 1, 120), (1592, 1, 120), (1592, 1, 60), (1292, 1, 215), (1292, 1, 230),
+                   (1292, 1, 250), (1292, 1001, 1100), (1292, 1, 100000), (692, 1, 130), (692, 1, 110))
+
+
+def label_digits(frame):
+    return len(str(abs(int(frame)))) + (1 if frame < 0 else 0)
+
+
+def label_need_px(digits):
+    """Spacing (px at UI scale 1) Maya needs between two labels of ``digits`` characters (fitted to the 1292 px
+    widget cases: <= 3 digits fit at 25.6 px but not 24.7, 4 digits need more than 25.6 and fit at 32, 5 digits
+    need more than 32)."""
+    return max(25.0, 7.0 * digits + 3.0)
+
+
+def _multiples(step, lo, hi):
+    import math
+    first = math.ceil(lo / step) * step
+    return range(int(first), int(hi) + 1, int(step))
+
+
+def tick_step(start, end, px_per_frame, scale=1.0):
+    """Maya Time Slider step (frames between ticks / labels) for the playback range start..end shown at
+    ``px_per_frame``: the smallest of 1, 2, 5, 10, 20, 50 ... whose spacing fits the widest label below the end."""
+    for step in NICE_STEPS:
+        labels = _multiples(step, start, max(start, end - 1))
+        widest = max((label_digits(f) for f in (labels[0], labels[-1])), default=1) if len(labels) else 1
+        if step * px_per_frame >= label_need_px(widest) * scale:
+            return step
+    return NICE_STEPS[-1]
+
+
+def ruler_ticks(step, lo, hi):
+    """Frames with a tick and a label in the visible frame range lo..hi."""
+    return list(_multiples(step, lo - 1, hi + 1))
+
+
+def _rows(name, h, rows=None):
+    """(y0, y1) region rows (bottom-up) of a Maya ruler row band, scaled from 32 px to height h."""
+    top, bottom = (rows or ROWS)[name]
+    k = h / MAYA_RULER_H
+    return h - (bottom + 1) * k, h - top * k
+
+
+def _draw_ruler(context, region):
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+    scene = context.scene
+    s = context.preferences.system.ui_scale or 1.0
+    w, h = region.width, region.height
+    v2d = region.view2d
+
+    def x_of(f):
+        return v2d.view_to_region(f, 0, clip=False)[0]
+    pxf = x_of(1.0) - x_of(0.0)
+    if pxf <= 0:
+        return
+    start, end = playback_range(scene)
+    step = tick_step(start, end, pxf, s)
+    lo, hi = v2d.region_to_view(0, 0)[0], v2d.region_to_view(w, 0)[0]
+    frames = ruler_ticks(step, lo, hi)
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+
+    def rects(rs, colour):
+        tris = []
+        for x0, y0, x1, y1 in rs:
+            tris += [(x0, y0), (x1, y0), (x1, y1), (x0, y0), (x1, y1), (x0, y1)]
+        if tris:
+            shader.uniform_float("color", colour)
+            batch_for_shader(shader, 'TRIS', {"pos": tris}).draw(shader)
+    from ..operators import bookmarks
+    marks = bookmarks.markers(scene)
+    rows = ROWS_BOOKMARKS if marks else ROWS
+    gpu.state.blend_set('ALPHA')
+    rects([(0, 0, w, h)], RULER_BG)
+    b0, b1 = _rows("band", h, rows)
+    rects([(0, b0, w, b1)], RULER_BAND)
+    if marks:
+        s0, s1 = _rows("strip", h, rows)
+        rects([(0, s0, w, s1)], BOOKMARK_STRIP)
+        m0, m1 = _rows("bookmark", h, rows)
+        bars, edges = [], []
+        for m in marks:
+            a, b = bookmarks.bookmark_range(scene, m)
+            x0, x1 = round(x_of(a - 0.5)), round(x_of(b + 0.5))
+            bars.append((x0, m0, x1, m1))
+            edges.append((x0, s0, x0 + max(1.0, round(s)), s1))
+        rects(bars, (*BOOKMARK_RGB, 0.8))
+        rects(edges, (*BOOKMARK_RGB, 1.0))
+    tw = max(1.0, round(TICK_PX * s))
+    t0, t1 = _rows("tick", h, rows)
+    lefts = {f: round(x_of(f - 0.5)) for f in frames}
+    rects([(x, t0, x + tw, t1) for x in lefts.values()], RULER_TICK)
+    cur = scene.frame_current
+    cx0, cx1 = x_of(cur - 0.5), x_of(cur + 0.5)
+    rects([(round(cx0), 0, max(round(cx0) + 1, round(cx1)), h)], RULER_CURRENT)
+    # labels: Maya puts them 2 px + a fifth of a frame right of the tick
+    l0, l1 = _rows("label", h, rows)
+    size = max(6.0, (l1 - l0) / 0.72)
+    blf.size(0, size)
+    off = 2 * s + 0.2 * pxf
+    blf.color(0, *RULER_LABEL)
+    for f, x in lefts.items():
+        blf.position(0, x + off, l0, 0)
+        blf.draw(0, str(f))
+    c0, _c1 = _rows("current_label", h, rows)
+    blf.color(0, *RULER_CURRENT_LABEL)
+    blf.position(0, round(cx0) + off, c0, 0)
+    blf.draw(0, str(cur))
+    gpu.state.blend_set('NONE')
+
+
+def playback_range(scene):
+    """Maya playback range = the preview range when on, else the scene range (module docstring)."""
+    if scene.use_preview_range:
+        return scene.frame_preview_start, scene.frame_preview_end
+    return scene.frame_start, scene.frame_end
 
 
 # --- key ticks -----------------------------------------------------
@@ -592,7 +749,13 @@ def playhead_half_width(context, frame):
     return max(text_w + 8 * s, 24 * s) / 2
 
 
-def _draw_keys(context, region):
+def key_x(region, frame, maya):
+    """Region x of a key tick: Maya draws it on the frame's tick, the left edge of the frame's cell (step 186,
+    ); other timelines keep Blender's frame centre."""
+    return region.view2d.view_to_region(frame - 0.5 if maya else frame, 0, clip=False)[0]
+
+
+def _draw_keys(context, region, maya=False):
     from . import channel_box
     keys = key_frames(channel_box.targets(context))
     if not keys:
@@ -601,6 +764,10 @@ def _draw_keys(context, region):
     from gpu_extras.batch import batch_for_shader
     w = max(1.0, round(context.preferences.system.ui_scale or 1.0))
     h = region.height
+    if maya:
+        from ..operators import bookmarks
+        if bookmarks.markers(context.scene):     # Maya: keys stay under the bookmark strip
+            h = _rows("strip", h, ROWS_BOOKMARKS)[0]
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     current = context.scene.frame_current
     for colour, breakdown in ((KEY_RGB, False), (BREAKDOWN_RGB, True)):
@@ -608,7 +775,7 @@ def _draw_keys(context, region):
         for f, bd in keys:
             if bd != breakdown:
                 continue
-            x = region.view2d.view_to_region(f, 0, clip=False)[0]
+            x = key_x(region, f, maya)
             if x < -w or x > region.width + w:
                 continue
             x0, x1 = int(x), int(x) + w
@@ -617,8 +784,9 @@ def _draw_keys(context, region):
                 # POST_PIXEL), and in the Maya layout that box fills the Time Slider: a key at the current frame
                 # was invisible (issue #38). Maya shows it through its translucent current-time block; here the
                 # key colour frames the box instead (wider than the box, so its edges stay red).
+                centre = region.view2d.view_to_region(f, 0, clip=False)[0]
                 half = playhead_half_width(context, current) + 2 * w
-                x0, x1 = int(x - half), int(x + half)
+                x0, x1 = int(centre - half), int(centre + half)
             tris += [(x0, 0), (x1, 0), (x1, h), (x0, 0), (x1, h), (x0, h)]
         if tris:
             shader.uniform_float("color", colour)
