@@ -158,10 +158,11 @@ def s_menu_open():
 
 @step
 def s_blender_row():
-    # Blender's own rows still get their clicks: the third DAG row (pCube3)
+    # Blender's own rows still get their clicks: the third DAG row (pCube3) after Maya's four startup cameras
+    # (step 211: persp top front side pCube1 pCube2 pCube3)
     _a, region = outl()
     u = mod("ui.outliner_sets").unit(bpy.context.preferences)
-    y = int(region.view2d.view_to_region(0, -2.5 * u, clip=False)[1])
+    y = int(region.view2d.view_to_region(0, -6.5 * u, clip=False)[1])
     p = (region.x + int(4 * u), region.y + y)
     click(p)
 

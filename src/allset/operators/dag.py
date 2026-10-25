@@ -112,8 +112,9 @@ def _on_load(*_args):
 
 def delete_hierarchy(context, objects):
     """Maya delete of transforms: the nodes and every descendant, with their now unused data. Returns the count."""
-    from . import constrain_199
-    obs = hierarchy(objects)
+    from . import constrain_199, startup_cameras
+    # Maya refuses to delete its startup cameras ("Non-deletable node 'persp' cannot be deleted.", step 211)
+    obs = [ob for ob in hierarchy(objects) if not startup_cameras.is_startup(ob)]
     # Maya's normal / tangent constraint node is a child of the constrained object: its kit helper empty goes too
     # (step 202, #109; the helper has no parent — constrain_199.update clears it — so hierarchy() misses it)
     helpers = [h for h in constrain_199.helpers_owned_by(obs) if h not in obs]
@@ -176,6 +177,10 @@ class ALLSET_OT_delete(bpy.types.Operator):
         return context.mode == 'OBJECT' and bool(context.selected_objects)
 
     def execute(self, context):
+        from . import startup_cameras
+        for ob in context.selected_objects:
+            if startup_cameras.is_startup(ob):
+                self.report({'WARNING'}, f"Non-deletable node '{ob.name}' cannot be deleted.")
         delete_hierarchy(context, list(context.selected_objects))
         return {'FINISHED'}
 

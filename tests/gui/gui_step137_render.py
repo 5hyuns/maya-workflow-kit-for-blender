@@ -102,9 +102,10 @@ def s_rendered():
     cam = sc.camera
     check(f"Render > Render Current Frame: a Render View window with the Render Result (menu {C['ret']}, "
           f"window {w is not None})", w is not None)
-    check(f"rendered through persp: scene.camera {cam and cam.name} (allset_persp {bool(cam and cam.get('allset_persp'))}), "
-          f"lens {cam and round(cam.data.lens, 3)} mm, linked to no collection (not a second Outliner row)",
-          cam is not None and cam.name == "persp" and cam.get("allset_persp") and not cam.users_collection)
+    # step 211: a kit new Maya scene renders through Maya's startup persp (a hidden Outliner row, not a second one)
+    check(f"rendered through persp: scene.camera {cam and cam.name} (startup {cam and cam.get('allset_startup_camera')}), "
+          f"lens {cam and round(cam.data.lens, 3)} mm, hidden",
+          cam is not None and cam.name == "persp" and cam.get("allset_startup_camera") == "persp" and cam.hide_viewport)
     image = mod(".ui.render_view").render_result()
     path = os.path.join(SHOTS or tempfile.gettempdir(), "gui_step137_render_result.png")
     ok = False
@@ -155,7 +156,7 @@ def s_shots():
 def s_again():
     if wait(s_again, lambda: not bpy.app.is_job_running('RENDER')):
         return
-    persps = [o.name for o in bpy.data.objects if o.get("allset_persp")]
+    persps = [o.name for o in bpy.data.objects if o.type == 'CAMERA' and o.name.startswith("persp")]
     check(f"render again: persp reused ({persps})", persps == ["persp"])
     # close the render windows this test opened
     for w in list(bpy.context.window_manager.windows[1:]):

@@ -37,7 +37,10 @@ MAYA_FILM_MM = 36.0          # Maya 35 mm camera film back (create.MAYA_FILM_MM,
 
 def persp_camera(create=True):
     """The kit's persp camera object (made on demand when ``create``)."""
-    ob = next((o for o in bpy.data.objects if o.get(PROP) and o.type == 'CAMERA'), None)
+    # a kit new Maya scene has Maya's real startup persp camera (operators/startup_cameras.py, step 211): that one
+    ob = next((o for o in bpy.context.scene.objects if o.type == 'CAMERA' and o.get("allset_startup_camera") == NAME),
+              None) if bpy.context.scene is not None else None
+    ob = ob or next((o for o in bpy.data.objects if o.get(PROP) and o.type == 'CAMERA'), None)
     if ob is None and create:
         data = bpy.data.cameras.new(SHAPE)
         data.sensor_width = MAYA_FILM_MM

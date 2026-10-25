@@ -28,6 +28,7 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty
 
 from .. import compat
+from . import naming
 
 BASE = "BaseAnimation"
 MARK = "allset_anim_layer"
@@ -70,11 +71,8 @@ def selected_layers(scene):
 
 
 def unique_name(scene, base="AnimLayer"):
-    names = {e.name for e in layers(scene)}
-    n = 1
-    while f"{base}{n}" in names:
-        n += 1
-    return f"{base}{n}"
+    """Maya ``AnimLayer<N>``: one past the highest, gaps not filled (research/maya/re/naming_211.md N3)."""
+    return f"{base}{naming.next_number(base, {e.name for e in layers(scene)})}"
 
 
 # --- per object tracks -------------------------------------------------------------------------------

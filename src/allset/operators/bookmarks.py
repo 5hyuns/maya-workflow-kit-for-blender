@@ -16,6 +16,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
+from .naming import next_number
 
 ENDS = "allset_bookmarks"
 
@@ -25,11 +26,9 @@ def markers(scene):
 
 
 def next_name(scene):
-    names = {m.name for m in scene.timeline_markers}
-    n = 1
-    while f"bookmark{n}" in names:
-        n += 1
-    return f"bookmark{n}"
+    """``bookmark<N>`` one past the highest, gaps not filled like Maya's timeSliderBookmark nodes
+    (research/maya/re/naming_211.md N5)."""
+    return f"bookmark{next_number('bookmark', {m.name for m in scene.timeline_markers})}"
 
 
 def selected_range(context):

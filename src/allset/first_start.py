@@ -30,9 +30,16 @@ def new_maya_scene():
     _armed[0] = False      # this load is the Maya layout: the start hook must not load it again (#47)
     win = _window()
     if win is None:
-        return bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
-    with bpy.context.temp_override(window=win, screen=win.screen):
-        return bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
+        res = bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
+    else:
+        with bpy.context.temp_override(window=win, screen=win.screen):
+            res = bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=True)
+    # Maya's startup cameras persp / top / front / side head the new scene's DAG (step 211, #117)
+    from .operators import startup_cameras
+    scene = bpy.context.scene or (bpy.data.scenes[0] if bpy.data.scenes else None)
+    if scene is not None:
+        startup_cameras.ensure(scene, scene.view_layers[0])
+    return res
 
 
 def make(context, open_layout=True):

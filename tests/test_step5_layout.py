@@ -76,5 +76,7 @@ def test_new_maya_scene_layout():
     # step 20: Maya animation range 1-200 = frame range, playback 1-120 = preview range
     assert (scene.frame_start, scene.frame_end, scene.render.fps) == (1, 200, 24)
     assert scene.use_preview_range and (scene.frame_preview_start, scene.frame_preview_end) == (1, 120)
-    assert len(bpy.data.objects) == 0, [o.name for o in bpy.data.objects]
+    # step 211: only Maya's hidden startup cameras (operators/startup_cameras.py)
+    assert sorted(o.name for o in bpy.data.objects) == ["front", "persp", "side", "top"],         [o.name for o in bpy.data.objects]
+    assert all(o.get("allset_startup_camera") and o.hide_viewport for o in bpy.data.objects)
     bpy.ops.wm.read_homefile()

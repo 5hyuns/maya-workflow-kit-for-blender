@@ -2,6 +2,26 @@
 
 ## 현재 작업
 
+- Step 211 (Audit 16 fix batch, backlog #1, Issue #117) 완료 — `docs/steps/step_211.md`, Maya 측정 `research/maya/re/naming_211.md`
+  (mayapy + GUI Maya). Windows > Relationship Editors > Light Linking ▸ Light-Centric / Object-Centric = 킷 Light Linking 편집기;
+  set / display layer / anim layer / character / bookmark 이름 = 가장 큰 번호 + 1 (mayapy 측정); Ctrl+V = `pasted__pCube1` 이 새
+  `group` 아래 (그룹만 선택); 새 Maya 장면 = 숨은 startup 카메라 persp / top / front / side (Outliner 맨 위, 렌더 안 함, Export All
+  제외, Delete 거부) + Outliner 생성 순서 (Blender 의 불안정 qsort 가 2–8 줄 목록을 한 칸 돌림 → `ui/outliner_order.py` 가 미리
+  돌려 링크, 재부모 = 새 형제 맨 끝); AE 노드 탭 한 줄 (좁으면 ◀ ▶); nHair Modify Curves 옵션 상자 = Curves 창 (generic 28 → 25,
+  window 179). 헤드리스 step211 14 / 14, 전체 2032 / 2032, GUI 관련 + 스모크 160 / 160, dogfood 48 / 48, 메뉴 unique 804 / 1319.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#117 닫힘; 에이전트 worktree 64 개 정리 여부.
+  **바로 다음 할 일**: step 212 = backlog #2 「Blender 5.x test pass 3」 (Issue #118) — steps 202–211 을 5.0 / 5.2 헤드리스 전체 +
+  GUI 파일 (step 211 Outliner 순서 보정이 5.x 에서도 맞는지 `gui_step211_fix_batch` 로 확인: 5.0.1 소스도 같은 qsort).
+
+- **체크포인트 2026-10-26 (/sc:save, 210 후)** — 지금 단계: **210 완료 · 커밋 8719407** (재점검 16차, src 변경 없음). 이번 세션에 208
+  (f2e0e90, #115 maya.cmds look-alike 2) · 209 (4dd0b14, #116 Reference Editor) · 210 (8719407, 감사 16) 커밋. 진행 중인 레인 ·
+  테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ 추적 안 함). 숫자: 헤드리스 2018 / 2018, dogfood 48 / 48, 메뉴 803 / 1318,
+  편집기 메뉴 676 / 952. backlog 8 개 (steps 211–218) = 이슈 #117–#124.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#116 닫힘; 에이전트 worktree 64 개 정리 여부.
+  **바로 다음 할 일**: step 211 = backlog #1 「Audit 16 fix batch」 (Issue #117) — Light Linking 메뉴 → 킷 편집기, 빈 번호 채우기
+  남은 곳 (sets / display layers / anim layers / character sets / bookmarks, mayapy 로 먼저 측정) + `pasted__` 붙여넣기 이름, Outliner
+  카메라 먼저, AE 가로 탭 + dock 폭, nHair 옵션 상자. 그다음 212 Blender 5.x test pass 3 (#118).
+
 - Step 210 (재점검 16차 = 사용자 지시의 「재점검 15차」, 감사 — src 변경 없음) 완료 — `docs/steps/step_210.md` (+ `step_210_remaining.md`,
   `step_210_quant.md`), PLAN 「재점검 16차」. 헤드리스 2018 / 2018, dogfood 48 / 48, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 803 / 1318
   (60.9 %), 편집기 메뉴 676 / 952, 옵션 창 176, look_compare kit-drawn 1.0 / 1.25 모두 12 / 12. backlog 8 개 (steps 211–218)

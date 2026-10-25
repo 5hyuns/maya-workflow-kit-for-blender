@@ -10,12 +10,12 @@ the scene tree is untouched (research/maya/workflows/scene.md:102). Design:
 docs/steps/step_96.md 「계획」 1-2.
 """
 
-import re
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
+from . import naming
 
 PROP = "allset_set"
 TEXT = "allset_set_text"
@@ -41,12 +41,8 @@ def get(name):
 
 
 def next_name(base="set"):
-    """Maya: the lowest free ``set<N>`` (research/maya/re/sets.md S2)."""
-    used = {int(m.group(1)) for c in bpy.data.collections if (m := re.fullmatch(re.escape(base) + r"(\d+)", c.name))}
-    n = 1
-    while n in used:
-        n += 1
-    return f"{base}{n}"
+    """Maya: ``set<N>`` one past the highest, gaps not filled (research/maya/re/naming_211.md N1)."""
+    return f"{base}{naming.next_number(base, {c.name for c in bpy.data.collections})}"
 
 
 def create(name="", objects=(), text=""):

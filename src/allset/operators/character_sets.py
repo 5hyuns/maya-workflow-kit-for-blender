@@ -23,6 +23,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
+from .naming import next_number
 
 PARENT = "allset_character_parent"
 PICKED = "allset_character_nodes"
@@ -43,11 +44,8 @@ def _cb():
 # --- pure helpers (tests/test_step187_character_sets.py) --------------------------------------------
 
 def next_name(taken, base):
-    """Maya's naming: ``<base>1``, then the first free number."""
-    n = 1
-    while f"{base}{n}" in taken:
-        n += 1
-    return f"{base}{n}"
+    """Maya's naming: ``<base><N>`` one past the highest, gaps not filled (research/maya/re/naming_211.md N4)."""
+    return f"{base}{next_number(base, set(taken))}"
 
 
 def merge_target(picked, parents):

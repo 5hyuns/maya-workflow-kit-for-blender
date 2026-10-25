@@ -186,7 +186,7 @@ def test_select_members_and_node():
 
 def test_pure_rules():
     m = cs()
-    assert m.next_name({"character1", "character3"}, "character") == "character2"
+    assert m.next_name({"character1", "character3"}, "character") == "character4"   # step 211: Maya max + 1
     assert m.merge_target(["character1", "character2"], {}) == "character2"
     assert m.merge_target(["subCharacter1", "character1"], {"subCharacter1": "character1"}) == "character1"
     assert m.maya_attr("location", 2) == "translateZ" and m.maya_attr('["custom"]', -1) == "custom"

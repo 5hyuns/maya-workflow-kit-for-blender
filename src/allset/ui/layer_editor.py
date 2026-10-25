@@ -21,6 +21,7 @@ from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
 
 from . import chrome
+from ..operators import naming
 
 ROOT_NAME = "Display Layers"
 TYPES = (("NORMAL", "Normal", "Selectable, normal display"),
@@ -92,11 +93,8 @@ def layer_of(ob, scene):
 
 
 def next_layer_name():
-    used = {int(m.group(1)) for c in bpy.data.collections if (m := re.match(r"^layer(\d+)$", c.name))}
-    n = 1
-    while n in used:
-        n += 1
-    return f"layer{n}"
+    """Maya ``layer<N>``: one past the highest, gaps not filled (research/maya/re/naming_211.md N2)."""
+    return f"layer{naming.next_number('layer', {c.name for c in bpy.data.collections})}"
 
 
 OWN = "allset_layer_own"   # the member's own display_type / hide_select while a layer overrides them

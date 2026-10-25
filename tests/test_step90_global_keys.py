@@ -70,10 +70,13 @@ def test_cut_takes_the_hierarchy_and_paste_brings_it_back():
     assert "group1" not in bpy.data.objects and "pCube1" not in bpy.data.objects and other.name == "pCube2"
     del child
     assert bpy.ops.allset.paste() == {'FINISHED'}
-    assert "group1" in bpy.data.objects and "pCube1" in bpy.data.objects, sorted(bpy.data.objects.keys())
-    assert bpy.data.objects["pCube1"].parent == bpy.data.objects["group1"]
-    assert bpy.context.view_layer.objects.active == bpy.data.objects["group1"]     # Maya: the first pasted node leads
-    assert bpy.data.objects["pCube1"].data.name == "pCube1Shape", bpy.data.objects["pCube1"].data.name   # shape name kept
+    # Maya pasteScene (step 211, research/maya/re/naming_211.md P1-P3): pasted__ names under a new "group"
+    objs = bpy.data.objects
+    assert "pasted__group1" in objs and "pasted__pCube1" in objs, sorted(objs.keys())
+    assert objs["pasted__pCube1"].parent == objs["pasted__group1"]
+    assert objs["pasted__group1"].parent == objs["group"]
+    assert bpy.context.view_layer.objects.active == objs["group"]     # Maya selects the paste group
+    assert objs["pasted__pCube1"].data.name == "pasted__pCube1Shape", objs["pasted__pCube1"].data.name
 
 
 def test_cut_needs_object_mode_and_a_selection():

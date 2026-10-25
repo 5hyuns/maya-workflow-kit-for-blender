@@ -699,7 +699,9 @@ class _FileDialog:
                     with dag.selected_hierarchy(context):
                         write(context, fmt, path, op, args, self.maya_conversion, k)
                 else:
-                    write(context, fmt, path, op, args, self.maya_conversion, k)
+                    from . import startup_cameras
+                    with startup_cameras.excluded(context.scene, context.view_layer):
+                        write(context, fmt, path, op, args, self.maya_conversion, k)
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}

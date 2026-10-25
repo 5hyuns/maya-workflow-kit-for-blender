@@ -1352,3 +1352,11 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] After two Create References with namespaces `prop` / `prop1`, Windows > General Editors > Namespace Editor: Maya lists `:`, `prop`, `prop1` and can rename / merge them. Today the item is greyed (NB14).
 - [ ] pCube1 selected, Ctrl+C then Ctrl+V: Maya pastes `pasted__pCube1`. Today the copy is `pCube1.001` with a `.001` shape (NB15). Also: Create > Sets > Set three times, delete set2, make another set → `set4` if Maya's one-past-the-highest rule (research/maya/re/cmds_201.md §2, measured on transforms / joints / history nodes, not on sets) holds; the kit makes `set2` again. Same for display layers (`layer`N) and animation layers.
 - [ ] Blender 5.2 (and 5.0), Maya Workflow Kit layout: Reference Editor window, Graph Editor pin / kit list, Layer Editor two selected anim layers (dimmed curves), Deform > Tension / Jiggle, UV Editor HUDs, Script Editor `cmds.file(new=True, f=True)` work like on 4.5 — steps 202–209 ran no 5.x headless or GUI files (NB16).
+
+### Step 211 — Audit 16 fix batch (#117)
+
+- [ ] Windows > Relationship Editors > Light Linking ▸ Light-Centric / Object-Centric: the kit Light Linking Editor opens in that mode (not the Properties Object tab).
+- [ ] pCube1 selected, Ctrl+C, Ctrl+V: a new `group` holds `pasted__pCube1` (shape `pasted__pCubeShape1`) at the cube's place, only `group` is selected; a second Ctrl+V makes `group1` / `pasted__pCube2`. Create > Sets > Set ×3, delete set2, another set → `set4`.
+- [ ] File > New Scene (Maya layout): the Outliner starts with greyed persp / top / front / side, new objects follow in creation order (also after making 10+ objects and after grouping three cubes: the group lists them in creation order), sets last. Click persp: the Channel Box shows persp (Visibility off). Edit > Delete with persp active and a cube selected deletes only the cube.
+- [ ] Attribute Editor on a cube: the node tabs are one row (pCube1 / pCubeShape1 / polyCube1 / initialShadingGroup / lambert1); drag the dock narrower: ◀ ▶ appear around the current tab instead of the tabs stacking; Select / Load Attributes / Copy Tab stay one row at the fitted width.
+- [ ] nHair > Modify Curves > Bend ❒ / Curl ❒ / Scale Curvature ❒ open the same Maya windows as Curves > Bend ❒ / Curl ❒ / Scale Curvature ❒.

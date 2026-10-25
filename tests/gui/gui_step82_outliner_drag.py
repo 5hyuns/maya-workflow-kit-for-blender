@@ -107,7 +107,7 @@ def s_scene():
     redraw()
 
 
-rows_check(["A", "B", "C", "D", None], "rows (sorted) A B C D")
+rows_check(["A", "B", "C", "D", None], "rows (creation order) A B C D")
 
 
 def drag(button, src, dst, shift=False):
@@ -228,39 +228,27 @@ def s_empty_check():
     redraw()
 
 
-# rows: A, C (child), B, D
-rows_check(["A", "C", "B", "D"], "rows: A C B D")
+# rows: A, C (child), D, B — the Maya Outliner is unsorted (creation order) and Maya lists an unparented node last
+# among the world's nodes (step 211, ui/outliner_order.py)
+rows_check(["A", "C", "D", "B"], "rows: A C D B (unparented B last)")
 
 
-# 4. Sort Alphabetically off: Blender draws the first base last (link A B C D -> B C D A; C under A)
-@step
-def s_unsorted():
-    a, _r = outl()
-    a.spaces.active.use_sort_alpha = False
-    redraw()
-
-
-rows_check(["B", "D", "A", "C"], "unsorted rows: B D A C (first linked drawn last)")
-
-# MMB drag A between the top edge and B (top quarter of row 0) -> A drawn first
+# 4. MMB drag D between the top edge and A (top quarter of row 0) -> D drawn first
 add(drag('MIDDLEMOUSE', lambda: row_xy(2), lambda: row_xy(0, 0.1)))
 
 
 @step
 def s_order_check():
-    col = bpy.context.scene.collection.children[0]
-    names = [o.name for o in col.objects]
-    check(f"MMB between rows: link order D A B C draws A first ({names})", names == ["D", "A", "B", "C"])
     check("reorder kept A in the world and in place, C its child, selection D",
           ob("A").parent is None and world_kept("A") and ob("C").parent == ob("A") and world_kept("C")
-          and [o.name for o in bpy.context.selected_objects] == ["D"])
+          and ob("D").parent is None and [o.name for o in bpy.context.selected_objects] == ["D"])
     redraw()
 
 
-rows_check(["A", "C", "B", "D"], "unsorted rows after the drag: A C B D")
+rows_check(["D", "A", "C", "B"], "rows after the drag: D A C B")
 
 # 5. LMB drop C (Maya child of the rotated, scaled A) onto empty space -> parent_clear redone: world kept
-add(drag('LEFTMOUSE', lambda: row_xy(1), empty_xy))
+add(drag('LEFTMOUSE', lambda: row_xy(2), empty_xy))
 
 
 @step
@@ -285,8 +273,8 @@ def s_cycle_setup():
     redraw()
 
 
-rows_check(["A", "C", "B", "D"], "rows before the cycle drag: A C B D")
-add(drag('MIDDLEMOUSE', lambda: row_xy(0), lambda: row_xy(1)))
+rows_check(["D", "A", "C", "B"], "rows before the cycle drag: D A C B")
+add(drag('MIDDLEMOUSE', lambda: row_xy(1), lambda: row_xy(2)))
 
 
 @step
