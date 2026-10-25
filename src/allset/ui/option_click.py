@@ -21,7 +21,8 @@ Shift / Ctrl+click.
 import bpy
 
 # checked: in widget units (toolbar_fit.unit)
-LEAD_UNITS = 1.48        # top bar region left -> first Maya menu button: header padding + Blender logo pulldown
+from .. import compat
+LEAD_UNITS = compat.MENU_BAR_LEAD_UNITS   # top bar region left -> first Maya menu button (4.5 1.48, 5.x 1.25)
 TEXT_UNITS = 1.6         # menu edge -> item text (menu padding + icon column)
 PAD_SUB_UNITS = 1.6      # widest text -> menu right edge when the menu has submenu rows (arrow column)
 PAD_UNITS = 1.28         # ... without submenu rows

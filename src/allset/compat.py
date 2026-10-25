@@ -318,3 +318,51 @@ def set_unprojected_radius(ups, radius):
 # (step 130), so with the 5.x default a held option box can't close the Maya menu under it (step 153).
 def menus_close_on_leave(prefs):
     return getattr(prefs.view, "menu_close_leave", True)
+
+
+# --- Geometry Nodes modifier inputs --------------------------------------------------------------------
+# 4.5 – 5.1 keep a Geometry Nodes modifier's inputs as ID properties on the modifier (``md[socket identifier]``,
+# ``<identifier>_use_attribute`` / ``_attribute_name``); 5.2 moved them to ``md.properties.inputs.<identifier>``
+# with ``value``, ``type`` ('VALUE' / 'ATTRIBUTE') and ``attribute_name``, and ``md[key] = value`` raises
+# (checked on 5.2.3, step 200).
+GN_INPUT_STRUCT = "properties" in bpy.types.NodesModifier.bl_rna.properties
+
+
+def _gn_input(md, key):
+    return getattr(md.properties.inputs, key, None)
+
+
+def gn_input_get(md, key):
+    """The value of input ``key`` (socket identifier) of the Geometry Nodes modifier ``md``, or None."""
+    if GN_INPUT_STRUCT:
+        item = _gn_input(md, key)
+        return item.value if item is not None else None
+    return md[key] if key in md else None
+
+
+def gn_input_set(md, key, value):
+    if GN_INPUT_STRUCT:
+        item = _gn_input(md, key)
+        if item is not None:
+            item.value = value
+        return
+    md[key] = value
+
+
+def gn_input_attribute(md, key, attribute):
+    """Make input ``key`` read the named attribute ``attribute`` (a vertex group) instead of a value."""
+    if GN_INPUT_STRUCT:
+        item = _gn_input(md, key)
+        if item is not None:
+            item.type = 'ATTRIBUTE'
+            item.attribute_name = attribute
+        return
+    md[f"{key}_use_attribute"] = True
+    md[f"{key}_attribute_name"] = attribute
+
+
+# --- Top bar: where the first menu of the Maya menu bar opens ------------------------------------------
+# Option box click model (ui/option_click.py, step 183): top bar region left -> the first Maya menu's pulldown,
+# in widget units. 4.5: 1.48 (step 183 table); 5.0 – 5.2: 1.25 (step 200, gui_step183_option_click at UI 1.0 =
+# 25 px of 20, UI 1.25 = 31 px of 25 on 5.0.1 / 5.1.2 / 5.2.3: the header row starts closer to the region edge).
+MENU_BAR_LEAD_UNITS = 1.48 if VERSION < (5, 0) else 1.25
