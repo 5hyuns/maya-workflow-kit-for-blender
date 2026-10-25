@@ -17,6 +17,7 @@ KINDS = {
     "COMPONENT_EDITOR": ("show_properties_object", "show_properties_modifiers"),
     "SHAPE_EDITOR": ("show_properties_object", "show_properties_data"),
     "CONNECTION_EDITOR": ("show_properties_object", "show_properties_material"),
+    "HOTKEY_EDITOR": ("show_properties_bone", "show_properties_bone_constraints"),   # step 215 (ui/hotkey_editor.py)
 }
 
 
