@@ -39,13 +39,30 @@ def _check_unsaved(force):
         raise RuntimeError("Unsaved changes. Save the scene first, or use force=True.")
 
 
+_window = {"ptr": 0}         # the window a script loaded a file from (see ``script_window``)
+
+
 def _load(path):
+    """A file read leaves the running script's context without window / screen (checked in the UI: the next
+    command had no ``selected_objects``; a ``temp_override`` around the load doesn't bring them back), so the window
+    is remembered and every later cmds call runs in it (``cmds_shim._guarded``)."""
     _state["name"] = ""
+    win = bpy.context.window
+    _window["ptr"] = win.as_pointer() if win is not None else 0
     if path is None:
         from .. import app_template
         bpy.ops.wm.read_homefile(filepath=app_template.STARTUP, load_ui=False)
     else:
         bpy.ops.wm.open_mainfile(filepath=path, load_ui=False)
+
+
+def script_window():
+    """The window to run a cmds call in when the context has none (after a load), else None."""
+    wm = bpy.context.window_manager
+    if bpy.context.window is not None or wm is None or not wm.windows:
+        return None
+    from .. import live_refs
+    return live_refs.window(_window["ptr"]) or wm.windows[0]
 
 
 def file(*args, **kwargs):  # noqa: A001 - Maya's command name
