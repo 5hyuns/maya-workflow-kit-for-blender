@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 187 (Character Sets on Keying Sets, backlog_183.json #5) 완료 — `docs/steps/step_187.md`, Maya 측정
+  `research/maya/re/character_sets_183.md` (mayapy + GUI Maya 2 회). 모든 Keying Set = kit character set (current = active),
+  S = current 캐릭터 멤버 키, Create / Subcharacter / Add / Remove / Merge / Select / Set Current / AE 팝업, Time Slider 드롭다운.
+  Key 54 → 73 %, Control 7 → 64 %, unique 730. 헤드리스 1703 / 1703, GUI step187 4 / 4 (+ 56 · 73 · 180 26 / 26).
+  **바로 다음 할 일**: 188 Animation layer follow-ups (backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog_183.json`
+  6 번째).
+
 - Step 186 (Time Slider ticks and playhead, backlog_183.json #4) 완료 — `docs/steps/step_186.md`, Maya 측정
   `research/maya/re/time_slider_186.md` (GUI Maya 43 경우 + 북마크 · 키). Maya 레이아웃 Time Slider 를 kit 이 Maya 자로 그림
   (`ui/time_slider._draw_ruler`: 배경, step 눈금 + 회색 라벨, 흰 25 % 현재 칸 + 번호, 북마크 띠, 키 = 눈금 자리). Blender 의 파란 현재

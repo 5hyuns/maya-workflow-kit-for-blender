@@ -49,10 +49,6 @@ NOTICES = {
         "NLA Editor", "Blender has no Time Editor: clips are actions laid out as NLA strips."),
     "Windows/Relationship Editors/Character Sets": (
         "Keying Sets", "Blender has no character sets: a Keying Set (Scene properties) keys a chosen set of channels."),
-    "Control/Create Character Set": (
-        "Keying Set", "Blender has no character sets: a Keying Set (Scene properties) keys a chosen set of channels."),
-    "Key/Create Character Set": (
-        "Keying Set", "Blender has no character sets: a Keying Set (Scene properties) keys a chosen set of channels."),
     # Playback (step 56): Blender playback always loops
     **{f"Playback/Playback Looping/{kind}": (
         "Continuous", "Blender playback always loops (no Once / Oscillate).") for kind in ("Once", "Oscillate")},

@@ -1225,3 +1225,7 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 ## Step 186
 
 - [ ] Maya layout Time Slider: small grey labels with a tick under each (1-120 = every 5 frames), the current frame's cell lit with its white number (Blender's blue current-frame box still sits on top); widen / narrow the window and change the range (1-24, 1-1000): the step changes like Maya's; Alt+T bookmark = red bar in a strip on top; keys = red lines on the ticks.
+
+## Step 187
+
+- [ ] Select a cube, Key > Create Character Set: the Time Slider field reads "character1"; select another object (or nothing) and press S = only character1's channels get keys; the field's dropdown > None, then S keys the selection again. Key > Select Character Set Members > character1 selects the cube; Channel Box select Translate X of another object + Key > Add to Character Set adds it.

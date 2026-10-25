@@ -382,7 +382,16 @@ MAP = {
     "UV/3D Cut and Sew UV Tool": "allset.cut_sew_tool_set",   # step 79          # seam cleared + the smaller shell moved onto the edge
     "UV/Merge UVs": "uv.weld",
     # --- Skeleton (Rigging) ---
-    "Control/Create Character Set": "anim.keying_set_add",   # step 54: Keying Set + notice (ui/notices.py)
+    # step 187: Maya Character Sets on Blender Keying Sets (operators/character_sets.py)
+    "Control/Create Character Set": "allset.character_create",
+    "Control/Create Subcharacter Set": ("allset.character_create", {"sub": True}),
+    "Control/Attribute Editor": "allset.character_attributes",
+    "Control/Add to Character Set": ("allset.character_edit", {"add": True}),
+    "Control/Remove from Character Set": ("allset.character_edit", {"add": False}),
+    "Control/Merge Character Sets": "allset.character_merge",
+    "Control/Select Character Set Node": ("menu", "ALLSET_MT_character_select_node"),
+    "Control/Select Character Set Members": ("menu", "ALLSET_MT_character_select_members"),
+    "Control/Set Current Character Set": ("menu", "ALLSET_MT_character_set_current"),
     # step 57: Joint Tool (click, click, Enter), option-box dialogs (docs/steps/step_57.md)
     "Skeleton/Create Joints": "allset.joint_tool",
     "Skeleton/Quick Rig": "allset.quick_rig",              # Rigify (notice in ui/notices.py), step 62
@@ -1025,7 +1034,10 @@ MAP.update(_EDITOR_MAP)
 # UV Editor Tools > Unfold / Cut / Sew / Pin are Maya's brush tools; the kit runs the command on the selection
 # (Blender's UV editor has no unfold / cut / sew brush) [delegated].
 TWINS = {
-    "Key/Create Character Set": "Control/Create Character Set",
+    **{f"Key/{label}": f"Control/{label}" for label in (
+        "Create Character Set", "Create Subcharacter Set", "Attribute Editor", "Add to Character Set",
+        "Remove from Character Set", "Merge Character Sets", "Select Character Set Node", "Select Character Set Members",
+        "Set Current Character Set")},
     "Hypershade/Edit/Select All by Type/Lights": "Select/All by Type/Lights",
     **{f"UV Editor/Select/Convert Selection/{label}": f"Select/Convert Selection/{label}"
        for label in ("To Contained Edges", "To Contained Faces", "To Edge Loop", "To Edge Ring")},
