@@ -80,7 +80,8 @@ def main(argv=None):
         cmd = [args.blender, "--factory-startup", "--enable-event-simulate", *os.environ.get("ALLSET_GUI_ARGS", "").split(),
                "--window-geometry", "0", "0", "1600", "900",
                "--python", str(path), "--", str(out)]
-        with open(log, "w", encoding="utf-8", errors="replace") as fh:
+        with headless.blender_slots.slot(f"gui {path.stem}"), \
+                open(log, "w", encoding="utf-8", errors="replace") as fh:
             proc = subprocess.Popen(cmd, env=env, stdin=subprocess.DEVNULL,
                                     stdout=fh, stderr=subprocess.STDOUT)
             timed_out = False

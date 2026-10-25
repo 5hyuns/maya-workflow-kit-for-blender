@@ -83,8 +83,10 @@ def build_extension_with_blender(blender, out):
     cmd = [blender, "--factory-startup", "--command", "extension", "build",
            "--source-dir", str(SRC), "--output-filepath", str(out)]
     # stdin must not be inherited: with an interactive stdin the command can hang.
-    r = subprocess.run(cmd, env=sandbox_env(), stdin=subprocess.DEVNULL,
-                       capture_output=True, text=True, timeout=300)
+    from blender_slots import slot      # machine-wide Blender slots ( 10-25)
+    with slot("tools/build.py extension build"):
+        r = subprocess.run(cmd, env=sandbox_env(), stdin=subprocess.DEVNULL,
+                           capture_output=True, text=True, timeout=300)
     sys.stdout.write(r.stdout)
     sys.stderr.write(r.stderr)
     if r.returncode != 0 or not out.exists():
