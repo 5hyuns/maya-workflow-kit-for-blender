@@ -153,7 +153,7 @@ def test_history_notice_and_groups():
     sl = import_module(kit.MODULE + ".ui.status_line")
     groups = [g for g, _d in sl.GROUPS]
     assert groups.index("HISTORY") < groups.index("RENDER") < groups.index("INPUT") < groups.index("EDITORS")
-    assert il.HISTORY_PATH in notices.PANEL_NOTICES
-    tip = notices.tooltip(il.HISTORY_PATH, mapped=False)
-    assert tip and "construction history" in tip.lower()
+    # step 189 (BS5): Construction History is Maya's toggle now, not a greyed widget with a notice
+    assert il.HISTORY_PATH not in notices.PANEL_NOTICES
+    assert bpy.context.window_manager.allset_construction_history is True
     assert isinstance(bpy.context.scene.bl_rna.properties["allset_input"], bpy.types.PointerProperty)

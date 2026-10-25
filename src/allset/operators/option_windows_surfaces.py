@@ -72,6 +72,12 @@ def _run_rebuild(context, v):
                                           degree_u=_degree(v["degree_u"]), degree_v=_degree(v["degree_v"]))
 
 
+def _run_insert_isoparms(context, v):
+    return bpy.ops.allset.surface_insert_isoparm(
+        'EXEC_DEFAULT', between=v["location"] == "Between selections", increase=v["multiplicity"] == "Increase",
+        count=v["count"], keep_original=v["keep_original"])
+
+
 REBUILD_DEGREES = ("1 Linear", "2", "3 Cubic", "5", "7")    # Maya-665 (Original: missing)
 
 WINDOWS = [
@@ -143,6 +149,14 @@ WINDOWS = [
     Window("surface_reverse", "Reverse Surface Direction Options", "Reverse", ("allset.surface_reverse", {}), [
         F("direction", "Surface direction:", "enum", "U", items=("U", "V", "Swap", "Both")),
     ], _run_reverse, paths=("Surfaces/Reverse Direction",), missing=("Keep original (off)",)),
+    # Surfaces > Insert Isoparms (Maya-262, surface title :362; Maya-66:
+    # At selection, Increase, 1, Keep original off; step 189)
+    Window("surface_insert_isoparms", "Insert Isoparms Options", "Insert", ("allset.surface_insert_isoparm", {}), [
+        F("location", "Insert location:", "enum", "At selection", items=("At selection", "Between selections")),
+        F("multiplicity", "Multiplicity:", "enum", "Increase", items=("Set", "Increase")),
+        F("count", "Multiplicity / # isoparms to insert:", "int", 1, lo=1, hi=7),
+        F("keep_original", "", "bool", False, text="Keep original"),
+    ], _run_insert_isoparms, paths=("Surfaces/Insert Isoparms",), missing=("Use surface isoparm: U / V axis",)),
     # Surfaces > Rebuild (Maya-686, title :819; Maya-100:
     # Uniform, 4 x 4 spans, cubic both ways, U and V)
     Window("surface_rebuild", "Rebuild Surface Options", "Rebuild", ("allset.surface_rebuild", {}), [

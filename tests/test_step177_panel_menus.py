@@ -59,7 +59,7 @@ def test_drawn_rows_are_the_counted_rows():
     # Status Line: the greyed widgets it draws are the listed ones
     drawn = {f"Status Line/{desc}" for _g, desc, _i, types_ in status_line.OBJECT_MASKS if types_ is None}
     drawn |= {f"Status Line/{desc}" for _n, desc, _i, el in status_line.SNAPS if el is None}
-    drawn.add(input_line.HISTORY_PATH)
+    assert input_line.HISTORY_PATH not in pmd.STATUS_LINE      # a real toggle since step 189 (BS5)
     src = inspect.getsource(status_line)
     drawn |= {p for p in pmd.STATUS_LINE if f'"{p}"' in src}
     assert drawn == set(pmd.STATUS_LINE), drawn ^ set(pmd.STATUS_LINE)

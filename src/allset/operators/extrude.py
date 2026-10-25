@@ -500,6 +500,18 @@ class Record:
 RECORDS = {}   # object name -> Record
 
 
+def keep(context, ob, rec):
+    """Remember ``rec`` as the object's history node, unless Maya's Construction History is off (Status Line
+    toggle, step 189): Maya's menu commands then run with -ch 0 and leave no polyExtrude / polyBevel node
+    (Maya:  "Construction History")."""
+    from . import prim_history
+    if prim_history.history_on(context):
+        RECORDS[ob.name] = rec
+        return
+    rec.free()
+    RECORDS.pop(ob.name, None)
+
+
 def clear():
     for rec in RECORDS.values():
         rec.free()
@@ -691,7 +703,7 @@ def record_new(context, ob, bm, spec, params, unit):
     rec = Record(name or next_name(context.scene, spec), pre, params, spec)
     rec.mesh_uid = ob.data.session_uid
     _store_generic(rec, bm, tracked, params)
-    RECORDS[ob.name] = rec
+    keep(context, ob, rec)
     bmesh.update_edit_mesh(ob.data)
     return rec
 
@@ -782,7 +794,7 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
             rec.mesh_uid = ob.data.session_uid
             caps, moved = extrude(bm, faces, unit=unit, **params, **mesh_axes(ob))
             _store(rec, bm, caps, moved, params)
-            RECORDS[ob.name] = rec
+            keep(context, ob, rec)
             bmesh.update_edit_mesh(ob.data)
             done += 1
         return {'FINISHED'} if done else {'CANCELLED'}

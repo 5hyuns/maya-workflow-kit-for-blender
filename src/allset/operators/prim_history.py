@@ -37,6 +37,13 @@ GROUPS = {"makeNurbsSquare", "makeNurbCube"}
 SURFACES = {"makeNurbSphere", "makeNurbCylinder", "makeNurbCone", "makeNurbPlane", "makeNurbTorus", "makeNurbCube"}
 
 
+def history_on(context):
+    """Maya's Construction History toggle (Status Line, ``constructionHistory -toggle``): on by default, one state
+    for the session that File > New keeps (Maya,  "Construction History"),
+    hence a WindowManager property (ui/input_line.py)."""
+    return getattr(context.window_manager, "allset_construction_history", True)
+
+
 def to_blender(p, k):
     """Maya Y-up point -> Blender Z-up, scaled by the Maya unit (): (x, y, z) -> (x, -z, y) * k."""
     return (p[0] * k, -p[2] * k, p[1] * k)
@@ -355,7 +362,8 @@ def create_object(context, kind, values=None, maya_naming=True, create_uvs=True)
         owner = cu
     if maya_naming and node_type not in GROUPS:
         naming.apply_maya_name(ob, base)
-    _store(owner, node_type, _next_name(node_type), vals, k, extra)
+    if history_on(context):                  # off: Maya's -ch 0 primitive has no polyCube1 node (step 189)
+        _store(owner, node_type, _next_name(node_type), vals, k, extra)
     for o in context.selected_objects:
         o.select_set(False)
     ob.select_set(True)

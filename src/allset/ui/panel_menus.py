@@ -103,6 +103,8 @@ TIPS = {
     "SAFE_ACTION": "Safe action (Blender draws the action and title safe areas together)",
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
     "GRID": "Grid",
+    "SHOW_IMAGE_PLANES": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
+    "SHOW_IK_HANDLES": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
     "SHADE_WIRE": "Wireframe",
     "SHADE_SMOOTH": "Smooth shade all",
     "DEFAULT_MATERIAL": "Use default material",
@@ -114,6 +116,25 @@ TIPS = {
     "CM_ENABLE": "Colour management on / off (off = Blender's Raw view transform)",
     "LAYOUT_FOUR": "Four View: top, persp, front and side. " + view_ops.FOUR_VIEW_NOTE,
 }
+
+
+SHOW_HIDDEN = "allset_hidden_by_show"   # IK handles the Show menu hid (view-layer hide; only these come back)
+
+
+def show_ik_handles(context, on):
+    """Maya Show > IK Handles (step 189): Blender has no view filter for these empties, so the kit hides them in
+    the view layer (every view) and marks them; showing again un-hides only marked ones."""
+    from ..operators import by_type
+    for ob in by_type.ik_handles(context.scene):
+        try:
+            if on and ob.get(SHOW_HIDDEN):
+                ob.hide_set(False)
+                del ob[SHOW_HIDDEN]
+            elif not on and not ob.hide_get():
+                ob.hide_set(True)
+                ob[SHOW_HIDDEN] = True
+        except RuntimeError:       # not in the view layer
+            pass
 
 
 def state(context, key):
@@ -159,6 +180,13 @@ def state(context, key):
     if key == "GRID":
         from . import maya_grid
         return maya_grid.visible(space)
+    if key == "SHOW_IMAGE_PLANES":
+        from ..operators import global_keys4
+        planes = global_keys4.image_planes(context.scene)
+        return not planes or any(getattr(o, f) for o in planes for f in global_keys4.IMAGE_FLAGS)
+    if key == "SHOW_IK_HANDLES":
+        from ..operators import by_type
+        return not any(o.get(SHOW_HIDDEN) for o in by_type.ik_handles(context.scene))
     if key == "LAYOUT_SINGLE":
         return not space.region_quadviews
     if key == "LAYOUT_FOUR":
@@ -244,6 +272,11 @@ def apply(context, key):
     elif key == "GRID":
         from . import maya_grid
         maya_grid.toggle(space)
+    elif key == "SHOW_IMAGE_PLANES":
+        from ..operators import global_keys4
+        global_keys4.toggle_show(space, context.scene, 'IMAGE_PLANES')
+    elif key == "SHOW_IK_HANDLES":
+        show_ik_handles(context, not state(context, key))
     elif key in ("SHOW_ALL", "SHOW_NONE"):
         for t in ALL_TYPES:
             setattr(space, f"show_object_viewport_{t}", key == "SHOW_ALL")

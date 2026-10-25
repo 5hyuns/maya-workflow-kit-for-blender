@@ -365,10 +365,8 @@ CATEGORIES = {
     "Lighting/Shading": ("Cycles Bake", "Blender transfers maps between meshes with Cycles Bake (Render "
                          "properties > Bake, Selected to Active)."),
     # modeling
-    "UV": ("UV Editor", "Blender: grab UVs with G in the UV Editor, delete UVs by removing the UV map (Data "
-           "properties > UV Maps)."),
-    "Mesh Display": ("Normals / Color Attributes", "Blender's normals are under Mesh > Normals (custom normals), "
-                     "vertex colors are Color Attributes (Data properties)."),
+    "UV": ("UV Editor", "Blender: grab UVs with G in the UV Editor; UV maps (UV sets) are in Data properties "
+           "> UV Maps."),
     **{f"Mesh Display/{sub}": ("Color Attribute node", "Blender mixes vertex colors into materials with a Color "
                                "Attribute node in the Shader Editor, not a per-object setting.")
        for sub in ("Color Material Channel", "Material Blend Setting")},
@@ -622,14 +620,13 @@ PANEL_MENU = {
     _PM + "Lighting/Two Sided Lighting": (
         "none", "Blender always lights both sides of a face in the viewport (Backface Culling hides back faces)."),
     **{_PM + f"Show/{t}": _NO_FILTER for t in (
-        "Controllers", "NURBS CVs", "NURBS Hulls", "Subdiv Surfaces", "Planes", "Dynamics", "Particle Instancers",
+        "Controllers", "Subdiv Surfaces", "Planes", "Dynamics", "Particle Instancers",
         "Follicles", "nCloths", "nParticles", "nRigids", "Dynamic Constraints", "Dimensions", "Handles",
         "Texture Placements", "Strokes", "Plugin Shapes", "Clip Ghosts")},
-    _PM + "Show/Image Planes": (
-        "Show > Locators", "Maya Workflow Kit image planes are Blender image empties: they show / hide with Locators."),
-    _PM + "Show/IK Handles": (
-        "Show > Locators", "Maya Workflow Kit IK handles are empties (IK constraint targets): they show / hide with "
-        "Locators."),
+    **{_PM + f"Show/{t}": (
+        "Edit Mode", "Blender draws a curve's or surface's control points and control polygon (hull) only in Edit "
+        "Mode, and always there: they can't be shown in Object Mode or hidden per view.") for t in (
+        "NURBS CVs", "NURBS Hulls")},
     _PM + "Show/Hold-Outs": (
         "Object Properties > Visibility > Holdout", "Blender holdouts are a render setting per object / collection; "
         "views don't filter them."),
@@ -685,9 +682,6 @@ PANEL_MENU = {
         "object behind it."),
     _SL + "Snap to view planes": (
         "Snap to Grid", "Blender has no view planes: snap to the grid or to a vertex."),
-    _SL + "Construction History": (
-        "Edit > Delete by Type > History", "Blender keeps no construction history to switch off: the kit's history "
-        "nodes are modifiers; Delete History (Alt+Shift+D) bakes them."),
     _SL + "Render Setup": (
         "View Layers", "Blender's render layers are View Layers (top bar, View Layer properties), with collections "
         "for overrides."),

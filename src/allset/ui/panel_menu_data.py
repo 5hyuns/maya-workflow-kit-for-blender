@@ -109,12 +109,13 @@ LIGHTING = [
     ("prop", "shading", "show_shadows", "Shadows"),
 ]
 
-# Maya object type -> SpaceView3D.show_object_viewport_<type> (None = no Blender filter).
+# Maya object type -> SpaceView3D.show_object_viewport_<type> (None = no Blender filter, "@" = an overlay flag,
+# "!" = a kit ``set`` key: ui/panel_menus.state / apply, step 189).
 SHOW_TYPES = (
     ("Controllers", None), ("NURBS Curves", "curve"), ("NURBS Surfaces", "surf"),
     ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
-    ("Planes", None), ("Lights", "light"), ("Cameras", "camera"), ("Image Planes", None),
-    ("Joints", "armature"), ("IK Handles", None), ("Deformers", "lattice"), ("Dynamics", None),
+    ("Planes", None), ("Lights", "light"), ("Cameras", "camera"), ("Image Planes", "!SHOW_IMAGE_PLANES"),
+    ("Joints", "armature"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
     ("Particle Instancers", None), ("Fluids", "volume"), ("Hair Systems", "curves"),
     ("Follicles", None), ("nCloths", None), ("nParticles", None), ("nRigids", None),
     ("Dynamic Constraints", None), ("Locators", "empty"), ("Dimensions", None),
@@ -131,6 +132,8 @@ def _show_row(label, target):
         return _grey(label)
     if target.startswith("@"):
         return ("prop", "overlay", target[1:], label)
+    if target.startswith("!"):
+        return ("set", target[1:], label)
     return ("prop", "space", f"show_object_viewport_{target}", label)
 
 
@@ -253,7 +256,7 @@ MENU_PREFIX, TOOLBAR_PREFIX = "Panel menu/", "Panel toolbar/"
 # The Status Line's greyed widgets (ui/status_line.py ``_grey``; tests/test_step177_panel_menus.py checks the drawn set).
 STATUS_LINE = ("Status Line/Select by hierarchy", "Status Line/Select by handle object type",
                "Status Line/Select by dynamic object type", "Status Line/Snap to projected center",
-               "Status Line/Snap to view planes", "Status Line/Construction History", "Status Line/Render Setup",
+               "Status Line/Snap to view planes", "Status Line/Render Setup",
                "Status Line/Pause Viewport 2.0", "Status Line/Show or hide the Character Controls")
 
 
