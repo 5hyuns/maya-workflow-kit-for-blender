@@ -85,9 +85,9 @@ from . import poly_cleanup  # noqa: E402  step 197: Mesh > Cleanup... (Maya poly
 
 classes += poly_cleanup.classes
 
-from . import graph_buffers, graph_retime, graph_weights  # noqa: E402  step 198: Graph Editor depth 2
+from . import graph_buffers, graph_menu_198, graph_retime, graph_weights  # noqa: E402  step 198: Graph Editor depth 2
 
-classes += graph_retime.classes + graph_buffers.classes + graph_weights.classes
+classes += graph_retime.classes + graph_buffers.classes + graph_weights.classes + graph_menu_198.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -137,9 +137,11 @@ def register():
     graph_retime.register_handlers()
     graph_buffers.register_handlers()
     graph_weights.register_handlers()
+    graph_menu_198.register_props()
 
 
 def unregister():
+    graph_menu_198.unregister_props()
     graph_weights.unregister_handlers()
     graph_buffers.unregister_handlers()
     graph_retime.unregister_handlers()
