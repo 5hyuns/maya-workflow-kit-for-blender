@@ -89,6 +89,10 @@ from . import graph_buffers, graph_menu_198, graph_retime, graph_weights  # noqa
 
 classes += graph_retime.classes + graph_buffers.classes + graph_weights.classes + graph_menu_198.classes
 
+from . import constrain_199, skin_tools_199  # noqa: E402  step 199: Skin and Constrain tools 2
+
+classes += skin_tools_199.classes + constrain_199.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -138,9 +142,13 @@ def register():
     graph_buffers.register_handlers()
     graph_weights.register_handlers()
     graph_menu_198.register_props()
+    skin_tools_199.register_handlers()
+    constrain_199.register_handlers()
 
 
 def unregister():
+    constrain_199.unregister_handlers()
+    skin_tools_199.unregister_handlers()
     graph_menu_198.unregister_props()
     graph_weights.unregister_handlers()
     graph_buffers.unregister_handlers()
