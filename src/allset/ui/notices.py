@@ -96,13 +96,8 @@ NOTICES = {
         "Extrude (E)", "Blender extrudes the curve's end points: move the mouse, click to place the new point."),
     "Curves/Offset/Offset Curve": (
         "Poly curve", "Blender's offset copy is a poly curve through the moved points, not a fitted NURBS curve."),
-    "Surfaces/Loft": (
-        "Mesh", "Blender can't loft NURBS surfaces: the loft is a quad mesh through the curves (active curve last)."),
     "Surfaces/Planar": (
         "Filled 2D curve", "Blender fills closed 2D curves: a copy of the curve, flattened onto its own XY plane."),
-    "Surfaces/Extrude": (
-        "Curve bevel object", "Blender bevels a copy of the path curve with the profile curve (select the profile "
-        "first, the path last)."),
     "Surfaces/Bevel Plus": (
         "Curve extrude + bevel, converted", "Blender builds a mesh from the filled curve, extruded and bevelled both ways around "
         "the curve's plane."),
@@ -302,9 +297,10 @@ _XGEN_ITEMS = ("XGen Editor", "XGen Library", "Import Collections or Description
                "Convert Interactive Groom to Polygons...", "Display HUD")
 CATEGORIES = {
     # whole Maya-only systems
-    "Surfaces": ("NURBS surface edit mode", "Blender's NURBS surfaces can be edited (CVs, Open/Close, Revolve = "
-                 "Screw modifier) but have no Trim, Fillet or Stitch (Loft, Planar, Extrude and Bevel Plus are "
-                 "built by Maya Workflow Kit): model with polygons."),
+    "Surfaces": ("NURBS surface edit mode", "Blender's NURBS surfaces can't be trimmed and have no Fillet, Stitch "
+                 "or surface Booleans (Maya Workflow Kit builds Loft, Revolve, Extrude, Birail 1, Boundary, Square, "
+                 "Attach, Detach, Rebuild and Reverse as NURBS surfaces): edit CVs in Edit Mode or model with "
+                 "polygons."),
     "Generate": ("Grease Pencil / Geometry Nodes", "Blender has no Paint Effects: draw strokes with Grease Pencil, "
                  "scatter geometry with Geometry Nodes."),
     **{f"Generate/{item}": ("Hair curves", "Blender has no XGen: hair is a Curves object groomed in Sculpt mode "

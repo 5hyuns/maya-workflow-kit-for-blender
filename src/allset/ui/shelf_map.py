@@ -46,7 +46,6 @@ BY_COMMAND = {
     "CreateNURBSCylinder": (_create('NURBS_CYLINDER'), 'SURFACE_NCYLINDER'),
     "CreateNURBSPlane": (_create('NURBS_PLANE'), 'SURFACE_NSURFACE'),
     "CreateNURBSTorus": (_create('NURBS_TORUS'), 'SURFACE_NTORUS'),
-    "Revolve": (_mod('SCREW'), 'MOD_SCREW'),
     "OpenCloseSurfaces": ("curve.cyclic_toggle", 'MOD_CURVE'),
     # --- Poly Modeling ---
     "CreatePolygonSphere": (_create('SPHERE'), 'MESH_UVSPHERE'),
@@ -174,6 +173,7 @@ MENU = {
     "CurvesSurfaces/Offset Curve": "Curves/Offset/Offset Curve",
     "CurvesSurfaces/Rebuild Curve": "Curves/Rebuild",
     "CurvesSurfaces/Add Points Tool": "Curves/Add Points Tool",
+    "CurvesSurfaces/Revolve": "Surfaces/Revolve",          # step 181: a NURBS revolve (was the Screw modifier)
     "CurvesSurfaces/Loft": "Surfaces/Loft",
     "CurvesSurfaces/Planar": "Surfaces/Planar",
     "CurvesSurfaces/Extrude": "Surfaces/Extrude",
