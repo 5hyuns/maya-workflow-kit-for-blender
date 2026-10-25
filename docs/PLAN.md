@@ -954,3 +954,50 @@ Moved since audit 11: selection modifiers outside the 3D View Partial → Done (
 
 1. Component mode keeps the transform tool. 2. Repeat Last for Maya commands (G). 3. Selected-face look and dogfood fixes.
 4. Panel menus honesty and twins. 5. UV Editor finish. 6. Light Linking. 7. Animation Layers on NLA. 8. Surfaces basics.
+
+## 재점검 13차 (step 182, 2026-10-25 — 사용자 지시의 「재점검 12차」)
+
+User request: everything planned (backlog_174, steps 174–181) is done — dogfood in a clean install, collect what is left,
+implementation rate, priorities, backlog; criterion "default Maya with Blender features attached", differences only. 「재점검 12차」 is
+step 173, so this one is numbered 13 (delegated). Evidence: `docs/steps/step_182.md` (main: dogfood shots, scored differences) + lane
+files `step_182_remaining.md` (README table, open work, issues, blindspots, manual checks) and `step_182_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **30 (91 %)** | **1** — theme (store compliance, decision 13) | **0** | **2** — separate pivots, Y-up |
+
+No row moved; hidden differences under Done rows fixed by steps 174–181 (tool carry, Repeat Last, Anim tab).
+
+### Headline numbers (step 173 → now)
+
+| Measure | Step 173 | Now (326f12f) |
+|---|---|---|
+| Menu leaves working (1318) | 699 (53.0 %) | **714 (54.2 %)** — Lighting/Shading 93 %, Surfaces 37 % |
+| Editor menu bars working (914) | 560 | **578** (UV Editor 79 %) |
+| Panel menus / panel toolbar / Status Line greys (new baseline, step 177) | – | 67 / 111, 22 / 29, 0 / 9 |
+| Option boxes → kit Maya window (paths) | 104 | **114**; dead 214 → 207 (Insert Isoparms regressed to generic) |
+| Shelves; hotkeys; marking menus working / greyed | 155; 209; 368 / 65 | **159; 210**; 368 / 65 |
+| Tests | headless 1600/1600, dogfood 48/48 | **headless 1683/1683**, **dogfood 48/48**, console errors 0 |
+| look_compare (effective 1.0) | viewport 11/12, kit pixels 6/6, rects 5/12 | **viewport 12/12** (selected face ΔE 40.5 → 2.3), 6/6, 5/12 |
+| Manual checks | 663, 96 ticked (682 after 174–181) | 694, 107 ticked |
+| Open GitHub issues | 1 (#89) | 1 (#89, 0.5.0) |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 16 | Option box ❒ click = command (#82, sixth audit) |
+| 15 | RMB list beside the ring, running over the Time Slider (Maya: under the ring) |
+| 12 | Selected edges hidden under the edge wire; manipulator plane handles / centre colour |
+| 10 | Time Slider: no per-frame ticks, blue playhead bubble |
+| 9 | Character Sets (Key 54 %, Control 7 %); Mesh Display 38 % + greyed twins (UV > Delete UVs, panel Show items) |
+| 6 | Auto Key unaware of animation layers + two stale "no animation layers" entries; Polygon Primitives 7 greyed; FX 18 % (sixth audit) |
+| 4 | In-view message over the hotbox, stale "Undo:" result text, AE tabs cut, Channel Box row look, maya.cmds 17 functions |
+
+### Backlog (steps 183+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`)
+
+1. Option box click opens the window. 2. RMB list under the ring. 3. Selected edges and manipulator look. 4. Time Slider ticks and
+playhead. 5. Character Sets on Keying Sets. 6. Animation layer follow-ups. 7. Mesh Display and greyed twins. 8. Seven Polygon Primitives.
+

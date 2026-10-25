@@ -1201,3 +1201,9 @@ Real keys only: `Window.event_simulate` drops modifiers on CLICK_DRAG and Ctrl C
 - [ ] Surfaces > Loft on three curves picked in order (last picked = active): the surface passes through them in that order; CV edits in surface edit mode reshape it like Maya CVs.
 - [ ] Surfaces > Birail > Birail 1 Tool with a profile touching two rails: the sweep follows both rails whatever order the three curves were picked in.
 - [ ] Surfaces > Detach / Insert Isoparms: select a CV row or column in surface edit mode, run the item: the split / new isoparm is at that row; Duplicate NURBS Patch copies the patch around the selected CVs.
+
+## Step 182
+
+- [ ] Hotbox right after F8: the in-view message ("Object selection on…") doesn't cover the hotbox rows.
+- [ ] Undo then P / Shift+P: the Command Line result field shows the new command's result, not the old "Undo: …".
+- [ ] Attribute Editor tab in a real (non-simulated) session: the dock widens so AE tabs / menus are not cut ("Sele…", "pCub…").

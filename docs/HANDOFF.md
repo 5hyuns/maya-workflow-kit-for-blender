@@ -2,6 +2,11 @@
 
 ## 현재 작업
 
+- Step 182 (재점검 13차 = 사용자 지시의 「재점검 12차」) 완료 — `docs/steps/step_182.md` (+ `_remaining.md`, `_quant.md`), PLAN
+  「재점검 13차」. 헤드리스 1683 / 1683, dogfood 48 / 48 (콘솔 오류 0), 메뉴 714 / 1318, 대응표 30 / 1 / 0 / 2, look_compare 뷰포트 12 / 12.
+  **바로 다음 할 일**: backlog `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json` 8 개 = steps 183–190 (첫째: Option box
+  click opens the window, #82).
+
 - Step 181 (Surfaces basics, backlog_174 #8 = 마지막) 완료 — `docs/steps/step_181.md`. Maya 측정 (`research/maya/re/surfaces_181.md/.json`,
   97 경우) + Blender 프로브 (`research/blender/nurbs_surface_181.md`): Maya NURBS 표면 = Blender 레거시 NURBS 표면 (균일 = Endpoint / Cyclic
   정확, 비균일 = Bezier 분해). `operators/surfaces_math.py` (bpy 없음, mayapy 대비 ≤ 1.2e-7) + `operators/surfaces_maya.py` (Loft, Revolve,
