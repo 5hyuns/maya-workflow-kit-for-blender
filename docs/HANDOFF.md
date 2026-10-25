@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 205 (Deform 2, backlog #4, Issue #112) 완료 — `docs/steps/step_205.md`, Maya 측정 `research/maya/re/deform_205.md`. Tension · Solidify ·
+  Sculpt · Morph · Jiggle (GN 디포머, Maya 이름 · INPUTS · AE · 옵션 창 · Paint Weights · Non-Deformer History 에서 남음), UV Pin · Proximity
+  Pin, Display / Hide Intermediate Objects, Wrap Add / Remove Influence. mayapy O 경우 모두 1e-4 안 (최대 2.3e-6), Deform 60 / 74, 헤드리스
+  1964 / 1964, GUI 관련 44 / 44.
+  **바로 다음 할 일**: step 206 = backlog #5 「UV Editor depth 2」 (Issue #113). 그다음 207 (#114) · 208 (#115).
+
 - Step 204 (Animation layers 4, backlog #3, Issue #111) 완료 — `docs/steps/step_204.md`, Maya 측정 `research/maya/re/anim_layers_201.md`.
   Extract / Duplicate (No Animation) / Empty / Delete Empty / Zero·Full Weight and Key, BaseAnimation 선택 시 회색, 레이어 RMB 메뉴,
   Ctrl / Shift 여러 레이어 선택 + Graph Editor 다른 레이어 커브 (그린 읽기 전용) + 그 커브 클릭 = 활성. mayapy 23 / 25 (1.55e-6),

@@ -1316,3 +1316,9 @@ that steps 199 / 200 left without a group.
 - [ ] Layer Editor Anim 탭: AnimLayer1 클릭, AnimLayer2 Ctrl+클릭 → 둘 다 선택, Graph Editor 에 두 레이어 커브 (하나는 흐리게); 흐린 커브를 클릭하면 그 레이어가 편집 가능해짐.
 - [ ] 레이어 RMB → Duplicate Layer 두 번 → `AnimLayer1_copy` 위, `AnimLayer1_copy1` 그 아래; Ctrl+Z 한 번에 하나씩 사라짐.
 - [ ] Zero Weight and Key Layer 버튼 → 레이어 weight 0 + Time Slider 에 키, 되돌리기 한 번.
+
+### Step 205 — Deform 2
+
+- [ ] 스킨 바인드한 실린더에 Deform > Tension: 관절을 굽히면 접힌 쪽 면이 덜 찌그러짐 (Maya 처럼), AE tension1 탭의 Smoothing Iterations 를 바꾸면 바로 반영.
+- [ ] Deform > Jiggle 뒤 큐브를 키로 움직이고 재생: 멈출 때 출렁임, 처음 프레임으로 되감으면 다시 원래 모양.
+- [ ] Constrain > UV Pin 으로 Locator 를 변형되는 메시에 붙이기: 메시가 휘면 Locator 가 표면을 따라감, Channel Box 의 Translate / Rotate 는 0.
