@@ -165,7 +165,8 @@ def picked_joints(arm):
     """Selected joints of ``arm`` as (source, targets): Maya takes the first selected joint as the source; Blender
     keeps no selection order, so with two joints the active (last picked) one is the target, with more the joints
     other than the active one come in skeleton order and the first is the source (delegated)."""
-    sel = [b.name for b in arm.data.bones if b.select]
+    from ..ui import channel_box      # Bone.select is gone in 5.x: the shim (step 200)
+    sel = [pb.name for pb in arm.pose.bones if channel_box.bone_selected(pb)]
     act = arm.data.bones.active
     act = act.name if act is not None and act.name in sel else None
     others = [n for n in sel if n != act]

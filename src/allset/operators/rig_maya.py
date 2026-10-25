@@ -371,7 +371,8 @@ def _selected_bone_names(context):
         arm = context.active_object
     if arm is None:
         return []
-    return [b.name for b in arm.data.bones if b.select]
+    from ..ui import channel_box      # Bone.select is gone in 5.x: the shim (step 200)
+    return [pb.name for pb in arm.pose.bones if channel_box.bone_selected(pb)]
 
 
 class ALLSET_OT_add_influence(bpy.types.Operator):

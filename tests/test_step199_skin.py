@@ -829,8 +829,9 @@ def test_move_weights_locked_and_post_match_maya():
 
 def test_move_weights_selection_and_errors():
     arm, mesh = _move_scene()
+    cbm = import_module(kit.MODULE + ".ui.channel_box")       # Bone.select is gone in 5.x (step 200)
     for b in arm.data.bones:                      # two joints: the active (last picked) one is the target
-        b.select = b.name in ("joint2", "joint3")
+        cbm.set_bone_selected(arm.pose.bones[b.name], b.name in ("joint2", "joint3"))
     arm.data.bones.active = arm.data.bones["joint3"]
     assert st.picked_joints(arm) == ("joint2", ["joint3"])
     before = _rows(mesh, MOVE_NAMES)
