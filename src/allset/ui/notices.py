@@ -877,10 +877,58 @@ CATEGORIES.update({
         "linked file."),
     "Reference Editor/Help/What's New/Highlight What's New": (
         "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    # step 213: the Component Editor's menu bar (ui/component_editor.py)
+    "Component Editor/Options/Right Justify Headers": (
+        "Left-aligned headers", "Blender's panel layout can't right-justify a label row."),
+    "Component Editor/Options/Show Namespaces": (
+        "Mesh names", "The table shows the mesh data names: Blender has no DAG path or namespace to add."),
+    "Component Editor/Options/Sort Alphabetically": (
+        "Influence order", "Blender lists vertex groups in their own order: the columns follow it (Maya's influence order)."),
+    "Component Editor/Options/Show Path Name": (
+        "Mesh names", "The table shows the mesh data names: Blender has no DAG path or namespace to add."),
+    "Component Editor/Options/Change Precision...": (
+        "3 decimals", "Blender fields show 3 decimals here (Maya's factory precision); type more digits in a cell to set them."),
+    "Component Editor/Options/Remember This Layout...": (
+        "Hide Zero Columns", "Blender keeps no saved column layouts here: Hide Zero Columns / Show All Columns pick the "
+        "columns."),
+    "Component Editor/Options/Delete Current Layout": (
+        "Hide Zero Columns", "Blender keeps no saved column layouts here: Hide Zero Columns / Show All Columns pick the "
+        "columns."),
+    "Component Editor/Layout/Show Selected Columns": (
+        "Show All Columns", "Blender's panel table has no column selection: Show All Columns / Hide Zero Columns pick them."),
+    "Component Editor/Layout/Show Selected Objects": (
+        "Load Selected Components", "Blender shows the selected objects' selected vertices with Load Selected Components."),
+    "Component Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
+    # step 213: the Shape Editor's menu bar (ui/shape_editor.py)
+    "Shape Editor/File": (
+        "Blender files", "Blender has no blend shape file format: keep shapes in a .blend and append the mesh."),
+    "Shape Editor/Edit/Group": (
+        "Flat target list", "Blender's shape keys are one flat list per mesh: no target groups."),
+    "Shape Editor/Create/Add In-Between Target": (
+        "Relative To + driver", "Blender shape keys have no in-between targets: set a key's Relative To another key "
+        "and drive it."),
+    "Shape Editor/Create/Add Selection as In-Between Target": (
+        "Relative To + driver", "Blender shape keys have no in-between targets: set a key's Relative To another key "
+        "and drive it."),
+    "Shape Editor/Create/Add Combination Target": (
+        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
+    "Shape Editor/Create/Add Selection as Combination Target": (
+        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
+    "Shape Editor/Shapes/Set as Combination Target": (
+        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
+    "Shape Editor/Shapes/Merge Targets": (
+        "New Shape from Mix", "Blender's Shape Keys menu > New Shape from Mix makes one key of the current mix."),
+    "Shape Editor/Shapes/Rebuild Target": (
+        "Duplicate + Apply", "Blender keeps no target mesh to rebuild: duplicate the mesh and apply the key."),
+    "Shape Editor/Options/Show Edit HUD": (
+        "Edit button", "Blender draws no edit HUD here: the target being edited has the red Edit button."),
+    "Shape Editor/Help/What's New/Highlight What's New": (
+        "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
     # step 213: the Connection Editor's menu bar (ui/connection_editor.py)
     "Connection Editor/Options/Attribute Order": (
-        "Maya list order", "The kit lists visibility, translate, rotate, scale, then custom attributes (no other "
-        "order)."),
+        "Maya list order", "Blender attributes are listed visibility, translate, rotate, scale, then custom ones (no "
+        "other order)."),
     "Connection Editor/Left Display": (
         "Transform and custom attributes", "The kit lists only attributes Blender has: transform channels, "
         "visibility and custom attributes (no hidden / published / output-only filters)."),

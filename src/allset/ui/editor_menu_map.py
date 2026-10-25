@@ -575,14 +575,33 @@ MAP.update(_hs_nodes())
 
 # step 213: Component / Shape / Connection Editor windows (ui/component_editor.py, shape_editor.py,
 # connection_editor.py; ; literal: no bpy imports)
-CN = "Connection Editor"
+CE, SH, CN = "Component Editor", "Shape Editor", "Connection Editor"
 MAP.update({
+    f"{SH}/Edit/Deselect All": ("allset.shape_pick", {"key": ""}),
+    f"{SH}/Create/Blend Shape Deformer": "allset.shape_create",
+    f"{SH}/Create/Add Target": "allset.shape_add_target",
+    f"{SH}/Create/Add Selection as Target": "allset.shape_add_selection",
+    f"{SH}/Shapes/Duplicate Target": "allset.shape_duplicate",
+    f"{SH}/Shapes/Flip Target": "allset.shape_flip",
+    f"{SH}/Shapes/Mirror Target": ("allset.shape_mirror", {"direction": "POSITIVE"}),
+    f"{SH}/Shapes/Key": "allset.shape_key",
+    f"{SH}/Shapes/Reset": "allset.shape_reset",
+    **_help_menu(SH, "animation/shape_keys/index.html"),
+    f"{SH}/Help/Help on Shape Authoring": _url(_MANUAL + "animation/shape_keys/index.html"),
+
+    f"{CE}/Options/Auto Update": _prop("window_manager.allset_ce_auto_update"),
+    f"{CE}/Options/Hide Zero Columns": _prop("window_manager.allset_ce_hide_zero"),
+    f"{CE}/Layout/Load Selected Components": "allset.ce_load",
+    f"{CE}/Layout/Show All Columns": _prop("window_manager.allset_ce_hide_zero", False),
+    **_help_menu(CE, "modeling/meshes/editing/mesh/vertex.html"),
+
     f"{CN}/Options/Auto-connect": _prop("window_manager.allset_cn_auto"),
     f"{CN}/Options/Channel Names/Nice": _prop("window_manager.allset_cn_names", "NICE"),
     f"{CN}/Options/Channel Names/Long": _prop("window_manager.allset_cn_names", "LONG"),
     f"{CN}/Options/Channel Names/Short": _prop("window_manager.allset_cn_names", "SHORT"),
     **_help_menu(CN, "animation/drivers/index.html"),
 })
+MAP.pop(f"{SH}/Help/Help on {SH}", None)    # Maya titles it Help on Shape Authoring (capture)
 
 
 # step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py,
