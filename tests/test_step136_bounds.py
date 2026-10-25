@@ -99,8 +99,9 @@ def test_rmb_and_shift_menus_never_on_a_border():
         menu = mm.with_object_name(mm.MENUS[name], "pCube1")
         for origin in _origins():
             s = _session(menu, origin)
-            assert s.center == origin, "the ring stays at the press point"
-            _check_layout(s.layout, origin, (name, origin))
+            # the ring stays at the press point, or the whole menu is drawn straight above it (step 184, Maya)
+            assert s.center[0] == origin[0] and s.center[1] >= origin[1], (s.center, origin)
+            _check_layout(s.layout, s.center, (name, origin))
     total = len(MENUS) * len(_origins())
     print("step136 layouts", total, "with rows on a vertical border", len(CROSSED), sorted(set(CROSSED))[:20])
     assert len(CROSSED) <= total // 50, CROSSED
@@ -112,7 +113,7 @@ def test_list_cascades_never_on_a_border():
         s = _session(menu, origin)
         for row in [it for it in s.layout.items if it.kind == "list" and it.sub is not None and it.enabled]:
             s._pop_to(0)
-            x0, y0, x1, y1 = _abs(origin, row)
+            x0, y0, x1, y1 = _abs(s.stack[0][1], row)
             s.move((x0 + x1) / 2, (y0 + y1) / 2, 0.5)
             if len(s.stack) == 2:
                 lay, center = s.stack[1]

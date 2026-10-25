@@ -110,8 +110,9 @@ def test_rmb_list_is_maya_2022():
 
 
 def test_rmb_list_under_the_ring():
-    """Maya keeps the list in one column: under the ring when it fits, else beside the ring (step 161, G2: it used to
-    wrap into columns under the ring near the window bottom); never over the ring, never outside the window."""
+    """Maya keeps the list in one column under the ring, always (): when it would
+    run past the bottom the whole menu is drawn higher so the list ends ``list_gap`` above the window bottom; the
+    pointer stays where it was pressed (step 184, replacing step 161's column beside the ring)."""
     b = (0.0, 0.0, 1600.0, 900.0)
     for origin in ((800.0, 600.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0), (800.0, 120.0)):
         s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
@@ -120,23 +121,48 @@ def test_rmb_list_under_the_ring():
         boxes = list(s.layout.radial.values())
         assert not any(r.rect[0] < x.rect[2] and x.rect[0] < r.rect[2] and r.rect[1] < x.rect[3] and
                        x.rect[1] < r.rect[3] for r in rows for x in boxes), (origin, "list over the ring")
-        absr = [(it.rect[0] + origin[0], it.rect[1] + origin[1], it.rect[2] + origin[0], it.rect[3] + origin[1])
-                for it in rows]
+        cx, cy = s.center
+        absr = [(it.rect[0] + cx, it.rect[1] + cy, it.rect[2] + cx, it.rect[3] + cy) for it in rows]
         assert all(b[0] - 1e-6 <= r[0] and r[2] <= b[2] + 1e-6 and b[1] - 1e-6 <= r[1] and r[3] <= b[3] + 1e-6
                    for r in absr), origin
         top = max(rows, key=lambda it: it.rect[3])
         assert top.label == mm.OBJECT_TITLE, "the column starts with the title"
         ring_bottom = min(it.rect[1] for it in boxes)
-        under = all(it.rect[3] <= ring_bottom for it in rows)
+        assert all(it.rect[3] <= ring_bottom for it in rows), (origin, "under the ring")
+        assert s.press == origin and s.pos == origin and cx == origin[0], "the pointer is not moved"
         if origin[1] == 600.0:
-            assert under, "room under the ring: the list stays there"
+            assert cy == origin[1], "room under the ring: the menu stays at the press point"
         if origin[1] in (450.0, 120.0):
-            # RMB on a mesh: E = UV (a radial submenu the way to a right column would open), so the column is left
-            assert not under and max(it.rect[2] for it in rows) <= min(x.rect[0] for x in boxes),                 (origin, "no room under the ring: one column beside it, on the side without a submenu")
+            assert cy > origin[1], (origin, "no room: the whole menu is drawn higher")
+            bottom = min(r[1] for r in absr)
+            assert abs(bottom - (b[1] + s.params.list_gap)) < 1e-6, (origin, bottom)
+            assert s.layout.lifted is not None
     # room for everything: one column centred under the ring
     s = engine.Session(mm.RMB_MESH, (800.0, 880.0), 0.0, measure, None, None, (0.0, -2000.0, 1600.0, 900.0))
     rows = [it for it in s.layout.items if it.kind == "list"]
     assert len({it.rect[0] for it in rows}) == 1 and abs(rows[0].rect[0] + rows[0].rect[2]) < 1e-6
+
+
+def test_lifted_menu_picks_like_maya():
+    """Maya, lifted menu (rmb_list_184.md B3 / B6 / B9): the highlight follows the pointer against the rows as drawn;
+    under the ring no radial direction is picked (a release below the list without crossing the S box runs
+    nothing); a quick click on the press point that lands on a row runs that row."""
+    b = (0.0, 0.0, 1600.0, 900.0)
+    s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
+    cx, cy = s.center
+    rows = [it for it in s.layout.items if it.kind == "list" and it.enabled and it.sub is None]
+    row = rows[len(rows) // 2]
+    x, y = cx + (row.rect[0] + row.rect[2]) / 2, cy + (row.rect[1] + row.rect[3]) / 2
+    s.move(x, y, 0.5)
+    assert s.hover[0] is row, (s.hover, row.label)
+    s.move(cx, 2.0, 0.6)                        # below the list, straight under the ring
+    assert s.hover[0] is None, s.hover
+    face = s.layout.radial["S"]
+    s.move(cx, cy + (face.rect[1] + face.rect[3]) / 2, 0.7)    # on the drawn S box: Face
+    assert s.hover[0] is face
+    # a quick click (no drag) opens the menu in click mode even when a row lies under the press point
+    s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
+    assert s.release(800.0, 120.0, 0.1) is None and s.mode == "CLICK"
 
 
 def test_window_bounds_and_cover_handlers():

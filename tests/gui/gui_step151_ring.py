@@ -77,7 +77,7 @@ def _ring_checks(s, what):
     r = s.layout.radial
     p = s.params
     check(f"{what}: radius {p.radius:.2f} = 55 x UI scale {k:.2f}", abs(p.radius - 55 * k) < 1e-3)
-    if "N" in r:
+    if "N" in r and s.layout.lifted is None:     # a menu drawn higher (step 184) may slide a box off a border band
         n = r["N"].rect
         check(f"{what}: N box centre 55 px above the press point x scale ({(n[1] + n[3]) / 2:.1f})",
               abs((n[1] + n[3]) / 2 - 55 * k) < 0.5)
