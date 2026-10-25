@@ -128,7 +128,7 @@ def hidden_types(context=None):
 
 def _constraint_tabs(node):
     return [(f"C:{con.name}", channel_box.constraint_node_name(node, con),
-             channel_box.MAYA_CONSTRAINT.get(con.type, con.type.lower()))
+             channel_box.maya_constraint_type(con, con.type.lower()))
             for con in channel_box.constraints(node)]
 
 
@@ -143,8 +143,11 @@ def tabs(ob):
     rec = history_record(ob)
     if rec is not None:              # Maya: the newest history node first (CB INPUTS order, step 65)
         out.append(("H", rec.name, rec.spec.node_type))   # polyExtrudeFace / Edge / Vertex, polyBevel3 (step 139)
+    from ..operators import skin_tools_199
     for md in ob.modifiers:
         if display.is_preview(md):   # shape display attribute, drawn in "Smooth Mesh" (step 15)
+            continue
+        if skin_tools_199.is_part(md):   # the skin's weight-sum helper (step 199) belongs to the skinCluster
             continue
         name, mtype = modifier_node(ob, md)
         out.append((f"M:{md.name}", name, mtype))
@@ -518,7 +521,7 @@ def constraint_props(con):
 def draw_constraint(layout, context, node, con):
     """A Maya constraint node tab: target weight (= influence), then the constraint's settings."""
     header, body = layout.panel(f"allset_ae_constraint_{con.type}", default_closed=False)
-    header.label(text=f"{channel_box.MAYA_CONSTRAINT.get(con.type, con.type.title())} Attributes")
+    header.label(text=f"{channel_box.maya_constraint_type(con, con.type.title())} Attributes")
     if body is not None:
         col = body.column()
         if hasattr(con, "enabled"):

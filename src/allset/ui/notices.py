@@ -20,9 +20,6 @@ NOTICES = {
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
                         "closest-distance weights, then paint them (Skin > Paint Skin Weights).")
        for item in ("Interactive Bind Skin", "Interactive Bind Skin Tool")},
-    **{f"Skin/{item}": ("Deform > Export / Import Weights", "Maya's image weight maps aren't in Blender: Deform > Export / "
-                        "Import Weights saves and loads the skin weights as Maya's deformer weight XML.")
-       for item in ("Export Weight Maps...", "Import Weights Maps...")},
     # Windows > Settings/Preferences (step 120)
     "Windows/Settings/Preferences/Marking Menu Editor": (
         "Marking menus", "The marking menus are the kit's Maya layouts; Blender has no editor for them "
@@ -348,8 +345,8 @@ CATEGORIES = {
              "(Weights menu: Normalize, Mirror, Clean, Limit Total); no influence objects or interactive bind."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
                "deformer sets, intermediate objects or tweak nodes."),
-    "Constrain": ("Object / bone constraints", "Blender: Normal / Tangent = Shrinkwrap or Track To, UV Pin / "
-                  "Proximity Pin = vertex parenting; targets are edited in the Constraints tab."),
+    "Constrain": ("Object / bone constraints", "Blender: UV Pin / Proximity Pin = vertex parenting; targets are "
+                  "edited in the Constraints tab."),
     "Constrain/Motion Paths": ("Follow Path constraint", "Blender follows a curve with a Follow Path constraint "
                                "(animate its Offset); there are no flow path lattices or motion path keys."),
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "

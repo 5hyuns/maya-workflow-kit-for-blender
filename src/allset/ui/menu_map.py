@@ -803,10 +803,21 @@ MAP.update({
     # Skeleton / Skin / Constrain
     "Skeleton/Insert Joints": "armature.subdivide",
     "Skeleton/Connect Joint": ("armature.parent_set", {"type": 'CONNECTED'}),
-    "Skin/Normalize Weights/Enable Weight Normalization":
-        ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": True}),
-    "Skin/Normalize Weights/Disable Weight Normalization":
-        ("wm.context_set_boolean", {"data_path": "tool_settings.use_auto_normalize", "value": False}),
+    # step 199 (#106): Maya's three skinCluster.normalizeWeights modes (operators/skin_tools_199.py)
+    "Skin/Normalize Weights/Enable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'INTERACTIVE'}),
+    "Skin/Normalize Weights/Disable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'NONE'}),
+    "Skin/Normalize Weights/Enable Weight Post Normalization": ("allset.skin_normalize_mode", {"mode": 'POST'}),
+    "Skin/Move Weights to Influences": "allset.move_skin_weights",
+    "Skin/Export Weight Maps...": "allset.export_weight_maps",
+    "Skin/Import Weights Maps...": "allset.import_weight_maps",
+    "Skin/Substitute Geometry": "allset.substitute_geometry",
+    "Skin/Bake Deformation to Skin Weights...": "allset.bake_deformation",
+    # step 199 (#106, operators/constrain_199.py, research/maya/re/constrain_199.md)
+    "Constrain/Normal": "allset.normal_constraint",
+    "Constrain/Tangent": "allset.tangent_constraint",
+    "Constrain/Remove Target": "allset.remove_constraint_target",
+    "Constrain/Set Rest Position": "allset.set_constraint_rest",
+    "Constrain/Modify Constrained Axis...": "allset.modify_constraint_axes",
     "Constrain/Rivet": "object.vertex_parent_set",
     "Constrain/Closest Point": _con('SHRINKWRAP'),
     "Constrain/Point On Poly": _con('SHRINKWRAP'),

@@ -637,8 +637,9 @@ def _text_set(key):
 def _inputs(ob):
     # + the kit deformers a lattice / handle drives: Maya shows ffd1 / bend1 in the INPUTS of ffd1Lattice /
     # bend1Handle (step 144, research/maya/re/options_144.md)
-    from ..operators import deformers
-    return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m) and not deformers.is_base(m)] \
+    from ..operators import deformers, skin_tools_199
+    return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m) and not deformers.is_base(m)
+            and not skin_tools_199.is_part(m)] \
         + deformers.driven_modifiers(ob)
 
 
@@ -764,17 +765,33 @@ def _nth_constraint(node, con):
     return [c for c in constraints(node) if c.type == con.type].index(con)
 
 
+def maya_constraint_type(con, default=None):
+    """Maya node type of a kit constraint: normal / tangent constraints are a Track To on a helper (step 199,
+    operators/constrain_199.maya_type), the rest by Blender type."""
+    if con.type in _AIM:
+        from ..operators import constrain_199
+        kind = constrain_199.maya_type(con)
+        if kind in ("normal", "tangent"):
+            return f"{kind}Constraint"
+    return MAYA_CONSTRAINT.get(con.type, default)
+
+
 def constraint_node_name(node, con):
     """Maya's name for the constraint node: ``<node>_<type><n>`` (pCube1_parentConstraint1)."""
-    mtype = MAYA_CONSTRAINT.get(con.type)
+    mtype = maya_constraint_type(con)
     if mtype is None:
         return con.name
-    same = [c for c in constraints(node) if MAYA_CONSTRAINT.get(c.type) == mtype]
+    same = [c for c in constraints(node) if maya_constraint_type(c) == mtype]
     return f"{node.name}_{mtype}{same.index(con) + 1}"
 
 
 def weight_name(con):
-    """Maya target weight attribute: ``<target>W0`` (one target per Blender constraint)."""
+    """Maya target weight attribute: ``<target>W0`` (one target per Blender constraint; normal / tangent
+    constraints name their surface / curve, step 199)."""
+    from ..operators import constrain_199
+    surface, _sub = constrain_199.maya_target(con)
+    if surface is not None and surface is not getattr(con, "target", None):
+        return f"{surface.name}W0"
     target = getattr(con, "target", None)
     if target is None:
         return "W0"

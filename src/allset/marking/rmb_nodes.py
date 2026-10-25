@@ -52,7 +52,7 @@ def input_nodes(ob):
     if node is not None:
         out.append((node["name"], node["type"], ob, "CH", cb.history_node(node["name"]), None))
     for con in cb.constraints(ob):
-        out.append((cb.constraint_node_name(ob, con), cb.MAYA_CONSTRAINT.get(con.type, con.type.lower()), ob,
+        out.append((cb.constraint_node_name(ob, con), cb.maya_constraint_type(con, con.type.lower()), ob,
                     "C:" + con.name, cb.con_node(ob, con), con))
     return out
 
@@ -85,7 +85,7 @@ def output_nodes(ob):
                 out.append((name, mtype, other, "M:" + md.name, cb.mod_node(md), md))
         for con in cb.constraints(other):
             if _uses(con, ob):
-                out.append((cb.constraint_node_name(other, con), cb.MAYA_CONSTRAINT.get(con.type, con.type.lower()),
+                out.append((cb.constraint_node_name(other, con), cb.maya_constraint_type(con, con.type.lower()),
                             other, "C:" + con.name, cb.con_node(other, con), con))
     return out
 
