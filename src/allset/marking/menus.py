@@ -940,7 +940,7 @@ SHIFT_UV = MarkingMenu(
         "W": ("Cut UVs", "allset.uv_cut"),                               # :99
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),     # :108 (step 79)
     },
-    items=[("Auto Seams", None), *_UV_TAIL])
+    items=[("Auto Seams", _item("UV/Auto Seams")), *_UV_TAIL])
 
 SHIFT_UV_SHELL = MarkingMenu(
     "contextPolyToolsUVShellMM", "UV Shell Tools", " contextPolyToolsUVShellMM",
@@ -949,7 +949,7 @@ SHIFT_UV_SHELL = MarkingMenu(
         "NE": ("3D Grab UV Tool", GRAB_UV),                                # :38
         "E": ("Optimize", "uv.minimize_stretch"),                          # :54
         "SE": ("Flip", ("transform.mirror", {"constraint_axis": (True, False, False)})),   # :69 (Flip U)
-        "S": ("Auto Seams", None),                                         # :81
+        "S": ("Auto Seams", _item("UV/Auto Seams")),                                    # :81
         "SW": ("Layout", "allset.uv_layout"),                            # :97
         "W": ("Unfold", "allset.uv_unfold"),                             # :112
         "NW": ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"),     # :126 (step 79)

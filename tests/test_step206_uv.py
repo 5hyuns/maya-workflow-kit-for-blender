@@ -378,8 +378,9 @@ def test_auto_seams_keeps_existing_cuts():
     case = data()["cases"]["autoseam_cube"]
     ob, before = build_case(case)
     select(ob, before, [])
-    bpy.ops.allset.uv_auto_seams()
+    res = bpy.ops.allset.uv_auto_seams()
     assert worst(uvs(ob), before["face_uvs"]) < 1e-6
+    assert res == {'CANCELLED'} and not _cut_edges(ob), (res, _cut_edges(ob))
 
 
 # --- HUD ----------------------------------------------------------------------------------------------------------

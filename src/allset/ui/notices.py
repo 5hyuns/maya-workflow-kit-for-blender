@@ -158,9 +158,6 @@ NOTICES = {
         "Maya Workflow Kit project", "Blender has no projects: Maya Workflow Kit makes Maya's project folders and keeps the folder "
         "as your project."),
     # UV (step 66): Blender cuts / sews UVs in the UV Editor only
-    "UV/Auto Seams": (
-        "UV > Automatic", "Blender has no automatic seams: UV > Automatic cuts the mesh into shells by 6 projection "
-        "planes, Smart UV Project (UV Editor) by angle."),
     # Modeling (step 64): the Crease Tool works, with Blender's 0-1 crease underneath
     "Mesh Tools/Crease Tool": (
         "Edge crease", "Blender stores creases as 0-1 (1 = fully sharp). The kit shows Maya's value (sharp for that "
@@ -466,9 +463,6 @@ CATEGORIES.update({
     "UV Editor/Select": (
         "Select menu", "Blender's UV Editor shows one image, so there is no per-image face filter: Select Linked, "
         "Overlapping and the face filters (Connected / Contained Faces) are there."),
-    "UV Editor/Modify": (
-        "UV menu", "Blender has no such UV layout command: Pack Islands, Align, Snap and Average Islands Scale are "
-        "its tools."),
     "UV Editor/Tools": (
         "UV tools", "Blender's UV tools are Select, Move / Rotate / Scale, Rip and the Grab / Relax / Pinch sculpt "
         "brushes."),
@@ -949,9 +943,6 @@ MARKING = {
     "HotboxWestMenu/Dynamics Mask": (
         "Object types filter", "Blender's dynamics are modifiers and physics settings on ordinary objects, so they "
         "have no selection mask of their own."),
-    **{f"{menu}/Auto Seams": (
-        "Smart UV Project", "Blender has no automatic seam placement: Smart UV Project cuts by angle, or mark seams "
-        "and Unwrap.") for menu in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM")},
     "doSelectComponentMM/All Components off": (
         "Mesh select mode", "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11."),
     "doSelectComponentMM/Save to shelf": (
