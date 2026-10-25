@@ -285,9 +285,9 @@ def in_dock(context):
     space = getattr(context, "space_data", None)
     if space is None or space.type != 'PROPERTIES':
         return False
-    from . import hypershade, maya_dock, reference_editor
+    from . import hypershade, marked_window, maya_dock, reference_editor
     return (maya_dock.area_role(context) is None and hypershade.context_pane(context) is None
-            and not reference_editor.context_pane(context))
+            and not reference_editor.context_pane(context) and marked_window.context_kind(context) is None)
 
 
 def tool_kind(context):

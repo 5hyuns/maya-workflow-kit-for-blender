@@ -32,6 +32,9 @@ def _hidden(context):
     from . import reference_editor   # the Reference Editor window (step 209) shows only its own panel
     if reference_editor.context_pane(context):
         return True
+    from . import marked_window      # Component / Shape / Connection Editor windows (step 213), same
+    if marked_window.context_kind(context) is not None:
+        return True
     # The Tool Settings dock (a Properties Tool tab, step 106): Maya sections replace Blender's tool panels
     # for Move / Rotate / Scale.
     from . import tool_settings

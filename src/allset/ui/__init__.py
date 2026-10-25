@@ -18,10 +18,11 @@ from . import hs_drag  # step 162: Hypershade swatch MMB drag
 from . import ghosting  # step 171: Maya ghosting (Visualize)
 from . import reference_editor  # step 209: Maya Reference Editor window
 from . import outliner_order  # step 211: Maya Outliner order (startup cameras first, creation order)
+from . import marked_window, component_editor, shape_editor, connection_editor  # step 213 (#119)
 
 _modules = (status_icons, kit_icons, notices, input_line, cb_points, channel_box, cb_channels, creation_inputs, layer_editor, attribute_editor, outliner, menu_sets, workspaces, file_project, status_line, shelf,
             time_slider, panel_menus, panel_toolbar, camera_tools, light_link_editor, maya_grid, view_furniture, selection_wire, component_colors, ghosting, toolbox, dock_tabs, maya_outliner, outliner_sets, outliner_order,
-            paint_weights, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, uv_display, uv_hud, hypershade, hs_drag, light_editor, render_view, graph_editor, graph_units, graph_view, editor_chrome, render_settings, script_editor, reference_editor,
+            paint_weights, manipulator, set_driven_key, modeling_toolkit, mesh_tools, mesh_tools_poly, mesh_tools_loop, in_view, uv_toolkit, uv_display, uv_hud, hypershade, hs_drag, light_editor, render_view, graph_editor, graph_units, graph_view, editor_chrome, render_settings, script_editor, reference_editor, component_editor, shape_editor, connection_editor,
             view_message, range_bar, tool_settings, maya_dock, soft_overlay, save_prompt, scene_carry)
 
 
