@@ -428,11 +428,21 @@ def driver(ob, key):
 
 
 def channel_state(ob, key, frame=None):
-    """'DRIVEN', 'MUTED', 'KEYED' (key on this frame), 'ANIMATED' or None (channel_box.md:138-139; Maya muted =
-    brown, step 158: Blender's UI has no brown, the mute icon marks it)."""
+    """'DRIVEN', 'MUTED', 'LAYERED', 'KEYED' (key on this frame), 'ANIMATED' or None (channel_box.md:138-139; Maya
+    muted = brown, step 158: Blender's UI has no brown, the mute icon marks it). Step 194: a channel in an animation
+    layer above BaseAnimation is Maya's teal #4db6ac in every layer state, keyed or not
+    (research/maya/re/anim_layers_193.md); the other channels of a layered object show their BaseAnimation keys."""
     if driver(ob, key) is not None:
         return 'DRIVEN'
     fc = fcurve(ob, key)
+    if isinstance(ob, bpy.types.Object) and not is_shape_key(key):
+        from ..operators import anim_layers
+        if anim_layers.has_layers(ob):
+            path, idx, _kind = channel_path(key)
+            if path is not None:
+                if anim_layers.member_of_layer(ob, path, idx):
+                    return 'LAYERED'
+                fc = anim_layers.base_curve(ob, path, idx)
     if fc is None:
         return None
     if fc.mute:
@@ -1667,7 +1677,9 @@ def draw_empty(layout):
 # --- panel ---------------------------------------------------------------------------------------------
 
 _STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DRIVEN': 'DECORATE_DRIVER',
-               'MUTED': 'MUTE_IPO_ON'}
+               'MUTED': 'MUTE_IPO_ON', 'LAYERED': 'NLA'}
+# states drawn red (``alert``); a layer member is Maya teal, which UILayout can't draw: icon only (step 194)
+_ALERT_STATES = {'KEYED', 'ANIMATED', 'DRIVEN', 'MUTED'}
 
 
 def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
@@ -1699,7 +1711,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
         right.operator("allset.cb_select_channel", text=text, depress=True).key = key
         row.label(text="", icon='CONSTRAINT')
         return row
-    right.alert = state is not None
+    right.alert = state in _ALERT_STATES
     right.prop(value_owner, value_prop, text="")
     # Proxy fields get no automatic keyframe colouring: show the lead object's state.
     row.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
@@ -1841,7 +1853,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         sub.prop(row, "sel", text=label, toggle=True, emboss=key in selected_channels(context))
         right = split.row(align=True)
         state = channel_state(ob, key)
-        right.alert = state is not None
+        right.alert = state in _ALERT_STATES
         right.prop(row, "text", text="")
         line.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))
         return

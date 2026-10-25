@@ -2,9 +2,15 @@
 
 ## 현재 작업
 
+- Step 194 (Animation layers: keys stay visible, backlog #2) 완료 — `docs/steps/step_194.md`, Maya 측정
+  `research/maya/re/anim_layers_193.md`. 레이어 오브젝트의 활성 액션 = 선택 레이어 strip 액션 (influence 0, 평가 차이 0) → Graph
+  Editor / Dope Sheet / Time Slider / CB 가 Maya 처럼 선택 레이어를 보임; CB 레이어 멤버 = LAYERED; Zero Key Layer · Merge Layers.
+  헤드리스 1736 / 1736, GUI 관련 33 / 33. **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: step 195 = backlog #3 「Channel Box and Time Slider look」 (CB teal 레이어 바탕도).
+
 - Step 193 (RMB flick works when the menu is lifted, backlog #1) 완료 — `docs/steps/step_193.md`. 마킹 메뉴 링은 언제나 누른 점
   (`engine.fit_ring` 의 step 184 메뉴 전체 들어올리기 지움), 목록이 링 아래에 안 들어가면 목록만 링 옆 한 열. 헤드리스 1730 / 1730,
-  GUI 관련 10 파일 103 / 103, dogfood 48 / 48 (UI 1.25 · 1.0). **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  GUI 관련 10 파일 103 / 103, dogfood 48 / 48 (UI 1.25 · 1.0).
   **바로 다음 할 일**: step 194 = backlog #2 「Animation layers: keys stay visible」 (먼저 GUI Maya 측정).
 
 - Step 192 (재점검 14차 = 사용자 지시의 「재점검 13차」, 감사 — src 변경 없음) 완료 — `docs/steps/step_192.md` (+ `step_192_remaining.md`,

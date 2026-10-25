@@ -15,9 +15,16 @@ are not set through tweak mode: ``key()`` solves the layer value from the compos
 Layers are scene-wide (``Scene.allset_anim_layers``, first entry BaseAnimation) like Maya's animLayer nodes; every
 member object has one NLA track per layer, named like the layer, playing an action ``<layer>_<object>`` marked with
 the ID property ``allset_anim_layer``.
+
+Display (step 194, research/maya/re/anim_layers_193.md): Maya's Graph Editor, Dope Sheet and Time Slider show the
+keys of the layers selected in the Anim tab, the Channel Box marks layer members teal. A layered object's active
+action is the selected layer's strip action (BaseAnimation when the object is not in it) at action influence 0: the
+NLA result is unchanged (measured: 0 difference, tmp/p194), and every reader of the active action (Graph Editor,
+Dope Sheet, compat.id_fcurves, the kit's key readers) sees that layer's curves.
 """
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, FloatProperty, IntProperty, StringProperty
 
 from .. import compat
@@ -148,7 +155,10 @@ def remove_object(scene, ob, layer):
     if tr is None or layer == BASE:
         return
     act = _strip(tr).action
-    ob.animation_data.nla_tracks.remove(tr)
+    ad = ob.animation_data
+    if ad.action is not None and ad.action == act:      # shown as the active action (step 194)
+        ad.action = None
+    ad.nla_tracks.remove(tr)
     if act is not None and act.users == 0:
         bpy.data.actions.remove(act)
 
@@ -196,6 +206,53 @@ def sync(scene):
             _set_influence(st, 1.0 if name == BASE else e.weight)
             tr.lock = e.lock
         ob.update_tag(refresh={'TIME'})
+    show(scene)
+
+
+def display_layer(scene, ob):
+    """The layer whose keys ``ob`` shows: the selected layer when the object is in it, else BaseAnimation."""
+    e = selected(scene)
+    name = e.name if e is not None else BASE
+    return name if name in tracks(ob) else BASE
+
+
+def show(scene):
+    """Make every layered object's active action its display layer's strip action at influence 0 (module docstring):
+    Graph Editor / Dope Sheet / key readers then show that layer, the evaluated result stays the NLA's."""
+    for ob in scene.objects:
+        have = tracks(ob)
+        if not have:
+            continue
+        ad = ob.animation_data
+        tr = have.get(display_layer(scene, ob)) or have.get(BASE) or next(iter(have.values()))
+        act = _strip(tr).action
+        if ad.action != act:
+            ad.action = act
+            sl = _slot(act)
+            if sl is not None and hasattr(ad, "action_slot"):
+                ad.action_slot = sl
+        if ad.action_influence != 0.0:
+            ad.action_influence = 0.0      # the strip already plays it: shown, not applied twice
+
+
+def base_curve(ob, path, index):
+    """``ob``'s BaseAnimation curve of one channel (None without layers or curve)."""
+    tr = tracks(ob).get(BASE)
+    return None if tr is None else _fcurve(_strip(tr).action, path, max(index, 0))
+
+
+def member_of_layer(ob, path, index):
+    """The channel is in a layer above BaseAnimation (Maya draws it teal in the Channel Box, anim_layers_193.md)."""
+    return any(name != BASE and is_member(ob, name, path, index) for name in tracks(ob))
+
+
+def hidden_base_curves(ob, scene):
+    """BaseAnimation curves the display layer doesn't show: channels that are not in that layer still show their
+    base keys in Maya's Time Slider (anim_layers_193.md, ry ticks 1 / 24 with AnimLayer1 selected)."""
+    layer = display_layer(scene, ob)
+    if layer == BASE or BASE not in tracks(ob):
+        return []
+    return [fc for fc in layer_curves(ob, BASE) if not is_member(ob, layer, fc.data_path, fc.array_index)]
 
 
 def _set_influence(st, w):
@@ -454,6 +511,18 @@ def _sync_update(self, context):
     sync(context.scene)
 
 
+def _index_update(self, context):
+    show(self)
+
+
+@persistent
+def _load_post(_dummy):
+    """Files layered before step 194 have no active action: show the selected layer."""
+    for scene in bpy.data.scenes:
+        if len(layers(scene)):
+            show(scene)
+
+
 class ALLSET_PG_anim_layer(bpy.types.PropertyGroup):
     weight: FloatProperty(name="Weight", default=1.0, min=0.0, max=1.0, update=_sync_update,
                           description="Maya layer weight (NLA strip influence)")
@@ -561,6 +630,137 @@ class ALLSET_OT_anim_layer_delete(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def _identity(path):
+    return 1.0 if path in SCALE_PATHS else 0.0
+
+
+def zero_key(scene, obs, frame=None):
+    """Maya Zero Key Layer (research/maya/re/anim_layers_193.md section 6, ``setKeyframe -id -itt flat``): an identity
+    key on every member channel of the selected layer at ``frame`` (an existing key's value is overwritten, its
+    tangents kept; a new key's in tangent is flat). Returns the number of keys, None for BaseAnimation."""
+    e = selected(scene)
+    if e is None or e.name == BASE:
+        return None
+    frame = scene.frame_current if frame is None else frame
+    from ..ui import channel_box as cb
+    n = 0
+    for ob in obs:
+        if e.name not in tracks(ob):
+            continue
+        act = _strip(tracks(ob)[e.name]).action
+        for k in member_keys(ob, e.name):
+            path, idx, _kind = cb.channel_path(k)
+            try:
+                v = ob.path_resolve(path)
+                v = v[idx] if idx >= 0 else v
+            except (ValueError, TypeError, IndexError):
+                continue
+            if isinstance(v, bool):       # visibility is not layered by the kit's NLA tracks (delegated)
+                continue
+            idx = max(idx, 0)
+            fc = _fcurve(act, path, idx) or _new_fcurve(ob, act, path, idx)
+            if fc is None:
+                continue
+            old = next((kp for kp in fc.keyframe_points if abs(kp.co.x - frame) < 1e-4), None)
+            if old is not None:
+                d = _identity(path) - old.co.y
+                old.co.y += d
+                old.handle_left.y += d
+                old.handle_right.y += d
+            else:
+                kp = fc.keyframe_points.insert(frame, _identity(path))
+                kp.handle_left_type = 'FREE'
+                kp.handle_left.y = kp.co.y
+            fc.update()
+            n += 1
+        ob.update_tag(refresh={'TIME'})
+    return n
+
+
+def merge_down(scene, layer):
+    """Maya Merge Layers with BaseAnimation and ``layer`` selected (anim_layers_193.md section 5, factory options:
+    bake every frame, delete the merged layer): each member channel of ``layer`` gets a BaseAnimation curve keyed on
+    every whole frame of the object's key range with the result of Base + ``layer``; non-member channels keep their
+    keys; the layer is deleted."""
+    if layer == BASE:
+        return False
+    for ob in members(scene, layer):
+        base_act = _strip(tracks(ob)[BASE]).action
+        curves = layer_curves(ob, BASE) + layer_curves(ob, layer)
+        xs = [kp.co.x for fc in curves for kp in fc.keyframe_points]
+        if not xs:
+            continue
+        frames = range(int(round(min(xs))), int(round(max(xs))) + 1)
+        info = {e.name: e for e in layers(scene)}
+        lay = tracks(ob)[layer]
+        st = _strip(lay)
+        mode = 'REPLACE' if info[layer].override else None
+        w = 0.0 if info[layer].mute else (st.influence if st.use_animated_influence else 1.0)
+        baked = {}
+        for fc in layer_curves(ob, layer):
+            path, idx = fc.data_path, fc.array_index
+            if not is_member(ob, layer, path, idx):
+                continue
+            m = mode or ('MUL' if path in SCALE_PATHS else 'ADD')
+            bfc = _fcurve(base_act, path, idx)
+            rest = _identity(path)     # NLA starts a channel no lower strip animates from its default (see key())
+            vals = []
+            for f in frames:
+                below = bfc.evaluate(f) if bfc is not None else rest
+                vals.append(compose([(m, w, fc.evaluate(f))], below))
+            baked[(path, idx)] = vals
+        for (path, idx), vals in baked.items():
+            bfc = _fcurve(base_act, path, idx) or _new_fcurve(ob, base_act, path, idx)
+            if bfc is None:
+                continue
+            bfc.keyframe_points.clear()
+            bfc.keyframe_points.add(len(vals))
+            for kp, f, v in zip(bfc.keyframe_points, frames, vals):
+                kp.co = (f, v)
+                kp.interpolation = 'BEZIER'
+                kp.handle_left_type = kp.handle_right_type = 'AUTO_CLAMPED'
+            bfc.update()
+        remove_object(scene, ob, layer)
+        ob.update_tag(refresh={'TIME'})
+    ls = layers(scene)
+    i = next((i for i, x in enumerate(ls) if x.name == layer), None)
+    if i is not None:
+        ls.remove(i)
+    scene.allset_anim_layer_index = 0
+    sync(scene)
+    return True
+
+
+class ALLSET_OT_anim_layer_zero_key(bpy.types.Operator):
+    """Set an identity key on the selected layer's attributes at the current time (Maya Zero Key Layer)"""
+    bl_idname = "allset.anim_layer_zero_key"
+    bl_label = "Zero Key Layer"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        n = zero_key(context.scene, _layer_objects(context))
+        if n is None:
+            self.report({'WARNING'}, "Cannot set an identity key on BaseAnimation")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_OT_anim_layer_merge(bpy.types.Operator):
+    """Merge the selected layer into BaseAnimation, baking every frame (Maya Merge Layers with BaseAnimation and
+    the layer selected)"""
+    bl_idname = "allset.anim_layer_merge"
+    bl_label = "Merge Layers"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        e = selected(context.scene)
+        if e is None or e.name == BASE:
+            self.report({'WARNING'}, "Select an animation layer to merge into BaseAnimation")
+            return {'CANCELLED'}
+        merge_down(context.scene, e.name)
+        return {'FINISHED'}
+
+
 class ALLSET_OT_anim_layer_select(bpy.types.Operator):
     """Make this the selected layer: keys go to it (Maya click on a layer)"""
     bl_idname = "allset.anim_layer_select"
@@ -575,14 +775,19 @@ class ALLSET_OT_anim_layer_select(bpy.types.Operator):
 
 
 classes = (ALLSET_PG_anim_layer, ALLSET_OT_anim_layer_create, ALLSET_OT_anim_layer_members, ALLSET_OT_anim_layer_attrs,
-           ALLSET_OT_anim_layer_delete, ALLSET_OT_anim_layer_select)
+           ALLSET_OT_anim_layer_delete, ALLSET_OT_anim_layer_select, ALLSET_OT_anim_layer_zero_key,
+           ALLSET_OT_anim_layer_merge)
 
 
 def register_props():
     bpy.types.Scene.allset_anim_layers = CollectionProperty(type=ALLSET_PG_anim_layer)
-    bpy.types.Scene.allset_anim_layer_index = IntProperty(name="Selected Layer", default=0, min=0)
+    bpy.types.Scene.allset_anim_layer_index = IntProperty(name="Selected Layer", default=0, min=0,
+                                                          update=_index_update)
+    bpy.app.handlers.load_post.append(_load_post)
 
 
 def unregister_props():
+    if _load_post in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(_load_post)
     del bpy.types.Scene.allset_anim_layer_index
     del bpy.types.Scene.allset_anim_layers

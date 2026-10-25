@@ -1256,3 +1256,8 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 
 - [ ] Real mouse, Blender window not maximised (e.g. 1600 x 900): RMB on an object in the middle and near the bottom of the viewport, flick W / N / S without looking (Vertex / Edge / Face) — the ring is drawn at the pointer and every flick picks its item; the list sits beside the ring (W side on a mesh) in one column, all rows reachable by dragging.
 - [ ] Same with Shift+RMB (component tools list) and RMB in a UV Editor near its bottom edge.
+
+## Step 194
+
+- [ ] Layered cube (Create Layer from Selected, keys on the layer): clicking AnimLayer1 / BaseAnimation in the Anim tab switches the Graph Editor, Dope Sheet and Time Slider ticks to that layer's keys at once, the cube does not move; layer members show the NLA icon in the Channel Box (Maya teal), channels outside the layer keep red / pink.
+- [ ] Layers > Zero Key Layer and Merge Layers from the Anim tab menu: the cube's motion is unchanged after Merge, undo brings the layer back.
