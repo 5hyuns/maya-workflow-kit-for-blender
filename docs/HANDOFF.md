@@ -2,6 +2,22 @@
 
 ## 현재 작업
 
+- Step 201 (재점검 15차 = 드라이버 「AUDIT 14」, 감사 — src 변경 없음) 완료 — `docs/steps/step_201.md` (+ `step_201_remaining.md`,
+  `step_201_quant.md`), PLAN 「재점검 15차」. 헤드리스 1844 / 1844, dogfood 48 / 48, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 762 / 1318
+  (57.8 %), 편집기 메뉴 600 / 914, 옵션 창 164 경로, look_compare kit-drawn 1.0 12 / 12 · 1.25 11 / 12 (Time Slider 현재 칸 회귀).
+  backlog 8 개 (steps 202–209) `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, 이슈 #109–#116 (마일스톤 0.5.0),
+  #108 표 갱신. **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#107 닫힘; 에이전트 worktree 63 개 정리 여부.
+  **바로 다음 할 일**: step 202 = backlog #1 「Audit 15 fix batch」 (Issue #109) — Delete Non-Deformer History 가 킷 GN 디포머를 굽는 문제,
+  제약 helper 고아, All by Type 연결, Add Influence 가중치, UI 1.25 Time Slider 현재 칸, CB "Chann..." · Outliner 모드 열.
+
+- **체크포인트 2026-10-25 (/sc:save, 200 후)** — 지금 단계: **200 완료 · 커밋 0d75f44** (Fixes #107, push 안 함). 197 (beb75af, #104),
+  198 (845230b, #105), 199 (51bc287, #106) 도 커밋됨 → backlog 8 (steps 193–200) 전부 끝. 진행 중인 레인 · 테스트 없음, 작업 트리
+  깨끗 (research/ · .impeccable/ 추적 안 함). 숫자: 헤드리스 1844 / 1844 (4.5.4 · 5.0.1 · 5.1.2 · 5.2.3), 메뉴 unique 762 / 1318,
+  Graph Editor 167 / 229, Skin 25 / 28, Constrain 16 / 20. 이슈 #104–#107 은 push 해야 닫힘.
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: 새 감사 (재점검 15차: dogfood · 대응표 · 메뉴 수 → 새 backlog 단계마다 GitHub 이슈, #108 표 / Planned next
+  갱신) 또는 0.5.0 출시 준비 (그때만 GUI 전체 묶음).
+
 - Step 200 (Blender 5.x test pass 2, backlog #8 = 마지막, Issue #107) 완료 — `docs/steps/step_200.md`, `docs/compat_5x.md`
   「step 200」. 헤드리스 전체 4.5.4 / 5.0.1 / 5.1.2 / 5.2.3 모두 **1844 / 1844** (첫 실행 1841 / 1840 / 1834). 고친 것 (compat):
   5.2 GN 모디파이어 입력 (`gn_input_*`, Wire), 5.x 메뉴 바 첫 메뉴 위치 (`MENU_BAR_LEAD_UNITS`, ❒ 클릭), `Bone.select` 직접

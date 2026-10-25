@@ -1047,3 +1047,47 @@ No row moved (third audit in a row); 13 items of the step 182 list finished by s
 1. RMB flick works when the menu is lifted. 2. Animation layers: keys stay visible. 3. Channel Box and Time Slider look. 4. Maya
 option windows for primitives and character sets. 5. Small Maya polish batch. 6. Graph Editor depth 2. 7. Skin and Constrain tools 2.
 8. Blender 5.x test pass 2.
+
+## 재점검 15차 (step 201, 2026-10-25 — 드라이버 「AUDIT 14」 / 사용자 지시의 「재점검 14차」)
+
+User request: everything planned (backlog_193, steps 193–200) is done — dogfood in a clean install, collect what is left,
+implementation rate, priorities, backlog + one roadmap issue per item, #108 table; criterion "default Maya with Blender features
+attached", differences only. 「재점검 14차」 is step 192, so this one is numbered 15 (delegated). Evidence: `docs/steps/step_201.md`
+(main: dogfood, GUI differences) + lane files `step_201_remaining.md` (README table, open work, blindspots NB7–NB11, manual checks)
+and `step_201_quant.md` (counts, look_compare).
+
+### Implementation rate — research/README.md mapping table (33 rows)
+
+| Group | Done | Partial | Not started | Not possible (C) |
+|---|---|---|---|---|
+| **Total (33)** | **30 (91 %)** | **1** — theme (store compliance, decision 13) | **0** | **2** — separate pivots, Y-up |
+
+No row moved (fourth audit in a row); 16 items of the step 192 list finished by steps 193–200.
+
+### Headline numbers (step 192 → now)
+
+| Measure | Step 192 | Now (0d75f44) |
+|---|---|---|
+| Menu leaves working (1318) | 750 (56.9 %) | **762 (57.8 %)** — Skin 89 %, Constrain 80 %; FX 19 % (third audit unchanged) |
+| Editor menu bars working (914) | 578 | **600** (Graph Editor 167 / 229, Dope Sheet 139 / 181) |
+| Option boxes → kit Maya window (paths); redo-only; dead | 120; 127; 193 | **164; 104; 187** |
+| Shelves; hotkeys; marking menus working / greyed | 160; 210; 371 / 52 | unchanged |
+| Tests | headless 1731/1731 (4.5), dogfood 47/48 | **headless 1844/1844** (4.5; 5.0 / 5.1 / 5.2 at step 200), **dogfood 48/48**, console errors 0 |
+| look_compare kit-drawn pixels (1.0 / 1.25) | 7/7 / 7/7 | **12/12 / 11/12** (time_slider_current at 1.25 ΔE 13.8 — regression) |
+| Manual checks | 709, 107 ticked | 731, 107 ticked |
+
+### Top differences (score = severity × frequency)
+
+| Score | Difference |
+|---|---|
+| 6 | Delete Non-Deformer History bakes the kit's Geometry Nodes deformers (wire, skin weight sum); constraint helpers orphaned; All by Type greyed for kit-made nodes; Add Influence weight 0 (NB7–NB10) |
+| 4 | Graph Editor / Dope Sheet rest (Pin, Load Selected, attribute filters) |
+| 4 | Deform 48 / 74; animation layers rest; UV Editor 136 / 172; Curves 58 % (fifth audit) |
+| 4 | `maya.cmds` 17 functions; Reference Editor; Maya Preferences / Hotkey Editor; lambert1 1.25x brighter |
+| 3 | Time Slider current cell lost at UI 1.25; Channel Box "Chann..." cut; Blender mode column in the kit Outliner in component mode |
+
+### Backlog (steps 202+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, milestone 0.5.0)
+
+1. Audit 15 fix batch (#109). 2. Graph Editor depth 3 (#110). 3. Animation layers 4 (#111). 4. Deform 2 (#112). 5. UV Editor
+depth 2 (#113). 6. Curves 3 (#114). 7. maya.cmds look-alike 2 (#115). 8. Reference Editor (#116). Next in line: Maya Preferences
+window, render parity 2, FX menus, Surfaces.
