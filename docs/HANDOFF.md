@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 199 (Skin and Constrain tools 2, backlog #7, Issue #106) 완료 — `docs/steps/step_199.md`, mayapy 명세
+  `research/maya/re/skin_tools_199.md` · `constrain_199.md`. Move Weights to Influences, Normalize 세 모드 (Post 포함), Weight Maps
+  내보내기 / 가져오기, Substitute Geometry, Bake Deformation, Constrain Normal / Tangent / Remove Target / Set Rest Position /
+  Modify Constrained Axis + 옵션 창 5. Skin 19 → 25 / 28, Constrain 11 → 16 / 20, unique 762. 헤드리스 1841 / 1841, GUI 관련 100 / 100.
+  **바로 다음 할 일**: step 200 = backlog #8 「Blender 5.x test pass 2」 (Issue #107) — backlog 마지막.
+
 - Step 198 (Graph Editor depth 2, backlog #6, Issue #105) 완료 — `docs/steps/step_198.md`, Maya 측정
   `research/maya/re/graph_editor_193.md` (GUI Maya QTest Retime 드래그 + mayapy 가중 탄젠트 / 버퍼). Retime Tool (Graph Editor + Dope
   Sheet), 버퍼 커브 Snapshot / Swap / Show, Weighted / Non-weighted / Default Tangent Weight / Lock·Free Tangent Length, Select
