@@ -399,6 +399,7 @@ class Builder:
         so.use_filter_collection = False
         so.show_restrict_column_render = False
         so.show_restrict_column_hide = False   # no eye column: Maya hides with H (= ui/maya_outliner.setup, step 50)
+        so.show_mode_column = False             # no Blender mode column in component mode (step 202, #109)
 
         st = a["timeline"].spaces.active       # Time Slider: no channel list; sidebar = its buttons (step 50)
         st.show_region_channels = False

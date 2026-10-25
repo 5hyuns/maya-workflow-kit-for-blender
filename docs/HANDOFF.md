@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 202 (Audit 15 fix batch, backlog #1, Issue #109) 완료 — `docs/steps/step_202.md`, mayapy 명세 `research/maya/re/add_influence_202.md`.
+  Non-Deformer History 가 킷 Wire / weight-sum 을 남김, 제약 helper 삭제, All by Type Wires / nCloths / nParticles / nRigids, Add Influence
+  Maya 거리 가중치 (mayapy 8.1e-7), Time Slider 높이 UI scale 맞춤 (1.25 현재 칸 ΔE 13.8 → 0.3), CB 메뉴 바 줄바꿈, Outliner 모드 열
+  끔 (템플릿 다시 만듦) + 그린 행 정렬. 헤드리스 1867 / 1867, look_compare kit-drawn 12 / 12 (1.0 · 1.25), GUI 관련 통과, dogfood 48 / 48.
+  **바로 다음 할 일**: step 203 = backlog #2 「Graph Editor depth 3」 (Issue #110). 그다음 204 (#111) · 205 (#112).
+
 - Step 201 (재점검 15차 = 드라이버 「AUDIT 14」, 감사 — src 변경 없음) 완료 — `docs/steps/step_201.md` (+ `step_201_remaining.md`,
   `step_201_quant.md`), PLAN 「재점검 15차」. 헤드리스 1844 / 1844, dogfood 48 / 48, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 762 / 1318
   (57.8 %), 편집기 메뉴 600 / 914, 옵션 창 164 경로, look_compare kit-drawn 1.0 12 / 12 · 1.25 11 / 12 (Time Slider 현재 칸 회귀).

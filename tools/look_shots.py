@@ -101,6 +101,15 @@ def anchor_rects():
     elif "shelf.HEADER" in rects:           # older layout: tab buttons in the header
         rects["shelf.tabs"] = rects["shelf.HEADER"]
         rects["shelf.icons"] = rects["shelf.WINDOW"]
+    # the current frame's cell on the Time Slider ruler (step 202): it moves with the timeline view, so a fixed offset
+    # from the region edge missed it at UI 1.25 (ui/time_slider.py _draw_ruler: cell = [f - 0.5, f + 0.5])
+    tl = next((a for a in areas if names.get(a) == "timeline"), None)
+    reg = next((r for r in tl.regions if r.type == 'WINDOW'), None) if tl is not None else None
+    if reg is not None and reg.width > 1:
+        cur = bpy.context.scene.frame_current
+        x0 = reg.view2d.view_to_region(cur - 0.5, 0, clip=False)[0]
+        x1 = reg.view2d.view_to_region(cur + 0.5, 0, clip=False)[0]
+        rects["timeline.current"] = _img_rect(reg.x + round(x0), reg.y, max(1, round(x1) - round(x0)), reg.height)
     # editor gap between the Outliner and the viewport (Maya: the viewport frame line)
     if "outliner" in rects and "view3d" in rects:
         ox, oy, ow, oh = rects["outliner"]

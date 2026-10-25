@@ -2204,8 +2204,13 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
     def body(layout, context):
         """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane). The row above it
         (Maya's title / tab row) is the dock's handle + tab row (ui/maya_dock.py, step 116)."""
-        chrome.menu_bar(layout, MENU_BAR)
-        units = 2.0
+        # a dock narrower than Maya's Channel Box (user-sized, or not fitted yet) wraps the menu bar instead of
+        # cutting "Channels" to "Chann..." (step 201 dogfood G1; same rule as the AE bar, step 197)
+        from .attribute_editor import wrap_rows
+        rows = wrap_rows(context, [label for label, _m in MENU_BAR], equal=False)
+        for idx in rows:
+            chrome.menu_bar(layout, [MENU_BAR[i] for i in idx])
+        units = 1.0 + len(rows)
         from . import paint_weights
         if paint_weights.active(context):
             paint_weights.draw(layout, context)   # Maya Tool Settings of the paint tool (step 58)

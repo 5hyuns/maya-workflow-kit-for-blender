@@ -100,8 +100,9 @@ KIT_POINTS = {
     "dock_side_tab_strip": ("11_channel_box", "dock", 0.622, 25, 1,
                             "dock tab row, Attribute Editor tab (kit: tabs on top, Maya: a vertical strip)"),
     "time_slider_bg": ("11_channel_box", "timeline.WINDOW", 0.554, 25, 2, "timeline ruler between two ticks, lower band"),
-    "time_slider_current": ("11_channel_box", "timeline.WINDOW", 32, 28, 1,
-                            "current-time block on frame 1, left of its number, under Blender's frame box (step 195)"),
+    # step 202: anchored on the frame's cell (look_shots "timeline.current"), left part, below Blender's frame box
+    "time_slider_current": ("11_channel_box", "timeline.current", 1, -4, 1,
+                            "current-time block on frame 1, left of the frame line, under Blender's frame box"),
     "time_field": ("11_channel_box", "timeline.UI", 30, 18, 2, "current frame field (Time Slider row), left of the text"),
     "range_slider_field": ("11_channel_box", "timeline.HEADER", 60, 13, 2, "start frame field, left of the text"),
     "range_slider_bar": ("02_cube_selected_move", "timeline.HEADER", 340, 13, 2, "Range Slider bar (ui/range_bar.py, step 73)"),

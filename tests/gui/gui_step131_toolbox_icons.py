@@ -125,7 +125,8 @@ def s_check():
     sets_ = [rw for rw in rows if rw[2] == 'DEFAULT_SET']
     if sets_:
         y0, y1 = sets_[0][0], sets_[0][1]
-        cxi = reg.x + round(2.5 * u)
+        lead = u if outl.spaces.active.show_mode_column else 0   # step 202: no mode column in the Maya Outliner
+        cxi = reg.x + round(lead + 1.5 * u)
         cyi = reg.y + round((y0 + y1) / 2)
         crop = px[cyi - n_small // 2 - 1:cyi + n_small // 2 + 1, cxi - n_small // 2 - 1:cxi + n_small // 2 + 1]
         t = near(crop, TEAL, 0.06)
@@ -137,7 +138,9 @@ def s_check():
     stack = dock_area()
     sreg = next(rg for rg in stack.regions if rg.type == 'WINDOW')
     crop = px[sreg.y:sreg.y + sreg.height, sreg.x:sreg.x + sreg.width]
-    t = near(crop, TEAL)
+    # the dock's additive lift to Maya's grey (step 195, maya_dock.draw_tint) also lifts the icons drawn under it
+    lift = import_module(MODULE + ".ui.maya_dock").dock_lift(bpy.context)
+    t = near(crop, np.clip(TEAL + lift, 0.0, 1.0))
     check(f"Layer Editor toolbar icons in Maya teal ({int(t.sum())} px)", t.sum() > 12)
     if SHOTS:
         save_crops(px, r, reg, sreg)

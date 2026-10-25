@@ -118,7 +118,9 @@ def s_click_set_done():
 @step
 def s_ctrl_done():
     check(f"Ctrl+click toggles the members ({selected()})", selected() == {"pCube2"})
-    click(point(C["row"], 1.6))   # the disclosure triangle
+    _a, r = outl()
+    lead = 1.0 if _a.spaces.active.show_mode_column else 0.0   # step 202: the Maya Outliner has no mode column
+    click(point(C["row"], lead + 0.6))   # the disclosure triangle
 
 
 @step

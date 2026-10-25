@@ -1298,3 +1298,9 @@ that steps 199 / 200 left without a group.
 - [ ] With a kit wire deformer / nCloth / nParticles in the scene, hover Select > All by Type > Wires / nCloths / nParticles and Edit > Delete All by Type > Wires: Maya selects / deletes them. Today they are greyed with "Blender has no node of this type".
 - [ ] (step 199) Constrain > Normal: drag the constrained cube over a sphere with a real mouse — it turns to the surface at once, no lag; Skin > Normalize Weights > Disable Weight Normalization, then paint one joint's weight down: that part of the mesh pulls toward the world origin like Maya.
 - [ ] (step 200) Blender 5.2, Maya Workflow Kit layout: dock grey (#444444, Layer Editor list dark), Graph Editor Retime Tool lines / handle, buffer curves and a layered cube's layer curves draw like on 4.5 (step 200 ran 5.x GUI step183 / 187 only).
+
+### Step 202 — Audit 15 fix batch
+
+- [ ] Windows 125 % (UI 1.25), Maya Workflow Kit layout 새로 열기: Time Slider ruler 가 1.0 때와 같은 비율로 높아지고 (header 아래 ~45 px), 현재 프레임 칸 회색 (#525252) 이 Blender 파란 상자 아래로 보임; 직접 Time Slider 높이를 바꾼 뒤엔 다시 맞추지 않음.
+- [ ] Channel Box dock 을 손으로 좁히면 메뉴 바가 "Channels Edit Object" / "Show" 두 줄로 (글자 잘림 없음), 넓히면 한 줄.
+- [ ] 큐브 RMB > Vertex: 왼쪽 Outliner 에 모드 아이콘 / 점 열이 없고, persp / top / defaultLightSet 행 아이콘이 pCube1 아이콘과 같은 x.
