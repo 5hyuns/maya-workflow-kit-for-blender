@@ -288,8 +288,8 @@ def _node_items(want_textures):
         if not compat.material_uses_nodes(mat):
             continue
         for node in mat.node_tree.nodes:
-            if node.type in SHADER_NODES:
-                continue
+            if node.type in SHADER_NODES or node.name == "Maya Diffuse":
+                continue        # the diffuse multiply is part of the Maya material (operators/material.py, step 214)
             if (node.type in TEXTURE_NODES) == want_textures:
                 out.append((f"{mat.name}::{node.name}", node.label or node.name, mat, node))
     return out

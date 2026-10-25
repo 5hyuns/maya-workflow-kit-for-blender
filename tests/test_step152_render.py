@@ -34,7 +34,20 @@ outliner_sets = import_module(kit.MODULE + ".ui.outliner_sets")
 
 # Maya 2022 Software render, 8-bit, colour management on or off alike (output transform off): tmp/m152/m152d.json
 MAYA = {"top": 76.84, "front": 65.12, "side": 10.0}
-MAYA_DIFFUSE = 0.8          # lambert1 diffuse; the kit's lambert1 renders colour 0.5 without it (step 100)
+
+
+def _de00_grey(v1, v2):
+    """CIEDE2000 between two neutral greys given as 8-bit sRGB-encoded values (a* = b* = 0, so only the lightness
+    term is left: dL / S_L). Maya's numbers are an 8-bit PNG with colour management off, the kit's are linear EXR
+    values x 255 — both read as the same 0-255 code values here (step 214)."""
+    def lab_l(v):
+        c = max(v, 0.0) / 255.0
+        y = c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+        f = y ** (1 / 3) if y > (6 / 29) ** 3 else y / (3 * (6 / 29) ** 2) + 4 / 29
+        return 116 * f - 16
+    l1, l2 = lab_l(v1), lab_l(v2)
+    lm = (l1 + l2) / 2
+    return abs(l1 - l2) / (1 + 0.015 * (lm - 50) ** 2 / math.sqrt(20 + (lm - 50) ** 2))
 
 
 def _clear():
@@ -401,17 +414,21 @@ def _maya_view_render_in(engine, world):
 
 
 def test_cube_brightness_like_maya():
-    """The light matches Maya: kit face value x 0.8 (Maya lambert1 diffuse, which the kit's lambert1 doesn't carry)
-    = Maya's within 3 / 255 with no world; the template's grey world adds its ambient on top."""
+    """Light and lambert1 match Maya: since step 214 the kit's lambert1 carries Maya's diffuse 0.8 (the "Maya Diffuse"
+    node), so kit face values = Maya's within 1 / 255 with no world; the template's grey world adds its ambient on
+    top. Prints a kit / Maya / ratio / CIEDE2000 table per engine and world (STEP214_BRIGHTNESS lines)."""
     report = []
     for engine in (None, 'CYCLES'):
         for world in (False, True):
             vals, used = _maya_view_render(engine, world)
             got = {f: round(v * 255, 2) for f, v in vals.items()}
             report.append((used, world, got))
-            print("STEP152_BRIGHTNESS", used, "world" if world else "no world", got,
-                  {f: round(v * MAYA_DIFFUSE * 255, 2) for f, v in vals.items()}, MAYA)
+            print("STEP152_BRIGHTNESS", used, "world" if world else "no world", got, MAYA)
+            for face, maya in MAYA.items():
+                print("STEP214_BRIGHTNESS", f"{used:20s}", "world   " if world else "no world", f"{face:5s}",
+                      f"kit {got[face]:7.2f}", f"maya {maya:6.2f}", f"ratio {got[face] / maya:.4f}",
+                      f"dE00 {_de00_grey(got[face], maya):.3f}")
             if not world:
                 for face, maya in MAYA.items():
-                    assert abs(vals[face] * MAYA_DIFFUSE * 255 - maya) < 3.0, (used, face, got, MAYA)
+                    assert abs(vals[face] * 255 - maya) < 1.0, (used, face, got, MAYA)
     assert report
