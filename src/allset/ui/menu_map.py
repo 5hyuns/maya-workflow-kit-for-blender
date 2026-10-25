@@ -782,6 +782,14 @@ MAP.update({
     # Prune Membership, Point On Curve
     "Deform/Wire": _deformer('WIRE'),
     "Deform/Paint Weights/Wire": ("allset.paint_deformer_weights", {"kind": "wire"}),
+    # step 205: Maya-checked deformers (operators/deformers_205a.py / _205b.py, )
+    **{f"Deform/{label}": ("allset.deformer_tss", {"kind": kind})
+       for label, kind in (("Tension", 'TENSION'), ("Solidify", 'SOLIDIFY'), ("Sculpt", 'SCULPT'))},
+    "Deform/Prune Membership/Sculpt": "allset.prune_sculpt",
+    "Deform/Morph": "allset.morph",
+    "Deform/Jiggle/Jiggle Deformer": "allset.jiggle",
+    **{f"Deform/Paint Weights/{label}": ("allset.paint_deformer_weights", {"kind": kind})
+       for label, kind in (("Tension", "tension"), ("Jiggle", "jiggle"))},
     **{f"Deform/Wire#2/{label}": ("allset.wire_edit", {"action": action}) for label, action in (
         ("Add", "ADD"), ("Remove", "REMOVE"), ("Reset", "RESET"), ("Show Base Wire", "SHOW_BASE"),
         ("Parent Base Wire", "PARENT_BASE"))},

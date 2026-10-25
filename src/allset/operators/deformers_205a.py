@@ -991,6 +991,11 @@ WINDOWS = []          # filled by windows() when option_windows._extend asks (av
 def windows():
     if not WINDOWS:
         WINDOWS.extend(_windows())
+        # Deform > Paint Weights > Tension ❒ = Maya's Paint Attributes Tool, like the other Paint Weights boxes
+        from .option_windows import Window
+        from .option_windows_deform import PAINT_FIELDS, PAINT_MISSING, _paint
+        WINDOWS.append(Window("paint_weights_tension", "Paint Attributes Tool", "Paint", None, PAINT_FIELDS(),
+                              _paint("tension"), paths=("Deform/Paint Weights/Tension",), missing=PAINT_MISSING))
     return WINDOWS
 
 

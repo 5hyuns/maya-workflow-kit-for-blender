@@ -367,7 +367,10 @@ def test_option_windows_have_maya_factory_values():
                                                 "falloff_iterations": 2}
     assert ws["deform_sculpt"].defaults() == {"mode": "Stretch", "inside_mode": "Even", "max_displacement": 0.1,
                                               "dropoff_type": "Linear", "dropoff_distance": 1.0, "centered": True}
+    assert ws["paint_weights_tension"].paths == ("Deform/Paint Weights/Tension",)
     for w in ws.values():
+        if w.key.startswith("paint_weights"):
+            continue           # Maya's Paint Attributes Tool, shared with the other Paint Weights boxes
         assert w.match[0] == "allset.deformer_tss"
         assert set(w.defaults()) <= set(dfa.DEFAULTS[w.match[1]["kind"]])
     # a window's values reach the node

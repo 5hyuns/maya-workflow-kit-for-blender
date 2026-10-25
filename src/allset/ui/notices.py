@@ -228,13 +228,6 @@ NOTICES.update({
                     "the Hook wrap1Base after it follows the influence's transform."),
     "Deform/Proximity Wrap": ("Surface Deform", "Blender: proximityWrap1 is a Surface Deform modifier bound to the "
                               "driver (Maya's Surface wrap mode)."),
-    "Deform/Tension": ("Corrective Smooth", "Blender has no tension deformer: Delta Mush (a Corrective Smooth "
-                       "modifier, Length Weight) is the closest."),
-    "Deform/Solidify": ("Rigid vertex group", "Blender has no solidify deformer (its Solidify modifier adds "
-                        "thickness): keep sections out of the deformer's vertex group instead."),
-    "Deform/Morph": ("Shape keys", "Blender has no morph deformer: Blend Shape (shape keys) morphs to a target."),
-    "Deform/Jiggle/Jiggle Deformer": ("Soft Body", "Blender has no jiggle deformer: Soft Body physics with a goal "
-                                      "vertex group is the closest."),
     "Deform/Wire": ("Geometry Nodes wire", "Blender has no wire deformer: wire1 is a Geometry Nodes modifier with "
                     "Maya's wire rule (dropoff, rotation, dropoff locators); select the objects, then the curve."),
     "Deform/Wire#2/Add Holder": ("No holders", "Blender's kit wire has no holder curves: limit the wire with its "
@@ -246,16 +239,11 @@ NOTICES.update({
                               "through the point by least squares)."),
     "Deform/Wrinkle": ("Sculpt mode", "Blender has no wrinkle deformer: sculpt the wrinkles (Crease brush) or use a "
                        "Displace modifier (Deform > Texture)."),
-    "Deform/Sculpt": ("Cast modifier", "Blender has no sculpt (implicit sphere) deformer: the Cast modifier pushes "
-                      "points towards a sphere."),
     **{f"Deform/Paint Weights/{kind}": (
         "Weight Paint", "Blender paints the deformer's vertex group in Weight Paint mode (the group of the "
         "deformer's name).")
        for kind in ("Blend Shape", "Cluster", "Delta Mush", "Proximity Wrap", "Lattice", "ShrinkWrap",
                     "Nonlinear", "Texture Deformer", "Wire")},
-    **{f"Deform/Paint Weights/{kind}": (
-        "Weight Paint", f"Blender has no {kind.lower()} deformer to paint (see Deform > {kind}).")
-       for kind in ("Tension", "Jiggle")},
     **{f"Constrain/{item}": ("Shrinkwrap constraint", "Blender sticks an object to a surface with a Shrinkwrap "
                                                      "constraint (Nearest Surface Point).")
        for item in ("Closest Point", "Point On Poly")},
