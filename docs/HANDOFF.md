@@ -2,6 +2,13 @@
 
 ## 현재 작업
 
+- Step 198 (Graph Editor depth 2, backlog #6, Issue #105) 완료 — `docs/steps/step_198.md`, Maya 측정
+  `research/maya/re/graph_editor_193.md` (GUI Maya QTest Retime 드래그 + mayapy 가중 탄젠트 / 버퍼). Retime Tool (Graph Editor + Dope
+  Sheet), 버퍼 커브 Snapshot / Swap / Show, Weighted / Non-weighted / Default Tangent Weight / Lock·Free Tangent Length, Select
+  Unsnapped, Set Curve Colors..., Add Key Tool, 메인 패널 Graph Editor 사이드바 닫기. Graph Editor 155 → 167 / 229, Dope Sheet 130 → 139.
+  헤드리스 1807 / 1807, GUI 관련 42 / 42 + 스모크 45 / 45. 남은 것: Pin / Load Selected.
+  **바로 다음 할 일**: step 199 = backlog #7 「Skin and Constrain tools 2」 (Issue #106). 그다음 200 (#107).
+
 - Step 197 (Small Maya polish batch, backlog #5, Issue #104) 완료 — `docs/steps/step_197.md`. 핫박스 / 마킹 메뉴가 떠 있는 동안
   in-view 메시지 · In-View Editor 안 그림, 결과 칸의 옛 `Undo: …` 를 새 명령이 지움 (F8 포함), AE 탭 · 메뉴 · 버튼 줄을 잰 폭으로 줄바꿈
   (잘린 글자 0), Mesh > Cleanup… = Maya 명령 `allset.poly_cleanup` + Cleanup Options 창, character set 옛 문구 제거 + Relationship

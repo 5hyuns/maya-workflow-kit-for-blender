@@ -1279,3 +1279,10 @@ Blindspots of audit 14 (`docs/steps/step_192_remaining.md` §4). These are expec
 - [ ] Narrow the dock on the Attribute Editor: tabs / menus / Select-Load Attributes-Copy Tab wrap instead of showing "…".
 - [ ] Mesh > Cleanup… opens no submenu; its ❒ opens Cleanup Options; Select matching polygons with 4-sided faces selects every quad.
 - [ ] Windows > Relationship Editors > Character Sets lists the sets; Graph Editor Show > Objects > Characters lists character rows.
+
+## Step 198
+
+- [ ] Graph Editor > Edit > Transformation Tools > Retime Tool: a real double-click adds a marker; dragging its middle handle retimes smoothly; the low part of the line moves only the marker; the ✕ deletes; Esc ends.
+- [ ] Curves > Buffer Curve > Snapshot, edit a key, View > Show Buffer Curves: the grey snapshot shows; Swap Buffer Curve swaps.
+- [ ] Curves > Non-weighted Tangents, then drag a tangent handle: after release the handle length goes back to a third of the interval.
+- [ ] Switch the big view to the Graph Editor: no Blender sidebar; N still opens it.
