@@ -466,9 +466,6 @@ CATEGORIES.update({
     "UV Editor/Select": (
         "Select menu", "Blender's UV Editor shows one image, so there is no per-image face filter: Select Linked, "
         "Overlapping and the face filters (Connected / Contained Faces) are there."),
-    "UV Editor/Cut/Sew": (
-        "Seams / Rip", "Blender makes shells from seams (Cut, Unwrap) and splits UVs with the Rip tool; it has no "
-        "auto seams or grid shells."),
     "UV Editor/Modify": (
         "UV menu", "Blender has no such UV layout command: Pack Islands, Align, Snap and Average Islands Scale are "
         "its tools."),
@@ -969,3 +966,12 @@ MARKING.update({f"doSelectComponentMM/{p}": _PICK_MASK for p in (
     "Parm Points/Subdiv Mesh UVs", "Parm Points/Surface Points", "Lines/Trim Edges", "Lines/All Lines",
     "Lines/Springs", "Lines/Isoparms", "Hulls", "Pivots/Scale Pivots", "Pivots/Joint Pivots", "Pivots/All Pivots",
     "Pivots/Rotate Pivots", "Handles", "Misc./Local Rotation Axes", "Misc./Image Planes", "Misc./All Misc")})
+
+
+# step 206: polyWarpImage bakes a file texture from one UV set into another as a new image file
+# (performPolyWarpImage.mel); Blender does that with a Cycles bake.
+NOTICES.update({
+    "UV Editor/Modify/Warp Image": (
+        "Cycles Bake", "Blender has no image warp between UV sets: assign the texture with the old UV Map, make the "
+        "new UV Map active for an empty image and bake (Render Properties > Bake, Cycles)."),
+})
