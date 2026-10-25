@@ -1360,3 +1360,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] File > New Scene (Maya layout): the Outliner starts with greyed persp / top / front / side, new objects follow in creation order (also after making 10+ objects and after grouping three cubes: the group lists them in creation order), sets last. Click persp: the Channel Box shows persp (Visibility off). Edit > Delete with persp active and a cube selected deletes only the cube.
 - [ ] Attribute Editor on a cube: the node tabs are one row (pCube1 / pCubeShape1 / polyCube1 / initialShadingGroup / lambert1); drag the dock narrower: ◀ ▶ appear around the current tab instead of the tabs stacking; Select / Load Attributes / Copy Tab stay one row at the fitted width.
 - [ ] nHair > Modify Curves > Bend ❒ / Curl ❒ / Scale Curvature ❒ open the same Maya windows as Curves > Bend ❒ / Curl ❒ / Scale Curvature ❒.
+
+### Step 213 — Component, Shape and Connection Editors (#119)
+
+- [ ] Skin a cylinder, select a few vertices, Windows > General Editors > Component Editor: Smooth Skins shows the joints + Total; type 0.5 in a joint cell — the other joints share the rest proportionally (Total stays 1.000); set a Hold to on and edit again: the held column stays. Polygons tab: type a new vertex.y and see the vertex move; Ctrl+Z undoes it.
+- [ ] Windows > Animation Editors > Shape Editor on pCube1: Create Blend Shape, Add Target (pCube2, red Edit), move vertices in Edit Mode, turn Edit off, drag the weight slider: the shape blends; Shapes > Key keys the weight; Reset sets 0.
+- [ ] Windows > General Editors > Connection Editor with two objects selected: pick translate on the left, translate on the right: the right object follows the left; pick the right translate again: the connection breaks and the object stays where it was.

@@ -2,6 +2,16 @@
 
 ## 현재 작업
 
+- Step 213 (Component, Shape and Connection Editors, backlog #3, Issue #119) 완료 — `docs/steps/step_213.md`, Maya 측정
+  `research/maya/re/editors_213.md` (GUI Maya 캡처 `research/maya/screens/editors212/` + mayapy). Windows 메뉴 세 항목이 Blender
+  기본 편집기 대신 킷 창을 엶 (`ui/marked_window.py`: Properties Tool 탭 + 숨은 플래그 쌍): Component Editor (Smooth Skins = 관절 열 +
+  Total + Hold, Maya 비례 정규화, Polygons = Maya 단위 위치, 편집 가능 + undo), Shape Editor (blendShape = Key, Add Target 이름
+  pCube2 / pCube3, 가중치 슬라이더, 빨간 Edit, Key / Reset / Duplicate / Flip / Mirror), Connection Editor (연결 = 드라이버 + Maya 단위
+  변환). 편집기 메뉴 676 / 952 → 720 / 1036. 헤드리스 전체 2061 / 2061, GUI step213 12 / 12 + 관련·스모크 55 / 55 (샷 3 장 확인).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#119 닫힘; 에이전트 worktree 정리 여부 (이번 레인 2 개 추가).
+  **바로 다음 할 일**: step 214 = backlog #4 「Render parity 2」 (Issue #120) — 킷 lambert1 이 Maya 보다 1.25 배 밝음 (Principled 에
+  Diffuse 0.8 없음) 등 (step_210_remaining.md §8 #1).
+
 - Step 212 (Blender 5.x test pass 3, backlog #2, Issue #118) 완료 — `docs/steps/step_212.md`, `docs/compat_5x.md` 「step 212」.
   헤드리스 전체 첫 실행 5.0.1 2031 / 2032, 5.1.2 2032 / 2032, 5.2.3 2022 / 2032 → 고친 뒤 4.5.4 / 5.2.3 전체 **2032 / 2032**, 5.0.1 /
   5.1.2 고친 파일 63 / 63; GUI (steps 203–211 파일 + 스모크 10 개) 5.0.1 / 5.1.2 / 5.2.3 모두 **88 / 88** (step 211 Outliner 순서 보정

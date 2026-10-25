@@ -374,9 +374,7 @@ def draw_list(layout, context, side):
         return
     col.label(text=ob.name, icon='OBJECT_DATA')
     picked = getattr(wm, f"allset_cn_{side.lower()}_attr")
-    src_side, dst_side = direction(context)
-    other = node(context, src_side if side == dst_side else dst_side)
-    other_attr = getattr(wm, f"allset_cn_{(src_side if side == dst_side else dst_side).lower()}_attr")
+    _src_side, dst_side = direction(context)
     for name, depth, compound in attributes(ob):
         if depth and not any(is_open(context, side, c) for c, kids in COMPOUNDS.items() if name in kids):
             continue
@@ -387,14 +385,13 @@ def draw_list(layout, context, side):
             op = row.operator(ALLSET_OT_cn_toggle.bl_idname, text="", emboss=False,
                               icon='DISCLOSURE_TRI_DOWN' if is_open(context, side, name) else 'DISCLOSURE_TRI_RIGHT')
             op.side, op.attr = side, name
-        # connected = this side's attribute is fed (right) or feeds the picked right attribute (left)
-        if side == dst_side and other is not None and other_attr:
-            linked = connected(other, other_attr, ob, name)
-        else:
-            linked = side == dst_side and any(source_of(ob, leaf) is not None for leaf in leaves(name))
+        # a fed attribute (every leaf has a kit connection) shows the driver icon, like Maya's connected rows
+        linked = side == dst_side and all(source_of(ob, leaf) is not None for leaf in leaves(name))
         label = _nice(name) if wm.allset_cn_names == "NICE" else name
-        op = row.operator(ALLSET_OT_cn_pick.bl_idname, text=label, depress=name == picked,
-                          icon='DRIVER' if linked else 'NONE', emboss=name == picked)
+        cell = row.row(align=True)
+        cell.alignment = 'LEFT'          # Maya's attribute names start at the left
+        op = cell.operator(ALLSET_OT_cn_pick.bl_idname, text=label, depress=name == picked,
+                           icon='DRIVER' if linked else 'NONE', emboss=name == picked)
         op.side, op.attr = side, name
 
 
