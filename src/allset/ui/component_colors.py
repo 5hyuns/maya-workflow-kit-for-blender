@@ -22,6 +22,16 @@ pixels between the stipple dots #9d856b where the unselected face is #747577; Ma
 Maya layout 3D View, while the kit draws every edited mesh, the view's ``overlay.show_faces`` is switched off (view
 data, not preferences; from a timer, never inside the draw) and switched back when the kit stops drawing there
 (preference off, mesh over ``BMESH_LIMIT``) and on unregister. Views the kit didn't switch are left alone.
+
+Edges (step 185, ): Maya draws a thin hilite wire with crisp orange selected edges
+(). Kit primitives keep Maya's hard edges as ``sharp_edge`` (step 134), so
+Blender drew its theme sharp-edge colour (factory #00ffff) about 3 px wide around the kit's line (GUI probe at UI 1.25,
+cross-section of a silhouette edge: 519a9a 00dfdf 008a8a with the kit's 64dbff only in the middle) and the selected
+edge looked like an orange sliver inside a thick cyan band. ``overlay.show_edge_sharp`` is now switched off with
+``show_faces`` (Maya has no sharp-edge colour); Blender's plain edit edge left under the kit line is 2 px (474747 333333),
+so the hilite line is 1.5 px x UI scale (2 px at 1.25, nothing of Blender's left; 1 px left a dark pixel beside it).
+The lines also failed the depth test on one side of a silhouette edge (bias 0.0005): ``DEPTH_BIAS`` 0.002 for the
+hilite wire, ``EDGE_SEL_BIAS`` 0.003 for selected edges, drawn last and 2 px so they stay on top.
 """
 
 import bpy
@@ -34,15 +44,18 @@ EDGE_SEL = "#e3ac79"        # selected edges (09_edges_selected.png; polyEdge 21
 FACE_SEL = "#e3ac79"        # selected face stipple (07_faces_selected.png; polyFace 21)
 VERT_PX = 3.0               # Maya pixel sizes at UI scale 1.0 (08_verts_selected.png)
 VERT_SEL_PX = 4.0
-LINE_PX = 2.0               # Maya's lines are 1 px, but Blender's own edit edges under them are ~2 px anti-aliased
-                            # (x UI scale): 1 px left Blender's colours on both sides (GUI shot, )
+LINE_PX = 1.5               # Maya's lines are 1 px; 1.5 x UI scale just covers Blender's own 2 px edit edge (step 185)
+EDGE_SEL_PX = 2.0           # selected edges a little wider, drawn over the hilite wire
 BMESH_LIMIT = 50000         # cage read from the BMesh (modifiers shown in edit mode) only up to this many vertices
-DEPTH_BIAS = 0.0005         # relative pull toward the camera (soft_overlay uses 0.001 and draws over this)
+DEPTH_BIAS = 0.002          # relative pull toward the camera: 0.0005 lost the line's far side on silhouettes (step 185)
+EDGE_SEL_BIAS = 0.003       # selected edges in front of the hilite wire
+FACE_BIAS = 0.0005          # selected face stipple (steps 134 / 176)
 POINT_BIAS = 0.003          # vertices: Blender's own edit vertices write depth well in front of the surface
 
 _handle = []
-_faces_off = set()          # space pointers whose overlay.show_faces the kit switched off (restored on unregister)
-_pending = {}               # space pointer -> show_faces value the timer writes
+OVERLAY_OFF = ("show_faces", "show_edge_sharp")   # Blender edit-mesh overlays under the Maya look (steps 176, 185)
+_faces_off = set()          # (space pointer, overlay prop) the kit switched off (restored on unregister)
+_pending = {}               # (space pointer, overlay prop) -> value the timer writes
 _shader = {}
 _cache = {}                 # (object pointer, mesh pointer) -> _State
 _dirty = set()              # object / mesh names a depsgraph update touched since the last read
@@ -248,9 +261,9 @@ def _batches(st, select_mode):
     poly = _builtin('POLYLINE_UNIFORM_COLOR')
     out = []
 
-    def lines(idx, color, width):
+    def lines(idx, color, width, kind='LINES'):
         if len(idx):
-            out.append(('LINES', poly, batch_for_shader(poly, 'LINES', {"pos": m.co[idx.reshape(-1)]}), color, width))
+            out.append((kind, poly, batch_for_shader(poly, 'LINES', {"pos": m.co[idx.reshape(-1)]}), color, width))
 
     def points(idx, color, size):
         if len(idx):
@@ -261,7 +274,7 @@ def _batches(st, select_mode):
                     _linear(FACE_SEL), 0.0))
     lines(lay["edges"], srgb(HILITE) + (1.0,), LINE_PX)
     if "edges_sel" in lay:
-        lines(lay["edges_sel"], srgb(EDGE_SEL) + (1.0,), LINE_PX)
+        lines(lay["edges_sel"], srgb(EDGE_SEL) + (1.0,), EDGE_SEL_PX, 'LINES_SEL')
     if "verts" in lay:
         points(lay["verts"], srgb(VERT) + (1.0,), VERT_PX)
         points(lay["verts_sel"], srgb(VERT_SEL) + (1.0,), VERT_SEL_PX)
@@ -324,26 +337,28 @@ def _apply_pending():
     from .. import live_refs
     todo = dict(_pending)
     _pending.clear()
-    for ptr, value in todo.items():
+    for (ptr, prop), value in todo.items():
         _w, area, space = live_refs.find_space(ptr)
-        if space is not None and space.overlay.show_faces != value:
-            space.overlay.show_faces = value
+        if space is not None and getattr(space.overlay, prop) != value:
+            setattr(space.overlay, prop, value)
             area.tag_redraw()
     return None
 
 
 def _face_overlay(context, space, kit_draws):
-    ptr = space.as_pointer()
-    value, ours = face_overlay_action(kit_draws and _maya_layout(context), space.overlay.show_faces,
-                                      ptr in _faces_off)
-    if ours:
-        _faces_off.add(ptr)
-    else:
-        _faces_off.discard(ptr)
-    if value is not None and _pending.get(ptr) != value:
-        _pending[ptr] = value
-        if not bpy.app.timers.is_registered(_apply_pending):
-            bpy.app.timers.register(_apply_pending, first_interval=0.0)
+    """Switch the OVERLAY_OFF overlays of this view off while the kit draws the Maya look in a Maya layout view."""
+    want_off = kit_draws and _maya_layout(context)
+    for prop in OVERLAY_OFF:
+        key = (space.as_pointer(), prop)
+        value, ours = face_overlay_action(want_off, getattr(space.overlay, prop), key in _faces_off)
+        if ours:
+            _faces_off.add(key)
+        else:
+            _faces_off.discard(key)
+        if value is not None and _pending.get(key) != value:
+            _pending[key] = value
+            if not bpy.app.timers.is_registered(_apply_pending):
+                bpy.app.timers.register(_apply_pending, first_interval=0.0)
 
 
 def _draw():
@@ -383,19 +398,20 @@ def _draw():
     scale = context.preferences.system.ui_scale or 1.0
     gpu.state.depth_test_set('NONE' if _xray(space) else 'LESS_EQUAL')
     gpu.state.depth_mask_set(False)
-    proj = {False: _biased_projection(rv3d, DEPTH_BIAS), True: _biased_projection(rv3d, POINT_BIAS)}
+    proj = {'LINES': _biased_projection(rv3d, DEPTH_BIAS), 'TRIS': _biased_projection(rv3d, FACE_BIAS),
+            'LINES_SEL': _biased_projection(rv3d, EDGE_SEL_BIAS), 'POINTS': _biased_projection(rv3d, POINT_BIAS)}
     gpu.matrix.push_projection()
     try:
         for ob, st in states:
             with gpu.matrix.push_pop():
                 gpu.matrix.multiply_matrix(ob.matrix_world)
                 for kind, sh, batch, color, size in _batches(st, select_mode):
-                    gpu.matrix.load_projection_matrix(proj[kind == 'POINTS'])
+                    gpu.matrix.load_projection_matrix(proj[kind])
                     sh.bind()
                     sh.uniform_float("color", color)
                     if kind == 'POINTS':
                         gpu.state.point_size_set(max(1.0, round(size * scale)))
-                    elif kind == 'LINES':
+                    elif kind in ('LINES', 'LINES_SEL'):
                         sh.uniform_float("viewportSize", (region.width, region.height))
                         sh.uniform_float("lineWidth", size * scale)
                     batch.draw(sh)
@@ -460,8 +476,8 @@ def unregister():
     if bpy.app.timers.is_registered(_apply_pending):
         bpy.app.timers.unregister(_apply_pending)
     _pending.clear()
-    for ptr in list(_faces_off):
-        _pending[ptr] = True
+    for key in list(_faces_off):
+        _pending[key] = True
     _faces_off.clear()
     _apply_pending()
     _cache.clear()
