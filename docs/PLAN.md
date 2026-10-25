@@ -1134,7 +1134,7 @@ went into rows already counted done (menus, editors, depth).
 
 ### Backlog (steps 211+, `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`, milestone 0.5.0)
 
-1. Audit 16 fix batch (#117) — **done, step 211** (`docs/steps/step_211.md`). 2. Blender 5.x test pass 3 (#118). 3. Component, Shape and Connection Editors (#119). 4. Render
+1. Audit 16 fix batch (#117) — **done, step 211** (`docs/steps/step_211.md`). 2. Blender 5.x test pass 3 (#118) — **done, step 212**. 3. Component, Shape and Connection Editors (#119). 4. Render
 parity 2 (#120). 5. Maya Preferences window and Hotkey Editor (#121). 6. maya.cmds look-alike 3 (#122). 7. NURBS components and
 Surfaces 2 (#123). 8. FX menus: nConstraint and nCache (#124). Next in line: Arnold menus (measure first), Channel Box look 2,
 Hypershade depth 2, Namespace Editor.

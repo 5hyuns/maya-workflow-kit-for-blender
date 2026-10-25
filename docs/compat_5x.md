@@ -59,11 +59,31 @@ theme_migration_api), 그리고 실측 (헤드리스 RNA 덤프·동작 탐침, 
 | IC Ctrl+S 계열에 `show_save_modified_images_dialog=True` | 킷의 Save Scene / Save Scene As | 동작: 저장 안 된 이미지 확인 창이 안 뜸 | `save_dialog_args` |
 | 가장자리 맞붙은 영역이 같이 안 움직임, 사이드바 탭 항상 보임 | Tool Box 열 맞춤, 뷰포트 사이드바 | GUI 확인 항목 | 아래 시각 확인 |
 | GN 모디파이어 입력이 ID 속성 (`md["Socket_1"]`, `_use_attribute` / `_attribute_name`) 에서 `md.properties.inputs.Socket_1.value` / `.type` ('VALUE' / 'ATTRIBUTE') / `.attribute_name` 로 (옛 쓰기는 `TypeError`) | Deform > Wire (`wire_deformer`, step 169) | **깨짐**: Wire 만들기 실패 (step169 8 테스트, step 200) | `GN_INPUT_STRUCT`, `gn_input_get` / `gn_input_set` / `gn_input_attribute` |
+| `FunctionNodeCompare` 가 지금 data type 의 소켓 둘만 가짐 (4.5 – 5.1: 모든 type 의 A / B, INT = 인덱스 2 / 3) | Deform > Morph / Jiggle (`deformers_205b`, step 205) | **깨짐**: 노드 그룹 만들기 IndexError (step205_deform_b 7 테스트, step 212) | `compare_inputs` (identifier `A_INT` / `B_INT` …, 없으면 처음 둘) |
+| `-b` 에서 방금 읽은 home 파일 / 스크립트 편집이 `bpy.data.is_dirty` 로 안 보임 (4.5 – 5.1 은 home 파일이 modified) | maya.cmds `file -new` 의 Unsaved changes (step 208) | 헤드리스 테스트만 (GUI 는 4 버전 모두 오류 냄, `gui_step208`) | 테스트가 `-b` 상태를 재고 그 경우만 건너뜀 |
 | 조각 자동 마스킹, `template_palette(color=)` | — | 없음 | — |
 
 ## 버전별 결과
 
-### step 200 (2026-10-25, 최신 전체)
+### step 212 (2026-10-26, 최신 전체)
+
+헤드리스 = `ALLSET_SANDBOX=<ver> python tests/run.py --no-build --blender <exe>` 전체 243 파일 (zip 은 4.5 로 빌드), Blender 둘씩.
+GUI = 버전마다 `-k step203_outliner,step204,step205,step206,step207,step208,step209,step211,step5_layout,step60_switch` (10 파일).
+steps 202–211 (Graph Editor list, anim layers 4, Deform 2, UV 2, Curves 3, maya.cmds 2, Reference Editor, audit 16 fixes) 의 첫
+5.x 통과 (`docs/steps/step_212.md`).
+
+| Blender | 헤드리스 첫 실행 | 헤드리스 (수정 뒤) | GUI (10 파일) |
+|---|---|---|---|
+| 4.5.4 LTS (대상) | (step 211: 2032 / 2032) | **2032 / 2032** | (step 211 관련 160 / 160) |
+| 5.0.1 | 2031 / 2032 (테스트의 `Bone.select`) | 고친 파일 63 / 63 | **88 / 88** |
+| 5.1.2 | **2032 / 2032** | 고친 파일 63 / 63 | **88 / 88** |
+| 5.2.3 LTS | 2022 / 2032 (+ Compare 노드 7, `-b` modified 2) | **2032 / 2032** | **88 / 88** |
+
+- 고친 것: `compat.compare_inputs` (5.2 Compare 노드, Morph / Jiggle), 테스트 둘 (`test_step203_list` 가 `Bone.select` 대신 kit shim,
+  `test_step208_cmds` 의 Unsaved changes 는 `-b` 가 modified 를 보일 때만 — GUI 는 4 버전 모두 확인).
+- step 211 의 Outliner 순서 보정 (불안정 qsort 회전) 은 5.0.1 / 5.1.2 / 5.2.3 GUI 에서도 그대로 맞음 (`gui_step211_fix_batch` 10 / 10).
+
+### step 200 (2026-10-25)
 
 헤드리스 = `ALLSET_SANDBOX=<ver> python tests/run.py --no-build --blender <exe>` 전체 226 파일 (zip 은 4.5 로 한 번 빌드),
 한 번에 Blender 둘. GUI = 5.2.3 에서 `-k step183,step186,step187` (step186 은 GUI 파일 없음 → 2 파일) + step183 UI 1.0.

@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 212 (Blender 5.x test pass 3, backlog #2, Issue #118) 완료 — `docs/steps/step_212.md`, `docs/compat_5x.md` 「step 212」.
+  헤드리스 전체 첫 실행 5.0.1 2031 / 2032, 5.1.2 2032 / 2032, 5.2.3 2022 / 2032 → 고친 뒤 4.5.4 / 5.2.3 전체 **2032 / 2032**, 5.0.1 /
+  5.1.2 고친 파일 63 / 63; GUI (steps 203–211 파일 + 스모크 10 개) 5.0.1 / 5.1.2 / 5.2.3 모두 **88 / 88** (step 211 Outliner 순서 보정
+  5.x 에서도 맞음). 고친 것: `compat.compare_inputs` (5.2 Compare 노드 = Morph / Jiggle), 테스트 둘 (`Bone.select` → shim, 5.2 `-b`
+  is_dirty 차이).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#118 닫힘; 에이전트 worktree 64 개 정리 여부.
+  **바로 다음 할 일**: step 213 = backlog #3 「Component, Shape and Connection Editors」 (Issue #119) — Windows 메뉴 17 개가 Blender 기본
+  편집기만 여는 문제 (step_210_remaining.md NB12): Component Editor (스킨 가중치 표), Shape Editor, Connection Editor.
+
 - Step 211 (Audit 16 fix batch, backlog #1, Issue #117) 완료 — `docs/steps/step_211.md`, Maya 측정 `research/maya/re/naming_211.md`
   (mayapy + GUI Maya). Windows > Relationship Editors > Light Linking ▸ Light-Centric / Object-Centric = 킷 Light Linking 편집기;
   set / display layer / anim layer / character / bookmark 이름 = 가장 큰 번호 + 1 (mayapy 측정); Ctrl+V = `pasted__pCube1` 이 새

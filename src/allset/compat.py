@@ -361,6 +361,18 @@ def gn_input_attribute(md, key, attribute):
     md[f"{key}_attribute_name"] = attribute
 
 
+def compare_inputs(node):
+    """The (A, B) input sockets of a ``FunctionNodeCompare`` for its current data type. 4.5 – 5.1 keep every type's
+    sockets on the node (A / B float first, then ``A_INT`` / ``B_INT`` ...; the others unavailable); 5.2 keeps only
+    the current type's two (an index 2 raised IndexError, step 212). Looked up by identifier, else the first two."""
+    suffix = {'INT': "_INT", 'VECTOR': "_VEC3", 'RGBA': "_COL", 'STRING': "_STR"}.get(node.data_type, "")
+    by_id = {s.identifier: s for s in node.inputs}
+    a, b = by_id.get("A" + suffix), by_id.get("B" + suffix)
+    if a is not None and b is not None:
+        return a, b
+    return node.inputs[0], node.inputs[1]
+
+
 # --- Top bar: where the first menu of the Maya menu bar opens ------------------------------------------
 # Option box click model (ui/option_click.py, step 183): top bar region left -> the first Maya menu's pulldown,
 # in widget units. 4.5: 1.48 (step 183 table); 5.0 – 5.2: 1.25 (step 200, gui_step183_option_click at UI 1.0 =

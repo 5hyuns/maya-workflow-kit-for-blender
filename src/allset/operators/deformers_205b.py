@@ -30,6 +30,7 @@ is kept but changes nothing [U]. Blender's simulation cache plays Maya's jiggle1
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 
+from .. import compat
 from . import deformers, wire_deformer
 
 MORPH_GROUP = ".Allset Morph"
@@ -144,12 +145,9 @@ class _B(wire_deformer._B):
 
     def compare(self, op, a, b, dtype='INT'):
         n = self.node("FunctionNodeCompare", data_type=dtype, operation=op)
-        if dtype == 'INT':
-            self._in(n.inputs[2], a)
-            self._in(n.inputs[3], b)
-        else:
-            self._in(n.inputs[0], a)
-            self._in(n.inputs[1], b)
+        sa, sb = compat.compare_inputs(n)          # 5.2 keeps only the current type's sockets (step 212)
+        self._in(sa, a)
+        self._in(sb, b)
         return n.outputs[0]
 
     def lerp(self, a, b, f):
