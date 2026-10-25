@@ -127,8 +127,8 @@ def test_greyed_click_and_tooltip_show_the_notice():
     tip = shelf.button_tooltip("Rendering", "Render Diagnostics", False)
     assert "Info editor" in tip, tip
     # Mapped with a different Blender result: the tooltip says what Blender does.
-    tip = shelf.button_tooltip("CurvesSurfaces", "Loft", True)
-    assert "Blender: Mesh" in tip, tip
+    tip = shelf.button_tooltip("CurvesSurfaces", "Planar", True)
+    assert "Blender: Filled 2D curve" in tip, tip
 
 
 def test_sculpting_tools_are_blender_brushes():
@@ -179,13 +179,16 @@ def test_loft_two_circles():
     _select(a, b)
     assert bpy.ops.allset.loft() == {'FINISHED'}
     ob = bpy.data.objects["loftedSurface1"]
-    me = ob.data
-    n = len(me.vertices) // 2
-    assert len(me.vertices) == 2 * n and len(me.polygons) == n, (len(me.vertices), len(me.polygons))
-    zs = sorted({round(v.co.z, 4) for v in me.vertices})
-    assert zs == [0.0, 5.0], zs
-    radii = {round(v.co.xy.length, 2) for v in me.vertices}
-    assert radii and all(0.9 <= r <= 1.0 for r in radii), radii
+    assert ob.type == 'SURFACE', ob.type                 # a NURBS surface since step 181 (surfaces_181.md)
+    sp = ob.data.splines[0]
+    assert sp.use_cyclic_u and sp.point_count_v == 4, (sp.use_cyclic_u, sp.point_count_v)   # 2 curves: 1 cubic span
+    ev = ob.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    me = ev.to_mesh()
+    try:
+        zs = [ob.matrix_world @ v.co for v in me.vertices]
+        assert abs(min(p.z for p in zs)) < 1e-4 and abs(max(p.z for p in zs) - 5.0) < 1e-4
+    finally:
+        ev.to_mesh_clear()
     assert ob.active_material is not None          # lambert1, like a Maya shape (step 100)
 
 
@@ -197,7 +200,7 @@ def test_extrude_sweeps_profile_along_path():
     _select(prof, path)
     assert bpy.ops.allset.surface_extrude() == {'FINISHED'}
     ob = bpy.data.objects["extrudedSurface1"]
-    assert ob.data.bevel_mode == 'OBJECT' and ob.data.bevel_object == prof and ob.data is not path.data
+    assert ob.type == 'SURFACE' and ob.data is not path.data and ob.data is not prof.data
     assert _evaluated_faces(ob) > 0
 
 

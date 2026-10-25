@@ -69,6 +69,10 @@ from . import repeat_maya  # noqa: E402  step 175: Maya G / Edit > Repeat / Rece
 
 classes += repeat_maya.classes
 
+from . import surfaces_maya  # noqa: E402  step 181: Maya Surfaces menu on NURBS surfaces
+
+classes += surfaces_maya.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
@@ -164,3 +168,4 @@ def unregister():
     render_batch.unregister()
     default_light.unregister()
     _unregister_classes()
+

@@ -4,10 +4,7 @@
 Results checked in Maya 2022  ( 「계획」, defaults of the commands):
 - Planar on a closed curve -> ``planarTrimmedSurface1``; here a copy of the curve filled in 2D (Blender fills
   closed 2D curves; the curve is flattened onto its local XY plane).
-- Loft of two or more curves -> ``loftedSurface1`` (NURBS in Maya, uniform off, degree 3); here a quad mesh
-  through the curves, each resampled by arc length to the same point count.
-- Extrude profile + path -> ``extrudedSurface1`` (tube: the profile swept along the path); here a copy of the
-  path curve with the profile as its bevel object (Blender keeps it live, like Maya's history).
+- Loft / Extrude: real NURBS surfaces since step 181 (operators/surfaces_maya.py).
 - Bevel Plus on a closed curve -> ``bevelPolygon1`` (a **mesh**, the curve kept): width 0.1, depth 0.1, extrude
   depth 0.25 in Maya units.
 - Offset Curve -> ``offsetNurbsCurve1`` (distance 1), Sweep Mesh -> ``sweep1`` (an 8-sided tube mesh): see the
@@ -142,74 +139,7 @@ def resample(points, count, closed):
     return out
 
 
-def loft(context, obs):
-    rows = [curve_points(context, ob) for ob in obs]
-    rows = [r for r in rows if len(r[0]) >= 2]
-    if len(rows) < 2:
-        return None
-    closed = all(c for _p, c in rows)
-    n = max(len(p) for p, _c in rows)
-    grid = [resample(p, n, closed) for p, _c in rows]
-    verts = [tuple(v) for row in grid for v in row]
-    faces = []
-    span = n if closed else n - 1
-    for r in range(len(grid) - 1):
-        for i in range(span):
-            j = (i + 1) % n
-            faces.append((r * n + i, r * n + j, (r + 1) * n + j, (r + 1) * n + i))
-    me = bpy.data.meshes.new("loftedSurfaceShape")
-    me.from_pydata(verts, [], faces)
-    me.shade_smooth()
-    me.update()
-    ob = _link_new(context, bpy.data.objects.new("loftedSurface", me), "loftedSurface")
-    from . import material
-    material.give_default(ob)
-    return ob
-
-
-class ALLSET_OT_loft(bpy.types.Operator):
-    """Make a surface through the selected curves, in order (Maya Surfaces > Loft)"""
-    bl_idname = "allset.loft"
-    bl_label = "Loft"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        _object_mode(context)
-        ob = loft(context, _curves(context))
-        if ob is None:
-            self.report({'WARNING'}, "Invalid selection.  Need at least two curves.")   # Maya's message
-            return {'CANCELLED'}
-        return {'FINISHED'}
-
-
-# --- Extrude ------------------------------------------------------------------------------------
-
-def extrude(context, profile, path):
-    data = path.data.copy()
-    data.dimensions = '3D'
-    data.bevel_mode = 'OBJECT'
-    data.bevel_object = profile
-    data.use_fill_caps = False
-    new = bpy.data.objects.new("extrudedSurface", data)
-    new.matrix_world = path.matrix_world
-    return _link_new(context, new, "extrudedSurface")
-
-
-class ALLSET_OT_surface_extrude(bpy.types.Operator):
-    """Sweep the profile curve along the path curve (select the profile, then the path; Maya Surfaces >
-    Extrude, tube style)"""
-    bl_idname = "allset.surface_extrude"
-    bl_label = "Extrude"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        _object_mode(context)
-        obs = _curves(context)
-        if len(obs) < 2:
-            self.report({'WARNING'}, "Select a profile curve, then the path curve.")
-            return {'CANCELLED'}
-        extrude(context, obs[0], obs[-1])
-        return {'FINISHED'}
+# Loft / Extrude moved to operators/surfaces_maya.py (step 181: real NURBS surfaces, checked).
 
 
 # --- Bevel Plus ---------------------------------------------------------------------------------
@@ -427,5 +357,5 @@ class ALLSET_OT_add_points(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_surface_planar, ALLSET_OT_loft, ALLSET_OT_surface_extrude, ALLSET_OT_bevel_plus,
+classes = (ALLSET_OT_surface_planar, ALLSET_OT_bevel_plus,
            ALLSET_OT_offset_curve, ALLSET_OT_sweep_mesh, ALLSET_OT_pencil_curve, ALLSET_OT_add_points)
