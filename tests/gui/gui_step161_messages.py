@@ -154,10 +154,10 @@ def s_rmb():
     over = [r.label for r in rows for b in boxes if r.rect[0] < b.rect[2] and b.rect[0] < r.rect[2]
             and r.rect[1] < b.rect[3] and b.rect[1] < r.rect[3]]
     check(f"G2 the list doesn't cover the ring ({over[:3]})", not over)
-    under = all(it.rect[3] <= min(b.rect[1] for b in boxes) for it in rows)
-    # step 184 (Maya, research/maya/re/rmb_list_184.md): the list stays under the ring; near the bottom the whole
-    # menu is drawn higher instead (the pointer stays at the press point)
-    check(f"G2 the column hangs under the ring, the menu drawn {s.center[1] - s.press[1]:.0f} px higher", under)
+    # step 193: the ring stays at the press point (marks keep working); a list that doesn't fit under it goes beside
+    # it (Maya lifts the whole menu only at the screen bottom, research/maya/re/rmb_list_184.md — Blender's window is
+    # smaller than the screen)
+    check(f"G2 the ring stays at the press point ({s.center} / {s.press})", s.center == s.press)
     _area, region = main_view()
     cx, cy = s.center
     cx, cy = cx + region.x, cy + region.y      # the session works in the invoking region's pixels

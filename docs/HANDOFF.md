@@ -2,11 +2,15 @@
 
 ## 현재 작업
 
+- Step 193 (RMB flick works when the menu is lifted, backlog #1) 완료 — `docs/steps/step_193.md`. 마킹 메뉴 링은 언제나 누른 점
+  (`engine.fit_ring` 의 step 184 메뉴 전체 들어올리기 지움), 목록이 링 아래에 안 들어가면 목록만 링 옆 한 열. 헤드리스 1730 / 1730,
+  GUI 관련 10 파일 103 / 103, dogfood 48 / 48 (UI 1.25 · 1.0). **사용자 할 일**: 스토어에 0.4.1 zip 업로드.
+  **바로 다음 할 일**: step 194 = backlog #2 「Animation layers: keys stay visible」 (먼저 GUI Maya 측정).
+
 - Step 192 (재점검 14차 = 사용자 지시의 「재점검 13차」, 감사 — src 변경 없음) 완료 — `docs/steps/step_192.md` (+ `step_192_remaining.md`,
   `step_192_quant.md`), PLAN 「재점검 14차」. 헤드리스 1731 / 1731, dogfood 47 / 48 (RMB 서쪽 flick → Vertex 실패 = step 184 lift 회귀,
   처음 실행은 연쇄로 43 / 48), 추가 세션 2 / 2, 콘솔 0. 대응표 30 / 1 / 0 / 2 (91 %), 메뉴 750 / 1318 (56.9 %), 옵션 창 120 경로,
   look_compare 뷰포트 20 / 20. backlog 8 개 (steps 193–200) `C:/Users/ohnsk/AppData/Local/hermes/autodrive_bmk/backlog.json`.
-  **사용자 할 일**: 스토어에 0.4.1 zip (`dist/maya-workflow-kit-0.4.1.zip`) 업로드.
   **바로 다음 할 일**: step 193 = backlog #1 「RMB flick works when the menu is lifted」 (계획 먼저 `docs/steps/step_193.md`).
   남은 정리: 옛 worktree 2 개 (`.claude/worktrees/agent-a1d69614…`, `agent-aed8f880…`, 내용 반영됨, 삭제는 훅이 막음).
 

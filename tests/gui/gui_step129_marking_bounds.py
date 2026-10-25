@@ -114,16 +114,9 @@ def s_in_timeline():
     if s is not None:
         item = s.hover[0]
         print("GUI-DBG on_row stack", len(s.stack), "hover", item and item.label, "pos", s.pos, flush=True)
-        C["lifted"] = s.layout.lifted is not None
-        if C["lifted"]:
-            # step 184 / 191: the object menu's list doesn't fit under a ring this low, so Maya draws the whole menu
-            # higher with the list ending just above the window bottom — over the timeline here; the highlight follows
-            # the rows as drawn (rmb_list_184.md B3)
-            check(f"factory: the lifted list row drawn over the timeline is highlighted ({item and item.label})",
-                  item is not None and item.kind == "list")
-            C["row_sub"] = item is not None and item.sub is not None
-        else:
-            check("factory: south item (Face) highlighted over the timeline", item is not None and item.label == "Face")
+        # step 193: the ring stays at the press point (the list goes beside it), so dragging down picks Face
+        check(f"factory: south item (Face) highlighted over the timeline ({item and item.label})",
+              item is not None and item.label == "Face")
 
 
 @step
@@ -134,18 +127,9 @@ def s_release():
 
 @step
 def s_released():
-    if C.get("lifted"):
-        s = draw().ACTIVE.get("session")
-        if C.get("row_sub"):
-            check("factory: release on a submenu row keeps the menu open (click mode)",
-                  s is not None and s.mode == "CLICK")
-            tap('ESC')
-        else:
-            check("factory: release on the drawn row runs it", s is None)
-    else:
-        check("factory: release over the timeline runs the south item (face mode)",
-              bpy.context.mode == 'EDIT_MESH'
-              and tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, False, True))
+    check("factory: release over the timeline runs the south item (face mode)",
+          bpy.context.mode == 'EDIT_MESH'
+          and tuple(bpy.context.scene.tool_settings.mesh_select_mode) == (False, False, True))
 
 
 @step
