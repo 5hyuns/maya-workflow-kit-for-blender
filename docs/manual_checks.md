@@ -1310,3 +1310,9 @@ that steps 199 / 200 left without a group.
 - [ ] Graph Editor: List > Auto Load Selected Objects 켜진 동안 Load / Add Selected Objects 줄이 회색; 끄고 Load → 다른 오브젝트를 선택해도 목록 그대로; Auto Load 다시 켜면 선택을 따라감.
 - [ ] 채널 행을 하이라이트 → Curves > Pin Channel: 다른 오브젝트를 선택해도 그 채널 행과 커브가 남고 똑바른 핀 아이콘, Unpin 하면 사라짐.
 - [ ] 회전 키가 X / Y / Z 다른 시각에 있는 큐브: Curves > Change Rotation Interp > Synchronized Euler → 세 채널에 같은 시각 키, Rotate X 키를 끌면 Y / Z 키도 같이 움직임; Quaternion Slerp → 뷰포트 회전이 최단 경로, Independent Euler 로 되돌리면 원래 커브.
+
+### Step 204 — Animation layers 4
+
+- [ ] Layer Editor Anim 탭: AnimLayer1 클릭, AnimLayer2 Ctrl+클릭 → 둘 다 선택, Graph Editor 에 두 레이어 커브 (하나는 흐리게); 흐린 커브를 클릭하면 그 레이어가 편집 가능해짐.
+- [ ] 레이어 RMB → Duplicate Layer 두 번 → `AnimLayer1_copy` 위, `AnimLayer1_copy1` 그 아래; Ctrl+Z 한 번에 하나씩 사라짐.
+- [ ] Zero Weight and Key Layer 버튼 → 레이어 weight 0 + Time Slider 에 키, 되돌리기 한 번.

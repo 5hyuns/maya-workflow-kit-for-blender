@@ -2,6 +2,12 @@
 
 ## 현재 작업
 
+- Step 204 (Animation layers 4, backlog #3, Issue #111) 완료 — `docs/steps/step_204.md`, Maya 측정 `research/maya/re/anim_layers_201.md`.
+  Extract / Duplicate (No Animation) / Empty / Delete Empty / Zero·Full Weight and Key, BaseAnimation 선택 시 회색, 레이어 RMB 메뉴,
+  Ctrl / Shift 여러 레이어 선택 + Graph Editor 다른 레이어 커브 (그린 읽기 전용) + 그 커브 클릭 = 활성. mayapy 23 / 25 (1.55e-6),
+  헤드리스 1918 / 1918, GUI 관련 통과.
+  **바로 다음 할 일**: step 205 = backlog #4 「Deform 2」 (Issue #112). 그다음 206 (#113) · 207 (#114).
+
 - Step 203 (Graph Editor depth 3, backlog #2, Issue #110) 완료 — `docs/steps/step_203.md`, Maya 측정 `research/maya/re/graph_editor_201.md`.
   먼저 공용 Blender 슬롯 잠금 `tools/blender_slots.py` (a162a62 「QA: blender slots」, 사용자 결정 10-25: 레인 ≤ 4, Blender ≤ 2).
   List Load / Add (Auto Load 동안 회색) · Pin / Unpin · Show > Attributes / Objects 필터 · Upstream / Hierarchy Below · Change Rotation

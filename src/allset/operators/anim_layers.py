@@ -565,8 +565,14 @@ def _new_fcurve(ob, act, path, index):
         if sl is not None and hasattr(ad, "action_slot"):
             ad.action_slot = sl
         if hasattr(act, "fcurve_ensure_for_datablock"):
-            return act.fcurve_ensure_for_datablock(ob, path, index=index)
-        return act.fcurves.new(path, index=index)
+            fc = act.fcurve_ensure_for_datablock(ob, path, index=index)
+        else:
+            fc = act.fcurves.new(path, index=index)
+        # Blender's keying gives transform channels X / Y / Z = red / green / blue (Maya's axis colours); a curve
+        # made through the API starts AUTO_RAINBOW (step 204 GUI: a layer's Translate Y drew red)
+        if path.rsplit(".", 1)[-1] in {"location", "rotation_euler", "scale", "delta_location"}:
+            fc.color_mode = 'AUTO_RGB'
+        return fc
     finally:
         ad.action = keep
         if keep is not None and keep_slot is not None:
@@ -603,6 +609,17 @@ class ALLSET_PG_anim_layer(bpy.types.PropertyGroup):
                          description="Selected in the Layer Editor (Ctrl / Shift click, step 204)")
 
 
+def _layer_entry(scene, name=""):
+    """The layer a single-layer command acts on: ``name`` (the layer row's right-click menu, step 204) or the selected
+    one."""
+    if name:
+        return next((e for e in layers(scene) if e.name == name), None)
+    return selected(scene)
+
+
+ROW_LAYER = dict(options={'SKIP_SAVE', 'HIDDEN'}, description="Act on this layer only (layer right-click menu)")
+
+
 def _layer_objects(context):
     return [ob for ob in context.selected_objects if ob.type in {'MESH', 'CURVE', 'SURFACE', 'EMPTY', 'ARMATURE',
                                                                'LIGHT', 'CAMERA', 'LATTICE', 'META', 'FONT'}]
@@ -637,9 +654,10 @@ class ALLSET_OT_anim_layer_members(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     add: BoolProperty(default=True, options={'SKIP_SAVE'})
+    layer: StringProperty(**ROW_LAYER)
 
     def execute(self, context):
-        e = selected(context.scene)
+        e = _layer_entry(context.scene, self.layer)
         if e is None or e.name == BASE:
             self.report({'WARNING'}, "Select an animation layer")
             return {'CANCELLED'}
@@ -684,9 +702,11 @@ class ALLSET_OT_anim_layer_delete(bpy.types.Operator):
     bl_label = "Delete Animation Layer"
     bl_options = {'UNDO'}
 
+    layer: StringProperty(**ROW_LAYER)
+
     def execute(self, context):
         scene = context.scene
-        e = selected(scene)
+        e = _layer_entry(scene, self.layer)
         if e is None or e.name == BASE:
             self.report({'WARNING'}, "BaseAnimation can't be deleted")
             return {'CANCELLED'}
@@ -822,8 +842,10 @@ class ALLSET_OT_anim_layer_merge(bpy.types.Operator):
     bl_label = "Merge Layers"
     bl_options = {'UNDO'}
 
+    layer: StringProperty(**ROW_LAYER)
+
     def execute(self, context):
-        e = selected(context.scene)
+        e = _layer_entry(context.scene, self.layer)
         if e is None or e.name == BASE:
             self.report({'WARNING'}, "Select an animation layer to merge into BaseAnimation")
             return {'CANCELLED'}

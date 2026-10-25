@@ -20,11 +20,14 @@ from MayaStrings m_layerEditor.*), re-implemented on the kit's NLA layers (opera
   ``allset_anim_layer_index`` (keys and the Graph Editor's editable curves, step 194), ui/graph_layers.py draws the
   other selected layers' curves.
 
-[K] = documented / MEL-read behaviour not measured in Maya yet (research/maya/re/anim_layers_201.md will confirm).
+Measured in Maya 2022 (mayapy + GUI, research/maya/re/anim_layers_201.md / .json, test copy tests/maya204_layers_data.py):
+new layers (extract / copy) get weight 1.0 whatever L's weight (so an extract from a layer of weight != 1 changes the
+result, like Maya), go directly above L and are not selected; an Override copy without animation holds L's value at
+the current time; Delete Empty Layers deletes the layers without member attributes (keys don't count).
 """
 
 import bpy
-from bpy.props import BoolProperty
+from bpy.props import BoolProperty, FloatProperty, StringProperty
 
 from . import anim_layers as al
 
@@ -123,12 +126,12 @@ def _keep_selection(scene, name, picked):
             e.picked = True
 
 
-SETTINGS = ("weight", "mute", "solo", "lock", "override")
+SETTINGS = ("mute", "solo", "lock", "override")   # not weight: a copy / extract layer has weight 1.0 [O]
 
 
 def insert_layer(scene, name, above, like=None):
     """A new list entry ``name`` right above entry ``above`` (Maya ``-moveLayerAfter``), settings copied from
-    ``like`` (Maya ``-copy`` / ``-copyNoAnimation`` keep the layer attributes, [K])."""
+    ``like`` (``-copy`` / ``-copyNoAnimation`` keep Additive / Override, weight 1.0: anim_layers_201.md §2-3)."""
     ls = al.ensure_list(scene)
     cur = al.selected(scene)
     keep, picked = (cur.name if cur is not None else al.BASE), {e.name for e in ls if e.picked}
@@ -151,20 +154,18 @@ def _rename_action(act, layer, ob):
 
 
 def move_track(scene, ob, src, dst):
-    """``ob``'s curves on ``src`` go to a new ``dst`` track (Maya -extractAnimation): the action is re-marked, the
-    weight keys go along, the attribute list too; BaseAnimation gets a new empty action."""
+    """``ob``'s curves on ``src`` go to a new ``dst`` track (Maya -extractAnimation: the same curves, keys and
+    tangents), the attribute list too; the weight and its keys stay with ``src`` (the new layer has weight 1.0 [O]);
+    BaseAnimation gets a new empty action."""
     tr = al.tracks(ob)[src]
-    st = al._strip(tr)
-    act, state = st.action, al.strip_state(st)
+    act = al._strip(tr).action
     ad = ob.animation_data
     if ad.action is not None and ad.action == act:
         ad.action = None
     ad.nla_tracks.remove(tr)
     _rename_action(act, dst, ob)
-    ntr = al._add_track(ob, dst, act)
-    if src != al.BASE:
-        al.restore_strip_state(al._strip(ntr), state)
-    else:
+    al._add_track(ob, dst, act)
+    if src == al.BASE:
         al._add_track(ob, al.BASE, al._new_action(ob, al.BASE))
     rec = al._attr_record(ob).get(src)
     if rec is not None:
@@ -172,7 +173,11 @@ def move_track(scene, ob, src, dst):
         al._set_attr_record(ob, dst, rec)
 
 
-def copy_track(scene, ob, src, dst, with_curves=True):
+def copy_track(scene, ob, src, dst, with_curves=True, hold=None):
+    """``ob``'s ``src`` track copied to a new ``dst`` track (Maya ``animLayer -copy``: copies of the curves, same
+    members; weight 1.0 without weight keys [O]). ``with_curves`` False = ``-copyNoAnimation``; ``hold`` = a frame:
+    every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation,
+    anim_layers_201.md §3)."""
     tr = al.tracks(ob)[src]
     st = al._strip(tr)
     if with_curves:
@@ -180,11 +185,88 @@ def copy_track(scene, ob, src, dst, with_curves=True):
         _rename_action(act, dst, ob)
     else:
         act = al._new_action(ob, dst)
-    ntr = al._add_track(ob, dst, act)
-    al.restore_strip_state(al._strip(ntr), al.strip_state(st))
+    al._add_track(ob, dst, act)
+    if not with_curves and hold is not None:
+        for fc in al.layer_curves(ob, src):
+            if len(fc.keyframe_points):
+                static(ob, act, fc.data_path, fc.array_index, hold, fc.evaluate(hold))
     rec = al._attr_record(ob).get(src)
     if rec is not None:
         al._set_attr_record(ob, dst, rec)
+
+
+def static(ob, act, path, index, frame, value):
+    """Maya's static (unkeyed) layer value of a member attribute. NLA has no per-strip constant, so the kit writes it
+    as one CONSTANT key (delegated: a one-key curve where Maya has no curve; the result is the same at every frame)."""
+    fc = al._fcurve(act, path, index) or al._new_fcurve(ob, act, path, index)
+    if fc is None:
+        return None
+    fc.keyframe_points.clear()
+    kp = fc.keyframe_points.insert(frame, value, options={'FAST'})
+    kp.interpolation = 'CONSTANT'
+    fc.update()
+    return fc
+
+
+def _copy_keys(src, dst):
+    pts = src.keyframe_points
+    dst.keyframe_points.clear()
+    dst.keyframe_points.add(len(pts))
+    for a, b in zip(dst.keyframe_points, pts):
+        a.co = b.co
+        a.interpolation = b.interpolation
+        a.handle_left_type, a.handle_right_type = b.handle_left_type, b.handle_right_type
+        a.handle_left, a.handle_right = b.handle_left, b.handle_right
+        a.easing = b.easing
+    dst.extrapolation = src.extrapolation
+    dst.update()
+
+
+def copy_base(scene):
+    """Maya Duplicate Layer on BaseAnimation (anim_layers_201.md §3, case ``copy_base``): an Override layer
+    ``BaseAnimation_copy`` on top of the stack; members = the layered attributes only (those in some layer above
+    BaseAnimation), curves = copies of their base curves; a member without a base curve holds its base value (the
+    property default NLA starts from, see anim_layers.key) — so the copy overrides every layer below."""
+    from ..ui import channel_box as cb
+    ls = al.layers(scene)
+    new = insert_layer(scene, maya_name(scene, al.BASE + COPY), len(ls) - 1)
+    new.override = True
+    obs = []
+    for ob in list(scene.objects):
+        have = al.tracks(ob)
+        if al.BASE not in have:
+            continue
+        keys = list(dict.fromkeys(k for name in have if name not in (al.BASE, new.name)
+                                  for k in al.member_keys(ob, name)))
+        keys = [k for k in keys if not isinstance(_value_of(ob, k), bool)]   # visibility isn't NLA-layered
+        if not keys:
+            continue
+        act = al._new_action(ob, new.name)
+        al._add_track(ob, new.name, act)
+        for k in keys:
+            path, idx, _kind = cb.channel_path(k)
+            idx = max(idx, 0)
+            base = al.base_curve(ob, path, idx)
+            if base is not None and len(base.keyframe_points):
+                fc = al._new_fcurve(ob, act, path, idx)
+                if fc is not None:
+                    _copy_keys(base, fc)
+            else:
+                static(ob, act, path, idx, scene.frame_current, al._identity(path))
+        al._set_attr_record(ob, new.name, keys)
+        obs.append(ob)
+    _finish(scene, obs)
+    return new.name
+
+
+def _value_of(ob, key):
+    from ..ui import channel_box as cb
+    path, idx, _kind = cb.channel_path(key)
+    try:
+        v = ob.path_resolve(path)
+        return v[idx] if idx >= 0 else v
+    except (ValueError, TypeError, IndexError, KeyError):
+        return None
 
 
 def _finish(scene, obs):
@@ -218,12 +300,18 @@ def extract(scene, objects, layer):
 
 
 def duplicate(scene, layer, with_curves=True):
-    """Maya Duplicate Layer (``animLayer -copy``) / Duplicate Layer (No Animation) (``-copyNoAnimation``)."""
+    """Maya Duplicate Layer (``animLayer -copy``) / Duplicate Layer (No Animation) (``-copyNoAnimation``): ``L_copy``
+    directly above L (a second copy ``L_copy1`` also directly above L, i.e. below the first), weight 1.0 [O]."""
+    if layer == al.BASE:
+        if not with_curves:
+            return None      # [U] Duplicate Layer (No Animation) on BaseAnimation was not measured: nothing happens
+        return copy_base(scene)
     src = al.layers(scene)[_index_of(scene, layer)]
     new = insert_layer(scene, maya_name(scene, layer + COPY), _index_of(scene, layer), like=src)
     obs = al.members(scene, layer)
+    hold = scene.frame_current if src.override and not with_curves else None
     for ob in obs:
-        copy_track(scene, ob, layer, new.name, with_curves)
+        copy_track(scene, ob, layer, new.name, with_curves, hold)
     _finish(scene, obs)
     return new.name
 
@@ -253,25 +341,30 @@ def delete_empty(scene):
 
 
 def key_weight(scene, names, weight, frame=None):
-    """Maya Zero Weight and Key Layer / Set Weight to 1.0 and Key Layer: the weight of each layer (not
-    BaseAnimation) set, then keyed at ``frame`` on every member strip's influence. Returns the keyed layers."""
+    """Maya Zero Weight and Key Layer / Set Weight to 1.0 and Key Layer (``weight`` 0 / 1) and the Weight row's K
+    button (``weight`` None = the current weight), anim_layers_201.md §5: each layer's weight set, then
+    ``setKeyframe <layer>.weight`` at ``frame``. The kit's weight is each member's strip influence, so the key goes on
+    every member strip's influence curve (Maya auto tangents = Blender Auto Clamped, as for every kit key).
+    BaseAnimation's weight is not changed but still keyed [O]; the kit's BaseAnimation weight is always 1.0 (strip
+    influence 1), so it gets a key of 1.0 (delegated: no effect, like Maya's). Returns the keyed layers."""
     frame = scene.frame_current if frame is None else frame
     done = []
     for name in names:
-        if name == al.BASE:
-            continue
         i = _index_of(scene, name)
         if i is None:
             continue
         e = al.layers(scene)[i]
-        if abs(e.weight - weight) > 1e-9:
-            e.weight = weight                    # its update writes the strips (anim_layers.sync)
+        value = 1.0 if name == al.BASE else (e.weight if weight is None else weight)
+        if name != al.BASE and abs(e.weight - value) > 1e-9:
+            e.weight = value                     # its update writes the strips (anim_layers.sync)
         for ob in al.members(scene, name):
             st = al._strip(al.tracks(ob)[name])
             fc = al.weight_curve(st)
             if fc is None:
                 continue
-            fc.keyframe_points.insert(frame, weight)
+            kp = fc.keyframe_points.insert(frame, value)
+            kp.interpolation = 'BEZIER'
+            kp.handle_left_type = kp.handle_right_type = 'AUTO_CLAMPED'
             fc.update()
             ob.update_tag(refresh={'TIME'})
         done.append(name)
@@ -280,8 +373,21 @@ def key_weight(scene, names, weight, frame=None):
 
 # --- operators -------------------------------------------------------------------------------------------------
 
-def _names(scene):
+def _names(scene, layer=""):
+    """The layers a command acts on: Maya's selected layers in stack order (getSelectedAnimLayer), or one ``layer``
+    (the layer row's right-click menu on a row that isn't selected acts on that row only, anim_layers_201.md §1)."""
+    if layer:
+        return [layer] if _index_of(scene, layer) is not None else []
     return [e.name for e in al.selected_layers(scene)]
+
+
+def base_selected(scene):
+    """BaseAnimation is among the selected layers: Maya greys the Layers menu items listed in GREY_WITH_BASE
+    ($M:485-557, anim_layers_201.md §1)."""
+    return al.BASE in _names(scene)
+
+
+LAYER_PROP = dict(options={'SKIP_SAVE', 'HIDDEN'}, description="Act on this layer only (layer right-click menu)")
 
 
 class ALLSET_OT_anim_layer_extract(bpy.types.Operator):
@@ -293,6 +399,7 @@ class ALLSET_OT_anim_layer_extract(bpy.types.Operator):
 
     base: BoolProperty(options={'SKIP_SAVE'}, description="Extract the non-layered (BaseAnimation) animation")
     all_objects: BoolProperty(options={'SKIP_SAVE'}, description="Every animated object, not the selection")
+    layer: StringProperty(**LAYER_PROP)
 
     def execute(self, context):
         scene = context.scene
@@ -305,7 +412,7 @@ class ALLSET_OT_anim_layer_extract(bpy.types.Operator):
         if not obs and (self.base or self.all_objects):
             self.report({'WARNING'}, "Select objects to extract")
             return {'CANCELLED'}
-        for name in ([al.BASE] if self.base or self.all_objects else _names(scene)):
+        for name in ([al.BASE] if self.base or self.all_objects else _names(scene, self.layer)):
             extract(scene, obs, name)
         return {'FINISHED'}
 
@@ -317,14 +424,11 @@ class ALLSET_OT_anim_layer_duplicate(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     no_animation: BoolProperty(options={'SKIP_SAVE'}, description="Copy members and settings, not the keys")
+    layer: StringProperty(**LAYER_PROP)
 
     def execute(self, context):
         scene = context.scene
-        names = [n for n in _names(scene) if n != al.BASE]
-        if not names:
-            self.report({'WARNING'}, "Select an animation layer")     # [K] Maya's message for BaseAnimation
-            return {'CANCELLED'}
-        for name in names:
+        for name in _names(scene, self.layer):
             duplicate(scene, name, with_curves=not self.no_animation)
         return {'FINISHED'}
 
@@ -335,8 +439,10 @@ class ALLSET_OT_anim_layer_empty(bpy.types.Operator):
     bl_label = "Empty"
     bl_options = {'UNDO'}
 
+    layer: StringProperty(**LAYER_PROP)
+
     def execute(self, context):
-        names = [n for n in _names(context.scene) if n != al.BASE]
+        names = [n for n in _names(context.scene, self.layer) if n != al.BASE]
         if not names:
             self.report({'WARNING'}, "Select an animation layer")
             return {'CANCELLED'}
@@ -360,21 +466,24 @@ class ALLSET_OT_anim_layer_delete_empty(bpy.types.Operator):
 
 class ALLSET_OT_anim_layer_key_weight(bpy.types.Operator):
     """Set the selected layers' weight and key it at the current time (Maya Zero Weight and Key Layer / Set Weight
-    to 1.0 and Key Layer)"""
+    to 1.0 and Key Layer; the Weight row's K button keys the current weight)"""
     bl_idname = "allset.anim_layer_key_weight"
     bl_label = "Key Layer Weight"
     bl_options = {'UNDO'}
 
-    weight: bpy.props.FloatProperty(default=0.0, min=0.0, max=1.0, options={'SKIP_SAVE'})
+    weight: FloatProperty(default=0.0, min=0.0, max=1.0, options={'SKIP_SAVE'})
+    current: BoolProperty(options={'SKIP_SAVE'}, description="Key the current weight (Maya's K button)")
+    layer: StringProperty(**LAYER_PROP)
 
     @classmethod
     def description(cls, context, props):
+        if props.current:
+            return "Key the layer weight"
         return "Set Weight to 1.0 and Key Layer" if props.weight >= 1.0 else "Zero Weight and Key Layer"
 
     def execute(self, context):
-        if not key_weight(context.scene, _names(context.scene), self.weight):
-            self.report({'WARNING'}, "Select an animation layer")
-            return {'CANCELLED'}
+        # Maya: no layer selected = nothing; the kit always has a selected layer (delegated)
+        key_weight(context.scene, _names(context.scene, self.layer), None if self.current else self.weight)
         return {'FINISHED'}
 
 
