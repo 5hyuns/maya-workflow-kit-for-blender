@@ -99,8 +99,8 @@ def test_rmb_and_shift_menus_never_on_a_border():
         menu = mm.with_object_name(mm.MENUS[name], "pCube1")
         for origin in _origins():
             s = _session(menu, origin)
-            # the ring stays at the press point, or the whole menu is drawn straight above it (step 184, Maya)
-            assert s.center[0] == origin[0] and s.center[1] >= origin[1], (s.center, origin)
+            # the ring stays at the press point (step 193: only the list moves)
+            assert s.center == origin, (s.center, origin)
             _check_layout(s.layout, s.center, (name, origin))
     total = len(MENUS) * len(_origins())
     print("step136 layouts", total, "with rows on a vertical border", len(CROSSED), sorted(set(CROSSED))[:20])

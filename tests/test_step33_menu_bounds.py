@@ -37,8 +37,8 @@ def _check(menu, origin, bounds=B):
     rows = [r for it, r in rects if it.kind == "list"]
     clash = [(a, b) for a in rows for b in radial if _overlap(a, b)]
     assert not clash, (menu.name, origin, clash[:2])
-    # the ring stays at the press point, or (step 184, Maya) the whole menu is drawn straight above it
-    assert s.center[0] == origin[0] and s.center[1] >= origin[1], (s.center, origin)
+    # the ring stays at the press point (step 193: only the list moves)
+    assert s.center == origin, (s.center, origin)
     assert s.press == origin
     return s
 
@@ -76,7 +76,7 @@ def test_radial_submenu_in_place_stays_inside():
     s = engine.Session(mm.MENUS["polyConvertMM"], (150.0, 40.0), 0.0, measure, None, None, B)
     w = s.layout.radial["W"]
     p = s.params
-    cx, cy = s.center          # drawn higher when its list doesn't fit under the ring (step 184)
+    cx, cy = s.center          # = the press point (step 193)
     s.move(cx - p.radius - 5, cy, 0.3)
     assert len(s.stack) == 2 and w.sub is not None
     for it in s.layout.items:

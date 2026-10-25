@@ -3,6 +3,8 @@
 
 from importlib import import_module
 
+import math
+
 import bpy
 
 import kit
@@ -109,13 +111,15 @@ def test_rmb_list_is_maya_2022():
                                                                          "Invert Selection"]
 
 
-def test_rmb_list_under_the_ring():
-    """Maya keeps the list in one column under the ring, always (): when it would
-    run past the bottom the whole menu is drawn higher so the list ends ``list_gap`` above the window bottom; the
-    pointer stays where it was pressed (step 184, replacing step 161's column beside the ring)."""
+def test_rmb_list_under_or_beside_the_ring():
+    """Maya keeps the list in one column under the ring () and draws the whole menu
+    higher only at the *screen* bottom. Blender can't draw outside its (smaller) window, so step 193 keeps the ring
+    at the press point — the marks keep working — and moves only the list: under the ring when it fits, else beside
+    it in one column (step 161 side rule), else above / pushed inside. Never over the ring, always inside."""
     b = (0.0, 0.0, 1600.0, 900.0)
     for origin in ((800.0, 600.0), (800.0, 450.0), (300.0, 380.0), (1500.0, 420.0), (800.0, 120.0)):
         s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
+        assert s.center == origin and s.press == origin and s.pos == origin, (origin, "the ring stays at the press")
         rows = [it for it in s.layout.items if it.kind == "list"]
         assert len({round(it.rect[0], 3) for it in rows}) == 1, (origin, "one column")
         boxes = list(s.layout.radial.values())
@@ -127,59 +131,41 @@ def test_rmb_list_under_the_ring():
                    for r in absr), origin
         top = max(rows, key=lambda it: it.rect[3])
         assert top.label == mm.OBJECT_TITLE, "the column starts with the title"
+        order = [it.label for it in sorted(rows, key=lambda it: -it.rect[3])]
+        assert order == [it.label for it in rows], (origin, "Maya order top-down")
         ring_bottom = min(it.rect[1] for it in boxes)
-        assert all(it.rect[3] <= ring_bottom for it in rows), (origin, "under the ring")
-        assert s.press == origin and s.pos == origin and cx == origin[0], "the pointer is not moved"
+        under = all(it.rect[3] <= ring_bottom for it in rows)
         if origin[1] == 600.0:
-            assert cy == origin[1], "room under the ring: the menu stays at the press point"
-        if origin[1] in (450.0, 120.0):
-            assert cy > origin[1], (origin, "no room: the whole menu is drawn higher")
-            bottom = min(r[1] for r in absr)
-            assert abs(bottom - (b[1] + s.params.list_gap)) < 1e-6, (origin, bottom)
-            assert s.layout.lifted is not None
+            assert under, "room under the ring: the list hangs under it"
+        if origin[1] == 450.0:
+            beside_w = max(it.rect[2] for it in rows) <= min(it.rect[0] for it in boxes)
+            assert not under and beside_w, "no room under: beside the ring, on the W side (E = UV opens on the way)"
     # room for everything: one column centred under the ring
     s = engine.Session(mm.RMB_MESH, (800.0, 880.0), 0.0, measure, None, None, (0.0, -2000.0, 1600.0, 900.0))
     rows = [it for it in s.layout.items if it.kind == "list"]
     assert len({it.rect[0] for it in rows}) == 1 and abs(rows[0].rect[0] + rows[0].rect[2]) < 1e-6
 
 
-def test_lifted_menu_picks_like_maya():
-    """Maya, lifted menu (rmb_list_184.md B3 / B6 / B9): the highlight follows the pointer against the rows as drawn;
-    under the ring no radial direction is picked (a release below the list without crossing the S box runs
-    nothing); a quick click on the press point that lands on a row runs that row."""
+def test_rmb_marks_work_where_the_list_does_not_fit():
+    """Step 193 (dogfood 192: RMB west on pCube1 in the middle of a 1600 x 900 window picked nothing): every radial
+    mark from the press point picks its box, drawn or not, wherever the list goes."""
     b = (0.0, 0.0, 1600.0, 900.0)
-    s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
-    cx, cy = s.center
-    rows = [it for it in s.layout.items if it.kind == "list" and it.enabled and it.sub is None]
-    row = rows[len(rows) // 2]
-    x, y = cx + (row.rect[0] + row.rect[2]) / 2, cy + (row.rect[1] + row.rect[3]) / 2
-    s.move(x, y, 0.5)
-    assert s.hover[0] is row, (s.hover, row.label)
-    s.move(cx, 2.0, 0.6)                        # below the list, straight under the ring
-    assert s.hover[0] is None, s.hover
-    face = s.layout.radial["S"]
-    s.move(cx, cy + (face.rect[1] + face.rect[3]) / 2, 0.7)    # on the drawn S box: Face
-    assert s.hover[0] is face
-    # a quick click (no drag) opens the menu in click mode even when a row lies under the press point
+    for origin in ((800.0, 450.0), (800.0, 120.0), (300.0, 380.0)):
+        for key in ("N", "S", "W", "NW", "SW"):
+            action = mm.RMB_MESH.radial.get(key, (None, None))[1]
+            if action is None or isinstance(action, mm.Sub):     # greyed / submenu boxes run nothing on release
+                continue
+            ang = {"N": 90, "S": 270, "W": 180, "NW": 135, "SW": 225}[key]
+            dx, dy = 110 * math.cos(math.radians(ang)), 110 * math.sin(math.radians(ang))
+            for t in (0.06, 0.6):       # a quick mark (menu not drawn yet) and a slow drag over the drawn ring
+                s = engine.Session(mm.RMB_MESH, origin, 0.0, measure, None, None, b)
+                s.move(origin[0] + dx / 2, origin[1] + dy / 2, t / 2)
+                res = s.release(origin[0] + dx, origin[1] + dy, t)
+                want = s.layout.radial[key]
+                assert res is not None and res[0] == "RUN" and res[1] is want, (origin, key, t, res)
+    # a quick click opens the menu in click mode
     s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
     assert s.release(800.0, 120.0, 0.1) is None and s.mode == "CLICK"
-
-
-def test_lifted_menu_marks_read_from_the_press():
-    """Step 191: a mark (released before the menu is drawn) on a menu that would be drawn higher is read from the
-    press point — the user never saw the lifted menu. After the show delay the drawn boxes count again."""
-    b = (0.0, 0.0, 1600.0, 900.0)
-    for key, (dx, dy) in (("N", (0.0, 70.0)), ("S", (0.0, -70.0)), ("W", (-70.0, 0.0))):
-        s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
-        assert s.layout.lifted is not None and s.center[1] > 120.0
-        s.move(800.0 + dx / 2, 120.0 + dy / 2, 0.03)
-        res = s.release(800.0 + dx, 120.0 + dy, 0.06)
-        assert res is not None and res[0] == "RUN" and res[1] is s.layout.radial[key], (key, res)
-    # drawn (after the delay): straight up from the press is not the N box of the lifted ring
-    s = engine.Session(mm.RMB_MESH, (800.0, 120.0), 0.0, measure, None, None, b)
-    north = s.layout.radial["N"]
-    s.move(800.0, 190.0, 0.5)
-    assert s.hover[0] is not north, s.hover
 
 
 def test_window_bounds_and_cover_handlers():

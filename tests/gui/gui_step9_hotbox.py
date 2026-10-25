@@ -34,8 +34,8 @@ def obj_mode():
 
 
 def box(key):
-    """Window point of the drawn radial box ``key``: near the window bottom the whole menu is drawn higher than
-    the press point (step 184), so a drag aims at the box as drawn (step 191)."""
+    """Window point of the drawn radial box ``key`` (step 193: the ring stays at the press point; a box slid inside
+    the window near its edge is aimed at as drawn)."""
     s = C["draw"].ACTIVE["session"]
     it = s.layout.radial[key]
     return (C["x"] + int(s.center[0] - s.press[0] + (it.rect[0] + it.rect[2]) / 2),

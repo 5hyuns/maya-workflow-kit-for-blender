@@ -102,7 +102,6 @@ class Layout:
         enabled = enabled or (lambda action: action is not None and not mm.is_unavailable(action))
         self.radial = {}
         self.items = []
-        self.lifted = None      # fit_ring: the menu was drawn higher -> no radial direction under this y (step 184)
         h = p.item_h
         for key in mm.RADIALS:
             if key not in sub.radial:
@@ -193,7 +192,7 @@ class Layout:
         if rects_only:
             return None, False
         d = direction(dx, dy, self.params.dead)
-        if d and d in self.radial and (self.lifted is None or dy >= self.lifted):
+        if d and d in self.radial:
             return self.radial[d], False
         return None, False
 
@@ -386,54 +385,18 @@ def _settle_list(rows, top, floor, x0, x1, gap_unit, edges, center=None, lift=No
     _flow(rows, top, floor, w, gap_unit, hbands, best[1])
 
 
-def lift_up(layout, center, bounds):
-    """How far Maya draws a ring + list menu higher so its list ends ``list_gap`` above the bottom of ``bounds``
-    ( the list always hangs under the ring and is never cut or moved beside it;
-    near the screen bottom the whole menu goes up, the pointer stays). 0 when it fits, when there is no ring or no
-    list, or when the lifted ring would leave the top (then fit_ring's older placements apply)."""
-    rows = [it for it in layout.items if it.kind == "list"]
-    if not rows or not layout.radial:
-        return 0.0
-    cy = center[1]
-    _lx0, ly0, _lx1, _ly1 = _bbox(rows)
-    floor = bounds[1] + layout.params.list_gap
-    if cy + ly0 >= floor:
-        return 0.0
-    r = layout.params.radius
-    top = max(max(it.rect[3] for it in layout.radial.values()), r)
-    up = floor - (cy + ly0)
-    if cy + up + top > bounds[3]:
-        return 0.0
-    return up
-
-
 def fit_ring(layout, center, bounds, edges=()):
-    """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1). Returns how far the menu's centre moved up
-    (``lift_up``, step 184 — Maya draws the whole menu higher when its list would run past the bottom); otherwise the
-    centre stays the press point the gesture directions are checked from (step 33 「계획」).
+    """Keep a menu's items inside ``bounds`` (region x0, y0, x1, y1). The centre stays the press point the gesture
+    directions are checked from (step 33 「계획」): returns 0.0 (how far the centre moved).
 
-    Radial boxes slide inside; the list goes under the ring (Maya), lifted with the ring when needed, else (a ring
-    too tall to lift) beside it in one column (right, then left; step 161), else above it, else is pushed up from
-    under the ring. ``edges`` = area border bands (region pixels, step 136): no box or row is left overlapping
-    one."""
-    up = lift_up(layout, center, bounds)
-    if not up:
-        _place(layout, center, bounds, edges)
-        return 0.0
-    layout.lifted = min(it.rect[1] for it in layout.radial.values())
-    start = [(it, it.rect, it.opt_rect) for it in layout.items]
-    top = max(max(it.rect[3] for it in layout.radial.values()), layout.params.radius)
-    for _ in range(6):
-        for it, r, o in start:
-            it.rect, it.opt_rect = r, o
-        _place(layout, (center[0], center[1] + up), bounds, edges)
-        rows = [it for it in layout.items if it.kind == "list"]
-        # rows moved below an area border band (step 136) may now run past the bottom: lift by that much more
-        over = bounds[1] + layout.params.list_gap - (center[1] + up + min(it.rect[1] for it in rows))
-        if over <= 1e-6 or center[1] + up + over + top > bounds[3]:
-            break
-        up += over
-    return up
+    Radial boxes slide inside; the list goes under the ring (Maya), else beside it in one column (the side with no
+    radial submenu on the way, step 161), else above it, else is pushed up from under the ring. Maya draws the whole
+    menu higher only when the list would run past the *screen* bottom ( Rule 2-3);
+    Blender can't draw outside its window, which is smaller, so lifting at the window edge (step 184) moved the ring
+    off the pointer in the middle of the view and killed the radial marks — step 193 moves only the list.
+    ``edges`` = area border bands (region pixels, step 136): no box or row is left overlapping one."""
+    _place(layout, center, bounds, edges)
+    return 0.0
 
 
 def _place(layout, center, bounds, edges):
@@ -543,8 +506,7 @@ class Session:
         root = Layout(menu, measure, self.params, enabled)
         self.press = origin
         if bounds is not None:
-            # Maya draws the whole menu higher when its list would run off the bottom; the pointer stays (step 184)
-            origin = (origin[0], origin[1] + fit_ring(root, origin, bounds, self.edges))
+            fit_ring(root, origin, bounds, self.edges)
         self.measure = measure
         self.enabled = enabled
         self.t0 = t0
@@ -594,7 +556,7 @@ class Session:
         if self.bounds is not None and layout.items and not layout.radial:
             at = self._inside_bounds(layout, at)
         elif self.bounds is not None and layout.items:
-            at = (at[0], at[1] + fit_ring(layout, at, self.bounds, self.edges))   # in-place radial: centre = pointer
+            fit_ring(layout, at, self.bounds, self.edges)   # in-place radial: centre = pointer
         self.stack.append((layout, at))
         self.openers.append(item if cascade else None)
         self.hover = (None, False)
@@ -659,14 +621,6 @@ class Session:
                 return
             self._pop_to(level)   # another row of a menu under the cascade: the cascade closes
         dx, dy = self._rel(x, y)
-        if self.mode == "PRESS" and len(self.stack) == 1 and self.layout.lifted is not None \
-                and not self.visible(t):
-            # A mark made before the menu is drawn (step 191): the user never saw the menu drawn higher (step 184),
-            # so the stroke is read from the press point like any Maya mark — not against the unseen lifted boxes.
-            px, py = self.press
-            d = direction(x - px, y - py, self.params.dead)
-            item, opt = (self.layout.radial.get(d), False) if d else (None, False)
-            dx, dy = x - px, y - py
         self.hover = (item, opt)
         if item is None or item.sub is None or not item.enabled:
             return
@@ -687,8 +641,8 @@ class Session:
         self.move(x, y, t)
         item, opt = self.hover
         if len(self.stack) == 1 and self.max_dist < self.params.dead and t - self.t0 < self.params.click_time \
-                and (item is None or self.layout.lifted is not None):
-            # quick click: the menu stays up — also when a menu drawn higher (step 184) put a row under the pointer
+                and item is None:
+            # quick click: the menu stays up
             self.mode = "CLICK"
             return None
         if item is not None and item.sub is None:

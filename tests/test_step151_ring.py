@@ -129,7 +129,7 @@ def test_fit_ring_keeps_centre_and_bounds():
     measure = lambda t: 7.0 * len(t)
     for origin in ((20.0, 20.0), (380.0, 280.0), (200.0, 150.0)):
         s = engine.Session(mm.SHIFT_DEFAULT, origin, 0.0, measure, None, None, bounds)
-        assert s.center == origin           # list taller than the window: no lift (step 184), boxes slide
+        assert s.center == origin           # list taller than the window: the ring stays (step 193), boxes slide
         for it in s.layout.radial.values():
             r = it.rect
             assert r[0] + origin[0] >= -1e-6 and r[2] + origin[0] <= 400 + 1e-6, (origin, it, r)

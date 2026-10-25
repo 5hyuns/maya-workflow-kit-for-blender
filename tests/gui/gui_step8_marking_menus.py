@@ -35,15 +35,9 @@ def s_setup():
 
 
 def _drawn(key="N", dx=0, dy=DRAG):
-    """The radial box ``key`` as drawn: a menu whose list would run off the bottom is drawn higher (step 184), so
-    the drag aims at the box on screen (step 191); otherwise (dx, dy) from the press."""
-    from importlib import import_module
-    s = import_module(sys.modules["sim"].MODULE + ".marking.draw").ACTIVE.get("session")
-    if s is None or s.layout.lifted is None:
-        return C["x"] + dx, C["y"] + dy
-    it = s.layout.radial[key]
-    return (C["x"] + int(s.center[0] - s.press[0] + (it.rect[0] + it.rect[2]) / 2),
-            C["y"] + int(s.center[1] - s.press[1] + (it.rect[1] + it.rect[3]) / 2))
+    """Where the drag to the radial box ``key`` ends: (dx, dy) from the press (step 193: the ring stays at the press
+    point wherever the list goes)."""
+    return C["x"] + dx, C["y"] + dy
 
 
 @step
@@ -97,7 +91,7 @@ def s_ctrl_esc():
 
 @step
 def s_back_wait():
-    pass        # the component menu is drawn (maybe higher, step 184) before the drag aims at its NE box
+    pass        # the component menu is drawn before the drag aims at its NE box
 
 
 @step

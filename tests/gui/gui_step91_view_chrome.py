@@ -88,9 +88,9 @@ def s_hud():
         # step 161: with no room under the ring the list is one column left of it (RMB on a mesh: E = UV), its right
         # edge ~190 px left of the press point, ~215 px wide (it goes right when the left has no room); press ~300 px right of
         # the HUD so that column runs over the HUD panel
-        # step 184 / 191: the list always hangs under the ring (lifted when it would run off the bottom, ending just
-        # above it), so press above the HUD's middle and the list column runs down over the HUD
-        target = (h.x + h.width / 2 - region.x, region.height * 0.42)
+        # step 193 (as step 161): the ring stays at the press point; with no room under it the list goes beside it,
+        # so press ~300 px right of the HUD and the column left of the ring runs over the HUD panel
+        target = (h.x + h.width - region.x + 300, region.height * 0.42)
         p = region_2d_to_location_3d(region, region.data, target, (0.0, 0.0, 0.0))
         p.z = 0.0
         C["place"] = p
