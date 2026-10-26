@@ -223,10 +223,16 @@ def test_switch_to_blender_in_the_template_file():
     layouts = [w for w in bpy.data.workspaces if sw.BLENDER_LAYOUT_KEY in w]
     assert len(layouts) == 1 and layouts[0].name == "Layout", [w.name for w in bpy.data.workspaces]
     assert not _strips(layouts[0].screens[0]) and not _headerless_properties(layouts[0].screens[0])
+    factory = {w.get(sw.BLENDER_WORKSPACE_KEY): w for w in bpy.data.workspaces
+               if sw.BLENDER_WORKSPACE_KEY in w}
+    assert set(factory) == set(sw.BLENDER_WORKSPACES), list(factory)
+    assert all(not sw.is_maya_workspace(w) for w in factory.values())
+    assert all(not _strips(w.screens[0]) for w in factory.values())
+    assert sw.template_of(bpy.data.workspaces["Sculpting"]) == "Sculpting", "Maya names must not reuse Blender layouts"
     assert bpy.context.preferences.app_template == ""
     sw.set_mode(True)
     sw.set_mode(False)
-    assert len(bpy.data.workspaces) == n_ws + 1, "Blender's Layout is appended once and reused"
+    assert len(bpy.data.workspaces) == n_ws + len(sw.BLENDER_WORKSPACES), "Blender workspaces are appended once"
     bpy.ops.wm.read_homefile()
     assert bpy.context.preferences.app_template == ""
     assert not _strips(bpy.context.window_manager.windows[0].screen)
