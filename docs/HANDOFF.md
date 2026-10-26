@@ -7,6 +7,15 @@
 
 ## 현재 작업
 
+- **체크포인트 2026-10-27 (/sc:save, 225 후)** — 지금 단계: **225 완료 · 커밋 3dea6e9** (Fixes #135, push 안 함). 이번 세션 커밋:
+  223 3fa2033 (#133 리그 FBX 가져오기 + IK/FK) · 224 b601732 (#134 #126 숫자 가중치 · 두 번째 스킨 질문 · Tool Settings 필드) ·
+  225 3dea6e9 (#135 Game Exporter 클립 · Motion Trail Editor). 진행 중인 레인·테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ ·
+  tmp/ 추적 안 함). 규칙: 속도 우선 — 단계마다 그 기능의 -k 테스트만, 전체·GUI 스모크·5.x·dogfood 는 228 Release prep.
+  Release prep 에서 볼 것: `test_step169_deform` 2개 실패 (223 커밋에서도 실패, 219 메뉴 변경 추정). Serena 메모리
+  `session_2026-10-27_steps223-225`, `learnings_anim_chain_2026_b`.
+  **바로 다음 할 일**: step 226 = Controls from NURBS curves (bone custom shapes) (Issue #136) — 결정 1 (컨트롤 = 본 Custom
+  Shape), 기준 research/maya/re/maya2026_controls.md.
+
 - Step 225 (clips + motion trail, Issue #135) 완료 — `docs/steps/step_225.md`: File > Game Exporter = 킷 창 (Maya 노드 기본값
   17개, 클립 = 재생 범위, 한 파일 = 클립마다 take / 클립별 파일 = 접두사 + 클립 이름, take 시간 = Maya 클립 프레임), Visualize >
   Motion Trail Editor = Blender 모션 패스 (Maya 설정 22개, 9가지 왕복). fbx_rig 가 take 여러 개 처리. -k 관련 128 / 128, GUI step225 3 / 3.

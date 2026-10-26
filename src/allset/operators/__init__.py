@@ -134,6 +134,8 @@ classes += deformer_order.classes
 from . import game_exporter, motion_trail  # noqa: E402  step 225
 classes += game_exporter.classes
 classes += motion_trail.classes
+from . import constrain_multi, control_shapes, wire_color  # noqa: E402  step 226 (#136)
+classes += control_shapes.classes + wire_color.classes + constrain_multi.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -143,6 +145,9 @@ def register():
     weight_paint.register_props()
     game_exporter.register_props()
     motion_trail.register_props()
+    control_shapes.register_props()
+    wire_color.register_props()
+    constrain_multi.register_props()
     default_light.register()
     snap_align.register_props()
     material.register_props()
@@ -212,6 +217,9 @@ def unregister():
     weight_paint.unregister_props()
     game_exporter.unregister_props()
     motion_trail.unregister_props()
+    constrain_multi.unregister_props()
+    wire_color.unregister_props()
+    control_shapes.unregister_props()
     character_sets.unregister_props()
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
