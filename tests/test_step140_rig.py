@@ -126,7 +126,9 @@ def test_titles_buttons_fields_defaults_are_maya():
     # IK Handle Tool (option_boxes_140.md:208-211): Rotate-Plane solver, Solver enable on, Weight 1
     assert _fields("ik_handle_tool") == [("solver", "Current solver:", "Rotate-Plane Solver"),
                                          ("solver_enable", "", True), ("weight", "Weight:", 1.0)]
-    assert _fields("ik_spline_tool") == [("root_on_curve", "", True)]               # :214
+    assert _fields("ik_spline_tool") == [("root_on_curve", "", True), ("parent_curve", "", True),   # :214
+                                         ("snap_curve", "", False), ("create_curve", "", True),
+                                         ("spans", "Number of spans:", "1")]       # step 218 (Maya 2026)
     # Bind Skin (option_boxes_140.md:28-46), button "Apply and Close"
     w = _w("bind_skin_maya")
     assert (w.title, w.action) == ("Bind Skin Options", "Apply and Close")

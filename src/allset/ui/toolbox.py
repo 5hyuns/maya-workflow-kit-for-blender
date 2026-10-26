@@ -33,6 +33,9 @@ MAYA_TOOLS = ("builtin.select_box", "builtin.select_lasso", "builtin.select_circ
 
 _saved = {}
 _drawing = [False]
+# True while Maya's Skin Paint Mode (Select / Paint Select, step 218) sets a select tool inside weight paint: those
+# tools then stay in paint instead of leaving it like the Tool Box's Select / Move / ... (operators/weight_paint.py)
+KEEP_PAINT = [False]
 
 
 def _enabled(context):
@@ -183,7 +186,7 @@ def _show_tool_settings_later(window):
 def _make_activate_by_id(original):
     def activate_by_id(context, space_type, idname, *, as_fallback=False):
         if (space_type == 'VIEW_3D' and context.mode == 'PAINT_WEIGHT'
-                and idname in MAYA_TOOLS and not as_fallback):
+                and idname in MAYA_TOOLS and not as_fallback and not KEEP_PAINT[0]):
             from ..operators.skin import leave_weight_paint
             leave_weight_paint(context)
         done = original(context, space_type, idname, as_fallback=as_fallback)

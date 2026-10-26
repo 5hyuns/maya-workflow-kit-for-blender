@@ -67,7 +67,10 @@ def _run_ik_handle(context, v):
 
 
 def _run_ik_spline(context, v):
-    return bpy.ops.allset.ik_spline_handle('INVOKE_DEFAULT', root_on_curve=v["root_on_curve"])
+    return bpy.ops.allset.ik_spline_handle(
+        'INVOKE_DEFAULT', root_on_curve=v.get("root_on_curve", True), parent_curve=v.get("parent_curve", True),
+        snap_curve=v.get("snap_curve", False), create_curve=v.get("create_curve", True),
+        spans=int(v.get("spans", "1")))
 
 
 def _run_bind(context, v):
@@ -203,13 +206,17 @@ WINDOWS = [
     # Skeleton > Create IK Handle: Tool Settings "IK Handle Tool" (option_boxes_140.md:208-211)
     Window("ik_handle_tool", "IK Handle Tool", "Create IK Handle", None, _ik_fields(), _run_ik_handle,
            paths=("Skeleton/Create IK Handle",), missing=_IK_MISSING),
-    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (option_boxes_140.md:213-218)
+    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (option_boxes_140.md:213-218; Maya
+    # 2026 factory values ikSplineHandleCtx, , step 218)
     Window("ik_spline_tool", "IK Spline Handle Tool", "Create IK Spline Handle", None, [
-        F("root_on_curve", "", "bool", True, text="Root on curve")], _run_ik_spline,
+        F("root_on_curve", "", "bool", True, text="Root on curve"),
+        F("parent_curve", "", "bool", True, text="Auto parent curve"),
+        F("snap_curve", "", "bool", False, text="Snap curve to root"),
+        F("create_curve", "", "bool", True, text="Auto create curve"),
+        F("spans", "Number of spans:", "enum", "1", items=("1", "2", "3", "4"))], _run_ik_spline,
         paths=("Skeleton/Create IK Spline Handle",),
-        missing=("Auto create root axis", "Auto parent curve", "Snap curve to root",
-                 "Auto create curve (always on)", "Auto simplify curve (always on)", "Number of spans (always 1)",
-                 "Root twist mode", "Twist type")),
+        missing=("Auto create root axis", "Auto simplify curve (the kit always fits the curve: on)",
+                 "Root twist mode", "Twist type (Linear; Blender's Spline IK has no twist distribution)")),
     # Skin > Bind Skin (option_boxes_140.md:28-46); replaces option_windows "bind_skin"
     Window("bind_skin_maya", "Bind Skin Options", "Apply and Close", ("allset.bind_skin", {}), [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),

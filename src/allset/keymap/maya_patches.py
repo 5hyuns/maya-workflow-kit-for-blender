@@ -1155,7 +1155,9 @@ def patch_key_batch_3(kd):
     # Alt+R: IC clear scale -> Maya reflection (symmetry) toggle
     kd.remove("Object Mode", "object.scale_clear", type="R", alt=True)
     kd.remove("Pose", "pose.scale_clear", type="R", alt=True)
-    _add(kd, "3D View", "allset.symmetry", make_event("R", alt=True), {"mode": "TOGGLE"}, shadows=VIEW3_SHADOWS)
+    # (weight paint has its own Alt+R = Maya artisanToggleReflection, step 218)
+    _add(kd, "3D View", "allset.symmetry", make_event("R", alt=True), {"mode": "TOGGLE"},
+         shadows=(*VIEW3_SHADOWS, "Weight Paint"))
     # Ctrl+I: IC invert in the 3D modes (Maya Ctrl+I = next intermediate object; Ctrl+Shift+I still inverts)
     for km in MODE_KEYMAPS:
         _remove_where(kd, km, lambda it: it[0].endswith("select_all"), type="I", ctrl=True)
@@ -1199,7 +1201,14 @@ def patch_key_batch_3(kd):
     _add(kd, "Weight Paint", "wm.call_menu", make_event("U"), {"name": "ALLSET_MT_paint_operation"})
     _add(kd, "Weight Paint", "wm.radial_control", make_event("N"), weight)
     _add(kd, "Weight Paint", "wm.radial_control", make_event("B"), size, shadows=("3D View",))
-    _add(kd, "Weight Paint", "paint.weight_set", make_event("F", alt=True))
+    # step 218 (): Alt+F = Maya Flood, Ctrl+Alt+C / V = copy /
+    # paste vertex weights, Ctrl+. / Ctrl+, = next / previous Skin Paint Mode, Alt+R = reflection (X mirror)
+    _add(kd, "Weight Paint", "allset.flood_weights", make_event("F", alt=True))
+    _add(kd, "Weight Paint", "allset.paint_copy_vertex_weights", make_event("C", ctrl=True, alt=True))
+    _add(kd, "Weight Paint", "allset.paint_paste_vertex_weights", make_event("V", ctrl=True, alt=True))
+    _add(kd, "Weight Paint", "allset.skin_paint_mode", make_event("PERIOD", ctrl=True), {"step": 1})
+    _add(kd, "Weight Paint", "allset.skin_paint_mode", make_event("COMMA", ctrl=True), {"step": -1})
+    _add(kd, "Weight Paint", "allset.paint_reflection", make_event("R", alt=True), shadows=("3D View",))
     _add(kd, "Mesh", "allset.copy_vertex_weights", make_event("C", ctrl=True, alt=True))
     _add(kd, "Mesh", "allset.paste_vertex_weights", make_event("V", ctrl=True, alt=True))
 
