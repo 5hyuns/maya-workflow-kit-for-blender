@@ -22,7 +22,7 @@ ADDED = []
 
 # Operators that return PASS_THROUGH when they don't apply, so they may sit in
 # front of another item with the same event in the same keymap.
-PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
+PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.weight_numbers_hover", "allset.cb_scroll","allset.time_range_drag", "allset.manip_ctrl", "allset.manip_duplicate", "allset.manip_press",
                       "allset.select_priority", "allset.select_through", "allset.toolbox_guard", "allset.time_scrub",
                       "allset.time_slider_menu", "allset.outliner_set_click", "allset.outliner_set_menu",
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
@@ -362,6 +362,8 @@ def patch_cb_slider(kd):
     # Channel Box rows: drag over names / fields selects a range (the dock is a Properties editor, step 116;
     # ui/channel_box.ALLSET_OT_cb_hover,  「계획」 #6)
     _add(kd, "Property Editor", "allset.cb_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
+    # Paint Skin Weights numeric labels around the brush need the pointer (ui/weight_numbers.py, step 224)
+    _add(kd, "Weight Paint", "allset.weight_numbers_hover", make_event("MOUSEMOVE", "ANY", any=True), first=True)
     # The Channel Box part of the dock scrolls by itself, the Layer Editor below stays (Maya's fixed split, step 135
     # #55); passes through outside an overflowing Channel Box
     for wheel in ("WHEELUPMOUSE", "WHEELDOWNMOUSE"):
