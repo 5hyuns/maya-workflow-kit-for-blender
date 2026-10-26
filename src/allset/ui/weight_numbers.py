@@ -22,9 +22,8 @@ import numpy as np
 LIMIT = 2000
 FONT = 0
 _handles = []
-_cursor = []
 _cache = {"key": None, "co": None, "weights": {}, "dirty": False}
-STATS = {"drawn": 0, "in_view": 0, "capped": False, "ms": 0.0, "mouse": None}
+STATS = {"drawn": 0, "in_view": 0, "capped": False, "ms": 0.0, "mouse": None, "history": [], "refreshed": False}
 
 
 def settings(context):
@@ -120,7 +119,6 @@ def _brush_radius(context):
 
 def draw():
     context = bpy.context
-    STATS.update(drawn=0, in_view=0, capped=False)
     if context.mode != 'PAINT_WEIGHT':
         return
     ob = context.active_object
@@ -128,13 +126,19 @@ def draw():
         return
     s = settings(context)
     if not s.show_numbers:
+        STATS.update(drawn=0, in_view=0, capped=False)
         return
     region, rv3d = context.region, context.region_data
     if region is None or rv3d is None:
         return
+    from . import toolbox
+    if toolbox.is_toolbox(context.space_data):
+        return
     t0 = time.perf_counter()
+    refreshed = _cache["key"] is None
     if _cache["dirty"] and not _stroke_running(context):
         _cache.update(key=None, dirty=False)
+        refreshed = True
     co = _positions(context, ob)
     x, y, inside = project(co, rv3d.perspective_matrix, region.width, region.height)
     mouse = STATS["mouse"]
@@ -160,7 +164,9 @@ def draw():
             blf.color(FONT, r, g, b, 1.0)
         blf.position(FONT, x[i] - hw, y[i] - hh, 0)
         blf.draw(FONT, format_weight(w, places))
-    STATS.update(drawn=len(idx), in_view=n, capped=n > LIMIT, ms=(time.perf_counter() - t0) * 1000.0)
+    ms = (time.perf_counter() - t0) * 1000.0
+    STATS.update(drawn=len(idx), in_view=n, capped=n > LIMIT, ms=ms, refreshed=refreshed)
+    STATS["history"] = (STATS["history"] + [(ms, refreshed)])[-30:]
 
 
 def help_note():
@@ -170,14 +176,17 @@ def help_note():
     return ""
 
 
-def _track(*args):
-    """Draw cursor of the 3D View: remembers the pointer (window pixels) for the brush-local labels."""
-    nums = [a for a in args if isinstance(a, (int, float))]
-    if len(nums) >= 2:
-        if STATS["mouse"] != (nums[-2], nums[-1]):
-            STATS["mouse"] = (nums[-2], nums[-1])
-            if STATS["capped"] and bpy.context.region is not None:
-                bpy.context.region.tag_redraw()
+class ALLSET_OT_weight_numbers_hover(bpy.types.Operator):
+    """Remembers the pointer for the brush-local labels (first MOUSEMOVE item of "Weight Paint", passes through)"""
+    bl_idname = "allset.weight_numbers_hover"
+    bl_label = "Weight Numbers Hover"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        STATS["mouse"] = (event.mouse_x, event.mouse_y)
+        if STATS["capped"] and context.area is not None:
+            context.area.tag_redraw()
+        return {'PASS_THROUGH'}
 
 
 @bpy.app.handlers.persistent
@@ -188,13 +197,8 @@ def _on_depsgraph(scene, depsgraph):
             return
 
 
-def ensure_cursor(context):
-    """The pointer tracker is added when Show Numbers is first turned on (not in the restricted register context)."""
-    if not _cursor and context.window_manager is not None:
-        _cursor.append(context.window_manager.draw_cursor_add(_track, (), 'VIEW_3D', 'WINDOW'))
-
-
 def register():
+    bpy.utils.register_class(ALLSET_OT_weight_numbers_hover)
     _handles.append(bpy.types.SpaceView3D.draw_handler_add(draw, (), 'WINDOW', 'POST_PIXEL'))
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
 
@@ -202,11 +206,7 @@ def register():
 def unregister():
     if _on_depsgraph in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
-    while _cursor:
-        wm = bpy.context.window_manager
-        handle = _cursor.pop()
-        if wm is not None:
-            wm.draw_cursor_remove(handle)
     while _handles:
         bpy.types.SpaceView3D.draw_handler_remove(_handles.pop(), 'WINDOW')
     _cache.update(key=None, co=None, weights={}, dirty=False)
+    bpy.utils.unregister_class(ALLSET_OT_weight_numbers_hover)

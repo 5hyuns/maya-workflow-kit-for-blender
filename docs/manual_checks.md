@@ -1430,3 +1430,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 
 - [ ] Generated Rigify rig, pick a control (Pose): the Channel Box shows Rotate X / Y / Z; type 270 in Rotate Y — it
   stays 270; MMB-drag Rotate X turns the control; S keys it and the Graph Editor shows Rotate W / X / Y / Z.
+
+### Step 224 — Paint Skin Weights numeric / skin clusters
+- [ ] Visualization > Numeric > Show Numbers: labels stay put during a stroke and update when it ends; with many vertices in view the labels follow the brush as the mouse moves (no lag).
+- [ ] Second Bind Skin on a skinned mesh: the question pops up at the mouse, Yes is greyed, No / moving away closes it.

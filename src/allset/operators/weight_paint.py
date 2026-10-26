@@ -105,8 +105,6 @@ def _normalize_mode_set(self, value):
 
 
 def _numbers_update(self, context):
-    from ..ui import weight_numbers
-    weight_numbers.ensure_cursor(context)
     for area in context.screen.areas if context.screen else ():
         if area.type == 'VIEW_3D':
             area.tag_redraw()

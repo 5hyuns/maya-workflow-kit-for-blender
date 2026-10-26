@@ -7,6 +7,12 @@
 
 ## 현재 작업
 
+- Step 224 (Paint Skin Weights numeric / skin clusters / fields, Issue #134 + #126) 완료 — `docs/steps/step_224.md`: Show
+  Numbers (노랑 2자리, 화면 2,000개 넘으면 브러시 주변 + Help Line, 19,842 정점 10–13 ms), 두 번째 Bind Skin = Maya 질문 (Yes
+  비활성 + 안내), Skin Clusters 목록 읽기 전용 + 영향 필터, 내보내기 경고, Tool Settings 필드 24개 = Maya 기본값. -k 관련 317 / 319
+  (step169 2개는 223 커밋에서도 실패 — Release prep), GUI step224 7 / 7.
+  **바로 다음 할 일**: step 225 = Animating a received rig: clips and motion trail (Issue #135).
+
 - Step 223 (Rig FBX import + IK/FK, Issue #133) 완료 — `docs/steps/step_223.md`: Maya FBX 리그를 파일에서 다시 짜서 가져옴
   (Maya auto 탄젠트 = Auto Clamped + Continuous Acceleration, 오일러 키 1:1, 스켈레톤 변환 없음, 메시 분리, 범위 = 파일) → 조인트
   1.2e-5 cm, 222 왕복 0.27 cm [U] → 1.3e-5 cm (원인 = Blender 리더의 선형 샘플링). Ik Blend = 핸들 속성 → IK Influence 드라이버,
