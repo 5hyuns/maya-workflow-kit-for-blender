@@ -98,6 +98,19 @@ def s_new_chain():
           len(others) == 1 and len(others[0].data.bones) == 2
           and sum(b.parent is None for b in others[0].data.bones) == 1)
     C["new"] = others[0].name if others else None
+    if others:
+        new = others[0]
+        root = next(b for b in new.data.bones if b.parent is None)
+        sel = [pb.name for pb in new.pose.bones if mod(".ui.channel_box").bone_selected(pb)]
+        # Maya 2026 (): Enter selects the new chain's root, Select Tool
+        check(f"Enter selected the new chain's root ({sel}, root {root.name})", sel == [root.name]
+              and new.data.bones.active == root)
+    check("Enter ended the Joint Tool", not running())
+    area, region = main_view()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        tool = bpy.context.workspace.tools.from_space_view3d_mode(bpy.context.mode, create=False)
+    check(f"Enter switched to the Select tool ({tool and tool.idname})",
+          tool is not None and tool.idname == 'builtin.select_box')
 
 
 @step
@@ -148,6 +161,8 @@ def s_branched():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         tool = bpy.context.workspace.tools.from_space_view3d_mode(bpy.context.mode, create=False)
     check(f"W switched to the Move tool ({tool and tool.idname})", tool is not None and tool.idname == 'builtin.move')
+    sel = [pb.name for pb in rig.pose.bones if mod(".ui.channel_box").bone_selected(pb)]
+    check(f"W selected the joint the branch grew from ({sel})", sel == [C["b"]])
 
 
 run()

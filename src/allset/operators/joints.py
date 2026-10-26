@@ -105,8 +105,9 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
     return eb.name
 
 
-def finish(context, ob, names):
-    """Pose mode, new joints rotate XYZ (rigging.md:134), the last joint is the only selection."""
+def finish(context, ob, names, top=None):
+    """Pose mode, new joints rotate XYZ (rigging.md:134). Maya 2026 selects the top of the branch just made: the
+    new chain's root, or ``top`` = the existing joint the chain branched from (maya2026_joints.md)."""
     if ob.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
     cb = _cb()
@@ -114,11 +115,11 @@ def finish(context, ob, names):
         if pb.name in names:
             pb.rotation_mode = 'XYZ'
         cb.set_bone_selected(pb, False)
-    if names:
-        last = ob.pose.bones.get(names[-1])
-        if last is not None:
-            cb.set_bone_selected(last, True)
-            ob.data.bones.active = last.bone
+    head = top or (names[0] if names else None)
+    pb = ob.pose.bones.get(head) if head else None
+    if pb is not None:
+        cb.set_bone_selected(pb, True)
+        ob.data.bones.active = pb.bone
 
 
 def view_under(window, x, y):
@@ -167,7 +168,42 @@ def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
     return n
 
 
-BRANCH_RADIUS_PX = 10      # a Joint Tool click this close to an existing joint branches from it
+# A Joint Tool click inside a joint's drawn sphere branches from it (Maya 2026: the hit area is the drawn sphere,
+# not a fixed radius - maya2026_joints.md). Blender draws an octahedral bone's joint as a sphere of radius
+# JOINT_SPHERE x the bone length (a connected head: the incoming bone's tail sphere) [I: Blender's bone point shape];
+# the floor is Maya's click box (select_priority.RADIUS_PX), also the whole hit area of Stick bones.
+JOINT_SPHERE = 0.05
+BRANCH_MIN_PX = 5.0
+
+
+def joint_sphere_radius(arm, bone):
+    """World radius of the sphere Blender draws at ``bone``'s head (0 when it draws none: Stick / B-Bone / ...)."""
+    if arm.data.display_type != 'OCTAHEDRAL':
+        return 0.0
+    src = bone.parent if bone.parent is not None and bone.use_connect else bone
+    return JOINT_SPHERE * src.length * max(arm.matrix_world.to_scale())
+
+
+def pick_branch_joint(region, rv3d, armatures, coord, floor):
+    """(armature, bone name) whose head sphere holds ``coord`` (screen px), nearest first; None."""
+    from bpy_extras import view3d_utils
+    right = rv3d.view_rotation @ Vector((1.0, 0.0, 0.0))
+    best, best_d = None, None
+    for arm in armatures:
+        for bone in arm.data.bones:
+            if bone.hide or (bone.collections and not any(c.is_visible_effectively for c in bone.collections)):
+                continue
+            head = arm.matrix_world @ bone.head_local
+            p = view3d_utils.location_3d_to_region_2d(region, rv3d, head)
+            if p is None:
+                continue
+            r = joint_sphere_radius(arm, bone)
+            edge = view3d_utils.location_3d_to_region_2d(region, rv3d, head + right * r) if r > 0 else None
+            radius = max(floor, (edge - p).length if edge is not None else 0.0)
+            d = (Vector(coord) - p).length
+            if d <= radius and (best_d is None or d < best_d):
+                best, best_d = (arm, bone.name), d
+    return best
 
 
 class ALLSET_OT_joint_tool(bpy.types.Operator):
@@ -213,7 +249,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         # Maya 2022-2027 never branch from a joint selected before the tool starts (checked: joint1 selected, two
         # clicks -> an unparented chain, PR125_MAYA_CHECK.md 8b); clicking an existing joint with the tool does
         # (``_branch_from``).
-        self._names, self._ob, self._parent = [], None, None
+        self._names, self._ob, self._parent, self._top = [], None, None, None
         self._swallow = False
         context.workspace.status_text_set(STATUS)
         context.window_manager.modal_handler_add(self)
@@ -248,13 +284,12 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
 
     def _branch_from(self, context, area, region, coord):
         """The first click on an existing joint: the new joints go under it (Maya Joint Tool). True when hit."""
-        from .skin import pick_joint
         arms = [o for o in context.view_layer.objects if o.type == 'ARMATURE' and o.visible_get()]
         scale = context.preferences.system.ui_scale or 1.0
-        hit = pick_joint(region, region.data, arms, coord, BRANCH_RADIUS_PX * scale) if arms else None
-        if hit is None or hit[1][1] != 'HEAD':
+        hit = pick_branch_joint(region, region.data, arms, coord, BRANCH_MIN_PX * scale) if arms else None
+        if hit is None:
             return False
-        arm, (name, _end) = hit
+        arm, name = hit
         with context.temp_override(window=context.window, area=area, region=region):
             if context.mode != 'OBJECT' and context.active_object is not None:
                 bpy.ops.object.mode_set(mode='OBJECT')
@@ -263,23 +298,24 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
             arm.select_set(True)
             context.view_layer.objects.active = arm
             bpy.ops.object.mode_set(mode='EDIT')
-        self._ob, self._parent = arm, name
+        self._ob, self._parent, self._top = arm, name, name
         area.tag_redraw()
         return True
 
     def modal(self, context, event):
-        if (event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS'
-                and not (event.alt or event.ctrl or event.shift or event.oskey)):
+        # Maya 2026 ends the tool on Enter / Q / W / E / R with the branch top selected; Enter and Q leave the Select
+        # Tool, W / E / R their tool (maya2026_joints.md).
+        enter = event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS'
+        if enter or (event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS'
+                     and not (event.alt or event.ctrl or event.shift or event.oskey)):
             result = self._done(context)
             tool = {'Q': 'builtin.select_box', 'W': 'builtin.move',
-                    'E': 'builtin.rotate', 'R': 'builtin.scale'}[event.type]
-            hit = view_under(context.window, event.mouse_x, event.mouse_y)
-            if hit is not None:
-                with context.temp_override(area=hit[0], region=hit[1]):
+                    'E': 'builtin.rotate', 'R': 'builtin.scale'}.get(event.type, 'builtin.select_box')
+            hit = view_under(context.window, event.mouse_x, event.mouse_y) or self._any_view(context)
+            if hit is not None and 'FINISHED' in result:
+                with context.temp_override(window=context.window, area=hit[0], region=hit[1]):
                     bpy.ops.wm.tool_set_by_id(name=tool)
-            return {'FINISHED'} if self._ob is not None else {'CANCELLED'}
-        if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
-            return self._done(context)
+            return result
         if event.type == 'ESC' and event.value == 'PRESS':
             if not self._names:
                 self._end(context)
@@ -295,12 +331,18 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
                 return {'RUNNING_MODAL'}
         return {'PASS_THROUGH'}
 
+    @staticmethod
+    def _any_view(context):
+        from ..ui import toolbox
+        return next(((a, r) for a in context.window.screen.areas
+                     if a.type == 'VIEW_3D' and not toolbox.is_toolbox(a.spaces.active)
+                     for r in a.regions if r.type == 'WINDOW'), None)
+
     def _done(self, context):
         self._end(context)
         if self._ob is None or not self._names:
             return {'CANCELLED'}
-        hit = next(((a, r) for a in context.window.screen.areas if a.type == 'VIEW_3D'
-                    for r in a.regions if r.type == 'WINDOW'), None)
+        hit = self._any_view(context)
         override = dict(window=context.window, area=hit[0], region=hit[1]) if hit else dict(window=context.window)
         with context.temp_override(**override):
             return self._finish(context)
@@ -311,7 +353,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
             orient_new(ob, names, self.secondary_axis, self.secondary_world, self.secondary_sign)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex))
-        finish(context, ob, names)
+        finish(context, ob, names, getattr(self, "_top", None))
         msg = f"Created {len(names)} joint(s) in {ob.name}"
         if self.create_ik and len(names) >= 2:
             from .skin import create_ik
