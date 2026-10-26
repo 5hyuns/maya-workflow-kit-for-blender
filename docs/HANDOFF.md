@@ -1,5 +1,10 @@
 # HANDOFF
 
+- 2026-10-26: merged `Bug-Fixes-RealtimeTransforms-JointMode-PaintWeights` into `master`.
+  Conflict decisions, integration corrections and validation are recorded in
+  [the merge protocol](merge-2026-10-26-realtime-joints-weights.md).
+  Branch-specific checks now run with `python tests/integration/run.py --blender PATH`.
+
 ## 현재 작업
 
 - Step 216 (maya.cmds look-alike 3, Issue #122) 완료 — `docs/steps/step_216.md`, mayapy `research/maya/re/cmds_201.md` 「step 216」.

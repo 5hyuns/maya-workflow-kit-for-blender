@@ -564,6 +564,60 @@ def influences(mesh):
     return [vg for vg in mesh.vertex_groups if vg.name in bones]
 
 
+def leave_weight_paint(context):
+    """Release paint and its helper skeleton; retain the painted mesh as the selection."""
+    if context.mode != 'PAINT_WEIGHT':
+        return False
+    mesh = context.active_object
+    mod = armature_modifier(mesh) if mesh is not None else None
+    arm = mod.object if mod is not None else None
+    bpy.ops.object.mode_set(mode='OBJECT')
+    if arm is not None and arm.name in context.view_layer.objects:
+        if arm.mode == 'POSE':
+            context.view_layer.objects.active = arm
+            try:
+                bpy.ops.object.mode_set(mode='OBJECT')
+            finally:
+                context.view_layer.objects.active = mesh
+        arm.select_set(False)
+    if mesh is not None:
+        mesh.select_set(True)
+        context.view_layer.objects.active = mesh
+    return True
+
+
+def set_view_tool(context, name):
+    """Tool changes from the dock/menu also target the real modeling viewport."""
+    from ..ui.status_line import main_view3d
+    area, region = main_view3d(context.screen)
+    if area is not None and region is not None:
+        with context.temp_override(window=context.window, area=area, region=region):
+            return bpy.ops.wm.tool_set_by_id(name=name, space_type='VIEW_3D')
+    return bpy.ops.wm.tool_set_by_id(name=name, space_type='VIEW_3D')
+
+
+class ALLSET_OT_weight_paint_exit(bpy.types.Operator):
+    """Leave Paint Skin Weights and activate Maya's Select, Move, Rotate, or Scale tool"""
+    bl_idname = "allset.weight_paint_exit"
+    bl_label = "Leave Paint Skin Weights"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    tool: EnumProperty(items=(
+        ('builtin.select_box', 'Select', 'Q: leave painting and select objects'),
+        ('builtin.move', 'Move', 'W: leave painting and move objects'),
+        ('builtin.rotate', 'Rotate', 'E: leave painting and rotate objects'),
+        ('builtin.scale', 'Scale', 'R: leave painting and scale objects'),
+    ), default='builtin.select_box', options={'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'PAINT_WEIGHT'
+
+    def execute(self, context):
+        leave_weight_paint(context)
+        return set_view_tool(context, self.tool)
+
+
 # Maya Paint Skin Weights Tool settings with a Blender meaning (research/maya/re/option_boxes_140.md); the window
 # (operators/option_windows_rig.py) passes them, a plain menu click leaves the brush as the user set it in the dock.
 PAINT_OPERATIONS = (("REPLACE", "Replace", "Blender brush blend Mix"), ("ADD", "Add", "Blender brush blend Add"),
@@ -593,19 +647,22 @@ def apply_paint_settings(context, mesh, arm, v):
     refused = []
     if v["operation"] == "SMOOTH":
         try:
-            bpy.ops.wm.tool_set_by_id(name="builtin_brush.Blur")
+            from .weight_paint import activate_brush
+            activate_brush(context, 'BLUR')
         except (RuntimeError, TypeError):
             refused.append("operation")
     else:
         try:
-            bpy.ops.wm.tool_set_by_id(name="builtin.brush")
+            from .weight_paint import activate_brush
+            activate_brush(context, 'DRAW')
         except (RuntimeError, TypeError):
             pass
     brush = ts.weight_paint.brush
     if brush is not None:
         if v["operation"] in PAINT_BLEND and not _brush_set(brush, "blend", PAINT_BLEND[v["operation"]]):
             refused.append("operation")
-        if not _brush_set(brush, "curve_preset", PROFILE_CURVE[v["profile"]]):
+        curve_prop = 'curve_distance_falloff_preset' if hasattr(brush, 'curve_distance_falloff_preset') else 'curve_preset'
+        if not _brush_set(brush, curve_prop, PROFILE_CURVE[v["profile"]]):
             refused.append("profile")
     # Maya Value / Opacity / Radius(U) are tool settings: Blender's unified paint settings hold them for every brush
     ups.use_unified_weight = ups.use_unified_strength = ups.use_unified_size = True
@@ -663,7 +720,8 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
                 if mesh is not None and armature_modifier(mesh):
                     self._settings(context, mesh)
                 return {'FINISHED'}
-            bpy.ops.paint.weight_paint_toggle()          # Maya: leaving the paint tool
+            leave_weight_paint(context)
+            set_view_tool(context, 'builtin.select_box')
             return {'FINISHED'}
         mesh = skinned_mesh(context)
         if mesh is None:
@@ -678,6 +736,12 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         mesh.select_set(True)
         context.view_layer.objects.active = mesh
         bpy.ops.paint.weight_paint_toggle()              # the skeleton goes to pose mode with it
+        current = context.workspace.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False)
+        # Older sessions may have left a selection/transform tool remembered
+        # inside paint mode. Re-entering the paint tool must restore a brush.
+        from ..ui.toolbox import MAYA_TOOLS
+        if current is None or not current.idname or current.idname in MAYA_TOOLS:
+            set_view_tool(context, 'builtin.brush')
         if mesh.vertex_groups.active is None and influences(mesh):
             mesh.vertex_groups.active_index = influences(mesh)[0].index
         # Maya Bind Skin makes the skinCluster with Normalize Weights = Interactive (normalizeWeights 1): painting a
@@ -690,8 +754,7 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
 
 
 class ALLSET_OT_flood_weights(bpy.types.Operator):
-    """Maya Paint Skin Weights Flood: the Value on every vertex for the selected joint; with weight normalization on
-    (Maya Interactive) the other joints make room so every vertex keeps a total weight of 1"""
+    """Flood the current operation and opacity into the active influence, respecting masks and locked weights"""
     bl_idname = "allset.flood_weights"
     bl_label = "Flood"
     bl_options = {'REGISTER', 'UNDO'}
@@ -702,12 +765,12 @@ class ALLSET_OT_flood_weights(bpy.types.Operator):
         return context.mode == 'PAINT_WEIGHT' and ob is not None and ob.vertex_groups.active is not None
 
     def execute(self, context):
-        res = bpy.ops.paint.weight_set()                 # Blender's fill ignores Auto Normalize (measured, step 129)
-        if res != {'FINISHED'}:
-            return res
-        if context.tool_settings.use_auto_normalize:
-            bpy.ops.object.vertex_group_normalize_all(group_select_mode='BONE_DEFORM', lock_active=True)
-        return {'FINISHED'}
+        from .weight_paint import flood
+        try:
+            return flood(context)
+        except (ValueError, RuntimeError) as ex:
+            self.report({'WARNING'}, str(ex))
+            return {'CANCELLED'}
 
 
 # --- Copy / Mirror Skin Weights, Copy / Paste Vertex Weights -----------------------------------------
@@ -1058,5 +1121,5 @@ class ALLSET_OT_reset_skin_weights(bpy.types.Operator):
         return {'FINISHED'}
 
 classes = (ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
-           ALLSET_OT_paint_skin_weights, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
+           ALLSET_OT_paint_skin_weights, ALLSET_OT_weight_paint_exit, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
            ALLSET_OT_copy_vertex_weights, ALLSET_OT_paste_vertex_weights)
