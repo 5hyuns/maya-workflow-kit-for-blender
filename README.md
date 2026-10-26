@@ -25,6 +25,24 @@ Blender's own keys.
 ▶ **[Watch the half-minute tour (MP4)](docs/distribution/marketing/clips/00_trailer.mp4)** · [Website](https://5hyuns.github.io/maya-workflow-kit-for-blender/) <!-- live once the repository is public and Pages is enabled -->
 · [Install](#installation) · [Quick start](#quick-start-for-maya-users) · [FAQ](#faq)
 
+📥 **Free download:** [Blender Extensions](https://extensions.blender.org/add-ons/allset/), or in Blender: *Edit → Preferences → Get Extensions* → search "Maya Workflow Kit"
+
+---
+
+## 👋 Hi, a quick note from me
+
+I spent years in Maya. When I finally tried to move to Blender, the software wasn't really the problem. My hands
+were. I'd hold Space and nothing would pop up, I'd look for the Channel Box that wasn't there, and every few minutes
+I'd catch myself reaching for a shelf. I made this hoping that people like me, who are used to Maya, can settle into
+Blender a little more easily.
+
+To be honest, it's still rough in places. Some Maya tools aren't there yet, and some don't feel quite right. I use it
+myself and I'll keep improving it, but I can only fix what I know about. So if something breaks, feels off, or you
+miss a Maya feature you use every day, please [leave an issue](https://github.com/5hyuns/maya-workflow-kit-for-blender/issues/new).
+Even a one-liner helps a lot.
+
+Thanks for giving it a try 🙂
+
 ---
 
 ## Contents
