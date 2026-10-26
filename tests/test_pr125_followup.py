@@ -43,3 +43,13 @@ def test_idle_poll_draws_nothing():
 def test_wheel_is_three_lines():
     """Maya: one wheel notch = QScrollBar single step 15 px x wheelScrollLines 3 = 45 px, about 3 rows."""
     assert cb.WHEEL_LINES == 3
+
+
+def test_no_split_faces_by_edges():
+    """'Split Faces by Edges' is Blender's name, in no Maya Edit Mesh menu (2022-2027); Maya's tool is Detach."""
+    data = import_module(kit.MODULE + ".ui.menu_data")
+    mm = import_module(kit.MODULE + ".ui.menu_map")
+    labels = [it[0] for it in data.MENUS["mainEditMeshMenu"][3]]
+    assert "Split Faces by Edges" not in labels and "Detach" in labels
+    assert "Edit Mesh/Split Faces by Edges" not in mm.MAP
+    assert mm.MAP["Edit Mesh/Detach"] == "allset.detach"
