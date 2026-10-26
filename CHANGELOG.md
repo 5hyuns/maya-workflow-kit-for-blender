@@ -5,6 +5,30 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.5.0] — unreleased
+
+### Added
+- **Joints feel like Maya objects** (PR #125 by @cnzim): clicking a joint selects that joint (Shift toggles,
+  Ctrl removes, Ctrl+Shift adds), clicking another object or empty space releases the skeleton, Alt+D clears
+  everything (Maya SelectNone), F8 switches a skeleton between joint editing and posing, Q/W/E/R finish Joint Tool
+  placement and switch tools, and selecting a skeleton enters joint picking (Pose) directly.
+- **Live Channel Box** while dragging the manipulator, and Channel Box wheel / trackpad scrolling that never changes
+  values or moves the Layer Editor (PR #125 by @cnzim).
+- **Paint Skin Weights workspace** in Tool Settings: influence list with sort / lock menus, brush, mask, flood that
+  respects locks and the current operation, weight actions and display; Q/W/E/R leave painting with the mesh kept
+  selected (PR #125 by @cnzim).
+- Tool Box **Search** button under the layout / Outliner buttons, as in Maya 2022.1+ (PR #125 by @cnzim).
+- Optional armature mode picker for the viewport header (add-on preference, off in the Maya layout).
+
+### Changed
+- Channel Box wheel scrolls 3 lines per notch (Maya: 15 px × 3 wheel lines).
+- Select Priority off now only steps in for joint picking; other clicks are Blender's own pick.
+
+### Fixed
+- Component highlight refreshes on selection changes Blender doesn't report to the depsgraph (PR #125 by @cnzim).
+- Timers and watchers added by PR #125 no longer keep window / area references across ticks (closing a window could
+  crash Blender, #36 class).
+
 ## [0.4.1] — 2026-10-25
 
 The release after audits 12 and 13 (steps 173–190). Blender 4.5 LTS through 5.2.x. Quad Draw leftovers (#89) stay in
