@@ -661,7 +661,7 @@ def apply_paint_settings(context, mesh, arm, v):
     if brush is not None:
         if v["operation"] in PAINT_BLEND and not _brush_set(brush, "blend", PAINT_BLEND[v["operation"]]):
             refused.append("operation")
-        curve_prop = 'curve_distance_falloff_preset' if hasattr(brush, 'curve_distance_falloff_preset') else 'curve_preset'
+        curve_prop = compat.brush_falloff_props(brush)[0]
         if not _brush_set(brush, curve_prop, PROFILE_CURVE[v["profile"]]):
             refused.append("profile")
     # Maya Value / Opacity / Radius(U) are tool settings: Blender's unified paint settings hold them for every brush

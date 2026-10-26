@@ -93,10 +93,13 @@ assert state._ob is None and state._parent is None and bpy.context.mode == 'POSE
 state._end = lambda context: joints.ALLSET_OT_joint_tool._end(state, context)
 assert joints.ALLSET_OT_joint_tool._done(state, proxy) == {'CANCELLED'}
 assert selected() == {a} and bpy.context.mode == 'POSE'
-# Q exits the placement modal instead of letting future clicks keep adding joints.
+# Q exits the placement modal instead of letting future clicks keep adding joints
+# (nothing placed yet: the modal ends CANCELLED, like Enter).
 state._done = lambda context: {'FINISHED'}
 event = SimpleNamespace(type='Q', value='PRESS', alt=False, ctrl=False,
                         shift=False, oskey=False, mouse_x=-1, mouse_y=-1)
+assert joints.ALLSET_OT_joint_tool.modal(state, bpy.context, event) == {'CANCELLED'}
+state._ob = rig
 assert joints.ALLSET_OT_joint_tool.modal(state, bpy.context, event) == {'FINISHED'}
 
 # An object row can release Edit mode without a manual Tab/F8.

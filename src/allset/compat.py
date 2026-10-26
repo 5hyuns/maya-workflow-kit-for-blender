@@ -329,6 +329,16 @@ def set_unprojected_radius(ups, radius):
         ups.unprojected_size = radius * 2.0
 
 
+# --- Brush falloff curve ----------------------------------------------------------------------
+# 4.5: ``Brush.curve_preset`` / ``Brush.curve``; 5.0+: ``curve_distance_falloff_preset`` / ``curve_distance_falloff``
+# (PR #125 used the 5.x names only, AttributeError on 4.5).
+def brush_falloff_props(brush):
+    """(preset property, curve property) names of the brush's distance falloff."""
+    if "curve_distance_falloff_preset" in brush.bl_rna.properties:
+        return "curve_distance_falloff_preset", "curve_distance_falloff"
+    return "curve_preset", "curve"
+
+
 # --- Menus closing when the mouse leaves ----------------------------------------------------
 # 4.5 closes a menu the mouse moved away from; 5.0 keeps menus and popups open until a click, with the preference
 # ``PreferencesView.menu_close_leave`` (default off) for the old behaviour (5.0 release notes, user interface,
