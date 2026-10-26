@@ -2,6 +2,17 @@
 
 ## 현재 작업
 
+- Step 216 (maya.cmds look-alike 3, Issue #122) 완료 — `docs/steps/step_216.md`, mayapy `research/maya/re/cmds_201.md` 「step 216」.
+  cmds 23 함수 추가 (`command_line/cmds_rig.py`: makeIdentity, 제약 5 종, joint, connectAttr 계열; `cmds_misc.py`: nodeType / objectType,
+  attributeQuery, currentUnit, sets, shadingNode, polyExtrudeFacet, polyEvaluate, exactWorldBoundingBox, listHistory, camera) → mayapy
+  37 / 37 cases 일치 (DEVIATIONS 이유 기록). Script Editor History 13 항목 = 킷 옵션 (Echo All Commands, Line numbers, Show Stack Trace,
+  Suppress ..., History Output; 편집기 메뉴 32 → 45 / 59). freeze: r/s 만 굳힐 때 자식 피벗 오프셋을 부모 새 좌표로 옮김. 헤드리스 전체
+  2111 / 2111, GUI 관련 + 스모크 61 / 61. 주의: `test_step216_history` 에서 python311 크래시 1 / 5 회 (간헐).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#122 닫힘; 에이전트 worktree 정리 여부.
+  **바로 다음 할 일**: 사용자 결정 (2026-10-26, `docs/user_decisions.md` 「겉모습은 Maya, 엔진은 Blender」, 커밋 안 된 사용자 편집):
+  maya.cmds 흉내는 216 에서 멈춤 — 217 = FX · Render 를 Blender 엔진에 연결, 218 = Maya 사용자의 첫 1 시간 점검. (backlog #123 / #124 의
+  원래 217 · 218 제목과 다르니 시작 때 결정 문서 기준으로 확인.)
+
 - Step 215 (Maya Preferences window and Hotkey Editor, Issue #121) 완료 — `docs/steps/step_215.md`, Maya 캡처
   `research/maya/re/prefs_215.md` (GUI Maya, `research/maya/screens/prefs215/`). Windows > Settings/Preferences > Preferences = 킷
   창 (Maya 38 범주 목록, 페이지 제목 · 섹션, 킷 설정 37 + 장면 값 12 편집, Blender 설정 12 개는 읽기 전용 + Recommended setup + Blender
