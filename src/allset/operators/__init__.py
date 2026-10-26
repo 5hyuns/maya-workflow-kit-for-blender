@@ -128,6 +128,10 @@ from . import controllers  # noqa: E402  step 217: Control > Tag As Controller /
 
 classes += controllers.classes
 
+from . import deformer_order  # noqa: E402  step 218 L17 / L15b: reorderDeformers, blend shape weight keys
+
+classes += deformer_order.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

@@ -7,6 +7,15 @@
 
 ## 현재 작업
 
+- Step 218 (Anim chain fixes 2, Issue #129) 완료 — `docs/steps/step_218.md`. Paint Skin Weights: Flood = Maya 2026 수식
+  (Replace / Add / Scale / Smooth, 잠금·비율 재분배·선택 정점만, Maya 대비 ≤ 1.9e-6), Alt+F = 킷 Flood, Influences RMB = Maya 7 항목,
+  Ctrl+Alt+C/V · Ctrl+./, · Alt+R, Mode Paint / Select / Paint Select. IK Spline = 기존 커브 사용 (Root on curve 7e-5, Snap curve;
+  Root on curve 끔은 Blender 한계로 1.35 차이), 커브 CV Cluster = 그 CV 인덱스 Hook (끝 조인트 2.5e-5). Deformer 순서 = Maya
+  `reorderDeformers A B` (B 를 A 바로 앞으로, mayapy 측정) + All Inputs ▲▼; Set Blend Shape Target Weight Keys = 셰이프 키 값 키
+  (Maya 2026 은 13 가지 선택에서 아무 키도 안 만듦 — 측정 기록). 헤드리스 전체 2177 / 2177 (step107 기대값 갱신 후), GUI 관련 +
+  스모크 84 / 84.
+  **바로 다음 할 일**: step 219 = Menus follow Maya 2026 (Issue #130).
+
 - Step 217 (Anim chain fixes 1: Bake, joints, pick walk, Issue #128) 완료 — `docs/steps/step_217.md`, mayapy
   `research/scripts/maya_bake217/`. Bake Simulation = `allset.bake_simulation` (Maya 2026 규칙: 범위 안 비샘플 키 삭제,
   Keep unbaked keys 끔 = 범위 밖 키 삭제, 컨스트레인트는 지우지 않고 mute, Disable implicit control = IK influence 0);

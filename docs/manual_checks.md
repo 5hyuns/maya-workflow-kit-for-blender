@@ -1413,3 +1413,15 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
   collections" off = plain hierarchy. Check `shin_tweak.L` Up lands somewhere a Maya user expects (decision 6, weakest
   point).
 - [ ] Control > Tag As Controller / Parent Controller on three bones: Up from a child goes to the parent controller.
+
+## Step 218 — paint keys, Spline IK on a curve, curve clusters, deformer order (Issue #129)
+
+- [ ] Paint Skin Weights: select a few vertices in Edit mode, enter the tool — the vertex mask is on and Alt+F floods
+  only them; Ctrl+. / Ctrl+, cycle Paint / Select / Paint Select and painting feels right in each.
+- [ ] Influences list: the menu button next to the search field shows Lock Selected … Remove Affected Vertices first;
+  Select Vertices shows the joint's vertices.
+- [ ] Skeleton > Create IK Spline Handle ❒ with Auto create curve off: click root joint, end joint, then a curve —
+  the chain lies on the curve (Root on curve); Snap curve to root moves the curve to the root.
+- [ ] Select two CVs of that curve, Deform > Cluster: moving the cluster handle bends the spine chain.
+- [ ] RMB > Inputs > All Inputs… on a skinned mesh with a cluster: ▲ / ▼ swap the cluster and the skin, the mesh
+  updates, Ctrl+Z restores (check the popup stays usable after a click).
