@@ -134,3 +134,18 @@ def test_priority_off_leaves_non_joint_clicks_to_blender():
     finally:
         js.pick, js.select, js.select_object_at, sp.hits = real
         prefs.select_priority = was
+
+
+def test_paint_skin_weights_sections_and_channel_box():
+    """Paint Skin Weights Tool Settings = Maya 2024+ frames in order (PR125_MAYA_LATER.md 6), Blender extras after;
+    the Channel Box stays the Channel Box in weight paint mode (no Maya version swaps it for paint UI)."""
+    import inspect
+    pw = import_module(kit.MODULE + ".ui.paint_weights")
+    names = [n for n, _fn in pw.SECTIONS]
+    assert names[:7] == ["Skin Clusters", "Influences", "Brush", "Visualization", "Stroke", "Stylus Pressure",
+                         "Display"], names
+    assert tuple(names[:7]) == pw.MAYA_SECTIONS
+    src = inspect.getsource(cb.ALLSET_PT_channel_box.body)
+    assert "paint_weights.draw" not in src
+    ts = import_module(kit.MODULE + ".ui.tool_settings")
+    assert "paint_weights.draw" in inspect.getsource(ts.draw_dock)

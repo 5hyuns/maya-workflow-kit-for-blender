@@ -2080,8 +2080,7 @@ def in_channel_part(context, event):
 def over_pane(context, event):
     """The mouse is over an overflowing Channel Box part of a Maya dock."""
     area, region = context.area, context.region
-    if (area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW'
-            or context.mode == 'PAINT_WEIGHT'):
+    if area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW':
         return False
     from . import maya_dock
     if maya_dock.shown_kind(context) != 'CHANNEL_BOX':
@@ -2360,10 +2359,8 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         for idx in rows:
             chrome.menu_bar(layout, [MENU_BAR[i] for i in idx])
         units = 1.0 + len(rows)
-        from . import paint_weights
-        if paint_weights.active(context):
-            paint_weights.draw(layout, context)   # Maya Tool Settings of the paint tool (step 58)
-            return None
+        # Paint Skin Weights: the Channel Box stays the Channel Box (no Maya version puts paint UI here, PR #125
+        # check 9c); the paint settings are the Tool Settings dock (ui/tool_settings.draw_dock)
         if placing_joints(context):
             layout.separator(factor=2)
             chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)

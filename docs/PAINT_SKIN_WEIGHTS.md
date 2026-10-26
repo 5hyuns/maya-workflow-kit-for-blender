@@ -1,39 +1,32 @@
-# Paint Skin Weights workspace · 0.5.2
+# Paint Skin Weights · 0.5.0
 
-Restart Blender after updating the extension. Enable Maya mode, select a skinned mesh, and choose **Skin > Paint Skin Weights**. The Channel Box becomes the painting workspace. The menu's option box opens the same workspace in a wider Tool Settings dock. Double-clicking the paint tool also uses the new Tool Settings interface.
+Enable Maya mode, select a skinned mesh, and choose **Skin > Paint Skin Weights**. Like Maya, the plain menu item
+starts the tool and leaves the Channel Box as the Channel Box; the tool's settings are in **Tool Settings**: the menu's
+option box or a double-click on the paint tool opens them (Maya `ArtPaintSkinWeightsToolOptions` = `toolPropertyWindow`).
+Q/W/E/R leave painting with the mesh still selected (Maya: the Select / Move / Rotate / Scale tool).
 
-The layout follows Maya's influence-first workflow. Search, hierarchy order, influence selection, and lock controls remain above the three pages. A checkmark in the header finishes painting; Q/W/E/R retain the Maya tool-exit behavior.
+The sections follow Maya 2024+ Tool Settings (PR125_MAYA_LATER.md 6), then two Blender extras:
 
-## Paint
+| Section | Contents |
+|---|---|
+| Skin Clusters | The skin (Armature modifier = skinCluster), influence count, Normalize Weights (Interactive), Lock-relative |
+| Influences | Search, sort (hierarchy / name / group order), lock menu, influence list, lock others / unlock all |
+| Brush | Brush asset, Maya operations Replace / Add / Scale / Smooth (+ Blender Subtract / Average / Smear), Value, Opacity, Radius, value presets, Flood, Sample, Pick joint, gradients, profile (falloff), blend, front faces, size units, multi-paint, existing weights only |
+| Visualization | Weight opacity, contours, zero weights, colour ramp (Maya's numeric weight display has no Blender counterpart) |
+| Stroke | Stroke method / spacing, stabilizer, reflection X / Y / Z, mirrored influence names, radial copies, topology matching |
+| Stylus Pressure | Radius / Opacity / Jitter pressure with curves |
+| Display | Brush outline, brush on surface, cursor display, wireframe, overlays, joints in front |
+| Skin Commands *(Blender extra)* | Set Value, Normalize, Smooth, Levels, Mirror, Prune, Limit, Quantize, Invert, Transfer, Automatic / Envelope weights (Maya has these in the Skin menu) |
+| Selection Masking *(Blender extra)* | Vertex / face masks and their selection commands |
 
-- Brush Assets: browse Blender's installed weight-paint brush assets and use the native brush asset context menu.
-- Replace, Add, Subtract, Scale, Smooth, Average, and Smear; Blender's full native blend selector is in Advanced.
-- Value, Opacity, Size, tablet-pressure switches, unified settings, and one-click weight values.
-- Flood applies the chosen operation and opacity, preserves locked influences, and respects visible vertices, vertex/face masks, and Existing Weights Only. Smear requires a directional stroke, so Flood is disabled for it.
-- Sample Weight, Pick Joint/Group, and Linear/Radial Gradient tools stay inside weight painting.
-- Expandable native falloff curves and presets, spherical/projected falloff, front-face restriction, and front-face angle falloff.
-- Native stroke methods, airbrush rate, spacing/pressure, dashes, jitter/unit/pressure, Paint Curve creation/drawing, input samples, and stroke stabilization.
-- Custom tablet pressure curves for size, opacity, and jitter.
-- Auto normalization is remembered per skin. Lock-relative, multi-paint, existing-weight restriction, and size units are available.
-- Reflection & symmetry, directly below Brush: X/Y/Z reflection, mirrored influence names, topology matching, and radial symmetry.
-- Selection masking: vertex/face switches; select all/none/invert; box/lasso/paint selection; grow/shrink/linked; hide/reveal; and select unweighted vertices.
+Flood applies the chosen operation and opacity to the active influence and keeps locked influences.
 
-## Weights
-
-Set Weight, Normalize/Normalize All, Mirror, Invert, Prune/Clean, Quantize, Levels, Smooth, Limit Influences, Transfer, Automatic Weights, and Bone Envelope Weights. Each operation opens its own settings dialog, including the relevant native scope and numerical options. Existing locked influences are protected.
-
-Transfer takes an explicit source mesh, supports native vertex mapping, layer matching, transforms, distance limits, and mix controls, and restores the previous object selection afterward.
-
-The influence menu supports hierarchy/alphabetical/group order, non-joint groups, locked-only filtering, lock/unlock all, lock/unlock selected joints, lock/unlock other influences, and invert locks.
-
-## Display
-
-Weight opacity, contours, wireframe, overlays, zero-weight display, and X-ray joints. Native brush cursor color, surface following, and falloff overlay controls. Blender's custom weight-color ramp is available here; it is shared across Blender and only changes when you edit it.
+Not done yet (GitHub issues): Maya's influence context menu (Select / Add / Remove Affected Verts), Maya 2024's several
+skinClusters per mesh, Maya 2027 Skin Tools (ngSkinTools-based layers).
 
 ## Validation
 
-Verified in Blender 5.2.3 LTS against the installed native paint panels and weight operators. Advanced brush controls reuse Blender's own conditional panel drawing, avoiding a separate imitation of its settings. No theme is installed or automatically changed.
-
-`tests/integration/blender_weight_workspace.py` exercises brush families, gradients/sampling, Flood arithmetic and masks, lock preservation, normalization, transfer, automatic/envelope weighting, filtering, and re-entry. `tests/integration/blender_weight_workspace_ui.py` renders every page and the expanded native controls in an isolated Tool Settings dock. The existing joint and paint-tool exit integration tests also pass.
-
-Reference: [Blender's weight-paint tools](https://docs.blender.org/manual/en/4.3/sculpt_paint/weight_paint/tools.html). The running Blender installation supplies the version-specific settings and operator definitions.
+`tests/integration/blender_weight_workspace.py` (brush families, gradients, Flood maths and masks, locks,
+normalization, transfer, automatic / envelope weights, filtering, re-entry) and
+`tests/integration/blender_weight_workspace_ui.py` (every section collapsed and expanded in a Tool Settings dock) pass on
+Blender 4.5.4 and 5.2.2; `tests/gui/gui_step58_skin.py` paints through the Tool Settings influence list.

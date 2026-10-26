@@ -1,4 +1,5 @@
-"""Render every Paint Skin Weights page in an isolated Blender GUI, then quit."""
+"""Render the Paint Skin Weights Tool Settings (Maya 2024+ sections, every section expanded) in an isolated Blender
+GUI, then quit."""
 import sys
 import traceback
 from pathlib import Path
@@ -10,6 +11,7 @@ OUTPUT.mkdir(parents=True, exist_ok=True)
 import bpy
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 from allset.operators import weight_paint as w, skin
+from allset import compat
 from allset.ui import paint_weights as ui, dock_tabs, tool_dock
 dock_tabs.register()
 for c in (*w.classes, skin.ALLSET_OT_paint_skin_weights, skin.ALLSET_OT_weight_paint_exit,
@@ -55,14 +57,15 @@ class ALLSET_PT_weight_preview(bpy.types.Panel):
     def draw(self,context):
         try:
             ui.draw(self.layout,context)
-            draw_calls.append(w.state(context).page)
+            draw_calls.append(tuple(name for name, _fn in ui.SECTIONS))
         except Exception:
             draw_errors.append(traceback.format_exc())
             raise
 bpy.utils.register_class(ALLSET_PT_weight_preview)
 prop=next(a for a in bpy.context.screen.areas if a.type=='PROPERTIES')
 phase=0
-pages=['PAINT','WEIGHTS','DISPLAY','ADVANCED']
+pages=['COLLAPSED','EXPANDED']
+FLAGS=[n for n in w.ALLSET_PG_weight_workspace.__annotations__ if n.startswith('show_')]
 
 def tick():
     global phase
@@ -77,25 +80,23 @@ def tick():
             page=pages[phase//2]
             if phase%2==0:
                 s=w.state(bpy.context)
-                s.page='PAINT' if page=='ADVANCED' else page
-                if page=='ADVANCED':
-                    for name in ('show_stroke','show_pressure','show_falloff','show_advanced','show_mask'):
+                if page=='EXPANDED':
+                    for name in FLAGS:
                         setattr(s,name,True)
                     brush=bpy.context.tool_settings.weight_paint.brush
                     brush.stroke_method='CURVE'
                     brush.use_pressure_size=brush.use_pressure_strength=True
-                    brush.curve_distance_falloff_preset='CUSTOM'
-                if page=='DISPLAY':
-                    s.show_color=s.show_cursor=True
+                    setattr(brush,compat.brush_falloff_props(brush)[0],'CUSTOM')   # 4.5 curve_preset, 5.x curve_distance_falloff_preset
                 prop.tag_redraw()
             else:
                 bpy.ops.screen.screenshot(filepath=str(OUTPUT / ('allset-weight-'+page.lower()+'.png')))
                 with bpy.context.temp_override(area=prop,region=next(r for r in prop.regions if r.type=='WINDOW')):
                     bpy.ops.screen.screenshot_area(filepath=str(OUTPUT / ('allset-weight-panel-'+page.lower()+'.png')))
         else:
-            assert set(draw_calls)=={'PAINT','WEIGHTS','DISPLAY'}, draw_calls
+            assert draw_calls and draw_calls[-1][:7]==ui.MAYA_SECTIONS, draw_calls[-1:]
+            assert ui.MAYA_SECTIONS==('Skin Clusters','Influences','Brush','Visualization','Stroke','Stylus Pressure','Display')
             assert not draw_errors, '\n'.join(draw_errors)
-            (OUTPUT / 'allset-weight-ui-result.txt').write_text('PASS: Paint, Weights, Display, expanded native stroke/pressure/falloff/cursor panels')
+            (OUTPUT / 'allset-weight-ui-result.txt').write_text('PASS: Maya 2024+ sections (Skin Clusters, Influences, Brush, Visualization, Stroke, Stylus Pressure, Display) + extras, collapsed and expanded')
             bpy.ops.wm.quit_blender();return None
         phase+=1
         return .65

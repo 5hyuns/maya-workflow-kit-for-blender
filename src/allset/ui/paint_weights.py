@@ -158,6 +158,21 @@ class ALLSET_UL_influences(bpy.types.UIList):
         pass  # Dedicated, always-visible search above the list.
 
 
+def _skin_clusters(layout, context):
+    """Maya 2024+ "Skin Clusters": the skin being painted and its normalization."""
+    s, mesh = model.state(context), context.active_object
+    col = _card(layout, 'Skin Clusters', setting='show_skin_clusters', context=context)
+    if col is None:
+        return
+    mod = skin.armature_modifier(mesh)
+    row = col.split(factor=0.8)
+    row.label(text=mod.name if mod else mesh.name, icon='MOD_ARMATURE' if mod else 'MESH_DATA')
+    row.label(text=str(len(skin.influences(mesh))), icon='BONE_DATA')
+    row = col.row(align=True)
+    row.prop(s, 'auto_normalize', text='Normalize Weights', toggle=True)
+    row.prop(context.tool_settings, 'use_lock_relative', text='Lock-relative', toggle=True)
+
+
 def _influences(layout, context):
     s, mesh = model.state(context), context.active_object
     col = _card(layout, 'Influences', setting='show_influences', context=context)
@@ -197,102 +212,160 @@ def _unified(layout, context, name, label, pressure=None):
     return row
 
 
-def _paint(layout, context):
+def _brush(layout, context):
+    """Maya "Brush" + paint operation: operation, Value / Opacity / Radius, Flood, profile (falloff)."""
     ts, mesh = context.tool_settings, context.active_object
     brush = ts.weight_paint.brush
     kind = model.brush_kind(brush)
     col = _card(layout, 'Brush', setting='show_brush', context=context)
-    if col:
-        assets = col.row(align=True)
-        _tool(assets, brush.name if brush else 'Choose a brush', 'ASSETS', icon='ASSET_MANAGER')
-        assets.menu('VIEW3D_MT_brush_context_menu', text='', icon='DOWNARROW_HLT')
-        col.separator(factor=0.35)
-        for operations in ((('Replace', 'DRAW', 'MIX'), ('Add', 'DRAW', 'ADD'), ('Subtract', 'DRAW', 'SUB')),
-                           (('Scale', 'DRAW', 'MUL'), ('Smooth', 'BLUR', ''), ('Smear', 'SMEAR', ''))):
-            row = col.row(align=True)
-            row.scale_y = 1.15
-            for label, target, blend in operations:
-                chosen = kind == target and (not blend or (brush and brush.blend == blend))
-                _tool(row, label, target, blend, chosen)
-        col.separator(factor=0.5)
-        values = col.column(align=True)
-        values.scale_y = 1.12
-        _unified(values, context, 'weight', 'Value').enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
-        _unified(values, context, 'strength', 'Opacity', 'use_pressure_strength')
-        _unified(values, context, 'size', 'Size', 'use_pressure_size')
-        col.separator(factor=0.35)
-        presets = col.row(align=True)
-        presets.enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
-        for value, label in [(0, '0'), (.25, '0.25'), (.5, '0.5'), (.75, '0.75'), (1, '1')]:
-            presets.operator('allset.weight_value', text=label).value = value
-        col.separator(factor=0.5)
+    if col is None:
+        return
+    assets = col.row(align=True)
+    _tool(assets, brush.name if brush else 'Choose a brush', 'ASSETS', icon='ASSET_MANAGER')
+    assets.menu('VIEW3D_MT_brush_context_menu', text='', icon='DOWNARROW_HLT')
+    col.separator(factor=0.35)
+    # Maya's paint operations first (Replace / Add / Scale / Smooth, Maya-148), Blender's
+    # extra blends on a second row
+    for operations in ((('Replace', 'DRAW', 'MIX'), ('Add', 'DRAW', 'ADD'), ('Scale', 'DRAW', 'MUL'),
+                        ('Smooth', 'BLUR', '')),
+                       (('Subtract', 'DRAW', 'SUB'), ('Average', 'AVERAGE', ''), ('Smear', 'SMEAR', ''))):
         row = col.row(align=True)
-        row.scale_y = 1.4
-        flood = row.row(align=True)
-        flood.enabled = (mesh.vertex_groups.active is not None and not mesh.vertex_groups.active.lock_weight
-                         and kind != 'SMEAR')
-        flood.operator(FLOOD_OP, text='Flood', icon='COLOR')
-        _tool(row, 'Sample', 'SAMPLE', icon='EYEDROPPER')
-        row = col.row(align=True)
-        row.prop(model.state(context), 'auto_normalize', text='Auto normalize', toggle=True)
-        row.prop(ts, 'use_lock_relative', text='Lock-relative', toggle=True)
-        if mesh.vertex_groups.active and mesh.vertex_groups.active.lock_weight:
-            _muted(col, 'Unlock this influence to paint or flood.', 'LOCKED')
-        if brush is None:
-            _muted(col, 'Choose a brush above to start painting.', 'INFO')
-    _symmetry(layout, context)
-    col = _card(layout, 'Paint tools', icon='BRUSH_DATA')
+        row.scale_y = 1.15
+        for label, target, blend in operations:
+            chosen = kind == target and (not blend or (brush and brush.blend == blend))
+            _tool(row, label, target, blend, chosen)
+    col.separator(factor=0.5)
+    values = col.column(align=True)
+    values.scale_y = 1.12
+    _unified(values, context, 'weight', 'Value').enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
+    _unified(values, context, 'strength', 'Opacity', 'use_pressure_strength')
+    _unified(values, context, 'size', 'Radius', 'use_pressure_size')
+    col.separator(factor=0.35)
+    presets = col.row(align=True)
+    presets.enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
+    for value, label in [(0, '0'), (.25, '0.25'), (.5, '0.5'), (.75, '0.75'), (1, '1')]:
+        presets.operator('allset.weight_value', text=label).value = value
+    col.separator(factor=0.5)
     row = col.row(align=True)
-    _tool(row, 'Average', 'AVERAGE')
+    row.scale_y = 1.4
+    flood = row.row(align=True)
+    flood.enabled = (mesh.vertex_groups.active is not None and not mesh.vertex_groups.active.lock_weight
+                     and kind != 'SMEAR')
+    flood.operator(FLOOD_OP, text='Flood', icon='COLOR')
+    _tool(row, 'Sample', 'SAMPLE', icon='EYEDROPPER')
+    if mesh.vertex_groups.active and mesh.vertex_groups.active.lock_weight:
+        _muted(col, 'Unlock this influence to paint or flood.', 'LOCKED')
+    if brush is None:
+        _muted(col, 'Choose a brush above to start painting.', 'INFO')
+        return
+    row = col.row(align=True)
     _tool(row, 'Pick joint', 'SAMPLE_GROUP', icon='EYEDROPPER')
-    row = col.row(align=True)
     _tool(row, 'Linear gradient', 'LINEAR')
     _tool(row, 'Radial gradient', 'RADIAL')
+    preset, curve = compat.brush_falloff_props(brush)
     current = context.workspace.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False)
-    if current and current.idname == 'builtin.gradient' and brush:
-        _prop(col, brush, 'curve_distance_falloff_preset', text='Gradient falloff')
-        if getattr(brush, 'curve_distance_falloff_preset', '') == 'CUSTOM':
-            col.template_curve_mapping(brush, 'curve_distance_falloff', brush=True, show_presets=True)
-    if brush:
-        _brush_details(layout, context, brush)
-    _mask(layout, context)
+    if current and current.idname == 'builtin.gradient':
+        _prop(col, brush, preset, text='Gradient falloff')
+        if getattr(brush, preset, '') == 'CUSTOM':
+            col.template_curve_mapping(brush, curve, brush=True, show_presets=True)
+    # Maya "Profile" = the brush falloff
+    col.separator(factor=0.5)
+    _native(col, context, paint_common.FalloffPanel)
+    _prop(col, brush, 'falloff_shape', text='Shape')
+    _prop(col, brush, 'use_frontface', text='Front faces only')
+    _prop(col, brush, 'use_frontface_falloff', text='Front-face falloff')
+    sub = col.column()
+    sub.active = getattr(brush, 'use_frontface_falloff', False)
+    _prop(sub, brush, 'falloff_angle', text='Falloff angle')
+    _prop(col, brush, 'blend', text='Blend mode')
+    _prop(col, brush, 'use_accumulate', text='Accumulate strokes')
+    ups = compat.unified_paint_settings(ts)
+    _prop(col, ups if ups.use_unified_size else brush, 'use_locked_size', text='Size units')
+    _prop(col, ts, 'use_multipaint', text='Multi-paint selected joints')
+    _prop(col, ts.weight_paint, 'use_group_restrict', text='Existing weights only')
 
 
-def _brush_details(layout, context, brush):
-    col = _card(layout, 'Falloff & surface', setting='show_falloff', context=context)
-    if col:
-        _native(col, context, paint_common.FalloffPanel)
-        _prop(col, brush, 'falloff_shape', text='Shape')
-        _prop(col, brush, 'use_frontface', text='Front faces only')
-        _prop(col, brush, 'use_frontface_falloff', text='Front-face falloff')
-        sub = col.column()
-        sub.active = getattr(brush, 'use_frontface_falloff', False)
-        _prop(sub, brush, 'falloff_angle', text='Falloff angle')
-    col = _card(layout, 'Stroke & stabilizer', setting='show_stroke', context=context)
-    if col:
+def _visualization(layout, context):
+    """Maya 2024+ "Visualization" (geometry colour / colour ramp; Maya's numeric weight display has no Blender
+    counterpart)."""
+    from .status_line import main_view3d
+    col = _card(layout, 'Visualization', setting='show_visualization', context=context)
+    if col is None:
+        return
+    area, _region = main_view3d(context.screen)
+    view = area.spaces.active if area else None
+    if view:
+        _prop(col, view.overlay, 'weight_paint_mode_opacity', text='Weight opacity', slider=True)
+        _prop(col, view.overlay, 'show_wpaint_contours', text='Weight contours')
+    _prop(col, context.tool_settings, 'vertex_group_user', text='Zero weights')
+    prefs = context.preferences.view
+    col.prop(prefs, 'use_weight_color_range', text='Color ramp')
+    sub = col.column()
+    sub.enabled = prefs.use_weight_color_range
+    sub.template_color_ramp(prefs, 'weight_color_range', expand=True)
+    _muted(col, 'This color ramp is shared across Blender.', 'INFO')
+
+
+def _stroke(layout, context):
+    """Maya "Stroke": stroke method, spacing, stabilizer and reflection."""
+    brush = context.tool_settings.weight_paint.brush
+    col = _card(layout, 'Stroke', setting='show_stroke', context=context)
+    if col is None:
+        return
+    if brush is not None:
         _native(col, context, paint_common.StrokePanel)
         _prop(col, brush, 'use_smooth_stroke', text='Stabilize stroke')
         sub = col.column()
         sub.enabled = brush.use_smooth_stroke
         _prop(sub, brush, 'smooth_stroke_radius', text='Stabilizer radius')
         _prop(sub, brush, 'smooth_stroke_factor', text='Stabilizer strength')
-    col = _card(layout, 'Tablet pressure', setting='show_pressure', context=context)
-    if col:
-        for enabled, curve, title in [('use_pressure_size', 'curve_size', 'Size pressure'),
-                                      ('use_pressure_strength', 'curve_strength', 'Opacity pressure'),
-                                      ('use_pressure_jitter', 'curve_jitter', 'Jitter pressure')]:
-            _prop(col, brush, enabled, text=title)
-            if getattr(brush, enabled, False) and hasattr(brush, curve):
-                col.template_curve_mapping(brush, curve, brush=True, show_presets=True)
-    col = _card(layout, 'Advanced brush & normalization', setting='show_advanced', context=context)
-    if col:
-        _prop(col, brush, 'blend', text='Blend mode')
-        _prop(col, brush, 'use_accumulate', text='Accumulate strokes')
-        ups = compat.unified_paint_settings(context.tool_settings)
-        owner = ups if ups.use_unified_size else brush
-        _prop(col, owner, 'use_locked_size', text='Size units')
-        _prop(col, context.tool_settings, 'use_multipaint', text='Multi-paint selected joints')
-        _prop(col, context.tool_settings.weight_paint, 'use_group_restrict', text='Existing weights only')
+    mesh = context.active_object.data
+    col.prop(mesh, 'use_mirror_vertex_groups', text='Mirror influence names')
+    row = col.row(align=True)
+    row.label(text='Reflection')
+    for axis in ('x', 'y', 'z'):
+        row.prop(context.active_object, 'use_mesh_mirror_' + axis, text=axis.upper(), toggle=True)
+    radial = col.column()
+    radial.active = not mesh.use_mirror_vertex_groups
+    radial.prop(mesh, 'radial_symmetry', text='Radial copies')
+    topology = col.column()
+    topology.active = mesh.use_mirror_vertex_groups
+    topology.prop(mesh, 'use_mirror_topology', text='Topology matching')
+
+
+def _pressure(layout, context):
+    """Maya "Stylus Pressure"."""
+    brush = context.tool_settings.weight_paint.brush
+    col = _card(layout, 'Stylus Pressure', setting='show_pressure', context=context)
+    if col is None or brush is None:
+        return
+    for enabled, curve, title in [('use_pressure_size', 'curve_size', 'Radius pressure'),
+                                  ('use_pressure_strength', 'curve_strength', 'Opacity pressure'),
+                                  ('use_pressure_jitter', 'curve_jitter', 'Jitter pressure')]:
+        _prop(col, brush, enabled, text=title)
+        if getattr(brush, enabled, False) and hasattr(brush, curve):
+            col.template_curve_mapping(brush, curve, brush=True, show_presets=True)
+
+
+def _display(layout, context):
+    """Maya "Display": brush outline, wireframe, joints in front."""
+    from .status_line import main_view3d
+    col = _card(layout, 'Display', setting='show_display', context=context)
+    if col is None:
+        return
+    wp = context.tool_settings.weight_paint
+    _prop(col, wp, 'show_brush', text='Show brush')
+    _prop(col, wp, 'show_brush_on_surface', text='Brush follows surface')
+    if wp.brush:
+        _native(col, context, paint_common.DisplayPanel)
+    area, _region = main_view3d(context.screen)
+    view = area.spaces.active if area else None
+    if view:
+        _prop(col, view.overlay, 'show_paint_wire', text='Show wireframe')
+        _prop(col, view.overlay, 'show_overlays', text='Viewport overlays')
+    mod = skin.armature_modifier(context.active_object)
+    if mod and mod.object:
+        _prop(col, mod.object, 'show_in_front', text='Joints in front')
 
 
 def _mask(layout, context):
@@ -320,9 +393,11 @@ def _action(layout, key, text=None, icon='NONE'):
     layout.operator('allset.weight_action', text=text or model.ACTIONS[key][0], icon=icon).action = key
 
 
-def _weights(layout, context):
-    col = _card(layout, 'Balance', icon='NORMALIZE_FCURVES')
-    _unified(col, context, 'weight', 'Value')
+def _commands(layout, context):
+    """Blender extra: Maya keeps these in the Skin menu (Normalize, Mirror, Prune ...), not in Tool Settings."""
+    col = _card(layout, 'Skin Commands', setting='show_commands', context=context)
+    if col is None:
+        return
     _action(col, 'SET', 'Set current Value', icon='COLOR')
     row = col.row(align=True)
     _action(row, 'NORMALIZE_ALL', 'Normalize all')
@@ -331,89 +406,38 @@ def _weights(layout, context):
     _action(row, 'SMOOTH', 'Smooth')
     _action(row, 'LEVELS', 'Levels')
     _action(col, 'MIRROR', icon='MOD_MIRROR')
-    col = _card(layout, 'Clean up', icon='BRUSH_DATA')
     row = col.row(align=True)
     _action(row, 'CLEAN', 'Prune')
     _action(row, 'LIMIT', 'Limit influences')
     row = col.row(align=True)
     _action(row, 'QUANTIZE', 'Quantize')
     _action(row, 'INVERT', 'Invert')
-    col = _card(layout, 'Transfer & bind', icon='MOD_DATA_TRANSFER')
     _action(col, 'TRANSFER', 'Transfer from another mesh', icon='MOD_DATA_TRANSFER')
     row = col.row(align=True)
     _action(row, 'AUTO', 'Automatic weights')
     _action(row, 'ENVELOPE', 'Bone envelopes')
-    _muted(col, 'Each operation opens its own settings.', 'PREFERENCES')
     _muted(col, 'Locked influences stay protected.', 'LOCKED')
-    _mask(layout, context)
 
 
-def _symmetry(layout, context):
-    col = _card(layout, 'Reflection & symmetry', setting='show_symmetry', context=context)
-    if col:
-        mesh = context.active_object.data
-        col.prop(mesh, 'use_mirror_vertex_groups', text='Mirror influence names')
-        row = col.row(align=True)
-        row.label(text='Reflect')
-        for axis in ('x', 'y', 'z'):
-            row.prop(context.active_object, 'use_mesh_mirror_' + axis, text=axis.upper(), toggle=True)
-        radial = col.column()
-        radial.active = not mesh.use_mirror_vertex_groups
-        radial.prop(mesh, 'radial_symmetry', text='Radial copies')
-        topology = col.column()
-        topology.active = mesh.use_mirror_vertex_groups
-        topology.prop(mesh, 'use_mirror_topology', text='Topology matching')
-
-
-def _display(layout, context):
-    from .status_line import main_view3d
-    area, region = main_view3d(context.screen)
-    view = area.spaces.active if area else None
-    col = _card(layout, 'Weight visualization', icon='SHADING_RENDERED')
-    if view:
-        _prop(col, view.overlay, 'weight_paint_mode_opacity', text='Weight opacity', slider=True)
-        _prop(col, view.overlay, 'show_wpaint_contours', text='Weight contours')
-        _prop(col, view.overlay, 'show_paint_wire', text='Wireframe')
-        _prop(col, view.overlay, 'show_overlays', text='Viewport overlays')
-    _prop(col, context.tool_settings, 'vertex_group_user', text='Zero weights')
-    mod = skin.armature_modifier(context.active_object)
-    if mod:
-        _prop(col, mod.object, 'show_in_front', text='X-ray joints')
-    col = _card(layout, 'Brush cursor', setting='show_cursor', context=context)
-    brush = context.tool_settings.weight_paint.brush
-    if col:
-        _prop(col, context.tool_settings.weight_paint, 'show_brush', text='Show cursor')
-        _prop(col, context.tool_settings.weight_paint, 'show_brush_on_surface', text='Follow surface')
-        if brush:
-            _native(col, context, paint_common.DisplayPanel)
-    col = _card(layout, 'Weight color ramp', setting='show_color', context=context)
-    if col:
-        prefs = context.preferences.view
-        col.prop(prefs, 'use_weight_color_range', text='Custom weight colors')
-        sub = col.column()
-        sub.enabled = prefs.use_weight_color_range
-        sub.template_color_ramp(prefs, 'weight_color_range', expand=True)
-        _muted(col, 'This color ramp is shared across Blender.', 'INFO')
+# Maya 2024+ Tool Settings frames in order, then Blender extras (PR #125 follow-up, PR125_MAYA_LATER.md 6; Maya 2022
+# had Influences / Gradient / Stroke / Stylus Pressure / Display, Maya-351)
+SECTIONS = (("Skin Clusters", _skin_clusters), ("Influences", _influences), ("Brush", _brush),
+            ("Visualization", _visualization), ("Stroke", _stroke), ("Stylus Pressure", _pressure),
+            ("Display", _display), ("Skin Commands", _commands), ("Selection Masking", _mask))
+MAYA_SECTIONS = ("Skin Clusters", "Influences", "Brush", "Visualization", "Stroke", "Stylus Pressure", "Display")
 
 
 def draw(layout, context):
+    """The Paint Skin Weights Tool Settings: drawn in the Tool Settings dock only (no Maya version turns the
+    Channel Box into paint UI)."""
     layout.use_property_decorate = False
-    s, mesh = model.state(context), context.active_object
-    hero = layout.box()
-    title = hero.split(factor=0.86, align=True)
+    s = model.state(context)
+    title = layout.split(factor=0.86, align=True)
     title.scale_y = 1.35
-    title.label(text='Paint Skin Weights', icon_value=status_icons.icon('skin_weights'))
+    title.label(text='Paint Skin Weights Tool', icon_value=status_icons.icon('skin_weights'))
     title.operator('allset.weight_paint_exit', text='', icon='CHECKMARK')
-    row = hero.split(factor=0.8)
-    row.label(text=mesh.name, icon='MESH_DATA')
-    groups = skin.influences(mesh)
-    row.label(text=str(len(groups)), icon='BONE_DATA')
-    layout.separator(factor=0.5)
-    tabs = layout.row(align=True)
-    tabs.scale_y = 1.15
-    tabs.prop(s, 'page', expand=True)
-    _influences(layout, context)
-    {'PAINT': _paint, 'WEIGHTS': _weights, 'DISPLAY': _display}[s.page](layout, context)
+    for _name, fn in SECTIONS:
+        fn(layout, context)
     layout.separator(factor=0.6)
     if s.status:
         _muted(layout, s.status, 'CHECKMARK')
