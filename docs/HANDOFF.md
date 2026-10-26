@@ -7,6 +7,10 @@
 
 ## 현재 작업
 
+- Step 222 (Rig FBX export, Issue #132) 완료 — `docs/steps/step_222.md`: FBX 후처리 (`operators/fbx_rig.py`) = jointOrient 를
+  PreRotation 으로, 아마추어 Null 제거, cm, 디폼 본만. Maya 2026 에서 열어 조인트 5e-6 cm, 스킨 정점 1e-6 cm 일치.
+  **바로 다음 할 일**: step 223 = Rig FBX import and IK/FK switch (Issue #133).
+
 - Step 221 (Quaternion bones, Issue #131) 완료 — `docs/steps/step_221.md`: 쿼터니언 본도 CB 에 Rotate X/Y/Z (compat 오일러, 쓸 때
   쿼터니언), S 가 rotation_quaternion 4 채널 키. Rigify 212 컨트롤 전부 표시, -k 13 / 13. 공용 헬퍼 `rotation_display.py`.
   **바로 다음 할 일**: step 222 = Rig FBX export matches Maya (Issue #132).

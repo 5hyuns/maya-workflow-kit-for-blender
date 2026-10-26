@@ -100,7 +100,11 @@ def export_args(fmt, k, selection, maya=True):
         if maya:
             args.update(axis_forward='-Z', axis_up='Y', apply_unit_scale=True, global_scale=1.0,
                         apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_space_transform=True,
-                        bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False)
+                        bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
+                        # step 222 (decision 3): Maya joints point X down the bone; Maya exports joints, not the
+                        # kit's control bones; a key per frame like Maya's bake (also re-composable by fbx_rig)
+                        primary_bone_axis='X', secondary_bone_axis='-Y', use_armature_deform_only=True,
+                        bake_anim_simplify_factor=0.0)
         return "export_scene.fbx", args
     if fmt == 'OBJ':
         args = {"export_selected_objects": selection}
@@ -539,7 +543,9 @@ def _write(context, fmt, path, op, args, maya, k):
     run('EXEC_DEFAULT', filepath=path, **args)
     if not maya:
         return
-    if fmt == 'OBJ':
+    if fmt == 'FBX':
+        rig_fbx_maya(context, path, run, args)
+    elif fmt == 'OBJ':
         _write_obj_groups(path)
     elif fmt == 'USD' and not usd_maya_axes(path, k):
         # no pxr / skeletons / usdz: Blender's own conversion (it lands on the top prims' channels)
@@ -547,6 +553,39 @@ def _write(context, fmt, path, op, args, maya, k):
                                                   export_global_forward_selection='NEGATIVE_Z',
                                                   export_global_up_selection='Y', convert_scene_units='CUSTOM',
                                                   meters_per_unit=k))
+
+
+def _exported_armatures(context, args):
+    obs = context.selected_objects if args.get("use_selection") else context.view_layer.objects
+    return [ob for ob in obs if ob is not None and ob.type == 'ARMATURE']
+
+
+def rig_fbx_maya(context, path, run, args):
+    """Step 222: joint orient as PreRotation, no armature Null (operators/fbx_rig.py). Needs a second export of the
+    same objects at the rest pose (the writer's own conventions, decision 3). Returns (joints, nulls) or None."""
+    from . import fbx_rig
+    rigs = _exported_armatures(context, args)
+    if not rigs or fbx_rig.modules() is None:
+        return None
+    saved = [(arm, arm.pose_position) for arm in {ob.data for ob in rigs}]
+    # written beside the user's file and deleted at once (the kit writes nowhere the user didn't choose)
+    rest = os.path.splitext(path)[0] + ".rest_pose.tmp.fbx"
+    try:
+        for arm, _pos in saved:
+            arm.pose_position = 'REST'
+        context.view_layer.update()
+        run('EXEC_DEFAULT', filepath=rest, **dict(args, bake_anim=False))
+    finally:
+        for arm, pos in saved:
+            arm.pose_position = pos
+        context.view_layer.update()
+    try:
+        return fbx_rig.rewrite(path, rest)
+    finally:
+        try:
+            os.remove(rest)
+        except OSError:
+            pass
 
 
 def preset_text(fmt, k, export):
