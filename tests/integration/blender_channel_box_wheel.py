@@ -31,7 +31,14 @@ phase=0
 baseline=None
 position=None
 layer=None
-model_state=(tuple(mesh.location),tuple(mesh.rotation_euler),tuple(mesh.scale),dict(mesh.items()))
+W=cb.WHEEL_LINES   # Maya: 3 rows per notch
+
+def channels():
+    # channel values only: other kit props (e.g. ghosting's allset_ghost) may appear on the object meanwhile
+    return (tuple(mesh.location),tuple(mesh.rotation_euler),tuple(mesh.scale),
+            {k:mesh[k] for k in mesh.keys() if k.startswith('extra_')})
+
+model_state=channels()
 
 def emit(kind,x,y,count=1):
     window=bpy.context.window
@@ -53,13 +60,13 @@ def run():
             assert cb._wheel_windows.get(bpy.context.window.as_pointer())==cb._wheel_generation
             baseline=region.view2d.region_to_view(0,0)
             # Translate/rotate value fields, not blank background.
-            emit('WHEELDOWNMOUSE',region.x+region.width*.72,region.y+region.height-150,5)
+            emit('WHEELDOWNMOUSE',region.x+region.width*.72,region.y+region.height-150,2)
         elif phase==2:
-            assert cb._scroll.get(ptr,0)==5,cb._scroll
+            assert cb._scroll.get(ptr,0)==2*W,cb._scroll
             assert region.view2d.region_to_view(0,0)==baseline,'The whole dock moved'
-            emit('WHEELUPMOUSE',region.x+region.width*.3,region.y+region.height-160,2)
+            emit('WHEELUPMOUSE',region.x+region.width*.3,region.y+region.height-160,1)
         elif phase==3:
-            assert cb._scroll.get(ptr,0)==3,cb._scroll
+            assert cb._scroll.get(ptr,0)==W,cb._scroll
             emit('WHEELDOWNMOUSE',region.x+region.width*.72,region.y+region.height-150,100)
         elif phase==4:
             first,total,limit=cb._last[ptr]
@@ -84,14 +91,14 @@ def run():
             emit('WHEELUPMOUSE',region.x+region.width*.72,region.y+region.height-150,100)
         elif phase==8:
             assert cb._scroll[ptr]==0,cb._scroll
-            assert model_state==(tuple(mesh.location),tuple(mesh.rotation_euler),tuple(mesh.scale),dict(mesh.items())), 'Wheel edited channel values'
+            assert model_state==channels(), 'Wheel edited channel values'
             assert region.view2d.region_to_view(0,0)==baseline,'Layer split/dock moved'
             addon.switch.set_mode(False,layout=False)
             assert not bpy.app.timers.is_registered(cb._ensure_wheel_watch)
             assert not cb._wheel_windows
             emit('WHEELUPMOUSE',vr.x+vr.width*.5,vr.y+vr.height*.5)
         else:
-            (OUTPUT / 'allset-channel-wheel-result.txt').write_text('PASS: wheel over fields and labels, one-row steps, limits, fixed Layer Editor, viewport pass-through, unchanged values, cleanup')
+            (OUTPUT / 'allset-channel-wheel-result.txt').write_text('PASS: wheel over fields and labels, three-row steps, limits, fixed Layer Editor, viewport pass-through, unchanged values, cleanup')
             bpy.ops.wm.quit_blender()
             return None
         phase+=1

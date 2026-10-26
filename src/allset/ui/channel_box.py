@@ -1953,7 +1953,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
 _scroll = {}    # area pointer -> first line shown
 _reveal = {"node": None}    # an INPUTS node key to scroll into view at the next draw (``reveal``)
 _last = {}      # area pointer -> (first, total, limit) of the last draw (limit None: every line fits)
-WHEEL_LINES = 1
+WHEEL_LINES = 3     # Maya: one notch = single step 15 px x QApplication.wheelScrollLines 3 = 45 px ~ 3 rows (PR #125 check)
 BUTTON_LINES = 3
 _wheel_windows = {}   # live window pointer -> registration generation
 _wheel_generation = 0
