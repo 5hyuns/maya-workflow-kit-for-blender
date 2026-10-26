@@ -1379,3 +1379,22 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Windows > Settings/Preferences > Preferences: click through the Categories (the list scrolls); change Settings > Linear to millimeters and Time Slider > Framerate, then Cancel: both come back. Change them again and Save: they stay.
 - [ ] In Preferences > Undo, the "Blender Preferences" button opens Blender's Preferences on System (Undo Steps); the kit didn't change it.
 - [ ] Windows > Settings/Preferences > Hotkey Editor: search "duplicate", pick Duplicate, Assign New Hotkey..., press Ctrl+Shift+F9: Ctrl+Shift+F9 duplicates in the viewport; Restore brings Ctrl+D back. Quit without saving preferences: the change is gone next start (Blender's Save Preferences keeps it).
+
+## PR #125 follow-up (0.5.0) — joints, Channel Box, Paint Skin Weights
+
+- [ ] F8 on a selected skeleton: Edit mode (joint positions editable), F8 again: Pose mode with joints selectable. Maya
+  2022 measured (PR125_MAYA_CHECK.md 6): F8 with a joint selected goes to component mode, the selection empties and no
+  joint component mask (joint pivot / local rotation axis / rotate pivot / scale pivot) is on — Maya's F8 does nothing
+  useful on joints. The kit's Edit mode = "the joint's components" is a Blender stand-in (`delegated`); the in-view
+  message still says object / component selection.
+- [ ] Select a skeleton in the Outliner: Pose mode starts; the Channel Box shows the lead joint's channels once a joint
+  is clicked (Maya would show the root joint at once — check it is not confusingly empty).
+- [ ] Mouse wheel over the Channel Box: three rows per notch, values unchanged, the Layer Editor below doesn't move.
+- [ ] Drag the Move manipulator: Channel Box numbers follow during the drag; with nothing moving, no constant redraw
+  (CPU idle in Task Manager).
+- [ ] Skin > Paint Skin Weights (plain click): painting starts, the Channel Box still shows channels; Skin > Paint Skin
+  Weights ❒ opens Tool Settings with Skin Clusters / Influences / Brush / Visualization / Stroke / Stylus Pressure /
+  Display. W leaves painting with the mesh selected.
+- [ ] Tool Box: the magnifier under the Outliner button opens command search; the column is as wide as before 0.5.0.
+- [ ] Preferences > Add-ons > Maya Workflow Kit: Armature Mode Picker / Pulse Armature Mode off by default; turned on,
+  the picker appears at the start of the main viewport header with a skeleton active and its button pulses softly.
