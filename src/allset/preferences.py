@@ -113,6 +113,43 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Curve Colors", default="",
         description="Colour rules by attribute name (Maya Edit > Set Curve Colors...)")
 
+    # Script Editor History menu (Maya scriptEditorInfo optionVars; factory states from the Maya 2022 capture
+    # research/maya/screens/editors105/_editors105.json "checked": Batch Render Messages / Line numbers in errors on,
+    # the rest off, History Output Show Both). Read by command_line/runner.py (step 216).
+    se_batch_render_messages: bpy.props.BoolProperty(
+        name="Batch Render Messages", default=True,
+        description="Show batch rendering messages in the Script Editor history (Maya; the kit's batch render "
+                    "writes its messages to the system console)")
+    se_echo_all: bpy.props.BoolProperty(
+        name="Echo All Commands",
+        description="Write every command run from a menu, shelf or marking menu into the Script Editor history "
+                    "(as the Python call the kit runs)")
+    se_line_numbers: bpy.props.BoolProperty(
+        name="Line numbers in errors", default=True,
+        description="Error messages name the script line the error happened on")
+    se_stack_trace: bpy.props.BoolProperty(
+        name="Show Stack Trace",
+        description="An error writes the whole Python traceback into the Script Editor history")
+    se_suppress_results: bpy.props.BoolProperty(
+        name="Suppress Command Results", description="No \"# Result:\" lines in the Script Editor history")
+    se_suppress_info: bpy.props.BoolProperty(
+        name="Suppress Info Messages", description="No info messages in the Script Editor history")
+    se_suppress_warnings: bpy.props.BoolProperty(
+        name="Suppress Warning Messages", description="No warning messages in the Script Editor history")
+    se_suppress_errors: bpy.props.BoolProperty(
+        name="Suppress Error Messages", description="No error messages in the Script Editor history")
+    se_suppress_stack_window: bpy.props.BoolProperty(
+        name="Suppress Stack Window",
+        description="Maya: no stack trace window on error (Blender has no such window: kept for Maya's menu)")
+    se_suppress_dup_vars: bpy.props.BoolProperty(
+        name="Suppress Duplicate Variable Messages",
+        description="Maya: no warnings about redeclared MEL variables (the kit runs no MEL: kept for Maya's menu)")
+    se_history_output: bpy.props.EnumProperty(
+        name="History Output", default='BOTH',
+        items=(('BOTH', "Show Both", "Show both MEL and Python output in the history"),
+               ('MEL', "Show MEL Only", "Show only MEL output in the history"),
+               ('PYTHON', "Show Python Only", "Show only Python output in the history")))
+
     # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (Maya optionVars, factory off;
     # generateChannelMenu.mel:43-85, ui/cb_channels.py, step 158).
     cb_sync_graph: bpy.props.BoolProperty(

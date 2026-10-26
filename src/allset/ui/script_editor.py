@@ -11,6 +11,10 @@ kit's command echo and results as reports) over input = Text Editor showing the 
 marked (window pointer); in it the Info header draws the Maya menu bar + icon row and the Text header the tabs. The
 Python tab runs through the command line runner (``command_line/runner.py``: ``cmds`` subset, ``bpy``, C, D; the
 value of a last expression is the result); the MEL tab gives Maya's warning (decision 5: no MEL).
+
+History menu (step 216): Maya's scriptEditorInfo options are add-on preferences (``se_*``) drawn as check / radio
+items; ``runner.history_lines`` applies them to what a run writes into the history, ``runner.echo_command`` writes
+Echo All Commands lines (``allset.script_echo``).
 """
 
 import bpy
@@ -99,6 +103,24 @@ def run_text(text, code):
     return code, runner.run(code)
 
 
+# Blender report type of each history line kind (runner.KINDS); the echo / output / results are INFO like Blender's
+# own Python console echo (step 161 keeps the Script Editor's INFO reports).
+REPORT_TYPES = {"WARNING": 'WARNING', "ERROR": 'ERROR', "TRACE": 'ERROR'}
+
+
+def write_history(op, echo, res, lang="Python"):
+    """Write a run into the history pane (Blender's report log, listed by the Info editor) after the History menu
+    options (step 216: Line numbers / Stack Trace / Suppress ... / History Output, ``runner.history_lines``)."""
+    from ..command_line import runner
+    lines = runner.history_lines(echo, res, lang)
+    for kind, line in lines:
+        if kind in REPORT_TYPES:
+            op.report({REPORT_TYPES[kind]}, line)
+        else:
+            op.report({'INFO'}, line)
+    return lines
+
+
 @undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
 class ALLSET_OT_script_run(bpy.types.Operator):
     """Maya Script Editor: execute the selection, else the whole tab (Ctrl+Enter keeps the input, Execute / numpad
@@ -128,13 +150,26 @@ class ALLSET_OT_script_run(bpy.types.Operator):
             return {'CANCELLED'}
         name, loads = text.name, _carry["loads"]
         echo, res = run_text(text, code)
-        self.report({'INFO'}, echo.rstrip())
-        if res.text:
-            self.report({'ERROR'} if res.error else {'INFO'}, res.text)
+        write_history(self, echo, res, text.get(LANG_PROP) or "Python")
         if _carry["loads"] != loads:      # the script loaded a file (cmds.file): the old Text is gone, use its copy
             text = bpy.data.texts.get(name)
         if self.clear and not part and not res.error and text is not None:
             text.clear()
+        return {'FINISHED'}
+
+
+class ALLSET_OT_script_echo(bpy.types.Operator):
+    """Maya History > Echo All Commands: one command line in the Script Editor history"""
+    bl_idname = "allset.script_echo"
+    bl_label = "Echo Command"
+    bl_options = {'INTERNAL'}
+
+    text: StringProperty(options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        # OPERATOR type: the Info editor lists it like Blender's own operator echo; no status-bar banner (Blender
+        # shows INFO / WARNING / ERROR reports there only).
+        self.report({'OPERATOR'}, self.text)
         return {'FINISHED'}
 
 
@@ -279,7 +314,7 @@ def _load_post(*_args):
 _orig = {}
 HEADERS = (("info", "INFO_HT_header", _info_header), ("text", "TEXT_HT_header", _text_header))
 
-classes = (ALLSET_OT_script_run, ALLSET_OT_script_clear, ALLSET_OT_script_tab)
+classes = (ALLSET_OT_script_run, ALLSET_OT_script_echo, ALLSET_OT_script_clear, ALLSET_OT_script_tab)
 
 
 def register():

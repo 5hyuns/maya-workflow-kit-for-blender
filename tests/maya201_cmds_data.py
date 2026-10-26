@@ -9,7 +9,365 @@ META = {'maya': '2022', 'unit': 'cm'}
 
 NEW_SCENE = {'playback': [1.0, 120.0, 1.0, 200.0], 'time': 1.0}
 
-CASES = {'cut_key': '\n'
+CASES = {'c216_aim_constraint': '\n'
+                        'a = cmds.polyCube()[0]\n'
+                        'b = cmds.polyCube()[0]\n'
+                        'cmds.move(0, 0, -10, a)\n'
+                        'R = [cmds.aimConstraint(a, b)]\n'
+                        "R.append(cmds.getAttr(b + '.rotate')[0])\n"
+                        'R.append(cmds.aimConstraint(R[0][0], q=True, aimVector=True))\n'
+                        'R.append(cmds.aimConstraint(R[0][0], q=True, upVector=True))\n'
+                        'R.append(cmds.aimConstraint(R[0][0], q=True, worldUpVector=True))\n'
+                        'R.append(cmds.aimConstraint(R[0][0], q=True, worldUpType=True))\n'
+                        'c = cmds.polyCube()[0]\n'
+                        'cmds.move(5, 5, 0, a)\n'
+                        "R.append(cmds.getAttr(b + '.rotate')[0])\n"
+                        'R.append(cmds.aimConstraint(a, c, aim=(0, 1, 0), u=(1, 0, 0)))\n'
+                        "R.append(cmds.getAttr(c + '.rotate')[0])\n"
+                        "R.append(cmds.listRelatives(b, c=True, type='constraint'))\n",
+ 'c216_attribute_query': '\n'
+                         'a = cmds.polyCube()[0]\n'
+                         "cmds.addAttr(a, ln='speed', at='double', min=0, max=10, dv=2, k=True)\n"
+                         "cmds.addAttr(a, ln='note', dt='string')\n"
+                         'R = []\n'
+                         "for at in ('translateX', 'visibility', 'speed', 'note', 'rotate'):\n"
+                         '    R.append([at, cmds.attributeQuery(at, node=a, exists=True),\n'
+                         '              cmds.attributeQuery(at, node=a, keyable=True),\n'
+                         '              cmds.attributeQuery(at, node=a, shortName=True),\n'
+                         '              cmds.attributeQuery(at, node=a, longName=True),\n'
+                         '              cmds.attributeQuery(at, node=a, niceName=True),\n'
+                         '              cmds.attributeQuery(at, node=a, attributeType=True),\n'
+                         '              cmds.attributeQuery(at, node=a, minExists=True),\n'
+                         '              cmds.attributeQuery(at, node=a, maxExists=True)])\n'
+                         "R.append(cmds.attributeQuery('speed', node=a, min=True))\n"
+                         "R.append(cmds.attributeQuery('speed', node=a, max=True))\n"
+                         "R.append(cmds.attributeQuery('speed', node=a, listDefault=True))\n"
+                         "R.append(cmds.attributeQuery('tx', node=a, exists=True))\n"
+                         "R.append(cmds.attributeQuery('tx', node=a, longName=True))\n"
+                         "R.append(cmds.attributeQuery('nothing', node=a, exists=True))\n"
+                         'try:\n'
+                         "    cmds.attributeQuery('nothing', node=a, keyable=True)\n"
+                         "    R.append('no error')\n"
+                         'except RuntimeError:\n'
+                         "    R.append('RuntimeError')\n"
+                         "R.append(cmds.attributeQuery('rotate', node=a, listChildren=True))\n"
+                         "R.append(cmds.attributeQuery('rotateX', node=a, listParent=True))\n"
+                         "R.append(cmds.attributeQuery('visibility', node=a, listDefault=True))\n",
+ 'c216_connect_attr': '\n'
+                      'a = cmds.polyCube()[0]\n'
+                      'b = cmds.polyCube()[0]\n'
+                      'c = cmds.polyCube()[0]\n'
+                      "R = [cmds.connectAttr(a + '.translateX', b + '.translateY')]\n"
+                      "cmds.setAttr(a + '.translateX', 4)\n"
+                      "R.append(cmds.getAttr(b + '.translateY'))\n"
+                      "R.append(cmds.listConnections(b + '.translateY', s=True, d=False))\n"
+                      "R.append(cmds.listConnections(b + '.translateY', s=True, d=False, p=True))\n"
+                      "R.append(cmds.listConnections(a + '.translateX', s=False, d=True, p=True))\n"
+                      'R.append(cmds.listConnections(a, s=False, d=True))\n'
+                      "R.append(cmds.isConnected(a + '.translateX', b + '.translateY'))\n"
+                      "R.append(cmds.connectionInfo(b + '.translateY', sfd=True))\n"
+                      'try:\n'
+                      "    cmds.connectAttr(c + '.translateZ', b + '.translateY')\n"
+                      "    R.append('no error')\n"
+                      'except RuntimeError:\n'
+                      "    R.append('RuntimeError')\n"
+                      "R.append(cmds.connectAttr(c + '.translateZ', b + '.translateY', f=True))\n"
+                      "R.append(cmds.listConnections(b + '.translateY', s=True, d=False))\n"
+                      "cmds.setAttr(c + '.translateZ', 2.5)\n"
+                      "R.append(cmds.getAttr(b + '.translateY'))\n"
+                      "R.append(cmds.disconnectAttr(c + '.translateZ', b + '.translateY'))\n"
+                      "R.append(cmds.getAttr(b + '.translateY'))\n"
+                      "cmds.setAttr(c + '.translateZ', 9)\n"
+                      "R.append(cmds.getAttr(b + '.translateY'))\n"
+                      "R.append(cmds.listConnections(b + '.translateY', s=True, d=False))\n"
+                      'try:\n'
+                      "    cmds.disconnectAttr(c + '.translateZ', b + '.translateY')\n"
+                      "    R.append('no error')\n"
+                      'except RuntimeError:\n'
+                      "    R.append('RuntimeError')\n"
+                      "R.append(cmds.connectAttr(a + '.rotate', c + '.rotate'))\n"
+                      "cmds.setAttr(a + '.rotate', 10, 20, 30)\n"
+                      "R.append(cmds.getAttr(c + '.rotate')[0])\n"
+                      'try:\n'
+                      "    cmds.setAttr(c + '.rotateX', 5)\n"
+                      "    R.append('no error')\n"
+                      'except RuntimeError:\n'
+                      "    R.append('RuntimeError')\n",
+ 'c216_constraint_names': '\n'
+                          'a = cmds.polyCube()[0]\n'
+                          'b = cmds.polyCube()[0]\n'
+                          'R = [cmds.pointConstraint(a, b)]\n'
+                          'R.append(cmds.orientConstraint(a, b))\n'
+                          'R.append(cmds.pointConstraint(a, b))\n'
+                          'R.append(cmds.listRelatives(b, c=True))\n'
+                          'R.append(cmds.pointConstraint(b, q=True))\n'
+                          'R.append(cmds.pointConstraint(R[0][0], q=True, targetList=True))\n'
+                          "cmds.rename(b, 'hero')\n"
+                          "R.append(cmds.listRelatives('hero', c=True))\n"
+                          "cmds.delete(cmds.listRelatives('hero', c=True, type='pointConstraint'))\n"
+                          "R.append(cmds.listRelatives('hero', c=True))\n"
+                          "R.append(cmds.pointConstraint(a, 'hero'))\n"
+                          'try:\n'
+                          "    cmds.parentConstraint(a, 'hero')\n"
+                          "    R.append('no error')\n"
+                          'except RuntimeError:\n'
+                          "    R.append('RuntimeError')\n"
+                          "R.append(cmds.listRelatives('hero', c=True))\n"
+                          'e = cmds.polySphere()[0]\n'
+                          'cmds.select(a, e)\n'
+                          'R.append(cmds.parentConstraint())\n'
+                          'R.append(cmds.listRelatives(e, c=True))\n',
+ 'c216_current_unit': '\n'
+                      'R = [cmds.currentUnit(q=True, linear=True), cmds.currentUnit(q=True, angle=True), '
+                      'cmds.currentUnit(q=True, time=True)]\n'
+                      'R.append(cmds.currentUnit(q=True, fullName=True, linear=True))\n'
+                      'R.append(cmds.currentUnit(q=True, fullName=True, time=True))\n'
+                      'a = cmds.polyCube()[0]\n'
+                      'cmds.move(100, 0, 0, a)\n'
+                      "R.append(cmds.currentUnit(linear='m'))\n"
+                      'R.append(cmds.currentUnit(q=True, linear=True))\n'
+                      "R.append(cmds.getAttr(a + '.translateX'))\n"
+                      'R.append(cmds.xform(a, q=True, ws=True, t=True))\n'
+                      'cmds.move(2, 0, 0, a)\n'
+                      "R.append(cmds.getAttr(a + '.translateX'))\n"
+                      "R.append(cmds.currentUnit(time='pal'))\n"
+                      'R.append(cmds.currentUnit(q=True, time=True))\n'
+                      'R.append([cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True)])\n'
+                      "R.append(cmds.currentUnit(angle='rad'))\n"
+                      'R.append(cmds.currentUnit(q=True, angle=True))\n'
+                      "cmds.setAttr(a + '.rotateY', 1.0)\n"
+                      "R.append(cmds.currentUnit(linear='cm', angle='deg', time='film'))\n"
+                      "R.append(cmds.getAttr(a + '.translateX'))\n"
+                      "R.append(cmds.getAttr(a + '.rotateY'))\n"
+                      'R.append([cmds.currentUnit(q=True, linear=True), cmds.currentUnit(q=True, angle=True), '
+                      'cmds.currentUnit(q=True, time=True)])\n'
+                      'R.append([cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True)])\n',
+ 'c216_joint_chain': '\n'
+                     'R = [cmds.joint(p=(0, 0, 0))]\n'
+                     'R.append(cmds.joint(p=(0, 5, 0)))\n'
+                     "R.append(cmds.joint(p=(0, 10, 2), n='tip'))\n"
+                     'R.append(cmds.ls(sl=True))\n'
+                     "R.append(cmds.listRelatives('joint1', ad=True))\n"
+                     "R.append(cmds.getAttr('joint2.translate')[0])\n"
+                     "R.append(cmds.getAttr('tip.translate')[0])\n"
+                     "R.append(cmds.xform('tip', q=True, ws=True, t=True))\n"
+                     "R.append(cmds.getAttr('joint1.radius'))\n"
+                     "R.append(cmds.getAttr('joint2.jointOrient')[0])\n"
+                     'cmds.select(cl=True)\n'
+                     'R.append(cmds.joint(p=(3, 0, 0), rad=2))\n'
+                     "R.append(cmds.getAttr(R[-1] + '.radius'))\n"
+                     'R.append(cmds.listRelatives(R[-2], p=True))\n'
+                     "cmds.select('joint2')\n"
+                     'R.append(cmds.joint(p=(4, 5, 0)))\n'
+                     'R.append(cmds.listRelatives(R[-1], p=True))\n'
+                     'R.append(cmds.xform(R[-2], q=True, ws=True, t=True))\n'
+                     "R.append(cmds.getAttr(R[-3] + '.translate')[0])\n"
+                     "R.append(cmds.nodeType('joint1'))\n"
+                     "R.append(cmds.ls(type='joint'))\n"
+                     'cmds.select(cl=True)\n'
+                     'c = cmds.polyCube()[0]\n'
+                     'cmds.move(0, 0, 7, c)\n'
+                     'cmds.select(c)\n'
+                     'R.append(cmds.joint(p=(1, 1, 1)))\n'
+                     'R.append(cmds.listRelatives(R[-1], p=True))\n'
+                     'R.append(cmds.xform(R[-2], q=True, ws=True, t=True))\n',
+ 'c216_make_identity': '\n'
+                       'a = cmds.polyCube()[0]\n'
+                       'c = cmds.polySphere()[0]\n'
+                       'cmds.parent(c, a)\n'
+                       'cmds.move(1, 2, 3, a)\n'
+                       'cmds.rotate(0, 90, 0, a)\n'
+                       'cmds.scale(2, 2, 2, a)\n'
+                       'cmds.move(4, 0, 0, c, r=True, os=True)\n'
+                       'R = [cmds.xform(c, q=True, ws=True, t=True)]\n'
+                       'R.append(cmds.makeIdentity(a, apply=True, t=True))\n'
+                       "R.append([cmds.getAttr(a + '.translate')[0], cmds.getAttr(a + '.rotate')[0], cmds.getAttr(a + "
+                       "'.scale')[0]])\n"
+                       'R.append(cmds.xform(a, q=True, ws=True, rp=True))\n'
+                       'R.append(cmds.makeIdentity(a, apply=True, r=True, s=True))\n'
+                       "R.append([cmds.getAttr(a + '.translate')[0], cmds.getAttr(a + '.rotate')[0], cmds.getAttr(a + "
+                       "'.scale')[0]])\n"
+                       'R.append(cmds.xform(a, q=True, ws=True, rp=True))\n'
+                       "R.append([cmds.getAttr(c + '.translate')[0], cmds.getAttr(c + '.rotate')[0], cmds.getAttr(c + "
+                       "'.scale')[0]])\n"
+                       'R.append(cmds.xform(c, q=True, ws=True, t=True))\n'
+                       'R.append(cmds.exactWorldBoundingBox(a))\n'
+                       'R.append(cmds.xform(c, q=True, ws=True, rp=True))\n'
+                       'R.append(cmds.exactWorldBoundingBox(c))\n'
+                       'b = cmds.polyCube()[0]\n'
+                       'cmds.move(0, 5, 0, b)\n'
+                       'cmds.rotate(30, 0, 0, b)\n'
+                       'cmds.select(b)\n'
+                       'R.append(cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0))\n'
+                       "R.append([cmds.getAttr(b + '.translate')[0], cmds.getAttr(b + '.rotate')[0]])\n"
+                       'R.append(cmds.exactWorldBoundingBox(b))\n'
+                       'd = cmds.polyCube()[0]\n'
+                       'cmds.move(3, 0, 0, d)\n'
+                       'R.append(cmds.makeIdentity(d))\n'
+                       "R.append(cmds.getAttr(d + '.translate')[0])\n"
+                       'R.append(cmds.exactWorldBoundingBox(d))\n',
+ 'c216_node_type': '\n'
+                   'a = cmds.polyCube()[0]\n'
+                   'j = cmds.joint(p=(0, 0, 0))\n'
+                   'cmds.select(cl=True)\n'
+                   'l = cmds.spaceLocator()[0]\n'
+                   'cam = cmds.camera()[0]\n'
+                   'g = cmds.group(em=True)\n'
+                   "R = [cmds.nodeType(a), cmds.nodeType('pCubeShape1'), cmds.nodeType('polyCube1'), "
+                   'cmds.nodeType(j)]\n'
+                   'R.append(cmds.nodeType(l))\n'
+                   "R.append(cmds.nodeType('locatorShape1'))\n"
+                   'R.append(cmds.nodeType(cam))\n'
+                   "R.append(cmds.nodeType('cameraShape1'))\n"
+                   'R.append(cmds.nodeType(g))\n'
+                   "R.append(cmds.nodeType('lambert1'))\n"
+                   "R.append(cmds.nodeType('initialShadingGroup'))\n"
+                   "R.append(cmds.nodeType('time1'))\n"
+                   "R.append(cmds.nodeType(a + '.translateX'))\n"
+                   'R.append(cmds.nodeType(j, inherited=True))\n'
+                   "R.append(cmds.nodeType('pCubeShape1', inherited=True))\n"
+                   'R.append(cmds.objectType(a))\n'
+                   "R.append(cmds.objectType('pCubeShape1'))\n"
+                   'R.append(cmds.objectType(j))\n'
+                   "R.append(cmds.objectType(a, isType='transform'))\n"
+                   "R.append(cmds.objectType(j, isType='transform'))\n"
+                   "R.append(cmds.objectType('pCubeShape1', isType='mesh'))\n"
+                   "R.append(cmds.objectType('lambert1'))\n"
+                   "R.append(cmds.nodeType('persp'))\n"
+                   "R.append(cmds.nodeType('perspShape'))\n"
+                   'try:\n'
+                   "    cmds.nodeType('nothing_here')\n"
+                   "    R.append('no error')\n"
+                   'except RuntimeError:\n'
+                   "    R.append('RuntimeError')\n"
+                   'except ValueError:\n'
+                   "    R.append('ValueError')\n",
+ 'c216_orient_scale_constraint': '\n'
+                                 'a = cmds.polyCube()[0]\n'
+                                 'b = cmds.polyCube()[0]\n'
+                                 'cmds.rotate(10, 20, 30, a)\n'
+                                 'cmds.scale(1, 2, 3, a)\n'
+                                 'cmds.move(3, 0, 0, b)\n'
+                                 'R = [cmds.orientConstraint(a, b)]\n'
+                                 "R.append(cmds.getAttr(b + '.rotate')[0])\n"
+                                 'R.append(cmds.scaleConstraint(a, b))\n'
+                                 "R.append(cmds.getAttr(b + '.scale')[0])\n"
+                                 "R.append(cmds.getAttr(b + '.translate')[0])\n"
+                                 'R.append(cmds.listRelatives(b, c=True))\n'
+                                 'c = cmds.polyCube()[0]\n'
+                                 'cmds.rotate(0, 30, 0, c)\n'
+                                 'R.append(cmds.orientConstraint(a, c, mo=True))\n'
+                                 "R.append(cmds.getAttr(c + '.rotate')[0])\n"
+                                 'cmds.rotate(10, 50, 30, a)\n'
+                                 "R.append(cmds.getAttr(c + '.rotate')[0])\n"
+                                 'R.append(cmds.orientConstraint(R[6][0], q=True, offset=True))\n',
+ 'c216_parent_constraint': '\n'
+                           'a = cmds.polyCube()[0]\n'
+                           'b = cmds.polySphere()[0]\n'
+                           'cmds.move(5, 0, 0, a)\n'
+                           'cmds.rotate(0, 45, 0, a)\n'
+                           'cmds.move(0, 2, 0, b)\n'
+                           'R = [cmds.parentConstraint(a, b)]\n'
+                           'R.append(cmds.xform(b, q=True, ws=True, t=True))\n'
+                           'R.append(cmds.xform(b, q=True, ws=True, ro=True))\n'
+                           'R.append(cmds.listRelatives(b, c=True))\n'
+                           'R.append(cmds.parentConstraint(R[0][0], q=True, targetList=True))\n'
+                           'R.append(cmds.parentConstraint(R[0][0], q=True, weightAliasList=True))\n'
+                           'cmds.move(6, 0, 0, a)\n'
+                           'R.append(cmds.xform(b, q=True, ws=True, t=True))\n'
+                           'c = cmds.polyCube()[0]\n'
+                           'd = cmds.polyCube()[0]\n'
+                           'cmds.move(0, 0, 4, c)\n'
+                           'cmds.move(1, 1, 1, d)\n'
+                           'R.append(cmds.parentConstraint(c, d, mo=True))\n'
+                           'R.append(cmds.xform(d, q=True, ws=True, t=True))\n'
+                           'cmds.move(0, 0, 6, c)\n'
+                           'R.append(cmds.xform(d, q=True, ws=True, t=True))\n'
+                           'R.append(cmds.nodeType(R[7][0]))\n',
+ 'c216_point_constraint_two_targets': '\n'
+                                      'a = cmds.polyCube()[0]\n'
+                                      'b = cmds.polyCube()[0]\n'
+                                      'c = cmds.polySphere()[0]\n'
+                                      'cmds.move(0, 0, 0, a)\n'
+                                      'cmds.move(10, 0, 0, b)\n'
+                                      'R = [cmds.pointConstraint(a, b, c)]\n'
+                                      'R.append(cmds.xform(c, q=True, ws=True, t=True))\n'
+                                      'R.append(cmds.pointConstraint(R[0][0], q=True, targetList=True))\n'
+                                      'R.append(cmds.pointConstraint(R[0][0], q=True, weightAliasList=True))\n'
+                                      'R.append(cmds.pointConstraint(a, c, e=True, w=3))\n'
+                                      'R.append(cmds.pointConstraint(a, c, q=True, weight=True))\n'
+                                      "R.append(cmds.getAttr(R[0][0] + '.' + R[3][0]))\n"
+                                      'R.append(cmds.xform(c, q=True, ws=True, t=True))\n'
+                                      'R.append(cmds.pointConstraint(b, c, rm=True))\n'
+                                      'R.append(cmds.pointConstraint(R[0][0], q=True, targetList=True))\n'
+                                      'R.append(cmds.xform(c, q=True, ws=True, t=True))\n'
+                                      'R.append(cmds.pointConstraint(a, c, rm=True))\n'
+                                      'R.append(cmds.listRelatives(c, c=True))\n'
+                                      "R.append(cmds.ls(type='pointConstraint'))\n"
+                                      'R.append(cmds.xform(c, q=True, ws=True, t=True))\n'
+                                      'd = cmds.polyCube()[0]\n'
+                                      "R.append(cmds.pointConstraint(b, d, w=0.5, n='myPC'))\n"
+                                      'R.append(cmds.pointConstraint(b, d, q=True, weight=True))\n',
+ 'c216_poly_extrude_facet': '\n'
+                            'a = cmds.polyCube()[0]\n'
+                            'R = [cmds.polyEvaluate(a, v=True), cmds.polyEvaluate(a, f=True)]\n'
+                            "R.append(cmds.polyExtrudeFacet(a + '.f[1]', ltz=2, kft=True))\n"
+                            'R.append([cmds.polyEvaluate(a, v=True), cmds.polyEvaluate(a, f=True), '
+                            'cmds.polyEvaluate(a, e=True)])\n'
+                            'R.append(cmds.exactWorldBoundingBox(a))\n'
+                            "R.append(cmds.getAttr(R[2][0] + '.localTranslateZ'))\n"
+                            'R.append(cmds.nodeType(R[2][0]))\n'
+                            'R.append(cmds.ls(sl=True))\n'
+                            "R.append(cmds.polyExtrudeFacet(a + '.f[0]', a + '.f[2]', ltz=1, kft=True))\n"
+                            'R.append([cmds.polyEvaluate(a, v=True), cmds.polyEvaluate(a, f=True)])\n'
+                            'R.append(cmds.exactWorldBoundingBox(a))\n'
+                            "R.append(cmds.polyExtrudeFacet(a + '.f[3]', kft=True, ty=3))\n"
+                            'R.append(cmds.exactWorldBoundingBox(a))\n'
+                            'R.append(cmds.listHistory(a, pdo=True))\n',
+ 'c216_sets': '\n'
+              'a = cmds.polyCube()[0]\n'
+              'b = cmds.polyCube()[0]\n'
+              'c = cmds.polySphere()[0]\n'
+              'R = [cmds.sets(a, b)]\n'
+              'R.append(cmds.sets(R[0], q=True))\n'
+              'R.append(cmds.nodeType(R[0]))\n'
+              "R.append(cmds.sets(name='heroes', empty=True))\n"
+              "R.append(cmds.sets(c, a, add='heroes'))\n"
+              "R.append(cmds.sets('heroes', q=True))\n"
+              "R.append(cmds.sets(a, remove='heroes'))\n"
+              "R.append(cmds.sets('heroes', q=True))\n"
+              'cmds.select(b, c)\n'
+              'R.append(cmds.sets())\n'
+              'R.append(cmds.sets(R[-1], q=True))\n'
+              'R.append(cmds.sets(em=True))\n'
+              'R.append(cmds.sets(R[-1], q=True))\n'
+              "R.append(cmds.sets(a, n='set1'))\n"
+              "R.append(cmds.sets(c, isMember='heroes'))\n"
+              "R.append(cmds.sets(a, isMember='heroes'))\n"
+              'R.append(cmds.ls(sl=True))\n'
+              "R.append(cmds.ls(type='objectSet'))\n",
+ 'c216_shading_node': '\n'
+                      "R = [cmds.shadingNode('lambert', asShader=True)]\n"
+                      "R.append(cmds.shadingNode('blinn', asShader=True))\n"
+                      "R.append(cmds.shadingNode('phong', asShader=True))\n"
+                      "R.append(cmds.shadingNode('file', asTexture=True))\n"
+                      "R.append(cmds.shadingNode('lambert', asShader=True, n='skin'))\n"
+                      "R.append(cmds.shadingNode('blinn', asShader=True))\n"
+                      "R.append(cmds.getAttr(R[0] + '.color')[0])\n"
+                      "R.append(cmds.getAttr(R[1] + '.color')[0])\n"
+                      "R.append(cmds.getAttr(R[1] + '.eccentricity'))\n"
+                      "R.append(cmds.getAttr(R[1] + '.specularRollOff'))\n"
+                      "R.append(cmds.getAttr(R[2] + '.cosinePower'))\n"
+                      "R.append(cmds.getAttr(R[0] + '.diffuse'))\n"
+                      "R.append(cmds.getAttr(R[3] + '.fileTextureName'))\n"
+                      "R.append(cmds.connectAttr(R[3] + '.outColor', R[0] + '.color'))\n"
+                      "R.append(cmds.listConnections(R[0] + '.color', s=True, d=False, p=True))\n"
+                      'R.append([cmds.nodeType(x) for x in R[:4]])\n'
+                      'R.append(sorted(cmds.ls(materials=True)))\n'
+                      'R.append(cmds.ls(textures=True))\n'
+                      'R.append(cmds.ls(sl=True))\n'
+                      "R.append(cmds.listConnections(R[0], type='shadingEngine'))\n",
+ 'cut_key': '\n'
             'a = cmds.polyCube()[0]\n'
             'for t, x in ((1, 0), (10, 5), (20, 8), (30, 2)):\n'
             "    cmds.setKeyframe(a, at='tx', t=t, v=x)\n"
@@ -320,7 +678,646 @@ CASES = {'cut_key': '\n'
                  'R.append(cmds.xform(a, q=True, ws=True, rp=True))\n'
                  "R.append(cmds.getAttr(a + '.translate'))\n"}
 
-MAYA = {'cut_key': {'R': [1, [1.0, 20.0, 30.0], 1, [1.0, 10.0, 30.0], 0, 0, 2, 0],
+MAYA = {'c216_aim_constraint': {'R': [['pCube2_aimConstraint1'],
+                               [-0.0, 90.0, 0.0],
+                               [1.0, 0.0, 0.0],
+                               [0.0, 1.0, 0.0],
+                               [0.0, 1.0, 0.0],
+                               'vector',
+                               [0.0, -0.0, 45.0],
+                               ['pCube3_aimConstraint1'],
+                               [-180.0, 0.0, 135.0],
+                               ['pCube2_aimConstraint1']],
+                         'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3'],
+                                   'nodes': {'|pCube1': {'keys': {},
+                                                         'r': [0.0, 0.0, 0.0],
+                                                         'ro': 0,
+                                                         's': [1.0, 1.0, 1.0],
+                                                         'shapes': ['pCubeShape1'],
+                                                         't': [5.0, 5.0, 0.0],
+                                                         'v': True,
+                                                         'wt': [5.0, 5.0, 0.0]},
+                                             '|pCube2': {'keys': {},
+                                                         'r': [0.0, -0.0, 45.0],
+                                                         'ro': 0,
+                                                         's': [1.0, 1.0, 1.0],
+                                                         'shapes': ['pCubeShape2'],
+                                                         't': [0.0, 0.0, 0.0],
+                                                         'v': True,
+                                                         'wt': [0.0, 0.0, 0.0]},
+                                             '|pCube3': {'keys': {},
+                                                         'r': [-180.0, 0.0, 135.0],
+                                                         'ro': 0,
+                                                         's': [1.0, 1.0, 1.0],
+                                                         'shapes': ['pCubeShape3'],
+                                                         't': [0.0, 0.0, 0.0],
+                                                         'v': True,
+                                                         'wt': [0.0, 0.0, 0.0]}},
+                                   'playback': [1.0, 120.0, 1.0, 200.0],
+                                   'time': 1.0}},
+ 'c216_attribute_query': {'R': [['translateX',
+                                 True,
+                                 True,
+                                 'tx',
+                                 'translateX',
+                                 'Translate X',
+                                 'doubleLinear',
+                                 False,
+                                 False],
+                                ['visibility', True, True, 'v', 'visibility', 'Visibility', 'bool', True, True],
+                                ['speed', True, True, 'speed', 'speed', 'Speed', 'double', True, True],
+                                ['note', True, False, 'note', 'note', 'Note', 'typed', False, False],
+                                ['rotate', True, False, 'r', 'rotate', 'Rotate', 'double3', False, False],
+                                [0.0],
+                                [10.0],
+                                [2.0],
+                                True,
+                                'translateX',
+                                False,
+                                'RuntimeError',
+                                ['rotateX', 'rotateY', 'rotateZ'],
+                                ['rotate'],
+                                [1.0]],
+                          'scene': {'history': ['polyCube1'],
+                                    'nodes': {'|pCube1': {'keys': {},
+                                                          'r': [0.0, 0.0, 0.0],
+                                                          'ro': 0,
+                                                          's': [1.0, 1.0, 1.0],
+                                                          'shapes': ['pCubeShape1'],
+                                                          't': [0.0, 0.0, 0.0],
+                                                          'v': True,
+                                                          'wt': [0.0, 0.0, 0.0]}},
+                                    'playback': [1.0, 120.0, 1.0, 200.0],
+                                    'time': 1.0}},
+ 'c216_connect_attr': {'R': ['Connected pCube1.translate.translateX to pCube2.translate.translateY.',
+                             4.0,
+                             ['pCube1'],
+                             ['pCube1.translateX'],
+                             ['pCube2.translateY'],
+                             ['pCube2'],
+                             True,
+                             'pCube1.translateX',
+                             'RuntimeError',
+                             'Connected pCube3.translate.translateZ to pCube2.translate.translateY.',
+                             ['pCube3'],
+                             2.5,
+                             'Disconnect pCube3.translate.translateZ from pCube2.translate.translateY.',
+                             2.5,
+                             2.5,
+                             None,
+                             'RuntimeError',
+                             'Connected pCube1.rotate to pCube3.rotate.',
+                             [10.0, 20.0, 30.0],
+                             'RuntimeError'],
+                       'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3'],
+                                 'nodes': {'|pCube1': {'keys': {},
+                                                       'r': [10.0, 20.0, 30.0],
+                                                       'ro': 0,
+                                                       's': [1.0, 1.0, 1.0],
+                                                       'shapes': ['pCubeShape1'],
+                                                       't': [4.0, 0.0, 0.0],
+                                                       'v': True,
+                                                       'wt': [4.0, 0.0, 0.0]},
+                                           '|pCube2': {'keys': {},
+                                                       'r': [0.0, 0.0, 0.0],
+                                                       'ro': 0,
+                                                       's': [1.0, 1.0, 1.0],
+                                                       'shapes': ['pCubeShape2'],
+                                                       't': [0.0, 2.5, 0.0],
+                                                       'v': True,
+                                                       'wt': [0.0, 2.5, 0.0]},
+                                           '|pCube3': {'keys': {},
+                                                       'r': [10.0, 20.0, 30.0],
+                                                       'ro': 0,
+                                                       's': [1.0, 1.0, 1.0],
+                                                       'shapes': ['pCubeShape3'],
+                                                       't': [0.0, 0.0, 9.0],
+                                                       'v': True,
+                                                       'wt': [0.0, 0.0, 9.0]}},
+                                 'playback': [1.0, 120.0, 1.0, 200.0],
+                                 'time': 1.0}},
+ 'c216_constraint_names': {'R': [['pCube2_pointConstraint1'],
+                                 ['pCube2_orientConstraint1'],
+                                 ['pCube2_pointConstraint1'],
+                                 ['pCubeShape2', 'pCube2_pointConstraint1', 'pCube2_orientConstraint1'],
+                                 'pCube2_pointConstraint1',
+                                 ['pCube1'],
+                                 ['heroShape', 'pCube2_pointConstraint1', 'pCube2_orientConstraint1'],
+                                 ['heroShape', 'pCube2_orientConstraint1'],
+                                 ['hero_pointConstraint1'],
+                                 'RuntimeError',
+                                 ['heroShape', 'pCube2_orientConstraint1', 'hero_pointConstraint1'],
+                                 ['pSphere1_parentConstraint1'],
+                                 ['pSphereShape1', 'pSphere1_parentConstraint1']],
+                           'scene': {'history': ['polyCube1', 'polyCube2', 'polySphere1'],
+                                     'nodes': {'|hero': {'keys': {},
+                                                         'r': [0.0, 0.0, 0.0],
+                                                         'ro': 0,
+                                                         's': [1.0, 1.0, 1.0],
+                                                         'shapes': ['heroShape'],
+                                                         't': [0.0, 0.0, 0.0],
+                                                         'v': True,
+                                                         'wt': [0.0, 0.0, 0.0]},
+                                               '|pCube1': {'keys': {},
+                                                           'r': [0.0, 0.0, 0.0],
+                                                           'ro': 0,
+                                                           's': [1.0, 1.0, 1.0],
+                                                           'shapes': ['pCubeShape1'],
+                                                           't': [0.0, 0.0, 0.0],
+                                                           'v': True,
+                                                           'wt': [0.0, 0.0, 0.0]},
+                                               '|pSphere1': {'keys': {},
+                                                             'r': [0.0, 0.0, 0.0],
+                                                             'ro': 0,
+                                                             's': [1.0, 1.0, 1.0],
+                                                             'shapes': ['pSphereShape1'],
+                                                             't': [0.0, 0.0, 0.0],
+                                                             'v': True,
+                                                             'wt': [0.0, 0.0, 0.0]}},
+                                     'playback': [1.0, 120.0, 1.0, 200.0],
+                                     'time': 1.0}},
+ 'c216_current_unit': {'R': ['cm',
+                             'deg',
+                             'film',
+                             'centimeter',
+                             'film',
+                             'meter',
+                             'm',
+                             1.0,
+                             [1.0, 0.0, 0.0],
+                             2.0,
+                             'pal',
+                             'pal',
+                             [1.041667, 125.0],
+                             'radian',
+                             'rad',
+                             'film',
+                             200.0,
+                             57.29578,
+                             ['cm', 'deg', 'film'],
+                             [1.0, 120.0]],
+                       'scene': {'history': ['polyCube1'],
+                                 'nodes': {'|pCube1': {'keys': {},
+                                                       'r': [0.0, 57.29578, 0.0],
+                                                       'ro': 0,
+                                                       's': [1.0, 1.0, 1.0],
+                                                       'shapes': ['pCubeShape1'],
+                                                       't': [200.0, 0.0, 0.0],
+                                                       'v': True,
+                                                       'wt': [200.0, 0.0, 0.0]}},
+                                 'playback': [1.0, 120.0, 1.0, 200.0],
+                                 'time': 1.0}},
+ 'c216_joint_chain': {'R': ['joint1',
+                            'joint2',
+                            'tip',
+                            ['tip'],
+                            ['tip', 'joint2'],
+                            [0.0, 5.0, 0.0],
+                            [0.0, 5.0, 2.0],
+                            [0.0, 10.0, 2.0],
+                            1.0,
+                            [0.0, 0.0, 0.0],
+                            'joint3',
+                            2.0,
+                            None,
+                            'joint4',
+                            ['joint2'],
+                            [4.0, 5.0, 0.0],
+                            [4.0, 0.0, 0.0],
+                            'joint',
+                            ['joint1', 'joint2', 'joint3', 'joint4', 'tip'],
+                            'joint5',
+                            ['pCube1'],
+                            [1.0, 1.0, 1.0]],
+                      'scene': {'history': ['polyCube1'],
+                                'nodes': {'|joint1': {'keys': {},
+                                                      'r': [0.0, 0.0, 0.0],
+                                                      'ro': 0,
+                                                      's': [1.0, 1.0, 1.0],
+                                                      'shapes': [],
+                                                      't': [0.0, 0.0, 0.0],
+                                                      'v': True,
+                                                      'wt': [0.0, 0.0, 0.0]},
+                                          '|joint1|joint2': {'keys': {},
+                                                             'r': [0.0, 0.0, 0.0],
+                                                             'ro': 0,
+                                                             's': [1.0, 1.0, 1.0],
+                                                             'shapes': [],
+                                                             't': [0.0, 5.0, 0.0],
+                                                             'v': True,
+                                                             'wt': [0.0, 5.0, 0.0]},
+                                          '|joint1|joint2|joint4': {'keys': {},
+                                                                    'r': [0.0, 0.0, 0.0],
+                                                                    'ro': 0,
+                                                                    's': [1.0, 1.0, 1.0],
+                                                                    'shapes': [],
+                                                                    't': [4.0, 0.0, 0.0],
+                                                                    'v': True,
+                                                                    'wt': [4.0, 5.0, 0.0]},
+                                          '|joint1|joint2|tip': {'keys': {},
+                                                                 'r': [0.0, 0.0, 0.0],
+                                                                 'ro': 0,
+                                                                 's': [1.0, 1.0, 1.0],
+                                                                 'shapes': [],
+                                                                 't': [0.0, 5.0, 2.0],
+                                                                 'v': True,
+                                                                 'wt': [0.0, 10.0, 2.0]},
+                                          '|joint3': {'keys': {},
+                                                      'r': [0.0, 0.0, 0.0],
+                                                      'ro': 0,
+                                                      's': [1.0, 1.0, 1.0],
+                                                      'shapes': [],
+                                                      't': [3.0, 0.0, 0.0],
+                                                      'v': True,
+                                                      'wt': [3.0, 0.0, 0.0]},
+                                          '|pCube1': {'keys': {},
+                                                      'r': [0.0, 0.0, 0.0],
+                                                      'ro': 0,
+                                                      's': [1.0, 1.0, 1.0],
+                                                      'shapes': ['pCubeShape1'],
+                                                      't': [0.0, 0.0, 7.0],
+                                                      'v': True,
+                                                      'wt': [0.0, 0.0, 7.0]},
+                                          '|pCube1|joint5': {'keys': {},
+                                                             'r': [0.0, 0.0, 0.0],
+                                                             'ro': 0,
+                                                             's': [1.0, 1.0, 1.0],
+                                                             'shapes': [],
+                                                             't': [1.0, 1.0, -6.0],
+                                                             'v': True,
+                                                             'wt': [1.0, 1.0, 1.0]}},
+                                'playback': [1.0, 120.0, 1.0, 200.0],
+                                'time': 1.0}},
+ 'c216_make_identity': {'R': [[1.0, 2.0, -5.0],
+                              None,
+                              [[0.0, 0.0, 0.0], [0.0, 90.0, 0.0], [2.0, 2.0, 2.0]],
+                              [1.0, 2.0, 3.0],
+                              None,
+                              [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+                              [1.0, 2.0, 3.0],
+                              [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+                              [0.0, 0.0, 0.0],
+                              [-1.000001, 0.0, -7.0, 3.0, 4.0, 4.0],
+                              [1.0, 2.0, -5.0],
+                              [-1.000001, 0.0, -7.0, 3.0, 4.0, -3.0],
+                              None,
+                              [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+                              [-0.5, 4.316987, -0.683013, 0.5, 5.683013, 0.683013],
+                              None,
+                              [0.0, 0.0, 0.0],
+                              [-0.5, -0.5, -0.5, 0.5, 0.5, 0.5]],
+                        'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3', 'polySphere1'],
+                                  'nodes': {'|pCube1': {'keys': {},
+                                                        'r': [0.0, 0.0, 0.0],
+                                                        'ro': 0,
+                                                        's': [1.0, 1.0, 1.0],
+                                                        'shapes': ['pCubeShape1'],
+                                                        't': [0.0, 0.0, 0.0],
+                                                        'v': True,
+                                                        'wt': [0.0, 0.0, 0.0]},
+                                            '|pCube1|pSphere1': {'keys': {},
+                                                                 'r': [0.0, 0.0, 0.0],
+                                                                 'ro': 0,
+                                                                 's': [1.0, 1.0, 1.0],
+                                                                 'shapes': ['pSphereShape1'],
+                                                                 't': [0.0, 0.0, 0.0],
+                                                                 'v': True,
+                                                                 'wt': [0.0, 0.0, 0.0]},
+                                            '|pCube2': {'keys': {},
+                                                        'r': [0.0, 0.0, 0.0],
+                                                        'ro': 0,
+                                                        's': [1.0, 1.0, 1.0],
+                                                        'shapes': ['pCubeShape2'],
+                                                        't': [0.0, 0.0, 0.0],
+                                                        'v': True,
+                                                        'wt': [0.0, 0.0, 0.0]},
+                                            '|pCube3': {'keys': {},
+                                                        'r': [0.0, 0.0, 0.0],
+                                                        'ro': 0,
+                                                        's': [1.0, 1.0, 1.0],
+                                                        'shapes': ['pCubeShape3'],
+                                                        't': [0.0, 0.0, 0.0],
+                                                        'v': True,
+                                                        'wt': [0.0, 0.0, 0.0]}},
+                                  'playback': [1.0, 120.0, 1.0, 200.0],
+                                  'time': 1.0}},
+ 'c216_node_type': {'R': ['transform',
+                          'mesh',
+                          'polyCube',
+                          'joint',
+                          'transform',
+                          'locator',
+                          'transform',
+                          'camera',
+                          'transform',
+                          'lambert',
+                          'shadingEngine',
+                          'time',
+                          'transform',
+                          ['containerBase', 'entity', 'dagNode', 'transform', 'joint'],
+                          ['containerBase',
+                           'entity',
+                           'dagNode',
+                           'shape',
+                           'geometryShape',
+                           'deformableShape',
+                           'controlPoint',
+                           'surfaceShape',
+                           'mesh'],
+                          'transform',
+                          'mesh',
+                          'joint',
+                          True,
+                          False,
+                          True,
+                          'lambert',
+                          'transform',
+                          'camera',
+                          'RuntimeError'],
+                    'scene': {'history': ['polyCube1'],
+                              'nodes': {'|camera1': {'keys': {},
+                                                     'r': [0.0, 0.0, 0.0],
+                                                     'ro': 0,
+                                                     's': [1.0, 1.0, 1.0],
+                                                     'shapes': ['cameraShape1'],
+                                                     't': [0.0, 0.0, 0.0],
+                                                     'v': True,
+                                                     'wt': [0.0, 0.0, 0.0]},
+                                        '|locator1': {'keys': {},
+                                                      'r': [0.0, 0.0, 0.0],
+                                                      'ro': 0,
+                                                      's': [1.0, 1.0, 1.0],
+                                                      'shapes': ['locatorShape1'],
+                                                      't': [0.0, 0.0, 0.0],
+                                                      'v': True,
+                                                      'wt': [0.0, 0.0, 0.0]},
+                                        '|null1': {'keys': {},
+                                                   'r': [0.0, 0.0, 0.0],
+                                                   'ro': 0,
+                                                   's': [1.0, 1.0, 1.0],
+                                                   'shapes': [],
+                                                   't': [0.0, 0.0, 0.0],
+                                                   'v': True,
+                                                   'wt': [0.0, 0.0, 0.0]},
+                                        '|pCube1': {'keys': {},
+                                                    'r': [0.0, 0.0, 0.0],
+                                                    'ro': 0,
+                                                    's': [1.0, 1.0, 1.0],
+                                                    'shapes': ['pCubeShape1'],
+                                                    't': [0.0, 0.0, 0.0],
+                                                    'v': True,
+                                                    'wt': [0.0, 0.0, 0.0]},
+                                        '|pCube1|joint1': {'keys': {},
+                                                           'r': [0.0, 0.0, 0.0],
+                                                           'ro': 0,
+                                                           's': [1.0, 1.0, 1.0],
+                                                           'shapes': [],
+                                                           't': [0.0, 0.0, 0.0],
+                                                           'v': True,
+                                                           'wt': [0.0, 0.0, 0.0]}},
+                              'playback': [1.0, 120.0, 1.0, 200.0],
+                              'time': 1.0}},
+ 'c216_orient_scale_constraint': {'R': [['pCube2_orientConstraint1'],
+                                        [10.0, 20.0, 30.0],
+                                        ['pCube2_scaleConstraint1'],
+                                        [1.0, 2.0, 3.0],
+                                        [3.0, 0.0, 0.0],
+                                        ['pCubeShape2', 'pCube2_orientConstraint1', 'pCube2_scaleConstraint1'],
+                                        ['pCube3_orientConstraint1'],
+                                        [-0.0, 30.0, -0.0],
+                                        [-25.108218, 53.902219, -17.303829],
+                                        [0.018196, 0.135311, -0.486748]],
+                                  'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3'],
+                                            'nodes': {'|pCube1': {'keys': {},
+                                                                  'r': [10.0, 50.0, 30.0],
+                                                                  'ro': 0,
+                                                                  's': [1.0, 2.0, 3.0],
+                                                                  'shapes': ['pCubeShape1'],
+                                                                  't': [0.0, 0.0, 0.0],
+                                                                  'v': True,
+                                                                  'wt': [0.0, 0.0, 0.0]},
+                                                      '|pCube2': {'keys': {},
+                                                                  'r': [10.0, 50.0, 30.0],
+                                                                  'ro': 0,
+                                                                  's': [1.0, 2.0, 3.0],
+                                                                  'shapes': ['pCubeShape2'],
+                                                                  't': [3.0, 0.0, 0.0],
+                                                                  'v': True,
+                                                                  'wt': [3.0, 0.0, 0.0]},
+                                                      '|pCube3': {'keys': {},
+                                                                  'r': [-25.108218, 53.902219, -17.303829],
+                                                                  'ro': 0,
+                                                                  's': [1.0, 1.0, 1.0],
+                                                                  'shapes': ['pCubeShape3'],
+                                                                  't': [0.0, 0.0, 0.0],
+                                                                  'v': True,
+                                                                  'wt': [0.0, 0.0, 0.0]}},
+                                            'playback': [1.0, 120.0, 1.0, 200.0],
+                                            'time': 1.0}},
+ 'c216_parent_constraint': {'R': [['pSphere1_parentConstraint1'],
+                                  [5.0, 0.0, 0.0],
+                                  [0.0, 45.0, 0.0],
+                                  ['pSphereShape1', 'pSphere1_parentConstraint1'],
+                                  ['pCube1'],
+                                  ['pCube1W0'],
+                                  [6.0, 0.0, 0.0],
+                                  ['pCube3_parentConstraint1'],
+                                  [1.0, 1.0, 1.0],
+                                  [1.0, 1.0, 3.0],
+                                  'parentConstraint'],
+                            'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3', 'polySphere1'],
+                                      'nodes': {'|pCube1': {'keys': {},
+                                                            'r': [0.0, 45.0, 0.0],
+                                                            'ro': 0,
+                                                            's': [1.0, 1.0, 1.0],
+                                                            'shapes': ['pCubeShape1'],
+                                                            't': [6.0, 0.0, 0.0],
+                                                            'v': True,
+                                                            'wt': [6.0, 0.0, 0.0]},
+                                                '|pCube2': {'keys': {},
+                                                            'r': [0.0, 0.0, 0.0],
+                                                            'ro': 0,
+                                                            's': [1.0, 1.0, 1.0],
+                                                            'shapes': ['pCubeShape2'],
+                                                            't': [0.0, 0.0, 6.0],
+                                                            'v': True,
+                                                            'wt': [0.0, 0.0, 6.0]},
+                                                '|pCube3': {'keys': {},
+                                                            'r': [0.0, 0.0, 0.0],
+                                                            'ro': 0,
+                                                            's': [1.0, 1.0, 1.0],
+                                                            'shapes': ['pCubeShape3'],
+                                                            't': [1.0, 1.0, 3.0],
+                                                            'v': True,
+                                                            'wt': [1.0, 1.0, 3.0]},
+                                                '|pSphere1': {'keys': {},
+                                                              'r': [0.0, 45.0, 0.0],
+                                                              'ro': 0,
+                                                              's': [1.0, 1.0, 1.0],
+                                                              'shapes': ['pSphereShape1'],
+                                                              't': [6.0, 0.0, 0.0],
+                                                              'v': True,
+                                                              'wt': [6.0, 0.0, 0.0]}},
+                                      'playback': [1.0, 120.0, 1.0, 200.0],
+                                      'time': 1.0}},
+ 'c216_point_constraint_two_targets': {'R': [['pSphere1_pointConstraint1'],
+                                             [5.0, 0.0, 0.0],
+                                             ['pCube1', 'pCube2'],
+                                             ['pCube1W0', 'pCube2W1'],
+                                             ['pSphere1_pointConstraint1'],
+                                             3.0,
+                                             3.0,
+                                             [2.5, 0.0, 0.0],
+                                             ['pSphere1_pointConstraint1'],
+                                             ['pCube1'],
+                                             [0.0, 0.0, 0.0],
+                                             None,
+                                             ['pSphereShape1'],
+                                             [],
+                                             [0.0, 0.0, 0.0],
+                                             ['myPC'],
+                                             0.5],
+                                       'scene': {'history': ['polyCube1', 'polyCube2', 'polyCube3', 'polySphere1'],
+                                                 'nodes': {'|pCube1': {'keys': {},
+                                                                       'r': [0.0, 0.0, 0.0],
+                                                                       'ro': 0,
+                                                                       's': [1.0, 1.0, 1.0],
+                                                                       'shapes': ['pCubeShape1'],
+                                                                       't': [0.0, 0.0, 0.0],
+                                                                       'v': True,
+                                                                       'wt': [0.0, 0.0, 0.0]},
+                                                           '|pCube2': {'keys': {},
+                                                                       'r': [0.0, 0.0, 0.0],
+                                                                       'ro': 0,
+                                                                       's': [1.0, 1.0, 1.0],
+                                                                       'shapes': ['pCubeShape2'],
+                                                                       't': [10.0, 0.0, 0.0],
+                                                                       'v': True,
+                                                                       'wt': [10.0, 0.0, 0.0]},
+                                                           '|pCube3': {'keys': {},
+                                                                       'r': [0.0, 0.0, 0.0],
+                                                                       'ro': 0,
+                                                                       's': [1.0, 1.0, 1.0],
+                                                                       'shapes': ['pCubeShape3'],
+                                                                       't': [10.0, 0.0, 0.0],
+                                                                       'v': True,
+                                                                       'wt': [10.0, 0.0, 0.0]},
+                                                           '|pSphere1': {'keys': {},
+                                                                         'r': [0.0, 0.0, 0.0],
+                                                                         'ro': 0,
+                                                                         's': [1.0, 1.0, 1.0],
+                                                                         'shapes': ['pSphereShape1'],
+                                                                         't': [0.0, 0.0, 0.0],
+                                                                         'v': True,
+                                                                         'wt': [0.0, 0.0, 0.0]}},
+                                                 'playback': [1.0, 120.0, 1.0, 200.0],
+                                                 'time': 1.0}},
+ 'c216_poly_extrude_facet': {'R': [8,
+                                   6,
+                                   ['polyExtrudeFace1'],
+                                   [12, 10, 20],
+                                   [-0.5, -0.5, -0.5, 0.5, 2.5, 0.5],
+                                   2.0,
+                                   'polyExtrudeFace',
+                                   ['pCube1', 'pCube1.f[1]'],
+                                   ['polyExtrudeFace2'],
+                                   [20, 18],
+                                   [-0.5, -0.5, -1.5, 0.5, 2.5, 1.5],
+                                   ['polyExtrudeFace3'],
+                                   [-0.5, -0.5, -1.5, 0.5, 2.5, 1.5],
+                                   ['polyExtrudeFace3', 'polyExtrudeFace2', 'polyExtrudeFace1', 'polyCube1']],
+                             'scene': {'history': ['polyCube1'],
+                                       'nodes': {'|pCube1': {'keys': {},
+                                                             'r': [0.0, 0.0, 0.0],
+                                                             'ro': 0,
+                                                             's': [1.0, 1.0, 1.0],
+                                                             'shapes': ['pCubeShape1'],
+                                                             't': [0.0, 0.0, 0.0],
+                                                             'v': True,
+                                                             'wt': [0.0, 0.0, 0.0]}},
+                                       'playback': [1.0, 120.0, 1.0, 200.0],
+                                       'time': 1.0}},
+ 'c216_sets': {'R': ['set1',
+                     ['pCube1', 'pCube2'],
+                     'objectSet',
+                     'heroes',
+                     'heroes',
+                     ['pCube1', 'pSphere1'],
+                     'heroes',
+                     ['pSphere1'],
+                     'set2',
+                     ['pSphere1', 'pCube2'],
+                     'set3',
+                     None,
+                     'set4',
+                     True,
+                     False,
+                     ['pCube2', 'pSphere1'],
+                     ['defaultLightSet',
+                      'defaultObjectSet',
+                      'heroes',
+                      'initialParticleSE',
+                      'initialShadingGroup',
+                      'set1',
+                      'set2',
+                      'set3',
+                      'set4']],
+               'scene': {'history': ['polyCube1', 'polyCube2', 'polySphere1'],
+                         'nodes': {'|pCube1': {'keys': {},
+                                               'r': [0.0, 0.0, 0.0],
+                                               'ro': 0,
+                                               's': [1.0, 1.0, 1.0],
+                                               'shapes': ['pCubeShape1'],
+                                               't': [0.0, 0.0, 0.0],
+                                               'v': True,
+                                               'wt': [0.0, 0.0, 0.0]},
+                                   '|pCube2': {'keys': {},
+                                               'r': [0.0, 0.0, 0.0],
+                                               'ro': 0,
+                                               's': [1.0, 1.0, 1.0],
+                                               'shapes': ['pCubeShape2'],
+                                               't': [0.0, 0.0, 0.0],
+                                               'v': True,
+                                               'wt': [0.0, 0.0, 0.0]},
+                                   '|pSphere1': {'keys': {},
+                                                 'r': [0.0, 0.0, 0.0],
+                                                 'ro': 0,
+                                                 's': [1.0, 1.0, 1.0],
+                                                 'shapes': ['pSphereShape1'],
+                                                 't': [0.0, 0.0, 0.0],
+                                                 'v': True,
+                                                 'wt': [0.0, 0.0, 0.0]}},
+                         'playback': [1.0, 120.0, 1.0, 200.0],
+                         'time': 1.0}},
+ 'c216_shading_node': {'R': ['lambert2',
+                             'blinn1',
+                             'phong1',
+                             'file1',
+                             'skin',
+                             'blinn2',
+                             [0.5, 0.5, 0.5],
+                             [0.5, 0.5, 0.5],
+                             0.3,
+                             0.7,
+                             20.0,
+                             0.8,
+                             '',
+                             'Connected file1.outColor to lambert2.color.',
+                             ['file1.outColor'],
+                             ['lambert', 'blinn', 'phong', 'file'],
+                             ['blinn1',
+                              'blinn2',
+                              'lambert1',
+                              'lambert2',
+                              'particleCloud1',
+                              'phong1',
+                              'skin',
+                              'standardSurface1'],
+                             ['file1'],
+                             ['blinn2'],
+                             None],
+                       'scene': {'history': [], 'nodes': {}, 'playback': [1.0, 120.0, 1.0, 200.0], 'time': 1.0}},
+ 'cut_key': {'R': [1, [1.0, 20.0, 30.0], 1, [1.0, 10.0, 30.0], 0, 0, 2, 0],
              'scene': {'history': ['polyCube1'],
                        'nodes': {'|pCube1': {'keys': {},
                                              'r': [0.0, 0.0, 0.0],
@@ -464,14 +1461,14 @@ MAYA = {'cut_key': {'R': [1, [1.0, 20.0, 30.0], 1, [1.0, 10.0, 30.0], 0, 0, 2, 0
                                                      'wt': [1.0, 2.0, 3.0]}},
                                'playback': [1.0, 120.0, 1.0, 200.0],
                                'time': 1.0}},
- 'file_new_save_open': {'R': ['C:/Users/ohnsk/AppData/Local/Temp/cmds201_5evix1n3/scene1.ma',
-                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_5evix1n3/scene1.ma',
-                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_5evix1n3/scene1.ma',
+ 'file_new_save_open': {'R': ['C:/Users/ohnsk/AppData/Local/Temp/cmds201_cyfl4avz/scene1.ma',
+                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_cyfl4avz/scene1.ma',
+                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_cyfl4avz/scene1.ma',
                               'scene1.ma',
                               'untitled',
                               [],
                               '',
-                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_5evix1n3/scene1.ma',
+                              'C:/Users/ohnsk/AppData/Local/Temp/cmds201_cyfl4avz/scene1.ma',
                               ['pCubeShape1'],
                               3.0,
                               'scene1.ma'],

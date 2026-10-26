@@ -852,9 +852,6 @@ CATEGORIES.update({
     "Script Editor/File": (
         "Text Editor", "Blender sources a script by opening it and running it (Text > Run Script) and saves one text "
         "at a time; shelf buttons from scripts aren't there."),
-    "Script Editor/History": (
-        "Info editor filters", "Blender's history pane is the Info editor: it echoes every operator; its filters are "
-        "in the Info editor's View menu."),
     "Script Editor/Command": (
         "Text Editor View menu", "Blender's Text Editor has no such option (see its View menu and Preferences > "
         "Editing > Text Editor)."),

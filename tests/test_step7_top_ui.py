@@ -474,7 +474,7 @@ def test_runner_uses_blenders_run_script():
     r = runner.run("for i in range(2):\n    print('line', i)")
     assert r.text == "line 1" and not r.error, r
     r = runner.run("def g():\n    return undefined_name\ng()")
-    assert r.error and r.text == "# Error: NameError: name 'undefined_name' is not defined", r
+    assert r.error and r.text == "# Error: NameError: file <maya console> line 2: name 'undefined_name' is not "         "defined", r          # Maya History > Line numbers in errors, factory on (step 216)
     assert {t.name for t in bpy.data.texts} == before, "the temporary Text is removed"
     r = runner.run("y * 2")
     assert r.text == "# Result: 12 #", "variables of earlier entries persist"
