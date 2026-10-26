@@ -26,7 +26,7 @@ PRIORITY = """
 Deform/Display Intermediate Objects|Deform/Edit Membership Tool|Deform/Hide Intermediate Objects|Deform/Jiggle/Jiggle Deformer
 Deform/Jiggle/Jiggle Disk Cache|Deform/Jiggle/Jiggle Disk Cache Attributes|Deform/Mirror Deformer Weights|Deform/Nonlinear/Bend
 Deform/Nonlinear/Flare|Deform/Nonlinear/Sine|Deform/Nonlinear/Squash|Deform/Nonlinear/Twist|Deform/Nonlinear/Wave
-Deform/Paint Weights/Blend Shape|Deform/Paint Weights/Cluster|Deform/Paint Weights/Jiggle|Deform/Paint Weights/Set Membership
+Deform/Paint Weights/Blend Shape|Deform/Paint Weights/Cluster|Deform/Paint Weights/Jiggle|Deform/Paint Membership
 Deform/Paint Weights/ShrinkWrap|Deform/Paint Weights/Texture Deformer|Deform/Paint Weights/Wire|Deform/Point On Curve
 Deform/Pose Space Deformation/Create Pose Interpolator|Deform/Prune Membership/Cluster|Deform/Prune Membership/Lattice
 Deform/Prune Membership/Sculpt|Deform/Prune Membership/Wire|Deform/Sculpt|Deform/ShrinkWrap|Deform/Soft Modification Tool
@@ -61,7 +61,7 @@ Mesh Display/Unlock Normals|Mesh Display/Vertex Normal Edit Tool
 Mesh Tools/Append to Polygon|Mesh Tools/Connect|Mesh Tools/Crease Tool|Mesh Tools/Create Polygon
 Mesh Tools/Insert Edge Loop|Mesh Tools/Make Hole|Mesh Tools/Offset Edge Loop|Mesh Tools/Paint Reduce Weights
 Mesh Tools/Paint Transfer Attributes|Mesh Tools/Slide Edge
-Mesh/Booleans/Difference|Mesh/Booleans/Intersection|Mesh/Booleans/Union|Mesh/Cleanup...
+Mesh/Booleans/Difference (A - B)|Mesh/Booleans/Intersection|Mesh/Booleans/Union|Mesh/Cleanup...
 Mesh/Clipboard Actions/Clear Clipboard|Mesh/Clipboard Actions/Copy Attributes|Mesh/Clipboard Actions/Paste Attributes
 Mesh/Fill Hole|Mesh/Quadrangulate|Mesh/Separate|Mesh/Smooth Proxy/Both Proxy and Subdiv Display
 Mesh/Smooth Proxy/Crease Tool|Mesh/Smooth Proxy/Remove Subdiv Proxy Mirror|Mesh/Smooth Proxy/Subdiv Proxy
@@ -70,8 +70,8 @@ Mesh/Triangulate
 """
 PRIORITY_PATHS = [p for line in PRIORITY.strip().splitlines() for p in line.split("|")]
 
-STEP131_ICONS = 190         # menu items with an icon after step 131
-MAYA_ICON_ITEMS = 679       # kit menu items Maya 2022 shows with an icon (tools/gen_menu_icons.py)
+STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: Maya 2026 renamed / dumped items, step 219)
+MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (2022 capture + step 219 renames) (tools/gen_menu_icons.py)
 MIN_ICONS = 675             # this step: 675 of 679 (the 4 left have no exported Maya picture to follow)
 
 # Same uniqueness rule as tests/test_step131_icons.py (shelf / Status Line): enough pixels differ clearly.

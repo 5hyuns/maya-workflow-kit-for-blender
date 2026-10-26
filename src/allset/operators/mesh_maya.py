@@ -318,7 +318,8 @@ class ALLSET_OT_boolean(bpy.types.Operator):
     bl_label = "Boolean"
     bl_options = {'REGISTER', 'UNDO'}
 
-    operation: EnumProperty(items=(('UNION', "Union", ""), ('DIFFERENCE', "Difference", ""),
+    operation: EnumProperty(items=(('UNION', "Union", ""), ('DIFFERENCE', "Difference (A - B)", ""),
+                                   ('DIFFERENCE_BA', "Difference (B - A)", "Maya 2026: the second minus the first"),
                                    ('INTERSECT', "Intersection", "")), name="Operation", default='UNION')
 
     @classmethod
@@ -329,10 +330,13 @@ class ALLSET_OT_boolean(bpy.types.Operator):
         objs = _mesh_selection(context)
         operand = context.view_layer.objects.active if context.view_layer.objects.active in objs else objs[-1]
         base = next(o for o in objs if o is not operand)
+        if self.operation == 'DIFFERENCE_BA':
+            base, operand = operand, base
+        op = 'DIFFERENCE' if self.operation == 'DIFFERENCE_BA' else self.operation
         if base.data.users > 1:
             base.data = base.data.copy()
         mod = base.modifiers.new("Maya Boolean", 'BOOLEAN')
-        mod.operation, mod.object, mod.solver = self.operation, operand, 'EXACT'
+        mod.operation, mod.object, mod.solver = op, operand, 'EXACT'
         with context.temp_override(object=base, active_object=base):
             bpy.ops.object.modifier_apply(modifier=mod.name)
         bpy.data.objects.remove(operand)

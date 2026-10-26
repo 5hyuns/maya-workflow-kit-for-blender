@@ -320,11 +320,12 @@ def test_orientation_slots_per_tool():
 def test_modify_menu_pivot_and_align_sections():
     modify = next(m for m in menu_sets.menu_data.MENUS.values() if m[0] == "Modify")
     items = [it[0] for _p, it in menu_sets.children(modify[3], "Modify") if it[0] != "-"]
-    items += [it[0] for it in menu_map.CHILDREN["Modify/Snap Align Objects"]]
+    sub = {it[0]: it for it in modify[3]}          # step 219: the submenus come from the Maya 2026 dump
+    items += [it[0] for it in sub["Snap Align Objects"][1]]
     i_match = items.index("Match Transformations")
     i_pivot = items.index("Center Pivot")
     i_align = items.index("Snap Align Objects")
-    assert "Match Pivots" in [it[0] for it in menu_map.CHILDREN["Modify/Match Transformations"]]
+    assert "Match Pivots" in [it[0] for it in sub["Match Transformations"][1]]
     assert i_match < i_pivot < i_align, items
     assert "Bake Pivot" in items
     assert menu_map.MAP["Modify/Bake Pivot"] == "allset.bake_pivot"

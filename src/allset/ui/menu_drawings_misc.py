@@ -436,7 +436,7 @@ def i_vis_turntable(cv):
     cv.fill(cv.m_ering(20, 25, 8, 4, 2.0) & (cv.y > 25), LIGHT, ol=True)
 
 
-@icon("Visualize/Open Ghosting Editor")
+@icon("Visualize/Ghosting Editor")
 def i_vis_ghosting_editor(cv):
     def body(x0, y0, x1, y1):
         for x, y in ((x0 + 3, y1 - 3), (x0 + 8, y0 + 5), (x0 + 15, y0 + 3), (x1 - 3, y1 - 3)):

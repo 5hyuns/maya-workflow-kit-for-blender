@@ -7,6 +7,10 @@
 
 ## 현재 작업
 
+- Step 219 (Menus follow Maya 2026, Issue #130) 완료 — `docs/steps/step_219.md`: 메뉴 데이터 = Maya 2026 GUI 덤프 (42 메뉴,
+  2210 항목), 이름 바뀐 항목은 킷 매핑 유지, 새 항목은 Blender 기능 연결 또는 안내. consistency 0, 안내 없는 회색 0, -k 250 / 250.
+  **바로 다음 할 일**: step 220 = Quaternion bones (Issue #131).
+
 - Step 218 (Anim chain fixes 2, Issue #129) 완료 — `docs/steps/step_218.md`. Paint Skin Weights: Flood = Maya 2026 수식
   (Replace / Add / Scale / Smooth, 잠금·비율 재분배·선택 정점만, Maya 대비 ≤ 1.9e-6), Alt+F = 킷 Flood, Influences RMB = Maya 7 항목,
   Ctrl+Alt+C/V · Ctrl+./, · Alt+R, Mode Paint / Select / Paint Select. IK Spline = 기존 커브 사용 (Root on curve 7e-5, Snap curve;

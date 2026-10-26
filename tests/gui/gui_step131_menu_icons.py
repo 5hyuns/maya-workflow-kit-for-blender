@@ -30,6 +30,7 @@ MENUS = [
     ("constrain", ms.menu_idname("mainRigConstraintsMenu"), 400),
     ("key", ms.menu_idname("mainKeysMenu"), 400),
     ("general_editors", ms.SUBMENU_IDS["Windows/General Editors"], 400),
+    ("visualize", ms.menu_idname("mainVisualizeMenu"), 400),      # step 219: Maya 2026 Visualize
 ]
 
 

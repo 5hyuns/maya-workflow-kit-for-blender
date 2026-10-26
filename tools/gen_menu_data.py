@@ -1,20 +1,23 @@
-"""Generate src/allset/ui/menu_data.py from research/maya/menus.json.
+"""Generate src/allset/ui/menu_data.py from the Maya 2026 GUI menu dump.
 
     python tools/gen_menu_data.py
 
-Keeps only the menu structure (menu sets, menu labels, item labels, dividers,
-submenus, which items have an option box) — no MEL command strings (docs/user_decisions.md #6). Cleans the
-heuristic static parse (docs/steps/step_7.md 「계획」 2): unknown
-``<dynamic:...>`` labels and parse leftovers are dropped, repeated labels in a
-row collapse to one.
+Step 219 (Issue #130): the source is research/maya/re/maya2026_menus_dump.json — every main menu as a running Maya
+2026 builds it (postMenuCommand run, plug-in and run-time items included). The menu sets (which menu belongs to which
+set) still come from research/maya/menus.json. Keeps only the menu structure (menu labels, item labels, dividers,
+submenus, which items have an option box) — no MEL command strings in the output (docs/user_decisions.md #6).
+The Maya 2022 static-parse fixes (RUNTIME_LABELS, INSERTS, ...) below are kept for the record but no longer applied:
+the live dump has those items in Maya 2026's own places.
 """
 
 import json
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "research" / "maya" / "menus.json"
+SRC = ROOT / "research" / "maya" / "menus.json"          # menu sets (and the Maya 2022 static parse)
+DUMP = ROOT / "research" / "maya" / "re" / "maya2026_menus_dump.json"   # step 219: the menu structure
 OUT = ROOT / "src" / "allset" / "ui" / "menu_data.py"
 
 DYNAMIC = {"$QuitLabel": "Exit", "$kIncrementAndSaveLabel": "Increment and Save"}
@@ -185,7 +188,88 @@ def command_paths(items, prefix):
             yield from command_paths(it[1], path)
 
 
-def build(data):
+# Labels Maya 2026 builds with the live state in them (Edit > Undo "<last command>").
+_LIVE_LABELS = (re.compile(r'^(Undo|Redo) ".*"$'),)
+
+
+def _live_label(label):
+    for rx in _LIVE_LABELS:
+        m = rx.match(label)
+        if m:
+            return m.group(1)
+    return label
+
+
+def kit_filled():
+    """Label paths whose children the kit builds at run time (``menu_map.CHILDREN``, or a ``("menu", ...)`` action
+    that opens a kit menu listing the scene's sets / bookmarks / workspaces ...): the dump's children there are the
+    dumping scene's state, not menu structure, so the entry stays a leaf (step 219)."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import menu_count
+    _data, menu_map, _notices = menu_count._load()
+    out = set(menu_map.CHILDREN)            # (only Windows > Settings/Preferences since step 219)
+    for path, action in menu_map.MAP.items():
+        if isinstance(action, tuple) and action and action[0] == "menu":
+            out.add(path)
+    return out
+
+
+_RTC = {}    # runTimeCommand name -> its MEL (menus.json recorded the MEL; hotkeys match on it, step 108)
+
+
+def convert_live(items, prefix="", filled=frozenset()):
+    """Dump items -> menu_data items (labels as Maya 2026 draws them). ``prefix`` = the label path of ``items``'
+    parent (menu_sets.children rules), ``filled`` = paths left childless (``kit_filled``)."""
+    out = []
+    seen = {}
+    for it in items:
+        if "divider" in it:
+            entry = ("-", (it.get("divider") or "").strip())
+            if out and out[-1][0] == "-":
+                out[-1] = entry if entry[1] or not out[-1][1] else out[-1]
+            elif out:
+                out.append(entry)
+            continue
+        label = (it.get("label") or "").strip()
+        if not label:
+            continue
+        label = LABEL_RENAMES.get(_live_label(label), _live_label(label))
+        n = seen[label] = seen.get(label, 0) + 1
+        path = f"{prefix}/{label}" + (f"#{n}" if n > 1 else "")
+        rel = path.split("/", 1)[1] if "/" in path else path       # CHILDREN keys have no top menu label
+        kids = [] if (path in filled or rel in filled) else (it.get("items") or [])
+        children = convert_live(kids, path, filled)
+        entry = (label, children) if children else (label,)
+        _OPTION[id(entry)] = bool(it.get("optionBox"))
+        if it.get("command"):
+            _COMMAND[id(entry)] = _RTC.get(it["command"], it["command"])
+        out.append(entry)
+    while out and out[-1][0] == "-":
+        out.pop()
+    return out
+
+
+def build(data=None):
+    """{menu name: (label, menu set, source, items)}: the Maya 2026 live dump for every menu the kit draws (the menu
+    list and menu sets from menus.json ``data``; read from disk when not given)."""
+    data = data if data and "menus" in data else json.loads(SRC.read_text(encoding="utf-8"))
+    dump = json.loads(DUMP.read_text(encoding="utf-8"))
+    _RTC.clear()
+    _RTC.update(dump.get("runTimeCommands") or {})
+    live = {m["name"]: m for v in dump.values() if isinstance(v, list) for m in v if isinstance(m, dict)}
+    filled = kit_filled()
+    menus = {}
+    for m in data["menus"]:
+        src = live.get(m["name"])
+        if src is None:
+            continue
+        label = src["menu"].strip()
+        menus[m["name"]] = (label, m["menuSet"], "maya2026_menus_dump.json",
+                            convert_live(src["items"], label, filled))
+    return menus
+
+
+def build_2022(data):
     """{menu name: (label, menu set, builder, items)} from menus.json data (with the run-time fixes)."""
     menus = {}
     for m in data["menus"]:
@@ -201,7 +285,7 @@ def build(data):
 
 def option_boxes(menus):
     """Label paths with a Maya option box (call right after ``build``: it reads the items' ids)."""
-    return {p for m in menus.values() for p in option_paths(m[3], m[0])} | CACHE_BOXES
+    return {p for m in menus.values() for p in option_paths(m[3], m[0])}
 
 
 def main():
@@ -210,10 +294,10 @@ def main():
     menus = build(data)
     lines = [
         '# SPDX-License-Identifier: GPL-3.0-or-later',
-        '"""Maya 2022 main menu structure (generated by tools/gen_menu_data.py — do not edit).',
+        '"""Maya 2026 main menu structure (generated by tools/gen_menu_data.py — do not edit).',
         '',
-        'Source: research/maya/menus.json (static parse of Maya\'s shipped menu builders;',
-        'structure and labels only). MENUS[name] = (label, menu set, Maya builder file:line,',
+        'Source: research/maya/re/maya2026_menus_dump.json (menus as a running Maya 2026 builds them; structure',
+        'and labels only), menu sets from research/maya/menus.json. MENUS[name] = (label, menu set, source,',
         'items); item = (label,) | (label, [children]) | ("-", section label).',
         '"""',
         '',

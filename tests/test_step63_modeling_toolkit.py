@@ -60,7 +60,7 @@ def test_dock_and_status_line_toggle():
     assert status_line.EDITORS[0][0] == "MODELING_TOOLKIT", "Maya order: MTK first (ui_layout.md:212)"
     m = menu_map.MAP
     assert m["Windows/Modeling Editors/Modeling Toolkit"][1] == "allset.dock_show"
-    assert m["Mesh Tools/Show/Hide Modeling Toolkit"][0] == "allset.editor_toggle"
+    assert m["Mesh Tools/Hide Modeling Toolkit"][0] == "allset.editor_toggle"
 
 
 def test_mtk_buttons_are_menu_actions():
@@ -193,7 +193,7 @@ def test_menus_shelf_marking():
     m = menu_map.MAP
     assert m["Mesh/Combine"] == "allset.combine" and m["Mesh/Separate"] == "allset.separate"
     assert m["Mesh/Mirror"] == "allset.mirror"
-    assert m["Mesh/Booleans/Difference"] == ("allset.boolean", {"operation": 'DIFFERENCE'})
+    assert m["Mesh/Booleans/Difference (A - B)"] == ("allset.boolean", {"operation": 'DIFFERENCE'})
     assert shelf_map.BY_COMMAND["CombinePolygons"][0] == "allset.combine"
     assert shelf_map.BY_COMMAND["MirrorPolygonGeometry"][0] == "allset.mirror"
     actions = [a for menu in mm.MENUS.values() for _n, a in getattr(menu, "items", lambda: [])()] \

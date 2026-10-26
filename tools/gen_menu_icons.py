@@ -50,6 +50,14 @@ GLYPHS = {
 }
 
 
+
+RENAMED_2026 = {"Deform/Paint Membership": "Deform/Paint Weights/Set Membership",
+                "Mesh/Booleans/Difference (A - B)": "Mesh/Booleans/Difference",
+                "Visualize/Ghosting Editor": "Visualize/Open Ghosting Editor",
+                "Visualize/Motion Trail Editor": "Visualize/Create Editable Motion Trail",
+                "Create/Polygon Primitives/Polygon Disc": "Create/Polygon Primitives/Disc",
+                "Create/Polygon Type": "Create/Type"}
+
 def _first(*paths):
     for p in paths:
         if p.exists():
@@ -170,6 +178,10 @@ def build():
     images = {}
     for e in json.loads(ref.read_text(encoding="utf-8")):
         images.setdefault(e["path"], e["image"])
+    # step 219: Maya 2026 renamed these items (same command, same icon) - the icon capture is from Maya 2022
+    for new_path, old_path in RENAMED_2026.items():
+        if old_path in images:
+            images.setdefault(new_path, images[old_path])
     commands = _menu_commands()
 
     icons, how = {}, {}

@@ -27,7 +27,8 @@ def _create(kind):
 
 _PRIMS = {label: _create(kind) for label, kind in (
     ("Sphere", 'SPHERE'), ("Cube", 'CUBE'), ("Cylinder", 'CYLINDER'), ("Cone", 'CONE'),
-    ("Torus", 'TORUS'), ("Plane", 'PLANE'), ("Disc", 'DISC'), ("Platonic Solid", 'PLATONIC'),
+    ("Torus", 'TORUS'), ("Plane", 'PLANE'), ("Polygon Disc", 'DISC'),   # step 219: Maya 2026 label
+    ("Platonic Solid", 'PLATONIC'),
     ("Pyramid", 'PYRAMID'), ("Prism", 'PRISM'), ("Pipe", 'PIPE'), ("Helix", 'HELIX'), ("Gear", 'GEAR'),
     ("Soccer Ball", 'SOCCER_BALL'), ("Super Ellipse", 'SUPER_ELLIPSE'), ("Spherical Harmonics", 'SPHERICAL_HARMONICS'),
     ("Ultra Shape", 'ULTRA_SHAPE'))}   # step 190: the last seven
@@ -93,8 +94,6 @@ def _kit_pref(prop):
 _WINDOW_EDITORS = {
     "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
     "General Editors/Channel Box / Layer Editor": _dock('CHANNEL_BOX'),
-    "General Editors/Channel Box": _dock('CHANNEL_BOX'),
-    "General Editors/Layer Editor": _dock('CHANNEL_BOX'),
     "General Editors/Tool Settings": ("allset.editor_toggle", {"editor": 'TOOL_SETTINGS'}),
     "General Editors/Attribute Spread Sheet": _editor('SPREADSHEET'),
     "General Editors/Display Layer Editor": ("v3d", "allset.dock_show", {"dock": 'CHANNEL_BOX', "le_tab": 'DISPLAY'}),
@@ -115,6 +114,9 @@ _WINDOW_EDITORS = {
     "General Editors/Hypergraph: Hierarchy": _editor('OUTLINER'),
     "General Editors/Hypergraph: Connections": _editor('DRIVERS'),
     "Rendering Editors/Hypershade": "allset.hypershade",                 # step 67: browser + graph + AE
+    # step 219 (Maya 2026 Windows menu): Blender engines in Maya's places (user decision 10-26)
+    "LookdevX Graph Editor": "allset.hypershade",                        # Maya shading graph -> Shader Editor
+    "Bifrost Graph Editor": _editor('GeometryNodeTree'),                   # Bifrost graph -> Geometry Nodes
     "Rendering Editors/Light Editor": "allset.light_editor",             # step 67: kit light list
     "Rendering Editors/Render View": "render.view_show",
     "Rendering Editors/Render Settings": "allset.render_settings",
@@ -196,7 +198,7 @@ MAP = {
     "Create/Curve Tools/Three Point Circular Arc": "allset.arc3_tool",
     "Create/Curve Tools/Two Point Circular Arc": "allset.arc2_tool",
     "Create/Curve Tools/Bezier Curve Tool": _create('BEZIER_CURVE'),
-    "Create/Type": _create('TEXT'),                 # step 54: Maya units (W5)
+    "Create/Polygon Type": _create('TEXT'),                 # step 54: Maya units (W5)
     "Create/Free Image Plane": _create('IMAGE_PLANE'),
     "Create/Locator": _create('LOCATOR'),
     "Create/Annotation...": ("tool", "builtin.annotate", False),
@@ -265,6 +267,7 @@ MAP = {
     "Modify/Center Pivot": "allset.center_pivot",
     # step 59: pivot / align (research/maya/workflows/pivot_snap.md P7, P8, S8-S13)
     "Modify/Bake Pivot": "allset.bake_pivot",
+    "Modify/Zero Pivot": "allset.reset_pivot",              # Maya 2026 ZeroPivot = xform -ztp (step 219)
     "Modify/Match Transformations/Match All Transforms": ("allset.match_transform", {"kind": 'ALL'}),
     "Modify/Match Transformations/Match Translation": ("allset.match_transform", {"kind": 'TRANSLATE'}),
     "Modify/Match Transformations/Match Rotation": ("allset.match_transform", {"kind": 'ROTATE'}),
@@ -315,8 +318,11 @@ MAP = {
     "Mesh/Combine": "allset.combine",                     # Maya: new pCube2, centre pivot (step 63)
     "Mesh/Separate": "allset.separate",                   # object mode: polySurfaceN under a group
     "Mesh/Booleans/Union": ("allset.boolean", {"operation": 'UNION'}),
-    "Mesh/Booleans/Difference": ("allset.boolean", {"operation": 'DIFFERENCE'}),
+    "Mesh/Booleans/Difference (A - B)": ("allset.boolean", {"operation": 'DIFFERENCE'}),
     "Mesh/Booleans/Intersection": ("allset.boolean", {"operation": 'INTERSECT'}),
+    # step 219: Maya 2026 Booleans (maya2026_menus_dump.json; PolygonBooleanDifferenceBA = polyPerformBooleanAction 4)
+    "Mesh/Booleans/Difference (B - A)": ("allset.boolean", {"operation": 'DIFFERENCE_BA'}),
+    "Mesh/Unsmooth": ("v3d", "mesh.unsubdivide", {}),        # UnsmoothPolygon -> Blender Un-Subdivide
     "Mesh/Fill Hole": "mesh.fill_holes",
     "Mesh/Reduce": _mod('DECIMATE'),
     "Mesh/Remesh": _mod('REMESH'),
@@ -333,6 +339,7 @@ MAP = {
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect (step 139, edit_mesh_139_edit.md §1)
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace (step 65)
+    "Edit Mesh/Smart Extrude": ("v3d", "allset.extrude", {}),   # Maya 2026 SmartExtrude (step 219)
     "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices (step 139, edit_mesh_139_edit.md §2)
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
     "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first (step 139, edit_mesh_139_edit.md §4)
@@ -346,7 +353,7 @@ MAP = {
     "Edit Mesh/Extract": ("mesh.separate", {"type": 'SELECTED'}),
     "Edit Mesh/Poke": "mesh.poke",
     # --- Mesh Tools ---
-    "Mesh Tools/Show/Hide Modeling Toolkit": ("allset.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
+    "Mesh Tools/Hide Modeling Toolkit": ("allset.editor_toggle", {"editor": 'MODELING_TOOLKIT'}),
     "Mesh Tools/Create Polygon": "allset.create_polygon_start",       # step 144: kit tool, a new polySurfaceN
     "Mesh Tools/Insert Edge Loop": ("tool", "allset.insert_edge_loop_tool", True),   # step 144: click = loop there
     "Mesh Tools/Multi-Cut": ("tool", "allset.multi_cut_tool", True),      # step 129
@@ -381,7 +388,7 @@ MAP = {
     "Deform/ShrinkWrap": _deformer('SHRINK_WRAP'),
     "Deform/Nonlinear/Wave": _deformer('WAVE'),
     "Deform/Texture": _deformer('TEXTURE'),
-    "Deform/Paint Weights/Set Membership": "paint.weight_paint_toggle",
+    "Deform/Paint Membership": "paint.weight_paint_toggle",
     # --- UV ---
     "UV/UV Editor": _editor('UV'),
     "UV/Planar": "allset.uv_planar",
@@ -478,14 +485,21 @@ MAP = {
     "Playback/Set Range to/Selected": ("allset.time_set_range", {"mode": "SELECTED"}),
     "Playback/Playback Speed/Real-time": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
                                                                    "value": "FRAME_DROP"}),
+    # step 219: Maya 2026 Play Every Frame, Free / Max Real-time = Blender Play Every Frame (never above the fps)
+    **{f"Playback/Playback Speed/Play Every Frame, {k}": ("wm.context_set_enum", {"data_path": "scene.sync_mode",
+                                                                                  "value": "NONE"})
+       for k in ("Free", "Max Real-time")},
     "Playback/Render Current Frame": "allset.render_current_frame",
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
-    "Visualize/Create Editable Motion Trail": "object.paths_calculate",
+    "Visualize/Motion Trail Editor": "object.paths_calculate",
     # step 171 (research/maya/re/visualize_171.md): snapshots + ghosting
     "Visualize/Create Animation Snapshot": "allset.animation_snapshot",
     "Visualize/Update Snapshot": "allset.update_snapshot",
-    "Visualize/Open Ghosting Editor": "allset.opt_ghosting_editor",
+    "Visualize/Ghosting Editor": "allset.opt_ghosting_editor",
+    "Windows/Animation Editors/Ghosting Editor": "allset.opt_ghosting_editor",       # step 219 (Maya 2026)
+    "Windows/Animation Editors/Motion Trail Editor": "object.paths_calculate",
+    "Visualize/Blue Pencil": ("v3d", "wm.tool_set_by_id", {"name": "builtin.annotate"}),   # Blender Annotate
     "Visualize/Ghost Selected": ("allset.ghost", {"action": "GHOST"}),
     "Visualize/Unghost Selected": ("allset.ghost", {"action": "UNGHOST"}),
     "Visualize/Unghost All": ("allset.ghost", {"action": "UNGHOST_ALL"}),
@@ -524,7 +538,8 @@ MAP = {
     # --- Rendering ---
     # Materials (research/maya/menus.md:1652-1657; operators/material.py, docs/steps/step_29.md).
     "Lighting/Shading/Material Attributes": ("v3d", "allset.material_attributes", {}),
-    "Lighting/Shading/Assign New Material...": "allset.assign_new_material",
+    # Maya 2026: Assign New Material is a submenu (favourites + New Material...) (step 219)
+    "Lighting/Shading/Assign New Material/New Material...": "allset.assign_new_material",
     "Lighting/Shading/Assign Favorite Material": ("menu", "ALLSET_MT_assign_favorite_material"),
     "Lighting/Shading/Assign Existing Material": ("menu", "ALLSET_MT_assign_existing_material"),
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
@@ -557,52 +572,20 @@ EXTRA = {
 # Submenus Maya builds at run time, so research/maya/menus.json has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
 CHILDREN = {
+    # Step 219: the other run-time submenus (Windows > ... Editors, Modify > Match Transformations / Snap Align
+    # Objects, Display > Heads Up Display) now come from the Maya 2026 GUI dump in ui/menu_data.py.
     # Windows > Settings/Preferences ($M/scripts/startup/WindowMenu.mel:741 buildSettingsMenu; Performance
     # Settings only with the legacy viewport, off by default; step 120)
     "Windows/Settings/Preferences": [
         ("Preferences",), ("-", ""), ("Hotkey Editor",), ("Color Settings",), ("Marking Menu Editor",),
         ("Shelf Editor",), ("Panel Editor",), ("-", ""), ("Plug-in Manager",)],
-    # Modify > Match Transformations / Snap Align Objects ($M\startup\ModObjectsMenu.mel:290-480, step 59)
-    "Modify/Match Transformations": [
-        ("Match All Transforms",), ("Match Translation",), ("Match Rotation",), ("Match Scaling",),
-        ("-", ""), ("Match Pivots",)],
-    "Modify/Snap Align Objects": [
-        ("Point to Point",), ("2 Points to 2 Points",), ("3 Points to 3 Points",), ("Align Objects",),
-        ("Position Along Curve",)],
-    "Windows/General Editors": [
-        ("Attribute Editor",), ("Channel Box / Layer Editor",), ("Channel Box",), ("Layer Editor",),
-        ("Tool Settings",), ("-", ""), ("Hypergraph: Hierarchy",), ("Hypergraph: Connections",),
-        ("Asset Editor",), ("Attribute Spread Sheet",), ("Component Editor",), ("Connection Editor",),
-        ("Channel Control",), ("Display Layer Editor",), ("File Path Editor",), ("Namespace Editor",),
-        ("-", ""), ("Script Editor",), ("Command Shell",), ("Profiler",), ("Evaluation Toolkit",)],
-    "Windows/Modeling Editors": [
-        ("Modeling Toolkit",), ("Paint Effects",), ("UV Editor",), ("XGen Editor",), ("Crease Sets",)],
-    "Windows/Animation Editors": [
-        ("Graph Editor",), ("Time Editor",), ("Trax Editor",), ("Camera Sequencer",), ("Dope Sheet",),
-        ("Quick Rig",), ("HumanIK",), ("Shape Editor",), ("Pose Editor",), ("Expression Editor",),
-        ("Motion Library",)],
-    # Hypershade / Render View / Render Settings head Maya's list (added by the renderer menus) [K].
-    "Windows/Rendering Editors": [
-        ("Hypershade",), ("Render View",), ("Render Settings",), ("-", ""), ("Render Layer Editor",),
-        ("Light Editor",), ("Rendering Flags",), ("Shading Group Attributes",),
-        ("Hardware Render Buffer",)],
-    "Windows/Relationship Editors": [
-        ("Animation Layers",), ("Camera Sets",), ("Character Sets",), ("Deformer Sets",),
-        ("Display Layers",), ("Dynamic Relationships",), ("Light Linking",), ("Partitions",),
-        ("Render Layers",), ("Render Pass Sets",), ("Sets",), ("UV Linking",)],
-    "Windows/Relationship Editors/Light Linking": [("Light-Centric",), ("Object-Centric",)],
-    # Display > Heads Up Display: Maya lists every HUD item at run time [K]; the ones Blender's
-    # viewport overlay can show are mapped (Poly Count = scene statistics).
-    "Display/Heads Up Display": [
-        ("Animation Details",), ("Bounding Box",), ("Camera Names",), ("Frame Rate",),
-        ("Object Details",), ("Poly Count",), ("Selection Details",), ("View Axis",), ("View Cube",)],
 }
 MAP.update({
     "Display/Heads Up Display/Poly Count": _hud("space_data.overlay.show_stats"),
     # Maya furniture (ui/view_furniture.py, step 46): global like Maya's HUD.
     "Display/Heads Up Display/Camera Names": _kit_pref("maya_camera_names"),
     "Display/Heads Up Display/View Axis": _kit_pref("maya_view_axis"),
-    "Display/Heads Up Display/View Cube": _kit_pref("maya_viewcube"),
+    "Display/Heads Up Display/ViewCube": _kit_pref("maya_viewcube"),
 })
 
 
@@ -678,7 +661,7 @@ MAP.update({
     # Blender's playback frame rate display is a preference (#43): open it, don't write it
     "Display/Heads Up Display/Frame Rate": ("screen.userpref_show", {"section": 'VIEWPORT'}),
     "Display/Heads Up Display/Object Details": _hud("space_data.overlay.show_stats"),
-    "Display/Heads Up Display/Selection Details": _hud("space_data.overlay.show_stats"),
+    "Display/Heads Up Display/Select Details": _hud("space_data.overlay.show_stats"),
     "Display/Toggle Show/Hide": ("allset.visibility", {"action": 'TOGGLE'}),
     "Display/Object Display/Template": ("allset.object_display", {"kind": 'TEMPLATE'}),
     "Display/Object Display/Untemplate": ("allset.object_display", {"kind": 'UNTEMPLATE'}),
@@ -696,8 +679,7 @@ MAP.update({
                                                                           "display_mode": 'LIBRARIES'}),
     "Windows/General Editors/Command Shell": _editor('CONSOLE'),
     "Windows/Animation Editors/Shape Editor": ("allset.shape_editor", {}),
-    "Windows/Rendering Editors/Render Layer Editor": _props('VIEW_LAYER'),
-    "Windows/Relationship Editors/Render Layers": _props('VIEW_LAYER'),
+    "Windows/Rendering Editors/Render Setup": _props('VIEW_LAYER'),   # Maya 2026 (step 219)
     # Maya's Light Linking submenu (startup/WindowMenu.mel:597-612 buildLightLinkingEdMenu): the step 179 kit editor
     # in light- / object-centric mode, like Lighting/Shading > Light Linking Editor (step 211, audit 16 NB13).
     "Windows/Relationship Editors/Light Linking/Light-Centric": ("v3d", "allset.light_linking_editor",
@@ -891,7 +873,7 @@ MAP.update({
     "Lighting/Shading/Select Objects Shadowed by Light": ("allset.light_link_select", {"kind": "SHADOW"}),
     "Lighting/Shading/Select Lights Shadowing Object": ("allset.light_link_select", {"kind": "SHADOW", "lights": True}),
     "Toon/Assign Outline": ("v3d", "object.grease_pencil_add", {"type": 'LINEART_OBJECT'}),
-    "Stereo/Create/Stereo Camera": "allset.stereo_camera",
+    "Create/Cameras/Stereo Camera": "allset.stereo_camera",
     # Cache (Alembic / GPU cache = Alembic files; Geometry Cache = Alembic too, with a notice)
     "Cache/Alembic Cache/Open Alembic...": "wm.alembic_import",
     "Cache/Alembic Cache/Reference Alembic...": "wm.alembic_import",
@@ -907,9 +889,7 @@ MAP.update({
     "Cache/GPU Cache/Export Selection...": ("allset.file_export_selection", {"export_type": 'ABC'}),
     # Help -> Blender's documentation and community
     "Help/Search": _url(_MANUAL),
-    "Help/Find Menu": "wm.search_menu",
     "Help/Maya Help": _url(_MANUAL),
-    "Help/What's New/List of What's New": _url(_NOTES),
     "Help/Quick Tour": _url(_MANUAL + "getting_started/index.html"),
     "Help/Interactive Tutorials/Basic Skills": _url(_TUTORIALS),
     "Help/Interactive Tutorials/View All Interactive Tutorials...": _url(_TUTORIALS),
@@ -917,10 +897,6 @@ MAP.update({
     "Help/Scripting Reference/MEL Command Reference": _url(_API),
     "Help/Scripting Reference/Python Command Reference": _url(_API),
     "Help/Scripting Reference/Node and Attribute Reference": _url(_API + "bpy.types.html"),
-    "Help/MEL Command Reference": _url(_API),
-    "Help/Python Command Reference": _url(_API),
-    "Help/Node and Attribute Reference": _url(_API + "bpy.types.html"),
-    "Help/Services and Support/Patch Release Notes": _url(_NOTES),
     "Help/Services and Support/Release Notes Updates": _url(_NOTES),
     "Help/Services and Support/Support Center": _url("https://www.blender.org/support/"),
     "Help/Feedback/Report a Problem...": _url("https://projects.blender.org/blender/blender/issues"),
@@ -1113,6 +1089,7 @@ TWINS = {
         "Remove from Character Set", "Merge Character Sets", "Select Character Set Node", "Select Character Set Members",
         "Set Current Character Set")},
     "Hypershade/Edit/Select All by Type/Lights": "Select/All by Type/Lights",
+    "UV/3D Grab UV Tool": "UV Editor/Tools/Grab",      # step 219: Maya 2026 UV menu item = the UV Editor Grab tool
     **{f"UV Editor/Select/Convert Selection/{label}": f"Select/Convert Selection/{label}"
        for label in ("To Contained Edges", "To Contained Faces", "To Edge Loop", "To Edge Ring")},
     "UV Editor/Tools/Unfold": "UV Editor/Modify/Unfold",
