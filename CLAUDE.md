@@ -53,8 +53,10 @@ python tools/build_repo.py       # static extension repository: dist/repo/ (zip 
 python tools/repo_check.py       # clean sandbox: add file:// repo, install, Make Maya, disable, update to next version, Remove, repo-remove
 python tools/installer_check.py  # Windows installer helper (tools/installer/allset_setup.ps1) install -> uninstall round trip
 python tools/dogfood.py          # clean-config install + scripted Maya-user session: checks, tmp/dogfood/shots/, console errors (expected-behaviour checks may FAIL)
+python tests/integration/run.py --blender PATH  # PR #125 joint / Channel Box wheel / weight-paint checks (4 GUI windows open briefly; run per Blender version, not part of tests/run.py)
 ```
 
+- GUI runners (`tests/gui/run.py`, `tests/integration/run.py`) take `ALLSET_GUI_GEOMETRY="2048 0 1600 900"` to open their window on a second monitor.
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.allset`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
 - A test is a top-level `test_*` function that raises on failure. Shared helpers in `tests/kit.py` (`enable`, `disable`, `snapshot`, `diff`).
 - Logs: `tmp/test_env/logs/<test>.log`. Results: `tmp/test_env/results/<test>.json`.
