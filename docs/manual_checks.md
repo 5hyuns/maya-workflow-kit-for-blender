@@ -1425,3 +1425,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Select two CVs of that curve, Deform > Cluster: moving the cluster handle bends the spine chain.
 - [ ] RMB > Inputs > All Inputs… on a skinned mesh with a cluster: ▲ / ▼ swap the cluster and the skin, the mesh
   updates, Ctrl+Z restores (check the popup stays usable after a click).
+
+## Step 221 — quaternion bones in the Channel Box (Issue #131)
+
+- [ ] Generated Rigify rig, pick a control (Pose): the Channel Box shows Rotate X / Y / Z; type 270 in Rotate Y — it
+  stays 270; MMB-drag Rotate X turns the control; S keys it and the Graph Editor shows Rotate W / X / Y / Z.

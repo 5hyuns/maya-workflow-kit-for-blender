@@ -7,6 +7,10 @@
 
 ## 현재 작업
 
+- Step 221 (Quaternion bones, Issue #131) 완료 — `docs/steps/step_221.md`: 쿼터니언 본도 CB 에 Rotate X/Y/Z (compat 오일러, 쓸 때
+  쿼터니언), S 가 rotation_quaternion 4 채널 키. Rigify 212 컨트롤 전부 표시, -k 13 / 13. 공용 헬퍼 `rotation_display.py`.
+  **바로 다음 할 일**: step 222 = Rig FBX export matches Maya (Issue #132).
+
 - Step 220 (user report #139, 스냅이 안 움직임) 완료 — `docs/steps/step_220.md`: Step Snap Off 가 Blender 의 "Affect: Move" 를
   꺼서 그리드·정점 스냅이 모두 꺼졌던 것 수정 (+ 버튼·홀드·파일 열기 때 복구). 4.5 / 5.2.3 GUI 3 / 3.
   **바로 다음 할 일**: step 221 = Quaternion bones (Issue #131).

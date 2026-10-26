@@ -287,8 +287,12 @@ def has_channel(ob, key):
         return key[len(CUSTOM_PREFIX):] in ob.keys()
     if is_shape_key(key):
         return shape_owner(ob, key) is not None
-    kind = MAIN_BY_KEY[key][4]
-    return kind != "ROT" or ob.rotation_mode in {'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'}
+    # Maya rotation channels are always Rotate X / Y / Z: quaternion / axis-angle nodes show Euler (step 221)
+    return MAIN_BY_KEY[key][4] != "ROT" or hasattr(ob, "rotation_mode")
+
+
+def _non_euler_rot(ob, kind):
+    return kind == "ROT" and getattr(ob, "rotation_mode", 'XYZ') in ('QUATERNION', 'AXIS_ANGLE')
 
 
 def get_value(ob, key):
@@ -299,6 +303,9 @@ def get_value(ob, key):
         return ob[key[len(CUSTOM_PREFIX):]]
     if kind == "VIS":
         return not (compat.bone_hidden(ob) if is_bone(ob) else ob.hide_viewport)
+    if _non_euler_rot(ob, kind):
+        from .. import rotation_display
+        return rotation_display.shown_euler(ob)[idx]
     return getattr(ob, path)[idx]
 
 
@@ -331,6 +338,9 @@ def set_value(ob, key, value):
             compat.set_bone_hidden(ob, not value)
         else:
             ob.hide_viewport = not value
+    elif _non_euler_rot(ob, kind):
+        from .. import rotation_display
+        rotation_display.set_component(ob, idx, value)
     else:
         getattr(ob, path)[idx] = value
 
@@ -339,6 +349,10 @@ def keyframe(ob, key, keytype='KEYFRAME'):
     path, idx, kind = channel_path(key)
     if kind == "VIS" and is_bone(ob):
         return False
+    if _non_euler_rot(ob, kind):
+        # a quaternion is one rotation: Rotate X / Y / Z key all its components (decision 4, step 221)
+        from .. import rotation_display
+        path, idx = rotation_display.curve_path(ob), -1
     if kind == "SHAPE":
         owner = shape_owner(ob, key)
         if owner is None:
@@ -393,7 +407,11 @@ def fcurve(ob, key):
     fcs = _fcurves(ob)
     if fcs is None:
         return None
-    path, idx, _kind = channel_path(key)
+    path, idx, kind = channel_path(key)
+    if _non_euler_rot(ob, kind):
+        from .. import rotation_display
+        path = full_path(ob, rotation_display.curve_path(ob))
+        return None if path is None else next((fc for i in range(4) for fc in [fcs.find(path, index=i)] if fc), None)
     path = full_path(ob, path)
     return None if path is None else fcs.find(path, index=max(idx, 0))
 
@@ -402,6 +420,10 @@ def channel_fcurves(ob, key):
     """Every F-curve behind a channel (a SHAPES channel can have several: spot Cone Angle = size + blend)."""
     if is_shape_key(key):
         return shape_fcurves(ob, key)
+    if _non_euler_rot(ob, MAIN_BY_KEY.get(key, ("", "", "", 0, ""))[4]):
+        from .. import rotation_display
+        fcs, path = _fcurves(ob), full_path(ob, rotation_display.curve_path(ob))
+        return [fc for i in range(4) for fc in [fcs.find(path, index=i) if fcs is not None and path else None] if fc]
     fc = fcurve(ob, key)
     return [fc] if fc is not None else []
 
