@@ -114,7 +114,21 @@ def kit_icons_on(items, context):
 def _tools_from_context(cls, context, mode=None):
     original = _saved["tools_from_context"].__func__
     if _drawing[0] and mode is None:
-        maya = maya_tools(list(original(cls, context)), context.mode)
+        items = list(original(cls, context))
+        if context.mode == 'PAINT_WEIGHT':
+            # Maya's global selection/transform tools leave Artisan painting.
+            # Blender hides some of these tools in paint mode; draw their
+            # Object-mode definitions and release paint before activation.
+            paint_items = list(_flat(items))
+            object_items = list(original(cls, context, mode='OBJECT'))
+            maya = maya_tools(object_items, 'OBJECT')
+            if maya is not None:
+                current = context.workspace.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False)
+                brush = next((t for t in paint_items if current is not None and t.idname == current.idname), None)
+                if brush is not None and brush.idname not in MAYA_TOOLS:
+                    maya.append(brush)
+        else:
+            maya = maya_tools(items, context.mode)
         if maya is not None:
             if is_toolbox(context.space_data):
                 maya = kit_icons_on(maya, context)
@@ -168,6 +182,10 @@ def _show_tool_settings_later(window):
 
 def _make_activate_by_id(original):
     def activate_by_id(context, space_type, idname, *, as_fallback=False):
+        if (space_type == 'VIEW_3D' and context.mode == 'PAINT_WEIGHT'
+                and idname in MAYA_TOOLS and not as_fallback):
+            from ..operators.skin import leave_weight_paint
+            leave_weight_paint(context)
         done = original(context, space_type, idname, as_fallback=as_fallback)
         if done and space_type == 'VIEW_3D' and note_tool_click(context, idname):
             _show_tool_settings_later(getattr(context, "window", None))
@@ -183,6 +201,15 @@ def _draw_begin(self, context):
     _drawing[0] = _enabled(context)
     if context.space_data is not None and context.space_data.type == 'VIEW_3D':
         self.layout.context_pointer_set(TOOLBAR_MEMBER, context.space_data)
+        # Draw the F3 launcher *inside the actual tools panel* rather than
+        # relying on a separate TOOLS panel (which narrow tool strips can omit).
+        # Keep it icon-only to preserve the original toolbox width and icons.
+        if _enabled(context) and is_toolbox(context.space_data):
+            column = self.layout.column(align=True)
+            column.operator_context = 'INVOKE_DEFAULT'
+            column.scale_y = 1.35
+            column.operator('allset.viewport_search', text='', icon='VIEWZOOM', emboss=True)
+            self.layout.separator(factor=0.35)
 
 
 def _draw_end(self, context):
@@ -225,7 +252,9 @@ _fallback = set()   # screens whose main view shows its toolbar because the colu
 
 
 def column_width(context=None):
-    return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
+    """Original Maya toolbox width plus exactly three pixels at the current UI scale."""
+    scale = (context or bpy.context).preferences.system.ui_scale
+    return round((TOOLBAR_PX + 3) * scale)
 
 
 # Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md, step 142 #78): 280 px with the
@@ -484,22 +513,20 @@ def fit_columns(start_fit=True):
                            (outl.x + outl.width + 1, outl.y + outl.height // 2), pending)
         if armed and not needed:
             _disarm(screen)      # fitted: the user's own edge moves stay
-        narrow = column.width < want - 1
         main, _r = main_view3d(screen)
         if main is None or main == column:
             continue
-        key = screen.name
-        # The property update re-inits the area through the context window: a timer runs with the last active
-        # window, which may just have been closed (crash in WM_window_get_active_workspace, step 99) — so set it
-        # with this window in the context.
-        if narrow and key not in _fallback and not main.spaces.active.show_region_toolbar:
+        # Reveal the central tool strip only when the dedicated toolbox can no
+        # longer fit a full icon column. Respect manual splitter resizing.
+        # The +3 px default width deliberately sits above this threshold.
+        narrow = column.width < round(TOOLBAR_PX * scale) - 1
+        if bool(main.spaces.active.show_region_toolbar) != narrow:
             with context.temp_override(window=window, screen=screen, area=main):
-                main.spaces.active.show_region_toolbar = True
-            _fallback.add(key)
-        elif not narrow and key in _fallback:
-            with context.temp_override(window=window, screen=screen, area=main):
-                main.spaces.active.show_region_toolbar = False
-            _fallback.discard(key)
+                main.spaces.active.show_region_toolbar = narrow
+        if narrow:
+            _fallback.add(screen.name)
+        else:
+            _fallback.discard(screen.name)
     if start_fit and pending and not _running[0] and auto_warp():
         window, edge = next(iter(pending.values()))
         key = window.screen.name
@@ -628,6 +655,426 @@ class ALLSET_OT_quick_layout(bpy.types.Operator):
             return bpy.ops.allset.panel_set(key=key)
 
 
+class ALLSET_OT_viewport_search(bpy.types.Operator):
+    """Open Blender command search using the actual modeling viewport, not the tool strip."""
+    bl_idname = "allset.viewport_search"
+    bl_label = "Search Commands"
+    bl_description = "Search Blender commands in the main modeling viewport (F3)"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        from .status_line import main_view3d
+        area, region = main_view3d(context.screen)
+        if area is None or region is None:
+            self.report({'WARNING'}, "No modeling viewport found")
+            return {'CANCELLED'}
+        # Search uses its invocation context for poll and dispatch. The narrow
+        # dedicated toolbox is itself a VIEW_3D but has no useful model region.
+        with context.temp_override(window=context.window, area=area, region=region):
+            return bpy.ops.wm.search_menu('INVOKE_DEFAULT')
+
+    def execute(self, context):
+        return self.invoke(context, None)
+
+
+class ALLSET_OT_armature_mode(bpy.types.Operator):
+    """Switch the selected skeleton between Object, Edit, and Pose modes"""
+    bl_idname = 'allset.armature_mode'
+    bl_label = 'Armature Mode'
+    bl_options = {'INTERNAL'}
+
+    mode: bpy.props.EnumProperty(items=[
+        ('OBJECT', 'Object Mode', 'Select the entire skeleton'),
+        ('EDIT', 'Edit Mode', 'Edit bones and joint positions'),
+        ('POSE', 'Pose Mode', 'Select and pose joints'),
+    ])
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.view_layer.objects.active
+        return obj is not None and obj.type == 'ARMATURE'
+
+    def execute(self, context):
+        from .status_line import main_view3d
+        obj = context.view_layer.objects.active
+        if obj is None or obj.type != 'ARMATURE':
+            return {'CANCELLED'}
+        if obj.mode == self.mode:
+            return {'FINISHED'}
+        area, region = main_view3d(context.screen)
+        try:
+            if area is not None and region is not None:
+                with context.temp_override(window=context.window, area=area, region=region):
+                    bpy.ops.object.mode_set(mode=self.mode)
+            else:
+                bpy.ops.object.mode_set(mode=self.mode)
+        except (RuntimeError, ValueError) as ex:
+            self.report({'WARNING'}, f'Unable to switch armature mode: {ex}')
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class ALLSET_MT_armature_modes(bpy.types.Menu):
+    """Switch joint/object modes from the main viewport header."""
+    bl_idname = 'ALLSET_MT_armature_modes'
+    bl_label = 'Armature Mode'
+
+    def draw(self, context):
+        obj = context.view_layer.objects.active
+        for mode, label, icon in (
+            ('OBJECT', 'Object Mode', 'OBJECT_DATAMODE'),
+            ('EDIT', 'Edit Mode', 'EDITMODE_HLT'),
+            ('POSE', 'Pose Mode', 'POSE_HLT'),
+        ):
+            row = self.layout.row()
+            row.enabled = obj is not None and obj.mode != mode
+            row.operator('allset.armature_mode', text=label, icon=icon).mode = mode
+
+
+def _draw_armature_mode_header(self, context):
+    """Prominent, outlined armature mode picker with an explicit chevron."""
+    from . import armature_mode_pulse
+    armature_mode_pulse.forget(context)
+    if not _enabled(context):
+        return
+    obj = context.view_layer.objects.active
+    if obj is None or obj.type != 'ARMATURE':
+        return
+    from .status_line import main_view3d
+    area, _ = main_view3d(context.screen)
+    if context.area != area or is_toolbox(context.space_data):
+        return
+    mode_label = {'OBJECT': 'OBJECT', 'EDIT': 'EDIT JOINTS', 'POSE': 'POSE JOINTS'}.get(obj.mode, 'JOINT MODE')
+    mode_icon = {'OBJECT': 'OBJECT_DATAMODE', 'EDIT': 'EDITMODE_HLT', 'POSE': 'POSE_HLT'}.get(obj.mode, 'ARMATURE_DATA')
+    # Header menus normally hide their dropdown affordance; place a chevron
+    # explicitly alongside the text, inside a single framed toolbar group.
+    frame = self.layout.row(align=True)
+    frame.ui_units_x = armature_mode_pulse.CUSTOM_UNITS
+    # This control is first in the header, giving its pulse a stable local
+    # footprint even in the kit's custom Maya header and narrow viewports.
+    armature_mode_pulse.mark(context)
+    frame.label(text='', icon='ARMATURE_DATA')
+    frame.menu('ALLSET_MT_armature_modes', text=mode_label + '  ▾', icon=mode_icon)
+
+
+# Track active-object transitions rather than forcing Pose Mode continuously.
+# This leaves the user free to switch to Edit/Object manually in the dropdown.
+_last_armature_target = {}
+_AUTO_MODE_TICK = 0.18
+
+
+def _auto_armature_tick():
+    if bpy.app.background:
+        return None
+    try:
+        for window in bpy.context.window_manager.windows:
+            screen = window.screen
+            if not screen:
+                continue
+            from .status_line import main_view3d
+            area, region = main_view3d(screen)
+            key = window.as_pointer()
+            if area is None or region is None:
+                _last_armature_target.pop(key, None)
+                continue
+            with bpy.context.temp_override(window=window, area=area, region=region):
+                ctx = bpy.context
+                if not _enabled(ctx):
+                    _last_armature_target.pop(key, None)
+                    continue
+                ob = ctx.view_layer.objects.active
+                target = ob.as_pointer() if ob and ob.type == 'ARMATURE' and ob.select_get() else None
+                if key not in _last_armature_target:
+                    _last_armature_target[key] = target
+                    continue
+                previous = _last_armature_target[key]
+                if target == previous:
+                    continue
+                _last_armature_target[key] = target
+                if target is not None and ob.mode == 'OBJECT':
+                    try:
+                        bpy.ops.object.mode_set(mode='POSE')
+                    except (RuntimeError, ValueError):
+                        pass
+                elif target is None and ob and ob.mode == 'POSE':
+                    try:
+                        bpy.ops.object.mode_set(mode='OBJECT')
+                    except (RuntimeError, ValueError):
+                        pass
+    except (RuntimeError, ReferenceError, AttributeError):
+        pass
+    return _AUTO_MODE_TICK
+
+
+def _click_hits_joint(context, obj, x, y):
+    """Whether a viewport click is on a visible armature bone (screen pixels).
+
+    Unlike checking selection flags, this also handles Blender retaining edit-bone
+    selection when the user clicks a blank part of the viewport.
+    """
+    from bpy_extras.view3d_utils import location_3d_to_region_2d
+    from mathutils import Vector
+
+    region = context.region
+    space = context.space_data
+    if not space or space.type != 'VIEW_3D' or region.type != 'WINDOW':
+        return True  # Never change modes if the target region is uncertain.
+    rv3d = space.region_3d
+    if rv3d is None:
+        return True
+    if obj.mode == 'EDIT':
+        segments = ((b.head, b.tail) for b in obj.data.edit_bones if not b.hide)
+    else:
+        segments = ((b.head, b.tail) for b in obj.pose.bones if not b.bone.hide)
+
+    point = Vector((x, y))
+    # Bone handles have nonzero screen size; allow a modest hit margin.
+    margin = 15.0 * context.preferences.system.ui_scale
+    margin_sq = margin * margin
+    matrix = obj.matrix_world
+    for head, tail in segments:
+        p = location_3d_to_region_2d(region, rv3d, matrix @ head)
+        q = location_3d_to_region_2d(region, rv3d, matrix @ tail)
+        if p is None or q is None:
+            continue
+        delta = q - p
+        fraction = max(0.0, min(1.0, (point - p).dot(delta) / max(delta.length_squared, 1e-9)))
+        if (point - (p + fraction * delta)).length_squared <= margin_sq:
+            return True
+    return False
+
+
+
+def _other_object_under_click(context, armature, x, y):
+    """Find another selectable scene mesh under a viewport click.
+
+    Blender's regular object picking cannot change the active object while an
+    armature is in Edit Mode. Ray-cast instead, then switch mode before selecting.
+    """
+    from bpy_extras.view3d_utils import region_2d_to_origin_3d, region_2d_to_vector_3d
+    from mathutils import Vector
+
+    region = context.region
+    rv3d = context.space_data.region_3d
+    coord = Vector((x, y))
+    origin = region_2d_to_origin_3d(region, rv3d, coord)
+    direction = region_2d_to_vector_3d(region, rv3d, coord)
+    depsgraph = context.evaluated_depsgraph_get()
+    hit, _point, _normal, _index, obj, _matrix = context.scene.ray_cast(
+        depsgraph, origin, direction, distance=1.0e6)
+    if not hit or obj is None:
+        return None
+    original = getattr(obj, 'original', obj)
+    if original == armature or not original.visible_get(view_layer=context.view_layer):
+        return None
+    if original.name not in context.view_layer.objects or original.hide_select:
+        return None
+    return original
+
+
+class ALLSET_OT_pose_empty_click(bpy.types.Operator):
+    """Exit joint modes on an actual empty click in the main 3D viewport."""
+    bl_idname = 'allset.pose_empty_click'
+    bl_label = 'Maya Joint Empty Click Watch'
+    bl_options = {'INTERNAL'}
+    _area_ptr = None
+    _press = None
+
+    def invoke(self, context, event):
+        self._area_ptr = context.area.as_pointer()
+        self._press = None
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if not _enabled(context) or context.area is None or context.area.as_pointer() != self._area_ptr:
+            _pose_watch_areas.discard(self._area_ptr)
+            return {'CANCELLED'}
+        if event.type != 'LEFTMOUSE':
+            return {'PASS_THROUGH'}
+        # A click, not a box-select, drag, or transform-gizmo movement.
+        if event.value == 'PRESS':
+            self._press = (event.mouse_region_x, event.mouse_region_y) if (
+                context.region and context.region.type == 'WINDOW'
+                and not (event.shift or event.ctrl or event.alt or event.oskey)) else None
+            return {'PASS_THROUGH'}
+        if event.value != 'RELEASE':
+            return {'PASS_THROUGH'}
+        press = self._press
+        self._press = None
+        if press is None or context.region is None or context.region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        x, y = event.mouse_region_x, event.mouse_region_y
+        if min(x, y) < 0 or x >= context.region.width or y >= context.region.height:
+            return {'PASS_THROUGH'}
+        if (x - press[0]) ** 2 + (y - press[1]) ** 2 > 36:
+            return {'PASS_THROUGH'}
+
+        win, area = context.window, context.area
+        def check():
+            try:
+                if area not in win.screen.areas:
+                    return None
+                region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+                if region is None:
+                    return None
+                with bpy.context.temp_override(window=win, area=area, region=region):
+                    ctx = bpy.context
+                    obj = ctx.view_layer.objects.active
+                    if obj is not None and obj.type == 'ARMATURE' and obj.mode in {'POSE', 'EDIT'}:
+                        # Give joints priority even if a mesh is visible behind them.
+                        if not _click_hits_joint(ctx, obj, x, y):
+                            other = _other_object_under_click(ctx, obj, x, y)
+                            bpy.ops.object.mode_set(mode='OBJECT')
+                            if other is not None:
+                                # Edit Mode locks Blender's normal object selection.
+                                # Explicitly transfer selection after leaving the mode.
+                                for selected in tuple(ctx.selected_objects):
+                                    selected.select_set(False)
+                                other.select_set(True)
+                                ctx.view_layer.objects.active = other
+                            area.tag_redraw()
+            except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+                pass
+            return None
+        # Delay until Blender's own selection event has finished.
+        bpy.app.timers.register(check, first_interval=0.06)
+        return {'PASS_THROUGH'}
+
+
+_pose_watch_areas = set()
+
+
+def _ensure_pose_watch():
+    if bpy.app.background:
+        return None
+    try:
+        for window in bpy.context.window_manager.windows:
+            from .status_line import main_view3d
+            area, region = main_view3d(window.screen)
+            if area is None or region is None:
+                continue
+            ptr = area.as_pointer()
+            if ptr in _pose_watch_areas:
+                continue
+            with bpy.context.temp_override(window=window, area=area, region=region):
+                if _enabled(bpy.context):
+                    bpy.ops.allset.pose_empty_click('INVOKE_DEFAULT')
+                    _pose_watch_areas.add(ptr)
+    except (RuntimeError, ReferenceError, AttributeError):
+        pass
+    return 1.0
+
+
+# Outliner clicks occur in a separate editor, so the viewport's modal click
+# watcher cannot detect them. Observe actual Outliner object-row selection.
+_outliner_watch_areas = set()
+
+
+class ALLSET_OT_joint_outliner_select(bpy.types.Operator):
+    """Leave armature joint mode when a different object is picked in the Outliner."""
+    bl_idname = 'allset.joint_outliner_select'
+    bl_label = 'Maya Joint Outliner Selection Watch'
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        self._area_ptr = context.area.as_pointer()
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        area = context.area
+        if (area is None or area.as_pointer() != self._area_ptr
+                or area.type != 'OUTLINER' or not _enabled(context)):
+            _outliner_watch_areas.discard(self._area_ptr)
+            return {'CANCELLED'}
+        if event.type != 'LEFTMOUSE' or event.value != 'RELEASE':
+            return {'PASS_THROUGH'}
+        if context.region is None or context.region.type != 'WINDOW':
+            return {'PASS_THROUGH'}
+        win = context.window
+        # Blender updates selected_ids on completion of the Outliner click.
+        def after_selection():
+            try:
+                if area not in win.screen.areas or area.type != 'OUTLINER':
+                    return None
+                region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+                if region is None:
+                    return None
+                with bpy.context.temp_override(window=win, area=area, region=region):
+                    ctx = bpy.context
+                    if not _enabled(ctx):
+                        return None
+                    selected = [item for item in ctx.selected_ids if isinstance(item, bpy.types.Object)]
+                    if len(selected) != 1:
+                        return None
+                    target = selected[0]
+                    active = ctx.view_layer.objects.active
+                    if (active is None or active.type != 'ARMATURE'
+                            or active.mode not in {'EDIT', 'POSE'} or target == active
+                            or target.name not in ctx.view_layer.objects
+                            or target.hide_select):
+                        return None
+                    from .status_line import main_view3d
+                    view, view_region = main_view3d(win.screen)
+                    if view is None or view_region is None:
+                        return None
+                    with bpy.context.temp_override(window=win, area=view, region=view_region):
+                        bpy.ops.object.mode_set(mode='OBJECT')
+                        for ob in tuple(ctx.view_layer.objects.selected):
+                            ob.select_set(False)
+                        target.select_set(True)
+                        ctx.view_layer.objects.active = target
+                        _last_armature_target[win.as_pointer()] = None
+                        view.tag_redraw()
+                    area.tag_redraw()
+            except (RuntimeError, ReferenceError, AttributeError, TypeError, ValueError):
+                pass
+            return None
+        bpy.app.timers.register(after_selection, first_interval=0.06)
+        return {'PASS_THROUGH'}
+
+
+def _ensure_outliner_watch():
+    if bpy.app.background:
+        return None
+    try:
+        for win in bpy.context.window_manager.windows:
+            for area in win.screen.areas:
+                if area.type != 'OUTLINER' or area.as_pointer() in _outliner_watch_areas:
+                    continue
+                region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+                if region is None:
+                    continue
+                with bpy.context.temp_override(window=win, area=area, region=region):
+                    if _enabled(bpy.context):
+                        bpy.ops.allset.joint_outliner_select('INVOKE_DEFAULT')
+                        _outliner_watch_areas.add(area.as_pointer())
+    except (RuntimeError, ReferenceError, AttributeError):
+        pass
+    return 1.0
+
+
+class ALLSET_PT_toolbox_search(bpy.types.Panel):
+    """A visible F3 search launcher above the native Maya tool icons."""
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_label = "Search Commands"
+    bl_options = {'HIDE_HEADER'}
+    bl_order = -100
+
+    @classmethod
+    def poll(cls, context):
+        return _enabled(context) and is_toolbox(context.space_data)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator_context = 'INVOKE_DEFAULT'
+        column = layout.column(align=True)
+        column.scale_y = 1.4
+        column.operator('allset.viewport_search', text='', icon='VIEWZOOM', emboss=True)
+
+
 class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -653,7 +1100,7 @@ class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
         button(col, "allset.open_editor", "layout:OUTLINER", 'OUTLINER', text="").ui_type = 'OUTLINER'
 
 
-classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_PT_toolbox_layouts)
+classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
 
 
 def register():
@@ -662,6 +1109,11 @@ def register():
     _saved["tools_from_context"] = TOOLBAR.__dict__["tools_from_context"]
     TOOLBAR.tools_from_context = classmethod(_tools_from_context)
     TOOLBAR.prepend(_draw_begin)
+    bpy.types.VIEW3D_HT_header.prepend(_draw_armature_mode_header)
+    if not bpy.app.background:
+        bpy.app.timers.register(_auto_armature_tick, first_interval=0.5, persistent=True)
+        bpy.app.timers.register(_ensure_pose_watch, first_interval=1.0, persistent=True)
+        bpy.app.timers.register(_ensure_outliner_watch, first_interval=1.0, persistent=True)
     TOOLBAR.append(_draw_end)
     from bl_ui import space_toolsystem_common as stc
     _saved["activate_by_id"] = stc.activate_by_id
@@ -674,6 +1126,12 @@ def register():
 def unregister():
     _running[0] = False
     _tab_target.clear()
+    _last_armature_target.clear()
+    _pose_watch_areas.clear()
+    _outliner_watch_areas.clear()
+    for timer in (_auto_armature_tick, _ensure_pose_watch, _ensure_outliner_watch):
+        if bpy.app.timers.is_registered(timer):
+            bpy.app.timers.unregister(timer)
     if _fit_after_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_fit_after_load)
     if bpy.app.timers.is_registered(_fit_tick):
@@ -683,6 +1141,7 @@ def unregister():
     if "activate_by_id" in _saved:
         stc.activate_by_id = _saved.pop("activate_by_id")
     _last_click[:] = [None, 0.0]
+    bpy.types.VIEW3D_HT_header.remove(_draw_armature_mode_header)
     TOOLBAR.remove(_draw_begin)
     TOOLBAR.remove(_draw_end)
     for cls in reversed(classes):

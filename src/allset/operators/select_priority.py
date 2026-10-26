@@ -6,8 +6,9 @@ Maya picks the overlapping candidate of the highest type priority (``selectPrefP
 research/maya/defaults.json:105, PREF:779-847), occluded or not. Blender's ``view3d.select`` picks by
 depth, so a control curve or a joint in front of (or behind) a mesh can lose to the mesh.
 
-``allset.select_priority`` sits in front of the object-mode click select items. It only looks for
-candidates above priority 2: when there is none, Blender's own pick (with its cycling) runs as usual.
+``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
+Pose mode directly; clicks away from a skeleton release Pose/Edit mode for native object picking.
+In Object mode, ordinary candidates still use Blender's native pick and cycling.
 """
 
 import math
@@ -181,23 +182,75 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
     def invoke(self, context, event):
         from ..ui import toolbox
         space, region = context.space_data, context.region
-        if (context.mode != 'OBJECT' or space is None or space.type != 'VIEW_3D' or region is None
-                or region.type != 'WINDOW' or toolbox.is_toolbox(space) or not _enabled(context)):
+        if (context.mode not in {'OBJECT', 'POSE', 'EDIT_ARMATURE'} or space is None or space.type != 'VIEW_3D' or region is None
+                or region.type != 'WINDOW' or toolbox.is_toolbox(space)):
             return {'PASS_THROUGH'}
         rv3d = context.region_data
         if rv3d is None:
             return {'PASS_THROUGH'}
         scale = context.preferences.system.ui_scale or 1.0
-        best = rank(hits(context, region, rv3d, (event.mouse_region_x, event.mouse_region_y)), RADIUS_PX * scale)
+        from . import joint_selection
+        mouse = (event.mouse_region_x, event.mouse_region_y)
+        radius = RADIUS_PX * scale
+        # In component mode native bone picking keeps endpoint and connected-bone semantics.
+        # A click away from the skeleton releases the edit-mode lock.
+        if context.mode == 'EDIT_ARMATURE':
+            if joint_selection.pick(context, context.active_object, mouse, radius) is not None:
+                return {'PASS_THROUGH'}
+            joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+            active = context.active_object
+            return self._finish_pick(context, event, active is not None and active.select_get())
+        enabled = _enabled(context)
+        best = rank(hits(context, region, rv3d, mouse), radius) if enabled else None
         if best is None:
+            if not enabled and context.mode == 'OBJECT':
+                # Native depth picking chooses the object when type priority is off;
+                # an armature hit still resolves to an individual Maya joint.
+                previous = context.active_object
+                joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+                ob = context.active_object
+                if ob is None and event.ctrl and not event.shift:
+                    ob = previous
+                if ob is not None and ob.type == 'ARMATURE':
+                    name = joint_selection.pick(context, ob, mouse, radius)
+                    if name is not None:
+                        selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
+                        return self._finish_pick(context, event, selected)
+                active = context.active_object
+                return self._finish_pick(context, event, active is not None and active.select_get())
+            if context.mode == 'POSE':
+                # Priority can be disabled without disabling direct joint selection in the rig.
+                ob = context.active_object
+                name = joint_selection.pick(context, ob, mouse, radius)
+                if name is not None:
+                    selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
+                    return self._finish_pick(context, event, selected)
+                joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+                active = context.active_object
+                return self._finish_pick(context, event, active is not None and active.select_get())
             return {'PASS_THROUGH'}
         ob = context.scene.objects[best[0]]
-        apply(context, ob, event.shift, event.ctrl)
-        if event.value == 'PRESS' and ob.select_get():
+        if ob.type == 'ARMATURE':
+            name = joint_selection.pick(context, ob, mouse, radius)
+            if name is None:
+                # The coarse armature hit includes unselectable bones; let native picking decide.
+                if context.mode == 'POSE':
+                    joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+                    return {'FINISHED'}
+                return {'PASS_THROUGH'}
+            selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
+        else:
+            joint_selection.leave(context, clear_selection=not (event.shift or event.ctrl))
+            apply(context, ob, event.shift, event.ctrl)
+            selected = ob.select_get()
+        return self._finish_pick(context, event, selected)
+
+    def _finish_pick(self, context, event, selected):
+        if event.value == 'PRESS' and selected:
             # Tweak tool: this press is consumed, so Blender makes no CLICK_DRAG from it — start the
             # tweak's move ourselves once the mouse leaves the drag threshold (step 97)
             self._start = (event.mouse_x, event.mouse_y)
-            self._threshold = context.preferences.inputs.drag_threshold_mouse * scale
+            self._threshold = context.preferences.inputs.drag_threshold_mouse * (context.preferences.system.ui_scale or 1.0)
             context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         return {'FINISHED'}

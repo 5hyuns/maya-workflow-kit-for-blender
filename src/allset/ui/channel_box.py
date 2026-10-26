@@ -1853,12 +1853,48 @@ def row_for(context, ob, kind, name, mod_type="", nth=0):
 @persistent
 def _on_depsgraph(_scene, _depsgraph):
     rebuild_rows()
+    # The dock is a custom PROPERTIES-area UI, not Blender's native transform
+    # sidebar. Tag it explicitly: transform gizmos can update RNA values without
+    # invalidating the Channel Box panel's drawn value fields.
+    from . import maya_dock
+    maya_dock.redraw()
 
 
 @persistent
 def _on_load(_dummy):
+    global _wheel_generation
+    _wheel_generation += 1
+    _wheel_windows.clear()
+    _last.clear()
     reset_open()
     rebuild_rows()
+
+
+_transform_snapshot = None
+
+
+def _poll_transform_values():
+    """Refresh displayed transform channels even during modal gizmo movements."""
+    global _transform_snapshot
+    try:
+        ob = lead()
+        if ob is None:
+            signature = None
+        elif is_bone(ob):
+            signature = (ob.id_data.as_pointer(), ob.name, tuple(v for row in ob.matrix for v in row))
+        else:
+            signature = (ob.as_pointer(), tuple(ob.location), tuple(ob.rotation_euler),
+                         tuple(ob.rotation_quaternion), tuple(ob.rotation_axis_angle),
+                         tuple(ob.scale), ob.rotation_mode, ob.hide_viewport)
+        # Request redraw on every tick, not just on a changed RNA snapshot.
+        # While a Blender transform operator is modal the RNA snapshot may
+        # remain unchanged even though the displayed channel value is stale.
+        _transform_snapshot = signature
+        from . import maya_dock
+        maya_dock.redraw()
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
+    return 0.1
 
 
 def _first_rebuild():
@@ -1910,8 +1946,10 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
 _scroll = {}    # area pointer -> first line shown
 _reveal = {"node": None}    # an INPUTS node key to scroll into view at the next draw (``reveal``)
 _last = {}      # area pointer -> (first, total, limit) of the last draw (limit None: every line fits)
-WHEEL_LINES = 2
+WHEEL_LINES = 1
 BUTTON_LINES = 3
+_wheel_windows = {}   # live window pointer -> registration generation
+_wheel_generation = 0
 
 
 class Lines:
@@ -2035,7 +2073,8 @@ def in_channel_part(context, event):
 def over_pane(context, event):
     """The mouse is over an overflowing Channel Box part of a Maya dock."""
     area, region = context.area, context.region
-    if area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW':
+    if (area is None or region is None or area.type != 'PROPERTIES' or region.type != 'WINDOW'
+            or context.mode == 'PAINT_WEIGHT'):
         return False
     from . import maya_dock
     if maya_dock.shown_kind(context) != 'CHANNEL_BOX':
@@ -2044,6 +2083,101 @@ def over_pane(context, event):
         return False
     from_top = region.height - event.mouse_region_y
     return 0 <= from_top <= cb_share(region, _unit(context)) * region.height
+
+
+def scroll_lines(context, amount):
+    """Move only the virtual Channel Box rows, never values or the Layer Editor."""
+    area = context.area
+    if area is None:
+        return False
+    ptr = area.as_pointer()
+    first, total, limit = _last.get(ptr, (0, 0, None))
+    if limit is None:
+        return False
+    first = _scroll.get(ptr, first)  # several wheel events may arrive before the next redraw
+    _scroll[ptr] = max(0, min(first + amount, max(0, total - limit)))
+    if _scroll[ptr] != first and context.window is not None:
+        # New rows can appear under a stationary cursor; never retain the old
+        # channel hit for the next click or drag.
+        _hover.pop(context.window.as_pointer(), None)
+    area.tag_redraw()
+    return True
+
+
+class ALLSET_OT_cb_wheel(bpy.types.Operator):
+    """Catch Channel Box scrolling before Blender's field and panel handlers"""
+    bl_idname = 'allset.cb_wheel'
+    bl_label = 'Channel Box Wheel Navigation'
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        if context.window is None:
+            return {'CANCELLED'}
+        self._window_ptr = context.window.as_pointer()
+        self._generation = _wheel_generation
+        self._fraction = {}
+        _wheel_windows[self._window_ptr] = self._generation
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        from .. import live_refs
+        window = live_refs.window(self._window_ptr)
+        if self._generation != _wheel_generation or window is None:
+            if _wheel_windows.get(self._window_ptr) == self._generation:
+                _wheel_windows.pop(self._window_ptr, None)
+            return {'CANCELLED', 'PASS_THROUGH'}
+        if (event.type not in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'TRACKPADPAN'}
+                or event.ctrl or event.shift or event.alt or event.oskey):
+            return {'PASS_THROUGH'}
+        # Resolve the current regions each event: panes can resize, change tabs,
+        # move to another window, or close while this window watcher is running.
+        x, y = event.mouse_x, event.mouse_y
+        for area in window.screen.areas:
+            if area.type != 'PROPERTIES':
+                continue
+            for region in area.regions:
+                if (region.type != 'WINDOW' or not region.x <= x < region.x + region.width
+                        or not region.y <= y < region.y + region.height):
+                    continue
+                with context.temp_override(window=window, area=area, region=region):
+                    ctx = bpy.context
+                    from . import maya_dock
+                    if x >= region.x + region.width - maya_dock.area_reserved_px(ctx):
+                        return {'PASS_THROUGH'}
+                    from types import SimpleNamespace
+                    if not over_pane(ctx, SimpleNamespace(mouse_region_y=y - region.y)):
+                        return {'PASS_THROUGH'}
+                    if event.type == 'TRACKPADPAN':
+                        ptr = area.as_pointer()
+                        delta = (event.mouse_prev_y - event.mouse_y) / row_pitch(ctx)
+                        fraction = self._fraction.get(ptr, 0.0) + delta
+                        amount = int(fraction)
+                        self._fraction[ptr] = fraction - amount
+                    else:
+                        amount = WHEEL_LINES if event.type == 'WHEELDOWNMOUSE' else -WHEEL_LINES
+                    scroll_lines(ctx, amount)
+                    return {'RUNNING_MODAL'}
+        return {'PASS_THROUGH'}
+
+
+def _ensure_wheel_watch():
+    if bpy.app.background:
+        return None
+    for window in bpy.context.window_manager.windows:
+        if _wheel_windows.get(window.as_pointer()) == _wheel_generation:
+            continue
+        for area in window.screen.areas:
+            if area.type != 'PROPERTIES':
+                continue
+            region = next((r for r in area.regions if r.type == 'WINDOW'), None)
+            if region is None:
+                continue
+            with bpy.context.temp_override(window=window, area=area, region=region):
+                if _is_cb_dock(bpy.context):
+                    bpy.ops.allset.cb_wheel('INVOKE_DEFAULT')
+                    break
+    return 0.25
 
 
 class ALLSET_OT_cb_scroll(bpy.types.Operator):
@@ -2062,16 +2196,7 @@ class ALLSET_OT_cb_scroll(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        area = context.area
-        if area is None:
-            return {'CANCELLED'}
-        ptr = area.as_pointer()
-        first, total, limit = _last.get(ptr, (0, 0, None))
-        if limit is None:
-            return {'CANCELLED'}
-        _scroll[ptr] = max(0, min(first + self.lines, total - limit))
-        area.tag_redraw()
-        return {'FINISHED'}
+        return {'FINISHED'} if scroll_lines(context, self.lines) else {'CANCELLED'}
 
 
 def _scroll_row(col, first, limit, total):
@@ -2217,6 +2342,10 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
     def body(layout, context):
         """Draw the Channel Box; returns its height in UI units (estimate, for the CB_SHARE pane). The row above it
         (Maya's title / tab row) is the dock's handle + tab row (ui/maya_dock.py, step 116)."""
+        # Early-return views (paint tools, no selection, joint placement) use
+        # native region scrolling and must not retain an old virtual-row range.
+        if context.area is not None:
+            _last.pop(context.area.as_pointer(), None)
         # a dock narrower than Maya's Channel Box (user-sized, or not fitted yet) wraps the menu bar instead of
         # cutting "Channels" to "Chann..." (step 201 dogfood G1; same rule as the AE bar, step 197)
         from .attribute_editor import wrap_rows
@@ -2338,7 +2467,7 @@ class ALLSET_PT_dock_modeling_toolkit(bpy.types.Panel):
 
 classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider, ALLSET_OT_cb_select_channel,
            ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag,
-           ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, *CHANNEL_OPS,
+           ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, ALLSET_OT_cb_wheel, *CHANNEL_OPS,
            ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_freeze, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
            ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
@@ -2349,6 +2478,8 @@ classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider,
 
 
 def register():
+    global _wheel_generation
+    _wheel_generation += 1
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.allset_cb = bpy.props.PointerProperty(type=ALLSET_PG_channel_box)
@@ -2357,10 +2488,22 @@ def register():
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
     bpy.app.handlers.load_post.append(_on_load)
     bpy.app.timers.register(_first_rebuild, first_interval=0.0)
+    if not bpy.app.timers.is_registered(_poll_transform_values):
+        bpy.app.timers.register(_poll_transform_values, first_interval=0.1)
     bpy.types.UI_MT_button_context_menu.prepend(draw_button_menu)
+    if not bpy.app.background:
+        bpy.app.timers.register(_ensure_wheel_watch, first_interval=0.0, persistent=True)
 
 
 def unregister():
+    global _transform_snapshot, _wheel_generation
+    _wheel_generation += 1
+    _wheel_windows.clear()
+    if bpy.app.timers.is_registered(_ensure_wheel_watch):
+        bpy.app.timers.unregister(_ensure_wheel_watch)
+    _transform_snapshot = None
+    if bpy.app.timers.is_registered(_poll_transform_values):
+        bpy.app.timers.unregister(_poll_transform_values)
     _reveal["node"] = None
     _watching.clear()
     _hover.clear()

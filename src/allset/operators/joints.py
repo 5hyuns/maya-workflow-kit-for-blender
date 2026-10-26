@@ -209,8 +209,10 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
             return {'CANCELLED'}
         self._names, self._ob, self._parent = [], None, None
         ob = context.active_object
-        if ob is not None and ob.type == 'ARMATURE' and ob.mode == 'EDIT' and ob.data.edit_bones.active:
-            self._ob, self._parent = ob, ob.data.edit_bones.active.name   # branch from the picked joint
+        if ob is not None and ob.type == 'ARMATURE' and ob.mode in {'EDIT', 'POSE'}:
+            active = ob.data.edit_bones.active if ob.mode == 'EDIT' else ob.data.bones.active
+            if active is not None and active.name in selected_joint_names(ob):
+                self._ob, self._parent = ob, active.name   # branch from the picked joint
         self._swallow = False
         context.workspace.status_text_set(STATUS)
         context.window_manager.modal_handler_add(self)
@@ -230,6 +232,9 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         if self._ob is None:
             with context.temp_override(window=context.window, area=area, region=region):
                 self._ob = new_skeleton(context)
+        if self._ob.mode != 'EDIT':
+            with context.temp_override(window=context.window, area=area, region=region):
+                bpy.ops.object.mode_set(mode='EDIT')
         up = rv3d.view_rotation @ Vector((0.0, 1.0, 0.0))
         name = add_joint(self._ob, point, self._parent, up=up, length=units.maya_unit(context.scene))
         if name != self._parent:
@@ -239,6 +244,16 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         return True
 
     def modal(self, context, event):
+        if (event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS'
+                and not (event.alt or event.ctrl or event.shift or event.oskey)):
+            result = self._done(context)
+            tool = {'Q': 'builtin.select_box', 'W': 'builtin.move',
+                    'E': 'builtin.rotate', 'R': 'builtin.scale'}[event.type]
+            hit = view_under(context.window, event.mouse_x, event.mouse_y)
+            if hit is not None:
+                with context.temp_override(area=hit[0], region=hit[1]):
+                    bpy.ops.wm.tool_set_by_id(name=tool)
+            return {'FINISHED'} if self._ob is not None else {'CANCELLED'}
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             return self._done(context)
         if event.type == 'ESC' and event.value == 'PRESS':
@@ -258,7 +273,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
 
     def _done(self, context):
         self._end(context)
-        if self._ob is None:
+        if self._ob is None or not self._names:
             return {'CANCELLED'}
         hit = next(((a, r) for a in context.window.screen.areas if a.type == 'VIEW_3D'
                     for r in a.regions if r.type == 'WINDOW'), None)

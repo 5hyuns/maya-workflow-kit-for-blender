@@ -441,7 +441,7 @@ def patch_attribute_editor(kd):
     _add(kd, "Object Mode", "allset.ae_toggle", make_event("A", ctrl=True))
     _add(kd, "Object Mode", "object.select_all", make_event("A", ctrl=True, shift=True),
          {"action": 'SELECT'})
-    _add(kd, "Object Mode", "object.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
+    _add(kd, "Object Mode", "allset.select_none", make_event("D", alt=True))
     # Ctrl+a is a global Maya hotkey (no editor context binds Ctrl+a, hotkeys_default.json): in every component /
     # pose mode IC's Ctrl+A select-all gives way to the AE / CB swap and Ctrl+Shift+A selects all (#65, step 141).
     for km, idname in CTRL_A_MODES:
@@ -452,9 +452,9 @@ def patch_attribute_editor(kd):
         if km != "Paint Vertex Selection (Weight, Vertex)":     # IC has no Ctrl+Shift+A there
             kd.remove(km, idname, type="A", ctrl=True, shift=True)
         _add(kd, km, idname, make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
-    # Alt+d SelectNone: joints are objects in Maya, so pose mode just deselects; component modes clear and go back
-    # to object mode like Mesh (changeSelectMode -object; select -cl, research/maya/interaction.md:75)
-    _add(kd, "Pose", "pose.select_all", make_event("D", alt=True), {"action": 'DESELECT'})
+    # Alt+D clears joints, latent bone selection, and the active object, releasing
+    # pose/edit mode so the next click can select any object.
+    _add(kd, "Pose", "allset.select_none", make_event("D", alt=True))
     for km in ("Curve", "Armature", "Metaball", "Lattice", "Curves", "Point Cloud"):
         _add(kd, km, "allset.select_none", make_event("D", alt=True))
 
@@ -1294,6 +1294,18 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_global_keys_4, patch_graph_keys_2, patch_outliner_sets, patch_render_slots,
            patch_graph_outliner, patch_shelf_scroll, patch_script_editor, patch_key_batch_3,
            patch_menu_shortcuts, patch_repeat, patch_blender_render)
+
+
+def patch_weight_paint_exit(kd):
+    """Maya's Q/W/E/R change the global tool, leaving weight painting."""
+    for key, tool in (('Q', 'builtin.select_box'), ('W', 'builtin.move'),
+                      ('E', 'builtin.rotate'), ('R', 'builtin.scale')):
+        _remove_where(kd, 'Weight Paint', lambda it: it[0] == 'wm.tool_set_by_id', type=key)
+        _add(kd, 'Weight Paint', 'allset.weight_paint_exit', make_event(key),
+             {'tool': tool}, first=True, shadows=('3D View',))
+
+
+PATCHES += (patch_weight_paint_exit,)
 
 
 def apply(data):

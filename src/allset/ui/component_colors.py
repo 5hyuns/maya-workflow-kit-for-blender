@@ -60,6 +60,8 @@ _shader = {}
 _cache = {}                 # (object pointer, mesh pointer) -> _State
 _dirty = set()              # object / mesh names a depsgraph update touched since the last read
 _times = []
+_selection_snapshot = {}       # edit-mesh selection signatures for changes with no depsgraph notification
+_POLL_INTERVAL = 0.15
 
 
 # --- pure helpers (tests/test_step134_selection.py) -----------------------------------------------
@@ -315,15 +317,34 @@ def state(ob, depsgraph, faces=True):
     if st.arrays is not None and ob.name not in _dirty and ob.data.name not in _dirty and (st.faces or not faces):
         return st
     bm = bmesh.from_edit_mesh(ob.data)
+    # Draw may run before the selection poll. Detect changed membership here.
+    # This avoids presenting the previously cached GPU batch for one more frame.
+    if len(bm.verts) <= BMESH_LIMIT:
+        sig = _selection_signature(bm)
+        if _selection_snapshot.get(key) != sig:
+            _selection_snapshot[key] = sig
+            _dirty.update((ob.name, ob.data.name))
     evaluated = use_evaluated(ob.modifiers)
     if not readable(len(bm.verts), evaluated):
         st.arrays = None
         return None
-    arrays = read_evaluated(ob, depsgraph, faces) if evaluated else None
-    if arrays is None or len(arrays.co) != len(bm.verts) or len(arrays.edges) != len(bm.edges):
-        if len(bm.verts) > BMESH_LIMIT:
-            return None
+    # Blender 4.5: evaluated mesh selection attributes may lag behind the live
+    # edit BMesh (notably when growing/shrinking selections without a geometry
+    # dependency-graph update). Always obtain highlight flags from the BMesh.
+    # For small meshes also read cage coordinates from the BMesh, avoiding stale
+    # evaluated snapshots and preserving consistent element ordering.
+    if len(bm.verts) <= BMESH_LIMIT:
         arrays, faces = read_bmesh(bm), True
+    else:
+        arrays = read_evaluated(ob, depsgraph, faces) if evaluated else None
+        if arrays is None or len(arrays.co) != len(bm.verts) or len(arrays.edges) != len(bm.edges):
+            return None
+        # Keep evaluated coordinates on large meshes but use authoritative live
+        # BMesh selection flags (the element order matches when lengths match).
+        arrays.vsel = np.fromiter((v.select for v in bm.verts), bool, len(bm.verts))
+        arrays.esel = np.fromiter((e.select for e in bm.edges), bool, len(bm.edges))
+        if faces and len(arrays.fsel) == len(bm.faces):
+            arrays.fsel = np.fromiter((f.select for f in bm.faces), bool, len(bm.faces))
     st.arrays, st.faces, st.batches, st.bkey = arrays, faces, None, None
     return st
 
@@ -431,15 +452,75 @@ def frame_ms():
 def _callback():
     try:
         _draw()
-    except Exception:  # never let a draw error repeat every frame
+    except Exception:
+        # A transient graphics-context error must not permanently disable
+        # highlighting until the entire add-on is reloaded.
         import traceback
         traceback.print_exc()
-        _remove_handler()
 
 
 def _remove_handler():
     while _handle:
         bpy.types.SpaceView3D.draw_handler_remove(_handle.pop(), 'WINDOW')
+
+
+def _selection_signature(bm):
+    """Track selection *membership*, not only counts (replace/add/subtract all matter).
+
+    Blender does not always tag edit-mesh selection as a depsgraph update, especially
+    when expanding an existing component selection. The overlay must not cache it forever.
+    """
+    return (len(bm.verts), len(bm.edges), len(bm.faces),
+            tuple(v.index for v in bm.verts if v.select),
+            tuple(e.index for e in bm.edges if e.select),
+            tuple(f.index for f in bm.faces if f.select))
+
+
+def _poll_selection():
+    """Invalidate and redraw the Maya overlay when component selection changes."""
+    if not _handle:
+        return None
+    try:
+        import bmesh
+        seen = set()
+        changed = False
+        wm = bpy.context.window_manager
+        for window in wm.windows:
+            for area in window.screen.areas:
+                if area.type != 'VIEW_3D':
+                    continue
+                with bpy.context.temp_override(window=window, area=area):
+                    ctx = bpy.context
+                    if ctx.mode != 'EDIT_MESH':
+                        continue
+                    for ob in edit_objects(ctx):
+                        key = (ob.as_pointer(), ob.data.as_pointer())
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        bm = bmesh.from_edit_mesh(ob.data)
+                        # Avoid scanning unusually large edit meshes on a UI timer.
+                        if len(bm.verts) > BMESH_LIMIT:
+                            continue
+                        bm.verts.index_update()
+                        bm.edges.index_update()
+                        bm.faces.index_update()
+                        sig = _selection_signature(bm)
+                        if _selection_snapshot.get(key) != sig:
+                            _selection_snapshot[key] = sig
+                            _dirty.update((ob.name, ob.data.name))
+                            changed = True
+        for key in tuple(_selection_snapshot):
+            if key not in seen:
+                del _selection_snapshot[key]
+        if changed:
+            for window in wm.windows:
+                for area in window.screen.areas:
+                    if area.type == 'VIEW_3D':
+                        area.tag_redraw()
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass  # transient area/mode changes while switching Blender screens
+    return _POLL_INTERVAL
 
 
 @bpy.app.handlers.persistent
@@ -455,6 +536,7 @@ def _on_depsgraph(_scene=None, depsgraph=None):
 def _on_reload(*_args):
     _cache.clear()
     _dirty.clear()
+    _selection_snapshot.clear()
 
 
 _HANDLERS = (("depsgraph_update_post", _on_depsgraph), ("undo_post", _on_reload), ("redo_post", _on_reload),
@@ -465,10 +547,14 @@ def register():
     for name, fn in _HANDLERS:
         getattr(bpy.app.handlers, name).append(fn)
     _handle.append(bpy.types.SpaceView3D.draw_handler_add(_callback, (), 'WINDOW', 'POST_VIEW'))
+    if not bpy.app.timers.is_registered(_poll_selection):
+        bpy.app.timers.register(_poll_selection, first_interval=_POLL_INTERVAL)
 
 
 def unregister():
     _remove_handler()
+    if bpy.app.timers.is_registered(_poll_selection):
+        bpy.app.timers.unregister(_poll_selection)
     for name, fn in _HANDLERS:
         lst = getattr(bpy.app.handlers, name)
         if fn in lst:
@@ -482,5 +568,6 @@ def unregister():
     _apply_pending()
     _cache.clear()
     _dirty.clear()
+    _selection_snapshot.clear()
     _shader.clear()
     _times.clear()
