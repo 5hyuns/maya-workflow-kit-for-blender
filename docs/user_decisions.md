@@ -150,3 +150,14 @@
     켜져 있으면 전과 같이 Maya 우선순위 (IK 핸들 > 조인트 > 커브 > 메시). Pose / 아마추어 Edit 모드에서 리그 밖을 클릭하면 리그에서 빠져나가는
     동작은 설정과 무관 (아마추어 모드에서만 일어나는 일이라 「아마추어 히트에만 개입」 범위 안). 근거: `C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md`
     #3. 검증: `tests/test_pr125_followup.py::test_priority_off_leaves_non_joint_clicks_to_blender`.
+
+16. **스켈레톤 선택 = 자동 Pose 모드 (PR #125 수용, 2026-10-26, 유지보수자 결정: 「Maya 손맛이 맞으면 PR 동작을 따른다」)**.
+    `research/maya/workflows/rigging.md:136` 의 이전 결정 (delegated, 「오브젝트 모드에서 아마추어 클릭 → 포즈 모드 자동 진입은 하지 않음 —
+    다른 오브젝트 선택이 끊김」) 을 뒤집는다. 이유: PR #125 가 그 끊김을 풀었다 — Pose / 아마추어 Edit 에서 다른 오브젝트나 빈 곳을 클릭하면
+    (뷰포트, Outliner 모두) 리그에서 빠져나가 그 오브젝트를 고른다 (`joint_selection.select_object_at`, `toolbox.pose_empty_click`,
+    `toolbox.joint_outliner_select`). 그래서 「클릭 = 그 조인트 선택」 이라는 Maya 의 손맛 (Maya 의 조인트는 오브젝트 노드, 모드 없음;
+    2022 실측 + 2023–2027 문서 변화 없음, `C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md` #3 #4 #7, `PR125_MAYA_LATER.md` 5) 을 얻고
+    잃는 것이 없다. 규칙: 활성 + 선택된 아마추어가 바뀌면 Object → Pose, 선택이 풀리면 Pose → Object (`toolbox._auto_armature_tick`,
+    0.18 s); Edit 은 사용자가 고른 경우 (F8 / 선택기) 만. 남은 확인: Outliner / 전체 선택으로 아마추어를 고르면 선택된 본이 없어 Channel
+    Box 가 빈다 (Maya 는 루트 조인트 채널) — docs/manual_checks.md 「PR #125」. 연구 노트 `rigging.md:136` 은 메인 작업 트리의 추적되지 않는
+    파일이라 이 브랜치 작업에서 고치지 않았다 — 이 결정이 그 줄을 대신한다.
