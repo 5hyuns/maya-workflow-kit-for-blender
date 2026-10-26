@@ -86,6 +86,9 @@ def run_action(context, action, option=False, path=None):
     outer = undo_steps.depth() == 0
     label = _label(action, path)
     res = undo_steps.command(label, lambda: _run_action(context, action, option, path))
+    if outer and isinstance(res, set) and 'FINISHED' in res:
+        from ..command_line import runner         # Script Editor History > Echo All Commands (step 216)
+        runner.echo_action(action)
     if outer and not option and isinstance(res, set) and 'FINISHED' in res:
         from ..operators import repeat_maya       # Maya G / Recent Commands (step 175)
         repeat_maya.record(label, action, path, context)
