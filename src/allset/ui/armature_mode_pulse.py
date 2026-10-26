@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""A quiet, local highlight for the viewport's armature mode dropdown."""
+"""A quiet, local highlight for the viewport's armature mode dropdown.
+
+No Maya version has a pulsing header element (PR125_MAYA_LATER.md 4a): it only runs with the add-on preference
+``armature_mode_pulse`` on (default off), and the timer idles cheaply otherwise."""
 
 import math
 import time
@@ -16,7 +19,17 @@ _handles = []
 _custom = {}
 
 
+def wanted(context=None):
+    from .. import preferences
+    try:
+        return bool(getattr(preferences.get(context), "armature_mode_pulse", False))
+    except KeyError:
+        return False
+
+
 def eligible(context):
+    if not wanted(context):
+        return False
     ob = context.active_object
     return (ob is not None and ob.type == 'ARMATURE' and ob.select_get()
             and context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'})
@@ -94,6 +107,8 @@ def _draw():
 
 
 def _tick():
+    if not wanted():
+        return 0.5
     active = False
     for window in bpy.context.window_manager.windows:
         for area in window.screen.areas:

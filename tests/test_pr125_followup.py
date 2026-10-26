@@ -53,3 +53,46 @@ def test_no_split_faces_by_edges():
     assert "Split Faces by Edges" not in labels and "Detach" in labels
     assert "Edit Mesh/Split Faces by Edges" not in mm.MAP
     assert mm.MAP["Edit Mesh/Detach"] == "allset.detach"
+
+
+class _Ops:
+    """A stand-in UILayout recording operator ids in draw order."""
+
+    def __init__(self, log):
+        self.log = log
+
+    def __getattr__(self, name):
+        if name in ("row", "column", "box", "split"):
+            return lambda *a, **k: _Ops(self.log)
+        if name == "operator":
+            def op(idname, **kw):
+                self.log.append(idname)
+                from types import SimpleNamespace
+                return SimpleNamespace()
+            return op
+        return lambda *a, **k: None
+
+    def __setattr__(self, name, value):
+        if name == "log":
+            object.__setattr__(self, name, value)
+
+
+def test_header_extras_off_and_search_under_layouts():
+    """No Maya viewport header has a mode picker or a pulse: both are add-on preferences, off by default. The Tool
+    Box Search button sits under the layout / Outliner buttons (Maya 2022.1+ toolBox.mel:367-379), and the column
+    keeps Maya's measured width (no +3 px)."""
+    from types import SimpleNamespace
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    assert prefs.armature_mode_header is False and prefs.armature_mode_pulse is False
+    pulse = import_module(kit.MODULE + ".ui.armature_mode_pulse")
+    assert not pulse.wanted()
+    tb = import_module(kit.MODULE + ".ui.toolbox")
+    assert tb.column_width() == round(tb.TOOLBAR_PX * bpy.context.preferences.system.ui_scale)
+    log = []
+    tb.ALLSET_PT_toolbox_layouts.draw(SimpleNamespace(layout=_Ops(log)), bpy.context)
+    assert log[-1] == "allset.viewport_search" and log[-2] == "allset.open_editor", log
+    # the header picker draws nothing with the preference off
+    log = []
+    bpy.ops.object.armature_add()
+    tb._draw_armature_mode_header(SimpleNamespace(layout=_Ops(log)), bpy.context)
+    assert not log, log

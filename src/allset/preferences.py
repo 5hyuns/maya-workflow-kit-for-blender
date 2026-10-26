@@ -40,6 +40,17 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
                     "under the mouse, like Maya's selection priority",
         default=True)
+    # PR #125 extras with no Maya counterpart (no Maya 2022-2027 viewport header has a mode picker or a pulse,
+    # PR125_MAYA_LATER.md 4a): off by default.
+    armature_mode_header: bpy.props.BoolProperty(
+        name="Armature Mode Picker",
+        description="Show an Object / Edit Joints / Pose Joints picker at the start of the main viewport header "
+                    "while a skeleton is active (not part of Maya)",
+        default=False)
+    armature_mode_pulse: bpy.props.BoolProperty(
+        name="Pulse Armature Mode",
+        description="Softly pulse the viewport header's mode button while a skeleton is selected (not part of Maya)",
+        default=False)
     # First start (docs/steps/step_42.md): welcome dialog shown once.
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
 
@@ -366,6 +377,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")
         col.prop(self, "select_priority")
+        col.prop(self, "armature_mode_header")
+        col.prop(self, "armature_mode_pulse")
 
         box = layout.box()
         box.label(text="Scene Concepts")

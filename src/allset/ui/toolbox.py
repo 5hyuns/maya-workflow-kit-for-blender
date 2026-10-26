@@ -201,15 +201,6 @@ def _draw_begin(self, context):
     _drawing[0] = _enabled(context)
     if context.space_data is not None and context.space_data.type == 'VIEW_3D':
         self.layout.context_pointer_set(TOOLBAR_MEMBER, context.space_data)
-        # Draw the F3 launcher *inside the actual tools panel* rather than
-        # relying on a separate TOOLS panel (which narrow tool strips can omit).
-        # Keep it icon-only to preserve the original toolbox width and icons.
-        if _enabled(context) and is_toolbox(context.space_data):
-            column = self.layout.column(align=True)
-            column.operator_context = 'INVOKE_DEFAULT'
-            column.scale_y = 1.35
-            column.operator('allset.viewport_search', text='', icon='VIEWZOOM', emboss=True)
-            self.layout.separator(factor=0.35)
 
 
 def _draw_end(self, context):
@@ -252,9 +243,7 @@ _fallback = set()   # screens whose main view shows its toolbar because the colu
 
 
 def column_width(context=None):
-    """Original Maya toolbox width plus exactly three pixels at the current UI scale."""
-    scale = (context or bpy.context).preferences.system.ui_scale
-    return round((TOOLBAR_PX + 3) * scale)
+    return round(TOOLBAR_PX * (context or bpy.context).preferences.system.ui_scale)
 
 
 # Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md, step 142 #78): 280 px with the
@@ -513,20 +502,23 @@ def fit_columns(start_fit=True):
                            (outl.x + outl.width + 1, outl.y + outl.height // 2), pending)
         if armed and not needed:
             _disarm(screen)      # fitted: the user's own edge moves stay
+        narrow = column.width < want - 1
         main, _r = main_view3d(screen)
         if main is None or main == column:
             continue
-        # Reveal the central tool strip only when the dedicated toolbox can no
-        # longer fit a full icon column. Respect manual splitter resizing.
-        # The +3 px default width deliberately sits above this threshold.
-        narrow = column.width < round(TOOLBAR_PX * scale) - 1
-        if bool(main.spaces.active.show_region_toolbar) != narrow:
+        key = screen.name
+        # The property update re-inits the area through the context window: a timer runs with the last active
+        # window, which may just have been closed (crash in WM_window_get_active_workspace, step 99) — so set it
+        # with this window in the context. Only the kit's own fallback is undone: a toolbar the user showed (T)
+        # stays (PR #125 synced it to the column width every fit).
+        if narrow and key not in _fallback and not main.spaces.active.show_region_toolbar:
             with context.temp_override(window=window, screen=screen, area=main):
-                main.spaces.active.show_region_toolbar = narrow
-        if narrow:
-            _fallback.add(screen.name)
-        else:
-            _fallback.discard(screen.name)
+                main.spaces.active.show_region_toolbar = True
+            _fallback.add(key)
+        elif not narrow and key in _fallback:
+            with context.temp_override(window=window, screen=screen, area=main):
+                main.spaces.active.show_region_toolbar = False
+            _fallback.discard(key)
     if start_fit and pending and not _running[0] and auto_warp():
         window, edge = next(iter(pending.values()))
         key = window.screen.name
@@ -732,10 +724,12 @@ class ALLSET_MT_armature_modes(bpy.types.Menu):
 
 
 def _draw_armature_mode_header(self, context):
-    """Prominent, outlined armature mode picker with an explicit chevron."""
+    """Prominent, outlined armature mode picker with an explicit chevron. Maya has no mode picker in any version
+    (PR125_MAYA_LATER.md 4a): only drawn with the add-on preference ``armature_mode_header`` on."""
     from . import armature_mode_pulse
+    from .. import preferences
     armature_mode_pulse.forget(context)
-    if not _enabled(context):
+    if not _enabled(context) or not getattr(preferences.get(context), "armature_mode_header", False):
         return
     obj = context.view_layer.objects.active
     if obj is None or obj.type != 'ARMATURE':
@@ -1063,26 +1057,6 @@ def _ensure_outliner_watch():
     return 1.0
 
 
-class ALLSET_PT_toolbox_search(bpy.types.Panel):
-    """A visible F3 search launcher above the native Maya tool icons."""
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_label = "Search Commands"
-    bl_options = {'HIDE_HEADER'}
-    bl_order = -100
-
-    @classmethod
-    def poll(cls, context):
-        return _enabled(context) and is_toolbox(context.space_data)
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_DEFAULT'
-        column = layout.column(align=True)
-        column.scale_y = 1.4
-        column.operator('allset.viewport_search', text='', icon='VIEWZOOM', emboss=True)
-
-
 class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -1106,6 +1080,11 @@ class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
         button(sub, op, "layout:FRONT_PERSP", 'SPLIT_VERTICAL', text="").layout = 'FRONT_PERSP'
         col.separator()
         button(col, "allset.open_editor", "layout:OUTLINER", 'OUTLINER', text="").ui_type = 'OUTLINER'
+        # Maya 2022.1+: the Search icon under the layout / Outliner buttons, after a divider (toolBox.mel:367-379,
+        # PR125_MAYA_LATER.md 4b); it opens Blender's command search (Maya Ctrl+F = SearchEngine).
+        col.separator()
+        col.operator_context = 'INVOKE_DEFAULT'
+        col.operator('allset.viewport_search', text='', icon='VIEWZOOM')
 
 
 classes = (ALLSET_OT_toolbox_guard, ALLSET_OT_fit_columns, ALLSET_OT_quick_layout, ALLSET_OT_viewport_search, ALLSET_OT_armature_mode, ALLSET_MT_armature_modes, ALLSET_OT_pose_empty_click, ALLSET_OT_joint_outliner_select, ALLSET_PT_toolbox_layouts)
