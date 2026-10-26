@@ -1373,3 +1373,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Create > Lights > Volume Light, scale it to 5 around the cube, render (Cycles): faces nearer the centre are brighter, nothing lit outside the sphere.
 - [ ] Attribute Editor of lambert1: Diffuse 0.8; set it to 1 and render — the cube gets brighter by 1.25 x.
 - [ ] In Maya mode with the mouse over the Outliner, F12 opens Blender's Render window with the cube lit (no lights in the scene); over the 3D View F12 stays Maya's UV selection mask.
+
+## Step 215 — Maya Preferences window and Hotkey Editor (#121)
+
+- [ ] Windows > Settings/Preferences > Preferences: click through the Categories (the list scrolls); change Settings > Linear to millimeters and Time Slider > Framerate, then Cancel: both come back. Change them again and Save: they stay.
+- [ ] In Preferences > Undo, the "Blender Preferences" button opens Blender's Preferences on System (Undo Steps); the kit didn't change it.
+- [ ] Windows > Settings/Preferences > Hotkey Editor: search "duplicate", pick Duplicate, Assign New Hotkey..., press Ctrl+Shift+F9: Ctrl+Shift+F9 duplicates in the viewport; Restore brings Ctrl+D back. Quit without saving preferences: the change is gone next start (Blender's Save Preferences keeps it).

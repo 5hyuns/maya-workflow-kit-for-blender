@@ -2,6 +2,15 @@
 
 ## 현재 작업
 
+- Step 215 (Maya Preferences window and Hotkey Editor, Issue #121) 완료 — `docs/steps/step_215.md`, Maya 캡처
+  `research/maya/re/prefs_215.md` (GUI Maya, `research/maya/screens/prefs215/`). Windows > Settings/Preferences > Preferences = 킷
+  창 (Maya 38 범주 목록, 페이지 제목 · 섹션, 킷 설정 37 + 장면 값 12 편집, Blender 설정 12 개는 읽기 전용 + Recommended setup + Blender
+  Preferences 버튼, Save / Cancel / Revert to Saved / Restore Default Settings = Maya 공장 값). Hotkey Editor = 킷 창 (Maya 공장 단축키
+  400, 이름 / 단축키 검색, Maya 범주, 킷 바인딩, Assign New Hotkey = `keyconfigs.user` 항목 편집 (Blender 키맵 편집기와 같음, 킷은
+  파일 안 씀), Restore / Restore All). 헤드리스 전체 2101 / 2101, GUI 관련 + 스모크 87 / 87 (샷 4 장 확인).
+  **사용자 할 일**: 스토어에 0.4.1 zip 업로드; push 하면 #103–#121 닫힘; 에이전트 worktree 정리 여부.
+  **바로 다음 할 일**: step 216 = backlog 「maya.cmds look-alike 3」 (Issue #122).
+
 - Step 214 (Render parity 2, backlog #4, Issue #120) 완료 — `docs/steps/step_214.md`, Maya 측정 `research/maya/re/render_parity_214.md`
   (mayapy, Maya Software). lambert 계열 + lambert1 = 「Maya Diffuse」 노드 (Base Color = diffuse 0.8 × Color, AE Diffuse 행, 킷
   내보내기는 `diffuse_bypass`) → 기본 조명 큐브가 Maya 와 0.6 / 255 이내 (EEVEE · Cycles, 전에는 1.25 배). Create > Lights > Ambient
