@@ -7,6 +7,18 @@
 
 ## 현재 작업
 
+- PR #125 후속 (0.5.0, 브랜치 `merge-pr125`, push 안 함) — 유지보수자 결정: PR 수용, 최신 Maya 동작 기준, 오류 원인 수정. 근거
+  `C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md` · `PR125_MAYA_LATER.md`. 버전 0.5.2 → 0.5.0 + CHANGELOG; 조인트 감시 타이머 = 포인터
+  (`live_refs`, 창 닫기 크래시 재현 후 수정, `gui_pr125_window_close`); CB 0.1 s 폴은 변화 / 트랜스폼 중에만 redraw; 휠 3 줄; Joint Tool
+  = 미리 선택한 조인트에서 분기 안 함, 툴 중 조인트 클릭 = 분기 (`gui_pr125_joint_tool`); Edit Mesh 「Split Faces by Edges」 삭제 (생성기
+  재실행); 헤더 모드 선택기 · pulse = 애드온 설정 (기본 끔); Tool Box Search = 레이아웃 / Outliner 버튼 아래 (Maya 2022.1+), +3 px 폭
+  되돌림; Selection Priority 끔 = 조인트 클릭만 개입 (결정 15); 아마추어 선택 = 자동 Pose (결정 16, rigging.md:136 대체); Paint Skin
+  Weights = Maya 2024+ Tool Settings 섹션, Channel Box 는 그대로. 헤드리스 2117 / 2117, GUI 관련 + 스모크 201 / 201 (+ audit128 4 / 5,
+  실패 1 = PR 이전 master 와 같은 기존 실패), 통합 7 / 7 (4.5.4 · 5.2.2), repo_check 11 / 11. 이슈 #126 (Paint 나머지), #127 (Maya
+  2027 Skin Tools). 보고 `tmp/pr125_followup_report.md`.
+  **사용자 할 일**: 브랜치 검토 후 master 병합 · push; `research/maya/workflows/rigging.md:136` 에 결정 16 반영 (메인 트리의 추적 안 되는
+  파일이라 손대지 않음).
+
 - Step 216 (maya.cmds look-alike 3, Issue #122) 완료 — `docs/steps/step_216.md`, mayapy `research/maya/re/cmds_201.md` 「step 216」.
   cmds 23 함수 추가 (`command_line/cmds_rig.py`: makeIdentity, 제약 5 종, joint, connectAttr 계열; `cmds_misc.py`: nodeType / objectType,
   attributeQuery, currentUnit, sets, shadingNode, polyExtrudeFacet, polyEvaluate, exactWorldBoundingBox, listHistory, camera) → mayapy
