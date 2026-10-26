@@ -97,7 +97,7 @@ BY_COMMAND = {
     # --- Animation ---
     "PlayblastWindow": (("v3d", "allset.playblast", {}), 'RENDER_ANIMATION'),
     "CreateMotionTrail": ("object.paths_calculate", 'ANIM_DATA'),
-    "BakeSimulation": ("nla.bake", 'ACTION'),
+    "BakeSimulation": ("allset.bake_simulation", 'ACTION'),   # step 217 L18
     "SetKeyAnimated": (_key("Available"), 'KEYINGSET'),
     "SetKeyTranslate": (_key("Location"), 'CON_LOCLIKE'),
     "SetKeyRotate": (_key("Rotation"), 'CON_ROTLIKE'),

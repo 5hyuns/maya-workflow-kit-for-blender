@@ -245,16 +245,12 @@ def _run_set_key(context, v):
 
 
 def _run_bake(context, v):
-    scene = context.scene
-    start, end = (scene.frame_start, scene.frame_end) if v["time_range"] == "Time Slider" else \
-        (int(round(v["start"])), int(round(v["end"])))
-    types = {'POSE'} if context.mode == 'POSE' else {'OBJECT'}
-
-    def go():
-        return bpy.ops.nla.bake('EXEC_DEFAULT', frame_start=start, frame_end=end, step=max(1, int(round(v["sample_by"]))),
-                                only_selected=True, visual_keying=True, clear_constraints=not v["keep_unbaked"],
-                                bake_types=types)
-    return _with_hierarchy(context, v["hierarchy"] == "Below", go)
+    # step 217 L18: Maya's bakeResults rules (operators/bake_maya.py). Keep unbaked keys = keys outside the range,
+    # never constraint deletion (research/maya/re/maya2026_engine_fbx.md:89-92)
+    return bpy.ops.allset.bake_simulation(
+        'EXEC_DEFAULT', hierarchy_below=v["hierarchy"] == "Below", use_time_slider=v["time_range"] == "Time Slider",
+        start=int(round(v["start"])), end=int(round(v["end"])), sample_by=max(1, int(round(v["sample_by"]))),
+        keep_unbaked=bool(v["keep_unbaked"]), disable_implicit=bool(v["disable_implicit"]))
 
 
 def _run_uv_planar(context, v):
@@ -427,12 +423,13 @@ WINDOWS = [
         F("hierarchy", "Hierarchy:", "enum", "Selected", items=("Selected", "Below"))], _run_set_key,
         missing=("Set keys on: manipulator handles", "Set keys at: Prompt", "Set IK/FK keys", "Channels: From Channel Box",
                  "Control points", "Shapes")),
-    Window("bake_simulation", "Bake Simulation Options", "Bake", ("nla.bake", {}), [
+    Window("bake_simulation", "Bake Simulation Options", "Bake", ("allset.bake_simulation", {}), [
         F("hierarchy", "Hierarchy:", "enum", "Selected", items=("Selected", "Below")),
         F("time_range", "Time range:", "enum", "Time Slider", items=("Time Slider", "Start/End")),
         F("start", "Start time:", "float", 0.0), F("end", "End time:", "float", 10.0),
         F("sample_by", "Sample by:", "float", 1.0, lo=1.0, hi=100.0),
-        F("keep_unbaked", "Keep unbaked keys:", "bool", True)], _run_bake,
+        F("keep_unbaked", "Keep unbaked keys:", "bool", True),
+        F("disable_implicit", "Disable implicit control:", "bool", True)], _run_bake,
         missing=("Channels: From Channel Box", "Bake To: New Layer", "Smart Bake", "Sparse curve bake")),
     Window("uv_planar", "Planar Mapping Options", "Project", ("allset.uv_planar", {}), [
         F("fit", "Fit projection to:", "enum", "Bounding box", items=("Best plane", "Bounding box")),

@@ -40,6 +40,14 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
                     "under the mouse, like Maya's selection priority",
         default=True)
+    # Step 217 / docs/strategy/DECISIONS7.md decision 6: bone collections = the rigger's "animator controls" set.
+    pick_walk_skip_hidden_collections: bpy.props.BoolProperty(
+        name="Pick Walk Skips Hidden Bone Collections",
+        description="In Pose mode the arrow keys walk past bones whose bone collections are all hidden (Rigify MCH / "
+                    "DEF / ORG bones), to the nearest shown parent, child or sibling. Maya walks into hidden nodes: "
+                    "bones hidden one by one (H) are still walked into, and an armature with controller tags "
+                    "(Control > Tag As Controller) follows its controller hierarchy instead. Off: plain hierarchy",
+        default=True)
     # PR #125 extras with no Maya counterpart (no Maya 2022-2027 viewport header has a mode picker or a pulse,
     # PR125_MAYA_LATER.md 4a): off by default.
     armature_mode_header: bpy.props.BoolProperty(
@@ -377,6 +385,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "select_through")
         col.prop(self, "preselect_highlight")
         col.prop(self, "select_priority")
+        col.prop(self, "pick_walk_skip_hidden_collections")
         col.prop(self, "armature_mode_header")
         col.prop(self, "armature_mode_pulse")
 
