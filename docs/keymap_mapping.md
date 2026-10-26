@@ -7,9 +7,9 @@
 
 | 상태 | 개수 |
 |---|---|
-| 구현 | 210 |
+| 구현 | 212 |
 | IC 일치 | 26 |
-| 해당 없음 | 164 |
+| 해당 없음 | 162 |
 | macOS 전용 | 68 |
 
 | Maya 키 | Blender 이벤트 | 컨텍스트 | runTimeCommand | Maya 키컨피그 현재 바인딩 | 상태 | 비고 | 근거 |
@@ -265,17 +265,17 @@
 | Alt+Shift+> | Alt+Shift+PERIOD | global | NextGreasePencilFrame | — | 해당 없음 | Maya Blue Pencil 프레임 | hotkeySetup.mel:430 |
 | u | U | global | PaintOperationMarkingMenuPress / PaintOperationMarkingMenuRelease (release) | — | 구현 | Replace / Add / Scale / Smooth 메뉴 (누르면 열림, 드래그 아님) | hotkeySetup.mel:433 |
 | b | B | global | ModifyUpperRadiusPress / ModifyUpperRadiusRelease (release) | 3D View: `allset.tap_hold` (binding='soft_select') | 구현 | 탭=소프트 셀렉트 토글, 홀드+LMB 드래그=반경 | hotkeySetup.mel:436 |
-| Shift+B | Shift+B | global | ModifyLowerRadiusPress / ModifyLowerRadiusRelease (release) | — | 해당 없음 | Blender 브러시는 반지름이 하나 (압력 최소 크기는 브러시 설정) | hotkeySetup.mel:439 |
+| Shift+B | Shift+B | global | ModifyLowerRadiusPress / ModifyLowerRadiusRelease (release) | — | 해당 없음 | Blender 브러시는 반지름이 하나 (압력 최소 크기는 브러시 설정); Shift+B 는 안내만 | hotkeySetup.mel:439 |
 | / | SLASH | global | PickColorActivate / PickColorDeactivate (release) | — | 해당 없음 | Artisan 색 스포이트 없음 (가중치 샘플 I) | hotkeySetup.mel:442 |
 | n | N | global | ModifyPaintValuePress / ModifyPaintValueRelease (release) | — | 구현 | 가중치 값 드래그 | hotkeySetup.mel:445 |
 | Shift+U | Shift+U | global | ModifyUVVectorPress / ModifyUVVectorRelease (release) | — | 해당 없음 | Artisan UV 벡터 없음 | hotkeySetup.mel:448 |
-| Alt+f | Alt+F | global | FloodSurfaces | — | 구현 | 현재 값으로 채우기 | hotkeySetup.mel:451 |
+| Alt+f | Alt+F | global | FloodSurfaces | — | 구현 | Maya Flood: 연산 × Opacity, 나머지 영향에 기존 비율로 재분배, 잠금 존중, 선택 정점만 (step 218) | hotkeySetup.mel:451 |
 | Alt+c | Alt+C | global | ToggleColorFeedback | — | 구현 | 스킨 페인트 가중치 색 켬/끔; IC Mesh 의 루프 컷 도구 제거 | hotkeySetup.mel:452 |
 | Alt+j | Alt+J | global | ToggleMultiColorFeedback | — | 해당 없음 | 다중 색 피드백 없음 | hotkeySetup.mel:453 |
-| Ctrl+Alt+c | Ctrl+Alt+C | global | CopyVertexSkinWeights | Mesh: `allset.copy_vertex_weights` | 구현 | 편집 모드 활성 버텍스 (step 58) | hotkeySetup.mel:454 |
-| Ctrl+Alt+v | Ctrl+Alt+V | global | PasteVertexSkinWeights | Mesh: `allset.paste_vertex_weights` | 구현 |  | hotkeySetup.mel:455 |
-| Ctrl+. | Ctrl+PERIOD | global | NextSkinPaintMode | — | 해당 없음 | Maya 스킨 페인트 모드 없음 (Blender 는 가중치 페인트 하나) | hotkeySetup.mel:456 |
-| Ctrl+, | Ctrl+COMMA | global | PrevSkinPaintMode | — | 해당 없음 | Maya 스킨 페인트 모드 (Paint / Select / Paint Select) 없음; IC Ctrl+, 환경설정 제거 | hotkeySetup.mel:457 |
+| Ctrl+Alt+c | Ctrl+Alt+C | global | CopyVertexSkinWeights | Mesh: `allset.copy_vertex_weights` | 구현 | 편집 모드 활성 버텍스 (step 58); 가중치 페인트에서도 같은 키 (활성 / 첫 선택 정점, step 218) | hotkeySetup.mel:454 |
+| Ctrl+Alt+v | Ctrl+Alt+V | global | PasteVertexSkinWeights | Mesh: `allset.paste_vertex_weights` | 구현 | 선택 정점에; 가중치 페인트에서도 같은 키 (step 218) | hotkeySetup.mel:455 |
+| Ctrl+. | Ctrl+PERIOD | global | NextSkinPaintMode | — | 구현 | Paint → Select → Paint Select 순환 (Paint Select = 원 선택 도구, step 218) | hotkeySetup.mel:456 |
+| Ctrl+, | Ctrl+COMMA | global | PrevSkinPaintMode | — | 구현 | Paint → Paint Select → Select 순환 (Select = 박스 선택 도구 + 정점 마스크, step 218); IC Ctrl+, 환경설정 제거 | hotkeySetup.mel:457 |
 | o | O | global | PolyBrushMarkingMenu / PolyBrushMarkingMenuPopDown (release) | — | 해당 없음 | Poly Brush 없음 | hotkeySetup.mel:458 |
 | m | M | global | ModifyDisplacementPress / ModifyDisplacementRelease (release) | — | 구현 | 조각: 세기 드래그; 3D 모드의 IC Measure 도구 제거 | hotkeySetup.mel:463 |
 | Return | RET | outlinerPanel | OutlinerRenameSelectedItem | Outliner: `outliner.item_rename` (use_active=True); Screen: `file.execute` | IC 일치 | 활성 행 이름 바꾸기 | hotkeySetup.mel:467 |
@@ -389,7 +389,7 @@
 | Ctrl+7 | Ctrl+SEVEN | xgmIGBrush | XgmSetNoiseBrushTool | — | 해당 없음 | XGen 없음 | hotkeySetup.mel:597 |
 | Ctrl+8 | Ctrl+EIGHT | xgmIGBrush | XgmSetClumpBrushTool | — | 해당 없음 | XGen 없음 | hotkeySetup.mel:598 |
 | Ctrl+9 | Ctrl+NINE | xgmIGBrush | XgmSetPartBrushTool | — | 해당 없음 | XGen 없음 | hotkeySetup.mel:599 |
-| Alt+r | Alt+R | global | ToggleReflection | 3D View: `allset.symmetry` (mode='TOGGLE') | 구현 | 대칭 켬/끔 (kit 대칭 = 메시 mirror → 모델링·조각·페인트); IC 의 스케일 초기화 제거 | hotkeySetup.mel:602 |
+| Alt+r | Alt+R | global | ToggleReflection | 3D View: `allset.symmetry` (mode='TOGGLE') | 구현 | 대칭 켬/끔 (kit 대칭 = 메시 mirror → 모델링·조각·페인트); IC 의 스케일 초기화 제거; 가중치 페인트에서는 X 미러 토글 (allset.paint_reflection, step 218) | hotkeySetup.mel:602 |
 | Shift+U | Shift+U | sculptMeshCache | SculptMeshUnfreezeAll | Sculpt: `paint.mask_flood_fill` (mode='VALUE', value=0.0) | 구현 | 마스크 지움 | hotkeySetup.mel:604 |
 | Ctrl+Shift+I | Ctrl+Shift+I | sculptMeshCache | SculptMeshInvertFreeze | Sculpt: `paint.mask_flood_fill` (mode='INVERT') | 구현 | 마스크 반전 | hotkeySetup.mel:605 |
 | Ctrl+0 | Ctrl+ZERO | sculptMeshCache | SetMeshFreezeTool | Sculpt: `brush.asset_activate` (asset_library_type='ESSENTIALS', relative_asset_identifier='brushes/essentials_brushes-mesh_sculpt.blend/Brush/Mask') | 구현 | Mask 브러시 | hotkeySetup.mel:607 |

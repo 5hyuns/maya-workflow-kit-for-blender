@@ -223,8 +223,92 @@ def fit_cubic(points):
     return [p0, (r1 * a22 - r2 * a12) / det, (r2 * a11 - r1 * a12) / det, p3]
 
 
-def create_spline_ik(context, arm, start, end):
-    """``curve1`` through the chain + a Spline IK constraint ``ikHandleN`` on the bone ending at the end joint."""
+def fit_spans(points, spans=1):
+    """Clamped uniform cubic with ``spans`` spans (spans + 3 CVs), ends on the first / last point, inner CVs a
+    least-squares fit of the polyline (Maya IK Spline Handle Tool "Number of spans", factory 1; 1 = ``fit_cubic``)."""
+    if spans <= 1:
+        return fit_cubic(points)
+    from . import curves_math as cm
+    n = spans + 3
+    U = cm.full(cm.clamped_uniform(n, 3))
+    p0, pn = points[0], points[-1]
+    m = n - 2
+    A = [[0.0] * m for _ in range(m)]
+    B = [Vector() for _ in range(m)]
+    for p, t in _resample(points, SPLINE_SAMPLES):
+        row = cm._row(U, 3, n, t * spans, 0)
+        rest = p - p0 * row[0] - pn * row[-1]
+        for a in range(m):
+            if row[a + 1]:
+                B[a] += rest * row[a + 1]
+                for b in range(m):
+                    A[a][b] += row[a + 1] * row[b + 1]
+    try:
+        inner = [Vector(c) for c in cm.solve(A, [tuple(b) for b in B])]
+    except ValueError:
+        inner = [p0.lerp(pn, k / (n - 1)) for k in range(1, n - 1)]
+    return [p0, *inner, pn]
+
+
+# Blender's Spline IK walks the curve's evaluated polyline (resolution_u segments per span): at 128 the joints land
+# within 7e-5 of Maya's 4-decimal numbers (64: 1.1e-4; tests/test_step218_curve_rig.py), so kit Spline IK curves get
+# at least this.
+SPLINE_RESOLUTION = 128
+
+
+def _first_cv_world(curve):
+    sp = curve.data.splines[0]
+    co = sp.bezier_points[0].co if sp.type == 'BEZIER' else Vector(sp.points[0].co[:3])
+    return curve.matrix_world @ co
+
+
+def _parent_curve(curve, arm, first):
+    """Maya Auto parent curve: the curve goes under the start joint's parent (a bone of the skeleton, else the
+    skeleton's parent object); a root without parent leaves it in the world (research/maya/re/
+    maya2026_curve_rigs.md:21)."""
+    world = curve.matrix_world.copy()
+    if first.parent is not None:
+        pb = first.parent
+        # Blender's bone parent space = the bone's pose matrix moved to its tail
+        parent = arm.matrix_world @ pb.matrix @ Matrix.Translation((0.0, pb.bone.length, 0.0))
+        curve.parent = arm
+        curve.parent_type = 'BONE'
+        curve.parent_bone = pb.name
+    elif arm.parent is not None:
+        parent = arm.parent.matrix_world
+        curve.parent = arm.parent
+    else:
+        return
+    curve.matrix_parent_inverse = Matrix.Identity(4)
+    curve.matrix_basis = parent.inverted_safe() @ world
+
+
+def _new_spline_curve(context, cvs):
+    data = bpy.data.curves.new("curveShape", 'CURVE')
+    data.dimensions = '3D'
+    sp = data.splines.new('NURBS')
+    sp.points.add(len(cvs) - 1)
+    for p, c in zip(sp.points, cvs):
+        p.co = (c.x, c.y, c.z, 1.0)
+    sp.order_u = 4
+    sp.use_endpoint_u = True
+    curve = bpy.data.objects.new("curve", data)
+    context.view_layer.active_layer_collection.collection.objects.link(curve)
+    naming.apply_maya_name(curve, "curve")
+    return curve
+
+
+def create_spline_ik(context, arm, start, end, curve=None, root_on_curve=True, snap_curve=False,
+                     parent_curve=True, spans=1):
+    """Spline IK constraint ``ikHandleN`` on the bone ending at the end joint (Maya ikSplineSolver).
+
+    ``curve`` None = Auto create curve: ``curveN`` fitted through the chain (degree 3, ``spans`` spans; step 110).
+    An existing curve (step 218, research/maya/re/maya2026_curve_rigs.md:13-20): Root on curve moves the root onto
+    the curve start and the joints keep their lengths along the curve (Blender Spline IK, Y scale None, no chain
+    offset); off keeps the root where it is and the chain takes the curve's shape from there (Chain Offset; Maya
+    instead puts the joints after the root on the curve itself, maya2026_curve_rigs.json L6 roc0_snc0: up to 1.35
+    units apart, Blender's Spline IK has no start point on the curve); Snap curve to root moves the curve so its
+    first CV is on the root joint. Returns (constraint, curve) or None."""
     from .skin import ik_chain
     chain = ik_chain(arm, start, end)
     if chain is None:
@@ -236,41 +320,55 @@ def create_spline_ik(context, arm, start, end):
         b = b.parent
     bones.reverse()
     mw = arm.matrix_world
-    pts = [mw @ pb.head for pb in bones] + [mw @ ik_bone.tail]
-    cvs = fit_cubic(pts)
-    data = bpy.data.curves.new("curveShape", 'CURVE')
-    data.dimensions = '3D'
-    sp = data.splines.new('NURBS')
-    sp.points.add(3)
-    for p, c in zip(sp.points, cvs):
-        p.co = (c.x, c.y, c.z, 1.0)
-    sp.order_u = 4
-    sp.use_endpoint_u = True
-    curve = bpy.data.objects.new("curve", data)
-    context.view_layer.active_layer_collection.collection.objects.link(curve)
-    naming.apply_maya_name(curve, "curve")
+    root = mw @ bones[0].head
+    if curve is None:
+        pts = [mw @ pb.head for pb in bones] + [mw @ ik_bone.tail]
+        curve = _new_spline_curve(context, fit_spans(pts, spans))
+    elif snap_curve:
+        curve.matrix_world = Matrix.Translation(root - _first_cv_world(curve)) @ curve.matrix_world
+    if curve.data.resolution_u < SPLINE_RESOLUTION:
+        curve.data.resolution_u = SPLINE_RESOLUTION
+    if parent_curve:
+        context.view_layer.update()
+        _parent_curve(curve, arm, bones[0])
     taken = {c.name for o in bpy.data.objects if o.pose for p in o.pose.bones for c in p.constraints}
     taken |= {o.name for o in bpy.data.objects}
     con = ik_bone.constraints.new('SPLINE_IK')
     con.name = f"ikHandle{naming.next_number('ikHandle', taken)}"
     con.target = curve
     con.chain_count = count
-    con.y_scale_mode = 'BONE_ORIGINAL'      # Maya: no stretch by default
+    con.y_scale_mode = 'NONE'           # Maya: bone lengths kept (no stretch by default)
     con.xz_scale_mode = 'NONE'
     con.use_curve_radius = False
+    con.use_chain_offset = not root_on_curve
     return con, curve
 
 
+SPLINE_STATUS = "IK Spline Handle Tool: click the start joint, then the end joint{} (Esc: cancel)"
+
+
 class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
-    """Create a spline IK from the start joint to the end joint with a curve through the chain (select both
-    joints; Maya Skeleton > Create IK Spline Handle)"""
+    """Create a spline IK from the start joint to the end joint: a new curve through the chain, or (Auto create
+    curve off) the selected / clicked curve (Maya Skeleton > Create IK Spline Handle)"""
     bl_idname = "allset.ik_spline_handle"
     bl_label = "Create IK Spline Handle"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}       # a click tool: Maya has no redo panel (step 147)
 
-    # Maya IK Spline Handle Tool "Root on curve" (factory on, research/maya/re/option_boxes_140.md:213-218): off lets
-    # the root joint keep its place off the curve = Blender's Chain Offset
-    root_on_curve: bpy.props.BoolProperty(name="Root on curve", default=True)
+    # Maya 2026 IK Spline Handle Tool factory settings (ikSplineHandleCtx, research/maya/re/maya2026_curve_rigs.md:11)
+    root_on_curve: BoolProperty(name="Root on curve", default=True, options={'SKIP_SAVE'})
+    parent_curve: BoolProperty(name="Auto parent curve", default=True, options={'SKIP_SAVE'})
+    snap_curve: BoolProperty(name="Snap curve to root", default=False, options={'SKIP_SAVE'})
+    create_curve: BoolProperty(name="Auto create curve", default=True, options={'SKIP_SAVE'})
+    spans: bpy.props.IntProperty(name="Number of spans", default=1, min=1, max=4, options={'SKIP_SAVE'})
+    curve: bpy.props.StringProperty(name="Curve", default="", options={'SKIP_SAVE', 'HIDDEN'},
+                                    description="Existing curve object (Auto create curve off); empty = the "
+                                                "selected curve")
+
+    def _existing_curve(self, context):
+        if self.curve:
+            ob = bpy.data.objects.get(self.curve)
+            return ob if ob is not None and ob.type == 'CURVE' else None
+        return next((o for o in context.selected_objects if o.type == 'CURVE'), None)
 
     def execute(self, context):
         from .skin import selected_pair
@@ -278,15 +376,92 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
         if pair is None:
             self.report({'WARNING'}, "Select the start joint, then the end joint (pose mode)")
             return {'CANCELLED'}
-        res = create_spline_ik(context, *pair)
+        return self._make(context, *pair, self._existing_curve(context))
+
+    def _make(self, context, arm, start, end, curve):
+        if not self.create_curve and curve is None:
+            self.report({'WARNING'}, "Auto create curve is off: select or click a curve")
+            return {'CANCELLED'}
+        res = create_spline_ik(context, arm, start, end, None if self.create_curve else curve,
+                               root_on_curve=self.root_on_curve, snap_curve=self.snap_curve,
+                               parent_curve=self.parent_curve, spans=self.spans)
         if res is None:
             self.report({'WARNING'}, "The end joint must be below the start joint in the same skeleton")
             return {'CANCELLED'}
         con, curve = res
-        con.use_chain_offset = not self.root_on_curve
+        # Maya selects the new ikHandle (maya2026_curve_rigs.json L6_spline_auto_curve): the kit handle is the
+        # constraint, so its bone becomes the only selected joint (delegated)
+        cb = _cb()
+        owner = next(pb for pb in arm.pose.bones if pb.constraints.get(con.name) == con)
+        for pb in arm.pose.bones:
+            cb.set_bone_selected(pb, pb == owner)
+        arm.data.bones.active = owner.bone
         results.result(self, f"Created {con.name} with {curve.name} (Spline IK constraint; Blender has no "
                               "effector node)")
         return {'FINISHED'}
+
+    # --- click tool: start joint, end joint, then (Auto create curve off) the curve ------------------------
+
+    def invoke(self, context, event):
+        from .skin import selected_pair
+        pair = selected_pair(context)
+        curve = self._existing_curve(context)
+        if context.window is None or (pair is not None and (self.create_curve or curve is not None)):
+            return self.execute(context)
+        self._picks = [] if pair is None else list(pair)
+        self._swallow = False
+        context.workspace.status_text_set(SPLINE_STATUS.format("" if self.create_curve else ", then the curve"))
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _pick_curve(self, context, event):
+        from . import select_priority
+        from .joints import view_under
+        hit = view_under(context.window, event.mouse_x, event.mouse_y)
+        if hit is None:
+            return None
+        area, region = hit
+        mouse = (event.mouse_x - region.x, event.mouse_y - region.y)
+        with context.temp_override(window=context.window, area=area, region=region):
+            found = select_priority.hits(bpy.context, region, region.data, mouse)
+        radius = 25 * context.preferences.system.ui_scale
+        best = min((h for h in found if h[2] <= radius and bpy.data.objects[h[0]].type == 'CURVE'),
+                   key=lambda h: h[2], default=None)
+        return bpy.data.objects[best[0]] if best else None
+
+    def modal(self, context, event):
+        from .skin import ALLSET_OT_ik_handle
+        if event.type == 'ESC' and event.value == 'PRESS':
+            context.workspace.status_text_set(None)
+            return {'CANCELLED'}
+        if event.type != 'LEFTMOUSE':
+            return {'PASS_THROUGH'}
+        if event.value == 'RELEASE' and self._swallow:
+            self._swallow = False
+            return {'RUNNING_MODAL'}
+        if event.value != 'PRESS' or event.alt or event.ctrl or event.shift:
+            return {'PASS_THROUGH'}
+        curve = None
+        if len(self._picks) < 3:
+            hit = ALLSET_OT_ik_handle._pick(self, context, event)
+            if hit is None:
+                return {'RUNNING_MODAL'} if self._swallow else {'PASS_THROUGH'}
+            arm, joint = hit
+            if not self._picks or self._picks[0] != arm:
+                self._picks = [arm, joint]
+            else:
+                self._picks.append(joint)
+            self._swallow = True
+            if len(self._picks) < 3 or not self.create_curve:
+                return {'RUNNING_MODAL'}
+        else:
+            curve = self._pick_curve(context, event)
+            if curve is None:
+                return {'RUNNING_MODAL'} if self._swallow else {'PASS_THROUGH'}
+            self._swallow = True
+        context.workspace.status_text_set(None)
+        with context.temp_override(window=context.window):
+            return self._make(context, *self._picks, curve)
 
 
 # --- Skin: influences, Hammer ----------------------------------------------------------------------
@@ -645,6 +820,48 @@ def _selection(ob):
     return ob.matrix_world @ c, idx
 
 
+def control_points(ob):
+    """``(hook index, local co, selected)`` of a curve / surface / lattice in the Hook modifier's point order: NURBS
+    and poly points one each, a Bezier point three (left handle, point, right handle; the point carries the
+    selection and the position)."""
+    out = []
+    if ob.type == 'LATTICE':
+        for i, p in enumerate(ob.data.points):
+            out.append((i, Vector(p.co_deform), p.select))
+        return out
+    i = 0
+    for sp in ob.data.splines:
+        if sp.type == 'BEZIER':
+            for bp in sp.bezier_points:
+                out.append(((i, i + 1, i + 2), bp.co.copy(), bp.select_control_point))
+                i += 3
+        else:
+            for p in sp.points:
+                out.append((i, Vector(p.co[:3]), p.select))
+                i += 1
+    return out
+
+
+def _point_selection(ob, selected_only):
+    """Maya cluster on CVs (step 218, research/maya/re/maya2026_curve_rigs.md:27-29): the handle pivot is the centre
+    of the selected CVs, the Hook acts on exactly those indices; object mode = every CV (pivot = their box centre,
+    like a mesh). Returns (world centre, indices) or (None, None)."""
+    pts = [p for p in control_points(ob) if p[2] or not selected_only]
+    if not pts:
+        return None, None
+    idx = []
+    for k, _co, _sel in pts:
+        idx.extend(k if isinstance(k, tuple) else (k,))
+    cos = [co for _k, co, _sel in pts]
+    if selected_only:
+        c = sum(cos, Vector()) / len(cos)
+    else:
+        lo = Vector([min(v[a] for v in cos) for a in range(3)])
+        hi = Vector([max(v[a] for v in cos) for a in range(3)])
+        c = (lo + hi) / 2
+    return ob.matrix_world @ c, idx
+
+
 def _select_handle(context, handle):
     if context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -674,14 +891,17 @@ class ALLSET_OT_cluster(bpy.types.Operator):
         ob = context.active_object
         if ob.type == 'MESH':
             centre, idx = _selection(ob)
+            if ob.mode == 'EDIT':
+                bpy.ops.object.mode_set(mode='OBJECT')
         else:
-            centre, idx = ob.matrix_world @ (sum((Vector(c) for c in ob.bound_box), Vector()) / 8), None
+            if ob.mode == 'EDIT':     # leaving edit mode writes the CV selection back to the data
+                bpy.ops.object.mode_set(mode='OBJECT')
+                centre, idx = _point_selection(ob, True)
+            else:
+                centre, idx = _point_selection(ob, False)
         if centre is None:
             self.report({'WARNING'}, "Select components or an object")
             return {'CANCELLED'}
-        mode = ob.mode
-        if mode == 'EDIT':
-            bpy.ops.object.mode_set(mode='OBJECT')
         md, handle = _hook(context, ob, "cluster", centre, idx)
         md.strength = self.envelope
         handle.empty_display_type = 'SPHERE'

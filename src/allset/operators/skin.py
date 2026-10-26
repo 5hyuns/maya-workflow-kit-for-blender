@@ -744,6 +744,12 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
             set_view_tool(context, 'builtin.brush')
         if mesh.vertex_groups.active is None and influences(mesh):
             mesh.vertex_groups.active_index = influences(mesh)[0].index
+        # Maya keeps a vertex selection made before the tool and floods only it
+        # (research/maya/re/maya2026_paint_skin_weights.md:17, :84): Blender shows that selection only with the vertex
+        # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then (delegated).
+        shown = [v.select for v in mesh.data.vertices if not v.hide]
+        if any(shown) and not all(shown) and not mesh.data.use_paint_mask:
+            mesh.data.use_paint_mask_vertex = True
         # Maya Bind Skin makes the skinCluster with Normalize Weights = Interactive (normalizeWeights 1): painting a
         # joint takes weight from the others so every vertex keeps a total of 1 (#20, step 129). Blender's factory
         # Auto Normalize is off; Skin > Normalize Weights > Disable still turns it off while painting. The skin's own

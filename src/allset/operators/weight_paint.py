@@ -86,9 +86,12 @@ def _normalize_set(self, value):
 
 class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     search: StringProperty(name='Find influence', options={'TEXTEDIT_UPDATE'})
-    sort: EnumProperty(name='Sort', items=[('HIERARCHY', 'Hierarchy', 'Joint hierarchy order'),
-                                         ('NAME', 'Name', 'Alphabetical order'),
-                                         ('INDEX', 'Group order', 'Vertex group order')], default='HIERARCHY')
+    # Maya 2026 Sort: Alphabetically (natural order) / By Hierarchy (default) / Flat
+    # (research/maya/re/maya2026_paint_skin_weights.md:31, :63)
+    sort: EnumProperty(name='Sort', items=[('NAME', 'Alphabetically', 'Natural name order (joint2 before joint10)'),
+                                         ('HIERARCHY', 'By Hierarchy', 'Joint hierarchy order'),
+                                         ('INDEX', 'Flat', 'Influence order, no hierarchy')], default='HIERARCHY')
+    paint_tool: StringProperty(default='', options={'HIDDEN'})
     show_all: BoolProperty(name='Include non-joint groups', default=False)
     locked_only: BoolProperty(name='Locked influences only', default=False)
     auto_normalize: BoolProperty(name='Auto normalize',
@@ -276,6 +279,7 @@ class ALLSET_OT_weight_influence(bpy.types.Operator):
                                ('OTHERS', 'Lock unselected', ''), ('INVERT', 'Invert locks', ''),
                                ('LOCK_SELECTED', 'Lock selected joints', ''),
                                ('UNLOCK_SELECTED', 'Unlock selected joints', ''),
+                               ('LOCK_OTHERS', 'Lock Inverse Selection', ''),
                                ('UNLOCK_OTHERS', 'Unlock other influences', ''),
                                ('JOINT', 'Select influence joint', '')])
 
@@ -297,18 +301,14 @@ class ALLSET_OT_weight_influence(bpy.types.Operator):
                 set_bone_selected(bone, bone == pb)
             mod.object.data.bones.active = pb.bone
         else:
-            from ..ui.channel_box import bone_selected
-            mod = skin.armature_modifier(mesh)
-            selected = {b.name for b in mod.object.pose.bones if bone_selected(b)} if mod else set()
-            if vg:
-                selected.add(vg.name)
+            selected = picked_influences(context, mesh)
             for group in groups:
                 if self.action in {'LOCK_SELECTED', 'UNLOCK_SELECTED'}:
                     if group.name in selected:
                         group.lock_weight = self.action == 'LOCK_SELECTED'
-                elif self.action == 'UNLOCK_OTHERS':
+                elif self.action in {'LOCK_OTHERS', 'UNLOCK_OTHERS'}:      # Maya artSkinInvLockInf
                     if group.name not in selected:
-                        group.lock_weight = False
+                        group.lock_weight = self.action == 'LOCK_OTHERS'
                 else:
                     group.lock_weight = (not group.lock_weight if self.action == 'INVERT' else
                                          group != vg if self.action == 'OTHERS' else self.action == 'LOCK')
@@ -387,55 +387,396 @@ def vertex_targets(mesh, indices):
         data.update()
 
 
-def flood(context):
-    """Maya Flood uses the active operation, opacity, influence locks and masks."""
+# --- Flood (Maya 2026 artAttrSkinPaintCtx -clear, research/maya/re/maya2026_paint_skin_weights.md:66-90) ---------
+# Maya applies the operation to the influence being painted, multiplied by Opacity o:
+#   Replace w' = w + o(v - w)   Add w' = min(1, w + o v)   Scale w' = w (1 - o (1 - v))
+#   Smooth  w' = w + o(avg - w), avg = the mean of the vertex and its edge neighbours (Value ignored; the neighbour
+#   rule was fitted to the measured rings, docs/steps/step_218.md)
+# and gives the change to the other unlocked influences in their old ratio; locked influences keep their weight; only
+# selected vertices change when any vertex is selected (measured on polyCylinder h 8 sx 20 sy 8).
+
+OPERATIONS = (('BRUSH', 'Brush', 'The current brush and its blend'), ('REPLACE', 'Replace', ''),
+              ('ADD', 'Add', ''), ('SCALE', 'Scale', ''), ('SMOOTH', 'Smooth', ''))
+_BLEND_OPERATION = {'MIX': 'REPLACE', 'ADD': 'ADD', 'MUL': 'SCALE'}
+
+
+def maya_target(op, w, value, opacity, avg=None):
+    """New weight of the painted influence for one vertex (before clamping / redistribution)."""
+    if op == 'REPLACE':
+        return w + opacity * (value - w)
+    if op == 'ADD':
+        return w + opacity * value
+    if op == 'SCALE':
+        return w * (1.0 - opacity * (1.0 - value))
+    if op == 'SMOOTH':
+        return w + opacity * (avg - w)
+    if op == 'SUB':
+        return w - opacity * value
+    if op == 'LIGHTEN':
+        return w + opacity * (max(w, value) - w)
+    if op == 'DARKEN':
+        return w + opacity * (min(w, value) - w)
+    raise ValueError(op)
+
+
+def redistribute(weights, target, new, locked, influences):
+    """Maya Interactive normalization of one vertex: ``weights`` {group: w}; returns the new {group: w}.
+
+    The painted influence gets ``new`` clamped to what the locked ones leave; the unlocked other influences share the
+    rest in their old ratio (Replace 0.3 keeps j1:j3, Value 0 gives j2's weight to j1 / j3, joint1 locked + Add 1 only
+    takes joint3's share)."""
+    out = dict(weights)
+    locked_sum = sum(w for g, w in weights.items() if g != target and g in locked and g in influences)
+    others = {g: w for g, w in weights.items() if g != target and g not in locked and g in influences and w > 0}
+    room = max(0.0, 1.0 - locked_sum)
+    new = min(max(new, 0.0), room)
+    total = sum(others.values())
+    if total <= 0.0:
+        # nothing unlocked takes the rest: a normalized vertex can't lose weight, an unweighted one simply gets the
+        # value (not measured in Maya: delegated)
+        new = max(new, min(room, weights.get(target, 0.0)))
+    else:
+        rest = room - new
+        for g, w in others.items():
+            out[g] = rest * w / total
+    out[target] = new
+    return out
+
+
+def flood_vertices(mesh):
+    """Vertices a Flood changes: the face mask's faces, else the selected vertices when any vertex is selected (Maya
+    floods only selected components, vertex mask on or off), else every visible vertex."""
+    data = mesh.data
+    visible = [v.index for v in data.vertices if not v.hide]
+    if data.use_paint_mask:
+        faces = {i for f in data.polygons if f.select and not f.hide for i in f.vertices}
+        return [i for i in visible if i in faces]
+    selected = [i for i in visible if data.vertices[i].select]
+    return selected if selected else visible
+
+
+def _neighbours(data):
+    nb = [[] for _ in data.vertices]
+    for e in data.edges:
+        a, b = e.vertices
+        nb[a].append(b)
+        nb[b].append(a)
+    return nb
+
+
+def flood_settings(context, operation='BRUSH'):
+    """(operation, value, opacity) from the operator or the current brush."""
+    ts = context.tool_settings
+    brush = ts.weight_paint.brush
+    ups = compat.unified_paint_settings(ts)
+    strength = (ups if ups.use_unified_strength or brush is None else brush).strength
+    value = (ups if ups.use_unified_weight or brush is None else brush).weight
+    if operation != 'BRUSH':
+        return operation, value, strength
+    kind = brush_kind(brush) or 'DRAW'
+    if kind == 'SMEAR':
+        raise ValueError('Smear needs a directional stroke; choose another operation to flood')
+    if kind == 'BLUR':
+        return 'SMOOTH', value, strength
+    if kind == 'AVERAGE':
+        return 'AVERAGE', value, strength
+    blend = brush.blend if brush is not None else 'MIX'
+    op = _BLEND_OPERATION.get(blend, blend)
+    if op not in {'REPLACE', 'ADD', 'SCALE', 'SUB', 'LIGHTEN', 'DARKEN'}:
+        raise ValueError('Flood supports Replace, Add, Scale, Smooth, Subtract, Lighten, Darken and Average')
+    return op, value, strength
+
+
+def flood(context, operation='BRUSH'):
+    """Maya Flood: the paint operation x Opacity into the painted influence, Maya's redistribution and locks."""
     mesh = context.active_object
     group = mesh.vertex_groups.active
     if group is None or group.lock_weight:
         raise ValueError('Choose an unlocked influence before flooding')
-    brush = context.tool_settings.weight_paint.brush
-    kind = brush_kind(brush) or 'DRAW'
-    if kind == 'SMEAR':
-        raise ValueError('Smear needs a directional stroke; choose another operation to flood')
-    ups = compat.unified_paint_settings(context.tool_settings)
-    strength = (ups if ups.use_unified_strength or brush is None else brush).strength
-    value = (ups if ups.use_unified_weight or brush is None else brush).weight
+    op, value, opacity = flood_settings(context, operation)
     data = mesh.data
-    face_vertices = {i for f in data.polygons if f.select and not f.hide for i in f.vertices} if data.use_paint_mask else None
-    vertices = [v for v in data.vertices if not v.hide
-                and (not data.use_paint_mask_vertex or v.select)
-                and (face_vertices is None or v.index in face_vertices)]
+    targets = flood_vertices(mesh)
     if context.tool_settings.weight_paint.use_group_restrict:
-        vertices = [v for v in vertices if any(e.group == group.index for e in v.groups)]
-    before = {v.index: next((e.weight for e in v.groups if e.group == group.index), 0.0) for v in vertices}
-    if not before or strength <= 0:
+        targets = [i for i in targets if any(e.group == group.index for e in data.vertices[i].groups)]
+    if not targets or opacity <= 0:
         return {'FINISHED'}
-    protected = locked_snapshot(mesh)
-    try:
-        if kind == 'BLUR':
-            with vertex_targets(mesh, before), viewport(context):
-                bpy.ops.object.vertex_group_smooth(group_select_mode='ACTIVE', factor=strength, repeat=1)
+    t = group.index
+    rows = {i: {e.group: e.weight for e in data.vertices[i].groups} for i in targets}
+    nb, own = None, None
+    if op == 'SMOOTH':
+        nb = _neighbours(data)
+        own = {}
+        for i in {j for i in targets for j in (i, *nb[i])}:
+            own[i] = next((e.weight for e in data.vertices[i].groups if e.group == t), 0.0)
+    elif op == 'AVERAGE':
+        op, value = 'REPLACE', sum(r.get(t, 0.0) for r in rows.values()) / len(rows)
+    influences = {g.index for g in skin.influences(mesh)}
+    normalize = context.tool_settings.use_auto_normalize and t in influences
+    locked = {g.index for g in mesh.vertex_groups if g.lock_weight}
+    groups = mesh.vertex_groups
+    for i, row in rows.items():
+        w = row.get(t, 0.0)
+        avg = (own[i] + sum(own[j] for j in nb[i])) / (1 + len(nb[i])) if op == 'SMOOTH' else None
+        new = maya_target(op, w, value, opacity, avg)
+        if normalize:
+            result = redistribute(row, t, new, locked, influences)
         else:
-            if kind == 'AVERAGE':
-                value = sum(before.values()) / len(before) if before else 0.0
-            blend = brush.blend if brush and kind == 'DRAW' else 'MIX'
-            operations = {'MIX': lambda w: value, 'ADD': lambda w: w + value,
-                          'SUB': lambda w: w - value, 'MUL': lambda w: w * value,
-                          'LIGHTEN': lambda w: max(w, value), 'DARKEN': lambda w: min(w, value)}
-            if blend not in operations:
-                raise ValueError('Flood supports Replace, Add, Subtract, Scale, Lighten, Darken, Smooth and Average')
-            for index, weight in before.items():
-                result = weight + strength * (operations[blend](weight) - weight)
-                group.add([index], min(1.0, max(0.0, result)), 'REPLACE')
-        if context.tool_settings.use_auto_normalize:
-            with vertex_targets(mesh, before), viewport(context):
-                bpy.ops.object.vertex_group_normalize_all(
-                    group_select_mode='BONE_DEFORM' if skin.armature_modifier(mesh) else 'ALL', lock_active=True)
-        data.update()
-        state(context).status = 'Flood complete'
+            result = {**row, t: min(1.0, max(0.0, new))}
+        for g, nw in result.items():
+            if nw == row.get(g):
+                continue
+            if nw <= 0.0:
+                if g in row:
+                    groups[g].remove([i])
+            else:
+                groups[g].add([i], nw, 'REPLACE')
+    data.update()
+    state(context).status = 'Flood complete'
+    return {'FINISHED'}
+
+
+# --- Influences list RMB (Maya 2026, research/maya/re/maya2026_paint_skin_weights.md:47-63) -------------------
+
+NO_INFLUENCE = 'Please select an influence first'      # Maya kNoInfluenceSelected (resources/MayaStrings:7186)
+
+
+def picked_influences(context, mesh):
+    """The influences "selected in the Influences list" (Maya's treeView selection): Blender's list has one active
+    row, so that row. Selected joints don't count (delegated): a skeleton often stays fully selected after it is
+    made or bound, which would turn Select Vertices into "every vertex"."""
+    vg = mesh.vertex_groups.active
+    return {vg.name} if vg is not None else set()
+
+
+def affected_vertices(mesh, names):
+    """Vertices whose weight in any of the named influences is > 0 (skinCluster -selectInfluenceVerts)."""
+    idx = {mesh.vertex_groups[n].index for n in names if n in mesh.vertex_groups}
+    return {v.index for v in mesh.data.vertices if any(e.group in idx and e.weight > 0.0 for e in v.groups)}
+
+
+def show_vertex_selection(mesh):
+    """Blender shows (and limits painting to) a weight-paint vertex selection only with the vertex mask on."""
+    mesh.data.use_paint_mask = False
+    mesh.data.use_paint_mask_vertex = True
+
+
+def set_vertex_selection(mesh, indices):
+    data = mesh.data
+    keep = set(indices)
+    for v in data.vertices:
+        v.select = v.index in keep and not v.hide
+    for e in data.edges:
+        e.select = all(data.vertices[i].select for i in e.vertices)
+    for f in data.polygons:
+        f.select = all(data.vertices[i].select for i in f.vertices)
+    data.update()
+
+
+class ALLSET_OT_weight_influence_verts(bpy.types.Operator):
+    """Select the vertices the influences picked in the list affect (weight > 0)"""
+    bl_idname = 'allset.weight_influence_verts'
+    bl_label = 'Select Vertices'
+    bl_options = {'UNDO'}
+    mode: EnumProperty(items=[('SET', 'Select Vertices', 'Select the vertices the picked influences affect'),
+                              ('ADD', 'Add Affected Vertices', 'Add them to the vertex selection'),
+                              ('REMOVE', 'Remove Affected Vertices', 'Remove them from the vertex selection')],
+                       options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        return {'SET': 'Select the vertices the picked influences affect (weight above 0)',
+                'ADD': 'Add the vertices the picked influences affect to the selection',
+                'REMOVE': 'Remove the vertices the picked influences affect from the selection'}[properties.mode]
+
+    @classmethod
+    def poll(cls, context):
+        return active(context)
+
+    def execute(self, context):
+        mesh = context.active_object
+        names = picked_influences(context, mesh)
+        if not names:
+            self.report({'ERROR'}, NO_INFLUENCE)
+            return {'CANCELLED'}
+        hit = affected_vertices(mesh, names)
+        current = {v.index for v in mesh.data.vertices if v.select}
+        chosen = hit if self.mode == 'SET' else current | hit if self.mode == 'ADD' else current - hit
+        show_vertex_selection(mesh)
+        set_vertex_selection(mesh, chosen)
         return {'FINISHED'}
-    finally:
-        restore_locked(mesh, protected)
+
+
+# --- Skin Paint Mode (Paint / Select / Paint Select, Ctrl+. / Ctrl+,) and Select Geometry ----------------------
+
+PAINT_MODES = ('PAINT', 'SELECT', 'PAINT_SELECT')
+MODE_LABELS = {'PAINT': 'Paint', 'SELECT': 'Select', 'PAINT_SELECT': 'Paint Select'}
+_MODE_TOOLS = {'SELECT': 'builtin.select_box', 'PAINT_SELECT': 'builtin.select_circle'}
+
+
+def paint_mode(context):
+    """Maya's Skin Paint Mode read from the active weight-paint tool."""
+    ws = context.workspace
+    tool = ws.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False) if ws is not None else None
+    name = tool.idname if tool is not None else ''
+    if name == 'builtin.select_circle':
+        return 'PAINT_SELECT'
+    if name.startswith('builtin.select'):
+        return 'SELECT'
+    return 'PAINT'
+
+
+def next_mode(mode, step):
+    return PAINT_MODES[(PAINT_MODES.index(mode) + step) % len(PAINT_MODES)]
+
+
+class ALLSET_OT_skin_paint_mode(bpy.types.Operator):
+    """Maya Skin Paint Mode: Paint weights, Select vertices, or Paint Select vertices with a brush"""
+    bl_idname = 'allset.skin_paint_mode'
+    bl_label = 'Skin Paint Mode'
+    bl_options = {'UNDO'}
+    mode: EnumProperty(items=[('PAINT', 'Paint', 'Paint weights'), ('SELECT', 'Select', 'Select vertices'),
+                              ('PAINT_SELECT', 'Paint Select', 'Select vertices with a brush')],
+                       options={'SKIP_SAVE'})
+    step: IntProperty(default=0, options={'SKIP_SAVE', 'HIDDEN'},
+                      description='1 = next mode (Ctrl+.), -1 = previous mode (Ctrl+,), 0 = the mode above')
+
+    @classmethod
+    def description(cls, context, properties):
+        if properties.step:
+            return 'Next Skin Paint Mode' if properties.step > 0 else 'Previous Skin Paint Mode'
+        return {'PAINT': 'Paint weights with the brush',
+                'SELECT': 'Select vertices (drag a box); Flood then fills only the selection',
+                'PAINT_SELECT': 'Select vertices by brushing over them'}[properties.mode]
+
+    @classmethod
+    def poll(cls, context):
+        return active(context)
+
+    def execute(self, context):
+        current = paint_mode(context)
+        mode = next_mode(current, self.step) if self.step else self.mode
+        mesh = context.active_object
+        s = state(context)
+        try:
+            if mode == 'PAINT':
+                skin.set_view_tool(context, s.paint_tool or 'builtin.brush')
+            else:
+                if current == 'PAINT':
+                    ws = context.workspace
+                    tool = ws.tools.from_space_view3d_mode('PAINT_WEIGHT', create=False) if ws else None
+                    s.paint_tool = tool.idname if tool is not None and tool.idname else 'builtin.brush'
+                show_vertex_selection(mesh)
+                from ..ui import toolbox
+                toolbox.KEEP_PAINT[0] = True
+                try:
+                    skin.set_view_tool(context, _MODE_TOOLS[mode])
+                finally:
+                    toolbox.KEEP_PAINT[0] = False
+        except RuntimeError as ex:
+            self.report({'WARNING'}, str(ex))
+            return {'CANCELLED'}
+        from .. import results
+        results.result(self, 'Paint mode: ' + MODE_LABELS[mode])
+        return {'FINISHED'}
+
+
+class ALLSET_OT_select_geometry(bpy.types.Operator):
+    """Select the whole mesh (drop the vertex selection) and keep painting"""
+    bl_idname = 'allset.select_geometry'
+    bl_label = 'Select Geometry'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return active(context)
+
+    def execute(self, context):
+        mesh = context.active_object
+        set_vertex_selection(mesh, ())
+        mesh.data.use_paint_mask_vertex = False
+        mesh.data.use_paint_mask = False
+        mesh.select_set(True)
+        return {'FINISHED'}
+
+
+class ALLSET_OT_paint_copy_vertex_weights(bpy.types.Operator):
+    """Maya Copy Vertex Weights while painting: remember the active (else first selected) vertex's weights"""
+    bl_idname = 'allset.paint_copy_vertex_weights'
+    bl_label = 'Copy Vertex Weights'
+
+    @classmethod
+    def poll(cls, context):
+        return active(context)
+
+    def execute(self, context):
+        import bmesh
+        mesh = context.active_object
+        bm = bmesh.new()
+        try:
+            bm.from_mesh(mesh.data)
+            act = bm.select_history.active
+            index = act.index if isinstance(act, bmesh.types.BMVert) and act.select else None
+        finally:
+            bm.free()
+        if index is None:
+            index = next((v.index for v in mesh.data.vertices if v.select and not v.hide), None)
+        if index is None:
+            self.report({'WARNING'}, 'Select a vertex')
+            return {'CANCELLED'}
+        names = {vg.index: vg.name for vg in mesh.vertex_groups}
+        skin._VERTEX_CLIPBOARD.clear()
+        skin._VERTEX_CLIPBOARD.update({names[e.group]: e.weight for e in mesh.data.vertices[index].groups
+                                       if e.group in names})
+        from .. import results
+        results.result(self, f"Copied {len(skin._VERTEX_CLIPBOARD)} weight(s)")
+        return {'FINISHED'}
+
+
+class ALLSET_OT_paint_paste_vertex_weights(bpy.types.Operator):
+    """Maya Paste Vertex Weights while painting: give the selected vertices the copied weights"""
+    bl_idname = 'allset.paint_paste_vertex_weights'
+    bl_label = 'Paste Vertex Weights'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return active(context) and bool(skin._VERTEX_CLIPBOARD)
+
+    def execute(self, context):
+        mesh = context.active_object
+        targets = [v.index for v in mesh.data.vertices if v.select and not v.hide]
+        if not targets:
+            self.report({'WARNING'}, 'Select vertices to paste the weights on')
+            return {'CANCELLED'}
+        groups = {name: (mesh.vertex_groups.get(name) or mesh.vertex_groups.new(name=name))
+                  for name in skin._VERTEX_CLIPBOARD}
+        for vg in mesh.vertex_groups:
+            if vg.name not in groups:
+                vg.remove(targets)
+        for name, w in skin._VERTEX_CLIPBOARD.items():
+            groups[name].add(targets, w, 'REPLACE')
+        mesh.data.update()
+        from .. import results
+        results.result(self, f"Pasted weights on {len(targets)} vertices")
+        return {'FINISHED'}
+
+
+class ALLSET_OT_paint_reflection(bpy.types.Operator):
+    """Maya Toggle Reflection while painting: mirror the paint across X"""
+    bl_idname = 'allset.paint_reflection'
+    bl_label = 'Toggle Reflection'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return active(context)
+
+    def execute(self, context):
+        data = context.active_object.data
+        data.use_mirror_x = not data.use_mirror_x
+        from .. import results
+        results.result(self, 'Reflection ' + ('on (X)' if data.use_mirror_x else 'off'))
+        return {'FINISHED'}
 
 
 class ALLSET_OT_weight_action(bpy.types.Operator):
@@ -522,7 +863,9 @@ class ALLSET_OT_weight_action(bpy.types.Operator):
 
 classes = (*_SETTING_CLASSES, ALLSET_PG_weight_workspace, ALLSET_OT_weight_tool,
            ALLSET_OT_weight_value, ALLSET_OT_weight_mask, ALLSET_OT_weight_influence, ALLSET_OT_weight_action,
-           ALLSET_OT_weight_workspace, ALLSET_OT_weight_curve)
+           ALLSET_OT_weight_workspace, ALLSET_OT_weight_curve, ALLSET_OT_weight_influence_verts,
+           ALLSET_OT_skin_paint_mode, ALLSET_OT_select_geometry, ALLSET_OT_paint_copy_vertex_weights,
+           ALLSET_OT_paint_paste_vertex_weights, ALLSET_OT_paint_reflection)
 
 
 def register_props():

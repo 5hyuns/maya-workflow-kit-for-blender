@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """An influence-first skin-paint workspace with native Blender paint capabilities."""
 import fnmatch
+import re
 from types import SimpleNamespace
 
 import bpy
@@ -93,32 +94,57 @@ def _weight_icon(cv):
     cv.line(0.42, 0.12, 0.73, 0.19, 0.06, status_icons.LIGHT)
 
 
+# Maya 2026 Influences list RMB, labels and order exactly as Maya's (research/maya/re/maya2026_paint_skin_weights.md:51-59);
+# the kit's extras come below a separator
+MAYA_RMB = (('Lock Selected', 'allset.weight_influence', 'action', 'LOCK_SELECTED'),
+            ('Unlock Selected', 'allset.weight_influence', 'action', 'UNLOCK_SELECTED'),
+            ('Lock Inverse Selection', 'allset.weight_influence', 'action', 'LOCK_OTHERS'),
+            ('Unlock Inverse Selection', 'allset.weight_influence', 'action', 'UNLOCK_OTHERS'),
+            ('Select Vertices', 'allset.weight_influence_verts', 'mode', 'SET'),
+            ('Add Affected Vertices', 'allset.weight_influence_verts', 'mode', 'ADD'),
+            ('Remove Affected Vertices', 'allset.weight_influence_verts', 'mode', 'REMOVE'))
+
+
+def draw_influence_menu(layout, context):
+    for label, op, prop, value in MAYA_RMB:
+        setattr(layout.operator(op, text=label), prop, value)
+    layout.separator()
+    s = model.state(context)
+    for action, label, icon in [('LOCK', 'Lock all influences', 'LOCKED'),
+                                ('UNLOCK', 'Unlock all influences', 'UNLOCKED'),
+                                ('INVERT', 'Invert locks', 'ARROW_LEFTRIGHT')]:
+        layout.operator('allset.weight_influence', text=label, icon=icon).action = action
+    layout.separator()
+    layout.prop(s, 'show_all')
+    layout.prop(s, 'locked_only')
+
+
 class ALLSET_MT_weight_influences(bpy.types.Menu):
-    bl_label = 'Influence Options'
+    bl_label = 'Influences'
     bl_idname = 'ALLSET_MT_weight_influences'
 
     def draw(self, context):
-        layout = self.layout
-        s = model.state(context)
-        layout.prop(s, 'sort', expand=True)
-        layout.separator()
-        layout.prop(s, 'show_all')
-        layout.prop(s, 'locked_only')
-        layout.separator()
-        for action, label, icon in [('LOCK', 'Lock all influences', 'LOCKED'),
-                                     ('UNLOCK', 'Unlock all influences', 'UNLOCKED'),
-                                     ('LOCK_SELECTED', 'Lock selected joints', 'LOCKED'),
-                                     ('UNLOCK_SELECTED', 'Unlock selected joints', 'UNLOCKED'),
-                                     ('OTHERS', 'Lock other influences', 'LOCKED'),
-                                     ('UNLOCK_OTHERS', 'Unlock other influences', 'UNLOCKED'),
-                                     ('INVERT', 'Invert locks', 'ARROW_LEFTRIGHT')]:
-            layout.operator('allset.weight_influence', text=label, icon=icon).action = action
+        draw_influence_menu(self.layout, context)
+
+
+def draw_list_item_menu(self, context):
+    """RMB on a row of the influence list (Blender's list item context menu) = Maya's Influences RMB."""
+    ui_list = getattr(context, 'ui_list', None)
+    if ui_list is None or getattr(ui_list, 'bl_idname', '') != 'ALLSET_UL_influences' or not active(context):
+        return
+    draw_influence_menu(self.layout, context)
+
+
+def natural_key(name):
+    """Maya 2026 Alphabetically = natural order (joint2 before joint10; skinClusterInflMenu.mel:306-321)."""
+    return [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in re.split(r'(\d+)', name.casefold())
+            if part]
 
 
 def influence_order(mesh, sort='HIERARCHY'):
     groups = list(mesh.vertex_groups)
     if sort == 'NAME':
-        order = sorted(range(len(groups)), key=lambda i: groups[i].name.casefold())
+        order = sorted(range(len(groups)), key=lambda i: natural_key(groups[i].name))
     elif sort == 'HIERARCHY' and skin.armature_modifier(mesh):
         arm = skin.armature_modifier(mesh).object
         rank = {name: i for i, name in enumerate(skin._hierarchy_order(arm))}
@@ -179,8 +205,11 @@ def _influences(layout, context):
     if col is None:
         return
     row = col.row(align=True)
+    row.label(text='Sort:')
+    row.prop(s, 'sort', expand=True)
+    row = col.row(align=True)
     row.prop(s, 'search', text='', icon='VIEWZOOM', placeholder='Find a joint…')
-    row.menu('ALLSET_MT_weight_influences', text='', icon='FILTER')
+    row.menu('ALLSET_MT_weight_influences', text='', icon='DOWNARROW_HLT')
     col.template_list('ALLSET_UL_influences', '', mesh, 'vertex_groups', mesh.vertex_groups,
                       'active_index', rows=5, maxrows=8, sort_lock=True)
     row = col.row(align=True)
@@ -220,6 +249,15 @@ def _brush(layout, context):
     col = _card(layout, 'Brush', setting='show_brush', context=context)
     if col is None:
         return
+    # Maya 2026 Brush frame: Mode (Paint / Select / Paint Select, Ctrl+. / Ctrl+,) and Select Geometry
+    # (research/maya/re/maya2026_paint_skin_weights.md:32)
+    mode = model.paint_mode(context)
+    row = col.row(align=True)
+    row.label(text='Mode:')
+    for key in model.PAINT_MODES:
+        row.operator('allset.skin_paint_mode', text=model.MODE_LABELS[key], depress=mode == key).mode = key
+    col.operator('allset.select_geometry')
+    col.separator(factor=0.35)
     assets = col.row(align=True)
     _tool(assets, brush.name if brush else 'Choose a brush', 'ASSETS', icon='ASSET_MANAGER')
     assets.menu('VIEW3D_MT_brush_context_menu', text='', icon='DOWNARROW_HLT')
@@ -453,9 +491,11 @@ def register():
     status_icons.EXTRA['skin_weights'] = _weight_icon
     for cls in classes:
         bpy.utils.register_class(cls)
+    bpy.types.UI_MT_list_item_context_menu.append(draw_list_item_menu)
 
 
 def unregister():
+    bpy.types.UI_MT_list_item_context_menu.remove(draw_list_item_menu)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     status_icons.EXTRA.pop('skin_weights', None)
