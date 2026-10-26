@@ -45,10 +45,17 @@ def s_maya():
     sw().set_mode(True, layout=False)
     bpy.ops.allset.keymap_activate()
     check(f"Maya mode in the template file ({len(strips())} strips)", sw().is_on() and len(strips()) == 2)
+    import_module(MODULE + ".ui.workspaces").activate(bpy.context, win(), "Animation")
 
 
 @step
 def s_to_blender():
+    C["objects"] = set(bpy.data.objects)
+    C["maya"] = win().workspace
+    for area in win().screen.areas:
+        if area.type == 'OUTLINER':
+            area.type = 'INFO'
+    C["maya_types"] = sorted(a.type for a in win().screen.areas)
     sw().set_mode(False)
 
 
@@ -60,6 +67,18 @@ def s_check_blender():
     check(f"Blender mode: no header-less Properties dock left ({len(headerless_properties())})",
           not headerless_properties())
     C["n_ws"] = len(bpy.data.workspaces)
+    factory = {w.get(sw().BLENDER_WORKSPACE_KEY): w for w in bpy.data.workspaces
+               if sw().BLENDER_WORKSPACE_KEY in w}
+    check("All default Blender workspaces loaded", set(factory) == set(sw().BLENDER_WORKSPACES))
+    check("Extension remains enabled", MODULE in bpy.context.preferences.addons)
+    check("Scene objects unchanged", set(bpy.data.objects) == C["objects"])
+    # Return from a different Blender tab, not just Layout.
+    win().workspace = factory["Shading"]
+
+
+@step
+def s_return_from_shading():
+    check("Blender Shading workspace usable", not sw().is_maya_workspace(win().workspace))
     sw().set_mode(True)
 
 
@@ -67,6 +86,8 @@ def s_check_blender():
 def s_maya_again():
     check(f"Maya again in the same file: its own Maya layout is back ({len(strips())} strips, "
           f"{len(bpy.data.workspaces)} workspaces)", len(strips()) == 2 and len(bpy.data.workspaces) == C["n_ws"])
+    check("Previous Maya workspace restored", win().workspace == C["maya"])
+    check("Maya workspace edits preserved", sorted(a.type for a in win().screen.areas) == C["maya_types"])
     sw().set_mode(False)
 
 

@@ -16,7 +16,8 @@ unregistering the Maya mode modules takes back everything they registered.
 
 Layout: switching on in a file that has no Maya layout appends the layout workspace of the startup.blend
 bundled inside the extension (``app_template.STARTUP``) (named "Maya-style") and activates it; switching off goes back to the previous
-workspace and deletes the appended one. Scenes and objects are never touched.
+workspace and deletes the appended one. A Maya template file gets Blender's full factory workspace set on
+switching off; both sets are reused on subsequent switches. Scenes and objects are never touched.
 """
 
 import bpy
@@ -99,12 +100,15 @@ def enter_layout(window):
     if window is None or is_maya_workspace(window.workspace):
         return None
     own = [ws for ws in bpy.data.workspaces if PREV_KEY not in ws and is_maya_workspace(ws)]
-    own.sort(key=lambda ws: template_of(ws) != TEMPLATE_WORKSPACE)     # Maya Classic first (step 160)
+    last = window.workspace.get(LAST_MAYA_KEY, "") if window.workspace else ""
+    own.sort(key=lambda ws: (ws.name != last, template_of(ws) != TEMPLATE_WORKSPACE))
     own = own[0] if own else None
     if own is not None:
         # the file's own Maya layout (a Maya Workflow Kit template file left by a switch to Blender): back to it,
         # nothing appended twice (#19, step 129)
         window.workspace = own
+        from .ui import workspaces
+        workspaces.apply_settings(bpy.context, own)
         return own
     prev = window.workspace.name
     ws = append_workspace(window, TEMPLATE_WORKSPACE)
@@ -222,6 +226,12 @@ def leave_layout(window):
 
 
 BLENDER_LAYOUT_KEY = "allset_blender_layout"
+BLENDER_WORKSPACE_KEY = "allset_blender_workspace"
+LAST_MAYA_KEY = "allset_last_maya_workspace"
+# General startup workspaces, as exposed by Blender's Add Workspace menu. Use the embedded startup of the
+# running Blender rather than a shipped .blend, so editors and defaults match the installed version.
+BLENDER_WORKSPACES = ("Layout", "Modeling", "Sculpting", "UV Editing", "Texture Paint", "Shading", "Animation",
+                      "Rendering", "Compositing", "Geometry Nodes", "Scripting")
 # Blender's embedded factory startup file: what Add Workspace > General appends from (workspace_edit.cc
 # workspace_append_button, BLO_EMBEDDED_STARTUP_BLEND; measured on 4.5, step 129)
 EMBEDDED_STARTUP = "<startup.blend>"
@@ -229,22 +239,39 @@ EMBEDDED_STARTUP = "<startup.blend>"
 
 def _leave_template_layout(window):
     """The window shows the Maya layout of a Maya Workflow Kit template file (no workspace to go back to): give it
-    Blender's factory Layout workspace, appended once and reused (#19, step 129). The Maya one stays in the file
-    for the way back (``enter_layout``)."""
-    target = next((w for w in bpy.data.workspaces if BLENDER_LAYOUT_KEY in w), None)
-    if target is None:
+    Blender's factory workspaces, appended once and reused. Maya workspaces stay in the file for the way back
+    (``enter_layout``), including any changes to their editors. Only workspace data is loaded, never a scene."""
+    maya_name = window.workspace.name
+    target = None
+    for name in BLENDER_WORKSPACES:
+        ws = next((w for w in bpy.data.workspaces if not is_maya_workspace(w) and
+                   (w.get(BLENDER_WORKSPACE_KEY) == name or w.name == name or
+                    (name == "Layout" and BLENDER_LAYOUT_KEY in w))), None)
+        if ws is not None:
+            if name == "Layout":
+                target = ws
+            continue
         before = set(bpy.data.workspaces)
         try:
             with bpy.context.temp_override(**_window_override(window)):
-                bpy.ops.workspace.append_activate(idname="Layout", filepath=EMBEDDED_STARTUP)
+                bpy.ops.workspace.append_activate(idname=name, filepath=EMBEDDED_STARTUP)
         except RuntimeError as ex:
-            print("Maya Workflow Kit: Blender layout not appended:", ex)
-            return False
+            print(f"Maya Workflow Kit: Blender workspace {name} not appended:", ex)
+            continue
         new = [w for w in bpy.data.workspaces if w not in before]
         if not new:
-            return False
-        target = new[0]
-        target[BLENDER_LAYOUT_KEY] = True
+            continue
+        ws = new[0]
+        ws[BLENDER_WORKSPACE_KEY] = name
+        if name == "Layout":
+            target = ws
+            target[BLENDER_LAYOUT_KEY] = True
+    if target is None:
+        return False
+    # Remember the Maya workspace on every Blender tab, so returning from e.g. Shading still restores it.
+    for ws in bpy.data.workspaces:
+        if not is_maya_workspace(ws):
+            ws[LAST_MAYA_KEY] = maya_name
     window.workspace = target
     return True
 
