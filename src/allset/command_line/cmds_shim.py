@@ -27,7 +27,12 @@ __all__ = ["ls", "select", "move", "rotate", "scale", "setAttr", "getAttr", "add
            "polyCube", "polySphere", "polyCylinder", "polyPlane", "delete", "rename",
            "objExists", "listRelatives", "currentTime",
            "parent", "group", "duplicate", "spaceLocator",
-           "setKeyframe", "cutKey", "keyframe", "playbackOptions", "file"]
+           "setKeyframe", "cutKey", "keyframe", "playbackOptions", "file",
+           # step 216 (cmds_rig.py, cmds_misc.py)
+           "makeIdentity", "parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint",
+           "aimConstraint", "joint", "connectAttr", "disconnectAttr", "isConnected", "listConnections",
+           "connectionInfo", "nodeType", "objectType", "attributeQuery", "currentUnit", "sets", "shadingNode",
+           "polyExtrudeFacet", "polyEvaluate", "exactWorldBoundingBox", "listHistory", "camera"]
 
 
 def __getattr__(name):
@@ -853,6 +858,11 @@ from .cmds_dag import (delete, rename, objExists, listRelatives, parent, group, 
                        spaceLocator)
 from .cmds_anim import currentTime, setKeyframe, cutKey, keyframe, playbackOptions  # noqa: E402
 from .cmds_file import file  # noqa: E402,A001
+from .cmds_rig import (makeIdentity, parentConstraint, pointConstraint, orientConstraint,  # noqa: E402
+                       scaleConstraint, aimConstraint, joint, connectAttr, disconnectAttr, isConnected,
+                       listConnections, connectionInfo)
+from .cmds_misc import (nodeType, objectType, attributeQuery, currentUnit, sets, shadingNode,  # noqa: E402
+                        polyExtrudeFacet, polyEvaluate, exactWorldBoundingBox, listHistory, camera)
 
 
 def _guarded(fn):
