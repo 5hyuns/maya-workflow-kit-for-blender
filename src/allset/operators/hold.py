@@ -34,21 +34,26 @@ class SnapGroup(HoldGroup):
     ELEMENTS = {"grid": {'GRID'}, "curve": {'EDGE'}, "point": {'VERTEX'}, "step": {'INCREMENT'}}
 
     def capture(self, ts):
-        return (ts.use_snap, set(ts.snap_elements), ts.snap_target)
+        return (ts.use_snap, set(ts.snap_elements), ts.snap_target, ts.use_snap_translate, ts.use_snap_rotate,
+                ts.use_snap_scale)
 
     def apply(self, ts, names):
         elements = set().union(*(self.ELEMENTS[n] for n in names))
         ts.snap_elements = elements
         ts.use_snap = True
+        # a held snap key snaps whatever transform runs (#139: an Affect flag left off ignored X / V)
+        ts.use_snap_translate = ts.use_snap_rotate = ts.use_snap_scale = True
         # Maya snaps the manipulator centre (the pivot / the component bbox centre), not the
         # object's closest point (research/maya/workflows/pivot_snap.md S2, S4, S5).
         ts.snap_target = 'CENTER'
 
     def restore(self, ts, state):
-        use_snap, elements, target = state
+        use_snap, elements, target, *affect = state
         ts.snap_elements = elements
         ts.use_snap = use_snap
         ts.snap_target = target
+        if affect:
+            ts.use_snap_translate, ts.use_snap_rotate, ts.use_snap_scale = affect
 
 
 class PivotGroup(HoldGroup):

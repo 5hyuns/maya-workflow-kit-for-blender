@@ -7,6 +7,10 @@
 
 ## 현재 작업
 
+- Step 220 (user report #139, 스냅이 안 움직임) 완료 — `docs/steps/step_220.md`: Step Snap Off 가 Blender 의 "Affect: Move" 를
+  꺼서 그리드·정점 스냅이 모두 꺼졌던 것 수정 (+ 버튼·홀드·파일 열기 때 복구). 4.5 / 5.2.3 GUI 3 / 3.
+  **바로 다음 할 일**: step 221 = Quaternion bones (Issue #131).
+
 - Step 219 (Menus follow Maya 2026, Issue #130) 완료 — `docs/steps/step_219.md`: 메뉴 데이터 = Maya 2026 GUI 덤프 (42 메뉴,
   2210 항목), 이름 바뀐 항목은 킷 매핑 유지, 새 항목은 Blender 기능 연결 또는 안내. consistency 0, 안내 없는 회색 0, -k 250 / 250.
   **바로 다음 할 일**: step 220 = Quaternion bones (Issue #131).

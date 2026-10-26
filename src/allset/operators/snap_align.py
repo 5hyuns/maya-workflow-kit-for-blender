@@ -383,24 +383,71 @@ STEP_FLAGS = {'TRANSLATE': "use_snap_translate", 'ROTATE': "use_snap_rotate", 'R
 MAYA_ROTATE_STEP = 0.2617993877991494      # 15 degrees (manipRotateContext -snapValue, S3)
 
 
+# Issue #139 (step 220): Blender's use_snap_translate / rotate / scale ("Affect") switch *all* snapping off for that
+# transform, not only the increment. Step Snap Off used to clear use_snap_translate, so Snap to Grid / Points on the
+# Status Line looked on but Move never snapped. The kit now keeps its per-tool Step Snap state in a scene ID property
+# and leaves a transform's Affect flag on while any other snap mode (grid / curve / point / live) is on.
+STEP_PROP = "allset_step_snap"
+OTHER_SNAPS = ('GRID', 'VERTEX', 'EDGE', 'FACE', 'FACE_PROJECT', 'FACE_NEAREST', 'VOLUME', 'EDGE_MIDPOINT',
+               'EDGE_PERPENDICULAR')
+
+
+def _record(ts):
+    scene = ts.id_data
+    return dict(scene.get(STEP_PROP, {})) if scene is not None else {}
+
+
+def _store(ts, rec):
+    if ts.id_data is not None:
+        ts.id_data[STEP_PROP] = rec
+
+
 def step_snap_mode(ts, kind):
     """'OFF' / 'RELATIVE' / 'ABSOLUTE' for the tool ``kind`` (Maya Step Snap)."""
     if not (ts.use_snap and 'INCREMENT' in ts.snap_elements and getattr(ts, STEP_FLAGS[kind])):
         return 'OFF'
+    if _record(ts).get(kind) == 'OFF':
+        return 'OFF'
     return 'ABSOLUTE' if ts.use_snap_grid_absolute else 'RELATIVE'
+
+
+def other_snaps_on(ts):
+    """Any snap mode besides the increment step is on (grid / point / curve / live)."""
+    return ts.use_snap and bool(set(ts.snap_elements) & set(OTHER_SNAPS))
+
+
+def heal_affect(ts):
+    """Turn the Move / Rotate / Scale Affect flags back on wherever Step Snap isn't the reason they are off: with
+    a grid / point / curve snap on, Blender would otherwise ignore it for that transform (#139)."""
+    if not other_snaps_on(ts):
+        return 0
+    n = 0
+    for kind, flag in STEP_FLAGS.items():
+        if not getattr(ts, flag):
+            setattr(ts, flag, True)
+            n += 1
+    return n
 
 
 def set_step_snap(ts, kind, mode):
     if mode == 'TOGGLE':
         mode = 'OFF' if step_snap_mode(ts, kind) != 'OFF' else 'RELATIVE'
+    rec = _record(ts)
+    rec[kind] = mode
+    _store(ts, rec)
     if mode == 'OFF':
-        setattr(ts, STEP_FLAGS[kind], False)
-        if not any(getattr(ts, f) for f in STEP_FLAGS.values()) or set(ts.snap_elements) == {'INCREMENT'}:
-            elements = set(ts.snap_elements) - {'INCREMENT'}
-            if elements:
-                ts.snap_elements = elements
-            else:
-                ts.use_snap = False
+        # tools whose Step Snap the user turned on (Blender's Affect flags are on by default for all three)
+        stepping = [k for k in STEP_FLAGS if k != kind and rec.get(k) in ('RELATIVE', 'ABSOLUTE')
+                    and step_snap_mode(ts, k) != 'OFF']
+        elements = set(ts.snap_elements) if ts.use_snap else set()
+        if not stepping:
+            elements.discard('INCREMENT')
+        # the Affect flag stays on while a grid / point / curve snap is on: it would switch those off too
+        setattr(ts, STEP_FLAGS[kind], bool(elements - {'INCREMENT'}))
+        if elements:
+            ts.snap_elements = elements
+        else:
+            ts.use_snap = False
         return 'OFF'
     ts.snap_elements = set(ts.snap_elements if ts.use_snap else ()) | {'INCREMENT'}
     ts.use_snap = True

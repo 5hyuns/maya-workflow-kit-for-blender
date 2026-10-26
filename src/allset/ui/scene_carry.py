@@ -77,6 +77,7 @@ def read(scene, wm=None):
     for name in SCENE_PROPS:
         if hasattr(scene, name):
             state["props"][name] = getattr(scene, name)
+    state["step_snap"] = dict(scene.get("allset_step_snap", {}))    # per-tool Step Snap (snap_align.STEP_PROP)
     for slot in scene.transform_orientation_slots:
         state["slots"].append((slot.type if slot.type in BUILTIN_ORIENTATIONS else None,
                                getattr(slot, "use", None)))
@@ -113,6 +114,8 @@ def write(scene, state, wm=None):
             _set(group, key, value)
     for name, value in state["props"].items():
         _set(scene, name, value)
+    if "step_snap" in state:
+        scene["allset_step_snap"] = state["step_snap"]
     slots = scene.transform_orientation_slots
     for i, (kind, use) in enumerate(state["slots"][:len(slots)]):
         if kind is not None:
@@ -157,8 +160,10 @@ def _after_load(*_args):
     state = _carried.pop("state", None)
     try:
         wm = bpy.context.window_manager
+        from ..operators import snap_align
         for scene in bpy.data.scenes:
             write(scene, state, wm)
+            snap_align.heal_affect(scene.tool_settings)    # #139: files saved with Move snapping cut off by Step Snap
     except (AttributeError, ReferenceError):
         pass
     _session["loaded"] = True
