@@ -910,10 +910,14 @@ class ALLSET_OT_pose_empty_click(bpy.types.Operator):
         if (x - press[0]) ** 2 + (y - press[1]) ** 2 > 36:
             return {'PASS_THROUGH'}
 
-        win, area = context.window, context.area
+        # pointers, looked up when the timer runs: the window may close in between (#36, step 129)
+        win_ptr, area_ptr = context.window.as_pointer(), context.area.as_pointer()
+
         def check():
+            from .. import live_refs
+            win, area = live_refs.find_area(area_ptr, win_ptr)
             try:
-                if area not in win.screen.areas:
+                if area is None:
                     return None
                 region = next((r for r in area.regions if r.type == 'WINDOW'), None)
                 if region is None:
@@ -992,11 +996,15 @@ class ALLSET_OT_joint_outliner_select(bpy.types.Operator):
             return {'PASS_THROUGH'}
         if context.region is None or context.region.type != 'WINDOW':
             return {'PASS_THROUGH'}
-        win = context.window
+        # pointers, looked up when the timer runs: the window may close in between (#36, step 129)
+        win_ptr, area_ptr = context.window.as_pointer(), area.as_pointer()
+
         # Blender updates selected_ids on completion of the Outliner click.
         def after_selection():
+            from .. import live_refs
+            win, area = live_refs.find_area(area_ptr, win_ptr)
             try:
-                if area not in win.screen.areas or area.type != 'OUTLINER':
+                if area is None or area.type != 'OUTLINER':
                     return None
                 region = next((r for r in area.regions if r.type == 'WINDOW'), None)
                 if region is None:

@@ -46,7 +46,8 @@ def main():
     for path in files:
         gui = path.stem in GUI_RESULTS
         cmd = [args.blender, '--factory-startup', '--python-exit-code', '1']
-        cmd += (['--enable-event-simulate', '--window-geometry', '0', '0', '1600', '900']
+        geometry = os.environ.get('ALLSET_GUI_GEOMETRY', '0 0 1600 900').split()   # '2048 0 1600 900' = 2nd monitor
+        cmd += (['--enable-event-simulate', '--window-geometry', *geometry]
                 if gui else ['--background'])
         cmd += ['--python', str(path)]
         log = headless.SANDBOX / 'logs' / (path.stem + '.log')
