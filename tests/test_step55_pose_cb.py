@@ -195,10 +195,11 @@ def test_quaternion_joint_rotate_order_button():
     pb3.rotation_quaternion.normalize()
     bpy.context.view_layer.update()
     before = pb3.matrix_basis.copy()
-    assert not cb.has_channel(pb3, "rx")
+    # step 221 (): a quaternion joint shows Maya's Rotate X / Y / Z (written back as a quaternion)
+    assert cb.has_channel(pb3, "rx")
     rec = _draw_cb()
-    assert "Rotation mode QUATERNION" in rec.texts("label") and "Rotate Order XYZ" in rec.texts("operator")
-    assert bpy.ops.allset.cb_rotate_order(order='XYZ') == {'FINISHED'}
+    assert "Rotation mode QUATERNION" not in rec.texts("label")
+    assert bpy.ops.allset.cb_rotate_order(order='XYZ') == {'FINISHED'}     # converting still keeps the pose
     bpy.context.view_layer.update()
     assert pb3.rotation_mode == 'XYZ' and cb.has_channel(pb3, "rx")
     err = max(abs(a - b) for ra, rb in zip(before, pb3.matrix_basis) for a, b in zip(ra, rb))
