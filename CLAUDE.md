@@ -38,7 +38,7 @@ python tests/run.py -k enable    # only matching test files
 python tests/run.py --no-build   # reuse dist/ zip
 python tools/build.py            # build only
 python tools/gen_keymap_mapping.py  # regenerate docs/keymap_mapping.md (exit 1 if an IC/KIT row is unbound)
-python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (a Blender window opens briefly)
+python tests/gui/run.py [--shots DIR]  # GUI tests: simulated key/mouse events (on an invisible desktop)
 python tools/make_startup.py     # regenerate app_template/Maya_Workflow_Kit/startup.blend (GUI Blender, a window opens briefly)
 python tools/make_theme.py       # regenerate theme/studio_grey.xml from its colour table
 python tools/gen_menu_data.py    # regenerate ui/menu_data.py (Maya menu structure) from research/maya/menus.json
@@ -56,7 +56,7 @@ python tools/dogfood.py          # clean-config install + scripted Maya-user ses
 python tests/integration/run.py --blender PATH  # PR #125 joint / Channel Box wheel / weight-paint checks (4 GUI windows open briefly; run per Blender version, not part of tests/run.py)
 ```
 
-- GUI runners (`tests/gui/run.py`, `tests/integration/run.py`) take `ALLSET_GUI_GEOMETRY="2048 0 1600 900"` to open their window on a second monitor.
+- Test Blenders never show on the maintainer's screen: GUI runners (`tests/gui/run.py`, `tests/integration/run.py`, `tools/dogfood.py`, `release_check.py`, `look_compare.py`, `make_startup.py`) re-run themselves on an invisible Windows desktop (`tools/hidden_desktop.ensure_hidden`; windows, GPU drawing and crash dialogs stay there; any other command: `python tools/hidden_desktop.py <cmd>`). `ALLSET_GUI_VISIBLE=1` opts out for manual debugging; then `ALLSET_GUI_GEOMETRY="2048 0 1600 900"` opens the window on the second monitor.
 - Each test file runs in its own `blender -b --factory-startup` process. The extension module is `bl_ext.user_default.allset`; it is enabled automatically unless the test module sets `AUTO_ENABLE = False`.
 - A test is a top-level `test_*` function that raises on failure. Shared helpers in `tests/kit.py` (`enable`, `disable`, `snapshot`, `diff`).
 - Logs: `tmp/test_env/logs/<test>.log`. Results: `tmp/test_env/results/<test>.json`.
