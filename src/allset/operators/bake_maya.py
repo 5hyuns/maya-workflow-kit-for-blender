@@ -154,7 +154,8 @@ def bake(context, objects=None, bones=None, start=1, end=10, step=1, keep_unbake
                     else:
                         target_baked = False      # pose-mode bakes never include the handle object
                     if not target_baked:
-                        con.influence = 0.0
+                        from . import ik_fk
+                        ik_fk.set_blend(arm, pb, con, 0.0)      # Ik Blend 0 (drives the Influence, step 223)
                         iks += 1
     context.scene.frame_set(context.scene.frame_current)     # show the baked pose (nla.bake leaves the last sample)
     return {"nodes": len(owners), "muted": muted, "drivers": drivers, "ik": iks}

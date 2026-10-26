@@ -116,6 +116,13 @@ NOTICES = {
     "Skeleton/Create IK Spline Handle": (
         "Spline IK constraint", "Blender makes a Spline IK constraint on the end bone and the curve curve1; there is no "
         "ikHandle / effector node."),
+    # step 223 L14 (operators/ik_fk.py)
+    "Skeleton/Enable IK/FK Control": (
+        "Always on", "Blender always lets you rotate joints in an IK chain: the rotation shows where the handle's "
+        "Ik Blend is 0 (Key > IK/FK Keys)."),
+    "Key/IK/FK Keys/Set IK/FK Key": (
+        "Ik Blend + joint keys", "Keys the handle (Ik Blend included) and the chain joints' solved rotation; Blender "
+        "has no handle Pole Vector / Offset / Roll / Twist channels to key."),
     "Deform/Cluster": (
         "Hook modifier", "Blender's cluster is a Hook modifier driven by the clusterNHandle empty."),
     "Deform/Soft Modification Tool": (
@@ -325,7 +332,9 @@ CATEGORIES = {
     # rigging / animation
     "Key": ("Copy Transforms constraints", "Blender has no character mapping or redirection: retarget with Copy "
             "Transforms constraints. Character sets: Key > Create Character Set."),
-    "Key/IK": ("IK constraint Influence", "Blender switches IK / FK by keying the IK constraint's Influence."),
+    # step 223: Set IK/FK Key / Enable IK Solver / Move IK to FK work (operators/ik_fk.py); Connect to IK/FK is left
+    "Key/IK": ("Ik Blend property", "Blender has no Connect to IK/FK: drive the handle's Ik Blend from a control "
+               "with Key > Set Driven Key or a driver."),
     "Key/Scene Time Warp": ("NLA strip time", "Blender has no scene time warp: remap time per action with an NLA "
                             "strip's Scale / Repeat or a Time Offset modifier."),
     "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "

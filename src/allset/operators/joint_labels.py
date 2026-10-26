@@ -470,8 +470,14 @@ class ALLSET_OT_ik_handle_enable(bpy.types.Operator):
         if not cons:
             self.report({'ERROR'}, "No handle selected.")       # Maya ikHandle -e -eh / -dh with no handle
             return {'CANCELLED'}
+        from . import ik_fk
         for con in cons:
-            con.influence = 1.0 if self.enable else 0.0       # Maya ikHandle -eh / -dh write ikBlend 1 / 0 (mayapy)
+            # Maya ikHandle -eh / -dh write ikBlend 1 / 0 (mayapy); Ik Blend drives the Influence (step 223)
+            pb = next((p for p in con.id_data.pose.bones if any(c == con for c in p.constraints)), None)
+            if con.type == 'IK' and pb is not None:
+                ik_fk.set_blend(con.id_data, pb, con, 1.0 if self.enable else 0.0)
+            else:
+                con.influence = 1.0 if self.enable else 0.0
             con.id_data.update_tag()
         context.view_layer.update()
         return {'FINISHED'}

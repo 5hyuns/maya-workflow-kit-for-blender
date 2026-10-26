@@ -7,6 +7,21 @@
 
 ## 현재 작업
 
+- Step 223 (Rig FBX import + IK/FK, Issue #133) 완료 — `docs/steps/step_223.md`: Maya FBX 리그를 파일에서 다시 짜서 가져옴
+  (Maya auto 탄젠트 = Auto Clamped + Continuous Acceleration, 오일러 키 1:1, 스켈레톤 변환 없음, 메시 분리, 범위 = 파일) → 조인트
+  1.2e-5 cm, 222 왕복 0.27 cm [U] → 1.3e-5 cm (원인 = Blender 리더의 선형 샘플링). Ik Blend = 핸들 속성 → IK Influence 드라이버,
+  Set IK/FK Key / Enable IK Solver / Move IK to FK = mayapy 일치. -k 관련 233 / 233, GUI step223 6 / 6.
+  **바로 다음 할 일**: step 224 = Paint Skin Weights: numeric weights, several skin clusters, remaining Tool Settings
+  (Issue #134).
+
+- **체크포인트 2026-10-26 (/sc:save, 222 후)** — 지금 단계: **222 완료 · 커밋 4824f55** (Fixes #132, push 안 함). 이번 세션 커밋:
+  217 0f30ad1 (#128) · 218 c984ef1 (#129) · 219 c1129b7 (#130) · 220 0d19e07 (#139 사용자 신고, 이슈 댓글 남김) · 221 a1f50c8 (#131) ·
+  222 4824f55 (#132). 진행 중인 레인·테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ · tmp/ 추적 안 함).
+  규칙: 속도 우선 (사용자 10-26 밤) — 단계마다 그 기능의 -k 테스트만; 헤드리스 전체·GUI 스모크·5.x·dogfood 는 228 Release prep 에서 한
+  번에, 실패는 git bisect. Serena 메모리 `session_2026-10-26_steps217-222`, `learnings_anim_chain_2026`.
+  **바로 다음 할 일**: step 223 = Rig FBX import and IK/FK switch (Issue #133) — 결정 4 의 가져오기 쪽 (Maya 처럼 쿼터니언 → 오일러
+  키 변환, `rotation_display.euler_curve` 재사용), 222 후처리 파일 왕복 (Blender 재가져오기 0.27 cm 어긋남 [U], DECISIONS7 §3).
+
 - Step 222 (Rig FBX export, Issue #132) 완료 — `docs/steps/step_222.md`: FBX 후처리 (`operators/fbx_rig.py`) = jointOrient 를
   PreRotation 으로, 아마추어 Null 제거, cm, 디폼 본만. Maya 2026 에서 열어 조인트 5e-6 cm, 스킨 정점 1e-6 cm 일치.
   **바로 다음 할 일**: step 223 = Rig FBX import and IK/FK switch (Issue #133).

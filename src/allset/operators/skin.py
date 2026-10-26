@@ -121,6 +121,8 @@ def create_ik(context, arm, start, end, solver="RP", solver_enable=True, weight=
     con.use_rotation = solver == "SC"
     con.weight = max(0.01, weight)               # Blender's IK weight range starts at 0.01
     con.mute = not solver_enable
+    from . import ik_fk
+    ik_fk.ensure_blend(arm, ik_bone, con)           # Maya Ik Blend on the handle (step 223)
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     for ob in context.selected_objects:
