@@ -255,8 +255,9 @@ def select_rows(context, rows, index, mode, anchor=None):
     ob = bpy.data.objects.get(rows[index].object)
     if ob is None:
         return
-    if context.mode == 'POSE':
-        bpy.ops.object.mode_set(mode='OBJECT')   # an object row: back to picking objects
+    if context.mode != 'OBJECT' and context.active_object is not None:
+        from ..operators import joint_selection
+        joint_selection.leave(context, clear_selection=mode == 'REPLACE')
     if mode == 'TOGGLE':
         if _select(ob, not ob.select_get()) and ob.select_get():
             vl.objects.active = ob
@@ -287,7 +288,7 @@ class ALLSET_OT_outliner_select(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode in {'OBJECT', 'POSE'}
+        return context.mode in {'OBJECT', 'POSE', 'EDIT_ARMATURE'}
 
     def invoke(self, context, event):
         self.mode = 'TOGGLE' if event.ctrl else 'RANGE' if event.shift else 'REPLACE'

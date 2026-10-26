@@ -81,11 +81,16 @@ from . import color_sets_maya, normals_maya  # noqa: E402  step 189: Mesh Displa
 
 classes += normals_maya.classes + color_sets_maya.classes
 
+from . import weight_paint
+
+classes += weight_paint.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
 def register():
     _register_classes()
+    weight_paint.register_props()
     default_light.register()
     snap_align.register_props()
     material.register_props()
@@ -129,6 +134,7 @@ def register():
 
 
 def unregister():
+    weight_paint.unregister_props()
     character_sets.unregister_props()
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
