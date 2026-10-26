@@ -183,8 +183,6 @@ one-line note saying why and what to use instead.
 - A **Maya | Blender** switch at the right of the top bar, an Edit menu entry and **Ctrl+Alt+Shift+M**.
 - Switching to Blender unregisters the Maya keys and Maya UI and gives Blender's own back — with the same scene open;
   switch again whenever you like.
-- In a Maya layout file, Blender mode loads all 11 default Blender workspaces. Switching back restores the previous
-  Maya workspace, including layout edits. Both workspace sets stay in the file and are reused; the extension stays enabled.
 - Maya mode never changes your preferences, theme or active keymap, so there is nothing to restore.
 
 ![Maya or Blender, one click](docs/distribution/marketing/gif/07_switch.gif)
