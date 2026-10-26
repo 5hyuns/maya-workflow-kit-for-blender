@@ -120,6 +120,14 @@ from . import weight_paint
 
 classes += weight_paint.classes
 
+from . import bake_maya  # noqa: E402  step 217 L18: Maya Bake Simulation (constraints muted, not deleted)
+
+classes += bake_maya.classes
+
+from . import controllers  # noqa: E402  step 217: Control > Tag As Controller / Parent Controller (pick walk)
+
+classes += controllers.classes
+
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 

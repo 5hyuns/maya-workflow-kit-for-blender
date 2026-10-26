@@ -317,9 +317,10 @@ CATEGORIES = {
                         "Cache File properties."),
     "Help": ("Blender Help menu", "Blender has no Autodesk account, product research or analytics services; "
              "Blender's Help menu has the manual and bug reports."),
-    # step 197: character sets are real (operators/character_sets.py); what is left is HumanIK / controller tags
-    "Control": ("Bone collections", "Blender has no controller tags, HumanIK control rigs, character mapping or "
-                "redirection: bone collections group the controls. Character sets: Control > Create Character Set."),
+    # step 197: character sets are real (operators/character_sets.py); step 217: controller tags too
+    # (operators/controllers.py); what is left is HumanIK
+    "Control": ("Bone collections", "Blender has no HumanIK control rigs, character mapping or redirection: bone "
+                "collections group the controls. Character sets: Control > Create Character Set."),
     # rigging / animation
     "Key": ("Copy Transforms constraints", "Blender has no character mapping or redirection: retarget with Copy "
             "Transforms constraints. Character sets: Key > Create Character Set."),

@@ -534,19 +534,121 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
 
 # --- joint pick-walk and parenting --------------------------------------------------------------
 
-def walk_bone(bone, direction):
-    """Bone reached from ``bone`` (data Bone): Up parent, Down first child, Left/Right sibling (wraps)."""
+# Step 217 ( ,  L20): Maya's pickWalk walks the DAG and
+# goes into hidden nodes (); with controller tags it follows the controller
+# hierarchy (:19). Kit controller tags live on data Bones (operators/controllers.py). An untagged armature treats
+# bones whose bone collections are all hidden as "not a control" and walks past them (preference
+# pick_walk_skip_hidden_collections; Maya walks into hidden display layers — kit difference, delegated). Bones
+# hidden one by one (h) are walked into like Maya.
+CONTROLLER = "allset_controller"
+CONTROLLER_PARENT = "allset_controller_parent"
+
+
+def _by_name(bones):
+    return sorted(bones, key=lambda b: b.name)
+
+
+def _wrap(sibs, bone, direction):
+    names = [b.name for b in sibs]
+    if len(sibs) < 2 or bone.name not in names:
+        return bone
+    return sibs[(names.index(bone.name) + (1 if direction == "RIGHT" else -1)) % len(sibs)]
+
+
+def collection_hidden(bone):
+    """The bone is in bone collections and none of them is shown (a bone in no collection is always shown)."""
+    cols = bone.collections
+    return len(cols) > 0 and not any(c.is_visible_effectively for c in cols)
+
+
+def has_controllers(arm):
+    """The armature data has kit controller tags (Control > Tag As Controller / Parent Controller)."""
+    return any(b.get(CONTROLLER) for b in arm.bones)
+
+
+def controller_parent(bone):
+    name = bone.get(CONTROLLER_PARENT)
+    return bone.id_data.bones.get(name) if name else None
+
+
+def controller_children(bone):
+    return _by_name(b for b in bone.id_data.bones if b.get(CONTROLLER_PARENT) == bone.name)
+
+
+def _dag_walk(bone, direction):
     if direction == "UP":
         return bone.parent or bone
     if direction == "DOWN":
-        kids = sorted(bone.children, key=lambda b: b.name)
+        kids = _by_name(bone.children)
         return kids[0] if kids else bone
     sibs = bone.parent.children if bone.parent else [b for b in bone.id_data.bones if b.parent is None]
-    sibs = sorted(sibs, key=lambda b: b.name)
-    if len(sibs) < 2:
-        return bone
-    i = [b.name for b in sibs].index(bone.name)
-    return sibs[(i + (1 if direction == "RIGHT" else -1)) % len(sibs)]
+    return _wrap(_by_name(sibs), bone, direction)
+
+
+def _controller_walk(bone, direction):
+    """Maya's controller rule: the controller hierarchy where it is set, else the DAG."""
+    up = controller_parent(bone)
+    if direction == "UP":
+        return up or bone.parent or bone
+    if direction == "DOWN":
+        kids = controller_children(bone)
+        return kids[0] if kids else _dag_walk(bone, "DOWN")
+    if up is not None:
+        return _wrap(controller_children(up), bone, direction)
+    return _dag_walk(bone, direction)
+
+
+def visible_ancestor(bone):
+    """Nearest ancestor not hidden by its bone collections, or None."""
+    p = bone.parent
+    while p is not None and collection_hidden(p):
+        p = p.parent
+    return p
+
+
+def visible_below(bones):
+    """Nearest descendants not hidden by collections under ``bones`` (depth-first, each level sorted by name)."""
+    out = []
+    for b in _by_name(bones):
+        if collection_hidden(b):
+            out.extend(visible_below(b.children))
+        else:
+            out.append(b)
+    return out
+
+
+def _visible_walk(bone, direction):
+    if direction == "UP":
+        return visible_ancestor(bone) or bone
+    if direction == "DOWN":
+        kids = visible_below(bone.children)
+        return kids[0] if kids else bone
+    up = visible_ancestor(bone)
+    sibs = visible_below(up.children if up is not None
+                         else [b for b in bone.id_data.bones if b.parent is None])
+    if bone.name not in {b.name for b in sibs}:      # the bone itself is hidden by a collection
+        return _dag_walk(bone, direction)
+    return _wrap(sibs, bone, direction)
+
+
+def walk_bone(bone, direction, skip_hidden=False):
+    """Bone reached from ``bone`` (data Bone) by a Maya arrow key (Up / Down / Left / Right, siblings wrap).
+
+    Controller-tagged armature = the controller rule; else ``skip_hidden`` (the preference) walks past bones hidden
+    by their bone collections; else the plain DAG (parent, first child by name, siblings by name)."""
+    if has_controllers(bone.id_data):
+        return _controller_walk(bone, direction)
+    if skip_hidden:
+        return _visible_walk(bone, direction)
+    return _dag_walk(bone, direction)
+
+
+def _skip_hidden_pref(context):
+    from .. import preferences
+    try:
+        return preferences.get(context).pick_walk_skip_hidden_collections
+    except (KeyError, AttributeError):
+        return True
 
 
 @undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
@@ -566,9 +668,10 @@ class ALLSET_OT_pick_walk_joint(bpy.types.Operator):
     def execute(self, context):
         cb = _cb()
         lead = cb.lead(context)
+        skip = _skip_hidden_pref(context)
         picked = []
         for pb in cb.targets(context):
-            to = walk_bone(pb.bone, self.direction)
+            to = walk_bone(pb.bone, self.direction, skip)
             key = (pb.id_data.name, to.name)
             if key not in picked:
                 picked.append(key)
@@ -578,7 +681,7 @@ class ALLSET_OT_pick_walk_joint(bpy.types.Operator):
         for arm_name, bone_name in picked:
             cb.set_bone_selected(bpy.data.objects[arm_name].pose.bones[bone_name], True)
         if lead is not None:
-            lead.id_data.data.bones.active = walk_bone(lead.bone, self.direction)
+            lead.id_data.data.bones.active = walk_bone(lead.bone, self.direction, skip)
         return {'FINISHED'}
 
 

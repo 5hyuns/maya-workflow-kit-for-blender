@@ -160,7 +160,7 @@ MAP = {
     "Edit/Keys/Cut Keys": ("allset.time_keys", {"action": "CUT", "time_range": 'ALL'}),
     "Edit/Keys/Copy Keys": ("allset.time_keys", {"action": "COPY", "time_range": 'ALL'}),
     "Edit/Keys/Paste Keys": ("allset.time_keys", {"action": "PASTE"}),
-    "Edit/Keys/Bake Simulation": "nla.bake",
+    "Edit/Keys/Bake Simulation": "allset.bake_simulation",          # step 217 L18
     # step 140: Maya factory Scale Keys = factor 1 (a no-op), so a plain click opens the window
     "Edit/Keys/Scale Keys": "allset.opt_scale_keys",
     "Edit/Delete": "allset.delete",                              # step 164: with the hierarchy (dag_164.md)
@@ -396,6 +396,9 @@ MAP = {
     "UV/Merge UVs": "allset.uv_merge",     # Maya polyMergeUV: per vertex within 0.01 (step 196)
     # --- Skeleton (Rigging) ---
     # step 187: Maya Character Sets on Blender Keying Sets (operators/character_sets.py)
+    # step 217: controller tags on bones, followed by pose-mode pick walk (operators/controllers.py)
+    "Control/Tag As Controller": "allset.tag_controller",
+    "Control/Parent Controller": "allset.parent_controller",
     "Control/Create Character Set": "allset.character_create",
     "Control/Create Subcharacter Set": ("allset.character_create", {"sub": True}),
     "Control/Attribute Editor": "allset.character_attributes",
@@ -456,7 +459,7 @@ MAP = {
     "Key/Set Key on Rotate": ("allset.set_key", {"channels": "ROTATE"}),   # step 157: default tangents
     "Key/Set Key on Scale": ("allset.set_key", {"channels": "SCALE"}),   # step 157: default tangents
     "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
-    "Key/Bake Simulation": "nla.bake",
+    "Key/Bake Simulation": "allset.bake_simulation",  # step 217 L18
     "Key/Scale Keys": "allset.opt_scale_keys",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "allset.playblast", {}),
