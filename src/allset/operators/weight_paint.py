@@ -85,9 +85,6 @@ def _normalize_set(self, value):
 
 
 class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
-    page: EnumProperty(items=[('PAINT', 'Paint', 'Brushes, value, flood and stroke'),
-                              ('WEIGHTS', 'Weights', 'Normalize, mirror, transfer and clean up'),
-                              ('DISPLAY', 'Display', 'Weight colors, overlays and symmetry')], default='PAINT')
     search: StringProperty(name='Find influence', options={'TEXTEDIT_UPDATE'})
     sort: EnumProperty(name='Sort', items=[('HIERARCHY', 'Hierarchy', 'Joint hierarchy order'),
                                          ('NAME', 'Name', 'Alphabetical order'),
@@ -97,15 +94,16 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     auto_normalize: BoolProperty(name='Auto normalize',
                                  description='Keep deform weights normalized while painting; remembered for this skin',
                                  get=_normalize_get, set=_normalize_set)
+    # Tool Settings frames in Maya 2024+ order (Skin Clusters / Influences / Brush / Visualization / Stroke /
+    # Stylus Pressure / Display), then the Blender-only extras (ui/paint_weights.SECTIONS)
+    show_skin_clusters: BoolProperty(default=True)
     show_influences: BoolProperty(default=True)
     show_brush: BoolProperty(default=True)
+    show_visualization: BoolProperty(default=False)
     show_stroke: BoolProperty(default=False)
-    show_falloff: BoolProperty(default=False)
     show_pressure: BoolProperty(default=False)
-    show_advanced: BoolProperty(default=False)
-    show_cursor: BoolProperty(default=False)
-    show_color: BoolProperty(default=False)
-    show_symmetry: BoolProperty(default=True)
+    show_display: BoolProperty(default=False)
+    show_commands: BoolProperty(default=False)
     show_mask: BoolProperty(default=False)
     status: StringProperty(default='')
     __annotations__.update({key.lower(): PointerProperty(type=cls)

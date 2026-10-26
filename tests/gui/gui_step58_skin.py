@@ -12,8 +12,9 @@ from bpy_extras import view3d_utils
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import MODULE, check, dock_region, ev, px, run, screenshot, setup, step, tap, win, load_maya_layout  # noqa: E402
+from sim import MODULE, check, ev, find_button, run, screenshot, setup, step, tap, win, load_maya_layout  # noqa: E402
 
+GUI_TIMEOUT = 360   # the influence-row sweep in Tool Settings (PR #125 follow-up)
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
 
@@ -172,24 +173,52 @@ def s_painting():
 
 
 @step
+def s_tool_settings():
+    # Maya: the plain menu item only starts the tool (the Channel Box stays); its settings, influence list included,
+    # are Tool Settings (PR #125 follow-up) -- open them like the option box / tool double-click does
+    area, region = main_view()
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        bpy.ops.allset.weight_workspace()
+
+
+def tool_settings_region():
+    td = import_module(MODULE + ".ui.tool_dock")
+    area = td.find(win().screen)
+    return area, next(r for r in area.regions if r.type == 'WINDOW')
+
+
+@step
 def s_panel_shot():
     shot("gui_step58_paint_panel.png")
     c = cyl()
-    rows = [vg.name for vg in sorted(c.vertex_groups, key=lambda g: g.name)]
-    ui = dock_region()     # Maya's tab stack (step 116; was the 3D View sidebar): rows below its content top
-    top = ui.view2d.view_to_region(0, 0, clip=False)[1]
-    # Influences list: rows are 20 px x scale under the panel's "Influences" label (gui_step58_paint_panel.png)
-    i = rows.index("joint2")
-    C["row"] = (ui.x + ui.width // 3, ui.y + top - px(LIST_TOP + ROW * i))
-    ev('MOUSEMOVE', 'NOTHING', x=C["row"][0], y=C["row"][1])
+    pw = import_module(MODULE + ".ui.paint_weights")
+    # display position of joint2 in the list (Maya order: by hierarchy)
+    C["pos"] = pw.influence_order(c, 'HIERARCHY')[c.vertex_groups['joint2'].index]
+    C["unit"] = round(20 * bpy.context.preferences.system.ui_scale * bpy.context.preferences.view.ui_scale)
 
 
-LIST_TOP, ROW = 167, 25   # joint1 row centre below the UI region top at scale 1.25 (gui_step58_paint_panel.png)
+# the influence search field (above the list) in the Tool Settings dock, swept top to bottom
+step(find_button(tool_settings_region, lambda path, cmd: path.endswith("allset_weight_workspace.search"), C, "search",
+                 step_px=4, x_frac=0.5))
+
+
+@step
+def s_found_row():
+    found = C.get("search")
+    # list rows are one UI unit tall, the first one 1.4 units under the search field's centre (measured on
+    # gui_step58_paint_panel.png at UI 1.25), in hierarchy order
+    C["lock"] = (found[0], found[1] - int(C["unit"] * (1.4 + C["pos"]))) if found else None
 
 
 @step
 def s_click_row():
-    x, y = C["row"]
+    found = C.get("lock")
+    check(f"the Tool Settings influence list shows joint2 ({found})", found is not None)
+    if found is None:
+        return
+    _a, r = tool_settings_region()
+    x, y = r.x + r.width // 3, found[1]
+    ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     ev('LEFTMOUSE', 'PRESS', x=x, y=y)
     ev('LEFTMOUSE', 'RELEASE', x=x, y=y)
 
