@@ -352,10 +352,14 @@ def move(*args, **kwargs):
     relative = f.get("relative", "r", False)
     f.get("absolute", "a", True)
     f.get("worldSpace", "ws", True)
+    os_ = f.get("objectSpace", "os", False)
     f.done()
     values, names = _split_values(args)
     v = Vector([_to_bu(x) for x in values])
     for ob in _objects(names):
+        if os_ and relative:      # along the object's own axes (its rotate), in its parent's units
+            ob.location = ob.location + ob.rotation_euler.to_matrix() @ v
+            continue
         # Maya ``move -a`` puts the rotate pivot at the point: the kit's pivot is the origin (step 10)
         mw = ob.matrix_world.copy()
         mw.translation = mw.translation + v if relative else v
@@ -870,11 +874,16 @@ def _guarded(fn):
     @functools.wraps(fn)
     def command(*args, **kwargs):
         from .cmds_file import script_window
+        from . import cmds_rig
+
+        def run():
+            r = cmds_rig.intercept(fn.__name__, fn, args, kwargs)
+            return fn(*args, **kwargs) if r is cmds_rig.PASS else r
         win = script_window()
         if win is None:
-            return fn(*args, **kwargs)
+            return run()
         with bpy.context.temp_override(window=win, screen=win.screen):
-            return fn(*args, **kwargs)
+            return run()
     return command
 
 

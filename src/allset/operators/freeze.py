@@ -129,6 +129,9 @@ def freeze(objects, translate=True, rotate=True, scale=True):
             ob.location = (0.0, 0.0, 0.0)
             ob.delta_location = t           # the pivot stays (Maya rotatePivot)
         else:
+            if moved:   # Maya carries the pivot offset into the parent's new frame like the translate
+                carry = (frame.inverted_safe() @ w_old[ob] @ ob.matrix_basis.inverted_safe()).to_3x3()
+                ob.delta_location = carry @ Vector(ob.delta_location)
             ob.location = t - Vector(ob.delta_location)
         if rotate and bake:
             clear_rotation(ob)
