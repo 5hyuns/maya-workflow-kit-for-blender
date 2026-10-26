@@ -351,6 +351,24 @@ def after_import(context, fmt, path, obs, materials, args):
                 obs.remove(ob)
                 bpy.data.objects.remove(ob)
             bake_conversion(context, obs, _axis_matrix(up_y) @ Matrix.Scale(c, 4))
+    elif fmt == 'FBX':
+        # rigs: Maya's curves / Euler rotations / skeleton without the conversion node (step 223, L12)
+        # (a rig file is read without bake_space_transform, see execute: the reader would shrink skinned meshes)
+        from . import fbx_rig_import, joints, naming
+        done, conv = set(), None
+        for arm in [o for o in obs if o.type == 'ARMATURE']:
+            res = fbx_rig_import.fix_armature(context, arm, path)
+            if res is None or "conversion" not in res:
+                continue
+            done.add(arm)
+            done.update(res["meshes"])
+            conv = res["conversion"]
+            if arm.name.startswith("Armature"):
+                naming.apply_maya_name(arm, joints.SKELETON_BASE, rename_data=False)
+        if conv is not None and not args.get("bake_space_transform", False):
+            rest = [o for o in obs if o not in done and o.parent not in done]
+            if rest:
+                bake_conversion(context, rest, conv)
     maya_names(obs, materials, path)
 
 
@@ -721,6 +739,12 @@ class _FileDialog:
                     results.result(self, f"Imported {len(obs)} object(s) from {os.path.basename(path)}")
                     return {'FINISHED'}
                 op, args = import_args(fmt, k, self.maya_conversion)
+                if fmt == 'FBX' and self.maya_conversion:
+                    from . import fbx_rig_import
+                    if fbx_rig_import.has_skeleton(path):
+                        # Blender's reader bakes the conversion into a skinned mesh but leaves it on the armature
+                        # (mesh 0.01 x, first_hour #37): read plain, after_import converts (step 223)
+                        args = dict(args, bake_space_transform=False)
                 before, mats = set(bpy.data.objects), set(bpy.data.materials)
                 mod, name = op.split(".")
                 getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', filepath=path, **args)
