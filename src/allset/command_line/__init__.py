@@ -195,7 +195,8 @@ def draw_help_line(layout, context):
     from ..ui import notices
     notices.remember_status_area(context.area, context.window)
     note = notices.current()   # a notice of the menu item under the mouse (step 54)
-    text = note or help_text(context)
+    from ..ui import weight_numbers
+    text = note or weight_numbers.help_note() or help_text(context)
     if text:
         layout.label(text=text, icon='ERROR' if note else 'INFO')
     else:

@@ -157,8 +157,16 @@ def influence_order(mesh, sort='HIERARCHY'):
     return inverse
 
 
-def influence_filter(mesh, flag, search='', sort='NAME', show_all=False, locked_only=False):
-    names = {g.name for g in skin.influences(mesh)}
+def chosen_cluster(context, mesh):
+    """The Armature modifier picked in the Skin Clusters list (Maya: the first bound one on entry)."""
+    mods = skin.armature_modifiers(mesh)
+    if not mods:
+        return None
+    return mods[min(model.state(context).skin_cluster, len(mods) - 1)]
+
+
+def influence_filter(mesh, flag, search='', sort='NAME', show_all=False, locked_only=False, mod=None):
+    names = {g.name for g in skin.influences(mesh, mod)}
     pattern = '*' + search.casefold() + '*'
     flags = [flag if (show_all or g.name in names) and fnmatch.fnmatchcase(g.name.casefold(), pattern)
              and (not locked_only or g.lock_weight) else 0 for g in mesh.vertex_groups]
@@ -178,24 +186,32 @@ class ALLSET_UL_influences(bpy.types.UIList):
 
     def filter_items(self, context, data, propname):
         s = model.state(context)
-        return influence_filter(data, self.bitflag_filter_item, s.search, s.sort, s.show_all, s.locked_only)
+        return influence_filter(data, self.bitflag_filter_item, s.search, s.sort, s.show_all, s.locked_only,
+                                chosen_cluster(context, data))
 
     def draw_filter(self, context, layout):
         pass  # Dedicated, always-visible search above the list.
 
 
 def _skin_clusters(layout, context):
-    """Maya 2024+ "Skin Clusters": the skin being painted and its normalization."""
+    """Maya 2024+ "Skin Clusters": every skin of the mesh in chain order (: shown read-only — the kit binds
+    one skin per mesh, FBX / engines keep one), the picked one filters the Influences list."""
     s, mesh = model.state(context), context.active_object
     col = _card(layout, 'Skin Clusters', setting='show_skin_clusters', context=context)
     if col is None:
         return
-    mod = skin.armature_modifier(mesh)
-    row = col.split(factor=0.8)
-    row.label(text=mod.name if mod else mesh.name, icon='MOD_ARMATURE' if mod else 'MESH_DATA')
-    row.label(text=str(len(skin.influences(mesh))), icon='BONE_DATA')
+    mods = skin.armature_modifiers(mesh)
+    chosen = chosen_cluster(context, mesh)
+    if not mods:
+        _muted(col, 'No skin cluster: Skin > Bind Skin first.', 'INFO')
+    for i, mod in enumerate(mods):
+        row = col.split(factor=0.8, align=True)
+        op = row.operator('allset.weight_skin_cluster', text=mod.name, icon='MOD_ARMATURE', depress=mod == chosen)
+        op.index = i
+        row.label(text=str(len(skin.influences(mesh, mod))), icon='BONE_DATA')
+    if len(mods) > 1:
+        _muted(col, 'Several skin clusters: FBX and game engines keep one skin per mesh.', 'ERROR')
     row = col.row(align=True)
-    row.prop(s, 'auto_normalize', text='Normalize Weights', toggle=True)
     row.prop(context.tool_settings, 'use_lock_relative', text='Lock-relative', toggle=True)
 
 
@@ -241,6 +257,44 @@ def _unified(layout, context, name, label, pressure=None):
     return row
 
 
+def s_state(context):
+    return model.state(context)
+
+
+# Maya Profile buttons (maya2026_paint_skin_weights.md: Gaussian / Soft (default) / Solid / Square / image)
+PROFILES = (('GAUSSIAN', 'Gaussian'), ('SOFT', 'Soft'), ('SOLID', 'Solid'), ('SQUARE', 'Square'))
+
+
+def current_profile(brush):
+    if brush is None:
+        return 'SOFT'
+    preset = getattr(brush, compat.brush_falloff_props(brush)[0], '')
+    return next((k for k, v in skin.PROFILE_CURVE.items() if v == preset), '')
+
+
+def _maya_brush_fields(col, context, brush):
+    """Maya 2026 Brush frame rows the kit adds (step 224): Profile, Weight Type, Normalize Weights."""
+    s = model.state(context)
+    col.separator(factor=0.35)
+    row = col.row(align=True)
+    row.label(text='Profile:')
+    now = current_profile(brush)
+    for key, label in PROFILES:
+        sub = row.row(align=True)
+        sub.enabled = key in skin.PROFILE_CURVE and brush is not None
+        sub.operator('allset.weight_profile', text=label, depress=key == now).profile = key
+    row = col.row(align=True)
+    row.label(text='Weight Type:')
+    row.prop_enum(s, 'weight_type', 'SKIN')
+    sub = row.row(align=True)
+    sub.enabled = False                        # Blender: one dual quaternion switch per skin (Armature modifier)
+    sub.prop_enum(s, 'weight_type', 'DQ')
+    row = col.row(align=True)
+    row.label(text='Normalize Weights:')
+    for key, label in (('NONE', 'Off'), ('INTERACTIVE', 'Interactive'), ('POST', 'Post')):
+        row.prop_enum(s, 'normalize_mode', key, text=label)
+
+
 def _brush(layout, context):
     """Maya "Brush" + paint operation: operation, Value / Opacity / Radius, Flood, profile (falloff)."""
     ts, mesh = context.tool_settings, context.active_object
@@ -272,12 +326,17 @@ def _brush(layout, context):
         for label, target, blend in operations:
             chosen = kind == target and (not blend or (brush and brush.blend == blend))
             _tool(row, label, target, blend, chosen)
+    _maya_brush_fields(col, context, brush)
     col.separator(factor=0.5)
     values = col.column(align=True)
     values.scale_y = 1.12
-    _unified(values, context, 'weight', 'Value').enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
     _unified(values, context, 'strength', 'Opacity', 'use_pressure_strength')
+    _unified(values, context, 'weight', 'Value').enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
     _unified(values, context, 'size', 'Radius', 'use_pressure_size')
+    row = col.row(align=True)
+    row.label(text='Min/Max value:')
+    row.prop(s_state(context), 'min_value', text='')
+    row.prop(s_state(context), 'max_value', text='')
     col.separator(factor=0.35)
     presets = col.row(align=True)
     presets.enabled = kind not in {'BLUR', 'AVERAGE', 'SMEAR'}
@@ -324,8 +383,8 @@ def _brush(layout, context):
 
 
 def _visualization(layout, context):
-    """Maya 2024+ "Visualization" (geometry colour / colour ramp; Maya's numeric weight display has no Blender
-    counterpart)."""
+    """Maya 2024+ "Visualization": Geometry Color (Blender's weight colours / colour ramp) and Numeric (kit-drawn
+    numbers)."""
     from .status_line import main_view3d
     col = _card(layout, 'Visualization', setting='show_visualization', context=context)
     if col is None:
@@ -342,6 +401,20 @@ def _visualization(layout, context):
     sub.enabled = prefs.use_weight_color_range
     sub.template_color_ramp(prefs, 'weight_color_range', expand=True)
     _muted(col, 'This color ramp is shared across Blender.', 'INFO')
+    # Maya 2024+ Numeric (Show Numbers, Decimal Places, Number Color, Color Ramp; step 224, ui/weight_numbers.py)
+    s = model.state(context)
+    col.separator(factor=0.5)
+    col.label(text='Numeric')
+    col.prop(s, 'show_numbers')
+    sub = col.column()
+    sub.active = s.show_numbers
+    sub.prop(s, 'number_places')
+    sub.prop(s, 'number_color')
+    sub.prop(s, 'number_color_ramp')
+    ramp = sub.row(align=True)
+    ramp.active = s.number_color_ramp
+    ramp.prop(s, 'number_min_color')
+    ramp.prop(s, 'number_max_color')
 
 
 def _stroke(layout, context):
