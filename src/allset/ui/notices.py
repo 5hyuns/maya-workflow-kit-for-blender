@@ -188,7 +188,9 @@ NOTICES.update({
     "File/Archive Scene": (
         "Pack Resources", "Blender packs textures and sounds into the .blend instead of zipping the scene folder."),
     **{f"File/{item}": ("FBX export", "Blender has no game-engine live links: export FBX (Unity / Unreal read it).")
-       for item in ("Game Exporter", "Send To Unity", "Send To Unreal")},
+       for item in ("Send To Unity", "Send To Unreal")},
+    "File/Game Exporter": ("Kit Game Exporter", "Clips are NLA strips written as FBX takes; Maya's extra Take 001 and "
+                           "the repeated clips in later clip files are not written."),
     "File/View Sequence...": (
         "Play Rendered Animation", "Blender plays the render output frames (Render > View Animation)."),
     "Edit/Delete All by Type/Shading Groups and Materials": (

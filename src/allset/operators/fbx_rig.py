@@ -128,6 +128,7 @@ class Index:
         self.models = {m.props[0]: m for m in self.objects.find(b"Model")}
         self.parent = {}                      # child uid -> parent uid (OO)
         self.curve_nodes = {}                 # (model uid, b"Lcl Rotation") -> curve node
+        self.curve_nodes_all = {}             # every take's curve node (step 225: Game Exporter clips = takes)
         self.curves = {}                      # curve node uid -> {b"d|X": curve elem}
         nodes = {e.props[0]: e for e in self.objects.find(b"AnimationCurveNode")}
         curves = {e.props[0]: e for e in self.objects.find(b"AnimationCurve")}
@@ -137,6 +138,7 @@ class Index:
                 self.parent.setdefault(a, b)
             elif kind == b"OP" and a in nodes and b in self.models:
                 self.curve_nodes[(b, c.props[3])] = nodes[a]
+                self.curve_nodes_all.setdefault((b, c.props[3]), []).append(nodes[a])
             elif kind == b"OP" and a in curves and b in nodes:
                 self.curves.setdefault(b, {})[c.props[3]] = curves[a]
 
@@ -159,6 +161,28 @@ def _values(curve):
 def _times(curve):
     t = curve.first(b"KeyTime") if curve is not None else None
     return list(t.props[0]) if t is not None else None
+
+
+def channel_keys_all(index, uid, attr, default):
+    """``channel_keys`` of the attribute's curve node in every take (a file with several takes has one each)."""
+    out = []
+    for node in index.curve_nodes_all.get((uid, attr), []):
+        one = _node_keys(index, node, default)
+        if one is not None:
+            out.append(one)
+    return out
+
+
+def _node_keys(index, node, default):
+    cs = index.curves.get(node.props[0], {})
+    cs = [cs.get(k) for k in (b"d|X", b"d|Y", b"d|Z")]
+    if not any(cs):
+        return None
+    times = next((_times(c) for c in cs if c is not None), None)
+    if any(c is not None and _times(c) != times for c in cs):
+        return None
+    vals = [list(_values(c).props[0]) if c is not None else [default[i]] * len(times) for i, c in enumerate(cs)]
+    return times, [Vector((vals[0][k], vals[1][k], vals[2][k])) for k in range(len(times))], node, cs
 
 
 def channel_keys(index, uid, attr, default):
@@ -242,7 +266,8 @@ def _armature_nulls(index):
 def _moves(index, uid):
     """The model's curves change over time (the writer bakes constant curves for every object too)."""
     for attr in (b"Lcl Translation", b"Lcl Rotation", b"Lcl Scaling"):
-        node, cs = index.channel(uid, attr)
+        cs = [c for node in index.curve_nodes_all.get((uid, attr), [])
+              for c in index.curves.get(node.props[0], {}).values()]
         for c in cs:
             vals = _values(c)
             if vals is not None and len(vals.props[0]) and max(vals.props[0]) - min(vals.props[0]) > 1e-6:
@@ -279,10 +304,10 @@ def fold_null(index, uid, null):
     for u in inside:
         m = index.models[u]
         set_vec(m, b"Lcl Translation", get_vec(m, b"Lcl Translation") * s, b"Lcl Translation", b"", b"A")
-        keys = channel_keys(index, u, b"Lcl Translation", get_vec(m, b"Lcl Translation"))
-        if keys is not None and u not in roots:
-            times, vals, node, cs = keys
-            write_keys(node, cs, [v * s for v in vals])
+        for keys in channel_keys_all(index, u, b"Lcl Translation", get_vec(m, b"Lcl Translation")):
+            if u not in roots:
+                times, vals, node, cs = keys
+                write_keys(node, cs, [v * s for v in vals])
     # roots take the Null's rotation / translation
     for u in roots:
         m = index.models[u]
@@ -290,12 +315,10 @@ def fold_null(index, uid, null):
         r = rot_matrix(get_vec(m, b"Lcl Rotation"))
         set_vec(m, b"Lcl Translation", t_n + r_n @ t, b"Lcl Translation", b"", b"A")
         set_vec(m, b"Lcl Rotation", to_degrees(r_n @ r)[0], b"Lcl Rotation", b"", b"A")
-        tk = channel_keys(index, u, b"Lcl Translation", get_vec(m, b"Lcl Translation"))
-        if tk is not None:
+        for tk in channel_keys_all(index, u, b"Lcl Translation", get_vec(m, b"Lcl Translation")):
             times, vals, node, cs = tk
             write_keys(node, cs, [t_n + r_n @ (v * s) for v in vals])
-        rk = channel_keys(index, u, b"Lcl Rotation", get_vec(m, b"Lcl Rotation"))
-        if rk is not None:
+        for rk in channel_keys_all(index, u, b"Lcl Rotation", get_vec(m, b"Lcl Rotation")):
             times, vals, node, cs = rk
             out, prev = [], None
             for v in vals:
@@ -361,8 +384,7 @@ def apply_prerotation(index, rest):
         set_int(m, b"RotationActive", 1, b"bool", b"")
         set_vec(m, b"Lcl Rotation", to_degrees(inv @ rot_matrix(get_vec(m, b"Lcl Rotation")))[0],
                 b"Lcl Rotation", b"", b"A")
-        rk = channel_keys(index, uid, b"Lcl Rotation", get_vec(m, b"Lcl Rotation"))
-        if rk is not None:
+        for rk in channel_keys_all(index, uid, b"Lcl Rotation", get_vec(m, b"Lcl Rotation")):
             times, vals, node, cs = rk
             out, prev = [], None
             for v in vals:

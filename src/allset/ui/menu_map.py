@@ -496,13 +496,13 @@ MAP = {
     "Playback/Render Current Frame": "allset.render_current_frame",
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
-    "Visualize/Motion Trail Editor": "object.paths_calculate",
+    "Visualize/Motion Trail Editor": "allset.motion_trail_editor",      # step 225 L21
     # step 171 (research/maya/re/visualize_171.md): snapshots + ghosting
     "Visualize/Create Animation Snapshot": "allset.animation_snapshot",
     "Visualize/Update Snapshot": "allset.update_snapshot",
     "Visualize/Ghosting Editor": "allset.opt_ghosting_editor",
     "Windows/Animation Editors/Ghosting Editor": "allset.opt_ghosting_editor",       # step 219 (Maya 2026)
-    "Windows/Animation Editors/Motion Trail Editor": "object.paths_calculate",
+    "Windows/Animation Editors/Motion Trail Editor": "allset.motion_trail_editor",
     "Visualize/Blue Pencil": ("v3d", "wm.tool_set_by_id", {"name": "builtin.annotate"}),   # Blender Annotate
     "Visualize/Ghost Selected": ("allset.ghost", {"action": "GHOST"}),
     "Visualize/Unghost Selected": ("allset.ghost", {"action": "UNGHOST"}),
@@ -620,7 +620,7 @@ MAP.update({
     "File/View Image...": _editor('IMAGE_EDITOR'),
     "File/View Sequence...": "render.play_rendered_anim",
     "File/Recent Increments": ("menu", "TOPBAR_MT_file_open_recent"),
-    "File/Game Exporter": "export_scene.fbx",
+    "File/Game Exporter": "allset.game_exporter",       # step 225 L24 (operators/game_exporter.py)
     "File/Send To Unity": "export_scene.fbx",
     "File/Send To Unreal": "export_scene.fbx",
     # Edit
