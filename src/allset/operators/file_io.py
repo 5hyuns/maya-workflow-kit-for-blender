@@ -622,6 +622,12 @@ def preset_text(fmt, k, export):
 
 # --- .blend as a Maya scene file ------------------------------------------------------------------
 
+def multi_skin_meshes(obs):
+    """Names of the meshes with more than one skin (Armature modifier with a skeleton)."""
+    from . import skin
+    return [o.name for o in obs if o.type == 'MESH' and len(skin.armature_modifiers(o)) > 1]
+
+
 def import_blend(context, path):
     """Maya Import of a Maya scene: the other file's objects join this scene (in a collection named after it)."""
     with bpy.data.libraries.load(path, link=False) as (src, dst):
@@ -776,6 +782,12 @@ class _FileDialog:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}
         verb = "Imported" if self.mode == 'IMPORT' else "Exported"
+        if self.mode != 'IMPORT':
+            many = multi_skin_meshes(context.selected_objects if self.selection else context.scene.objects)
+            if many:
+                # decision 5 (step 224): Blender reads a second Armature modifier back as one, engines keep one skin
+                self.report({'WARNING'}, f"{', '.join(many)}: several skin clusters — FBX and game engines keep one "
+                                         "skin per mesh")
         results.result(self, f"{verb} {os.path.basename(path)}")
         return {'FINISHED'}
 

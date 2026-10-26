@@ -12,7 +12,7 @@ import math
 
 import bmesh
 import bpy
-from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 from bpy_extras import view3d_utils
 from mathutils import Vector, kdtree
 
@@ -314,6 +314,12 @@ def armature_modifier(mesh):
     return next((m for m in mesh.modifiers if m.type == 'ARMATURE' and m.object is not None), None)
 
 
+def armature_modifiers(mesh):
+    """Every skin (Armature modifier with a skeleton) of a mesh, stack order = Maya's skinCluster chain from the
+    first bound (decision 5: the kit makes one, a received file may hold more — shown read-only)."""
+    return [m for m in getattr(mesh, "modifiers", ()) if m.type == 'ARMATURE' and m.object is not None]
+
+
 # Maya Bind Skin options the kit honours (research/maya/re/option_boxes_140.md): Normalize weights is kept on the
 # mesh (Interactive = Blender's Auto Normalize while painting, step 129), Colorize skeleton = a bone colour per joint
 # (Unbind Skin's "Remove joint colors" takes them away), Remove unused influences = drop joints that weigh nothing.
@@ -461,6 +467,56 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
     return meshes
 
 
+QUESTION = {"mesh": None}                 # the last mesh the second-skin question was asked for (tests)
+SECOND_SKIN_NOTE = ("Blender keeps one skin per mesh here: FBX and game engines read one. To add joints to this "
+                    "skin use Skin > Edit Influences > Add Influence; a second Armature modifier can be added by "
+                    "hand in Properties > Modifiers.")
+
+
+def question_text(name):
+    """Maya's Bind Skin question (canAddMultiSkinClustersDialog.mel:13-80, maya2026_paint_skin_weights.md §6)."""
+    return f"There is already a skin cluster on {name}.\nDo you want to create another?"
+
+
+class ALLSET_OT_skin_cluster_question(bpy.types.Operator):
+    """Maya Bind Skin Options question for a mesh that already has a skin"""
+    bl_idname = "allset.skin_cluster_question"
+    bl_label = "Bind Skin Options"
+    bl_options = {'INTERNAL'}
+
+    mesh: StringProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_popup(self, width=420)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Bind Skin Options")
+        for line in question_text(self.mesh).split("\n"):
+            layout.label(text=line, icon='QUESTION' if line.startswith("There") else 'NONE')
+        row = layout.row(align=True)
+        yes = row.row(align=True)
+        yes.enabled = False
+        yes.operator("allset.skin_cluster_answer", text="Yes")
+        row.operator("allset.skin_cluster_answer", text="No")
+        from ..ui import chrome
+        box = layout.box()
+        chrome.paragraph(box, context, SECOND_SKIN_NOTE, width=400)
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+
+class ALLSET_OT_skin_cluster_answer(bpy.types.Operator):
+    """No: leave the mesh with its one skin"""
+    bl_idname = "allset.skin_cluster_answer"
+    bl_label = "No"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+
 class ALLSET_OT_bind_skin(bpy.types.Operator):
     """Maya Bind Skin: the selected skeleton and meshes, in any order (closest distance weights, no parenting)"""
     bl_idname = "allset.bind_skin"
@@ -486,6 +542,15 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
         meshes = [o for o in sel if o.type == 'MESH']
         if arm is None or not meshes:
             self.report({'WARNING'}, "Select a skeleton and the meshes to bind")
+            return {'CANCELLED'}
+        skinned = [m for m in meshes if armature_modifier(m) is not None]
+        if skinned:
+            # Maya 2024+ asks before a second skinCluster (canAddMultiSkinClustersDialog.mel); decision 5: the kit
+            # keeps one skin per mesh — the question with Yes greyed and the Blender way (step 224)
+            QUESTION["mesh"] = skinned[0].name
+            if context.window is not None:
+                bpy.ops.allset.skin_cluster_question('INVOKE_DEFAULT', mesh=skinned[0].name)
+            self.report({'WARNING'}, question_text(skinned[0].name).replace("\n", " "))
             return {'CANCELLED'}
         only = set(picked) if self.bind_to == "SELECTED" and picked else None
         bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize,
@@ -557,9 +622,9 @@ def skinned_mesh(context):
     return next((o for o in context.selected_objects if o.type == 'MESH' and armature_modifier(o)), None)
 
 
-def influences(mesh):
-    """Vertex groups that are joints of the mesh's skeleton (Maya: the skinCluster influences)."""
-    mod = armature_modifier(mesh)
+def influences(mesh, mod=None):
+    """Vertex groups that are joints of the mesh's skeleton (Maya: the skinCluster influences); ``mod`` = one skin."""
+    mod = mod or armature_modifier(mesh)
     if mod is None:
         return []
     bones = {b.name for b in mod.object.data.bones}
@@ -1128,6 +1193,7 @@ class ALLSET_OT_reset_skin_weights(bpy.types.Operator):
             bpy.ops.object.mode_set(mode='EDIT')
         return {'FINISHED'}
 
-classes = (ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
+classes = (ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_skin_cluster_question,
+           ALLSET_OT_skin_cluster_answer, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
            ALLSET_OT_paint_skin_weights, ALLSET_OT_weight_paint_exit, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
            ALLSET_OT_copy_vertex_weights, ALLSET_OT_paste_vertex_weights)

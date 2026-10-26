@@ -3,7 +3,8 @@
 from contextlib import contextmanager
 
 import bpy
-from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, PointerProperty, StringProperty
+from bpy.props import (BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty, PointerProperty,
+                       StringProperty)
 
 from .. import compat
 from . import skin
@@ -84,6 +85,33 @@ def _normalize_set(self, value):
         mesh[skin.NORMALIZE_PROP] = 'INTERACTIVE' if value else 'NONE'
 
 
+def _normalize_mode_get(self):
+    mesh = bpy.context.active_object
+    ids = [k for k, _l, _d in skin.NORMALIZE]
+    if mesh is not None and mesh.type == 'MESH' and mesh.get(skin.NORMALIZE_PROP) in ids:
+        if mesh[skin.NORMALIZE_PROP] != 'INTERACTIVE' or bpy.context.tool_settings.use_auto_normalize:
+            return ids.index(mesh[skin.NORMALIZE_PROP])
+    return ids.index('INTERACTIVE' if bpy.context.tool_settings.use_auto_normalize else 'NONE')
+
+
+def _normalize_mode_set(self, value):
+    """Maya Normalize Weights Off / Interactive / Post: Interactive = Blender Auto Normalize; Post = weights left as
+    painted and normalised by the deformation (Blender's Armature modifier divides by the weight sum)."""
+    key = skin.NORMALIZE[value][0]
+    bpy.context.tool_settings.use_auto_normalize = key == 'INTERACTIVE'
+    mesh = bpy.context.active_object
+    if mesh is not None and mesh.type == 'MESH':
+        mesh[skin.NORMALIZE_PROP] = key
+
+
+def _numbers_update(self, context):
+    from ..ui import weight_numbers
+    weight_numbers.ensure_cursor(context)
+    for area in context.screen.areas if context.screen else ():
+        if area.type == 'VIEW_3D':
+            area.tag_redraw()
+
+
 class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     search: StringProperty(name='Find influence', options={'TEXTEDIT_UPDATE'})
     # Maya 2026 Sort: Alphabetically (natural order) / By Hierarchy (default) / Flat
@@ -99,16 +127,39 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
                                  get=_normalize_get, set=_normalize_set)
     # Tool Settings frames in Maya 2024+ order (Skin Clusters / Influences / Brush / Visualization / Stroke /
     # Stylus Pressure / Display), then the Blender-only extras (ui/paint_weights.SECTIONS)
-    show_skin_clusters: BoolProperty(default=True)
+    # Maya 2026 frame defaults: Skin Clusters collapsed (skinCtxClustersCollapsed 1), Influences / Brush /
+    # Visualization open, Stroke / Stylus Pressure / Display collapsed (maya2026_paint_skin_weights.md §2)
+    show_skin_clusters: BoolProperty(default=False)
     show_influences: BoolProperty(default=True)
     show_brush: BoolProperty(default=True)
-    show_visualization: BoolProperty(default=False)
+    show_visualization: BoolProperty(default=True)
     show_stroke: BoolProperty(default=False)
     show_pressure: BoolProperty(default=False)
     show_display: BoolProperty(default=False)
     show_commands: BoolProperty(default=False)
     show_mask: BoolProperty(default=False)
     status: StringProperty(default='')
+    # step 224: Maya 2026 fields the kit keeps itself (maya2026_paint_skin_weights.md §2 ctx_defaults)
+    skin_cluster: IntProperty(name='Skin Cluster', default=0, min=0,
+                              description='The skin cluster (Armature modifier) whose influences the list shows')
+    normalize_mode: EnumProperty(name='Normalize Weights', items=skin.NORMALIZE, get=_normalize_mode_get,
+                                 set=_normalize_mode_set)
+    weight_type: EnumProperty(name='Weight Type', items=[('SKIN', 'Skin Weight', 'Paint the skin weights'),
+                                                        ('DQ', 'DQ Blend Weight', 'Blender has no per-vertex dual '
+                                                         'quaternion blend weight')], default='SKIN')
+    min_value: FloatProperty(name='Min', default=0.0, min=0.0, max=1.0, description='Lowest weight Flood writes')
+    max_value: FloatProperty(name='Max', default=1.0, min=0.0, max=1.0, description='Highest weight Flood writes')
+    show_numbers: BoolProperty(name='Show Numbers', default=False, update=_numbers_update,
+                               description="Draw the painted influence's weight at every vertex")
+    number_places: IntProperty(name='Decimal Places', default=2, min=1, max=4)
+    number_color: FloatVectorProperty(name='Number Color', subtype='COLOR', size=3, min=0.0, max=1.0,
+                                      default=(1.0, 1.0, 0.0))
+    number_color_ramp: BoolProperty(name='Color Ramp', default=False,
+                                    description='Colour the numbers by weight (0 = Min color, 1 = Max color)')
+    number_min_color: FloatVectorProperty(name='Weight 0', subtype='COLOR', size=3, min=0.0, max=1.0,
+                                          default=(1.0, 1.0, 1.0))
+    number_max_color: FloatVectorProperty(name='Weight 1', subtype='COLOR', size=3, min=0.0, max=1.0,
+                                          default=(0.0, 0.0, 0.0))
     __annotations__.update({key.lower(): PointerProperty(type=cls)
                             for key, cls in zip(ACTIONS, _SETTING_CLASSES)})
 
@@ -514,10 +565,13 @@ def flood(context, operation='BRUSH'):
     normalize = context.tool_settings.use_auto_normalize and t in influences
     locked = {g.index for g in mesh.vertex_groups if g.lock_weight}
     groups = mesh.vertex_groups
+    st = state(context)
+    lo_hi = (min(st.min_value, st.max_value), max(st.min_value, st.max_value))
     for i, row in rows.items():
         w = row.get(t, 0.0)
         avg = (own[i] + sum(own[j] for j in nb[i])) / (1 + len(nb[i])) if op == 'SMOOTH' else None
         new = maya_target(op, w, value, opacity, avg)
+        new = min(lo_hi[1], max(lo_hi[0], new))         # Maya Min / Max value (step 224)
         if normalize:
             result = redistribute(row, t, new, locked, influences)
         else:
@@ -607,6 +661,48 @@ class ALLSET_OT_weight_influence_verts(bpy.types.Operator):
 
 
 # --- Skin Paint Mode (Paint / Select / Paint Select, Ctrl+. / Ctrl+,) and Select Geometry ----------------------
+
+class ALLSET_OT_weight_skin_cluster(bpy.types.Operator):
+    """Show this skin cluster's influences in the Influences list"""
+    bl_idname = 'allset.weight_skin_cluster'
+    bl_label = 'Skin Cluster'
+    bl_options = {'INTERNAL'}
+
+    index: IntProperty(default=0, min=0)
+
+    def execute(self, context):
+        state(context).skin_cluster = self.index
+        for area in context.screen.areas if context.screen else ():
+            area.tag_redraw()
+        return {'FINISHED'}
+
+
+class ALLSET_OT_weight_profile(bpy.types.Operator):
+    """Maya brush Profile: the brush falloff (Gaussian / Soft / Solid)"""
+    bl_idname = 'allset.weight_profile'
+    bl_label = 'Profile'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    profile: EnumProperty(items=[(k, k.title(), '') for k in ('GAUSSIAN', 'SOFT', 'SOLID', 'SQUARE')],
+                          options={'SKIP_SAVE'})
+
+    @classmethod
+    def description(cls, context, properties):
+        if properties.profile == 'SQUARE':
+            return "Blender brushes are round: Maya's Square profile has no Blender brush"
+        return f"Brush falloff {skin.PROFILE_CURVE.get(properties.profile, '').title()}"
+
+    def execute(self, context):
+        brush = context.tool_settings.weight_paint.brush
+        preset = skin.PROFILE_CURVE.get(self.profile)
+        if brush is None or preset is None:
+            self.report({'WARNING'}, "Blender brushes are round: no Square profile")
+            return {'CANCELLED'}
+        if not skin._brush_set(brush, compat.brush_falloff_props(brush)[0], preset):
+            self.report({'WARNING'}, "This brush is a linked asset: Blender keeps its falloff")
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
 
 PAINT_MODES = ('PAINT', 'SELECT', 'PAINT_SELECT')
 MODE_LABELS = {'PAINT': 'Paint', 'SELECT': 'Select', 'PAINT_SELECT': 'Paint Select'}
@@ -864,7 +960,7 @@ class ALLSET_OT_weight_action(bpy.types.Operator):
 classes = (*_SETTING_CLASSES, ALLSET_PG_weight_workspace, ALLSET_OT_weight_tool,
            ALLSET_OT_weight_value, ALLSET_OT_weight_mask, ALLSET_OT_weight_influence, ALLSET_OT_weight_action,
            ALLSET_OT_weight_workspace, ALLSET_OT_weight_curve, ALLSET_OT_weight_influence_verts,
-           ALLSET_OT_skin_paint_mode, ALLSET_OT_select_geometry, ALLSET_OT_paint_copy_vertex_weights,
+           ALLSET_OT_skin_paint_mode, ALLSET_OT_select_geometry, ALLSET_OT_weight_skin_cluster, ALLSET_OT_weight_profile, ALLSET_OT_paint_copy_vertex_weights,
            ALLSET_OT_paint_paste_vertex_weights, ALLSET_OT_paint_reflection)
 
 
