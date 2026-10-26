@@ -62,6 +62,9 @@ def configure(area, window=None):
         ident = prop.identifier
         if ident.startswith("show_properties_") and ident != "show_properties_tool":
             setattr(space, ident, False)
+    # Changing the visible context flags can make Blender fall back to Object.
+    # Select Tool again after those updates so the new dock opens on its content.
+    space.context = 'TOOL'
     space.show_region_header = False
     nav = next((r for r in area.regions if r.type == 'NAVIGATION_BAR'), None)
     if nav is not None and nav.width > 1 and window is not None:
@@ -74,7 +77,7 @@ def configure(area, window=None):
     return True
 
 
-def open_dock(context, window=None):
+def open_dock(context, window=None, width=None):
     """Split the main viewport and put the dock on its left. Returns the new area or None."""
     window = window or context.window
     screen = window.screen if window is not None else context.screen
@@ -84,7 +87,7 @@ def open_dock(context, window=None):
     if area is None or region is None:
         return None
     scale = context.preferences.system.ui_scale or 1.0      # 0 in background
-    factor = min(MAX_SHARE, WIDTH * scale / max(area.width, 1))
+    factor = min(MAX_SHARE, (width or WIDTH) * scale / max(area.width, 1))
     before = {a.as_pointer() for a in screen.areas}
     with context.temp_override(window=window, screen=screen, area=area, region=region):
         if bpy.ops.screen.area_split(direction='VERTICAL', factor=factor) != {'FINISHED'}:
@@ -134,7 +137,7 @@ def close_dock(context, window=None):
     return True
 
 
-def show(context):
+def show(context, width=None):
     """Maya toolPropertyWindow from a Tool Box double-click (step 129, #3): a Tool Settings dock that is open in any
     window (docked or torn off) is redrawn — Blender can't raise an OS window — else the dock opens left of this
     window's viewport. Returns the dock area (or None)."""
@@ -143,7 +146,7 @@ def show(context):
         if area is not None:
             area.tag_redraw()
             return area
-    return open_dock(context)
+    return open_dock(context, width=width)
 
 
 def toggle(context, show_only=False):

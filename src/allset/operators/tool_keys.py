@@ -256,12 +256,18 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
         return bpy.ops.object.editmode_toggle.poll()
 
     def execute(self, context):
-        result = bpy.ops.object.editmode_toggle()
+        ob = context.active_object
+        # Maya joints are objects. Pose mode is their object-selection state;
+        # Edit mode exposes the rest skeleton as components.
+        if ob is not None and ob.type == 'ARMATURE':
+            result = bpy.ops.object.mode_set(mode='POSE' if ob.mode == 'EDIT' else 'EDIT')
+        else:
+            result = bpy.ops.object.editmode_toggle()
         if 'FINISHED' not in result:
             return {'CANCELLED'}
         from ..ui import view_message
         # Maya toggleSelMode.mel:28-30: a topCenter message naming the new mode and the key back.
-        if context.mode == 'OBJECT':
+        if context.mode in {'OBJECT', 'POSE'}:
             text = "Object selection <hl>on</hl>.\nF8 goes back to components."
         else:
             text = "Component selection <hl>on</hl>.\nF8 goes back to objects."
