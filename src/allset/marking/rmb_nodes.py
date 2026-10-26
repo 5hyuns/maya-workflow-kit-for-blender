@@ -280,8 +280,30 @@ class ALLSET_OT_mm_node_table(bpy.types.Operator):
         head.label(text="")
         head.label(text="Node State")
         ae = _ae()
+        from ..operators import deformer_order
+        order = [] if self.future else [m.name for m in deformer_order.movable(ob)]
         for name, mtype, owner, key, _cbkey, struct in found:
             row = col.row(align=True)
+            if order:
+                # Maya: drag a node with MMB in this list = reorderDeformers (step 218 L17). The rows are in stack
+                # order (first evaluated on top): up = one step earlier, down = one step later; shape keys,
+                # extrusions and constraints don't move.
+                mod_name = struct.name if isinstance(struct, bpy.types.Modifier) and struct.name in order else None
+                i = order.index(mod_name) if mod_name else -1
+                arrows = row.row(align=True)
+                arrows.scale_x = 0.6
+                up = arrows.row(align=True)
+                up.enabled = i > 0
+                op = up.operator("allset.reorder_deformers", text="", icon='TRIA_UP')
+                op.object = ob.name
+                if up.enabled:               # reorderDeformers <previous> <this>: this moves right before it
+                    op.first, op.second = order[i - 1], mod_name
+                down = arrows.row(align=True)
+                down.enabled = 0 <= i < len(order) - 1
+                op = down.operator("allset.reorder_deformers", text="", icon='TRIA_DOWN')
+                op.object = ob.name
+                if down.enabled:             # reorderDeformers <this> <next>: the next one moves before this
+                    op.first, op.second = mod_name, order[i + 1]
             split = row.split(factor=0.5, align=True)
             op = split.operator(ALLSET_OT_mm_node.bl_idname, text=f"{name} ({ae.nice_type(mtype)})", emboss=False)
             op.object, op.key = owner.name, key

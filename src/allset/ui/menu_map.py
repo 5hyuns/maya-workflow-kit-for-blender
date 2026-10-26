@@ -444,6 +444,7 @@ MAP = {
     # --- Key (Animation) ---
     # step 56: S = every keyable channel
     "Key/Set Key": "allset.set_key",
+    "Key/Set Blend Shape Target Weight Keys": "allset.key_blend_shape_weights",   # step 218 L15b
     "Key/Set Key on Animated": ("anim.keyframe_insert_by_name", {"type": "Available"}),
     "Key/Set Breakdown Key": ("allset.set_key", {"breakdown": True}),
     "Key/Set Driven Key/Set...": "allset.sdk_window",      # step 62

@@ -140,7 +140,7 @@ def test_skin_paint_keys():
     assert k.properties.data_path_primary.endswith("brush.weight")
     k = _one("Weight Paint", 'B', "wm.radial_control")
     assert k.properties.data_path_primary.endswith("brush.size")
-    _one("Weight Paint", 'F', "paint.weight_set", alt=True)
+    _one("Weight Paint", 'F', "allset.flood_weights", alt=True)     # step 218 A2: Maya Flood (Alt+F)
     _one("Mesh", 'C', "allset.copy_vertex_weights", ctrl=True, alt=True)
     _one("Mesh", 'V', "allset.paste_vertex_weights", ctrl=True, alt=True)
     assert hasattr(bpy.types, "ALLSET_MT_paint_operation")

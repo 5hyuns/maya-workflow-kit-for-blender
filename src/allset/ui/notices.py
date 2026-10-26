@@ -327,8 +327,6 @@ CATEGORIES = {
     "Key/IK": ("IK constraint Influence", "Blender switches IK / FK by keying the IK constraint's Influence."),
     "Key/Scene Time Warp": ("NLA strip time", "Blender has no scene time warp: remap time per action with an NLA "
                             "strip's Scale / Repeat or a Time Offset modifier."),
-    "Key/Set Blend Shape Target Weight Keys": ("Shape key Value", "Blender keys a shape key's Value in the Shape "
-                                               "Keys panel (I over the field)."),
     "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "
                  "joints are bone heads edited in armature edit mode."),
     "Skin": ("Vertex groups / Weight Paint", "Blender skin weights are vertex groups edited in Weight Paint mode "
