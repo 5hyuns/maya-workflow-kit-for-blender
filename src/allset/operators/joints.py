@@ -167,6 +167,9 @@ def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
     return n
 
 
+BRANCH_RADIUS_PX = 10      # a Joint Tool click this close to an existing joint branches from it
+
+
 class ALLSET_OT_joint_tool(bpy.types.Operator):
     """Maya Joint Tool: click in a view to place joints (each one a child of the last), Enter to finish"""
     bl_idname = "allset.joint_tool"
@@ -207,12 +210,10 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     def invoke(self, context, event):
         if context.window is None:
             return {'CANCELLED'}
+        # Maya 2022-2027 never branch from a joint selected before the tool starts (measured: joint1 selected, two
+        # clicks -> an unparented chain, PR125_MAYA_CHECK.md 8b); clicking an existing joint with the tool does
+        # (``_branch_from``).
         self._names, self._ob, self._parent = [], None, None
-        ob = context.active_object
-        if ob is not None and ob.type == 'ARMATURE' and ob.mode in {'EDIT', 'POSE'}:
-            active = ob.data.edit_bones.active if ob.mode == 'EDIT' else ob.data.bones.active
-            if active is not None and active.name in selected_joint_names(ob):
-                self._ob, self._parent = ob, active.name   # branch from the picked joint
         self._swallow = False
         context.workspace.status_text_set(STATUS)
         context.window_manager.modal_handler_add(self)
@@ -228,6 +229,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         area, region = hit
         rv3d = region.data
         coord = (event.mouse_x - region.x, event.mouse_y - region.y)
+        if self._ob is None and self._branch_from(context, area, region, coord):
+            return True
         point = click_point(region, rv3d, coord)
         if self._ob is None:
             with context.temp_override(window=context.window, area=area, region=region):
@@ -240,6 +243,27 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
         if name != self._parent:
             self._names.append(name)
         self._parent = name
+        area.tag_redraw()
+        return True
+
+    def _branch_from(self, context, area, region, coord):
+        """The first click on an existing joint: the new joints go under it (Maya Joint Tool). True when hit."""
+        from .skin import pick_joint
+        arms = [o for o in context.view_layer.objects if o.type == 'ARMATURE' and o.visible_get()]
+        scale = context.preferences.system.ui_scale or 1.0
+        hit = pick_joint(region, region.data, arms, coord, BRANCH_RADIUS_PX * scale) if arms else None
+        if hit is None or hit[1][1] != 'HEAD':
+            return False
+        arm, (name, _end) = hit
+        with context.temp_override(window=context.window, area=area, region=region):
+            if context.mode != 'OBJECT' and context.active_object is not None:
+                bpy.ops.object.mode_set(mode='OBJECT')
+            for o in context.selected_objects:
+                o.select_set(False)
+            arm.select_set(True)
+            context.view_layer.objects.active = arm
+            bpy.ops.object.mode_set(mode='EDIT')
+        self._ob, self._parent = arm, name
         area.tag_redraw()
         return True
 
