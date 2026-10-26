@@ -116,12 +116,16 @@ from . import references  # noqa: E402  step 209: Reference Editor commands (rel
 classes += references.classes
 
 from . import maya_lights  # noqa: E402  step 214: Maya Ambient / Volume Light (no classes: props + handlers)
+from . import weight_paint
+
+classes += weight_paint.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
 
 def register():
     _register_classes()
+    weight_paint.register_props()
     default_light.register()
     snap_align.register_props()
     material.register_props()
@@ -188,6 +192,7 @@ def unregister():
     graph_weights.unregister_handlers()
     graph_buffers.unregister_handlers()
     graph_retime.unregister_handlers()
+    weight_paint.unregister_props()
     character_sets.unregister_props()
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()

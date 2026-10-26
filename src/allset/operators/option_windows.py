@@ -651,6 +651,8 @@ def _make(window):
                                     description="Back to Maya's factory settings (Maya Edit > Reset Settings)")
 
     def invoke(self, context, event):
+        if window.key == "paint_skin_weights":
+            return bpy.ops.allset.weight_workspace('INVOKE_DEFAULT')
         for name, val in (saved(window.key) or {}).items():
             if name in ann:
                 try:

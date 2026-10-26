@@ -735,6 +735,10 @@ def sections(kind):
 
 
 def draw_dock(layout, context):
+    from . import paint_weights
+    if paint_weights.active(context):
+        paint_weights.draw(layout, context)
+        return
     tool = active_tool(context)
     if tool is None:
         layout.label(text="No tool settings in this mode")
@@ -772,7 +776,7 @@ class ALLSET_PT_tool_settings(bpy.types.Panel):
 
 def hides_blender_panels(context):
     """True in the Tool Settings dock while the Maya sections replace Blender's tool panels (dock_tabs)."""
-    return in_dock(context) and tool_kind(context) is not None
+    return in_dock(context) and (context.mode == 'PAINT_WEIGHT' or tool_kind(context) is not None)
 
 
 classes = (ALLSET_OT_reset_tool, ALLSET_OT_ts_option, ALLSET_PT_tool_settings)

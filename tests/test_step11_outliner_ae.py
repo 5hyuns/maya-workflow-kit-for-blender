@@ -420,4 +420,5 @@ def _kmis(km_name, key, **mods):
 def test_keys():
     assert _kmis("Object Mode", "A", ctrl=True) == [("allset.ae_toggle", None)]
     assert _kmis("Object Mode", "A", ctrl=True, shift=True) == [("object.select_all", 'SELECT')]
-    assert _kmis("Object Mode", "D", alt=True) == [("object.select_all", 'DESELECT')]
+    # Select None also clears latent bone selection and releases joint modes.
+    assert _kmis("Object Mode", "D", alt=True) == [("allset.select_none", None)]

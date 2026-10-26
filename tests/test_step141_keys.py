@@ -44,8 +44,8 @@ def test_ctrl_a_is_ae_toggle_in_every_mode():
 
 
 def test_alt_d_select_none_in_component_and_pose_modes():
-    pose = [(k.idname, k.properties.action) for k in _items("Pose", 'D', alt=True)]
-    assert pose == [("pose.select_all", 'DESELECT')], pose
+    pose = [(k.idname, getattr(k.properties, "action", None)) for k in _items("Pose", 'D', alt=True)]
+    assert pose == [("allset.select_none", None)], pose
     for km in ("Mesh", "Curve", "Armature", "Lattice", "Metaball"):
         assert [k.idname for k in _items(km, 'D', alt=True)] == ["allset.select_none"], km
 

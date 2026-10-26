@@ -28,12 +28,15 @@ class ALLSET_OT_select_none(bpy.types.Operator):
         return context.view_layer is not None
 
     def execute(self, context):
+        from . import joint_selection
+        joint_selection.clear(context)
         if context.mode == 'EDIT_MESH':
             bpy.ops.mesh.select_all(action='DESELECT')
         if context.mode != 'OBJECT' and context.active_object is not None:
             bpy.ops.object.mode_set(mode='OBJECT')
         for ob in context.view_layer.objects:
             ob.select_set(False)
+        context.view_layer.objects.active = None
         return {'FINISHED'}
 
 

@@ -157,8 +157,10 @@ def test_scroll_operator_clamps():
     area = SimpleNamespace(as_pointer=lambda: 12345, tag_redraw=lambda: None)
     cb._last[12345] = (0, 30, 9)
     op = SimpleNamespace(lines=50)
-    ctx = SimpleNamespace(area=area)
+    ctx = SimpleNamespace(area=area, window=SimpleNamespace(as_pointer=lambda: 67890))
+    cb._hover[67890] = 'stale row'
     cb.ALLSET_OT_cb_scroll.execute(op, ctx)
+    assert 67890 not in cb._hover, 'Scrolling must clear the previous row under the pointer'
     assert cb._scroll[12345] == 21
     cb._last[12345] = (21, 30, 9)
     op.lines = -100
