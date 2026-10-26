@@ -1873,6 +1873,13 @@ def _on_load(_dummy):
 _transform_snapshot = None
 
 
+def _transforming():
+    """A transform modal (manipulator drag, G / R / S) runs in some window."""
+    wm = bpy.context.window_manager
+    return wm is not None and any(op.bl_idname.startswith("TRANSFORM_OT_")
+                                  for w in wm.windows for op in w.modal_operators)
+
+
 def _poll_transform_values():
     """Refresh displayed transform channels even during modal gizmo movements."""
     global _transform_snapshot
@@ -1886,12 +1893,12 @@ def _poll_transform_values():
             signature = (ob.as_pointer(), tuple(ob.location), tuple(ob.rotation_euler),
                          tuple(ob.rotation_quaternion), tuple(ob.rotation_axis_angle),
                          tuple(ob.scale), ob.rotation_mode, ob.hide_viewport)
-        # Request redraw on every tick, not just on a changed RNA snapshot.
-        # While a Blender transform operator is modal the RNA snapshot may
-        # remain unchanged even though the displayed channel value is stale.
-        _transform_snapshot = signature
-        from . import maya_dock
-        maya_dock.redraw()
+        # Redraw when the lead's channels changed, and on every tick while a transform modal runs (its RNA values
+        # can stay the same between ticks while the drawn fields are stale); idle ticks draw nothing.
+        if signature != _transform_snapshot or _transforming():
+            _transform_snapshot = signature
+            from . import maya_dock
+            maya_dock.redraw()
     except (AttributeError, ReferenceError, RuntimeError):
         pass
     return 0.1
