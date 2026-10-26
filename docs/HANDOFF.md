@@ -7,6 +7,11 @@
 
 ## 현재 작업
 
+- Step 225 (clips + motion trail, Issue #135) 완료 — `docs/steps/step_225.md`: File > Game Exporter = 킷 창 (Maya 노드 기본값
+  17개, 클립 = 재생 범위, 한 파일 = 클립마다 take / 클립별 파일 = 접두사 + 클립 이름, take 시간 = Maya 클립 프레임), Visualize >
+  Motion Trail Editor = Blender 모션 패스 (Maya 설정 22개, 9가지 왕복). fbx_rig 가 take 여러 개 처리. -k 관련 128 / 128, GUI step225 3 / 3.
+  **바로 다음 할 일**: step 226 = Controls from NURBS curves (bone custom shapes) (Issue #136).
+
 - Step 224 (Paint Skin Weights numeric / skin clusters / fields, Issue #134 + #126) 완료 — `docs/steps/step_224.md`: Show
   Numbers (노랑 2자리, 화면 2,000개 넘으면 브러시 주변 + Help Line, 19,842 정점 10–13 ms), 두 번째 Bind Skin = Maya 질문 (Yes
   비활성 + 안내), Skin Clusters 목록 읽기 전용 + 영향 필터, 내보내기 경고, Tool Settings 필드 24개 = Maya 기본값. -k 관련 317 / 319
