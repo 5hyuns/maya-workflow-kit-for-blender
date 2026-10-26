@@ -81,15 +81,15 @@ joints.finish(bpy.context, second, [c])
 selection.select(bpy.context, rig, a)
 assert bpy.context.active_object == rig and bpy.context.mode == 'POSE'
 assert not any(bone_selected(pb) for pb in second.pose.bones)
-# Starting the Joint Tool from a picked pose joint branches without entering Edit
-# mode until a placement occurs. Cancelling before placement preserves selection.
+# Maya never branches from a joint picked before the Joint Tool starts (PR125_MAYA_CHECK.md 8b):
+# the tool starts a new chain; cancelling before placement preserves the selection.
 status = []
 proxy = SimpleNamespace(window=bpy.context.window, active_object=rig,
                         workspace=SimpleNamespace(status_text_set=status.append),
                         window_manager=SimpleNamespace(modal_handler_add=lambda op: None))
 state = SimpleNamespace()
 assert joints.ALLSET_OT_joint_tool.invoke(state, proxy, None) == {'RUNNING_MODAL'}
-assert state._ob == rig and state._parent == a and bpy.context.mode == 'POSE'
+assert state._ob is None and state._parent is None and bpy.context.mode == 'POSE'
 state._end = lambda context: joints.ALLSET_OT_joint_tool._end(state, context)
 assert joints.ALLSET_OT_joint_tool._done(state, proxy) == {'CANCELLED'}
 assert selected() == {a} and bpy.context.mode == 'POSE'
