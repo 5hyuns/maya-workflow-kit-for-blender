@@ -468,6 +468,10 @@ MAP = {
     "Key/Set Key on Scale": ("allset.set_key", {"channels": "SCALE"}),   # step 157: default tangents
     "Key/Delete Keys": ("v3d", "anim.keyframe_clear_v3d", {"confirm": False}),
     "Key/Bake Simulation": "allset.bake_simulation",  # step 217 L18
+    # step 223 L14: Ik Blend = the handle property driving the IK constraint's Influence (operators/ik_fk.py)
+    "Key/IK/FK Keys/Set IK/FK Key": "allset.ik_fk_key",
+    "Key/IK/FK Keys/Enable IK Solver": "allset.ik_solver_toggle",
+    "Key/IK/FK Keys/Move IK to FK": "allset.move_ik_to_fk",
     "Key/Scale Keys": "allset.opt_scale_keys",
     # --- Playback ---
     "Playback/Playblast": ("v3d", "allset.playblast", {}),
