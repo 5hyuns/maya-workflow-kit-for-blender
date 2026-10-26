@@ -131,6 +131,9 @@ classes += controllers.classes
 from . import deformer_order  # noqa: E402  step 218 L17 / L15b: reorderDeformers, blend shape weight keys
 
 classes += deformer_order.classes
+from . import game_exporter, motion_trail  # noqa: E402  step 225
+classes += game_exporter.classes
+classes += motion_trail.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -138,6 +141,8 @@ _register_classes, _unregister_classes = bpy.utils.register_classes_factory(clas
 def register():
     _register_classes()
     weight_paint.register_props()
+    game_exporter.register_props()
+    motion_trail.register_props()
     default_light.register()
     snap_align.register_props()
     material.register_props()
@@ -205,6 +210,8 @@ def unregister():
     graph_buffers.unregister_handlers()
     graph_retime.unregister_handlers()
     weight_paint.unregister_props()
+    game_exporter.unregister_props()
+    motion_trail.unregister_props()
     character_sets.unregister_props()
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
