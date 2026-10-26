@@ -95,7 +95,7 @@ def test_runtime_menu_data():
     paths = {p for p, _it in menu_sets.iter_items()}
     for p in ("Modify/Prefix Hierarchy Names...", "Modify/Search and Replace Names...", "Modify/Center Pivot",
               "Modify/Add Attribute...", "Help/Maya Help", "Help/About Maya", "Audio/Import Audio...",
-              "Audio/Waveform Display/Centered", "Stereo/Create/Stereo Camera", "Stereo/Make Links",
+              "Audio/Waveform Display/Centered", "Create/Cameras/Stereo Camera", "Stereo/Make Links",
               "Cache/Alembic Cache/Import Alembic...", "Cache/Geometry Cache/Create New Cache",
               "Cache/GPU Cache/Refresh All...", "File/Game Exporter", "Create/Sweep Mesh",
               "Create/Universal Scene Description (USD)", "Select/USD Selection Mode", "Playback/Cached Playback",

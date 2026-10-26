@@ -16,6 +16,7 @@ from .. import live_refs
 
 # path: (substitute in Blender, one line). Paths with an action in menu_map.MAP run that substitute.
 NOTICES = {
+    "Mesh Display/Assign Existing Set/No bakesets defined": ("Render Properties > Bake", "Maya lists the scene's bake sets here; Blender bakes from Render Properties > Bake (Cycles)."),
     # step 159
     **{f"Skin/{item}": ("Bind Skin / Paint Skin Weights", "Blender has no volume capsules to drag: Bind Skin gives Maya's "
                         "closest-distance weights, then paint them (Skin > Paint Skin Weights).")
@@ -210,7 +211,7 @@ NOTICES.update({
         "Continuous", "Blender playback always loops: Continuous is already on."),
     **{f"Display/Heads Up Display/{item} Details": (
         "Statistics overlay", "Blender's Statistics overlay shows the object and selection counts.")
-       for item in ("Object", "Selection")},
+       for item in ("Object", "Select")},        # Maya 2026 label "Select Details" (step 219)
     "Display/Toggle Show/Hide": (
         "Maya visibility toggle", "Blender: same as h (selected objects shown / hidden)."),
     **{f"Mesh Tools/Sculpting Tools/{maya} Tool": (brush, f"Blender has no {maya} brush: the {brush} sculpt brush "
@@ -250,7 +251,7 @@ NOTICES.update({
        for item in ("Closest Point", "Point On Poly")},
     "Constrain/Rivet": ("Vertex parent", "Blender: select the object, then vertices of the mesh, Vertex Parent (Ctrl+P)."),
     "Toon/Assign Outline": ("Line Art", "Blender draws toon outlines with a Line Art Grease Pencil object."),
-    "Stereo/Create/Stereo Camera": (
+    "Create/Cameras/Stereo Camera": (
         "Stereoscopy", "Blender stereo = a camera with Render > Stereoscopy (Views) on, no stereo rig."),
     "Audio/Import Audio Clip to Time Editor...": (
         "Sound strip", "Blender has no Time Editor: the sound becomes a Video Sequencer strip."),
@@ -347,8 +348,6 @@ CATEGORIES = {
     "Lighting/Shading": ("Cycles Bake", "Blender transfers maps between meshes with Cycles Bake (Render "
                          "properties > Bake, Selected to Active)."),
     # modeling
-    "UV": ("UV Editor", "Blender: grab UVs with G in the UV Editor; UV maps (UV sets) are in Data properties "
-           "> UV Maps."),
     **{f"Mesh Display/{sub}": ("Color Attribute node", "Blender mixes vertex colors into materials with a Color "
                                "Attribute node in the Shader Editor, not a per-object setting.")
        for sub in ("Color Material Channel", "Material Blend Setting")},
@@ -373,8 +372,6 @@ CATEGORIES = {
                                   "Blender has no interactive (drag to size) creation."),
     "Create/NURBS Primitives": ("Add > Surface", "Blender's NURBS primitives are in Add > Surface (no cube, cone or "
                                 "square); objects are created at once, never interactively."),
-    "Create/Subdiv Primitives": ("Subdivision Surface modifier", "Blender has no subdiv surface type: a polygon "
-                                 "primitive with a Subdivision Surface modifier (3 = smooth preview)."),
     "Create/Volume Primitives": ("Volume / Mesh to Volume", "Blender has no volume primitives: a Volume object or a "
                                  "Mesh to Volume modifier."),
     "Create/Measure Tools": ("Measure tool", "Blender's Measure tool measures distances and angles; parameter and "

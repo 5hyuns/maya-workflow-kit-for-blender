@@ -153,7 +153,7 @@ def test_menus_draw_the_icons_with_hotkeys_and_boxes_kept():
 def _check_menus():
     log = _draw(ms.SUBMENU_IDS["Create/Polygon Primitives"])
     rows = {t.split("  ")[0].replace(ms.HAIR, "").strip(): k for kind, t, k in log if kind == "op"}
-    for label in ("Sphere", "Cube", "Cylinder", "Cone", "Torus", "Plane", "Disc"):
+    for label in ("Sphere", "Cube", "Cylinder", "Cone", "Torus", "Plane", "Polygon Disc"):
         assert rows[label].get("icon_value"), (label, rows[label])
     assert not rows["Interactive Creation"].get("icon_value"), rows["Interactive Creation"]
     texts = [t for kind, t, _k in log if kind == "op"]

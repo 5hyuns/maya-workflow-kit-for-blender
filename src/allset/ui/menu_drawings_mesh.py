@@ -654,7 +654,7 @@ def i_slide_edge(cv):
 
 # --- Mesh -------------------------------------------------------------------------------------
 
-@icon("Mesh/Booleans/Difference")
+@icon("Mesh/Booleans/Difference (A - B)")
 def i_bool_difference(cv):
     cv.fill(cv.m_circle(12, 12, 9.5) & ~cv.m_circle(19, 19, 9.5), ORANGE, ol=True)
     dashed_ring(cv, 19, 19, 9.5, 1.6)

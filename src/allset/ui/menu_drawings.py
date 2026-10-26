@@ -267,7 +267,7 @@ def i_pw_jiggle(cv):
     paint_mark(cv)
 
 
-@icon("Deform/Paint Weights/Set Membership")
+@icon("Deform/Paint Membership")
 def i_pw_membership(cv):
     blob(cv, 6, 10, 4, TAN)
     cylinder(cv, 14, 2, 10, 3.5, 1.5, BLUE)

@@ -48,7 +48,7 @@ def _indices(ob):
 def test_shading_menu_items_mapped():
     expect = {
         "Lighting/Shading/Material Attributes": ("v3d", "allset.material_attributes"),
-        "Lighting/Shading/Assign New Material...": ("op", "allset.assign_new_material"),
+        "Lighting/Shading/Assign New Material/New Material...": ("op", "allset.assign_new_material"),
         "Lighting/Shading/Assign Favorite Material": ("menu", "ALLSET_MT_assign_favorite_material"),
         "Lighting/Shading/Assign Existing Material": ("menu", "ALLSET_MT_assign_existing_material"),
     }

@@ -390,7 +390,7 @@ SHIFT_OBJECT = MarkingMenu(
         ("Separate", "allset.separate"),                # :380
         ("Combine", "allset.combine"),                                        # :387
         ("Booleans", Sub(items=[("Union", _item("Mesh/Booleans/Union")),
-                                ("Difference", _item("Mesh/Booleans/Difference")),
+                                ("Difference", _item("Mesh/Booleans/Difference (A - B)")),
                                 ("Intersection", _item("Mesh/Booleans/Intersection"))],
                          options={"Union", "Difference", "Intersection"})),
         DIVIDER,
