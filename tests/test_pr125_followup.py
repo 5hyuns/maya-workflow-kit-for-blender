@@ -96,3 +96,41 @@ def test_header_extras_off_and_search_under_layouts():
     bpy.ops.object.armature_add()
     tb._draw_armature_mode_header(SimpleNamespace(layout=_Ops(log)), bpy.context)
     assert not log, log
+
+
+def test_priority_off_leaves_non_joint_clicks_to_blender():
+    """Selection Priority off (docs/user_decisions.md 15): an Object-mode click is the kit's only when it hits a joint;
+    everything else passes through to Blender's own pick (the PR called view3d.select for every click)."""
+    from types import SimpleNamespace
+    sp = import_module(kit.MODULE + ".operators.select_priority")
+    js = import_module(kit.MODULE + ".operators.joint_selection")
+    prefs = import_module(kit.MODULE + ".preferences").get()
+    _cube()
+    bpy.ops.object.armature_add(location=(3, 0, 0))
+    bpy.ops.object.mode_set(mode='OBJECT')
+    arm = bpy.context.active_object
+    space = SimpleNamespace(type='VIEW_3D', show_region_toolbar=False)
+    region = SimpleNamespace(type='WINDOW', width=400, height=300)
+    ctx = SimpleNamespace(mode='OBJECT', space_data=space, region=region, region_data=SimpleNamespace(),
+                          preferences=bpy.context.preferences, visible_objects=list(bpy.context.visible_objects),
+                          window_manager=bpy.context.window_manager)
+    event = SimpleNamespace(mouse_region_x=10, mouse_region_y=10, shift=False, ctrl=False, value='CLICK',
+                            mouse_x=10, mouse_y=10)
+    calls = []
+    real = (js.pick, js.select, js.select_object_at, sp.hits)
+    js.select_object_at = lambda *a, **k: calls.append("view3d.select")
+    sp.hits = lambda *a, **k: calls.append("priority hits") or []
+    js.select = lambda c, ob, name, *a: calls.append(("joint", ob.name, name)) or True
+    was = prefs.select_priority
+    prefs.select_priority = False
+    try:
+        js.pick = lambda c, ob, mouse, radius: None
+        res = sp.ALLSET_OT_select_priority.invoke(SimpleNamespace(), ctx, event)
+        assert res == {'PASS_THROUGH'} and not calls, (res, calls)
+        js.pick = lambda c, ob, mouse, radius: "Bone" if ob == arm else None
+        me = SimpleNamespace(_finish_pick=lambda c, e, selected: {'FINISHED'} if selected else {'CANCELLED'})
+        res = sp.ALLSET_OT_select_priority.invoke(me, ctx, event)
+        assert calls == [("joint", arm.name, "Bone")] and res == {'FINISHED'}, (res, calls)
+    finally:
+        js.pick, js.select, js.select_object_at, sp.hits = real
+        prefs.select_priority = was

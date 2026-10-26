@@ -142,3 +142,11 @@
     - Maya 레이아웃의 3D 뷰 배경 = 뷰 자체의 단색 Maya #5c5c5c (`View3DShading.background_type='VIEWPORT'`, 테마가 아님; #45).
     - 결정 3 의 「Maya 레이아웃 설치」 버튼 · 사용자 scripts 폴더 복사, 결정 9 의 템플릿 설치 · Maya 테마 · 스플래시 끔 · 환경설정 저장은
       이 결정으로 대체된다.
+
+15. **Selection Priority 끔의 뜻 (delegated, PR #125 후속, 2026-10-26)**: PR #125 가 조인트 클릭 선택을 `allset.select_priority`
+    (Object 모드 클릭 맨 앞) 에 넣으면서, 애드온 환경설정 「Selection Priority」 를 꺼도 Object 모드의 모든 클릭을 가로채
+    (`view3d.select` 를 직접 부름) 설정의 뜻이 바뀌었다. 정한 규칙: **꺼져 있으면 조인트를 맞힌 클릭만 킷이 받고 (Maya 의 조인트는 각자
+    노드라 아마추어 전체가 아니라 그 조인트를 고름), 그 밖의 클릭은 PASS_THROUGH = Blender 자체 선택 (깊이 순, 반복 클릭 순환).**
+    켜져 있으면 전과 같이 Maya 우선순위 (IK 핸들 > 조인트 > 커브 > 메시). Pose / 아마추어 Edit 모드에서 리그 밖을 클릭하면 리그에서 빠져나가는
+    동작은 설정과 무관 (아마추어 모드에서만 일어나는 일이라 「아마추어 히트에만 개입」 범위 안). 근거: `C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md`
+    #3. 검증: `tests/test_pr125_followup.py::test_priority_off_leaves_non_joint_clicks_to_blender`.

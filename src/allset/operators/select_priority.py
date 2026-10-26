@@ -8,7 +8,8 @@ depth, so a control curve or a joint in front of (or behind) a mesh can lose to 
 
 ``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
 Pose mode directly; clicks away from a skeleton release Pose/Edit mode for native object picking.
-In Object mode, ordinary candidates still use Blender's native pick and cycling.
+In Object mode, ordinary candidates still use Blender's native pick and cycling. With the Selection Priority
+preference off, an Object-mode click is only taken when it hits a joint (docs/user_decisions.md 15).
 """
 
 import math
@@ -204,20 +205,16 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         best = rank(hits(context, region, rv3d, mouse), radius) if enabled else None
         if best is None:
             if not enabled and context.mode == 'OBJECT':
-                # Native depth picking chooses the object when type priority is off;
-                # an armature hit still resolves to an individual Maya joint.
-                previous = context.active_object
-                joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
-                ob = context.active_object
-                if ob is None and event.ctrl and not event.shift:
-                    ob = previous
-                if ob is not None and ob.type == 'ARMATURE':
+                # Selection Priority off (docs/user_decisions.md 15): only a click on a joint is the kit's (a Maya
+                # joint is its own node: pick it, not the whole armature); every other click is Blender's own pick.
+                for ob in context.visible_objects:
+                    if ob.type != 'ARMATURE' or ob.hide_select:
+                        continue
                     name = joint_selection.pick(context, ob, mouse, radius)
                     if name is not None:
                         selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
                         return self._finish_pick(context, event, selected)
-                active = context.active_object
-                return self._finish_pick(context, event, active is not None and active.select_get())
+                return {'PASS_THROUGH'}
             if context.mode == 'POSE':
                 # Priority can be disabled without disabling direct joint selection in the rig.
                 ob = context.active_object
