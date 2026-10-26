@@ -1388,7 +1388,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
   useful on joints. The kit's Edit mode = "the joint's components" is a Blender stand-in (`delegated`); the in-view
   message still says object / component selection.
 - [ ] Select a skeleton in the Outliner: Pose mode starts; the Channel Box shows the lead joint's channels once a joint
-  is clicked (Maya would show the root joint at once — check it is not confusingly empty).
+  is clicked (Maya would show the root joint at once — check it is not confusingly empty). **Step 217**: the root joint
+  is now selected at once (Maya 2026) — check it.
 - [ ] Mouse wheel over the Channel Box: three rows per notch, values unchanged, the Layer Editor below doesn't move.
 - [ ] Drag the Move manipulator: Channel Box numbers follow during the drag; with nothing moving, no constant redraw
   (CPU idle in Task Manager).
@@ -1398,3 +1399,17 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Tool Box: the magnifier under the Outliner button opens command search; the column is as wide as before 0.5.0.
 - [ ] Preferences > Add-ons > Maya Workflow Kit: Armature Mode Picker / Pulse Armature Mode off by default; turned on,
   the picker appears at the start of the main viewport header with a skeleton active and its button pulses softly.
+
+## Step 217 — Bake Simulation, Joint Tool end, pick walk (Issue #128)
+
+- [ ] Key > Bake Simulation ❒ on a constrained cube: the window shows "Disable implicit control" (on); Bake keeps the
+  motion, the constraint stays in the Channel Box INPUTS but off (muted), the channels are no longer blue; turning
+  "Keep unbaked keys" off removes keys outside the range and still keeps the constraint.
+- [ ] Skeleton > Create Joints, three clicks, Enter: the root joint is selected and the Select tool is active (Maya
+  2026); clicking near a big joint's sphere (zoomed in) branches from it, a click just outside the drawn sphere starts
+  a new skeleton — check the hit area feels like the drawn ball.
+- [ ] Generated Rigify human: arrow keys walk from control to control (no MCH / ORG bones selected); turn on the MCH
+  collection and the arrows walk into it; Preferences > Add-ons > Maya Workflow Kit > "Pick walk skips hidden bone
+  collections" off = plain hierarchy. Check `shin_tweak.L` Up lands somewhere a Maya user expects (decision 6, weakest
+  point).
+- [ ] Control > Tag As Controller / Parent Controller on three bones: Up from a child goes to the parent controller.

@@ -23,6 +23,42 @@ def clear(context):
         ob.data.bones.active = None
 
 
+def _collection_hidden(bone):
+    return bool(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)
+
+
+def root_joints(ob):
+    """Pose bones of the skeleton's top joints: shown bones with no shown ancestor, in bone order."""
+    out = []
+    for pb in ob.pose.bones:
+        if compat.bone_hidden(pb) or _collection_hidden(pb.bone):
+            continue
+        up = pb.bone.parent
+        while up is not None and (up.hide or _collection_hidden(up)):
+            up = up.parent
+        if up is None:
+            out.append(pb)
+    return out
+
+
+def select_roots_if_empty(ob):
+    """Maya: picking a skeleton picks its root joint (research/maya/re/maya2026_joints.md §4 - the Channel Box shows
+    the root's channels, Select > All = every root, lead = the last). When the automatic Pose mode (decision 16) shows
+    a rig with no shown bone selected, select its root joints, the last one active. True when it selected."""
+    from ..ui.channel_box import bone_selected, set_bone_selected
+    if ob is None or ob.type != 'ARMATURE' or ob.pose is None:
+        return False
+    if any(bone_selected(pb) and not compat.bone_hidden(pb) and not _collection_hidden(pb.bone)
+           for pb in ob.pose.bones):
+        return False
+    roots = root_joints(ob)
+    for pb in roots:
+        set_bone_selected(pb, True)
+    if roots:
+        ob.data.bones.active = roots[-1].bone
+    return bool(roots)
+
+
 def pick(context, ob, mouse, radius):
     """Pick a visible, selectable joint, preferring its head over the connecting shaft."""
     from .select_priority import BONE_WIDTH, bone_width

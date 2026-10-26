@@ -7,6 +7,16 @@
 
 ## 현재 작업
 
+- Step 217 (Anim chain fixes 1: Bake, joints, pick walk, Issue #128) 완료 — `docs/steps/step_217.md`, mayapy
+  `research/scripts/maya_bake217/`. Bake Simulation = `allset.bake_simulation` (Maya 2026 규칙: 범위 안 비샘플 키 삭제,
+  Keep unbaked keys 끔 = 범위 밖 키 삭제, 컨스트레인트는 지우지 않고 mute, Disable implicit control = IK influence 0);
+  Joint Tool 끝 = 새 체인 루트(분기면 분기 부모) 선택, Enter → Select 툴, 분기 히트 = 그려진 조인트 구 (0.05 × 뼈 길이,
+  바닥 5 px); 스켈레톤을 고르면 루트 조인트 선택 (CB 안 빔); pick walk = 결정 6 (컨트롤러 태그 → 숨은 본 컬렉션 건너뜀,
+  환경설정), Control > Tag As Controller / Parent Controller. Rigify Up 이 숨은 본에 떨어지는 비율 63.2 % → 0 %.
+  검증: 헤드리스 전체 2140 / 2140, GUI 관련 + 스모크 80 / 80 + 조인트 32 / 32.
+  **바로 다음 할 일**: step 218 = Anim chain fixes 2 (Issue #129: paint shortcuts, Spline IK, curve clusters, deformer
+  order).
+
 - PR #125 후속 (0.5.0, 브랜치 `merge-pr125`, push 안 함) — 유지보수자 결정: PR 수용, 최신 Maya 동작 기준, 오류 원인 수정. 근거
   `C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md` · `PR125_MAYA_LATER.md`. 버전 0.5.2 → 0.5.0 + CHANGELOG; 조인트 감시 타이머 = 포인터
   (`live_refs`, 창 닫기 크래시 재현 후 수정, `gui_pr125_window_close`); CB 0.1 s 폴은 변화 / 트랜스폼 중에만 redraw; 휠 3 줄; Joint Tool

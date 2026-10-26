@@ -56,7 +56,8 @@ def test_joint_tool_chain():
     joints.finish(bpy.context, ob, names)
     assert ob.mode == 'POSE'
     assert all(pb.rotation_mode == 'XYZ' for pb in ob.pose.bones)
-    assert cb.lead() == ob.pose.bones["joint3"] and cb.targets() == [ob.pose.bones["joint3"]]
+    # Maya 2026: the new chain's root is the selection (research/maya/re/maya2026_joints.md §2)
+    assert cb.lead() == ob.pose.bones["joint1"] and cb.targets() == [ob.pose.bones["joint1"]]
     # a second skeleton keeps counting joints scene-wide (Maya)
     bpy.ops.object.mode_set(mode='OBJECT')
     ob2, names2 = _skeleton(POINTS[:2])

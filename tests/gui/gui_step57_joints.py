@@ -1,6 +1,6 @@
 """Step 57 in a real UI, Maya rigging_01 hand order on the Maya Workflow Kit layout: Skeleton > Create Joints -> three clicks in
-the persp view (ground plane) -> Enter -> pose mode, joint1 > joint2 > joint3, Channel Box lead joint3 -> Up Up (pick-walk)
--> joint1 -> Skeleton > Mirror Joints (option dialog, YZ) -> six joints. Plan: docs/steps/step_57.md 「계획」 4."""
+the persp view (ground plane) -> Enter -> pose mode, joint1 > joint2 > joint3, Channel Box lead joint1 (Maya 2026: the root) -> Down Down
+-> joint3 -> Up Up (pick-walk) -> joint1 -> Skeleton > Mirror Joints (option dialog, YZ) -> six joints. Plan: docs/steps/step_57.md 「계획」 4."""
 
 import os
 import sys
@@ -115,7 +115,7 @@ def s_finished():
     z = max(abs(b.head_local.z) for b in bones)
     check(f"persp clicks land on the ground (|z| max {z:.2e})", z < 1e-4)
     ld = cb().lead()
-    check(f"Channel Box lead = the last joint ({getattr(ld, 'name', None)})", ld is not None and ld.name == "joint3")
+    check(f"Channel Box lead = the root joint (Maya 2026) ({getattr(ld, 'name', None)})", ld is not None and ld.name == "joint1")
     check("joints rotate XYZ", all(pb.rotation_mode == 'XYZ' for pb in sk.pose.bones))
     for a in win().screen.areas:
         a.tag_redraw()
@@ -123,6 +123,18 @@ def s_finished():
 
 @step
 def s_shot_cb():
+    tap('DOWN_ARROW')
+
+
+@step
+def s_down2():
+    tap('DOWN_ARROW')
+
+
+@step
+def s_at_end():
+    ld = cb().lead()
+    check(f"Down Down walks to the end joint ({getattr(ld, 'name', None)})", ld is not None and ld.name == "joint3")
     shot("gui_step57_joint3.png")
     tap('UP_ARROW')
 

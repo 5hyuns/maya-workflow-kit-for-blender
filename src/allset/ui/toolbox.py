@@ -790,6 +790,12 @@ def _auto_armature_tick():
                         bpy.ops.object.mode_set(mode='POSE')
                     except (RuntimeError, ValueError):
                         pass
+                    else:
+                        # B4 (step 217): a skeleton picked from the Outliner / Select All shows its root joint
+                        from ..operators import joint_selection
+                        if joint_selection.select_roots_if_empty(ob):
+                            for a in window.screen.areas:
+                                a.tag_redraw()
                 elif target is None and ob and ob.mode == 'POSE':
                     try:
                         bpy.ops.object.mode_set(mode='OBJECT')
