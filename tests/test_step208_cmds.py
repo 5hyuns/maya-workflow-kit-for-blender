@@ -59,6 +59,29 @@ DEVIATIONS = {
     # In background mode Blender reports a just-loaded home file as modified (measured: read_homefile() -> is_dirty
     # True in -b); the GUI check is in tests/gui/gui_step208_script_editor.py.
     "new_scene_unsaved": {"skip": ["R4"]},
+    # --- step 216 (research/maya/re/cmds_201.md 「step 216」) ---
+    # Blender constraints act on the world matrix; the object's own channels keep their values under them (Maya's
+    # channels hold the constraint output). getAttr / xform read the constrained values (cmds_rig.intercept).
+    "c216_parent_constraint": {"node_fields": {"|pSphere1": ["t", "r"], "|pCube3": ["t"]}},
+    "c216_point_constraint_two_targets": {"node_fields": {"|pCube3": ["t"]}},
+    "c216_orient_scale_constraint": {"node_fields": {"|pCube2": ["r", "s"], "|pCube3": ["r"]}},
+    "c216_aim_constraint": {"node_fields": {"|pCube2": ["r"], "|pCube3": ["r"]}},
+    # Kit joints are bones of skeleton armatures (step 57): the scene objects are skeleton1/2/3, not joint transforms.
+    "c216_joint_chain": {"skip": ["nodes"]},
+    # A frozen parent keeps its pivot in delta_location and Blender children inherit it, so the child's world translate
+    # reads the parent's pivot (1 2 3) where Maya's reads 0 (pivot, bbox and geometry match; step 10 model).
+    "c216_make_identity": {"skip": ["R8"], "node_fields": {"|pCube1|pSphere1": ["wt"]}},
+    # Blender frames are whole numbers: pal keeps the playback range at whole frames (1 / 125, film again 1 / 120).
+    "c216_current_unit": {"R12": [1.0, 125.0]},
+    # Kit numbers are Blender's Z-up axes (decision 5): the cube's top f[1] is +Z, front f[0] -Y, and -ty moves
+    # along Blender Y like cmds.move.
+    "c216_poly_extrude_facet": {"R4": [-0.5, -0.5, -0.5, 0.5, 0.5, 2.5], "R10": [-0.5, -1.5, -0.5, 0.5, 1.5, 2.5],
+                                "R12": [-0.5, -1.5, -0.5, 0.5, 3.5, 2.5]},
+    # Maya's factory particleCloud1 / standardSurface1 have no kit counterpart in a new scene.
+    "c216_shading_node": {"R16": ["blinn1", "blinn2", "lambert1", "lambert2", "phong1", "skin"]},
+    # Create > Camera levels the Blender camera (rotate X 90) so it looks along Maya's -Z (= Blender +Y); the joint
+    # made under pCube1 is a bone of the skeleton armature skeleton1 (step 57).
+    "c216_node_type": {"node_fields": {"|camera1": ["r"], "|pCube1|skeleton1": ["shapes"]}, "rename": {"|pCube1|joint1": "|pCube1|skeleton1"}},
 }
 
 
