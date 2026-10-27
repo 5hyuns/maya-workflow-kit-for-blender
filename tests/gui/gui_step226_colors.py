@@ -46,6 +46,16 @@ def near(pxs, rgb, tol=0.03):
     return sum(1 for p in pxs if all(abs(p[k] - rgb[k]) <= tol for k in range(3)))
 
 
+def reddish(pxs):
+    """Pixels of a 1 px anti-aliased red wire: red clearly above green and blue (the grey background has r = g = b)."""
+    return sum(1 for p in pxs if p[0] - max(p[1], p[2]) > 0.12)
+
+
+def strongest(pxs, bg):
+    """The wire pixel furthest from the flat background (the line's core, least mixed with it)."""
+    return max(pxs, key=lambda p: sum((p[k] - bg[k]) ** 2 for k in range(3)))
+
+
 @step
 def s_setup():
     setup()
@@ -75,7 +85,7 @@ def s_curve():
 
 @step
 def s_before():
-    C["before"] = near(pixels("before"), (1.0, 0.0, 0.0), 0.1)
+    C["before"] = reddish(pixels("before"))
 
 
 @step
@@ -87,7 +97,7 @@ def s_red():
 
 @step
 def s_red_shot():
-    C["red"] = near(pixels("red"), (1.0, 0.0, 0.0), 0.1)
+    C["red"] = reddish(pixels("red"))
 
 
 @step
@@ -102,16 +112,21 @@ def s_cyan_shot():
     srgb = C["wc"].PALETTE[18]
     from mathutils import Color
     lin = Color(srgb).from_srgb_to_scene_linear()
-    C["cyan_srgb"] = near(pxs, srgb, 0.04)
-    C["cyan_lin"] = near(pxs, (lin.r, lin.g, lin.b), 0.04)
+    bg = max(set(pxs), key=pxs.count)
+    tinted = [p for p in pxs if max(p) - min(p) > 0.12] or pxs   # the coloured wire only (ViewCube / text are grey)
+    core = strongest(tinted, bg)
+    dist = lambda c: sum((core[k] - c[k]) ** 2 for k in range(3)) ** 0.5  # noqa: E731
+    C["cyan_srgb"] = round(dist(srgb), 3)        # distance of the line core to each candidate
+    C["cyan_lin"] = round(dist((lin.r, lin.g, lin.b)), 3)
+    C["core"] = tuple(round(v, 3) for v in core)
     print("GUI measure wire type", C["type0"], "->", C["type1"], "red before", C["before"], "after", C["red"],
           "index 18 as sRGB", C["cyan_srgb"], "as linear", C["cyan_lin"], flush=True)
     check(f"Maya layout view switched to object wire colours ({C['type0']} -> {C['type1']})",
           C["type0"] == 'THEME' and C["type1"] == 'OBJECT')
     check(f"no red wire before ({C['before']} px)", C["before"] < 5)
     check(f"unselected curve wire drawn in override index 13 red ({C['red']} px)", C["red"] > 50)
-    check(f"index 18 drawn as Maya's sRGB value ({C['cyan_srgb']} px vs {C['cyan_lin']} px at the linear value)",
-          C["cyan_srgb"] > 50 and C["cyan_srgb"] > C["cyan_lin"])
+    check(f"index 18 line core {C['core']} nearer Maya's sRGB value ({C['cyan_srgb']}) than the linear one "
+          f"({C['cyan_lin']})", C["cyan_srgb"] < C["cyan_lin"])
 
 
 @step

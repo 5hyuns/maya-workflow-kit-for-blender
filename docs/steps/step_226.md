@@ -62,3 +62,47 @@ Offset Parent Matrix = 하지 않음 (ATTACH_PLAN L3 (d)).
 - SDK 값 vs mayapy 1e-4 (`controls_226.json` 표본 전부), 여러 타깃 Point / Scale / Parent 위치 1e-4, Orient 같은 가중치 1e-4 +
   다른 가중치 차이 기록, L1 `-r` / 절대 CV 월드 = Maya (5.68, 2.39, −0.78) / (1.78, 0, −0.78) (Y-up → Z-up, × maya_unit),
   내보낸 FBX 에 모양 메시 없음, GUI 클릭이 Custom Shape 위에서 본 선택.
+
+## 한 것
+
+레인 4 개 병렬 (A L1 · B L2 · C L3/L4 · D L5, 파일 단위로 나눔; 공용 `operators/__init__.py` 는 메인이 스텁을 먼저 등록).
+
+- **L1 컨트롤 모양** (`operators/control_shapes.py`): `allset.parent_shape` + `parent_shape()` = Maya `parent -s [-r]`.
+  본 대상 = 커브 데이터 복사본을 본 공간에 구워 Custom Shape (`.AllsetControlShapes` 장면 밖 + fake user, bone size 끔).
+  `-r` = Z +90° (조인트 Maya 축), 절대 = 본 월드⁻¹ × 커브 월드. 두 번째 모양 = 스플라인 추가 (Maya), `replace` = 교체.
+  `-r` 뒤 원래 커브 = 같은 이름의 빈 트랜스폼 (Empty), 절대 = 사라짐. 커브 대상 = 스플라인 합침, Empty 대상 = 경고.
+  `cmds.parent(s=True, r=True)` (`command_line/cmds_dag.py`). 클릭: `select_priority` 조인트 히트 = Custom Shape 와이어 투영
+  (팔면체 아님). 내보내기: 장면 안의 Custom Shape 원본 (Rigify WGT 포함) 은 Export All / Selection 에서 뺌 (`file_io.py`).
+- **L2 색** (`operators/wire_color.py`, `ui/ae_layout.py`, `ui/menu_map.py`): Maya colorIndex 32 색 표 (값만),
+  Display > Wireframe Color… = Maya 창 (Indexed / RGB, user palette 8 = 24–31, Apply / Default / Close), AE Drawing Overrides
+  (Enable, Index / RGB). 오브젝트 = `Object.color` (scene linear 로 변환, 측정) + Maya 워크스페이스 3D View 만
+  `wireframe_color_type` THEME → OBJECT (킷 색이 없어지면 되돌림), 본 = 포즈 본 color CUSTOM (sRGB).
+- **L3 Match**: 리드가 포즈 본이면 그 본의 월드 행렬 (`snap_align.py`).
+- **L4 여러 타깃** (`operators/constrain_multi.py`, `rig_tools.py`, `option_windows._constraint`, `ui/channel_box.py`):
+  타깃마다 컨스트레인트를 쌓고 Maya 가중치 = 소유자 속성 `allset_w_<member>` (키·SDK 가능), influence = 단순 식 드라이버
+  `w_i / S_i if S_i > 0 else 1/(i+1)`; Scale = power w/Σw (가중 기하 평균); Maintain Offset = 숨은 오프셋 Empty
+  (`.AllsetConstraintHelpers`, 장면 밖, 지우면 정리). CB = Maya 노드 하나 + `<target>W<i>` 행.
+- **L5 SDK** (`operators/driven_key.py`, `ui/set_driven_key.py`): Maya 2026 auto 탄젠트 규칙 직접 계산 (끝 평평, 가운데 =
+  (y₊ − y₋)/(x₊ − x₋), 극값 평평; Blender 핸들 유형으로는 3 키에서 2.58 차이 — 측정) → ALIGNED 핸들 (delegated).
+  다른 드라이버 = blendWeighted 더하기: 드라이버마다 숨은 `allset_sdk_<n>` + 채널 드라이버 SUM; Key = 다른 입력을 뺀 값을 그
+  입력에 (delegated). Driven 노드에 blendShape (셰이프 키 value), 컨스트레인트 가중치 (W 속성 또는 influence), IK ikBlend.
+
+## 검증
+
+- 헤드리스 `-k step226`: **36 / 36** (shapes 8, colors 11, constraints 10, sdk 7).
+  - SDK vs mayapy: two_keys 1.46e-5, three_keys 1.26e-5, four_keys_overshoot 5e-7, two_drivers 0 (20 쌍), 회전 60° / 65° — 1e-4 이내.
+  - 여러 타깃 Point / Scale / Parent 위치 1e-4 (모두 0 = 같은 가중치 포함). 회전 차이 (slerp vs Maya nlerp) [U]:
+    orient coaxial W1 = 3 0.259°, skew W1 = 3 0.532°, skew 같은 가중치 0, parent W1 = 3 회전 0.901°.
+  - L1 `-r` / 절대 CV 월드 = Maya 표, FBX Export All 에 모양 오브젝트 없음.
+- 관련 기존 헤드리스 (step62 · 76 · 199 · 102 · 138 · 101 · 54 · 166 · 208 · 216 · 217 · 223 · 169): 163 / 165, 실패 2 =
+  `test_step169_deform` 두 개 (223 커밋부터 있던 실패, Release prep).
+- GUI: `gui_step226_control_click` 4 / 4 (와이어 클릭 → Pose + joint1 리드, 원 안 빈 곳 = 조인트 안 고름),
+  `gui_step226_colors` 5 / 5 (선택 안 된 커브 와이어 빨강 1210 px, 인덱스 18 = sRGB 값 쪽; 측정을 1 px 안티앨리어스
+  선에 맞게 고침). 샷 확인.
+
+## 남은 것
+
+- 회전 섞기는 Blender slerp: 다른 가중치에서 Maya 와 최대 ~0.9° (parent). nlerp 흉내는 하지 않음 [U].
+- Drawing Override 와 Wireframe Color 가 둘 다 있을 때 우선순위는 Maya 에서 재지 않음 [U, delegated: override 우선].
+- SDK 창에서 blendShape / 컨스트레인트 값을 포즈할 때 msgbus 로 잡는 것은 GUI 미확인 (`docs/manual_checks.md`).
+- Blender Custom Shape 는 본 그림을 대체 (Maya 는 조인트 구 + 커브 둘 다 보임) — 결정 1 대로.

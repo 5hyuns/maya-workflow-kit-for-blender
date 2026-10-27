@@ -7,6 +7,12 @@
 
 ## 현재 작업
 
+- Step 226 (controls from NURBS curves, Issue #136) 완료 — `docs/steps/step_226.md`: parent -s/-r = 본 Custom Shape
+  (클릭 = 그려진 와이어, 내보내기 제외), Maya 와이어 색 / Drawing Overrides, Match → 본, 여러 타깃 컨스트레인트 = 가중 평균
+  (가중치 속성 + 드라이버), SDK = Maya auto 탄젠트 + 두 번째 드라이버 더하기. -k step226 36 / 36 (SDK vs mayapy ≤ 1.5e-5),
+  관련 163 / 165 (step169 기존 2), GUI 9 / 9. **바로 다음 할 일**: step 227 = Blend shape in-betweens, combinations and
+  corrective shapes (Issue #137).
+
 - **체크포인트 2026-10-27 (/sc:save, 225 후)** — 지금 단계: **225 완료 · 커밋 3dea6e9** (Fixes #135, push 안 함). 이번 세션 커밋:
   223 3fa2033 (#133 리그 FBX 가져오기 + IK/FK) · 224 b601732 (#134 #126 숫자 가중치 · 두 번째 스킨 질문 · Tool Settings 필드) ·
   225 3dea6e9 (#135 Game Exporter 클립 · Motion Trail Editor). 진행 중인 레인·테스트 없음, 작업 트리 깨끗 (research/ · .impeccable/ ·
