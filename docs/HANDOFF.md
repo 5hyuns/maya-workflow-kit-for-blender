@@ -7,6 +7,12 @@
 
 ## 현재 작업
 
+- Step 228 (curve rig leftovers, Issue #138) 완료 — `docs/steps/step_228.md`: Attach to Motion Path (Follow Path + offset 키,
+  Maya auto, 위치 9.5e-5) / Set Motion Path Key (Maya 처럼 커브에 점 추가) / Flow Path Object (격자 + Curve 모디파이어, 근사) /
+  Loft Polygons (40/56/40 + 히스토리). 헤드리스 67 / 68 (step103 = step 219 이후 기존 실패), GUI curves 53 / 53.
+  **바로 다음 할 일**: step 229 = Release prep 0.5.0 — 전체 헤드리스 · GUI · 5.x · dogfood, 기존 실패 (`test_step103`
+  Set Membership, `test_step169_deform` 2 개) 원인 = step 219 메뉴 변경 (bisect 로 확인), push.
+
 - Step 227 (blend shape in-betweens / combinations / correctives, Issue #137) 완료 — `docs/steps/step_227.md`: Shape Editor
   인비트윈 (숨은 키 + 조각 선형 단순 식 드라이버) · 조합 (곱 / 최소 / 조화 평균), Pose Interpolator + Pose Editor (스윙 각 선형,
   트위스트 무시, 교정 키). vs mayapy ≤ 4.9e-7, 헤드리스 관련 87 / 87, GUI shape_editor 5 / 5 + pose_editor 5 / 5.

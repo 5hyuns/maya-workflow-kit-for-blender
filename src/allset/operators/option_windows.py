@@ -499,6 +499,8 @@ def _extend():
     WINDOWS.extend(option_windows_199.WINDOWS)      # step 199: Skin / Constrain tools 2
     from . import option_windows_curves207
     WINDOWS.extend(option_windows_curves207.WINDOWS)    # step 207: Bend / Curl / Scale Curvature
+    from . import motion_path_228
+    WINDOWS.extend(motion_path_228.windows())    # step 228: Attach to Motion Path
 
 
 _extend()

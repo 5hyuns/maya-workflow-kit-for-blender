@@ -181,7 +181,8 @@ def test_window_fields_follow_maya():
     extrude = {f.name: f for f in d["surface_extrude"].fields}
     assert extrude["style"].items == ("Distance", "Flat", "Tube")
     # what the kit can't follow is listed, not hidden
-    assert any("Polygons" in m for m in d["loft"].missing)
+    assert any("Bezier" in m for m in d["loft"].missing)        # step 228: Polygons is made now
+    assert _call(d["loft"], {"output": "Polygons"})[2]["output"] == 'POLYGONS'
     assert any("tolerance" in m.lower() for m in d["revolve"].missing)
     assert any("Rotation" in m for m in d["surface_extrude"].missing)
 

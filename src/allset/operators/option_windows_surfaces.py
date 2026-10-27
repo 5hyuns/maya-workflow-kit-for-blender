@@ -19,9 +19,11 @@ def _degree(label):
 
 
 def _run_loft(context, v):
+    # step 228 L10: Output geometry Polygons -> a mesh (the factory NURBS call stays Maya's plain loft)
+    extra = {"output": 'POLYGONS'} if v.get("output") == "Polygons" else {}
     return bpy.ops.allset.loft('EXEC_DEFAULT', uniform=v["parameterization"] == "Uniform",
                                auto_reverse=v["auto_reverse"], close=v["close"], degree=_degree(v["degree"]),
-                               section_spans=v["section_spans"])
+                               section_spans=v["section_spans"], **extra)
 
 
 def _run_revolve(context, v):
@@ -88,7 +90,11 @@ WINDOWS = [
         F("close", "", "bool", False, text="Close"),
         F("degree", "Surface degree:", "enum", "Cubic", items=("Linear", "Cubic")),
         F("section_spans", "Section spans:", "int", 1, lo=1, hi=500),
-    ], _run_loft, paths=("Surfaces/Loft",), missing=(_RANGE, _OUTPUT)),
+        # step 228 L10 (maya2026_curve_rigs.md §L10): Polygons = a mesh with UVs that follows the curves
+        F("output", "Output geometry:", "enum", "NURBS", items=("NURBS", "Polygons")),
+    ], _run_loft, paths=("Surfaces/Loft",),
+        missing=(_RANGE, "Output geometry: Bezier not made",
+                 "Polygon tessellation options: the kit's grid only (Maya General / Standard fit not followed)")),
     # Surfaces > Revolve (performRevolve.mel:299-376, title :492; revolveSetOptionVars.mel:31-131: axis Y, Object
     # pivot, 0 - 360, cubic, segments 8)
     Window("revolve", "Revolve Options", "Revolve", ("allset.revolve", {}), [
@@ -170,3 +176,9 @@ WINDOWS = [
                  "Direction: U / V (U and V only)", "Keep: Corners / CVs / NumSpans", "Degree: Original",
                  "Keep original (off)", "Use tolerance", _OUTPUT)),
 ]
+
+
+# step 228 L9: Constrain > Motion Paths > Flow Path Object Options live with the operator
+from .flow_path_228 import windows as _flow_windows  # noqa: E402
+
+WINDOWS += _flow_windows()

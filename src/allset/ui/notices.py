@@ -345,8 +345,6 @@ CATEGORIES = {
              "(Weights menu: Normalize, Mirror, Clean, Limit Total); no influence objects or interactive bind."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
                "deformer sets or tweak nodes."),
-    "Constrain/Motion Paths": ("Follow Path constraint", "Blender follows a curve with a Follow Path constraint "
-                               "(animate its Offset); there are no flow path lattices or motion path keys."),
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "
                   "camera rig or animated sweep surface (the kit has Animation Snapshot and ghosting)."),
     "Playback": ("Timeline Playback popover", "Blender's playback options are in the Timeline's Playback popover; "

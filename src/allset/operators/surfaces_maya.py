@@ -205,6 +205,9 @@ class ALLSET_OT_loft(_SurfOp, bpy.types.Operator):
     auto_reverse: BoolProperty(name="Auto reverse", default=True, options={'SKIP_SAVE'})
     degree: EnumProperty(name="Surface degree", items=DEGREES, default='3', options={'SKIP_SAVE'})
     section_spans: IntProperty(name="Section spans", default=1, min=1, max=1000, options={'SKIP_SAVE'})
+    # step 228 L10: Maya Output geometry (NURBS / Polygons; Bezier isn't made)
+    output: EnumProperty(name="Output geometry", items=[('NURBS', "NURBS", ""), ('POLYGONS', "Polygons", "")],
+                         default='NURBS', options={'SKIP_SAVE'})
 
     def execute(self, context):
         _object_mode(context)
@@ -212,9 +215,170 @@ class ALLSET_OT_loft(_SurfOp, bpy.types.Operator):
         if len(obs) < 2:
             self.report({'WARNING'}, "Invalid selection.  Need at least two curves.")
             return {'CANCELLED'}
-        s = sm.loft([_crv(o) for o in obs], self.uniform, self.close, int(self.degree), self.section_spans,
-                    self.auto_reverse)
+        opts = {"uniform": self.uniform, "close": self.close, "degree": int(self.degree),
+                "section_spans": self.section_spans, "auto_reverse": self.auto_reverse}
+        s = _loft_surf(obs, opts)
+        if self.output == 'POLYGONS':
+            return _done(self, context, [new_loft_mesh(context, s, [o.name for o in obs], opts)])
         return _done(self, context, [new_surface(context, "loftedSurface", s, select=False)])
+
+
+# --- step 228 L10: Loft > Output geometry Polygons, with kit history -------------------------------------------
+# Maya (research/maya/re/maya2026_curve_rigs.md §L10, mayapy ``loft`` in research/maya/re/curve_rigs_228.json):
+# ``loft ... -po 1`` gives only a mesh ``loftedSurface1`` (history nurbsTessellate <- loft <- the curves; moving a CV
+# moves the mesh), UVs = the surface's normalised (u, v): UV u across the curves, UV v along them. Maya's general
+# tessellation (uNumber / vNumber 3, chord height 0.9) picks its own non-uniform rows [U]; the kit cuts each span
+# into TESS_ALONG x TESS_ACROSS uniform parameter steps, two triangles per cell (Maya polygonType 0 = triangles):
+# 40 vertices / 56 triangles / 40 UVs on the measured two-curve loft, like Maya (delegated).
+
+LOFT_KEY = "allset_loft"       # mesh object ID prop: {"curves", "opts", "sig"} while the mesh is the kit's result
+TESS_ALONG = 7                 # segments per span along the curves (kit Surf U)
+TESS_ACROSS = 4                # segments per span across the curves (kit Surf V)
+
+
+def _loft_surf(obs, opts):
+    return sm.loft([_crv(o) for o in obs], opts["uniform"], opts["close"], int(opts["degree"]),
+                   opts["section_spans"], opts["auto_reverse"])
+
+
+def _params(knots, degree, per_span):
+    d0, d1 = sm.domain(knots, degree)
+    brk = sorted({k for k in knots if d0 - 1e-12 <= k <= d1 + 1e-12})
+    out = [brk[0]]
+    for a, b in zip(brk, brk[1:]):
+        out += [a + (b - a) * k / per_span for k in range(1, per_span + 1)]
+    return out, d0, d1
+
+
+def tessellate(s, along=TESS_ALONG, across=TESS_ACROSS):
+    """(vertices, triangles, per-vertex UVs) of Surf ``s`` (world space): a grid on uniform parameter steps per span,
+    UV = (normalised V, normalised U) = Maya's (across, along)."""
+    us, u0, u1 = _params(s.knots_u, s.degree_u, along)
+    vs, v0, v1 = _params(s.knots_v, s.degree_v, across)
+    nu = len(us)
+    verts, uvs = [], []
+    for v in vs:
+        for u in us:
+            verts.append(s.point(u, v))
+            uvs.append(((v - v0) / ((v1 - v0) or 1.0), (u - u0) / ((u1 - u0) or 1.0)))
+    tris = []
+    for j in range(len(vs) - 1):
+        for i in range(nu - 1):
+            a, b = j * nu + i, j * nu + i + 1
+            c, d = (j + 1) * nu + i + 1, (j + 1) * nu + i
+            tris += [(a, b, c), (a, c, d)]
+    return verts, tris, uvs
+
+
+def _mesh_signature(me):
+    import hashlib
+    import numpy as np
+    co = np.empty(len(me.vertices) * 3, dtype=np.float64)
+    me.vertices.foreach_get("co", co)
+    return hashlib.md5(np.round(co, 4).tobytes() + str(len(me.polygons)).encode()).hexdigest()
+
+
+def _write_mesh(me, s):
+    verts, tris, uvs = tessellate(s)
+    me.clear_geometry()
+    me.from_pydata(verts, [], tris)
+    layer = me.uv_layers.new(name="map1")
+    data = layer.data
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            data[li].uv = uvs[me.loops[li].vertex_index]
+    me.update()
+
+
+def new_loft_mesh(context, s, curve_names, opts):
+    """Mesh ``loftedSurfaceN`` of Surf ``s`` with UVs, recording its input curves (kit history, ``refresh_lofts``)."""
+    me = bpy.data.meshes.new("loftedSurfaceShape")
+    _write_mesh(me, s)
+    ob = bpy.data.objects.new("loftedSurface", me)
+    (context.collection or context.scene.collection).objects.link(ob)
+    naming.apply_maya_name(ob, "loftedSurface")
+    material.give_default(ob)
+    ob[LOFT_KEY] = json.dumps({"curves": list(curve_names), "opts": opts, "sig": _mesh_signature(me)})
+    return ob
+
+
+def loft_record(ob):
+    try:
+        return json.loads(ob[LOFT_KEY]) if LOFT_KEY in ob else None
+    except (ValueError, TypeError):
+        return None
+
+
+def refresh_lofts(scene=None, changed=None):
+    """Rebuild every kit loft mesh whose input curves are in ``changed`` (None = all). A mesh edited away from the
+    kit's result, or whose curves are gone, loses its record (Maya: the history link is broken). Returns the
+    rebuilt objects."""
+    scene = scene or bpy.context.scene
+    done = []
+    for ob in list(scene.objects):
+        if ob is None or ob.type != 'MESH' or LOFT_KEY not in ob:
+            continue
+        rec = loft_record(ob)
+        if rec is None:
+            del ob[LOFT_KEY]
+            continue
+        if changed is not None and not set(rec["curves"]) & changed:
+            continue
+        curves = [bpy.data.objects.get(n) for n in rec["curves"]]
+        if (any(c is None or c.type != 'CURVE' or not c.data.splines for c in curves)
+                or _mesh_signature(ob.data) != rec["sig"] or ob.mode != 'OBJECT'):
+            del ob[LOFT_KEY]
+            continue
+        try:
+            s = _loft_surf(curves, rec["opts"])
+        except (ValueError, ZeroDivisionError):
+            continue
+        _write_mesh(ob.data, s)
+        rec["sig"] = _mesh_signature(ob.data)
+        ob[LOFT_KEY] = json.dumps(rec)
+        done.append(ob)
+    return done
+
+
+_pending = set()
+
+
+def _tick():
+    names = set(_pending)
+    _pending.clear()
+    try:
+        refresh_lofts(bpy.context.scene, names)
+    except (ReferenceError, AttributeError):
+        pass
+    return None
+
+
+@bpy.app.handlers.persistent
+def _on_depsgraph(scene, depsgraph):
+    names = set()
+    for up in depsgraph.updates:
+        idb = up.id
+        if isinstance(idb, bpy.types.Object) and idb.type == 'CURVE' and (up.is_updated_geometry
+                                                                          or up.is_updated_transform):
+            names.add(idb.original.name)
+    if not names or not any(LOFT_KEY in o for o in scene.objects if o is not None and o.type == 'MESH'):
+        return
+    _pending.update(names)
+    if not bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.register(_tick, first_interval=0.0)
+
+
+def register_history():
+    if _on_depsgraph not in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
+
+
+def unregister_history():
+    if _on_depsgraph in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
+    if bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.unregister(_tick)
+    _pending.clear()
 
 
 @undo_steps.no_redo_panel
