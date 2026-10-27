@@ -650,6 +650,8 @@ MAP.update({
     "Modify/Convert/NURBS Curve to Bezier": ("curve.spline_type_set", {"type": 'BEZIER'}),
     "Modify/Convert/Bezier Curve to NURBS": ("curve.spline_type_set", {"type": 'NURBS'}),
     # step 168 (): Modify leaves
+    "Modify/Reorder Rotation...": "allset.reorder_rotation",     # step 229: Maya xform -roo -p
+    "Modify/Paint Attributes Tool": "paint.weight_paint_toggle",  # Blender paints vertex group weights
     "Modify/Evaluate Nodes/Evaluate All": ("allset.evaluate_all", {"on": True}),
     "Modify/Evaluate Nodes/Ignore All": ("allset.evaluate_all", {"on": False}),
     **{f"Modify/Evaluate Nodes/{label}": ("prop", f"scene.allset_eval.{kind}", {})

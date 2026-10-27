@@ -591,9 +591,65 @@ class ALLSET_OT_evaluate_all(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# --- Modify > Reorder Rotation... (Maya xform -rotateOrder <order> -preserve) ----------------------------------------
+
+# Maya rotateOrder names = Blender's Euler modes of the same names (command_line/cmds_shim.ROTATE_ORDERS).
+REORDER_ITEMS = tuple((m, m.lower(), f"Maya rotate order {m.lower()}") for m in ('XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'))
+
+
+def _rotation_matrix(node):
+    mode = node.rotation_mode
+    if mode == 'QUATERNION':
+        return node.rotation_quaternion.normalized().to_matrix()
+    if mode == 'AXIS_ANGLE':
+        from mathutils import Quaternion
+        angle, *axis = node.rotation_axis_angle
+        return Quaternion(Vector(axis), angle).to_matrix()
+    return node.rotation_euler.to_matrix()
+
+
+def reorder_rotation(nodes, order):
+    """Change the rotate order of objects / pose bones keeping their orientation (Maya's -preserve): setting
+    rotation_mode from Python only reinterprets the values (checked, step 229), so the Euler angles are recomputed
+    from the old rotation, closest to the old angles. Keys are left as they are. Returns how many changed."""
+    n = 0
+    for node in nodes:
+        if node.rotation_mode == order:
+            continue
+        m = _rotation_matrix(node)
+        old = node.rotation_euler.copy()
+        node.rotation_mode = order
+        node.rotation_euler = m.to_euler(order, old)
+        n += 1
+    return n
+
+
+class ALLSET_OT_reorder_rotation(bpy.types.Operator):
+    """Change the rotate order of the selected objects / joints, keeping their orientation (Maya Modify > Reorder
+    Rotation)"""
+    bl_idname = "allset.reorder_rotation"
+    bl_label = "Reorder Rotation"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    order: EnumProperty(items=REORDER_ITEMS, name="Rotate order", default='XYZ')
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.selected_objects) or bool(getattr(context, "selected_pose_bones", None))
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, title="Reorder Rotation", confirm_text="Reorder")
+
+    def execute(self, context):
+        nodes = list(context.selected_pose_bones or ()) if context.mode == 'POSE' else list(context.selected_objects)
+        n = reorder_rotation(nodes, self.order)
+        results.result(self, f"Rotate order {self.order.lower()} on {n} node(s)")
+        return {'FINISHED'}
+
+
 classes = (ALLSET_OT_smooth_to_polygons, ALLSET_OT_default_manip, ALLSET_OT_show_manipulator,
            ALLSET_OT_align_to_lead, ALLSET_OT_align_tool, ALLSET_OT_position_along_curve, ALLSET_OT_geometry_to_bbox,
-           ALLSET_PG_evaluate_nodes, ALLSET_OT_evaluate_all)
+           ALLSET_PG_evaluate_nodes, ALLSET_OT_evaluate_all, ALLSET_OT_reorder_rotation)
 
 
 def register_props():

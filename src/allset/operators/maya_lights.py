@@ -336,18 +336,78 @@ def _guarded(scene):
         _busy[0] = False
 
 
+# The sync adds / removes World datablocks, node trees and scene.world: doing that inside depsgraph_update_post /
+# frame_change_post crashed Blender 5.2.3 on the next relations build (std::bad_alloc in DepsgraphNodeBuilder, 2 of 3
+# runs of test_step214_lights, step 229). The handlers only queue the scene (by name: no ID kept across ticks) and a
+# 0 s timer syncs it outside the depsgraph evaluation; ``flush`` does it at once (operators, tests).
+_pending = set()
+
+
+def flush():
+    """Sync every queued scene now."""
+    names = list(_pending)
+    _pending.clear()
+    for name in names:
+        sc = bpy.data.scenes.get(name)
+        if sc is not None:
+            _guarded(sc)
+
+
+def _tick():
+    flush()
+    return None
+
+
+def _queue(scene):
+    if scene is None:
+        return
+    _pending.add(scene.name)
+    if not bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.register(_tick, first_interval=0.0)
+
+
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, depsgraph=None):
     if depsgraph is not None and not any(
             isinstance(u.id, (bpy.types.Object, bpy.types.Light, bpy.types.Scene, bpy.types.Collection))
             for u in depsgraph.updates):
         return
-    _guarded(scene)
+    _queue(scene)
+
+
+def _frame_values(scene):
+    """Frame change: the keyable values now (a render job runs no timers between frames) — light energy and the
+    existing ambient World colour; anything structural (nodes, a World to add or remove) goes to the queue."""
+    k = _k(scene)
+    for ob in scene.objects:
+        if ob is None or ob.type != 'LIGHT':
+            continue
+        light, what = ob.data, kind(ob.data)
+        i = max(0.0, intensity(light))
+        if what == AMBIENT:
+            _set(light, "energy", i * shade(light) / _diffuse() * lights.power_factor('POINT', 0, k))
+        elif what == VOLUME:
+            r_m = radius_m(light, scene, ob)
+            _set(light, "energy", 4.0 * math.pi ** 2 * VOLUME_A * r_m * r_m * i)
+    tree = scene.world.node_tree if scene.world is not None else None
+    bg = tree.nodes.get(W_BG) if tree is not None else None
+    total = _ambient_sum(scene)
+    if bg is not None and total is not None:
+        col = bg.inputs["Color"]
+        want = (*total, 1.0)
+        if any(abs(a - b) > 1e-7 for a, b in zip(col.default_value, want)):
+            col.default_value = want
 
 
 @bpy.app.handlers.persistent
 def _on_frame(scene, *_a):
-    _guarded(scene)
+    if scene is not None and not _busy[0]:
+        _busy[0] = True
+        try:
+            _frame_values(scene)
+        finally:
+            _busy[0] = False
+    _queue(scene)
 
 
 @bpy.app.handlers.persistent
@@ -394,6 +454,9 @@ def unregister():
         lst = getattr(bpy.app.handlers, attr)
         if fn in lst:
             lst.remove(fn)
+    if bpy.app.timers.is_registered(_tick):
+        bpy.app.timers.unregister(_tick)
+    _pending.clear()
     for world in list(bpy.data.worlds):
         remove_world_nodes(world)
     if hasattr(bpy.types.Light, "allset_ambient_shade"):

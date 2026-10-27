@@ -25,6 +25,12 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 light_editor = import_module(kit.MODULE + ".ui.light_editor")
 
 
+def _update():
+    """A depsgraph update plus the queued light / World sync (the handler defers it to a 0 s timer, step 229)."""
+    bpy.context.view_layer.update()
+    ml.flush()
+
+
 def _clear(world=False):
     if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -91,7 +97,7 @@ def test_intensity_shade_round_trip_and_radius():
     # volume: radius follows the object's scale (depsgraph handler)
     vol = _make('VOLUME_LIGHT')
     vol.scale = (3.0, 1.0, 2.0)
-    bpy.context.view_layer.update()
+    _update()
     assert abs(vol.data.cutoff_distance - 3.0 * k) < 1e-6, vol.data.cutoff_distance
     assert abs(vol.data.node_tree.nodes[ml.V_RATIO].inputs[1].default_value - 3.0 * k) < 1e-6
     vol.data.allset_intensity = 0.5
@@ -111,18 +117,18 @@ def test_world_sum_hide_delete_restore():
     b = _make('AMBIENT_LIGHT')
     assert b.name == "ambientLight2"
     b.data.color = (1.0, 0.0, 0.0)
-    bpy.context.view_layer.update()
+    _update()
     bg = tree.nodes[ml.W_BG]
     col = bg.inputs["Color"].default_value
     assert abs(col[0] - 2 * 0.55 / 0.8) < 1e-6 and abs(col[1] - 0.55 / 0.8) < 1e-6, col[:]
     add = tree.nodes[ml.W_ADD]
     assert add.inputs[0].links[0].from_node == user_bg and out.inputs["Surface"].links[0].from_node == add
     b.hide_render = True
-    bpy.context.view_layer.update()
+    _update()
     assert abs(bg.inputs["Color"].default_value[0] - 0.55 / 0.8) < 1e-6, "a hidden ambient light adds nothing"
     bpy.data.objects.remove(a)
     bpy.data.objects.remove(b)
-    bpy.context.view_layer.update()
+    _update()
     assert not _kit_nodes(world) and tree.nodes.get(ml.W_BG) is None
     assert out.inputs["Surface"].links[0].from_node == user_bg, "the user's World link is back"
     assert sc.world == world and bpy.data.worlds.get("userWorld") is not None
@@ -131,7 +137,7 @@ def test_world_sum_hide_delete_restore():
     a = _make('AMBIENT_LIGHT')
     assert sc.world.get(ml.W_MADE)
     bpy.data.objects.remove(a)
-    bpy.context.view_layer.update()
+    _update()
     assert sc.world is None and not bpy.data.worlds
 
 
@@ -153,7 +159,7 @@ def test_undo_and_unregister_remove_world_nodes():
         assert not _kit_nodes(bpy.data.worlds.get(name)), "disable removes the kit nodes"
     finally:
         kit.enable()
-    bpy.context.view_layer.update()
+    _update()
     assert _kit_nodes(bpy.context.scene.world), "re-enabled: the handler puts them back"
 
 
@@ -311,7 +317,7 @@ def test_volume_light_renders_like_maya():
         _plane(k, 4 * R, z=z0)
         vol = _make('VOLUME_LIGHT')
         vol.scale = (R, R, R)
-        bpy.context.view_layer.update()
+        _update()
         w, h, px = _render(f"vol_{engine}")
         pix = 2 * half / w                                    # Maya units per pixel
         for x in samples:

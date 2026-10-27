@@ -224,7 +224,7 @@ def test_blend_shape_weight_is_a_driven_node():
     head = bpy.data.objects.new("pSphere1", me)
     bpy.context.scene.collection.objects.link(head)
     head.shape_key_add(name="Basis")
-    head.shape_key_add(name="smile")
+    head.shape_key_add(name="smile").value = 0.0   # Blender 5.x starts a new key at 1.0 (checked, step 229)
     key = me.shape_keys
     key.name = "blendShape1"
     drv = _empty("ctrl", curl=0, spread=0)

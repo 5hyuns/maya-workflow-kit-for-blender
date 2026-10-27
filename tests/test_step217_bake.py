@@ -21,6 +21,7 @@ import kit
 
 ow = import_module(kit.MODULE + ".operators.option_windows")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
+cb = import_module(kit.MODULE + ".ui.channel_box")      # bone selection shim (5.x has no Bone.select)
 shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 
 F1_10 = [float(f) for f in range(1, 11)]
@@ -255,7 +256,7 @@ def _pose_bake(arm, bones, **kw):
     _select(arm)
     bpy.ops.object.mode_set(mode='POSE')
     for pb in arm.pose.bones:
-        pb.bone.select = pb.name in bones
+        cb.set_bone_selected(pb, pb.name in bones)
     res = _bake(**kw)
     bpy.ops.object.mode_set(mode='OBJECT')
     return res
@@ -302,4 +303,4 @@ def test_ik_hierarchy_below_from_the_root_joint():
     assert _pose_bake(arm, {"a"}, hierarchy_below=True) == {'FINISHED'}
     assert arm.pose.bones["b"].constraints[0].influence == 0.0
     assert _curve(arm, 'pose.bones["b"].rotation_quaternion', 0) is not None
-    assert not arm.pose.bones["b"].bone.select           # the temporary selection is put back
+    assert not cb.bone_selected(arm.pose.bones["b"])          # the temporary selection is put back

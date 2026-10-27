@@ -93,7 +93,8 @@ def test_compound_and_unit_conversion():
     ce.connect(bpy.context.scene, a, "weight", b, "scaleZ")
     _eval()
     fc = ce._fcurve(b, "scale", 2)
-    assert abs(b.scale.z - 0.25) < 1e-9, (b.scale.z, fc and fc.driver.is_valid, fc and fc.driver.expression,
+    # float32 channel (5.x reads 0.24999998)
+    assert abs(b.scale.z - 0.25) < 1e-6, (b.scale.z, fc and fc.driver.is_valid, fc and fc.driver.expression,
                                           fc and [(v.targets[0].id, v.targets[0].data_path) for v in fc.driver.variables])
 
 

@@ -162,8 +162,9 @@ def _arm():
 
 
 def _select_bone(arm, name):
+    cb = import_module(kit.MODULE + ".ui.channel_box")     # bone selection shim (5.x has no Bone.select)
     for pb in arm.pose.bones:
-        pb.bone.select = pb.name == name
+        cb.set_bone_selected(pb, pb.name == name)
     arm.data.bones.active = arm.data.bones[name]
 
 
