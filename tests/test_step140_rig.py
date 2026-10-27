@@ -138,6 +138,8 @@ def test_titles_buttons_fields_defaults_are_maya():
         ("bind_to", "Bind to:", "Joint hierarchy"), ("bind_method", "Bind method:", "Closest distance"),
         ("skinning", "Skinning method:", "Classic linear"),
         ("normalize", "Normalize weights:", "Interactive"), ("max_influences", "Max influences:", 5),
+        # step 247: Maya 2026 factory Maintain max influences on, Dropoff rate 4.0 (skin_basics_247.md)
+        ("maintain_max", "", True), ("dropoff", "Dropoff rate:", 4.0),
         ("remove_unused", "", True), ("colorize", "", True)]
     # Detach Skin (option_boxes_140.md:48-51)
     w = _w("unbind_skin")

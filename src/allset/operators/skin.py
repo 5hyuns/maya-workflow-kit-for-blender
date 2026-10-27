@@ -14,7 +14,7 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 from bpy_extras import view3d_utils
-from mathutils import Vector, kdtree
+from mathutils import Vector
 
 from .. import results
 from .. import compat
@@ -355,8 +355,15 @@ def normalize_mode(mesh):
 # one height subdivision left joint2 with no weights). Heat Map = Blender's automatic weights (bone heat).
 BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Maya's factory bind: weights fall off with the distance to "
                  "each joint"),
+                ("CLOSEST_HIERARCHY", "Closest in hierarchy", "Only the joints next to the closest one in the "
+                 "skeleton (and the end joints) take weight"),
                 ("HEAT_MAP", "Heat Map", "Blender's automatic weights (bone heat)"))
 DROPOFF = 4.0
+# Maya treats a vertex within 1e-4 of joints as on them: those share it equally (checked , 
+# skin_basics_247.md; the kit used 1e-9 before step 247)
+ON_JOINT = 1e-4
+SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matrices (Maya factory)"),
+            ("DUAL_QUATERNION", "Dual quaternion", "Volume-preserving blend (Blender Preserve Volume)"))
 
 
 def joint_segments(arm, bones=None):
@@ -372,8 +379,9 @@ def joint_segments(arm, bones=None):
     return out
 
 
-def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5):
-    """(names, weights (V, J)) for world ``points`` (V, 3) - the Maya closest-distance rule above."""
+def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5, hierarchy=None):
+    """(names, weights (V, J)) for world ``points`` (V, 3) - the Maya closest-distance rule above. ``hierarchy`` =
+    {name: (parent name or None, [child names])} turns on Maya's Closest in hierarchy (``hierarchy_candidates``)."""
     import numpy as np
     names = list(segments)
     pts = np.asarray(points, dtype=np.float64).reshape(-1, 3)
@@ -385,9 +393,12 @@ def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5
             ll = float(ab @ ab)
             t = np.clip((pts - a) @ ab / ll, 0.0, 1.0)[:, None] if ll > 0.0 else 0.0
             dist[:, j] = np.minimum(dist[:, j], np.linalg.norm(pts - (a + t * ab), axis=1))
-    on = dist < 1e-9
+    if hierarchy is not None:
+        dist = np.where(hierarchy_candidates(dist, names, hierarchy, max_influences), dist, np.inf)
+    on = dist <= ON_JOINT
     with np.errstate(divide='ignore'):
         w = np.where(on.any(axis=1)[:, None], on.astype(np.float64), dist ** -float(dropoff))
+    w = np.where(np.isfinite(w), w, 0.0)
     if 0 < max_influences < len(names):
         cut = np.argsort(-w, axis=1)[:, max_influences:]
         np.put_along_axis(w, cut, 0.0, axis=1)
@@ -395,14 +406,53 @@ def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5
     return names, np.divide(w, total, out=np.zeros_like(w), where=total > 0)
 
 
-def _bind_closest(arm, mesh, bones, max_influences):
+def hierarchy_candidates(dist, names, hierarchy, max_influences):
+    """Maya Closest in hierarchy (Maya bind_hier2, error <= 3.9e-16; skin_basics_247.md): per vertex the
+    closest joint *with children*; candidates = its breadth-first list (each listed joint's children, then its parent,
+    at most ``max_influences`` joints) plus every end joint. (V, J) bool mask."""
+    import numpy as np
+    col = {n: j for j, n in enumerate(names)}
+    kids = {n: [c for c in hierarchy[n][1] if c in col] for n in names}
+    par = {n: hierarchy[n][0] if hierarchy[n][0] in col else None for n in names}
+    ends = np.array([not kids[n] for n in names])
+    inner = [j for j, n in enumerate(names) if kids[n]]
+    mask = np.tile(ends, (len(dist), 1))
+    if not inner:
+        return np.ones_like(mask)
+    cache = {}
+    for i, j in enumerate(np.asarray(inner)[np.argmin(dist[:, inner], axis=1)]):
+        lst = cache.get(j)
+        if lst is None:
+            lst, k = [names[j]], 0
+            while k < len(lst) and len(lst) < max_influences:
+                for c in kids[lst[k]]:
+                    if c not in lst and len(lst) < max_influences:
+                        lst.append(c)
+                p = par[lst[k]]
+                if len(lst) < max_influences and p is not None and p not in lst:
+                    lst.append(p)
+                k += 1
+            lst = cache[j] = [col[n] for n in lst]
+        mask[i, lst] = True
+    return mask
+
+
+def joint_hierarchy(arm, names):
+    bones = arm.data.bones
+    return {n: (bones[n].parent.name if bones[n].parent is not None else None, [c.name for c in bones[n].children])
+            for n in names}
+
+
+def _bind_closest(arm, mesh, bones, max_influences, dropoff=DROPOFF, hierarchy=False):
     import numpy as np
     me = mesh.data
     co = np.empty(len(me.vertices) * 3)
     me.vertices.foreach_get("co", co)
     mw = np.array(mesh.matrix_world)
     pts = co.reshape(-1, 3) @ mw[:3, :3].T + mw[:3, 3]
-    names, w = closest_distance_weights(pts, joint_segments(arm, bones), DROPOFF, max_influences)
+    segs = joint_segments(arm, bones)
+    names, w = closest_distance_weights(pts, segs, dropoff, max_influences,
+                                        joint_hierarchy(arm, list(segs)) if hierarchy else None)
     every = list(range(len(me.vertices)))
     for j, name in enumerate(names):
         vg = mesh.vertex_groups.get(name) or mesh.vertex_groups.new(name=name)
@@ -434,8 +484,10 @@ def name_skin_cluster(mesh):
 
 
 def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize="INTERACTIVE",
-              remove_unused=True, colorize_skeleton=True, method="CLOSEST_DISTANCE"):
-    """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy."""
+              remove_unused=True, colorize_skeleton=True, method="CLOSEST_DISTANCE", dropoff=DROPOFF,
+              skinning="CLASSIC_LINEAR", maintain_max=True):
+    """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy. Also stores Maya's bind pose
+    (Go to Bind Pose), maxInfluences / maintainMaxInfluences / dropoffRate on the mesh (step 247)."""
     for mesh in meshes:
         mesh.pop(PAINT_SEEN, None)          # a new skin: Paint Skin Weights starts on its first influence (238)
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
@@ -452,7 +504,7 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
         bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')   # Maya doesn't parent the skin to the joints
     else:
         for mesh in meshes:
-            _bind_closest(arm, mesh, only_bones, max_influences)
+            _bind_closest(arm, mesh, only_bones, max_influences, dropoff, method == "CLOSEST_HIERARCHY")
     for mesh in meshes:
         name_skin_cluster(mesh)
     bones = {b.name for b in arm.data.bones}
@@ -470,6 +522,16 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
             for name in unused_influences(mesh):
                 mesh.vertex_groups.remove(mesh.vertex_groups[name])
         mesh[NORMALIZE_PROP] = normalize
+        from . import rig_maya, skin_basics
+        mesh[rig_maya.MAX_INFLUENCES_PROP] = int(max_influences)
+        mesh[skin_basics.MAINTAIN_MAX] = bool(maintain_max)
+        if float(dropoff) != DROPOFF:
+            mesh[rig_maya.DROPOFF_PROP] = {vg.name: float(dropoff) for vg in influences(mesh)}
+        md = armature_modifier(mesh)
+        if md is not None:
+            md.use_deform_preserve_volume = skinning == "DUAL_QUATERNION"
+    from . import skin_basics
+    skin_basics.store_bind_pose(arm)
     if colorize_skeleton:
         colorize(arm)
     arm.select_set(True)
@@ -536,7 +598,11 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
                                                  ("SELECTED", "Selected Joints", "Only the joints selected in "
                                                   "pose mode")), default="HIERARCHY")
     bind_method: EnumProperty(name="Bind method", items=BIND_METHODS, default="CLOSEST_DISTANCE")
+    skinning: EnumProperty(name="Skinning method", items=SKINNING, default="CLASSIC_LINEAR")
     max_influences: IntProperty(name="Max Influences", default=5, min=1, max=30)
+    # Maya 2026 factory (maya.internal.nodes.skincluster.cmd_create: obeyMaxInfl 1, dropoff 4.0, slider 0.1-10)
+    maintain_max: BoolProperty(name="Maintain max influences", default=True)
+    dropoff: FloatProperty(name="Dropoff rate", default=DROPOFF, min=0.1, max=100.0, soft_max=10.0, precision=1)
     normalize: EnumProperty(name="Normalize weights", items=NORMALIZE, default="INTERACTIVE")
     remove_unused: BoolProperty(name="Remove unused influences", default=True)
     colorize: BoolProperty(name="Colorize skeleton", default=True)
@@ -566,7 +632,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
             return {'CANCELLED'}
         only = set(picked) if self.bind_to == "SELECTED" and picked else None
         bind_skin(context, arm, meshes, self.max_influences, only, self.normalize, self.remove_unused, self.colorize,
-                  self.bind_method)
+                  self.bind_method, self.dropoff, self.skinning, self.maintain_max)
         results.result(self, f"Bound {len(meshes)} mesh(es) to {arm.name}")
         return {'FINISHED'}
 
@@ -596,6 +662,9 @@ def unbind(context, mesh, history="DELETE"):
                 mesh.vertex_groups.remove(vg)
     if NORMALIZE_PROP in mesh:
         del mesh[NORMALIZE_PROP]
+    from . import skin_basics
+    for arm in arms:
+        skin_basics.forget_bind_pose(arm)
     return arms
 
 
@@ -1075,37 +1144,61 @@ def mirror_group_names(arm, axis, tol=1e-3, modes=("CLOSEST_JOINT",), unmatched=
     return out
 
 
+def surface_weights(mesh, points, groups, w):
+    """Weights at world ``points`` from the closest point on the mesh surface: the barycentric mix of that triangle's
+    vertices (Maya Surface Association "Closest point on surface", Maya: ).
+    ``w`` = (V, K) vertex weights of ``groups``. Returns (P, K)."""
+    import numpy as np
+    from mathutils import geometry
+    from mathutils.bvhtree import BVHTree
+    me = mesh.data
+    me.calc_loop_triangles()
+    mw = mesh.matrix_world
+    co = [mw @ v.co for v in me.vertices]
+    tris = [tuple(t.vertices) for t in me.loop_triangles]
+    tree = BVHTree.FromPolygons(co, tris, all_triangles=True)
+    out = np.zeros((len(points), len(groups)))
+    for i, p in enumerate(points):
+        hit, _n, t, _d = tree.find_nearest(p)
+        if hit is None:
+            continue
+        a, b, c = tris[t]
+        bary = geometry.barycentric_transform(hit, co[a], co[b], co[c], (1, 0, 0), (0, 1, 0), (0, 0, 1))
+        out[i] = bary[0] * w[a] + bary[1] * w[b] + bary[2] * w[c]
+    return out
+
+
 def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOINT",), unmatched=None):
-    """Copy the weights of one side onto the other (Maya Mirror Skin Weights); count of vertices written."""
+    """Copy the weights of one side onto the other (Maya Mirror Skin Weights, factory Closest point on surface): each
+    destination vertex takes the weights at the closest surface point to its mirror image (barycentric), every joint
+    renamed to its mirror partner; vertices on the plane are left alone. Count of vertices written."""
+    import numpy as np
+    from . import skin_basics
     mod = armature_modifier(mesh)
     pair = mirror_group_names(mod.object, axis, modes=modes, unmatched=unmatched) if mod and mod.object else {}
+    groups = list(mesh.vertex_groups)
+    if not groups:
+        return 0
     mw = mesh.matrix_world
     verts = mesh.data.vertices
     world = [mw @ v.co for v in verts]
-    tree = kdtree.KDTree(len(world))
-    for i, p in enumerate(world):
-        tree.insert(p, i)
-    tree.balance()
-    groups = mesh.vertex_groups
-    names = {vg.index: vg.name for vg in groups}
     eps = 1e-6
-    n = 0
-    for v in verts:
-        side = world[v.index][axis]
-        if (side <= eps) if positive_to_negative else (side >= -eps):
-            continue
-        _co, j, _d = tree.find(_reflect(world[v.index], axis))
-        if j is None or j == v.index:
-            continue
-        weights = [(names[g.group], g.weight) for g in v.groups]
-        for vg in groups:
-            vg.remove([j])
-        for name, w in weights:
-            target = groups.get(pair.get(name, name))
-            if target is not None:
-                target.add([j], w, 'REPLACE')
-        n += 1
-    return n
+    dst = [i for i, p in enumerate(world) if (p[axis] < -eps if positive_to_negative else p[axis] > eps)]
+    if not dst:
+        return 0
+    w = skin_basics.weights(mesh, groups)                  # read before any write (faces across the plane)
+    got = surface_weights(mesh, [_reflect(world[i], axis) for i in dst], groups, w)
+    col = {g.name: j for j, g in enumerate(groups)}
+    out = w.copy()
+    out[dst] = 0.0
+    for j, g in enumerate(groups):
+        k = col.get(pair.get(g.name, g.name))
+        if k is not None:
+            out[dst, k] += got[:, j]
+    out[np.abs(out) < 1e-12] = 0.0
+    skin_basics.write(mesh, groups, out, dst)
+    skin_basics.enforce_max(mesh)
+    return len(dst)
 
 
 class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):

@@ -144,6 +144,8 @@ from . import flow_path_228, motion_path_228  # noqa: E402  step 228 (#138)
 classes += motion_path_228.classes + flow_path_228.classes
 from . import skeleton_menu  # noqa: E402  step 246 (#163): Insert / Remove / Disconnect / Connect Joint
 classes += skeleton_menu.classes
+from . import skin_basics  # noqa: E402  step 247 (#164): Prune / Set Max Influences / Go to Bind Pose
+classes += skin_basics.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
