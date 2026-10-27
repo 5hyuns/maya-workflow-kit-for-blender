@@ -36,6 +36,15 @@ WIDE = (-1000.0, 1000.0)          # strip / action range: keys outside it are no
 SCALE_PATHS = {"scale", "delta_scale"}
 
 
+def _leaf(path):
+    """The property name of a data path (``pose.bones["j"].scale`` -> ``scale``)."""
+    return path.rsplit(".", 1)[-1] if "." in path else path
+
+
+def is_scale(path):
+    return _leaf(path) in SCALE_PATHS
+
+
 # --- scene model -----------------------------------------------------------------------------------
 
 def layers(scene):
@@ -301,6 +310,64 @@ def show(scene):
             ad.action_influence = 0.0      # the strip already plays it: shown, not applied twice
 
 
+def show_base(ob):
+    """Make BaseAnimation ``ob``'s active action (influence 0) — what a bake writes into (step 234)."""
+    tr = tracks(ob).get(BASE)
+    if tr is None:
+        return
+    ad = ob.animation_data
+    act = _strip(tr).action
+    if ad.action != act:
+        ad.action = act
+        sl = _slot(act)
+        if sl is not None and hasattr(ad, "action_slot"):
+            ad.action_slot = sl
+    ad.action_influence = 0.0
+
+
+def settle_base(scene, ob, prefixes):
+    """After a bake wrote the VISUAL values into BaseAnimation: re-solve every baked key of channels the layers
+    above also animate, so base + layers = the baked value (otherwise the layers add again: audit 0.5.0 ⑤-8, the
+    elbow at 2 x -60). ``prefixes`` = data path prefixes of the baked owners ("" = the object)."""
+    base = tracks(ob).get(BASE)
+    if base is None:
+        return 0
+    act = _strip(base).action
+    upper = set()
+    for name, tr in tracks(ob).items():
+        if name != BASE:
+            upper |= {(fc.data_path, fc.array_index) for fc in compat.action_fcurves(_strip(tr).action,
+                                                                                   _slot(_strip(tr).action))}
+    if not upper:
+        return 0
+
+    def mine(path):
+        return any(path.startswith(p) if p else not path.startswith("pose.") for p in prefixes)
+    curves = [fc for fc in compat.action_fcurves(act, _slot(act)) if mine(fc.data_path)]
+    n = 0
+    quats = {}
+    for fc in curves:
+        if _leaf(fc.data_path) == "rotation_quaternion":
+            quats.setdefault(fc.data_path, {})[fc.array_index] = fc
+            continue
+        if (fc.data_path, fc.array_index) not in upper:
+            continue
+        for f, v in [(kp.co[0], kp.co[1]) for kp in fc.keyframe_points]:
+            key(ob, fc.data_path, fc.array_index, frame=f, value=v, scene=scene, layer=BASE)
+            n += 1
+    from mathutils import Quaternion
+    for path, comps in quats.items():
+        if not any((path, i) in upper for i in range(4)) or len(comps) < 4:
+            continue
+        frames = sorted({kp.co[0] for kp in comps[0].keyframe_points})
+        values = {f: Quaternion([comps[i].evaluate(f) for i in range(4)]) for f in frames}
+        for f in frames:
+            key_quaternion(ob, path, f, values[f], scene, BASE)
+            n += 1
+    ob.update_tag(refresh={'TIME'})
+    return n
+
+
 def base_curve(ob, path, index):
     """``ob``'s BaseAnimation curve of one channel (None without layers or curve)."""
     tr = tracks(ob).get(BASE)
@@ -369,7 +436,7 @@ def _steps(ob, path, index, frame, scene):
         w = strip_weight(st, frame)
         if st.blend_type == 'REPLACE':
             mode = 'REPLACE'
-        elif st.blend_type == 'COMBINE' and path in SCALE_PATHS:
+        elif st.blend_type == 'COMBINE' and is_scale(path):
             mode = 'MUL'
         else:
             mode = 'ADD'
@@ -436,8 +503,24 @@ def channel_key(path, index):
     return character_sets.channel_key_of(path, index)
 
 
+BONE = "bone:"           # step 234: a joint member of a layer (Maya adds the joint node), "bone:<bone name>"
+
+
+def bone_of(path):
+    """The bone name of a ``pose.bones["<name>"]...`` path, else None."""
+    if not path.startswith('pose.bones["'):
+        return None
+    end = path.find('"]', 12)
+    return bpy.utils.unescape_identifier(path[12:end]) if end > 0 else None
+
+
+def bone_path(pb, prop):
+    return f'pose.bones["{bpy.utils.escape_identifier(pb.name)}"].{prop}'
+
+
 def is_member(ob, layer, path=None, index=-1):
-    """``ob``'s channel (``path``, ``index``) is in ``layer`` (no path: the object is a member at all)."""
+    """``ob``'s channel (``path``, ``index``) is in ``layer`` (no path: the object is a member at all). A joint
+    channel is a member when its bone is (step 234: Maya animLayer -addSelectedObjects on joints)."""
     if layer == BASE:
         return True
     if layer not in tracks(ob):
@@ -445,7 +528,20 @@ def is_member(ob, layer, path=None, index=-1):
     rec = _attr_record(ob).get(layer)
     if rec is None or path is None:
         return True
+    bone = bone_of(path)
+    if bone is not None:
+        return BONE + bone in rec
     return channel_key(path, index) in rec
+
+
+def member_bones(ob, layer):
+    """Joints of the armature ``ob`` in ``layer`` (all of them when the whole object is a member)."""
+    if layer not in tracks(ob) or ob.type != 'ARMATURE':
+        return []
+    rec = _attr_record(ob).get(layer)
+    if rec is None:
+        return [pb.name for pb in ob.pose.bones]
+    return [k[len(BONE):] for k in rec if k.startswith(BONE)]
 
 
 def member_keys(ob, layer):
@@ -476,9 +572,14 @@ def remove_attrs(scene, ob, layer, keys):
     act = _strip(tracks(ob)[layer]).action
     from ..ui import channel_box as cb
     for k in keys:
-        path, idx, _kind = cb.channel_path(k)
-        fc = _fcurve(act, path, max(idx, 0))
-        if fc is not None:
+        if k.startswith(BONE):         # a joint leaves: all its layer curves go (step 234)
+            fcs = [fc for fc in compat.action_fcurves(act, _slot(act)) if bone_of(fc.data_path) == k[len(BONE):]]
+        else:
+            path, idx, _kind = cb.channel_path(k)
+            fcs = [_fcurve(act, path, max(idx, 0))]
+        for fc in fcs:
+            if fc is None:
+                continue
             for owner in compat.fcurve_owners(act):
                 if any(f == fc for f in owner.fcurves):
                     owner.fcurves.remove(fc)
@@ -507,7 +608,7 @@ def result(ob, path, index, frame=None, scene=None):
     known = [(m, w, x) for _n, m, w, x in steps if x is not None]
     if not known:
         return None
-    return compose(known, 1.0 if path in SCALE_PATHS else 0.0)
+    return compose(known, 1.0 if is_scale(path) else 0.0)
 
 
 def layer_curves(ob, layer):
@@ -519,15 +620,19 @@ def layer_curves(ob, layer):
     return list(compat.action_fcurves(act, _slot(act))) if act is not None else []
 
 
-def key(ob, path, index, frame=None, value=None, scene=None):
-    """Key channel (``path``, ``index``) of ``ob`` on the selected layer so the result is ``value`` (default: the
-    displayed value). False when the layer is locked."""
+def key(ob, path, index, frame=None, value=None, scene=None, layer=None):
+    """Key channel (``path``, ``index``) of ``ob`` on the selected layer (or ``layer``) so the result is ``value``
+    (default: the displayed value). A quaternion (``rotation_quaternion``) is keyed whole whatever ``index``.
+    False when the layer is locked."""
     scene = scene or bpy.context.scene
     frame = scene.frame_current if frame is None else frame
+    if _leaf(path) == "rotation_quaternion":
+        return key_quaternion(ob, path, frame, value if value is not None and not isinstance(value, float) else None,
+                              scene, layer)
     if value is None:
         v = ob.path_resolve(path)
         value = float(v[index] if index >= 0 else v)
-    layer = target_layer(scene, ob, path, index)
+    layer = layer or target_layer(scene, ob, path, index)
     index = max(index, 0)
     info = {e.name: e for e in layers(scene)}
     if layer in info and info[layer].lock:
@@ -538,9 +643,9 @@ def key(ob, path, index, frame=None, value=None, scene=None):
         steps = [s for s in steps if s[0] != layer]
         st = _strip(tr)
         steps.append((layer, 'REPLACE' if st.blend_type == 'REPLACE' else
-                      ('MUL' if path in SCALE_PATHS else 'ADD'), 1.0, None))
+                      ('MUL' if is_scale(path) else 'ADD'), 1.0, None))
     # NLA starts a channel no lower strip animates from the property's default (scale 1, else 0)
-    start = value if layer == BASE else (1.0 if path in SCALE_PATHS else 0.0)
+    start = value if layer == BASE else (1.0 if is_scale(path) else 0.0)
     x = solve(steps, value, layer, start)
     act = _strip(tracks(ob)[layer]).action
     fc = _fcurve(act, path, index)
@@ -552,6 +657,115 @@ def key(ob, path, index, frame=None, value=None, scene=None):
     fc.update()
     ob.update_tag(refresh={'TIME'})
     return True
+
+
+# Quaternion channels (step 234: Rigify-style joints, decision 4 shows them as Euler). Blender's NLA mixes a quaternion
+# as a whole: REPLACE = component lerp of the lower result and the strip by the influence, COMBINE = lower @ strip^w
+# (measured in tests/test_step234_layer_joints.py against the evaluated pose). The layer's key is solved so the result
+# is the displayed rotation, with the layers above combined after it.
+def _quat_power(q, w):
+    from mathutils import Quaternion
+    axis, angle = q.to_axis_angle()
+    return Quaternion(axis, angle * w)
+
+
+def _quat_layers(ob, path, frame, scene):
+    """[(layer, blend, weight, Quaternion or None)] bottom first for a quaternion channel."""
+    from mathutils import Quaternion
+    info = {e.name: e for e in layers(scene)}
+    out = []
+    for tr in ob.animation_data.nla_tracks:
+        if tr.name not in info or tr.mute:
+            continue
+        st = _strip(tr)
+        fcs = [_fcurve(st.action, path, i) for i in range(4)]
+        q = None
+        if any(fcs):
+            ident = (1.0, 0.0, 0.0, 0.0)
+            q = Quaternion([fc.evaluate(frame) if fc is not None else ident[i] for i, fc in enumerate(fcs)])
+        out.append((tr.name, st.blend_type, strip_weight(st, frame), q))
+    return out
+
+
+def compose_quaternion(steps, start):
+    from mathutils import Quaternion
+    acc = Quaternion(start)
+    for _n, blend, w, q in steps:
+        if q is None:
+            continue
+        if blend == 'REPLACE':
+            acc = Quaternion([(1.0 - w) * a + w * b for a, b in zip(acc, q)])
+        else:
+            acc = acc @ _quat_power(q, w)
+    return acc
+
+
+def key_quaternion(ob, path, frame, value=None, scene=None, layer=None):
+    """Key a quaternion channel (all four curves) on ``layer`` (default: the selected one) so the result is ``value``
+    (default: the displayed rotation)."""
+    from mathutils import Quaternion
+    scene = scene or bpy.context.scene
+    target = Quaternion(value if value is not None else ob.path_resolve(path))
+    layer = layer or target_layer(scene, ob, path, 0)
+    info = {e.name: e for e in layers(scene)}
+    if layer in info and info[layer].lock:
+        return False
+    steps = _quat_layers(ob, path, frame, scene)
+    if not any(s[0] == layer for s in steps):
+        st = _strip(tracks(ob)[layer])
+        steps.append((layer, st.blend_type, 1.0, None))
+    k = next(i for i, s in enumerate(steps) if s[0] == layer)
+    _n, blend, w, cur = steps[k]
+    upper = Quaternion()
+    for _u, b, uw, q in steps[k + 1:]:
+        if q is not None and b != 'REPLACE':
+            upper = upper @ _quat_power(q, uw)
+    acc = target @ upper.inverted()                     # the result just above this layer
+    if layer == BASE:
+        x = acc
+    else:
+        below = compose_quaternion(steps[:k], Quaternion())
+        if w < 1e-12:
+            return False
+        if blend == 'REPLACE':
+            if below.dot(acc) < 0.0:
+                acc = -acc
+            x = Quaternion([(a - (1.0 - w) * b) / w for a, b in zip(acc, below)])
+        else:
+            x = _quat_power(below.inverted() @ acc, 1.0 / w)
+    if cur is not None and cur.dot(x) < 0.0:
+        x = -x                                          # keep the curve on one side (no flips between keys)
+    act = _strip(tracks(ob)[layer]).action
+    for i in range(4):
+        fc = _fcurve(act, path, i) or _new_fcurve(ob, act, path, i)
+        if fc is None:
+            return False
+        fc.keyframe_points.insert(frame, x[i])
+        fc.update()
+    ob.update_tag(refresh={'TIME'})
+    return True
+
+
+def key_pose_bone(pb, path, index, frame=None, scene=None):
+    """Channel Box / S key of a joint channel on a layered armature (step 234; Blender's own keying refuses an
+    NLA-stacked armature: "Due to the NLA stack setup ..."). ``index`` -1 = every component."""
+    scene = scene or bpy.context.scene
+    frame = scene.frame_current if frame is None else frame
+    arm = pb.id_data
+    full = bone_path(pb, path)
+    if _leaf(full) == "rotation_quaternion":
+        return key_quaternion(arm, full, frame, scene=scene)
+    if index >= 0:
+        return key(arm, full, index, frame, scene=scene)
+    v = arm.path_resolve(full)
+    try:
+        n = len(v)
+    except TypeError:
+        return key(arm, full, 0, frame, value=float(v), scene=scene)
+    done = False
+    for i in range(n):
+        done = key(arm, full, i, frame, scene=scene) or done
+    return done
 
 
 def _new_fcurve(ob, act, path, index):
@@ -568,7 +782,7 @@ def _new_fcurve(ob, act, path, index):
             fc = act.fcurves.new(path, index=index)
         # Blender's keying gives transform channels X / Y / Z = red / green / blue (Maya's axis colours); a curve
         # made through the API starts AUTO_RAINBOW (step 204 GUI: a layer's Translate Y drew red)
-        if path.rsplit(".", 1)[-1] in {"location", "rotation_euler", "scale", "delta_location"}:
+        if _leaf(path) in {"location", "rotation_euler", "scale", "delta_location", "rotation_quaternion"}:
             fc.color_mode = 'AUTO_RGB'
         return fc
     finally:
@@ -623,6 +837,24 @@ def _layer_objects(context):
                                                                'LIGHT', 'CAMERA', 'LATTICE', 'META', 'FONT'}]
 
 
+def _selected_joints(context, ob):
+    """Selected joints of an armature in pose mode (Maya: the joint nodes picked), else []."""
+    if ob.type != 'ARMATURE' or ob.mode != 'POSE':
+        return []
+    from ..ui import channel_box as cb
+    return [pb.name for pb in ob.pose.bones if cb.bone_selected(pb)]
+
+
+def add_selected(context, layer):
+    """Maya Create Layer from Selected / Add Selected Objects: objects join whole, joints in pose mode one by one."""
+    for ob in _layer_objects(context):
+        bones = _selected_joints(context, ob)
+        if bones:
+            add_attrs(context.scene, ob, layer, [BONE + n for n in bones])
+        else:
+            add_object(context.scene, ob, layer)
+
+
 class ALLSET_OT_anim_layer_create(bpy.types.Operator):
     """Create an animation layer, empty or with the selected objects (Maya Create Empty Layer / Create Layer from
     Selected)"""
@@ -639,8 +871,7 @@ class ALLSET_OT_anim_layer_create(bpy.types.Operator):
         e.name = unique_name(scene)
         scene.allset_anim_layer_index = len(ls) - 1
         if self.from_selected:
-            for ob in _layer_objects(context):
-                add_object(scene, ob, e.name)
+            add_selected(context, e.name)
         sync(scene)
         return {'FINISHED'}
 
@@ -659,8 +890,15 @@ class ALLSET_OT_anim_layer_members(bpy.types.Operator):
         if e is None or e.name == BASE:
             self.report({'WARNING'}, "Select an animation layer")
             return {'CANCELLED'}
-        for ob in _layer_objects(context):
-            (add_object if self.add else remove_object)(context.scene, ob, e.name)
+        if self.add:
+            add_selected(context, e.name)
+        else:
+            for ob in _layer_objects(context):
+                bones = _selected_joints(context, ob)
+                if bones:
+                    remove_attrs(context.scene, ob, e.name, [BONE + n for n in bones])
+                else:
+                    remove_object(context.scene, ob, e.name)
         sync(context.scene)
         return {'FINISHED'}
 
@@ -719,7 +957,7 @@ class ALLSET_OT_anim_layer_delete(bpy.types.Operator):
 
 
 def _identity(path):
-    return 1.0 if path in SCALE_PATHS else 0.0
+    return 1.0 if is_scale(path) else 0.0
 
 
 def zero_key(scene, obs, frame=None):
@@ -789,7 +1027,7 @@ def merge_down(scene, layer):
             path, idx = fc.data_path, fc.array_index
             if not is_member(ob, layer, path, idx):
                 continue
-            m = mode or ('MUL' if path in SCALE_PATHS else 'ADD')
+            m = mode or ('MUL' if is_scale(path) else 'ADD')
             bfc = _fcurve(base_act, path, idx)
             rest = _identity(path)     # NLA starts a channel no lower strip animates from its default (see key())
             vals = []
