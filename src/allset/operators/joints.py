@@ -23,8 +23,8 @@ from . import naming, units
 JOINT_BASE = "joint"
 SKELETON_BASE = "skeleton"
 STATUS = "Joint Tool: click to place joints, Enter to finish (Esc: stop)"
-AXIS_NOTE = ("Blender joints point their Y axis at the child joint (Maya Primary Axis X): "
-             "only the secondary axis can be set.")
+AXIS_NOTE = ("Blender joints point their Y axis at the child joint; a Maya frame with another primary axis is "
+             "kept with the joint (exported to FBX).")
 
 
 def _cb():
@@ -93,6 +93,7 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
     if parent is not None and (p - parent.head).length < 1e-6:
         return parent.name
     eb = ebs.new(next_joint_name())
+    eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (factory; Blender 4.5 checked, joint_math.md)
     eb.head = p
     if parent is None:
         eb.tail = p + Vector(up).normalized() * length
@@ -246,29 +247,142 @@ def free_location_constrained(context, arm):
     return names
 
 
-def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
-    """Roll the new joints so their Maya secondary axis faces the Maya world direction (Joint Tool orientation)."""
-    if secondary == "NONE":
-        return 0
+def orient_new(ob, names, secondary="Y", world="Y", sign="+", aos=True, to_world=False):
+    """Orient the new joints the way Maya's Joint Tool does on finish (jointCtx factory: -ajo xyz -sao yup -aos on,
+    ): primary X, ``secondary`` Y / Z toward the Maya world axis
+    ``world`` / ``sign`` (bend normal with ``aos``), "NONE" = Maya's traditional orient (no -sao), ``to_world`` = Orient
+    Joint to World. Also writes Maya's variable bone radius (). Returns the number of joints oriented."""
     if secondary == "X":
         raise RuntimeError("Secondary axis must differ from the primary axis (X)")
-    d = WORLD_AXES[world] * (1.0 if sign == "+" else -1.0)
-    d = ob.matrix_world.inverted().to_3x3() @ d
-    n = 0
+    oj = "none" if to_world else ("xzy" if secondary == "Z" else "xyz")
+    sao = None if secondary == "NONE" else world.lower() + ("up" if sign == "+" else "down")
+    done = {}
     with _InEditMode(ob) as ebs:
-        for name in names:
-            eb = ebs.get(name)
-            if eb is None or eb.length < 1e-9:
-                continue
-            y = (eb.tail - eb.head).normalized()
-            # secondary Y = bone Z -> d; secondary Z = bone X -> d, so bone Z = X x Y = d x y
-            z = d if secondary == "Y" else d.cross(y)
-            if z.cross(y).length < 1e-6:
-                continue                    # the bone runs along the world direction: Maya leaves it too
-            eb.align_roll(z)
-            n += 1
-        store_end_orient(ob, ebs, names)
+        n = orient_bones(ob, ebs, [nm for nm in names if nm in ebs], oj, sao, aos, result=done)
+        set_radius(ebs, [nm for nm in names if nm in ebs])
+    fix_frames(ob, done)
     return n
+
+
+def maya_bone_frame(bone):
+    """A bone's (Bone or EditBone) Maya frame in armature space: columns Maya X, Y, Z (bone axes, turned by
+    ``MAYA_FRAME``)."""
+    from mathutils import Quaternion
+    m = bone.matrix if isinstance(bone, bpy.types.EditBone) else bone.matrix_local
+    f = m.to_3x3().normalized() @ JOINT_AXES
+    q = bone.get(MAYA_FRAME)
+    return f @ Quaternion(q).to_matrix() if q is not None and len(q) == 4 else f
+
+
+def armature_world(ob):
+    """Maya's world axes in the armature's own space."""
+    return ob.matrix_world.to_3x3().normalized().inverted() @ MAYA_WORLD
+
+
+def _first_child(eb):
+    kids = list(eb.children)
+    return kids[0] if kids else None
+
+
+def _rotated(ob, name):
+    """Maya skips joints whose rotate isn't zero (1e-10; principles2.md)."""
+    pb = ob.pose.bones.get(name) if ob.pose is not None else None
+    return pb is not None and pb.matrix_basis.to_quaternion().angle > 1e-9
+
+
+def fix_frames(ob, frames):
+    """After edit mode: Blender rebuilds each bone's matrix through its parent chain in float32 (a few 1e-6 off on
+    short bones, step 244); store the remainder against the intended Maya ``frames`` {name: frame} in ``MAYA_FRAME``
+    of the Bone."""
+    from mathutils import Quaternion
+    if ob.mode == 'EDIT':
+        return
+    for name, frame in frames.items():
+        bone = ob.data.bones.get(name)
+        if bone is None:
+            continue
+        base = bone.matrix_local.to_3x3().normalized() @ JOINT_AXES
+        from .joint_edit import FRAME_TOL
+        if max((base.col[i] - frame.col[i]).length for i in range(3)) < FRAME_TOL:   # not q.angle (float32)
+            if MAYA_FRAME in bone:
+                del bone[MAYA_FRAME]
+        else:
+            from .joint_edit import quat_between
+            bone[MAYA_FRAME] = quat_between(base, frame)
+
+
+def orient_bones(ob, ebs, names, oj="xyz", sao="yup", aos=True, skipped=None, result=None):
+    """Write Maya orientJoint frames (operators/joint_orient.py) onto edit bones ``names``: the roll puts the bone's Z
+    on Maya Y, and a frame the bone can't take (primary axis not X, an end joint) goes into ``MAYA_FRAME``. Rotated
+    joints are skipped (``skipped`` gets (name, reason)). Returns the number oriented."""
+    from . import joint_orient, joint_selection
+    if joint_selection.is_skinned(ob):
+        if skipped is not None:
+            skipped.extend((nm, "It is bound to a skin.") for nm in names)
+        return 0
+    depth = {eb.name: len(eb.parent_recursive) for eb in ebs}
+    order = sorted(names, key=lambda nm: depth.get(nm, 0))
+    todo = []
+    for nm in order:
+        if _rotated(ob, nm):
+            if skipped is not None:
+                skipped.append((nm, "It has non-zero rotations."))
+        else:
+            todo.append(nm)
+    pos = {eb.name: eb.head.copy() for eb in ebs}
+    parent_of = {eb.name: (eb.parent.name if eb.parent is not None else None) for eb in ebs}
+    first = {eb.name: (c.name if (c := _first_child(eb)) is not None else None) for eb in ebs}
+    frames = {eb.name: maya_bone_frame(eb) for eb in ebs}
+    old = {k: v.copy() for k, v in frames.items()}
+    origin = ob.matrix_world.inverted() @ Vector((0.0, 0.0, 0.0))
+    world = armature_world(ob)
+    out = joint_orient.orient_frames(todo, pos, parent_of, first, frames, world, oj, sao, aos, origin)
+    for nm, f in out.items():
+        set_bone_frame(ebs[nm], f)
+    # a skipped rotated joint keeps its jointOrient (Maya: jo / rotate unchanged), so it turns with a re-oriented parent
+    for nm in order:
+        par = parent_of.get(nm)
+        if nm in out or par not in out:
+            continue
+        f = out[par] @ (old[par].transposed() @ old[nm])
+        frames[nm] = out[nm] = f
+        set_bone_frame(ebs[nm], f)
+    if result is not None:
+        result.update(out)
+    return sum(1 for nm in out if nm in todo)
+
+
+def set_bone_frame(eb, frame):
+    """Give edit bone ``eb`` the Maya frame ``frame`` (armature space): roll its Z onto Maya Y (or the axis least along
+    the bone), the rest into ``MAYA_FRAME``."""
+    y = (eb.tail - eb.head).normalized()
+    target = frame.col[1]
+    if abs(y.dot(target)) > 0.999:
+        target = frame.col[2] if abs(y.dot(frame.col[2])) < abs(y.dot(frame.col[0])) else frame.col[0]
+    eb.align_roll(target)
+    from .joint_edit import _set_local_frame
+    _set_local_frame(eb, frame)
+
+
+def set_radius(ebs, names, unit=None):
+    """Maya Joint Tool variable bone radius (``allset_radius``, Maya units): from the distance to the first child,
+    an end joint copies its parent's (joint_rig_2026_joint_tool.md)."""
+    from . import joint_orient
+    k = unit or units.maya_unit(bpy.context.scene)
+    for nm in names:
+        eb = ebs.get(nm)
+        if eb is None:
+            continue
+        child = _first_child(eb)
+        if child is not None:
+            eb[RADIUS] = joint_orient.radius((child.head - eb.head).length / k)
+        elif eb.parent is not None and RADIUS in eb.parent:
+            eb[RADIUS] = eb.parent[RADIUS]
+        else:
+            eb[RADIUS] = 0.5
+
+
+RADIUS = "allset_radius"
 
 
 # A Joint Tool click inside a joint's drawn sphere branches from it (Maya 2026: the hit area is the drawn sphere,
@@ -281,10 +395,14 @@ BRANCH_MIN_PX = 5.0
 
 def joint_sphere_radius(arm, bone):
     """World radius of the sphere Blender draws at ``bone``'s head (0 when it draws none: Stick / B-Bone / ...)."""
+    scale = max(arm.matrix_world.to_scale())
+    maya = bone.get(RADIUS)
+    if maya is not None:     # step 244: the Maya joint radius (Joint Tool variable bone size) is the click sphere
+        return float(maya) * units.maya_unit(bpy.context.scene) * scale
     if arm.data.display_type != 'OCTAHEDRAL':
         return 0.0
     src = bone.parent if bone.parent is not None and bone.use_connect else bone
-    return JOINT_SPHERE * src.length * max(arm.matrix_world.to_scale())
+    return JOINT_SPHERE * src.length * scale
 
 
 def pick_branch_joint(region, rv3d, armatures, coord, floor):
@@ -319,6 +437,9 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
                                   items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
     secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
+    # Maya 2025+ jointCtx factory -aos on (joint_rig_2026_joint_tool.md); Orient Joint to World = -ajo none
+    auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True)
+    orient_world: BoolProperty(name="Orient Joint to World", default=False)
     create_ik: BoolProperty(name="Create IK handle", default=False)
     ik_solver: EnumProperty(name="Current solver",
                             items=(("RP", "Rotate-Plane Solver", ""), ("SC", "Single-Chain Solver", "")), default="RP")
@@ -458,7 +579,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     def _finish(self, context):
         ob, names = self._ob, self._names
         try:
-            orient_new(ob, names, self.secondary_axis, self.secondary_world, self.secondary_sign)
+            orient_new(ob, names, self.secondary_axis, self.secondary_world, self.secondary_sign,
+                       self.auto_secondary, self.orient_world)
         except RuntimeError as ex:
             self.report({'WARNING'}, str(ex))
         finish(context, ob, names, getattr(self, "_top", None))
@@ -531,21 +653,20 @@ SAO_ROLL = {"X+": 'GLOBAL_POS_X', "X-": 'GLOBAL_NEG_X', "Y+": 'GLOBAL_POS_Z', "Y
 _AXES = [(a, a, "") for a in ("X", "Y", "Z")]
 
 
-def orient(ob, names, sao, children=True):
-    """Roll the joints so their secondary axis faces the world direction (Maya Orient Joint)."""
-    if sao not in SAO_ROLL:
+def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
+    """Maya Skeleton > Orient Joint (``joint -e -oj <oj> -sao <sao> [-aos] -ch -zso``; factory xyz / yup / aos on /
+    children on, joint_rig_2026_skeleton_menu.md): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no secondary world
+    axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints are skipped
+    (``skipped``). Returns the number oriented."""
+    if oj != "none" and sao not in SAO_ROLL and sao != "NONE":
         return 0
+    maya_sao = None if sao == "NONE" else sao[0].lower() + ("up" if sao[1] == "+" else "down")
+    done = {}
     with _InEditMode(ob) as ebs:
         targets = with_descendants(ebs, names) if children else [n for n in names if n in ebs]
-        keep = {eb.name: eb.select for eb in ebs}
-        for eb in ebs:
-            eb.select = eb.select_head = eb.select_tail = eb.name in targets
-        if targets:
-            bpy.ops.armature.calculate_roll(type=SAO_ROLL[sao])
-            store_end_orient(ob, ebs, targets)
-        for eb in ebs:
-            eb.select = keep.get(eb.name, False)
-    return len(targets)
+        n = orient_bones(ob, ebs, targets, oj, maya_sao, aos, skipped, done) if targets else 0
+    fix_frames(ob, done)
+    return n
 
 
 def _load_options(op, key, names):
@@ -565,18 +686,26 @@ def _save_options(op, key, names):
 
 
 class ALLSET_OT_orient_joint(bpy.types.Operator):
-    """Maya Orient Joint: aim the joints' secondary axis at a world direction (the bone always points at its child)"""
+    """Maya Orient Joint: orient the joints from their positions (primary axis down the chain, secondary axis by the
+    bend or a world direction)"""
     bl_idname = "allset.orient_joint"
     bl_label = "Orient Joint Options"
     bl_options = {'UNDO'}
 
+    to_world: BoolProperty(name="Orient Joint to World", default=False)
     primary: EnumProperty(name="Primary Axis", items=_AXES, default="X")
     secondary: EnumProperty(name="Secondary Axis", items=_AXES, default="Y")
-    world: EnumProperty(name="Secondary World Orientation",
-                        items=[(k, k, "") for k in SAO_ROLL] + [("NONE", "None", "Leave the roll")],
+    world: EnumProperty(name="Secondary Axis World Orientation",
+                        items=[(k, k, "") for k in SAO_ROLL] + [("NONE", "None", "No secondary axis world "
+                                                                 "orientation: Maya's orient from the bend alone")],
                         default="Y+")
+    auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True,
+                                 description="Maya 2025+: the secondary axis follows the bend of the chain, turned "
+                                             "toward the world orientation")
     children: BoolProperty(name="Orient Children of Joint", default=True)
     option_box: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})
+
+    OPTIONS = ("to_world", "primary", "secondary", "world", "auto_secondary", "children")
 
     @classmethod
     def poll(cls, context):
@@ -587,19 +716,18 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         # dialog on every click kept the keyboard until closed, audit 0.5.0 ③-2). Blender keeps the last values.
         if self.option_box:
             return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Orient")
-        _load_options(self, "orient_joint", ("primary", "secondary", "world", "children"))
+        _load_options(self, "orient_joint", self.OPTIONS)
         return self.execute(context)
 
     def draw(self, context):
         lay = self.layout
-        note = lay.column(align=True)
-        note.active = False
-        for line in ("Blender joints point their Y axis at the child joint", "(Maya Primary Axis X):",
-                     "only the secondary axis can be set."):
-            note.label(text=line)
-        lay.prop(self, "primary")
-        lay.prop(self, "secondary")
-        lay.prop(self, "world")
+        lay.prop(self, "to_world")
+        col = lay.column()
+        col.enabled = not self.to_world
+        col.prop(self, "primary")
+        col.prop(self, "secondary")
+        col.prop(self, "world")
+        col.prop(self, "auto_secondary")
         lay.prop(self, "children")
 
     def execute(self, context):
@@ -608,9 +736,17 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         if not names:
             self.report({'WARNING'}, "Select joints to orient")
             return {'CANCELLED'}
-        _save_options(self, "orient_joint", ("primary", "secondary", "world", "children"))
-        n = orient(ob, names, self.world, self.children)
-        results.result(self, f"Oriented {n} joint(s). {AXIS_NOTE}")
+        if not self.to_world and self.primary == self.secondary:
+            self.report({'ERROR'}, "Secondary axis must differ from the primary axis")
+            return {'CANCELLED'}
+        _save_options(self, "orient_joint", self.OPTIONS)
+        oj = "none" if self.to_world else (self.primary + self.secondary
+                                           + ({"X", "Y", "Z"} - {self.primary, self.secondary}).pop()).lower()
+        skipped = []
+        n = orient(ob, names, self.world, self.children, oj, self.auto_secondary, skipped)
+        for name, why in skipped:
+            self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning (principles2.md)
+        results.result(self, f"Oriented {n} joint(s)")
         return {'FINISHED'}
 
 

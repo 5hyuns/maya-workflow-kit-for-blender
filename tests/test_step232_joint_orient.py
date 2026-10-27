@@ -54,10 +54,11 @@ def _arm(mirror=True, orient_menu=True):
         parent = joints.add_joint(ob, _bl(MAYA_POS[name], k), parent, up=Vector((0, 0, 1)), length=2 * k)
         names.append(parent)
     assert names == ["joint1", "joint2", "joint3"], names
-    joints.orient_new(ob, names)                                  # Joint Tool finish (Y, world +Y)
+    # chain3.json was checked with `joint -e -oj xyz -sao yup -ch -zso` — no -aos (step 244: aos=False here)
+    joints.orient_new(ob, names, aos=False)                       # Joint Tool finish (Y, world +Y)
     joints.finish(bpy.context, ob, names)
     if orient_menu:
-        joints.orient(ob, ["joint1"], "Y+", True)                 # Skeleton > Orient Joint factory
+        joints.orient(ob, ["joint1"], "Y+", True, aos=False)      # Skeleton > Orient Joint, no -aos
     if mirror:
         joints.mirror(ob, ["joint1"], "YZ", True)                 # Mirror Joints YZ, Behavior
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -132,7 +133,7 @@ def test_end_orient_cleared_when_the_joint_gets_a_child():
     bpy.context.view_layer.objects.active = ob
     bpy.ops.object.mode_set(mode='EDIT')
     joints.add_joint(ob, _bl((26, 0, 2), k), "joint3")
-    joints.orient_new(ob, ["joint3", "joint4"])
+    joints.orient_new(ob, ["joint3", "joint4"], aos=False)
     bpy.ops.object.mode_set(mode='OBJECT')
     assert joints.MAYA_FRAME not in ob.data.bones["joint3"]
     assert joints.MAYA_FRAME in ob.data.bones["joint4"]
