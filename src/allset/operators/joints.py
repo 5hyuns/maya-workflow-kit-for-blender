@@ -764,7 +764,7 @@ def mirrored_name(name, search, replace, taken):
     return new
 
 
-def mirror(ob, names, plane="YZ", behavior=True, search="", replace=""):
+def mirror(ob, names, plane="XY", behavior=True, search="", replace=""):
     """Mirror the joints and their hierarchies across a plane through the world origin; returns the new names."""
     r = Matrix.Diagonal(PLANES[plane])
     mw = ob.matrix_world
@@ -797,7 +797,33 @@ def mirror(ob, names, plane="YZ", behavior=True, search="", replace=""):
                 dst.parent = parent
             made[name] = dst.name
             new_names.append(dst.name)
+    if ob.mode != 'EDIT':
+        copy_rotate(ob, made)
     return new_names
+
+
+def _maya_axes(bone):
+    """Maya joint axes in the bone's own coordinates (JOINT_AXES turned by ``MAYA_FRAME``)."""
+    from mathutils import Quaternion
+    q = bone.get(MAYA_FRAME)
+    return JOINT_AXES @ Quaternion(q).to_matrix() if q is not None and len(q) == 4 else JOINT_AXES.copy()
+
+
+def copy_rotate(ob, pairs):
+    """Maya Mirror Joints copies the rotate values (both functions; joint_rig_2026_skeleton_menu.md §7, fixture
+    mirror_joint XY_behavior_factory / YZ_orientation: dst r = src r). ``pairs`` {source: copy}; same Maya rotate in
+    each joint's own axes, also when their bones differ from their Maya frames."""
+    for src, dst in pairs.items():
+        ps, pd = ob.pose.bones.get(src), ob.pose.bones.get(dst)
+        if ps is None or pd is None:
+            continue
+        a_s, a_d = _maya_axes(ps.bone), _maya_axes(pd.bone)
+        r_m = a_s.transposed() @ ps.matrix_basis.to_3x3() @ a_s
+        q = (a_d @ r_m @ a_d.transposed()).to_quaternion()
+        # a Maya joint rotates by Euler values (rigging.md:134): the copy keeps the source's order, XYZ otherwise
+        euler = ps.rotation_mode not in ('QUATERNION', 'AXIS_ANGLE')
+        pd.rotation_mode = ps.rotation_mode if euler else 'XYZ'
+        pd.rotation_euler = q.to_euler(pd.rotation_mode, ps.rotation_euler) if euler else q.to_euler('XYZ')
 
 
 class ALLSET_OT_mirror_joints(bpy.types.Operator):
@@ -806,7 +832,8 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
     bl_label = "Mirror Joints Options"
     bl_options = {'UNDO'}
 
-    plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="YZ")
+    # Maya 2026 factory: XY (joint_rig_2026_skeleton_menu.md §7, step 246)
+    plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="XY")
     function: EnumProperty(name="Mirror Function", items=(("BEHAVIOR", "Behavior", "Mirrored joints rotate "
                                                            "the opposite way (Blender symmetrize)"),
                                                           ("ORIENTATION", "Orientation", "Mirrored joints keep the "
@@ -843,11 +870,6 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
             return {'CANCELLED'}
         _save_options(self, "mirror_joints", ("plane", "function", "search", "replace"))
         new = mirror(ob, names, self.plane, self.function == "BEHAVIOR", self.search, self.replace)
-        if ob.mode == 'POSE':
-            for name in new:
-                pb = ob.pose.bones.get(name)
-                if pb is not None:
-                    pb.rotation_mode = 'XYZ'
         results.result(self, f"Mirrored {len(new)} joint(s)")
         return {'FINISHED'}
 

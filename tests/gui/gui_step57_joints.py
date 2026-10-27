@@ -1,6 +1,6 @@
 """Step 57 in a real UI, Maya rigging_01 hand order on the Maya Workflow Kit layout: Skeleton > Create Joints -> three clicks in
 the persp view (ground plane) -> Enter -> pose mode, joint1 > joint2 > joint3, Channel Box lead joint1 (Maya 2026: the root) -> Down Down
--> joint3 -> Up Up (pick-walk) -> joint1 -> Skeleton > Mirror Joints (option dialog, YZ) -> six joints. Plan: docs/steps/step_57.md 「계획」 4."""
+-> joint3 -> Up Up (pick-walk) -> joint1 -> Skeleton > Mirror Joints (factory XY since step 246) -> six joints. Plan: docs/steps/step_57.md 「계획」 4."""
 
 import os
 import sys
@@ -159,17 +159,19 @@ def s_mirror_item():
 @step
 def s_dialog():
     shot("gui_step57_mirror_dialog.png")
-    tap('RET')        # Mirror (YZ, Behavior)
+    tap('RET')        # Mirror (Maya 2026 factory XY, Behavior; step 246)
 
 
 @step
 def s_mirrored():
     sk = skeleton()
     n = len(sk.data.bones)
-    check(f"Mirror Joints YZ: six joints ({n}, {sorted(sk.data.bones.keys())})", n == 6)
+    check(f"Mirror Joints XY: six joints ({n}, {sorted(sk.data.bones.keys())})", n == 6)
     if n == 6:
         a, b = sk.data.bones["joint1"], sk.data.bones["joint4"]
-        check("joint4 = joint1 mirrored across YZ", abs(a.head_local.x + b.head_local.x) < 1e-5)
+        # Maya XY plane = Blender XZ: Blender Y flips (joints.PLANES)
+        check("joint4 = joint1 mirrored across Maya XY", abs(a.head_local.y + b.head_local.y) < 1e-5
+              and abs(a.head_local.x - b.head_local.x) < 1e-5)
     for ar in win().screen.areas:
         ar.tag_redraw()
 

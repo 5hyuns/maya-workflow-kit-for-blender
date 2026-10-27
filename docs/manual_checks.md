@@ -1466,3 +1466,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skeleton > Create IK Handle on a bent arm with a real mouse, then drag the handle with the Move manipulator: the elbow stays on the pole side like Maya, no flip when the goal passes near the shoulder.
 - [ ] Channel Box: type Twist 45 / -45 on the handle, and Pole Vector X/Y/Z values: the arm plane turns like Maya's; key Twist over frames and play: no visible lag.
 - [ ] Constrain > Pole Vector with a locator, then move the locator: the knee follows it.
+
+## Step 246 — Skeleton menu commands with Maya meaning (#163)
+- [ ] Skeleton > Insert Joints with a real mouse: press on a joint, drag — the new joint follows the cursor, the joint's children stay where they are; a click without a drag leaves the new joint on the clicked one; Enter / Q ends the tool.
+- [ ] Skeleton > Remove Joints on a skinned joint, then pose the skeleton: the vertices it drove follow the remaining joints (Blender divides by the weight sum while Maya leaves the weights unnormalised — compare the look with Maya).
+- [ ] Skeleton > Connect Joint ❒: Connect joint / Parent joint; pick a joint of another skeleton first (Shift-click into the second skeleton): both become one skeleton, its skinned mesh still deforms.
+- [ ] Skeleton > Mirror Joints on a posed arm (rotate values set): the copy shows the same Rotate X / Y / Z in the Channel Box and mirrors the pose.
