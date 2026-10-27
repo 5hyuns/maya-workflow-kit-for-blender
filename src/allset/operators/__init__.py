@@ -148,6 +148,7 @@ from . import skin_basics  # noqa: E402  step 247 (#164): Prune / Set Max Influe
 classes += skin_basics.classes
 from . import joint_display  # noqa: E402  step 248 (#165): Radius row, Local Rotation Axes, Joint Size
 classes += joint_display.classes
+from . import skin_method  # noqa: E402  step 250 (#167): Weight Blended / DQ skinning method
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -168,6 +169,7 @@ def register():
     default_light.register()
     joint_edit.register()
     joint_display.register_props()
+    skin_method.register_props()
     ik_rp.register_handlers()
     snap_align.register_props()
     material.register_props()
@@ -226,6 +228,7 @@ def unregister():
     ik_rp.unregister_handlers()
     joint_edit.unregister()
     joint_display.unregister_props()
+    skin_method.unregister_props()
     curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()
     deformers_205b.unregister_handlers()

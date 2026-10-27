@@ -317,14 +317,21 @@ class ALLSET_OT_pole_vector(bpy.types.Operator):
 
 # --- Bind / Unbind Skin -------------------------------------------------------------------------
 
+def _skin_part(m):
+    from .skin_method import is_part     # Weight Blended's DQ half (step 250) is part of the skin, not a second one
+    return is_part(m)
+
+
 def armature_modifier(mesh):
-    return next((m for m in mesh.modifiers if m.type == 'ARMATURE' and m.object is not None), None)
+    return next((m for m in mesh.modifiers if m.type == 'ARMATURE' and m.object is not None and not _skin_part(m)),
+                None)
 
 
 def armature_modifiers(mesh):
     """Every skin (Armature modifier with a skeleton) of a mesh, stack order = Maya's skinCluster chain from the
     first bound (decision 5: the kit makes one, a received file may hold more — shown read-only)."""
-    return [m for m in getattr(mesh, "modifiers", ()) if m.type == 'ARMATURE' and m.object is not None]
+    return [m for m in getattr(mesh, "modifiers", ()) if m.type == 'ARMATURE' and m.object is not None
+            and not _skin_part(m)]
 
 
 # Maya Bind Skin options the kit honours (research/maya/re/option_boxes_140.md): Normalize weights is kept on the
@@ -363,7 +370,9 @@ DROPOFF = 4.0
 # skin_basics_247.md; the kit used 1e-9 before step 247)
 ON_JOINT = 1e-4
 SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matrices (Maya factory)"),
-            ("DUAL_QUATERNION", "Dual quaternion", "Volume-preserving blend (Blender Preserve Volume)"))
+            ("DUAL_QUATERNION", "Dual quaternion", "Volume-preserving blend (Blender Preserve Volume)"),
+            ("WEIGHT_BLENDED", "Weight blended", "Per vertex mix of linear and dual quaternion by the blendWeights "
+             "vertex group (0 = linear until painted)"))
 
 
 def joint_segments(arm, bones=None):
@@ -527,9 +536,8 @@ def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize
         mesh[skin_basics.MAINTAIN_MAX] = bool(maintain_max)
         if float(dropoff) != DROPOFF:
             mesh[rig_maya.DROPOFF_PROP] = {vg.name: float(dropoff) for vg in influences(mesh)}
-        md = armature_modifier(mesh)
-        if md is not None:
-            md.use_deform_preserve_volume = skinning == "DUAL_QUATERNION"
+        from . import skin_method
+        skin_method.set_method(mesh, skinning)       # step 250: Classic linear / Dual quaternion / Weight blended
     from . import skin_basics
     skin_basics.store_bind_pose(arm)
     if colorize_skeleton:
@@ -658,7 +666,8 @@ def unbind(context, mesh, history="DELETE"):
             mesh.modifiers.remove(mod)
         if history != "KEEP" and arm is not None:
             bones = {b.name for b in arm.data.bones}
-            for vg in [g for g in mesh.vertex_groups if g.name in bones]:
+            from .skin_method import BLEND_GROUP      # the skinCluster's blendWeights go with it (step 250)
+            for vg in [g for g in mesh.vertex_groups if g.name in bones or g.name == BLEND_GROUP]:
                 mesh.vertex_groups.remove(vg)
     if NORMALIZE_PROP in mesh:
         del mesh[NORMALIZE_PROP]

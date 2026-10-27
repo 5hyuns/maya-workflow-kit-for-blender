@@ -149,6 +149,9 @@ def tabs(ob):
             continue
         if skin_tools_199.is_part(md):   # the skin's weight-sum helper (step 199) belongs to the skinCluster
             continue
+        from ..operators import skin_method
+        if skin_method.is_part(md):      # Weight Blended's DQ half (step 250) belongs to the skinCluster too
+            continue
         name, mtype = modifier_node(ob, md)
         out.append((f"M:{md.name}", name, mtype))
     from ..operators import prim_history
@@ -508,6 +511,8 @@ def draw_history(layout, context, ob, md):
         from ..operators import deformers_205a, deformers_205b
         # step 205: Tension / Solidify / Sculpt and Morph / Jiggle draw their Maya attributes
         drawn = deformers_205a.draw_ae(col, md) or deformers_205b.draw_ae(col, md)
+        if md.type == 'ARMATURE' and hasattr(ob, "allset_skinning_method"):
+            col.prop(ob, "allset_skinning_method")       # Maya skinCluster Skinning Method (step 250)
         for ident in ([] if drawn else modifier_props(md)):
             col.prop(md, ident, text=attr_label(context, md.bl_rna.properties[ident].name, ident))
     row = layout.row(align=True)

@@ -1489,3 +1489,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skeleton > Create IK Spline Handle on a spine, bend the curve by moving CVs, then drag the handle's Twist in the Channel Box (MMB virtual slider): the in-between joints turn smoothly like Maya; Twist Type Ease In / Ease Out / Ease In Out moves the turn toward the end / root / middle.
 - [ ] Roll turns the whole chain from the root like Maya; key Twist over frames and play: no lag.
 - [ ] Delete the ikHandle: the chain stops following the curve (Maya deletes the solver with the handle).
+
+## Step 250 — Weight Blended and DQ parity (#167)
+- [ ] Bind a character, AE skinCluster1 > Skinning Method Dual Quaternion: elbows / shoulders keep their volume like Maya DQ; Weight Blended: paint the `blendWeights` vertex group (Weight Paint) — 1 = DQ, 0 = linear, like Maya's Paint Skin Weights > DQ blend weights.
+- [ ] With a scaled joint (squash / stretch rig) and Dual Quaternion, compare with Maya: Blender scales about the joint, Maya about the origin (known difference, step_250.md).
