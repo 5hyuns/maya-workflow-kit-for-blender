@@ -14,8 +14,10 @@ Maya 2026 rules (mayapy, research/scripts/maya_rig223/make.py / solver.py, numbe
   bones' *visual* rotation (the solved pose) into their channels — the kit equivalent of Maya's rotate values.
 - **Set IK/FK Key** (``ikFK(0, sel)``): keys on the handle every keyable channel (translate / rotate / scale /
   visibility, Ik Blend — in auto / out clamped), the chain joints' rotate X / Y / Z (= the solved pose), the chain
-  root's translate and preferred angle (out step). Maya also keys the handle's Pole Vector / Offset / Roll / Twist:
-  Blender keeps the pole as a target object and has no handle offset / roll / twist channels (delegated, not keyed).
+  root's translate and preferred angle (out step). Maya also keys the handle's Twist and Pole Vector — or, when a Pole
+  Vector constraint drives it, the pole object's translate (mayapy 2026, research/maya/re/060_rig_lane.md "Extra"
+  R18; step 253): the kit RP handle's ``twist`` / ``poleVectorX/Y/Z`` channels (step 245) and the pole object's
+  location. Maya's Offset / Roll exist on the kit's spline handles only (step 249), not on RP handles.
 - **Enable IK Solver** (``updateIKFKState``): a global check (factory off); each use flips it and sets Ik Blend of
   the selected handles — or of the handles whose chain holds a selected joint — to the new state, keeping the
   joints' rotation (so switching IK off keeps the IK pose). Nothing selected: Maya's error.
@@ -188,6 +190,23 @@ def _key(owner, path, frame, group, index=-1, interp=None):
             fc.update()
 
 
+def _key_rp_channels(handle, frame):
+    """Twist + Pole Vector of a kit RP handle (step 245), or the pole object's translate when a Pole Vector
+    constraint drives the vector (Maya keys the constraint's target then, not the driven poleVector)."""
+    from . import ik_rp
+    if ik_rp.HELPER not in handle.keys():
+        return
+    if ik_rp.TWIST in handle.keys():
+        _key(handle, f'["{ik_rp.TWIST}"]', frame, handle.name)
+    pole = handle.get(ik_rp.POLE_OBJECT)
+    if isinstance(pole, bpy.types.Object):
+        _key(pole, "location", frame, pole.name)
+        return
+    for name in ik_rp.PV:
+        if name in handle.keys():
+            _key(handle, f'["{name}"]', frame, handle.name)
+
+
 def set_ik_fk_key(context, found, frame=None):
     """Maya Set IK/FK Key on ``found`` (ik_constraints). Returns the handles keyed."""
     from . import rig_maya
@@ -206,6 +225,7 @@ def set_ik_fk_key(context, found, frame=None):
             _key(handle, "hide_viewport", frame, handle.name, interp='CONSTANT')
             _key(handle, f'["{IK_BLEND}"]', frame, handle.name)
             _clamped_out(handle, frame)
+            _key_rp_channels(handle, frame)
             done.append(handle)
         for b in bones:
             _key(b, rotation_path(b), frame, b.name)
