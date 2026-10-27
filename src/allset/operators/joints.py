@@ -605,8 +605,13 @@ def _armature(context):
 
 
 def selected_joint_names(ob):
+    """The joints the user picked. In Edit mode (the Move tool, step 241) a picked joint selects its whole subtree
+    so W carries the children: the Skeleton menu / P act on the picked joints only, like Maya's selection (step 253
+    rig QA: clicking joint1 then P / Mirror / Orient saw joint1's children as picked too)."""
     if ob.mode == 'EDIT':
-        return [eb.name for eb in ob.data.edit_bones if eb.select]
+        from .joint_selection import _edit_picked
+        picked = [eb.name for eb in _edit_picked(ob)]
+        return picked or [eb.name for eb in ob.data.edit_bones if eb.select]
     cb = _cb()
     return [pb.name for pb in ob.pose.bones if cb.bone_selected(pb)]
 

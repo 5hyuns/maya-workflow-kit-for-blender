@@ -122,16 +122,16 @@ def test_set_ik_fk_key_channels_and_tangents():
     assert bpy.ops.allset.ik_fk_key() == {'FINISHED'}
     paths = {(fc.data_path, fc.array_index) for fc in compat.id_fcurves(handle)}
     want = {("location", i) for i in range(3)} | {("rotation_euler", i) for i in range(3)} \
-        | {("scale", i) for i in range(3)} | {("hide_viewport", 0), ('["ikBlend"]', 0)}
+        | {("scale", i) for i in range(3)} | {("hide_viewport", 0), ('["ikBlend"]', 0)} \
+        | {('["twist"]', 0)} | {(f'["poleVector{a}"]', 0) for a in "XYZ"}     # step 253: Maya keys them too
     assert paths == want, paths
     bones = {(fc.data_path, fc.array_index) for fc in compat.id_fcurves(arm)}
     want_b = {(f'pose.bones["{b}"].rotation_euler', i) for b in ("shoulder", "elbow") for i in range(3)} \
         | {('pose.bones["shoulder"].location', i) for i in range(3)}
     assert want_b <= bones, bones
-    # Maya keys every chain joint's rotate, the handle channels, ikBlend: 32 curves minus Pole Vector X / Y / Z,
-    # Offset, Roll, Twist (no Blender channel) and preferredAngle (only kept when set) = 15 + 6
-    maya = {c for c in truth.IK["set_key_f1"] if "poleVector" not in c and not c.endswith(("offset", "roll", "twist"))
-            and "preferredAngle" not in c}
+    # Maya keys every chain joint's rotate, the handle channels, ikBlend, Twist, Pole Vector X / Y / Z: 32 curves minus
+    # Offset, Roll (spline handles only in the kit) and preferredAngle (only kept when set) = 19 + 6 (step 253)
+    maya = {c for c in truth.IK["set_key_f1"] if not c.endswith(("offset", "roll")) and "preferredAngle" not in c}
     assert len(maya) == len(paths) + len(want_b), (len(maya), len(paths), len(want_b))
     # frame 10: Ik Blend 0 + FK rotate, key again; frame 5 = Maya's in auto / out clamped curve
     sc = bpy.context.scene
