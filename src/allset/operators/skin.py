@@ -429,6 +429,8 @@ def name_skin_cluster(mesh):
 def bind_skin(context, arm, meshes, max_influences=5, only_bones=None, normalize="INTERACTIVE",
               remove_unused=True, colorize_skeleton=True, method="CLOSEST_DISTANCE"):
     """Smooth bind (Maya skinCluster): the meshes stay where they are in the hierarchy."""
+    for mesh in meshes:
+        mesh.pop(PAINT_SEEN, None)          # a new skin: Paint Skin Weights starts on its first influence (238)
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     if method == "HEAT_MAP":
@@ -631,6 +633,25 @@ def influences(mesh, mod=None):
     return [vg for vg in mesh.vertex_groups if vg.name in bones]
 
 
+PAINT_SEEN = "allset_paint_seen"      # the mesh's skin was painted once (Maya: keep the picked influence)
+
+
+def first_influence(mesh):
+    """The influence Maya hilites first: the skeleton's joints depth first from the root (armature bone order for
+    siblings), the first that is an influence."""
+    mod = armature_modifier(mesh)
+    if mod is None or mod.object is None:
+        return None
+    groups = {vg.name: vg for vg in influences(mesh, mod)}
+    todo = [b for b in mod.object.data.bones if b.parent is None]
+    while todo:
+        b = todo.pop(0)
+        if b.name in groups:
+            return groups[b.name]
+        todo[0:0] = list(b.children)
+    return None
+
+
 def leave_weight_paint(context):
     """Release paint and its helper skeleton; retain the painted mesh as the selection."""
     if context.mode != 'PAINT_WEIGHT':
@@ -809,8 +830,13 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         from ..ui.toolbox import MAYA_TOOLS
         if current is None or not current.idname or current.idname in MAYA_TOOLS:
             set_view_tool(context, 'builtin.brush')
-        if mesh.vertex_groups.active is None and influences(mesh):
-            mesh.vertex_groups.active_index = influences(mesh)[0].index
+        # Maya hilites the first influence (joint1, the skeleton's root) the first time the tool opens on a skin and
+        # keeps the picked one afterwards (, :20). Bind Skin leaves
+        # Blender's last made group (the last joint) active: the first entry picks by hierarchy (step 238, #146).
+        first = first_influence(mesh)
+        if first is not None and (mesh.vertex_groups.active is None or not mesh.get(PAINT_SEEN)):
+            mesh.vertex_groups.active_index = first.index
+        mesh[PAINT_SEEN] = True
         # Maya keeps a vertex selection made before the tool and floods only it
         # (, :84): Blender shows that selection only with the vertex
         # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then (delegated).

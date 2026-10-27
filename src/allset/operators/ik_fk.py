@@ -322,4 +322,31 @@ class ALLSET_OT_move_ik_to_fk(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# Step 238 (Issue #146, audit ③-6 CHAINS_AUDIT_0.5.0.md:190): Maya draws Enable IK Solver as a check item, so the hand
+# sees the state. The menu draws it as this WindowManager property (``("prop", ...)`` kind, ui/menu_map.py); a click
+# runs the operator above (undo step, report) instead of only flipping the value.
+def _get_solver(_self):
+    return _STATE["on"]
+
+
+def _set_solver(_self, value):
+    if bool(value) == _STATE["on"]:
+        return
+    try:
+        bpy.ops.allset.ik_solver_toggle('EXEC_DEFAULT', True)
+    except RuntimeError:
+        pass                     # nothing selected: Maya's error, the check flips anyway (Maya flips first)
+
+
+def register_props():
+    bpy.types.WindowManager.allset_ik_solver = bpy.props.BoolProperty(
+        name="Enable IK Solver", get=_get_solver, set=_set_solver,
+        description="Switch the selected IK handles between IK (Ik Blend 1) and FK (Ik Blend 0) keeping the pose "
+                    "(Maya Key > IK/FK Keys > Enable IK Solver)")
+
+
+def unregister_props():
+    del bpy.types.WindowManager.allset_ik_solver
+
+
 classes = (ALLSET_OT_ik_fk_key, ALLSET_OT_ik_solver_toggle, ALLSET_OT_move_ik_to_fk)

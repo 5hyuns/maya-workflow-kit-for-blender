@@ -206,9 +206,10 @@ def test_move_ik_to_fk_like_maya():
 
 
 def test_menu_items_mapped():
-    for label, op in (("Set IK/FK Key", "allset.ik_fk_key"), ("Enable IK Solver", "allset.ik_solver_toggle"),
-                      ("Move IK to FK", "allset.move_ik_to_fk")):
+    for label, op in (("Set IK/FK Key", "allset.ik_fk_key"), ("Move IK to FK", "allset.move_ik_to_fk")):
         assert menu_map.MAP[f"Key/IK/FK Keys/{label}"] == op
+    # step 238: a Maya check item drawn as the WindowManager property that runs allset.ik_solver_toggle
+    assert menu_map.MAP["Key/IK/FK Keys/Enable IK Solver"] == ("prop", "window_manager.allset_ik_solver", {})
 
 
 def test_undo_restores_blend():

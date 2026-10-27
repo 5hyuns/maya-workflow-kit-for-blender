@@ -147,6 +147,7 @@ _register_classes, _unregister_classes = bpy.utils.register_classes_factory(clas
 def register():
     _register_classes()
     weight_paint.register_props()
+    ik_fk.register_props()
     game_exporter.register_props()
     motion_trail.register_props()
     control_shapes.register_props()
@@ -223,6 +224,7 @@ def unregister():
     graph_buffers.unregister_handlers()
     graph_retime.unregister_handlers()
     weight_paint.unregister_props()
+    ik_fk.unregister_props()
     game_exporter.unregister_props()
     motion_trail.unregister_props()
     flow_path_228.unregister_props()
