@@ -384,7 +384,7 @@ variables `ALLSET_*`); the id stays the same whatever the display name.
 | `src/allset/` | The extension: `blender_manifest.toml`, `preferences.py`, `switch.py`, `keymap/`, `marking/`, `operators/`, `ui/`, `compat.py` (all Blender-version differences) |
 | `tests/` | Headless harness `run.py`, GUI tests `gui/`, helpers `kit.py`, tests `test_*.py` |
 | `tools/` | `build.py` (packages), `release_check.py`, `build_repo.py` (static extension repository), generators for the keymap doc, menus, shelves and layout |
-| `docs/` | `PLAN.md`, `HANDOFF.md`, per-step notes `steps/`, `keymap_mapping.md`, `compat_5x.md`, `manual_checks.md`, `distribution/` |
+| `docs/` | `keymap_mapping.md`, `compat_5x.md`, `manual_checks.md`, `distribution/`, user guides |
 
 ### Build and test
 
