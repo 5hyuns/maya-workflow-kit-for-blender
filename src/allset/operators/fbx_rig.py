@@ -460,6 +460,28 @@ def turn_skin(index, turns):
             tr.props[0] = array.array('d', _arr(q4.inverted_safe() @ _mat(tr.props[0])))
 
 
+KTIME = 46186158000            # FBX ticks per second
+
+
+def set_time_span(path, start, end, fps):
+    """GlobalSettings TimeSpan = the Time Slider range like Maya writes it (Blender's writer puts 0 .. 1 s there,
+    step 235)."""
+    tree, version = load(path)
+    gs = tree.first(b"GlobalSettings")
+    p70 = _p70(gs) if gs is not None else None
+    if p70 is None:
+        return False
+    vals = {b"TimeSpanStart": int(round(start / fps * KTIME)), b"TimeSpanStop": int(round(end / fps * KTIME))}
+    have = {p.props[0]: p for p in p70.elems if p.props}
+    for name, v in vals.items():
+        if name in have:
+            have[name].props[4] = v
+        else:
+            p70.elems.append(Elem(b"P", [name, b"KTime", b"Time", b"", v], b"SSSSL"))
+    save(path, tree, version)
+    return True
+
+
 def rewrite(path, rest_path, turns=None):
     """Rewrite the rig FBX at ``path`` the Maya way; ``rest_path`` = the same export at the rest pose; ``turns`` =
     {joint name: Q} (joints.maya_frames). Returns (joints given a PreRotation, Nulls folded)."""

@@ -552,7 +552,42 @@ def write(context, fmt, path, op, args, maya, k):
         _write(context, fmt, path, op, args, maya, k)
 
 
+class _BlendShapesKept:
+    """Step 235 (Issue #144, audit ④-8): Blender's FBX writer exports the EVALUATED mesh and drops its shape keys
+    when any non-Armature modifier is on ($S/addons_core/io_scene_fbx/export_fbx_bin.py:2645-2690, 2773), so a mesh
+    with a blend shape and a cluster / lattice / kit deformer lost every blend shape. Maya's FBX keeps the blendShape
+    (and skinCluster) and leaves the other deformers out: while writing, those deformer modifiers of meshes with
+    shape keys are switched off (restored afterwards)."""
+
+    def __init__(self, obs):
+        self.obs, self.saved = obs, []
+
+    def __enter__(self):
+        from .history import is_deformer
+        for ob in self.obs:
+            key = getattr(ob.data, "shape_keys", None) if ob.type == 'MESH' else None
+            if key is None or len(key.key_blocks) < 2:
+                continue
+            for md in ob.modifiers:
+                if md.type != 'ARMATURE' and is_deformer(md) and (md.show_viewport or md.show_render):
+                    self.saved.append((md, md.show_viewport, md.show_render))
+                    md.show_viewport = md.show_render = False
+        return self
+
+    def __exit__(self, *exc):
+        for md, vp, rd in self.saved:
+            md.show_viewport, md.show_render = vp, rd
+
+
 def _write(context, fmt, path, op, args, maya, k):
+    if fmt == 'FBX' and maya:
+        obs = context.selected_objects if args.get("use_selection") else list(context.view_layer.objects)
+        with _BlendShapesKept([o for o in obs if o is not None]):
+            return _write_one(context, fmt, path, op, args, maya, k)
+    return _write_one(context, fmt, path, op, args, maya, k)
+
+
+def _write_one(context, fmt, path, op, args, maya, k):
     mod, name = op.split(".")
     run = getattr(getattr(bpy.ops, mod), name)
     if maya and fmt == 'ABC':
@@ -564,6 +599,14 @@ def _write(context, fmt, path, op, args, maya, k):
         return
     if fmt == 'FBX':
         rig_fbx_maya(context, path, run, args)
+        from . import fbx_blend, fbx_rig
+        if fbx_rig.modules() is not None:        # Maya's blendShape: in-betweens in their target's channel (235)
+            obs = context.selected_objects if args.get("use_selection") else list(context.view_layer.objects)
+            fbx_blend.rewrite(path, [o for o in obs if o is not None and o.type == 'MESH'])
+        if fbx_rig.modules() is not None:
+            sc = context.scene
+            fps = sc.render.fps / (sc.render.fps_base or 1.0)
+            fbx_rig.set_time_span(path, sc.frame_start, sc.frame_end, fps)     # Maya's Time Slider range (235)
     elif fmt == 'OBJ':
         _write_obj_groups(path)
     elif fmt == 'USD' and not usd_maya_axes(path, k):
