@@ -1501,3 +1501,6 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 
 ## Step 255 — #171 Rigify controls keep Pose mode (real mouse)
 - [ ] Maya mode, Rigify human rig, Pose mode: click IK hand / foot, torso, hips widgets one after another with the Select tool and with W — the rig never leaves Pose; a click on empty space only clears the selection; a click on the character mesh selects the mesh.
+
+## Step 256 — UV Shell selection (#172, real mouse)
+- [ ] Maya mode, a mesh with several UV shells: RMB > UV > UV Shell (or Alt+F12), click a face in the viewport — its whole UV shell is selected; Shift toggles a shell, Ctrl removes, a click on empty space clears; a marquee over part of a shell selects the whole shell; the UV Editor shows the same selection, and a click there picks shells too.

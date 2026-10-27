@@ -210,7 +210,8 @@ def test_added_bindings_not_shadowed():
     assert maya_patches.ADDED, "no added bindings recorded"
     problems = []
     # step 170: select tool keymaps that got a Maya marquee item are only active with that tool (own stack)
-    stacks = {**_STACKS, **{km: (km,) for km in maya_patches.SELECT_2D_KEYMAPS if km not in _STACKS}}
+    stacks = {**_STACKS, **{km: (km,) for km in maya_patches.SELECT_2D_KEYMAPS if km not in _STACKS},
+              **{km: (km,) for km in maya_patches.UV_SHELL_DRAG_KEYMAPS if km not in _STACKS}}
     for km, idname, ev, _props, shadows in maya_patches.ADDED:
         stack = stacks[km]
         k = patch.event_key(ev)

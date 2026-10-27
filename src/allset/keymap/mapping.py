@@ -163,7 +163,7 @@ ENTRIES = {
     "SelectUVMask": _e("KIT", (OBJ, "allset.uv_component", {"mode": 'UV'}),
                        note="UV Editor 를 열고 (편집 모드) UV 선택 = UV Sync 끔 + UV 정점 (step 66). 3D 뷰 오브젝트·메시 편집 밖의 F12 = Blender Render Image + Maya 기본 라이트 (allset.render_blender, step 214)"),
     "SelectMeshUVShell": _e("KIT", (OBJ, "allset.uv_component", {"mode": 'SHELL'}),
-                            note="UV Editor 를 열고 UV Shell = Blender UV 섬 모드 (step 66)"),
+                            note="Maya UV Shell 마스크: 3D View / UV Editor 클릭·박스가 UV 셸 전체 (면) 를 고름 (step 256, operators/uv_shell_select.py)"),
     # --- step 66: UV Editor (polyTexturePlacementPanel) ---
     "polyTexturePlacementPanel:CutUVs": _e("KIT", ("UV Editor", "allset.uv_cut", {}),
                                            note="솔기 + 작은 쪽 셸을 0.2 px 떼어 그 자리에서 분리 (IC 스냅 파이 제거)"),

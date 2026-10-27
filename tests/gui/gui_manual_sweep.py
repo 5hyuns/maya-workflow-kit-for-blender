@@ -3993,9 +3993,11 @@ def _m66_1_again_check():
 @named("m66_1_shell_check")
 def _m66_1_shell_check():
     b = ubm()
-    check(f"[M66-1] Alt+F12 = UV Shell (island mode, {ts().uv_select_mode}); the 3D view shows every face selected "
-          f"({sum(f.select for f in b.faces)} of {len(b.faces)})",
-          import_module(MODULE + ".compat").uv_island_mode(ts()) and all(f.select for f in b.faces))
+    # step 256: Alt+F12 = Maya's UV Shell mask (sync on, face mode, selection cleared; operators/uv_shell_select.py)
+    check(f"[M66-1] Alt+F12 = UV Shell mask (sync {ts().use_uv_select_sync}, face mode "
+          f"{tuple(ts().mesh_select_mode)}); selection cleared ({sum(f.select for f in b.faces)} of {len(b.faces)})",
+          bpy.context.window_manager.allset_uv_shell_mask and ts().use_uv_select_sync
+          and tuple(ts().mesh_select_mode) == (False, False, True) and not any(f.select for f in b.faces))
     # [M66-3] the top face's border edges in the 3D view, then the UV Editor keys
     ts().use_uv_select_sync = True
     ts().mesh_select_mode = (False, True, False)

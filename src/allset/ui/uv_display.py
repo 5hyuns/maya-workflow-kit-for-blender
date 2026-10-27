@@ -501,7 +501,7 @@ class ALLSET_OT_uv_move_shell(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     def execute(self, context):
-        uv_tools.set_component(context, 'SHELL')
+        uv_tools.set_component(context, 'ISLAND')
         if not bpy.app.background:
             bpy.ops.wm.tool_set_by_id(name=MOVE_TOOL, space_type='IMAGE_EDITOR')
             _shell_tool["on"] = True

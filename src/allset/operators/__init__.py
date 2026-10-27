@@ -151,6 +151,8 @@ classes += skin_basics.classes
 from . import joint_display  # noqa: E402  step 248 (#165): Radius row, Local Rotation Axes, Joint Size
 classes += joint_display.classes
 from . import skin_method  # noqa: E402  step 250 (#167): Weight Blended / DQ skinning method
+from . import uv_shell_select  # noqa: E402  step 256 (#172): Maya UV Shell selection in the 3D View / UV Editor
+classes += uv_shell_select.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -186,6 +188,7 @@ def register():
     edge_loops.register_props()
     extrude.register_handlers()
     uv_tools.register_props()
+    uv_shell_select.register_props()
     fx.register_props()
     taphold.register_bindings()
     graph_keys.register_bindings()
@@ -293,6 +296,7 @@ def unregister():
     maya_lights.unregister()
     lights.unregister_props()
     material.unregister_props()
+    uv_shell_select.unregister_props()
     uv_tools.unregister_props()
     extrude.unregister_handlers()
     mesh_tools.clear()

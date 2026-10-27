@@ -28,7 +28,8 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.wei
                       "allset.graph_channel_click", "allset.graph_channel_scroll", "allset.script_run",
                       "allset.dock_strip_click",
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
-                      "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick")
+                      "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
+                      "allset.uv_shell_pick", "allset.uv_shell_box")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -681,6 +682,28 @@ def patch_select_through(kd):
                  shadows=(km,))   # in front of the select item on purpose (PASS_THROUGH)
 
 
+# Step 256 (#172): Maya UV Shell selection (operators/uv_shell_select.py) — a click picks the whole UV shell, a box /
+# lasso grows to shells; in front of the click / drag select items of the 3D View and the UV Editor, PASS_THROUGH
+# unless the UV Shell mask is on (research/maya/re/uv_shell_select_256.md §2, §7).
+UV_SHELL_CLICK_KEYMAPS = ("3D View", "UV Editor")
+UV_SHELL_DRAG_KEYMAPS = SELECT_DRAG_KEYMAPS + ("Image Editor Tool: Uv, Select Box",
+                                              "Image Editor Tool: Uv, Select Box (fallback)",
+                                              "Image Editor Tool: Uv, Select Lasso",
+                                              "Image Editor Tool: Uv, Select Lasso (fallback)")
+
+
+def patch_uv_shell_select(kd):
+    mods = ((False, False), (True, False), (False, True), (True, True))
+    for km in UV_SHELL_CLICK_KEYMAPS:
+        for shift, ctrl in mods:
+            _add(kd, km, "allset.uv_shell_pick", make_event("LEFTMOUSE", "CLICK", shift=shift, ctrl=ctrl),
+                 first=True, shadows=(km,))   # in front of view3d.select / uv.select on purpose (PASS_THROUGH)
+    for km in UV_SHELL_DRAG_KEYMAPS:
+        for shift, ctrl in mods:
+            _add(kd, km, "allset.uv_shell_box", make_event("LEFTMOUSE", "CLICK_DRAG", shift=shift, ctrl=ctrl),
+                 first=True, shadows=(km,))   # always PASS_THROUGH: Blender's box runs, the kit grows it after
+
+
 # Step 49: a click under the Tool Box column's tools reaches that narrow 3D View's WINDOW region,
 # where view3d.select would deselect everything (it deselects hidden object types too). The guard
 # swallows the click there and passes it through everywhere else (ui/toolbox.py).
@@ -1303,7 +1326,7 @@ PATCHES = (patch_selection, patch_display, patch_group, patch_space,
            patch_attribute_editor, patch_undo_visibility,
            patch_mesh_components, patch_key_stepping, patch_manip_duplicate,
            patch_component_delete, patch_view_keys, patch_active_handle, patch_materials,
-           patch_select_through, patch_key_batch, patch_component_pick_walk,
+           patch_uv_shell_select, patch_select_through, patch_key_batch, patch_component_pick_walk,
            patch_toolbox_guard, patch_select_priority, patch_pose_joints, patch_time_slider, patch_joints, patch_uv,
            patch_scene_files, patch_graph_keys, patch_key_batch_2, patch_outliner_drag,
            patch_key_insert, patch_time_range, patch_manip_ctrl, patch_view_keys_3,

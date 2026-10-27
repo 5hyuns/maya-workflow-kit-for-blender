@@ -28,7 +28,9 @@ def test_select_through_items_lead_box_and_lasso():
             for ctrl in (False, True):
                 same = [k.idname for k in items if k.type == 'LEFTMOUSE' and k.value == 'CLICK_DRAG'
                         and k.shift == shift and k.ctrl == ctrl and not k.alt]
-                assert same[:2] == ["allset.select_through", target], (km_name, shift, ctrl, same)
+                # other kit PASS_THROUGH items may sit between (step 256: allset.uv_shell_box)
+                rest = [i for i in same[1:] if i not in patches.PASS_THROUGH_FIRST]
+                assert same[0] == "allset.select_through" and rest[:1] == [target], (km_name, shift, ctrl, same)
 
 
 def _fake_entry(running):

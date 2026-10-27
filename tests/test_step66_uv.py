@@ -199,7 +199,12 @@ def test_uv_components():
     ts.use_uv_select_sync = False
     assert bpy.ops.allset.uv_component(mode='EDGE') == {'FINISHED'}
     assert ob.mode == 'EDIT' and ts.use_uv_select_sync and tuple(ts.mesh_select_mode) == (False, True, False)
+    # step 256: SHELL is Maya's UV Shell mask (sync on, face mode, selection cleared; operators/uv_shell_select.py);
+    # Blender's island selection is the internal 'ISLAND' (Move UV Shell)
     assert bpy.ops.allset.uv_component(mode='SHELL') == {'FINISHED'}
+    assert ts.use_uv_select_sync and tuple(ts.mesh_select_mode) == (False, False, True)
+    assert bpy.context.window_manager.allset_uv_shell_mask and ob.data.total_face_sel == 0
+    uvt.set_component(bpy.context, 'ISLAND')
     assert not ts.use_uv_select_sync and compat.uv_island_mode(ts)
     assert ob.data.total_face_sel == 2, "every face selected so the UV Editor draws all UVs"
     assert bpy.ops.allset.uv_component(mode='UV') == {'FINISHED'}
