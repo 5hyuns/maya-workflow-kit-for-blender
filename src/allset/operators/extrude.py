@@ -58,7 +58,10 @@ class Spec:
     values (one undo step); ``build(bm, params, unit)`` (not FACE) -> the vertices to track."""
 
     def __init__(self, kind, node, fields, labels, defaults, kinds, arrow, edit_op, build=None, node_type=None,
-                 manip=()):
+                 manip=(), in_view=True, object_check=None, pre_uv=False):
+        self.pre_uv = pre_uv                   # a rerun on the same mesh also needs the same UVs (UV projections)
+        self.in_view = in_view                 # the In-View Editor shows it (not a UV projection, step 257)
+        self.object_check = object_check       # (ob, rec) -> the object-mode mesh is still the node's result
         self.node_type = node_type or node     # Maya node type (the AE history tab title)
         self.kind, self.node, self.fields, self.labels = kind, node, tuple(fields), dict(labels)
         self.manip = tuple(manip)              # values only the manipulator sets (step 151): not shown as rows
@@ -185,12 +188,23 @@ def _caps(ret_geom):
     return [g for g in ret_geom if isinstance(g, bmesh.types.BMFace) and all(v in verts for v in g.verts)]
 
 
+def _closed(faces):
+    """No edge of ``faces`` borders an unextruded face or the mesh border: the faces are whole closed shells."""
+    sel = set(faces)
+    return bool(faces) and all(sum(1 for g in e.link_faces if g in sel) == 2 for f in faces for e in f.edges)
+
+
 def _region(bm, faces):
     edges = {e for f in faces for e in f.edges}
+    closed = _closed(faces)
     ret = bmesh.ops.extrude_face_region(bm, geom=list(faces) + list(edges))
     caps = _caps(ret["geom"])
     gone = [f for f in faces if f.is_valid]
-    if gone:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
+    if gone and closed:
+        # whole closed shells: Maya keeps the old faces, turned inside out (mayapy 2026, 4 / 4 cases, step 257:
+        # research/maya/re/bevel_numbering_257.md §7); bmesh has already turned them (measured in Blender 4.5)
+        pass
+    elif gone:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
         bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
     return caps
 
@@ -211,6 +225,8 @@ def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, f
     order = [f.index for f in faces]
     levels = []
     caps = faces
+    if together and _closed(faces):
+        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says (2 / 2 cases, §7)
     for level in range(max(1, divisions)):
         if level == 0 and not together:
             caps = bmesh.ops.extrude_discrete_faces(bm, faces=caps)["faces"]
@@ -283,7 +299,17 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
     """Maya polyExtrudeFace on ``faces`` (bmesh). Returns (caps, moved); the caps end up selected. ``manip`` =
     Local Translate X / Y and Local Scale X / Y / Z (MANIP_FIELDS); ``direction`` / ``fallback`` = world X / Z
     in mesh space (the faces' local X, step 151)."""
+    bm.faces.index_update()
+    picked = sorted({f.index for f in faces if f.is_valid})
+    plan = maya_plan(bm, picked, divisions, keep_faces_together)
+    src = bm.verts.layers.int.new(".allset_extrude_src")     # added before elements are collected again (step 64)
+    for v in bm.verts:
+        v[src] = v.index + 1
+    bm.faces.ensure_lookup_table()
+    faces = [bm.faces[i] for i in picked]
     caps, levels, vectors = extrude_topology(bm, faces, divisions, keep_faces_together, direction, fallback)
+    # an inner vertex of a middle level is gone once the next level is extruded (Maya has only the cap's)
+    levels = [{key: v for key, v in found.items() if v.is_valid} for found in levels]
     moved = moved_vertices(levels, vectors, unit)
     place(moved, thickness, local_translate_z, offset, **manip)
     for f in bm.faces:
@@ -294,9 +320,154 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
         v.select = False
     for f in caps:
         f.select_set(True)
+    caps, moved = renumber(bm, plan, levels, src, caps, moved)
+    bm.verts.index_update()
+    bm.faces.index_update()
+    cap_ids = [f.index for f in caps]
+    moved_ids = [(v.index, rest) for v, *rest in moved]
+    bm.verts.layers.int.remove(src)     # removing a layer invalidates element references too
+    bm.verts.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    caps = [bm.faces[i] for i in cap_ids]
+    moved = [(bm.verts[i], *rest) for i, rest in moved_ids]
     bm.select_flush_mode()
     bm.normal_update()
     return caps, moved
+
+
+# --- Maya's numbering of the result (step 257, #149) ---------------------------------------------------------------
+# polyExtrudeFacet, mayapy 2026: vertices, edges and faces by index in 53 / 53 cases with a border + 4 / 4 whole closed
+# shells (research/maya/re/bevel_numbering_257.md §7). The mesh's edge index is taken as Maya's edge id: kit
+# primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_maya.maya_edge_ids).
+
+def maya_plan(bm, picked, divisions=1, together=True):
+    """What Maya's polyExtrudeFacet of faces ``picked`` (indices) leaves, in Maya's order, as descriptors:
+    ("o", i) = old vertex i, ("n", key, j) = the new vertex of ``key`` at level j (key = old vertex index, or
+    (face index, vertex index) for faces apart; j = 0 for the one new vertex of an inner vertex).
+    Returns {"verts", "edges", "faces", "div"} or None (no faces)."""
+    bm.verts.index_update()
+    bm.edges.index_update()
+    bm.faces.index_update()
+    sel = sorted(set(picked))
+    if not sel:
+        return None
+    F = [[v.index for v in f.verts] for f in bm.faces]
+    E = [(e.verts[0].index, e.verts[1].index) for e in bm.edges]
+    eid = {frozenset(p): i for i, p in enumerate(E)}
+    efaces = {}
+    for fi, f in enumerate(F):
+        for k in range(len(f)):
+            efaces.setdefault(frozenset((f[k], f[(k + 1) % len(f)])), []).append(fi)
+
+    def corner_edges(fi):
+        f = F[fi]
+        return [(f[k], f[(k + 1) % len(f)]) for k in range(len(f))]
+    div = max(1, int(divisions))
+    whole = set(sel)
+    closed = together and all(len([x for x in efaces[frozenset(c)] if x in whole]) == 2
+                              for fi in sel for c in corner_edges(fi))
+    if closed:
+        div = 1
+    groups = [sel] if together else [[fi] for fi in sel]
+    new_verts, new_edges, side_faces, removed, gone = [], [], [], set(), set()
+    out_faces = [[("o", v) for v in f] for f in F]
+    for grp in groups:
+        g = set(grp)
+
+        def border(key):
+            return len([x for x in efaces[key] if x in g]) == 1
+        bverts = set()
+        for fi in grp:
+            for c in corner_edges(fi):
+                if border(frozenset(c)):
+                    bverts |= set(c)
+        chain, done = {}, set()
+
+        def tag(x):
+            return x if together else (grp[0], x)
+
+        def lev(x, j):
+            if j == 0:
+                return ("o", x)
+            c = chain[x]
+            return c[j - 1] if len(c) > 1 else c[0]
+        for fi in grp:
+            for a, b in corner_edges(fi):
+                key = frozenset((a, b))
+                v0, v1 = E[eid[key]]
+                for x in (v0, v1):          # new vertices in the order the walk meets them, edge ends in edge order
+                    if x in chain:
+                        continue
+                    if x in bverts:         # a chain of Divisions vertices up from x
+                        chain[x] = [("n", tag(x), j) for j in range(1, div + 1)]
+                        new_verts += chain[x]
+                        new_edges += list(zip([("o", x)] + chain[x][:-1], chain[x]))
+                    else:                   # an inner (or closed-shell) vertex: one new vertex, the old one goes
+                        chain[x] = [("n", tag(x), 0)]
+                        new_verts.append(chain[x][0])
+                        if not closed:
+                            gone.add(x)
+                if key not in done:
+                    done.add(key)
+                    if border(key):
+                        new_edges += [(lev(v0, j), lev(v1, j)) for j in range(1, div + 1)]
+                    else:
+                        if not closed:
+                            removed.add(eid[key])
+                        new_edges.append((lev(v0, div), lev(v1, div)))
+                if border(key):
+                    side_faces += [[lev(a, j), lev(b, j), lev(b, j + 1), lev(a, j + 1)] for j in range(div)]
+        for fi in grp:
+            out_faces[fi] = [lev(v, div) for v in F[fi]]
+    if closed:
+        side_faces = [[("o", F[fi][0])] + [("o", v) for v in reversed(F[fi][1:])] for fi in sel]
+    return {"verts": [("o", v) for v in range(len(bm.verts)) if v not in gone] + new_verts,
+            "edges": [(("o", p[0]), ("o", p[1])) for i, p in enumerate(E) if i not in removed] + new_edges,
+            "faces": out_faces + side_faces, "div": div}
+
+
+def renumber(bm, plan, levels, src, caps, moved):
+    """Sort the extruded mesh's vertices, edges and faces into ``plan``'s (Maya's) order; caps / moved come back as
+    fresh references (a bmesh sort moves the data under existing ones). Left as it is when the kit's result doesn't
+    match the plan element for element."""
+    if plan is None:
+        return caps, moved
+    elem, newer = {}, set()
+    for j, found in enumerate(levels, 1):
+        for key, v in found.items():
+            if v.is_valid:
+                elem[("n", key, j)] = v
+                newer.add(v)
+    if len(levels) == plan["div"]:
+        for key, v in levels[-1].items():      # inner vertices: the cap level's
+            if v.is_valid:
+                elem.setdefault(("n", key, 0), v)
+    for v in bm.verts:
+        if v not in newer:
+            elem[("o", v[src] - 1)] = v
+    try:
+        vrank = {elem[d]: i for i, d in enumerate(plan["verts"])}
+        edge_of = {frozenset(e.verts): e for e in bm.edges}
+        face_of = {frozenset(f.verts): f for f in bm.faces}
+        erank = {edge_of[frozenset((elem[a], elem[b]))]: i for i, (a, b) in enumerate(plan["edges"])}
+        frank = {face_of[frozenset(elem[d] for d in f)]: i for i, f in enumerate(plan["faces"])}
+    except KeyError:
+        return caps, moved
+    if not (len(vrank) == len(bm.verts) == len(plan["verts"]) and len(erank) == len(bm.edges) == len(plan["edges"])
+            and len(frank) == len(bm.faces) == len(plan["faces"])):
+        return caps, moved
+    cap_ids = [frank[f] for f in caps]
+    moved_ids = [(vrank[v], rest) for v, *rest in moved]
+    bm.verts.sort(key=lambda v: vrank[v])
+    bm.edges.sort(key=lambda e: erank[e])
+    bm.faces.sort(key=lambda f: frank[f])
+    bm.verts.index_update()
+    bm.edges.index_update()
+    bm.faces.index_update()
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    return [bm.faces[i] for i in cap_ids], [(bm.verts[i], *rest) for i, rest in moved_ids]
 
 
 # --- polyExtrudeEdge / polyExtrudeVertex (step 139, research/maya/re/edit_mesh_139_shape.md §1-2) ------------
@@ -628,6 +799,16 @@ def current(ob):
     return None
 
 
+def object_record(ob):
+    """The record of ``ob`` in object mode for nodes that stay editable there (UV > Automatic, step 257), else None."""
+    if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH' or ob.mode == 'EDIT':   # a pose bone lead too
+        return None
+    rec = RECORDS.get(ob.name)
+    if rec is None or rec.pre is None or rec.mesh_uid != ob.data.session_uid or rec.spec.object_check is None:
+        return None
+    return rec if rec.spec.object_check(ob, rec) else None
+
+
 def _cap_faces(bm, cap_verts):
     s = set(cap_verts)
     bm.faces.ensure_lookup_table()
@@ -673,6 +854,13 @@ def _pre_signature(bm):
     return (len(bm.verts), len(bm.edges), len(bm.faces)) + selection_signature(bm)
 
 
+def _uv_signature(bm):
+    uv = bm.loops.layers.uv.active
+    if uv is None:
+        return None
+    return hash(tuple(round(c, 7) for f in bm.faces for lp in f.loops for c in lp[uv].uv))
+
+
 def kind_of(bm, select_mode):
     """Which Maya extrusion the selection asks for: the select mode first (Maya extrudes the selected
     component type), then whatever is selected."""
@@ -691,7 +879,8 @@ def record_new(context, ob, bm, spec, params, unit):
     old = RECORDS.get(ob.name)
     name = None
     if (old is not None and old.spec is spec and old.pre is not None and old.mesh_uid == ob.data.session_uid
-            and _pre_signature(old.pre) == _pre_signature(bm)):
+            and _pre_signature(old.pre) == _pre_signature(bm)
+            and (not spec.pre_uv or _uv_signature(old.pre) == _uv_signature(bm))):
         name = old.name
     pre = bm.copy()
     tracked = spec.build(bm, params, unit)
@@ -867,6 +1056,8 @@ INT_FIELDS = ("divisions", "segments")
 def set_params(context, **changes):
     """Change values of the active object's last kit node (one undo step). Returns the operator result."""
     _ob, rec = active(context)
+    if rec is None:
+        rec = object_record(getattr(context, "active_object", None))
     if rec is None:
         return {'CANCELLED'}
     params = dict(rec.params)

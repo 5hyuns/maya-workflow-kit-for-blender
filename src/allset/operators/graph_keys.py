@@ -68,6 +68,7 @@ def tangent_selected(context, kind, side="BOTH"):
                 hit += 1
         if hit:
             fc.update()
+            time_keys._maya_auto(fc)
         n += hit
     return n
 
@@ -159,6 +160,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
                         break
                     fc.keyframe_points.remove(kp)
                 fc.update()
+                time_keys._maya_auto(fc)
         elif act in {"TO_KEY", "TO_BREAKDOWN"}:
             for _fc, pts in selected_keys(context):
                 for kp in pts:

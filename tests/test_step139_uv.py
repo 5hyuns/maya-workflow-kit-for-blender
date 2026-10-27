@@ -23,12 +23,10 @@ MAYA_AUTO = {
     'PLANE': (1, [100], 121),
     'TORUS': (10, [96, 96, 36, 36, 36, 36, 16, 16, 16, 16], 536),
 }
-# Kit = each face to the plane it faces most, ties to Maya X (Maya's "Fast" optimisation rule, -o 0, measured: sphere
-# 104 / 104 / 56 / 48 / 48 / 40). Maya's factory "Less distortion" (-o 1) moves some faces between neighbouring planes
-# (sphere sides 72 / 72 / 24 / 24, torus 96 / 96 / 36 x4 / 16 x4): the kit's sizes there are the recorded deviation
-# (docs/steps/step_139_uv.md). Shell counts are Maya's everywhere; cube / cylinder / plane are Maya's exactly.
-KIT_AUTO = dict(MAYA_AUTO, SPHERE=(6, [104, 104, 56, 56, 40, 40], None),
-                TORUS=(10, [112, 112, 28, 28, 28, 28, 16, 16, 16, 16], None))
+# Kit = Maya's own plane assignment since step 257 (factory -o 1 "Fewer pieces": candidate planes, seeds by fewest
+# candidates, symmetric seed groups; research/maya/re/autoproj_layout_257.md §7), so the step 139 deviation (sphere
+# 104 / 104 / 56 / 56 / 40 / 40, torus 112 / 112 / 28 x4 / 16 x4) is gone.
+KIT_AUTO = dict(MAYA_AUTO)
 
 
 def _clear():
@@ -81,8 +79,9 @@ def test_object_mode_automatic_is_maya_auto_projection():
         assert n == shells and got == sizes, (kind, n, got)
         if uvs is not None:
             assert count == uvs, (kind, count, uvs)
-        # laid out in 0-1 with Maya's 0.2 % space (Maya bounds 0.002 - 0.998, measured)
-        assert x0 >= 0.0019 and y0 >= 0.0019 and x1 <= 0.9981 and y1 <= 0.9981, (kind, x0, y0, x1, y1)
+        # laid out in 0-1 with Maya's 0.2 % space (Maya bounds 0.0016 - 0.998: the menu cylinder's U starts at
+        # 0.0016944 in mayapy 2026, step 257 layout)
+        assert x0 >= 0.0016 and y0 >= 0.0016 and x1 <= 0.9981 and y1 <= 0.9981, (kind, x0, y0, x1, y1)
         assert max(x1, y1) > 0.9, (kind, x1, y1)
     print("kit vs Maya automatic:", rows)
 

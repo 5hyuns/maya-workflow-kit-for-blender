@@ -29,6 +29,7 @@ from mathutils import Matrix, Vector, geometry
 
 from . import cb_entry, manipulator
 from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec (step 139)
+from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec (step 257)
 
 ROW_H = 16          # px at UI scale 1 (Maya In-View rows, modeling_03.png)
 WIDTH = 180
@@ -43,7 +44,8 @@ ALL_FIELDS = tuple(dict.fromkeys(f for spec in extrude.SPECS.values() for f in s
 MAX_ROWS = max(len(spec.fields) for spec in extrude.SPECS.values())
 BOOL_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "BOOL"}
 INT_FIELDS = {f for spec in extrude.SPECS.values() for f, k in spec.kinds.items() if k == "INT"}
-RANGES = {"fraction": (0.0, 1.0), "depth": (-1.0, 1.0)}
+RANGES = {"fraction": (0.0, 1.0), "depth": (-1.0, 1.0), "planes": (3, 12), "optimize": (0.0, 1.0),
+          "percentage_space": (0.0, 5.0)}
 _ = bevel_maya
 BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)
@@ -69,7 +71,7 @@ def record(context):
     if is_toolbox(space):
         return None, None
     ob, rec = extrude.active(context)
-    if rec is None or rec.dismissed or not extrude.caps_selected(ob, rec):
+    if rec is None or rec.dismissed or not rec.spec.in_view or not extrude.caps_selected(ob, rec):
         return None, None
     return ob, rec
 
@@ -718,9 +720,15 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
 
 def cb_record(context, ob):
     """The lead object's last extrusion for Channel Box INPUTS (any selection), or None."""
-    if ob is None or ob is not getattr(context, "edit_object", None):
+    if ob is None:
         return None
+    if ob is not getattr(context, "edit_object", None):
+        return extrude.object_record(ob)        # a node editable in object mode (UV > Automatic, step 257)
     return extrude.current(ob)
+
+
+def _lead(context):
+    return getattr(context, "edit_object", None) or getattr(context, "active_object", None)
 
 
 def clamp(field, value):
@@ -734,7 +742,7 @@ def clamp(field, value):
 
 def _text_get(field):
     def get(_self):
-        rec = cb_record(bpy.context, bpy.context.edit_object)
+        rec = cb_record(bpy.context, _lead(bpy.context))
         if rec is None or field not in rec.params:
             return ""
         return cb_entry.format_value(rec.params[field], rec.spec.kinds[field], bpy.context.scene)
@@ -744,7 +752,7 @@ def _text_get(field):
 def _text_set(field):
     def set_(_self, text):
         context = bpy.context
-        rec = cb_record(context, context.edit_object)
+        rec = cb_record(context, _lead(context))
         if rec is None or field not in rec.params:
             return
         try:

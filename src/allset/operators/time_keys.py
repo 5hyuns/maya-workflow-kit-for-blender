@@ -50,6 +50,12 @@ def apply_tangent(kp, kind):
         kp.handle_left_type = kp.handle_right_type = handle
     if kind == "FLAT":
         kp.handle_left.y = kp.handle_right.y = kp.co.y
+def _maya_auto(fc):
+    """Maya auto tangents after the curve changed (operators/maya_tangents.py, step 257)."""
+    from . import maya_tangents
+    maya_tangents.apply(fc)
+
+
 TANGENT_ITEMS = [(k, TANGENT_LABELS.get(k, k.title()), "") for k in TANGENTS]
 
 _CLIPBOARD = {"nodes": [], "span": 0.0, "start": 0.0}
@@ -156,6 +162,7 @@ def delete_keys(context, a, b):
                 fcs.remove(fc)
             else:
                 fc.update()
+                _maya_auto(fc)
     return n
 
 
@@ -235,6 +242,7 @@ def set_tangent(context, a, b, kind):
                 apply_tangent(kp, kind)
                 n += 1
             fc.update()
+            _maya_auto(fc)
     return n
 
 

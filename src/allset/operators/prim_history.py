@@ -176,6 +176,9 @@ def fill_bmesh(bm, shape, k, uvs=True):
     """Write a ``prim_shapes.Mesh`` into an empty bmesh (Maya units -> Blender, scaled by ``k``)."""
     verts = [bm.verts.new(to_blender(p, k)) for p in shape.verts]
     bm.verts.index_update()
+    if shape.edges:     # Maya's edge ids = the bmesh edge index (step 257, bevel_maya.maya_edge_ids)
+        for a, b in shape.edges:
+            bm.edges.new((verts[a], verts[b]))
     uv = bm.loops.layers.uv.new(UV_NAME) if uvs and shape.uvs is not None else None
     flat = shape.hard == prim_shapes.ALL
     for fi, f in enumerate(shape.faces):
