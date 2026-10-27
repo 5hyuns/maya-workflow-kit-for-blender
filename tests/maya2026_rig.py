@@ -145,7 +145,7 @@ def build_skeleton(joints, unit=1.0, name="skeleton1", context=None, oriented=Tr
     for jn in _order(joints):
         kids = children(joints, jn)
         parent = joints[jn].get("parent")
-        if kids:
+        if kids and (pos[kids[0]] - pos[jn]).length > 1e-9:
             length = (pos[kids[0]] - pos[jn]).length
         elif parent and parent in lengths:
             length = lengths[parent] * 0.5
@@ -160,7 +160,8 @@ def build_skeleton(joints, unit=1.0, name="skeleton1", context=None, oriented=Tr
             y = frame_to_blender(axes).col[0]
             z = frame_to_blender(axes).col[1]
         else:
-            y = to_blender(pos[kids[0]] - pos[jn]).normalized() if kids else Vector((0.0, 1.0, 0.0))
+            d = to_blender(pos[kids[0]] - pos[jn]) if kids else Vector()
+            y = d.normalized() if d.length > 1e-9 else Vector((0.0, 1.0, 0.0))   # a zero-length child: any way
             z = None
         eb.head = head
         eb.tail = head + y * (length * unit)

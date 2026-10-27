@@ -18,6 +18,11 @@ OUT = os.path.join(ROOT, "tests", "maya2026_rig_data.py")
 
 TOPICS = ("joint_math", "skeleton_menu", "ik", "skinning", "constraints_sdk", "select_pick")
 MEASURED_FILES = ("measured_ik_verify", "measured_sc_verify", "measured_sc_verify2", "measured_dq_scale")
+# second measurement pass: orientJoint rule checks (step 244)
+MEASURED2 = os.environ.get("ALLSET_RIG_MEASURED2_DIR", "")
+MEASURED2_FILES = ("oj_verify",)
+# joint_rig_2026_joint_tool.json: only the measured GUI numbers (the file also holds Tool Settings MEL lines)
+JOINT_TOOL_KEYS = ("jointCtx", "front_clicks", "front_chain", "jointDisplayScale")
 # key paths whose values are Maya script text or a capture-script traceback, not measurements
 DROP = {
     ("skeleton", "move_skinned_joints", "ERROR"),
@@ -58,11 +63,15 @@ def main():
         data = _clean(_load(os.path.join(RE, f"joint_rig_2026_{topic}.json")))
         parts.append(f"\n# research/maya/re/joint_rig_2026_{topic}.json\n{topic.upper()} = "
                      + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
-    for name in MEASURED_FILES:
-        data = _clean(_load(os.path.join(measured, f"{name}.json")))
+    gui = _load(os.path.join(RE, "joint_rig_2026_joint_tool.json"))["gui"]
+    data = _clean({k: gui[k] for k in JOINT_TOOL_KEYS})
+    parts.append("\n# research/maya/re/joint_rig_2026_joint_tool.json gui (measured GUI Joint Tool, step 244)\n"
+                 "JOINT_TOOL = " + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
+    for folder, name in [(measured, n) for n in MEASURED_FILES] + [(MEASURED2, n) for n in MEASURED2_FILES]:
+        data = _clean(_load(os.path.join(folder, f"{name}.json")))
         parts.append(f"\n# measured cross-check {name}.json (research/maya/re/joint_rig_2026_principles.md)\n"
                      f"{name.upper()} = " + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
-    names = [t.upper() for t in TOPICS] + [n.upper() for n in MEASURED_FILES]
+    names = [t.upper() for t in TOPICS] + ["JOINT_TOOL"] + [n.upper() for n in MEASURED_FILES + MEASURED2_FILES]
     parts.append("\nALL = {" + ", ".join(f'"{n}": {n}' for n in names) + "}\n")
     text = "".join(parts)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:

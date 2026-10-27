@@ -295,7 +295,7 @@ JOINT = [
       ("prop", "arm", "display_type", "Draw Style"),
       ("draw", "joint_stiffness"),
       ("draw", "joint_orient"),
-      ("prop", "bone", "inherit_scale", "Segment Scale Compensate")),
+      ("prop", "bone", "allset_ssc", "Segment Scale Compensate")),       # step 244: Maya's check box
     S("Limit Information", False, subs=[
         S("Translate", False, ("draw", "limit:LIMIT_LOCATION")),
         S("Rotate", True, ("draw", "limit:LIMIT_ROTATION")),                # collapse=0

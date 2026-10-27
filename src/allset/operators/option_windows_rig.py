@@ -50,6 +50,7 @@ def joint_tool_props(v):
     """Window values -> ``allset.joint_tool`` properties."""
     return dict(secondary_axis="NONE" if v["secondary_axis"] == "None" else v["secondary_axis"],
                 secondary_world=v["secondary_world"], secondary_sign=v["secondary_sign"],
+                auto_secondary=v.get("auto_secondary", True), orient_world=v.get("orient_world", False),
                 create_ik=v["create_ik"], ik_solver=_SOLVER[v["ik_solver"]],
                 ik_solver_enable=v["ik_solver_enable"], ik_weight=v["ik_weight"])
 
@@ -193,15 +194,18 @@ _ANIM_LAYER = ("Animation Layer", "Set layer to override")
 
 WINDOWS = [
     # Skeleton > Create Joints: Tool Settings "Joint Tool" (option_boxes_140.md:196-206)
+    # Orientation section of Maya 2026 (step 244, joint_rig_2026_joint_tool.md §1): Orient Joint to World, Secondary
+    # Axis, its world orientation, Auto orient secondary axis (factory on since 2025)
     Window("joint_tool", "Joint Tool", "Create Joints", None, [
+        F("orient_world", "", "bool", False, text="Orient Joint to World"),
         F("secondary_axis", "Secondary Axis:", "enum", "Y", items=("X", "Y", "Z", "None")),
         F("secondary_world", "Secondary Axis World Orientation:", "enum", "Y", items=("X", "Y", "Z")),
         F("secondary_sign", "", "enum", "+", items=("+", "-")),
+        F("auto_secondary", "", "bool", True, text="Auto orient secondary axis"),
         F("create_ik", "", "bool", False, text="Create IK handle"),
         *_ik_fields("ik_")], _run_joint_tool, paths=("Skeleton/Create Joints",),
         missing=("Degrees of freedom", "Symmetry", "Scale compensate", "Auto joint limits",
                  "Variable Bone Radius Settings / Bone Radius Settings", "Projected Centering",
-                 "Orient Joint to World (Blender bones point Y at the child)",
                  "Primary Axis (always the bone's Y = Maya X)") + _IK_MISSING),
     # Skeleton > Create IK Handle: Tool Settings "IK Handle Tool" (option_boxes_140.md:208-211)
     Window("ik_handle_tool", "IK Handle Tool", "Create IK Handle", None, _ik_fields(), _run_ik_handle,

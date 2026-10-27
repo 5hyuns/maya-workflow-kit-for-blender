@@ -1456,3 +1456,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Joint Tool on a bent chain → W → drag joint2 with the manipulator arrows (real mouse): joint1's local axes (Display > Joint axes) keep their direction; the Channel Box Translate of joint2 gets Y / Z values like Maya.
 - [ ] Hold D (or press Insert) and drag a joint: its children stay; release D: the next drag moves the subtree again. Tool Settings > Move Settings > Preserve Children shows the same state.
 - [ ] Type `+=2` in the Edit-mode Channel Box Translate Y of a joint: it moves, its children follow (or stay with Preserve Children on); Ctrl+Z puts it back in one step.
+
+## Step 244 — Joint orientation = Maya 2025+ factory (#161)
+- [ ] Joint Tool in the side and top views (real mouse): the secondary axis follows the bend like Maya (Display Local Axis), a zig-zag flips at the bend joint, the end joint copies its parent's axes.
+- [ ] Skeleton > Orient Joint ❒: Orient Joint to World, Primary / Secondary axis and Auto orient secondary axis change the axes as in Maya; a rotated joint prints "Skipping <joint>: It has non-zero rotations."
+- [ ] AE joint tab: Joint Orient reads Maya's values; Segment Scale Compensate check box off -> scaling the parent shears the child like Maya SSC off.

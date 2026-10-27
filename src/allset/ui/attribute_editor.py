@@ -347,10 +347,13 @@ JOINT_AXIS_NOTE = "Bone Y points to the child joint (Maya Primary Axis X)"
 
 
 def joint_orient(pb):
-    """Maya jointOrient ~ the bone's rest rotation relative to its parent's rest (Euler XYZ)."""
+    """Maya jointOrient (radians, xyz) from the joints' Maya frames (step 244: bone axes turned by
+    ``allset_maya_frame``; a top joint against Maya's world axes)."""
+    from ..operators import joints
     bone = pb.bone
-    rest = bone.matrix_local if bone.parent is None else bone.parent.matrix_local.inverted() @ bone.matrix_local
-    return rest.to_euler('XYZ')
+    frame = joints.maya_bone_frame(bone)
+    parent = joints.maya_bone_frame(bone.parent) if bone.parent is not None else joints.armature_world(pb.id_data)
+    return (parent.transposed() @ frame).to_euler('XYZ')
 
 
 def draw_joint_orient(layout, context, pb):

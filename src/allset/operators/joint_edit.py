@@ -51,13 +51,46 @@ def local_frame(eb):
     return f @ Quaternion(q).to_matrix() if q is not None else f
 
 
+# A Maya frame is stored with a joint only when its bone is off by more than this (a bone carries ~1e-7 float32
+# noise; storing that would mark every joint "turned" for FBX / Mirror, step 244)
+FRAME_TOL = 1e-6
+
+
+def quat_between(base, frame):
+    """[w, x, y, z] of base^T @ frame in float64 (mathutils' float32 quaternion is ~1e-6 off near identity)."""
+    import numpy as np
+    b = np.array([[base[r][c] for c in range(3)] for r in range(3)], dtype=np.float64)
+    f = np.array([[frame[r][c] for c in range(3)] for r in range(3)], dtype=np.float64)
+    u, _s, vt = np.linalg.svd(b)
+    b = u @ vt                                          # orthonormalise the float32 bone frame
+    m = b.T @ f
+    t = m[0, 0] + m[1, 1] + m[2, 2]
+    if t > 0:
+        k = 2.0 * np.sqrt(1.0 + t)
+        q = [0.25 * k, (m[2, 1] - m[1, 2]) / k, (m[0, 2] - m[2, 0]) / k, (m[1, 0] - m[0, 1]) / k]
+    elif m[0, 0] > m[1, 1] and m[0, 0] > m[2, 2]:
+        k = 2.0 * np.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2])
+        q = [(m[2, 1] - m[1, 2]) / k, 0.25 * k, (m[0, 1] + m[1, 0]) / k, (m[0, 2] + m[2, 0]) / k]
+    elif m[1, 1] > m[2, 2]:
+        k = 2.0 * np.sqrt(1.0 + m[1, 1] - m[0, 0] - m[2, 2])
+        q = [(m[0, 2] - m[2, 0]) / k, (m[0, 1] + m[1, 0]) / k, 0.25 * k, (m[1, 2] + m[2, 1]) / k]
+    else:
+        k = 2.0 * np.sqrt(1.0 + m[2, 2] - m[0, 0] - m[1, 1])
+        q = [(m[1, 0] - m[0, 1]) / k, (m[0, 2] + m[2, 0]) / k, (m[1, 2] + m[2, 1]) / k, 0.25 * k]
+    n = float(np.sqrt(sum(c * c for c in q)))
+    return [float(c) / n for c in q]
+
+
 def _set_local_frame(eb, frame):
-    q = ((eb.matrix.to_3x3().normalized() @ joints.JOINT_AXES).inverted() @ frame).to_quaternion()
-    if q.angle < 1e-7:
+    base = eb.matrix.to_3x3().normalized() @ joints.JOINT_AXES
+    q = quat_between(base, frame)
+    # judged by the axes, not q.angle: a float32 quaternion's angle reads 0 below ~1e-6 (step 244: a bone near -Y
+    # left 2.8e-6 unstored)
+    if _frame_error(base, frame) < FRAME_TOL:
         if joints.MAYA_FRAME in eb:
             del eb[joints.MAYA_FRAME]
     else:
-        eb[joints.MAYA_FRAME] = list(q)
+        eb[joints.MAYA_FRAME] = q
 
 
 def _frame_error(a, b):
@@ -250,7 +283,20 @@ def _translate_set(axis):
 AXES = "xyz"
 
 
+def _ssc_get(self):
+    return self.inherit_scale == 'NONE'
+
+
+def _ssc_set(self, value):
+    # Maya segmentScaleCompensate on = Blender inherit_scale NONE, off = FULL (measured in Blender 4.5,
+    # research/maya/re/joint_rig_2026_joint_math.md §4; ALIGNED is not Maya)
+    self.inherit_scale = 'NONE' if value else 'FULL'
+
+
 def register():
+    bpy.types.Bone.allset_ssc = bpy.props.BoolProperty(
+        name="Segment Scale Compensate", get=_ssc_get, set=_ssc_set,
+        description="Maya: the child joint isn't scaled by its parent joint's scale")
     for i, a in enumerate(AXES):
         setattr(bpy.types.Scene, f"allset_joint_t{a}",
                 bpy.props.StringProperty(name=f"Translate {a.upper()}", get=_translate_get(i), set=_translate_set(i),
@@ -258,6 +304,8 @@ def register():
 
 
 def unregister():
+    if hasattr(bpy.types.Bone, "allset_ssc"):
+        del bpy.types.Bone.allset_ssc
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     _timer["on"] = False

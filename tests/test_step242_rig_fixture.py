@@ -31,6 +31,8 @@ TABLES = {
     "MEASURED_DQ_SCALE": (),
     "MEASURED_SC_VERIFY": (),
     "MEASURED_SC_VERIFY2": (),
+    "JOINT_TOOL": ("jointCtx", "front_clicks", "front_chain"),       # step 244
+    "OJ_VERIFY": ("traditional_no_sao", "extremes", "siblings"),       # step 244 (measured)
 }
 
 
