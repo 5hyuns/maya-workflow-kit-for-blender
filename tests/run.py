@@ -101,17 +101,46 @@ def run_test_file(blender, path, env):
     return results, log, dt
 
 
+def add_order_args(ap):
+    """QA step 240 (activity A): file order is a test input too (order-dependent failures, M59-4)."""
+    ap.add_argument("--shuffle", type=int, default=None, metavar="SEED", help="run the files in a seeded random order")
+    ap.add_argument("--reverse", action="store_true", help="run the files in reverse order")
+    ap.add_argument("--order", default="", help="file with one test file stem per line: run exactly these, in this order")
+    ap.add_argument("--extra", default="", help="comma-separated extra test module paths (tools/qa harnesses)")
+    ap.add_argument("--zip", default="", help="install this extension zip instead of the current build (QA: older release)")
+
+
+def order(files, args):
+    if args.extra:
+        files = files + [Path(p).resolve() for p in args.extra.split(",") if p]
+    if args.order:
+        by_stem = {p.stem: p for p in files}
+        wanted = [line.strip() for line in Path(args.order).read_text(encoding="utf-8").splitlines() if line.strip()]
+        files = [by_stem[s] for s in wanted if s in by_stem]
+    if args.shuffle is not None:
+        import random
+        random.Random(args.shuffle).shuffle(files)
+    if args.reverse:
+        files = files[::-1]
+    if args.shuffle is not None or args.reverse or args.order:
+        print("order: " + " ".join(p.stem for p in files))
+    return files
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Run Maya Workflow Kit headless tests")
     ap.add_argument("-k", default="", help="only test files whose name contains this (comma-separated: any of them)")
     ap.add_argument("--no-build", action="store_true")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", build.DEFAULT_BLENDER))
+    add_order_args(ap)
     args = ap.parse_args(argv)
 
     if not Path(args.blender).is_file():
         raise SystemExit(f"Blender not found: {args.blender}")
 
-    if args.no_build:
+    if args.zip:
+        zip_path = Path(args.zip).resolve()
+    elif args.no_build:
         zip_path = build.ext_zip()
     else:
         zip_path = build.main(["--blender", args.blender, "--no-legacy"])
@@ -120,7 +149,7 @@ def main(argv=None):
     install(args.blender, zip_path, env)
 
     pats = args.k.split(",")
-    files = sorted(p for p in TESTS.glob("test_*.py") if any(k in p.name for k in pats))
+    files = order(sorted(p for p in TESTS.glob("test_*.py") if any(k in p.name for k in pats)), args)
     passed = failed = 0
     for path in files:
         results, log, dt = run_test_file(args.blender, path, env)

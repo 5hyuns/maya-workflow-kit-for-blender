@@ -5,6 +5,43 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-10-27
+
+The release after the animation-chain re-audit (steps 230–239): a rig made in the kit now reaches a game engine and
+Maya 2026 the way a Maya rig does. Blender 4.5 LTS through 5.2.x.
+
+### Added
+- **Four View as four real panels** (#148): each panel has its own shading, Show menu, camera and menu bar like
+  Maya's; Space taps between Four View and the panel under the mouse, the layout survives save / open, and switching
+  to Blender folds it back to one view.
+- **Animation layers on joints** (#143): Create Layer from Selected / Add / Remove Selected take the picked joints, S
+  keys joints (quaternion joints too) on the selected layer, and Bake Simulation bakes to BaseAnimation with the
+  layers combined so the result looks the same as before baking.
+- **Received Rigify rigs to the engine** (#145): FBX export writes only the deforming joints (re-chained through the
+  DEF bones), Maya-safe names (no `FBXASC`), and leaves the metarig out; pick walk on Rigify controls follows the rig's
+  hierarchy (upper_arm_fk.L ↑ → shoulder.L). New FBX options "Deforming Joints Only" and "Maya-Safe Names" (on).
+- **Blend shapes next to deformers in FBX** (#144): in-between targets are written as Maya blendShape in-betweens
+  (Maya 2026 reads `blendShape1` like its own FBX), and other deformers are paused while the file is written.
+
+### Changed
+- **Game Exporter clips** (#140) are written as timeline takes: Maya scale, IK arms in place, only the clip takes in
+  the file, and several clips in one file keep their own names and ranges.
+- **Joint orientation the Maya way** (#141): a plain click on Orient Joint / Mirror Joints runs at once with the saved
+  options (❒ opens the window); FBX joints carry Maya's jointOrient (within 4e-5° of Maya 2026).
+- **Constraints on child joints** (#142) move the joint like Maya: position constraints detach only that joint, and
+  rotation-following joints get Maya's axes (a 90° offset is gone).
+- **Kit FBX back into the kit** (#144): File > Import of a kit FBX puts skinned meshes at the file's world position and
+  sets the Time Slider to the take's range, like Maya.
+- **Rig and animation polish** (#146): Enable IK Solver shows its check mark; the first Paint Skin Weights entry picks
+  the first influence in hierarchy order; importing an animation FBX sets the Time Slider to the file's range; typing a
+  value in the Set Driven Key window is no longer overwritten before Key.
+- Release QA now also runs shuffled / reversed test orders, toggle invariants, a seeded monkey, an upgrade path, other
+  add-ons side by side and an end-to-end workflow (`tools/qa/`).
+
+### Fixed
+- **Bevel on a cylinder cap rim** gives Maya's width (it was a sixth of it) (#124).
+- **Delete History** also removes the kit's Extrude / Bevel history (the Channel Box INPUTS emptied like Maya) (#124).
+
 ## [0.5.0] — 2026-10-27
 
 The release after audits 14–16 and the animation chain (steps 192–228). Blender 4.5 LTS through 5.2.x.
