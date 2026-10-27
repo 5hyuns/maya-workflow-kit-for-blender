@@ -861,9 +861,43 @@ classes = (ALLSET_MT_anim_preferences, ALLSET_PT_time_slider, ALLSET_OT_time_scr
            ALLSET_OT_time_slider_unavailable, *TIME_SLIDER_MENUS)
 
 
+# Maya's undo never moves the current time (a time change isn't an undo step there); Blender's memfile undo restores
+# the scene's frame_current with everything else, so Ctrl+Z after scrubbing jumped back (step 240 QA H2-1). The frame
+# is put back from a 0 s timer, not inside undo_post (data written there before the next push is unsafe for redo).
+_KEEP = {}
+
+
+@persistent
+def _keep_frame_pre(*_args):
+    scene = bpy.context.scene
+    if scene is not None:
+        _KEEP["frame"] = (scene.name, scene.frame_current)
+
+
+@persistent
+def _keep_frame_post(*_args):
+    if "frame" in _KEEP and not bpy.app.timers.is_registered(restore_frame):
+        bpy.app.timers.register(restore_frame, first_interval=0.0)
+
+
+def restore_frame():
+    """Put the frame from before the undo / redo back (None: timer done)."""
+    name, frame = _KEEP.pop("frame", (None, None))
+    scene = bpy.context.scene
+    if scene is not None and scene.name == name and scene.frame_current != frame:
+        scene.frame_current = frame
+    return None
+
+
+_UNDO_HANDLERS = (("undo_pre", _keep_frame_pre), ("redo_pre", _keep_frame_pre),
+                  ("undo_post", _keep_frame_post), ("redo_post", _keep_frame_post))
+
+
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    for name, fn in _UNDO_HANDLERS:
+        getattr(bpy.app.handlers, name).append(fn)
     wm = bpy.types.WindowManager
     wm.allset_time_range_on = bpy.props.BoolProperty(
         name="Time Range", description="A Shift-dragged Time Slider range is highlighted", options={'SKIP_SAVE'})
@@ -893,6 +927,12 @@ def register():
 
 
 def unregister():
+    for name, fn in _UNDO_HANDLERS:
+        if fn in getattr(bpy.app.handlers, name):
+            getattr(bpy.app.handlers, name).remove(fn)
+    if bpy.app.timers.is_registered(restore_frame):
+        bpy.app.timers.unregister(restore_frame)
+    _KEEP.clear()
     if _on_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(_on_load)
     bpy.msgbus.clear_by_owner(_OWNER)

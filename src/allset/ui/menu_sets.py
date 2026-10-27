@@ -571,7 +571,8 @@ def _op_description(path):
 WHOLE_MESH_PROPS = {
     "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
     "Edit Mesh/Average Vertices": {"repeat": 10},
-    "Edit Mesh/Circularize": {"value": 1.0},
+    # Circularize: allset.circularize's own defaults are Maya's (step 110); the old LoopTools "value" key made every
+    # object-mode Circularize raise TypeError (step 240 QA D-240-1)
 }
 
 
@@ -603,7 +604,7 @@ class ALLSET_OT_menu_whole_mesh(bpy.types.Operator):
             bpy.ops.mesh.select_mode(type=rule[1])
             bpy.ops.mesh.select_all(action='SELECT')
             getattr(getattr(bpy.ops, mod), name)('EXEC_DEFAULT', **props)
-        except RuntimeError as ex:
+        except (RuntimeError, TypeError) as ex:
             self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
         finally:
             bpy.ops.object.mode_set(mode='OBJECT')

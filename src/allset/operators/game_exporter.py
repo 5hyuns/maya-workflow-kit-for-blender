@@ -407,7 +407,7 @@ class ALLSET_OT_game_exporter(bpy.types.Operator):
         s = settings(context)
         if not s.export_path:
             from . import project
-            s.export_path = project.current_root(context)
+            s.export_path = project.ensure_root(context)   # the default project's folders exist (step 240 QA H1-1)
         return context.window_manager.invoke_props_dialog(self, width=560, title="Game Exporter",
                                                           confirm_text="Export")
 

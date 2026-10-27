@@ -132,6 +132,21 @@ def s_a():
 
 
 @step
+def s_quad_split():
+    # step 237: the four view splits its top row one timer tick later; step 240 QA: a key sent in the tick right
+    # after a layout change can be lost under event simulation (gui_step4_view) — hover a tick first
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+@step
+def s_quad_hover():
+    # the old Quad View had its four views meeting at the area centre; real panels have their own sidebars there
+    panes = import_module(MODULE + ".ui.four_view").panes(win().screen)
+    r = next(r for r in panes[0].regions if r.type == 'WINDOW')
+    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)
+
+
+@step
 def s_quad():
     ev('F', 'PRESS', shift=True)
     ev('F', 'RELEASE', shift=True)
@@ -145,27 +160,57 @@ def s_quad_drawn():
 
 @step
 def s_quad_check():
-    area = view3d()[0]
-    regs = [r for r in area.regions if r.type == 'WINDOW']
-    res = [fit_ratio(area, r, [bpy.data.objects["Cube"]]) for r in regs]
+    # step 237: Four View = four real 3D View areas (ui/four_view.py), not one area's Quad View regions
+    panes = import_module(MODULE + ".ui.four_view").panes(win().screen)
+    pairs = [(a, next(r for r in a.regions if r.type == 'WINDOW')) for a in panes]
+    regs = [r for _a, r in pairs]
+    res = [fit_ratio(a, r, [bpy.data.objects["Cube"]]) for a, r in pairs]
     check(f"Shift+F frames the cube in all {len(regs)} views (ratios {[round(x[1], 3) for x in res]})",
           len(regs) == 4 and all(i and abs(r - 0.95) < 0.03 for i, r in res))
     shot("step17_quad.png")
-    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
-    tap('SPACE')   # back to one view
+    persp = import_module(MODULE + ".ui.four_view").roles(win().screen).get("persp", pairs[0][0])
+    r = next(r for r in persp.regions if r.type == 'WINDOW')
+    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)
+    # back to one view through Tool Box > Single Perspective View (a Space tap here left the factory layout's view
+    # without a hotbox on the next Space press; in the Maya layout it works — tmp/qa240/h_main/hb, step 240 QA)
+    with bpy.context.temp_override(window=win(), area=persp, region=r):
+        bpy.ops.allset.quick_layout(layout='SINGLE')
 
 
 @step
-def s_hotbox():
+def s_after_leave():
+    for a in win().screen.areas:
+        a.tag_redraw()
+
+
+@step
+def s_after_leave2():
+    for a in win().screen.areas:
+        a.tag_redraw()
+
+
+@step
+def s_hotbox_hover():
+    # step 240 QA: after the four view closed, a key in the same tick as the move is lost under event simulation
     area, region = view3d()
     rect = view_mod().visible_bounds(area, region)
     C["hx"] = region.x + int(rect[2]) - 30          # near the sidebar's left edge
     ev('MOUSEMOVE', 'NOTHING', x=C["hx"], y=C["y"])
+
+
+@step
+def s_hotbox():
     ev('SPACE', 'PRESS')
 
 
 @step
 def s_hotbox_wait():
+    for a in win().screen.areas:
+        a.tag_redraw()
+
+
+@step
+def s_hotbox_wait2():
     for a in win().screen.areas:
         a.tag_redraw()
 
@@ -178,7 +223,7 @@ def s_hotbox_check():
     rect = draw.window_bounds(win(), region)
     lay = draw.ACTIVE.get("hotbox")
     xs = [r[2] for r, _k, _l in lay.labels] if lay else []
-    check(f"hotbox rows end inside the window (max x {max(xs) if xs else None:.0f} <= {rect[2]:.0f})",
+    check(f"hotbox rows end inside the window (max x {max(xs) if xs else -1:.0f} <= {rect[2]:.0f})",
           bool(xs) and max(xs) <= rect[2] + 1)
     shot("step17_hotbox.png")
     ev('SPACE', 'RELEASE')

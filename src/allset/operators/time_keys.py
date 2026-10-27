@@ -703,18 +703,18 @@ class ALLSET_OT_set_key(bpy.types.Operator):
 
     breakdown: BoolProperty(name="Breakdown", description="Set a breakdown key (Maya Set Breakdown Key)",
                             options={'SKIP_SAVE'})
-    channels: EnumProperty(name="Channels", items=(("", "All Keyable", "Every keyable channel"),
+    channels: EnumProperty(name="Channels", items=(("ALL", "All Keyable", "Every keyable channel"),
                                                    ("TRANSLATE", "Translate", "Translate X / Y / Z (Maya Shift+W)"),
                                                    ("ROTATE", "Rotate", "Rotate X / Y / Z (Maya Shift+E)"),
                                                    ("SCALE", "Scale", "Scale X / Y / Z (Maya Shift+R)")),
-                           default="", options={'SKIP_SAVE'})
+                           default="ALL", options={'SKIP_SAVE'})   # not "": Blender reads it as a separator (QA B)
 
     @classmethod
     def poll(cls, context):
         return context.scene.keying_sets.active is not None or _cb().lead(context) is not None
 
     def execute(self, context):
-        n = set_key(context, self.breakdown, self.channels)
+        n = set_key(context, self.breakdown, "" if self.channels == 'ALL' else self.channels)
         if n == 0:
             self.report({'WARNING'}, "Nothing keyable selected")
             return {'CANCELLED'}
