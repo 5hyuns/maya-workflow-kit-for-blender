@@ -18,6 +18,8 @@ one (Maya's last selected) being the target; in mesh edit mode each mesh's selec
 vertices in selection order (``select_history``), the active object's being the target.
 """
 
+import math
+
 import bmesh
 import bpy
 from bpy.props import BoolProperty, EnumProperty, IntProperty, PointerProperty
@@ -150,15 +152,55 @@ def align_objects(context, axes=(True, False, False), mode='MID'):
 
 # --- Match Transformations ------------------------------------------------------------------------
 
-def match_transform(context, translate=True, rotate=True, scale=True):
+# A joint's Maya X / Y / Z = the bone's Y / Z / X, an object's Maya X / Y / Z = Blender X / Z / -Y (CLAUDE.md step 57),
+# so an object lined up with a joint's Maya axes has world = bone world @ Rz(+90) (step 226 L1 uses the same turn).
+_BONE_TO_OBJECT = Matrix.Rotation(math.pi / 2, 4, 'Z')
+
+
+def _maya_frame(node):
+    """World matrix of ``node`` (Object / PoseBone) in an object's axis convention (Maya Match compares Maya axes)."""
+    if isinstance(node, bpy.types.PoseBone):
+        return node.id_data.matrix_world @ node.matrix @ _BONE_TO_OBJECT
+    return node.matrix_world.copy()
+
+
+def _set_maya_frame(node, m):
+    if isinstance(node, bpy.types.PoseBone):
+        node.matrix = node.id_data.matrix_world.inverted_safe() @ m @ _BONE_TO_OBJECT.inverted()
+    else:
+        node.matrix_world = m
+
+
+def match_lead(context):
+    """(lead, others) of Maya Match Transformations: the last selected node is the lead. A joint lead = the active pose
+    bone in pose mode (decision 16: picking a joint enters Pose mode, the objects picked before stay selected), or the
+    active bone of an active armature in object mode (step 226 L3, ATTACH_PLAN L3 (a))."""
     lead = context.view_layer.objects.active
+    if lead is None:
+        return None, []
     others = [ob for ob in context.selected_objects if ob is not lead]
+    if lead.type == 'ARMATURE' and lead.pose is not None:
+        pb = None
+        if lead.mode == 'POSE':
+            pb = context.active_pose_bone
+            others += [b for b in (context.selected_pose_bones or ()) if b != pb and b.id_data == lead]
+        elif lead.data.bones.active is not None:
+            pb = lead.pose.bones.get(lead.data.bones.active.name)
+        if pb is not None:
+            return pb, others
+    return lead, others
+
+
+def match_transform(context, translate=True, rotate=True, scale=True):
+    lead, others = match_lead(context)
     if lead is None or not others:
         return 0
-    lt, lr, ls = lead.matrix_world.decompose()
-    for ob in others:
-        t, r, s = ob.matrix_world.decompose()
-        ob.matrix_world = Matrix.LocRotScale(lt if translate else t, lr if rotate else r, ls if scale else s)
+    lt, lr, ls = _maya_frame(lead).decompose()
+    for node in others:
+        t, r, s = _maya_frame(node).decompose()
+        _set_maya_frame(node, Matrix.LocRotScale(lt if translate else t, lr if rotate else r, ls if scale else s))
+        if isinstance(node, bpy.types.PoseBone):
+            context.view_layer.update()      # the next bone's frame may hang below this one
     return len(others)
 
 
@@ -228,7 +270,7 @@ class ALLSET_OT_match_transform(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        return context.mode in ('OBJECT', 'POSE')
 
     def execute(self, context):
         k = self.kind

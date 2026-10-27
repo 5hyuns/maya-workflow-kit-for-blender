@@ -1434,3 +1434,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 ### Step 224 — Paint Skin Weights numeric / skin clusters
 - [ ] Visualization > Numeric > Show Numbers: labels stay put during a stroke and update when it ends; with many vertices in view the labels follow the brush as the mouse moves (no lag).
 - [ ] Second Bind Skin on a skinned mesh: the question pops up at the mouse, Yes is greyed, No / moving away closes it.
+
+### Step 226 L1 — control shapes (bone Custom Shapes, Issue #136)
+- [ ] Command Line `cmds.parent('nurbsCircleShape1', 'joint1', s=True, r=True)` on a joint chain: the circle draws around joint1 (CV local values in the joint's frame), `nurbsCircle1` stays as an empty transform; a click on the circle's wire in Object Mode picks joint1 (Pose, Channel Box = joint1), a click inside the circle picks nothing; dragging right after the click on the wire moves the joint.
+- [ ] Same with a Rigify-generated rig: clicking a widget's wire picks its control bone; File > Export All (FBX) has no WGT- or Shape objects when re-imported.

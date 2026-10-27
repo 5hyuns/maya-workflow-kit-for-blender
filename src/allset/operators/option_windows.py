@@ -147,11 +147,32 @@ def _last_constraint(context):
     return owner.constraints[-1] if owner is not None and owner.constraints else None
 
 
+def _group_axes(cons, ctype, v):
+    """Constraint axes on every Blender constraint of a kit multi-target group (step 226): the parent group's Copy
+    Location members take Translate, its Copy Rotation members Rotate (Maya Z = Blender -Y, Maya Y = Blender Z)."""
+    for con in cons:
+        if ctype == 'CHILD_OF':
+            pre = "all_t" if con.type == 'COPY_LOCATION' else "all_r"
+            keys = ("tx", "tz", "ty") if con.type == 'COPY_LOCATION' else ("rx", "rz", "ry")
+            con.use_x, con.use_y, con.use_z = (v[pre] or v[k] for k in keys)
+        else:
+            con.use_x = v["all"] or v["x"]
+            con.use_y = v["all"] or v["z"]
+            con.use_z = v["all"] or v["y"]
+
+
 def _constraint(ctype):
     def run(context, v):
-        res = bpy.ops.allset.constrain('EXEC_DEFAULT', type=ctype)
+        from . import constrain_multi
+        res = bpy.ops.allset.constrain('EXEC_DEFAULT', type=ctype, weight=v["weight"],
+                                       maintain_offset='ON' if v["maintain_offset"] else 'OFF')
         con = _last_constraint(context)
         if res != {'FINISHED'} or con is None:
+            return res
+        mb = constrain_multi.member(con)
+        if mb is not None:
+            # a multi-target node: Maintain offset and Weight were applied when it was built (weights = W0, W1 ...)
+            _group_axes(constrain_multi.members(mb.owner, mb.group), ctype, v)
             return res
         con.influence = v["weight"]
         if ctype == 'CHILD_OF':

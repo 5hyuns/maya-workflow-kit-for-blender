@@ -37,6 +37,16 @@ def S(name, open_, *rows, subs=()):
     return Section(name, open_, rows, subs)
 
 
+# Maya Drawing Overrides colour (overrideEnabled / overrideRGBColors / overrideColor / overrideColorRGB): RNA over the
+# kit's ID properties, operators/wire_color.py (step 226, research/maya/re/maya2026_controls.md §L2). Objects and
+# joints (pose bones) both have them. Object.color is written by the kit from these, so it has no row of its own.
+_DRAWING_OVERRIDES = (
+    ("prop", "ob", "allset_override_enabled", "Enable Overrides"),
+    ("prop", "ob", "allset_override_mode", "Color"),
+    ("prop", "ob", "allset_override_index", "Color Index"),
+    ("prop", "ob", "allset_override_color", "Color"),
+)
+
 # --- transform (AEtransformMain.mel:34, AEtransformNoScroll.mel:725-800) ---------------------
 TRANSFORM = [
     S("Transform Attributes", True,                                          # collapse=0
@@ -63,7 +73,7 @@ TRANSFORM = [
             ("prop", "ob", "display_bounds_type", "Bounds Type")),
           S("Drawing Overrides", False,                                     # collapse=1
             ("prop", "ob", "display_type", "Display Type"),
-            ("prop", "ob", "color", "Color")),
+            *_DRAWING_OVERRIDES),
       ]),
 ]
 
@@ -295,7 +305,8 @@ JOINT = [
       ("draw", "visibility"),
       ("prop", "arm", "show_axes", "Display Local Axis"),
       ("prop", "armob", "show_in_front", "Always Draw On Top"),
-      ("prop", "ob", "custom_shape", "Display as Control Shape")),
+      ("prop", "ob", "custom_shape", "Display as Control Shape"),
+      subs=[S("Drawing Overrides", False, *_DRAWING_OVERRIDES)]),         # collapse=1 (step 226)
 ]
 
 # --- nucleus (step 68): Maya's nucleus1 attributes on Scene.allset_nucleus (operators/fx.py). Section names from

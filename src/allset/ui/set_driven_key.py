@@ -58,13 +58,14 @@ class ALLSET_UL_sdk_attrs(bpy.types.UIList):
 
 
 class ALLSET_UL_sdk_nodes(bpy.types.UIList):
-    """Driven node rows (the node whose attributes the right list shows is pressed)."""
+    """Driven node rows (the node whose attributes the right list shows is pressed). Step 226: a loaded object's
+    blendShape and constraint nodes follow it (Maya: any keyable attribute can be driven, maya2026_controls.md §L5)."""
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0):
-        node = sdk.node_of(item.object, item.bone)
+        node = sdk.item_node(item)
         selected = index == data.driven_index
-        op = layout.operator("allset.sdk_pick", text=node.name if node else "?", emboss=selected,
-                             depress=selected)
+        op = layout.operator("allset.sdk_pick", text=sdk.node_label(node) if node is not None else "?",
+                             emboss=selected, depress=selected)
         op.which, op.index = 'NODE', index
 
     def draw_filter(self, context, layout):
@@ -87,7 +88,7 @@ def draw(layout, context):
     left = split.box().column(align=True)
     drv = sdk.driver_node(st)
     if drv is not None:
-        left.label(text=drv.name)
+        left.label(text=sdk.node_label(drv))
     split.template_list("ALLSET_UL_sdk_attrs", "driver", st, "driver_items", st, "driver_items_index",
                         rows=rows, maxrows=rows)
 

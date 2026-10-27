@@ -18,6 +18,7 @@ import bpy
 import numpy as np
 
 from .. import compat
+from . import control_shapes
 from .preselect import project, segment_distance
 
 # Maya factory customSelectPriority (PREF:781-847) for the kit's object kinds; anything else is 2.
@@ -58,6 +59,50 @@ def segments_hit(mouse, a, b, front, width=None):
     return float(dist.min())
 
 
+def shape_hit(mouse, xa, xb, front):
+    """Screen distance from ``mouse`` to a Custom Shape's projected wire (segments xa-xb, both ends in front)."""
+    return segments_hit(mouse, xa, xb, front)
+
+
+def pick_joint(context, ob, mouse, radius):
+    """``joint_selection.pick`` for pose / object mode with Custom Shapes: a bone that has one is hit on its drawn
+    wire (projected evaluated shape segments), not on the octahedron Blender doesn't draw for it (step 226)."""
+    from . import joint_selection
+    shaped = any(pb.custom_shape is not None for pb in ob.pose.bones)
+    if ob.mode == 'EDIT' or not shaped or not control_shapes.shows_custom_shapes(ob):
+        return joint_selection.pick(context, ob, mouse, radius)
+    depsgraph = context.evaluated_depsgraph_get()
+    persp = np.asarray(context.region_data.perspective_matrix, dtype=np.float64)
+    region = context.region
+    candidates = []
+    for pb in ob.pose.bones:
+        bone = pb.bone
+        if (compat.bone_hidden(pb) or bone.hide_select or (bone.collections and
+                not any(c.is_visible_effectively for c in bone.collections))):
+            continue
+        if pb.custom_shape is not None:
+            a, b = control_shapes.shape_segments(ob, pb, depsgraph)
+            if len(a) == 0:
+                continue
+            xa, fa = project(a, persp, region.width, region.height)
+            xb, fb = project(b, persp, region.width, region.height)
+            d = shape_hit(mouse, xa, xb, fa & fb)
+            if d <= radius:
+                candidates.append((False, d, pb.name))      # the drawn wire is an exact hit, like a joint head
+            continue
+        points = np.asarray([ob.matrix_world @ pb.head, ob.matrix_world @ pb.tail])
+        screen, front = project(points, persp, region.width, region.height)
+        if not all(front):
+            continue
+        distance, t = segment_distance(mouse, screen[:1], screen[1:])
+        width = BONE_WIDTH * np.linalg.norm(screen[1] - screen[0]) if ob.data.display_type == 'OCTAHEDRAL' else 0
+        shaft = max(0.0, float(distance[0] - bone_width(t, width)[0]))
+        head = float(np.linalg.norm(screen[0] - mouse))
+        if min(head, shaft) <= radius:
+            candidates.append((head > radius, head if head <= radius else shaft, pb.name))
+    return min(candidates)[2] if candidates else None
+
+
 # --- scene -------------------------------------------------------------------------------------------------
 
 def ik_targets(scene):
@@ -93,14 +138,23 @@ def _segments(ob, kind, depsgraph):
     per unit of length (bones)."""
     mw = ob.matrix_world
     if kind == 'ARMATURE':
-        a, b = [], []
+        # a bone with a Custom Shape is drawn as that shape's wire, not the octahedron (step 226, decision 1 note 1)
+        a, b, reach = [], [], []
+        shapes = control_shapes.shows_custom_shapes(ob)
         for pb in ob.pose.bones:
             bone = pb.bone
             if compat.bone_hidden(pb) or (len(bone.collections) and not any(c.is_visible_effectively for c in bone.collections)):
                 continue
+            if shapes and pb.custom_shape is not None:
+                sa, sb = control_shapes.shape_segments(ob, pb, depsgraph)
+                a.extend(sa)
+                b.extend(sb)
+                reach.extend([0.0] * len(sa))
+                continue
             a.append(mw @ pb.head)
             b.append(mw @ pb.tail)
-        return a, b, BONE_WIDTH
+            reach.append(BONE_WIDTH)
+        return a, b, np.asarray(reach, dtype=np.float64)
     if kind == 'CURVE':
         ev = ob.evaluated_get(depsgraph)
         me = ev.to_mesh()
@@ -145,7 +199,7 @@ def hits(context, region, rv3d, mouse):
             continue
         xa, fa = project(np.asarray(a, dtype=np.float64), persp, region.width, region.height)
         xb, fb = project(np.asarray(b, dtype=np.float64), persp, region.width, region.height)
-        width = reach * np.hypot(*(xb - xa).T) if reach else None
+        width = reach * np.hypot(*(xb - xa).T) if np.any(reach) else None
         d = segments_hit(mouse, xa, xb, fa & fb, width)
         out.append((ob.name, pri, max(d, 0.0)))
     return out
@@ -210,7 +264,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
                 for ob in context.visible_objects:
                     if ob.type != 'ARMATURE' or ob.hide_select:
                         continue
-                    name = joint_selection.pick(context, ob, mouse, radius)
+                    name = pick_joint(context, ob, mouse, radius)
                     if name is not None:
                         selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
                         return self._finish_pick(context, event, selected)
@@ -218,7 +272,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
             if context.mode == 'POSE':
                 # Priority can be disabled without disabling direct joint selection in the rig.
                 ob = context.active_object
-                name = joint_selection.pick(context, ob, mouse, radius)
+                name = pick_joint(context, ob, mouse, radius)
                 if name is not None:
                     selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
                     return self._finish_pick(context, event, selected)
@@ -228,7 +282,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
             return {'PASS_THROUGH'}
         ob = context.scene.objects[best[0]]
         if ob.type == 'ARMATURE':
-            name = joint_selection.pick(context, ob, mouse, radius)
+            name = pick_joint(context, ob, mouse, radius)
             if name is None:
                 # The coarse armature hit includes unselectable bones; let native picking decide.
                 if context.mode == 'POSE':
