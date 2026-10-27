@@ -327,9 +327,12 @@ def s_time_on():
         reads.append((t2 - t) * 1000.0)
         parts.append((round((t1 - t) * 1000, 1), round((t2 - t1) * 1000, 1)))
     print("GUI step134 read / batch ms", parts)
+    # PR #125 (2e8dcde, kept by the maintainer) rebuilds from the live edit BMesh so the highlight never lags the
+    # selection: 101k vertices 36 -> 73 ms per rebuild (git bisect, step 229); the per-frame draw is unchanged.
+    REBUILD_MS = 90.0
     print("GUI step134 frame ms", C["verts"], C["off"], C["on"], "rebuild ms", reads)
     check(f"{C['verts']} vertices in edit mode: frame {C['off']:.2f} -> {C['on']:.2f} ms with Maya component "
-          f"colours, cache rebuild {min(reads):.1f} ms (< 60 ms)", st is not None and min(reads) < 60.0)
+          f"colours, cache rebuild {min(reads):.1f} ms (< {REBUILD_MS:.0f} ms)", st is not None and min(reads) < REBUILD_MS)
     shot("100k")
 
 
