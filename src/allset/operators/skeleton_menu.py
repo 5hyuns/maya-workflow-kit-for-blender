@@ -57,13 +57,16 @@ def _end_tail(eb_head, frame, length):
 def _new_joint(ob, ebs, like):
     eb = ebs.new(joints.next_joint_name(extra={e.name for e in ebs}))
     eb.inherit_scale = like.inherit_scale
+    joints.stamp_last(eb)
     return eb
 
 
 def _reparent(eb, parent):
-    """Re-hang ``eb`` under ``parent`` keeping where it is (connected only when its head sits on the tail)."""
+    """Re-hang ``eb`` under ``parent`` keeping where it is (connected only when its head sits on the tail); it becomes
+    the newest child (Maya child order, step 248)."""
     eb.use_connect = False
     eb.parent = parent
+    joints.stamp_last(eb)
     if parent is not None and (parent.tail - eb.head).length < EPS:
         eb.use_connect = True
 
@@ -147,6 +150,7 @@ def remove_joints(ob, names):
         for k in kids:
             k.use_connect = False
             k.parent = parent
+            joints.stamp_last(k)
         if aimed:
             first = next((k for k in kids if (k.head - parent.head).length > EPS), None)
             if first is not None:
@@ -197,6 +201,7 @@ def disconnect_joint(ob, name):
     j.parent = None
     e.parent = parent
     e.use_connect = connected
+    joints.stamp_last(j)          # a new root: last among the roots (Maya: a new world node)
     _aim(e, e.tail, fj)
     _store(j, fj)
     return e.name, {j.name: fj, e.name: fj}

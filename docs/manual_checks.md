@@ -1478,3 +1478,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skin > Edit Influences > Set Max Influences...: the dialog shows Max influences 5; 2 on a skinned arm — the deformation looks like Maya's (weights recomputed by distance, painted weights replaced).
 - [ ] Bind a skeleton while it is posed, pose it further, Go to Bind Pose: Maya returns to the pose at bind; compare the mesh (Blender's skin binds at the rest pose — see step_247.md 남은 것).
 - [ ] Skin > Mirror Skin Weights on a character with uneven topology (left / right vertices not at mirrored places): the copied side looks smooth like Maya (closest point + interpolation), no stair steps.
+
+## Step 248 — Pick walk order and joint display (#165)
+- [ ] Build a spine with three branches by hand (Joint Tool: click spine, then L_arm, R_arm, neck branches): ↓ goes to the first branch made, ← / → walk the branches in the order they were made and wrap, like Maya.
+- [ ] P a branch to another joint and back: it is now the last child (→ from the others reaches it last), like Maya.
+- [ ] Channel Box: a joint shows Radius under Visibility; typing 2 makes the joint easier to click (larger pick sphere); Display > Animation > Joint Size... scales all of them.
+- [ ] Display > Transform Display > Local Rotation Axes with joints selected: the skeleton's axes show (Blender shows all joints of that skeleton, Maya only the selected ones).

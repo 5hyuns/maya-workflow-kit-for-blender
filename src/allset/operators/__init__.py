@@ -146,6 +146,8 @@ from . import skeleton_menu  # noqa: E402  step 246 (#163): Insert / Remove / Di
 classes += skeleton_menu.classes
 from . import skin_basics  # noqa: E402  step 247 (#164): Prune / Set Max Influences / Go to Bind Pose
 classes += skin_basics.classes
+from . import joint_display  # noqa: E402  step 248 (#165): Radius row, Local Rotation Axes, Joint Size
+classes += joint_display.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -165,6 +167,7 @@ def register():
     flow_path_228.register_props()
     default_light.register()
     joint_edit.register()
+    joint_display.register_props()
     ik_rp.register_handlers()
     snap_align.register_props()
     material.register_props()
@@ -222,6 +225,7 @@ def register():
 def unregister():
     ik_rp.unregister_handlers()
     joint_edit.unregister()
+    joint_display.unregister_props()
     curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()
     deformers_205b.unregister_handlers()
