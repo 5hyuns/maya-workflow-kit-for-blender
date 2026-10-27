@@ -83,14 +83,18 @@ def s_gravity_check():
     open_menu("Windows/Animation Editors")
 
 
+TRAX_ROW = 6      # rows below the tear-off line in Windows > Animation Editors (Maya 2026)
+
+
 @step
 def s_trax_walk():
     # The menu opens with its first row under the mouse — Maya's tear-off line since step 116 — rows are 20 px at
-    # scale 1: Graph Editor is one row down, Trax Editor three.
+    # scale 1: Graph Editor is one row down; Maya 2026 (step 219) puts Dope Sheet, Time Editor, MotionMaker Editor and
+    # Camera Sequencer before Trax Editor, six rows down.
     area, region = view3d()
     x, y = region.x + region.width // 2, region.y + region.height // 2
     pitch = round(20 * bpy.context.preferences.system.ui_scale)
-    for n in (1, 2, 3):
+    for n in range(1, TRAX_ROW + 1):
         ev('MOUSEMOVE', 'NOTHING', x=x + 4, y=y - n * pitch)
 
 
@@ -105,7 +109,7 @@ def s_trax_wait2():
     area, region = view3d()
     x, y = region.x + region.width // 2, region.y + region.height // 2
     pitch = round(20 * bpy.context.preferences.system.ui_scale)
-    ev('MOUSEMOVE', 'NOTHING', x=x + 6, y=y - 3 * pitch)
+    ev('MOUSEMOVE', 'NOTHING', x=x + 6, y=y - TRAX_ROW * pitch)
 
 
 @step

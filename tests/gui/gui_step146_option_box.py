@@ -75,7 +75,7 @@ def first_row(menu):
     mouse (gui_step143_user grid_box); Key is taller than the window, so Blender pins it to the window top (Set Key
     87 px down); Constrain opens with its tear-off line at the mouse, Parent 23 px under it."""
     if menu == "mainDisplayMenu":
-        return C["x"], C["open"][1] + px(34)
+        return C["x"], C["open"][1] + px(9)   # Maya 2026 Display menu (step 229 shot)
     if menu == "mainKeysMenu":
         return C["x"], win().height - px(87 if C["case"] == "Key/Set Key" else 444)
     return C["x"], C["open"][1] - px(23)

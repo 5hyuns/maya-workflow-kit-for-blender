@@ -55,6 +55,10 @@ def tool_id():
     return t.idname if t else None
 
 
+# PR #125's always-running window watchers are not a user modal (step 229)
+WATCHERS = {'ALLSET_OT_joint_outliner_select', 'ALLSET_OT_pose_empty_click'}
+
+
 @step
 def s_setup():
     C["x"], C["y"] = setup()
@@ -109,7 +113,7 @@ def s_extrude_modal():
     ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
     _o, rec = ex.active(bpy.context)
     check(f"Ctrl+E: polyExtrudeFace right away, no drag modal ({rec and rec.name}, {list(win().modal_operators)})",
-          rec is not None and not list(win().modal_operators))
+          rec is not None and not [o for o in win().modal_operators if o.bl_idname not in WATCHERS])
 
 
 @step
@@ -125,7 +129,7 @@ def s_bevel_modal():
     # Maya polyBevel3 since step 139 (#16): beveled right away, no drag modal
     ex = sys.modules["sim"].import_module(sys.modules["sim"].MODULE + ".operators.extrude")
     _o, rec = ex.active(bpy.context)
-    mods = [op.bl_idname for op in win().modal_operators]
+    mods = [op.bl_idname for op in win().modal_operators if op.bl_idname not in WATCHERS]
     check(f"Ctrl+B: polyBevel right away, no modal ({rec and rec.name}, {mods})",
           rec is not None and rec.name.startswith("polyBevel") and not mods)
     ev('MOUSEMOVE', 'NOTHING', x=C["x"] + 60, y=C["y"])

@@ -94,7 +94,8 @@ def s_favorite_shot():
 @step
 def s_favorite_done():
     mat = cube().active_material
-    check("Favorite > Blinn assigned blinn1 to the cube under the menu", mat is not None and mat.name == "blinn1")
+    # Maya numbers a new node one past the highest (steps 208 / 211, naming.next_number): blinn5 exists -> blinn6
+    check("Favorite > Blinn assigned blinn6 to the cube under the menu", mat is not None and mat.name == "blinn6")
     check("menu closed", not C["draw"].ACTIVE)
     rmb_click()
 
@@ -127,7 +128,7 @@ def s_existing_shot():
 
 @step
 def s_existing_closed():
-    check("Escape leaves the cube's material alone", cube().active_material.name == "blinn1")
+    check("Escape leaves the cube's material alone", cube().active_material.name == "blinn6")
 
 
 @step

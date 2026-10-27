@@ -70,7 +70,7 @@ def s_open():
 @step
 def s_hover():
     # Display opens mid-viewport with Grid 34 px above the mouse (gui_step146_option_box.first_row)
-    C["row"] = (C["x"], C["y"] + px(34))
+    C["row"] = (C["x"], C["y"] + px(9))   # Maya 2026 Display menu (step 229 shot)
     ev('MOUSEMOVE', 'NOTHING', x=C["row"][0] - 4, y=C["row"][1])
 
 

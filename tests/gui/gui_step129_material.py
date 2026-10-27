@@ -54,8 +54,8 @@ def s_scene():
     mat = material.new_material('LAMBERT')
     ob.data.materials.clear()
     ob.data.materials.append(mat)
-    bsdf = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
-    bsdf.inputs["Base Color"].default_value = (0.8, 0.02, 0.02, 1.0)   # the AE Color field writes this socket
+    # the AE Color field writes Maya's Color: since step 214 the "Maya Diffuse" input (material.color_socket)
+    material.color_socket(mat).default_value = (0.8, 0.02, 0.02, 1.0)
     for a in win().screen.areas:
         a.tag_redraw()
 
