@@ -94,6 +94,7 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
         return parent.name
     eb = ebs.new(next_joint_name())
     eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (factory; Blender 4.5 checked, joint_math.md)
+    stamp_last(eb)                 # Maya child order = creation order (step 248)
     eb.head = p
     if parent is None:
         eb.tail = p + Vector(up).normalized() * length
@@ -398,7 +399,9 @@ def joint_sphere_radius(arm, bone):
     scale = max(arm.matrix_world.to_scale())
     maya = bone.get(RADIUS)
     if maya is not None:     # step 244: the Maya joint radius (Joint Tool variable bone size) is the click sphere
-        return float(maya) * units.maya_unit(bpy.context.scene) * scale
+        # step 248: x Display > Animation > Joint Size (Maya jointDisplayScale)
+        size = float(getattr(bpy.context.scene, "allset_joint_size", 1.0) or 1.0)
+        return float(maya) * units.maya_unit(bpy.context.scene) * scale * size
     if arm.data.display_type != 'OCTAHEDRAL':
         return 0.0
     src = bone.parent if bone.parent is not None and bone.use_connect else bone
@@ -780,6 +783,7 @@ def mirror(ob, names, plane="XY", behavior=True, search="", replace=""):
             rot = refl @ src.matrix.to_3x3()
             rot.col[0 if behavior else 2] *= -1.0              # right-handed again (Behavior = symmetrize)
             dst = ebs.new(mirrored_name(name, search, replace, taken))
+            stamp_last(dst)
             taken.add(dst.name)
             dst.head = refl @ src.head + origin
             dst.tail = refl @ src.tail + origin
@@ -886,8 +890,37 @@ CONTROLLER = "allset_controller"
 CONTROLLER_PARENT = "allset_controller_parent"
 
 
+# Step 248 (Issue #165): Maya's pickWalk goes down to the first child and sideways through the siblings in the
+# parent's child order, wrapping at the ends (tests/maya2026_rig_data.py SELECT_PICK: spine's children L_arm, R_arm,
+# neck — L_arm left -> neck, neck right -> L_arm). Maya's child order = creation order, a re-parented node goes last.
+# Blender keeps bones in creation order (``arm.bones``, the edit-bone list); the kit stamps ``CHILD_ORDER`` on a bone
+# it re-parents (P, Connect / Remove / Disconnect / Insert Joint) with the armature's next number, so it sorts last.
+CHILD_ORDER = "allset_child_order"
+
+
+def child_order_key(bone):
+    """Sort key of a bone (Bone or EditBone) among its siblings: Maya child order."""
+    stamp = bone.get(CHILD_ORDER)
+    if stamp is not None:
+        return float(stamp)
+    bones = bone.id_data.edit_bones if isinstance(bone, bpy.types.EditBone) else bone.id_data.bones
+    try:
+        return float(bones.find(bone.name))
+    except (AttributeError, ReferenceError):
+        return 0.0
+
+
+def stamp_last(eb):
+    """Mark edit bone / bone ``eb`` as its parent's newest child (Maya parent puts a re-parented node last)."""
+    arm = eb.id_data
+    bones = arm.edit_bones if arm.is_editmode else arm.bones
+    used = [float(b.get(CHILD_ORDER)) for b in bones if b.get(CHILD_ORDER) is not None]
+    eb[CHILD_ORDER] = max([len(bones)] + used) + 1.0
+
+
 def _by_name(bones):
-    return sorted(bones, key=lambda b: b.name)
+    """Siblings in Maya child order (the name kept for the callers' history: it sorted by name before step 248)."""
+    return sorted(bones, key=child_order_key)
 
 
 def _wrap(sibs, bone, direction):
@@ -1138,6 +1171,7 @@ def parent_joints(ob, names, parent_name):
                 continue                                       # would make a loop
             eb.use_connect = False
             eb.parent = parent
+            stamp_last(eb)
             n += 1
     return n
 

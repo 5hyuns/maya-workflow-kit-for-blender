@@ -2328,6 +2328,15 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             draw_channel_row(r, ob, key, row, "text", key in sel, sel_owner=row, sel_prop="sel")
         else:
             draw_channel_row(r, ob, key, ob, f'["{name}"]', key in sel)
+    # step 248 (#165): a joint's Radius under Visibility (Maya joint.radius, non-keyable; operators/joint_display.py)
+    if is_bone(ob) and hasattr(ob.bone, "allset_joint_radius"):
+        r = lines.row()
+        if r is not None:
+            split = r.row(align=True).split(factor=0.5, align=True)
+            split.alignment = 'RIGHT'
+            split.label(text="Radius")
+            split.prop(ob.bone, "allset_joint_radius", text="")
+            r.label(text="", icon='BLANK1')
 
     # SHAPES: the shape name is a rename field (Maya, cb135/pass1/c04_shape_clicked.png); camera / light shapes show
     # their attributes expanded (c11_camera.png, c12_spot_light.png)

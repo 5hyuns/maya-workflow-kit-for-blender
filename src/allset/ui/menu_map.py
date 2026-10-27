@@ -295,7 +295,8 @@ MAP = {
     # one Maya visibility = hide_viewport (operators/visibility.py, step 129 #26)
     "Display/Hide": ("allset.visibility", {"action": 'HIDE'}),
     "Display/Show": ("allset.visibility", {"action": 'SHOW_ALL'}),
-    "Display/Transform Display/Local Rotation Axes": ("wm.context_toggle", {"data_path": "object.show_axis"}),
+    # step 248 (#165): joints = their skeleton's bone axes, objects = every selected one (operators/joint_display.py)
+    "Display/Transform Display/Local Rotation Axes": "allset.local_rotation_axes",
     "Display/Frame All in All Views": ("allset.frame_all_views", {"selected": False}),
     "Display/Frame Selection in All Views": ("allset.frame_all_views", {"selected": True}),
     "Display/Frame Selection with Children in All Views": ("allset.frame_all_views",
@@ -679,6 +680,7 @@ MAP.update({
     "Display/Object Display/No Bounding Box": ("allset.object_display", {"kind": 'NO_BBOX'}),
     "Display/Polygons": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh", "keep_open": True}),
     "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
+    "Display/Animation/Joint Size...": "allset.joint_size",              # step 248: Maya jointDisplayScale
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
     # step 226 (#136): Maya's Wireframe Color window (user palette 1-8 / RGB, Apply / Default / Close)
     "Display/Wireframe Color...": ("allset.wireframe_color", {}),
