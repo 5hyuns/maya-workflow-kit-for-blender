@@ -1461,3 +1461,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Joint Tool in the side and top views (real mouse): the secondary axis follows the bend like Maya (Display Local Axis), a zig-zag flips at the bend joint, the end joint copies its parent's axes.
 - [ ] Skeleton > Orient Joint ❒: Orient Joint to World, Primary / Secondary axis and Auto orient secondary axis change the axes as in Maya; a rotated joint prints "Skipping <joint>: It has non-zero rotations."
 - [ ] AE joint tab: Joint Orient reads Maya's values; Segment Scale Compensate check box off -> scaling the parent shears the child like Maya SSC off.
+
+## Step 245 — IK RP like Maya (#162)
+- [ ] Skeleton > Create IK Handle on a bent arm with a real mouse, then drag the handle with the Move manipulator: the elbow stays on the pole side like Maya, no flip when the goal passes near the shoulder.
+- [ ] Channel Box: type Twist 45 / -45 on the handle, and Pole Vector X/Y/Z values: the arm plane turns like Maya's; key Twist over frames and play: no visible lag.
+- [ ] Constrain > Pole Vector with a locator, then move the locator: the knee follows it.

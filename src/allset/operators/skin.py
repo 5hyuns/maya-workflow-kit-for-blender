@@ -123,6 +123,10 @@ def create_ik(context, arm, start, end, solver="RP", solver_enable=True, weight=
     con.mute = not solver_enable
     from . import ik_fk
     ik_fk.ensure_blend(arm, ik_bone, con)           # Maya Ik Blend on the handle (step 223)
+    if solver == "RP":
+        # Maya ikRPsolver: default pole vector + Twist channels, the pole helper, Blender's pole angle (step 245)
+        from . import ik_rp
+        ik_rp.setup(context, arm, ik_bone, con, handle)
     if context.active_object is not None and context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
     for ob in context.selected_objects:
@@ -251,24 +255,27 @@ def _chain_heads(arm, con_bone, count):
 
 
 def set_pole(context, arm, pb, con, pole):
-    """Pole target + the pole angle that keeps the chain where it is: the analytic angle's sign and
-    half-turn depend on the bone roll, so the candidates are tried and the one that moves the chain
-    least is kept (Maya: adding a pole vector doesn't flip the knee)."""
+    """Maya poleVectorConstraint: the handle's pole vector = target − start joint (joint_rig_2026_ik.md §3), so the
+    chain plane turns to face the target like Maya's. A kit RP handle keeps its pole helper (twist still applies);
+    another IK constraint gets the target as its pole with Blender's pole angle for Maya's plane (step 245; the old
+    "move the chain least" search kept the chain where it was, which Maya doesn't). Returns the chain's movement."""
+    from . import ik_rp
+    from .ik_fk import chain
     count = max(con.chain_count, 1)
     context.view_layer.update()
     before = _chain_heads(arm, pb, count)
-    a = pole_angle(arm, pb, count, pole.matrix_world.translation)
-    con.pole_target = pole
-    best = None
-    for cand in (a, -a, a + math.pi, -a + math.pi):
-        con.pole_angle = math.atan2(math.sin(cand), math.cos(cand))
-        context.view_layer.update()
-        moved = sum((p - q).length for p, q in zip(before, _chain_heads(arm, pb, count)))
-        if best is None or moved < best[0]:
-            best = (moved, con.pole_angle)
-    con.pole_angle = best[1]
+    handle = con.target
+    if handle is not None and ik_rp.HELPER in handle:
+        ik_rp.set_pole_object(handle, pole)
+    else:
+        bones = chain(pb, con)
+        inv = (arm.matrix_world @ bones[0].matrix @ bones[0].bone.matrix_local.inverted()).to_3x3().inverted()
+        start = arm.matrix_world @ bones[0].head
+        bend, _straight = ik_rp._rest_bend(bones, inv @ (pole.matrix_world.translation - start))
+        con.pole_target = pole
+        con.pole_angle = ik_rp.pole_angle(arm, bones, bend)
     context.view_layer.update()
-    return best[0]
+    return sum((p - q).length for p, q in zip(before, _chain_heads(arm, pb, count)))
 
 
 def ik_constraints_on(target):
