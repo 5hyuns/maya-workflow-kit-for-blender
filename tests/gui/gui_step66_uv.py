@@ -195,8 +195,10 @@ def s_rmb_release():
 @step
 def s_shell_mode():
     ts = bpy.context.scene.tool_settings
-    check(f"UV Editor RMB NW = UV Shell: island mode, sync off (got {ts.uv_select_mode}, {ts.use_uv_select_sync})",
-          mod(".compat").uv_island_mode(ts) and not ts.use_uv_select_sync)
+    # step 256: UV Shell = Maya's UV Shell mask (one selection with the 3D View: sync on, face mode)
+    check(f"UV Editor RMB NW = UV Shell mask (sync {ts.use_uv_select_sync}, {tuple(ts.mesh_select_mode)})",
+          bpy.context.window_manager.allset_uv_shell_mask and ts.use_uv_select_sync
+          and tuple(ts.mesh_select_mode) == (False, False, True))
     _w, a, _r = uv_window()
     a.spaces.active.show_region_ui = True
     redraw_all()

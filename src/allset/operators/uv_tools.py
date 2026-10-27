@@ -734,7 +734,7 @@ COMPONENTS = (('VERTEX', "Vertex", "Mesh vertices (UV Sync Selection on)"),
               ('EDGE', "Edge", "Mesh edges (UV Sync Selection on)"),
               ('FACE', "Face", "Mesh faces (UV Sync Selection on)"),
               ('UV', "UV", "UVs picked apart from the mesh (UV Sync Selection off)"),
-              ('SHELL', "UV Shell", "Whole UV shells = Blender UV islands (UV Sync Selection off)"),
+              ('SHELL', "UV Shell", "Maya UV Shell mask: a click / box picks whole UV shells (faces), 3D View and UV Editor"),
               ('OPEN', "Open", "Only open the UV Editor"))
 
 
@@ -785,7 +785,10 @@ def leave_uv_mode(context):
     """Maya F9 / F10 / F11 after F12 / Alt+F12: UV Sync Selection back on and the mesh selection from before UV mode
     back (when the mesh still has the same element counts)."""
     ts = context.scene.tool_settings
-    if ts.use_uv_select_sync:
+    from . import uv_shell_select
+    was_shell = uv_shell_select.flag(context)
+    uv_shell_select.set_flag(context, False)      # another component mode ends the UV Shell mask (step 256)
+    if ts.use_uv_select_sync and not was_shell:
         return
     ts.use_uv_select_sync = True
     for ob in _edit_meshes(context):
@@ -806,13 +809,22 @@ def leave_uv_mode(context):
 
 
 def set_component(context, mode):
+    """'SHELL' = Maya's UV Shell mask (operators/uv_shell_select.py, step 256); 'ISLAND' = Blender's UV island
+    selection in the UV Editor (UV Sync off; Move UV Shell, step 155)."""
+    from . import uv_shell_select
     ts = context.scene.tool_settings
+    if mode == 'SHELL':
+        if not _MESH_SELECTION:       # from a mesh component mode: F9 / F10 / F11 bring its selection back (#80)
+            remember_mesh_selection(context)
+        uv_shell_select.enter(context)
+        return
+    uv_shell_select.set_flag(context, False)
     if mode in ('VERTEX', 'EDGE', 'FACE'):
         leave_uv_mode(context)
         ts.mesh_select_mode = (mode == 'VERTEX', mode == 'EDGE', mode == 'FACE')
-    elif mode in ('UV', 'SHELL'):
+    elif mode in ('UV', 'ISLAND'):
         ts.use_uv_select_sync = False
-        compat.set_uv_island_mode(ts, mode == 'SHELL')
+        compat.set_uv_island_mode(ts, mode == 'ISLAND')
         # without sync Blender draws only the selected faces' UVs: Maya shows them all
         for ob in _edit_meshes(context):
             bm = bmesh.from_edit_mesh(ob.data)
@@ -847,7 +859,7 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
             context.view_layer.objects.active = target
         ts = context.scene.tool_settings
         # coming from a mesh component mode (or object mode): keep its selection for F9 / F10 / F11 (#80)
-        remember = self.mode in ('UV', 'SHELL') and (context.mode != 'EDIT_MESH' or ts.use_uv_select_sync)
+        remember = self.mode == 'UV' and (context.mode != 'EDIT_MESH' or ts.use_uv_select_sync)
         if self.mode in ('VERTEX', 'EDGE', 'FACE') and context.mode == 'EDIT_MESH':
             leave_uv_mode(context)     # before prepare() turns UV Sync Selection on
         if not prepare(context):
@@ -857,7 +869,9 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
             remember_mesh_selection(context)
         # open the editor first: its prepare() turns UV Sync Selection on, which undid F12's UV mode the first time
         # (issue #80)
-        if find_uv_editor(context)[1] is None and context.window is not None and not bpy.app.background:
+        # Maya's UV Shell mask picks shells in the 3D View too: no UV Editor needed (step 256)
+        if (self.mode != 'SHELL' and find_uv_editor(context)[1] is None and context.window is not None
+                and not bpy.app.background):
             bpy.ops.allset.open_editor(ui_type='UV')
         if self.mode != 'OPEN':
             set_component(context, self.mode)

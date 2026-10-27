@@ -50,6 +50,9 @@ def shown_faces(bm, synced):
 
 def mask(ts):
     """Maya component mask of the kit state: 'VERT' / 'EDGE' / 'FACE' / 'UV' / 'SHELL'."""
+    from . import uv_shell_select
+    if uv_shell_select.flag(bpy.context) and ts.use_uv_select_sync:      # step 256: Maya's UV Shell mask
+        return 'SHELL'
     if ts.use_uv_select_sync:
         sv, se, sf = ts.mesh_select_mode
         return 'FACE' if sf and not (sv or se) else 'EDGE' if se and not sv else 'VERT'
