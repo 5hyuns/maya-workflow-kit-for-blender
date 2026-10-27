@@ -7,7 +7,10 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sim import check, ev, run, step, tap, setup, screenshot, view3d, win  # noqa: E402
+from sim import MODULE, check, ev, run, step, tap, setup, screenshot, view3d, win  # noqa: E402
+from importlib import import_module  # noqa: E402
+
+four_view = import_module(MODULE + ".ui.four_view")   # step 237: four real panels
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")
 C = {}
@@ -113,19 +116,23 @@ def s_redo_view():
 
 
 @step
+def s_quad_wait():
+    pass                      # step 237: the top row splits one tick later
+
+
+@step
 def s_quad_on():
-    space = view3d()[0].spaces.active
-    check("Space tap -> four views", len(space.region_quadviews) > 0)
+    screen = win().screen
+    check("Space tap -> four views", four_view.is_four(screen))
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step4_quad.png"))
-    # Hover the top-left quadrant (Blender: top view) and tap again.
-    area = view3d()[0]
-    regions = [r for r in area.regions if r.type == 'WINDOW']
-    left = min(r.x for r in regions)   # = area.x with Region Overlap, right of the toolbar without (step 112)
-    tl = max((r for r in regions if r.x <= left + 2), key=lambda r: r.y)
-    C["hover_persp"] = tl.data.view_perspective
-    C["hover_rot"] = tuple(round(v, 4) for v in tl.data.view_rotation)
-    ev('MOUSEMOVE', 'NOTHING', x=tl.x + tl.width // 2, y=tl.y + tl.height // 2)
+    # Hover the top-left panel (Maya: top) and tap again.
+    tl = four_view.roles(screen)["top"]
+    rv = tl.spaces.active.region_3d
+    C["hover_persp"] = rv.view_perspective
+    C["hover_rot"] = tuple(round(v, 4) for v in rv.view_rotation)
+    reg = next(r for r in tl.regions if r.type == 'WINDOW')
+    ev('MOUSEMOVE', 'NOTHING', x=reg.x + reg.width // 2, y=reg.y + reg.height // 2)
     tap('SPACE')
 
 
@@ -133,14 +140,19 @@ def s_quad_on():
 def s_quad_off():
     space = view3d()[0].spaces.active
     r = space.region_3d
-    check("Space tap in a quadrant -> single view", len(space.region_quadviews) == 0)
-    check("single view keeps the hovered quadrant's view",
+    check("Space tap in a panel -> single view", len(four_view.panes(win().screen)) == 1)
+    check("single view keeps the hovered panel's view",
           r.view_perspective == C["hover_persp"]
           and tuple(round(v, 4) for v in r.view_rotation) == C["hover_rot"])
     _a, reg = view3d()
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
     r.view_perspective = 'PERSP'
     r.view_distance = 200.0
+
+
+@step
+def s_shift_a():
+    # step 237: after a layout change the first key sent in the move's tick is lost under event simulation
     ev('A', 'PRESS', shift=True)
     ev('A', 'RELEASE', shift=True)
 

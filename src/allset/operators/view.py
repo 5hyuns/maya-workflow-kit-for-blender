@@ -593,18 +593,13 @@ class ALLSET_OT_view_history(bpy.types.Operator):
 # --- Space tap: four views <-> single view -------------------------------------
 
 
-# --- Maya's ortho cameras in the four view (step 161, G3) ----------------------------------------------------------
-# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) and keep their own pan / zoom across layout
-# changes (research/maya/screens/16_four_view.png: a 1-unit cube is ~16 px of a ~495 px pane = ~31 units across).
-# Blender gives each new quad pane the single view's location and distance (measured: after F on a 1 cm cube the
-# panes were 3 units across), so entering the four view puts each ortho pane back on its Maya camera: the pan / zoom
-# it had when the four view was last left, else Maya's default (centred on the origin, 30 units across). Blender's
-# viewport ortho width along the longer side = view_distance x 72 / lens (measured, gui_step161_views: distance 3 cm
-# with lens 70 = 3.086 units across).
+# --- Maya's ortho cameras (step 161, G3) ---------------------------------------------------------------------------
+# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) (research/maya/screens/16_four_view.png: a
+# 1-unit cube is ~16 px of a ~495 px pane = ~31 units across). Blender's viewport ortho width along the longer side =
+# view_distance x 72 / lens (measured, gui_step161_views: distance 3 cm with lens 70 = 3.086 units across). Step 237:
+# the four view's panels are real 3D View areas that keep their own camera (ui/four_view.py).
 MAYA_ORTHO_WIDTH = 30.0
-FOUR_VIEW_NOTE = ("Blender's four view has one header for all four panes (Maya: one per panel): its shading / show "
-                  "settings apply to every pane, view commands to the pane under the mouse")
-_ortho_views = {}          # area pointer -> {pane key: (location, distance)}
+FOUR_VIEW_NOTE = "each panel has its own camera, shading and Show settings, like Maya's"
 
 
 def ortho_key(rv3d):
@@ -624,30 +619,9 @@ def maya_ortho_distance(space, scene=None):
     return MAYA_ORTHO_WIDTH * maya_unit(scene or bpy.context.scene) * space.lens / 72.0
 
 
-def remember_ortho(area, space):
-    """Keep the four view's ortho panes' pan / zoom (Maya's cameras keep theirs)."""
-    store = _ortho_views.setdefault(area.as_pointer(), {})
-    for rv3d in space.region_quadviews:
-        key = ortho_key(rv3d)
-        if key:
-            store[key] = (rv3d.view_location.copy(), rv3d.view_distance)
-
-
-def maya_ortho_panes(area, space):
-    """Each ortho pane of a just-entered four view gets its Maya camera back (or Maya's default one)."""
-    store = _ortho_views.get(area.as_pointer(), {})
-    for rv3d in space.region_quadviews:
-        key = ortho_key(rv3d)
-        if not key:
-            continue
-        loc, dist = store.get(key, (Vector((0.0, 0.0, 0.0)), maya_ortho_distance(space)))
-        rv3d.view_location = loc
-        rv3d.view_distance = dist
-
-
 class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
-    """Toggle four views; leaving it keeps the view under the cursor (Maya Space tap). Blender's four view has one
-    header for all four panes (Maya: one per panel)"""
+    """Toggle the four view; leaving it keeps the panel under the cursor (Maya Space tap). Four real panels, each
+    with its own camera, shading and Show settings (ui/four_view.py, step 237)"""
     bl_idname = "allset.toggle_quad_view"
     bl_label = "Toggle Four Views"
 
@@ -656,29 +630,18 @@ class ALLSET_OT_toggle_quad_view(bpy.types.Operator):
         return context.space_data is not None and context.space_data.type == 'VIEW_3D'
 
     def execute(self, context):
-        space = context.space_data
+        from ..ui import four_view
         area = context.area
-        leaving = bool(space.region_quadviews)
-        hovered = capture(context.region_data) if leaving and context.region_data else None
-        # Copying the rotation leaves an axis view (Top/Front/...) as "User Orthographic";
-        # Maya keeps the panel's camera (top, front, ...). Step 31.
-        side = leaving and context.region_data is not None and context.region_data.is_orthographic_side_view
-        region = context.region if context.region and context.region.type == 'WINDOW' else \
-            next(r for r in area.regions if r.type == 'WINDOW')
-        if leaving:
-            remember_persp(area, space)
-            remember_ortho(area, space)
-        with context.temp_override(area=area, region=region):
-            bpy.ops.screen.region_quadview()
-        if not leaving:
-            maya_ortho_panes(area, space)
-        if hovered is not None:
-            restore(space.region_3d, hovered)
-            if side:
-                space.region_3d.is_orthographic_side_view = True
-        elif not leaving:
-            ensure_persp(area, space)    # Maya four view: the top right panel is persp
-        area.tag_redraw()
+        if four_view.is_four(context.window.screen):
+            if bpy.app.background:
+                self.report({'WARNING'}, "Leaving the four view needs the Blender window")
+                return {'CANCELLED'}
+            kept = four_view.leave(context, keep=area)
+            if kept is None:
+                return {'CANCELLED'}
+            return {'FINISHED'}
+        if not four_view.enter(context, area):
+            return {'CANCELLED'}
         return {'FINISHED'}
 
 

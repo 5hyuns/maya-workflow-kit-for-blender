@@ -40,8 +40,10 @@ def shot(name):
 
 
 def windows_regions():
+    """(main area, WINDOW regions of every viewport panel) — step 237: the four view is four real 3D View areas."""
     area, _r = view3d()
-    return area, [r for r in area.regions if r.type == 'WINDOW']
+    fv = mod("ui.four_view")
+    return area, [r for a in fv.panes(win().screen) for r in a.regions if r.type == 'WINDOW']
 
 
 def units_across(region, rv3d):
@@ -56,7 +58,7 @@ def units_across(region, rv3d):
 
 
 def toggle(region):
-    area, _r = view3d()
+    area = next(a for a in win().screen.areas if any(r == region for r in a.regions))
     with bpy.context.temp_override(window=win(), area=area, region=region, space_data=area.spaces.active,
                                    region_data=region.data):
         bpy.ops.allset.toggle_quad_view()
@@ -126,8 +128,7 @@ step(redraw)
 @step
 def s_quad():
     area, regions = windows_regions()
-    space = area.spaces.active
-    check(f"Space tap: four views ({len(space.region_quadviews)})", len(space.region_quadviews) >= 3)
+    check(f"Space tap: four views ({len(regions)})", len(regions) == 4)
     widths = {}
     for r in regions:
         rv3d = r.data
@@ -185,8 +186,9 @@ def s_side_shot():
     area, region = view3d()
     space = area.spaces.active
     rv3d = space.region_3d
-    check(f"leaving the four view keeps the side view ({len(space.region_quadviews)} quads, "
-          f"{rv3d.view_perspective})", not space.region_quadviews and rv3d.view_perspective == 'ORTHO')
+    n = len(windows_regions()[1])
+    check(f"leaving the four view keeps the side view ({n} panels, {rv3d.view_perspective})",
+          n == 1 and rv3d.view_perspective == 'ORTHO')
     px = shot("side")
     pts = outline_points(region, rv3d, bpy.data.objects["pCube1"])
     share = green_share(px, pts)

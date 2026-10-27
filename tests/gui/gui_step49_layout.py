@@ -146,11 +146,14 @@ def s_empty_click():
     redraw()
 
 
+step(redraw)                  # step 237: the top row splits one tick later
+
+
 @step
 def s_four():
-    view = main_view()
+    fv = import_module(MODULE + ".ui.four_view")
     check("Four View quick layout splits the main view, not the Tool Box",
-          bool(view.spaces.active.region_quadviews) and not toolbox_area().spaces.active.region_quadviews)
+          fv.is_four(win().screen) and toolbox_area() is not None)
     with bpy.context.temp_override(window=win(), area=toolbox_area(), region=column_window()):
         bpy.ops.allset.quick_layout(layout='SINGLE')
     redraw()
@@ -158,7 +161,8 @@ def s_four():
 
 @step
 def s_single():
-    check("Single Perspective quick layout", not main_view().spaces.active.region_quadviews)
+    fv = import_module(MODULE + ".ui.four_view")
+    check("Single Perspective quick layout", len(fv.panes(win().screen)) == 1)
     redraw()
 
 

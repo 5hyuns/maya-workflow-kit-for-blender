@@ -187,10 +187,10 @@ def state(context, key):
     if key == "SHOW_IK_HANDLES":
         from ..operators import by_type
         return not any(o.get(SHOW_HIDDEN) for o in by_type.ik_handles(context.scene))
-    if key == "LAYOUT_SINGLE":
-        return not space.region_quadviews
-    if key == "LAYOUT_FOUR":
-        return bool(space.region_quadviews)
+    if key in ("LAYOUT_SINGLE", "LAYOUT_FOUR"):
+        from . import four_view                 # step 237: four real panels
+        four = four_view.is_four(context.screen) if context.screen is not None else False
+        return four == (key == "LAYOUT_FOUR")
     return None
 
 
@@ -320,17 +320,18 @@ def apply(context, key):
     elif key in ("EXPOSURE", "GAMMA", "CM_ENABLE"):
         _toggle_colour(context.scene, key)
     elif key in ("LAYOUT_SINGLE", "LAYOUT_FOUR"):
+        # step 237 (Issue #148): Maya's layouts = four real panels (ui/four_view.py); Single Perspective View keeps
+        # the persp panel, Four View puts every panel back with its own settings
+        from . import four_view
         from ..operators import view
-        area = context.area
-        if bool(space.region_quadviews) != (key == "LAYOUT_FOUR"):
-            if space.region_quadviews:
-                view.remember_ortho(area, space)
-            with context.temp_override(area=area, region=main_region(area)):
-                bpy.ops.screen.region_quadview()
-            if space.region_quadviews:
-                view.maya_ortho_panes(area, space)      # Maya's ortho cameras (step 161)
-        # Maya: Single Perspective is always the persp camera, Four View's top right panel is persp (#8)
-        view.ensure_persp(area, space)
+        area, window = context.area, context.window
+        if four_view.is_four(window.screen) != (key == "LAYOUT_FOUR"):
+            if key == "LAYOUT_FOUR":
+                four_view.enter(context, area, window)
+            else:
+                area = four_view.leave(context, window=window, role="persp") or area
+        if key == "LAYOUT_SINGLE":
+            view.ensure_persp(area, area.spaces.active)     # Maya: Single Perspective is the persp camera (#8)
     else:
         return False
     return True

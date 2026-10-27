@@ -1442,3 +1442,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 ## Step 227 — corrective shapes (Pose Editor)
 - [ ] Pose Editor > Add Shape on a skinned arm at the bent pose: Edit enters Edit Mode on the deformed cage; sculpted vertices land where you put them on the bent arm, and at rest the corrective shows nothing (weight 0).
 - [ ] Shape Editor: dragging the target slider through an in-between feels like Maya (in-between shape reached at its weight, no jump).
+
+## Step 237 — Four View = four real panels
+- [ ] Space tap over a panel with a real mouse: that panel fills the viewport at once and takes keys right away (event simulation lost the first key sent in the same tick as the move).
+- [ ] Dragging the edges between the four panels feels like Maya's pane dividers (Blender moves aligned edges together; Maya's horizontal divider spans the whole width).

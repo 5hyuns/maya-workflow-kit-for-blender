@@ -327,7 +327,10 @@ _state = {}          # screen name -> [ui scale, area pointers, armed]
 def _armed(screen, scale):
     """True while ``screen`` may still be fitted: same areas as when it was first seen / loaded / the UI scale
     changed, and not fitted yet. Once its areas change (split, close, dock, tear-off) it stays off for this scale."""
-    areas = frozenset(a.as_pointer() for a in screen.areas)
+    # step 237: the viewport panels don't count — the four view (ui/four_view.py) splits / joins them without
+    # touching the columns
+    areas = frozenset(a.as_pointer() for a in screen.areas
+                      if not (a.type == 'VIEW_3D' and not is_toolbox(a.spaces.active)))
     state = _state.get(screen.name)
     if state is None or state[0] != scale:
         _state[screen.name] = [scale, areas, True]

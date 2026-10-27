@@ -333,6 +333,11 @@ def set_mode(on, layout=True):
             maya_dock.close_floating()     # floating Maya panels would show Blender's Tool tab (step 116)
         except Exception:
             pass
+        try:
+            from .ui import four_view
+            four_view.collapse_all(bpy.context)   # step 237: the four panels back to one, the screen as it was
+        except Exception:
+            pass
         if layout:
             for window in _windows():
                 leave_layout(window)
