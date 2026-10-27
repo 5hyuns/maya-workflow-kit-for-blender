@@ -15,10 +15,10 @@ Maya 2026 (mayapy, research/scripts/maya_anim225/game_exporter.py; ``$M/others/g
   per-clip loop never clears the take list, so a later clip file repeats the earlier clips' takes (measured) — the
   kit writes only the clip's own takes (delegated: engines would import those extra clips).
 
-Blender: a take = an NLA strip in the FBX writer (``bake_anim_use_nla_strips``); the kit adds a temporary track per
-clip on every animated object (strip = the object's action over the clip range), writes, then removes them, and
-merges takes of the same name written by several objects into one take and moves each take to the clip's own
-frames (``finalize_takes``).
+Blender (step 231, Issue #140): each clip is the scene's timeline take written by the kit's Maya FBX preset (the
+step 222 rig rewrite included, so a clip file has Export Selection's joints), one write per clip with the scene's
+range set to the clip; several clips of one file are merged into it as takes (``merge_takes``). Blender's NLA-strip
+takes are not used: they evaluate one object at a time (``_ClipTimeline``).
 """
 
 import os
@@ -29,8 +29,6 @@ from bpy.props import BoolProperty, CollectionProperty, EnumProperty, FloatPrope
     StringProperty
 
 from .. import results
-
-TRACK = "allset_game_clip"
 
 FACTORY = {"export_type": 'MODEL', "export_set": 'ALL', "model_file_mode": 'SINGLE', "file_split": 'SINGLE',
            "bake_animation": True, "skinning": True, "blendshapes": True, "smoothing_groups": True,
@@ -157,123 +155,157 @@ def fbx_args(context, s, selection):
 
 
 KTIME = 46186158000            # FBX ticks per second
+ANIM_IDS = (b"AnimationStack", b"AnimationLayer", b"AnimationCurveNode", b"AnimationCurve")
 
 
-def finalize_takes(path, clips, fps):
-    """Maya's takes from Blender's: one take per clip name and Maya's clip times.
+class _ClipTimeline:
+    """The scene's timeline = one clip while Blender's writer bakes it (its scene take, not NLA strips).
 
-    Blender's writer makes a take per NLA strip, so a clip on two objects gives two takes of the same name (with the
-    same ids: the elements are written twice) — they become one; and it starts every take at time 0 while Maya writes
-    the clip's own frames (frame f = f / fps seconds, game_exporter.json: walk 1-10, run 11-24), so each take's keys and
-    LocalTime / ReferenceTime move by the clip start. Returns the take names in order."""
-    from . import fbx_rig
-    tree, version = fbx_rig.load(path)
-    objects = tree.first(b"Objects")
-    conns = tree.first(b"Connections")
-    seen, elems = set(), []
-    for e in objects.elems:                       # the same take written twice: keep one copy
-        if e.id in (b"AnimationStack", b"AnimationLayer"):
-            if e.props[0] in seen:
-                continue
-            seen.add(e.props[0])
-        elems.append(e)
-    objects.elems = elems
-    seen_c, keep_c = set(), []
-    for c in conns.elems:
-        key = tuple(c.props)
-        if key in seen_c:
-            continue
-        seen_c.add(key)
-        keep_c.append(c)
-    conns.elems = keep_c
-    stacks = objects.find(b"AnimationStack")
-    stack_ids = {st.props[0]: st for st in stacks}
-    layer_stack = {c.props[1]: c.props[2] for c in conns.elems if c.props[0] == b"OO" and c.props[2] in stack_ids}
-    node_layer = {c.props[1]: c.props[2] for c in conns.elems if c.props[0] == b"OO" and c.props[2] in layer_stack}
-    curve_node = {c.props[1]: c.props[2] for c in conns.elems if c.props[0] in (b"OO", b"OP")
-                  and c.props[2] in node_layer}
-    by_name = {c.name: c for c in clips}
-    offsets = {}
-    for st in stacks:
-        clip = by_name.get(fbx_rig.name_of(st))
-        if clip is None:
-            continue
-        off = int(round(clip.start / fps * KTIME))
-        offsets[st.props[0]] = off
-        p70 = fbx_rig._p70(st)
-        props = {p.props[0]: p for p in p70.elems if p.props}
-        stop = int(props[b"LocalStop"].props[4]) if b"LocalStop" in props else 0
-        for name, value in ((b"LocalStart", off), (b"LocalStop", stop + off), (b"ReferenceStart", off),
-                            (b"ReferenceStop", stop + off)):
-            if name in props:
-                props[name].props[4] = value
-            else:
-                p70.elems.append(fbx_rig.Elem(b"P", [name, b"KTime", b"Time", b"", value], b"SSSSL"))
-    import array
-    for e in objects.find(b"AnimationCurve"):
-        node = curve_node.get(e.props[0])
-        st = layer_stack.get(node_layer.get(node)) if node is not None else None
-        off = offsets.get(st)
-        kt = e.first(b"KeyTime")
-        if off and kt is not None:
-            kt.props[0] = array.array('q', [t + off for t in kt.props[0]])
-    takes = tree.first(b"Takes")
-    if takes is not None:
-        names, keep = set(), []
-        for t in takes.elems:
-            if t.id == b"Take":
-                nm = t.props[0].decode("utf-8", "replace") if isinstance(t.props[0], bytes) else t.props[0]
-                if nm in names:
-                    continue
-                names.add(nm)
-                clip = by_name.get(nm)
-                if clip is not None:
-                    off = int(round(clip.start / fps * KTIME))
-                    for sub in t.elems:
-                        if sub.id in (b"LocalTime", b"ReferenceTime"):
-                            sub.props = [sub.props[0] + off, sub.props[1] + off]
-            keep.append(t)
-        takes.elems = keep
-    fbx_rig.save(path, tree, version)
-    out = []
-    for st in stacks:
-        if fbx_rig.name_of(st) not in out:
-            out.append(fbx_rig.name_of(st))
-    return out
+    Step 231 (Issue #140): the writer's NLA-strip takes evaluate one object's strip at a time (export_fbx_bin.py
+    ``bake_anim_use_nla_strips``: every other strip muted, every active action removed), so a joint chain driven
+    by another object (an IK handle's keys, a constraint target) was written without that object's animation —
+    the audit's 21 cm IK arm. The timeline take evaluates the whole scene, like Maya's exporter, and leaves the
+    kit's animation-layer NLA tracks out of the take list (they evaluate into the result instead). The scene gets
+    a unique name while it writes: Blender derives a take's element ids from the scene name, so the takes of
+    several clips can be merged into one file (``merge_takes``)."""
 
-
-class _Clips:
-    """Temporary NLA tracks: a strip per clip on every animated object (the writer's takes)."""
-
-    def __init__(self, obs, clips):
-        self.obs = [o for o in obs if o.animation_data is not None and o.animation_data.action is not None]
-        self.clips = clips
-        self.made = []
+    def __init__(self, scene, clip, index):
+        self.scene, self.clip, self.index = scene, clip, index
 
     def __enter__(self):
-        for ob in self.obs:
-            ad = ob.animation_data
-            action = ad.action
-            for c in self.clips:
-                track = ad.nla_tracks.new()
-                track.name = TRACK
-                strip = track.strips.new(c.name or "clip", int(round(c.start)), action)
-                strip.name = c.name or "clip"
-                strip.action_frame_start, strip.action_frame_end = c.start, c.end
-                strip.frame_start, strip.frame_end = c.start, c.end
-                self.made.append((ob, track))
+        sc = self.scene
+        self.saved = (sc.name, sc.frame_start, sc.frame_end, sc.frame_current)
+        start, end = int(round(self.clip.start)), int(round(self.clip.end))
+        if end < start:
+            raise ValueError(f"Clip {self.clip.name}: the end is before the start")
+        name, n = f"{sc.name}.clip{self.index}", 0
+        while name in bpy.data.scenes:
+            n += 1
+            name = f"{self.saved[0]}.clip{self.index}.{n}"
+        sc.name = name
+        _set_range(sc, start, end)
         return self
 
     def __exit__(self, *exc):
-        for ob, track in self.made:
-            ad = ob.animation_data
-            if ad is not None and track.name in ad.nla_tracks:
-                ad.nla_tracks.remove(track)
+        sc = self.scene
+        name, start, end, current = self.saved
+        sc.name = name
+        _set_range(sc, start, end)
+        sc.frame_set(current)
+
+
+def _set_range(sc, start, end):
+    # Blender clamps frame_start to frame_end and back: widen first, then narrow
+    sc.frame_end = max(end, sc.frame_end)
+    sc.frame_start = start
+    sc.frame_end = end
+
+
+def _rename(elem, name):
+    """An FBX object name is ``<name>\x00\x01<class>``."""
+    old = elem.props[1]
+    tail = old[old.index(b"\x00\x01"):] if b"\x00\x01" in old else b""
+    elem.props[1] = name.encode("utf-8") + tail
+
+
+def _text(v):
+    return v.decode("utf-8", "replace") if isinstance(v, bytes) else v
+
+
+def _same_kind(old, new):
+    return new.encode("utf-8") if isinstance(old, bytes) else new
+
+
+def merge_takes(path, parts, clips):
+    """One file with a take per clip: ``path`` holds clip 0's take, ``parts[i]`` clip i+1's (the same objects
+    written again, so the same object ids). Takes are renamed after their clips. Returns the take names."""
+    from . import fbx_rig
+    tree, version = fbx_rig.load(path)
+    objects, conns = tree.first(b"Objects"), tree.first(b"Connections")
+    takes = tree.first(b"Takes")
+    have = {e.props[0] for e in objects.elems if e.props}
+    added = {}
+    for part in parts:
+        other, _v = fbx_rig.load(part)
+        anim = [e for e in other.first(b"Objects").elems if e.id in ANIM_IDS]
+        ids = {e.props[0] for e in anim}
+        if ids & have:
+            raise RuntimeError("Game Exporter: two clips wrote the same take ids")
+        objects.elems.extend(anim)
+        have |= ids
+        for e in anim:
+            added[e.id] = added.get(e.id, 0) + 1
+        conns.elems.extend(c for c in other.first(b"Connections").elems if c.props[1] in ids)
+        o_takes = other.first(b"Takes")
+        if takes is not None and o_takes is not None:
+            takes.elems.extend(t for t in o_takes.elems if t.id == b"Take")
+    defs = tree.first(b"Definitions")
+    if defs is not None and added:
+        for ot in defs.find(b"ObjectType"):
+            n, cnt = added.get(ot.props[0]), ot.first(b"Count")
+            if n and cnt is not None:
+                cnt.props[0] += n
+        total = defs.first(b"Count")
+        if total is not None:
+            total.props[0] += sum(added.values())
+    stacks = objects.find(b"AnimationStack")
+    children = {}
+    for c in conns.elems:
+        if c.props[0] == b"OO":
+            children.setdefault(c.props[2], []).append(c.props[1])
+    layers = {e.props[0]: e for e in objects.find(b"AnimationLayer")}
+    names = []
+    for st, clip in zip(stacks, clips):
+        old = fbx_rig.name_of(st)
+        _rename(st, clip.name)
+        for lid in children.get(st.props[0], ()):
+            if lid in layers:
+                _rename(layers[lid], clip.name)
+        for t in (takes.find(b"Take") if takes is not None else ()):
+            if _text(t.props[0]) == old:
+                t.props[0] = _same_kind(t.props[0], clip.name)
+                for sub in t.elems:
+                    if sub.id == b"FileName":
+                        sub.props[0] = _same_kind(sub.props[0], clip.name + ".tak")
+        names.append(clip.name)
+    if takes is not None and names:
+        cur = takes.first(b"Current")
+        if cur is not None:
+            cur.props[0] = _same_kind(cur.props[0], names[0])
+    fbx_rig.save(path, tree, version)
+    return names
+
+
+class _Scope:
+    """What a kit export leaves out (file_io ``_FileDialog``, steps 164 / 211 / 226): Export All = no startup
+    cameras, never control shapes; Export Selection with Include Children = the selection with its hierarchy."""
+
+    def __init__(self, context, selection, children):
+        self.context, self.selection, self.children = context, selection, children
+        self.stack = []
+
+    def __enter__(self):
+        from . import dag, startup_cameras
+        from .control_shapes import excluded as shapes_excluded
+        sc, vl = self.context.scene, self.context.view_layer
+        cms = [shapes_excluded(sc, vl)]
+        if not self.selection:
+            cms.append(startup_cameras.excluded(sc, vl))
+        elif self.children:
+            cms.append(dag.selected_hierarchy(self.context))
+        for cm in cms:
+            cm.__enter__()
+            self.stack.append(cm)
+        return self
+
+    def __exit__(self, *exc):
+        while self.stack:
+            self.stack.pop().__exit__(*exc)
 
 
 def export(context, s):
     """Write the files; returns [(path, take names)]."""
-    from . import file_io, dag, units
+    from . import file_io, units
     folder = bpy.path.abspath(s.export_path) or ""
     if not folder:
         raise ValueError("The file path is empty")            # Maya kGameExporterFilePathEmpty
@@ -286,7 +318,6 @@ def export(context, s):
     if selection and not obs:
         raise ValueError("Nothing selected to export.")
     k = units.maya_unit(context.scene)
-    run = bpy.ops.export_scene.fbx
     out = []
     if s.export_type == 'ANIMATION':
         files = clip_files(s, folder)
@@ -296,16 +327,22 @@ def export(context, s):
         if any(not n for n in names) or len(set(names)) != len(names):
             raise ValueError("Every exported clip needs a unique name")
         for path, clips in files:
-            args = dict(fbx_args(context, s, selection), bake_anim=True, bake_anim_use_nla_strips=True,
+            args = dict(fbx_args(context, s, selection), bake_anim=True, bake_anim_use_nla_strips=False,
                         bake_anim_use_all_actions=False, bake_anim_force_startend_keying=True)
-            with _Clips(obs, clips):
-                if selection and s.include_children:
-                    with dag.selected_hierarchy(context):
-                        file_io.write(context, 'FBX', path, "export_scene.fbx", args, True, k)
-                else:
-                    file_io.write(context, 'FBX', path, "export_scene.fbx", args, True, k)
-            fps = context.scene.render.fps / (context.scene.render.fps_base or 1.0)
-            out.append((path, finalize_takes(path, clips, fps)))
+            parts = []
+            try:
+                with _Scope(context, selection, s.include_children):
+                    for i, clip in enumerate(clips):
+                        part = path if i == 0 else os.path.splitext(path)[0] + f".clip{i}.tmp.fbx"
+                        if i:
+                            parts.append(part)
+                        with _ClipTimeline(context.scene, clip, i):
+                            file_io.write(context, 'FBX', part, "export_scene.fbx", args, True, k)
+                out.append((path, merge_takes(path, parts, clips)))
+            finally:
+                for part in parts:                 # written beside the user's file, deleted at once
+                    if os.path.exists(part):
+                        os.remove(part)
         return out
     roots = [o for o in obs if o.parent is None or o.parent not in obs]
     files = model_files(s, folder, roots)
