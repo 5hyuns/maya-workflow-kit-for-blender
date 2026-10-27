@@ -250,7 +250,14 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
         # In component mode native bone picking keeps endpoint and connected-bone semantics.
         # A click away from the skeleton releases the edit-mode lock.
         if context.mode == 'EDIT_ARMATURE':
-            if joint_selection.pick(context, context.active_object, mouse, radius) is not None:
+            ob = context.active_object
+            name = joint_selection.pick(context, ob, mouse, radius)
+            if name is not None:
+                if joint_selection.joint_mode(ob) == 'EDIT':
+                    # step 241 (#156): a joint of a skeleton shown in Edit mode is picked like a Maya joint (its
+                    # subtree moves with it), not as Blender's head / tail point
+                    selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
+                    return self._finish_pick(context, event, selected)
                 return {'PASS_THROUGH'}
             joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
             active = context.active_object

@@ -429,6 +429,7 @@ MAP = {
     "Skin/Bind Skin": "allset.bind_skin",
     "Skin/Unbind Skin": "allset.unbind_skin",
     "Skin/Go to Bind Pose": "pose.transforms_clear",
+    "Skin/Move Skinned Joints": "allset.move_skinned_joints",          # step 241 (#156): Edit mode, mesh kept
     "Skin/Paint Skin Weights": "allset.paint_skin_weights",
     "Skin/Mirror Skin Weights": "allset.mirror_skin_weights",
     "Skin/Copy Skin Weights": "allset.copy_skin_weights",

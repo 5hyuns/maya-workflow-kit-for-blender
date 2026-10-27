@@ -792,17 +792,19 @@ def _auto_armature_tick():
                     continue
                 _last_armature_target[key] = target
                 if target is not None and ob.mode == 'OBJECT':
+                    from ..operators import joint_selection
                     try:
+                        # ; step 241 (#156): the Move tool on an unskinned skeleton then switches it to
+                        # Edit mode (joint_selection.sync_tool_mode, tool_keys watch)
                         bpy.ops.object.mode_set(mode='POSE')
                     except (RuntimeError, ValueError):
                         pass
                     else:
                         # B4 (step 217): a skeleton picked from the Outliner / Select All shows its root joint
-                        from ..operators import joint_selection
                         if joint_selection.select_roots_if_empty(ob):
                             for a in window.screen.areas:
                                 a.tag_redraw()
-                elif target is None and ob and ob.mode == 'POSE':
+                elif target is None and ob and (ob.mode == 'POSE' or (ob.type == 'ARMATURE' and ob.mode == 'EDIT')):
                     try:
                         bpy.ops.object.mode_set(mode='OBJECT')
                     except (RuntimeError, ValueError):

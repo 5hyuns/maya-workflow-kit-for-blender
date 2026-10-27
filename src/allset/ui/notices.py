@@ -341,8 +341,6 @@ CATEGORIES = {
                             "strip's Scale / Repeat or a Time Offset modifier."),
     "Skeleton": ("Armature edit / pose mode", "Blender: IK handles are IK constraints (switch with Influence), "
                  "joints are bone heads edited in armature edit mode."),
-    "Skin": ("Vertex groups / Weight Paint", "Blender skin weights are vertex groups edited in Weight Paint mode "
-             "(Weights menu: Normalize, Mirror, Clean, Limit Total); no influence objects or interactive bind."),
     "Deform": ("Modifiers", "Blender deformers are modifiers (Properties > Modifiers) with vertex-group weights: no "
                "deformer sets or tweak nodes."),
     "Visualize": ("Motion Paths", "Blender shows motion with Motion Paths (Object properties); there is no turntable "

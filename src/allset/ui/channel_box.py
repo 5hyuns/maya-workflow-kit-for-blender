@@ -1733,7 +1733,9 @@ MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit")
 EMPTY_TEXT = ("Select objects in the scene to view,", "edit and set keyframes on channels", "(attributes)")
 
 
-PLACING_TEXT = ("Placing joints:", "channels are in pose mode")
+# step 241 (#156): an unskinned skeleton's joints are edited in Edit mode (W / E / R reposition them); their keyable
+# channels are in Pose mode
+PLACING_TEXT = ("Editing joints: W / E / R move them,", "F8 = pose mode (channels and keys)")
 POSE_HINT = "Joint channels: Ctrl+Tab (pose mode)"
 
 

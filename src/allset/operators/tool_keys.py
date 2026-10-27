@@ -113,6 +113,15 @@ def _watch():
                 _mode[0] = context.mode
             elif context.mode != _mode[0] and not bpy.app.timers.is_registered(_carry):
                 _carry()   # a mode change no depsgraph update reported
+        if context.mode in {'POSE', 'EDIT_ARMATURE'}:
+            from . import joint_selection
+            # step 241 (#156): Move tool = Edit mode for an unskinned skeleton's joints, other tools = Pose
+            joint_selection.sync_tool_mode(context)
+            if context.mode == 'EDIT_ARMATURE':
+                joint_selection.sync_joint_pivot(context)      # E / R about the lead joint
+        if context.mode != 'EDIT_ARMATURE':
+            from . import joint_selection
+            joint_selection.restore_joint_pivot(context)
     except (AttributeError, RuntimeError, ReferenceError):
         pass
     return _TICK
@@ -260,6 +269,11 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
         # Maya joints are objects. Pose mode is their object-selection state;
         # Edit mode exposes the rest skeleton as components.
         if ob is not None and ob.type == 'ARMATURE':
+            if ob.mode == 'EDIT':
+                # step 241: F8 also ends Skin > Move Skinned Joints, and Pose stays while the Move tool is on
+                ob.pop("allset_move_skinned", None)
+                if ob.pop("allset_joint_move_edit", None):
+                    ob["allset_joint_pose_pin"] = True
             result = bpy.ops.object.mode_set(mode='POSE' if ob.mode == 'EDIT' else 'EDIT')
         else:
             result = bpy.ops.object.editmode_toggle()

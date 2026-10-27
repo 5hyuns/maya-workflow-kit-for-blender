@@ -418,6 +418,11 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
             if hit is not None and 'FINISHED' in result:
                 with context.temp_override(window=context.window, area=hit[0], region=hit[1]):
                     bpy.ops.wm.tool_set_by_id(name=tool)
+                # step 241: this command picked the Pose-mode tool itself; the one-tool carry (step 174) must not
+                # replace it with the placing mode's Select tool on the first Pose visit
+                from . import tool_keys
+                tool_keys._seen[context.mode] = tool
+                tool_keys._mode[0] = context.mode
             return result
         if event.type == 'ESC' and event.value == 'PRESS':
             if not self._names:
