@@ -365,9 +365,7 @@ def after_insert(owner, path, index, frame):
     idd = owner.id_data
     full = path if owner == idd else owner.path_from_id(path)
     _new_curve_weights(idd, full, index)
-    tin, tout = default_tangents()
-    if tin == "AUTO" and tout == "AUTO":
-        return 0
+    from . import maya_tangents
     n = 0
     for fc in compat.id_fcurves(idd):
         if fc.data_path != full or (index is not None and index >= 0 and fc.array_index != index):
@@ -375,6 +373,8 @@ def after_insert(owner, path, index, frame):
         kp = next((k for k in fc.keyframe_points if abs(k.co.x - frame) <= EPS), None)
         if kp is not None and apply_default(fc, kp):
             n += 1
+        # Maya 2026 auto tangents on the curve's Auto keys (the new key and its neighbours; step 257, #151)
+        maya_tangents.apply(fc)
     return n
 
 

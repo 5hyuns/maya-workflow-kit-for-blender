@@ -354,51 +354,60 @@ def _basis(d):
     return u, d.cross(u).normalized()
 
 
-def _shelf(rects, scale, gap):
-    """Shelf layout of ``rects`` (w, h) at ``scale`` in 0-1 with ``gap`` around and between them; (positions, fits)."""
-    x = y = gap
-    row = 0.0
-    pos = [None] * len(rects)
-    for i in sorted(range(len(rects)), key=lambda i: -rects[i][1]):
-        w, h = rects[i][0] * scale, rects[i][1] * scale
-        if x > gap and x + w + gap > 1.0 + 1e-9:
-            x, y, row = gap, y + row + gap, 0.0
-        pos[i] = (x, y)
-        x += w + gap
-        row = max(row, h)
-    return pos, y + row + gap <= 1.0 + 1e-9 and all(w * scale + 2 * gap <= 1.0 + 1e-9 for w, _h in rects)
+def _maya_shells(faces, k_unit, optimize=True):
+    """6 planes: Maya's own plane choice and shells (autoproj_layout.assign_planes, Fewer pieces on = the factory
+    optimize 1), fed with the faces in index order and the points in Maya axes and units (Blender (x, y, z) =
+    Maya (x, -z, y)). Returns ``[(projector, faces)]``; a projector maps a Blender point to the plane's (u, v)."""
+    from . import autoproj_layout
+    faces = sorted(faces, key=lambda f: f.index)
+    ids = {}
+    for f in faces:
+        for v in f.verts:
+            ids.setdefault(v, len(ids))
+    points = [(v.co.x * k_unit, v.co.z * k_unit, -v.co.y * k_unit) for v in ids]
+    shells = autoproj_layout.assign_planes(points, [[ids[v] for v in f.verts] for f in faces], optimize=optimize)
+    out = []
+    for plane, group in shells:
+        _n, mu, mv = autoproj_layout.PLANES6[plane]
+        # Maya (x, y, z) of a Blender point = (x, z, -y): the frame vectors in Blender axes
+        u = Vector((mu[0], -mu[2], mu[1])) * k_unit
+        v = Vector((mv[0], -mv[2], mv[1])) * k_unit
+        out.append(((lambda co, u=u, v=v: (co.dot(u), co.dot(v))), [faces[i] for i in group]))
+    return out
 
 
-def pack_uniform(rects, gap):
-    """Positions and one scale for every rect so the shells fit 0-1 (Maya Automatic: uniform scale, square layout)."""
-    big = max((max(w, h) for w, h in rects), default=0.0)
-    if big <= 1e-12:
-        return [(gap, gap)] * len(rects), 1.0
-    lo, hi = 0.0, (1.0 - 2 * gap) / big
-    best = _shelf(rects, lo, gap)[0]
-    for _ in range(40):
-        mid = (lo + hi) / 2
-        pos, fits = _shelf(rects, mid, gap)
-        if fits:
-            lo, best = mid, pos
-        else:
-            hi = mid
-    return best, lo
-
-
-def auto_project(bm, uv, faces, planes=6, spacing=0.2):
-    """Maya polyAutoProjection on ``faces`` (object space, -ws 0): every face goes to the plane its normal faces most,
-    connected faces of one plane are one shell projected on it, shells are laid out in 0-1 at one scale with
-    ``spacing`` percent between them (factory 6 planes / 0.2 %, Maya-51). Returns the shell count."""
-    dirs = auto_planes(planes)
+def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
+    """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with factory options: 6 planes assign faces
+    and build shells Maya's way (``_maya_shells``: candidate planes within 60 degrees, seeds by fewest candidates,
+    flood fill that stops where a shell would overlap itself; ); other
+    plane counts give every face the plane its normal faces most. Shells are laid out in 0-1 at one scale with
+    ``spacing`` percent between them (factory 0.2 %, Maya-51) by Maya's packed "Into square"
+    layout (operators/autoproj_layout.py, step 257). ``unit`` = Blender length of one Maya unit
+    (``units.maya_unit``): Maya projects and packs in Maya units. Returns the shell count."""
+    from . import autoproj_layout
     faces = [f for f in faces if not f.hide]
+    k_unit = 1.0 / (unit or 1.0)
+    if int(planes) == 6:
+        shells = _maya_shells(faces, k_unit, optimize)
+        # Maya's shell order for the layout = ascending lowest face index (spec)
+        shells.sort(key=lambda s: min(f.index for f in s[1]))
+        flat = [{lp: proj(lp.vert.co) for g in group for lp in g.loops} for proj, group in shells]
+        if not flat:
+            return 0
+        lay = autoproj_layout.layout([autoproj_layout.bbox_of(pts.values()) for pts in flat], max(0.0, spacing))
+        for i, pts in enumerate(flat):
+            for lp, (x, y) in pts.items():
+                lp[uv].uv = lay.transform(i, x, y)
+        return len(flat)
+    dirs = auto_planes(planes)
     which = {}
     for f in faces:
         dots = [f.normal.dot(d) for d in dirs]
         top = max(dots)
         which[f] = next(i for i, x in enumerate(dots) if x >= top - 1e-6)
     seen, shells = set(), []
-    for f in faces:
+    # Maya's shell order = ascending lowest face index (initPoly visits faces in index order, spec)
+    for f in sorted(faces, key=lambda f: f.index):
         if f in seen:
             continue
         seen.add(f)
@@ -412,18 +421,16 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2):
                         seen.add(n)
                         todo.append(n)
         shells.append((which[f], group))
-    flat, rects = [], []
+    flat = []
     for k, group in shells:
         u, v = _basis(dirs[k])
-        pts = {lp: Vector((lp.vert.co.dot(u), lp.vert.co.dot(v))) for g in group for lp in g.loops}
-        lo = Vector((min(p.x for p in pts.values()), min(p.y for p in pts.values())))
-        hi = Vector((max(p.x for p in pts.values()), max(p.y for p in pts.values())))
-        flat.append((pts, lo))
-        rects.append((hi.x - lo.x, hi.y - lo.y))
-    pos, scale = pack_uniform(rects, max(0.0, spacing) / 100.0)
-    for (pts, lo), (x, y) in zip(flat, pos):
-        for lp, p in pts.items():
-            lp[uv].uv = ((p.x - lo.x) * scale + x, (p.y - lo.y) * scale + y)
+        flat.append({lp: (lp.vert.co.dot(u) * k_unit, lp.vert.co.dot(v) * k_unit) for g in group for lp in g.loops})
+    if not flat:
+        return 0
+    lay = autoproj_layout.layout([autoproj_layout.bbox_of(pts.values()) for pts in flat], max(0.0, spacing))
+    for i, pts in enumerate(flat):
+        for lp, (x, y) in pts.items():
+            lp[uv].uv = lay.transform(i, x, y)
     return len(shells)
 
 
@@ -492,18 +499,134 @@ class ALLSET_OT_uv_automatic(bpy.types.Operator):
 
     def execute(self, context):
         n = 0
+        from . import extrude
+        unit = units.maya_unit(context.scene)
+        params = dict(AUTOPROJ.defaults, planes=int(self.planes), percentage_space=self.spacing)
+        made = []
+        object_mode = context.mode == 'OBJECT'
         with _ObjectFaces(context) as obs:
             for ob in obs:
                 bm = bmesh.from_edit_mesh(ob.data)
-                uv = bm.loops.layers.uv.verify()
-                faces = [f for f in bm.faces if f.select and not f.hide]
-                if faces:
-                    n += auto_project(bm, uv, faces, self.planes, self.spacing)
-                    bmesh.update_edit_mesh(ob.data)
+                if not any(f.select and not f.hide for f in bm.faces):
+                    continue
+                # the polyAutoProj history node (step 257, #150): Channel Box INPUTS / AE, editable values
+                if extrude.record_new(context, ob, bm, AUTOPROJ, params, unit) is not None:
+                    n += 1
+                    made.append(ob)
+        if object_mode:
+            for ob in made:
+                note_object_state(ob)
         if not n:
             self.report({'WARNING'}, "Select faces (or a mesh) to project.")
             return {'CANCELLED'}
         return {'FINISHED'}
+
+
+# --- polyAutoProj history node (step 257, Issue #150) ------------------------------------------------
+# Maya's UV > Automatic leaves a polyAutoProj node whose Channel Box INPUTS rows can be edited
+# ( B2: Planes, Optimize, Layout, Percentage Space, Scale Mode, Layout Method
+# after the projection's Translate / Rotate / Scale / Pivot). The kit's node shows the rows it rebuilds with
+# (delegated: Planes, Optimize = 1 Fewer pieces / 0 Less distortion, Percentage Space); the others stay at Maya's
+# factory values (Into square, Uniform, Bounding box, no projection transform). Like the kit's extrude / bevel
+# nodes it is the last kit operation on the mesh (operators/extrude.py records); a UV > Automatic run from object
+# mode stays editable there while the mesh's UVs are the ones it made.
+
+PLANE_COUNTS = (3, 4, 5, 6, 8, 12)
+
+
+def _build_autoproj(bm, params, unit):
+    faces = [f for f in bm.faces if f.select and not f.hide]
+    if not faces:
+        return []
+    planes = min(PLANE_COUNTS, key=lambda n: abs(n - int(round(params["planes"]))))
+    uv = bm.loops.layers.uv.verify()
+    auto_project(bm, uv, faces, planes, max(0.0, params["percentage_space"]), unit,
+                 optimize=int(round(params["optimize"])) >= 1)
+    return list({v for f in faces for v in f.verts})
+
+
+def _uv_state(me):
+    import numpy as np
+    layer = me.uv_layers.active
+    if layer is None:
+        return None
+    a = np.empty(len(layer.data) * 2, dtype=np.float32)
+    layer.data.foreach_get("uv", a)
+    return (len(me.vertices), len(me.polygons), layer.name, hash(a.tobytes()))
+
+
+def note_object_state(ob):
+    """Remember the UVs a UV > Automatic left on ``ob`` (object mode): its node stays while they are unchanged."""
+    from . import extrude
+    rec = extrude.RECORDS.get(ob.name)
+    if rec is not None and rec.spec is AUTOPROJ:
+        rec.object_state = _uv_state(ob.data)
+
+
+def object_state_ok(ob, rec):
+    st = getattr(rec, "object_state", None)
+    return st is not None and st == _uv_state(ob.data)
+
+
+def _autoproj_spec():
+    from . import extrude
+    return extrude.add_spec(extrude.Spec(
+        'AUTOPROJ', "polyAutoProj", ("planes", "optimize", "percentage_space"),
+        {"planes": "Planes", "optimize": "Optimize", "percentage_space": "Percentage Space"},
+        {"planes": 6, "optimize": 1.0, "percentage_space": 0.2},
+        {"planes": "INT", "optimize": "NONE", "percentage_space": "NONE"},
+        None, "uv_automatic_edit", _build_autoproj, in_view=False, object_check=object_state_ok,
+        pre_uv=True))
+
+
+AUTOPROJ = _autoproj_spec()
+
+
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
+class ALLSET_OT_uv_automatic_edit(bpy.types.Operator):
+    """Change the last UV > Automatic (Maya: edit the polyAutoProj node). Blender keeps no history, so only the
+    last one can be changed"""
+    bl_idname = "allset.uv_automatic_edit"
+    bl_label = "polyAutoProj"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    planes: IntProperty(name="Planes", default=6, min=3, max=12, options={'SKIP_SAVE'})
+    optimize: FloatProperty(name="Optimize", default=1.0, min=0.0, max=1.0, options={'SKIP_SAVE'},
+                            description="1 = Fewer pieces, 0 = Less distortion")
+    percentage_space: FloatProperty(name="Percentage Space", default=0.2, min=0.0, max=5.0, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode in {'EDIT_MESH', 'OBJECT'}
+
+    def execute(self, context):
+        from . import extrude
+        unit = units.maya_unit(context.scene)
+        params = {"planes": self.planes, "optimize": self.optimize, "percentage_space": self.percentage_space}
+        if context.mode == 'EDIT_MESH':
+            done = 0
+            for ob in context.objects_in_mode_unique_data:
+                rec = extrude.RECORDS.get(ob.name)
+                if rec is not None and rec.spec is AUTOPROJ and rec.pre is not None and (
+                        rec.live or extrude.current(ob) is not None):
+                    done += bool(extrude.run(ob, rec, params, unit))
+            return {'FINISHED'} if done else {'CANCELLED'}
+        ob = context.active_object
+        rec = extrude.object_record(ob)
+        if rec is None or rec.spec is not AUTOPROJ:
+            return {'CANCELLED'}
+        sel = list(context.selected_objects)
+        for o in sel:
+            o.select_set(o == ob)
+        bpy.ops.object.mode_set(mode='EDIT')
+        try:
+            ok = extrude.run(ob, rec, params, unit)
+        finally:
+            bpy.ops.object.mode_set(mode='OBJECT')
+            for o in sel:
+                o.select_set(True)
+        note_object_state(ob)
+        return {'FINISHED'} if ok else {'CANCELLED'}
 
 
 class ALLSET_OT_uv_contour(bpy.types.Operator):
@@ -879,4 +1002,5 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_uv_cut, ALLSET_OT_uv_sew, ALLSET_OT_uv_unfold, ALLSET_OT_uv_layout, ALLSET_OT_uv_texel_get,
-           ALLSET_OT_uv_texel_set, ALLSET_OT_uv_component, ALLSET_OT_uv_automatic, ALLSET_OT_uv_contour)
+           ALLSET_OT_uv_texel_set, ALLSET_OT_uv_component, ALLSET_OT_uv_automatic, ALLSET_OT_uv_automatic_edit,
+           ALLSET_OT_uv_contour)

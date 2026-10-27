@@ -7,8 +7,9 @@ curve. Every rule here is a checked of Maya 2022 (Maya, factory option boxes):
 face layouts and UVs were compared with Maya's output for the default and varied attributes
 (``tests/test_step129_primitives.py`` keeps the count table).
 
-A polygon shape = ``Mesh(verts, faces, uvs, hard)``: ``uvs`` one (u, v) per face corner (or None), ``hard`` the
-edges Maya marks hard (frozenset vertex pairs) or ``ALL``. A NURBS shape = list of ``Patch`` (one per Maya shape:
+A polygon shape = ``Mesh(verts, faces, uvs, hard, edges)``: ``uvs`` one (u, v) per face corner (or None), ``hard`` the
+edges Maya marks hard (frozenset vertex pairs) or ``ALL``, ``edges`` Maya's edge ids as vertex pairs in Maya's order
+(polyCube / polyCylinder, step 257: ) or None. A NURBS shape = list of ``Patch`` (one per Maya shape:
 nurbsSquare / nurbsCube are a group of four / six).
 """
 
@@ -18,10 +19,12 @@ ALL = "ALL"
 
 
 class Mesh:
-    __slots__ = ("verts", "faces", "uvs", "hard")
+    __slots__ = ("verts", "faces", "uvs", "hard", "edges")
 
-    def __init__(self, verts, faces, uvs=None, hard=()):
+    def __init__(self, verts, faces, uvs=None, hard=(), edges=None):
         self.verts, self.faces, self.uvs, self.hard = verts, faces, uvs, hard
+        # Maya's edge ids: (a, b) per edge in Maya's order and direction, or None (not checked for this node)
+        self.edges = edges
 
 
 class Patch:
@@ -236,11 +239,17 @@ def poly_cube(a):
         ((w / 2, -h / 2, d / 2), (0, 0, -d), (0, h, 0), sz, sy, (c1, 0.0, c2, 0.25)),       # right +X
         ((-w / 2, -h / 2, -d / 2), (0, 0, d), (0, h, 0), sz, sy, (c_, 0.0, c0, 0.25)),      # left -X
     )
-    for o, du, dv, nu, nv, (u0, v0, u1, v1) in sides:
-        grid = [[vid((o[0] + du[0] * i / nu + dv[0] * j / nv, o[1] + du[1] * i / nu + dv[1] * j / nv,
-                      o[2] + du[2] * i / nu + dv[2] * j / nv)) for i in range(nu + 1)] for j in range(nv + 1)]
+    for side, (o, du, dv, nu, nv, (u0, v0, u1, v1)) in enumerate(sides):
+        # Maya walks the right side (+X) from the back (step 257, 15 / 15 polyCube sizes): its interior vertices
+        # and faces come back to front
+        cols = list(range(nu + 1))[::-1] if side == 4 else list(range(nu + 1))
+        grid = [{} for _ in range(nv + 1)]
+        for j in range(nv + 1):
+            for i in cols:
+                grid[j][i] = vid((o[0] + du[0] * i / nu + dv[0] * j / nv, o[1] + du[1] * i / nu + dv[1] * j / nv,
+                                  o[2] + du[2] * i / nu + dv[2] * j / nv))
         for j in range(nv):
-            for i in range(nu):
+            for i in cols[1:] if side == 4 else cols[:-1]:
                 faces.append([grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]])
                 uvs.append([(u0 + (u1 - u0) * i / nu, v0 + (v1 - v0) * j / nv),
                             (u0 + (u1 - u0) * (i + 1) / nu, v0 + (v1 - v0) * j / nv),
@@ -254,7 +263,26 @@ def poly_cube(a):
                      if abs(abs(p[k]) - half) < 1e-7 and abs(abs(q[k]) - half) < 1e-7 and p[k] * q[k] > 0)
             if on >= 2:
                 hard.add(frozenset((f[i], f[i - 1])))
-    return Mesh(_orient(verts, a), faces, uvs, hard)
+    return Mesh(_orient(verts, a), faces, uvs, hard, _cube_edges(index, w, h, d, sx, sy, sz))
+
+
+def _cube_edges(index, w, h, d, sx, sy, sz):
+    """polyCube's edge ids (Maya 2026, 15 / 15 sizes edge for edge, ): the
+    2 x (Height + Depth) vertex rows around the front / top / back / bottom, first the Width edges along each row,
+    then the edges from each row to the next; then per side cap (+X, then -X) its inner rows (bottom to top, back to
+    front), then its inner columns (rows of cells bottom to top, columns back to front)."""
+    def at(x, y, z):
+        return index[tuple(round(c, 7) for c in (x, y, z))]
+
+    rows = 2 * (sy + sz)
+    out = [(r * (sx + 1) + i, r * (sx + 1) + i + 1) for r in range(rows) for i in range(sx)]
+    out += [(r * (sx + 1) + i, (r + 1) % rows * (sx + 1) + i) for r in range(rows) for i in range(sx + 1)]
+    for x in (w / 2, -w / 2):
+        def g(j, k):
+            return at(x, -h / 2 + h * j / sy, -d / 2 + d * k / sz)
+        out += [(g(j, k), g(j, k + 1)) for j in range(1, sy) for k in range(sz)]
+        out += [(g(j, k), g(j + 1, k)) for j in range(sy) for k in range(1, sz)]
+    return out
 
 
 def poly_sphere(a):
@@ -341,6 +369,56 @@ CAP_R, CAP_V, CAP_DV = 0.15625, (0.15625, 0.84375), 0.00625
 def poly_cylinder(a):
     r, h, sx, sy, sc = a["radius"], a["height"], a["subdivisionsAxis"], a["subdivisionsHeight"], a["subdivisionsCaps"]
     dome = r if a.get("roundCap") and sc > 0 else 0.0
+    if sc == 0:
+        return _cylinder_ngon_caps(a, r, h, sx, sy)
+    # Maya stacks every ring from the bottom cap's innermost up the side to the top cap's innermost, then the two
+    # centres (Maya 2026, step 257: 24 / 24 polyCylinder sizes with Subdivisions Caps >= 1, round caps 4 / 4)
+    rings = []          # (radius, y, part): part -1 bottom cap, 0 side, 1 top cap
+    for c in range(1, sc):
+        rings.append(_cap_ring(r, -h / 2, sc, c, -1, dome) + (-1,))
+    rings += [(r, -h / 2 + h * j / sy, 0) for j in range(sy + 1)]
+    for c in range(sc - 1, 0, -1):
+        rings.append(_cap_ring(r, h / 2, sc, c, 1, dome) + (1,))
+    verts = []
+    for rr, yy, _part in rings:
+        verts += _ring(sx, rr, yy)
+    c0, c1 = len(verts), len(verts) + 1
+    verts += [(0.0, -h / 2 - dome, 0.0), (0.0, h / 2 + dome, 0.0)]
+    rim0, rim1 = sc - 1, sc - 1 + sy          # the rim rings
+    uv_bottom = _cap_uv(r, False, (0.5, CAP_V[0]), CAP_R, CAP_DV)
+    uv_top = _cap_uv(r, True, (0.5, CAP_V[1]), CAP_R, CAP_DV)
+    faces, uvs, side = [], [], []
+    for q in range(len(rings) - 1):
+        for i in range(sx):
+            k = (i + 1) % sx
+            f = [q * sx + i, q * sx + k, (q + 1) * sx + k, (q + 1) * sx + i]
+            if rim0 <= q < rim1:
+                j = q - rim0
+                side.append(len(faces))
+                uvs.append([_side_uv(i, j, sx, sy), _side_uv(i + 1, j, sx, sy), _side_uv(i + 1, j + 1, sx, sy),
+                            _side_uv(i, j + 1, sx, sy)])
+            else:
+                uvs.append([(uv_bottom if q < rim0 else uv_top)(verts[v]) for v in f])
+            faces.append(f)
+    last = (len(rings) - 1) * sx
+    for i in range(sx):
+        f = [(i + 1) % sx, i, c0]
+        faces.append(f)
+        uvs.append([uv_bottom(verts[v]) for v in f])
+    for i in range(sx):
+        f = [last + i, last + (i + 1) % sx, c1]
+        faces.append(f)
+        uvs.append([uv_top(verts[v]) for v in f])
+    hard = set()
+    if not dome:
+        for i in range(sx):   # the cap rims are hard, the sides soft unless facetted ()
+            hard.add(frozenset((rim0 * sx + i, rim0 * sx + (i + 1) % sx)))
+            hard.add(frozenset((rim1 * sx + i, rim1 * sx + (i + 1) % sx)))
+    hard |= _soft_by_angle(verts, [faces[i] for i in side])
+    return Mesh(_orient(verts, a), faces, uvs, hard, _cylinder_edges(len(rings), sx, (c0, c1)))
+
+
+def _cylinder_ngon_caps(a, r, h, sx, sy):
     verts = []
     for j in range(sy + 1):
         verts += _ring(sx, r, -h / 2 + h * j / sy)
@@ -352,16 +430,48 @@ def poly_cylinder(a):
             uvs.append([_side_uv(i, j, sx, sy), _side_uv(i + 1, j, sx, sy), _side_uv(i + 1, j + 1, sx, sy),
                         _side_uv(i, j + 1, sx, sy)])
     side = len(faces)
-    _cap(verts, faces, uvs, list(range(sx)), -h / 2, sc, r, False, (0.5, CAP_V[0]), CAP_R, dome, CAP_DV)
-    _cap(verts, faces, uvs, list(range(sy * sx, sy * sx + sx)), h / 2, sc, r, True, (0.5, CAP_V[1]), CAP_R, dome,
+    _cap(verts, faces, uvs, list(range(sx)), -h / 2, 0, r, False, (0.5, CAP_V[0]), CAP_R, 0.0, CAP_DV)
+    _cap(verts, faces, uvs, list(range(sy * sx, sy * sx + sx)), h / 2, 0, r, True, (0.5, CAP_V[1]), CAP_R, 0.0,
          CAP_DV)
     hard = set()
-    if not dome:
-        for i in range(sx):   # the cap rims are hard, the sides soft unless facetted ()
-            hard.add(frozenset((i, (i + 1) % sx)))
-            hard.add(frozenset((sy * sx + i, sy * sx + (i + 1) % sx)))
+    for i in range(sx):   # the cap rims are hard, the sides soft unless facetted ()
+        hard.add(frozenset((i, (i + 1) % sx)))
+        hard.add(frozenset((sy * sx + i, sy * sx + (i + 1) % sx)))
     hard |= _soft_by_angle(verts, faces[:side])
-    return Mesh(_orient(verts, a), faces, uvs, hard)
+    return Mesh(_orient(verts, a), faces, uvs, hard, _cylinder_edges(sy + 1, sx, None))
+
+
+def _cap_ring(r, centre_y, sc, c, sign, dome):
+    """(radius, y) of cap ring ``c`` (sc - c rings in from the rim), as ``_cap`` places it."""
+    if dome:
+        ang = math.pi / 2 * (sc - c) / sc
+        return dome * math.cos(ang), centre_y + sign * dome * math.sin(ang)
+    return r * c / sc, centre_y
+
+
+def _cap_uv(rim_r, top, uv_c, uv_r, centre_dv):
+    """``_cap``'s UV rule as a function of the position (``rim_r`` = the rim's radius)."""
+    sign = 1 if top else -1
+    rim_r = rim_r or 1.0
+
+    def uv(p):
+        if abs(p[0]) < 1e-12 and abs(p[2]) < 1e-12:
+            return (uv_c[0], uv_c[1] - centre_dv)
+        k = uv_r / rim_r
+        return (uv_c[0] + k * p[0], uv_c[1] - sign * k * p[2])
+    return uv
+
+
+def _cylinder_edges(nrings, sx, centres):
+    """polyCylinder's edge ids (Maya 2026, 36 / 36 sizes + 4 round caps, edge for edge): every ring's edges ring by
+    ring, then the edges from each ring to the next, then the bottom centre's spokes (centre first) and the top
+    centre's (centre last)."""
+    out = [(q * sx + i, q * sx + (i + 1) % sx) for q in range(nrings) for i in range(sx)]
+    out += [(q * sx + i, (q + 1) * sx + i) for q in range(nrings - 1) for i in range(sx)]
+    if centres:
+        out += [(centres[0], i) for i in range(sx)]
+        out += [((nrings - 1) * sx + i, centres[1]) for i in range(sx)]
+    return out
 
 
 def _side_uv(i, j, n, rows):

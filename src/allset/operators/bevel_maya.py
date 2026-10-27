@@ -12,6 +12,13 @@
   cap of a zero-length extrusion bevels into an inset (12/20/10, cap at 0.25), Fraction 1 merges (6/9/5).
 - Faces bevel their edges; Maya leaves nothing selected afterwards. Vertex mode = Chamfer Vertex (performBevelOrChamfer
   -> polyChamfer, 0.25 of each edge, no editable node here).
+- Numbering (step 257, #149; Maya 2026, ): kept vertices first in their old
+  order, then the new vertices of each bevelled vertex, the bevelled vertices taken in the order the selected edges
+  reach them (ascending Maya edge id, ends by ascending vertex id) and each one's new vertices in Maya's vertex ->
+  edge order (``vertex_edges``). Faces, when every bevelled vertex ends two or more bevelled edges: old faces off the
+  bevelled edges, the bevel faces, old faces along bevelled edges, corner faces. Maya's edge ids = the mesh's edge
+  index (``maya_edge_ids``) unless the caller passes them.
+  Not renumbered (Maya's order there is not checked): Segments > 1, border vertices, merged results.
 """
 
 import math
@@ -67,13 +74,185 @@ def width(edges, fraction=0.5, offset_as_fraction=True, offset=0.2, unit=1.0):
     return max(0.0, offset) * unit * FIT
 
 
+# --- Maya numbering (step 257) -----------------------------------------------------------------------------------
+
+def maya_edge_ids(bm):
+    """{BMEdge: Maya edge id}: the mesh's edge index (delegated kit design, step 257). It is Maya's id wherever
+    the kit made the edges: kit polyCube / polyCylinder are built with Maya's edge order (prim_shapes ``edges``) and
+    kit extrusions sort their result into polyExtrudeFacet's order (extrude.renumber), 
+    bevel_numbering_257.md - Maya numbers a mesh made from a face list in face-corner order (); bmesh's
+    ``faces.new`` doesn't (it makes a face's closing edge first), so such a mesh needs its edges made in that order
+    first. Elsewhere (other primitives, Blender's own tools, imports) Maya's ids are not known."""
+    bm.edges.index_update()
+    return {e: e.index for e in bm.edges}
+
+
+def vertex_edges(v, ids):
+    """Maya's vertex -> edge order (MItMeshVertex.getConnectedEdges): start at the edge with the highest Maya id (on
+    a border: the border edge the face winding leaves v along), then each next edge = the edge coming into v in the
+    face the current edge leaves v in. 477 / 477 vertices of 24 checked meshes (
+    bevel_numbering_257.md). None for a vertex that isn't a single fan of faces."""
+    nxt = {}
+    for loop in v.link_loops:
+        if loop.edge in nxt:
+            return None
+        nxt[loop.edge] = loop.link_loop_prev.edge
+    edges = list(v.link_edges)
+    if not edges:
+        return None
+    heads = [e for e in nxt if e not in set(nxt.values())]
+    if len(heads) > 1:
+        return None
+    cur = heads[0] if heads else max(edges, key=lambda e: ids[e])
+    out = [cur]
+    while len(out) < len(edges):
+        cur = nxt.get(cur)
+        if cur is None or cur in out:
+            return None
+        out.append(cur)
+    return out
+
+
+def _face_between(v, e_out, e_in):
+    for loop in v.link_loops:
+        if loop.edge is e_out and loop.link_loop_prev.edge is e_in:
+            return loop.face
+    return None
+
+
+def _slots(v, sel, ids):
+    """The new vertices of bevelled vertex ``v`` in Maya's order, each as the set of old face indices it lies in;
+    None where the order is not checked (border vertices, one bevelled edge at a two-edge vertex)."""
+    E = vertex_edges(v, ids)
+    if E is None or any(e.is_boundary or e.is_wire for e in E):
+        return None
+    n = len(E)
+    between = [_face_between(v, E[k], E[(k + 1) % n]) for k in range(n)]
+    if None in between:
+        return None
+    marks = [k for k in range(n) if E[k] in sel]
+    if len(marks) == 1:
+        if n < 3:
+            return None
+        k = marks[0]
+        # one bevelled edge: a new vertex on each edge next to it, in E(v)'s list order
+        return [frozenset((between[j - 1].index, between[j].index)) for j in sorted({(k - 1) % n, (k + 1) % n})]
+    out = []
+    for i, k in enumerate(marks):      # one new vertex per wedge, the wedge after each bevelled edge in E(v)'s order
+        span = (marks[(i + 1) % len(marks)] - k) % n or n
+        out.append(frozenset(between[(k + j) % n].index for j in range(span)))
+    return out
+
+
+def _plan(bm, edges, ids):
+    """Maya's order of what the bevel will leave, as keys the result is matched to (None: not checked here)."""
+    sel = set(edges)
+    bm.verts.index_update()
+    bm.faces.index_update()
+    order, seen = [], set()
+    for e in sorted(edges, key=lambda e: ids[e]):
+        for v in sorted(e.verts, key=lambda v: v.index):
+            if v not in seen:
+                seen.add(v)
+                order.append(v)
+    slots, edge_faces, met, corners = [], [], set(), []
+    for v in order:
+        s = _slots(v, sel, ids)
+        if s is None or len(set(s)) != len(s):
+            return None
+        slots += [(v.index, key) for key in s]
+        for e in vertex_edges(v, ids):      # a bevel face comes when its edge is first met in this walk
+            if e in sel and e not in met:
+                met.add(e)
+                edge_faces.append(frozenset(x.index for x in e.verts))
+        if sum(1 for e in v.link_edges if e in sel) >= 3:
+            corners.append(v.index)
+    along = sorted({f.index for e in edges for f in e.link_faces})
+    # the face order below is Maya's when every bevelled vertex ends two or more bevelled edges (closed loops, all
+    # edges: 16 / 16 checked cases); with a chain end or a lone edge Maya orders the faces another way, not yet
+    # known (), so the faces then keep Blender's order
+    closed = all(sum(1 for e in v.link_edges if e in sel) >= 2 for v in order)
+    return {"kept": [v.index for v in bm.verts if v not in seen], "slots": slots, "edge_faces": edge_faces,
+            "corners": corners, "along": along, "faces": len(bm.faces), "closed": closed,
+            "co": {v.index: v.co.copy() for v in order}}
+
+
+def _renumber(bm, plan, vlay, flay, made, new_verts):
+    """Sort the bevelled mesh into Maya's order. Vertices only when every one is matched; faces only when every face
+    is (else they keep Blender's order). A new vertex is matched by the old faces it lies in, and among bevelled
+    vertices with a wedge of the same faces by the nearest old position (bevel copies a neighbour's custom data onto
+    new vertices, so they carry no reliable source index)."""
+    kept = {i: n for n, i in enumerate(plan["kept"])}
+    by_key = {}
+    for n, (v, key) in enumerate(plan["slots"]):
+        by_key.setdefault(key, []).append((v, len(kept) + n))
+    rank, owner = {}, {}
+    for v in bm.verts:
+        if v not in new_verts:
+            r = kept.get(v[vlay] - 1)
+            src = v[vlay] - 1
+        else:
+            cands = by_key.get(frozenset(f[flay] - 1 for f in v.link_faces if f not in made), ())
+            if not cands:
+                return
+            src, r = min(cands, key=lambda c: (plan["co"][c[0]] - v.co).length_squared)
+        if r is None:
+            return
+        rank[v] = r
+        owner[v] = src
+    if sorted(rank.values()) != list(range(len(bm.verts))):
+        return
+    made_owners = {f: frozenset(owner[v] for v in f.verts) for f in made}
+    bm.verts.sort(key=lambda v: rank[v])
+    bm.verts.index_update()
+    if not plan["closed"]:
+        return
+    along = {i: n for n, i in enumerate(plan["along"])}
+    plain = {i: n for n, i in enumerate(i for i in range(plan["faces"]) if i not in along)}
+    edge_rank = {key: n for n, key in enumerate(plan["edge_faces"])}
+    corner_rank = {v: n for n, v in enumerate(plan["corners"])}
+    frank = {}
+    for f in bm.faces:
+        if f in made:
+            srcs = made_owners[f]
+            if srcs in edge_rank:
+                frank[f] = (1, edge_rank[srcs])
+            elif len(srcs) == 1 and next(iter(srcs)) in corner_rank:
+                frank[f] = (3, corner_rank[next(iter(srcs))])
+            else:
+                return
+        else:
+            i = f[flay] - 1
+            frank[f] = (2, along[i]) if i in along else (0, plain[i])
+    if len(set(frank.values())) != len(frank):
+        return
+    bm.faces.sort(key=lambda f: frank[f][0] * 1000000 + frank[f][1])
+    bm.faces.index_update()
+
+
 def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, segments=1, depth=1.0, unit=1.0,
-                **_unused):
-    """polyBevel3 on ``edges`` (bmesh). Returns the vertices the bevel made (empty: nothing done)."""
+                edge_ids=None, **_unused):
+    """polyBevel3 on ``edges`` (bmesh). Returns the vertices the bevel made (empty: nothing done). ``edge_ids``
+    ({BMEdge: Maya edge id}) replaces ``maya_edge_ids`` for a mesh whose Maya edge numbering the caller knows."""
     edges = [e for e in edges if e.is_valid]
     w = width(edges, fraction, offset_as_fraction, offset, unit)
     if not edges or w <= 0.0:
         return []
+    ids = edge_ids if edge_ids is not None else maya_edge_ids(bm)
+    plan = _plan(bm, edges, ids) if ids is not None and int(segments) == 1 else None
+    bm.edges.index_update()
+    picked = [e.index for e in edges]
+    # source indices ride along as custom data (bevel copies them onto what it makes); added before elements are
+    # collected again, since adding a layer can invalidate element references (step 64)
+    vlay = bm.verts.layers.int.new(".allset_bevel_src")
+    tlay = bm.verts.layers.int.new(".allset_bevel_made")
+    flay = bm.faces.layers.int.new(".allset_bevel_src")
+    for v in bm.verts:
+        v[vlay] = v.index + 1
+    for f in bm.faces:
+        f[flay] = f.index + 1
+    bm.edges.ensure_lookup_table()
+    edges = [bm.edges[i] for i in picked]
     verts = {v for e in edges for v in e.verts}
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=max(1, int(segments)), profile=profile(depth), affect='EDGES',
@@ -89,10 +268,21 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
         target.co = (v.co + target.co) / 2
     if pairs:
         bmesh.ops.weld_verts(bm, targetmap=pairs)
+    for v in near:
+        if v.is_valid:
+            v[tlay] = 1
+    if plan is not None and not pairs:      # Maya's numbering after Merge Vertices merged something isn't checked
+        _renumber(bm, plan, vlay, flay, {f for f in ret["faces"] if f.is_valid}, {v for v in made if v.is_valid})
+    bm.verts.index_update()
+    tracked = [v.index for v in bm.verts if v[tlay]]
+    bm.verts.layers.int.remove(vlay)
+    bm.verts.layers.int.remove(tlay)
+    bm.faces.layers.int.remove(flay)
+    bm.verts.ensure_lookup_table()
     extrude.deselect_all(bm)
     bm.select_flush_mode()
     bm.normal_update()
-    return [v for v in near if v.is_valid]
+    return [bm.verts[i] for i in tracked]
 
 
 def chamfer_vertices(bm, verts):
