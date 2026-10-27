@@ -80,32 +80,41 @@ def s_layout_shot():
 
 
 @step
+def s_quad_wait():
+    redraw()                  # step 237: the top row splits one tick later
+
+
+@step
 def s_quad():
-    area = C["area"]
-    quads = [r for r in area.regions if r.type == 'WINDOW']
-    print("STATE quads", len(area.spaces.active.region_quadviews), len(quads))
-    check("four views on", len(quads) == 4)
-    # Top-left quad = Top (Blender's quad order: left column front/top, ...): hover it.
-    tl = max((r for r in quads), key=lambda r: (r.y, -r.x))
+    fv = import_module(MODULE + ".ui.four_view")
+    placed = fv.roles(win().screen)
+    print("STATE panels", len(fv.panes(win().screen)))
+    check("four views on", len(placed) == 4)
+    tl = placed["top"]                       # Maya's top-left panel = top
     C["tl"] = tl
-    ev('MOUSEMOVE', 'NOTHING', x=tl.x + tl.width // 2, y=tl.y + tl.height // 2)
+    reg = next(r for r in tl.regions if r.type == 'WINDOW')
+    ev('MOUSEMOVE', 'NOTHING', x=reg.x + reg.width // 2, y=reg.y + reg.height // 2)
 
 
 @step
 def s_quad_shot():
     shot("gui_step31_quad.png")
     tl = C["tl"]
-    rv = tl.data
+    reg = next(r for r in tl.regions if r.type == 'WINDOW')
+    rv = reg.data
     C["picked"] = (rv.view_perspective, rv.is_orthographic_side_view)
-    with bpy.context.temp_override(window=win(), area=C["area"], region=tl):
+    with bpy.context.temp_override(window=win(), area=tl, region=reg):
         bpy.ops.allset.toggle_quad_view()
+    C["area"] = main_view()
 
 
 @step
 def s_single():
+    fv = import_module(MODULE + ".ui.four_view")
+    C["area"] = main_view()
     rv = C["area"].spaces.active.region_3d
     print("STATE picked", C["picked"], "single", rv.view_perspective, rv.is_orthographic_side_view)
-    check("back to one view", not C["area"].spaces.active.region_quadviews)
+    check("back to one view", len(fv.panes(win().screen)) == 1)
     check("the kept view is still a named axis view (header 'Top Orthographic', not 'User')",
           rv.view_perspective == 'ORTHO' and rv.is_orthographic_side_view == C["picked"][1] is True)
     redraw()
@@ -120,6 +129,8 @@ def s_single_shot():
     with bpy.context.temp_override(window=win(), area=area, region=region):
         bpy.ops.allset.view_home()   # Maya persp again for the menu shots
     bpy.context.scene.frame_set(8)
+    # step 237: a move in its own tick first (the first key after a layout change is lost under event simulation)
+    ev('MOUSEMOVE', 'NOTHING', x=area.x + area.width // 3, y=area.y + area.height // 2)
     redraw()
 
 

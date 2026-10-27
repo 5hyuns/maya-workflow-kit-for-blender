@@ -501,11 +501,9 @@ class ALLSET_OT_hb_single(bpy.types.Operator):
         area, region = _view3d(context)
         if area is None:
             return {'CANCELLED'}
-        if area.spaces.active.region_quadviews:
-            from ..operators import view
-            view.remember_ortho(area, area.spaces.active)      # Maya's ortho cameras keep their view (step 161)
-            with context.temp_override(area=area, region=region):
-                bpy.ops.screen.region_quadview()
+        from ..ui import four_view                 # step 237: the persp panel stays, the others close
+        if four_view.is_four(context.window.screen):
+            four_view.leave(context, window=context.window, role="persp")
         return {'FINISHED'}
 
 
