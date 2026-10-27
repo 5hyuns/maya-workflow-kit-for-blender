@@ -74,9 +74,17 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
     keeps only bend — so every non-deformer modifier is baked into the mesh under the deformers;
     ``before_only`` = "History before deformers only" (``-preDeformers``) bakes only the modifiers above the first
     deformer (the kit's rule before step 162)."""
-    from . import prim_history
+    from . import extrude, prim_history
     baked, notes = 0, []
     for ob in objects:
+        # Step 239 (#124, first-hour audit F-5): the kit's polyExtrudeFace / polyBevel record is a non-deformer
+        # history node too — Maya's Delete History (both kinds) removes it from the Channel Box INPUTS
+        rec = extrude.RECORDS.pop(ob.name, None)
+        if rec is not None:
+            rec.free()
+            if not ob.modifiers and not (ob.type == 'MESH' and ob.data.shape_keys) and prim_history.owner_of(ob) is None:
+                baked += 1
+                continue
         # The primitive's creation node (polyCube1, makeNurbCircle1) is history too: both kinds drop it, the shape
         # stays as it is (step 129)
         if prim_history.drop(ob) and not ob.modifiers and not (ob.type == 'MESH' and ob.data.shape_keys):

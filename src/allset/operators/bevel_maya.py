@@ -27,15 +27,30 @@ CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x
 
 
 def slide_limit(edges):
-    """Maya's fraction base: min over slide edges of length / (number of their ends a bevel slides along)."""
+    """Maya's fraction base (a perpendicular width): min over slide edges of length x sin(angle to the beveled edge)
+    / (number of their ends a bevel slides along).
+
+    Another beveled edge is a slide only where it shares a face with this one (the cube's top loop: the corner slides
+    inside the top face along it). Step 239 (#124, Maya audit230/maya/first_hour239.py): a cylinder cap's border ring
+    has no face holding two ring edges, so Maya slides along the side / cap fan edges (length 1) — and the width is
+    perpendicular, so the fan edges at 81 degrees to the ring give 0.49995 x sin 81 = 0.49379 (the side ring lands at
+    y 1.5062, the cap ring at radius 0.5). The ring neighbours had given 0.078. Cube cases are all at 90 degrees."""
     sel = set(edges)
     used = {}
     for e in edges:
+        faces = set(e.link_faces)
+        d = (e.verts[1].co - e.verts[0].co).normalized()
         for v in e.verts:
             for s in v.link_edges:
-                if s is not e:
-                    used.setdefault(s, set()).add(v)
-    caps = [s.calc_length() / len(ends) for s, ends in used.items() if s.calc_length() > ZERO]
+                if s is e or (s in sel and not faces.intersection(s.link_faces)):
+                    continue
+                t = (s.other_vert(v).co - v.co)
+                sin = t.normalized().cross(d).length if t.length > ZERO else 0.0
+                key = s
+                ent = used.setdefault(key, [set(), 1.0])
+                ent[0].add(v)
+                ent[1] = min(ent[1], sin)
+    caps = [s.calc_length() * sin / len(ends) for s, (ends, sin) in used.items() if s.calc_length() > ZERO]
     if caps:
         return min(caps)
     return min((e.calc_length() for e in sel), default=0.0)
