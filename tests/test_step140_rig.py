@@ -130,7 +130,8 @@ def test_titles_buttons_fields_defaults_are_maya():
                                          ("solver_enable", "", True), ("weight", "Weight:", 1.0)]
     assert _fields("ik_spline_tool") == [("root_on_curve", "", True), ("parent_curve", "", True),   # :214
                                          ("snap_curve", "", False), ("create_curve", "", True),
-                                         ("spans", "Number of spans:", "1")]       # step 218 (Maya 2026)
+                                         ("spans", "Number of spans:", "1"),       # step 218 (Maya 2026)
+                                         ("twist_type", "Twist type:", "Linear")]  # step 249 (Maya factory)
     # Bind Skin (option_boxes_140.md:28-46), button "Apply and Close"
     w = _w("bind_skin_maya")
     assert (w.title, w.action) == ("Bind Skin Options", "Apply and Close")

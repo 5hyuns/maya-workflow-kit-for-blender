@@ -341,6 +341,9 @@ def create_spline_ik(context, arm, start, end, curve=None, root_on_curve=True, s
     con.xz_scale_mode = 'NONE'
     con.use_curve_radius = False
     con.use_chain_offset = not root_on_curve
+    # step 249 (#166): Maya's handle with Twist / Roll / Twist Type (drivers on the chain's roll)
+    from . import spline_twist
+    spline_twist.setup(context, arm, ik_bone, con, mw @ ik_bone.tail)
     return con, curve
 
 
@@ -360,6 +363,8 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
     snap_curve: BoolProperty(name="Snap curve to root", default=False, options={'SKIP_SAVE'})
     create_curve: BoolProperty(name="Auto create curve", default=True, options={'SKIP_SAVE'})
     spans: bpy.props.IntProperty(name="Number of spans", default=1, min=1, max=4, options={'SKIP_SAVE'})
+    # step 249: Maya Twist type of the tool (factory Linear) = the new handle's Twist Type
+    twist_type: bpy.props.IntProperty(name="Twist type", default=0, min=0, max=3, options={'SKIP_SAVE'})
     curve: bpy.props.StringProperty(name="Curve", default="", options={'SKIP_SAVE', 'HIDDEN'},
                                     description="Existing curve object (Auto create curve off); empty = the "
                                                 "selected curve")
@@ -389,6 +394,10 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
             self.report({'WARNING'}, "The end joint must be below the start joint in the same skeleton")
             return {'CANCELLED'}
         con, curve = res
+        handle = bpy.data.objects.get(con.name)
+        if handle is not None and self.twist_type:
+            handle["twistType"] = int(self.twist_type)
+            handle.update_tag()
         # Maya selects the new ikHandle (maya2026_curve_rigs.json L6_spline_auto_curve): the kit handle is the
         # constraint, so its bone becomes the only selected joint (delegated)
         cb = _cb()
