@@ -15,6 +15,13 @@ first into the second with Blender's bundled ``io_scene_fbx.parse_fbx`` / ``enco
    (``rest_rotations``): the writer's own axis conventions, never the current frame ('s trap).
    Lcl Rotation default and keys become Pre^-1 R(t), compat Euler (``rotation_display.euler_curve``'s rule).
 
+3. Step 232: joints whose Maya frame a bone can't take (``joints.MAYA_FRAME``: an oriented end joint lines up with
+   the world, a Behavior-mirrored joint points X back up the chain) turn their frame by Q_j (joint axes). The local
+   matrix becomes Q_p^-1 L Q_j (Q_p = the parent joint's turn): PreRotation = Q_p^-1 R_rest Q_j, Lcl Rotation =
+   Q_j^-1 R_rest^-1 R(t) Q_j, Lcl Translation = Q_p^-1 t; models under a turned joint get Q_p^-1 on rotation and
+   translation; skin clusters / bind pose of a turned joint: TransformLink Q_j, Transform = Q_j^-1 Transform. The
+   joints' world positions and the skinned mesh don't change.
+
 An animated armature object (curves on the Null) keeps its Null: only step 2 runs (delegated).
 """
 
@@ -372,32 +379,90 @@ def fold_null(index, uid, null):
     return len(roots)
 
 
-def apply_prerotation(index, rest):
-    """PreRotation = rest rotation, Lcl Rotation (default and keys) = Pre^-1 R. Returns the joints changed."""
+def _turn_keys(index, uid, attr, fn):
+    m = index.models[uid]
+    default = get_vec(m, attr)
+    for rk in channel_keys_all(index, uid, attr, default):
+        times, vals, node, cs = rk
+        out, prev = [], None
+        for v in vals:
+            res = fn(v, prev)
+            if isinstance(res, tuple):
+                res, prev = res
+            out.append(res)
+        write_keys(node, cs, out)
+
+
+def apply_prerotation(index, rest, turns=None):
+    """PreRotation = rest rotation, Lcl Rotation (default and keys) = Pre^-1 R — with the frame turns of
+    ``turns`` {joint name: Q} (module doc, 3). Returns the joints changed."""
     n = 0
-    for uid, m in index.limbs().items():
-        pre = rest.get(name_of(m))
-        if pre is None:
+    turns = turns or {}
+    limbs = index.limbs()
+    by_uid = {uid: turns.get(name_of(m)) for uid, m in limbs.items()}
+    for uid, m in index.models.items():
+        qj = by_uid.get(uid)
+        par = index.parent.get(uid)
+        qp = by_uid.get(par) if par in limbs else None
+        qpi = qp.inverted() if qp is not None else None
+        if uid not in limbs:
+            if qpi is None:
+                continue                              # a model under a turned joint follows the turn
+            set_vec(m, b"Lcl Translation", qpi @ get_vec(m, b"Lcl Translation"), b"Lcl Translation", b"", b"A")
+            set_vec(m, b"Lcl Rotation", to_degrees(qpi @ rot_matrix(get_vec(m, b"Lcl Rotation")))[0],
+                    b"Lcl Rotation", b"", b"A")
+            _turn_keys(index, uid, b"Lcl Translation", lambda v, _p: qpi @ v)
+            _turn_keys(index, uid, b"Lcl Rotation", lambda v, p: to_degrees(qpi @ rot_matrix(v), p))
             continue
+        r_rest = rest.get(name_of(m))
+        if r_rest is None:
+            continue
+        pre = r_rest
+        if qpi is not None:
+            pre = qpi @ pre
+        if qj is not None:
+            pre = pre @ qj
         inv = pre.inverted_safe()
+
+        def local(r, qpi=qpi, qj=qj, inv=inv):
+            out = qpi @ r if qpi is not None else r
+            return inv @ out @ qj if qj is not None else inv @ out
         set_vec(m, b"PreRotation", to_degrees(pre)[0])
         set_int(m, b"RotationActive", 1, b"bool", b"")
-        set_vec(m, b"Lcl Rotation", to_degrees(inv @ rot_matrix(get_vec(m, b"Lcl Rotation")))[0],
+        set_vec(m, b"Lcl Rotation", to_degrees(local(rot_matrix(get_vec(m, b"Lcl Rotation"))))[0],
                 b"Lcl Rotation", b"", b"A")
-        for rk in channel_keys_all(index, uid, b"Lcl Rotation", get_vec(m, b"Lcl Rotation")):
-            times, vals, node, cs = rk
-            out, prev = [], None
-            for v in vals:
-                deg, prev = to_degrees(inv @ rot_matrix(v), prev)
-                out.append(deg)
-            write_keys(node, cs, out)
+        _turn_keys(index, uid, b"Lcl Rotation", lambda v, p, local=local: to_degrees(local(rot_matrix(v)), p))
+        if qpi is not None:
+            set_vec(m, b"Lcl Translation", qpi @ get_vec(m, b"Lcl Translation"), b"Lcl Translation", b"", b"A")
+            _turn_keys(index, uid, b"Lcl Translation", lambda v, _p, qpi=qpi: qpi @ v)
         n += 1
     return n
 
 
-def rewrite(path, rest_path):
-    """Rewrite the rig FBX at ``path`` the Maya way; ``rest_path`` = the same export at the rest pose.
-    Returns (joints given a PreRotation, Nulls folded)."""
+def turn_skin(index, turns):
+    """Skin clusters and bind pose of the turned joints follow their frames (module doc, 3)."""
+    uids = {uid: turns[name_of(m)].to_4x4() for uid, m in index.limbs().items() if name_of(m) in turns}
+    if not uids:
+        return
+    for pose in index.objects.find(b"Pose"):
+        for pn in pose.find(b"PoseNode"):
+            node, mat = pn.first(b"Node"), pn.first(b"Matrix")
+            if node is not None and mat is not None and node.props[0] in uids:
+                mat.props[0] = array.array('d', _arr(_mat(mat.props[0]) @ uids[node.props[0]]))
+    clusters = {d.props[0]: d for d in index.objects.find(b"Deformer") if d.props[2] == b"Cluster"}
+    for c in index.conns.elems:
+        if c.props[0] == b"OO" and c.props[2] in clusters and c.props[1] in uids:
+            d, q4 = clusters[c.props[2]], uids[c.props[1]]
+            tl, tr = d.first(b"TransformLink"), d.first(b"Transform")
+            if tl is None or tr is None:
+                continue
+            tl.props[0] = array.array('d', _arr(_mat(tl.props[0]) @ q4))
+            tr.props[0] = array.array('d', _arr(q4.inverted_safe() @ _mat(tr.props[0])))
+
+
+def rewrite(path, rest_path, turns=None):
+    """Rewrite the rig FBX at ``path`` the Maya way; ``rest_path`` = the same export at the rest pose; ``turns`` =
+    {joint name: Q} (joints.maya_frames). Returns (joints given a PreRotation, Nulls folded)."""
     tree, version = load(path)
     rest_tree, _v = load(rest_path)
     index, rest_index = Index(tree), Index(rest_tree)
@@ -410,7 +475,9 @@ def rewrite(path, rest_path):
         fold_null(index, uid, null)
         folded += 1
         index = Index(tree)
-    joints = apply_prerotation(index, rest)
+    turns = {k: v for k, v in (turns or {}).items()}
+    joints = apply_prerotation(index, rest, turns)
+    turn_skin(index, turns)
     save(path, tree, version)
     return joints, folded
 
