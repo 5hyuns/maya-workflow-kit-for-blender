@@ -370,7 +370,30 @@ def after_import(context, fmt, path, obs, materials, args):
             rest = [o for o in obs if o not in done and o.parent not in done]
             if rest:
                 bake_conversion(context, rest, conv)
+        if not done:
+            _file_time_slider(context, path, obs)
     maya_names(obs, materials, path)
+
+
+def _file_time_slider(context, path, obs):
+    """Step 238 (#146, audit ③-17): an animated FBX without a skeleton sets the Time Slider to the file's range too —
+    Maya's FBXImport does even with Fill Timeline off (research/maya/re/maya2026_engine_fbx.md:57); Blender's reader
+    leaves the scene's range (0-250). Rigs get it in fbx_rig_import.fix_armature (step 235)."""
+    if not any(o.animation_data is not None and o.animation_data.action is not None for o in obs):
+        return None
+    from . import fbx_rig, fbx_rig_import
+    if fbx_rig.modules() is None:
+        return None
+    scene = context.scene
+    tree, _v = fbx_rig.load(path)
+    span = fbx_rig_import.time_span(tree, fbx_rig_import.file_fps(tree, scene))
+    if span is None:
+        return None
+    scene.frame_start, scene.frame_end = span
+    if scene.use_preview_range:
+        scene.frame_preview_start, scene.frame_preview_end = span
+    scene.frame_set(max(span[0], min(scene.frame_current, span[1])))
+    return span
 
 
 def _write_obj_groups(path):

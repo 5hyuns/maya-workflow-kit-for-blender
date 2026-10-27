@@ -633,8 +633,64 @@ def _on_posed(id_name, id_kind, path, index):
         fc.mute = True
 
 
+# Step 238 (#146, audit230/chain4.md:56): msgbus notifies on the next event-loop pass, so a value typed into a blend
+# shape / constraint weight and keyed before that pass met a depsgraph update first, and the unmuted driver wrote its
+# result over it (the key became (90, 0)). The driven values seen after each update are kept; an update that finds a
+# value changed since (= typed, not driven) mutes that SDK driver first — depsgraph_update_pre runs before drivers.
+_SEEN = {}
+
+
+def _loaded_chans(st):
+    for node in driven_nodes(st):
+        if not (is_key(node) or is_constraint(node)):
+            continue
+        for key in channels(node):
+            c = chan(node, key)
+            if c is not None and not c.attr.startswith('["'):
+                yield c
+
+
+def _remember(st):
+    _SEEN.clear()
+    for c in _loaded_chans(st):
+        _SEEN[(c.id.name, c.path, c.index)] = c.get()
+
+
+@bpy.app.handlers.persistent
+def _before_update(_scene, _depsgraph=None):
+    try:
+        st = state()
+    except (AttributeError, ReferenceError):
+        return
+    if not st.open or not _SEEN:
+        return
+    for c in _loaded_chans(st):
+        seen = _SEEN.get((c.id.name, c.path, c.index))
+        if seen is None or abs(c.get() - seen) < 1e-9:
+            continue
+        fc = c.find()
+        if is_sdk(fc) and not fc.mute:
+            fc.mute = True
+
+
+@bpy.app.handlers.persistent
+def _after_update(_scene, _depsgraph=None):
+    try:
+        st = state()
+    except (AttributeError, ReferenceError):
+        return
+    if st.open:
+        _remember(st)
+    elif _SEEN:
+        _SEEN.clear()
+
+
 def _watch(st):
     bpy.msgbus.clear_by_owner(_MSG)
+    if st.open:
+        _remember(st)
+    else:
+        _SEEN.clear()
     if not st.open:
         return
     for node in driven_nodes(st):
@@ -835,11 +891,18 @@ def register_props():
     bpy.types.WindowManager.allset_sdk = PointerProperty(type=ALLSET_PG_sdk, options={'SKIP_SAVE'})
     cb.WRITE_HOOKS.append(hold_driven)
     bpy.app.handlers.load_post.append(_on_load)
+    bpy.app.handlers.depsgraph_update_pre.append(_before_update)
+    bpy.app.handlers.depsgraph_update_post.append(_after_update)
 
 
 def unregister_props():
     bpy.msgbus.clear_by_owner(_MSG)
     bpy.app.handlers.load_post.remove(_on_load)
+    for lst, fn in ((bpy.app.handlers.depsgraph_update_pre, _before_update),
+                    (bpy.app.handlers.depsgraph_update_post, _after_update)):
+        if fn in lst:
+            lst.remove(fn)
+    _SEEN.clear()
     if hold_driven in cb.WRITE_HOOKS:
         cb.WRITE_HOOKS.remove(hold_driven)
     del bpy.types.WindowManager.allset_sdk
