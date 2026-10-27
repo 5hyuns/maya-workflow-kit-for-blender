@@ -119,7 +119,11 @@ class ALLSET_OT_constrain(bpy.types.Operator):
 # type Vector, world up vector (0, 1, 0). Maya is Y-up: an object's Maya X / Y / Z = Blender X / Z / -Y (
 # step 57); a joint's Maya X / Y / Z = the bone's Y / Z / X (the bone's Y points at the child, Maya's primary X).
 AIM_VECTOR, UP_VECTOR, WORLD_UP = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), "Vector"
-WORLD_UP_TYPES = ("Scene up", "Vector", "None")      # the Maya world up types Blender's Track To can do
+# Maya aimConstraint world up types (enum order of the node's worldUpType: Scene Up / Object Up / Object Rotation Up /
+# Vector / None, command default Vector — step 252,  A11 + "Step 252 checked")
+WORLD_UP_TYPES = ("Scene up", "Object up", "Object rotation up", "Vector", "None")
+AIM_UP = "allset_aim_up"          # helper empty: name of the aim constraint whose up it carries
+UP_SUFFIX = " up"                 # the Locked Track that turns an Object up aim about its aim axis
 
 
 def local_axis(v, bone=False):
@@ -139,21 +143,66 @@ def axis_of(v):
     return "XYZ"[i], (1 if v[i] > 0 else -1)
 
 
-def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP, bone=False):
+def _aim_helper(con, name):
+    """Hidden empty for an aim's up (constrain_multi's helper collection; it goes when its aim goes)."""
+    owner = constrain_multi.owner_of(con)
+    h = bpy.data.objects.new(name, None)
+    h.empty_display_size = 0.0
+    h.hide_viewport = h.hide_render = h.hide_select = True
+    constrain_multi._helper_collection().objects.link(h)
+    id_ob, _prefix = constrain_multi._id_and_prefix(owner)
+    h[constrain_multi.H_OWNER] = id_ob
+    h[constrain_multi.H_BONE] = owner.name if isinstance(owner, bpy.types.PoseBone) else ""
+    h[constrain_multi.H_CON] = con.name
+    h[AIM_UP] = con.name
+    constrain_multi._state["armed"] = True
+    return h
+
+
+def is_up_companion(con):
+    t = getattr(con, "target", None)
+    return con.type == 'LOCKED_TRACK' and con.name.endswith(UP_SUFFIX) and t is not None and AIM_UP in t.keys()
+
+
+def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP, bone=False, up_object=None,
+        world_up_vector=(0.0, 1.0, 0.0)):
     """Make ``con`` (a Track To just added to ``cons``) Maya's aim: the owner's ``aim_vector`` points at the target,
-    its ``up_vector`` towards the world up (Blender: world Z = Maya Y). World up type None = Damped Track (no up,
-    the shortest turn, like Maya). Raises RuntimeError for vectors Blender's constraints can't take."""
+    its ``up_vector`` towards the world up w projected across the aim (Maya aimConstraint, checked). Blender:
+    - Scene up / Vector (0, 1, 0): Track To up = world Z (= Maya Y);
+    - Vector w / Object rotation up (w = worldUpVector x the up object's matrix): Track To with ``use_target_z`` on a
+      hidden empty at the aim target whose Z axis is w;
+    - Object up (w = up object position - constrained position; no object = the world origin, checked): Damped
+      Track + Locked Track (lock = aim axis, track = up axis) at the up object — the same turn about the aim;
+    - None = Damped Track (the shortest turn, like Maya).
+    Raises RuntimeError for vectors Blender's constraints can't take."""
     a = axis_of(local_axis(aim_vector, bone))
     if a is None:
         raise RuntimeError("Blender aims along an axis: the aim vector must be +-X, +-Y or +-Z")
     track = ("TRACK_" if a[1] > 0 else "TRACK_NEGATIVE_") + a[0]
-    if world_up == "None":
+    if world_up in ("None", "Object up"):
         damped = cons.new('DAMPED_TRACK')
         damped.target, damped.subtarget, damped.influence = con.target, con.subtarget, con.influence
         name = con.name
         cons.remove(con)
         damped.name = name
         damped.track_axis = track
+        if world_up == "None":
+            return damped
+        u = axis_of(local_axis(up_vector, bone))
+        if u is None or u[0] == a[0]:
+            raise RuntimeError("Blender turns the up vector along a local axis other than the aim vector's")
+        h = _aim_helper(damped, f"{name}_upPoint")
+        c = h.constraints.new('COPY_LOCATION')     # the up object's position (none: the world origin)
+        if up_object is not None:
+            c.target = up_object
+        else:
+            h.constraints.remove(c)
+        lock = cons.new('LOCKED_TRACK')
+        lock.name = name + UP_SUFFIX
+        lock.target = h
+        lock.lock_axis = "LOCK_" + a[0]
+        lock.track_axis = ("TRACK_" if u[1] > 0 else "TRACK_NEGATIVE_") + u[0]
+        lock.influence = damped.influence
         return damped
     u = axis_of(local_axis(up_vector, bone))
     if u is None or u[1] < 0 or u[0] == a[0]:
@@ -161,7 +210,32 @@ def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP
                            "vector's")
     con.track_axis = track
     con.up_axis = "UP_" + u[0]
-    con.use_target_z = False         # world up = world Z (Maya Y): Maya Scene up / Vector (0, 1, 0)
+    w = Vector(world_up_vector)
+    if world_up == "Scene up" or (world_up == "Vector" and w.length > 1e-12
+                                  and (w.normalized() - Vector((0.0, 1.0, 0.0))).length < 1e-9):
+        con.use_target_z = False         # world up = world Z (Maya Y): Maya Scene up / Vector (0, 1, 0)
+        return con
+    if world_up == "Object rotation up" and up_object is None:
+        world_up = "Vector"              # worldUpMatrix unconnected = identity: w = the vector (A11 formula)
+    target, sub = con.target, con.subtarget
+    h = _aim_helper(con, f"{con.name}_upAxis")
+    # the empty's Z axis = w: Vector = the world vector, Object rotation up = the up object's matrix times the vector
+    zl = local_axis(world_up_vector, False)
+    rot = zl.to_track_quat('Z', 'Y').to_matrix().to_4x4() if zl.length > 1e-12 else Vector((0, 0, 1)).to_track_quat(
+        'Z', 'Y').to_matrix().to_4x4()
+    h.matrix_basis = rot
+    if world_up == "Object rotation up":
+        child = h.constraints.new('CHILD_OF')
+        child.target = up_object
+        child.inverse_matrix.identity()
+        child.set_inverse_pending = False
+    loc = h.constraints.new('COPY_LOCATION')
+    loc.target = target
+    if sub:
+        loc.subtarget = sub
+    con.target = h
+    con.subtarget = ""
+    con.use_target_z = True
     return con
 
 

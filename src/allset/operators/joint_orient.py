@@ -28,8 +28,9 @@ EVEN = frozenset({"xyz", "yzx", "zxy"})
 ORDERS = ("xyz", "yzx", "zxy", "xzy", "yxz", "zyx")
 SAO = {"xup": (0, 1.0), "xdown": (0, -1.0), "yup": (1, 1.0), "ydown": (1, -1.0), "zup": (2, 1.0), "zdown": (2, -1.0)}
 EPS = 1e-9
-# n . up within this of 0 is Maya's tie (a chain drawn in a view plane that contains the up axis: front / side view):
-# Maya leaves the sign to float rounding; the kit keeps n so click noise can't flip it (delegated)
+# Maya flips n only when n . up < 0 (strict, checked); its view-plane clicks are exact, so a chain drawn
+# in the front / side view has n . up = 0 and keeps n. The kit's clicks carry float32 noise, so it treats |n . up|
+# below this as that 0 (kit input tolerance, step 252)
 TIE = 1e-6
 # The maths runs in float64 (numpy): mathutils is float32, and the bend normal of a nearly straight joint lost 3e-6
 # that way (step 244). Frames come back as mathutils Matrix (columns = Maya X, Y, Z).

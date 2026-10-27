@@ -138,6 +138,8 @@ classes += game_exporter.classes
 classes += motion_trail.classes
 from . import constrain_multi, control_shapes, wire_color  # noqa: E402  step 226 (#136)
 classes += control_shapes.classes + wire_color.classes + constrain_multi.classes
+from . import constrain_interp  # noqa: E402  step 252 (#168): Maya interpType
+classes += constrain_interp.classes
 from . import blend_shapes_227, pose_space_227  # noqa: E402  step 227 (#137)
 classes += blend_shapes_227.classes + pose_space_227.classes
 from . import flow_path_228, motion_path_228  # noqa: E402  step 228 (#138)
@@ -162,6 +164,7 @@ def register():
     control_shapes.register_props()
     wire_color.register_props()
     constrain_multi.register_props()
+    constrain_interp.register_handlers()
     blend_shapes_227.register_props()
     pose_space_227.register_props()
     motion_path_228.register_props()
@@ -249,6 +252,7 @@ def unregister():
     pose_space_227.unregister_props()
     blend_shapes_227.unregister_props()
     constrain_multi.unregister_props()
+    constrain_interp.unregister_handlers()
     wire_color.unregister_props()
     control_shapes.unregister_props()
     character_sets.unregister_props()

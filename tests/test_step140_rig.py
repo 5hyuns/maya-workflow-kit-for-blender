@@ -163,7 +163,7 @@ def test_titles_buttons_fields_defaults_are_maya():
     assert _fields("aim_constraint") == [
         ("aim_vector", "Aim vector:", (1.0, 0.0, 0.0)), ("up_vector", "Up vector:", (0.0, 1.0, 0.0)),
         ("world_up_type", "World up type:", "Vector"), ("world_up_vector", "World up vector:", (0.0, 1.0, 0.0)),
-        ("weight", "Weight:", 1.0)]
+        ("world_up_object", "World up object:", ""), ("weight", "Weight:", 1.0)]   # step 252: + World up object
     # Pole Vector: only Weight 1 (:187-188); Scale: Maintain offset off, Offset 1 1 1, All, Weight 1 (:190-192)
     assert _fields("pole_vector") == [("weight", "Weight:", 1.0)]
     assert [(n, d) for n, _l, d in _fields("scale_constraint")] == [
@@ -211,8 +211,10 @@ def test_aim_options():
     con = cube.constraints[-1]
     assert (con.track_axis, con.up_axis) == ('TRACK_NEGATIVE_Y', 'UP_X'), (con.track_axis, con.up_axis)  # Maya Z = -Y
     target, cube = _aim_scene()
+    # step 252 (#168): any world up vector (a hidden empty's Z axis = the vector, Track To uses its Z)
     res = ow.run(_w("aim_constraint"), bpy.context, {"world_up_vector": (1.0, 0.0, 0.0)})
-    assert isinstance(res, str) and "World up vector" in res and not cube.constraints, res
+    con = cube.constraints[-1]
+    assert res == {'FINISHED'} and con.type == 'TRACK_TO' and con.use_target_z and con.target is not target, res
 
 
 def test_scale_constraint_offset_and_axes():
