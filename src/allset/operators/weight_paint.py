@@ -613,7 +613,9 @@ def show_vertex_selection(mesh):
 
 
 def set_vertex_selection(mesh, indices):
+    from .. import compat
     data = mesh.data
+    compat.repair_selection_attributes(data)     # Blender 5.0.1: a mistyped .select_edge crashes MeshEdge.select
     keep = set(indices)
     for v in data.vertices:
         v.select = v.index in keep and not v.hide

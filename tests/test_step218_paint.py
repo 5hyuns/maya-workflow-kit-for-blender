@@ -48,7 +48,7 @@ def _cylinder():
     faces.append(tuple(reversed(range(SIDES))))
     faces.append(tuple((RINGS - 1) * SIDES + i for i in range(SIDES)))
     me = bpy.data.meshes.new("pCylinderShape1")
-    me.from_pydata(verts, [], faces)
+    compat.mesh_from_pydata(me, verts, [], faces)       # Blender 5.0.1 mistypes .select_edge (step 229)
     me.update()
     ob = bpy.data.objects.new("pCylinder1", me)
     bpy.context.scene.collection.objects.link(ob)
