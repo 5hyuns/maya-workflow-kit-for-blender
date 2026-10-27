@@ -118,11 +118,18 @@ def delete_hierarchy(context, objects):
     # Maya's normal / tangent constraint node is a child of the constrained object: its kit helper empty goes too
     # (step 202, #109; the helper has no parent — constrain_199.update clears it — so hierarchy() misses it)
     helpers = [h for h in constrain_199.helpers_owned_by(obs) if h not in obs]
+    from . import ik_rp
+    poles = ik_rp.helpers_of(obs)          # a kit RP handle's pole helper goes with the handle (step 245)
     datas = {ob.data for ob in obs if ob.data is not None}
     n = len(obs)
     for ob in reversed(obs):              # children first
         bpy.data.objects.remove(ob, do_unlink=True)
     constrain_199.remove_helpers(helpers)
+    for h in poles:
+        try:
+            bpy.data.objects.remove(h, do_unlink=True)
+        except ReferenceError:
+            pass
     for data in datas:
         try:
             if data.users == 0:

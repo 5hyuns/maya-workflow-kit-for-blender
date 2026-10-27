@@ -262,9 +262,11 @@ def test_pole_vector_weight():
     res = ow.run(_w("pole_vector"), bpy.context, {"weight": 0.5})
     assert isinstance(res, str) and "weight" in res.lower(), res
     con = arm.pose.bones["joint2"].constraints["ikHandle1"]
-    assert con.pole_target is None
+    # step 245: an RP handle has Maya's default pole vector (a hidden helper) from the start
+    helper = handle["allset_pole_helper"]
+    assert con.pole_target == helper and handle.get("allset_pole_object") is None
     _run("pole_vector")
-    assert con.pole_target == pole
+    assert handle.get("allset_pole_object") == pole and con.pole_target == helper    # pv = target - start joint
 
 
 def test_joint_tool_options_reach_the_bones():
