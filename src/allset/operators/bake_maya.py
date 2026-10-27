@@ -100,14 +100,25 @@ def bake(context, objects=None, bones=None, start=1, end=10, step=1, keep_unbake
     pose = bool(bones)
     owners = bones if pose else objects
     ids = {pb.id_data for pb in bones} if pose else set(objects)
+    from . import anim_layers
+    layered = [idb for idb in ids if anim_layers.has_layers(idb)]
+    for idb in layered:
+        # step 234 (Issue #143): bake onto BaseAnimation (the active action is the shown layer at influence 0,
+        # anim_layers.show) — then solved below so base + layers give the baked result (Maya 2026: the pose doesn't
+        # change and the layers stay, C:/Repos/bmk-strategy/audit230/maya/bake234.json)
+        anim_layers.show_base(idb)
     before = {}
     for idb in ids:
         before[idb] = {(fc.data_path, fc.array_index) for fc in compat.id_fcurves(idb)}
     res = bpy.ops.nla.bake('EXEC_DEFAULT', frame_start=int(start), frame_end=int(end), step=max(1, int(step)),
                            only_selected=True, visual_keying=True, clear_constraints=False, clear_parents=False,
                            use_current_action=True, clean_curves=False, bake_types={'POSE'} if pose else {'OBJECT'},
-                           channel_types={'LOCATION', 'ROTATION', 'SCALE', 'PROPS'})
+                           # step 234: Blender refuses custom-property keys of NLA-layered data ("Due to the NLA stack
+                           # setup ..." per key); a layered rig bakes its transforms only
+                           channel_types={'LOCATION', 'ROTATION', 'SCALE'} | (set() if layered else {'PROPS'}))
     if res != {'FINISHED'}:
+        if layered:
+            anim_layers.show(context.scene)
         return None
     prefixes = {}
     for o in owners:
@@ -157,6 +168,10 @@ def bake(context, objects=None, bones=None, start=1, end=10, step=1, keep_unbake
                         from . import ik_fk
                         ik_fk.set_blend(arm, pb, con, 0.0)      # Ik Blend 0 (drives the Influence, step 223)
                         iks += 1
+    for idb in layered:
+        anim_layers.settle_base(context.scene, idb, [_prefix(o) for o in owners if o.id_data == idb])
+    if layered:
+        anim_layers.show(context.scene)
     context.scene.frame_set(context.scene.frame_current)     # show the baked pose (nla.bake leaves the last sample)
     return {"nodes": len(owners), "muted": muted, "drivers": drivers, "ik": iks}
 

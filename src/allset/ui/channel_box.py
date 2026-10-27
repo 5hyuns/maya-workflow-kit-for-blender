@@ -371,6 +371,9 @@ def keyframe(ob, key, keytype='KEYFRAME'):
     if isinstance(ob, bpy.types.Object) and anim_layers.has_layers(ob):
         # Maya animation layers (step 180): the key goes to the selected layer, solved so the result is the value
         return anim_layers.key(ob, path, idx)
+    if is_bone(ob) and anim_layers.has_layers(ob.id_data):
+        # step 234: a joint of a layered armature (Blender's keying refuses NLA-stacked data)
+        return anim_layers.key_pose_bone(ob, path, idx)
     ok = ob.keyframe_insert(path, index=idx, keytype=keytype)
     if ok:      # Maya Tangents > Default In / Out Tangent (step 157)
         from ..operators import graph_key_menu
@@ -457,14 +460,16 @@ def channel_state(ob, key, frame=None):
     if driver(ob, key) is not None:
         return 'DRIVEN'
     fc = fcurve(ob, key)
-    if isinstance(ob, bpy.types.Object) and not is_shape_key(key):
+    if not is_shape_key(key) and (isinstance(ob, bpy.types.Object) or is_bone(ob)):
         from ..operators import anim_layers
-        if anim_layers.has_layers(ob):
+        id_ob = ob.id_data
+        if anim_layers.has_layers(id_ob):
             path, idx, _kind = channel_path(key)
+            path = full_path(ob, path) if path is not None else None
             if path is not None:
-                if anim_layers.member_of_layer(ob, path, idx):
+                if anim_layers.member_of_layer(id_ob, path, idx):
                     return 'LAYERED'
-                fc = anim_layers.base_curve(ob, path, idx)
+                fc = anim_layers.base_curve(id_ob, path, idx)
     if fc is None:
         return None
     if fc.mute:
