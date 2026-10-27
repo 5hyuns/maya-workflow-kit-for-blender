@@ -684,6 +684,10 @@ MAP.update({
                                                                           "display_mode": 'LIBRARIES'}),
     "Windows/General Editors/Command Shell": _editor('CONSOLE'),
     "Windows/Animation Editors/Shape Editor": ("allset.shape_editor", {}),
+    # step 227 L16 (#137): Pose Space Deformation (operators/pose_space_227.py, ui/pose_editor.py)
+    "Windows/Animation Editors/Pose Editor": ("allset.pose_editor", {}),
+    "Deform/Pose Space Deformation/Pose Editor": ("allset.pose_editor", {}),
+    "Deform/Pose Space Deformation/Create Pose Interpolator": ("allset.pose_interpolator_create", {}),
     "Windows/Rendering Editors/Render Setup": _props('VIEW_LAYER'),   # Maya 2026 (step 219)
     # Maya's Light Linking submenu (startup/Maya-612 Maya): the step 179 kit editor
     # in light- / object-centric mode, like Lighting/Shading > Light Linking Editor (step 211, audit 16 NB13).
