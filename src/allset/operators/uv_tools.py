@@ -155,24 +155,29 @@ def cut(bm, uv, edges):
     owner = {f: i for i, isl in enumerate(groups) for f in isl}
     moved = set()
     split = 0
+    centres = {}      # island -> UV centre, taken before its first nudge (each nudge is NUDGE; step 254)
     for e in edges:
         fs = [f for f in e.link_faces if f in owner]
         if len(fs) != 2 or owner[fs[0]] == owner[fs[1]]:
             continue
         split += 1
         small = min(fs, key=lambda f: len(groups[owner[f]]))
-        isl = groups[owner[small]]
-        centre = uv_centre(isl, uv)
+        side = owner[small]
+        if side not in centres:
+            centres[side] = uv_centre(groups[side], uv)
+        centre = centres[side]
         for v in e.verts:
-            key = (owner[small], v.index)
+            key = (side, v.index)
             if key in moved:
                 continue
             moved.add(key)
             c = _uv_at(small, v, uv).copy()
             d = centre - c
             d = d.normalized() * NUDGE if d.length > 1e-9 else Vector((NUDGE, 0.0))
-            for loop in _island_loops(isl):
-                if loop.vert is v and _same(loop[uv].uv, c):
+            # the island's loops at v are v's own loops in that island: no scan of the whole island per vertex
+            # (that made Cut UV Edges O(edges x island), 36 s on 48 k faces, step 254)
+            for loop in v.link_loops:
+                if owner.get(loop.face) == side and _same(loop[uv].uv, c):
                     loop[uv].uv = c + d
     return split
 
@@ -183,12 +188,14 @@ def sew(bm, uv, edges):
     for e in edges:
         e.seam = False
     sewn = 0
+    groups = where = None
     for e in edges:
         fs = [f for f in e.link_faces if not f.hide]
         if len(fs) != 2:
             continue
-        groups = islands(bm, uv, [f for f in bm.faces if not f.hide])
-        where = {f: i for i, isl in enumerate(groups) for f in isl}
+        if groups is None:     # islands change only when a shell moves onto another (step 254: once per edge was
+            groups = islands(bm, uv, [f for f in bm.faces if not f.hide])      # O(edges x mesh))
+            where = {f: i for i, isl in enumerate(groups) for f in isl}
         a, b = fs
         v, w = e.verts
         if where[a] == where[b]:
@@ -209,10 +216,12 @@ def sew(bm, uv, edges):
         for loop in _island_loops(groups[where[small]]):
             z = complex(*(loop[uv].uv - p_v)) * k
             loop[uv].uv = q_v + Vector((z.real, z.imag))
+        moved_shell = set(groups[where[small]])
         for vert, q in ((v, q_v), (w, q_w)):
             for loop in vert.link_loops:
-                if loop.face in set(groups[where[small]]) and (loop[uv].uv - q).length < 1e-4:
+                if loop.face in moved_shell and (loop[uv].uv - q).length < 1e-4:
                     loop[uv].uv = q.copy()
+        groups = None          # the two shells are one now
         sewn += 1
     return sewn
 

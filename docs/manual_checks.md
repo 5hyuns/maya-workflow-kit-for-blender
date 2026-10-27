@@ -1493,3 +1493,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 ## Step 250 — Weight Blended and DQ parity (#167)
 - [ ] Bind a character, AE skinCluster1 > Skinning Method Dual Quaternion: elbows / shoulders keep their volume like Maya DQ; Weight Blended: paint the `blendWeights` vertex group (Weight Paint) — 1 = DQ, 0 = linear, like Maya's Paint Skin Weights > DQ blend weights.
 - [ ] With a scaled joint (squash / stretch rig) and Dual Quaternion, compare with Maya: Blender scales about the joint, Maya about the origin (known difference, step_250.md).
+
+## Step 254 — #170 / #172 (real mouse, Blender 5.2.x and 4.5)
+- [ ] Fresh Blender 5.2.x: Edit > Preferences > Get Extensions > Install from Disk (the zip), keep the mouse on the Preferences window: the top menus of the main window still open on the first click; the welcome dialog appears only after the mouse moves into the main viewport.
+- [ ] Same on 4.5.
+- [ ] Maya mode, UV Editing workspace, a 50 k-face mesh: click faces, W-drag a face selection and a UV shell, Cut UV Edges, Ctrl+Z — no freeze, no crash; the UV HUD and the thick texture borders come back right after each drag.
