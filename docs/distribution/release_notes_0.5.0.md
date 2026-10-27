@@ -34,6 +34,7 @@ Known limits
 - Pose Space Deformation blends each pose linearly; overlapping poses differ from Maya.
 - Motion path roll on 3D paths can differ from Maya by a few degrees.
 - In-between shapes reach game engines as plain shape keys.
+- On Blender 5.1, Cycles renders Maya Ambient and Volume lights too dark; use Blender 4.5, 5.2 or EEVEE for them.
 
 Thanks to @cnzim for the joint, Channel Box and weight-painting work, and to everyone who reported problems from real
 work.
