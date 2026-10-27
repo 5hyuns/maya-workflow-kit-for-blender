@@ -446,7 +446,9 @@ MAP = {
     "Constrain/Scale": _con('COPY_SCALE'),
     "Constrain/Aim": _con('TRACK_TO'),
     "Constrain/Pole Vector": "allset.pole_vector",
-    "Constrain/Motion Paths/Attach to Motion Path": _con('FOLLOW_PATH'),
+    "Constrain/Motion Paths/Attach to Motion Path": "allset.motion_path_attach",    # step 228 L8 (motion_path_228.py)
+    "Constrain/Motion Paths/Set Motion Path Key": "allset.motion_path_key",        # step 228 L8
+    "Constrain/Motion Paths/Flow Path Object": "allset.flow_path",     # step 228 L9 (flow_path_228.py)
     "Constrain/Geometry": _con('SHRINKWRAP'),
     # --- Key (Animation) ---
     # step 56: S = every keyable channel
