@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 111–124 and Maya Kit before step 111). Format: [Keep a Changelog](https://keepachangelog.com/), versions follow
-[Semantic Versioning](https://semver.org/). Step documents: <n>.md`.
+[Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 

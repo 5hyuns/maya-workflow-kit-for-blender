@@ -22,3 +22,12 @@ site/.impeccable/review/
 
 # Internal product-strategy notes stay private (kept outside the repo)
 
+
+# Internal working notes (kept locally for the dev driver, not published)
+
+
+
+
+docs/merge-*.md
+
+
