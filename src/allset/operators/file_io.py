@@ -101,9 +101,10 @@ def export_args(fmt, k, selection, maya=True):
             args.update(axis_forward='-Z', axis_up='Y', apply_unit_scale=True, global_scale=1.0,
                         apply_scale_options='FBX_SCALE_NONE', add_leaf_bones=False, bake_space_transform=True,
                         bake_anim_use_all_actions=False, bake_anim_use_nla_strips=False,
-                        # step 222 (decision 3): Maya joints point X down the bone; Maya exports joints, not the
-                        # kit's control bones; a key per frame like Maya's bake (also re-composable by fbx_rig)
-                        primary_bone_axis='X', secondary_bone_axis='-Y', use_armature_deform_only=True,
+                        # step 222 (decision 3): Maya joints point X down the bone; step 232: Maya Y = the bone's
+                        # Z, Maya Z = its X (joints.JOINT_AXES, what Orient Joint sets) — '-Y' put Maya Y on the
+                        # bone's -X (jointOrient 90 deg off Maya's); Maya exports joints, not the kit's control bones; a key per frame like Maya's bake (also re-composable by fbx_rig)
+                        primary_bone_axis='X', secondary_bone_axis='Z', use_armature_deform_only=True,
                         bake_anim_simplify_factor=0.0)
         return "export_scene.fbx", args
     if fmt == 'OBJ':
@@ -597,8 +598,12 @@ def rig_fbx_maya(context, path, run, args):
         for arm, pos in saved:
             arm.pose_position = pos
         context.view_layer.update()
+    from .joints import maya_frames
+    ends = {}
+    for ob in rigs:
+        ends.update(maya_frames(ob))
     try:
-        return fbx_rig.rewrite(path, rest)
+        return fbx_rig.rewrite(path, rest, ends)
     finally:
         try:
             os.remove(rest)

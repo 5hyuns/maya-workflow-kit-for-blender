@@ -143,6 +143,63 @@ SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "
 # Maya world axis (Y-up) -> Blender world vector (Z-up: X -> X, Y -> Z, Z -> -Y)
 WORLD_AXES = {"X": Vector((1.0, 0.0, 0.0)), "Y": Vector((0.0, 0.0, 1.0)), "Z": Vector((0.0, -1.0, 0.0))}
 
+# A Maya joint's axes in its bone's axes: X = bone Y (down the chain), Y = bone Z, Z = bone X (rig_tools.local_axis);
+# the kit's FBX writer uses the same mapping (file_io export_args primary 'X' / secondary 'Z', step 232).
+JOINT_AXES = Matrix(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
+# Maya's world axes in Blender world coordinates (Maya X -> X, Y -> Z, Z -> -Y)
+MAYA_WORLD = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0)))
+# A Maya joint frame a bone can't take: a Blender bone always points its Y at the child, a Maya joint's X need not.
+# Such joints store their Maya frame relative to the bone's joint frame (``MAYA_FRAME``, quaternion in joint axes) and
+# the FBX writer turns the joint by it (fbx_rig.rewrite, step 232). Two cases (mayapy 2026, C:/Repos/bmk-strategy/
+# audit230/maya/chain3.json "chain"):
+# - Orient Joint / Joint Tool (oj xyz, any sao) leave an END joint (no child joint) lined up with the world: joint3
+#   jointOrient (0, 7.31, 0) after joint1 (0, 7.01, 0) and joint2 (0, -14.32, 0);
+# - Mirror Joints Behavior: the copy's frame is -(reflection x source frame) — its X points back up the chain
+#   (joint4 (-180, -7.01, 0), joint5 (0, -14.32, 0) with translate X -8.06), Orientation: the source's frame.
+MAYA_FRAME = "allset_maya_frame"
+
+
+def joint_frame(ob, eb):
+    """World rotation of a Maya joint's axes for edit bone ``eb`` (as the bone allows)."""
+    return (ob.matrix_world.to_3x3().normalized() @ eb.matrix.to_3x3().normalized()) @ JOINT_AXES
+
+
+def maya_frame(ob, eb):
+    """The joint's Maya frame (world rotation): the bone's joint frame turned by ``MAYA_FRAME``."""
+    from mathutils import Quaternion
+    q = eb.get(MAYA_FRAME)
+    f = joint_frame(ob, eb)
+    return f @ Quaternion(q).to_matrix() if q is not None and len(q) == 4 else f
+
+
+def set_maya_frame(ob, eb, frame):
+    """Store ``frame`` (world rotation) as the joint's Maya frame; nothing stored when the bone has it."""
+    q = (joint_frame(ob, eb).inverted() @ frame).to_quaternion()
+    if q.angle < 1e-7:
+        if MAYA_FRAME in eb:
+            del eb[MAYA_FRAME]
+    else:
+        eb[MAYA_FRAME] = list(q)
+
+
+def store_end_orient(ob, ebs, names):
+    """After an orient: joints with a child joint take the bone's frame, end joints Maya's world-aligned one."""
+    for name in names:
+        eb = ebs.get(name)
+        if eb is not None:
+            set_maya_frame(ob, eb, joint_frame(ob, eb) if eb.children else MAYA_WORLD)
+
+
+def maya_frames(ob):
+    """{bone name: rotation Matrix in joint axes} of the joints whose Maya frame differs from the bone's."""
+    from mathutils import Quaternion
+    out = {}
+    for b in ob.data.bones:
+        q = b.get(MAYA_FRAME)
+        if q is not None and len(q) == 4:
+            out[b.name] = Quaternion(q).to_matrix()
+    return out
+
 
 def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
     """Roll the new joints so their Maya secondary axis faces the Maya world direction (Joint Tool orientation)."""
@@ -165,6 +222,7 @@ def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
                 continue                    # the bone runs along the world direction: Maya leaves it too
             eb.align_roll(z)
             n += 1
+        store_end_orient(ob, ebs, names)
     return n
 
 
@@ -434,16 +492,33 @@ def orient(ob, names, sao, children=True):
             eb.select = eb.select_head = eb.select_tail = eb.name in targets
         if targets:
             bpy.ops.armature.calculate_roll(type=SAO_ROLL[sao])
+            store_end_orient(ob, ebs, targets)
         for eb in ebs:
             eb.select = keep.get(eb.name, False)
     return len(targets)
+
+
+def _load_options(op, key, names):
+    """The values last used (Maya optionVars): Blender doesn't remember properties of operators run from Python."""
+    from .option_windows import saved
+    for name, value in (saved("op_" + key) or {}).items():
+        if name in names:
+            try:
+                setattr(op, name, value)
+            except (TypeError, ValueError):
+                pass
+
+
+def _save_options(op, key, names):
+    from .option_windows import store
+    store("op_" + key, {name: getattr(op, name) for name in names})
 
 
 class ALLSET_OT_orient_joint(bpy.types.Operator):
     """Maya Orient Joint: aim the joints' secondary axis at a world direction (the bone always points at its child)"""
     bl_idname = "allset.orient_joint"
     bl_label = "Orient Joint Options"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     primary: EnumProperty(name="Primary Axis", items=_AXES, default="X")
     secondary: EnumProperty(name="Secondary Axis", items=_AXES, default="Y")
@@ -451,13 +526,19 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
                         items=[(k, k, "") for k in SAO_ROLL] + [("NONE", "None", "Leave the roll")],
                         default="Y+")
     children: BoolProperty(name="Orient Children of Joint", default=True)
+    option_box: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
         return _armature(context) is not None
 
     def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Orient")
+        # Maya: a plain menu click runs with the saved options, the option box opens the window (step 232; the
+        # dialog on every click kept the keyboard until closed, audit 0.5.0 ③-2). Blender keeps the last values.
+        if self.option_box:
+            return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Orient")
+        _load_options(self, "orient_joint", ("primary", "secondary", "world", "children"))
+        return self.execute(context)
 
     def draw(self, context):
         lay = self.layout
@@ -477,6 +558,7 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         if not names:
             self.report({'WARNING'}, "Select joints to orient")
             return {'CANCELLED'}
+        _save_options(self, "orient_joint", ("primary", "secondary", "world", "children"))
         n = orient(ob, names, self.world, self.children)
         results.result(self, f"Oriented {n} joint(s). {AXIS_NOTE}")
         return {'FINISHED'}
@@ -518,6 +600,9 @@ def mirror(ob, names, plane="YZ", behavior=True, search="", replace=""):
             m = rot.to_4x4()
             m.translation = dst.head
             dst.matrix = m
+            # Maya's frame of the copy (see MAYA_FRAME): Behavior -(R F), Orientation F (world reflection R)
+            f = maya_frame(ob, src)
+            set_maya_frame(ob, dst, (r.to_3x3() @ f) * -1.0 if behavior else f)
             parent = src.parent
             if parent is not None and parent.name in made:
                 dst.parent = ebs[made[parent.name]]
@@ -533,7 +618,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
     """Maya Mirror Joints: copy the selected joints and their children across a plane through the origin"""
     bl_idname = "allset.mirror_joints"
     bl_label = "Mirror Joints Options"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'UNDO'}
 
     plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="YZ")
     function: EnumProperty(name="Mirror Function", items=(("BEHAVIOR", "Behavior", "Mirrored joints rotate "
@@ -542,13 +627,19 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
                                                            "same axes")), default="BEHAVIOR")
     search: StringProperty(name="Search For")
     replace: StringProperty(name="Replace With")
+    option_box: BoolProperty(options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
         return _armature(context) is not None
 
     def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Mirror")
+        # Maya: a plain menu click runs with the saved options, the option box opens the window (step 232; the
+        # dialog on every click kept the keyboard until closed, audit 0.5.0 ③-2). Blender keeps the last values.
+        if self.option_box:
+            return context.window_manager.invoke_props_dialog(self, width=360, confirm_text="Mirror")
+        _load_options(self, "mirror_joints", ("plane", "function", "search", "replace"))
+        return self.execute(context)
 
     def draw(self, context):
         lay = self.layout
@@ -564,6 +655,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
         if not names:
             self.report({'WARNING'}, "Select the joints to mirror")
             return {'CANCELLED'}
+        _save_options(self, "mirror_joints", ("plane", "function", "search", "replace"))
         new = mirror(ob, names, self.plane, self.function == "BEHAVIOR", self.search, self.replace)
         if ob.mode == 'POSE':
             for name in new:
