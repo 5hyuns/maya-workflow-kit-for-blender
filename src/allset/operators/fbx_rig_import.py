@@ -168,11 +168,27 @@ def file_fps(tree, scene):
 
 
 def time_span(tree, fps):
+    """The file's Time Slider range (frames): GlobalSettings TimeSpan (Maya writes the playback range). Blender's
+    FBX writer always writes 0 .. 1 s there (step 235: a kit file came back as 0-24), so that value defers to the
+    first take's LocalStart / LocalStop."""
     s = _settings(tree)
     a, b = s.get(b"TimeSpanStart"), s.get(b"TimeSpanStop")
+    if a is not None and b is not None and (a, b) == (0, KTIME):
+        take = _take_span(tree)
+        if take is not None:
+            a, b = take
     if a is None or b is None or b <= a:
         return None
     return round(a / KTIME * fps), round(b / KTIME * fps)
+
+
+def _take_span(tree):
+    objects = tree.first(b"Objects")
+    for st in objects.find(b"AnimationStack") if objects is not None else ():
+        props = {p.props[0]: p.props[4] for p in fbx_rig._p70(st).elems if p.props and len(p.props) > 4}
+        if b"LocalStop" in props:
+            return props.get(b"LocalStart", 0), props[b"LocalStop"]
+    return None
 
 
 class Joint:
@@ -377,8 +393,15 @@ def _rebuild(context, arm, joints, parents, scratch, f0, tree, fps):
     s = g.to_scale()[0]
     # 5. skinned meshes leave the armature keeping their place; the conversion goes into the bones
     meshes = [o for o in arm.children if o.type == 'MESH']
+    index = fbx_rig.Index(tree)
     for ob in meshes:
         mw = ob.matrix_world.copy()
+        fw = model_world(index, ob.name)
+        if fw is not None:
+            # step 235: the mesh's place from the file (conversion @ its FBX world). Blender's reader parents a
+            # skinned root mesh under the armature and, when the joints have no parent node (a file the kit wrote:
+            # Maya layout, step 222), keeps the conversion on both -> 1/100 size turned 90 deg (audit ③-17)
+            mw = g @ fw
         ob.parent = None
         ob.matrix_parent_inverse = Matrix.Identity(4)
         lin = mw.to_3x3()
@@ -474,6 +497,34 @@ def _rebuild(context, arm, joints, parents, scratch, f0, tree, fps):
     scene.frame_set(frame_was if span is None else max(span[0], min(frame_was, span[1])))
     return {"joints": len(joints), "conversion": g, "meshes": meshes, "sparse_rotation": sparse_r, "sparse_translation": sparse_t, "dense": dense,
             "range": span}
+
+
+def model_world(index, name):
+    """World matrix of the FBX model called ``name`` (Blender may add ".001"), from its Lcl / Pre / Post values up
+    the model hierarchy (file units and axes); None when absent."""
+    base = name.split(".")[0] if name not in {fbx_rig.name_of(m) for m in index.models.values()} else name
+    uid = next((u for u, m in index.models.items() if fbx_rig.name_of(m) == base and m.props[2] == b"Mesh"), None)
+    if uid is None:
+        return None
+
+    def local(u):
+        m = index.models[u]
+        t = fbx_rig.get_vec(m, b"Lcl Translation")
+        r = fbx_rig.rot_matrix(fbx_rig.get_vec(m, b"Lcl Rotation"))
+        pre = fbx_rig.rot_matrix(fbx_rig.get_vec(m, b"PreRotation"))
+        post = fbx_rig.rot_matrix(fbx_rig.get_vec(m, b"PostRotation"))
+        sc = fbx_rig.get_vec(m, b"Lcl Scaling", (1.0, 1.0, 1.0))
+        # FBX: T . Roff . Rp . Rpre . R . Rpost^-1 . Rp^-1 . Soff . Sp . S . Sp^-1
+        roff, rp = (Matrix.Translation(fbx_rig.get_vec(m, n)) for n in (b"RotationOffset", b"RotationPivot"))
+        soff, sp = (Matrix.Translation(fbx_rig.get_vec(m, n)) for n in (b"ScalingOffset", b"ScalingPivot"))
+        return (Matrix.Translation(t) @ roff @ rp @ (pre @ r @ post.inverted_safe()).to_4x4() @ rp.inverted()
+                @ soff @ sp @ Matrix.Diagonal((sc.x, sc.y, sc.z, 1.0)) @ sp.inverted())
+    w = local(uid)
+    p = index.parent.get(uid, 0)
+    while p in index.models:
+        w = local(p) @ w
+        p = index.parent.get(p, 0)
+    return w
 
 
 def _rows_normalised(m3):

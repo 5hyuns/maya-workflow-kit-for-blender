@@ -301,27 +301,69 @@ def test_undo_restores():
     assert key.key_blocks.get("smile_ib500") is None and not bs.inbetweens(key)
 
 
-def test_fbx_export_keeps_shape_keys():
-    """Kit File > Export All (FBX): the shape keys (Maya targets + the helper keys) are in the file; the drivers are
-    not (FBX has none)."""
+def _channels(path):
+    """{BlendShape deformer name: {channel name: (shape names in order, FullWeights)}} of an FBX file."""
+    fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
+    tree, _v = fbx_rig.load(path)
+    objs, conns = tree.first(b"Objects"), tree.first(b"Connections")
+    ids = {e.props[0]: e for e in objs.elems if e.props}
+    kids = {}
+    for c in conns.elems:
+        if c.props[0] == b"OO":
+            kids.setdefault(c.props[2], []).append(c.props[1])
+    out = {}
+    for d in [e for e in objs.find(b"Deformer") if e.props[2] == b"BlendShape"]:
+        chans = {}
+        for u in kids.get(d.props[0], ()):
+            ch = ids[u]
+            shapes = [fbx_rig.name_of(ids[x]) for x in kids.get(u, ()) if x in ids and ids[x].props[2] == b"Shape"]
+            fw = ch.first(b"FullWeights")
+            chans[fbx_rig.name_of(ch)] = (shapes, [round(x, 3) for x in fw.props[0]] if fw is not None else None)
+        out[fbx_rig.name_of(d)] = chans
+    return out
+
+
+def test_fbx_export_writes_maya_blend_shapes():
+    """Kit File > Export All (FBX), step 235: Maya's blendShape layout — one channel per target, an in-between is a
+    second shape of its target's channel (FullWeights 50 / 100 like Maya's items 5500 / 6000), the helper keys are
+    not channels; a combination target is a plain target (Maya FBX writes the combo the same way)."""
     _fresh()
     face, key = _face(("smile", (0, 1, 0)), ("blink", (0, 1, 0)))
     bs.add_inbetween(key, "smile", 0.5)
-    assert bpy.ops.allset.shape_add_combination(key=key.name, targets="smile\tblink") == {'FINISHED'}
-    want = [kb.name for kb in key.key_blocks[1:]]
+    assert bpy.ops.allset.shape_add_combination(key=key.name, targets="smile	blink") == {'FINISHED'}
+    targets = [kb.name for kb in bs.target_blocks(key)]
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "blend227.fbx")
     for ob in bpy.context.selected_objects:
         ob.select_set(False)
     r = bpy.ops.allset.file_export_all('EXEC_DEFAULT', filepath=path, export_type='FBX')
     assert r == {'FINISHED'}, r
-    bpy.ops.wm.read_homefile(use_empty=True)
-    bpy.ops.import_scene.fbx(filepath=path)
-    meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
-    assert meshes, "nothing imported"
-    got = [kb.name for kb in meshes[0].data.shape_keys.key_blocks[1:]] if meshes[0].data.shape_keys else []
-    print(f"FBX re-import shape keys: {got}")
-    assert sorted(got) == sorted(want), (got, want)
+    got = _channels(path)
+    print(f"FBX blend shapes: {got}")
+    (name, chans), = got.items()
+    assert sorted(chans) == sorted(targets), (sorted(chans), targets)
+    assert chans["smile"] == (["smile_ib500", "smile"], [50.0, 100.0]), chans["smile"]
+    assert all(v == ([k], [100.0]) for k, v in chans.items() if k != "smile"), chans
+
+
+def test_fbx_blend_shapes_next_to_a_cluster():
+    """Step 235 (audit ④-8): a cluster (Hook) on the mesh no longer drops the blend shapes from the FBX."""
+    _fresh()
+    face, key = _face(("smile", (0, 1, 0)), ("blink", (0, 1, 0)))
+    bs.add_inbetween(key, "smile", 0.5)
+    e = bpy.data.objects.new("cluster1Handle", None)
+    bpy.context.scene.collection.objects.link(e)
+    md = face.modifiers.new("cluster1", 'HOOK')
+    md.object = e
+    md.vertex_indices_set([0])
+    path = os.path.join(OUT, "blend227_hook.fbx")
+    for ob in bpy.context.selected_objects:
+        ob.select_set(False)
+    assert bpy.ops.allset.file_export_all('EXEC_DEFAULT', filepath=path, export_type='FBX') == {'FINISHED'}
+    (name, chans), = _channels(path).items()
+    assert sorted(chans) == ["blink", "smile"], chans
+    assert chans["smile"][1] == [50.0, 100.0]
+    assert md.show_viewport and md.show_render
 
 
 def test_unregister_removes_handler():
