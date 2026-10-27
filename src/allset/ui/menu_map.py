@@ -421,8 +421,9 @@ MAP = {
     "Windows/Animation Editors/Quick Rig": "allset.quick_rig",
     "Skeleton/Mirror Joints": "allset.mirror_joints",
     "Skeleton/Orient Joint": "allset.orient_joint",
-    "Skeleton/Remove Joints": "armature.delete",
-    "Skeleton/Disconnect Joint": ("armature.parent_clear", {"type": 'DISCONNECT'}),
+    # step 246 (#163): Maya's meaning (operators/skeleton_menu.py; joint_rig_2026_skeleton_menu.md-6)
+    "Skeleton/Remove Joints": "allset.remove_joint",
+    "Skeleton/Disconnect Joint": "allset.disconnect_joint",
     "Skeleton/Create IK Handle": "allset.ik_handle",       # step 58: click start + end joint
     # --- Skin ---
     # step 58: any selection order, no parenting, Max Influences
@@ -836,8 +837,8 @@ MAP.update({
     "Generate/Create Description...": "object.curves_empty_hair_add",
     "Generate/Create Interactive Groom Splines": "object.curves_empty_hair_add",
     # Skeleton / Skin / Constrain
-    "Skeleton/Insert Joints": "armature.subdivide",
-    "Skeleton/Connect Joint": ("armature.parent_set", {"type": 'CONNECTED'}),
+    "Skeleton/Insert Joints": "allset.insert_joint_tool",          # step 246: click a joint, drag
+    "Skeleton/Connect Joint": "allset.connect_joint",              # step 246: connect / parent mode (option box)
     # step 199 (#106): Maya's three skinCluster.normalizeWeights modes (operators/skin_tools_199.py)
     "Skin/Normalize Weights/Enable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'INTERACTIVE'}),
     "Skin/Normalize Weights/Disable Weight Normalization": ("allset.skin_normalize_mode", {"mode": 'NONE'}),

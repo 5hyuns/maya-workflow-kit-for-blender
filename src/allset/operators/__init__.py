@@ -142,6 +142,8 @@ from . import blend_shapes_227, pose_space_227  # noqa: E402  step 227 (#137)
 classes += blend_shapes_227.classes + pose_space_227.classes
 from . import flow_path_228, motion_path_228  # noqa: E402  step 228 (#138)
 classes += motion_path_228.classes + flow_path_228.classes
+from . import skeleton_menu  # noqa: E402  step 246 (#163): Insert / Remove / Disconnect / Connect Joint
+classes += skeleton_menu.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

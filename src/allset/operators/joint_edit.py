@@ -19,7 +19,7 @@ from mathutils import Quaternion
 from . import joints
 
 TRANSLATE_OPS = frozenset({"TRANSFORM_OT_translate"})
-SKIP_MODALS = ("TRANSFORM_OT_", "ALLSET_OT_joint_tool")
+SKIP_MODALS = ("TRANSFORM_OT_", "ALLSET_OT_joint_tool", "ALLSET_OT_insert_joint_tool")
 EPS = 1e-6
 
 _snap = {"ob": None, "bones": {}, "op": None}
