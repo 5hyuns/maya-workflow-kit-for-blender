@@ -201,6 +201,50 @@ def maya_frames(ob):
     return out
 
 
+# Step 233 (Issue #142): Blender ignores every location constraint on a CONNECTED bone (its head is glued to the
+# parent's tail; checked 4.5: Copy Location / Child Of / Copy Transforms / Limit Location leave it in place, rotation
+# constraints work), while a Maya joint's translate is free: Constrain > Point / Parent on a child joint moves it
+# (Maya 2026, C:/Repos/bmk-strategy/audit230/maya/cons233.json: joint3 (12, 12, 0), W1 = 3 -> (12, 13, 0)).
+# The joint that gets such a constraint is disconnected (delegated: only that bone — Joint Tool chains stay connected,
+# so moving a joint in edit mode still drags the chain); it stays where it is (rest pose unchanged) and the bone is
+# marked ``FREED``. Undo brings the connection back with the constraint.
+LOCATION_CONSTRAINTS = frozenset({'COPY_LOCATION', 'CHILD_OF', 'COPY_TRANSFORMS', 'LIMIT_LOCATION', 'LIMIT_DISTANCE',
+                                  'SHRINKWRAP', 'FOLLOW_PATH', 'CLAMP_TO', 'FLOOR', 'TRANSFORM', 'PIVOT'})
+FREED = "allset_freed_connect"
+
+
+def location_constrained(arm):
+    """Names of the connected bones of ``arm`` that carry a location constraint."""
+    out = []
+    for b in arm.data.bones:
+        if not b.use_connect:
+            continue
+        pb = arm.pose.bones.get(b.name)
+        if pb is not None and any(c.type in LOCATION_CONSTRAINTS and c.enabled for c in pb.constraints):
+            out.append(b.name)
+    return out
+
+
+def free_location_constrained(context, arm):
+    """Disconnect the bones Blender would hold at the parent's tail despite a location constraint; returns them."""
+    names = location_constrained(arm)
+    if not names:
+        return []
+    vl = context.view_layer
+    prev = vl.objects.active
+    vl.objects.active = arm
+    try:
+        with _InEditMode(arm) as ebs:
+            for name in names:
+                eb = ebs.get(name)
+                if eb is not None:
+                    eb.use_connect = False
+                    eb[FREED] = True
+    finally:
+        vl.objects.active = prev
+    return names
+
+
 def orient_new(ob, names, secondary="Y", world="Y", sign="+"):
     """Roll the new joints so their Maya secondary axis faces the Maya world direction (Joint Tool orientation)."""
     if secondary == "NONE":
