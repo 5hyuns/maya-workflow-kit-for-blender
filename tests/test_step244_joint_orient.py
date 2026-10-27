@@ -274,15 +274,22 @@ def test_rotated_and_skinned_joints_are_skipped_with_mayas_warning():
     ob.data.bones.active = ob.data.bones["j0"]
     r = bpy.ops.allset.orient_joint('EXEC_DEFAULT')
     assert r == {'FINISHED'}
-    # skinned skeleton: every joint skipped
+    # skinned skeleton: Maya orients it without a warning (step 252, 060_rig_lane.md A1); only rotated joints skip.
+    # Maya then moves the skinned mesh, Blender's skin follows the new rest: the kit's mesh stays (measured difference)
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.mesh.primitive_cube_add()
     body = bpy.context.active_object
     body.modifiers.new("skinCluster1", 'ARMATURE').object = ob
     bpy.context.view_layer.objects.active = ob
+    dg = bpy.context.evaluated_depsgraph_get()
+    pts0 = [v.co.copy() for v in body.evaluated_get(dg).to_mesh().vertices]
     skipped = []
-    assert joints.orient(ob, ["j0"], "Y+", True, "xyz", True, skipped) == 0
-    assert all(why == "It is bound to a skin." for _n, why in skipped) and len(skipped) == 4, skipped
+    assert joints.orient(ob, ["j0"], "Y+", True, "xyz", True, skipped) > 0
+    assert skipped and all(why == "It has non-zero rotations." for _n, why in skipped), skipped
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    pts1 = [v.co.copy() for v in body.evaluated_get(dg).to_mesh().vertices]
+    assert max((a - b).length for a, b in zip(pts0, pts1)) < 1e-5
     _reset()
 
 

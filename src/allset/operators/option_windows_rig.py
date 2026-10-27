@@ -16,6 +16,7 @@ from bpy.props import StringProperty
 from mathutils import Vector
 
 from .option_windows import F, Window, _constraint, _last_constraint  # noqa: F401  (imported by option_windows)
+from .option_windows_modify import FString
 
 
 class FText(F):
@@ -130,38 +131,44 @@ def _run_blend_shape(context, v):
 def _run_aim(context, v):
     from . import rig_tools
     world_up = v["world_up_type"]
-    if world_up == "Vector":
-        up = Vector(v["world_up_vector"])
-        if up.length < 1e-9 or (up.normalized() - Vector((0.0, 1.0, 0.0))).length > 1e-6:
-            raise RuntimeError("Blender's Track To turns the up vector towards the scene up only: World up vector "
-                               "must be 0 1 0 (Maya Y)")
-    # check the vectors before anything is added (rig_tools.aim raises on vectors Blender can't take)
     bone = context.mode == 'POSE'
-    if rig_tools.axis_of(rig_tools.local_axis(v["aim_vector"], bone)) is None:
+    up_object = None
+    if world_up in ("Object up", "Object rotation up"):
+        name = v.get("world_up_object", "").strip()
+        if name:
+            up_object = bpy.data.objects.get(name)
+            if up_object is None:
+                raise RuntimeError(f"World up object: no object named {name}")
+    # check the vectors before anything is added (rig_tools.aim raises on vectors Blender can't take)
+    a = rig_tools.axis_of(rig_tools.local_axis(v["aim_vector"], bone))
+    if a is None:
         raise RuntimeError("Blender aims along an axis: the aim vector must be +-X, +-Y or +-Z")
     if world_up != "None":
-        a = rig_tools.axis_of(rig_tools.local_axis(v["aim_vector"], bone))
         u = rig_tools.axis_of(rig_tools.local_axis(v["up_vector"], bone))
-        if u is None or u[1] < 0 or u[0] == a[0]:
-            raise RuntimeError("Blender's Track To needs an up vector along a positive axis other than the aim "
-                               "vector's")
+        if u is None or u[0] == a[0] or (u[1] < 0 and world_up != "Object up"):
+            raise RuntimeError("Blender turns the up vector along a local axis other than the aim vector's "
+                               "(a positive one unless World up type is Object up)")
     res = bpy.ops.allset.constrain('EXEC_DEFAULT', type='TRACK_TO')
     con = _last_constraint(context)
     if res != {'FINISHED'} or con is None:
         return res
     owner = context.active_pose_bone if bone else context.active_object
     cons = owner.constraints
-    if (tuple(v["aim_vector"]), tuple(v["up_vector"]), world_up) != (rig_tools.AIM_VECTOR, rig_tools.UP_VECTOR,
-                                                                    rig_tools.WORLD_UP):
-        # the operator made Maya's factory aim; redo it with the window's vectors on a fresh Track To
+    if (tuple(v["aim_vector"]), tuple(v["up_vector"]), world_up, tuple(v["world_up_vector"])) != (
+            rig_tools.AIM_VECTOR, rig_tools.UP_VECTOR, rig_tools.WORLD_UP, (0.0, 1.0, 0.0)):
+        # the operator made Maya's factory aim; redo it with the window's values on a fresh Track To
         target, sub, name = con.target, getattr(con, "subtarget", ""), con.name
         cons.remove(con)
         con = cons.new('TRACK_TO')
         con.name, con.target = name, target
         if sub:
             con.subtarget = sub
-        con = rig_tools.aim(cons, con, v["aim_vector"], v["up_vector"], world_up, bone=bone)
+        con = rig_tools.aim(cons, con, v["aim_vector"], v["up_vector"], world_up, bone=bone, up_object=up_object,
+                            world_up_vector=v["world_up_vector"])
     con.influence = v["weight"]
+    companion = cons.get(con.name + rig_tools.UP_SUFFIX)
+    if companion is not None:
+        companion.influence = v["weight"]
     return res
 
 
@@ -283,11 +290,13 @@ WINDOWS = [
     # Constrain > Aim (option_boxes_140.md:169-185): +X at the target, +Y up, world up Vector (0, 1, 0)
     Window("aim_constraint", "Aim Constraint Options", "Add", ("allset.constrain", {"type": 'TRACK_TO'}), [
         F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)), F("up_vector", "Up vector:", "vec3", (0.0, 1.0, 0.0)),
-        F("world_up_type", "World up type:", "enum", "Vector", items=("Scene up", "Vector", "None")),
+        F("world_up_type", "World up type:", "enum", "Vector",
+          items=("Scene up", "Object up", "Object rotation up", "Vector", "None")),
         F("world_up_vector", "World up vector:", "vec3", (0.0, 1.0, 0.0)),
+        FString("world_up_object", "World up object:"),
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_aim, paths=("Constrain/Aim",),
         missing=("Maintain offset / Offset (Blender's Track To has none)",) + _ANIM_LAYER +
-        ("World up type: Object up / Object rotation up", "World up object", "Constraint axes (always All)")),
+        ("Constraint axes (always All)",)),
     # Constrain > Pole Vector (option_boxes_140.md:187-188): only Weight
     Window("pole_vector", "Pole Vector Constraint Options", "Add", ("allset.pole_vector", {}), [
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_pole_vector, paths=("Constrain/Pole Vector",)),

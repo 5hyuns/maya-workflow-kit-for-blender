@@ -316,11 +316,10 @@ def orient_bones(ob, ebs, names, oj="xyz", sao="yup", aos=True, skipped=None, re
     """Write Maya orientJoint frames (operators/joint_orient.py) onto edit bones ``names``: the roll puts the bone's Z
     on Maya Y, and a frame the bone can't take (primary axis not X, an end joint) goes into ``MAYA_FRAME``. Rotated
     joints are skipped (``skipped`` gets (name, reason)). Returns the number oriented."""
-    from . import joint_orient, joint_selection
-    if joint_selection.is_skinned(ob):
-        if skipped is not None:
-            skipped.extend((nm, "It is bound to a skin.") for nm in names)
-        return 0
+    from . import joint_orient
+    # Skin-bound joints are oriented too, without a warning (mayapy 2026 tmp/re251/a/verify_orient_messages.json,
+    # 060_rig_lane.md A1). Maya then moves the skinned mesh (bindPreMatrix kept: 2.06 units on tmp/p252/oj_skin.json);
+    # Blender's skin follows the new rest, so the kit's mesh stays (step 252, a measured difference).
     depth = {eb.name: len(eb.parent_recursive) for eb in ebs}
     order = sorted(names, key=lambda nm: depth.get(nm, 0))
     todo = []
@@ -748,7 +747,11 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         skipped = []
         n = orient(ob, names, self.world, self.children, oj, self.auto_secondary, skipped)
         for name, why in skipped:
-            self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning (principles2.md §1.1)
+            self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning (060_rig_lane.md A1)
+        if skipped:
+            # Maya ends with this one, naming the first rotated joint up the hierarchy (060_rig_lane.md A1, mayapy)
+            self.report({'WARNING'}, f"Cannot perform joint orientation. Transform {skipped[0][0]} has non-zero "
+                                     "rotations.")
         results.result(self, f"Oriented {n} joint(s)")
         return {'FINISHED'}
 

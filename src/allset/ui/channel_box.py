@@ -780,7 +780,10 @@ _AIM = ('TRACK_TO', 'DAMPED_TRACK', 'LOCKED_TRACK')
 
 def constraints(node):
     """Constraints shown as INPUTS nodes (Limit constraints are Maya transform limits: AE only)."""
-    return [c for c in getattr(node, "constraints", ()) if not c.type.startswith("LIMIT_")]
+    from ..operators import constrain_interp, rig_tools
+    # a step 252 group blend / Object up turn is part of its Maya node
+    return [c for c in getattr(node, "constraints", ()) if not c.type.startswith("LIMIT_")
+            and not constrain_interp.is_blend(c) and not rig_tools.is_up_companion(c)]
 
 
 def constraint_enabled(con):
@@ -816,6 +819,8 @@ def maya_constraint_type(con, default=None):
 
 def constraint_node_name(node, con):
     """Maya's name for the constraint node: ``<node>_<type><n>`` (pCube1_parentConstraint1)."""
+    from ..operators import constrain_multi
+    con = constrain_multi.head_of(con, node)     # a step 252 hidden blend / Object up turn = its node
     mtype = maya_constraint_type(con)
     if mtype is None:
         return con.name
@@ -2425,12 +2430,52 @@ def _draw_group(lines, context, ob, con, mb):
         op.bone = ob.name if is_bone(ob) else ""
         op.group = mb.group
     if opened:
+        if constrain_multi.group_type(con, ob) in ("orientConstraint", "parentConstraint"):
+            r = lines.row()
+            if r is not None:
+                _draw_interp_row(r, ob, mb.group)
         for prop, label in constrain_multi.weights(ob, mb.group):
             if prop not in ob.keys():
                 continue
             r = lines.row()
             if r is not None:
                 _draw_text_row(r, context, ob, ob, prop, "CUSTOM", label=label)
+
+
+def _draw_interp_row(layout, ob, group):
+    """Maya's keyable Interp Type of an orient / parent constraint (enum, factory Average; step 252, #168 —
+    research/maya/re/060_rig_lane.md "Step 252 measurements")."""
+    from ..operators import constrain_interp
+    mode = constrain_interp.mode_of(ob, group)
+    line = layout.row(align=True)
+    split = line.split(factor=0.5, align=True)
+    name = split.row(align=True)
+    name.alignment = 'CENTER'
+    name.label(text="Interp Type")
+    right = split.row(align=True)
+    right.context_pointer_set("allset_interp_owner", ob)
+    right.context_string_set("allset_interp_group", group)
+    right.menu(ALLSET_MT_cb_interp.bl_idname,
+               text=constrain_interp.NAMES[constrain_interp.SHORTEST if mode is None else mode])
+    line.label(text="", icon='BLANK1')
+
+
+class ALLSET_MT_cb_interp(bpy.types.Menu):
+    bl_idname = "ALLSET_MT_cb_interp"
+    bl_label = "Interp Type"
+
+    def draw(self, context):
+        from ..operators import constrain_interp
+        owner = getattr(context, "allset_interp_owner", None)
+        group = getattr(context, "allset_interp_group", "")
+        if owner is None or not group:
+            return
+        for i, n in enumerate(constrain_interp.NAMES):
+            op = self.layout.operator("allset.constraint_interp", text=n)
+            op.object = owner.id_data.name
+            op.bone = owner.name if is_bone(owner) else ""
+            op.group = group
+            op.mode = str(i)
 
 
 class ALLSET_PT_channel_box(bpy.types.Panel):
@@ -2580,7 +2625,7 @@ classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider,
            ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, ALLSET_OT_cb_wheel, *CHANNEL_OPS,
            ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_freeze, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
-           ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit,
+           ALLSET_OT_cb_rotate_order, ALLSET_MT_cb_edit, ALLSET_MT_cb_interp,
            ALLSET_MT_cb_object, ALLSET_MT_cb_show)
 # ALLSET_PT_channel_box / _dock_attribute_editor / _dock_modeling_toolkit are no longer registered as 3D View sidebar
 # tabs: the Maya panels live in their own dock areas / floating windows (ui/maya_dock.py, step 116), which call

@@ -22,9 +22,8 @@ The kit (one Blender constraint reads one target):
   constraint goes (``cleanup``, from a depsgraph handler through a timer).
 - Scale: Maya's multi-target scale is the weighted geometric mean (measured): member i = Copy Scale with
   ``power = w_i / Σw`` (equal split when Σw = 0), the first replaces, the others multiply (``use_offset``) — exact.
-- Rotation: Blender mixes an influence with slerp, Maya orient / parent Average (interpType 1) is the normalised
-  weighted quaternion sum (nlerp). Equal weights on two targets agree; other weights differ by under a degree
-  (tests/test_step226_constraints.py records the numbers) [U, not faked].
+- Rotation: Maya's interpType (orient / parent) — step 252 (#168), operators/constrain_interp.py: Shortest is the
+  rotation members' influence w_i / W_total, the other types (factory Average) a kit-computed blend.
 """
 
 import re
@@ -134,8 +133,17 @@ def is_head(con, owner=None):
 
 
 def head_of(con, owner=None):
+    """The constraint that stands for ``con``'s Maya node: a group's first member; a step 252 Interp Type blend's
+    group head; an aim's Object up turn (``rig_tools.UP_SUFFIX``) = that aim."""
     mb = member(con, owner)
     if mb is None:
+        from . import constrain_interp, rig_tools
+        owner = owner if owner is not None else owner_of(con)
+        if constrain_interp.is_blend(con):
+            ms = members(owner, con.name[:-len(constrain_interp.BLEND)])
+            return ms[0] if ms else con
+        if rig_tools.is_up_companion(con):
+            return owner.constraints.get(con.name[:-len(rig_tools.UP_SUFFIX)]) or con
         return con
     ms = members(mb.owner, mb.group)
     return ms[0] if ms else con
@@ -161,7 +169,9 @@ def weights(owner, group):
 
 
 def set_enabled(owner, group, on):
-    for c in members(owner, group):
+    from . import constrain_interp
+    blend = constrain_interp.blend_constraint(owner, group)
+    for c in members(owner, group) + ([blend] if blend is not None else []):
         if hasattr(c, "enabled"):
             c.enabled = on
         else:
@@ -324,6 +334,11 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
             if first is None:
                 first = c
     _state["armed"] = True
+    if ctype in ('COPY_ROTATION', 'CHILD_OF') and len(targets) > 1:
+        # step 252 (#168): Maya interpType, factory Average (operators/constrain_interp.py); one target = its own
+        # rotation whatever the type (Maya: fewer than 2 targets blend as Average = that target)
+        from . import constrain_interp
+        constrain_interp.set_mode(context, owner, group, constrain_interp.AVERAGE)
     owner.id_data.update_tag()
     context.view_layer.update()
     return first
@@ -332,6 +347,11 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
 def remove_group(owner, group):
     """Delete a group: its constraints, their drivers, weight properties and helper empties."""
     id_ob, prefix = _id_and_prefix(owner)
+    from . import constrain_interp
+    constrain_interp._remove_blend(owner, group)
+    for key in (constrain_interp.INTERP, constrain_interp.LAST, constrain_interp.REST, constrain_interp.OFFSET):
+        if key + group in owner.keys():
+            del owner[key + group]
     hs = []
     for c in members(owner, group):
         h = helper_of(c)
@@ -382,6 +402,11 @@ def cleanup():
             node = owner.pose.bones.get(bone) if bone and owner.pose is not None else (None if bone else owner)
             if node is not None:
                 alive = any(helper_of(c) == h for c in node.constraints if c.name.startswith(con_name))
+                partner = h.get("allset_aim_up")       # step 252: an aim's up helper goes with its aim
+                if alive and partner and node.constraints.get(partner) is None:
+                    alive = False
+                    for c in [c for c in node.constraints if helper_of(c) == h]:
+                        node.constraints.remove(c)
         if not alive:
             bpy.data.objects.remove(h, do_unlink=True)
             n += 1
