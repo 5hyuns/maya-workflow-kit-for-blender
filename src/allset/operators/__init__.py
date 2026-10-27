@@ -136,6 +136,8 @@ classes += game_exporter.classes
 classes += motion_trail.classes
 from . import constrain_multi, control_shapes, wire_color  # noqa: E402  step 226 (#136)
 classes += control_shapes.classes + wire_color.classes + constrain_multi.classes
+from . import blend_shapes_227, pose_space_227  # noqa: E402  step 227 (#137)
+classes += blend_shapes_227.classes + pose_space_227.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -148,6 +150,8 @@ def register():
     control_shapes.register_props()
     wire_color.register_props()
     constrain_multi.register_props()
+    blend_shapes_227.register_props()
+    pose_space_227.register_props()
     default_light.register()
     snap_align.register_props()
     material.register_props()
@@ -217,6 +221,8 @@ def unregister():
     weight_paint.unregister_props()
     game_exporter.unregister_props()
     motion_trail.unregister_props()
+    pose_space_227.unregister_props()
+    blend_shapes_227.unregister_props()
     constrain_multi.unregister_props()
     wire_color.unregister_props()
     control_shapes.unregister_props()
