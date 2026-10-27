@@ -13,6 +13,7 @@ sdk = import_module(kit.MODULE + ".operators.driven_key")
 rig = import_module(kit.MODULE + ".operators.rig_tools")
 joints = import_module(kit.MODULE + ".operators.joints")
 cb = import_module(kit.MODULE + ".ui.channel_box")
+multi = import_module(kit.MODULE + ".operators.constrain_multi")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
@@ -190,9 +191,12 @@ def test_constrain_in_pose_mode_goes_on_the_joint():
     arm.data.bones.active = arm.data.bones["joint2"]
     assert bpy.ops.allset.constrain(type='COPY_ROTATION') == {'FINISHED'}
     con = arm.pose.bones["joint2"].constraints[-1]
-    assert con.type == 'COPY_ROTATION' and con.target == ctrl and not arm.constraints
+    # step 233: a joint copies the control's Maya axes through a hidden helper that follows the control
+    helper = multi.helper_of(con)
+    assert con.type == 'COPY_ROTATION' and helper is not None and not arm.constraints
+    assert helper.constraints[0].target == ctrl
     assert bpy.ops.allset.constrain(type='CHILD_OF') == {'FINISHED'}
-    assert arm.pose.bones["joint2"].constraints[-1].type == 'CHILD_OF'
+    assert multi.group_type(arm.pose.bones["joint2"].constraints[-1]) == "parentConstraint"
     # no target selected -> nothing, with the Maya selection hint
     bpy.ops.object.mode_set(mode='OBJECT')
     _select(arm)

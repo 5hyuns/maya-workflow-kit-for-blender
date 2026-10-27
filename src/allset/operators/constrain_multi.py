@@ -256,6 +256,23 @@ def target_label(target, sub):
     return sub if sub and target.type == 'ARMATURE' else target.name
 
 
+def _joint_from_object():
+    from .joints import JOINT_AXES, MAYA_WORLD
+    return (MAYA_WORLD @ JOINT_AXES.transposed()).to_4x4()
+
+
+# Step 233: an object's Maya axes are its Blender X / Z / -Y (joints.MAYA_WORLD), a joint's are its bone's Y / Z / X
+# (joints.JOINT_AXES), so a bone copying an object's rotation has to copy the object's frame turned by
+# MAYA_WORLD JOINT_AXES^-1 (Maya orientConstraint / parentConstraint without offset: the joint's axes = the target's;
+# mayapy 2026 C:/Repos/bmk-strategy/audit230/maya/cons233.json, 90 deg off before). A bone target needs nothing.
+
+
+def needs_joint_axes(owner, target, sub, ctype):
+    """A joint (pose bone) copying the rotation of an object (not of a bone)."""
+    return (isinstance(owner, bpy.types.PoseBone) and ctype in ('COPY_ROTATION', 'CHILD_OF')
+            and not (sub and target.type == 'ARMATURE'))
+
+
 def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
     """Maya multi-target constraint on ``owner`` (Object / PoseBone) from ``targets`` [(object, subtarget)] in Maya
     target order. Returns the group's first constraint."""
@@ -283,6 +300,11 @@ def build(context, owner, targets, ctype, maintain_offset=None, weight=1.0):
         src, src_sub = t, sub
         if maintain_offset:
             src = _helper(owner, f"{owner_name}_{group}_{labels[i]}Offset", t, sub, ow, ctype == 'COPY_LOCATION')
+            src_sub = ""
+        elif needs_joint_axes(owner, t, sub, ctype):
+            # step 233: a joint takes the target's Maya axes, not its Blender ones (joints.JOINT_AXES)
+            src = _helper(owner, f"{owner_name}_{group}_{labels[i]}Axes", t, sub,
+                          _target_world(t, sub) @ _joint_from_object(), False)
             src_sub = ""
         kinds = (('COPY_LOCATION', base), ('COPY_ROTATION', base + ROT)) if ctype == 'CHILD_OF' else ((ctype, base),)
         for btype, name in kinds:

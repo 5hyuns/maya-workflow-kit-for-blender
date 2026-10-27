@@ -63,7 +63,9 @@ class ALLSET_OT_constrain(bpy.types.Operator):
                 return {'CANCELLED'}
             targets = ([(o, "") for o in sorted(others, key=lambda o: o.name)]
                        + [(b.id_data, b.name) for b in sorted(bones, key=lambda b: b.name)])
-            if len(targets) > 1 and self.type in constrain_multi.TYPES:
+            if self.type in constrain_multi.TYPES and (len(targets) > 1 or any(
+                    constrain_multi.needs_joint_axes(pb, t, sub, self.type) for t, sub in targets)):
+                # step 233: a joint following an object's rotation also goes through the node builder (Maya axes)
                 return self._multi(context, pb, targets, label)
             before = len(pb.constraints)
             bpy.ops.pose.constraint_add_with_targets(type=self.type)
@@ -84,6 +86,11 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             self.report({'WARNING'}, CONSTRAIN_HINT)
             return {'CANCELLED'}
         con = cons[-1]
+        if arm is not None:
+            from .joints import free_location_constrained
+            free_location_constrained(context, arm)       # a Maya child joint's translate is free (step 233)
+            cons = arm.pose.bones[owner].constraints       # the edit-mode round trip renews the pose bones
+            con = cons[-1]
         if self.type == 'TRACK_TO':
             con = aim(cons, con, bone=arm is not None)     # Maya's factory aim (+X at the target, +Y up)
         target = getattr(con, "target", None)
@@ -97,7 +104,12 @@ class ALLSET_OT_constrain(bpy.types.Operator):
         mo = None if self.maintain_offset == 'DEFAULT' else self.maintain_offset == 'ON'
         constrain_multi.build(context, owner, targets, self.type, mo, self.weight)
         names = ", ".join(constrain_multi.target_label(t, sub) for t, sub in targets)
-        results.result(self, f"{label} constraint on {owner.name} (targets {names})")
+        owner_name = owner.name
+        if isinstance(owner, bpy.types.PoseBone):
+            # step 233: read names first — the edit-mode round trip makes Python's pose bone references stale
+            from .joints import free_location_constrained
+            free_location_constrained(context, owner.id_data)
+        results.result(self, f"{label} constraint on {owner_name} (targets {names})")
         return {'FINISHED'}
 
 
