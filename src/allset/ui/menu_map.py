@@ -674,7 +674,8 @@ MAP.update({
     "Display/Polygons": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh", "keep_open": True}),
     "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
-    "Display/Wireframe Color...": _props('OBJECT'),
+    # step 226 (#136): Maya's Wireframe Color window (user palette 1-8 / RGB, Apply / Default / Close)
+    "Display/Wireframe Color...": ("allset.wireframe_color", {}),
     # Windows
     # step 213 (#119, audit 16 NB12): the kit's Maya windows instead of Blender's Spreadsheet / Drivers editors
     "Windows/General Editors/Component Editor": ("allset.component_editor", {}),

@@ -771,12 +771,13 @@ class _FileDialog:
                 # Maya Export Selection writes the selected nodes with everything below them (step 164,
                 # ); Blender's writers take only the selected objects
                 from . import dag
+                from .control_shapes import excluded as shapes_excluded   # step 226: no control shape curves
                 if self.selection:
-                    with dag.selected_hierarchy(context):
+                    with dag.selected_hierarchy(context), shapes_excluded(context.scene, context.view_layer):
                         write(context, fmt, path, op, args, self.maya_conversion, k)
                 else:
                     from . import startup_cameras
-                    with startup_cameras.excluded(context.scene, context.view_layer):
+                    with startup_cameras.excluded(context.scene, context.view_layer),                             shapes_excluded(context.scene, context.view_layer):
                         write(context, fmt, path, op, args, self.maya_conversion, k)
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])

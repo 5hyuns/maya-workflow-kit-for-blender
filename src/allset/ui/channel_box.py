@@ -790,7 +790,12 @@ def _nth_constraint(node, con):
 def maya_constraint_type(con, default=None):
     """Maya node type of a kit constraint: normal / tangent constraints are a Track To on a helper (step 199,
     operators/constrain_199.maya_type), UV / Proximity Pins a Copy Transforms on a helper (step 205,
-    operators/pins_205.pin_type), the rest by Blender type."""
+    operators/pins_205.pin_type), a kit multi-target group its own type (a parent group's Copy Location / Rotation,
+    step 226, operators/constrain_multi.py), the rest by Blender type."""
+    from ..operators import constrain_multi
+    grouped = constrain_multi.group_type(con)
+    if grouped is not None:
+        return grouped
     if con.type == 'COPY_TRANSFORMS':
         from ..operators import pins_205
         kind = pins_205.pin_type(con)
@@ -813,14 +818,21 @@ def constraint_node_name(node, con):
     pin = pins_205.node_name(con)          # a pin node keeps its own name (uvPin1, step 205)
     if pin is not None:
         return pin
-    same = [c for c in constraints(node) if maya_constraint_type(c) == mtype]
-    return f"{node.name}_{mtype}{same.index(con) + 1}"
+    from ..operators import constrain_multi
+    # a multi-target group is one Maya node (step 226): count group heads, name every member like its head
+    head = constrain_multi.head_of(con, node)
+    same = [c for c in constraints(node) if constrain_multi.is_head(c, node) and maya_constraint_type(c) == mtype]
+    return f"{node.name}_{mtype}{same.index(head) + 1}"
 
 
 def weight_name(con):
     """Maya target weight attribute: ``<target>W0`` (one target per Blender constraint; normal / tangent
-    constraints name their surface / curve, step 199)."""
-    from ..operators import constrain_199, pins_205
+    constraints name their surface / curve, step 199; a member of a kit multi-target group = ``<target>W<i>``,
+    step 226)."""
+    from ..operators import constrain_199, constrain_multi, pins_205
+    mb = constrain_multi.member(con)
+    if mb is not None:
+        return f"{mb.label}W{mb.index}"
     geometry = pins_205.geometry_of(con)   # UV / Proximity Pin: the pinned-to geometry (step 205)
     if geometry is not None:
         return f"{geometry.name}W0"
@@ -1816,9 +1828,17 @@ def wanted_rows(ob):
         if is_open(ob, mod_node(mod)):
             for prop in _modifier_props(mod):
                 out.append(("INPUT", prop, mod.type, _nth_of_type(ob, mod)))
+    from ..operators import constrain_multi
     for con in constraints(ob):
-        if is_open(ob, con_node(ob, con)):
+        if not is_open(ob, con_node(ob, con)):
+            continue
+        mb = constrain_multi.member(con, ob)
+        if mb is None:
             out.append(("CONSTRAINT", "influence", con.type, _nth_constraint(ob, con)))
+        elif constrain_multi.is_head(con, ob):
+            # Maya weights <target>W0, W1 ... = the owner's weight ID properties (step 226), typed like custom rows
+            out += [("CUSTOM", prop, "", 0) for prop, _label in constrain_multi.weights(ob, mb.group)
+                    if prop in ob.keys()]
     return out
 
 
@@ -1960,7 +1980,7 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
         if v is not None:   # a Maya attribute (step 144) has no RNA property to draw until the rows are rebuilt
             right.label(text=cb_entry.format_value(v.get(owner), v.kind, context.scene))
         else:
-            right.prop(owner, prop, text="")
+            right.prop(owner, f'["{prop}"]' if kind == "CUSTOM" else prop, text="")
     else:
         right.prop(row, "text", text="")
     line.label(text="", icon='BLANK1')
@@ -2339,7 +2359,13 @@ def draw_inputs(lines, context, ob):
                     _draw_text_row(r, context, ob, mod, prop, "INPUT", mod.type, _nth_of_type(ob, mod))
     if created:
         creation_inputs.draw_cb(lines, context, ob)
+    from ..operators import constrain_multi
     for con in cons:
+        mb = constrain_multi.member(con, ob)
+        if mb is not None:
+            if constrain_multi.is_head(con, ob):
+                _draw_group(lines, context, ob, con, mb)
+            continue
         # Maya constraint node + its target weight (animation.md:42, :126)
         row, opened = node_row(lines, ob, con_node(ob, con), constraint_node_name(ob, con),
                                active=constraint_enabled(con))
@@ -2350,6 +2376,27 @@ def draw_inputs(lines, context, ob):
             if r is not None:
                 _draw_text_row(r, context, ob, con, "influence", "CONSTRAINT", con.type,
                                _nth_constraint(ob, con), label=weight_name(con))
+
+
+def _draw_group(lines, context, ob, con, mb):
+    """A kit multi-target constraint = one Maya node: its state toggles every member, its rows are the target weights
+    <target>W0, W1 ... (step 226, operators/constrain_multi.py)."""
+    from ..operators import constrain_multi
+    on = constraint_enabled(con)
+    row, opened = node_row(lines, ob, con_node(ob, con), constraint_node_name(ob, con), active=on)
+    if row is not None:
+        op = row.operator("allset.constraint_group_enable", text="", emboss=False,
+                          icon='CHECKBOX_HLT' if on else 'CHECKBOX_DEHLT')
+        op.object = ob.id_data.name
+        op.bone = ob.name if is_bone(ob) else ""
+        op.group = mb.group
+    if opened:
+        for prop, label in constrain_multi.weights(ob, mb.group):
+            if prop not in ob.keys():
+                continue
+            r = lines.row()
+            if r is not None:
+                _draw_text_row(r, context, ob, ob, prop, "CUSTOM", label=label)
 
 
 class ALLSET_PT_channel_box(bpy.types.Panel):

@@ -19,6 +19,7 @@ from mathutils import Vector
 
 from .. import results
 from ..ui import channel_box as cb
+from . import constrain_multi
 
 CONSTRAINT_TYPES = (
     ('CHILD_OF', "Parent", "Maya parentConstraint (Child Of; the offset is kept like Maya's Maintain Offset)"),
@@ -39,6 +40,12 @@ class ALLSET_OT_constrain(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     type: EnumProperty(items=CONSTRAINT_TYPES, name="Type")
+    # Maya option window values for a multi-target constraint (step 226, operators/constrain_multi.py); a one-target
+    # constraint is set up afterwards by option_windows._constraint as before
+    maintain_offset: EnumProperty(name="Maintain Offset", items=(
+        ('DEFAULT', "Default", "Maya factory: on for Parent, off for Point / Orient / Scale"),
+        ('ON', "On", ""), ('OFF', "Off", "")), default='DEFAULT', options={'SKIP_SAVE', 'HIDDEN'})
+    weight: FloatProperty(name="Weight", default=1.0, min=0.0, options={'SKIP_SAVE', 'HIDDEN'})
 
     @classmethod
     def poll(cls, context):
@@ -54,14 +61,22 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             if pb is None or not (others or bones):
                 self.report({'WARNING'}, CONSTRAIN_HINT)
                 return {'CANCELLED'}
+            targets = ([(o, "") for o in sorted(others, key=lambda o: o.name)]
+                       + [(b.id_data, b.name) for b in sorted(bones, key=lambda b: b.name)])
+            if len(targets) > 1 and self.type in constrain_multi.TYPES:
+                return self._multi(context, pb, targets, label)
             before = len(pb.constraints)
             bpy.ops.pose.constraint_add_with_targets(type=self.type)
             owner, cons = pb.name, pb.constraints
         else:
             ob = context.active_object
-            if not [o for o in context.selected_objects if o is not ob]:
+            others = [o for o in context.selected_objects if o is not ob]
+            if not others:
                 self.report({'WARNING'}, CONSTRAIN_HINT)
                 return {'CANCELLED'}
+            if len(others) > 1 and self.type in constrain_multi.TYPES:
+                # Maya target order: Blender keeps no selection order, targets go by name (modify_maya.selection_order)
+                return self._multi(context, ob, [(o, "") for o in sorted(others, key=lambda o: o.name)], label)
             before = len(ob.constraints)
             bpy.ops.object.constraint_add_with_targets(type=self.type)
             owner, cons = ob.name, ob.constraints
@@ -75,6 +90,14 @@ class ALLSET_OT_constrain(bpy.types.Operator):
         sub = getattr(con, "subtarget", "")
         results.result(self, f"{label} constraint on {owner}" +
                     (f" (target {target.name}{'.' + sub if sub else ''})" if target else ""))
+        return {'FINISHED'}
+
+    def _multi(self, context, owner, targets, label):
+        """Maya multi-target constraint: one node, weighted average of the targets (step 226 L4)."""
+        mo = None if self.maintain_offset == 'DEFAULT' else self.maintain_offset == 'ON'
+        constrain_multi.build(context, owner, targets, self.type, mo, self.weight)
+        names = ", ".join(constrain_multi.target_label(t, sub) for t, sub in targets)
+        results.result(self, f"{label} constraint on {owner.name} (targets {names})")
         return {'FINISHED'}
 
 

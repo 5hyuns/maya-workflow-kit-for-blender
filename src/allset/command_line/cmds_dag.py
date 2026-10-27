@@ -171,8 +171,11 @@ def parent(*args, **kwargs):
     world = f.get("world", "w", False)
     relative = f.get("relative", "r", False)
     f.get("absolute", "a", False)
+    shape = f.get("shape", "s", False)
     f.done()
     names = list(_flatten(args))
+    if shape:
+        return _parent_shape(names, relative)
     obs = [_object(n) for n in names] if names else _selection()
     if world:
         if not obs:
@@ -192,6 +195,46 @@ def parent(*args, **kwargs):
     _view_layer()
     _select_only(children)
     return [o.name for o in children]
+
+
+def _shape_target(name):
+    """A joint (pose bone) or an object for ``parent -s``'s last argument."""
+    if isinstance(name, bpy.types.Object):
+        return name
+    short = str(name).rsplit("|", 1)[-1]
+    if bpy.data.objects.get(short) is None:
+        from .cmds_rig import find_joint
+        found = find_joint(short)
+        if found is not None:
+            arm, bone = found
+            return arm.pose.bones[bone.name]
+    return _object(name)
+
+
+def _parent_shape(names, relative):
+    """``parent -s [-r] curveShape... joint|curve`` (step 226, ): the curve
+    shapes become the joint's control shape (bone Custom Shape) or join the target curve. Returns the shape names."""
+    from ..operators import control_shapes
+    if names:
+        sources, target = [_object(n) for n in names[:-1]], _shape_target(names[-1]) if len(names) > 1 else None
+    else:
+        sel = _selection()
+        sources, target = sel[:-1], sel[-1] if sel else None
+        if target is not None and target.type == 'ARMATURE' and target.mode == 'POSE' and target.data.bones.active:
+            target = target.pose.bones[target.data.bones.active.name]      # the selected joint
+    if target is None or not sources:
+        raise RuntimeError("parent: Not enough objects or values.")
+    out = []
+    for ob in sources:
+        if ob.type != 'CURVE':
+            raise RuntimeError(f"parent: {ob.name} has no curve shape to move.")
+        out.append(ob.data.name)
+        try:
+            control_shapes.parent_shape(ob, target, relative=bool(relative))
+        except ValueError as ex:
+            raise RuntimeError(str(ex))
+    _view_layer()
+    return out
 
 
 def _empty(context, kind, name):
