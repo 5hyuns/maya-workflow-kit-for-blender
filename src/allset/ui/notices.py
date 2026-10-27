@@ -122,7 +122,7 @@ NOTICES = {
         "Ik Blend is 0 (Key > IK/FK Keys)."),
     "Key/IK/FK Keys/Set IK/FK Key": (
         "Ik Blend + joint keys", "Keys the handle (Ik Blend included) and the chain joints' solved rotation; Blender "
-        "has no handle Pole Vector / Offset / Roll / Twist channels to key."),
+        "has no handle Offset channel to key."),
     "Deform/Cluster": (
         "Hook modifier", "Blender's cluster is a Hook modifier driven by the clusterNHandle empty."),
     "Deform/Soft Modification Tool": (

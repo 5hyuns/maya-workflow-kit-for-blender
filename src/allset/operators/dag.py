@@ -120,6 +120,8 @@ def delete_hierarchy(context, objects):
     helpers = [h for h in constrain_199.helpers_owned_by(obs) if h not in obs]
     from . import ik_rp
     poles = ik_rp.helpers_of(obs)          # a kit RP handle's pole helper goes with the handle (step 245)
+    from . import spline_twist
+    spline_twist.release(obs)              # a kit Spline IK handle takes its twist drivers and constraint (step 249)
     datas = {ob.data for ob in obs if ob.data is not None}
     n = len(obs)
     for ob in reversed(obs):              # children first
