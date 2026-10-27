@@ -240,9 +240,39 @@ def _set_edit(eb, state):
 
 
 def _edit_picked(ob):
-    """Picked joints in Edit mode: selected bones whose parent isn't selected (the rest is their subtree)."""
-    return [eb for eb in ob.data.edit_bones if _edit_selected(eb)
+    """Picked joints in Edit mode: bones whose head is selected and whose parent isn't wholly selected (a picked joint
+    is its whole subtree, or only its head with Preserve Children)."""
+    return [eb for eb in ob.data.edit_bones if eb.select_head
+            and (_edit_selected(eb) or not eb.select_tail)
             and not (eb.parent is not None and _edit_selected(eb.parent))]
+
+
+def _pick_shape(eb, state, preserve):
+    """Select joint ``eb`` for W: its bone and subtree, or (Maya Preserve Children, step 243) only its head, so the
+    children stay — a connected head is the parent's tail point."""
+    if not preserve:
+        for b in _subtree(eb):
+            _set_edit(b, state)
+        return
+    eb.select_head = state
+    eb.select = eb.select_tail = False
+    if eb.use_connect and eb.parent is not None and not _edit_selected(eb.parent):
+        eb.parent.select_tail = state
+
+
+def reshape(context, ob, preserve):
+    """Re-select the picked joints of ``ob`` (edit mode) in the subtree / head-only shape; the active stays."""
+    if ob is None or ob.type != 'ARMATURE' or ob.mode != 'EDIT':
+        return False
+    ebs = ob.data.edit_bones
+    picked = [eb.name for eb in _edit_picked(ob)]
+    active = ebs.active
+    for eb in ebs:
+        _set_edit(eb, False)
+    for name in picked:
+        _pick_shape(ebs[name], True, preserve)
+    ebs.active = active
+    return bool(picked)
 
 
 def select_edit(context, ob, name, shift=False, ctrl=False):
@@ -264,13 +294,14 @@ def select_edit(context, ob, name, shift=False, ctrl=False):
                 _set_edit(eb, False)
     ebs = ob.data.edit_bones
     eb = ebs[name]
-    selected = _edit_selected(eb)
+    from .joint_edit import preserve_children
+    preserve = preserve_children(context)
+    selected = eb.select_head and (_edit_selected(eb) or preserve)
     remove = (ctrl and not shift) or (shift and not ctrl and selected)
     if not shift and not ctrl:
         for other in ebs:
             _set_edit(other, False)
-    for b in _subtree(eb):
-        _set_edit(b, not remove)
+    _pick_shape(eb, not remove, preserve)
     if remove:
         if ebs.active == eb:
             picked = _edit_picked(ob)

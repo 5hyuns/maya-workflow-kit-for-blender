@@ -13,6 +13,7 @@ from . import (auto_key, bookmarks, ik_fk, component, create, curve_tools, curve
                time_keys, tool_keys, units, uv_shells, uv_tools, uv_modify, uv_select_178, view, view_keys3, visibility)
 from . import poly_draw, quad_draw  # step 144 POLY: Create Polygon / Append to Polygon / Quad Draw (#30)
 from . import edge_loops  # step 144 LOOP: Insert / Offset Edge Loop, Slide Edge (#31)
+from . import joint_edit  # step 243 (#160): joint moves keep Maya frames, Preserve Children, Edit-mode Translate
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
@@ -158,6 +159,7 @@ def register():
     motion_path_228.register_props()
     flow_path_228.register_props()
     default_light.register()
+    joint_edit.register()
     snap_align.register_props()
     material.register_props()
     lights.register_props()
@@ -212,6 +214,7 @@ def register():
 
 
 def unregister():
+    joint_edit.unregister()
     curves_207.unregister_handlers()
     deformers_205a.unregister_handlers()
     deformers_205b.unregister_handlers()

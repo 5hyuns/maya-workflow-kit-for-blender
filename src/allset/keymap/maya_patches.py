@@ -539,6 +539,11 @@ def patch_mesh_components(kd):
     _add(kd, "Mesh", "allset.hold", make_event("D"), {"name": "component_pivot"})
     # Insert = the same pivot edit as a toggle (research/maya/interaction.md:125, docs/steps/step_77.md)
     _add(kd, "Mesh", "allset.pivot_toggle", make_event("INSERT"))
+    # step 243 (#160): D held / Insert on joints in Edit mode = Maya Preserve Children (move the joint only;
+    # research/maya/re/joint_rig_2026_joint_math.md §3 `move -pcp`)
+    kd.remove("Armature", "wm.tool_set_by_id", type="D")                   # annotate tool
+    _add(kd, "Armature", "allset.hold", make_event("D"), {"name": "preserve_children"})
+    _add(kd, "Armature", "allset.pivot_toggle", make_event("INSERT"))
     kd.remove("Mesh", "mesh.select_all", type="A", ctrl=True, shift=True)   # IC: deselect
     _add(kd, "Mesh", "mesh.select_all", make_event("A", ctrl=True, shift=True), {"action": 'SELECT'})
     _add(kd, "Mesh", "allset.select_none", make_event("D", alt=True))

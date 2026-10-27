@@ -1451,3 +1451,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Joint Tool 3 clicks → W → drag the Move manipulator's arrows / centre with a real mouse: the joint and its children move, the parent stays (tests/gui/gui_step241_joint_move.py drags the joint itself).
 - [ ] Skinned skeleton → Skin > Move Skinned Joints → drag the Move manipulator with a real mouse: the joint moves, the mesh stays (simulated presses on the manipulator after the menu item didn't reach the gizmo; the GUI test runs the same transform from code).
 - [ ] With the Move tool on an unskinned skeleton, press E / R / Q: the same joints stay picked in Pose mode and the Channel Box shows their channels.
+
+## Step 243 — Moving a joint keeps the parent's Maya frame (#160)
+- [ ] Joint Tool on a bent chain → W → drag joint2 with the manipulator arrows (real mouse): joint1's local axes (Display > Joint axes) keep their direction; the Channel Box Translate of joint2 gets Y / Z values like Maya.
+- [ ] Hold D (or press Insert) and drag a joint: its children stay; release D: the next drag moves the subtree again. Tool Settings > Move Settings > Preserve Children shows the same state.
+- [ ] Type `+=2` in the Edit-mode Channel Box Translate Y of a joint: it moves, its children follow (or stay with Preserve Children on); Ctrl+Z puts it back in one step.

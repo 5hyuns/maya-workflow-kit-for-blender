@@ -173,9 +173,21 @@ def build_skeleton(joints, unit=1.0, name="skeleton1", context=None, oriented=Tr
     return ob
 
 
+MAYA_FRAME = "allset_maya_frame"   # joints.MAYA_FRAME: the joint's Maya frame relative to the bone (quaternion)
+
+
 def joint_world(ob, name, unit=1.0):
-    """(Maya world position, Maya world axes) read back from a bone's rest frame (inverse of ``build_skeleton``)."""
-    bone = ob.data.bones[name]
-    m = ob.matrix_world @ bone.matrix_local
-    axes = frame_to_maya(m.to_3x3().normalized() @ JOINT_AXES)
-    return to_maya(m.to_translation(), unit), axes
+    """(Maya world position, Maya world axes) read back from a bone's rest frame (inverse of ``build_skeleton``),
+    turned by the bone's stored Maya frame (``allset_maya_frame``) when it has one. Works in edit mode too."""
+    from mathutils import Quaternion
+    if ob.mode == 'EDIT':
+        bone = ob.data.edit_bones[name]
+        m = ob.matrix_world @ bone.matrix
+    else:
+        bone = ob.data.bones[name]
+        m = ob.matrix_world @ bone.matrix_local
+    axes = m.to_3x3().normalized() @ JOINT_AXES
+    q = bone.get(MAYA_FRAME)
+    if q is not None and len(q) == 4:
+        axes = axes @ Quaternion(q).to_matrix()
+    return to_maya(m.to_translation(), unit), frame_to_maya(axes)
