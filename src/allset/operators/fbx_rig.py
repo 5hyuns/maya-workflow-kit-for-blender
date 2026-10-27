@@ -482,12 +482,18 @@ def set_time_span(path, start, end, fps):
     return True
 
 
-def rewrite(path, rest_path, turns=None):
+def rewrite(path, rest_path, turns=None, parents=None):
     """Rewrite the rig FBX at ``path`` the Maya way; ``rest_path`` = the same export at the rest pose; ``turns`` =
-    {joint name: Q} (joints.maya_frames). Returns (joints given a PreRotation, Nulls folded)."""
+    {joint name: Q} (joints.maya_frames); ``parents`` = {joint name: parent name or None}: only those joints stay,
+    hung there (step 236, ``fbx_skeleton.reparent``). Returns (joints given a PreRotation, Nulls folded)."""
     tree, version = load(path)
     rest_tree, _v = load(rest_path)
     index, rest_index = Index(tree), Index(rest_tree)
+    if parents:
+        from . import fbx_skeleton
+        fbx_skeleton.reparent(index, parents)
+        fbx_skeleton.reparent(rest_index, parents)
+        index, rest_index = Index(tree), Index(rest_tree)
     rest = rest_rotations(rest_index)
     folded = 0
     for uid, null, animated in _armature_nulls(index):

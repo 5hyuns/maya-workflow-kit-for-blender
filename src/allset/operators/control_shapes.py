@@ -108,17 +108,29 @@ def custom_shape_objects(data=None):
     return out
 
 
+def is_rig_template(ob):
+    """A Rigify metarig: its bones carry Rigify rig types (the template Generate builds the rig from, not a skeleton;
+    its bones all deform, so an Export All wrote 159 more joints — audit CHAINS_AUDIT_0.5.0.md:324, step 236)."""
+    if ob.type != 'ARMATURE' or ob.pose is None or ob.data.get("rig_id"):      # rig_id = a generated rig
+        return False
+    return any(getattr(pb, "rigify_type", None) or pb.get("rigify_type") for pb in ob.pose.bones)
+
+
+def rig_templates(data=None):
+    return {ob for ob in (data or bpy.data).objects if is_rig_template(ob)}
+
+
 class excluded:
     """Context manager: every Custom Shape object (kit controls, Rigify WGT objects ...) is out of the scene's
     collections while a kit export runs ( note 2: controls are not exported), then linked back in the
-    same order with the same select / hide state."""
+    same order with the same select / hide state. Rigify metarigs go out too (step 236, delegated)."""
 
     def __init__(self, scene, view_layer):
         self.scene, self.view_layer = scene, view_layer
         self.colls = []
 
     def __enter__(self):
-        shapes = custom_shape_objects()
+        shapes = custom_shape_objects() | rig_templates()
         if not shapes:
             return self
         vl = self.view_layer

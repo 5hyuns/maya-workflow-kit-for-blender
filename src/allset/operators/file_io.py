@@ -544,12 +544,14 @@ def usd_maya_axes(path, k):
     return True
 
 
-def write(context, fmt, path, op, args, maya, k):
+def write(context, fmt, path, op, args, maya, k, deform_only=True, maya_names=True):
     """Run Blender's writer with the Maya preset's pre / post steps (step 138); lambert-family Base Color is linked
-    straight to the Maya colour / texture while it writes (``material.diffuse_bypass``, step 214)."""
+    straight to the Maya colour / texture while it writes (``material.diffuse_bypass``, step 214). FBX with the Maya
+    preset: ``deform_only`` = only the deforming joints, hung on the deforming chain; ``maya_names`` = Maya-safe
+    node names (step 236, operators/fbx_skeleton.py)."""
     from . import material
     with material.diffuse_bypass():
-        _write(context, fmt, path, op, args, maya, k)
+        _write(context, fmt, path, op, args, maya, k, (deform_only, maya_names))
 
 
 class _BlendShapesKept:
@@ -579,15 +581,15 @@ class _BlendShapesKept:
             md.show_viewport, md.show_render = vp, rd
 
 
-def _write(context, fmt, path, op, args, maya, k):
+def _write(context, fmt, path, op, args, maya, k, rig=(True, True)):
     if fmt == 'FBX' and maya:
         obs = context.selected_objects if args.get("use_selection") else list(context.view_layer.objects)
         with _BlendShapesKept([o for o in obs if o is not None]):
-            return _write_one(context, fmt, path, op, args, maya, k)
-    return _write_one(context, fmt, path, op, args, maya, k)
+            return _write_one(context, fmt, path, op, args, maya, k, rig)
+    return _write_one(context, fmt, path, op, args, maya, k, rig)
 
 
-def _write_one(context, fmt, path, op, args, maya, k):
+def _write_one(context, fmt, path, op, args, maya, k, rig=(True, True)):
     mod, name = op.split(".")
     run = getattr(getattr(bpy.ops, mod), name)
     if maya and fmt == 'ABC':
@@ -598,7 +600,7 @@ def _write_one(context, fmt, path, op, args, maya, k):
     if not maya:
         return
     if fmt == 'FBX':
-        rig_fbx_maya(context, path, run, args)
+        rig_fbx_maya(context, path, run, args, deform_only=rig[0])
         from . import fbx_blend, fbx_rig
         if fbx_rig.modules() is not None:        # Maya's blendShape: in-betweens in their target's channel (235)
             obs = context.selected_objects if args.get("use_selection") else list(context.view_layer.objects)
@@ -607,6 +609,9 @@ def _write_one(context, fmt, path, op, args, maya, k):
             sc = context.scene
             fps = sc.render.fps / (sc.render.fps_base or 1.0)
             fbx_rig.set_time_span(path, sc.frame_start, sc.frame_end, fps)     # Maya's Time Slider range (235)
+            if rig[1]:
+                from . import fbx_skeleton
+                fbx_skeleton.rewrite_names(path)       # step 236: no FBXASC names in Maya
     elif fmt == 'OBJ':
         _write_obj_groups(path)
     elif fmt == 'USD' and not usd_maya_axes(path, k):
@@ -622,9 +627,10 @@ def _exported_armatures(context, args):
     return [ob for ob in obs if ob is not None and ob.type == 'ARMATURE']
 
 
-def rig_fbx_maya(context, path, run, args):
+def rig_fbx_maya(context, path, run, args, deform_only=True):
     """Step 222: joint orient as PreRotation, no armature Null (operators/fbx_rig.py). Needs a second export of the
-    same objects at the rest pose (the writer's own conventions, ). Returns (joints, nulls) or None."""
+    same objects at the rest pose (the writer's own conventions, ). ``deform_only`` (step 236): only the
+    deforming joints, on the deforming chain (``fbx_skeleton.deform_parents``). Returns (joints, nulls) or None."""
     from . import fbx_rig
     rigs = _exported_armatures(context, args)
     if not rigs or fbx_rig.modules() is None:
@@ -645,8 +651,16 @@ def rig_fbx_maya(context, path, run, args):
     ends = {}
     for ob in rigs:
         ends.update(maya_frames(ob))
+    parents = None
+    if deform_only:
+        from . import fbx_skeleton
+        parents = {}
+        for arm in {ob.data for ob in rigs}:          # armatures already on a deforming chain stay untouched
+            own = fbx_skeleton.deform_parents(arm)
+            if fbx_skeleton.changes_anything(own, arm):
+                parents.update(own)
     try:
-        return fbx_rig.rewrite(path, rest, ends)
+        return fbx_rig.rewrite(path, rest, ends, parents)
     finally:
         try:
             os.remove(rest)
@@ -720,6 +734,14 @@ class _FileDialog:
     maya_conversion: BoolProperty(name="Maya Units and Axes", default=True,
                                   description="Convert to / from a Maya scene: centimetres and Y up")
     animation: BoolProperty(name="Animation", default=True, description="Write the animation (FBX, Alembic, USD)")
+    # step 236 (Issue #145): engine-ready skeletons (operators/fbx_skeleton.py)
+    deform_only: BoolProperty(name="Deforming Joints Only", default=True,
+                              description="FBX: write only the joints that deform the skin (a Rigify rig's DEF "
+                                          "bones), parented along the deforming chain; helper and control bones "
+                                          "stay out")
+    maya_names: BoolProperty(name="Maya-Safe Names", default=True,
+                             description="FBX: '-', '.' and other characters Maya can't have in a node name "
+                                         "become '_' (DEF-spine.001 -> DEF_spine_001)")
     option_box: BoolProperty(options={'HIDDEN', 'SKIP_SAVE'},
                              description="Maya option box: the Options panel of this dialog")
 
@@ -771,6 +793,11 @@ class _FileDialog:
                 box = layout.box()
                 box.label(text="File Type Specific Options")
                 box.prop(self, "animation")
+                if fmt == 'FBX':
+                    col = box.column()
+                    col.enabled = self.maya_conversion
+                    col.prop(self, "deform_only")
+                    col.prop(self, "maya_names")
         layout.label(text=f"Project: {os.path.basename(project.current_root(context))}", icon='FILE_FOLDER')
 
     def execute(self, context):
@@ -822,11 +849,13 @@ class _FileDialog:
                 from .control_shapes import excluded as shapes_excluded   # step 226: no control shape curves
                 if self.selection:
                     with dag.selected_hierarchy(context), shapes_excluded(context.scene, context.view_layer):
-                        write(context, fmt, path, op, args, self.maya_conversion, k)
+                        write(context, fmt, path, op, args, self.maya_conversion, k,
+                              self.deform_only, self.maya_names)
                 else:
                     from . import startup_cameras
                     with startup_cameras.excluded(context.scene, context.view_layer),                             shapes_excluded(context.scene, context.view_layer):
-                        write(context, fmt, path, op, args, self.maya_conversion, k)
+                        write(context, fmt, path, op, args, self.maya_conversion, k,
+                              self.deform_only, self.maya_names)
         except RuntimeError as ex:
             self.report({'ERROR'}, str(ex).strip().splitlines()[-1])
             return {'CANCELLED'}

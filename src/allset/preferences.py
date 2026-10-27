@@ -44,7 +44,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     pick_walk_skip_hidden_collections: bpy.props.BoolProperty(
         name="Pick Walk Skips Hidden Bone Collections",
         description="In Pose mode the arrow keys walk past bones whose bone collections are all hidden (Rigify MCH / "
-                    "DEF / ORG bones), to the nearest shown parent, child or sibling. Maya walks into hidden nodes: "
+                    "DEF / ORG bones), to the nearest shown parent, child or sibling; a generated Rigify rig follows "
+                    "its controls' ORG hierarchy (upper_arm_fk.L Up = shoulder.L). Maya walks into hidden nodes: "
                     "bones hidden one by one (H) are still walked into, and an armature with controller tags "
                     "(Control > Tag As Controller) follows its controller hierarchy instead. Off: plain hierarchy",
         default=True)

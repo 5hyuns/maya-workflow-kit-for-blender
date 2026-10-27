@@ -9,6 +9,7 @@ previous segment.
 """
 
 import json
+import re
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, StringProperty
@@ -809,13 +810,111 @@ def _visible_walk(bone, direction):
     return _wrap(sibs, bone, direction)
 
 
+# Step 236 (Issue #145, audit CHAINS_AUDIT_0.5.0.md:321): in a Rigify rig 63 % of the controls hang on hidden MCH
+# bones, so the nearest shown ancestor of upper_arm_fk.L is tweak_spine.003, not shoulder.L. Decision 6's flip
+# signal = "Rigify rule (ORG hierarchy projection)": a generated rig (data property ``rig_id``) without kit tags gets
+# controller parents computed from its ORG bones (never stored, so Tag / Parent Controller still win): control C ->
+# its ORG twin (C's name without the variant word: upper_arm_fk.L -> ORG-upper_arm.L, tweak_spine.003 ->
+# ORG-spine.003) -> up the ORG parents to the first one with a shown control twin, same variant first
+# (upper_arm_fk.L -> shoulder.L, forearm_fk.L -> upper_arm_fk.L, tweak_spine.003 -> tweak_spine.002). Controls with no
+# ORG twin (torso, chest, hand_ik.L ...) keep the shown-ancestor rule.
+_VARIANTS = ("_fk", "_ik", "_tweak", "_master", "_parent")
+_RIGIFY_MAPS = {}
+
+
+def is_rigify_rig(arm):
+    return bool(arm.get("rig_id")) and any(b.name.startswith("ORG-") for b in arm.bones)
+
+
+_VARIANT_RE = re.compile(r"(_fk|_ik|_tweak|_master|_parent)(?=\.|$)")
+
+
+def _split_variant(name):
+    """(ORG base name, variant) of a Rigify control name: upper_arm_fk.L -> (upper_arm.L, '_fk'),
+    f_index.01_master.L -> (f_index.01.L, '_master'), tweak_spine.003 -> (spine.003, 'tweak_')."""
+    if name.startswith("tweak_"):
+        return name[len("tweak_"):], "tweak_"
+    m = _VARIANT_RE.search(name)
+    if m is None:
+        return name, ""
+    return name[:m.start()] + name[m.end():], m.group(1)
+
+
+def _with_variant(base, v):
+    if v == "tweak_":
+        return ["tweak_" + base]
+    cuts = [i for i, ch in enumerate(base) if ch == "."] + [len(base)]
+    return [base[:i] + v + base[i:] for i in cuts]
+
+
+def _twin_names(base, variant):
+    """Control names for ORG base ``base``: the same variant first, then the plain name, then the others."""
+    out = _with_variant(base, variant) if variant else []
+    out.append(base)
+    for v in (*_VARIANTS, "tweak_"):
+        if v != variant:
+            out += _with_variant(base, v)
+    return out
+
+
+def rigify_parents(arm):
+    """{control name: controller parent name or None} of a Rigify rig (shown controls only; cached per state)."""
+    shown = {b.name for b in arm.bones if not collection_hidden(b) and not b.name.startswith(("ORG-", "MCH-", "DEF-"))}
+    key = (hash(tuple(b.name for b in arm.bones)),
+           tuple(sorted(c.name for c in arm.collections_all if c.is_visible_effectively)))
+    got = _RIGIFY_MAPS.get(arm.name)
+    if got is not None and got[0] == key:
+        return got[1]
+    bones = arm.bones
+    out = {}
+    for name in shown:
+        base, variant = _split_variant(name)
+        org = bones.get("ORG-" + base)
+        parent = None
+        p = org.parent if org is not None else None
+        while p is not None and parent is None:
+            if p.name.startswith("ORG-"):
+                parent = next((n for n in _twin_names(p.name[4:], variant) if n in shown and n != name), None)
+            p = p.parent
+        if parent is None:
+            up = visible_ancestor(bones[name])
+            parent = up.name if up is not None else None
+        out[name] = parent
+    for name in list(out):                      # a loop (never checked) makes that control a root
+        seen, cur = set(), name
+        while cur is not None and cur not in seen:
+            seen.add(cur)
+            cur = out.get(cur)
+        if cur is not None:
+            out[name] = None
+    _RIGIFY_MAPS[arm.name] = (key, out)
+    return out
+
+
+def _mapped_walk(bone, direction, parents):
+    bones = bone.id_data.bones
+    if bone.name not in parents:                    # a hidden helper selected by hand: plain DAG
+        return _dag_walk(bone, direction)
+    up = parents[bone.name]
+    if direction == "UP":
+        return bones[up] if up is not None else bone
+    if direction == "DOWN":
+        kids = _by_name(bones[n] for n, p in parents.items() if p == bone.name)
+        return kids[0] if kids else bone
+    sibs = _by_name(bones[n] for n, p in parents.items() if p == up)
+    return _wrap(sibs, bone, direction)
+
+
 def walk_bone(bone, direction, skip_hidden=False):
     """Bone reached from ``bone`` (data Bone) by a Maya arrow key (Up / Down / Left / Right, siblings wrap).
 
-    Controller-tagged armature = the controller rule; else ``skip_hidden`` (the preference) walks past bones hidden
-    by their bone collections; else the plain DAG (parent, first child by name, siblings by name)."""
+    Controller-tagged armature = the controller rule; else ``skip_hidden`` (the preference) walks a Rigify rig's
+    controls by its ORG hierarchy (step 236) and other armatures past bones hidden by their bone collections; else
+    the plain DAG (parent, first child by name, siblings by name)."""
     if has_controllers(bone.id_data):
         return _controller_walk(bone, direction)
+    if skip_hidden and is_rigify_rig(bone.id_data):
+        return _mapped_walk(bone, direction, rigify_parents(bone.id_data))
     if skip_hidden:
         return _visible_walk(bone, direction)
     return _dag_walk(bone, direction)
