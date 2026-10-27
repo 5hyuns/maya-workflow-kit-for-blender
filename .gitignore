@@ -19,3 +19,6 @@ tmp/
 
 # impeccable review captures (step 127)
 site/.impeccable/review/
+
+# Internal product-strategy notes stay private (kept outside the repo)
+docs/strategy/
