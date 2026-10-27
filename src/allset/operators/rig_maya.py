@@ -536,7 +536,7 @@ def maya_add_weights(points, before, segments, is_new, locked, dropoffs, max_inf
             ll = float(ab @ ab)
             t = np.clip((pts - a) @ ab / ll, 0.0, 1.0)[:, None] if ll > 0.0 else 0.0
             dist[:, j] = np.minimum(dist[:, j], np.linalg.norm(pts - (a + t * ab), axis=1))
-    on = dist < 1e-9
+    on = dist <= 1e-4                     # Maya's on-joint distance (measured with mayapy, skin_basics_247.md)
     with np.errstate(divide='ignore'):
         w = np.where(on.any(axis=1)[:, None], on.astype(np.float64), dist ** -np.asarray(dropoffs, dtype=np.float64))
     w = np.where(np.isfinite(w), w, 0.0)

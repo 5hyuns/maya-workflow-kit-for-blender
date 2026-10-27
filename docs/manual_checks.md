@@ -1472,3 +1472,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skeleton > Remove Joints on a skinned joint, then pose the skeleton: the vertices it drove follow the remaining joints (Blender divides by the weight sum while Maya leaves the weights unnormalised — compare the look with Maya).
 - [ ] Skeleton > Connect Joint ❒: Connect joint / Parent joint; pick a joint of another skeleton first (Shift-click into the second skeleton): both become one skeleton, its skinned mesh still deforms.
 - [ ] Skeleton > Mirror Joints on a posed arm (rotate values set): the copy shows the same Rotate X / Y / Z in the Channel Box and mirrors the pose.
+
+## Step 247 — Skin basics corrections (#164)
+- [ ] Skin > Prune Small Weights ❒: "Prune below" changes the threshold; with some vertices selected in Edit / Weight Paint (vertex mask) only those change; a locked joint keeps its small weights.
+- [ ] Skin > Edit Influences > Set Max Influences...: the dialog shows Max influences 5; 2 on a skinned arm — the deformation looks like Maya's (weights recomputed by distance, painted weights replaced).
+- [ ] Bind a skeleton while it is posed, pose it further, Go to Bind Pose: Maya returns to the pose at bind; compare the mesh (Blender's skin binds at the rest pose — see step_247.md 남은 것).
+- [ ] Skin > Mirror Skin Weights on a character with uneven topology (left / right vertices not at mirrored places): the copied side looks smooth like Maya (closest point + interpolation), no stair steps.

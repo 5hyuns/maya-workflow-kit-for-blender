@@ -74,19 +74,20 @@ def _run_ik_spline(context, v):
         spans=int(v.get("spans", "1")))
 
 
+_BIND_METHOD = {"Closest distance": "CLOSEST_DISTANCE", "Closest in hierarchy": "CLOSEST_HIERARCHY",
+                "Heat Map": "HEAT_MAP"}
+
+
 def _run_bind(context, v):
-    res = bpy.ops.allset.bind_skin('EXEC_DEFAULT', bind_to='SELECTED' if v["bind_to"] == "Selected joints" else
-                                   'HIERARCHY', max_influences=v["max_influences"],
-                                   bind_method='HEAT_MAP' if v.get("bind_method") == "Heat Map" else
-                                   'CLOSEST_DISTANCE',
-                                   normalize=_NORMALIZE[v["normalize"]], remove_unused=v["remove_unused"],
-                                   colorize=v["colorize"])
-    if res == {'FINISHED'}:
-        for ob in context.selected_objects:
-            for md in getattr(ob, "modifiers", ()):
-                if md.type == 'ARMATURE':
-                    md.use_deform_preserve_volume = v["skinning"] == "Dual quaternion"
-    return res
+    # step 247: skinning method, dropoff and Maintain max influences are Bind Skin operator options
+    return bpy.ops.allset.bind_skin('EXEC_DEFAULT', bind_to='SELECTED' if v["bind_to"] == "Selected joints" else
+                                    'HIERARCHY', max_influences=v["max_influences"],
+                                    bind_method=_BIND_METHOD.get(v.get("bind_method"), 'CLOSEST_DISTANCE'),
+                                    skinning='DUAL_QUATERNION' if v["skinning"] == "Dual quaternion" else
+                                    'CLASSIC_LINEAR', dropoff=v.get("dropoff", 4.0),
+                                    maintain_max=v.get("maintain_max", True),
+                                    normalize=_NORMALIZE[v["normalize"]], remove_unused=v["remove_unused"],
+                                    colorize=v["colorize"])
 
 
 def _run_unbind(context, v):
@@ -224,15 +225,19 @@ WINDOWS = [
     # Skin > Bind Skin (option_boxes_140.md:28-46); replaces option_windows "bind_skin"
     Window("bind_skin_maya", "Bind Skin Options", "Apply and Close", ("allset.bind_skin", {}), [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
-        F("bind_method", "Bind method:", "enum", "Closest distance", items=("Closest distance", "Heat Map")),
+        F("bind_method", "Bind method:", "enum", "Closest distance",
+          items=("Closest distance", "Closest in hierarchy", "Heat Map")),
         F("skinning", "Skinning method:", "enum", "Classic linear", items=("Classic linear", "Dual quaternion")),
         F("normalize", "Normalize weights:", "enum", "Interactive", items=("None", "Interactive", "Post")),
         F("max_influences", "Max influences:", "int", 5, lo=1, hi=30),
+        # Maya 2026 factory: Maintain max influences on, Dropoff rate 4.0 (research/maya/re/skin_basics_247.md)
+        F("maintain_max", "", "bool", True, text="Maintain max influences"),
+        F("dropoff", "Dropoff rate:", "float", 4.0, lo=0.1, hi=100.0),
         F("remove_unused", "", "bool", True, text="Remove unused influences"),
         F("colorize", "", "bool", True, text="Colorize skeleton")], _run_bind, paths=("Skin/Bind Skin",),
-        missing=("Bind to: Object hierarchy", "Bind method: Closest in hierarchy / Geodesic Voxel", "Skinning method: Weight "
-                 "blended", "Weight distribution", "Allow multiple bind poses", "Maintain max influences",
-                 "Include hidden selections on creation", "Deformer node")),
+        missing=("Bind to: Object hierarchy", "Bind method: Geodesic Voxel", "Skinning method: Weight blended",
+                 "Weight distribution", "Allow multiple bind poses", "Include hidden selections on creation",
+                 "Deformer node")),
     # Skin > Unbind Skin: "Detach Skin Options" (option_boxes_140.md:48-51)
     Window("unbind_skin", "Detach Skin Options", "Detach", ("allset.unbind_skin", {}), [
         F("history", "History:", "enum", "Delete history", items=("Delete history", "Keep history", "Bake history")),

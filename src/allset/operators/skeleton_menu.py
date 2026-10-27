@@ -172,6 +172,8 @@ def drop_influences(ob, names):
             if vg is not None:
                 mesh.vertex_groups.remove(vg)
                 n += 1
+    from .skin_basics import drop_bind_pose_members      # ... and the bindPose member (step 247)
+    drop_bind_pose_members(ob, names)
     return n
 
 

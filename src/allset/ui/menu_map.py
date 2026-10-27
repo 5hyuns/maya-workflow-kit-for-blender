@@ -429,16 +429,16 @@ MAP = {
     # step 58 (docs/steps/step_58.md): any selection order, no parenting, Max Influences
     "Skin/Bind Skin": "allset.bind_skin",
     "Skin/Unbind Skin": "allset.unbind_skin",
-    "Skin/Go to Bind Pose": "pose.transforms_clear",
+    "Skin/Go to Bind Pose": "allset.go_to_bind_pose",                  # step 247: the pose stored at bind
     "Skin/Move Skinned Joints": "allset.move_skinned_joints",          # step 241 (#156): Edit mode, mesh kept
     "Skin/Paint Skin Weights": "allset.paint_skin_weights",
     "Skin/Mirror Skin Weights": "allset.mirror_skin_weights",
     "Skin/Copy Skin Weights": "allset.copy_skin_weights",
     "Skin/Copy Vertex Weights": "allset.copy_vertex_weights",
     "Skin/Paste Vertex Weights": "allset.paste_vertex_weights",
-    "Skin/Edit Influences/Set Max Influences...": "object.vertex_group_limit_total",
+    "Skin/Edit Influences/Set Max Influences...": "allset.set_max_influences",   # step 247 (#164)
     "Skin/Smooth Skin Weights": "object.vertex_group_smooth",
-    "Skin/Prune Small Weights": "object.vertex_group_clean",
+    "Skin/Prune Small Weights": "allset.prune_small_weights",         # step 247: 0.01, all joints, renormalised
     "Skin/Normalize Weights/Normalize Weights": "object.vertex_group_normalize_all",
     # --- Constrain (Rigging, Animation): Maya selects targets first, the
     # constrained object last = Blender's active object.
