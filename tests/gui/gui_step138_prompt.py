@@ -73,6 +73,10 @@ def save_browser():
     return None, None
 
 
+# since step 211 a kit scene carries Maya's hidden startup cameras as objects
+STARTUP_CAMERAS = {'persp', 'top', 'front', 'side'}
+
+
 @step
 def s_setup():
     setup()
@@ -199,7 +203,7 @@ step(wait)
 @step
 def s_saved_then_new():
     with bpy.data.libraries.load(SAVED) as (src, _dst):
-        names = sorted(src.objects)
+        names = sorted(n for n in src.objects if n not in STARTUP_CAMERAS)
     check(f"Save wrote the file first ({names})", len(names) == 2 and os.path.getmtime(SAVED) > C["mtime"])
     check(f"... then the new Maya scene ({meshes()}, file {bpy.data.filepath!r}, {len(strips())} strips)",
           not meshes() and not bpy.data.filepath and len(strips()) == 2)
@@ -272,7 +276,7 @@ def s_saved_as_then_new():
     names = []
     if os.path.isfile(SAVED_AS):
         with bpy.data.libraries.load(SAVED_AS) as (src, _dst):
-            names = sorted(src.objects)
+            names = sorted(n for n in src.objects if n not in STARTUP_CAMERAS)
     check(f"Save As wrote the file ({names})", names == ["Cube"])
     check(f"... then the new Maya scene ({meshes()}, file {bpy.data.filepath!r})",
           not meshes() and not bpy.data.filepath and len(strips()) == 2)

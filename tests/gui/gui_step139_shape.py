@@ -86,6 +86,10 @@ def combo(key, **mods):
     ev(key, 'RELEASE', **mods)
 
 
+# PR #125's always-running window watchers are not a user modal (step 229)
+WATCHERS = {'ALLSET_OT_joint_outliner_select', 'ALLSET_OT_pose_empty_click'}
+
+
 @step
 def s_setup():
     C["x"], C["y"] = setup()
@@ -107,7 +111,8 @@ def s_ctrl_b():
 @step
 def s_beveled():
     r = rec()
-    mods = [op.bl_idname for op in win().modal_operators]
+    mods = [op.bl_idname for op in win().modal_operators
+            if op.bl_idname not in WATCHERS]
     check(f"Ctrl+B on an edge = polyBevel1 at once, no modal (got {r and r.name}, {counts()}, modal {mods})",
           r is not None and r.name == "polyBevel1" and counts() == (10, 15, 7) and not mods)
     combo('ESC')
@@ -194,7 +199,8 @@ def s_ctrl_e_edges():
 @step
 def s_edges_extruded():
     r = rec()
-    mods = [op.bl_idname for op in win().modal_operators]
+    mods = [op.bl_idname for op in win().modal_operators
+            if op.bl_idname not in WATCHERS]
     check(f"Ctrl+E on 2 edges = polyExtrudeEdge1 at once, 12/18/8 (got {r and r.name}, {counts()}, modal {mods})",
           r is not None and r.name == "polyExtrudeEdge1" and counts() == (12, 18, 8) and not mods)
     C["rows"] = in_view_rows()

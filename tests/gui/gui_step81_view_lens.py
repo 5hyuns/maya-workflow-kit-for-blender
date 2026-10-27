@@ -65,7 +65,8 @@ def s_view():
 
 @step
 def s_camera():
-    cams = [o for o in bpy.data.objects if o.type == 'CAMERA']
+    # since step 211 the scene also has Maya's hidden startup cameras (persp / top / front / side)
+    cams = [o for o in bpy.data.objects if o.type == 'CAMERA' and not o.get("allset_startup_camera")]
     lens = cams[-1].data.lens if cams else None
     check(f"Ctrl+Shift+C = a Maya 35 mm camera ({[c.name for c in cams]}, focal {lens})",
           len(cams) == 1 and abs(lens - 35.0) < 1e-3 and cams[-1].data.sensor_width == 36.0)

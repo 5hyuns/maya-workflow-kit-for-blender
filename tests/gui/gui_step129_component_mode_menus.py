@@ -118,7 +118,9 @@ def s_ctrl_d():
     modals = [op.bl_idname for op in win().modal_operators]
     check(f"Ctrl+D in face mode: no face copy, no move, no new object (objects {C['n_obj']} -> "
           f"{len(bpy.data.objects)}, faces {n_faces()}, modals {modals})",
-          len(bpy.data.objects) == C["n_obj"] and n_faces() == 6 and not modals)
+          # PR #125's window watchers (joint Outliner select, pose empty click) are always running: only a transform
+          # modal would be a move
+          len(bpy.data.objects) == C["n_obj"] and n_faces() == 6 and not [m for m in modals if m.startswith("TRANSFORM_OT")])
 
 
 run()

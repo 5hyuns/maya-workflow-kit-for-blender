@@ -97,11 +97,15 @@ def open_display():
         bpy.ops.wm.call_menu(name=mod(".ui.menu_sets").menu_idname("mainDisplayMenu"))
 
 
+# Maya 2026 Display menu (step 219): shot 143_display_menu.png of step 229 = Grid's row 9 px above the mouse
+GRID_ROW_UP = 9
+
+
 def grid_box():
     """Window point of Grid's option box mark: Blender opens this menu with its "Heads Up Display" row near the mouse
     (first-open shot 143_display_menu.png at effective scale 1.25: Grid's row 34 px above the mouse, its box mark
     63 px right of it)."""
-    return C["x"] + px(63), C["y"] + px(34)
+    return C["x"] + px(63), C["y"] + px(GRID_ROW_UP)
 
 
 @step
