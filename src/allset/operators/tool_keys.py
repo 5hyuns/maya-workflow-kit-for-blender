@@ -115,6 +115,10 @@ def _watch():
                 _carry()   # a mode change no depsgraph update reported
         if context.mode in {'POSE', 'EDIT_ARMATURE'}:
             from . import joint_selection
+            if context.mode == 'EDIT_ARMATURE':
+                from . import joint_edit
+                joint_edit.process(context)                    # step 243 (#160): a move keeps the Maya frames
+                joint_edit.watch()
             # step 241 (#156): Move tool = Edit mode for an unskinned skeleton's joints, other tools = Pose
             joint_selection.sync_tool_mode(context)
             if context.mode == 'EDIT_ARMATURE':

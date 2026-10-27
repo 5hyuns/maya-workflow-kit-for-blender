@@ -1739,6 +1739,24 @@ PLACING_TEXT = ("Editing joints: W / E / R move them,", "F8 = pose mode (channel
 POSE_HINT = "Joint channels: Ctrl+Tab (pose mode)"
 
 
+def draw_joint_translate(layout, context):
+    """Edit-mode joints (step 243): the lead joint's name + Translate X / Y / Z text fields (``+=`` entry, display
+    units; typing moves the joint, its children follow unless Preserve Children, every Maya frame stays —
+    operators/joint_edit.py). Returns the UI units drawn."""
+    from ..operators import joint_edit
+    _ob, eb = joint_edit.lead_joint(context)
+    if eb is None:
+        return 0
+    layout.label(text=eb.name)
+    for a in joint_edit.AXES:
+        row = layout.row(align=True)
+        split = row.split(factor=0.5, align=True)
+        split.label(text=f"Translate {a.upper()}")
+        split.prop(context.scene, f"allset_joint_t{a}", text="")
+        row.label(text="", icon='BLANK1')
+    return 1 + len(joint_edit.AXES)
+
+
 def draw_empty(layout):
     layout.separator(factor=6)
     chrome.wrapped(layout, EMPTY_TEXT)   # empty state, channel_box.md:22-24
@@ -2438,9 +2456,12 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         # Paint Skin Weights: the Channel Box stays the Channel Box (no Maya version puts paint UI here, PR #125
         # check 9c); the paint settings are the Tool Settings dock (ui/tool_settings.draw_dock)
         if placing_joints(context):
+            # armature edit mode = joint placement (step 55); step 243 (#160): the lead joint's Maya Translate
+            # (position in the parent's Maya frame) is typed here like Maya's Channel Box
+            extra = draw_joint_translate(layout, context)
             layout.separator(factor=2)
-            chrome.wrapped(layout, PLACING_TEXT)   # armature edit mode = joint placement (step 55)
-            return units + 0.5 + len(PLACING_TEXT)
+            chrome.wrapped(layout, PLACING_TEXT)
+            return units + 0.5 + extra + len(PLACING_TEXT)
         ob = lead(context)
         comp = component_mode(ob)
         if ob is None or (comp and not cb_points.has_selection(ob)):

@@ -92,6 +92,32 @@ class ComponentPivotGroup(HoldGroup):
         ts.transform_pivot_point = state
 
 
+class PreserveChildrenGroup(HoldGroup):
+    """D hold on joints in Edit mode (step 243, #160): Maya moves the joint only, its children stay (``move -pcp``,
+    ). The picked joints are re-selected head-only while held."""
+
+    def capture(self, ts):
+        return preserve_children_set(None)
+
+    def apply(self, ts, names):
+        preserve_children_set(True)
+
+    def restore(self, ts, state):
+        preserve_children_set(state)
+
+
+def preserve_children_set(value):
+    """Set Maya Preserve Children (``None`` = only read it); re-shapes the picked joints. Returns the old value."""
+    from . import joint_selection
+    context = bpy.context
+    ts = context.scene.tool_settings
+    old = bool(ts.use_transform_skip_children)    # Blender's Preserve Children = Maya's (joint_edit.preserve_children)
+    if value is not None and bool(value) != old:
+        ts.use_transform_skip_children = bool(value)
+        joint_selection.reshape(context, context.active_object, bool(value))
+    return old
+
+
 def component_pivot_after(saved, moved):
     """Pivot point after releasing D in edit mode: a pivot the user placed (cursor moved)
     stays, like Maya's custom component pivot (); a
@@ -366,9 +392,10 @@ def unregister_component():
     COMPONENT.pending_tool = COMPONENT.sel_sig = None
 
 
-GROUPS = {"snap": SnapGroup(), "pivot": PivotGroup(), "component_pivot": ComponentPivotGroup()}
+GROUPS = {"snap": SnapGroup(), "pivot": PivotGroup(), "component_pivot": ComponentPivotGroup(),
+          "preserve_children": PreserveChildrenGroup()}
 HOLDS = {"grid": "snap", "curve": "snap", "point": "snap", "step": "snap", "pivot": "pivot",
-         "component_pivot": "component_pivot"}
+         "component_pivot": "component_pivot", "preserve_children": "preserve_children"}
 
 # group -> {"saved": state, "active": [hold names in press order]}
 _state = {}
@@ -430,6 +457,7 @@ _HOLD_ITEMS = (
     ("step", "Step Snap", "Maya J: incremental snap while held"),
     ("pivot", "Pivot Edit", "Maya D: affect only origins while held"),
     ("component_pivot", "Component Pivot", "Maya D in edit mode: place the pivot (3D cursor) while held"),
+    ("preserve_children", "Preserve Children", "Maya D on joints: move the joint only, its children stay"),
 )
 
 class ALLSET_OT_hold(bpy.types.Operator):
@@ -491,6 +519,10 @@ class ALLSET_OT_pivot_toggle(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context):
+        if context.mode == 'EDIT_ARMATURE':   # step 243: Insert on joints = Preserve Children on / off
+            preserve_children_set(not preserve_children_set(None))
+            _redraw()
+            return {'FINISHED'}
         if context.mode == EDIT_MODE:     # Maya component mode Insert (step 77): the 3D cursor pivot edit
             if COMPONENT.on:
                 COMPONENT.finish(context)
