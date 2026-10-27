@@ -32,6 +32,8 @@ EDITOR_TYPES = (
     ('PROPERTIES', "Properties", ""),
     # step 101: Windows > Command Shell / Content Browser, File > View Image
     ('CONSOLE', "Python Console", ""), ('ASSETS', "Asset Browser", ""), ('IMAGE_EDITOR', "Image Editor", ""),
+    # Windows > Bifrost Graph Editor (menu_map) opens Geometry Nodes; it was missing here and raised (step 240 QA)
+    ('GeometryNodeTree', "Geometry Node Editor", ""),
 )
 
 

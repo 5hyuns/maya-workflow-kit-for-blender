@@ -143,6 +143,11 @@ class Geo:
 
     def __init__(self, ob, depsgraph):
         me = ob.data
+        if ob.mode == 'EDIT':
+            # the original mesh's loop data is empty while the edit BMesh owns it (foreach_get raised on every
+            # update, step 240 QA D-240-2): the pin waits where it is and follows again when edit mode ends
+            self.ok = False
+            return
         tris = me.loop_triangles
         nt = len(tris)
         self.ok = nt > 0

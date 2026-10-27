@@ -61,3 +61,58 @@ def test_outliner_rows_keep_dag_order():
     rows = [r[1] for r in outliner.dag_rows(scene, False) if r[1].startswith("qa")]
     assert rows == ["qaA", "qaC", "qaD", "qaB"], rows
     bpy.data.batch_remove(obs)
+
+
+# --- S2 fixes found by the new QA activities ------------------------------------------
+
+def test_circularize_from_object_mode():
+    """D-240-1: Edit Mesh > Circularize with an object selected raised TypeError (an old LoopTools "value" key)."""
+    bpy.ops.mesh.primitive_cube_add()
+    ob = bpy.context.active_object
+    assert bpy.ops.allset.menu_whole_mesh(item="Edit Mesh/Circularize") == {'FINISHED'}
+    assert ob.mode == 'OBJECT'
+    bpy.data.objects.remove(ob)
+
+
+def test_step_snap_off_stays_off_when_the_grid_goes():
+    """C-240-1: Scale Step Absolute, Grid on, Rotate Step Off, Grid off -> Rotate showed Off but still stepped."""
+    snap_align = import_module(kit.MODULE + ".operators.snap_align")
+    ts = bpy.context.scene.tool_settings
+    ts.use_snap, ts.snap_elements = False, {'INCREMENT'}
+    ts.use_snap_translate = ts.use_snap_rotate = ts.use_snap_scale = True
+    bpy.context.scene.pop(snap_align.STEP_PROP, None)
+    snap_align.set_step_snap(ts, 'RESIZE', 'ABSOLUTE')
+    status_line.toggle_snap(ts, "GRID")
+    snap_align.set_step_snap(ts, 'ROTATE', 'OFF')
+    assert ts.use_snap_rotate, "grid snap must still rotate-snap while it is on (#139)"
+    status_line.toggle_snap(ts, "GRID")
+    assert snap_align.step_snap_mode(ts, 'ROTATE') == 'OFF'
+    stepping = ts.use_snap and 'INCREMENT' in ts.snap_elements and ts.use_snap_rotate
+    assert not stepping, "Rotate shows Step Snap Off but Blender still steps it"
+    assert snap_align.step_snap_mode(ts, 'RESIZE') == 'ABSOLUTE'
+
+
+def test_undo_keeps_the_current_time():
+    """H2-1: Maya's undo never moves the current time."""
+    time_slider = import_module(kit.MODULE + ".ui.time_slider")
+    scene = bpy.context.scene
+    scene.frame_current = 12
+    time_slider._keep_frame_pre()
+    scene.frame_current = 1                      # what Blender's memfile undo does
+    time_slider.restore_frame()
+    assert scene.frame_current == 12
+
+
+def test_uv_pin_geometry_waits_in_edit_mode():
+    """D-240-2: the UV Pin depsgraph handler read the original mesh's UVs in edit mode (empty) on every update."""
+    pins = import_module(kit.MODULE + ".operators.pins_205")
+    bpy.ops.mesh.primitive_plane_add()
+    ob = bpy.context.active_object
+    bpy.ops.object.mode_set(mode='EDIT')
+    try:
+        geo = pins.Geo(ob, bpy.context.evaluated_depsgraph_get())
+        assert not geo.ok
+    finally:
+        bpy.ops.object.mode_set(mode='OBJECT')
+    assert pins.Geo(ob, bpy.context.evaluated_depsgraph_get()).ok
+    bpy.data.objects.remove(ob)

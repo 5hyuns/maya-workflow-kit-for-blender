@@ -471,6 +471,21 @@ def heal_affect(ts):
     return n
 
 
+def settle_affect(ts):
+    """After the Status Line snap set changed: with a grid / point / curve snap on, every Affect flag is on (#139);
+    with none left, a tool whose Step Snap the user turned Off gets its Affect flag back off — otherwise it kept
+    stepping by another tool's increment while showing Off (step 240 QA C-240-1)."""
+    if other_snaps_on(ts):
+        return heal_affect(ts)
+    n = 0
+    for kind, mode in _record(ts).items():
+        flag = STEP_FLAGS.get(kind)
+        if mode == 'OFF' and flag and getattr(ts, flag):
+            setattr(ts, flag, False)
+            n += 1
+    return n
+
+
 def set_step_snap(ts, kind, mode):
     if mode == 'TOGGLE':
         mode = 'OFF' if step_snap_mode(ts, kind) != 'OFF' else 'RELATIVE'

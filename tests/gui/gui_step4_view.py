@@ -151,6 +151,13 @@ def s_quad_off():
 
 
 @step
+def s_settle_layout():
+    # step 240 QA: alone 1 of 3 runs failed (non-deterministic) — after the layout change the window needs a tick of
+    # its own with the pointer in the view before a key reaches the new area under event simulation
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+
+
+@step
 def s_shift_a():
     # step 237: after a layout change the first key sent in the move's tick is lost under event simulation
     ev('A', 'PRESS', shift=True)
@@ -159,6 +166,11 @@ def s_shift_a():
 
 @step
 def s_wait_frame():
+    pass
+
+
+@step
+def s_wait_frame2():
     pass
 
 

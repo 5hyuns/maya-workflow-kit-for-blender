@@ -191,7 +191,7 @@ def toggle_snap(ts, name):
         # Maya snaps the Move tool whenever a snap button is on: an Affect flag left off (Step Snap Off before
         # step 220, or a file saved that way) would make the button look on while nothing snaps (#139)
         from ..operators import snap_align
-        snap_align.heal_affect(ts)
+        snap_align.settle_affect(ts)
     else:
         ts.use_snap = False
 
