@@ -2473,9 +2473,10 @@ def _m62_3_go():
           abs(x1 - 0.0) < 1e-4 and abs(x2 - 1.0) < 1e-4)
     fc = sdk().sdk_fcurve(cube, "ry")
     kps = list(fc.keyframe_points)
-    check(f"[M62-3] the SDK curve is a smooth S, flat at the ends (Bezier, auto-clamped, constant extrapolation: "
+    # step 226: the kit writes Maya 2026 auto tangents itself (ALIGNED handles, operators/driven_key.maya_auto)
+    check(f"[M62-3] the SDK curve is a smooth S, flat at the ends (Bezier, Maya auto, constant extrapolation: "
           f"{[(p.interpolation, p.handle_left_type) for p in kps]}, {fc.extrapolation})",
-          all(p.interpolation == 'BEZIER' and p.handle_left_type == 'AUTO_CLAMPED' for p in kps)
+          all(p.interpolation == 'BEZIER' and p.handle_left_type in ('ALIGNED', 'AUTO_CLAMPED') for p in kps)
           and fc.extrapolation == 'CONSTANT'
           and all(abs(p.handle_left[1] - p.co[1]) < 1e-6 and abs(p.handle_right[1] - p.co[1]) < 1e-6 for p in (kps[0], kps[-1])))
     with override():
@@ -2914,7 +2915,7 @@ def _m63_6_mirror():
         b = create('CUBE')
         b.location = (0.5 * k(), 0, 0)
         select_only(a, b)    # first selected - last selected
-        menu(f"Mesh/Booleans/{op}")
+        menu(f"Mesh/Booleans/{op} (A - B)" if op == "Difference" else f"Mesh/Booleans/{op}")   # Maya 2026 label (step 219)
         meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
         xs = [(meshes[0].matrix_world @ v.co).x / k() for v in meshes[0].data.vertices] if meshes else [0]
         want = (-0.5, 0.0) if op == "Difference" else (0.0, 0.5)
@@ -4881,10 +4882,11 @@ def _m69_5_editor():
     a = w.screen.areas[0]
     sp = a.spaces.active
     lib = os.path.basename(C["src"])
-    check(f"[M69-5] File > Reference Editor: an Outliner window in Blender File view listing {lib} "
-          f"({len(bpy.context.window_manager.windows) - C['nwin']} new, {a.type}, {getattr(sp, 'display_mode', None)})",
-          len(bpy.context.window_manager.windows) == C["nwin"] + 1 and a.type == 'OUTLINER'
-          and sp.display_mode == 'LIBRARIES' and lib in bpy.data.libraries)
+    # since step 209 the Reference Editor is the kit's Maya window (a marked Properties Tool tab, ui/reference_editor.py)
+    check(f"[M69-5] File > Reference Editor: the kit's Reference Editor window, {lib} loaded "
+          f"({len(bpy.context.window_manager.windows) - C['nwin']} new, {a.type})",
+          len(bpy.context.window_manager.windows) == C["nwin"] + 1 and a.type == 'PROPERTIES'
+          and lib in bpy.data.libraries)
     # the library row's context menu Reload (Blender's Outliner library operation = Library.reload)
     bpy.data.libraries[lib].reload()
     check(f"[M69-5] Reload keeps the referenced objects ({bpy.data.objects.get('prop:pCube1') is not None})",

@@ -17,7 +17,7 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty, IntProperty
 from mathutils import Vector
 
-from .. import results, undo_steps
+from .. import compat, results, undo_steps
 from . import curves_maya, material, naming, units
 from . import surfaces_math as sm
 from .modify_maya import selection_order
@@ -281,7 +281,7 @@ def _mesh_signature(me):
 def _write_mesh(me, s):
     verts, tris, uvs = tessellate(s)
     me.clear_geometry()
-    me.from_pydata(verts, [], tris)
+    compat.mesh_from_pydata(me, verts, [], tris)
     layer = me.uv_layers.new(name="map1")
     data = layer.data
     for poly in me.polygons:

@@ -406,3 +406,51 @@ def compare_inputs(node):
 # in widget units. 4.5: 1.48 (step 183 table); 5.0 – 5.2: 1.25 (step 200, gui_step183_option_click at UI 1.0 =
 # 25 px of 20, UI 1.25 = 31 px of 25 on 5.0.1 / 5.1.2 / 5.2.3: the header row starts closer to the region edge).
 MENU_BAR_LEAD_UNITS = 1.48 if VERSION < (5, 0) else 1.25
+
+
+
+# --- Mesh selection attributes ----------------------------------------------------------------------------------
+# Blender 5.0.1 (checked, step 229, tmp/p229/vanilla7.py / vanilla8.py; 4.5 and 5.2.3 make a BOOLEAN): computing a
+# mesh's edges (``Mesh.from_pydata`` with no edges, ``Mesh.update(calc_edges=True)``) while it has a ``.select_vert``
+# attribute creates ``.select_edge`` as an EDGE **INT32_2D** attribute (the ``.edge_verts`` layout). Blender then
+# crashes on reading it as a selection: writing ``MeshEdge.select`` (rna_MeshEdge_select_set), leaving weight paint
+# (mesh_select_vert_flush), and edit mode gets a garbage edge selection. Feature check by type: a selection attribute
+# that is not BOOLEAN on its domain is dropped and rebuilt from the vertex selection.
+_SELECT_ATTRS = ((".select_vert", 'POINT'), (".select_edge", 'EDGE'), (".select_poly", 'FACE'))
+
+
+def repair_selection_attributes(mesh):
+    """Replace wrongly typed selection attributes (Blender 5.0.1 calc_edges bug) by BOOLEAN ones derived from the
+    vertex selection. Returns True when something was repaired. Object mode / non-edit meshes only."""
+    bad = [(a.name, d) for n, d in _SELECT_ATTRS for a in mesh.attributes
+           if a.name == n and (a.data_type != 'BOOLEAN' or a.domain != d)]
+    if not bad:
+        return False
+    import numpy as np
+    for name, _domain in bad:
+        for a in [a for a in mesh.attributes if a.name == name]:
+            mesh.attributes.remove(a)
+    vsel = np.zeros(len(mesh.vertices), bool)
+    if len(vsel):
+        mesh.vertices.foreach_get("select", vsel)
+    for name, domain in bad:
+        if name == ".select_vert":
+            continue                      # absent = nothing selected
+        a = mesh.attributes.new(name, 'BOOLEAN', domain)
+        if name == ".select_edge":
+            ev = np.zeros(2 * len(mesh.edges), np.int32)
+            mesh.edges.foreach_get("vertices", ev)
+            ev = ev.reshape(-1, 2)
+            values = vsel[ev[:, 0]] & vsel[ev[:, 1]] if len(ev) else np.zeros(0, bool)
+        else:
+            values = np.array([all(vsel[i] for i in p.vertices) for p in mesh.polygons], bool)
+        a.data.foreach_set("value", values.tolist())
+    mesh.update()
+    return True
+
+
+def mesh_from_pydata(mesh, vertices, edges, faces):
+    """``Mesh.from_pydata`` + the Blender 5.0.1 selection-attribute repair above (use it whenever edges are left for
+    Blender to compute)."""
+    mesh.from_pydata(vertices, edges, faces)
+    repair_selection_attributes(mesh)
