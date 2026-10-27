@@ -84,8 +84,9 @@ def _run_bind(context, v):
     return bpy.ops.allset.bind_skin('EXEC_DEFAULT', bind_to='SELECTED' if v["bind_to"] == "Selected joints" else
                                     'HIERARCHY', max_influences=v["max_influences"],
                                     bind_method=_BIND_METHOD.get(v.get("bind_method"), 'CLOSEST_DISTANCE'),
-                                    skinning='DUAL_QUATERNION' if v["skinning"] == "Dual quaternion" else
-                                    'CLASSIC_LINEAR', dropoff=v.get("dropoff", 4.0),
+                                    skinning={"Dual quaternion": 'DUAL_QUATERNION', "Weight blended":
+                                              'WEIGHT_BLENDED'}.get(v["skinning"], 'CLASSIC_LINEAR'),
+                                    dropoff=v.get("dropoff", 4.0),
                                     maintain_max=v.get("maintain_max", True),
                                     normalize=_NORMALIZE[v["normalize"]], remove_unused=v["remove_unused"],
                                     colorize=v["colorize"])
@@ -230,7 +231,8 @@ WINDOWS = [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
         F("bind_method", "Bind method:", "enum", "Closest distance",
           items=("Closest distance", "Closest in hierarchy", "Heat Map")),
-        F("skinning", "Skinning method:", "enum", "Classic linear", items=("Classic linear", "Dual quaternion")),
+        F("skinning", "Skinning method:", "enum", "Classic linear",
+          items=("Classic linear", "Dual quaternion", "Weight blended")),
         F("normalize", "Normalize weights:", "enum", "Interactive", items=("None", "Interactive", "Post")),
         F("max_influences", "Max influences:", "int", 5, lo=1, hi=30),
         # Maya 2026 factory: Maintain max influences on, Dropoff rate 4.0 ()
@@ -238,8 +240,7 @@ WINDOWS = [
         F("dropoff", "Dropoff rate:", "float", 4.0, lo=0.1, hi=100.0),
         F("remove_unused", "", "bool", True, text="Remove unused influences"),
         F("colorize", "", "bool", True, text="Colorize skeleton")], _run_bind, paths=("Skin/Bind Skin",),
-        missing=("Bind to: Object hierarchy", "Bind method: Geodesic Voxel", "Skinning method: Weight blended",
-                 "Weight distribution", "Allow multiple bind poses", "Include hidden selections on creation",
+        missing=("Bind to: Object hierarchy", "Bind method: Geodesic Voxel", "Weight distribution", "Allow multiple bind poses", "Include hidden selections on creation",
                  "Deformer node")),
     # Skin > Unbind Skin: "Detach Skin Options" (option_boxes_140.md:48-51)
     Window("unbind_skin", "Detach Skin Options", "Detach", ("allset.unbind_skin", {}), [
