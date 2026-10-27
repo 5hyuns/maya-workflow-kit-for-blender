@@ -78,7 +78,7 @@ def _set(mesh, i, ws):
         vg = mesh.vertex_groups[name]
         if w > 0:
             vg.add([i], w, 'REPLACE')
-        else:
+        elif any(g.group == vg.index for g in mesh.data.vertices[i].groups):
             vg.remove([i])
 
 
@@ -402,3 +402,37 @@ def test_copy_skin_weights_closest_point_interpolates():
         except RuntimeError:
             got = 0.0
         assert abs(got - r["wA"]) < 1e-4, (r["x"], got)
+
+
+def test_mirror_only_selected_destination_vertices():
+    # mayapy 2026 (tmp/m247/ms.py): with vtx[0] (negative side) selected only it is written; a selected source vertex
+    # writes nothing; the Normalize option leaves sums of 1 as they are
+    for sel, changed in ((0, {0}), (8, set())):
+        _reset()
+        arm = _skeleton([("C", (0, 0, 0), None), ("L_a", (4, 0, 0), "C"), ("R_a", (-4, 0, 0), "C")])
+        xs = [-4, -2, 0, 2, 4]
+        pts = [(x, 0, z) for x in xs for z in (0, 1)]
+        faces = [(2 * i, 2 * (i + 1), 2 * (i + 1) + 1, 2 * i + 1) for i in range(len(xs) - 1)]
+        mesh = _mesh(pts, faces)
+        names = ["C", "L_a", "R_a"]
+        _skin(mesh, arm, names)
+        for i, x in enumerate(xs):
+            for k in (0, 1):
+                w = [0.2, 0.0, 0.8] if x < 0 else ([1, 0, 0] if x == 0 else [0.375, 0.625, 0.0])
+                _set(mesh, 2 * i + k, dict(zip(names, w)))
+        _select(mesh)
+        for elems in (mesh.data.polygons, mesh.data.edges):
+            for e in elems:
+                e.select = False
+        for v in mesh.data.vertices:
+            v.select = v.index == sel
+        bpy.ops.object.mode_set(mode='EDIT')
+        assert bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT', normalize=True) == {'FINISHED'}
+        assert mesh.mode == 'EDIT'
+        bpy.ops.object.mode_set(mode='OBJECT')
+        for i in range(10):
+            got = _get(mesh, i, names)
+            if i in changed:
+                assert _close(got, [0.375, 0.0, 0.625]), (sel, i, got)
+            elif xs[i // 2] < 0:
+                assert _close(got, [0.2, 0.0, 0.8]), (sel, i, got)

@@ -1168,10 +1168,13 @@ def surface_weights(mesh, points, groups, w):
     return out
 
 
-def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOINT",), unmatched=None):
+def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOINT",), unmatched=None, only=None,
+                   normalize=False):
     """Copy the weights of one side onto the other (Maya Mirror Skin Weights, factory Closest point on surface): each
     destination vertex takes the weights at the closest surface point to its mirror image (barycentric), every joint
-    renamed to its mirror partner; vertices on the plane are left alone. Count of vertices written."""
+    renamed to its mirror partner; vertices on the plane are left alone. ``only`` = Maya filterSelected: just these
+    destination vertices are written (mayapy: a selected source vertex writes nothing, skin_basics_247.md);
+    ``normalize`` = the option's Normalize (factory off). Count of vertices written."""
     import numpy as np
     from . import skin_basics
     mod = armature_modifier(mesh)
@@ -1184,6 +1187,9 @@ def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOIN
     world = [mw @ v.co for v in verts]
     eps = 1e-6
     dst = [i for i, p in enumerate(world) if (p[axis] < -eps if positive_to_negative else p[axis] > eps)]
+    if only is not None:
+        keep = {int(i) for i in only}
+        dst = [i for i in dst if i in keep]
     if not dst:
         return 0
     w = skin_basics.weights(mesh, groups)                  # read before any write (faces across the plane)
@@ -1196,6 +1202,11 @@ def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOIN
         if k is not None:
             out[dst, k] += got[:, j]
     out[np.abs(out) < 1e-12] = 0.0
+    if normalize:
+        infl = [j for j, g in enumerate(groups) if g.name in mod.object.data.bones] if mod and mod.object else []
+        total = out[np.ix_(dst, infl)].sum(axis=1, keepdims=True)
+        out[np.ix_(dst, infl)] = np.divide(out[np.ix_(dst, infl)], total, out=out[np.ix_(dst, infl)],
+                                           where=total > 0)
     skin_basics.write(mesh, groups, out, dst)
     skin_basics.enforce_max(mesh)
     return len(dst)
@@ -1211,10 +1222,12 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
     positive_to_negative: BoolProperty(name="Direction: Positive to Negative", default=True)
     influence1: EnumProperty(name="Influence Association 1", items=MIRROR_INFLUENCE, default="CLOSEST_JOINT")
     influence2: EnumProperty(name="Influence Association 2", items=MIRROR_INFLUENCE_2, default="NONE")
+    # Maya optionVar mirrorSkinNormalize, factory 0 (performMirrorSkinWeights; skin_basics_247.md)
+    normalize: BoolProperty(name="Normalize", default=False)
 
     @classmethod
     def poll(cls, context):
-        return context.mode in {'OBJECT', 'PAINT_WEIGHT'}
+        return context.mode in {'OBJECT', 'PAINT_WEIGHT', 'EDIT_MESH'}
 
     def execute(self, context):
         mesh = skinned_mesh(context)
@@ -1223,8 +1236,12 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
             return {'CANCELLED'}
         modes = [m for m in (self.influence1, self.influence2) if m != "NONE"]
         unmatched = []
-        n = mirror_weights(mesh, PLANE_AXIS[self.plane], self.positive_to_negative, modes, unmatched)
-        mesh.data.update()
+        from . import skin_basics
+        rows = skin_basics.target_rows(mesh)             # Maya filterSelected: selected vertices, else all
+        only = rows if len(rows) < len(mesh.data.vertices) else None
+        with skin_basics._ObjectData(mesh):
+            n = mirror_weights(mesh, PLANE_AXIS[self.plane], self.positive_to_negative, modes, unmatched, only,
+                               self.normalize)
         if unmatched:
             self.report({'WARNING'}, "Not all influences could be matched up using the selected association "
                         "options. Weight transfer may be problematic near the unmatched influences.")
