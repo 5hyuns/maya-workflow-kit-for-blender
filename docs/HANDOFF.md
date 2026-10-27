@@ -7,6 +7,12 @@
 
 ## 현재 작업
 
+- Step 229 (Release prep 0.5.0) — `docs/steps/step_229.md`: 전체 헤드리스 4.5 / 5.0.1 / 5.1.2 / 5.2.3, GUI 전체 4.5, release_check
+  4.5.4 / 5.2.2, dogfood 48 / 48, look_compare. 고친 것: 5.2.3 크래시 (World 동기화가 depsgraph 핸들러 안에서 데이터를 만들고 지움),
+  5.0.1 크래시 (`.select_edge` 타입 버그 → compat 수리), Reorder Rotation, step 219 이후 낡은 테스트들. CHANGELOG 0.5.0, release notes,
+  push, v0.5.0 태그, draft release. **사용자 할 일**: draft release 공개 + 스토어에 0.5.0 zip 업로드
+  (`C:/Users/ohnsk/Desktop/MayaWorkflowKit_upload/`). **바로 다음 할 일**: 사용자 방향 (열린 이슈 #89 #123 #124 #127).
+
 - Step 228 (curve rig leftovers, Issue #138) 완료 — `docs/steps/step_228.md`: Attach to Motion Path (Follow Path + offset 키,
   Maya auto, 위치 9.5e-5) / Set Motion Path Key (Maya 처럼 커브에 점 추가) / Flow Path Object (격자 + Curve 모디파이어, 근사) /
   Loft Polygons (40/56/40 + 히스토리). 헤드리스 67 / 68 (step103 = step 219 이후 기존 실패), GUI curves 53 / 53.

@@ -31,3 +31,20 @@ Steps 192–228 + PR #125 (@cnzim). 사용자 10-26 밤: 단계마다 미룬 검
 - `test_step125_name` 허용 목록에 장면 밖 헬퍼 컬렉션 3 개. 테스트 러너가 `TEST <name>` 을 찍어 크래시 위치를 보여 줌.
 - M59-4 (pivot ring 이 오브젝트를 돌림): git bisect v0.4.1..HEAD — 모든 커밋에서 그 단계만 돌리면 PASS (전체 sweep 순서에서만 실패) →
   커밋 원인 없음.
+- `gui_step134_selection` 101k 정점 캐시 다시 만들기 36 → 73 ms: git bisect = 2e8dcde (PR #125, 살아 있는 edit BMesh 에서 읽어
+  하이라이트가 선택보다 늦지 않게 — 유지자가 받아들인 동작). 프레임 그리기는 그대로 (~2.7 ms) → 테스트 한도 60 → 90 ms (delegated).
+
+## 검증
+
+- 헤드리스 전체: 4.5.4 2302 / 2308 → 실패 6 개 고친 뒤 그 파일 -k 통과; 5.2.3 2286 / 2301 → 15 개 고친 뒤 -k 통과 (step214_lights
+  크래시 3 / 3 없음); 5.0.1 2271 / 2274 → 크래시 3 개 고친 뒤 39 / 39; 5.1.2 2308 / 2310 — 남은 2 = step 214 Cycles 렌더
+  (`test_step214_lights` ambient / volume, bf4aa49 에서도 같음 = 5.1 만, release notes 알려진 한계).
+- GUI 전체 (`ALLSET_GUI_FULL=1`, 4.5): 2132 / 2159 (206 파일, GUI_SKIP 2) → 실패 14 파일 고친 뒤 -k: 419 / 420 + 44 / 44, step134 13 / 13.
+- release_check 4.5.4 (validate PASS, 설치·해제·Remove 모두 PASS, docs/screenshots 7 장 다시 찍음 — 01 확인) / 5.2.2 (--no-shots,
+  모두 PASS). dogfood 48 / 48, 콘솔 오류 0. look_compare 검사 9 / 9, 킷 그림 색 12 / 12, 뷰포트 20 / 20 (ΔE00 5), rects 5 / 12 (기록).
+
+## 남은 것
+
+- Blender 5.1 Cycles 의 Maya Ambient / Volume light (Light Path 출력이 world / light 셰이더에서 다름) — 5.2 에서는 맞음.
+- M59-4 는 전체 sweep 순서에서만 한 번 실패 (단독·재실행 PASS) — 순서 의존 여부는 다음 GUI 전체 때 다시 봄.
+- 열린 채로 둔 이슈: #89 Quad Draw 나머지, #123 FX / Render, #124 첫 1 시간, #127 Maya 2027 Skin Tools, #108 (고정).
