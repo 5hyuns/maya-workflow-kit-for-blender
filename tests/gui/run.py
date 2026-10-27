@@ -51,6 +51,7 @@ def main(argv=None):
     ap.add_argument("--dir", default=str(HERE), help="folder of gui_*.py files (audit repro scripts: tests/gui/audit128)")
     ap.add_argument("--blender", default=os.environ.get("BLENDER", headless.build.DEFAULT_BLENDER))
     ap.add_argument("--include-skipped", action="store_true", help="also run files marked GUI_SKIP")
+    headless.add_order_args(ap)
     args = ap.parse_args(argv)
 
     if args.no_build:
@@ -68,7 +69,8 @@ def main(argv=None):
 
     env["PYTHONUNBUFFERED"] = "1"     # a Blender killed on timeout keeps what it printed
     passed = failed = skipped = timeouts = 0
-    files = sorted(p for p in Path(args.dir).resolve().glob("gui_*.py") if any(k in p.name for k in args.k.split(",")))
+    files = headless.order(sorted(p for p in Path(args.dir).resolve().glob("gui_*.py")
+                                  if any(k in p.name for k in args.k.split(","))), args)
     for path in files:
         reason = skip_reason(path)
         if reason and not args.include_skipped:

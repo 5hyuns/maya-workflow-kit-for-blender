@@ -35,13 +35,15 @@ def shot(name):
 
 
 def quads():
-    """{position: RegionView3D} of the four view (tl, tr, bl, br)."""
-    area, _r = view3d()
-    ws = [r for r in area.regions if r.type == 'WINDOW']
-    xs, ys = sorted({r.x for r in ws}), sorted({r.y for r in ws})
+    """{position: WINDOW region} of the four view (tl, tr, bl, br). Since step 237 the four view is four real 3D View
+    areas (ui/four_view.py), not one area's Quad View regions."""
+    areas = mod("ui.four_view").panes(win().screen)
+    cx = sum(a.x + a.width / 2 for a in areas) / max(len(areas), 1)
+    cy = sum(a.y + a.height / 2 for a in areas) / max(len(areas), 1)
     out = {}
-    for r in ws:
-        out[("t" if r.y == ys[-1] else "b") + ("l" if r.x == xs[0] else "r")] = r
+    for a in areas:
+        r = next(r for r in a.regions if r.type == 'WINDOW')
+        out[("t" if a.y + a.height / 2 > cy else "b") + ("l" if a.x + a.width / 2 < cx else "r")] = r
     return out
 
 

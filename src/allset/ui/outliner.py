@@ -99,6 +99,12 @@ def dag_rows(scene, shapes):
     armature's bones come first under it, like the joints under a Maya skeleton group."""
     # the kit's default light exists only during a render (step 152): Maya's Outliner doesn't list it
     order = {ob: i for i, ob in enumerate(scene.objects) if not ob.get("allset_default_light")}
+    # Object.children scans every object in the file: once per object made each depsgraph update O(n^2)
+    # (step 240 QA G: 620 objects = 65 ms per update)
+    children = {}
+    for ob in order:
+        if ob.parent in order:
+            children.setdefault(ob.parent, []).append(ob)
     rows = []
 
     def visit_bone(ob, bone, depth):
@@ -108,7 +114,7 @@ def dag_rows(scene, shapes):
                 visit_bone(ob, child, depth + 1)
 
     def visit(ob, depth):
-        kids = sorted((c for c in ob.children if c in order), key=order.get)
+        kids = sorted(children.get(ob, ()), key=order.get)
         shape = shapes and ob.data is not None
         roots = [b for b in ob.data.bones if b.parent is None] if ob.type == 'ARMATURE' else []
         rows.append(('OBJECT', ob.name, depth, bool(kids) or shape or bool(roots), ""))
