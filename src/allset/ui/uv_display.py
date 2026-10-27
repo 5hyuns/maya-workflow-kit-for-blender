@@ -32,7 +32,7 @@ from gpu_extras.batch import batch_for_shader
 
 from .. import results
 from .. import compat
-from ..operators import uv_tools
+from ..operators import uv_arrays, uv_tools
 
 BORDER_PX = 3.0                        # setting displayPolyBorderEdgeSize (factory 3.0, 3.0)
 SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour : Maya's colour was not checked
@@ -96,8 +96,11 @@ def segments_of(ob, synced):
     if pts is None:
         bm = bmesh.from_edit_mesh(ob.data)
         uv = bm.loops.layers.uv.active
-        segs = border_segments(bm, uv, shown_faces(bm, synced)) if uv is not None else []
-        pts = np.array([p for s in segs for p in s], dtype=np.float32).reshape(-1, 2)
+        if uv is None:
+            pts = np.zeros((0, 2), np.float32)
+        else:     # numpy (operators/uv_arrays.py): the Python border_segments took ~1.8 s on 48 k faces (step 254)
+            arrays = uv_arrays.read(ob, bm, uv, bpy.context.view_layer.depsgraph, cached=True)
+            pts = uv_arrays.border_points(arrays, uv_arrays.shown_faces(arrays, synced))
         _cache[key] = pts
     return pts
 
@@ -117,6 +120,8 @@ def _draw():
         p1 = v2d.view_to_region(1.0, 1.0, clip=False)
         if p0[0] == p1[0] or p0[1] == p1[1]:
             return
+        if uv_arrays.editing_now(wm):
+            return      # a UV drag runs: the borders come back when it ends (crash fix, operators/uv_arrays.py)
         synced = context.scene.tool_settings.use_uv_select_sync
         pts = [segments_of(ob, synced) for ob in _edit_meshes(context)]
         pts = [p for p in pts if len(p)]
@@ -145,6 +150,7 @@ def _invalidate(_scene=None, depsgraph=None):
                                          for u in depsgraph.updates):
         return
     _cache.clear()
+    uv_arrays.invalidate()
 
 
 def redraw_uv_editors():
@@ -559,6 +565,7 @@ def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     _cache.clear()
+    uv_arrays.invalidate()
     _isolated.clear()
     _iso_sets.clear()
     _hidden_image.clear()

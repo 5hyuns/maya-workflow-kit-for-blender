@@ -23,7 +23,7 @@ import bmesh
 import bpy
 from bpy.props import BoolProperty
 
-from ..operators import uv_shells
+from ..operators import uv_arrays, uv_shells
 from .. import compat
 
 TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (checked core pixels 203-207)
@@ -36,7 +36,7 @@ REFRESH_S = 0.25                     # statistics are recomputed at most this of
 STACK_EPS = 1e-6                     # "overlapping" = the same position (kit cuts sit uv_tools.NUDGE apart)
 
 _handle = []
-_cache = {"at": 0.0, "key": None, "value": None}
+_cache = {"at": 0.0, "key": None, "value": None, "last": None}
 
 
 # --- pure helpers (tests/test_step206_uv.py) ---------------------------------------------------------------------
@@ -126,25 +126,33 @@ def _edit_meshes(context):
 
 
 def collect(context):
-    """Statistics over every mesh in edit mode, cached for REFRESH_S."""
+    """Statistics over every mesh in edit mode, cached for REFRESH_S (numpy, operators/uv_arrays.py, step 254)."""
     synced = context.scene.tool_settings.use_uv_select_sync
     key = (synced, tuple(o.as_pointer() for o in _edit_meshes(context)))
     now = time.monotonic()
-    if _cache["key"] == key and now - _cache["at"] < REFRESH_S and _cache["value"] is not None:
-        return _cache["value"]
+    if _cache["key"] == key:
+        if _cache["value"] is not None and now - _cache["at"] < REFRESH_S:
+            return _cache["value"]
+    if uv_arrays.editing_now(context.window_manager):
+        # a UV drag runs: keep the last numbers, never read the mesh now (crash fix, operators/uv_arrays.py)
+        return _cache["last"] if _cache["key"] == key and _cache["last"] is not None else ("", "")
+    # after a depsgraph update the arrays are shared with the border drawing (uv_display); the REFRESH_S re-read
+    # reads afresh (a selection change does not always send a depsgraph update, step 134)
+    shared = _cache["value"] is None
     tot = [0] * 6
     coords = []
+    depsgraph = context.view_layer.depsgraph
     for ob in _edit_meshes(context):
         bm = bmesh.from_edit_mesh(ob.data)
         uv = bm.loops.layers.uv.active
         if uv is None:
             continue
-        got = mesh_statistics(bm, uv, synced)
+        got = uv_arrays.statistics(uv_arrays.read(ob, bm, uv, depsgraph, cached=shared), bm, uv, synced, STACK_EPS)
         for i in range(6):
             tot[i] += got[i]
         coords += got[6]
     value = (statistics_text(tot[1], tot[0], tot[3], tot[2], tot[5], tot[4]), position_text(coords))
-    _cache.update(at=now, key=key, value=value)
+    _cache.update(at=now, key=key, value=value, last=value)
     return value
 
 
@@ -187,6 +195,7 @@ def _draw():
 @bpy.app.handlers.persistent
 def _invalidate(_scene=None, _depsgraph=None):
     _cache["value"] = None
+    uv_arrays.invalidate()
 
 
 def _redraw(_self, context):
@@ -221,4 +230,4 @@ def unregister():
     for name, _l, _t in PROPS:
         if hasattr(wm, name):
             delattr(wm, name)
-    _cache.update(at=0.0, key=None, value=None)
+    _cache.update(at=0.0, key=None, value=None, last=None)

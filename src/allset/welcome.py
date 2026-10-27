@@ -133,22 +133,73 @@ class ALLSET_OT_welcome(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def _show_welcome():
+# Where the dialog may open (#170, step 254). Blender opens a props dialog at the window's last pointer position, clamped
+# into the window. Installing from Edit > Preferences leaves the main window's pointer on the menu bar, so the dialog
+# opened over File / Edit / ... and swallowed every click there, often hidden behind the Preferences window: "the top
+# menus don't respond" (GUI 4.5.4 / 5.2.2, tmp/p254/lane170). So the kit waits until the pointer moves inside the main
+# window far enough below its top for the whole dialog, and opens it there.
+DIALOG_ROOM_PX = 420      # unscaled px kept above the pointer (the dialog is ~378 px tall at UI scale 1.25 = ~300 unscaled, checked)
+
+
+def spot_ok(window, x, y, ui_scale):
+    """The pointer (window px, bottom-left origin) is a place the dialog may open: in the window, below the top bar by
+    the dialog's height, above the status bar."""
+    return 0 <= x < window.width and 30 * ui_scale <= y <= window.height - DIALOG_ROOM_PX * ui_scale
+
+
+def _wanted():
     try:
         prefs = preferences.get()
     except KeyError:
-        return None
-    if prefs.welcome_done or prefs.maya_mode:
+        return False
+    return not (prefs.welcome_done or prefs.maya_mode)
+
+
+class ALLSET_OT_welcome_wait(bpy.types.Operator):
+    """Open the welcome dialog once the pointer is in the main window, clear of its menu bar (#170)"""
+    bl_idname = "allset.welcome_wait"
+    bl_label = "Welcome (wait for the pointer)"
+    bl_options = {'INTERNAL'}
+
+    def invoke(self, context, event):
+        self._win = context.window.as_pointer()
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if not _wanted():
+            return {'CANCELLED', 'PASS_THROUGH'}
+        if event.type != 'MOUSEMOVE' or context.window is None or context.window.as_pointer() != self._win:
+            return {'PASS_THROUGH'}
+        win = context.window
+        x, y = event.mouse_x, event.mouse_y
+        if not spot_ok(win, x, y, context.preferences.system.ui_scale or 1.0):
+            return {'PASS_THROUGH'}
+        ptr = self._win
+
+        def show():
+            from . import live_refs
+            w = live_refs.window(ptr)
+            if w is not None and _wanted():
+                with bpy.context.temp_override(window=w, screen=w.screen):
+                    bpy.ops.allset.welcome('INVOKE_DEFAULT')
+            return None
+        bpy.app.timers.register(show, first_interval=0.0)    # not from inside this modal's own event
+        return {'FINISHED', 'PASS_THROUGH'}
+
+
+def _show_welcome():
+    if not _wanted():
         return None
     win = _window()
     if win is None:
         return 0.5
     with bpy.context.temp_override(window=win, screen=win.screen):
-        bpy.ops.allset.welcome('INVOKE_DEFAULT')
+        bpy.ops.allset.welcome_wait('INVOKE_DEFAULT')
     return None
 
 
-classes = (ALLSET_OT_welcome,)
+classes = (ALLSET_OT_welcome, ALLSET_OT_welcome_wait)
 
 
 def register():
