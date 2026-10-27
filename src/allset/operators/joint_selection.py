@@ -48,6 +48,18 @@ def select_roots_if_empty(ob):
     from ..ui.channel_box import bone_selected, set_bone_selected
     if ob is None or ob.type != 'ARMATURE' or ob.pose is None:
         return False
+    if ob.mode == 'EDIT':
+        # step 241: an unskinned skeleton is shown in Edit mode; its root joints are picked with their subtrees
+        ebs = ob.data.edit_bones
+        if any(eb.select or eb.select_head or eb.select_tail for eb in ebs):
+            return False
+        roots = [ebs[pb.name] for pb in root_joints(ob) if pb.name in ebs]
+        for eb in roots:
+            for b in _subtree(eb):
+                _set_edit(b, True)
+        if roots:
+            ebs.active = roots[-1]
+        return bool(roots)
     if any(bone_selected(pb) and not compat.bone_hidden(pb) and not _collection_hidden(pb.bone)
            for pb in ob.pose.bones):
         return False
@@ -86,8 +98,201 @@ def pick(context, ob, mouse, radius):
     return min(candidates)[2] if candidates else None
 
 
+# --- Edit or Pose (step 241, Issue #156; research/maya/re/joint_move_241.md) ------------------------------------
+# Maya moves a placed joint with W at any time (translate; the children follow). Blender can't translate a connected
+# bone in Pose mode, so while the **Move tool** is on, a skeleton that drives no mesh is shown in Edit mode (the rest
+# = where Maya's joints are); with any other tool joints are picked in Pose mode as before (decision 16: Channel Box
+# channels, S keys, pick walk). A skinned (or animated) skeleton is posed with every tool, and Skin > Move Skinned
+# Joints puts it in Edit mode for the move (the Armature modifier deforms by pose x rest^-1: a new rest at the rest
+# pose leaves the mesh where it is = Maya's moveJointsMode rewriting bindPreMatrix). Delegated: the first cut entered
+# Edit mode on every pick and lost the Channel Box / S / pick walk of unskinned joints (19 GUI checks).
+
+MOVE_SKINNED = "allset_move_skinned"
+AUTO_EDIT = "allset_joint_move_edit"      # Edit mode entered because of the Move tool (sync_tool_mode leaves it)
+POSE_PIN = "allset_joint_pose_pin"        # F8 chose Pose while the Move tool is on
+
+
+def move_tool_active(context):
+    try:
+        tools = context.workspace.tools
+        return any((t := tools.from_space_view3d_mode(m, create=False)) is not None and t.idname == "builtin.move"
+                   for m in {context.mode, 'POSE'} if m in {'POSE', 'EDIT_ARMATURE', 'OBJECT'})
+    except (AttributeError, RuntimeError, TypeError):
+        return False
+
+
+def sync_tool_mode(context):
+    """Move tool on an unskinned skeleton's picked joints -> Edit mode with the picked subtrees; another tool -> back
+    to Pose with the same joints picked. Returns the mode switched to (None: nothing done). tool_keys watch, 0.25 s."""
+    ob = context.active_object
+    if ob is None or ob.type != 'ARMATURE' or not ob.select_get() or ob.get(MOVE_SKINNED):
+        return None
+    moving = move_tool_active(context)
+    if ob.get(POSE_PIN):            # F8 went back to Pose with the Move tool on: stay until another tool is picked
+        if not moving:
+            ob.pop(POSE_PIN, None)
+        return None
+    if ob.mode == 'POSE' and moving and joint_mode(ob) == 'EDIT':
+        from ..ui.channel_box import bone_selected
+        picked = [pb.name for pb in ob.pose.bones if bone_selected(pb)]
+        active = ob.data.bones.active.name if ob.data.bones.active else None
+        if not picked:
+            return None
+        bpy.ops.object.mode_set(mode='EDIT')
+        ob[AUTO_EDIT] = True
+        ebs = ob.data.edit_bones
+        for eb in ebs:
+            _set_edit(eb, False)
+        for name in picked:
+            for b in _subtree(ebs[name]):
+                _set_edit(b, True)
+        ebs.active = ebs.get(active) if active in picked else ebs[picked[-1]]
+        sync_joint_pivot(context)
+        return 'EDIT'
+    if ob.mode == 'EDIT' and ob.get(AUTO_EDIT) and not moving:
+        picked = [eb.name for eb in _edit_picked(ob)]
+        active = ob.data.edit_bones.active.name if ob.data.edit_bones.active else None
+        ob.pop(AUTO_EDIT, None)
+        bpy.ops.object.mode_set(mode='POSE')
+        from ..ui.channel_box import set_bone_selected
+        for pb in ob.pose.bones:
+            set_bone_selected(pb, pb.name in picked)
+        if picked:
+            ob.data.bones.active = ob.data.bones[active if active in picked else picked[-1]]
+        return 'POSE'
+    return None
+
+
+def is_skinned(ob):
+    """An Armature modifier of some mesh uses ``ob`` (Maya: a skinCluster influence)."""
+    return any(o.type == 'MESH' and any(m.type == 'ARMATURE' and m.object == ob for m in o.modifiers)
+               for o in bpy.data.objects)
+
+
+def is_animated(ob):
+    ad = ob.animation_data
+    if ad is None:
+        return False
+    if ad.nla_tracks:
+        return True
+    return any(fc.data_path.startswith("pose.bones") for fc in compat.id_fcurves(ob))
+
+
+def joint_mode(ob):
+    """'EDIT' where moving a joint repositions its rest (unskinned, unanimated, or Move Skinned Joints on), else
+    'POSE' (used with the Move tool, see sync_tool_mode)."""
+    if ob.get(MOVE_SKINNED):
+        return 'EDIT'
+    return 'POSE' if is_skinned(ob) or is_animated(ob) else 'EDIT'
+
+
+def sync_joint_pivot(context):
+    """E / R on picked joints in Edit mode turn / scale about the lead joint (Maya rotates a joint about itself).
+    Blender's Active Element pivot of an edit bone is its middle, so the Edit Armature pivot is the 3D cursor kept on
+    the lead joint (pivot.MAYA_PIVOT_POINT; the Maya layout doesn't draw the cursor). Called on a pick and from
+    tool_keys' 0.25 s watch (the joint moves with W)."""
+    ob = context.active_object
+    if ob is None or ob.type != 'ARMATURE' or ob.mode != 'EDIT':
+        return False
+    eb = ob.data.edit_bones.active
+    if eb is None or not eb.select:
+        return False
+    from .pivot import MAYA_PIVOT_POINT
+    ts = context.scene.tool_settings
+    if ts.transform_pivot_point != 'CURSOR' and ts.transform_pivot_point in {*MAYA_PIVOT_POINT.values(), 'MEDIAN_POINT'}:
+        # only from a Maya pivot value (or Blender's default Median), and put back when Edit Armature ends (restore_joint_pivot): a user's cursor
+        # pivot in mesh editing is never touched (test_step59_pivot_snap)
+        _PIVOT["prev"] = ts.transform_pivot_point
+        ts.transform_pivot_point = 'CURSOR'
+    head = ob.matrix_world @ eb.head
+    cursor = context.scene.cursor
+    if (cursor.location - head).length > 1e-9:
+        cursor.location = head
+    return True
+
+
+_PIVOT = {"prev": None}
+
+
+def restore_joint_pivot(context):
+    """Outside Edit Armature mode, give back the pivot sync_joint_pivot replaced. tool_keys watch."""
+    prev = _PIVOT["prev"]
+    if prev is None or context.mode == 'EDIT_ARMATURE':
+        return False
+    _PIVOT["prev"] = None
+    ts = context.scene.tool_settings
+    if ts.transform_pivot_point == 'CURSOR':
+        ts.transform_pivot_point = prev
+        return True
+    return False
+
+
+def _subtree(bone):
+    return [bone, *bone.children_recursive]
+
+
+def _edit_selected(eb):
+    return eb.select and eb.select_head and eb.select_tail
+
+
+def _set_edit(eb, state):
+    eb.select = eb.select_head = eb.select_tail = state
+
+
+def _edit_picked(ob):
+    """Picked joints in Edit mode: selected bones whose parent isn't selected (the rest is their subtree)."""
+    return [eb for eb in ob.data.edit_bones if _edit_selected(eb)
+            and not (eb.parent is not None and _edit_selected(eb.parent))]
+
+
+def select_edit(context, ob, name, shift=False, ctrl=False):
+    """Maya replace / toggle / subtract / add on joints of a skeleton in Edit mode: a picked joint selects its bone
+    and the subtree below it (W moves them together, like Maya's children following their parent)."""
+    if context.mode != 'OBJECT' and (context.active_object != ob or ob.mode != 'EDIT'):
+        bpy.ops.object.mode_set(mode='OBJECT')
+    if not shift and not ctrl:
+        clear(context)
+        for other in context.selected_objects:
+            if other != ob:
+                other.select_set(False)
+    ob.select_set(True)
+    context.view_layer.objects.active = ob
+    if ob.mode != 'EDIT':
+        bpy.ops.object.mode_set(mode='EDIT')
+        if not shift and not ctrl:
+            for eb in ob.data.edit_bones:
+                _set_edit(eb, False)
+    ebs = ob.data.edit_bones
+    eb = ebs[name]
+    selected = _edit_selected(eb)
+    remove = (ctrl and not shift) or (shift and not ctrl and selected)
+    if not shift and not ctrl:
+        for other in ebs:
+            _set_edit(other, False)
+    for b in _subtree(eb):
+        _set_edit(b, not remove)
+    if remove:
+        if ebs.active == eb:
+            picked = _edit_picked(ob)
+            ebs.active = picked[-1] if picked else None
+        if not _edit_picked(ob):
+            bpy.ops.object.mode_set(mode='OBJECT')
+            ob.select_set(False)
+            if context.view_layer.objects.active == ob:
+                context.view_layer.objects.active = next(iter(context.selected_objects), None)
+        return False
+    ebs.active = eb
+    sync_joint_pivot(context)
+    return True
+
+
 def select(context, ob, name, shift=False, ctrl=False):
     """Maya replace / toggle / subtract / add on individual joints."""
+    if ob.get(MOVE_SKINNED) or (joint_mode(ob) == 'EDIT' and not ob.get(POSE_PIN) and move_tool_active(context)):
+        r = select_edit(context, ob, name, shift, ctrl)
+        if not ob.get(MOVE_SKINNED) and ob.mode == 'EDIT':
+            ob[AUTO_EDIT] = True
+        return r
     from ..ui.channel_box import bone_selected, set_bone_selected
     pb = ob.pose.bones[name]
     selected = bone_selected(pb)

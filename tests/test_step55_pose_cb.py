@@ -102,7 +102,7 @@ def test_lead_and_targets_follow_pose_bones():
     cb.set_bone_selected(pb2, False)          # active but not selected: Maya has no such lead
     assert cb.lead() == pb3
     _mode('EDIT')
-    assert cb.placing_joints() and "Placing joints:" in _draw_cb().texts("label")
+    assert cb.placing_joints() and "Editing joints: W / E / R move them," in _draw_cb().texts("label")
     _mode('POSE')
 
 
@@ -351,5 +351,5 @@ def test_attribute_editor_joint_tabs():
     _mode('EDIT')
     rec = Recorder()
     ae.draw_panel(rec, bpy.context)
-    assert "Placing joints:" in rec.texts("label")
+    assert "Editing joints: W / E / R move them," in rec.texts("label")
     _mode('POSE')

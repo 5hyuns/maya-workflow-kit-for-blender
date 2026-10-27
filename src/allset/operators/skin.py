@@ -541,6 +541,9 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
         sel = list(context.selected_objects)
         if arm is None:
             arm = next((o for o in sel if o.type == 'ARMATURE'), None)
+            if arm is not None and arm.mode == 'EDIT':
+                # step 241: an unskinned skeleton's joints are picked in Edit mode
+                picked = [eb.name for eb in arm.data.edit_bones if eb.select]
         meshes = [o for o in sel if o.type == 'MESH']
         if arm is None or not meshes:
             self.report({'WARNING'}, "Select a skeleton and the meshes to bind")
@@ -1219,7 +1222,57 @@ class ALLSET_OT_reset_skin_weights(bpy.types.Operator):
             bpy.ops.object.mode_set(mode='EDIT')
         return {'FINISHED'}
 
-classes = (ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_skin_cluster_question,
+class ALLSET_OT_move_skinned_joints(bpy.types.Operator):
+    """Maya Skin > Move Skinned Joints: reposition the joints of a skinned skeleton without deforming the mesh (the
+    new place becomes the bind). Run it again, press F8 or pick another tool mode to go back to posing"""
+    bl_idname = "allset.move_skinned_joints"
+    bl_label = "Move Skinned Joints"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        from . import joint_selection
+        ob = context.active_object
+        if ob is not None and ob.type == 'MESH':
+            md = armature_modifier(ob)
+            ob = md.object if md is not None else None
+        if ob is None or ob.type != 'ARMATURE' or not joint_selection.is_skinned(ob):
+            self.report({'WARNING'}, "Select a skinned skeleton or a skinned mesh")   # Maya: "No skinned joints"
+            return {'CANCELLED'}
+        on = move_skinned_joints(context, ob, not ob.get(joint_selection.MOVE_SKINNED))
+        results.result(self, "Move Skinned Joints " + ("on: move the joints, run it again to pose" if on else "off"))
+        return {'FINISHED'}
+
+
+def move_skinned_joints(context, arm, on):
+    """Maya moveJointsMode (research/maya/re/joint_move_241.md §3): on = the skeleton in Edit mode, its picked joints
+    kept; off = back to Pose mode. The Armature modifier deforms by pose x rest^-1, so moving the rest at the rest
+    pose leaves the mesh where it is and the new rest is the bind (Maya rewrites bindPreMatrix)."""
+    from . import joint_selection
+    picked = [pb.name for pb in arm.pose.bones if _cb().bone_selected(pb)] if arm.mode == 'POSE' else []
+    if context.active_object is not None and context.active_object.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    for ob in context.selected_objects:
+        if ob != arm:
+            ob.select_set(False)
+    arm.select_set(True)
+    context.view_layer.objects.active = arm
+    if on:
+        arm[joint_selection.MOVE_SKINNED] = True
+        bpy.ops.object.mode_set(mode='EDIT')
+        for eb in arm.data.edit_bones:
+            eb.select = eb.select_head = eb.select_tail = False
+        for i, name in enumerate(picked):
+            joint_selection.select_edit(context, arm, name, shift=i > 0)
+        if not picked:
+            joint_selection.select_roots_if_empty(arm)
+    else:
+        arm.pop(joint_selection.MOVE_SKINNED, None)
+        bpy.ops.object.mode_set(mode='POSE')
+        joint_selection.select_roots_if_empty(arm)
+    return on
+
+
+classes = (ALLSET_OT_move_skinned_joints, ALLSET_OT_reset_skin_weights, ALLSET_OT_ik_handle, ALLSET_OT_pole_vector, ALLSET_OT_skin_cluster_question,
            ALLSET_OT_skin_cluster_answer, ALLSET_OT_bind_skin, ALLSET_OT_unbind_skin,
            ALLSET_OT_paint_skin_weights, ALLSET_OT_weight_paint_exit, ALLSET_OT_flood_weights, ALLSET_OT_copy_skin_weights, ALLSET_OT_mirror_skin_weights,
            ALLSET_OT_copy_vertex_weights, ALLSET_OT_paste_vertex_weights)

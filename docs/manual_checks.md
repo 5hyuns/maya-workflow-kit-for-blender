@@ -1446,3 +1446,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 ## Step 237 — Four View = four real panels
 - [ ] Space tap over a panel with a real mouse: that panel fills the viewport at once and takes keys right away (event simulation lost the first key sent in the same tick as the move).
 - [ ] Dragging the edges between the four panels feels like Maya's pane dividers (Blender moves aligned edges together; Maya's horizontal divider spans the whole width).
+
+## Step 241 — Joints move after placement (#156)
+- [ ] Joint Tool 3 clicks → W → drag the Move manipulator's arrows / centre with a real mouse: the joint and its children move, the parent stays (tests/gui/gui_step241_joint_move.py drags the joint itself).
+- [ ] Skinned skeleton → Skin > Move Skinned Joints → drag the Move manipulator with a real mouse: the joint moves, the mesh stays (simulated presses on the manipulator after the menu item didn't reach the gizmo; the GUI test runs the same transform from code).
+- [ ] With the Move tool on an unskinned skeleton, press E / R / Q: the same joints stay picked in Pose mode and the Channel Box shows their channels.
