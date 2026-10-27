@@ -5,7 +5,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
-## [0.5.0] — unreleased
+## [0.5.0] — 2026-10-27
+
+The release after audits 14–16 and the animation chain (steps 192–228). Blender 4.5 LTS through 5.2.x.
 
 ### Added
 - **Joints feel like Maya objects** (PR #125 by @cnzim): clicking a joint selects that joint (Shift toggles,
@@ -18,16 +20,81 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   respects locks and the current operation, weight actions and display; Q/W/E/R leave painting with the mesh kept
   selected (PR #125 by @cnzim).
 - Tool Box **Search** button under the layout / Outliner buttons, as in Maya 2022.1+ (PR #125 by @cnzim).
-- Optional armature mode picker for the viewport header (add-on preference, off in the Maya layout).
+- **Rig controls from NURBS curves** (#136): parenting a curve shape to a joint draws it as the joint's control (clicks
+  hit the drawn wire, exports leave the shapes out), Maya Wireframe Color / Drawing Overrides colour index, Match to a
+  joint.
+- **Constraints**: several targets blend as Maya's weighted average (#136); Normal / Tangent constraints, Remove
+  Target, Set Rest Position, Modify Constrained Axis (#106); UV Pin / Proximity Pin (#112).
+- **Set Driven Key** with Maya's auto tangents; a second driver adds to the first like Maya's blendWeighted (#136).
+- **Blend shapes** (#137): Shape Editor in-between targets, combination targets (multiply / lowest / smooth) and
+  corrective shapes; **Pose Space Deformation** with a Pose Interpolator on a joint's swing and a Pose Editor window.
+- **Paint Skin Weights numbers** (#134 #126): Visualization > Numeric shows each vertex's weight; Brush Profile, Weight
+  Type, Normalize Weights and Min / Max follow Maya 2026; a second Bind Skin asks Maya's question; the Skin Clusters
+  list shows every skin on the mesh.
+- **Skin tools**: Move Weights to Influences, the three Normalize Weights modes, Export / Import Weight Maps,
+  Substitute Geometry, Bake Deformation to Skin Weights (#106); Add Influence with Maya's distance weights (#109).
+- **Rig FBX round trip with Maya** (#132 #133): exports write joint orientation the way Maya does (joints open in
+  Maya 2026 within 5e-6 cm, skinned vertices within 1e-6 cm); imports rebuild Maya's curves, tangents, Euler keys and
+  the frame range without converting the skeleton.
+- **IK / FK switching** (#133): IK handles get Ik Blend; Set IK/FK Key, Enable IK Solver and Move IK to FK work like
+  Maya. IK Spline can use an existing curve, and a cluster on curve CVs moves exactly those CVs (#129).
+- **Quaternion bones** in received rigs show Maya's Rotate X / Y / Z in the Channel Box and key with S, Shift+E and
+  Auto Key (#131).
+- **Game Exporter** (#135): Maya's clip list, one FBX take per clip or one file per clip, Maya's defaults.
+- **Motion Trail Editor** (#135) with Maya's settings, and **motion paths** (#138): Attach to Motion Path with Maya's
+  offset keys, Set Motion Path Key, Flow Path Object, Loft with polygon output.
+- **Preferences window and Hotkey Editor** (#121): Maya's 38 categories with the kit's settings in Maya's pages;
+  Maya's factory hotkeys with search and rebinding.
+- **Component, Shape and Connection Editors** (#119) with Maya's menu bars: editable skin weights and vertex
+  positions, blend shape targets, attribute connections as drivers.
+- **Reference Editor** (#116): reload, unload / load, replace, import, remove, duplicate, lock, clean up and offline
+  edits on Blender links, with Maya's reference node names.
+- **Graph Editor** (#105 #110): Retime Tool, buffer curves, weighted tangents, Add Key Tool; Load / Add Selected
+  Objects, Pin Channel, Show filters, Change Rotation Interp, Key Sync and Peak Removal.
+- **Animation layers** (#111): Extract, Duplicate, Empty, Delete Empty Layers, Zero / Full Weight keys, Zero Key Layer,
+  Merge Layers; several layers selected with their curves drawn in the Graph Editor.
+- **Deform** (#112): Tension, Solidify, Sculpt, Morph and Jiggle deformers with Channel Box inputs, Attribute Editor
+  tabs, option windows and Paint Weights; Display / Hide Intermediate Objects, Wrap influences.
+- **UV Editor** (#113): Cycle, Split, Create Shell (Grid), Auto Seams, UV set commands and Maya's three heads-up
+  displays. **Curves** (#114): Bend, Curl, Scale Curvature, Lock Length, CV Hardness, Fit B-spline, Align, Duplicate
+  Surface Curves, Intersect.
+- **Lights**: Ambient Light and Volume Light (#120).
+- **Command Line / Script Editor** `maya.cmds` (#115 #122): parenting, grouping, keys, files, constraints, joints,
+  connections, sets and more, checked against Maya; Script Editor History options.
+- **34 Maya option windows** for primitives, character sets, curves and UV commands (#103); Mesh > Cleanup with its
+  Cleanup Options window (#104).
 
 ### Changed
+- **Menus follow Maya 2026** (#130): renamed items, dropped items gone, new items open the Blender counterpart
+  (Unsmooth, Smart Extrude, Zero Pivot, Bifrost Graph = Geometry Nodes ...) or explain what's missing.
+- **Bake Simulation follows Maya 2026** (#128): constraints are muted, never deleted. The Joint Tool ends on the new
+  chain's root and branches only from a joint clicked while it runs; picking a skeleton selects its root joint; pick
+  walk skips hidden bone collections.
+- **Paint Skin Weights**: flood uses Maya 2026's Replace / Add / Scale / Smooth with locks (#129), the Influences
+  menu has Maya's items, Alt+F and Maya's paint keys work; the Channel Box keeps showing channels while painting.
+- Reorder Deformers follows Maya's rule; Set Blend Shape Target Weight Keys keys the targets (#129).
+- **Renders match Maya's brightness** (#120): lambert-family materials render like Maya Software; F12 adds Maya's
+  default light.
+- **Names and scenes like Maya** (#117): sets, layers, characters and bookmarks number one past the highest; Ctrl+V
+  pastes `pasted__` copies under a new group; new scenes have Maya's hidden startup cameras; the Outliner lists
+  objects in creation order; Attribute Editor tabs stay in one row.
+- Docks are Maya's grey and the Time Slider's current-time cell looks like Maya's.
 - Channel Box wheel scrolls 3 lines per notch (Maya: 15 px × 3 wheel lines).
 - Select Priority off now only steps in for joint picking; other clicks are Blender's own pick.
+- The armature mode picker and its highlight are optional (add-on preferences, off by default).
 
 ### Fixed
+- Snapping works again after Step Snap Off; scenes saved in that state snap again (#139).
+- The RMB marking-menu ring stays at the press point, so flicks pick the right item everywhere.
+- Animation layer keys show in the Channel Box, Time Slider, Graph Editor and Dope Sheet.
+- Non-Deformer History keeps the kit's wire and skin deformers; Delete removes constraint helpers; the Time Slider
+  height follows the UI scale; the Channel Box menu bar wraps instead of cutting (#109).
+- Morph / Jiggle deformers on Blender 5.2; Blender 5.x test passes (#107 #118).
+- Stale Undo / Redo text in the result field; the Attribute Editor wraps instead of cutting (#104).
 - Component highlight refreshes on selection changes Blender doesn't report to the depsgraph (PR #125 by @cnzim).
 - Timers and watchers added by PR #125 no longer keep window / area references across ticks (closing a window could
-  crash Blender, #36 class).
+  crash Blender, #36 class); the Channel Box redraws only when values change.
+- Edit Mesh no longer lists "Split Faces by Edges" (not a Maya item; use Detach).
 
 ## [0.4.1] — 2026-10-25
 

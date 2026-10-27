@@ -333,7 +333,8 @@ def test_point_on_curve():
 def test_paint_weights_windows_and_wire_paint():
     for label in ("Blend Shape", "Cluster", "Delta Mush", "Proximity Wrap", "Lattice", "ShrinkWrap", "Wire",
                   "Nonlinear", "Texture Deformer", "Set Membership"):
-        path = f"Deform/Paint Weights/{label}"
+        # Maya 2026 moved Paint Weights > Set Membership to Deform > Paint Membership (step 219 menus, step 229)
+        path = "Deform/Paint Membership" if label == "Set Membership" else f"Deform/Paint Weights/{label}"
         w = option_windows.find_path(path)
         assert w is not None and w.title in ("Paint Attributes Tool", "Paint Blend Shape Weights Tool"), path
         assert menu_sets.option_kind(path) == "window", path
@@ -360,7 +361,12 @@ def test_deform_option_boxes_and_count():
     print(f"Deform: {working} / {len(paths)} working ({100 * working / len(paths):.0f} %); boxes "
           + ", ".join(f"{k} {len(v)}" for k, v in sorted(kinds.items())))
     print("dead:", kinds.get("dead"))
-    assert working / len(paths) >= 0.60, (working, len(paths))
+    # Maya 2026 menus (step 219) add the 70-item Maya Muscle plug-in submenu: a separate legacy muscle system the kit
+    # explains with notices (product rule 10-26: rare Maya systems get a notice, not a re-implementation), so the
+    # working share is counted without it (step 229, delegated); every greyed Muscle item still needs a notice below.
+    core = [p for p in paths if not p.startswith("Deform/Muscle/")]
+    working = sum(1 for p in core if p in menu_map.MAP)
+    assert working / len(core) >= 0.60, (working, len(core))
     assert not kinds.get("generic"), kinds.get("generic")
     assert len(kinds.get("dead", ())) <= 12, kinds.get("dead")
     for p in paths:

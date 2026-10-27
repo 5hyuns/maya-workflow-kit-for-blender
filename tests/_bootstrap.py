@@ -30,6 +30,7 @@ def main():
             kit.enable()
         tests = [(n, f) for n, f in vars(mod).items() if n.startswith("test_") and callable(f)]
         for name, func in tests:
+            print(f"TEST {name}", flush=True)      # the last name in a crashed run's log = the crashing test
             try:
                 func()
                 results.append({"name": name, "ok": True})

@@ -41,7 +41,10 @@ def _select(obs):
 
 def test_light_linking_submenu_opens_the_kit_editor():
     mm, ms = m("ui.menu_map"), m("ui.menu_sets")
-    assert mm.CHILDREN["Windows/Relationship Editors/Light Linking"] == [("Light-Centric",), ("Object-Centric",)]
+    # since the Maya 2026 menus (step 219) the submenu is in the menu data itself, no run-time CHILDREN entry
+    md = m("ui.menu_data")
+    win = next(it for it in md.MENUS["mainWindowMenu"][3] if it[0] == "Relationship Editors")
+    assert ("Light Linking", [("Light-Centric",), ("Object-Centric",)]) in win[1]
     for label, mode in (("Light-Centric", 'LIGHT_CENTRIC'), ("Object-Centric", 'OBJECT_CENTRIC')):
         act = mm.MAP[f"Windows/Relationship Editors/Light Linking/{label}"]
         assert act == ("v3d", "allset.light_linking_editor", {"mode": mode}), act

@@ -231,7 +231,9 @@ WINDOWS = [
     # brush"; Blend Shape: Paint Blend Shape Weights Tool), the button starts painting with them
     *[Window(f"paint_weights_{(kind or 'membership').lower()}", "Paint Blend Shape Weights Tool" if kind == "blendShape" else
              "Paint Attributes Tool", "Paint", None, PAINT_FIELDS(), _paint(kind),
-             paths=(f"Deform/Paint Weights/{label}",), missing=PAINT_MISSING)
+             # Maya 2026 moved Paint Weights > Set Membership to Deform > Paint Membership (menus dump, step 219)
+             paths=("Deform/Paint Membership",) if not kind else (f"Deform/Paint Weights/{label}",),
+             missing=PAINT_MISSING)
       for label, kind in (("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),
                           ("Proximity Wrap", "proximityWrap"), ("Lattice", "ffd"), ("ShrinkWrap", "shrinkWrap"),
                           ("Wire", "wire"), ("Nonlinear", "nonLinear"), ("Texture Deformer", "textureDeformer"),
