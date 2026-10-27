@@ -1498,3 +1498,6 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Fresh Blender 5.2.x: Edit > Preferences > Get Extensions > Install from Disk (the zip), keep the mouse on the Preferences window: the top menus of the main window still open on the first click; the welcome dialog appears only after the mouse moves into the main viewport.
 - [ ] Same on 4.5.
 - [ ] Maya mode, UV Editing workspace, a 50 k-face mesh: click faces, W-drag a face selection and a UV shell, Cut UV Edges, Ctrl+Z — no freeze, no crash; the UV HUD and the thick texture borders come back right after each drag.
+
+## Step 255 — #171 Rigify controls keep Pose mode (real mouse)
+- [ ] Maya mode, Rigify human rig, Pose mode: click IK hand / foot, torso, hips widgets one after another with the Select tool and with W — the rig never leaves Pose; a click on empty space only clears the selection; a click on the character mesh selects the mesh.

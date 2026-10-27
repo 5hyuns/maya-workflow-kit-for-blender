@@ -283,9 +283,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
                 if name is not None:
                     selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
                     return self._finish_pick(context, event, selected)
-                joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
-                active = context.active_object
-                return self._finish_pick(context, event, active is not None and active.select_get())
+                return self._pose_miss(context, event, ob, mouse)
             return {'PASS_THROUGH'}
         ob = context.scene.objects[best[0]]
         if ob.type == 'ARMATURE':
@@ -293,8 +291,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
             if name is None:
                 # The coarse armature hit includes unselectable bones; let native picking decide.
                 if context.mode == 'POSE':
-                    joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
-                    return {'FINISHED'}
+                    return self._pose_miss(context, event, context.active_object, mouse)
                 return {'PASS_THROUGH'}
             selected = joint_selection.select(context, ob, name, event.shift, event.ctrl)
         else:
@@ -302,6 +299,25 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
             apply(context, ob, event.shift, event.ctrl)
             selected = ob.select_get()
         return self._finish_pick(context, event, selected)
+
+    def _pose_miss(self, context, event, ob, mouse):
+        """A Pose-mode click that hit no control (#171, step 255). Maya has no selection mode to leave: a click whose
+        click box holds no curve / joint picks the object under it, else clears the selection
+        (research/maya/re/uv_shell_select_256.md "click empty space -> []"). So: another object under the click ->
+        leave Pose and select it (Blender can't pick another object from Pose); nothing -> stay in Pose, bones
+        deselected (Shift / Ctrl: nothing changes)."""
+        from ..ui import toolbox
+        from . import joint_selection
+        other = toolbox._other_object_under_click(context, ob, *mouse) if ob is not None else None
+        if other is not None:
+            joint_selection.select_object_at(context, mouse, event.shift, event.ctrl)
+            active = context.active_object
+            return self._finish_pick(context, event, active is not None and active.select_get())
+        if not (event.shift or event.ctrl):
+            joint_selection.clear(context)
+            for area in context.screen.areas if context.screen else ():
+                area.tag_redraw()
+        return {'FINISHED'}
 
     def _finish_pick(self, context, event, selected):
         if event.value == 'PRESS' and selected:

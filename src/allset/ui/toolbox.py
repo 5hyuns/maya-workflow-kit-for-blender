@@ -830,10 +830,12 @@ def _click_hits_joint(context, obj, x, y):
     rv3d = space.region_3d
     if rv3d is None:
         return True
+    def shown(bone):    # hidden bone collections hide their bones too (#171: ORG / MCH bones gave false hits)
+        return not (bone.collections and not any(c.is_visible_effectively for c in bone.collections))
     if obj.mode == 'EDIT':
-        segments = ((b.head, b.tail) for b in obj.data.edit_bones if not b.hide)
+        segments = ((b.head, b.tail) for b in obj.data.edit_bones if not b.hide and shown(b))
     else:
-        segments = ((b.head, b.tail) for b in obj.pose.bones if not b.bone.hide)
+        segments = ((b.head, b.tail) for b in obj.pose.bones if not b.bone.hide and shown(b.bone))
 
     point = Vector((x, y))
     # Bone handles have nonzero screen size; allow a modest hit margin.
@@ -933,7 +935,9 @@ class ALLSET_OT_pose_empty_click(bpy.types.Operator):
                 with bpy.context.temp_override(window=win, area=area, region=region):
                     ctx = bpy.context
                     obj = ctx.view_layer.objects.active
-                    if obj is not None and obj.type == 'ARMATURE' and obj.mode in {'POSE', 'EDIT'}:
+                    # Pose mode: select_priority decides every click (a control stays in Pose; #171, step 255 —
+                    # head-tail lines missed custom-shape controls and dropped Pose ~60 ms after the pick)
+                    if obj is not None and obj.type == 'ARMATURE' and obj.mode == 'EDIT':
                         # Give joints priority even if a mesh is visible behind them.
                         if not _click_hits_joint(ctx, obj, x, y):
                             other = _other_object_under_click(ctx, obj, x, y)

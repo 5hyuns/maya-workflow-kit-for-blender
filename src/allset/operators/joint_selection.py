@@ -136,8 +136,8 @@ def sync_tool_mode(context):
         from ..ui.channel_box import bone_selected
         picked = [pb.name for pb in ob.pose.bones if bone_selected(pb)]
         active = ob.data.bones.active.name if ob.data.bones.active else None
-        if not picked:
-            return None
+        if not picked or any(ob.pose.bones[n].custom_shape is not None for n in picked):
+            return None     # controls (custom shapes) are animated in Pose, never repositioned (#171, step 255)
         bpy.ops.object.mode_set(mode='EDIT')
         ob[AUTO_EDIT] = True
         ebs = ob.data.edit_bones
@@ -319,7 +319,11 @@ def select_edit(context, ob, name, shift=False, ctrl=False):
 
 def select(context, ob, name, shift=False, ctrl=False):
     """Maya replace / toggle / subtract / add on individual joints."""
-    if ob.get(MOVE_SKINNED) or (joint_mode(ob) == 'EDIT' and not ob.get(POSE_PIN) and move_tool_active(context)):
+    # a bone with a custom shape is a control (DECISIONS7: control = bone Custom Shape), not a Maya joint: picking it
+    # keeps Pose mode with the Move tool too (#171, step 255: an unkeyed Rigify rig went to Edit mode on a W click)
+    control = name in ob.pose.bones and ob.pose.bones[name].custom_shape is not None
+    if ob.get(MOVE_SKINNED) or (joint_mode(ob) == 'EDIT' and not control and not ob.get(POSE_PIN)
+                                and move_tool_active(context)):
         r = select_edit(context, ob, name, shift, ctrl)
         if not ob.get(MOVE_SKINNED) and ob.mode == 'EDIT':
             ob[AUTO_EDIT] = True
