@@ -1438,3 +1438,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 ### Step 226 L1 — control shapes (bone Custom Shapes, Issue #136)
 - [ ] Command Line `cmds.parent('nurbsCircleShape1', 'joint1', s=True, r=True)` on a joint chain: the circle draws around joint1 (CV local values in the joint's frame), `nurbsCircle1` stays as an empty transform; a click on the circle's wire in Object Mode picks joint1 (Pose, Channel Box = joint1), a click inside the circle picks nothing; dragging right after the click on the wire moves the joint.
 - [ ] Same with a Rigify-generated rig: clicking a widget's wire picks its control bone; File > Export All (FBX) has no WGT- or Shape objects when re-imported.
+
+## Step 227 — corrective shapes (Pose Editor)
+- [ ] Pose Editor > Add Shape on a skinned arm at the bent pose: Edit enters Edit Mode on the deformed cage; sculpted vertices land where you put them on the bent arm, and at rest the corrective shows nothing (weight 0).
+- [ ] Shape Editor: dragging the target slider through an in-between feels like Maya (in-between shape reached at its weight, no jump).

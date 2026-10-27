@@ -97,7 +97,8 @@ def blend_shape_keys(ob):
     key = getattr(getattr(ob, "data", None), "shape_keys", None)
     if key is None:
         return []
-    return [kb for kb in key.key_blocks if kb != key.reference_key]
+    from . import blend_shapes_227   # in-between helper keys are driven, not Maya targets (step 227)
+    return blend_shapes_227.target_blocks(key)
 
 
 def key_target_weights(context, objects):

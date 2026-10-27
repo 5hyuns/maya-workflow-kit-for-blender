@@ -124,8 +124,9 @@ def extra_nodes(node):
 
 def channels(node):
     """The node's keyable attributes (Maya SDK lists the Channel Box ones)."""
-    if is_key(node):
-        return [SHAPE + b.name for b in list(node.key_blocks)[1:]]
+    if is_key(node):     # Maya targets only: the hidden in-between helper keys are driven (step 227)
+        from . import blend_shapes_227
+        return [SHAPE + b.name for b in blend_shapes_227.target_blocks(node)]
     if is_constraint(node):
         return [WEIGHT]
     keys = cb._visible_channels(node)

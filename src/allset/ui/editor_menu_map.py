@@ -600,6 +600,12 @@ MAP.update({
     f"{SH}/Shapes/Mirror Target": ("allset.shape_mirror", {"direction": "POSITIVE"}),
     f"{SH}/Shapes/Key": "allset.shape_key",
     f"{SH}/Shapes/Reset": "allset.shape_reset",
+    # step 227 (#137): in-between and combination targets (operators/blend_shapes_227.py)
+    f"{SH}/Create/Add In-Between Target": "allset.shape_add_inbetween",
+    f"{SH}/Create/Add Selection as In-Between Target": ("allset.shape_add_inbetween", {"selection": True}),
+    f"{SH}/Create/Add Combination Target": "allset.shape_add_combination",
+    f"{SH}/Create/Add Selection as Combination Target": ("allset.shape_add_combination", {"mode": "SELECTION"}),
+    f"{SH}/Shapes/Set as Combination Target": ("allset.shape_add_combination", {"mode": "SET"}),
     **_help_menu(SH, "animation/shape_keys/index.html"),
     f"{SH}/Help/Help on Shape Authoring": _url(_MANUAL + "animation/shape_keys/index.html"),
 

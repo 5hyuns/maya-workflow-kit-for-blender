@@ -93,7 +93,14 @@ def _targets(context, whole_node=True):
         key = _key_of(context)
     if key is None or not whole_node:
         return []
-    return [(key, i) for i in range(1, len(key.key_blocks))]
+    return _target_indices(key)
+
+
+def _target_indices(key):
+    """[(key, index)] of ``key``'s Maya targets (step 227: hidden in-between / fix keys left out)."""
+    from ..operators import blend_shapes_227
+    hidden = blend_shapes_227.helper_names(key)
+    return [(key, i) for i in range(1, len(key.key_blocks)) if key.key_blocks[i].name not in hidden]
 
 
 @contextlib.contextmanager
@@ -255,10 +262,27 @@ class ALLSET_OT_shape_pick(bpy.types.Operator):
 
     key: StringProperty(options={'SKIP_SAVE'})
     index: bpy.props.IntProperty(default=0, options={'SKIP_SAVE'})
+    extend: bpy.props.BoolProperty(default=False, options={'SKIP_SAVE'},
+                                   description="Add this target to the picked targets (Ctrl / Shift+click)")
+
+    def invoke(self, context, event):
+        if event.ctrl or event.shift:
+            self.extend = True
+        return self.execute(context)
 
     def execute(self, context):
         wm = context.window_manager
         wm.allset_se_current = (f"{self.key}/{self.index}" if self.index > 0 else self.key) if self.key else ""
+        # step 227: the picked targets in pick order (Add / Set as Combination Target read them)
+        if hasattr(wm, "allset_se_picked"):
+            key = bpy.data.shape_keys.get(self.key) if self.key else None
+            names = []
+            if key is not None and 0 < self.index < len(key.key_blocks):
+                name = key.key_blocks[self.index].name
+                old, _, rest = wm.allset_se_picked.partition("/")
+                names = [n for n in rest.split("	") if n and n != name] if self.extend and old == key.name else []
+                names.append(name)
+            wm.allset_se_picked = f"{key.name}/" + "	".join(names) if names else ""
         redraw(context)
         return {'FINISHED'}
 
@@ -381,7 +405,7 @@ class _TargetOp:
             if key is None:
                 return []
             i = key.key_blocks.find(self.target) if self.target else -1
-            return [(key, i)] if i > 0 else ([(key, j) for j in range(1, len(key.key_blocks))] if whole_node else [])
+            return [(key, i)] if i > 0 else (_target_indices(key) if whole_node else [])
         return _targets(context, whole_node)
 
 
@@ -575,8 +599,12 @@ def draw_tree(layout, context):
         if not open_:
             continue
         in_edit = editing(key)
+        from ..operators import blend_shapes_227 as bs
+        hidden = bs.helper_names(key)
+        ibs, combos = bs.inbetweens(key), bs.combinations(key)
+        picked = picked_targets(context, key)
         for i, kb in enumerate(key.key_blocks):
-            if i == 0 or (text and text not in kb.name.lower()):
+            if i == 0 or kb.name in hidden or (text and text not in kb.name.lower()):
                 continue
             name, weight, buttons = _columns(col)
             name.label(text="", icon='BLANK1')
@@ -585,12 +613,21 @@ def draw_tree(layout, context):
             if cur_key == key and cur_index == i:
                 name.prop(kb, "name", text="")
             else:
-                pick = name.operator("allset.shape_pick", text=kb.name, emboss=False)
+                on = kb.name in picked
+                pick = name.operator("allset.shape_pick", text=kb.name, emboss=on, depress=on,
+                                     icon='AUTOMERGE_ON' if kb.name in combos else 'NONE')
                 pick.key, pick.index = key.name, i
             field = weight.row(align=True)
             field.scale_x = 0.55
             field.prop(kb, "value", text="")
-            weight.prop(kb, "value", text="", slider=True)
+            if kb.name in combos:
+                # a combination target: its weight is driven by the driver targets (Maya combinationShape)
+                inputs, method = combos[kb.name]
+                label = next(m[1] for m in bs.METHODS if m[0] == method)
+                op = weight.operator_menu_enum("allset.shape_combination_method", "method", text=label)
+                op.key, op.target = key.name, kb.name
+            else:
+                weight.prop(kb, "value", text="", slider=True)
             is_edit = in_edit == kb.name
             edit = buttons.row(align=True)
             edit.alert = is_edit                 # Maya draws the Edit button red while sculpting
@@ -598,6 +635,41 @@ def draw_tree(layout, context):
             op.key, op.target = key.name, kb.name
             op = buttons.operator("allset.shape_key", text="", icon=_keyed_icon(key, kb, frame), emboss=False)
             op.key, op.target = key.name, kb.name
+            for w, label in ibs.get(kb.name, ()):
+                _draw_inbetween(col, key, kb, w, label, in_edit)
+
+
+def _draw_inbetween(col, key, kb, w, label, in_edit):
+    """An in-between row under its target (Maya shows in-betweens as the target's children with their weight)."""
+    from ..operators import blend_shapes_227 as bs
+    hb = key.key_blocks.get(bs.ib_name(kb.name, w))
+    if hb is None:
+        return
+    name, weight, buttons = _columns(col)
+    name.label(text="", icon='BLANK1')
+    name.label(text="", icon='BLANK1')
+    name.label(text=label, icon='IPO_LINEAR')
+    shown = weight.row(align=True)
+    shown.enabled = False                # the in-between weight is fixed (blendShapeChangeInBetweenWeight: not here)
+    shown.label(text=f"{w:.3f}")
+    op = weight.operator("allset.shape_remove_inbetween", text="", icon='X', emboss=False)
+    op.key, op.target, op.weight = key.name, kb.name, w
+    is_edit = in_edit == hb.name
+    edit = buttons.row(align=True)
+    edit.alert = is_edit
+    op = edit.operator("allset.shape_edit", text="Edit", depress=is_edit)
+    op.key, op.target = key.name, hb.name
+    buttons.label(text="", icon='BLANK1')
+
+
+def picked_targets(context, key):
+    """Targets picked in the Shape Editor for ``key`` (step 227), else the current target."""
+    wm = context.window_manager
+    name, _, rest = getattr(wm, "allset_se_picked", "").partition("/")
+    if key is not None and name == key.name:
+        return [n for n in rest.split("	") if n and key.key_blocks.get(n) is not None]
+    cur, index = current(context)
+    return [cur.key_blocks[index].name] if cur == key and index is not None else []
 
 
 class ALLSET_PT_shape_editor(bpy.types.Panel):

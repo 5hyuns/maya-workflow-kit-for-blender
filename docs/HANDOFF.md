@@ -7,6 +7,11 @@
 
 ## 현재 작업
 
+- Step 227 (blend shape in-betweens / combinations / correctives, Issue #137) 완료 — `docs/steps/step_227.md`: Shape Editor
+  인비트윈 (숨은 키 + 조각 선형 단순 식 드라이버) · 조합 (곱 / 최소 / 조화 평균), Pose Interpolator + Pose Editor (스윙 각 선형,
+  트위스트 무시, 교정 키). vs mayapy ≤ 4.9e-7, 헤드리스 관련 87 / 87, GUI shape_editor 5 / 5 + pose_editor 5 / 5.
+  **바로 다음 할 일**: step 228 = Curve rig leftovers: motion path, flow path, loft (Issue #138).
+
 - Step 226 (controls from NURBS curves, Issue #136) 완료 — `docs/steps/step_226.md`: parent -s/-r = 본 Custom Shape
   (클릭 = 그려진 와이어, 내보내기 제외), Maya 와이어 색 / Drawing Overrides, Match → 본, 여러 타깃 컨스트레인트 = 가중 평균
   (가중치 속성 + 드라이버), SDK = Maya auto 탄젠트 + 두 번째 드라이버 더하기. -k step226 36 / 36 (SDK vs mayapy ≤ 1.5e-5),

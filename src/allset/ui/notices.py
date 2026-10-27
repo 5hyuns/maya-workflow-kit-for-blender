@@ -912,18 +912,6 @@ CATEGORIES.update({
         "Blender files", "Blender has no blend shape file format: keep shapes in a .blend and append the mesh."),
     "Shape Editor/Edit/Group": (
         "Flat target list", "Blender's shape keys are one flat list per mesh: no target groups."),
-    "Shape Editor/Create/Add In-Between Target": (
-        "Relative To + driver", "Blender shape keys have no in-between targets: set a key's Relative To another key "
-        "and drive it."),
-    "Shape Editor/Create/Add Selection as In-Between Target": (
-        "Relative To + driver", "Blender shape keys have no in-between targets: set a key's Relative To another key "
-        "and drive it."),
-    "Shape Editor/Create/Add Combination Target": (
-        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
-    "Shape Editor/Create/Add Selection as Combination Target": (
-        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
-    "Shape Editor/Shapes/Set as Combination Target": (
-        "Driver", "Blender has no combination targets: drive a key's value by the product of the others."),
     "Shape Editor/Shapes/Merge Targets": (
         "New Shape from Mix", "Blender's Shape Keys menu > New Shape from Mix makes one key of the current mix."),
     "Shape Editor/Shapes/Rebuild Target": (
