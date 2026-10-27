@@ -2515,7 +2515,11 @@ def _m62_4_pose():
     cons = arm.pose.bones["joint2"].constraints
     check(f"[M62-4] Constrain > Orient puts the constraint on the joint (bone), not the armature ({r}, "
           f"{[c.type for c in cons]}, armature {len(arm.constraints)})",
-          len(cons) == 1 and cons[0].type == 'COPY_ROTATION' and cons[0].target == C["ctrl"] and not arm.constraints)
+          # step 233: a joint that follows an object's rotation is constrained to Maya's axes helper of the control
+          # ("<owner>_<node>_<target>Axes", operators/constrain_multi.py), which follows the control
+          len(cons) == 1 and cons[0].type == 'COPY_ROTATION' and cons[0].target is not None
+          and (cons[0].target == C["ctrl"] or cons[0].target.name.endswith(C["ctrl"].name + "Axes"))
+          and not arm.constraints)
     C["ctrl"].select_set(False)
     for pb in arm.pose.bones:
         cb().set_bone_selected(pb, pb.name == "joint1")

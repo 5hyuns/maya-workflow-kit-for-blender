@@ -231,10 +231,21 @@ def s_toolbox():
 
 @step
 def s_tap():
-    area, _r = view3d()
-    check("Space tap = four views", len(area.spaces.active.region_quadviews) > 0)
+    # step 237: Four View = four real 3D View panels (ui/four_view.py), not Quad View regions
+    fv = import_module(MODULE + ".ui.four_view")
+    panes = fv.panes(win().screen)
+    check(f"Space tap = four views ({len(panes)} panels)", len(panes) == 4)
     check("no hotbox left after a tap", not C["draw"].ACTIVE)
-    tap('SPACE')  # back to one view
+    # back to one view (Tool Box > Single Perspective View: a Space tap at the old centre lands on a panel sidebar)
+    persp = fv.roles(win().screen).get("persp") or panes[0]
+    r = next(r for r in persp.regions if r.type == 'WINDOW')
+    with bpy.context.temp_override(window=win(), area=persp, region=r):
+        bpy.ops.allset.quick_layout(layout='SINGLE')
+
+
+@step
+def s_one_view_hover():
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
 
 
 @step

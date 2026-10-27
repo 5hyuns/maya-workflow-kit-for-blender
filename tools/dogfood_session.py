@@ -375,22 +375,40 @@ def s_hotbox_wait():
 def s_hotbox_shot():
     shot("07_hotbox.png")
     ev('SPACE', 'RELEASE')
-    C["quad"] = len(view3d()[0].spaces.active.region_quadviews)
+    # step 237: Four View = four real 3D View panels (ui/four_view.py), not Quad View regions
+    C["quad"] = len(import_module(MODULE + ".ui.four_view").panes(win().screen))
     tap('SPACE')
 
 
 @step
 def s_space_tap():
-    q = len(view3d()[0].spaces.active.region_quadviews)
-    check(f"Space tap toggles the four views (quadviews {C['quad']} -> {q})", q != C["quad"])
+    q = len(import_module(MODULE + ".ui.four_view").panes(win().screen))
+    check(f"Space tap toggles the four views (panels {C['quad']} -> {q})", q != C["quad"] and q in (1, 4))
     redraw()
 
 
 @step
 def s_quad_shot():
     shot("08_four_views.png")
-    centre()
+    # back to one panel: a Space tap over the persp panel's view (the old centre is on a panel's edge now)
+    fv = import_module(MODULE + ".ui.four_view")
+    persp = fv.roles(win().screen).get("persp") or fv.panes(win().screen)[0]
+    r = next(r for r in persp.regions if r.type == 'WINDOW')
+    ev('MOUSEMOVE', 'NOTHING', x=r.x + r.width // 2, y=r.y + r.height // 2)
+
+
+@step
+def s_quad_leave():
     tap('SPACE')
+
+
+@step
+def s_quad_left():
+    check("Space tap over the persp panel = one view again",
+          len(import_module(MODULE + ".ui.four_view").panes(win().screen)) == 1)
+    _area, region = view3d()
+    C["x"], C["y"] = region.x + region.width // 2, region.y + region.height // 2
+    centre()
 
 
 # --- Channel Box: type a value, MMB slider -----------------------------------------------
