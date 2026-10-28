@@ -20,6 +20,7 @@ KINDS = {
     "HOTKEY_EDITOR": ("show_properties_bone", "show_properties_bone_constraints"),   # step 215 (ui/hotkey_editor.py)
     "PREFERENCES": ("show_properties_scene", "show_properties_output"),   # step 215: Maya Preferences
     "POSE_EDITOR": ("show_properties_object", "show_properties_constraints"),   # step 227 (ui/pose_editor.py)
+    "GAME_EXPORTER": ("show_properties_scene", "show_properties_physics"),   # step 263 (operators/game_exporter.py)
 }
 
 

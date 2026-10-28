@@ -261,6 +261,8 @@ class ALLSET_OT_manip_press(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, _event):
+        from . import snap_align
+        snap_align.apply_active(context)       # step 263: this tool's Step Snap Relative / Absolute
         if from_xform_gizmo(context) and context.window is not None:
             watch({"kind": 'PRESS'}, context.window, context.area, context.region)
         return {'PASS_THROUGH'}
@@ -283,6 +285,8 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         return context.area is not None and context.area.type == 'VIEW_3D'
 
     def invoke(self, context, _event):
+        from . import snap_align
+        snap_align.apply_tool(context.scene.tool_settings, self.mode)   # step 263: per-tool Step Snap
         kwargs = {"release_confirm": True}
         handle = HANDLES.get(self.mode)
         if handle:

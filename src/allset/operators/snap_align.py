@@ -448,9 +448,49 @@ def step_snap_mode(ts, kind):
     """'OFF' / 'RELATIVE' / 'ABSOLUTE' for the tool ``kind`` (Maya Step Snap)."""
     if not (ts.use_snap and 'INCREMENT' in ts.snap_elements and getattr(ts, STEP_FLAGS[kind])):
         return 'OFF'
-    if _record(ts).get(kind) == 'OFF':
-        return 'OFF'
+    own = _record(ts).get(kind)
+    if own in ('OFF', 'RELATIVE', 'ABSOLUTE'):
+        return own
     return 'ABSOLUTE' if ts.use_snap_grid_absolute else 'RELATIVE'
+
+
+# Step 263 (Issue #153): Maya keeps Relative / Absolute per tool (manipMoveContext / manipRotateContext /
+# manipScaleContext -snapRelative, research/maya/re/060_messages_ui.md B5), Blender has one Absolute Grid Snap flag
+# for every transform. The kit keeps each tool's mode in STEP_PROP and puts it into Blender's flag when a transform
+# of that tool can start: the tool becomes active (tool_keys._watch), an LMB press on the manipulator
+# (manip.ALLSET_OT_manip_press), an MMB drag (manip_mmb), and when the user picks the mode of the active tool.
+TOOL_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
+
+
+def apply_tool(ts, kind):
+    """Blender's shared Absolute Grid Snap flag = the stored mode of tool ``kind`` (no change without one)."""
+    if kind not in STEP_FLAGS:
+        return False
+    own = _record(ts).get(kind)
+    if own not in ('RELATIVE', 'ABSOLUTE'):
+        return False
+    want = own == 'ABSOLUTE'
+    if ts.use_snap_grid_absolute != want:
+        ts.use_snap_grid_absolute = want
+        return True
+    return False
+
+
+def active_kind(context):
+    """'TRANSLATE' / 'ROTATE' / 'RESIZE' of the active 3D View tool, else None."""
+    workspace = getattr(context, "workspace", None)
+    if workspace is None:
+        return None
+    try:
+        tool = workspace.tools.from_space_view3d_mode(context.mode, create=False)
+    except (AttributeError, RuntimeError, TypeError):
+        return None
+    return TOOL_KINDS.get(tool.idname) if tool is not None else None
+
+
+def apply_active(context):
+    kind = active_kind(context)
+    return apply_tool(context.scene.tool_settings, kind) if kind and context.scene else False
 
 
 def other_snaps_on(ts):
@@ -506,9 +546,23 @@ def set_step_snap(ts, kind, mode):
         else:
             ts.use_snap = False
         return 'OFF'
+    # step 263 (#153): the other tools keep their own Step Snap — one never set stays Off instead of following
+    # Blender's shared increment snap (Maya: a tool context's -snap is its own, 060_messages_ui.md B5)
+    was_snapping = ts.use_snap and 'INCREMENT' in ts.snap_elements
+    for other, flag in STEP_FLAGS.items():
+        if other == kind or rec.get(other) in ('RELATIVE', 'ABSOLUTE', 'OFF'):
+            continue
+        if was_snapping and getattr(ts, flag):
+            rec[other] = 'ABSOLUTE' if ts.use_snap_grid_absolute else 'RELATIVE'   # what it showed: keep it
+            continue
+        rec[other] = 'OFF'
+        if not other_snaps_on(ts):
+            setattr(ts, flag, False)
+    _store(ts, rec)
     ts.snap_elements = set(ts.snap_elements if ts.use_snap else ()) | {'INCREMENT'}
     ts.use_snap = True
     setattr(ts, STEP_FLAGS[kind], True)
+    # this tool's own mode (step 263); Blender's shared flag follows it until another tool's transform starts
     ts.use_snap_grid_absolute = mode == 'ABSOLUTE'
     if kind == 'ROTATE' and abs(ts.snap_angle_increment_3d - 0.0872664600610733) < 1e-6:
         ts.snap_angle_increment_3d = MAYA_ROTATE_STEP     # Blender's 5 degrees -> Maya's 15
