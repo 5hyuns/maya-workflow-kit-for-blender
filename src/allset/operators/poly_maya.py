@@ -9,7 +9,7 @@ import math
 import bmesh
 import bpy
 
-from .. import results
+from .. import results, undo_steps
 
 CONNECT_WARNING = "Can't perform polyConnectComponents1 on selection"   # Maya's warning
 
@@ -638,9 +638,33 @@ def smooth_targets(bm):
     return list(bm.faces)
 
 
+# polySmoothFace history node (#204): Maya's Mesh > Smooth leaves polySmoothFace1 in Channel Box INPUTS with its
+# Divisions editable. Like the kit's extrude / bevel nodes it is the last kit operation on the mesh (operators/extrude.py
+# records), editable while the mesh is still its result, in component and object mode. The kit's Catmull-Clark has no
+# Method / Continuity switch, so Divisions is its only row (delegated).
+
+def _build_smooth(bm, params, unit):
+    targets = smooth_targets(bm)
+    for el in (*bm.verts, *bm.edges, *bm.faces):
+        el.select = False
+    faces = smooth(bm, targets, int(params["divisions"]))
+    bm.select_flush_mode()
+    return list({v for f in faces if f.is_valid for v in f.verts})
+
+
+def _smooth_spec():
+    from . import extrude
+    return extrude.add_spec(extrude.Spec(
+        'SMOOTH', "polySmoothFace", ("divisions",), {"divisions": "Divisions"}, {"divisions": 1},
+        {"divisions": "INT"}, None, "smooth_edit", _build_smooth, in_view=False))
+
+
+SMOOTH = _smooth_spec()
+
+
 class ALLSET_OT_smooth(bpy.types.Operator):
     """Smooth the selected faces (component mode) or the selected meshes with real Catmull-Clark geometry
-    (Maya Mesh > Smooth)"""
+    (Maya Mesh > Smooth): change its Divisions in Channel Box INPUTS (polySmoothFace)"""
     bl_idname = "allset.smooth"
     bl_label = "Smooth"
     bl_options = {'REGISTER', 'UNDO'}
@@ -654,28 +678,54 @@ class ALLSET_OT_smooth(bpy.types.Operator):
         return context.mode == 'OBJECT' and any(o.type == 'MESH' for o in context.selected_objects)
 
     def execute(self, context):
+        from . import extrude, units
+        unit = units.maya_unit(context.scene)
+        params = {"divisions": self.divisions}
         if context.mode == 'EDIT_MESH':
-            for ob in context.objects_in_mode:
+            for ob in context.objects_in_mode_unique_data:
+                if ob.type != 'MESH':
+                    continue
                 bm = bmesh.from_edit_mesh(ob.data)
-                targets = smooth_targets(bm)
-                for el in (*bm.verts, *bm.edges, *bm.faces):
-                    el.select = False
-                smooth(bm, targets, self.divisions)
-                bm.select_flush_mode()
-                bmesh.update_edit_mesh(ob.data)
+                if extrude.record_new(context, ob, bm, SMOOTH, params, unit) is None:
+                    bmesh.update_edit_mesh(ob.data)
             return {'FINISHED'}
         done = set()
         for ob in context.selected_objects:
             if ob.type != 'MESH' or ob.data in done:
                 continue
             done.add(ob.data)
-            bm = bmesh.new()
-            bm.from_mesh(ob.data)
-            smooth(bm, list(bm.faces), self.divisions)
-            bm.to_mesh(ob.data)
-            bm.free()
-            ob.data.update()
+            extrude.record_object(context, ob, SMOOTH, params, unit)
         return {'FINISHED'}
+
+
+@undo_steps.no_redo_panel      # step 147: no Adjust Last Operation (Maya has none)
+class ALLSET_OT_smooth_edit(bpy.types.Operator):
+    """Change the last Smooth (Maya: edit the polySmoothFace node). Blender keeps no history, so only the last one
+    can be changed"""
+    bl_idname = "allset.smooth_edit"
+    bl_label = "polySmoothFace"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    divisions: bpy.props.IntProperty(name="Divisions", default=1, min=0, max=6, options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode in {'EDIT_MESH', 'OBJECT'}
+
+    def execute(self, context):
+        from . import extrude, units
+        params = {"divisions": self.divisions}
+        if context.mode == 'OBJECT':
+            ok = extrude.edit_from_object_mode(context, "smooth_edit", lambda _spec: params)
+            return {'FINISHED'} if ok else {'CANCELLED'}
+        unit = units.maya_unit(context.scene)
+        done = 0
+        for ob in context.objects_in_mode_unique_data:
+            rec = extrude.RECORDS.get(ob.name)
+            if rec is not None and rec.spec is SMOOTH and rec.pre is not None and (
+                    rec.live or extrude.current(ob) is not None):
+                done += bool(extrude.run(ob, rec, params, unit))
+        return {'FINISHED'} if done else {'CANCELLED'}
 
 
 # --- Symmetrize --------------------------------------------------------------------------------
@@ -904,4 +954,4 @@ class ALLSET_OT_symmetrize(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_circularize, ALLSET_OT_connect, ALLSET_OT_make_hole, ALLSET_OT_merge, ALLSET_OT_smooth,
-           ALLSET_OT_symmetrize)
+           ALLSET_OT_smooth_edit, ALLSET_OT_symmetrize)

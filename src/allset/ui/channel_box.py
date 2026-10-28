@@ -2403,7 +2403,8 @@ def draw_inputs(lines, context, ob):
     last = in_view.cb_record(context, ob)    # the last kit extrusion = Maya's newest history node (step 65)
     from . import creation_inputs
     created = creation_inputs.has_node(ob)   # the primitive's creation node, oldest history (step 129)
-    if not (inputs or cons or last is not None or created):
+    key = blend_shape_key(ob)                # the mesh's blendShape node (#204)
+    if not (inputs or cons or last is not None or created or key is not None):
         return
     r = lines.row()
     if r is not None:
@@ -2425,6 +2426,10 @@ def draw_inputs(lines, context, ob):
                 r = lines.row()
                 if r is not None:
                     _draw_text_row(r, context, ob, mod, prop, "INPUT", mod.type, _nth_of_type(ob, mod))
+    if key is not None:
+        # shape keys are evaluated before every modifier: below the modifiers, above the creation node (Maya:
+        # polyBevel1, blendShape1, polyCube1)
+        draw_blend_shape(lines, context, ob, key)
     if created:
         creation_inputs.draw_cb(lines, context, ob)
     from ..operators import constrain_multi
@@ -2444,6 +2449,50 @@ def draw_inputs(lines, context, ob):
             if r is not None:
                 _draw_text_row(r, context, ob, con, "influence", "CONSTRAINT", con.type,
                                _nth_constraint(ob, con), label=weight_name(con))
+
+
+def blend_shape_key(ob):
+    """The mesh's shape keys = its Maya blendShape node (named blendShapeN, Shape Editor step 213), or None."""
+    if not isinstance(ob, bpy.types.Object) or ob.type != 'MESH':
+        return None
+    key = ob.data.shape_keys
+    return key if key is not None and len(key.key_blocks) else None
+
+
+def blend_shape_node(key):
+    return "bs:" + key.name
+
+
+def blend_shape_targets(key):
+    """The key blocks Maya lists as targets: every block after the Basis but the kit's hidden in-between keys."""
+    from ..operators import blend_shapes_227
+    hidden = blend_shapes_227.helper_names(key)
+    return [kb for i, kb in enumerate(key.key_blocks) if i and kb.name not in hidden]
+
+
+def draw_blend_shape(lines, context, ob, key):
+    """Maya's blendShape node in INPUTS: Envelope, then one weight row per target named after it. Blender has no
+    envelope: it reads Maya's 1, like the Shape Editor."""
+    _row, opened = node_row(lines, ob, blend_shape_node(key), key.name)
+    if not opened:
+        return
+    rows = [("Envelope", None)] + [(kb.name, kb) for kb in blend_shape_targets(key)]
+    for label, kb in rows:
+        r = lines.row()
+        if r is None:
+            continue
+        line = r.row(align=True)
+        split = line.split(factor=0.5, align=True)
+        name = split.row(align=True)
+        name.alignment = 'CENTER'
+        name.label(text=label)
+        right = split.row(align=True)
+        if kb is None:
+            right.enabled = False
+            right.label(text=cb_entry.format_value(1.0, "NONE", context.scene))
+        else:
+            right.prop(kb, "value", text="")
+        line.label(text="", icon='BLANK1')
 
 
 def _draw_group(lines, context, ob, con, mb):

@@ -120,11 +120,13 @@ class ALLSET_OT_bevel_edit(_BevelProps, bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'EDIT_MESH'
+        return context.mode in {'EDIT_MESH', 'OBJECT'}     # Maya edits history nodes in object mode too (#204)
 
     def invoke(self, context, event):
         from . import extrude
         _ob, rec = extrude.active(context)
+        if rec is None:
+            rec = extrude.object_record(getattr(context, "active_object", None))
         if rec is None or rec.spec.edit_op != "bevel_edit":
             return {'CANCELLED'}
         for k, v in rec.params.items():
@@ -135,6 +137,11 @@ class ALLSET_OT_bevel_edit(_BevelProps, bpy.types.Operator):
     def execute(self, context):
         from . import extrude, units
         unit = units.maya_unit(context.scene)
+        if context.mode == 'OBJECT':
+            if extrude.edit_from_object_mode(context, "bevel_edit", lambda _spec: _bevel_params(self)):
+                return {'FINISHED'}
+            self.report({'WARNING'}, "No bevel to change: " + extrude.NOTICE)
+            return {'CANCELLED'}
         done = 0
         for ob in context.objects_in_mode_unique_data:
             rec = extrude.RECORDS.get(ob.name)
