@@ -41,7 +41,13 @@ rv3d.view_perspective = 'ORTHO'
 rv3d.view_location = Vector((0, 0, 0))
 rv3d.view_distance = 12
 class Probe:
-    _finish_pick = select_priority.ALLSET_OT_select_priority._finish_pick
+    """Stand-in operator instance with every helper method of the real one (#158: helpers added later, like
+    ``_pose_miss``, broke a stand-in that copied one method)."""
+
+
+for _name, _fn in vars(select_priority.ALLSET_OT_select_priority).items():
+    if _name.startswith("_") and not _name.startswith("__") and callable(_fn):
+        setattr(Probe, _name, _fn)
 
 probe = Probe()
 step = 0
@@ -69,8 +75,10 @@ def run():
                 assert bpy.context.mode == 'POSE' and rig.data.bones.active.name == b
             elif step == 3:
                 click((0, -3, 0))
-                assert bpy.context.mode == 'OBJECT' and not bpy.context.selected_objects
-                assert bpy.context.active_object is None
+                # step 255 (#171): an empty click in Pose stays in Pose and clears the joint selection (Maya has no
+                # selection mode to leave: an empty click clears the selection, select_priority._pose_miss)
+                assert bpy.context.mode == 'POSE'
+                assert not any(bone_selected(pb) for pb in rig.pose.bones)
             elif step == 4:
                 click((-2, 0, 0))
                 bpy.ops.allset.toggle_sel_mode()
@@ -86,7 +94,7 @@ def run():
                 click((2, 0, 0))
                 assert bpy.context.mode == 'OBJECT' and bpy.context.active_object == cube
             else:
-                (OUTPUT / 'allset-viewport-result.txt').write_text('PASS: joint -> mesh -> joint -> empty -> edit -> mesh')
+                (OUTPUT / 'allset-viewport-result.txt').write_text('PASS: joint -> mesh -> joint -> empty (stays Pose) -> edit -> mesh')
                 bpy.ops.wm.quit_blender()
                 return None
             area.tag_redraw()
