@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2026 orientJoint (step 244, Issue #161): ``joint -e -oj <xyz> [-sao <yup>] [-aos]`` frames from joint positions.
 
-Rules (Maya 2026 behaviour checked , error 0 — , joint_rig_2026_joint_tool.md
-, joint_rig_2026_skeleton_menu.md):
+Rules (Maya 2026 behaviour checked , error 0 — ,
+joint_rig_2026_joint_tool.md, joint_rig_2026_skeleton_menu.md):
 - ``oj`` "none" (Orient to World): every frame = the world axes.
 - with ``sao`` (computeAim): aim a = toward the first child (a zero-length child: the joint is left as it is); the
   reference w = the world-up axis, or with ``aos`` the bend normal n = (P − P_parent) × (P_child − P) (top joint:
