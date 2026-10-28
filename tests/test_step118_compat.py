@@ -27,7 +27,8 @@ def test_version_checks_only_in_compat():
             if re.search(r"bpy\.app\.version\b(?!_string)", code):
                 bad.append(f"{path.relative_to(ROOT)}:{n}")
     assert not bad, bad
-    assert compat.IS_TARGET == (tuple(bpy.app.version[:2]) == (4, 5))
+    assert compat.IS_TARGET == (tuple(bpy.app.version[:2]) == (5, 2))      # main target since step 272
+    assert compat.IS_STRICT == (tuple(bpy.app.version[:2]) in ((4, 5), (5, 2)))
 
 
 def test_action_fcurves_on_layered_actions():
@@ -86,7 +87,7 @@ def test_pointmerge_facedata_and_strips():
 def test_dock_role_ignores_newer_properties_tabs():
     """The Maya Workflow Kit template is saved by 4.5: 5.x opens its dock with the newer strip tabs on."""
     assert compat.LATER_PROPERTIES_TABS.isdisjoint(set(maya_dock.ROLE_FLAGS.values()) | {"show_properties_tool"})
-    if compat.IS_TARGET:
+    if compat.VERSION < (5, 0):
         names = {p.identifier for p in bpy.types.SpaceProperties.bl_rna.properties}
         assert compat.LATER_PROPERTIES_TABS.isdisjoint(names), "4.5 has none of them"
 

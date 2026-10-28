@@ -14,9 +14,10 @@ Pure Python (no bpy) so the mapping-doc tool and tests can reuse it.
 
 MODS = ("shift", "ctrl", "alt", "oskey")
 
-# Strict on the Blender the kit targets (: 4.5): a patch that finds nothing raises, which catches
-# Industry Compatible drift. On other versions (5.x, ) the missing items are recorded in
-# ``DRIFT`` instead, so the keymap still builds; keymap/__init__.py sets STRICT from bpy.app.version.
+# Strict on the Blenders the kit is checked on (step 272: 5.2, the main target, and 4.5): a patch that finds
+# nothing raises, which catches Industry Compatible drift. On other versions (5.0 / 5.1, )
+# the missing items are recorded in ``DRIFT`` instead, so the keymap still builds; keymap/__init__.py sets STRICT
+# from bpy.app.version.
 STRICT = True
 DRIFT = []
 
@@ -95,9 +96,12 @@ class KeyconfigData:
         return out
 
     # -- edits -----------------------------------------------------------
-    def remove(self, km_name, idname=None, **ev):
-        """Remove matching items. Raises if nothing matched (catches IC drift)."""
+    def remove(self, km_name, idname=None, optional=False, **ev):
+        """Remove matching items. Raises if nothing matched (catches IC drift); ``optional``: an item only some
+        Blender versions have (nothing matched = nothing to do)."""
         found = self.find(km_name, idname, **ev)
+        if not found and optional:
+            return []
         if not found:
             if not STRICT:
                 DRIFT.append(f"{km_name}: no item {idname} {ev}")

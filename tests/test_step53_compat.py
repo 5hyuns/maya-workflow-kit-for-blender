@@ -1,7 +1,7 @@
 """Step 53: Blender version compatibility and a safe install.
 
-Runs on the target Blender 4.5 and on 5.x (BLENDER=... python tests/run.py): the keymap patches are strict
-on 4.5 and only show the known Industry Compatible drift elsewhere, the manifest declares the tested range, the
+Runs on the main target Blender 5.2 and on 4.5 / 5.0 / 5.1 (BLENDER=... python tests/run.py): the keymap patches are
+strict on 5.2 and 4.5 (step 272) and only show the known Industry Compatible drift elsewhere, the manifest declares the tested range, the
 timeline shim matches the Blender. (The theme round trip tests went with the theme, step 130.)"""
 
 import tomllib
@@ -15,17 +15,17 @@ import kit
 ROOT = Path(__file__).resolve().parent.parent
 patch = import_module(kit.MODULE + ".keymap.patch")
 keymap = import_module(kit.MODULE + ".keymap")
+compat = import_module(kit.MODULE + ".compat")
 time_slider = import_module(kit.MODULE + ".ui.time_slider")
 
-# Industry Compatible items the 4.5 patches expect that Blender 5.x doesn't have (checked on 5.2.2).
-KNOWN_5X_DRIFT = {
-    "Node Editor: no item node.viewer_border {'type': 'Z'}",
-}
+# Industry Compatible items the patches expect that Blender 5.0 / 5.1 don't have (none since the Node Editor Z
+# removal became optional, step 272).
+KNOWN_5X_DRIFT = set()
 
 
 def test_keymap_patches_strict_on_target_drift_known_elsewhere():
     keymap.generate_data()
-    if tuple(bpy.app.version[:2]) == keymap.TARGET_VERSION:
+    if tuple(bpy.app.version[:2]) in compat.STRICT_VERSIONS:
         assert patch.STRICT and not patch.DRIFT, patch.DRIFT
     else:
         assert not patch.STRICT
