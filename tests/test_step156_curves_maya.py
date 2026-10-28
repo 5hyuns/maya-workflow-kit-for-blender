@@ -3,7 +3,6 @@ research/maya/re/curves_156.md). Coordinates stay Maya's (every rule is rotation
 passed in Maya axes)."""
 
 import json
-import os
 from importlib import import_module
 
 import bpy
@@ -13,15 +12,13 @@ import kit
 cm = import_module(kit.MODULE + ".operators.curves_math")
 cmaya = import_module(kit.MODULE + ".operators.curves_maya")
 
-DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                    "research", "maya", "re", "curves_156.json")
 _D = None
 
 
 def data():
     global _D
     if _D is None:
-        with open(DATA, encoding="utf-8") as fh:
+        with open(kit.maya_data("maya", "re", "curves_156.json"), encoding="utf-8") as fh:
             _D = json.load(fh)
     return _D
 

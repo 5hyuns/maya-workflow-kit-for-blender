@@ -5,8 +5,6 @@ C:/Repos/bmk-strategy/maya2026_re/scripts/py_curves.py). Maya (x, y, z) = Blende
 Measured scene: joint1..joint5 at Maya (0, 2i, 0); spineCurve = degree 3, CVs (1,0,0) (2,2,0) (1,4,1) (0,6,0) (1,8,0).
 """
 
-import json
-import os
 from importlib import import_module
 
 import bpy
@@ -19,9 +17,7 @@ ow = import_module(kit.MODULE + ".operators.option_windows")
 parenting = import_module(kit.MODULE + ".operators.parenting")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-with open(os.path.join(ROOT, "research", "maya", "re", "maya2026_curve_rigs.json"), encoding="utf-8") as fh:
-    MAYA = json.load(fh)
+MAYA = kit.MayaJson("maya", "re", "maya2026_curve_rigs.json")
 
 CVS = [(1, 0, 0), (2, 2, 0), (1, 4, 1), (0, 6, 0), (1, 8, 0)]
 # Blender's Spline IK walks the curve's polyline (kit resolution 128): measured 7e-5 against Maya's numbers, which are

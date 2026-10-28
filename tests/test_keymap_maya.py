@@ -8,7 +8,6 @@ import bpy
 
 import kit
 
-ROOT = Path(__file__).resolve().parent.parent
 # Pure-data helpers from the installed extension (imported, not re-registered).
 from importlib import import_module  # noqa: E402
 ic_data = import_module(kit.MODULE + ".keymap.ic_data")
@@ -229,7 +228,7 @@ def test_added_bindings_not_shadowed():
 # --- mapping table ------------------------------------------------------------
 
 def test_mapping_rows_are_bound():
-    hk_path = ROOT / "research" / "maya" / "hotkeys_default.json"
+    hk_path = Path(kit.maya_data("maya", "hotkeys_default.json"))
     hotkeys = json.loads(hk_path.read_text(encoding="utf-8"))["hotkeys"]
     assert len(hotkeys) == 495, len(hotkeys)   # Maya 2026 (468 in 2022)
     kd = patch.KeyconfigData(maya_patches.apply(ic_data.generate()))

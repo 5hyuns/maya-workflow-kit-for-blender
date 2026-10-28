@@ -4,7 +4,6 @@ selection with UV sync off (the kit's UV mode), runs the kit operator and compar
 
 import json
 import math
-import os
 from importlib import import_module
 
 import bmesh
@@ -15,15 +14,13 @@ import kit
 compat = import_module(kit.MODULE + ".compat")
 shells_mod = import_module(kit.MODULE + ".operators.uv_shells")
 
-DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                    "research", "maya", "re", "uv_shells_155.json")
 _D = None
 
 
 def data():
     global _D
     if _D is None:
-        with open(DATA, encoding="utf-8") as fh:
+        with open(kit.maya_data("maya", "re", "uv_shells_155.json"), encoding="utf-8") as fh:
             _D = json.load(fh)
     return _D
 

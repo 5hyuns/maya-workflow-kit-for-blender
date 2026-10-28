@@ -13,7 +13,8 @@
    process through tests/_bootstrap.py, which enables the extension (unless
    the test module sets ``AUTO_ENABLE = False``), runs each ``test_*``
    function and writes a JSON result.
-5. Prints PASS/FAIL per test and a summary. Exit code 1 if anything failed.
+5. Prints PASS/FAIL/SKIP per test and a summary (SKIP = Maya reference data
+   this clone doesn't have, tests/kit.maya_data). Exit code 1 if anything failed.
 """
 
 import argparse
@@ -150,14 +151,17 @@ def main(argv=None):
 
     pats = args.k.split(",")
     files = order(sorted(p for p in TESTS.glob("test_*.py") if any(k in p.name for k in pats)), args)
-    passed = failed = 0
+    passed = failed = skipped = 0
     for path in files:
         results, log, dt = run_test_file(args.blender, path, env)
         file_failed = False
         for r in results:
-            status = "PASS" if r["ok"] else "FAIL"
+            status = "SKIP" if "skipped" in r else "PASS" if r["ok"] else "FAIL"
             print(f"{status}  {path.stem}::{r['name']}")
-            if r["ok"]:
+            if "skipped" in r:
+                skipped += 1
+                print("      " + r["skipped"])
+            elif r["ok"]:
                 passed += 1
             else:
                 failed += 1
@@ -168,7 +172,7 @@ def main(argv=None):
             tail = log.read_text(encoding="utf-8", errors="replace").splitlines()[-30:]
             print("      --- log tail ---\n      " + "\n      ".join(tail))
 
-    print(f"\n{passed} passed, {failed} failed, {len(files)} file(s)")
+    print(f"\n{passed} passed, {failed} failed, {skipped} skipped, {len(files)} file(s)")
     return 1 if failed or not files else 0
 
 

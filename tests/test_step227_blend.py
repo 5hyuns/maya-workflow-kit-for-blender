@@ -8,7 +8,6 @@ vertex 0's world position sampled at 37 weights -0.4 ... 1.4. Combinations: comb
 multiplication / lowest / smooth (8 x 8 grid, 2 inputs; 4 rows, 3 inputs). Maya (x, y, z) -> Blender (x, -z, y);
 deltas from the base are compared so the axis swap is the only mapping."""
 
-import json
 import os
 from importlib import import_module
 
@@ -24,8 +23,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 OUT = os.path.join(ROOT, "tmp", "test_step227")
 TOL = 1e-4
-with open(os.path.join(ROOT, "research", "maya", "re", "shapes_227.json"), encoding="utf-8") as f:
-    MAYA = json.load(f)
+MAYA = kit.MayaJson("maya", "re", "shapes_227.json")
 MAYA_BASE0 = (-1.0, 0.0, 1.0)            # polyPlane vertex 0
 METHODS = ('MULTIPLY', 'LOWEST', 'SMOOTH')
 MAX = {}                                  # case -> max deviation (printed at the end of each test)
