@@ -41,3 +41,13 @@ def test_smoke_in_edit_mode_warns_instead_of_raising():
 def test_pivot_reset_without_selection_does_nothing():
     bpy.ops.object.select_all(action='DESELECT')
     assert bpy.ops.allset.pivot_reset() == {'CANCELLED'}
+
+
+def test_uv_prepare_with_hidden_active_mesh_does_not_raise():
+    uv_tools = import_module(kit.MODULE + ".operators.uv_tools")
+    bpy.ops.mesh.primitive_cube_add()
+    ob = bpy.context.object
+    ob.hide_set(True)
+    bpy.context.view_layer.objects.active = ob
+    assert uv_tools.prepare(bpy.context) is False
+    assert ob.mode == 'OBJECT'

@@ -12,6 +12,8 @@ import os
 import sys
 from pathlib import Path
 
+import time
+
 import bpy
 from importlib import import_module
 
@@ -377,6 +379,12 @@ def s_hotbox_shot():
     ev('SPACE', 'RELEASE')
     # step 237: Four View = four real 3D View panels (ui/four_view.py), not Quad View regions
     C["quad"] = len(import_module(MODULE + ".ui.four_view").panes(win().screen))
+
+
+@step
+def s_space_gap():
+    # step 260 (#174): a Space PRESS within RELEASE_GRACE (0.12 s) of the hold's release belongs to that hold
+    time.sleep(0.2)
     tap('SPACE')
 
 
