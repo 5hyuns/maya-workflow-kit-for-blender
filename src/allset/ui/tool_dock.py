@@ -19,7 +19,7 @@ import bpy
 
 from .. import live_refs
 
-WIDTH = 280          # unscaled px (Maya's narrow panels are 260, createGlobalOptVars.mel:218-221; its Tool Settings 460)
+WIDTH = 280          # unscaled px (Maya's narrow panels are 260 by default; its Tool Settings 460)
 MAX_SHARE = 0.35     # of the main viewport's width
 _pending = {}        # area pointer -> True while a new dock waits for its first tick
 

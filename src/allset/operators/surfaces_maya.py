@@ -670,7 +670,7 @@ class ALLSET_OT_surface_insert_isoparm(_SurfOp, bpy.types.Operator):
     bl_idname = "allset.surface_insert_isoparm"
     bl_label = "Insert Isoparms"
 
-    # Maya option box (performInsertKnot.mel:239-262; insertKnotSetOptionVars.mel:50-66 factory: At selection,
+    # Maya option box (Insert Isoparms Options factory: At selection,
     # Increase, 1, Keep original off) — step 189
     between: BoolProperty(name="Between selections", default=False, options={'SKIP_SAVE'},
                           description="Insert evenly between the selected rows / columns instead of at them")

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 207: Maya option windows of Curves > Bend / Curl / Scale Curvature (same spec as operators/option_windows.py).
-Titles, labels and factory values: $M/others/performBendCurves.mel:31, :36, performCurlCurves.mel:31, :36,
-performScaleCurvature.mel:31, :36 (research/maya/re/curves_156.md §1); MayaStrings m_performBendCurves.* etc."""
+Titles, labels and factory values: Maya's Bend / Curl / Scale Curvature Options windows
+(research/maya/re/curves_156.md §1)."""
 
 import bpy
 

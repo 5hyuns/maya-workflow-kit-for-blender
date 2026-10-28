@@ -457,7 +457,7 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
     def execute(self, context):
         ob = context.active_object
         if context.mode != 'SCULPT' and not ob.visible_get():
-            # Maya switches the tool without a check (setMeshSculptTool.mel, 060_messages_ui.md B4); Blender can't
+            # Maya switches the tool without a check (060_messages_ui.md B4); Blender can't
             # sculpt a hidden object, so the kit says so and stays in object mode (delegated, step 258)
             self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to sculpt it.")
             return {'CANCELLED'}
@@ -488,8 +488,8 @@ class ALLSET_OT_paint_hair_follicles(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        # Maya switches to the Paint Hair Follicles tool for any selection, a mesh included (paintHairTool.mel,
-        # research/maya/re/060_messages_ui.md B4). Blender grows hair as a Curves object attached to a surface mesh:
+        # Maya switches to the Paint Hair Follicles tool for any selection, a mesh included
+        # (research/maya/re/060_messages_ui.md B4). Blender grows hair as a Curves object attached to a surface mesh:
         # the mesh's hair (its first Curves object) or a new empty one, then Sculpt mode (delegated, step 258).
         ob = context.active_object
         if ob is not None and ob.mode != 'OBJECT' and ob.type != 'CURVES':
@@ -581,8 +581,8 @@ class ALLSET_OT_checker_shader(bpy.types.Operator):
 
 
 # --- UV Editor checker button / Textures > Checker Map (a display toggle, #13) -------------------------------
-# Maya: textureWindowDisplayCheckered(1, 1/0) shows / hides a checker map on the objects (texturePanel.mel:569-606,
-# textureWindowToolbar.mel checkeredButton = iconTextCheckBox). Blender has no display-only override, so the kit
+# Maya: the UV Editor checker button shows / hides a checker map on the objects
+# (a check button). Blender has no display-only override, so the kit
 # puts a checker material on the objects' slots at object level (``link = 'OBJECT'``: the mesh's own materials are
 # untouched) and remembers what was there in the object property CHECKER_PREV; off puts it back.
 

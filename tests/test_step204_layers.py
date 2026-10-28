@@ -1,6 +1,6 @@
 """Step 204: animation layers 4 (Issue #111) — Extract Selected Objects, Duplicate Layer, Empty / Delete Empty Layers,
 Zero / Full Weight key, Layer Editor Ctrl / Shift multi-selection and the Graph Editor lines of the other selected
-layers (operators/anim_layers_204.py, ui/graph_layers.py). Maya behaviour from layerEditor.mel ([K] until
+layers (operators/anim_layers_204.py, ui/graph_layers.py). Maya behaviour of the Layer Editor ([K] until
 research/maya/re/anim_layers_201.md): extraction keeps the result, a duplicate adds its layer again, each command is
 one undo step."""
 

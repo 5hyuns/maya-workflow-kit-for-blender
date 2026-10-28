@@ -77,7 +77,7 @@ def build_rows():
         current = "; ".join(fmt_item(km, it) for km, it in mapping.current_bindings(kd, hk)) or "—"
         label = STATUS_LABEL[status] + (f" Step {step}" if status == "STEP" else "")
         rows.append((hk["display"], fmt_event(mapping.maya_event(hk)), hk["context"], rtc,
-                     current, label, note, f"hotkeySetup.mel:{hk['line']}", status))
+                     current, label, note, f"#{hk['line']}", status))
     return rows
 
 
@@ -88,8 +88,8 @@ def write_doc(rows):
         "# Maya 기본 단축키 → Blender 대응표",
         "",
         "자동 생성: `python tools/gen_keymap_mapping.py` (손으로 고치지 말 것).",
-        f"입력: `research/maya/hotkeys_default.json` (Maya 2022 팩토리 핫키 {len(rows)}개; "
-        "근거 열 = Maya `scripts/startup/hotkeySetup.mel` 줄). "
+        f"입력: `research/maya/hotkeys_default.json` (Maya 2026 팩토리 핫키 {len(rows)}개; "
+        "근거 열 = Maya 2026 기본 핫키 목록의 순번). "
         "Blender 쪽: 이 킷의 \"Maya\" 키컨피그 (`src/allset/keymap/`), 상태 = `keymap/mapping.py`.",
         "",
         "현재 바인딩 = Maya 컨텍스트에 대응하는 Blender 키맵들(`mapping.CONTEXT_KEYMAPS`)에서 "

@@ -2,7 +2,7 @@
 """Maya's viewport grid: finite, 12 units each way, a line every unit, thicker every 5, axes thicker.
 
 Maya 2022 factory grid (research/maya/colors.json metrics.grid {size 12, spacing 5, divisions 5};
-research/maya/interaction.md:183, initialGUI.mel:188-226): lines from -12 to +12 every 1 unit, every
+research/maya/interaction.md:183): lines from -12 to +12 every 1 unit, every
 5th line (and the axes through the origin) thicker, all the same grey (displayColor grid / gridAxis /
 gridHighlight = index 2, #404040, a kit colour since step 134: no theme), aliased. Measured in
 research/maya/screens/01_layout_empty.png: only the background and #404040 in the view, minor lines 1 px, major lines and axes 2 px

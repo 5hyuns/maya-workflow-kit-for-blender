@@ -309,7 +309,7 @@ def _actions(menu, label, out):
 def test_menus_marking_menus_shelf_mtk():
     assert menu_map.MAP["Mesh Tools/Target Weld"] == TARGET_WELD
     assert menu_map.MAP["Mesh Tools/Crease Tool"] == CREASE
-    assert shelf_map.BY_COMMAND["MergeVertexTool"][0] == TARGET_WELD, "Polygons shelf Target Weld Tool"
+    assert shelf_map.BY_COMMAND["MergeVertexTool"][0] == TARGET_WELD, "Polygons shelf Target Weld"
     weld, crease = [], []
     for menu in (mm.SHIFT_OBJECT, mm.SHIFT_VERTEX, mm.SHIFT_EDGE, mm.SHIFT_FACE):
         _actions(menu, "Target Weld Tool", weld)

@@ -37,7 +37,7 @@ _CONSTRAINTS = {
 }
 
 BY_COMMAND = {
-    # --- Curves / Surfaces ---
+    # --- Curves, Surfaces ---
     "CreateNURBSCircle": (_create('NURBS_CIRCLE'), 'CURVE_NCIRCLE'),
     "EPCurveTool": ("allset.ep_curve_tool", 'CURVE_NCURVE'),          # step 156
     "CreateBezierCurveTool": (_create('BEZIER_CURVE'), 'CURVE_BEZCURVE'),
@@ -67,16 +67,16 @@ BY_COMMAND = {
     "ReducePolygon": (_mod('DECIMATE'), 'MOD_DECIM'),
     "PolyRemesh": (_mod('REMESH'), 'MOD_REMESH'),
     "PolyExtrude": (("v3d", "allset.extrude", {}), 'FACESEL'),     # polyExtrudeFace (step 65)
-    "performBridgeOrFill": ("mesh.bridge_edge_loops", 'MOD_LATTICE'),
-    "performBevelOrChamfer": (("item", "Edit Mesh/Bevel"), 'MOD_BEVEL'),        # step 139
+    "BridgeOrFill": ("mesh.bridge_edge_loops", 'MOD_LATTICE'),
+    "BevelPolygon": (("item", "Edit Mesh/Bevel"), 'MOD_BEVEL'),                 # step 139
     "PolyMerge": (("item", "Edit Mesh/Merge"), 'AUTOMERGE_OFF'),               # step 139
     "MergeToCenter": (("mesh.merge", {"type": 'CENTER'}), 'PIVOT_MEDIAN'),
     "FlipTriangleEdge": ("mesh.edge_rotate", 'MOD_TRIANGULATE'),
     "DuplicateFace": (("v3d", "mesh.duplicate_move", {}), 'DUPLICATE'),
     "PolygonCollapse": ("mesh.edge_collapse", 'FULLSCREEN_EXIT'),
-    "dR_multiCutTool": (("tool", "allset.multi_cut_tool", True), 'SCULPTMODE_HLT'),
+    "MultiCutTool": (("tool", "allset.multi_cut_tool", True), 'SCULPTMODE_HLT'),
     "MergeVertexTool": (("tool", "allset.target_weld_tool", True), 'AUTOMERGE_OFF'),   # Target Weld (step 64)
-    "dR_quadDrawTool": ("allset.quad_draw_start", 'MESH_DATA'),     # step 144 (#30)
+    "QuadDrawTool": ("allset.quad_draw_start", 'MESH_DATA'),        # step 144 (#30)
     "TextureViewWindow": (("allset.hb_pane", {"ui_type": 'UV'}), 'UV'),
     "SetCutSewUVTool": ("allset.cut_sew_tool_set", 'UV_EDGESEL'),   # step 79
     # --- Sculpting ---
@@ -127,10 +127,10 @@ BY_COMMAND = {
 }
 
 BY_LABEL = {
-    "Polygons/Planar Mapping": (("v3d", "uv.project_from_view", {}), 'UV_FACESEL'),
-    "Polygons/Cylindrical Mapping": (("v3d", "uv.cylinder_project", {}), 'MESH_CYLINDER'),
-    "Polygons/Spherical Mapping": (("v3d", "uv.sphere_project", {}), 'MESH_UVSPHERE'),
-    "Polygons/Automatic Mapping": (("item", "UV/Automatic"), 'UV_DATA'),      # step 139
+    "UVEditing/Planar Mapping": (("v3d", "uv.project_from_view", {}), 'UV_FACESEL'),
+    "UVEditing/Cylindrical Mapping": (("v3d", "uv.cylinder_project", {}), 'MESH_CYLINDER'),
+    "UVEditing/Spherical Mapping": (("v3d", "uv.sphere_project", {}), 'MESH_UVSPHERE'),
+    "UVEditing/Automatic Mapping": (("item", "UV/Automatic"), 'UV_DATA'),      # step 139
     "Rendering/Standard Surface Material": (_shader('STANDARD_SURFACE'), 'MATERIAL'),
     "Rendering/Lambert Material": (_shader('LAMBERT'), 'SHADING_SOLID'),
     "Rendering/Blinn Material": (_shader('BLINN'), 'SHADING_RENDERED'),
@@ -161,44 +161,51 @@ _HAIR = {"Current Position": "Display/Current Position", "Start Position": "Disp
              "Hair Systems", "Follicles", "Start Curves", "Rest Curves", "Start Curve End CVs",
              "Rest Curve End CVs")}}
 MENU = {
-    # Curves / Surfaces
-    "CurvesSurfaces/NURBS Square": "Create/NURBS Primitives/Square",
-    "CurvesSurfaces/NURBS Cube": "Create/NURBS Primitives/Cube",
-    "CurvesSurfaces/NURBS Cone": "Create/NURBS Primitives/Cone",
-    "CurvesSurfaces/Pencil Curve Tool": "Create/Curve Tools/Pencil Curve Tool",
-    "CurvesSurfaces/Three Point Circular Arc": "Create/Curve Tools/Three Point Circular Arc",
-    "CurvesSurfaces/Attach Curves": "Curves/Attach",
-    "CurvesSurfaces/Detach Curves": "Curves/Detach",
-    "CurvesSurfaces/Extend Curve": "Curves/Extend/Extend Curve",
-    "CurvesSurfaces/Offset Curve": "Curves/Offset/Offset Curve",
-    "CurvesSurfaces/Rebuild Curve": "Curves/Rebuild",
-    "CurvesSurfaces/Add Points Tool": "Curves/Add Points Tool",
-    "CurvesSurfaces/Revolve": "Surfaces/Revolve",          # step 181: a NURBS revolve (was the Screw modifier)
-    "CurvesSurfaces/Loft": "Surfaces/Loft",
-    "CurvesSurfaces/Planar": "Surfaces/Planar",
-    "CurvesSurfaces/Extrude": "Surfaces/Extrude",
-    "CurvesSurfaces/Birail 1 Tool": "Surfaces/Birail/Birail 1 Tool",
-    "CurvesSurfaces/Bevel Plus": "Surfaces/Bevel Plus",
-    "CurvesSurfaces/Project Curve on Surface": "Surfaces/Project Curve on Surface",
-    "CurvesSurfaces/Intersect Surfaces": "Surfaces/Intersect",
-    "CurvesSurfaces/Trim Tool": "Surfaces/Trim Tool",
-    "CurvesSurfaces/Untrim Surfaces": "Surfaces/Untrim",
-    "CurvesSurfaces/Attach Surfaces": "Surfaces/Attach",
-    "CurvesSurfaces/Detach Surfaces": "Surfaces/Detach",
-    "CurvesSurfaces/Insert Isoparms": "Surfaces/Insert Isoparms",
-    "CurvesSurfaces/Extend Surfaces": "Surfaces/Extend",
-    "CurvesSurfaces/Rebuild Surfaces": "Surfaces/Rebuild",
-    "CurvesSurfaces/Sculpt Geometry Tool": "Surfaces/Sculpt Geometry Tool",
-    "CurvesSurfaces/Surface Editing Tool": "Surfaces/Surface Editing/Surface Editing Tool",
+    # Curves, Surfaces (one Curves / Surfaces shelf in Maya 2022, two shelves in Maya 2026)
+    "Curves/NURBS Square": "Create/NURBS Primitives/Square",
+    "Surfaces/NURBS Cube": "Create/NURBS Primitives/Cube",
+    "Surfaces/NURBS Cone": "Create/NURBS Primitives/Cone",
+    "Curves/Pencil Curve Tool": "Create/Curve Tools/Pencil Curve Tool",
+    "Curves/Three Point Circular Arc": "Create/Curve Tools/Three Point Circular Arc",
+    "Curves/Attach Curves": "Curves/Attach",
+    "Curves/Detach Curves": "Curves/Detach",
+    "Curves/Extend Curve": "Curves/Extend/Extend Curve",
+    "Curves/Offset Curve": "Curves/Offset/Offset Curve",
+    "Curves/Rebuild Curve": "Curves/Rebuild",
+    "Curves/Add Points Tool": "Curves/Add Points Tool",
+    "Surfaces/Revolve": "Surfaces/Revolve",          # step 181: a NURBS revolve (was the Screw modifier)
+    "Surfaces/Loft": "Surfaces/Loft",
+    "Surfaces/Planar": "Surfaces/Planar",
+    "Surfaces/Extrude": "Surfaces/Extrude",
+    "Surfaces/Birail 1 Tool": "Surfaces/Birail/Birail 1 Tool",
+    "Surfaces/Bevel Plus": "Surfaces/Bevel Plus",
+    "Surfaces/Project Curve on Surface": "Surfaces/Project Curve on Surface",
+    "Surfaces/Intersect Surfaces": "Surfaces/Intersect",
+    "Surfaces/Trim Tool": "Surfaces/Trim Tool",
+    "Surfaces/Untrim Surfaces": "Surfaces/Untrim",
+    "Surfaces/Attach Surfaces": "Surfaces/Attach",
+    "Surfaces/Detach Surfaces": "Surfaces/Detach",
+    "Surfaces/Insert Isoparms": "Surfaces/Insert Isoparms",
+    "Surfaces/Extend Surfaces": "Surfaces/Extend",
+    "Surfaces/Rebuild Surfaces": "Surfaces/Rebuild",
+    "Surfaces/Sculpt Geometry Tool": "Surfaces/Sculpt Geometry Tool",
+    "Surfaces/Surface Editing Tool": "Surfaces/Surface Editing/Surface Editing Tool",
     # Poly Modeling
-    "Polygons/Super Shape": "Create/Polygon Primitives/Super Ellipse",
+    "Polygons/Super Ellipse": "Create/Polygon Primitives/Super Ellipse",
     "Polygons/Sweep Mesh": "Create/Sweep Mesh",
     "Polygons/SVG": "Create/SVG",
     "Polygons/Content Browser": "Windows/Content Browser",
     "Polygons/Retopologize": "Mesh/Retopologize",
     "Polygons/Circularize": "Edit Mesh/Circularize",
-    "Polygons/Contour Stretch": "UV/Contour Stretch",
-    "Polygons/3D Grab UV Tool": "UV/3D Grab UV Tool",
+    "Polygons/Difference (A - B)": "Mesh/Booleans/Difference (A - B)",     # Maya 2026 shelf (step 269)
+    "Polygons/Smart Extrude": "Edit Mesh/Smart Extrude",                   # Maya 2026 shelf (step 269)
+    # UV Editing (Maya 2026: the UV buttons of the 2022 Poly Modeling shelf plus four more)
+    "UVEditing/Contour Stretch": "UV/Contour Stretch",
+    "UVEditing/3D Grab UV Tool": "UV/3D Grab UV Tool",
+    "UVEditing/Auto Seams": "UV/Auto Seams",
+    "UVEditing/Cut UV Edges": "UV/Cut UV Edges",
+    "UVEditing/Delete UVs": "UV/Delete UVs",
+    "UVEditing/UV Set Editor": "UV/UV Set Editor",
     # Sculpting (Mesh Tools > Sculpting Tools = the essentials brushes, step 101)
     **{f"Sculpting/{t} Tool": f"Mesh Tools/Sculpting Tools/{t} Tool" for t in _SCULPT},
     "Sculpting/Base Meshes": "Windows/Content Browser",       # Maya opens the Content Browser on its meshes
@@ -207,6 +214,7 @@ MENU = {
     # Rigging / Animation
     "Rigging/Human IK": "Windows/Animation Editors/HumanIK",
     "Rigging/Create Cluster": "Deform/Cluster",
+    "Animation/Motion Trail Editor": "Visualize/Motion Trail Editor",     # Maya 2026 shelf (step 269)
     # Rendering
     "Rendering/Ambient Light": "Create/Lights/Ambient Light",
     "Rendering/Volume Light": "Create/Lights/Volume Light",
@@ -232,7 +240,7 @@ MENU = {
 
 # Buttons with no Maya menu item: (Blender substitute, one line), like ui/notices.NOTICES.
 NOTICES = {
-    "CurvesSurfaces/Curve Editing Tool": (
+    "Curves/Curve Editing Tool": (
         "Curve edit mode", "Blender has no curve editing manipulator: edit the curve's points in Edit Mode (Tab)."),
     "Sculpting/Convert To Frozen": (
         "Sculpt mode Mask", "Blender masks are painted in Sculpt mode (Mask brush, Mask menu); there is no "
@@ -240,6 +248,10 @@ NOTICES = {
     "Rendering/Render Diagnostics": (
         "Info editor", "Blender reports render problems in the Info editor and the status bar; there is no "
         "diagnostics window."),
+    # Maya 2026 shelf (step 269); the kit's Maya materials have no openPBRSurface kind
+    "Rendering/OpenPBR Surface Material": (
+        "Standard Surface Material", "Maya Workflow Kit has no OpenPBR Surface material: use the Standard Surface "
+        "Material button (a Principled BSDF material)."),
 }
 
 

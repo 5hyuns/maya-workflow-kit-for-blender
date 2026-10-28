@@ -25,7 +25,7 @@ MAYA_BELOW = [["Mesh", "Edit Mesh", "Mesh Tools", "Mesh Display", "Curves", "Sur
               ["Lighting/Shading", "Texturing", "Render", "Toon", "Stereo"]]
 PLUGIN = {"MASH"}
 
-# Maya 2022 RMB list over pCube1 (14_marking_menu_object.png, dagMenuProc.mel:2582-2764), "-" = divider.
+# Maya 2022 RMB list over pCube1 (14_marking_menu_object.png), "-" = divider.
 MAYA_RMB = ["pCube1...", "-", "Select", "Select All", "Deselect All", "Select Hierarchy", "Invert Selection", "-",
             "Select Similar", "-", "Make Live", "-", "DG Traversal", "Inputs", "Outputs", "Paint", "Metadata",
             "Actions", "UV Sets", "Color Sets", "Time Editor"]
@@ -96,7 +96,7 @@ def test_rmb_list_is_maya_2022():
     assert got == MAYA_RMB, got
     tail = [e[0] for e in menu.items[len(MAYA_RMB):] if e != mm.DIVIDER]
     assert tail == ["Material Attributes...", "Assign New Material...", "Assign Favorite Material",
-                    "Assign Existing Material"], tail                   # dagMenuProc.mel:2755-2764
+                    "Assign Existing Material"], tail                   # Maya 2022 RMB list end
     actions = {e[0]: e[1] for e in menu.items if e != mm.DIVIDER}
     # a Sub or a Blender menu (step 136: UV Sets / Color Sets list the mesh's sets) — both show ▸
     assert all(isinstance(actions[n], mm.Sub) or actions[n][0] == "menu" for n in SUBMENUS), "submenus show ▸"

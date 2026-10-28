@@ -99,7 +99,7 @@ def test_turning_one_tool_on_leaves_the_others_off():
 
 
 def test_move_absolute_only_with_world_axes():
-    # Maya manipMoveProperties.mel:70-74 (060_messages_ui.md B5): "Absolute only supported in world mode"
+    # Maya Move Tool Settings (060_messages_ui.md B5): "Absolute only supported in world mode"
     sc = bpy.context.scene
     slot = sc.transform_orientation_slots[1]          # the Move tool's axis (ui/manipulator.SLOT)
     slot.type = 'GLOBAL'

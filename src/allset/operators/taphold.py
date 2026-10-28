@@ -3,7 +3,7 @@
 
 research/maya/interaction.md §0: on press Maya builds a marking menu on
 LMB; if no menu was posted before release, the release runs the default
-action (``a`` tap = FrameAll, ``buildSelectAllMM.mel``). Design:
+action (``a`` tap = FrameAll). Design:
 docs/steps/step_3.md 「계획」 5.
 
 API (used by the marking-menu step): subclass ``TapHoldBinding``, then
@@ -165,7 +165,7 @@ class SoftSelectBinding(TapHoldBinding):
         from . import soft_select
         if soft_select.toggle(context):
             from ..ui import view_message
-            # Maya showSoftSelectEnabledMsg.mel:10 (only when it turns on, topCenter).
+            # Maya's Soft Select message (only when it turns on, topCenter).
             view_message.show(context, "<hl>Soft Select</hl> is <hl>on</hl>. Tap <hl>b</hl> to turn it <hl>off</hl>.",
                               'TOP_CENTER')
 
@@ -255,7 +255,7 @@ def time_from_drag(start_frame, dx, fpp):
 
 class TimeDragBinding(TapHoldBinding):
     """K: hold + LMB drag anywhere = move the current time (Maya Time Dragger, TimeDraggerToolActivate,
-    hotkeySetup.mel:334, research/maya/workflows/animation.md:10). LMB is used up, so the selection
+    research/maya/workflows/animation.md:10). LMB is used up, so the selection
     stays; a tap does nothing."""
     name = "time_drag"
     label = "Time Dragger"

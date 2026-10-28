@@ -4,7 +4,7 @@
 A kit IK handle is the ``ikHandleN`` empty an IK constraint targets (operators/skin.create_ik). Maya's handle
 attribute **Ik Blend** (keyable, factory 1; research/maya/re/maya2026_deform.md L14) is the handle's custom property
 ``ikBlend``, and the IK constraint's Influence is driven by it — so the Channel Box shows "Ik Blend" on the handle, S
-and Set IK/FK Key key it on the handle like Maya. Like Maya's ``ikFK`` (``$M/others/ikFK.mel``) the chain joints get
+and Set IK/FK Key key it on the handle like Maya. Like Maya's ``ikFK`` the chain joints get
 an ``ikBlend`` property connected (driven) from the handle.
 
 Maya 2026 rules (mayapy, research/scripts/maya_rig223/make.py / solver.py, numbers in docs/steps/step_223.md):
@@ -254,7 +254,7 @@ def clamped_slope(keys, i):
 
 
 def _clamped_out(handle, frame):
-    """Ik Blend keys: in auto / out clamped (Maya ikFK.mel). Auto = Auto Clamped with Continuous Acceleration
+    """Ik Blend keys: in auto / out clamped (Maya IK/FK keys). Auto = Auto Clamped with Continuous Acceleration
     (step 223 measurement); the clamped out side is a free handle on Maya's clamped slope, recomputed for every
     key because a clamped tangent follows its neighbours."""
     from .. import compat

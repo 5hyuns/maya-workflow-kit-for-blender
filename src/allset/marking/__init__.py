@@ -141,7 +141,7 @@ def resolve(trigger, context, picked=None):
         return ("pie", idname(name)) if name else None
     space = getattr(context, "space_data", None)
     if space is not None and space.type == 'IMAGE_EDITOR':
-        # UV Editor (step 66): texturePanelMenus.mel RMB radial, Shift+RMB = UV / UV Shell tools
+        # UV Editor (step 66): Maya 2026's UV Editor RMB marking menu, Shift+RMB = UV / UV Shell tools
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":
@@ -153,7 +153,7 @@ def resolve(trigger, context, picked=None):
             return ("pie", idname("contextPolyToolsUVShellMM" if shell else "contextPolyToolsUVMM"))
         return None
     if trigger == "CTRL_RMB":
-        # buildConvertMM.mel:85-106 picks by the lead's shape type, not the mode: a mesh lead gets polyConvertMM in
+        # Maya's Ctrl+RMB convert menu picks by the lead's shape type, not the mode: a mesh lead gets polyConvertMM in
         # object mode too (an item then converts the whole object, modal.CONVERT_FROM_OBJECT; step 136)
         if mode == 'EDIT_MESH' or (mode == 'OBJECT' and ob is not None and ob.type == 'MESH'):
             return ("pie", idname("polyConvertMM"))
@@ -291,7 +291,7 @@ HANDLE_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builti
 
 class ToolOptionsBinding(taphold.TapHoldBinding):
     """Key press = this tool (Maya activates it on press); hold + LMB = its options
-    marking menu (buildTranslateMM.mel:40-51 via hotkeys_and_menus.md §5.1)."""
+    marking menu (Maya's tool hold menus, hotkeys_and_menus.md §5.1)."""
     tool = ""
     menu = ""
 
@@ -353,7 +353,7 @@ def _tool_later(idname):
 
 
 class SelectComponentBinding(ToolOptionsBinding):
-    """Shift+Q (hotkeySetup.mel:286, buildSelectComponentMM.mel:202-206): the select tool in component mode;
+    """Shift+Q (Maya factory hotkey and its hold marking menu): the select tool in component mode;
     hold + LMB = the component pick mask marking menu."""
     name = "select_component"
     label = "Select Tool, Components / Pick Mask"
@@ -374,7 +374,7 @@ class SelectComponentBinding(ToolOptionsBinding):
 
 
 class SelectPolygonBinding(ToolOptionsBinding):
-    """Alt+Q (hotkeySetup.mel:287, buildPolyMM.mel:47-49): the select tool; hold + LMB = Vertices / Edges / Faces /
+    """Alt+Q (Maya factory hotkey and its hold marking menu): the select tool; hold + LMB = Vertices / Edges / Faces /
     UVs."""
     name = "select_polygon"
     label = "Select Tool / Polygon Components"

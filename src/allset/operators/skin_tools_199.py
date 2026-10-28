@@ -6,24 +6,24 @@ Every rule here was measured in mayapy 2022 (research/maya/re/skin_tools_199.md,
 research/scripts/skin_tools_199_mayapy_a.py .. _e.py). A kit skin = the Armature modifier + vertex groups named after
 its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex group's ``lock_weight``.
 
-- Move Weights to Influences (doMoveSkinInfluencesFromSelection.mel:24-45 -> doMoveSkinInfluences.mel:28-47 =
+- Move Weights to Influences (Maya runs
   ``skinPercent -tmw source -tmw target ...``): on each selected vertex every unlocked target gets the **source's
   weight** (set, not added), the source gets 0; with Interactive normalisation the unlocked weights are then scaled to
   fill 1 - (locked weights). None / Post leave the sums as they are.
-- Normalize Weights modes (doNormalizeWeightsArgList.mel:54-62 = skinCluster.normalizeWeights 0 / 1 / 2): Maya deforms
+- Normalize Weights modes (skinCluster.normalizeWeights 0 / 1 / 2): Maya deforms
   a point by sum(w_i M_i p) in world space in None and Interactive (unnormalised weights scale the point about the
   world origin; a point without weights stays put) and by sum(w_i M_i p) / sum(w_i) in Post. Blender's Armature
   modifier is Post (it divides by the weight sum, measured), so None / Interactive skins get a Geometry Nodes modifier
   after the Armature modifier that multiplies the world position by the weight sum.
-- Weight maps (exportSkinMap.mel / importSkinMap.mel): a ``<name>.weightMap`` text file (two comment lines, then
+- Weight maps (Maya Export / Import Skin Weight Maps): a ``<name>.weightMap`` text file (two comment lines, then
   ``<skin>\\t<influence>\\t<image>`` per weighted influence) and a ``<name>/`` folder with one grey image per influence
   in UV space (factory 512 x 512, luminance). Import: every weight of the skins in the file is cleared (``skinPercent
   -prw 1.1``), each listed influence takes the image value at the vertex UVs, then the weights are normalised.
-- Substitute Geometry (performSubstituteGeometry.mel:180-209, ``substituteGeometry old new -wdt 1``): the skinned object
+- Substitute Geometry (``substituteGeometry old new -wdt 1``): the skinned object
   keeps its name, transform and skin and takes the new mesh's object-space points; each new vertex takes the old
   weights interpolated at the closest point of the old surface (bilinear on quads, barycentric on triangles) when that
   point is within the reweighting distance, else the weights of the nearest old vertex.
-- Bake Deformation to Skin Weights (performBakeDeformer.mel:318-347, ``bakeDeformer``): per vertex the weights are the
+- Bake Deformation to Skin Weights (``bakeDeformer``): per vertex the weights are the
   least-squares fit, over a range of motion, of linear blend skinning of the **source rest point** to the source's
   deformed points, constrained to w >= 0 and sum(w) = 1 (measured exact against Maya with a known custom range of
   motion). Maya's default range of motion is internal; the kit samples each joint rotated +-45 degrees about its X / Y
@@ -108,7 +108,7 @@ class _Weights:
 
 
 # --- Move Weights to Influences ------------------------------------------------------------------------------------
-# Maya's errors (doMoveSkinInfluences.mel:22 / 51, skinPercent).
+# Maya's errors (Move Weights to Influences, skinPercent).
 NO_VERTS = "No skin vertices were selected."
 BAD_SOURCE = "Selected source influence for move weights are either locked or not connected to this skin cluster."
 BAD_TARGETS = "Selected target influences for move weights are either locked or not connected to this skin cluster."
@@ -382,7 +382,7 @@ def _sync_sum_modifiers(scene, depsgraph):
 
 
 # --- Weight maps ---------------------------------------------------------------------------------------------------
-# exportSkinMap.mel:135-172 file types; Blender writes these (IFF / SGI / Alias / SoftImage ... aren't Blender formats).
+# Maya Export Skin Weight Maps file types; Blender writes these (IFF / SGI / Alias / SoftImage ... aren't Blender formats).
 MAP_FORMATS = (("PNG", "PNG", "png"), ("TIFF", "TIFF", "tiff"), ("JPEG", "JPEG", "jpg"), ("TARGA", "Targa", "tga"),
                ("BMP", "Windows Bitmap", "bmp"))
 MAP_EXT = {k: e for k, _l, e in MAP_FORMATS}
@@ -390,7 +390,7 @@ MAP_HEADER = "// Exported skin weight map file\n// \n"
 
 
 def map_file_name(taken, base, skin_name, inf, count):
-    """exportSkinMap.mel:42-79 convertToFileName: ``<skin>_<influence>`` (short names), ``_<count>`` when taken,
+    """Maya's map file names: ``<skin>_<influence>`` (short names), ``_<count>`` when taken,
     ``<base>_<count>`` when longer than 100 characters."""
     def short(name):
         pipe = name.split("|")[-1]
@@ -405,7 +405,7 @@ def map_file_name(taken, base, skin_name, inf, count):
 
 
 def map_paths(filepath):
-    """(<dir>/<name>.weightMap, <dir>/<name>): exportSkinMap.mel:208-217 / 255 (name = text before the first '.')."""
+    """(<dir>/<name>.weightMap, <dir>/<name>): Maya's export paths (name = text before the first '.')."""
     folder, fn = os.path.split(filepath)
     base = fn.split(".")[0] or "skinMap"
     return os.path.join(folder, base + ".weightMap"), os.path.join(folder, base), base
@@ -546,7 +546,7 @@ def import_weight_maps(filepath):
     with open(map_file, encoding="utf-8") as f:
         for line in f:
             parts = line.split()
-            if len(parts) == 3:                     # importSkinMap.mel:124-147 (comment lines have other counts)
+            if len(parts) == 3:                     # Maya's map file rows (comment lines have other counts)
                 lines.append(parts)
     skins = []
     for skin_name, _inf, _img in lines:
@@ -991,7 +991,7 @@ class ALLSET_OT_bake_deformation(bpy.types.Operator):
     bl_label = "Bake Deformation to Skin Weights"
     bl_options = {'REGISTER', 'UNDO'}
 
-    max_influences: IntProperty(name="Max influences", default=3, min=1, max=50)    # performBakeDeformer.mel:116
+    max_influences: IntProperty(name="Max influences", default=3, min=1, max=50)    # Maya factory value
 
     def execute(self, context):
         meshes = [o for o in context.selected_objects if o.type == 'MESH']

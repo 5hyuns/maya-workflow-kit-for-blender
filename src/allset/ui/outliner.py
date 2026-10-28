@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner as a UIList in the 3D View sidebar (category "Outliner").
 
-research/maya/ui_layout.md:258-264 (``initOutliner.mel``: showShapes 0,
+research/maya/ui_layout.md:258-264 (Maya's default Outliner: showShapes 0,
 showDagOnly 1, autoExpand 0), research/maya/concepts.md §2 (transform / shape),
 research/blender/api_limits.md #3 (Blender's Outliner tree is C; a UIList is the
 way to a custom tree, without drag and drop). Design: docs/steps/step_11.md 「계획」 2.

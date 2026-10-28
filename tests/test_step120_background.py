@@ -34,7 +34,7 @@ def _theme_state():
 
 
 def test_maya_rule_flat_colours():
-    # cycleBackgroundColor.mel: 0 -> 0.36; < 0.5 -> 0.631; else (Maya: gradient) -> black here
+    # Maya Alt+B background cycle (research/maya/re/background_120.md): 0 -> 0.36; < 0.5 -> 0.631; else (Maya: gradient) -> black here
     assert [kb3.next_state(s) for s in kb3.CYCLE] == ["LIGHT", "BLACK", "GREY"]
     assert kb3.next_state(0.2) == "LIGHT" and kb3.next_state(0.7) == "BLACK" and kb3.next_state(0.0) == "GREY"
     assert not hasattr(kb3, "theme_gradients") and not hasattr(kb3, "set_gradient")
@@ -95,7 +95,7 @@ def test_keys_alt_b_cycles_ctrl_b_bevels():
     assert [k.idname for k in alt_b] == ["allset.cycle_background"]
     assert not [k for km in kc.keymaps for k in km.keymap_items if k.idname == "allset.cycle_background" and k.ctrl]
     mesh = [k.idname for k in kc.keymaps["Mesh"].keymap_items if k.type == 'B' and k.ctrl and not k.alt]
-    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (hotkeys_default.json, hotkeySetup.mel:385)
+    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (hotkeys_default.json)
 
 
 def test_settings_preferences_menu():

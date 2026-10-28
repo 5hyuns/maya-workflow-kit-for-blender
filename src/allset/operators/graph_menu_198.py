@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Graph Editor menu items of step 198 (Issue #105, research/maya/re/graph_editor_193.md §4).
 
-- Edit > Select Unsnapped (Maya ``selectKey -unsnappedKeys 1``, loadAnimMenuLibrary.mel:409-414,
-  doSnapKeyArgList.mel:136-137): the keys of the shown curves whose time isn't a whole frame replace the key selection.
-- Edit > Set Curve Colors... (Maya showCurveColorWindow.mel: "Curve Colors" window, rules attribute name -> colour,
+- Edit > Select Unsnapped (Maya ``selectKey -unsnappedKeys 1``,
+  Graph Editor Edit menu): the keys of the shown curves whose time isn't a whole frame replace the key selection.
+- Edit > Set Curve Colors... (Maya's "Curve Colors" window, rules attribute name -> colour,
   Add = the attributes of the channels selected in the editor at magenta 1 0 1, Remove): rules in the add-on pref
   ``curve_color_rules`` (JSON list of [attribute, r, g, b]); every curve of that attribute gets the colour unless the
   user coloured it (Change Curve Color) — the curves a rule coloured are recorded on their Action

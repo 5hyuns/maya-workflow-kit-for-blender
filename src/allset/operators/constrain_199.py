@@ -3,7 +3,7 @@
 
 Spec and mayapy ground truth: research/maya/re/constrain_199.md (scripts research/scripts/constrain_199_*.py).
 
-- Normal / Tangent (performNormalConstraint.mel / performTangentConstraint.mel, factory: weight 1, aim (1, 0, 0),
+- Normal / Tangent (Maya Normal / Tangent Constraint Options, factory: weight 1, aim (1, 0, 0),
   up (0, 1, 0), world up type Vector (0, 1, 0)): Maya only turns the object — its aim vector = the target's normal at
   the closest surface point (MFnMesh.getClosestPointAndNormal) / the curve's tangent at the closest curve point, its up
   vector towards the world up. No Blender constraint computes Maya's normal: Blender's Shrinkwrap uses Blender's
@@ -13,13 +13,13 @@ Spec and mayapy ground truth: research/maya/re/constrain_199.md (scripts researc
   the object (Maya's aim / up, rig_tools.aim) towards a hidden helper empty that a depsgraph / frame handler keeps at
   P + L * direction  (P = the object's world position, direction computed the Maya way in double precision:
   ``SurfaceData.normal`` / ``CurveData.tangent``). Matches mayapy within 6e-6 (1e-7 away from the world-up pole).
-- Remove Target (doRemoveConstraintTarget.mel): targets selected, the constrained object last; the constraints of the
+- Remove Target: targets selected, the constrained object last; the constraints of the
   checked types whose target is selected go. When the last target of a type goes Maya deletes the constraint node and
   the channels keep the constrained value (mayapy) — the kit bakes the visual value into the object's own channels.
-- Set Rest Position (setConstraintRestPosition.mel): Maya stores the current constrained channels as the constraint's
+- Set Rest Position: Maya stores the current constrained channels as the constraint's
   rest values, used when every target weight is 0. In Blender a constraint at influence 0 shows the object's own
   channels, so the rest position is the own channels: the kit writes the current constrained values into them.
-- Modify Constrained Axis (doModifyConstraintAxes.mel, factory X / Y / Z on, Maintain offset off): which axes the point
+- Modify Constrained Axis (factory X / Y / Z on, Maintain offset off): which axes the point
   / orient / scale / parent constraints drive (Blender use_x / use_y / use_z, Child Of use_location_* / use_rotation_*;
   the axes are the Channel Box's). A newly skipped channel keeps its last constrained value (mayapy); Maintain offset
   = Blender's constraint offsets set so nothing moves now.

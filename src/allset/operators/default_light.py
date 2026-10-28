@@ -25,7 +25,7 @@ the render keys with ``allset.render_blender``: its invoke adds the light on the
 the centre, the plain one 0.0, and the timer removed the light once the job ended). Keys (keymap/maya_patches.py
 ``patch_blender_render``): F12 = Render Image and Ctrl+F12 = Render Animation in "Screen" (Blender's default keys,
 whose own items are switched off in Maya mode; F12 over a 3D View in object / edit-mesh mode or over a UV Editor stays
-Maya's UV selection mask, hotkeySetup.mel:256), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >
+Maya's UV selection mask, a Maya default hotkey), Ctrl+Alt+Enter = IC's Render Animation. Blender's top bar Render >
 Render Image / Render Animation (the kit's "Blender Render" menu) still runs ``render.render`` itself: no light.
 """
 

@@ -20,9 +20,9 @@ from . import uv_shells
 from .uv_shells import _index_loops, _meshes, shells, target_shells, uv_points
 from .uv_tools import sync, uv_bounds
 
-GRID = 256                 # Match Grid factory: polyGridUV 256 256 1 (performPolyGridUV.mel:34-47)
-STACK_TOLERANCE = 0.1      # Stack Similar factory: stackSimilarToleranceOptVar 0.1 (performStackSimilarShells.mel:165)
-GAP_TOLERANCE = 5          # Straighten Border factory: -gt 5 (performPolyStraightenUV.mel:31-35)
+GRID = 256                 # Match Grid factory: polyGridUV 256 256 1
+STACK_TOLERANCE = 0.1      # Stack Similar factory: stackSimilarToleranceOptVar 0.1
+GAP_TOLERANCE = 5          # Straighten Border factory: -gt 5
 
 
 # --- Maya UVs ------------------------------------------------------------------------------------------------
@@ -52,10 +52,10 @@ def _set(pt, uv, p):
         l[uv].uv = p
 
 
-# --- Distribute UVs (texDistributeUVs.mel) ----------------------------------------------------------------------
+# --- Distribute UVs ----------------------------------------------------------------------
 
 def _round_off(value, precision=8):
-    """texRoundOff.mel: scientific-looking values become 0, else round half away from zero."""
+    """Maya's rounding: scientific-looking values become 0, else round half away from zero."""
     if "e" in _mel_str(value):
         value = 0.0
     sign = (value > 0) - (value < 0)
@@ -70,7 +70,7 @@ def _mel_str(value):
 def distribute_uvs(items, axis=0):
     """Maya Distribute UVs, factory Distance = bounding box: the selected UVs (``items`` = [(name, uv layer, point)]
     in selection order) sorted by position along ``axis`` — Maya sorts the strings "<pos + offset> <name>", so ties
-    go by name — keep the first, and step the others by width / (count - 1) (texDistributeUVs.mel)."""
+    go by name — keep the first, and step the others by width / (count - 1)."""
     n = len(items)
     if n < 2:
         return 0
@@ -98,16 +98,16 @@ def distribute_uvs(items, axis=0):
     return n
 
 
-# --- Match Grid (polyGridUV.mel) -------------------------------------------------------------------------------
+# --- Match Grid -------------------------------------------------------------------------------
 
 def _grid_u(x, cell):
-    """polyGridUV.mel u rule: nearer grid line (the upper one on a tie), then half a cell inward = the cell centre."""
+    """Match Grid u rule: nearer grid line (the upper one on a tie), then half a cell inward = the cell centre."""
     lo, hi = math.floor(x / cell) * cell, math.ceil(x / cell) * cell
     return lo + cell / 2 if x - lo < hi - x else hi - cell / 2
 
 
 def _grid_v(y, cell):
-    """polyGridUV.mel v rule: like u, but an exact tie (y on a grid line) takes the lower line."""
+    """Match Grid v rule: like u, but an exact tie (y on a grid line) takes the lower line."""
     lo, hi = math.floor(y / cell) * cell, math.ceil(y / cell) * cell
     return lo + cell / 2 if y - lo <= hi - y else hi - cell / 2
 
@@ -279,7 +279,7 @@ def layout_along(groups, uv, direction='U'):
     """Maya Layout Along U: flipped shells are flipped back (mirror in v), a shell wider than tall turns 90 degrees
     clockwise, the shells go left to right by height (tallest first; ties by shell order), bottoms on v = 0, no gap,
     one scale for all so the row fits the 0-1 square. V = that row turned 90 degrees counter-clockwise, each shell's
-    left side on u = 0 (texLayoutAlong.mel)."""
+    left side on u = 0."""
     if not groups:
         return 0
     for g in groups:
@@ -314,7 +314,7 @@ def layout_along(groups, uv, direction='U'):
 # --- Stack Similar Shells (polyUVStackSimilarShells -to 0.1) ---------------------------------------------------------
 
 def _signature(cycle, pts, uv):
-    """Border features of a shell (textureStackSimilarUVShells.mel): per border UV the length to the previous one,
+    """Border features of a shell (Stack Similar): per border UV the length to the previous one,
     the previous-to-next length and the cross product of the unit vectors to both neighbours."""
     ps = [_get(pts[i], uv) for i in cycle]
     n = len(ps)

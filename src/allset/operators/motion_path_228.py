@@ -4,7 +4,7 @@
 Maya truth: research/maya/re/maya2026_curve_rigs.md §L8, mayapy 2026 measurements research/maya/re/curve_rigs_228.json
 (script research/scripts/maya_curves228/measure.py; Set Motion Path Key curve edit measured again for this lane).
 
-- Attach to Motion Path (``performPathAnimation``, factory optionVars $M/others/performPathAnimation.mel:32-50): the
+- Attach to Motion Path (Maya factory option values): the
   selected objects + one curve in any order (Maya takes the curve as the path, ``L8_motion_path_wrong_order``). Per
   object one Follow Path constraint ``motionPathN`` (Maya's node name, numbered one past the highest) with Fixed
   Position on: its Offset = Maya's ``uValue`` in fraction mode (arc-length fraction), keyed at the Time Slider start
@@ -457,7 +457,7 @@ class ALLSET_OT_motion_path_key(bpy.types.Operator):
 classes = (ALLSET_OT_motion_path_attach, ALLSET_OT_motion_path_key)
 
 
-# --- option window (Maya Attach to Motion Path Options, $M/others/performPathAnimation.mel:32-50 factory values) -----
+# --- option window (Maya Attach to Motion Path Options factory values) -----
 
 WINDOWS = []
 _RANGE = {"Time Slider": 'TIME_SLIDER', "Start": 'START', "Start/End": 'START_END'}

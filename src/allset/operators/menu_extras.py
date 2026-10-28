@@ -176,7 +176,7 @@ def increment_path(path):
     """Next file of Maya's Increment and Save: the digits after the last '.' of the root name
     go up by one with their width kept, else '.0001' is appended (MyFile.blend ->
     MyFile.0001.blend, MyFile.0043 -> 0044, MyFile.99 -> MyFile.100, MyFile01 -> MyFile01.0001;
-    Maya incrementAndSaveScene.mel, behaviour only)."""
+    Maya's Increment and Save, behaviour only)."""
     folder, name = os.path.split(path)
     root, ext = os.path.splitext(name)
     m = _VERSION.match(root)

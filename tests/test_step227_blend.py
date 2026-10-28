@@ -178,7 +178,7 @@ def test_inbetween_two_vs_maya():
     assert [w for w, _n in bs.inbetweens(key)["smile"]] == [0.3, 0.7]
     _simple(key)
     _check_vertex(face, key.key_blocks["smile"], "inbetween_two")
-    # Maya refuses a second in-between at the same weight and one at 1 (doBlendShapeAddInBetweenTarget.mel)
+    # Maya refuses a second in-between at the same weight and one at 1 (Maya Shape Editor)
     for bad in (0.3, 1.0):
         try:
             bs.add_inbetween(key, "smile", bad)
@@ -190,7 +190,7 @@ def test_inbetween_two_vs_maya():
 
 def test_empty_inbetween_keeps_the_shape_and_goes_into_edit():
     """Add In-Between Target without a selection = the shape the target has at that weight, then Edit on it
-    (doBlendShapeAddInBetweenTarget.mel: duplicate the shape at the in-between weight, sculptTarget -ibw)."""
+    (Maya Shape Editor: duplicate the shape at the in-between weight, sculptTarget -ibw)."""
     _fresh()
     face, key = _face(("smile", (0, 1, 0)))
     smile = key.key_blocks["smile"]

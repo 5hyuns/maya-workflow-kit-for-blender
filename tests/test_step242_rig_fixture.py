@@ -73,7 +73,7 @@ def test_fixture_loads_with_the_tables_later_steps_use():
 
 def test_fixture_holds_no_maya_script_text():
     text = open(data.__file__, encoding="utf-8").read()
-    for bad in ("$", "`", "Traceback", "proc ", "global proc"):
+    for bad in ("$", "`", "Traceback", "proc "):    # "proc " covers every MEL procedure header
         assert bad not in text, bad
 
 

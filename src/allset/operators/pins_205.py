@@ -30,14 +30,14 @@ input (Offset Translation 0 = on the surface, Offset Orientation 0 = Edge / UV o
 towards the input). Deformed points = the evaluated mesh when its topology equals the mesh's (the smooth preview: its
 first vertices).
 
-Intermediate objects ($M/others/displayInterObjects.mel:245-410): Maya's intermediate object of a deformed shape is its
+Intermediate objects: Maya's intermediate object of a deformed shape is its
 ``<shape>Orig`` (every mesh deformer adds one, research/maya/re/options_144.md:150); Display sets intermediateObject 0
 on it and selects it, Hide sets it back and selects the deformed objects. Blender keeps the undeformed mesh as the
 object's own data, so the kit shows it as a child object ``<shape>Orig`` sharing that mesh with no modifiers (edits
 to it edit the original shape, like Maya) and deletes it on Hide [delegated]. Base wires / pin and constraint helpers
 are not intermediate objects in Maya (curve1BaseWire = a hidden transform, deform_169.md:15) and stay as they are.
 
-Wrap influences ($M/others/doWrapArgList.mel:354-480): the deformed surfaces are selected, the influence last. Blender's
+Wrap influences (Maya's Wrap deformer): the deformed surfaces are selected, the influence last. Blender's
 Surface Deform reads one target, so every extra influence is one more Surface Deform ``wrap1Influence<k>`` (+ its Hook
 ``wrap1Influence<k>Base`` like wrap1Base) and each wrapped point follows the influence nearest to it (its weight moves to
 that influence's vertex group; Maya blends influences by distance [U], delegated). Removing the last influence removes

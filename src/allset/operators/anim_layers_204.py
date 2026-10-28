@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya animation layer commands, part 4 (docs/steps/step_204.md 「계획」, Issue #111).
 
-Maya 2022 Layer Editor Anim tab (layerEditor.mel, layerEditorBuildAnimLayerMenu / createAnimLayerEditor; labels
-from MayaStrings m_layerEditor.*), re-implemented on the kit's NLA layers (operators/anim_layers.py):
+Maya 2022 Layer Editor Anim tab (its menus and labels),
+re-implemented on the kit's NLA layers (operators/anim_layers.py):
 
 - Extract Selected Objects (layerEditorExtractObjectsSingleAnimLayer): per selected layer L a new layer
   ``L_extract`` with L's settings, right above L, takes the selected objects' membership and curves out of L

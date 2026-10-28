@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's "Save changes?" prompt before an action that replaces the open scene (step 138, #57).
 
-Maya (``saveChanges.mel``, Maya 2022 ``scripts/others/saveChanges.mel:43-89``; texts
-``resources/MayaStrings:36422-36425`` and ``:64898-64903``): when the scene is modified, a dialog with the buttons
+Maya 2022 (measured in a running Maya): when the scene is modified, a dialog with the buttons
 Save / Don't Save / Cancel (default Save, Esc = Cancel):
 
 - a saved scene: title "Save Changes", message "Save changes to <scene path>?"; Save = ``file -save``, then the action;

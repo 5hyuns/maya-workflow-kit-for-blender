@@ -4,14 +4,14 @@ Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X 
 
 Maya behaviour (scripts of the installed Maya 2022, behaviour only):
 - PasteSelected = cutCopyPaste "paste" -> pasteScene: import the clipboard file with every node renamed
-  ``pasted__<name>``, grouped under a new ``group`` (startup/cutCopyPaste.mel:50-58, research/maya/re/naming_211.md).
+  ``pasted__<name>``, grouped under a new ``group`` (research/maya/re/naming_211.md).
 - CutSelected = cutCopyPaste "cut": export the selection (with its hierarchy) to the clipboard file, then delete it
-  (startup/defaultRunTimeCommands.mel:1135-1139; research/maya/hotkeys_and_menus.md:132).
-- PlaybackRangeAnimStartEnd: playback min / max = animation start / end (defaultRunTimeCommands.mel:20629-20634).
+  (research/maya/hotkeys_and_menus.md:132).
+- PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya runtime command).
 - toggleNurbsCurvesOption / togglePolygonsOption / toggleImagePlaneOption flip that type in the focused model panel
-  (others/createModelPanelMenu.mel; hotkeys_and_menus.md:113).
+  (viewport Show menu; hotkeys_and_menus.md:113).
 - smoothingDisplayToggle 1 swaps the proxy (cage) and smooth mesh visibility (both shown -> cage only), 0 shows both;
-  performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (others/smoothingDisplayToggle.mel; hotkeys_and_menus.md:121).
+  performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (hotkeys_and_menus.md:121).
 """
 
 import re
@@ -134,7 +134,7 @@ class ALLSET_OT_paste(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        # Maya pasteScene (startup/cutCopyPaste.mel:50-58; GUI Maya + mayapy, research/maya/re/naming_211.md P1-P3):
+        # Maya pasteScene (GUI Maya + mayapy, research/maya/re/naming_211.md P1-P3):
         # every node renamed pasted__<name>, the top nodes under a new group at the origin, only the group selected.
         before = set(bpy.data.objects.keys())
         if bpy.ops.view3d.pastebuffer() != {'FINISHED'}:

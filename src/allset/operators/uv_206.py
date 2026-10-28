@@ -8,13 +8,13 @@ coordinate); a Maya cut that leaves the UVs where they are can't be told apart f
 made from shared coordinates, step 66), so a split UV moves uv_tools.NUDGE towards its own faces (same convention as
 Cut / Create UV Shell).
 
-- Cycle (polyRotateUVsByVertex.mel): the first face of the selection (faces, else faces touching the selection) is cut
+- Cycle: the first face of the selection (faces, else faces touching the selection) is cut
   out (CutUVs on its edges), then its vertices are walked from the lowest vertex id: the face's edges in Maya edge-id
   order, each edge as (lower id, higher id); next = the first edge whose lower end is the current vertex (and whose
   higher end isn't the previous one), else the first whose higher end is. Each UV takes the previous walked vertex's
   UV, the first the last's. Maya edge ids = creation order over the faces (corner k -> k+1), verified on every
   mayapy-built mesh (uv_201.md §1).
-- Split (polySplitTextureUV.mel): selection -> edges (UVs / vertices: every edge of their faces at that vertex;
+- Split: selection -> edges (UVs / vertices: every edge of their faces at that vertex;
   faces: their edges), then polyMapCut on them: at each end vertex the UV splits into the fans the cut edges separate.
 - Create Shell (Grid) (polyUVRectangle via polyPerformAction ... v 0): the two lowest selected vertices must be
   opposite corners of a rectangle of quads; its UVs become the uniform grid i / I, j / J over 0-1 (3D spacing and
@@ -64,7 +64,7 @@ def bm_edge_ids(bm):
     return maya_edge_ids([[v.index for v in f.verts] for f in bm.faces])
 
 
-# --- Cycle (polyRotateUVsByVertex.mel) ---------------------------------------------------------------------------
+# --- Cycle ---------------------------------------------------------------------------
 
 def cycle_walk(face_verts, edge_ids):
     """Vertex order of polyRotateUVsByVertex's getLoopVertices for one face (vertex indices)."""

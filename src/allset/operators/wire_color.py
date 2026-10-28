@@ -7,7 +7,7 @@ Maya has two ways to colour a control's wire (research/maya/re/maya2026_controls
    (userDefined 1-8 = colorIndex 24-31, research/maya/re/maya2026_controls.json ``userDefined_gui``), an RGB colour
    slider, Apply / Default / Close. Apply = ``color -ud N`` (useObjectColor 1, objectColor N - 1) or
    ``color -rgb r g b`` (useObjectColor 2, wireColorRGB) on the selection; Default = ``color`` (useObjectColor 0)
-   (``L2_wireframe_color_command``; window: $M/others/objectColorPaletteForObject.mel:51-72, 103-243).
+   (``L2_wireframe_color_command``; window: Maya's Wireframe Color window).
 2. Attribute Editor > Display > Drawing Overrides: overrideEnabled, overrideRGBColors (Index / RGB), overrideColor
    (index 0-31, 0 = default) and overrideColorRGB. Factory values all 0 / off (``L2_drawing_override_palette``).
 

@@ -5,7 +5,7 @@
   right→left zooms out (research/maya/interaction.md:43).
 - ``allset.last_tool`` (Y): back to the last tool that is not Q/W/E/R/T, Maya's
   "non-sacred" tool (interaction.md:96). A timer remembers it per mode.
-- ``allset.menu_set`` (F2–F6): switch the Maya menu set (hotkeySetup.mel:322-327).
+- ``allset.menu_set`` (F2–F6): switch the Maya menu set (Maya default hotkeys).
 """
 
 import bpy
@@ -290,7 +290,7 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
         if 'FINISHED' not in result:
             return {'CANCELLED'}
         from ..ui import view_message
-        # Maya toggleSelMode.mel:28-30: a topCenter message naming the new mode and the key back.
+        # Maya F8: a topCenter message naming the new mode and the key back.
         if context.mode in {'OBJECT', 'POSE'}:
             text = "Object selection <hl>on</hl>.\nF8 goes back to components."
         else:

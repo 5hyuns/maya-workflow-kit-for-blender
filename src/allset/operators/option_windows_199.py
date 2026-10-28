@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 199 (#106): Maya option windows of the new Skin / Constrain commands.
 
-Titles, buttons, labels and factory values from Maya 2022 (resources/MayaStrings m_performNormalConstraint.*,
-m_performRemoveConstraintTarget.*, m_performSubstituteGeometry.*; $M/scripts/others/performNormalConstraint.mel,
-performTangentConstraint.mel, performRemoveConstraintTarget.mel, performModifyConstraintAxes.mel,
-performSubstituteGeometry.mel; research/maya/re/constrain_199.md, skin_tools_199.md). Fields the kit can't honour
+Titles, buttons, labels and factory values from Maya 2022's option windows
+(research/maya/re/constrain_199.md, skin_tools_199.md). Fields the kit can't honour
 are listed (``missing``), never faked.
 """
 
@@ -60,24 +58,24 @@ def _run_substitute(context, v):
 
 
 WINDOWS = [
-    # performNormalConstraint.mel (factory aim 1 0 0, up 0 1 0, world up Vector 0 1 0, weight 1)
+    # Normal Constraint Options (factory aim 1 0 0, up 0 1 0, world up Vector 0 1 0, weight 1)
     Window("normal_constraint", "Normal Constraint Options", "Add", ("allset.normal_constraint", {}), _aim_fields(),
            _aim_like("normal_constraint"), paths=("Constrain/Normal",), missing=_AIM_MISSING),
     Window("tangent_constraint", "Tangent Constraint Options", "Add", ("allset.tangent_constraint", {}),
            _aim_fields(), _aim_like("tangent_constraint"), paths=("Constrain/Tangent",), missing=_AIM_MISSING),
-    # performRemoveConstraintTarget.mel: removeAllTargets 1, every type 1, remConstMaintainOffset 0
+    # Remove Target Options: all targets, every type, Maintain offset off
     Window("remove_constraint_target", "Remove Target Options", "Remove", ("allset.remove_constraint_target", {}),
            [F("remove_all", "Constraint type:", "bool", True, text="All")]
            + [F(k, "", "bool", True, text=label) for k, label in REMOVE_TYPES],
            _run_remove, paths=("Constrain/Remove Target",),
            missing=("Point on poly constraint (the kit's is a Shrinkwrap = Geometry)", "Maintain offset")),
-    # performModifyConstraintAxes.mel: X / Y / Z on, Maintain offset off
+    # Modify Constrained Axis Options: X / Y / Z on, Maintain offset off
     Window("modify_constraint_axes", "Modify Constrained Axis Options", "Modify",
            ("allset.modify_constraint_axes", {}),
            [F("x", "Constrain:", "bool", True, text="X"), F("y", "", "bool", True, text="Y"),
             F("z", "", "bool", True, text="Z"), F("maintain_offset", "", "bool", False, text="Maintain offset")],
            _run_axes, paths=("Constrain/Modify Constrained Axis...",)),
-    # performSubstituteGeometry.mel (labels m_performSubstituteGeometry.*)
+    # Substitute Geometry Options
     Window("substitute_geometry", "Substitute Geometry Options", "Substitute Geometry",
            ("allset.substitute_geometry", {}),
            [F("reweight_distance", "Re-weighting distance tolerance:", "float", 1.0, lo=0.0, hi=10.0),

@@ -136,7 +136,7 @@ def draw_list_item_menu(self, context):
 
 
 def natural_key(name):
-    """Maya 2026 Alphabetically = natural order (joint2 before joint10; skinClusterInflMenu.mel:306-321)."""
+    """Maya 2026 Alphabetically = natural order (joint2 before joint10; measured in Maya 2026)."""
     return [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in re.split(r'(\d+)', name.casefold())
             if part]
 
@@ -316,7 +316,7 @@ def _brush(layout, context):
     _tool(assets, brush.name if brush else 'Choose a brush', 'ASSETS', icon='ASSET_MANAGER')
     assets.menu('VIEW3D_MT_brush_context_menu', text='', icon='DOWNARROW_HLT')
     col.separator(factor=0.35)
-    # Maya's paint operations first (Replace / Add / Scale / Smooth, artAttrSkinProperties.mel:137-148), Blender's
+    # Maya's paint operations first (Replace / Add / Scale / Smooth, Maya Paint Skin Weights Tool Settings), Blender's
     # extra blends on a second row
     for operations in ((('Replace', 'DRAW', 'MIX'), ('Add', 'DRAW', 'ADD'), ('Scale', 'DRAW', 'MUL'),
                         ('Smooth', 'BLUR', '')),
@@ -531,7 +531,7 @@ def _commands(layout, context):
 
 
 # Maya 2024+ Tool Settings frames in order, then Blender extras (PR #125 follow-up, PR125_MAYA_LATER.md 6; Maya 2022
-# had Influences / Gradient / Stroke / Stylus Pressure / Display, artAttrSkinProperties.mel:285-351)
+# had Influences / Gradient / Stroke / Stylus Pressure / Display)
 SECTIONS = (("Skin Clusters", _skin_clusters), ("Influences", _influences), ("Brush", _brush),
             ("Visualization", _visualization), ("Stroke", _stroke), ("Stylus Pressure", _pressure),
             ("Display", _display), ("Skin Commands", _commands), ("Selection Masking", _mask))

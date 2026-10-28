@@ -169,8 +169,8 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Graph Editor 1 / 2 / 3 = graphEditorSetViewMode 0 / 1 / 2 (hotkeySetup.mel:148-150, defaultRunTimeCommands.mel:
-# 12992-13006). Blender has Normalize; a stacked view (each curve in its own band) isn't there: 2 = normalized + notice.
+# Graph Editor 1 / 2 / 3 = graphEditorSetViewMode 0 / 1 / 2 (Maya default
+# hotkeys). Blender has Normalize; a stacked view (each curve in its own band) isn't there: 2 = normalized + notice.
 VIEW_MODES = (("ABSOLUTE", "Absolute", "Maya 1: curves at their values"),
               ("STACKED", "Stacked", "Maya 2: not in Blender, curves are normalized instead"),
               ("NORMALIZED", "Normalized", "Maya 3: curves scaled to -1..1"))
@@ -223,6 +223,54 @@ class ALLSET_OT_graph_center_time(bpy.types.Operator):
         dx = center_delta(x, region.width)
         if dx:
             bpy.ops.view2d.pan(deltax=dx, deltay=0)
+        return {'FINISHED'}
+
+
+def in_dope_sheet(context):
+    """A Dope Sheet that is not the Timeline (the Maya Time Slider is no Dope Sheet: its keys stay global)."""
+    space = getattr(context, "space_data", None)
+    return space is not None and space.type == 'DOPESHEET_EDITOR' and space.mode != 'TIMELINE'
+
+
+class ALLSET_OT_dope_sheet_key(bpy.types.Operator):
+    """Maya 2026 Dope Sheet keys: g frames the playback range, t centres the current time, h / j lock / unlock the
+    selected channels (the same as the Graph Editor's keys, measured in Maya 2026)"""
+    bl_idname = "allset.dope_sheet_key"
+    bl_label = "Dope Sheet Key"
+    bl_options = {'REGISTER'}
+
+    action: bpy.props.EnumProperty(items=(('RANGE', "Frame Playback Range", ""), ('CENTER', "Center Current Time", ""),
+                                          ('LOCK', "Lock Channel", ""), ('UNLOCK', "Unlock Channel", "")),
+                                   options={'SKIP_SAVE'})
+
+    @classmethod
+    def poll(cls, context):
+        # fails in the Timeline, so the key falls through to the window keys there (g = Repeat Last)
+        return in_dope_sheet(context) and context.region is not None and context.region.type == 'WINDOW'
+
+    def execute(self, context):
+        if self.action == 'RANGE':
+            return bpy.ops.anim.scene_range_frame()
+        if self.action == 'CENTER':
+            region = context.region
+            x, _y = region.view2d.view_to_region(context.scene.frame_current, 0.0, clip=False)
+            dx = center_delta(x, region.width)
+            if dx:
+                bpy.ops.view2d.pan(deltax=dx, deltay=0)
+            return {'FINISHED'}
+        # Blender's channel settings only reach channels shown in an expanded list; Maya locks the selected
+        # channels however the list is folded, so set the curves' lock directly
+        from .. import compat
+        lock = self.action == 'LOCK'
+        space = context.space_data
+        only_sel = space.dopesheet.show_only_selected
+        obs = [o for o in context.scene.objects if o.animation_data and (o.select_get() or not only_sel)]
+        for ob in obs:
+            for fc in compat.id_fcurves(ob):
+                if fc.select:
+                    fc.lock = lock
+        for a in context.screen.areas:
+            a.tag_redraw()
         return {'FINISHED'}
 
 
@@ -312,7 +360,7 @@ class ALLSET_OT_snap_time_toggle(bpy.types.Operator):
 
 
 def draw_view_menu(self, context):
-    """Graph Editor View > Snap Time To Selection (the Maya View menu check item, graphEditorPanel.mel:942-945)."""
+    """Graph Editor View > Snap Time To Selection (the Maya View menu check item)."""
     from .. import preferences
     try:
         prefs = preferences.get(context)
@@ -526,7 +574,7 @@ class ALLSET_OT_curve_color(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_set_tangent, ALLSET_OT_key_edit, ALLSET_OT_curve_infinity, ALLSET_OT_curve_color, ALLSET_OT_graph_view_mode, ALLSET_OT_graph_center_time,
-           ALLSET_OT_snap_time_toggle, ALLSET_OT_insert_key_tool)
+           ALLSET_OT_dope_sheet_key, ALLSET_OT_snap_time_toggle, ALLSET_OT_insert_key_tool)
 
 
 def register_bindings():

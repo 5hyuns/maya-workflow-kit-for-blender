@@ -217,7 +217,7 @@ def test_texture_borders():
         return
     for mask in ("facet", "edge", "vertex", "polymeshUV"):
         run("borders_" + mask, "uv_select_texture_borders")
-    # UV Shell mask: Maya selects nothing and keeps the selection (selectUVBorderComponents.mel:52)
+    # UV Shell mask: Maya selects nothing and keeps the selection (research/maya/re/uv_select_178.md)
     assert data()["cases"]["borders_meshUVShell"]["after"] == {}
     build("borders")
     set_mask("meshUVShell")

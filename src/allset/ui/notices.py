@@ -423,7 +423,8 @@ CATEGORIES = {
 
 
 def _anim_editor_categories(ed):
-    """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104, menus captured in Maya 2022)."""
+    """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104; menus captured in Maya 2026 since step
+    269)."""
     m = {
         f"{ed}/Edit/Transformation Tools": (
             "G / S on keys", "Blender moves and scales keys with G and S (or by dragging): it has no lattice or "
@@ -447,8 +448,15 @@ def _anim_editor_categories(ed):
             "Release notes", "Blender doesn't highlight new menu items: Help > What's New lists them."),
     }
     if ed != "Graph Editor":
-        # step 203: the Dope Sheet's last greyed curve filters (Key Sync / Peak Removal) are mapped
-        m.pop(f"{ed}/Curves", None)
+        # Maya 2026's Dope Sheet has no Curves menu, Scene Time Warp or bookmarks; its Transformation Tools and
+        # List items left greyed have their own notices (NOTICES below), Spreadsheet moved to the Channels menu
+        for key in ("Curves", "Edit/Transformation Tools", "Edit/Scene Time Warp", "List"):
+            m.pop(f"{ed}/{key}", None)
+        m[f"{ed}/Channels/Spreadsheet..."] = m.pop(f"{ed}/Curves/Spreadsheet...")
+    else:
+        m[f"{ed}/Edit/Transformation Tools/Sculpting Tools"] = (
+            "Key menu", "Blender has no key brushes: its Graph Editor smooths and decimates the selected keys from "
+            "the Key menu instead.")
     return m
 
 
@@ -462,7 +470,8 @@ CATEGORIES.update({
         "Hover", "Blender's Graph Editor doesn't highlight the curve under the mouse: the picked curve is drawn "
         "brighter once selected."),
     "Dope Sheet/View": (
-        "View menu", "Blender's Dope Sheet always draws its ticks and has no scene summary or auto frame."),
+        "View menu", "Blender's Dope Sheet has no scene summary, channel sets or key value display: a key's value "
+        "shows in the Graph Editor."),
     "UV Editor/Edit/Reset UV Editor UI": (
         "Load Factory Settings", "Blender resets editors with File > Defaults > Load Factory Settings."),
     "UV Editor/Select": (
@@ -750,8 +759,51 @@ NOTICES.update({
     f"{ed}/Tangents/{sub}Auto/{kind}": (
         "Auto Clamped handles", "Blender has one auto tangent (Auto Clamped): Maya's Ease / Mix / Custom weights "
         "aren't there.")
-    for ed in ("Graph Editor", "Dope Sheet") for sub in ("", "In Tangent/", "Out Tangent/")
+    for ed in ("Graph Editor",) for sub in ("", "In Tangent/", "Out Tangent/")
     for kind in ("Auto Ease", "Auto Mix", "Auto Custom")})
+
+
+# Step 269: Maya 2026 editor menu items with no Blender command (Maya annotations in
+# research/maya/screens/editors104/_editors104.json)
+_REMOVE_KEY = {
+    "Unsnapped": ("Select Unsnapped", "Blender has no command that deletes unsnapped keys: Edit > Select Unsnapped, "
+                  "then Delete."),
+    "Before Current Frame": ("Select before the frame", "Blender deletes only selected keys: Select > Before "
+                             "Current Frame ([), then Delete."),
+    "After Current Frame": ("Select after the frame", "Blender deletes only selected keys: Select > After Current "
+                            "Frame (]), then Delete."),
+    "Outside Selected Range": ("Select, then Delete", "Blender has no delete outside a range: select the keys to "
+                               "remove, then Delete."),
+    "Ripple Delete": ("Delete, then G", "Blender has no ripple delete for keys: delete them, then move the later "
+                      "keys back with G."),
+}
+_SHAPES = ("Shape Keys filter", "Blender shows shape key channels or not (header filters > Shape Keys); it has no "
+           "auto expand depth for them.")
+NOTICES.update({
+    **{f"{ed}/Keys/Remove Key/{item}": notice for ed in ("Graph Editor", "Dope Sheet")
+       for item, notice in _REMOVE_KEY.items()},
+    **{f"{ed}/List/Show Animated Shapes/{item}": _SHAPES for ed in ("Graph Editor", "Dope Sheet")
+       for item in ("One", "None")},
+    "Graph Editor/Select/Prefer Selected Curves": (
+        "Hide unselected (Shift+H)", "Blender picks keys on every curve it shows: hide the unselected curves "
+        "(Shift+H) to pick only on the selected ones."),
+    "Graph Editor/View/Channel Sets": (
+        "Not in Blender", "Blender's channel list has no channel sets."),
+    "Graph Editor/Curves/Offset Curves": (
+        "G with a number", "Blender moves the selected keys by a typed amount: G, then the amount, then Enter."),
+    "Graph Editor/Curves/Clamp Curves": (
+        "Limits modifier", "Blender clamps a curve's values with a Limits F-Curve modifier (Sidebar > Modifiers), "
+        "not by changing the keys."),
+    "Dope Sheet/Channels/Offset Keys": (
+        "G with a number", "Blender moves the selected keys by a typed number of frames: G, then the amount, then "
+        "Enter."),
+    "Dope Sheet/Edit/Transformation Tools/Select Tool": (
+        "Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
+    "Dope Sheet/Edit/Transformation Tools/Select Keys": (
+        "Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
+    "Dope Sheet/Edit/Transformation Tools/Move Nearest Picked Key": (
+        "Drag a key", "Blender's Dope Sheet always moves the key under the mouse when you drag it: no tool to pick."),
+})
 
 
 # Step 150 (#96): Graph Editor View items Blender can't do, one line each (Maya annotations in
@@ -1023,7 +1075,7 @@ MARKING.update({f"doSelectComponentMM/{p}": _PICK_MASK for p in (
 
 
 # step 206: polyWarpImage bakes a file texture from one UV set into another as a new image file
-# (performPolyWarpImage.mel); Blender does that with a Cycles bake.
+# (Maya UV > Warp Image); Blender does that with a Cycles bake.
 NOTICES.update({
     "UV Editor/Modify/Warp Image": (
         "Cycles Bake", "Blender has no image warp between UV sets: assign the texture with the old UV Map, make the "

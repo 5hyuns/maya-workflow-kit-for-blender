@@ -49,8 +49,8 @@ RUNTIME_MENUS = {
                        ("Create", [("Stereo Camera",), ("Multi Stereo Rig",)]),
                        ("-", "Stereo Links"), ("Make Links",), ("Break Links",)],
 }
-# Maya 2022's Cache menu = three plug-in submenus; the static parse saw only AniGeoCacheMenu.mel (Geometry
-# Cache). Alembic: $M/scripts/others/AlembicCreateUI.mel:158-198, GPU: gpuCacheCreateUI.mel:812-841.
+# Maya 2022's Cache menu = three plug-in submenus; the static parse saw only the Geometry
+# Cache one. Alembic and GPU Cache items: Maya 2022 Cache menu labels.
 CACHE_MENU = "mainPipelineCacheMenu"
 ALEMBIC = [("Open Alembic...",), ("Reference Alembic...",), ("Import Alembic...",), ("Replace Alembic...",),
            ("Export All to Alembic...",), ("Export Selection to Alembic...",), ("About Alembic...",)]

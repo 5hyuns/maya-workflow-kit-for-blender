@@ -79,7 +79,7 @@ class _Ops:
 
 def test_header_extras_off_and_search_under_layouts():
     """No Maya viewport header has a mode picker or a pulse: both are add-on preferences, off by default. The Tool
-    Box Search button sits under the layout / Outliner buttons (Maya 2022.1+ toolBox.mel:367-379), and the column
+    Box Search button sits under the layout / Outliner buttons (Maya 2022.1+ Tool Box), and the column
     keeps Maya's measured width (no +3 px)."""
     from types import SimpleNamespace
     prefs = import_module(kit.MODULE + ".preferences").get()

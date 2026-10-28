@@ -553,7 +553,7 @@ SECOND_SKIN_NOTE = ("Blender keeps one skin per mesh here: FBX and game engines 
 
 
 def question_text(name):
-    """Maya's Bind Skin question (canAddMultiSkinClustersDialog.mel:13-80, maya2026_paint_skin_weights.md §6)."""
+    """Maya's Bind Skin question (maya2026_paint_skin_weights.md §6)."""
     return f"There is already a skin cluster on {name}.\nDo you want to create another?"
 
 
@@ -641,7 +641,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
             return {'CANCELLED'}
         skinned = [m for m in meshes if armature_modifier(m) is not None]
         if skinned:
-            # Maya 2024+ asks before a second skinCluster (canAddMultiSkinClustersDialog.mel); decision 5: the kit
+            # Maya 2024+ asks before a second skinCluster; decision 5: the kit
             # keeps one skin per mesh — the question with Yes greyed and the Blender way (step 224)
             QUESTION["mesh"] = skinned[0].name
             if context.window is not None:

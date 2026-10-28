@@ -687,7 +687,7 @@ def cut_all(curves, last_only=False, keep_longest=False):
 
 
 # --- Curves > Bend / Curl / Scale Curvature (step 207) ------------------------------------------------------
-# Maya's modifySelectedCurves.mel (research/maya/re/curves_201.md §1): the CVs become "deflections" — each CV leg
+# Maya's Curves > Bend / Curl / Scale Curvature commands (research/maya/re/curves_201.md §1): the CVs become "deflections" — each CV leg
 # expressed in a frame carried along the curve (start frame from the first leg with the twist axis taken from Maya's
 # Y-up world, each next frame = the previous one turned onto the next leg by half the angle twice, getNewFrame). The
 # commands edit deflections (or the points) and rebuild the CVs from them. Points are in Maya's Y-up object space.

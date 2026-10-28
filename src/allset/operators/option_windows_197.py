@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 197 (#104): Maya's Cleanup Options window for Mesh > Cleanup... (operators/poly_cleanup.py).
 
-Title / button / labels / factory values from Maya 2022 performPolyCleanup.mel (:58-126 optionVars, :342-440 layout,
-labels in resources/MayaStrings m_performPolyCleanup.*), spec research/maya/re/cleanup_197.md.
+Title / button / labels / factory values from Maya 2022's Cleanup Options window,
+spec research/maya/re/cleanup_197.md.
 """
 
 from .option_windows import F, Window

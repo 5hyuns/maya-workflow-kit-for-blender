@@ -623,7 +623,7 @@ DEFAULTS = {
                 "squash": 1.0, "stretch": 1.0, "shear": 0.0, "bend": 0.0},
     # Solidify Options ($P/solidify/cmd_create.py:31-36)
     'SOLIDIFY': {"attachment": "Borders", "stabilization": 0, "border_falloff": True, "falloff_iterations": 2},
-    # Sculpt Options ($M/others/performSculpt.mel:32-77)
+    # Sculpt Options (Maya factory values)
     'SCULPT': {"mode": "Stretch", "inside_mode": "Even", "max_displacement": 0.1, "dropoff_type": "Linear",
                "dropoff_distance": 1.0, "centered": True},
 }
@@ -971,7 +971,7 @@ def _windows():
             F("border_falloff", "", "bool", True, text="Use border falloff"),
             F("falloff_iterations", "Falloff iterations:", "int", 2, lo=0, hi=100)], run('SOLIDIFY'),
             paths=("Deform/Solidify",), missing=ADVANCED),
-        # Sculpt Options ($M/others/performSculpt.mel:32-77, MEL box)
+        # Sculpt Options (Maya factory values)
         Window("deform_sculpt", "Sculpt Options", "Create", (match, {"kind": 'SCULPT'}), [
             F("mode", "Mode:", "enum", "Stretch", items=SCULPT_MODES),
             F("inside_mode", "Inside mode:", "enum", "Even", items=INSIDE_MODES),

@@ -21,7 +21,7 @@ from .. import results, undo_steps
 
 NEW_SET = "colorSet1"          # Apply Color on a mesh without a set (mayapy apply_object)
 UNSET = (1.0, 1.0, 1.0, 1.0)
-APPLY_COLOR = (0.5, 0.5, 0.5)  # performApplyColor.mel:34-49 (polyApplyColor<Channel>Value)
+APPLY_COLOR = (0.5, 0.5, 0.5)  # Maya Apply Color Options factory value (polyApplyColor<Channel>Value)
 APPLY_ALPHA = 1.0
 OPERATIONS = (('REPLACE', "Replace", "Replace the colour (Maya factory)"), ('ADD', "Add", "Add the colour"),
               ('SUBTRACT', "Subtract", "Subtract the colour"), ('REMOVE', "Remove", "Remove the colour"))

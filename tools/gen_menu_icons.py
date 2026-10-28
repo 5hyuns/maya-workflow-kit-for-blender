@@ -161,7 +161,7 @@ def build():
 
     by_image, by_command, by_label = {}, {}, {}
     for shelf, _tab, buttons in shelf_data.SHELVES:
-        raw = shelves[shelf]
+        raw = [b for b in shelves[shelf] if not b.get("separator")]     # step 269: Maya 2026 files list separators
         for i, (label, command) in enumerate(buttons):
             button = ("shelf", shelf, label, i)
             by_label.setdefault(f"{shelf}/{label}", button)

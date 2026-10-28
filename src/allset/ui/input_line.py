@@ -2,8 +2,8 @@
 """Maya's Status Line Input Line (research/maya/ui_layout.md:208-211; docs/steps/step_75.md 「계획」).
 
 A mode button (Absolute transform / Relative transform / Rename / Select by name) and either three
-X / Y / Z fields or one text field. Re-implemented from Maya 2022 statusLine.mel:1928-2245,
-numericalInputChangeCommand.mel and renameSelectionList.mel:
+X / Y / Z fields or one text field. Behaves like Maya 2022's Status Line
+input field (measured):
 
 - Abs / Rel apply the current tool (Move / Rotate / Scale; any other tool = Move) to the selection on
   the axes typed in; an empty field leaves that axis alone; the fields clear afterwards.
@@ -33,7 +33,7 @@ MODES = (
     ('SELECT', "Select by Name", "Select objects by name; * and ? are wildcards", 'VIEWZOOM', 3),
 )
 TOOLS = {"builtin.move": 'MOVE', "builtin.rotate": 'ROTATE', "builtin.scale": 'SCALE'}
-NAME_RULE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")   # renameSelectionList.mel:81
+NAME_RULE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")   # Maya's rule for a valid node name
 _TRAIL = re.compile(r"^(.*?)(\d+)$")
 HISTORY_PATH = "Status Line/Construction History"
 
@@ -288,7 +288,7 @@ class ALLSET_PG_input_line(bpy.types.PropertyGroup):
 # --- drawing ------------------------------------------------------------------------------------------
 
 def draw_history(layout, context):
-    """Maya's Construction History toggle (statusLine.mel:3017-3032; step 189): pressed = on."""
+    """Maya's Construction History toggle (Maya 2022 Status Line; step 189): pressed = on."""
     layout.operator(ALLSET_OT_construction_history.bl_idname, text="", icon='RECOVER_LAST',
                     depress=context.window_manager.allset_construction_history)
 

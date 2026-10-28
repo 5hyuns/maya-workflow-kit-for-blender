@@ -76,7 +76,7 @@ class _Fake:
 
 
 def test_symmetry_box_is_a_drop_down():
-    """Maya's "Symmetry: Off" box opens the list on a click (statusLine.mel:1909-1925); it was a text field."""
+    """Maya's "Symmetry: Off" box opens the list on a click (Maya 2022 Status Line); it was a text field."""
     log = []
     status_line.draw_status_line(_Fake(log), bpy.context)
     props = [e for e in log if e[0] == "prop" and len(e[1]) > 1 and e[1][1] == "allset_symmetry_text"]

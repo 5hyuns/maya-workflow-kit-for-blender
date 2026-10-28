@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Insert Key (Alt+I, Ctrl+Shift+W/E/R), Nudge Keys (Shift+( / )) and Select Previous / Next Key (Ctrl+Alt+, / .).
 
-research/maya/hotkeys_and_menus.md:158-166; defaultRunTimeCommands.mel (research/maya/runtime_commands.json):
-InsertKeyTranslate / Rotate / Scale = ``setKeyframe -insert -at translate|rotate|scale`` (:11980-11994), InsertKey =
-``insertKey`` (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's; :200-222),
-Nudge = ``keyframe -animation keys -r -o over -tc ±1`` (:1019, :1026), SelectNext/PreviousKey = ``selectNextOrPrevKey``
-(from the last selected key: find the next / previous key, select only it, go there; :225-241). Plan: docs/steps/step_83.md.
+research/maya/hotkeys_and_menus.md:158-166; Maya runtime commands (research/maya/runtime_commands.json):
+InsertKeyTranslate / Rotate / Scale = ``setKeyframe -insert -at translate|rotate|scale``, InsertKey =
+``insertKey`` (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's),
+Nudge = ``keyframe -animation keys -r -o over -tc ±1``, SelectNext/PreviousKey = ``selectNextOrPrevKey``
+(from the last selected key: find the next / previous key, select only it, go there). Plan: docs/steps/step_83.md.
 
 An insert keeps the curve's shape. Blender 4.5's ``keyframe_points.insert`` already subdivides a segment between two
 auto-handle keys (measured: 1e-6) and keeps the handles auto (= Maya Auto tangents, which follow later edits); with

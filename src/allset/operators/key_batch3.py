@@ -17,7 +17,7 @@ from .. import results
 
 # Maya background (step 120, docs/steps/step_120.md). Measured in a running Maya 2022 with factory prefs
 # (research/maya/screens/bg120/_bg120.json, research/scripts/maya_bg120/bg120.py, research/maya/re/background_120.md):
-# cycleBackgroundColor ($M/scripts/others/cycleBackgroundColor.mel) is one global state for every viewport -
+# Maya's Alt+B background cycle is one global state for every viewport -
 #   gradient on        -> background 0 0 0, gradient off
 #   background == 0    -> 0.36 (factory)
 #   background <  0.5  -> 0.631
@@ -58,7 +58,7 @@ def background_state(shading):
 
 
 def next_state(state):
-    """Maya's rule (cycleBackgroundColor.mel) on a state or a display value, flat colours only (no gradient)."""
+    """Maya's Alt+B rule on a state or a display value, flat colours only (no gradient)."""
     value = {"GREY": FLAT, "LIGHT": LIGHT, "BLACK": BLACK}.get(state, state)
     if value == 0:
         return "GREY"

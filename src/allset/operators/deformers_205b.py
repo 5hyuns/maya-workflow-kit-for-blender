@@ -696,7 +696,7 @@ def windows():
             F("use_original", "", "bool", False, text="Use Original Morph Target")], _run_morph,
             paths=("Deform/Morph",),
             missing=("Use Component Lookup (points pair by index)",) + ADVANCED),
-        # $M/others/performJiggle.mel:34-75: Stiffness 0.5, Damping 0.5, Weight 1.0, Jiggle only when object stops
+        # Maya Jiggle Options factory values: Stiffness 0.5, Damping 0.5, Weight 1.0, Jiggle only when object stops
         # off, Ignore transform off
         Window("deform_jiggle", "Jiggle Deformer Options", "Create", ("allset.jiggle", {}), [
             F("stiffness", "Stiffness:", "float", 0.5, lo=0.0, hi=1.0),

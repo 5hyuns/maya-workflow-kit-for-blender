@@ -2,7 +2,7 @@
 """Maya File > Game Exporter (step 225, Issue #135; ATTACH_PLAN L24): the Model / Animation export window with
 Maya's Animation Clips list, written with the kit's Maya FBX preset (operators/file_io.py, step 222 rig post-process).
 
-Maya 2026 (mayapy, research/scripts/maya_anim225/game_exporter.py; ``$M/others/gameFbxExporter*.mel``):
+Maya 2026 (mayapy, research/scripts/maya_anim225/game_exporter.py; the Game Exporter window):
 
 - settings live on a ``gameFbxExporter`` node; factory values (createNode, ``FACTORY``): Export All, Model tab,
   one file, Bake Animation on, Skinning / Blend Shapes on, Smoothing Groups / Tangents and Binormals on, Triangulate /
@@ -35,8 +35,8 @@ FACTORY = {"export_type": 'MODEL', "export_set": 'ALL', "model_file_mode": 'SING
            "tangents": True, "triangulate": False, "move_to_origin": False, "embed_media": False,
            "include_children": False, "input_connections": False, "up_axis": 'Y', "include_cameras": True,
            "include_lights": True}
-# What a user sees: the window applies its default presets the first time it opens (gameExp_CreateDefaultPresets,
-# gameFbxExporterPreset.mel) — Model tab "Model Default", Animation Clips tab "Anim Default" (step 266 independent
+# What a user sees: the window applies its default presets the first time it opens
+# — Model tab "Model Default", Animation Clips tab "Anim Default" (step 266 independent
 # check, mayapy 2026 applyAttrPreset of both preset files on a fresh node). The kit keeps the per-tab values.
 PRESET_MODEL = {"embed_media": True, "include_children": True, "input_connections": True}
 PRESET_ANIM = {"file_split": 'PER_CLIP', "embed_media": True, "include_cameras": False, "include_children": False,
@@ -433,7 +433,7 @@ def _row(layout, label):
 
 
 def draw(layout, context):
-    """The Game Exporter window (Maya gameFbxExporter.mel: tabs, export set, settings, Up Axis, Path / file name)."""
+    """The Game Exporter window (Maya's Game Exporter: tabs, export set, settings, Up Axis, Path / file name)."""
     s = settings(context)
     layout.row().prop(s, "export_type", expand=True)
     box = layout.box()
@@ -457,7 +457,7 @@ def draw(layout, context):
         sub = grid.row()
         sub.enabled = name not in {"blendshapes", "move_to_origin"}
         sub.prop(s, tab_prop(s, name))
-    # Maya: the "Up Axis" label, then Y / Z (gameFbxExporter.mel, research/maya/re/060_messages_ui.md B6)
+    # Maya: the "Up Axis" label, then Y / Z (research/maya/re/060_messages_ui.md B6)
     _row(col, "Up Axis").row().prop(s, "up_axis", expand=True)
     box = layout.box()
     _row(box, "Path").prop(s, "export_path", text="", placeholder="Choose an export directory")
@@ -485,7 +485,7 @@ class ALLSET_OT_game_exporter(bpy.types.Operator):
 
     def execute(self, context):
         # step 263 (Issue #154): Maya's Game Exporter is an ordinary floating window that stays open while you work
-        # (gameFbxExporter.mel ``window`` + ``showWindow``, B6) — a kit window, no longer a popup a click outside closed
+        # (a floating Maya window, B6) — a kit window, no longer a popup a click outside closed
         from ..ui import marked_window
         s = settings(context)
         if not s.export_path:

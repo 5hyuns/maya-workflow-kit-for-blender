@@ -3,7 +3,7 @@
 
 Maya 2022's Hotkey Editor lists the commands of the current hotkey set with their keys, searches them by name or by
 hotkey, filters by category, and lets a key be assigned (warning when another command already uses it). The kit's
-list = Maya's factory hotkeys (``keymap/hotkey_rows``: hotkeySetup.mel joined with ``keymap/mapping.py``) with what
+list = Maya's factory hotkeys (``keymap/hotkey_rows``: Maya's factory hotkey list joined with ``keymap/mapping.py``) with what
 the kit binds for each one.
 
 A binding is changed the Blender way: on the item of ``wm.keyconfigs.user`` — the merged keymap Blender's own

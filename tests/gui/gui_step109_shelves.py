@@ -16,8 +16,8 @@ C = {"rects": {}}
 shelf = import_module(MODULE + ".ui.shelf")
 shelf_data = import_module(MODULE + ".ui.shelf_data")
 notices = import_module(MODULE + ".ui.notices")
-MAYA_COUNTS = {"CurvesSurfaces": 38, "Polygons": 43, "Sculpting": 26, "Rigging": 18, "Animation": 14,
-               "Rendering": 25, "FX": 29, "FXCaching": 10}
+MAYA_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
+               "Animation": 15, "Rendering": 26, "FX": 29, "FXCaching": 10}     # Maya 2026 (step 269)
 TABS = [s[0] for s in shelf_data.SHELVES]
 
 
@@ -79,7 +79,7 @@ for _name in TABS:
 
 @step
 def s_greyed_hover():
-    bpy.ops.allset.shelf_select(shelf="CurvesSurfaces")
+    bpy.ops.allset.shelf_select(shelf="Surfaces")
     redraw()
     _cur, buttons = shelf.icon_buttons(bpy.context)
     C["trim"] = next(k for k, b in enumerate(buttons) if b[1] == "Trim Tool")

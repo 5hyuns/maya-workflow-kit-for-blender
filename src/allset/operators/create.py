@@ -92,7 +92,7 @@ KINDS = {
                       (0.0, HALF_PI, 0.0)),
     'FIELD_VORTEX': ("Vortex Field", "vortexField", "object.effector_add", {"type": 'VORTEX', "radius": 1.0}, None),
 }
-# Maya Fields/Solvers factory magnitudes (dynSetOptionVars.mel setGravityOptionVars / setNewtonOptionVars, mayapy
+# Maya Fields/Solvers factory magnitudes (Gravity / Newton Options, mayapy
 # check in research/maya/re/fields_141.md): Gravity 9.8 along Maya -Y (the Wind above is turned to blow down),
 # Newton 5 pulling in (Blender Force: negative strength attracts). An acceleration in Maya units per second squared,
 # so it is scaled by the step 68 simulation scale g = maya_unit() / Space Scale like the nucleus gravity (#72).

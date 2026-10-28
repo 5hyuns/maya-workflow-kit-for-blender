@@ -38,7 +38,7 @@ def test_package_contents():
     # images are the kit's own, rendered by tools/make_splash.py (docs/steps/step_42.md).
     kit_images = {"app_template/Maya_Workflow_Kit/splash.png", "app_template/Maya_Workflow_Kit/splash_2x.png", "welcome.png"}
     assert kit_images <= set(names), kit_images - set(names)
-    assert not [n for n in names if (n.endswith((".mel", ".png", ".xpm", ".svg")) and n not in kit_images)
+    assert not [n for n in names if (n.rsplit(".", 1)[-1] in ("mel", "png", "xpm", "svg") and n not in kit_images)
                 or "research" in n]
 
 

@@ -4,11 +4,11 @@
 - Edit menu key windows from a key editor act on the **selected keys** (Maya ``doCutKeyArgList`` & co.: from the
   Graph Editor with keys selected and the "keys" option; else the time range of the nodes, ``operators/time_keys``).
 - Keys > Add / Remove Inbetween: the keys after the current time on the curves the editor shows move by one frame
-  (``loadAnimMenuLibrary.mel`` ``doKeyEdit``).
+  (Maya's Graph Editor Keys menu).
 - Keys > Mute / Unmute Key (``doMuteKey``): Maya keys a mute node so the curve holds the muted key's value until the
   next unmuted key (mayapy, ``tmp/maya157/mute2.py``). Blender has no per-key mute: a Stepped F-modifier limited to
   [muted key, next unmuted key) gives the same values; the modifiers named ``MUTE_NAME`` are the kit's.
-- Select > All / Only Curve / Curve / Key / In Tangent / Out Tangent (``graphEditorPanel.mel:903-945``): pick masks
+- Select > All / Only Curve / Curve / Key / In Tangent / Out Tangent (Maya's Graph Editor Select menu): pick masks
   as add-on prefs; Blender has none, so ``_mask_tick`` filters what a selection just added.
 - Tangents > Default In / Out Tangent: add-on prefs applied to the keys the kit sets (``after_insert``).
 """

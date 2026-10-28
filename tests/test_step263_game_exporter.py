@@ -1,5 +1,5 @@
-"""Step 263 (Issue #154): the Game Exporter is a kit window that stays open (Maya: a plain floating window,
-gameFbxExporter.mel), with Maya 2026's field facts (research/maya/re/060_messages_ui.md B6, measured with
+"""Step 263 (Issue #154): the Game Exporter is a kit window that stays open (Maya: a plain floating
+window), with Maya 2026's field facts (research/maya/re/060_messages_ui.md B6, measured with
 getPluginResource / the node's attributes): an "Up Axis" label before Y / Z, File Name empty with the grey hint
 "Enter a filename" (one file) / "Multi File Prefix" / "Clip File Prefix", a new clip = empty name shown as the
 "Clip Name" hint with the playback range, Maya's error texts."""

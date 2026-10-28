@@ -11,12 +11,12 @@ the same Error report (``report_nested``) instead of Blender's Python error.
 WRONG_SELECTION = "Current selection doesn't match required selection type."     # polyRemesh / polyReduce
 NO_LIVE_SURFACE = "A live surface is required for conform."                         # dR_conformToLiveSurface
 NO_CONFORM_SELECTION = "No components or objects selected for conform."
-MUST_SELECT_JOINT = "You must select at least one joint."                           # createSkinCluster.mel:244
+MUST_SELECT_JOINT = "You must select at least one joint."                           # Maya Bind Skin, no joint selected
 SELECT_TO_BIND = "Select objects to bind."                     # Bind Skin, nothing selected (step 258 / 266 mayapy)
 BINDABLE_IN_SELECTION = "Bindable objects must be part of the selection."   # Bind Skin, joints only (step 266)
 NO_TARGETS = "Target list was empty or contained no valid targets."                 # parent / point / orient /
 #                                                    scale / aim / geometry constraint (B4 + step 258 measurements)
-MOVE_IK_TO_FK = "Must select an ik handle, joint or object that connected to IK/FK."   # moveIKtoFK.mel:256
+MOVE_IK_TO_FK = "Must select an ik handle, joint or object that connected to IK/FK."   # Maya Move IK to FK
 # research/maya/re/060_messages_ui.md B4 additions (step 258 mayapy): nothing selected / a plain skeleton
 REMESH_NOTHING = "This command requires at least 1 argument(s) to be specified or selected;  found 0."
 REDUCE_NOTHING = "Reduce requires that at least 1 object or group of faces be selected."
@@ -43,7 +43,7 @@ def report_nested(op, ex):
 
 # Maya menu commands that Blender runs as a modifier on the active object (ui/menu_map._mod): which Maya check runs
 # first. Remesh / Reduce: polyRemesh / polyReduce want polygon meshes; Conform: dR_conformToLiveSurface wants a live
-# surface (Modify > Make Live) before anything else (drInit.mel:521-526), then a selection.
+# surface (Modify > Make Live) before anything else, then a selection.
 _NOTHING = {'REMESH': REMESH_NOTHING, 'DECIMATE': REDUCE_NOTHING}
 
 

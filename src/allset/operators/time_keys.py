@@ -3,7 +3,7 @@
 (Cut / Copy / Paste / Delete / Snap / Keys / Tangents / Set Range to).
 
 research/maya/workflows/animation.md §1.1 (S keys every keyable attribute), §3 rows 5, 8, 11-13; Maya
-``others/TimeSliderMenu.mel:300-770`` (the time slider edits act on ``timeControl -q -range``: the
+Time Slider menu (the time slider edits act on ``timeControl -q -range``: the
 Shift-dragged range, else the current frame), design docs/steps/step_56.md 「계획」 2, 4.
 
 Nodes are the Channel Box's (``ui/channel_box.targets``): selected objects, or the selected pose bones

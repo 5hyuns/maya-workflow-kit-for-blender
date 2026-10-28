@@ -61,7 +61,7 @@ def _gkm():
 
 
 def _on_selected(context, v):
-    """Maya fromGraphEditor rule (doCutKeyArgList.mel & co.): a key window opened from a Graph Editor / Dope Sheet
+    """Maya fromGraphEditor rule (Cut / Copy / Paste Keys & co.): a key window opened from a Graph Editor / Dope Sheet
     menu with keys selected and Method Keys acts on those keys, not on the nodes' time range (step 157)."""
     g = _gkm()
     return g.in_key_editor(context) and v.get("method", "Keys") == "Keys" and g.has_selected_keys(context)

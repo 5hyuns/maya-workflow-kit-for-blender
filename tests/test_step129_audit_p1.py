@@ -71,7 +71,7 @@ def test_component_edit_delete_deletes_faces():
     assert _item("Edit/Delete") == {'FINISHED'}
     assert bpy.context.mode == 'EDIT_MESH' and _faces(ob) == 5
     ob = _edit_one_face()
-    assert _item("Edit/Cut") == {'FINISHED'}         # Maya Cut on faces deletes them (cutCopyPaste.mel warns)
+    assert _item("Edit/Cut") == {'FINISHED'}         # Maya Cut on faces deletes them (Maya warns)
     assert _faces(ob) == 5
 
 

@@ -2,8 +2,8 @@
 """Maya 3D Cut and Sew UV Tool (docs/steps/step_79.md 「계획」).
 
 research/maya/workflows/uv.md:30-39: UV > 3D Cut and Sew UV Tool switches to edge mode; in the 3D View an LMB drag
-along edges cuts the UVs there, Ctrl+drag sews; tool keys x / s / d = Cut / Sew / Unfold + Layout (hotkeySetup.mel:
-539-541); shell borders (Texture Borders) show thick. The cut / sew themselves are step 66's ``uv_tools.cut`` /
+along edges cuts the UVs there, Ctrl+drag sews; tool keys x / s / d = Cut / Sew / Unfold + Layout (Maya default
+hotkeys); shell borders (Texture Borders) show thick. The cut / sew themselves are step 66's ``uv_tools.cut`` /
 ``sew``; the edge under the mouse is the pre-selection pick (step 74), so the red highlight is the edge a press takes.
 """
 

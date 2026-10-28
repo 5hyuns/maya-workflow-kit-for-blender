@@ -382,7 +382,7 @@ def _menu_row(layout):
 def _draw_cm(layout, context, menu=False):
     """Exposure / gamma fields and the view transform (Maya's colour management controls). Maya's exposure / gamma
     icons switch between the default and the last value; the colour management icon is a check box
-    (createColorManagementSection.mel). ``menu``: one line per control (the » popover)."""
+    (Maya panel toolbar). ``menu``: one line per control (the » popover)."""
     vs = context.scene.view_settings
     set_op = panel_menus.ALLSET_OT_panel_set.bl_idname
 

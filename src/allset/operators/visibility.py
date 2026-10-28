@@ -185,8 +185,8 @@ class ALLSET_OT_visibility(bpy.types.Operator):
 
 
 def message(action, had_selection, changed):
-    """Maya's in-view message for a visibility action, or None (doHideObjects.mel:76-90,
-    toggleVisibilityAndKeepSelection.mel:124-125)."""
+    """Maya's in-view message for a visibility action, or None (Maya's Hide / Toggle
+    Visibility messages)."""
     if action == 'HIDE':
         if had_selection:
             return ("Selection <hl>hidden</hl>.\n"

@@ -34,7 +34,7 @@ from . import cb_entry, cb_points, chrome
 CATEGORY = "Channel Box / Layer Editor"
 AE_CATEGORY = "Attribute Editor"
 MTK_CATEGORY = "Modeling Toolkit"
-# Channel Box pane share of the dock, Layer Editor below: initChannelsLayers.mel asks for 70 % (research/maya/
+# Channel Box pane share of the dock, Layer Editor below: Maya's default split is 70 % (research/maya/
 # ui_layout.md:252), but the factory Maya 2022 screen puts the Display / Anim tabs at y 473 of a 132-785 dock
 # (research/maya/screens/audit7/maya/a01_first_screen.png) = about half of the kit's sidebar below its header; step 135
 # measured the panes: ChannelBoxForm 299 px / LayerEditorForm 328 px (research/maya/screens/cb135/_cb135.json) = 0.48.
@@ -1295,7 +1295,7 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         context menu draws its C items first and a Python menu only after them (step 148, #87: the Channels items
         sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
         that isn't selected becomes the selection first (delegated), so Key Selected keys the clicked channel."""
-        if edit:     # Ctrl+RMB = the Edit menu (initChannelBox.mel:533-539, channel_box.md:35), selection kept
+        if edit:     # Ctrl+RMB = the Edit menu (Maya Channel Box, channel_box.md:35), selection kept
             bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
             return {'RUNNING_MODAL'}
         if hit is not None:
@@ -1547,7 +1547,7 @@ class ALLSET_OT_cb_show_all(bpy.types.Operator):
 # --- menus -------------------------------------------------------------------------------------------
 
 class ALLSET_MT_cb_channels(bpy.types.Menu):
-    """Maya Channel Box Channels menu (RMB anywhere in the Channel Box; generateChannelMenu.mel:87-178,
+    """Maya Channel Box Channels menu (RMB anywhere in the Channel Box;
     research/maya/channel_box.md §2.4; step 158 completes it)"""
     bl_label = "Channels"
 
@@ -1595,7 +1595,7 @@ class ALLSET_MT_cb_channels(bpy.types.Menu):
 
 
 class ALLSET_MT_cb_freeze(bpy.types.Menu):
-    """Maya Channels > Freeze (makeIdentity -apply, channelBoxCommand.mel -freezeTranslate ...)"""
+    """Maya Channels > Freeze (makeIdentity -apply on the chosen channels)"""
     bl_label = "Freeze"
 
     def draw(self, context):
@@ -1653,7 +1653,7 @@ class ALLSET_MT_cb_settings(bpy.types.Menu):
 
 
 class ALLSET_MT_cb_edit(bpy.types.Menu):
-    """Maya Channel Box Edit menu (generateCBEditMenu.mel:72-174, research/maya/channel_box.md:124-133)"""
+    """Maya Channel Box Edit menu (research/maya/channel_box.md:124-133)"""
     bl_label = "Edit"
 
     def draw(self, context):
@@ -1761,7 +1761,7 @@ class ALLSET_MT_cb_show(bpy.types.Menu):
             chrome.grey(lay, label)
 
 
-# Maya Channel Box menu bar, left to right (initChannelsLayers.mel:456-474, channel_box.md:27-30).
+# Maya Channel Box menu bar, left to right (Maya 2022, channel_box.md:27-30).
 MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit"),
             ("Object", "ALLSET_MT_cb_object"), ("Show", "ALLSET_MT_cb_show"))
 # Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).

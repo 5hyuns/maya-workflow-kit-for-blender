@@ -166,13 +166,19 @@ GRAPH_ICONS = (
     ("curvesPostInfinityCycleOffsetButton", 'FRAME_NEXT', _inf("POST", "CYCLE_OFFSET"),
      "Post-infinity cycle with offset"),
     "|",
+    # Maya 2026: the editor buttons at the right end are getGraphEditorButton / getDopeSheetButton / getCTEButton
+    # in both editors (Maya 2022: getTraxButton for the Time Editor)
+    ("getGraphEditorButton", 'GRAPH', ("allset.open_editor", {"ui_type": 'FCURVES'}), "Open the Graph Editor"),
     ("getDopeSheetButton", 'ACTION', ("allset.open_editor", {"ui_type": 'DOPESHEET'}), "Open the Dope Sheet"),
-    ("getTraxButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),
+    ("getCTEButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),
 )
 
+# Maya 2026 Dope Sheet tools: Select keys / Move Tool / Scale Tool / Insert Keys Tool (Maya 2022: select, move
+# nearest picked key, insert)
 DOPE_ICONS = (
-    ("selectKeyTool", 'RESTRICT_SELECT_OFF', None, "Select keys"),
-    ("directKeyTool", 'ORIENTATION_CURSOR', None, "Move Nearest Picked Key Tool"),
+    ("selectTool", 'RESTRICT_SELECT_OFF', None, "Select keys"),
+    ("moveTool", 'ORIENTATION_CURSOR', ("transform.transform", {"mode": 'TIME_TRANSLATE'}), "Move Tool"),
+    ("scaleTool", 'FULLSCREEN_ENTER', ("transform.transform", {"mode": 'TIME_SCALE'}), "Scale Tool"),
     ("insertKeyTool", 'KEY_HLT', "action.keyframe_insert", "Insert Keys Tool"),
     "|", "STATS", "|",
     ("frameAllButton", 'ZOOM_ALL', "action.view_all", "Frame all"),
@@ -185,8 +191,11 @@ DOPE_ICONS = (
      "Auto load Dope Sheet on selection"),
     ("OutlineEdreloadButton", 'FILE_REFRESH', ("allset.graph_list", {"action": "LOAD"}), "Load the selected objects"),
     "|",
+    ("dopeSheetTimeSnapButton", 'SNAP_ON', ("prop", "tool_settings.use_snap_anim", {}), "Time snap"),
+    "|",
     ("getGraphEditorButton", 'GRAPH', ("allset.open_editor", {"ui_type": 'FCURVES'}), "Open the Graph Editor"),
-    ("getTraxButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),
+    ("getDopeSheetButton", 'ACTION', ("allset.open_editor", {"ui_type": 'DOPESHEET'}), "Open the Dope Sheet"),
+    ("getCTEButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),
 )
 
 _UVE = "space_data.uv_editor"
@@ -246,7 +255,7 @@ ICONS = {GE: GRAPH_ICONS, DS: DOPE_ICONS, UV: UV_ICONS, "Hypershade": HS_GRAPH_I
 NOTICES = {
     "directKeyTool": ("Drag a key", "Blender's Graph Editor / Dope Sheet always move the key under the mouse when you "
                       "drag it: no tool to pick."),
-    "selectKeyTool": ("Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
+    "selectTool": ("Click / box select", "Blender selects keys with a click or a box drag: no tool to pick."),
     "latticeDeformKeyTool": ("Scale (S)", "Blender has no lattice for keys: scale the selected keys with S."),
     "valueSnapButton": ("Snap", "Blender snaps keys to frames only (Edit > Snap, time snap button)."),
     "toggleTextureBorderButton": ("Seams", "Blender draws seams in the 3D View, not texture borders here."),
@@ -1297,6 +1306,7 @@ def draw_channels():
         return
     top, h = metrics(region)
     s = context.preferences.system.ui_scale
+    pins = getattr(context.window_manager, "allset_show_pins", True)      # Maya 2026 View > Show Pins
     gpu.state.blend_set('ALPHA')
     _rect(0, 0, region.width, top, BACK)
     font = 0
@@ -1320,7 +1330,8 @@ def draw_channels():
             blf.color(font, *(attr_color(fc) if kind == "UP_SDK" else TEXT))
             blf.position(font, 66 * s, y - h + 6 * s, 0)
             blf.draw(font, _up_label.get((kind, fc.as_pointer()), ""))
-            _draw_pin(56 * s, y - h / 2, s, False)
+            if pins:
+                _draw_pin(56 * s, y - h / 2, s, False)
         elif kind != "ATTR":
             sign = "−" if _expanded.get(node_key(node), True) else "+"
             blf.color(font, *TEXT)
@@ -1332,7 +1343,8 @@ def draw_channels():
             blf.color(font, *attr_color(fc))
             blf.position(font, 44 * s, y - h + 6 * s, 0)
             blf.draw(font, attr_label(fc))
-            _draw_pin(34 * s, y - h / 2, s, is_pinned(node, fc))
+            if pins:
+                _draw_pin(34 * s, y - h / 2, s, is_pinned(node, fc))
         y -= h
     n_vis = visible_rows(region)
     if len(all_rows) > n_vis:       # Maya's scroll bar at the right edge: thumb = the shown part of the list
@@ -1700,8 +1712,10 @@ FLAGS = (
      "and the driver's own curve"),
     ("allset_hierarchy_below", "Hierarchy Below", "Also show the keys of the listed objects' children (the kit lists "
      "them as rows)"),
+    ("allset_show_pins", "Show Pins", "Toggle display of pinning buttons in the outliner"),
 )
-FLAGS_ON = {"allset_show_upstream"}      # Maya factory: Show Upstream Curves checked (graph_editor_201.md §3)
+# Maya factory: Show Upstream Curves checked (graph_editor_201.md §3); View > Show Pins checked (Maya 2026 capture)
+FLAGS_ON = {"allset_show_upstream", "allset_show_pins"}
 
 
 # --- header draws ------------------------------------------------------------------------------------------------

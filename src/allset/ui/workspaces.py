@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya workspaces: Windows > Workspaces, the Status Line "Workspace:" dropdown, Reset Current Workspace (step 160, #81).
 
-Maya 2022 lists its factory workspaces in this order (``$gFactoryWorkspaces``, scripts/startup/buildViewMenu.mel:29-43;
-dividers after General, XGen - Interactive Groom, Animation and Rendering - Expert, :176-180), then the actions Reset /
-Save / Import / Delete Current Workspace and Disable Docking/Undocking (:136-160). "General" is shown as "Maya Classic"
+Maya 2022 lists its factory workspaces in this order (Windows > Workspaces;
+dividers after General, XGen - Interactive Groom, Animation and Rendering - Expert), then the actions Reset /
+Save / Import / Delete Current Workspace and Disable Docking/Undocking. "General" is shown as "Maya Classic"
 (research/maya/ui_layout.md:78). Choosing one switches the menu set to its ``linkedMenu`` (research/maya/ui_layout.md:
 146-152). The kit's template (tools/make_startup.MAYA_WORKSPACES) carries eight of them; a file without one gets it
 appended from the bundled template (``switch.append_workspace``), Reset replaces the current one with a fresh copy
@@ -200,7 +200,7 @@ class ALLSET_OT_reset_workspace(bpy.types.Operator):
 
 
 class ALLSET_MT_maya_workspaces(bpy.types.Menu):
-    """Maya Windows > Workspaces (buildViewMenu.mel rebuildWorkspaceListMenu / rebuildWorkspaceActionsList)"""
+    """Maya Windows > Workspaces (Maya 2022 order)"""
     bl_label = "Workspaces"
 
     def draw(self, context):

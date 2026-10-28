@@ -4,7 +4,7 @@
 Maya 2022 (research/maya/re/repeat_175.md, GUI-measured): a menu item run from the UI goes into ``repeatLast``
 (Create > Polygon Primitives > Cube → "CreatePolygonCube", G makes the next cube); an option window's Apply records the
 command with its options (``performPolyPrimitive "Cube" 0``, label "PolyPrimitive"); MEL run by a script is not
-recorded; Edit > Repeat reads ``Repeat "<label>"`` (buildEditMenu.mel:83-93); Recent Commands lists the history.
+recorded; Edit > Repeat reads ``Repeat "<label>"``; Recent Commands lists the history.
 
 Blender's G (``screen.repeat_last``) repeats the last *registered* operator, and the kit's menu / shelf / marking-menu
 commands are never registered (``marking/modal.run_action`` calls operators from Python, undo_steps.py:4-6). So the kit

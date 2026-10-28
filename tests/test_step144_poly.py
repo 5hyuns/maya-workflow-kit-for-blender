@@ -370,7 +370,7 @@ def test_menus_shelf_hotkey_are_the_kit_tools():
     assert menu_map.MAP["Mesh Tools/Quad Draw"] == "allset.quad_draw_start"
     assert menu_map.MAP["Mesh Tools/Create Polygon"] == "allset.create_polygon_start"
     assert menu_map.MAP["Mesh Tools/Append to Polygon"] == "allset.append_polygon_start"
-    assert shelf_map.BY_COMMAND["dR_quadDrawTool"][0] == "allset.quad_draw_start"
+    assert shelf_map.BY_COMMAND["QuadDrawTool"][0] == "allset.quad_draw_start"
     for km in ("Object Mode", "Mesh"):
         hot = [k.idname for k in kit.maya_kc().keymaps[km].keymap_items
                if k.active and k.type == 'Q' and k.ctrl and k.shift and not k.alt]

@@ -1334,7 +1334,7 @@ class ALLSET_OT_shelf_scroll(bpy.types.Operator):
         return {'FINISHED'}
 
 
-SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 43)
+SLOTS = 64   # more than the largest factory shelf (Poly Modeling, 37 in Maya 2026)
 
 
 class ALLSET_GGT_shelf(bpy.types.GizmoGroup):

@@ -130,7 +130,7 @@ def test_existing_material_and_rmb_target():
     assert bpy.ops.allset.assign_material(material="blinn7") == {'CANCELLED'}, "top menu: selection only"
     assert bpy.ops.allset.assign_material(material="blinn7", rmb=True) == {'FINISHED'}
     assert other.active_material == mat and ob.active_material is not mat
-    # A selection overrides the object under the menu (buildShaderMenus.mel:372-374).
+    # A selection overrides the object under the menu (Maya 2022 RMB marking menu).
     ob.select_set(True)
     bpy.ops.allset.shelf_material(kind='LAMBERT', rmb=True)
     assert ob.active_material.name == "lambert2" and other.active_material == mat

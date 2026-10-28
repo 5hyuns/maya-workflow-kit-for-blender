@@ -153,7 +153,7 @@ class ALLSET_OT_flow_path(bpy.types.Operator):
 
 
 def windows():
-    """Maya Flow Path Object Options (research/maya/re/maya2026_curve_rigs.md §L9: performFlow.mel setOptionVars —
+    """Maya Flow Path Object Options (research/maya/re/maya2026_curve_rigs.md §L9: factory values —
     Divisions Front 5 / Up 2 / Side 2, Lattice around Object, Local effect off 2 / 2 / 2)."""
     from .option_windows import F, Window
 
