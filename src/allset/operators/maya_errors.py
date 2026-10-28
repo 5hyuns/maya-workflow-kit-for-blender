@@ -78,7 +78,8 @@ def check_modifier(context, kind):
     ob = context.active_object
     nothing = context.mode == 'OBJECT' and not context.selected_objects
     if kind == 'SHRINKWRAP':
-        if getattr(context.scene, "allset_live", None) is None:
+        from . import live
+        if not live.objects(context.scene):
             raise MayaError(NO_LIVE_SURFACE)
         if nothing or ob is None:
             raise MayaError(NO_CONFORM_SELECTION)

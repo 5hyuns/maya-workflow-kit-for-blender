@@ -61,6 +61,13 @@ Thanks for giving it a try 🙂
 
 ## Features
 
+Modern [Smart Extrude](docs/smart_extrude.md) grows, carves and stitches intersecting
+faces, with a combined Move/Rotate/Scale manipulator and cut-through support.
+
+[Make Live](docs/make_live.md) uses the Status Line magnet and history menu to
+manage reference meshes, with dark green labels/wires, viewport selection
+restrictions and Move/Quad Draw projection onto the live list.
+
 Everything below is in the current version. Maya menu items that Blender cannot do are still shown — greyed, with a
 one-line note saying why and what to use instead.
 
@@ -82,12 +89,16 @@ one-line note saying why and what to use instead.
   adds), **F8** object / component toggle, **F9–F12** vertex / edge / face / UV.
 - Pre-selection highlight, edit-mode box select through occluded elements, selection priority, arrow-key **pick-walk**
   (edge loops / rings, joints), soft select and symmetry.
-- **Hold keys**: **X / C / V** snap to grid / edge / vertex while held, **J** step snap, **D / Insert** edit the pivot,
+- **Hold keys**: **X / C / V** snap to grid / edge / vertex while held, **J** step snap, **D / Insert** toggle pivot editing (**D** can also be held temporarily),
   **B** soft select.
 
 ![Edit the pivot, snap with V](docs/distribution/marketing/gif/05_pivot_snap.gif)
 
 *Insert edits the pivot; hold V while dragging and it snaps to a vertex. Insert again, and the object rotates around its new pivot.*
+
+During pivot editing, click a vertex, edge or face to snap and align the pivot.
+Shift-click changes position; Ctrl-click changes orientation.
+See [custom pivot editing](docs/pivot_component_picking.md) for the full controls.
 
 ### Hotbox, marking menus & menu sets
 

@@ -187,11 +187,16 @@ def _transform_running(window):
 # ...AfterToolSwitch true). Session only; a re-tap of the tool key resets.
 HANDLES = {}
 OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTATE',
-            "TRANSFORM_OT_resize": 'RESIZE'}
+            "TRANSFORM_OT_resize": 'RESIZE', "ALLSET_OT_component_scale": 'RESIZE', 'ALLSET_OT_live_translate': 'TRANSLATE'}
 
 
 def handle_from_op(bl_idname, props):
     """(kind, handle) for a transform the manipulator ran; handle None = free (centre)."""
+    if bl_idname == 'ALLSET_OT_pivot_translate':
+        from ..ui import manipulator
+        axes = tuple(bool(a) for a in props.constraint_axis)
+        return 'TRANSLATE', ({'constraint_axis': axes,
+                             'orient_type': manipulator.slot_type(bpy.context.scene, 'TRANSLATE')} if any(axes) else None)
     kind = OP_KINDS.get(bl_idname)
     if kind is None:
         return None, None
@@ -203,6 +208,9 @@ def handle_from_op(bl_idname, props):
                       "orient_axis": props.orient_axis}
     if not any(axes):
         return kind, None
+    if bl_idname in {'ALLSET_OT_component_scale', 'ALLSET_OT_live_translate'}:
+        return kind, {"constraint_axis": axes, "orient_type": 'GLOBAL',
+                      "orient_matrix_type": 'GLOBAL', "orient_matrix": props.orient_matrix.copy()}
     return kind, {"constraint_axis": axes, "orient_type": props.orient_type}
 
 
@@ -329,7 +337,14 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
             kwargs.update(handle)
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
         try:
-            res = op('INVOKE_DEFAULT', **kwargs)
+            if self.mode == 'RESIZE':
+                from . import component_scale
+                res = component_scale.start(context, kwargs, 'MIDDLEMOUSE')
+            elif self.mode == 'TRANSLATE':
+                from . import live_translate
+                res = live_translate.start(context, kwargs, 'MIDDLEMOUSE')
+            else:
+                res = op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:     # nothing to transform (poll failed)
             return {'PASS_THROUGH'}
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
@@ -426,7 +441,12 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
             return {'FINISHED'}
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[kind])
         try:
-            op('INVOKE_DEFAULT', constraint_axis=axes, orient_type=otype, release_confirm=True)
+            kwargs = dict(constraint_axis=axes, orient_type=otype, release_confirm=True)
+            if kind == 'TRANSLATE':
+                from . import live_translate
+                live_translate.start(context, kwargs)
+            else:
+                op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:
             return {'PASS_THROUGH'}
         return {'FINISHED'}
@@ -486,8 +506,13 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
             try:
                 # launched from this MOUSEMOVE: release_confirm can't see the MMB, so the transform is
                 # confirmed by the MMB release below it (checked, )
-                op('INVOKE_DEFAULT', constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
-                   release_confirm=True)
+                kwargs = dict(constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
+                              release_confirm=True)
+                if self.mode == 'RESIZE':
+                    from . import component_scale
+                    component_scale.start(context, kwargs, 'MIDDLEMOUSE')
+                else:
+                    op('INVOKE_DEFAULT', **kwargs)
             except RuntimeError:
                 return {'CANCELLED'}
             return {'FINISHED'}

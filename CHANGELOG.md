@@ -19,6 +19,58 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   Blender's "Cannot edit hidden object" or a Python error when the active object is hidden; they warn
   "<name> is hidden: show it (Display > Show) first" and change nothing. Thanks to @youngmin2k for the component-mode
   fix and its tests (#196).
+- **Live Outliner names with restriction columns**: monitor/eye/camera icons no
+  longer hide live-name candidates. Bind the editor framebuffer and pixel
+  projection explicitly so cold glyph rendering paints the name in the correct
+  region on its first draw, including in the user's Maya layout.
+- **Make Live performance**: cache verified Outliner row matches, read its pixels
+  once per draw and compare glyph bounds before testing translations. Native
+  BVHs avoid Python geometry expansion for uniform-scale reference meshes;
+  nonuniform scale/shear retains exact world-distance queries. Evict least-recent
+  BVHs under an estimated memory budget and release references removed from the
+  last live scene. A single oversized surface may occupy the cache alone.
+- **Quad Draw backfaces**: continue through deep stacks of rejected backfaces
+  until a front face or a miss, with progress checks; never accept a backface
+  merely because an iteration limit was reached.
+- **Maya mode startup**: defer Make Live scene reconciliation until `load_post`
+  when Blender restricts data during addon registration. Saved Maya mode can
+  register fully on restart and show its layout again.
+- **Make Live**: the Status Line magnet makes the selected meshes live; its arrow
+  opens surface history. Live references resist viewport selection, use dark green
+  `#009954` Outliner labels and wire overlays, and keep snap settings independent.
+  Move centre/plane handles and Quad Draw query only the explicit live list,
+  including evaluated modifiers and multiple references. History, add/remove,
+  cancellation, Undo/Redo and file reload preserve selection restrictions.
+  Virtual Outliner rows no longer cover native objects in short editors.
+  See [usage and limits](docs/make_live.md).
+- **Component scale**: Prevent Negative Scale is functional in Scale Settings,
+  the active-tool popup and R marking menu. Single-axis mesh scaling stops at
+  exactly zero, preserving the captured pivot/frame and recovering smoothly
+  when dragging back. J, numeric values, MMB, cancellation and Undo/Redo share
+  the same guard. Native proportional editing, mesh symmetry, shape keys and UV
+  correction are retained. Object, plane and uniform scaling remain native.
+  See [scope and behavior](docs/component_scale.md).
+- **Smart Extrude response**: handles follow every mouse event while Boolean
+  previews run on an adaptive 60 Hz timer, removing the previous 10 Hz stepping.
+- **Smart Extrude source topology**: rebuild explicitly identified source faces,
+  caps and wall panels from their intersection boundaries. Keep inset/edge-loop
+  borders instead of merging entire planar islands. Rectangular holes use four
+  stable corner-matched frame panels; temporary connectors carry endpoint proof
+  across subsequent edits and blend-file roundtrips. UV-based topology guessing
+  is removed.
+- **Smart Extrude cut drags**: long inward drags use a stable screen-to-axis
+  mapping; toggling Shift precision preserves the current depth. Mesh and handles
+  stay on the last valid preview if a later position cannot be evaluated.
+- **Smart Extrude topology validation**: test original feature edges, surviving
+  cut segments, panel boundaries and Undo/Redo alongside volume/manifold checks.
+
+### Added
+- **Modern Smart Extrude**: the menu, Polygons shelf and face marking menu now use
+  a separate tool that grows, carves and stitches intersecting geometry within a
+  closed mesh, including partial/full cut-through and disconnected shells.
+  Combined Move/Rotate/Scale handles support custom pivots, J snapping, numeric
+  input, cancellation, Undo/Redo and G on a new selection. Ordinary Extrude and
+  legacy Shift+drag retain their behavior. See [usage and limits](docs/smart_extrude.md).
 
 ## [0.6.2] — 2026-10-28
 
