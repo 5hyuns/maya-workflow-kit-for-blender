@@ -68,10 +68,6 @@ def texts(log):
 
 
 def test_generated_table_is_current():
-    spec = importlib.util.spec_from_file_location("gen_menu_hotkeys", ROOT / "tools" / "gen_menu_hotkeys.py")
-    gen = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gen)
-    assert gen.table() == hotkeys.HOTKEYS, "run python tools/gen_menu_hotkeys.py"
     for path, key in (("File/New Scene", "Ctrl+N"), ("File/Open Scene...", "Ctrl+O"), ("File/Save Scene", "Ctrl+S"),
                       ("File/Save Scene As...", "Ctrl+Shift+S"), ("File/Increment and Save", "Ctrl+Alt+S"),
                       ("File/Exit", "Ctrl+Q"), ("Edit Mesh/Bevel", "Ctrl+B"), ("Edit Mesh/Extrude", "Ctrl+E"),
@@ -79,6 +75,13 @@ def test_generated_table_is_current():
         assert hotkeys.HOTKEYS.get(path) == key, (path, hotkeys.HOTKEYS.get(path))
     # never a key the kit doesn't bind the Maya way (Recent Files has no Maya key at all)
     assert "File/Recent Files" not in hotkeys.HOTKEYS
+    kit.research("maya", "menus.json")             # the generator reads  (not in a public clone): last
+    kit.research("maya", "hotkeys_default.json")
+    kit.research("maya", "re", "maya2026_menus_dump.json")
+    spec = importlib.util.spec_from_file_location("gen_menu_hotkeys", ROOT / "tools" / "gen_menu_hotkeys.py")
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    assert gen.table() == hotkeys.HOTKEYS, "run python tools/gen_menu_hotkeys.py"
 
 
 def test_drawn_items_carry_the_maya_key():

@@ -4,7 +4,9 @@
 
 Enables the extension unless the test module sets ``AUTO_ENABLE = False``,
 runs each top-level ``test_*`` function in definition order and writes
-``[{"name", "ok", "error"}]`` to the result file.
+``[{"name", "ok", "error"}]`` to the result file; a test that raises
+``kit.Skip`` (Maya reference data not in this clone) is ``{"name", "ok": True,
+"skipped": reason}``.
 """
 
 import importlib.util
@@ -34,8 +36,12 @@ def main():
             try:
                 func()
                 results.append({"name": name, "ok": True})
+            except kit.Skip as ex:
+                results.append({"name": name, "ok": True, "skipped": str(ex)})
             except Exception:
                 results.append({"name": name, "ok": False, "error": traceback.format_exc()})
+    except kit.Skip as ex:          # the test file needs data that isn't here (kit.maya_data at import)
+        results.append({"name": "<file>", "ok": True, "skipped": str(ex)})
     except Exception:
         results.append({"name": "<setup>", "ok": False, "error": traceback.format_exc()})
 

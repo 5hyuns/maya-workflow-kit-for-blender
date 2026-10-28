@@ -39,7 +39,7 @@ Blender a little more easily.
 To be honest, it's still rough in places. Some Maya tools aren't there yet, and some don't feel quite right. I use it
 myself and I'll keep improving it, but I can only fix what I know about. So if something breaks, feels off, or you
 miss a Maya feature you use every day, please [leave an issue](https://github.com/5hyuns/maya-workflow-kit-for-blender/issues/new).
-Even a one-liner helps a lot.
+Even a one-liner helps a lot. Want to help in other ways? Anything goes — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Thanks for giving it a try 🙂
 
