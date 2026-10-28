@@ -150,7 +150,8 @@ def draw_ae(layout, context, ob):
     header, body = layout.panel("allset_ae_creation", default_closed=False)
     header.label(text=f"{nice_type(node['type'])} History")
     if body is not None:
-        _rows(body.column(align=True), context, node, 0.42)
+        from .attribute_editor import section_body
+        _rows(section_body(body).column(align=True), context, node, 0.42)     # inset content area (#194)
 
 
 classes = (ALLSET_PG_creation,)

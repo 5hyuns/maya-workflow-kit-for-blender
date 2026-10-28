@@ -483,8 +483,11 @@ def _menu(idname, label, rows, doc):
 
 
 def _cameras(context, ortho):
+    """Cameras listed under Panels > Perspective / Orthographic; the startup persp / top / front / side are the
+    menus' own first rows."""
+    from ..operators import startup_cameras
     return [ob for ob in context.scene.objects
-            if ob.type == 'CAMERA' and (ob.data.type == 'ORTHO') == ortho]
+            if ob.type == 'CAMERA' and (ob.data.type == 'ORTHO') == ortho and not startup_cameras.is_startup(ob)]
 
 
 class ALLSET_OT_panel_look_through(bpy.types.Operator):
@@ -502,12 +505,42 @@ class ALLSET_OT_panel_look_through(bpy.types.Operator):
             if ob is None:
                 self.report({'WARNING'}, "Select an object to look through")
             return {'CANCELLED'}
-        space = area.spaces.active
-        space.camera = ob
-        space.use_local_camera = ob != context.scene.camera
-        space.region_3d.view_perspective = 'CAMERA'
-        # Maya: navigating a view that looks through a camera moves the camera (#9)
-        space.lock_camera = True
+        look_through(context, area, ob)
+        return {'FINISHED'}
+
+
+def look_through(context, area, ob):
+    space = area.spaces.active
+    space.camera = ob
+    space.use_local_camera = ob != context.scene.camera
+    space.region_3d.view_perspective = 'CAMERA'
+    # Maya: navigating a view that looks through a camera moves the camera (#9)
+    space.lock_camera = True
+
+
+class ALLSET_OT_panel_new_persp(bpy.types.Operator):
+    """Make a new perspective camera and look through it in this view"""
+    bl_idname = "allset.panel_new_persp"
+    bl_label = "New"
+    # an undo step, no Adjust Last Operation (Maya has no redo panel, step 147)
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.area is not None and context.area.type == 'VIEW_3D'
+
+    def execute(self, context):
+        # Maya 2026 behaviour (measured, #193): New makes persp1, persp2 ... with the camera settings and the place
+        # of a new scene's persp (35 mm, translate 28 21 28 aimed at the origin), selects it and looks through it
+        from ..operators import create, naming, startup_cameras, units
+        ob = create.create(context, 'CAMERA', maya_naming=False)
+        naming.apply_maya_name(ob, "persp")
+        ob.matrix_world = startup_cameras.maya_matrix("persp", units.maya_unit(context.scene))
+        for other in context.selected_objects:
+            other.select_set(other == ob)
+        ob.select_set(True)
+        context.view_layer.objects.active = ob
+        look_through(context, context.area, ob)
         return {'FINISHED'}
 
 
@@ -525,6 +558,8 @@ class ALLSET_MT_panel_perspective(bpy.types.Menu):
     def draw(self, context):
         draw_rows(self.layout, context, [_view("persp", 'PERSP')])
         _draw_camera_list(self.layout, context, False)
+        self.layout.separator()
+        self.layout.operator(ALLSET_OT_panel_new_persp.bl_idname, text="New")      # Maya: New under the list (#193)
 
 
 class ALLSET_MT_panel_orthographic(bpy.types.Menu):
@@ -584,7 +619,7 @@ _generated = [
     _menu("ALLSET_MT_panel_layouts", "Layouts", LAYOUTS, "Maya panel layouts"),
 ]
 
-classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_look_through,
+classes = (ALLSET_OT_panel_set, ALLSET_OT_panel_run, ALLSET_OT_panel_look_through, ALLSET_OT_panel_new_persp,
            ALLSET_MT_panel_perspective, ALLSET_MT_panel_orthographic, ALLSET_MT_panel_panel,
            ALLSET_MT_panel_blender, ALLSET_MT_panel_bar, *_generated)
 

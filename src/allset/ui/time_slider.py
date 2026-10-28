@@ -640,13 +640,26 @@ def ruler_ticks(step, lo, hi):
     return list(_multiples(step, lo - 1, hi + 1))
 
 
+# A taller Time Slider (Maya 2026 behaviour, measured at six heights, #190): the frame numbers stay at the top in
+# their size, the current frame number stays at the bottom, and the ticks keep their bottom end and normal length
+# until half the room between the numbers and that end (less this many px) is longer; then they take that half.
+TICK_HALF_PAD = 2.33
+
+
 def _rows(name, h, rows=None, scale=1.0):
-    """UI-scaled ruler rows; tick marks stretch between fixed top and bottom margins."""
-    top, bottom = (rows or ROWS)[name]
+    """(y0, y1) region rows (bottom-up) of a ruler row band at region height ``h``, UI-scaled: the label rows keep
+    their place under the top edge, the band and the current frame number theirs above the bottom edge, and the
+    ticks grow Maya's way (``TICK_HALF_PAD``)."""
+    rows = rows or ROWS
+    top, bottom = rows[name]
     k = min(h / MAYA_RULER_H, scale)
     if name == "tick":
-        return (MAYA_RULER_H - bottom - 1) * k, h - top * k
-    if name == "band":
+        y0 = (MAYA_RULER_H - bottom - 1) * k                     # the bottom end, above the band
+        normal = (bottom + 1 - top) * k
+        label_low = h - (rows["label"][1] + 1) * k              # the frame numbers' lowest row
+        half = (label_low - y0) / 2 - TICK_HALF_PAD * k
+        return y0, y0 + max(normal, half)
+    if name in ("band", "current_label"):
         return (MAYA_RULER_H - bottom - 1) * k, (MAYA_RULER_H - top) * k
     return h - (bottom + 1) * k, h - top * k
 
