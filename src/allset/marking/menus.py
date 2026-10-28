@@ -654,6 +654,7 @@ OPT_SCALE = MarkingMenu(
         ("Preserve Children", PRESERVE_CHILDREN),
         DIVIDER,
         ("Scale Options", TOOL_SETTINGS),
+        ("Prevent Negative Scale", ("allset.prevent_negative_scale", {})),
     ])
 
 OPT_SELECT = MarkingMenu(

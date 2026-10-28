@@ -9,6 +9,13 @@ preferences (the navigation / undo / panel / auto key / theme / splash / density
 import bpy
 
 
+def _redraw_tools(_self, context):
+    wm = getattr(context, 'window_manager', None)
+    for window in wm.windows if wm else ():
+        for area in window.screen.areas:
+            area.tag_redraw()
+
+
 class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # Must equal the top-level package name: "bl_ext.<repo>.allset" as an
     # extension, "allset" as a legacy add-on.
@@ -28,6 +35,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "behind the surface, like Maya (Camera based selection off). X-ray is switched "
                     "on only while dragging",
         default=True)
+    # Addon default for flattening workflows; Maya's docs do not state its factory value.
+    prevent_negative_scale: bpy.props.BoolProperty(
+        name="Prevent Negative Scale",
+        description="Stop single-axis mesh component scaling at zero in the Maya Scale tool; "
+                    "does not affect object, plane or uniform scaling",
+        default=True, update=_redraw_tools)
     # Maya preSelectHilite true.
     preselect_highlight: bpy.props.BoolProperty(
         name="Pre-selection Highlight",

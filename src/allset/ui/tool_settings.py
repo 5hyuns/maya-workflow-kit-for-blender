@@ -94,6 +94,9 @@ def reset_maya_options(context, kind):
     snap_align.set_step_snap(ts, kind, 'OFF')
     if kind == 'ROTATE':
         ts.snap_angle_increment_3d = MAYA_ROTATE_STEP
+    if kind == 'RESIZE':
+        from .. import preferences
+        preferences.get(context).prevent_negative_scale = True
     if kind == 'TRANSLATE':
         from .. import preferences
         prefs = preferences.get(context)
@@ -252,7 +255,6 @@ TS_NOTICES = {
     f"{TS}/Modify Translation": ("off", "Blender's rotate never moves the objects' positions"),
     f"{TS}/Free Rotate": ("the white ring / trackball",
                           "Blender's rotate manipulator has the free trackball rotation built in"),
-    f"{TS}/Prevent Negative Scale": ("off", "Blender lets scale go negative"),
 }
 # Step 129: greyed rows of the other tools (Maya 2022 rows) -> (substitute, one line).
 _SPACE = "Blender's selection tools work in screen space"
@@ -400,6 +402,8 @@ def draw_settings(layout, context, kind):
         op.kind, op.mode = kind, m
     if kind == 'ROTATE':
         _labelled(layout, "").prop(ts, "snap_angle_increment_3d", text="Step")
+    elif kind == 'RESIZE':
+        _labelled(layout, "").label(text="Step: 0.1")
     else:
         # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template (step 25).
         _labelled(layout, "").label(text="Step: one grid unit", icon='SNAP_INCREMENT')
@@ -409,7 +413,10 @@ def draw_settings(layout, context, kind):
     if kind == 'ROTATE':
         _grey(_labelled(layout, "Free Rotate:"), "Free Rotate", text=" ", check=True)
     if kind == 'RESIZE':
-        _grey(_labelled(layout, "Prevent Negative Scale:"), "Prevent Negative Scale", text=" ", check=True)
+        from .. import preferences
+        row = layout.row()
+        row.enabled = context.mode == 'EDIT_MESH'
+        row.prop(preferences.get(context), 'prevent_negative_scale')
 
 
 def draw_selection(layout, context):

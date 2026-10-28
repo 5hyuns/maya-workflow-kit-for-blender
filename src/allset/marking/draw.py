@@ -162,6 +162,9 @@ def checked(action):
     try:
         if op == "wm.context_toggle":
             return bool(bpy.context.path_resolve(props["data_path"]))
+        if op == "allset.prevent_negative_scale":
+            from .. import preferences
+            return preferences.get(bpy.context).prevent_negative_scale
         if op == "allset.symmetry":
             from ..operators import symmetry
             return symmetry.item_state(props["mode"])

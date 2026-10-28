@@ -6,6 +6,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Component scale**: Prevent Negative Scale is functional in Scale Settings,
+  the active-tool popup and R marking menu. Single-axis mesh scaling stops at
+  exactly zero, preserving the captured pivot/frame and recovering smoothly
+  when dragging back. J, numeric values, MMB, cancellation and Undo/Redo share
+  the same guard. Native proportional editing, mesh symmetry, shape keys and UV
+  correction are retained. Object, plane and uniform scaling remain native.
+  See [scope and behavior](docs/component_scale.md).
 - **Smart Extrude response**: handles follow every mouse event while Boolean
   previews run on an adaptive 60 Hz timer, removing the previous 10 Hz stepping.
 - **Smart Extrude source topology**: rebuild explicitly identified source faces,
