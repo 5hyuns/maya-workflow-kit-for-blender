@@ -186,7 +186,7 @@ def _mesh_stats(ob):
 
 def test_g_after_a_dragged_extrude_extrudes_the_new_faces():
     """#184: Ctrl+E, drag the manipulator (edits polyExtrudeFace1), select another face, G = a new extrusion on
-    that face (Maya 2026 behaviour, checked: G runs the extrude command again, it doesn't edit the old node)."""
+    that face (Maya 2026 behaviour: G runs the extrude command again, it doesn't edit the old node)."""
     ex = import_module(kit.MODULE + ".operators.extrude")
     ob = _edit_cube_with_top_face()
     assert bpy.ops.allset.extrude('EXEC_DEFAULT', True) == {'FINISHED'}            # Ctrl+E

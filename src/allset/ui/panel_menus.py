@@ -530,7 +530,7 @@ class ALLSET_OT_panel_new_persp(bpy.types.Operator):
         return context.area is not None and context.area.type == 'VIEW_3D'
 
     def execute(self, context):
-        # Maya 2026 behaviour (checked, #193): New makes persp1, persp2 ... with the camera settings and the place
+        # Maya 2026 behaviour (#193): New makes persp1, persp2 ... with the camera settings and the place
         # of a new scene's persp (35 mm, translate 28 21 28 aimed at the origin), selects it and looks through it
         from ..operators import create, naming, startup_cameras, units
         ob = create.create(context, 'CAMERA', maya_naming=False)

@@ -477,7 +477,7 @@ SECTION_INDENT = 1.2     # separator factor in front of an open section's conten
 
 def section_body(body):
     """The content of an open Attribute Editor section: Maya draws it inset under the section header, in a content
-    area of its own shade (Maya 2026 behaviour, checked: 2 px in from each side, one step off the editor's grey;
+    area of its own shade (Maya 2026 behaviour: 2 px in from each side, one step off the editor's grey;
     #194). The box starts under the section's disclosure arrow, gives the content area its shade and frame; the
     column is what the rows go into."""
     row = body.row()

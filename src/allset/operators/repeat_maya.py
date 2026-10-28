@@ -12,7 +12,7 @@ keeps its own record of Maya commands (``record``) next to Blender's operator li
 the kit record unless a repeatable Blender operator was registered after it (key commands such as Ctrl+E,
 Ctrl+D). Selection, transform, view, undo and screen operators never count: Maya's repeatLast doesn't take selection
 clicks or manipulator drags (delegated, ); a manipulator drag on a kit node (Ctrl+E then drag) is a node edit, so
-G after it extrudes the new selection (Maya 2026 behaviour, checked; #184).
+G after it extrudes the new selection (Maya 2026 behaviour; #184).
 """
 
 import bpy

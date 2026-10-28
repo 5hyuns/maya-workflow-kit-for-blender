@@ -1,6 +1,6 @@
 """#193: Panels > Perspective > New makes a perspective camera and looks through it in that view.
 
-Maya 2026 behaviour (checked in the GUI): New makes ``persp1`` (then ``persp2``) with the camera settings of a new
+Maya 2026 behaviour: New makes ``persp1`` (then ``persp2``) with the camera settings of a new
 scene's persp (35 mm, translate 28 21 28, aimed at the origin), selects it, looks through it in the panel, lists it
 under Panels > Perspective (above New), and one undo removes it again."""
 
