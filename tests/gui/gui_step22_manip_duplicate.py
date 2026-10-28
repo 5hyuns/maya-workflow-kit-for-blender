@@ -51,6 +51,9 @@ def drag(x, y, d, dist, shift):
 
 def drag_press():
     x, y, d, dist, shift = C["drag"]
+    if shift:
+        # a real Shift drag: only a keyboard event's modifiers reach the window event state (step 261)
+        ev('LEFT_SHIFT', 'PRESS', shift=True)
     ev('LEFTMOUSE', 'PRESS', x=x, y=y, shift=shift)
     for i in range(1, STEPS + 1):
         f = dist * i / STEPS
@@ -60,6 +63,8 @@ def drag_press():
 def drag_release():
     x, y, d, dist, shift = C["drag"]
     ev('LEFTMOUSE', 'RELEASE', x=int(x + d.x * dist), y=int(y + d.y * dist), shift=shift)
+    if shift:
+        ev('LEFT_SHIFT', 'RELEASE')
 
 
 def select_only(ob):

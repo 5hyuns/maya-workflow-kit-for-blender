@@ -53,7 +53,18 @@ def hover(x, y):
     ev('MOUSEMOVE', 'NOTHING', x=x + 1, y=y)
 
 
+def shift_down():
+    # A simulated keyboard event's modifiers reach the window event state (mouse events' don't):
+    # pressing LEFT_SHIFT first makes the LMB press and its CLICK_DRAG real Shift events (step 261).
+    ev('LEFT_SHIFT', 'PRESS', shift=True)
+
+
+def shift_up():
+    ev('LEFT_SHIFT', 'RELEASE')
+
+
 def press_drag(x, y, d, dist):
+    shift_down()
     ev('LEFTMOUSE', 'PRESS', x=x, y=y, shift=True)
     for i in range(1, 9):
         ev('MOUSEMOVE', 'NOTHING', x=int(x + d.x * dist * i / 8), y=int(y + d.y * dist * i / 8), shift=True)
@@ -97,6 +108,7 @@ def s_extrude_shot():
     shot("gui_step26_smart_extrude.png")
     x, y, d = C["g"]
     ev('LEFTMOUSE', 'RELEASE', x=int(x + d.x * 70), y=int(y + d.y * 70), shift=True)
+    shift_up()
 
 
 @step
@@ -120,6 +132,7 @@ def s_extruded():
 @step
 def s_click_press():
     x, y, _d = C["g"]
+    shift_down()
     ev('LEFTMOUSE', 'PRESS', x=x, y=y, shift=True)
 
 
@@ -127,6 +140,7 @@ def s_click_press():
 def s_click_release():
     x, y, _d = C["g"]
     ev('LEFTMOUSE', 'RELEASE', x=x, y=y, shift=True)
+    shift_up()
 
 
 @step
@@ -166,6 +180,7 @@ def s_dup_cancel():
     ev('RIGHTMOUSE', 'PRESS', x=int(x + d.x * 60), y=int(y + d.y * 60), shift=True)
     ev('RIGHTMOUSE', 'RELEASE', x=int(x + d.x * 60), y=int(y + d.y * 60), shift=True)
     ev('LEFTMOUSE', 'RELEASE', x=int(x + d.x * 60), y=int(y + d.y * 60))
+    shift_up()
 
 
 @step
