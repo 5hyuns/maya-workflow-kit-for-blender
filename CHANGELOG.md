@@ -6,6 +6,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Live Outliner names with restriction columns**: monitor/eye/camera icons no
+  longer hide live-name candidates. Bind the editor framebuffer and pixel
+  projection explicitly so cold glyph rendering paints the name in the correct
+  region on its first draw, including in the user's Maya layout.
 - **Make Live performance**: cache verified Outliner row matches, read its pixels
   once per draw and compare glyph bounds before testing translations. Native
   BVHs avoid Python geometry expansion for uniform-scale reference meshes;
