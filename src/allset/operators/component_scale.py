@@ -90,11 +90,11 @@ class ALLSET_OT_component_scale(bpy.types.Operator):
     bl_label = "Scale Components"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING'}
 
-    constraint_axis: bpy.props.BoolVectorProperty(size=3, default=(False, False, False))
-    orient_type: bpy.props.StringProperty(default='GLOBAL')
-    orient_matrix_type: bpy.props.StringProperty(default='GLOBAL')
-    orient_matrix: bpy.props.FloatVectorProperty(size=(3, 3), subtype='MATRIX', default=((1, 0, 0), (0, 1, 0), (0, 0, 1)))
-    value: bpy.props.FloatVectorProperty(name="Scale", size=3, default=(1, 1, 1))
+    constraint_axis: bpy.props.BoolVectorProperty(size=3, default=(False, False, False), options={'HIDDEN'})
+    orient_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN'})
+    orient_matrix_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN'})
+    orient_matrix: bpy.props.FloatVectorProperty(size=(3, 3), subtype='MATRIX', default=((1, 0, 0), (0, 1, 0), (0, 0, 1)), options={'HIDDEN'})
+    value: bpy.props.FloatVectorProperty(name="Scale", size=3, default=(1, 1, 1), options={'HIDDEN'})
     release_confirm: bpy.props.BoolProperty(default=True, options={'HIDDEN'})
     release_event: bpy.props.EnumProperty(items=(('LEFTMOUSE', "Left", ""), ('MIDDLEMOUSE', "Middle", "")),
                                         default='LEFTMOUSE', options={'HIDDEN', 'SKIP_SAVE'})
