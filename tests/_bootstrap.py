@@ -34,8 +34,12 @@ def main():
             try:
                 func()
                 results.append({"name": name, "ok": True})
+            except kit.Skip as ex:
+                results.append({"name": name, "ok": True, "skipped": str(ex)})
             except Exception:
                 results.append({"name": name, "ok": False, "error": traceback.format_exc()})
+    except kit.Skip as ex:          # the test file needs data that isn't here (kit.maya_data at import)
+        results.append({"name": "<file>", "ok": True, "skipped": str(ex)})
     except Exception:
         results.append({"name": "<setup>", "ok": False, "error": traceback.format_exc()})
 

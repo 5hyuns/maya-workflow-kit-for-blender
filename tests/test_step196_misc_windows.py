@@ -7,7 +7,6 @@ option-window MEL, Maya option effects) and  (curve cases)."""
 
 import json
 import math
-import os
 from importlib import import_module
 
 import bmesh
@@ -21,13 +20,12 @@ cmaya = import_module(kit.MODULE + ".operators.curves_maya")
 cm = import_module(kit.MODULE + ".operators.curves_math")
 rig = import_module(kit.MODULE + ".operators.rig_maya")
 
-RE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "research", "maya", "re")
 _D = {}
 
 
 def data(name):
     if name not in _D:
-        with open(os.path.join(RE, name), encoding="utf-8") as fh:
+        with open(kit.maya_data("maya", "re", name), encoding="utf-8") as fh:
             _D[name] = json.load(fh)
     return _D[name]
 
