@@ -48,7 +48,7 @@ switch = import_module(kit.MODULE + ".switch")
 TAG = qa.env_tag()
 WORK = qa.out_dir() / f"b_{TAG}"
 WORK.mkdir(parents=True, exist_ok=True)
-VERSION = f"Blender {bpy.app.version_string}, kit {qa.git_head()} (working tree, 0.6.1)"
+VERSION = f"Blender {bpy.app.version_string}, kit {qa.git_head()} (working tree, 0.6.2)"
 FRAMES = (1, 7, 10, 15, 20)
 NDEC = 4            # cm / radians rounding of fingerprints
 
