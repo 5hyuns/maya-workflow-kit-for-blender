@@ -242,7 +242,9 @@ class ALLSET_OT_connection_editor(bpy.types.Operator):
         if len(sel) > 1 and not wm.allset_cn_right:
             wm.allset_cn_right = sel[-1].name
         if marked_window.open_window(context, KIND) is None:
-            self.report({'ERROR'}, "Could not open the Connection Editor window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Connection Editor window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

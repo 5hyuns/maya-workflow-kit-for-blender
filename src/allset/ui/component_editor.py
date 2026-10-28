@@ -423,7 +423,9 @@ class ALLSET_OT_component_editor(bpy.types.Operator):
             return {'CANCELLED'}
         rebuild(context)
         if marked_window.open_window(context, KIND) is None:
-            self.report({'ERROR'}, "Could not open the Component Editor window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Component Editor window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

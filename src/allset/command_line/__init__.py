@@ -95,7 +95,9 @@ class ALLSET_OT_script_editor(bpy.types.Operator):
             return {'CANCELLED'}
         from ..ui import script_editor
         if script_editor.open_window(context) is None:
-            self.report({'ERROR'}, "Could not open a new window")
+            from ..ui import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

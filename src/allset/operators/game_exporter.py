@@ -494,7 +494,9 @@ class ALLSET_OT_game_exporter(bpy.types.Operator):
         if context.window is None:
             return {'CANCELLED'}
         if marked_window.open_window(context, KIND) is None:
-            self.report({'ERROR'}, "Could not open the Game Exporter window")
+            from ..ui import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Game Exporter window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

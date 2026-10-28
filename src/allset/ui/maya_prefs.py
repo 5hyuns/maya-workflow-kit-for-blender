@@ -263,7 +263,9 @@ class ALLSET_OT_maya_preferences(bpy.types.Operator):
         if marked_window.find_window(context, KIND) is None:
             take_snapshot(context)
         if marked_window.open_window(context, KIND) is None:
-            self.report({'WARNING'}, "Couldn't open the Preferences window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'WARNING'}, "Couldn't open the Preferences window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

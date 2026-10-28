@@ -110,9 +110,11 @@ class ALLSET_OT_light_editor(bpy.types.Operator):
             area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
         if area is None:
             return {'CANCELLED'}
-        window = menu_extras.open_window(context, area)
+        window = menu_extras.open_window(context, area, "light_editor")
         if window is None:
-            self.report({'ERROR'}, "Could not open a new window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
         target = window.screen.areas[0]
         if target.type != 'VIEW_3D':

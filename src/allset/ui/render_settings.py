@@ -279,7 +279,7 @@ def open_window(context):
     area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
     if area is None:
         return None
-    window = menu_extras.open_window(context, area)
+    window = menu_extras.open_window(context, area, "render_settings")
     if window is None:
         return None
     target = window.screen.areas[0]

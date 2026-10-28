@@ -444,7 +444,9 @@ class ALLSET_OT_pose_editor(bpy.types.Operator):
         if context.window is None:
             return {'CANCELLED'}
         if marked_window.open_window(context, pose_editor.KIND) is None:
-            self.report({'ERROR'}, "Could not open the Pose Editor window")
+            from ..ui import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Pose Editor window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

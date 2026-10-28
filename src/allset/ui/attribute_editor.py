@@ -1376,9 +1376,11 @@ class ALLSET_OT_ae_copy_tab(bpy.types.Operator):
         ob = ae_node(context)
         tab, pin = copy_tab_target(ob, current_tab(context, ob))
         area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
-        new = open_window(context, area) if area is not None else None
+        new = open_window(context, area, "attribute_editor_copy") if area is not None else None
         if new is None:
-            self.report({'ERROR'}, "Could not open a new window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
         target = new.screen.areas[0]
         target.ui_type = 'PROPERTIES'

@@ -306,7 +306,7 @@ class ALLSET_OT_show_batch_render(bpy.types.Operator):
             return {'FINISHED'}
         from . import menu_extras
         area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
-        new = menu_extras.open_window(context, area) if area is not None else None
+        new = menu_extras.open_window(context, area, "render_view") if area is not None else None
         if new is None:
             return {'FINISHED'}
         target = new.screen.areas[0]

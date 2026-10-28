@@ -107,7 +107,7 @@ def open_window(context):
     area = max(context.window.screen.areas, key=lambda a: a.width * a.height, default=None)
     if area is None:
         return None
-    window = menu_extras.open_window(context, area)
+    window = menu_extras.open_window(context, area, "reference_editor")
     if window is None:
         return None
     target = window.screen.areas[0]
@@ -129,7 +129,9 @@ class ALLSET_OT_reference_editor(bpy.types.Operator):
         if find_window(context) is not None:
             return {'FINISHED'}            # Maya raises the open one
         if open_window(context) is None:
-            self.report({'ERROR'}, "Could not open the Reference Editor window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Reference Editor window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

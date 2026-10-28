@@ -339,7 +339,9 @@ class ALLSET_OT_hotkey_editor(bpy.types.Operator):
             return {'CANCELLED'}
         refresh(context)
         if marked_window.open_window(context, KIND) is None:
-            self.report({'ERROR'}, "Could not open the Hotkey Editor window")
+            from . import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open the Hotkey Editor window")
             return {'CANCELLED'}
         return {'FINISHED'}
 

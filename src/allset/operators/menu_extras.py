@@ -43,14 +43,12 @@ def _maya_outliner(space):
     maya_outliner.setup(space)
 
 
-def open_window(context, area):
-    """Duplicate ``area`` into a new window (Maya's floating editor windows); the new window or None."""
-    window = context.window
-    before = set(context.window_manager.windows[:])
-    with context.temp_override(window=window, area=area):
-        bpy.ops.screen.area_dupli('INVOKE_DEFAULT')
-    new = [w for w in context.window_manager.windows if w not in before]
-    return new[0] if new else None
+def open_window(context, area, kind=None):
+    """Duplicate ``area`` into a new window (Maya's floating editor windows); the new window or None. ``kind`` =
+    the window's name: it opens at the size and place it had when it was last closed (ui/window_places.py,
+    #203)."""
+    from ..ui import window_places
+    return window_places.open_at(context, area, kind)
 
 
 # Timers below keep the window's pointer and look it up each tick (live_refs, #36).
@@ -148,9 +146,11 @@ class ALLSET_OT_open_editor(bpy.types.Operator):
         area = max(window.screen.areas, key=lambda a: a.width * a.height, default=None)
         if area is None:
             return {'CANCELLED'}
-        new = open_window(context, area)
+        new = open_window(context, area, f"editor:{self.ui_type}")
         if new is None:
-            self.report({'ERROR'}, "Could not open a new window")
+            from ..ui import window_places
+            if not window_places.deferred():     # opens on a later tick (#203)
+                self.report({'ERROR'}, "Could not open a new window")
             return {'CANCELLED'}
         target = new.screen.areas[0]
         target.ui_type = self.ui_type

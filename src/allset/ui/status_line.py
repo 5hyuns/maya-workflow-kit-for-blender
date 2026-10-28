@@ -335,8 +335,8 @@ class ALLSET_OT_render_settings(bpy.types.Operator):
         # Step 105: the kit's Render Settings window (ui/render_settings.py: Maya menus, Render Layer / Render Using,
         # Common | renderer tabs over a Properties editor on the Render tab).
         if context.window is not None:
-            from . import render_settings
-            if render_settings.open_window(context) is not None:
+            from . import render_settings, window_places
+            if render_settings.open_window(context) is not None or window_places.deferred():
                 return {'FINISHED'}
         return {'FINISHED'} if show_properties(context.screen, 'RENDER') else {'CANCELLED'}
 
