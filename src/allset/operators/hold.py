@@ -513,7 +513,8 @@ class ALLSET_OT_hold(bpy.types.Operator):
             # transform to end: it writes its snap state back to the tool settings when it
             # finishes, which would undo a restore made during the drag (step 59).
             window = context.window
-            if window is not None and any(op.bl_idname.startswith("TRANSFORM_OT_")
+            from .manip_scale import TRANSFORM_MODALS
+            if window is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS)
                                           for op in window.modal_operators):
                 return {'PASS_THROUGH'}
             return self._finish(context)

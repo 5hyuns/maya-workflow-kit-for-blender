@@ -88,7 +88,8 @@ def _transform_running():
     if win is None:
         return False
     try:
-        return any(op.bl_idname.startswith("TRANSFORM_OT") for op in win.modal_operators)
+        from ..operators.manip_scale import TRANSFORM_MODALS
+        return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in win.modal_operators)
     except (AttributeError, ReferenceError):
         return False
 

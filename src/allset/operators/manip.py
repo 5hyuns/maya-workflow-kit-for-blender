@@ -177,7 +177,8 @@ def _last_op():
 
 
 def _transform_running(window):
-    return any(op.bl_idname.startswith("TRANSFORM_OT_") for op in window.modal_operators)
+    from .manip_scale import TRANSFORM_MODALS
+    return any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in window.modal_operators)
 
 
 # --- the active handle (Maya MMB drag anywhere), step 28 -------------------------------
@@ -320,12 +321,36 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         snap_align.apply_tool(context.scene.tool_settings, self.mode)   # step 263: per-tool Step Snap
         kwargs = {"release_confirm": True}
         handle = HANDLES.get(self.mode)
+        if self.mode == 'RESIZE':
+            res = self._maya_scale(handle)
+            if res is not None:
+                return res
         if handle:
             kwargs.update(handle)
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
         try:
             res = op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:     # nothing to transform (poll failed)
+            return {'PASS_THROUGH'}
+        return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
+
+    @staticmethod
+    def _maya_scale(handle):
+        """Step 275 (#200): the active Scale handle drags Maya's way (operators/manip_scale.py); an axis or plane
+        handle at half speed there."""
+        axes = tuple(bool(a) for a in handle.get("constraint_axis", ())) if handle else ()
+        kwargs = {"button": 'MIDDLEMOUSE'}
+        if handle and sum(axes) == 1:
+            kwargs.update(mode='AXIS', axis='XYZ'[axes.index(True)])
+        elif handle and sum(axes) == 2:
+            kwargs.update(mode='PLANE', plane="".join(a for a, on in zip('XYZ', axes) if on))
+        elif handle and any(axes):
+            return None
+        if handle:
+            kwargs["orient_type"] = handle.get("orient_type", "")
+        try:
+            res = bpy.ops.allset.manip_scale('INVOKE_DEFAULT', **kwargs)
+        except RuntimeError:
             return {'PASS_THROUGH'}
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
@@ -392,6 +417,13 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         otype = manipulator.slot_type(context.scene, kind)
         axes = plane_of(axis)
         HANDLES[kind] = {"constraint_axis": axes, "orient_type": otype}
+        if kind == 'RESIZE':
+            # Maya: the other two axes by this handle's own drag factor (step 275, operators/manip_scale.py)
+            try:
+                bpy.ops.allset.manip_scale('INVOKE_DEFAULT', mode='AXIS', axis=axis, others=True, orient_type=otype)
+            except RuntimeError:
+                return {'PASS_THROUGH'}
+            return {'FINISHED'}
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[kind])
         try:
             op('INVOKE_DEFAULT', constraint_axis=axes, orient_type=otype, release_confirm=True)

@@ -27,6 +27,7 @@ from mathutils import Matrix, Quaternion, Vector
 
 from .. import results
 from . import freeze
+from .manip_scale import TRANSFORM_MODALS
 
 ORIENT_NAME = "Maya Pivot"
 # Object-space orientation (quaternion w, x, y, z) of the object's custom pivot (Bake Pivot input).
@@ -233,7 +234,7 @@ def _op_key():
 
 def _transform_running():
     for window in bpy.context.window_manager.windows:
-        if any(op.bl_idname.startswith("TRANSFORM_OT_") for op in window.modal_operators):
+        if any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in window.modal_operators):
             return True
     return False
 

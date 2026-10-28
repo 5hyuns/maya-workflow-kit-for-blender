@@ -16,7 +16,8 @@ circle. Maya's:
 
 ``ALLSET_GGT_xform`` draws that and runs Blender's own transform operators from each
 handle (``target_set_operator``), so snapping, constraints, numeric input, Smart
-Duplicate/Extrude (step 22/26) and the active handle (step 28) keep working. It becomes
+Duplicate/Extrude (step 22/26) and the active handle (step 28) keep working. The Scale centre and axis handles run
+``allset.manip_scale`` (operators/manip_scale.py), Maya's scale drag on top of Blender's resize (step 275). It becomes
 the widget of the Move and Scale tools in object and mesh edit mode by swapping their
 ToolDefs in ``VIEW3D_PT_tools_active._tools`` for copies with another ``widget`` (same
 idname, so ``wm.tool_set_by_id`` still finds them); tools already active are set up
@@ -530,7 +531,16 @@ class ALLSET_GGT_xform(GizmoGroup):
         """Point each handle at Blender's transform with its constraint and orientation."""
         op = {'TRANSLATE': "transform.translate", 'RESIZE': "transform.resize"}[kind]
         for gz, role, data in self.handles:
-            if role == 'AXIS':
+            if kind == 'RESIZE' and role in ('AXIS', 'PLANE', 'CENTER'):
+                # step 275 (#200): Maya's scale drag (operators/manip_scale.py)
+                props = gz.target_set_operator("allset.manip_scale")
+                props.mode = role
+                if role == 'AXIS':
+                    props.axis = data
+                elif role == 'PLANE':
+                    props.plane = data
+                props.orient_type = otype
+            elif role == 'AXIS':
                 axes = tuple(a == data for a in 'XYZ')
                 props = gz.target_set_operator(op)
                 props.constraint_axis = axes

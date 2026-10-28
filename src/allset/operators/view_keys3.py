@@ -203,7 +203,8 @@ class ALLSET_OT_tweak_hold(bpy.types.Operator):
             return self._finish(context) if event.value == 'RELEASE' else {'RUNNING_MODAL'}
         if event.type == 'TIMER' and keystate.is_down(self._key) is False:
             window = context.window
-            if window is not None and any(op.bl_idname.startswith("TRANSFORM_OT_") for op in window.modal_operators):
+            from .manip_scale import TRANSFORM_MODALS
+            if window is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS) for op in window.modal_operators):
                 return {'PASS_THROUGH'}       # the release went to a tweak drag: wait for it to end
             return self._finish(context)
         return {'PASS_THROUGH'}

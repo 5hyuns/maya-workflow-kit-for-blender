@@ -1978,7 +1978,8 @@ _transform_snapshot = None
 def _transforming():
     """A transform modal (manipulator drag, G / R / S) runs in some window."""
     wm = bpy.context.window_manager
-    return wm is not None and any(op.bl_idname.startswith("TRANSFORM_OT_")
+    from ..operators.manip_scale import TRANSFORM_MODALS
+    return wm is not None and any(op.bl_idname.startswith(TRANSFORM_MODALS)
                                   for w in wm.windows for op in w.modal_operators)
 
 
