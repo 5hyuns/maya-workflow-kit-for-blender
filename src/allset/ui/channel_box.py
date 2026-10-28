@@ -805,10 +805,12 @@ _AIM = ('TRACK_TO', 'DAMPED_TRACK', 'LOCKED_TRACK')
 
 def constraints(node):
     """Constraints shown as INPUTS nodes (Limit constraints are Maya transform limits: AE only)."""
-    from ..operators import constrain_interp, rig_tools
-    # a step 252 group blend / Object up turn is part of its Maya node
+    from ..operators import constrain_interp, ik_rp, rig_tools
+    # a step 252 group blend / Object up turn is part of its Maya node; the kit's 3+ bone RP solve (step 282) belongs
+    # to the IK handle
     return [c for c in getattr(node, "constraints", ()) if not c.type.startswith("LIMIT_")
-            and not constrain_interp.is_blend(c) and not rig_tools.is_up_companion(c)]
+            and not constrain_interp.is_blend(c) and not rig_tools.is_up_companion(c)
+            and not ik_rp.is_solver_constraint(c)]
 
 
 def constraint_enabled(con):

@@ -127,6 +127,7 @@ def delete_hierarchy(context, objects):
     for ob in reversed(obs):              # children first
         bpy.data.objects.remove(ob, do_unlink=True)
     constrain_199.remove_helpers(helpers)
+    ik_rp.drop_orphan_rotations()          # step 282: its 3+ bone chain's Copy Rotations and bone helpers too
     for h in poles:
         try:
             bpy.data.objects.remove(h, do_unlink=True)

@@ -19,8 +19,8 @@ from . import naming, units
 from .joints import _InEditMode
 
 PREFERRED_PROP = "allset_preferred_angle"
-PREFERRED_NOTE = ("Blender's IK bends from the rest pose: the preferred angle is stored and restored by Assume "
-                  "Preferred Angle, the solver doesn't read it.")
+PREFERRED_NOTE = ("Preferred angle stored: RP handles on 3+ bones start their solve from it like Maya; "
+                  "2-bone chains bend from the rest pose (Blender's IK).")
 SOFT_MOD_RADIUS = 5.0          # Maya softMod falloffRadius default (Maya units)
 SPLINE_SAMPLES = 200           # polyline samples for the IK Spline curve fit
 
