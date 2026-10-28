@@ -21,9 +21,11 @@ The kit (Blender constraints only blend by influence = a shortest slerp):
   rotation channels (the sign of q_Euler).
 - per-group state on the owner (Object / PoseBone): ``allset_interp_<group>`` (Maya enum value), ``allset_last_<group>``
   (No Flip memory), ``allset_rest_<group>`` (zero-weight output), ``allset_ooff_<group>`` (orient offset).
-- Known differences: an offset is decomposed into Euler the standard way (middle angle in [-90, 90]); Maya stores 2 of
-  50 measured offsets on another branch and 1 of those flips the offset quaternion's sign, which only changes Average /
-  No Flip (060_questions.md C8). A bone target's rest (Maya jointOrient) joins its parent part (canonical sign).
+- a parent constraint's offset Euler = Maya's offset Euler (step 266, 060_questions.md C8, Maya 2026 behaviour measured
+  with mayapy: 720 + 90 cases exact): the standard solution or the alternate
+  (first + 180, 180 − middle, last + 180, not wrapped), whichever has the smaller sum of |angles| (ties: standard);
+  the branch decides the offset quaternion's sign, which Average / No Flip read. A bone target's rest (Maya
+  jointOrient) joins its parent part (canonical sign).
 """
 
 import math
@@ -157,6 +159,27 @@ def decompose(m, order='XYZ'):
     g = math.atan2(s * m[j][i], m[i][i])
     r = [0.0, 0.0, 0.0]
     r[i], r[j], r[k] = a, b, g
+    return r
+
+
+_EPS = 1e-10
+
+
+def offset_euler(m, order='XYZ'):
+    """Maya's parent-constraint offset Euler: the standard Euler or its alternate (first + 180, 180 − middle, last + 180;
+    only when cos² middle > 1e-10, not wrapped), whichever has the smaller sum of |angles| (strictly)."""
+    i, j, k = ORDERS[order]
+    r = decompose(m, order)
+    a, b, c = r[i], r[j], r[k]
+    if math.cos(b) ** 2 <= _EPS:
+        return r
+    a2 = a - math.pi if a > math.pi - _EPS else a + math.pi
+    b2 = -math.pi - b if b < -math.pi + _EPS else math.pi - b
+    c2 = c - math.pi if c > math.pi - _EPS else c + math.pi
+    if abs(a2) + abs(b2) + abs(c2) < abs(a) + abs(b) + abs(c):
+        out = [0.0, 0.0, 0.0]
+        out[i], out[j], out[k] = a2, b2, c2
+        return out
     return r
 
 
@@ -297,11 +320,11 @@ def _weights(owner, group):
 
 
 def _offset_quat(owner, node, offset):
-    """Maya targetOffsetRotate of a parent-constraint target as q_Euler (standard decomposition, owner's order)."""
+    """Maya targetOffsetRotate of a parent-constraint target as q_Euler (``offset_euler`` in the owner's order, C8)."""
     x_t, x_o = _axes(node), _axes(owner)
     m = x_t.inverted() @ offset @ x_o
     order = owner.rotation_mode if owner.rotation_mode in ORDERS else 'XYZ'
-    return euler_quat(decompose(m, order), order)
+    return euler_quat(offset_euler(m, order), order)
 
 
 def target_quats(owner, group):

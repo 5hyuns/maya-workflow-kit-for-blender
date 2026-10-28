@@ -185,10 +185,8 @@ def test_straight_chain_bends_like_maya():
         pv = Vector([h[n] for n in ik_rp.PV])
         if pa:      # in the preferred-angle pose: Maya's pole vector exactly
             assert (pv - Vector(maya_pv)).length < 1e-4, (pa, tuple(pv), maya_pv)
-        else:       # straight, no preferred angle: Maya (1.414, 0, 1.414) [U]; the kit's +Z has the same solve plane
-            perp = Vector(straight["straight_default_pv"]) * 1.0
-            perp.x = 0.0
-            assert (pv.normalized() - perp.normalized()).length < 1e-4, tuple(pv)
+        else:       # straight, no preferred angle: Maya's ikHandle writes pa (0, 90, 0) first (step 266 R4)
+            assert (pv - Vector(straight["straight_default_pv"])).length < 1e-4, tuple(pv)
         _solve(h, (6, 0, 0))
         e = (_maya(ob, "j1") - Vector(elbow)).length
         assert e < 1e-3, (pa, tuple(_maya(ob, "j1")), elbow, e)
