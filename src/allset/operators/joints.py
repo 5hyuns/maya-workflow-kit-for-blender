@@ -128,6 +128,8 @@ def finish(context, ob, names, top=None):
 def view_under(window, x, y):
     """(area, WINDOW region) of the 3D View under window position x, y (not the Tool Box column)."""
     from ..ui import toolbox
+    if window is None:
+        return None
     for area in window.screen.areas:
         if area.type != 'VIEW_3D' or toolbox.is_toolbox(area.spaces.active):
             continue
@@ -565,6 +567,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     @staticmethod
     def _any_view(context):
         from ..ui import toolbox
+        if context.window is None:          # no window (background, #158)
+            return None
         return next(((a, r) for a in context.window.screen.areas
                      if a.type == 'VIEW_3D' and not toolbox.is_toolbox(a.spaces.active)
                      for r in a.regions if r.type == 'WINDOW'), None)
