@@ -3,8 +3,8 @@
 「계획」 5, GitHub #30).
 
 The kit tool ``allset.quad_draw_tool`` (edit mode, ui/mesh_tools_poly.py) edits one mesh — the selected one, or a new
-empty ``polySurfaceN`` (``allset.quad_draw_start``) — on the reference surface: the live surface (Modify > Make Live,
-``Scene.allset_live``), else every other visible mesh, else Maya's construction plane.
+empty ``polySurfaceN`` (``allset.quad_draw_start``) — on the reference surfaces: the Make Live mesh list,
+else every other visible mesh, else Maya's construction plane. With a live list, unrelated meshes never participate.
 
 - click = a dot on the surface; press-drag on a dot / vertex / edge / face = move it along the surface (Auto-weld:
   a vertex let go within the weld distance of another vertex is merged with it); middle-drag = move too;
@@ -30,7 +30,6 @@ from bpy.props import BoolProperty
 from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
-from mathutils.bvhtree import BVHTree
 
 from . import mesh_tools, multi_cut, poly_draw, preselect
 
@@ -379,29 +378,14 @@ def weld_target(xy, moved, mouse_xy, radius, exclude=()):
 
 # --- reference surface ----------------------------------------------------------------------------------
 
-_bvh = {}       # object name -> (signature, BVHTree in object space, matrix_world, inverse)
-
-
 def reference_objects(context):
-    """The live surface if one is set (and shown), else every visible mesh not being edited."""
-    live = getattr(context.scene, "allset_live", None)
+    """All current live meshes (including hidden references), else visible non-edit meshes."""
+    from . import live
+    refs = live.objects(context.scene)
+    if refs:
+        return refs
     shown = [o for o in context.visible_objects if o.type == 'MESH' and o.mode != 'EDIT']
-    if live is not None and live in shown:
-        return [live]
     return shown
-
-
-def _tree(context, ob):
-    sig = (tuple(map(tuple, ob.matrix_world)), len(ob.data.vertices), len(ob.data.polygons))
-    got = _bvh.get(ob.name)
-    if got is not None and got[0] == sig:
-        return got
-    dg = context.evaluated_depsgraph_get()
-    ev = ob.evaluated_get(dg)
-    tree = BVHTree.FromObject(ev, dg)
-    mw = ob.matrix_world.copy()
-    got = _bvh[ob.name] = (sig, tree, mw, mw.inverted_safe())
-    return got
 
 
 def surface_hit(context, region, rv3d, mouse, refs=None):
@@ -409,24 +393,9 @@ def surface_hit(context, region, rv3d, mouse, refs=None):
     refs = reference_objects(context) if refs is None else refs
     origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse)
     ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse).normalized()
-    backfaces = poly_draw.settings(context).qd_snap_backfaces
-    best = None
-    for ob in refs:
-        _s, tree, mw, inv = _tree(context, ob)
-        lo = inv @ origin
-        ld = (inv.to_3x3() @ ray).normalized()
-        loc, n, _i, _d = tree.ray_cast(lo, ld)
-        for _k in range(16):        # Snap to Backfaces off (Maya factory): go on through faces turned away
-            if loc is None or backfaces or n.dot(ld) <= 0:
-                break
-            loc, n, _i, _d = tree.ray_cast(loc + ld * 1e-5, ld)
-        if loc is None:
-            continue
-        w = mw @ loc
-        d = (w - origin).length
-        if best is None or d < best[0]:
-            best = (d, w)
-    return best[1] if best else None
+    from . import live
+    hit = live.ray_hit(context, origin, ray, refs, poly_draw.settings(context).qd_snap_backfaces)
+    return hit[0] if hit else None
 
 
 def place_point(context, region, rv3d, mouse, refs=None):
@@ -440,34 +409,9 @@ def place_point(context, region, rv3d, mouse, refs=None):
 def project_point(context, w, refs=None):
     """The closest reference surface point to world ``w`` (``w`` itself without a surface)."""
     refs = reference_objects(context) if refs is None else refs
-    best = None
-    for ob in refs:
-        _s, tree, mw, inv = _tree(context, ob)
-        loc, _n, _i, _d = tree.find_nearest(inv @ w)
-        if loc is None:
-            continue
-        p = mw @ loc
-        d = (p - w).length
-        if best is None or d < best[0]:
-            best = (d, p)
-    return best[1] if best else w
-
-
-@bpy.app.handlers.persistent
-def _forget(_scene=None, depsgraph=None):
-    """depsgraph_update_post: drop the BVH of a reference object whose geometry / transform changed."""
-    if depsgraph is None:
-        _bvh.clear()
-        return
-    for u in depsgraph.updates:
-        if not (u.is_updated_geometry or u.is_updated_transform):
-            continue
-        idb = u.id
-        if isinstance(idb, bpy.types.Object) and idb.mode != 'EDIT':
-            _bvh.pop(idb.name, None)
-        elif isinstance(idb, bpy.types.Mesh):
-            for name in [n for n in _bvh if (o := bpy.data.objects.get(n)) is None or o.data == idb.original]:
-                _bvh.pop(name, None)
+    from . import live
+    hit = live.nearest(context, w, refs)
+    return hit[0] if hit else w
 
 
 # --- live state -----------------------------------------------------------------------------------------
@@ -1412,9 +1356,9 @@ def new_target(context):
 
 def pick_target(context):
     """The mesh Quad Draw edits: the edited / selected mesh unless it is the live surface; else None (make one)."""
-    live = getattr(context.scene, "allset_live", None)
+    from . import live
     ob = context.active_object
-    if ob is not None and ob.type == 'MESH' and ob is not live and (ob.mode == 'EDIT' or ob.select_get()):
+    if ob is not None and ob.type == 'MESH' and not live.contains(context.scene, ob) and (ob.mode == 'EDIT' or ob.select_get()):
         return ob
     return None
 
@@ -1437,12 +1381,12 @@ class ALLSET_OT_quad_draw_start(bpy.types.Operator):
         if context.mode != 'EDIT_MESH' or context.edit_object is not ob:
             if context.mode != 'OBJECT':
                 bpy.ops.object.mode_set(mode='OBJECT')
-            live = getattr(context.scene, "allset_live", None)
+            from . import live
             for other in context.selected_objects:
                 if other is not ob:
                     other.select_set(False)
-            if live is not None:
-                live.select_set(False)
+            for reference in live.objects(context.scene):
+                reference.select_set(False)
             ob.select_set(True)
             context.view_layer.objects.active = ob
             bpy.ops.object.mode_set(mode='EDIT')
@@ -1470,17 +1414,12 @@ def register_handlers():
     if not _handles:
         _handles.append(bpy.types.SpaceView3D.draw_handler_add(_draw_view, (), 'WINDOW', 'POST_VIEW'))
         _handles.append(bpy.types.SpaceView3D.draw_handler_add(_draw_pixel, (), 'WINDOW', 'POST_PIXEL'))
-    if _forget not in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.append(_forget)
 
 
 def unregister_handlers():
     while _handles:
         bpy.types.SpaceView3D.draw_handler_remove(_handles.pop(), 'WINDOW')
-    if _forget in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.remove(_forget)
     if bpy.app.timers.is_registered(_watch):
         bpy.app.timers.unregister(_watch)
     STATE.update(ob=None, preview=None, created=None, timer=False)
     _restore_overlays()
-    _bvh.clear()

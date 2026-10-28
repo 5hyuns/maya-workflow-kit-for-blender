@@ -284,21 +284,8 @@ class ALLSET_OT_match_transform(bpy.types.Operator):
 # --- Make Live (S13) ------------------------------------------------------------------------------
 
 def make_live(context, ob):
-    ts = context.scene.tool_settings
-    context.scene.allset_live = ob
-    elements = set(ts.snap_elements)
-    if ob is not None:
-        ts.snap_elements = elements | {'FACE_PROJECT'}
-        ts.use_snap = True
-        ts.use_snap_align_rotation = False
-    else:
-        elements.discard('FACE_PROJECT')
-        if elements:
-            ts.snap_elements = elements
-        if not elements or elements == {'INCREMENT'}:
-            ts.use_snap = False
-    for area in context.screen.areas if context.screen else ():
-        area.tag_redraw()
+    from . import live
+    live.set_objects(context.scene, [ob] if ob else [])
 
 
 class ALLSET_OT_make_live(bpy.types.Operator):
@@ -310,17 +297,29 @@ class ALLSET_OT_make_live(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.mode == 'OBJECT'
+        from . import live
+        return context.mode == 'OBJECT' or (context.mode == 'EDIT_MESH' and bool(live.objects(context.scene)))
+
+    def invoke(self, context, event):
+        if event.type == 'MIDDLEMOUSE':
+            return bpy.ops.allset.live_list('EXEC_DEFAULT', False, action='RECENT')
+        return self.execute(context)
 
     def execute(self, context):
-        ob = context.view_layer.objects.active
-        if ob is not None and (not ob.select_get() or ob.type != 'MESH'):
-            ob = None
-        make_live(context, ob)
-        results.result(self, f"Live surface: {ob.name}" if ob else "No Live Surface")
+        from . import live
+        targets = live.selected(context) if context.mode == 'OBJECT' else []
+        if set(targets) == set(live.objects(context.scene)):
+            targets = []
+        try:
+            live.set_objects(context.scene, targets)
+        except ValueError as ex:
+            self.report({'WARNING'}, str(ex))
+            return {'CANCELLED'}
+        label = live.text(context.scene)
+        results.result(self, f"Live surface: {label}" if targets else "No Live Surface")
         from ..ui import view_message
         # Maya's Make Live message (topCenter).
-        view_message.show(context, f"{ob.name} is <hl>live</hl>." if ob else "Make Live is <hl>off</hl>.",
+        view_message.show(context, f"{label} is <hl>live</hl>." if targets else "Make Live is <hl>off</hl>.",
                           'TOP_CENTER')
         return {'FINISHED'}
 
@@ -410,12 +409,16 @@ classes = (ALLSET_OT_snap_points, ALLSET_OT_align_objects, ALLSET_OT_match_trans
 
 
 def register_props():
+    from . import live
     bpy.types.Scene.allset_live = PointerProperty(
         type=bpy.types.Object, name="Live Surface",
-        description="Maya live surface: moves snap onto it (Modify > Make Live)")
+        description="First live surface (legacy script compatibility)", update=live.compatibility_changed)
+    live.register()
 
 
 def unregister_props():
+    from . import live
+    live.unregister()
     del bpy.types.Scene.allset_live
 
 

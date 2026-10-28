@@ -6,6 +6,14 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Make Live**: the Status Line magnet makes the selected meshes live; its arrow
+  opens surface history. Live references resist viewport selection, use dark green
+  `#009954` Outliner labels and wire overlays, and keep snap settings independent.
+  Move centre/plane handles and Quad Draw query only the explicit live list,
+  including evaluated modifiers and multiple references. History, add/remove,
+  cancellation, Undo/Redo and file reload preserve selection restrictions.
+  Virtual Outliner rows no longer cover native objects in short editors.
+  See [usage and limits](docs/make_live.md).
 - **Component scale**: Prevent Negative Scale is functional in Scale Settings,
   the active-tool popup and R marking menu. Single-axis mesh scaling stops at
   exactly zero, preserving the captured pivot/frame and recovering smoothly

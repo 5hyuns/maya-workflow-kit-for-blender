@@ -593,6 +593,7 @@ class ALLSET_OT_hold(bpy.types.Operator):
                                           or op.bl_idname == 'ALLSET_OT_pivot_rotate'
                                           or op.bl_idname == 'ALLSET_OT_pivot_translate'
                                           or op.bl_idname == 'ALLSET_OT_component_scale'
+                                          or op.bl_idname == 'ALLSET_OT_live_translate'
                                           for op in window.modal_operators):
                 return {'PASS_THROUGH'}
             return self._finish(context)

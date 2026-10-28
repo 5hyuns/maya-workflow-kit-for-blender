@@ -108,8 +108,8 @@ def draw_live(layout, context):
     _grey(_row(layout, "Mesh Alpha:"), "Quad Draw/Mesh Alpha", "0.7500", check=True)
     _grey(_row(layout, "Surface Offset:"), "Quad Draw/Surface Offset", "0.0000", check=False)
     _row(layout, "Snap to Backfaces:").prop(s, "qd_snap_backfaces", text="")
-    live = getattr(context.scene, "allset_live", None)
-    _row(layout, "Live surface:").label(text=live.name if live is not None else "None (other visible meshes)")
+    from ..operators import live
+    _row(layout, "Live surface:").label(text=live.text(context.scene))
 
 
 def _limit(layout, s, prefix):

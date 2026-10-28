@@ -276,7 +276,11 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
 
     def execute(self, context):
         ob = context.active_object
-        # Maya joints are objects. Pose mode is their object-selection state;
+        from . import live
+        if context.mode == 'OBJECT' and live.contains(context.scene, ob):
+            self.report({'WARNING'}, f"{ob.name} is live: turn off Make Live to edit its components.")
+            return {'CANCELLED'}
+        # Maya joints are objects. Pose is their object-selection state;
         # Edit mode exposes the rest skeleton as components.
         if ob is not None and ob.type == 'ARMATURE':
             if ob.mode == 'EDIT':

@@ -1457,15 +1457,18 @@ def _m59_9_together_check():
           f"{cm(want)}), facing it (normal {tuple(round(c, 3) for c in n)})",
           (top - want).length < 0.01 * k() and abs(want.x - 3.5 * k()) < 1e-6 and n.dot(Vector((-1, 0, 0))) > 0.999)
     select_only(C["b"])
+    snap_before = ts().use_snap, set(ts().snap_elements)
     menu("Modify/Make Live")
     live = getattr(bpy.context.scene, "allset_live", None)
-    check(f"[M59-9] Make Live: face snapping on, the Status Line field shows the name ({live and live.name}, "
-          f"{set(ts().snap_elements)})", live == C["b"] and ts().use_snap and 'FACE_PROJECT' in ts().snap_elements)
+    check(f"[M59-9] Make Live: reference restricted, Status Line shows the name ({live and live.name})",
+          live == C["b"] and live.hide_select and not live.select_get()
+          and (ts().use_snap, set(ts().snap_elements)) == snap_before)
     for o in bpy.context.scene.objects:
         o.select_set(False)
     menu("Modify/Make Live")
     check(f"[M59-9] Make Live with an empty selection = off ({getattr(bpy.context.scene, 'allset_live', None)})",
-          bpy.context.scene.allset_live is None and 'FACE_PROJECT' not in ts().snap_elements)
+          bpy.context.scene.allset_live is None and not C["b"].hide_select
+          and (ts().use_snap, set(ts().snap_elements)) == snap_before)
     ts().use_snap = False
 
 

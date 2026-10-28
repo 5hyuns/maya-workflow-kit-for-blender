@@ -21,7 +21,7 @@ GREY = {
     "Multi-Cut/Color Settings": (
         "Preferences > Themes", "The cut colours are the kit's (yellow points, grey preview, orange loop)."),
     "Multi-Cut/Live Constraint Options": (
-        "Snap to Face", "No live surface in Blender: snap with the Face snap while moving the new vertices."),
+        "Make Live / Move", "Multi-Cut has no live constraint yet. Move new vertices onto Make Live surfaces with the Move centre/plane handles."),
     "Crease Tool/Extend to creased components": (
         "Select Similar", "Select the creased edges with Select > Select Similar > Crease first."),
 }

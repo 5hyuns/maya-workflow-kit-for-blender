@@ -254,6 +254,10 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
     def execute(self, context):
         if context.mode != 'EDIT_MESH':
             ob = context.active_object
+            from . import live
+            if live.contains(context.scene, ob):
+                self.report({'WARNING'}, f"{ob.name} is live: turn off Make Live to edit its components.")
+                return {'CANCELLED'}
             if not ob.visible_get():
                 self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to edit its components.")
                 return {'CANCELLED'}
@@ -299,7 +303,8 @@ class ALLSET_OT_component_mask(bpy.types.Operator):
         ts = context.scene.tool_settings
         # a hidden object: Maya sets the pick mask silently; Blender can't
         # enter edit mode on it, so only the mask changes (delegated, step 258)
-        if context.mode != 'EDIT_MESH' and context.active_object.visible_get():
+        from . import live
+        if context.mode != 'EDIT_MESH' and context.active_object.visible_get() and not live.contains(context.scene, context.active_object):
             bpy.ops.object.mode_set(mode='EDIT')
         ts.mesh_select_mode = toggled_mask(tuple(ts.mesh_select_mode), self.kind)
         return {'FINISHED'}
