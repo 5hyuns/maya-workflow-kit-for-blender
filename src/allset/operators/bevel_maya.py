@@ -33,15 +33,67 @@ FIT = 0.9999          # Maya's bevel width = 0.9999 x the asked width (offset 0.
 CHAMFER = 25.0        # Chamfer Vertex: 0.25 of each edge (unit cube and 4 x 1 x 2 box)
 
 
+def terminal_moves(edges):
+    """Step 283 (#182): the ends of an open chain (or a lone edge) between two faces. At a vertex v that ends exactly
+    one bevelled edge e, every other edge t at v that lies in no face of e gets its new vertex at
+    d = W x sin(alpha / 2) / s_phi from v (alpha = the angle between e's two slide edges seen along e = the dihedral
+    angle of e's faces, phi = the angle between t and e, s_phi = sin phi below 90 degrees, else 1): Maya keeps that
+    point at W x sin(alpha / 2) from the bevelled edge. Returns ([(v position, unit(t), k = d / W)],
+    {t: [lengths / k]}) — the second is what limits the width (``slide_limit``)."""
+    sel = set(edges)
+    moves, limits = [], {}
+    for v in {v for e in edges for v in e.verts}:
+        mine = [e for e in v.link_edges if e in sel]
+        if len(mine) != 1 or len(mine[0].link_faces) != 2:
+            continue
+        e = mine[0]
+        d = (e.other_vert(v).co - v.co)
+        if d.length <= ZERO:
+            continue
+        d.normalize()
+        slides = [s for f in e.link_faces for s in v.link_edges if s is not e and f in s.link_faces]
+        if len(slides) < 2:
+            continue
+
+        def across(x):
+            x = x - d * x.dot(d)
+            return x.normalized() if x.length > ZERO else None
+        a, b = (across(s.other_vert(v).co - v.co) for s in slides[:2])
+        if a is None or b is None:
+            continue
+        half = math.acos(max(-1.0, min(1.0, a.dot(b)))) / 2.0
+        if math.sin(half) <= ZERO:
+            continue
+        for t in v.link_edges:
+            if t is e or t in slides:
+                continue
+            off = t.other_vert(v).co - v.co
+            if off.length <= ZERO:
+                continue
+            u = off.normalized()
+            c = u.dot(d)
+            s_phi = math.sqrt(max(0.0, 1.0 - c * c)) if c > 0.0 else 1.0
+            if s_phi <= ZERO:
+                continue
+            k = math.sin(half) / s_phi
+            moves.append((v.co.copy(), u, k))
+            limits.setdefault(t, []).append(off.length / k)
+    return moves, limits
+
+
 def slide_limit(edges):
-    """Maya's fraction base (a perpendicular width): min over slide edges of length x sin(angle to the beveled edge)
-    / (number of their ends a bevel slides along).
+    """Maya's fraction base (a perpendicular width): the smallest of
+    (a) slide edges — an edge at an end of a bevelled edge that lies in one of its faces: length x sin(angle to the
+        bevelled edge) / (number of its ends a bevel slides along);
+    (b) terminal edges at the end of an open chain (``terminal_moves``): length x s_phi / sin(alpha / 2) / (number of
+        its ends that are such chain ends).
 
     Another beveled edge is a slide only where it shares a face with this one (the cube's top loop: the corner slides
     inside the top face along it). Step 239 (#124): a cylinder cap's border ring
     has no face holding two ring edges, so Maya slides along the side / cap fan edges (length 1) — and the width is
     perpendicular, so the fan edges at 81 degrees to the ring give 0.49995 x sin 81 = 0.49379 (the side ring lands at
-    y 1.5062, the cap ring at radius 0.5). The ring neighbours had given 0.078. Cube cases are all at 90 degrees."""
+    y 1.5062, the cap ring at radius 0.5). Step 283: an edge in no face of the bevelled edge is no slide edge; at a
+    chain end it is a terminal edge (part of a cap rim: the unbevelled rim neighbour)."""
     sel = set(edges)
     used = {}
     for e in edges:
@@ -49,15 +101,16 @@ def slide_limit(edges):
         d = (e.verts[1].co - e.verts[0].co).normalized()
         for v in e.verts:
             for s in v.link_edges:
-                if s is e or (s in sel and not faces.intersection(s.link_faces)):
+                if s is e or not faces.intersection(s.link_faces):
                     continue
                 t = (s.other_vert(v).co - v.co)
                 sin = t.normalized().cross(d).length if t.length > ZERO else 0.0
-                key = s
-                ent = used.setdefault(key, [set(), 1.0])
+                ent = used.setdefault(s, [set(), 1.0])
                 ent[0].add(v)
                 ent[1] = min(ent[1], sin)
     caps = [s.calc_length() * sin / len(ends) for s, (ends, sin) in used.items() if s.calc_length() > ZERO]
+    _moves, ends = terminal_moves(edges)
+    caps += [min(ls) / len(ls) for ls in ends.values()]
     if caps:
         return min(caps)
     return min((e.calc_length() for e in sel), default=0.0)
@@ -254,10 +307,22 @@ def bevel_edges(bm, edges, fraction=0.5, offset_as_fraction=True, offset=0.2, se
     bm.edges.ensure_lookup_table()
     edges = [bm.edges[i] for i in picked]
     verts = {v for e in edges for v in e.verts}
+    # Offset As Fraction only: with an absolute Offset Maya leaves that vertex at W along the edge, as Blender does
+    moves = terminal_moves(edges)[0] if int(segments) == 1 and offset_as_fraction else []
     ret = bmesh.ops.bevel(bm, geom=list(edges) + list(verts), offset=w, offset_type='OFFSET',
                           segments=max(1, int(segments)), profile=profile(depth), affect='EDGES',
                           clamp_overlap=False, loop_slide=True)
     made = [v for v in ret["verts"] if v.is_valid]
+    # step 283: Blender puts a chain end's new vertex on a terminal edge at W along it; Maya (Fraction) at W x k
+    for origin, unit_dir, k in moves:
+        best = None
+        for v in made:
+            off = v.co - origin
+            s = off.dot(unit_dir)
+            if s > 1e-7 and (off - unit_dir * s).length < 1e-5 and (best is None or s < best[0]):
+                best = (s, v)
+        if best is not None:
+            best[1].co = origin + unit_dir * (w * k)
     near = set(made)
     for v in made:
         near.update(e.other_vert(v) for e in v.link_edges)
