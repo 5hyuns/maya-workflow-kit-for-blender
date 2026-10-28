@@ -191,6 +191,7 @@ MAP = {
     "Create/Lights/Spot Light": _create('SPOT_LIGHT'),
     "Create/Lights/Area Light": _create('AREA_LIGHT'),
     "Create/Lights/Volume Light": _create('VOLUME_LIGHT'),
+    "Create/Lights/Dome Light": "allset.dome_light",                # step 276 (#201): the World environment
     "Create/Cameras": _create('CAMERA'),
     "Create/Curve Tools/CV Curve Tool": "allset.cv_curve_tool",            # step 156: operators/curve_draw.py
     "Create/Curve Tools/EP Curve Tool": "allset.ep_curve_tool",
@@ -575,6 +576,8 @@ MAP = {
 EXTRA = {
     # The kit's own switch back to plain Blender (switch.py, step 60): found by the menu search too.
     "Windows/Settings/Preferences": [("Switch to Blender",)],
+    # Dome Light (#201): renderers add it to Maya; here = Blender's World environment (operators/dome_light.py)
+    "Create/Lights/Volume Light": [("-", ""), ("Dome Light",)],
 }
 
 # Submenus Maya builds at run time, so Maya's static menu structure has them as leaves (or with a

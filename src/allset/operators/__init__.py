@@ -155,6 +155,8 @@ from . import uv_shell_select  # noqa: E402  step 256 (#172): Maya UV Shell sele
 classes += uv_shell_select.classes
 from . import manip_scale  # noqa: E402  step 275 (#200): Maya Scale manipulator centre / axis drag
 classes += manip_scale.classes
+from . import dome_light  # noqa: E402  step 276 (#201): Create > Lights > Dome Light = the World environment
+classes += dome_light.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
