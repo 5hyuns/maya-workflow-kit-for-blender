@@ -55,6 +55,7 @@ PAGES = (
     ("VIEWCUBE", "ViewCube", 1, "ViewCube: ViewCube Preferences", [
         ("ViewCube", [
             ("pref", "maya_viewcube", "Show the ViewCube"),
+            ("pref", "view_navigation", "Navigation widget"),
             ("missing", "On-screen position / size / opacity", "Blender's navigation gizmo has fixed placement"),
         ]),
     ]),

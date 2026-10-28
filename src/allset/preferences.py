@@ -227,9 +227,23 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "Blender's menus and workspace tabs (Blender menus stay as submenus)",
         default=True)
     # Maya view furniture, in views whose Blender navigation gizmo is off.
+    def _update_navigation(self, context):
+        from .ui import view_furniture
+        if view_furniture._handle:       # Maya mode on (view_furniture registered)
+            view_furniture.apply_navigation()
+
     maya_viewcube: bpy.props.BoolProperty(
-        name="ViewCube", description="Maya ViewCube in the top right of the view (click a face to look "
-                                     "along it)", default=True)
+        name="ViewCube", description="Maya ViewCube (or Blender's navigation gizmo, see Viewport Navigation) in "
+                                     "the top right of the view", default=True, update=_update_navigation)
+    # #209: Blender's navigation gizmo instead of the Maya ViewCube (ui/view_furniture.py)
+    view_navigation: bpy.props.EnumProperty(
+        name="Viewport Navigation",
+        items=(('VIEWCUBE', "Maya ViewCube", "Maya ViewCube in the top right of the view (click a face to look "
+                                             "along it)"),
+               ('BLENDER', "Blender Navigation Gizmo", "Blender's navigation gizmo (axis ball, zoom / pan "
+                                                        "buttons) in the top right of the view")),
+        default='VIEWCUBE', update=_update_navigation,
+        description="Navigation widget in the top right of the 3D View")
     maya_camera_names: bpy.props.BoolProperty(
         name="Camera Names", description="Maya camera name (persp, top -Y, ...) at the bottom of the view",
         default=True)
@@ -428,6 +442,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "maya_toolbox")
         row = box.row()
         row.prop(self, "maya_viewcube")
+        row.prop(self, "view_navigation", text="")
         row.prop(self, "maya_camera_names")
         row.prop(self, "maya_view_axis")
         row.prop(self, "maya_selection_wire")
