@@ -8,7 +8,7 @@ checklist in `docs/release_checklist.md`.
 
 **0.6.0 — rigging that behaves like Maya 2026** (Blender 4.5 LTS – 5.2)
 
-Joints, IK, skinning and constraints now follow Maya 2026 (measured with mayapy), and a rig made in the kit reaches
+Joints, IK, skinning and constraints now follow Maya 2026, and a rig made in the kit reaches
 Maya and game engines the way a Maya rig does.
 
 Added

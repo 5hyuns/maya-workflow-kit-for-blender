@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Run one command-line entry: Python only (MEL is not supported, decision 5).
 
-research/maya/ui_layout.md §4.12 (:290-293). Design: docs/steps/step_7.md 「계획」 4, docs/steps/step_130_exec.md.
+Maya's Command Line. Design: docs/steps/step_7.md 「계획」 4, docs/steps/step_130_exec.md.
 
 The kit runs no code itself (extension review, issue #40): the entry is written into a Text datablock and run by
 Blender's own ``text.run_script`` — the path of the Text Editor's Run Script. Before that the source is rewritten
@@ -284,7 +284,7 @@ def _format(value):
 # "file ... line n:" part off [K]; Show Stack Trace adds the traceback lines, each behind "# " [K].
 
 KINDS = ("ECHO", "OUTPUT", "RESULT", "INFO", "WARNING", "ERROR", "TRACE")
-OPTION_DEFAULTS = {         # Maya 2022 factory states (research/maya/screens/editors105/_editors105.json "checked")
+OPTION_DEFAULTS = {         # Maya 2022 factory states (Script Editor History menu check items)
     "se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True, "se_stack_trace": False,
     "se_suppress_results": False, "se_suppress_info": False, "se_suppress_warnings": False,
     "se_suppress_errors": False, "se_suppress_stack_window": False, "se_suppress_dup_vars": False,

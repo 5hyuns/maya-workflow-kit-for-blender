@@ -72,7 +72,7 @@ def test_new_material_object_replaces_all_slots():
     ob.data.materials.append(old)
     ob.data.polygons[2].material_index = 1
     assert bpy.ops.allset.assign_new_material(kind='LAMBERT') == {'FINISHED'}
-    # step 100: lambert1 is Maya's default material, so a new Lambert is lambert2 (mayapy)
+    # step 100: lambert1 is Maya's default material, so a new Lambert is lambert2 (Maya)
     assert [s.material.name for s in ob.material_slots] == ["lambert2"], [s.material for s in ob.material_slots]
     assert set(_indices(ob)) == {0}
     # Maya names count up per type; Principled values from the kind.

@@ -2,7 +2,7 @@
 """Maya 2026 Auto tangents (step 257, Issue #151).
 
 Maya's factory in / out tangent for new keys is ``auto`` (non-weighted). Its slope rule
-(Maya 2026 behaviour, measured with mayapy on 15 curves; private notes research/maya/re/060_modeling_anim.md B3):
+(Maya 2026 behaviour, 15 curves):
 
 1. the first and the last key are flat;
 2. a middle key takes the central difference m = (v+ - v-) / (t+ - t-) over both neighbours;

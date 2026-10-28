@@ -2,7 +2,7 @@
 """A ``maya.cmds`` look-alike for the command line (docs/steps/step_7.md 「계획」 5, step 208).
 
 Re-implemented from Maya's documented command behaviour (flag long/short
-names, return values) and mayapy measurements (research/maya/re/cmds_201.md) — no Maya code. Numbers are in the
+names, return values and Maya's results) — no Maya code. Numbers are in the
 scene's display units like Maya's current linear unit (cm by default, decision 1) and angles in degrees (radians if
 the scene's rotation unit is radians). Attribute names match the Channel Box (``ui/channel_box.py`` MAIN). Channel
 numbers are Blender's axes as they are (the Channel Box's convention); Maya's Y-up is not converted (decision 5).
@@ -95,7 +95,7 @@ def _flatten(args):
 
 
 # Maya locators: a kit Empty marked by ``create.LOCATOR_PROP`` (Create > Locator, spaceLocator); its shape name
-# follows the transform like Maya's rename (mayapy: box10 -> boxShape10, hero -> heroShape, research/maya/re/cmds_201.md §2)
+# follows the transform like Maya's rename (Maya: box10 -> boxShape10, hero -> heroShape)
 _TRAIL = re.compile(r"^(.*?)(\d+)$")
 
 
@@ -123,7 +123,7 @@ PLAIN_SHAPE = 2       # a locator whose shape is "<name>Shape" (after a rename f
 
 
 def renamed_shape(old_name, old_shape, new_name):
-    """Maya's shape name after renaming its transform ``old_name`` -> ``new_name`` (mayapy, cmds_201.md §2): a
+    """Maya's shape name after renaming its transform ``old_name`` -> ``new_name`` (Maya's rule): a
     shape named like the old transform's ``<base>Shape<N>`` follows as ``shape_name_for(new)`` (pCube1 -> box10:
     boxShape10, -> hero: heroShape); any other shape becomes ``<new>Shape`` (ctrl / ctrlShape -> ctrl2: ctrl2Shape)."""
     return shape_name_for(new_name) if old_shape == shape_name_for(old_name) and _TRAIL.match(old_name)         else f"{new_name}Shape"
@@ -203,7 +203,7 @@ def _selection():
 
 
 def _select_only(obs):
-    """Maya commands that make nodes select them (mayapy: polyCube, group, duplicate, parent, spaceLocator)."""
+    """Maya commands that make nodes select them (Maya: polyCube, group, duplicate, parent, spaceLocator)."""
     vl = _view_layer()
     for o in vl.objects:
         if o is not None and o.select_get():
@@ -216,13 +216,13 @@ def _select_only(obs):
         vl.objects.active = o
 
 
-# Maya's default cameras: the kit draws them as Outliner rows (step 99), Maya's names are taken (mayapy: group -n top
+# Maya's default cameras: the kit draws them as Outliner rows (step 99), Maya's names are taken (Maya: group -n top
 # -> top1)
 DEFAULT_CAMERAS = ("persp", "top", "front", "side")
 
 
 def unique_name(name, exclude=None):
-    """``name`` if no other object has it, else Maya's increment (mayapy: rename to a taken "hero" -> hero1,
+    """``name`` if no other object has it, else Maya's increment (Maya: rename to a taken "hero" -> hero1,
     polyCube -n pCube1 with pCube1 taken -> pCube2)."""
     from ..operators import naming
     taken = {o.name for o in bpy.data.objects if o is not exclude} | set(DEFAULT_CAMERAS)
@@ -743,7 +743,7 @@ def setAttr(attr, *values, **kwargs):
         if _cb().is_locked(ob, k):
             raise RuntimeError(f"The attribute '{ob.name}.{name}' is locked or connected and cannot be modified.")
         if k.startswith(_cb().CUSTOM_PREFIX) and isinstance(v, (int, float)) and not isinstance(v, bool):
-            # Maya refuses a value outside the attribute's limits (mayapy: "past its maximum value of 10")
+            # Maya refuses a value outside the attribute's limits (Maya: "past its maximum value of 10")
             lo, hi = _limits(ob, k[len(_cb().CUSTOM_PREFIX):])
             if hi is not None and v > hi:
                 raise RuntimeError(f"setAttr: Cannot set the attribute '{ob.name}.{name}' past its maximum value "
@@ -796,7 +796,7 @@ def addAttr(*args, **kwargs):
 # --- creation (Maya naming: pCube1 / pCubeShape1 / polyCube1) ----------------------
 
 # Maya flags (long, short) -> creation node attribute; the bare command's defaults (polyCylinder caps 0, unlike
-# the Create menu's 1: research/maya/re/primitives_129.md §1)
+# the Create menu's 1)
 _PRIM_FLAGS = {
     "polyCube": ('CUBE', {}, (("width", "w"), ("height", "h"), ("depth", "d"), ("subdivisionsX", "sx", "subdivisionsWidth"),
                              ("subdivisionsY", "sy", "subdivisionsHeight"), ("subdivisionsZ", "sz", "subdivisionsDepth"))),
@@ -832,7 +832,7 @@ def _primitive(cmd, kwargs):
     ob = prim_history.create_object(bpy.context, kind, values)
     node = prim_history.node_dict(prim_history.owner_of(ob))["name"]
     if name:
-        # mayapy: -n pCube with pCube1 present = pCube / pCubeShape; -n pCube1 taken -> pCube2 / pCube2Shape
+        # Maya: -n pCube with pCube1 present = pCube / pCubeShape; -n pCube1 taken -> pCube2 / pCube2Shape
         ob.name = unique_name(str(name), exclude=ob)
         ob.data.name = f"{ob.name}Shape"
     if not ch:

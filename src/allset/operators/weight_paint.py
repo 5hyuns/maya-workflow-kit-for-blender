@@ -113,7 +113,6 @@ def _numbers_update(self, context):
 class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     search: StringProperty(name='Find influence', options={'TEXTEDIT_UPDATE'})
     # Maya 2026 Sort: Alphabetically (natural order) / By Hierarchy (default) / Flat
-    # (research/maya/re/maya2026_paint_skin_weights.md:31, :63)
     sort: EnumProperty(name='Sort', items=[('NAME', 'Alphabetically', 'Natural name order (joint2 before joint10)'),
                                          ('HIERARCHY', 'By Hierarchy', 'Joint hierarchy order'),
                                          ('INDEX', 'Flat', 'Influence order, no hierarchy')], default='HIERARCHY')
@@ -126,7 +125,7 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     # Tool Settings frames in Maya 2024+ order (Skin Clusters / Influences / Brush / Visualization / Stroke /
     # Stylus Pressure / Display), then the Blender-only extras (ui/paint_weights.SECTIONS)
     # Maya 2026 frame defaults: Skin Clusters collapsed (skinCtxClustersCollapsed 1), Influences / Brush /
-    # Visualization open, Stroke / Stylus Pressure / Display collapsed (maya2026_paint_skin_weights.md §2)
+    # Visualization open, Stroke / Stylus Pressure / Display collapsed
     show_skin_clusters: BoolProperty(default=False)
     show_influences: BoolProperty(default=True)
     show_brush: BoolProperty(default=True)
@@ -137,7 +136,7 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
     show_commands: BoolProperty(default=False)
     show_mask: BoolProperty(default=False)
     status: StringProperty(default='')
-    # step 224: Maya 2026 fields the kit keeps itself (maya2026_paint_skin_weights.md §2 ctx_defaults)
+    # step 224: Maya 2026 fields the kit keeps itself (ctx_defaults)
     skin_cluster: IntProperty(name='Skin Cluster', default=0, min=0,
                               description='The skin cluster (Armature modifier) whose influences the list shows')
     normalize_mode: EnumProperty(name='Normalize Weights', items=skin.NORMALIZE, get=_normalize_mode_get,
@@ -442,13 +441,13 @@ def vertex_targets(mesh, indices):
         data.update()
 
 
-# --- Flood (Maya 2026 Paint Skin Weights Flood, research/maya/re/maya2026_paint_skin_weights.md:66-90) ---------
+# --- Flood (Maya 2026 Paint Skin Weights Flood) ---------
 # Maya applies the operation to the influence being painted, multiplied by Opacity o:
 #   Replace w' = w + o(v - w)   Add w' = min(1, w + o v)   Scale w' = w (1 - o (1 - v))
 #   Smooth  w' = w + o(avg - w), avg = the mean of the vertex and its edge neighbours (Value ignored; the neighbour
 #   rule was fitted to the measured rings, docs/steps/step_218.md)
 # and gives the change to the other unlocked influences in their old ratio; locked influences keep their weight; only
-# selected vertices change when any vertex is selected (measured on polyCylinder h 8 sx 20 sy 8).
+# selected vertices change when any vertex is selected (Maya, on polyCylinder h 8 sx 20 sy 8).
 
 OPERATIONS = (('BRUSH', 'Brush', 'The current brush and its blend'), ('REPLACE', 'Replace', ''),
               ('ADD', 'Add', ''), ('SCALE', 'Scale', ''), ('SMOOTH', 'Smooth', ''))
@@ -488,7 +487,7 @@ def redistribute(weights, target, new, locked, influences):
     total = sum(others.values())
     if total <= 0.0:
         # nothing unlocked takes the rest: a normalized vertex can't lose weight, an unweighted one simply gets the
-        # value (not measured in Maya: delegated)
+        # value (Maya's value unknown: delegated)
         new = max(new, min(room, weights.get(target, 0.0)))
     else:
         rest = room - new
@@ -593,7 +592,7 @@ def flood(context, operation='BRUSH'):
     return {'FINISHED'}
 
 
-# --- Influences list RMB (Maya 2026, research/maya/re/maya2026_paint_skin_weights.md:47-63) -------------------
+# --- Influences list RMB (Maya 2026) -------------------
 
 NO_INFLUENCE = 'Please select an influence first'      # Maya's warning text
 

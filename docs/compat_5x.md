@@ -126,7 +126,7 @@ step 153 이후 (step 154–199) 의 버전 민감 코드 첫 5.x 통과 (`docs/
 이 PC 125 %), 설치 왕복 = `tools/release_check.py` (extension validate, 깨끗한 설정에 설치 → 켜기, 사용자 셋업 유지, 끄기 = 전부 복원,
 Remove, 남는 킷 파일 0, opt-in · 레이아웃 스크린샷).
 
-| Blender | 헤드리스 | GUI | 설치 왕복 | 시각 (look_compare) | 이 단계 전 (step 117) |
+| Blender | 헤드리스 | GUI | 설치 왕복 | 시각 | 이 단계 전 (step 117) |
 |---|---|---|---|---|---|
 | 4.5.4 LTS (대상) | **877 / 877** | **1121 / 1121** | **23 / 23** | 테마 ΔE00 > 5: 0 / 38, 장면 3 / 3, 밀도 5 / 6 | 869 / 869 |
 | 5.0.1 | **877 / 877** | **1121 / 1121** | **23 / 23** | 0 / 38, 3 / 3, 4 / 6 | 850 / 869 |
@@ -140,7 +140,7 @@ Remove, 남는 킷 파일 0, opt-in · 레이아웃 스크린샷).
   통과. 같은 단계들을 `ALLSET_SWEEP_ONLY` 로 두 세션에 나누면 전부 통과 (173 + 158 = 331). 나머지 88 파일 790 / 790. 합계 1121 / 1121.
   두 번째 묶음에서 실제 크래시 하나를 찾아 고침 (위 5.1 표: Maya → Blender 전환). 멈춤 자체는 원인 미확정 (남은 것).
 - 전환 수정 뒤 `gui_step60` + 스윕 M60 을 네 버전에서 다시 돌림: 11 / 11 + 11 / 11 × 4.
-- 시각: `research/maya/screens/compare_<ver>/` (나란히 그림·표), `tmp/look_env_<ver>/shots/` 를 직접 봄 — 레이아웃 (메뉴 막대, Status
+- 시각: 버전별 나란히 그림·표, `tmp/look_env_<ver>/shots/` 를 직접 봄 — 레이아웃 (메뉴 막대, Status
   Line, 셸프, Tool Box, Outliner, 탭 스택), Maya 테마 색, 핫박스, Move / Rotate 매니퓰레이터, RMB 마킹 메뉴 + 목록, Channel Box 가
   4.5 와 같다. 차이: 5.x 타임라인은 한 줄 (재생 버튼이 Range Slider 줄 오른쪽 끝, 위 「5.x Time Slider」), Time Slider 눈금 간격이
   Blender 5.x 의 것 (5, 10 … 대신 6, 12 …). 「밀도」 5 / 6 → 4 / 6 은 Create 메뉴 줄 간격 측정이 5.x 메뉴 그림자 가장자리를 다른 열로
@@ -184,7 +184,7 @@ Blender 기본색으로 남았다. step 119 부터 **버전마다 테마 파일*
 
 ### 버전 × 색 지표
 
-`tools/look_compare.py` (Maya 2022 대비, `ALLSET_LOOK_TAG=<ver>`) — 네 버전 모두 같은 값:
+Maya 모양 비교 (유지보수 도구) — 네 버전 모두 같은 값:
 
 | Blender | 테마 ΔE00 > 5 | 픽셀 점 일치 | 뷰포트 | 영역 | 장면 | 밀도 | 격자 | 뷰 가구 |
 |---|---|---|---|---|---|---|---|---|
@@ -194,9 +194,9 @@ Blender 기본색으로 남았다. step 119 부터 **버전마다 테마 파일*
 | 5.2.2 | 0 / 38 | 4 / 25 | 11 / 12 | 5 / 12 | 3 / 3 | 5 / 6 | 4 / 4 | 2 / 3 |
 
 (step 118 에서 5.x 밀도 4 / 6 이던 것은 측정점 문제 — 메뉴 탐지 x 시작, 5.x 타임라인 time_field 대체점, Outliner 검색칸 측정점을
-`tools/look_data.py` 에서 고침.)
+비교 도구 쪽에서 고침.)
 
-`tools/version_compare.py` (4.5 대비 같은 장면, ±3 px 안에서 가장 작은 ΔE00, `research/maya/screens/version_compare/<ver>/`):
+버전 비교 (4.5 대비 같은 장면, ±3 px 안에서 가장 작은 ΔE00):
 
 | Blender | 평균 ΔE00 (레이아웃 장면) | ΔE00 > 5 픽셀 | ΔE00 2–5 픽셀 | 첫 화면 (opt-in 전, Blender 자기 화면) |
 |---|---|---|---|---|
@@ -232,7 +232,7 @@ opt-in 전의 Blender 5.x 기본 화면이라 킷과 무관.
 ## 남은 것
 
 - 5.3 이후: `blender_version_max = "5.3.0"` 이라 설치 안 됨. 새 마이너가 나오면 같은 순서 (zip → `ALLSET_SANDBOX=<v> tests/run.py
-  --blender`, GUI, release_check, `ALLSET_LOOK_TAG` look_compare) 로 재고 compat 에 분기를 더한 뒤 올림.
+  --blender`, GUI, release_check, 모양 비교) 로 재고 compat 에 분기를 더한 뒤 올림.
 - 5.x 테마 (step 119 이후): 후속 없이 삭제된 키는 그릴 곳이 없고, `KEEP_FACTORY_5X` 10 키만 Blender 값. 5.x Outliner 활성 행
   외곽선은 테마 키가 없어 4.5 와 다름. 새 5.x 마이너가 나오면 `python tools/make_theme.py` 로 그 버전 파일을 만들고 `theme_diff.py` 로 새 키 확인.
 - 5.x Time Slider 는 사이드바가 없어 재생 버튼 위치만 Maya 와 다름 (한 줄). Blender 가 Timeline 사이드바를 다시 열게 되면 4.5 배치로.

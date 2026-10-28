@@ -16,7 +16,7 @@ NO_HUD = ("allset.display_mode", "allset.smooth_preview", "allset.smooth_level",
           "allset.component_mask", "allset.toggle_sel_mode", "allset.select_mode", "allset.mm_component",
           "allset.uv_component", "allset.cycle_display", "allset.camera_mode_toggle", "allset.symmetry",
           "allset.cycle_background", "allset.toggle_grid", "allset.pivot_toggle")
-# Maya keeps these in its undo queue (component mode = hilite, measured in mayapy: docs/steps/step_134_hud.md)
+# Maya keeps these in its undo queue (component mode = hilite; docs/steps/step_134_hud.md)
 # or Blender needs the push so a later undo doesn't drop the change (smooth preview, delegated).
 KEEP_UNDO = ("allset.smooth_preview", "allset.smooth_level", "allset.component_mode", "allset.component_mask",
              "allset.toggle_sel_mode", "allset.select_mode")
@@ -161,7 +161,7 @@ def test_old_face_only_group_is_upgraded():
 
 
 def test_component_mode_and_preview_still_undo():
-    # Maya undoes a component-mode change (hilite, mayapy); the kit keeps the undo push for F9 and 3.
+    # Maya undoes a component-mode change (hilite); the kit keeps the undo push for F9 and 3.
     ob = _maya_cube()
     assert 'UNDO' in _cls("allset.component_mode").bl_options
     assert 'UNDO' in _cls("allset.smooth_preview").bl_options

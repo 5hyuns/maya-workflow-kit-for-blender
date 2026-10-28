@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Control > Tag As Controller / Parent Controller on bones (docs/steps/step_217.md L20, DECISIONS7 decision 6).
 
-Maya's ``controller`` command (menu Tag As Controller, research/maya/menus.json:7064) tags nodes as controllers with
-an empty parent controller; ``cmds.controller(parent=True)`` (Parent Controller, :7070) makes the last selected node the
-parent controller of the others. Pick walk then follows the controller hierarchy (research/maya/re/maya2026_anim.md:19;
-DECISIONS7 M4: tags alone leave the parent empty, so j3 Up still reaches the hidden j2 until Parent Controller).
+Maya's ``controller`` command (menu Tag As Controller) tags nodes as controllers with
+an empty parent controller; ``cmds.controller(parent=True)`` (Parent Controller) makes the last selected node the
+parent controller of the others. Pick walk then follows the controller hierarchy
+(DECISIONS7 M4: tags alone leave the parent empty, so j3 Up still reaches the hidden j2 until Parent Controller).
 
 Kit translation: a controller tag is the data Bone ID property ``allset_controller`` (True), the parent controller
 ``allset_controller_parent`` (a bone name in the same armature). Only pose bones carry tags: objects are walked by

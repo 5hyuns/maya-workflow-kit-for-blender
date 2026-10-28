@@ -1,7 +1,7 @@
 """Step 204: animation layers 4 (Issue #111) — Extract Selected Objects, Duplicate Layer, Empty / Delete Empty Layers,
 Zero / Full Weight key, Layer Editor Ctrl / Shift multi-selection and the Graph Editor lines of the other selected
-layers (operators/anim_layers_204.py, ui/graph_layers.py). Maya behaviour of the Layer Editor ([K] until
-research/maya/re/anim_layers_201.md): extraction keeps the result, a duplicate adds its layer again, each command is
+layers (operators/anim_layers_204.py, ui/graph_layers.py). Maya behaviour of the Layer Editor:
+extraction keeps the result, a duplicate adds its layer again, each command is
 one undo step."""
 
 from importlib import import_module
@@ -137,7 +137,7 @@ def test_extract_selected_objects_keeps_the_result():
 
 def test_extract_keeps_mode_not_weight():
     """Maya (anim_layers_201.md §2): the extract layer keeps Additive / Override but has weight 1.0 without L's
-    weight keys, so the result changes when L's weight isn't 1 (measured, extract_l2_cube)."""
+    weight keys, so the result changes when L's weight isn't 1 (Maya extract case)."""
     sc, cube, sphere = _layered()
     e = sc.allset_anim_layers[1]
     e.override = True

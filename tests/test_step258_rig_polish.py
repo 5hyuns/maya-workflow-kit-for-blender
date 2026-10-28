@@ -1,7 +1,7 @@
 """Step 258 lane B (Issue #155): rig polish — root joint Translate, Outliner name, Orient Joint / Ghost Selected output,
 menu items that left pose mode, the Channel Box joint hint.
 
-Maya 2026 facts: research/maya/re/060_messages_ui.md B7 (mayapy b4567.json B7_joint: a new root joint is ``joint1`` in
+Maya 2026: a new root joint is ``joint1`` in
 the Outliner and the Channel Box, its Translate = its position; Orient Joint after success = only the command echo;
 Ghost Selected prints nothing on success, "Nothing selected can be ghosted using the current settings." when nothing
 can be ghosted). Kit axes: decision 2 / step 239 — the kit shows Blender's Z-up values (Maya Translate Y = kit Z).
@@ -161,7 +161,7 @@ def test_ghost_selected_nothing_selected_error():
 
 # --- 5. menu items keep pose mode -------------------------------------------------------------------------------------
 
-# h3_02.json #17-30 (the #155 session) — Maya has no modes: none of these changes what is selected
+# the #155 session, steps 17-30 — Maya has no modes: none of these changes what is selected
 MENU_ITEMS = (
     "Key/Hold Current Keys",
     "Key/IK/FK Keys/Move IK to FK",

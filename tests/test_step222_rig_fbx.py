@@ -1,7 +1,7 @@
 """Step 222 (Issue #132, decision 3): rig FBX like Maya 2026 — joint orient as PreRotation (rotate 0 at rest), joint
 translations in cm, no armature Null; the joint world positions the file describes (T . Pre . R . S) equal
-Blender's at every frame. mayapy 2026 cross-check: research/scripts/maya_fbx222/ (numbers in docs/steps/step_222.md).
-Spec: research/maya/re/maya2026_engine_fbx.md L11."""
+Blender's at every frame, cross-checked with Maya 2026 (numbers in docs/steps/step_222.md).
+"""
 
 import math
 import os
@@ -16,7 +16,7 @@ fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
 units = import_module(kit.MODULE + ".operators.units")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step222")
 
-# the spec's measurement rig: root (0,0,0) -> spine (0,5,2) -> head (0,10,0) in Maya cm, Y up
+# the spec's rig: root (0,0,0) -> spine (0,5,2) -> head (0,10,0) in Maya cm, Y up
 JOINTS = (("root", (0, 0, 0)), ("spine", (0, 5, 2)), ("head", (0, 10, 0)))
 
 
@@ -133,7 +133,7 @@ def test_world_positions_every_frame_equal_blender():
         for name, w in got.items():
             worst = max(worst, (w.to_translation() - truth[name]).length)
     print(f"step222 max joint world position error {worst:.2e} cm")
-    # Blender truth for the mayapy 2026 cross-check (research/scripts/maya_fbx222/check.py)
+    # Blender truth for the Maya 2026 cross-check
     import json
     dg = bpy.context.evaluated_depsgraph_get()
     truth = {}

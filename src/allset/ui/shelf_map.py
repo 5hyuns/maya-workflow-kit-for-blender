@@ -4,11 +4,11 @@
 Keys: the button's runTimeCommand (``shelf_data``), or "<shelf file>/<label>" for
 buttons whose Maya command is a script rather than a runTimeCommand. Values: (action, icon) with the
 action in ``ui/menu_map.py`` form (run by ``marking.modal.run_action``). Icons are
-Blender's own (no Maya artwork, research/maya/shelves.md:86-88); the shelf row draws kit-made
+Blender's own (no Maya artwork); the shelf row draws kit-made
 pictograms (``shelf_icons``).
 
 Step 109 (docs/steps/step_109.md 「계획」 1-3): every factory button keeps its slot. ``MENU`` names the Maya menu
-item that runs the same runTimeCommand (research/maya/menus.md ``rtc:`` tags): the button takes that item's
+item that runs the same runTimeCommand: the button takes that item's
 action (``menu_map.MAP``) or, when the item is greyed, its notice (``ui/notices.py``). Buttons that are in no
 Maya menu carry their own notice in ``NOTICES``. Unmapped buttons are drawn greyed with the notice as tooltip.
 """
@@ -113,7 +113,7 @@ BY_COMMAND = {
     "Art3dPaintTool": ("paint.texture_paint_toggle", 'TPAINT_HLT'),
     "ShowShadingGroupAttributeEditor": (_dock('ATTRIBUTE_EDITOR'), 'MATERIAL'),   # Edit Material Attributes
     # --- FX ---
-    # step 68: operators/fx.py (the old Emitter = particle_system_add was Emit from Object, fx.md:54-57)
+    # step 68: operators/fx.py (the old Emitter = particle_system_add was Emit from Object)
     "NCreateEmitter": ("allset.fx_emitter", 'PARTICLES'),
     "NEmitFromObject": ("allset.fx_emit_from_object", 'PARTICLE_DATA'),
     "makeCollideNCloth": ("allset.fx_passive", 'MOD_PHYSICS'),
@@ -147,8 +147,8 @@ BY_LABEL = {
     "FXCaching/Create New Cache": (("allset.ncache", {"action": 'CREATE', "kind": 'NOBJECT'}), 'FILE_CACHE'),
 }
 
-# Shelf button -> the Maya menu item with the same runTimeCommand (research/maya/shelves.json ``command`` =
-# research/maya/menus.md ``rtc:``). Mapped items lend their action, greyed ones their notice.
+# Shelf button -> the Maya menu item with the same runTimeCommand.
+# Mapped items lend their action, greyed ones their notice.
 _SCULPT = ("Smooth", "Relax", "Grab", "Pinch", "Flatten", "Foamy", "Spray", "Repeat", "Imprint", "Wax", "Scrape",
            "Fill", "Knife", "Smear", "Bulge", "Amplify", "Freeze", "Smooth Target", "Clone Target", "Mask Target",
            "Erase Target")

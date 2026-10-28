@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Skeleton > Joint Labelling and Enable / Disable Selected IK Handles (step 159 lane L).
 
-Behaviour spec (Maya 2022 menus + mayapy measurements): research/maya/re/joint_labels_159.md.
+Behaviour: Maya 2022 menus.
 
 A Maya joint is a bone (step 57). Its joint label attributes live as ID properties on the bone: ``allset_side``
 (Maya ``side``: 0 Center, 1 Left, 2 Right, 3 None; factory 0), ``allset_type`` (Maya ``type``, the 30-value enum
@@ -21,19 +21,19 @@ from bpy.props import BoolProperty, EnumProperty
 from bpy_extras import view3d_utils
 
 SIDE, TYPE, OTHER, DRAW = "allset_side", "allset_type", "allset_other_type", "allset_draw_label"
-OTHER_DEFAULT = "jaw"          # mayapy: a new joint's otherType
+OTHER_DEFAULT = "jaw"          # a new joint's otherType
 
-# Maya joint.side enum (mayapy attributeQuery -le): index = value
+# Maya joint.side enum: index = value
 SIDES = ("Center", "Left", "Right", "None")
 CENTER, LEFT, RIGHT, NO_SIDE = range(4)
-# Maya joint.type enum (mayapy attributeQuery -le): index = value
+# Maya joint.type enum: index = value
 TYPES = ("None", "Root", "Hip", "Knee", "Foot", "Toe", "Spine", "Neck", "Head", "Collar", "Shoulder", "Elbow", "Hand",
          "Finger", "Thumb", "PropA", "PropB", "PropC", "Other", "Index Finger", "Middle Finger", "Ring Finger",
          "Pinky Finger", "Extra Finger", "Big Toe", "Index Toe", "Middle Toe", "Ring Toe", "Pinky Toe", "Foot Thumb")
 T_NONE, T_ROOT, T_HIP, T_KNEE, T_FOOT, T_TOE = 0, 1, 2, 3, 4, 5
 T_SPINE, T_NECK, T_HEAD, T_COLLAR, T_SHOULDER, T_ELBOW, T_HAND, T_FINGER, T_THUMB = 6, 7, 8, 9, 10, 11, 12, 13, 14
 T_OTHER = 18
-# Rename Joints From Labels spells the enum name without spaces, except Foot Thumb (research spec §4)
+# Rename Joints From Labels spells the enum name without spaces, except Foot Thumb
 RENAME_TYPE = {i: t.replace(" ", "") for i, t in enumerate(TYPES)}
 
 # Add Joint Labels menu items -> (type value, act on descendants too, also set side Center); "ARM" / "LEG" are the
@@ -90,7 +90,7 @@ SUFFIX = {CENTER: "", LEFT: " (L)", RIGHT: " (R)", NO_SIDE: " (None)"}
 
 def label_text(bone):
     """The text Maya draws next to a joint with Draw Label on: type (Other: its other type) + side suffix,
-    "Hip (L)", "Index Finger (R)", "Knee (None)", "Spine" (GUI Maya shot, research spec §6)."""
+    "Hip (L)", "Index Finger (R)", "Knee (None)", "Spine" (Maya)."""
     side, typ, other, _draw = get_label(bone)
     return (other if typ == T_OTHER else TYPES[typ]) + SUFFIX.get(side, "")
 
@@ -151,7 +151,7 @@ def all_joints(context):
     return out
 
 
-# --- Maya rules (pure; research spec §3-5) -------------------------------------------------------------------------
+# --- Maya rules (pure) -------------------------------------------------------------------------
 
 def _has(name, *words):
     return any(w in name for w in words)
@@ -248,7 +248,7 @@ def _roll(name):
 
 def limb_labels(limb, chain):
     """Types Maya's Label Shoulder (ARM) / Label Hip (LEG) item gives ``chain`` = [(name, joint children)], the
-    selected top joint first, then every joint below it depth first (research spec §3.3)."""
+    selected top joint first, then every joint below it depth first."""
     top, mid, end, digit = LIMBS[limb]
     out = [top]
     cur = top
@@ -473,7 +473,7 @@ class ALLSET_OT_ik_handle_enable(bpy.types.Operator):
             return {'CANCELLED'}
         from . import ik_fk
         for con in cons:
-            # Maya ikHandle -eh / -dh write ikBlend 1 / 0 (mayapy); Ik Blend drives the Influence (step 223)
+            # Maya ikHandle -eh / -dh write ikBlend 1 / 0; Ik Blend drives the Influence (step 223)
             pb = next((p for p in con.id_data.pose.bones if any(c == con for c in p.constraints)), None)
             if con.type == 'IK' and pb is not None:
                 ik_fk.set_blend(con.id_data, pb, con, 1.0 if self.enable else 0.0)
@@ -490,7 +490,7 @@ classes = (ALLSET_OT_joint_label, ALLSET_OT_joint_label_toggle, ALLSET_OT_joint_
 
 # --- viewport label drawing ----------------------------------------------------------------------------------------
 
-# Maya 2022 label look (GUI shot, research spec §6): colour by side; Left text starts at the joint, Right text ends at
+# Maya 2022 label look: colour by side; Left text starts at the joint, Right text ends at
 # it, Center / None text is centred over it; the text sits just above the joint.
 def _srgb(h):
     return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)) + (1.0,)

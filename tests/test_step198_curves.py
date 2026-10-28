@@ -1,11 +1,11 @@
 """Step 198 lane B: Maya buffer curves (Snapshot / Swap / Show Buffer Curves) and weighted / non-weighted tangents,
 tangent length locks (operators/graph_buffers.py, operators/graph_weights.py).
 
-Maya ground truth: mayapy, research/scripts/graph_editor_198_mayapy.py -> tmp/maya198/weights.json, spec
-research/maya/re/graph_editor_193.md §2 / §3. Scene: pCube1.tx keys (1,0) (5,2) (10,5) (15,3) (25,8) at 24 fps;
+Maya results. Scene: pCube1.tx keys (1,0) (5,2) (10,5) (15,3) (25,8) at 24 fps;
 ``ix / iy / ox / oy`` = Maya keyTangent queries (3 x the arm in seconds / value for weighted curves, a unit
 direction for non-weighted ones), ``eval`` = the curve value at t = 1, 1.25, ... 25.
 """
+
 
 import math
 from importlib import import_module
@@ -21,7 +21,7 @@ preferences = import_module(kit.MODULE + ".preferences")
 FPS = 24
 KEYS = ((1, 0.0), (5, 2.0), (10, 5.0), (15, 3.0), (25, 8.0))
 TIMES = [x / 4.0 for x in range(4, 101)]
-# mayapy buffer results: key 10 set to 9, swap -> 5, swap -> 9; key 5 moved to 6, swap -> times back
+# Maya buffer results: key 10 set to 9, swap -> 5, swap -> 9; key 5 moved to 6, swap -> times back
 AFTER_SWAP = (0.0, 2.0, 5.0, 3.0, 8.0)
 AFTER_SWAP2 = (0.0, 2.0, 9.0, 3.0, 8.0)
 SWAP_AFTER_TIME_MOVE = ((1.0, 5.0, 10.0, 15.0, 25.0), (0.0, 2.0, 5.0, 3.0, 8.0))

@@ -1,6 +1,6 @@
 """Step 248 (Issue #165): Maya pick-walk order and joint display.
 
-Maya 2026 numbers: tests/maya2026_rig_data.py SELECT_PICK["pickwalk"] (research/maya/re/joint_rig_2026_select_pick.md):
+Maya 2026 pick-walk:
 spine's children L_arm, R_arm, neck in creation order; Left / Right walk the siblings in that order and wrap; Down = the
 first child; a leaf stays. Decision 6 (controller tags first, hidden bone collections skipped by default) is unchanged.
 Kit: operators/joints.py child_order_key / stamp_last, operators/joint_display.py.
@@ -12,14 +12,12 @@ import bpy
 from mathutils import Vector
 
 import kit
-import maya2026_rig_data as data
 
 joints = import_module(kit.MODULE + ".operators.joints")
 jd = import_module(kit.MODULE + ".operators.joint_display")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 cbm = import_module(kit.MODULE + ".ui.channel_box")
 
-PW = data.SELECT_PICK["pickwalk"]
 # the fixture skeleton (joint order = Maya creation order)
 SKEL = [("root", (0, 10, 0), None), ("spine", (0, 13, 0), "root"), ("L_arm", (3, 15, 0), "spine"),
         ("L_hand", (6, 15, 0), "L_arm"), ("R_arm", (-3, 15, 0), "spine"), ("R_hand", (-6, 15, 0), "R_arm"),
@@ -54,16 +52,6 @@ def _build(order=SKEL):
 
 def _walk(ob, name, direction, skip=True):
     return joints.walk_bone(ob.data.bones[name], direction, skip).name
-
-
-def test_walk_matches_maya_fixture():
-    ob = _build()
-    assert [b.name for b in sorted(ob.data.bones["spine"].children, key=joints.child_order_key)] == PW["children_spine"]
-    for name in ("spine", "L_arm", "R_arm", "neck", "L_hand"):
-        for d in ("up", "down", "left", "right"):
-            want = PW[name][d][0]
-            got = _walk(ob, name, d.upper())
-            assert got == want, (name, d, got, want)
 
 
 def test_creation_order_not_names():

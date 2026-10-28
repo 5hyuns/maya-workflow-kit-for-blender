@@ -87,8 +87,8 @@ def _kit_pref(prop):
     return ("wm.context_toggle", {"data_path": f'preferences.addons["{pkg}"].preferences.{prop}'})
 
 
-# Windows > ... Editors: Maya fills these submenus at run time (labels from
-# research/maya/runtime_commands.json). Items listed in
+# Windows > ... Editors: Maya fills these submenus at run time (Maya's labels).
+# Items listed in
 # CHILDREN without an action here draw greyed. docs/steps/step_34.md.
 _WINDOW_EDITORS = {
     "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
@@ -124,7 +124,7 @@ _WINDOW_EDITORS = {
 }
 
 MAP = {
-    # --- File (research/maya/menus.md "File") ---
+    # --- File ---
     "File/New Scene": "allset.new_maya_scene",     # the Maya layout file bundled in the extension (step 130)
     # step 69: file dialogs start in the project's scenes folder (operators/project.py)
     "File/Open Scene...": "allset.open_scene",
@@ -164,7 +164,7 @@ MAP = {
     "Edit/Keys/Bake Simulation": "allset.bake_simulation",          # step 217 L18
     # step 140: Maya factory Scale Keys = factor 1 (a no-op), so a plain click opens the window
     "Edit/Keys/Scale Keys": "allset.opt_scale_keys",
-    "Edit/Delete": "allset.delete",                              # step 164: with the hierarchy (dag_164.md)
+    "Edit/Delete": "allset.delete",                              # step 164: with the hierarchy
     "Edit/Ungroup": "allset.ungroup",                            # step 34
     "Edit/Delete by Type/History": "allset.delete_history",
     "Edit/Delete by Type/Non-Deformer History": ("allset.delete_history", {"non_deformer": True}),
@@ -234,7 +234,7 @@ MAP = {
     "Select/Components/Edge": ("allset.component_mode", {"type": 'EDGE'}),
     "Select/Components/Face": ("allset.component_mode", {"type": 'FACE'}),
     "Select/Contiguous Edges": ("allset.select_loops", {"ring": False}),
-    # Step 141 (research/maya/re/select_convert_141.md, mayapy): To Vertices / Edges / Faces = the components the
+    # Step 141: To Vertices / Edges / Faces = the components the
     # selection touches (Ctrl+F9-F11's operator), the other conversions operators/select_convert.py.
     "Select/Convert Selection/To Vertices": ("allset.convert_selection", {"type": 'VERT'}),
     "Select/Convert Selection/To Edges": ("allset.convert_selection", {"type": 'EDGE'}),
@@ -264,7 +264,7 @@ MAP = {
     "Modify/Reset Transformations": "allset.reset_transform",
     "Modify/Freeze Transformations": "allset.freeze_transform",
     "Modify/Center Pivot": "allset.center_pivot",
-    # step 59: pivot / align (research/maya/workflows/pivot_snap.md P7, P8, S8-S13)
+    # step 59: pivot / align
     "Modify/Bake Pivot": "allset.bake_pivot",
     "Modify/Zero Pivot": "allset.reset_pivot",              # Maya 2026 ZeroPivot = xform -ztp (step 219)
     "Modify/Match Transformations/Match All Transforms": ("allset.match_transform", {"kind": 'ALL'}),
@@ -283,8 +283,8 @@ MAP = {
     "Modify/Delete Attribute...": "allset.delete_attribute",
     "Windows/Switch to Blender": ("allset.switch_mode", {"mode": 'BLENDER'}),
     "Modify/Convert/NURBS to Polygons": ("object.convert", {"target": 'MESH'}),
-    # step 168: only the kit's smooth-preview modifiers are applied (Maya keeps skinCluster1 etc.,
-    # research/maya/re/modify_168.md §1); object.convert baked every modifier
+    # step 168: only the kit's smooth-preview modifiers are applied (Maya keeps skinCluster1
+    # etc.); object.convert baked every modifier
     "Modify/Convert/Smooth Mesh Preview to Polygons": "allset.smooth_to_polygons",
     "Modify/Convert/Polygon Edges to Curve": ("object.convert", {"target": 'CURVE'}),
     "Modify/Convert/Type to Curves": ("object.convert", {"target": 'CURVE'}),
@@ -320,13 +320,13 @@ MAP = {
     "Mesh/Booleans/Union": ("allset.boolean", {"operation": 'UNION'}),
     "Mesh/Booleans/Difference (A - B)": ("allset.boolean", {"operation": 'DIFFERENCE'}),
     "Mesh/Booleans/Intersection": ("allset.boolean", {"operation": 'INTERSECT'}),
-    # step 219: Maya 2026 Booleans (maya2026_menus_dump.json; PolygonBooleanDifferenceBA = Difference B - A)
+    # step 219: Maya 2026 Booleans (PolygonBooleanDifferenceBA = Difference B - A)
     "Mesh/Booleans/Difference (B - A)": ("allset.boolean", {"operation": 'DIFFERENCE_BA'}),
     "Mesh/Unsmooth": ("v3d", "mesh.unsubdivide", {}),        # UnsmoothPolygon -> Blender Un-Subdivide
     "Mesh/Fill Hole": "mesh.fill_holes",
     "Mesh/Reduce": _mod('DECIMATE'),
     "Mesh/Remesh": _mod('REMESH'),
-    "Mesh/Smooth": "allset.smooth",            # real polySmoothFace geometry (step 139, edit_mesh_139_edit.md §3)
+    "Mesh/Smooth": "allset.smooth",            # real polySmoothFace geometry (step 139)
     "Mesh/Triangulate": _mod('TRIANGULATE'),
     "Mesh/Quadrangulate": "mesh.tris_convert_to_quads",
     "Mesh/Mirror": "allset.mirror",                       # applied, world plane; □ = Mirror Options
@@ -337,12 +337,12 @@ MAP = {
     "Edit Mesh/Bevel": ("v3d", "allset.bevel", {}),           # polyBevel3 at once, editable (step 139, #16)
     "Edit Mesh/Bridge": "mesh.bridge_edge_loops",
     "Edit Mesh/Collapse": "mesh.edge_collapse",
-    "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect (step 139, edit_mesh_139_edit.md §1)
+    "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect (step 139)
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace (step 65)
     "Edit Mesh/Smart Extrude": ("v3d", "allset.extrude", {}),   # Maya 2026 SmartExtrude (step 219)
-    "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices (step 139, edit_mesh_139_edit.md §2)
+    "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices (step 139)
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
-    "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first (step 139, edit_mesh_139_edit.md §4)
+    "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first (step 139)
     "Edit Mesh/Average Vertices": "mesh.vertices_smooth",
     "Edit Mesh/Chamfer Vertices": ("v3d", "mesh.bevel", {"affect": 'VERTICES'}),
     "Edit Mesh/Delete Edge/Vertex": "mesh.dissolve_mode",
@@ -368,7 +368,7 @@ MAP = {
     "Mesh Display/Reverse": "mesh.flip_normals",
     "Mesh Display/Set to Face": "allset.set_to_face_normal",
     "Mesh Display/Set Vertex Normal": "allset.set_vertex_normal",
-    # Maya polySoftEdge: edges selected = those, object = every edge (step 101, mayapy)
+    # Maya polySoftEdge: edges selected = those, object = every edge (step 101)
     "Mesh Display/Harden Edge": ("allset.soften_harden", {"angle": 0.0}),
     "Mesh Display/Soften Edge": ("allset.soften_harden", {"angle": 180.0}),
     "Mesh Display/Paint Vertex Color Tool": "paint.vertex_paint_toggle",
@@ -421,7 +421,7 @@ MAP = {
     "Windows/Animation Editors/Quick Rig": "allset.quick_rig",
     "Skeleton/Mirror Joints": "allset.mirror_joints",
     "Skeleton/Orient Joint": "allset.orient_joint",
-    # step 246 (#163): Maya's meaning (operators/skeleton_menu.py; joint_rig_2026_skeleton_menu.md §2-6)
+    # step 246 (#163): Maya's meaning (operators/skeleton_menu.py)
     "Skeleton/Remove Joints": "allset.remove_joint",
     "Skeleton/Disconnect Joint": "allset.disconnect_joint",
     "Skeleton/Create IK Handle": "allset.ik_handle",       # step 58: click start + end joint
@@ -501,7 +501,7 @@ MAP = {
     "Playback/Render Settings": "allset.render_settings",
     # --- Visualize ---
     "Visualize/Motion Trail Editor": "allset.motion_trail_editor",      # step 225 L21
-    # step 171 (research/maya/re/visualize_171.md): snapshots + ghosting
+    # step 171: snapshots + ghosting
     "Visualize/Create Animation Snapshot": "allset.animation_snapshot",
     "Visualize/Update Snapshot": "allset.update_snapshot",
     "Visualize/Ghosting Editor": "allset.opt_ghosting_editor",
@@ -512,7 +512,7 @@ MAP = {
     "Visualize/Unghost Selected": ("allset.ghost", {"action": "UNGHOST"}),
     "Visualize/Unghost All": ("allset.ghost", {"action": "UNGHOST_ALL"}),
     # --- FX ---
-    # step 68 (operators/fx.py, research/maya/workflows/fx.md §4): Maya units + nucleus, every selected mesh
+    # step 68 (operators/fx.py): Maya units + nucleus, every selected mesh
     "nParticles/Create Emitter": "allset.fx_emitter",
     "nParticles/Create Emitter#2": "allset.fx_emitter",               # Legacy Particles section
     "nParticles/Emit from Object": "allset.fx_emit_from_object",
@@ -544,7 +544,7 @@ MAP = {
     "Effects/Fire": ("allset.quick_smoke", {"style": 'FIRE'}),
     "Effects/Smoke": "allset.quick_smoke",
     # --- Rendering ---
-    # Materials (research/maya/menus.md:1652-1657; operators/material.py, docs/steps/step_29.md).
+    # Materials (operators/material.py, docs/steps/step_29.md).
     "Lighting/Shading/Material Attributes": ("v3d", "allset.material_attributes", {}),
     # Maya 2026: Assign New Material is a submenu (favourites + New Material...) (step 219)
     "Lighting/Shading/Assign New Material/New Material...": "allset.assign_new_material",
@@ -552,7 +552,7 @@ MAP = {
     "Lighting/Shading/Assign Existing Material": ("menu", "ALLSET_MT_assign_existing_material"),
     "Texturing/3D Paint Tool": "paint.texture_paint_toggle",
     "Render/Render Settings...": "allset.render_settings",
-    # Render menu (research/maya/menus.md:1686-1704, restored by tools/gen_menu_data.py PLACEHOLDERS; step 67).
+    # Render menu (step 67).
     # Maya renders into the Render View window: render.render INVOKE opens Blender's (Render Result).
     # Through the active view's camera, else Maya's persp camera made on demand (operators/render_persp.py, step 137).
     "Render/Render Using": ("menu", "ALLSET_MT_render_using"),
@@ -577,11 +577,11 @@ EXTRA = {
     "Windows/Settings/Preferences": [("Switch to Blender",)],
 }
 
-# Submenus Maya builds at run time, so research/maya/menus.json has them as leaves (or with a
+# Submenus Maya builds at run time, so Maya's static menu structure has them as leaves (or with a
 # placeholder child): {label path: [items like menu_data's]}. Their actions are in MAP.
 CHILDREN = {
     # Step 219: the other run-time submenus (Windows > ... Editors, Modify > Match Transformations / Snap Align
-    # Objects, Display > Heads Up Display) now come from the Maya 2026 GUI dump in ui/menu_data.py.
+    # Objects, Display > Heads Up Display) now come from the Maya 2026 menus in ui/menu_data.py.
     # Windows > Settings/Preferences (Maya 2026 Windows menu; Performance
     # Settings only with the legacy viewport, off by default; step 120)
     "Windows/Settings/Preferences": [
@@ -617,7 +617,7 @@ _NOTES = "https://developer.blender.org/docs/release_notes/4.5/"
 _TUTORIALS = "https://www.blender.org/support/tutorials/"
 
 # step 101 (docs/steps/step_101.md 「계획」 3): what Blender does cheaply. Items whose meaning differs carry a
-# notice (ui/notices.py NOTICES); research/maya/re/menu_honesty.md has the Maya behaviour measured with mayapy.
+# notice (ui/notices.py NOTICES).
 MAP.update({
     # File
     "File/Archive Scene": "file.pack_all",
@@ -651,7 +651,7 @@ MAP.update({
     "Modify/Replace Objects": ("object.make_links_data", {"type": 'OBDATA'}),
     "Modify/Convert/NURBS Curve to Bezier": ("curve.spline_type_set", {"type": 'BEZIER'}),
     "Modify/Convert/Bezier Curve to NURBS": ("curve.spline_type_set", {"type": 'NURBS'}),
-    # step 168 (research/maya/re/modify_168.md): Modify leaves
+    # step 168: Modify leaves
     "Modify/Reorder Rotation...": "allset.reorder_rotation",     # step 229: Maya xform -roo -p
     "Modify/Paint Attributes Tool": "paint.weight_paint_toggle",  # Blender paints vertex group weights
     "Modify/Evaluate Nodes/Evaluate All": ("allset.evaluate_all", {"on": True}),
@@ -719,7 +719,7 @@ MAP.update({
     "Edit Mesh/Edit Edge Flow": "allset.edge_flow",
     "Edit Mesh/Wedge": "allset.wedge",
     "Edit Mesh/Split Mesh with Projected Curve": ("v3d", "mesh.knife_project", {}),
-    # Mesh Tools (Sculpting Tools -> the essentials brushes, research/maya/menus.md:542-583)
+    # Mesh Tools (Sculpting Tools -> the essentials brushes)
     "Mesh Tools/Append to Polygon": "allset.append_polygon_start",   # step 144: border edge + points, Enter
     **{f"Mesh Tools/Sculpting Tools/{maya} Tool": _sculpt(brush) for maya, brush in (
         ("Sculpt", "Draw"), ("Smooth", "Smooth"), ("Relax", "Relax Slide"), ("Grab", "Grab"),
@@ -733,7 +733,7 @@ MAP.update({
     "Mesh Display/Vertex Normal Edit Tool": ("v3d", "transform.rotate_normal", {}),
     "Mesh Display/Create Empty Set": "geometry.color_attribute_add",
     "Mesh Display/Delete Current Set": "geometry.color_attribute_remove",
-    # step 189: Maya colour commands (operators/color_sets_maya.py, research/maya/re/mesh_display_184_colors.md)
+    # step 189: Maya colour commands (operators/color_sets_maya.py)
     "Mesh Display/Apply Color": "allset.apply_color",
     "Mesh Display/Rename Current Set...": "allset.color_set_rename",
     "Mesh Display/Modify Current Set": "allset.color_set_modify",
@@ -748,14 +748,14 @@ MAP.update({
                                                      {"data_path": "space_data.shading.color_type",
                                                       "value": 'VERTEX'}),
     # Curves
-    "Curves/Attach": "allset.curve_attach",          # step 156: operators/curves_maya.py (mayapy-measured)
+    "Curves/Attach": "allset.curve_attach",          # step 156: operators/curves_maya.py (Maya-style)
     "Curves/Detach": "allset.curve_detach",
     "Curves/Rebuild": "allset.curve_rebuild",
     "Curves/Fillet": "allset.curve_fillet",
     "Curves/Cut": "allset.curve_cut",
     "Curves/Straighten": "allset.curve_straighten",
     "Curves/Move Seam": "allset.curve_move_seam",
-    # step 207 (operators/curves_207.py, research/maya/re/curves_201.md)
+    # step 207 (operators/curves_207.py)
     "Curves/Lock Length": ("allset.curve_lock_length", {"lock": True}),
     "Curves/Unlock Length": ("allset.curve_lock_length", {"lock": False}),
     "Curves/Bend": ("allset.curve_modify", {"kind": 'BEND'}),
@@ -775,8 +775,8 @@ MAP.update({
     "Curves/Bezier Curves/Tangent Options/Smooth Anchor Tangents": ("curve.handle_type_set", {"type": 'ALIGNED'}),
     "Curves/Bezier Curves/Tangent Options/Break Anchor Tangents": ("curve.handle_type_set", {"type": 'FREE_ALIGN'}),
     "Curves/Bezier Curves/Tangent Options/Even Anchor Tangents": ("curve.handle_type_set", {"type": 'AUTOMATIC'}),
-    # Surfaces: Maya NURBS surfaces as Blender NURBS surfaces (step 181, operators/surfaces_maya.py; mayapy rules
-    # research/maya/re/surfaces_181.md §4; option windows operators/option_windows_surfaces.py)
+    # Surfaces: Maya NURBS surfaces as Blender NURBS surfaces (step 181, operators/surfaces_maya.py;
+    # option windows operators/option_windows_surfaces.py)
     "Surfaces/Revolve": "allset.revolve",
     "Surfaces/Birail/Birail 1 Tool": "allset.birail1",
     "Surfaces/Boundary": ("allset.surface_boundary", {"kind": 'BOUNDARY'}),
@@ -797,17 +797,17 @@ MAP.update({
     "Deform/Nonlinear/Sine": _deformer('SINE'),
     "Deform/Blend Shape#2/Remove": "object.shape_key_remove",
     # Paint Weights > <deformer>: Weight Paint on that deformer's vertex group (step 144; Maya's paint tool
-    # "<type>", research/maya/re/options_144.md); Tension / Wire / Jiggle have no Blender deformer (greyed)
+    # "<type>"); Tension / Wire / Jiggle have no Blender deformer (greyed)
     **{f"Deform/Paint Weights/{label}": ("allset.paint_deformer_weights", {"kind": kind}) for label, kind in (
         ("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),
         ("Proximity Wrap", "proximityWrap"), ("Lattice", "ffd"), ("ShrinkWrap", "shrinkWrap"),
         ("Nonlinear", "nonLinear"), ("Texture Deformer", "textureDeformer"))},
     "Deform/Mirror Deformer Weights": "object.vertex_group_mirror",
-    # step 169 (research/maya/re/deform_169.md): Wire as a kit deformer + its edit items, ShrinkWrap / Lattice edits,
+    # step 169: Wire as a kit deformer + its edit items, ShrinkWrap / Lattice edits,
     # Prune Membership, Point On Curve
     "Deform/Wire": _deformer('WIRE'),
     "Deform/Paint Weights/Wire": ("allset.paint_deformer_weights", {"kind": "wire"}),
-    # step 205: Maya-measured deformers (operators/deformers_205a.py / _205b.py, research/maya/re/deform_205.md)
+    # step 205: Maya-style deformers (operators/deformers_205a.py / _205b.py)
     **{f"Deform/{label}": ("allset.deformer_tss", {"kind": kind})
        for label, kind in (("Tension", 'TENSION'), ("Solidify", 'SOLIDIFY'), ("Sculpt", 'SCULPT'))},
     "Deform/Prune Membership/Sculpt": "allset.prune_sculpt",
@@ -833,7 +833,7 @@ MAP.update({
     "UV/Best Plane": "allset.uv_planar",
     "UV/Contour Stretch": "allset.uv_contour",    # Follow Active Quads + stretch to 0-1 (step 139)
     "UV/Split UVs": "allset.uv_split",        # SplitUV = polySplitTextureUV, like UV Editor Cut/Sew > Split (step 206)
-    "UV/Auto Seams": "allset.uv_auto_seams",  # Maya UV > Auto Seams (step 206, research/maya/re/uv_201.md §4)
+    "UV/Auto Seams": "allset.uv_auto_seams",  # Maya UV > Auto Seams (step 206)
     # Generate (XGen -> hair curves)
     "Generate/Create Description...": "object.curves_empty_hair_add",
     "Generate/Create Interactive Groom Splines": "object.curves_empty_hair_add",
@@ -849,7 +849,7 @@ MAP.update({
     "Skin/Import Weights Maps...": "allset.import_weight_maps",
     "Skin/Substitute Geometry": "allset.substitute_geometry",
     "Skin/Bake Deformation to Skin Weights...": "allset.bake_deformation",
-    # step 199 (#106, operators/constrain_199.py, research/maya/re/constrain_199.md)
+    # step 199 (#106, operators/constrain_199.py)
     "Constrain/Normal": "allset.normal_constraint",
     "Constrain/Tangent": "allset.tangent_constraint",
     "Constrain/Remove Target": "allset.remove_constraint_target",
@@ -866,7 +866,7 @@ MAP.update({
     "Playback/Select Previous Key": ("screen.keyframe_jump", {"next": False}),
     "Playback/Playback Looping/Continuous": ("allset.menu_note", {"item": "Playback/Playback Looping/Continuous"}),
     "Visualize/Time Slider Bookmarks": "marker.add",
-    # Audio (research/maya/re/menu_honesty.md §1): sounds are Video Sequencer sound strips
+    # Audio: sounds are Video Sequencer sound strips
     "Audio/Import Audio...": "allset.import_audio",
     "Audio/Import Audio Clip to Time Editor...": "allset.import_audio",
     "Audio/Mute": ("wm.context_toggle", {"data_path": "scene.use_audio"}),
@@ -877,8 +877,8 @@ MAP.update({
     "nParticles/Soft Body#2": _mod('SOFT_BODY'),
     "nParticles/Make Collide": "allset.fx_passive",
     # Rendering
-    # step 179: Maya light / shadow linking on Blender light linking (operators/light_links.py,
-    # research/maya/re/light_links_179.md); the editor = a kit popover with Maya's two lists (ui/light_link_editor.py)
+    # step 179: Maya light / shadow linking on Blender light linking (operators/light_links.py);
+    # the editor = a kit popover with Maya's two lists (ui/light_link_editor.py)
     "Lighting/Shading/Light Linking Editor": ("v3d", "allset.light_linking_editor", {}),
     "Lighting/Shading/Make Light Links": ("allset.light_link", {"kind": "LIGHT", "make": True}),
     "Lighting/Shading/Break Light Links": ("allset.light_link", {"kind": "LIGHT", "make": False}),
@@ -895,7 +895,7 @@ MAP.update({
     "Cache/Alembic Cache/Reference Alembic...": "wm.alembic_import",
     "Cache/Alembic Cache/Import Alembic...": "wm.alembic_import",
     "Cache/Alembic Cache/Export All to Alembic...": ("wm.alembic_export", {"selected": False}),
-    # step 164: the kit's Export Selection dialog (Maya preset + the selection's descendants, dag_164.md)
+    # step 164: the kit's Export Selection dialog (Maya preset + the selection's descendants)
     "Cache/Alembic Cache/Export Selection to Alembic...": ("allset.file_export_selection", {"export_type": 'ABC'}),
     "Cache/Geometry Cache/Create New Cache": ("wm.alembic_export", {"selected": True}),
     "Cache/Geometry Cache/Import Cache...": "wm.alembic_import",
@@ -921,7 +921,7 @@ MAP.update({
 })
 
 # Mapped items whose Blender operator needs component (edit) mode run the Maya way from object mode
-# (step 101 「계획」 4, research/maya/re/menu_honesty.md §2, mayapy-measured):
+# (step 101 「계획」 4):
 # ('ALL', select mode) = Maya acts on every component of the selected meshes; a string = Maya's warning.
 OBJECT_MODE = {
     "Edit Mesh/Add Divisions": ('ALL', 'FACE'),
@@ -944,23 +944,23 @@ OBJECT_MODE = {
     "Edit Mesh/Wedge": "No faces selected to wedge. Select faces and one or more edges from the selected faces "
                        "to wedge about.",
     "Edit Mesh/Connect": "Can't perform polyConnectComponents1 on selection",
-    "Edit Mesh/Symmetrize": "No components selected for Symmetrize.",     # Maya 2022 GUI (step 139)
+    "Edit Mesh/Symmetrize": "No components selected for Symmetrize.",     # Maya 2022 (step 139)
     "Edit Mesh/Flip Triangle Edge": "Select edges to flip.",
     "Edit Mesh/Spin Edge Backward": "Select edges to spin.",
     "Edit Mesh/Spin Edge Forward": "Select edges to spin.",
-    # Step 136 (the Shift+RMB object menu runs these from object mode): PolyExtrude extrudes every face (measured,
-    # menu_honesty.md §2); Mesh > Fill Hole / Quadrangulate act on the whole object in Maya [K] (delegated).
+    # Step 136 (the Shift+RMB object menu runs these from object mode): PolyExtrude extrudes every face;
+    # Mesh > Fill Hole / Quadrangulate act on the whole object in Maya [K] (delegated).
     "Edit Mesh/Extrude": ('ALL', 'FACE'),
     "Mesh/Fill Hole": ('ALL', 'EDGE'),
     "Mesh/Quadrangulate": ('ALL', 'FACE'),
     # Step 139 (U1): Maya's UV projections convert an object selection to all its faces
-    # (measured in Maya 2026); Automatic / Contour Stretch / Planar do that in their own operator.
+    # (Maya 2026); Automatic / Contour Stretch / Planar do that in their own operator.
     "UV/Cylindrical": ('ALL', 'FACE'),
     "UV/Spherical": ('ALL', 'FACE'),
 }
 
 # Edit / Select / Modify items run in component (mesh edit) mode the way Maya 2022 runs them there (step 129, #39 /
-# #17 / #18; measured in a Maya GUI session with pCube1.f[1] selected after F11, docs/steps/step_129_audit_p1.md):
+# #17 / #18; with pCube1.f[1] selected after F11):
 # ("run", action) = this action instead of the object one; ("object", action) = back to object mode, then the
 # action; ("owner", action) = the action on the objects whose components are selected, then back to component mode
 # with the same components; ("warn", text) = Maya's warning, nothing done; ("none",) = Maya runs it with no effect.
@@ -986,7 +986,7 @@ EDIT_MODE = {
 }
 
 # Step 109 (docs/steps/step_109.md 「계획」 3): Curves / Surfaces and FX commands built for the shelf, same in the
-# menus. operators/curve_tools.py, operators/fx.py; Maya results measured with mayapy (step_109.md).
+# menus. operators/curve_tools.py, operators/fx.py.
 MAP.update({
     "Create/NURBS Primitives/Square": _create('NURBS_SQUARE'),
     "Create/NURBS Primitives/Cube": _create('NURBS_CUBE'),
@@ -1009,13 +1009,13 @@ MAP.update({
     "nHair/Paint Hair Follicles": "allset.paint_hair_follicles",     # step 258: a mesh selection is valid (#152)
 })
 
-# Step 110 (docs/steps/step_110.md 「계획」): modeling / rigging commands with mayapy-measured results
-# (research/maya/re/modeling_rigging_110.md); operators/poly_maya.py, operators/rig_maya.py, menu_items.nonlinear.
+# Step 110 (docs/steps/step_110.md 「계획」): modeling / rigging commands with Maya's results;
+# operators/poly_maya.py, operators/rig_maya.py, menu_items.nonlinear.
 MAP.update({
     "Edit Mesh/Circularize": "allset.circularize",
     "Mesh Tools/Connect": "allset.connect",
     "Mesh Tools/Make Hole": "allset.make_hole",
-    # step 159: Joint Labelling (operators/joint_labels.py, research/maya/re/joint_labels_159.md): the first
+    # step 159: Joint Labelling (operators/joint_labels.py): the first
     # Label Shoulder / Label Hip items are Maya's limb labels (FBIKLabelArm / Leg)
     "Skeleton/Joint Labelling/Add Joint Labels/Label Left": ("allset.joint_label", {"side": "LEFT"}),
     "Skeleton/Joint Labelling/Add Joint Labels/Label Right": ("allset.joint_label", {"side": "RIGHT"}),
@@ -1055,7 +1055,7 @@ MAP.update({
     "Skeleton/Joint Labelling/Label Based on Joint Names": "allset.label_from_joint_names",
     "Skeleton/Enable Selected IK Handles": ("allset.ik_handle_enable", {"enable": True}),
     "Skeleton/Disable Selected IK Handles": ("allset.ik_handle_enable", {"enable": False}),
-    # step 159: Maya deformerWeights XML (operators/deformer_weights.py, research/maya/re/skin_weights_159.md)
+    # step 159: Maya deformerWeights XML (operators/deformer_weights.py)
     "Deform/Export Weights...": "allset.export_deformer_weights",
     "Deform/Import Weights...": "allset.import_deformer_weights",
     "Skin/Reset Default Weights": "allset.reset_skin_weights",     # step 159: closest distance bind weights

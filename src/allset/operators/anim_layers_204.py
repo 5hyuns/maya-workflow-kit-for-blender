@@ -20,7 +20,7 @@ re-implemented on the kit's NLA layers (operators/anim_layers.py):
   ``allset_anim_layer_index`` (keys and the Graph Editor's editable curves, step 194), ui/graph_layers.py draws the
   other selected layers' curves.
 
-Measured in Maya 2022 (mayapy + GUI, research/maya/re/anim_layers_201.md / .json, test copy tests/maya204_layers_data.py):
+Maya 2022:
 new layers (extract / copy) get weight 1.0 whatever L's weight (so an extract from a layer of weight != 1 changes the
 result, like Maya), go directly above L and are not selected; an Override copy without animation holds L's value at
 the current time; Delete Empty Layers deletes the layers without member attributes (keys don't count).
@@ -131,7 +131,7 @@ SETTINGS = ("mute", "solo", "lock", "override")   # not weight: a copy / extract
 
 def insert_layer(scene, name, above, like=None):
     """A new list entry ``name`` right above entry ``above`` (Maya ``-moveLayerAfter``), settings copied from
-    ``like`` (``-copy`` / ``-copyNoAnimation`` keep Additive / Override, weight 1.0: anim_layers_201.md §2-3)."""
+    ``like`` (``-copy`` / ``-copyNoAnimation`` keep Additive / Override, weight 1.0)."""
     ls = al.ensure_list(scene)
     cur = al.selected(scene)
     keep, picked = (cur.name if cur is not None else al.BASE), {e.name for e in ls if e.picked}
@@ -176,8 +176,7 @@ def move_track(scene, ob, src, dst):
 def copy_track(scene, ob, src, dst, with_curves=True, hold=None):
     """``ob``'s ``src`` track copied to a new ``dst`` track (Maya ``cmds.animLayer(copy=...)``: copies of the curves,
     same members; weight 1.0 without weight keys [O]). ``with_curves`` False = ``copyNoAnimation=True``; ``hold`` = a
-    frame: every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation,
-    anim_layers_201.md §3)."""
+    frame: every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation)."""
     tr = al.tracks(ob)[src]
     st = al._strip(tr)
     if with_curves:
@@ -223,7 +222,7 @@ def _copy_keys(src, dst):
 
 
 def copy_base(scene):
-    """Maya Duplicate Layer on BaseAnimation (anim_layers_201.md §3, case ``copy_base``): an Override layer
+    """Maya Duplicate Layer on BaseAnimation (``copy_base``): an Override layer
     ``BaseAnimation_copy`` on top of the stack; members = the layered attributes only (those in some layer above
     BaseAnimation), curves = copies of their base curves; a member without a base curve holds its base value (the
     property default NLA starts from, see anim_layers.key) — so the copy overrides every layer below."""
@@ -304,7 +303,7 @@ def duplicate(scene, layer, with_curves=True):
     directly above L (a second copy ``L_copy1`` also directly above L, i.e. below the first), weight 1.0 [O]."""
     if layer == al.BASE:
         if not with_curves:
-            return None      # [U] Duplicate Layer (No Animation) on BaseAnimation was not measured: nothing happens
+            return None      # [U] Duplicate Layer (No Animation) on BaseAnimation is unknown: nothing happens
         return copy_base(scene)
     src = al.layers(scene)[_index_of(scene, layer)]
     new = insert_layer(scene, maya_name(scene, layer + COPY), _index_of(scene, layer), like=src)
@@ -342,7 +341,7 @@ def delete_empty(scene):
 
 def key_weight(scene, names, weight, frame=None):
     """Maya Zero Weight and Key Layer / Set Weight to 1.0 and Key Layer (``weight`` 0 / 1) and the Weight row's K
-    button (``weight`` None = the current weight), anim_layers_201.md §5: each layer's weight set, then
+    button (``weight`` None = the current weight), each layer's weight set, then
     ``setKeyframe <layer>.weight`` at ``frame``. The kit's weight is each member's strip influence, so the key goes on
     every member strip's influence curve (Maya auto tangents = Blender Auto Clamped, as for every kit key).
     BaseAnimation's weight is not changed but still keyed [O]; the kit's BaseAnimation weight is always 1.0 (strip
@@ -375,15 +374,14 @@ def key_weight(scene, names, weight, frame=None):
 
 def _names(scene, layer=""):
     """The layers a command acts on: Maya's selected layers in stack order, or one ``layer``
-    (the layer row's right-click menu on a row that isn't selected acts on that row only, anim_layers_201.md §1)."""
+    (the layer row's right-click menu on a row that isn't selected acts on that row only)."""
     if layer:
         return [layer] if _index_of(scene, layer) is not None else []
     return [e.name for e in al.selected_layers(scene)]
 
 
 def base_selected(scene):
-    """BaseAnimation is among the selected layers: Maya greys the Layers menu items listed in GREY_WITH_BASE
-    (anim_layers_201.md §1)."""
+    """BaseAnimation is among the selected layers: Maya greys the Layers menu items listed in GREY_WITH_BASE."""
     return al.BASE in _names(scene)
 
 

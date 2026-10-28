@@ -2,8 +2,8 @@
 """Maya 2022 UV Editor depth 2 (step 206): Cut/Sew > Auto Seams / Create Shell (Grid) / Split, Modify > Cycle and
 the UV Sets items Rename Current UV Set / Copy UVs to UV Set > map1 / map1.
 
-Rules measured in mayapy (research/maya/re/uv_201.md, ground truth research/maya/re/uv_201.json; scripts
-research/scripts/uv_201/). Maya UVs are kit points (operators/uv_shells.uv_points: loops of one vertex sharing a
+Rules follow Maya 2022.
+Maya UVs are kit points (operators/uv_shells.uv_points: loops of one vertex sharing a
 coordinate); a Maya cut that leaves the UVs where they are can't be told apart from no cut in Blender (islands are
 made from shared coordinates, step 66), so a split UV moves uv_tools.NUDGE towards its own faces (same convention as
 Cut / Create UV Shell).
@@ -13,17 +13,17 @@ Cut / Create UV Shell).
   order, each edge as (lower id, higher id); next = the first edge whose lower end is the current vertex (and whose
   higher end isn't the previous one), else the first whose higher end is. Each UV takes the previous walked vertex's
   UV, the first the last's. Maya edge ids = creation order over the faces (corner k -> k+1), verified on every
-  mayapy-built mesh (uv_201.md §1).
+  test mesh.
 - Split: selection -> edges (UVs / vertices: every edge of their faces at that vertex;
   faces: their edges), then polyMapCut on them: at each end vertex the UV splits into the fans the cut edges separate.
 - Create Shell (Grid) (polyUVRectangle): the two lowest selected vertices must be
   opposite corners of a rectangle of quads; its UVs become the uniform grid i / I, j / J over 0-1 (3D spacing and
   the old UVs don't matter), cut from the rest. Origin = the lower vertex id; U runs along the first edge (corner k -> k
-  + 1, k = 0..3) of the origin's region face that contains the origin (uv_201.md §3, 27 cases).
+  + 1, k = 0..3) of the origin's region face that contains the origin.
 - Auto Seams (u3dAutoSeam -s 0 -p 1, Unfold3D): Maya keeps every existing cut and adds seams until a shell can be
   unfolded; its edge choice is Unfold3D's [U]. Kit rule (delegated): cut graph of each shell (dual spanning tree, then
   dangling edges pruned) = the loops a torus / pipe needs and a path joining several borders; a closed genus-0 shell
-  (cube, sphere, cylinder with caps) gets Maya's measured shape: one shortest path between its two farthest vertices.
+  (cube, sphere, cylinder with caps) gets Maya's shape: one shortest path between its two farthest vertices.
 """
 
 import heapq
@@ -49,7 +49,7 @@ def _same(a, b):
 
 def maya_edge_ids(faces):
     """{frozenset(vertex index pair): Maya edge id} for faces given as vertex-index lists in face order: Maya numbers
-    edges as the faces create them, corner k -> k + 1 (uv_201.md §1)."""
+    edges as the faces create them, corner k -> k + 1."""
     ids = {}
     for f in faces:
         n = len(f)
@@ -389,7 +389,7 @@ def shell_seams(shell, uv):
     if graph or border:
         return graph
     # closed genus 0: one shortest path between the two farthest vertices (Maya: cube corner to corner, sphere over a
-    # pole, capped cylinder rim + side; research/maya/re/uv_201.md §4)
+    # pole, capped cylinder rim + side)
     verts = sorted({v for f in shell for v in f.verts}, key=lambda v: v.index)
     if len(verts) < 3:
         return set()

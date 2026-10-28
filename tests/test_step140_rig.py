@@ -1,6 +1,6 @@
 """Step 140 lane RIG: Maya option windows / tool settings for Skeleton, Skin, Blend Shape and Aim / Pole Vector /
 Scale constraints (operators/option_windows_rig.py). Labels and factory defaults are Maya 2022's
-(research/maya/re/option_boxes_140.md, cited per window). Plan: docs/steps/step_140.md; notes docs/steps/step_140_rig.md."""
+(cited per window). Plan: docs/steps/step_140.md; notes docs/steps/step_140_rig.md."""
 
 import json
 import math

@@ -1,7 +1,7 @@
 """Step 150 lane B in a real UI: the Maya Graph Editor outliner with pCube1 (translateX / translateY), a keyed
 10-joint skeleton and pSphere1's blendShape1 -> joint and blendShape node rows, only the selected nodes highlighted,
 the list scrolls (``allset.graph_channel_scroll``), a click on a joint row shows only that joint's curves
-(screenshots next to research/maya/screens/audit7/maya/e02_graph_editor_win1.png)."""
+(screenshots with ALLSET_GUI_SHOTS)."""
 
 import os
 import sys

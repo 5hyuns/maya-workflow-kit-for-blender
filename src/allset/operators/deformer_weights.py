@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Deform > Export Weights... / Import Weights... (``deformerWeights``): a deformer's weights as Maya's XML file.
 
-Format and import rules measured with mayapy (research/maya/re/skin_weights_159.md): one ``<shape>`` with the shape's
+Format and import rules: one ``<shape>`` with the shape's
 object-space points (Maya Y-up, cm), then one ``<weights>`` element per influence (skinCluster: per joint; cluster and
 other one-weight deformers: source ``baseLayer``) listing only the points with a non-zero weight. The kit writes the
 same structure, so Maya reads its files and the kit reads Maya's (and Maya's JSON variant).

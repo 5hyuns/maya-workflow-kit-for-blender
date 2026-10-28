@@ -61,7 +61,7 @@ def s_point():
 @step
 def s_point_check():
     ob = bpy.context.view_layer.objects.active
-    # Maya intensity 1, Decay Rate No Decay (step 137, research/maya/re/render_defaults_137.md): matches Maya at
+    # Maya intensity 1, Decay Rate No Decay (step 137): matches Maya at
     # 10 units, power = 4 pi^2 k^2 x 10^2 (operators/lights.power_factor); still scales with maya_unit^2 (step 54)
     want = 4.0 * math.pi ** 2 * C["k"] ** 2 * 100.0
     check(f"Create > Lights > Point Light: {ob and ob.name}, power {ob and ob.data.energy:.6f} W "

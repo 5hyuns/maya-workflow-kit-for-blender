@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Time Slider bookmarks as Blender timeline markers (docs/steps/step_107.md 「계획」).
 
-Maya 2022 hotkeys (research/maya/hotkeys_default.json): Alt+T CreateTimeSliderBookmark
+Maya 2022 hotkeys: Alt+T CreateTimeSliderBookmark
 ("Create a new Time Slider Bookmark from selection", a name dialog), Alt+Shift+T QuickCreate, ' / ; Next / Previous
 bookmark, Shift+| FrameTimeSliderBookmark ("Sets the playback range to the current Bookmark's start and end time"),
-Shift+" / Shift+: frame the next / previous one (research/maya/runtime_commands.json annotations).
+Shift+" / Shift+: frame the next / previous one (annotations).
 
 A Maya bookmark is a time range; a Blender marker is one frame. The kit bookmark = a marker at the range start; its
 end is kept in the scene ID property ``allset_bookmarks`` {marker name: end frame} when the bookmark was made from a
@@ -26,8 +26,7 @@ def markers(scene):
 
 
 def next_name(scene):
-    """``bookmark<N>`` one past the highest, gaps not filled like Maya's timeSliderBookmark nodes
-    (research/maya/re/naming_211.md N5)."""
+    """``bookmark<N>`` one past the highest, gaps not filled like Maya's timeSliderBookmark nodes."""
     return f"bookmark{next_number('bookmark', {m.name for m in scene.timeline_markers})}"
 
 

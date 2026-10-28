@@ -21,8 +21,8 @@ aren't sure it's a bug. Those notes are exactly what this project is built from.
 
 - Building and running the tests: see [Development](README.md#development) in the README. In short,
   `python tests/run.py` builds the extension and runs the headless tests in a sandbox, without touching your own
-  Blender settings (set `BLENDER` to your Blender executable if it isn't in the default Windows location). Tests
-  that need Maya reference data your clone doesn't have are skipped.
+  Blender settings (set `BLENDER` to your Blender executable if it isn't in the default Windows location). A few
+  tests that need maintainer-only data or tools are skipped.
 - Looking for a place to start:
   [good first issue](https://github.com/5hyuns/maya-workflow-kit-for-blender/labels/good%20first%20issue) and
   [help wanted](https://github.com/5hyuns/maya-workflow-kit-for-blender/labels/help%20wanted).

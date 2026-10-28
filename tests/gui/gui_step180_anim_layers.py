@@ -4,7 +4,7 @@ layers on NLA tracks (ui/layer_editor.draw_anim_tab, operators/anim_layers.py).
 A keyed pCube1 (translateX at frames 1 and 10), two layers made with Create Layer from Selected, AnimLayer1 muted:
 the tab lists AnimLayer2 / AnimLayer1 / BaseAnimation (top layer first), a click on the AnimLayer2 row selects it,
 its Weight writes the NLA strip influence. Shot ``gui_step180_anim_tab.png`` with ``--shots`` for the side by side
-look against the Maya capture of the same scene."""
+look against Maya with the same scene."""
 
 import os
 import sys

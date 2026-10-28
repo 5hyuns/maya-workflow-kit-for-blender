@@ -1,5 +1,5 @@
 """Step 258 lane B (Issue #155) in a real UI: the Maya layout after Skeleton > Create Joints (three joints, root away
-from the origin): the Outliner row reads joint1 (Maya 2026, research/maya/re/060_messages_ui.md B7), the Channel Box
+from the origin): the Outliner row reads joint1 (Maya 2026), the Channel Box
 Translate of the root = its position, and with the skeleton in Object Mode the Channel Box joint hint fits the dock.
 Run at both scales: default (effective 1.25 on this PC) and ``ALLSET_GUI_UI_SCALE=0.8`` (effective 1.0)."""
 

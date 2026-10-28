@@ -1,5 +1,5 @@
 """Step 213: Shape Editor (Issue #119) — Maya blendShape editing on Blender shape keys (ui/shape_editor.py).
-Maya rules from mayapy (research/maya/re/editors_213.md SE4-SE8): Create Blend Shape = blendShape1, blendShape2 (one
+Maya rules: Create Blend Shape = blendShape1, blendShape2 (one
 past the highest); Add Target = pCube2, pCube3 (duplicate name, next free alias; after renaming pCube2 the next is
 pCube2 again), weight 1.0, zero delta, the new target in Edit; weight w blends base + w * delta."""
 
@@ -90,7 +90,7 @@ def test_add_target_names_weight_delta():
     assert ob.active_shape_key_index == 2 and shape_editor.editing(key) == "pCube3"
     kb.name = "smile"
     _ok(bpy.ops.allset.shape_add_target())
-    assert _targets(ob) == ["smile", "pCube3", "pCube2"], "mayapy add3_after_rename: pCube2 again"
+    assert _targets(ob) == ["smile", "pCube3", "pCube2"], "Maya: after a rename pCube2 again"
     # an object pCube4 in the scene raises the number (the duplicate's node name)
     _cube("pCube4")
     _ok(bpy.ops.allset.shape_add_target())

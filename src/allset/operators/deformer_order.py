@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Deformer order (Maya ``reorderDeformers``) and Key > Set Blend Shape Target Weight Keys (step 218, L17 / L15b).
 
-Maya 2026 (mayapy, research/scripts/maya_bs218/reorder218.json; research/maya/re/maya2026_deform.md L17):
+Maya 2026:
 ``reorderDeformers A B`` moves **B** to directly before A in evaluation order, so A then runs right after B; when B
-already runs right before A, nothing moves and Maya warns "B and A are already in the specified order." Measured on
+already runs right before A, nothing moves and Maya warns "B and A are already in the specified order." With
 three clusters (evaluation c1 c2 c3): (c3, c1) -> c2 c1 c3, (c1, c3) -> c3 c1 c2, (c1, c2) -> c2 c1 c3, (c2, c1) ->
 warning. The kit's deformers are the object's modifiers (the stack = evaluation order); blend shapes are shape keys,
 which Blender always evaluates first (= Maya's automatic Blend Shape placement before the skin) and can't move.
@@ -103,7 +103,7 @@ def blend_shape_keys(ob):
 
 def key_target_weights(context, objects):
     """Key every blend shape target weight (shape key Value) of ``objects`` at the current frame; returns the count.
-    Maya 2026 keys nothing for any selection we could give it (research/maya/re/maya2026_deform.md L15b re-measure),
+    Maya 2026 keys nothing for any selection we could give it,
     so the kit does what the menu name says (delegated)."""
     frame = context.scene.frame_current
     n = 0
@@ -129,8 +129,7 @@ class ALLSET_OT_key_blend_shape_weights(bpy.types.Operator):
     def execute(self, context):
         objects = list(context.selected_objects)
         if not any(ob.type in SHAPE_TYPES for ob in objects):
-            # Maya 2026's message for nothing / a plain skeleton (measured, step 258: research/maya/re/
-            # 060_messages_ui.md B4)
+            # Maya 2026's message for nothing / a plain skeleton (step 258)
             self.report({'ERROR'}, "No shape was selected.")
             return {'CANCELLED'}
         n = key_target_weights(context, objects)

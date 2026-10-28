@@ -11,7 +11,7 @@
    preferences, undo steps and theme). After the install the user's add-ons, theme and interface
    preferences are unchanged and only the kit's declared, backed-up changes appear (Maya keymap active,
    prefs_preset navigation / undo values); after disabling the kit everything is as seeded (step 53,
-   research/competitors.md §6).
+   competitor notes §6).
 4. A GUI Blender on that sandbox (no --factory-startup, so the saved sandbox
    preferences with the enabled extension load like a real first start) runs
    tools/release_shots.py: checks the extension and the Maya keymap are active,

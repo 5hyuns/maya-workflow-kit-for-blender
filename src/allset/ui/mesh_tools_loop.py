@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Insert Edge Loop, Offset Edge Loop and Slide Edge as kit tools (docs/steps/step_144_loop.md 「계획」, GitHub #31).
 
-The tools run the modals of operators/edge_loops.py; their Maya Tool Settings (fields and factory values:
-research/maya/re/options_144.md:87-108, research/maya/screens/options144/{insert_edge_loop,offset_edge_loop,
-slide_edge}.png) are drawn here, in Blender's tool header and in the kit's Tool Settings dock (ui/tool_settings.py
+The tools run the modals of operators/edge_loops.py; their Maya Tool Settings (fields and factory values)
+are drawn here, in Blender's tool header and in the kit's Tool Settings dock (ui/tool_settings.py
 kinds INSERT_EDGE_LOOP / OFFSET_EDGE_LOOP / SLIDE_EDGE). The left button keeps Blender's selection where it
 doesn't hit an edge (KEYMAP_FALLBACK), like Maya's tools that select with a click.
 """
@@ -21,7 +20,7 @@ GREY = {
     f"{TS}/Offset Edge Loop/Press enter": ("Automatically", "The loops are made when you release the mouse"),
 }
 
-DESCRIPTIONS = {   # Maya's Description section, the kit's words (insert_edge_loop.png / offset_edge_loop.png / slide_edge.png)
+DESCRIPTIONS = {   # Maya's Description section, the kit's words
     'INSERT_EDGE_LOOP': ("To create a new path of edges across a mesh,", "click an edge and drag."),
     'OFFSET_EDGE_LOOP': ("To insert edge loops on both sides of an edge,", "click an edge and drag."),
     'SLIDE_EDGE': ("Select an edge loop or path and middle-drag", "to slide it along the neighbouring edges."),

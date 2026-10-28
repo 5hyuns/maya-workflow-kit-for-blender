@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya light Intensity and Decay Rate on Blender lights (step 137, issue #71).
 
-Maya (mayapy + Maya Software renders, research/maya/re/render_defaults_137.md): a new point / spot / area / volume
+Maya (Maya Software renders): a new point / spot / area / volume
 light has intensity 1 and Decay Rate No Decay; a lambert surface facing a point / spot light at any distance renders
 color x diffuse x intensity (Linear divides by the distance in Maya units, Quadratic by its square, Cubic by its
 cube). A directional light renders color x diffuse x intensity. An area light (2 x 2 units) falls off by itself:
@@ -43,7 +43,7 @@ REF_UNITS = 10.0
 AREA_FAR = 9.87                        # Maya area light, No Decay: brightness x distance^2 / intensity at 10 units
 DECAY_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 FALLOFF_OUTPUT = {0: "Constant", 1: "Linear"}
-MAYA_SPOT_CONE, MAYA_SPOT_PENUMBRA = 40.0, 0.0      # degrees (mayapy: coneAngle 40, penumbraAngle 0)
+MAYA_SPOT_CONE, MAYA_SPOT_PENUMBRA = 40.0, 0.0      # degrees (coneAngle 40, penumbraAngle 0)
 MAYA_AREA_SIZE = 2.0                   # Maya's area light is a 2 x 2 unit square [K]
 KIND_PROP = "allset_light_kind"        # step 214: "ambientLight" / "volumeLight" (operators/maya_lights.py)
 
@@ -252,7 +252,7 @@ def _penumbra():
 
 
 def channel_attrs(light=None):
-    """Maya light shape channels Blender keeps differently (mayapy listAttr -keyable, steps 148 / 158): Color R / G / B
+    """Maya light shape channels Blender keeps differently (keyable attributes, steps 148 / 158): Color R / G / B
     (one colour vector), spot Cone Angle / Penumbra Angle (``spot_size`` + ``spot_blend``) — Channel Box SHAPES rows
     ``maya:colorR`` ... (ui/channel_box._virtual). ``paths`` = the Blender properties a key on the row keys."""
     from .deformers import Attr

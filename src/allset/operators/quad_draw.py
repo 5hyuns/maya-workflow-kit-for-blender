@@ -753,7 +753,7 @@ class ALLSET_OT_quad_draw(bpy.types.Operator):
         self._refs = reference_objects(context)
         self._moved = False
         self._grab = None
-        # Maya's Keyboard/Mouse Shortcuts (research/maya/screens/options144/quad_draw.png)
+        # Maya's Keyboard/Mouse Shortcuts
         if event.ctrl and event.shift and self.middle:
             self._mode = 'MOVE'                 # Ctrl+Shift+MMB: drag an edge = tweak its edge loop
             self._grab = self._grab_loop(context, mouse)

@@ -1,5 +1,5 @@
-"""Step 150 (#96) side by side with Maya: research/maya/screens/graph/graph_00_frame_all_ge.png (pCube1 Translate X
-0 -> 5 -> 0 at frames 1 / 10 / 20, Frame All) and audit7/maya/e02_graph_editor_win1.png (outliner: only pCube1 blue,
+"""Step 150 (#96) side by side with Maya's Graph Editor (pCube1 Translate X
+0 -> 5 -> 0 at frames 1 / 10 / 20, Frame All) and its outliner (only pCube1 blue,
 Translate X red). Also Ctrl+A over the Graph Editor = Attribute Editor / Channel Box (Maya's global Ctrl+a) and the
 mouse wheel over the kit outliner reaches allset.graph_channel_scroll. Shots with ``--shots``."""
 

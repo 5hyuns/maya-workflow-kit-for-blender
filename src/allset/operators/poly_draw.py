@@ -12,7 +12,7 @@
   face, wound against the face they border), later clicks pick another border edge (its two vertices) or place a point
   (on the plane through the first edge that faces the view), Enter adds the face to the mesh.
 Tool Settings (Divisions, Limit points, Keep new faces planar, Texture) live in ``Scene.allset_poly_tools``; their
-Maya factory values: research/maya/screens/options144/ (Maya 2022 Tool Settings). Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
+Maya factory values (Maya 2022 Tool Settings). Pure bmesh parts (``polygon_points``, ``polygon_uvs``,
 ``build_polygon``, ``append_face``) are tested headless (tests/test_step144_poly.py).
 """
 
@@ -46,7 +46,7 @@ TEXTURES = (('NORMALIZE', "Normalize (scale to fit)", "UVs: planar projection sc
 
 
 class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
-    """Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw (factory values: options_144.md)."""
+    """Maya Tool Settings of Create Polygon / Append to Polygon / Quad Draw (factory values)."""
     # Create Polygon (polyCreateFacetCtx)
     cp_divisions: IntProperty(name="Divisions", default=1, min=1, soft_max=10,
                               description="Each edge of the new polygon is split into this many edges")
@@ -69,7 +69,7 @@ class ALLSET_PG_poly_tools(bpy.types.PropertyGroup):
     ap_keep_planar: BoolProperty(name="Keep new faces planar", default=False,
                                  description="Flatten the new points onto one plane with the face's other points")
     ap_texture: EnumProperty(name="Texture space", items=TEXTURES, default='NORMALIZE')
-    # Quad Draw (nexQuadDrawCtx, research/maya/workflows/shots/modeling_07_win1.png)
+    # Quad Draw (nexQuadDrawCtx)
     qd_auto_weld: BoolProperty(name="Auto-weld", default=True,
                                description="A vertex moved this close (pixels) to another one is merged with it")
     qd_weld_px: IntProperty(name="Auto-weld distance", default=10, min=1, soft_max=50, subtype='PIXEL')

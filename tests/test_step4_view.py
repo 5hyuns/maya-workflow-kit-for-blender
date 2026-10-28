@@ -133,7 +133,7 @@ def test_smooth_preview_levels():
 
 def test_smooth_preview_leaves_user_subsurf_and_user_wire():
     # Step 15 reversed step 4's "re-use the first Subsurf": 1/2/3 only touch the kit's
-    # preview modifier (a user Subsurf is history in Maya terms, research/maya/concepts.md:64-74).
+    # preview modifier (a user Subsurf is history in Maya terms).
     ob = _mesh("sp_b")
     user = ob.modifiers.new("Mine", 'SUBSURF')
     user.levels = 3

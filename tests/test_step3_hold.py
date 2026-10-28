@@ -193,7 +193,7 @@ def test_pick_walk():
     vl = bpy.context.view_layer
     vl.update()  # sync new objects into view_layer.objects
     assert pickwalk.walk(vl, a, "UP") == root
-    # Maya creation order b, a, c (step 266 independent check, mayapy 2026: locators made b, a, c)
+    # Maya creation order b, a, c (step 266 independent check, Maya 2026: locators made b, a, c)
     assert pickwalk.walk(vl, root, "DOWN") == b          # the first child made
     assert pickwalk.walk(vl, b, "RIGHT") == a
     assert pickwalk.walk(vl, a, "RIGHT") == c

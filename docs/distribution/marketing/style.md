@@ -31,7 +31,7 @@ Blender's factory theme for the UI, #41; highlight blue #5285a6) — the teal is
 
 ### Where the values come from (colour values only)
 
-- **Maya logo teal** — pixels of this PC's Maya 2022 install, measured with Pillow (`tmp/color124/px.py`, px2.py;
+- **Maya logo teal** — the teal of the Maya logo, colour value only (`tmp/color124/px.py`, px2.py;
   saturated opaque pixels, sorted by brightness). Every sample is hue 180°:
   - `icons/MayaEDUStartupImage.png` (startup image): most frequent bright bins #00b8b8 / #00bcbc, p50 #009c9e,
     p10 #007777 → `teal-500` #00bcbb (the bright face), `teal-800` #008b8d (the shade).
@@ -57,7 +57,7 @@ Blender's factory theme for the UI, #41; highlight blue #5285a6) — the teal is
 - **Fallback palette `maya-ui`** (in `style.json`, `ALLSET_MARKETING_PALETTE=maya-ui python tools/make_listing_media.py`
   and `tools/marketing/make_clips.py --no-record` regenerate everything): if a store review reads the logo teal as an
   implied affiliation, switch to Maya 2022's **UI** colours only — accent `blue-300` #8fb7d3 (light tint of Maya's
-  highlight blue #5285a6, `research/maya/colors.json`), highlight `green-400` #43ffa3 (Maya lead selection), ink
+  highlight blue #5285a6), highlight `green-400` #43ffa3 (Maya lead selection), ink
   black. Nothing else changes.
 
 ### Contrast (WCAG 2.x, computed)
@@ -74,7 +74,7 @@ Blender's factory theme for the UI, #41; highlight blue #5285a6) — the teal is
 
 ## Type
 
-Inter (SIL OFL 1.1, `research/marketing_assets/font_inter/`, fetched by `tools/marketing/fetch_assets.py`). One family.
+Inter (SIL OFL 1.1, local assets folder, fetched by `tools/marketing/fetch_assets.py`). One family.
 
 ### Lockup (steps 124, 125)
 
@@ -137,7 +137,7 @@ Words in images: a title of ≤ 6 words and one line of ≤ 12 words (references
   PC's 125 % UI scale.
 - Licensed models only, each with its licence recorded in `CREDITS.md` (the step 125 scene set replaces step 122's).
 - Viewport background (step 142, #41): every Maya-mode 3D View in a shot or clip shows **Maya's factory flat #5c5c5c**
-  (`research/maya/re/background_120.md`), checked after capture by `tools/marketing/bg_check.py` (Blender's
+  , checked after capture by `tools/marketing/bg_check.py` (Blender's
   #3d3d3d or a gradient fails) together with "theme unchanged". Step 125's gradient came from a theme, which the
   kit no longer has (Blender keeps a gradient only in themes).
 - Bones are shown only in the rigging shot; import helpers (empties) are hidden; glTF quaternion channels converted

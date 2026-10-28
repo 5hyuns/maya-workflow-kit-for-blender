@@ -42,7 +42,7 @@ def root_joints(ob):
 
 
 def select_roots_if_empty(ob):
-    """Maya: picking a skeleton picks its root joint (research/maya/re/maya2026_joints.md §4 - the Channel Box shows
+    """Maya: picking a skeleton picks its root joint (the Channel Box shows
     the root's channels, Select > All = every root, lead = the last). When the automatic Pose mode (decision 16) shows
     a rig with no shown bone selected, select its root joints, the last one active. True when it selected."""
     from ..ui.channel_box import bone_selected, set_bone_selected
@@ -98,7 +98,7 @@ def pick(context, ob, mouse, radius):
     return min(candidates)[2] if candidates else None
 
 
-# --- Edit or Pose (step 241, Issue #156; research/maya/re/joint_move_241.md) ------------------------------------
+# --- Edit or Pose (step 241, Issue #156) ------------------------------------
 # Maya moves a placed joint with W at any time (translate; the children follow). Blender can't translate a connected
 # bone in Pose mode, so while the **Move tool** is on, a skeleton that drives no mesh is shown in Edit mode (the rest
 # = where Maya's joints are); with any other tool joints are picked in Pose mode as before (decision 16: Channel Box

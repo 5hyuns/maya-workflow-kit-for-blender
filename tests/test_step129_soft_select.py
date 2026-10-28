@@ -1,5 +1,5 @@
 """Step 129: one Maya soft select state (#15, #1), B + MMB radius drag (#1), falloff colour overlay (#2).
-Plan + Maya measurements: docs/steps/step_129_softsel.md; GUI: tests/gui/gui_step129_soft_select.py."""
+Plan: docs/steps/step_129_softsel.md; GUI: tests/gui/gui_step129_soft_select.py."""
 
 import os
 import tempfile
@@ -145,7 +145,7 @@ def test_b_drag_turns_on_both_and_cancel_restores():
 
 
 def test_b_drags_with_lmb_and_mmb():
-    """Maya: B + LMB **or** MMB drag (research/maya/interaction.md:156)."""
+    """Maya: B + LMB **or** MMB drag."""
     assert taphold.get_binding("soft_select").buttons == {'LEFTMOUSE', 'MIDDLEMOUSE'}
     assert taphold.get_binding("select_all").buttons == {'LEFTMOUSE'}
 
@@ -153,7 +153,7 @@ def test_b_drags_with_lmb_and_mmb():
 # --- colours (#2) ----------------------------------------------------------------------------
 
 def test_maya_colour_ramp():
-    """softSelect -q -softSelectColorCurve = 1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1 (mayapy, step 129)."""
+    """softSelect -q -softSelectColorCurve = 1,1,0,1,1, 1,0,0,0.5,1, 0,0,0,0,1 (Maya, step 129)."""
     c = soft.ramp(np.array([1.0, 0.75, 0.5, 0.25, 0.0]))
     want = [(1, 1, 0), (1, 0.5, 0), (1, 0, 0), (0.5, 0, 0), (0, 0, 0)]
     assert np.allclose(c, want), c

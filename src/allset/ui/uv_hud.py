@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor heads-up displays (step 206): View > Heads-Up Display > Isolate Select / UV Position / UV Statistics.
 
-Measured in a GUI Maya 2022 (research/maya/re/uv_201.md §5, shots research/maya/screens/uv_201/run2, run3):
+Maya 2022:
 all three are on in the factory UV Editor (textureWindow -q -display*HUD = 1). Text #cfcfcf, ~10 px caps, 5 px from
 the view's left / right edge, baseline 7 px above its bottom; a second line 20 px higher.
 
@@ -9,7 +9,7 @@ the view's left / right edge, baseline 7 px above its bottom; a second line 20 p
   the selected components, second = over the objects (Maya counts objects selected as objects; Blender's edit-mode
   objects are always selected, so the kit always shows the totals, delegated). Shells are Maya's: faces sharing
   any UV, a corner is enough. Overlapping UVs = UVs lying exactly on
-  a UV of another shell (stacked shells counted 8, a partly overlapping shell 0 — measured), reversed UVs = UVs of
+  a UV of another shell (stacked shells counted 8, a partly overlapping shell 0), reversed UVs = UVs of
   faces whose UV winding is clockwise.
 - UV Position, bottom left: "U:  <u> V:  <v>" = centre of the selected UVs' bounding box (UVs 0.1 0.1 0.3 0.5 ->
   0.3), 3 decimals without trailing zeros; nothing when nothing is selected.
@@ -26,7 +26,7 @@ from bpy.props import BoolProperty
 from ..operators import uv_arrays, uv_shells
 from .. import compat
 
-TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (measured core pixels 203-207)
+TEXT_RGB = (0.81, 0.81, 0.81)        # #cfcfcf (Maya's HUD text)
 FONT_PX = 10                         # Maya's HUD caps ~7 px high
 MARGIN_PX = 5
 BASELINE_PX = 7
@@ -71,7 +71,7 @@ def _signed_area(face, uv):
 
 
 def maya_shells(faces, pts):
-    """{face: shell id} the way Maya counts shells (polyEvaluate -uvShell, measured on the cube in uv_201.md §3):
+    """{face: shell id} the way Maya counts shells (polyEvaluate -uvShell):
     faces sharing any UV are one shell, a shared corner is enough (Blender's islands need a shared edge)."""
     parent = {f: f for f in faces}
 

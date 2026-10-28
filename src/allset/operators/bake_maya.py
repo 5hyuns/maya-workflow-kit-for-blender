@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Key > Bake Simulation (Edit > Keys > Bake Simulation, shelf, option window), step 217 lane L18.
 
-Maya 2026 rules measured with ``bakeResults`` and the menu's factory flags (research/scripts/maya_bake217/bake217.py
-→ bake217.json, bake217_ik.py → bake217_ik.json; docs/steps/step_217.md 「계획」 L18; option window
-research/maya/re/maya2026_engine_fbx.md:67-93):
+Maya 2026 rules of ``bakeResults`` and the menu's factory flags (docs/steps/step_217.md 「계획」 L18):
 
-1. every keyable transform channel of a baked node gets a key on each sample (bake217.json ``default.curves``);
+1. every keyable transform channel of a baked node gets a key on each sample;
 2. samples = start, start + step, … ≤ end (``step2``: 1 3 5 7 9 on 1–10);
 3. existing keys inside [start, end] that are not samples are removed (sz 2.5 / 6, every case);
 4. Keep unbaked keys on = keys outside the range stay (sx 20), off = removed (``pok_off``); constraints are never
-   deleted (research/maya/re/maya2026_engine_fbx.md:89-92);
+   deleted;
 5. baking always disconnects the constraint from the baked channels, Disable implicit control on or off
    (``dic_off.pos_after_driver_moved``); the constraint node stays;
 6. Disable implicit control = IK: baking chain joints without the handle sets ikBlend 0 when on, keeps 1 when off;
-   baking the handle too leaves ikBlend alone (bake217_ik.json).
+   baking the handle too leaves ikBlend alone.
 
 Kit translation: Blender's ``nla.bake`` (visual keying, current action, constraints kept) writes the samples, then the
 Maya rules run on the baked F-curves. Rule 5 = **mute** every non-IK constraint on a baked object / pose bone (Blender
@@ -44,7 +42,7 @@ def time_slider_range(scene):
 
 
 def samples(start, end, step):
-    """Maya sample frames: start, start + step, … ≤ end (bake217.json ``step2``)."""
+    """Maya sample frames: start, start + step, … ≤ end."""
     step = max(1, int(step))
     return list(range(int(start), int(end) + 1, step))
 
@@ -105,7 +103,7 @@ def bake(context, objects=None, bones=None, start=1, end=10, step=1, keep_unbake
     for idb in layered:
         # step 234 (Issue #143): bake onto BaseAnimation (the active action is the shown layer at influence 0,
         # anim_layers.show) — then solved below so base + layers give the baked result (Maya 2026: the pose doesn't
-        # change and the layers stay, C:/Repos/bmk-strategy/audit230/maya/bake234.json)
+        # change and the layers stay)
         anim_layers.show_base(idb)
     before = {}
     for idb in ids:

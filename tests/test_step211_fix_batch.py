@@ -1,6 +1,6 @@
 """Step 211 (audit 16 fix batch, #117): Light Linking submenu, Maya max + 1 names for sets / layers / anim layers /
 characters / bookmarks, Ctrl+V pasted__ names under a group, startup cameras first in the Outliner, AE tab row, nHair
-option boxes = the Curves windows. Maya values: research/maya/re/naming_211.md (mayapy + GUI Maya)."""
+option boxes = the Curves windows. Maya values."""
 
 from importlib import import_module
 
@@ -56,7 +56,7 @@ def test_light_linking_submenu_opens_the_kit_editor():
         assert "Windows/Relationship Editors/Light Linking/Object-Centric" in paths
 
 
-# --- (2) names: Maya max + 1 (mayapy naming_211.md N1-N5) ---------------------------------------------------
+# --- (2) names: Maya max + 1 ---------------------------------------------------------------------------------
 
 def test_set_names_count_past_the_highest():
     _clear()
@@ -65,9 +65,9 @@ def test_set_names_count_past_the_highest():
         sets.create()
     assert [c.name for c in sets.all_sets()] == ["set1", "set2", "set3"]
     sets.delete(bpy.data.collections["set2"])
-    assert sets.next_name() == "set4", "mayapy: set1 set2 set3, delete set2 -> set4"
+    assert sets.next_name() == "set4", "Maya: set1 set2 set3, delete set2 -> set4"
     bpy.data.collections["set3"].name = "set10"
-    assert sets.next_name() == "set11", "mayapy: renamed set10 -> set11"
+    assert sets.next_name() == "set11", "Maya: renamed set10 -> set11"
 
 
 def test_display_layer_names_count_past_the_highest():
@@ -75,7 +75,7 @@ def test_display_layer_names_count_past_the_highest():
     le = m("ui.layer_editor")
     for n in ("layer1", "layer3"):
         bpy.data.collections.new(n)
-    assert le.next_layer_name() == "layer4", "mayapy: layer1 layer2 layer3, delete layer2 -> layer4"
+    assert le.next_layer_name() == "layer4", "Maya: layer1 layer2 layer3, delete layer2 -> layer4"
     bpy.data.collections.new("layer10")
     assert le.next_layer_name() == "layer11"
 
@@ -90,7 +90,7 @@ def test_anim_layer_and_character_and_bookmark_names():
     real = al.layers
     try:
         al.layers = lambda scene: [_E("BaseAnimation"), _E("AnimLayer1"), _E("AnimLayer3")]
-        assert al.unique_name(bpy.context.scene) == "AnimLayer4", "mayapy: AnimLayer1 .. 3, delete 2 -> AnimLayer4"
+        assert al.unique_name(bpy.context.scene) == "AnimLayer4", "Maya: AnimLayer1 .. 3, delete 2 -> AnimLayer4"
     finally:
         al.layers = real
     cs = m("operators.character_sets")
@@ -101,7 +101,7 @@ def test_anim_layer_and_character_and_bookmark_names():
     sc = bpy.context.scene
     sc.timeline_markers.new("bookmark1", frame=1)
     sc.timeline_markers.new("bookmark3", frame=5)
-    assert bm.next_name(sc) == "bookmark4", "GUI Maya: timeSliderBookmark1 .. 3, delete 2 -> timeSliderBookmark4"
+    assert bm.next_name(sc) == "bookmark4", "Maya: timeSliderBookmark1 .. 3, delete 2 -> timeSliderBookmark4"
 
 
 def test_naming_doc_says_no_gap_filling():
@@ -109,7 +109,7 @@ def test_naming_doc_says_no_gap_filling():
     assert "lowest one free" not in doc and "gaps are not filled" in doc
 
 
-# --- (2b) Ctrl+V: pasted__ names under a group (GUI Maya + mayapy, naming_211.md P1-P3) -----------------------
+# --- (2b) Ctrl+V: pasted__ names under a group (Maya) ---------------------------------------------------------
 
 def test_paste_names_group_and_selection():
     _clear()

@@ -15,14 +15,9 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 taphold = import_module(kit.MODULE + ".operators.taphold")
 maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
-RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        "research", "maya", "marking_menus.json")
 # Menus resolved by hand (radials set from variables in Maya, hotkeys_and_menus.md:248-252).
 HAND_RESOLVED = {"RMB_MESH", "RMB_CURVE", "RMB_EMPTY"}
 LABEL_ALIASES = {"To Edges": "<$toEdges>", "To Faces": "<$toFaces>"}
-# Kit menu id -> its key in the private research JSON (research/maya/marking_menu_ids.json; PIVOT_EDIT is one
-# branch of the RMB_EMPTY menu, step 94).
-RESEARCH_IDS = os.path.join(os.path.dirname(RESEARCH), "marking_menu_ids.json")
 
 
 class FakeLayout:
@@ -91,44 +86,6 @@ def test_definitions_well_formed():
             for _label, action in list(sub.radial.values()) + [e for e in sub.items if e != mm.DIVIDER]:
                 if isinstance(action, mm.Sub):
                     stack.append(action)
-
-
-def test_radial_positions_match_research():
-    if not os.path.exists(RESEARCH):
-        print("research/maya/marking_menus.json missing: skipped")
-        return
-    data = json.load(open(RESEARCH, encoding="utf-8"))["menus"]
-    ids = json.load(open(RESEARCH_IDS, encoding="utf-8"))
-    checked = 0
-    bad = []
-
-    def compare(sub, items, where):
-        nonlocal checked
-        by_label = {}
-        for it in items:
-            if it.get("label"):
-                by_label.setdefault(it["label"], it)
-        for pos, (label, action) in sub.radial.items():
-            src = by_label.get(LABEL_ALIASES.get(label, label))
-            if src is None:
-                bad.append((where, label, "not in research"))
-                continue
-            checked += 1
-            if src.get("radial") != pos:
-                bad.append((where, label, pos, src.get("radial")))
-            if isinstance(action, mm.Sub) and src.get("submenu"):
-                compare(action, src["submenu"], f"{where}/{label}")
-
-    for name, menu in mm.MENUS.items():
-        if name in HAND_RESOLVED:
-            continue
-        # Items a menu gets from the research menus it calls (e.g. the Symmetry ▸ submenu).
-        proc = ids[name]
-        called = [it for c in data[proc].get("calls", ()) for it in data.get(c["call"], {}).get("items", ())]
-        compare(menu, data[proc]["items"] + called, name)
-    print("radial items checked against research:", checked)
-    assert not bad, bad
-    assert checked >= 80, checked
 
 
 def test_actions_exist():

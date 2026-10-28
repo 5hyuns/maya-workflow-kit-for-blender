@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya option windows of the Mesh Display menu (step 189): Set Vertex Normal, Average, Set to Face, Apply Color.
 
-Fields and factory values: research/maya/re/mesh_display_184.md (option vars of the perform scripts).
+Fields and factory values: Maya's (option vars of the perform scripts).
 """
 
 import bpy
@@ -68,8 +68,7 @@ WINDOWS = [
         F("alpha", "Alpha value:", "float", 1.0, lo=0.0, hi=1.0),
     ], _run_apply_color, paths=("Mesh Display/Apply Color",),
         missing=("Individual channels (Red / Green / Blue / Alpha each on its own)",)),
-    # Mesh Display > Prelight (Maya) (values = vertexBakeSet factory attributes,
-    # research/maya/re/mesh_display_184_colors3.json)
+    # Mesh Display > Prelight (Maya) (values = vertexBakeSet factory attributes)
     Window("prelight", "Prelight (Maya) Options", "Prelight", ("allset.prelight", {}), [
         F("bake_color", "", "bool", True, text="Bake shading group lighting"),
         F("bake_alpha", "", "bool", False, text="Bake alpha"),

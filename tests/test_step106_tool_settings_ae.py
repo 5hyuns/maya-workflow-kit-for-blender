@@ -1,6 +1,6 @@
 """Step 106: Tool Settings dock with Maya sections, Attribute Editor history tabs / menu bar / buttons / Notes, Blender
-explanation sentences moved into tooltips. Plan: docs/steps/step_106.md; Maya 2022 measured:
-research/maya/screens/ts106/_ts106.json."""
+explanation sentences moved into tooltips. Plan: docs/steps/step_106.md."""
+
 
 from importlib import import_module
 from types import SimpleNamespace

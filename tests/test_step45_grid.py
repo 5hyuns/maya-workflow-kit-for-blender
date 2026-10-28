@@ -1,5 +1,5 @@
-"""Step 45: Maya grid — finite 12 units, a line every unit, thicker every 5, axes (research/maya/colors.json
-metrics.grid), drawn by the kit in the views that use it; projection maths checked against Blender's."""
+"""Step 45: Maya grid — finite 12 units, a line every unit, thicker every 5, axes (Maya
+grid metrics), drawn by the kit in the views that use it; projection maths checked against Blender's."""
 
 import math
 import os
@@ -36,7 +36,7 @@ def test_plane_points_and_view_planes():
     assert all(p[0] == 0.0 for p in grid.plane_points(segs, "YZ", unit))
     assert grid.plane_for_view('PERSP', False, (0.3, 0.5, -0.8)) == "FLOOR"
     assert grid.plane_for_view('ORTHO', True, (0.0, 0.0, -1.0)) == "FLOOR"   # top
-    # Maya's front / side cameras grid their own plane (step 161: screens/16_four_view.png)
+    # Maya's front / side cameras grid their own plane (step 161)
     assert grid.plane_for_view('ORTHO', True, (0.0, 1.0, 0.0)) == "XZ"       # front (looks +Y)
     assert grid.plane_for_view('ORTHO', True, (-1.0, 0.0, 0.0)) == "YZ"      # right
     assert grid.plane_for_view('ORTHO', False, (0.0, 1.0, 0.0)) == "FLOOR"   # user ortho
@@ -65,7 +65,7 @@ def _persp(w, h, eye, lens=35.0):
 
 def test_corner_projection_matches_blender_within_1px():
     from bpy_extras.view3d_utils import location_3d_to_region_2d
-    w, h = 1003, 653                          # Maya MainPane (colors.json metrics.widgets)
+    w, h = 1003, 653                          # Maya MainPane
     unit = 0.01
     for m in (_persp(w, h, (0.28, -0.28, 0.21)),
               Matrix.Scale(1 / 0.2, 4) @ Matrix.Rotation(math.radians(-90), 4, 'X')):

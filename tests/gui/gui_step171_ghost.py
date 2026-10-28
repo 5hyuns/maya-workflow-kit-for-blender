@@ -1,8 +1,8 @@
 """Step 171 in the Maya Workflow Kit layout (docs/steps/step_171.md): Visualize > Ghost Selected draws Maya's ghosts.
 
-Same scene as the Maya 2022 capture research/scripts/maya_ghost171/ghost171.py (factory prefs, #5c5c5c viewport):
+Same scene as in Maya 2022 (factory prefs, #5c5c5c viewport):
 a 1-unit cube keyed translateX 0 -> 18 over frames 1 -> 10 (linear), current frame 5, Ghost Selected, nothing
-selected, seen from the front. Maya's pixels at each ghost's front-face centre (_ghost171.json ghost_f5):
+selected, seen from the front. Maya's pixels at each ghost's front-face centre (frame 5):
 pre frames 2 / 3 / 4 = #4d7371 / #3d8a87 / #339e9a, post 6 / 7 / 8 = #96807f / #847272 / #6f6565, no ghost at
 frames 1 / 9 / 10. Shots with ``--shots``."""
 

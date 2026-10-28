@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Channel Box INPUTS / Attribute Editor tab for the creation node of a primitive (#11, #12, step 129).
 
-``polyCylinder1`` with Radius, Height, Subdivisions Axis / Height / Caps ... (Maya's Channel Box, measured
-attribute names: research/maya/re/primitives_129.md §1). Values are typed like every Channel Box field (step 38:
+``polyCylinder1`` with Radius, Height, Subdivisions Axis / Height / Caps ... (Maya's Channel Box
+attribute names). Values are typed like every Channel Box field (step 38:
 ``+=2``, ``*2``, units) into text proxies on the Scene (UI edits of Scene properties push an undo step) and go to
 every selected object whose node has the same type; ``operators/prim_history.rebuild`` remakes the shape.
 """

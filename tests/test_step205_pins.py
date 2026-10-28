@@ -1,6 +1,6 @@
 """Step 205 lane P (#112): Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects, Deform >
-Wrap > Add / Remove Influence (operators/pins_205.py). Maya behaviour from Maya 2022's own scripts (module doc there);
-no mayapy numbers yet (research/maya/re/deform_205.md), so these tests check the kit's rules: a pin follows the
+Wrap > Add / Remove Influence (operators/pins_205.py), following Maya 2022's behaviour;
+no Maya numbers yet, so these tests check the kit's rules: a pin follows the
 deformed surface, keeps its creation offset (Proximity Pin), names, undo, clean disable."""
 
 from importlib import import_module

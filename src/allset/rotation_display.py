@@ -3,7 +3,7 @@
 
 Decision 4 (docs/strategy/DECISIONS7.md): a received rig keeps its rotation mode (Rigify / FBX bones are
 QUATERNION) — the Channel Box *shows* Euler and *writes* the quaternion back. Maya's rotation channels are always
-Rotate X / Y / Z (research/maya/re/maya2026_anim.md L19). Shown values are converted compatible with the last value
+Rotate X / Y / Z. Shown values are converted compatible with the last value
 shown for that node (``Quaternion.to_euler(order, compat)``): a typed 270 comes back as 270, not -90 (2000 random
 inputs within 0.002 deg, decision 4's measurement). The last shown Euler is kit state, never written to the file.
 
@@ -14,7 +14,7 @@ uses to rebuild rotation curves.
 from mathutils import Euler, Quaternion
 
 EULER_MODES = frozenset({'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'})
-SHOWN_ORDER = 'XYZ'          # Maya's default rotateOrder xyz (maya2026_anim.md L19)
+SHOWN_ORDER = 'XYZ'          # Maya's default rotateOrder xyz
 
 _shown = {}                  # node key -> last Euler shown / typed (radians)
 

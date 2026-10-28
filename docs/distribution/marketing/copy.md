@@ -19,7 +19,7 @@ kept in every long text.
 ## How the headlines were made
 
 The `copy-masters` agency workflow (plugin `ad-copy-agency-skill`), run 2026-10-20, files in
-`research/copy-runs/allset/2026-10-20-allset-listing/` (not tracked): raw material (47 product facts from the
+the 2026-10-20 listing copy run (local notes, not tracked): raw material (47 product facts from the
 listing, 48 Maya-user voices from Blender Artists / Reddit / Polycount, 34 competitor ad lines) → planner brief →
 CD surgery (PASS) → three teams in sequence (99 lines, 15 routes) → CD round 1 (5 routes, 15 lines kept) → rework
 and defenses (40 + 3) → CD round 2 (shortlist 5) → client check (fact / FTC-style regulation check, 1 line caught) →

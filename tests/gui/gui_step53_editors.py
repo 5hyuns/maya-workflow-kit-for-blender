@@ -1,5 +1,5 @@
 """Step 53 in a real UI: with Maya Workflow Kit on (Maya keymap active), the other editors keep their own basic
-operation (research/competitors.md §6: Maya add-ons that break Graph Editor navigation).
+operation (Maya add-ons that break Graph Editor navigation).
 
 - Text Editor: typing inserts text, including the keys the kit binds elsewhere (z = undo, h = hide,
   q / w / e / r = tools, Space = hotbox).

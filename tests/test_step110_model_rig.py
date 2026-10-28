@@ -1,5 +1,5 @@
-"""Step 110: modeling / rigging commands against the Maya 2022 numbers measured with mayapy
-(research/maya/re/modeling_rigging_110.md). Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
+"""Step 110: modeling / rigging commands against Maya 2022's numbers.
+Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
 
 Plan: docs/steps/step_110.md 「계획」.
 """
@@ -299,7 +299,7 @@ def _skinned_plane():
 
 def test_hammer_is_the_neighbour_average():
     ob, _arm, g1, g2 = _skinned_plane()
-    # Maya's measured weights around vertex 12 (neighbours 7, 11, 13, 17)
+    # Maya's weights around vertex 12 (neighbours 7, 11, 13, 17)
     w = {12: (0.95, 0.05), 7: (0.9615, 0.0385), 17: (0.9615, 0.0385), 11: (1.0, 0.0), 13: (1.0, 0.0)}
     for i in range(25):
         a, b = w.get(i, (1.0, 0.0))

@@ -20,30 +20,9 @@ surfaces_maya = import_module(kit.MODULE + ".operators.surfaces_maya")
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _mc():
-    sys.path.insert(0, str(ROOT / "tools"))
-    try:
-        return import_module("menu_consistency")
-    finally:
-        sys.path.pop(0)
-
-
 def test_main_uv_delete_uvs_works_like_the_marking_menu():
     assert menu_map.spec("UV/Delete UVs")[1] == "allset.uv_delete"
     assert not notices.greyed_notice("UV/Delete UVs") or "UV/Delete UVs" in menu_map.MAP
-
-
-def test_runtime_aliases_meet():
-    mc = _mc()
-    if not (ROOT / "research" / "maya" / "runtime_commands.json").exists():
-        return                              # research/ is not tracked: nothing to compare against
-    main = mc.signature("DeleteUVsWithoutHotkey", None)
-    marking = mc.signature("DeleteUVs", None)
-    assert main and marking and set(main) & set(marking), (main, marking)
-    assert mc.pairs([("A/Delete UVs", main, False), ("B/Delete UVs", marking, True)]) == [("A/Delete UVs",
-                                                                                            "B/Delete UVs")]
-    for twin in ("nHair/Modify Curves/Smooth", "nHair/Modify Curves/Straighten"):
-        assert twin in menu_map.MAP, twin
 
 
 def test_show_rows_for_ik_handles_and_image_planes():

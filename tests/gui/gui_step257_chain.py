@@ -150,7 +150,7 @@ def s_curve():
     compat = mod("compat")
     fc = next((fc for fc in compat.id_fcurves(C["loc"]) if fc.data_path == "location" and fc.array_index == 2), None)
     vals = {t: fc.evaluate(t) for t in (6.0, 18.0)} if fc else {}
-    # Maya 2026 (060_modeling_anim.md B3, mayapy): frame 6 = 0.648009, frame 18 = 0.75
+    # Maya 2026: frame 6 = 0.648009, frame 18 = 0.75
     check(f"S keys follow Maya auto tangents {vals}",
           fc is not None and abs(vals[6.0] - 0.648009) < 2e-5 and abs(vals[18.0] - 0.75) < 2e-5)
     C["nkeys"] = len(fc.keyframe_points) if fc else 0

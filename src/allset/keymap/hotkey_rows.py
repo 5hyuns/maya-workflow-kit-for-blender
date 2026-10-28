@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rows of the kit Hotkey Editor (step 215, Issue #121): Maya's factory hotkeys + what the kit does with each.
 
-Pure Python (no bpy): ``build_rows`` joins ``hotkey_data.HOTKEYS`` (Maya 2022 factory hotkeys, research/maya/
-hotkeys_default.json) with ``mapping.ENTRIES`` (status IC / KIT / STEP / NO, the expected Blender binding ``check``
+Pure Python (no bpy): ``build_rows`` joins ``hotkey_data.HOTKEYS`` (Maya 2022 factory
+hotkeys) with ``mapping.ENTRIES`` (status IC / KIT / STEP / NO, the expected Blender binding ``check``
 and the note); ``search`` filters them like Maya's Hotkey Editor (Search by Name / by Hotkey, category); ``conflicts``
 finds items that already use an event. The live side (``keyconfigs.user`` items) is ``ui/hotkey_editor.py``.
 """
@@ -87,7 +87,7 @@ def parse_hotkey(text):
 
 
 def _hotkey(raw):
-    """hotkeys_default.json-shaped dict of one ``hotkey_data`` tuple (what ``mapping`` reads)."""
+    """Maya-hotkey-shaped dict of one ``hotkey_data`` tuple (what ``mapping`` reads)."""
     d = dict(zip(hotkey_data.FIELDS, raw))
     press = {}
     if d["command"]:

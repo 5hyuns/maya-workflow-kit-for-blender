@@ -4,14 +4,12 @@ Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X 
 
 Maya 2022 behaviour:
 - PasteSelected = Edit > Paste: import the clipboard file with every node renamed
-  ``pasted__<name>``, grouped under a new ``group`` (research/maya/re/naming_211.md).
-- CutSelected = Edit > Cut: export the selection (with its hierarchy) to the clipboard file, then delete it
-  (research/maya/hotkeys_and_menus.md:132).
+  ``pasted__<name>``, grouped under a new ``group``.
+- CutSelected = Edit > Cut: export the selection (with its hierarchy) to the clipboard file, then delete it.
 - PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya runtime command).
-- Alt+1 / 2 / 4 flip NURBS Curves / Polygons / Image Planes in the focused panel's Show menu
-  (hotkeys_and_menus.md:113).
+- Alt+1 / 2 / 4 flip NURBS Curves / Polygons / Image Planes in the focused panel's Show menu.
 - Ctrl+` swaps the proxy (cage) and smooth mesh visibility (both shown -> cage only), Shift+~ shows both;
-  Ctrl+Shift+~ = Mesh > Smooth Proxy > Subdiv Proxy (hotkeys_and_menus.md:121).
+  Ctrl+Shift+~ = Mesh > Smooth Proxy > Subdiv Proxy.
 """
 
 import re
@@ -83,8 +81,8 @@ def _unsuffixed(name):
 
 
 def pasted_name(orig, taken):
-    """Maya Edit > Paste imports with every node renamed by the prefix "pasted_": every node becomes ``pasted__<name>``
-    (research/maya/re/naming_211.md P1). Maya keeps a clashing short name under another group; Blender names are
+    """Maya Edit > Paste imports with every node renamed by the prefix "pasted_": every node becomes ``pasted__<name>``.
+    Maya keeps a clashing short name under another group; Blender names are
     unique, so a taken one counts up like a new node (``pasted__pCube2``, delegated)."""
     name = PASTE_PREFIX + orig
     if name not in taken:
@@ -94,7 +92,7 @@ def pasted_name(orig, taken):
 
 
 def paste_group_name(taken):
-    """Maya's paste puts the pasted nodes under ``group``, then ``group1``, ``group2`` (naming_211.md P2)."""
+    """Maya's paste puts the pasted nodes under ``group``, then ``group1``, ``group2``."""
     if "group" not in taken:
         return "group"
     return f"group{naming.next_number('group', taken)}"
@@ -134,7 +132,7 @@ class ALLSET_OT_paste(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        # Maya pasteScene (GUI Maya + mayapy, research/maya/re/naming_211.md P1-P3):
+        # Maya pasteScene:
         # every node renamed pasted__<name>, the top nodes under a new group at the origin, only the group selected.
         before = set(bpy.data.objects.keys())
         if bpy.ops.view3d.pastebuffer() != {'FINISHED'}:

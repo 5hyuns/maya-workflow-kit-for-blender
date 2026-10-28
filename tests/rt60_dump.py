@@ -64,8 +64,8 @@ def keymaps(kc):
 
 
 def populate():
-    """Background Blender leaves the default keyconfig empty (research/blender/
-    industry_compatible_vs_maya.md:14): fill it from Blender's keymap data so the user keyconfig
+    """Background Blender leaves the default keyconfig empty
+    (``-b``): fill it from Blender's keymap data so the user keyconfig
     (default + the user's saved key edits) exists like in the UI."""
     kcs = bpy.context.window_manager.keyconfigs
     km = kcs.default.keymaps.get("Object Mode")

@@ -3,7 +3,7 @@
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
 option_windows._extend appends ``WINDOWS``). Title, labels, button and factory values from Maya 2022's
-Modify > Convert > Geometry to Bounding Box Options window: research/maya/re/modify_168.md §6.
+Modify > Convert > Geometry to Bounding Box Options window.
 """
 
 import bpy

@@ -3,7 +3,7 @@
 User request (2026-10-19): 「Blender 상위 애드온(인기 많은 것)을 레퍼런스 삼아서 가자. Blender 보면 움직이는 이미지도 들어가던데?」
 
 Fetched 2026-10-20. Every number below comes from a fetched page (URL in the row); "unknown" = not on the page.
-Raw HTML, parsed JSON, ffprobe output, thumbnails and contact sheets are in `research/marketing_refs/` (not tracked:
+Raw HTML, parsed JSON, ffprobe output, thumbnails and contact sheets are in a local reference folder (not tracked:
 third-party images): `extensions_top.{md,json}`, `superhive_competitors.{md,json}`, `videos_probe.json`,
 `collage_extensions.png`, `collage_superhive.png`, `collage_competitors.png`, `thumbs/`, `review/`.
 "Hero style" and "text on images" are judgements by eye from the downloaded images.
@@ -30,7 +30,7 @@ guideline. Base URL of the source: https://projects.blender.org/infrastructure/e
 | Preview captions | `CharField(max_length=255)`, placeholder "Describe the preview"; shown as the gallery item's alt text | `extensions/models.py` (`Preview`) |
 | Required before review | featured image, icon and ≥ 1 preview ("Require at least one preview image when requesting a review", "Make feature image and icon required too") | `extensions/forms.py` |
 | Number of previews | no cap in the code (formset without `max_num`) | `extensions/forms.py` |
-| Preview file size / video length | no limit in the code (the 200 MB `MAX_UPLOAD_SIZE_MB` is the extension zip's form); web-server limit unknown. Accepted in practice (this sample): up to 85.5 MB and 133.4 s, H.264 and HEVC | `files/forms.py`; `research/marketing_refs/videos_probe.json` |
+| Preview file size / video length | no limit in the code (the 200 MB `MAX_UPLOAD_SIZE_MB` is the extension zip's form); web-server limit unknown. Accepted in practice (this sample): up to 85.5 MB and 133.4 s, H.264 and HEVC | `files/forms.py`; local video sample notes |
 | Video poster | the server takes the frame at `00:00:00.01` as the thumbnail — **the first frame is what visitors see** | `files/utils.py` (`extract_frame`), `files/tasks.py` |
 | Thumbnails | 1920 × 1080 and 640 × 360, served as WebP | `constants/base.py` |
 | Tagline | max 64 characters | `extensions/models.py`, `files/validators.py` |

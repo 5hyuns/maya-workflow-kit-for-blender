@@ -1,6 +1,6 @@
 """Step 144 POLY lane (GitHub #30): Quad Draw, Create Polygon, Append to Polygon as Maya tools.
-Plan: docs/steps/step_144_poly.md; GUI: tests/gui/gui_step144_poly.py. Maya Tool Settings defaults:
-research/maya/screens/options144/ (Maya 2022 Tool Settings)."""
+Plan: docs/steps/step_144_poly.md; GUI: tests/gui/gui_step144_poly.py. Maya Tool Settings defaults
+(Maya 2022 Tool Settings)."""
 
 import math
 from importlib import import_module
@@ -414,7 +414,7 @@ def test_tool_settings_kinds_defaults_and_reset():
     s = pd.settings()
     for kind in pd.SETTINGS:
         pd.reset_settings(s, kind)
-    # Maya 2022 factory Tool Settings: research/maya/screens/options144/{quad_draw,create_polygon,append_polygon}.png
+    # Maya 2022 factory Tool Settings of Quad Draw / Create Polygon / Append to Polygon
     want = {"qd_auto_weld": True, "qd_weld_px": 10, "qd_relax": 'AUTO_LOCK', "qd_extend": 'EDGE',
             "qd_strip_width": 20, "qd_snap_backfaces": False,
             "cp_divisions": 1, "cp_limit_on": False, "cp_limit_points": 4, "cp_keep_planar": False,

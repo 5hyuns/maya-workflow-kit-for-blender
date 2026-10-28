@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Insert Edge Loop, Offset Edge Loop and Slide Edge (docs/steps/step_144_loop.md 「계획」, GitHub #31).
 
-Maya behaviour measured with mayapy (research/maya/re/edge_loops_144.md):
+Maya behaviour:
 - Insert Edge Loop (polySplitRing): the press on an edge inserts the loop at that point at once, dragging slides it
   along the edge ring, the release keeps it. Relative distance = the same fraction of every ring edge; Equal
   distance = the same length from one side of the ring (the side of the clicked edge nearer to the click), clamped
@@ -14,8 +14,8 @@ Maya behaviour measured with mayapy (research/maya/re/edge_loops_144.md):
 - Slide Edge (polySlideEdge): middle-drag slides the selected edges along their side edges; Relative = a fraction of
   each vertex's side edge, Absolute = one distance (fraction × the shortest side edge of that side); Use Snapping
   catches the fraction at k/(points+1) within the tolerance.
-Tool Settings / window values live in ``Scene.allset_loop_tools`` (Maya factory values: research/maya/re/
-options_144.md:87-108, option_boxes_140.md:239-245). The bmesh parts are tested headless (tests/test_step144_loop.py).
+Tool Settings / window values live in ``Scene.allset_loop_tools`` (Maya factory values).
+The bmesh parts are tested headless (tests/test_step144_loop.py).
 """
 
 import math
@@ -46,8 +46,8 @@ SLIDE_MODES = (('RELATIVE', "Relative", "Each vertex slides the same fraction of
 
 
 class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
-    """Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (factory values: options_144.md)."""
-    # Insert Edge Loop (SplitEdgeRingTool, option_boxes_140.md:239-245)
+    """Maya Tool Settings of Insert Edge Loop / Offset Edge Loop / Slide Edge (factory values)."""
+    # Insert Edge Loop (SplitEdgeRingTool)
     iel_position: EnumProperty(name="Maintain position", items=INSERT_POSITIONS, default='RELATIVE')
     iel_loops: IntProperty(name="Number of edge loops", default=2, min=1, soft_max=10, max=100,
                            description="How many loops Multiple edge loops inserts")
@@ -57,7 +57,7 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
                                    soft_max=1.0, precision=4)
     iel_smoothing: FloatProperty(name="Smoothing angle", default=30.0, min=0.0, max=180.0, precision=4,
                                  description="New edges between faces at more than this angle are hard")
-    # Offset Edge Loop (polyDuplicateEdge window, options_144.md:92-103)
+    # Offset Edge Loop (polyDuplicateEdge window)
     oel_position: EnumProperty(name="Maintain position", items=OFFSET_POSITIONS, default='RELATIVE')
     oel_delete_edge: BoolProperty(name="Delete edge (maintain 4-sided polygons)", default=True,
                                   description="Where a loop ends inside the mesh, merge the two triangles there")
@@ -69,7 +69,7 @@ class ALLSET_PG_loop_tools(bpy.types.PropertyGroup):
                                  description="New edges between faces at more than this angle are hard")
     oel_offset: FloatProperty(name="Offset", default=0.5, min=0.001, max=0.999, precision=4,
                               description="Offset of a click without a drag (Maya polyDuplicateEdgeOffset)")
-    # Slide Edge (polySlideEdgeContext, options_144.md:105-108)
+    # Slide Edge (polySlideEdgeContext)
     slide_mode: EnumProperty(name="Mode", items=SLIDE_MODES, default='RELATIVE')
     slide_snap: BoolProperty(name="Use Snapping", default=True,
                              description="Catch the slide at the snapping points")
@@ -198,7 +198,7 @@ def _connect(bm, points, n_faces, closed):
 def insert_fractions(lengths, root_length, t, from_far, position='RELATIVE', count=2):
     """Per ring edge (``lengths``), the fractions from its side vertex where the new loops cut it. ``t`` = the click
     on the root edge from its side vertex. Equal distance measures ``t``'s distance from the side the click was
-    nearer to (``from_far``: the far side), clamped to the shortest ring edge (measured, edge_loops_144.md)."""
+    nearer to (``from_far``: the far side), clamped to the shortest ring edge."""
     if position == 'MULTIPLE':
         n = max(1, int(count))
         return [[k / (n + 1) for k in range(1, n + 1)] for _length in lengths]

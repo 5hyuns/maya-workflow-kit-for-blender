@@ -1,5 +1,5 @@
 """Step 72: Maya in-view messages (ui/view_message.py) and the top bar repaint after F2-F6.
-Plan + Maya measurements: docs/steps/step_72.md; GUI: tests/gui/gui_step72_view_message.py, gui_step35 (F3 shot)."""
+Plan: docs/steps/step_72.md; GUI: tests/gui/gui_step72_view_message.py, gui_step35 (F3 shot)."""
 
 from importlib import import_module
 
@@ -22,7 +22,7 @@ def test_parse_markup():
 
 
 def test_fade_curve():
-    # Maya measured: 0.25 s rising, full by 1.5 s, still full at 2.3 s, nearly gone at 3.6 s (step_72.md)
+    # Maya: 0.25 s rising, full by 1.5 s, still full at 2.3 s, nearly gone at 3.6 s
     assert vm.alpha(-0.1) == 0.0
     assert 0.7 < vm.alpha(0.25) < 0.9
     assert vm.alpha(1.5) == 1.0 and vm.alpha(2.25) == 1.0

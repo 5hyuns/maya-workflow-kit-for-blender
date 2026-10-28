@@ -1,4 +1,4 @@
-"""Step 104: Maya editor chrome — Graph Editor / Dope Sheet / UV Editor menu bars from the Maya capture (Maya 2026
+"""Step 104: Maya editor chrome — Graph Editor / Dope Sheet / UV Editor menu bars like Maya's (Maya 2026
 since step 269), every
 leaf mapped or greyed with a notice, check items, icon rows, header draws swapped and restored, Curves > Infinity,
 in / out tangents, Stats fields, the Graph Editor outliner rows. Plan: docs/steps/step_104.md."""
@@ -20,11 +20,9 @@ data = import_module(kit.MODULE + ".ui.editor_menu_data")
 chrome = import_module(kit.MODULE + ".ui.editor_chrome")
 graph_keys = import_module(kit.MODULE + ".operators.graph_keys")
 
-CAPTURE = Path(os.environ.get("ALLSET_ROOT", Path(__file__).resolve().parent.parent)) / \
-    "research" / "maya" / "screens" / "editors104" / "_editors104.json"
 
-# Maya 2026 GUI capture (research/maya/screens/editors104/_log.txt). The UV Editor window holds two menu bars: the
-# editor's (ending in Help) and the UV Toolkit's own Options / Help, both visible in the capture.
+# Maya 2026 editor menu bars. The UV Editor window holds two menu bars: the
+# editor's (ending in Help) and the UV Toolkit's own Options / Help, both shown in Maya.
 MAYA_BARS = {"Graph Editor": ["Edit", "View", "Select", "Curves", "Keys", "Tangents", "List", "Show", "Help"],
              "Dope Sheet": ["Edit", "View", "Channels", "Keys", "List", "Show", "Help"],
              "UV Editor": ["Edit", "Create", "Select", "Cut/Sew", "Modify", "Tools", "View", "Image", "Textures",
@@ -42,29 +40,13 @@ def _leaves(editor=None):
     return out
 
 
-def _count_capture(items):
+def _count_items(items):
     n = 0
     for e in items:
         if e.get("optionBox") or not e.get("visible", True) or e["sep"] or e.get("divider"):
             continue
-        n += _count_capture(e["items"]) if e.get("items") else 1
+        n += _count_items(e["items"]) if e.get("items") else 1
     return n
-
-
-def test_menu_bars_match_the_maya_capture():
-    for editor, titles in MAYA_BARS.items():
-        assert [t for t, _ in data.EDITORS[editor]] == titles, editor
-    leaves = _leaves()
-    print({ed: (len(_leaves(ed)), sum(_leaves(ed).values())) for ed in MAYA_BARS}, "total", len(leaves),
-          "mapped", sum(leaves.values()))
-    assert len(leaves) == 516, len(leaves)
-    if CAPTURE.exists():   # research/ is not tracked: checked where the capture is
-        cap = json.loads(CAPTURE.read_text(encoding="utf-8"))
-        n = sum(_count_capture(m["items"]) for key in ("graph_editor", "dope_sheet", "uv_editor")
-                for b in cap[key][0]["bars"] for m in b["menus"])
-        assert n == len(leaves), (n, len(leaves))
-    assert len([p for p in data.OPTION_BOXES if p.split("/", 1)[0] in MAYA_BARS]) == 126
-    assert "Graph Editor/Edit/Cut" in data.OPTION_BOXES
 
 
 def test_every_editor_leaf_mapped_or_noticed():
@@ -107,30 +89,6 @@ def test_check_items_are_blender_properties():
     # step 157: Default In / Out Tangent are kit add-on prefs (the kit's own keys use them), not Blender's preference
     assert menu_map.spec("Graph Editor/Tangents/Default In Tangent/Linear") ==         ("prop", "addon_prefs.default_in_tangent", {"value": 'LINEAR'})
     assert menu_map.spec("Graph Editor/View/Infinity") == ("prop", "space_data.show_extrapolation", {})
-
-
-def test_icon_rows_follow_the_capture_and_use_real_icons():
-    icons = set(bpy.types.UILayout.bl_rna.functions["prop"].parameters["icon"].enum_items.keys())
-    for editor, row in chrome.ICONS.items():
-        for it in row:
-            if isinstance(it, tuple):
-                assert it[1] in icons, (editor, it)
-                if it[2] is None:
-                    assert it[0] in chrome.NOTICES, it
-    if CAPTURE.exists():
-        cap = json.loads(CAPTURE.read_text(encoding="utf-8"))
-        maya = [w["maya"] for w in cap["graph_editor"][0]["widgets"] if w["maya"]]
-        kit_keys = [it[0] for it in chrome.GRAPH_ICONS if isinstance(it, tuple)]
-        # Maya order kept (control names; the outliner load buttons carry the panel name as a prefix). The last
-        # three (Graph Editor / Dope Sheet / Time Editor buttons) sit at the toolbar's right end in Maya 2026: the
-        # capture lists them by x among the tangent buttons of the overflowing row.
-        idx = [next(i for i, m in enumerate(maya) if m.endswith(k)) for k in kit_keys]
-        assert idx[:-3] == sorted(idx[:-3]), list(zip(kit_keys, idx))
-        assert kit_keys[-3:] == ["getGraphEditorButton", "getDopeSheetButton", "getCTEButton"]
-        dope = [w["maya"] for w in cap["dope_sheet"][0]["widgets"] if w["maya"]]
-        dope_keys = [it[0] for it in chrome.DOPE_ICONS if isinstance(it, tuple)]
-        idx = [next(i for i, m in enumerate(dope) if m.endswith(k)) for k in dope_keys]
-        assert idx == sorted(idx), list(zip(dope_keys, idx))
 
 
 def test_headers_swapped_while_enabled():

@@ -1,6 +1,6 @@
 """Step 165: the Channel Box in component mode (Maya: the shape, the CVs line / table, INPUTS — no transform rows) and the
-RMB list's DG Traversal / Inputs / Outputs submenus. Maya 2022 measured: research/maya/re/cb_component_164.md,
-research/maya/screens/cb165."""
+RMB list's DG Traversal / Inputs / Outputs submenus, following Maya 2022.
+"""
 
 from importlib import import_module
 

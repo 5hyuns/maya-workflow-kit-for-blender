@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Target Weld, Crease Tool and Multi-Cut feel (docs/steps/step_64.md 「계획」).
 
-- Target Weld (Maya polyMergeVertexContext, research/maya/workflows/modeling.md:37-39, shots/modeling_08_win1.png):
+- Target Weld (Maya polyMergeVertexContext):
   drag a vertex (an edge in edge mode) onto another one; a dragged vertex that is selected takes every selected
   vertex with it (Maya's tool description, docs/steps/step_64.md 「계획」 실측). Merge To Target / Center.
-- Crease Tool (Maya polyCreaseCtx, modeling.md:49): MMB drag left / right = less / more crease on the selected
+- Crease Tool (Maya polyCreaseCtx): MMB drag left / right = less / more crease on the selected
   edges (vertices in vertex mode), shown as Maya's value. Blender stores 0-1 with OpenSubdiv sharpness = 10 * b^2
-  (measured, step 64), so Maya value c is stored as sqrt(c / 10).
+  (step 64), so Maya value c is stored as sqrt(c / 10).
 - Multi-Cut: since step 129 a kit tool (operators/multi_cut.py); its Tool Settings live here
-  (shots/modeling_06_win1.png) and it reuses ``edge_ring`` / ``insert_loop`` / ``snap_factor``.
+  and it reuses ``edge_ring`` / ``insert_loop`` / ``snap_factor``.
 """
 
 import math
@@ -26,7 +26,7 @@ from mathutils import Vector, geometry
 PICK_RADIUS = 15          # px at UI scale 1: how far from a vertex / edge a press still picks it
 CREASE_PER_PX = 0.02      # Maya crease value per px of horizontal MMB drag (50 px = 1; sensitivity [U])
 MAYA_CREASE_MAX = 10.0    # Blender crease 1.0 = sharpness 10 (and "infinitely" sharp)
-MAYA_SNAP_STEP = 10       # Multi-Cut Snap Step % (shots/modeling_06_win1.png)
+MAYA_SNAP_STEP = 10       # Multi-Cut Snap Step %
 
 TARGET_WELD_TOOL = "allset.target_weld_tool"
 CREASE_TOOL = "allset.crease_tool"
@@ -52,7 +52,7 @@ class ALLSET_PG_mesh_tools(bpy.types.PropertyGroup):
     snap_step: IntProperty(
         name="Snap Step %", default=MAYA_SNAP_STEP, min=1, max=100,
         description="Multi-Cut: Shift snaps the cut point along the edge in these steps")
-    # Multi-Cut Tool Settings, Maya factory values (shots/modeling_06_win1.png, research/maya/re/multi_cut.md)
+    # Multi-Cut Tool Settings, Maya factory values
     smoothing_angle: FloatProperty(
         name="Smoothing Angle", default=180.0, min=0.0, max=180.0, precision=0,
         description="New edges between faces bent more than this are hard (sharp), the rest soft")

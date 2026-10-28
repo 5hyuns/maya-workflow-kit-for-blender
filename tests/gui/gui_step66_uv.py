@@ -1,4 +1,4 @@
-"""Step 66 in a real UI (research/maya/workflows/uv.md uv_01-03): cube -> UV > UV Editor -> a UV Editor window, edit mode,
+"""Step 66 in a real UI (Maya UV workflow): cube -> UV > UV Editor -> a UV Editor window, edit mode,
 UV Sync Selection, the UVs drawn -> the top face's edges selected -> Shift+X (Cut) -> two shells -> Ctrl+U (Unfold) ->
 Ctrl+L (Layout) -> inside 0-1, no overlap -> RMB marking menu NW = UV Shell -> island mode; UV Toolkit tab (screenshots)."""
 

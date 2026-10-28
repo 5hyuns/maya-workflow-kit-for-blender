@@ -1,6 +1,6 @@
 """Step 129 (#11, #12): Maya 2022 primitive topology and creation history nodes in Channel Box INPUTS.
 
-Counts: Maya 2022 mayapy, Create menu factory option boxes (research/maya/re/primitives_129.md §2, §3).
+Counts: Maya 2022, Create menu factory option boxes.
 """
 
 from importlib import import_module
@@ -29,7 +29,7 @@ MAYA_MENU = {
     'PRISM': ("polyPrism", (6, 9, 5), {4: 3, 3: 2}),
 }
 
-# node, attributes -> (vertices, edges, faces) measured in Maya 2022 for non-default values
+# node, attributes -> (vertices, edges, faces) in Maya 2022 for non-default values
 MAYA_VARIANTS = [
     ("polyCube", dict(subdivisionsWidth=2, subdivisionsHeight=3, subdivisionsDepth=4), (54, 104, 52)),
     ("polySphere", dict(subdivisionsAxis=8, subdivisionsHeight=4), (26, 56, 32)),

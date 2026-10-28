@@ -1,7 +1,7 @@
 # Maya 기본 단축키 → Blender 대응표
 
-자동 생성: `python tools/gen_keymap_mapping.py` (손으로 고치지 말 것).
-입력: `research/maya/hotkeys_default.json` (Maya 2026 팩토리 핫키 495개; 근거 열 = Maya 2026 기본 핫키 목록의 순번). Blender 쪽: 이 킷의 "Maya" 키컨피그 (`src/allset/keymap/`), 상태 = `keymap/mapping.py`.
+자동 생성 (손으로 고치지 말 것).
+입력: Maya 2026 팩토리 핫키 495개 (근거 열 = Maya 2026 기본 핫키 목록의 순번). Blender 쪽: 이 킷의 "Maya" 키컨피그 (`src/allset/keymap/`), 상태 = `keymap/mapping.py`.
 
 현재 바인딩 = Maya 컨텍스트에 대응하는 Blender 키맵들(`mapping.CONTEXT_KEYMAPS`)에서 같은 키에 걸린 항목. 근사 조회라 모드에 따라 실제로 먼저 잡히는 항목은 다를 수 있다.
 

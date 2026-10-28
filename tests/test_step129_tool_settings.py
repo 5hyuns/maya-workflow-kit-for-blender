@@ -1,6 +1,6 @@
 """Step 129 (Tool Settings lane): Tool Box double-click opens Tool Settings (#3); Maya Tool Settings sections for the
-Tool Box select tools (#29) and the Mesh Tools tools (#28). Plan: docs/steps/step_129_tool_settings.md; Maya 2022
-measured: research/maya/screens/ts129/_ts129.json, _ts129_insert_edge_loop.json."""
+Tool Box select tools (#29) and the Mesh Tools tools (#28). Plan: docs/steps/step_129_tool_settings.md."""
+
 
 from importlib import import_module
 from types import SimpleNamespace

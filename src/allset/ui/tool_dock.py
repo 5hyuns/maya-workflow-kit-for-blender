@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Tool Settings as a docked column left of the viewport (docs/steps/step_106.md 「계획」 1).
 
-Maya's Tool Settings is a dock control on the left of the main window (research/maya/ui_layout.md:47, :266-268;
-docked geometry measured in Maya 2022: research/maya/screens/ts106/_ts106.json ``docked_left``). The kit's dock is a
+Maya's Tool Settings is a dock control on the left of the main window (docked
+left in Maya 2022). The kit's dock is a
 Properties editor on its Tool tab, split off the left edge of the main 3D View, with its header and navigation bar
 hidden: the Tool tab draws the 3D View "Tool" panels, i.e. ``tool_settings.ALLSET_PT_tool_settings`` (Maya sections)
 and, for tools without Maya sections, Blender's own tool panels. The dock is recognised by its state (Tool tab and no
-header), so it survives saving and reloading the file. ToggleToolSettings shows / hides it (measured: visible ->
+header), so it survives saving and reloading the file. ToggleToolSettings shows / hides it (Maya: visible ->
 hidden -> visible); closing = ``screen.area_close`` (the viewport gets its width back, measured).
 
 GUI facts (measured with the step 106 probe): ``screen.area_split(direction='VERTICAL', factor=f)`` with f < 0.5 puts

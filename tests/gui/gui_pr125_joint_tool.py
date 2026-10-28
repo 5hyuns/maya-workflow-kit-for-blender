@@ -102,7 +102,7 @@ def s_new_chain():
         new = others[0]
         root = next(b for b in new.data.bones if b.parent is None)
         sel = [pb.name for pb in new.pose.bones if mod(".ui.channel_box").bone_selected(pb)]
-        # Maya 2026 (research/maya/re/maya2026_joints.md §2): Enter selects the new chain's root, Select Tool
+        # Maya 2026: Enter selects the new chain's root, Select Tool
         check(f"Enter selected the new chain's root ({sel}, root {root.name})", sel == [root.name]
               and new.data.bones.active == root)
     check("Enter ended the Joint Tool", not running())

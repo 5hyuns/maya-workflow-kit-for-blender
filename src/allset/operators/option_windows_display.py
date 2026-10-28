@@ -2,9 +2,9 @@
 """Step 152 (#101) Maya option windows of the Display menu: Display > Grid ❒ = Maya's Grid Options.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
-option_windows._extend appends ``WINDOWS``). Labels, kinds, factory defaults and buttons were read from a running
-Maya 2022 with factory prefs (research/maya/re/render_grid_152.md "Grid Options", shot
-research/maya/screens/render152/grid_options.png; ``cmds.grid(query=True)`` = size 12, spacing 5, divisions 5,
+option_windows._extend appends ``WINDOWS``). Labels, kinds, factory defaults and buttons are Maya 2022's
+with factory prefs (Grid Options;
+grid size 12, spacing 5, divisions 5,
 displayColor grid / gridAxis / gridHighlight = index 2 = 0.25 grey).
 
 Maya keeps grid options as optionVars (gridSize / gridSpacing / gridDivisions, displayGrid*: per user), so the kit
@@ -66,8 +66,7 @@ def _run_grid(context, v):
 
 
 # --- Display > Toggle Show/Hide ❒ (step 162) ----------------------------------------------------------------------
-# Maya 2022 "Toggle Visibility Options" (GUI capture research/maya/screens/options162/_options162.json, behaviour
-# measured with mayapy, research/maya/re/options_162.md): First Selection: Independent (factory, optionVar
+# Maya 2022 "Toggle Visibility Options": First Selection: Independent (factory, optionVar
 # toggleVisibilityAndKeepSelectionBehaviour 1) / Dependent (2); buttons Apply and Close / Apply / Close. The plain
 # click and h run with the saved value (operators/visibility.toggle_dependent).
 TOGGLE_KEY = "toggle_show_hide"

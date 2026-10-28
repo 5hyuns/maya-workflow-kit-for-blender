@@ -2,7 +2,7 @@
 """Quad Draw, Create Polygon and Append to Polygon as kit tools (docs/steps/step_144_poly.md 「계획」, GitHub #30).
 
 The tools run the modals of operators/quad_draw.py and operators/poly_draw.py; their Maya Tool Settings (fields and
-factory values: research/maya/screens/options144/ (Maya 2022 Tool Settings)) are drawn here, in Blender's tool header / Tool tab and in the kit's
+factory values of Maya 2022) are drawn here, in Blender's tool header / Tool tab and in the kit's
 Tool Settings dock (ui/tool_settings.py kinds QUAD_DRAW / CREATE_POLYGON / APPEND_POLYGON).
 """
 
@@ -11,7 +11,7 @@ import bpy
 from . import notices
 from ..operators import poly_draw, quad_draw
 
-# Maya rows the kit can't honour (Live Constraint Options, research/maya/screens/options144/quad_draw.png):
+# Maya rows the kit can't honour (Live Constraint Options):
 # (notice key) -> (substitute, one line)
 _LIVE = "Blender draws the edited mesh with its Retopology overlay (over the surface, theme colours)"
 GREY = {
@@ -24,7 +24,7 @@ GREY = {
     "Append to Polygon/Rotation angle": ("Rotate afterwards", "Maya keeps this field greyed in the tool too"),
 }
 
-# Maya's Keyboard/Mouse Shortcuts section (quad_draw.png), as the kit does them.
+# Maya's Keyboard/Mouse Shortcuts section, as the kit does them.
 QUAD_DRAW_SHORTCUTS = (
     ("(outside the quad mesh)", ""),
     ("LMB", "click to drop dots"),

@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Tool Settings: Reset Tool (docs/steps/step_93.md 「계획」 3) and the dock's Maya sections (step 106).
 
-Maya's Tool Settings window has the tool name, Reset Tool / Tool Help above the active tool's options
-(research/maya/ui_layout.md:267-268). Since step 106 the kit's Tool Settings is a dock
+Maya's Tool Settings window has the tool name, Reset Tool / Tool Help above the active tool's options.
+Since step 106 the kit's Tool Settings is a dock
 left of the viewport (``ui/tool_dock.py``: a Properties editor on its Tool tab) that draws ``ALLSET_PT_tool_settings``:
 the head row, then for the Move / Rotate / Scale tools Maya's sections in Maya's order with Maya's rows bound to kit
-state (measured in Maya 2022: research/maya/screens/ts106/_ts106.json; rows the kit can't do are greyed with a tooltip).
+state (Maya 2022's rows; rows the kit can't do are greyed with a tooltip).
 Other tools keep Blender's tool panels under the head row; the Reset Tool row is also prepended to
 ``VIEW3D_PT_active_tool`` for Blender's own Tool tab / popups.
 Reset = the active tool's operator options back to their defaults (every operator of the tool's keymap) and, for
-the Move / Rotate / Scale tools, Maya's factory tool options: axis World / Object / Object (research/maya/workflows/
-pivot_snap.md P12), the manipulator at the lead object's pivot (P11, step 59), Step Snap off and rotate step 15
+the Move / Rotate / Scale tools, Maya's factory tool options: axis World / Object / Object, the
+manipulator at the lead object's pivot (step 59), Step Snap off and rotate step 15
 degrees (S3), Smart Duplicate / Smart Extrude at their defaults (Move tool, step 22 / 26).
 """
 
@@ -25,7 +25,7 @@ from ..operators.poly_draw import APPEND_TOOL, CREATE_TOOL
 from ..operators.quad_draw import TOOL as QUAD_DRAW_TOOL
 from .manipulator import KINDS, SLOT, active_tool
 
-# Maya factory axis per tool (pivot_snap.md P12); the same values tools/make_startup.py writes into the template.
+# Maya factory axis per tool; the same values tools/make_startup.py writes into the template.
 MAYA_AXIS = {'TRANSLATE': 'GLOBAL', 'ROTATE': 'LOCAL', 'RESIZE': 'LOCAL'}
 MAYA_PIVOT = 'ACTIVE_ELEMENT'
 MAYA_ROTATE_STEP = math.radians(15.0)
@@ -36,7 +36,7 @@ TOOL_OPERATORS = {"builtin.move": ("transform.translate",), "builtin.rotate": ("
                   "builtin.loop_cut": ("mesh.loopcut_slide",), "builtin.edge_slide": ("transform.edge_slide",)}
 
 # Step 129 (docs/steps/step_129_tool_settings.md): the other tools with Maya Tool Settings sections. Maya tool
-# (runTimeCommand in research/maya/menus.json) -> Blender tool; measured in Maya 2022: research/maya/screens/ts129/.
+# (Maya runTimeCommand) -> Blender tool; sections as in Maya 2022.
 TOOLS = {"builtin.select_box": 'SELECT', "builtin.select": 'SELECT',               # SelectTool (Marquee / Tweak)
          "builtin.select_lasso": 'LASSO', "builtin.select_circle": 'PAINT_SELECT',  # LassoTool, ArtPaintSelectTool
          # SplitEdgeRingTool, SlideEdgeTool, (step 144 LOOP) the kit tools of ui/mesh_tools_loop.py
@@ -125,7 +125,7 @@ def reset_tool(context):
 
 
 def reset_kind_defaults(context, kind, tool=None):
-    """Maya factory values where they differ from the Blender tool's defaults (research/maya/screens/ts129):
+    """Maya factory values where they differ from the Blender tool's defaults:
     Paint Selection = Select + Add to current selection; Target Weld = Target, Preserve UVs on; Crease = Absolute."""
     if kind == 'PAINT_SELECT':
         _paint_add[0] = True
@@ -184,15 +184,15 @@ def draw_reset_row(self, context):
 
 
 # --- Tool Settings dock: Maya sections (docs/steps/step_106.md 「계획」 2) ------------------------------------
-# Section order, default open state and rows measured in Maya 2022 (research/maya/screens/ts106/_ts106.json
-# move / rotate / scale, *_ts_full0.png). Rows without kit state are greyed with a tooltip (TS_NOTICES).
+# Section order, default open state and rows as in Maya 2022 (Move / Rotate / Scale Tool Settings).
+# Rows without kit state are greyed with a tooltip (TS_NOTICES).
 
 TOOL_NAMES = {'TRANSLATE': "Move Tool", 'ROTATE': "Rotate Tool", 'RESIZE': "Scale Tool",
-              # step 129: Maya 2022 Tool Settings titles (contextInfo -t, research/maya/screens/ts129)
+              # step 129: Maya 2022 Tool Settings titles
               'SELECT': "Select Tool", 'LASSO': "Lasso Tool", 'PAINT_SELECT': "Paint Selection Tool",
               'INSERT_EDGE_LOOP': "Insert Edge Loop Tool", 'SLIDE_EDGE': "Slide Edge Tool",
               'TARGET_WELD': "Target Weld Tool", 'CREASE': "Crease Tool", 'QUAD_DRAW': "Quad Draw Tool",
-              # step 144: Maya 2022 Tool Settings titles (research/maya/screens/options144)
+              # step 144: Maya 2022 Tool Settings titles
               'CREATE_POLYGON': "Create Polygon Tool", 'APPEND_POLYGON': "Append To Polygon Tool",
               'OFFSET_EDGE_LOOP': "Offset Edge Loop Tool"}
 SETTINGS = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
@@ -254,7 +254,7 @@ TS_NOTICES = {
                           "Blender's rotate manipulator has the free trackball rotation built in"),
     f"{TS}/Prevent Negative Scale": ("off", "Blender lets scale go negative"),
 }
-# Step 129: greyed rows of the other tools (Maya 2022 rows, research/maya/screens/ts129) -> (substitute, one line).
+# Step 129: greyed rows of the other tools (Maya 2022 rows) -> (substitute, one line).
 _SPACE = "Blender's selection tools work in screen space"
 TS_NOTICES.update({f"{TS}/{k}": v for k, v in {
     "Lasso/Open": ("Closed lasso", "Blender's lasso always closes the shape from the last point to the first"),
@@ -347,7 +347,7 @@ def _check_op(layout, op, text, on, **props):
 
 
 def draw_head(layout, context, tool):
-    """Maya's Tool Settings head: tool icon + name, Reset Tool, Tool Help (c02_tool_settings_move_win1.png)."""
+    """Maya's Tool Settings head: tool icon + name, Reset Tool, Tool Help."""
     label, icon = tool_label(context, tool)
     row = layout.row(align=True)
     name = row.row()
@@ -361,7 +361,7 @@ def draw_head(layout, context, tool):
 
 
 def draw_settings(layout, context, kind):
-    """Move / Rotate / Scale Settings (move_ts_full0.png rows)."""
+    """Move / Rotate / Scale Settings (Maya's rows)."""
     from ..operators import pivot_menu, snap_align
     scene = context.scene
     ts = scene.tool_settings
@@ -464,7 +464,7 @@ def draw_section(layout, context, key, kind):
         OTHER_SECTIONS[key](layout, context, kind)
 
 
-# --- step 129: the other tools' sections (docs/steps/step_129_tool_settings.md, research/maya/screens/ts129) -------
+# --- step 129: the other tools' sections (docs/steps/step_129_tool_settings.md) -------
 
 def _radio(layout, text, on, option, value):
     """A Maya radio button bound through allset.ts_option."""

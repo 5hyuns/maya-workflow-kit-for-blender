@@ -1,7 +1,7 @@
 """Step 151 lane A (#99): the marking-menu ring has Maya 2022's geometry — radius 55, diagonal boxes with their corner
 on the diagonal, boxes 21 px high and text + 2 x 25 px wide, the submenu arrow inside the right padding, the list
-21 px under the ring. Numbers measured from research/maya/screens/14_marking_menu_object.png and
-15_marking_menu_shift_rmb.png (research/maya/re/marking_ring_151.md). Engine only (no bpy UI)."""
+21 px under the ring. Numbers of Maya's object marking menu and Shift+RMB menu.
+Engine only (no bpy UI)."""
 
 from importlib import import_module
 
@@ -10,7 +10,7 @@ import kit
 engine = import_module(kit.MODULE + ".marking.engine")
 mm = import_module(kit.MODULE + ".marking.menus")
 
-PRESS = (815, 458)     # Maya press point (pixel, y down) in both captures
+PRESS = (815, 458)     # Maya press point (pixel, y down) in both menus
 
 # Maya text ink widths (px) and box outer rects (x0, y0, x1, y1 border pixels, y down), marking_ring_151.md.
 INK_14 = {"Edge": 26, "Object Mode": 69, "Vertex": 33, "UV": 15, "Vertex Face": 59, "Multi": 28, "Face": 24}

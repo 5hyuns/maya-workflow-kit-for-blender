@@ -1,7 +1,7 @@
 """Step 234 (Issue #143): animation layers on joints — key, bake, membership.
 
-Maya 2026 truth (mayapy, C:/Repos/bmk-strategy/audit230/maya/chain5.py -> chain5.json "maya_chain"; bake234.py ->
-bake234.json): Create Layer from Selected on a joint, Rotate X +20 at frame 12, S -> Rotate X 20 on every frame (one
+Maya 2026 (chain and bake results):
+Create Layer from Selected on a joint, Rotate X +20 at frame 12, S -> Rotate X 20 on every frame (one
 key on the layer, BaseAnimation has none); Bake Simulation leaves the pose unchanged (0.0 cm) and keeps the layers.
 Audit 0.5.0 ⑤-5 / ⑤-14: S on a layer joint keyed nothing; ⑤-8: the bake doubled the base animation (35.2 cm).
 """

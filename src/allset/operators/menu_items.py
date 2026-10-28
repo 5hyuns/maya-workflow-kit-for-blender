@@ -4,7 +4,7 @@
 Each reproduces the Maya result with a few data / bmesh edits: Modify > Naming, Mesh Display > Soften/Harden
 Edges, Edit Mesh > Detach / Edit Edge Flow / Wedge, Deform > Nonlinear, Display > Object Display, Mesh Tools >
 Sculpting Tools, UV > Assign Checker Shader, the Audio menu, Stereo > Create, and ``menu_note`` for items whose
-Maya behaviour already is Blender's (only the notice is shown). Maya behaviour: research/maya/re/menu_honesty.md.
+Maya behaviour already is Blender's (only the notice is shown).
 """
 
 import math
@@ -110,7 +110,7 @@ class ALLSET_OT_search_replace_names(bpy.types.Operator):
 
 def soften_harden(bm, angle, edges=None):
     """Maya polySoftEdge: an edge whose faces meet at less than ``angle`` degrees is soft, the rest hard;
-    the faces shade smooth (mayapy: Soften/Harden on an object = every edge, angle 30)."""
+    the faces shade smooth (Soften/Harden on an object = every edge, angle 30)."""
     limit = math.radians(angle) + 1e-6
     for e in (bm.edges if edges is None else edges):
         e.smooth = len(e.link_faces) != 2 or e.calc_face_angle(0.0) <= limit
@@ -206,7 +206,7 @@ class ALLSET_OT_detach(bpy.types.Operator):
             return {'FINISHED'}
         n = detach(bm, 'VERT' if mode[0] else 'EDGE')
         if not n:
-            self.report({'WARNING'}, "No vertices or edges selected to detach.")   # Maya's warning (mayapy)
+            self.report({'WARNING'}, "No vertices or edges selected to detach.")   # Maya's warning
             return {'CANCELLED'}
         bmesh.update_edit_mesh(ob.data)
         return {'FINISHED'}
@@ -240,7 +240,7 @@ def edge_flow(bm, edges, flow=1.0):
     """Maya Edit Edge Flow (polyEditEdgeFlow -adjustEdgeFlow): each vertex of the selected edges moves onto a cubic
     Hermite curve between its two ring neighbours a, b, with tangents along the circles through (a's outer
     neighbour, a, b) and (a, b, b's outer neighbour) and length = |ab|, at the vertex's own parameter; flow 0 = the
-    straight line. Measured: research/maya/re/modeling_rigging_110.md §2 (sphere ring: Maya 0.9983, this rule
+    straight line (sphere ring: Maya 0.9983, this rule
     0.9971; the step-101 Catmull-Rom gave 0.951). Returns the number of moved vertices."""
     selected = set(edges)
     moves = {}
@@ -321,7 +321,7 @@ class ALLSET_OT_wedge(bpy.types.Operator):
                          and sum(f.select for f in e.link_faces) == 1), None)
         if not faces or edge is None:
             self.report({'WARNING'}, "No faces selected to wedge. Select faces and one or more edges from the "
-                                     "selected faces to wedge about.")   # Maya's warning (mayapy)
+                                     "selected faces to wedge about.")   # Maya's warning
             return {'CANCELLED'}
         mw = ob.matrix_world
         p0, p1 = mw @ edge.verts[0].co, mw @ edge.verts[1].co
@@ -374,7 +374,7 @@ class ALLSET_OT_nonlinear(bpy.types.Operator):
         n = 1
         while f"{base}{n}" in names or f"{base}{n}Handle" in names:
             n += 1
-        # Maya (research/maya/re/modeling_rigging_110.md §8): the handle sits at the bounding-box centre, pointing
+        # Maya: the handle sits at the bounding-box centre, pointing
         # up (Maya +Y = Blender +Z), scaled to half the height; low / high bound -1 / 1 = the whole object.
         lo, hi = world_bounds(obs)
         handle = bpy.data.objects.new(f"{base}{n}Handle", None)
@@ -457,7 +457,7 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
     def execute(self, context):
         ob = context.active_object
         if context.mode != 'SCULPT' and not ob.visible_get():
-            # Maya switches the tool without a check (060_messages_ui.md B4); Blender can't
+            # Maya switches the tool without a check; Blender can't
             # sculpt a hidden object, so the kit says so and stays in object mode (delegated, step 258)
             self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to sculpt it.")
             return {'CANCELLED'}
@@ -489,7 +489,7 @@ class ALLSET_OT_paint_hair_follicles(bpy.types.Operator):
 
     def execute(self, context):
         # Maya switches to the Paint Hair Follicles tool for any selection, a mesh included
-        # (research/maya/re/060_messages_ui.md B4). Blender grows hair as a Curves object attached to a surface mesh:
+        # (Maya). Blender grows hair as a Curves object attached to a surface mesh:
         # the mesh's hair (its first Curves object) or a new empty one, then Sculpt mode (delegated, step 258).
         ob = context.active_object
         if ob is not None and ob.mode != 'OBJECT' and ob.type != 'CURVES':

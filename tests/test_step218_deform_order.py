@@ -1,5 +1,5 @@
 """Step 218 L17 / L15b: Maya reorderDeformers on the modifier stack, Key > Set Blend Shape Target Weight Keys.
-Maya 2026 (mayapy): research/scripts/maya_bs218/reorder218.json, research/maya/re/maya2026_deform.md L17 / L15b."""
+Maya 2026 deformer order."""
 
 from importlib import import_module
 
@@ -11,7 +11,7 @@ order_mod = import_module(kit.MODULE + ".operators.deformer_order")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 notices = import_module(kit.MODULE + ".ui.notices")
 
-# reorder218.json: evaluation order c1 c2 c3 (Maya lists output first: c3 c2 c1)
+# Maya: evaluation order c1 c2 c3 (Maya lists output first: c3 c2 c1)
 MAYA = {("c3", "c1"): ["c2", "c1", "c3"], ("c1", "c3"): ["c3", "c1", "c2"], ("c1", "c2"): ["c2", "c1", "c3"]}
 
 

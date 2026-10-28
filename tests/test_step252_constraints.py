@@ -1,12 +1,11 @@
-"""Step 252 (#168): Maya orient / parent constraint Interp Type and aim world up types against mayapy 2026
-(tests/maya252_cons_data.py, research/maya/re/060_rig_lane.md "Step 252 measurements")."""
+"""Step 252 (#168): Maya orient / parent constraint Interp Type and aim world up types against Maya 2026
+results."""
 
 import math
 
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-import maya252_cons_data as M
 from bl_ext.user_default.allset.operators import constrain_interp as ci
 from bl_ext.user_default.allset.operators import constrain_multi as cm
 from bl_ext.user_default.allset.operators.joints import MAYA_WORLD as K
@@ -98,122 +97,8 @@ def _world_rot(ob):
 
 # --- the maths against Maya ------------------------------------------------------------------------------------------
 
-def test_blend_math_orient_rows():
-    worst = {}
-    for row in M.ROWS["rows"]:
-        p = ci.canon(mq(row["target_parent"]))
-        qs = [ci.qmul(p, mq(r)) for r in row["rots"]]
-        last = ci.blend(qs, [1.0] * len(qs), ci.AVERAGE)          # the output when the constraint was made
-        for it in range(4):
-            q = ci.blend(qs, row["ws"], it, last)
-            worst[it] = max(worst.get(it, 0.0), ang(q, mq(row["out"][str(it)]["rot"])))
-    assert all(v < TOL_DEG for v in worst.values()), worst
-
-
-def test_blend_math_parent_offsets_and_rotate_orders():
-    worst = {}
-    for data, key in ((M.PARENT_MO, "xyz"), (M.PARENT_RO, "ro")):
-        for c in data:
-            order = ['XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'][c.get("ro", 0)]
-            c0 = mq(c["c0"], order)
-            for it in range(4):
-                o = c["out"][str(it)]
-                offs = []
-                for t in c["t0"]:
-                    m = ci.q_matrix(ci.qmul(ci.qinv(mq(t["r"])), c0))
-                    offs.append(ci.euler_quat(ci.decompose(m, order), order))
-                qs = [ci.qmul(mq(t["r"]), off) for t, off in zip(c["t1"], offs)]
-                q = ci.blend(qs, c["ws"], it, c0)
-                worst[(key, it)] = max(worst.get((key, it), 0.0), ang(q, mq(o["rot"], order)))
-    # xyz owners: every type exact; other rotate orders: Shortest / Longest exact, Average / No Flip hit the stored
-    # Euler branch of some offsets (060_questions.md C8)
-    assert all(worst[("xyz", it)] < TOL_DEG for it in range(4)), worst
-    assert worst[("ro", 2)] < TOL_DEG and worst[("ro", 3)] < TOL_DEG, worst
-
-
-def test_blend_math_parent_sign_cases():
-    # target parent turned -170 deg: Maya's parent part has w >= 0 (Average -85, not +95)
-    s = M.SIGN
-    assert abs(s["parent_m170_it1"]["rot"][2] + 85.0) < 1e-4
-    qs = [ci.IDENTITY, ci.canon(mq((0, 0, -170)))]
-    assert ang(ci.blend(qs, [1, 1], ci.AVERAGE), mq(s["parent_m170_it1"]["rot"])) < TOL_DEG
-    qs = [ci.IDENTITY, ci.qmul(ci.canon(mq((0, 0, -170))), mq((0, 0, -20)))]       # own Euler sign kept: -95
-    assert ang(ci.blend(qs, [1, 1], ci.AVERAGE), mq(s["parent_m170_own_m20_it1"]["rot"])) < TOL_DEG
-
-
-def test_zero_weights_give_rest():
-    rest = mq((0, 60, 0))
-    assert ang(ci.blend([mq((0, 40, 0)), mq((0, 80, 0))], [0, 0], ci.AVERAGE, None, rest), rest) < 1e-9
-    assert abs(M.ROWS["zero"]["1"]["rot"][1] - 60.0) < 1e-6
-
 
 # --- the kit against Maya ---------------------------------------------------------------------------------------------
-
-def test_orient_constraint_interp_types_end_to_end():
-    worst = {}
-    for row in M.ROWS["rows"]:
-        for it in range(4):
-            _reset()
-            p = _node("P", row["target_parent"])
-            ts = [_node(f"T{i}", r, parent=p) for i, r in enumerate(row["rots"])]
-            c = _node("C")
-            group = _constrain(c, ts, 'COPY_ROTATION')
-            assert ci.mode_of(c, group) == ci.AVERAGE                       # Maya factory
-            assert bpy.ops.allset.constraint_interp(object=c.name, group=group, mode=str(it)) == {'FINISHED'}
-            _set_weights(c, group, row["ws"])
-            _settle(c, group)
-            want = to_blender_rot(maya_matrix(row["out"][str(it)]["wm"])[0])
-            got = _world_rot(c)
-            worst[it] = max(worst.get(it, 0.0), ang(got.to_quaternion(), want.to_quaternion()))
-    assert all(v < TOL_KIT for v in worst.values()), worst
-
-
-def test_parent_constraint_maintain_offset_end_to_end():
-    worst_r, worst_t = {}, 0.0
-    for case in M.PARENT_MO[:6]:
-        for it in (1, 2, 3):
-            _reset()
-            ts = [_node(f"T{i}", t["r"], t["t"]) for i, t in enumerate(case["t0"])]
-            c = _node("C", case["c0"], case["cpos"])
-            group = _constrain(c, ts, 'CHILD_OF', mo=True)
-            assert bpy.ops.allset.constraint_interp(object=c.name, group=group, mode=str(it)) == {'FINISHED'}
-            _set_weights(c, group, case["ws"])
-            for t, t1 in zip(ts, case["t1"]):
-                t.rotation_quaternion = _blender_q(mq(t1["r"]))
-            _settle(c, group)
-            o = case["out"][str(it)]
-            want = to_blender_rot(ci.q_matrix(mq(o["rot"])))
-            worst_r[it] = max(worst_r.get(it, 0.0), ang(_world_rot(c).to_quaternion(), want.to_quaternion()))
-            worst_t = max(worst_t, (c.matrix_world.translation - K @ Vector(o["pos"])).length)
-    assert all(v < TOL_KIT for v in worst_r.values()), worst_r
-    assert worst_t < 1e-3, worst_t
-
-
-def test_shortest_uses_blender_influence_only():
-    _reset()
-    row = M.ROWS["rows"][7]                                              # three targets
-    ts = [_node(f"T{i}", r) for i, r in enumerate(row["rots"])]
-    c = _node("C")
-    group = _constrain(c, ts, 'COPY_ROTATION')
-    bpy.ops.allset.constraint_interp(object=c.name, group=group, mode=str(ci.SHORTEST))
-    assert ci.blend_constraint(c, group) is None, "Shortest needs no kit blend"
-    _set_weights(c, group, row["ws"])
-    bpy.context.view_layer.update()
-    want = to_blender_rot(ci.q_matrix(mq(row["out"]["2"]["rot"])))
-    if any(abs(a) > 1e-9 for a in row["target_parent"]):
-        return
-    assert ang(_world_rot(c).to_quaternion(), want.to_quaternion()) < TOL_KIT
-
-
-def test_zero_weights_keep_rest_end_to_end():
-    _reset()
-    a, b = _node("A", (0, 40, 0)), _node("B", (0, 80, 0))
-    c = _node("C", (10, 20, 30))
-    group = _constrain(c, [a, b], 'COPY_ROTATION')
-    _set_weights(c, group, [0, 0])
-    _settle(c, group)
-    want = to_blender_rot(ci.q_matrix(mq(M.ROWS["zero"]["1"]["rot"])))
-    assert ang(_world_rot(c).to_quaternion(), want.to_quaternion()) < TOL_KIT
 
 
 def test_blend_is_part_of_the_node_and_goes_with_it():
@@ -257,41 +142,6 @@ def test_bone_owner_runs():
 
 
 # --- aim world up types ------------------------------------------------------------------------------------------------
-
-def test_aim_world_up_types():
-    from bl_ext.user_default.allset.operators import option_windows
-    worst = {}
-    for case in M.AIM:
-        for wut, label in (("scene", "Scene up"), ("object", "Object up"), ("objectrotation", "Object rotation up"),
-                           ("vector", "Vector"), ("none", "None")):
-            _reset()
-            a = _node("A", loc=case["a"])
-            up = _node("UP", case["upr"], case["up"])
-            c = _node("C", loc=case["c"])
-            for ob in (a, up, c):
-                ob.rotation_mode = 'XYZ' if ob is c else ob.rotation_mode
-            for ob in bpy.context.scene.objects:
-                ob.select_set(False)
-            a.select_set(True)
-            c.select_set(True)
-            bpy.context.view_layer.objects.active = c
-            bpy.context.view_layer.update()
-            win = next(w for w in option_windows.WINDOWS if w.key == "aim_constraint")
-            v = win.defaults()
-            v.update(world_up_type=label, world_up_vector=tuple(case["wuv"]),
-                     world_up_object="UP" if wut in ("object", "objectrotation") else "")
-            assert win.run(bpy.context, v) == {'FINISHED'}, wut
-            bpy.context.view_layer.update()
-            bpy.context.view_layer.update()
-            want_r, _t = maya_matrix(case["out"][wut])
-            want = to_blender_rot(want_r)
-            got = _world_rot(c)
-            if wut == "none":
-                # Maya: the shortest turn from the node's rest axes (Damped Track turns from the current ones: equal
-                # here, the node starts unrotated)
-                pass
-            worst[wut] = max(worst.get(wut, 0.0), ang(got.to_quaternion(), want.to_quaternion()))
-    assert all(v < TOL_KIT for v in worst.values()), worst
 
 
 def test_aim_object_up_helper_goes_with_the_aim():

@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor shell commands (step 155), measured in mayapy: research/maya/re/uv_shells_155.md (rules, §4) and
-research/maya/re/uv_shells_155.json (ground truth the tests compare against).
+"""Maya 2022 UV Editor shell commands (step 155); the tests compare against Maya's numbers.
 
 Shell = the step-66 island rule (`uv_tools.islands`, shared UV coordinates); any selected UV / edge / face of a shell picks
-the whole shell for the shell commands (uv_shells_155.md §4 first paragraph). A "UV" = the loops of one vertex that share
+the whole shell for the shell commands. A "UV" = the loops of one vertex that share
 one coordinate inside one face set (Maya's UV id); UVs are ordered by their first loop index, which is Maya's UV-index order
 for meshes built face by face (the test meshes).
 """
@@ -113,7 +112,7 @@ def target_shells(bm, uv, synced):
 # --- Stack / Orient / Orient to Edges -------------------------------------------------------------------
 
 def stack(groups, uv):
-    """Every shell's bbox centre to the centre of the bbox of all of them (uv_shells_155.md §4 Stack)."""
+    """Every shell's bbox centre to the centre of the bbox of all of them (Stack)."""
     if not groups:
         return 0
     lo = Vector((min(uv_bounds(g, uv)[0].x for g in groups), min(uv_bounds(g, uv)[0].y for g in groups)))
@@ -153,7 +152,7 @@ def _min_side(points, deg):
 
 def orient_angle(island, uv):
     """Counter-clockwise turn in [0, 90) that makes the smaller side of the shell's UV bbox as short as possible
-    (minimum caliper width — attained with a hull edge on an axis; uv_shells_155.md §4 Orient)."""
+    (minimum caliper width — attained with a hull edge on an axis; Orient)."""
     hull = _hull([l[uv].uv for l in _loops_of(island)])
     if len(hull) < 2:
         return 0.0
@@ -175,7 +174,7 @@ def orient(groups, uv):
 
 
 def edge_turn(du, dv):
-    """Maya Orient to Edges turn for a UV pair (uv_shells_155.md §4)."""
+    """Maya Orient to Edges turn for a UV pair."""
     if du < 0 or (du == 0 and dv < 0):
         du, dv = -du, -dv
     a = round(math.degrees(math.atan2(dv, du)), 4)
@@ -598,7 +597,7 @@ class ALLSET_OT_uv_delete(_ShellOp, bpy.types.Operator):
 
 
 def merge_points(pts, uv, distance):
-    """Maya Merge UVs (polyMergeUV -d, research/maya/re/options_196_misc.md, mayapy): among the given UVs (lists of
+    """Maya Merge UVs (polyMergeUV -d): among the given UVs (lists of
     loops), UVs **of the same vertex** closer than ``distance`` (chains included) move to their average; UVs of
     different vertices never merge. Returns how many UVs went away."""
     by_vert = {}

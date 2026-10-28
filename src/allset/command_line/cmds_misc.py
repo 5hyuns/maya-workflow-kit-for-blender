@@ -2,7 +2,6 @@
 """maya.cmds look-alike 3 (step 216, Issue #122): node types, attribute queries, units, sets, shading nodes, polygon
 queries / extrude, camera.
 
-Maya behaviour: research/maya/re/cmds_201.md 「step 216」 (mayapy, cases research/scripts/cmds_201/cases.py c216_*).
 Everything goes through the kit's own data so a script gives what the menus give:
 
 - Maya nodes that aren't DAG objects (``_node``): materials = kit materials (``operators/material.py``, lambert1 =
@@ -32,12 +31,12 @@ _flatten = _shim._flatten
 HISTORY_PROP = "allset_cmds_history"   # mesh data: [{name, type, values}] of the extrusions made by commands
 TEXTURE_PROP = "allset_shading_node"   # node group: Maya node type ("file")
 FILE_NAME_PROP = "allset_file_texture_name"
-# Maya's factory scene nodes that aren't DAG objects (mayapy: ls -type objectSet, nodeType time1)
+# Maya's factory scene nodes that aren't DAG objects (Maya: ls -type objectSet, nodeType time1)
 DEFAULT_SETS = {"defaultLightSet": "objectSet", "defaultObjectSet": "objectSet",
                 "initialParticleSE": "shadingEngine", "initialShadingGroup": "shadingEngine"}
 DEFAULT_NODES = {"time1": "time"}
 
-# nodeType -inherited (mayapy-measured: joint and mesh, research/maya/re/cmds_201.md c216_node_type; the others
+# nodeType -inherited (Maya's lists for joint and mesh; the others
 # follow Maya's documented node hierarchy [K])
 _DAG = ["containerBase", "entity", "dagNode"]
 _SHAPE = _DAG + ["shape"]
@@ -200,7 +199,7 @@ def _default_camera_type(name):
 
 
 def _type_of(name):
-    """Maya node type of a node / plug / component name; RuntimeError when nothing has that name (mayapy)."""
+    """Maya node type of a node / plug / component name; RuntimeError when nothing has that name."""
     text = str(name)
     node = text.rsplit("|", 1)[-1].split(".", 1)[0]
     component = "[" in text
@@ -231,7 +230,7 @@ def _rig():
 
 def nodeType(*args, **kwargs):
     """``nodeType`` = the Maya type of a node, plug (its node) or component (its shape); ``-inherited`` = the class
-    chain (mayapy: joint containerBase entity dagNode transform joint). A missing node raises RuntimeError."""
+    chain (Maya: joint containerBase entity dagNode transform joint). A missing node raises RuntimeError."""
     f = _Flags("nodeType", kwargs)
     inherited = f.get("inherited", "i", False)
     f.get("apiType", "api", False)
@@ -318,7 +317,7 @@ def _attr_of(ob, name):
 
 def attributeQuery(*args, **kwargs):
     """``attributeQuery <attr> -node <node>``: exists / keyable / names / type / limits / default of an attribute
-    (mayapy: lists for min / max / listDefault; a missing attribute answers exists False, other flags raise)."""
+    (Maya: lists for min / max / listDefault; a missing attribute answers exists False, other flags raise)."""
     f = _Flags("attributeQuery", kwargs)
     node = f.get("node", "n")
     flags = {}
@@ -451,7 +450,7 @@ def _set_range(scene, start_attr, end_attr, start, end):
 
 
 def _set_fps(scene, fps):
-    """Maya keeps the time ranges in seconds when the time unit changes (mayapy: 1 / 120 film -> 1.041667 / 125
+    """Maya keeps the time ranges in seconds when the time unit changes (Maya: 1 / 120 film -> 1.041667 / 125
     pal); Blender frames are whole, so the kit rounds (keys stay where they are, [U] for Maya's keys)."""
     old = _fps(scene)
     ratio = fps / old if old else 1.0
@@ -470,7 +469,7 @@ def _set_fps(scene, fps):
 def currentUnit(*args, **kwargs):
     """Maya working units = the scene's display units: linear = ``unit_settings.length_unit`` (the kit's numbers
     follow it: 100 cm reads 1.0 in m), angle = ``system_rotation``, time = the frame rate. Setting returns the full
-    linear / angle name or the time name (mayapy); a multi-flag set returns the last one's."""
+    linear / angle name or the time name; a multi-flag set returns the last one's."""
     f = _Flags("currentUnit", kwargs)
     query = f.get("query", "q", False)
     linear = f.get("linear", "l")
@@ -523,7 +522,7 @@ def _all_names():
 
 
 def unique_node_name(name, taken=None):
-    """``name`` when no Maya node has it, else one past the highest number of its base (mayapy: -n set1 with set1 ..
+    """``name`` when no Maya node has it, else one past the highest number of its base (Maya: -n set1 with set1 ..
     set3 taken -> set4)."""
     from ..operators import naming
     taken = _all_names() if taken is None else taken
@@ -553,7 +552,7 @@ def _set_node(name):
 
 def sets(*args, **kwargs):
     """``sets`` = Create > Sets > Set: a kit set (``operators/sets.py``) named set1, set2 … (one past the highest);
-    -add / -remove / -isMember / -q on a set. Making or editing a set doesn't change the selection (mayapy)."""
+    -add / -remove / -isMember / -q on a set. Making or editing a set doesn't change the selection."""
     from ..operators import sets as kit_sets
     f = _Flags("sets", kwargs)
     query = f.get("query", "q", False)
@@ -582,7 +581,7 @@ def sets(*args, **kwargs):
             if found.kind != 'SET':
                 raise RuntimeError(f"sets: the kit can't edit the members of {target}")
             obs = [_shim._object(n) for n in names] if names else _shim._selection()
-            # mayapy: -add (c, a) lists a before c (members go in last given first)
+            # Maya: -add (c, a) lists a before c (members go in last given first)
             op(found.data, list(reversed(obs)))
             return found.name
     if clear is not None:
@@ -595,7 +594,7 @@ def sets(*args, **kwargs):
     elif names:
         obs = [_shim._object(n) for n in names]
     else:
-        obs = list(reversed(_shim._selection()))   # mayapy: from the selection (b, c) -> [c, b]
+        obs = list(reversed(_shim._selection()))   # Maya: from the selection (b, c) -> [c, b]
     new_name = unique_node_name(str(name)) if name else kit_sets.next_name()
     coll = kit_sets.create(new_name, obs, text=str(text or ""))
     return coll.name
@@ -631,7 +630,7 @@ def new_file_texture(name=None):
 def shadingNode(*args, **kwargs):
     """``shadingNode lambert -asShader`` = a kit material (``material.new_material``: lambert2 while lambert1
     exists, blinn1, phong1 …, Maya's factory values); ``file -asTexture`` = ``new_file_texture``. No shading group
-    is made; the new node becomes the selection (mayapy)."""
+    is made; the new node becomes the selection."""
     from ..operators import material
     f = _Flags("shadingNode", kwargs)
     f.get("asShader", "asShader", False)
@@ -942,7 +941,7 @@ def _extrude_object(context, ob, ids, params, world_t, name, history):
 def polyExtrudeFacet(*args, **kwargs):
     """``polyExtrudeFacet pCube1.f[1] -ltz 2`` = Maya polyExtrudeFace through the kit's extrusion (the In-View
     Editor / Channel Box INPUTS show the node); returns [polyExtrudeFaceN]. ``-t`` / ``-tx`` … is a world move of
-    the extruded faces in the kit's axes (Blender's, like ``move``); the faces stay selected (mayapy)."""
+    the extruded faces in the kit's axes (Blender's, like ``move``); the faces stay selected."""
     from ..operators import extrude
     f = _Flags("polyExtrudeFacet", kwargs)
     params = dict(extrude.DEFAULTS, **extrude.MANIP_DEFAULTS)
@@ -1072,7 +1071,7 @@ def exactWorldBoundingBox(*args, **kwargs):
 
 def listHistory(*args, **kwargs):
     """``listHistory`` = the shape, then its history newest first: the extrusions the kit made, then the creation
-    node (mayapy: -pdo polyExtrudeFace3 2 1 polyCube1). ``-pdo`` leaves the DAG nodes out."""
+    node (Maya: -pdo polyExtrudeFace3 2 1 polyCube1). ``-pdo`` leaves the DAG nodes out."""
     from ..operators import prim_history
     f = _Flags("listHistory", kwargs)
     pdo = f.get("pruneDagObjects", "pdo", False)

@@ -126,7 +126,7 @@ def test_breakdown_all_and_mute_all():
     assert not any(f.mute for f in kit.fcurves(ob))
 
 
-# --- Cut / Copy / Paste Selected (mayapy, tmp/maya158/paste.py) ------------------------------------------------
+# --- Cut / Copy / Paste Selected (Maya) ------------------------------------------------
 
 def test_paste_selected_connects_and_inserts_like_maya():
     ob = _cube()
@@ -294,7 +294,7 @@ def test_bind_skin_inputs_is_skin_cluster():
         bpy.context.view_layer.objects.active = mesh
         assert bpy.ops.allset.bind_skin() == {'FINISHED'}
     names = [next(m.name for m in me.modifiers if m.type == 'ARMATURE') for me in meshes]
-    assert names == ["skinCluster1", "skinCluster2"], names      # mayapy: skinCluster1 / skinCluster2
+    assert names == ["skinCluster1", "skinCluster2"], names      # Maya: skinCluster1 / skinCluster2
     md = next(m for m in meshes[0].modifiers if m.type == 'ARMATURE')
     assert attribute_editor.modifier_node(meshes[0], md) == ("skinCluster1", "skinCluster")
     # Blender's own bind (Heat Map) gets the next name too

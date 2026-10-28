@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Pose Editor window (step 227 L16, Issue #137; research/maya/re/maya2026_deform.md §L16).
+"""Maya's Pose Editor window (step 227 L16, Issue #137).
 
 Maya: Windows > Animation Editors > Pose Editor / Deform > Pose Space Deformation > Pose Editor — pose interpolators on
 the left, the current interpolator's poses on the right (Add Pose, Add Shape, Edit, Go to Pose, Delete, the pose
-weights). The window was not measured in a GUI Maya [U]: the kit layout (delegated) = toolbar row, then two columns
+weights). The window's exact layout isn't known [U]: the kit layout (delegated) = toolbar row, then two columns
 (interpolators | poses with their read-only weight), then the interpolation (Linear; Gaussian greyed with a notice).
 Logic in ``operators/pose_space_227.py``; the window is ``marked_window`` kind POSE_EDITOR.
 """

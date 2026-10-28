@@ -3,10 +3,10 @@
 (docs/steps/step_226.md).
 
 Maya gives a joint a control shape with ``cmds.parent(curveShape, joint, shape=True, relative=True)``
-(research/maya/re/maya2026_controls.md:15, mayapy ``L1_parent_shape_relative`` in maya2026_controls.json): the curve
+(case ``L1_parent_shape_relative``): the curve
 shape moves under the joint keeping its CV local values, the old transform stays without a shape. Without ``relative``
-the CVs keep their world positions and the old transform goes away (maya2026_controls.md:16). A second shape on the same
-node is added (two shapes, one control, maya2026_controls.md:18). Decision 1 (docs/strategy/DECISIONS7.md): every kit
+the CVs keep their world positions and the old transform goes away. A second shape on the same
+node is added (two shapes, one control). Decision 1 (docs/strategy/DECISIONS7.md): every kit
 control = a bone Custom Shape — the shape is a copy of the curve data baked into bone space on a curve object in the
 hidden collection ``.AllsetControlShapes`` (not linked to any scene, fake user), Custom Shape transform identity and
 bone size off.
@@ -298,7 +298,7 @@ def _empty_in_place(ob):
 
 
 def _finish_source(curve_ob, relative):
-    # absolute: Maya deletes the transform it emptied (mayapy old_transform None); one with children stays [I]
+    # absolute: Maya deletes the transform it emptied (old_transform None); one with children stays [I]
     if relative or curve_ob.children:
         return _empty_in_place(curve_ob)
     _drop(curve_ob)

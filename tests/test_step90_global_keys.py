@@ -70,7 +70,7 @@ def test_cut_takes_the_hierarchy_and_paste_brings_it_back():
     assert "group1" not in bpy.data.objects and "pCube1" not in bpy.data.objects and other.name == "pCube2"
     del child
     assert bpy.ops.allset.paste() == {'FINISHED'}
-    # Maya pasteScene (step 211, research/maya/re/naming_211.md P1-P3): pasted__ names under a new "group"
+    # Maya pasteScene (step 211): pasted__ names under a new "group"
     objs = bpy.data.objects
     assert "pasted__group1" in objs and "pasted__pCube1" in objs, sorted(objs.keys())
     assert objs["pasted__pCube1"].parent == objs["pasted__group1"]

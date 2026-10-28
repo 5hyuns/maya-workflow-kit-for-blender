@@ -19,7 +19,7 @@ A small update to 0.6.0. Blender 4.5 LTS through 5.2.x.
 
 ## [0.6.0] — 2026-10-28
 
-The rigging release (steps 230–270): joints, IK, skinning and constraints follow Maya 2026 (measured with mayapy), a
+The rigging release (steps 230–270): joints, IK, skinning and constraints follow Maya 2026, a
 rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does, and the reports that came in after
 0.5.0 are fixed. Reference data (hotkeys, shelves, editor menus) now follows Maya 2026. Blender 4.5 LTS through 5.2.x.
 

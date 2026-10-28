@@ -1,8 +1,8 @@
 """Step 238 (Issue #146, audit CHAINS_AUDIT_0.5.0.md:376 K9): rig and animation hand polish.
 
 ③-6 Enable IK Solver is a Maya check item (the menu shows the state), ③-8 Paint Skin Weights starts on the first
-influence (Maya: joint1 hilited, research/maya/re/maya2026_paint_skin_weights.md:17), ③-17 an animated FBX sets the
-Time Slider to the file's range (research/maya/re/maya2026_engine_fbx.md:57), chain ④ SDK: a blend shape weight typed
+influence (Maya: joint1 hilited), ③-17 an animated FBX sets the
+Time Slider to the file's range, chain ④ SDK: a blend shape weight typed
 and keyed before msgbus runs isn't overwritten by its driver (audit230/chain4.md:56).
 """
 

@@ -1,5 +1,5 @@
 """Step 149 (#91 #93 #94): selection wire follows deformation per frame, Maya names restart after Delete, Bind Skin =
-Maya closest distance. Plan / measurements: docs/steps/step_149.md, research/maya/re/skin_bind_149.md;
+Maya closest distance. Plan: docs/steps/step_149.md;
 GUI: tests/gui/gui_step149_wire.py (playback shot)."""
 
 import math
@@ -51,7 +51,7 @@ def _bind(arm, mesh):
 
 # --- #94 Bind Skin --------------------------------------------------------------------------------------------------
 
-# mayapy, factory Bind Skin (closest distance, dropoff 4, max 5): (Maya point, {joint: weight})
+# Maya, factory Bind Skin (closest distance, dropoff 4, max 5): (Maya point, {joint: weight})
 MAYA_PLANE = (((1, -2, 0), (0.00905, 0.49548, 0.49548)), ((1, 0, 0), (0.00173, 0.49914, 0.49914)),
               ((1, 1, 0), (0.00794, 0.79365, 0.19841)), ((1, 2, 0), (0.03704, 0.92593, 0.03704)),
               ((1, 5, 0), (0.79905, 0.19976, 0.00118)), ((1, 10, 0), (0.97971, 0.01789, 0.0024)))
@@ -170,7 +170,7 @@ def test_91_wire_batch_dropped_on_frame_change_for_deforming_objects():
 
 
 def test_lattice_gets_the_maya_selection_wire():
-    # Maya: displayColor lattice -active 16 (white), lead 19 (green) like meshes (research/maya/screens/_maya_ui_dump.json)
+    # Maya: displayColor lattice -active 16 (white), lead 19 (green) like meshes
     _clear()
     lat = bpy.data.lattices.new("ffd1LatticeShape")
     lat.points_u, lat.points_v, lat.points_w = 2, 5, 2

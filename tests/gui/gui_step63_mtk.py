@@ -1,4 +1,4 @@
-"""Step 63 in a real UI (research/maya/workflows/modeling.md modeling_02 / 14): Status Line MTK icon -> the
+"""Step 63 in a real UI (Maya modeling workflow): Status Line MTK icon -> the
 Modeling Toolkit in the dock -> Face mode icon -> a face selected -> Extrude button -> more faces; cube + sphere
 -> Combine button -> one pCube2 -> Separate button -> two pieces. Screenshots (vs shots/modeling_03.png)."""
 

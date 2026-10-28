@@ -1,24 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya polyExtrudeFace and the "last kit modeling operation" history (docs/steps/step_65.md 「계획」 1-2).
 
-Maya 2022 measured with mayapy (step 65, unit cube, top face): Edit Mesh > Extrude = a zero-length extrusion
+Maya 2022 (step 65, unit cube, top face): Edit Mesh > Extrude = a zero-length extrusion
 (Thickness 0, Local Translate Z 0, Offset 0, Divisions 1, Keep Faces Together on); Local Translate Z moves each face along
 its normal (a vertex shared by several extruded faces moves by the average), Thickness offsets every face plane by the
-same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides
-(research/maya/workflows/modeling.md:19-24, shots/modeling_03.png / modeling_04.png).
+same distance (shell), Offset shrinks the extruded faces in their plane (no new faces), Divisions = rings along the sides.
 
-Blender keeps no history in edit mode (research/maya/concepts.md:72). The kit remembers the last extrusion per object:
+Blender keeps no history in edit mode. The kit remembers the last extrusion per object:
 its node name (``polyExtrudeFaceN``), the mesh before it and the values; changing a value rebuilds the extrusion from that
 mesh (``allset.extrude_edit``), so it is one undo step and the Adjust Last Operation panel shows the same Maya names.
 The record is valid only while the mesh equals one of the states the kit made (Ctrl+Z / Ctrl+Shift+Z included).
 
 Step 139 (#70 M4, #16): the record is one ``Spec`` per Maya node - polyExtrudeEdge / polyExtrudeVertex here (edges /
 vertices extrude at once, no drag) and polyBevel3 in operators/bevel_maya.py - each with its Maya fields, edit
-operator and arrow field (research/maya/re/edit_mesh_139_shape.md).
+operator and arrow field.
 
 Step 151 (lane B): the extrude manipulator's other handles drive polyExtrudeFace Local Translate X / Y and Local
-Scale X / Y / Z (Maya 2022 mayapy, data in tests/test_step151_extrude_manip.py): every extruded face has its own frame
-- Z = its normal, X = Maya world X (``localDirection`` 1 0 0, measured in world space) projected into the face plane
+Scale X / Y / Z (Maya 2022, data in tests/test_step151_extrude_manip.py): every extruded face has its own frame
+- Z = its normal, X = Maya world X (``localDirection`` 1 0 0, in world space) projected into the face plane
 (Maya world Z = Blender -Y when the face faces X), Y = Z x X; Local Translate moves the face along X / Y, Local Scale scales it about its vertex mean along its X / Y / Z
 (Z does nothing on a flat face); a vertex shared by several extruded faces takes the mean of their moves (Keep Faces
 Together), the rings between take the level fraction, and Offset adds after the scale.
@@ -124,7 +123,7 @@ def _offset_dir(perps):
 
 
 def face_axes(normal, direction=WORLD_X, fallback=MAYA_Z):
-    """Maya's local X / Y of an extruded face (polyExtrudeFace ``localDirection`` 1 0 0, mayapy step 151): the
+    """Maya's local X / Y of an extruded face (polyExtrudeFace ``localDirection`` 1 0 0, step 151): the
     direction projected into the face plane, ``fallback`` (Maya world Z) when the face looks along it; Y = Z x X."""
     n = normal.normalized() if normal.length > 1e-12 else Vector((0.0, 0.0, 1.0))
     for d in (direction, fallback, Vector((0.0, 1.0, 0.0))):
@@ -201,8 +200,8 @@ def _region(bm, faces):
     caps = _caps(ret["geom"])
     gone = [f for f in faces if f.is_valid]
     if gone and closed:
-        # whole closed shells: Maya keeps the old faces, turned inside out (mayapy 2026, 4 / 4 cases, step 257:
-        # research/maya/re/bevel_numbering_257.md §7); bmesh has already turned them (measured in Blender 4.5)
+        # whole closed shells: Maya keeps the old faces, turned inside out (4 / 4 cases, step 257);
+        # bmesh has already turned them (measured in Blender 4.5)
         pass
     elif gone:   # an isolated region keeps its faces in bmesh; Maya's extrusion has no bottom
         bmesh.ops.delete(bm, geom=gone, context='FACES_ONLY')
@@ -226,7 +225,7 @@ def extrude_topology(bm, faces, divisions=1, together=True, direction=WORLD_X, f
     levels = []
     caps = faces
     if together and _closed(faces):
-        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says (2 / 2 cases, §7)
+        divisions = 1        # Maya extrudes whole closed shells once whatever Divisions says (2 / 2 cases)
     for level in range(max(1, divisions)):
         if level == 0 and not together:
             caps = bmesh.ops.extrude_discrete_faces(bm, faces=caps)["faces"]
@@ -336,8 +335,8 @@ def extrude(bm, faces, thickness=0.0, local_translate_z=0.0, offset=0.0, divisio
 
 
 # --- Maya's numbering of the result (step 257, #149) ---------------------------------------------------------------
-# polyExtrudeFacet, mayapy 2026: vertices, edges and faces by index in 53 / 53 cases with a border + 4 / 4 whole closed
-# shells (research/maya/re/bevel_numbering_257.md §7). The mesh's edge index is taken as Maya's edge id: kit
+# polyExtrudeFacet (Maya 2026): vertices, edges and faces by index in 53 / 53 cases with a border + 4 / 4 whole closed
+# shells. The mesh's edge index is taken as Maya's edge id: kit
 # primitives (polyCube / polyCylinder) and kit extrusions keep it so (bevel_maya.maya_edge_ids).
 
 def maya_plan(bm, picked, divisions=1, together=True):
@@ -470,7 +469,7 @@ def renumber(bm, plan, levels, src, caps, moved):
     return [bm.faces[i] for i in cap_ids], [(bm.verts[i], *rest) for i, rest in moved_ids]
 
 
-# --- polyExtrudeEdge / polyExtrudeVertex (step 139, research/maya/re/edit_mesh_139_shape.md §1-2) ------------
+# --- polyExtrudeEdge / polyExtrudeVertex (step 139) ------------
 
 def deselect_all(bm):
     for seq in (bm.faces, bm.edges, bm.verts):
@@ -484,7 +483,7 @@ def _unit_or(vec, fallback):
 
 def edge_frame(e):
     """Maya's local frame of an extruded edge (a -> b = the edge's vertex order): X along the edge, Z = mean of the
-    adjacent face normals (Local Translate Z / Thickness), Y = Z x X (Offset). Measured: §1."""
+    adjacent face normals (Local Translate Z / Thickness), Y = Z x X (Offset)."""
     a, b = e.verts
     x = _unit_or(b.co - a.co, (1.0, 0.0, 0.0))
     z = _unit_or(sum((f.normal for f in e.link_faces), Vector()), (0.0, 0.0, 1.0))
@@ -525,7 +524,7 @@ def extrude_edges(bm, edges, thickness=0.0, local_translate_z=0.0, offset=0.0, d
 
 def _split_edges_at(bm, verts, width):
     """Split every edge of ``verts`` at ``width`` x its length from the vertex (Maya width = a fraction of each
-    edge, measured on a 4 x 1 x 2 box, §2). Returns {vertex: [base vertices]}."""
+    edge, on a 4 x 1 x 2 box). Returns {vertex: [base vertices]}."""
     vset = set(verts)
     base = {v: [] for v in verts}
     edges = sorted({e for v in verts for e in v.link_edges}, key=lambda e: e.index)
@@ -559,7 +558,7 @@ def _cut_corner(bm, v):
 
 
 def _rings(bm, v, k):
-    """``k`` - 1 rings on the cone of ``v`` (Maya divisions: rings at j/k from the base ring to the tip, §2)."""
+    """``k`` - 1 rings on the cone of ``v`` (Maya divisions: rings at j/k from the base ring to the tip)."""
     tris = [f for f in v.link_faces if len(f.verts) == 3]
     ring = {}
 
@@ -674,7 +673,7 @@ RECORDS = {}   # object name -> Record
 def keep(context, ob, rec):
     """Remember ``rec`` as the object's history node, unless Maya's Construction History is off (Status Line
     toggle, step 189): Maya's menu commands then run without construction history and leave no polyExtrude / polyBevel
-    node (mayapy: research/maya/re/mesh_display_184.md "Construction History")."""
+    node (Maya's Construction History)."""
     from . import prim_history
     if prim_history.history_on(context):
         RECORDS[ob.name] = rec
@@ -951,7 +950,7 @@ class ALLSET_OT_extrude(_ExtrudeProps, bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     def invoke(self, context, event):
-        # Maya extrudes edges / vertices at once too (no drag: research/maya/re/edit_mesh_139_shape.md §1-2, #70)
+        # Maya extrudes edges / vertices at once too (no drag: #70)
         return self.execute(context)
 
     def execute(self, context):

@@ -1,5 +1,5 @@
 """Step 151 lane B in a real UI: top face -> Ctrl+E -> Maya's polyExtrudeFace manipulator (three local arrows, scale
-cubes, plane handles, centre square; research/maya/workflows/shots/modeling_03.png) from Maya's persp angle; drag the
+cubes, plane handles, centre square) from Maya's persp angle; drag the
 red X arrow (Local Translate X, one Ctrl+Z step), the red X scale cube (Local Scale X) and the centre square (uniform
 Local Scale). Screenshots: gui_step151_manip.png / _hover.png / _scaled.png (compare with modeling_03.png)."""
 
@@ -97,7 +97,7 @@ def s_setup():
     C["x"], C["y"] = setup()
     area, _region = view3d()
     rv3d = area.spaces.active.region_3d
-    # Maya's default persp angle (from +X, front, above; research/maya/screens/audit7/maya/c01_model_extrude.png)
+    # Maya's default persp angle (from +X, front, above)
     rv3d.view_perspective = 'PERSP'
     rv3d.view_rotation = Euler((math.radians(62), 0, math.radians(42))).to_quaternion()
     rv3d.view_location = (0, 0, 0.3)

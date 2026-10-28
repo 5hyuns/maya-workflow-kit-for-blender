@@ -13,7 +13,7 @@ ALLSET_REPO names the repository the kit is in (default user_default; tools/repo
 
 ``seed`` installs and enables a user add-on (a legacy add-on file), changes input preferences
 and the theme the way a user might, saves the preferences and writes a snapshot; ``check`` only
-writes the snapshot. release_check.py compares them (research/competitors.md §6: installs that
+writes the snapshot. release_check.py compares them (competitor notes §6: installs that
 delete add-ons or change the user's keymap settings).
 """
 

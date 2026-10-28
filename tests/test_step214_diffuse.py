@@ -1,7 +1,7 @@
 """Step 214 (#120): Maya diffuse 0.8 on the kit's lambert-family materials.
 
-Maya renders color x diffuse x light (research/maya/re/render_defaults_137.md §1, §3); the kit's lambert1 rendered
-1.25 x Maya (research/maya/re/default_light_152.md §4). A "Maya Diffuse" Mix node now feeds the Principled Base
+Maya renders color x diffuse x light; the kit's lambert1 rendered
+1.25 x Maya. A "Maya Diffuse" Mix node now feeds the Principled Base
 Color (operators/material.py); brightness against Maya: tests/test_step152_render.py."""
 
 import os

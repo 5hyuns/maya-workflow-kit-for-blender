@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Attribute Editor sections: Maya template sections -> Blender properties (data only).
 
-Section names and open/closed state follow research/maya/ae_templates.json
+Section names and open/closed state follow Maya's Attribute Editor templates
 (``collapse`` flag of each Attribute Editor section; Maya sections
 without a flag start collapsed [K]); rows are the Blender properties that play
 the part of the Maya attributes (docs/steps/step_11.md 「계획」 3). Maya
@@ -38,7 +38,7 @@ def S(name, open_, *rows, subs=()):
 
 
 # Maya Drawing Overrides colour (overrideEnabled / overrideRGBColors / overrideColor / overrideColorRGB): RNA over the
-# kit's ID properties, operators/wire_color.py (step 226, research/maya/re/maya2026_controls.md §L2). Objects and
+# kit's ID properties, operators/wire_color.py (step 226). Objects and
 # joints (pose bones) both have them. Object.color is written by the kit from these, so it has no row of its own.
 _DRAWING_OVERRIDES = (
     ("prop", "ob", "allset_override_enabled", "Enable Overrides"),
@@ -131,7 +131,7 @@ _LIGHT_MAIN = (("prop", "data", "type", "Type"),
                ("prop", "data", "allset_intensity", "Intensity"),      # Maya intensity (operators/lights.py)
                ("prop", "data", "diffuse_factor", "Emit Diffuse"),
                ("prop", "data", "specular_factor", "Emit Specular"))
-# Maya Decay Rate (research/maya/attribute_editor.md:132-135): No Decay / Linear / Quadratic / Cubic, rendered by
+# Maya Decay Rate: No Decay / Linear / Quadratic / Cubic, rendered by
 # Cycles with a Light Falloff node; EEVEE / the viewport keep distance squared (step 137, operators/lights.py).
 _DECAY = ("draw", "light_decay")
 POINT_LIGHT = [
@@ -161,7 +161,7 @@ AREA_LIGHT = [
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
 ]
 
-# step 214 (research/maya/re/render_parity_214.md §2-3, operators/maya_lights.py): Maya's ambient / volume light
+# step 214 (operators/maya_lights.py): Maya's ambient / volume light
 # shape attributes; the stand-ins are point lights, so Maya-only attributes are missing rows.
 AMBIENT_LIGHT = [
     S("Ambient Light Attributes", True,
@@ -209,8 +209,8 @@ STANDARD_SURFACE = [
       ("missing", "Thin Walled", "Blender's Principled BSDF has no thin-walled mode")),
 ]
 
-# standardSurface / aiStandardSurface attribute -> Principled BSDF 4.5 input (research/maya/workflows/render.md
-# §4.4, names from the public Autodesk Standard Surface spec [K]; Arnold's aiStandardSurface uses the same names).
+# standardSurface / aiStandardSurface attribute -> Principled BSDF 4.5 input
+# (names from the public Autodesk Standard Surface spec [K]; Arnold's aiStandardSurface uses the same names).
 # None = no Principled input. Map button tooltips name the Maya attribute (attribute_editor, step 67).
 STANDARD_SURFACE_ATTRS = (
     ("base", "Weight"), ("baseColor", "Base Color"), ("diffuseRoughness", "Diffuse Roughness"),
@@ -228,7 +228,7 @@ STANDARD_SURFACE_ATTRS = (
     ("opacity", "Alpha"), ("normalCamera", "Normal"), ("thinWalled", None),
 )
 MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
-# --- lambert (Maya 2022 Attribute Editor; attribute_editor.md:137-140) -----------------------
+# --- lambert (Maya 2022 Attribute Editor) -----------------------
 # Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
 # Normal, diffuse -> the "Maya Diffuse" node factor (Base Color = Color x Diffuse, operators/material.py step 214;
 # Color = that node's B input), translucence -> Subsurface; refractions -> Transmission.
@@ -269,7 +269,7 @@ ANISOTROPIC = [_LAMBERT_COMMON,
                _RAYTRACE]
 RAMP_SHADER = [
     S("Color", True, ("missing", "Color", "the Color Ramp node in the graph (input: facing ratio)"),
-      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # rampShader diffuse 0.8 (render_defaults_137.md §1)
+      ("maya", "allset_diffuse", "Diffuse", "Diffuse")),       # rampShader diffuse 0.8
     S("Specular Shading", True, ("socket", "Roughness", "Specularity")),
     S("Incandescence", False, ("socket", "Emission Color", "Incandescence")),
 ]
@@ -285,7 +285,7 @@ USE_BACKGROUND = [
        "shadows)")),
 ]
 # Material without nodes: Blender viewport values (no Maya template).
-# --- joint = pose bone (Maya 2022 Attribute Editor, research/maya/workflows/rigging.md:134-136) ----
+# --- joint = pose bone (Maya 2022 Attribute Editor) ----
 # Joint Labelling (side / type) and Preferred Angle have no Blender counterpart.
 JOINT = [
     S("Transform Attributes", True,                                          # collapse=0

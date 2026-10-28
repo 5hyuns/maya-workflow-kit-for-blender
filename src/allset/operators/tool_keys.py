@@ -2,9 +2,9 @@
 """Maya keys without a Blender operator of their own (docs/steps/step_35.md 「계획」).
 
 - ``allset.box_zoom`` (Ctrl+Alt+LMB drag): draw a box; left→right zooms in on it,
-  right→left zooms out (research/maya/interaction.md:43).
+  right→left zooms out.
 - ``allset.last_tool`` (Y): back to the last tool that is not Q/W/E/R/T, Maya's
-  "non-sacred" tool (interaction.md:96). A timer remembers it per mode.
+  "non-sacred" tool. A timer remembers it per mode.
 - ``allset.menu_set`` (F2–F6): switch the Maya menu set (Maya default hotkeys).
 """
 
@@ -139,7 +139,7 @@ def _watch():
 
 # --- one tool across object / component modes (step 174) -------------------------------------------
 # Maya's tool is one global context: W then F9 / F10 / F11 / F8 / RMB Vertex keeps the Move tool (and E / R / Q / T
-# their own) in either selection mode (research/maya/re/tool_modes_174.md). Blender keeps a tool per mode and a
+# their own) in either selection mode. Blender keeps a tool per mode and a
 # mesh's edit mode starts on Select Box, so after a mode change the new mode takes the previous mode's sacred tool.
 # Only modes that have every sacred tool (paint / sculpt modes keep their own brushes).
 CARRY_MODES = {'OBJECT', 'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_LATTICE', 'EDIT_ARMATURE', 'EDIT_METABALL',
@@ -156,7 +156,7 @@ def carried_tool(prev_mode, new_mode, prev_tool, new_tool):
         return None
     if prev_tool == "builtin.transform":
         # T (Maya ShowManipulators = builtin.transform, keymap/mapping.py) doesn't survive a mode change: Maya goes
-        # back to the Select tool (tool_modes_174.md row "F9 vertex (T)")
+        # back to the Select tool (row "F9 vertex (T)")
         prev_tool = "builtin.select_box"
     return None if prev_tool == new_tool else prev_tool
 

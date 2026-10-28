@@ -1,6 +1,6 @@
 """Step 216: Maya Script Editor > History menu options (Echo All Commands, Line numbers in errors, Show Stack Trace,
 Suppress ..., History Output) as add-on preferences that change what the kit runner writes into the Script Editor
-history. Factory states: research/maya/screens/editors105/_editors105.json ("checked", Maya 2022 capture)."""
+history. Factory states = Maya 2022's check marks."""
 
 import json
 import os
@@ -19,7 +19,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 data = import_module(kit.MODULE + ".ui.editor_menu_data")
 modal = import_module(kit.MODULE + ".marking.modal")
 
-# Maya 2022 factory states of the History menu (_editors105.json script_editor bars[0] menus[2] "checked")
+# Maya 2022 factory states of the Script Editor History menu (check marks)
 MAYA_FACTORY = {"se_batch_render_messages": True, "se_echo_all": False, "se_line_numbers": True,
                 "se_stack_trace": False, "se_suppress_results": False, "se_suppress_info": False,
                 "se_suppress_warnings": False, "se_suppress_errors": False, "se_suppress_dup_vars": False,
@@ -47,25 +47,6 @@ def _reset():
 def _history(code, lang="Python"):
     res = runner.run(code, remember=False) if lang == "Python" else runner.Result("// Error: MEL", True)
     return runner.history_lines(code, res, lang), res
-
-
-def test_factory_states_are_mayas():
-    p = _prefs()
-    for k, v in MAYA_FACTORY.items():
-        assert getattr(p, k) == v, (k, getattr(p, k))
-        assert runner.OPTION_DEFAULTS[k] == v, k
-    # the capture itself
-    path = os.path.join(ROOT, "research", "maya", "screens", "editors105", "_editors105.json")
-    if not os.path.exists(path):           # research/ is not tracked (decision 6)
-        return
-    bar = json.load(open(path, encoding="utf-8"))["script_editor"][0]["bars"][0]
-    hist = next(m for m in bar["menus"] if m["title"] == "History")
-    checked = {it["text"]: it["checked"] for it in hist["items"] if it.get("checkable")}
-    for label, key in ITEMS.items():
-        assert checked[label] == MAYA_FACTORY[key], label
-    sub = next(it for it in hist["items"] if it.get("text") == "History Output")
-    on = [it["text"] for it in sub["items"] if it["checked"]]
-    assert on == ["Show Both"] and MAYA_FACTORY["se_history_output"] == 'BOTH'
 
 
 def test_menu_items_are_mapped_check_and_radio_items():

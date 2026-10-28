@@ -1,5 +1,5 @@
-"""Step 198 (#105): Graph Editor Retime Tool — time map against the GUI Maya 2022 measurements
-(research/maya/re/graph_editor_193.md §1) and its application to real F-curves."""
+"""Step 198 (#105): Graph Editor Retime Tool — time map against Maya 2022
+and its application to real F-curves."""
 
 from importlib import import_module
 

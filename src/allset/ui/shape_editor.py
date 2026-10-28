@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Shape Editor window (step 213, Issue #119; research/maya/re/editors_213.md SE1-SE8,
-research/maya/screens/editors212/shape_editor_win1.png).
+"""Maya's Shape Editor window (step 213, Issue #119).
 
 Maya: menu bar, a toolbar (Create Blend Shape, Add Target, search) and a tree of blendShape nodes with their targets
 (visibility dot, name, weight field + slider, Edit, Key). Blender (delegated mapping): a blendShape node = the base
@@ -144,7 +143,7 @@ def edit_on(context, key, index):
 
 
 def add_target_name(key, ob):
-    """Maya's Add Target name (SE5, mayapy): the base duplicate's name — one past the highest ``<base><N>`` node name
+    """Maya's Add Target name: the base duplicate's name — one past the highest ``<base><N>`` node name
     (pCube1 -> pCube2) — and the next number while that name is already a target of this blendShape."""
     from ..operators import naming
     base = naming.base_name(ob.name)

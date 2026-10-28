@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner chrome on Blender's Outliner (docs/steps/step_50.md 「계획」 3).
 
-Maya's Outliner has a menu bar Display / Show / Help and a search field (research/maya/ui_layout.md:258-264,
-screens/17_outliner_crop.png). Outliners set up the Maya way (the Maya Workflow Kit layout and Windows > Outliner:
+Maya's Outliner has a menu bar Display / Show / Help and a search field.
+Outliners set up the Maya way (the Maya Workflow Kit layout and Windows > Outliner:
 View Layer mode, no collection rows, no object contents; ``is_maya_outliner``) get that header:
 ``OUTLINER_HT_header.draw`` is swapped while the kit is enabled and restored on unregister; other
 Outliners draw as usual. The rows themselves are Blender's (the C list): Maya's grey camera rows

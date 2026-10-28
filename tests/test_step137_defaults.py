@@ -1,6 +1,6 @@
 """Step 137, issue #71: Maya material / light / Render Settings defaults (lane DEFAULTS).
 
-Maya values (mayapy, research/maya/re/render_defaults_137.md): blinn1 color 0.5, incandescence black,
+Maya values: blinn1 color 0.5, incandescence black,
 specularRollOff 0.7, eccentricity 0.3, specularColor 0.5; phong1 cosinePower 20; lights intensity 1, Decay Rate
 No Decay; defaultResolution 960 x 540. Light power rule and its renders: operators/lights.py."""
 
@@ -254,7 +254,7 @@ def _render_centre(engine, dist_units, k):
 
 def test_point_light_brightness_like_maya():
     """Maya Software: lambert color 0.5 x diffuse 1 under an intensity-1 No Decay point light = 0.5 at any distance
-    (measured 0.25 for color 0.5 x diffuse 0.5, research/maya/re/render_defaults_137.md). Cycles follows it at every
+    (0.25 for color 0.5 x diffuse 0.5 in Maya). Cycles follows it at every
     distance; EEVEE (distance squared) matches at 10 units."""
     k = _cm()
     for dist in (10.0, 40.0):

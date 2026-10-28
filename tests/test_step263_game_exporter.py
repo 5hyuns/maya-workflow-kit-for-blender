@@ -1,6 +1,6 @@
 """Step 263 (Issue #154): the Game Exporter is a kit window that stays open (Maya: a plain floating
-window), with Maya 2026's field facts (research/maya/re/060_messages_ui.md B6, measured with
-getPluginResource / the node's attributes): an "Up Axis" label before Y / Z, File Name empty with the grey hint
+window), with Maya 2026's field facts (the
+and the node's attributes): an "Up Axis" label before Y / Z, File Name empty with the grey hint
 "Enter a filename" (one file) / "Multi File Prefix" / "Clip File Prefix", a new clip = empty name shown as the
 "Clip Name" hint with the playback range, Maya's error texts."""
 
@@ -35,7 +35,7 @@ def test_window_kind_is_unique_and_the_panel_polls_only_there():
 
 def test_file_name_starts_empty_with_mayas_hints():
     s = _s()
-    assert s.export_filename == ""                     # Maya 2026: exportFilename "" (B6, measured)
+    assert s.export_filename == ""                     # Maya 2026: exportFilename ""
     assert ge.filename_placeholder(s) == "Enter a filename"
     s.model_file_mode = 'PER_ROOT'
     assert ge.filename_placeholder(s) == "Multi File Prefix"

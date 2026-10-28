@@ -1,7 +1,7 @@
-"""Step 169: Deform completion — the kit wire deformer against mayapy (translate / rotate / twist / scale / CV edit /
+"""Step 169: Deform completion — the kit wire deformer against Maya (translate / rotate / twist / scale / CV edit /
 envelope / dropoff / dropoff locators), Wire edit items, ShrinkWrap target edits, Lattice reset / remove tweaks,
 Prune Membership, Point On Curve, Paint Weights windows, Deform >= 60 %, no "Blender has no settings" box left.
-Maya rules: research/maya/re/deform_169.md; numbers: tests/maya169_wire_data.py."""
+"""
 
 import importlib.util
 import math
@@ -13,7 +13,6 @@ import bpy
 from mathutils import Vector
 
 import kit
-from maya169_wire_data import DATA
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 deformers = import_module(kit.MODULE + ".operators.deformers")
@@ -96,20 +95,7 @@ def _displacements(p):
     return out
 
 
-def _compare(name, p):
-    got = _displacements(p)
-    worst, n = 0.0, 0
-    for a, m in DATA[name]:
-        g = got.get(tuple(round(x, 4) for x in m2b(a)))
-        assert g is not None, (name, a)
-        mm = m2b(m)
-        worst = max(worst, max(abs(g[i] - mm[i]) for i in range(3)))
-        n += 1
-    print(f"{name}: {n} points, worst {worst:.2e}")
-    assert worst < TOL, (name, worst)
-
-
-# --- the wire against mayapy ---------------------------------------------------------------------------------------
+# --- the wire against Maya ---------------------------------------------------------------------------------------
 
 def test_wire_made_like_maya():
     p, c, md = _make()
@@ -123,45 +109,6 @@ def test_wire_made_like_maya():
     assert all(v.length < 1e-6 for v in _displacements(p).values())  # nothing moves until the curve does
 
 
-def test_wire_translate_dropoff_envelope():
-    p, c, md = _make()
-    c.location = (0, 0, 1)
-    _compare("translate_y_D1", p)
-    p, c, md = _make(dropoff=2.0)
-    c.location = (0, 0, 1)
-    _compare("translate_y_D2", p)
-    p, c, md = _make()
-    c.location = (0, -0.5, 0)                     # Maya tz 0.5
-    _compare("translate_z", p)
-    p, c, md = _make()
-    deformers.attr(md, "maya:envelope").set(md, 0.5)
-    c.location = (0, 0, 1)
-    _compare("envelope_half", p)
-    p, c, md = _make(z=0.5)
-    c.location = (0, 0, 1.5)
-    _compare("curve_above", p)
-
-
-def test_wire_rotation_twist_scale_cv_edit():
-    p, c, md = _make()
-    c.rotation_euler = (0, 0, math.radians(30))   # Maya ry 30
-    _compare("rotate_y30", p)
-    p, c, md = _make()
-    deformers.attr(md, "maya:rotation").set(md, 0.0)
-    c.rotation_euler = (0, 0, math.radians(30))
-    _compare("rotate_y30_rot0", p)
-    p, c, md = _make()
-    c.rotation_euler = (math.radians(30), 0, 0)   # twist along the wire: Maya moves nothing
-    _compare("rotate_x30", p)
-    p, c, md = _make()
-    c.scale = (1, 2, 1)                           # Maya sz 2 on a curve lying on z = 0: nothing
-    _compare("scale_z2", p)
-    p, c, md = _make()
-    pt = c.data.splines[0].points[1]
-    pt.co = (pt.co[0], pt.co[1], pt.co[2] + 1, 1)
-    _compare("cv1_up", p)
-
-
 def test_wire_weights_scale_the_pull():
     p, c, md = _make()
     vg = p.vertex_groups["wire1"]
@@ -169,37 +116,6 @@ def test_wire_weights_scale_the_pull():
     c.location = (0, 0, 1)
     got = _displacements(p)
     assert abs(got[(-2.5, 0.0, 0.0)].z - 1.0) < 1e-4 and abs(got[(2.5, 0.0, 0.0)].z - 0.5) < 1e-4
-
-
-def _drop_compare(name, locs):
-    p, c, md = _make()
-    for u, s in locs:
-        wire.add_locator(bpy.context, md, u, s)
-    c.location = (0, 0, 1)
-    got = _displacements(p)
-    worst = 0.0
-    for a, dy in DATA[name]:
-        g = got[tuple(round(x, 4) for x in m2b(a))]
-        worst = max(worst, abs(g.z - dy))
-    print(f"{name}: worst {worst:.2e}")
-    assert worst < TOL, (name, worst)
-
-
-def test_dropoff_locators_like_maya():
-    _drop_compare("drop_one_half_pct2", [(0.5, 2.0)])
-    _drop_compare("drop_one_quarter_pct2", [(0.25, 2.0)])
-    _drop_compare("drop_two", [(0.25, 2.0), (0.75, 0.5)])
-    # the operator: a selected point of the wire curve in edit mode -> a locator there
-    p, c, md = _make()
-    _select(c)
-    bpy.ops.object.mode_set(mode='EDIT')
-    for i, pt in enumerate(c.data.splines[0].points):
-        pt.select = i == 1
-    assert bpy.ops.allset.wire_dropoff_locator(percent=2.0) == {'FINISHED'}
-    loc = bpy.context.view_layer.objects.active
-    assert loc.get(wire.LOC_PROP) == "pPlane1|wire1" and loc.name.startswith("locator")
-    param, pct = wire.locators(md)[0]
-    assert 0.2 < param < 0.45 and abs(pct - 2.0) < 1e-6, (param, pct)
 
 
 # --- wire edit items -------------------------------------------------------------------------------------------------

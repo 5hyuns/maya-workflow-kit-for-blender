@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya buffer curves (step 198, research/maya/re/graph_editor_193.md §3): Curves > Buffer Curve Snapshot /
+"""Maya buffer curves (step 198): Curves > Buffer Curve Snapshot /
 Swap Buffer Curve and View > Show Buffer Curves.
 
-Maya (mayapy, tmp/maya198/weights.json): Snapshot stores the selected curves; Swap exchanges a curve and its buffer —
+Maya: Snapshot stores the selected curves; Swap exchanges a curve and its buffer —
 times and values both come back (a key moved 5 → 6 then swapped is at 5 again), swapping twice restores the edit.
 
 Storage: ``Action["allset_buffers"]["<data_path>|<array_index>"]`` = flat lists per key — "co" (x, y), "hl" / "hr"
@@ -14,7 +14,7 @@ handler (view space = frame, displayed value) drawing each visible curve's buffe
 Bezier segments sampled by the kit (CONSTANT / LINEAR honoured, Blender's easing types drawn as straight lines),
 Blender's handle correction applied like its evaluation (``_correct``), rotations in degrees when the scene shows degrees, constant
 extrapolation to the view edges. Normalized views (``use_normalization``) draw nothing (delegated: the normalization
-factor per curve isn't exposed to Python), NLA time mapping is ignored. The grey is not Maya-measured [K].
+factor per curve isn't exposed to Python), NLA time mapping is ignored. The grey is not Maya's exact colour [K].
 """
 
 import math

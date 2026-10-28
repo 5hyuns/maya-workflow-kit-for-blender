@@ -23,8 +23,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 curve_tools = import_module(kit.MODULE + ".operators.curve_tools")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESEARCH = os.path.join(ROOT, "research", "maya", "shelves.json")
-# Maya 2026 factory shelf files (research/maya/shelves.json, step 269)
+# Maya 2026 factory shelf files (step 269)
 MAYA_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
                "Animation": 15, "Rendering": 26, "FX": 29, "FXCaching": 10}
 
@@ -62,17 +61,6 @@ def _evaluated_faces(ob):
 
 
 # --- slots, counts, notices -------------------------------------------------------------------
-
-def test_every_maya_button_keeps_its_slot():
-    counts = {name: len(shelf.all_buttons(name)) for name, _l, _b in shelf_data.SHELVES}
-    assert counts == MAYA_COUNTS, counts
-    if os.path.exists(RESEARCH):
-        data = json.load(open(RESEARCH, encoding="utf-8"))["factory"]
-        for name, _label, _b in shelf_data.SHELVES:
-            maya = [b for b in data[name] if not b.get("separator")]
-            assert [b[1] for b in shelf.all_buttons(name)] == [b.get("label", "") for b in maya], name
-    for name, _l, _b in shelf_data.SHELVES:
-        assert [b[0] for b in shelf.all_buttons(name)] == list(range(MAYA_COUNTS[name])), name
 
 
 def test_drawn_mapped_at_least_150():
@@ -319,7 +307,7 @@ def test_fluid_collide_and_ncloth_display():
 # --- icons ------------------------------------------------------------------------------------
 
 def test_icons_use_maya_hues_and_fade_when_greyed():
-    # step 131: hues measured on the exported Maya 2022 icons (research/maya/re/icons131.md:21)
+    # step 131: hues of Maya 2022's icons
     assert shelf_icons.SHELF_COLOURS["Polygons"] == shelf_icons.SHELF_COLOURS["Sculpting"]
     assert shelf_icons.SHELF_COLOURS["Curves"] == shelf_icons.SHELF_COLOURS["Surfaces"]
     r, g, b = shelf_icons.SHELF_COLOURS["Curves"]

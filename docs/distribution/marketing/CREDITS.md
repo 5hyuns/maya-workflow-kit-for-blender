@@ -2,11 +2,11 @@
 
 The screenshots, key visuals and clips are taken in Blender with Maya Workflow Kit. The scenes are built from the
 third-party assets below — Blender Studio / blender.org files plus one Poly Haven HDRI — downloaded by
-`python tools/marketing/fetch_assets.py --active` into `research/marketing_assets/` (outside the repository, not shipped
+`python tools/marketing/fetch_assets.py --active` into a local assets folder (outside the repository, not shipped
 in the extension, never redistributed). URLs, sha256, the licence wording quoted from each page and the date it was
 checked (2026-10-20) are in `tools/marketing/assets.json`; what is in each file is in
-`research/marketing_assets/INVENTORY_125.md`. Public direct downloads only: no login, no subscription content, no paid
-files. No Maya logo, Autodesk asset or Maya screen capture is used anywhere, and no Blender logo is added.
+the local asset inventory (not in git). Public direct downloads only: no login, no subscription content, no paid
+files. No Maya logo, Autodesk asset or Maya screen image is used anywhere, and no Blender logo is added.
 
 | Asset | Author | Source | Licence | Changes we make |
 |---|---|---|---|---|

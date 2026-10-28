@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Ambient Light and Volume Light on Blender point lights (step 214, issue #120).
 
-Maya (mayapy, Maya Software, research/maya/re/render_parity_214.md §2-3):
-- ambientLight: intensity 1, colour 1, Ambient Shade s 0.45, no shadows at factory render settings (§2:54-60).
+Maya (Maya Software):
+- ambientLight: intensity 1, colour 1, Ambient Shade s 0.45, no shadows at factory render settings.
   v = I x colour x max(0, (1 - s) + s cos t), t = angle between the normal and the direction to the light's
-  *position*; no distance falloff, rotation / scale ignored, NOT multiplied by the material's Diffuse, no specular
-  (render_parity_214.md:62-74).
+  *position*; no distance falloff, rotation / scale ignored, NOT multiplied by the material's Diffuse, no specular.
 - volumeLight (Sphere, Outward, factory ramp): v = I x colour x diffuse x (1 - r/R) x max(0, cos toward the centre),
-  0 for r >= R, R = the sphere radius = the transform's scale (scale 1 = 1 Maya unit), Decay Rate ignored, no 1/r^2
-  (render_parity_214.md:113-120).
+  0 for r >= R, R = the sphere radius = the transform's scale (scale 1 = 1 Maya unit), Decay Rate ignored, no 1/r^2.
 
 Blender stand-ins (approximations delegated by the main lane, errors measured by tests/test_step214_lights.py):
 - Ambient Light = a point light at the object carrying the directional part s x I (No Decay: the Cycles Light Falloff
@@ -22,7 +20,7 @@ Blender stand-ins (approximations delegated by the main lane, errors measured by
 - Volume Light = a point light at the centre. Cycles: exact — Light Falloff Constant whose Strength is
   max(0, 1 - Ray Length / R) (Light Path Ray Length in a light shader = the distance from the shading point to the
   light, measured step 214). EEVEE / the viewport ignore light nodes: 1/r^2 cut at R by Custom Distance (EEVEE
-  attenuates by (1 - (r/R)^4)^2 inside the cutoff, measured), matched to Maya at r = R/2.
+  attenuates by (1 - (r/R)^4)^2 inside the cutoff), matched to Maya at r = R/2.
 Maya intensity is kept in an ID property of the light (``INTENSITY_PROP``): the power can't hold it (s may be 0).
 """
 
@@ -39,7 +37,7 @@ AMBIENT, VOLUME = "ambientLight", "volumeLight"
 KINDS = {'AMBIENT_LIGHT': AMBIENT, 'VOLUME_LIGHT': VOLUME}
 INTENSITY_PROP = "allset_maya_intensity"
 SHADE_PROP = "allset_ambient_shade"
-MAYA_SHADE = 0.45                      # ambientShade factory value (render_parity_214.md:44)
+MAYA_SHADE = 0.45                      # ambientShade factory value
 # EEVEE volume fit: I x A x (R/r)^2 x (1 - (r/R)^4)^2 = 0.5 at r = R/2 (Maya's 1 - r/R there)
 VOLUME_A = 0.5 / (4.0 * (1.0 - 1.0 / 16.0) ** 2)
 
@@ -189,7 +187,7 @@ def set_intensity(light, value):
 
 
 def defaults(light, k):
-    """A new Maya Ambient / Volume Light (render_parity_214.md:42-46, 79-84)."""
+    """A new Maya Ambient / Volume Light."""
     light.shadow_soft_size = 0.0           # a point (Maya measures from the light's position / the volume centre)
     light.use_shadow = False               # no shadows at Maya's factory render settings (delegated for volume)
     light.color = (1.0, 1.0, 1.0)
@@ -197,7 +195,7 @@ def defaults(light, k):
     light[INTENSITY_PROP] = 1.0
     if kind(light) == AMBIENT:
         light[SHADE_PROP] = MAYA_SHADE
-        light.specular_factor = 0.0        # Maya's ambient light has no specular (render_parity_214.md:70)
+        light.specular_factor = 0.0        # Maya's ambient light has no specular
     apply_light(light)
 
 
