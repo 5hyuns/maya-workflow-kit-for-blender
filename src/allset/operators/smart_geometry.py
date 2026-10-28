@@ -9,9 +9,8 @@ import math
 
 import bmesh
 import bpy
-from mathutils import Vector
-
 CAP = "allset_smart_cap"
+SOURCE = ".allset_smart_source_face"
 
 
 class GeometryError(ValueError):
@@ -194,8 +193,10 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
         original = pre.copy()
         try:
             marker = original.faces.layers.int.get(CAP) or original.faces.layers.int.new(CAP)
-            for f in original.faces:
+            source = original.faces.layers.int.get(SOURCE) or original.faces.layers.int.new(SOURCE)
+            for i, f in enumerate(original.faces):
                 f[marker] = 0
+                f[source] = i+1
             original.to_mesh(mesh)
         finally:
             original.free()
@@ -222,12 +223,26 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
             bm.from_mesh(mesh)
             bm.normal_update()
             marker = bm.faces.layers.int.get(CAP)
+            source = bm.faces.layers.int.get(SOURCE)
             if marker:
-                edges = [e for e in bm.edges if len(e.link_faces) == 2
-                         and all(f[marker] > 0 for f in e.link_faces)
-                         and e.link_faces[0][marker] == e.link_faces[1][marker]]
-                bmesh.ops.dissolve_limit(bm, angle_limit=1e-5, verts=[], edges=edges,
-                                        delimit={'MATERIAL', 'UV', 'SEAM', 'SHARP'})
+                edges = []
+                for e in bm.edges:
+                    if len(e.link_faces) != 2:
+                        continue
+                    a, b = e.link_faces
+                    same_original = source and a[source] > 0 and a[source] == b[source]
+                    same_sweep = a[marker] > 0 and a[marker] == b[marker]
+                    if same_original or same_sweep:
+                        edges.append(e)
+                # Rejoin Boolean fragments of each original polygon as well as
+                # sweep panels. Original polygon boundaries stay intact. New
+                # Boolean diagonals may be flagged sharp: that flag is not an
+                # artist boundary and must not prevent their removal.
+                # Below ~sqrt(float32 epsilon), cos(angle) rounds to 1 and
+                # dissolve_limit rejects even exactly coplanar neighbours.
+                bmesh.ops.dissolve_limit(bm, angle_limit=.001,
+                                        verts=list({v for e in edges for v in e.verts}), edges=edges,
+                                        delimit={'MATERIAL', 'UV'} if bm.loops.layers.uv.active else {'MATERIAL'})
                 bm.normal_update()
             validate(bm)
             caps = [f for f in bm.faces if marker and f[marker] == 1]
@@ -244,8 +259,10 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
                 f.select_set(True)
             bm.select_mode = {'FACE'}
             bm.select_flush_mode()
-            if marker:
-                bm.faces.layers.int.remove(marker)
+            for name in (CAP, SOURCE):
+                layer = bm.faces.layers.int.get(name)
+                if layer is not None:
+                    bm.faces.layers.int.remove(layer)
             return bm
         except Exception:
             bm.free()

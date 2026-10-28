@@ -14,6 +14,7 @@
 4. Hold **J** for incremental movement/rotation/scale. Type a value for exact input
    (rotation is entered in degrees). **Enter** or mouse release confirms;
    **Esc/right-click** restores the geometry and selection from before the drag.
+   Hold **Shift** for precision; changing precision mid-drag keeps the current depth.
 5. **G** repeats the accumulated extrusion parameters on the current selection.
    Undo/Redo restores topology as well as positions. **Q/W/E/R** leave the tool.
 
@@ -35,10 +36,15 @@ before the first drag so changing cap topology cannot move the operation's pivot
   face plane has no solid volume to add or remove; these values can be combined
   with a subsequent normal movement of the same extrusion.
 - Invalid output, including a cut that removes the entire object, is rejected
-  atomically. No temporary operands, mode switches or user modifiers are left.
+  atomically. During a drag the last valid mesh and gizmo position remain visible;
+  releasing after rejection keeps that preview and reports a warning. Escape
+  still restores the pre-drag mesh. No temporary operands or user modifiers remain.
 - Original material slots and UV layers pass through the solver. Cap UVs inherit
   their source corners; cut/side UVs may need unwrapping. Coplanar generated edges
-  are dissolved where material, UV, seam and sharp-edge boundaries allow it.
+  and Boolean splits within each original face are dissolved, preserving original
+  polygon boundaries and material/UV discontinuities. Planar cut panels become
+  quads/n-gons. A polygon with an enclosed hole still needs support edges because
+  Blender cannot store a single face with an inner boundary.
 - Output may contain triangles and n-gons. This is not a quad retopology tool or a
   copy of Autodesk's proprietary solver. Extreme or self-crossing transforms may
   need smaller steps.
@@ -48,6 +54,10 @@ before the first drag so changing cap topology cannot move the operation's pivot
 Previews rebuild from a frozen mesh, are limited to at most ten evaluations per
 second and slow down adaptively when evaluation is expensive. Release commits the
 latest validated preview; Escape restores the exact pre-drag snapshot.
+Axis translation uses a fixed mapping at the gesture's start depth to avoid
+perspective vanishing-point jumps during long cuts or near-axial views. The
+manipulator displays the transform of the accepted mesh, including after the
+moving cap has passed entirely through the object.
 
 Ordinary **Extrude/Ctrl+E** and the legacy **Shift+drag** extrusion are separate
 and retain their existing behavior. Autodesk also distinguishes these workflows:
@@ -63,3 +73,6 @@ UVs/materials, repeated commands, atomic rejection and temporary-data cleanup.
 `tests/gui/gui_smart_extrude.py` exercises actual handles, live previews, shared
 Move/Rotate/Scale history, Undo/Redo, J, numeric input, cancellation and G in a
 sandbox Blender window.
+`tests/gui/gui_smart_extrude_cut.py` additionally checks long inward drags across
+the exit plane, near-axial views, precision toggles, clean walls and rejection
+without resetting a valid preview.

@@ -17,8 +17,9 @@ def widget_frame(context):
     drag = smart.DRAG
     if drag is not None:
         session = drag._session
-        centre = session.centre + session.axes @ (Vector(drag.translation)*session.unit)
-        axes = session.axes @ Euler(tuple(drag.rotation), 'XYZ').to_matrix()
+        params = drag._display_params
+        centre = session.centre + session.axes @ (Vector(params['translation'])*session.unit)
+        axes = session.axes @ Euler(tuple(params['rotation']), 'XYZ').to_matrix()
         return centre, axes
     saved = smart.display(context)
     if saved is not None:
