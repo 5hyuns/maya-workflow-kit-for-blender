@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Render > Test Resolution and Render > Batch Render / Cancel / Show Batch Render (step 152, #101).
 
-Test Resolution (Maya: others/Maya builds the submenu from Maya;
-choices Maya-79, labels ): Camera Panel,
+Test Resolution (Maya's Render > Test Resolution submenu): Camera Panel,
 Render Settings (WxH), then 10 / 25 / 50 / 75 % and 110 / 125 / 150 % of the Render Settings size, a check on the
 current one, default Render Settings. It is a Maya preference (setting renderViewTestResolution) used by Render View
 renders only, not by batch renders: the kit keeps it in the add-on preference ``test_resolution`` and applies it to

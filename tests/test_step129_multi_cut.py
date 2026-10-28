@@ -205,7 +205,7 @@ def _actions(menu, label, out):
 
 def test_menu_shelf_marking_menu_hotkey_point_to_the_tool():
     assert menu_map.MAP["Mesh Tools/Multi-Cut"] == TOOL
-    assert shelf_map.BY_COMMAND["dR_multiCutTool"][0] == TOOL
+    assert shelf_map.BY_COMMAND["MultiCutTool"][0] == TOOL
     cuts = []
     for menu in (mm.SHIFT_OBJECT, mm.SHIFT_VERTEX, mm.SHIFT_EDGE, mm.SHIFT_FACE):
         _actions(menu, "Multi-Cut", cuts)

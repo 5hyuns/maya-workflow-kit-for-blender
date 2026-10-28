@@ -100,7 +100,7 @@ def test_uv_is_a_submenu_with_the_arrow_in_the_padding():
     assert engine.Layout.ring_text(label, action) == "UV", "the arrow doesn't widen the box"
     assert not engine.Layout.has_arrow(mm.RMB_MESH.radial["N"][1])
     assert engine.Layout.has_arrow(("menu", "X")), "a Blender menu opens as a submenu too"
-    # flick E past the ring: the submenu opens in place, E = UV, S = UV Shell (Maya-1006)
+    # flick E past the ring: the submenu opens in place, E = UV, S = UV Shell (Maya 2022 RMB marking menu)
     s = engine.Session(mm.RMB_MESH, (500.0, 400.0), 0.0, lambda t: 7.0 * len(t))
     s.move(530.0, 400.0, 0.05)
     s.move(560.0, 400.0, 0.1)

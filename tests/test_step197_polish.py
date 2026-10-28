@@ -103,7 +103,7 @@ def test_cleanup_is_a_leaf_with_maya_window():
     w = option_windows._BY_KEY["poly_cleanup"]
     assert w.title == "Cleanup Options" and w.action == "Cleanup"
     assert "Mesh/Cleanup..." in w.paths
-    d = w.defaults()      # Maya-126 factory values
+    d = w.defaults()      # Maya Cleanup Options factory values
     assert d["operation"] == "Cleanup matching polygons" and d["scope"] == "Apply to selected objects"
     assert not any(d[k] for k in ("quads", "nsided", "concave", "holes", "nonplanar", "lamina", "nonmanifold",
                                    "zero_edge", "zero_face", "zero_map"))

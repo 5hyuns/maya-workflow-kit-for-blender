@@ -2,7 +2,7 @@
 """Graph Editor / Dope Sheet curve commands of step 203 (Issue #110, -,
 ground truth tests/maya203_graph_data.py).
 
-- Curves > Change Rotation Interp (Maya ``rotationInterpolation -c``, Maya-110 = the curves of
+- Curves > Change Rotation Interp (Maya ``rotationInterpolation -c`` on the curves of
   the selected keys + the highlighted channels): one rotate curve converts the node's three. Every mode but
   Independent Euler synchronises keys first: rx / ry / rz get a key at the union of their key times, inserted keys
   keep the curve shape (Maya: fixed tangents keeping the slope) — evaluated curves unchanged (, exact).

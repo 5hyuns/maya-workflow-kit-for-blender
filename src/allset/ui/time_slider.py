@@ -47,7 +47,7 @@ def draw_transport(layout, context):
     """Current frame field + Maya's 8 transport buttons (ui_layout.md:272-276)."""
     scene, screen = context.scene, context.screen
     row = layout.row()
-    row.ui_units_x = 4.5    # Maya timeField width 90 (Maya-226)
+    row.ui_units_x = 4.5    # Maya current time field width 90
     row.prop(scene, "frame_current", text="")
     row = layout.row(align=True)
     row.operator("screen.frame_jump", text="", icon='REW').end = False
@@ -77,7 +77,7 @@ def has_slider_panel(space, area=None):
     return ui is not None and ui.width > 20
 
 
-# Range Slider row, Maya order (Maya-332, :366-596; ui_layout.md:284-288).
+# Range Slider row, Maya order (ui_layout.md:284-288).
 RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto key", "No Character Set",
                "No Anim Layer", "fps", "loop", "sound", "animation preferences")
 
@@ -181,7 +181,7 @@ class ALLSET_MT_anim_preferences(bpy.types.Menu):
 
 
 class ALLSET_PT_time_slider(bpy.types.Panel):
-    """Current time field and transport buttons at the right of Maya's Time Slider (Maya-281)."""
+    """Current time field and transport buttons at the right of Maya's Time Slider."""
     bl_space_type = 'DOPESHEET_EDITOR'
     bl_region_type = 'UI'
     bl_label = "Time Slider"
@@ -203,7 +203,7 @@ def _no_editor_menus(cls, context, layout):
 
 # --- Time Slider hand feel ---------------------------------
 # Maya: LMB anywhere on the Time Slider moves the time, Shift+LMB drag highlights a range, RMB = the
-# Time Slider menu (others/Maya-1170, labels ).
+# Time Slider menu (Maya 2022 labels).
 # Blender's timeline is a Dope Sheet mode, so these sit first in the "Dopesheet" keymap and pass
 # through in the Dope Sheet itself (keys are clicked there in Maya too).
 
@@ -428,7 +428,7 @@ def _grey(layout, label):
 
 
 class ALLSET_MT_time_slider(bpy.types.Menu):
-    """Maya Time Slider menu, in Maya's order (Maya-1170)"""
+    """Maya Time Slider menu, in Maya's order"""
     bl_label = "Time Slider"
 
     def draw(self, context):

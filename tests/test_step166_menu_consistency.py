@@ -62,10 +62,11 @@ def test_checker_finds_a_planted_pair():
 def test_twins_mapped_to_the_same_action():
     for twin, source in menu_map.TWINS.items():
         assert menu_map.MAP.get(twin) == menu_map.MAP.get(source) is not None, twin
+    # Maya 2026's Dope Sheet has no Curves menu (step 269): its curve commands are gone with it
     for label in ("Euler Filter", "Smooth Filter (Butterworth)", "Smooth Filter (Gaussian)", "Resample Curve",
                   "Isolate Curve"):
-        action = menu_map.MAP[f"Dope Sheet/Curves/{label}"]
-        assert action[0] == "allset.dope_graph_op" and action[1]["command"] in graph_key_menu.DOPE_GRAPH_OPS
+        assert f"Dope Sheet/Curves/{label}" not in menu_map.MAP, label
+        assert f"Graph Editor/Curves/{label}" in menu_map.MAP, label
     assert menu_map.MAP["Dope Sheet/View/Auto Frame"] == menu_map.MAP["Graph Editor/View/Auto Frame"][:1] +         ("addon_prefs.dope_auto_frame",) + menu_map.MAP["Graph Editor/View/Auto Frame"][2:]
     assert preferences.get().dope_auto_frame is False, "Maya's Dope Sheet Auto Frame is off by default"
 
@@ -77,7 +78,8 @@ def test_menu_counts():
     r = menu_count.count(md, menu_map, notices)
     eds = r["editors"]
     print({k: eds[k]["working"] for k in ("Dope Sheet", "UV Editor")})
-    assert eds["Dope Sheet"]["working"] >= 130, eds["Dope Sheet"]     # 124 at step 163, +6
+    # 124 at step 163, 158 at step 268; the Maya 2026 Dope Sheet (step 269) has 94 leaves, 68 working
+    assert eds["Dope Sheet"]["working"] >= 68, eds["Dope Sheet"]
     assert eds["UV Editor"]["working"] >= 114, eds["UV Editor"]       # 110 at step 163, >= +4
     assert not r["greyed"], r["greyed"][:5]
 

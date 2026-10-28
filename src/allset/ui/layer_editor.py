@@ -43,7 +43,7 @@ class ALLSET_PG_layer(bpy.types.PropertyGroup):
     playback: BoolProperty(name="Playback", default=True, update=_update,
                            description="Show the layer's objects during playback (Maya P)")
     display_type: EnumProperty(name="Display Type", items=TYPES, default="NORMAL", update=_update)
-    # list position: Maya lists the newest layer on top and Move Up / Down reorders (Maya-5111)
+    # list position: Maya lists the newest layer on top and Move Up / Down reorders (Maya 2022 Layer Editor)
     order: IntProperty(options={'HIDDEN'})
 
 
@@ -420,7 +420,7 @@ class ALLSET_UL_layers(bpy.types.UIList):
         row.prop(item, "name", text="", emboss=False)
 
 
-LAYER_MENU = (   # Maya's layer RMB menu (layerEditorShowPopupMenu, Maya; )
+LAYER_MENU = (   # Maya's layer RMB menu ()
     ("allset.layer_assign", "Add Selected Objects", {"remove": False}),
     ("allset.layer_assign", "Remove Selected Objects", {"remove": True}),
     ("allset.layer_select", "Select Objects", {}),
@@ -512,8 +512,8 @@ class ALLSET_MT_le_help(bpy.types.Menu):
 
 
 HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/collections.html"
-# Maya Layer Editor: tabs Display / Anim (Maya-5135), menu bar Layers / Options / Help
-# (:5082-5098), toolbar on the right (:5100-5111); 
+# Maya Layer Editor: tabs Display / Anim, menu bar Layers / Options / Help,
+# toolbar on the right; 
 TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
 MENU_BAR = (("Layers", "ALLSET_MT_le_layers"), ("Options", "ALLSET_MT_le_options"), ("Help", "ALLSET_MT_le_help"))
 
@@ -755,7 +755,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             draw_anim_tab(layout, context)    # step 180: Maya animation layers on NLA tracks
             return
         # Maya's toolbar, right-aligned, frameless icon buttons in Maya's order: move up, move down, create
-        # empty layer, create layer from selected (Maya-5111)
+        # empty layer, create layer from selected (Maya 2022 Layer Editor)
         row = layout.row(align=True)
         row.alignment = 'RIGHT'
         row.emboss = 'NONE'

@@ -4,8 +4,8 @@
 Keys are ``editor_menu_data`` paths ("Graph Editor/Keys/Insert Key Tool"); values use ``menu_map``'s forms plus
 ``("prop", "<context path>")`` = a Maya check item drawn as Blender's own check box (``{"value": v}`` = one choice
 of a radio collection). ``menu_map`` merges ``MAP`` into its own, so the step 101 rules (every leaf mapped or greyed
-with a notice) cover these menus too. Menu structure:  (Maya 2022
-GUI capture); Blender counterparts checked in 4.5.
+with a notice) cover these menus too. Menu structure:  (Maya 2026
+GUI capture since step 269; Maya 2022 before); Blender counterparts checked in 4.5.
 """
 
 import math
@@ -40,11 +40,12 @@ def _uv_tool(idname):
     return ("wm.tool_set_by_id", {"name": idname, "space_type": 'IMAGE_EDITOR'})
 
 
-# Maya tangent labels -> set_tangent kinds (operators/time_keys.TANGENTS). Maya 2022's Auto variants
+# Maya tangent labels -> set_tangent kinds (operators/time_keys.TANGENTS). Maya's Auto variants
 # (Auto Span / Ease / Mix / Custom) are one Blender auto handle (Auto Clamped): notices in ui/notices.py.
+# Maya 2026 labels the first one "Auto Span" (Maya 2022: "Auto Span (Legacy)").
 TANGENT_KINDS = {"Spline": "SPLINE", "Linear": "LINEAR", "Clamped": "CLAMPED", "Stepped": "STEPPED",
                  "Stepped Next": "STEPPED_NEXT", "Flat": "FLAT", "Fixed": "FIXED", "Plateau": "PLATEAU"}
-AUTO_KINDS = ("Auto Span (Legacy)", "Auto Ease", "Auto Mix", "Auto Custom")
+AUTO_KINDS = ("Auto Span", "Auto Ease", "Auto Mix", "Auto Custom")
 
 # Default In / Out Tangent (step 157): kit add-on prefs the kit's own keys use (operators/graph_key_menu.after_insert);
 # Blender's preference is never written (store review, #40 / #43). Maya's Auto variants are one Auto.
@@ -68,18 +69,24 @@ def _tangents_menu(ed):
     return m
 
 
+def _channel_commands(ed, menu, graph):
+    """Bake / Mute / Lock: the Graph Editor's Curves menu, the Dope Sheet's Channels menu (Maya 2026)."""
+    return {
+        f"{ed}/{menu}/Bake Channel": "graph.bake_keys" if graph else "action.bake_keys",
+        f"{ed}/{menu}/Mute Channel": ("anim.channels_setting_enable", {"type": 'MUTE'}),
+        f"{ed}/{menu}/Unmute Channel": ("anim.channels_setting_disable", {"type": 'MUTE'}),
+        f"{ed}/{menu}/Lock Channel": ("anim.channels_setting_enable", {"type": 'PROTECT'}),
+        f"{ed}/{menu}/Unlock Channel": ("anim.channels_setting_disable", {"type": 'PROTECT'}),
+    }
+
+
 def _curves_menu(ed, graph):
-    m = {}
+    m = _channel_commands(ed, "Curves", graph)
     for side, sub in (("PRE", "Pre Infinity"), ("POST", "Post Infinity")):
         for label, mode in (("Cycle", "CYCLE"), ("Cycle with Offset", "CYCLE_OFFSET"), ("Oscillate", "OSCILLATE"),
                             ("Linear", "LINEAR"), ("Constant", "CONSTANT")):
             m[f"{ed}/Curves/{sub}/{label}"] = _infinity(side, mode)
     m.update({
-        f"{ed}/Curves/Bake Channel": "graph.bake_keys" if graph else "action.bake_keys",
-        f"{ed}/Curves/Mute Channel": ("anim.channels_setting_enable", {"type": 'MUTE'}),
-        f"{ed}/Curves/Unmute Channel": ("anim.channels_setting_disable", {"type": 'MUTE'}),
-        f"{ed}/Curves/Lock Channel": ("anim.channels_setting_enable", {"type": 'PROTECT'}),
-        f"{ed}/Curves/Unlock Channel": ("anim.channels_setting_disable", {"type": 'PROTECT'}),
         f"{ed}/Curves/Simplify Curve": "graph.clean" if graph else "action.clean",
         f"{ed}/Curves/Key Reducer Filter": "graph.decimate" if graph else "action.clean",
     })
@@ -102,7 +109,7 @@ def _curves_menu(ed, graph):
 def _edit_menu(ed, graph):
     move = "transform.translate" if graph else ("transform.transform", {"mode": 'TIME_TRANSLATE'})
     scale = "transform.resize" if graph else ("transform.transform", {"mode": 'TIME_SCALE'})
-    return {
+    m = {
         f"{ed}/Edit/Undo": "ed.undo",
         f"{ed}/Edit/Redo": "ed.redo",
         f"{ed}/Edit/Cut": _key("CUT"),
@@ -113,10 +120,17 @@ def _edit_menu(ed, graph):
         f"{ed}/Edit/Transformation Tools/Move Keys Tool": move,
         f"{ed}/Edit/Transformation Tools/Scale Keys Tool": scale,
         f"{ed}/Edit/Snap": ("graph.snap" if graph else "action.snap", {"type": 'NEAREST_FRAME'}),
-        f"{ed}/Edit/Change Curve Color": ("allset.curve_color", {"action": 'CHANGE'}),
-        f"{ed}/Edit/Remove Curve Color": ("allset.curve_color", {"action": 'REMOVE'}),
-        f"{ed}/Edit/Preferences": ("screen.userpref_show", {"section": 'ANIMATION'}),
     }
+    if graph:
+        m.update({
+            f"{ed}/Edit/Change Curve Color": ("allset.curve_color", {"action": 'CHANGE'}),
+            f"{ed}/Edit/Remove Curve Color": ("allset.curve_color", {"action": 'REMOVE'}),
+            f"{ed}/Edit/Preferences": ("screen.userpref_show", {"section": 'ANIMATION'}),
+        })
+    else:
+        # Maya 2026's Dope Sheet tool list; Insert Keys = the Dope Sheet toolbar's Insert Keys button
+        m[f"{ed}/Edit/Transformation Tools/Insert Keys"] = "action.keyframe_insert"
+    return m
 
 
 def _keys_menu(ed, graph):
@@ -132,6 +146,9 @@ def _keys_menu(ed, graph):
     }
     if graph:
         m[f"{ed}/Keys/Insert Key Tool"] = "allset.insert_key_tool"
+    # Maya 2026 Keys > Remove Key > Redundant Keys ("removes keys with similar values") = Blender's Clean Keyframes;
+    # the other Remove Key items are greyed with notices (ui/notices.py)
+    m[f"{ed}/Keys/Remove Key/Redundant Keys"] = "graph.clean" if graph else "action.clean"
     return m
 
 
@@ -174,6 +191,9 @@ def _list_show_menus(ed):
     # channels, so there they keep the objects with such an attribute (ui/editor_chrome.row_objects)
     m.update({f"{ed}/Show/Attributes/{label}": _prop(f"{_WM}.allset_attr_{flag}")
               for label, flag in SHOW_ATTRIBUTE_FLAGS.items()})
+    # Maya 2026: Show Animated Shapes is an All / One / None expand choice (Maya 2022: one check item); All =
+    # Blender's shape key channels shown (delegated), One / None greyed with notices
+    m[f"{ed}/List/Show Animated Shapes/All"] = _prop(f"{_DS}.show_shapekeys")
     if ed == "Graph Editor":
         m[f"{ed}/List/Show Upstream Curves"] = _prop(f"{_WM}.allset_show_upstream")
         m[f"{ed}/Curves/Pin Channel"] = ("allset.graph_pin", {"pin": True})
@@ -220,7 +240,7 @@ GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
 _SP = "space_data"
 
 MAP = {
-    # --- Graph Editor (Maya menus, captured) ---
+    # --- Graph Editor (captured menus) ---
     **_edit_menu(GE, True),
     f"{GE}/View/Frame/Frame All": "graph.view_all",
     f"{GE}/View/Frame/Frame Selection": "graph.view_selected",
@@ -245,7 +265,8 @@ MAP = {
     f"{GE}/View/Stacked View": ("allset.graph_view_mode", {"mode": "STACKED"}),
     f"{GE}/View/Normalized View": _prop(f"{_SP}.use_normalization", True),
     f"{GE}/View/Renormalize": _prop(f"{_SP}.use_auto_normalization"),
-    # step 157: Maya's Select menu sets what a click / drag picks (selectType, Maya-940)
+    f"{GE}/View/Show Pins": _prop(f"{_WM}.allset_show_pins"),     # Maya 2026; the kit outliner's pin icons
+    # step 157: Maya's Select menu sets what a click / drag picks (selectType)
     f"{GE}/Select/All": ("allset.graph_select_type", {"preset": "ALL"}),
     f"{GE}/Select/Only Curve": ("allset.graph_select_type", {"preset": "ONLY_CURVE"}),
     f"{GE}/Select/Curve": _prop("addon_prefs.graph_select_curve"),
@@ -263,21 +284,20 @@ MAP = {
     **_keys_menu(GE, True),
     **_tangents_menu(GE),
     **_list_show_menus(GE),
-    f"{GE}/List/Show Animated Shapes": _prop(f"{_DS}.show_shapekeys"),
+    f"{GE}/Curves/Reorder Rotation...": "allset.reorder_rotation",    # Maya 2026; same command as Modify menu
     **_help_menu(GE, "editors/graph_editor/index.html"),
 
-    # --- Dope Sheet (Maya menus, captured) ---
+    # --- Dope Sheet (captured menus; Maya 2026 has no Curves / Tangents menu here, a Channels menu instead) ---
     **_edit_menu(DS, False),
     f"{DS}/View/Frame All": "action.view_all",
     f"{DS}/View/Frame Selection": "action.view_selected",
     f"{DS}/View/Frame Playback Range": "anim.scene_range_frame",
     f"{DS}/View/Center Current Time": "action.view_frame",
     f"{DS}/View/Dope Sheet Summary": _prop(f"{_DS}.show_summary"),
-    **_curves_menu(DS, False),
+    **_channel_commands(DS, "Channels", False),
     **_keys_menu(DS, False),
-    **_tangents_menu(DS),
     **_list_show_menus(DS),
-    **_depth2(DS),
+    f"{DS}/Edit/Select Unsnapped": "allset.select_unsnapped",
     **_help_menu(DS, "editors/dope_sheet/index.html"),
 
     # --- UV Editor (textureWindow menus, captured); kit UV commands from step 66 ---
@@ -625,11 +645,11 @@ MAP.pop(f"{SH}/Help/Help on {SH}", None)    # Maya titles it Help on Shape Autho
 
 
 # step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py,
-# -8), both editors
+# -8); Maya 2026's Dope Sheet has no Curves menu / Select Curve Nodes
 # (literal here: tools/menu_count.py loads the menu maps without bpy)
 _ROT_MODES = {"Independent Euler": "NONE", "Synchronized Euler": "EULER", "Quaternion Slerp": "SLERP",
               "Quaternion Cubic": "SQUAD", "Quaternion Tangent Dependent": "TANGENT"}
-for _ed in (GE, DS):
+for _ed in (GE,):
     MAP.update({f"{_ed}/Curves/Change Rotation Interp/{label}": ("allset.rotation_interp", {"mode": mode})
                 for label, mode in _ROT_MODES.items()})
     MAP[f"{_ed}/Curves/Key Sync Filter"] = "allset.key_sync_filter"

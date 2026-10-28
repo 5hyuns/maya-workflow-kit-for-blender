@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Tool Box: the 3D View toolbar shows Maya's tools in every mode.
 
-Maya's Tool Box (, Maya-307) is a 40 px column left of the
+Maya's Tool Box () is a 40 px column left of the
 Outliner: Select, Lasso, Paint Select, Move, Rotate, Scale, the last non-sacred tool, then quick layout
 buttons and an Outliner toggle. Here:
 
@@ -27,7 +27,7 @@ from bl_ui.space_toolsystem_toolbar import VIEW3D_PT_tools_active as TOOLBAR
 from .. import compat
 from ..operators import tool_keys, view
 
-# Maya-302 order: Select, Lasso, Paint Select, Move, Rotate, Scale.
+# Maya 2022 Tool Box order: Select, Lasso, Paint Select, Move, Rotate, Scale.
 MAYA_TOOLS = ("builtin.select_box", "builtin.select_lasso", "builtin.select_circle",
               "builtin.move", "builtin.rotate", "builtin.scale")
 
@@ -140,7 +140,7 @@ def _tools_from_context(cls, context, mode=None):
     yield from original(cls, context, mode)
 
 
-# --- double-click a tool = its Tool Settings (step 129, #3; Maya-307) ------------------------------------
+# --- double-click a tool = its Tool Settings (step 129, #3; Maya 2022 Tool Box) -------------------------------------
 # A toolbar icon is a UI button: a double click never reaches a keymap, but each click runs wm.tool_set_by_id, whose
 # execute imports bl_ui.space_toolsystem_common.activate_by_id when it runs ($S\startup\bl_operators\wm.py:2338-2347;
 # a DOUBLE_CLICK the button doesn't take comes back as a PRESS). That module function is wrapped: the same tool set
@@ -252,13 +252,13 @@ def column_width(context=None):
 # Maya's right tab stack (ui/maya_dock.py STACK area, #60, , step 142 #78): 280 px with the
 # Channel Box raised ( x 1320-1600 = a 260 px panel + the vertical tab strip;
 # = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px with the Attribute Editor raised (10_attribute_editor.png
-# x 1120-1600; Maya's AE is a wide panel, Maya-221). Since step 142 the kit's tabs are Maya's
+# x 1120-1600; Maya's AE is a wide panel). Since step 142 the kit's tabs are Maya's
 # vertical strip too (maya_dock.draw_strip), so the stack is as wide as the raised panel needs: the Channel Box / Modeling
 # Toolkit stack at least 277 px x the scale (wider when the Channel Box labels need it), the Attribute Editor
 # stack 480 px x the scale (delegated: Maya resizes the stack when its tab changes, ``tab_changed``).
 DOCK_MAYA_PX = 277
 DOCK_MAX_PX = 480
-WIDE_KINDS = ('ATTRIBUTE_EDITOR',)   # Maya's wide panels (460 px, Maya-221)
+WIDE_KINDS = ('ATTRIBUTE_EDITOR',)   # Maya's wide panels (460 px by default)
 # px between neighbouring areas: 3 at UI scale 1.0, 5 at 1.5 (the area edge grows with the scale, checked)
 GAP_PX = 8
 # the main viewport keeps at least this (x UI scale) after the Tool Box column and Outliner are fitted too: a 1600 px
@@ -627,7 +627,7 @@ def _fit_after_load(*_args):
         bpy.app.timers.register(lambda: _fit_tick() and None, first_interval=0.0)
 
 
-# --- quick layouts (Maya, :397-404) ---------------------------------------------
+# --- quick layouts (Maya 2022 Tool Box) ---------------------------------------------------
 
 class ALLSET_OT_quick_layout(bpy.types.Operator):
     """Maya Tool Box quick layout button"""
@@ -1106,7 +1106,7 @@ class ALLSET_PT_toolbox_layouts(bpy.types.Panel):
         button(sub, op, "layout:FRONT_PERSP", 'SPLIT_VERTICAL', text="").layout = 'FRONT_PERSP'
         col.separator()
         button(col, "allset.open_editor", "layout:OUTLINER", 'OUTLINER', text="").ui_type = 'OUTLINER'
-        # Maya 2022.1+: the Search icon under the layout / Outliner buttons, after a divider (Maya-379,
+        # Maya 2022.1+: the Search icon under the layout / Outliner buttons, after a divider (Maya 2022.1 Tool Box,
         # PR125_MAYA_LATER.md 4b); it opens Blender's command search (Maya Ctrl+F = SearchEngine).
         col.separator()
         col.operator_context = 'INVOKE_DEFAULT'

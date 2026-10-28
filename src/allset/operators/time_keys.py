@@ -3,7 +3,7 @@
 (Cut / Copy / Paste / Delete / Snap / Keys / Tangents / Set Range to).
 
  (S keys every keyable attribute), rows 5, 8, 11-13; Maya
-``others/Maya-770`` (the time slider edits act on ``timeControl -q -range``: the
+Time Slider menu (the time slider edits act on ``timeControl -q -range``: the
 Shift-dragged range, else the current frame), design  「계획」 2, 4.
 
 Nodes are the Channel Box's (``ui/channel_box.targets``): selected objects, or the selected pose bones

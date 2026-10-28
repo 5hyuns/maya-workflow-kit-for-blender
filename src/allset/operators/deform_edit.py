@@ -3,8 +3,8 @@
 Dropoff Locator, ShrinkWrap > Set Target / Remove Target / Add surfaces / Remove surfaces, Lattice > Reset Lattice /
 Remove Lattice Tweaks, Prune Membership > Cluster / Lattice / Wire, Point On Curve.
 
-Maya behaviour:  (Maya; Maya / Maya /
-Maya selection rules and messages). The kit wire: operators/wire_deformer.py.
+Maya behaviour:  (Maya; Wire Edit / Shrink Wrap / Dropoff Locator
+selection rules and messages). The kit wire: operators/wire_deformer.py.
 """
 
 import bpy

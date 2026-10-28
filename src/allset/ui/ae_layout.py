@@ -47,7 +47,7 @@ _DRAWING_OVERRIDES = (
     ("prop", "ob", "allset_override_color", "Color"),
 )
 
-# --- transform (Maya, Maya-800) ---------------------
+# --- transform (Maya 2022 Attribute Editor transform tab) ------------------------------------
 TRANSFORM = [
     S("Transform Attributes", True,                                          # collapse=0
       ("draw", "transform_channels"),
@@ -77,7 +77,7 @@ TRANSFORM = [
       ]),
 ]
 
-# --- mesh shape (Maya-1119, :874; Maya) ------
+# --- mesh shape (Maya 2022 Attribute Editor mesh shape tab) ---------------------------------
 MESH = [
     S("Mesh Component Display", False,
       ("prop", "ob", "show_wire", "Wireframe on Shaded"),
@@ -99,7 +99,7 @@ MESH = [
       ("prop", "ob", "display_type", "Display Type")),
 ]
 
-# --- camera (Maya-756) ---------------------------------------------
+# --- camera (Maya 2022 Attribute Editor camera tab) -----------------------------------------
 CAMERA = [
     S("Camera Attributes", True,
       ("prop", "data", "lens", "Focal Length"),
@@ -125,7 +125,7 @@ CAMERA = [
       ("prop", "data", "ortho_scale", "Orthographic Width")),
 ]
 
-# --- lights (Maya-124, Maya-43) -----------
+# --- lights (Maya 2022 Attribute Editor point / directional light tabs) ----------------------
 _LIGHT_MAIN = (("prop", "data", "type", "Type"),
                ("prop", "data", "color", "Color"),
                ("prop", "data", "allset_intensity", "Intensity"),      # Maya intensity (operators/lights.py)
@@ -185,7 +185,7 @@ VOLUME_LIGHT = [
     S("Shadows", False, ("prop", "data", "use_shadow", "Use Shadows")),
 ]
 
-# --- material: standardSurface (Maya-512) on Principled BSDF ----
+# --- material: standardSurface (Maya 2022 Attribute Editor) on Principled BSDF --------------
 STANDARD_SURFACE = [
     S("Base", True, ("socket", "Weight", "Weight"), ("socket", "Base Color", "Color"),
       ("socket", "Diffuse Roughness", "Diffuse Roughness"), ("socket", "Metallic", "Metalness")),
@@ -228,7 +228,7 @@ STANDARD_SURFACE_ATTRS = (
     ("opacity", "Alpha"), ("normalCamera", "Normal"), ("thinWalled", None),
 )
 MAYA_ATTR = {socket: attr for attr, socket in STANDARD_SURFACE_ATTRS if socket}
-# --- lambert (Maya -> Maya; attribute_editor.md:137-140) ---
+# --- lambert (Maya 2022 Attribute Editor; attribute_editor.md:137-140) -----------------------
 # Principled stand-ins: transparency -> Alpha (opacity), incandescence -> Emission, bump ->
 # Normal, diffuse -> the "Maya Diffuse" node factor (Base Color = Color x Diffuse, operators/material.py step 214;
 # Color = that node's B input), translucence -> Subsurface; refractions -> Transmission.
@@ -240,8 +240,8 @@ _LAMBERT_COMMON = S("Common Material Attributes", True,
 _RAYTRACE = S("Raytrace Options", False, ("socket", "Transmission Weight", "Refractions"),
               ("socket", "IOR", "Refractive Index"))
 LAMBERT = [_LAMBERT_COMMON, _RAYTRACE]
-# blinn / phong = lambert common + Specular Shading, open (Maya 2022 Maya-39,
-# Maya-33; not in the research templates).
+# blinn / phong = lambert common + Specular Shading, open (Maya 2022 Attribute Editor
+# blinn / phong tabs; not in the research templates).
 # Eccentricity / Cosine Power are Maya numbers converted to the Principled Roughness (operators/material.py, #71).
 BLINN = [_LAMBERT_COMMON,
          S("Specular Shading", True, ("maya", "allset_eccentricity", "Eccentricity", "Roughness"),
@@ -252,7 +252,7 @@ PHONG = [_LAMBERT_COMMON,
          S("Specular Shading", True, ("maya", "allset_cosine_power", "Cosine Power", "Roughness"),
            ("socket", "Specular Tint", "Specular Color")),
          _RAYTRACE]
-# surfaceShader (Maya-34): out color = emission.
+# surfaceShader (Maya 2022 Attribute Editor): out color = emission.
 SURFACE_SHADER = [
     S("Surface Shader Attributes", True, ("socket", "Emission Color", "Out Color"),
       ("socket", "Alpha", "Out Opacity")),
@@ -285,7 +285,7 @@ USE_BACKGROUND = [
        "shadows)")),
 ]
 # Material without nodes: Blender viewport values (no Maya template).
-# --- joint = pose bone (Maya-54, ) ----
+# --- joint = pose bone (Maya 2022 Attribute Editor, ) ----
 # Joint Labelling (side / type) and Preferred Angle have no Blender counterpart.
 JOINT = [
     S("Transform Attributes", True,                                          # collapse=0

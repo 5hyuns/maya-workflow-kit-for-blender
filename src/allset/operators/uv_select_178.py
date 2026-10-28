@@ -3,9 +3,9 @@
  (rules, tags) and  (ground truth the tests use;
 script ).
 
-The Maya procs work on every component of the hilited meshes of the current component mask
-($M\\others\\Maya, Maya,
-Maya). Kit mask: UV Sync Selection on = the mesh select mode (vertex / edge / face);
+Maya's commands work on every component of the hilited meshes of the current component mask
+(UV Editor Select menu).
+Kit mask: UV Sync Selection on = the mesh select mode (vertex / edge / face);
 off = the UV Editor's own mode (vertex = Maya UV, edge, face; island = Maya UV Shell). Candidates are the faces the UV
 Editor shows (uv_display.shown_faces). A "UV" = the loops of one vertex sharing one coordinate (Maya's UV id).
 
@@ -15,7 +15,7 @@ Editor shows (uv_display.shown_faces). A "UV" = the loops of one vertex sharing 
   front-facing too (checked: strips 'fold', 'maj_mid', 'maj5').
 - Texture Borders (selectUVBorderComponents): components on UV shell borders (a face side no other face shares
   across with the same UVs: mesh borders + seams); faces = faces with such a side. UV Shell mask: Maya selects
-  nothing (unsupported, Maya).
+  nothing (unsupported).
 - Non-Overlapping (selectUVOverlappingComponents 0 0, all meshes together): faces whose UV area meets no other face's
   (touching edges don't count); edges whose UV segments cross / lie along another edge's (shared or touching ends
   don't count); UVs / vertices with no other UV at the same place. UV Shell mask: every face outside the shells of
@@ -37,7 +37,7 @@ from . import uv_tools
 from .component import select_only
 
 EPS = uv_tools.EPS
-AREA_TOL = 1e-6          # polyCleanup map tolerance used by selectUnmappedFaces (Maya)
+AREA_TOL = 1e-6          # Maya 2026's Select Unmapped Faces tolerance (checked)
 OVERLAP_AREA = 1e-10     # UV area shared by two faces that counts as an overlap
 _TINY = 1e-12
 
@@ -461,7 +461,7 @@ class ALLSET_OT_uv_select_texture_borders(_SelectOp, bpy.types.Operator):
 
     def execute(self, context):
         if mask(context.scene.tool_settings) == 'SHELL':
-            # Maya: no result for the UV Shell mask, the selection stays
+            # Maya Texture Borders: no result for the UV Shell mask, the selection stays
             self.report({'WARNING'}, "Texture Borders works on UVs, vertices, edges or faces (not UV shells)")
             return {'CANCELLED'}
         return super().execute(context)
@@ -512,7 +512,7 @@ class ALLSET_OT_uv_select_unmapped(bpy.types.Operator):
         if not obs:
             return {'CANCELLED'}
         ts = context.scene.tool_settings
-        # Maya: changeSelectMode -component; setComponentMask facet (Maya-21)
+        # Maya: changeSelectMode -component; setComponentMask facet
         uv_tools.forget_mesh_selection()
         uv_tools.set_component(context, 'FACE')
         found = 0

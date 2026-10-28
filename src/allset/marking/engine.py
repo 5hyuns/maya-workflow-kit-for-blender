@@ -681,7 +681,7 @@ class Session:
 # --- hotbox ---------------------------------------------------------------------------
 
 class HotboxLayout:
-    """Maya hotbox (Maya, 187-237;  「계획」 2): menu rows above the cursor
+    """Maya hotbox (Maya 2022 hotbox, checked;  「계획」 2): menu rows above the cursor
     (``rows``, top first), the cursor row (``side`` = left / right boxes beside the centre box), rows under it
     (``below``, top first), zone lines on the diagonals. Sizes are Maya's at scale 1 (13_hotbox.png: row pitch
     35 = box 26 + gap 9; the centre box is the title with padding)."""
@@ -825,7 +825,7 @@ class HotboxLayout:
         return "E" if dx > 0 else "W"
 
 
-TAP_TIME = 0.4  # Maya (-noClickDelay 0.4)
+TAP_TIME = 0.4  # Maya 2022 hotbox tap time
 
 
 def is_tap(press_t, release_t, clicked):

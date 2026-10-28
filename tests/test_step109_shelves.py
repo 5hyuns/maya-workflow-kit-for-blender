@@ -24,9 +24,9 @@ curve_tools = import_module(kit.MODULE + ".operators.curve_tools")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESEARCH = os.path.join(ROOT, "research", "maya", "shelves.json")
-# Maya 2022 factory shelf files ()
-MAYA_COUNTS = {"CurvesSurfaces": 38, "Polygons": 43, "Sculpting": 26, "Rigging": 18, "Animation": 14,
-               "Rendering": 25, "FX": 29, "FXCaching": 10}
+# Maya 2026 factory shelf files (, step 269)
+MAYA_COUNTS = {"Curves": 14, "Surfaces": 24, "Polygons": 37, "Sculpting": 26, "UVEditing": 12, "Rigging": 18,
+               "Animation": 15, "Rendering": 26, "FX": 29, "FXCaching": 10}
 
 
 def _fresh():
@@ -69,7 +69,8 @@ def test_every_maya_button_keeps_its_slot():
     if os.path.exists(RESEARCH):
         data = json.load(open(RESEARCH, encoding="utf-8"))["factory"]
         for name, _label, _b in shelf_data.SHELVES:
-            assert [b[1] for b in shelf.all_buttons(name)] == [b.get("label", "") for b in data[name]], name
+            maya = [b for b in data[name] if not b.get("separator")]
+            assert [b[1] for b in shelf.all_buttons(name)] == [b.get("label", "") for b in maya], name
     for name, _l, _b in shelf_data.SHELVES:
         assert [b[0] for b in shelf.all_buttons(name)] == list(range(MAYA_COUNTS[name])), name
 
@@ -77,9 +78,9 @@ def test_every_maya_button_keeps_its_slot():
 def test_drawn_mapped_at_least_150():
     mapped = {name: len(shelf.factory_buttons(name)) for name, _l, _b in shelf_data.SHELVES}
     total = sum(mapped.values())
-    print("mapped per shelf", mapped, "total", total, "/ 203")
+    print("mapped per shelf", mapped, "total", total, "/", sum(MAYA_COUNTS.values()))
     assert total >= 150, mapped
-    assert mapped["Sculpting"] >= 19 and mapped["CurvesSurfaces"] >= 24 and mapped["FX"] >= 13, mapped
+    assert mapped["Sculpting"] >= 19 and mapped["Curves"] + mapped["Surfaces"] >= 24 and mapped["FX"] >= 13, mapped
 
 
 def test_every_greyed_button_has_a_notice():
@@ -119,15 +120,15 @@ def test_icon_buttons_include_greyed_slots():
 
 
 def test_greyed_click_and_tooltip_show_the_notice():
-    i = next(i for i, lab, a, _ic in shelf.all_buttons("CurvesSurfaces") if lab == "Trim Tool")
-    assert bpy.ops.allset.shelf_button(shelf="CurvesSurfaces", index=i) == {'CANCELLED'}
+    i = next(i for i, lab, a, _ic in shelf.all_buttons("Surfaces") if lab == "Trim Tool")
+    assert bpy.ops.allset.shelf_button(shelf="Surfaces", index=i) == {'CANCELLED'}
     assert notices.current().startswith("Trim Tool: "), notices.current()
-    tip = shelf.button_tooltip("CurvesSurfaces", "Trim Tool", False)
+    tip = shelf.button_tooltip("Surfaces", "Trim Tool", False)
     assert "(Maya shelf, greyed)" in tip and notices.category("Surfaces/Trim Tool")[0] in tip, tip
     tip = shelf.button_tooltip("Rendering", "Render Diagnostics", False)
     assert "Info editor" in tip, tip
     # Mapped with a different Blender result: the tooltip says what Blender does.
-    tip = shelf.button_tooltip("CurvesSurfaces", "Planar", True)
+    tip = shelf.button_tooltip("Surfaces", "Planar", True)
     assert "Blender: Filled 2D curve" in tip, tip
 
 
@@ -320,13 +321,14 @@ def test_fluid_collide_and_ncloth_display():
 def test_icons_use_maya_hues_and_fade_when_greyed():
     # step 131: hues checked on the exported Maya 2022 icons ()
     assert shelf_icons.SHELF_COLOURS["Polygons"] == shelf_icons.SHELF_COLOURS["Sculpting"]
-    r, g, b = shelf_icons.SHELF_COLOURS["CurvesSurfaces"]
+    assert shelf_icons.SHELF_COLOURS["Curves"] == shelf_icons.SHELF_COLOURS["Surfaces"]
+    r, g, b = shelf_icons.SHELF_COLOURS["Curves"]
     assert b > r and round(b * 255) == 0xcb
     px = shelf_icons.draw("Polygon Cube", "Polygons")
     opaque = px[px[..., 3] > 0.99][:, :3]
     hue = np.array(shelf_icons.SHELF_COLOURS["Polygons"])
     assert (np.abs(opaque - hue).max(axis=1) < 0.02).any(), "the cube's front face is Maya's orange"
-    grey = shelf_icons.draw("Trim Tool", "CurvesSurfaces", greyed=True)
+    grey = shelf_icons.draw("Trim Tool", "Surfaces", greyed=True)
     assert grey[..., 3].max() <= shelf_icons.GREYED_ALPHA + 1e-6
     assert np.allclose(grey[..., 0], grey[..., 1]) and np.allclose(grey[..., 1], grey[..., 2])
     tools = shelf_icons.draw("Merge", "Polygons")
@@ -338,5 +340,5 @@ def test_icons_use_maya_hues_and_fade_when_greyed():
     # step 131: Maya's dark outline round the shapes, UV tools green
     outline = np.array(shelf_icons.DARK)
     assert (np.abs(px[px[..., 3] > 0.5][:, :3] - outline).max(axis=1) < 0.03).any(), "dark outline"
-    uv = shelf_icons.draw("Planar Mapping", "Polygons")
+    uv = shelf_icons.draw("Planar Mapping", "UVEditing")
     assert (np.abs(uv[uv[..., 3] > 0.99][:, :3] - np.array(shelf_icons.GREEN)).max(axis=1) < 0.03).any(), "UV green"

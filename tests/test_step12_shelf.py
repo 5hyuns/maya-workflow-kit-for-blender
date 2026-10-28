@@ -79,17 +79,27 @@ def _tool_ids():
 # --- data -------------------------------------------------------------------------------------
 
 def test_factory_shelves_match_research():
+    # Maya 2026's default shelf tabs (step 269: Curves and Surfaces are two shelves, UV Editing is new)
     names = [s[0] for s in shelf_data.SHELVES]
-    assert names == ["CurvesSurfaces", "Polygons", "Sculpting", "Rigging", "Animation",
+    assert names == ["Curves", "Surfaces", "Polygons", "Sculpting", "UVEditing", "Rigging", "Animation",
                      "Rendering", "FX", "FXCaching"], names
-    assert [s[1] for s in shelf_data.SHELVES][:2] == ["Curves / Surfaces", "Poly Modeling"]
+    assert [s[1] for s in shelf_data.SHELVES][:3] == ["Curves", "Surfaces", "Poly Modeling"]
     assert shelf_data.DEFAULT == "Polygons"
     if not os.path.exists(RESEARCH):
         print(" missing: skipped")
         return
     data = json.load(open(RESEARCH, encoding="utf-8"))["factory"]
     for name, _label, buttons in shelf_data.SHELVES:
-        assert [b[0] for b in buttons] == [b.get("label", "") for b in data[name]], name
+        maya = [b for b in data[name] if not b.get("separator")]
+        assert [b[0] for b in buttons] == [b.get("label", "") for b in maya], name
+        # Maya's shelf separators sit before the buttons listed in GAPS
+        gaps, n = [], 0
+        for b in data[name]:
+            if b.get("separator"):
+                gaps.append(n)
+            else:
+                n += 1
+        assert shelf_data.GAPS[name] == tuple(i for i in gaps if 0 < i < n), name
 
 
 def test_mapping_targets_and_icons_exist():
@@ -120,7 +130,8 @@ def test_mapping_targets_and_icons_exist():
 def test_mapped_buttons_per_shelf():
     counts = {name: len(shelf.factory_buttons(name)) for name, _l, _b in shelf_data.SHELVES}
     print("mapped shelf buttons:", counts)
-    assert counts["Polygons"] >= 33, counts      # 43 in Maya; no Super Shape, Sweep, SVG, ...
+    assert counts["Polygons"] >= 30, counts      # 37 in Maya 2026; no Sweep, SVG, ...
+    assert counts["UVEditing"] >= 10, counts     # 12 in Maya 2026
     assert counts["Rigging"] >= 13 and counts["Animation"] >= 13 and counts["Rendering"] >= 13, counts
     assert all(v >= 1 for v in counts.values()), counts
 
@@ -196,7 +207,9 @@ def test_tab_step_and_select():
     assert shelf.current() == "Sculpting"
     bpy.ops.allset.shelf_step(forward=False)
     bpy.ops.allset.shelf_step(forward=False)
-    assert shelf.current() == "CurvesSurfaces"
+    assert shelf.current() == "Surfaces"
+    bpy.ops.allset.shelf_step(forward=False)
+    assert shelf.current() == "Curves"                                 # the first tab
     bpy.ops.allset.shelf_step(forward=False)                           # wraps to the last tab
     assert shelf.current() == shelf.shelves()[-1][0]
     bpy.ops.allset.shelf_select(shelf="Polygons")

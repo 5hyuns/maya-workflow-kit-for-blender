@@ -2,7 +2,7 @@
 """Maya Tool Settings: Reset Tool and the dock's Maya sections (step 106).
 
 Maya's Tool Settings window has the tool name, Reset Tool / Tool Help above the active tool's options
-(, Maya-55). Since step 106 the kit's Tool Settings is a dock
+(). Since step 106 the kit's Tool Settings is a dock
 left of the viewport (``ui/tool_dock.py``: a Properties editor on its Tool tab) that draws ``ALLSET_PT_tool_settings``:
 the head row, then for the Move / Rotate / Scale tools Maya's sections in Maya's order with Maya's rows bound to kit
 state (checked in Maya 2022: ; rows the kit can't do are greyed with a tooltip).

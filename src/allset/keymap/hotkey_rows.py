@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Rows of the kit Hotkey Editor (step 215, Issue #121): Maya's factory hotkeys + what the kit does with each.
 
-Pure Python (no bpy): ``build_rows`` joins ``hotkey_data.HOTKEYS`` (Maya 2022 Maya, 
+Pure Python (no bpy): ``build_rows`` joins ``hotkey_data.HOTKEYS`` (Maya 2022 factory hotkeys, 
 hotkeys_default.json) with ``mapping.ENTRIES`` (status IC / KIT / STEP / NO, the expected Blender binding ``check``
 and the note); ``search`` filters them like Maya's Hotkey Editor (Search by Name / by Hotkey, category); ``conflicts``
 finds items that already use an event. The live side (``keyconfigs.user`` items) is ``ui/hotkey_editor.py``.
@@ -106,7 +106,7 @@ def build_rows(platform="windows"):
     index, command (runTimeCommand / nameCommand, "" for an explicitly empty binding), release, maya_key (Maya key
     text), event (Blender event dict of the Maya key), context, category (Maya Hotkey Editor category path, "" if
     none), status (KIT / IC / STEP / NO / MAC / None), status_text, check ((keymap, idname, props) or None), step,
-    note, line (Maya), editable (the kit binds it: IC / KIT with a check)."""
+    note, line (row number in the Maya factory hotkey list), editable (the kit binds it: IC / KIT with a check)."""
     rows = []
     for i, raw in enumerate(hotkey_data.HOTKEYS):
         hk = _hotkey(raw)

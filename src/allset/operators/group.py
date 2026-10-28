@@ -151,7 +151,7 @@ class ALLSET_OT_group(bpy.types.Operator):
         context.view_layer.objects.active = grp
         results.result(self, f"Result: {grp.name}")       # Maya: "// Result: group1 //" (the group command's return)
         from ..ui import view_message
-        # Maya Maya-38: success, or an empty group with "select objects first".
+        # Maya Edit > Group: success, or an empty group with "select objects first".
         view_message.show(context, f"<hl>{grp.name}</hl> grouped." if objects else
                           f"Nothing selected: <hl>{grp.name}</hl> is empty. <hl>Select</hl> objects before grouping.")
         return {'FINISHED'}

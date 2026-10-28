@@ -272,8 +272,8 @@ class ALLSET_MT_symmetry(bpy.types.Menu):
 def draw_symmetry(layout, context):
     """▾ list with the mode text + a toggle that is blue (pressed) while symmetry is on.
 
-    Maya: LMB ▾ = list, MMB = toggle, the text box turns blue when on (Maya-1925,
-    2941-2986). A Blender menu button has no MMB action, so the toggle is its own button.
+    Maya: LMB ▾ = list, MMB = toggle, the text box turns blue when on (Maya 2022
+    Status Line). A Blender menu button has no MMB action, so the toggle is its own button.
     """
     from ..operators import symmetry
     sym = symmetry.state(context.scene)
@@ -404,7 +404,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
             from . import tool_dock
             tool_dock.toggle(context, show_only=self.show)
             return {'FINISHED'}
-        # Maya toggleUIComponentVisibility (Maya-1419): a panel tabbed behind another is raised,
+        # Maya Windows > UI Elements toggles: a panel tabbed behind another is raised,
         # a shown one hidden (ui/maya_dock.py, step 116)
         from . import maya_dock
         maya_dock.toggle(context, DOCK_KINDS[self.editor], show_only=self.show)
@@ -414,7 +414,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
 # --- drawing --------------------------------------------------------------------
 
 # Maya Status Line groups each start with an "openBar" collapse handle that hides the group
-# (, Maya toggleFileIcons ... toggleInputField). Kept for the
+# (). Kept for the
 # session only (Maya keeps them in setting; delegated).
 GROUPS = (
     ("FILE", "File: New, Open, Save, Undo, Redo"),
@@ -570,14 +570,14 @@ def draw_status_line(layout, context, compact=False):
         sub = row.row(align=True)
         sub.emboss = 'NONE'
         sub.menu(ALLSET_MT_symmetry.bl_idname, text="", icon='DOWNARROW_HLT')
-        # Maya's symmetry box is a drop-down (Maya-1925): a click on the text opens the list, it is
+        # Maya's symmetry box is a drop-down (Maya 2022 Status Line): a click on the text opens the list, it is
         # never a text field (step 258, Issue #155: the read-only text property took a text cursor)
         box = row.row(align=True)
         box.ui_units_x = 5
         box.menu(ALLSET_MT_symmetry.bl_idname, text=_symmetry_text(None))
         _group_end(layout, "SYMMETRY")
 
-    if _group(layout, "HISTORY"):   # Maya Maya-3032; toggle since step 189 (input_line.draw_history)
+    if _group(layout, "HISTORY"):   # Maya Status Line; toggle since step 189 (input_line.draw_history)
         _flat(layout, input_line.ALLSET_OT_construction_history.bl_idname, "history",
               depress=context.window_manager.allset_construction_history)
         _group_end(layout, "HISTORY")
@@ -594,7 +594,7 @@ def draw_status_line(layout, context, compact=False):
         _grey(row, "pause", "Status Line/Pause Viewport 2.0")
         _group_end(layout, "RENDER")
 
-    if not compact and _group(layout, "INPUT"):     # Maya Maya-3202 (step 75)
+    if not compact and _group(layout, "INPUT"):     # Maya Status Line input field (step 75)
         input_line.draw(layout, context)
         _group_end(layout, "INPUT")
 

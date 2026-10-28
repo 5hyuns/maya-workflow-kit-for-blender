@@ -2,7 +2,7 @@
 
 Ctrl and Shift are held (the add-on reads the OS key state, ``keystate.is_down``, which the simulation replaces) while
 Display > Grid is clicked: the item does not run and doesn't open its option box; a "Grid" button is appended to the
-Animation shelf after its 14 Maya slots (Poly Modeling's 43 run past a 1600 px window). In the Maya layout the shelf
+Animation shelf after its 15 Maya slots (Poly Modeling has 37). In the Maya layout the shelf
 draws it (shot ``162_shelf.png``) and a click on it runs Display > Grid through ``allset.menu_item``. Menu buttons
 with a kit picture (Cube: a shelf drawing, Move Tool: a Tool Box glyph) are drawn too (``162_icons.png``). The
 sandbox's shelves.json is restored at the end.

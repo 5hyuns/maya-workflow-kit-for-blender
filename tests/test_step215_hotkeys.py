@@ -56,10 +56,10 @@ def _setup():
 def test_rows_are_the_maya_hotkeys_with_mapping_status():
     hr, mapping, data = m("keymap.hotkey_rows"), m("keymap.mapping"), m("keymap.hotkey_data")
     every = hr.build_rows(platform=None)
-    assert len(every) == len(data.HOTKEYS) == 468, len(every)
+    assert len(every) == len(data.HOTKEYS) == 495, len(every)
     rows = hr.build_rows()
     mac = sum(1 for r in data.HOTKEYS if r[-1] == "mac-only")
-    assert mac == 68 and len(rows) == 468 - mac, (mac, len(rows))
+    assert mac == 71 and len(rows) == 495 - mac, (mac, len(rows))
     # the generated data equals the research file (regenerate with tools/gen_hotkey_data.py)
     src = os.path.join(ROOT, "research", "maya", "hotkeys_default.json")
     if os.path.exists(src):

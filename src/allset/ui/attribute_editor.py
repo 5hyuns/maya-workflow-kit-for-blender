@@ -979,8 +979,8 @@ class ALLSET_OT_dock_show(bpy.types.Operator):
 
 
 class ALLSET_OT_object_attributes(bpy.types.Operator):
-    """Show this object in the Attribute Editor (Maya RMB menu "<object>...", showEditor:
-    Maya)"""
+    """Show this object in the Attribute Editor (Maya RMB marking menu row
+    "<object>...")"""
     bl_idname = "allset.object_attributes"
     bl_label = "Object Attributes"
 

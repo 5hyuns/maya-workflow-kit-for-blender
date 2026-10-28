@@ -517,7 +517,7 @@ def unregister_handlers():
 
 def targets(context, rmb=False):
     """Objects to assign to: the edited objects, the selection, else (from the RMB
-    menu) the object the menu was opened on (Maya-374)."""
+    menu) the object the menu was opened on, like Maya."""
     if context.mode.startswith('EDIT'):
         return [o for o in context.objects_in_mode if o.type in SUPPORTED]
     obs = [o for o in context.selected_objects if o.type in SUPPORTED]

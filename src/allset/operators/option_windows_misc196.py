@@ -144,7 +144,7 @@ _INCLUDE = ("All keyable", "From Channel Box", "All keyable except:")
 _KEEP_ORIGINAL = "Keep original (Maya keeps the input curve and makes new ones)"
 
 WINDOWS = [
-    # Maya-71 (option vars), :305-420 (window); Maya char_* (options_196_misc.json)
+    # Create Character Set Options (factory values, window); Maya char_* (options_196_misc.json)
     Window("character_set", "Create Character Set Options", "Create Character Set", None, [
         FText("name", "Name:", "character1"),
         F("hierarchy", "Include:", "bool", False, text="Hierarchy below selected node"),
@@ -156,7 +156,7 @@ WINDOWS = [
         F("no_dynamic", "", "bool", False, text="Dynamic"),
     ], _character(False), paths=("Control/Create Character Set", "Key/Create Character Set"),
         missing=("Redirection: Redirect character (Rotation and translation / Rotation only / Translation only)",)),
-    # Maya-60, :226-340 (no hierarchy, no redirection)
+    # Create Subcharacter Set Options (no hierarchy, no redirection)
     Window("subcharacter_set", "Create Subcharacter Set Options", "Create Subcharacter Set", None, [
         FText("name", "Name:", "subCharacter1"),
         F("attributes", "Subcharacter set attributes:", "enum", "All keyable except:", items=_INCLUDE),
@@ -166,7 +166,7 @@ WINDOWS = [
         F("no_visibility", "", "bool", True, text="No visibility"),
         F("no_dynamic", "", "bool", False, text="No dynamic"),
     ], _character(True), paths=("Control/Create Subcharacter Set", "Key/Create Subcharacter Set")),
-    # Maya-83 (factory 1 / 2), :402-418 (Cut / Keep radios), :639 title
+    # Cut Curve Options (factory 1 / 2, Cut / Keep radios, title)
     Window("cut_curve", "Cut Curve Options", "Cut", None, [
         F("cut", "Cut:", "enum", "At all intersections", items=("At all intersections", "Using last curve")),
         F("keep", "Keep:", "enum", "All curve segments", items=("Longest segments", "All curve segments")),
@@ -174,28 +174,28 @@ WINDOWS = [
         missing=("Find intersections: In 2D and 3D / In 3D only / Use direction (the kit finds 3D crossings)",
                  "Keep: Segments with curve points", "Use tolerance: Global / Local, Tolerance 0.0001",
                  _KEEP_ORIGINAL)),
-    # Maya, :204, :274
+    # Detach Curves Options
     Window("detach_curves", "Detach Curves Options", "Detach", None, [], _run_detach, paths=("Curves/Detach",),
            missing=(_KEEP_ORIGINAL,)),
-    # Maya, Maya, :184
+    # Reverse Curve Options
     Window("reverse_curve", "Reverse Curve Options", "Reverse", None, [
         F("keep_original", "", "bool", False, text="Keep original"),
     ], _run_reverse, paths=("Curves/Reverse Direction",)),
-    # Maya (factor 4), :130-163; Maya smooth
+    # Smooth Curves Options (factor 4)
     Window("smooth_curves", "Smooth Curves Options", "Smooth Curves", None, [
         F("factor", "Smooth factor:", "int", 4, lo=1, hi=100),
     ], _run_smooth_curves, paths=("Curves/Smooth", "nHair/Modify Curves/Smooth")),
-    # Maya, :25, :127-199 (Edit section Smooth = smoothCurve)
+    # Smooth Curve Options (Edit section Smooth = smoothCurve)
     Window("smooth_curve", "Smooth Curve Options", "Smooth", None, [
         F("keep_original", "", "bool", False, text="Keep original"),
     ], _run_smooth_curve, paths=("Curves/Smooth#2",),
         missing=("Smoothness: 10.0 (Maya's smoothCurve; the kit runs Blender's curve Smooth)",)),
-    # Maya, :36, :142-182; Maya straighten
+    # Straighten Curves Options
     Window("straighten_curves", "Straighten Curves Options", "Straighten Curves", None, [
         F("straightness", "Straightness:", "float", 1.0, lo=0.0, hi=2.0),
         F("preserve_length", "", "bool", True, text="Preserve length"),
     ], _run_straighten, paths=("Curves/Straighten", "nHair/Modify Curves/Straighten")),
-    # Tool Settings "Three / Two Point Arc Settings": Maya-61, Maya-55 (window = tool name,
+    # Tool Settings "Three / Two Point Arc Settings" (window = tool name,
     # its button starts the tool, like step 140's tool boxes)
     Window("arc3_tool", "Three Point Arc Settings", "Create Arc", None, [
         F("degree", "Circular arc degree:", "enum", "3", items=("1 Linear", "3")),
@@ -205,24 +205,24 @@ WINDOWS = [
         F("degree", "Circular arc degree:", "enum", "3", items=("1 Linear", "3")),
         F("sections", "Sections:", "int", 8, lo=4, hi=200),
     ], _arc("arc2_tool"), paths=("Create/Curve Tools/Two Point Circular Arc",)),
-    # Maya (0.01), :90, :110, :122
+    # Merge UVs Options (factory 0.01)
     Window("merge_uvs", "Merge UVs Options", "Merge UVs", None, [
         F("threshold", "Threshold:", "float", 0.01, lo=0.0, hi=1.0),
     ], _run_merge_uvs, paths=("UV/Merge UVs",)),
-    # Maya-100, :242-300, :366 (Contour)
+    # Contour Stretch Mapping Options
     Window("contour_stretch", "Contour Stretch Mapping Options", "Project", None, [], _run_contour,
            paths=("UV/Contour Stretch",),
            missing=("Method: Walk Contours / NURBS Projection (the kit follows the quad grid)",
                     "Smoothness 0-3, Offset 0-3", "User defined corner vertices",
                     "Insert projection before deformers", "Create new UV Set")),
-    # Maya-39 (setting recursive 1 = Hierarchy), Maya, :84
+    # Set Preferred Angle Options (factory Hierarchy)
     Window("set_preferred_angle", "Set Preferred Angle Options", "Set", None, [
         F("options", "Options:", "enum", "Hierarchy", items=("Selected joint", "Hierarchy")),
     ], _preferred("set_preferred_angle"), paths=("Skeleton/Set Preferred Angle",)),
     Window("assume_preferred_angle", "Assume Preferred Angle Options", "Assume", None, [
         F("options", "Options:", "enum", "Hierarchy", items=("Selected joint", "Hierarchy")),
     ], _preferred("assume_preferred_angle"), paths=("Skeleton/Assume Preferred Angle",)),
-    # Maya-60, :256-336
+    # Add Influence Options
     Window("add_influence", "Add Influence Options", "Add", None, [
         F("lock_weights", "Weight locking:", "bool", False, text="Lock weights"),
         F("default_weight", "Default weight:", "float", 0.0, lo=0.0, hi=1.0),

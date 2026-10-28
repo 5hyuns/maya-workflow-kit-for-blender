@@ -173,7 +173,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                ('PYTHON', "Show Python Only", "Show only Python output in the history")))
 
     # Channel Box Channels > Sync Selection in Graph Editor / Sync Timeline Display (Maya setting, factory off;
-    # Maya-85, ui/cb_channels.py, step 158).
+    # Maya Channel Box Channels menu, ui/cb_channels.py, step 158).
     cb_sync_graph: bpy.props.BoolProperty(
         name="Sync Selection in Graph Editor",
         description="Selecting channels in the Channel Box selects their curves, and S keys only the selected channels")
@@ -181,7 +181,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Sync Timeline Display",
         description="The Time Slider shows only the keys of the channels selected in the Channel Box")
     # Graph Editor Select > Curve / Key / In Tangent / Out Tangent (Maya selectType pick masks, factory all on;
-    # Maya-940, operators/graph_key_menu.py, step 157).
+    # Maya Graph Editor Select menu, operators/graph_key_menu.py, step 157).
     graph_select_curve: bpy.props.BoolProperty(
         name="Curve", default=True, description="Clicking or dragging in the Graph Editor can pick curves")
     graph_select_key: bpy.props.BoolProperty(

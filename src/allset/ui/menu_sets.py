@@ -348,7 +348,7 @@ def item_texts(rows, size=None):
 
 
 def _dynamic_label(path, label):
-    """Maya labels built when the menu opens: Edit > Repeat = 'Repeat "<last command>"' (Maya-93)."""
+    """Maya labels built when the menu opens: Edit > Repeat = 'Repeat "<last command>"' (Maya 2022 Edit menu)."""
     if path == "Edit/Repeat":
         from ..operators import repeat_maya
         try:
@@ -973,7 +973,7 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
 
 
 class ALLSET_MT_ui_elements(bpy.types.Menu):
-    """Maya Windows > UI Elements (startup/Maya-83, ui_layout.md:190-191)"""
+    """Maya Windows > UI Elements (ui_layout.md:190-191)"""
     bl_idname = "ALLSET_MT_ui_elements"
     bl_label = "UI Elements"
 

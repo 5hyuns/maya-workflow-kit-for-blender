@@ -4,14 +4,14 @@ Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X 
 
 Maya behaviour (scripts of the installed Maya 2022, behaviour only):
 - PasteSelected = cutCopyPaste "paste" -> pasteScene: import the clipboard file with every node renamed
-  ``pasted__<name>``, grouped under a new ``group`` (startup/Maya-58, ).
+  ``pasted__<name>``, grouped under a new ``group`` ().
 - CutSelected = cutCopyPaste "cut": export the selection (with its hierarchy) to the clipboard file, then delete it
-  (startup/Maya-1139; ).
-- PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya-20634).
+  ().
+- PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya runtime command).
 - toggleNurbsCurvesOption / togglePolygonsOption / toggleImagePlaneOption flip that type in the focused model panel
-  (others/Maya; hotkeys_and_menus.md:113).
+  (viewport Show menu; hotkeys_and_menus.md:113).
 - smoothingDisplayToggle 1 swaps the proxy (cage) and smooth mesh visibility (both shown -> cage only), 0 shows both;
-  performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (others/Maya; hotkeys_and_menus.md:121).
+  performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (hotkeys_and_menus.md:121).
 """
 
 import re
@@ -134,7 +134,7 @@ class ALLSET_OT_paste(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        # Maya pasteScene (startup/Maya-58; Maya + Maya,  P1-P3):
+        # Maya pasteScene (Maya + Maya,  P1-P3):
         # every node renamed pasted__<name>, the top nodes under a new group at the origin, only the group selected.
         before = set(bpy.data.objects.keys())
         if bpy.ops.view3d.pastebuffer() != {'FINISHED'}:

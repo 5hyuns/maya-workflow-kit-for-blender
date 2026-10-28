@@ -1,5 +1,5 @@
 """Step 181 (lane W): the Surfaces menu leaves mapped to the kit's NURBS surface commands, their Maya option windows
-(titles / fields / factory values: , $M perform<X>.mel), shelf routing and notices.
+(titles / fields / factory values: ), shelf routing and notices.
  Geometry against Maya: tests of operators/surfaces_maya.py."""
 
 import types
@@ -175,7 +175,7 @@ def test_window_fields_follow_maya():
         assert _call(d["surface_reverse"], {"direction": label})[2] == dict(direction=want)
     assert _call(d["surface_rebuild"], {"degree_u": "1 Linear", "degree_v": "5", "spans_v": 7})[2] == dict(
         spans_u=4, spans_v=7, degree_u='1', degree_v='5')
-    # Maya field order of the radio groups ($M Maya-144, Maya-236)
+    # Maya field order of the radio groups (Maya 2026 Reverse Surface Direction / Extrude option windows)
     reverse = {f.name: f for f in d["surface_reverse"].fields}
     assert reverse["direction"].items == ("U", "V", "Swap", "Both")
     extrude = {f.name: f for f in d["surface_extrude"].fields}
@@ -202,9 +202,9 @@ def test_notices_and_shelf():
                         ("Birail 1 Tool", "Surfaces/Birail/Birail 1 Tool"), ("Attach Surfaces", "Surfaces/Attach"),
                         ("Detach Surfaces", "Surfaces/Detach"), ("Insert Isoparms", "Surfaces/Insert Isoparms"),
                         ("Rebuild Surfaces", "Surfaces/Rebuild")):
-        command = next(c for shelf, _t, buttons in shelf_map_data() if shelf == "CurvesSurfaces"
+        command = next(c for shelf, _t, buttons in shelf_map_data() if shelf == "Surfaces"
                        for lab, c in buttons if lab == label)
-        hit = shelf_map.lookup("CurvesSurfaces", label, command)
+        hit = shelf_map.lookup("Surfaces", label, command)
         assert hit is not None and hit[0] == menu_map.MAP[path], (label, hit)
 
 

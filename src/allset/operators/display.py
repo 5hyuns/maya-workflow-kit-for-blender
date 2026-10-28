@@ -194,7 +194,7 @@ SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range [delegated]
 
 
 def change_smoothing_level(ob, delta):
-    """Maya PgUp / PgDn (changeSmoothingLevel, Maya-679): the smooth preview's
+    """Maya PgUp / PgDn (changeSmoothingLevel, Maya default hotkeys): the smooth preview's
     division level. An object without a preview gets a hidden one that keeps the level
     (Maya's smoothLevel shows only in 3 mode too). Returns the new level."""
     mod = preview_modifier(ob, create=False)
@@ -261,7 +261,7 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Shift+Q marking menu check boxes (doSelectComponentMM, Maya-160): Maya pick-mask
+# Shift+Q marking menu check boxes: Maya pick-mask
 # types that Blender has = the mesh select modes.
 MASK_KINDS = (("VERT", "Poly Vertices", ""), ("EDGE", "Poly Edges", ""), ("FACE", "Faces", ""),
               ("ALL", "All Components On", ""))

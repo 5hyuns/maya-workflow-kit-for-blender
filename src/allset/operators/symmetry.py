@@ -27,7 +27,7 @@ ABOUT = (("OBJECT", "Object", "Mirror across the object's own axis"),
          ("WORLD", "World", "Mirror across the world axis"),
          ("TOPOLOGY", "Topology", "Mirror by mesh topology (Blender: topology mirror on the chosen axis)"))
 
-# Status Line ▾ list, in Maya's order (Maya reflectionBuildMenu).
+# Status Line ▾ list, in Maya's order.
 MODES = (("OFF", "Off"),
          ("OBJECT_X", "Object X"), ("OBJECT_Y", "Object Y"), ("OBJECT_Z", "Object Z"),
          ("WORLD_X", "World X"), ("WORLD_Y", "World Y"), ("WORLD_Z", "World Z"),
@@ -63,7 +63,7 @@ def mode_of(sym):
 
 
 def label(sym):
-    """Status Line text: Maya's "Symmetry: Off" or the mode name (Maya-1925)."""
+    """Status Line text: Maya's "Symmetry: Off" or the mode name."""
     mode = mode_of(sym)
     return "Symmetry: Off" if mode == "OFF" else dict(MODES)[mode]
 

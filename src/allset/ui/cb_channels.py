@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Channel Box Channels menu commands Maya has and the step-38 set lacked.
 
-Maya 2022 ``Maya`` (read only; ): Breakdown All / Mute All /
+Maya 2022 Channel Box Channels menu (): Breakdown All / Mute All /
 Unmute All act on every shown channel; Cut / Copy / Delete Selected take the whole curves of the selected channels
 (``cutKey / copyKey -t ":" -f ":"``); Paste Selected = ``pasteKey -connect true -time <current>``; Freeze =
 ``makeIdentity -apply``; Select Connection selects the node feeding the channel. Paste checked 
@@ -12,7 +12,7 @@ without a curve gets the copied values as they are.
 
 Sync Selection in Graph Editor / Sync Timeline Display are Maya setting (factory off) = add-on prefs
 ``cb_sync_graph`` / ``cb_sync_timeline``: with Sync Graph Editor on, the selected channels' F-curves become the
-selected curves and S keys only the selected channels (Maya setKeyframeWhich 1, Maya-68);
+selected curves and S keys only the selected channels (Maya setKeyframeWhich 1, Channels menu);
 with Sync Timeline Display on, the Time Slider shows only the selected channels' keys.
 """
 

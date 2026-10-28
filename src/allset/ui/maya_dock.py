@@ -35,7 +35,7 @@ LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attr
 ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
               'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
               'MENU': "show_properties_texture"}
-WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya-221, ui_layout.md:72-73)
+WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya 2022 defaults, ui_layout.md:72-73)
 HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
 TEAR_LINE = "- " * 18        # Maya's tear-off line at the top of a menu (``-to true``, ui_layout.md:184)
 

@@ -82,7 +82,7 @@ class ALLSET_OT_pick_walk(bpy.types.Operator):
 
 
 # --- component pick-walk (step 39) ----------------------------------------------------
-#  「계획」 1. Maya 2022 pickWalk*.mel: edges walk the edge ring (Up/Down)
+#  「계획」 1. Maya 2022 pick-walk: edges walk the edge ring (Up/Down)
 # and the edge loop (Left/Right); faces/vertices (Maya: face loop / index order) walk to the
 # neighbour whose screen direction is closest to the arrow (delegated).
 

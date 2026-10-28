@@ -52,7 +52,7 @@ VIEW = [
     _grey("View Sequence Time"),
 ]
 
-# Maya viewSet -vx = seen from +X (Maya-1203); axis names as Blender's
+# Maya viewSet -vx = seen from +X (Maya 2022 panel View menu); axis names as Blender's
 # (X = X, Y = Y, Z = Z: , ).
 VIEW_AXIS = [_view("X", 'RIGHT'), _view("Y", 'BACK'), _view("Z", 'TOP'),
              _view("-X", 'LEFT'), _view("-Y", 'FRONT'), _view("-Z", 'BOTTOM')]
@@ -191,7 +191,7 @@ LAYOUTS = [
     ("set", "LAYOUT_FOUR", "Four View"),
 ]
 
-# The menu bar, in Maya's order (Maya-2086).
+# The menu bar, in Maya 2022's order.
 BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
        ("Lighting", "ALLSET_MT_panel_lighting"), ("Show", "ALLSET_MT_panel_show"),
        ("Renderer", "ALLSET_MT_panel_renderer"), ("Panels", "ALLSET_MT_panel_panels"))
@@ -200,7 +200,7 @@ BAR = (("View", "ALLSET_MT_panel_view"), ("Shading", "ALLSET_MT_panel_shading"),
 # (glyph, kind, data, label): kind "set" = panel_menus.ALLSET_OT_panel_set key, "prop" = (owner, prop) on the view,
 # "run" = (operator, props) run in the view, "grey" = no Blender equivalent (the label explains it).
 #
-# Step 129 (#10): every Maya toggle (iconTextCheckBox, Maya; ``checkable`` in _top113.json) is a
+# Step 129 (#10): every Maya toggle (a check button on Maya's panel toolbar; ``checkable`` in _top113.json) is a
 # toggle here too — "set" keys are drawn with ``toggle=True`` so Wireframe / Smooth Shade All / Use All Lights turn
 # off to Maya's off state (panel_menus.TOGGLE_OFF); camera buttons act on the camera the view looks through and are
 # disabled in Blender's persp / ortho views (Maya disables Lock Camera there too). Table: 
@@ -260,7 +260,7 @@ STATUS_LINE = ("Status Line/Select by hierarchy", "Status Line/Select by handle 
                "Status Line/Pause Viewport 2.0", "Status Line/Show or hide the Character Controls")
 
 
-# Maya runTimeCommand of panel rows whose command is one (; Maya):
+# Maya runTimeCommand of panel rows whose command is one (; Maya panel menus):
 # tools/menu_consistency.py compares these with the main / editor / marking menus.
 COMMANDS = {"Tumble Tool": "TumbleTool", "Track Tool": "TrackTool", "Dolly Tool": "DollyTool",
             "Center View of Selection": "CenterViewOfSelection", "Default View": "GoToDefaultView"}

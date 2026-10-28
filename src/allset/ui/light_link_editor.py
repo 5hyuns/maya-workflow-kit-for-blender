@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Light Linking Editor (Lighting/Shading > Light Linking Editor; Maya Relationship Editor light-centric /
-object-centric, $M\\others\\Maya-8562): two lists, the left one picks a light (light-centric)
+object-centric, Maya 2026): two lists, the left one picks a light (light-centric)
 or an object (object-centric), the right one shows what it is linked to — click a row to make / break the link.
 A kit popover (keep_open) on ``operators/light_links.py``; Light / Shadow switches between light and shadow links
 (Maya's editor has one per kind). Step 179."""

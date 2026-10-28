@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """RMB list DG Traversal / Inputs / Outputs (step 165, ).
 
-Maya fills these submenus from the dependency graph when they open (others/Maya,
-Maya). The kit's graph is what the Channel Box INPUTS and the Attribute Editor tabs already
+Maya fills these submenus from the dependency graph when they open (Maya 2022
+RMB marking menu). The kit's graph is what the Channel Box INPUTS and the Attribute Editor tabs already
 show: the last kit extrusion (polyExtrudeFace1), the modifiers (Maya deformers / poly nodes), the primitive's creation
 node (polyCube1), the constraints; the shape (mesh data) and its shading groups. ``nodes(ob)`` turns them into the
 bpy-free data ``marking/menus.with_nodes`` builds the submenus from.
@@ -239,7 +239,7 @@ class ALLSET_OT_mm_node_all(bpy.types.Operator):
             return {'FINISHED'}
         n = sum(set_enabled(e[5], self.action == 'ENABLE') for e in found)
         if not found:
-            # Maya kNoNodestoEnable / kNoNodestoDisable
+            # Maya's message when there is nothing to enable / disable
             self.report({'WARNING'}, f"No nodes to {self.action.lower()}.")
             return {'CANCELLED'}
         results.result(self, f"{self.action.title()}d {n} node{'s' if n != 1 else ''}")

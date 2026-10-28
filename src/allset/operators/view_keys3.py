@@ -2,9 +2,9 @@
 """Maya view keys, batch 3: Alt+A cycle display, Alt+P camera persp / ortho, Alt+arrows 1-pixel move,
 ` hold = tweak mode, \\ hold = 2D pan / zoom.
 
-Maya behaviour read from its scripts (Maya, 347, 370-373, 682, 697-698): switchDisplayMode
-(Maya), CameraModeToggle (viewPlace -o / -p), editorDependentMove -> pixelMove, strsTweakMode
-(Maya), activatePanZoom / deactivatePanZoom; , :94, :98, :116.
+Maya default hotkeys: switchDisplayMode,
+CameraModeToggle (viewPlace -o / -p), editorDependentMove -> pixelMove, strsTweakMode,
+activatePanZoom / deactivatePanZoom; , :94, :98, :116.
 """
 
 import math

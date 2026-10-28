@@ -283,6 +283,7 @@ def test_menu_items_mapped():
         assert m[f"{ed}/Keys/Mute Key"] == ("allset.mute_key", {"mute": True})
         assert m[f"{ed}/Keys/Unmute Key"] == ("allset.mute_key", {"mute": False})
         assert m[f"{ed}/Keys/Add Inbetween"][0] == "allset.graph_inbetween"
+    for ed in ("Graph Editor",):    # Maya 2026's Dope Sheet has no Tangents menu (checked in Maya 2026)
         assert m[f"{ed}/Tangents/Default In Tangent/Flat"] == ("prop", "addon_prefs.default_in_tangent",
                                                                {"value": 'FLAT'})
         assert m[f"{ed}/Tangents/Default Out Tangent/Stepped"][2] == {"value": 'STEPPED'}

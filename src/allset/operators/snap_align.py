@@ -319,7 +319,7 @@ class ALLSET_OT_make_live(bpy.types.Operator):
         make_live(context, ob)
         results.result(self, f"Live surface: {ob.name}" if ob else "No Live Surface")
         from ..ui import view_message
-        # Maya Maya-1900 (topCenter).
+        # Maya's Make Live message (topCenter).
         view_message.show(context, f"{ob.name} is <hl>live</hl>." if ob else "Make Live is <hl>off</hl>.",
                           'TOP_CENTER')
         return {'FINISHED'}
@@ -463,7 +463,7 @@ TOOL_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.
 
 
 def absolute_offered(scene, kind):
-    """Maya offers Move's Absolute step snap only while its axis orientation is World (Maya-74,
+    """Maya offers Move's Absolute step snap only while its axis orientation is World (Move Tool Settings,
     060_messages_ui.md B5); Rotate and Scale always offer it."""
     if kind != 'TRANSLATE':
         return True

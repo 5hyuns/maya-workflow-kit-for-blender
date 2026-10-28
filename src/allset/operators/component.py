@@ -4,7 +4,7 @@
 Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
  (SelectNone: ``changeSelectMode -object; select -cl``),
-:79 (Ctrl+F9-F12 convert), Maya via  (Ctrl+B BevelPolygon).
+:79 (Ctrl+F9-F12 convert),  (Ctrl+B BevelPolygon, Maya default hotkey).
  「계획」 2-3, 5; Delete:  「계획」.
 """
 

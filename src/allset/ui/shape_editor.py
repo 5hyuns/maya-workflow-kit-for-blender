@@ -156,7 +156,7 @@ def add_target_name(key, ob):
 
 
 def unique_target_name(key, name):
-    """``blendShapeUniqueWeighName`` (others/Maya, behaviour): ``name``, else name1,
+    """Maya Shape Editor target naming (behaviour): ``name``, else name1,
     name2 ... until no target has it."""
     names = {kb.name for kb in key.key_blocks}
     out, i = name, 1
@@ -484,8 +484,8 @@ class ALLSET_OT_shape_duplicate(_TargetOp, bpy.types.Operator):
         for key, i in picked:
             ob = owner(key)
             src = key.key_blocks[i]
-            # Maya (behaviour): name <target>_Copy, made unique by
-            # blendShapeUniqueWeighName (_Copy1, _Copy2 ...); the copy's weight stays 0 (delegated)
+            # Maya Shape Editor Duplicate Target (behaviour): name <target>_Copy, made unique
+            # (_Copy1, _Copy2 ...); the copy's weight stays 0 (delegated)
             name = unique_target_name(key, src.name + "_Copy")
             with _object_mode(ob):
                 kb = ob.shape_key_add(name=name, from_mix=False)

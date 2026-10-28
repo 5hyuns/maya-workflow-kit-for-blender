@@ -303,7 +303,7 @@ def interpolated(key, target, weight):
 
 def add_inbetween(key, target, weight, flat=None, name=""):
     """Maya ``blendShape -e -ib``: an in-between of ``target`` at ``weight`` with absolute coords ``flat`` (None =
-    the shape the target has at that weight, Maya's empty in-between). Returns the
+    the shape the target has at that weight, like Maya's Add In-Between Target). Returns the
     helper key block."""
     from ..ui import shape_editor
     weight = round(float(weight), 3)
@@ -541,7 +541,7 @@ class ALLSET_OT_shape_add_inbetween(bpy.types.Operator):
             self.report({'ERROR'}, str(exc))
             return {'CANCELLED'} if made is None else {'FINISHED'}
         if not self.selection:
-            # the empty in-between goes into Edit (sculptTarget -ibw w, Maya)
+            # the empty in-between goes into Edit (sculptTarget -ibw w, like Maya's Add In-Between Target)
             shape_editor.edit_on(context, key, key.key_blocks.find(made.name))
         _redraw(context)
         return {'FINISHED'}

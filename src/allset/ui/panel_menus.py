@@ -2,9 +2,8 @@
 """Maya viewport panel menu bar: View, Shading, Lighting, Show, Renderer, Panels.
 
 Every Maya modelPanel has its own menu bar (). Menu contents
-follow Maya 2022 ``Maya`` (View :1381-1640, Shading :2159-2290, Lighting
-:2488-2522, Show :2578-2741, Renderer :509-664) and ``Maya-427``
-(Panels); re-implemented, only labels and order. Design:  「계획」.
+follow Maya 2022's panel menus (View, Shading, Lighting,
+Show, Renderer, Panels), checked in a running Maya; only labels and order. Design:  「계획」.
 
 Only the menu part of the 3D View header changes: ``VIEW3D_MT_editor_menus.draw_collapsible``
 (inherited from ``bpy.types.Menu``, called once by ``VIEW3D_HT_header.draw``,
@@ -66,17 +65,17 @@ def camera_locked(ob):
     return all(ob.lock_location) and all(ob.lock_rotation)
 
 
-# Maya camera display toggles (Maya modelPanelBarDecorationsCallback) -> Blender camera data.
+# Maya camera display toggles (Maya panel toolbar) -> Blender camera data.
 # Blender draws title and action safe areas together (one flag).
 CAMERA_DATA = {"FILM_GATE": "show_sensor", "GATE_MASK": "show_passepartout",
                "SAFE_ACTION": "show_safe_areas", "SAFE_TITLE": "show_safe_areas"}
 CAMERA_KEYS = {"CAMERA_LOCK", *CAMERA_DATA}
 
-# Toolbar toggles whose Maya off state is another mode (Maya modelPanelBarShadingCallback):
+# Toolbar toggles whose Maya off state is another mode (Maya panel toolbar):
 # Wireframe off = smooth shaded, Smooth Shade All off = wireframe, Use All Lights off = default lighting.
 TOGGLE_OFF = {"SHADE_WIRE": "SHADE_SMOOTH", "SHADE_SMOOTH": "SHADE_WIRE", "LIGHT_ALL": "LIGHT_DEFAULT"}
 
-# Maya colour management icons (Maya: exposure / gamma icon = toggle between the
+# Maya colour management icons (Maya panel toolbar: exposure / gamma icon = toggle between the
 # default and the last other value, view transform check box = colour management on / off). Blender keeps these per
 # scene (view settings); the last values live in Scene ID properties.
 EXPOSURE_LAST, GAMMA_LAST, TRANSFORM_LAST = "allset_exposure_last", "allset_gamma_last", "allset_view_transform_last"

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor display keys and Move UV Shell.
 
-Maya 2022 UV Editor hotkeys ( context polyTexturePlacementPanel,
-Maya-536; View menu ):
+Maya 2022 UV Editor hotkeys ( context polyTexturePlacementPanel;
+View menu ):
 
 - 4 Wireframe / 5 Shaded (Display Mode radio) -> ``SpaceUVEditor.show_faces`` off / on (Shaded also sets
   ``uv_face_opacity`` 1). ``uv_face_opacity`` 0 alone still draws grey face fills (GUI shot, step 155): no wireframe.
@@ -235,12 +235,12 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
 
 # --- isolate (Ctrl+1, View > Isolate Select, Select > Filter Selection) -------------------------------------
 #
-# Maya keeps one face set (textureEditorIsolateSelectSet, $M\others\Maya-80): Add
+# Maya keeps one face set (Maya UV Editor isolate select): Add
 # Selected (mode 1) adds the faces the selection touches (polyListComponentConversion -tf: vertices -> their faces,
 # edges -> the faces beside them, UVs -> the faces using them), Remove Selected (2) takes them out, Remove All (0)
 # empties it for the hilited meshes; the UV Editor shows only the set's faces while the isolate view is on
 # (textureWindowShaderFacesMode 1). Ctrl+1 = Remove All + Add Selected + view on
-# (Maya-31). checked:  (Isolate). Kit: the set is
+# (Maya 2026). checked:  (Isolate). Kit: the set is
 # ``_iso_sets`` (face indices per object); while the view is on, faces outside it are hidden (UV Sync Selection on:
 # Blender's hide, the 3D View too) or deselected (sync off: the UV Editor draws only selected faces). Filter Selection
 # > Connected / Contained Faces (txtWndRelFacesMode) uses the same state with the faces of the selection at the time

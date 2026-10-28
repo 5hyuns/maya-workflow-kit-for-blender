@@ -463,7 +463,7 @@ class ALLSET_OT_manip_size(bpy.types.Operator):
     bl_label = "Manipulator Size"
     bl_options = {'INTERNAL'}
 
-    # Maya: manipOptions -r -s 2.0 / 0.5 (Maya-389 via ); 1.25x steps within
+    # Maya: manipOptions -r -s 2.0 / 0.5 (Maya default hotkeys, ); 1.25x steps within
     # Blender's gizmo size range 10-200 px. Since step 130 this scales the kit's
     # Move / Scale manipulator only (ui/manipulator.SIZE): Blender's gizmo_size preference is never written, so
     # Blender's own gizmos (Rotate) keep their size.

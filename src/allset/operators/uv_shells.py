@@ -175,7 +175,7 @@ def orient(groups, uv):
 
 
 def edge_turn(du, dv):
-    """Maya texOrientEdge turn for a UV pair (Maya-64; uv_shells_155.md Orient to Edges)."""
+    """Maya Orient to Edges turn for a UV pair (uv_shells_155.md)."""
     if du < 0 or (du == 0 and dv < 0):
         du, dv = -du, -dv
     a = round(math.degrees(math.atan2(dv, du)), 4)

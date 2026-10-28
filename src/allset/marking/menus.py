@@ -116,7 +116,7 @@ SYMMETRY = ("Symmetry", Sub(radial={
     "SE": ("Z Axis", _sym('AXIS_Z')),
 }))
 
-# Material items at the end of the RMB object list (Maya-2764 -> buildShaderMenus,
+# Material items at the end of the RMB object list (Maya builds them when the RMB marking menu opens,
 # ; ). ``rmb``: with nothing selected
 # they act on the object the menu was opened on, like Maya.
 _FAVORITES = (("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'),
@@ -137,10 +137,10 @@ def _material_items():
 
 
 # --- RMB: Maya (hotkeys_and_menus.md, :246-252) --------------------------
-# Mesh radials come from createSelectMenuItems' order (Maya-892) and
-# objectSelectMasks (:503-509); NE "Object Mode" (:1286-1289).  resolved by hand.
+# Mesh radials follow Maya 2022's RMB marking menu over a mesh and its object select masks;
+# NE "Object Mode".  resolved by hand.
 
-# The list under the ring, Maya 2022 order (Maya-2764 in 
+# The list under the ring, Maya 2022 order (
 # menus.Maya; 14_marking_menu_object.png, ). The first row is the object's name
 # (``OBJECT_TITLE`` is replaced by it when the menu opens). An empty ``Sub`` is a greyed submenu: Maya's
 # dependency-graph / metadata / set editors have no Blender counterpart here.
@@ -153,8 +153,8 @@ def unavailable():
 
 
 class NodeList(Sub):
-    """DG Traversal / Inputs / Outputs: filled from the object when the menu opens (``with_nodes``; Maya fills them in
-    their postMenuCommands, Maya-2640). Never greyed: Maya shows the header rows even with no node."""
+    """DG Traversal / Inputs / Outputs: filled from the object when the menu opens (``with_nodes``; Maya fills them
+    when the submenu opens). Never greyed: Maya shows the header rows even with no node."""
 
     def __init__(self, kind):
         super().__init__()
@@ -170,7 +170,7 @@ def _object_items():
         (OBJECT_TITLE, ("allset.object_attributes", {"rmb": True})),
         DIVIDER,
         ("Select", ("allset.mm_component", {"type": 'NONE'})),
-        # SelectAll / SelectNone / InvertSelection = the Select menu's runTimeCommands (Maya-2595):
+        # SelectAll / SelectNone / InvertSelection = the Select menu's runTimeCommands (Maya 2022 RMB menu):
         # the same items, so component mode follows menu_map.EDIT_MODE (#62)
         ("Select All", _item("Select/All")),
         ("Deselect All", _item("Select/Deselect All")),
@@ -205,7 +205,7 @@ RMB_MESH = MarkingMenu(
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya-1006,
+        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya 2022 RMB marking menu,
         # ); both open the UV Editor (step 66).
         "E": ("UV", Sub(radial={"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
                                 "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))})),
@@ -216,7 +216,7 @@ RMB_MESH = MarkingMenu(
     items=_object_items(),
     options=("Select Similar",))
 
-# Curve: N curve point, W CV, S edit point, E hull (Maya-501). Blender
+# Curve: N curve point, W CV, S edit point, E hull (Maya 2022 RMB marking menu over a curve). Blender
 # curves edit control points only.
 RMB_CURVE = MarkingMenu(
     "dagMenuProc_curve", "Curve", "",
@@ -242,8 +242,8 @@ def with_object_name(menu, name):
 # --- DG Traversal / Inputs / Outputs (step 165, ) ------------------------
 # ``nodes`` (marking/rmb_nodes.py builds it, bpy-free here): {"object": name, "inputs": [(type label, owner, key)],
 # "outputs": [...], "history": [(node name, owner, key)], "future": [...]}; owner = the object holding the node,
-# key = its Attribute Editor tab key. Maya: Select / Enable / Disable All, the nodes by type nice name
-# (option box = showEditor = Attribute Editor), All Inputs... (detachHistoryTable); Maya:
+# key = its Attribute Editor tab key. Maya's Inputs / Outputs submenus: Select / Enable / Disable All, the nodes by type nice name
+# (option box = showEditor = Attribute Editor), All Inputs...; Maya's DG Traversal submenu:
 # Select <object>, then History / Future node names, each a submenu.
 
 TITLE_ROW = ("allset.mm_node_label", {})     # Maya's "History" / "Future" rows: plain items without a command
@@ -319,7 +319,7 @@ def with_nodes(menu, nodes):
     return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
 
 
-# Nothing under the cursor: Select All / Complete Tool (Maya-150).
+# Nothing under the cursor: Select All / Complete Tool (Maya 2022 RMB marking menu over empty space).
 RMB_EMPTY = MarkingMenu(
     "buildObjectMenuItemsNow", "Select", "",
     items=[("Select All", _item("Select/All")),                           # SelectAll :140
@@ -352,7 +352,7 @@ PIVOT_EDIT = MarkingMenu(
 
 # --- Shift+RMB: Maya*MM (, :254-265) ---------------------------------
 
-SOFT_HARD = Sub(radial={  # Maya-169 / Maya-109
+SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
     "S": ("Toggle Soft Edge Display", SOFT_EDGE_DISPLAY),
     "SE": ("Harden Edge", "mesh.mark_sharp"),
     "E": ("Soften/Harden", _item("Mesh Display/Soften/Harden Edges")),   # PolygonSoftenHarden
@@ -686,7 +686,7 @@ SELECT_ALL = MarkingMenu(
     },
     options={"Freeze Transforms"})
 
-# --- Shift+S hold + LMB: Maya (marking_menus.json :284-571, Maya) ------------
+# --- Shift+S hold + LMB: Maya (marking_menus.json :284-571, Maya factory hotkey) ------------
 # Maya builds the same layout inside and outside the Graph Editor (:284-430 / :449-571); the actions pick the
 # Graph Editor's selected keys or the current-time keys themselves (operators/graph_keys.py, step 70).
 
@@ -723,10 +723,10 @@ KEY_TANGENT = MarkingMenu(
         })),
     })
 
-# --- Shift+Q / Alt+Q hold + LMB (Maya-287; ) ---------------------------------
-# doSelectComponentMM (Maya, popup :206 -sh) = the component pick mask; Blender's mask is the
+# --- Shift+Q / Alt+Q hold + LMB (Maya factory hotkeys; ) ---------------------------------
+# doSelectComponentMM (Maya's Shift+Q hold menu) = the component pick mask; Blender's mask is the
 # mesh select mode, so only Poly Vertices / Poly Edges / Faces / All Components on / Select Objects do something.
-# doSelectPolygonMM (Maya, popup :49 -alt) = F9 / F10 / F11 / F12.
+# doSelectPolygonMM (Maya's Alt+Q hold menu) = F9 / F10 / F11 / F12.
 
 def _mask(kind):
     return ("allset.component_mask", {"kind": kind})
@@ -813,7 +813,7 @@ ANIMATION_WS = ("allset.hb_workspace", {"name": "Animation"})
 HB_NORTH = MarkingMenu(
     "HotboxNorthMenu", "Panel Layouts", " hotbox.zones.N",
     radial={
-        "N": ("Single Perspective", ("allset.hb_single", {})),          # Maya
+        "N": ("Single Perspective", ("allset.hb_single", {})),          # Maya 2022 hotbox North zone
         "NE": ("Hypershade/Render/Persp", SHADING_WS),                     # :39
         "SE": ("Hypershade/Outliner/Persp", SHADING_WS),                   # :42
         "E": ("Hypershade/Persp", SHADING_WS),                             # :45
@@ -826,7 +826,7 @@ HB_NORTH = MarkingMenu(
 HB_SOUTH = MarkingMenu(
     "HotboxSouthMenu", "Panel Types", " hotbox.zones.S",
     radial={
-        "N": ("Outliner", _pane('OUTLINER')),                              # Maya
+        "N": ("Outliner", _pane('OUTLINER')),                              # Maya 2022 hotbox South zone
         "E": ("Graph Editor", _pane('FCURVES')),                           # :137
         "SE": ("Dope Sheet", _pane('DOPESHEET')),                          # :140
         "S": ("Hypergraph", _pane('OUTLINER')),                            # :143 (hierarchy = the Outliner)
@@ -839,7 +839,7 @@ HB_SOUTH = MarkingMenu(
 HB_EAST = MarkingMenu(
     "HotboxEastMenu", "UI Elements", " hotbox.zones.E",
     radial={
-        "N": ("Help Line", _ui('HELP_LINE')),                              # Maya
+        "N": ("Help Line", _ui('HELP_LINE')),                              # Maya 2022 hotbox East zone
         "NE": ("Status Line", _ui('STATUS_LINE')),                         # :44
         "E": ("Attributes", Sub(radial={                                   # :48
             "E": ("Channel Box", _ui('CHANNEL_BOX')),
@@ -871,7 +871,7 @@ HB_WEST = MarkingMenu(
 HB_CENTER = MarkingMenu(
     "HotboxCenterMenu", "Views", " hotbox.zones.C",
     radial={
-        "N": ("Perspective View", _view('PERSP')),                         # Maya
+        "N": ("Perspective View", _view('PERSP')),                         # Maya 2022 hotbox centre zone
         "E": ("Side View", _view('RIGHT')),                                # :146
         "S": ("Front View", _view('FRONT')),                               # :149
         "W": ("Top View", _view('TOP')),                                   # :152
@@ -896,8 +896,7 @@ def _uvc(mode):
 UV_OPS = [("Cut UV Edges", "allset.uv_cut"), ("Sew UV Edges", "allset.uv_sew"),
           ("Unfold", "allset.uv_unfold"), ("Layout", "allset.uv_layout")]
 
-# RMB in the UV Editor: Maya textureWindowCreatePopupRadialMenu (polygon version, :53-77, directions
-# :34-42; , recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
+# RMB in the UV Editor: Maya 2026's UV Editor marking menu (polygon version; , recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
 # the kit lists the commands of this step instead.
 UV_EDITOR_RMB = MarkingMenu(
     "textureWindowCreatePopupRadialMenu", "UV Editor", " textureWindowCreatePopupRadialMenu",
@@ -911,7 +910,7 @@ UV_EDITOR_RMB = MarkingMenu(
     items=[*UV_OPS, DIVIDER, ("Select All", ("uv.select_all", {"action": 'SELECT'})),
            ("Pin", "uv.pin"), ("Unpin", ("uv.pin", {"clear": True}))])
 
-# Shift+RMB in the UV Editor: Maya's UV / UV Shell tool menus (Maya / Maya),
+# Shift+RMB in the UV Editor: Maya's UV / UV Shell tool marking menus,
 # Mapping = contextPolyToolsUVMappingMM.
 UV_MAPPING = Sub(radial={
     "N": ("Planar", "allset.uv_planar"),
@@ -963,7 +962,7 @@ MENUS = {m.name: m for m in (RMB_MESH, RMB_CURVE, RMB_EMPTY, PIVOT_EDIT, SHIFT_O
                              UV_EDITOR_RMB, SHIFT_UV, SHIFT_UV_SHELL, KEY_TANGENT,
                              SELECT_COMPONENT, SELECT_POLYGON)}
 
-# Active tool -> its options marking menu (Maya-49).
+# Active tool -> its options marking menu (Maya's tool hold menus).
 TOOL_OPTIONS = {"builtin.move": "translateMarkingMenuImpl", "builtin.rotate": "rotateMarkingMenuImpl",
                 "builtin.scale": "scaleMarkingMenuImpl", "builtin.transform": "translateMarkingMenuImpl"}
 SELECT_OPTIONS = "selectMarkingMenuImpl"

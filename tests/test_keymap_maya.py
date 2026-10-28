@@ -231,7 +231,7 @@ def test_added_bindings_not_shadowed():
 def test_mapping_rows_are_bound():
     hk_path = ROOT / "research" / "maya" / "hotkeys_default.json"
     hotkeys = json.loads(hk_path.read_text(encoding="utf-8"))["hotkeys"]
-    assert len(hotkeys) == 468, len(hotkeys)
+    assert len(hotkeys) == 495, len(hotkeys)   # Maya 2026 (468 in 2022)
     kd = patch.KeyconfigData(maya_patches.apply(ic_data.generate()))
     checked, bad = 0, []
     for hk in hotkeys:

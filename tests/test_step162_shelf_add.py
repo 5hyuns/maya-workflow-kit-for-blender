@@ -98,7 +98,7 @@ def test_ctrl_shift_click_adds_to_the_factory_shelf():
         try:
             before = list(shelf.icon_buttons(bpy.context)[1])
             n_factory = len(shelf.all_buttons("Polygons"))
-            assert len(before) == n_factory == 43
+            assert len(before) == n_factory == 37        # Maya 2026 Poly Modeling shelf
             cubes = _cubes()
             assert bpy.ops.allset.menu_item(item=CUBE, clicked=True) == {'FINISHED'}
             assert calls == [] and _cubes() == cubes          # neither the option box nor the command
@@ -186,4 +186,4 @@ def test_remove_and_edit_with_the_shelf_tools():
         assert [b["label"] for b in shelf.factory_extras("Polygons")] == ["Box"]
         bpy.ops.allset.shelf_remove_button(index=0)
         assert shelf.factory_extras("Polygons") == []
-        assert len(shelf.icon_buttons(bpy.context)[1]) == 43
+        assert len(shelf.icon_buttons(bpy.context)[1]) == 37

@@ -3,8 +3,7 @@
 Primitives (same spec as operators/option_windows.py; option_windows._extend appends ``WINDOWS``).
 
 Titles, field labels, ranges and factory values:  (+ .json), read from Maya 2022's
-perform procs ($M\\others\\Maya, performPolyDisc / Platonic / Gear / Maya,
-performNurbs<Shape>.mel) and confirmed  with a fresh MAYA_APP_DIR ().
+option windows and confirmed  with a fresh MAYA_APP_DIR ().
 Each window fills the kit's Maya creation node (operators/prim_history.py, prim_shapes*.py, prim_supershape.py) through
 ``create.create(context, kind, overrides)``: values are Maya values, lengths in Maya units (create() scales them).
 Fields Blender / the kit can't follow are listed as ``missing``."""
@@ -90,7 +89,7 @@ def _run_super(context, v):
 
 
 def _super_fields(shape):
-    """Maya polySuperShapeOptions: General / Helix / Super Ellipse / Spherical Harmonics / Ultra
+    """Polygon Super Shape Options: General / Helix / Super Ellipse / Spherical Harmonics / Ultra
     frames (factory values settings; the menu item sets the Shape)."""
     sh = [F(f"harmonics{i}", f"{'V' if i < 4 else 'H'} {'Multiplier' if i % 2 == 0 else 'Exponent'} {i % 4 // 2 + 1}:",
             "float", d, lo=-20.0 if i % 2 == 0 else 0.0, hi=20.0 if i % 2 == 0 else 5.0)
@@ -229,14 +228,14 @@ _CAPS = "Caps: None only, Extra transform on caps (no cap surfaces)"
 _DEG_MORE = "Surface degree: 2 / 5 / 7 (1 Linear and 3 Cubic only)"
 
 WINDOWS = [
-    # Maya: Sides 3, Subdivision Mode Circle, Subdivisions 3, Radius 1 (no axis, no UV option)
+    # Polygon Disc Options: Sides 3, Subdivision Mode Circle, Subdivisions 3, Radius 1 (no axis, no UV option)
     Window("poly_disc", "Polygon Disc Options", "Create", ("allset.create", {"kind": 'DISC'}), [
         F("sides", "Sides:", "int", 3, lo=3, hi=20),
         F("subdivision_mode", "Subdivision Mode:", "enum", "Circle", items=_DISC_MODES),
         F("subdivisions", "Subdivisions:", "int", 3, lo=0, hi=40),
         F("radius", "Radius:", "length", 1.0, lo=0.001, hi=100)],
         _poly('DISC', ("sides", "subdivisions", "radius"), axis=False, uvs=False, extra=_disc_extra)),
-    # Maya: Icosahedron, Quads, 0 subdivisions, radius 1, spherical inflation 1
+    # Polygon Platonic Options: Icosahedron, Quads, 0 subdivisions, radius 1, spherical inflation 1
     Window("poly_platonic", "Polygon Platonic Options", "Create", ("allset.create", {"kind": 'PLATONIC'}), [
         F("primitive", "Primitive:", "enum", "Icosahedron", items=_PLATONIC),
         F("subdivision_mode", "Subdivision Mode:", "enum", "Quads", items=_PLATONIC_MODES),
@@ -245,7 +244,7 @@ WINDOWS = [
         F("sphericalInflation", "Spherical Inflation:", "float", 1.0, lo=0.0, hi=1.0)],
         _poly('PLATONIC', ("subdivisions", "radius", "sphericalInflation"), axis=False, uvs=False,
               extra=_platonic_extra)),
-    # Maya Pyramid: side length 1, sides 4, height / cap divisions 1 / 0, axis Y, UVs
+    # Polygon Pyramid Options: side length 1, sides 4, height / cap divisions 1 / 0, axis Y, UVs
     Window("poly_pyramid", "Polygon Pyramid Options", "Create", ("allset.create", {"kind": 'PYRAMID'}), [
         F("sideLength", "Side length:", "length", 1.0, lo=0.0, hi=100),
         F("number_of_sides", "Number of sides in base:", "enum", "4", items=("3", "4", "5")),
@@ -284,7 +283,7 @@ WINDOWS = [
         _poly('HELIX', ("coils", "height", "width", "radius", "subdivisionsAxis", "subdivisionsCoil", "subdivisionsCaps",
                         "roundCap"), extra=_helix_extra),
         missing=_NORM),
-    # Maya: no axis, no UV option
+    # Polygon Gear Options: no axis, no UV option
     Window("poly_gear", "Polygon Gear Options", "Create", ("allset.create", {"kind": 'GEAR'}), [
         F("sides", "Sides:", "int", 16, lo=3, hi=20), F("radius", "Radius:", "length", 1.0, lo=0.001, hi=100),
         F("internalRadius", "Internal Radius:", "length", 0.3, lo=0.0, hi=50),
@@ -296,7 +295,7 @@ WINDOWS = [
         F("twist", "Twist:", "float", 0.0, lo=0.0, hi=1.0), F("taper", "Taper:", "float", 1.0, lo=0.001, hi=1.0)],
         _poly('GEAR', ("sides", "radius", "internalRadius", "height", "heightDivisions", "gearSpacing", "gearOffset",
                        "gearTip", "gearMiddle", "twist", "taper"), axis=False, uvs=False)),
-    # Maya Misc: radius 1, side length 0.4036 (linked), axis Y, UVs, Normalize Collectively
+    # Polygon Soccer Ball Options: radius 1, side length 0.4036 (linked), axis Y, UVs, Normalize Collectively
     Window("poly_soccer_ball", "Polygon Soccer Ball Options", "Create", ("allset.create", {"kind": 'SOCCER_BALL'}), [
         F("radius", "Radius:", "length", 1.0, lo=0.01, hi=100),
         F("sideLength", "Side length:", "length", 0.4036, lo=0.01, hi=100), AXIS, UVS],
@@ -306,7 +305,7 @@ WINDOWS = [
     _super("poly_spherical_harmonics", "Spherical Harmonics"),
     _super("poly_ultra_shape", "Ultra Shape"),
 
-    # --- NURBS (Maya<Shape>.mel settings: pivot Object, axis Y, cubic, no tolerance) -------------
+    # --- NURBS (factory: pivot Object, axis Y, cubic, no tolerance) -------------
     Window("nurbs_sphere", "NURBS Sphere Options", "Create", ("allset.create", {"kind": 'NURBS_SPHERE'}), [
         *_pivot_fields(), *_axis_fields(), *_sweep_fields(),
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=1000), _degree_field(), *_sections(4, 2)],

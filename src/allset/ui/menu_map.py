@@ -87,9 +87,8 @@ def _kit_pref(prop):
     return ("wm.context_toggle", {"data_path": f'preferences.addons["{pkg}"].preferences.{prop}'})
 
 
-# Windows > ... Editors: Maya fills these submenus at run time (startup/Maya
-# Maya / Maya / Maya / buildRenderingEdMenu /
-# Maya; labels from ). Items listed in
+# Windows > ... Editors: Maya fills these submenus at run time (labels from
+# ). Items listed in
 # CHILDREN without an action here draw greyed. 
 _WINDOW_EDITORS = {
     "General Editors/Attribute Editor": _dock('ATTRIBUTE_EDITOR'),
@@ -308,7 +307,7 @@ MAP = {
     "Windows/Node Editor": _editor('ShaderNodeTree'),
     **{f"Windows/{path}": action for path, action in _WINDOW_EDITORS.items()},
     "Windows/UI Elements": ("menu", "ALLSET_MT_ui_elements"),
-    # Settings/Preferences submenu ($M/scripts/startup/Maya Maya; step 120)
+    # Settings/Preferences submenu (Maya 2026 Windows menu; step 120)
     "Windows/Settings/Preferences/Preferences": "allset.maya_preferences",   # step 215: kit window
     "Windows/Settings/Preferences/Hotkey Editor": "allset.hotkey_editor",   # step 215: Maya list + kit keys
     "Windows/Settings/Preferences/Color Settings": "allset.color_settings",   # viewport background
@@ -583,7 +582,7 @@ EXTRA = {
 CHILDREN = {
     # Step 219: the other run-time submenus (Windows > ... Editors, Modify > Match Transformations / Snap Align
     # Objects, Display > Heads Up Display) now come from the Maya 2026 GUI dump in ui/menu_data.py.
-    # Windows > Settings/Preferences ($M/scripts/startup/Maya Maya; Performance
+    # Windows > Settings/Preferences (Maya 2026 Windows menu; Performance
     # Settings only with the legacy viewport, off by default; step 120)
     "Windows/Settings/Preferences": [
         ("Preferences",), ("-", ""), ("Hotkey Editor",), ("Color Settings",), ("Marking Menu Editor",),
@@ -697,7 +696,7 @@ MAP.update({
     "Deform/Pose Space Deformation/Pose Editor": ("allset.pose_editor", {}),
     "Deform/Pose Space Deformation/Create Pose Interpolator": ("allset.pose_interpolator_create", {}),
     "Windows/Rendering Editors/Render Setup": _props('VIEW_LAYER'),   # Maya 2026 (step 219)
-    # Maya's Light Linking submenu (startup/Maya-612 Maya): the step 179 kit editor
+    # Maya's Light Linking submenu (Windows > Rendering Editors): the step 179 kit editor
     # in light- / object-centric mode, like Lighting/Shading > Light Linking Editor (step 211, audit 16 NB13).
     "Windows/Relationship Editors/Light Linking/Light-Centric": ("v3d", "allset.light_linking_editor",
                                                                  {"mode": 'LIGHT_CENTRIC'}),
@@ -955,7 +954,7 @@ OBJECT_MODE = {
     "Mesh/Fill Hole": ('ALL', 'EDGE'),
     "Mesh/Quadrangulate": ('ALL', 'FACE'),
     # Step 139 (U1): Maya's UV projections convert an object selection to all its faces
-    # (Maya-634); Automatic / Contour Stretch / Planar do that in their own operator.
+    # (checked in Maya 2026); Automatic / Contour Stretch / Planar do that in their own operator.
     "UV/Cylindrical": ('ALL', 'FACE'),
     "UV/Spherical": ('ALL', 'FACE'),
 }
@@ -1114,8 +1113,8 @@ TWINS = {
     "UV Editor/Tools/Sew": "UV Editor/Cut/Sew/Sew",
     "UV Editor/Tools/Pin": "UV Editor/Edit/Pin Selection",
     # step 189: runTimeCommand aliases (tools/menu_consistency.py module doc) — the main UV > Delete UVs runs
-    # DeleteUVsWithoutHotkey = the marking menu's DeleteUVs (polyPerformAction polyMapDel f 0, Maya);
-    # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (Maya, 51)
+    # DeleteUVsWithoutHotkey = the marking menu's DeleteUVs (polyMapDel on the selected faces, Maya UV marking menu);
+    # nHair > Modify Curves runs the Curves menu's SmoothHairCurves / StraightenCurves (Maya 2026 nHair menu)
     "nHair/Modify Curves/Smooth": "Curves/Smooth",
     "nHair/Modify Curves/Straighten": "Curves/Straighten",
     "nHair/Modify Curves/Lock Length": "Curves/Lock Length",          # step 207

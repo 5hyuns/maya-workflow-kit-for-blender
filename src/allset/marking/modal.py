@@ -3,7 +3,7 @@
 
 ``allset.mm_engine``: one marking menu (``marking/menus.py``) drawn with the
 GPU, driven by ``engine.Session``. ``allset.hotbox``: Space hold (menu rows,
-centre and N/S/E/W zones); a quick tap toggles the pane (Maya).
+centre and N/S/E/W zones); a quick tap toggles the pane (Maya 2022 hotbox).
 Plus the small operators the hotbox zone menus run.
 """
 
@@ -316,7 +316,7 @@ def open_menu(menu_name, button, origin=None):
 # --- hotbox ---------------------------------------------------------------------------
 
 def hotbox_rows(context, area_type=None):
-    """(rows above, cursor row sides, rows below) like Maya's hotbox (13_hotbox.png; Maya-237):
+    """(rows above, cursor row sides, rows below) like Maya's hotbox (13_hotbox.png, Maya 2022):
     common menus (+ Cache, Help), the 3D View's panel menus, then the menu set rows (every set when
     Hotbox Controls > Show All Menu Sets is on, Maya's default; else the current one)."""
     prefs = _prefs(context)
@@ -461,7 +461,7 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
 
 
 class ALLSET_MT_hotbox_controls(bpy.types.Menu):
-    """Hotbox Controls (Maya-207): menu sets, rows, style"""
+    """Hotbox Controls (Maya 2022 hotbox): menu sets, rows, style"""
     bl_idname = "ALLSET_MT_hotbox_controls"
     bl_label = "Hotbox Controls"
 
@@ -492,7 +492,7 @@ _persp_views = {}  # area pointer -> (rotation, location, distance) of the last 
 
 
 class ALLSET_OT_hb_view(bpy.types.Operator):
-    """Switch the pane to a Maya camera view (Maya-163)"""
+    """Switch the pane to a Maya camera view (Maya 2022 hotbox centre zone)"""
     bl_idname = "allset.hb_view"
     bl_label = "Switch View"
     bl_options = {'INTERNAL'}
@@ -520,7 +520,7 @@ class ALLSET_OT_hb_view(bpy.types.Operator):
 
 
 class ALLSET_OT_hb_pane(bpy.types.Operator):
-    """Turn the pane under the hotbox into another editor (Maya-119)"""
+    """Turn the pane under the hotbox into another editor (Maya 2022 hotbox South zone)"""
     bl_idname = "allset.hb_pane"
     bl_label = "Switch Panel Type"
     bl_options = {'INTERNAL'}
@@ -577,7 +577,7 @@ _PREF_ELEMENTS = {"HELP_LINE": "show_help_line", "STATUS_LINE": "show_status_lin
 
 
 class ALLSET_OT_hb_ui(bpy.types.Operator):
-    """Show or hide a Maya UI element (Maya-90)"""
+    """Show or hide a Maya UI element (Maya 2022 hotbox East zone)"""
     bl_idname = "allset.hb_ui"
     bl_label = "Toggle UI Element"
     bl_options = {'INTERNAL'}
@@ -611,7 +611,7 @@ class ALLSET_OT_hb_ui(bpy.types.Operator):
         return bpy.ops.allset.editor_toggle(editor=self.element)
 
 
-# Exclusive selection-mask presets (Maya setSelectMode, Maya).
+# Exclusive selection-mask presets (Maya's selection mask presets).
 MASK_PRESETS = {
     "ALL": None,
     "POLYGONS": {"mesh"},
@@ -642,7 +642,7 @@ class ALLSET_OT_hb_mask(bpy.types.Operator):
 
 
 class ALLSET_OT_hb_style(bpy.types.Operator):
-    """Hotbox style: zones and menu rows, zones only, or centre only (Maya-176)"""
+    """Hotbox style: zones and menu rows, zones only, or centre only (Maya 2022 hotbox centre zone)"""
     bl_idname = "allset.hb_style"
     bl_label = "Hotbox Style"
     bl_options = {'INTERNAL'}

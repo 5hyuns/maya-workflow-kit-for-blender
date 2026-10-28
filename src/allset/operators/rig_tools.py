@@ -4,7 +4,7 @@
 - Constrain > Parent / Point / Orient / Scale / Aim ...: Maya order (targets, then the constrained node
   last). In pose mode the constraint goes on the active joint (pose bone), the target is the selected
   control object or joint — not on the armature object (-18,-3).
-- Modify > Add / Edit / Delete Attribute (Maya Attributes section,
+- Modify > Add / Edit / Delete Attribute (Maya Modify menu Attributes section,
   ): custom properties on the selected objects / joints,
   which the Channel Box shows as channels.
 - Deform > Blend Shape: ``object.join_shapes`` (targets selected, base last = Maya's order).

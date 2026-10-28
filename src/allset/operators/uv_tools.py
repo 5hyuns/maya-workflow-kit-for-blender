@@ -381,7 +381,7 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
     and build shells Maya's way (``_maya_shells``: candidate planes within 60 degrees, seeds by fewest candidates,
     flood fill that stops where a shell would overlap itself; ); other
     plane counts give every face the plane its normal faces most. Shells are laid out in 0-1 at one scale with
-    ``spacing`` percent between them (factory 0.2 %, Maya-51) by Maya's packed "Into square"
+    ``spacing`` percent between them (factory 0.2 %) by Maya's packed "Into square"
     layout (operators/autoproj_layout.py, step 257). ``unit`` = Blender length of one Maya unit
     (``units.maya_unit``): Maya projects and packs in Maya units. Returns the shell count."""
     from . import autoproj_layout
@@ -448,7 +448,7 @@ def fit_unit(loops, uv):
 
 class _ObjectFaces:
     """From object mode: the selected meshes in edit mode with every face selected (Maya converts an object selection
-    to its faces for UV projections, Maya-634, Maya-464), back to
+    to its faces for UV projections), back to
     object mode afterwards. In edit mode: nothing."""
 
     def __init__(self, context):

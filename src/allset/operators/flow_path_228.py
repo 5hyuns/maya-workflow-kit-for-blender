@@ -153,7 +153,7 @@ class ALLSET_OT_flow_path(bpy.types.Operator):
 
 
 def windows():
-    """Maya Flow Path Object Options (: Maya settings —
+    """Maya Flow Path Object Options (: factory values —
     Divisions Front 5 / Up 2 / Side 2, Lattice around Object, Local effect off 2 / 2 / 2)."""
     from .option_windows import F, Window
 

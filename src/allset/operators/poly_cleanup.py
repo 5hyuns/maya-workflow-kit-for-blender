@@ -2,8 +2,8 @@
 """Mesh > Cleanup... as Maya's command (step 197, #104): a menu leaf with an option box, not Blender's Clean Up submenu.
 
 Maya 2022: the item runs ``performPolyCleanup 0`` = ``polyCleanupArgList 4 {...}`` with the Cleanup Options values
-(Maya-126 factory setting: Operation 1 "Cleanup matching polygons", Scope selected objects,
-history on, every criterion off, tolerances 1e-5; :503 the argument list; Maya-32 the meaning of
+(factory: Operation 1 "Cleanup matching polygons", Scope selected objects,
+history on, every criterion off, tolerances 1e-5; the meaning of
 each argument: the "Fix by Tesselation" boxes triangulate, the "Remove Geometry" boxes delete). Spec:
 
 

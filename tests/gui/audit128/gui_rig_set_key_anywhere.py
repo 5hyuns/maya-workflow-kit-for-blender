@@ -1,4 +1,4 @@
-"""Audit 128 (rig/anim lane) repro: Maya's S (SetKey, Maya) is a global hotkey -- it keys every
+"""Audit 128 (rig/anim lane) repro: Maya's S (SetKey, Maya factory hotkey) is a global hotkey -- it keys every
 keyable channel of the selection wherever the mouse is. In the kit S is only bound in the 3D View keymaps
 ("Object Mode" / "Pose"), so with the mouse over the Channel Box (IC "User Interface" S = anim.keyframe_insert_button
 on the Scene proxy field) or over the Time Slider (IC Dopesheet S = action.keyframe_insert, existing curves only) a

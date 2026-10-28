@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner as a UIList in the 3D View sidebar (category "Outliner").
 
- (``Maya``: showShapes 0,
+ (Maya's default Outliner: showShapes 0,
 showDagOnly 1, autoExpand 0),  (transform / shape),
  #3 (Blender's Outliner tree is C; a UIList is the
 way to a custom tree, without drag and drop). Design:  「계획」 2.
