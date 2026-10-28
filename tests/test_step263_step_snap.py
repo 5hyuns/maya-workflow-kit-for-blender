@@ -96,3 +96,15 @@ def test_turning_one_tool_on_leaves_the_others_off():
     assert not ts.use_snap_rotate and not ts.use_snap_scale        # and Blender doesn't step them
     _click('ROTATE', 'ABSOLUTE')
     assert snap.step_snap_mode(ts, 'TRANSLATE') == 'RELATIVE' and snap.step_snap_mode(ts, 'RESIZE') == 'OFF'
+
+
+def test_move_absolute_only_with_world_axes():
+    # Maya Maya-74 (060_messages_ui.md B5): "Absolute only supported in world mode"
+    sc = bpy.context.scene
+    slot = sc.transform_orientation_slots[1]          # the Move tool's axis (ui/manipulator.SLOT)
+    slot.type = 'GLOBAL'
+    assert snap.absolute_offered(sc, 'TRANSLATE')
+    slot.type = 'LOCAL'
+    assert not snap.absolute_offered(sc, 'TRANSLATE')
+    assert snap.absolute_offered(sc, 'ROTATE') and snap.absolute_offered(sc, 'RESIZE')
+    slot.type = 'GLOBAL'
