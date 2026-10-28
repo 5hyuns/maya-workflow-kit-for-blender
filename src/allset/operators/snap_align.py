@@ -295,6 +295,9 @@ class ALLSET_OT_make_live(bpy.types.Operator):
     bl_label = "Make Live"
     bl_options = {'REGISTER', 'UNDO'}
 
+    toggle: bpy.props.BoolProperty(default=False, options={'HIDDEN', 'SKIP_SAVE'},
+                                   description="Status Line magnet: while something is live, turn Make Live off")
+
     @classmethod
     def poll(cls, context):
         from . import live
@@ -308,8 +311,8 @@ class ALLSET_OT_make_live(bpy.types.Operator):
     def execute(self, context):
         from . import live
         targets = live.selected(context) if context.mode == 'OBJECT' else []
-        if set(targets) == set(live.objects(context.scene)):
-            targets = []
+        if self.toggle and live.objects(context.scene):
+            targets = []                # Maya's Status Line magnet turns Make Live off whatever is selected
         try:
             live.set_objects(context.scene, targets)
         except ValueError as ex:

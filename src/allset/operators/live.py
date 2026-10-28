@@ -6,11 +6,11 @@ from bpy.app.handlers import persistent
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
-COLOR = (0., 153/255, 84/255)  # sRGB #009954, sampled from the contributor's Maya viewport
+COLOR = (0., 153/255, 84/255)  # sRGB #009954, Maya's live surface wire / Outliner colour
 LIMIT = 16
 LOCK = '_allset_live_select_before'
 _busy = False
-_locked = {}
+_locked = {}          # session_uid -> object name of the objects whose selection Make Live locked
 _trees = OrderedDict()
 CACHE_BUDGET = 256 * 1024 * 1024  # estimated retained BVH bytes; one oversized surface may occupy the cache alone
 
@@ -56,6 +56,30 @@ def _restore(ob):
         del ob[LOCK]
 
 
+def _gone(ob):
+    return ob is None or not ob.users_scene
+
+
+def _prune(scene):
+    """Drop deleted objects from the live list and history: a kept pointer would hold the object (and its mesh) in
+    the file after it was deleted."""
+    refs = getattr(scene, 'allset_live_objects', None)
+    for i in reversed(range(len(refs) if refs is not None else 0)):
+        if _gone(refs[i].object):
+            refs.remove(i)
+    history = getattr(scene, 'allset_live_history', None)
+    for i in reversed(range(len(history) if history is not None else 0)):
+        entry = history[i].objects
+        for j in reversed(range(len(entry))):
+            if _gone(entry[j].object):
+                entry.remove(j)
+        if not len(entry):
+            history.remove(i)
+    legacy = getattr(scene, 'allset_live', None)
+    if legacy is not None and _gone(legacy):
+        scene.allset_live = None
+
+
 def sync():
     """Reconcile the union of live references across scenes, without touching transform locks."""
     global _busy
@@ -65,25 +89,25 @@ def sync():
     try:
         wanted = {}
         for scene in bpy.data.scenes:
+            _prune(scene)
             refs = objects(scene)
             first = refs[0] if refs else None
             if getattr(scene, 'allset_live', None) != first:
                 scene.allset_live = first
             wanted.update((ob.session_uid, ob) for ob in refs)
-        for uid, ob in list(_locked.items()):
+        for uid, name in list(_locked.items()):
             if uid not in wanted:
                 _trees.pop(uid, None)
-                try:
+                ob = bpy.data.objects.get(name)
+                if ob is not None and ob.session_uid == uid:
                     _restore(ob)
-                except ReferenceError:
-                    pass
                 del _locked[uid]
         for uid, ob in wanted.items():
             if LOCK not in ob:
                 ob[LOCK] = ob.hide_select
             if not ob.hide_select:
                 ob.hide_select = True
-            _locked[uid] = ob
+            _locked[uid] = ob.name
     finally:
         _busy = False
 
@@ -120,7 +144,8 @@ def set_objects(scene, targets, remember=True):
         # An active-but-deselected live reference must not become an Edit Mode target.
         vl = getattr(bpy.context, 'view_layer', None)
         if vl and vl.objects.active in targets:
-            vl.objects.active = next((ob for ob in vl.objects if ob.select_get() and ob not in targets), None)
+            vl.objects.active = next((ob for ob in vl.objects if ob is not None and ob.select_get() and ob not in targets),
+                                      None)
     finally:
         _busy = False
     sync()
@@ -189,8 +214,9 @@ class ALLSET_OT_live_list(bpy.types.Operator):
     bl_label = 'Live Surfaces'
     bl_options = {'REGISTER', 'UNDO'}
 
-    action: bpy.props.EnumProperty(items=[(s, s.title(), '') for s in ('CLEAR', 'RECALL', 'RECENT', 'ADD', 'REMOVE')])
-    index: bpy.props.IntProperty(default=0)
+    action: bpy.props.EnumProperty(items=[(s, s.title(), '') for s in ('CLEAR', 'RECALL', 'RECENT', 'ADD', 'REMOVE')],
+                                  options={'HIDDEN'})
+    index: bpy.props.IntProperty(default=0, options={'HIDDEN'})
     object_name: bpy.props.StringProperty(options={'HIDDEN', 'SKIP_SAVE'})
 
     def execute(self, context):

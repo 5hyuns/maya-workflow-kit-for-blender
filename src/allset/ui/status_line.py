@@ -558,7 +558,7 @@ def draw_status_line(layout, context, compact=False):
         for name, desc, _icon, elements in SNAPS:
             if name == 'LIVE':
                 from ..operators import live
-                _flat(row, 'allset.make_live', 'snap_LIVE', depress=bool(live.objects(context.scene)))
+                _flat(row, 'allset.make_live', 'snap_LIVE', depress=bool(live.objects(context.scene))).toggle = True
             elif elements is None:
                 _grey(row, "snap_" + name, f"Status Line/{desc}")
             else:
