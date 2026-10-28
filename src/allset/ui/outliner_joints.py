@@ -69,6 +69,7 @@ def _ref(text, size, height):
     blf.size(0, size)
     w = int(blf.dimensions(0, text)[0]) + 4
     base = int(round((height - blf.dimensions(0, "x")[1]) / 2.0))   # x-height centred; DY absorbs the rest
+    viewport, scissor = gpu.state.viewport_get(), gpu.state.scissor_get()
     off = gpu.types.GPUOffScreen(w, height)
     try:
         with off.bind():
@@ -90,6 +91,11 @@ def _ref(text, size, height):
             px = np.array(fb.read_color(0, 0, w, height, 4, 0, 'UBYTE').to_list(), dtype=np.int16)
     finally:
         off.free()
+        # Freeing the temporary framebuffer can restore the full-window GPU
+        # viewport instead of this editor's. Restore the editor state explicitly
+        # so the first cold glyph lookup does not draw labels outside its region.
+        gpu.state.viewport_set(*viewport)
+        gpu.state.scissor_set(*scissor)
     got = (w, base, px.reshape(height, w, 4)[..., 0] > 90)
     _refs[key] = got
     while len(_refs) > 256:
@@ -243,8 +249,9 @@ def draw():
 
     k_lo = max(0, int(math.floor(-v2d.region_to_view(0, region.height - 1)[1] / u)))
     k_hi = int(math.floor(-v2d.region_to_view(0, 0)[1] / u))
-    # the text columns (first / last ink) each name would have at each depth: a row's middle line is read first and
-    # only a row whose text ends within reach of one of them is read whole (one line per row on a big scene)
+    # Candidate name spans at each depth. Restriction icons (monitor, eye,
+    # camera, selectability) can be to the right of the name: the last ink in
+    # the whole row is not necessarily the last letter of its label.
     spans = []
     for name in named:
         w, _base, ref = _ref(name, size, u)
@@ -265,8 +272,7 @@ def draw():
         mid = pixels[y0+u//2:y0+u//2+1]
         bg = _background(mid)
         cols = _ink(mid, bg)[0]
-        text = _extent(cols, int(lead + 2 * u) - reach, width - max(4, round(size/3)))
-        if text is None or not any(abs(text[1] - b) <= reach for _a, b in spans):
+        if not any(cols[max(0, a-reach):min(width, b+reach+1)].any() for a, b in spans):
             continue
         if lo == y0 and hi == y0+u:
             lines = pixels[lo:hi]
@@ -293,33 +299,49 @@ def draw():
     SEEN[region.as_pointer()] = [(h[4], named[h[4]]) for h in hits]
     if not hits:
         return
-    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    for k, depth, dx, dy, name in hits:
-        lines = rows[k]
-        bg = _background(lines)
-        w, base, _mask = _ref(name, size, u)
-        x = int(lead + (depth + 2.25) * u) + dx
-        y0 = bottom_of(k)
-        band = lines[:, max(0, x):min(width, x + w), :3]
-        diff = np.abs(band - np.asarray(bg, dtype=np.int16)).sum(axis=-1)
-        if diff.size and diff.max() > INK:
-            iy, ix = np.unravel_index(int(diff.argmax()), diff.shape)
-            text_rgb = tuple(int(c) for c in band[iy, ix])
-        else:
-            text_rgb = (220, 220, 220)
-        gpu.state.blend_set('NONE')
-        x0, x1 = x - 1, x + w + 2
-        batch = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0 + 1), (x1, y0 + 1), (x1, y0 + u - 1),
-                                                          (x0, y0 + u - 1)]}, indices=[(0, 1, 2), (0, 2, 3)])
-        shader.uniform_float("color", (bg[0] / 255.0, bg[1] / 255.0, bg[2] / 255.0, 1.0))
-        batch.draw(shader)
-        gpu.state.blend_set('ALPHA')
-        blf.size(0, size)
-        color = live.COLOR if bpy.data.objects.get(name) in live_objects else tuple(c/255 for c in text_rgb)
-        blf.color(0, *color, 1.0)
-        blf.position(0, x + 1, y0 + base + dy, 0)
-        blf.draw(0, named[name])
-    gpu.state.blend_set('NONE')
+    from mathutils import Matrix
+    with fb.bind():
+        gpu.matrix.push_projection()
+        gpu.matrix.push()
+        try:
+            gpu.matrix.load_identity()
+            gpu.matrix.load_projection_matrix(Matrix(((2.0/width, 0, 0, -1),
+                (0, 2.0/region.height, 0, -1), (0, 0, 1, 0), (0, 0, 0, 1))))
+            # Readbacks/offscreen glyph rendering may leave a full-window viewport even
+            # though the active framebuffer is this editor's region texture.
+            gpu.state.viewport_set(0, 0, region.width, region.height)
+            gpu.state.scissor_set(0, 0, region.width, region.height)
+            shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+            for k, depth, dx, dy, name in hits:
+                lines = rows[k]
+                bg = _background(lines)
+                w, base, _mask = _ref(name, size, u)
+                x = int(lead + (depth + 2.25) * u) + dx
+                y0 = bottom_of(k)
+                band = lines[:, max(0, x):min(width, x + w), :3]
+                diff = np.abs(band - np.asarray(bg, dtype=np.int16)).sum(axis=-1)
+                if diff.size and diff.max() > INK:
+                    iy, ix = np.unravel_index(int(diff.argmax()), diff.shape)
+                    text_rgb = tuple(int(c) for c in band[iy, ix])
+                else:
+                    text_rgb = (220, 220, 220)
+                gpu.state.blend_set('NONE')
+                x0, x1 = x - 1, x + w + 2
+                batch = batch_for_shader(shader, 'TRIS', {"pos": [(x0, y0 + 1), (x1, y0 + 1), (x1, y0 + u - 1),
+                                                                  (x0, y0 + u - 1)]}, indices=[(0, 1, 2), (0, 2, 3)])
+                shader.uniform_float("color", (bg[0] / 255.0, bg[1] / 255.0, bg[2] / 255.0, 1.0))
+                batch.draw(shader)
+                gpu.state.blend_set('ALPHA')
+                blf.size(0, size)
+                color = live.COLOR if bpy.data.objects.get(name) in live_objects else tuple(c/255 for c in text_rgb)
+                blf.color(0, *color, 1.0)
+                blf.position(0, x + 1, y0 + base + dy, 0)
+                blf.draw(0, named[name])
+            gpu.state.blend_set('NONE')
+        finally:
+            gpu.matrix.pop()
+            gpu.matrix.pop_projection()
+
 
 
 def register():
