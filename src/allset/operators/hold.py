@@ -406,6 +406,16 @@ def active_holds():
     return {g: list(s["active"]) for g, s in _state.items()}
 
 
+def step_state(ts, kind):
+    """J state and the persistent increment setting from before a temporary hold."""
+    state = _state.get('snap')
+    held = state is not None and 'step' in state['active']
+    saved = state['saved'] if held else GROUPS['snap'].capture(ts)
+    affect = {'TRANSLATE': 3, 'ROTATE': 4, 'RESIZE': 5}[kind]
+    baseline = bool(saved[0] and 'INCREMENT' in saved[1] and saved[affect])
+    return held or keystate.is_down('J') is True, baseline
+
+
 def begin(ts, name):
     """Start holding ``name``. Saves the group's state on its first hold."""
     group_name = HOLDS[name]
