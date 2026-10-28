@@ -193,10 +193,12 @@ def test_pick_walk():
     vl = bpy.context.view_layer
     vl.update()  # sync new objects into view_layer.objects
     assert pickwalk.walk(vl, a, "UP") == root
-    assert pickwalk.walk(vl, root, "DOWN") == a          # first child by name
-    assert pickwalk.walk(vl, a, "RIGHT") == b
-    assert pickwalk.walk(vl, c, "RIGHT") == a            # wraps
-    assert pickwalk.walk(vl, a, "LEFT") == c             # wraps backwards
+    # Maya creation order b, a, c (step 266 independent check, Maya 2026: locators made b, a, c)
+    assert pickwalk.walk(vl, root, "DOWN") == b          # the first child made
+    assert pickwalk.walk(vl, b, "RIGHT") == a
+    assert pickwalk.walk(vl, a, "RIGHT") == c
+    assert pickwalk.walk(vl, c, "RIGHT") == b            # wraps
+    assert pickwalk.walk(vl, b, "LEFT") == c             # wraps backwards
     assert pickwalk.walk(vl, leaf, "DOWN") == leaf       # nowhere to go
     assert pickwalk.walk(vl, leaf, "LEFT") == leaf       # only child
     assert pickwalk.walk(vl, root, "UP") == root         # already at the top
@@ -209,7 +211,7 @@ def test_pick_walk():
     assert _selected() == ["pw_root"], _selected()       # both walk to the same parent
     _select([a, b], active=b)
     bpy.ops.allset.pick_walk(direction="RIGHT")
-    assert _selected() == ["pw_b", "pw_c"] and vl.objects.active == c
+    assert _selected() == ["pw_a", "pw_c"] and vl.objects.active == a   # creation order b, a, c
 
 
 # --- keymap ---------------------------------------------------------------------

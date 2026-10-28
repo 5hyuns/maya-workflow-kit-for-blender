@@ -12,6 +12,8 @@ WRONG_SELECTION = "Current selection doesn't match required selection type."    
 NO_LIVE_SURFACE = "A live surface is required for conform."                         # Maya
 NO_CONFORM_SELECTION = "No components or objects selected for conform."
 MUST_SELECT_JOINT = "You must select at least one joint."                           # Maya
+SELECT_TO_BIND = "Select objects to bind."                     # Bind Skin, nothing selected (step 258 / 266 Maya)
+BINDABLE_IN_SELECTION = "Bindable objects must be part of the selection."   # Bind Skin, joints only (step 266)
 NO_TARGETS = "Target list was empty or contained no valid targets."                 # parent / point / orient /
 #                                                    scale / aim / geometry constraint (B4 + step 258 checked)
 MOVE_IK_TO_FK = "Must select an ik handle, joint or object that connected to IK/FK."   # Maya

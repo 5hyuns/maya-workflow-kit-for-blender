@@ -2,8 +2,10 @@
 """Maya arrow-key pick-walk (object mode).
 
  "Arrow keys": Up = parent, Down = child,
-Left/Right = sibling (``pickWalk -d up``, HK:364-369). Siblings are ordered
-by name (Blender Outliner default sort) and wrap around . Edit mode:
+Left/Right = sibling (``pickWalk -d up``, HK:364-369). Siblings are in Maya's
+creation order (a re-parented node last; the kit's ``outliner_order.ORDER`` numbers) and wrap around —
+step 266 independent check, Maya 2026: locators made b, a, c walk b -> a -> c -> b, Down = the first made.
+Edit mode:
 component pick-walk at the end of this file (step 39).
 """
 
@@ -20,8 +22,11 @@ DIRECTIONS = (
 
 
 def _in_layer(view_layer, objs):
+    from ..ui.outliner_order import ORDER
     names = view_layer.objects
-    return sorted((o for o in objs if o.name in names), key=lambda o: o.name)
+    link = {o.name: i for i, o in enumerate(view_layer.objects) if o is not None}   # link order = creation order
+    return sorted((o for o in objs if o.name in names),
+                  key=lambda o: (o.get(ORDER, 10 ** 9 + link.get(o.name, 0)), link.get(o.name, 0)))
 
 
 def siblings(view_layer, ob):
