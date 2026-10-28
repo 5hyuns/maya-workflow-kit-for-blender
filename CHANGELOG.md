@@ -9,6 +9,28 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 - **Requires Blender 5.0 or newer (5.0 – 5.2).** 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
   there. Blender 5.0, 5.1 and 5.2 are supported as before; versions after 5.2 are added once they are tested.
 
+### Added
+Pivot editing, component scale, Smart Extrude and Make Live from @youngmin2k (#207) — thank you!
+- **Pivot editing (D)**: tap D (or Insert) to keep pivot editing on; hold D for a temporary edit as before. While
+  editing, click a vertex, edge or face to move the pivot there and turn it to that component (Ctrl = turn only,
+  Shift = move only); Move and Rotate handles follow the edited pivot, and the Rotate rings turn it live. Hold J for
+  step snapping during pivot drags. Choosing a transform tool (Q / W / E / R) ends a latched pivot edit, like Maya.
+  See [component picking](docs/pivot_component_picking.md).
+- **Prevent Negative Scale**: the Scale tool option (on by default, as in Maya; Tool Settings, the tool popup and the
+  R marking menu) stops a single-axis component scale at zero instead of flipping the selection.
+  See [scope and behavior](docs/component_scale.md).
+- **Smart Extrude**: Edit Mesh > Smart Extrude, the Polygons shelf button and the face marking menu grow or carve the
+  selected faces inside a closed mesh; pushed through the mesh it cuts a hole, and where it meets another part of the
+  same mesh the two are joined. The result keeps the existing edge loops and, like Maya, has no extra points on
+  straight edges (a hole through a cube has quad walls). Move / Rotate / Scale handles, J snapping, typed values,
+  Esc, Undo / Redo and G. Ordinary Extrude (Ctrl+E) and Shift+drag extrusion are unchanged.
+  See [usage and limits](docs/smart_extrude.md).
+- **Make Live**: several meshes can be live at once. The Status Line magnet makes the selection live and, while
+  something is live, turns Make Live off; its arrow lists recent live surfaces. Live meshes can't be picked in the
+  viewport or edited as components, show a dark green wire and Outliner name, and the Move centre / plane handles
+  and Quad Draw snap only onto them. A deleted live mesh is let go (it no longer stays in the file).
+  See [usage and limits](docs/make_live.md).
+
 ### Fixed
 - **Maya menus and switching back on Blender 5.1** (#199, #198): when one part of Maya mode fails to start, the kit now
   takes back everything it had started and stays in plain Blender, and says why (console, a message and the add-on
@@ -19,58 +41,10 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   Blender's "Cannot edit hidden object" or a Python error when the active object is hidden; they warn
   "<name> is hidden: show it (Display > Show) first" and change nothing. Thanks to @youngmin2k for the component-mode
   fix and its tests (#196).
-- **Live Outliner names with restriction columns**: monitor/eye/camera icons no
-  longer hide live-name candidates. Bind the editor framebuffer and pixel
-  projection explicitly so cold glyph rendering paints the name in the correct
-  region on its first draw, including in the user's Maya layout.
-- **Make Live performance**: cache verified Outliner row matches, read its pixels
-  once per draw and compare glyph bounds before testing translations. Native
-  BVHs avoid Python geometry expansion for uniform-scale reference meshes;
-  nonuniform scale/shear retains exact world-distance queries. Evict least-recent
-  BVHs under an estimated memory budget and release references removed from the
-  last live scene. A single oversized surface may occupy the cache alone.
-- **Quad Draw backfaces**: continue through deep stacks of rejected backfaces
-  until a front face or a miss, with progress checks; never accept a backface
-  merely because an iteration limit was reached.
-- **Maya mode startup**: defer Make Live scene reconciliation until `load_post`
-  when Blender restricts data during addon registration. Saved Maya mode can
-  register fully on restart and show its layout again.
-- **Make Live**: the Status Line magnet makes the selected meshes live; its arrow
-  opens surface history. Live references resist viewport selection, use dark green
-  `#009954` Outliner labels and wire overlays, and keep snap settings independent.
-  Move centre/plane handles and Quad Draw query only the explicit live list,
-  including evaluated modifiers and multiple references. History, add/remove,
-  cancellation, Undo/Redo and file reload preserve selection restrictions.
-  Virtual Outliner rows no longer cover native objects in short editors.
-  See [usage and limits](docs/make_live.md).
-- **Component scale**: Prevent Negative Scale is functional in Scale Settings,
-  the active-tool popup and R marking menu. Single-axis mesh scaling stops at
-  exactly zero, preserving the captured pivot/frame and recovering smoothly
-  when dragging back. J, numeric values, MMB, cancellation and Undo/Redo share
-  the same guard. Native proportional editing, mesh symmetry, shape keys and UV
-  correction are retained. Object, plane and uniform scaling remain native.
-  See [scope and behavior](docs/component_scale.md).
-- **Smart Extrude response**: handles follow every mouse event while Boolean
-  previews run on an adaptive 60 Hz timer, removing the previous 10 Hz stepping.
-- **Smart Extrude source topology**: rebuild explicitly identified source faces,
-  caps and wall panels from their intersection boundaries. Keep inset/edge-loop
-  borders instead of merging entire planar islands. Rectangular holes use four
-  stable corner-matched frame panels; temporary connectors carry endpoint proof
-  across subsequent edits and blend-file roundtrips. UV-based topology guessing
-  is removed.
-- **Smart Extrude cut drags**: long inward drags use a stable screen-to-axis
-  mapping; toggling Shift precision preserves the current depth. Mesh and handles
-  stay on the last valid preview if a later position cannot be evaluated.
-- **Smart Extrude topology validation**: test original feature edges, surviving
-  cut segments, panel boundaries and Undo/Redo alongside volume/manifold checks.
-
-### Added
-- **Modern Smart Extrude**: the menu, Polygons shelf and face marking menu now use
-  a separate tool that grows, carves and stitches intersecting geometry within a
-  closed mesh, including partial/full cut-through and disconnected shells.
-  Combined Move/Rotate/Scale handles support custom pivots, J snapping, numeric
-  input, cancellation, Undo/Redo and G on a new selection. Ordinary Extrude and
-  legacy Shift+drag retain their behavior. See [usage and limits](docs/smart_extrude.md).
+- **Maya mode at Blender startup** (#207): a saved Maya mode now starts completely when Blender opens.
+- **Quad Draw behind many back faces** (#207): drawing keeps looking past stacked back faces to the first front face.
+- **Pivot editing keeps the selection**: starting or ending a pivot edit in edge or face mode no longer selects
+  extra components.
 
 ## [0.6.2] — 2026-10-28
 
