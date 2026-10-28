@@ -6,11 +6,16 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Smart Extrude response**: handles follow every mouse event while Boolean
+  previews run on an adaptive 60 Hz timer, removing the previous 10 Hz stepping.
+- **Intersecting Smart Extrude cuts**: clean affected planar islands across
+  successive cuts, merging joined tunnel walls into concave n-gons while keeping
+  explicit seams, creases and material boundaries. Unaffected topology is retained.
 - **Smart Extrude cut drags**: long inward drags use a stable screen-to-axis
   mapping; toggling Shift precision preserves the current depth. Mesh and handles
   stay on the last valid preview if a later position cannot be evaluated.
 - **Smart Extrude topology**: remove Boolean diagonals from planar cut walls and
-  fragments of original faces, retaining n-gons and original polygon/UV/material
+  fragments of original faces, retaining n-gons and explicit UV/material/crease
   boundaries instead of leaving unnecessary triangles.
 
 ### Added
