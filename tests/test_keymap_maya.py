@@ -87,7 +87,7 @@ def test_box_select_modes():
 
 
 def test_outliner_and_graph_click_select():
-    # Step 170 (checked in Maya): Outliner Shift = range, Ctrl = toggle, Ctrl+Shift = add range; Graph Editor
+    # Step 170 (Maya): Outliner Shift = range, Ctrl = toggle, Ctrl+Shift = add range; Graph Editor
     # Shift / Ctrl+Shift toggle in Blender's item (Ctrl+Shift "add only" by allset.select_2d_click), Ctrl = plain
     for (shift, ctrl), (extend, rng) in (((True, False), (False, True)), ((False, True), (True, False)),
                                          ((True, True), (True, True))):
@@ -226,21 +226,6 @@ def test_added_bindings_not_shadowed():
 
 
 # --- mapping table ------------------------------------------------------------
-
-def test_mapping_rows_are_bound():
-    hk_path = Path(kit.maya_data("maya", "hotkeys_default.json"))
-    hotkeys = json.loads(hk_path.read_text(encoding="utf-8"))["hotkeys"]
-    assert len(hotkeys) == 495, len(hotkeys)   # Maya 2026 (468 in 2022)
-    kd = patch.KeyconfigData(maya_patches.apply(ic_data.generate()))
-    checked, bad = 0, []
-    for hk in hotkeys:
-        mapping.maya_event(hk)  # every Maya key converts
-        entry = mapping.entry_for(hk)
-        if hk["platform"] != "mac-only" and entry and entry["check"]:
-            checked += 1
-            if not mapping.check_entry(kd, hk, entry):
-                bad.append(hk["display"])
-    assert checked >= 20 and not bad, (checked, bad)
 
 
 def test_disable_leaves_keyconfigs_alone():

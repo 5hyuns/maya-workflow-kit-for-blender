@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Status Line Input Line (;  「계획」).
+"""Maya's Status Line Input Line.
 
 A mode button (Absolute transform / Relative transform / Rename / Select by name) and either three
 X / Y / Z fields or one text field. Behaves like Maya 2022's Status Line
-input field (checked):
+input field:
 
 - Abs / Rel apply the current tool (Move / Rotate / Scale; any other tool = Move) to the selection on
   the axes typed in; an empty field leaves that axis alone; the fields clear afterwards.

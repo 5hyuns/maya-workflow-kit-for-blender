@@ -1,4 +1,4 @@
-"""Step 131 (#25): Hypershade window in Maya's layout — split plan vs the Maya 2022 capture, pane markers, pane
+"""Step 131 (#25): Hypershade window in Maya's layout — split plan vs Maya 2022's layout, pane markers, pane
 content, current material from a pane. ; GUI: tests/gui/gui_step131_hypershade.py."""
 
 from importlib import import_module

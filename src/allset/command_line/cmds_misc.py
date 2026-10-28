@@ -2,7 +2,6 @@
 """maya.cmds look-alike 3 (step 216, Issue #122): node types, attribute queries, units, sets, shading nodes, polygon
 queries / extrude, camera.
 
-Maya behaviour:  (Maya, cases  c216_*).
 Everything goes through the kit's own data so a script gives what the menus give:
 
 - Maya nodes that aren't DAG objects (``_node``): materials = kit materials (``operators/material.py``, lambert1 =
@@ -37,7 +36,7 @@ DEFAULT_SETS = {"defaultLightSet": "objectSet", "defaultObjectSet": "objectSet",
                 "initialParticleSE": "shadingEngine", "initialShadingGroup": "shadingEngine"}
 DEFAULT_NODES = {"time1": "time"}
 
-# nodeType -inherited (checked: joint and mesh,  c216_node_type; the others
+# nodeType -inherited (Maya's lists for joint and mesh; the others
 # follow Maya's documented node hierarchy )
 _DAG = ["containerBase", "entity", "dagNode"]
 _SHAPE = _DAG + ["shape"]
@@ -200,7 +199,7 @@ def _default_camera_type(name):
 
 
 def _type_of(name):
-    """Maya node type of a node / plug / component name; RuntimeError when nothing has that name (Maya)."""
+    """Maya node type of a node / plug / component name; RuntimeError when nothing has that name."""
     text = str(name)
     node = text.rsplit("|", 1)[-1].split(".", 1)[0]
     component = "[" in text
@@ -470,7 +469,7 @@ def _set_fps(scene, fps):
 def currentUnit(*args, **kwargs):
     """Maya working units = the scene's display units: linear = ``unit_settings.length_unit`` (the kit's numbers
     follow it: 100 cm reads 1.0 in m), angle = ``system_rotation``, time = the frame rate. Setting returns the full
-    linear / angle name or the time name (Maya); a multi-flag set returns the last one's."""
+    linear / angle name or the time name; a multi-flag set returns the last one's."""
     f = _Flags("currentUnit", kwargs)
     query = f.get("query", "q", False)
     linear = f.get("linear", "l")
@@ -553,7 +552,7 @@ def _set_node(name):
 
 def sets(*args, **kwargs):
     """``sets`` = Create > Sets > Set: a kit set (``operators/sets.py``) named set1, set2 … (one past the highest);
-    -add / -remove / -isMember / -q on a set. Making or editing a set doesn't change the selection (Maya)."""
+    -add / -remove / -isMember / -q on a set. Making or editing a set doesn't change the selection."""
     from ..operators import sets as kit_sets
     f = _Flags("sets", kwargs)
     query = f.get("query", "q", False)
@@ -631,7 +630,7 @@ def new_file_texture(name=None):
 def shadingNode(*args, **kwargs):
     """``shadingNode lambert -asShader`` = a kit material (``material.new_material``: lambert2 while lambert1
     exists, blinn1, phong1 …, Maya's factory values); ``file -asTexture`` = ``new_file_texture``. No shading group
-    is made; the new node becomes the selection (Maya)."""
+    is made; the new node becomes the selection."""
     from ..operators import material
     f = _Flags("shadingNode", kwargs)
     f.get("asShader", "asShader", False)
@@ -942,7 +941,7 @@ def _extrude_object(context, ob, ids, params, world_t, name, history):
 def polyExtrudeFacet(*args, **kwargs):
     """``polyExtrudeFacet pCube1.f[1] -ltz 2`` = Maya polyExtrudeFace through the kit's extrusion (the In-View
     Editor / Channel Box INPUTS show the node); returns [polyExtrudeFaceN]. ``-t`` / ``-tx`` … is a world move of
-    the extruded faces in the kit's axes (Blender's, like ``move``); the faces stay selected (Maya)."""
+    the extruded faces in the kit's axes (Blender's, like ``move``); the faces stay selected."""
     from ..operators import extrude
     f = _Flags("polyExtrudeFacet", kwargs)
     params = dict(extrude.DEFAULTS, **extrude.MANIP_DEFAULTS)

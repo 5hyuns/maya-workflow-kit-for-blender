@@ -1,5 +1,5 @@
 """Step 149 (#91 #93 #94): selection wire follows deformation per frame, Maya names restart after Delete, Bind Skin =
-Maya closest distance. Plan / checked: , ;
+Maya closest distance. ;
 GUI: tests/gui/gui_step149_wire.py (playback shot)."""
 
 import math
@@ -170,7 +170,7 @@ def test_91_wire_batch_dropped_on_frame_change_for_deforming_objects():
 
 
 def test_lattice_gets_the_maya_selection_wire():
-    # Maya: displayColor lattice -active 16 (white), lead 19 (green) like meshes ()
+    # Maya: displayColor lattice -active 16 (white), lead 19 (green) like meshes
     _clear()
     lat = bpy.data.lattices.new("ffd1LatticeShape")
     lat.points_u, lat.points_v, lat.points_w = 2, 5, 2

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 228 L8: Maya Attach to Motion Path / Set Motion Path Key on Follow Path.
 
-Maya truth: , Maya 2026 checked 
-(script ; Set Motion Path Key curve edit checked again for this lane).
+Maya 2026 behaviour (Set Motion Path Key curve edit checked again for this lane).
 
 - Attach to Motion Path (Maya factory option values): the
   selected objects + one curve in any order (Maya takes the curve as the path, ``L8_motion_path_wrong_order``). Per
@@ -13,7 +12,7 @@ Maya truth: , Maya 2026 checked
   ``mp_rotated_obj`` = ``mp_default``), so the object's Translate (and Rotate while Follow is on) are zeroed
   (delegated: Blender's Follow Path adds the owner's transform).
 - Arc length: Blender's path is the evaluated polyline of the curve; at the default 12 per segment the position is
-  off by 5e-3 (0.15 deg) on the checked path, so the path's splines get ``PATH_POINTS`` evaluated points (resolution
+  off by 5e-3 (0.15 deg) on the test path, so the path's splines get ``PATH_POINTS`` evaluated points (resolution
   256 on the 4-span path: 9.5e-5 against Maya — the exact arc length itself differs from Maya by up to 9.6e-5, Maya's
   own arc-length tolerance; rotation 1e-3 deg).
 - Front / Up axis: Maya local X / Y / Z = Blender X / Z / -Y ( step 57). Blender's Up is a positive axis
@@ -25,7 +24,7 @@ Maya truth: , Maya 2026 checked
 - Parametric length on (Maya fractionMode off, ``mp_parametric``): Blender's path is always by length, so the Maya
   parameter keys (start -> 0, end -> maxValue) are kept on the object (``PROP``) and the Offset is baked to their
   arc-length fraction on every frame (exact on whole frames, linear between; not live when the curve changes).
-- Set Motion Path Key (``setKeyPath``, checked: knots [0,0,0,1,2,2,2] -> [0,0,0,0.719319,1,2,2,2], 6 CVs): Maya adds an
+- Set Motion Path Key (``setKeyPath``, knots [0,0,0,1,2,2,2] -> [0,0,0,0.719319,1,2,2,2], 6 CVs): Maya adds an
   edit point at the object's current position — the cubic is re-interpolated through the old edit points plus that
   position, with the old knots plus a new knot placed between the neighbouring edit points by chord length (0.719319),
   and the old end derivatives — and keys ``uValue`` at the current time with the point's fraction of the new curve
@@ -150,7 +149,7 @@ def insert_edit_point(mc, u):
     uniq = sorted(set(knots))
     if u <= uniq[0] + 1e-9 or u >= uniq[-1] - 1e-9 or any(abs(u - k) < 1e-9 for k in uniq):
         return None
-    # the new knot sits between its edit points by chord length (checked: the object at curve parameter 0.699 on
+    # the new knot sits between its edit points by chord length (Maya: the object at curve parameter 0.699 on
     # span [0, 1] between edit points (0,0,0) and (10,0,0) -> knot 0.719319 = 7.945 / (7.945 + 3.100))
     i = max(j for j in range(len(uniq) - 1) if uniq[j] < u)
     pos = cm.evaluate(mc.cvs, knots, 3, u)

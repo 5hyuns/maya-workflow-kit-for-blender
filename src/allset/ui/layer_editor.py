@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Layer Editor (Display Layers) wrapped on collections.
 
-; design  「계획」.
+Maya's Layer Editor; design  「계획」.
 A display layer is a child collection of a "Display Layers" collection that
 is excluded from every view layer, so layers are membership lists that do
 not change the scene hierarchy or visibility by themselves. The layer state
@@ -93,7 +93,7 @@ def layer_of(ob, scene):
 
 
 def next_layer_name():
-    """Maya ``layer<N>``: one past the highest, gaps not filled ( N2)."""
+    """Maya ``layer<N>``: one past the highest, gaps not filled."""
     return f"layer{naming.next_number('layer', {c.name for c in bpy.data.collections})}"
 
 
@@ -377,7 +377,7 @@ class ALLSET_OT_layer_set_type(_LayerOp, bpy.types.Operator):
 
 # --- UI ------------------------------------------------------------------------------------------
 
-# Maya layer row (): three 20x14 boxes V / P / type with 3 px gaps, a 16x14
+# Maya layer row: three 20x14 boxes V / P / type with 3 px gaps, a 16x14
 # colour swatch, then the name as plain text, rows 20 px: boxes one UI unit wide in a left-aligned row (natural
 # widths, small gaps).
 BOX_UNITS = 1.4
@@ -420,7 +420,7 @@ class ALLSET_UL_layers(bpy.types.UIList):
         row.prop(item, "name", text="", emboss=False)
 
 
-LAYER_MENU = (   # Maya's layer RMB menu ()
+LAYER_MENU = (   # Maya's layer RMB menu
     ("allset.layer_assign", "Add Selected Objects", {"remove": False}),
     ("allset.layer_assign", "Remove Selected Objects", {"remove": True}),
     ("allset.layer_select", "Select Objects", {}),
@@ -457,7 +457,7 @@ def draw_anim_layer_mode(layout, context):
 
 
 class ALLSET_MT_le_layers(bpy.types.Menu):
-    """Maya Layer Editor Layers menu ()"""
+    """Maya Layer Editor Layers menu"""
     bl_label = "Layers"
 
     def draw(self, context):
@@ -513,7 +513,7 @@ class ALLSET_MT_le_help(bpy.types.Menu):
 
 HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/collections.html"
 # Maya Layer Editor: tabs Display / Anim, menu bar Layers / Options / Help,
-# toolbar on the right; 
+# toolbar on the right.
 TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
 MENU_BAR = (("Layers", "ALLSET_MT_le_layers"), ("Options", "ALLSET_MT_le_options"), ("Help", "ALLSET_MT_le_help"))
 
@@ -547,18 +547,18 @@ ANIM_TOOLBAR = (
     ("allset.anim_layer_key_weight", 'KEY_DEHLT', {"weight": 0.0}),
     ("allset.anim_layer_key_weight", 'KEY_HLT', {"weight": 1.0}),
 )
-# Maya's row buttons, left of the name: Lock, Solo, Mute (, _anim180_pixels.json:
-# 24 px pitch, BaseAnimation only Lock); icons (off, on) instead of Maya's padlock / rectangle / circle-slash images
+# Maya's row buttons, left of the name: Lock, Solo, Mute (24 px pitch,
+# BaseAnimation only Lock); icons (off, on) instead of Maya's padlock / rectangle / circle-slash images
 ANIM_TOGGLES = (("lock", ('UNLOCKED', 'LOCKED')), ("solo", ('SOLO_OFF', 'SOLO_ON')),
                 ("mute", ('MUTE_IPO_OFF', 'MUTE_IPO_ON')))
 
 
 # Maya greys these Layers menu items while BaseAnimation is among the selected layers
-# (: Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
+# (Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
 # Export, Membership, Attribute Editor, Delete, Empty, Delete Empty Layers, Layer Mode). With no layer selected Maya
 # enables everything; the kit always has a selected layer (delegated).
 GREY_WITH_BASE = ("Add Selected Objects", "Remove Selected Objects", "Delete", "Empty", "Delete Empty Layers")
-# Layer row right-click menu (anim_layers_201.md): the Layers menu without
+# Layer row right-click menu: the Layers menu without
 # the Create / Extract Non-Layered items, plus Lock / Mute / Solo; on BaseAnimation only Extract, Duplicate x2, Merge
 # and Lock stay enabled. Exclusive solo, Select Objects / All / Branch / Layer Node, Export, Membership and Attribute
 # Editor are not in the kit (remaining).
@@ -717,7 +717,7 @@ def draw_anim_tab(layout, context):
     layout.separator(factor=0.5)
     # Maya's bottom row: "Weight" field + slider, greyed while BaseAnimation is selected (anim180 state d);
     # Additive / Override is Maya's layer menu choice (Layers menu here)
-    # Maya's K is a small square button right of the slider (), not half the row
+    # Maya's K is a small square button right of the slider, not half the row
     w = layout.split(factor=0.88, align=True)
     slider = w.row(align=True)
     slider.enabled = sel.name != anim_layers.BASE
@@ -765,7 +765,7 @@ class ALLSET_PT_layer_editor(bpy.types.Panel):
             button(row, "allset.layer_move", f"layer:{direction}", icon, text="").direction = direction
         button(row, "allset.layer_new", "layer:NEW_EMPTY", 'ADD', text="").selected = False
         button(row, "allset.layer_new", "layer:NEW_SELECTED", 'COLLECTION_NEW', text="").selected = True
-        # Maya shows the (empty) layer list area even with no layers (11b_channel_box_crop.png): an empty
+        # Maya shows the (empty) layer list area even with no layers: an empty
         # list over the scene collection's children (the filter keeps display layers only).
         r = root(scene)
         owner = r if r is not None else scene.collection

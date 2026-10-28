@@ -3,8 +3,8 @@
 .
 
 Maya's marquee selects everything inside the rectangle, hidden or not, unless
-"Camera based selection" is on (``selectPrefUseDepth false``,
-, defaults.json:98). Blender's edit-mode box
+"Camera based selection" is on (``selectPrefUseDepth false``).
+Blender's edit-mode box
 select skips occluded elements unless the view's X-ray flag is set; the flag
 alone is enough, so with X-ray alpha 1.0 surfaces stay opaque (checked in
 tests/gui/gui_step30_selection.py). The flag shows hidden wires and lights the

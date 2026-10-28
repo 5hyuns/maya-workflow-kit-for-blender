@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya object sets (Create > Sets, Select > Quick Select Sets, Outliner set rows).
 
-Maya behaviour:  (checked: names set1, set2 …, selection kept,
+Maya behaviour (names set1, set2 …, selection kept,
 ``select <set>`` = the members, Quick Select Set = a set with text "gCharacterSet").
 Blender has no set node, so a kit set is a collection that is not linked to any scene
 (fake user, so it is saved) carrying the ID property ``allset_set`` = its creation number
 (Outliner order); its objects are the members — an object can be in several collections, so
-the scene tree is untouched (). Design:
+the scene tree is untouched. Design:
  「계획」 1-2.
 """
 
@@ -19,7 +19,7 @@ from . import naming
 
 PROP = "allset_set"
 TEXT = "allset_set_text"
-QUICK = "gCharacterSet"     # Maya's text for Quick Select Sets ( S6)
+QUICK = "gCharacterSet"     # Maya's text for Quick Select Sets
 
 
 def is_set(coll):
@@ -41,7 +41,7 @@ def get(name):
 
 
 def next_name(base="set"):
-    """Maya: ``set<N>`` one past the highest, gaps not filled ( N1)."""
+    """Maya: ``set<N>`` one past the highest, gaps not filled."""
     return f"{base}{naming.next_number(base, {c.name for c in bpy.data.collections})}"
 
 
@@ -125,7 +125,7 @@ class ALLSET_OT_create_set(bpy.types.Operator):
     option_box: BoolProperty(options={'HIDDEN', 'SKIP_SAVE'})
 
     def invoke(self, context, event):
-        if self.option_box:   # Maya Create Set Options: the name ( S1)
+        if self.option_box:   # Maya Create Set Options: the name
             self.name = self.name or next_name()
             return context.window_manager.invoke_props_dialog(self, title="Create Set Options", confirm_text="Create")
         return self.execute(context)
@@ -228,7 +228,7 @@ class ALLSET_OT_set_edit(bpy.types.Operator):
 
 
 class ALLSET_MT_quick_select_sets(bpy.types.Menu):
-    """Select > Quick Select Sets ( S7)"""
+    """Select > Quick Select Sets"""
     bl_label = "Quick Select Sets"
     bl_idname = "ALLSET_MT_quick_select_sets"
 

@@ -2,8 +2,8 @@
 """Maya selection priority for object-mode clicks.
 
 Maya picks the overlapping candidate of the highest type priority (``selectPrefPriorityMode
-"animation"``; ikHandle 10, joint 9, nurbsCurve 4, everything else 2 — ,
-), occluded or not. Blender's ``view3d.select`` picks by
+"animation"``; ikHandle 10, joint 9, nurbsCurve 4, everything else 2),
+occluded or not. Blender's ``view3d.select`` picks by
 depth, so a control curve or a joint in front of (or behind) a mesh can lose to the mesh.
 
 ``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
@@ -23,7 +23,7 @@ from .preselect import project, segment_distance
 
 # Maya factory customSelectPriority for the kit's object kinds; anything else is 2.
 IK_HANDLE, JOINT, CURVE, DEFAULT = 10, 9, 4, 2
-RADIUS_PX = 5.0     # clickBoxSize 4 (defaults.json:95) = a box of half-width 4: half diagonal ~5.7 
+RADIUS_PX = 5.0     # clickBoxSize 4 = a box of half-width 4: half diagonal ~5.7 
 BONE_WIDTH = 0.1    # octahedral bone: widest at 0.1 x length (Blender's bone shape)
 
 
@@ -206,7 +206,7 @@ def hits(context, region, rv3d, mouse):
 
 
 def apply(context, ob, shift, ctrl):
-    """Maya click modifiers (): none = replace, Shift = toggle,
+    """Maya click modifiers: none = replace, Shift = toggle,
     Ctrl = deselect, Ctrl+Shift = add. Selecting makes ``ob`` the lead (active)."""
     view_layer = context.view_layer
     if ctrl and not shift:
@@ -303,7 +303,7 @@ class ALLSET_OT_select_priority(bpy.types.Operator):
     def _pose_miss(self, context, event, ob, mouse):
         """A Pose-mode click that hit no control (#171, step 255). Maya has no selection mode to leave: a click whose
         click box holds no curve / joint picks the object under it, else clears the selection
-        ( "click empty space -> []"). So: another object under the click ->
+        (a click on empty space selects nothing). So: another object under the click ->
         leave Pose and select it (Blender can't pick another object from Pose); nothing -> stay in Pose, bones
         deselected (Shift / Ctrl: nothing changes)."""
         from ..ui import toolbox

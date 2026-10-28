@@ -2,8 +2,7 @@
 """Maya symmetric modelling (Status Line Symmetry, Move/Rotate/Scale marking menu Symmetry ▸).
 
 Maya has one global state (``symmetricModelling``): on/off, about object/world/topology,
-axis x/y/z; factory default off, x, object (,
-). Blender keeps symmetry per mesh
+axis x/y/z; factory default off, x, object. Blender keeps symmetry per mesh
 (``Mesh.use_mirror_x/y/z``, ``use_mirror_topology``, local axes through the object
 origin), read by edit-mode transforms and sculpt. Design:  「계획」.
 

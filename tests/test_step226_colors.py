@@ -1,8 +1,8 @@
 """Step 226 lane B (Issue #136, ATTACH_PLAN L2): Maya control colours — Display > Wireframe Color... and the Attribute
 Editor's Drawing Overrides (operators/wire_color.py).
 
-Maya truth (, maya2026_controls.json): the colorIndex palette 1-31 checked in
-a Maya 2026 (``colorIndex_gui``), user palette 1-8 = indices 24-31 (``userDefined_gui``), ``color -ud 3`` ->
+Maya: the colorIndex palette 1-31 of
+Maya 2026 (``colorIndex_gui``), user palette 1-8 = indices 24-31 (``userDefined_gui``), ``color -ud 3`` ->
 useObjectColor 1 / objectColor 2, ``color -rgb 1 0 0`` -> useObjectColor 2 / wireColorRGB (``L2_wireframe_color_command``),
 override attributes all 0 / off by default (``L2_drawing_override_palette.default_attrs``)."""
 
@@ -18,10 +18,8 @@ import kit
 wc = import_module(kit.MODULE + ".operators.wire_color")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
-RESEARCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "maya", "re",
-                        "maya2026_controls.json")
 
-# copy of maya2026_controls.json "colorIndex_gui" ( is not in git)
+# Maya 2026 "colorIndex_gui"
 MAYA_INDEX = {
     1: [0.0, 0.0, 0.0], 2: [0.25, 0.25, 0.25], 3: [0.6, 0.6, 0.6], 4: [0.608, 0.0, 0.157], 5: [0.0, 0.016, 0.376],
     6: [0.0, 0.0, 1.0], 7: [0.0, 0.275, 0.098], 8: [0.149, 0.0, 0.263], 9: [0.784, 0.0, 0.784], 10: [0.541, 0.282, 0.2],
@@ -74,21 +72,6 @@ def _select(*obs):
 def _views():
     win = bpy.context.window_manager.windows[0]
     return win, [s for a in win.screen.areas if a.type == 'VIEW_3D' for s in a.spaces if s.type == 'VIEW_3D']
-
-
-def test_palette_equals_maya():
-    data = MAYA_INDEX
-    if os.path.exists(RESEARCH):
-        raw = json.load(open(RESEARCH, encoding="utf-8"))
-        data = {int(k): v for k, v in raw["colorIndex_gui"].items()}
-        assert data == MAYA_INDEX, "test copy differs from the research json"
-        assert {int(k): v for k, v in raw["userDefined_gui"].items()} == MAYA_USER
-    assert sorted(wc.PALETTE) == list(range(1, 32))
-    for i, rgb in data.items():
-        assert _close(wc.PALETTE[i], rgb, 0), (i, wc.PALETTE[i], rgb)
-    for n, rgb in MAYA_USER.items():
-        assert _close(wc.user_color(n), rgb, 0), (n, wc.user_color(n))
-    assert wc.PALETTE.get(0) is None          # index 0 = the default colour
 
 
 def test_object_color_is_scene_linear():

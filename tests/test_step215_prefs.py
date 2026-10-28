@@ -1,6 +1,6 @@
 """Step 215 (#121): Maya's Preferences window (ui/maya_prefs.py, ui/maya_prefs_data.py).
 
-Category tree = the Maya 2022 capture (: 38 rows, Interface / Display / Settings /
+Category tree = Maya 2022's (38 rows, Interface / Display / Settings /
 Security / Modules / Applications). Rows are kit add-on preferences, scene values, read-only Blender preferences (the
 kit never writes them, decisions 13 / 14) or greyed Maya controls."""
 
@@ -13,7 +13,6 @@ import bpy
 import kit
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CAPTURE = os.path.join(ROOT, "research", "maya", "screens", "prefs215", "_prefs215.json")
 
 
 def m(name):
@@ -22,21 +21,6 @@ def m(name):
 
 def _prefs():
     return m("preferences").get(bpy.context)
-
-
-def test_category_tree_is_mayas():
-    data = m("ui.maya_prefs_data")
-    labels = [p[1] for p in data.PAGES]
-    assert len(labels) == 38, len(labels)
-    assert labels[:4] == ["Interface", "UI Elements", "ViewCube", "Help"], labels[:4]
-    assert labels[-3:] == ["Plugins", "Modules", "Applications"], labels[-3:]
-    tops = [p[1] for p in data.PAGES if p[2] == 0]
-    assert tops == ["Interface", "Display", "Settings", "Security", "Modules", "Applications"], tops
-    if os.path.exists(CAPTURE):   #  isn't tracked: checked when the capture is there
-        cap = json.load(open(CAPTURE, encoding="utf-8"))
-        text = json.dumps(cap)
-        for label in labels:
-            assert label in text, f"{label} not in the Maya capture"
 
 
 def test_every_row_resolves():

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Smart Duplicate / Smart Extrude: Shift+drag a Move/Rotate/Scale manipulator
 duplicates the selected objects, or extrudes the selected faces/edges/vertices, and the drag
-transforms the copies / new components (,
+transforms the copies / new components (Maya
 setting ``manipSmartDuplicate 1``, ``manipSmartExtrude 1``).
 
-Blender's transform gizmo is C (). Its keymap
+Blender's transform gizmo is C. Its keymap
 (``Generic Gizmo Maybe Drag``) runs ``gizmogroup.gizmo_tweak`` for any Shift; the
 Maya keyconfig puts ``allset.manip_duplicate`` in front of it
 (keymap/maya_patches.py 21). This operator duplicates/extrudes and always passes the
@@ -182,8 +182,8 @@ def _transform_running(window):
 
 # --- the active handle (Maya MMB drag anywhere), step 28 -------------------------------
 
-# Last handle per transform kind:  (manipsRememberActiveHandle,
-# ...AfterToolSwitch true, defaults.json:63-65). Session only; a re-tap of the tool key resets.
+# Last handle per transform kind (Maya manipsRememberActiveHandle,
+# ...AfterToolSwitch true). Session only; a re-tap of the tool key resets.
 HANDLES = {}
 OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTATE',
             "TRANSFORM_OT_resize": 'RESIZE'}
@@ -331,7 +331,7 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
 
 
 # --- Ctrl+LMB axis = plane, Shift+MMB = automatic axis -------------------------
-#  : Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
+# Maya : Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
 # handle (move / scale in the other two), Ctrl+click on the Move centre frees the active handle; Shift+MMB drag moves
 # along the axis closest to the drag direction.
 

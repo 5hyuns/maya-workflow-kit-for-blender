@@ -2,12 +2,12 @@
 """Maya IK / FK switching on kit IK handles (step 223, Issue #133; ATTACH_PLAN L14).
 
 A kit IK handle is the ``ikHandleN`` empty an IK constraint targets (operators/skin.create_ik). Maya's handle
-attribute **Ik Blend** (keyable, factory 1;  L14) is the handle's custom property
+attribute **Ik Blend** (keyable, factory 1) is the handle's custom property
 ``ikBlend``, and the IK constraint's Influence is driven by it — so the Channel Box shows "Ik Blend" on the handle, S
 and Set IK/FK Key key it on the handle like Maya. Like Maya's ``ikFK`` the chain joints get
 an ``ikBlend`` property connected (driven) from the handle.
 
-Maya 2026 rules (Maya,  / solver.py, numbers in ):
+Maya 2026 rules (numbers in ):
 
 - Maya writes the IK solution into the joints' rotate attributes while IK is on; at Ik Blend 0 the joints use those
   rotate values. Blender's IK constraint leaves the bone channels alone, so every kit command below first writes the
@@ -15,8 +15,8 @@ Maya 2026 rules (Maya,  / solver.py, numbers in ):
 - **Set IK/FK Key** (``ikFK(0, sel)``): keys on the handle every keyable channel (translate / rotate / scale /
   visibility, Ik Blend — in auto / out clamped), the chain joints' rotate X / Y / Z (= the solved pose), the chain
   root's translate and preferred angle (out step). Maya also keys the handle's Twist and Pole Vector — or, when a Pole
-  Vector constraint drives it, the pole object's translate (Maya 2026,  "Extra"
-  R18; step 253): the kit RP handle's ``twist`` / ``poleVectorX/Y/Z`` channels (step 245) and the pole object's
+  Vector constraint drives it, the pole object's translate (step 253): the kit RP handle's ``twist`` /
+  ``poleVectorX/Y/Z`` channels (step 245) and the pole object's
   location. Maya's Offset / Roll exist on the kit's spline handles only (step 249), not on RP handles.
 - **Enable IK Solver**: a global check (factory off); each use flips it and sets Ik Blend of
   the selected handles — or of the handles whose chain holds a selected joint — to the new state, keeping the
@@ -239,7 +239,7 @@ def set_ik_fk_key(context, found, frame=None):
 def clamped_slope(keys, i):
     """Maya clamped tangent slope at key ``i`` of [(frame, value)]: the spline slope (to the one neighbour at an
     end, else across both neighbours), flat where the key is a local extreme (no overshoot). Checked on the Maya
-    Set IK/FK Key curve 1 -> 0 over frames 1 / 10: Ik Blend 0.44582 at frame 5 (Maya)."""
+    Set IK/FK Key curve 1 -> 0 over frames 1 / 10: Ik Blend 0.44582 at frame 5."""
     f, v = keys[i]
     if len(keys) < 2:
         return 0.0
@@ -255,7 +255,7 @@ def clamped_slope(keys, i):
 
 def _clamped_out(handle, frame):
     """Ik Blend keys: in auto / out clamped (Maya IK/FK keys). Auto = Auto Clamped with Continuous Acceleration
-    (step 223 checked); the clamped out side is a free handle on Maya's clamped slope, recomputed for every
+    (step 223); the clamped out side is a free handle on Maya's clamped slope, recomputed for every
     key because a clamped tangent follows its neighbours."""
     from .. import compat
     for fc in compat.id_fcurves(handle):
@@ -332,7 +332,7 @@ class ALLSET_OT_move_ik_to_fk(bpy.types.Operator):
         found = [(a, p, c) for a, p, c in ik_constraints(context) if c.target is not None]
         if not found:
             from .maya_errors import MOVE_IK_TO_FK
-            self.report({'ERROR'}, MOVE_IK_TO_FK)       # Maya 2026 ( B4)
+            self.report({'ERROR'}, MOVE_IK_TO_FK)       # Maya 2026
             return {'CANCELLED'}
         for arm, pb, con in found:
             mw = con.target.matrix_world.copy()

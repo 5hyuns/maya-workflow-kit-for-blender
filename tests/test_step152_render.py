@@ -1,7 +1,7 @@
 """Step 152 (#101) lane B: Maya's default light for kit renders of a scene without lights, Render Settings > Render
 Options > Enable Default Light, Render > Test Resolution, Render > Batch Render / Cancel / Show Batch Render.
 
-Maya (Maya, Maya Software, ): a white directional light of intensity 1 from
+Maya (Maya Software): a white directional light of intensity 1 from
 the camera's view axis turned 25 deg up and 25 deg left, no shadows; any light node turns it off. Fresh scene, default
 cube, persp at its factory direction (8x closer): top 76.8 / front 65.1 / side 10.0 of 255, background 0."""
 
@@ -32,7 +32,7 @@ render_settings = import_module(kit.MODULE + ".ui.render_settings")
 outliner = import_module(kit.MODULE + ".ui.outliner")
 outliner_sets = import_module(kit.MODULE + ".ui.outliner_sets")
 
-# Maya 2022 Software render, 8-bit, colour management on or off alike (output transform off): tmp/m152/m152d.json
+# Maya 2022 Software render, 8-bit, colour management on or off alike (output transform off)
 MAYA = {"top": 76.84, "front": 65.12, "side": 10.0}
 
 
@@ -122,7 +122,7 @@ def test_default_light_only_during_the_render():
 
 def test_light_direction_follows_the_camera_like_maya():
     """+Z of the sun (toward the light) = camera view axis turned 25 deg up, 25 deg left: camera space
-    (-0.383, 0.423, 0.821), Maya fit (-0.384, 0.421, 0.819) from a turned plane (m152b.json)."""
+    (-0.383, 0.423, 0.821), Maya fit (-0.384, 0.421, 0.819) from a turned plane."""
     _clear()
     sc = bpy.context.scene
     cam = rp.persp_camera()

@@ -3,7 +3,7 @@
 Object Manipulator / Show Manipulator Tool, Align Tool, Snap Align Objects > Position Along Curve, Convert >
 Geometry to Bounding Box and the Evaluate Nodes check items.
 
-Maya rules and checked:  (Maya, Maya 2022). Option window of Geometry to
+Maya 2022 rules. Option window of Geometry to
 Bounding Box: operators/option_windows_modify.py.
 """
 
@@ -16,9 +16,9 @@ from .. import results
 from .. import undo_steps
 
 
-# --- Convert > Smooth Mesh Preview to Polygons () ------------------------------
+# --- Convert > Smooth Mesh Preview to Polygons ------------------------------
 
-WARN_NO_PREVIEW = "No polygonal objects selected were in smooth preview mode."   # modify_168.md 
+WARN_NO_PREVIEW = "No polygonal objects selected were in smooth preview mode."   # 
 WARN_NO_POLYS = "No polygonal objects selected."
 
 
@@ -51,7 +51,7 @@ def smooth_to_polygons(context, obs):
             mod.show_viewport = True
             # Blender applies a modifier that isn't first to the base mesh (earlier modifiers are not baked in) and
             # carries vertex groups through the Subsurf, so an Armature before it keeps deforming the dense mesh
-            # (Maya: polySmoothFace after skinCluster1, modify_168.md).
+            # (Maya: polySmoothFace after skinCluster1).
             with context.temp_override(object=ob, active_object=ob, selected_objects=[ob],
                                        selected_editable_objects=[ob]):
                 bpy.ops.object.modifier_apply(modifier=name, report=False)
@@ -99,7 +99,7 @@ class ALLSET_OT_smooth_to_polygons(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Transformation Tools > Default Object Manipulator / Show Manipulator Tool (modify_168.md) ----------------
+# --- Transformation Tools > Default Object Manipulator / Show Manipulator Tool ----------------
 
 MANIP_PROP = "allset_manip_default"           # Maya showManipDefault: 0 None, 1 Move, 2 Rotate, 3 Scale, 4 Transform
 MANIP_TOOLS = {1: "builtin.move", 2: "builtin.rotate", 3: "builtin.scale", 4: "builtin.transform"}
@@ -112,7 +112,7 @@ def manip_default(ob):
 
 def show_manip_tool(ob):
     """The tool the Show Manipulator Tool gives ``ob``: its Default Object Manipulator, else Transform (the kit's T:
-    Blender has no node-specific manipulators, modify_168.md)."""
+    Blender has no node-specific manipulators)."""
     return MANIP_TOOLS.get(manip_default(ob), "builtin.transform")
 
 
@@ -129,7 +129,7 @@ class ALLSET_OT_default_manip(bpy.types.Operator):
     def execute(self, context):
         obs = list(context.selected_objects)
         if not obs:
-            self.report({'WARNING'}, "No objects selected.")     # Maya's warning text, modify_168.md 
+            self.report({'WARNING'}, "No objects selected.")     # Maya's warning text 
             return {'CANCELLED'}
         for ob in obs:
             if self.value:
@@ -155,7 +155,7 @@ class ALLSET_OT_show_manipulator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Align Tool (modify_168.md) ----------------------------------------------------------------------------
+# --- Align Tool ----------------------------------------------------------------------------
 
 def align_to_lead(context, axis, mode):
     """Line the selected objects up with the lead's world bounding box (min / mid / max) along world ``axis``."""
@@ -232,7 +232,7 @@ class ALLSET_OT_align_tool(bpy.types.Operator):
                 op.axis, op.mode = axis, mode
 
 
-# --- Snap Align Objects > Position Along Curve (modify_168.md) ----------------------------------------------
+# --- Snap Align Objects > Position Along Curve ----------------------------------------------
 
 ERR_NO_CURVE = "Position Along Curve: No curve selected to position along"
 ERR_SELECTION = "Position Along Curve: Nothing selected. Select a curve and two or more nodes."
@@ -302,7 +302,7 @@ class ALLSET_OT_position_along_curve(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Convert > Geometry to Bounding Box (modify_168.md) ----------------------------------------------------
+# --- Convert > Geometry to Bounding Box ----------------------------------------------------
 
 BBOX_FACES = ((0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0))
 
@@ -432,7 +432,7 @@ class ALLSET_OT_geometry_to_bbox(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Evaluate Nodes (modify_168.md) --------------------------------------------------------------------------
+# --- Evaluate Nodes --------------------------------------------------------------------------
 # Maya: check items turning every node of that type on / off. Kit: Scene.allset_eval (saved with
 # the file), each switch mutes / unmutes the Blender data standing for that Maya node type.
 

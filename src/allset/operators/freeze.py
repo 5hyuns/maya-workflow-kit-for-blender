@@ -3,16 +3,16 @@
 
 Design and matrix math:  「계획」 0-3. The Maya pivot is the
 Blender origin; ``delta_location`` plays the part of Maya's pivot offset
-(``rotatePivot``/``rotatePivotTranslate``, ), so the
+(``rotatePivot``/``rotatePivotTranslate``), so the
 channels the Channel Box shows (``location``/``rotation``/``scale``) can read
-0/0/1 while the pivot stays where it was ().
+0/0/1 while the pivot stays where it was.
 
 - Freeze = ``cmds.makeIdentity(apply=True, t=1, r=1, s=1, pn=1)``
-  (): bakes into the data, keeps world positions
+  bakes into the data, keeps world positions
   and the pivot, applies to the whole hierarchy below the selection.
-- Reset = Modify > Reset Transformations (concepts.md:80): channels back to
+- Reset = Modify > Reset Transformations: channels back to
   0/0/1, deltas (the last freeze) kept.
-- Center Pivot = ``cmds.xform(centerPivots=True)`` (): pivot to the
+- Center Pivot = ``cmds.xform(centerPivots=True)``: pivot to the
   bounding box centre; vertices, translate and children stay.
 """
 

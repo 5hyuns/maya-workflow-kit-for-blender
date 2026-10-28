@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 226 L2: Maya Wireframe Color / Drawing Overrides colour index.
 
-Maya has two ways to colour a control's wire (, checked in Maya 2026):
+Maya has two ways to colour a control's wire:
 
 1. Display > Wireframe Color...: an option menu Indexed / RGB, a palette of the 8 user colours
-   (userDefined 1-8 = colorIndex 24-31,  ``userDefined_gui``), an RGB colour
+   (userDefined 1-8 = colorIndex 24-31, ``userDefined_gui``), an RGB colour
    slider, Apply / Default / Close. Apply = ``cmds.color(userDefined=N)`` (useObjectColor 1, objectColor N - 1) or
    ``cmds.color(rgbColor=(r, g, b))`` (useObjectColor 2, wireColorRGB) on the selection; Default = ``cmds.color()``
    (useObjectColor 0) (``L2_wireframe_color_command``; window: Maya's Wireframe Color window).
@@ -25,14 +25,14 @@ writes the Blender colour from it:
   selected control in the selection colours, not its own [delegated].
 
 Which wins when both are set: the drawing override (enabled with an index > 0 or RGB), then the object colour
-[U: precedence not checked in Maya; delegated].
+[U: precedence unknown; delegated].
 """
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatVectorProperty, IntProperty
 
-# Maya 2026 factory colorIndex palette, sRGB 0-1 ( "colorIndex_gui",
-# checked in a Maya). Index 0 = the default colour (no override). Values only.
+# Maya 2026 factory colorIndex palette, sRGB 0-1.
+# Index 0 = the default colour (no override). Values only.
 PALETTE = {
     1: (0.0, 0.0, 0.0), 2: (0.25, 0.25, 0.25), 3: (0.6, 0.6, 0.6), 4: (0.608, 0.0, 0.157),
     5: (0.0, 0.016, 0.376), 6: (0.0, 0.0, 1.0), 7: (0.0, 0.275, 0.098), 8: (0.149, 0.0, 0.263),

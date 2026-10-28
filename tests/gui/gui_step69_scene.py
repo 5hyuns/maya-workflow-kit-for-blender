@@ -1,4 +1,4 @@
-"""Step 69 in a real UI ( scene_01-04): File > Project Window (dialog shot) -> project
+"""Step 69 in a real UI (Maya scene workflow): File > Project Window (dialog shot) -> project
 folders made -> Ctrl+Shift+S opens the file browser in <project>/scenes -> save shot_v001 -> Ctrl+Alt+S = Maya Increment
 and Save -> shot_v001.0001 -> Ctrl+R opens the browser in scenes -> reference shot_v001 as prop -> prop:pCube1 ->
 File > Reference Editor = the kit Reference Editor window listing propRN (step 209; screenshots)."""

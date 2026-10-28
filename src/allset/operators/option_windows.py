@@ -4,7 +4,7 @@
 Maya opens a window per command with its fields (labels right-aligned, field + slider), an Edit menu (Save Settings /
 Reset Settings) and three buttons: the command ("Create", "Extrude", ...), Apply (run, keep the window) and Close; the
 values are kept between sessions (setting). Fields, labels and factory defaults below were read from the running
-Maya 2022 windows (, ).
+Maya 2022 windows.
 
 Each ``Window`` becomes one operator ``allset.opt_<key>`` drawn with ``invoke_props_dialog`` (confirm = the
 command's button, Blender's cancel = Close); Apply / Save Settings / Reset Settings are toggle buttons inside the
@@ -267,7 +267,7 @@ def _run_set_key(context, v):
 
 def _run_bake(context, v):
     # step 217 L18: Maya's bakeResults rules (operators/bake_maya.py). Keep unbaked keys = keys outside the range,
-    # never constraint deletion ()
+    # never constraint deletion
     return bpy.ops.allset.bake_simulation(
         'EXEC_DEFAULT', hierarchy_below=v["hierarchy"] == "Below", use_time_slider=v["time_range"] == "Time Slider",
         start=int(round(v["start"])), end=int(round(v["end"])), sample_by=max(1, int(round(v["sample_by"]))),
@@ -343,7 +343,7 @@ def _run_save(context, v):
     return bpy.ops.wm.save_mainfile('EXEC_DEFAULT', compress=v["compressed"])
 
 
-# --- the windows (labels / defaults: ) ------------------------------
+# --- the windows (labels / defaults) ------------------------------
 
 AXIS = F("axis", "Axis:", "enum", "Y", items=("X", "Y", "Z"))
 UVS = F("create_uvs", "Texture mapping:", "bool", True, text="Create UVs")

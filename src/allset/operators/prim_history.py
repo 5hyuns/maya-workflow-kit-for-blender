@@ -9,7 +9,6 @@ changes. Object, transforms and materials stay; Delete History drops the node (l
 
 A node is shown only while the shape still is what the kit built (a signature of the points): Blender edits made
 after creation would be thrown away by a rebuild, and Maya would keep them as tweaks the kit can't replay.
-checked: 
 """
 
 import hashlib
@@ -28,7 +27,7 @@ KIND_NODES = {
     'CONE': ("polyCone", "pCone"), 'TORUS': ("polyTorus", "pTorus"), 'PLANE': ("polyPlane", "pPlane"),
     'DISC': ("polyDisc", "pDisc"), 'PLATONIC': ("polyPlatonic", "pPlatonic"), 'PYRAMID': ("polyPyramid", "pPyramid"),
     'PRISM': ("polyPrism", "pPrism"),
-    # step 190 ()
+    # step 190
     'PIPE': ("polyPipe", "pPipe"), 'HELIX': ("polyHelix", "pHelix"), 'GEAR': ("polyGear", "pGear"),
     'SOCCER_BALL': ("polyPrimitiveMisc", "pSolid"), 'SUPER_ELLIPSE': ("polySuperShape", "pSuperShape"),
     'SPHERICAL_HARMONICS': ("polySuperShape", "pSuperShape"), 'ULTRA_SHAPE': ("polySuperShape", "pSuperShape"),
@@ -45,7 +44,7 @@ SURFACES = {"makeNurbSphere", "makeNurbCylinder", "makeNurbCone", "makeNurbPlane
 
 def history_on(context):
     """Maya's Construction History toggle (Status Line, ``cmds.constructionHistory(toggle=...)``): on by default, one
-    state for the session that File > New keeps (Maya,  "Construction History"),
+    state for the session that File > New keeps,
     hence a WindowManager property (ui/input_line.py)."""
     return getattr(context.window_manager, "allset_construction_history", True)
 

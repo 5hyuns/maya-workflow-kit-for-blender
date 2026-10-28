@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Attribute Editor in the 3D View sidebar, sharing the Channel Box dock.
 
-; design:  「계획」 1, 3.
+Maya's Attribute Editor; design:  「계획」 1, 3.
 - Dock mode (``WindowManager.allset_dock``): the sidebar tabs "Channel Box / Layer
   Editor", "Attribute Editor", "Modeling Toolkit" = the tabs of Maya's right dock
-  (, step 99); Ctrl+A toggles
+  (step 99); Ctrl+A toggles
   (``ShowAttributeEditorOrChannelBox``).
-- Node tabs (attribute_editor.md:42-61): transform = object, shape = object
+- Node tabs: transform = object, shape = object
   data, one tab per modifier (construction history inputs) and per material.
 - Sections and their rows: ``ae_layout`` (Maya template sections, collapse flags
-  from ), drawn as ``layout.panel`` sections.
+  from Maya's Attribute Editor templates), drawn as ``layout.panel`` sections.
 - Joints (step 55): in pose mode the node is the lead pose bone (``channel_box.lead``): a
   ``joint`` tab (ae_layout.JOINT) plus one tab per constraint node, like Maya's
   ``pCube1_parentConstraint1``.
@@ -162,7 +162,7 @@ def tabs(ob):
     for i, slot in enumerate(ob.material_slots):
         if slot.material is not None:
             # Maya: the shape's shading group, then its surface shader (pCubeShape1 | polyCube1 |
-            # initialShadingGroup | lambert1; Maya listConnections, step 100)
+            # initialShadingGroup | lambert1; step 100)
             out.append((f"SG:{i}", material_ops.shading_group_name(slot.material), "shadingEngine"))
             out.append((f"MAT:{i}", slot.material.name, material_type(slot.material)))
     if has_nucleus(ob):
@@ -188,7 +188,7 @@ def _kind(key):
 
 def current_tab(context, ob):
     """The selected tab key: the stored one, else the first of the stored kind, else
-    the shape (Maya's preferred node, attribute_editor.md:43-53), else the transform."""
+    the shape (Maya's preferred node), else the transform."""
     wm = context.window_manager
     keys = [t[0] for t in tabs(ob)]
     if wm.allset_ae_tab in keys:
@@ -637,7 +637,7 @@ def wrap_rows(context, labels, equal=True, extra_units=None):
 
 
 def tab_window(widths, avail, current, arrows):
-    """Maya's AE tab bar is one Qt tab row that scrolls (; audit 16 G1): the tabs
+    """Maya's AE tab bar is one Qt tab row that scrolls (audit 16 G1): the tabs
     [a, b) shown, ``current`` among them, as many as fit in ``avail`` px; when not all fit, ``arrows`` px are kept
     for the ◀ ▶ buttons. Returns (a, b, overflow). Pure (tests/test_step211_fix_batch.py)."""
     n = len(widths)
@@ -730,7 +730,7 @@ def draw(layout, context, ob):
 
 def draw_head(layout, context, ob, key, target, entry):
     """Maya's node row: "<type>: [name]" with the in / out arrows, Focus / Presets, Show / Hide
-    (; tooltips from _ts106.json ``ae.widgets``)."""
+    (tooltips as Maya's)."""
     from . import notices
     kind = _kind(key)
     top = layout.row(align=True)
@@ -1067,7 +1067,7 @@ def draw_panel(layout, context):
 
 
 # --- Maya AE chrome -------------------------------------------------------
-# Menus, buttons and tooltips checked in Maya 2022 ( ``ae``: bars, widgets).
+# Menus, buttons and tooltips as in Maya 2022's Attribute Editor (bars, widgets).
 
 ATTRIBUTE_NAMES = (('NICE', "Nice", "Readable names (Translate X)"),
                    ('LONG', "Long", "Property names (location)"),

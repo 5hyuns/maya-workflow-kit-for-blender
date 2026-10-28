@@ -22,7 +22,7 @@ def test_parse_markup():
 
 
 def test_fade_curve():
-    # Maya checked: 0.25 s rising, full by 1.5 s, still full at 2.3 s, nearly gone at 3.6 s ()
+    # Maya: 0.25 s rising, full by 1.5 s, still full at 2.3 s, nearly gone at 3.6 s
     assert vm.alpha(-0.1) == 0.0
     assert 0.7 < vm.alpha(0.25) < 0.9
     assert vm.alpha(1.5) == 1.0 and vm.alpha(2.25) == 1.0

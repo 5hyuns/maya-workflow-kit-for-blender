@@ -1,6 +1,6 @@
 """Step 164 in the Maya Workflow Kit layout: Ctrl+1 on group1 isolates it with pCube1 (Maya
 isolate select shows the selection's descendants), h on group1 hides pCube1 too while its Visibility channel stays on
-(). Shots with ``--shots``."""
+(Maya DAG rules). Shots with ``--shots``."""
 
 import os
 import sys

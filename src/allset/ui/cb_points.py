@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Channel Box in component mode: the selected points' rows (step 165).
 
-Maya 2022 (, screens/cb165/cb_vtx_three.png / cb_vtx_cv_shown.png): with
+Maya 2022: with
 points selected the Channel Box shows the shape's name, a ``CVs (click to show)`` line and INPUTS; a click on that
 line shows a table — one row per selected point (its index, X, Y, Z) — and the line reads ``CVs (click to hide)``.
-The table stays open for the next selection (cb_vtx_one_after_cv.png). Edges / faces selected: no CVs line.
+The table stays open for the next selection. Edges / faces selected: no CVs line.
 
 Maya's values are the point tweaks (``pnts``, 0 on an untweaked cube); Blender keeps no tweak layer, so the rows
 show the vertex positions in object space, in display units, and typing moves the vertex (relative entry ``+=1``
@@ -41,7 +41,7 @@ def selected_points(ob):
 
 
 def points_shown(ob):
-    """Maya's CVs line: points (vertex mode) are selected — not edges / faces (cb_edge_two.png, cb_face_one.png)."""
+    """Maya's CVs line: points (vertex mode) are selected — not edges / faces."""
     if ob is None or ob.type != 'MESH':
         return False
     vert, _edge, _face = bpy.context.tool_settings.mesh_select_mode
@@ -54,7 +54,7 @@ def _count(ob):
 
 
 def has_selection(ob):
-    """Something selected in component mode (Maya: nothing selected = the empty Channel Box, cb_vtx_none.png)."""
+    """Something selected in component mode (Maya: nothing selected = the empty Channel Box)."""
     if ob is None:
         return False
     if ob.type == 'MESH':

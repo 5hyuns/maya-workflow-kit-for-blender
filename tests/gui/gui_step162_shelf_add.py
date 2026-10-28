@@ -1,4 +1,4 @@
-"""Step 162: Ctrl+Shift+click on a Maya menu item adds it to the current shelf ().
+"""Step 162: Ctrl+Shift+click on a Maya menu item adds it to the current shelf.
 
 Ctrl and Shift are held (the add-on reads the OS key state, ``keystate.is_down``, which the simulation replaces) while
 Display > Grid is clicked: the item does not run and doesn't open its option box; a "Grid" button is appended to the

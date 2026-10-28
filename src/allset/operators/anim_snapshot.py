@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Visualize > Create Animation Snapshot / Update Snapshot (step 171).
 
-Maya rules, checked  in Maya 2022 (, scripts
-*.py):
+Maya rules (Maya 2022):
 - Visualize > Create Animation Snapshot with the factory options: Time range Start/End 1 – 10, Increment 1,
   Update "Fast (update only when keyframes change)".
 - Result: a top-level group ``snapshot<N>Group`` with one child per sampled frame, ``transform<N>_<k>`` /
@@ -33,8 +32,8 @@ from .. import undo_steps
 GEOMETRY = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 RECORD = "allset_snapshot"             # group Empty ID prop: {"start", "end", "increment", "update"}
 SOURCE = "allset_snapshot_source"      # group Empty ID prop: the source object (ID pointer)
-NO_GEOMETRY = "No geometry found to create snapshot."           # visualize_171.md 
-NOTHING_TO_UPDATE = "Select motion trails or snapshots to update."  # visualize_171.md 
+NO_GEOMETRY = "No geometry found to create snapshot."           # 
+NOTHING_TO_UPDATE = "Select motion trails or snapshots to update."  # 
 UPDATE_STYLES = ("demand", "animCurve", "force")                 # Maya -update values (On demand / Fast / Slow)
 FACTORY = {"time_slider": False, "start": 1.0, "end": 10.0, "increment": 1.0, "update": "animCurve"}
 EPS = 1e-6
@@ -46,7 +45,7 @@ _pending = set()    # session_uid of snapshot groups waiting for a rebuild
 # --- pure rules ---------------------------------------------------------------------------------------------------
 
 def sample_frames(start, end, increment):
-    """Maya's snapshot frames: start, start + increment, ... while <= end (visualize_171.md)."""
+    """Maya's snapshot frames: start, start + increment, ... while <= end."""
     if increment <= 0:
         increment = 1.0
     out, i = [], 0

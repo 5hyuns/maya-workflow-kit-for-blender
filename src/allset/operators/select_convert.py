@@ -3,8 +3,7 @@
 Grow / Shrink Along Loop, To Vertex / Edge / Face Perimeter, To Face Path, To Shell Border, To UV Shell Border,
 To UVs, To UV Perimeter, To UV Edge Loop.
 
-Every rule is Maya 2022 checked  on a 4 x 4 plane, a 6 x 6 plane and a cube
-(, scripts *.py):
+Every rule is Maya 2022's, checked on a 4 x 4 plane, a 6 x 6 plane and a cube.
 
 - Grow Along Loop (PolySelectTraverse 5): a face / vertex / edge with a selected neighbour grows one step past each
   end of that line (faces: the face across the quad's opposite edge; vertices: through the selected edges between
@@ -324,7 +323,7 @@ def uv_edge_loop(edges, uv):
         for v0 in e0.verts:
             e, v = e0, v0
             while True:
-                if seam:        # along the seam (a cube's corners end it: three edges, checked)
+                if seam:        # along the seam (a cube's corners end it: three edges)
                     n = loop_next(e, v)
                     if n is not None and not uv_seam(n, uv):
                         n = None
@@ -346,7 +345,7 @@ def _key(lp, uv):
 
 
 def uv_loops(kind, elems, uv):
-    """The face corners (Blender loops) Maya's To UVs selects (checked): a face's own UVs, an edge's UVs in the faces
+    """The face corners (Blender loops) Maya's To UVs selects: a face's own UVs, an edge's UVs in the faces
     beside it, every UV of a vertex; a UV = every corner sharing its vertex and position."""
     if kind == 'FACE':
         keys = {_key(lp, uv) for f in elems for lp in f.loops}

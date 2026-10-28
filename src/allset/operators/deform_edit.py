@@ -3,7 +3,7 @@
 Dropoff Locator, ShrinkWrap > Set Target / Remove Target / Add surfaces / Remove surfaces, Lattice > Reset Lattice /
 Remove Lattice Tweaks, Prune Membership > Cluster / Lattice / Wire, Point On Curve.
 
-Maya behaviour:  (Maya; Wire Edit / Shrink Wrap / Dropoff Locator
+Maya behaviour (Wire Edit / Shrink Wrap / Dropoff Locator
 selection rules and messages). The kit wire: operators/wire_deformer.py.
 """
 
@@ -17,7 +17,7 @@ from . import deformers, wire_deformer
 
 # --- wire ---------------------------------------------------------------------------------------------------------
 
-MSG = {   # Maya's own messages (deform_169.md)
+MSG = {   # Maya's own messages
     "ADD": "Found no curves to add.",
     "REMOVE": "Must select curves to be removed.",
     "RESET": "Must select wire curves to be reset.",
@@ -85,7 +85,7 @@ def wire_reset(context, node=""):
 
 
 def wire_show_base(context, node=""):
-    """Maya Show Base Wire: the base wires show and join the selection (checked: curve1, curve1BaseWire)."""
+    """Maya Show Base Wire: the base wires show and join the selection (curve1, curve1BaseWire)."""
     curves = [o for o in context.selected_objects if o.type == 'CURVE']
     found = _wires(curves, node)
     if not found:
@@ -200,7 +200,7 @@ def _shrinkwraps(ob):
 
 
 def shrink_wrap_edit(context, action):
-    """Maya Deform > Shrink Wrap edit commands (deform_169.md): the surfaces are selected first, the target last
+    """Maya Deform > Shrink Wrap edit commands: the surfaces are selected first, the target last
     (the active object)."""
     target = context.view_layer.objects.active
     surfaces = [o for o in context.selected_objects if o is not target and o.type in deformers._DEFORMABLE]
@@ -288,8 +288,7 @@ def _kit_lattices(context):
 
 def lattice_edit(context, action):
     """Remove Lattice Tweaks: the lattice points back on its grid (the transform stays); Reset Lattice: also the
-    lattice back to its base (Maya ffd1Base; the kit's ``<ffd>Base`` Hook keeps the transform it was made with).
-    deform_169.md (Maya)."""
+    lattice back to its base (Maya ffd1Base; the kit's ``<ffd>Base`` Hook keeps the transform it was made with)."""
     found = _kit_lattices(context)
     if not found:
         raise RuntimeError("Select a lattice or an object it deforms.")
@@ -329,7 +328,7 @@ class ALLSET_OT_lattice_edit(bpy.types.Operator):
 
 # --- Prune Membership -----------------------------------------------------------------------------------------------
 
-PRUNE_NONE = "No components could be pruned."      # Maya's message (deform_169.md)
+PRUNE_NONE = "No components could be pruned."      # Maya's message
 
 
 def prune(context, kind):

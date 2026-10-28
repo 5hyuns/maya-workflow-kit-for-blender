@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Deform menu deformers (step 144 lane DEFORM, issue #34; plan  「계획」).
 
-Maya 2022 facts:  ("Deform option windows" = fields / factory defaults, "Deformers
-created with factory options" = nodes, names, selection afterwards, Channel Box rows, Paint Weights targets) and
- (handle position / size). Each Maya deformer becomes the Blender
+Maya 2022 facts: the Deform option windows (fields / factory defaults), the deformers made with factory options
+(nodes, names, selection afterwards, Channel Box rows, Paint Weights targets) and the handle position / size.
+Each Maya deformer becomes the Blender
 modifier that does the same job, named like the Maya node (``ffd1``, ``deltaMush1``, ``bend1``), plus the Maya
 transform it is driven by (``ffd1Lattice``, ``bend1Handle``). Its weights are the vertex group of the node's name
 (factory weight 1 on the deformed points), which Deform > Paint Weights paints.
@@ -162,7 +162,7 @@ def _wire_input(name):
 _ENVELOPE = _prop("envelope", "Envelope", "NONE", "strength")
 _BOUNDS = [Attr("lowBound", "Low Bound", "NONE", *_limit(0)), Attr("highBound", "High Bound", "NONE", *_limit(1))]
 
-# options_144.md "Deformers created with factory options", CB rows column (only those Blender can hold)
+# Maya deformers made with factory options: their Channel Box rows (only those Blender can hold)
 ATTRS = {
     "ffd": [_ENVELOPE],
     "deltaMush": [_prop("smoothingIterations", "Smoothing Iterations", "INT", "iterations"),
@@ -190,8 +190,8 @@ ATTRS = {
     "textureDeformer": [_prop("strength", "Strength", "NONE", "strength"),
                         Attr("offset", "Offset", "NONE", _tex_offset_get, _tex_offset_set)],
     "curveWarp": [],
-    # step 169 (deform_169.md): the wire modifier's inputs; Crossing Effect / Tension / Local Influence /
-    # Scale[0] have no form in the kit wire (factory 0 / 1 / 0 / 1 = no effect in the checked)
+    # step 169: the wire modifier's inputs; Crossing Effect / Tension / Local Influence /
+    # Scale[0] have no form in the kit wire (factory 0 / 1 / 0 / 1 = no effect in Maya)
     "wire": [Attr("envelope", "Envelope", "NONE", *_wire_input("Envelope")),
              Attr("rotation", "Rotation", "NONE", *_wire_input("Rotation")),
              Attr("dropoffDistance[0]", "Dropoff Distance[0]", "LENGTH", *_wire_input("Dropoff Distance"))],
@@ -217,7 +217,7 @@ def attr(md, name):
 
 def driven_modifiers(ob):
     """Kit deformer modifiers that ``ob`` drives (a lattice / handle object): Maya shows the deformer node in
-    the handle's INPUTS (options_144.md: ffd1Lattice, bend1Handle)."""
+    the handle's INPUTS (ffd1Lattice, bend1Handle)."""
     if ob is None or getattr(ob, "type", None) not in {'EMPTY', 'LATTICE'}:
         return []
     out = []
@@ -412,7 +412,7 @@ def _surface(context, base, render_influence=True, select_driver=True):
         md = _add(ob, name, 'SURFACE_DEFORM', idx)
         md.target = drv
         _bind(ob, md)
-        # Surface Deform follows the influence's shape but not its transform (checked); Maya's wrap follows both.
+        # Surface Deform follows the influence's shape but not its transform; Maya's wrap follows both.
         # A Hook to the influence after it carries the points by the influence's transform since creation.
         _base_hook(ob, md.name, drv, md.vertex_group)
     if not render_influence:
@@ -466,7 +466,7 @@ def _curve_warp(context, v):
 
 
 def _wire(context, v):
-    """Maya Wire (deform_169.md): the deformed objects, then the wire curve (Maya's Wire Tool picks them in that
+    """Maya Wire: the deformed objects, then the wire curve (Maya's Wire Tool picks them in that
     order); a kit wire per object named like the node, weights = vertex group of that name, base wire = a hidden copy
     of the curve. Maya selects the curve afterwards."""
     from . import wire_deformer
@@ -492,8 +492,8 @@ def _nonlinear(context, kind, v):
     items = _deformed(context)
     lo, hi = _bounds(items)
     name = new_name(base)
-    # Maya (modeling_rigging_110.md): the handle at the bounding-box centre, pointing up (Maya +Y = Blender +Z),
-    # uniform scale = half the height; options_144.md: handle scale 0.5 on the unit cube
+    # Maya: the handle at the bounding-box centre, pointing up (Maya +Y = Blender +Z),
+    # uniform scale = half the height; handle scale 0.5 on the unit cube
     handle = _link(context, bpy.data.objects.new(f"{name}Handle", None))
     handle.empty_display_type = 'SINGLE_ARROW'
     handle.empty_display_size = 1.0
@@ -561,7 +561,7 @@ def _texture(context, v):
     return items[0][0]
 
 
-# option window field defaults = Maya factory values (options_144.md "Deform option windows")
+# option window field defaults = Maya factory values
 DEFAULTS = {
     'LATTICE': {"divisions": (2, 5, 2), "center": True, "auto_parent": False},
     'DELTA_MUSH': {"iterations": 10, "step": 0.5, "pin_border": True},
@@ -578,7 +578,7 @@ DEFAULTS = {
     'TEXTURE': {"point_space": "UV", "direction": "Handle", "vector_space": "Object", "strength": 1.0,
                 "offset": 0.0},
     'CURVE_WARP': {},
-    'WIRE': {"envelope": 1.0, "dropoff": 1.0},             # Wire Tool settings (options_144.md "Wire")
+    'WIRE': {"envelope": 1.0, "dropoff": 1.0},             # Wire Tool settings
 }
 
 

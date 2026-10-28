@@ -1,5 +1,5 @@
-"""Step 195: Maya dock grey and Time Slider current-time block ( cb_bg #444444,
- (22, 800) #525252). The pixel results are checked by tools/look_compare.py
+"""Step 195: Maya dock grey and Time Slider current-time block (Maya dock #444444,
+current-time block #525252). The pixel results are checked by look-comparison shots
 (compare_s195_*); here the rules behind them."""
 
 from importlib import import_module

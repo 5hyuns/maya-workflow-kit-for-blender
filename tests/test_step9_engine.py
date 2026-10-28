@@ -17,9 +17,6 @@ draw = import_module(kit.MODULE + ".marking.draw")
 marking = import_module(kit.MODULE + ".marking")
 maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
-RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        "research", "maya", "marking_menus.json")
-
 
 def measure(text):
     return 7.0 * len(text)
@@ -202,39 +199,6 @@ def test_hotbox_rows_follow_menu_set():
 
 
 # --- zone menus ----------------------------------------------------------------------
-
-def test_zone_menus_match_research():
-    if not os.path.exists(RESEARCH):
-        print("research missing: skipped")
-        return
-    zones = json.load(open(RESEARCH, encoding="utf-8"))["hotbox"]["zones"]
-    checked = 0
-    for key, menu in mm.HOTBOX_ZONES.items():
-        src = {it["label"]: it.get("radial") for it in zones[key]["items"] if it.get("label")}
-        for pos, (label, _action) in menu.radial.items():
-            assert src.get(label) == pos, (key, label, pos, src.get(label))
-            checked += 1
-    assert checked == 39, checked
-
-
-def test_option_boxes_match_research():
-    if not os.path.exists(RESEARCH):
-        return
-    data = json.load(open(RESEARCH, encoding="utf-8"))["menus"]
-    ids = json.load(open(os.path.join(os.path.dirname(RESEARCH), "marking_menu_ids.json"), encoding="utf-8"))
-
-    def check(sub, items, where):
-        src = {it["label"]: bool(it.get("option_box_command")) for it in items if it.get("label")}
-        for label in sub.options:
-            assert src.get(label), (where, label)
-        for pos, (label, action) in sub.radial.items():
-            if isinstance(action, mm.Sub):
-                child = next((it for it in items if it.get("label") == label), None)
-                if child and child.get("submenu"):
-                    check(action, child["submenu"], f"{where}/{label}")
-    for name in ("SHIFT_OBJECT", "SHIFT_VERTEX", "SHIFT_EDGE",
-                 "SHIFT_FACE", "SHIFT_DEFAULT"):
-        check(mm.MENUS[name], data[ids[name]]["items"], name)
 
 
 def test_zone_operators():

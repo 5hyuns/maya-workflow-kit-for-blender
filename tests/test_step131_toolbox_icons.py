@@ -75,7 +75,7 @@ def test_distinct_within_each_area():
 
 
 def test_maya_palette():
-    """Maya icon colours: light grey line art with teal accents ( item 8)."""
+    """Maya icon colours: light grey line art with teal accents."""
     for name in ("tool:builtin.move", "tool:builtin.rotate", "layer:UP", "outliner:SET"):
         px = ki.pixels(name, ki.size_for(name, 1.0))
         solid = px[px[..., 3] > 0.99][:, :3]

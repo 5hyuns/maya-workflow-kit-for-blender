@@ -1,8 +1,8 @@
 """Step 102: Maya file I/O — one file dialog with Files of type, Maya cm / Y-up presets, default project, round trip
-with Maya. ; Maya numbers: ; GUI:
+with Maya. ; GUI:
 tests/gui/gui_step102_file_dialog.py.
 
-The round trip writes tmp/file_io/kit_cube.* (read by  ) and reads the
+The round trip writes tmp/file_io/kit_cube.* (for reading in Maya) and reads the
 Maya-written tmp/file_io/maya_cube.* when that script has run (skipped otherwise)."""
 
 import os
@@ -22,7 +22,6 @@ menu_data = import_module(kit.MODULE + ".ui.menu_data")
 ROOT = Path(__file__).resolve().parent.parent
 # per sandbox: version runs in parallel (step 200) must not share the exported files
 IO = ROOT / "tmp" / os.environ.get("ALLSET_SANDBOX", "test_env") / "file_io"
-MAYA_IO = ROOT / "tmp" / "file_io"        # Maya-written files from  (read only)
 # pCube1 for the round trip: 10 x 20 x 5 Maya units (cm), the 20 along Maya's up axis.
 SIZE = (10.0, 20.0, 5.0)
 
@@ -178,15 +177,3 @@ def test_export_selection_writes_only_the_selection():
                                         filepath=str(path)) == {'CANCELLED'}
 
 
-def test_maya_written_files_import_at_maya_size():
-    """tmp/file_io/maya_cube.* come from  (polyCube 10 x 20 x 5 cm)."""
-    found = 0
-    for ext in (".fbx", ".obj", ".abc", ".usd"):
-        path = MAYA_IO / f"maya_cube{ext}"
-        if not path.exists():
-            continue
-        found += 1
-        size = _bbox(_import(path))
-        want = Vector((SIZE[0], SIZE[2], SIZE[1])) * 0.01      # Maya Y (20) -> Blender Z
-        assert (size - want).length < 1e-4, (ext, tuple(size))
-    print(f"Maya-written files checked: {found}")

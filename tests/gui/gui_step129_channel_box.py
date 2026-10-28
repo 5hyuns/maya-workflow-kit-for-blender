@@ -3,7 +3,7 @@
   starts on a value field selects too; then one value typed into a selected field goes into every selected channel
   of both selected cubes.
 - #7: the Layer Editor with three display layers (Maya-like rows: V / P / type boxes, swatch, name) for the side by
-  side look against 
+  side look against Maya's dock.
 Screenshots with ALLSET_GUI_SHOTS (or --shots)."""
 
 import math

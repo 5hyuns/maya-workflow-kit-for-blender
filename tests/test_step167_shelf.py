@@ -1,6 +1,6 @@
 """Step 167: a shelf double-click = the button's option box (the first click ran the command once), and Maya's shelf
-overflow (rows that wrap, one shown, a scroll bar / the wheel move one row). Maya 2022 checked:
- ()."""
+overflow (rows that wrap, one shown, a scroll bar / the wheel move one row), following Maya 2022.
+"""
 
 from importlib import import_module
 from types import SimpleNamespace

@@ -37,7 +37,7 @@ def corners(obs):
 
 
 def maya_fit(inside, ratio, persp=True):
-    """Step 258: Maya's perspective viewFit leaves more room than 0.95 (checked, tests/test_step258_view.py);
+    """Step 258: Maya's perspective viewFit leaves more room than 0.95 (tests/test_step258_view.py);
     orthographic views still fill 0.95."""
     return inside and (0.5 < ratio < 0.95 if persp else abs(ratio - 0.95) < 0.03)
 

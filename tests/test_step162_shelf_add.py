@@ -1,4 +1,4 @@
-"""Step 162: Ctrl+Shift+click on a Maya menu item adds it to the current shelf (; Maya
+"""Step 162: Ctrl+Shift+click on a Maya menu item adds it to the current shelf (Maya
 menuItemToShelf appends a shelfButton for the item to the shelf tab shown, factory tabs included).
 
 GUI: tests/gui/gui_step162_shelf_add.py (Ctrl+Shift+click Display > Grid, the button drawn on Poly Modeling)."""

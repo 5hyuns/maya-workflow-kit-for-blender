@@ -1,4 +1,4 @@
-"""Step 129 (audit P1, lane A): Maya menu items and keys in component mode (#39, #17, #18; Maya 2022 GUI-checked,
+"""Step 129 (audit P1, lane A): Maya menu items and keys in component mode (#39, #17, #18; Maya 2022,
 ), Paint Skin Weights normalization (#20) and the switch to Blender in the Maya
 Workflow Kit template file (#19). GUI: tests/gui/gui_step129_*.py."""
 
@@ -53,7 +53,7 @@ def _item(path):
 
 def test_component_select_items_act_on_components():
     # Maya SelectAll / InvertSelection keep component mode and act on the faces; SelectNone clears and goes back
-    # to object mode (GUI-checked, research: tmp comp129 capture in ).
+    # to object mode.
     ob = _edit_one_face()
     assert _item("Select/All") == {'FINISHED'}
     assert bpy.context.mode == 'EDIT_MESH' and len(_selected_faces(ob)) == 6

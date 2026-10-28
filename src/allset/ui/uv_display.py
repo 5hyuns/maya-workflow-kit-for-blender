@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Editor display keys and Move UV Shell.
 
-Maya 2022 UV Editor hotkeys ( context polyTexturePlacementPanel;
-View menu ):
+Maya 2022 UV Editor hotkeys (context polyTexturePlacementPanel) and View menu:
 
 - 4 Wireframe / 5 Shaded (Display Mode radio) -> ``SpaceUVEditor.show_faces`` off / on (Shaded also sets
   ``uv_face_opacity`` 1). ``uv_face_opacity`` 0 alone still draws grey face fills (GUI shot, step 155): no wireframe.
 - 6 UVEditor_ToggleUVTextureImage -> ``SpaceImageEditor.image`` = None / back (Blender has no "hide the image"
   flag; the image is remembered per editor, else the active material's image texture is shown).
-- 8 UVEditor_ToggleUVShellBorder = Maya's shell border display toggle (hotkeys_default.json:8194): shell
-  borders drawn in colour, width setting displayPolyBorderEdgeSize[1] = 3 px (
-  options140/_options140.json:627). Colour not checked .
-- 9 UVEditor_ToggleTextureBorder = ``ToggleTextureBorderDisplay`` (hotkeys_default.json:8217): Maya's "texture
+- 8 UVEditor_ToggleUVShellBorder = Maya's shell border display toggle: shell
+  borders drawn in colour, width setting displayPolyBorderEdgeSize[1] = 3 px. Colour not known .
+- 9 UVEditor_ToggleTextureBorder = ``ToggleTextureBorderDisplay``: Maya's "texture
   borders" are the UV shell border edges drawn thick (Select > Texture Borders selects the same edges; step 79
-  cut_sew.py calls them that too), on in the Maya factory View menu (checked in the capture). Drawn 3 px in the
+  cut_sew.py calls them that too), on in the Maya factory View menu (checked). Drawn 3 px in the
   theme's UV wire colour, i.e. the same edge, thicker.
 - Ctrl+1 UVEditor_ToggleUVIsolateViewSelected -> ``allset.uv_isolate``.
 
@@ -35,7 +33,7 @@ from .. import compat
 from ..operators import uv_arrays, uv_tools
 
 BORDER_PX = 3.0                        # setting displayPolyBorderEdgeSize (factory 3.0, 3.0)
-SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour : Maya's colour was not checked
+SHELL_RGB = (0.25, 0.75, 1.0)          # Toggle Shell Borders colour : Maya's colour isn't known
 MOVE_TOOL = "builtin.move"
 
 MODES = (("WIREFRAME", "Wireframe", "Maya 4: UVs as wireframe (no shaded faces)"),
@@ -240,7 +238,7 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
 # edges -> the faces beside them, UVs -> the faces using them), Remove Selected (2) takes them out, Remove All (0)
 # empties it for the hilited meshes; the UV Editor shows only the set's faces while the isolate view is on
 # (Maya's shader faces mode). Ctrl+1 = Remove All + Add Selected + view on
-# (Maya 2026). checked:  (Isolate). Kit: the set is
+# (Maya 2026). Kit: the set is
 # ``_iso_sets`` (face indices per object); while the view is on, faces outside it are hidden (UV Sync Selection on:
 # Blender's hide, the 3D View too) or deselected (sync off: the UV Editor draws only selected faces). Filter Selection
 # > Connected / Contained Faces uses the same state with the faces of the selection at the time

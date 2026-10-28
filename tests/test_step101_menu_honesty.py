@@ -1,6 +1,6 @@
 """Step 101: menu honesty — every greyed Maya menu item has a notice, cheap Blender equivalents mapped, mapped
-items stay enabled in object mode the Maya way. ; Maya facts:
-"""
+items stay enabled in object mode the Maya way. """
+
 
 import math
 import types

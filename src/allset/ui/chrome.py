@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya editor chrome helpers: a flat menu bar row at the top of an editor
 (Maya panels and docks have one: Channel Box "Channels Edit Object Show", Layer Editor "Layers Options
-Help", Outliner "Display Show Help"; , :140-142, ui_layout.md:258-264)
+Help", Outliner "Display Show Help")
 and greyed menu items for Maya entries the kit has no equivalent for."""
 
 

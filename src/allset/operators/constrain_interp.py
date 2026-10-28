@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 252 (#168): Maya orient / parent constraint Interp Type for the kit's multi-target groups (constrain_multi).
 
-Maya (, 060_rig_lane.md "Step 252 checked", Maya 2026
-tmp/p252/*.json): every target gives a quaternion
+Maya: every target gives a quaternion
 q_i = canon(rotation(targetParent · constraintParent⁻¹)) ⊗ q_Euler(rotate) [⊗ q_Euler(targetOffsetRotate), parent
 constraint with offset, applied first]; the matrix part has w >= 0, the Euler parts keep their sign. Then
 - Average (1, Maya's default): normalize(Σ w_i q_i), no hemisphere alignment;
@@ -12,7 +11,7 @@ constraint with offset, applied first]; the matrix part has w >= 0, the Euler pa
 - Cache (4): uses interpCache, which only ``cmds.orientConstraint(createCache=...)`` writes (the kit has no cache: 0 =
   No Flip);
 - fewer than 2 targets with No Flip / Cache = Average; total weight <= 1e-10 = restRotate (the output at creation).
-Worst 2e-6 deg against 22 checked rows for every type.
+Worst 2e-6 deg against 22 Maya rows for every type.
 
 The kit (Blender constraints only blend by influence = a shortest slerp):
 - Shortest: the group's rotation members get influence w_i / W_total (member 0 = 1) — Blender alone, exact.
@@ -23,8 +22,8 @@ The kit (Blender constraints only blend by influence = a shortest slerp):
   rotation channels (the sign of q_Euler).
 - per-group state on the owner (Object / PoseBone): ``allset_interp_<group>`` (Maya enum value), ``allset_last_<group>``
   (No Flip memory), ``allset_rest_<group>`` (zero-weight output), ``allset_ooff_<group>`` (orient offset).
-- a parent constraint's offset Euler = Maya's offset Euler (step 266, 060_questions.md C8, Maya 2026 behaviour checked
-  : 720 + 90 cases exact): the standard solution or the alternate
+- a parent constraint's offset Euler = Maya's offset Euler (step 266, Maya 2026, 720 + 90 cases exact): the
+  standard solution or the alternate
   (first + 180, 180 − middle, last + 180, not wrapped), whichever has the smaller sum of |angles| (ties: standard);
   the branch decides the offset quaternion's sign, which Average / No Flip read. A bone target's rest (Maya
   jointOrient) joins its parent part (canonical sign).
@@ -457,9 +456,9 @@ def set_mode(context, owner, group, mode):
     ms = constrain_multi.members(owner, group)
     last_index = max(list(owner.constraints).index(m) for m in ms)
     owner.constraints.move(len(owner.constraints) - 1, last_index + 1)
-    # Maya (step 252 checked): the constraint evaluates once when it is made (interpType Average): that output is
+    # Maya (step 252): the constraint evaluates once when it is made (interpType Average): that output is
     # restRotate (all weights 0) and the first No Flip memory; an orient offset (Maintain Offset) is one rotation after
-    # the blend computed then (out = offset * result, checked). They are node
+    # the blend computed then (out = offset * result). They are node
     # attributes: a later Interp Type change keeps them.
     qs = target_quats(owner, group) or []
     base = blend(qs, _weights(owner, group), AVERAGE) if qs else IDENTITY

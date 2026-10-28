@@ -5,9 +5,9 @@
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator, bound to its
 menu paths; option_windows._extend appends ``WINDOWS``). Titles, buttons, labels and factory values come from Maya
-2022's option windows and Maya ( / .json); fields the kit
+2022's option windows; fields the kit
 can't honour are only listed (``missing``), never faked. Every window run with its defaults does what the plain menu
-item does; Merge UVs / Smooth (Modify section) run the kit's Maya-checked operators, like their plain menu items
+item does; Merge UVs / Smooth (Modify section) run the kit's Maya operators, like their plain menu items
 (menu_map, step 196).
 """
 
@@ -42,7 +42,7 @@ def _run_detach(context, v):
 
 def _keep_copies(context, suffix):
     """Maya Keep original (object mode): the selected curves are duplicated, the copies — named
-    ``<curve><suffix>N`` (Maya: ``curveAreversedCurve1``, ``curveAsmoothCurve1``) — become the selection and get the
+    ``<curve><suffix>N`` (``curveAreversedCurve1``, ``curveAsmoothCurve1``) — become the selection and get the
     command; the originals stay unchanged."""
     from . import naming
     if context.mode != 'OBJECT':
@@ -67,7 +67,7 @@ def _keep_copies(context, suffix):
 
 def _run_reverse(context, v):
     """Curves > Reverse Direction: Blender's Switch Direction in edit mode (the plain item); in object mode every
-    selected curve is reversed whole (CVs reversed, knots mirrored: curves_156.md)."""
+    selected curve is reversed whole (CVs reversed, knots mirrored)."""
     if v["keep_original"]:
         _keep_copies(context, "reversedCurve")
     if context.mode == 'EDIT_CURVE':
@@ -144,7 +144,7 @@ _INCLUDE = ("All keyable", "From Channel Box", "All keyable except:")
 _KEEP_ORIGINAL = "Keep original (Maya keeps the input curve and makes new ones)"
 
 WINDOWS = [
-    # Create Character Set Options (factory values, window); Maya char_* (options_196_misc.json)
+    # Create Character Set Options (factory values, window)
     Window("character_set", "Create Character Set Options", "Create Character Set", None, [
         FText("name", "Name:", "character1"),
         F("hierarchy", "Include:", "bool", False, text="Hierarchy below selected node"),

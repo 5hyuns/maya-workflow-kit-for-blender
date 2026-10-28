@@ -1,6 +1,6 @@
 """Step 139 lane UV (#68,  U1 / U2): UV > Automatic / Contour Stretch from object mode act on the whole
 object, Automatic = Maya polyAutoProjection (shell counts vs Maya), UV Editor > Create > Best Plane / Contour Stretch
-mapped like the main UV menu. Maya numbers:  (Maya,
+mapped like the main UV menu. (Maya,
 ). Step doc: ; GUI: tests/gui/gui_step139_uv.py."""
 
 from importlib import import_module
@@ -24,7 +24,7 @@ MAYA_AUTO = {
     'TORUS': (10, [96, 96, 36, 36, 36, 36, 16, 16, 16, 16], 536),
 }
 # Kit = Maya's own plane assignment since step 257 (factory -o 1 "Fewer pieces": candidate planes, seeds by fewest
-# candidates, symmetric seed groups; ), so the step 139 deviation (sphere
+# candidates, symmetric seed groups), so the step 139 deviation (sphere
 # 104 / 104 / 56 / 56 / 40 / 40, torus 112 / 112 / 28 x4 / 16 x4) is gone.
 KIT_AUTO = dict(MAYA_AUTO)
 
@@ -80,7 +80,7 @@ def test_object_mode_automatic_is_maya_auto_projection():
         if uvs is not None:
             assert count == uvs, (kind, count, uvs)
         # laid out in 0-1 with 0.2 % space (Maya bounds 0.0016 - 0.998: the menu cylinder's U starts at
-        # 0.0016944  2026, step 257 layout)
+        # 0.0016944 in Maya 2026, step 257 layout)
         assert x0 >= 0.0016 and y0 >= 0.0016 and x1 <= 0.9981 and y1 <= 0.9981, (kind, x0, y0, x1, y1)
         assert max(x1, y1) > 0.9, (kind, x1, y1)
     print("kit vs Maya automatic:", rows)
@@ -114,14 +114,14 @@ def test_planes_option_and_window():
     res = ow.run(w, bpy.context, {"planes": "4", "spacing": 0.2})
     assert res == {'FINISHED'}, res
     n, _g, _c, _b = _info(ob)
-    assert 2 <= n <= 6, n                 # Maya 4 planes on a cube: 4 shells (checked); kit: tetrahedron planes
+    assert 2 <= n <= 6, n                 # Maya 4 planes on a cube: 4 shells; kit: tetrahedron planes
     for planes in ("3", "5", "8", "12"):
         _make('SPHERE')
         assert bpy.ops.allset.uv_automatic(planes=planes) == {'FINISHED'}
 
 
 def test_object_mode_contour_stretch():
-    """U1: Contour Stretch from object mode = every face (Maya: one shell in 0-1; plane 121 UVs, checked)."""
+    """U1: Contour Stretch from object mode = every face (Maya: one shell in 0-1; plane 121 UVs)."""
     ob = _make('PLANE')
     assert bpy.ops.allset.menu_item(item="UV/Contour Stretch") == {'FINISHED'}
     n, _g, count, (x0, y0, x1, y1) = _info(ob)

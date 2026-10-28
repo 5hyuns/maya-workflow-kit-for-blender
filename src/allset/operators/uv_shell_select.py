@@ -1,21 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV Shell selection in the 3D viewport and the UV Editor (step 256, #172).
 
-Maya 2026 (; Maya /, Maya /):
+Maya 2026:
 - The mask is one global state (``cmds.selectType(meshUVShell=True)``), turned on by RMB > UV > UV Shell, Select >
   Components > UV Shell and Alt+F12 (`SelectMeshUVShell`): component mode, selection cleared, in-view message. Here: the
   WindowManager flag ``allset_uv_shell_mask`` + face select mode + UV Sync Selection on (one selection for the 3D View
   and the UV Editor, like Maya's one selection list). Any other component mode clears the flag
   (``uv_tools.leave_uv_mode`` / ``set_component``).
 - A click selects **faces**: every face of the UV shell of the face under the cursor (3D: the face the pick returns at
-  that pixel, so on an edge between two shells one shell wins,; UV Editor: the UV face containing the point,
- ). Plain = replace, Shift = toggle the shell (by the clicked face's state), Ctrl = remove, Ctrl+Shift = add; a
+  that pixel, so on an edge between two shells one shell wins; UV Editor: the UV face containing the point).
+  Plain = replace, Shift = toggle the shell (by the clicked face's state), Ctrl = remove, Ctrl+Shift = add; a
   plain click on nothing clears.
 - A box (or lasso) picks every face under it — occluded ones too in the 3D View (camera-based selection off; the kit's
-  box already selects through, step 30) — and grows each to its shell: plain = replace, Shift = add, Ctrl = remove
-  (,).
-- Shell = UVs connected through faces in the **current UV set** (checked: Maya's shell selection takes
-  ``currentMapSetId`` and grows a UV bit field with ``extendToShell``; Maya: a shared corner UV joins faces, a second
+  box already selects through, step 30) — and grows each to its shell: plain = replace, Shift = add, Ctrl = remove.
+- Shell = UVs connected through faces in the **current UV set** (Maya's shell selection takes
+  ``currentMapSetId`` and grows a UV bit field with ``extendToShell``; a shared corner UV joins faces, a second
   UV set has other shells). Blender's active UV layer is the current set; ``uv_arrays.uv_points`` + ``components``
   give the same shells as ``uv_hud.maya_shells``.
 """
@@ -30,7 +29,7 @@ from . import uv_arrays
 FLAG = "allset_uv_shell_mask"
 BOX_OPS = ("VIEW3D_OT_select_box", "VIEW3D_OT_select_lasso", "UV_OT_select_box", "UV_OT_select_lasso",
            "VIEW3D_OT_select_circle", "UV_OT_select_circle")
-SHELL_MESSAGE = "UV shell selection is now <hl>on</hl>. Press <hl>F8</hl> for object selection"   #
+SHELL_MESSAGE = "UV shell selection is now <hl>on</hl>. Press <hl>F8</hl> for object selection"
 
 
 def flag(context):
@@ -73,7 +72,7 @@ def shell_labels(a):
 
 
 def apply_rule(before, shell, shift, ctrl, clicked_selected=None):
-    """Maya click / box rule on face index sets (,): plain replace, Ctrl+Shift add, Ctrl remove, Shift = toggle
+    """Maya click / box rule on face index sets: plain replace, Ctrl+Shift add, Ctrl remove, Shift = toggle
     for a click (by the clicked face's state) / add for a box (``clicked_selected`` None)."""
     if shift and ctrl:
         return before | shell
@@ -101,7 +100,7 @@ def write_selection(ob, bm, chosen):
 def _arrays(context, ob):
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.active
-    if uv is None:          # no UV set: no shells (Maya: faces without UVs can't be picked,)
+    if uv is None:          # no UV set: no shells (Maya: faces without UVs can't be picked)
         return bm, None, None
     a = uv_arrays.read(ob, bm, uv, context.view_layer.depsgraph)
     return bm, a, shell_labels(a)
@@ -286,7 +285,7 @@ class ALLSET_OT_uv_shell_box(bpy.types.Operator):
 # --- the mode -----------------------------------------------------------------------------------------------
 
 def enter(context):
-    """Maya SelectMeshUVShell: component mode, UV Shell mask, selection cleared ( 'not converted'), message."""
+    """Maya SelectMeshUVShell: component mode, UV Shell mask, selection cleared, message."""
     ts = context.scene.tool_settings
     ts.use_uv_select_sync = True
     ts.mesh_select_mode = (False, False, True)

@@ -2,8 +2,7 @@
 """Maya view furniture in the 3D View: ViewCube (top right), axis triad (bottom left), camera name label
 (bottom centre), in place of Blender's navigation gizmo and text info.
 
-checked in Maya 2022 factory shots (, 02, 16_four_view.png;
-): ViewCube 65 px, 26 px from the view's right and 27 px from its top, white faces at
+Maya 2022 factory views (step 46): ViewCube 65 px, 26 px from the view's right and 27 px from its top, white faces at
 opacity 0.5 (FRONT/RIGHT/TOP readable in the default persp), only in the active panel of a four view;
 label "persp" / "top -Y" ... 11 px #e3e3e3, baseline 9 px above the bottom, centred 9 px left of the
 middle; axis triad origin 26 px from the left and bottom, 13 px lines, lower-case letters.
@@ -23,7 +22,7 @@ import math
 import bpy
 from mathutils import Vector
 
-# --- Maya checked () -------------------------------------------------------
+# --- Maya sizes and colours (step 46) -----------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view
 CUBE_INSET = (26.0, 27.0)      # from the right, from the top
 MAYA_VIEW_H = 612.0
@@ -49,7 +48,7 @@ FACES = {
 FACE_NAMES = tuple(FACES)
 
 # Orthographic side views (key = the direction the view looks, Blender axes): Maya camera name + that direction
-# in Maya's Y-up axes, as Maya prints it ("top -Y", "front -Z", "side -X": ;
+# in Maya's Y-up axes, as Maya prints it ("top -Y", "front -Z", "side -X";
 # Blender X/Y/Z = Maya X/-Z/Y,  step 57). Step 176 (delegated): Maya's own words, not Blender's axes.
 SIDE_LABELS = {(0, 0, -1): "top -Y", (0, 0, 1): "bottom +Y", (0, 1, 0): "front -Z", (0, -1, 0): "back +Z",
                (-1, 0, 0): "side -X", (1, 0, 0): "left +X"}

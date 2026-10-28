@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 NURBS surface maths, bpy-free (step 181). Rules and Maya ground truth:  /
-.json; the Blender legacy NURBS side: 
+"""Maya 2022 NURBS surface maths, bpy-free (step 181).
 
 Conventions (Maya's):
 - knot lists are Maya lists (no phantom end knots: len = CVs + degree - 1);
@@ -9,7 +8,7 @@ Conventions (Maya's):
 - every rule is rotation-free, so it works in any right-handed frame (the tests feed Maya's Y-up numbers, Blender feeds
   its Z-up ones: Maya (X, Y, Z) -> Blender (X, -Z, Y) is a rotation). Revolve takes its axis, Extrude Distance its
   direction, as vectors in the caller's frame.
-Outputs are non-rational (Maya's outputs checked here all have weight 1, surfaces_181.md intro).
+Outputs are non-rational (Maya's outputs here all have weight 1).
 """
 
 import math
@@ -115,7 +114,7 @@ def _reverse_curve(c):
 
 
 def _crv(c):
-    """Anything curve-like (Crv, (cvs, knots, degree[, periodic]) or a Maya JSON dict) -> Crv."""
+    """Anything curve-like (Crv, (cvs, knots, degree[, periodic]) or a JSON dict) -> Crv."""
     if isinstance(c, Crv):
         return Crv([tuple(p) for p in c.cvs], list(c.knots), c.degree, c.periodic)
     if isinstance(c, dict):
@@ -216,7 +215,7 @@ def _remap(c, a, b):
 
 
 def compatible(curves):
-    """Maya loft compatibility (surfaces_181.md 4.1): curves that already share degree and knots stay as they are
+    """Maya loft compatibility: curves that already share degree and knots stay as they are
     (periodic circles stay periodic); otherwise every curve is reparameterised linearly onto the FIRST curve's domain,
     raised to the highest degree and given the union of the interior knots with the maximum multiplicity (a degree-p
     curve's knots gain p_max - p). Returns (knots, degree, [cvs per curve]), shapes unchanged."""
@@ -226,7 +225,7 @@ def compatible(curves):
            and all(abs(x - y) < EPS for x, y in zip(c.knots, c0.knots)) for c in curves):
         return list(c0.knots), c0.degree, [list(c.cvs) for c in curves]
     if any(c.periodic for c in curves):
-        #  mixed periodic / open curves not checked: periodic ones are opened over their domain first
+        #  mixed periodic / open curves unknown: periodic ones are opened over their domain first
         curves = [open_periodic_curve(c) if c.periodic else c for c in curves]
         c0 = curves[0]
     p = max(c.degree for c in curves)
@@ -308,7 +307,7 @@ def _lagrange_d0(ts, P):
 
 def end_direction(P, at_end=False):
     """Loft interpolation end tangent (direction of travel): 3 points = the circle through them, >= 4 points = the
-    derivative of the cubic through the first (last) 4 points with chord-length parameters (surfaces_181.md 4.1)."""
+    derivative of the cubic through the first (last) 4 points with chord-length parameters."""
     if len(P) == 3:
         return _circle_tangent(P[0], P[1], P[2], 2 if at_end else 0)
     Q = P[-4:][::-1] if at_end else P[:4]
@@ -358,7 +357,7 @@ def _auto_reverse(curves):
 
 
 def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reverse=True):
-    """Maya Loft (surfaces_181.md 4.1). U = the compatible curves, V = across them (curve k = iso v_k)."""
+    """Maya Loft. U = the compatible curves, V = across them (curve k = iso v_k)."""
     curves = [_crv(c) for c in curves]
     if len(curves) < 2:
         raise ValueError("loft needs 2 or more curves")
@@ -369,7 +368,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
     n, ncv = len(cc), len(cc[0])
     ss = max(1, int(section_spans))
     if degree == 1:
-        if close:       #  not checked: the first curve again at the end (closed form)
+        if close:       #  unknown: the first curve again at the end (closed form)
             cc = cc + [cc[0]]
             n += 1
         chord = [0.0]
@@ -402,7 +401,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
             raise ValueError("a closed loft needs 3 or more curves")
         kv = [float(k) for k in range(n + 5)]
         cols = [_interp_periodic([cc[k][i] for k in range(n)], kv) for i in range(ncv)]
-        #  section spans on a closed loft not checked: ignored
+        #  section spans on a closed loft unknown: ignored
         return Surf(cols, knots_u, kv, p, 3, periodic_u, True)
     kv = [params[0]] * 3 + [params[1]] * 3 if n == 2 else [params[0]] * 2 + params + [params[-1]] * 2
     cols = [_interp_open([cc[k][i] for k in range(n)], params, kv) for i in range(ncv)]
@@ -417,7 +416,7 @@ def loft(curves, uniform=True, close=False, degree=3, section_spans=1, auto_reve
 # --- 4.3 Revolve ----------------------------------------------------------------------------------------
 
 def revolve(profile, axis=(0.0, 1.0, 0.0), pivot=(0.0, 0.0, 0.0), start=0.0, end=360.0, segments=8, degree=3):
-    """Maya Revolve (surfaces_181.md 4.3). U = the profile, V = around ``axis`` through ``pivot``; the point at sweep
+    """Maya Revolve. U = the profile, V = around ``axis`` through ``pivot``; the point at sweep
     angle a = the profile point turned by -a about the axis (right-hand rule). Angles in degrees."""
     pr = _crv(profile)
     s = max(1, int(segments))
@@ -503,7 +502,7 @@ def _path_dirs(P):
 
 
 def extrude_tube(profile, path, pivot=(0.0, 0.0, 0.0), at_path=False, component_pivot=False):
-    """Maya Extrude, style Tube (surfaces_181.md 4.4). U = profile, V = path; every CV ring is a rigid copy of the
+    """Maya Extrude, style Tube. U = profile, V = path; every CV ring is a rigid copy of the
     profile CVs carried by the discrete parallel transport of the path CV directions. ``pivot`` = the profile
     transform's world rotate pivot (used At path only). A straight profile (no Newell normal) is not turned onto
     the path [delegated]. Exact on cubic paths; along a degree-1 path Maya's interior ring directions are not the
@@ -558,7 +557,7 @@ def extrude_distance(profile, direction=None, length=1.0):
 # --- 4.5 Birail 1 ------------------------------------------------------------------------------------------
 
 def birail1(profile, rail1, rail2, proportional=True):
-    """Maya Birail 1 (surfaces_181.md 4.5): U = rails (knots normalised 0..1), V = profile (normalised). Row j = the
+    """Maya Birail 1: U = rails (knots normalised 0..1), V = profile (normalised). Row j = the
     profile mapped by the transform taking (profile start, profile end) onto (rail1 CV j, rail2 CV j): minimal
     rotation of the chord, scale uniform (proportional) or along the chord only. Exact for rails whose chords stay
     in one plane; twisted rails differ from Maya by 0.17-0.61 . Rails with different knots are made compatible
@@ -608,7 +607,7 @@ def order_boundary(curves):
 def coons(edge_v0, edge_v1, edge_u0, edge_u1, gu, gv):
     """Bilinearly blended Coons patch of four compatible CV nets: edge_v0[i] / edge_v1[i] = the v = 0 / 1 edges (over
     U), edge_u0[j] / edge_u1[j] = the u = 0 / 1 edges (over V); gu / gv = the normalised Greville parameters. Exact:
-    the linear blends are reproduced by Greville weights (surfaces_181.md 4.6; multi-span sides )."""
+    the linear blends are reproduced by Greville weights (multi-span sides )."""
     c00, c10, c01, c11 = edge_v0[0], edge_v0[-1], edge_v1[0], edge_v1[-1]
     out = []
     for i, u in enumerate(gu):
@@ -662,7 +661,7 @@ def _edges(s):
 
 
 def reverse(s, mode="U"):
-    """Maya Reverse Direction (surfaces_181.md 4.8): "U" (factory) = CV rows reversed, U knots mirrored; "V";
+    """Maya Reverse Direction: "U" (factory) = CV rows reversed, U knots mirrored; "V";
     "BOTH"; "SWAP" = transpose (knots swapped)."""
     mode = mode.upper()
     if mode == "SWAP":
@@ -703,7 +702,7 @@ def _join_line(ca, ka, cb, kb, degree, method, bias):
 
 
 def attach(a, b, method="BLEND", bias=0.5):
-    """Maya Attach (surfaces_181.md 4.7): the pair of edges (a's vs b's) whose CV lines are nearest (mean CV distance,
+    """Maya Attach: the pair of edges (a's vs b's) whose CV lines are nearest (mean CV distance,
     either line direction) joins; copies are turned so a's U end meets b's U start, then the step 156 curve rule
     (Blend: bias, joint knot multiplicity 1; Connect: full multiplicity) runs on every CV line along U."""
     best = None
@@ -759,7 +758,7 @@ def open_periodic(s, direction, at=None):
 
 def insert_knot(s, direction, t, times=1):
     """Maya Insert Isoparms (Boehm insertion, shape unchanged). A periodic direction is opened first [delegated:
-    Maya's periodic insert keeps the form, not checked]."""
+    Maya's periodic insert keeps the form, unknown]."""
     if times < 1:
         return s.copy()
     w, back = _along(s, direction)
@@ -773,9 +772,9 @@ def insert_knot(s, direction, t, times=1):
 
 
 def detach(s, direction, t):
-    """Maya Detach at the isoparm ``t`` (surfaces_181.md 4.8): insertion to full multiplicity, split; the pieces keep
+    """Maya Detach at the isoparm ``t``: insertion to full multiplicity, split; the pieces keep
     the original parameters. A periodic direction is opened at ``t`` instead: returns (that open surface, None)
-    [delegated, not checked]."""
+    [delegated, unknown]."""
     w, back = _along(s, direction)
     if w.periodic_u:
         return back(open_periodic(w, "U", t)), None
@@ -789,7 +788,7 @@ def detach(s, direction, t):
 
 def sub_patch(s, u0, u1, v0, v1):
     """Maya Duplicate NURBS Patches on the patch [u0, u1] x [v0, v1]: detach twice per direction, the original
-    parameters kept (surfaces_181.md 4.8)."""
+    parameters kept."""
     out = s
     for direction, a, b in (("U", u0, u1), ("V", v0, v1)):
         w, _back = _along(out, direction)
@@ -808,7 +807,7 @@ def sub_patch(s, u0, u1, v0, v1):
 def rebuild(s, spans_u=4, spans_v=4, degree_u=3, degree_v=3):
     """Maya Rebuild (factory Uniform, 4 x 4 spans, cubic, range 0..1, keep ends) [U algorithm]: per direction, every
     CV line is mapped linearly onto 0..1 and interpolated at the Greville points of Maya's factory knots (clamped
-    uniform over 0..1, checked exact). Exact when the new space contains the old one (e.g. 2 -> 4 spans); otherwise
+    uniform over 0..1, exact). Exact when the new space contains the old one (e.g. 2 -> 4 spans); otherwise
     an approximation: rebuild_surface case CVs within 0.066 of Maya, points at the same parameters within 0.035
     (the step 156 curve model, equal-arc-length least squares per line, was 1.8 / 1.3 off: per-line arc lengths
     disagree)."""
@@ -826,7 +825,7 @@ def rebuild(s, spans_u=4, spans_v=4, degree_u=3, degree_v=3):
     return out
 
 
-# --- Blender legacy NURBS representation () -----------------------------------
+# --- Blender legacy NURBS representation -----------------------------------
 
 def _direction_mode(knots, degree, periodic, n):
     if degree == 1:
@@ -889,7 +888,7 @@ def _breaks(knots, degree, mode, n):
 
 
 def blender_grid(s):
-    """Surf -> Blender legacy NURBS surface data (exact geometry, ):
+    """Surf -> Blender legacy NURBS surface data (exact geometry):
     rows[j][i] = CV i along u of row j (Blender row j = Maya V index j, ``spline.points[j * nu + i]``), orders,
     cyclic / endpoint / bezier flags per direction, plus map_u / map_v = [(maya_t, blender_t)] breakpoints of the
     piecewise-linear parameter map. Clamped uniform -> endpoint; periodic uniform -> cyclic with the unique CVs only
@@ -965,7 +964,7 @@ def from_blender_grid(rows, order_u, order_v, cyclic_u=False, cyclic_v=False, en
     return Surf(cvs, ku, kv, du, dv, pu, pv)
 
 
-# --- Duplicate Surface Curves (curves_201.md) --------------------------------------------------------------------
+# --- Duplicate Surface Curves --------------------------------------------------------------------
 
 def isoparm(s, direction, t):
     """The isoparm of ``s`` as a curve: direction "U" = Maya ``u[t]`` (runs along V: CV j = column j's U-curve at t,

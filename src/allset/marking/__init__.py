@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya marking menus, first version: Blender pie menus.
 
- (triggers and menus); 
-api_limits.md #5 (pies: 8 slots, press-drag-release via pie_tap_timeout).
+Maya's marking-menu triggers and menus; Blender pies: 8 slots, press-drag-release via pie_tap_timeout.
 
 - ``menus.py``: the menus as data (Maya radial positions).
 - ``engine.py`` / ``draw.py`` / ``modal.py``: the step-9 marking menu engine
@@ -291,7 +290,7 @@ HANDLE_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builti
 
 class ToolOptionsBinding(taphold.TapHoldBinding):
     """Key press = this tool (Maya activates it on press); hold + LMB = its options
-    marking menu (Maya's tool hold menus, hotkeys_and_menus.md)."""
+    marking menu (Maya's tool hold menus)."""
     tool = ""
     menu = ""
 

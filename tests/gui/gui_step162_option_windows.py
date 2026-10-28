@@ -1,6 +1,6 @@
 """Step 162 (1) in a real UI: Display > Toggle Show/Hide ❒ and Edit > Delete by Type > Non-Deformer History ❒ open
-Maya's option windows (); Enter = the window's command with Maya's factory values.
-Screenshots (ALLSET_GUI_SHOTS) for the step doc next to *.png."""
+Maya's option windows; Enter = the window's command with Maya's factory values.
+Screenshots (ALLSET_GUI_SHOTS) for the step doc."""
 
 import os
 import sys

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 181: Maya option windows of the Surfaces menu (same spec as operators/option_windows.py; option_windows._extend
-appends ``WINDOWS``). Titles, field labels and factory values:  (Maya 2022 option
+appends ``WINDOWS``). Titles, field labels and factory values: Maya 2022's option
 windows).
 Fields Blender / the kit can't follow are listed as ``missing``. Operators:
 operators/surfaces_maya.py. Values are Maya values (lengths in Maya units)."""
@@ -90,7 +90,7 @@ WINDOWS = [
         F("close", "", "bool", False, text="Close"),
         F("degree", "Surface degree:", "enum", "Cubic", items=("Linear", "Cubic")),
         F("section_spans", "Section spans:", "int", 1, lo=1, hi=500),
-        # step 228 L10 (maya2026_curve_rigs.md): Polygons = a mesh with UVs that follows the curves
+        # step 228 L10: Polygons = a mesh with UVs that follows the curves
         F("output", "Output geometry:", "enum", "NURBS", items=("NURBS", "Polygons")),
     ], _run_loft, paths=("Surfaces/Loft",),
         missing=(_RANGE, "Output geometry: Bezier not made",

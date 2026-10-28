@@ -2,8 +2,8 @@
 """Step 140 Maya option windows: modeling, parenting and key commands (issues #33, #35).
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
-factory defaults read from Maya 2022 (); what the values do was checked with
-Maya (). option_windows.py appends ``WINDOWS`` to its own list, so this
+factory defaults are Maya 2022's; what the values do matches Maya.
+option_windows.py appends ``WINDOWS`` to its own list, so this
 module only imports ``F`` / ``Window`` / helpers from it. Maya fields Blender can't honour are listed in ``missing``
 (drawn greyed), never as fields. Plan / decisions: , 
 """
@@ -15,13 +15,13 @@ from mathutils import Vector
 
 from .option_windows import F, Window, _components, _k  # noqa: F401  (option_windows imports this module at its end)
 
-# --- key commands (Key / Edit > Keys; ) -------------------------------
+# --- key commands (Key / Edit > Keys) -------------------------------
 
 _OBJECTS = F("objects", "Objects:", "enum", "Selected", items=("Selected", "All"))
 
 
 def _scope_fields(objects=True):
-    """The rows every Maya key command window starts with (option_boxes_140.md:77-88)."""
+    """The rows every Maya key command window starts with."""
     return ([_OBJECTS] if objects else []) + [
         F("hierarchy", "Hierarchy:", "enum", "Selected", items=("Selected", "Below")),
         F("channels", "Channels:", "enum", "All keyable", items=("All keyable", "From Channel Box")),
@@ -139,19 +139,15 @@ _DELETE_TAIL = [
     F("connect", "Connect:", "bool", False)]
 
 KEY_WINDOWS = [
-    # option_boxes_140.md:77-90
     Window("delete_keys", "Delete Keys Options", "Delete Keys", None, _scope_fields() + _DELETE_TAIL, _run_delete,
            paths=_paths("Delete Keys", "Delete"), missing=(_CONTROL_POINTS,)),
-    # :92-95
     Window("cut_keys", "Cut Keys Options", "Cut Keys", None, _scope_fields(objects=False) + _DELETE_TAIL, _run_cut,
            paths=_paths("Cut Keys", "Cut"),
-           missing=(_CONTROL_POINTS, "Method: Range (Maya cutKey has no area option)")),
-    # :97-99
+           missing=(_CONTROL_POINTS, "Method: Range (cutKey has no area option)")),
     Window("copy_keys", "Copy Keys Options", "Copy Keys", None, _scope_fields(objects=False) + [
         F("method", "Method:", "enum", "Keys", items=("Keys", "Segments"))], _run_copy,
         paths=_paths("Copy Keys", "Copy"),
-        missing=(_CONTROL_POINTS, "Method: Range (Maya copyKey has no area option)")),
-    # :101-113
+        missing=(_CONTROL_POINTS, "Method: Range (copyKey has no area option)")),
     Window("paste_keys", "Paste Keys Options", "Paste Keys", None, [
         F("time_range", "Time range:", "enum", "Current", items=("Start", "Start/End", "Current", "Clipboard")),
         F("start", "Start time:", "float", 0.0, lo=-1e6, hi=1e6), F("end", "End time:", "float", 10.0, lo=-1e6, hi=1e6),
@@ -163,7 +159,6 @@ KEY_WINDOWS = [
         _run_paste, paths=_paths("Paste Keys", "Paste"),
         missing=("Selected keys override specified time range", "Clipboard adjustment: Scale / Fit (Preserve only)",
                  "Connect")),
-    # :115-118
     Window("scale_keys", "Scale Keys Options", "Scale Keys", None, _scope_fields() + [
         F("method", "Method:", "enum", "Scale/Pivot", items=("Scale/Pivot", "Start/End")),
         F("only_specified", "", "bool", True, text="Only scale specified keys"),
@@ -174,7 +169,6 @@ KEY_WINDOWS = [
         F("new_start", "New start time:", "float", 1.0, lo=-1e6, hi=1e6),
         F("new_end", "New end time:", "float", 10.0, lo=-1e6, hi=1e6)], _run_scale,
         paths=_paths("Scale Keys", "Scale"), missing=(_CONTROL_POINTS,)),
-    # :120-123
     Window("snap_keys", "Snap Keys Options", "Snap Keys", None, _scope_fields() + [
         F("snap", "Snap:", "enum", "Times", items=("Times", "Values", "Both")),
         F("time_multiple", "Snap times to multiple of:", "float", 1.0, lo=0.0, hi=1000.0),
@@ -183,7 +177,7 @@ KEY_WINDOWS = [
 ]
 
 
-# --- Edit menu (option_boxes_140.md:62-75, :154-167) --------------------------------------------------------------
+# --- Edit menu --------------------------------------------------------------
 
 def _run_parent(context, v):
     return bpy.ops.allset.parent('EXEC_DEFAULT', preserve_position=v["preserve"])
@@ -231,7 +225,7 @@ EDIT_WINDOWS = [
         F("under", "Ungroup under:", "enum", "Parent", items=("Parent", "World")), _PRESERVE], _run_ungroup,
         paths=("Edit/Ungroup",)),
     # step 103's window (option_windows.py "duplicate_special") plus Smart transform, which the kit has
-    # (option_boxes_140.md:154-167); the main loop deletes the old spec at merge
+    # too; the main loop deletes the old spec at merge
     Window("duplicate_special_maya", "Duplicate Special Options", "Duplicate Special", None, [
         F("geometry_type", "Geometry type:", "enum", "Copy", items=("Copy", "Instance")),
         F("group_under", "Group under:", "enum", "Parent", items=("Parent", "World", "New group")),
@@ -244,7 +238,7 @@ EDIT_WINDOWS = [
 ]
 
 
-# --- Edit Mesh / Mesh Tools (option_boxes_140.md:136-152, :239-256) ------------------------------------------------
+# --- Edit Mesh / Mesh Tools ------------------------------------------------
 
 def _edit_only(context):
     from .poly_maya import CONNECT_WARNING
@@ -312,7 +306,7 @@ def _run_insert_edge_loop(context, v):
 
 
 def _run_offset_edge_loop(context, v):
-    """Maya "Enter Tool": the values go to the tool, then the tool starts ()."""
+    """Maya "Enter Tool": the values go to the tool, then the tool starts."""
     from . import edge_loops
     offset_edge_loop_options(context, v)
     return bpy.ops.allset.menu_tool('EXEC_DEFAULT', tool=edge_loops.OFFSET_TOOL, edit=True)
@@ -348,7 +342,7 @@ MESH_WINDOWS = [
         F("smoothing", "Smoothing angle:", "float", 30.0, lo=0.0, hi=180.0)], _run_insert_edge_loop,
         paths=("Mesh Tools/Insert Edge Loop",),
         missing=("Use Equal Multiplier (always on)", "Auto complete (always on)", "Fix Quads (always on)")),
-    # step 144 LOOP: Maya's box is a window with Enter Tool And Close / Enter Tool / Close (options_144.md:92-103)
+    # step 144 LOOP: Maya's box is a window with Enter Tool And Close / Enter Tool / Close
     Window("offset_edge_loop", "Offset Edge Loop Options", "Enter Tool And Close", None, [
         F("delete_edge", "", "bool", True, text="Delete edge (maintain 4-sided polygons)"),
         F("edge_flow", "", "bool", False, text="Insert with edge flow"),
@@ -361,8 +355,8 @@ MESH_WINDOWS = [
 ]
 
 # --- Edit > Delete by Type > Non-Deformer History ❒ (step 162) ---------------------------------------------------
-# Maya 2022 "Delete Non Deformer History Options" (GUI capture ,
-# ): Delete: All non-deformer history (factory, setting bakePreDefHistory 0) /
+# Maya 2022 "Delete Non Deformer History Options": Delete: All non-deformer history (factory, setting
+# bakePreDefHistory 0) /
 # History before deformers only; buttons Delete / Apply / Close.
 NONDEF_ALL = "All non-deformer history"
 NONDEF_PRE = "History before deformers only"

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's default light for kit renders of a scene without lights (step 152, #101).
 
-Maya (Maya, Maya Software, ): Render Settings > Common > Render Options >
+Maya (Maya Software): Render Settings > Common > Render Options >
 Enable Default Light (``defaultRenderGlobals.enableDefaultLight``, factory on) lights a scene that has no light node
 (a hidden light, an ambient light or a light outside defaultLightSet all turn it off) with a white directional light
 of intensity 1 that follows the render camera: its direction is the camera's view axis turned 25 deg up and 25 deg to
@@ -17,7 +17,7 @@ marked lights (an undo step pushed while a render ran, a file saved during a ren
 load. The kit Outliner, defaultLightSet and the Light Editor skip it; a marked light never counts as a scene light.
 
 Blender's own render keys (step 214, #120): every ``bpy.app.handlers.render_*`` callback of a UI (INVOKE) render
-runs on the render job's thread, not the main one ( tmp/f214m/m1_out.json from m1_threads.py, factory 4.5.4 GUI:
+runs on the render job's thread, not the main one ( from m1_threads.py, factory 4.5.4 GUI:
 render_init / render_pre / render_post / render_complete all off ``threading.main_thread()``), and the engine builds
 its depsgraph there, so a render_init handler can't add the light safely: no handler fallback. Instead Maya mode wraps
 the render keys with ``allset.render_blender``: its invoke adds the light on the main thread, then starts
@@ -50,7 +50,7 @@ def is_default_light(ob):
 
 
 def scene_has_lights(scene):
-    """Maya: any light node turns the default light off, hidden or not (checked)."""
+    """Maya: any light node turns the default light off, hidden or not."""
     return any(ob.type == 'LIGHT' and not is_default_light(ob) for ob in scene.objects)
 
 

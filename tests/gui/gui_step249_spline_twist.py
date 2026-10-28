@@ -1,7 +1,7 @@
 """Step 249 (Issue #166) in a real UI: a six-joint spine -> Skeleton > Create IK Spline Handle (click the root, then
 the end joint) -> the curve is bent -> the handle's Channel Box shows Twist / Roll / Twist Type; Twist 100 turns the
 in-between joints 25 deg each (Maya Linear), Twist Type 1 (Ease In) piles it toward the end, Roll 30 turns the root
--> Ctrl+Z -> save + open keeps the twist ()."""
+-> Ctrl+Z -> save + open keeps the twist."""
 
 import math
 import os
@@ -128,7 +128,7 @@ def s_made():
     curve = next(o for o in bpy.data.objects if o.type == 'CURVE')
     k = mod(".operators.units").maya_unit()
     pts = curve.data.splines[0].points
-    pts[-2].co = (2.0 * k, 0.0, pts[-2].co[2], 1.0)          # bend it like the Maya checked
+    pts[-2].co = (2.0 * k, 0.0, pts[-2].co[2], 1.0)          # bend it like the Maya case
     pts[-1].co = (4.0 * k, -1.0 * k, pts[-1].co[2], 1.0)
     curve.data.update_tag()
     bpy.ops.ed.undo_push(message="bend")

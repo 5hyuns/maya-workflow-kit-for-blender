@@ -2,7 +2,7 @@
 """Maya Outliner: a kit skeleton's row reads its root joint's name (step 258, Issue #155 H1-6).
 
 Maya 2026: a new skeleton is ``joint1`` in the Outliner and in the Channel Box — a joint is one DAG node, there is no
-skeleton node above it ( B7, Maya b4567.json B7_joint). The kit's skeleton is an
+skeleton node above it. The kit's skeleton is an
 armature object ``skeleton<N>`` holding the joints as bones (operators/joints.py), and Blender's C Outliner shows the
 object name. Renaming the object after its root joint would put an object and a bone of the same name in the scene
 (the kit's ``maya.cmds`` look-up, FBX nodes and many rig tools find nodes by name; 100+ test references), so the kit

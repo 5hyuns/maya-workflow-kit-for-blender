@@ -2,7 +2,7 @@
 """Maya framing math (F, A, Shift+F, Shift+A, Ctrl+Shift+F): fit a bounding box into
 the visible part of a 3D view with Maya's fit factor.
 
- F frames the selection (no children), Ctrl+Shift+F
+Maya: F frames the selection (no children), Ctrl+Shift+F
 with children, A everything; fit factor 0.95. Blender's view_selected fits a
 sphere into the region width only, so a cube overfills a wide 35 mm view and part of it
 sits under the sidebar. 
@@ -15,7 +15,7 @@ orthographic: its extent scales with the distance).
 
 from mathutils import Matrix, Vector
 
-FIT = 0.95       # 
+FIT = 0.95       # Maya fit factor
 MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units [delegated]
 
 
@@ -123,8 +123,8 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
         return max((b[2] - b[0]) / (2.0 * hw), (b[3] - b[1]) / (2.0 * hh))
 
     if not ortho and win0[0][0] > 0.0 and win0[1][1] > 0.0:
-        # Maya viewFit in perspective (step 258, checked  2026 for fitFactor 1.0 / 0.95 / 0.9,
-        #  B7): the camera stands back from the box centre by the box's half depth
+        # Maya viewFit in perspective (step 258, Maya 2026 for fitFactor 1.0 / 0.95 / 0.9): the camera stands back from
+        # the box centre by the box's half depth
         # along the view plus the distance at which the box's half extents across the view (the axis-aligned box
         # projected on the view's right / up axes) fill the field of view times the fit factor. The field of view is
         # the visible rect's (sidebars excluded). Maya aims the camera at the box centre: the centre is put on the

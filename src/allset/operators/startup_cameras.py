@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's startup cameras persp / top / front / side as hidden camera objects of a new Maya scene (step 211, #117).
 
-Maya 2022 (Maya,  C1-C3): a new scene's top DAG nodes are persp, top, front, side
+Maya 2022: a new scene's top DAG nodes are persp, top, front, side
 (visibility off, ``cmds.camera(query=True, startupCamera=True)`` true), then the user's nodes in creation order; the
 Outliner lists them in that order and greys them (hidden). ``cmds.delete("persp")`` fails with "Non-deletable node
 'persp' cannot be deleted.".
@@ -24,7 +24,7 @@ from . import units
 MARK = "allset_startup_camera"
 NAMES = ("persp", "top", "front", "side")
 MAYA_LENS, MAYA_FILM_MM, MAYA_ORTHO_WIDTH = 35.0, 36.0, 30.0
-# Maya new-scene values (Maya, Y-up, Maya units): translate, rotate (XYZ degrees), orthographic
+# Maya new-scene values (Y-up, Maya units): translate, rotate (XYZ degrees), orthographic
 MAYA = {
     "persp": ((28.0, 21.0, 28.0), (-27.938352729602, 45.0, 0.0), False),
     "top": ((0.0, 1000.1, 0.0), (-90.0, 0.0, 0.0), True),

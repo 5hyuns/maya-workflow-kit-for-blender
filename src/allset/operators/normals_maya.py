@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 Mesh Display normal commands (step 189): Set Vertex Normal, Lock / Unlock Normals, Average, Set to Face.
 
-Rules checked  on explicit meshes:  "Normals" (ground truth
-, script ).
+Maya rules on explicit meshes.
 
 Maya keeps a normal per vertex-face (corner) with a "locked" (frozen, user) flag; Blender's custom split normals are
 the same thing: a corner with a custom normal keeps it, a corner without one (custom value (0, 0) in its normal

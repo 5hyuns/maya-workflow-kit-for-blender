@@ -5,7 +5,7 @@ Maya layout and keeps the user's theme (step 130). Then: menu bar without the me
 screen, "Workspace:" dropdown, flat Maya / Blender switch; Status Line led by the menu set, Maya's collapsed groups;
 shelf row without a header, tab strip drawn in its WINDOW region and clickable; viewport header = Maya panel menus,
 tool header = Maya panel toolbar. Screen pixels: the theme's menu bar colour, the shelf tab strip dimmed like Maya's. Screenshots for the
-side-by-side with Maya's grab ()."""
+side-by-side with Maya."""
 
 import os
 import sys

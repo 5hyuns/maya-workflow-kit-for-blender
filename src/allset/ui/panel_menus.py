@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya viewport panel menu bar: View, Shading, Lighting, Show, Renderer, Panels.
 
-Every Maya modelPanel has its own menu bar (). Menu contents
+Every Maya modelPanel has its own menu bar. Menu contents
 follow Maya 2022's panel menus (View, Shading, Lighting,
-Show, Renderer, Panels), checked in a running Maya; only labels and order. Design:  「계획」.
+Show, Renderer, Panels); only labels and order. Design:  「계획」.
 
 Only the menu part of the 3D View header changes: ``VIEW3D_MT_editor_menus.draw_collapsible``
 (inherited from ``bpy.types.Menu``, called once by ``VIEW3D_HT_header.draw``,

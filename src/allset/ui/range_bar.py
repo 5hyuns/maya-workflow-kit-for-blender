@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Range Slider bar in the timeline header: drag the playback range.
 
-Maya (, checked in ): a dark
+Maya: a dark
 track (#373737) spans the animation range, the playback range is a rounded segment (#5d5d5d) on it with
 a handle square (#919191) inside each end and the start / end frames next to the handles. Dragging the
 segment moves the playback range, dragging a handle moves that end.
@@ -17,7 +17,7 @@ stretches before the bar.
 
 import bpy
 
-# --- Maya checked () ------------------------------------------------------------------
+# --- Maya sizes and colours (step 73) ----------------------------------------------------------------
 TRACK_RGB = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 SEGMENT_RGB = (0x5d / 255, 0x5d / 255, 0x5d / 255, 1.0)
 HANDLE_RGB = (0x91 / 255, 0x91 / 255, 0x91 / 255, 1.0)

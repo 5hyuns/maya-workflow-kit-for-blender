@@ -153,7 +153,7 @@ SHOW = [
 ]
 
 ISOLATE = [
-    _run("View Selected", "allset.isolate"),          # step 164: with the children (dag_164.md)
+    _run("View Selected", "allset.isolate"),          # step 164: with the children
 ]
 
 RENDERER = [
@@ -260,7 +260,7 @@ STATUS_LINE = ("Status Line/Select by hierarchy", "Status Line/Select by handle 
                "Status Line/Pause Viewport 2.0", "Status Line/Show or hide the Character Controls")
 
 
-# Maya runTimeCommand of panel rows whose command is one (; Maya panel menus):
+# Maya runTimeCommand of panel rows whose command is one (Maya panel menus):
 # tools/menu_consistency.py compares these with the main / editor / marking menus.
 COMMANDS = {"Tumble Tool": "TumbleTool", "Track Tool": "TrackTool", "Dolly Tool": "DollyTool",
             "Center View of Selection": "CenterViewOfSelection", "Default View": "GoToDefaultView"}

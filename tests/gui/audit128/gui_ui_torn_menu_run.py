@@ -1,5 +1,5 @@
 """Audit 128 (UI lane): items of a torn-off Maya menu (Maya: a torn-off menu window runs its items exactly like the
-menu, ) must run from the floating window. The torn window is a Properties editor,
+menu) must run from the floating window. The torn window is a Properties editor,
 so every "op"-kind menu item is polled there and in the main viewport (object mode with pCube1 selected, then edit
 mode with all faces selected); items that poll in the viewport but not in the torn window are listed. Then runs
 Mesh > Smooth from a torn Mesh menu window (the operator a user clicks) and checks it worked.

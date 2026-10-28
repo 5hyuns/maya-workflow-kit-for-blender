@@ -1,6 +1,6 @@
 """Step 241 (Issue #156, report @cnzim): joints move after placement.
 
-Maya 2026 (, Maya C:/Repos/bmk-strategy/maya2026_re/scripts/joint_move_241.py):
+Maya 2026:
 chain (0,0,0) (0,10,0) (0,20,0); W on joint2 by +3 X -> joint2 (3,10,0), joint3 follows to (3,20,0), joint1 stays;
 undo restores. After Bind Skin a joint move poses (the mesh moves 3); Skin > Move Skinned Joints moves the joint with
 the mesh unchanged (0.0) and the weights the same, and posing afterwards bends about the new place.

@@ -1,7 +1,7 @@
 """Step 226 lane C: Match Transformations to a joint, Maya multi-target constraints (weighted average) against Maya.
 
-Ground truth:  from  (Maya 2026; the
-values are copied into MAYA below because  is not tracked). Scene: locators ctrl (1, 4.5, 0), ctrlB (-3, 4, 0),
+Maya 2026 results (the
+values are in MAYA below). Scene: locators ctrl (1, 4.5, 0), ctrlB (-3, 4, 0),
 obj (0, 4, 0) in Maya Y-up -> Blender (x, -z, y) x maya_unit(). Rotations: Maya XYZ Euler degrees, R_b = C R_m C^-1.
 """
 
@@ -22,7 +22,7 @@ joints = import_module(kit.MODULE + ".operators.joints")
 TOL = 1e-4
 C3 = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))      # Maya axes -> Blender axes
 
-MAYA = {   #  (Maya 2026)
+MAYA = {   # Maya 2026
     "orient": {"coaxial_equal": (0.0, 0.0, 15.0), "coaxial_w1_3": (0.0, 0.0, -0.26148),
                "skew_equal": (27.048397, 32.577252, 24.714866), "skew_w1_3": (18.464918, 48.151595, 9.316553)},
     "parent": {"start": (0.0, 4.0, 0.0), "a_x2": (1.0, 4.0, 0.0),
@@ -31,11 +31,11 @@ MAYA = {   #  (Maya 2026)
     "point": {"equal": (-1.0, 4.25, 0.0), "w1_3": (-2.0, 4.125, 0.0), "all_zero": (-1.0, 4.25, 0.0),
               "w0_half_only": (1.0, 4.5, 0.0)},
     "scale": {"equal": (1.414214, 2.44949, 1.414214), "w1_3": (1.189207, 2.710806, 1.189207)},
-    # L3_group_freeze_match.matchTransform_ctrl (): joint at (5, 2, 1),
+    # Maya matchTransform ctrl: joint at (5, 2, 1),
     # jointOrientZ 30 -> the matched ctrl t (5, 2, 1), r (0, 0, 30)
     "match": {"t": (5.0, 2.0, 1.0), "r": (0.0, 0.0, 30.0)},
 }
-DEVIATIONS = {}     # checked kit - Maya differences that are not faked (logged at the end)
+DEVIATIONS = {}     # kit - Maya differences that are not faked (logged at the end)
 
 
 def _u():

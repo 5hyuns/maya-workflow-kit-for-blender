@@ -2,7 +2,7 @@
 """Step 205 lane P (issue #112): Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects,
 Deform > Wrap > Add / Remove Influence.
 
-Maya 2022 behaviour (Maya's option windows and Maya, ):
+Maya 2022 behaviour (Maya's option windows):
 
 - UV Pin: factory = Pin locations
   *Transforms*, Output *Existing Transform*, Normal axis X, Tangent axis Y, UV set "" (current), Normalize isoparms on.
@@ -21,7 +21,7 @@ The kit: a pinned transform gets a Copy Transforms constraint named like the May
 Original (Full) — world = pin matrix @ own channels, Maya's offsetParentMatrix with inheritsTransform off (the
 "Inherit transform has been turned off" warning lists every pinned existing transform, like Maya) — targeting a hidden
 helper empty that a depsgraph / frame handler keeps at the pin matrix (the pattern of operators/constrain_199.py). The
-pin matrix follows Maya's checked rules (, checked within 1e-4 against Maya by
+pin matrix follows Maya's rules (within 1e-4, checked by
 tests/test_step205_pins_maya.py): quad locations are bilinear (s, t), normal = blend of Maya vertex normals (unit
 face-normal average), tangent = dP/du of the face's first triangle; UV Pin = the frame at the stored UV on the deformed
 mesh; Proximity Pin = the closest point of the *original* mesh to pinInput at every evaluation, output = F1 · F0⁻¹ ·
@@ -30,11 +30,11 @@ towards the input). Deformed points = the evaluated mesh when its topology equal
 first vertices).
 
 Intermediate objects: Maya's intermediate object of a deformed shape is its
-``<shape>Orig`` (every mesh deformer adds one, ); Display sets intermediateObject 0
+``<shape>Orig`` (every mesh deformer adds one); Display sets intermediateObject 0
 on it and selects it, Hide sets it back and selects the deformed objects. Blender keeps the undeformed mesh as the
 object's own data, so the kit shows it as a child object ``<shape>Orig`` sharing that mesh with no modifiers (edits
 to it edit the original shape, like Maya) and deletes it on Hide [delegated]. Base wires / pin and constraint helpers
-are not intermediate objects in Maya (curve1BaseWire = a hidden transform, deform_169.md:15) and stay as they are.
+are not intermediate objects in Maya (curve1BaseWire = a hidden transform) and stay as they are.
 
 Wrap influences (Maya's Wrap deformer): the deformed surfaces are selected, the influence last. Blender's
 Surface Deform reads one target, so every extra influence is one more Surface Deform ``wrap1Influence<k>`` (+ its Hook
@@ -94,7 +94,7 @@ MSG_NO_WRAP = "No wrap deformer is associated with surface {0}."
 
 # --- geometry: original and deformed points of one mesh -------------------------------------------------------
 #
-# Maya's pin surface frame, checked (, pins_model.py; every "O" case within 1.4e-7):
+# Maya's pin surface frame (every "O" case within 1.4e-7):
 # a location is (face, weights over its corners) — on a quad the bilinear (s, t) of its corners f0 f1 f2 f3, found
 # from the UV (UV Pin) or the closest point (Proximity Pin); position = the same blend of the corner points, normal =
 # the same blend of Maya vertex normals (normalised sum of the unit face normals around the vertex), tangent = dP/du
@@ -397,7 +397,7 @@ def _rot_blend(a, b, f):
 
 
 def _orientation_base(inp, geo, loc, mode, axes):
-    """Offset Orientation 0 (deform_205.md): Edge = the input turned by the minimal rotation taking its normal axis
+    """Offset Orientation 0: Edge = the input turned by the minimal rotation taking its normal axis
     onto the rest normal n0; UV = the rest frame on the normal / tangent options."""
     if mode == "uv":
         return geo.frame(loc, axes, deformed=False, world=False)[:3, :3]
@@ -412,7 +412,7 @@ def _orientation_base(inp, geo, loc, mode, axes):
 
 
 def pin_matrix(h, geo):
-    """World matrix (numpy 4x4) the pin puts its output at, or None ()."""
+    """World matrix (numpy 4x4) the pin puts its output at, or None."""
     axes = tuple(h.get(AXES, (0, 1)))
     if h.get(KIND) == "uvPin":
         # UV Pin: the frame at the stored UV on the deformed mesh (the target's own rotation is dropped)

@@ -1,5 +1,5 @@
 """Step 152 (#101) main: Maya option windows of Render > Render Sequence ❒ / Batch Render ❒ and Maya's warning for
-Render Current Frame ❒ ()."""
+Render Current Frame ❒."""
 
 from importlib import import_module
 

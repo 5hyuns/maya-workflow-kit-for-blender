@@ -47,7 +47,7 @@ def test_fit_wide_box_in_narrow_perspective_view():
     loc, d = framing.fit(pts, rot, win, 2.84, False, size, (0, 0) + rect)
     b = framing._bounds(win @ framing.view_matrix(loc, rot, d), framing.box_corners(pts), size)
     assert b[0] >= 0 and b[1] >= 0 and b[2] <= size[0] and b[3] <= size[1], b
-    # step 258: Maya's perspective viewFit aims at the box centre with its checked margin (test_step258_view)
+    # step 258: Maya's perspective viewFit aims at the box centre with its margin (test_step258_view)
     lo, hi = framing.box_corners(pts)[0], framing.box_corners(pts)[-1]
     c = framing.project(win @ framing.view_matrix(loc, rot, d), (lo + hi) / 2, size)
     assert abs(c.x - size[0] / 2) < 1 and abs(c.y - size[1] / 2) < 1, c

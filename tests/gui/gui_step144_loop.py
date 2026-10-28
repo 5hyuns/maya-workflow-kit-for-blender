@@ -2,7 +2,7 @@
 click on a cube edge = a loop right at that height (no second click), Ctrl+Z takes it back, press-drag = the loop
 follows the mouse; Offset Edge Loop = a click on that loop = two loops (Maya offset 0.5, relative to each side
 edge), a drag sets the offset; Slide Edge = middle-drag slides the selected loop along the cube's sides.
-; Maya numbers: """
+"""
 
 import os
 import sys

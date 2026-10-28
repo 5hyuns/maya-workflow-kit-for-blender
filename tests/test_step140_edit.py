@@ -1,7 +1,7 @@
 """Step 140 lane EDIT: Maya option windows for the key commands, Parent / Unparent / Ungroup, Duplicate Special,
 Connect, Circularize, Make Hole and Insert Edge Loop (issues #33, #35). Fields / labels / factory defaults:
- (Maya 2022 GUI capture); results: Maya, 
-(raw numbers  from measure.py there). ,
+Maya 2022; results: Maya 2022.
+,
 """
 
 import math
@@ -167,7 +167,7 @@ def test_key_menu_items_run_with_maya_factory_options():
 
 # --- key commands -----------------------------------------------------------------------------------
 
-BASE = [(0, 0), (5, 10), (10, 0), (15, 10), (20, 0)]           # measure.py BASE (frame, Maya value)
+BASE = [(0, 0), (5, 10), (10, 0), (15, 10), (20, 0)]           # BASE (frame, Maya value)
 TARGET = [(0, 1), (3, 2), (6, 3), (9, 4), (12, 5), (20, 6)]
 
 
@@ -418,7 +418,7 @@ def test_duplicate_special_smart_transform():
 
 def _grid():
     """Maya polyPlane sx 4 sy 4 w 4 h 4 in Blender axes (Maya (x, y, z) -> Blender (x, -z, y)), the 4 middle faces
-    selected (measure.py circ)."""
+    selected (Maya circularize case)."""
     _clear()
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=4, y_subdivisions=4, size=4)
     ob = bpy.context.active_object
@@ -474,7 +474,7 @@ def test_circularize_options():
 
 def _sphere_edges(ob):
     """The two latitude edges between longitudes 90 and 135 degrees on the equator and the ring below
-    (measure.py connect: Maya e[20], e[28] of an 8 x 8 sphere)."""
+    (Maya connect case: e[20], e[28] of an 8 x 8 sphere)."""
     bm = bmesh.from_edit_mesh(ob.data)
     out = []
     for e in bm.edges:
@@ -556,7 +556,7 @@ def test_connect_tool_segments_slide():
 
 
 def _hole_scene():
-    """measure.py hole: a 4 x 4 face and a 1 x 1 stamp centred at Maya (0.5, 0.5, 0.25) = Blender (0.5, -0.25, 0.5)."""
+    """Maya hole case: a 4 x 4 face and a 1 x 1 stamp centred at Maya (0.5, 0.5, 0.25) = Blender (0.5, -0.25, 0.5)."""
     _clear()
     me = bpy.data.meshes.new("m")
     bm = bmesh.new()

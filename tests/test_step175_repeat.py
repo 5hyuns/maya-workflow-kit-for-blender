@@ -1,5 +1,5 @@
 """Step 175: Maya G repeats menu / shelf / marking-menu commands too (operators/repeat_maya.py), Edit > Repeat label,
-Recent Commands, one undo step per G. Maya rules:  (GUI-checked)."""
+Recent Commands, one undo step per G, following Maya."""
 
 from importlib import import_module
 

@@ -30,7 +30,7 @@ def _only(ob):
 
 
 def test_95_lattice_reads_maya_scale_in_cm():
-    # Maya (Maya): lattice -dv 2 5 2 -oc on a radius 1 polySphere = Scale 2 2 2
+    # Maya: lattice -dv 2 5 2 -oc on a radius 1 polySphere = Scale 2 2 2
     _cm_scene()
     bpy.ops.allset.create(kind='SPHERE')
     sphere = bpy.context.active_object

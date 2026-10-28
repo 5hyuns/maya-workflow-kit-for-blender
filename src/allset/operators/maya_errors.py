@@ -1,23 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's ``// Error:`` messages for commands run on a selection they don't take (step 258, #152).
 
-Maya prints these as Errors in the Command Line / Help Line ( B4, Maya 2026;
+Maya prints these as Errors in the Command Line / Help Line (Maya 2026,
 with the step-258 additions there). A kit operator reports one with ``op.report({'ERROR'}, text)``;
 code that runs a Blender operator for a Maya menu item raises ``MayaError`` before it, which the menu item turns into
 the same Error report (``report_nested``) instead of Blender's Python error.
 """
 
-#  B4 (Maya 2026)
 WRONG_SELECTION = "Current selection doesn't match required selection type."     # polyRemesh / polyReduce
 NO_LIVE_SURFACE = "A live surface is required for conform."                         # Maya Mesh Tools > Conform
 NO_CONFORM_SELECTION = "No components or objects selected for conform."
 MUST_SELECT_JOINT = "You must select at least one joint."                           # Maya Bind Skin, no joint selected
-SELECT_TO_BIND = "Select objects to bind."                     # Bind Skin, nothing selected (step 258 / 266 Maya)
+SELECT_TO_BIND = "Select objects to bind."                     # Bind Skin, nothing selected (step 258 / 266)
 BINDABLE_IN_SELECTION = "Bindable objects must be part of the selection."   # Bind Skin, joints only (step 266)
 NO_TARGETS = "Target list was empty or contained no valid targets."                 # parent / point / orient /
-#                                                    scale / aim / geometry constraint (B4 + step 258 checked)
+#                                                    scale / aim / geometry constraint (step 258)
 MOVE_IK_TO_FK = "Must select an ik handle, joint or object that connected to IK/FK."   # Maya Move IK to FK
-#  B4 additions (step 258 Maya): nothing selected / a plain skeleton
+# step 258: nothing selected / a plain skeleton
 REMESH_NOTHING = "This command requires at least 1 argument(s) to be specified or selected;  found 0."
 REDUCE_NOTHING = "Reduce requires that at least 1 object or group of faces be selected."
 NO_SHAPE = "No shape was selected."                     # KeyBlendShapeTargetsWeight on a plain skeleton / nothing
@@ -71,7 +70,7 @@ def check_modifier(context, kind):
 
 def wrong_type_warning(kind):
     """Kit warning for the other Maya commands the kit runs as a modifier (Triangulate, Smooth, Soft Body ...) when
-    Blender has no such modifier for the active object type: no Maya text was checked for those."""
+    Blender has no such modifier for the active object type: no Maya text is known for those."""
     label = {'TRIANGULATE': "Triangulate", 'SUBSURF': "Smooth", 'DATA_TRANSFER': "Transfer Attributes",
              'OCEAN': "Ocean", 'SOFT_BODY': "Soft Body"}.get(kind, str(kind).title())
     return f"{label}: select a mesh first."

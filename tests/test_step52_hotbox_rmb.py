@@ -1,4 +1,4 @@
-"""Step 52: hotbox and RMB marking menu as Maya 2022 shows them (,
+"""Step 52: hotbox and RMB marking menu as Maya 2022 shows them (
 14_marking_menu_object.png). ; GUI: tests/gui/gui_step52_hotbox_rmb.py."""
 
 from importlib import import_module
@@ -112,7 +112,7 @@ def test_rmb_list_is_maya_2022():
 
 
 def test_rmb_list_under_or_beside_the_ring():
-    """Maya keeps the list in one column under the ring () and draws the whole menu
+    """Maya keeps the list in one column under the ring and draws the whole menu
     higher only at the *screen* bottom. Blender can't draw outside its (smaller) window, so step 193 keeps the ring
     at the press point — the marks keep working — and moves only the list: under the ring when it fits, else beside
     it in one column (step 161 side rule), else above / pushed inside. Never over the ring, always inside."""

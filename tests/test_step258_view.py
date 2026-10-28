@@ -1,7 +1,7 @@
-"""Step 258 (Issue #155): F frames like Maya's viewFit (fit factor 0.95, checked margin), the Status Line snap
+"""Step 258 (Issue #155): F frames like Maya's viewFit (fit factor 0.95, Maya's margin), the Status Line snap
 toggles stay out of the undo queue, the Symmetry control opens Maya's drop-down.
 
-Maya truth (Maya 2026,  B7): unit polyCube, persp camera (35 mm, film 36 x 24:
+Maya 2026: unit polyCube, persp camera (35 mm, film 36 x 24:
 hfov 54.4322, vfov 37.8493), viewFit -> camera 3.23226 from the cube centre (fitFactor 1.0: 3.11360, 0.9: 3.36412),
 camera direction (1.94505, 1.45879, 1.94505) in Maya axes."""
 

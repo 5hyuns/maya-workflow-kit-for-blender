@@ -2,7 +2,7 @@
 """``maya.cmds`` time and key commands of the kit's look-alike (step 208, Issue #115): currentTime, setKeyframe,
 cutKey, keyframe, playbackOptions.
 
-checked  (Maya 2022, ): return values (setKeyframe = keys set, cutKey /
+Maya's behaviour: return values (setKeyframe = keys set, cutKey /
 keyframe -e = curves changed, cutKey -clear = 0), values in Maya units / degrees, a keyed attribute takes its curve's
 value at the current time. Keys go on the Channel Box channels' F-curves (``ui/channel_box.py``) with the kit's
 default tangents (``graph_key_menu.after_insert``, step 157). Maya's animation range = the scene frame range,
@@ -186,7 +186,7 @@ def setKeyframe(*args, **kwargs):
             for frame in times:
                 count += bool(insert_key(ob, key, frame, None if v is None else float(v), bd))
             # Maya leaves the attribute alone when a key at another time goes onto an existing curve (until the time
-            # changes, ); Blender's next depsgraph update writes every animated
+            # changes); Blender's next depsgraph update writes every animated
             # property from its curve anyway, so the script sees that value right away (deviation,)
             touched.append((ob, key))
     refresh(touched)
@@ -211,7 +211,7 @@ def _remove_points(ob, key, a, b):
 
 
 def cutKey(*args, **kwargs):
-    """Remove keys (all, or in -time); returns the number of curves cut, 0 with -clear (Maya). The keys are
+    """Remove keys (all, or in -time); returns the number of curves cut, 0 with -clear. The keys are
     not put on the animation clipboard (delegated: the kit's clipboard holds Channel Box / Graph Editor copies)."""
     f = _Flags("cutKey", kwargs)
     at = f.get("attribute", "at")

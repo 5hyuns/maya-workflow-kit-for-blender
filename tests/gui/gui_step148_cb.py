@@ -229,7 +229,7 @@ def s_lattice_shot():
     lat = bpy.data.objects.get("ffd1Lattice")
     sc = tuple(round(v, 4) for v in lat.scale) if lat else None
     size = tuple(round(v, 5) for v in lat.matrix_world.to_scale()) if lat else None
-    # Maya's polyCube is 1 unit wide: its lattice reads Scale 1 1 1 (a radius 1 sphere's reads 2, Maya); the
+    # Maya's polyCube is 1 unit wide: its lattice reads Scale 1 1 1 (a radius 1 sphere's reads 2 in Maya); the
     # world size is the cube's (1 cm in the cm template), not 1 m
     check(f"#95 ffd1Lattice Scale = Maya's 1 1 1 around the 1-unit cube ({sc}; world {size})",
           sc is not None and all(abs(v - 1.0) < 1e-3 for v in sc)

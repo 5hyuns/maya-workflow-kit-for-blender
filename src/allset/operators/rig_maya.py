@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Skeleton / Skin / Deform commands with Maya-checked results (step 110,  「계획」 5-7).
+"""Maya Skeleton / Skin / Deform commands with Maya's results (step 110,  「계획」 5-7).
 
- (Reroot, Preferred Angle, IK Spline Handle), (Hammer, Add / Remove
-Influence, Remove Unused Influences), (Cluster, Soft Mod; Nonlinear lives in ``menu_items``). A Maya joint is a
-bone head (or a chain end's tail), ; skin = Armature modifier + vertex groups
+Reroot, Preferred Angle, IK Spline Handle; Hammer, Add / Remove
+Influence, Remove Unused Influences; Cluster, Soft Mod (Nonlinear lives in ``menu_items``). A Maya joint is a
+bone head (or a chain end's tail), skin = Armature modifier + vertex groups
 named after the joints.
 """
 
@@ -132,8 +132,7 @@ def _with_children(bones):
 
 def set_preferred(bones, hierarchy=True):
     """Maya ``cmds.joint(edit=True, setPreferredAngles=True, children=True)``: preferredAngle = the current rotation, on
-    the joints and their children (option window Options: Selected joint = ``hierarchy`` False, no ``children``;
-    )."""
+    the joints and their children (option window Options: Selected joint = ``hierarchy`` False, no ``children``)."""
     for pb in (_with_children(bones) if hierarchy else bones):
         pb[PREFERRED_PROP] = [math.degrees(a) for a in _euler(pb)]
 
@@ -207,7 +206,7 @@ def _resample(points, n):
 
 def fit_cubic(points):
     """One-span cubic (4 control points) with its ends on the first / last point and the middle two a least-squares
-    fit of the polyline (Maya's IK Spline curve: spans 1, degree 3, modeling_rigging_110.md)."""
+    fit of the polyline (Maya's IK Spline curve: spans 1, degree 3)."""
     p0, p3 = points[0], points[-1]
     a11 = a12 = a22 = 0.0
     r1, r2 = Vector(), Vector()
@@ -266,8 +265,7 @@ def _first_cv_world(curve):
 
 def _parent_curve(curve, arm, first):
     """Maya Auto parent curve: the curve goes under the start joint's parent (a bone of the skeleton, else the
-    skeleton's parent object); a root without parent leaves it in the world (
-    maya2026_curve_rigs.md:21)."""
+    skeleton's parent object); a root without parent leaves it in the world."""
     world = curve.matrix_world.copy()
     if first.parent is not None:
         pb = first.parent
@@ -305,10 +303,10 @@ def create_spline_ik(context, arm, start, end, curve=None, root_on_curve=True, s
     """Spline IK constraint ``ikHandleN`` on the bone ending at the end joint (Maya ikSplineSolver).
 
     ``curve`` None = Auto create curve: ``curveN`` fitted through the chain (degree 3, ``spans`` spans; step 110).
-    An existing curve (step 218, ): Root on curve moves the root onto
+    An existing curve (step 218): Root on curve moves the root onto
     the curve start and the joints keep their lengths along the curve (Blender Spline IK, Y scale None, no chain
     offset); off keeps the root where it is and the chain takes the curve's shape from there (Chain Offset; Maya
-    instead puts the joints after the root on the curve itself, maya2026_curve_rigs.json L6 roc0_snc0: up to 1.35
+    instead puts the joints after the root on the curve itself, roc0_snc0: up to 1.35
     units apart, Blender's Spline IK has no start point on the curve); Snap curve to root moves the curve so its
     first CV is on the root joint. Returns (constraint, curve) or None."""
     from .skin import ik_chain
@@ -359,7 +357,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
     bl_label = "Create IK Spline Handle"
     bl_options = {'UNDO'}       # a click tool: Maya has no redo panel (step 147)
 
-    # Maya 2026 IK Spline Handle Tool factory settings (ikSplineHandleCtx, )
+    # Maya 2026 IK Spline Handle Tool factory settings (ikSplineHandleCtx)
     root_on_curve: BoolProperty(name="Root on curve", default=True, options={'SKIP_SAVE'})
     parent_curve: BoolProperty(name="Auto parent curve", default=True, options={'SKIP_SAVE'})
     snap_curve: BoolProperty(name="Snap curve to root", default=False, options={'SKIP_SAVE'})
@@ -400,7 +398,7 @@ class ALLSET_OT_ik_spline_handle(bpy.types.Operator):
         if handle is not None and self.twist_type:
             handle["twistType"] = int(self.twist_type)
             handle.update_tag()
-        # Maya selects the new ikHandle (maya2026_curve_rigs.json L6_spline_auto_curve): the kit handle is the
+        # Maya selects the new ikHandle (L6_spline_auto_curve): the kit handle is the
         # constraint, so its bone becomes the only selected joint (delegated)
         cb = _cb()
         owner = next(pb for pb in arm.pose.bones if pb.constraints.get(con.name) == con)
@@ -503,7 +501,7 @@ def normalize(mesh, groups=None):
                 g.weight /= total
 
 
-# Maya Add Influence without Lock weights (step 202, , Maya): the skin's
+# Maya Add Influence without Lock weights (step 202): the skin's
 # weights are recomputed by the closest-distance rule of Bind Skin (skin.closest_distance_weights) over the old and
 # the new influences, each with its own dropoff (old = the bind's, new = the option's Dropoff, factory 4).
 MAX_INFLUENCES_PROP = "allset_max_influences"   # Maya skinCluster maxInfluences (Bind Skin factory 5)
@@ -528,7 +526,7 @@ def maya_add_weights(points, before, segments, is_new, locked, dropoffs, max_inf
     """Weights (V, K) after Maya's Add Influence for world ``points`` (V, 3); columns = influences in skinCluster order
     (old ones, then the new ones), ``before`` (V, K) = current weights (0 for new), ``segments`` a list of K segment
     lists, ``is_new`` / ``locked`` (K,) bools, ``dropoffs`` (K,). Per vertex, w_i = distance(vertex, influence i) **
-    -dropoff_i (a vertex on influences = those share equally) and (Maya, ):
+    -dropoff_i (a vertex on influences = those share equally), and:
     - no locked influence, K <= max influences: every influence gets w_i / sum w (painted weights are discarded);
     - no locked influence, K > max influences: the max influences largest w (ties: skinCluster order) are kept, but
       only new influences and those with weight > 0 before receive weight;
@@ -547,7 +545,7 @@ def maya_add_weights(points, before, segments, is_new, locked, dropoffs, max_inf
             ll = float(ab @ ab)
             t = np.clip((pts - a) @ ab / ll, 0.0, 1.0)[:, None] if ll > 0.0 else 0.0
             dist[:, j] = np.minimum(dist[:, j], np.linalg.norm(pts - (a + t * ab), axis=1))
-    on = dist <= 1e-4                     # Maya's on-joint distance (checked , skin_basics_247.md)
+    on = dist <= 1e-4                     # Maya's on-joint distance
     with np.errstate(divide='ignore'):
         w = np.where(on.any(axis=1)[:, None], on.astype(np.float64), dist ** -np.asarray(dropoffs, dtype=np.float64))
     w = np.where(np.isfinite(w), w, 0.0)
@@ -620,8 +618,8 @@ def _add_by_distance(mesh, names, dropoff):
 
 def add_influence(mesh, bone_names, lock=False, weight=0.0, dropoff=4.0):
     """Maya Add Influence. Factory (Lock weights off): the skin weights are recomputed by distance with the new
-    joints (``maya_add_weights``, step 202). Option window Lock weights (step 196, 
-    options_196_misc.md, Maya): the new influence weighs ``weight`` on every vertex, the other influences are scaled
+    joints (``maya_add_weights``, step 202). Option window Lock weights (step 196):
+    the new influence weighs ``weight`` on every vertex, the other influences are scaled
     by 1 - weight, and it is locked (Blender's vertex group lock)."""
     names = [n for n in dict.fromkeys(bone_names) if n not in mesh.vertex_groups]
     if not names:
@@ -739,7 +737,7 @@ class ALLSET_OT_remove_unused_influences(bpy.types.Operator):
 
 def hammer(bm, deform, groups):
     """Selected vertices take the plain average of their edge neighbours' weights over ``groups`` (Maya Hammer Skin
-    Weights, modeling_rigging_110.md). Returns the number of changed vertices."""
+    Weights). Returns the number of changed vertices."""
     new = {}
     for v in (v for v in bm.verts if v.select):
         nbrs = [e.other_vert(v) for e in v.link_edges]
@@ -800,7 +798,7 @@ def _hook(context, ob, base, centre_world, vertex_indices=None):
     context.view_layer.update()
     md = ob.modifiers.new(name, 'HOOK')
     md.object = handle
-    # inverted_safe: an object scaled to 0 on an axis still gets its cluster1 in Maya (060_messages_ui.md B4)
+    # inverted_safe: an object scaled to 0 on an axis still gets its cluster1 in Maya
     md.center = ob.matrix_world.inverted_safe() @ centre_world
     md.matrix_inverse = handle.matrix_world.inverted() @ ob.matrix_world
     if ob.type == 'MESH':
@@ -855,7 +853,7 @@ def control_points(ob):
 
 
 def _point_selection(ob, selected_only):
-    """Maya cluster on CVs (step 218, ): the handle pivot is the centre
+    """Maya cluster on CVs (step 218): the handle pivot is the centre
     of the selected CVs, the Hook acts on exactly those indices; object mode = every CV (pivot = their box centre,
     like a mesh). Returns (world centre, indices) or (None, None)."""
     pts = [p for p in control_points(ob) if p[2] or not selected_only]
@@ -891,8 +889,7 @@ class ALLSET_OT_cluster(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     envelope: bpy.props.FloatProperty(name="Envelope", default=1.0, min=0.0, max=1.0,
-                                      description="Maya cluster envelope = the Hook's strength "
-                                                  "( Cluster Options)")
+                                      description="Maya cluster envelope = the Hook's strength")
 
     @classmethod
     def poll(cls, context):

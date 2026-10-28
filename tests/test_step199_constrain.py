@@ -1,5 +1,5 @@
 """Step 199 lane C: Constrain > Normal / Tangent / Remove Target / Set Rest Position / Modify Constrained Axis against
-Maya (, scripts *.py; the checked values are DATA at
+Maya (Maya's values are DATA at
 the end of this file). Maya Y-up -> Blender Z-up: C = (x, y, z) -> (x, -z, y), a world matrix B = C M C^-1."""
 
 import math
@@ -84,7 +84,7 @@ def _mesh(name, verts, faces, sharp=False):
 
 
 def _maya_targets():
-    """The three Maya target meshes of the checked (kit's Maya-exact primitives, Maya vertex / face order)."""
+    """The three Maya target meshes (kit's Maya-exact primitives, Maya vertex / face order)."""
     a = prim.defaults("polySphere")
     a.update(radius=5.0, subdivisionsAxis=20, subdivisionsHeight=20)
     s = prim.poly_sphere(a)
@@ -105,7 +105,7 @@ def _maya_targets():
 
 # --- Normal -------------------------------------------------------------------------------------------------
 
-def test_normal_matches_Maya():
+def test_normal_matches_maya():
     _fresh()
     targets = _maya_targets()
     worst = 0.0
@@ -206,7 +206,7 @@ def _curve(name, cvs, cyclic=False):
     return ob
 
 
-def test_tangent_matches_Maya():
+def test_tangent_matches_maya():
     _fresh()
     curve = _curve("tCurve", DATA["tangent_curve"])
     circle = _curve("tCircle", DATA["tangent_circle"], cyclic=True)
@@ -262,7 +262,7 @@ def _two_targets(kind):
     return a, b, o
 
 
-def test_remove_target_matches_Maya():
+def test_remove_target_matches_maya():
     for kind, want in DATA["remove"].items():
         _fresh()
         a, b, o = _two_targets(kind)
@@ -275,7 +275,7 @@ def test_remove_target_matches_Maya():
         assert bpy.ops.allset.remove_constraint_target() == {'FINISHED'}
         bpy.context.view_layer.update()
         assert not o.constraints, kind
-        # the constraint node is gone and the channels keep the constrained value (Maya checked)
+        # the constraint node is gone and the channels keep the constrained value (Maya)
         close(o.matrix_world, b_matrix(want["after_all"]), what=f"{kind} after all")
         close(o.matrix_basis, b_matrix(want["after_all"]), what=f"{kind} own channels")
 
@@ -348,7 +348,7 @@ def test_remove_pole_vector_target():
 
 # --- Set Rest Position --------------------------------------------------------------------------------------
 
-def test_set_rest_position_matches_Maya():
+def test_set_rest_position_matches_maya():
     for kind, want in DATA["rest"].items():
         _fresh()
         a = _empty("tA", maya_xform((4, 2, -1), (10, 30, 0), (2, 1, 3)))
@@ -412,7 +412,7 @@ def _skip_maya_y(maintain):
     return bpy.ops.allset.modify_constraint_axes(x=True, y=True, z=False, maintain_offset=maintain)
 
 
-def test_modify_axis_point_matches_Maya():
+def test_modify_axis_point_matches_maya():
     for maintain in (0, 1):
         want = DATA["axis"][f"point_{maintain}"]
         _fresh()
@@ -431,7 +431,7 @@ def test_modify_axis_point_matches_Maya():
         close(o.matrix_world, maya_channels(want["all_again"]), what=f"point all again {maintain}")
 
 
-def test_modify_axis_scale_maintain_matches_Maya():
+def test_modify_axis_scale_maintain_matches_maya():
     want = DATA["axis"]["scale_1"]
     _fresh()
     a, o, con = _axis_setup("scale")
@@ -449,7 +449,7 @@ def test_modify_axis_scale_maintain_matches_Maya():
 
 
 def test_modify_axis_skipped_channel_keeps_its_value():
-    # Maya scale without Maintain offset collapses to 0 (-offset 0 0 0, checked): the kit keeps the value instead
+    # Maya scale without Maintain offset collapses to 0 (-offset 0 0 0): the kit keeps the value instead
     for kind in ("scale", "orient"):
         _fresh()
         a, o, con = _axis_setup(kind)

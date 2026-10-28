@@ -1,6 +1,6 @@
 """Step 105 in a real UI: the Maya Workflow Kit layout, pCube1 with lambert1 + a Blinn, then Windows > Rendering Editors >
 Hypershade, Render > Render Settings, Windows > General Editors > Script Editor in new windows -> Maya menu bars,
-Browser tabs, Common tab, history over MEL / Python input (screenshots beside audit-7 pairs h01 / h03 / h05)."""
+Browser tabs, Common tab, history over MEL / Python input (screenshots with ALLSET_GUI_SHOTS)."""
 
 import os
 import sys

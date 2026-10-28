@@ -1,18 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """maya.cmds look-alike 3 (step 216, Issue #122): freeze, constraints, joints, connections.
 
-Maya behaviour:  (Maya, cases  c216_*).
 Numbers follow the rest of the look-alike (cmds_shim.py): lengths in Maya units, Blender's axes as they are.
 
 - makeIdentity = Modify > Freeze / Reset Transformations (``operators/freeze.py``: channels 0 / 0 / 1, the pivot kept
   in ``delta_location``, children frozen too).
 - Constraints = Blender constraints like Constrain > ... (``ui/channel_box`` shows them as INPUTS nodes): one Maya
   node = one Blender constraint per target (influence w_i / (w_1 + ... + w_i), so the stack gives Maya's weighted
-  blend). Maya's node name ``<constrained>_<type>N`` is fixed at creation (a rename doesn't follow, Maya), so it
+  blend). Maya's node name ``<constrained>_<type>N`` is fixed at creation (a rename doesn't follow), so it
   is kept in the object's ID property ``NODES`` with the targets' weight / alias index. Without Maintain Offset:
   point = Copy Location, orient = Copy Rotation, scale = Copy Scale, parent = Child Of with the inverse matrix that
   puts the object on the target; with it a Child Of on the node's channels whose inverse is the target's current
-  matrix (Maya's offset is composed as a matrix, checked: orient mo). aim = Track To (aim / up vectors along
+  matrix (Maya's offset is composed as a matrix: orient mo). aim = Track To (aim / up vectors along
   axes) evaluated in a hidden helper's space whose Z is Maya's world up vector — Blender's Track To ups to world Z.
 - joint = a joint of a kit skeleton (``operators/joints.py``, step 57): a bone, ``jointN`` named scene-wide; the
   selected joint is the parent, a selected transform parents a new skeleton keeping the joint's world position.
@@ -66,7 +65,7 @@ def _cb():
 def makeIdentity(*args, **kwargs):
     """``makeIdentity -apply 1 -t -r -s`` = Freeze Transformations (channels 0 / 0 / 1, world pivots and shapes stay,
     the hierarchy below frozen too); without ``-apply`` = the channels back to identity (the objects jump). No t / r /
-    s flag = all three. Returns None (Maya)."""
+    s flag = all three. Returns None."""
     from ..operators import freeze
     f = _Flags("makeIdentity", kwargs)
     apply = f.get("apply", "a", False)
@@ -108,7 +107,7 @@ def _owners():
 
 
 def nodes_of(ob):
-    """[(node name, entry)] of ``ob`` in creation order (Maya lists them after the shape, Maya)."""
+    """[(node name, entry)] of ``ob`` in creation order (Maya lists them after the shape)."""
     return list(_registry(ob).items())
 
 
@@ -261,7 +260,7 @@ def constrained_values(ob):
 
 def _bake(ob, keys):
     """Write the constrained values of ``keys`` into ``ob``'s own channels (Maya: a deleted constraint leaves the
-    channels at their last value, Maya)."""
+    channels at their last value)."""
     if not keys:
         return
     _view_layer()
@@ -477,7 +476,7 @@ def _constrain(mtype, args, kwargs):
             cname = _con_of_target(owner, entry, t)
             if cname is None:
                 continue
-            if len(entry["targets"]) == 1:          # the last target: the node goes, the channels stay (Maya)
+            if len(entry["targets"]) == 1:          # the last target: the node goes, the channels stay
                 _remove_node(owner, node)
                 return None
             owner.constraints.remove(owner.constraints[cname])
@@ -538,7 +537,7 @@ def _constrain(mtype, args, kwargs):
         if mtype == "orientConstraint" and mo and not entry["targets"]:
             off = (t.matrix_world.to_quaternion().to_matrix().inverted() @
                    _own_world(owner).to_quaternion().to_matrix()).to_euler('XYZ')
-            entry["offset"] = [off.x, off.y, off.z]        # Maya's q -offset reads radians (Maya)
+            entry["offset"] = [off.x, off.y, off.z]        # Maya's q -offset reads radians
         con = _add_blender(owner, node, entry, t, mtype, mo, skip_by)
         con.name = node if not entry["targets"] else f"{node} {i}"
         entry["targets"][con.name] = {"i": i, "w": float(1.0 if weight is None else weight)}
@@ -676,7 +675,7 @@ def joint(*args, **kwargs):
     """``joint -p x y z`` = Skeleton > Create Joints for one click: a joint at the world position ``p`` under the
     selected joint (a new skeleton when no joint is selected; a selected transform becomes the new skeleton's parent,
     the joint keeping its world position). Maya names (joint1, -n tip), radius 1, jointOrient 0 0 0 (no auto orient);
-    the new joint is the selection (pose mode). Returns its name (a string, Maya)."""
+    the new joint is the selection (pose mode). Returns its name (a string)."""
     from ..operators import joints, parenting
     f = _Flags("joint", kwargs)
     query = f.get("query", "q", False)
@@ -851,7 +850,7 @@ def _leaf_key(ob, leaf):
 def connectAttr(*args, **kwargs):
     """``connectAttr src.attr dst.attr``: ``dst`` follows ``src`` (a compound child by child, Maya's unit
     conversion). A connected or constrained destination is an error unless ``-f`` (which replaces the connection).
-    Returns Maya's message "Connected a.translate.translateX to b.translate.translateY." (Maya)."""
+    Returns Maya's message "Connected a.translate.translateX to b.translate.translateY."."""
     f = _Flags("connectAttr", kwargs)
     force = f.get("force", "f", False)
     f.get("lock", "l", False)
@@ -886,7 +885,7 @@ def connectAttr(*args, **kwargs):
 
 def disconnectAttr(*args, **kwargs):
     """``disconnectAttr src.attr dst.attr``: the destination keeps its current value. Returns "Disconnect a.attr
-    from b.attr." (Maya); no such connection is an error."""
+    from b.attr."; no such connection is an error."""
     f = _Flags("disconnectAttr", kwargs)
     f.get("nextAvailable", "na", False)
     f.done()
@@ -928,7 +927,7 @@ def _matching(node_text):
 
 def listConnections(*args, **kwargs):
     """Sources / destinations of a node or plug's connections (``-s`` / ``-d`` default on, ``-p`` = plugs).
-    None when there are none (Maya)."""
+    None when there are none."""
     f = _Flags("listConnections", kwargs)
     s = f.get("source", "s", True)
     d = f.get("destination", "d", True)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya weighted / non-weighted tangents and tangent length locks (step 198, ).
+"""Maya weighted / non-weighted tangents and tangent length locks (step 198).
 
-Maya (Maya, tmp/maya198/weights.json):
+Maya:
 - a weighted tangent's weight is the Bezier arm length in (frame, value) space, the angle is checked there too:
   control point = key ± w·(cos a, sin a). Maya ``ix / iy`` = 3 × the arm in (seconds, value), so
   arm frames = ix·fps / 3, arm value = iy / 3 — exactly a Blender F-curve handle (FREE) minus its key.

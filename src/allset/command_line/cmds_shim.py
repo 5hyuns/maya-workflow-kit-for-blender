@@ -2,7 +2,7 @@
 """A ``maya.cmds`` look-alike for the command line.
 
 Re-implemented from Maya's documented command behaviour (flag long/short
-names, return values) and Maya checked () — no Maya code. Numbers are in the
+names, return values and Maya's results) — no Maya code. Numbers are in the
 scene's display units like Maya's current linear unit (cm by default, ) and angles in degrees (radians if
 the scene's rotation unit is radians). Attribute names match the Channel Box (``ui/channel_box.py`` MAIN). Channel
 numbers are Blender's axes as they are (the Channel Box's convention); Maya's Y-up is not converted ().
@@ -95,7 +95,7 @@ def _flatten(args):
 
 
 # Maya locators: a kit Empty marked by ``create.LOCATOR_PROP`` (Create > Locator, spaceLocator); its shape name
-# follows the transform like Maya's rename (Maya: box10 -> boxShape10, hero -> heroShape, )
+# follows the transform like Maya's rename (Maya: box10 -> boxShape10, hero -> heroShape)
 _TRAIL = re.compile(r"^(.*?)(\d+)$")
 
 
@@ -123,7 +123,7 @@ PLAIN_SHAPE = 2       # a locator whose shape is "<name>Shape" (after a rename f
 
 
 def renamed_shape(old_name, old_shape, new_name):
-    """Maya's shape name after renaming its transform ``old_name`` -> ``new_name`` (Maya, cmds_201.md): a
+    """Maya's shape name after renaming its transform ``old_name`` -> ``new_name`` (Maya's rule): a
     shape named like the old transform's ``<base>Shape<N>`` follows as ``shape_name_for(new)`` (pCube1 -> box10:
     boxShape10, -> hero: heroShape); any other shape becomes ``<new>Shape`` (ctrl / ctrlShape -> ctrl2: ctrl2Shape)."""
     return shape_name_for(new_name) if old_shape == shape_name_for(old_name) and _TRAIL.match(old_name)         else f"{new_name}Shape"
@@ -796,7 +796,7 @@ def addAttr(*args, **kwargs):
 # --- creation (Maya naming: pCube1 / pCubeShape1 / polyCube1) ----------------------
 
 # Maya flags (long, short) -> creation node attribute; the bare command's defaults (polyCylinder caps 0, unlike
-# the Create menu's 1: )
+# the Create menu's 1)
 _PRIM_FLAGS = {
     "polyCube": ('CUBE', {}, (("width", "w"), ("height", "h"), ("depth", "d"), ("subdivisionsX", "sx", "subdivisionsWidth"),
                              ("subdivisionsY", "sy", "subdivisionsHeight"), ("subdivisionsZ", "sz", "subdivisionsDepth"))),

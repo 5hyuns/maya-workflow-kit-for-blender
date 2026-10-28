@@ -2,8 +2,8 @@
 """Maya-shaped Move / Rotate / Scale manipulators.
 
 Blender's transform gizmo (``VIEW3D_GGT_xform_gizmo``) is C and its shape can't be
-changed (): thick axes, small cones, a white centre
-circle. Maya's ( M1-M7, shots ``manip_*.png``):
+changed: thick axes, small cones, a white centre
+circle. Maya's:
 
 - Move: thin axis lines with cones, a hollow centre square (free move), filled
   plane handles (normal-axis colour), the active handle drawn yellow (M2).
@@ -40,14 +40,14 @@ SLOT = {'TRANSLATE': 1, 'ROTATE': 2, 'RESIZE': 3}
 KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
 
 # Arrow length in px at gizmo_size 75 and UI scale 1: Maya's Move Y arrow at manipGlobalScale 1.5
-# (pivot_snap.md M4). Shapes are built in "arrow units" (arrow length = 1).
+#. Shapes are built in "arrow units" (arrow length = 1).
 ARROW_PX = 108.0
-# Shape sizes in arrow units, checked on shots/manip_move.png / manip_scale.png (M4).
+# Shape sizes in arrow units (Maya's Move / Scale manipulators).
 CENTER_HALF = 0.083      # hollow centre square: 18 px
 CONE_LEN, CONE_R = 0.13, 0.045
 LINE_START = 0.0
-# Plane handles (step 185): Maya's YZ / XY squares in  span 0.52-0.68
-# arrow units along both axes (pixels solved into axis coordinates, tmp probe ): a 1 px rim in the
+# Plane handles (step 185): Maya's YZ / XY squares span 0.52-0.68
+# arrow units along both axes: a 1 px rim in the
 # axis colour around a translucent fill (pixels over the #767676 top face: red #b6655f, blue #5f63db).
 PLANE_AT, PLANE_HALF = 0.60, 0.08
 CUBE_AT, CUBE_HALF = 0.85, 0.05
@@ -56,8 +56,7 @@ PIVOT_RING_R = 0.32      # pivot orientation rings (M7, offset 50)
 PICK_R = 0.05            # half width of the invisible pick shape around a thin line
 YELLOW = (1.0, 1.0, 0.0)  # hovered handle (displayColor manipCurrent #ffff00)
 # Active handle and centre as Maya draws them on screen (step 185): #fdff88 for the active handle, the centre
-# light blue #64dcff while an axis is active (,
-# manip_move_active_x.png, 02_cube_selected_move.png, 06_scale_manip.png: 81 px of #fdff88 / #64dcff in the square).
+# light blue #64dcff while an axis is active (81 px of #fdff88 / #64dcff in the square).
 ACTIVE = (0xfd / 255, 1.0, 0x88 / 255)
 CENTER_IDLE = (0x64 / 255, 0xdc / 255, 1.0)
 ALPHA = 1.0
@@ -356,11 +355,11 @@ def _has_selection(context):
 
 
 # Step 142 (#76): kit-fixed Maya axis colours instead of the user's theme gizmo axes (Blender's #ff3653 / #8adb00 /
-# #3b64a5, ΔE00 15 / 8 / 21 from Maya; ). Maya's manipulator as
-# drawn: X #e60000, Y #00e600 (displayRGBColor manipX / manipY,  manip_x / manip_y), Z #0000ff
-# (the Z line as rendered, colors.json manip_z_rendered at 02_cube_selected_move.png (799, 484); the displayRGBColor
+# #3b64a5, ΔE00 15 / 8 / 21 from Maya). Maya's manipulator as
+# drawn: X #e60000, Y #00e600 (displayRGBColor manipX / manipY), Z #0000ff
+# (the Z line as Maya draws it; the displayRGBColor
 # "Zaxis" #4a92ff is the grid / view axis light blue). The active and the hovered handle stay Maya's yellow
-# (displayColor manipCurrent #ffff00; hover = #ffff00,  gizmo_hi). Gizmo colours
+# (displayColor manipCurrent #ffff00; hover = #ffff00). Gizmo colours
 # are sRGB like the theme values they replace (the gizmo shaders convert). Rotate keeps Blender's C gizmo, whose rings
 # read the theme's axis colours: Python can't recolour it without writing the theme (), so it keeps the
 # user's theme colours (recorded, ).
@@ -604,7 +603,7 @@ class ALLSET_GGT_xform(GizmoGroup):
 classes = (ALLSET_GT_maya_handle, ALLSET_GGT_xform)
 
 
-# --- Tool Settings: Maya Move / Rotate / Scale Settings (pivot_snap.md P12, P13, S3, S5) --------
+# --- Tool Settings: Maya Move / Rotate / Scale Settings --------
 
 TITLES = {'TRANSLATE': "Move Settings", 'ROTATE': "Rotate Settings", 'RESIZE': "Scale Settings"}
 

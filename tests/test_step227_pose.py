@@ -1,8 +1,8 @@
 """Step 227 lane B (Issue #137, ATTACH_PLAN L16 (b)): Pose Space Deformation — Create Pose Interpolator, poses,
 corrective shapes (operators/pose_space_227.py) and the Pose Editor window (ui/pose_editor.py).
 
-Maya truth (Maya 2026,  ``pose_one`` / ``pose_two`` / ``pose_one_gaussian``, script
-): arm shoulder (0,0,0) -> elbow (4,0,-1) -> wrist (8,0,0), ``joint -oj xyz
+Maya 2026 (``pose_one`` / ``pose_two`` / ``pose_one_gaussian``):
+arm shoulder (0,0,0) -> elbow (4,0,-1) -> wrist (8,0,0), ``joint -oj xyz
 -sao yup``, interpolator on the elbow, pose ``elbowBent`` at elbow rotate (0, 0, -90); the rows are the pose's output
 weight at elbow rotations (Maya XYZ Euler degrees). The kit's weight = Maya's Linear swing ratio inside the neutral ->
 pose arc and ignores twist about the driver axis (asserted at 1e-4); outside the arc, swing in another plane and two
@@ -22,7 +22,7 @@ marked_window = import_module(kit.MODULE + ".ui.marked_window")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 compat = import_module(kit.MODULE + ".compat")
 
-# copies of shapes_227.json ( is not in git): (elbow rotate, elbowBent weight[, elbowUp weight])
+# Maya 2026 values: (elbow rotate, elbowBent weight[, elbowUp weight])
 POSE_ONE = [
     ((0, 0, 0), -0.0), ((0, 0, -5), 0.055556), ((0, 0, -15), 0.166667), ((0, 0, -30), 0.333333),
     ((0, 0, -45), 0.5), ((0, 0, -60), 0.666667), ((0, 0, -75), 0.833333), ((0, 0, -90), 1.0),
@@ -63,7 +63,7 @@ def _fresh():
 
 
 def _arm():
-    """Maya's checked arm as an armature: bones shoulder / elbow, bone Z = Maya joint Y (world up, sao yup)."""
+    """Maya's arm as an armature: bones shoulder / elbow, bone Z = Maya joint Y (world up, sao yup)."""
     arm = bpy.data.armatures.new("skeleton1")
     ob = bpy.data.objects.new("skeleton1", arm)
     bpy.context.scene.collection.objects.link(ob)

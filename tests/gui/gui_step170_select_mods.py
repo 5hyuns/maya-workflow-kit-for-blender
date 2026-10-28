@@ -1,6 +1,6 @@
-"""Step 170 in a real UI: Maya selection modifiers in the Graph Editor (checked: a click on a selected key keeps the
+"""Step 170 in a real UI: Maya selection modifiers in the Graph Editor (Maya: a click on a selected key keeps the
 selection, Ctrl+Shift+click only adds, Shift+marquee toggles, Ctrl+marquee deselects) and the Outliner (Shift+click =
-range, Ctrl+click = toggle). Maya data: ; screenshots (ALLSET_GUI_SHOTS)."""
+range, Ctrl+click = toggle); screenshots (ALLSET_GUI_SHOTS)."""
 
 import os
 import sys

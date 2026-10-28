@@ -1,7 +1,7 @@
 """Step 144 LOOP lane (GitHub #31): Insert Edge Loop, Offset Edge Loop and Slide Edge as Maya tools.
-; GUI: tests/gui/gui_step144_loop.py. Every expected number below was checked in
-Maya 2022  on the same meshes:  (polySplitRing / polyDuplicateEdge /
-polySlideEdge). Tool Settings / window defaults: """
+; GUI: tests/gui/gui_step144_loop.py. Every expected number below is what
+Maya 2022 gives on the same meshes (polySplitRing / polyDuplicateEdge /
+polySlideEdge), plus Maya's Tool Settings / window defaults."""
 
 import math
 from importlib import import_module

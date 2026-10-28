@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Channel Box Channels menu commands Maya has and the step-38 set lacked.
 
-Maya 2022 Channel Box Channels menu (): Breakdown All / Mute All /
+Maya 2022 Channel Box Channels menu: Breakdown All / Mute All /
 Unmute All act on every shown channel; Cut / Copy / Delete Selected take the whole curves of the selected channels
 (``cmds.cutKey`` / ``cmds.copyKey`` over all time and every float range); Paste Selected = ``cmds.pasteKey(connect=True,
 time=current)``; Freeze = ``cmds.makeIdentity(apply=True)``; Select Connection selects the node feeding
-the channel. Paste checked  (``tmp/maya158/paste.py``): a copied curve 1:0 10:5 20:2 pasted at 15 onto a curve
+the channel. Maya's Paste: a copied curve 1:0 10:5 20:2 pasted at 15 onto a curve
 1:1 12:3 30:4 gives 15:3.2896 24:8.2896 34:5.2896 and moves the key at 30 to 49 — keys start at the paste time, values
 are offset so the first one meets the target curve's value there (connect), later keys move right by the pasted length
 (insert); a channel without a curve gets the copied values as they are.

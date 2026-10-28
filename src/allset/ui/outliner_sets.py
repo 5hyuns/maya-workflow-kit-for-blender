@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner set rows on Blender's Outliner.
 
-Maya lists object sets after the DAG nodes, outside the hierarchy; expanding one shows its members
-( S9). The Maya Workflow Kit layout's Outliner is Blender's C tree (``maya_outliner``),
+Maya lists object sets after the DAG nodes, outside the hierarchy; expanding one shows its members.
+The Maya Workflow Kit layout's Outliner is Blender's C tree (``maya_outliner``),
 which Python can't add rows to, so a WINDOW POST_PIXEL handler draws the set rows under Blender's last
 row: that row is found by reading one pixel line through the middle of each candidate row (an empty
 row is one flat stripe colour; rows are contiguous, so a binary search). The rows drawn are remembered
@@ -10,8 +10,8 @@ per region; the "Outliner" keymap items ``allset.outliner_set_click`` (LMB CLICK
 ``allset.outliner_set_menu`` (RMB) act on them and pass through elsewhere.
 
 Maya's default rows (step 99): a new Maya scene lists the startup cameras persp / top / front / side (hidden, so
-greyed) and the sets defaultLightSet / defaultObjectSet (;
-Maya, : defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
+greyed) and the sets defaultLightSet / defaultObjectSet (:
+defaultLightSet = every light, selecting it selects them; defaultObjectSet is empty;
 selecting persp selects the hidden camera). The kit has no camera objects behind them (Blender's user views aren't
 cameras; real objects would render, export and sort among the user's objects), so they are drawn rows too: the
 cameras first, then the default sets, then the kit sets. Blender's rows can't be pushed down, so with objects in
@@ -69,7 +69,7 @@ def default_entries(scene=None):
 
 
 def default_set_members(name, scene):
-    """defaultLightSet = every light in the scene (Maya, step 99); defaultObjectSet is empty in a new scene."""
+    """defaultLightSet = every light in the scene (step 99); defaultObjectSet is empty in a new scene."""
     if name == "defaultLightSet":
         return [ob for ob in scene.objects if ob.type == 'LIGHT' and not ob.get("allset_default_light")]  # step 152
     return []
@@ -331,7 +331,7 @@ class ALLSET_OT_outliner_set_menu(bpy.types.Operator):
 
 
 class ALLSET_MT_outliner_set(bpy.types.Menu):
-    """Maya Outliner set / set member RMB menu ( S8)"""
+    """Maya Outliner set / set member RMB menu"""
     bl_label = "Set"
     bl_idname = "ALLSET_MT_outliner_set"
 

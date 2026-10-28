@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 polySuperShape (Create > Polygon Primitives > Super Ellipse / Spherical Harmonics / Ultra Shape).
 
-Pure Python (no bpy), Maya Y-up space and Maya units, returning ``prim_shapes.Mesh``. Every rule is a Maya
-checked of Maya 2022 (factory menu items, then one attribute changed at a time):
- (polySuperShape section), data , v1.json
-and the probe_b*.py runs. No Maya code or data was copied.
+Pure Python (no bpy), Maya Y-up space and Maya units, returning ``prim_shapes.Mesh``. Every rule follows
+Maya 2022 (factory menu items, then one attribute changed at a time).
+No Maya code or data was copied.
 
 checked rules in brief:
 
@@ -23,7 +22,7 @@ checked rules in brief:
   (m1, e1, e2, mix, m2, e3, e4, e5) = the eight attributes in order; point = (r1 r2 cos b cos phi, r2 sin b,
   r1 r2 cos b sin phi). Ultra Mirror on = the vertical set copies the horizontal one.
 - Radius scales the point. Horizontal / Vertical Revolutions, Vertical Offset, Internal Radius, X / Z Offset change
-  nothing in Maya 2022 (checked on all three shapes, alone and together).
+  nothing in Maya 2022 (on all three shapes, alone and together).
 - Vertices column-major: column 0 rows 0..R (both poles), then each further column rows 1..R-1; column n = column 0.
   Faces row-major (rows from the bottom, columns inner): quad (i, j) (i, j+1) (i+1, j+1) (i+1, j) with merged
   corners dropped, so the poles are triangle fans (n x R faces, n x (R - 1) + 2 vertices). Merge Vertices off: the
@@ -79,7 +78,7 @@ def _f32(x):
 
 
 def _pw(c, e):
-    """Signed power sign(c) |c|^e; a zero base stays 0 (checked with exponent 0)."""
+    """Signed power sign(c) |c|^e; a zero base stays 0 (also with exponent 0)."""
     if c == 0.0:
         return 0.0
     return math.copysign(abs(c) ** e, c)

@@ -7,7 +7,7 @@ coordinates of the region they were invoked in, and every region of that window 
 the same picture moved by its offset from that region (each region clips its own
 part), so menus also cover sidebars, toolbars and neighbouring editors. Other
 windows / no menu: a single dictionary lookup.
- #4 (:53): ``draw_handler_add`` + ``gpu`` + ``blf``.
+Drawing: ``draw_handler_add`` + ``gpu`` + ``blf``.
 """
 
 import time
@@ -36,7 +36,7 @@ COVER_SPACES = SPACES + tuple(getattr(bpy.types, n) for n in (
 REGION_TYPES = ('WINDOW', 'UI', 'TOOLS', 'HEADER', 'TOOL_HEADER', 'CHANNELS', 'FOOTER', 'HUD')
 
 # Maya greys and selection blue #5285A6. Menu boxes and the list body: #525252
-# ( ui_samples marking_menu_box / marking_menu_list_bg, step 52).
+# (step 52).
 BG = (0x52 / 255, 0x52 / 255, 0x52 / 255, 1.0)
 DIVIDER = (0x3a / 255, 0x3a / 255, 0x3a / 255, 1.0)
 BG_HOVER = (0.32, 0.52, 0.65, 1.0)
@@ -54,7 +54,7 @@ def ui_scale():
 
 
 def font_size():
-    # Maya menus: Segoe UI 11 px at Qt dpr 1.0 ( metrics.font) = Blender's 11 pt
+    # Maya menus: Segoe UI 11 px at Qt dpr 1.0 = Blender's 11 pt
     # widget text at an effective scale of 1.0 (the Maya density preset, ).
     # blf font 0 is the interface font, so it is Segoe UI when view.font_path_ui points there.
     return max(8, round(11 * ui_scale()))
@@ -130,7 +130,7 @@ def _text(x, y, s, color):
 
 def _ring_arrow(rect, color, k, ox, oy):
     """Maya's submenu triangle of a radial box: in the right padding, base 13 px and tip 9 px left of the
-    box's right side, 7 px tall, tip on the box's vertical centre ()."""
+    box's right side, 7 px tall, tip on the box's vertical centre."""
     x1 = rect[2] + ox
     yc = (rect[1] + rect[3]) / 2 + oy
     sh = _sh()
@@ -231,7 +231,7 @@ def _draw_layout(lay, cx, cy, hover):
 
 
 def _draw_list_body(lay, cx, cy):
-    """The list under the ring as one menu body per column with divider lines (14_marking_menu_object.png)."""
+    """The list under the ring as one menu body per column with divider lines (like Maya's)."""
     columns = {}
     for it in lay.items:
         if it.kind == "list":
@@ -250,8 +250,8 @@ def _draw_list_body(lay, cx, cy):
 
 # --- hotbox ---------------------------------------------------------------------------
 
-# Maya hotbox (13_hotbox.png): no dimming; each row is one translucent strip (#444444 at 70 % = #4c4c4c over
-# Maya's #5c5c5c view, colors.json ui_samples hotbox_row_bg), the hovered menu name lights up, the centre box
+# Maya hotbox: no dimming; each row is one translucent strip (#444444 at 70 % = #4c4c4c over
+# Maya's #5c5c5c view), the hovered menu name lights up, the centre box
 # shows "Maya", four short white diagonal lines mark the zones (no zone names).
 ROW_BG = (0x44 / 255, 0x44 / 255, 0x44 / 255, 0.7)
 ROW_TEXT = (0xbb / 255, 0xbb / 255, 0xbb / 255, 1.0)

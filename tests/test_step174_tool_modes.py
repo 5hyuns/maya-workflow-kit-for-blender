@@ -1,5 +1,5 @@
-"""Step 174: one tool across object / component modes (Maya keeps currentCtx when the selection mode changes,
-). The rule is bpy-free; the GUI test tests/gui/gui_step174_tool_modes.py presses
+"""Step 174: one tool across object / component modes (Maya keeps currentCtx when the selection mode changes).
+The rule is bpy-free; the GUI test tests/gui/gui_step174_tool_modes.py presses
 the keys."""
 
 from importlib import import_module

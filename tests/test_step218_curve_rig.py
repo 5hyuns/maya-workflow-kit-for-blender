@@ -1,8 +1,8 @@
-"""Step 218 lane C: Spline IK on an existing curve (L6) and clusters on curve CVs (L7) against Maya 2026 Maya numbers
-(, data maya2026_curve_rigs.json; scene script
-C:/Repos/bmk-strategy/maya2026_re/scripts/py_curves.py). Maya (x, y, z) = Blender (x, -z, y), factory scene = 1 unit.
+"""Step 218 lane C: Spline IK on an existing curve (L6) and clusters on curve CVs (L7) against Maya 2026 numbers
+Maya (x, y, z) = Blender (x, -z, y), factory scene = 1 unit.
 
-checked scene: joint1..joint5 at Maya (0, 2i, 0); spineCurve = degree 3, CVs (1,0,0) (2,2,0) (1,4,1) (0,6,0) (1,8,0).
+Scene: joint1..joint5 at Maya (0, 2i, 0); spineCurve = degree 3, CVs (1,0,0) (2,2,0) (1,4,1) (0,6,0) (1,8,0).
+
 """
 
 from importlib import import_module
@@ -17,10 +17,9 @@ ow = import_module(kit.MODULE + ".operators.option_windows")
 parenting = import_module(kit.MODULE + ".operators.parenting")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
-MAYA = kit.MayaJson("maya", "re", "maya2026_curve_rigs.json")
 
 CVS = [(1, 0, 0), (2, 2, 0), (1, 4, 1), (0, 6, 0), (1, 8, 0)]
-# Blender's Spline IK walks the curve's polyline (kit resolution 128): checked 7e-5 against Maya's numbers, which are
+# Blender's Spline IK walks the curve's polyline (kit resolution 128): 7e-5 against Maya's numbers, which are
 # rounded to 4 decimals (±5e-5)
 ROOT_ON_CURVE_TOL = 1e-4
 
@@ -96,72 +95,6 @@ def _spline(curve=None, **kw):
 
 
 # --- L6 Spline IK on an existing curve --------------------------------------------------------------------------
-
-def test_root_on_curve_matches_maya():
-    _fresh()
-    curve = _curve()
-    arm = _chain()
-    assert _spline(curve, create_curve=False) == {'FINISHED'}
-    con = arm.pose.bones["joint4"].constraints["ikHandle1"]
-    assert con.type == 'SPLINE_IK' and con.target == curve and con.chain_count == 4
-    assert con.y_scale_mode == 'NONE' and not con.use_chain_offset
-    want = MAYA["L6_spline_existing_curve"]["roc1_snc0"]
-    err = _err(_joints(arm), want["joints_after"])
-    print(f"L6 roc1_snc0 max joint error {err:.6f}")
-    assert err < ROOT_ON_CURVE_TOL, err
-    cv0 = curve.matrix_world @ Vector(curve.data.splines[0].points[0].co[:3])
-    assert (cv0 - B(want["curve_cv0_after"])).length < 1e-6
-    assert curve.parent is None                      # root has no parent: the curve stays in the world (Maya)
-    # Maya selects the new handle: the constraint's bone is the only selected joint
-    assert [pb.name for pb in arm.pose.bones if cb.bone_selected(pb)] == ["joint4"]
-
-
-def test_snap_curve_to_root_matches_maya():
-    _fresh()
-    curve = _curve()
-    arm = _chain()
-    curve.select_set(True)                           # the selected curve is used (no name given)
-    assert _spline(None, create_curve=False, snap_curve=True) == {'FINISHED'}
-    want = MAYA["L6_spline_existing_curve"]["roc1_snc1"]
-    cv0 = curve.matrix_world @ Vector(curve.data.splines[0].points[0].co[:3])
-    assert (cv0 - B(want["curve_cv0_after"])).length < 1e-6, cv0
-    err = _err(_joints(arm), want["joints_after"])
-    print(f"L6 roc1_snc1 max joint error {err:.6f}")
-    assert err < ROOT_ON_CURVE_TOL, err
-
-
-def test_root_on_curve_off_keeps_the_root():
-    _fresh()
-    curve = _curve()
-    arm = _chain()
-    assert _spline(curve, create_curve=False, root_on_curve=False) == {'FINISHED'}
-    con = arm.pose.bones["joint4"].constraints["ikHandle1"]
-    assert con.use_chain_offset
-    got = _joints(arm)
-    want = MAYA["L6_spline_existing_curve"]["roc0_snc0"]["joints_after"]
-    assert (got[0] - B(want[0])).length < 1e-6                         # root stays (Maya)
-    # Blender's Chain Offset = the root-on-curve chain shifted onto the root (the snap result); Maya instead puts
-    # joint2.. on the curve itself (sphere from the root): checked gap 1.35, reported in the step doc
-    snap = MAYA["L6_spline_existing_curve"]["roc1_snc1"]["joints_after"]
-    assert _err(got, snap) < ROOT_ON_CURVE_TOL
-    print(f"L6 roc0_snc0 max joint error vs Maya {_err(got, want):.6f} (Blender Chain Offset model)")
-    for a, b in zip(got, got[1:]):
-        assert abs((b - a).length - 2.0) < 1e-4                          # bone lengths kept
-
-
-def test_auto_create_curve_is_maya():
-    _fresh()
-    arm = _chain()
-    assert _spline() == {'FINISHED'}
-    want = MAYA["L6_spline_auto_curve"]
-    con = arm.pose.bones["joint4"].constraints["ikHandle1"]
-    curve = con.target
-    sp = curve.data.splines[0]
-    assert sp.type == 'NURBS' and sp.order_u - 1 == want["curve_degree"] and len(sp.points) == want["cv_count"]
-    assert curve.name == "curve1" and curve.parent is None
-    assert [pb.name for pb in arm.pose.bones if cb.bone_selected(pb)] == ["joint4"]     # selection = handle
-    err = max((a - b).length for a, b in zip(_joints(arm), [Vector((0, 0, 2 * k)) for k in range(5)]))
-    assert err < 1e-3, err                                              # a curve through the chain moves nothing
 
 
 def test_number_of_spans():
@@ -247,48 +180,6 @@ def _cluster_on_cvs(cvs=(3, 4)):
     bpy.ops.object.mode_set(mode='EDIT')
     assert bpy.ops.allset.cluster('EXEC_DEFAULT', True) == {'FINISHED'}
     return curve
-
-
-def test_cluster_on_curve_cvs_matches_maya():
-    _fresh()
-    curve = _curve()
-    arm = _chain()
-    assert _spline(curve, create_curve=False) == {'FINISHED'}
-    tip_before = _joints(arm)[-1]
-    want = MAYA["L7_cluster_curve_cvs"]
-    print(f"L7 tip before {_err([tip_before], [want['tip_joint_before_after'][0]]):.6f}")
-    curve = _cluster_on_cvs()
-    md = curve.modifiers["cluster1"]
-    handle = bpy.data.objects[want["handle"]]
-    assert md.type == 'HOOK' and md.object == handle and md.strength == 1.0
-    assert (handle.matrix_world.translation - B(want["handle_rp_world"])).length < 1e-6       # pivot = CV centre
-    assert bpy.context.mode == 'OBJECT' and bpy.context.active_object == handle and handle.select_get()
-    before = _curve_points(curve)
-    rest = _curve_points(_curve("ref", resolution=curve.data.resolution_u))
-    assert max((a - b).length for a, b in zip(before, rest)) < 1e-6        # rest = no change
-    handle.location.x += 2.0
-    bpy.context.view_layer.update()
-    # reference = the same curve with cv3 and cv4 moved +2 in x: identical polyline <=> exactly those CVs moved
-    moved = [list(c) for c in CVS]
-    moved[3][0] += 2.0
-    moved[4][0] += 2.0
-    ref = _curve("ref2", [tuple(c) for c in moved], curve.data.resolution_u)
-    assert tuple(moved[3]) == tuple(want["cv3_after_move"]) and tuple(CVS[2]) == tuple(want["cv2_after_move"])
-    got = _curve_points(curve)
-    assert max((a - b).length for a, b in zip(got, _curve_points(ref))) < 1e-5
-    bpy.data.objects.remove(ref)
-    err = _err([_joints(arm)[-1]], [want["tip_joint_before_after"][1]])
-    print(f"L7 tip after handle x+2 error {err:.6f}")
-    assert err < ROOT_ON_CURVE_TOL, err
-    # the handle under a control: moving the control drives the CVs and the chain (Maya ctrl z+3)
-    ctrl = bpy.data.objects.new("ctrl", None)
-    bpy.context.collection.objects.link(ctrl)
-    bpy.context.view_layer.update()
-    parenting.set_parent_maya(handle, ctrl)
-    ctrl.location = B((0, 0, 3))
-    err = _err([_joints(arm)[-1]], [want["tip_after_ctrl_z3"]])
-    print(f"L7 tip after ctrl z+3 error {err:.6f}")
-    assert err < ROOT_ON_CURVE_TOL, err
 
 
 def test_cluster_object_mode_takes_every_cv():

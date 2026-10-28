@@ -1,6 +1,6 @@
 """Step 236 (Issue #145): a received Rigify rig to the engine, and Maya pick walk over its controls.
 
-Audit 0.5.0 (C:/Repos/bmk-strategy/CHAINS_AUDIT_0.5.0.md ⑤-15 :324): Export Selection of a Rigify human wrote 278 joints
+Audit 0.5.0 (⑤-15): Export Selection of a Rigify human wrote 278 joints
 (160 deforming + their non-deforming ancestors) that Maya named DEFFBXASC045spine...; Export All added the hidden
 metarig (437). ⑤-12 (:321): Up from forearm_fk.L twice reached tweak_spine.003 instead of shoulder.L.
 """

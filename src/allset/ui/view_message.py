@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya in-view messages: a short fading message box in the 3D View ().
+"""Maya in-view messages: a short fading message box in the 3D View.
 
-checked in Maya 2022: a rounded grey box
+Maya 2022: a rounded grey box
 (#484848 at opacity 0.75), light text at opacity 0.9 with ``<hl>`` words in yellow #eded08, 25 px lines,
 10 px padding. The default position is the view's top left (10, 11) px in; ``topCenter`` messages sit
 centred at the same height. Fade in about 0.3 s, show 2.0 s (inViewMessageDisplayTime), fade
@@ -20,9 +20,9 @@ import bpy
 import gpu
 from gpu_extras.batch import batch_for_shader
 
-# --- Maya checked () ------------------------------------------------------------------
+# --- Maya sizes and colours (step 72) ----------------------------------------------------------------
 FADE_IN = 0.3
-HOLD = 2.0          # inViewMessageDisplayTime 2.0 ()
+HOLD = 2.0          # inViewMessageDisplayTime 2.0 (Maya default)
 FADE_OUT = 1.5
 BOX_RGBA = (0.282, 0.282, 0.282, 0.75)   # inViewMessageOpacity 75
 TEXT_RGBA = (0.95, 0.95, 0.95, 0.9)

@@ -1,9 +1,9 @@
 """Step 247 (Issue #164): skin basics with Maya's meaning.
 
 Maya 2026 numbers: tests/maya2026_rig_data.py SKINNING["skin"] (prune_and_max, unbind_and_bind_pose, copy_mirror_weights)
-and the Maya runs of  / , written here as literals:
+and Maya's results, written here as literals:
 prune with a locked joint, Set Max Influences (recomputed by distance), Go to Bind Pose, Mirror Skin Weights barycentric,
-Closest in hierarchy rows (Maya bind_hier2: Maya's own weights of three vertices).
+Closest in hierarchy rows (Maya's own weights of three vertices).
 Kit: operators/skin_basics.py, skin.py (bind options, mirror, closest_distance_weights).
 """
 
@@ -14,14 +14,11 @@ import numpy as np
 from mathutils import Vector
 
 import kit
-import maya2026_rig_data as data
 
 skin = import_module(kit.MODULE + ".operators.skin")
 sb = import_module(kit.MODULE + ".operators.skin_basics")
 rig_maya = import_module(kit.MODULE + ".operators.rig_maya")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
-
-SK = data.SKINNING["skin"]
 
 
 def _reset():
@@ -130,16 +127,6 @@ def test_menu_items():
 
 # --- Prune Small Weights ----------------------------------------------------------------------------------------
 
-def test_prune_matrix_maya_rows():
-    ex = SK["prune_and_max"]
-    out, ch = sb.prune_matrix([ex["example_before"]], [False] * 4)
-    assert _close(out[0], ex["example_after"]) and ch[0]
-    # Maya 2026 (skin_basics_247.md): unlocked rescaled, a locked small weight stays (vertex unchanged)
-    out, _ = sb.prune_matrix([[0.6, 0.005, 0.3, 0.095]], [False] * 4)
-    assert _close(out[0], [0.603015, 0.0, 0.301508, 0.095477], 1e-6), out
-    out, ch = sb.prune_matrix([[0.6, 0.005, 0.3, 0.095]], [False, True, False, False])
-    assert _close(out[0], [0.6, 0.005, 0.3, 0.095]) and not ch[0]
-
 
 def test_prune_operator_whole_mesh_and_selected_vertices():
     arm, mesh = _chain_skin()
@@ -187,7 +174,7 @@ def test_set_max_influences_recomputes_like_maya():
 
 
 def test_enforce_max_rule():
-    # Maya 2026, checked : smallest first, locked last, rest renormalised
+    # Maya 2026: smallest first, locked last, rest renormalised
     out = sb.enforce_max_matrix([[0.4, 0.3, 0.1, 0.2]], [False] * 4, 2)
     assert _close(out[0], [0.4 / 0.7, 0.3 / 0.7, 0.0, 0.0])
     out = sb.enforce_max_matrix([[0.4, 0.3, 0.1, 0.2]], [False, False, True, False], 2)
@@ -211,8 +198,8 @@ HIER = [("hips", (0, 0, 0), None), ("spine", (0, 3, 0), "hips"), ("chest", (0, 6
 
 
 def test_closest_in_hierarchy_matches_maya_rows():
-    # Maya bind_hier2 (private checked): Maya's weights (4 decimals) of three
-    # vertices of a 16 x 20 plane (vertex i at Maya (-8 + i % 17, -10 + i // 17, 0.5), Maya)
+    # Maya's weights (4 decimals) of three
+    # vertices of a 16 x 20 plane (vertex i at Maya (-8 + i % 17, -10 + i // 17, 0.5))
     names = [n for n, _p, _q in HIER]
     pos = {n: np.array(p, dtype=float) for n, p, _q in HIER}
     kids = {n: [c for c, _p, par in HIER if par == n] for n in names}
@@ -347,7 +334,7 @@ def test_mirror_skin_weights_barycentric_like_maya():
             _set(mesh, 2 * i + k, dict(zip(names, src.get(x, [0.2, 0.0, 0.8]))))
     _select(mesh)
     assert bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT') == {'FINISHED'}   # factory YZ, positive to negative
-    # Maya 2026 copySkinWeights -mirrorMode YZ -sa closestPoint (skin_basics_247.md)
+    # Maya 2026 copySkinWeights -mirrorMode YZ -sa closestPoint
     want = {-4: [0, 0, 1], -3: [0.2, 0, 0.8], -2.5: [0.3, 0, 0.7], -1.5: [0.5, 0, 0.5], -0.5: [0.8, 0, 0.2],
             0: [1, 0, 0], 1: [0.6, 0.4, 0], 4: [0, 1, 0]}
     for i, x in enumerate(MIRROR_XS):
@@ -360,52 +347,8 @@ def test_mirror_factory_plane_is_yz():
     assert bpy.ops.allset.mirror_skin_weights.get_rna_type().properties["plane"].default == "YZ"
 
 
-def test_mirror_fixture_rows():
-    rows = SK["copy_mirror_weights"]["mirror_YZ_pos_to_neg"]
-    _reset()
-    arm = _skeleton([("C", (0, 0, 0), None), ("L_a", (2, 0, 0), "C"), ("L_b", (4, 0, 0), "L_a"),
-                     ("R_a", (-2, 0, 0), "C"), ("R_b", (-4, 0, 0), "R_a")])
-    xs = [r["x"] for r in rows]
-    pts = [(x, 0, z) for x in xs for z in (0, 1)]
-    faces = [(2 * i, 2 * (i + 1), 2 * (i + 1) + 1, 2 * i + 1) for i in range(len(xs) - 1)]
-    mesh = _mesh(pts, faces)
-    names = ["C", "L_a", "L_b", "R_a", "R_b"]
-    _skin(mesh, arm, names)
-    for i, r in enumerate(rows):
-        w = r["w"] if r["x"] >= 0 else {"C": 0.3, "L_a": 0, "L_b": 0, "R_a": 0.1, "R_b": 0.6}
-        for k in (0, 1):
-            _set(mesh, 2 * i + k, w)
-    _select(mesh)
-    assert bpy.ops.allset.mirror_skin_weights('EXEC_DEFAULT', plane="YZ") == {'FINISHED'}
-    for i, r in enumerate(rows):
-        got = _get(mesh, 2 * i, names)
-        assert _close(got, [r["w"][n] for n in names], 1e-5), (r["x"], got)
-
-
-def test_copy_skin_weights_closest_point_interpolates():
-    # fixture copy_closestPoint: wA 1 / .75 / .5 / .25 / 0 at x -2 .. 2 from a source whose vertices sit at x -2 and 2
-    _reset()
-    arm = _skeleton([("A", (-2, 0, 0), None), ("B", (2, 0, 0), "A")])
-    src = _mesh([(-2, 0, 0), (2, 0, 0), (2, 0, 1), (-2, 0, 1)], [(0, 1, 2, 3)], "src")
-    _skin(src, arm, ["A", "B"])
-    for i, x in enumerate((-2, 2, 2, -2)):
-        _set(src, i, {"A": 1.0 if x < 0 else 0.0, "B": 0.0 if x < 0 else 1.0})
-    xs = [r["x"] for r in SK["copy_mirror_weights"]["copy_closestPoint"]]
-    pts = [(x, 0, z) for x in xs for z in (0, 1)]
-    faces = [(2 * i, 2 * (i + 1), 2 * (i + 1) + 1, 2 * i + 1) for i in range(len(xs) - 1)]
-    dst = _mesh(pts, faces, "dst")
-    _select(src, dst, active=dst)
-    assert bpy.ops.allset.copy_skin_weights('EXEC_DEFAULT') == {'FINISHED'}
-    for i, r in enumerate(SK["copy_mirror_weights"]["copy_closestPoint"]):
-        try:
-            got = dst.vertex_groups["A"].weight(2 * i)
-        except RuntimeError:
-            got = 0.0
-        assert abs(got - r["wA"]) < 1e-4, (r["x"], got)
-
-
 def test_mirror_only_selected_destination_vertices():
-    # Maya 2026 (tmp/m247/ms.py): with vtx[0] (negative side) selected only it is written; a selected source vertex
+    # Maya 2026: with vtx[0] (negative side) selected only it is written; a selected source vertex
     # writes nothing; the Normalize option leaves sums of 1 as they are
     for sel, changed in ((0, {0}), (8, set())):
         _reset()

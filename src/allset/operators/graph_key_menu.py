@@ -7,7 +7,7 @@
 - Keys > Add / Remove Inbetween: the keys after the current time on the curves the editor shows move by one frame
   (Maya's Graph Editor Keys menu).
 - Keys > Mute / Unmute Key: Maya keys a mute node so the curve holds the muted key's value until the
-  next unmuted key (Maya, ``tmp/maya157/mute2.py``). Blender has no per-key mute: a Stepped F-modifier limited to
+  next unmuted key. Blender has no per-key mute: a Stepped F-modifier limited to
   [muted key, next unmuted key) gives the same values; the modifiers named ``MUTE_NAME`` are the kit's.
 - Select > All / Only Curve / Curve / Key / In Tangent / Out Tangent (Maya's Graph Editor Select menu): pick masks
   as add-on prefs; Blender has none, so ``_mask_tick`` filters what a selection just added.
@@ -570,7 +570,7 @@ class ALLSET_OT_graph_select_type(bpy.types.Operator):
 
 # --- Dope Sheet Curves items that are Graph Editor commands (step 166) -----------------------------------------
 # Maya's Dope Sheet Curves menu runs the Graph Editor's curve commands (Euler Filter, Smooth Filter, Resample, Isolate;
-# same annotations in ) on the curves of the selected keys. Blender's
+# same annotations) on the curves of the selected keys. Blender's
 # graph.* operators only run in a Graph Editor, so the Dope Sheet area turns into one for the call and back.
 
 DOPE_GRAPH_OPS = {"EULER": ("graph.euler_filter", {}), "BUTTERWORTH": ("graph.butterworth_smooth", {}),

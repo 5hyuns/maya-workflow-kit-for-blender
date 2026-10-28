@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya animation layers on Blender NLA tracks.
 
-Maya 2022 (Maya,  / .json): BaseAnimation = the plain anim curves; an Additive
+Maya 2022: BaseAnimation = the plain anim curves; an Additive
 layer adds weight x its curve (rotations Euler component-wise, scale multiplies: below x layer^weight), an Override
 layer replaces ((1 - w) below + w layer); mute drops a layer, solo keeps BaseAnimation + the soloed layers; a key set
 on the selected layer is the curve value that makes the result the displayed value.
@@ -16,10 +16,10 @@ Layers are scene-wide (``Scene.allset_anim_layers``, first entry BaseAnimation) 
 member object has one NLA track per layer, named like the layer, playing an action ``<layer>_<object>`` marked with
 the ID property ``allset_anim_layer``.
 
-Display (step 194, ): Maya's Graph Editor, Dope Sheet and Time Slider show the
+Display (step 194): Maya's Graph Editor, Dope Sheet and Time Slider show the
 keys of the layers selected in the Anim tab, the Channel Box marks layer members teal. A layered object's active
 action is the selected layer's strip action (BaseAnimation when the object is not in it) at action influence 0: the
-NLA result is unchanged (checked: 0 difference, tmp/p194), and every reader of the active action (Graph Editor,
+NLA result is unchanged (checked: 0 difference), and every reader of the active action (Graph Editor,
 Dope Sheet, compat.id_fcurves, the kit's key readers) sees that layer's curves.
 """
 
@@ -80,7 +80,7 @@ def selected_layers(scene):
 
 
 def unique_name(scene, base="AnimLayer"):
-    """Maya ``AnimLayer<N>``: one past the highest, gaps not filled ( N3)."""
+    """Maya ``AnimLayer<N>``: one past the highest, gaps not filled."""
     return f"{base}{naming.next_number(base, {e.name for e in layers(scene)})}"
 
 
@@ -375,13 +375,13 @@ def base_curve(ob, path, index):
 
 
 def member_of_layer(ob, path, index):
-    """The channel is in a layer above BaseAnimation (Maya draws it teal in the Channel Box, anim_layers_193.md)."""
+    """The channel is in a layer above BaseAnimation (Maya draws it teal in the Channel Box)."""
     return any(name != BASE and is_member(ob, name, path, index) for name in tracks(ob))
 
 
 def hidden_base_curves(ob, scene):
     """BaseAnimation curves the display layer doesn't show: channels that are not in that layer still show their
-    base keys in Maya's Time Slider (anim_layers_193.md, ry ticks 1 / 24 with AnimLayer1 selected)."""
+    base keys in Maya's Time Slider (ry ticks 1 / 24 with AnimLayer1 selected)."""
     layer = display_layer(scene, ob)
     if layer == BASE or BASE not in tracks(ob):
         return []
@@ -473,7 +473,7 @@ def solve(steps, target, layer, start=0.0):
     return (acc - below) / w
 
 
-# --- attribute membership (step 188, ) ---------------------------------------
+# --- attribute membership (step 188) ---------------------------------------
 # Maya layer members are attributes (animLayer -attribute): Channel Box > Channels > Add to / Remove From Selected
 # Layers edits them, a key on a non-member attribute goes to BaseAnimation, removing a keyed attribute deletes its
 # layer curve. The kit's members are objects (one NLA track each, Add Selected Objects = every attribute); an object's
@@ -961,7 +961,7 @@ def _identity(path):
 
 
 def zero_key(scene, obs, frame=None):
-    """Maya Zero Key Layer ( section 6, ``cmds.setKeyframe(identity=True,
+    """Maya Zero Key Layer (section 6, ``cmds.setKeyframe(identity=True,
     inTangentType="flat")``): an identity key on every member channel of the selected layer at ``frame`` (an existing
     key's value is overwritten, its tangents kept; a new key's in tangent is flat). Returns the number of keys, None for
     BaseAnimation."""
@@ -1005,7 +1005,7 @@ def zero_key(scene, obs, frame=None):
 
 
 def merge_down(scene, layer):
-    """Maya Merge Layers with BaseAnimation and ``layer`` selected (anim_layers_193.md section 5, factory options:
+    """Maya Merge Layers with BaseAnimation and ``layer`` selected (section 5, factory options:
     bake every frame, delete the merged layer): each member channel of ``layer`` gets a BaseAnimation curve keyed on
     every whole frame of the object's key range with the result of Base + ``layer``; non-member channels keep their
     keys; the layer is deleted."""

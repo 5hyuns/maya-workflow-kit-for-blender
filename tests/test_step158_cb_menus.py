@@ -126,7 +126,7 @@ def test_breakdown_all_and_mute_all():
     assert not any(f.mute for f in kit.fcurves(ob))
 
 
-# --- Cut / Copy / Paste Selected (Maya, tmp/maya158/paste.py) ------------------------------------------------
+# --- Cut / Copy / Paste Selected (Maya) ------------------------------------------------
 
 def test_paste_selected_connects_and_inserts_like_maya():
     ob = _cube()

@@ -1,4 +1,4 @@
-"""Step 68 in a real UI, Maya Workflow Kit layout (1 unit = 1 cm;  fx_01-02): F5 -> nParticles >
+"""Step 68 in a real UI, Maya Workflow Kit layout (1 unit = 1 cm): F5 -> nParticles >
 Create Emitter -> Alt+V plays -> after one second the oldest particles fell ~4.9 units like in Maya -> ground plane
 Create Passive Collider + a 1 unit plane two units up nCloth > Create nCloth -> two seconds -> the cloth lies on the
 ground (Blender's 0.015 m collision distance would keep it 1.5 units up) -> AE nucleus1 tab (screenshots)."""

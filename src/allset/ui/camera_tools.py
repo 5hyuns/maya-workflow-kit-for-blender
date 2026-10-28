@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya panel View menu commands that had no kit counterpart until step 177:
 
-- View > Center View of Selection = Maya ``cmds.viewFit(camera)`` (Maya 2026 panel View menu). checked in
-  Maya (): the camera keeps its rotation and its straight-line distance to the
+- View > Center View of Selection = Maya ``cmds.viewFit(camera)`` (Maya 2026 panel View menu). In
+  Maya the camera keeps its rotation and its straight-line distance to the
   selection's bounding-box centre, and moves so that centre lies on its view axis (persp at (28, 21, 28), a cube at
   (5, 2, -3): rotation unchanged, centre of interest 44.82 -> 43.02 = |centre - eye|).
 - View > Camera Attribute Editor... / panel toolbar Camera Attributes = Maya's camera Attribute Editor: the Attribute

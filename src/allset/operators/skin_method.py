@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya skinCluster Skinning Method (step 250, Issue #167): Classic Linear / Dual Quaternion / Weight Blended.
 
-Maya 2026 (, Maya tmp/m250/dq.py, numbers
+Maya 2026 (numbers
 in tests/test_step250_skin_method.py): Dual Quaternion = DQ skinning with hemisphere alignment, scale blended linearly
 before the rigid DQ (dqsSupportNonRigid 0, factory); Weight Blended = per vertex (1 - b) * linear + b * DQ with the
 skinCluster's blendWeights b (factory 0 = linear).
 
-Blender: Dual Quaternion = the Armature modifier's Preserve Volume (checked equal to Maya's vertices, see the test);
+Blender: Dual Quaternion = the Armature modifier's Preserve Volume (equal to Maya's vertices, see the test);
 Weight Blended = the skin's Armature modifier (linear) followed by a second Armature modifier of the same skeleton
 with Preserve Volume and Multi Modifier, mixed by the vertex group ``blendWeights`` (Blender's multi modifier: same
 input as the previous modifier, result = lerp(previous, this, group weight) — Maya's formula). The second modifier is a

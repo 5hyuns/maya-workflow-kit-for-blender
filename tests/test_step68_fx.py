@@ -180,7 +180,7 @@ def test_ncloth_on_every_selected_and_nucleus():
 
 def test_cloth_lands_on_passive_collider():
     """A 1 unit cloth falls on a passive ground plane and rests on it: with Blender's 0.015 m collision distance it
-    would hover 1.5 units above ()."""
+    would hover 1.5 units above."""
     sc = _scene(cm=True)
     ground = _grid("pPlane1", 10, 0, subdiv=2)
     _select(ground)

@@ -2,9 +2,7 @@
 """Maya camera/view feel: ortho tumble lock, Alt+Shift axis-locked tumble/track, framing in all views,
 view-change undo (``[`` / ``]``), Space-tap four-view toggle.
 
-Design:  「계획」 2-5. Evidence:
- (:38-57), (:189-196), (:216-225),
- (:248-249).
+Design:  「계획」 2-5.
 """
 
 import bpy
@@ -100,7 +98,7 @@ class ALLSET_OT_dolly(bpy.types.Operator):
 
 
 # --- Alt+RMB dolly in the UV / Image Editor (step 141, B4) ---------------------------------
-# Maya dollies 2D panels with Alt+RMB too (). IC's image.view_zoom reads the drag axis
+# Maya dollies 2D panels with Alt+RMB too. IC's image.view_zoom reads the drag axis
 # from Blender's Zoom Axis preference (factory Vertical), so like allset.dolly the drag is read here and applied with
 # a plain image.view_zoom call with a factor (centred, like Blender's factory "Zoom to Mouse Position" off; delegated).
 
@@ -154,7 +152,7 @@ class ALLSET_OT_dolly_2d(bpy.types.Operator):
 
 
 # --- Alt+Shift drag: tumble / track locked to one axis (step 39) ---------------------
-#  (): the first dominant drag direction (horizontal or
+# Maya (): the first dominant drag direction (horizontal or
 # vertical) is kept for the whole drag.  「계획」 2.
 
 AXIS_THRESHOLD = 4   # px of movement before the axis is chosen
@@ -594,7 +592,7 @@ class ALLSET_OT_view_history(bpy.types.Operator):
 
 
 # --- Maya's ortho cameras (step 161, G3) ---------------------------------------------------------------------------
-# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) ( a
+# Maya's top / front / side cameras have orthographicWidth 30 (Maya units) (a
 # 1-unit cube is ~16 px of a ~495 px pane = ~31 units across). Blender's viewport ortho width along the longer side =
 # view_distance x 72 / lens (checked, gui_step161_views: distance 3 cm with lens 70 = 3.086 units across). Step 237:
 # the four view's panels are real 3D View areas that keep their own camera (ui/four_view.py).
@@ -678,7 +676,7 @@ def ensure_persp(area, space):
 
 
 def home_view(rv3d, k):
-    """Maya Home (viewSet -home, interaction.md:50): the default camera place, no animation.
+    """Maya Home (viewSet -home): the default camera place, no animation.
     Perspective = Maya's new-scene persp (units.PERSP_EYE, Maya units); orthographic keeps
     its direction and goes back to the origin at the same distance."""
     eye = Vector(units.PERSP_EYE) * k

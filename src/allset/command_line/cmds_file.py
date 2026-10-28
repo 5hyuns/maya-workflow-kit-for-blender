@@ -2,7 +2,7 @@
 """``maya.cmds.file`` of the kit's look-alike (step 208, Issue #115): -new / -open / -rename / -save and the
 -query flags scripts use (-sceneName, -shortName, -modified).
 
-checked  (): ``file -rename`` only names the scene (returns the path),
+Maya's behaviour: ``file -rename`` only names the scene (returns the path),
 ``file -save`` writes it (returns the path), ``file -new`` returns "untitled", ``file -open`` returns the path, and
 -new / -open on a modified scene without -force raise "Unsaved changes". The script goes on in the new scene.
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Auto Key without Blender's preferences (step 130, ).
 
-Maya's Auto Key keys only attributes that already have keys (). Blender's
+Maya's Auto Key keys only attributes that already have keys. Blender's
 own auto keying keys every changed channel unless the user preference "Only Insert Available" is on, and the kit
 no longer writes preferences (steps 70–129 did, ``prefs_preset`` group ``autokey``). So the kit has its own toggle,
 ``Scene.allset_auto_key`` (the Time Slider's key button), and keys by itself while it is on: a depsgraph handler
@@ -87,7 +87,7 @@ def _value(ob, path, index):
 def changed_layer_channels(ob, frame, scene=None):
     """(path, index, value) of a layered object's channels that have keys on the layer a key would go to and whose
     value differs from the layers' result (step 188: Maya Auto Key keys the selected layer only where that attribute
-    already has keys on it,  "autokey" / "autokey_layer_keyed")."""
+    already has keys on it)."""
     from . import anim_layers
     scene = scene or bpy.context.scene
     seen, out = set(), []

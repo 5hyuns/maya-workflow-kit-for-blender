@@ -2,7 +2,7 @@
 """Maya Graph Editor toolbar: tangent buttons and buffer curves in the Graph Editor header.
 
 Maya's Graph Editor has a toolbar of tangent buttons (Auto, Spline, Clamped, Linear, Flat, Stepped, Plateau, then
-Break / Unify) and buffer curve buttons (; animation.md).
+Break / Unify) and buffer curve buttons.
 Blender has the same settings two menus deep (Key > Interpolation Mode / Handle Type), so a row of buttons is
 appended to ``GRAPH_HT_header`` (removed on unregister). Buffer curves = Blender ghost curves (a snapshot shown
 behind the curves; Maya's Swap Buffer Curve has no counterpart).

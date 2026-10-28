@@ -1,4 +1,4 @@
-"""Step 105: Hypershade, Render Settings and Script Editor look — Maya menu bars from the Maya 2022 capture, the
+"""Step 105: Hypershade, Render Settings and Script Editor look — Maya menu bars like Maya 2022's, the
 Render Settings Common tab writing scene.render, Maya presets, the new Create shader kinds, the Browser tabs, Script
 Editor run / echo. """
 
@@ -20,7 +20,7 @@ material = import_module(kit.MODULE + ".operators.material")
 attribute_editor = import_module(kit.MODULE + ".ui.attribute_editor")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
-# 
+# Maya 2022 menu bars of these windows
 MAYA_BARS = {"Hypershade": ["File", "Edit", "View", "Create", "Tabs", "Graph", "Window", "Options", "Help"],
              "Render Settings": ["Edit", "Presets", "Help"],
              "Script Editor": ["File", "Edit", "History", "Command", "Tabs", "Help"]}
@@ -33,7 +33,7 @@ def _clear():
         bpy.data.materials.remove(m)
 
 
-def test_menu_bars_match_the_capture_and_are_honest():
+def test_menu_bars_match_maya_and_are_honest():
     for editor, titles in MAYA_BARS.items():
         assert [t for t, _ in data.EDITORS[editor]] == titles, editor
     leaves = {}
@@ -69,7 +69,7 @@ def test_common_tab_writes_scene_render():
     assert (r.resolution_x, r.resolution_y) == (720, 486) and abs(r.pixel_aspect_x / r.pixel_aspect_y - 0.9) < 1e-4
     r.resolution_x = 1000
     assert sc.allset_rs_size == 'CUSTOM'
-    # Presets > Import Render Settings > Default Settings = Maya factory (captured: 960 x 540, PNG, padding 4, single)
+    # Presets > Import Render Settings > Default Settings = Maya factory (960 x 540, PNG, padding 4, single)
     r.image_settings.file_format = 'JPEG'
     assert bpy.ops.allset.rs_defaults() == {'FINISHED'}
     assert (r.resolution_x, r.resolution_y, r.pixel_aspect_x, r.pixel_aspect_y) == (960, 540, 1.0, 1.0)
