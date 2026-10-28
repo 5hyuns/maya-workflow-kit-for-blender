@@ -104,6 +104,10 @@ TIPS = {
     "SAFE_TITLE": "Safe title (Blender draws the action and title safe areas together)",
     "GRID": "Grid",
     "SHOW_IMAGE_PLANES": "Image planes (Blender image empties: shown or hidden in every view, like Alt+4)",
+    "SELECTION_HILITE": "Selection highlighting in this view (the Maya selection wire, and Blender's outline "
+                        "where it was on)",
+    "SHOW_NURBS_CURVES": "NURBS curves: curve objects in this view, and rig controls drawn as bone shapes "
+                         "(their bones are shown or hidden in every view)",
     "SHOW_IK_HANDLES": "IK handles (the empties IK constraints follow: shown or hidden in every view)",
     "SHADE_WIRE": "Wireframe",
     "SHADE_SMOOTH": "Smooth shade all",
@@ -184,6 +188,11 @@ def state(context, key):
         from ..operators import global_keys4
         planes = global_keys4.image_planes(context.scene)
         return not planes or any(getattr(o, f) for o in planes for f in global_keys4.IMAGE_FLAGS)
+    if key == "SHOW_NURBS_CURVES":
+        return space.show_object_viewport_curve
+    if key == "SELECTION_HILITE":
+        from . import selection_wire
+        return selection_wire.highlighting(context)
     if key == "SHOW_IK_HANDLES":
         from ..operators import by_type
         return not any(o.get(SHOW_HIDDEN) for o in by_type.ik_handles(context.scene))
@@ -277,9 +286,19 @@ def apply(context, key):
         global_keys4.toggle_show(space, context.scene, 'IMAGE_PLANES')
     elif key == "SHOW_IK_HANDLES":
         show_ik_handles(context, not state(context, key))
+    elif key == "SELECTION_HILITE":
+        from . import selection_wire
+        selection_wire.set_highlighting(context, not selection_wire.highlighting(context))
+    elif key == "SHOW_NURBS_CURVES":
+        # step 262 (#173): the view's curve filter + the curve-shaped bone controls (ui/curve_controls.py)
+        from . import curve_controls
+        space.show_object_viewport_curve = not space.show_object_viewport_curve
+        curve_controls.sync(space, context.scene)
     elif key in ("SHOW_ALL", "SHOW_NONE"):
         for t in ALL_TYPES:
             setattr(space, f"show_object_viewport_{t}", key == "SHOW_ALL")
+        from . import curve_controls
+        curve_controls.sync(space, context.scene)
     elif key == "APPLY_ALL":
         for screen in bpy.data.screens:
             for area in screen.areas:
@@ -613,5 +632,10 @@ def register():
 
 def unregister():
     unpatch_header()
+    from . import curve_controls
+    try:
+        curve_controls.release_all()
+    except Exception:          # restricted context while Blender quits
+        pass
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

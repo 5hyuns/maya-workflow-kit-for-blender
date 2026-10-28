@@ -112,7 +112,7 @@ LIGHTING = [
 # Maya object type -> SpaceView3D.show_object_viewport_<type> (None = no Blender filter, "@" = an overlay flag,
 # "!" = a kit ``set`` key: ui/panel_menus.state / apply, step 189).
 SHOW_TYPES = (
-    ("Controllers", None), ("NURBS Curves", "curve"), ("NURBS Surfaces", "surf"),
+    ("Controllers", None), ("NURBS Curves", "!SHOW_NURBS_CURVES"), ("NURBS Surfaces", "surf"),
     ("NURBS CVs", None), ("NURBS Hulls", None), ("Polygons", "mesh"), ("Subdiv Surfaces", None),
     ("Planes", None), ("Lights", "light"), ("Cameras", "camera"), ("Image Planes", "!SHOW_IMAGE_PLANES"),
     ("Joints", "armature"), ("IK Handles", "!SHOW_IK_HANDLES"), ("Deformers", "lattice"), ("Dynamics", None),
@@ -149,7 +149,7 @@ SHOW = [
     ("set", "GRID", "Grid"),               # Maya grid (ui/maya_grid.py, step 45)
     ("prop", "overlay", "show_text", "HUD"),
     _grey("Hold-Outs"),
-    ("prop", "overlay", "show_outline_selected", "Selection Highlighting"),
+    ("set", "SELECTION_HILITE", "Selection Highlighting"),   # kit wire + Blender outline (step 262)
 ]
 
 ISOLATE = [

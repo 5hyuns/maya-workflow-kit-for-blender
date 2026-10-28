@@ -198,6 +198,9 @@ def toggle_show(space, scene, kind):
         attr = SPACE_FILTER[kind]
         new = not getattr(space, attr)
         setattr(space, attr, new)
+        if kind == 'CURVES':        # step 262: curve-shaped bone controls follow (ui/curve_controls.py)
+            from ..ui import curve_controls
+            curve_controls.sync(space, scene)
         return new
     planes = image_planes(scene)
     new = not any(getattr(o, f) for o in planes for f in IMAGE_FLAGS)

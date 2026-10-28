@@ -120,15 +120,88 @@ def _batch(ob, depsgraph):
     return _batches[key][0]
 
 
+def _view(context):
+    space = getattr(context, "space_data", None)
+    return space if space is not None and space.type == 'VIEW_3D' else None
+
+
+def _shown(ob, space):
+    """Drawn in this view: the per-view type filter and local view count (step 262: ``visible_get()`` alone
+    ignores them, ``visible_get(viewport=space)`` doesn't — measured, docs/steps/step_262_prep.md)."""
+    if isinstance(space, bpy.types.SpaceView3D):
+        return ob.visible_get(viewport=space)
+    return ob.visible_get()
+
+
+# Maya Show > Selection Highlighting is per panel (step 262, Issue #173). The kit's highlight is this wire; Maya
+# Workflow Kit views keep Blender's outline off (step 47), so ``show_outline_selected`` can't be the row's state.
+# Views with highlighting off = a JSON {area index: Blender outline was on} on their screen (delegated: Blender
+# spaces / areas take no ID properties; an area index survives save / open).
+HILITE_OFF = "allset_hilite_off"
+
+
+def _off_map(screen):
+    import json
+    try:
+        return json.loads(screen.get(HILITE_OFF) or "{}") if screen is not None else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _area_index(context, space):
+    screen = getattr(context, "screen", None)
+    if screen is None or space is None:
+        return None
+    for i, area in enumerate(screen.areas):
+        if area.spaces.active == space:
+            return str(i)
+    return None
+
+
+def highlighting(context):
+    """Maya Show > Selection Highlighting of this view (the panel menu row ``SELECTION_HILITE``): off = no kit
+    selection wire and no Blender outline."""
+    space = _view(context)
+    if space is None:
+        return True
+    key = _area_index(context, space)
+    return key is None or key not in _off_map(context.screen)
+
+
+def set_highlighting(context, on):
+    """Turn this view's Selection Highlighting on / off; Blender's outline goes with it and comes back as it was."""
+    import json
+    space = _view(context)
+    key = _area_index(context, space)
+    if key is None:
+        return
+    screen = context.screen
+    off = _off_map(screen)
+    if on and key in off:
+        if off.pop(key):
+            space.overlay.show_outline_selected = True
+    elif not on and key not in off:
+        off[key] = bool(space.overlay.show_outline_selected)
+        space.overlay.show_outline_selected = False
+    if off:
+        screen[HILITE_OFF] = json.dumps(off)
+    elif HILITE_OFF in screen:
+        del screen[HILITE_OFF]
+
+
 def wire_objects(context):
     """Selected objects that get the wire: object mode, drawable types, visible."""
+    space = _view(context)
     return [ob for ob in context.selected_objects
-            if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get()]
+            if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space)]
 
 
 def highlighted(context):
     """[(object, is_lead)]: the selected objects that get the wire plus their descendants (Maya's hierarchy
     highlight), each in the colour of its nearest selected ancestor (itself when selected)."""
+    if not highlighting(context):
+        return []
+    space = _view(context)
     active = context.view_layer.objects.active
     out, seen = [], set()
 
@@ -136,12 +209,16 @@ def highlighted(context):
         if ob.session_uid in seen:
             return
         seen.add(ob.session_uid)
-        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and ob.visible_get():
+        if ob.type in WIRE_TYPES and ob.mode == 'OBJECT' and _shown(ob, space):
             out.append((ob, lead))
         for child in ob.children:
             if not child.select_get():          # a selected child keeps its own colour (visited as a root)
                 visit(child, lead)
     for ob in context.selected_objects:
+        # step 262 (#173): an armature in Pose / Edit mode is selected for its bones (Maya: a picked control),
+        # so its child meshes aren't a selected hierarchy
+        if ob.mode != 'OBJECT':
+            continue
         visit(ob, ob == active)
     return out
 
