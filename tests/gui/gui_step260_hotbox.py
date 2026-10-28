@@ -172,6 +172,40 @@ def s2_done():
           C["up"] and n == 0)
 
 
+# --- Step 267 (#174 on Windows 11): Windows auto-repeat = raw-input key-downs only, no release (GHOST_SystemWin32.cc
+# processKeyEvent :1334-1341 flags them is_repeat by the thread key state; event_simulate can't set the flag, the modal
+# handles a PRESS the same either way). Space held 2 s (0.5 s delay, then a repeat each 50 ms tick), OS state down ---
+@step
+def s4_press():
+    C["t0"] = C["taps"]
+    ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])
+    ev('SPACE', 'PRESS')
+
+
+wait(10)        # Windows' default repeat delay
+for _i in range(30):
+    @step
+    def s4_repeat():
+        ev('SPACE', 'PRESS')
+
+
+@step
+def s4_mid():
+    C["up"] = "hotbox" in active()
+    shot("gui_step267_hotbox_held.png")
+    ev('SPACE', 'RELEASE')
+
+
+wait(8)
+
+
+@step
+def s4_done():
+    n = C["taps"] - C["t0"]
+    check(f"held Space with Windows-style press-only repeats for 2 s: hotbox stays up ({C['up']}), pane toggles {n}",
+          C["up"] and n == 0)
+
+
 # --- a quick tap still toggles the pane ---
 @step
 def s3_press():

@@ -1518,3 +1518,10 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
       held + a manipulator drag (grid / curve / point snap).
 - [ ] With another add-on that binds D in Object Mode (e.g. a draw / annotate add-on): Maya mode on → D = pivot edit;
       Maya mode off → that add-on's D again.
+
+## Step 267 (#174 #177 follow-up)
+- [ ] Windows 11, Blender 5.2.x, a plain keyboard (no remote desktop / remapper): hold Space 5 s over the 3D View → the
+      hotbox stays up and the Four View never toggles; release → it closes; a quick tap → Four View once. Repeat with a
+      keyboard that has its own software (G Hub / Synapse) running.
+- [ ] Blender 5.1, a 2-button mouse with a wheel: Emulate 3 Button Mouse off → Alt+LMB tumbles; on → no tumble, and the
+      welcome dialog / add-on preferences show the Emulate hint.
