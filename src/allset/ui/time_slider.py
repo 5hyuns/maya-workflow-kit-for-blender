@@ -583,7 +583,7 @@ RULER_LABEL = (0x75 / 255, 0x75 / 255, 0x75 / 255, 1.0)
 # (22, 800)) = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %, not the 25 % estimated in step 186
 RULER_CURRENT = (1.0, 1.0, 1.0, (0x52 - 0x2b) / (0xff - 0x2b))
 RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
-# (top row, bottom row) of Maya's 32 px widget, scaled to the kit region's height. With Time Slider bookmarks
+# (top row, bottom row) of Maya's 32 px widget. With Time Slider bookmarks
 # (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down
 # (research/maya/screens/ts186c/r3_bookmark_keys.png): strip #454545 rows 0-8, each bookmark's colour at 80 % over
 # it in rows 0-4 with a solid 1 px left edge over the strip height.
@@ -593,6 +593,8 @@ ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26)
 BOOKMARK_STRIP = (0x45 / 255, 0x45 / 255, 0x45 / 255, 1.0)
 BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # the bookmark colour measured (Maya picks one per bookmark)
 TICK_PX = 2.0
+# Eight-pixel label row in Maya's standard 32 px ruler, converted to BLF size.
+RULER_FONT_SIZE = 8.0 / 0.72
 NICE_STEPS = tuple(m * 10 ** e for e in range(8) for m in (1, 2, 5))
 
 
@@ -638,10 +640,14 @@ def ruler_ticks(step, lo, hi):
     return list(_multiples(step, lo - 1, hi + 1))
 
 
-def _rows(name, h, rows=None):
-    """(y0, y1) region rows (bottom-up) of a Maya ruler row band, scaled from Maya's 32 px to height h."""
+def _rows(name, h, rows=None, scale=1.0):
+    """UI-scaled ruler rows; tick marks stretch between fixed top and bottom margins."""
     top, bottom = (rows or ROWS)[name]
-    k = h / MAYA_RULER_H
+    k = min(h / MAYA_RULER_H, scale)
+    if name == "tick":
+        return (MAYA_RULER_H - bottom - 1) * k, h - top * k
+    if name == "band":
+        return (MAYA_RULER_H - bottom - 1) * k, (MAYA_RULER_H - top) * k
     return h - (bottom + 1) * k, h - top * k
 
 
@@ -677,12 +683,12 @@ def _draw_ruler(context, region):
     rows = ROWS_BOOKMARKS if marks else ROWS
     gpu.state.blend_set('ALPHA')
     rects([(0, 0, w, h)], RULER_BG)
-    b0, b1 = _rows("band", h, rows)
+    b0, b1 = _rows("band", h, rows, s)
     rects([(0, b0, w, b1)], RULER_BAND)
     if marks:
-        s0, s1 = _rows("strip", h, rows)
+        s0, s1 = _rows("strip", h, rows, s)
         rects([(0, s0, w, s1)], BOOKMARK_STRIP)
-        m0, m1 = _rows("bookmark", h, rows)
+        m0, m1 = _rows("bookmark", h, rows, s)
         bars, edges = [], []
         for m in marks:
             a, b = bookmarks.bookmark_range(scene, m)
@@ -692,22 +698,22 @@ def _draw_ruler(context, region):
         rects(bars, (*BOOKMARK_RGB, 0.8))
         rects(edges, (*BOOKMARK_RGB, 1.0))
     tw = max(1.0, round(TICK_PX * s))
-    t0, t1 = _rows("tick", h, rows)
+    t0, t1 = _rows("tick", h, rows, s)
     lefts = {f: round(x_of(f - 0.5)) for f in frames}
     rects([(x, t0, x + tw, t1) for x in lefts.values()], RULER_TICK)
     cur = scene.frame_current
     cx0, cx1 = x_of(cur - 0.5), x_of(cur + 0.5)
     rects([(round(cx0), 0, max(round(cx0) + 1, round(cx1)), h)], RULER_CURRENT)
     # labels: Maya puts them 2 px + a fifth of a frame right of the tick
-    l0, l1 = _rows("label", h, rows)
-    size = max(6.0, (l1 - l0) / 0.72)
-    blf.size(0, size)
+    l0, _l1 = _rows("label", h, rows, s)
+    # The same UI-scaled font is used for the current-frame number.
+    blf.size(0, RULER_FONT_SIZE * s)
     off = 2 * s + 0.2 * pxf
     blf.color(0, *RULER_LABEL)
     for f, x in lefts.items():
         blf.position(0, x + off, l0, 0)
         blf.draw(0, str(f))
-    c0, _c1 = _rows("current_label", h, rows)
+    c0, _c1 = _rows("current_label", h, rows, s)
     blf.color(0, *RULER_CURRENT_LABEL)
     blf.position(0, round(cx0) + off, c0, 0)
     blf.draw(0, str(cur))
@@ -782,7 +788,7 @@ def _draw_keys(context, region, maya=False):
     if maya:
         from ..operators import bookmarks
         if bookmarks.markers(context.scene):     # Maya: keys stay under the bookmark strip
-            h = _rows("strip", h, ROWS_BOOKMARKS)[0]
+            h = _rows("strip", h, ROWS_BOOKMARKS, context.preferences.system.ui_scale or 1.0)[0]
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     current = context.scene.frame_current
     for colour, breakdown in ((KEY_RGB, False), (BREAKDOWN_RGB, True)):
