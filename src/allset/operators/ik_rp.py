@@ -5,8 +5,13 @@ Maya 2026 (–3,; checked , private notes –1.5):
 - a new RP handle gets a **default pole vector**: with the chain at its preferred angles, the joint whose offset from
   the start joint has the largest |p × d| (d = start -> end; ties keep the first), pv = d × (p × d) normalised (= that
   joint's offset perpendicular to the chain), length 2 × jointDisplayScale, stored in the handle's parent space
-  (world); a straight chain falls back to a perpendicular [U: the checked straight pv bends toward Maya +Z for a chain
-  along X: d × Maya Y here];
+  (world); a straight chain (every |p × d|² < 1e-10) falls back to e_k ⊥ d, k = the smallest |component| of d in the
+  start joint's frame, pv = d × n ( A2 steps 3–4);
+- step 266 (060_questions.md R4, Maya 2026 179 cases): for an RP handle on exactly 3 joints whose middle joint has
+  preferredAngle ≈ 0, jointOrient ≈ 0 (≤ 3e-5° bends, ≥ 1e-4° doesn't) and rotate 0 and a straight chain, ``ikHandle``
+  first writes preferredAngle (0, 90, 0) on the middle joint, so the pv comes from that bent pose (along X with equal
+  bones: (1.414, 0, 1.414)) and the chain bends that way; every other straight chain (4+ joints, a jointOrient on the
+  middle joint) gets the fallback pv and a 3+ bone chain stays straight;
 - the solve plane: v = pv perpendicular to u = root -> goal, turned about u by +twist (right-handed); Pole Vector
   constraint = pv follows (target − start joint).
 
@@ -75,9 +80,23 @@ def chain_points(arm, bones, preferred=True):
     return pts
 
 
-def default_pole_vector(points, length):
+def straight_fallback(d_local):
+    """Maya's straight-chain normal in the start joint's frame (A2 step 3): the axis e_k of the smallest |component|
+    of d, made perpendicular to d."""
+    ax, ay, az = (abs(c) for c in d_local)
+    if az <= ay:
+        k = 0 if az > ax else 2
+    else:
+        k = 1 if ay <= ax else 0
+    e = Vector((0.0, 0.0, 0.0))
+    e[k] = 1.0
+    return e * d_local.length_squared - d_local * d_local[k]
+
+
+def default_pole_vector(points, length, start_frame=None):
     """Maya's default pole vector (world) for the chain ``points`` (start .. end): the in-between joint with the
-    largest |p × d|, its offset perpendicular to d; a straight chain: d × Maya up (then d × Maya X)."""
+    largest |p × d|, its offset perpendicular to d; a straight chain: the A2 fallback in ``start_frame`` (the start
+    joint's Maya axes in world, a 3x3; world axes when None)."""
     p0 = points[0]
     d = points[-1] - p0
     best, best_n2 = None, 0.0
@@ -86,12 +105,51 @@ def default_pole_vector(points, length):
         if best is None or n.length_squared > best_n2 + 1e-10:
             best, best_n2 = n, n.length_squared
     if best is None or best_n2 < 1e-12 * max(d.length_squared, 1e-12) ** 2:
-        v = d.cross(Vector((0.0, 0.0, 1.0)))            # Maya up (+Y) in Blender
-        if v.length < 1e-9 * max(d.length, 1e-9):
-            v = d.cross(Vector((1.0, 0.0, 0.0)))
+        frame = start_frame if start_frame is not None else Matrix(_M2B).transposed()
+        n = frame @ straight_fallback(frame.inverted() @ d)
+        v = d.cross(n)
     else:
         v = d.cross(best)
     return v.normalized() * length
+
+
+# R4 (step 266): Maya writes the middle joint's preferred angle (0, 90, 0) — 90° about its Maya Y = the bone's Z
+# (joints.JOINT_AXES), as pose Euler XYZ in bone axes like rig_maya.PREFERRED_PROP — when the 3-joint chain is
+# straight. Straightness: the middle joint 1e-3 / 4 off the line still counts, 0.1 / 4 doesn't (Maya); the kit
+# takes 1e-3 of the chain length (delegated, inside that checked bracket). jointOrient bracket 3e-5° .. 1e-4°: the
+# kit takes 1e-6 rad (5.7e-5°).
+AUTO_PREFERRED = (0.0, 0.0, 90.0)
+STRAIGHT_TOL = 1e-3
+JO_TOL = 1e-6
+
+
+def maya_axes(arm, bone):
+    """World rotation (3x3) of the joint's Maya axes at rest (joints.maya_frame for a Bone)."""
+    from .joints import JOINT_AXES, MAYA_FRAME
+    f = (arm.matrix_world.to_3x3().normalized() @ bone.matrix_local.to_3x3().normalized()) @ JOINT_AXES
+    q = bone.get(MAYA_FRAME)
+    return f @ Quaternion(q).to_matrix() if q is not None and len(q) == 4 else f
+
+
+def auto_preferred(arm, bones):
+    """True when Maya's ikHandle would write preferredAngle (0, 90, 0) on the middle joint (R4)."""
+    from .rig_maya import PREFERRED_PROP
+    if len(bones) != 2:
+        return False
+    mid = bones[1]
+    if PREFERRED_PROP in mid and any(abs(a) > 1e-5 for a in mid[PREFERRED_PROP]):
+        return False
+    if mid.matrix_basis.to_quaternion().angle > 1e-9:
+        return False
+    rel = maya_axes(arm, bones[0].bone).inverted() @ maya_axes(arm, mid.bone)
+    if rel.to_quaternion().angle > JO_TOL:
+        return False
+    p0, p1, p2 = bones[0].bone.head_local, mid.bone.head_local, mid.bone.tail_local
+    d = p2 - p0
+    if d.length < 1e-12:
+        return False
+    off = (p1 - p0).cross(d.normalized()).length
+    return off <= STRAIGHT_TOL * d.length
 
 
 def pole_angle(arm, bones, bend):
@@ -145,6 +203,19 @@ def _prebend(arm, bones, bend):
             b.rotation_euler = q.to_euler(b.rotation_mode)
 
 
+def _start_frame(arm, root):
+    """The start joint's Maya axes in world with its current pose (Maya evaluates at the start joint's rotation)."""
+    rest = maya_axes(arm, root.bone)
+    pose = (arm.matrix_world.to_3x3().normalized() @ root.matrix.to_3x3().normalized()
+            @ root.bone.matrix_local.to_3x3().normalized().inverted() @ arm.matrix_world.to_3x3().normalized().inverted())
+    return pose @ rest
+
+
+def _has_preferred(bones):
+    from .rig_maya import PREFERRED_PROP
+    return any(PREFERRED_PROP in b and any(abs(a) > 1e-9 for a in b[PREFERRED_PROP]) for b in bones[1:])
+
+
 def _maya_unit(context=None):
     scene = getattr(context or bpy.context, "scene", None)
     return units.maya_unit(scene) if scene is not None else 1.0
@@ -157,8 +228,12 @@ def setup(context, arm, ik_bone, con, handle, display_scale=1.0):
     bones = chain(ik_bone, con)
     k = _maya_unit(context)
     context.view_layer.update()
+    if auto_preferred(arm, bones):
+        from .rig_maya import PREFERRED_PROP
+        bones[1][PREFERRED_PROP] = list(AUTO_PREFERRED)        # Maya ikHandle (R4)
     pts = chain_points(arm, bones)
-    pv = default_pole_vector(pts, 2.0 * display_scale * k)
+    start = _start_frame(arm, bones[0])
+    pv = default_pole_vector(pts, 2.0 * display_scale * k, start)
     for i, name in enumerate(PV):
         handle[name] = float(to_maya(pv)[i] / k)
         handle.id_properties_ui(name).update(default=0.0)
@@ -188,7 +263,8 @@ def setup(context, arm, ik_bone, con, handle, display_scale=1.0):
     bend, straight = _rest_bend(bones, inv @ pv)
     con.pole_target = helper
     con.pole_angle = pole_angle(arm, bones, bend)
-    if straight:
+    if straight and (len(bones) == 2 or _has_preferred(bones)):
+        # Maya: a straight 3+ joint chain without preferred angles stays straight (060_rig_lane.md A2, step 251)
         _prebend(arm, bones, bend)
     update_handle(handle)
     return helper
