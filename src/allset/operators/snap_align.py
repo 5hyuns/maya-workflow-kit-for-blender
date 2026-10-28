@@ -462,6 +462,15 @@ def step_snap_mode(ts, kind):
 TOOL_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.scale": 'RESIZE'}
 
 
+def absolute_offered(scene, kind):
+    """Maya offers Move's Absolute step snap only while its axis orientation is World (manipMoveProperties.mel:70-74,
+    060_messages_ui.md B5); Rotate and Scale always offer it."""
+    if kind != 'TRANSLATE':
+        return True
+    from ..ui import manipulator
+    return manipulator.slot_type(scene, kind) == 'GLOBAL'
+
+
 def apply_tool(ts, kind):
     """Blender's shared Absolute Grid Snap flag = the stored mode of tool ``kind`` (no change without one)."""
     if kind not in STEP_FLAGS:

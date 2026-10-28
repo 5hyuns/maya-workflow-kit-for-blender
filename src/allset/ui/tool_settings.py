@@ -393,7 +393,10 @@ def draw_settings(layout, context, kind):
     row = _labelled(layout, "Step Snap:")
     mode = snap_align.step_snap_mode(ts, kind)
     for m in ('OFF', 'RELATIVE', 'ABSOLUTE'):
-        op = row.operator("allset.step_snap", text=m.title(), depress=mode == m)
+        cell = row.row(align=True)
+        # step 263: Move offers Absolute only with World axes (Maya, 060_messages_ui.md B5)
+        cell.enabled = m != 'ABSOLUTE' or snap_align.absolute_offered(scene, kind)
+        op = cell.operator("allset.step_snap", text=m.title(), depress=mode == m)
         op.kind, op.mode = kind, m
     if kind == 'ROTATE':
         _labelled(layout, "").prop(ts, "snap_angle_increment_3d", text="Step")
