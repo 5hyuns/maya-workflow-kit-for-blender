@@ -222,6 +222,43 @@ def test_extend_edges_edge_and_loop():
     bm.free()
 
 
+def _l_shape():
+    """A 2 x 2 grid (z up) without its +x -y quad: the centre vertex is the inner (concave) corner of an L."""
+    bm = _plane(n=2, size=1.0)
+    gone = next(f for f in bm.faces if f.calc_center_median().x > 0 and f.calc_center_median().y < 0)
+    bmesh.ops.delete(bm, geom=[gone], context='FACES')
+    for seq in (bm.verts, bm.edges, bm.faces):
+        seq.index_update()
+        seq.ensure_lookup_table()
+    return bm
+
+
+def test_corner_quad_fills_the_inner_corner():
+    """#180, Maya 2026 Quad Draw (Autodesk's Quad Draw help, Extend: Tab-drag a border vertex): the vertex, its two
+    border neighbours and the point under the mouse make the new quad."""
+    bm = _l_shape()
+    centre = min(bm.verts, key=lambda v: v.co.length)
+    assert qd.corner_neighbours(centre) is not None
+    face = qd.corner_quad(bm, centre, Vector((0.9, -0.9, 0.0)))
+    assert face is not None and _counts(bm) == (9, 12, 4), _counts(bm)
+    assert centre in face.verts and _consistent(bm)
+    assert all(f.normal.z > 0.99 for f in bm.faces)
+    bm.free()
+
+
+def test_corner_quad_refuses_folded_faces():
+    """An outer corner / a straight border / the mouse on the wrong side: no face (it would overlap or fold)."""
+    bm = _l_shape()
+    outer = max(bm.verts, key=lambda v: v.co.x - v.co.y * 0 + v.co.y)   # (+x, +y): a corner of one face
+    assert qd.corner_quad(bm, outer, outer.co + Vector((0.5, 0.5, 0))) is None
+    mid = next(v for v in bm.verts if abs(v.co.x) < 1e-6 and v.co.y > 0.9)    # middle of the top border
+    assert qd.corner_quad(bm, mid, mid.co + Vector((0, 0.6, 0))) is None
+    centre = min(bm.verts, key=lambda v: v.co.length)
+    assert qd.corner_quad(bm, centre, Vector((-0.9, 0.9, 0.0))) is None        # over the existing faces
+    assert _counts(bm) == (8, 10, 3), _counts(bm)
+    bm.free()
+
+
 def test_strip_pairs_and_faces():
     pairs = qd.strip_pairs([(0, 0), (100, 0)], 20)
     assert len(pairs) == 6, pairs
