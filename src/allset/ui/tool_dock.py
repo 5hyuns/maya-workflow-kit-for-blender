@@ -138,7 +138,7 @@ def close_dock(context, window=None):
 
 
 def show(context, width=None):
-    """Maya toolPropertyWindow from a Tool Box double-click (step 129, #3): a Tool Settings dock that is open in any
+    """Maya Tool Settings from a Tool Box double-click (step 129, #3): a Tool Settings dock that is open in any
     window (docked or torn off) is redrawn — Blender can't raise an OS window — else the dock opens left of this
     window's viewport. Returns the dock area (or None)."""
     for window in context.window_manager.windows:
@@ -150,7 +150,7 @@ def show(context, width=None):
 
 
 def toggle(context, show_only=False):
-    """Maya ToggleToolSettings (``show_only``: toolPropertyWindow, open without closing). True = shown after."""
+    """Maya ToggleToolSettings (``show_only``: open without closing). True = shown after."""
     screen = context.window.screen if context.window is not None else context.screen
     if shown(screen):
         if show_only:

@@ -125,7 +125,7 @@ def _drawn():
 
 
 def _menu_commands():
-    """{kit-style path: runTimeCommand} from research/maya/menus.json (labels that are MEL expressions skipped)."""
+    """{kit-style path: runTimeCommand} from research/maya/menus.json (labels Maya builds at run time skipped)."""
     data = json.loads(_research("menus.json").read_text(encoding="utf-8"))["menus"]
     out = {}
 

@@ -125,7 +125,7 @@ WINDOWS = [
         paths=("Deform/Delta Mush",),
         missing=("Displacement 1.0", "Inward constraint / Outward constraint", "Distance weight", ENVELOPE)
         + ADVANCED),
-    # Wrap Options (MEL box, no tabs): Render influence objects off
+    # Wrap Options (no tabs): Render influence objects off
     Window("deform_wrap", "Wrap Options", "Create", _match('WRAP'), [
         F("render_influence", "", "bool", False, text="Render influence objects")], _create('WRAP'),
         paths=("Deform/Wrap",),
@@ -137,7 +137,7 @@ WINDOWS = [
            _create('PROXIMITY_WRAP'), paths=("Deform/Proximity Wrap",),
            missing=("Wrap mode (always Surface: Blender's Surface Deform)", "Max drivers 5 (one driver)",
                     "Falloff scale", "Smooth influences / Smooth normals") + ADVANCED),
-    # ShrinkWrap Options (MEL box): Projection Toward Inner Object ...
+    # ShrinkWrap Options: Projection Toward Inner Object ...
     Window("deform_shrink_wrap", "ShrinkWrap Options", "Create", _match('SHRINK_WRAP'), [
         F("projection", "Projection:", "enum", "Toward Inner Object",
           items=("Toward Inner Object", "Toward Center", "Parallel To Axes", "Vertex Normals", "Closest")),
@@ -191,7 +191,7 @@ WINDOWS = [
         F("wavelength", "Wavelength:", "float", 1.0, lo=0.1, hi=10.0)], _create('WAVE'),
         paths=("Deform/Nonlinear/Wave",),
         missing=("Min radius", "Dropoff", "Offset", ENVELOPE) + ADVANCED),
-    # Texture Options (MEL box; Advanced tab empty)
+    # Texture Options (Advanced tab empty)
     Window("deform_texture", "Texture Options", "Create", _match('TEXTURE'), [
         F("point_space", "Point Space:", "enum", "UV", items=("World", "Local", "UV")),
         F("direction", "Direction:", "enum", "Handle", items=("Normal", "Handle", "Vector")),

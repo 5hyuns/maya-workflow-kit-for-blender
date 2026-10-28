@@ -166,8 +166,8 @@ GRAPH_ICONS = (
     ("curvesPostInfinityCycleOffsetButton", 'FRAME_NEXT', _inf("POST", "CYCLE_OFFSET"),
      "Post-infinity cycle with offset"),
     "|",
-    # Maya 2026: the editor buttons at the right end are getGraphEditorButton / getDopeSheetButton / getCTEButton
-    # in both editors (Maya 2022: getTraxButton for the Time Editor)
+    # Maya 2026: the editor buttons at the right end are Graph Editor / Dope Sheet / Time Editor
+    # in both editors (Maya 2022: Trax Editor for the Time Editor)
     ("getGraphEditorButton", 'GRAPH', ("allset.open_editor", {"ui_type": 'FCURVES'}), "Open the Graph Editor"),
     ("getDopeSheetButton", 'ACTION', ("allset.open_editor", {"ui_type": 'DOPESHEET'}), "Open the Dope Sheet"),
     ("getCTEButton", 'NLA', ("allset.open_editor", {"ui_type": 'NLA_EDITOR'}), "Open the Time Editor"),

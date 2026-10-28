@@ -634,7 +634,7 @@ def test_menus_use_concept_operators():
 
 
 def test_select_all_marking_menu():
-    menu = mm.MENUS["buildSelectAllMM"]
+    menu = mm.MENUS["SELECT_ALL"]
     assert menu.radial["NW"][1] == "allset.delete_history"
     assert menu.radial["SE"][1] == "allset.freeze_transform"
     assert "Freeze Transforms" in menu.options

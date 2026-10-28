@@ -129,7 +129,7 @@ class ALLSET_OT_default_manip(bpy.types.Operator):
     def execute(self, context):
         obs = list(context.selected_objects)
         if not obs:
-            self.report({'WARNING'}, "No objects selected.")     # setDefaultManip, modify_168.md §2 [O]
+            self.report({'WARNING'}, "No objects selected.")     # Maya's warning text, modify_168.md §2 [O]
             return {'CANCELLED'}
         for ob in obs:
             if self.value:
@@ -433,7 +433,7 @@ class ALLSET_OT_geometry_to_bbox(bpy.types.Operator):
 
 
 # --- Evaluate Nodes (modify_168.md §3) --------------------------------------------------------------------------
-# Maya: check items calling setState <type> on / off for every node of that type. Kit: Scene.allset_eval (saved with
+# Maya: check items turning every node of that type on / off. Kit: Scene.allset_eval (saved with
 # the file), each switch mutes / unmutes the Blender data standing for that Maya node type.
 
 KINDS = ("iksolver", "constraint", "expression", "fluid", "ncloth", "nparticle", "nrigid", "particle", "rigidbody",
@@ -591,7 +591,7 @@ class ALLSET_OT_evaluate_all(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- Modify > Reorder Rotation... (Maya xform -rotateOrder <order> -preserve) ----------------------------------------
+# --- Modify > Reorder Rotation... (Maya keeps the orientation, preserve on) -----------------------------------------
 
 # Maya rotateOrder names = Blender's Euler modes of the same names (command_line/cmds_shim.ROTATE_ORDERS).
 REORDER_ITEMS = tuple((m, m.lower(), f"Maya rotate order {m.lower()}") for m in ('XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'))

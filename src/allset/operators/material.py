@@ -25,7 +25,7 @@ from .. import compat
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
-# Maya createAndAssignShader kinds on Principled BSDF (research/maya/shelves.md:60-62).
+# Maya shader kinds (shelf shader buttons) on Principled BSDF (research/maya/shelves.md:60-62).
 # Maya factory values measured with mayapy (research/maya/re/render_defaults_137.md; lambert: docs/steps/step_100.md).
 # Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
 # strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is

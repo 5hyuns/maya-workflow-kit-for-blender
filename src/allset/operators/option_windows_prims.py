@@ -62,8 +62,8 @@ def _helix_extra(v, over):
 
 
 def _soccer_extra(v, over):
-    # Maya links Radius and Side length both ways while editing (setRadiusCallback / setEdgeCallback,
-    # Side = Radius x 0.4036); the kit node follows the radius, so a side length typed alone sets the radius
+    # Maya links Radius and Side length both ways while editing
+    # (Side = Radius x 0.4036); the kit node follows the radius, so a side length typed alone sets the radius
     # (delegated: whichever field differs from the linked value wins)
     from . import prim_shapes_more
     side = prim_shapes_more.SOCCER_SIDE
@@ -81,7 +81,7 @@ _SUPER_ATTRS = (["radius", "horizontalDivisions", "verticalDivisions", "mergeVer
 
 
 def _run_super(context, v):
-    # the window's Shape field picks the shape (polySuperShapeCallback: shape 1 / 2 / 3 -> SuperEllipse /
+    # the window's Shape field picks the shape (shape 1 / 2 / 3 -> SuperEllipse /
     # SphericalHarmonics / UltraShape), whichever menu item opened it
     over = {a: v[a] for a in _SUPER_ATTRS}
     over["createUVs"] = int(v["create_uvs"] != "None")
@@ -90,7 +90,7 @@ def _run_super(context, v):
 
 def _super_fields(shape):
     """Polygon Super Shape Options: General / Helix / Super Ellipse / Spherical Harmonics / Ultra
-    frames (factory values setOptionVars; the menu item sets the Shape)."""
+    frames (Maya factory values; the menu item sets the Shape)."""
     sh = [F(f"harmonics{i}", f"{'V' if i < 4 else 'H'} {'Multiplier' if i % 2 == 0 else 'Exponent'} {i % 4 // 2 + 1}:",
             "float", d, lo=-20.0 if i % 2 == 0 else 0.0, hi=20.0 if i % 2 == 0 else 5.0)
           for i, d in enumerate((0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0))]
@@ -271,7 +271,7 @@ WINDOWS = [
         _poly('PIPE', ("radius", "height", "thickness", "subdivisionsAxis", "subdivisionsHeight", "subdivisionsCaps",
                        "roundCap"))),
     # Helix: coils 3, height 2, width 2, radius 0.4, 8 / 50 / 0 divisions, Counterclockwise. Maya labels the cap
-    # divisions slider "Coils:" too (ooption "C" -> kCoilsOption); kept as Maya shows it
+    # divisions slider "Coils:" too ("C" in Maya's window); kept as Maya shows it
     Window("poly_helix", "Polygon Helix Options", "Create", ("allset.create", {"kind": 'HELIX'}), [
         F("coils", "Coils:", "float", 3.0, lo=0.5, hi=1000), F("height", "Height:", "length", 2.0, lo=0.01, hi=100),
         F("width", "Width:", "length", 2.0, lo=0.01, hi=100), F("radius", "Radius:", "length", 0.4, lo=0.01, hi=100),
@@ -345,7 +345,7 @@ WINDOWS = [
         F("sweep", "Sweep angle:", "float", 360.0, lo=-3600.0, hi=3600.0),
         F("radius", "Radius:", "length", 1.0, lo=0.0001, hi=1000), _degree_field("Degree:"), *_sections()],
         _run_circle, missing=("Normal axis: Active view", _TOL)),
-    # Square (nurbsSquarePreset): centre, normal Y, sides 1 x 1, 1 span per side, degree 3
+    # Square (Maya factory): centre, normal Y, sides 1 x 1, 1 span per side, degree 3
     Window("nurbs_square", "NURBS Square Options", "Create", ("allset.create", {"kind": 'NURBS_SQUARE'}), [
         F("center", "Center:", "vec3", (0.0, 0.0, 0.0)), *_axis_fields("Normal axis:", "Normal definition:"),
         F("side1", "Length of Side 1:", "length", 1.0, lo=0.1, hi=1000),

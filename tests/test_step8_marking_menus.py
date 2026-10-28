@@ -18,10 +18,11 @@ maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                         "research", "maya", "marking_menus.json")
 # Menus resolved by hand (radials set from variables in Maya, hotkeys_and_menus.md:248-252).
-HAND_RESOLVED = {"dagMenuProc", "dagMenuProc_curve", "buildObjectMenuItemsNow"}
+HAND_RESOLVED = {"RMB_MESH", "RMB_CURVE", "RMB_EMPTY"}
 LABEL_ALIASES = {"To Edges": "<$toEdges>", "To Faces": "<$toFaces>"}
-# Kit menus that are one branch of a Maya proc (step 94: the pivot-edit branch of buildObjectMenuItemsNow).
-RESEARCH_PROC = {"buildObjectMenuItemsNow_pivot": "buildObjectMenuItemsNow"}
+# Kit menu id -> its key in the private research JSON (research/maya/marking_menu_ids.json; PIVOT_EDIT is one
+# branch of the RMB_EMPTY menu, step 94).
+RESEARCH_IDS = os.path.join(os.path.dirname(RESEARCH), "marking_menu_ids.json")
 
 
 class FakeLayout:
@@ -97,6 +98,7 @@ def test_radial_positions_match_research():
         print("research/maya/marking_menus.json missing: skipped")
         return
     data = json.load(open(RESEARCH, encoding="utf-8"))["menus"]
+    ids = json.load(open(RESEARCH_IDS, encoding="utf-8"))
     checked = 0
     bad = []
 
@@ -120,8 +122,8 @@ def test_radial_positions_match_research():
     for name, menu in mm.MENUS.items():
         if name in HAND_RESOLVED:
             continue
-        # Items a menu gets from the procs it calls (e.g. commonReflectionOptionsPopup = Symmetry ▸).
-        proc = RESEARCH_PROC.get(name, name)
+        # Items a menu gets from the research menus it calls (e.g. the Symmetry ▸ submenu).
+        proc = ids[name]
         called = [it for c in data[proc].get("calls", ()) for it in data.get(c["call"], {}).get("items", ())]
         compare(menu, data[proc]["items"] + called, name)
     print("radial items checked against research:", checked)
@@ -157,7 +159,7 @@ def test_pie_classes_and_slot_order():
         assert hasattr(bpy.types, marking.idname(name)), name
     # RMB mesh pie: Blender order W, E, S, N, NW, NE, SW, SE.
     fake = types.SimpleNamespace(layout=FakeLayout())
-    getattr(bpy.types, marking.idname("dagMenuProc")).draw(fake, bpy.context)
+    getattr(bpy.types, marking.idname("RMB_MESH")).draw(fake, bpy.context)
     texts = [e[2] for e in fake.layout.log if e[0] in ("op", "menu")]
     assert texts[:2] == ["Vertex", "UV ▸"], texts  # W, E (UV = submenu, step 151)
     # S, then the list under S: the object's name row (step 52), then Select
@@ -165,12 +167,12 @@ def test_pie_classes_and_slot_order():
     assert "Edge" in texts and "Object Mode" in texts and texts.index("Edge") > texts.index("Face")
     # Radial submenu = another pie; empty slots = separators.
     fake = types.SimpleNamespace(layout=FakeLayout())
-    getattr(bpy.types, marking.idname("contextPolyToolsEdgeMM")).draw(fake, bpy.context)
+    getattr(bpy.types, marking.idname("SHIFT_EDGE")).draw(fake, bpy.context)
     pies = [e for e in fake.layout.log if e[0] == "op" and e[1] == "wm.call_menu_pie"]
-    assert {p[3].name for p in pies} >= {marking.idname("contextPolyToolsEdgeMM", "N"),
-                                          marking.idname("contextPolyToolsEdgeMM", "NE")}, pies
+    assert {p[3].name for p in pies} >= {marking.idname("SHIFT_EDGE", "N"),
+                                          marking.idname("SHIFT_EDGE", "NE")}, pies
     fake = types.SimpleNamespace(layout=FakeLayout())
-    getattr(bpy.types, marking.idname("rotateMarkingMenuImpl")).draw(fake, bpy.context)
+    getattr(bpy.types, marking.idname("OPT_ROTATE")).draw(fake, bpy.context)
     seps = [e for e in fake.layout.log if e[0] == "sep"]
     assert seps, "N is empty in Maya's rotate options: a separator keeps the slot"
     # step 59: Discrete Rotate (greyed before) is the rotate step snap now
@@ -182,34 +184,34 @@ def test_dispatch_by_context():
     _fresh()
     R = marking.resolve
     with _override():
-        assert R("RMB", bpy.context) == ("pie", marking.idname("buildObjectMenuItemsNow"))
-        assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname("contextPolyToolsDefaultMM"))
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_EMPTY"))
+        assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname("SHIFT_DEFAULT"))
         bpy.ops.mesh.primitive_cube_add()
-        assert R("RMB", bpy.context) == ("pie", marking.idname("dagMenuProc"))
-        assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname("contextPolyToolsObjectMM"))
-        # buildConvertMM picks by the lead's shape type: a mesh object gets the convert menu (step 136)
-        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("polyConvertMM")), "mesh object: convert menu"
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_MESH"))
+        assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname("SHIFT_OBJECT"))
+        # Maya's Ctrl+RMB convert marking menu picks by the lead's shape type: a mesh object gets the convert menu (step 136)
+        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("CTRL_CONVERT")), "mesh object: convert menu"
         bpy.ops.object.mode_set(mode='EDIT')
         ts = bpy.context.scene.tool_settings
-        for sel, want in (((True, False, False), "contextPolyToolsVertexMM"),
-                          ((False, True, False), "contextPolyToolsEdgeMM"),
-                          ((False, False, True), "contextPolyToolsFaceMM")):
+        for sel, want in (((True, False, False), "SHIFT_VERTEX"),
+                          ((False, True, False), "SHIFT_EDGE"),
+                          ((False, False, True), "SHIFT_FACE")):
             ts.mesh_select_mode = sel
             assert R("SHIFT_RMB", bpy.context) == ("pie", marking.idname(want)), sel
-        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("polyConvertMM"))
-        assert R("RMB", bpy.context) == ("pie", marking.idname("dagMenuProc"))
+        assert R("CTRL_RMB", bpy.context) == ("pie", marking.idname("CTRL_CONVERT"))
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_MESH"))
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.camera_add()
         assert R("RMB", bpy.context) == ("menu", "VIEW3D_MT_object_context_menu")
         bpy.ops.curve.primitive_bezier_curve_add()
-        assert R("RMB", bpy.context) == ("pie", marking.idname("dagMenuProc_curve"))
+        assert R("RMB", bpy.context) == ("pie", marking.idname("RMB_CURVE"))
 
 
 def test_tool_options_dispatch():
     ws = bpy.context.workspace
     tool = ws.tools.from_space_view3d_mode('OBJECT', create=True)
-    for tid, want in (("builtin.move", "translateMarkingMenuImpl"), ("builtin.rotate", "rotateMarkingMenuImpl"),
-                      ("builtin.scale", "scaleMarkingMenuImpl"), ("builtin.select_box", "selectMarkingMenuImpl")):
+    for tid, want in (("builtin.move", "OPT_MOVE"), ("builtin.rotate", "OPT_ROTATE"),
+                      ("builtin.scale", "OPT_SCALE"), ("builtin.select_box", "OPT_SELECT")):
         tool.idname = tid
         with _override():
             assert marking.resolve("TOOL_OPTIONS", bpy.context) == ("pie", marking.idname(want)), tid
@@ -292,7 +294,7 @@ def test_bindings_removed_on_disable():
     try:
         names = taphold.binding_names()
         assert not any(n.startswith("tool_") for n in names), names
-        assert not hasattr(bpy.types, marking.idname("dagMenuProc"))
+        assert not hasattr(bpy.types, marking.idname("RMB_MESH"))
         assert "allset_mm_target" not in bpy.types.WindowManager.bl_rna.properties
     finally:
         kit.enable()

@@ -222,10 +222,10 @@ def _ctx(space_mode='UV', sync=True, island=False):
 
 
 def test_uv_editor_marking_menus():
-    assert marking.resolve("RMB", _ctx()) == ("pie", marking.idname("textureWindowCreatePopupRadialMenu"))
-    assert marking.resolve("SHIFT_RMB", _ctx()) == ("pie", marking.idname("contextPolyToolsUVMM"))
+    assert marking.resolve("RMB", _ctx()) == ("pie", marking.idname("UV_EDITOR_RMB"))
+    assert marking.resolve("SHIFT_RMB", _ctx()) == ("pie", marking.idname("SHIFT_UV"))
     assert marking.resolve("SHIFT_RMB", _ctx(sync=False, island=True)) == \
-        ("pie", marking.idname("contextPolyToolsUVShellMM"))
+        ("pie", marking.idname("SHIFT_UV_SHELL"))
     assert marking.resolve("RMB", _ctx(space_mode='VIEW')) is None, "image viewing: no UV menu"
     rmb = mm.UV_EDITOR_RMB.radial
     assert {p: l for p, (l, _a) in rmb.items()} == {"S": "Face", "N": "Edge", "E": "UV", "W": "Vertex", "NW": "UV Shell"}

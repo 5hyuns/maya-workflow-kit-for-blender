@@ -53,14 +53,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "dagMenuProc",
-  "path": "dagMenuProc/E:UV/S:UV Shell",
+  "menu": "RMB_MESH",
+  "path": "RMB_MESH/E:UV/S:UV Shell",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsFaceMM",
-  "path": "contextPolyToolsFaceMM/7:Bridge Faces",
+  "menu": "SHIFT_FACE",
+  "path": "SHIFT_FACE/7:Bridge Faces",
   "w": 1
  },
  {
@@ -70,8 +70,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/5:Selection Boundary",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/5:Selection Boundary",
   "w": 1
  },
  {
@@ -118,20 +118,20 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsVertexMM",
-  "path": "contextPolyToolsVertexMM/W:Multi-Cut",
+  "menu": "SHIFT_VERTEX",
+  "path": "SHIFT_VERTEX/W:Multi-Cut",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/N:To Edges/NW:To Contiguous Edges",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/N:To Edges/NW:To Contiguous Edges",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVShellMM",
-  "path": "contextPolyToolsUVShellMM/3:UV Set Editor",
+  "menu": "SHIFT_UV_SHELL",
+  "path": "SHIFT_UV_SHELL/3:UV Set Editor",
   "w": 1
  },
  {
@@ -147,8 +147,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxEastMenu",
-  "path": "HotboxEastMenu/E:Attributes/N:Tool Settings",
+  "menu": "HB_EAST",
+  "path": "HB_EAST/E:Attributes/N:Tool Settings",
   "w": 1
  },
  {
@@ -182,8 +182,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVShellMM",
-  "path": "contextPolyToolsUVShellMM/W:Unfold",
+  "menu": "SHIFT_UV_SHELL",
+  "path": "SHIFT_UV_SHELL/W:Unfold",
   "w": 1
  },
  {
@@ -226,14 +226,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVMM",
-  "path": "contextPolyToolsUVMM/N:Mapping/N:Planar",
+  "menu": "SHIFT_UV",
+  "path": "SHIFT_UV/N:Mapping/N:Planar",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "doSelectComponentMM",
-  "path": "doSelectComponentMM/5:Select Objects",
+  "menu": "SELECT_COMPONENT",
+  "path": "SELECT_COMPONENT/5:Select Objects",
   "w": 1
  },
  {
@@ -308,8 +308,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/NW:Object",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/NW:Object",
   "w": 1
  },
  {
@@ -423,8 +423,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/NW:Object",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/NW:Object",
   "w": 1
  },
  {
@@ -436,8 +436,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxSouthMenu",
-  "path": "HotboxSouthMenu/E:Graph Editor",
+  "menu": "HB_SOUTH",
+  "path": "HB_SOUTH/E:Graph Editor",
   "w": 1
  },
  {
@@ -552,8 +552,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "dagMenuProc",
-  "path": "dagMenuProc/25:Assign Favorite Material/2:Phong",
+  "menu": "RMB_MESH",
+  "path": "RMB_MESH/25:Assign Favorite Material/2:Phong",
   "w": 1
  },
  {
@@ -775,14 +775,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/NW:Object",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/NW:Object",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/8:Reduce",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/8:Reduce",
   "w": 1
  },
  {
@@ -870,8 +870,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/N:Symmetry/E:Object",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/N:Symmetry/E:Object",
   "w": 1
  },
  {
@@ -922,14 +922,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/N:Symmetry/S:Y Axis",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/N:Symmetry/S:Y Axis",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "HotboxWestMenu",
-  "path": "HotboxWestMenu/E:Animation Mask",
+  "menu": "HB_WEST",
+  "path": "HB_WEST/E:Animation Mask",
   "w": 1
  },
  {
@@ -982,8 +982,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/E:Snap Scale",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/E:Snap Scale",
   "w": 1
  },
  {
@@ -1182,8 +1182,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/6:Scale Options",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/6:Scale Options",
   "w": 1
  },
  {
@@ -1248,8 +1248,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "buildObjectMenuItemsNow_pivot",
-  "path": "buildObjectMenuItemsNow_pivot/N:Pin Component Pivot",
+  "menu": "PIVOT_EDIT",
+  "path": "PIVOT_EDIT/N:Pin Component Pivot",
   "w": 1
  },
  {
@@ -1392,8 +1392,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/NE:Component",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/NE:Component",
   "w": 1
  },
  {
@@ -1472,8 +1472,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/S:Extrude",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/S:Extrude",
   "w": 1
  },
  {
@@ -1538,8 +1538,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/S:To Faces/S:To Faces",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/S:To Faces/S:To Faces",
   "w": 1
  },
  {
@@ -1683,8 +1683,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/SE:Soften/Harden Edges/NE:Soften Edge",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/SE:Soften/Harden Edges/NE:Soften Edge",
   "w": 1
  },
  {
@@ -1729,14 +1729,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/4:Preserve Children",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/4:Preserve Children",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "HotboxSouthMenu",
-  "path": "HotboxSouthMenu/SW:Node Editor",
+  "menu": "HB_SOUTH",
+  "path": "HB_SOUTH/SW:Node Editor",
   "w": 1
  },
  {
@@ -1781,8 +1781,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxCenterMenu",
-  "path": "HotboxCenterMenu/SW:Back View",
+  "menu": "HB_CENTER",
+  "path": "HB_CENTER/SW:Back View",
   "w": 3
  },
  {
@@ -1792,8 +1792,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/SW:Axis/NW:Normal",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/SW:Axis/NW:Normal",
   "w": 1
  },
  {
@@ -1898,8 +1898,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "dagMenuProc",
-  "path": "dagMenuProc/E:UV/E:UV",
+  "menu": "RMB_MESH",
+  "path": "RMB_MESH/E:UV/E:UV",
   "w": 1
  },
  {
@@ -1952,8 +1952,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxWestMenu",
-  "path": "HotboxWestMenu/NW:Object/Components",
+  "menu": "HB_WEST",
+  "path": "HB_WEST/NW:Object/Components",
   "w": 1
  },
  {
@@ -2110,8 +2110,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsVertexMM",
-  "path": "contextPolyToolsVertexMM/N:Merge Vertices/N:Merge Vertices To Center",
+  "menu": "SHIFT_VERTEX",
+  "path": "SHIFT_VERTEX/N:Merge Vertices/N:Merge Vertices To Center",
   "w": 1
  },
  {
@@ -2126,14 +2126,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsFaceMM",
-  "path": "contextPolyToolsFaceMM/4:Triangulate Faces",
+  "menu": "SHIFT_FACE",
+  "path": "SHIFT_FACE/4:Triangulate Faces",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/0:To Face Path",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/0:To Face Path",
   "w": 1
  },
  {
@@ -2188,8 +2188,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/SE:Soften/Harden Edges/E:Soften/Harden",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/SE:Soften/Harden Edges/E:Soften/Harden",
   "w": 1
  },
  {
@@ -2268,14 +2268,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "textureWindowCreatePopupRadialMenu",
-  "path": "textureWindowCreatePopupRadialMenu/3:Layout",
+  "menu": "UV_EDITOR_RMB",
+  "path": "UV_EDITOR_RMB/3:Layout",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "textureWindowCreatePopupRadialMenu",
-  "path": "textureWindowCreatePopupRadialMenu/3:Layout",
+  "menu": "UV_EDITOR_RMB",
+  "path": "UV_EDITOR_RMB/3:Layout",
   "w": 1
  },
  {
@@ -2349,8 +2349,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/4:Mirror",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/4:Mirror",
   "w": 1
  },
  {
@@ -2360,8 +2360,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/N:To Edges/S:To Contained Edges",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/N:To Edges/S:To Contained Edges",
   "w": 1
  },
  {
@@ -2383,8 +2383,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "buildKeyframeTangentMM",
-  "path": "buildKeyframeTangentMM/W:Keys/E:Paste Keys",
+  "menu": "KEY_TANGENT",
+  "path": "KEY_TANGENT/W:Keys/E:Paste Keys",
   "w": 1
  },
  {
@@ -2423,8 +2423,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/SW:Edge Ring Utilities/SW:To Edge Ring",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/SW:Edge Ring Utilities/SW:To Edge Ring",
   "w": 1
  },
  {
@@ -2456,8 +2456,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/W:Multi-Cut",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/W:Multi-Cut",
   "w": 1
  },
  {
@@ -2472,8 +2472,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxSouthMenu",
-  "path": "HotboxSouthMenu/N:Outliner",
+  "menu": "HB_SOUTH",
+  "path": "HB_SOUTH/N:Outliner",
   "w": 1
  },
  {
@@ -2512,8 +2512,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "rotateMarkingMenuImpl",
-  "path": "rotateMarkingMenuImpl/NE:Component",
+  "menu": "OPT_ROTATE",
+  "path": "OPT_ROTATE/NE:Component",
   "w": 1
  },
  {
@@ -2532,8 +2532,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "textureWindowCreatePopupRadialMenu",
-  "path": "textureWindowCreatePopupRadialMenu/7:Unpin",
+  "menu": "UV_EDITOR_RMB",
+  "path": "UV_EDITOR_RMB/7:Unpin",
   "w": 1
  },
  {
@@ -2659,8 +2659,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/8:Fill Hole",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/8:Fill Hole",
   "w": 1
  },
  {
@@ -2717,8 +2717,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/W:To Vertices/W:To Vertices",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/W:To Vertices/W:To Vertices",
   "w": 1
  },
  {
@@ -2863,8 +2863,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVShellMM",
-  "path": "contextPolyToolsUVShellMM/N:Mapping/NE:Normal-Based",
+  "menu": "SHIFT_UV_SHELL",
+  "path": "SHIFT_UV_SHELL/N:Mapping/NE:Normal-Based",
   "w": 1
  },
  {
@@ -2992,8 +2992,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "dagMenuProc",
-  "path": "dagMenuProc/3:Select All",
+  "menu": "RMB_MESH",
+  "path": "RMB_MESH/3:Select All",
   "w": 1
  },
  {
@@ -3053,8 +3053,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/SW:Axis/W:Parent",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/SW:Axis/W:Parent",
   "w": 1
  },
  {
@@ -3091,8 +3091,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/1:Insert Edge Loop Tool",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/1:Insert Edge Loop Tool",
   "w": 1
  },
  {
@@ -3135,8 +3135,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsVertexMM",
-  "path": "contextPolyToolsVertexMM/N:Merge Vertices/NE:Merge Vertices",
+  "menu": "SHIFT_VERTEX",
+  "path": "SHIFT_VERTEX/N:Merge Vertices/NE:Merge Vertices",
   "w": 1
  },
  {
@@ -3348,8 +3348,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/11:Combine",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/11:Combine",
   "w": 1
  },
  {
@@ -3363,14 +3363,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVShellMM",
-  "path": "contextPolyToolsUVShellMM/N:Mapping/N:Planar",
+  "menu": "SHIFT_UV_SHELL",
+  "path": "SHIFT_UV_SHELL/N:Mapping/N:Planar",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "buildKeyframeTangentMM",
-  "path": "buildKeyframeTangentMM/E:Tangents/NW:Stepped",
+  "menu": "KEY_TANGENT",
+  "path": "KEY_TANGENT/E:Tangents/NW:Stepped",
   "w": 1
  },
  {
@@ -3471,8 +3471,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/10:Connect Components",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/10:Connect Components",
   "w": 1
  },
  {
@@ -3482,8 +3482,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/SE:Soften/Harden Edges/SE:Harden Edge",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/SE:Soften/Harden Edges/SE:Harden Edge",
   "w": 1
  },
  {
@@ -3688,8 +3688,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "scaleMarkingMenuImpl",
-  "path": "scaleMarkingMenuImpl/N:Symmetry/S:Y Axis",
+  "menu": "OPT_SCALE",
+  "path": "OPT_SCALE/N:Symmetry/S:Y Axis",
   "w": 1
  },
  {
@@ -3720,8 +3720,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVMM",
-  "path": "contextPolyToolsUVMM/N:Mapping/N:Planar",
+  "menu": "SHIFT_UV",
+  "path": "SHIFT_UV/N:Mapping/N:Planar",
   "w": 1
  },
  {
@@ -3876,14 +3876,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVMM",
-  "path": "contextPolyToolsUVMM/4:UV Set Editor",
+  "menu": "SHIFT_UV",
+  "path": "SHIFT_UV/4:UV Set Editor",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/8:Reduce",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/8:Reduce",
   "w": 1
  },
  {
@@ -3908,8 +3908,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/E:Snap/E:Discrete Move",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/E:Snap/E:Discrete Move",
   "w": 1
  },
  {
@@ -4047,8 +4047,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxSouthMenu",
-  "path": "HotboxSouthMenu/NE:Set Editor",
+  "menu": "HB_SOUTH",
+  "path": "HB_SOUTH/NE:Set Editor",
   "w": 1
  },
  {
@@ -4113,8 +4113,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "doSelectComponentMM",
-  "path": "doSelectComponentMM/0:All Components on",
+  "menu": "SELECT_COMPONENT",
+  "path": "SELECT_COMPONENT/0:All Components on",
   "w": 1
  },
  {
@@ -4216,8 +4216,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsObjectMM",
-  "path": "contextPolyToolsObjectMM/12:Booleans/1:Difference",
+  "menu": "SHIFT_OBJECT",
+  "path": "SHIFT_OBJECT/12:Booleans/1:Difference",
   "w": 1
  },
  {
@@ -4236,8 +4236,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsVertexMM",
-  "path": "contextPolyToolsVertexMM/5:Circularize Vertices",
+  "menu": "SHIFT_VERTEX",
+  "path": "SHIFT_VERTEX/5:Circularize Vertices",
   "w": 1
  },
  {
@@ -4287,8 +4287,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "HotboxCenterMenu",
-  "path": "HotboxCenterMenu/0:Hotbox Style/2:Center Zone Only",
+  "menu": "HB_CENTER",
+  "path": "HB_CENTER/0:Hotbox Style/2:Center Zone Only",
   "w": 1
  },
  {
@@ -4311,14 +4311,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "translateMarkingMenuImpl",
-  "path": "translateMarkingMenuImpl/N:Symmetry/E:Object",
+  "menu": "OPT_MOVE",
+  "path": "OPT_MOVE/N:Symmetry/E:Object",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsVertexMM",
-  "path": "contextPolyToolsVertexMM/SW:Delete Vertex",
+  "menu": "SHIFT_VERTEX",
+  "path": "SHIFT_VERTEX/SW:Delete Vertex",
   "w": 1
  },
  {
@@ -4349,8 +4349,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "polyConvertMM",
-  "path": "polyConvertMM/NE:Grow Selection/N:Grow Along Loop",
+  "menu": "CTRL_CONVERT",
+  "path": "CTRL_CONVERT/NE:Grow Selection/N:Grow Along Loop",
   "w": 1
  },
  {
@@ -4371,8 +4371,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/6:Add Divisions To Edge",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/6:Add Divisions To Edge",
   "w": 1
  },
  {
@@ -4402,14 +4402,14 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "rotateMarkingMenuImpl",
-  "path": "rotateMarkingMenuImpl/N:Symmetry/SW:X Axis",
+  "menu": "OPT_ROTATE",
+  "path": "OPT_ROTATE/N:Symmetry/SW:X Axis",
   "w": 1
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsDefaultMM",
-  "path": "contextPolyToolsDefaultMM/N:Create Polygon Tool",
+  "menu": "SHIFT_DEFAULT",
+  "path": "SHIFT_DEFAULT/N:Create Polygon Tool",
   "w": 1
  },
  {
@@ -4518,8 +4518,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsUVMM",
-  "path": "contextPolyToolsUVMM/N:Mapping/S:Best Plane",
+  "menu": "SHIFT_UV",
+  "path": "SHIFT_UV/N:Mapping/S:Best Plane",
   "w": 1
  },
  {
@@ -4692,8 +4692,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsEdgeMM",
-  "path": "contextPolyToolsEdgeMM/E:Bevel Edge",
+  "menu": "SHIFT_EDGE",
+  "path": "SHIFT_EDGE/E:Bevel Edge",
   "w": 1
  },
  {
@@ -4730,8 +4730,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "contextPolyToolsFaceMM",
-  "path": "contextPolyToolsFaceMM/9:Extract Faces",
+  "menu": "SHIFT_FACE",
+  "path": "SHIFT_FACE/9:Extract Faces",
   "w": 1
  },
  {
@@ -4760,8 +4760,8 @@ ACTIONS = [
  },
  {
   "kind": "mark",
-  "menu": "doSelectComponentMM",
-  "path": "doSelectComponentMM/5:Select Objects",
+  "menu": "SELECT_COMPONENT",
+  "path": "SELECT_COMPONENT/5:Select Objects",
   "w": 1
  },
  {

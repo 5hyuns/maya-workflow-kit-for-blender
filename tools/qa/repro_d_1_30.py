@@ -12,8 +12,8 @@ _spec.loader.exec_module(core)
 ACTIONS = [
  {
   "kind": "mark",
-  "menu": "contextPolyToolsFaceMM",
-  "path": "contextPolyToolsFaceMM/3:Circularize Components",
+  "menu": "SHIFT_FACE",
+  "path": "SHIFT_FACE/3:Circularize Components",
   "w": 1
  }
 ]

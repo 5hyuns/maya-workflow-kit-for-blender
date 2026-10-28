@@ -983,7 +983,7 @@ CATEGORIES.update({
 })
 
 
-# Greyed marking-menu entries (step 136, docs/steps/step_136_items.md): key = "<menu proc>/<label path>" (the kit menu
+# Greyed marking-menu entries (step 136, docs/steps/step_136_items.md): key = "<menu>/<label path>" (the kit menu
 # name in marking/menus.MENUS, then the labels down to the item), same (substitute, one line) form. While a marking
 # menu hovers a greyed entry, marking/modal.py puts its line in the Help Line. tests/test_step136_items.py checks that
 # every greyed entry has one and every key is a greyed entry.
@@ -995,78 +995,78 @@ _RMB_LIST = {
                     "Editors)."),
 }
 MARKING = {
-    **{f"{menu}/{label}": n for menu in ("dagMenuProc", "dagMenuProc_curve") for label, n in _RMB_LIST.items()},
-    "dagMenuProc/Vertex Face": (
+    **{f"{menu}/{label}": n for menu in ("RMB_MESH", "RMB_CURVE") for label, n in _RMB_LIST.items()},
+    "RMB_MESH/Vertex Face": (
         "Face corners", "Blender has no vertex-face component: per-corner values (normals, colours, UVs) are edited "
         "on the face corners through their tools."),
-    "dagMenuProc_curve/Curve Point": (
+    "RMB_CURVE/Curve Point": (
         "Control points", "Blender curves are edited by their control points only: there are no points on the curve "
         "to pick (Subdivide adds one)."),
-    "dagMenuProc_curve/Hull": (
+    "RMB_CURVE/Hull": (
         "Control points", "Blender draws the control polygon but has no hull component: select its control points."),
-    "dagMenuProc_curve/Edit Point": (
+    "RMB_CURVE/Edit Point": (
         "Control points", "Blender curves have no edit points: Bezier curves are edited by their knots and handles."),
-    "buildObjectMenuItemsNow/Complete Tool": (
+    "RMB_EMPTY/Complete Tool": (
         "Enter", "Blender tools finish with Enter or a right-click: there is no tool to complete from this menu."),
-    "buildObjectMenuItemsNow_pivot/Show Orientation Handle": (
+    "PIVOT_EDIT/Show Orientation Handle": (
         "Transform orientation", "Blender's pivot has no orientation handle: turn the pivot with a custom "
         "orientation (Orientation menu > Create)."),
-    "contextPolyToolsVertexMM/Reorder Vertices": (
+    "SHIFT_VERTEX/Reorder Vertices": (
         "Sort Mesh Elements", "Blender can't set the vertex order from three picked vertices: Mesh > Sort Elements "
         "reorders them by a rule."),
-    "contextPolyToolsEdgeMM/Merge/Collapse Edges/Merge Edge Tool": (
+    "SHIFT_EDGE/Merge/Collapse Edges/Merge Edge Tool": (
         "Merge / Bridge", "Blender has no tool that merges two clicked border edges: select both edges and use Merge "
         "(At Center) or Bridge."),
-    "contextPolyToolsFaceMM/Assign Invisible Faces": (
+    "SHIFT_FACE/Assign Invisible Faces": (
         "Delete faces / Hide", "Blender's Subdivision Surface has no invisible faces: delete the faces or hide them "
         "(Display > Hide)."),
-    "translateMarkingMenuImpl/Snap/Face Center": (
+    "OPT_MOVE/Snap/Face Center": (
         "Snap to Face", "Blender snaps to faces (Face Project / Face Nearest), not to their centres."),
-    "translateMarkingMenuImpl/Keep Spacing": (
+    "OPT_MOVE/Keep Spacing": (
         "Snap With", "Blender moves the selected components together while snapping (Snap With in the snapping "
         "popover); there is no separate keep-spacing switch."),
-    "translateMarkingMenuImpl/Axis/Live Object Axis": (
+    "OPT_MOVE/Axis/Live Object Axis": (
         "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
         "menu > Create) and pick it."),
-    "translateMarkingMenuImpl/Axis/Custom": (
+    "OPT_MOVE/Axis/Custom": (
         "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
         "selection."),
-    "rotateMarkingMenuImpl/Custom/Custom": (
+    "OPT_ROTATE/Custom/Custom": (
         "Custom orientation", "Blender's custom axis is a saved orientation: Orientation menu > Create, from the "
         "selection."),
-    "rotateMarkingMenuImpl/Custom/Reset": (
+    "OPT_ROTATE/Custom/Reset": (
         "Orientation: Object", "Blender keeps saved orientations until you delete them: pick Object to go back to "
         "the default rotate axis."),
-    "scaleMarkingMenuImpl/Axis/Live Object Axis": (
+    "OPT_SCALE/Axis/Live Object Axis": (
         "Custom orientation", "Blender has no live object axis: create an orientation from the object (Orientation "
         "menu > Create) and pick it."),
-    **{f"buildSelectAllMM/{label}": (
+    **{f"SELECT_ALL/{label}": (
         "Modifier stack", "Blender's history is the modifier stack, which has no upstream / downstream nodes to "
         "select or switch off: show / hide modifiers in Properties > Modifiers.")
        for label in ("Select All Inputs", "Select All Outputs", "Enable All Outputs", "Disable All Outputs")},
-    "HotboxNorthMenu/Persp/Relationship Editor": (
+    "HB_NORTH/Persp/Relationship Editor": (
         "Workspaces", "Blender has no relationship editor layout: the Outliner and Properties sit beside the view "
         "in every workspace."),
-    "HotboxEastMenu/Time Slider": (
+    "HB_EAST/Time Slider": (
         "Timeline area", "Blender's Time Slider is the Timeline area: drag its edge to hide it, or maximize the view "
         "(Ctrl+Space) for more room."),
-    "HotboxEastMenu/Range Slider": (
+    "HB_EAST/Range Slider": (
         "Timeline header", "The Range Slider is part of the Timeline header in Blender: it hides with the Timeline."),
-    "HotboxWestMenu/Hierarchy": (
+    "HB_WEST/Hierarchy": (
         "Select > Hierarchy", "Blender has no hierarchy select mode: click the object and use Select > Hierarchy "
         "(or the Outliner) to take its children."),
-    "HotboxWestMenu/Dynamics Mask": (
+    "HB_WEST/Dynamics Mask": (
         "Object types filter", "Blender's dynamics are modifiers and physics settings on ordinary objects, so they "
         "have no selection mask of their own."),
-    "doSelectComponentMM/All Components off": (
+    "SELECT_COMPONENT/All Components off": (
         "Mesh select mode", "Blender always keeps vertex, edge or face picking on: switch with F9 / F10 / F11."),
-    "doSelectComponentMM/Save to shelf": (
+    "SELECT_COMPONENT/Save to shelf": (
         "Quick Favorites", "Blender has no shelf button from a pick mask: right-click a select mode button > Add to "
         "Quick Favorites."),
 }
 _PICK_MASK = ("Pick mask", "Blender picks this kind of component in the object's own edit mode (Tab), not through a "
               "pick mask: the mask only switches mesh vertex / edge / face picking.")
-MARKING.update({f"doSelectComponentMM/{p}": _PICK_MASK for p in (
+MARKING.update({f"SELECT_COMPONENT/{p}": _PICK_MASK for p in (
     "Points/All Points", "Points/CVs", "Points/Lattice Points", "Points/Subdiv Mesh Points", "Points/Particles",
     "Parm Points/All Parm Points", "Parm Points/Edit Points", "Parm Points/Curve Points",
     "Parm Points/Subdiv Mesh UVs", "Parm Points/Surface Points", "Lines/Trim Edges", "Lines/All Lines",

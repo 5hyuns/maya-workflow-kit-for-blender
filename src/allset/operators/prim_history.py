@@ -44,8 +44,8 @@ SURFACES = {"makeNurbSphere", "makeNurbCylinder", "makeNurbCone", "makeNurbPlane
 
 
 def history_on(context):
-    """Maya's Construction History toggle (Status Line, ``constructionHistory -toggle``): on by default, one state
-    for the session that File > New keeps (mayapy, research/maya/re/mesh_display_184.md "Construction History"),
+    """Maya's Construction History toggle (Status Line, ``cmds.constructionHistory(toggle=...)``): on by default, one
+    state for the session that File > New keeps (mayapy, research/maya/re/mesh_display_184.md "Construction History"),
     hence a WindowManager property (ui/input_line.py)."""
     return getattr(context.window_manager, "allset_construction_history", True)
 

@@ -215,7 +215,7 @@ def gear(cv, cx, cy, r, colour):
 
 
 def clapper(cv, colour=GREY, top=0.06):
-    """Maya's clapperboard: a striped clapstick over the board (rvRender)."""
+    """Maya's clapperboard: a striped clapstick over the board (Render View)."""
     cv.rect(0.06, top, 0.94, top + 0.20, colour)
     for i in range(4):
         x = 0.14 + i * 0.22

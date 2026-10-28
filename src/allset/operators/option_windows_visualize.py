@@ -4,8 +4,7 @@
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
 option_windows._extend appends ``WINDOWS``). Titles, labels, buttons and factory values were read from a running
 Maya 2022 with factory prefs (research/maya/re/visualize_171.md §3; grabs research/maya/screens/ghost171/
-snapshot_options.png, editor_GhostingEditor.png; strings from ``uiRes m_performSnapshot.*`` and the ghosting
-module's string table).
+snapshot_options.png, editor_GhostingEditor.png; labels as Maya shows them).
 
 The Ghosting Editor is a panel in Maya, not an option box: here it is a window whose command button is Maya's
 "Create Ghost from Selection" and whose Apply puts the display values on every current ghost (Maya's editor applies

@@ -63,7 +63,7 @@ def _round_off(value, precision=8):
 
 
 def _mel_str(value):
-    """MEL float -> string (10 significant digits, measured: 1.0/3 -> "0.3333333333", 14.0 -> "14")."""
+    """Float -> string as Maya writes it (10 significant digits, measured: 1.0/3 -> "0.3333333333", 14.0 -> "14")."""
     return "%.10g" % value
 
 
@@ -167,7 +167,7 @@ def outer_cycle(island, uv, where):
     return max(cyc, key=len) if cyc else []
 
 
-# --- Map Border (untangleUV -mb square -sd 0) ----------------------------------------------------------------------
+# --- Map Border (Maya factory options: Square) ------------------------------------------------------------------
 
 def _square(t):
     """Point at perimeter parameter t in [0, 4) on the unit square, counter-clockwise from (0, 0)."""
@@ -260,7 +260,7 @@ def straighten(cycle, chains, pts, uv):
     return done
 
 
-# --- Layout Along (texLayoutAlong 0 = polyLayoutUV -l 1 -sc 1 -rbf 1 -fr 1 -se 0) ------------------------------------
+# --- Layout Along (Maya factory options) ----------------------------------------------------------------------------
 
 def _signed_area(island, uv):
     a = 0.0
@@ -311,7 +311,7 @@ def layout_along(groups, uv, direction='U'):
     return len(groups)
 
 
-# --- Stack Similar Shells (polyUVStackSimilarShells -to 0.1) ---------------------------------------------------------
+# --- Stack Similar Shells (Maya factory tolerance 0.1) ----------------------------------------------------------------
 
 def _signature(cycle, pts, uv):
     """Border features of a shell (Stack Similar): per border UV the length to the previous one,

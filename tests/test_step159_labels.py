@@ -1,6 +1,6 @@
 """Step 159 lane L: Skeleton > Joint Labelling (labels as bone ID properties, Rename Joints From Labels, Label Based
 on Joint Names, Toggle / Show / Hide labels + viewport drawing), Mirror Skin Weights Label association, Enable /
-Disable Selected IK Handles. Maya facts (MEL procs + mayapy measurements): research/maya/re/joint_labels_159.md."""
+Disable Selected IK Handles. Maya facts (measured with mayapy): research/maya/re/joint_labels_159.md."""
 
 from importlib import import_module
 

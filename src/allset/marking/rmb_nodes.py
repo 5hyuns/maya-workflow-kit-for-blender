@@ -7,9 +7,9 @@ show: the last kit extrusion (polyExtrudeFace1), the modifiers (Maya deformers /
 node (polyCube1), the constraints; the shape (mesh data) and its shading groups. ``nodes(ob)`` turns them into the
 bpy-free data ``marking/menus.with_nodes`` builds the submenus from.
 
-- An Inputs / Outputs node = Maya ``select -add <node>``: the object stays selected, the Channel Box opens the node
-  under INPUTS (cb165/cb_hist_pick_extrude.png) and the Attribute Editor tab follows; its option box = showEditor
-  (the Attribute Editor on that node).
+- An Inputs / Outputs node = Maya ``cmds.select(node, add=True)``: the object stays selected, the Channel Box opens the
+  node under INPUTS (cb165/cb_hist_pick_extrude.png) and the Attribute Editor tab follows; its option box = the
+  Attribute Editor on that node.
 - Enable / Disable All = Maya ``nodeState`` 0 / 2 (has no effect): the modifiers' viewport + render switches, the
   constraints' enabled flag. Blender has no switch for the kit's extrusion / creation node: those are left alone.
 - Outputs of an object = the nodes of other objects that use it (Maya's lattice / handle / constraint target future:
@@ -109,7 +109,7 @@ def nodes(ob):
         "object": ob.name,
         "inputs": [(ae.nice_type(t), owner.name, key) for _n, t, owner, key, _c, _s in ins],
         "outputs": [(ae.nice_type(t), owner.name, key) for _n, t, owner, key, _c, _s in outs],
-        # createTraversalMenuItems on the transform: History = the shape + what drives the transform; Future = the
+        # Maya's RMB DG Traversal on the transform: History = the shape + what drives the transform; Future = the
         # shape, its shading groups, what uses the object (rmb_cube_DG_Traversal.png)
         "history": shape + cons,
         "future": shape + groups + named_outs,
@@ -127,8 +127,8 @@ def _redraw(context):
 
 
 def _make_lead(context, ob, replace):
-    """Maya ``select -add`` (the object stays in the selection) or ``select -r``; the node's object becomes the lead
-    so the Channel Box / Attribute Editor show it."""
+    """Maya ``cmds.select(add=True)`` (the object stays in the selection) or ``cmds.select(replace=True)``; the node's
+    object becomes the lead so the Channel Box / Attribute Editor show it."""
     if context.mode != 'OBJECT' and context.active_object is not ob:
         bpy.ops.object.mode_set(mode='OBJECT')
     try:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Ctrl+G group and Edit > Ungroup.
 
-research/maya/concepts.md:89-91: ``doGroup(world=0, preserve=1, zeroPivot=1)``
+research/maya/concepts.md:89-91: Edit > Group factory options (under Parent, Preserve position, pivot at the origin)
 creates the group under the common parent with its pivot at the origin; with
 nothing selected it makes an empty group. Names are ``group1``, ``group2``, ...
 
@@ -64,10 +64,10 @@ def make_group(context, objects):
 
 
 def ungroup(context, groups, world=False, preserve=True):
-    """Maya Edit > Ungroup (performUngroup; factory Ungroup under Parent, Preserve position on): each group's
+    """Maya Edit > Ungroup (factory Ungroup under Parent, Preserve position on): each group's
     children move under the group's parent (``world``: to the world; the world when it has none) keeping their world
-    transform, then the group goes. Preserve position off (``ungroup -relative``) folds the group's local transform
-    into each child's local values instead (mayapy: grp t 0 5 0, child t 1 2 3 -> child t 1 7 3,
+    transform, then the group goes. Preserve position off (``cmds.ungroup(relative=True)``) folds the group's local
+    transform into each child's local values instead (mayapy: grp t 0 5 0, child t 1 2 3 -> child t 1 7 3,
     research/maya/re/option_boxes_140_edit.md §6). A selected object that has data of its own (a mesh with
     children) only loses its children (delegated, docs/steps/step_34.md). Returns the moved children."""
     moved = []

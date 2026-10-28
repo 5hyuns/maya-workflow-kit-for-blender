@@ -21,7 +21,7 @@ _OBJECTS = F("objects", "Objects:", "enum", "Selected", items=("Selected", "All"
 
 
 def _scope_fields(objects=True):
-    """keySetOptionBoxCommon: the rows every key command window starts with (option_boxes_140.md:77-88)."""
+    """The rows every Maya key command window starts with (option_boxes_140.md:77-88)."""
     return ([_OBJECTS] if objects else []) + [
         F("hierarchy", "Hierarchy:", "enum", "Selected", items=("Selected", "Below")),
         F("channels", "Channels:", "enum", "All keyable", items=("All keyable", "From Channel Box")),

@@ -6,7 +6,7 @@ A leaf's identity = its label (without the "#n" of repeated labels) + the Maya c
 - main menus: the runTimeCommand / command of research/maya/menus.json (tools/gen_menu_data.command_paths);
 - editor menu bars: the item's annotation in the Maya GUI capture (research/maya/screens/editors104 / 105) — Maya's
   menu items show their runTimeCommand's annotation, so equal annotations mean the same command;
-- marking menus: the command of the item with that label in research/maya/marking_menus.json (the proc's items).
+- marking menus: the command of the item with that label in research/maya/marking_menus.json (that menu's items).
 A main-menu command is turned into its annotation through research/maya/runtime_commands.json, so a main item and
 an editor item compare on the same text. Leaves without a known command are skipped (no claim).
 
@@ -155,9 +155,11 @@ def editor_annotations():
 
 
 def marking_commands():
-    """{(proc, label): command} of the Maya marking menu items (first item with that label per proc)."""
+    """{(kit menu id, label): command} of the Maya marking menu items (first item with that label per menu)."""
+    kit_id = {key: kid for kid, key in _json(RESEARCH / "marking_menu_ids.json").items() if kid not in SHARED_MENU}
     out = {}
-    for proc, m in _json(RESEARCH / "marking_menus.json")["menus"].items():
+    for key, m in _json(RESEARCH / "marking_menus.json")["menus"].items():
+        proc = kit_id.get(key, key)
         for it in m.get("items", ()):
             label, cmd = it.get("label"), it.get("command")
             if label and cmd and (proc, label) not in out:
@@ -222,7 +224,7 @@ def menu_leaves(paths_working):
 
 
 def marking_leaves(entries):
-    """``entries`` = [(proc, label path, working)] -> [(proc/label path, signature, working)]."""
+    """``entries`` = [(menu, label path, working)] -> [(menu/label path, signature, working)]."""
     notes = annotations()
     cmds = marking_commands()
     out = []
@@ -246,11 +248,11 @@ def panel_leaves(pmd):
     return out
 
 
-RESEARCH_PROC = {"buildObjectMenuItemsNow_pivot": "buildObjectMenuItemsNow", "dagMenuProc_curve": "dagMenuProc"}
+SHARED_MENU = {"PIVOT_EDIT": "RMB_EMPTY", "RMB_CURVE": "RMB_MESH"}
 
 
 def marking_entries(mk, menu_map_keys):
-    """[(Maya proc, label path, working)] of every marking menu leaf (``mk`` = marking/menus; working = drawn
+    """[(kit menu id, label path, working)] of every marking menu leaf (``mk`` = marking/menus; working = drawn
     enabled: an action, and a main-menu ``("item", path)`` only when that path is mapped)."""
     out = []
     for name, menu in mk.MENUS.items():
@@ -260,7 +262,7 @@ def marking_entries(mk, menu_map_keys):
             ok = not mk.is_greyed(action)
             if ok and isinstance(action, tuple) and len(action) == 2 and action[0] == "item":
                 ok = action[1] in menu_map_keys
-            out.append((RESEARCH_PROC.get(name, name), path.lstrip("/"), ok))
+            out.append((SHARED_MENU.get(name, name), path.lstrip("/"), ok))
     return out
 
 

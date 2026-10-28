@@ -63,7 +63,7 @@ def _rotate(s):
 
 
 def _cmp(a, b):
-    """sortBySize with the twoSidedLayout comparator: taller first, heights within 1e-6 keep the shell order."""
+    """Shell order (measured): taller first, heights within 1e-6 keep the shell order."""
     ha, hb = a.height, b.height
     if F(hb - SORT_EPS) > ha:
         return 1
@@ -306,7 +306,7 @@ class _Border:
         del self.edges[size:]
 
     def drop(self, lo, hi):
-        """Remove positions lo .. hi-1 (Maya's removeAt), keeping the order of the rest."""
+        """Remove positions lo .. hi-1 (as Maya does), keeping the order of the rest."""
         tail = self.edges[hi:]
         self.truncate(lo)
         for a, b in tail:
@@ -441,7 +441,7 @@ def assign_planes(points, faces, optimize=True):
         shells.append((plane, group))
 
     # Seeds: faces grouped by candidate count, then by mask (a mask mirrored to an earlier key joins that key),
-    # each group in face order (MaintainSymmetry on).
+    # each group in face order (symmetry kept).
     groups = {}
     for fi in range(n):
         m = mask[fi]

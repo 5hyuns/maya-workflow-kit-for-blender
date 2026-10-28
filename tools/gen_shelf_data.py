@@ -4,7 +4,7 @@
 
 Keeps the Maya 2026 factory shelf tabs in their default order with each button's label
 and runTimeCommand name only — no MEL (docs/user_decisions.md #6): a command that
-is not a bare identifier (a MEL expression with arguments) is stored as None and
+is not a bare identifier (a command with arguments) is stored as None and
 mapped by label in ui/shelf_map.py. Plan: docs/steps/step_12.md 「계획」 2, step 269.
 """
 

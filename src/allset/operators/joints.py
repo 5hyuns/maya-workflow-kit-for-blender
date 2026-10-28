@@ -141,8 +141,8 @@ def view_under(window, x, y):
 
 
 # Maya Joint Tool settings the kit honours (research/maya/re/option_boxes_140.md:196-206): Secondary Axis Y with
-# Secondary Axis World Orientation +Y (jointCtx secondaryAxisOrient "yup"), Create IK handle off. Blender bones point
-# their Y at the child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
+# Secondary Axis World Orientation +Y (Joint Tool factory), Create IK handle off. Blender bones point their Y at the
+# child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
 SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "Y", "The bone's Z axis"),
                   ("Z", "Z", "The bone's X axis"), ("NONE", "None", "Leave the bone roll as placed"))
 # Maya world axis (Y-up) -> Blender world vector (Z-up: X -> X, Y -> Z, Z -> -Y)
@@ -251,10 +251,11 @@ def free_location_constrained(context, arm):
 
 
 def orient_new(ob, names, secondary="Y", world="Y", sign="+", aos=True, to_world=False):
-    """Orient the new joints the way Maya's Joint Tool does on finish (jointCtx factory: -ajo xyz -sao yup -aos on,
-    research/maya/re/joint_rig_2026_joint_tool.md §3): primary X, ``secondary`` Y / Z toward the Maya world axis
-    ``world`` / ``sign`` (bend normal with ``aos``), "NONE" = Maya's traditional orient (no -sao), ``to_world`` = Orient
-    Joint to World. Also writes Maya's variable bone radius (§4). Returns the number of joints oriented."""
+    """Orient the new joints the way Maya's Joint Tool does on finish (Joint Tool factory: orientation xyz, secondary
+    axis yup, auto orient secondary on, research/maya/re/joint_rig_2026_joint_tool.md §3): primary X, ``secondary`` Y /
+    Z toward the Maya world axis ``world`` / ``sign`` (bend normal with ``aos``), "NONE" = Maya's traditional orient (no
+    secondary axis), ``to_world`` = Orient Joint to World. Also writes Maya's variable bone radius (§4). Returns the number of
+    joints oriented."""
     if secondary == "X":
         raise RuntimeError("Secondary axis must differ from the primary axis (X)")
     oj = "none" if to_world else ("xzy" if secondary == "Z" else "xyz")
@@ -441,7 +442,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
                                   items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
     secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
-    # Maya 2025+ jointCtx factory -aos on (joint_rig_2026_joint_tool.md §1); Orient Joint to World = -ajo none
+    # Maya 2025+ Joint Tool factory: auto orient secondary on (joint_rig_2026_joint_tool.md §1); Orient Joint to World =
+    # no orientation
     auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True)
     orient_world: BoolProperty(name="Orient Joint to World", default=False)
     create_ik: BoolProperty(name="Create IK handle", default=False)
@@ -665,10 +667,10 @@ _AXES = [(a, a, "") for a in ("X", "Y", "Z")]
 
 
 def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
-    """Maya Skeleton > Orient Joint (``joint -e -oj <oj> -sao <sao> [-aos] -ch -zso``; factory xyz / yup / aos on /
-    children on, joint_rig_2026_skeleton_menu.md §1): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no secondary world
-    axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints are skipped
-    (``skipped``). Returns the number oriented."""
+    """Maya Skeleton > Orient Joint (``cmds.joint(edit=True, oj=oj, sao=sao, aos=..., ch=True, zso=True)``; factory xyz
+    / yup / aos on / children on, joint_rig_2026_skeleton_menu.md §1): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no
+    secondary world axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints
+    are skipped (``skipped``). Returns the number oriented."""
     if oj != "none" and sao not in SAO_ROLL and sao != "NONE":
         return 0
     maya_sao = None if sao == "NONE" else sao[0].lower() + ("up" if sao[1] == "+" else "down")

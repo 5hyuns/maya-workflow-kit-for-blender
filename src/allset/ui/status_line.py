@@ -413,7 +413,7 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
 
 # --- drawing --------------------------------------------------------------------
 
-# Maya Status Line groups each start with an "openBar" collapse handle that hides the group
+# Maya Status Line groups each start with a collapse handle that hides the group
 # (research/maya/ui_layout.md:194-195). Kept for the
 # session only (Maya keeps them in optionVars; delegated).
 GROUPS = (

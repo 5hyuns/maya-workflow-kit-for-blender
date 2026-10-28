@@ -9,7 +9,8 @@ constraint with offset, applied first]; the matrix part has w >= 0, the Euler pa
 - Shortest (2) / Longest (3): acc = q_0, acc = slerp(acc, q_i, w_i / W_total) the short / long way;
 - No Flip (0): Shortest and Longest are both built, the one turning (1, 1, 1) closer to where the previous output
   turned it wins (tie: Longest); the previous output starts as the output when the constraint was made;
-- Cache (4): uses interpCache, which only ``orientConstraint -createCache`` writes (the kit has no cache: 0 = No Flip);
+- Cache (4): uses interpCache, which only ``cmds.orientConstraint(createCache=...)`` writes (the kit has no cache: 0 =
+  No Flip);
 - fewer than 2 targets with No Flip / Cache = Average; total weight <= 1e-10 = restRotate (the output at creation).
 Worst 2e-6 deg against 22 measured rows for every type.
 

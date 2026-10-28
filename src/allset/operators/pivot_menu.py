@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya pivot-edit RMB marking menu actions (docs/steps/step_94.md 「계획」 1).
 
-RMB held while editing a pivot (D / Insert) shows buildObjectMenuItemsNow's $editMode menu
-(research/maya/marking_menus.json menus.buildObjectMenuItemsNow; research/maya/interaction.md:81, :127-130):
+RMB held while editing a pivot (D / Insert) shows RMB_EMPTY's pivot-edit menu
+(research/maya/marking_menus.json menus.RMB_EMPTY; research/maya/interaction.md:81, :127-130):
 Pin Component Pivot / Snap Pivot Position / Snap Pivot Orientation are Move tool options (check boxes, Maya defaults
 off / on / on, research/maya/workflows/pivot_snap.md P13), Reset Pivot (Position / Orientation) and Exit are commands.
 Object pivot edit = ``tool_settings.use_transform_data_origin`` (operators/pivot.py), component pivot edit =

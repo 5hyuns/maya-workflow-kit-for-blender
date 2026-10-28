@@ -23,7 +23,7 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 option_windows = import_module(kit.MODULE + ".operators.option_windows")
 
 TOL = 1e-3   # Blender stores a custom normal as two 16-bit angles in the corner's normal space: up to ~3e-4 off (measured)
-SET = "performPolySetNormal 0"
+SET = "Set Vertex Normal"
 
 
 def _fresh():
@@ -81,22 +81,18 @@ def _select(ob, sel):
 
 def _run(cmd):
     ops = bpy.ops.allset
-    if cmd == "select -cl":
+    if cmd == "Select None":
         return
-    m = re.match(r"optionVar -fv polySetNormalX (\S+) -fv polySetNormalY (\S+) -fv polySetNormalZ (\S+);", cmd)
+    m = re.match(r"Set Vertex Normal (\S+) (\S+) (\S+)$", cmd)
     if m:
         assert ops.set_vertex_normal(x=float(m.group(1)), y=float(m.group(2)), z=float(m.group(3))) == {'FINISHED'}
         return
-    if "polyAverageNormalTol 0.0" in cmd:
-        assert ops.average_normals(distance=0.0) == {'FINISHED'}
-        return
-    if "polySetToFaceNormalUserNormal 1" in cmd:
-        assert ops.set_to_face_normal(user_normal=True) == {'FINISHED'}
-        return
-    run = {SET: lambda: ops.set_vertex_normal(), "performPolyAverageNormal 0": lambda: ops.average_normals(),
-           "performPolySetToFaceNormal 0": lambda: ops.set_to_face_normal(),
-           "expandPolyGroupSelection; polyNormalPerVertex -fn true": lambda: ops.lock_normals(),
-           "expandPolyGroupSelection; polyNormalPerVertex -ufn true": lambda: ops.lock_normals(unlock=True)}[cmd]
+    run = {SET: lambda: ops.set_vertex_normal(), "Average Normals": lambda: ops.average_normals(),
+           "Average Normals distance 0": lambda: ops.average_normals(distance=0.0),
+           "Set to Face": lambda: ops.set_to_face_normal(),
+           "Set to Face user normal": lambda: ops.set_to_face_normal(user_normal=True),
+           "Lock Normals": lambda: ops.lock_normals(),
+           "Unlock Normals": lambda: ops.lock_normals(unlock=True)}[cmd]
     assert run() == {'FINISHED'}, cmd
 
 

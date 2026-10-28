@@ -65,15 +65,15 @@ def test_list_goes_above_or_beside_the_ring():
 
 
 def test_other_menus_near_edges():
-    for name in ("buildObjectMenuItemsNow", "contextPolyToolsObjectMM", "translateMarkingMenuImpl",
-                 "polyConvertMM", "contextPolyToolsFaceMM"):
+    for name in ("RMB_EMPTY", "SHIFT_OBJECT", "OPT_MOVE",
+                 "CTRL_CONVERT", "SHIFT_FACE"):
         for origin in ((500.0, 20.0), (980.0, 580.0), (10.0, 10.0)):
             _check(mm.MENUS[name], origin)
 
 
 def test_radial_submenu_in_place_stays_inside():
     # Ctrl+RMB "To Vertices" (W) opens a radial submenu at the pointer (step 9).
-    s = engine.Session(mm.MENUS["polyConvertMM"], (150.0, 40.0), 0.0, measure, None, None, B)
+    s = engine.Session(mm.MENUS["CTRL_CONVERT"], (150.0, 40.0), 0.0, measure, None, None, B)
     w = s.layout.radial["W"]
     p = s.params
     cx, cy = s.center          # = the press point (step 193)

@@ -829,7 +829,7 @@ TAP_TIME = 0.4  # Maya 2022 hotbox tap time
 
 
 def is_tap(press_t, release_t, clicked):
-    """Space released quickly without picking anything = pane toggle (panePopAt)."""
+    """Space released quickly without picking anything = pane toggle (Maya's Space tap)."""
     return not clicked and release_t - press_t < TAP_TIME
 
 

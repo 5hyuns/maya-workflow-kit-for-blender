@@ -206,7 +206,7 @@ class SoftSelectBinding(TapHoldBinding):
 
 
 class SelectAllBinding(TapHoldBinding):
-    """A: tap = frame all; hold + LMB = the Maya marking menu buildSelectAllMM
+    """A: tap = frame all; hold + LMB = the Maya marking menu SELECT_ALL
     (delete history, freeze; research/maya/interaction.md:194, docs/steps/step_10.md)."""
     name = "select_all"
     label = "Frame All / History Menu"
@@ -222,7 +222,7 @@ class SelectAllBinding(TapHoldBinding):
     def click(self, context, event):
         # Opened on the LMB press like Q/W/E/R: dragging and releasing LMB picks.
         from ..marking import modal
-        modal.open_menu("buildSelectAllMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
+        modal.open_menu("SELECT_ALL", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
 class SpaceBinding(TapHoldBinding):

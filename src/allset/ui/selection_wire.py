@@ -24,8 +24,9 @@ The kit draws the edges itself (POST_VIEW), docs/steps/step_47.md 「실측」:
   drops the batches of objects whose evaluated shape can depend on time (``time_dependent``: modifiers, shape keys,
   animated data); static meshes keep their batch.
 - Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya's lattice selected colour is
-  displayColor lattice -active 16 = white, lead 19 (research/maya/screens/_maya_ui_dump.json displayColor_index), the
-  same as meshes. Edges = the lattice grid along U / V / W through the evaluated points (``co_deform``).
+  display colour index 16 = white for an active lattice, lead 19 (research/maya/screens/_maya_ui_dump.json
+  displayColor_index), the same as meshes. Edges = the lattice grid along U / V / W through the evaluated points
+  (``co_deform``).
 - Step 161 (G4): Maya highlights the whole hierarchy under a selected object: every descendant shape is drawn in the
   colour of its nearest selected ancestor (research/maya/screens/parent/parent_03_parents_selected.png: group1
   (selected) -> pCube1 white, pCube2 (lead) -> pCube3 green). Without it a child in front of its selected parent hid

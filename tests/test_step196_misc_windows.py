@@ -2,8 +2,8 @@
 Reverse Direction / Smooth (both) / Straighten, the circular arc tools, Merge UVs, Contour Stretch, Set / Assume
 Preferred Angle and Add Influence (operators/option_windows_misc196.py).
 
-Ground truth: research/maya/re/options_196_misc.json (window titles / buttons / factory values read from Maya 2022's
-option-window MEL, mayapy option effects) and research/maya/re/curves_156.json (curve cases)."""
+Ground truth: research/maya/re/options_196_misc.json (window titles / buttons / factory values of Maya's
+option windows, option effects measured with mayapy) and research/maya/re/curves_156.json (curve cases)."""
 
 import json
 import math
@@ -127,10 +127,13 @@ def test_factory_values_agree_with_mayapy_option_vars():
         == "Hierarchy"
     assert d["add_influence"]["lock_weights"] == bool(v["lockWeights"])
     assert d["add_influence"]["default_weight"] == v["defaultWeight"]
+    # What the menu items run when picked (mayapy): the trailing numbers are the factory option values.
     drag = maya()["mayapy"]["drag"]
-    assert drag["performSetPrefAngle 2"] == "joint -e -spa -ch"
-    assert drag["performStraighten 2"] == "modifySelectedCurves straighten 1 1"
-    assert drag["performSmoothHairCurves 2"] == "modifySelectedCurves smooth 4 0"
+    straighten = [c for k, c in drag.items() if "Straighten" in k][0].split()[-2:]
+    smooth = [c for k, c in drag.items() if "SmoothHair" in k][0].split()[-2:]
+    assert [float(x) for x in straighten] == [d["straighten_curves"]["straightness"],
+                                               float(d["straighten_curves"]["preserve_length"])], straighten
+    assert float(smooth[0]) == d["smooth_curves"]["factor"], smooth
 
 
 # --- character sets ------------------------------------------------------------------------------------

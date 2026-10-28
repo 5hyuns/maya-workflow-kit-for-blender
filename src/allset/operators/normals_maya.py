@@ -11,7 +11,7 @@ custom normals with ``Mesh.normals_split_custom_set`` (an unlocked corner gets t
 normal equals the computed one from an unlocked one [delegated: such a lock is lost; it looks the same].
 
 Which corners: Object Mode = every corner of the selected meshes; Edit Mode = the corners of the selected vertices
-(Maya's expandPolyGroupSelection of a vertex selection); Set to Face = the selected faces' corners.
+(Maya's conversion of a vertex selection); Set to Face = the selected faces' corners.
 """
 
 import bmesh

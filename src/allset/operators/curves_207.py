@@ -2,12 +2,13 @@
 """Maya 2022 Curves menu, step 207 (research/maya/re/curves_201.md, mayapy ground truth curves_201.json; maths in
 ``curves_math`` / ``surfaces_math``, bpy-free).
 
-- Bend / Curl / Scale Curvature = Maya's modifySelectedCurves on the CVs in object space (Maya Y-up: Blender local
+- Bend / Curl / Scale Curvature = Maya's Curves menu commands on the CVs in object space (Maya Y-up: Blender local
   (x, y, z) is Maya (x, z, -y), the frame's twist axis comes from Maya's world up). Object selected = every CV; in edit
   mode the selected CV range of a spline = Maya's ``cv[a:b]`` (the CVs after b follow).
 - Lock / Unlock Length = Maya's ``lockLength`` attribute (curve data ID property); while it is on, CV edits keep every
   CV leg length (``curves_math.keep_leg_lengths``, a depsgraph handler; Maya's CV manipulator rule is [U], delegated).
-- CV Hardness = hardenPointCurve -m -1 on the last selected CV (knots; shape exact through write_spline).
+- CV Hardness = ``cmds.hardenPointCurve(multiplicity=-1)`` on the last selected CV (knots; shape exact through
+  write_spline).
 - Fit B-spline = fitBspline on degree-1 curves: a new ``fitBsplineCurveN``.
 - Align = alignCurve (position + tangent): the first selected curve moves onto the closest end of the other.
 - Duplicate Surface Curves = duplicateCurve: the surface's visible isoparms (surface selected) or the isoparms through

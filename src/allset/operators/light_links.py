@@ -2,13 +2,12 @@
 """Maya light / shadow linking on Blender light linking (docs/steps/step_179.md).
 
 Maya 2022 (mayapy, research/maya/re/light_links_179.md / .json): every light illuminates and every object casts
-shadows from every light by default; Lighting/Shading > Make / Break Light Links = ``lightlink -make / -break
--useActiveLights -useActiveObjects`` for every selected light x selected object, and breaking a group breaks its whole
-hierarchy; a new object is linked to every default light; a light whose Illuminates by Default is off (not in
-defaultLightSet) lights only the objects made links with. Make / Break Shadow Links = the same with ``-shadow``.
-Select Objects Illuminated by Light / Shadowed by Light take the *first* selected node, and select the transforms of
-the linked objects (no groups, no shapes, no sets), or nothing when that node is not a light; Select Lights
-Illuminating / Shadowing Object do the reverse.
+shadows from every light by default; Lighting/Shading > Make / Break Light Links link / unlink every
+selected light x selected object, and breaking a group breaks its whole hierarchy; a new object is linked to every
+default light; a light whose Illuminates by Default is off (not in defaultLightSet) lights only the objects made links
+with. Make / Break Shadow Links = the same for shadows. Select Objects Illuminated by Light / Shadowed by Light take the
+*first* selected node, and select the transforms of the linked objects (no groups, no shapes, no sets), or nothing when
+that node is not a light; Select Lights Illuminating / Shadowing Object do the reverse.
 
 Blender 4.5 (Cycles probe, step_179.md): ``Object.light_linking.receiver_collection`` / ``blocker_collection`` of a
 light; objects in it with link state EXCLUDE are not lit / cast no shadow while everything else is (an empty
@@ -71,7 +70,8 @@ def _set_entry(coll, ob, state):
 
 
 def linked(light, ob, kind="LIGHT"):
-    """Maya ``lightlink -q``: does ``light`` illuminate (kind LIGHT) / get shadows from (SHADOW) ``ob``."""
+    """Maya ``cmds.lightlink(query=True)``: does ``light`` illuminate (kind LIGHT) / get shadows from (SHADOW)
+    ``ob``."""
     ent = _entries(_collection(light, kind))
     includes = [o for o, s in ent.items() if s == 'INCLUDE']
     if includes:
@@ -127,7 +127,7 @@ def split_selection(objects):
 
 
 def link_selection(objects, kind, on):
-    """``lightlink -make / -break [-shadow] -useActiveLights -useActiveObjects``: (lights, objects) changed."""
+    """Maya Make / Break Light Links (shadow links too): (lights, objects) changed."""
     lights, others = split_selection(objects)
     targets = hierarchy(others)
     for light in lights:
@@ -137,7 +137,7 @@ def link_selection(objects, kind, on):
 
 
 def objects_of(light, kind, scene):
-    """Maya selectObjectsIlluminatedBy / ShadowedBy: transforms of linked renderable objects (no groups)."""
+    """Maya Select Objects Illuminated / Shadowed by Light: transforms of linked renderable objects (no groups)."""
     return [o for o in scene.objects if o.type in RENDERABLE and linked(light, o, kind)]
 
 

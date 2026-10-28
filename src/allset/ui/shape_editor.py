@@ -121,7 +121,7 @@ def _object_mode(ob):
 
 
 def edit_off(context):
-    """``sculptTarget -e -target -1``: the target in Edit goes back to the Basis (SE6)."""
+    """Maya ``cmds.sculptTarget(edit=True, target=-1)``: the target in Edit goes back to the Basis (SE6)."""
     wm = context.window_manager
     name = wm.allset_se_edit.partition("/")[0]
     key = bpy.data.shape_keys.get(name) if name else None
@@ -387,7 +387,7 @@ class ALLSET_OT_shape_add_selection(bpy.types.Operator):
             for o in good:
                 kb = ob.shape_key_add(name=unique_target_name(key, o.name), from_mix=False)
                 _write(kb.data, _coords(o.data.vertices))
-                # doBlendShapeAddSelectionAsTarget <bs> <top> <type> "" 0 1: no Edit, weight reset to 0
+                # Maya Add Target from the selection: no Edit, weight reset to 0
                 kb.value = 0.0
         if bad:
             self.report({'WARNING'}, f"Skipped (different vertex count): {', '.join(o.name for o in bad)}")

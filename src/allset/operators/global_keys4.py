@@ -2,16 +2,16 @@
 """Global key batch 4 (docs/steps/step_90.md 「계획」 1): Ctrl+X cut / Ctrl+V paste, Alt+\\ playback range = animation range,
 Alt+1 / 2 / 4 show toggles, Ctrl+` / Shift+~ / Ctrl+Shift+~ smooth proxy. Alt+X walk is Blender's view3d.walk.
 
-Maya behaviour (scripts of the installed Maya 2022, behaviour only):
-- PasteSelected = cutCopyPaste "paste" -> pasteScene: import the clipboard file with every node renamed
+Maya 2022 behaviour:
+- PasteSelected = Edit > Paste: import the clipboard file with every node renamed
   ``pasted__<name>``, grouped under a new ``group`` (research/maya/re/naming_211.md).
-- CutSelected = cutCopyPaste "cut": export the selection (with its hierarchy) to the clipboard file, then delete it
+- CutSelected = Edit > Cut: export the selection (with its hierarchy) to the clipboard file, then delete it
   (research/maya/hotkeys_and_menus.md:132).
 - PlaybackRangeAnimStartEnd: playback min / max = animation start / end (Maya runtime command).
-- toggleNurbsCurvesOption / togglePolygonsOption / toggleImagePlaneOption flip that type in the focused model panel
-  (viewport Show menu; hotkeys_and_menus.md:113).
-- smoothingDisplayToggle 1 swaps the proxy (cage) and smooth mesh visibility (both shown -> cage only), 0 shows both;
-  performSmoothProxy = Mesh > Smooth Proxy > Subdiv Proxy (hotkeys_and_menus.md:121).
+- Alt+1 / 2 / 4 flip NURBS Curves / Polygons / Image Planes in the focused panel's Show menu
+  (hotkeys_and_menus.md:113).
+- Ctrl+` swaps the proxy (cage) and smooth mesh visibility (both shown -> cage only), Shift+~ shows both;
+  Ctrl+Shift+~ = Mesh > Smooth Proxy > Subdiv Proxy (hotkeys_and_menus.md:121).
 """
 
 import re
@@ -83,7 +83,7 @@ def _unsuffixed(name):
 
 
 def pasted_name(orig, taken):
-    """Maya pasteScene imports with ``-renameAll -renamingPrefix "pasted_"``: every node becomes ``pasted__<name>``
+    """Maya Edit > Paste imports with every node renamed by the prefix "pasted_": every node becomes ``pasted__<name>``
     (research/maya/re/naming_211.md P1). Maya keeps a clashing short name under another group; Blender names are
     unique, so a taken one counts up like a new node (``pasted__pCube2``, delegated)."""
     name = PASTE_PREFIX + orig
@@ -94,7 +94,7 @@ def pasted_name(orig, taken):
 
 
 def paste_group_name(taken):
-    """``-groupReference`` puts the pasted nodes under ``group``, then ``group1``, ``group2`` (naming_211.md P2)."""
+    """Maya's paste puts the pasted nodes under ``group``, then ``group1``, ``group2`` (naming_211.md P2)."""
     if "group" not in taken:
         return "group"
     return f"group{naming.next_number('group', taken)}"

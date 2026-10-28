@@ -287,7 +287,7 @@ def g_gamma(cv):
 
 
 def g_color_mgmt(cv):
-    """Maya rvViewingPipelineOff: a grey disc with OFF (the kit shows ON while colour management is on)."""
+    """Maya's colour management OFF button: a grey disc with OFF (the kit shows ON while colour management is on)."""
     cv.circle(0.5, 0.5, 0.46, GREY)
     for i, ch in enumerate("OFF"):
         letter(cv, ch, 0.18 + i * 0.23, 0.36, 0.28, 0.07, DARK)

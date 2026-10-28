@@ -1,5 +1,5 @@
 """Step 94 in a real UI (Maya Workflow Kit layout): with a custom pivot on pCube1, hold D, hold RMB = the pivot menu (Maya
-buildObjectMenuItemsNow edit-mode branch), drag south + release = Reset Pivot (delta_location back to 0), release D =
+RMB_EMPTY edit-mode branch), drag south + release = Reset Pivot (delta_location back to 0), release D =
 pivot edit off. Plan: docs/steps/step_94.md."""
 
 import os

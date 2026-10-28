@@ -26,7 +26,7 @@ research/blender/api_limits.md #11. Design: docs/steps/step_12.md 「계획」.
 - Step 109 (docs/steps/step_109.md 「계획」 1): every factory button keeps its Maya slot. Buttons without a
   Blender action are drawn greyed; their tooltip and a click show the notice (``button_notice``) in the
   Help Line, like greyed Maya menu items (step 101).
-- Step 162: Ctrl+Shift+click on a Maya menu item adds a button for it to the shelf shown (Maya menuItemToShelf,
+- Step 162: Ctrl+Shift+click on a Maya menu item adds a button for it to the shelf shown (as Maya does,
   research/maya/shelves.md:17), factory tabs included. A menu button is ``{"label", "icon", "script": "", "menu":
   <Maya menu path>}`` and runs that path like the menu; on a factory tab it is stored in ``shelves.json``
   ``"extra"[<shelf id>]`` and drawn after the factory slots, so every factory button keeps its Maya slot.
@@ -135,7 +135,7 @@ def menu_label(path):
 
 
 def add_menu_item(context, path, shelf_id=None):
-    """Append a button that runs Maya menu item ``path`` to the shelf shown (Maya menuItemToShelf); saved at once.
+    """Append a button that runs Maya menu item ``path`` to the shelf shown (as Maya does); saved at once.
     Returns (shelf id, tab label, button)."""
     shelf_id = shelf_id or current(context)
     buttons = editable_buttons(shelf_id, create=True)
@@ -1168,7 +1168,7 @@ def _draw_scroll_bar(region, s, base):
 def _user_texture(shelf_id, index, label, greyed, size):
     """Icon of a user-made button. A menu button (step 162) shows the menu item's kit picture (``menu_icon_data``:
     the same command's shelf drawing, else its Status Line / Tool Box / menu drawing), else Maya's command button
-    with the label's initials (Maya menuItemToShelf: the item's image, else commandButton + imageOverlayLabel)."""
+    with the label's initials (Maya: the item's image, else a default command icon with a label)."""
     rec = button_record(shelf_id, index)
     path = rec.get("menu") if rec else None
     if path:

@@ -96,7 +96,7 @@ class ALLSET_OT_new_maya_scene(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def invoke(self, context, event):
-        # Maya's saveChanges dialog before File > New Scene / Ctrl+N (step 138, #57; ui/save_prompt.py)
+        # Maya's "Save changes?" dialog before File > New Scene / Ctrl+N (step 138, #57; ui/save_prompt.py)
         from .ui import save_prompt
         return save_prompt.ask(context, new_maya_scene)
 

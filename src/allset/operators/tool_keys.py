@@ -138,7 +138,7 @@ def _watch():
 
 
 # --- one tool across object / component modes (step 174) -------------------------------------------
-# Maya's tool is one global context: W then F9 / F10 / F11 / F8 / RMB Vertex keeps moveSuperContext (and E / R / Q / T
+# Maya's tool is one global context: W then F9 / F10 / F11 / F8 / RMB Vertex keeps the Move tool (and E / R / Q / T
 # their own) in either selection mode (research/maya/re/tool_modes_174.md). Blender keeps a tool per mode and a
 # mesh's edit mode starts on Select Box, so after a mode change the new mode takes the previous mode's sacred tool.
 # Only modes that have every sacred tool (paint / sculpt modes keep their own brushes).
@@ -156,7 +156,7 @@ def carried_tool(prev_mode, new_mode, prev_tool, new_tool):
         return None
     if prev_tool == "builtin.transform":
         # T (Maya ShowManipulators = builtin.transform, keymap/mapping.py) doesn't survive a mode change: Maya goes
-        # back to selectSuperContext (tool_modes_174.md row "F9 vertex (T)")
+        # back to the Select tool (tool_modes_174.md row "F9 vertex (T)")
         prev_tool = "builtin.select_box"
     return None if prev_tool == new_tool else prev_tool
 

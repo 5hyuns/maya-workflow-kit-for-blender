@@ -3,7 +3,7 @@
 
 Maya picks the overlapping candidate of the highest type priority (``selectPrefPriorityMode
 "animation"``; ikHandle 10, joint 9, nurbsCurve 4, everything else 2 — research/maya/interaction.md:74,
-research/maya/defaults.json:105, PREF:779-847), occluded or not. Blender's ``view3d.select`` picks by
+research/maya/defaults.json:105), occluded or not. Blender's ``view3d.select`` picks by
 depth, so a control curve or a joint in front of (or behind) a mesh can lose to the mesh.
 
 ``allset.select_priority`` sits in front of viewport click selection. Individual joint hits enter
@@ -21,7 +21,7 @@ from .. import compat
 from . import control_shapes
 from .preselect import project, segment_distance
 
-# Maya factory customSelectPriority (PREF:781-847) for the kit's object kinds; anything else is 2.
+# Maya factory customSelectPriority for the kit's object kinds; anything else is 2.
 IK_HANDLE, JOINT, CURVE, DEFAULT = 10, 9, 4, 2
 RADIUS_PX = 5.0     # clickBoxSize 4 (defaults.json:95) = a box of half-width 4: half diagonal ~5.7 [I]
 BONE_WIDTH = 0.1    # octahedral bone: widest at 0.1 x length (Blender's bone shape)

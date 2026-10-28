@@ -511,7 +511,7 @@ def fillet_lines(p0, d0, p1, d1, radius):
 
 
 def straighten(cvs, straightness=1.0, preserve_length=True):
-    """Maya Straighten (modifySelectedCurves straighten, research/maya/re/options_196_misc.md): with Preserve length
+    """Maya Curves > Straighten (research/maya/re/options_196_misc.md): with Preserve length
     every CV leg keeps its length and turns towards the CV0 -> CV1 direction by ``straightness`` (1 = on that line);
     without it each CV moves by ``straightness`` towards the evenly spaced line CV0 -> last CV. Straightness 0 or fewer
     than 3 CVs (Maya: nothing to do) keep the CVs; with 1 and Preserve length 2 CVs stay as they are too."""
@@ -538,7 +538,7 @@ def straighten(cvs, straightness=1.0, preserve_length=True):
 
 
 def smooth_cvs(cvs, factor=4):
-    """Maya Curves > Smooth (Modify section; modifySelectedCurves smooth, options_196_misc.md): ``factor`` + 1 passes,
+    """Maya Curves > Smooth (Modify section; options_196_misc.md): ``factor`` + 1 passes,
     each interior CV <- 0.4 x itself + 0.3 x (its neighbours before this pass); the end CVs stay."""
     pts = [tuple(c) for c in cvs]
     if len(pts) < 3:
@@ -689,7 +689,7 @@ def cut_all(curves, last_only=False, keep_longest=False):
 # --- Curves > Bend / Curl / Scale Curvature (step 207) ------------------------------------------------------
 # Maya's Curves > Bend / Curl / Scale Curvature commands (research/maya/re/curves_201.md §1): the CVs become "deflections" — each CV leg
 # expressed in a frame carried along the curve (start frame from the first leg with the twist axis taken from Maya's
-# Y-up world, each next frame = the previous one turned onto the next leg by half the angle twice, getNewFrame). The
+# Y-up world, each next frame = the previous one turned onto the next leg by half the angle twice). The
 # commands edit deflections (or the points) and rebuild the CVs from them. Points are in Maya's Y-up object space.
 
 def _new_frame(new_dir, frame):
@@ -722,7 +722,7 @@ def _start_frame(along):
 
 
 def deflections(points):
-    """deflectionsFromCurve: [first leg] + every leg i >= 1 in the frame carried from leg i - 1."""
+    """Curve -> deflections: [first leg] + every leg i >= 1 in the frame carried from leg i - 1."""
     pts = [tuple(p) for p in points]
     if len(pts) < 3:
         return None
@@ -741,7 +741,7 @@ def deflections(points):
 
 
 def from_deflections(defl, points):
-    """curveFromDeflections: CV 0 stays, every next CV = previous + its deflection in the carried frame."""
+    """Deflections -> curve: CV 0 stays, every next CV = previous + its deflection in the carried frame."""
     pts = [tuple(p) for p in points]
     frame = _start_frame(defl[0])
     last = pts[0]
@@ -840,8 +840,7 @@ def curl_cvs(points, amount=0.3, frequency=1.0, count=None):
         if ln > 0.0000001:
             frame = _new_frame(mul(dif, 1.0 / ln), frame)
         last = sm[i]
-    # CVs after the range keep their place: the MEL tail loop adds its outer offset, which stays <<0,0,0>> (the loop
-    # declares a block-local $offset)
+    # CVs after the range keep their place (Maya leaves them where they are)
     return out
 
 

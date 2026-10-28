@@ -244,7 +244,7 @@ def patch_tap_hold_and_pivot(kd):
 
 
 # --- 8. Arrow-key pick-walk (object mode) -----------------------------------
-# research/maya/interaction.md:76 (HK:364-369). IC puts Left/Right frame
+# research/maya/interaction.md:76 (Maya default hotkeys). IC puts Left/Right frame
 # stepping into each mode keymap (IC:93-97 _template_items_animation); only
 # Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 7).
 
@@ -291,7 +291,7 @@ def patch_camera(kd):
 
 
 # --- 10. View-change undo: [ ] and Alt+Z / Alt+Y ----------------------------
-# research/maya/interaction.md:48 (HK:234-237). IC [ ] = select_hierarchy
+# research/maya/interaction.md:48 (Maya default hotkeys). IC [ ] = select_hierarchy
 # (IC:2506-2512), replaced by the arrow pick-walk in step 3. Paint modes keep
 # [ ] for brush size.
 
@@ -530,7 +530,7 @@ def patch_undo_visibility(kd):
 
 # --- 19. Mesh component keys (docs/steps/step_18.md 「계획」) -------------------------------
 # research/maya/interaction.md:75 (Ctrl+Shift+A / Alt+D), :79 (Ctrl+F9-F11 convert), :82 (> <,
-# Ctrl: along loop), :124-129 (D component pivot); HK:384-385 (Ctrl+E extrude, Ctrl+B bevel).
+# Ctrl: along loop), :124-129 (D component pivot); Maya default hotkeys Ctrl+E extrude, Ctrl+B bevel.
 
 CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 
@@ -585,7 +585,7 @@ def patch_key_stepping(kd):
 
 
 # --- 21. Shift+drag a manipulator = Smart Duplicate (docs/steps/step_22.md 「계획」) ----------------
-# research/maya/interaction.md:107 (PREF:371-374). The C transform gizmo runs gizmogroup.gizmo_tweak
+# research/maya/interaction.md:107. The C transform gizmo runs gizmogroup.gizmo_tweak
 # from these keymaps for any Shift/Ctrl (IC:3703-3721); our item goes first, duplicates the selection
 # and passes the same event on, so the gizmo moves the copies. Shift held during a transform was
 # Blender's precision (IC:3611-3612): Maya has none, so precision moves to Alt (delegated).
@@ -679,7 +679,7 @@ def patch_materials(kd):
 
 
 # --- 26. Marquee selects occluded components (docs/steps/step_30.md 「계획」 1) -----------------
-# Maya selectPrefUseDepth false (research/maya/interaction.md:68). In front of every LMB drag
+# Maya optionVar selectPrefUseDepth false (research/maya/interaction.md:68). In front of every LMB drag
 # box / lasso item of the select tools (and their fallbacks under Move/Rotate/Scale): sets the
 # view's X-ray flag for the drag, then PASS_THROUGH to view3d.select_box / select_lasso.
 SELECT_DRAG_KEYMAPS = ("3D View Tool: Select Box", "3D View Tool: Select Box (fallback)",
@@ -739,10 +739,10 @@ def patch_select_priority(kd):
 
 
 # --- 27. Maya key batch (docs/steps/step_35.md 「계획」) -------------------------------------------
-# Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator (HK:313), Y last non-sacred
-# tool (HK:316), Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw (HK:319-320), F2-F6 menu sets
-# (HK:322-327; IC's 3D View F2 right / F3 top / F4 camera / F5 orbit go, F1 and Ctrl+F1-F3 stay),
-# Return (HK:353): IC's 3D View rename popover goes (Blender modal tools confirm with their own Return).
+# Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator, Y last non-sacred
+# tool, Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw, F2-F6 menu sets
+# (IC's 3D View F2 right / F3 top / F4 camera / F5 orbit go, F1 and Ctrl+F1-F3 stay),
+# Return: IC's 3D View rename popover goes (Blender modal tools confirm with their own Return).
 
 # Editors whose own F2-F6 keys stay (they run before Screen): Image / UV zoom ratios, File Browser rename.
 MENU_SET_SHADOWS = ("Image", "File Browser")
@@ -869,7 +869,7 @@ def patch_joints(kd):
 
 # --- 34. UV workflow (docs/steps/step_66.md 「계획」 1-3) -------------------------------------------
 # research/maya/workflows/uv.md §1-2; Maya UV Editor factory keys (docs/keymap_mapping.md
-# polyTexturePlacementPanel rows), F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
+# UV Editor rows), F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
 # Ctrl+L = select_linked (IC:599), RMB = context menu (IC:614); Maya has no shell-select key there.
 UV_KM = "UV Editor"
 
@@ -891,7 +891,7 @@ def patch_uv(kd):
 
 
 # --- 36. Scene files (docs/steps/step_69.md 「계획」 1-3) --------------------------------------------------
-# HK:73-78 (Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+Alt+S / Ctrl+R). IC binds the first four in "Window"
+# Maya default hotkeys Ctrl+O / Ctrl+S / Ctrl+Shift+S / Ctrl+Alt+S / Ctrl+R. IC binds the first four in "Window"
 # (IC:194-199): replaced in place by the kit's (file dialogs start in the project's scenes folder; Ctrl+Alt+S =
 # Maya's Increment and Save rule shot_v001 -> shot_v001.0001, not Blender's shot_v002). Ctrl+R = Create Reference;
 # editor keymaps that bind Ctrl+R themselves keep it there (they run first).
@@ -908,7 +908,7 @@ def patch_scene_files(kd):
     for ic, kit, mods, key in SCENE_KEYS:
         kd.remove("Window", ic, type=key, **mods)
         _add(kd, "Window", kit, make_event(key, **mods))
-    # Ctrl+N = Maya New Scene (HK NewScene): IC's wm.read_homefile opens Blender's default file since step 130 removed
+    # Ctrl+N = Maya New Scene (Maya hotkey NewScene): IC's wm.read_homefile opens Blender's default file since step 130 removed
     # the app template copy; the kit's new_maya_scene reads the Maya layout file like File > New Scene (#44).
     kd.remove("Window", "wm.read_homefile", type="N", ctrl=True)
     _add(kd, "Window", "allset.new_maya_scene", make_event("N", ctrl=True), shadows=("Text",))  # Text: new text
@@ -918,8 +918,8 @@ def patch_scene_files(kd):
 
 
 # --- 37. Graph Editor keys, Shift+S tangent marking menu (docs/steps/step_70.md 「계획」 2-3) ----------------
-# HK:146 (Graph Editor G = FramePlaybackRange), HK:151 (D = TangentAuto), HK:418 (Shift+S hold =
-# KeyframeTangentMarkingMenu). G / D go in "Graph Editor" (it runs before Screen's G = repeat_last);
+# Maya default hotkeys: Graph Editor G = FramePlaybackRange, D = TangentAuto, Shift+S hold =
+# KeyframeTangentMarkingMenu. G / D go in "Graph Editor" (it runs before Screen's G = repeat_last);
 # Shift+S replaces IC's keyframe_insert menu in Object Mode / Pose (IC:2462, 2535) and is added to the Graph Editor
 # and Dope Sheet. Mesh / UV Shift+S (UV Sew, step 66) stay.
 
@@ -933,8 +933,8 @@ def patch_graph_keys(kd):
 
 
 # --- 38. Key batch 2 (docs/steps/step_78.md) ------------------------------------------------------------
-# Graph Editor 1/2/3 (HK:148-150), Shift+Q / Alt+Q select tool marking menus (HK:286-287), Ctrl+Alt+Left/Right
-# Spin Edge (HK:378-379), Shift+G repeat at the mouse (HK:363), Ctrl+Shift+C camera from view (HK:60).
+# Graph Editor 1/2/3, Shift+Q / Alt+Q select tool marking menus, Ctrl+Alt+Left/Right
+# Spin Edge, Shift+G repeat at the mouse, Ctrl+Shift+C camera from view (Maya default hotkeys).
 # IC has none of these events in these keymaps; same-event IC items elsewhere stay (editor keymaps run first):
 # Shift+Q in Grease Pencil modes, Shift+G select similar / grouped in Armature, Metaball, Grease Pencil.
 SELECT_MM_KEYMAPS = ("Object Mode", "Mesh")
@@ -1197,7 +1197,7 @@ def patch_key_batch_3(kd):
     # Alt+R: IC clear scale -> Maya reflection (symmetry) toggle
     kd.remove("Object Mode", "object.scale_clear", type="R", alt=True)
     kd.remove("Pose", "pose.scale_clear", type="R", alt=True)
-    # (weight paint has its own Alt+R = Maya artisanToggleReflection, step 218)
+    # (weight paint has its own Alt+R = Maya's paint Reflection toggle, step 218)
     _add(kd, "3D View", "allset.symmetry", make_event("R", alt=True), {"mode": "TOGGLE"},
          shadows=(*VIEW3_SHADOWS, "Weight Paint"))
     # Ctrl+I: IC invert in the 3D modes (Maya Ctrl+I = next intermediate object; Ctrl+Shift+I still inverts)

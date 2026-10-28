@@ -608,7 +608,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
     bind_method: EnumProperty(name="Bind method", items=BIND_METHODS, default="CLOSEST_DISTANCE")
     skinning: EnumProperty(name="Skinning method", items=SKINNING, default="CLASSIC_LINEAR")
     max_influences: IntProperty(name="Max Influences", default=5, min=1, max=30)
-    # Maya 2026 factory (maya.internal.nodes.skincluster.cmd_create: obeyMaxInfl 1, dropoff 4.0, slider 0.1-10)
+    # Maya 2026 Bind Skin Options factory (Maintain max influences on, dropoff 4.0, slider 0.1-10)
     maintain_max: BoolProperty(name="Maintain max influences", default=True)
     dropoff: FloatProperty(name="Dropoff rate", default=DROPOFF, min=0.1, max=100.0, soft_max=10.0, precision=1)
     normalize: EnumProperty(name="Normalize weights", items=NORMALIZE, default="INTERACTIVE")
@@ -1105,7 +1105,7 @@ def _reflect(v, axis):
     return v
 
 
-# Maya Mirror Skin Weights Options (performMirrorSkinWeights): Influence Association 1 = Closest joint / One to one /
+# Maya Mirror Skin Weights Options: Influence Association 1 = Closest joint / One to one /
 # Label (factory Closest joint), 2 = None / the same (factory None). One to one pairs a joint with itself inside one
 # skeleton, so the kit offers Closest joint and Label (research/maya/re/joint_labels_159.md §7).
 MIRROR_INFLUENCE = (("CLOSEST_JOINT", "Closest joint", "The joint nearest the mirrored place of the joint"),
@@ -1241,7 +1241,7 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
     positive_to_negative: BoolProperty(name="Direction: Positive to Negative", default=True)
     influence1: EnumProperty(name="Influence Association 1", items=MIRROR_INFLUENCE, default="CLOSEST_JOINT")
     influence2: EnumProperty(name="Influence Association 2", items=MIRROR_INFLUENCE_2, default="NONE")
-    # Maya optionVar mirrorSkinNormalize, factory 0 (performMirrorSkinWeights; skin_basics_247.md)
+    # Maya optionVar mirrorSkinNormalize, factory 0 (Mirror Skin Weights Options; skin_basics_247.md)
     normalize: BoolProperty(name="Normalize", default=False)
 
     @classmethod

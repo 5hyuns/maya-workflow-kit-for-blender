@@ -50,10 +50,9 @@ def err(a, b):
 
 
 def _modify_args(key, c):
-    cmd = c["cmds"][-1]
-    if cmd.startswith("modifySelectedCurves"):
-        _m, op, a1, a2 = cmd.split()
-        return op, float(a1), float(a2)
+    words = c["cmds"][-1].split()     # the recorded command: <command> <operation> <amount> <amount>
+    if len(words) == 4 and words[1] in ("bend", "curl", "curvature", "smooth", "straighten"):
+        return words[1], float(words[2]), float(words[3])
     op = key.split("_")[0]
     return op, *{"bend": (0.2, 0.0), "curl": (0.3, 1.0), "curvature": (1.1, 0.8)}[op]
 

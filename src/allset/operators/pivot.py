@@ -3,7 +3,7 @@
 
 Measured in Maya 2022 (research/maya/workflows/pivot_snap.md):
 
-- P1/P3: moving the pivot (D hold / Insert, ``xform -piv``) changes neither translate nor
+- P1/P3: moving the pivot (D hold / Insert, ``cmds.xform(pivots=...)``) changes neither translate nor
   the vertices nor the children; snapping applies while editing.
 - P8: orienting the pivot doesn't touch the channels either: the Move tool's axis mode
   becomes Custom; Modify > Bake Pivot puts that orientation into rotate (geometry stays).

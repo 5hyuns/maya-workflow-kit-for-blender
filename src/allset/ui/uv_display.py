@@ -8,14 +8,14 @@ View menu research/maya/screens/editors104/menu_uv_editor_w1_b0_View.png):
   ``uv_face_opacity`` 1). ``uv_face_opacity`` 0 alone still draws grey face fills (GUI shot, step 155): no wireframe.
 - 6 UVEditor_ToggleUVTextureImage -> ``SpaceImageEditor.image`` = None / back (Blender has no "hide the image"
   flag; the image is remembered per editor, else the active material's image texture is shown).
-- 8 UVEditor_ToggleUVShellBorder = ``polyOptions -displayShellBorder`` (hotkeys_default.json:8194): shell
+- 8 UVEditor_ToggleUVShellBorder = Maya's shell border display toggle (hotkeys_default.json:8194): shell
   borders drawn in colour, width optionVar displayPolyBorderEdgeSize[1] = 3 px (research/maya/screens/
   options140/_options140.json:627). Colour not measured [U].
 - 9 UVEditor_ToggleTextureBorder = ``ToggleTextureBorderDisplay`` (hotkeys_default.json:8217): Maya's "texture
   borders" are the UV shell border edges drawn thick (Select > Texture Borders selects the same edges; step 79
   cut_sew.py calls them that too), on in the Maya factory View menu (checked in the capture). Drawn 3 px in the
   theme's UV wire colour, i.e. the same edge, thicker.
-- Ctrl+1 UVEditor_ToggleUVIsolateViewSelected (textureEditorToggleIsolateSelect) -> ``allset.uv_isolate``.
+- Ctrl+1 UVEditor_ToggleUVIsolateViewSelected -> ``allset.uv_isolate``.
 
 Shell borders follow the step-66 island rule (operators/uv_tools.islands: faces join where their UVs match at both
 ends of an edge): an edge is a border on a face's side when no other shown face shares the same UVs across it.
@@ -239,15 +239,15 @@ class ALLSET_OT_uv_display(bpy.types.Operator):
 # Selected (mode 1) adds the faces the selection touches (polyListComponentConversion -tf: vertices -> their faces,
 # edges -> the faces beside them, UVs -> the faces using them), Remove Selected (2) takes them out, Remove All (0)
 # empties it for the hilited meshes; the UV Editor shows only the set's faces while the isolate view is on
-# (textureWindowShaderFacesMode 1). Ctrl+1 = Remove All + Add Selected + view on
+# (Maya's shader faces mode). Ctrl+1 = Remove All + Add Selected + view on
 # (Maya 2026). Measured: research/maya/re/uv_select_178.md (Isolate). Kit: the set is
 # ``_iso_sets`` (face indices per object); while the view is on, faces outside it are hidden (UV Sync Selection on:
 # Blender's hide, the 3D View too) or deselected (sync off: the UV Editor draws only selected faces). Filter Selection
-# > Connected / Contained Faces (txtWndRelFacesMode) uses the same state with the faces of the selection at the time
+# > Connected / Contained Faces uses the same state with the faces of the selection at the time
 # it is turned on (delegated: Maya's filter follows later selection changes).
 
 _isolated = {}       # object name -> {synced, gone (face indices the kit hid / deselected), before, count}
-_iso_sets = {}       # object name -> (face count, set of face indices): Maya's textureEditorIsolateSelectSet
+_iso_sets = {}       # object name -> (face count, set of face indices): Maya's UV Editor isolate set
 
 
 def _picked_faces(bm, uv, synced):

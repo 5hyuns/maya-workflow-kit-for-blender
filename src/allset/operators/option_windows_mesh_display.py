@@ -68,7 +68,7 @@ WINDOWS = [
         F("alpha", "Alpha value:", "float", 1.0, lo=0.0, hi=1.0),
     ], _run_apply_color, paths=("Mesh Display/Apply Color",),
         missing=("Individual channels (Red / Green / Blue / Alpha each on its own)",)),
-    # Mesh Display > Prelight (Maya) (performPrelight; values = vertexBakeSet factory attributes,
+    # Mesh Display > Prelight (Maya) (values = vertexBakeSet factory attributes,
     # research/maya/re/mesh_display_184_colors3.json)
     Window("prelight", "Prelight (Maya) Options", "Prelight", ("allset.prelight", {}), [
         F("bake_color", "", "bool", True, text="Bake shading group lighting"),

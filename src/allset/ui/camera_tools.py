@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya panel View menu commands that had no kit counterpart until step 177 (docs/steps/step_177.md):
 
-- View > Center View of Selection = Maya ``viewFit -c <camera>`` (Maya 2026 panel View menu). Measured in
+- View > Center View of Selection = Maya ``cmds.viewFit(camera)`` (Maya 2026 panel View menu). Measured in
   mayapy (research/maya/re/panel_menus_177.md): the camera keeps its rotation and its straight-line distance to the
   selection's bounding-box centre, and moves so that centre lies on its view axis (persp at (28, 21, 28), a cube at
   (5, 2, -3): rotation unchanged, centre of interest 44.82 -> 43.02 = |centre - eye|).
-- View > Camera Attribute Editor... / panel toolbar Camera Attributes = Maya ``showPanelCameraEditor``: the Attribute
+- View > Camera Attribute Editor... / panel toolbar Camera Attributes = Maya's camera Attribute Editor: the Attribute
   Editor of the camera the panel looks through. Blender's own persp / ortho views have no camera object: a popover
   shows the view's camera values (Focal Length in Maya millimetres, near / far clip) — Maya's perspShape.
 - View > Camera Tools > Tumble / Track / Dolly Tool = Maya's camera tools: tools whose LMB drag tumbles / tracks /

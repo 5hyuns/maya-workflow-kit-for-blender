@@ -55,7 +55,7 @@ def cluster_handles(scene):
 # Maya (research/maya/runtime_commands.json SelectAllWires:2444 / SelectAllNCloths:2624 / SelectAllNParticles:2637 /
 # SelectAllNRigids:2650, DeleteAllWires:2121 / DeleteAllNCloths:2676 / DeleteAllNParticles:2689 /
 # DeleteAllNRigids:2702): select the wire nodes / the nCloth, nParticle, nRigid transforms; delete the wire nodes,
-# Remove nCloth / nRigid (performRemoveNCloth: the meshes stay) and the nParticle shapes. The kit's nodes:
+# Remove nCloth / nRigid (nCloth > Remove nCloth: the meshes stay) and the nParticle shapes. The kit's nodes:
 # - wire = a kit wire Geometry Nodes modifier (operators/wire_deformer.py); it has no object, so Select picks the
 #   wire curves that drive one (delegated: the curve is what a Maya user grabs to work the wire), Delete removes the
 #   modifiers with their base wires and weights (wire_deformer.remove: the curve stays, measured in step 169);

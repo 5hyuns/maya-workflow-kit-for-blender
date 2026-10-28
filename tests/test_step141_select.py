@@ -1,4 +1,4 @@
-"""Step 141 lane SELECT (quant gap 3): Select menu / Ctrl+RMB (polyConvertMM) conversions — Grow / Shrink Along Loop,
+"""Step 141 lane SELECT (quant gap 3): Select menu / Ctrl+RMB (CTRL_CONVERT) conversions — Grow / Shrink Along Loop,
 perimeters, To Face Path, To Shell Border, To UV Shell Border, To UVs, To UV Perimeter, To UV Edge Loop
 (operators/select_convert.py). Every expected selection is Maya 2022 measured with mayapy on meshes numbered like
 Maya's (research/maya/re/select_convert_141.md, research/scripts/select_convert_141_mayapy*.py).
@@ -335,14 +335,14 @@ def test_menu_paths_mapped():
 
 
 def test_marking_menu_entries():
-    entries = {p: a for p, _l, a in mm.label_walk(mm.MENUS["polyConvertMM"], "polyConvertMM")}
+    entries = {p: a for p, _l, a in mm.label_walk(mm.MENUS["CTRL_CONVERT"], "CTRL_CONVERT")}
     greyed = [p for p, a in entries.items() if mm.is_greyed(a)]
     assert not greyed, greyed
-    for p in ("polyConvertMM/Grow Selection/Grow Along Loop",
-              "polyConvertMM/Shrink Selection/Shrink Selection Along Loop", "polyConvertMM/To UVs/To UV Perimeter",
-              "polyConvertMM/To UVs/To UVs", "polyConvertMM/To Face Path", "polyConvertMM/To Shell Border",
-              "polyConvertMM/To Vertices/To Vertex Perimeter", "polyConvertMM/To Faces/To Face Perimeter",
-              "polyConvertMM/To Edges/To Edge Perimeter"):
+    for p in ("CTRL_CONVERT/Grow Selection/Grow Along Loop",
+              "CTRL_CONVERT/Shrink Selection/Shrink Selection Along Loop", "CTRL_CONVERT/To UVs/To UV Perimeter",
+              "CTRL_CONVERT/To UVs/To UVs", "CTRL_CONVERT/To Face Path", "CTRL_CONVERT/To Shell Border",
+              "CTRL_CONVERT/To Vertices/To Vertex Perimeter", "CTRL_CONVERT/To Faces/To Face Perimeter",
+              "CTRL_CONVERT/To Edges/To Edge Perimeter"):
         a = entries[p]
         assert isinstance(a, tuple) and a[0] == "item" and a[1] in menu_map.MAP, (p, a)
         assert p not in notices.MARKING, p
@@ -352,11 +352,11 @@ def test_marking_menu_entries():
         if isinstance(a, tuple) and a[0] == "item":
             assert modal.poll_action(a), p
     # run through the marking-menu path: allset.menu_item -> the Select menu's operator
-    modal.run_action(bpy.context, entries["polyConvertMM/Grow Selection/Grow Along Loop"])
+    modal.run_action(bpy.context, entries["CTRL_CONVERT/Grow Selection/Grow Along Loop"])
     assert _result(ob, "plane", 'FACE') == [4, 5, 6, 7]
-    modal.run_action(bpy.context, entries["polyConvertMM/To Vertices/To Vertex Perimeter"])
+    modal.run_action(bpy.context, entries["CTRL_CONVERT/To Vertices/To Vertex Perimeter"])
     assert _mode_kind() == 'VERT' and _result(ob, "plane", 'VERT') == [5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-    modal.run_action(bpy.context, entries["polyConvertMM/To Edges/To Edges"])
+    modal.run_action(bpy.context, entries["CTRL_CONVERT/To Edges/To Edges"])
     assert _mode_kind() == 'EDGE' and len(_result(ob, "plane", 'EDGE')) == 23, _result(ob, "plane", 'EDGE')
 
 

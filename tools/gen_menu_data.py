@@ -214,7 +214,7 @@ def kit_filled():
     return out
 
 
-_RTC = {}    # runTimeCommand name -> its MEL (menus.json recorded the MEL; hotkeys match on it, step 108)
+_RTC = {}    # runTimeCommand name -> its recorded command (from menus.json; hotkeys match on it, step 108)
 
 
 def convert_live(items, prefix="", filled=frozenset()):

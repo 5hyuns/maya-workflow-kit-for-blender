@@ -16,7 +16,7 @@ Cut / Create UV Shell).
   mayapy-built mesh (uv_201.md §1).
 - Split: selection -> edges (UVs / vertices: every edge of their faces at that vertex;
   faces: their edges), then polyMapCut on them: at each end vertex the UV splits into the fans the cut edges separate.
-- Create Shell (Grid) (polyUVRectangle via polyPerformAction ... v 0): the two lowest selected vertices must be
+- Create Shell (Grid) (polyUVRectangle): the two lowest selected vertices must be
   opposite corners of a rectangle of quads; its UVs become the uniform grid i / I, j / J over 0-1 (3D spacing and
   the old UVs don't matter), cut from the rest. Origin = the lower vertex id; U runs along the first edge (corner k -> k
   + 1, k = 0..3) of the origin's region face that contains the origin (uv_201.md §3, 27 cases).
@@ -38,7 +38,7 @@ from . import uv_tools
 from .uv_shells import _index_loops, _meshes, _poll, uv_points
 from .uv_tools import EPS, NUDGE, islands, sync
 
-NO_FACE = "No face selected. Select a face and try again."    # m_polyRotateUVsByVertex.kNoFacesSelected
+NO_FACE = "No face selected. Select a face and try again."    # Maya's warning text
 
 
 def _same(a, b):
@@ -67,7 +67,7 @@ def bm_edge_ids(bm):
 # --- Cycle ---------------------------------------------------------------------------
 
 def cycle_walk(face_verts, edge_ids):
-    """Vertex order of polyRotateUVsByVertex's getLoopVertices for one face (vertex indices)."""
+    """Vertex order Maya's Cycle UVs walks for one face (vertex indices)."""
     n = len(face_verts)
     pairs = [tuple(sorted((face_verts[k], face_verts[(k + 1) % n]))) for k in range(n)]
     pairs.sort(key=lambda p: edge_ids[frozenset(p)])
@@ -105,7 +105,7 @@ def cycle_face(face, uv, edge_ids):
 
 
 def _picked_faces(bm, uv, synced, uv_mode):
-    """Faces of the selection the Maya way (getFaces = faces, else faces touching the selected components)."""
+    """Faces of the selection the Maya way (faces, else faces touching the selected components)."""
     shown = [f for f in bm.faces if not f.hide and (synced or f.select)]
     if synced:
         own = [f for f in shown if f.select]
@@ -286,7 +286,7 @@ def grid_shell(bm, uv, a, b):
 
 
 def grid_vertices(bm, uv, synced):
-    """The two lowest selected vertices (UVs / edges / faces count by their vertices, like polyPerformAction v)."""
+    """The two lowest selected vertices (UVs / edges / faces count by their vertices, like Maya)."""
     if synced:
         vs = [v for v in bm.verts if v.select and not v.hide]
     else:

@@ -76,7 +76,8 @@ def _selectable(ob):
 
 
 def select_members(context, coll, mode='REPLACE'):
-    """Maya ``select -r/-add/-tgl <set>``: the members in the view layer; the last one becomes the lead."""
+    """Maya ``cmds.select(set, replace / add / toggle=True)``: the members in the view layer; the last one becomes the
+    lead."""
     vl = context.view_layer
     obs = [ob for ob in members(coll, context.scene) if _selectable(ob)]
     if context.mode != 'OBJECT' and context.active_object is not None:

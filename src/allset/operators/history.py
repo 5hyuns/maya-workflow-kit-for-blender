@@ -3,7 +3,7 @@
 
 research/maya/concepts.md:64-74: Maya history = upstream DG nodes; the closest
 Blender equivalent is the modifier stack plus shape keys (blendShape). Delete
-History (``delete -ch``, Alt+Shift+D) bakes them; Non-Deformer History
+History (``cmds.delete(constructionHistory=True)``, Alt+Shift+D) bakes them; Non-Deformer History
 (``BakeNonDefHistory``) bakes the modelling operations and keeps the deformers.
 Plan: docs/steps/step_10.md 「계획」 8.
 """

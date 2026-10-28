@@ -2,8 +2,8 @@
 
 Sources (not tracked, see CLAUDE.md): research/maya/re/joint_rig_2026_<topic>.json for the six topics below and the
 mayapy cross-check files (``*_<check>.json``) in the private folders $ALLSET_RIG_MEASURED_DIR / $ALLSET_RIG_MEASURED2_DIR.
-Only numbers and attribute names are copied: MEL lines and script tracebacks that the capture scripts stored next to
-the numbers are dropped (``DROP``), so the fixture holds no Maya script text.
+Only numbers and attribute names are copied: command text and tracebacks that the capture scripts stored next to
+the numbers are dropped (``DROP``), so the fixture holds measurements only.
 
     python tools/gen_maya2026_rig_data.py
 """
@@ -23,14 +23,21 @@ MEASURED_FILES = {"MEASURED_IK_VERIFY": "ik_verify", "MEASURED_SC_VERIFY": "sc_v
 # second measurement pass: orientJoint rule checks (step 244)
 MEASURED2 = os.environ.get("ALLSET_RIG_MEASURED2_DIR", "")
 MEASURED2_FILES = {"OJ_VERIFY": "oj_verify"}
-# joint_rig_2026_joint_tool.json: only the measured GUI numbers (the file also holds Tool Settings MEL lines)
+# joint_rig_2026_joint_tool.json: only the measured GUI numbers (the file also holds recorded Tool Settings commands)
 JOINT_TOOL_KEYS = ("jointCtx", "front_clicks", "front_chain", "jointDisplayScale")
-# key paths whose values are Maya script text or a capture-script traceback, not measurements
+# key paths whose values are recorded command text or a capture-script traceback, not measurements
 DROP = {
     ("skeleton", "move_skinned_joints", "ERROR"),
     ("skeleton2", "move_skinned_joints", "moveJointsMode_mel_lines"),
     ("skeleton2", "move_skinned_joints", "moveJointsMode_calls"),
 }
+
+
+def _key(k):
+    """A capture key named after a Maya menu routine -> a neutral key ("<command>_optionVars" -> "option_vars")."""
+    if isinstance(k, str) and k.startswith("perform") and k.endswith("_optionVars"):
+        return "option_vars"
+    return k
 
 
 def _clean(value, path=()):
@@ -39,7 +46,7 @@ def _clean(value, path=()):
         for k, v in value.items():
             if path + (k,) in DROP:
                 continue
-            out[k] = _clean(v, path + (k,))
+            out[_key(k)] = _clean(v, path + (k,))
         return out
     if isinstance(value, list):
         return [_clean(v, path) for v in value]

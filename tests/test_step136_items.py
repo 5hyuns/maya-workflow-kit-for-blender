@@ -21,19 +21,19 @@ BASELINE = (464, 128)
 
 # step_133_quant.md §7: greyed marking entries whose Maya command already worked from the main menus.
 QUANT_25 = [
-    "contextPolyToolsObjectMM/Fill Holes", "contextPolyToolsObjectMM/Extrude", "contextPolyToolsObjectMM/Quadrangulate",
-    "contextPolyToolsObjectMM/Booleans/Union", "contextPolyToolsObjectMM/Booleans/Difference",
-    "contextPolyToolsObjectMM/Booleans/Intersection",
-    "contextPolyToolsVertexMM/Vertex Normals/Vertex Normal Edit Tool", "contextPolyToolsVertexMM/Detach Components",
-    "contextPolyToolsVertexMM/Circularize Vertices", "contextPolyToolsEdgeMM/Circularize Components",
-    "contextPolyToolsFaceMM/Circularize Components", "contextPolyToolsEdgeMM/Soften/Harden Edges/Soften/Harden",
-    "contextPolyToolsEdgeMM/Edit Edge Flow", "contextPolyToolsFaceMM/Wedge Face",
-    "contextPolyToolsFaceMM/Face Normals/Reverse Normals", "contextPolyToolsDefaultMM/Quad Draw Tool",
-    "polyConvertMM/To UV Shell",
-    "contextPolyToolsUVMM/Mapping/Best Plane", "contextPolyToolsUVShellMM/Mapping/Best Plane",
-    "contextPolyToolsUVMM/Mapping/Contour Stretch", "contextPolyToolsUVShellMM/Mapping/Contour Stretch",
-    "contextPolyToolsUVMM/UV Set Editor", "contextPolyToolsUVShellMM/UV Set Editor",
-    "dagMenuProc/Make Live", "dagMenuProc_curve/Make Live",
+    "SHIFT_OBJECT/Fill Holes", "SHIFT_OBJECT/Extrude", "SHIFT_OBJECT/Quadrangulate",
+    "SHIFT_OBJECT/Booleans/Union", "SHIFT_OBJECT/Booleans/Difference",
+    "SHIFT_OBJECT/Booleans/Intersection",
+    "SHIFT_VERTEX/Vertex Normals/Vertex Normal Edit Tool", "SHIFT_VERTEX/Detach Components",
+    "SHIFT_VERTEX/Circularize Vertices", "SHIFT_EDGE/Circularize Components",
+    "SHIFT_FACE/Circularize Components", "SHIFT_EDGE/Soften/Harden Edges/Soften/Harden",
+    "SHIFT_EDGE/Edit Edge Flow", "SHIFT_FACE/Wedge Face",
+    "SHIFT_FACE/Face Normals/Reverse Normals", "SHIFT_DEFAULT/Quad Draw Tool",
+    "CTRL_CONVERT/To UV Shell",
+    "SHIFT_UV/Mapping/Best Plane", "SHIFT_UV_SHELL/Mapping/Best Plane",
+    "SHIFT_UV/Mapping/Contour Stretch", "SHIFT_UV_SHELL/Mapping/Contour Stretch",
+    "SHIFT_UV/UV Set Editor", "SHIFT_UV_SHELL/UV Set Editor",
+    "RMB_MESH/Make Live", "RMB_CURVE/Make Live",
 ]
 
 
@@ -249,7 +249,7 @@ def test_hover_notice():
     item = next(it for it in s.stack[-1][0].items if it.label == "Time Editor")
     s.hover = (item, False)
     key, text = modal.hover_notice(s)
-    assert key == "dagMenuProc/Time Editor" and "NLA" in text, (key, text)
+    assert key == "RMB_MESH/Time Editor" and "NLA" in text, (key, text)
     item = next(it for it in s.stack[-1][0].items if it.label == "Select All")
     s.hover = (item, False)
     assert modal.hover_notice(s) is None

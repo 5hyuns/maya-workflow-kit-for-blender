@@ -7,11 +7,11 @@ Maya 2026 (mayapy, research/scripts/maya_anim225/game_exporter.py; the Game Expo
 - settings live on a ``gameFbxExporter`` node; factory values (createNode, ``FACTORY``): Export All, Model tab,
   one file, Bake Animation on, Skinning / Blend Shapes on, Smoothing Groups / Tangents and Binormals on, Triangulate /
   Move to Origin / Embed Media / Include Children / Input Connections off, Up Axis Y, Cameras / Lights on;
-- a new clip (``gameExp_AddNewAnimationClip``) starts with the playback range, an empty name, export on; a typed name
-  that exists gets the next number (``gameExp_ProvideUniqueName``: walk -> walk1, run09 -> run10);
+- a new clip starts with the playback range, an empty name, export on; a typed name
+  that exists gets the next number (walk -> walk1, run09 -> run10);
 - clips export as FBX takes (``FBXExportSplitAnimationIntoTakes`` name start end): **one file** = the file name
   (``.fbx`` added) with a take per exported clip; **a file per clip** = file name used as a prefix + clip name +
-  ``.fbx`` (``gameExp_GenerateClipFilenameList``). Maya's files also carry the FBX plug-in's own ``Take 001`` and its
+  ``.fbx``. Maya's files also carry the FBX plug-in's own ``Take 001`` and its
   per-clip loop never clears the take list, so a later clip file repeats the earlier clips' takes (measured) — the
   kit writes only the clip's own takes (delegated: engines would import those extra clips).
 
@@ -37,7 +37,7 @@ FACTORY = {"export_type": 'MODEL', "export_set": 'ALL', "model_file_mode": 'SING
            "include_lights": True}
 # What a user sees: the window applies its default presets the first time it opens
 # — Model tab "Model Default", Animation Clips tab "Anim Default" (step 266 independent
-# check, mayapy 2026 applyAttrPreset of both preset files on a fresh node). The kit keeps the per-tab values.
+# check, mayapy 2026, both presets applied to a fresh node). The kit keeps the per-tab values.
 PRESET_MODEL = {"embed_media": True, "include_children": True, "input_connections": True}
 PRESET_ANIM = {"file_split": 'PER_CLIP', "embed_media": True, "include_cameras": False, "include_children": False,
                "input_connections": False}
@@ -119,7 +119,7 @@ def add_clip(scene):
 
 
 def unique_name(name, taken):
-    """Maya gameExp_ProvideUniqueName: count up a trailing number (keeping its zeros), else append 1."""
+    """Maya Game Exporter clip names: count up a trailing number (keeping its zeros), else append 1."""
     while name in taken:
         m = re.search(r"\d+$", name)
         if m:
@@ -133,7 +133,7 @@ def unique_name(name, taken):
 
 
 def clip_files(s, folder):
-    """[(path, [clips])] Maya writes for the exported clips (gameExp_GenerateClipFilenameList)."""
+    """[(path, [clips])] Maya writes for the exported clips."""
     clips = [c for c in s.clips if c.export]
     stem = s.export_filename
     if s.file_split == 'SINGLE':
@@ -329,7 +329,7 @@ def export(context, s):
     from . import file_io, units
     folder = bpy.path.abspath(s.export_path) or ""
     if not folder:
-        raise ValueError("The file path is empty")            # Maya kGameExporterFilePathEmpty
+        raise ValueError("The file path is empty")            # Maya's error text
     if not os.path.isdir(folder):
         raise ValueError(f"The directory doesn't exist: {folder}")
     selection = s.export_set == 'SELECTION'
@@ -371,7 +371,7 @@ def export(context, s):
     roots = [o for o in obs if o.parent is None or o.parent not in obs]
     files = model_files(s, folder, roots)
     if not files:
-        raise ValueError("Choose a file name to export")            # Maya's text (B6, kGameExporterFilenameEmpty)
+        raise ValueError("Choose a file name to export")            # Maya's text (B6)
     for path, part in files:
         args = dict(fbx_args(context, s, True), bake_anim=False)
         keep = list(context.selected_objects)

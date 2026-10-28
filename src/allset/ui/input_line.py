@@ -47,7 +47,7 @@ def _say(text):
 # --- pure-ish helpers (tests/test_step75_input_line.py) ----------------------------------------------
 
 def clean_name(text):
-    """Maya quickRename: spaces -> "_"; None when the name breaks Maya's rule."""
+    """Maya Status Line rename: spaces -> "_"; None when the name breaks Maya's rule."""
     name = text.strip().replace(" ", "_")
     return name if NAME_RULE.match(name) else None
 

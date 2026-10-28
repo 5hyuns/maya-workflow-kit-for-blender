@@ -3,8 +3,8 @@
 
 Maya rules, measured with mayapy in Maya 2022 (research/maya/re/visualize_171.md §1, scripts
 research/scripts/visualize171_mayapy*.py):
-- ``performSnapshot`` runs ``snapshot -startTime 1 -endTime 10 -increment 1 -update animCurve`` with the factory
-  options (Time range Start/End 1 – 10, Increment 1, Update "Fast (update only when keyframes change)").
+- Visualize > Create Animation Snapshot with the factory options: Time range Start/End 1 – 10, Increment 1,
+  Update "Fast (update only when keyframes change)".
 - Result: a top-level group ``snapshot<N>Group`` with one child per sampled frame, ``transform<N>_<k>`` /
   ``transform<N>_Shape<k>`` (k = 1 ..), meshes in **world space** under identity transforms (a child of an animated
   group lands where it was in the world). Frames = start, start + increment, ... up to end (1 – 10 by 3 = 1, 4, 7, 10).
@@ -12,7 +12,7 @@ research/scripts/visualize171_mayapy*.py):
   = error "No geometry found to create snapshot." (a locator, an empty selection).
 - The current time and the selection don't change. Deleting the source keeps the copies.
 - Update: the snapshot follows key edits on its own (Fast) or every change (Slow); a non-animated edit (scale typed
-  in) shows only after Visualize > Update Snapshot (``updateMotionTrail``), which works with the group, a copy or the
+  in) shows only after Visualize > Update Snapshot, which works with the group, a copy or the
   source selected and warns "Select motion trails or snapshots to update." with nothing relevant selected.
 
 Kit: the copies are ordinary mesh objects (Blender has no snapshot node); the group Empty keeps the record (ID
@@ -20,7 +20,7 @@ properties: the source object pointer, range, increment, update style). Copies a
 object at each frame (``scene.frame_set`` loop, the current frame restored). The kit's smooth-preview modifiers are
 left out like Maya's worldMesh (display only, step 15). Fast / Slow updates rebuild from a timer after a
 depsgraph update that touches the source's Action (Fast) or the source itself (Slow); Modify > Evaluate Nodes >
-Snapshots off stops them (``Scene.allset_eval.snapshot``, Maya setState snapshot).
+Snapshots off stops them (``Scene.allset_eval.snapshot``, Maya Modify > Evaluate Nodes > Snapshots).
 """
 
 import bpy
@@ -262,7 +262,7 @@ def _watched():
 
 
 def evaluating(scene):
-    """Modify > Evaluate Nodes > Snapshots (Maya setState snapshot); on when the switch doesn't exist."""
+    """Modify > Evaluate Nodes > Snapshots; on when the switch doesn't exist."""
     ev = getattr(scene, "allset_eval", None)
     return getattr(ev, "snapshot", True) if ev is not None else True
 

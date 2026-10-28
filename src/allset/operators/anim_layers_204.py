@@ -4,17 +4,17 @@
 Maya 2022 Layer Editor Anim tab (its menus and labels),
 re-implemented on the kit's NLA layers (operators/anim_layers.py):
 
-- Extract Selected Objects (layerEditorExtractObjectsSingleAnimLayer): per selected layer L a new layer
+- Extract Selected Objects: per selected layer L a new layer
   ``L_extract`` with L's settings, right above L, takes the selected objects' membership and curves out of L
-  (``animLayer -extractAnimation``); with BaseAnimation selected (and Extract Non-Layered Animation for Selected / All
-  Objects) a new Override layer ``BaseAnimation_extract`` right above BaseAnimation takes the objects' base curves.
-  The result doesn't change.
-- Duplicate Layer / Duplicate Layer (No Animation) (layerEditorCopyAnimLayer: ``animLayer -copy L L_copy`` +
-  ``-moveLayerAfter L``): a copy right above L with the same members, settings and (or without) curves.
-- Empty (``animLayer -removeAllAttributes``) / Delete Empty Layers (deleteEmptyAnimLayers: every layer but
+  (``cmds.animLayer(extractAnimation=...)``); with BaseAnimation selected (and Extract Non-Layered Animation for
+  Selected / All Objects) a new Override layer ``BaseAnimation_extract`` right above BaseAnimation takes the objects'
+  base curves. The result doesn't change.
+- Duplicate Layer / Duplicate Layer (No Animation) (``cmds.animLayer("L_copy", copy="L")`` +
+  ``moveLayerAfter="L"``): a copy right above L with the same members, settings and (or without) curves.
+- Empty (``cmds.animLayer(removeAllAttributes=True)``) / Delete Empty Layers (every layer but
   BaseAnimation without attributes; the others are named in a warning).
-- Zero Weight and Key Layer / Set Weight to 1.0 and Key Layer (layerEditorZero/FullWeightKeyAnimLayer): weight 0 / 1
-  on the selected layers, then ``setKeyframe <layer>.weight`` at the current time. The kit's weight is each member's
+- Zero Weight and Key Layer / Set Weight to 1.0 and Key Layer: weight 0 / 1
+  on the selected layers, then a key on ``<layer>.weight`` at the current time. The kit's weight is each member's
   strip influence, so the key goes on every member's influence curve.
 - Layer Editor Ctrl / Shift click (Qt tree view): several selected layers (``picked`` flags); the last picked one stays
   ``allset_anim_layer_index`` (keys and the Graph Editor's editable curves, step 194), ui/graph_layers.py draws the
@@ -33,7 +33,7 @@ from . import anim_layers as al
 
 EXTRACT = "_extract"
 COPY = "_copy"
-NOT_EMPTY = "Layer was not deleted because it was not empty: {}"     # m_layerEditor.kLayersNotDeletedBecauseHaveObjects
+NOT_EMPTY = "Layer was not deleted because it was not empty: {}"     # Maya's warning text
 
 
 # --- selection (Layer Editor Ctrl / Shift click) --------------------------------------------------------------
@@ -174,9 +174,9 @@ def move_track(scene, ob, src, dst):
 
 
 def copy_track(scene, ob, src, dst, with_curves=True, hold=None):
-    """``ob``'s ``src`` track copied to a new ``dst`` track (Maya ``animLayer -copy``: copies of the curves, same
-    members; weight 1.0 without weight keys [O]). ``with_curves`` False = ``-copyNoAnimation``; ``hold`` = a frame:
-    every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation,
+    """``ob``'s ``src`` track copied to a new ``dst`` track (Maya ``cmds.animLayer(copy=...)``: copies of the curves,
+    same members; weight 1.0 without weight keys [O]). ``with_curves`` False = ``copyNoAnimation=True``; ``hold`` = a
+    frame: every curve of ``src`` becomes a static value = its value at that frame (Override copy without animation,
     anim_layers_201.md §3)."""
     tr = al.tracks(ob)[src]
     st = al._strip(tr)
@@ -281,10 +281,10 @@ def _finish(scene, obs):
 
 def extract(scene, objects, layer):
     """Maya Extract Selected Objects from ``layer`` (BaseAnimation: Extract Non-Layered Animation). Returns the new
-    layer's name. Maya makes the layer even when no object is a member ([O] MEL: copyNoAnimation first)."""
+    layer's name. Maya makes the layer even when no object is a member [O]."""
     if layer == al.BASE:
         new = insert_layer(scene, maya_name(scene, al.BASE + EXTRACT), 0)
-        new.override = True              # layerEditorCreateAnimLayer(true, true): an Override layer from the selection
+        new.override = True              # Maya: an Override layer from the selection
         obs = list(objects)
         for ob in obs:
             al.ensure_base(ob)
@@ -300,7 +300,7 @@ def extract(scene, objects, layer):
 
 
 def duplicate(scene, layer, with_curves=True):
-    """Maya Duplicate Layer (``animLayer -copy``) / Duplicate Layer (No Animation) (``-copyNoAnimation``): ``L_copy``
+    """Maya Duplicate Layer / Duplicate Layer (No Animation): ``L_copy``
     directly above L (a second copy ``L_copy1`` also directly above L, i.e. below the first), weight 1.0 [O]."""
     if layer == al.BASE:
         if not with_curves:
@@ -317,7 +317,7 @@ def duplicate(scene, layer, with_curves=True):
 
 
 def empty(scene, layer):
-    """Maya Layers > Empty (``animLayer -removeAllAttributes``): no members, no curves; the layer stays."""
+    """Maya Layers > Empty: no members, no curves; the layer stays."""
     for ob in al.members(scene, layer):
         al._set_attr_record(ob, layer, None)
         al.remove_object(scene, ob, layer)
@@ -374,7 +374,7 @@ def key_weight(scene, names, weight, frame=None):
 # --- operators -------------------------------------------------------------------------------------------------
 
 def _names(scene, layer=""):
-    """The layers a command acts on: Maya's selected layers in stack order (getSelectedAnimLayer), or one ``layer``
+    """The layers a command acts on: Maya's selected layers in stack order, or one ``layer``
     (the layer row's right-click menu on a row that isn't selected acts on that row only, anim_layers_201.md §1)."""
     if layer:
         return [layer] if _index_of(scene, layer) is not None else []
@@ -383,7 +383,7 @@ def _names(scene, layer=""):
 
 def base_selected(scene):
     """BaseAnimation is among the selected layers: Maya greys the Layers menu items listed in GREY_WITH_BASE
-    ($M:485-557, anim_layers_201.md §1)."""
+    (anim_layers_201.md §1)."""
     return al.BASE in _names(scene)
 
 

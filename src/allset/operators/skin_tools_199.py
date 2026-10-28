@@ -7,9 +7,9 @@ research/scripts/skin_tools_199_mayapy_a.py .. _e.py). A kit skin = the Armature
 its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex group's ``lock_weight``.
 
 - Move Weights to Influences (Maya runs
-  ``skinPercent -tmw source -tmw target ...``): on each selected vertex every unlocked target gets the **source's
-  weight** (set, not added), the source gets 0; with Interactive normalisation the unlocked weights are then scaled to
-  fill 1 - (locked weights). None / Post leave the sums as they are.
+  ``cmds.skinPercent(transformMoveWeights=[source, target, ...])``): on each selected vertex every unlocked target gets
+  the **source's weight** (set, not added), the source gets 0; with Interactive normalisation the unlocked weights are
+  then scaled to fill 1 - (locked weights). None / Post leave the sums as they are.
 - Normalize Weights modes (skinCluster.normalizeWeights 0 / 1 / 2): Maya deforms
   a point by sum(w_i M_i p) in world space in None and Interactive (unnormalised weights scale the point about the
   world origin; a point without weights stays put) and by sum(w_i M_i p) / sum(w_i) in Post. Blender's Armature
@@ -17,9 +17,10 @@ its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex
   after the Armature modifier that multiplies the world position by the weight sum.
 - Weight maps (Maya Export / Import Skin Weight Maps): a ``<name>.weightMap`` text file (two comment lines, then
   ``<skin>\\t<influence>\\t<image>`` per weighted influence) and a ``<name>/`` folder with one grey image per influence
-  in UV space (factory 512 x 512, luminance). Import: every weight of the skins in the file is cleared (``skinPercent
-  -prw 1.1``), each listed influence takes the image value at the vertex UVs, then the weights are normalised.
-- Substitute Geometry (``substituteGeometry old new -wdt 1``): the skinned object
+  in UV space (factory 512 x 512, luminance). Import: every weight of the skins in the file is cleared
+  (``cmds.skinPercent(pruneWeights=1.1)``), each listed influence takes the image value at the vertex UVs, then the
+  weights are normalised.
+- Substitute Geometry (``cmds.substituteGeometry(old, new, wdt=1)``): the skinned object
   keeps its name, transform and skin and takes the new mesh's object-space points; each new vertex takes the old
   weights interpolated at the closest point of the old surface (bilinear on quads, barycentric on triangles) when that
   point is within the reweighting distance, else the weights of the nearest old vertex.
@@ -355,7 +356,7 @@ class ALLSET_OT_skin_normalize_mode(bpy.types.Operator):
     def execute(self, context):
         meshes = skinned_meshes(context)
         if not meshes:
-            self.report({'ERROR'}, "Select a skinned object or its components")     # doNormalizeWeightsArgList:73
+            self.report({'ERROR'}, "Select a skinned object or its components")     # Maya's error text
             return {'CANCELLED'}
         for mesh in meshes:
             set_normalize_mode(context, mesh, self.mode)
@@ -553,7 +554,7 @@ def import_weight_maps(filepath):
         ob = bpy.data.objects.get(skin_name)
         if ob is not None and ob.type == 'MESH' and _skin_armature(ob) is not None and ob not in skins:
             skins.append(ob)
-    for ob in skins:                                # skinPercent -prw 1.1: every weight goes
+    for ob in skins:                                # Maya pruneWeights 1.1: every weight goes
         io = _Weights(ob)
         groups = {vg.name: vg.index for vg in ob.vertex_groups}
         for n in influence_names(ob):
@@ -619,7 +620,7 @@ class ALLSET_OT_export_weight_maps(bpy.types.Operator):
     def execute(self, context):
         meshes = skinned_meshes(context)
         if not meshes:
-            self.report({'ERROR'}, "Select skinned objects to export their weight maps")      # exportSkinMap kNoSkins
+            self.report({'ERROR'}, "Select skinned objects to export their weight maps")      # Maya's error text
             return {'CANCELLED'}
         if not self.filepath:
             self.report({'ERROR'}, "No file name")
@@ -649,7 +650,7 @@ class ALLSET_OT_import_weight_maps(bpy.types.Operator):
 
     def execute(self, context):
         if not self.filepath or not os.path.isfile(bpy.path.abspath(self.filepath)):
-            self.report({'ERROR'}, f"Unable to open file {self.filepath}")         # importSkinMap kUnabletoOpenFile
+            self.report({'ERROR'}, f"Unable to open file {self.filepath}")         # Maya's error text
             return {'CANCELLED'}
         if context.active_object is not None and context.active_object.mode == 'EDIT':
             bpy.ops.object.mode_set(mode='OBJECT')

@@ -331,12 +331,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Maya Naming", description="Create menu names objects pCube1 / pCubeShape1 "
                                         "(otherwise Blender names)",
         default=True)
-    # Maya manipSmartDuplicate 1 (research/maya/interaction.md:107, PREF:371-374).
+    # Maya optionVar manipSmartDuplicate 1 (research/maya/interaction.md:107).
     smart_duplicate: bpy.props.BoolProperty(
         name="Smart Duplicate", description="Shift+drag a Move/Rotate/Scale manipulator "
                                             "duplicates the selection and transforms the copy",
         default=True)
-    # Maya manipSmartExtrude 1 (research/maya/interaction.md:107, PREF:371-374).
+    # Maya optionVar manipSmartExtrude 1 (research/maya/interaction.md:107).
     smart_extrude: bpy.props.BoolProperty(
         name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
                                           "or edges extrudes them and transforms the new ones",

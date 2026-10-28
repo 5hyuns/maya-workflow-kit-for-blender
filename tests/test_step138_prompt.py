@@ -1,5 +1,5 @@
 """Step 138 / #57: Maya's Save Changes prompt before New Scene (ui/save_prompt.py). Headless: the texts with and without
-a file path (Maya 2022 resources/MayaStrings:36422-36425), the answers' effects (Cancel = nothing, Don't Save = the
+a file path (the wording of Maya 2022's Save Changes dialog), the answers' effects (Cancel = nothing, Don't Save = the
 action, Save with a path = save then the action, untitled Save = the action only after a real save), and every New
 Scene path (Ctrl+N / File > New Scene operator, the New Scene option window) going through the prompt.
 The dialog itself, clicks and the Save As browser: tests/gui/gui_step138_prompt.py."""

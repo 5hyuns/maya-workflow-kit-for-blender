@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""step 226 L1: NURBS curve shapes as bone Custom Shapes (Maya parent -s / -r) (docs/steps/step_226.md).
+"""step 226 L1: NURBS curve shapes as bone Custom Shapes (Maya ``cmds.parent(shape=True)``)
+(docs/steps/step_226.md).
 
-Maya gives a joint a control shape with ``parent -s -r <curveShape> <joint>`` (research/maya/re/maya2026_controls.md:15,
-mayapy ``L1_parent_shape_relative`` in maya2026_controls.json): the curve shape moves under the joint keeping its CV
-local values, the old transform stays without a shape. Without ``-r`` the CVs keep their world positions and the old
-transform goes away (maya2026_controls.md:16). A second shape on the same node is added (two shapes, one control,
-maya2026_controls.md:18). Decision 1 (docs/strategy/DECISIONS7.md): every kit control = a bone Custom Shape — the
-shape is a copy of the curve data baked into bone space on a curve object in the hidden collection
-``.AllsetControlShapes`` (not linked to any scene, fake user), Custom Shape transform identity and bone size off.
+Maya gives a joint a control shape with ``cmds.parent(curveShape, joint, shape=True, relative=True)``
+(research/maya/re/maya2026_controls.md:15, mayapy ``L1_parent_shape_relative`` in maya2026_controls.json): the curve
+shape moves under the joint keeping its CV local values, the old transform stays without a shape. Without ``relative``
+the CVs keep their world positions and the old transform goes away (maya2026_controls.md:16). A second shape on the same
+node is added (two shapes, one control, maya2026_controls.md:18). Decision 1 (docs/strategy/DECISIONS7.md): every kit
+control = a bone Custom Shape — the shape is a copy of the curve data baked into bone space on a curve object in the
+hidden collection ``.AllsetControlShapes`` (not linked to any scene, fake user), Custom Shape transform identity and
+bone size off.
 
 Joint frame: Maya joint X / Y / Z = bone Y / Z / X (step 57) and a Blender local point (x, y, z) is Maya (x, z, -y),
 so ``-r`` reads the CVs as bone-space (-y, x, z) = +90 deg about Z.
@@ -238,7 +240,7 @@ def shape_collection():
 
 
 def kit_shape(pb):
-    """``pb``'s Custom Shape when the kit made it (a control the next ``parent -s`` adds to), else None."""
+    """``pb``'s Custom Shape when the kit made it (a control the next shape parenting adds to), else None."""
     shape = pb.custom_shape
     return shape if shape is not None and MARK in shape and shape.type == 'CURVE' else None
 
@@ -253,8 +255,8 @@ def _drop(ob):
 
 
 def _empty_in_place(ob):
-    """Maya ``parent -s -r``: the old transform stays, without a shape (an Empty with its name, channels, parent,
-    children and collections)."""
+    """Maya ``cmds.parent(shape=True, relative=True)``: the old transform stays, without a shape (an Empty with its
+    name, channels, parent, children and collections)."""
     from . import units
     name, parent, inv = ob.name, ob.parent, ob.matrix_parent_inverse.copy()
     colls = list(ob.users_collection)
@@ -306,8 +308,9 @@ def _finish_source(curve_ob, relative):
 # --- parent -s -----------------------------------------------------------------------------------------------------
 
 def parent_shape(curve_ob, target, relative=True, replace=False):
-    """Maya ``parent -s [-r] curve target``. ``target`` = a pose bone (its Custom Shape) or a curve object (the splines
-    join it). Returns the shape object (bone) / target curve object; raises ValueError for any other target."""
+    """Maya ``cmds.parent(curve, target, shape=True[, relative=True])``. ``target`` = a pose bone (its Custom Shape) or
+    a curve object (the splines join it). Returns the shape object (bone) / target curve object; raises ValueError for
+    any other target."""
     if curve_ob is None or curve_ob.type != 'CURVE':
         raise ValueError(f"{getattr(curve_ob, 'name', curve_ob)} has no curve shape")
     shape_name = curve_ob.data.name

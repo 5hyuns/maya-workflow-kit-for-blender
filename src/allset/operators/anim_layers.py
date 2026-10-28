@@ -520,7 +520,7 @@ def bone_path(pb, prop):
 
 def is_member(ob, layer, path=None, index=-1):
     """``ob``'s channel (``path``, ``index``) is in ``layer`` (no path: the object is a member at all). A joint
-    channel is a member when its bone is (step 234: Maya animLayer -addSelectedObjects on joints)."""
+    channel is a member when its bone is (step 234: Maya Add Selected Objects on joints)."""
     if layer == BASE:
         return True
     if layer not in tracks(ob):
@@ -961,9 +961,10 @@ def _identity(path):
 
 
 def zero_key(scene, obs, frame=None):
-    """Maya Zero Key Layer (research/maya/re/anim_layers_193.md section 6, ``setKeyframe -id -itt flat``): an identity
-    key on every member channel of the selected layer at ``frame`` (an existing key's value is overwritten, its
-    tangents kept; a new key's in tangent is flat). Returns the number of keys, None for BaseAnimation."""
+    """Maya Zero Key Layer (research/maya/re/anim_layers_193.md section 6, ``cmds.setKeyframe(identity=True,
+    inTangentType="flat")``): an identity key on every member channel of the selected layer at ``frame`` (an existing
+    key's value is overwritten, its tangents kept; a new key's in tangent is flat). Returns the number of keys, None for
+    BaseAnimation."""
     e = selected(scene)
     if e is None or e.name == BASE:
         return None

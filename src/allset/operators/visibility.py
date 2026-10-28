@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya object visibility keys: h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H.
 
-research/maya/interaction.md:233-238 (HK:271-277): h toggles the visibility of the
+research/maya/interaction.md:233-238 (Maya default hotkeys): h toggles the visibility of the
 selection and keeps it selected; Ctrl+H hides the selection, Alt+H the rest;
 Shift+H shows the selected hidden objects; Ctrl+Shift+H shows what was hidden last.
 
@@ -95,7 +95,7 @@ def _first(objects, active):
 
 
 def toggle(context, dependent=False):
-    """Maya toggleVisibilityAndKeepSelection on the selection (visible selected + hidden kept). Returns the count."""
+    """Maya Toggle Visibility (h) on the selection (visible selected + hidden kept). Returns the count."""
     vl = context.view_layer
     objs = list(vl.objects)
     selected = [ob for ob in objs if ob.visible_get() and ob.select_get()]

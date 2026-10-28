@@ -2,7 +2,7 @@
 """Maya arrow-key pick-walk (object mode).
 
 research/maya/interaction.md §2 "Arrow keys": Up = parent, Down = child,
-Left/Right = sibling (``pickWalk -d up``, HK:364-369). Siblings are in Maya's
+Left/Right = sibling (Maya default hotkeys). Siblings are in Maya's
 creation order (a re-parented node last; the kit's ``outliner_order.ORDER`` numbers) and wrap around —
 step 266 independent check, mayapy 2026: locators made b, a, c walk b -> a -> c -> b, Down = the first made.
 Edit mode:

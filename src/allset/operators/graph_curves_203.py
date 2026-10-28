@@ -2,7 +2,7 @@
 """Graph Editor / Dope Sheet curve commands of step 203 (Issue #110, research/maya/re/graph_editor_201.md §6-§8,
 ground truth tests/maya203_graph_data.py).
 
-- Curves > Change Rotation Interp (Maya ``rotationInterpolation -c`` on the curves of
+- Curves > Change Rotation Interp (Maya ``cmds.rotationInterpolation(convert=...)`` on the curves of
   the selected keys + the highlighted channels): one rotate curve converts the node's three. Every mode but
   Independent Euler synchronises keys first: rx / ry / rz get a key at the union of their key times, inserted keys
   keep the curve shape (Maya: fixed tangents keeping the slope) — evaluated curves unchanged (§7, exact).
@@ -16,12 +16,12 @@ ground truth tests/maya203_graph_data.py).
   are identical), Blender normalises the quaternion. The Euler curves are kept in ``SNAP`` so Independent /
   Synchronized Euler gives them back exactly (Maya keeps the Euler curves, §7 "back to none") while the quaternion
   keys are the kit's; edited quaternion keys are turned back into Euler keys. (delegated: storage and sync design)
-- Curves > Key Sync Filter (``filterCurve -f keySync -selectedKeys``, §8): range = first .. last selected key over
-  the curves shown; every shown curve gets a key at each key time any of them has in that range (value = its curve
-  there, constant beyond its ends); inserted keys and their neighbours get Auto tangents (Maya: auto).
-- Curves > Peak Removal Filter (``filterCurve -f peakRemover -selectedKeys``, §8): a key between the first and last
-  selected key of its curve with two keys on each side, evenly spaced, that is a strict local extremum whose
-  distance to its neighbours' mean exceeds both outer neighbour steps (|v - (a + b)/2| > max(|a - a'|, |b - b'|))
+- Curves > Key Sync Filter (``cmds.filterCurve(filter="keySync", selectedKeys=True)``, §8): range = first .. last
+  selected key over the curves shown; every shown curve gets a key at each key time any of them has in that range (value
+  = its curve there, constant beyond its ends); inserted keys and their neighbours get Auto tangents (Maya: auto).
+- Curves > Peak Removal Filter (``cmds.filterCurve(filter="peakRemover", selectedKeys=True)``, §8): a key between the
+  first and last selected key of its curve with two keys on each side, evenly spaced, that is a strict local extremum
+  whose distance to its neighbours' mean exceeds both outer neighbour steps (|v - (a + b)/2| > max(|a - a'|, |b - b'|))
   becomes the mean of its two neighbours (values of the curve before the filter). Exact on every clean case of the
   data; Maya's noisy-curve smoothing (§8 [U]) isn't reproduced (residual in docs/steps/step_203.md).
 - Edit > Select Curve Nodes (§6): Maya selects the anim curve nodes of the curves with selected keys. Blender's curves

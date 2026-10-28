@@ -3,12 +3,12 @@
 
 Maya 2022 Channel Box Channels menu (research/maya/channel_box.md §2.4): Breakdown All / Mute All /
 Unmute All act on every shown channel; Cut / Copy / Delete Selected take the whole curves of the selected channels
-(``cutKey / copyKey -t ":" -f ":"``); Paste Selected = ``pasteKey -connect true -time <current>``; Freeze =
-``makeIdentity -apply``; Select Connection selects the node feeding the channel. Paste measured in mayapy
-(``tmp/maya158/paste.py``): a copied curve 1:0 10:5 20:2 pasted at 15 onto a curve 1:1 12:3 30:4 gives 15:3.2896
-24:8.2896 34:5.2896 and moves the key at 30 to 49 — keys start at the paste time, values are offset so the first one
-meets the target curve's value there (connect), later keys move right by the pasted length (insert); a channel
-without a curve gets the copied values as they are.
+(``cmds.cutKey`` / ``cmds.copyKey`` over all time and every float range); Paste Selected = ``cmds.pasteKey(connect=True,
+time=current)``; Freeze = ``cmds.makeIdentity(apply=True)``; Select Connection selects the node feeding
+the channel. Paste measured in mayapy (``tmp/maya158/paste.py``): a copied curve 1:0 10:5 20:2 pasted at 15 onto a curve
+1:1 12:3 30:4 gives 15:3.2896 24:8.2896 34:5.2896 and moves the key at 30 to 49 — keys start at the paste time, values
+are offset so the first one meets the target curve's value there (connect), later keys move right by the pasted length
+(insert); a channel without a curve gets the copied values as they are.
 
 Sync Selection in Graph Editor / Sync Timeline Display are Maya optionVars (factory off) = add-on prefs
 ``cb_sync_graph`` / ``cb_sync_timeline``: with Sync Graph Editor on, the selected channels' F-curves become the

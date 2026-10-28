@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Marking-menu items that had no Blender action (docs/steps/step_136.md 「계획」 B, #74 #62).
 
-- RMB list (dagMenuProc): Select Hierarchy (``select -hierarchy $object``, research/maya/marking_menus.json
-  dagMenuProc :2594), items run on the object the menu was opened on (Make Live, Actions ▸ Template / Untemplate /
-  Unparent / Bounding Box: createActionsMenuItems :1851-1854), UV Sets ▸ (createUVsetMenuItems :2060-2104) and
-  Color Sets ▸ (createColorSetMenuItems :2216-2252) as Blender menus listing the mesh's UV maps / color attributes.
-- Ctrl+RMB (polyConvertMM :147-294) "convert, then act" items and Shift+RMB Face Normals ▸ Reverse Propagate
-  (contextPolyToolsFaceMM, ``polyNormal -normalMode 4``): ``allset.mm_poly``; the runTimeCommands are in
-  research/maya/runtime_commands.json (PolyConvertToLoopAndDelete = SelectEdgeLoop; DeleteEdge, …).
-- Select options (selectMarkingMenuImpl :41): Camera-Based Selection = the kit's "marquee selects hidden
+- RMB list (RMB_MESH, research/maya/marking_menus.json): Select Hierarchy (selects the object the menu was opened
+  on and everything below it), items run on the object the menu was opened on (Make Live, Actions ▸ Template /
+  Untemplate / Unparent / Bounding Box), UV Sets ▸ and Color Sets ▸ as Blender menus listing the mesh's UV maps /
+  color attributes.
+- Ctrl+RMB (CTRL_CONVERT) "convert, then act" items and Shift+RMB Face Normals ▸ Reverse Propagate
+  (SHIFT_FACE: the selected faces' normals reversed, the rest of their shells following): ``allset.mm_poly``; the
+  runTimeCommands are in research/maya/runtime_commands.json (PolyConvertToLoopAndDelete = SelectEdgeLoop;
+  DeleteEdge, …).
+- Select options (OPT_SELECT): Camera-Based Selection = the kit's "marquee selects hidden
   components" preference turned the other way.
 
 The object the RMB menu was opened on is ``WindowManager.allset_mm_target`` (set in object mode), else the active
@@ -44,7 +45,7 @@ def _select_only(context, obs, active):
 # --- RMB list: object items -------------------------------------------------------------------
 
 class ALLSET_OT_mm_object_item(bpy.types.Operator):
-    """Run this Maya menu item on the object the marking menu was opened on (Maya passes $object)"""
+    """Run this Maya menu item on the object the marking menu was opened on, like Maya"""
     bl_idname = "allset.mm_object_item"
     bl_label = "Marking Menu Object Item"
     bl_options = {'INTERNAL'}
@@ -95,7 +96,7 @@ BBOX_OWN = "allset_bbox_own"
 
 
 class ALLSET_OT_mm_bounding_box(bpy.types.Operator):
-    """Toggle bounding-box display of the object (Maya: toggleBoundingBoxDisplay)"""
+    """Toggle bounding-box display of the object (Maya: Actions > Bounding Box)"""
     bl_idname = "allset.mm_bounding_box"
     bl_label = "Bounding Box"
     bl_options = {'REGISTER', 'UNDO'}
@@ -208,7 +209,7 @@ POLY_KINDS = (
     ('VERTEX_PERIMETER', "To Vertex Perimeter", "The vertices on the border of the selection"),
     ('SHELL_BORDER', "To Shell Border", "The open border edges of the selected shells"),
     ('REVERSE_PROPAGATE', "Reverse Propagate", "Reverse the selected faces' normals and make the rest of their "
-                                               "shells follow them (polyNormal -normalMode 4)"),
+                                               "shells follow them (Maya Mesh Display > Reverse with Propagate)"),
 )
 
 
@@ -347,7 +348,7 @@ class ALLSET_OT_mm_poly(bpy.types.Operator):
 # --- Select options ---------------------------------------------------------------------------
 
 class ALLSET_OT_mm_camera_based(bpy.types.Operator):
-    """Camera-Based Selection: marquee and lasso select only the components you can see (Maya selectPref -useDepth;
+    """Camera-Based Selection: marquee and lasso select only the components you can see (Maya ``cmds.selectPref(useDepth=...)``;
     the kit preference "Marquee Selects Hidden Components" the other way)"""
     bl_idname = "allset.mm_camera_based"
     bl_label = "Camera-Based Selection"

@@ -2,7 +2,7 @@
 """Attribute Editor sections: Maya template sections -> Blender properties (data only).
 
 Section names and open/closed state follow research/maya/ae_templates.json
-(``collapse`` flag of each ``editorTemplate -beginLayout``; Maya frameLayouts
+(``collapse`` flag of each Attribute Editor section; Maya sections
 without a flag start collapsed [K]); rows are the Blender properties that play
 the part of the Maya attributes (docs/steps/step_11.md 「계획」 3). Maya
 attributes with no Blender counterpart (shear, rotateAxis, tessellation, depth

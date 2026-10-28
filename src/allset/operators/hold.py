@@ -93,8 +93,9 @@ class ComponentPivotGroup(HoldGroup):
 
 
 class PreserveChildrenGroup(HoldGroup):
-    """D hold on joints in Edit mode (step 243, #160): Maya moves the joint only, its children stay (``move -pcp``,
-    research/maya/re/joint_rig_2026_joint_math.md §3). The picked joints are re-selected head-only while held."""
+    """D hold on joints in Edit mode (step 243, #160): Maya moves the joint only, its children stay
+    (``cmds.move(preserveChildPosition=True)``, research/maya/re/joint_rig_2026_joint_math.md §3). The picked joints are
+    re-selected head-only while held."""
 
     def capture(self, ts):
         return preserve_children_set(None)
@@ -273,7 +274,7 @@ class ComponentPivotEdit:
 
     def reset(self, context, position=True, orientation=True):
         """Maya Reset Pivot (Position / Orientation) for components: the pivot back on the selection's bounding-box
-        centre with world axes (manipPivotReset, research/maya/interaction.md:127)."""
+        centre with world axes (Maya Reset pivot, research/maya/interaction.md:127)."""
         cursor = context.scene.cursor
         if position:
             centre = selection_center(context)

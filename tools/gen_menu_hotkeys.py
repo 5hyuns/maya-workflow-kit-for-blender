@@ -71,9 +71,9 @@ def table():
             commands.setdefault(path, cmd)
         for path in _paths(m[3], m[0]):      # items without a command of their own still match by label
             commands.setdefault(path, "")
-    # A menu item records the MEL it runs (menus.json "command"); a hotkey records its runTimeCommand's MEL
-    # ("press.command"), label and menu category ("Menu items.Modeling.Edit Mesh"): match on the MEL, else on
-    # (menu, label) for items whose MEL Maya builds at run time ("$cmd").
+    # A menu item records the command it runs (menus.json "command"); a hotkey records its runTimeCommand's
+    # command ("press.command"), label and menu category ("Menu items.Modeling.Edit Mesh"): match on the command,
+    # else on (menu, label) for items whose command Maya builds at run time.
     by_mel, by_label = {}, {}
     for hk in json.loads(HOTKEYS.read_text(encoding="utf-8"))["hotkeys"]:
         if hk["platform"] == "mac-only" or hk.get("context", "global") != "global":

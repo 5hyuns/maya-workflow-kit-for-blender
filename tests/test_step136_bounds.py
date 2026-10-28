@@ -29,7 +29,7 @@ def measure(text):
 BOUNDS = draw.window_bounds(WINDOW, VIEW)
 EDGES = draw.window_edges(WINDOW, VIEW)
 MENUS = tuple(mm.MENUS)
-CROSSED = []   # layouts with rows on a vertical border (reported by the test)   # RMB (dagMenuProc), Shift+RMB, Ctrl+RMB, tool options, hotbox zones, UV, ...
+CROSSED = []   # layouts with rows on a vertical border (reported by the test)   # RMB (RMB_MESH), Shift+RMB, Ctrl+RMB, tool options, hotbox zones, UV, ...
 
 
 def _abs(center, it):

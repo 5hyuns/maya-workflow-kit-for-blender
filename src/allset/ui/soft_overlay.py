@@ -2,7 +2,7 @@
 """Maya soft select look in the 3D View (issues #1, #2; docs/steps/step_129_softsel.md).
 
 - Falloff colours (POST_VIEW): in Edit Mesh with soft select on, every vertex the transform will move gets Maya's
-  false colour (``softSelect -softSelectColorCurve``: yellow at weight 1, red at 0.5, black at 0) on its edges
+  false colour (Maya's soft select colour ramp: yellow at weight 1, red at 0.5, black at 0) on its edges
   and, in vertex select mode, its point — Maya colours the wireframe (research shot
   ``tmp/maya129/out/softsel_00_on.png``). Weights = Blender's transform rule (``operators/soft_select.weights``)
   with the scene's radius, falloff, Surface (connected) and Projected settings, so the colours show what G / R / S

@@ -618,10 +618,10 @@ def _attr_input(md, name, attribute):
 # --- creation ---------------------------------------------------------------------------------------------------
 
 DEFAULTS = {
-    # Tension Options ($P/tension/cmd_create.py:27-38, deform_205.md §1)
+    # Tension Options (Maya factory values, deform_205.md §1)
     'TENSION': {"iterations": 10, "step": 0.5, "pin_border": True, "relative": 0.0, "inward": 0.0, "outward": 0.0,
                 "squash": 1.0, "stretch": 1.0, "shear": 0.0, "bend": 0.0},
-    # Solidify Options ($P/solidify/cmd_create.py:31-36)
+    # Solidify Options (Maya factory values)
     'SOLIDIFY': {"attachment": "Borders", "stabilization": 0, "border_falloff": True, "falloff_iterations": 2},
     # Sculpt Options (Maya factory values)
     'SCULPT': {"mode": "Stretch", "inside_mode": "Even", "max_displacement": 0.1, "dropoff_type": "Linear",
@@ -820,7 +820,8 @@ def _input_points(context, ob, md):
 
 
 def prune_sculpt(context):
-    """Maya ``sculpt -e -pr``: the points the sculptor can't reach leave the node's vertex group. Returns the count."""
+    """Maya ``cmds.sculpt(edit=True, prune=True)``: the points the sculptor can't reach leave the node's vertex group.
+    Returns the count."""
     n = 0
     for ob, md in sculpt_targets(context):
         vg = ob.vertex_groups.get(md.name)
@@ -951,7 +952,7 @@ def _windows():
         return go
     match = "allset.deformer_tss"
     return [
-        # Tension Options ($P/tension/cmd_create.py:27-38): Create / Apply / Close
+        # Tension Options: Create / Apply / Close
         Window("deform_tension", "Tension Options", "Create", (match, {"kind": 'TENSION'}), [
             F("iterations", "Smoothing iterations:", "int", 10, lo=0, hi=100),
             F("step", "Smoothing step:", "float", 0.5, lo=0.0, hi=1.0),
@@ -964,7 +965,7 @@ def _windows():
             F("shear", "Shear strength:", "float", 0.0, lo=0.0, hi=1.0),
             F("bend", "Bend strength:", "float", 0.0, lo=0.0, hi=1.0)], run('TENSION'),
             paths=("Deform/Tension",), missing=ADVANCED),
-        # Solidify Options ($P/solidify/cmd_create.py:31-36)
+        # Solidify Options
         Window("deform_solidify", "Solidify Options", "Create", (match, {"kind": 'SOLIDIFY'}), [
             F("attachment", "Attachment mode:", "enum", "Borders", items=("Borders", "Full")),
             F("stabilization", "Stabilization Level:", "int", 0, lo=0, hi=100),

@@ -3,7 +3,7 @@
 (back to object mode), Ctrl+B bevel (Maya polyBevel3 at once, Chamfer Vertex in vertex mode: step 139),
 Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
-research/maya/interaction.md:75 (SelectNone: ``changeSelectMode -object; select -cl``),
+research/maya/interaction.md:75 (SelectNone: object selection mode, selection cleared),
 :79 (Ctrl+F9-F12 convert), docs/keymap_mapping.md (Ctrl+B BevelPolygon, Maya default hotkey).
 Plan: docs/steps/step_18.md 「계획」 2-3, 5; Delete: docs/steps/step_24.md 「계획」.
 """

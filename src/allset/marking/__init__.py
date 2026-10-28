@@ -145,42 +145,42 @@ def resolve(trigger, context, picked=None):
         if mode != 'EDIT_MESH' or space.mode != 'UV':
             return None
         if trigger == "RMB":
-            return ("pie", idname("textureWindowCreatePopupRadialMenu"))
+            return ("pie", idname("UV_EDITOR_RMB"))
         if trigger == "SHIFT_RMB":
             ts = context.scene.tool_settings
             from .. import compat
             shell = not ts.use_uv_select_sync and compat.uv_island_mode(ts)
-            return ("pie", idname("contextPolyToolsUVShellMM" if shell else "contextPolyToolsUVMM"))
+            return ("pie", idname("SHIFT_UV_SHELL" if shell else "SHIFT_UV"))
         return None
     if trigger == "CTRL_RMB":
-        # Maya's Ctrl+RMB convert menu picks by the lead's shape type, not the mode: a mesh lead gets polyConvertMM in
+        # Maya's Ctrl+RMB convert menu picks by the lead's shape type, not the mode: a mesh lead gets CTRL_CONVERT in
         # object mode too (an item then converts the whole object, modal.CONVERT_FROM_OBJECT; step 136)
         if mode == 'EDIT_MESH' or (mode == 'OBJECT' and ob is not None and ob.type == 'MESH'):
-            return ("pie", idname("polyConvertMM"))
+            return ("pie", idname("CTRL_CONVERT"))
         trigger = "RMB"  # not a mesh -> object menu
     if trigger == "SHIFT_RMB":
         if mode == 'EDIT_MESH':
             vert, edge, face = context.scene.tool_settings.mesh_select_mode
-            name = ("contextPolyToolsFaceMM" if face else "contextPolyToolsEdgeMM" if edge
-                    else "contextPolyToolsVertexMM")
+            name = ("SHIFT_FACE" if face else "SHIFT_EDGE" if edge
+                    else "SHIFT_VERTEX")
             return ("pie", idname(name))
         meshes = [o for o in context.selected_objects if o.type == 'MESH']
-        return ("pie", idname("contextPolyToolsObjectMM" if meshes else "contextPolyToolsDefaultMM"))
+        return ("pie", idname("SHIFT_OBJECT" if meshes else "SHIFT_DEFAULT"))
     # RMB
     from ..operators import pivot_menu
     if pivot_menu.pivot_editing(context):      # D / Insert held or on: the pivot menu (step 94)
-        return ("pie", idname("buildObjectMenuItemsNow_pivot"))
+        return ("pie", idname("PIVOT_EDIT"))
     if mode == 'EDIT_MESH':
-        return ("pie", idname("dagMenuProc"))
+        return ("pie", idname("RMB_MESH"))
     if mode in {'EDIT_CURVE', 'EDIT_SURFACE'}:
-        return ("pie", idname("dagMenuProc_curve"))
+        return ("pie", idname("RMB_CURVE"))
     if mode == 'OBJECT':
         if ob is None:
-            return ("pie", idname("buildObjectMenuItemsNow"))
+            return ("pie", idname("RMB_EMPTY"))
         if ob.type == 'MESH':
-            return ("pie", idname("dagMenuProc"))
+            return ("pie", idname("RMB_MESH"))
         if ob.type in {'CURVE', 'SURFACE'}:
-            return ("pie", idname("dagMenuProc_curve"))
+            return ("pie", idname("RMB_CURVE"))
         return ("menu", "VIEW3D_MT_object_context_menu")  # no Maya radial for this type (delegated)
     return None
 
@@ -330,10 +330,10 @@ def _binding(name, label, tool, menu):
 
 
 TOOL_BINDINGS = (
-    _binding("tool_select", "Select Tool / Options", "builtin.select_box", "selectMarkingMenuImpl"),
-    _binding("tool_move", "Move Tool / Options", "builtin.move", "translateMarkingMenuImpl"),
-    _binding("tool_rotate", "Rotate Tool / Options", "builtin.rotate", "rotateMarkingMenuImpl"),
-    _binding("tool_scale", "Scale Tool / Options", "builtin.scale", "scaleMarkingMenuImpl"),
+    _binding("tool_select", "Select Tool / Options", "builtin.select_box", "OPT_SELECT"),
+    _binding("tool_move", "Move Tool / Options", "builtin.move", "OPT_MOVE"),
+    _binding("tool_rotate", "Rotate Tool / Options", "builtin.rotate", "OPT_ROTATE"),
+    _binding("tool_scale", "Scale Tool / Options", "builtin.scale", "OPT_SCALE"),
 )
 TOOL_KEYS = (("Q", "tool_select"), ("W", "tool_move"), ("E", "tool_rotate"), ("R", "tool_scale"))
 
@@ -358,7 +358,7 @@ class SelectComponentBinding(ToolOptionsBinding):
     name = "select_component"
     label = "Select Tool, Components / Pick Mask"
     tool = "builtin.select_box"
-    menu = "doSelectComponentMM"
+    menu = "SELECT_COMPONENT"
 
     def _set_tool(self):
         context = bpy.context
@@ -379,7 +379,7 @@ class SelectPolygonBinding(ToolOptionsBinding):
     name = "select_polygon"
     label = "Select Tool / Polygon Components"
     tool = "builtin.select_box"
-    menu = "doSelectPolygonMM"
+    menu = "SELECT_POLYGON"
 
     def tap(self, context):
         self._set_tool()

@@ -4,7 +4,7 @@
 Measured in Maya 2022 (docs/steps/step_72.md 「계획」, research/maya/screens/ivm/): a rounded grey box
 (#484848 at opacity 0.75), light text at opacity 0.9 with ``<hl>`` words in yellow #eded08, 25 px lines,
 10 px padding. The default position is the view's top left (10, 11) px in; ``topCenter`` messages sit
-centred at the same height. Fade in about 0.3 s, show 2.0 s (inViewMessageDisplayTime, PREF:218), fade
+centred at the same height. Fade in about 0.3 s, show 2.0 s (inViewMessageDisplayTime), fade
 out about 1.5 s. One message at a time: a new one replaces the old one.
 
 ``show(context, text, pos)``: ``text`` may use ``<hl>...</hl>`` and ``\\n``. The message goes to the 3D View
@@ -22,9 +22,9 @@ from gpu_extras.batch import batch_for_shader
 
 # --- Maya measurements (step_72.md) ------------------------------------------------------------------
 FADE_IN = 0.3
-HOLD = 2.0          # inViewMessageDisplayTime 2.0 (research/maya/defaults.json, PREF:218)
+HOLD = 2.0          # inViewMessageDisplayTime 2.0 (research/maya/defaults.json)
 FADE_OUT = 1.5
-BOX_RGBA = (0.282, 0.282, 0.282, 0.75)   # inViewMessageOpacity 75 (PREF:220)
+BOX_RGBA = (0.282, 0.282, 0.282, 0.75)   # inViewMessageOpacity 75
 TEXT_RGBA = (0.95, 0.95, 0.95, 0.9)
 HL_RGB = (0.93, 0.93, 0.03)
 LINE_PX = 25.0

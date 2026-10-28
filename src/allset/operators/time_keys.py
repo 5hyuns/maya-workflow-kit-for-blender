@@ -3,7 +3,7 @@
 (Cut / Copy / Paste / Delete / Snap / Keys / Tangents / Set Range to).
 
 research/maya/workflows/animation.md §1.1 (S keys every keyable attribute), §3 rows 5, 8, 11-13; Maya
-Time Slider menu (the time slider edits act on ``timeControl -q -range``: the
+Time Slider menu (the time slider edits act on the Time Slider's highlighted range: the
 Shift-dragged range, else the current frame), design docs/steps/step_56.md 「계획」 2, 4.
 
 Nodes are the Channel Box's (``ui/channel_box.targets``): selected objects, or the selected pose bones
@@ -140,7 +140,7 @@ def set_key(context, breakdown=False, channels=""):
     from ..ui import cb_channels
     count = 0
     for node in nodes(context):
-        # Channel Box Sync Selection in Graph Editor on: S keys the selected channels (step 158, Maya setKeyframeWhich 1)
+        # Channel Box Sync Selection in Graph Editor on: S keys the selected channels (step 158, as in Maya)
         synced = None if only is not None else cb_channels.synced_keys(context, node)
         for key in synced if synced is not None else keyable_channels(node):
             if (only is None or key in only) and _cb().is_keyable(node, key):
@@ -254,13 +254,13 @@ def key_span(context):
 
 # --- Maya Key menu commands with their options (step 140, issue #35) ------------------------------
 # Maya's Key > Delete / Cut / Copy / Paste / Scale / Snap Keys run cutKey / copyKey / pasteKey / scaleKey / snapKey with
-# the option window's values (research/maya/re/option_boxes_140.md; doCutKeyArgList: Time range All = no -time, Time
+# the option window's values (research/maya/re/option_boxes_140.md: Time range All = every key, Time
 # Slider = the playback range, Start/End = the fields). Results measured with mayapy:
 # research/maya/re/option_boxes_140_edit.md. Values (pivots, offsets, multiples) are Maya values: display units for
 # translations, degrees for rotations.
 
 class KeyScope:
-    """The keySetOptionBoxCommon fields: which nodes, channels and times a key command acts on."""
+    """The common Maya key window fields: which nodes, channels and times a key command acts on."""
 
     NAMES = ("objects", "hierarchy", "channels", "driven", "shapes", "time_range", "start", "end")
 
@@ -358,7 +358,7 @@ def scope_range(context, scope):
     """(a, b) of a key command, or None = every key (Maya Time range All)."""
     if scope.time_range == "Start/End":
         return min(scope.start, scope.end), max(scope.start, scope.end)
-    if scope.time_range == "Time Slider":     # doCutKeyArgList: playbackOptions -min / -max
+    if scope.time_range == "Time Slider":     # Maya: the playback range
         sc = context.scene
         if sc.use_preview_range:
             return float(sc.frame_preview_start), float(sc.frame_preview_end)

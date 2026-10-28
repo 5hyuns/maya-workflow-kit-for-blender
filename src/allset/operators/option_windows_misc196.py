@@ -5,7 +5,7 @@
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator, bound to its
 menu paths; option_windows._extend appends ``WINDOWS``). Titles, buttons, labels and factory values come from Maya
-2022's option-window MEL and mayapy (research/maya/re/options_196_misc.md / .json, with $M file:line); fields the kit
+2022's option windows and mayapy (research/maya/re/options_196_misc.md / .json); fields the kit
 can't honour are only listed (``missing``), never faked. Every window run with its defaults does what the plain menu
 item does; Merge UVs / Smooth (Modify section) run the kit's Maya-measured operators, like their plain menu items
 (menu_map, step 196).

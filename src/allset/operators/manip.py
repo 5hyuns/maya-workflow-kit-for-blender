@@ -2,7 +2,7 @@
 """Maya Smart Duplicate / Smart Extrude: Shift+drag a Move/Rotate/Scale manipulator
 duplicates the selected objects, or extrudes the selected faces/edges, and the drag
 transforms the copies / new components (research/maya/interaction.md:107,
-``manipSmartDuplicate 1``, ``manipSmartExtrude 1``, PREF:371-374).
+optionVars ``manipSmartDuplicate 1``, ``manipSmartExtrude 1``).
 
 Blender's transform gizmo is C (research/blender/api_limits.md:62). Its keymap
 (``Generic Gizmo Maybe Drag``) runs ``gizmogroup.gizmo_tweak`` for any Shift; the

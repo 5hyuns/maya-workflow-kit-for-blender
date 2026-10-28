@@ -22,7 +22,7 @@ from bpy.props import EnumProperty, IntProperty, StringProperty
 _WINDOWS = set()        # window pointers of kit Render Settings windows
 _wrapped = []           # (panel class, its own poll or None, child panels)
 
-# Maya image size presets (captured resolutionMenu labels; sizes [K] Maya presets, HD 540 = 960 x 540 measured as the
+# Maya image size presets (Render Settings Presets labels; sizes [K] Maya presets, HD 540 = 960 x 540 measured as the
 # factory default): key -> (label, width, height, pixel aspect)
 SIZES = (
     ("320x240", "320x240", 320, 240, 1.0), ("640x480", "640x480", 640, 480, 1.0),

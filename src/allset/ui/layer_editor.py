@@ -457,7 +457,7 @@ def draw_anim_layer_mode(layout, context):
 
 
 class ALLSET_MT_le_layers(bpy.types.Menu):
-    """Maya Layer Editor Layers menu (layerEditorBuildDisplayLayerMenu, research/maya/channel_box.md:141)"""
+    """Maya Layer Editor Layers menu (research/maya/channel_box.md:141)"""
     bl_label = "Layers"
 
     def draw(self, context):
@@ -495,7 +495,7 @@ def draw_button_menu(self, context):
 
 
 class ALLSET_MT_le_options(bpy.types.Menu):
-    """Maya Layer Editor Options menu (layerEditorBuildDisplayOptionMenu)"""
+    """Maya Layer Editor Options menu"""
     bl_label = "Options"
 
     def draw(self, context):
@@ -517,7 +517,7 @@ HELP_URL = "https://docs.blender.org/manual/en/4.5/scene_layout/collections/coll
 TABS = (('DISPLAY', "Display", "Display layers"), ('ANIM', "Anim", "Animation layers"))
 MENU_BAR = (("Layers", "ALLSET_MT_le_layers"), ("Options", "ALLSET_MT_le_options"), ("Help", "ALLSET_MT_le_help"))
 
-# Maya Anim tab Layers menu (layerEditorBuildAnimLayerMenu, Maya order; labels m_layerEditor.*): the items the kit's
+# Maya Anim tab Layers menu (Maya order and labels): the items the kit's
 # NLA layers carry (step 180 operators/anim_layers.py, step 204 operators/anim_layers_204.py). Zero Key Layer is a Maya
 # toolbar button (also on the kit toolbar), kept here after Merge Layers since step 194.
 ANIM_LAYER_MENU = (
@@ -540,7 +540,7 @@ ANIM_LAYER_MENU = (
     ("allset.anim_layer_empty", "Empty", {}),
     ("allset.anim_layer_delete_empty", "Delete Empty Layers", {}),
 )
-# Maya's Anim tab toolbar, left part (createAnimLayerEditor: zeroKey / keyZeroWeight / keyFullWeight buttons;
+# Maya's Anim tab toolbar, left part (Zero Key / Zero Weight / Full Weight buttons;
 # Blender icons until kit glyphs are drawn)
 ANIM_TOOLBAR = (
     ("allset.anim_layer_zero_key", 'KEYFRAME', {}),
@@ -553,12 +553,12 @@ ANIM_TOGGLES = (("lock", ('UNLOCKED', 'LOCKED')), ("solo", ('SOLO_OFF', 'SOLO_ON
                 ("mute", ('MUTE_IPO_OFF', 'MUTE_IPO_ON')))
 
 
-# Maya greys these Layers menu items while BaseAnimation is among the selected layers ($M:485-557,
-# research/maya/re/anim_layers_201.md §1: Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
+# Maya greys these Layers menu items while BaseAnimation is among the selected layers
+# (research/maya/re/anim_layers_201.md §1: Add / Remove Selected Objects, Select Objects, Select Branch / Layer Node,
 # Export, Membership, Attribute Editor, Delete, Empty, Delete Empty Layers, Layer Mode). With no layer selected Maya
 # enables everything; the kit always has a selected layer (delegated).
 GREY_WITH_BASE = ("Add Selected Objects", "Remove Selected Objects", "Delete", "Empty", "Delete Empty Layers")
-# Layer row right-click menu (layerEditorBuildPopupMenu $M:1901-2165, anim_layers_201.md §1): the Layers menu without
+# Layer row right-click menu (anim_layers_201.md §1): the Layers menu without
 # the Create / Extract Non-Layered items, plus Lock / Mute / Solo; on BaseAnimation only Extract, Duplicate x2, Merge
 # and Lock stay enabled. Exclusive solo, Select Objects / All / Branch / Layer Node, Export, Membership and Attribute
 # Editor are not in the kit (remaining).

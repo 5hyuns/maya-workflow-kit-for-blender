@@ -320,7 +320,7 @@ MAP = {
     "Mesh/Booleans/Union": ("allset.boolean", {"operation": 'UNION'}),
     "Mesh/Booleans/Difference (A - B)": ("allset.boolean", {"operation": 'DIFFERENCE'}),
     "Mesh/Booleans/Intersection": ("allset.boolean", {"operation": 'INTERSECT'}),
-    # step 219: Maya 2026 Booleans (maya2026_menus_dump.json; PolygonBooleanDifferenceBA = polyPerformBooleanAction 4)
+    # step 219: Maya 2026 Booleans (maya2026_menus_dump.json; PolygonBooleanDifferenceBA = Difference B - A)
     "Mesh/Booleans/Difference (B - A)": ("allset.boolean", {"operation": 'DIFFERENCE_BA'}),
     "Mesh/Unsmooth": ("v3d", "mesh.unsubdivide", {}),        # UnsmoothPolygon -> Blender Un-Subdivide
     "Mesh/Fill Hole": "mesh.fill_holes",
@@ -796,7 +796,7 @@ MAP.update({
     "Deform/Nonlinear/Squash": _deformer('SQUASH'),
     "Deform/Nonlinear/Sine": _deformer('SINE'),
     "Deform/Blend Shape#2/Remove": "object.shape_key_remove",
-    # Paint Weights > <deformer>: Weight Paint on that deformer's vertex group (step 144; Maya artAttrToolScript 4
+    # Paint Weights > <deformer>: Weight Paint on that deformer's vertex group (step 144; Maya's paint tool
     # "<type>", research/maya/re/options_144.md); Tension / Wire / Jiggle have no Blender deformer (greyed)
     **{f"Deform/Paint Weights/{label}": ("allset.paint_deformer_weights", {"kind": kind}) for label, kind in (
         ("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),
@@ -833,7 +833,7 @@ MAP.update({
     "UV/Best Plane": "allset.uv_planar",
     "UV/Contour Stretch": "allset.uv_contour",    # Follow Active Quads + stretch to 0-1 (step 139)
     "UV/Split UVs": "allset.uv_split",        # SplitUV = polySplitTextureUV, like UV Editor Cut/Sew > Split (step 206)
-    "UV/Auto Seams": "allset.uv_auto_seams",  # performPolyAutoSeamUV 0 (step 206, research/maya/re/uv_201.md §4)
+    "UV/Auto Seams": "allset.uv_auto_seams",  # Maya UV > Auto Seams (step 206, research/maya/re/uv_201.md §4)
     # Generate (XGen -> hair curves)
     "Generate/Create Description...": "object.curves_empty_hair_add",
     "Generate/Create Interactive Groom Splines": "object.curves_empty_hair_add",
@@ -973,8 +973,8 @@ EDIT_MODE = {
     "Select/Hierarchy": ("none",),
     "Select/Similar": ("run", "mesh.select_similar"),           # SelectSimilar on components (step 136, delegated)
     "Edit/Delete": ("run", "allset.delete_components"),        # the Delete key (step 24)
-    "Edit/Cut": ("run", "allset.delete_components"),           # deleteComponent; nothing goes to the clipboard
-    "Edit/Group": ("object", _create('EMPTY_GROUP')),          # doGroup on components = an empty group null1
+    "Edit/Cut": ("run", "allset.delete_components"),           # deletes the components; nothing goes to the clipboard
+    "Edit/Group": ("object", _create('EMPTY_GROUP')),          # Group on components = an empty group null1
     "Edit/Duplicate": ("warn", _NO_DUPLICATE),
     "Edit/Duplicate Special": ("warn", _NO_DUPLICATE),
     "Edit/Duplicate with Transform": ("owner", "allset.duplicate_with_transform"),   # pCube2, f[1] kept

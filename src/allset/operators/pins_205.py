@@ -2,18 +2,17 @@
 """Step 205 lane P (issue #112): Constrain > UV Pin / Proximity Pin, Deform > Display / Hide Intermediate Objects,
 Deform > Wrap > Add / Remove Influence.
 
-Maya 2022 behaviour read from its own scripts (behaviour only, nothing copied; $P = Python37/Lib/site-packages/maya/
-internal, $M = scripts):
+Maya 2022 behaviour (Maya's option windows and mayapy, research/maya/re/deform_205.md §7):
 
-- UV Pin ($P/nodes/uvpin/cmd_create.py:47-55, :67-117; common/pin/node_interface.py:206-255): factory = Pin locations
+- UV Pin: factory = Pin locations
   *Transforms*, Output *Existing Transform*, Normal axis X, Tangent axis Y, UV set "" (current), Normalize isoparms on.
   The geometry is selected first, then the transforms. For each transform the UV at the closest point of the
-  geometry (common/utils/geometry.py:331) becomes an input of one uvPin node (``uvPin1``); the transform's translate /
-  rotate / scale are cleared (common/utils/transform.py:109), the node's output matrix drives its offsetParentMatrix
+  geometry becomes an input of one uvPin node (``uvPin1``); the transform's translate /
+  rotate / scale are cleared, the node's output matrix drives its offsetParentMatrix
   and inheritsTransform is turned off ("Inherit transform has been turned off for [...]"). Components mode (option)
-  pins new ``pinOutput`` transforms / locators to the selected vertices' UVs, faces' mean UV, edges' mid UV
-  (geometry.py:229-262); with Existing Transform it errors "Output mode does not work with this creation mode".
-- Proximity Pin ($P/nodes/proximitypin/cmd_create.py:54-120, node_interface.py:19-75): factory = Setup Transforms,
+  pins new ``pinOutput`` transforms / locators to the selected vertices' UVs, faces' mean UV, edges' mid UV;
+  with Existing Transform it errors "Output mode does not work with this creation mode".
+- Proximity Pin: factory = Setup Transforms,
   Output Existing Transform, Input *New Locator*, Maintain offset on, Mode Edge, axes X / Y. One proximityPin node; per
   transform a ``pinInput`` locator holding the transform's matrix relative to the geometry, the transform cleared and
   driven by the node. Components setup: "Not yet implemented...".
@@ -554,7 +553,7 @@ def _empty(context, name, like, display='PLAIN_AXES', size=None):
 
 
 def _clear_channels(ob):
-    """Maya clearTransformAttributes: translate / rotate / shear 0, scale 1 (the pin drives the transform)."""
+    """Maya clears the pinned transform: translate / rotate / shear 0, scale 1 (the pin drives the transform)."""
     ob.location = (0.0, 0.0, 0.0)
     ob.rotation_euler = (0.0, 0.0, 0.0)
     ob.rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
@@ -600,8 +599,8 @@ def _geometry_and_targets(context):
 
 
 def _component_uvs(ob):
-    """Maya getUvsFromSelection on a mesh in edit mode: vertices -> their UV, faces -> mean corner UV, edges -> mid of
-    the two vertices' UVs (geometry.py:229-262; the vertex UV = its first face corner)."""
+    """Maya's UVs of the selection on a mesh in edit mode: vertices -> their UV, faces -> mean corner UV, edges -> mid
+    of the two vertices' UVs (the vertex UV = its first face corner)."""
     bm = bmesh.from_edit_mesh(ob.data)
     uvl = bm.loops.layers.uv.active
     if uvl is None:
@@ -720,7 +719,7 @@ def proximity_pin(context, setup='TRANSFORMS', output='CURRENT', input_='LOCATOR
     update(depsgraph)
     context.view_layer.update()
     for o in inputs:
-        o.select_set(True)                       # Maya selects the created nodes (finalizeCommand addToSelection)
+        o.select_set(True)                       # Maya selects the created nodes
     return node, pinned, inputs, inherit
 
 
@@ -1118,7 +1117,7 @@ def _windows():
             maintain_offset=v["maintain_offset"], mode=v["mode"].upper(), normal_axis=v["normal_axis"],
             tangent_axis=v["tangent_axis"])
     return [
-        # $P/nodes/uvpin/cmd_create.py:47-55 (optionVarDefaults), labels cmd_create_res.py / common/pin
+        # Maya's UV Pin Options: factory values and labels
         Window("uv_pin", "UV Pin Options", "Add", ("allset.uv_pin", {}),
                [F("setup", "Pin locations", "enum", "Transforms", items=("Components", "Transforms"),
                   heading="Connections"),
@@ -1127,7 +1126,7 @@ def _windows():
                 F("tangent_axis", "Tangent axis", "enum", "Y", items=axes)],
                run_uv, paths=("Constrain/UV Pin",),
                missing=("Output: Matrix", "UV set name (the active UV map)", "Normalize isoparms (NURBS)")),
-        # $P/nodes/proximitypin/cmd_create.py:54-64
+        # Maya's Proximity Pin Options
         Window("proximity_pin", "Proximity Pin Options", "Add", ("allset.proximity_pin", {}),
                [F("setup", "Setup mode", "enum", "Transforms", items=("Components", "Transforms"),
                   heading="Connections"),
