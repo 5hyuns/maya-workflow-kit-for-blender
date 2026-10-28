@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Make Live lists/history, reversible viewport selection restrictions and target queries."""
+from collections import OrderedDict
 import bpy
 from bpy.app.handlers import persistent
 from mathutils import Vector
@@ -10,7 +11,8 @@ LIMIT = 16
 LOCK = '_allset_live_select_before'
 _busy = False
 _locked = {}
-_trees = {}
+_trees = OrderedDict()
+CACHE_BUDGET = 256 * 1024 * 1024  # estimated retained BVH bytes; one oversized surface may occupy the cache alone
 
 
 class ALLSET_PG_live_ref(bpy.types.PropertyGroup):
@@ -70,6 +72,7 @@ def sync():
             wanted.update((ob.session_uid, ob) for ob in refs)
         for uid, ob in list(_locked.items()):
             if uid not in wanted:
+                _trees.pop(uid, None)
                 try:
                     _restore(ob)
                 except ReferenceError:
@@ -238,23 +241,69 @@ class ALLSET_MT_live_history(bpy.types.Menu):
             op.action, op.object_name = 'REMOVE', ob.name
 
 
+class SurfaceTree:
+    """World-space queries over a native local BVH for similarity transforms."""
+    def __init__(self, bvh, triangles, matrix=None):
+        self.bvh, self.triangles, self.matrix = bvh, triangles, matrix
+        if matrix is not None:
+            self.inverse = matrix.inverted()
+            self.normals = self.inverse.to_3x3().transposed()
+            if matrix.determinant() < 0:
+                self.normals *= -1
+
+    def _world(self, hit, source):
+        point, normal, face, distance = hit
+        if point is None or self.matrix is None:
+            return hit
+        point = self.matrix @ point
+        return point, (self.normals @ normal).normalized(), face, (point-source).length
+
+    def ray_cast(self, origin, direction):
+        if self.matrix is None:
+            return self.bvh.ray_cast(origin, direction)
+        hit = self.bvh.ray_cast(self.inverse @ origin, (self.inverse.to_3x3() @ direction).normalized())
+        return self._world(hit, origin)
+
+    def find_nearest(self, point):
+        return self._world(self.bvh.find_nearest(self.inverse @ point), point) if self.matrix is not None else self.bvh.find_nearest(point)
+
+
+def _similarity(matrix):
+    """Local nearest distance is valid only for orthogonal axes of equal nonzero length."""
+    axes = matrix.to_3x3().col
+    lengths = [axis.length_squared for axis in axes]
+    scale = max(lengths)
+    return (min(lengths) > 1e-20 and max(lengths)-min(lengths) <= scale*1e-6
+            and all(abs(axes[i].dot(axes[j])) <= scale*1e-6 for i, j in ((0, 1), (0, 2), (1, 2))))
+
+
 def tree(context, ob):
-    """Cached evaluated geometry in world space: nearest queries remain correct under nonuniform scale."""
+    """Cache evaluated surfaces without expanding uniform-scale meshes into Python vertex/face lists."""
     mw = ob.matrix_world.copy()
     signature = tuple(map(tuple, mw))
     cached = _trees.get(ob.session_uid)
     if cached and cached[0] == signature:
+        _trees.move_to_end(ob.session_uid)
         return cached[2]
-    import numpy as np
-    ev = ob.evaluated_get(context.evaluated_depsgraph_get())
+    depsgraph = context.evaluated_depsgraph_get()
+    ev = ob.evaluated_get(depsgraph)
     mesh = ev.data
-    co = np.empty(len(mesh.vertices)*3, dtype=np.float32)
-    mesh.vertices.foreach_get('co', co)
-    world = co.reshape(-1, 3) @ np.array(mw.to_3x3(), dtype=np.float32).T + np.array(mw.translation, dtype=np.float32)
-    result = BVHTree.FromPolygons(world.tolist(), [tuple(p.vertices) for p in mesh.polygons], all_triangles=False)
-    _trees[ob.session_uid] = (signature, ob.data.session_uid, result)
-    while len(_trees) > 64:
-        del _trees[next(iter(_trees))]
+    triangles = max(0, len(mesh.loops)-2*len(mesh.polygons))
+    if _similarity(mw):
+        result = SurfaceTree(BVHTree.FromObject(ev, depsgraph), triangles, mw)
+    else:
+        # Anisotropic scale/shear needs world-space geometry for correct nearest
+        # distances. Keep this path exact rather than approximating its metric.
+        import numpy as np
+        co = np.empty(len(mesh.vertices)*3, dtype=np.float32)
+        mesh.vertices.foreach_get('co', co)
+        world = co.reshape(-1, 3) @ np.array(mw.to_3x3(), dtype=np.float32).T + np.array(mw.translation, dtype=np.float32)
+        result = SurfaceTree(BVHTree.FromPolygons(world.tolist(), [tuple(p.vertices) for p in mesh.polygons]), triangles)
+    cost = triangles*128 + len(mesh.vertices)*12
+    _trees[ob.session_uid] = (signature, ob.data.session_uid, result, cost)
+    _trees.move_to_end(ob.session_uid)
+    while len(_trees) > 1 and (len(_trees) > 64 or sum(value[3] for value in _trees.values()) > CACHE_BUDGET):
+        _trees.popitem(last=False)
     return result
 
 
@@ -263,13 +312,22 @@ def ray_hit(context, origin, direction, targets=None, backfaces=True):
     for ob in objects(context.scene) if targets is None else targets:
         bvh = tree(context, ob)
         point, normal, _face, distance = bvh.ray_cast(origin, direction)
-        for _ in range(16):
+        for _ in range(bvh.triangles+1):
             if point is None or backfaces or normal.dot(direction) <= 0:
                 break
-            point, normal, _face, _d = bvh.ray_cast(point+direction*1e-5, direction)
+            previous = point
+            epsilon = max(1e-7, max(abs(c) for c in point)*2**-23)
+            cursor = point+direction*epsilon
+            if (cursor-point).dot(direction) <= 0:
+                point = None
+                break
+            point, normal, _face, _d = bvh.ray_cast(cursor, direction)
             if point is not None:
+                if (point-previous).dot(direction) <= 0:
+                    point = None
+                    break
                 distance = (point-origin).length
-        if point is not None and (best is None or distance < best[0]):
+        if point is not None and (backfaces or normal.dot(direction) <= 0) and (best is None or distance < best[0]):
             best = distance, point, normal, ob
     return best[1:] if best else None
 

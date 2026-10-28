@@ -6,6 +6,15 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Make Live performance**: cache verified Outliner row matches, read its pixels
+  once per draw and compare glyph bounds before testing translations. Native
+  BVHs avoid Python geometry expansion for uniform-scale reference meshes;
+  nonuniform scale/shear retains exact world-distance queries. Evict least-recent
+  BVHs under an estimated memory budget and release references removed from the
+  last live scene. A single oversized surface may occupy the cache alone.
+- **Quad Draw backfaces**: continue through deep stacks of rejected backfaces
+  until a front face or a miss, with progress checks; never accept a backface
+  merely because an iteration limit was reached.
 - **Maya mode startup**: defer Make Live scene reconciliation until `load_post`
   when Blender restricts data during addon registration. Saved Maya mode can
   register fully on restart and show its layout again.
