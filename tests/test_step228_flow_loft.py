@@ -4,7 +4,6 @@ setups research/scripts/maya_curves228/measure.py). Maya (x, y, z) -> Blender (x
 
 import json
 import math
-import os
 from importlib import import_module
 
 import bpy
@@ -18,9 +17,7 @@ cmaya = import_module(kit.MODULE + ".operators.curves_maya")
 flowmod = import_module(kit.MODULE + ".operators.flow_path_228")
 units = import_module(kit.MODULE + ".operators.units")
 
-DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                    "research", "maya", "re", "curve_rigs_228.json")
-with open(DATA, encoding="utf-8") as _fh:
+with open(kit.maya_data("maya", "re", "curve_rigs_228.json"), encoding="utf-8") as _fh:
     D = json.load(_fh)
 
 

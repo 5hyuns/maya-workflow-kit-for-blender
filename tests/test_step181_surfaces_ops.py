@@ -4,7 +4,6 @@
 Blender evaluates = Maya's surface at the same parameters (every direction, Bezier-decomposed ones included)."""
 
 import json
-import os
 from importlib import import_module
 
 import bpy
@@ -16,8 +15,6 @@ sm = import_module(kit.MODULE + ".operators.surfaces_math")
 smaya = import_module(kit.MODULE + ".operators.surfaces_maya")
 cmaya = import_module(kit.MODULE + ".operators.curves_maya")
 
-DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                    "research", "maya", "re", "surfaces_181.json")
 TOL = 1e-4          # task threshold (actual errors are float32 noise, ~1e-6)
 _D = None
 
@@ -25,7 +22,7 @@ _D = None
 def data():
     global _D
     if _D is None:
-        with open(DATA, encoding="utf-8") as fh:
+        with open(kit.maya_data("maya", "re", "surfaces_181.json"), encoding="utf-8") as fh:
             _D = json.load(fh)
     return _D
 

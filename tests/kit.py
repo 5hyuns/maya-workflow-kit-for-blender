@@ -7,6 +7,30 @@ import addon_utils
 import bpy
 
 MODULE = os.environ.get("ALLSET_MODULE", "bl_ext.user_default.allset")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+class Skip(Exception):
+    """Raised by a test (or at import of a test file) that can't run here; tests/_bootstrap.py records SKIP."""
+
+
+def maya_data(*parts):
+    """Path of a Maya reference file named relative to ``research/`` (e.g. ``"maya", "re", "x.json"``):
+    ``tests/data/<parts>`` (measured numbers, in git) first, then the maintainer's ``research/<parts>`` (not in git).
+    Raises Skip when neither has it, so a fresh clone skips the comparison instead of failing."""
+    for base in (os.path.join(ROOT, "tests", "data"), os.path.join(ROOT, "research")):
+        path = os.path.join(base, *parts)
+        if os.path.exists(path):
+            return path
+    raise Skip("Maya reference data not here: research/" + "/".join(parts))
+
+
+def research(*parts):
+    """Path of an input the tools/gen_*.py generators read from ``research/`` itself; Skip when it isn't there."""
+    path = os.path.join(ROOT, "research", *parts)
+    if not os.path.exists(path):
+        raise Skip("generator input not here: research/" + "/".join(parts))
+    return path
 
 
 def _raise(ex):

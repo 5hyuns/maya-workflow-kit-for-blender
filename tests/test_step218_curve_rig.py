@@ -20,7 +20,7 @@ parenting = import_module(kit.MODULE + ".operators.parenting")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-with open(os.path.join(ROOT, "research", "maya", "re", "maya2026_curve_rigs.json"), encoding="utf-8") as fh:
+with open(kit.maya_data("maya", "re", "maya2026_curve_rigs.json"), encoding="utf-8") as fh:
     MAYA = json.load(fh)
 
 CVS = [(1, 0, 0), (2, 2, 0), (1, 4, 1), (0, 6, 0), (1, 8, 0)]

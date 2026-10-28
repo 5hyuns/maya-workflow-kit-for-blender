@@ -221,7 +221,7 @@ def test_other_keys():
 # --- every row classified ------------------------------------------------------------------------------------------
 
 def test_no_unreviewed_rows():
-    hot = json.loads((ROOT / "research" / "maya" / "hotkeys_default.json").read_text(encoding="utf-8"))["hotkeys"]
+    hot = json.loads(Path(kit.maya_data("maya", "hotkeys_default.json")).read_text(encoding="utf-8"))["hotkeys"]
     unreviewed = [(h["display"], h["context"], h["line"]) for h in hot
                   if h["platform"] != "mac-only" and mapping.entry_for(h) is None]
     assert len(unreviewed) < 100, unreviewed
