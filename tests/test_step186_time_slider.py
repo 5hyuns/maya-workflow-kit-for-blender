@@ -50,14 +50,22 @@ def test_ticks_and_rows():
     assert (y0, y1) == (32 - 28, 32 - 13), "Maya rows 13-27 of 32 (top-down) as region y (bottom-up)"
     y0, y1 = ts._rows("label", 64.0)
     assert (y0, y1) == (64 - 9, 64 - 1), "ruler stays at the top at its normal height"
-    for name in ("label", "current_label", "strip", "bookmark"):
+    for name in ("label", "strip", "bookmark"):
         rows = ts.ROWS_BOOKMARKS if name in ("strip", "bookmark") else ts.ROWS
         normal = ts._rows(name, 32, rows)
         tall = ts._rows(name, 320, rows)
         assert tuple(320 - y for y in tall) == tuple(32 - y for y in normal), name
-    assert ts._rows("tick", 320) == (4, 320 - 13), "ticks stretch down to the fixed bottom margin"
-    assert ts._rows("tick", 320, scale=2) == (8, 320 - 26)
-    assert ts._rows("tick", 320, ts.ROWS_BOOKMARKS) == (4, 320 - 23)
+    # #190, Maya 2026 (checked): the current frame number stays at the bottom, ticks keep their bottom end and
+    # grow into half the room under the frame numbers
+    assert ts._rows("current_label", 320) == ts._rows("current_label", 32) == (8, 16)
+    assert ts._rows("tick", 40) == (4, 4 + 15), "a little taller: the normal tick"
+    y0, y1 = ts._rows("tick", 320)
+    assert y0 == 4 and abs(y1 - ((320 - 9 + 4) / 2 - ts.TICK_HALF_PAD)) < 1e-9, (y0, y1)
+    assert y1 < 320 / 2, "ticks never reach up to the frame numbers"
+    y0, y1 = ts._rows("tick", 320, scale=2)
+    assert y0 == 8 and abs(y1 - ((320 - 18 + 8) / 2 - 2 * ts.TICK_HALF_PAD)) < 1e-9, (y0, y1)
+    y0, y1 = ts._rows("tick", 320, ts.ROWS_BOOKMARKS)
+    assert y0 == 4 and abs(y1 - ((320 - 19 + 4) / 2 - ts.TICK_HALF_PAD)) < 1e-9, (y0, y1)
     assert ts._rows("band", 320) == (0, 3), "bottom band stays at the bottom"
     assert ts._rows("tick", 16) == (2, 9.5), "small regions still fit the ruler"
     assert ts.label_digits(-12) == 3 and ts.label_digits(1000) == 4
