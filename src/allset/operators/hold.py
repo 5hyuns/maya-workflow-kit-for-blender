@@ -97,6 +97,15 @@ def latch_object_pivot(ts):
         _object_toggle_saved = state["saved"]
 
 
+def end_pivot_edit(context):
+    """Maya: choosing a transform tool (W / E / R / Q) ends a pivot edit that a D tap or Insert left on."""
+    ts = context.scene.tool_settings
+    if COMPONENT.on and COMPONENT.toggled:
+        COMPONENT.finish(context)
+    elif ts.use_transform_data_origin and _object_toggle_saved is not None and "pivot" not in _state:
+        toggle_object_pivot(ts)
+
+
 def toggle_object_pivot(ts):
     global _object_toggle_saved
     if ts.use_transform_data_origin:
@@ -250,6 +259,50 @@ def turned(before, after, eps=1e-5):
     return any(abs(before[i][j] - after[i][j]) > eps for i in range(3) for j in range(3))
 
 
+def _selection_flags(context):
+    """Selected vertices / edges / faces and the selection history of each mesh in edit mode, by object name."""
+    import bmesh
+    flags = {}
+    for ob in getattr(context, "objects_in_mode_unique_data", ()) or ():
+        if ob.type != 'MESH' or not ob.data.is_editmode:
+            continue
+        bm = bmesh.from_edit_mesh(ob.data)
+        for seq in (bm.verts, bm.edges, bm.faces):
+            seq.index_update()
+        history = [(type(e).__name__, e.index) for e in bm.select_history]
+        flags[ob.name] = ([v.select for v in bm.verts], [e.select for e in bm.edges], [f.select for f in bm.faces],
+                          history)
+    return flags
+
+
+def _restore_selection_flags(flags):
+    """Put back what ``_selection_flags`` read, where the mesh still has the same element counts."""
+    import bmesh
+    for name, (verts, edges, faces, history) in (flags or {}).items():
+        ob = bpy.data.objects.get(name)
+        if ob is None or ob.type != 'MESH' or not ob.data.is_editmode:
+            continue
+        bm = bmesh.from_edit_mesh(ob.data)
+        if (len(bm.verts), len(bm.edges), len(bm.faces)) != (len(verts), len(edges), len(faces)):
+            continue
+        # an element's select setter also changes its sub-elements: clear everything, then select upwards
+        for seq in (bm.faces, bm.edges, bm.verts):
+            for e in seq:
+                e.select = False
+        for seq, sel in ((bm.verts, verts), (bm.edges, edges), (bm.faces, faces)):
+            for e, on in zip(seq, sel):
+                if on:
+                    e.select = True
+        for seq in (bm.verts, bm.edges, bm.faces):
+            seq.ensure_lookup_table()
+        bm.select_history.clear()
+        kinds = {'BMVert': bm.verts, 'BMEdge': bm.edges, 'BMFace': bm.faces}
+        for kind, i in history:
+            if i < len(kinds[kind]):
+                bm.select_history.add(kinds[kind][i])
+        bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
+
+
 class ComponentPivotEdit:
     """One edit-mode pivot edit: the 3D cursor is the pivot, the cursor tool places it (step 18), a
     changed cursor rotation becomes the "Maya Pivot" Move orientation (step 59 P8, now in edit mode)."""
@@ -277,9 +330,11 @@ class ComponentPivotEdit:
         self.location = cursor.location.copy()
         self.rotation = cursor.matrix.to_3x3()
         self.select_mode = tuple(ts.mesh_select_mode)
+        self.selection = _selection_flags(context)
         self.on, self.toggled, self.pending_tool = True, toggled, None
         ts.transform_pivot_point = 'CURSOR'
         ts.mesh_select_mode = (True, True, True)
+        _restore_selection_flags(self.selection)      # switching select modes grows the selection: keep it as it was
         # the pivot is the 3D cursor: the Maya layout hides it (Maya has none, #59), show it while it is edited
         self.cursors |= show_cursors()
         _tool_set(context, CURSOR_TOOL, self.area_ptr)
@@ -301,6 +356,8 @@ class ComponentPivotEdit:
         rot = cursor.matrix.to_3x3()
         rotated = turned(self.rotation, rot)
         ts.mesh_select_mode = self.select_mode
+        _restore_selection_flags(getattr(self, "selection", None))
+        self.selection = None
         ts.transform_pivot_point = component_pivot_after(self.pivot, moved or rotated)
         self.custom = ts.transform_pivot_point == 'CURSOR'
         self.sel_sig = selection_signature(context) if self.custom else None

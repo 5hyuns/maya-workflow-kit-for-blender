@@ -318,6 +318,8 @@ class ToolOptionsBinding(taphold.TapHoldBinding):
         if kind and tool is not None and tool.idname == self.tool:
             from ..operators import manip
             manip.reset_handle(kind)
+        from ..operators import hold
+        hold.end_pivot_edit(context)
         self._set_tool()
 
     def click(self, context, event):

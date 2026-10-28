@@ -4,6 +4,7 @@ With a mesh selected in Object Mode or mesh Edit Mode, tap **D** or **Insert**
 to enter custom pivot editing. Tap either key again to finish. Holding **D**
 and using the mouse keeps the existing temporary workflow: releasing **D** exits.
 A tap is an unused press shorter than 0.3 seconds.
+Choosing a transform tool (**Q / W / E / R**) also finishes a tapped pivot edit.
 
 While editing, click a visible vertex, edge or face to place and align the pivot.
 Vertices use their exact position, edges their midpoint, and faces their median
@@ -16,7 +17,7 @@ The manipulator handles retain priority on their own pixels.
 - **Ctrl+Shift-click:** aim the active manipulator axis at the component.
 
 Mesh Edit Mode temporarily enables vertex, edge and face picking together and
-restores the original selection mode on exit. Picking leaves the selected
+restores the original selection mode and selection on exit. Picking leaves the selected
 components and world geometry intact. The existing cursor tool can also drag the component pivot.
 The resulting custom pivot remains available for transforms.
 Object Mode preserves transform channels, world geometry and child positions.
