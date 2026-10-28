@@ -253,6 +253,10 @@ class ALLSET_OT_component_mode(bpy.types.Operator):
 
     def execute(self, context):
         if context.mode != 'EDIT_MESH':
+            ob = context.active_object
+            if not ob.visible_get():
+                self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to edit its components.")
+                return {'CANCELLED'}
             bpy.ops.object.mode_set(mode='EDIT')
         # out of Maya UV mode (F12 / Alt+F12: UV Sync Selection off), its mesh selection back (issue #80)
         from .uv_tools import leave_uv_mode
