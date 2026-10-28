@@ -234,9 +234,10 @@ def dormant_objects(context):
         return []
     out = []
     from ..operators import live
-    live_objects = set(live.objects(context.scene))
+    scene = getattr(context, "scene", None)
+    live_objects = set(live.objects(scene)) if scene is not None else set()
     for ob in context.visible_objects:
-        if ob.type not in TYPES or ob.mode != 'OBJECT' or ob.select_get() or ob in live_objects:
+        if ob.type not in TYPES or ob.mode != 'OBJECT' or ob.select_get() or (live_objects and ob in live_objects):
             continue
         if not getattr(space, TYPE_FLAGS[ob.type], True):
             continue
