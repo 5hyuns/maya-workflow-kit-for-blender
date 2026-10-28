@@ -36,10 +36,24 @@ Live restores the original selection restriction, including an existing lock.
   that path can query geometry outside the live list. Turn those snap modes off
   when you want the dedicated live-surface Move behavior.
 
-The reference BVHs are cached in world space (so nearest-distance queries work
-with nonuniform scale), invalidated by geometry/transform updates and cleared
-on frame/file/undo changes. The cache is bounded. No geometry is baked into the
-reference object.
+Uniform-scale reference meshes use Blender's native local BVH with world-space
+query results, avoiding large Python vertex/face lists. Nonuniform scale and
+shear use world-space BVHs so nearest-distance queries remain exact. Geometry
+and transform updates invalidate entries; frame/file/undo changes clear them.
+Releasing a reference from its last live scene drops its cached BVH immediately.
+Quad Draw's non-live fallback retains its working cache across unrelated edits.
+
+The cache holds at most 64 entries, evicting the least recently queried surface
+under an estimated 256 MiB budget. One oversized surface can occupy it alone.
+This estimate bounds retained entries, not peak process memory: evaluated mesh
+data, Blender's own caches and allocator retention can still be substantial on
+million-polygon references. No geometry is baked into the reference object.
+
+The Outliner reads its visible pixels once per draw and reuses row matches only
+while the native pixels, names, scale and row positions agree. Changed rows use
+glyph bounds to narrow the search. This preserves rename, selection, filtering
+and scrolling without rescanning every translation on every redraw. Both its
+glyph and region caches are bounded.
 
 ## Scope and validation
 
@@ -54,7 +68,9 @@ Automated checks use the repository's sandbox harness in Blender 5.2.2 LTS:
 
 ```text
 python tests/run.py -k make_live,step144_poly,step59_pivot_snap,enable_disable
+python tests/run.py -k live_performance,maya_startup
 python tests/gui/run.py --no-build -k gui_make_live,gui_live_surface_move
+python tests/gui/run.py --no-build -k gui_live_outliner_performance,gui_maya_saved_startup
 python tests/gui/run.py --no-build -k gui_make_live --ui-scale 1.25
 python tests/gui/run.py --no-build -k gui_make_live --ui-scale 1.5
 ```

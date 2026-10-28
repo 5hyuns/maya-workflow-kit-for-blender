@@ -16,10 +16,12 @@ Which objects: armatures the kit named (``skeleton<N>``, ``joints.SKELETON_BASE`
 a user-named armature or a Rigify rig keeps its own name. With several root joints the first one names the row.
 """
 
+from hashlib import blake2b
 import bpy
 
 _handle = [None]
 _refs = {}          # (text, font size, row height) -> (width, baseline, ink mask (numpy bool, bottom row first))
+_rows = {}          # region -> (layout/name signature, {row: (pixel digest/position, hits)})
 INK = 48            # channel difference from the row background that counts as text
 MATCH = 0.72        # share of the ink (union) both pictures have
 DX = 4              # px the Blender name may sit off the expected column
@@ -90,6 +92,8 @@ def _ref(text, size, height):
         off.free()
     got = (w, base, px.reshape(height, w, 4)[..., 0] > 90)
     _refs[key] = got
+    while len(_refs) > 256:
+        del _refs[next(iter(_refs))]
     return got
 
 
@@ -119,21 +123,32 @@ def _extent(cols, x0, x1):
     return (x0 + int(xs[0]), x0 + int(xs[-1])) if len(xs) else None
 
 
-def match(ink, ref, x):
-    """(score, dx, dy) of the reference mask placed at column ``x`` (± DX) and baseline ± DY in the row mask."""
+def match(ink, ref, x, extent=None):
+    """Match glyph bounds first, then compare nearby translations instead of every pixel offset."""
     import numpy as np
     h, w = ref.shape
     best = (0.0, 0, 0)
     tolerance_x = max(DX, round(h * .25))
     tolerance_y = max(DY, round(h * .25))
-    for dx in range(-tolerance_x, tolerance_x + 1):
+    ref_x = _extent(ref.any(axis=0), 0, w)
+    if ref_x is None:
+        return best
+    if extent is None:
+        extent = _extent(ink.any(axis=0), x+ref_x[0]-tolerance_x, x+ref_x[1]+tolerance_x+1)
+    if extent is None:
+        return best
+    shifts_x = {extent[i]-x-ref_x[i]+offset for i in (0, 1) for offset in (-1, 0, 1)}
+    ref_y = np.flatnonzero(ref.any(axis=1))
+    for dx in sorted(d for d in shifts_x if abs(d) <= tolerance_x):
         x0 = x + dx
         if x0 < 0 or x0 + w > ink.shape[1]:
             continue
         win = ink[:, x0:x0 + w]
-        # Fractional UI scaling rounds the native text baseline independently
-        # of the row height; a fixed 3px range misses scrolled names at 150%.
-        for dy in range(-tolerance_y, tolerance_y + 1):
+        win_y = np.flatnonzero(win.any(axis=1))
+        if not len(win_y):
+            continue
+        shifts_y = {int(win_y[i]-ref_y[i])+offset for i in (0, -1) for offset in (-1, 0, 1)}
+        for dy in sorted(d for d in shifts_y if abs(d) <= tolerance_y):
             r = np.zeros_like(win)
             if dy > 0:
                 r[dy:, :] = ref[:h - dy, :]
@@ -172,7 +187,7 @@ def find_rows(rows, width, u, lead, names, size):
                 ext = _extent(cols, x + ref_ext[0] - tolerance_x - 1, x + ref_ext[1] + tolerance_x + 2)
                 if ext is None or abs(ext[0] - (x + ref_ext[0])) > tolerance_x or abs(ext[1] - (x + ref_ext[1])) > tolerance_x:
                     continue
-                s, dx, dy = match(ink, ref, x)
+                s, dx, dy = match(ink, ref, x, ext)
                 if s < MATCH or (best is not None and s <= best[0]):
                     continue
                 end = x + dx + ref_ext[1]
@@ -201,6 +216,7 @@ def draw():
         if lab is not None:
             named[ob.name] = lab
     if not named:
+        _rows.pop(region.as_pointer(), None)
         return
     import math
     import blf
@@ -214,6 +230,13 @@ def draw():
     v2d = region.view2d
     fb = gpu.state.active_framebuffer_get()
     width = region.width
+    try:
+        # One bounded readback is much cheaper than synchronizing with the GPU
+        # twice per visible row when several references are live.
+        pixels = np.asarray(fb.read_color(0, 0, width, region.height, 4, 0, 'UBYTE'),
+                            dtype=np.uint8).reshape(region.height, width, 4)
+    except ValueError:
+        return
 
     def bottom_of(k):
         return int(round(v2d.view_to_region(0, -(k + 1) * u, clip=False)[1]))
@@ -239,27 +262,34 @@ def draw():
         lo, hi = max(0, y0), min(region.height, y0 + u)
         if hi <= lo or not 0 <= y0 + u // 2 < region.height:
             continue
-        try:
-            mid = np.array(fb.read_color(0, y0 + u // 2, width, 1, 4, 0, 'UBYTE').to_list(),
-                           dtype=np.int16).reshape(1, width, 4)
-        except ValueError:
-            continue
+        mid = pixels[y0+u//2:y0+u//2+1]
         bg = _background(mid)
         cols = _ink(mid, bg)[0]
         text = _extent(cols, int(lead + 2 * u) - reach, width - max(4, round(size/3)))
         if text is None or not any(abs(text[1] - b) <= reach for _a, b in spans):
             continue
-        try:
-            # A scrolled row can have a visible name even when its border is
-            # clipped. Pad only its offscreen background for the glyph matcher.
-            lines = np.empty((u, width, 4), dtype=np.int16)
+        if lo == y0 and hi == y0+u:
+            lines = pixels[lo:hi]
+        else:
+            # A scrolled row can have a visible name even when its border is clipped.
+            lines = np.empty((u, width, 4), dtype=np.uint8)
             lines[:] = (*bg, 255)
-            lines[lo-y0:hi-y0] = np.array(fb.read_color(0, lo, width, hi-lo, 4, 0, 'UBYTE').to_list(),
-                                         dtype=np.int16).reshape(hi-lo, width, 4)
-            rows[k] = lines
-        except ValueError:
-            continue
-    hits = find_rows(rows, width, u, lead, list(named), size)
+            lines[lo-y0:hi-y0] = pixels[lo:hi]
+        rows[k] = lines
+    key = region.as_pointer()
+    signature = (width, u, lead, size, tuple(named))
+    cached = _rows.get(key)
+    previous = cached[1] if cached and cached[0] == signature else {}
+    current, hits = {}, []
+    for k, lines in rows.items():
+        digest = (bottom_of(k), blake2b(lines, digest_size=16).digest())
+        got = previous.get(k)
+        found = got[1] if got and got[0] == digest else find_rows({k: lines}, width, u, lead, list(named), size)
+        current[k] = (digest, found)
+        hits.extend(found)
+    _rows[key] = (signature, current)
+    while len(_rows) > 32:
+        del _rows[next(iter(_rows))]
     SEEN[region.as_pointer()] = [(h[4], named[h[4]]) for h in hits]
     if not hits:
         return
@@ -301,4 +331,5 @@ def unregister():
         bpy.types.SpaceOutliner.draw_handler_remove(_handle[0], 'WINDOW')
         _handle[0] = None
     _refs.clear()
+    _rows.clear()
     SEEN.clear()
