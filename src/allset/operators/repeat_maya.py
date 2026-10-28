@@ -3,7 +3,7 @@
 
 Maya 2022 (, GUI-checked): a menu item run from the UI goes into ``repeatLast``
 (Create > Polygon Primitives > Cube → "CreatePolygonCube", G makes the next cube); an option window's Apply records the
-command with its options (``performPolyPrimitive "Cube" 0``, label "PolyPrimitive"); MEL run by a script is not
+command with its options (label "PolyPrimitive"); commands run by a script are not
 recorded; Edit > Repeat reads ``Repeat "<label>"``; Recent Commands lists the history.
 
 Blender's G (``screen.repeat_last``) repeats the last *registered* operator, and the kit's menu / shelf / marking-menu

@@ -40,17 +40,17 @@ def test_menu_matches_maya():
         "N": "Pin Component Pivot", "S": "Reset Pivot", "NW": "Snap Pivot Orientation", "NE": "Snap Pivot Position",
         "SW": "Reset Pivot Orientation", "SE": "Reset Pivot Position", "W": "Show Orientation Handle", "E": "Exit"}
     assert m.items[0] == ("Bake Pivot Orientation", ("item", "Modify/Bake Pivot"))   # step 136
-    assert menus.MENUS["buildObjectMenuItemsNow_pivot"] is m
+    assert menus.MENUS["PIVOT_EDIT"] is m
 
 
 def test_resolve_only_while_editing_a_pivot():
     ob = _cube()
     ts = bpy.context.scene.tool_settings
     hold.set_pivot_mode(ts, False)
-    assert marking.resolve("RMB", bpy.context, ob) != ("pie", marking.idname("buildObjectMenuItemsNow_pivot"))
+    assert marking.resolve("RMB", bpy.context, ob) != ("pie", marking.idname("PIVOT_EDIT"))
     hold.set_pivot_mode(ts, True)
-    assert marking.resolve("RMB", bpy.context, ob) == ("pie", marking.idname("buildObjectMenuItemsNow_pivot"))
-    assert marking.resolve("RMB", bpy.context, None) == ("pie", marking.idname("buildObjectMenuItemsNow_pivot"))
+    assert marking.resolve("RMB", bpy.context, ob) == ("pie", marking.idname("PIVOT_EDIT"))
+    assert marking.resolve("RMB", bpy.context, None) == ("pie", marking.idname("PIVOT_EDIT"))
     hold.set_pivot_mode(ts, False)
 
 

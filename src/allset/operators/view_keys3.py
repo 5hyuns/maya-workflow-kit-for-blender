@@ -2,9 +2,9 @@
 """Maya view keys, batch 3: Alt+A cycle display, Alt+P camera persp / ortho, Alt+arrows 1-pixel move,
 ` hold = tweak mode, \\ hold = 2D pan / zoom.
 
-Maya default hotkeys: switchDisplayMode,
-CameraModeToggle (viewPlace -o / -p), editorDependentMove -> pixelMove, strsTweakMode,
-activatePanZoom / deactivatePanZoom; , :94, :98, :116.
+Maya default hotkeys: Alt+A display cycle,
+CameraModeToggle (orthographic / perspective), Alt+arrow pixel move, ` tweak mode,
+\\ 2D pan / zoom; , :94, :98, :116.
 """
 
 import math
@@ -15,7 +15,7 @@ from mathutils import Vector
 from .. import undo_steps
 from . import keystate
 
-# --- Alt+A: cycle display (switchDisplayMode) -----------------------------------------------------------------
+# --- Alt+A: cycle display ------------------------------------------------------------------------------------
 # Maya setting cycleDisplayLikeMobuVar (global, starts at 0): 0 -> joint X-ray on, everything shown (1),
 # 1 -> joint X-ray off, everything shown (2), 2 -> joints and curves hidden, meshes only (0).
 CYCLE = {0: ("XRAY_JOINTS", 1), 1: ("ALL", 2), 2: ("MESHES", 0)}
@@ -151,7 +151,7 @@ class ALLSET_OT_pixel_move(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- ` hold: tweak mode (strsTweakMode) ----------------------------------------------------------------------
+# --- ` hold: tweak mode -------------------------------------------------------------------------------------
 # Maya turns tweak mode on for Select / Move / Rotate / Scale (the Select tool becomes Move); Blender's Tweak tool
 # (builtin.select: click-drag moves what is under the mouse) is that mode.
 TWEAK_FROM = {"builtin.select_box", "builtin.select_circle", "builtin.select_lasso", "builtin.move",
@@ -209,7 +209,7 @@ class ALLSET_OT_tweak_hold(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
 
-# --- \ hold: 2D pan / zoom (activatePanZoom) ---------------------------------------------------------------
+# --- \ hold: 2D pan / zoom -------------------------------------------------------------------------------
 # Blender's camera view offset / zoom move the camera view without touching the render, like Maya's film-back
 # 2D Pan/Zoom; a user view has none.
 ZOOM_PER_PX = 0.25          # view_camera_zoom units per pixel of MMB drag

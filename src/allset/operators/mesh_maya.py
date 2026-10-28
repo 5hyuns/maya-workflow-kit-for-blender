@@ -2,9 +2,10 @@
 """Mesh menu commands with Maya's meaning.
 
 checked in Maya 2022 (Maya, factory prefs, step 63):
-- Mesh > Combine = ``polyUnite -centerPivot -name <first>``: a new ``pCube2`` (pCube1 / pSphere1 stay behind as
+- Mesh > Combine = ``cmds.polyUnite(centerPivot=True, name=first)``: a new ``pCube2`` (pCube1 / pSphere1 stay behind as
   empty transforms, so the name skips 1), vertices where they were, pivot at the bounding-box centre, translate 0.
-- Mesh > Separate = ``polySeparate``: ``polySurface1`` / ``polySurface2`` under the original transform (now a group).
+- Mesh > Separate = ``cmds.polySeparate``: ``polySurface1`` / ``polySurface2`` under the original transform (now a
+  group).
 - Mesh > Mirror options (): Cut Geometry on, Mirror Axis Position
   World, Offset 0, Mirror Axis X, Direction -, Combine with Original on, Merge border vertices, threshold Automatic.
 The kit applies the result to the mesh (Maya's state after Delete History; no empty transforms are left).

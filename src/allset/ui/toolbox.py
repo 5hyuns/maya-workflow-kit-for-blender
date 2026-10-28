@@ -88,8 +88,8 @@ def _flat(items):
 
 def maya_tools(blender_items, mode):
     """The Tool Box for one mode from Blender's tool items (ToolDefs, groups, None), or None when the
-    mode lacks the Maya tools. The last slot is the last non-sacred tool used in that mode (Maya
-    $gNonSacredToolWidget; tool_keys.LAST, the Y key's memory)."""
+    mode lacks the Maya tools. The last slot is the last non-sacred tool used in that mode (Maya's
+    last non-sacred tool; tool_keys.LAST, the Y key's memory)."""
     by_id = {t.idname: t for t in _flat(blender_items)}
     picked = [by_id[i] for i in MAYA_TOOLS if i in by_id]
     if not any(t.idname == "builtin.move" for t in picked):

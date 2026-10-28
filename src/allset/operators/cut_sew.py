@@ -275,7 +275,7 @@ class ALLSET_OT_cut_sew_tool_set(bpy.types.Operator):
         with context.temp_override(window=window, area=area, region=region):
             if context.mode != 'EDIT_MESH':
                 bpy.ops.object.mode_set(mode='EDIT')
-            context.scene.tool_settings.mesh_select_mode = (False, True, False)   # superCutUVContext: edges
+            context.scene.tool_settings.mesh_select_mode = (False, True, False)   # Maya 3D Cut and Sew tool: edges
             bpy.ops.wm.tool_set_by_id(name=TOOL)
         self.report({'INFO'}, "3D Cut and Sew UV Tool: drag = cut, Ctrl+drag = sew, x / s / d = Cut / Sew / Unfold")
         return {'FINISHED'}

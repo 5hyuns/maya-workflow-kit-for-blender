@@ -2,8 +2,8 @@
 """Maya UV Shell selection in the 3D viewport and the UV Editor (step 256, #172).
 
 Maya 2026 (; Maya /, Maya /):
-- The mask is one global state (``selectType -meshUVShell``), turned on by RMB > UV > UV Shell, Select > Components >
-  UV Shell and Alt+F12 (`SelectMeshUVShell`): component mode, selection cleared, in-view message. Here: the
+- The mask is one global state (``cmds.selectType(meshUVShell=True)``), turned on by RMB > UV > UV Shell, Select >
+  Components > UV Shell and Alt+F12 (`SelectMeshUVShell`): component mode, selection cleared, in-view message. Here: the
   WindowManager flag ``allset_uv_shell_mask`` + face select mode + UV Sync Selection on (one selection for the 3D View
   and the UV Editor, like Maya's one selection list). Any other component mode clears the flag
   (``uv_tools.leave_uv_mode`` / ``set_component``).

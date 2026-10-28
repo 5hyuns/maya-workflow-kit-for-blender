@@ -97,7 +97,7 @@ def label_of(ws):
 
 
 def reset_label(ws):
-    """Maya's item text for a factory workspace (Maya m_buildViewMenu.kFactoryReset)."""
+    """Maya's item text for a factory workspace (Windows > Workspaces menu)."""
     return f'Reset "{label_of(ws)}" to Factory Default' if switch.template_of(ws) else "Reset Current Workspace"
 
 

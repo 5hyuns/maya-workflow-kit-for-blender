@@ -17,7 +17,7 @@ from . import deformers, wire_deformer
 
 # --- wire ---------------------------------------------------------------------------------------------------------
 
-MSG = {   # Maya's own messages (resources m_doWireEdit.*, deform_169.md)
+MSG = {   # Maya's own messages (deform_169.md)
     "ADD": "Found no curves to add.",
     "REMOVE": "Must select curves to be removed.",
     "RESET": "Must select wire curves to be reset.",
@@ -102,7 +102,7 @@ def wire_show_base(context, node=""):
 
 
 def wire_parent_base(context, node=""):
-    """Maya Parent Base Wire (doWireEdit 5, "group wire and base wire"): the base wire follows the wire curve's
+    """Maya Parent Base Wire ("group wire and base wire"): the base wire follows the wire curve's
     transform, so moving the curve object carries both and only its shape edits deform."""
     curves = [o for o in context.selected_objects if o.type == 'CURVE']
     found = _wires(curves, node)
@@ -200,7 +200,7 @@ def _shrinkwraps(ob):
 
 
 def shrink_wrap_edit(context, action):
-    """Maya doShrinkWrapArgList 2 / 3 / 6 / 7 (deform_169.md): the surfaces are selected first, the target last
+    """Maya Deform > Shrink Wrap edit commands (deform_169.md): the surfaces are selected first, the target last
     (the active object)."""
     target = context.view_layer.objects.active
     surfaces = [o for o in context.selected_objects if o is not target and o.type in deformers._DEFORMABLE]

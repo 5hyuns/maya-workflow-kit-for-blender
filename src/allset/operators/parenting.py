@@ -48,8 +48,8 @@ def set_parent_maya(child, parent):
 
 
 def set_parent_relative(child, parent):
-    """Maya Parent / Unparent with Preserve position off (``parent -relative``): the child keeps its local values,
-    so it moves with the new parent (Maya: t 1 2 3 under a parent at 10 0 0 stays t 1 2 3,
+    """Maya Parent / Unparent with Preserve position off (``cmds.parent(relative=True)``): the child keeps its local
+    values, so it moves with the new parent (Maya: t 1 2 3 under a parent at 10 0 0 stays t 1 2 3,
     )."""
     basis = child.matrix_basis.copy()
     child.parent = parent

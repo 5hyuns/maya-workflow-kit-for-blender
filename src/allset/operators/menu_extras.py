@@ -3,7 +3,7 @@
 
 - ``allset.open_editor``: Windows > ... Editors open a floating editor window, like
   Maya's panels torn off into windows ().
-- ``allset.increment_save``: File > Increment and Save (Maya ``incrementAndSaveScene``
+- ``allset.increment_save``: File > Increment and Save (Maya
   numbering, re-implemented in ``increment_path``).
 - ``ALLSET_MT_export_selection``: File > Export Selection... = the exporters with
   "selected only" set.

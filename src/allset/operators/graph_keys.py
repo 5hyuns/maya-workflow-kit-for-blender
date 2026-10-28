@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya tangents and key edits for the Graph Editor toolbar and the Shift+S marking menu.
 
-Maya's Graph Editor tangent buttons and ``buildKeyframeTangentMM`` act on the selected keys in the Graph Editor
-and on the current-time keys of the selection anywhere else (``timeSliderSetTangent``,
- buildKeyframeTangentMM :284-571; ).
+Maya's Graph Editor tangent buttons and ``KEY_TANGENT`` act on the selected keys in the Graph Editor
+and on the current-time keys of the selection anywhere else (Maya's Time Slider tangent menu,
+ KEY_TANGENT :284-571; ).
 In Blender's Graph Editor the selected keys are the selected control points of the editable curves; elsewhere
 ``operators/time_keys`` acts on the Channel Box nodes (Time Slider range, else the current frame).
 
@@ -169,7 +169,7 @@ class ALLSET_OT_key_edit(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Graph Editor 1 / 2 / 3 = graphEditorSetViewMode 0 / 1 / 2 (Maya default
+# Graph Editor 1 / 2 / 3 = the Graph Editor view modes (Maya default
 # hotkeys). Blender has Normalize; a stacked view (each curve in its own band) isn't there: 2 = normalized + notice.
 VIEW_MODES = (("ABSOLUTE", "Absolute", "Maya 1: curves at their values"),
               ("STACKED", "Stacked", "Maya 2: not in Blender, curves are normalized instead"),
@@ -482,7 +482,7 @@ class ALLSET_OT_insert_key_tool(bpy.types.Operator):
 
 
 class KeyTangentBinding(taphold.TapHoldBinding):
-    """Shift+S: hold + LMB = the Keyframe / Tangent marking menu (buildKeyframeTangentMM); a tap does nothing."""
+    """Shift+S: hold + LMB = the Keyframe / Tangent marking menu (KEY_TANGENT); a tap does nothing."""
     name = "key_tangent"
     label = "Keyframe / Tangent Menu"
 
@@ -491,7 +491,7 @@ class KeyTangentBinding(taphold.TapHoldBinding):
 
     def click(self, context, event):
         from ..marking import modal
-        modal.open_menu("buildKeyframeTangentMM", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
+        modal.open_menu("KEY_TANGENT", 'LEFTMOUSE', (event.mouse_region_x, event.mouse_region_y))
 
 
 # --- Curves > Pre / Post Infinity, Edit > Change / Remove Curve Color -------------------

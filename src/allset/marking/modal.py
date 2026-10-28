@@ -133,7 +133,7 @@ def _run_action(context, action, option, path):
         return bpy.ops.wm.call_menu_pie(name=target)
     if kind == "tool":
         res = bpy.ops.allset.menu_tool(tool=target, edit=props["edit"])
-        if option:  # tool + its settings (toolPropertyWindow)
+        if option:  # tool + its settings (Tool Settings window)
             bpy.ops.allset.editor_toggle(editor='TOOL_SETTINGS', show=True)
         return res
     if kind == "v3d" and (context.area is None or context.area.type != 'VIEW_3D'):
@@ -173,7 +173,7 @@ def _call(op, option, props):
 
 
 # Ctrl+RMB convert menu: also opened on a mesh in object mode (marking/__init__.resolve, step 136).
-CONVERT_FROM_OBJECT = "polyConvertMM"
+CONVERT_FROM_OBJECT = "CTRL_CONVERT"
 
 
 # --- marking menu engine --------------------------------------------------------------
@@ -483,7 +483,7 @@ def _view3d(context):
     if area is None:
         return None, None
     if area.type != 'VIEW_3D':
-        area.ui_type = 'VIEW_3D'  # Maya switchModelView turns the pane into a model panel
+        area.ui_type = 'VIEW_3D'  # Maya turns the pane into a 3D view panel
     region = next((r for r in area.regions if r.type == 'WINDOW'), None)
     return area, region
 

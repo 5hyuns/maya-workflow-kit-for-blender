@@ -4,10 +4,9 @@ Transform (Shift+D).
 
 ; defaults.json ``duplicateSpecial`` (copy,
 count 1, group under Parent, T/R = 0, S = 1) and ``shiftD``
-(``duplicate -smartTransform``). The RTC runs ``performDuplicateSpecial false``
-( DuplicateSpecial): the saved
-options, no dialog; Blender's Adjust Last Operation edits them afterwards.
-Maya duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
+(``cmds.duplicate(smartTransform=True)``). Edit > Duplicate Special runs with
+the saved options ( DuplicateSpecial), no dialog; Blender's Adjust Last Operation
+edits them afterwards. Maya duplicates the whole subtree; names count up (``pCube1`` -> ``pCube2``).
  「계획」 5; Ctrl+D: 
 """
 

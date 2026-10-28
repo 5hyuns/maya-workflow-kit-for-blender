@@ -2,8 +2,9 @@
 """Maya's startup cameras persp / top / front / side as hidden camera objects of a new Maya scene (step 211, #117).
 
 Maya 2022 (Maya,  C1-C3): a new scene's top DAG nodes are persp, top, front, side
-(visibility off, ``camera -q -startupCamera`` true), then the user's nodes in creation order; the Outliner lists them
-in that order and greys them (hidden). ``delete persp`` fails with "Non-deletable node 'persp' cannot be deleted.".
+(visibility off, ``cmds.camera(query=True, startupCamera=True)`` true), then the user's nodes in creation order; the
+Outliner lists them in that order and greys them (hidden). ``cmds.delete("persp")`` fails with "Non-deletable node
+'persp' cannot be deleted.".
 
 Blender's Outliner is C: Python can't put rows above its object rows, so the kit-drawn camera rows of step 99
 (ui/outliner_sets.py) followed the user's objects. Real hidden cameras linked before any user object are Blender rows

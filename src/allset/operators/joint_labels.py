@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Skeleton > Joint Labelling and Enable / Disable Selected IK Handles (step 159 lane L).
 
-Behaviour spec (Maya 2022 menu procs + Maya checked): 
+Behaviour spec (Maya 2022 menus + Maya checked): 
 
 A Maya joint is a bone (step 57). Its joint label attributes live as ID properties on the bone: ``allset_side``
 (Maya ``side``: 0 Center, 1 Left, 2 Right, 3 None; factory 0), ``allset_type`` (Maya ``type``, the 30-value enum
@@ -9,9 +9,9 @@ below; factory 0 None), ``allset_other_type`` (Maya ``otherType``, factory "jaw"
 (``drawLabel``, factory off). In armature edit mode they are written on the edit bone (Blender writes edit bones
 back over the bones when edit mode ends), else on the data bone.
 
-Which joints a command acts on follows the Maya procs' ``ls -sl [-dag] -type joint``: the selected joints (pose
-bones in pose mode, edit bones in edit mode; in object mode a selected skeleton stands for its root joints) and,
-for the ``-dag`` commands, everything below them.
+Which joints a command acts on follows Maya's ``cmds.ls(selection=True, type="joint"[, dag=True])``: the selected
+joints (pose bones in pose mode, edit bones in edit mode; in object mode a selected skeleton stands for its root
+joints) and, for the ``dag`` commands, everything below them.
 """
 
 import blf
@@ -124,7 +124,7 @@ def _children(ob, name):
 
 
 def with_descendants(pairs):
-    """``ls -sl -dag``: the joints and everything below them, depth first, each once."""
+    """``cmds.ls(selection=True, dag=True)``: the joints and everything below them, depth first, each once."""
     out, seen = [], set()
 
     def walk(ob, name):
@@ -141,7 +141,7 @@ def with_descendants(pairs):
 
 
 def all_joints(context):
-    """``ls -type joint``: every bone of every skeleton in the scene."""
+    """``cmds.ls(type="joint")``: every bone of every skeleton in the scene."""
     seen, out = set(), []
     for o in context.scene.objects:
         if o.type == 'ARMATURE' and o.data.name not in seen:
@@ -158,7 +158,7 @@ def _has(name, *words):
 
 
 def _has2(name, word):
-    """Maya jlMultiMatch(name, "word", "Word"): case-sensitive, lower or capitalised."""
+    """Maya's joint label name match for "word": case-sensitive, lower or capitalised."""
     return word in name or (word[0].upper() + word[1:]) in name
 
 
@@ -314,7 +314,8 @@ class ALLSET_OT_joint_label(bpy.types.Operator):
             return {'CANCELLED'}
         if self.side != "KEEP":
             value = SIDES.index(self.side.title())
-            # Maya retargetingSideLabel: Center on the selected joints only, Left / Right / None also below them
+            # Maya Label Center / Left / Right / None: Center on the selected joints only, Left / Right / None also
+            # below them
             for _ob, _n, b in _labels(sel if value == CENTER else with_descendants(sel)):
                 set_label(b, side=value)
         if self.type in LIMBS:

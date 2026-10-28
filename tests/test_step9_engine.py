@@ -221,6 +221,7 @@ def test_option_boxes_match_research():
     if not os.path.exists(RESEARCH):
         return
     data = json.load(open(RESEARCH, encoding="utf-8"))["menus"]
+    ids = json.load(open(os.path.join(os.path.dirname(RESEARCH), "marking_menu_ids.json"), encoding="utf-8"))
 
     def check(sub, items, where):
         src = {it["label"]: bool(it.get("option_box_command")) for it in items if it.get("label")}
@@ -231,9 +232,9 @@ def test_option_boxes_match_research():
                 child = next((it for it in items if it.get("label") == label), None)
                 if child and child.get("submenu"):
                     check(action, child["submenu"], f"{where}/{label}")
-    for name in ("contextPolyToolsObjectMM", "contextPolyToolsVertexMM", "contextPolyToolsEdgeMM",
-                 "contextPolyToolsFaceMM", "contextPolyToolsDefaultMM"):
-        check(mm.MENUS[name], data[name]["items"], name)
+    for name in ("SHIFT_OBJECT", "SHIFT_VERTEX", "SHIFT_EDGE",
+                 "SHIFT_FACE", "SHIFT_DEFAULT"):
+        check(mm.MENUS[name], data[ids[name]]["items"], name)
 
 
 def test_zone_operators():
@@ -314,21 +315,21 @@ def test_engine_is_default_and_pie_fallback():
             ops=types.SimpleNamespace(
                 allset=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k))),
                 wm=types.SimpleNamespace(call_menu_pie=lambda **k: calls.append(("pie", k)))))
-        modal.open_menu("dagMenuProc", "RIGHTMOUSE")
+        modal.open_menu("RMB_MESH", "RIGHTMOUSE")
         prefs.marking_menu_style = 'PIE'
-        modal.open_menu("dagMenuProc", "RIGHTMOUSE")
+        modal.open_menu("RMB_MESH", "RIGHTMOUSE")
     finally:
         modal.bpy = bpy
         prefs.marking_menu_style = 'ENGINE'
-    assert calls[0] == ("engine", {"menu": "dagMenuProc", "button": "RIGHTMOUSE"}), calls
+    assert calls[0] == ("engine", {"menu": "RMB_MESH", "button": "RIGHTMOUSE"}), calls
     modal.bpy = types.SimpleNamespace(context=bpy.context, ops=types.SimpleNamespace(
         allset=types.SimpleNamespace(mm_engine=lambda *a, **k: calls.append(("engine", k)))))
     try:
-        modal.open_menu("dagMenuProc", "LEFTMOUSE", (10, 20))
+        modal.open_menu("RMB_MESH", "LEFTMOUSE", (10, 20))
     finally:
         modal.bpy = bpy
-    assert calls[-1] == ("engine", {"menu": "dagMenuProc", "button": "LEFTMOUSE", "origin": (10, 20)})
-    assert calls[1] == ("pie", {"name": marking.idname("dagMenuProc")}), calls
+    assert calls[-1] == ("engine", {"menu": "RMB_MESH", "button": "LEFTMOUSE", "origin": (10, 20)})
+    assert calls[1] == ("pie", {"name": marking.idname("RMB_MESH")}), calls
 
 
 def test_draw_handlers_removed_on_disable():

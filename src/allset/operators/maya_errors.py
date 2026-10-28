@@ -9,7 +9,7 @@ the same Error report (``report_nested``) instead of Blender's Python error.
 
 #  B4 (Maya 2026)
 WRONG_SELECTION = "Current selection doesn't match required selection type."     # polyRemesh / polyReduce
-NO_LIVE_SURFACE = "A live surface is required for conform."                         # Maya
+NO_LIVE_SURFACE = "A live surface is required for conform."                         # Maya Mesh Tools > Conform
 NO_CONFORM_SELECTION = "No components or objects selected for conform."
 MUST_SELECT_JOINT = "You must select at least one joint."                           # Maya Bind Skin, no joint selected
 SELECT_TO_BIND = "Select objects to bind."                     # Bind Skin, nothing selected (step 258 / 266 Maya)
@@ -42,7 +42,7 @@ def report_nested(op, ex):
 
 
 # Maya menu commands that Blender runs as a modifier on the active object (ui/menu_map._mod): which Maya check runs
-# first. Remesh / Reduce: polyRemesh / polyReduce want polygon meshes; Conform: Maya wants a live
+# first. Remesh / Reduce: polyRemesh / polyReduce want polygon meshes; Conform wants a live
 # surface (Modify > Make Live) before anything else, then a selection.
 _NOTHING = {'REMESH': REMESH_NOTHING, 'DECIMATE': REDUCE_NOTHING}
 
@@ -58,7 +58,7 @@ def check_modifier(context, kind):
         if nothing or ob is None:
             raise MayaError(NO_CONFORM_SELECTION)
         if ob.type != 'MESH':
-            # Maya runs mtkShrinkWrap on a joint with a live surface; what it prints there isn't known (B4): kit text
+            # Maya runs Shrinkwrap on a joint with a live surface; what it prints there isn't known (B4): kit text
             raise RuntimeError("Conform: select a mesh to conform onto the live surface.")
         return
     if kind in _NOTHING:

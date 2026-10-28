@@ -3,11 +3,11 @@
 
 Maya has two ways to colour a control's wire (, checked in Maya 2026):
 
-1. Display > Wireframe Color... (``objectColorPalette``): an option menu Indexed / RGB, a palette of the 8 user colours
+1. Display > Wireframe Color...: an option menu Indexed / RGB, a palette of the 8 user colours
    (userDefined 1-8 = colorIndex 24-31,  ``userDefined_gui``), an RGB colour
-   slider, Apply / Default / Close. Apply = ``color -ud N`` (useObjectColor 1, objectColor N - 1) or
-   ``color -rgb r g b`` (useObjectColor 2, wireColorRGB) on the selection; Default = ``color`` (useObjectColor 0)
-   (``L2_wireframe_color_command``; window: Maya's Wireframe Color window).
+   slider, Apply / Default / Close. Apply = ``cmds.color(userDefined=N)`` (useObjectColor 1, objectColor N - 1) or
+   ``cmds.color(rgbColor=(r, g, b))`` (useObjectColor 2, wireColorRGB) on the selection; Default = ``cmds.color()``
+   (useObjectColor 0) (``L2_wireframe_color_command``; window: Maya's Wireframe Color window).
 2. Attribute Editor > Display > Drawing Overrides: overrideEnabled, overrideRGBColors (Index / RGB), overrideColor
    (index 0-31, 0 = default) and overrideColorRGB. Factory values all 0 / off (``L2_drawing_override_palette``).
 
@@ -346,7 +346,7 @@ class ALLSET_OT_wireframe_color(bpy.types.Operator):
     __annotations__ = _annotations()
 
     def invoke(self, context, event):
-        # Maya's window shows the first selected shape's colour (objectColorSelectionChanged)
+        # Maya's window shows the first selected shape's colour
         nodes = selection(context)
         if nodes:
             st = _object_state(nodes[0])

@@ -97,7 +97,7 @@ def test_entries():
     assert menu_map.MAP["UV/3D Cut and Sew UV Tool"] == "allset.cut_sew_tool_set"
     assert "UV/3D Cut and Sew UV Tool" not in notices.NOTICES
     assert shelf_map.BY_COMMAND["SetCutSewUVTool"][0] == "allset.cut_sew_tool_set"
-    for name in ("contextPolyToolsUVMM", "contextPolyToolsUVShellMM"):
+    for name in ("SHIFT_UV", "SHIFT_UV_SHELL"):
         assert menus.MENUS[name].radial["NW"] == ("3D Cut and Sew UV Tool", "allset.cut_sew_tool_set"), name
 
 

@@ -1,4 +1,4 @@
-"""Step 141 lane SELECT in a real UI: Ctrl+RMB (polyConvertMM) on a cube in component mode runs the new conversions
+"""Step 141 lane SELECT in a real UI: Ctrl+RMB (CTRL_CONVERT) on a cube in component mode runs the new conversions
 through marking-menu gestures — vertex mode: Grow Selection > Grow Along Loop (an isolated vertex grows to its three
 neighbours); face mode: To Vertices > To Vertex Perimeter (the face's 4 vertices); then the list row To Face Path
 (the rings of the touched edges = all 6 faces). Screenshot: gui_step141_convert_menu.png."""
@@ -130,7 +130,7 @@ def s_grow_press():
 def s_grow_drag1():
     s = session()
     check("Ctrl+RMB in vertex mode opens the convert menu",
-          s is not None and getattr(s.layout.sub, "name", "") == "polyConvertMM")
+          s is not None and getattr(s.layout.sub, "name", "") == "CTRL_CONVERT")
     _drag("NE")
 
 

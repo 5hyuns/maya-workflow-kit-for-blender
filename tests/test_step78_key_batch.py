@@ -42,10 +42,10 @@ def test_keymap_items():
 
 
 def test_menus_registered():
-    assert "doSelectComponentMM" in menus.MENUS and "doSelectPolygonMM" in menus.MENUS
-    poly = menus.MENUS["doSelectPolygonMM"].radial
+    assert "SELECT_COMPONENT" in menus.MENUS and "SELECT_POLYGON" in menus.MENUS
+    poly = menus.MENUS["SELECT_POLYGON"].radial
     assert [poly[d][0] for d in ("N", "E", "S", "W")] == ["Vertices", "Edges", "Faces", "UVs"]
-    comp = menus.MENUS["doSelectComponentMM"].radial
+    comp = menus.MENUS["SELECT_COMPONENT"].radial
     assert comp["SE"][1] == ("allset.component_mask", {"kind": "FACE"})
 
 

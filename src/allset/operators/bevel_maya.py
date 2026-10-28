@@ -10,8 +10,8 @@
   round arc (0.5), 0 = straight, -1 = the arc mirrored over the chord (exact for 2 segments, checked).
 - Zero-length slide edges don't count, and what the bevel makes is merged within 0.0001 (Merge Vertices): the
   cap of a zero-length extrusion bevels into an inset (12/20/10, cap at 0.25), Fraction 1 merges (6/9/5).
-- Faces bevel their edges; Maya leaves nothing selected afterwards. Vertex mode = Chamfer Vertex (performBevelOrChamfer
-  -> polyChamfer, 0.25 of each edge, no editable node here).
+- Faces bevel their edges; Maya leaves nothing selected afterwards. Vertex mode = Chamfer Vertex (Maya's Bevel
+  on vertices chamfers them: 0.25 of each edge, no editable node here).
 - Numbering (step 257, #149; Maya 2026, ): kept vertices first in their old
   order, then the new vertices of each bevelled vertex, the bevelled vertices taken in the order the selected edges
   reach them (ascending Maya edge id, ends by ascending vertex id) and each one's new vertices in Maya's vertex ->

@@ -138,7 +138,8 @@ def _keys_menu(ed, graph):
         f"{ed}/Keys/Convert to Key": _key("TO_KEY") if graph else ("action.keyframe_type", {"type": 'KEYFRAME'}),
         f"{ed}/Keys/Convert to Breakdown": _key("TO_BREAKDOWN") if graph else
         ("action.keyframe_type", {"type": 'BREAKDOWN'}),
-        # step 157: the editor's curves after the current time (Maya doKeyEdit), per-key mute = graph_key_menu
+        # step 157: the editor's curves after the current time (Maya Add / Remove Inbetween), per-key mute =
+        # graph_key_menu
         f"{ed}/Keys/Add Inbetween": ("allset.graph_inbetween", {"delta": "ADD"}),
         f"{ed}/Keys/Remove Inbetween": ("allset.graph_inbetween", {"delta": "REMOVE"}),
         f"{ed}/Keys/Mute Key": ("allset.mute_key", {"mute": True}),

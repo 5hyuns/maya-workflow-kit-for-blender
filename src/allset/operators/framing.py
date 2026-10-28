@@ -3,7 +3,7 @@
 the visible part of a 3D view with Maya's fit factor.
 
  F frames the selection (no children), Ctrl+Shift+F
-with children, A everything; fit factor 0.95 (PREF:576). Blender's view_selected fits a
+with children, A everything; fit factor 0.95. Blender's view_selected fits a
 sphere into the region width only, so a cube overfills a wide 35 mm view and part of it
 sits under the sidebar. 
 
@@ -15,7 +15,7 @@ orthographic: its extent scales with the distance).
 
 from mathutils import Matrix, Vector
 
-FIT = 0.95       #  (PREF:576)
+FIT = 0.95       # 
 MIN_HALF = 0.5   # half size around a single point (locator, light), Maya units [delegated]
 
 

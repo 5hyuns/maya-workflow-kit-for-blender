@@ -709,8 +709,8 @@ def modifier_held():
 
 # --- Ctrl+Shift+click: the item to the current shelf (step 162) -------------------------------------------------
 # Maya: Shift+Ctrl+click on a menu item adds it to the current shelf (); Maya's
-# menuItemToShelf appends a shelfButton with the item's label / annotation / image (the item's command as -command)
-# to the shelf tab shown, factory tabs included, and prints nothing (it runs under catchQuiet). The kit button runs
+# Maya appends a shelf button with the item's label / annotation / image (running the item's command)
+# to the shelf tab shown, factory tabs included, and prints nothing. The kit button runs
 # the path like the menu (``shelf.add_menu_item``, ``marking.modal.run_action(("item", path))``).
 
 def ctrl_shift_held():

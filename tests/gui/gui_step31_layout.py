@@ -176,7 +176,7 @@ def s_pie():
     x, y = C["w"]
     ev('MOUSEMOVE', 'NOTHING', x=x, y=y)
     with bpy.context.temp_override(window=win(), area=C["area"]):
-        bpy.ops.wm.call_menu_pie(name=marking.idname("translateMarkingMenuImpl"))
+        bpy.ops.wm.call_menu_pie(name=marking.idname("OPT_MOVE"))
 
 
 @step

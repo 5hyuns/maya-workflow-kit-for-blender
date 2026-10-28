@@ -673,8 +673,8 @@ RECORDS = {}   # object name -> Record
 
 def keep(context, ob, rec):
     """Remember ``rec`` as the object's history node, unless Maya's Construction History is off (Status Line
-    toggle, step 189): Maya's menu commands then run with -ch 0 and leave no polyExtrude / polyBevel node
-    (Maya:  "Construction History")."""
+    toggle, step 189): Maya's menu commands then run without construction history and leave no polyExtrude / polyBevel
+    node (Maya:  "Construction History")."""
     from . import prim_history
     if prim_history.history_on(context):
         RECORDS[ob.name] = rec

@@ -688,7 +688,7 @@ def windows():
     from .option_windows import F, Window
     from .option_windows_deform import ADVANCED, PAINT_FIELDS, PAINT_MISSING, _paint
     return [
-        # $P/morph/cmd_create.py:40-45: Morph mode Absolute, Morph space Object, Use Original Morph Target off,
+        # Maya's Morph Options factory values: Morph mode Absolute, Morph space Object, Use Original Morph Target off,
         # Use Component Lookup off
         Window("deform_morph", "Morph Options", "Create", ("allset.morph", {}), [
             F("mode", "Morph mode:", "enum", "Absolute", items=MORPH_MODES),

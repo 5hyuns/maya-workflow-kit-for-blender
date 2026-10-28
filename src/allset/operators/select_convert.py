@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Select menu / Ctrl+RMB (polyConvertMM) conversions Blender has no operator for (step 141 lane SELECT):
+"""Maya Select menu / Ctrl+RMB (CTRL_CONVERT) conversions Blender has no operator for (step 141 lane SELECT):
 Grow / Shrink Along Loop, To Vertex / Edge / Face Perimeter, To Face Path, To Shell Border, To UV Shell Border,
 To UVs, To UV Perimeter, To UV Edge Loop.
 
@@ -16,7 +16,7 @@ Every rule is Maya 2022 checked  on a 4 x 4 plane, a 6 x 6 plane and a cube
   the selection contains, else the faces it touches (vertices: their faces, edges: the edges' faces); its border
   edges, their vertices, all UVs of those vertices. Face Perimeter keeps a selection that contains no face.
 - To Face Path (SelectFacePath): the edge rings of the touched edges, then the faces of those rings.
-- To Shell Border (polyConvertToShellBorder): only when part of the selection is on an open border: then every
+- To Shell Border: only when part of the selection is on an open border: then every
   border component (same type) of those shells; nothing otherwise. To UV Shell Border (polySelectBorderShell 1):
   the open-border components of the shells the selection touches (UVs: the UV shell border).
 - To UVs (PolySelectConvert 4): faces -> their UVs; edges -> their UVs in the faces beside them; vertices -> every UV.

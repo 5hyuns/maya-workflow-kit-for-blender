@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya soft selection as ONE global state (issues #1, #15) and the falloff maths of the colour overlay (#2).
 
-Maya's soft select is one global option (``softSelect -sse``, factory 0 = off: Maya, 
-「계획」 0). Blender has two per-scene flags, ``use_proportional_edit_objects`` (object mode) and
-``use_proportional_edit`` (edit modes, UV), so the kit keeps both flags of every scene equal to ``STATE``:
+Maya's soft select is one global option (``cmds.softSelect(softSelectEnabled=...)``, factory 0 = off: Maya,
+ 「계획」 0). Blender has two per-scene flags, ``use_proportional_edit_objects`` (object mode)
+and ``use_proportional_edit`` (edit modes, UV), so the kit keeps both flags of every scene equal to ``STATE``:
 kit toggles call ``set_on``; a flag changed by Blender's own UI is pulled in (``pull``: depsgraph handler +
 msgbus); loads / undo / redo push the state back (a file saved with soft select on follows the global state).
 
 Falloff maths = Blender's transform (``set_prop_dist``, ``transform_convert_mesh_connectivity_distance`` +
 ``geodesic_distance_propagate_across_triangle``, ``calculatePropRatio``) so the colours show what G / R / S
-will do; the colour ramp is Maya's ``softSelect -q -softSelectColorCurve`` (yellow 1, red 0.5, black 0).
+will do; the colour ramp is Maya's ``cmds.softSelect(query=True, softSelectColorCurve=True)`` (yellow 1, red 0.5,
+black 0).
 """
 
 import bpy

@@ -2,9 +2,9 @@
 """Maya Insert Key (Alt+I, Ctrl+Shift+W/E/R), Nudge Keys (Shift+( / )) and Select Previous / Next Key (Ctrl+Alt+, / .).
 
 ; Maya runtime commands ():
-InsertKeyTranslate / Rotate / Scale = ``setKeyframe -insert -at translate|rotate|scale``, InsertKey =
-``insertKey`` (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's),
-Nudge = ``keyframe -animation keys -r -o over -tc ±1``, SelectNext/PreviousKey = ``selectNextOrPrevKey``
+InsertKeyTranslate / Rotate / Scale = ``cmds.setKeyframe(insert=True, attribute="translate" / ...)``, InsertKey =
+Insert Key (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's),
+Nudge = ``cmds.keyframe(animation="keys", relative=True, option="over", timeChange=±1)``, SelectNext/PreviousKey
 (from the last selected key: find the next / previous key, select only it, go there). 
 
 An insert keeps the curve's shape. Blender 4.5's ``keyframe_points.insert`` already subdivides a segment between two

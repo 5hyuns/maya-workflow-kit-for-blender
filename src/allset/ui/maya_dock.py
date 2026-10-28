@@ -268,7 +268,7 @@ def show(context, kind):
 
 
 def toggle(context, kind, show_only=False):
-    """Maya toggleUIComponentVisibility: a hidden or tabbed-behind panel is raised; a shown one is hidden (its
+    """Maya Windows > UI Elements toggle: a hidden or tabbed-behind panel is raised; a shown one is hidden (its
     floating window closed, or the tab stack closed when it is the stack's tab). Returns True = shown after."""
     wm = context.window_manager
     if kind_visible(wm, kind):

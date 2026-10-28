@@ -361,7 +361,7 @@ class ALLSET_OT_weight_influence(bpy.types.Operator):
                 if self.action in {'LOCK_SELECTED', 'UNLOCK_SELECTED'}:
                     if group.name in selected:
                         group.lock_weight = self.action == 'LOCK_SELECTED'
-                elif self.action in {'LOCK_OTHERS', 'UNLOCK_OTHERS'}:      # Maya artSkinInvLockInf
+                elif self.action in {'LOCK_OTHERS', 'UNLOCK_OTHERS'}:      # Maya Lock / Unlock Unselected
                     if group.name not in selected:
                         group.lock_weight = self.action == 'LOCK_OTHERS'
                 else:
@@ -442,7 +442,7 @@ def vertex_targets(mesh, indices):
         data.update()
 
 
-# --- Flood (Maya 2026 artAttrSkinPaintCtx -clear, ) ---------
+# --- Flood (Maya 2026 Paint Skin Weights Flood, ) ---------
 # Maya applies the operation to the influence being painted, multiplied by Opacity o:
 #   Replace w' = w + o(v - w)   Add w' = min(1, w + o v)   Scale w' = w (1 - o (1 - v))
 #   Smooth  w' = w + o(avg - w), avg = the mean of the vertex and its edge neighbours (Value ignored; the neighbour
@@ -595,7 +595,7 @@ def flood(context, operation='BRUSH'):
 
 # --- Influences list RMB (Maya 2026, ) -------------------
 
-NO_INFLUENCE = 'Please select an influence first'      # Maya kNoInfluenceSelected (resources/Maya:7186)
+NO_INFLUENCE = 'Please select an influence first'      # Maya's warning text
 
 
 def picked_influences(context, mesh):
@@ -607,7 +607,7 @@ def picked_influences(context, mesh):
 
 
 def affected_vertices(mesh, names):
-    """Vertices whose weight in any of the named influences is > 0 (skinCluster -selectInfluenceVerts)."""
+    """Vertices whose weight in any of the named influences is > 0 (Maya Select Affected Vertices)."""
     idx = {mesh.vertex_groups[n].index for n in names if n in mesh.vertex_groups}
     return {v.index for v in mesh.data.vertices if any(e.group in idx and e.weight > 0.0 for e in v.groups)}
 

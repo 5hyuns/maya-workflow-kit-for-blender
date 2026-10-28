@@ -279,7 +279,7 @@ def frame_points(context, v3d, selected, children, exclude=None):
     (the camera a view looks through)."""
     vl, dg = context.view_layer, context.evaluated_depsgraph_get()
     mode = context.mode
-    if not selected:   # A / Shift+A: every visible object, in any mode (Maya fitPanel -all)
+    if not selected:   # A / Shift+A: every visible object, in any mode (Maya Frame All)
         return [p for ob in vl.objects if ob != exclude and _visible(ob, vl, v3d) for p in _object_points(ob, dg)]
     if mode == 'EDIT_MESH':
         pts = []
@@ -374,7 +374,7 @@ def camera_projection(context, cam):
 
 
 def frame_camera(context, cam, points):
-    """Move ``cam`` so ``points`` fill Maya's 0.95 of its frame, keeping its orientation (Maya fitPanel in a camera
+    """Move ``cam`` so ``points`` fill Maya's 0.95 of its frame, keeping its orientation (Maya framing in a camera
     view dollies / tracks the camera; an orthographic camera changes its width). A locked camera (Maya Lock Camera,
     ui/panel_menus.camera_locked) stays. Returns True when the camera moved."""
     if all(cam.lock_location):

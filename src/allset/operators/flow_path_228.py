@@ -2,10 +2,10 @@
 """step 228 L9: Maya Flow Path Object (lattice along the motion path).
 
 Maya (, Maya ``flow`` in , setup
-): ``flow -divisions 5 2 2 -objectCentered 1 -localCompute 0`` on an object
-that has a motion path makes ``flow1`` / ``ffd1`` / ``ffd1Lattice`` / ``ffd1Base``: a lattice around the object whose
-points the flow node places along the motion path (each point at its own distance along the path, offset in the
-path's frame), the ffd deforming the object.
+): Constrain > Motion Paths > Flow Path Object (Divisions 5 / 2 / 2,
+Lattice around Object, Local effect off) on an object that has a motion path makes ``flow1`` / ``ffd1`` /
+``ffd1Lattice`` / ``ffd1Base``: a lattice around the object whose points the flow node places along the motion path
+(each point at its own distance along the path, offset in the path's frame), the ffd deforming the object.
 
 Blender construction (delegated,  「계획」 B):
 - the kit lattice deformer of step 144 (``deformers.create('LATTICE')``: ``ffd1`` Lattice modifier + ``ffd1Base`` Hook

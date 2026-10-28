@@ -130,7 +130,7 @@ def test_toolbar_draw():
 # --- marking menu / keys ---------------------------------------------------------------------------
 
 def test_tangent_marking_menu():
-    menu = mm.MENUS["buildKeyframeTangentMM"]
+    menu = mm.MENUS["KEY_TANGENT"]
     keys, tans = menu.radial["W"][1], menu.radial["E"][1]
     assert menu.radial["W"][0] == "Keys" and menu.radial["E"][0] == "Tangents"
     assert tans.radial["S"] == ("Linear", ("allset.set_tangent", {"kind": "LINEAR"}))

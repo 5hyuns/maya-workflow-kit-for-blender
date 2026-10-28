@@ -722,7 +722,7 @@ def playback_range(scene):
 
 
 # --- key ticks -----------------------------------------------------
-# Maya draws the keys of the selected nodes (timeSliderShowKeys "active", PREF:473) as 1 px lines over the
+# Maya draws the keys of the selected nodes (setting timeSliderShowKeys "active") as 1 px lines over the
 # whole Time Slider height: displayRGBColor timeSliderKey red, timeSliderBreakdown green
 # (; checked in ).
 KEY_RGB = (1.0, 0.0, 0.0, 1.0)

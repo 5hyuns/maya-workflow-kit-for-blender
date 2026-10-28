@@ -4,8 +4,8 @@
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
 option_windows._extend appends ``WINDOWS``). Labels, kinds, factory defaults and buttons were read from a running
 Maya 2022 with factory prefs ( "Grid Options", shot
-; ``grid -q`` = size 12, spacing 5, divisions 5, displayColor grid /
-gridAxis / gridHighlight = index 2 = 0.25 grey).
+; ``cmds.grid(query=True)`` = size 12, spacing 5, divisions 5,
+displayColor grid / gridAxis / gridHighlight = index 2 = 0.25 grey).
 
 Maya keeps grid options as setting (gridSize / gridSpacing / gridDivisions, displayGrid*: per user), so the kit
 keeps them where every option window keeps its values: the add-on preference ``option_settings`` (key

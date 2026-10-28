@@ -18,10 +18,10 @@ Maya 2026 rules (Maya,  / solver.py, numbers in ):
   Vector constraint drives it, the pole object's translate (Maya 2026,  "Extra"
   R18; step 253): the kit RP handle's ``twist`` / ``poleVectorX/Y/Z`` channels (step 245) and the pole object's
   location. Maya's Offset / Roll exist on the kit's spline handles only (step 249), not on RP handles.
-- **Enable IK Solver** (``updateIKFKState``): a global check (factory off); each use flips it and sets Ik Blend of
+- **Enable IK Solver**: a global check (factory off); each use flips it and sets Ik Blend of
   the selected handles — or of the handles whose chain holds a selected joint — to the new state, keeping the
   joints' rotation (so switching IK off keeps the IK pose). Nothing selected: Maya's error.
-- **Move IK to FK** (``moveIKtoFK``): the handle moves to the FK end joint (the chain evaluated without IK); Ik Blend
+- **Move IK to FK**: the handle moves to the FK end joint (the chain evaluated without IK); Ik Blend
   stays as it is.
 """
 
@@ -31,7 +31,7 @@ from mathutils import Vector
 from .. import results
 
 IK_BLEND = "ikBlend"
-NO_HANDLE = "Select a handle, joint or an ikfk connected object."     # Maya updateIKFKState / ikFK error
+NO_HANDLE = "Select a handle, joint or an ikfk connected object."     # Maya's error text
 
 
 # --- handles and chains -------------------------------------------------------------------------------------------

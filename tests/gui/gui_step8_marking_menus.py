@@ -56,7 +56,7 @@ def s_rmb_release():
 @step
 def s_rmb_done():
     ts = bpy.context.scene.tool_settings
-    check("RMB drag north + release = Edge (dagMenuProc N)",
+    check("RMB drag north + release = Edge (RMB_MESH N)",
           bpy.context.mode == 'EDIT_MESH' and tuple(ts.mesh_select_mode) == (False, True, False))
     check("the picked cube became the active object", bpy.context.view_layer.objects.active == cube())
     ev('MOUSEMOVE', 'NOTHING', x=C["x"], y=C["y"])

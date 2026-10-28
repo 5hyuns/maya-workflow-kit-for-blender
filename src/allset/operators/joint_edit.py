@@ -3,9 +3,9 @@
 
 Maya 2026 (, Maya ``move_joint_156``): W on a joint changes only its
 translate, its subtree follows, and **no jointOrient changes** — the parent's X stops aiming at the moved child.
-Preserve Children (``move -pcp``) keeps the children's world positions instead. A Blender bone always points at its
-tail, so moving a connected child re-aims the parent bone; the joint's Maya frame is then written back into
-``joints.MAYA_FRAME`` (the bone-relative frame step 232's FBX writer already reads).
+Preserve Children (``cmds.move(preserveChildPosition=True)``) keeps the children's world positions instead. A Blender
+bone always points at its tail, so moving a connected child re-aims the parent bone; the joint's Maya frame is then
+written back into ``joints.MAYA_FRAME`` (the bone-relative frame step 232's FBX writer already reads).
 
 ``process`` runs from tool_keys' 0.25 s watch in Edit Armature mode: while no transform runs it snapshots every bone's
 (head, tail, roll, MAYA_FRAME, Maya frame); a bone whose head or tail afterwards moved with the same MAYA_FRAME (= it

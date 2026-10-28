@@ -422,7 +422,7 @@ def unregister_props():
 # --- Step Snap (Move/Rotate/Scale tool option, S3) -----------------------------------------------
 
 STEP_FLAGS = {'TRANSLATE': "use_snap_translate", 'ROTATE': "use_snap_rotate", 'RESIZE': "use_snap_scale"}
-MAYA_ROTATE_STEP = 0.2617993877991494      # 15 degrees (manipRotateContext -snapValue, S3)
+MAYA_ROTATE_STEP = 0.2617993877991494      # 15 degrees (Rotate tool snapValue, S3)
 
 
 # Issue #139 (step 220): Blender's use_snap_translate / rotate / scale ("Affect") switch *all* snapping off for that
@@ -454,8 +454,8 @@ def step_snap_mode(ts, kind):
     return 'ABSOLUTE' if ts.use_snap_grid_absolute else 'RELATIVE'
 
 
-# Step 263 (Issue #153): Maya keeps Relative / Absolute per tool (manipMoveContext / manipRotateContext /
-# manipScaleContext -snapRelative,  B5), Blender has one Absolute Grid Snap flag
+# Step 263 (Issue #153): Maya keeps Relative / Absolute per tool (Move / Rotate /
+# Scale tool snapRelative,  B5), Blender has one Absolute Grid Snap flag
 # for every transform. The kit keeps each tool's mode in STEP_PROP and puts it into Blender's flag when a transform
 # of that tool can start: the tool becomes active (tool_keys._watch), an LMB press on the manipulator
 # (manip.ALLSET_OT_manip_press), an MMB drag (manip_mmb), and when the user picks the mode of the active tool.

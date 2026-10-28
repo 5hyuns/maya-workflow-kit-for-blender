@@ -2,7 +2,7 @@
 """Maya 2026 Visualize > Motion Trail Editor on Blender motion paths (step 225, Issue #135; ATTACH_PLAN L21).
 
 Maya 2026 replaced "Create Editable Motion Trail" with the Motion Trail Editor ( L21;
-``$P/maya/app/motiontrail/MotionTrailEditor_res.py``, defaults in ``MotionTrailPreferences.py:357-556``): Create
+labels and defaults from Maya's Motion Trail Editor): Create
 Motion Trail on the selection (time range = Time Slider, increment 1), Delete Selected / Delete All, Settings (Draw
 Style Always Draw / Draw When Selected, X-Ray Draw, Draw Mode Constant / Alternating Frames / Past/Future (default) /
 Velocity, Anchor World / Object, Path before / before+after (default) / after, Increment 1, Pre / Post Frames 0), Edit

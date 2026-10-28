@@ -63,8 +63,8 @@ MAYA_CLIP = (0.1, 10000.0)        # cm,  (= operators/units.py CLIP)
 MAYA_PERSP_EYE = (28.0, -28.0, 21.0)  # cm, Maya persp (28, 21, 28) Y-up  (= units.PERSP_EYE)
 
 # Maya 2022 factory workspaces the template carries (step 160, #81): Windows > Workspaces / the Status Line dropdown
-# (= src/allset/ui/workspaces.py MAYA_WORKSPACES). Layouts from resources/workspaces/*.json
-# (, ); "General" is shown as "Maya Classic".
+# (= src/allset/ui/workspaces.py MAYA_WORKSPACES). Layouts follow Maya's factory
+# workspaces (, ); "General" is shown as "Maya Classic".
 # name -> (menu set linkedMenu, raised tab of the right tab stack, recipe)
 MAYA_WORKSPACES = {
     "General": ("", 'CHANNEL_BOX', ()),

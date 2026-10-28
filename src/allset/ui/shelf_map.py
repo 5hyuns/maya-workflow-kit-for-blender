@@ -2,7 +2,7 @@
 """Maya shelf button -> Blender action and Blender built-in icon.
 
 Keys: the button's runTimeCommand (``shelf_data``), or "<shelf file>/<label>" for
-buttons whose Maya command is a MEL expression. Values: (action, icon) with the
+buttons whose Maya command is a script rather than a runTimeCommand. Values: (action, icon) with the
 action in ``ui/menu_map.py`` form (run by ``marking.modal.run_action``). Icons are
 Blender's own (no Maya artwork, ); the shelf row draws kit-made
 pictograms (``shelf_icons``).

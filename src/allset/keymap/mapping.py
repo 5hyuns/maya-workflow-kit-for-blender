@@ -164,7 +164,7 @@ ENTRIES = {
                        note="UV Editor 를 열고 (편집 모드) UV 선택 = UV Sync 끔 + UV 정점 (step 66). 3D 뷰 오브젝트·메시 편집 밖의 F12 = Blender Render Image + Maya 기본 라이트 (allset.render_blender, step 214)"),
     "SelectMeshUVShell": _e("KIT", (OBJ, "allset.uv_component", {"mode": 'SHELL'}),
                             note="Maya UV Shell 마스크: 3D View / UV Editor 클릭·박스가 UV 셸 전체 (면) 를 고름 (step 256, operators/uv_shell_select.py)"),
-    # --- step 66: UV Editor (polyTexturePlacementPanel) ---
+    # --- step 66: UV Editor ---
     "polyTexturePlacementPanel:CutUVs": _e("KIT", ("UV Editor", "allset.uv_cut", {}),
                                            note="솔기 + 작은 쪽 셸을 0.2 px 떼어 그 자리에서 분리 (IC 스냅 파이 제거)"),
     "polyTexturePlacementPanel:SewUVs": _e("KIT", ("UV Editor", "allset.uv_sew", {}),
@@ -194,7 +194,7 @@ ENTRIES = {
     "BevelPolygon": _e("KIT", ("Mesh", "allset.bevel", {}),
                        note="정점 모드 = 정점 베벨, 그 외 엣지; 드래그로 폭"),
     # --- step 24: component Delete; plain Delete/Backspace is
-    # Maya's doDelete (not a hotkeySetup row): Mesh "allset.delete_components" ---
+    # Maya's Edit > Delete (not a default hotkey row): Mesh "allset.delete_components" ---
     "DeletePolyElements": _e("IC", ("Mesh", "mesh.dissolve_mode", {}),
                              note="엣지·정점 dissolve (Delete Edge/Vertex); Delete/Backspace = 바로 삭제 (step 24)"),
     # --- step 16: undo / visibility / isolate ---

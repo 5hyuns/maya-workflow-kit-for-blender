@@ -290,7 +290,7 @@ def compensate(rgb, saturation):
     return tuple(min(1.0, max(0.0, luma + (c - luma) / saturation)) for c in rgb)
 
 
-# --- Tool Box tools (32 grid; Maya aselect / lassoSelect / artSelect / move_M / rotate_M / scale_M) ----------
+# --- Tool Box tools (32 grid; Maya Select / Lasso / Paint Selection / Move / Rotate / Scale) ----------
 
 def _cursor(p, x, y, s, colour=LIGHT):
     """Maya's select pointer: tip at (x, y), ``s`` high, the tail to the lower right."""
@@ -350,7 +350,7 @@ TOOLS = {
 }
 
 
-# --- quick layout buttons (16 grid; Maya singlePerspLayout / fourViewLayout / twoViewVerticalLayout / outliner) ----
+# --- quick layout buttons (16 grid; Maya Single Perspective / Four View / Two Side by Side / Outliner) ----
 
 def _persp_mark(p, cx, cy, r, colour):
     """Maya's perspective panel mark: a quilt of four small diamonds round a light cross."""
@@ -400,7 +400,7 @@ def l_outliner(p):
         p.hline(9, w, y - 1, 1, LIGHT)
 
 
-# --- Layer Editor toolbar (16 grid; Maya moveLayerUp / moveLayerDown / newLayerEmpty / newLayerSelected) ----------
+# --- Layer Editor toolbar (16 grid; Maya Move Up / Move Down / New Empty Layer / New Layer from Selected) ----------
 
 def _layer(p):
     """Maya's display layer: a light grey sheet seen edge-on, pointing left."""

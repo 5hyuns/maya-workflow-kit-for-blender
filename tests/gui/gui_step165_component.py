@@ -1,5 +1,5 @@
 """Step 165 in the Maya Workflow Kit layout: RMB on a cube > Inputs opens the node list
-(Maya historyPopupFill: Select / Enable / Disable All, the nodes, All Inputs...), picking a node opens it in the
+(like Maya's RMB Inputs list: Select / Enable / Disable All, the nodes, All Inputs...), picking a node opens it in the
 Channel Box; in component mode the Channel Box shows the shape, the CVs line and INPUTS. Shots with ``--shots``."""
 
 import os

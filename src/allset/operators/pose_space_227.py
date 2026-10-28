@@ -173,8 +173,8 @@ def interpolator_name(bone_name):
 
 
 def create(context, arm, pb, twist_axis=0):
-    """``createPoseInterpolatorNode <joint>_poseInterpolator 1 <axis>``: the node + the neutral pose (= the bone's pose
-    now, Maya Create neutral poses on)."""
+    """Maya Pose Editor Create Pose Interpolator (``<joint>_poseInterpolator``, twist axis): the node + the neutral pose
+    (= the bone's pose now, Maya Create neutral poses on)."""
     _update(context)
     interp = bpy.data.objects.new(interpolator_name(pb.name), None)
     interp.empty_display_size = 0.0          # Maya's poseInterpolator shape draws nothing in the viewport

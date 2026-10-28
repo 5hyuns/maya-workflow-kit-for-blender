@@ -41,7 +41,7 @@ LABEL = {"normal": "Normal Constraint", "tangent": "Tangent Constraint"}
 MAYA_NODE = {"normal": "normalConstraint", "tangent": "tangentConstraint"}
 QUAD_SPLIT = 0.999                   # Maya splits a quad 0-2 only when d02^2 < 0.999 d13^2 (constrain_199.md)
 
-# Maya messages (Maya)
+# Maya's own messages
 MSG_REMOVE_SELECT = "You must select one or more target(s) followed by the constrained object."
 MSG_REMOVE_CONSTRAINED = "A constrained object must be the last object selected."
 MSG_REST = "A constrained object must be selected."

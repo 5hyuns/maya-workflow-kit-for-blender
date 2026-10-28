@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 4/5/6/7 viewport display modes.
 
- (RTC DisplayWireframe, DisplayShaded,
+ (runTimeCommands DisplayWireframe, DisplayShaded,
 DisplayShadedAndTextured, DisplayLight). Maya applies them to the panel under
 the pointer (interaction.md:33); bound in the "3D View" keymap, Blender gives
 us that area as ``context.space_data``.
@@ -194,7 +194,7 @@ SMOOTH_LEVELS = (0, 4)   # preview Subsurf levels kept in this range [delegated]
 
 
 def change_smoothing_level(ob, delta):
-    """Maya PgUp / PgDn (changeSmoothingLevel, Maya default hotkeys): the smooth preview's
+    """Maya PgUp / PgDn (Maya default hotkeys): the smooth preview's
     division level. An object without a preview gets a hidden one that keeps the level
     (Maya's smoothLevel shows only in 3 mode too). Returns the new level."""
     mod = preview_modifier(ob, create=False)

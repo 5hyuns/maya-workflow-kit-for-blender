@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's tool settings and UI don't come from the scene file (step 138, issues #63 #64; ).
 
-Global tool settings (#64): Maya keeps each tool context's settings in setting (``rememberCtxSettings``,
+Global tool settings (#64): Maya keeps each tool context's settings in setting (
 ) and symmetry / soft select in global options (), so
 they survive File > New Scene / Open. Blender keeps them per scene (``Scene.tool_settings``, the transform orientation
 slots, the kit's scene property groups), and a new / opened file brings its own. Like step 93's selection masks

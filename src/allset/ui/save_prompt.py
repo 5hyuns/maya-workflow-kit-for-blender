@@ -4,9 +4,10 @@
 Maya 2022 (checked in a running Maya): when the scene is modified, a dialog with the buttons
 Save / Don't Save / Cancel (default Save, Esc = Cancel):
 
-- a saved scene: title "Save Changes", message "Save changes to <scene path>?"; Save = ``file -save``, then the action;
+- a saved scene: title "Save Changes", message "Save changes to <scene path>?"; Save = File > Save Scene, then the
+  action;
 - an untitled scene: title "Warning: Scene Not Saved", message "Save changes to untitled scene?"; Save = the Save As
-  browser (``projectViewer "SaveAs"``), the action only once the scene was really saved;
+  browser (File > Save Scene As), the action only once the scene was really saved;
 - Don't Save = the action; Cancel = nothing.
 
 ``ask(context, proceed)`` runs ``proceed`` (a callable that may load a file) from a timer after that check — never

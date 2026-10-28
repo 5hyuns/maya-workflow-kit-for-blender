@@ -105,7 +105,7 @@ def _hsv_to_rgb(h, s, v):
 
 
 def rename_error(names, new):
-    """Maya colorSetEditCmd rename: an empty name or one already used fails ("Cannot rename color set to an existing
+    """Maya Color Set Editor rename: an empty name or one already used fails ("Cannot rename color set to an existing
     color set name."); spaces, digits first and dashes are accepted (Maya rename_*)."""
     if not new or new in names:
         return "Cannot rename color set to an existing color set name."
@@ -120,7 +120,7 @@ def next_bake_set(names):
 
 
 def blend(old, new, mode):
-    """vertexBakeSet colorBlending / alphaBlending (polyGeoSampler -colorBlend) of the baked value over the old one."""
+    """vertexBakeSet colorBlending / alphaBlending (polyGeoSampler colorBlend) of the baked value over the old one."""
     if mode == 1:
         return old + new
     if mode == 2:

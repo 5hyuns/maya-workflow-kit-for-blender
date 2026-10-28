@@ -96,8 +96,8 @@ def s_history_deleted():
 @step
 def s_a_menu_open():
     s = C["draw"].ACTIVE.get("session")
-    check("A hold + LMB opens the buildSelectAllMM marking menu",
-          s is not None and s.stack[0][0].sub is C["mm"].MENUS["buildSelectAllMM"])
+    check("A hold + LMB opens the SELECT_ALL marking menu",
+          s is not None and s.stack[0][0].sub is C["mm"].MENUS["SELECT_ALL"])
 
 
 @step

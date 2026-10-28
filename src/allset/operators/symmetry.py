@@ -32,7 +32,7 @@ MODES = (("OFF", "Off"),
          ("OBJECT_X", "Object X"), ("OBJECT_Y", "Object Y"), ("OBJECT_Z", "Object Z"),
          ("WORLD_X", "World X"), ("WORLD_Y", "World Y"), ("WORLD_Z", "World Z"),
          ("TOPOLOGY", "Topology"))
-# Marking menu check items (commonReflectionOptionsPopup) and the MMB toggle.
+# Marking menu check items (Maya's Symmetry submenu in the Move / Rotate / Scale marking menus) and the MMB toggle.
 PARTS = (("ON", "Symmetry", "Symmetry on/off"),
          ("ABOUT_WORLD", "World", "Mirror about the world"),
          ("ABOUT_OBJECT", "Object", "Mirror about the object"),
@@ -214,12 +214,12 @@ class ALLSET_OT_symmetry(bpy.types.Operator):
         sym = state(context.scene)
         mode = self.mode
         was_on = sym.on
-        if mode == "TOGGLE":     # Maya MMB on the Status Line button: reflectionToggle
+        if mode == "TOGGLE":     # Maya MMB on the Status Line button: symmetry on / off
             set_mode(sym, "OFF" if sym.on else sym.last)
         elif mode == "ON":       # check box: -symmetry on/off, about/axis kept
             sym.on = not sym.on
         elif mode.startswith("ABOUT_"):
-            sym.about = mode[6:]  # Maya: -about only, on/off unchanged (commonReflectionOptionsPopup)
+            sym.about = mode[6:]  # Maya: only the About setting, on/off unchanged
         elif mode.startswith("AXIS_"):
             sym.axis = mode[5:]
         else:
@@ -228,7 +228,7 @@ class ALLSET_OT_symmetry(bpy.types.Operator):
             sym.last = mode_of(sym)
         objects = edit_meshes(context.scene)
         apply(sym, objects)
-        # Maya selects the mirrored side when symmetry is switched on (reflectionSetMode).
+        # Maya selects the mirrored side when symmetry is switched on.
         if sym.on and (not was_on or mode in dict(MODES)):
             symmetrize_selection(context, sym)
         if sym.on and sym.about == 'WORLD':

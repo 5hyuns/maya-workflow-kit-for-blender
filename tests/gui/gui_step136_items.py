@@ -1,7 +1,7 @@
 """Step 136 lane ITEMS in a real UI: RMB in component mode — Select All / Deselect All / Invert / Select Hierarchy are
 enabled (#62), a greyed row puts its notice in the Help Line while hovered, releasing on Select All selects every
-vertex and stays in component mode. Ctrl+RMB on the mesh in object mode opens the convert menu (buildConvertMM picks by
-shape type) and a row converts the whole object in component mode (main session, step 136).
+vertex and stays in component mode. Ctrl+RMB on the mesh in object mode opens the convert menu (Maya's Ctrl+RMB convert
+marking menu picks its items by shape type) and a row converts the whole object in component mode (main session, step 136).
 Screenshot: gui_step136_rmb_component.png."""
 
 import os
@@ -151,7 +151,7 @@ def s_ctrl_menu():
     if s is None:
         return
     check(f"it is the convert menu ({s.layout.sub.name if hasattr(s.layout.sub, 'name') else '?'})",
-          getattr(s.layout.sub, "name", "") == "polyConvertMM")
+          getattr(s.layout.sub, "name", "") == "CTRL_CONVERT")
     it = _row(s, "To Shell")
     check("To Shell is enabled from object mode", it is not None and it.enabled)
     C["s"] = s

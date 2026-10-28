@@ -101,7 +101,7 @@ def test_click_mode_cascade_row_click_keeps_menu():
 
 def test_radial_submenu_still_replaces_the_menu():
     # In-place radial submenus (Ctrl+RMB To Vertices) are not cascades: no fall-back to the parent.
-    s = engine.Session(mm.MENUS["polyConvertMM"], O, 0.0, measure, None, None, B)
+    s = engine.Session(mm.MENUS["CTRL_CONVERT"], O, 0.0, measure, None, None, B)
     p = s.params
     s.move(O[0] - p.radius - 5, O[1], 0.3)
     assert len(s.stack) == 2

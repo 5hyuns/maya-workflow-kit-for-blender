@@ -169,7 +169,7 @@ def test_static_lists_are_not_greyed():
         action = _sub(mm.RMB_MESH, label)
         assert isinstance(action, mm.NodeList) and not mm.is_greyed(action), label
         assert modal.poll_action(action), label
-        assert f"dagMenuProc/{label}" not in notices.MARKING
+        assert f"RMB_MESH/{label}" not in notices.MARKING
 
 
 def test_inputs_outputs_plain_cube_like_maya():

@@ -49,7 +49,7 @@ def next_name(taken, base):
 
 
 def merge_target(picked, parents):
-    """Maya mergeCharacters: the top parent among the picked characters when one is a subcharacter of another,
+    """Maya Merge Character Sets: the top parent among the picked characters when one is a subcharacter of another,
     else the last picked."""
     tops = [c for c in picked if any(parents.get(o) == c for o in picked if o != c)]
     return tops[-1] if tops else picked[-1]
@@ -128,7 +128,7 @@ def member_name(path):
 
 
 def member_names(scene, ks):
-    """Maya ``character -q``: own attributes, then the subcharacters."""
+    """Maya ``cmds.character(query=True)``: own attributes, then the subcharacters."""
     return [member_name(p) for p in ks.paths] + children(scene, ks.bl_label)
 
 
@@ -235,7 +235,7 @@ def selected_nodes(context):
 
 
 def targets(context):
-    """Maya doEditCharacterArgList: selected character nodes, else the current character."""
+    """Maya Key > Character Set edit commands: selected character nodes, else the current character."""
     ks = picked(context)
     if ks:
         return ks
@@ -582,7 +582,7 @@ class ALLSET_MT_character_select_members(_CharacterList, bpy.types.Menu):
 
 
 class ALLSET_MT_character_set_current(bpy.types.Menu):
-    """Maya buildSetCharacterMenu: a radio row per character set, then None"""
+    """Maya Key > Set Current Character Set: a radio row per character set, then None"""
     bl_idname = "ALLSET_MT_character_set_current"
     bl_label = "Set Current Character Set"
 

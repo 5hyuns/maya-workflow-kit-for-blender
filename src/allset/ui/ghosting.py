@@ -8,9 +8,9 @@ Maya 2022 rules (, Maya + GUI capture ):
 - Factory settings: mode Pre And Post Frames, Pre Frames 3, Post Frames 3, Step 1 (presets 1s / 2s / 4s / 5s / 10s
   = step 1 / 2 / 4 / 5 / 10, Custom = own pre / post / step), Pre Frame Color (0.447, 1, 1), Post Frame Color
   (0.878, 0.678, 0.663), Near Opacity 0.5, Far Opacity 0.15.
-- Frames (``ghosting -q -frames``): t − k·step / t + k·step for k = 1 .. pre / post, not clipped to the playback range;
-  Pre And Post Keyframes = the pre / post nearest keys before / after t (any key, also outside the range); All
-  Keyframes = every key in the playback range; Custom Frames = the listed frames as they are.
+- Frames (``cmds.ghosting(query=True, frames=True)``): t − k·step / t + k·step for k = 1 .. pre / post, not clipped to
+  the playback range; Pre And Post Keyframes = the pre / post nearest keys before / after t (any key, also outside the
+  range); All Keyframes = every key in the playback range; Custom Frames = the listed frames as they are.
 - Look: each ghost is the object's mesh at that frame, drawn in the side's colour with opacity
   near + (far − near)·(k − 1)/(n − 1) for the k-th of n ghosts on that side (wireframe alpha 127 / 83 / 38 for
   k = 1 / 2 / 3). Shaded ghosts blend their front and back faces (alpha 191 / 139 / 71 = 1 − (1 − a)²), so the kit
@@ -37,7 +37,7 @@ PRE_COLOR = (0.447, 1.0, 1.0)                              # ghostColorPre facto
 POST_COLOR = (0.878, 0.678, 0.663)                         # ghostColorPost factory
 NEAR, FAR = 0.5, 0.15                                      # ghostNearOpacity / ghostFarOpacity factory
 # Maya's ghosting command error when nothing selected can be ghosted (s_TghostingCmdStrings
-# rGhostingCmdErrNoGhostableObjects,  B7)
+#  B7)
 NOTHING_TO_GHOST = "Nothing selected can be ghosted using the current settings."
 FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3, "custom_post": 3, "custom_step": 1,
            "custom_frames": "", "color_pre": PRE_COLOR, "color_post": POST_COLOR, "near_opacity": NEAR,

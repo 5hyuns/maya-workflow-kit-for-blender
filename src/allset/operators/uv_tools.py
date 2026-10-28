@@ -406,7 +406,7 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
         top = max(dots)
         which[f] = next(i for i, x in enumerate(dots) if x >= top - 1e-6)
     seen, shells = set(), []
-    # Maya's shell order = ascending lowest face index (initPoly visits faces in index order, spec)
+    # Maya's shell order = ascending lowest face index (faces visited in index order, spec)
     for f in sorted(faces, key=lambda f: f.index):
         if f in seen:
             continue

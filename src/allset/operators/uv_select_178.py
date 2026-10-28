@@ -9,23 +9,23 @@ Kit mask: UV Sync Selection on = the mesh select mode (vertex / edge / face);
 off = the UV Editor's own mode (vertex = Maya UV, edge, face; island = Maya UV Shell). Candidates are the faces the UV
 Editor shows (uv_display.shown_faces). A "UV" = the loops of one vertex sharing one coordinate (Maya's UV id).
 
-- Back-Facing / Front-Facing (selectUVFaceOrientationComponents ... 2 / 1): a UV is back (front) when a face with
+- Back-Facing / Front-Facing: a UV is back (front) when a face with
   negative (positive) UV winding area uses it; faces = faces all of whose UVs are, edges = face sides whose two UVs
   are, vertices = vertices with such a UV. So a clockwise quad between two counter-clockwise ones of its shell is
   front-facing too (checked: strips 'fold', 'maj_mid', 'maj5').
-- Texture Borders (selectUVBorderComponents): components on UV shell borders (a face side no other face shares
+- Texture Borders: components on UV shell borders (a face side no other face shares
   across with the same UVs: mesh borders + seams); faces = faces with such a side. UV Shell mask: Maya selects
   nothing (unsupported).
-- Non-Overlapping (selectUVOverlappingComponents 0 0, all meshes together): faces whose UV area meets no other face's
+- Non-Overlapping (all meshes together): faces whose UV area meets no other face's
   (touching edges don't count); edges whose UV segments cross / lie along another edge's (shared or touching ends
   don't count); UVs / vertices with no other UV at the same place. UV Shell mask: every face outside the shells of
   overlapping faces.
-- Unmapped Faces (selectUnmappedFaces = polyCleanup "zero map area" 1e-6): faces with UV area < 1e-6, i.e. deleted
+- Unmapped Faces (= Mesh > Cleanup's zero map area test, 1e-6): faces with UV area < 1e-6, i.e. deleted
   UVs (the kit's Delete UVs collapses them to (0, 0), uv_shells.DELETED), UVs on a point or a line, tiny faces;
   Face component mode, selection replaced (nothing found: Maya's warning, selection cleared).
-- To Connected Faces (textureWindow -selectRelatedFaces): faces touching the selection (= polyListComponentConversion
-  -tf: vertices -> their faces, edges -> the faces beside them, UVs -> the faces using them, faces stay).
-- Unpin All (UVEditorUnpinAll = polyPinUV -op 2): every UV pin of the meshes off.
+- To Connected Faces: faces touching the selection (= ``cmds.polyListComponentConversion(toFace=True)``:
+  vertices -> their faces, edges -> the faces beside them, UVs -> the faces using them, faces stay).
+- Unpin All (UVEditorUnpinAll): every UV pin of the meshes off.
 """
 
 import bmesh
@@ -512,7 +512,7 @@ class ALLSET_OT_uv_select_unmapped(bpy.types.Operator):
         if not obs:
             return {'CANCELLED'}
         ts = context.scene.tool_settings
-        # Maya: changeSelectMode -component; setComponentMask facet
+        # Maya: component mode, face mask
         uv_tools.forget_mesh_selection()
         uv_tools.set_component(context, 'FACE')
         found = 0
@@ -524,7 +524,7 @@ class ALLSET_OT_uv_select_unmapped(bpy.types.Operator):
             bmesh.update_edit_mesh(ob.data, loop_triangles=False, destructive=False)
         ts.mesh_select_mode = (False, False, True)
         if not found:
-            self.report({'WARNING'}, "No unmapped faces to select.")      # m_selectUnmappedFaces.kNoUnmappedFaces
+            self.report({'WARNING'}, "No unmapped faces to select.")      # Maya's warning text
         return {'FINISHED'}
 
 

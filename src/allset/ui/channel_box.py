@@ -1750,7 +1750,7 @@ class ALLSET_MT_cb_object(bpy.types.Menu):
 
 
 class ALLSET_MT_cb_show(bpy.types.Menu):
-    """Maya Channel Box Show menu (generateChannelShowMenu, )"""
+    """Maya Channel Box Show menu ()"""
     bl_label = "Show"
 
     def draw(self, context):

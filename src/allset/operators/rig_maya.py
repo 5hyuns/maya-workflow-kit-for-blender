@@ -131,14 +131,16 @@ def _with_children(bones):
 
 
 def set_preferred(bones, hierarchy=True):
-    """Maya ``joint -e -spa -ch``: preferredAngle = the current rotation, on the joints and their children (option
-    window Options: Selected joint = ``hierarchy`` False, no ``-ch``; )."""
+    """Maya ``cmds.joint(edit=True, setPreferredAngles=True, children=True)``: preferredAngle = the current rotation, on
+    the joints and their children (option window Options: Selected joint = ``hierarchy`` False, no ``children``;
+    )."""
     for pb in (_with_children(bones) if hierarchy else bones):
         pb[PREFERRED_PROP] = [math.degrees(a) for a in _euler(pb)]
 
 
 def assume_preferred(bones, hierarchy=True):
-    """Maya ``joint -e -apa -ch``: rotation = preferredAngle (joints without one keep their rotation)."""
+    """Maya ``cmds.joint(edit=True, assumePreferredAngles=True, children=True)``: rotation = preferredAngle (joints
+    without one keep their rotation)."""
     from mathutils import Euler
     for pb in (_with_children(bones) if hierarchy else bones):
         if PREFERRED_PROP in pb:
