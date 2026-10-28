@@ -58,6 +58,9 @@ EXCLUDE = (
     # popup menus / pies / marking-menu engines: Blender 4.5 -b crashes in ui_popup_menu_create_impl (no region) on
     # wm.call_menu exec (seen at seed 1 #295 "Windows/UI Elements") - headless-only, a GUI opens the menu
     r"^\('menu'", r"^\('pie'", r"allset\.mm_", r"hotbox", r"popup", r"option_box", r"call_menu", r"call_panel",
+    # Blender 4.5 / 5.2 -b crash in initTimeSlide on a scripted transform.transform(mode='TIME_SLIDE') with no
+    # Dope Sheet (factory Blender, no kit: tools/qa/repro_c_time_slide.py, step 271) - a GUI has the editor
+    r"TIME_SLIDE",
 )
 EXCLUDE_RE = re.compile("|".join(EXCLUDE))
 COMMON = ("object.", "mesh.", "transform.", "anim.", "pose.", "armature.", "wm.context_", "wm.tool_set", "view3d.",

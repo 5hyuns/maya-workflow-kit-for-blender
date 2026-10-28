@@ -215,7 +215,10 @@ def _helper(owner, name, target, sub, offset_world, point):
 
 
 def helpers():
-    coll = bpy.data.collections.get(HELPERS)
+    # register() runs with Blender's restricted data while add-ons load at start-up / install (no ``collections``):
+    # nothing to find then; load_post handlers look again once the file is loaded
+    colls = getattr(bpy.data, "collections", None)
+    coll = colls.get(HELPERS) if colls is not None else None
     return list(coll.objects) if coll is not None else []
 
 

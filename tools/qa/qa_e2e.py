@@ -554,6 +554,8 @@ def _truth():
         sc.frame_set(f)
         fr = {}
         for ob in sc.objects:
+            if "allset_pole_of" in ob:      # the kit's hidden RP pole helper: no Maya node, not exported (step 245)
+                continue
             fr[ob.name] = list(ob.matrix_world.to_translation() / k)
             if ob.type == 'ARMATURE':
                 for pb in ob.pose.bones:

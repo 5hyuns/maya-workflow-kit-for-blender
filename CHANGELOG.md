@@ -5,15 +5,39 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
-## [0.6.0] — 2026-10-27
+## [0.6.0] — 2026-10-28
 
-The release after the animation-chain re-audit (steps 230–239): a rig made in the kit now reaches a game engine and
-Maya 2026 the way a Maya rig does. Blender 4.5 LTS through 5.2.x.
+The rigging release (steps 230–270): joints, IK, skinning and constraints follow Maya 2026 (measured with mayapy), a
+rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does, and the reports that came in after
+0.5.0 are fixed. Reference data (hotkeys, shelves, editor menus) now follows Maya 2026. Blender 4.5 LTS through 5.2.x.
 
 ### Added
 - **Four View as four real panels** (#148): each panel has its own shading, Show menu, camera and menu bar like
   Maya's; Space taps between Four View and the panel under the mouse, the layout survives save / open, and switching
   to Blender folds it back to one view.
+- **Joints move after placement** (#156, #160): with the Move tool an unskinned skeleton is edited like Maya's joint
+  translate (children follow, every joint keeps its orientation; Preserve Children keeps the children where they are);
+  the Channel Box shows the lead joint's Translate for typing. Skin > **Move Skinned Joints** moves joints of a bound
+  skeleton without moving the mesh.
+- **Skeleton menu with Maya's meaning** (#163): Insert Joints is a click-and-drag tool; Remove Joints, Disconnect
+  Joint and Connect Joint (connect / parent mode) work like Maya's; Mirror Joints defaults to the XY plane.
+- **Skinning methods** (#167): Classic Linear, Dual Quaternion and Weight Blended, chosen in the Bind Skin options or
+  the Attribute Editor skinCluster tab (all three within 3.5e-6 of Maya 2026).
+- **Bind Skin options** (#164): skinning method, dropoff rate, Maintain max influences and Closest in hierarchy;
+  Mirror Skin Weights gets Normalize and works from component mode.
+- **Spline IK Twist and Roll** (#166): the Spline IK handle is a selectable `ikHandleN` with Twist, Roll and Twist
+  Type (Linear / Ease In / Ease Out / Ease In Out) in the Channel Box.
+- **Constraint Interp Type and aim world up types** (#168): orient / parent constraints with several targets have
+  Maya's Interp Type (No Flip, Average, Shortest, Longest, Cache) as a Channel Box drop-down; Aim has every Maya world
+  up type and a World up object.
+- **Joint display** (#165): the Channel Box shows a joint's Radius; Display > Local Rotation Axes and Display >
+  Animation > Joint Size work.
+- **UV Shell selection** (#172): RMB > UV > UV Shell, Select > Components > UV Shell or Alt+F12 select whole UV shells
+  by click, box or lasso in the 3D View and the UV Editor (Shift / Ctrl / Ctrl+Shift as Maya).
+- **UV Automatic history** (#150): the command leaves a polyAutoProj node in the Channel Box INPUTS and the Attribute
+  Editor (Planes, Optimize, Percentage Space), editable afterwards and removed by Delete History.
+- **Game Exporter as a window** (#154): File > Game Exporter stays open while you work, starts with Maya 2026's
+  first-open presets per tab, and shows Maya's file-name hints and export errors.
 - **Animation layers on joints** (#143): Create Layer from Selected / Add / Remove Selected take the picked joints, S
   keys joints (quaternion joints too) on the selected layer, and Bake Simulation bakes to BaseAnimation with the
   layers combined so the result looks the same as before baking.
@@ -22,25 +46,71 @@ Maya 2026 the way a Maya rig does. Blender 4.5 LTS through 5.2.x.
   hierarchy (upper_arm_fk.L ↑ → shoulder.L). New FBX options "Deforming Joints Only" and "Maya-Safe Names" (on).
 - **Blend shapes next to deformers in FBX** (#144): in-between targets are written as Maya blendShape in-betweens
   (Maya 2026 reads `blendShape1` like its own FBX), and other deformers are paused while the file is written.
+- **Dope Sheet keys from Maya 2026**: g frames the playback range, t centres the current time, h / j lock / unlock the
+  selected channels.
 
 ### Changed
-- **Game Exporter clips** (#140) are written as timeline takes: Maya scale, IK arms in place, only the clip takes in
-  the file, and several clips in one file keep their own names and ranges.
+- **Joint orientation = Maya 2025+ factory** (#161): the Joint Tool and Skeleton > Orient Joint orient with Maya's
+  auto orient secondary axis; new joints have Segment Scale Compensate on and Maya's joint radius.
+- **IK RP like Maya** (#162): a new RP handle gets Maya's default pole vector, Pole Vector X / Y / Z and Twist channels;
+  Constrain > Pole Vector turns the plane to the target, and straight chains bend by their preferred angle like Maya.
+- **Skin commands** (#164): Prune Small Weights, Set Max Influences, Go to Bind Pose and Mirror Skin Weights follow
+  Maya 2026 (Mirror Skin Weights takes the closest surface point and writes only the selected destination vertices).
+- **Pick walk order** (#165): arrows follow Maya's child order (Down = first child, Left / Right = siblings in
+  creation order, wrapping), for joints and for objects.
 - **Joint orientation the Maya way** (#141): a plain click on Orient Joint / Mirror Joints runs at once with the saved
   options (❒ opens the window); FBX joints carry Maya's jointOrient (within 4e-5° of Maya 2026).
 - **Constraints on child joints** (#142) move the joint like Maya: position constraints detach only that joint, and
   rotation-following joints get Maya's axes (a 90° offset is gone).
+- **Game Exporter clips** (#140) are written as timeline takes: Maya scale, IK arms in place, only the clip takes in
+  the file, and several clips in one file keep their own names and ranges.
 - **Kit FBX back into the kit** (#144): File > Import of a kit FBX puts skinned meshes at the file's world position and
   sets the Time Slider to the take's range, like Maya.
+- **Maya's vertex and face order** (#149): Create > Cylinder / Cube, Edit Mesh > Extrude and Edit Mesh > Bevel number
+  their vertices, edges and faces like Maya 2026, so a cylinder → extrude → bevel chain matches Maya by index.
+- **UV Automatic layout** (#150) uses Maya's "Into square" packing and "Fewer pieces" plane rule.
+- **Auto tangents** (#151): keys the kit sets (S, Channel Box, Auto Key, scripts) get Maya 2026's auto tangents, and
+  neighbouring keys are recomputed when a key is added or deleted.
+- **Step Snap per tool** (#153): Move, Rotate and Scale keep their own Step Snap Relative / Absolute; Move offers
+  Absolute only with World axes, like Maya.
+- **Maya errors on wrong selections** (#152): commands run on a selection they don't apply to print Maya 2026's own
+  error text (Bind Skin, constraints, Remesh / Reduce / Conform, Move IK to FK and more) instead of a Python error or
+  nothing; cases Maya handles silently work silently.
+- **Fresh-eye polish** (#155): F / A / Shift+F frame like Maya in perspective; Status Line snap toggles are no undo
+  step; the Symmetry box opens its drop-down; the Maya layout views show no redo panel; the layout no longer re-flows
+  after Four View or a dialog; a root joint's Translate shows its position and the Outliner names skeletons after
+  their root joint.
 - **Rig and animation polish** (#146): Enable IK Solver shows its check mark; the first Paint Skin Weights entry picks
   the first influence in hierarchy order; importing an animation FBX sets the Time Slider to the file's range; typing a
   value in the Set Driven Key window is no longer overwritten before Key.
-- Release QA now also runs shuffled / reversed test orders, toggle invariants, a seeded monkey, an upgrade path, other
-  add-ons side by side and an end-to-end workflow (`tools/qa/`).
+- **Hotkeys, shelves and editor menus follow Maya 2026**: the Hotkey Editor lists Maya 2026's 495 factory bindings;
+  shelves have the 2026 tabs (Curves, Surfaces, UV Editing) and buttons; Graph Editor and Dope Sheet menu bars and icon
+  rows follow Maya 2026.
+- **Alt navigation with Emulate 3 Button Mouse** (#177): the preferences and the welcome dialog explain that Blender's
+  Emulate 3 Button Mouse turns Alt+LMB into a middle drag (the kit never changes Blender preferences); the welcome
+  dialog comes back once at the next start when it was closed without turning Maya mode on.
 
 ### Fixed
+- **Shift+drag on the manipulator** runs Smart Duplicate / Smart Extrude again (it did nothing in 0.5.0) (#175, #183).
+- **Hotbox** (#174): a click on a hotbox menu name opens the menu instead of running the row under the pointer (Edit >
+  Cut deleted the selection), and a held Space keeps the hotbox up instead of cycling Four View.
+- **UV Editor freeze and crash** (#172, #170): clicking faces, dragging a shell or Cut UV Edges on a large mesh froze
+  Blender for seconds, and moving UVs in the UV Editing workspace could crash Blender.
+- **Top menus not responding after install** (#170): the welcome dialog no longer opens over the menu bar.
+- **Install error on Blender builds with Python 3.14** (some Linux distributions) (#176).
+- **Rigify controls keep Pose mode** (#171): clicking a control no longer drops the rig into Object or Edit mode; a
+  click just off a control clears the selection and stays in Pose, like Maya.
+- **Show > Selection Highlighting** turns the highlight off (#173); Show > NURBS Curves also hides curve-shaped bone
+  controls, and picking a control bone no longer highlights the meshes under the rig.
+- **D pivot edit** grabs the manipulator at once (also the X / C / V snap holds), and another add-on that binds the
+  same key no longer takes it from the kit in Maya mode (#178).
+- **Skeleton menu and P with the Move tool** act on the joints you clicked, not their whole subtree; Set IK/FK Key also
+  keys the handle's Twist and Pole Vector (#169).
 - **Bevel on a cylinder cap rim** gives Maya's width (it was a sixth of it) (#124).
 - **Delete History** also removes the kit's Extrude / Bevel history (the Channel Box INPUTS emptied like Maya) (#124).
+- Step Snap stays off when the last grid / point snap is turned off; Circularize works from object mode; UV Pin works
+  in edit mode; undo keeps the current time like Maya; the Game Exporter's default path exists; the Outliner stays fast
+  with hundreds of objects (#147).
 
 ## [0.5.0] — 2026-10-27
 

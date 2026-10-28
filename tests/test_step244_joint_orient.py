@@ -20,6 +20,7 @@ import maya2026_rig_data as data
 jo_mod = import_module(kit.MODULE + ".operators.joint_orient")
 joints = import_module(kit.MODULE + ".operators.joints")
 ae = import_module(kit.MODULE + ".ui.attribute_editor")
+cb = import_module(kit.MODULE + ".ui.channel_box")
 
 I3 = Matrix.Identity(3)
 EXTREME_PTS = {     # oj_verify.py "extremes" (Maya world, chain order)
@@ -270,7 +271,7 @@ def test_rotated_and_skinned_joints_are_skipped_with_mayas_warning():
     # the operator reports Maya's warning text
     bpy.ops.object.mode_set(mode='POSE')
     for pb in ob.pose.bones:
-        pb.bone.select = pb.name == "j0"
+        cb.set_bone_selected(pb, pb.name == "j0")
     ob.data.bones.active = ob.data.bones["j0"]
     r = bpy.ops.allset.orient_joint('EXEC_DEFAULT')
     assert r == {'FINISHED'}
@@ -337,7 +338,7 @@ def test_orient_joint_undo():
     bpy.ops.object.mode_set(mode='POSE')
     before = {n: rig.joint_world(ob, n)[1] for n in ("j0", "j1")}
     for pb in ob.pose.bones:
-        pb.bone.select = pb.name == "j0"
+        cb.set_bone_selected(pb, pb.name == "j0")
     ob.data.bones.active = ob.data.bones["j0"]
     bpy.ops.ed.undo_push(message="before")
     assert bpy.ops.allset.orient_joint('EXEC_DEFAULT', True) == {'FINISHED'}
