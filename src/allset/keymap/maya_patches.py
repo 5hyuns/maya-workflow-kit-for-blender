@@ -597,6 +597,18 @@ def patch_manip_duplicate(kd):
     for km in GIZMO_KEYMAPS:
         _add(kd, km, "allset.manip_duplicate", make_event("LEFTMOUSE", "PRESS", shift=True),
              first=True)
+        # Step 261 (#175): IC's gizmo_tweak CLICK_DRAG allows no Shift (IC:107-110, unlike
+        # blender_default.py:500-503 any_except("alt")), and a CLICK_DRAG carries the press's
+        # modifiers (wm_event_system.cc 4.5 :3644), so the real Shift+drag matched no gizmo item and
+        # the copy / extrusion was taken back. Shift "any"; Ctrl / Alt stay as IC has them.
+        found = kd.find(km, "gizmogroup.gizmo_tweak", type="LEFTMOUSE", value="CLICK_DRAG")
+        if not found:
+            if not patch.STRICT:
+                patch.DRIFT.append(f"{km}: no item gizmogroup.gizmo_tweak CLICK_DRAG")
+                continue
+            raise LookupError(f"{km}: no item gizmogroup.gizmo_tweak CLICK_DRAG")
+        for item in found:
+            item[1]["shift"] = -1
 
 
 # --- 22. Delete / Backspace on components ------------------------
