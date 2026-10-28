@@ -8,7 +8,11 @@ the ground grid in a perspective view (Blender z = 0) and on the view plane thro
 
 Keys (Maya curve contexts): LMB press = new point, drag = move it, release = place it; Enter = finish (CV: degree + 1
 points, EP: 2 points, else the tool keeps waiting); Backspace / Delete = remove the last point; Esc or a tool key
-(q / w / e / r / y) = stop without a curve; hold X = snap to the grid (Maya grid spacing / divisions). The arcs finish
+(q / w / e / r / y) = stop without a curve; MMB drag = move the last placed point (Maya: middle-drag the most recent
+point). Snaps while placing or moving a point (Issue #208, operators/curve_snap.py): hold X = grid (Maya grid spacing /
+divisions), hold C = the nearest curve / polygon edge under the cursor (dragging slides along it), hold V = the nearest
+CV / vertex / pivot; the Status Line snap buttons (Blender's scene snapping) snap too and Ctrl inverts them while
+clicking, like Blender. The arcs finish
 on the release of their last click (3 / 2 points). The curve itself comes from ``curves_maya`` (``make_cv_curve`` /
 ``make_ep_curve`` / ``make_arc3`` / ``make_arc2``) and is named ``curveN`` / ``curveShapeN``. UNDO only (no redo panel,
 step 147): one undo step per finished curve.
@@ -23,17 +27,20 @@ from bpy_extras import view3d_utils
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-from . import curves_maya, naming, units
+from . import curve_snap, curves_maya, keystate, naming, units
 
 CV, EP, ARC3, ARC2 = "CV", "EP", "ARC3", "ARC2"
 LABELS = {CV: "CV Curve Tool", EP: "EP Curve Tool", ARC3: "Three Point Circular Arc", ARC2: "Two Point Circular Arc"}
 STATUS = {
-    CV: "CV Curve Tool: click to place CVs, Enter to finish, Backspace: remove the last CV (Esc: stop, hold X: grid)",
-    EP: "EP Curve Tool: click to place edit points, Enter to finish, Backspace: remove the last point "
-        "(Esc: stop, hold X: grid)",
-    ARC3: "Three Point Circular Arc: click the start, a point on the arc and the end (Esc: stop, hold X: grid)",
-    ARC2: "Two Point Circular Arc: click the start and the end (Esc: stop, hold X: grid)",
+    CV: "CV Curve Tool: click to place CVs, Enter to finish, Backspace: remove the last CV, middle-drag: move it "
+        "(Esc: stop, hold X / C / V: snap to grid / curve / point)",
+    EP: "EP Curve Tool: click to place edit points, Enter to finish, Backspace: remove the last point, middle-drag: "
+        "move it (Esc: stop, hold X / C / V: snap to grid / curve / point)",
+    ARC3: "Three Point Circular Arc: click the start, a point on the arc and the end "
+          "(Esc: stop, hold X / C / V: snap to grid / curve / point)",
+    ARC2: "Two Point Circular Arc: click the start and the end (Esc: stop, hold X / C / V: snap to grid / curve / point)",
 }
+SNAP_KEYS = {'X': "grid", 'C': "curve", 'V': "point"}     # Maya snap holds (curve_snap.GRID / CURVE / POINT)
 TOOL_KEYS = {'Q', 'W', 'E', 'R', 'Y', 'T'}
 POINT_RGB = (0.95, 0.35, 0.95)      # Maya draws pending CVs / EPs in magenta-ish component colour
 LINE_RGB = (0.8, 0.8, 0.8)
@@ -72,6 +79,13 @@ class Drawing:
     def drag(self, p):
         if self.dragging and self.points:
             self.points[-1] = Vector(p)
+
+    def move_last(self, p):
+        """MMB drag: the most recent point follows the cursor (Maya)."""
+        if self.points and not self.dragging:
+            self.points[-1] = Vector(p)
+            return True
+        return False
 
     def release(self, p=None):
         """LMB release: the point is placed; True when an arc is complete now."""
@@ -199,6 +213,13 @@ def _redraw(window):
 
 # --- the modal ---------------------------------------------------------------------------------
 
+def _ui_scale(context):
+    try:
+        return context.preferences.system.ui_scale or 1.0
+    except AttributeError:
+        return 1.0
+
+
 class _CurveDrawTool:
     bl_options = {'UNDO'}
     kind = CV
@@ -230,7 +251,9 @@ class _CurveDrawTool:
         if context.window is None:
             return self.execute(context)
         self._drawing = Drawing(self.kind, self._degree())
-        self._snap = False
+        self._held = {}            # held snap key -> curve_snap mode
+        self._targets = None       # snap targets, gathered once per press
+        self._mmb = False          # MMB drag of the last point
         self._last_view = None
         STATE.update(points=self._drawing.points, kind=self.kind, owner=self)
         _add_handler()
@@ -255,22 +278,51 @@ class _CurveDrawTool:
             return None
         area, region = hit
         self._last_view = (area, region)
-        p = plane_point(region, region.data, (event.mouse_x - region.x, event.mouse_y - region.y))
-        if self._snap:
+        rv3d = region.data
+        mouse = (event.mouse_x - region.x, event.mouse_y - region.y)
+        modes = self._modes(context, event)
+        if modes - {curve_snap.GRID}:
+            if self._targets is None:
+                try:
+                    space = area.spaces.active
+                except (AttributeError, ReferenceError):
+                    space = None
+                self._targets = curve_snap.gather(context, space)
+            surface = curve_snap.surface_under(context, region, rv3d) if curve_snap.SURFACE in modes else None
+            p = curve_snap.snap_to(self._targets, modes, mouse, rv3d.perspective_matrix, region.width,
+                                   region.height, curve_snap.CURVE_RADIUS_PX * _ui_scale(context), surface)
+            if p is not None:
+                return p
+        p = plane_point(region, rv3d, mouse)
+        if curve_snap.GRID in modes:
             p = snap_grid(p, grid_step(context.scene))
         return p
+
+    def _modes(self, context, event):
+        """Snaps for this event: the held X / C / V keys plus Blender's scene snapping (Ctrl inverts it)."""
+        ts = context.scene.tool_settings
+        return set(self._held.values()) | curve_snap.scene_modes(ts.use_snap, ts.snap_elements, event.ctrl)
+
+    def _drop_released_keys(self):
+        """A snap key RELEASE another handler took: drop the hold once the key is up."""
+        for key in [k for k in self._held if keystate.is_down(k) is False]:
+            del self._held[key]
 
     def modal(self, context, event):
         d = self._drawing
         if STATE["owner"] is not self:          # another curve tool started: this one stops
             self._end(context)
             return {'CANCELLED', 'PASS_THROUGH'}
-        if event.type == 'X' and not (event.ctrl or event.alt or event.oskey):
-            if event.value == 'PRESS':
-                self._snap = True
+        if event.type in SNAP_KEYS and not (event.ctrl or event.alt or event.oskey):
+            if event.value == 'PRESS':           # Maya: Shift+x / c / v are the same holds
+                if event.type not in self._held:
+                    self._held[event.type] = SNAP_KEYS[event.type]
+                    self._targets = None
             elif event.value == 'RELEASE':
-                self._snap = False
+                self._held.pop(event.type, None)
             return {'RUNNING_MODAL'}
+        if event.type == 'MOUSEMOVE' and self._held:
+            self._drop_released_keys()
         if event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS':
             if d.can_finish():
                 return self._done(context)
@@ -286,14 +338,37 @@ class _CurveDrawTool:
         if event.type in TOOL_KEYS and event.value == 'PRESS' and not (event.ctrl or event.alt or event.oskey):
             self._end(context)
             return {'CANCELLED', 'PASS_THROUGH'}
-        if event.type == 'MOUSEMOVE' and d.dragging:
+        if event.type == 'MOUSEMOVE' and (d.dragging or self._mmb):
             p = self._point(context, event)
             if p is not None:
-                d.drag(p)
+                if self._mmb:
+                    d.move_last(p)
+                else:
+                    d.drag(p)
                 _redraw(context.window)
             return {'RUNNING_MODAL'}
+        if event.type == 'MIDDLEMOUSE':
+            # Maya: middle-drag moves the most recent point (Alt+MMB stays the view track)
+            if event.value == 'PRESS' and d.points and not d.dragging \
+                    and not (event.alt or event.shift or event.oskey):
+                self._targets = None
+                p = self._point(context, event)
+                if p is not None:
+                    self._mmb = True
+                    d.move_last(p)
+                    _redraw(context.window)
+                    return {'RUNNING_MODAL'}
+            elif event.value == 'RELEASE' and self._mmb:
+                self._mmb = False
+                p = self._point(context, event)
+                if p is not None:
+                    d.move_last(p)
+                _redraw(context.window)
+                return {'RUNNING_MODAL'}
         if event.type == 'LEFTMOUSE':
-            if event.value == 'PRESS' and not (event.alt or event.ctrl or event.shift or event.oskey):
+            # Ctrl+click places the point with Blender's snapping inverted (Blender's Ctrl snap toggle)
+            if event.value == 'PRESS' and not self._mmb and not (event.alt or event.shift or event.oskey):
+                self._targets = None
                 p = self._point(context, event)
                 if p is not None and d.press(p):
                     _redraw(context.window)
