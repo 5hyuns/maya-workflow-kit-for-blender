@@ -19,6 +19,8 @@ bundled inside the extension (``app_template.STARTUP``) (named "Maya-style") and
 workspace and deletes the appended one. Scenes and objects are never touched.
 """
 
+import os
+
 import bpy
 
 from . import results
@@ -103,7 +105,9 @@ def enter_layout(window):
     own = own[0] if own else None
     if own is not None:
         # the file's own Maya layout (a Maya Workflow Kit template file left by a switch to Blender): back to it,
-        # nothing appended twice (#19, step 129)
+        # nothing appended twice (#19, step 129); the user's workspace is remembered for the way back (#185)
+        if window.workspace is not None:
+            own[BLENDER_PREV_KEY] = window.workspace.name
         window.workspace = own
         return own
     prev = window.workspace.name
@@ -222,29 +226,106 @@ def leave_layout(window):
 
 
 BLENDER_LAYOUT_KEY = "allset_blender_layout"
+BLENDER_PREV_KEY = "allset_blender_prev"     # on a template Maya workspace: the user's workspace before it (#185)
 # Blender's embedded factory startup file: what Add Workspace > General appends from (workspace_edit.cc
 # workspace_append_button, BLO_EMBEDDED_STARTUP_BLEND; checked on 4.5, step 129)
 EMBEDDED_STARTUP = "<startup.blend>"
+# The workspace the user's own file showed when a new Maya scene replaced it (first_start.new_maya_scene).
+START_WORKSPACE = {"name": None}
+
+
+def user_startup_file():
+    """The user's own Blender startup file (File > Defaults > Save Startup File), or None. Only read: its workspaces
+    come back when a new Maya scene had replaced the user's file (#185)."""
+    config = os.environ.get("BLENDER_USER_CONFIG")
+    if not config:
+        base = os.environ.get("BLENDER_USER_RESOURCES") or bpy.utils.resource_path('USER')
+        config = os.path.join(base, "config")
+    path = os.path.join(config, "startup.blend")
+    return path if os.path.isfile(path) else None
+
+
+def _users_workspace(window):
+    """A workspace of the user's already in the file: the one the user had before the Maya layout, else the one
+    last brought back, else any workspace that isn't a Maya one (#185)."""
+    ws = window.workspace
+    names = [ws.get(BLENDER_PREV_KEY)] if ws is not None else []
+    names.append(START_WORKSPACE["name"])
+    for name in names:
+        found = bpy.data.workspaces.get(name) if name else None
+        if found is not None and not is_maya_workspace(found):
+            return found
+    marked = [w for w in bpy.data.workspaces if BLENDER_LAYOUT_KEY in w]
+    if marked:
+        return marked[0]
+    return next((w for w in bpy.data.workspaces if not is_maya_workspace(w)), None)
+
+
+def _append_workspaces(window, path, names):
+    """Append the workspaces ``names`` of ``path`` (marked BLENDER_LAYOUT_KEY); returns {name in path: workspace}."""
+    out = {}
+    for name in names:
+        before = set(bpy.data.workspaces)
+        try:
+            with bpy.context.temp_override(**_window_override(window)):
+                bpy.ops.workspace.append_activate(idname=name, filepath=path)
+        except RuntimeError as ex:
+            print("Maya Workflow Kit: workspace not appended:", name, ex)
+            continue
+        new = [w for w in bpy.data.workspaces if w not in before]
+        if new:
+            new[0][BLENDER_LAYOUT_KEY] = True
+            out[name] = new[0]
+    return out
+
+
+def _users_startup_workspaces(window):
+    """The workspaces of the user's own startup file appended to the open file; returns the one to show (the one
+    the user's file showed, else Layout, else the first), or None when there is no user startup file."""
+    path = user_startup_file()
+    if path is None:
+        return None
+    try:
+        with bpy.data.libraries.load(path) as (src, _dst):
+            names = list(src.workspaces)
+    except (OSError, RuntimeError) as ex:
+        print("Maya Workflow Kit: startup file not read:", ex)
+        return None
+    got = _append_workspaces(window, path, names)
+    for name in (START_WORKSPACE["name"], "Layout"):
+        if name in got:
+            return got[name]
+    return next(iter(got.values()), None)
+
+
+def blender_target(window):
+    """The workspace a switch to Blender shows in ``window`` when its Maya layout came with the file (no workspace
+    to go back to): the user's workspace if the file has one, else the user's own startup workspaces appended,
+    else Blender's factory Layout (#19 step 129, #185)."""
+    target = _users_workspace(window) or _users_startup_workspaces(window)
+    if target is not None:
+        return target
+    before = set(bpy.data.workspaces)
+    try:
+        with bpy.context.temp_override(**_window_override(window)):
+            bpy.ops.workspace.append_activate(idname="Layout", filepath=EMBEDDED_STARTUP)
+    except RuntimeError as ex:
+        print("Maya Workflow Kit: Blender layout not appended:", ex)
+        return None
+    new = [w for w in bpy.data.workspaces if w not in before]
+    if not new:
+        return None
+    new[0][BLENDER_LAYOUT_KEY] = True
+    return new[0]
 
 
 def _leave_template_layout(window):
     """The window shows the Maya layout of a Maya Workflow Kit template file (no workspace to go back to): give it
-    Blender's factory Layout workspace, appended once and reused (#19, step 129). The Maya one stays in the file
-    for the way back (``enter_layout``)."""
-    target = next((w for w in bpy.data.workspaces if BLENDER_LAYOUT_KEY in w), None)
+    the user's workspace (``blender_target``), appended once and reused. The Maya one stays in the file for the way
+    back (``enter_layout``)."""
+    target = blender_target(window)
     if target is None:
-        before = set(bpy.data.workspaces)
-        try:
-            with bpy.context.temp_override(**_window_override(window)):
-                bpy.ops.workspace.append_activate(idname="Layout", filepath=EMBEDDED_STARTUP)
-        except RuntimeError as ex:
-            print("Maya Workflow Kit: Blender layout not appended:", ex)
-            return False
-        new = [w for w in bpy.data.workspaces if w not in before]
-        if not new:
-            return False
-        target = new[0]
-        target[BLENDER_LAYOUT_KEY] = True
+        return False
     window.workspace = target
     return True
 
