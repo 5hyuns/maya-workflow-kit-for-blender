@@ -339,7 +339,7 @@ MAP = {
     "Edit Mesh/Collapse": "mesh.edge_collapse",
     "Edit Mesh/Connect": "allset.connect",      # = Mesh Tools > Connect (step 139)
     "Edit Mesh/Extrude": ("v3d", "allset.extrude", {}),       # polyExtrudeFace (step 65)
-    "Edit Mesh/Smart Extrude": ("v3d", "allset.extrude", {}),   # Maya 2026 SmartExtrude (step 219)
+    "Edit Mesh/Smart Extrude": ("v3d", "allset.smart_extrude", {}),
     "Edit Mesh/Merge": "allset.merge",          # alwaysMergeTwoVertices (step 139)
     "Edit Mesh/Merge to Center": ("mesh.merge", {"type": 'CENTER'}),
     "Edit Mesh/Symmetrize": "allset.symmetrize",   # pick the seam edge first (step 139)

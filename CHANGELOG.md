@@ -5,6 +5,14 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Added
+- **Modern Smart Extrude**: the menu, Polygons shelf and face marking menu now use
+  a separate tool that grows, carves and stitches intersecting geometry within a
+  closed mesh, including partial/full cut-through and disconnected shells.
+  Combined Move/Rotate/Scale handles support custom pivots, J snapping, numeric
+  input, cancellation, Undo/Redo and G on a new selection. Ordinary Extrude and
+  legacy Shift+drag retain their behavior. See [usage and limits](docs/smart_extrude.md).
+
 ## [0.6.2] — 2026-10-28
 
 Fixes and small additions for the reports after 0.6.1. Blender 4.5 LTS through 5.2.x.

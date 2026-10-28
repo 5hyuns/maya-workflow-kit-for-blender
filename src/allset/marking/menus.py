@@ -483,6 +483,7 @@ SHIFT_FACE = MarkingMenu(
         "NW": ("Paint Select Faces", PAINT_SELECT),
     },
     items=[
+        ("Smart Extrude", _item("Edit Mesh/Smart Extrude")),
         ("Smooth Faces", ("mesh.subdivide", {"smoothness": 1.0})),
         ("Assign Invisible Faces", None),
         ("Add Divisions To Faces", "mesh.subdivide"),

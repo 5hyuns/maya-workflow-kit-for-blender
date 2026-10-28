@@ -61,6 +61,9 @@ Thanks for giving it a try 🙂
 
 ## Features
 
+Modern [Smart Extrude](docs/smart_extrude.md) grows, carves and stitches intersecting
+faces, with a combined Move/Rotate/Scale manipulator and cut-through support.
+
 Everything below is in the current version. Maya menu items that Blender cannot do are still shown — greyed, with a
 one-line note saying why and what to use instead.
 

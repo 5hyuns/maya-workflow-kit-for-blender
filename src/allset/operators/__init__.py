@@ -18,11 +18,12 @@ from . import joint_edit  # step 243 (#160): joint moves keep Maya frames, Prese
 from . import pivot_pick
 from . import pivot_rotate
 from . import pivot_translate
+from . import smart_extrude
 
 classes = (*display.classes, *group.classes, *hold.classes, *taphold.classes,
            *pivot_pick.classes,
            *pivot_rotate.classes,
-           *pivot_translate.classes,
+           *pivot_translate.classes, *smart_extrude.classes,
            *pickwalk.classes, *view.classes, *freeze.classes, *parenting.classes,
            *duplicate.classes, *history.classes, *create.classes, *visibility.classes,
            *component.classes, *manip.classes, *material.classes,
@@ -193,6 +194,7 @@ def register():
     poly_draw.register_props()
     edge_loops.register_props()
     extrude.register_handlers()
+    smart_extrude.register_props()
     uv_tools.register_props()
     uv_shell_select.register_props()
     fx.register_props()
@@ -305,6 +307,7 @@ def unregister():
     uv_shell_select.unregister_props()
     uv_tools.unregister_props()
     extrude.unregister_handlers()
+    smart_extrude.unregister_props()
     mesh_tools.clear()
     edge_loops.unregister_props()
     edge_loops.clear()
