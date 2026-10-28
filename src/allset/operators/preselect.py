@@ -320,6 +320,9 @@ def _extrude_block(context, region, rv3d, mouse):
     """The mouse is over the polyExtrudeFace arrow or the In-View Editor box (step 65): like the manipulator's
     handles, they must get the click, not the hovered face under them (step 97)."""
     from ..ui import in_view
+    from ..ui import smart_extrude
+    if smart_extrude.handles_hit(context, region, rv3d, mouse, HANDLE_PX * (context.preferences.system.ui_scale or 1.0)):
+        return True
     try:
         if not in_view.manip_visible(context):
             return False

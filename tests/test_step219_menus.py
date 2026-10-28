@@ -48,7 +48,8 @@ def test_kit_mappings_follow_the_renames():
     m = menu_map.MAP
     assert m["Mesh/Booleans/Difference (A - B)"] == ("allset.boolean", {"operation": 'DIFFERENCE'})
     assert m["Mesh/Booleans/Difference (B - A)"] == ("allset.boolean", {"operation": 'DIFFERENCE_BA'})
-    assert m["Edit Mesh/Smart Extrude"] == m["Edit Mesh/Extrude"]
+    assert m["Edit Mesh/Smart Extrude"] == ("v3d", "allset.smart_extrude", {})
+    assert m["Edit Mesh/Smart Extrude"] != m["Edit Mesh/Extrude"]
     assert m["Modify/Zero Pivot"] == "allset.reset_pivot"
     assert m["Visualize/Ghosting Editor"] == "allset.opt_ghosting_editor"
     assert m["Deform/Paint Membership"] == "paint.weight_paint_toggle"
