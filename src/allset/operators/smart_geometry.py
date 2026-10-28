@@ -11,6 +11,8 @@ import bmesh
 import bpy
 CAP = "allset_smart_cap"
 SOURCE = ".allset_smart_source_face"
+SURFACE = ".allset_smart_surface"
+TOUCHED = ".allset_smart_touched"
 
 
 class GeometryError(ValueError):
@@ -98,6 +100,7 @@ def _brush(triangles, before, after, positive, materials):
     bm = bmesh.new()
     try:
         layer = bm.faces.layers.int.new(CAP)
+        surface = bm.faces.layers.int.new(SURFACE)
         uv_layers = {name: bm.loops.layers.uv.new(name) for name in triangles[0][2][0]}
         verts = {}
         for coords, material, cap, uvs in faces.values():
@@ -107,6 +110,7 @@ def _brush(triangles, before, after, positive, materials):
                     vs[i] = verts[co] = bm.verts.new(co)
             f = bm.faces.new(vs)
             f.material_index, f[layer] = material, cap
+            f[surface] = cap
             for lp, uv in zip(f.loops, uvs):
                 for name, uv_layer in uv_layers.items():
                     lp[uv_layer].uv = uv[name]
@@ -163,6 +167,77 @@ def _boolean(context, mesh, brush, operation):
         bpy.data.objects.remove(operand, do_unlink=True)
 
 
+def _uv_continuous(edge, layers):
+    a, b = edge.link_loops
+    b0, b1 = (b, b.link_loop_next) if a.vert is b.vert else (b.link_loop_next, b)
+    return all((a[layer].uv-b0[layer].uv).length < 1e-6
+               and (a.link_loop_next[layer].uv-b1[layer].uv).length < 1e-6 for layer in layers)
+
+
+def _legacy_wall(face, layers):
+    """Older sweeps copied base UVs onto their cap, leaving wall UVs collapsed.
+
+    Recognize these panels only when the mesh predates the surface attribute.
+    Artist faces with non-degenerate UVs keep their UV boundaries protected.
+    """
+    if not layers:
+        return False
+    for layer in layers:
+        uvs = [lp[layer].uv for lp in face.loops]
+        local = [uv-uvs[0] for uv in uvs]
+        area = sum(a.x*b.y-b.x*a.y for a, b in zip(local, local[1:]+local[:1]))
+        extent = max(v.length_squared for v in local)
+        if abs(area) > max(extent*1e-8, 1e-30):
+            return False
+    return True
+
+
+def clean_panels(bm, marker, source, protected):
+    """Dissolve affected planar islands, including panels from earlier cuts.
+
+    A second intersecting cut must not promote the first cut's support edges to
+    immutable artist topology. Flood only surfaces touching the current sweep;
+    leave unrelated objects/shells, creases and explicit seams alone.
+    """
+    surface = bm.faces.layers.int.get(SURFACE) or bm.faces.layers.int.new(SURFACE)
+    touched = bm.faces.layers.int.new(TOUCHED)
+    layers = list(bm.loops.layers.uv.values())
+    seeds = {f for f in bm.faces if f[marker] > 0}
+    for f in list(seeds):
+        seeds.update(n for e in f.edges for n in e.link_faces)
+    adjacent = {}
+    for e in bm.edges:
+        if len(e.link_faces) != 2:
+            continue
+        a, b = e.link_faces
+        if a.material_index != b.material_index or a.normal.dot(b.normal) < 1-1e-7:
+            continue
+        if source and tuple(sorted((a[source], b[source]))) in protected:
+            continue
+        # Keep the movable cap selectable independently of its surroundings.
+        if (a[marker] == 1) != (b[marker] == 1):
+            continue
+        cut_walls = a[surface] == b[surface] == 2
+        if not cut_walls and not _uv_continuous(e, layers):
+            continue
+        adjacent.setdefault(a, []).append((b, e))
+        adjacent.setdefault(b, []).append((a, e))
+    reached, todo, edges = set(seeds), list(seeds), set()
+    while todo:
+        face = todo.pop()
+        face[touched] = 1
+        for neighbour, edge in adjacent.get(face, ()):
+            edges.add(edge)
+            if neighbour not in reached:
+                reached.add(neighbour)
+                todo.append(neighbour)
+    # cos(1e-5) rounds to 1 in float32 and prevents even planar dissolves.
+    bmesh.ops.dissolve_limit(bm, angle_limit=.001, verts=list({v for e in edges for v in e.verts}),
+                            edges=list(edges), delimit={'MATERIAL'})
+    bm.normal_update()
+    return surface, touched
+
+
 def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
     """Return a new, validated BMesh. ``transforms`` are absolute mesh-space matrices.
 
@@ -171,7 +246,10 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
     """
     validate(pre, input_mesh=True)
     pre.faces.ensure_lookup_table()
+    pre.faces.index_update()
     pre.verts.index_update()
+    protected = {tuple(sorted(f.index+1 for f in e.link_faces)) for e in pre.edges
+                 if len(e.link_faces) == 2 and (e.seam or not e.smooth)}
     patch = pre.copy()
     mesh = None
     try:
@@ -194,6 +272,12 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
         try:
             marker = original.faces.layers.int.get(CAP) or original.faces.layers.int.new(CAP)
             source = original.faces.layers.int.get(SOURCE) or original.faces.layers.int.new(SOURCE)
+            if original.faces.layers.int.get(SURFACE) is None:
+                surface = original.faces.layers.int.new(SURFACE)
+                layers = list(original.loops.layers.uv.values())
+                for f in original.faces:
+                    if _legacy_wall(f, layers):
+                        f[surface] = 2
             for i, f in enumerate(original.faces):
                 f[marker] = 0
                 f[source] = i+1
@@ -224,29 +308,10 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
             bm.normal_update()
             marker = bm.faces.layers.int.get(CAP)
             source = bm.faces.layers.int.get(SOURCE)
-            if marker:
-                edges = []
-                for e in bm.edges:
-                    if len(e.link_faces) != 2:
-                        continue
-                    a, b = e.link_faces
-                    same_original = source and a[source] > 0 and a[source] == b[source]
-                    same_sweep = a[marker] > 0 and a[marker] == b[marker]
-                    if same_original or same_sweep:
-                        edges.append(e)
-                # Rejoin Boolean fragments of each original polygon as well as
-                # sweep panels. Original polygon boundaries stay intact. New
-                # Boolean diagonals may be flagged sharp: that flag is not an
-                # artist boundary and must not prevent their removal.
-                # Below ~sqrt(float32 epsilon), cos(angle) rounds to 1 and
-                # dissolve_limit rejects even exactly coplanar neighbours.
-                bmesh.ops.dissolve_limit(bm, angle_limit=.001,
-                                        verts=list({v for e in edges for v in e.verts}), edges=edges,
-                                        delimit={'MATERIAL', 'UV'} if bm.loops.layers.uv.active else {'MATERIAL'})
-                bm.normal_update()
+            surface, touched = clean_panels(bm, marker, source, protected)
             validate(bm)
             caps = [f for f in bm.faces if marker and f[marker] == 1]
-            selection = caps or [f for f in bm.faces if marker and f[marker] == 2]
+            selection = caps or [f for f in bm.faces if f[surface] == 2 and f[touched]]
             if not changed:
                 selection = [f for f in bm.faces if f.index in chosen]
             for v in bm.verts:
@@ -259,7 +324,7 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
                 f.select_set(True)
             bm.select_mode = {'FACE'}
             bm.select_flush_mode()
-            for name in (CAP, SOURCE):
+            for name in (CAP, SOURCE, TOUCHED):
                 layer = bm.faces.layers.int.get(name)
                 if layer is not None:
                     bm.faces.layers.int.remove(layer)

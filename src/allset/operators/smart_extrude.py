@@ -22,6 +22,7 @@ TOOL = "allset.smart_extrude_tool"
 DRAG = None
 RECORDS = {}
 FIELDS = ('translation', 'rotation', 'scale', 'orientation', 'together')
+FRAME_INTERVAL = 1/60
 
 
 def active(context):
@@ -421,6 +422,9 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
             values[self.axis] *= max(.001, value)
         setattr(self, attr, values)
         self._pending = True
+        if self._error is None:
+            self._display_params = {key: tuple(getattr(self, key)) for key in self._start}
+        context.area.tag_redraw()
         context.area.header_text_set(f"Smart Extrude · {self.kind.title()} {'XYZ'[self.axis] if self.axis >= 0 else 'All'}: "
                                      f"{math.degrees(value) if self.kind == 'ROTATE' else value:.3f} · J: Snap · Type: Value · Esc: Cancel")
 
@@ -435,9 +439,10 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
             self._error = None
         except (smart_geometry.GeometryError, RuntimeError) as ex:
             self._error = str(ex)
+            self._display_params = self._accepted
         self._pending = False
         self._last_time = time.monotonic()
-        self._interval = max(.10, min(1., (self._last_time-start)*1.5))
+        self._interval = max(FRAME_INTERVAL, min(.1, (self._last_time-start)*.25))
         context.area.tag_redraw()
 
     def _end(self, context, cancel=False):
@@ -503,8 +508,8 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
         self._precision_raw = self._precision_anchor = self._precision_value = 1. if self.kind == 'SCALE' else 0.
         self._text, self._error = '', None
         self._step_held, self._baseline_step = hold.step_state(context.tool_settings, 'RESIZE' if self.kind == 'SCALE' else self.kind)
-        self._last_time, self._interval, self._pending = 0., .1, False
-        self._timer = context.window_manager.event_timer_add(.10, window=context.window)
+        self._last_time, self._interval, self._pending = 0., FRAME_INTERVAL, False
+        self._timer = context.window_manager.event_timer_add(FRAME_INTERVAL, window=context.window)
         DRAG = self
         extrude.dismiss(context)
         context.window_manager.modal_handler_add(self)
