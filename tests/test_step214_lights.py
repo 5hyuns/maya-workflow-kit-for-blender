@@ -1,6 +1,6 @@
 """Step 214 (#120): Maya Ambient Light / Volume Light stand-ins (operators/maya_lights.py) — creation, Maya values,
 World ambient nodes, UI wiring, and headless Cycles / EEVEE renders against the Maya Software rules of
-research/maya/re/render_parity_214.md §2-3 (tables printed as STEP214_LIGHTS lines in the log)."""
+Maya's rules (tables printed as STEP214_LIGHTS lines in the log)."""
 
 import math
 import os

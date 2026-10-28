@@ -1,12 +1,12 @@
-"""Step 151 lane B: Maya's polyExtrudeFace manipulator (research/maya/workflows/shots/modeling_03.png) - three local
+"""Step 151 lane B: Maya's polyExtrudeFace manipulator - three local
 translate arrows, a scale cube per axis, three plane handles and the centre square (uniform scale) - and the
 polyExtrudeFace values they drive (Local Translate X / Y, Local Scale X / Y / Z, operators/extrude.py).
 
-MAYA = Maya 2022 mayapy (polyCube 1 x 1 x 1, polyExtrudeFacet, then setAttr on the node; script
-research/scripts/extrude_manip_151_mayapy.py): faces by Blender side (Maya f[0] +Z = -y,
+MAYA = Maya 2022 (polyCube 1 x 1 x 1, polyExtrudeFacet, then setAttr on the node): faces by Blender side
+(Maya f[0] +Z = -y,
 f[1] top, f[2] -Z = +y, f[3] bottom, f[4] +x, f[5] -x), node values, mesh preparation, every vertex sorted
 (Maya Y-up -> Blender (x, -z, y)). "slant" = Maya vtx[2:3] (top front edge) moved +0.4 up, "trap" = vtx[3] / vtx[5]
-(top right edge) +0.25 X, "rot" = the cube rotated 30 deg about Maya Y (Blender Z). Measured rules: each face's local
+(top right edge) +0.25 X, "rot" = the cube rotated 30 deg about Maya Y (Blender Z). Maya's rules: each face's local
 Z = its normal, X = Maya world X projected into the face (Maya world Z for faces looking along X: f[4] / f[5]),
 Y = Z x X; Local Scale scales about the face's vertex mean (a 5-sided cap: the mean, not the bbox centre = the
 node's pivot); a shared vertex takes the mean of its faces' moves (Keep Faces Together); rings take the level

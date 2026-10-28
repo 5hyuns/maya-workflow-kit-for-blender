@@ -4,8 +4,8 @@
 Blender's writer gives every shape key its own BlendShapeChannel, so a kit in-between (step 227: a hidden key
 ``<target>_ib<w>`` plus the ``<target>_ibfix`` copy, operators/blend_shapes_227.py) reached Maya / engines as extra
 targets, and the BlendShape deformer was named after the mesh. Maya writes one channel per target holding its
-in-between shapes, FullWeights = the in-between weights x 100 then 100 (mayapy 2026: bulge items 5500 / 6000,
-C:/Repos/bmk-strategy/audit230/maya/chain4.json "9_reimport_maya_fbx"), and the deformer is the blendShape node.
+in-between shapes, FullWeights = the in-between weights x 100 then 100 (bulge items 5500 / 6000),
+and the deformer is the blendShape node.
 
 ``rewrite`` (after Blender's writer, decision 3 "FBX post-processing allowed"): each in-between's Shape moves under its
 target's channel in weight order, the helper channels / fix shapes go, FullWeights = Maya's, the deformer takes the

@@ -1,6 +1,6 @@
 """Step 258 (#152): Maya's messages on wrong selections instead of Python errors or silence.
 
-Maya 2026 truth: research/maya/re/060_messages_ui.md B4 (mayapy) + the step-258 additions there (constraints with one
+Maya 2026 + the step-258 additions (constraints with one
 object, Set Blend Shape Target Weight Keys on a skeleton, nothing selected for Remesh / Reduce). Maya's Errors are the
 kit's ERROR reports: a menu item called from Python raises ``RuntimeError("Error: <Maya text>")`` (no traceback).
 Cases where Maya works silently must work without an error.
@@ -144,7 +144,7 @@ def test_other_modifier_items_with_a_joint_warn_without_traceback():
     _clear()
     arm = _skeleton()
     _select(arm)
-    assert _run("Mesh/Triangulate") is None       # kit warning (no Maya text measured), no TypeError
+    assert _run("Mesh/Triangulate") is None       # kit warning (no Maya text), no TypeError
     assert not arm.modifiers
 
 
@@ -232,7 +232,7 @@ def test_bind_skin_without_a_joint_is_mayas_error():
 
 
 def test_bind_skin_nothing_selected_and_joints_only_are_mayas_errors():
-    # step 266 independent check (mayapy 2026): nothing selected / only the skeleton
+    # step 266 independent check (Maya 2026): nothing selected / only the skeleton
     _clear()
     arm = _skeleton()
     _cube()

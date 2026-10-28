@@ -22,7 +22,7 @@
 
 ## 현재 코드 감사 (src/maya_kit, 0.1.0 시점 줄 번호 — 지금은 다를 수 있음)
 - **위반** `command_line/__init__.py` ~207-211: `sys.modules["maya"]`, `sys.modules["maya.cmds"]` 삽입. → 커맨드 라인·셸프·스크립트 에디터의 exec 네임스페이스 안에서만 `cmds`를 제공한다. `import maya.cmds`는 그 네임스페이스 전용 `__import__` 훅으로 처리한다.
-- **위반** splash*.png, welcome.png, startup.blend 등 자산에 CC0 표기 없음. → 자산 라이선스 표기를 넣는다(manifest license에 `SPDX:CC0-1.0` 추가 가능 여부 확인, 안 되면 README와 ASSETS_LICENSE). Maya 아이콘이나 Maya 화면 캡처는 넣지 않는다.
+- **위반** splash*.png, welcome.png, startup.blend 등 자산에 CC0 표기 없음. → 자산 라이선스 표기를 넣는다(manifest license에 `SPDX:CC0-1.0` 추가 가능 여부 확인, 안 되면 README와 ASSETS_LICENSE). Maya 아이콘이나 Maya 화면 그림은 넣지 않는다.
 - **위험** app_template/MayaKit/__init__.py: 확장 밖에 설치된 템플릿 코드가 `addon_utils.enable`을 호출하고 활성 키맵을 바꾼다. 확장을 지워도 남는다. → 템플릿은 레이아웃만 담고 코드는 최소로 한다. 비활성화·제거 때 마커가 있는 템플릿을 삭제한다(또는 템플릿 없이 workspace append 방식만 쓴다).
 - **위험** 활성화하자마자 키맵 활성화(keymap/__init__ ~96-104), 환경설정 프리셋 적용(prefs_preset ~188-197), 자동 `save_userpref`(switch.py ~409-424). → 첫 실행 환영 창에서 "Make Blender feel like Maya" 확인을 받은 뒤에만 적용한다(opt-in). 자동 저장은 사용자가 동작했을 때만 한다.
 - **위험** Blender UI 클래스의 `draw` 교체: STATUSBAR_HT_header(command_line), outliner, shelf, toolbox, TOPBAR, TIME. → 가능한 곳은 append/prepend로 바꾼다. 남는 것은 설명에 이유와 복원 보장을 적는다.

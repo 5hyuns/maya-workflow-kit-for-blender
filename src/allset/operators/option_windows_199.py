@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 199 (#106): Maya option windows of the new Skin / Constrain commands.
 
-Titles, buttons, labels and factory values from Maya 2022's option windows
-(research/maya/re/constrain_199.md, skin_tools_199.md). Fields the kit can't honour
+Titles, buttons, labels and factory values from Maya 2022's option windows.
+Fields the kit can't honour
 are listed (``missing``), never faked.
 """
 

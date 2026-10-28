@@ -1,6 +1,6 @@
 """Step 217 B1-B4: the Joint Tool ends on the top of the branch it made (Maya 2026), the branch hit area is the
 drawn joint sphere, and a skeleton picked with no bone selected shows its root joint.
-Maya data: research/maya/re/maya2026_joints.md section 2 (finish), 3 (hit area), 4 (root joint in the Channel Box).
+Maya 2026: Joint Tool finish, hit area, root joint in the Channel Box.
 GUI: tests/gui/gui_pr125_joint_tool.py (Enter -> Select tool, W after a branch), gui_step217_joint_hit.py."""
 
 from importlib import import_module

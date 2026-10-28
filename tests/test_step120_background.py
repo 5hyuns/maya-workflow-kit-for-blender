@@ -1,5 +1,5 @@
-"""Step 120 / 130: Maya's viewport background — Alt+B cycle (rule and colours measured in Maya 2022,
-research/maya/screens/bg120/_bg120.json), every view at once, flat colours only per view (the kit never edits the
+"""Step 120 / 130: Maya's viewport background — Alt+B cycle (rule and colours of Maya 2022),
+every view at once, flat colours only per view (the kit never edits the
 user's theme, step 130 #40), Ctrl+B stays Maya's Bevel, Windows > Settings/Preferences > Color Settings."""
 
 import json
@@ -16,7 +16,6 @@ menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 notices = import_module(kit.MODULE + ".ui.notices")
 
 ROOT = Path(__file__).resolve().parents[1]
-COLORS = ROOT / "research" / "maya" / "colors.json"
 
 
 def _views():
@@ -34,21 +33,10 @@ def _theme_state():
 
 
 def test_maya_rule_flat_colours():
-    # Maya Alt+B background cycle (research/maya/re/background_120.md): 0 -> 0.36; < 0.5 -> 0.631; else (Maya: gradient) -> black here
+    # Maya Alt+B background cycle: 0 -> 0.36; < 0.5 -> 0.631; else (Maya: gradient) -> black here
     assert [kb3.next_state(s) for s in kb3.CYCLE] == ["LIGHT", "BLACK", "GREY"]
     assert kb3.next_state(0.2) == "LIGHT" and kb3.next_state(0.7) == "BLACK" and kb3.next_state(0.0) == "GREY"
     assert not hasattr(kb3, "theme_gradients") and not hasattr(kb3, "set_gradient")
-
-
-def test_values_match_maya_measurement():
-    if not COLORS.exists():   # research/ is not tracked: present on the measuring PC
-        return
-    viewport = json.loads(COLORS.read_text(encoding="utf-8"))["viewport"]
-    assert tuple(viewport["background_flat"]["rgb"]) == (kb3.FLAT,) * 3
-    bg120 = ROOT / "research" / "maya" / "screens" / "bg120" / "_bg120.json"
-    if bg120.exists():
-        states = json.loads(bg120.read_text())["states"]
-        assert [round(s["background"][0], 3) for s in states] == [0.36, 0.631, 0.631, 0.0, 0.36]
 
 
 def test_cycle_every_view_per_view_colour():
@@ -95,7 +83,7 @@ def test_keys_alt_b_cycles_ctrl_b_bevels():
     assert [k.idname for k in alt_b] == ["allset.cycle_background"]
     assert not [k for km in kc.keymaps for k in km.keymap_items if k.idname == "allset.cycle_background" and k.ctrl]
     mesh = [k.idname for k in kc.keymaps["Mesh"].keymap_items if k.type == 'B' and k.ctrl and not k.alt]
-    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (hotkeys_default.json)
+    assert mesh == ["allset.bevel"]      # Maya Ctrl+B = BevelPolygon (Maya factory hotkey)
 
 
 def test_settings_preferences_menu():

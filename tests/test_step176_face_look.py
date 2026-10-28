@@ -25,7 +25,7 @@ def test_face_overlay_switch_rules():
 
 def test_maya_camera_labels():
     vf = importlib.import_module(MODULE + ".ui.view_furniture")
-    # research/maya/screens/16_four_view.png: Maya's camera names with Maya's Y-up view direction
+    # Maya's camera names with Maya's Y-up view direction
     assert vf.label_for('ORTHO', True, (0.0, 0.0, -1.0)) == "top -Y"
     assert vf.label_for('ORTHO', True, (0.0, 1.0, 0.0)) == "front -Z"
     assert vf.label_for('ORTHO', True, (-1.0, 0.0, 0.0)) == "side -X"

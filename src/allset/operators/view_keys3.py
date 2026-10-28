@@ -4,7 +4,7 @@
 
 Maya default hotkeys: Alt+A display cycle,
 CameraModeToggle (orthographic / perspective), Alt+arrow pixel move, ` tweak mode,
-\\ 2D pan / zoom; research/maya/hotkeys_and_menus.md:53, :94, :98, :116.
+\\ 2D pan / zoom.
 """
 
 import math

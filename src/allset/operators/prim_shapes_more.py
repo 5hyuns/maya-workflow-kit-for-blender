@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 Pipe / Helix / Gear / Soccer Ball (Create > Polygon Primitives) as data, like ``prim_shapes``.
 
-Pure Python (no bpy), Maya Y-up space and Maya units, ``prim_shapes.Mesh`` results. Every rule is a measurement of
-Maya 2022 (mayapy, factory Create menu commands: research/scripts/maya_prims190/e1.json, v1.json, v2a.json;
-rules in research/maya/re/poly_prims_185.md). No Maya code or data was copied; vertex order, face lists (start corner
-and winding), UVs per face corner and hard edges were compared case by case with Maya's output
-(research/scripts/maya_prims190/compare_a.py).
+Pure Python (no bpy), Maya Y-up space and Maya units, ``prim_shapes.Mesh`` results. Every rule follows
+Maya 2022 (factory Create menu commands).
+No Maya code or data was copied; vertex order, face lists (start corner
+and winding), UVs per face corner and hard edges were compared case by case with Maya's output.
 
 polyPipe: rings of ``subdivisionsAxis`` vertices, vertex i at angle -360 i / n in (x, z) (ring starts on +X, unlike
 polyCylinder). Ring order = the cross-section loop: inner wall bottom -> top, top cap inner -> outer, outer wall top
@@ -42,7 +41,7 @@ Mesh, _a, AXIS = ps.Mesh, ps._a, ps.AXIS
 
 # Channel Box (keyable) attributes in Maya's order with Maya's nice names, then the non-keyable ones the kit edits
 # like prim_shapes' Round Cap (polyHelix Direction: enum Clockwise / Counterclockwise, menu 1). Defaults = the Create
-# menu commands (e1.json "log"); limits = attributeQuery minimum / maximum in mayapy (no maxima unless listed).
+# menu commands; limits = the attributes' minimum / maximum (no maxima unless listed).
 # polyPipe Subdivisions Caps: the menu creates 0 although setAttr's minimum is 1; 0 and 1 build the same pipe.
 NODES = {
     "polyPipe": [*AXIS, _a("radius", "Radius", 1.0, "length", 0.01), _a("height", "Height", 2.0, "length", 0.01),
@@ -70,7 +69,7 @@ NODES = {
                           _a("sideLength", "Side Length", 0.4036, "length", 0.01)],
 }
 # Soccer Ball: Maya keeps Side Length = Radius * 0.4036 (both ways: radius 2 -> 0.8072, side 1 -> radius 2.4777;
-# v1.json soccer_r2 / soccer_l1); the shape follows the radius.
+# Maya 2022); the shape follows the radius.
 SOCCER_SIDE = 0.4036
 
 
@@ -125,7 +124,7 @@ def poly_pipe(a):
     ri = r - t
     mid, half = r - t / 2, t / 2
     prof = []   # (radius, y) of each ring along the loop
-    h = h / 2   # Maya's pipe is half its Height attribute tall (v1.json pipe_sa6_r2_h3: height 3 -> y +-0.75)
+    h = h / 2   # Maya's pipe is half its Height attribute tall (height 3 -> y +-0.75)
     for j in range(sh + 1):
         prof.append((ri, -h / 2 + h * j / sh))
     for c in range(1, sc):
@@ -167,7 +166,7 @@ def poly_pipe(a):
 
 
 # Pipe wall verticals / helix lengthwise edges are hard from 30 degrees per side on (pipe 12 sides hard, 13 soft;
-# helix 12 hard, 13 / 30 soft: v2a.json pipe_sa12 / sa13, helix_s12_sco4 / s13_sco4 / s30_sco4)
+# helix 12 hard, 13 / 30 soft: helix_s12_sco4 / s13_sco4 / s30_sco4)
 PIPE_FACET = 29.9
 
 
@@ -178,7 +177,7 @@ HELIX_CAP_R, HELIX_CAP_V, HELIX_CAP_DV = 0.15625, (0.15625, 0.84375), 0.00625
 
 
 def helix_steps(coils, per_coil):
-    """Body steps: whole coils (half rounds up, at least one) x Subdivisions Coil (v2a.json helix_s_c05 / c11 /
+    """Body steps: whole coils (half rounds up, at least one) x Subdivisions Coil (coils c05 / c11 /
     c12 / c15 / c17 / c25: 8 / 8 / 8 / 16 / 16 / 24 steps at 8 per coil)."""
     return max(1, int(math.floor(coils + 0.5))) * per_coil
 
@@ -444,10 +443,10 @@ def hard_by_angle(verts, faces, limit):
 # --- Soccer Ball (polyPrimitiveMisc) ----------------------------------------------------------------------------
 # Maya's vertex / face numbering follows no rule we could find (breadth-first from the +Y vertex, but the order inside
 # each layer flips orientation), so the face lists (Maya face order, start corner, outward counter-clockwise) and the
-# UV net (parent face of every face) are the measured topology of e1.json CreatePolygonSoccerBall; positions are
+# UV net (parent face of every face) are the topology of Maya's CreatePolygonSoccerBall; positions are
 # computed: a truncated icosahedron vertex lies on its pentagon's icosahedron vertex A, a third of the way to the
 # icosahedron vertex B of the pentagon across its hexagon-hexagon edge, (2 A + B) / 3, turned so that vertex 0 is
-# on +Y and vertex 1 on the +X side of the x-y plane (both measured).
+# on +Y and vertex 1 on the +X side of the x-y plane (both Maya).
 
 SOCCER_FACES = (
     (0, 1, 4, 11, 7, 2), (0, 2, 6, 14, 9, 3), (3, 8, 5, 1, 0), (5, 12, 19, 10, 4, 1), (7, 15, 13, 6, 2),
@@ -464,10 +463,10 @@ SOCCER_NET = {1: 0, 5: 1, 8: 1, 10: 1, 2: 5, 7: 5, 15: 5, 4: 8, 13: 8, 19: 8, 3:
               23: 13, 12: 17, 22: 17, 24: 17, 11: 22, 27: 22, 25: 24, 20: 23, 26: 23, 28: 23, 16: 26, 29: 26, 30: 26,
               21: 29, 31: 29, 6: 3}
 # Face 6's UVs are its net corners shifted by one (corner k gets corner k + 1's place), which is why Maya's UVs keep it
-# a separate shell (measured).
+# a separate shell.
 SOCCER_UV_SHIFT = {6: 1}
 # Net placement (Create UVs = Normalize Collectively and Preserve Aspect Ratio): width 1 (an edge = 2 / 31), u from
-# 0, v from 0.2 [I: measured 0.2; centring the net would give 0.2052]; face 0's first edge points 240 degrees.
+# 0, v from 0.2 [I: Maya 0.2; centring the net would give 0.2052]; face 0's first edge points 240 degrees.
 SOCCER_UV_V0, SOCCER_ROOT_DIR = 0.2, 240.0
 
 _SOCCER_CACHE = []

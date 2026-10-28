@@ -198,7 +198,7 @@ def test_joint_names_skip_existing_after_partial_delete():
     bpy.context.view_layer.objects.active = a
     bpy.ops.object.delete()
     _c, names = _skeleton(3)
-    assert names == ["joint4", "joint5", "joint6"], names   # mayapy (step 208): one past the highest, no gap filling
+    assert names == ["joint4", "joint5", "joint6"], names   # Maya (step 208): one past the highest, no gap filling
 
 
 # --- #72 Gravity / Newton --------------------------------------------------------------------------------------------

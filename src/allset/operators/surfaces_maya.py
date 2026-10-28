@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 Surfaces menu on Blender legacy NURBS surfaces (step 181; rules + mayapy ground truth
-research/maya/re/surfaces_181.md / .json, maths in ``surfaces_math`` — bpy-free, tested against the JSON).
+"""Maya 2022 Surfaces menu on Blender legacy NURBS surfaces (step 181;
+maths in ``surfaces_math`` — bpy-free, tested against Maya's numbers).
 
-Representation (docs/steps/step_181.md 「계획」, research/blender/nurbs_surface_181.md): a Maya NURBS surface = a Blender
+Representation (docs/steps/step_181.md 「계획」): a Maya NURBS surface = a Blender
 SURFACE object, one NURBS spline, Maya U = Blender u (along a row), Maya V = the row index. Uniform directions are exact
 (Endpoint / Cyclic), non-uniform ones a Bezier decomposition (exact shape). The Maya knot vectors and CVs are kept in the
 data's ID property ``allset_nurbs`` while the points are what the kit wrote (signature check), so later commands
@@ -24,7 +24,7 @@ from .modify_maya import selection_order
 
 KEY = "allset_nurbs"
 MAYA_AXES = {'X': (1.0, 0.0, 0.0), 'Y': (0.0, 0.0, 1.0), 'Z': (0.0, -1.0, 0.0)}   # Maya axis -> Blender world
-RESOLUTION = 4          # Blender evaluates resolution x points per direction (nurbs_surface_181.md §practicalities)
+RESOLUTION = 4          # Blender evaluates resolution x points per direction
 MAX_ORDER = 6           # Blender NURBS order 2..6: Maya degree 7 is drawn as degree 5
 
 
@@ -224,12 +224,12 @@ class ALLSET_OT_loft(_SurfOp, bpy.types.Operator):
 
 
 # --- step 228 L10: Loft > Output geometry Polygons, with kit history -------------------------------------------
-# Maya (research/maya/re/maya2026_curve_rigs.md §L10, mayapy ``loft`` in research/maya/re/curve_rigs_228.json):
+# Maya:
 # ``loft ... -po 1`` gives only a mesh ``loftedSurface1`` (history nurbsTessellate <- loft <- the curves; moving a CV
 # moves the mesh), UVs = the surface's normalised (u, v): UV u across the curves, UV v along them. Maya's general
 # tessellation (uNumber / vNumber 3, chord height 0.9) picks its own non-uniform rows [U]; the kit cuts each span
 # into TESS_ALONG x TESS_ACROSS uniform parameter steps, two triangles per cell (Maya polygonType 0 = triangles):
-# 40 vertices / 56 triangles / 40 UVs on the measured two-curve loft, like Maya (delegated).
+# 40 vertices / 56 triangles / 40 UVs on a two-curve loft, like Maya (delegated).
 
 LOFT_KEY = "allset_loft"       # mesh object ID prop: {"curves", "opts", "sig"} while the mesh is the kit's result
 TESS_ALONG = 7                 # segments per span along the curves (kit Surf U)

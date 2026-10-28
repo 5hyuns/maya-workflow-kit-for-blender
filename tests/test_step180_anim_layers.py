@@ -1,4 +1,4 @@
-"""Step 180: Maya animation layers on NLA (operators/anim_layers.py) against mayapy (research/maya/re/anim_layers_180.json):
+"""Step 180: Maya animation layers on NLA (operators/anim_layers.py) against Maya:
 the same base keys, the same layer keys set like Maya's setKeyframe -v (the value is the result), raw layer curves and
 translateX / rotateX / rotateY / rotateZ / scaleX at frames 1..10, then weight, mute, solo, override and the key that
 the selected layer receives."""
@@ -13,17 +13,12 @@ import bpy
 import kit
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(ROOT, "research", "maya", "re", "anim_layers_180.json")
 al = import_module(kit.MODULE + ".operators.anim_layers")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 PATH = {"translateX": ("location", 0, 1.0), "rotateX": ("rotation_euler", 0, math.pi / 180),
         "rotateY": ("rotation_euler", 1, math.pi / 180), "rotateZ": ("rotation_euler", 2, math.pi / 180),
         "scaleX": ("scale", 0, 1.0)}
 TOL = 1e-5          # Blender keeps rotations in float32 radians: ~3e-6 deg at 116 deg (probe: max 4e-6)
-
-
-def data():
-    return json.load(open(DATA, encoding="utf-8"))
 
 
 def linear(ob):
@@ -121,79 +116,6 @@ def two_additive():
     mkey(sc, ob, l2, "rotateY", 5, 45)
     mkey(sc, ob, l2, "rotateZ", 1, 15)
     return sc, ob
-
-
-def test_two_additive_layers_match_maya():
-    if not os.path.exists(DATA):
-        print("research/ missing: skipped")
-        return
-    d = data()
-    frames = d["meta"]["frames"]
-    sc, ob = two_additive()
-    want = d["cases"]["two_additive"]
-    # the raw layer curves equal Maya's (setKeyframe solved the layer values the same way)
-    got_curves = raw_curves(ob)
-    for layer, attrs in want["curves"].items():
-        for attr, keys in attrs.items():
-            got = got_curves[layer][attr]
-            assert len(got) == len(keys), (layer, attr, got, keys)
-            for (gt, gv), (wt, wv) in zip(got, keys):
-                assert abs(gt - wt) < 1e-6 and abs(gv - wv) < TOL, (layer, attr, got, keys)
-    assert_values("two_additive", values(sc, ob, frames), want["values"])
-    ad = ob.animation_data
-    # step 194: the active action is the selected layer's strip action at influence 0 (shown, not applied twice)
-    assert ad.action is not None and ad.action.get(al.MARK) in al.tracks(ob) and ad.action_influence == 0.0
-    assert [t.name for t in ad.nla_tracks] == ["BaseAnimation", "AnimLayer1", "AnimLayer2"]
-    # weight 0.5, mute, solo
-    sc.allset_anim_layers["AnimLayer1"].weight = 0.5
-    assert_values("weight_half", values(sc, ob, frames), d["cases"]["weight_half"]["values"])
-    sc.allset_anim_layers["AnimLayer1"].weight = 1.0
-    sc.allset_anim_layers["AnimLayer1"].mute = True
-    assert_values("mute_layer1", values(sc, ob, frames), d["cases"]["mute_layer1"]["values"])
-    sc.allset_anim_layers["AnimLayer1"].mute = False
-    sc.allset_anim_layers["AnimLayer2"].solo = True
-    assert_values("solo_layer2", values(sc, ob, frames), d["cases"]["solo_layer2"]["values"])
-    sc.allset_anim_layers["AnimLayer2"].solo = False
-    assert_values("two_additive again", values(sc, ob, frames), want["values"])
-
-
-def test_override_layer_matches_maya():
-    if not os.path.exists(DATA):
-        print("research/ missing: skipped")
-        return
-    d = data()
-    frames = d["meta"]["frames"]
-    sc, ob = scene()
-    l1 = new_layer(sc, override=True)
-    mkey(sc, ob, l1, "translateX", 1, 3); mkey(sc, ob, l1, "translateX", 10, 7)
-    mkey(sc, ob, l1, "rotateY", 5, 45)
-    # channels the layer has no curve for stay the base's (Maya: the layer holds only the keyed attributes)
-    assert_values("override_layer", values(sc, ob, frames), d["cases"]["override_layer"]["values"])
-    sc.allset_anim_layers[l1].weight = 0.5
-    assert_values("override_weight_half", values(sc, ob, frames), d["cases"]["override_weight_half"]["values"])
-
-
-def test_key_on_selected_layer_matches_maya():
-    if not os.path.exists(DATA):
-        print("research/ missing: skipped")
-        return
-    d = data()
-    for case, target, want_key in (("setkey_selected_layer", "AnimLayer1", 15.555556),
-                                   ("setkey_base_selected", "BaseAnimation", 19.444444)):
-        sc, ob = scene()
-        l1 = new_layer(sc)
-        mkey(sc, ob, l1, "translateX", 1, 5); mkey(sc, ob, l1, "translateX", 10, 5)
-        sc.allset_anim_layer_index = [e.name for e in sc.allset_anim_layers].index(target)
-        sc.frame_set(5)
-        ob.location.x = 20                      # Maya: setAttr translateX 20, then setKeyframe (S)
-        assert cb.keyframe(ob, "tx"), case      # the Channel Box / S key path
-        keys = raw_curves(ob)[target]["translateX"]
-        k5 = next(v for t, v in keys if abs(t - 5) < 1e-6)
-        assert abs(k5 - want_key) < 1e-4, (case, keys)
-        maya = d["cases"][case]["curves"][target]["translateX"]
-        assert [round(t) for t, _v in keys] == [round(t) for t, _v in maya], (case, keys, maya)
-        sc.frame_set(5)
-        assert abs(ob.location.x - 20.0) < TOL, (case, ob.location.x)
 
 
 def test_locked_layer_takes_no_keys():

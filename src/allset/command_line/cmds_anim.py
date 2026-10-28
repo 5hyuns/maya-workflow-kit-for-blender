@@ -2,7 +2,7 @@
 """``maya.cmds`` time and key commands of the kit's look-alike (step 208, Issue #115): currentTime, setKeyframe,
 cutKey, keyframe, playbackOptions.
 
-Measured with mayapy (Maya 2022, research/maya/re/cmds_201.md): return values (setKeyframe = keys set, cutKey /
+Maya's behaviour: return values (setKeyframe = keys set, cutKey /
 keyframe -e = curves changed, cutKey -clear = 0), values in Maya units / degrees, a keyed attribute takes its curve's
 value at the current time. Keys go on the Channel Box channels' F-curves (``ui/channel_box.py``) with the kit's
 default tangents (``graph_key_menu.after_insert``, step 157). Maya's animation range = the scene frame range,
@@ -163,7 +163,7 @@ def insert_key(ob, key, frame, value=None, breakdown=False):
 # --- setKeyframe / cutKey / keyframe -------------------------------------------------------------------------------
 
 def setKeyframe(*args, **kwargs):
-    """Returns the number of keys set (mayapy: a new cube = 10, two attributes at one time = 2)."""
+    """Returns the number of keys set (Maya: a new cube = 10, two attributes at one time = 2)."""
     f = _Flags("setKeyframe", kwargs)
     at = f.get("attribute", "at")
     t = f.get("time", "t")
@@ -186,7 +186,7 @@ def setKeyframe(*args, **kwargs):
             for frame in times:
                 count += bool(insert_key(ob, key, frame, None if v is None else float(v), bd))
             # Maya leaves the attribute alone when a key at another time goes onto an existing curve (until the time
-            # changes, research/maya/re/cmds_201.md §4); Blender's next depsgraph update writes every animated
+            # changes); Blender's next depsgraph update writes every animated
             # property from its curve anyway, so the script sees that value right away (deviation, §6)
             touched.append((ob, key))
     refresh(touched)
@@ -211,7 +211,7 @@ def _remove_points(ob, key, a, b):
 
 
 def cutKey(*args, **kwargs):
-    """Remove keys (all, or in -time); returns the number of curves cut, 0 with -clear (mayapy). The keys are
+    """Remove keys (all, or in -time); returns the number of curves cut, 0 with -clear. The keys are
     not put on the animation clipboard (delegated: the kit's clipboard holds Channel Box / Graph Editor copies)."""
     f = _Flags("cutKey", kwargs)
     at = f.get("attribute", "at")
@@ -228,7 +228,7 @@ def cutKey(*args, **kwargs):
         for key in keys:
             if _remove_points(ob, key, a, b):
                 curves += 1
-    # mayapy: the attributes keep the values they had (a cut curve doesn't re-evaluate them)
+    # Maya: the attributes keep the values they had (a cut curve doesn't re-evaluate them)
     return 0 if clear else curves
 
 
@@ -307,7 +307,7 @@ def _playback(scene):
 def playbackOptions(*args, **kwargs):
     """Maya's playback range (-min / -max = the Time Slider's) is the preview range, the animation range (-ast /
     -aet = the Range Slider's ends) the scene frame range (step 20). A min past the max pushes the max to min + 1
-    (mayapy: min 90 with max 60 -> 90 / 91)."""
+    (Maya: min 90 with max 60 -> 90 / 91)."""
     f = _Flags("playbackOptions", kwargs)
     query = f.get("query", "q", False)
     f.get("edit", "e", False)

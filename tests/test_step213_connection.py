@@ -1,5 +1,5 @@
-"""Step 213 (#119): Maya's Connection Editor = drivers (ui/connection_editor.py; research/maya/re/editors_213.md
-CN1-CN3, mayapy connectAttr: the right attribute follows the left, a second connect warns, break keeps the value)."""
+"""Step 213 (#119): Maya's Connection Editor = drivers (ui/connection_editor.py;
+Maya connectAttr: the right attribute follows the left, a second connect warns, break keeps the value)."""
 
 import math
 from importlib import import_module
@@ -60,11 +60,11 @@ def test_connect_follows_and_break_keeps_the_value():
     assert ce.source_of(b, "translateX") == (a, "translateX")
     a.location.x = 0.05
     _eval()
-    assert abs(b.location.x - 0.05) < 1e-9, "the right attribute follows the left (mayapy follow 5)"
+    assert abs(b.location.x - 0.05) < 1e-9, "the right attribute follows the left (Maya: 5)"
     assert ce.disconnect(b, "translateX") == 1
     a.location.x = 0.0
     _eval()
-    assert abs(b.location.x - 0.05) < 1e-9, "after Break the value stays (mayapy after_break 5)"
+    assert abs(b.location.x - 0.05) < 1e-9, "after Break the value stays (Maya: 5)"
     assert ce.source_of(b, "translateX") is None
 
 

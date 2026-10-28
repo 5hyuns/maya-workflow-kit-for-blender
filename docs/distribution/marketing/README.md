@@ -6,7 +6,7 @@ background is view / scene data, checked by `tools/marketing/bg_check.py`; step 
 licensed models of `CREDITS.md`. Name and lockup (step 125): "Maya Workflow Kit" + "for Maya users, in Blender"
 (`style.md`, decision 12 revision). Copy: `copy.md`. Visual system: `style.md` (step 124: Maya logo teal + Autodesk Hello Yellow, one lockup rule, motion). Design
 review: `design_review.md` (impeccable critique and what was fixed).
-Media standard and platform research: `references.md` (step 121), `research/marketing_refs/platform_rules_123.md`
+Media standard and platform research: `references.md` (step 121), local platform-rule notes (not in git)
 (not tracked). Nothing has been published (decision 11).
 
 **GIFs are not uploaded to extensions.blender.org.** The store gallery takes JPEG / PNG / WebP images and MP4 videos

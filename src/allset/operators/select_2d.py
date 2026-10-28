@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya click / marquee modifiers in the Graph Editor, Dope Sheet and UV Editor (step 170).
 
-Maya (GUI-measured with QTest events, research/maya/re/select_mods_170.md): marquee Shift = toggle (XOR), Ctrl =
+Maya (Graph Editor / Dope Sheet / Outliner clicks): marquee Shift = toggle (XOR), Ctrl =
 deselect, Ctrl+Shift = add, in all three; a click: Shift = toggle, Ctrl+Shift = add (never removes); Ctrl =
 deselect in the Dope Sheet and UV Editor, but in the Graph Editor Ctrl+click acts like a plain click, and a plain
 click on an already selected key keeps the selection (so several keys drag together).
@@ -45,7 +45,7 @@ def rule_deselect(before, after):
 
 def rule_keep(before, after):
     """Graph Editor plain / Ctrl click: Blender replaced the selection with the clicked key; on a key that was already
-    selected Maya keeps the whole selection (measured), elsewhere the replace stands."""
+    selected Maya keeps the whole selection, elsewhere the replace stands."""
     if after and after <= before:
         return before
     return after
@@ -200,7 +200,7 @@ _RULE_ITEMS = [(k, k.title(), "") for k in ('ADD', 'DESELECT', 'KEEP', 'CTRL', '
 
 
 def rule_ctrl(before, after):
-    """Graph Editor Ctrl click (measured): like a plain click on a key; on empty space the selection stays."""
+    """Graph Editor Ctrl click: like a plain click on a key; on empty space the selection stays."""
     return before if not after else rule_keep(before, after)
 
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Four View = four real 3D View panels (step 237, Issue #148; research/maya/re/four_view_237.md).
+"""Maya Four View = four real 3D View panels (step 237, Issue #148).
 
 Blender's Quad View splits one 3D View region in four: one header, one shading / overlay set for all four panes. A
 Maya model panel has its own camera, shading, Show settings and panel menu bar, so the kit's four view is four 3D
@@ -28,12 +28,12 @@ from mathutils import Euler, Quaternion
 
 PROP = "allset_four_view"
 ROLES = ("top", "persp", "front", "side")
-# (column, row from the top) of each role in Maya's Four View (four_view_237.md)
+# (column, row from the top) of each role in Maya's Four View
 SLOTS = {"top": (0, 0), "persp": (1, 0), "front": (0, 1), "side": (1, 1)}
 # Blender view rotations of Maya's ortho cameras (Maya side looks from +X = Blender Right view)
 AXIS = {"top": Quaternion(), "front": Euler((math.pi / 2, 0.0, 0.0)).to_quaternion(),
         "side": Euler((math.pi / 2, 0.0, math.pi / 2)).to_quaternion()}
-# Maya 2026 factory shading of a new four view (four_view_237.md): every panel Smooth Shade All (= Blender Solid)
+# Maya 2026 factory shading of a new four view: every panel Smooth Shade All (= Blender Solid)
 DEFAULT_SHADING = {"top": 'SOLID', "persp": 'SOLID', "front": 'SOLID', "side": 'SOLID'}
 SPLITS = (0.5001, 0.4999)            # HORIZONTAL (new on top), VERTICAL (new on the left)
 

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 Hypershade window layout as Blender area splits (no bpy: tested headless; docs/steps/step_131_hypershade.md).
 
-Maya's factory Hypershade (research/maya/re/hypershade131.md, capture research/maya/screens/hypershade131/, a
+Maya's factory Hypershade (a
 1440 x 900 window) is a menu bar over five docked panels: Browser top-left, Material Viewer top-right, Create
 bottom-left, the Graph work area (node editor) between Create and the right column, Property Editor bottom-right.
-``MAYA_RECTS`` are those panels measured on the capture (x, y, w, h; y down, window px); ``plan`` turns them into
+``MAYA_RECTS`` are those panels (x, y, w, h; y down, window px); ``plan`` turns them into
 ``screen.area_split`` calls on one area (the whole new window), ``simulate`` replays a plan on a rectangle with
 Blender's split rules (measured, CLAUDE.md steps 49 / 106 / 116):
 
@@ -14,7 +14,7 @@ Blender's split rules (measured, CLAUDE.md steps 49 / 106 / 116):
 """
 
 MAYA_SIZE = (1440, 900)
-# Maya 2022 Hypershade panels on the 1440 x 900 capture (hypershade_graph_screen.png; splitters found by pixel runs)
+# Maya 2022 Hypershade panels in a 1440 x 900 window
 MAYA_RECTS = {
     "MENU": (0, 0, 1440, 24),
     "BROWSER": (0, 24, 987, 237),

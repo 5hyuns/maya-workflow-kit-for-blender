@@ -1,7 +1,7 @@
 # Launch post drafts (step 123) — not posted
 
 English drafts for r/blender, r/Maya, X, BlenderArtists and an 80.lv pitch, each with that platform's rules
-(research: `research/marketing_refs/platform_rules_123.md`, 2026-10-20; Reddit pages could not be fetched — its rules
+(platform rules checked 2026-10-20, local notes; Reddit pages could not be fetched — its rules
 below come from Reddit's own text in search results, so **read the live sidebar before posting**). Claims follow
 `copy.md` (only implemented features; Maya only to describe compatibility; trademark line in long texts). Fill
 `<listing URL>` and `<YouTube URL>` first; the source link is https://github.com/5hyuns/maya-workflow-kit-for-blender (created private — make it public before posting). Post from the author's own account and say so.

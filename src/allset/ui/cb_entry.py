@@ -2,7 +2,7 @@
 """Channel Box field text: Maya-style display and entry (docs/steps/step_38.md 「계획」 1).
 
 Maya shows plain numbers in the current units (cm, degrees) and accepts relative entry
-``+=5``, ``-=2``, ``*=2``, ``/=2`` (research/maya/channel_box.md:134-137). Values are
+``+=5``, ``-=2``, ``*=2``, ``/=2`` (Maya's Channel Box entry). Values are
 shown in the scene's display length unit without the unit name; entry goes through
 ``bpy.utils.units.to_value`` so ``5`` means 5 display units and ``5 m`` / ``2*3`` work too
 (tmp/probe38). Kinds: ``LENGTH``, ``ROTATION``, ``NONE`` (plain float), ``INT``, ``BOOL``.

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya component colours in mesh edit mode (docs/steps/step_134_sel.md 「계획」).
 
-Maya 2022 draws a mesh in component mode with its own colours (research/maya/colors.json viewport, pixels of
-research/maya/screens/07_faces_selected.png, 08_verts_selected.png, 09_edges_selected.png at UI scale 1.0):
+Maya 2022 draws a mesh in component mode with its own colours (at UI scale 1.0):
 every visible edge 1 px hilite #64dcff; vertex mode: unselected vertices 3 px #c800c8 (hiliteComponent), selected
 vertices 4 px #fdff88 (the screen value of polyVertex); edge mode: selected edges #e3ac79 (polyEdge); face mode:
 selected faces a 1-in-4 pixel stipple #e3ac79 (polyFace), no fill.
@@ -23,8 +22,8 @@ Maya layout 3D View, while the kit draws every edited mesh, the view's ``overlay
 data, not preferences; from a timer, never inside the draw) and switched back when the kit stops drawing there
 (preference off, mesh over ``BMESH_LIMIT``) and on unregister. Views the kit didn't switch are left alone.
 
-Edges (step 185, docs/steps/step_185.md): Maya draws a thin hilite wire with crisp orange selected edges
-(research/maya/screens/09_edges_selected.png). Kit primitives keep Maya's hard edges as ``sharp_edge`` (step 134), so
+Edges (step 185, docs/steps/step_185.md): Maya draws a thin hilite wire with crisp orange selected edges.
+Kit primitives keep Maya's hard edges as ``sharp_edge`` (step 134), so
 Blender drew its theme sharp-edge colour (factory #00ffff) about 3 px wide around the kit's line (GUI probe at UI 1.25,
 cross-section of a silhouette edge: 519a9a 00dfdf 008a8a with the kit's 64dbff only in the middle) and the selected
 edge looked like an orange sliver inside a thick cyan band. ``overlay.show_edge_sharp`` is now switched off with
@@ -39,10 +38,10 @@ import numpy as np
 
 HILITE = "#64dcff"          # displayColor.hilite (18): the object being edited, every edge
 VERT = "#c800c8"            # displayColor.hiliteComponent (9): unselected vertices
-VERT_SEL = "#fdff88"        # selected vertices as Maya draws them (08_verts_selected.png; polyVertex 17 = #ffff00)
-EDGE_SEL = "#e3ac79"        # selected edges (09_edges_selected.png; polyEdge 21 = #e4ac79)
-FACE_SEL = "#e3ac79"        # selected face stipple (07_faces_selected.png; polyFace 21)
-VERT_PX = 3.0               # Maya pixel sizes at UI scale 1.0 (08_verts_selected.png)
+VERT_SEL = "#fdff88"        # selected vertices as Maya draws them (polyVertex 17 = #ffff00)
+EDGE_SEL = "#e3ac79"        # selected edges (polyEdge 21 = #e4ac79)
+FACE_SEL = "#e3ac79"        # selected face stipple (polyFace 21)
+VERT_PX = 3.0               # Maya pixel sizes at UI scale 1.0
 VERT_SEL_PX = 4.0
 LINE_PX = 1.5               # Maya's lines are 1 px; 1.5 x UI scale just covers Blender's own 2 px edit edge (step 185)
 EDGE_SEL_PX = 2.0           # selected edges a little wider, drawn over the hilite wire
@@ -239,7 +238,7 @@ def _stipple():
         info.vertex_in(0, 'VEC3', 'pos')
         info.fragment_out(0, 'VEC4', 'fragColor')
         info.vertex_source("void main() { gl_Position = ModelViewProjectionMatrix * vec4(pos, 1.0); }")
-        # Maya's face stipple: one pixel in every 2 x 2 block (07_faces_selected.png)
+        # Maya's face stipple: one pixel in every 2 x 2 block
         info.fragment_source("void main() { ivec2 p = ivec2(gl_FragCoord.xy);"
                              " if (((p.x | p.y) & 1) != 0) { discard; } fragColor = color; }")
         _shader["stipple"] = gpu.shader.create_from_info(info)

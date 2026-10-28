@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Modeling Toolkit: the third editor of the sidebar dock (docs/steps/step_63.md 「계획」 1).
 
-Order of Maya's tab (research/maya/workflows/shots/modeling_03.png, modeling.md §1 A2): selection mode
+Order of Maya's tab: selection mode
 (Multi-Component, Object / Vertex / Edge / Face / UV), "N face selected", Pick/Marquee · Drag ·
 Tweak/Marquee, Highlight Backfaces, Highlight Nearest Component, Camera Based Selection, Symmetry,
 Selection / Transform Constraint, ▸Soft Selection, ▾Mesh, ▾Components, ▾Tools. Buttons run the same
@@ -20,7 +20,7 @@ COMPONENTS = (("Extrude", None, 'FACESEL'), ("Bevel", "Edit Mesh/Bevel", 'MOD_BE
               ("Bridge", "Edit Mesh/Bridge", 'MOD_LATTICE'), ("Add Divisions", "Edit Mesh/Add Divisions", 'MESH_GRID'))
 TOOLS = (("Multi-Cut", "Mesh Tools/Multi-Cut", 'SCULPTMODE_HLT'), ("Target Weld", "Mesh Tools/Target Weld", 'AUTOMERGE_OFF'),
          ("Connect", "Edit Mesh/Connect", 'MOD_EDGESPLIT'), ("Quad Draw", "Mesh Tools/Quad Draw", 'MESH_DATA'))
-# Maya's three selection styles = Blender select tools (modeling_03.png)
+# Maya's three selection styles = Blender select tools
 PICK = (("Pick/Marquee", "builtin.select_box"), ("Drag", "builtin.select_circle"), ("Tweak/Marquee", "builtin.select"))
 COMPONENT_ICONS = (("VERT", 'VERTEXSEL', 0), ("EDGE", 'EDGESEL', 1), ("FACE", 'FACESEL', 2))
 UNIT = ("vertex", "edge", "face")

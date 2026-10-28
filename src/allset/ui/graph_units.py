@@ -3,8 +3,7 @@
 
 Blender's Graph Editor draws F-curve values as stored and converts only rotations (C ``ANIM_unit_mapping_get_factor``),
 so in the Maya Workflow Kit scene (cm shown, ``scale_length`` 1, decision 1 / 8) a 5 cm Translate X curve reads
-0.00 - 0.05 while the Channel Box and Maya's Graph Editor read 0 - 5 (research/maya/screens/editors104/
-graph_editor_win1.png). When every curve the Graph Editor shows is a length property, the kit writes Blender's value
+0.00 - 0.05 while the Channel Box and Maya's Graph Editor read 0 - 5. When every curve the Graph Editor shows is a length property, the kit writes Blender's value
 numbers again as ``value / units.maya_unit()`` on the same grid lines; mixed units (length + rotation / scale) keep
 Blender's numbers, one axis can't carry two units.
 

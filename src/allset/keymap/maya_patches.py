@@ -39,7 +39,7 @@ def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
 
 # --- 1. Selection modifiers ----------------------------------------------
 # Maya: Shift = toggle, Ctrl = deselect, Ctrl+Shift = add, for click and
-# marquee (research/maya/interaction.md:68-70). Order of variants:
+# marquee. Order of variants:
 # (shift, ctrl) = none, Shift, Ctrl, Ctrl+Shift.
 
 def _click(plain, toggle, deselect, add):
@@ -47,25 +47,25 @@ def _click(plain, toggle, deselect, add):
             ((False, True), deselect), ((True, True), add)]
 
 
-# Operators with a real ``deselect`` option (research/blender/operators.json).
+# Operators with a real ``deselect`` option.
 _CLICK_EXACT = _click({"deselect_all": True}, {"toggle": True},
                       {"deselect": True}, {"extend": True})
 
-# Step 170 (GUI-measured, research/maya/re/select_mods_170.md): Maya's Outliner is a Qt list — plain = replace,
+# Step 170: Maya's Outliner is a Qt list — plain = replace,
 # Shift = range from the anchor, Ctrl = toggle, Ctrl+Shift = add the range. Blender's item_activate does that with
 # extend / extend_range (the anchor is Blender's active element).
 _OUTLINER_CLICK = _click({"extend": False, "extend_range": False, "deselect_all": True},
                          {"extend": False, "extend_range": True, "deselect_all": True},
                          {"extend": True, "extend_range": False, "deselect_all": True},
                          {"extend": True, "extend_range": True, "deselect_all": True})
-# Graph Editor (measured): Shift toggles; Ctrl+click acts like a plain click; Ctrl+Shift adds — the plain / Ctrl /
+# Graph Editor (Maya): Shift toggles; Ctrl+click acts like a plain click; Ctrl+Shift adds — the plain / Ctrl /
 # Ctrl+Shift rules that Blender's clickselect lacks are applied by allset.select_2d_click placed first (patch below);
 # these items are what runs if that operator passes through.
 _GRAPH_CLICK = _click({"extend": False, "deselect_all": True},
                       {"extend": True}, {"extend": False, "deselect_all": True}, {"extend": True})
-# NLA (not measured in step 170): the step 2 rule, every modifier toggles
+# NLA (no Maya rule in step 170): the step 2 rule, every modifier toggles
 _NLA_CLICK = _click({"extend": False, "deselect_all": True}, {"extend": True}, {"extend": True}, {"extend": True})
-# Dope Sheet (measured): Shift toggles, Ctrl deselects, Ctrl+Shift adds (select_2d_click)
+# Dope Sheet (Maya): Shift toggles, Ctrl deselects, Ctrl+Shift adds (select_2d_click)
 _DOPE_CLICK = _click({"extend": False, "deselect_all": True},
                      {"extend": True}, {"extend": True}, {"extend": True})
 
@@ -128,7 +128,7 @@ def patch_selection(kd):
     return touched
 
 
-# Step 170: first-place operators that apply the measured Maya rule around Blender's own selection
+# Step 170: first-place operators that apply the Maya rule around Blender's own selection
 # (operators/select_2d.py). (keymap family key, editor, [(shift, ctrl, rule)]) for clicks; boxes: Shift = XOR.
 SELECT_2D_CLICKS = ((("graph.clickselect", "PRESS"), 'GRAPH', ((False, False, 'KEEP'), (False, True, 'CTRL'),
                                                                (True, True, 'ADD'))),
@@ -158,7 +158,7 @@ def patch_select_2d(kd, touched):
 
 # --- 2. 4/5/6/7 display modes ---------------------------------------------
 # Maya: 4 wireframe, 5 shaded, 6 shaded+textured, 7 all lights
-# (research/maya/interaction.md:174-177; hotkeys_default.json "4".."7").
+# (Maya factory hotkeys 4..7).
 
 DISPLAY_KEYS = (("FOUR", "WIREFRAME"), ("FIVE", "SHADED"),
                 ("SIX", "TEXTURED"), ("SEVEN", "LIGHTS"))
@@ -171,14 +171,14 @@ def patch_display(kd):
     for key, mode in DISPLAY_KEYS:
         _add(kd, "3D View", "allset.display_mode", make_event(key), {"mode": mode})
     # Losing 4 = object mode leaves no quick way out of edit mode; Maya's F8
-    # toggles object <-> last component mode (research/maya/interaction.md:73).
+    # toggles object <-> last component mode.
     # allset.toggle_sel_mode = editmode_toggle + Maya's in-view message (step 72).
     _add(kd, "Object Non-modal", "allset.toggle_sel_mode", make_event("F8"))
 
 
 # --- 3. Ctrl+G group --------------------------------------------------------
-# Maya Ctrl+G = group under common parent, pivot at origin
-# (research/maya/concepts.md:89-91). IC Ctrl+G = move to collection (IC:2547; Blender 5.x: the same as a
+# Maya Ctrl+G = group under common parent, pivot at origin.
+# IC Ctrl+G = move to collection (IC:2547; Blender 5.x: the same as a
 # wm.call_menu of OBJECT_MT_move_to_collection, step 53), so the item is removed whatever its operator.
 
 def patch_group(kd):
@@ -188,7 +188,7 @@ def patch_group(kd):
 
 
 # --- 4. Space reserved for the hotbox ---------------------------------------
-# Maya Space = hotbox (research/maya/hotkeys_default.json "Space" ShowHotbox),
+# Maya Space = hotbox (factory hotkey Space = ShowHotbox),
 # implemented in step 10; until then Space does nothing in other editors.
 # Playback moves to Maya's Alt+V (PlaybackToggle) and Alt+Shift+V (GoToMinFrame).
 
@@ -200,7 +200,7 @@ def patch_space(kd):
 
 # --- 5. Hold keys: X/C/V/J snapping ------------------------------------------
 # Maya: snapping only while the key is held, Shift variants identical
-# (research/maya/interaction.md:141-143; hotkeys_default.json x/X, c/C, v/V, j).
+# (Maya factory hotkeys x/X, c/C, v/V, j).
 # Paint/sculpt modes keep their own X (brush color flip): they are checked
 # before "3D View", so the hold never runs there.
 _PAINT_MODES = ("Sculpt", "Vertex Paint", "Image Paint", "Weight Paint")
@@ -221,7 +221,6 @@ def patch_hold_snap(kd):
 
 
 # --- 6. B soft select (tap toggle, hold + LMB drag radius) ------------------
-# research/maya/interaction.md:155-156.
 
 def patch_soft_select(kd):
     for km in ("Object Mode", "Mesh", "Curve", "Curves", "Metaball", "Lattice", "Particle"):
@@ -231,8 +230,8 @@ def patch_soft_select(kd):
 
 
 # --- 7. A tap / hold, D hold pivot, Insert pivot toggle ---------------------
-# A: research/maya/interaction.md:27 (tap = FrameAll, hold = marking menu).
-# D / Insert: interaction.md:124-125 (pivot edit while held / toggle).
+# A: tap = FrameAll, hold = marking menu.
+# D / Insert: pivot edit while held / toggle.
 
 def patch_tap_hold_and_pivot(kd):
     kd.remove("3D View", "view3d.view_all", type="A")
@@ -244,7 +243,7 @@ def patch_tap_hold_and_pivot(kd):
 
 
 # --- 8. Arrow-key pick-walk (object mode) -----------------------------------
-# research/maya/interaction.md:76 (Maya default hotkeys). IC puts Left/Right frame
+# Maya default hotkeys. IC puts Left/Right frame
 # stepping into each mode keymap (IC:93-97 _template_items_animation); only
 # Object Mode's copy is replaced. Maya steps frames with Alt+,/. (step 7).
 
@@ -263,7 +262,7 @@ def patch_pick_walk(kd):
 
 
 # --- 9. Camera: ortho tumble lock, framing in all views ----------------------
-# research/maya/interaction.md:40 (Alt+LMB tumble), :192-195 (Shift+F / Shift+A).
+# Maya: Alt+LMB tumble, Shift+F / Shift+A framing.
 
 def patch_camera(kd):
     kd.remove("3D View", "view3d.rotate", type="LEFTMOUSE", alt=True)       # IC:674
@@ -280,7 +279,7 @@ def patch_camera(kd):
     kd.remove("3D View", "view3d.view_center_pick", type="F", shift=True)
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True), {"selected": True})
     # Step 17: Maya fit (factor 0.95, sidebar excluded) for F and Ctrl+Shift+F (with children);
-    # A tap goes through taphold.SelectAllBinding (research/maya/interaction.md:191-196).
+    # A tap goes through taphold.SelectAllBinding.
     kd.remove("3D View", "view3d.view_selected", type="F")                  # IC:681
     _add(kd, "3D View", "allset.frame", make_event("F"), {"selected": True})
     _add(kd, "3D View", "allset.frame_all_views", make_event("F", shift=True, ctrl=True),
@@ -291,7 +290,7 @@ def patch_camera(kd):
 
 
 # --- 10. View-change undo: [ ] and Alt+Z / Alt+Y ----------------------------
-# research/maya/interaction.md:48 (Maya default hotkeys). IC [ ] = select_hierarchy
+# Maya default hotkeys. IC [ ] = select_hierarchy
 # (IC:2506-2512), replaced by the arrow pick-walk in step 3. Paint modes keep
 # [ ] for brush size.
 
@@ -305,7 +304,7 @@ def patch_view_history(kd):
 
 
 # --- 11. Space tap = four views, Ctrl+Space = full screen -------------------
-# research/maya/interaction.md:248-249. Space hold = hotbox (step 10).
+# Maya: Space tap = four views. Space hold = hotbox (step 10).
 
 # Space = hotbox (step 9; tap = pane toggle, Maya 2022 hotbox). Also in the editors
 # the hotbox South zone switches a pane to, so the hotbox can switch it back; Space is
@@ -321,7 +320,7 @@ def patch_space_tap(kd):
 
 
 # --- 12. 1/2/3 smooth mesh preview -------------------------------------------
-# research/maya/interaction.md:166-172. IC 1/2/3 = component modes
+# Maya 1/2/3 = smooth mesh preview levels. IC 1/2/3 = component modes
 # (IC:2558-2563 Object Mode, IC:164-177 Mesh), now on F9-F11.
 
 SMOOTH_KEYS = (("ONE", 1), ("TWO", 2), ("THREE", 3))
@@ -336,7 +335,7 @@ def patch_smooth_preview(kd):
 
 
 # --- 13. F7/F9/F10/F11 component modes ---------------------------------------
-# research/maya/interaction.md:73-74. F8 = editmode_toggle (patch 2).
+# Maya F8 / F9-F11 component modes. F8 = editmode_toggle (patch 2).
 
 COMPONENT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"), ("F7", "MULTI"))
 
@@ -347,7 +346,7 @@ def patch_component_keys(kd):
 
 
 # --- 14. Channel Box MMB virtual slider ---------------------------------------
-# research/maya/channel_box.md:73-78. Tool keymaps run before "3D View" and IC
+# Maya: MMB drag in the viewport drags the picked Channel Box attribute. Tool keymaps run before "3D View" and IC
 # gives Move/Rotate/Scale/Transform an MMB drag (IC:3823-3858), so the slider
 # goes first in those; it passes through when no channel is selected.
 
@@ -384,7 +383,7 @@ def patch_cb_slider(kd):
 
 
 # --- 15. Marking menus (pies) and Q/W/E/R hold + LMB (docs/steps/step_8.md 「계획」 2-4) ----
-# research/maya/hotkeys_and_menus.md §5.1 (:227-243). IC's RMB context menus in these
+# Maya marking menus. IC's RMB context menus in these
 # modes give way to the Maya marking menus; Shift+RMB 3D cursor goes (no 3D cursor in Maya).
 
 MM_KEYMAPS = (("Object Mode", "VIEW3D_MT_object_context_menu"),
@@ -411,8 +410,8 @@ def patch_marking_menus(kd):
 
 
 # --- 16. Scene concepts: P / Shift+P, Shift+D, Ctrl+Shift+D, Alt+Shift+D (docs/steps/step_10.md) ----
-# research/maya/hotkeys_default.json: p Parent, P Unparent, D DuplicateWithTransform,
-# Ctrl+D (capital) DuplicateSpecial, Alt+D (capital) DeleteHistory (concepts.md:68, :98).
+# Maya factory hotkeys: p Parent, P Unparent, D DuplicateWithTransform,
+# Ctrl+D (capital) DuplicateSpecial, Alt+D (capital) DeleteHistory.
 # IC Object Mode P / Shift+P = object.parent_set / parent_clear.
 
 def patch_concepts(kd):
@@ -426,7 +425,7 @@ def patch_concepts(kd):
     kd.remove("Object Mode", "object.duplicate_move", type="D", ctrl=True)
     _add(kd, "Object Mode", "allset.duplicate", make_event("D", ctrl=True))
     # Component mode Ctrl+D (#17, step 129): Maya's Duplicate there copies nothing ("No object(s) to duplicate",
-    # GUI-measured, docs/steps/step_129_audit_p1.md); IC mesh.duplicate_move copied the faces inside the mesh.
+    # docs/steps/step_129_audit_p1.md); IC mesh.duplicate_move copied the faces inside the mesh.
     kd.remove("Mesh", "mesh.duplicate_move", type="D", ctrl=True)
     _add(kd, "Mesh", "allset.component_command", make_event("D", ctrl=True), {"item": "Edit/Duplicate"})
     _add(kd, "Object Mode", "allset.duplicate_with_transform", make_event("D", shift=True))
@@ -435,7 +434,7 @@ def patch_concepts(kd):
 
 
 # --- 17. Ctrl+A Attribute Editor / Channel Box, Ctrl+Shift+A / Alt+D (docs/steps/step_11.md) ----
-# research/maya/hotkeys_default.json: Ctrl+a ShowAttributeEditorOrChannelBox, Ctrl+A (capital)
+# Maya factory hotkeys: Ctrl+a ShowAttributeEditorOrChannelBox, Ctrl+A (capital)
 # SelectAll, Alt+d SelectNone. IC Object Mode Ctrl+A / Ctrl+Shift+A = select all / none.
 
 def patch_attribute_editor(kd):
@@ -445,7 +444,7 @@ def patch_attribute_editor(kd):
     _add(kd, "Object Mode", "object.select_all", make_event("A", ctrl=True, shift=True),
          {"action": 'SELECT'})
     _add(kd, "Object Mode", "allset.select_none", make_event("D", alt=True))
-    # Ctrl+a is a global Maya hotkey (no editor context binds Ctrl+a, hotkeys_default.json): in every component /
+    # Ctrl+a is a global Maya hotkey (no editor context binds Ctrl+a): in every component /
     # pose mode IC's Ctrl+A select-all gives way to the AE / CB swap and Ctrl+Shift+A selects all (#65, step 141).
     for km, idname in CTRL_A_MODES:
         kd.remove(km, idname, type="A", ctrl=True)
@@ -479,8 +478,8 @@ CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curv
 
 
 # --- 18. Undo / redo, visibility, isolate, invert (docs/steps/step_16.md 「계획」) ------------
-# research/maya/interaction.md:220-221 (z / Shift+Z / Ctrl+Y), :233-240 (h, Ctrl+H, Alt+H,
-# Shift+H, Ctrl+Shift+H, Ctrl+Alt+H, Ctrl+1), :76 (Ctrl+Shift+I).
+# Maya: z / Shift+Z / Ctrl+Y; h, Ctrl+H, Alt+H,
+# Shift+H, Ctrl+Shift+H, Ctrl+Alt+H, Ctrl+1; Ctrl+Shift+I.
 
 # Editor keymaps run before "Screen": their z = zoom/viewer border would hide the undo. The Node Editor's Z item
 # exists in 4.5's Industry Compatible keymap only (keymap/ic_4_5.py; not in ic_5_*.py): optional (step 272).
@@ -515,9 +514,9 @@ def patch_undo_visibility(kd):
 
     # Ctrl+1 isolate select: local view without moving the camera; again = back.
     kd.remove("Mesh", "mesh.select_mode", type="ONE", ctrl=True)
-    # step 164: isolating a group shows its children (Maya isolate select, research/maya/re/dag_164.md)
+    # step 164: isolating a group shows its children (Maya isolate select)
     _add(kd, "3D View", "allset.isolate", make_event("ONE", ctrl=True), shadows=("Sculpt",))
-    # Maya Delete takes the selected hierarchy with it (dag_164.md "Delete"); Blender's leaves the children
+    # Maya Delete takes the selected hierarchy with it; Blender's leaves the children
     for key in ("DEL", "BACK_SPACE"):
         kd.remove("Object Mode", "object.delete", type=key)
         _add(kd, "Object Mode", "allset.delete", make_event(key))
@@ -530,8 +529,8 @@ def patch_undo_visibility(kd):
 
 
 # --- 19. Mesh component keys (docs/steps/step_18.md 「계획」) -------------------------------
-# research/maya/interaction.md:75 (Ctrl+Shift+A / Alt+D), :79 (Ctrl+F9-F11 convert), :82 (> <,
-# Ctrl: along loop), :124-129 (D component pivot); Maya default hotkeys Ctrl+E extrude, Ctrl+B bevel.
+# Maya: Ctrl+Shift+A / Alt+D, Ctrl+F9-F11 convert, > < (grow / shrink,
+# Ctrl: along loop), D component pivot; Maya default hotkeys Ctrl+E extrude, Ctrl+B bevel.
 
 CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 
@@ -539,10 +538,10 @@ CONVERT_KEYS = (("F9", "VERT"), ("F10", "EDGE"), ("F11", "FACE"))
 def patch_mesh_components(kd):
     kd.remove("Mesh", "wm.tool_set_by_id", type="D")                       # annotate tool
     _add(kd, "Mesh", "allset.hold", make_event("D"), {"name": "component_pivot"})
-    # Insert = the same pivot edit as a toggle (research/maya/interaction.md:125, docs/steps/step_77.md)
+    # Insert = the same pivot edit as a toggle (docs/steps/step_77.md)
     _add(kd, "Mesh", "allset.pivot_toggle", make_event("INSERT"))
-    # step 243 (#160): D held / Insert on joints in Edit mode = Maya Preserve Children (move the joint only;
-    # research/maya/re/joint_rig_2026_joint_math.md §3 `move -pcp`)
+    # step 243 (#160): D held / Insert on joints in Edit mode = Maya Preserve Children (move the joint only,
+    # like Maya's `move -pcp`)
     kd.remove("Armature", "wm.tool_set_by_id", type="D")                   # annotate tool
     _add(kd, "Armature", "allset.hold", make_event("D"), {"name": "preserve_children"})
     _add(kd, "Armature", "allset.pivot_toggle", make_event("INSERT"))
@@ -586,7 +585,7 @@ def patch_key_stepping(kd):
 
 
 # --- 21. Shift+drag a manipulator = Smart Duplicate (docs/steps/step_22.md 「계획」) ----------------
-# research/maya/interaction.md:107. The C transform gizmo runs gizmogroup.gizmo_tweak
+# Maya Smart Duplicate. The C transform gizmo runs gizmogroup.gizmo_tweak
 # from these keymaps for any Shift/Ctrl (IC:3703-3721); our item goes first, duplicates the selection
 # and passes the same event on, so the gizmo moves the copies. Shift held during a transform was
 # Blender's precision (IC:3611-3612): Maya has none, so precision moves to Alt (delegated).
@@ -613,7 +612,7 @@ def patch_manip_duplicate(kd):
 
 
 # --- 22. Delete / Backspace on components (docs/steps/step_24.md 「계획」) ------------------------
-# Maya deletes the selected faces / edges / vertices right away (runtime_commands.json Delete,
+# Maya deletes the selected faces / edges / vertices right away (Delete,
 # DeleteEdge, DeleteVertex); IC opens the Delete menu (IC:3061-3062). Ctrl+Delete / Ctrl+Backspace
 # keep IC's mesh.dissolve_mode = Maya DeletePolyElements (Maya factory hotkeys).
 
@@ -642,7 +641,7 @@ def patch_view_keys(kd):
 
 
 # --- 24. MMB drag = the last picked manipulator handle (docs/steps/step_28.md 「계획」) ------------
-# research/maya/interaction.md:103 (manipsRememberActiveHandle). A plain LMB press on the gizmo
+# Maya manipsRememberActiveHandle. A plain LMB press on the gizmo
 # remembers the handle (after the drag); the tool keymaps' MMB press (IC: free transform) uses it.
 # The Channel Box MMB slider (patch 14) stays in front.
 
@@ -671,7 +670,7 @@ def patch_active_handle(kd):
 
 
 # --- 25. Shift+T Assign New Material (docs/steps/step_29.md) -------------------------------------
-# Maya factory hotkey, research/maya/hotkeys_and_menus.md:135. IC binds Shift+T only in the
+# Maya factory hotkey. IC binds Shift+T only in the
 # Dope Sheet.
 
 def patch_materials(kd):
@@ -680,7 +679,7 @@ def patch_materials(kd):
 
 
 # --- 26. Marquee selects occluded components (docs/steps/step_30.md 「계획」 1) -----------------
-# Maya optionVar selectPrefUseDepth false (research/maya/interaction.md:68). In front of every LMB drag
+# Maya optionVar selectPrefUseDepth false. In front of every LMB drag
 # box / lasso item of the select tools (and their fallbacks under Move/Rotate/Scale): sets the
 # view's X-ray flag for the drag, then PASS_THROUGH to view3d.select_box / select_lasso.
 SELECT_DRAG_KEYMAPS = ("3D View Tool: Select Box", "3D View Tool: Select Box (fallback)",
@@ -697,7 +696,7 @@ def patch_select_through(kd):
 
 # Step 256 (#172): Maya UV Shell selection (operators/uv_shell_select.py) — a click picks the whole UV shell, a box /
 # lasso grows to shells; in front of the click / drag select items of the 3D View and the UV Editor, PASS_THROUGH
-# unless the UV Shell mask is on (research/maya/re/uv_shell_select_256.md §2, §7).
+# unless the UV Shell mask is on.
 UV_SHELL_CLICK_KEYMAPS = ("3D View", "UV Editor")
 UV_SHELL_DRAG_KEYMAPS = SELECT_DRAG_KEYMAPS + ("Image Editor Tool: Uv, Select Box",
                                               "Image Editor Tool: Uv, Select Box (fallback)",
@@ -726,7 +725,7 @@ def patch_toolbox_guard(kd):
              first=True, shadows=("3D View",))   # in front of view3d.select on purpose (PASS_THROUGH)
 
 
-# Step 76: Maya selection priority (research/maya/interaction.md:74) — in front of the object-mode click
+# Step 76: Maya selection priority — in front of the object-mode click
 # select items ("3D View" CLICK, Tweak tool PRESS); passes through outside object mode and when no IK
 # handle / joint / curve is under the mouse (operators/select_priority.py).
 SELECT_PRIORITY_ITEMS = (("3D View", "CLICK"), ("3D View Tool: Tweak", "PRESS"))
@@ -740,7 +739,7 @@ def patch_select_priority(kd):
 
 
 # --- 27. Maya key batch (docs/steps/step_35.md 「계획」) -------------------------------------------
-# Ctrl+Alt+LMB box zoom (interaction.md:43), Ctrl+T Universal Manipulator, Y last non-sacred
+# Ctrl+Alt+LMB box zoom, Ctrl+T Universal Manipulator, Y last non-sacred
 # tool, Ctrl+Shift+X Multi-Cut / Ctrl+Shift+Q Quad Draw, F2-F6 menu sets
 # (IC's 3D View F2 right / F3 top / F4 camera / F5 orbit go, F1 and Ctrl+F1-F3 stay),
 # Return: IC's 3D View rename popover goes (Blender modal tools confirm with their own Return).
@@ -773,7 +772,7 @@ def patch_key_batch(kd):
 # --- 28. Component pick-walk, Alt+Shift axis-locked navigation (docs/steps/step_39.md 「계획」) ------
 # Arrows in edit mode walk vertices / edges / faces (Maya factory arrow keys, Maya pick-walk); IC's Up/Down
 # grow/shrink go (Maya: Shift+> / <, step 18). Alt+Shift+LMB / MMB = tumble / track on one axis
-# (interaction.md:46); IC's Alt+Shift+LMB click-select toggle goes (a PRESS item would hide it anyway).
+# (Maya); IC's Alt+Shift+LMB click-select toggle goes (a PRESS item would hide it anyway).
 
 AXIS_LOCK_SHADOWS = ("Weight Paint", "Paint Face Mask (Weight, Vertex, Texture)",
                      "Paint Vertex Selection (Weight, Vertex)")
@@ -794,7 +793,7 @@ def patch_component_pick_walk(kd):
 
 
 # --- 30. Joints = pose bones (docs/steps/step_55.md 「계획」 2) ---------------------------------
-# Maya has no pose mode: picking a joint selects it (research/maya/workflows/rigging.md:136). Ctrl+Tab =
+# Maya has no pose mode: picking a joint selects it. Ctrl+Tab =
 # pose mode toggle (Blender's default key for it; posemode_toggle returns PASS_THROUGH unless an
 # armature is active, tmp/probe55, so Screen's Ctrl+Tab still gets the event); the Channel Box MMB
 # slider works on joints.
@@ -805,7 +804,7 @@ def patch_pose_joints(kd):
 
 
 # --- 31. Time Slider and keys (docs/steps/step_56.md 「계획」 1-5) ---------------------------------
-# research/maya/workflows/animation.md §5. The timeline is a Dope Sheet mode: the Maya Time Slider
+# Maya Time Slider. The timeline is a Dope Sheet mode: the Maya Time Slider
 # mouse (LMB time, Shift+LMB range, MMB time + notice, RMB menu) goes first in "Dopesheet" and passes
 # through in the Dope Sheet. K (Time Dragger, Maya factory hotkey) is global ("Screen"); editor keymaps
 # run first, so their plain K goes: Mesh knife tool cycle (IC:3074; Multi-Cut = Ctrl+Shift+X) and
@@ -844,7 +843,7 @@ def patch_time_slider(kd):
 
 
 # --- 32. Joints: pose-mode pick-walk, P / Shift+P (docs/steps/step_57.md 「계획」 3) ----------------------
-# Maya arrows walk joints like objects (pickWalk, research/maya/workflows/rigging.md:24); IC Pose
+# Maya arrows walk joints like objects (pickWalk); IC Pose
 # arrows = select_hierarchy (IC:2453-2459) and frame_offset Left/Right (frames are Alt+, / Alt+., step 20).
 # Maya P parents joints keeping their place: IC Pose P = object.parent_set (IC:2434), Armature
 # P / Shift+P = armature.parent_set / parent_clear menus (IC:3099-3100).
@@ -869,7 +868,7 @@ def patch_joints(kd):
 
 
 # --- 34. UV workflow (docs/steps/step_66.md 「계획」 1-3) -------------------------------------------
-# research/maya/workflows/uv.md §1-2; Maya UV Editor factory keys (docs/keymap_mapping.md
+# Maya UV Editor factory keys (docs/keymap_mapping.md
 # UV Editor rows), F12 / Alt+F12. IC's UV Editor: Shift+X = snap pie (IC:613),
 # Ctrl+L = select_linked (IC:599), RMB = context menu (IC:614); Maya has no shell-select key there.
 UV_KM = "UV Editor"
@@ -1074,8 +1073,8 @@ def patch_global_keys_4(kd):
 
 # --- 44. Graph Editor key batch (docs/steps/step_92.md 「계획」 2) ------------------------------------------
 # Maya factory hotkeys t = GraphEditorFrameCenterView, Alt+/ = SnapTimeToSelection toggle, i hold =
-# Insert Key tool; Maya binds it globally, it only means something in the Graph Editor: research/maya/workflows/
-# animation.md:142). None of these events is bound in the Graph Editor keymaps (measured).
+# Insert Key tool; Maya binds it globally, it only means something in the Graph Editor.
+# None of these events is bound in the Graph Editor keymaps (measured).
 
 def patch_graph_keys_2(kd):
     _add(kd, "Graph Editor", "allset.graph_center_time", make_event("T"))
@@ -1125,7 +1124,7 @@ def patch_graph_outliner(kd):
 
 
 def patch_shelf_scroll(kd):
-    # step 167: Maya's wheel over the shelf icons scrolls one row (research/maya/re/shelf_overflow_167.md); the shelf
+    # step 167: Maya's wheel over the shelf icons scrolls one row; the shelf
     # row is an Image Editor, so the items sit first in "Image" and pass through in every other image editor
     for wheel, delta in (("WHEELUPMOUSE", -1), ("WHEELDOWNMOUSE", 1)):
         _add(kd, "Image", "allset.shelf_scroll", make_event(wheel), {"delta": delta}, first=True,
@@ -1244,7 +1243,7 @@ def patch_key_batch_3(kd):
     _add(kd, "Weight Paint", "wm.call_menu", make_event("U"), {"name": "ALLSET_MT_paint_operation"})
     _add(kd, "Weight Paint", "wm.radial_control", make_event("N"), weight)
     _add(kd, "Weight Paint", "wm.radial_control", make_event("B"), size, shadows=("3D View",))
-    # step 218 (research/maya/re/maya2026_paint_skin_weights.md:113-129): Alt+F = Maya Flood, Ctrl+Alt+C / V = copy /
+    # step 218: Alt+F = Maya Flood, Ctrl+Alt+C / V = copy /
     # paste vertex weights, Ctrl+. / Ctrl+, = next / previous Skin Paint Mode, Alt+R = reflection (X mirror)
     _add(kd, "Weight Paint", "allset.flood_weights", make_event("F", alt=True))
     _add(kd, "Weight Paint", "allset.paint_copy_vertex_weights", make_event("C", ctrl=True, alt=True))
@@ -1275,7 +1274,7 @@ def patch_key_batch_3(kd):
     _add(kd, "Graph Editor", "anim.channels_setting_enable", make_event("H"), {"type": "PROTECT"})
     _add(kd, "Graph Editor", "anim.channels_setting_disable", make_event("J"), {"type": "PROTECT"})
 
-    # Maya 2026 Dope Sheet keys (measured in Maya 2026: g / t / h / j, like the Graph Editor's); a / f are IC's
+    # Maya 2026 Dope Sheet keys (g / t / h / j, like the Graph Editor's); a / f are IC's
     # action.view_all / view_selected. allset.dope_sheet_key fails its poll in the Timeline, so the Time Slider keeps
     # the window keys (g = Repeat Last)
     for key, action in (("G", 'RANGE'), ("T", 'CENTER'), ("H", 'LOCK'), ("J", 'UNLOCK')):
@@ -1305,8 +1304,8 @@ def patch_key_batch_3(kd):
 
 # --- 50. Menu shortcuts (docs/steps/step_108.md 「계획」 3) --------------------------------------------------------
 # Blender prints the keymap shortcut of a menu's ``wm.call_menu`` beside the item that opens it: File > Recent Files
-# showed IC's "Shift Ctrl O" (a C menu, so no kit subclass can hide it). Maya has no Ctrl+Shift+O
-# (research/maya/hotkeys_default.json); the recent files stay in File > Recent Files.
+# showed IC's "Shift Ctrl O" (a C menu, so no kit subclass can hide it). Maya has no Ctrl+Shift+O;
+# the recent files stay in File > Recent Files.
 
 def patch_menu_shortcuts(kd):
     kd.remove("Window", "wm.call_menu", type="O", ctrl=True, shift=True)

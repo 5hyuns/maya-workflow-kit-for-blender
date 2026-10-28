@@ -1,6 +1,6 @@
 """Step 225 (Issue #135, ATTACH_PLAN L24 + L21): Game Exporter clips and the Motion Trail Editor, Maya 2026.
 
-Maya truth (mayapy, research/scripts/maya_anim225/game_exporter.py): gameFbxExporter factory values, a new clip =
+Maya: gameFbxExporter factory values, a new clip =
 the playback range with an empty name, one file = a take per clip (walk 1-10, run 11-24), a file per clip = file name
 prefix + clip name ("hero_walk.fbx"). Maya also writes the plug-in's "Take 001" and repeats earlier clips in later
 clip files — the kit writes only the clips' own takes (documented in operators/game_exporter.py).
@@ -20,7 +20,7 @@ fbx_rig = import_module(kit.MODULE + ".operators.fbx_rig")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step225")
 
-# gameFbxExporter createNode values (game_exporter.json "attrs")
+# gameFbxExporter createNode values (Maya "attrs")
 MAYA_NODE = {"exportTypeIndex": 1, "exportSetIndex": 1, "modelFileMode": 1, "fileSplitType": 1, "bakeAnimation": True,
              "skinning": True, "blendshapes": True, "smoothingGroups": True, "tangentsBinormals": True,
              "triangulate": False, "moveToOrigin": False, "embedMedia": False, "includeChildren": False,
@@ -100,7 +100,7 @@ def _takes(path):
 
 def test_game_exporter_factory_equals_maya_node():
     # the node's createNode values (FACTORY), then the window's first-open presets (step 266: "Model Default" /
-    # "Anim Default", mayapy 2026 applyAttrPreset) — what the kit's fields start with
+    # "Anim Default", Maya 2026 applyAttrPreset) — what the kit's fields start with
     sc = _clear()
     s = bpy.data.scenes.new("ge_fresh").allset_game_exporter
     for attr, maya in MAYA_NODE.items():

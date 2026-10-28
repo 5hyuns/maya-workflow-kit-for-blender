@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya File > Import / Export All / Export Selection: one file dialog with Files of type and an Options panel
-(docs/steps/step_102.md 「계획」; Maya measurements research/maya/re/file_io.md).
+(docs/steps/step_102.md 「계획」).
 
 Maya opens a single dialog for every format and picks the translator from "Files of type" (or the extension,
 "Best Guess" on import); Blender has one operator per format. ``allset.file_dialog`` is that single dialog: the
@@ -40,7 +40,7 @@ MODES = (('IMPORT', "Import", "Maya File > Import"), ('EXPORT_ALL', "Export All"
          ('EXPORT_SELECTION', "Export Selection", "Maya File > Export Selection"))
 
 
-# Maya workspace file rules (mayapy, research/maya/re/file_io.md §1): where the dialog starts per format; the
+# Maya workspace file rules: where the dialog starts per format; the
 # others (scenes, FBX, USD, glTF, Best Guess) start in the scenes folder.
 FILE_RULES = {'OBJ': "data", 'ABC': os.path.join("cache", "alembic")}
 
@@ -64,12 +64,12 @@ def format_of(path):
 def import_args(fmt, k, maya=True):
     """(operator id, kwargs) that import ``fmt`` into a scene where one Maya unit = ``k`` BU (units.maya_unit).
 
-    Maya writes centimetres with Y up (research/maya/re/file_io.md §2): FBX carries its unit and axes and Blender's
+    Maya writes centimetres with Y up: FBX carries its unit and axes and Blender's
     importer converts both itself; OBJ and Alembic have no unit, so their numbers are Maya units (× k) and Y up;
     USD carries metersPerUnit, which Blender converts to metres, so cm files need ×100 to become Maya units.
     Blender's readers leave that conversion on the objects' channels (Rotate X 90, Scale 0.01, step 133 I2):
     ``after_import`` moves it into the geometry (step 138; FBX's own ``bake_space_transform`` does it there).
-    Maya writes frame 1 at FBX time 1/24 s, which Blender already reads as frame 1 (no extra offset, measured).
+    Maya writes frame 1 at FBX time 1/24 s, which Blender already reads as frame 1 (no extra offset).
     OBJ: Maya names the object with ``g`` (no ``o`` line), so groups split the objects.
     """
     if fmt == 'FBX':
@@ -137,8 +137,7 @@ def export_args(fmt, k, selection, maya=True):
 # rotation or scale shows as Rotate X -90 / Scale 100 in Maya (step_133_work.md I1, I3) and Blender's readers
 # leave the reverse on the kit's channels (I2). The kit instead conjugates: a transform M becomes C M C^-1 and
 # geometry p becomes C p (C = axes x units), so channels read the same numbers in both programs (the kit's
-# Z-up axes: Maya translate (1, 2, 3) = kit (1, -3, 2), rotate Y = kit rotate Z). Measured with mayapy:
-# research/maya/re/file_io.md §4.
+# Z-up axes: Maya translate (1, 2, 3) = kit (1, -3, 2), rotate Y = kit rotate Z).
 
 _SUFFIX = re.compile(r"^(.*)\.\d{3}$")
 _TRAIL = re.compile(r"^(.*?)(\d*)$")
@@ -377,7 +376,7 @@ def after_import(context, fmt, path, obs, materials, args):
 
 def _file_time_slider(context, path, obs):
     """Step 238 (#146, audit ③-17): an animated FBX without a skeleton sets the Time Slider to the file's range too —
-    Maya's FBXImport does even with Fill Timeline off (research/maya/re/maya2026_engine_fbx.md:57); Blender's reader
+    Maya's FBXImport does even with Fill Timeline off; Blender's reader
     leaves the scene's range (0-250). Rigs get it in fbx_rig_import.fix_armature (step 235)."""
     if not any(o.animation_data is not None and o.animation_data.action is not None for o in obs):
         return None
@@ -525,7 +524,7 @@ def usd_maya_axes(path, k):
         typ = prim.GetTypeName()
         if typ == "Xform" and prim.HasAttribute("faceVertexCounts"):
             # Blender 4.5 writes a merged transform + mesh as an Xform prim holding the mesh attributes (no
-            # mesh in Maya or Blender, measured): it is the mesh prim mayaUsd writes (Mesh "pCube1")
+            # mesh in Maya or Blender): it is the mesh prim mayaUsd writes (Mesh "pCube1")
             prim.SetTypeName("Mesh")
             typ = "Mesh"
         if prim.IsA(UsdGeom.Xformable):
@@ -866,8 +865,8 @@ class _FileDialog:
                     return {'FINISHED'}
                 op, args = export_args(fmt, k, self.selection, self.maya_conversion)
                 args.update(_animation_args(fmt, self.animation))
-                # Maya Export Selection writes the selected nodes with everything below them (step 164,
-                # research/maya/re/dag_164.md); Blender's writers take only the selected objects
+                # Maya Export Selection writes the selected nodes with everything below them (step 164);
+                # Blender's writers take only the selected objects
                 from . import dag
                 from .control_shapes import excluded as shapes_excluded   # step 226: no control shape curves
                 if self.selection:

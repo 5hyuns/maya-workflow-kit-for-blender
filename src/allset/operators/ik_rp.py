@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya ikRPsolver on a kit IK handle (step 245, Issue #162).
 
-Maya 2026 (research/maya/re/joint_rig_2026_ik.md §2–3, §7; measured with mayapy,
-private notes research/maya/re/joint_rig_2026_principles.md §1.2–1.5):
+Maya 2026:
 - a new RP handle gets a **default pole vector**: with the chain at its preferred angles, the joint whose offset from
   the start joint has the largest |p × d| (d = start -> end; ties keep the first), pv = d × (p × d) normalised (= that
   joint's offset perpendicular to the chain), length 2 × jointDisplayScale, stored in the handle's parent space
   (world); a straight chain (every |p × d|² < 1e-10) falls back to e_k ⊥ d, k = the smallest |component| of d in the
-  start joint's frame, pv = d × n (research/maya/re/060_rig_lane.md A2 steps 3–4);
-- step 266 (060_questions.md R4, mayapy 2026 179 cases): for an RP handle on exactly 3 joints whose middle joint has
+  start joint's frame, pv = d × n;
+- step 266 (179 cases): for an RP handle on exactly 3 joints whose middle joint has
   preferredAngle ≈ 0, jointOrient ≈ 0 (≤ 3e-5° bends, ≥ 1e-4° doesn't) and rotate 0 and a straight chain, ``ikHandle``
   first writes preferredAngle (0, 90, 0) on the middle joint, so the pv comes from that bent pose (along X with equal
   bones: (1.414, 0, 1.414)) and the chain bends that way; every other straight chain (4+ joints, a jointOrient on the
@@ -16,7 +15,7 @@ private notes research/maya/re/joint_rig_2026_principles.md §1.2–1.5):
 - the solve plane: v = pv perpendicular to u = root -> goal, turned about u by +twist (right-handed); Pole Vector
   constraint = pv follows (target − start joint).
 
-Blender (4.5 measured, ik.md §7): the IK constraint's pole target at root + R(u, twist)·pv with
+Blender (4.5 measured): the IK constraint's pole target at root + R(u, twist)·pv with
 pole_angle = −signed_angle(base bone X -> rest bend direction about the rest chain axis) reproduces Maya's elbow to
 2.2e-4 for reachable goals (0.011 when the goal is out of reach: Blender's IK keeps a sliver of bend). A straight chain
 needs a starting bend (Blender's IK starts from the pose): the in-between joints get their preferred angle, else 1°
@@ -62,7 +61,7 @@ def _signed(a, b, axis):
 
 def chain_points(arm, bones, preferred=True):
     """World positions of the chain joints (start, in-between, end) with the in-between joints at their preferred
-    angles (Maya computes the default pole vector that way, principles.md §1.3) — FK from the start joint's pose."""
+    angles (Maya computes the default pole vector that way) — FK from the start joint's pose."""
     from .rig_maya import PREFERRED_PROP
     root = bones[0]
     m = arm.matrix_world @ root.matrix
@@ -116,8 +115,8 @@ def default_pole_vector(points, length, start_frame=None):
 
 # R4 (step 266): Maya writes the middle joint's preferred angle (0, 90, 0) — 90° about its Maya Y = the bone's Z
 # (joints.JOINT_AXES), as pose Euler XYZ in bone axes like rig_maya.PREFERRED_PROP — when the 3-joint chain is
-# straight. Straightness: the middle joint 1e-3 / 4 off the line still counts, 0.1 / 4 doesn't (mayapy); the kit
-# takes 1e-3 of the chain length (delegated, inside that measured bracket). jointOrient bracket 3e-5° .. 1e-4°: the
+# straight. Straightness: the middle joint 1e-3 / 4 off the line still counts, 0.1 / 4 doesn't; the kit
+# takes 1e-3 of the chain length (delegated, inside that bracket). jointOrient bracket 3e-5° .. 1e-4°: the
 # kit takes 1e-6 rad (5.7e-5°).
 AUTO_PREFERRED = (0.0, 0.0, 90.0)
 STRAIGHT_TOL = 1e-3
@@ -182,7 +181,7 @@ def _rest_bend(bones, fallback):
 
 def _prebend(arm, bones, bend):
     """Give a straight chain's in-between joints a starting bend toward ``bend`` (armature space): their preferred
-    angle when they have one (Maya bends a straight chain that way, ik.md §2), else 1°. Only joints at rest."""
+    angle when they have one (Maya bends a straight chain that way), else 1°. Only joints at rest."""
     from .rig_maya import PREFERRED_PROP
     from mathutils import Euler
     u = (bones[-1].bone.tail_local - bones[0].bone.head_local).normalized()
@@ -265,7 +264,7 @@ def setup(context, arm, ik_bone, con, handle, display_scale=1.0):
     con.pole_target = helper
     con.pole_angle = pole_angle(arm, bones, bend)
     if straight and (len(bones) == 2 or _has_preferred(bones)):
-        # Maya: a straight 3+ joint chain without preferred angles stays straight (060_rig_lane.md A2, step 251)
+        # Maya: a straight 3+ joint chain without preferred angles stays straight (step 251)
         _prebend(arm, bones, bend)
     update_handle(handle)
     return helper

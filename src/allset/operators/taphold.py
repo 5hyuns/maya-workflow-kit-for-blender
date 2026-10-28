@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya "tap = action, hold + click = menu" keys.
 
-research/maya/interaction.md §0: on press Maya builds a marking menu on
+Maya hold keys: on press Maya builds a marking menu on
 LMB; if no menu was posted before release, the release runs the default
 action (``a`` tap = FrameAll). Design:
 docs/steps/step_3.md 「계획」 5.
@@ -133,7 +133,7 @@ class ALLSET_OT_tap_hold(bpy.types.Operator):
 
 # --- bindings of this step ----------------------------------------------------
 
-# Maya's factory soft select radius: softSelect -q -softSelectDistance = 5.0 (Maya units; mayapy, factory
+# Maya's factory soft select radius: softSelect -q -softSelectDistance = 5.0 (Maya units; factory
 # prefs, docs/steps/step_63.md). Blender's own default proportional_size is 1.0 BU.
 MAYA_SOFT_RADIUS = 5.0
 BLENDER_SOFT_RADIUS = 1.0
@@ -148,14 +148,14 @@ def maya_soft_radius(context):
 
 
 def radius_from_drag(start_size, dx):
-    """B + LMB / MMB drag: doubles the radius every 100 px to the right. Maya's rate is not measured (synthetic
+    """B + LMB / MMB drag: doubles the radius every 100 px to the right. Maya's rate is unknown (synthetic
     drags don't reach Maya's screen slider, docs/steps/step_129_softsel.md 「계획」 0); relative, so it feels
     the same at every radius (delegated)."""
     return max(1e-4, start_size * 2.0 ** (dx / 100.0))
 
 
 class SoftSelectBinding(TapHoldBinding):
-    """B: tap toggles soft select, hold + LMB / MMB drag sets the radius (interaction.md:155-156).
+    """B: tap toggles soft select, hold + LMB / MMB drag sets the radius.
     One Maya state for object and component mode (operators/soft_select.py, issue #15)."""
     name = "soft_select"
     label = "Soft Select"
@@ -207,7 +207,7 @@ class SoftSelectBinding(TapHoldBinding):
 
 class SelectAllBinding(TapHoldBinding):
     """A: tap = frame all; hold + LMB = the Maya marking menu SELECT_ALL
-    (delete history, freeze; research/maya/interaction.md:194, docs/steps/step_10.md)."""
+    (delete history, freeze; docs/steps/step_10.md)."""
     name = "select_all"
     label = "Frame All / History Menu"
 
@@ -226,7 +226,7 @@ class SelectAllBinding(TapHoldBinding):
 
 
 class SpaceBinding(TapHoldBinding):
-    """Space: tap = four views <-> single view (Maya pane maximize, interaction.md:248).
+    """Space: tap = four views <-> single view (Maya pane maximize).
     Hold = hotbox (step 10)."""
     name = "space"
     label = "Four Views / Hotbox"
@@ -243,7 +243,7 @@ def playback_range(scene):
 
 
 def frames_per_pixel(scene, width):
-    """K drag speed: the editor's width spans the playback range once (Maya's speed is not measured,
+    """K drag speed: the editor's width spans the playback range once (Maya's speed is unknown,
     docs/steps/step_56.md 「계획」 3), never slower than 1 frame per 50 px."""
     a, b = playback_range(scene)
     return max((b - a + 1) / max(width, 1), 0.02)
@@ -254,8 +254,8 @@ def time_from_drag(start_frame, dx, fpp):
 
 
 class TimeDragBinding(TapHoldBinding):
-    """K: hold + LMB drag anywhere = move the current time (Maya Time Dragger, TimeDraggerToolActivate,
-    research/maya/workflows/animation.md:10). LMB is used up, so the selection
+    """K: hold + LMB drag anywhere = move the current time (Maya Time Dragger, TimeDraggerToolActivate).
+    LMB is used up, so the selection
     stays; a tap does nothing."""
     name = "time_drag"
     label = "Time Dragger"

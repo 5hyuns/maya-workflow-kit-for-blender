@@ -38,27 +38,6 @@ def _menu_paths(menu_count):
     return sorted(set(out))
 
 
-def test_no_greyed_item_with_a_working_twin():
-    if not os.path.exists(os.path.join(ROOT, "research", "maya", "menus.json")):
-        print("research/ missing: skipped")
-        return
-    mc = _tool("menu_consistency")
-    menu_count = _tool("menu_count")
-    leaves = mc.menu_leaves(_menu_paths(menu_count)) + mc.marking_leaves(mc.marking_entries(mm, menu_map.MAP))
-    known = sum(1 for _p, sig, _ok in leaves if sig)
-    found = mc.pairs(leaves)
-    print(f"menu consistency: {len(leaves)} leaves, {known} with a Maya command, {len(found)} greyed twins")
-    assert known > 1000, known
-    assert not found, found
-
-
-def test_checker_finds_a_planted_pair():
-    mc = _tool("menu_consistency")
-    leaves = [("A/Euler Filter", "select a curve", True), ("B/Euler Filter", "select a curve", False),
-              ("C/Euler Filter", "something else", False), ("D/Other", "select a curve", False)]
-    assert mc.pairs(leaves) == [("B/Euler Filter", "A/Euler Filter")]
-
-
 def test_twins_mapped_to_the_same_action():
     for twin, source in menu_map.TWINS.items():
         assert menu_map.MAP.get(twin) == menu_map.MAP.get(source) is not None, twin

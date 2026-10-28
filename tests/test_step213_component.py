@@ -1,5 +1,5 @@
-"""Step 213 lane CE: Maya's Component Editor (research/maya/re/editors_213.md CE1-CE7) — Smooth Skins weights table with
-Hold / Hide Zero Columns / Interactive normalisation (CE5 numbers from mayapy), Polygons positions in Maya units, cell
+"""Step 213 lane CE: Maya's Component Editor — Smooth Skins weights table with
+Hold / Hide Zero Columns / Interactive normalisation (Maya's numbers), Polygons positions in Maya units, cell
 edits through the Scene proxies (undoable), Auto Update and the window's classes / properties."""
 
 from importlib import import_module
@@ -91,7 +91,7 @@ def _weights(ob, vi):
     return out
 
 
-# --- CE5: the normalisation rule against mayapy ---------------------------------------------------------------------
+# --- the normalisation rule against Maya ------------------------------------------------------------------------
 
 def test_normalize_matches_maya():
     _close(ce.normalize([0.8, 0.2, 0.0], 0, 0.5), [0.5, 0.5, 0.0])

@@ -20,7 +20,7 @@ kit_icons = import_module(kit.MODULE + ".ui.kit_icons")
 menu_drawings = import_module(kit.MODULE + ".ui.menu_drawings")
 
 SIZES = (16, 20, 24)            # menu icon px at UI scale 1.0 / 1.25 / 1.5
-# Menus where Maya itself shows one picture on two items (same icon file in the Maya capture)
+# Menus where Maya itself shows one picture on two items (same icon in Maya)
 MAYA_SHARED = {"nCache/Merge Caches", "nHair/Convert Selection"}
 
 

@@ -479,20 +479,20 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 ### Step 72 — 상단 바 다시 그리기 · Maya 인뷰 메시지
 
 - [x] (step 72) F2–F6: 마우스를 뷰에 둔 채 누르면 상단 메뉴 바가 바로 그 메뉴 세트로 바뀜 (호버 없이). 창을 하나 더 연 (Hypershade 등) 뒤에도 두 창의 상단 바가 모두 바뀜. (gui_manual_sweep)
-- [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — research/maya/screens/ivm/ivm_05 와 모양·위치·노란 강조 비교.
+- [ ] (step 72) F8 → 뷰 가운데 위 "Component selection on. / F8 goes back to objects." 상자가 0.3 초에 나타나 2 초 머문 뒤 1.5 초에 걸쳐 사라짐 — Maya 의 in-view 메시지와 모양·위치·노란 강조 비교.
 - [x] (step 72) Maya Workflow Kit 레이아웃에서 Ctrl+G / Ctrl+H / Alt+H 메시지는 뷰 왼쪽 위 (ivm_02, ivm_09 위치), Blender 텍스트 정보가 켜진 뷰에서는 가운데 위. b 로 소프트 선택 켤 때만 메시지, Make Live 켬 / 끔 메시지. (gui_manual_sweep)
 - [x] (step 72) 환경설정 UI Elements 「In-View Messages」 끄면 메시지 없음. 4분할에서는 키를 누른 그 뷰에만. (gui_manual_sweep)
 
 ### Step 73 — 타임 슬라이더 키 틱 · Range Slider 드래그
 
-- [ ] (step 73) 키가 있는 오브젝트를 선택하면 타임 슬라이더에 그 프레임마다 1 px 빨간 세로선 (Breakdown 키는 초록), 선택을 풀면 사라짐 — research/maya/screens/ts/ts_01_window.png 와 비교. 뼈 (포즈 모드) 는 그 뼈의 키만.
+- [ ] (step 73) 키가 있는 오브젝트를 선택하면 타임 슬라이더에 그 프레임마다 1 px 빨간 세로선 (Breakdown 키는 초록), 선택을 풀면 사라짐 — Maya 타임 슬라이더와 비교. 뼈 (포즈 모드) 는 그 뼈의 키만.
 - [x] (step 73) Range Slider 바: 회색 구간 가운데를 끌면 재생 범위가 같은 길이로 움직이고 타임 슬라이더가 따라감; 양끝 손잡이를 끌면 그 끝만; 애니메이션 범위 밖으로는 안 나감; ESC / RMB = 취소; Ctrl+Z 로 되돌림. (gui_manual_sweep)
 - [ ] (step 73) 바 더블클릭 = 전체 애니메이션 범위 ↔ 재생 범위 (GUI 테스트는 더블클릭 이벤트를 만들 수 없어 동작만 확인함).
 - [ ] (step 73) UI 배율 1.0 / 1.5 / 2.0 에서 바가 playback start 필드와 playback end 필드 사이에 정확히 그려지고 숫자가 손잡이 옆에 읽힘.
 
 ### Step 74 — 프리셀렉트 (엣지 · 면 · 변형 툴)
 
-- [ ] (step 74) 엣지 모드: 엣지 위 = 2 px 빨간 선, 꼭짓점 가까이에서도 엣지 (research/maya/screens/pre/pre_03, pre_04 와 비교). 면 위 엣지에서 먼 곳 = 그 면의 가장 가까운 엣지.
+- [ ] (step 74) 엣지 모드: 엣지 위 = 2 px 빨간 선, 꼭짓점 가까이에서도 엣지 (Maya 의 미리 선택 표시와 비교). 면 위 엣지에서 먼 곳 = 그 면의 가장 가까운 엣지.
 - [ ] (step 74) 면 모드: 커서 아래 면 = 빨간 테두리 + 붉은 채움 (Maya 점무늬 pre_05 와 느낌 비교). 뒤쪽 면 / 엣지 / 정점은 X-ray 일 때만.
 - [ ] (step 74) Move / Rotate / Scale 툴: 컴포넌트 위 프리셀렉트가 그대로 되고, 매니퓰레이터 화살표·가운데·회전 원 위에서는 꺼져서 손잡이를 잡을 수 있음. 클릭은 선택, 드래그는 박스 선택 그대로.
 - [ ] (step 74) 큰 메쉬 (10만 정점) 에서 호버가 끊기지 않는지 (numpy 투영 + 캐시; 편집 후 첫 호버만 캐시를 다시 만듦).
@@ -644,13 +644,13 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 102) 새로 설치한 상태 (프로젝트 설정 없음) 에서 Ctrl+O / File > Import... → 대화상자가 `Documents/Maya Workflow Kit/projects/default/scenes` (step 111 / 125 이름) 에서 열리고 그 폴더들이 생김 (Documents 맨 바닥이 아님). 왼쪽 「Current Project」 의 폴더를 누르면 그 폴더로, Set Project... 는 보고 있는 폴더를 프로젝트로.
 - [ ] (step 102) File > Export Selection... → 오른쪽 Files of type 을 OBJ → FBX 로 바꾸면 파일 이름 확장자가 따라 바뀌는지, 시작 폴더 (OBJ = data, FBX = scenes) 가 Maya 와 같다고 느껴지는지.
-- [ ] (step 102) 실제 Maya 2022 GUI 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지 (mayapy 로는 확인됨). Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
+- [ ] (step 102) 실제 Maya 2022 에서 kit 가 내보낸 FBX / OBJ 를 Import → 크기·방향이 Maya 에서 만든 것과 같은지. Maya 가 내보낸 FBX 를 kit 로 Import → Channel Box 크기 그대로.
 - [ ] (step 102) Import 대화상자에 .ma 파일을 고르면 「.ma / .mb can't be read: export FBX from Maya」 오류.
 
 ### Step 103 — Maya 옵션 창
 
 - [ ] (step 103) Create > Polygon Primitives > Cube ❒ 를 누르고 있기 → 「Option Box」 → Polygon Cube Options 창. Width 3 → Apply: 창이 열린 채 큐브가 생기는지 (Maya Apply). Create: 만들고 닫힘. 다시 메뉴에서 그냥 Cube 클릭 → 3 폭 큐브 (Maya 처럼 저장된 값). Reset Settings → 1 로 돌아가는지.
-- [ ] (step 103) Edit Mesh > Bevel ❒ / Constrain > Parent ❒ 창의 필드 이름·기본값이 Maya 창과 같다고 느껴지는지 (research/maya/screens/step103/ 비교 그림). 회색 「Not in Blender」 목록이 거슬리는지.
+- [ ] (step 103) Edit Mesh > Bevel ❒ / Constrain > Parent ❒ 창의 필드 이름·기본값이 Maya 창과 같다고 느껴지는지. 회색 「Not in Blender」 목록이 거슬리는지.
 - [ ] (step 103) 메뉴 라벨 끝의 ❒ 표시가 Maya 사용자에게 옵션 상자로 읽히는지, 누르고 있기로 여는 것이 불편한지 (Maya 는 ❒ 를 클릭).
 
 ### Step 104 — Graph Editor / Dope Sheet / UV Editor 메뉴·아이콘 줄
@@ -693,7 +693,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 109) 실제 마우스로 셸프 탭 8 개를 돌며 버튼 수가 Maya 공장 셸프와 같은지 (38 / 43 / 26 / 18 / 14 / 25 / 29 / 10), 회색 아이콘 위에 머물면 「(Maya shelf, greyed) → 대체」 툴팁과 Help Line 글이 뜨는지, 누르면 아무것도 안 되고 안내만 나오는지.
 - [ ] (step 109) Sculpting 셸프: 메시를 고르고 Smooth / Grab / Bulge / Freeze 를 차례로 눌러 조각 모드 + Smooth / Grab / Inflate/Deflate / Mask 브러시가 되는지 (세션 첫 클릭도 — 에셋 라이브러리 로딩 뒤 재시도), 드래그 느낌이 Maya 툴과 납득되는지.
 - [ ] (step 109) Curves / Surfaces: 원 두 개 → Loft (step 181 부터 NURBS 표면), 닫힌 커브 → Planar / Bevel Plus, 프로필 + 경로 → Extrude, 커브 → Offset Curve / Sweep Mesh, Pencil Curve Tool 로 그리기, Add Points Tool 로 끝점 연장이 Maya 손에 맞는지.
-- [ ] (step 109) 아이콘 모양 (셸프마다 Maya 색, 도구 부분 회색) 이 125 % 와 100 % 에서 Maya 셸프와 같은 인상인지 (`research/maya/screens/step109/`).
+- [ ] (step 109) 아이콘 모양 (셸프마다 Maya 색, 도구 부분 회색) 이 125 % 와 100 % 에서 Maya 셸프와 같은 인상인지.
 
 ### Step 110 — 모델링·리깅 기능
 
@@ -777,7 +777,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 - [ ] (step 129) Maya Workflow Kit layout, cube in object mode: B → in-view message; F11 (faces) → soft select still on (header proportional button lit); B in face mode → off; back to object mode → off too (#15). Open a file saved with soft select on → it follows the current setting (Maya global option).
 - [ ] (step 129) Edit mode, select one vertex of a dense grid, B on: the wire around it is yellow at the selection → red → black at the radius (Maya look, `tmp/maya129/out/softsel_00_on.png` reference); G moves exactly the coloured region and the colours stay put during the move; switch Volume / Surface and the falloff curve in the Modeling Toolkit → colours follow at once.
-- [ ] (step 129) Hold B, drag with the **middle** mouse (and with the left) left / right: a white circle of the radius around the selection + "Falloff Radius: x" next to the mouse, the view does not orbit, releasing B keeps soft select on. Judge whether ×2 per 100 px feels like Maya (Maya's rate is not measured: synthetic drags don't reach its screen slider).
+- [ ] (step 129) Hold B, drag with the **middle** mouse (and with the left) left / right: a white circle of the radius around the selection + "Falloff Radius: x" next to the mouse, the view does not orbit, releasing B keeps soft select on. Judge whether ×2 per 100 px feels like Maya (Maya's exact rate is not known).
 - [ ] (step 129) Feel on a ~100k-vertex mesh: orbiting / selecting with soft select on stays fluid; Surface mode first draw after a selection change ~0.5 s at radius ≈ 6 % of the mesh (headless: Volume 0.2 s first / 5 ms on a radius change, Surface 0.5 s).
 
 ### Step 129 Multi-Cut
@@ -809,11 +809,11 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [ ] (step 129) 실제 마우스로 Channel Box 이름 칸 Translate X → Scale Z 를 끌어 범위 선택 (파란 이름 칸), 값 칸에서 시작한 드래그도 범위 선택; Ctrl 클릭 토글, Shift 클릭 범위. 값 칸 한 번 클릭 → 그 자리에 편집 칸이 바로 뜨고 (글자 전체 선택) 입력 + Enter 로 선택한 채널 전부 · 선택한 오브젝트 전부에 들어가는지, Esc 로 닫으면 값이 그대로인지.
 - [ ] (step 129) 빠르게 끌 때 (한 이벤트에 여러 행) 범위 끝이 마우스 행과 맞는지, 드래그 중 Channel Box 밖으로 나갔다 들어와도 선택이 남는지, 125 % 와 100 % UI 배율.
 - [ ] (step 129) h → Channel Box Visibility off; Channel Box Visibility 0 → Display > Show 로 다시 보임; 레이어 V 끄고 켜도 자기 Visibility 0 인 오브젝트는 숨은 채; 레이어 Template → Normal 뒤 Bounding Box 표시가 그대로인지.
-- [ ] (step 129) Layer Editor: 행의 V / P / T 상자 클릭, 이름 더블클릭 이름 바꾸기, 상자 위 RMB → Maya 레이어 메뉴, 화살표로 순서 이동 (새 레이어가 맨 위). Maya 캡처 `research/maya/screens/le129/le02_dock.png` 와 나란히.
+- [ ] (step 129) Layer Editor: 행의 V / P / T 상자 클릭, 이름 더블클릭 이름 바꾸기, 상자 위 RMB → Maya 레이어 메뉴, 화살표로 순서 이동 (새 레이어가 맨 위). Maya Layer Editor 와 나란히.
 
 ### Step 131 — Hypershade
 
-- [ ] (step 131, #25) Windows > Rendering Editors > Hypershade (그리고 Status Line 아이콘, 핫박스 Windows 메뉴) → 새 창이 Maya 배치로 열리는지: 맨 위 Maya 메뉴 줄 (File … Help), 왼쪽 위 Browser, 오른쪽 위 Material Viewer, 왼쪽 아래 Create, 가운데 Graph (툴바 + "Untitled_1" 탭), 오른쪽 아래 Property Editor. `research/maya/screens/hypershade131/hypershade_graph_screen.png` 와 나란히 (`tmp/hyper131/hypershade_side_by_side.png`). 창을 크게 늘렸을 때 비율이 맞는지 (Blender 영역 경계는 창 크기에 비례).
+- [ ] (step 131, #25) Windows > Rendering Editors > Hypershade (그리고 Status Line 아이콘, 핫박스 Windows 메뉴) → 새 창이 Maya 배치로 열리는지: 맨 위 Maya 메뉴 줄 (File … Help), 왼쪽 위 Browser, 오른쪽 위 Material Viewer, 왼쪽 아래 Create, 가운데 Graph (툴바 + "Untitled_1" 탭), 오른쪽 아래 Property Editor. Maya Hypershade 와 나란히. 창을 크게 늘렸을 때 비율이 맞는지 (Blender 영역 경계는 창 크기에 비례).
 - [ ] (step 131) 창이 만들어지는 동안 (한 틱에 한 번 나누기, 약 0.2 s) 깜빡임이 거슬리지 않는지; 125 % / 100 % UI 배율에서 메뉴 줄이 헤더 한 줄 높이로 보이고 (본문이 비치지 않음) 메뉴가 열리는지.
 - [ ] (step 131) Browser 스와치 클릭 → Graph · Material Viewer · Property Editor 가 같은 재질로 바뀌는지; 검색 칸에 글자 입력 시 바로 걸러지는지; Bake Sets / Projects / Asset Nodes 탭, Show, 일시정지 버튼은 회색 + 툴팁 안내.
 - [ ] (step 131) Create: Favorites / Maya / 카테고리 클릭으로 목록이 바뀌는지, 검색 칸으로 전체에서 찾기, Blinn 클릭 = 할당 안 된 새 재질, Checker 클릭 = 현재 재질 그래프에 노드, Point Light = 씬에 라이트; 회색 항목 툴팁.
@@ -861,7 +861,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 135 — Channel Box / Layer Editor
 
-- [ ] (step 135 CB, #55) Maya 레이아웃 새 장면, 100 % / 125 % / 150 %: Create > Polygon Primitives > Cube → Channel Box INPUTS 에 `polyCube1` 한 줄만 (접힘), 오른쪽 독 아래 절반에 Layer Editor (Display / Anim 탭, Layers / Options / Help, 빈 목록) 가 보이는지 (Maya `research/maya/screens/11_channel_box.png`).
+- [ ] (step 135 CB, #55) Maya 레이아웃 새 장면, 100 % / 125 % / 150 %: Create > Polygon Primitives > Cube → Channel Box INPUTS 에 `polyCube1` 한 줄만 (접힘), 오른쪽 독 아래 절반에 Layer Editor (Display / Anim 탭, Layers / Options / Help, 빈 목록) 가 보이는지 (Maya Channel Box 와 같은지).
 - [ ] (step 135) `polyCube1` 을 클릭 → Width … 행이 그 아래 펼쳐지고, Layer Editor 는 같은 자리에 그대로; 다시 클릭 → 접힘. 펼침은 Ctrl+Z 단계를 남기지 않는지 (Ctrl+Z 가 큐브 생성을 되돌림).
 - [ ] (step 135) 펼친 채 두 번째 큐브를 만들거나 다른 오브젝트를 고른 뒤 첫 큐브로 돌아오면 다시 접혀 있는지 (Maya `cb135/d04_first_again.png`). 압출 (polyExtrudeFace1), modifier, 제약 노드도 접힌 채 시작하는지.
 - [ ] (step 135) INPUTS 를 여러 개 펼쳐 Channel Box 가 길어지면: 마지막 줄에 ▲ ▼ 단추, Channel Box 위에서 마우스 휠로 행이 스크롤되고 Layer Editor 위의 휠은 Layer Editor 목록에만 작동하는지. Properties 의 modifier 패널 접힘 (show_expanded) 이 Channel Box 클릭으로 바뀌지 않는지.
@@ -995,7 +995,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 
 ## Step 151 — Extrude manipulator (lane B)
 
-- [ ] Cube, top face, Ctrl+E from Maya's persp angle: blue arrow up (normal), red arrow along world X, green along the face's Y, a cube past each cone, three translucent plane squares between the axes, a light-blue centre square; compare with research/maya/workflows/shots/modeling_03.png (Maya also draws a cyan rotate ring and a world / local toggle icon: not in the kit).
+- [ ] Cube, top face, Ctrl+E from Maya's persp angle: blue arrow up (normal), red arrow along world X, green along the face's Y, a cube past each cone, three translucent plane squares between the axes, a light-blue centre square; compare with Maya's extrude manipulator (Maya also draws a cyan rotate ring and a world / local toggle icon: not in the kit).
 - [ ] Hover each handle ~1 s: it turns yellow, no Blender tooltip appears. Pre-selection doesn't highlight the face under a handle.
 - [ ] Drag the red arrow → the top slides along X; drag a plane square → it slides in that plane; Ctrl+Z once takes each drag back.
 - [ ] Drag the red / green cube outward → the top grows along that axis; drag the blue cube → nothing visible on a flat top (Maya too); drag the centre square right / left → the top grows / shrinks evenly.
@@ -1350,7 +1350,7 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Skin a cylinder to two joints, select some vertices, Windows > General Editors > Component Editor: Maya shows an editable skinCluster weight table (type 0.5 in a cell). Today it opens Blender's Spreadsheet (read-only, no skin weights tab); Shape Editor opens the Properties Data tab, Connection Editor / Expression Editor the Drivers editor (NB12).
 - [ ] Windows > Relationship Editors > Light Linking: Maya opens the Light Linking editor like Lighting/Shading > Light Linking Editor does. Today it opens the Properties Object tab instead of the kit's step 179 editor (NB13).
 - [ ] After two Create References with namespaces `prop` / `prop1`, Windows > General Editors > Namespace Editor: Maya lists `:`, `prop`, `prop1` and can rename / merge them. Today the item is greyed (NB14).
-- [ ] pCube1 selected, Ctrl+C then Ctrl+V: Maya pastes `pasted__pCube1`. Today the copy is `pCube1.001` with a `.001` shape (NB15). Also: Create > Sets > Set three times, delete set2, make another set → `set4` if Maya's one-past-the-highest rule (research/maya/re/cmds_201.md §2, measured on transforms / joints / history nodes, not on sets) holds; the kit makes `set2` again. Same for display layers (`layer`N) and animation layers.
+- [ ] pCube1 selected, Ctrl+C then Ctrl+V: Maya pastes `pasted__pCube1`. Today the copy is `pCube1.001` with a `.001` shape (NB15). Also: Create > Sets > Set three times, delete set2, make another set → `set4` if Maya's one-past-the-highest rule (seen on transforms / joints / history nodes, not yet on sets) holds; the kit makes `set2` again. Same for display layers (`layer`N) and animation layers.
 - [ ] Blender 5.2 (and 5.0), Maya Workflow Kit layout: Reference Editor window, Graph Editor pin / kit list, Layer Editor two selected anim layers (dimmed curves), Deform > Tension / Jiggle, UV Editor HUDs, Script Editor `cmds.file(new=True, f=True)` work like on 4.5 — steps 202–209 ran no 5.x headless or GUI files (NB16).
 
 ### Step 211 — Audit 16 fix batch (#117)
@@ -1382,8 +1382,8 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 
 ## PR #125 follow-up (0.5.0) — joints, Channel Box, Paint Skin Weights
 
-- [ ] F8 on a selected skeleton: Edit mode (joint positions editable), F8 again: Pose mode with joints selectable. Maya
-  2022 measured (PR125_MAYA_CHECK.md 6): F8 with a joint selected goes to component mode, the selection empties and no
+- [ ] F8 on a selected skeleton: Edit mode (joint positions editable), F8 again: Pose mode with joints selectable. In
+  Maya 2022, F8 with a joint selected goes to component mode, the selection empties and no
   joint component mask (joint pivot / local rotation axis / rotate pivot / scale pivot) is on — Maya's F8 does nothing
   useful on joints. The kit's Edit mode = "the joint's components" is a Blender stand-in (`delegated`); the in-view
   message still says object / component selection.

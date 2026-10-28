@@ -3,7 +3,7 @@
 (docs/steps/step_116.md 「계획」).
 
 Maya builds every UI element as a dockable ``workspaceControl``; the right column is one tab stack of Channel Box /
-Layer Editor, Attribute Editor and Modeling Toolkit (research/maya/ui_layout.md:39-63, 117-129), and a panel's
+Layer Editor, Attribute Editor and Modeling Toolkit, and a panel's
 dotted handle tears it off into a floating window. Here:
 
 - **Dock areas.** A Maya panel lives in its own Properties editor on the Tool tab, header and tab column hidden (the
@@ -35,9 +35,9 @@ LABELS = {'CHANNEL_BOX': "Channel Box / Layer Editor", 'ATTRIBUTE_EDITOR': "Attr
 ROLE_FLAGS = {'STACK': "show_properties_world", 'CHANNEL_BOX': "show_properties_physics",
               'ATTRIBUTE_EDITOR': "show_properties_effects", 'MODELING_TOOLKIT': "show_properties_particles",
               'MENU': "show_properties_texture"}
-WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya 2022 defaults, ui_layout.md:72-73)
+WIDTH = 260                  # unscaled px: Maya's narrow panels (Maya 2022 defaults)
 HANDLE = ":" * 8            # Maya's dotted grip on a workspaceControl (plain ASCII: every UI font has it)
-TEAR_LINE = "- " * 18        # Maya's tear-off line at the top of a menu (``-to true``, ui_layout.md:184)
+TEAR_LINE = "- " * 18        # Maya's tear-off line at the top of a menu (``-to true``)
 
 _torn_menus = {}             # window pointer -> (menu idname, label)
 _pending = {}                # area pointer -> role it waits for (a new Properties space has no tab list yet)
@@ -665,7 +665,7 @@ _drawing_torn = [False]
 
 def draw_handle(layout, context=None, tabs=False):
     """The top row of a Maya panel: Maya's dotted grip (click = tear off / dock) and, in the tab stack, the tabs
-    (Maya's title / tab row above the editor's menu bar, research/maya/screens/10_attribute_editor.png)."""
+    (Maya's title / tab row above the editor's menu bar)."""
     row = layout.row(align=True)
     grip = row.row(align=True)
     grip.alignment = 'LEFT'
@@ -700,7 +700,7 @@ def text_units(context, text, pad):
 
 # --- vertical tab strip (step 142, #78) ----------------------------------------------------------------------------
 # Maya's stack tabs are a vertical strip on the stack's right edge, so the stack is only as wide as its panel
-# (research/maya/screens/01_layout_empty.png: strip x 1584-1599 = 16 px; tabs from the content top, y 133:
+# (Maya's factory screen: strip x 1584-1599 = 16 px; tabs from the content top, y 133:
 # "Channel Box / Layer Editor" 133-294, "Attribute Editor" 297-404, "Modeling Toolkit" 407-520 = the text + about
 # 11 px at each end, 2 px apart; raised tab = the panel colour #444444, lowered tabs #373737, strip #2b2b2b, text
 # #eeeeee / #929292, reading top to bottom). Blender can't lay a button out rotated, so the strip is drawn here
@@ -841,7 +841,7 @@ def _strip_colours(context):
     return tuple(min(1.0, c + lift) for c in back), text
 
 
-# Maya's dock grey (research/maya/colors.json cb_bg #444444; Blender's factory Properties grey is #303030). The kit
+# Maya's dock grey (#444444; Blender's factory Properties grey is #303030). The kit
 # ships no theme (step 130), so the dock areas are lifted by the difference after drawing: an additive grey over the
 # region raises the background to Maya's and the value fields with it (#1d1d1d -> #313131, Maya #2b2b2b); text stays
 # near white (step 195). Only a theme darker than Maya's is lifted, never a light one.

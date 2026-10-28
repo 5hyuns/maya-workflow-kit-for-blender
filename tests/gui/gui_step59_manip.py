@@ -1,4 +1,4 @@
-"""Step 59 in a real UI, in Maya's order (research/maya/workflows/pivot_snap.md):
+"""Step 59 in a real UI, in Maya's order:
 
 Maya Workflow Kit layout, a cube, Move tool: the Maya-shaped manipulator (size, X handle drag, active
 handle), X hold + X arrow drag from 0.3 cm lands on whole cm (S2), D hold + drag moves only

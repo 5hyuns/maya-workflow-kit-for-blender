@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya P / Shift+P: parent to the last selected, unparent to the world.
 
-research/maya/concepts.md:98-101 and defaults.json ``parentPreserve 1`` /
+Maya ``parentPreserve 1`` /
 ``unparentPreserve 1``: the world transform is kept and the child's local
 values are recomputed relative to the new parent. docs/user_decisions.md #2:
 that is the default ("Maya" Parent Mode, parent inverse = identity); the
@@ -49,8 +49,7 @@ def set_parent_maya(child, parent):
 
 def set_parent_relative(child, parent):
     """Maya Parent / Unparent with Preserve position off (``cmds.parent(relative=True)``): the child keeps its local
-    values, so it moves with the new parent (mayapy: t 1 2 3 under a parent at 10 0 0 stays t 1 2 3,
-    research/maya/re/option_boxes_140_edit.md §6)."""
+    values, so it moves with the new parent (t 1 2 3 under a parent at 10 0 0 stays t 1 2 3)."""
     basis = child.matrix_basis.copy()
     child.parent = parent
     child.matrix_parent_inverse = Matrix.Identity(4)

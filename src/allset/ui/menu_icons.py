@@ -2,7 +2,7 @@
 """Kit-drawn icons on Maya menu items (step 131 lane MENU, issue #23; docs/steps/step_131_menu.md).
 
 Maya 2022 draws the shelf picture of a command beside its menu item (Create > Polygon Primitives, Mesh, Edit Mesh,
-Deform ...: look-only capture ``tmp/maya_icons131/menu_icons.json``). ``menu_icon_data.ICONS`` (tools/gen_menu_icons.py)
+Deform ...). ``menu_icon_data.ICONS`` (tools/gen_menu_icons.py)
 links such an item to the kit's own drawing of the same command: a shelf button (``shelf_icons``), a Status Line
 glyph (``status_icons``), a Tool Box glyph (``kit_icons``) or, for items on no shelf, a menu-only drawing
 (``menu_drawings``, step 142, #54). Items Maya shows without an icon, and items the kit has no drawing for, get none

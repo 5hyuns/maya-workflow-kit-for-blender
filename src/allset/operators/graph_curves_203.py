@@ -1,30 +1,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Graph Editor / Dope Sheet curve commands of step 203 (Issue #110, research/maya/re/graph_editor_201.md §6-§8,
-ground truth tests/maya203_graph_data.py).
+"""Graph Editor / Dope Sheet curve commands of step 203 (Issue #110).
 
 - Curves > Change Rotation Interp (Maya ``cmds.rotationInterpolation(convert=...)`` on the curves of
   the selected keys + the highlighted channels): one rotate curve converts the node's three. Every mode but
   Independent Euler synchronises keys first: rx / ry / rz get a key at the union of their key times, inserted keys
-  keep the curve shape (Maya: fixed tangents keeping the slope) — evaluated curves unchanged (§7, exact).
+  keep the curve shape (Maya: fixed tangents keeping the slope) — evaluated curves unchanged (exact).
   Synchronized Euler keeps that: an owner marked ``PROP`` = "EULER" has key moves / inserts / deletes on one rotate
   channel copied onto the other two by a depsgraph handler -> timer (after the transform ends); a key set on one
-  channel adds keys on the others at their curve value with the previous key's out tangent (mayapy), and the touched
+  channel adds keys on the others at their curve value with the previous key's out tangent, and the touched
   keys get Maya's non-weighted fixed tangents (slope kept, handle a third of the interval) — move / set / cut match
   Maya's samples within 1e-3 deg. Quaternion modes: Blender's
   rotation mode QUATERNION with W/X/Y/Z curves keyed at the synchronised times; each segment is a Bezier
-  least-squares fit of Maya's interpolation (Slerp; Cubic / Tangent Dependent = squad, the measured samples of both
+  least-squares fit of Maya's interpolation (Slerp; Cubic / Tangent Dependent = squad, Maya's samples of both
   are identical), Blender normalises the quaternion. The Euler curves are kept in ``SNAP`` so Independent /
-  Synchronized Euler gives them back exactly (Maya keeps the Euler curves, §7 "back to none") while the quaternion
+  Synchronized Euler gives them back exactly (Maya keeps the Euler curves) while the quaternion
   keys are the kit's; edited quaternion keys are turned back into Euler keys. (delegated: storage and sync design)
-- Curves > Key Sync Filter (``cmds.filterCurve(filter="keySync", selectedKeys=True)``, §8): range = first .. last
+- Curves > Key Sync Filter (``cmds.filterCurve(filter="keySync", selectedKeys=True)``): range = first .. last
   selected key over the curves shown; every shown curve gets a key at each key time any of them has in that range (value
   = its curve there, constant beyond its ends); inserted keys and their neighbours get Auto tangents (Maya: auto).
-- Curves > Peak Removal Filter (``cmds.filterCurve(filter="peakRemover", selectedKeys=True)``, §8): a key between the
+- Curves > Peak Removal Filter (``cmds.filterCurve(filter="peakRemover", selectedKeys=True)``): a key between the
   first and last selected key of its curve with two keys on each side, evenly spaced, that is a strict local extremum
   whose distance to its neighbours' mean exceeds both outer neighbour steps (|v - (a + b)/2| > max(|a - a'|, |b - b'|))
   becomes the mean of its two neighbours (values of the curve before the filter). Exact on every clean case of the
-  data; Maya's noisy-curve smoothing (§8 [U]) isn't reproduced (residual in docs/steps/step_203.md).
-- Edit > Select Curve Nodes (§6): Maya selects the anim curve nodes of the curves with selected keys. Blender's curves
+  data; Maya's noisy-curve smoothing ([U]) isn't reproduced (residual in docs/steps/step_203.md).
+- Edit > Select Curve Nodes: Maya selects the anim curve nodes of the curves with selected keys. Blender's curves
   aren't scene nodes: the kit selects those curves' channels and deselects the others (scene selection kept, so the
   editor still shows them); no selected keys = no channel selected. (delegated)
 """
@@ -114,7 +113,7 @@ def continuous(quats):
 
 def squad_controls(quats):
     """Shoemake's inner quadrangle points; an end key counts itself as its missing neighbour (fits Maya 2022's
-    quaternionSquad samples within 0.1 deg, tests/maya203_graph_data.py; mirrored ends miss by 2.6 deg)."""
+    quaternionSquad samples within 0.1 deg, mirrored ends miss by 2.6 deg)."""
     out = []
     n = len(quats)
     for i, q in enumerate(quats):
@@ -541,7 +540,7 @@ def third_handles(fc, times):
 
 def _previous_slope(fc, t):
     """Maya's key set on a synchronised channel (euler_setkey_rx_12): the value of the curve there and the out
-    tangent of the key before it (both measured: ry / rz key 12 = key 10's angle)."""
+    tangent of the key before it (Maya: ry / rz key 12 = key 10's angle)."""
     pts = sorted(fc.keyframe_points, key=lambda kp: kp.co.x)
     k = next((i for i, kp in enumerate(pts) if abs(kp.co.x - t) < EPS), None)
     if not k:

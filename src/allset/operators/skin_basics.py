@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Skin basics with Maya's meaning (step 247, Issue #164): Prune Small Weights, Set Max Influences, Go to Bind Pose,
-Maintain max influences. Behaviour spec: research/maya/re/skin_basics_247.md (mayapy 2026); fixture numbers
-tests/maya2026_rig_data.py SKINNING["skin"].
+Maintain max influences. Fixture numbers:
+tests/test_step247_skin_basics.py.
 
 A Maya skinCluster influence = a vertex group named like a joint of the mesh's skeleton; a locked influence (Maya
 ``.liw``) = the vertex group's ``lock_weight``.
@@ -83,7 +83,7 @@ class _ObjectData:
 
 def prune_matrix(w, locked, below=PRUNE_BELOW):
     """Maya prune on (V, K) weights: unlocked weights < ``below`` -> 0, the unlocked rest rescaled to 1 - locked sum
-    (skin_basics_247.md: [0.6, 0.005, 0.3, 0.095] -> [0.603015, 0, 0.301508, 0.095477]; a locked small weight stays).
+    ([0.6, 0.005, 0.3, 0.095] -> [0.603015, 0, 0.301508, 0.095477]; a locked small weight stays).
     Returns (new weights, changed row mask)."""
     w = np.array(w, dtype=np.float64)
     locked = np.asarray(locked, dtype=bool)
@@ -125,7 +125,7 @@ def _world_points(mesh):
 
 def set_max_influences(mesh, n):
     """Maya Set Max Influences: skinCluster.maxInfluences = n and the closest-distance weights recomputed by the Add
-    Influence rule without a new influence (skin_basics_247.md). Returns the number of vertices written."""
+    Influence rule without a new influence. Returns the number of vertices written."""
     arm = skin.armature_modifier(mesh).object
     groups = _influence_groups(mesh)
     mesh[MAX_INFLUENCES_PROP] = int(n)
@@ -147,7 +147,7 @@ def set_max_influences(mesh, n):
 
 
 def enforce_max_matrix(w, locked, n):
-    """Maya maintainMaxInfluences (measured with mayapy): while a vertex has more than ``n`` weighted
+    """Maya maintainMaxInfluences: while a vertex has more than ``n`` weighted
     influences, the smallest goes to 0 — unlocked ones first, locked ones last; the freed weight is redistributed to the
     remaining unlocked ones (normalisation)."""
     w = np.array(w, dtype=np.float64)

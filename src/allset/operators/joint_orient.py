@@ -2,8 +2,7 @@
 """Maya 2026 Skeleton > Orient Joint (step 244, Issue #161): ``cmds.joint(edit=True, oj=..., sao=..., aos=...)`` frames
 from joint positions.
 
-Rules (Maya 2026 behaviour measured with mayapy, error 0 — research/maya/re/joint_rig_2026_principles2.md §1,
-joint_rig_2026_joint_tool.md §3, joint_rig_2026_skeleton_menu.md §1):
+Rules (Maya 2026 behaviour, error 0):
 - ``oj`` "none" (Orient to World): every frame = the world axes.
 - with ``sao``: aim a = toward the first child (a zero-length child: the joint is left as it is); the
   reference w = the world-up axis, or with ``aos`` the bend normal n = (P − P_parent) × (P_child − P) (top joint:
@@ -29,7 +28,7 @@ EVEN = frozenset({"xyz", "yzx", "zxy"})
 ORDERS = ("xyz", "yzx", "zxy", "xzy", "yxz", "zyx")
 SAO = {"xup": (0, 1.0), "xdown": (0, -1.0), "yup": (1, 1.0), "ydown": (1, -1.0), "zup": (2, 1.0), "zdown": (2, -1.0)}
 EPS = 1e-9
-# Maya flips n only when n . up < 0 (strict, measured); its view-plane clicks are exact, so a chain drawn
+# Maya flips n only when n . up < 0 (strict); its view-plane clicks are exact, so a chain drawn
 # in the front / side view has n . up = 0 and keeps n. The kit's clicks carry float32 noise, so it treats |n . up|
 # below this as that 0 (kit input tolerance, step 252)
 TIE = 1e-6
@@ -136,7 +135,7 @@ def orient_frames(names, pos, parent_of, first_child, frames, world, oj="xyz", s
             else:
                 d = P[child] - P[name]
                 if np.linalg.norm(d) < EPS:
-                    # Maya: the orient fails for this joint (oj_verify.json "zero_len_child"): with a secondary axis
+                    # Maya: the orient fails for this joint: with a secondary axis
                     # it ends with jointOrient 0 = the parent's (new) frame; the traditional orient leaves its frame
                     if sao is None:
                         continue
@@ -170,6 +169,6 @@ def joint_orient(parent_frame, frame):
 
 
 def radius(length):
-    """Maya Joint Tool variable bone radius (jointCtx factory: length 1 -> 0.5, length 30 -> 2; GUI-measured L 5 ->
-    0.7073, L 3.6 -> 0.6356, joint_rig_2026_joint_tool.md §4) for a bone ``length`` in Maya units."""
+    """Maya Joint Tool variable bone radius (jointCtx factory: length 1 -> 0.5, length 30 -> 2; L 5 ->
+    0.7073, L 3.6 -> 0.6356) for a bone ``length`` in Maya units."""
     return min(2.0, max(0.5, 0.5 + (length - 1.0) / 29.0 * 1.5))

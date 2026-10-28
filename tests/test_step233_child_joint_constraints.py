@@ -1,6 +1,6 @@
 """Step 233 (Issue #142): constraints on a CHILD joint move it like Maya.
 
-Maya 2026 truth (mayapy, C:/Repos/bmk-strategy/audit230/maya/cons233.py -> cons233.json): joints (0, 10, 0) ->
+Maya 2026: joints (0, 10, 0) ->
 (6, 10, 0) -> (12, 10, 0) (cmds.joint), transforms ctrlA t (12, 10, 0) r (0, 0, 30) and ctrlB t (12, 14, 0)
 r (10, -20, 0); ctrlA, ctrlB, then joint3 selected -> Constrain > Point / Parent / Orient / Aim; W1 = 3; then
 ctrlB moved to (14, 15, 1). Audit 0.5.0 ①-7: the kit's Point constraint left joint3 at (12, 10, 0) (Blender ignores
@@ -21,7 +21,7 @@ units = import_module(kit.MODULE + ".operators.units")
 cb = import_module(kit.MODULE + ".ui.channel_box")
 
 C3 = Matrix(((1, 0, 0), (0, 0, -1), (0, 1, 0)))      # Maya axes -> Blender axes
-MAYA = {   # cons233.json joint3 world translation (cm)
+MAYA = {   # Maya joint3 world translation (cm)
     "point": {"w11": (12.0, 12.0, 0.0), "w13": (12.0, 13.0, 0.0), "moved": (13.5, 13.75, 0.75)},
     "parent_nomo": {"w11": (12.0, 12.0, 0.0), "w13": (12.0, 13.0, 0.0), "moved": (13.5, 13.75, 0.75)},
     "parent_mo": {"w11": (12.0, 10.0, 0.0), "w13": (12.0, 10.0, 0.0), "moved": (13.5, 10.75, 0.75)},

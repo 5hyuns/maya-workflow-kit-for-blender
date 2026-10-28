@@ -4,11 +4,10 @@ switch.enter_layout and "New Scene in Maya Layout", never copied out of the exte
     python tools/make_startup.py          # re-runs itself in `blender --factory-startup` (a window opens briefly)
 
 Writes src/allset/app_template/Maya_Workflow_Kit/startup.blend. Layout and reasons: docs/steps/step_5.md,
-docs/steps/step_49.md 「계획」 (research/maya/ui_layout.md §2 General layout, widget sizes from
-research/maya/screens/_maya_ui_dump.json). It runs in a GUI Blender because the factory right column
+docs/steps/step_49.md 「계획」 (Maya's General layout and widget sizes). It runs in a GUI Blender because the factory right column
 (Outliner + Properties) can only be removed there: in `-b` screen.area_close hangs and area_join crashes
 or adds empty areas (measured, step 49). The window is 1600x900 at the Maya density (effective UI scale
-1.0, like the look_compare shots), so area sizes are Maya pixels; the sidebar width is set by dragging
+1.0), so area sizes are Maya pixels; the sidebar width is set by dragging
 its edge with simulated events (no API). User dirs point into tmp/build_env (tools/build.sandbox_env).
 """
 
@@ -19,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src" / "allset" / "app_template" / "Maya_Workflow_Kit" / "startup.blend"
 
-# Maya widget sizes at effective scale 1.0 (research/maya/screens/_maya_ui_dump.json, ui_layout.md:122-127):
+# Maya widget sizes at effective scale 1.0:
 # Outliner 260, Channel Box / Layer Editor dock 260 (+ tab strip), Time Slider 36 (the timeline WINDOW region); the
 # Range Slider is the timeline header, flipped under it.
 OUTLINER_PX = 260
@@ -46,7 +45,7 @@ TIME_SLIDER_PX = 36
 SHELF_PX = 64
 WINDOW_SIZE = (1600, 900)
 EDGE = 3                  # px the area edges take from a split (measured)
-# Maya persp = focal length 35 on a 36 mm film back (research/maya/concepts.md:163, tools/look_data.py:25), horizontal
+# Maya persp = focal length 35 on a 36 mm film back, horizontal
 # 54.4 deg. Blender measures the viewport lens on a 72 mm sensor (tan(fov/2) = 36 / lens, docs/steps/step_41.md:11-12),
 # so the same angle is lens 70; lens 35 was a 91.6 deg view (docs/steps/step_81.md).
 MAYA_LENS = 70.0
@@ -59,12 +58,12 @@ SHELF_MARKER = ".AllsetShelf"  # = ui/shelf.py SHELF_MARKER (Shelf row)
 MAYA_UNIT = 0.01
 # Maya factory viewport #5c5c5c as a scene-linear View3DShading.background_color (sRGB 92/255 -> linear; #45)
 MAYA_BG_LINEAR = round(((92 / 255 + 0.055) / 1.055) ** 2.4, 5)
-MAYA_CLIP = (0.1, 10000.0)        # cm, research/maya/defaults.json:45-46 (= operators/units.py CLIP)
+MAYA_CLIP = (0.1, 10000.0)        # cm, Maya default (= operators/units.py CLIP)
 MAYA_PERSP_EYE = (28.0, -28.0, 21.0)  # cm, Maya persp (28, 21, 28) Y-up [K] (= units.PERSP_EYE)
 
 # Maya 2022 factory workspaces the template carries (step 160, #81): Windows > Workspaces / the Status Line dropdown
 # (= src/allset/ui/workspaces.py MAYA_WORKSPACES). Layouts follow Maya's factory
-# workspaces (research/maya/workspaces.json, research/maya/ui_layout.md:140-152); "General" is shown as "Maya Classic".
+# workspaces; "General" is shown as "Maya Classic".
 # name -> (menu set linkedMenu, raised tab of the right tab stack, recipe)
 MAYA_WORKSPACES = {
     "General": ("", 'CHANNEL_BOX', ()),
@@ -474,7 +473,7 @@ def maya_views():
                 space.clip_start, space.clip_end = (c * MAYA_UNIT for c in MAYA_CLIP)
                 space.lens = MAYA_LENS        # every view (and Four View's persp quadrant) = Maya's persp angle
                 # Finest perspective grid step = 1 cm (= units.grid_scale; docs/steps/step_25.md):
-                # Maya grid lines every 1 cm (research/maya/defaults.json:29-31).
+                # Maya grid lines every 1 cm (Maya default).
                 space.overlay.grid_scale = MAYA_UNIT
                 # Maya's grid axes are grey (displayColor gridAxis = grid); Blender colours them with
                 # the user's theme axis colours (the kit ships no theme since step 130).
@@ -490,7 +489,7 @@ def maya_views():
                 # Maya highlights a selection with its wireframe (ui/selection_wire.py), no outline (step 47).
                 space.overlay.show_outline_selected = False
                 # Maya draws no line from a child to its parent (factory Maya 2022 shots:
-                # research/maya/screens/parent/parent_0*.png, step 91); Blender's dashed relationship lines go.
+                # step 91); Blender's dashed relationship lines go.
                 space.overlay.show_relationship_lines = False
                 # Maya has no 3D cursor (01_layout_empty.png): hidden; the component pivot edit (D / Insert,
                 # operators/hold.ComponentPivotEdit) shows it while the cursor is the pivot (step 134, #59).
@@ -499,7 +498,7 @@ def maya_views():
                 # (step 258, #155 QA 240 H1-9). Kit option boxes of the "redo" kind open F9's popup
                 # (marking/modal._call screen.redo_last), which doesn't need the HUD region.
                 space.show_region_hud = False
-                # Maya's factory viewport is flat #5c5c5c (research/maya/re/background_120.md:33). Without the kit
+                # Maya's factory viewport is flat #5c5c5c. Without the kit
                 # theme (step 130) that is view data: the view's own background colour, scene linear (#45).
                 space.shading.background_type = 'VIEWPORT'
                 space.shading.background_color = (MAYA_BG_LINEAR,) * 3
@@ -521,12 +520,12 @@ def setup_scene():
     scene.use_preview_range = True
     scene.frame_preview_start, scene.frame_preview_end = 1, MAYA_FRAME_END
     scene.render.fps, scene.render.fps_base = 24, 1.0
-    # Maya Render Settings image size: defaultResolution 960 x 540, pixel aspect 1 (mayapy,
-    # research/maya/re/render_defaults_137.md; step 137, #71). Blender's scale stays 100 %.
+    # Maya Render Settings image size: defaultResolution 960 x 540, pixel aspect 1 (Maya default;
+    # step 137, #71). Blender's scale stays 100 %.
     scene.render.resolution_x, scene.render.resolution_y = MAYA_RESOLUTION
     scene.render.resolution_percentage = 100
     scene.render.pixel_aspect_x = scene.render.pixel_aspect_y = 1.0
-    # Maya tool defaults (research/maya/workflows/pivot_snap.md, docs/steps/step_59.md 「계획」 3):
+    # Maya tool defaults (docs/steps/step_59.md 「계획」 3):
     # axis mode per tool (Move World, Rotate/Scale Object, P12), the manipulator at the lead
     # object's pivot (P11; edit mode switches to the bbox centre, operators/pivot.py), rotate
     # step 15 degrees (S3).

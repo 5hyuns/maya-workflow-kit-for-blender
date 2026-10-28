@@ -21,7 +21,7 @@ md = import_module(kit.MODULE + ".ui.menu_drawings")
 ms = import_module(kit.MODULE + ".ui.menu_sets")
 
 # Maya 2022 menu items that show an icon in Maya and had none in the kit after step 131 (step 131 lane MENU "Left"),
-# in the menus #54 asks for first. Labels only (the Maya icon capture stays in tmp/, decision 6).
+# in the menus #54 asks for first. Labels only (no Maya icons in the repository, decision 6).
 PRIORITY = """
 Deform/Display Intermediate Objects|Deform/Edit Membership Tool|Deform/Hide Intermediate Objects|Deform/Jiggle/Jiggle Deformer
 Deform/Jiggle/Jiggle Disk Cache|Deform/Jiggle/Jiggle Disk Cache Attributes|Deform/Mirror Deformer Weights|Deform/Nonlinear/Bend
@@ -70,8 +70,8 @@ Mesh/Triangulate
 """
 PRIORITY_PATHS = [p for line in PRIORITY.strip().splitlines() for p in line.split("|")]
 
-STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: Maya 2026 renamed / dumped items, step 219)
-MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (2022 capture + step 219 renames) (tools/gen_menu_icons.py)
+STEP131_ICONS = 193         # menu items with an icon after step 131 (+3: items Maya 2026 renamed, step 219)
+MAYA_ICON_ITEMS = 688       # kit menu items Maya shows with an icon (Maya 2022 + step 219 renames)
 MIN_ICONS = 675             # this step: 675 of 679 (the 4 left have no exported Maya picture to follow)
 
 # Same uniqueness rule as tests/test_step131_icons.py (shelf / Status Line): enough pixels differ clearly.

@@ -1,7 +1,7 @@
 """Step 140 lane EDIT: Maya option windows for the key commands, Parent / Unparent / Ungroup, Duplicate Special,
 Connect, Circularize, Make Hole and Insert Edge Loop (issues #33, #35). Fields / labels / factory defaults:
-research/maya/re/option_boxes_140.md (Maya 2022 GUI capture); results: mayapy, research/maya/re/option_boxes_140_edit.md
-(raw numbers research/scripts/maya_options140_edit/measure.json from measure.py there). Plan: docs/steps/step_140.md,
+Maya 2022; results: Maya 2022.
+Plan: docs/steps/step_140.md,
 docs/steps/step_140_edit.md."""
 
 import math
@@ -167,7 +167,7 @@ def test_key_menu_items_run_with_maya_factory_options():
 
 # --- key commands -----------------------------------------------------------------------------------
 
-BASE = [(0, 0), (5, 10), (10, 0), (15, 10), (20, 0)]           # measure.py BASE (frame, Maya value)
+BASE = [(0, 0), (5, 10), (10, 0), (15, 10), (20, 0)]           # BASE (frame, Maya value)
 TARGET = [(0, 1), (3, 2), (6, 3), (9, 4), (12, 5), (20, 6)]
 
 
@@ -203,7 +203,7 @@ def test_delete_keys_ranges_hierarchy_methods():
     a = _keyed("a", BASE)
     _select(a)
     _run("delete_keys", time_range="Start/End", start=4, end=12)
-    _close(_keys(a), [[0, 0], [15, 10], [20, 0]])                       # mayapy clear_keys
+    _close(_keys(a), [[0, 0], [15, 10], [20, 0]])                       # Maya clear_keys
     _run("delete_keys")                                                  # Time range All (factory)
     assert _keys(a) is None, "every key goes, the curve too"
 
@@ -354,7 +354,7 @@ def test_parent_unparent_preserve_off():
     bpy.context.view_layer.update()
     assert child.parent is par and (child.location - Vector((1, 2, 3))).length < 1e-6, "local values kept"
     want = par.matrix_world @ Vector((1, 2, 3))
-    assert (child.matrix_world.translation - want).length < 1e-5, "it moves with the parent (mayapy parent -r)"
+    assert (child.matrix_world.translation - want).length < 1e-5, "it moves with the parent (Maya parent -r)"
     _select(child)
     _run("unparent", preserve=False)
     bpy.context.view_layer.update()
@@ -378,7 +378,7 @@ def test_ungroup_options():
     _select(grp)
     _run("ungroup", preserve=False)
     bpy.context.view_layer.update()
-    assert child.parent is par and (child.location - Vector((1, 2, 8))).length < 1e-6, child.location   # mayapy 1 7 3
+    assert child.parent is par and (child.location - Vector((1, 2, 8))).length < 1e-6, child.location   # Maya 1 7 3
     grp = _empty("grp2", (0, 0, 5))
     grp.parent = par
     child.parent = grp
@@ -418,7 +418,7 @@ def test_duplicate_special_smart_transform():
 
 def _grid():
     """Maya polyPlane sx 4 sy 4 w 4 h 4 in Blender axes (Maya (x, y, z) -> Blender (x, -z, y)), the 4 middle faces
-    selected (measure.py circ)."""
+    selected (Maya circularize case)."""
     _clear()
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=4, y_subdivisions=4, size=4)
     ob = bpy.context.active_object
@@ -474,7 +474,7 @@ def test_circularize_options():
 
 def _sphere_edges(ob):
     """The two latitude edges between longitudes 90 and 135 degrees on the equator and the ring below
-    (measure.py connect: Maya e[20], e[28] of an 8 x 8 sphere)."""
+    (Maya connect case: e[20], e[28] of an 8 x 8 sphere)."""
     bm = bmesh.from_edit_mesh(ob.data)
     out = []
     for e in bm.edges:
@@ -556,7 +556,7 @@ def test_connect_tool_segments_slide():
 
 
 def _hole_scene():
-    """measure.py hole: a 4 x 4 face and a 1 x 1 stamp centred at Maya (0.5, 0.5, 0.25) = Blender (0.5, -0.25, 0.5)."""
+    """Maya hole case: a 4 x 4 face and a 1 x 1 stamp centred at Maya (0.5, 0.5, 0.25) = Blender (0.5, -0.25, 0.5)."""
     _clear()
     me = bpy.data.meshes.new("m")
     bm = bmesh.new()

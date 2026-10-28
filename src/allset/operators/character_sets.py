@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Character Sets on Blender Keying Sets (docs/steps/step_187.md, research/maya/re/character_sets_183.md).
+"""Maya Character Sets on Blender Keying Sets (docs/steps/step_187.md).
 
 A Maya character set is a node that owns a list of attributes; one of them can be *current* (Time Slider field), and
 then Set Key (S) keys the current character's attributes whatever is selected. Blender's absolute Keying Set is that
@@ -13,7 +13,7 @@ concept: a named list of channel paths in the scene, one of them active (Blender
   ``WindowManager.allset_character_nodes`` (comma list), only while no object is selected (selecting an object in
   Maya deselects the character node).
 
-Rules (mayapy + GUI Maya, the spec's numbers): Create = every keyable channel of each selected node except Scale and
+Rules (the spec's numbers): Create = every keyable channel of each selected node except Scale and
 Visibility (1), names ``character1`` / ``subCharacter1`` counting up, the new set becomes current (1); S with a current
 character keys all its members (3); Add / Remove = the Channel Box's selected channels (5); Merge = into the last
 picked (6).
@@ -44,7 +44,7 @@ def _cb():
 # --- pure helpers (tests/test_step187_character_sets.py) --------------------------------------------
 
 def next_name(taken, base):
-    """Maya's naming: ``<base><N>`` one past the highest, gaps not filled (research/maya/re/naming_211.md N4)."""
+    """Maya's naming: ``<base><N>`` one past the highest, gaps not filled."""
     return f"{base}{next_number(base, set(taken))}"
 
 
@@ -168,7 +168,7 @@ def create_keys(node, excluded=EXCLUDED_KINDS):
 
 def unique_name(taken, name, base):
     """Maya node naming for the window's Name: the name itself while free, else its stem counting up from 1
-    (``hero`` -> ``hero1``, ``character1`` -> ``character2``; research/maya/re/options_196_misc.md)."""
+    (``hero`` -> ``hero1``, ``character1`` -> ``character2``)."""
     name = name.strip() or f"{base}1"
     if name not in taken:
         return name
@@ -276,7 +276,7 @@ class ALLSET_OT_character_create(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     sub: BoolProperty(name="Subcharacter", default=False, options={'SKIP_SAVE'})
-    # Create (Sub)character Set Options (step 196, research/maya/re/options_196_misc.md); defaults = Maya factory
+    # Create (Sub)character Set Options (step 196); defaults = Maya factory
     character_name: StringProperty(name="Name", default="", options={'SKIP_SAVE'},
                          description="Empty: character1 / subCharacter1, counting up")
     attributes: EnumProperty(name="Include", items=[('ALL', "All keyable", ""),

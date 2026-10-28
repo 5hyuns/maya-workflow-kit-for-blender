@@ -1,9 +1,9 @@
 """Step 144 lane DEFORM (#34): Maya Deform menu items create Maya-like deformers (operators/deformers.py) with
 Maya option windows (operators/option_windows_deform.py), Channel Box INPUTS rows and Paint Weights targets.
 
-Maya 2022 facts: research/maya/re/options_144.md (windows: "Deform option windows" table; created nodes, selection,
-Channel Box rows, paint targets: "Deformers created with factory options" table), research/maya/re/
-modeling_rigging_110.md §8 (Cluster / Soft Mod / Nonlinear handles). Plan: docs/steps/step_144_deform.md."""
+Maya 2022: the Deform option windows (fields, factory values) and the deformers created with factory options
+(nodes, selection, Channel Box rows, paint targets), plus the Cluster / Soft Mod / Nonlinear handles.
+Plan: docs/steps/step_144_deform.md."""
 
 import math
 from importlib import import_module

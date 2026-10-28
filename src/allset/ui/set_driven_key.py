@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Set Driven Key window drawn in the dock under the Channel Box (docs/steps/step_62.md 「계획」 1).
 
-Layout of Maya's window (research/maya/workflows/shots/rigging_06_win1.png): a "Driver" bar, node list |
+Layout of Maya's window: a "Driver" bar, node list |
 attribute list; a "Driven" bar, node list | attribute list; buttons Key · Load Driver · Load Driven · Close.
 Drawn by the Layer Editor panel while the window is open (its place in the dock), so the Channel Box stays
 above it for posing. The lists are fixed-height scrolling UILists like Maya's (all ten channels in plain
@@ -59,7 +59,7 @@ class ALLSET_UL_sdk_attrs(bpy.types.UIList):
 
 class ALLSET_UL_sdk_nodes(bpy.types.UIList):
     """Driven node rows (the node whose attributes the right list shows is pressed). Step 226: a loaded object's
-    blendShape and constraint nodes follow it (Maya: any keyable attribute can be driven, maya2026_controls.md §L5)."""
+    blendShape and constraint nodes follow it (Maya: any keyable attribute can be driven)."""
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0):
         node = sdk.item_node(item)

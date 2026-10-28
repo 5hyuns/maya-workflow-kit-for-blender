@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Tool Box: the 3D View toolbar shows Maya's tools in every mode (docs/steps/step_49.md).
 
-Maya's Tool Box (research/maya/ui_layout.md:224-233) is a 40 px column left of the
+Maya's Tool Box is a 40 px column left of the
 Outliner: Select, Lasso, Paint Select, Move, Rotate, Scale, the last non-sacred tool, then quick layout
 buttons and an Outliner toggle. Here:
 
@@ -223,7 +223,7 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
 # --- column width -----------------------------------------------------------------------------
 
 # Blender's toolbar is one 56 px column at scale 1 (UI_TOOLBAR_MARGIN + UI_TOOLBAR_COLUMN = 0.5 * 32 +
-# 1.25 * 32, interface UI_interface.hh); Maya's Tool Box is 40 px (ui_layout.md:224). Area sizes don't
+# 1.25 * 32, interface UI_interface.hh); Maya's Tool Box is 40 px. Area sizes don't
 # follow the UI scale: the template's column fits the toolbar at the Maya density (effective scale 1.0,
 # "Maya Density" preset). At a larger scale it is resized to one toolbar column with screen.area_move,
 # whose poll fails while the mouse is over any region (screen.active_region, measured): the column stayed
@@ -232,7 +232,7 @@ class ALLSET_OT_toolbox_guard(bpy.types.Operator):
 # puts the cursor back; until then the main view of that screen shows its own toolbar.
 TOOLBAR_PX = 56
 SHELF_PX = 64        # = tools/make_startup.py SHELF_PX
-OUTLINER_PX = 260    # Maya's narrow panel width (research/maya/ui_layout.md:262) = the template Outliner at scale 1
+OUTLINER_PX = 260    # Maya's narrow panel width = the template Outliner at scale 1
 TIME_SLIDER_PX = 36  # = tools/make_startup.py TIME_SLIDER_PX (the Time Slider ruler at scale 1)
 
 
@@ -250,8 +250,8 @@ def column_width(context=None):
 
 
 # Maya's right tab stack (ui/maya_dock.py STACK area, #60, docs/steps/step_135_width.md, step 142 #78): 280 px with the
-# Channel Box raised (research/maya/screens/01_layout_empty.png x 1320-1600 = a 260 px panel + the vertical tab strip;
-# = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px with the Attribute Editor raised (10_attribute_editor.png
+# Channel Box raised (Maya's factory screen: x 1320-1600 = a 260 px panel + the vertical tab strip;
+# = tools/make_startup.py's old DOCK_PX 260 + 17), 480 px with the Attribute Editor raised (Maya
 # x 1120-1600; Maya's AE is a wide panel). Since step 142 the kit's tabs are Maya's
 # vertical strip too (maya_dock.draw_strip), so the stack is as wide as the raised panel needs: the Channel Box / Modeling
 # Toolkit stack at least Maya's 277 px x the scale (wider when the Channel Box labels need it), the Attribute Editor

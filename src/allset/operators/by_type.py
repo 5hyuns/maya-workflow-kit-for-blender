@@ -2,7 +2,7 @@
 """Maya Select > All by Type / Edit > Delete All by Type for the nodes the kit makes (step 166, audit 11 BS4).
 
 Maya selects the transforms of the type (``SelectAllIKHandles`` = every ikHandle, ``SelectAllClusters`` = every
-clusterHandle; research/maya/runtime_commands.json, category "Menu items.Common.Select.All by Type") and deletes the
+clusterHandle; category "Menu items.Common.Select.All by Type") and deletes the
 nodes with them. The kit's counterparts:
 
 - IK handle = the ``ikHandleN`` empty an IK constraint targets (operators/skin.create_ik); a Spline IK handle is the
@@ -52,9 +52,9 @@ def cluster_handles(scene):
 
 
 # --- step 202 (#109, audit 15 NB9): wires, nCloths, nParticles, nRigids -----------------------------------------
-# Maya (research/maya/runtime_commands.json SelectAllWires:2444 / SelectAllNCloths:2624 / SelectAllNParticles:2637 /
-# SelectAllNRigids:2650, DeleteAllWires:2121 / DeleteAllNCloths:2676 / DeleteAllNParticles:2689 /
-# DeleteAllNRigids:2702): select the wire nodes / the nCloth, nParticle, nRigid transforms; delete the wire nodes,
+# Maya (SelectAllWires / SelectAllNCloths / SelectAllNParticles /
+# SelectAllNRigids, DeleteAllWires / DeleteAllNCloths / DeleteAllNParticles /
+# DeleteAllNRigids): select the wire nodes / the nCloth, nParticle, nRigid transforms; delete the wire nodes,
 # Remove nCloth / nRigid (nCloth > Remove nCloth: the meshes stay) and the nParticle shapes. The kit's nodes:
 # - wire = a kit wire Geometry Nodes modifier (operators/wire_deformer.py); it has no object, so Select picks the
 #   wire curves that drive one (delegated: the curve is what a Maya user grabs to work the wire), Delete removes the

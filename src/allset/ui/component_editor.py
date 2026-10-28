@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Component Editor window (step 213, Issue #119; research/maya/re/editors_213.md CE1-CE7).
+"""Maya's Component Editor window (step 213, Issue #119).
 
-Maya 2022 (research/maya/screens/editors212/component_tab_Smooth_Skins.png, ``_actions212.json``): menu bar Options /
+Maya 2022: menu bar Options /
 Layout / Help, a tab bar (CE2), a table — Smooth Skins: one column per skinCluster influence + Total, a Hold row, a
 shape row, one row per selected vertex (CE3); Polygons: vertex.x / y / z (+ red / green / blue) in object space (CE6) —
 and the bottom row "Auto Normalization: Interactive", Load Components / Close (CE4).
@@ -50,8 +50,8 @@ def _unit(scene):
 
 def normalize(weights, index, value, locked=()):
     """Weights after setting influence ``index`` to ``value`` (skinPercent -transformValue, normalizeWeights 1): the
-    unheld others are scaled to fill 1 − value, held (``locked``) ones keep theirs (research/maya/re/editors_213.md
-    CE5: [0.8, 0.2, 0] j1 = 0.5 → [0.5, 0.5, 0]; [0.5, 0.5, 0] j3 = 0.3 → [0.35, 0.35, 0.3]).
+    unheld others are scaled to fill 1 − value, held (``locked``) ones keep theirs (Maya:
+    [0.8, 0.2, 0] j1 = 0.5 → [0.5, 0.5, 0]; [0.5, 0.5, 0] j3 = 0.3 → [0.35, 0.35, 0.3]).
 
     Delegated: value is clamped to [0, 1 − held]; when the unheld others weigh nothing the rest is shared equally by
     them; with no unheld other only the edited weight changes."""

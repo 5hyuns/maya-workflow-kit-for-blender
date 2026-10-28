@@ -94,7 +94,7 @@ def _weight_icon(cv):
     cv.line(0.42, 0.12, 0.73, 0.19, 0.06, status_icons.LIGHT)
 
 
-# Maya 2026 Influences list RMB, labels and order exactly as Maya's (research/maya/re/maya2026_paint_skin_weights.md:51-59);
+# Maya 2026 Influences list RMB, labels and order exactly as Maya's;
 # the kit's extras come below a separator
 MAYA_RMB = (('Lock Selected', 'allset.weight_influence', 'action', 'LOCK_SELECTED'),
             ('Unlock Selected', 'allset.weight_influence', 'action', 'UNLOCK_SELECTED'),
@@ -136,7 +136,7 @@ def draw_list_item_menu(self, context):
 
 
 def natural_key(name):
-    """Maya 2026 Alphabetically = natural order (joint2 before joint10; measured in Maya 2026)."""
+    """Maya 2026 Alphabetically = natural order (joint2 before joint10)."""
     return [(0, int(part), '') if part.isdigit() else (1, 0, part) for part in re.split(r'(\d+)', name.casefold())
             if part]
 
@@ -261,7 +261,7 @@ def s_state(context):
     return model.state(context)
 
 
-# Maya Profile buttons (maya2026_paint_skin_weights.md §2: Gaussian / Soft (default) / Solid / Square / image)
+# Maya Profile buttons (Gaussian / Soft (default) / Solid / Square / image)
 PROFILES = (('GAUSSIAN', 'Gaussian'), ('SOFT', 'Soft'), ('SOLID', 'Solid'), ('SQUARE', 'Square'))
 
 
@@ -304,7 +304,6 @@ def _brush(layout, context):
     if col is None:
         return
     # Maya 2026 Brush frame: Mode (Paint / Select / Paint Select, Ctrl+. / Ctrl+,) and Select Geometry
-    # (research/maya/re/maya2026_paint_skin_weights.md:32)
     mode = model.paint_mode(context)
     row = col.row(align=True)
     row.label(text='Mode:')

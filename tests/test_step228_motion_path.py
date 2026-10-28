@@ -1,10 +1,10 @@
 """Step 228 lane A (Issue #138, ATTACH_PLAN L8): Constrain > Motion Paths > Attach to Motion Path / Set Motion Path Key
 (operators/motion_path_228.py).
 
-Maya truth: mayapy 2026 (research/maya/re/curve_rigs_228.json, script research/scripts/maya_curves228/measure.py; rows =
+Maya 2026 (rows =
 [frame, world translate, rotate XYZ deg, uValue], path = 5 CV cubic, Time Slider 1-120). SETKEY_KNOTS / SETKEY_CVS = the
-path after ``SetKeyPath`` at frame 50 (measured again with mayapy 2026 for this lane). Maya Y-up (x, y, z) -> Blender
-(x, -z, y) x maya_unit (1 in the factory m scene). research/ is not in git: the values are copied here."""
+path after ``SetKeyPath`` at frame 50. Maya Y-up (x, y, z) -> Blender
+(x, -z, y) x maya_unit (1 in the factory m scene). The values are written here."""
 
 import math
 from importlib import import_module

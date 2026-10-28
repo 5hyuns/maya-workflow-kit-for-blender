@@ -126,7 +126,7 @@ def do_undo():
 
 
 def do_parent():
-    # step 176 G2: Maya's result field after Ctrl+Z = "Undo: <command>" (research/maya/re/undo_result_176.md)
+    # step 176 G2: Maya's result field after Ctrl+Z = "Undo: <command>"
     text = import_module(MODULE + ".command_line")._result["text"]
     check(f"G2: result field after Ctrl+Z reads Maya's undo text ({text!r})",
           text.startswith("Undo: ") and "Group" in text)

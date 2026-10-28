@@ -163,7 +163,7 @@ It is not affiliated with, endorsed by, sponsored by, or otherwise approved by A
 Foundation. It contains no Autodesk code, icons, MEL scripts or other Autodesk assets; references to Maya are solely to
 describe compatibility and the intended audience.
 
-## C. Media (`docs/distribution/media/`: Blender screenshots taken with the kit, no Maya or Blender logo, no Maya capture)
+## C. Media (`docs/distribution/media/`: Blender screenshots taken with the kit, no Maya or Blender logo, no Maya screen image)
 
 Store rules (step 121, sources in `docs/distribution/marketing/references.md` §1): icon 256 × 256 PNG; featured
 image JPEG / PNG / WebP ≥ 1920 × 1080, 16:9 (also the social card); previews 16:9, each **a JPEG / PNG / WebP image

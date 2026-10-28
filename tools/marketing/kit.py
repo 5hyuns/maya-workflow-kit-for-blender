@@ -4,7 +4,7 @@
 
 Inputs: the step 122 GUI shots (tmp/marketing/raw/, tools/marketing/shots.py), the step 123 switch clip frames
 (tmp/marketing/clips/switch/, tools/marketing/clips.py), copy from tools/marketing/content.json (copy.md), tokens from
-style.json (style.md). Outputs in docs/distribution/marketing/kit/ (sizes from research/marketing_refs/
+style.json (style.md). Outputs in docs/distribution/marketing/kit/ (sizes from local platform notes 
 platform_rules_123.md: GitHub social preview 1280 x 640 < 1 MB, X image ≤ 5 MB, YouTube thumbnail 1280 x 720 ≤ 2 MB).
 """
 

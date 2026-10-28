@@ -1,6 +1,6 @@
-"""Step 139 lane EDIT: Edit Mesh > Connect / Merge / Symmetrize and Mesh > Smooth against the Maya 2022 numbers
-measured with mayapy / a Maya GUI session (research/maya/re/edit_mesh_139_edit.md, script
-research/scripts/edit_mesh_139_edit_mayapy.py). Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
+"""Step 139 lane EDIT: Edit Mesh > Connect / Merge / Symmetrize and Mesh > Smooth against Maya 2022's numbers.
+Maya Y-up -> Blender Z-up: Maya (x, y, z) = Blender (x, -z, y).
+
 
 Plan: docs/steps/step_139.md 「계획」, docs/steps/step_139_edit.md.
 """

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The Maya pivot concept on top of Blender's origin (docs/steps/step_59.md 「계획」 1-3).
 
-Measured in Maya 2022 (research/maya/workflows/pivot_snap.md):
+Maya 2022:
 
 - P1/P3: moving the pivot (D hold / Insert, ``cmds.xform(pivots=...)``) changes neither translate nor
   the vertices nor the children; snapping applies while editing.

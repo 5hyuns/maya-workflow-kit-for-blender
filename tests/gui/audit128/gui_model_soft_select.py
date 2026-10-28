@@ -1,5 +1,5 @@
 """Audit 128 repro (issue #1): B hold + MIDDLE mouse drag must change the soft select radius like B + LMB, and the
-B release after such a drag must not toggle soft select (Maya: research/maya/interaction.md:156 "B + LMB/MMB drag").
+B release after such a drag must not toggle soft select (Maya: "B + LMB/MMB drag").
 Today MMB is not handled by allset.tap_hold (operators/taphold.py modal: only LEFTMOUSE starts a drag), so the
 MMB drag passes through (view navigation) and the B release counts as a TAP -> soft select flips.
 PASSES when fixed."""

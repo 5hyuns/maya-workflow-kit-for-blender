@@ -1,6 +1,6 @@
 """Background check for promotional captures (step 142, #41; was step 125's gradient check): every Maya-mode 3D
 viewport in a screenshot / key visual / clip frame must show Maya's factory flat background #5c5c5c
-(research/maya/re/background_120.md:33). The kit ships no theme since step 130 (#40): the captures use Blender's
+(Maya default). The kit ships no theme since step 130 (#40): the captures use Blender's
 factory theme and the flat grey is view / scene data (tools/marketing/scene.py ``maya_look``), so Blender's factory
 theme background (#3d3d3d) or a theme gradient (step 125's #889db3 top) fail here.
 
@@ -18,7 +18,7 @@ the lower part of the view, like the DOGWALK snow, pass on the part above the ho
 import math
 import sys
 
-MAYA_FLAT = (0x5c, 0x5c, 0x5c)         # Maya 2022 factory viewport background (research/maya/colors.json)
+MAYA_FLAT = (0x5c, 0x5c, 0x5c)         # Maya 2022 factory viewport background
 BLENDER_FACTORY = (0x3d, 0x3d, 0x3d)   # Blender 4.5 factory theme 3D View background (what a missed view shows)
 
 # Thresholds. A capture passes when the top background (searched in the top TOP_BAND) is within DE_FLAT_MAX of

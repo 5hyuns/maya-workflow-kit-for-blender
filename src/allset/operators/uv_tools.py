@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya UV workflow on Blender's UV Editor (docs/steps/step_66.md 「계획」 1, 3).
 
-- Opening the UV Editor (Maya UV > UV Editor) enters edit mode with UV Sync Selection on, so the object's UVs show at once
-  (research/maya/workflows/uv.md:14-19, :60-63). Maya's UV / UV Shell components are UVs picked apart from the mesh
+- Opening the UV Editor (Maya UV > UV Editor) enters edit mode with UV Sync Selection on, so the object's UVs show at
+  once. Maya's UV / UV Shell components are UVs picked apart from the mesh
   vertices: Blender needs sync off for that (and then draws only the selected faces' UVs, so every face is selected).
-- UV Shell = Blender UV island (uv.md:130). Blender's island operators group UVs by shared coordinates and ignore seams
+- UV Shell = Blender UV island. Blender's island operators group UVs by shared coordinates and ignore seams
   (measured, step 66: pack_islands / average_islands_scale), only unwrap reads seams. So Cut = seam + the smaller side moved
   2e-4 off the cut (a real split that still looks in place), Sew = seam cleared + the smaller shell moved onto the edge.
 - Unfold = Blender Unwrap (Minimum Stretch) on the chosen shells with their borders kept as seams, each shell put back where
-  it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit (uv.md:141-142).
+  it was; Layout = Pack Islands with Maya's shell padding in pixels of the map; Texel Density = px per Maya unit.
 """
 
 import math
@@ -26,7 +26,7 @@ from .. import compat
 EPS = 1e-5           # UVs closer than this are one UV
 NUDGE = 2e-4         # how far Cut moves the smaller side (0.2 px on a 1024 map)
 MAYA_MAP_SIZE = 1024
-MAYA_SHELL_PADDING = 2   # px [K] (uv.md:140)
+MAYA_SHELL_PADDING = 2   # px [K]
 NOTICE_UNFOLD = "Unfold uses Blender Unwrap (Minimum Stretch), not Unfold3D: shapes can differ from Maya."
 
 
@@ -280,15 +280,15 @@ def unfold(context, ob):
     shells = target_islands(bm, uv, sync(context))
     faces = [f for isl in shells for f in isl]
     mark_shell_borders(bm, uv, faces)
-    # Maya Unfold (Unfold3D) keeps each shell's UV area and the mean of its UVs (research/maya/re/uv_shells_155.md §4
-    # Unfold); its solver turn can't be reproduced, Blender's unwrap orientation stays.
+    # Maya Unfold (Unfold3D) keeps each shell's UV area and the mean of its UVs
+    # (Unfold); its solver turn can't be reproduced, Blender's unwrap orientation stays.
     before = [([f.index for f in isl], _point_mean(isl, uv), sum(_uv_area(f, uv) for f in isl)) for isl in shells]
     bmesh.update_edit_mesh(ob.data)
     _with_faces(context, ob, faces, lambda: bpy.ops.uv.unwrap(method='MINIMUM_STRETCH', margin=0.0))
     bm = bmesh.from_edit_mesh(ob.data)
     uv = bm.loops.layers.uv.verify()
     bm.faces.ensure_lookup_table()
-    # one factor for all unfolded shells: the measured rule keeps the *total* area (one-shell cases), and a common
+    # one factor for all unfolded shells: Maya's rule keeps the *total* area (one-shell cases), and a common
     # factor keeps the even texel density Blender's unwrap gives the shells (sweep M66-3: Unfold then Layout)
     area = sum(a for _i, _m, a in before)
     now = sum(_uv_area(bm.faces[i], uv) for idx, _m, _a in before for i in idx)
@@ -323,13 +323,13 @@ def layout(context, ob, padding_px, map_size):
     return len(shells)
 
 
-# --- Automatic / Contour Stretch (step 139, research/maya/re/edit_mesh_139_uv.md) -------------------
+# --- Automatic / Contour Stretch (step 139) -------------------
 
 def auto_planes(count):
     """Projection directions of Maya's Automatic mapping (object space). 3 and 6 = the six axis planes (Maya 3 planes
-    also gives 6 shells on a cube / sphere, measured); 4 / 8 / 12 = tetrahedron / octahedron / dodecahedron faces,
+    also gives 6 shells on a cube / sphere); 4 / 8 / 12 = tetrahedron / octahedron / dodecahedron faces,
     5 = top, bottom and three around (delegated: only 6 is compared with Maya). Order = Maya X, Y, Z (Blender X, Z, -Y):
-    a face that ties goes to the earlier plane (a Maya cylinder's 45-degree sides go to X, measured)."""
+    a face that ties goes to the earlier plane (a Maya cylinder's 45-degree sides go to X)."""
     count = int(count)
     if count in (3, 6):
         return [Vector(d) for d in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, -1, 0), (0, 1, 0))]
@@ -379,7 +379,7 @@ def _maya_shells(faces, k_unit, optimize=True):
 def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
     """Maya polyAutoProjection on ``faces`` (object space, -ws 0) with Maya's factory options: 6 planes assign faces
     and build shells Maya's way (``_maya_shells``: candidate planes within 60 degrees, seeds by fewest candidates,
-    flood fill that stops where a shell would overlap itself; research/maya/re/autoproj_layout_257.md §7); other
+    flood fill that stops where a shell would overlap itself); other
     plane counts give every face the plane its normal faces most. Shells are laid out in 0-1 at one scale with
     ``spacing`` percent between them (factory 0.2 %) by Maya's packed "Into square"
     layout (operators/autoproj_layout.py, step 257). ``unit`` = Blender length of one Maya unit
@@ -389,7 +389,7 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
     k_unit = 1.0 / (unit or 1.0)
     if int(planes) == 6:
         shells = _maya_shells(faces, k_unit, optimize)
-        # Maya's shell order for the layout = ascending lowest face index (spec §2)
+        # Maya's shell order for the layout = ascending lowest face index
         shells.sort(key=lambda s: min(f.index for f in s[1]))
         flat = [{lp: proj(lp.vert.co) for g in group for lp in g.loops} for proj, group in shells]
         if not flat:
@@ -406,7 +406,7 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
         top = max(dots)
         which[f] = next(i for i, x in enumerate(dots) if x >= top - 1e-6)
     seen, shells = set(), []
-    # Maya's shell order = ascending lowest face index (faces visited in index order, spec §2)
+    # Maya's shell order = ascending lowest face index (faces visited in index order)
     for f in sorted(faces, key=lambda f: f.index):
         if f in seen:
             continue
@@ -435,7 +435,7 @@ def auto_project(bm, uv, faces, planes=6, spacing=0.2, unit=1.0, optimize=True):
 
 
 def fit_unit(loops, uv):
-    """Stretch the UVs of ``loops`` to fill 0-1 (Maya Contour Stretch: a strip of faces fills the square, measured)."""
+    """Stretch the UVs of ``loops`` to fill 0-1 (Maya Contour Stretch: a strip of faces fills the square)."""
     pts = [lp[uv].uv.copy() for lp in loops]
     if not pts:
         return
@@ -524,7 +524,7 @@ class ALLSET_OT_uv_automatic(bpy.types.Operator):
 
 # --- polyAutoProj history node (step 257, Issue #150) ------------------------------------------------
 # Maya's UV > Automatic leaves a polyAutoProj node whose Channel Box INPUTS rows can be edited
-# (research/maya/re/060_modeling_anim.md B2: Planes, Optimize, Layout, Percentage Space, Scale Mode, Layout Method
+# (Planes, Optimize, Layout, Percentage Space, Scale Mode, Layout Method
 # after the projection's Translate / Rotate / Scale / Pivot). The kit's node shows the rows it rebuilds with
 # (delegated: Planes, Optimize = 1 Fewer pieces / 0 Less distortion, Percentage Space); the others stay at Maya's
 # factory values (Into square, Uniform, Bounding box, no projection transform). Like the kit's extrude / bevel
@@ -985,7 +985,7 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
         ts = context.scene.tool_settings
         ob = context.view_layer.objects.active
         if ob is not None and ob.type == 'MESH' and ob.mode != 'EDIT' and not ob.visible_get():
-            # a hidden object: Maya converts silently (research/maya/re/060_messages_ui.md B4); Blender can't enter
+            # a hidden object: Maya converts silently; Blender can't enter
             # edit mode on it, so only the component type is set (delegated, step 258)
             if self.mode in ('VERTEX', 'EDGE', 'FACE'):
                 ts.mesh_select_mode = (self.mode == 'VERTEX', self.mode == 'EDGE', self.mode == 'FACE')

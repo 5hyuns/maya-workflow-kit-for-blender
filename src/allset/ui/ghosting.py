@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya ghosting (Visualize > Ghost Selected / Unghost Selected / Unghost All / Open Ghosting Editor), step 171.
 
-Maya 2022 rules (research/maya/re/visualize_171.md §2, mayapy + GUI capture research/maya/screens/ghost171/):
+Maya 2022 rules:
 - Ghost Selected turns ``ghosting`` on for the selection and, with Include Hierarchy (factory on), everything under
   it; Unghost Selected / Unghost All turn it off. Each ghosted node carries its own settings, copied from the
   Ghosting Editor's values when it was ghosted (an editor change applies to every current ghost).
@@ -16,7 +16,7 @@ Maya 2022 rules (research/maya/re/visualize_171.md §2, mayapy + GUI capture res
   k = 1 / 2 / 3). Shaded ghosts blend their front and back faces (alpha 191 / 139 / 71 = 1 − (1 − a)²), so the kit
   draws every triangle, both faces, without depth writes. Maya's colours live in its rendering space (ACEScg, colour
   management on by default): the kit converts them to linear Rec.709 and scales by GHOST_GAIN / WIRE_GAIN, fitted
-  to the captured pixels over Maya's #5c5c5c background (visualize_171.md §2 "colour model").
+  to Maya's ghost pixels over its #5c5c5c background.
 
 Kit: ghost settings = ``Object.allset_ghost`` (Maya's per-node attributes); geometry per (object, absolute frame) is
 cached in world space — it stays valid when the current frame moves. Missing frames are sampled by a timer with
@@ -30,14 +30,13 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProp
 
 GEOMETRY = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 MODES = ("Pre And Post Frames", "Pre Frames", "Post Frames", "Custom Frames", "Pre And Post Keyframes",
-         "All Keyframes")                                  # ghostingMode enum, visualize_171.md §2 [O]
+         "All Keyframes")                                  # ghostingMode enum
 MODE_IDS = ("PRE_POST", "PRE", "POST", "CUSTOM", "KEYS_PRE_POST", "KEYS_ALL")
 PRESETS = ("1s", "2s", "4s", "5s", "10s", "Custom")
 PRE_COLOR = (0.447, 1.0, 1.0)                              # ghostColorPre factory
 POST_COLOR = (0.878, 0.678, 0.663)                         # ghostColorPost factory
 NEAR, FAR = 0.5, 0.15                                      # ghostNearOpacity / ghostFarOpacity factory
-# Maya's ghosting command error when nothing selected can be ghosted (s_TghostingCmdStrings
-# research/maya/re/060_messages_ui.md B7)
+# Maya's ghosting command error when nothing selected can be ghosted
 NOTHING_TO_GHOST = "Nothing selected can be ghosted using the current settings."
 FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3, "custom_post": 3, "custom_step": 1,
            "custom_frames": "", "color_pre": PRE_COLOR, "color_post": POST_COLOR, "near_opacity": NEAR,
@@ -45,8 +44,8 @@ FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3,
 EDITOR_KEY = "ghosting_editor"                             # option_windows key of the Ghosting Editor
 # ACEScg (AP1) -> linear Rec.709, Bradford D60 -> D65 (the matrix OCIO's ACES configs use)
 AP1_TO_709 = ((1.70505, -0.62179, -0.08326), (-0.13026, 1.14080, -0.01055), (-0.02400, -0.12897, 1.15297))
-GHOST_GAIN = 0.34      # shaded: fitted to research/maya/screens/ghost171 _ghost171.json ghost_f5 (front faces)
-WIRE_GAIN = 0.78       # wireframe: fitted to the ghost_f5_wire alpha / colour pairs
+GHOST_GAIN = 0.34      # shaded: fitted to Maya's ghost colours (front faces)
+WIRE_GAIN = 0.78       # wireframe: fitted to Maya's wireframe ghost alpha / colour
 DEPTH_BIAS = 2e-5
 
 _geom = {}             # (object session_uid, frame) -> (tri positions, tri normals, edge positions) numpy float32
@@ -82,7 +81,7 @@ def parse_frames(text):
 
 def ghost_frames(t, mode, pre=3, post=3, step=1, custom=(), keys=(), play_range=(1, 24)):
     """[(frame, side, k, n)]: side 'pre' / 'post', k-th of n ghosts on that side counted from the current frame
-    (visualize_171.md §2 frames table). The current frame itself never gets a ghost."""
+    (as Maya). The current frame itself never gets a ghost."""
     step = max(1, step)
     if mode == "Pre And Post Frames":
         before = [t - k * step for k in range(1, pre + 1)]

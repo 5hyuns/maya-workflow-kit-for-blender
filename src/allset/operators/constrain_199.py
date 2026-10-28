@@ -1,27 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 199 lane C: Constrain > Normal / Tangent / Remove Target / Set Rest Position / Modify Constrained Axis.
 
-Spec and mayapy ground truth: research/maya/re/constrain_199.md (scripts research/scripts/constrain_199_*.py).
-
 - Normal / Tangent (Maya Normal / Tangent Constraint Options, factory: weight 1, aim (1, 0, 0),
   up (0, 1, 0), world up type Vector (0, 1, 0)): Maya only turns the object — its aim vector = the target's normal at
   the closest surface point (MFnMesh.getClosestPointAndNormal) / the curve's tangent at the closest curve point, its up
   vector towards the world up. No Blender constraint computes Maya's normal: Blender's Shrinkwrap uses Blender's
   corner-angle normals on Blender's triangulation, Maya interpolates face-vertex normals weighted by corner angle x
   face area (mesh vertexNormalMethod "Angle and Area Weighted") on its own triangulation (a quad is split along the
-  shorter diagonal only when d02^2 < 0.999 d13^2, else 1-3; measured on 540 quads). So the kit setup is: a Track To on
+  shorter diagonal only when d02^2 < 0.999 d13^2, else 1-3; on 540 quads). So the kit setup is: a Track To on
   the object (Maya's aim / up, rig_tools.aim) towards a hidden helper empty that a depsgraph / frame handler keeps at
   P + L * direction  (P = the object's world position, direction computed the Maya way in double precision:
-  ``SurfaceData.normal`` / ``CurveData.tangent``). Matches mayapy within 6e-6 (1e-7 away from the world-up pole).
+  ``SurfaceData.normal`` / ``CurveData.tangent``). Matches Maya within 6e-6 (1e-7 away from the world-up pole).
 - Remove Target: targets selected, the constrained object last; the constraints of the
   checked types whose target is selected go. When the last target of a type goes Maya deletes the constraint node and
-  the channels keep the constrained value (mayapy) — the kit bakes the visual value into the object's own channels.
+  the channels keep the constrained value (Maya) — the kit bakes the visual value into the object's own channels.
 - Set Rest Position: Maya stores the current constrained channels as the constraint's
   rest values, used when every target weight is 0. In Blender a constraint at influence 0 shows the object's own
   channels, so the rest position is the own channels: the kit writes the current constrained values into them.
 - Modify Constrained Axis (factory X / Y / Z on, Maintain offset off): which axes the point
   / orient / scale / parent constraints drive (Blender use_x / use_y / use_z, Child Of use_location_* / use_rotation_*;
-  the axes are the Channel Box's). A newly skipped channel keeps its last constrained value (mayapy); Maintain offset
+  the axes are the Channel Box's). A newly skipped channel keeps its last constrained value (Maya); Maintain offset
   = Blender's constraint offsets set so nothing moves now.
 """
 
@@ -39,7 +37,7 @@ OWNER = "allset_aim_owner"           # helper empty: the constrained object
 SURFACE = "allset_aim_surface"       # helper empty: the Maya target (mesh / curve)
 LABEL = {"normal": "Normal Constraint", "tangent": "Tangent Constraint"}
 MAYA_NODE = {"normal": "normalConstraint", "tangent": "tangentConstraint"}
-QUAD_SPLIT = 0.999                   # Maya splits a quad 0-2 only when d02^2 < 0.999 d13^2 (constrain_199.md §2)
+QUAD_SPLIT = 0.999                   # Maya splits a quad 0-2 only when d02^2 < 0.999 d13^2
 
 # Maya's own messages
 MSG_REMOVE_SELECT = "You must select one or more target(s) followed by the constrained object."
@@ -98,7 +96,7 @@ def _point(bc, a, b, c):
 
 
 def quad_split(q):
-    """Maya's triangles of quad corners 0..3 (MFnMesh.getTriangles, constrain_199.md §2)."""
+    """Maya's triangles of quad corners 0..3 (MFnMesh.getTriangles)."""
     d02 = _dot(_sub(q[0], q[2]), _sub(q[0], q[2]))
     d13 = _dot(_sub(q[1], q[3]), _sub(q[1], q[3]))
     return ((0, 1, 2), (0, 2, 3)) if d02 < QUAD_SPLIT * d13 else ((0, 1, 3), (1, 2, 3))
@@ -166,7 +164,7 @@ class SurfaceData:
                     a, b = find((v, faces[0])), find((v, f))
                     if a != b:
                         parent[a] = b
-        # Maya's mesh vertexNormalMethod default "Angle and Area Weighted": corner angle x face area (measured, §1)
+        # Maya's mesh vertexNormalMethod default "Angle and Area Weighted": corner angle x face area
         fan = {}
         for f, (s, t) in enumerate(zip(starts, totals)):
             for k in range(t):
@@ -183,7 +181,7 @@ class SurfaceData:
         for acc in fan.values():
             ln = math.sqrt(_dot(acc, acc)) or 1.0
             acc[:] = [c / ln for c in acc]
-        # Maya triangulation; n-gons use Blender's triangles (Maya's n-gon rule is not measured)
+        # Maya triangulation; n-gons use Blender's triangles (Maya's n-gon rule is unknown)
         tris, tri_normals, tri_faces = [], [], []
         ngon_tris = {}
         if any(t > 4 for t in totals):
@@ -222,7 +220,7 @@ class SurfaceData:
             q = _point(bc, a, b, c)
             found.append((_dot(_sub(p, q), _sub(p, q)), i, bc))
         dmin = min(f[0] for f in found)
-        # a point on a shared edge / corner: Maya took the higher face index (hard sphere ridge, constrain_199.md §1)
+        # a point on a shared edge / corner: Maya took the higher face index (hard sphere ridge)
         _d, i, bc = max((f for f in found if f[0] <= dmin * (1 + 1e-9) + 1e-18),
                         key=lambda f: (self.tri_faces[f[1]], -f[0]))
         ns = self.tri_normals[i]
@@ -853,7 +851,7 @@ def modify_axes(context, node, flags, maintain=False):
                 c.mix_mode = 'REPLACE'
             elif t == "parent":
                 # Child Of multiplies the own channels in: a new inverse keeps the object where it is (Maya zeroes
-                # the offset without Maintain offset: constrain_199.md §5, delegated)
+                # the offset without Maintain offset)
                 bake(context, node, "trs", matrix=vis)
                 c.set_inverse_pending = True
             if newly_off and t != "parent":

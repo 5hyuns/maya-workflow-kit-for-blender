@@ -1,5 +1,5 @@
 """Step 157: Graph Editor keys in Maya terms — key windows on the selected keys, Add / Remove Inbetween on the
-editor's curves, per-key Mute / Unmute (Maya-measured holds), Select masks, Default In / Out Tangent.
+editor's curves, per-key Mute / Unmute (Maya holds), Select masks, Default In / Out Tangent.
 Plan: docs/steps/step_157.md 「계획」."""
 
 from importlib import import_module
@@ -14,7 +14,7 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 preferences = import_module(kit.MODULE + ".preferences")
 
 FRAMES = (1, 5, 9, 10, 12, 15, 19, 20, 25, 30, 35)
-# mayapy (tmp/maya157/mute2.py): pCube1.tx linear keys 1:0 10:5 20:0 30:8, doMuteKey -true on the selected keys
+# Maya: pCube1.tx linear keys 1:0 10:5 20:0 30:8, doMuteKey -true on the selected keys
 MAYA = {
     "base": (0.0, 2.2222, 4.4444, 5.0, 4.0, 2.5, 0.5, 0.0, 4.0, 8.0, 8.0),
     (10,): (0.0, 2.2222, 4.4444, 5.0, 5.0, 5.0, 5.0, 0.0, 4.0, 8.0, 8.0),
@@ -283,7 +283,7 @@ def test_menu_items_mapped():
         assert m[f"{ed}/Keys/Mute Key"] == ("allset.mute_key", {"mute": True})
         assert m[f"{ed}/Keys/Unmute Key"] == ("allset.mute_key", {"mute": False})
         assert m[f"{ed}/Keys/Add Inbetween"][0] == "allset.graph_inbetween"
-    for ed in ("Graph Editor",):    # Maya 2026's Dope Sheet has no Tangents menu (measured in Maya 2026)
+    for ed in ("Graph Editor",):    # Maya 2026's Dope Sheet has no Tangents menu
         assert m[f"{ed}/Tangents/Default In Tangent/Flat"] == ("prop", "addon_prefs.default_in_tangent",
                                                                {"value": 'FLAT'})
         assert m[f"{ed}/Tangents/Default Out Tangent/Stepped"][2] == {"value": 'STEPPED'}

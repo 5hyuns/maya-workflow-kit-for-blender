@@ -2,7 +2,7 @@
 keyable channel of the selection wherever the mouse is. In the kit S is only bound in the 3D View keymaps
 ("Object Mode" / "Pose"), so with the mouse over the Channel Box (IC "User Interface" S = anim.keyframe_insert_button
 on the Scene proxy field) or over the Time Slider (IC Dopesheet S = action.keyframe_insert, existing curves only) a
-never-keyed pCube1 gets no key. research/maya/workflows/animation.md:144 flagged the Channel Box case as [U].
+never-keyed pCube1 gets no key. The Channel Box case was an open question [U].
 Each check PASSES once S keys the selection there too."""
 
 import os

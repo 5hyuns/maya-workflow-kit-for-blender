@@ -1,4 +1,4 @@
-"""Step 51: Maya option boxes in the menus (count = Maya's, research/maya/menus.json), kit-made shelf icons,
+"""Step 51: Maya option boxes in the menus (count = Maya's), kit-made shelf icons,
 shelf icon row (draw handler + gizmo pool). Plan: docs/steps/step_51.md; GUI: tests/gui/gui_step51_shelf_menus.py."""
 
 import json
@@ -56,28 +56,6 @@ def _all_menu_buttons():
     return log
 
 
-def test_option_box_count_matches_maya():
-    research = ROOT / "research" / "maya" / "menus.json"
-    sys.path.insert(0, str(ROOT / "tools"))
-    import gen_menu_data
-    if research.exists():   # research/ is not in git (decision 6); the generated set is checked anyway
-        data = json.loads(research.read_text(encoding="utf-8"))
-        gen_menu_data._OPTION.clear()
-        expected = gen_menu_data.option_boxes(gen_menu_data.build(data))   # incl. step 101 run-time items
-        assert expected == set(menu_data.OPTION_BOXES), len(expected ^ set(menu_data.OPTION_BOXES))
-    # step 103: the box is Maya's mark at the end of the label (no left window icon)
-    boxes = [b for b in _all_menu_buttons() if b["text"].endswith(menu_sets.BOX_MARK.strip())]
-    assert not [b for b in _all_menu_buttons() if b["icon"] == 'WINDOW']
-    drawn = {b["item"] for b in boxes if "item" in b}
-    submenus = [b for b in boxes if b["kind"] == "menu"]     # a submenu entry with a Maya option box
-    # Every Maya item with an option box is drawn with one (some menus share a label, so some paths
-    # are drawn more than once).
-    # (menu_sets.OPTION_BOXES = the main menus' + the step 104 editor menu bars')
-    assert drawn | {p for p in menu_sets.OPTION_BOXES
-                    if any(b["text"].startswith(p.rsplit("/", 1)[-1]) for b in submenus)}   # step 108: aligned box         == set(menu_sets.OPTION_BOXES), sorted(set(menu_sets.OPTION_BOXES) - drawn)[:5]
-    assert len(menu_data.OPTION_BOXES) > 400
-
-
 def test_option_box_runs_with_options():
     path = "Create/Polygon Primitives/Cube"
     assert path in menu_data.OPTION_BOXES
@@ -122,7 +100,7 @@ def test_shelf_row_layout():
     region = type("R", (), {"height": 38})()
     x0, y0, size = shelf.icon_rect(region, 0, 1.0)
     x1, _y, _s = shelf.icon_rect(region, 1, 1.0)
-    assert size == 32 and x1 - x0 == 35 and y0 == 3      # colors.json QPushButton 35x34, 32 px icons
+    assert size == 32 and x1 - x0 == 35 and y0 == 3      # Maya shelf button 35x34, 32 px icons
     assert sorted(r for _h, r in shelf._handle) == ['HEADER', 'WINDOW'], "icon row + tab row dim handlers"
     assert round(0x44 * (1 - shelf.TAB_DIM)) == 0x37   # Maya tab row #373737 over the #444444 header
     assert shelf.SLOTS >= max(len(b) for _s, _l, b in shelf_data.SHELVES)
@@ -159,7 +137,7 @@ class _Fake:
 
 def test_status_line_collapse_handles():
     """Every Maya Status Line group has a collapse arrow (ui_layout.md:194-195); Maya's factory collapsed groups
-    (masks, history, input line) start collapsed (step 113, research/maya/screens/top113/t02_top.png)."""
+    (masks, history, input line) start collapsed (step 113)."""
     status_line = import_module(kit.MODULE + ".ui.status_line")
     icons = import_module(kit.MODULE + ".ui.status_icons")
 

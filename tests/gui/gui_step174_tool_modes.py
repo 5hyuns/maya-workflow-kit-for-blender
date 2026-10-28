@@ -1,6 +1,6 @@
 """Step 174 in the Maya Workflow Kit layout (docs/steps/step_174.md): one tool across object / component modes.
 
-Maya 2022 keeps currentCtx when the selection mode changes (research/maya/re/tool_modes_174.md): W then F9 stays
+Maya 2022 keeps currentCtx when the selection mode changes: W then F9 stays
 moveSuperContext, F8 back too; E + F10 = rotate, R + F11 = scale, Q + F9 = select, and W picked in component mode
 is still Move after F8. Here: the 3D View keys, then the active tool of the mode we are in (and the kit Move / Scale
 manipulator widget). The RMB marking menu's Vertex item runs allset.mm_component like a click on it."""

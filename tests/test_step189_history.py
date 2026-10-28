@@ -1,6 +1,6 @@
 """Step 189 (audit 13 BS5): Maya's Status Line Construction History toggle.
 
-mayapy (research/maya/re/mesh_display_184.md "Construction History"): with the toggle off Maya's menu commands run
+Maya: with the toggle off Maya's menu commands run
 with -ch 0 — CreatePolygonCube / CreateNURBSSphere / CreateNURBSCircle leave no polyCube1 / makeNurb* node,
 PolyExtrude / BevelPolygon no polyExtrudeFace / polyBevel node; history made before stays (the kit keeps one node per object: the mesh then no longer matches it); File > New keeps the state.
 """

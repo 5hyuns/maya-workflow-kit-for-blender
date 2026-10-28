@@ -2,14 +2,14 @@
 """Maya 2022 factory primitives as data: creation nodes (attributes + defaults) and the shapes they build.
 
 Pure Python (no bpy), in Maya's Y-up space and Maya units; ``prim_history`` turns a shape into a Blender mesh /
-curve. Every rule here is a measurement of Maya 2022 (mayapy, factory option boxes):
-research/maya/re/primitives_129.md (§ numbers below). No Maya code or data was copied; vertex counts, positions,
+curve. Every rule here follows Maya 2022 (factory option boxes; § numbers below are the kit's notes).
+No Maya code or data was copied; vertex counts, positions,
 face layouts and UVs were compared with Maya's output for the default and varied attributes
 (``tests/test_step129_primitives.py`` keeps the count table).
 
 A polygon shape = ``Mesh(verts, faces, uvs, hard, edges)``: ``uvs`` one (u, v) per face corner (or None), ``hard`` the
 edges Maya marks hard (frozenset vertex pairs) or ``ALL``, ``edges`` Maya's edge ids as vertex pairs in Maya's order
-(polyCube / polyCylinder, step 257: research/maya/re/bevel_numbering_257.md §6) or None. A NURBS shape = list of ``Patch`` (one per Maya shape:
+(polyCube / polyCylinder, step 257) or None. A NURBS shape = list of ``Patch`` (one per Maya shape:
 nurbsSquare / nurbsCube are a group of four / six).
 """
 
@@ -23,7 +23,7 @@ class Mesh:
 
     def __init__(self, verts, faces, uvs=None, hard=(), edges=None):
         self.verts, self.faces, self.uvs, self.hard = verts, faces, uvs, hard
-        # Maya's edge ids: (a, b) per edge in Maya's order and direction, or None (not measured for this node)
+        # Maya's edge ids: (a, b) per edge in Maya's order and direction, or None (unknown for this node)
         self.edges = edges
 
 
@@ -37,7 +37,7 @@ class Patch:
         self.order_u, self.order_v, self.cyclic_u, self.cyclic_v = order_u, order_v, cyclic_u, cyclic_v
 
 
-# --- creation nodes (§1): Maya attribute name, Channel Box label, default, kind, (min, max) ------------------
+# --- creation nodes: Maya attribute name, Channel Box label, default, kind, (min, max) ------------------
 # kind: "length" (scaled by the Maya unit), "float", "int", "bool", "angle" (degrees), ("enum", labels)
 
 def _a(name, label, default, kind, lo=None, hi=None):
@@ -54,7 +54,7 @@ CENTER = [_a("centerX", "Center X", 0.0, "length"), _a("centerY", "Center Y", 0.
 DEGREE = ("enum", ("Linear", "Cubic"))   # Maya degree 1 / 3 (stored as 1 / 3)
 SWEEPS = [_a("startSweep", "Start Sweep", 0.0, "angle", 0.0, 360.0), _a("endSweep", "End Sweep", 360.0, "angle", 0.0, 360.0)]
 
-# Defaults = what the Create menu builds with factory option boxes (research/maya/re/primitives_129.md §1); where
+# Defaults = what the Create menu builds with factory option boxes; where
 # that differs from the bare command (polyCylinder subdivisionsCaps 0 -> menu 1) the menu wins.
 NODES = {
     "polyCube": [*AXIS, _a("width", "Width", 1.0, "length", 0.0), _a("height", "Height", 1.0, "length", 0.0),
@@ -96,7 +96,7 @@ NODES = {
                   _a("numberOfSides", "Number Of Sides", 3, "int", 3),
                   _a("subdivisionsHeight", "Subdivisions Height", 1, "int", 1),
                   _a("subdivisionsCaps", "Subdivisions Caps", 0, "int", 0)],
-    # NURBS (§3)
+    # NURBS
     "makeNurbCircle": [*NORMAL, *CENTER, _a("radius", "Radius", 1.0, "length", 0.0),
                        _a("sweep", "Sweep", 360.0, "angle", -360.0, 360.0), _a("degree", "Degree", 3, DEGREE),
                        _a("sections", "Sections", 8, "int", 1)],
@@ -160,7 +160,7 @@ def clamp(node_type, name, value):
 # --- small vector helpers ---------------------------------------------------------------------------------
 
 def _rot_to(axis):
-    """3x3 rotation taking Maya +Y to ``axis`` (shortest arc, measured: §2.1)."""
+    """3x3 rotation taking Maya +Y to ``axis`` (shortest arc)."""
     x, y, z = axis
     n = math.sqrt(x * x + y * y + z * z)
     if n < 1e-12:
@@ -196,7 +196,7 @@ def _orient(verts, a, offset=(0.0, 0.0, 0.0)):
 
 
 def _ring(n, r, y):
-    """Maya's ring order: vertex i at angle -(i + 1) * 360 / n in (x, z) (§2.1)."""
+    """Maya's ring order: vertex i at angle -(i + 1) * 360 / n in (x, z)."""
     out = []
     for i in range(n):
         t = -2 * math.pi * (i + 1) / n
@@ -212,7 +212,7 @@ def _edges_of(faces):
     return out
 
 
-# --- polygon primitives (§2) ---------------------------------------------------------------------------------
+# --- polygon primitives  ---------------------------------------------------------------------------------
 
 def poly_cube(a):
     w, h, d = a["width"], a["height"], a["depth"]
@@ -227,7 +227,7 @@ def poly_cube(a):
         return index[key]
 
     faces, uvs = [], []
-    # Maya's cross layout, menu Create UVs = Normalize Collectively and Preserve Aspect Ratio (§2.2): 0.25 squares,
+    # Maya's cross layout, menu Create UVs = Normalize Collectively and Preserve Aspect Ratio: 0.25 squares,
     # columns 0.125 / 0.375 / 0.625 / 0.875
     c_, c0, c1, c2 = 0.125, 0.375, 0.625, 0.875
     # side: (origin, u axis, v axis, nu, nv, uv rect (u0, v0, u1, v1))
@@ -256,7 +256,7 @@ def poly_cube(a):
                             (u0 + (u1 - u0) * (i + 1) / nu, v0 + (v1 - v0) * (j + 1) / nv),
                             (u0 + (u1 - u0) * i / nu, v0 + (v1 - v0) * (j + 1) / nv)])
     hard = set()
-    for f in faces:   # Maya: the cube's 12 box edges are hard, the subdivision edges soft (§2.2)
+    for f in faces:   # Maya: the cube's 12 box edges are hard, the subdivision edges soft
         for i in range(len(f)):
             p, q = verts[f[i]], verts[f[i - 1]]
             on = sum(1 for k, half in enumerate((w / 2, h / 2, d / 2))
@@ -267,7 +267,7 @@ def poly_cube(a):
 
 
 def _cube_edges(index, w, h, d, sx, sy, sz):
-    """polyCube's edge ids (mayapy 2026, 15 / 15 sizes edge for edge, research/maya/re/bevel_numbering_257.md §6): the
+    """polyCube's edge ids (15 / 15 sizes edge for edge): the
     2 x (Height + Depth) vertex rows around the front / top / back / bottom, first the Width edges along each row,
     then the edges from each row to the next; then per side cap (+X, then -X) its inner rows (bottom to top, back to
     front), then its inner columns (rows of cells bottom to top, columns back to front)."""
@@ -314,9 +314,9 @@ def poly_sphere(a):
 
 def _cap(verts, faces, uvs, rim, centre_y, sc, r, top, uv_c, uv_r, dome=0.0, centre_dv=0.0):
     """A cylinder / cone / pyramid / prism cap on ring ``rim`` (vertex ids): an n-gon (sc 0) or ``sc`` rings with a
-    centre fan (§2.3). ``dome`` > 0: Maya Round Cap (rings on a hemisphere of radius ``dome``). UVs: a circle of
+    centre fan. ``dome`` > 0: Maya Round Cap (rings on a hemisphere of radius ``dome``). UVs: a circle of
     radius ``uv_r`` around ``uv_c`` (u = x, v = z on the bottom cap and -z on the top one, menu Create UVs = Normalize
-    and Preserve Aspect Ratio); Maya puts the centre vertex ``centre_dv`` lower (measured)."""
+    and Preserve Aspect Ratio); Maya puts the centre vertex ``centre_dv`` lower."""
     n = len(rim)
     sign = 1 if top else -1
     rim_r = math.hypot(verts[rim[0]][0], verts[rim[0]][2]) or 1.0
@@ -360,7 +360,7 @@ def _cap(verts, faces, uvs, rim, centre_y, sc, r, top, uv_c, uv_r, dome=0.0, cen
         uvs.append([cap_uv(verts[v]) for v in f])
 
 
-# Menu UV layout (Create UVs = Normalize and Preserve Aspect Ratio, §2.3): sides in u 0.375..0.625,
+# Menu UV layout (Create UVs = Normalize and Preserve Aspect Ratio): sides in u 0.375..0.625,
 # v 0.3125..0.68844; caps circles of radius 0.15625 around v 0.15625 / 0.84375
 SIDE_U, SIDE_V = (0.375, 0.625), (0.3125, 0.68844)
 CAP_R, CAP_V, CAP_DV = 0.15625, (0.15625, 0.84375), 0.00625
@@ -372,7 +372,7 @@ def poly_cylinder(a):
     if sc == 0:
         return _cylinder_ngon_caps(a, r, h, sx, sy)
     # Maya stacks every ring from the bottom cap's innermost up the side to the top cap's innermost, then the two
-    # centres (mayapy 2026, step 257: 24 / 24 polyCylinder sizes with Subdivisions Caps >= 1, round caps 4 / 4)
+    # centres (step 257: 24 / 24 polyCylinder sizes with Subdivisions Caps >= 1, round caps 4 / 4)
     rings = []          # (radius, y, part): part -1 bottom cap, 0 side, 1 top cap
     for c in range(1, sc):
         rings.append(_cap_ring(r, -h / 2, sc, c, -1, dome) + (-1,))
@@ -411,7 +411,7 @@ def poly_cylinder(a):
         uvs.append([uv_top(verts[v]) for v in f])
     hard = set()
     if not dome:
-        for i in range(sx):   # the cap rims are hard, the sides soft unless facetted (§2.3)
+        for i in range(sx):   # the cap rims are hard, the sides soft unless facetted
             hard.add(frozenset((rim0 * sx + i, rim0 * sx + (i + 1) % sx)))
             hard.add(frozenset((rim1 * sx + i, rim1 * sx + (i + 1) % sx)))
     hard |= _soft_by_angle(verts, [faces[i] for i in side])
@@ -434,7 +434,7 @@ def _cylinder_ngon_caps(a, r, h, sx, sy):
     _cap(verts, faces, uvs, list(range(sy * sx, sy * sx + sx)), h / 2, 0, r, True, (0.5, CAP_V[1]), CAP_R, 0.0,
          CAP_DV)
     hard = set()
-    for i in range(sx):   # the cap rims are hard, the sides soft unless facetted (§2.3)
+    for i in range(sx):   # the cap rims are hard, the sides soft unless facetted
         hard.add(frozenset((i, (i + 1) % sx)))
         hard.add(frozenset((sy * sx + i, sy * sx + (i + 1) % sx)))
     hard |= _soft_by_angle(verts, faces[:side])
@@ -463,7 +463,7 @@ def _cap_uv(rim_r, top, uv_c, uv_r, centre_dv):
 
 
 def _cylinder_edges(nrings, sx, centres):
-    """polyCylinder's edge ids (mayapy 2026, 36 / 36 sizes + 4 round caps, edge for edge): every ring's edges ring by
+    """polyCylinder's edge ids (36 / 36 sizes + 4 round caps, edge for edge): every ring's edges ring by
     ring, then the edges from each ring to the next, then the bottom centre's spokes (centre first) and the top
     centre's (centre last)."""
     out = [(q * sx + i, q * sx + (i + 1) % sx) for q in range(nrings) for i in range(sx)]
@@ -486,7 +486,7 @@ def poly_cone(a):
         verts += _ring(sx, r * (1 - j / sy), -h / 2 + h * j / sy)
     faces, uvs = [], []
 
-    def side_uv(i, j):   # menu UVs: side fan u 0.25..0.75 at the base, apex (0.5, 1); base circle r 0.25 (§2.4)
+    def side_uv(i, j):   # menu UVs: side fan u 0.25..0.75 at the base, apex (0.5, 1); base circle r 0.25
         return (0.5 + (i / sx - 0.5) * 0.5 * (1 - j / sy), 0.5 + 0.5 * j / sy)
 
     for j in range(sy - 1):
@@ -503,7 +503,7 @@ def poly_cone(a):
         faces.append([last + i, last + k, apex])
         uvs.append([side_uv(i, sy - 1), side_uv(i + 1, sy - 1), (0.5, 1.0)])
     hard = set() if dome else {frozenset((i, (i + 1) % sx)) for i in range(sx)}
-    hard |= {frozenset((last + i, apex)) for i in range(sx)}   # Maya keeps the apex edges hard (§2.4)
+    hard |= {frozenset((last + i, apex)) for i in range(sx)}   # Maya keeps the apex edges hard
     return Mesh(_orient(verts, a), faces, uvs, hard)
 
 
@@ -541,12 +541,12 @@ def poly_plane(a):
 
 
 def _apex_uv(i, j, n, rows):
-    """Cone / pyramid side UVs (menu layout): a fan from u 0.25..0.75 at v 0.5 to the apex (0.5, 1) (§2.4)."""
+    """Cone / pyramid side UVs (menu layout): a fan from u 0.25..0.75 at v 0.5 to the apex (0.5, 1)."""
     return (0.5 + (i / n - 0.5) * 0.5 * (1 - j / rows), 0.5 + 0.5 * j / rows)
 
 
 def _ngon_solid(a, n, side, length, sh, sc, apex):
-    """Pyramid (``apex``) / prism: Maya side-length based polygons (§2.6, §2.7)."""
+    """Pyramid (``apex``) / prism: Maya side-length based polygons."""
     R = side / (2 * math.sin(math.pi / n))
     verts, faces, uvs = [], [], []
     rows = sh if apex else sh + 1
@@ -582,7 +582,7 @@ def _ngon_solid(a, n, side, length, sh, sc, apex):
 def poly_pyramid(a):
     n, s = a["numberOfSides"], a["sideLength"]
     R = s / (2 * math.sin(math.pi / n))
-    height = math.sqrt(max(s * s - R * R, 0.0))   # equilateral side triangles (§2.6)
+    height = math.sqrt(max(s * s - R * R, 0.0))   # equilateral side triangles
     return _ngon_solid(a, n, s, height, a["subdivisionsHeight"], a["subdivisionsCaps"], True)
 
 
@@ -591,11 +591,11 @@ def poly_prism(a):
                        a["subdivisionsCaps"], False)
 
 
-# --- polyDisc (§2.8) ------------------------------------------------------------------------------------------
+# --- polyDisc  ------------------------------------------------------------------------------------------
 
 def _polygon(n, r):
-    """polyDisc corners in (x, z): corner i at 90 + 180 / n - 360 i / n degrees (measured: n = 3 -> (-0.866, 0.5),
-    (0.866, 0.5), (0, -1); §2.8)."""
+    """polyDisc corners in (x, z): corner i at 90 + 180 / n - 360 i / n degrees (n = 3 -> (-0.866, 0.5),
+    (0.866, 0.5), (0, -1))."""
     out = []
     for i in range(n):
         t = math.pi / 2 + math.pi / n - 2 * math.pi * i / n
@@ -620,7 +620,7 @@ class _Builder:
 
 
 def _disc_2d(n, mode, sub, r):
-    """polyDisc in (x, z): list of 2D points and faces (§2.8)."""
+    """polyDisc in (x, z): list of 2D points and faces."""
     corners = _polygon(n, r)
     b = _Builder()
     centre = (0.0, 0.0)
@@ -642,7 +642,7 @@ def _disc_2d(n, mode, sub, r):
                     quad = [pt((x) / g, y / g), pt((x + 1) / g, y / g), pt((x + 1) / g, (y + 1) / g),
                             pt(x / g, (y + 1) / g)]
                     b.faces.append([b.v(p) for p in quad])
-        if mode == 4:   # Circle: kites rebuilt as Coons patches between circle arcs and straight spokes (§2.8)
+        if mode == 4:   # Circle: kites rebuilt as Coons patches between circle arcs and straight spokes
             b = _Builder()
             step = 2 * math.pi / n
             for i in range(n):
@@ -735,12 +735,12 @@ def _facing_down(verts, f):
     return s < 0
 
 
-# --- polyPlatonic (§2.9) ----------------------------------------------------------------------------------------
+# --- polyPlatonic  ----------------------------------------------------------------------------------------
 
 def _platonic_base(kind):
     phi = (1 + math.sqrt(5)) / 2
     if kind == 0:   # tetrahedron, apex on +Z
-        # Maya's tetrahedron: apex +Z, base ring at z = -0.5 (radius 0.866), not the regular -1/3 (§2.9)
+        # Maya's tetrahedron: apex +Z, base ring at z = -0.5 (radius 0.866), not the regular -1/3
         k = math.sqrt(0.75)
         v = [(0, 0, 1)] + [(k * math.cos(t), k * math.sin(t), -0.5) for t in (0, 2 * math.pi / 3, -2 * math.pi / 3)]
         f = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
@@ -761,7 +761,7 @@ def _platonic_base(kind):
         f = [[0, 2, 1], [0, 3, 2], [0, 4, 3], [0, 5, 4], [0, 1, 5], [1, 2, 7], [2, 3, 8], [3, 4, 9], [4, 5, 10],
              [5, 1, 6], [1, 7, 6], [2, 8, 7], [3, 9, 8], [4, 10, 9], [5, 6, 10], [6, 7, 11], [7, 8, 11], [8, 9, 11],
              [9, 10, 11], [10, 6, 11]]
-    else:   # dodecahedron: (+-1, +-1, +-1) and (0, +-1/phi, +-phi) cycles over sqrt(3), Maya's order (§2.9)
+    else:   # dodecahedron: (+-1, +-1, +-1) and (0, +-1/phi, +-phi) cycles over sqrt(3), Maya's order
         q, g = 1 / phi, phi
         raw = [(0, -q, -g), (-q, -g, 0), (-g, 0, -q), (-1, -1, -1), (-1, -1, 1), (0, -q, g), (-q, g, 0), (-g, 0, q),
                (-1, 1, -1), (-1, 1, 1), (0, q, -g), (q, -g, 0), (g, 0, -q), (1, -1, -1), (1, -1, 1), (0, q, g),
@@ -862,8 +862,8 @@ def poly_platonic(a):
 
 
 def _soft_by_angle(verts, faces, limit=55.0):
-    """Edges Maya leaves hard on facetted round primitives: normals more than ~55 degrees apart (measured: 6-sided
-    cylinders / spheres hard at 60, 20-sided soft, cone sides soft at 53; §2.10)."""
+    """Edges Maya leaves hard on facetted round primitives: normals more than ~55 degrees apart (6-sided
+    cylinders / spheres hard at 60, 20-sided soft, cone sides soft at 53)."""
     normals = []
     for f in faces:
         nx = ny = nz = 0.0
@@ -893,10 +893,10 @@ POLY = {"polyCube": poly_cube, "polySphere": poly_sphere, "polyCylinder": poly_c
         "polyPyramid": poly_pyramid, "polyPrism": poly_prism}
 
 
-# --- NURBS (§3) -----------------------------------------------------------------------------------------------
+# --- NURBS  -----------------------------------------------------------------------------------------------
 
 def _circle_factor(n):
-    """Periodic cubic CVs that interpolate a circle at the knots sit at radius 6 / (4 + 2 cos(360/n)) (§3.1)."""
+    """Periodic cubic CVs that interpolate a circle at the knots sit at radius 6 / (4 + 2 cos(360/n))."""
     return 6.0 / (4.0 + 2.0 * math.cos(2 * math.pi / n))
 
 
@@ -933,7 +933,7 @@ def _bspline_row(n, t):
 
 def _open_fit(points, t0, t1):
     """Open cubic CVs through ``points`` (n + 1, at the knots) with Maya's end rule: the second CV lies on the end
-    tangent ``t0`` / ``t1`` (unit) at a third of the first / last chord (§3.1)."""
+    tangent ``t0`` / ``t1`` (unit) at a third of the first / last chord."""
     n = len(points) - 1
     dim = len(points[0])
     m = n + 3
@@ -1004,7 +1004,7 @@ def _frame_to(normal):
 def nurbs_circle(a):
     sweep = math.radians(a["sweep"])
     deg = a["degree"]
-    # Maya: a cubic circle / arc gets at least 4 sections (measured: s 1 / 2 / 3 -> 4, §3.1)
+    # Maya: a cubic circle / arc gets at least 4 sections (s 1 / 2 / 3 -> 4)
     sections = max(a["sections"], 4) if deg == 3 else a["sections"]
     pts, cyclic = arc_cvs(a["radius"], math.pi / 2, sweep, sections, deg)
     rot = _frame_to((a["normalX"], a["normalY"], a["normalZ"]))
@@ -1031,7 +1031,7 @@ def nurbs_square(a):
     w, h, sps, deg = a["sideLength1"], a["sideLength2"], a["spansPerSide"], a["degree"]
     rot = _rot_to((a["normalX"], a["normalY"], a["normalZ"]))
     c = (a["centerX"], a["centerY"], a["centerZ"])
-    # Maya's four curves for normal +Y in (x, z): top, left, bottom, right, counter-clockwise from +X+Z (§3.2)
+    # Maya's four curves for normal +Y in (x, z): top, left, bottom, right, counter-clockwise from +X+Z
     x, z = w / 2, h / 2
     sides = (("top", (x, z), (-x, z)), ("left", (-x, z), (-x, -z)), ("bottom", (-x, -z), (x, -z)),
              ("right", (x, -z), (x, z)))
@@ -1045,7 +1045,7 @@ def nurbs_square(a):
 
 
 def _revolve(profile, a, sweep_closed):
-    """Surface of revolution about Maya +Y: ``profile`` = list of (radius, y); rows = profile points (§3.3)."""
+    """Surface of revolution about Maya +Y: ``profile`` = list of (radius, y); rows = profile points."""
     deg = a["degree"]
     s0, s1 = math.radians(a["startSweep"]), math.radians(a["endSweep"])
     sweep = s1 - s0
@@ -1105,7 +1105,7 @@ def nurbs_torus(a):
     spans = max(a["spans"], 2)
     start = math.pi
     if deg == 3 and abs(abs(msw) - 2 * math.pi) < 1e-9:
-        start += 2 * math.pi / max(spans, 4)   # periodic CVs: the first one on the inner side (§3.3)
+        start += 2 * math.pi / max(spans, 4)   # periodic CVs: the first one on the inner side
     sec, cyc_minor = arc_cvs(sr, start, msw, spans, deg)
     prof = [(R + p[0], p[1]) for p in sec]
     rows, cyc = _revolve(prof, a, True)
@@ -1130,13 +1130,13 @@ def nurbs_cube(a):
     pu, pv, deg = max(a["patchesU"], 1), max(a["patchesV"], 1), a.get("degree", 3)
     X, Y, Z, nZ = (w, 0, 0), (0, H, 0), (0, 0, L), (0, 0, -L)
     out = []
-    # (name, centre, u direction, v direction): Maya's six patches (§3.6); left / right are the +Z / -Z sides,
+    # (name, centre, u direction, v direction): Maya's six patches; left / right are the +Z / -Z sides,
     # front / back +X / -X
     faces = (("top", (0, H / 2, 0), X, nZ), ("bottom", (0, -H / 2, 0), nZ, X),
              ("left", (0, 0, L / 2), X, Y), ("right", (0, 0, -L / 2), Y, X),
              ("front", (w / 2, 0, 0), nZ, Y), ("back", (-w / 2, 0, 0), Y, nZ))
     for name, c, du, dv in faces:
-        # the face's lower Maya axis (x < y < z) gets patchesU, the higher one patchesV (measured, §3.6)
+        # the face's lower Maya axis (x < y < z) gets patchesU, the higher one patchesV
         au, av = _axis_of(du), _axis_of(dv)
         nu_, nv_ = (pu, pv) if au < av else (pv, pu)
         us = _line((-0.5,), (0.5,), nu_, deg)
@@ -1164,8 +1164,7 @@ def build(node_type, attrs):
 
 
 # Step 190: Pipe / Helix / Gear / Soccer Ball (prim_shapes_more) and Super Ellipse / Spherical Harmonics / Ultra Shape
-# (prim_supershape, one polySuperShape node) join the tables; both modules import this one, so they come last
-# (research/maya/re/poly_prims_185.md).
+# (prim_supershape, one polySuperShape node) join the tables; both modules import this one, so they come last.
 from . import prim_shapes_more, prim_supershape  # noqa: E402
 
 for _mod in (prim_shapes_more, prim_supershape):

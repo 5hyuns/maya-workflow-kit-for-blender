@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Key batch 3 (docs/steps/step_107.md 「계획」): Maya keys that had no or a wrong binding.
 
-Maya commands (research/maya/hotkeys_default.json, meanings from research/maya/runtime_commands.json annotations):
+Maya commands (meanings from Maya's annotations):
 - Ctrl+M ToggleMainMenubar: the main menu bar folds into Blender's top-bar menu button (``area.show_menus`` of the
   top bar, which the kit menu bar already follows: ui/status_line.draw_left).
 - Alt+B CycleBackgroundColor: Maya's cycle in every view, flat colours only (steps 120, 130; see below).
@@ -15,14 +15,13 @@ from bpy.props import EnumProperty
 
 from .. import results
 
-# Maya background (step 120, docs/steps/step_120.md). Measured in a running Maya 2022 with factory prefs
-# (research/maya/screens/bg120/_bg120.json, research/scripts/maya_bg120/bg120.py, research/maya/re/background_120.md):
+# Maya background (step 120, docs/steps/step_120.md), Maya with factory prefs:
 # Maya's Alt+B background cycle is one global state for every viewport -
 #   gradient on        -> background 0 0 0, gradient off
 #   background == 0    -> 0.36 (factory)
 #   background <  0.5  -> 0.631
 #   else               -> gradient on (backgroundTop #889db3 at the top, backgroundBottom #0d0d0d at the bottom)
-# Values are display (sRGB) values: the factory viewport pixel is #5c5c5c = 0.36 (research/maya/colors.json).
+# Values are display (sRGB) values: the factory viewport pixel is #5c5c5c = 0.36.
 #
 # Step 130 (#40, decision 2): the kit never edits the user's theme. Blender's only gradient background is the
 # theme's (``view_3d.space.gradients``; a 3D View's own background is one flat ``View3DShading.background_color``),

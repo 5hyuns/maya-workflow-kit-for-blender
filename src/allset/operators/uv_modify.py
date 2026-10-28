@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor Modify commands (step 178 lane A), measured in mayapy: research/maya/re/uv_modify_178.md (rules)
-and research/maya/re/uv_modify_178.json (ground truth the tests compare against).
+"""Maya 2022 UV Editor Modify commands (step 178 lane A); the tests compare against Maya's numbers.
 
 Distribute UVs, Match Grid, Layout Along, Stack Similar Shells, Map Border and Straighten Border, with Maya's factory
 options. Shells and Maya UVs (points: loops of one vertex sharing one coordinate, ordered by first loop index = Maya's UV
 index for meshes built face by face) come from operators/uv_shells.py. Modify > Symmetrize is not here: Maya's
-symmetrizeUV only acts after the Symmetrize UV tool's seam pick in a GUI session (uv_modify_178.md §4).
+symmetrizeUV only acts after the Symmetrize UV tool's seam pick in a GUI session.
 """
 
 import math
@@ -63,7 +62,7 @@ def _round_off(value, precision=8):
 
 
 def _mel_str(value):
-    """Float -> string as Maya writes it (10 significant digits, measured: 1.0/3 -> "0.3333333333", 14.0 -> "14")."""
+    """Float -> string as Maya writes it (10 significant digits, 1.0/3 -> "0.3333333333", 14.0 -> "14")."""
     return "%.10g" % value
 
 
@@ -334,7 +333,7 @@ def _signature(cycle, pts, uv):
 
 def _match_shift(target, cand, tolerance):
     """Shift k so cand's border UV (j + k) matches target's UV j, or None (no mirror match: Maya leaves mirrored
-    shells, measured)."""
+    shells)."""
     _tp, tl, tt, tc, tper = target
     _cp, cl, ct, cc, cper = cand
     n = len(tl)
@@ -426,7 +425,7 @@ class _ModOp(uv_shells._ShellOp):
 
 
 def picked_shells(bm, uv, synced):
-    """Shells with a whole face in the selection (Maya maps / straightens nothing for a lone inner UV, measured)."""
+    """Shells with a whole face in the selection (Maya maps / straightens nothing for a lone inner UV)."""
     every = shells(bm, uv)
     if synced:
         picked = {f for f in bm.faces if f.select}

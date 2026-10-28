@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya joints: Joint Tool, Orient Joint, Mirror Joints, joint pick-walk and P / Shift+P.
 
-research/maya/workflows/rigging.md §1.1 (1-6), §4 concept 1 (a Maya joint = a bone of one armature per
+Maya rigging (a Maya joint = a bone of one armature per
 skeleton, ``skeleton1`` / ``joint1``, rotate order XYZ, Blender's bone Y points at the child), design
 docs/steps/step_57.md 「계획」. A Maya joint is a point and a Blender bone a segment, so N clicks make N
 bones: bone K runs from click K to click K+1, the last (Maya's end joint) gets a short tail along the
@@ -93,7 +93,7 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
     if parent is not None and (p - parent.head).length < 1e-6:
         return parent.name
     eb = ebs.new(next_joint_name())
-    eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (factory; Blender 4.5 measured, joint_math.md §4)
+    eb.inherit_scale = 'NONE'      # Maya segmentScaleCompensate on (factory; Blender 4.5 measured)
     stamp_last(eb)                 # Maya child order = creation order (step 248)
     eb.head = p
     if parent is None:
@@ -109,8 +109,8 @@ def add_joint(ob, point, parent_name=None, up=Vector((0.0, 0.0, 1.0)), length=1.
 
 
 def finish(context, ob, names, top=None):
-    """Pose mode, new joints rotate XYZ (rigging.md:134). Maya 2026 selects the top of the branch just made: the
-    new chain's root, or ``top`` = the existing joint the chain branched from (maya2026_joints.md §2)."""
+    """Pose mode, new joints rotate XYZ. Maya 2026 selects the top of the branch just made: the
+    new chain's root, or ``top`` = the existing joint the chain branched from."""
     if ob.mode != 'POSE':
         bpy.ops.object.mode_set(mode='POSE')
     cb = _cb()
@@ -140,7 +140,7 @@ def view_under(window, x, y):
     return None
 
 
-# Maya Joint Tool settings the kit honours (research/maya/re/option_boxes_140.md:196-206): Secondary Axis Y with
+# Maya Joint Tool settings the kit honours: Secondary Axis Y with
 # Secondary Axis World Orientation +Y (Joint Tool factory), Create IK handle off. Blender bones point their Y at the
 # child (= Maya Primary Axis X); a joint's Maya Y / Z = the bone's Z / X (rig_tools.local_axis).
 SECONDARY_AXES = (("X", "X", "Maya X is the primary axis: not allowed"), ("Y", "Y", "The bone's Z axis"),
@@ -155,8 +155,7 @@ JOINT_AXES = Matrix(((0.0, 0.0, 1.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)))
 MAYA_WORLD = Matrix(((1.0, 0.0, 0.0), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0)))
 # A Maya joint frame a bone can't take: a Blender bone always points its Y at the child, a Maya joint's X need not.
 # Such joints store their Maya frame relative to the bone's joint frame (``MAYA_FRAME``, quaternion in joint axes) and
-# the FBX writer turns the joint by it (fbx_rig.rewrite, step 232). Two cases (mayapy 2026, C:/Repos/bmk-strategy/
-# audit230/maya/chain3.json "chain"):
+# the FBX writer turns the joint by it (fbx_rig.rewrite, step 232). Two cases:
 # - Orient Joint / Joint Tool (oj xyz, any sao) leave an END joint (no child joint) lined up with the world: joint3
 #   jointOrient (0, 7.31, 0) after joint1 (0, 7.01, 0) and joint2 (0, -14.32, 0);
 # - Mirror Joints Behavior: the copy's frame is -(reflection x source frame) — its X points back up the chain
@@ -209,7 +208,7 @@ def maya_frames(ob):
 # Step 233 (Issue #142): Blender ignores every location constraint on a CONNECTED bone (its head is glued to the
 # parent's tail; measured 4.5: Copy Location / Child Of / Copy Transforms / Limit Location leave it in place, rotation
 # constraints work), while a Maya joint's translate is free: Constrain > Point / Parent on a child joint moves it
-# (mayapy 2026, C:/Repos/bmk-strategy/audit230/maya/cons233.json: joint3 (12, 12, 0), W1 = 3 -> (12, 13, 0)).
+# (Maya 2026: joint3 (12, 12, 0), W1 = 3 -> (12, 13, 0)).
 # The joint that gets such a constraint is disconnected (delegated: only that bone — Joint Tool chains stay connected,
 # so moving a joint in edit mode still drags the chain); it stays where it is (rest pose unchanged) and the bone is
 # marked ``FREED``. Undo brings the connection back with the constraint.
@@ -252,9 +251,9 @@ def free_location_constrained(context, arm):
 
 def orient_new(ob, names, secondary="Y", world="Y", sign="+", aos=True, to_world=False):
     """Orient the new joints the way Maya's Joint Tool does on finish (Joint Tool factory: orientation xyz, secondary
-    axis yup, auto orient secondary on, research/maya/re/joint_rig_2026_joint_tool.md §3): primary X, ``secondary`` Y /
+    axis yup, auto orient secondary on): primary X, ``secondary`` Y /
     Z toward the Maya world axis ``world`` / ``sign`` (bend normal with ``aos``), "NONE" = Maya's traditional orient (no
-    secondary axis), ``to_world`` = Orient Joint to World. Also writes Maya's variable bone radius (§4). Returns the number of
+    secondary axis), ``to_world`` = Orient Joint to World. Also writes Maya's variable bone radius. Returns the number of
     joints oriented."""
     if secondary == "X":
         raise RuntimeError("Secondary axis must differ from the primary axis (X)")
@@ -289,7 +288,7 @@ def _first_child(eb):
 
 
 def _rotated(ob, name):
-    """Maya skips joints whose rotate isn't zero (1e-10; principles2.md §1.1)."""
+    """Maya skips joints whose rotate isn't zero (1e-10)."""
     pb = ob.pose.bones.get(name) if ob.pose is not None else None
     return pb is not None and pb.matrix_basis.to_quaternion().angle > 1e-9
 
@@ -320,8 +319,8 @@ def orient_bones(ob, ebs, names, oj="xyz", sao="yup", aos=True, skipped=None, re
     on Maya Y, and a frame the bone can't take (primary axis not X, an end joint) goes into ``MAYA_FRAME``. Rotated
     joints are skipped (``skipped`` gets (name, reason)). Returns the number oriented."""
     from . import joint_orient
-    # Skin-bound joints are oriented too, without a warning (mayapy 2026 tmp/re251/a/verify_orient_messages.json,
-    # 060_rig_lane.md A1). Maya then moves the skinned mesh (bindPreMatrix kept: 2.06 units on tmp/p252/oj_skin.json);
+    # Skin-bound joints are oriented too, without a warning. Maya then moves the skinned mesh (bindPreMatrix
+    # kept: 2.06 units on a test rig);
     # Blender's skin follows the new rest, so the kit's mesh stays (step 252, a measured difference).
     depth = {eb.name: len(eb.parent_recursive) for eb in ebs}
     order = sorted(names, key=lambda nm: depth.get(nm, 0))
@@ -369,7 +368,7 @@ def set_bone_frame(eb, frame):
 
 def set_radius(ebs, names, unit=None):
     """Maya Joint Tool variable bone radius (``allset_radius``, Maya units): from the distance to the first child,
-    an end joint copies its parent's (joint_rig_2026_joint_tool.md §4)."""
+    an end joint copies its parent's."""
     from . import joint_orient
     k = unit or units.maya_unit(bpy.context.scene)
     for nm in names:
@@ -389,7 +388,7 @@ RADIUS = "allset_radius"
 
 
 # A Joint Tool click inside a joint's drawn sphere branches from it (Maya 2026: the hit area is the drawn sphere,
-# not a fixed radius - maya2026_joints.md §3). Blender draws an octahedral bone's joint as a sphere of radius
+# not a fixed radius). Blender draws an octahedral bone's joint as a sphere of radius
 # JOINT_SPHERE x the bone length (a connected head: the incoming bone's tail sphere) [I: Blender's bone point shape];
 # the floor is Maya's click box (select_priority.RADIUS_PX), also the whole hit area of Stick bones.
 JOINT_SPHERE = 0.05
@@ -442,7 +441,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     secondary_world: EnumProperty(name="Secondary Axis World Orientation",
                                   items=[(a, a, "") for a in ("X", "Y", "Z")], default="Y")
     secondary_sign: EnumProperty(name="Sign", items=(("+", "+", ""), ("-", "-", "")), default="+")
-    # Maya 2025+ Joint Tool factory: auto orient secondary on (joint_rig_2026_joint_tool.md §1); Orient Joint to World =
+    # Maya 2025+ Joint Tool factory: auto orient secondary on; Orient Joint to World =
     # no orientation
     auto_secondary: BoolProperty(name="Auto orient secondary axis", default=True)
     orient_world: BoolProperty(name="Orient Joint to World", default=False)
@@ -476,8 +475,8 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
     def invoke(self, context, event):
         if context.window is None:
             return {'CANCELLED'}
-        # Maya 2022-2027 never branch from a joint selected before the tool starts (measured: joint1 selected, two
-        # clicks -> an unparented chain, PR125_MAYA_CHECK.md 8b); clicking an existing joint with the tool does
+        # Maya 2022-2027 never branch from a joint selected before the tool starts (joint1 selected, two
+        # clicks -> an unparented chain); clicking an existing joint with the tool does
         # (``_branch_from``).
         self._names, self._ob, self._parent, self._top = [], None, None, None
         self._swallow = False
@@ -534,7 +533,7 @@ class ALLSET_OT_joint_tool(bpy.types.Operator):
 
     def modal(self, context, event):
         # Maya 2026 ends the tool on Enter / Q / W / E / R with the branch top selected; Enter and Q leave the Select
-        # Tool, W / E / R their tool (maya2026_joints.md §2).
+        # Tool, W / E / R their tool.
         enter = event.type in {'RET', 'NUMPAD_ENTER'} and event.value == 'PRESS'
         if enter or (event.type in {'Q', 'W', 'E', 'R'} and event.value == 'PRESS'
                      and not (event.alt or event.ctrl or event.shift or event.oskey)):
@@ -668,7 +667,7 @@ _AXES = [(a, a, "") for a in ("X", "Y", "Z")]
 
 def orient(ob, names, sao, children=True, oj="xyz", aos=True, skipped=None):
     """Maya Skeleton > Orient Joint (``cmds.joint(edit=True, oj=oj, sao=sao, aos=..., ch=True, zso=True)``; factory xyz
-    / yup / aos on / children on, joint_rig_2026_skeleton_menu.md §1): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no
+    / yup / aos on / children on): ``sao`` "Y+" .. "Z-" (kit enum), "NONE" = no
     secondary world axis (Maya's traditional orient), ``oj`` "none" = Orient Joint to World. Rotated / skinned joints
     are skipped (``skipped``). Returns the number oriented."""
     if oj != "none" and sao not in SAO_ROLL and sao != "NONE":
@@ -758,13 +757,13 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
         skipped = []
         n = orient(ob, names, self.world, self.children, oj, self.auto_secondary, skipped)
         for name, why in skipped:
-            self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning (060_rig_lane.md A1)
+            self.report({'WARNING'}, f"Skipping {name}: {why}")     # Maya's warning
         if skipped:
-            # Maya ends with this one, naming the first rotated joint up the hierarchy (060_rig_lane.md A1, mayapy)
+            # Maya ends with this one, naming the first rotated joint up the hierarchy
             self.report({'WARNING'}, f"Cannot perform joint orientation. Transform {skipped[0][0]} has non-zero "
                                      "rotations.")
         # Maya 2026 prints only the command echo (joint -e -oj xyz -sao yup -aos -ch -zso;), no result line
-        # (research/maya/re/060_messages_ui.md B7): the result field is cleared
+        # (Maya): the result field is cleared
         results.result(self, "")
         return {'FINISHED'}
 
@@ -830,8 +829,8 @@ def _maya_axes(bone):
 
 
 def copy_rotate(ob, pairs):
-    """Maya Mirror Joints copies the rotate values (both functions; joint_rig_2026_skeleton_menu.md §7, fixture
-    mirror_joint XY_behavior_factory / YZ_orientation: dst r = src r). ``pairs`` {source: copy}; same Maya rotate in
+    """Maya Mirror Joints copies the rotate values (both functions:
+    dst r = src r). ``pairs`` {source: copy}; same Maya rotate in
     each joint's own axes, also when their bones differ from their Maya frames."""
     for src, dst in pairs.items():
         ps, pd = ob.pose.bones.get(src), ob.pose.bones.get(dst)
@@ -840,7 +839,7 @@ def copy_rotate(ob, pairs):
         a_s, a_d = _maya_axes(ps.bone), _maya_axes(pd.bone)
         r_m = a_s.transposed() @ ps.matrix_basis.to_3x3() @ a_s
         q = (a_d @ r_m @ a_d.transposed()).to_quaternion()
-        # a Maya joint rotates by Euler values (rigging.md:134): the copy keeps the source's order, XYZ otherwise
+        # a Maya joint rotates by Euler values: the copy keeps the source's order, XYZ otherwise
         euler = ps.rotation_mode not in ('QUATERNION', 'AXIS_ANGLE')
         pd.rotation_mode = ps.rotation_mode if euler else 'XYZ'
         pd.rotation_euler = q.to_euler(pd.rotation_mode, ps.rotation_euler) if euler else q.to_euler('XYZ')
@@ -852,7 +851,7 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
     bl_label = "Mirror Joints Options"
     bl_options = {'UNDO'}
 
-    # Maya 2026 factory: XY (joint_rig_2026_skeleton_menu.md §7, step 246)
+    # Maya 2026 factory: XY (step 246)
     plane: EnumProperty(name="Mirror Across", items=[(k, k, "") for k in ("XY", "YZ", "XZ")], default="XY")
     function: EnumProperty(name="Mirror Function", items=(("BEHAVIOR", "Behavior", "Mirrored joints rotate "
                                                            "the opposite way (Blender symmetrize)"),
@@ -897,8 +896,8 @@ class ALLSET_OT_mirror_joints(bpy.types.Operator):
 # --- joint pick-walk and parenting --------------------------------------------------------------
 
 # Step 217 (docs/strategy/DECISIONS7.md decision 6, docs/steps/step_217.md L20): Maya's pickWalk walks the DAG and
-# goes into hidden nodes (research/maya/re/maya2026_anim.md:16-18); with controller tags it follows the controller
-# hierarchy (:19). Kit controller tags live on data Bones (operators/controllers.py). An untagged armature treats
+# goes into hidden nodes; with controller tags it follows the controller
+# hierarchy. Kit controller tags live on data Bones (operators/controllers.py). An untagged armature treats
 # bones whose bone collections are all hidden as "not a control" and walks past them (preference
 # pick_walk_skip_hidden_collections; Maya walks into hidden display layers — kit difference, delegated). Bones
 # hidden one by one (h) are walked into like Maya.
@@ -907,7 +906,7 @@ CONTROLLER_PARENT = "allset_controller_parent"
 
 
 # Step 248 (Issue #165): Maya's pickWalk goes down to the first child and sideways through the siblings in the
-# parent's child order, wrapping at the ends (tests/maya2026_rig_data.py SELECT_PICK: spine's children L_arm, R_arm,
+# parent's child order, wrapping at the ends (SELECT_PICK: spine's children L_arm, R_arm,
 # neck — L_arm left -> neck, neck right -> L_arm). Maya's child order = creation order, a re-parented node goes last.
 # Blender keeps bones in creation order (``arm.bones``, the edit-bone list); the kit stamps ``CHILD_ORDER`` on a bone
 # it re-parents (P, Connect / Remove / Disconnect / Insert Joint) with the armature's next number, so it sorts last.

@@ -1,6 +1,6 @@
 """Step 138 (#69): FBX / OBJ / Alembic / USD round trip the Maya way — no axis / unit conversion left on the channels,
 Maya names. Plan: docs/steps/step_138.md 「계획」; lane doc docs/steps/step_138_file_io.md; Maya side:
-research/scripts/file_io_138_mayapy.py (writes tmp/file_io138/maya_cube138.*, reads tmp/file_io138/kit_cube138*.*).
+ (writes tmp/file_io138/maya_cube138.*, reads tmp/file_io138/kit_cube138*.*).
 
 The reference object is Maya's pCube1: polyCube 1 x 1 x 1 at Maya translate (1, 2, 3), rotate Y 28.6, tx keyed 1 at
 frame 1 and 5 at frame 10. The kit is Z up (Maya Y = Blender Z, Maya Z = Blender -Y, decision 8 / step 102), so in the
@@ -98,7 +98,7 @@ def import_file(path, cm=True):
 
 
 def test_measure():
-    """Writes kit_cube138*.* for mayapy and the kit's view of everything into tmp/file_io138/kit_<tag>.json."""
+    """Writes kit_cube138*.* for Maya and the kit's view of everything into tmp/file_io138/kit_<tag>.json."""
     IO.mkdir(parents=True, exist_ok=True)
     out = {"kit_scene": None, "export": {}, "kit_to_kit": {}, "maya_to_kit": {}}
     for cm, suffix in ((True, ""), (False, "_m")):
@@ -242,8 +242,8 @@ def test_presets():
 
 
 def test_maya_written_files():
-    """tmp/file_io138/maya_cube138.* from research/scripts/file_io_138_mayapy.py: Maya's channels, names and
-    keys in the kit (skipped when mayapy hasn't run)."""
+    """tmp/file_io138/maya_cube138.*: Maya's channels, names and
+    keys in the kit (skipped when Maya hasn't run)."""
     found = 0
     for fmt, ext in EXT.items():
         path = IO / f"maya_cube138{ext}"

@@ -1,7 +1,7 @@
-"""Step 186: the Maya Time Slider ruler in the Maya Workflow Kit layout (docs/steps/step_186.md,
-research/maya/re/time_slider_186.md).
+"""Step 186: the Maya Time Slider ruler in the Maya Workflow Kit layout (docs/steps/step_186.md).
 
-The step rule (frames between ticks / labels) against the steps a GUI Maya 2022 drew (research/maya/screens/ts186*/):
+
+The step rule (frames between ticks / labels) against the steps Maya 2022 draws:
 the cases the kit's model reproduces, and the few it doesn't (listed, [U] in the spec)."""
 
 from importlib import import_module

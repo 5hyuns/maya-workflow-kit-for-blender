@@ -1,5 +1,5 @@
 """Step 196 in a real UI: the option boxes of Create > Polygon Primitives > Gear and Control > Create Character Set open
-Maya's option windows (research/maya/re/options_196_prims.md, options_196_misc.md) instead of Blender's Adjust Last
+Maya's option windows instead of Blender's Adjust Last
 Operation; screenshots (ALLSET_GUI_SHOTS)."""
 
 import os

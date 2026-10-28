@@ -1,6 +1,6 @@
 """Step 101: menu honesty — every greyed Maya menu item has a notice, cheap Blender equivalents mapped, mapped
-items stay enabled in object mode the Maya way. Plan: docs/steps/step_101.md; Maya facts:
-research/maya/re/menu_honesty.md."""
+items stay enabled in object mode the Maya way. Plan: docs/steps/step_101.md."""
+
 
 import math
 import types
@@ -296,7 +296,7 @@ def test_object_mode_runs_on_the_whole_mesh():
     ob = _cube()
     _select(ob)
     assert bpy.ops.allset.menu_item(item="Edit Mesh/Poke") == {'FINISHED'}
-    assert bpy.context.mode == 'OBJECT' and len(ob.data.polygons) == 24, len(ob.data.polygons)   # mayapy 6 -> 24
+    assert bpy.context.mode == 'OBJECT' and len(ob.data.polygons) == 24, len(ob.data.polygons)   # Maya 6 -> 24
     bpy.ops.ed.undo_push(message="poked")
     _clear()
     ob = _cube()

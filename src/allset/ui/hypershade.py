@@ -2,7 +2,7 @@
 """Maya Hypershade = its own window in Maya's layout (docs/steps/step_131_hypershade.md 「계획」, issue #25; before:
 step 67 / 105 Shader Editor + sidebar tab).
 
-Maya 2022's factory Hypershade (research/maya/re/hypershade131.md, capture research/maya/screens/hypershade131/) is a
+Maya 2022's factory Hypershade is a
 floating window: the menu bar (File / Edit / View / Create / Tabs / Graph / Window / Options / Help) over the Browser
 (top-left: toolbar, 10 swatch tabs, swatch grid), Material Viewer (top-right), Create (bottom-left: category tree +
 node list), the Graph work area (centre: graph toolbar, "Untitled_1" tab, node editor) and the Property Editor
@@ -31,12 +31,12 @@ from ..operators import material as material_ops
 from ..operators import menu_extras
 from . import ae_layout, hypershade_layout
 
-# Maya Hypershade Create > Maya > Surface, alphabetical like Maya (h01_hypershade_win1): the ones Blender can build
+# Maya Hypershade Create > Maya > Surface, alphabetical like Maya: the ones Blender can build
 CREATE = ('ANISOTROPIC', 'BLINN', 'LAMBERT', 'LAYERED', 'PHONG', 'PHONG_E', 'RAMP', 'STANDARD_SURFACE', 'SURFACE',
           'USE_BACKGROUND')
 COLUMNS = 3
 
-# Browser swatch tabs (captured tab bar, research/maya/screens/hypershade131/_hypershade131.json)
+# Browser swatch tabs (Maya's tab bar)
 TABS = (("MATERIALS", "Materials", "Materials of the scene"),
         ("TEXTURES", "Textures", "Image and texture nodes in the materials"),
         ("UTILITIES", "Utilities", "Other nodes in the materials (Maya utility nodes)"),
@@ -46,7 +46,7 @@ TABS = (("MATERIALS", "Materials", "Materials of the scene"),
         ("SHADING_GROUPS", "Shading Groups", "Maya shading groups: one per material"))
 # Maya's last three Browser tabs: no Blender counterpart (greyed, notices in PANE_NOTICES)
 MAYA_ONLY_TABS = ("Bake Sets", "Projects", "Asset Nodes")
-# View > As Icons / As List / As Small ... Extra Large Swatches (captured View menu; descriptions = the Browser
+# View > As Icons / As List / As Small ... Extra Large Swatches (Maya's View menu; descriptions = the Browser
 # toolbar's Maya tooltips); icon scale per size
 SWATCHES = (("ICONS", "As Icons", "View as icons", 2.0), ("LIST", "As List", "View as list", 0.0),
             ("SMALL", "As Small Swatches", "View as small swatches", 2.0),
@@ -569,7 +569,7 @@ class ALLSET_OT_hs_edit(bpy.types.Operator):
 
 # --- panes ----------------------------------------------------------------------------------------------------
 
-# Create: Maya's category tree (capture: Favorites > Maya > Surface, then Maya > ...) -> Hypershade Create menu
+# Create: Maya's category tree (Favorites > Maya > Surface, then Maya > ...) -> Hypershade Create menu
 # submenus whose items the list shows (same paths as the Create menu, so menu and pane agree)
 CREATE_CATEGORIES = (
     ("FAVORITES", "Favorites", None),
@@ -588,9 +588,9 @@ CREATE_CATEGORIES = (
     ("GLOW", "Glow", ("Glow",)),
     ("RENDERING", "Rendering", ("Rendering",)),
 )
-# Maya's Displacement category (captured list) has no Hypershade Create menu items: greyed (category notice)
+# Maya's Displacement category has no Hypershade Create menu items: greyed (category notice)
 DISPLACEMENT = ("C Muscle Shader", "Displacement", "Usd Preview Surface")
-# Favorites > Maya > Surface (captured list order)
+# Favorites > Maya > Surface (Maya's list order)
 FAVORITES = ("Standard Surface", "Blinn", "Lambert", "Layered Shader", "Phong", "Phong E", "Ramp Shader",
              "Surface Shader", "Use Background")
 HS = "Hypershade"
@@ -945,7 +945,7 @@ def _node_header(self, context):
 
 
 TAB_TEXT = "Untitled_1"
-TAB_BACK = (68 / 255, 68 / 255, 68 / 255, 1.0)     # Maya's current tab (capture pixel at the tab: #444444)
+TAB_BACK = (68 / 255, 68 / 255, 68 / 255, 1.0)     # Maya's current tab #444444
 TAB_STRIP = (55 / 255, 55 / 255, 55 / 255, 1.0)    # tab row #373737
 TAB_INK = (0.78, 0.78, 0.78, 1.0)
 

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya pre-selection highlight in mesh edit mode (docs/steps/step_30.md, step_74.md 「계획」).
 
-Maya highlights the component under the mouse before you click (``preSelectHilite true``,
-research/maya/interaction.md:73, defaults.json:96), following the select mode, also while the
-Move / Rotate / Scale tool is active (measured in research/maya/screens/pre/): a vertex = 5 px red
+Maya highlights the component under the mouse before you click (``preSelectHilite true``),
+following the select mode, also while the
+Move / Rotate / Scale tool is active: a vertex = 5 px red
 square, an edge = 2 px red line (an edge also near its vertices), a face = red outline + red stipple.
 Maya 2022 doesn't highlight objects in object mode (pre_01), so neither does the kit.
 
@@ -34,12 +34,12 @@ SELECT_TOOLS = ("builtin.select", "allset.target_weld_tool", "allset.cut_sew_too
 TRANSFORM_TOOLS = {"builtin.move": 'TRANSLATE', "builtin.scale": 'RESIZE', "builtin.rotate": 'ROTATE',
                    "builtin.transform": 'TRANSFORM'}
 
-# --- Maya measurements (step_74.md) ------------------------------------------------------------------
-RGB = (1.0, 0.0, 0.0)               # preselect_hilite_component (research/maya/colors.json)
+# --- Maya values (step_74.md) ------------------------------------------------------------------
+RGB = (1.0, 0.0, 0.0)               # preselect_hilite_component
 VERT_PX = 5.0
 LINE_PX = 2.0
 FACE_FILL = (0.85, 0.26, 0.25, 0.35)  # the #d84240 stipple seen as a fill [I]
-RADIUS_PX = 16.0                    # MT_preSelectSize 16 (defaults.json:99) [I]
+RADIUS_PX = 16.0                    # MT_preSelectSize 16 [I]
 HANDLE_PX = 12.0                    # keep the hover on a manipulator handle this close
 ROTATE_RING = 1.25                  # Rotate (Blender's gizmo): disc of gizmo_size / 2 x this
 

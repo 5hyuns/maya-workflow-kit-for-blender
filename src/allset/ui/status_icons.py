@@ -3,8 +3,8 @@
 redrawn in step 131 for #23: docs/steps/step_131_status.md).
 
 Decision 6: no Maya icons. Maya's Status Line (20 px) and panel toolbar (16 px) show flat light-grey #bcbcbc line art
-with teal #48a9b4 accents, a dark outline around every shape and no button frame (research/maya/re/icons131.md:20-28,
-research/maya/screens/top113/t02_top.png). Every glyph here is a few vector shapes in unit coordinates, rasterised
+with teal #48a9b4 accents, a dark outline around every shape and no button frame.
+Every glyph here is a few vector shapes in unit coordinates, rasterised
 with numpy (supersampled, no files) and handed to Blender as a ``bpy.utils.previews`` image (``icon_value``).
 
 Pixel hinting: ``Canvas`` snaps rectangle edges to the target size's pixel grid, rounds line widths to whole pixels
@@ -20,7 +20,7 @@ import numpy as np
 
 SIZE = 32          # default drawing size (``Canvas`` / ``render``)
 SS = 4             # minimum supersampling
-GREY = (0.74, 0.74, 0.74)      # Maya glyph grey #bcbcbc (research/maya/re/icons131.md:27)
+GREY = (0.74, 0.74, 0.74)      # Maya glyph grey #bcbcbc
 LIGHT = (0.88, 0.88, 0.88)     # pointer / highlight
 DIM = (0.55, 0.55, 0.55)
 TEAL = (0.28, 0.66, 0.71)      # Maya accent #48a9b4
@@ -257,7 +257,7 @@ def letter(cv, ch, x, y, h, w, colour):
         cv.line(x, y, x + hw, y + h, w, colour)
 
 
-# --- Status Line glyphs (Maya 20 px, research/maya/re/icons131.md:324-369) ------------------------------
+# --- Status Line glyphs (Maya 20 px) ------------------------------
 
 def g_bar(cv):
     cv.line(0.5, 0.15, 0.5, 0.85, 0.08, DIM)

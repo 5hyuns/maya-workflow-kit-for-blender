@@ -3,9 +3,8 @@
 
 Maya 2022 lists its factory workspaces in this order (Windows > Workspaces;
 dividers after General, XGen - Interactive Groom, Animation and Rendering - Expert), then the actions Reset /
-Save / Import / Delete Current Workspace and Disable Docking/Undocking. "General" is shown as "Maya Classic"
-(research/maya/ui_layout.md:78). Choosing one switches the menu set to its ``linkedMenu`` (research/maya/ui_layout.md:
-146-152). The kit's template (tools/make_startup.MAYA_WORKSPACES) carries eight of them; a file without one gets it
+Save / Import / Delete Current Workspace and Disable Docking/Undocking. "General" is shown as "Maya Classic".
+Choosing one switches the menu set to its ``linkedMenu``. The kit's template (tools/make_startup.MAYA_WORKSPACES) carries eight of them; a file without one gets it
 appended from the bundled template (``switch.append_workspace``), Reset replaces the current one with a fresh copy
 (``switch.reset_workspace``). Each template workspace keeps its menu set and the raised tab of the right tab stack
 in ID properties (``allset_menu_set`` / ``allset_dock_tab``), applied when the kit switches to it.

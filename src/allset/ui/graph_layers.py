@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Graph Editor with several selected animation layers (docs/steps/step_204.md 「계획」 design limit).
 
-Maya (research/maya/re/anim_layers_193.md section 3, state c "both"): the Graph Editor lists each selected layer under
+Maya: the Graph Editor lists each selected layer under
 the object and draws every selected layer's curves in their own values. Blender's Graph Editor draws and edits one
 action per object: the last picked layer stays the active action (operators/anim_layers.show, editable); the other
 selected layers' curves are drawn here (Graph Editor WINDOW POST_VIEW, Maya channel colours dimmed, read only) and

@@ -4,7 +4,7 @@
 Pure Python. Used by tools/gen_keymap_mapping.py (writes the doc) and by
 tests/test_keymap_maya.py (checks every IC/KIT row is really bound).
 
-Maya side: research/maya/hotkeys_default.json (keys, contexts and
+Maya side: Maya's factory hotkeys (keys, contexts and
 runTimeCommand names only; no MEL is copied, docs/user_decisions.md #6).
 
 Status:
@@ -43,7 +43,7 @@ _DIGITS = ("ZERO", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT
 
 
 def maya_event(hotkey):
-    """Blender event dict for a hotkeys_default.json entry (PRESS)."""
+    """Blender event dict for a Maya factory hotkey entry (PRESS)."""
     key, mods = hotkey["key"], hotkey["modifiers"]
     shift = "sht" in mods
     if len(key) == 1 and key.isalpha():
@@ -91,7 +91,7 @@ ENTRIES = {
     "ShowHotbox": _e("KIT", (V3D, "allset.hotbox", {}),
                      note="홀드=핫박스(메뉴 행·존 마킹메뉴), 탭=4분할↔단일 / 패널 최대화. 재생은 Alt+V"),
 
-    # --- IC already matches (research/blender/industry_compatible_vs_maya.md §1) ---
+    # --- IC already matches ---
     "Duplicate": _e("KIT", (OBJ, "allset.duplicate", {}),
                     note="제자리, 자식 포함, pCube2/pCubeShape2 (컴포넌트 모드: Maya처럼 복제 없음 + 경고, step 129)"),
     "FrameSelectedWithoutChildren": _e("KIT", (V3D, "allset.frame", {"selected": True}),
@@ -565,7 +565,7 @@ ENTRIES = {
     "nodeEditorPanel:NodeEditorPickWalkRight": _e("NO", note="Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로)"),
     "nodeEditorPanel:NodeEditorPickWalkLeft": _e("NO", note="Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로)"),
     "nodeEditorPanel:NodeEditorCut": _e("NO", note="Maya Node Editor 표시·탐색 (Blender 노드 편집기에 같은 기능 없음 / Blender 키 그대로)"),
-    # --- step 269: rows new in Maya 2026 (measured in Maya 2026, research/maya/hotkeys_default.json) ---
+    # --- step 269: rows new in Maya 2026 ---
     "dopeSheetPanel:DopeSheetFrameAll": _e("IC", ("Dopesheet", "action.view_all", {})),
     "dopeSheetPanel:DopeSheetFrameSelected": _e("IC", ("Dopesheet", "action.view_selected", {})),
     "dopeSheetPanel:DopeSheetFramePlaybackRange": _e("KIT", ("Dopesheet", "allset.dope_sheet_key", {"action": "RANGE"}),
@@ -674,9 +674,9 @@ ENTRIES = {
 
 
 def entry_for(hotkey):
-    """Mapping entry for a hotkeys_default.json item (None = unreviewed)."""
+    """Mapping entry for a Maya factory hotkey item (None = unreviewed)."""
     press = hotkey.get("press") or {}
-    # MTK keys (Ctrl+Shift+X / Q) only have a nameCommand (research/maya/hotkeys_and_menus.md:281)
+    # MTK keys (Ctrl+Shift+X / Q) only have a nameCommand
     rtc = press.get("runTimeCommand") or press.get("nameCommand")
     if not rtc:         # release-only row (e.g. TogglePanZoomRelease, step 87)
         rtc = (hotkey.get("release") or {}).get("runTimeCommand")

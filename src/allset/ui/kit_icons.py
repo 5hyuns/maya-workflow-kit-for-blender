@@ -3,7 +3,7 @@
 (docs/steps/step_131_toolbox.md; issue #23).
 
 Decision 6: no Maya icon files. Each glyph is a few vector shapes in Maya's icon palette (light grey #bdbdbd line
-art, teal #48aab5 accents, a dark #3a3a3a rim; research/maya/re/icons131.md items 8 / 10) that follow the Maya
+art, teal #48aab5 accents, a dark #3a3a3a rim) that follow the Maya
 icon's silhouette, colour and composition, rasterised with numpy (``status_icons.Canvas``, 4x supersampled) at the
 exact pixel size the icon is shown at, so nothing is resampled:
 

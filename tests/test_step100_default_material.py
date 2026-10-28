@@ -1,5 +1,5 @@
 """Step 100: Maya's default material — every new shape joins initialShadingGroup = lambert1 (color 0.5, lambert;
-measured with mayapy: lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
+Maya: lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
 lambert2). Plan: docs/steps/step_100.md."""
 
 from importlib import import_module
@@ -36,9 +36,9 @@ def test_new_cubes_share_lambert1():
     assert len(a.material_slots) == 1 and material.is_default(ma)
     assert ma.get("allset_type") == "lambert" and ma.use_fake_user
     col = tuple(_principled(ma).inputs["Base Color"].default_value)
-    assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # mayapy lambert1.color = (0.5, 0.5, 0.5)
+    assert all(abs(c - 0.5) < 1e-6 for c in col[:3]), col   # Maya lambert1.color = (0.5, 0.5, 0.5)
     inc = tuple(_principled(ma).inputs["Emission Color"].default_value)
-    assert inc[:3] == (0.0, 0.0, 0.0), inc   # mayapy lambert1.incandescence = (0, 0, 0)
+    assert inc[:3] == (0.0, 0.0, 0.0), inc   # Maya lambert1.incandescence = (0, 0, 0)
     assert material.shading_group_name(ma) == "initialShadingGroup"
 
 
@@ -46,7 +46,7 @@ def test_new_lambert_is_lambert2_and_purge_keeps_lambert1():
     _clear()
     create.create(bpy.context, 'CUBE')
     m = material.new_material('LAMBERT')
-    assert m.name == "lambert2", m.name   # mayapy: shadingNode lambert -> lambert2
+    assert m.name == "lambert2", m.name   # Maya: shadingNode lambert -> lambert2
     assert material.shading_group_name(m) == "lambert2SG"
     bpy.data.materials.remove(m)
     for ob in list(bpy.data.objects):

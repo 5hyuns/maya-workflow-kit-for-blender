@@ -65,7 +65,7 @@ def s_cut():
 
 @step
 def s_paste():
-    # step 211: Maya pasteScene = pasted__pCube1 under a new group, the group selected (research/maya/re/naming_211.md)
+    # step 211: Maya pasteScene = pasted__pCube1 under a new group, the group selected
     objs = bpy.data.objects
     check(f"Ctrl+V pastes it back as pasted__pCube1 under group ({sorted(objs.keys())})",
           "pasted__pCube1" in objs and objs["pasted__pCube1"].parent == objs.get("group"))

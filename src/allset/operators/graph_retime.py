@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Graph Editor Retime Tool (Edit > Transformation Tools > Retime Tool, step 198, Issue #105).
 
-Spec: research/maya/re/graph_editor_193.md §1 (GUI Maya 2022 + mayapy, measured key times).
-
 - Double-click in the curve area adds a retime marker (whole frame with Snap On Frame).
 - Dragging a marker's handle (mid height) retimes every key of the displayed curves: the keys between the moved
   marker and its neighbours scale linearly, keys before a moved first marker / after a moved last marker ripple by the
@@ -12,7 +10,7 @@ Spec: research/maya/re/graph_editor_193.md §1 (GUI Maya 2022 + mayapy, measured
 
 Delegated decisions (recorded as delegated in docs/steps/step_198.md):
 - A marker can't pass or reach a neighbour: the drag target is clamped strictly inside (m[i-1], m[i+1]) with a gap of
-  ``MIN_GAP`` frames (1 frame with Snap On Frame) — Maya's behaviour there was not measured.
+  ``MIN_GAP`` frames (1 frame with Snap On Frame) — Maya's behaviour there was unknown.
 - Bézier handles are mapped through the same piecewise-linear time map as the keys (so a handle keeps its place in
   the scaled segment; auto handles are recomputed by ``FCurve.update``).
 - Times are the curves' own (action) times; NLA strip time mapping is ignored.
@@ -31,7 +29,7 @@ MIN_GAP = 0.01            # frames; Blender merges keys closer than 0.01 in x (C
 SNAP_GAP = 1.0
 YELLOW = (0.85, 0.85, 0.0, 1.0)
 GREY = (0.55, 0.55, 0.55, 1.0)
-HANDLE_BAND = (0.40, 0.67)          # fraction of the region height (spec §1 look)
+HANDLE_BAND = (0.40, 0.67)          # fraction of the region height (look)
 HIT_PX = 6                          # × UI scale
 X_RADIUS = 6                        # ✕ circle radius, × UI scale
 X_Y = 12                            # ✕ circle centre above the region bottom, × UI scale
@@ -52,7 +50,7 @@ def clamp_target(markers, index, new_time, snap=False):
 
 
 def retime_map(markers, index, new_time):
-    """The time map t -> t' of moving marker ``index`` of the sorted ``markers`` to ``new_time`` (spec §1).
+    """The time map t -> t' of moving marker ``index`` of the sorted ``markers`` to ``new_time``.
     ``new_time`` is used as given (call ``clamp_target`` first)."""
     m = [float(x) for x in markers]
     a, b = m[index], float(new_time)
@@ -172,7 +170,7 @@ def _draw():
     gpu.state.blend_set('NONE')
 
 
-# Maya's Retime Tool works in the Graph Editor and the Dope Sheet (both Edit menus, _editors104.json; step 198)
+# Maya's Retime Tool works in the Graph Editor and the Dope Sheet (both Edit menus, step 198)
 SPACES = ("SpaceGraphEditor", "SpaceDopeSheetEditor")
 AREA_TYPES = {'GRAPH_EDITOR', 'DOPESHEET_EDITOR'}
 

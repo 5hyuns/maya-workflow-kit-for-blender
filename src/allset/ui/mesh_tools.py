@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Target Weld and Crease Tool as Blender tools, and Maya's Multi-Cut Tool Settings (docs/steps/step_64.md 「계획」).
 
-- Target Weld (Maya Mesh Tools > Target Weld, research/maya/workflows/shots/modeling_08_win1.png): LMB press on a
+- Target Weld (Maya Mesh Tools > Target Weld): LMB press on a
   vertex / edge starts ``allset.target_weld``; a press away from them falls back to the select tool.
 - Crease Tool (Mesh Tools > Crease Tool): MMB drag = ``allset.crease_drag``; LMB selects (fallback).
 - Multi-Cut (step 129, docs/steps/step_129_multicut.md): the kit tool ``allset.multi_cut_tool`` running
-  ``allset.multi_cut`` (operators/multi_cut.py); its Tool Settings are Maya's (shots/modeling_06_win1.png).
+  ``allset.multi_cut`` (operators/multi_cut.py); its Tool Settings are Maya's.
 Settings live in ``Scene.allset_mesh_tools`` (operators/mesh_tools.py).
 """
 
@@ -159,7 +159,7 @@ class ALLSET_TL_multi_cut(bpy.types.WorkSpaceTool):
 
 
 def draw_multi_cut(layout, s):
-    """Maya's Multi-Cut Tool Settings, Maya's order and factory values (shots/modeling_06_win1.png)."""
+    """Maya's Multi-Cut Tool Settings, Maya's order and factory values."""
     layout.prop(s, "snap_step", slider=True)
     box = layout.box()
     box.label(text="Cut / Insert Edge Loop Tool")

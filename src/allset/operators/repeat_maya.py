@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya G / Edit > Repeat / Recent Commands for every Maya command, not only key operators (step 175).
 
-Maya 2022 (research/maya/re/repeat_175.md, GUI-measured): a menu item run from the UI goes into ``repeatLast``
+Maya 2022: a menu item run from the UI goes into ``repeatLast``
 (Create > Polygon Primitives > Cube → "CreatePolygonCube", G makes the next cube); an option window's Apply records the
 command with its options (label "PolyPrimitive"); commands run by a script are not
 recorded; Edit > Repeat reads ``Repeat "<label>"``; Recent Commands lists the history.

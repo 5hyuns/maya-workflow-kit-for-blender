@@ -1,5 +1,5 @@
-"""Step 159 (lane W): Deform > Export / Import Weights = Maya deformerWeights XML. Format and import rules measured
-with mayapy: research/maya/re/skin_weights_159.md (scripts tmp/maya159w/measure*.py)."""
+"""Step 159 (lane W): Deform > Export / Import Weights = Maya deformerWeights XML. Format and import rules follow
+Maya."""
 
 import os
 from importlib import import_module
@@ -17,9 +17,9 @@ deformers = import_module(kit.MODULE + ".operators.deformers")
 OUT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tmp", "test_step159_weights"))
 os.makedirs(OUT, exist_ok=True)
 
-# mayapy: polyPlane -w 4 -h 4 -sx 1 -sy 2, joints (0,0,-2) (0,0,0) (0,0,2), skinCluster -tsb false -mi 5 (factory
+# Maya: polyPlane -w 4 -h 4 -sx 1 -sy 2, joints (0,0,-2) (0,0,0) (0,0,2), skinCluster -tsb false -mi 5 (factory
 # closest distance weights), vtx[1] set to joint1 0.123456789 / joint2 0.876543211, then
-# deformerWeights -export -weightPrecision 9 (tmp/maya159w/measure2.py, out2/p9.xml; headerInfo fileName shortened).
+# deformerWeights -export -weightPrecision 9 (headerInfo fileName shortened).
 MAYA_XML = """<?xml version="1.0"?>
 <deformerWeight>
   <headerInfo fileName="C:/maya/p9.xml" worldMatrix="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 "/>
@@ -62,7 +62,7 @@ MAYA_WEIGHTS = {0: (0.111111111, 0.444444444, 0.444444444), 1: (0.123456789, 0.8
 MAYA_POINTS = ((-2, 0, 2), (2, 0, 2), (-2, 0, 0), (2, 0, 0), (-2, 0, -2), (2, 0, -2))
 MAYA_FACES = ((0, 1, 3, 2), (2, 3, 5, 4))
 JOINTS = ("joint1", "joint2", "joint3")
-# Maya's factory 3-decimal export (tmp/maya159w/out/skin.xml): zero weights left out, layer per influence
+# Maya's factory 3-decimal export: zero weights left out, layer per influence
 MAYA_XML_3 = """<?xml version="1.0"?>
 <deformerWeight>
   <headerInfo fileName="C:/maya/skin.xml" worldMatrix="1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 "/>

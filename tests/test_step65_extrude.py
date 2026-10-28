@@ -1,5 +1,5 @@
 """Step 65: Maya polyExtrudeFace (Thickness / Local Translate Z / Offset / Divisions / Keep Faces Together), the
-last-operation record (INPUTS row, In-View Editor). Plan + mayapy measurements: docs/steps/step_65.md;
+last-operation record (INPUTS row, In-View Editor). Plan: docs/steps/step_65.md;
 GUI: tests/gui/gui_step65_extrude.py."""
 
 from importlib import import_module
@@ -17,7 +17,7 @@ shelf_map = import_module(kit.MODULE + ".ui.shelf_map")
 mm = import_module(kit.MODULE + ".marking.menus")
 mapping = import_module(kit.MODULE + ".keymap.mapping")
 
-# Maya 2022 mayapy (tmp/maya65/probe.py): polyCube 1x1x1, polyExtrudeFacet on f[1] (top, +Y) / f[4] (+X).
+# Maya 2022: polyCube 1x1x1, polyExtrudeFacet on f[1] (top, +Y) / f[4] (+X).
 # (vertex count, face count, sorted world positions in Maya Y-up).
 MAYA = {
     "default": ({}, ["top"], 12, 10, None),

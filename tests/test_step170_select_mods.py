@@ -1,7 +1,7 @@
-"""Step 170: Maya click / marquee modifiers outside the 3D View (GUI-measured in Maya 2022:
-research/maya/re/select_mods_170.md). Per editor, the four variants (plain / Shift / Ctrl / Ctrl+Shift) of a click
+"""Step 170: Maya click / marquee modifiers outside the 3D View (Maya 2022).
+Per editor, the four variants (plain / Shift / Ctrl / Ctrl+Shift) of a click
 and a marquee: the Blender selection the kit's keymap item makes, then the kit's rule (operators/select_2d.py) —
-the result must be the measured Maya one. Plus the keymap items (first place, PASS_THROUGH ops) and the selection
+the result must be Maya's. Plus the keymap items (first place, PASS_THROUGH ops) and the selection
 state read / write on real keys and UVs."""
 
 from importlib import import_module
@@ -16,7 +16,7 @@ maya_patches = import_module(kit.MODULE + ".keymap.maya_patches")
 
 F = frozenset
 
-# Maya measured (select_mods_170.md): (editor, variant, before, clicked, Maya result)
+# Maya: (editor, variant, before, clicked, Maya result)
 CLICKS = [
     # Graph Editor: plain on a selected key keeps the selection, Ctrl acts like plain, Shift toggles, Ctrl+Shift adds
     ("GRAPH", "none", {1, 10}, 10, {1, 10}), ("GRAPH", "shift", {1, 10}, 10, {1}),
@@ -114,7 +114,7 @@ def test_outliner_click_is_maya_qt_rule():
     for k in km.keymap_items:
         if k.idname == "outliner.item_activate" and k.type == 'LEFTMOUSE' and k.value == 'CLICK' and not k.alt:
             got[(bool(k.shift), bool(k.ctrl))] = (k.properties.extend, k.properties.extend_range)
-    # plain replace, Shift range, Ctrl toggle, Ctrl+Shift add the range (Maya Outliner, measured)
+    # plain replace, Shift range, Ctrl toggle, Ctrl+Shift add the range (Maya Outliner)
     assert got == {(False, False): (False, False), (True, False): (False, True), (False, True): (True, False),
                    (True, True): (True, True)}, got
     toggles = [k for k in km.keymap_items if k.idname == "allset.select_2d_click" and k.ctrl and not k.shift]

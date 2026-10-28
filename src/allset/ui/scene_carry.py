@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's tool settings and UI don't come from the scene file (step 138, issues #63 #64; docs/steps/step_138_carry.md).
 
-Global tool settings (#64): Maya keeps each tool context's settings in optionVars (
-research/maya/interaction.md:31) and symmetry / soft select in global options (research/maya/interaction.md:159), so
-they survive File > New Scene / Open. Blender keeps them per scene (``Scene.tool_settings``, the transform orientation
+Global tool settings (#64): Maya keeps each tool context's settings in optionVars
+and symmetry / soft select in global options, so they survive File > New Scene / Open. Blender keeps them per scene (``Scene.tool_settings``, the transform orientation
 slots, the kit's scene property groups), and a new / opened file brings its own. Like step 93's selection masks
 (``ui/status_line._masks_before_load``), load_pre reads them from the current scene and load_post writes them into
 every scene of the loaded file — every load: File > Open, Open Recent, Revert, New Scene (the kit's startup.blend) and
@@ -11,8 +10,8 @@ Blender's File > New. What is carried is ``TOOL_SETTINGS`` / ``SCENE_GROUPS`` / 
 slots / the soft select radius (in Maya units) / the pivot options (``WM_PROPS``). Soft select on / off is already one
 global state (``operators/soft_select.py``), and Smart Duplicate / Extrude are add-on preferences.
 
-Maya layout on Open (#63): Maya's UI is built at startup from the workspace, never from the scene file
-(research/maya/ui_layout.md:15-77). With Maya mode on and the add-on preference ``maya_layout_on_open``, a file opened
+Maya layout on Open (#63): Maya's UI is built at startup from the workspace, never from the scene file.
+With Maya mode on and the add-on preference ``maya_layout_on_open``, a file opened
 in a non-Maya workspace gets the Maya layout from a timer after load_post (``switch.enter_layout`` runs an operator:
 not inside the load) — the file's own Maya layout workspace when it has one, else the bundled one appended.
 """
@@ -21,8 +20,8 @@ import bpy
 
 from .. import live_refs
 
-# ToolSettings attributes Maya keeps as tool / global options (Move / Rotate / Scale settings, research/maya/
-# workflows/pivot_snap.md; snapping toggles of the Status Line; soft selection falloff).
+# ToolSettings attributes Maya keeps as tool / global options (Move / Rotate / Scale settings;
+# snapping toggles of the Status Line; soft selection falloff).
 TOOL_SETTINGS = (
     "use_snap", "snap_elements", "use_snap_translate", "use_snap_rotate", "use_snap_scale",
     "use_snap_grid_absolute", "snap_angle_increment_3d",                # step snap (operators/snap_align.py)

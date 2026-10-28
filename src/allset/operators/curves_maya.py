@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 curve commands on Blender curves (step 156; rules + mayapy ground truth research/maya/re/curves_156.md / .json,
-maths in ``curves_math`` — bpy-free, tested against the JSON).
+"""Maya 2022 curve commands on Blender curves (step 156;
+maths in ``curves_math`` — bpy-free, tested against Maya's numbers).
 
 Representation (docs/steps/step_156.md 「계획」): a Maya clamped-uniform NURBS curve = a Blender NURBS spline with
 ``use_endpoint_u`` and order = degree + 1 (Blender's endpoint knots are the clamped uniform vector, measured); periodic
@@ -162,8 +162,7 @@ def make_cv_curve(context, points, degree=3):
 
 
 def make_ep_curve(context, points, degree=3, uniform=True):
-    """Maya EP Curve Tool (factory Uniform knot spacing): the cubic through the clicks at u = 0 .. n-1, natural ends
-    (curves_156.md §4.1, mayapy-exact)."""
+    """Maya EP Curve Tool (factory Uniform knot spacing): the cubic through the clicks at u = 0 .. n-1, natural ends."""
     cvs, knots, deg = cm.ep_curve([tuple(p) for p in points], degree, uniform)
     return _new_curve_object(context, "curve", [MCurve(cvs, knots, deg)])
 
@@ -210,7 +209,7 @@ class ALLSET_OT_curve_rebuild(_CurveOp, bpy.types.Operator):
             for sp in ob.data.splines:
                 c = read_spline(sp)
                 if c.periodic:
-                    out.append(c)       # periodic rebuild not measured [U]: left as it is
+                    out.append(c)       # periodic rebuild unknown [U]: left as it is
                     continue
                 cvs, knots, deg = cm.rebuild(c.cvs, c.knots, c.degree, self.spans, int(self.degree), c.weights)
                 out.append(MCurve(cvs, knots, deg))
@@ -313,7 +312,7 @@ class ALLSET_OT_curve_cut(_CurveOp, bpy.types.Operator):
     bl_idname = "allset.curve_cut"
     bl_label = "Cut Curve"
 
-    # Cut Curve Options (step 196, research/maya/re/options_196_misc.md): Cut "Using last curve" / Keep "Longest
+    # Cut Curve Options (step 196): Cut "Using last curve" / Keep "Longest
     # segments"; the last curve = the active one (Maya's last selected)
     last_only: BoolProperty(name="Using last curve", default=False, options={'SKIP_SAVE'})
     keep_longest: BoolProperty(name="Longest segments", default=False, options={'SKIP_SAVE'})

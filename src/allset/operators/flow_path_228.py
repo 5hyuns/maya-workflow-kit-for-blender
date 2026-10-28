@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 228 L9: Maya Flow Path Object (lattice along the motion path) (docs/steps/step_228.md).
 
-Maya (research/maya/re/maya2026_curve_rigs.md §L9, mayapy ``flow`` in research/maya/re/curve_rigs_228.json, setup
-research/scripts/maya_curves228/measure.py): Constrain > Motion Paths > Flow Path Object (Divisions 5 / 2 / 2,
+Maya: Constrain > Motion Paths > Flow Path Object (Divisions 5 / 2 / 2,
 Lattice around Object, Local effect off) on an object that has a motion path makes ``flow1`` / ``ffd1`` /
 ``ffd1Lattice`` / ``ffd1Base``: a lattice around the object whose points the flow node places along the motion path
 (each point at its own distance along the path, offset in the path's frame), the ffd deforming the object.
@@ -12,10 +11,10 @@ Blender construction (delegated, docs/steps/step_228.md 「계획」 B):
   + ``ffd1Lattice``, Front / Up / Side = lattice u / w / v), interpolation Linear;
 - the lattice gets a Curve modifier ``flow1`` on the path (Blender's Curve modifier maps curve-space X to the distance
   along the path and offsets Y / Z in the path frame — the same placement as Maya's flow node: the lattice end points
-  match mayapy to 1e-4 at frames 30 / 60 / 90) and a shape key ``flow1`` that shifts every point along the path by
+  match Maya to 1e-4 at frames 30 / 60 / 90) and a shape key ``flow1`` that shifts every point along the path by
   the path length, its value driven by the object's Follow Path ``offset_factor`` (= Maya motionPath uValue as a
   fraction); the object's own Follow Path constraint is muted (the lattice now carries the motion);
-- measured deviation: Maya's ffd with Local off is a global Bernstein (Bezier) volume over the 5 x 2 x 2 points
+- deviation: Maya's ffd with Local off is a global Bernstein (Bezier) volume over the 5 x 2 x 2 points
   (matched offline to 1e-4); Blender lattices interpolate Linear / Cardinal / Catmull-Rom / B-spline only, Linear is
   closest (max 0.075 on the 4-unit test cylinder, step 228 B test); beyond the path ends Blender extrapolates along
   the end tangent, Maya differently (0.043 at frames 1 / 120).
@@ -153,7 +152,7 @@ class ALLSET_OT_flow_path(bpy.types.Operator):
 
 
 def windows():
-    """Maya Flow Path Object Options (research/maya/re/maya2026_curve_rigs.md §L9: factory values —
+    """Maya Flow Path Object Options (factory values —
     Divisions Front 5 / Up 2 / Side 2, Lattice around Object, Local effect off 2 / 2 / 2)."""
     from .option_windows import F, Window
 

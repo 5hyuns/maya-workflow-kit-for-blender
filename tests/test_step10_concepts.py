@@ -448,7 +448,7 @@ def test_create_numbers_and_other_kinds():
     bpy.data.objects.remove(bpy.data.objects["pCube1"])
     bpy.data.meshes.remove(bpy.data.meshes["pCubeShape1"])
     bpy.ops.allset.create(kind='CUBE')
-    assert bpy.context.view_layer.objects.active.name == "pCube3"   # Maya: one past the highest (step 208, mayapy)
+    assert bpy.context.view_layer.objects.active.name == "pCube3"   # Maya: one past the highest (step 208)
     for kind, name in (('POINT_LIGHT', "pointLight1"), ('DIRECTIONAL_LIGHT', "directionalLight1"),
                        ('CAMERA', "camera1"), ('LOCATOR', "locator1"), ('EMPTY_GROUP', "null1"),
                        ('NURBS_SPHERE', "nurbsSphere1"), ('NURBS_CIRCLE', "nurbsCircle1")):

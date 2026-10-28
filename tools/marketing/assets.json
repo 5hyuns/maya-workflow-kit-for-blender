@@ -1,5 +1,5 @@
 {
-  "note": "Marketing-screenshot assets (not shipped in the extension, never redistributed). Fetch with tools/marketing/fetch_assets.py into research/marketing_assets/<id>/ ('--active' skips superseded entries). Step 125 set = status 'active'; licences checked on each page on the 'checked' date; inventory in research/marketing_assets/INVENTORY_125.md.",
+  "note": "Marketing-screenshot assets (not shipped in the extension, never redistributed). Fetch with tools/marketing/fetch_assets.py into the local assets folder <id>/ ('--active' skips superseded entries). Step 125 set = status 'active'; licences checked on each page on the 'checked' date; inventory kept with the local assets (not in git).",
   "assets": [
     {
       "id": "bs_rain_v3",
@@ -37,7 +37,7 @@
         "Rain v3.3/textures/TEX-rain_jeans_diffuse.png",
         "Rain v3.3/textures/TEX-rain_body_diffuse.1001.png"
       ],
-      "notes": "Blender 4.1 file, opens in 4.5 (headless checked). Collection CH-rain: RIG-rain (CloudRig, 2166 bones, 392 deform) + 18 visible GEO-rain-* meshes (52.9k base verts, 79.6k tris evaluated, Subdivision last) + WGT-* widgets (hidden collection) + HLP lattice. 1.65 m tall, metric, scale 1. Text block cloudrig.py is the rig UI: it only runs with Python auto-exec on (keep it off; the rig still poses). See research/marketing_assets/INVENTORY_125.md.",
+      "notes": "Blender 4.1 file, opens in 4.5 (headless checked). Collection CH-rain: RIG-rain (CloudRig, 2166 bones, 392 deform) + 18 visible GEO-rain-* meshes (52.9k base verts, 79.6k tris evaluated, Subdivision last) + WGT-* widgets (hidden collection) + HLP lattice. 1.65 m tall, metric, scale 1. Text block cloudrig.py is the rig UI: it only runs with Python auto-exec on (keep it off; the rig still poses). See the local asset inventory.",
       "download_url": "https://studio.blender.org/download-source/files/ee/a7/eea73e55dba1cea31c09848df6a794b2-4.zip",
       "sha256": "80217f163f6392dc829233d63c2cfb5e1376775bc34101ad14f39631fea70d24"
     },

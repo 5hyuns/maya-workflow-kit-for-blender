@@ -1,7 +1,7 @@
-"""Step 194: animation layer keys stay visible (research/maya/re/anim_layers_193.md). A layered object's active action is
+"""Step 194: animation layer keys stay visible. A layered object's active action is
 the selected layer's strip action at influence 0: the evaluated result is unchanged, the Time Slider ticks show the
 selected layer + the BaseAnimation keys of channels not in it, the Channel Box marks layer members (teal in Maya),
-Zero Key Layer and Merge Layers follow mayapy."""
+Zero Key Layer and Merge Layers follow Maya."""
 
 from importlib import import_module
 
@@ -127,7 +127,7 @@ def test_channel_box_states():
 
 
 def test_zero_key_layer():
-    """mayapy (section 6): identity keys on every member attribute at the current time, existing layer keys kept,
+    """Maya (section 6): identity keys on every member attribute at the current time, existing layer keys kept,
     the value at a key frame overwritten; nothing on BaseAnimation."""
     sc, ob, _b = _layered()
     sc.frame_set(12)
@@ -147,7 +147,7 @@ def test_zero_key_layer():
 
 
 def test_merge_layers_keeps_the_result():
-    """mayapy (section 5, Base + AnimLayer1): the layer is gone, every member channel with layer keys gets a base
+    """Maya (section 5, Base + AnimLayer1): the layer is gone, every member channel with layer keys gets a base
     key on every frame 1-24 holding the result, ry keeps its 2 keys, the result is unchanged."""
     sc, ob, _b = _layered()
     before = _evaluated(sc, ob)

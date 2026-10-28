@@ -1,4 +1,4 @@
-"""Step 204 in a real UI (Issue #111, research/maya/re/anim_layers_201.md §6): Layer Editor multi-selection -> the
+"""Step 204 in a real UI (Issue #111): Layer Editor multi-selection -> the
 Graph Editor shows every selected layer's curves.
 
 Maya Workflow Kit layout, pCube1 keyed on BaseAnimation (tx 0@1 5@12 0@24, ry 0 -> 90), AnimLayer1 (additive, tx
@@ -6,7 +6,7 @@ Maya Workflow Kit layout, pCube1 keyed on BaseAnimation (tx 0@1 5@12 0@24, ry 0 
 then a click on AnimLayer1's row in the Layer Editor Anim tab and a Ctrl+click on AnimLayer2's row (Maya §6: both
 selected, two curves). Checks: selection, kit outliner rows, the curve drawn by ui/graph_layers.py (its line model and
 screen pixels: a dim red tx line next to Blender's green ty curve), Zero Weight and Key Layer = one undo step.
-Shots ``gui_step204_*.png`` with ``--shots`` (compare research/maya/screens/anim_layers_201/
+Shots ``gui_step204_*.png`` with ``--shots`` (Layer Editor, Graph Editor:
 click_l1_ctrl_l2_graph_screen.png)."""
 
 import os

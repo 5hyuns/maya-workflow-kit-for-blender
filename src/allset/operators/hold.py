@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya "only while held" keys: X/C/V/J snapping, D pivot editing.
 
-research/maya/interaction.md §0 (press/release hotkeys), §4 (D hold /
-Insert), §5 (X grid, C curve, V point); hotkeys_default.json j =
+Maya press/release hotkeys, D hold /
+Insert, X grid, C curve, V point; j =
 MoveRotateScaleToolToggleSnapMode press/release. Design and limits:
 docs/steps/step_3.md 「계획」 1-4.
 
@@ -44,7 +44,7 @@ class SnapGroup(HoldGroup):
         # a held snap key snaps whatever transform runs (#139: an Affect flag left off ignored X / V)
         ts.use_snap_translate = ts.use_snap_rotate = ts.use_snap_scale = True
         # Maya snaps the manipulator centre (the pivot / the component bbox centre), not the
-        # object's closest point (research/maya/workflows/pivot_snap.md S2, S4, S5).
+        # object's closest point.
         ts.snap_target = 'CENTER'
 
     def restore(self, ts, state):
@@ -57,7 +57,7 @@ class SnapGroup(HoldGroup):
 
 
 class PivotGroup(HoldGroup):
-    """D hold: transform affects only object origins (research/blender/api_limits.md §7) and
+    """D hold: transform affects only object origins and
     not the children; ``pivot.watch`` rewrites each such transform the Maya way (channels
     stay, docs/steps/step_59.md 「계획」 1)."""
 
@@ -94,7 +94,7 @@ class ComponentPivotGroup(HoldGroup):
 
 class PreserveChildrenGroup(HoldGroup):
     """D hold on joints in Edit mode (step 243, #160): Maya moves the joint only, its children stay
-    (``cmds.move(preserveChildPosition=True)``, research/maya/re/joint_rig_2026_joint_math.md §3). The picked joints are
+    (``cmds.move(preserveChildPosition=True)``). The picked joints are
     re-selected head-only while held."""
 
     def capture(self, ts):
@@ -121,9 +121,9 @@ def preserve_children_set(value):
 
 def component_pivot_after(saved, moved):
     """Pivot point after releasing D in edit mode: a pivot the user placed (cursor moved)
-    stays, like Maya's custom component pivot (research/maya/interaction.md:127-129); a
+    stays, like Maya's custom component pivot; a
     plain tap resets it (cursor pivot -> Maya's component manipulator at the bounding-box
-    centre, research/maya/workflows/pivot_snap.md P11; otherwise the earlier setting)."""
+    centre, otherwise the earlier setting)."""
     if moved:
         return 'CURSOR'
     return 'BOUNDING_BOX_CENTER' if saved == 'CURSOR' else saved
@@ -133,7 +133,7 @@ def component_pivot_after(saved, moved):
 
 CURSOR_TOOL = "builtin.cursor"
 CURSOR_OP = "view3d.cursor3d"
-# Maya Move tool snapPivotOri True (pivot_snap.md P13): a click on a component orients the pivot too =
+# Maya Move tool snapPivotOri True: a click on a component orients the pivot too =
 # the cursor tool's "Geometry" orientation (axes along the clicked surface).
 PIVOT_CURSOR_ORIENTATION = 'GEOM'
 EDIT_MODE = 'EDIT_MESH'
@@ -274,7 +274,7 @@ class ComponentPivotEdit:
 
     def reset(self, context, position=True, orientation=True):
         """Maya Reset Pivot (Position / Orientation) for components: the pivot back on the selection's bounding-box
-        centre with world axes (Maya Reset pivot, research/maya/interaction.md:127)."""
+        centre with world axes (Maya Reset pivot)."""
         cursor = context.scene.cursor
         if position:
             centre = selection_center(context)
@@ -420,7 +420,7 @@ def begin(ts, name):
 
 
 def _redraw():
-    """Status Line snap buttons and the manipulator show the held state at once (pivot_snap.md S6)."""
+    """Status Line snap buttons and the manipulator show the held state at once."""
     wm = getattr(bpy.context, "window_manager", None)
     for window in wm.windows if wm is not None else ():
         for area in window.screen.areas:

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 156: Maya option windows of the Curves menu and Create > Curve Tools (same spec as operators/option_windows.py;
-option_windows._extend appends ``WINDOWS``). Titles, fields and factory values: research/maya/re/curves_156.md §1
+option_windows._extend appends ``WINDOWS``). Titles, fields and factory values from Maya's option windows
 (each option with its factory value). Fields Blender / the kit can't follow are listed as ``missing``."""
 
 import bpy

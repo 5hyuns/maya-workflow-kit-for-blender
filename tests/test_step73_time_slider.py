@@ -1,5 +1,5 @@
 """Step 73: Time Slider key ticks and the draggable Range Slider bar.
-Plan + Maya measurements: docs/steps/step_73.md; GUI: tests/gui/gui_step73_time_slider.py."""
+Plan: docs/steps/step_73.md; GUI: tests/gui/gui_step73_time_slider.py."""
 
 from importlib import import_module
 

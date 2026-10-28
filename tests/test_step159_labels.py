@@ -1,6 +1,6 @@
 """Step 159 lane L: Skeleton > Joint Labelling (labels as bone ID properties, Rename Joints From Labels, Label Based
 on Joint Names, Toggle / Show / Hide labels + viewport drawing), Mirror Skin Weights Label association, Enable /
-Disable Selected IK Handles. Maya facts (measured with mayapy): research/maya/re/joint_labels_159.md."""
+Disable Selected IK Handles, following Maya."""
 
 from importlib import import_module
 
@@ -61,7 +61,7 @@ def _lab(ob, name):
 def test_factory_label_values():
     _clear()
     ob, n = _chain(1)
-    assert _lab(ob, n[0]) == (0, 0, "jaw", False), _lab(ob, n[0])     # mayapy: Center, None, "jaw", off
+    assert _lab(ob, n[0]) == (0, 0, "jaw", False), _lab(ob, n[0])     # Maya: Center, None, "jaw", off
     assert len(labels.TYPES) == 30 and labels.TYPES[18] == "Other" and labels.TYPES[29] == "Foot Thumb"
     assert labels.SIDES == ("Center", "Left", "Right", "None")
 
@@ -73,7 +73,7 @@ def test_side_labels_follow_maya_scope():
     assert bpy.ops.allset.joint_label(side='LEFT') == {'FINISHED'}
     assert [_lab(ob, x)[0] for x in n] == [1, 1, 1], "Left = the selection and every joint below it"
     assert bpy.ops.allset.joint_label(side='CENTER') == {'FINISHED'}
-    assert [_lab(ob, x)[0] for x in n] == [0, 1, 1], "Center = the selected joints only (mayapy)"
+    assert [_lab(ob, x)[0] for x in n] == [0, 1, 1], "Center = the selected joints only (Maya)"
     assert bpy.ops.allset.joint_label(side='NONE') == {'FINISHED'}
     assert [_lab(ob, x)[0] for x in n] == [3, 3, 3]
 
@@ -89,7 +89,7 @@ def test_type_labels_follow_maya_scope():
     assert _lab(ob, n[2])[:2] == (1, 0), "non-digit types touch only the selection"
     _select(ob, [n[0]])
     assert bpy.ops.allset.joint_label(type='THUMB') == {'FINISHED'}
-    assert [_lab(ob, x)[1] for x in n] == [14, 14, 14], "digit types also label the joints below (mayapy)"
+    assert [_lab(ob, x)[1] for x in n] == [14, 14, 14], "digit types also label the joints below (Maya)"
     assert bpy.ops.allset.joint_label(type='NONE') == {'FINISHED'}
     assert _lab(ob, n[0])[:2] == (0, 0) and _lab(ob, n[1])[1] == 14, "Label None = type None + Center, selection only"
     _select(ob, [])
@@ -122,8 +122,8 @@ def test_object_mode_skeleton_means_its_root_joints():
     assert [_lab(ob, x)[0] for x in n] == [2, 2, 2]
 
 
-# mayapy (retargetingLimbLabel "Arm" / "Leg" on the top joint): names + child counts -> types
-def test_limb_labels_match_mayapy():
+# Maya (retargetingLimbLabel "Arm" / "Leg" on the top joint): names + child counts -> types
+def test_limb_labels_match_maya():
     chain5 = [("s", 1), ("el", 1), ("wr", 1), ("f1", 1), ("f2", 0)]
     assert labels.limb_labels("ARM", chain5) == [10, 11, 12, 13, 13]
     assert labels.limb_labels("ARM", [("s", 1), ("el", 1), ("wr", 0)]) == [10, 11, 12]
@@ -143,7 +143,7 @@ def test_limb_labels_match_mayapy():
 
 # --- Label Based on Joint Names -----------------------------------------------------------------------------------
 
-# mayapy labelJointsBasedOnNames on a new joint (side / type start at Center / None): name -> (side, type)
+# Maya labelJointsBasedOnNames on a new joint (side / type start at Center / None): name -> (side, type)
 MAYA_NAMES = {"L_arm": (1, 10), "leftHand": (1, 12), "Hip_R": (0, 2), "spine1": (0, 6), "LeftUpLeg": (1, 2),
               "RightHandThumb1": (2, 14), "rightArm": (2, 10), "leftForeArm": (1, 11), "Hips": (0, 1),
               "R_knee": (2, 3), "lf_index_finger": (1, 19), "IndexToe_L": (0, 25), "pelvis": (0, 1),
@@ -152,7 +152,7 @@ MAYA_NAMES = {"L_arm": (1, 10), "leftHand": (1, 12), "Hip_R": (0, 2), "spine1": 
               "ring_finger_R": (2, 21), "HIP_L": (0, 0)}
 
 
-def test_label_info_for_name_matches_mayapy():
+def test_label_info_for_name_matches_maya():
     for name, (side, typ) in MAYA_NAMES.items():
         t, s = labels.label_info_for_name(name)
         got = (s if s != -1 else 0, t if t != -1 else 0)
@@ -173,7 +173,7 @@ def test_label_from_joint_names_operator():
 
 # --- Rename Joints From Labels ------------------------------------------------------------------------------------
 
-def test_rename_joints_from_labels_matches_mayapy():
+def test_rename_joints_from_labels_matches_maya():
     _clear()
     ob, n = _chain(5)
     for name, (side, typ, other) in zip(n, ((0, 1, None), (1, 2, None), (3, 3, None), (1, 18, "Tail"), (2, 19, None))):
@@ -187,7 +187,7 @@ def test_rename_joints_from_labels_matches_mayapy():
     _select(ob, [n[0]])
     assert bpy.ops.allset.rename_joints_from_labels() == {'FINISHED'}
     got = [b.name for b in ob.data.bones]
-    # mayapy: |CenterRoot|LeftHip|c|LeftOther|RightIndexFinger (None side keeps its name; Other = "Other")
+    # Maya: |CenterRoot|LeftHip|c|LeftOther|RightIndexFinger (None side keeps its name; Other = "Other")
     assert got == ["CenterRoot", "LeftHip", n[2], "LeftOther", "RightIndexFinger"], got
     assert plane.vertex_groups.get("LeftHip") is not None
     # a clash numbers the name like Maya's rename (LeftHip1)
@@ -205,7 +205,7 @@ def test_toggle_show_hide_and_drawn_text():
     labels.set_label(ob.data.bones[n[2]], draw=True)
     _select(ob, [n[1]])
     assert bpy.ops.allset.joint_label_toggle() == {'FINISHED'}
-    # mayapy displayJointLabels 2: the first joint decides (off -> on for all)
+    # Maya displayJointLabels 2: the first joint decides (off -> on for all)
     assert [_lab(ob, x)[3] for x in n] == [False, True, True]
     bpy.ops.allset.joint_label_toggle()
     assert [_lab(ob, x)[3] for x in n] == [False, False, False]
@@ -215,7 +215,7 @@ def test_toggle_show_hide_and_drawn_text():
     labels.set_label(ob.data.bones[n[1]], side=3, type=3)
     labels.set_label(ob.data.bones[n[2]], side=2, type=18, other_type="tail")
     texts = sorted(t for _p, t, _s in labels.label_points(bpy.context))
-    assert texts == ["Hip (L)", "Knee (None)", "tail (R)"], texts          # GUI Maya shot
+    assert texts == ["Hip (L)", "Knee (None)", "tail (R)"], texts          # Maya's labels
     assert labels.label_text(ob.data.bones[n[0]]) == "Hip (L)"
     labels.set_label(ob.data.bones[n[0]], side=0, type=6)
     assert labels.label_text(ob.data.bones[n[0]]) == "Spine"
@@ -245,12 +245,12 @@ def test_mirror_label_association_pairs_unmirrored_joints():
     _clear()
     ob, n = _two_sided()
     by_label = skin.mirror_group_names(ob, 0, modes=("LABEL",))
-    # mayapy copySkinWeights -mirrorMode YZ -influenceAssociation label: aL->cR, bL->dR, fL1->gR2, fL2->gR1
+    # Maya copySkinWeights -mirrorMode YZ -influenceAssociation label: aL->cR, bL->dR, fL1->gR2, fL2->gR1
     assert by_label[n[0]] == n[0] and by_label[n[1]] == n[3] and by_label[n[2]] == n[4], by_label
     assert by_label[n[5]] == n[8] and by_label[n[6]] == n[7], by_label
     assert by_label[n[3]] == n[1]
     closest = skin.mirror_group_names(ob, 0)
-    # mayapy closestJoint: the joint nearest the mirrored place, no tolerance (bL -> cR, fL1 -> dR)
+    # Maya closestJoint: the joint nearest the mirrored place, no tolerance (bL -> cR, fL1 -> dR)
     assert closest[n[1]] == n[3] and closest[n[2]] == n[3] and closest[n[5]] == n[4], closest
     # unlabelled joints: Label alone falls back to the closest joint and reports it
     labels.set_label(ob.data.bones[n[2]], type=0)
@@ -321,7 +321,7 @@ def test_ik_handle_enable_disable():
     con = skin.ik_constraints_on(handle)[0][2]
     assert bpy.context.active_object is handle and handle.select_get()
     assert bpy.ops.allset.ik_handle_enable(enable=False) == {'FINISHED'}
-    assert con.influence == 0.0, "mayapy ikHandle -e -dh: ikBlend 0"
+    assert con.influence == 0.0, "Maya ikHandle -e -dh: ikBlend 0"
     assert bpy.ops.allset.ik_handle_enable(enable=True) == {'FINISHED'}
     assert con.influence == 1.0
     handle.select_set(False)
@@ -332,7 +332,7 @@ def test_ik_handle_enable_disable():
     except RuntimeError as ex:
         assert "No handle selected" in str(ex), ex
     else:
-        raise AssertionError("a joint / skeleton is not a handle (mayapy: 'No handle selected.')")
+        raise AssertionError("a joint / skeleton is not a handle (Maya: 'No handle selected.')")
     assert con.influence == 1.0
 
 

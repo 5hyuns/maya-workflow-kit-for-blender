@@ -5,9 +5,9 @@ Coordinates are region pixels (y up, as Blender's ``mouse_region_*``). Text
 width comes from a ``measure(text) -> width`` callback (``blf`` in Blender, a
 character count in tests), so everything here is testable headless.
 
-Behaviour sources: research/maya/hotkeys_and_menus.md §4-§5 (radial slots, list
-under the ring, hotbox zones and rows), interaction.md:26-29 (press/release,
-tap vs hold); timings and distances marked [K] are from Maya use, not files.
+Maya behaviour: radial slots, list
+under the ring, hotbox zones and rows, press/release,
+tap vs hold; timings and distances marked [K] are from Maya use.
 """
 
 import math
@@ -23,7 +23,7 @@ _UNIT = {name: (math.cos(math.radians(45 * i)), math.sin(math.radians(45 * i)))
 
 class Params:
     """Sizes in pixels at UI scale 1 (``scaled`` multiplies them)."""
-    # Radial ring = Maya 2022 measured (research/maya/re/marking_ring_151.md, 14/15_marking_menu_*.png, #99):
+    # Radial ring = Maya 2022's (#99):
     # N / S box centres and E / W near sides ``radius`` from the press point, diagonal boxes with their corner at
     # (±d, ±d), d = radius·cos 45°; boxes 21 px high, text + 2 × 25 px wide (+ 5 with an option box).
     radius = 55.0          # centre -> radial item anchor
@@ -137,8 +137,8 @@ class Layout:
                 y -= h
 
     def ring_rect(self, key, text_w, opt=False):
-        """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya 2022's placement
-        (research/maya/re/marking_ring_151.md). y is up here, so N is +y."""
+        """Rect of the radial box ``key`` whose text is ``text_w`` wide: Maya 2022's placement.
+        y is up here, so N is +y."""
         p = self.params
         r, h = p.radius, p.ring_h
         d = r * math.cos(math.radians(45.0))
@@ -161,7 +161,7 @@ class Layout:
 
     @staticmethod
     def ring_text(label, action):
-        """Text measured for a radial box width: the arrow lives in Maya's right padding (marking_ring_151.md),
+        """Text measured for a radial box width: the arrow lives in Maya's right padding,
         toggles keep room for their check box."""
         return label + ("    " if is_toggle(action) and not Layout.has_arrow(action) else "")
 
@@ -391,7 +391,7 @@ def fit_ring(layout, center, bounds, edges=()):
 
     Radial boxes slide inside; the list goes under the ring (Maya), else beside it in one column (the side with no
     radial submenu on the way, step 161), else above it, else is pushed up from under the ring. Maya draws the whole
-    menu higher only when the list would run past the *screen* bottom (research/maya/re/rmb_list_184.md Rule 2-3);
+    menu higher only when the list would run past the *screen* bottom;
     Blender can't draw outside its window, which is smaller, so lifting at the window edge (step 184) moved the ring
     off the pointer in the middle of the view and killed the radial marks — step 193 moves only the list.
     ``edges`` = area border bands (region pixels, step 136): no box or row is left overlapping one."""
@@ -430,7 +430,7 @@ def _place(layout, center, bounds, edges):
         rx0, ry0, rx1, ry1 = _bbox(list(layout.radial.values()))
         rx0, ry0, rx1, ry1 = min(rx0, -r), min(ry0, -r), max(rx1, r), max(ry1, r)
         h, w = ly1 - ly0, lx1 - lx0
-        # Maya keeps the list in one column under the ring (14_marking_menu_object.png, where it runs off a
+        # Maya keeps the list in one column under the ring (it runs off a
         # small window) and moves it when the screen ends; it never wraps into columns (step-154 dogfood G2). A
         # column that doesn't fit under the ring goes beside it (the side with no radial submenu on the way, else
         # right; moved up it would cover the ring's S boxes and the gestures), then above it; only a list taller than the window gets more columns,
@@ -681,9 +681,9 @@ class Session:
 # --- hotbox ---------------------------------------------------------------------------
 
 class HotboxLayout:
-    """Maya hotbox (Maya 2022 hotbox, measured; docs/steps/step_52.md 「계획」 2): menu rows above the cursor
+    """Maya hotbox (Maya 2022 hotbox; docs/steps/step_52.md 「계획」 2): menu rows above the cursor
     (``rows``, top first), the cursor row (``side`` = left / right boxes beside the centre box), rows under it
-    (``below``, top first), zone lines on the diagonals. Sizes are Maya's at scale 1 (13_hotbox.png: row pitch
+    (``below``, top first), zone lines on the diagonals. Sizes are Maya's at scale 1 (row pitch
     35 = box 26 + gap 9; the centre box is the title with padding)."""
 
     ROW_H, ROW_GAP, SIDE_GAP = 26.0, 9.0, 88.0
@@ -780,7 +780,7 @@ class HotboxLayout:
         return blocks
 
     def _zone_lines(self, scale):
-        """Maya's four short diagonal lines between the zones (13_hotbox.png), just outside the rows."""
+        """Maya's four short diagonal lines between the zones, just outside the rows."""
         cx, cy = self.center
         top = max([r[3] for r in self.bands] + [self.center_rect[3]]) - cy
         bottom = cy - min([r[1] for r in self.bands] + [self.center_rect[1]])

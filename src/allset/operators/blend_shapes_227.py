@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 227 L15: blendShape in-between and combination targets on shape keys (docs/steps/step_227.md 「계획」 A).
 
-Maya truth (mayapy 2026, research/maya/re/shapes_227.json ``inbetween_one`` / ``inbetween_two`` /
-``combination_two`` / ``combination_three``; research/maya/re/maya2026_deform.md §L15):
+Maya (``inbetween_one`` / ``inbetween_two`` /
+``combination_two`` / ``combination_three``):
 
 - In-betweens: the target's deformation is **piecewise linear** in its weight between the breakpoints
   0 < p1 < ... < pn = 1 (the in-between weights, item index 5000 + 1000·w, and the target at 1); outside [0, 1] the
@@ -96,7 +96,7 @@ def inbetween_exprs(weights, var=VAR):
 
 
 def combination_value(values, method='MULTIPLY'):
-    """Maya combinationShape outputWeight (shapes_227.json combination_two / _three)."""
+    """Maya combinationShape outputWeight (combination_two / _three)."""
     vals = [float(v) for v in values]
     if method == 'LOWEST':
         return min(vals)

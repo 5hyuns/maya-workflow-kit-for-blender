@@ -1,5 +1,5 @@
-"""Step 93: Shift+Q check marks, selection masks kept across File > New / Open (Maya measured: they are session
-state), Tool Settings Reset Tool. Plan: docs/steps/step_93.md; Maya behaviour research/maya/re/selection_masks.md."""
+"""Step 93: Shift+Q check marks, selection masks kept across File > New / Open (Maya: they are session
+state), Tool Settings Reset Tool. Plan: docs/steps/step_93.md."""
 
 import math
 from importlib import import_module

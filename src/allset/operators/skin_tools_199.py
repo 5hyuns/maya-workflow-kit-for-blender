@@ -2,8 +2,8 @@
 """Maya Skin menu tools of step 199: Move Weights to Influences, Normalize Weights > Disable / Enable / Enable Post,
 Export Weight Maps... / Import Weights Maps..., Substitute Geometry, Bake Deformation to Skin Weights...
 
-Every rule here was measured in mayapy 2022 (research/maya/re/skin_tools_199.md, probes
-research/scripts/skin_tools_199_mayapy_a.py .. _e.py). A kit skin = the Armature modifier + vertex groups named after
+Every rule here follows Maya 2022.
+A kit skin = the Armature modifier + vertex groups named after
 its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex group's ``lock_weight``.
 
 - Move Weights to Influences (Maya runs
@@ -26,9 +26,9 @@ its bones (operators/skin.py); a joint's Maya "lock weights" (.liw) = the vertex
   point is within the reweighting distance, else the weights of the nearest old vertex.
 - Bake Deformation to Skin Weights (``bakeDeformer``): per vertex the weights are the
   least-squares fit, over a range of motion, of linear blend skinning of the **source rest point** to the source's
-  deformed points, constrained to w >= 0 and sum(w) = 1 (measured exact against Maya with a known custom range of
+  deformed points, constrained to w >= 0 and sum(w) = 1 (exact against Maya with a known custom range of
   motion). Maya's default range of motion is internal; the kit samples each joint rotated +-45 degrees about its X / Y
-  / Z axes, a set Maya gives the same weights for as its default in the measured cases.
+  / Z axes, a set Maya gives the same weights for as its default in the known cases.
 """
 
 import math
@@ -232,7 +232,7 @@ def _link(tree, a, b):
 
 def _build_sum_group(tree, names):
     """position_world *= sum(influence weights) where that sum > 1e-4 (Blender's Armature modifier leaves points
-    whose sum is below 1e-4 at rest, measured), in the object's world space (Maya scales about the world origin)."""
+    whose sum is below 1e-4 at rest), in the object's world space (Maya scales about the world origin)."""
     tree.nodes.clear()
     if not tree.interface.items_tree:
         tree.interface.new_socket("Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
@@ -323,7 +323,7 @@ def remove_sum_modifier(mesh):
 
 
 def set_normalize_mode(context, mesh, mode):
-    """Maya skinCluster.normalizeWeights for one skin: the mode only (weights are not touched, measured: switching
+    """Maya skinCluster.normalizeWeights for one skin: the mode only (weights are not touched, switching
     to Interactive or Post leaves unnormalised weights as they are)."""
     mesh[skin.NORMALIZE_PROP] = mode
     if mode == "POST":
@@ -667,7 +667,7 @@ class ALLSET_OT_import_weight_maps(bpy.types.Operator):
 
 
 # --- Substitute Geometry -------------------------------------------------------------------------------------------
-NO_DEFORMERS = "No deformers found attached to the geometry."      # substituteGeometry's warning (measured)
+NO_DEFORMERS = "No deformers found attached to the geometry."      # substituteGeometry's warning
 
 
 def _quad_weights(p, q):

@@ -2,7 +2,7 @@
 feature screens and the key visuals (docs/distribution/marketing/style.md, copy.md).
 
 Runs in a GUI Blender on a clean sandbox with the extension installed, with --enable-event-simulate
-(tests/gui/sim.py). The scene is built from the licensed models in research/marketing_assets/
+(tests/gui/sim.py). The scene is built from the licensed models in the local assets folder
 (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md; recipes in tools/marketing/scene.py): the
 DOGWALK splash set (hero, hotbox), Pack Bot (components, Modeling Toolkit), Security Bot with its battery (Channel Box /
 Attribute Editor, pivot) and Rain (marking menus, menus, skin weights, animation), lit by the Studio Small 09 HDRI in

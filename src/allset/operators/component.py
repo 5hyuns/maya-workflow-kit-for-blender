@@ -3,7 +3,7 @@
 (back to object mode), Ctrl+B bevel (Maya polyBevel3 at once, Chamfer Vertex in vertex mode: step 139),
 Ctrl+F9-F11 convert selection and Delete / Backspace on components.
 
-research/maya/interaction.md:75 (SelectNone: object selection mode, selection cleared),
+(SelectNone: object selection mode, selection cleared),
 :79 (Ctrl+F9-F12 convert), docs/keymap_mapping.md (Ctrl+B BevelPolygon, Maya default hotkey).
 Plan: docs/steps/step_18.md 「계획」 2-3, 5; Delete: docs/steps/step_24.md 「계획」.
 """
@@ -83,7 +83,7 @@ class ALLSET_OT_bevel(_BevelProps, bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     def invoke(self, context, event):
-        # Maya bevels at once (no drag; Esc / no mouse keeps it): #16, research/maya/re/edit_mesh_139_shape.md §3
+        # Maya bevels at once (no drag; Esc / no mouse keeps it): #16,
         return self.execute(context)
 
     def execute(self, context):
@@ -220,7 +220,7 @@ def delete_components(bm, mode):
     """Maya Delete on one mesh's selection; ``mode`` = 'FACE' / 'EDGE' / 'VERT'.
 
     Returns (deleted, skipped): elements removed and border edges left alone.
-    research/maya/runtime_commands.json DeleteEdge (polyDelEdge -cv true: non-border
+    DeleteEdge (polyDelEdge -cv true: non-border
     edges, vertices cleaned up) and DeleteVertex (vertices and their attached edges).
     """
     if mode == 'FACE':

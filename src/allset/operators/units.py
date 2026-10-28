@@ -3,15 +3,15 @@
 (docs/user_decisions.md #1, #8).
 
 Rule (decision 8, docs/steps/step_21.md 「계획」): a Maya length of 1 is one scene
-display length unit, like Maya's current linear unit (research/maya/defaults.json:10).
+display length unit, like Maya's current linear unit.
 ``maya_unit()`` gives it in BU; every creation path scales by it, so a Create cube,
 ``cmds.polyCube()`` and a cube imported from a Maya FBX are the same size.
 
 Default (decision 1): metres kept, lengths shown in cm (the app template sets
 that, tools/make_startup.py). With the add-on preference on, the scenes of the
 current file get ``scale_length = 0.01`` + cm and the 3D views Maya's camera
-clip 0.1 / 10000 cm (research/maya/defaults.json:45-46). Side effects (physics,
-light falloff and importers assume 1 BU = 1 m): research/blender/api_limits.md:76-78.
+clip 0.1 / 10000 cm. Side effects (physics,
+light falloff and importers assume 1 BU = 1 m).
 
 The values before are kept per scene in the custom property
 ``allset_units_backup`` and come back when the option is turned off. New
@@ -26,7 +26,7 @@ from bpy.app.handlers import persistent
 
 BACKUP = "allset_units_backup"
 UNITS = {"system": 'METRIC', "length_unit": 'CENTIMETERS', "scale_length": 0.01}
-# Maya camera clipping in Maya units (research/maya/defaults.json:45-46).
+# Maya camera clipping in Maya units.
 CLIP = {"clip_start": 0.1, "clip_end": 10000.0}
 # Maya's new-scene persp camera at (28, 21, 28) Y-up looking at the origin [K]
 # = Blender (28, -28, 21); used by tools/make_startup.py.

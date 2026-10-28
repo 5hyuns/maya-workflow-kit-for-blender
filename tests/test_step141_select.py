@@ -1,7 +1,7 @@
 """Step 141 lane SELECT (quant gap 3): Select menu / Ctrl+RMB (CTRL_CONVERT) conversions — Grow / Shrink Along Loop,
 perimeters, To Face Path, To Shell Border, To UV Shell Border, To UVs, To UV Perimeter, To UV Edge Loop
-(operators/select_convert.py). Every expected selection is Maya 2022 measured with mayapy on meshes numbered like
-Maya's (research/maya/re/select_convert_141.md, research/scripts/select_convert_141_mayapy*.py).
+(operators/select_convert.py). Every expected selection is Maya 2022 on meshes numbered like
+Maya's.
 Step doc: docs/steps/step_141_select.md; GUI: tests/gui/gui_step141_select.py."""
 
 from importlib import import_module
@@ -18,7 +18,7 @@ notices = import_module(kit.MODULE + ".ui.notices")
 sc = import_module(kit.MODULE + ".operators.select_convert")
 compat = import_module(kit.MODULE + ".compat")
 
-# Maya polyCube: vertex positions, edges, faces (vertex order) and per-corner UV numbers (map index, UV) — mayapy.
+# Maya polyCube: vertex positions, edges, faces (vertex order) and per-corner UV numbers (map index, UV) — Maya.
 CUBE_V = [(-.5, -.5, .5), (.5, -.5, .5), (-.5, .5, .5), (.5, .5, .5), (-.5, .5, -.5), (.5, .5, -.5), (-.5, -.5, -.5),
           (.5, -.5, -.5)]
 CUBE_E = [(0, 1), (2, 3), (4, 5), (6, 7), (0, 2), (1, 3), (2, 4), (3, 5), (4, 6), (5, 7), (6, 0), (7, 1)]

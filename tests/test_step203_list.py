@@ -1,7 +1,7 @@
 """Step 203 lane B (#110): Graph Editor / Dope Sheet List > Load / Add Selected Objects with Auto Load, Curves > Pin /
 Unpin Channel, Show > Attributes filters (Hidden, Driven by Anim Curve / Expression / Driven Key, User Defined),
-Show > Objects > IkHandles / Sets / Characters, List > Show Upstream Curves / Hierarchy Below (ui/editor_chrome.py).
-Maya behaviour measured in GUI Maya 2022: research/maya/re/graph_editor_201.md §1-5."""
+Show > Objects > IkHandles / Sets / Characters, List > Show Upstream Curves / Hierarchy Below (ui/editor_chrome.py),
+following Maya 2022."""
 
 import types
 from importlib import import_module

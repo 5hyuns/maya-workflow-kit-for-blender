@@ -1,5 +1,5 @@
 """Step 209: Reference Editor (Issue #116) — Maya reference commands on Blender links + library overrides
-(operators/references.py, ui/reference_editor.py). Maya rules from mayapy (research/maya/re/refs_209.md): reload
+(operators/references.py, ui/reference_editor.py). Maya rules: reload
 keeps edits and shows the source's other changes, unload / load keep edits, replace re-applies edits by node name,
 import makes the nodes local with their ns: names, remove takes nodes and namespace, a second reference of a file is
 prop1 / propRN1."""
@@ -87,7 +87,7 @@ def test_names_like_maya():
     a = _reference()
     b = _reference()
     assert (a.name, refs.node_name(a)) == ("prop", "propRN"), (a.name, refs.node_name(a))
-    assert (b.name, refs.node_name(b)) == ("prop1", "propRN1"), "mayapy: namespace prop1, reference node propRN1"
+    assert (b.name, refs.node_name(b)) == ("prop1", "propRN1"), "Maya: namespace prop1, reference node propRN1"
     assert [r.name for r in refs.references()] == ["prop", "prop1"]
     assert {o.name for o in a.all_objects} == {"prop:pCube1", "prop:pSphere1"}
     assert all(o.override_library is not None for o in a.all_objects)
@@ -101,7 +101,7 @@ def test_reload_keeps_edits_and_shows_source_changes():
     _change_source(A, "bpy.data.objects['pSphere1'].location.y = 7; bpy.data.objects['pCube1'].location.x = 3")
     _cmd("RELOAD", ref)
     assert _loc("prop:pSphere1") == (0, 7, 0), "the source's change is seen"
-    # Maya: the edit (whole translate) stays and hides the source's change of that attribute (mayapy: 0 5 0)
+    # Maya: the edit (whole translate) stays and hides the source's change of that attribute (0 5 0)
     assert _loc("prop:pCube1") == (0, 0, 5), _loc("prop:pCube1")
 
 
@@ -156,7 +156,7 @@ def test_replace_reapplies_edits_by_name():
     assert refs.node_name(new) == "propRN" and refs.file_label(new) == "srcB.blend"
     names = {o.name for o in new.all_objects}
     assert names == {"prop:pCube1", "prop:pCone1"}, names
-    # mayapy: the pCube1 edit (0 5 0) went onto B's pCube1 (0 0 9)
+    # Maya: the pCube1 edit (0 5 0) went onto B's pCube1 (0 0 9)
     assert _loc("prop:pCube1") == (0, 0, 5), _loc("prop:pCube1")
     assert list(new[refs.REPLACED]) == [str(A)], "Recently Replaced Files"
     assert bpy.ops.allset.reference_recent(filepath=str(A)) == {'FINISHED'}

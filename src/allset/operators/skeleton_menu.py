@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Skeleton menu commands with Maya's meaning (step 246, Issue #163).
 
-Maya 2026 (research/maya/re/joint_rig_2026_skeleton_menu.md §2-7; numbers in tests/maya2026_rig_data.py
-``SKELETON_MENU``, extra mayapy runs in docs/steps/step_246.md 「측정」):
+Maya 2026 (extra cases in docs/steps/step_246.md):
 
 - Insert Joint: a new joint at the clicked joint (translate / jointOrient / rotate 0 = the joint's own frame), under
   it, on top of all its children (their world kept); the tool then drags it. Works on an end joint too.
@@ -168,7 +167,7 @@ def remove_joints(ob, names):
 
 
 def drop_influences(ob, names):
-    """Maya removes the joint's influence and leaves the other weights alone (mayapy 2026, step_246.md 「측정」)."""
+    """Maya removes the joint's influence and leaves the other weights alone (step_246.md)."""
     n = 0
     for mesh in _skinned_meshes(ob):
         for name in names:

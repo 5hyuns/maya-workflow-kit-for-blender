@@ -1,6 +1,6 @@
 """Step 162 (1): Display > Toggle Show/Hide ❒ and Edit > Delete by Type > Non-Deformer History ❒ open Maya's option
 windows again (they fell to the generic "Blender has no settings" window after step 147); results follow the
-mayapy measurements in research/maya/re/options_162.md."""
+Maya results."""
 
 from importlib import import_module
 
@@ -64,7 +64,7 @@ def test_both_boxes_are_maya_windows():
 
 
 def test_toggle_independent_flips_each():
-    # mayapy: (hidden, shown, shown) -> (shown, hidden, hidden)
+    # Maya: (hidden, shown, shown) -> (shown, hidden, hidden)
     obs = _abc({"a"})
     bpy.ops.allset.visibility(action='TOGGLE', behaviour='INDEPENDENT')
     assert _shown(obs) == [True, False, False], _shown(obs)
@@ -72,7 +72,7 @@ def test_toggle_independent_flips_each():
 
 
 def test_toggle_dependent_follows_the_first():
-    # mayapy: (hidden, shown, shown) -> all shown (the opposite of the first selected a)
+    # Maya: (hidden, shown, shown) -> all shown (the opposite of the first selected a)
     obs = _abc({"a"})
     bpy.ops.allset.visibility(action='TOGGLE', behaviour='DEPENDENT')
     assert _shown(obs) == [True, True, True], _shown(obs)
@@ -105,7 +105,7 @@ def _history_cube():
 
 
 def test_non_deformer_history_all_and_before_only():
-    # mayapy: polyCube -> extrude -> bend -> bevel: All keeps only bend; before only keeps bend + bevel
+    # Maya: polyCube -> extrude -> bend -> bevel: All keeps only bend; before only keeps bend + bevel
     ob = _history_cube()
     w = ow.find_path(NONDEF)
     ow.run(w, bpy.context, {"delete": "History before deformers only"})

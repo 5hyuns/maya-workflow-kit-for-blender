@@ -1,6 +1,6 @@
 """Step 235 (Issue #144): kit FBX back into the kit, blend shapes next to other deformers.
 
-Audit 0.5.0 (C:/Repos/bmk-strategy/CHAINS_AUDIT_0.5.0.md ③-17): File > Import of a file the kit wrote brought the
+Audit 0.5.0 (③-17): File > Import of a file the kit wrote brought the
 skinned mesh in at 1/100 size turned 90 deg and the Time Slider at 0-24 instead of the file's 1-20. ④-8: a mesh with a
 blend shape and a non-skin deformer (cluster = Hook) lost every blend shape in the FBX (Blender's writer exports the
 evaluated mesh when a non-Armature modifier is on: $S/addons_core/io_scene_fbx/export_fbx_bin.py:2645-2657, 2773).

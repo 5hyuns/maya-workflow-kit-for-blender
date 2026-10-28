@@ -1,5 +1,5 @@
 """Step 92: Graph Editor t (center the current time), Alt+/ (Snap Time To Selection toggle), i hold (Insert Key tool).
-Maya behaviour: research/maya/re/graph_editor_keys.md. Plan: docs/steps/step_92.md."""
+Plan: docs/steps/step_92.md."""
 
 from importlib import import_module
 

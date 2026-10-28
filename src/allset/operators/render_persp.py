@@ -2,7 +2,7 @@
 """Render > Render Current Frame / Render Sequence through Maya's persp camera (step 137, #67).
 
 Maya renders the active panel's camera; a new Maya scene's renderable camera is ``perspShape``
-(mayapy, tmp/audit133_work/out/m04_scene.json:33-34; docs/steps/step_133_work.md:105 X1). Blender's user
+(docs/steps/step_133_work.md:105 X1). Blender's user
 views aren't cameras and the Maya Workflow Kit startup file has none, so ``render.render`` stopped with
 "Cannot render, no camera". The kit renders:
 
@@ -20,7 +20,7 @@ default ``persp`` row (``ui/outliner_sets.default_entries``, step 99), which sta
 second row in Blender's Outliner, isn't selectable in the viewport, doesn't render as an object and isn't
 exported. ``scene.camera`` doesn't count as a user (measured: renders, follows its matrix, survives
 save / reload with ``use_fake_user``), so the object keeps a fake user like Maya's startup cameras, which every
-scene has. Measured (tmp/probe137): an unlinked ``scene.camera`` renders and follows its transform.
+scene has. An unlinked ``scene.camera`` renders and follows its transform.
 """
 
 import bpy
@@ -32,7 +32,7 @@ from .key_batch import VIEW_SENSOR, camera_matrix
 
 PROP = "allset_persp"
 NAME, SHAPE = "persp", "perspShape"
-MAYA_FILM_MM = 36.0          # Maya 35 mm camera film back (create.MAYA_FILM_MM, research/maya/concepts.md:163)
+MAYA_FILM_MM = 36.0          # Maya 35 mm camera film back (create.MAYA_FILM_MM)
 
 
 def persp_camera(create=True):

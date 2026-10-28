@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""RMB list DG Traversal / Inputs / Outputs (step 165, research/maya/re/cb_component_164.md §2).
+"""RMB list DG Traversal / Inputs / Outputs (step 165).
 
 Maya fills these submenus from the dependency graph when they open (Maya 2022
 RMB marking menu). The kit's graph is what the Channel Box INPUTS and the Attribute Editor tabs already
@@ -8,12 +8,12 @@ node (polyCube1), the constraints; the shape (mesh data) and its shading groups.
 bpy-free data ``marking/menus.with_nodes`` builds the submenus from.
 
 - An Inputs / Outputs node = Maya ``cmds.select(node, add=True)``: the object stays selected, the Channel Box opens the
-  node under INPUTS (cb165/cb_hist_pick_extrude.png) and the Attribute Editor tab follows; its option box = the
+  node under INPUTS and the Attribute Editor tab follows; its option box = the
   Attribute Editor on that node.
 - Enable / Disable All = Maya ``nodeState`` 0 / 2 (has no effect): the modifiers' viewport + render switches, the
   constraints' enabled flag. Blender has no switch for the kit's extrusion / creation node: those are left alone.
 - Outputs of an object = the nodes of other objects that use it (Maya's lattice / handle / constraint target future:
-  ffd1, bend1, the constraint node). A plain cube has none, like Maya (rmb_plain_Outputs.png).
+  ffd1, bend1, the constraint node). A plain cube has none, like Maya.
 """
 
 import bpy
@@ -110,7 +110,7 @@ def nodes(ob):
         "inputs": [(ae.nice_type(t), owner.name, key) for _n, t, owner, key, _c, _s in ins],
         "outputs": [(ae.nice_type(t), owner.name, key) for _n, t, owner, key, _c, _s in outs],
         # Maya's RMB DG Traversal on the transform: History = the shape + what drives the transform; Future = the
-        # shape, its shading groups, what uses the object (rmb_cube_DG_Traversal.png)
+        # shape, its shading groups, what uses the object
         "history": shape + cons,
         "future": shape + groups + named_outs,
         "inputs_named": [e for e in named_ins if not e[2].startswith("C:")],

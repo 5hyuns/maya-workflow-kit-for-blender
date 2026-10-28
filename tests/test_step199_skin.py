@@ -1,6 +1,6 @@
 """Step 199 lane S: Skin > Move Weights to Influences, Normalize Weights modes, Export / Import Weight Maps, Substitute
-Geometry, Bake Deformation to Skin Weights. Maya numbers below come from mayapy 2022 (research/maya/re/skin_tools_199.md,
-research/scripts/skin_tools_199_mayapy_a.py .. _e.py); scenes are built in Maya's coordinates (the rules are the same
+Geometry, Bake Deformation to Skin Weights. Maya numbers below come from Maya 2022;
+scenes are built in Maya's coordinates (the rules are the same
 in any axes), lengths in Blender metres = Maya units."""
 
 import math
@@ -18,7 +18,7 @@ skin = import_module(kit.MODULE + ".operators.skin")
 
 TOL = 1e-5
 
-# --- mayapy measurements (tmp/maya199s/*.json via the probes) ---
+# --- Maya numbers ---
 CYL_REST = [
     [1.31e-07, 0.0, -1.0],
     [-1.0, 0.0, -8.7e-08],
@@ -972,7 +972,7 @@ def test_substitute_geometry_matches_maya():
         assert (v.co - Vector(p)).length < 1e-6
     got = _rows(old, SUB_NAMES)
     # Maya's closest-point weights: bilinear at the closest point; Maya's points are float32 (1.5e-5) and in the
-    # outer quad columns Maya's closest point differs slightly (up to 9e-4, research/maya/re/skin_tools_199.md)
+    # outer quad columns Maya's closest point differs slightly (up to 9e-4)
     worst = max(abs(a - b) for ra, rb in zip(got, SUB_RES_W1) for a, b in zip(ra, rb))
     assert worst < 1e-3, worst
     inner = [i for i, p in enumerate(SUB_NEW_P) if abs(p[0]) < 3.0]
@@ -1067,8 +1067,8 @@ def test_bake_deformation_with_a_deformer_matches_maya():
     src, dst = _bake_scene(BAKE_SRC_W, CLUSTER)
     bpy.ops.allset.bake_deformation(max_influences=3)
     got = _rows(dst, ["j1", "j2", "j3"])
-    # vertices 12-15 have cluster weight 0.5 (measured with cmds.percent): Maya's bake gives them about the result of
-    # weight 1 (j2 0.999), the kit fits their real deformation (j1 0.43 / j2 0.57) - research/maya/re/skin_tools_199.md
+    # vertices 12-15 have cluster weight 0.5: Maya's bake gives them about the result of
+    # weight 1 (j2 0.999), the kit fits their real deformation (j1 0.43 / j2 0.57) -
     full = [i for i in range(len(got)) if i not in (12, 13, 14, 15)]
     d = max(abs(got[i][k] - BAKE_AFTER[i][k]) for i in full for k in range(3))
     assert d < TOL, f"skin + cluster source: {d}\n{got}"

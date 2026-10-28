@@ -6,7 +6,7 @@ Writes src/allset/app_template/Maya_Workflow_Kit/splash.png (1000x500) and splas
 Blender shows them as the splash screen while the Maya Workflow Kit template is active; and
 src/allset/welcome.png (256x256, the cubes only) for the welcome dialog (icons are square), and the same
 square as docs/distribution/media/icon.png plus media/featured.png (1920x1080) for the extensions.blender.org listing. The artwork is the kit's own (decision 6: no Maya image or logo): Maya's
-panel grey and highlight blue (research/maya/colors.json ui_palette_qt), three wire cubes in Maya's
+panel grey and highlight blue, three wire cubes in Maya's
 dormant blue / lead green / selected white (displayColor 5 / 19 / 16), Blender's bundled font.
 Rendered with Workbench (flat lighting, object colours, Standard view transform).
 """
@@ -110,7 +110,7 @@ def main():
         box(f"gv{i}", -5.0 + i * 0.6, -0.4, 0.03, 6.0, GRID, y=2.0)
         if -4 <= i <= 4:
             box(f"gh{i}", -5.0, -0.4 + i * 0.6, 7.2, 0.03, GRID, y=2.0)
-    # Three wire cubes like research/maya/screens/04 (dormant blue, lead green, selected white)
+    # Three wire cubes like Maya's selection colours (dormant blue, lead green, selected white)
     for hex_colour, dx in WIRES:
         bpy.ops.mesh.primitive_cube_add(size=1.8, location=(-5.0 + dx, 0, -0.3))
         ob = bpy.context.active_object

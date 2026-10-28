@@ -1,4 +1,4 @@
-"""Step 245 (Issue #162) in a real UI, chain ③ (research/maya/re/joint_rig_2026_ik.md §2–3): Joint Tool 3 clicks (a
+"""Step 245 (Issue #162) in a real UI, chain ③: Joint Tool 3 clicks (a
 bent arm) -> Enter -> Skeleton > Create IK Handle (click joint1, then joint3) -> the handle has Maya's default Pole
 Vector (2 units toward the elbow) and Twist in the Channel Box, the chain doesn't move -> move the handle: the elbow
 stays in Maya's plane -> Twist 90 turns the plane about root -> goal -> Ctrl+Z -> save + open keeps it working."""

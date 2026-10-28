@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya DAG rules for a parent: what happens to a node's descendants (step 164).
 
-Maya (mayapy-measured, research/maya/re/dag_164.md): a node is drawn only while it **and every ancestor** are visible —
+Maya: a node is drawn only while it **and every ancestor** are visible —
 hiding group1 (h, Ctrl+H, its Visibility channel, its display layer's V) hides pCube1 without touching pCube1's own
 Visibility, and showing group1 again leaves a child that was hidden on its own hidden. Delete, Export Selection and
 Isolate Select take the selected nodes with everything below them.

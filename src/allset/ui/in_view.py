@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's extrude manipulator, In-View Editor and the INPUTS rows of the last extrusion
-(docs/steps/step_65.md 「계획」 3-5; research/maya/workflows/shots/modeling_03.png, modeling_04.png).
+(docs/steps/step_65.md 「계획」 3-5).
 
 - Visible while the active edit object's last kit extrusion is valid and its extruded faces are the selection
   (operators/extrude.py). Maya swaps the Move manipulator for the extrude one: the kit Move/Scale manipulator
   (ui/manipulator.py) hides meanwhile.
 - The manipulator is a Python gizmo group (Blender's C transform gizmo can't be extended, docs/PLAN.md:10). Step 151:
-  Maya's polyExtrudeFace manipulator (research/maya/workflows/shots/modeling_03.png) in the faces' local frame - three
+  Maya's polyExtrudeFace manipulator in the faces' local frame - three
   arrows (Local Translate X red / Y green / Z blue = the normal), a cube past each cone (Local Scale X / Y / Z), three
   plane handles (two Local Translate values) and a light-blue centre square (uniform Local Scale). Every handle runs
   ``allset.extrude_drag`` with its ``handle``; release = one undo step (``extrude.set_params``). Edge / vertex
@@ -31,10 +31,10 @@ from . import cb_entry, manipulator
 from ..operators import bevel_maya, extrude, units   # bevel_maya: registers the polyBevel spec (step 139)
 from ..operators import uv_tools  # noqa: F401  registers the polyAutoProj spec (step 257)
 
-ROW_H = 16          # px at UI scale 1 (Maya In-View rows, modeling_03.png)
+ROW_H = 16          # px at UI scale 1 (Maya In-View rows)
 WIDTH = 180
 GAP = (150, -6)     # box top-left from the manipulator centre on screen: right of the X / Y handles (step 151;
-                    # Maya modeling_03.png: past the manipulator, 250 px from its centre at a 100 px rotate ring)
+                    # Maya: past the manipulator, 250 px from its centre at a 100 px rotate ring)
 FLOAT_STEP = 0.01   # Maya units per px of a sideways drag
 DIV_PX = 20         # px per division
 KINDS = {"thickness": "NONE", "local_translate_z": "NONE", "offset": "NONE", "divisions": "INT",
@@ -50,7 +50,7 @@ _ = bevel_maya
 BG = (0.22, 0.22, 0.22, 0.92)
 TITLE_BG = (0.30, 0.30, 0.30, 0.95)
 TEXT = (0.86, 0.86, 0.86, 1.0)
-HOT = (1.0, 1.0, 0.35, 1.0)        # Maya's highlighted attribute name (modeling_03.png)
+HOT = (1.0, 1.0, 0.35, 1.0)        # Maya's highlighted attribute name
 YELLOW = (1.0, 1.0, 0.0)
 
 _state = {"hot": 0, "handle": None}
@@ -259,7 +259,7 @@ class ALLSET_GGT_in_view(bpy.types.GizmoGroup):
 
 # --- the extrude manipulator (3D gizmo, step 151) --------------------------------------------------
 
-# Maya 2022 polyExtrudeFace manipulator measured on research/maya/workflows/shots/modeling_03.png (top face of a cube,
+# Maya 2022 polyExtrudeFace manipulator (top face of a cube,
 # local mode): lengths in "arrow units" (centre -> scale cube = 1): cone 0.64 -> 0.86 (radius 0.05), cube half 0.07,
 # plane handles centred 0.5 / 0.5 between two axes (half 0.08, translucent with a full-colour rim), hollow centre square
 # half 0.12 (20 px at an 83 px Z arrow) in #64dcff, screen facing. Axis colours = the kit Move manipulator's Maya
@@ -273,7 +273,7 @@ CENTER_HALF = 0.12
 CENTER_COLOUR = (0x64 / 255, 0xdc / 255, 1.0)
 SCALE_PX = 100.0          # px of mouse travel along a scale handle that doubles the scale (delegated)
 # Maya draws the extrude manipulator smaller than its Move one: Z arrow to cube 83 px at a ~27 deg persp elevation
-# (modeling_03.png) = ~93 px against the Move Y arrow's 108 px (manipulator.ARROW_PX)
+# = ~93 px against the Move Y arrow's 108 px (manipulator.ARROW_PX)
 SIZE = 0.86
 
 # handle -> (role, axis or plane, the values it drives)
@@ -779,9 +779,9 @@ HISTORY_TIP = "Blender keeps no edit-mode history: only the last operation can b
 
 
 def draw_cb_node(layout, context, rec):
-    """The polyExtrudeFace node in Channel Box INPUTS (modeling_04.png); the Blender notice is the node name's
+    """The polyExtrudeFace node in Channel Box INPUTS; the Blender notice is the node name's
     tooltip (step 106: no Blender sentences in Maya windows). Collapsed until its name is clicked, like Maya
-    (research/maya/screens/cb135/pass1/c07_extruded_component.png, step 135)."""
+    (step 135)."""
     from . import channel_box
     lines = channel_box.as_lines(layout)
     ob = channel_box.lead(context)

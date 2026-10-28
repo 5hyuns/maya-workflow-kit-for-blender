@@ -2,7 +2,7 @@
 """Maya IK handles and skinning: IK Handle Tool, Pole Vector, Bind / Unbind Skin, Paint Skin Weights, Copy /
 Mirror Skin Weights, Copy / Paste Vertex Weights.
 
-research/maya/workflows/rigging.md §1.2-1.3 (7, 8, 11-14), §4 concept 8 (skin = Armature modifier + vertex
+Maya rigging: skin = Armature modifier + vertex
 groups named after the joints), design docs/steps/step_58.md 「계획」. A Maya joint is a bone's head (or the
 tail of a chain end, step 57); Blender's IK pulls a bone's tail, so a Maya IK handle on end joint J is an IK
 constraint on the bone whose tail is J.
@@ -90,7 +90,7 @@ def joint_position(arm, joint):
     return arm.matrix_world @ (pb.tail if joint[1] == 'TAIL' else pb.head)
 
 
-# Maya IK Handle Tool factory settings (research/maya/re/option_boxes_140.md): Rotate-Plane solver, solver enabled,
+# Maya IK Handle Tool factory settings: Rotate-Plane solver, solver enabled,
 # weight 1. Blender's IK constraint: RP = plain IK (pole vector: Constrain > Pole Vector), SC = the chain end follows
 # the handle's rotation (``use_rotation``; the handle starts turned like the end joint so nothing jumps).
 IK_SOLVERS = (("RP", "Rotate-Plane Solver", "Maya ikRPsolver: Blender IK, the pole vector (Constrain > Pole Vector) "
@@ -255,7 +255,7 @@ def _chain_heads(arm, con_bone, count):
 
 
 def set_pole(context, arm, pb, con, pole):
-    """Maya poleVectorConstraint: the handle's pole vector = target − start joint (joint_rig_2026_ik.md §3), so the
+    """Maya poleVectorConstraint: the handle's pole vector = target − start joint, so the
     chain plane turns to face the target like Maya's. A kit RP handle keeps its pole helper (twist still applies);
     another IK constraint gets the target as its pole with Blender's pole angle for Maya's plane (step 245; the old
     "move the chain least" search kept the chain where it was, which Maya doesn't). Returns the chain's movement."""
@@ -334,7 +334,7 @@ def armature_modifiers(mesh):
             and not _skin_part(m)]
 
 
-# Maya Bind Skin options the kit honours (research/maya/re/option_boxes_140.md): Normalize weights is kept on the
+# Maya Bind Skin options the kit honours: Normalize weights is kept on the
 # mesh (Interactive = Blender's Auto Normalize while painting, step 129), Colorize skeleton = a bone colour per joint
 # (Unbind Skin's "Remove joint colors" takes them away), Remove unused influences = drop joints that weigh nothing.
 NORMALIZE_PROP = "allset_normalize"
@@ -354,8 +354,7 @@ def normalize_mode(mesh):
     return mesh.get(NORMALIZE_PROP, "INTERACTIVE")
 
 
-# Maya Bind Skin "Bind method" (option_boxes_140.md:32). Closest distance is Maya's factory method, measured in mayapy
-# (research/maya/re/skin_bind_149.md, research/scripts/skin_bind_149_mayapy.py): weight of joint i on a vertex is
+# Maya Bind Skin "Bind method". Closest distance is Maya's factory method: weight of joint i on a vertex is
 # distance(world vertex, joint i's segments) ** -dropoff, the segments run from the joint to each child joint (an end
 # joint is a point), dropoff = skinCluster dropoffRate (factory 4), the largest ``max influences`` kept, normalised.
 # World space: an object's non-uniform scale doesn't matter (#94 - Blender's bone heat on a mesh with Scale Y 8 and
@@ -366,8 +365,8 @@ BIND_METHODS = (("CLOSEST_DISTANCE", "Closest distance", "Maya's factory bind: w
                  "skeleton (and the end joints) take weight"),
                 ("HEAT_MAP", "Heat Map", "Blender's automatic weights (bone heat)"))
 DROPOFF = 4.0
-# Maya treats a vertex within 1e-4 of joints as on them: those share it equally (measured with mayapy, research/maya/re/
-# skin_basics_247.md; the kit used 1e-9 before step 247)
+# Maya treats a vertex within 1e-4 of joints as on them: those share it equally
+# (the kit used 1e-9 before step 247)
 ON_JOINT = 1e-4
 SKINNING = (("CLASSIC_LINEAR", "Classic linear", "Weights blend the joint matrices (Maya factory)"),
             ("DUAL_QUATERNION", "Dual quaternion", "Volume-preserving blend (Blender Preserve Volume)"),
@@ -416,7 +415,7 @@ def closest_distance_weights(points, segments, dropoff=DROPOFF, max_influences=5
 
 
 def hierarchy_candidates(dist, names, hierarchy, max_influences):
-    """Maya Closest in hierarchy (mayapy bind_hier2, error <= 3.9e-16; skin_basics_247.md): per vertex the
+    """Maya Closest in hierarchy (bind_hier2, error <= 3.9e-16): per vertex the
     closest joint *with children*; candidates = its breadth-first list (each listed joint's children, then its parent,
     at most ``max_influences`` joints) plus every end joint. (V, J) bool mask."""
     import numpy as np
@@ -477,7 +476,7 @@ def _bind_closest(arm, mesh, bones, max_influences, dropoff=DROPOFF, hierarchy=F
 
 
 def name_skin_cluster(mesh):
-    """Maya names each bind's deformer skinCluster1, skinCluster2 ... scene-wide (mayapy: two binds give skinCluster1 /
+    """Maya names each bind's deformer skinCluster1, skinCluster2 ... scene-wide (two binds give skinCluster1 /
     skinCluster2, step 158 #97): a skin modifier with Blender's automatic name gets the next free number."""
     md = armature_modifier(mesh)
     if md is None or md.name.startswith("skinCluster"):
@@ -553,7 +552,7 @@ SECOND_SKIN_NOTE = ("Blender keeps one skin per mesh here: FBX and game engines 
 
 
 def question_text(name):
-    """Maya's Bind Skin question (maya2026_paint_skin_weights.md §6)."""
+    """Maya's Bind Skin question."""
     return f"There is already a skin cluster on {name}.\nDo you want to create another?"
 
 
@@ -627,11 +626,11 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
                 picked = [eb.name for eb in arm.data.edit_bones if eb.select]
         meshes = [o for o in sel if o.type == 'MESH']
         if not sel and not picked:
-            from .maya_errors import SELECT_TO_BIND        # Maya 2026 mayapy (step 266 independent check)
+            from .maya_errors import SELECT_TO_BIND        # Maya 2026 (step 266 independent check)
             self.report({'ERROR'}, SELECT_TO_BIND)
             return {'CANCELLED'}
         if arm is None:
-            # Maya: no joint in the selection (only an IK handle / a curve ...) is an Error (060_messages_ui.md B4)
+            # Maya: no joint in the selection (only an IK handle / a curve ...) is an Error
             from .maya_errors import MUST_SELECT_JOINT
             self.report({'ERROR'}, MUST_SELECT_JOINT)
             return {'CANCELLED'}
@@ -655,7 +654,7 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Maya Detach Skin Options (research/maya/re/option_boxes_140.md): History Delete history (default) / Keep history /
+# Maya Detach Skin Options: History Delete history (default) / Keep history /
 # Bake history, Coloring: Remove joint colors on.
 UNBIND_HISTORY = (("DELETE", "Delete history", "Remove the skin and the joints' weights"),
                   ("KEEP", "Keep history", "Remove the skin, keep the joints' weights (vertex groups)"),
@@ -804,7 +803,7 @@ class ALLSET_OT_weight_paint_exit(bpy.types.Operator):
         return set_view_tool(context, self.tool)
 
 
-# Maya Paint Skin Weights Tool settings with a Blender meaning (research/maya/re/option_boxes_140.md); the window
+# Maya Paint Skin Weights Tool settings with a Blender meaning; the window
 # (operators/option_windows_rig.py) passes them, a plain menu click leaves the brush as the user set it in the dock.
 PAINT_OPERATIONS = (("REPLACE", "Replace", "Blender brush blend Mix"), ("ADD", "Add", "Blender brush blend Add"),
                     ("SCALE", "Scale", "Blender brush blend Multiply"), ("SMOOTH", "Smooth", "Blender's Blur tool"))
@@ -929,14 +928,14 @@ class ALLSET_OT_paint_skin_weights(bpy.types.Operator):
         if current is None or not current.idname or current.idname in MAYA_TOOLS:
             set_view_tool(context, 'builtin.brush')
         # Maya hilites the first influence (joint1, the skeleton's root) the first time the tool opens on a skin and
-        # keeps the picked one afterwards (research/maya/re/maya2026_paint_skin_weights.md:17, :20). Bind Skin leaves
+        # keeps the picked one afterwards. Bind Skin leaves
         # Blender's last made group (the last joint) active: the first entry picks by hierarchy (step 238, #146).
         first = first_influence(mesh)
         if first is not None and (mesh.vertex_groups.active is None or not mesh.get(PAINT_SEEN)):
             mesh.vertex_groups.active_index = first.index
         mesh[PAINT_SEEN] = True
         # Maya keeps a vertex selection made before the tool and floods only it
-        # (research/maya/re/maya2026_paint_skin_weights.md:17, :84): Blender shows that selection only with the vertex
+        # (Maya): Blender shows that selection only with the vertex
         # mask on. A full selection is the whole mesh anyway, so the mask stays as it was then (delegated).
         shown = [v.select for v in mesh.data.vertices if not v.hide]
         if any(shown) and not all(shown) and not mesh.data.use_paint_mask:
@@ -972,7 +971,7 @@ class ALLSET_OT_flood_weights(bpy.types.Operator):
 
 # --- Copy / Mirror Skin Weights, Copy / Paste Vertex Weights -----------------------------------------
 
-# Maya Copy Skin Weights Options (research/maya/re/option_boxes_140.md): Surface Association -> Blender Data Transfer
+# Maya Copy Skin Weights Options: Surface Association -> Blender Data Transfer
 # vertex mapping; Influence Association 1-3 = how a source joint finds its destination joint when the two meshes use
 # different skeletons (tried in order; one skeleton = every joint is itself).
 SURFACE_ASSOCIATION = (("CLOSEST_POINT", "Closest point on surface", "Interpolated from the nearest face"),
@@ -1082,7 +1081,7 @@ class ALLSET_OT_copy_skin_weights(bpy.types.Operator):
         src_names = [vg.name for vg in influences(srcs[0])]
         bpy.ops.object.data_transfer(use_reverse_transfer=True, data_type='VGROUP_WEIGHTS', use_create=True,
                                      vert_mapping=VERT_MAPPING[self.surface],
-                                     # reverse transfer swaps the two layer enums (measured, tmp/probe58/dt.py)
+                                     # reverse transfer swaps the two layer enums (measured)
                                      layers_select_src='NAME', layers_select_dst='ALL')
         if dst_arm != src_arm:
             modes = [m for m in (self.influence1, self.influence2, self.influence3) if m != "NONE"]
@@ -1107,7 +1106,7 @@ def _reflect(v, axis):
 
 # Maya Mirror Skin Weights Options: Influence Association 1 = Closest joint / One to one /
 # Label (factory Closest joint), 2 = None / the same (factory None). One to one pairs a joint with itself inside one
-# skeleton, so the kit offers Closest joint and Label (research/maya/re/joint_labels_159.md §7).
+# skeleton, so the kit offers Closest joint and Label.
 MIRROR_INFLUENCE = (("CLOSEST_JOINT", "Closest joint", "The joint nearest the mirrored place of the joint"),
                     ("LABEL", "Label", "The joint with the same type label on the other side (Skeleton > Joint "
                      "Labelling): Left <-> Right"))
@@ -1116,7 +1115,7 @@ MIRROR_INFLUENCE_2 = (("NONE", "None", "No further association"),) + MIRROR_INFL
 
 def _mirror_label_partner(arm, bone, reflected, labels):
     """Label association: the bone on the other side with the same type (Other: same other type); several = the one
-    nearest the mirrored place (mayapy: fingers of one type pair by place). Center / None side = the joint itself.
+    nearest the mirrored place (fingers of one type pair by place). Center / None side = the joint itself.
     None = no label to match."""
     side, typ, other, _d = labels.get_label(bone)
     if typ == labels.T_NONE:
@@ -1135,7 +1134,7 @@ def _mirror_label_partner(arm, bone, reflected, labels):
 def mirror_group_names(arm, axis, tol=1e-3, modes=("CLOSEST_JOINT",), unmatched=None):
     """Joint name -> its partner on the other side, by Maya influence association ``modes`` tried in order.
 
-    Closest joint = the joint whose head is nearest the mirrored head (mayapy: no tolerance, an unmirrored skeleton
+    Closest joint = the joint whose head is nearest the mirrored head (no tolerance, an unmirrored skeleton
     still pairs; a joint on the plane pairs with itself). Label = ``_mirror_label_partner``. A joint no mode pairs
     falls back to Closest joint and is added to ``unmatched`` (Maya warns "Not all influences could be matched")."""
     from . import joint_labels as labels
@@ -1165,7 +1164,7 @@ def mirror_group_names(arm, axis, tol=1e-3, modes=("CLOSEST_JOINT",), unmatched=
 
 def surface_weights(mesh, points, groups, w):
     """Weights at world ``points`` from the closest point on the mesh surface: the barycentric mix of that triangle's
-    vertices (Maya Surface Association "Closest point on surface", mayapy: research/maya/re/skin_basics_247.md).
+    vertices (Maya Surface Association "Closest point on surface").
     ``w`` = (V, K) vertex weights of ``groups``. Returns (P, K)."""
     import numpy as np
     from mathutils import geometry
@@ -1192,7 +1191,7 @@ def mirror_weights(mesh, axis=0, positive_to_negative=True, modes=("CLOSEST_JOIN
     """Copy the weights of one side onto the other (Maya Mirror Skin Weights, factory Closest point on surface): each
     destination vertex takes the weights at the closest surface point to its mirror image (barycentric), every joint
     renamed to its mirror partner; vertices on the plane are left alone. ``only`` = Maya filterSelected: just these
-    destination vertices are written (mayapy: a selected source vertex writes nothing, skin_basics_247.md);
+    destination vertices are written (a selected source vertex writes nothing);
     ``normalize`` = the option's Normalize (factory off). Count of vertices written."""
     import numpy as np
     from . import skin_basics
@@ -1241,7 +1240,7 @@ class ALLSET_OT_mirror_skin_weights(bpy.types.Operator):
     positive_to_negative: BoolProperty(name="Direction: Positive to Negative", default=True)
     influence1: EnumProperty(name="Influence Association 1", items=MIRROR_INFLUENCE, default="CLOSEST_JOINT")
     influence2: EnumProperty(name="Influence Association 2", items=MIRROR_INFLUENCE_2, default="NONE")
-    # Maya optionVar mirrorSkinNormalize, factory 0 (Mirror Skin Weights Options; skin_basics_247.md)
+    # Maya optionVar mirrorSkinNormalize, factory 0 (Mirror Skin Weights Options)
     normalize: BoolProperty(name="Normalize", default=False)
 
     @classmethod
@@ -1383,7 +1382,7 @@ class ALLSET_OT_move_skinned_joints(bpy.types.Operator):
 
 
 def move_skinned_joints(context, arm, on):
-    """Maya moveJointsMode (research/maya/re/joint_move_241.md §3): on = the skeleton in Edit mode, its picked joints
+    """Maya moveJointsMode: on = the skeleton in Edit mode, its picked joints
     kept; off = back to Pose mode. The Armature modifier deforms by pose x rest^-1, so moving the rest at the rest
     pose leaves the mesh where it is and the new rest is the bind (Maya rewrites bindPreMatrix)."""
     from . import joint_selection

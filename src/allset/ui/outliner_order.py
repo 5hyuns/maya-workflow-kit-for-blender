@@ -2,7 +2,7 @@
 """Maya Outliner order on Blender's Outliner: startup cameras first, then every list in creation order (step 211,
 audit 16 G2, #117).
 
-Maya lists DAG nodes in creation order (research/maya/re/naming_211.md C1). The Maya Outliner shows objects unsorted
+Maya lists DAG nodes in creation order. The Maya Outliner shows objects unsorted
 (``use_sort_alpha`` off, ui/maya_outliner.setup), so Blender builds its rows from the view layer's bases (= the
 collection's link order) and then calls ``outliner_collections_children_sort`` on the top list and every child list:
 a C ``qsort`` whose comparator says "equal" for all of them (only TE_CHILD_NOT_IN_COLLECTION differs; Blender

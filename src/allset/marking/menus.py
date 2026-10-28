@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya marking menus as plain data (docs/steps/step_8.md 「계획」 1).
 
-Positions and labels follow Maya's own marking menus as recorded in the private
-research notes (research/maya/marking_menus.json, keys mapped by
-research/maya/marking_menu_ids.json) and research/maya/hotkeys_and_menus.md §5. Re-implemented: only labels, radial
+Positions and labels follow Maya's own marking menus. Re-implemented: only labels, radial
 positions and the Blender action (same value forms as ``ui/menu_map.py``:
 ``"op.id"``, ``("op.id", {props})``, ``("v3d", ...)``, ``("tool", id, edit)``,
 ``("menu", id)``; ``None`` = greyed out). A radial ``Sub`` is a nested marking
@@ -21,7 +19,7 @@ class Sub:
     """A submenu: ``radial`` {pos: (label, action)}, ``items`` [(label, action) | "-"].
 
     ``options``: labels whose Maya item has an option box ``[]``
-    (``option_box_command`` in research/maya/marking_menus.json).
+    (Maya's option box items).
     """
 
     def __init__(self, radial=None, items=(), options=()):
@@ -33,9 +31,9 @@ class Sub:
 class MarkingMenu(Sub):
     def __init__(self, name, label, source, radial=None, items=(), options=()):
         super().__init__(radial, items, options)
-        self.name = name        # kit menu id (research/maya/marking_menu_ids.json maps it for checks)
+        self.name = name        # kit menu id
         self.label = label
-        self.source = source    # research citation
+        self.source = source    # where the Maya menu comes from (not read at run time)
 
 
 def _mod(kind):
@@ -50,7 +48,7 @@ def _create(kind):
 def _orient(kind, slot=0):
     # Not transform.select_orientation: invoked from a menu it opens its own enum popup (GUI test).
     # W/E/R menus set their own tool's slot (1 move, 2 rotate, 3 scale): Maya keeps one axis mode
-    # per tool, Move = World and Rotate/Scale = Object by default (pivot_snap.md P12, step 59).
+    # per tool, Move = World and Rotate/Scale = Object by default (step 59).
     return ("wm.context_set_enum", {"data_path": f"scene.transform_orientation_slots[{slot}].type", "value": kind})
 
 
@@ -117,7 +115,7 @@ SYMMETRY = ("Symmetry", Sub(radial={
 }))
 
 # Material items at the end of the RMB object list (Maya builds them when the RMB marking menu opens,
-# research/maya/hotkeys_and_menus.md:252; docs/steps/step_29.md). ``rmb``: with nothing selected
+# docs/steps/step_29.md). ``rmb``: with nothing selected
 # they act on the object the menu was opened on, like Maya.
 _FAVORITES = (("Lambert", 'LAMBERT'), ("Blinn", 'BLINN'), ("Phong", 'PHONG'),
               ("Standard Surface", 'STANDARD_SURFACE'))
@@ -136,12 +134,12 @@ def _material_items():
     ]
 
 
-# --- RMB: RMB_MESH (hotkeys_and_menus.md §5.2) --------------------------
+# --- RMB: RMB_MESH --------------------------
 # Mesh radials follow Maya 2022's RMB marking menu over a mesh and its object select masks;
 # NE "Object Mode". [I] resolved by hand.
 
-# The list under the ring, Maya 2022 order (research/maya/marking_menus.json
-# menus.RMB_MESH; 14_marking_menu_object.png, docs/steps/step_52.md). The first row is the object's name
+# The list under the ring, Maya 2022 order
+# (docs/steps/step_52.md). The first row is the object's name
 # (``OBJECT_TITLE`` is replaced by it when the menu opens). An empty ``Sub`` is a greyed submenu: Maya's
 # dependency-graph / metadata / set editors have no Blender counterpart here.
 OBJECT_TITLE = "<object>..."
@@ -200,13 +198,13 @@ def _object_items():
 
 
 RMB_MESH = MarkingMenu(
-    "RMB_MESH", "Object", "research/maya/hotkeys_and_menus.md:248-250",
+    "RMB_MESH", "Object", "maya",
     radial={
         "N": ("Edge", _comp('EDGE')),
         "W": ("Vertex", _comp('VERT')),
         "S": ("Face", _comp('FACE')),
-        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya 2022 RMB marking menu,
-        # research/maya/re/marking_ring_151.md); both open the UV Editor (step 66).
+        # A submenu in Maya 2022: the component at its own position, UV Shell at S (Maya 2022 RMB marking
+        # menu); both open the UV Editor (step 66).
         "E": ("UV", Sub(radial={"E": ("UV", ("allset.uv_component", {"mode": 'UV'})),
                                 "S": ("UV Shell", ("allset.uv_component", {"mode": 'SHELL'}))})),
         "SW": ("Vertex Face", None),
@@ -219,7 +217,7 @@ RMB_MESH = MarkingMenu(
 # Curve: N curve point, W CV, S edit point, E hull (Maya 2022 RMB marking menu over a curve). Blender
 # curves edit control points only.
 RMB_CURVE = MarkingMenu(
-    "RMB_CURVE", "Curve", "research/maya/hotkeys_and_menus.md:251",
+    "RMB_CURVE", "Curve", "maya",
     radial={
         "N": ("Curve Point", None),
         "W": ("Control Vertex", _comp('CV')),
@@ -239,7 +237,7 @@ def with_object_name(menu, name):
     return MarkingMenu(menu.name, menu.label, menu.source, menu.radial, items, menu.options)
 
 
-# --- DG Traversal / Inputs / Outputs (step 165, research/maya/re/cb_component_164.md §2) ------------------------
+# --- DG Traversal / Inputs / Outputs (step 165) ------------------------
 # ``nodes`` (marking/rmb_nodes.py builds it, bpy-free here): {"object": name, "inputs": [(type label, owner, key)],
 # "outputs": [...], "history": [(node name, owner, key)], "future": [...]}; owner = the object holding the node,
 # key = its Attribute Editor tab key. Maya's Inputs / Outputs submenus: Select / Enable / Disable All, the nodes by type nice name
@@ -321,11 +319,11 @@ def with_nodes(menu, nodes):
 
 # Nothing under the cursor: Select All / Complete Tool (Maya 2022 RMB marking menu over empty space).
 RMB_EMPTY = MarkingMenu(
-    "RMB_EMPTY", "Select", "research/maya/hotkeys_and_menus.md:252",
+    "RMB_EMPTY", "Select", "maya",
     items=[("Select All", _item("Select/All")),
            ("Complete Tool", None)])
 
-# Pivot edit (D / Insert): the menu Maya's RMB shows while a pivot is being edited (research/maya/interaction.md:81).
+# Pivot edit (D / Insert): the menu Maya's RMB shows while a pivot is being edited.
 # Maya treats it as a state of the RMB_EMPTY menu, so it has its own kit id like RMB_CURVE. Show Orientation Handle / Bake Pivot Orientation have no Blender counterpart (greyed).
 def _pivot_option(option):
     return ("allset.pivot_option", {"option": option})
@@ -336,7 +334,7 @@ def _pivot_reset(position=True, orientation=True):
 
 
 PIVOT_EDIT = MarkingMenu(
-    "PIVOT_EDIT", "Pivot", "research/maya/marking_menus.json RMB_EMPTY",
+    "PIVOT_EDIT", "Pivot", "maya",
     radial={
         "N": ("Pin Component Pivot", _pivot_option("PIN")),
         "S": ("Reset Pivot", _pivot_reset()),
@@ -359,7 +357,7 @@ SOFT_HARD = Sub(radial={  # Maya 2022 Shift+RMB object / edge marking menus
 }, options={"Soften/Harden"})
 
 SHIFT_OBJECT = MarkingMenu(
-    "SHIFT_OBJECT", "Object Tools", "research/maya/marking_menus.json SHIFT_OBJECT",
+    "SHIFT_OBJECT", "Object Tools", "maya",
     radial={
         "S": ("Extrude", _item("Edit Mesh/Extrude")),
         "SW": ("Insert Edge Loop Tool", _item("Mesh Tools/Insert Edge Loop")),
@@ -398,7 +396,7 @@ SHIFT_OBJECT = MarkingMenu(
     options=['Append to Polygon Tool', 'Combine', 'Crease Tool', 'Insert Edge Loop Tool', 'Mirror', 'Multi-Cut', 'Quad Draw Tool', 'Quadrangulate', 'Reduce', 'Sculpt Tool', 'Smooth', 'Subdiv Proxy', 'Target Weld Tool'])
 
 SHIFT_VERTEX = MarkingMenu(
-    "SHIFT_VERTEX", "Vertex Tools", "research/maya/marking_menus.json SHIFT_VERTEX",
+    "SHIFT_VERTEX", "Vertex Tools", "maya",
     radial={
         "S": ("Extrude Vertex", ("v3d", "mesh.extrude_vertices_move", {})),
         "E": ("Chamfer Vertex", _item("Edit Mesh/Chamfer Vertices")),  # step 139
@@ -430,7 +428,7 @@ SHIFT_VERTEX = MarkingMenu(
     options=['Chamfer Vertex', 'Circularize Vertices', 'Connect Components', 'Connect Tool', 'Crease Tool', 'Extrude Vertex', 'Multi-Cut'])
 
 SHIFT_EDGE = MarkingMenu(
-    "SHIFT_EDGE", "Edge Tools", "research/maya/marking_menus.json SHIFT_EDGE",
+    "SHIFT_EDGE", "Edge Tools", "maya",
     radial={
         "S": ("Extrude Edge", ("v3d", "mesh.extrude_edges_move", {})),
         "SW": ("Delete Edge", "mesh.dissolve_edges"),
@@ -468,7 +466,7 @@ SHIFT_EDGE = MarkingMenu(
     options=['Add Divisions To Edge', 'Bevel Edge', 'Bridge', 'Circularize Components', 'Connect Components', 'Crease Tool', 'Edit Edge Flow', 'Extrude Edge', 'Insert Edge Loop Tool', 'Multi-Cut', 'Slide Edge Tool'])
 
 SHIFT_FACE = MarkingMenu(
-    "SHIFT_FACE", "Face Tools", "research/maya/marking_menus.json SHIFT_FACE",
+    "SHIFT_FACE", "Face Tools", "maya",
     radial={
         "N": ("Merge Faces To Center", MERGE_CENTER),
         "S": ("Extrude Face", ("v3d", "allset.extrude", {})),  # step 65
@@ -501,7 +499,7 @@ SHIFT_FACE = MarkingMenu(
     options=['Add Divisions To Faces', 'Assign Invisible Faces', 'Bevel Face', 'Bridge Faces', 'Circularize Components', 'Duplicate Face', 'Extract Faces', 'Extrude Face', 'Multi-Cut', 'Poke Face', 'Smooth Faces', 'Target Weld Tool', 'Wedge Face'])
 
 SHIFT_DEFAULT = MarkingMenu(
-    "SHIFT_DEFAULT", "Create", "research/maya/marking_menus.json SHIFT_DEFAULT",
+    "SHIFT_DEFAULT", "Create", "maya",
     radial={
         "N": ("Create Polygon Tool", _item("Mesh Tools/Create Polygon")),
         "NE": ("Disc", _create('DISC')),
@@ -528,9 +526,9 @@ SHIFT_DEFAULT = MarkingMenu(
 _CS = "Select/Convert Selection/"
 
 CTRL_CONVERT = MarkingMenu(
-    "CTRL_CONVERT", "Convert Selection", "research/maya/marking_menus.json CTRL_CONVERT",
+    "CTRL_CONVERT", "Convert Selection", "maya",
     # Every convert entry runs the Select menu item with the same runTimeCommand (step 141: menu and marking menu
-    # agree; research/maya/re/select_convert_141.md); the convert-then-act items stay allset.mm_poly.
+    # agree); the convert-then-act items stay allset.mm_poly.
     radial={
         "N": ("To Edges", Sub(radial={
             "N": ("To Edges", _item(_CS + "To Edges")),
@@ -583,7 +581,7 @@ CTRL_CONVERT = MarkingMenu(
 # Maya manip modes -> Blender transform orientations (Object = Local, Component = Normal).
 
 OPT_MOVE = MarkingMenu(
-    "OPT_MOVE", "Move Options", "research/maya/marking_menus.json OPT_MOVE",
+    "OPT_MOVE", "Move Options", "maya",
     radial={
         "NE": ("Component", _orient('NORMAL', 1)),
         "W": ("World", _orient('GLOBAL', 1)),
@@ -613,7 +611,7 @@ OPT_MOVE = MarkingMenu(
     ])
 
 OPT_ROTATE = MarkingMenu(
-    "OPT_ROTATE", "Rotate Options", "research/maya/marking_menus.json OPT_ROTATE",
+    "OPT_ROTATE", "Rotate Options", "maya",
     radial={
         "NW": ("Object", _orient('LOCAL', 2)),
         "W": ("World", _orient('GLOBAL', 2)),
@@ -633,7 +631,7 @@ OPT_ROTATE = MarkingMenu(
     ])
 
 OPT_SCALE = MarkingMenu(
-    "OPT_SCALE", "Scale Options", "research/maya/marking_menus.json OPT_SCALE",
+    "OPT_SCALE", "Scale Options", "maya",
     radial={
         "W": ("World", _orient('GLOBAL', 3)),
         "NW": ("Object", _orient('LOCAL', 3)),
@@ -658,7 +656,7 @@ OPT_SCALE = MarkingMenu(
     ])
 
 OPT_SELECT = MarkingMenu(
-    "OPT_SELECT", "Select Options", "research/maya/marking_menus.json OPT_SELECT",
+    "OPT_SELECT", "Select Options", "maya",
     radial={
         "NW": ("Marquee", ("tool", "builtin.select_box", False)),
         "NE": ("Drag", ("tool", "builtin.select", False)),
@@ -668,12 +666,12 @@ OPT_SELECT = MarkingMenu(
         "SW": ("Lasso", ("tool", "builtin.select_lasso", False)),
     })
 
-# --- A hold + LMB: SELECT_ALL (interaction.md:194; marking_menus.json) -------------
+# --- A hold + LMB: SELECT_ALL -------------
 # Inputs/outputs = history in Maya; the Blender history equivalent (modifiers) has no
 # up/downstream selection, so W/E/N/S stay greyed (docs/steps/step_10.md 「계획」 9).
 
 SELECT_ALL = MarkingMenu(
-    "SELECT_ALL", "Select All / History", "research/maya/marking_menus.json SELECT_ALL",
+    "SELECT_ALL", "Select All / History", "maya",
     radial={
         "W": ("Select All Inputs", None),
         "E": ("Select All Outputs", None),
@@ -698,7 +696,7 @@ def _key(action):
 
 
 KEY_TANGENT = MarkingMenu(
-    "KEY_TANGENT", "Keyframe / Tangents", "research/maya/marking_menus.json KEY_TANGENT",
+    "KEY_TANGENT", "Keyframe / Tangents", "maya",
     radial={
         "W": ("Keys", Sub(radial={
             "N": ("Delete Keys", _key("DELETE")),
@@ -732,7 +730,7 @@ def _mask(kind):
 
 
 SELECT_COMPONENT = MarkingMenu(
-    "SELECT_COMPONENT", "Component Pick Mask", "research/maya/marking_menus.json SELECT_COMPONENT",
+    "SELECT_COMPONENT", "Component Pick Mask", "maya",
     radial={
         "N": ("Points", Sub(radial={
             "N": ("All Points", None),
@@ -780,7 +778,7 @@ def _component(kind):
 
 
 SELECT_POLYGON = MarkingMenu(
-    "SELECT_POLYGON", "Polygon Components", "research/maya/marking_menus.json SELECT_POLYGON",
+    "SELECT_POLYGON", "Polygon Components", "maya",
     radial={
         "N": ("Vertices", _component("VERT")),
         "E": ("Edges", _component("EDGE")),
@@ -788,7 +786,7 @@ SELECT_POLYGON = MarkingMenu(
         "W": ("UVs", ("allset.uv_component", {"mode": 'UV'})),
     })
 
-# --- Hotbox zones (hotkeys_and_menus.md §4; marking_menus.json hotbox.zones) ------
+# --- Hotbox zones ------
 
 def _pane(ui_type):
     return ("allset.hb_pane", {"ui_type": ui_type})
@@ -810,7 +808,7 @@ SHADING_WS = ("allset.hb_workspace", {"name": "Shading"})
 ANIMATION_WS = ("allset.hb_workspace", {"name": "Animation"})
 
 HB_NORTH = MarkingMenu(
-    "HB_NORTH", "Panel Layouts", "research/maya/marking_menus.json hotbox.zones.N",
+    "HB_NORTH", "Panel Layouts", "maya",
     radial={
         "N": ("Single Perspective", ("allset.hb_single", {})),          # Maya 2022 hotbox North zone
         "NE": ("Hypershade/Render/Persp", SHADING_WS),
@@ -823,7 +821,7 @@ HB_NORTH = MarkingMenu(
     })
 
 HB_SOUTH = MarkingMenu(
-    "HB_SOUTH", "Panel Types", "research/maya/marking_menus.json hotbox.zones.S",
+    "HB_SOUTH", "Panel Types", "maya",
     radial={
         "N": ("Outliner", _pane('OUTLINER')),                              # Maya 2022 hotbox South zone
         "E": ("Graph Editor", _pane('FCURVES')),
@@ -836,7 +834,7 @@ HB_SOUTH = MarkingMenu(
     })
 
 HB_EAST = MarkingMenu(
-    "HB_EAST", "UI Elements", "research/maya/marking_menus.json hotbox.zones.E",
+    "HB_EAST", "UI Elements", "maya",
     radial={
         "N": ("Help Line", _ui('HELP_LINE')),                              # Maya 2022 hotbox East zone
         "NE": ("Status Line", _ui('STATUS_LINE')),
@@ -854,7 +852,7 @@ HB_EAST = MarkingMenu(
     })
 
 HB_WEST = MarkingMenu(
-    "HB_WEST", "Selection Masks", "research/maya/marking_menus.json hotbox.zones.W",
+    "HB_WEST", "Selection Masks", "maya",
     radial={
         "N": ("NURBS Mask", _mask('NURBS')),
         "NE": ("Hierarchy", None),
@@ -868,7 +866,7 @@ HB_WEST = MarkingMenu(
     items=[("All Objects", _mask('ALL'))])
 
 HB_CENTER = MarkingMenu(
-    "HB_CENTER", "Views", "research/maya/marking_menus.json hotbox.zones.C",
+    "HB_CENTER", "Views", "maya",
     radial={
         "N": ("Perspective View", _view('PERSP')),                         # Maya 2022 hotbox centre zone
         "E": ("Side View", _view('RIGHT')),
@@ -895,10 +893,10 @@ def _uvc(mode):
 UV_OPS = [("Cut UV Edges", "allset.uv_cut"), ("Sew UV Edges", "allset.uv_sew"),
           ("Unfold", "allset.uv_unfold"), ("Layout", "allset.uv_layout")]
 
-# RMB in the UV Editor: Maya 2026's UV Editor marking menu (polygon version; research/maya/marking_menus.json, recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
+# RMB in the UV Editor: Maya 2026's UV Editor marking menu (polygon version, recorded in step 66). Maya puts a copy of the UV Editor menu bar under it:
 # the kit lists the commands of this step instead.
 UV_EDITOR_RMB = MarkingMenu(
-    "UV_EDITOR_RMB", "UV Editor", "research/maya/marking_menus.json UV_EDITOR_RMB",
+    "UV_EDITOR_RMB", "UV Editor", "maya",
     radial={
         "S": ("Face", _uvc('FACE')),
         "N": ("Edge", _uvc('EDGE')),
@@ -927,7 +925,7 @@ _UV_TAIL = [("Texture Borders", ("allset.uv_display", {"mode": 'TEXTURE_BORDERS'
             ("UV Set Editor", _item("UV/UV Set Editor"))]
 
 SHIFT_UV = MarkingMenu(
-    "SHIFT_UV", "UV Tools", "research/maya/marking_menus.json SHIFT_UV",
+    "SHIFT_UV", "UV Tools", "maya",
     radial={
         "N": ("Mapping", UV_MAPPING),
         "NE": ("3D Grab UV Tool", GRAB_UV),
@@ -941,7 +939,7 @@ SHIFT_UV = MarkingMenu(
     items=[("Auto Seams", _item("UV/Auto Seams")), *_UV_TAIL])
 
 SHIFT_UV_SHELL = MarkingMenu(
-    "SHIFT_UV_SHELL", "UV Shell Tools", "research/maya/marking_menus.json SHIFT_UV_SHELL",
+    "SHIFT_UV_SHELL", "UV Shell Tools", "maya",
     radial={
         "N": ("Mapping", UV_MAPPING),
         "NE": ("3D Grab UV Tool", GRAB_UV),

@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Command Line and Help Line in Blender's status bar.
 
-research/maya/ui_layout.md §4.12 (:290-293: language toggle, input/result
-field, Script Editor button), §4.13 (:295-298: Help Line);
-research/blender/api_limits.md #14 (:93-94). Design: docs/steps/step_7.md
+Maya's Command Line (language toggle, input/result field, Script Editor button) and Help Line.
+Design: docs/steps/step_7.md
 「계획」 4. Python only: MEL is not supported (decision 5). ``maya.cmds`` is a
 small look-alike (``cmds_shim``), importable as ``import maya.cmds as cmds`` in code run from the Command Line,
 shelf buttons and the Script Editor only: those imports are rewritten to the kit's module before Blender's Run Script
@@ -117,7 +116,7 @@ class ALLSET_MT_command_history(bpy.types.Menu):
 
 # --- Help Line ---------------------------------------------------------------------------
 
-# Maya shows the tool's help in the Help Line when a tool is active (ui_layout.md:295-298).
+# Maya shows the tool's help in the Help Line when a tool is active.
 TOOL_HELP = {
     "builtin.select": "Select Tool: click or drag to select. Shift toggles, Ctrl deselects, Ctrl+Shift adds",
     "builtin.move": "Move Tool: drag the manipulator. Hold X/C/V to snap to grid/curve/point, D to move the pivot",
@@ -158,12 +157,12 @@ def help_text(context):
 
 # --- status bar --------------------------------------------------------------------------
 
-# Maya 2022 puts the Help Line and the Command Line on one row, Help Line left (research/maya/ui_layout.md:
-# 128-131, :290-298); widths from the factory window (_maya_ui_dump.json HelpLine 675 px, CommandLine 915 px
+# Maya 2022 puts the Help Line and the Command Line on one row, Help Line left;
+# widths in Maya's factory window (Help Line 675 px, Command Line 915 px
 # at 1600 px) in UI units (20 px at effective scale 1.0).
 HELP_UNITS = 33.75
 COMMAND_UNITS = 45.75
-# Inside the Command Line (research/maya/screens/16_four_view.png, 1600 px window): language button ~35 px, input
+# Inside the Command Line (1600 px window): language button ~35 px, input
 # ~335 px, result field ~485 px, Script Editor button. Step 161: the row is shared out as a fraction of the status bar
 # like Maya's (the fixed UI units ran 1988 px wide at UI scale 1.25 in a 1600 px window, so the result field was drawn
 # off the right edge and a command's result never showed).

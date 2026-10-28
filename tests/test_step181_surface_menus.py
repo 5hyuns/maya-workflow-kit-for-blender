@@ -1,6 +1,6 @@
 """Step 181 (lane W): the Surfaces menu leaves mapped to the kit's NURBS surface commands, their Maya option windows
-(titles / fields / factory values: research/maya/re/surfaces_181.md §1), shelf routing and notices.
-Plan + operator table: docs/steps/step_181.md. Geometry against mayapy: tests of operators/surfaces_maya.py."""
+(titles / fields / factory values), shelf routing and notices.
+Plan + operator table: docs/steps/step_181.md. Geometry: tests of operators/surfaces_maya.py."""
 
 import types
 from importlib import import_module

@@ -248,7 +248,7 @@ def test_menu_tool_enters_edit_mode():
         try:
             bpy.ops.allset.menu_tool(tool="builtin.knife", edit=True)
         except RuntimeError as ex:
-            # -b: tool keymaps are not built (research/blender/industry_compatible_vs_maya.md:14),
+            # -b: tool keymaps are not built,
             # so activating a tool fails; the tool switch itself is checked in the GUI test.
             assert "keymap" in str(ex), ex
         try:

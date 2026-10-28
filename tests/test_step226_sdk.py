@@ -1,8 +1,8 @@
 """Step 226 lane D (Issue #136, ATTACH_PLAN L5): Set Driven Key like Maya 2026 (operators/driven_key.py).
 
-Maya truth (mayapy 2026, research/scripts/maya_controls226/measure.py -> research/maya/re/controls_226.json): curve shapes
+Maya 2026: curve shapes
 of 2 / 3 / 4 keys (29 samples each, auto tangents, infinity Constant), two drivers on one channel = blendWeighted sum
-(20 pairs), rotate 10 / 10 -> 60, a third driver (0, 0) (1, 5) -> 65. Spec research/maya/re/maya2026_controls.md §L5."""
+(20 pairs), rotate 10 / 10 -> 60, a third driver (0, 0) (1, 5) -> 65."""
 
 import math
 from importlib import import_module
@@ -18,7 +18,7 @@ joints = import_module(kit.MODULE + ".operators.joints")
 
 TOL = 1e-4
 
-# copy of controls_226.json (research/ is not in git)
+# Maya 2026 values
 MAYA = {"sdk_two_keys": {"keys": [[0, 0], [10, 90]], "xs": [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0], "ty": [0.0, 0.0, 0.0, 0.0, 0.0, 0.6525, 2.52, 5.4675, 9.36, 14.0625, 19.44, 25.3575, 31.68, 38.2725, 45.0, 51.7275, 58.32, 64.6425, 70.56, 75.9375, 80.64, 84.5325, 87.48, 89.3475, 90.0, 90.0, 90.0, 90.0, 90.0]},  # noqa: E501
         "sdk_three_keys": {"keys": [[0, 0], [3, 20], [10, 90]], "xs": [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0], "ty": [0.0, 0.0, 0.0, 0.0, 0.0, 0.856481, 3.185185, 6.625, 10.814815, 15.393519, 20.0, 24.90051, 30.489796, 36.59949, 43.061224, 49.706633, 56.367347, 62.875, 69.061224, 74.757653, 79.795918, 84.007653, 87.22449, 89.278061, 90.0, 90.0, 90.0, 90.0, 90.0]},  # noqa: E501
         "sdk_four_keys_overshoot": {"keys": [[0, 0], [2, 50], [6, 40], [10, 90]], "xs": [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0], "ty": [0.0, 0.0, 0.0, 0.0, 0.0, 7.8125, 25.0, 42.1875, 50.0, 49.570312, 48.4375, 46.835938, 45.0, 43.164062, 41.5625, 40.429688, 40.0, 42.148438, 47.8125, 55.820312, 65.0, 74.179688, 82.1875, 87.851562, 90.0, 90.0, 90.0, 90.0, 90.0]},  # noqa: E501
@@ -80,7 +80,7 @@ def _cases():
     return [n for n in ("sdk_two_keys", "sdk_three_keys", "sdk_four_keys_overshoot")]
 
 
-def test_curve_shapes_match_mayapy():
+def test_curve_shapes_match_maya():
     """Maya auto tangents (flat ends, chord slope, flat extremes), infinity Constant: every sample within 1e-4."""
     for name in _cases():
         _clear()
@@ -154,7 +154,7 @@ def _load_driver(drv, attr):
 
 
 def test_rotate_two_and_three_drivers_through_the_window():
-    """measure.py: curl (0,0)(10,90) + spread (0,0)(10,-30) on rz -> 60; fist (0,0)(1,5) -> 65. Window flow: Key /
+    """Maya: curl (0,0)(10,90) + spread (0,0)(10,-30) on rz -> 60; fist (0,0)(1,5) -> 65. Window flow: Key /
     pose held while open / Go to Previous / Next / Close."""
     _clear()
     drv = _empty("drv", curl=0, spread=0, fist=0)

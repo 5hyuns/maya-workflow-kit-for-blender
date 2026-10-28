@@ -1,4 +1,4 @@
-"""Step 95: V point snap with the Move manipulator, default and close zoom (research/maya/workflows/pivot_snap.md S4).
+"""Step 95: V point snap with the Move manipulator, default and close zoom.
 
 Maya Workflow Kit cm template, pCube1 at the origin and pCube2 at x = 3 cm, Move tool. V held + drag of pCube1's X arrow to the
 screen position of a pCube2 vertex -> pCube1's pivot lands on that vertex projected onto the X axis (t x = 2.5 cm).

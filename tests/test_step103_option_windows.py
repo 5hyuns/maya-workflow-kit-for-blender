@@ -1,4 +1,4 @@
-"""Step 103: real Maya option windows (fields / defaults read from Maya 2022, research/maya/re/option_boxes.md),
+"""Step 103: real Maya option windows (fields / defaults from Maya 2022),
 option boxes as Maya's right-side square, every mapped option box opens something. Plan: docs/steps/step_103.md;
 GUI: tests/gui/gui_step103_option_windows.py."""
 
@@ -77,8 +77,8 @@ def test_windows_registered_with_maya_titles_and_buttons():
             assert getattr(bpy.ops.allset, "opt_" + w.key) and w.action, w.key
             continue
         # Maya option windows end in "Options"; boxes that open Maya Tool Settings carry the tool name (step 140);
-        # two Render windows carry Maya's own titles (step 152, research/maya/re/render_grid_152.md); the arc tools'
-        # boxes open Maya's Tool Settings "Three / Two Point Arc Settings" (step 196, research/maya/re/options_196_misc.md)
+        # two Render windows carry Maya's own titles (step 152); the arc tools'
+        # boxes open Maya's Tool Settings "Three / Two Point Arc Settings" (step 196)
         assert (w.title.endswith(("Options", "Tool", "Arc Settings"))
                 or w.title in ("Render Sequence (Current Frame)", "Batch Render Frame")) and w.action, w.key
         rna = getattr(bpy.ops.allset, "opt_" + w.key).get_rna_type()
@@ -90,7 +90,7 @@ def test_windows_registered_with_maya_titles_and_buttons():
         for p in w.paths:
             # editor menu bars (Graph Editor / Dope Sheet Edit key windows, step 157) have their own boxes
             assert (p in menu_data.OPTION_BOXES or p in editor_menu_data.OPTION_BOXES) and p in menu_map.MAP, (w.key, p)
-    # Maya factory values (research/maya/re/option_boxes.md)
+    # Maya factory values
     d = ow._BY_KEY
     assert d["poly_plane"].defaults()["width_div"] == 10 and d["poly_sphere"].defaults()["axis_div"] == 20
     assert d["bevel"].defaults()["width"] == 0.5 and d["merge"].defaults()["threshold"] == 0.01

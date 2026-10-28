@@ -2,11 +2,11 @@
 """Step 140 Maya option windows: rigging, skinning, deformers and constraints (issue #32, Aim / Pole Vector of #35).
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator); labels and
-factory defaults read from Maya 2022 (research/maya/re/option_boxes_140.md, shots research/maya/screens/options140/).
+factory defaults are Maya 2022's.
 option_windows.py appends ``WINDOWS`` to its own list, so this module only imports ``F`` / ``Window`` / helpers from it.
 
 Maya tool boxes (Create Joints, Create IK Handle, Create IK Spline Handle, Paint Skin Weights) open Tool Settings,
-not a window (option_boxes_140.md:15-17): here they are the same kind of window titled with the tool name, whose
+not a window: here they are the same kind of window titled with the tool name, whose
 button starts the tool with the values (docs/steps/step_140.md 「설계」). Fields Blender can't honour are only listed
 (``missing``), never faked.
 """
@@ -36,7 +36,7 @@ _NORMALIZE = {"None": "NONE", "Off": "NONE", "Interactive": "INTERACTIVE", "Post
 
 
 def _ik_fields(prefix=""):
-    # IK Handle Settings (option_boxes_140.md:208-211): Current solver RP, Solver enable on, Weight 1
+    # IK Handle Settings: Current solver RP, Solver enable on, Weight 1
     return [F(prefix + "solver", "Current solver:", "enum", "Rotate-Plane Solver",
               items=("Single-Chain Solver", "Rotate-Plane Solver")),
             F(prefix + "solver_enable", "", "bool", True, text="Solver enable"),
@@ -179,7 +179,7 @@ def _run_scale(context, v):
         return res
     owner = context.active_pose_bone if context.mode == 'POSE' else context.active_object
     # Maya: driven scale = target scale x offset (Maya Y = Blender Z). Blender's Copy Scale with Offset multiplies
-    # the owner's own scale in, so the owner's scale channels become the offset (option_boxes_140.md:190-192).
+    # the owner's own scale in, so the owner's scale channels become the offset.
     offset = Vector((v["offset"][0], v["offset"][2], v["offset"][1]))
     if v["maintain_offset"]:
         target = con.target
@@ -198,13 +198,13 @@ def _run_pole_vector(context, v):
     return bpy.ops.allset.pole_vector('EXEC_DEFAULT')
 
 
-# --- the windows (labels / defaults: research/maya/re/option_boxes_140.md) --------------------------
+# --- the windows (labels / defaults) --------------------------
 
 _ANIM_LAYER = ("Animation Layer", "Set layer to override")
 
 WINDOWS = [
-    # Skeleton > Create Joints: Tool Settings "Joint Tool" (option_boxes_140.md:196-206)
-    # Orientation section of Maya 2026 (step 244, joint_rig_2026_joint_tool.md §1): Orient Joint to World, Secondary
+    # Skeleton > Create Joints: Tool Settings "Joint Tool"
+    # Orientation section of Maya 2026 (step 244): Orient Joint to World, Secondary
     # Axis, its world orientation, Auto orient secondary axis (factory on since 2025)
     Window("joint_tool", "Joint Tool", "Create Joints", None, [
         F("orient_world", "", "bool", False, text="Orient Joint to World"),
@@ -217,11 +217,11 @@ WINDOWS = [
         missing=("Degrees of freedom", "Symmetry", "Scale compensate", "Auto joint limits",
                  "Variable Bone Radius Settings / Bone Radius Settings", "Projected Centering",
                  "Primary Axis (always the bone's Y = Maya X)") + _IK_MISSING),
-    # Skeleton > Create IK Handle: Tool Settings "IK Handle Tool" (option_boxes_140.md:208-211)
+    # Skeleton > Create IK Handle: Tool Settings "IK Handle Tool"
     Window("ik_handle_tool", "IK Handle Tool", "Create IK Handle", None, _ik_fields(), _run_ik_handle,
            paths=("Skeleton/Create IK Handle",), missing=_IK_MISSING),
-    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (option_boxes_140.md:213-218; Maya
-    # 2026 factory values ikSplineHandleCtx, research/maya/re/maya2026_curve_rigs.md:11, step 218)
+    # Skeleton > Create IK Spline Handle: Tool Settings "IK Spline Handle Tool" (Maya
+    # 2026 factory values ikSplineHandleCtx, step 218)
     Window("ik_spline_tool", "IK Spline Handle Tool", "Create IK Spline Handle", None, [
         F("root_on_curve", "", "bool", True, text="Root on curve"),
         F("parent_curve", "", "bool", True, text="Auto parent curve"),
@@ -233,7 +233,7 @@ WINDOWS = [
         _run_ik_spline, paths=("Skeleton/Create IK Spline Handle",),
         missing=("Auto create root axis", "Auto simplify curve (the kit always fits the curve: on)",
                  "Root twist mode")),
-    # Skin > Bind Skin (option_boxes_140.md:28-46); replaces option_windows "bind_skin"
+    # Skin > Bind Skin; replaces option_windows "bind_skin"
     Window("bind_skin_maya", "Bind Skin Options", "Apply and Close", ("allset.bind_skin", {}), [
         F("bind_to", "Bind to:", "enum", "Joint hierarchy", items=("Joint hierarchy", "Selected joints")),
         F("bind_method", "Bind method:", "enum", "Closest distance",
@@ -242,19 +242,19 @@ WINDOWS = [
           items=("Classic linear", "Dual quaternion", "Weight blended")),
         F("normalize", "Normalize weights:", "enum", "Interactive", items=("None", "Interactive", "Post")),
         F("max_influences", "Max influences:", "int", 5, lo=1, hi=30),
-        # Maya 2026 factory: Maintain max influences on, Dropoff rate 4.0 (research/maya/re/skin_basics_247.md)
+        # Maya 2026 factory: Maintain max influences on, Dropoff rate 4.0
         F("maintain_max", "", "bool", True, text="Maintain max influences"),
         F("dropoff", "Dropoff rate:", "float", 4.0, lo=0.1, hi=100.0),
         F("remove_unused", "", "bool", True, text="Remove unused influences"),
         F("colorize", "", "bool", True, text="Colorize skeleton")], _run_bind, paths=("Skin/Bind Skin",),
         missing=("Bind to: Object hierarchy", "Bind method: Geodesic Voxel", "Weight distribution", "Allow multiple bind poses", "Include hidden selections on creation",
                  "Deformer node")),
-    # Skin > Unbind Skin: "Detach Skin Options" (option_boxes_140.md:48-51)
+    # Skin > Unbind Skin: "Detach Skin Options"
     Window("unbind_skin", "Detach Skin Options", "Detach", ("allset.unbind_skin", {}), [
         F("history", "History:", "enum", "Delete history", items=("Delete history", "Keep history", "Bake history")),
         F("remove_colors", "Coloring:", "bool", True, text="Remove joint colors")], _run_unbind,
         paths=("Skin/Unbind Skin",)),
-    # Skin > Copy Skin Weights (option_boxes_140.md:53-60)
+    # Skin > Copy Skin Weights
     Window("copy_skin_weights", "Copy Skin Weights Options", "Copy", ("allset.copy_skin_weights", {}), [
         F("surface", "Surface Association:", "enum", "Closest point on surface",
           items=("Closest point on surface", "Ray cast", "Closest component")),
@@ -266,7 +266,7 @@ WINDOWS = [
           items=("None", "Closest joint", "Closest bone", "One to one", "Name")),
         F("normalize", "", "bool", False, text="Normalize")], _run_copy_weights, paths=("Skin/Copy Skin Weights",),
         missing=("Surface Association: UV space", "Influence Association: Label")),
-    # Skin > Paint Skin Weights: Tool Settings "Paint Skin Weights Tool" (option_boxes_140.md:220-237)
+    # Skin > Paint Skin Weights: Tool Settings "Paint Skin Weights Tool"
     Window("paint_skin_weights", "Paint Skin Weights Tool", "Paint Skin Weights", None, [
         F("operation", "Paint operation:", "enum", "Replace", items=("Replace", "Add", "Scale", "Smooth")),
         F("profile", "Profile:", "enum", "Soft", items=("Gaussian", "Soft", "Solid")),
@@ -279,7 +279,7 @@ WINDOWS = [
         missing=("Influences sort / filter (the vertex group list)", "Mode: Select / Paint Select", "Weight Type",
                  "Min/Max value", "Gradient / color ramp", "Radius(L)", "Reflection", "Stamp spacing / depth",
                  "Stylus pressure", "Other display options")),
-    # Deform > Blend Shape (option_boxes_140.md:125-134)
+    # Deform > Blend Shape
     Window("blend_shape", "Blend Shape Options", "Create", ("allset.blend_shape", {}), [
         FText("node_name", "BlendShape node:"),
         F("origin", "Origin:", "enum", "Local", items=("Local", "World")),
@@ -287,7 +287,7 @@ WINDOWS = [
         F("delete_targets", "", "bool", False, text="Delete targets")], _run_blend_shape,
         paths=("Deform/Blend Shape",), missing=("Envelope (Blender shape keys have no envelope)",
                                                 "Target shape options: In-between")),
-    # Constrain > Aim (option_boxes_140.md:169-185): +X at the target, +Y up, world up Vector (0, 1, 0)
+    # Constrain > Aim: +X at the target, +Y up, world up Vector (0, 1, 0)
     Window("aim_constraint", "Aim Constraint Options", "Add", ("allset.constrain", {"type": 'TRACK_TO'}), [
         F("aim_vector", "Aim vector:", "vec3", (1.0, 0.0, 0.0)), F("up_vector", "Up vector:", "vec3", (0.0, 1.0, 0.0)),
         F("world_up_type", "World up type:", "enum", "Vector",
@@ -297,10 +297,10 @@ WINDOWS = [
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_aim, paths=("Constrain/Aim",),
         missing=("Maintain offset / Offset (Blender's Track To has none)",) + _ANIM_LAYER +
         ("Constraint axes (always All)",)),
-    # Constrain > Pole Vector (option_boxes_140.md:187-188): only Weight
+    # Constrain > Pole Vector: only Weight
     Window("pole_vector", "Pole Vector Constraint Options", "Add", ("allset.pole_vector", {}), [
         F("weight", "Weight:", "float", 1.0, lo=0.0, hi=1.0)], _run_pole_vector, paths=("Constrain/Pole Vector",)),
-    # Constrain > Scale (option_boxes_140.md:190-192)
+    # Constrain > Scale
     Window("scale_constraint", "Scale Constraint Options", "Add", ("allset.constrain", {"type": 'COPY_SCALE'}), [
         F("maintain_offset", "Maintain offset:", "bool", False), F("offset", "Offset:", "vec3", (1.0, 1.0, 1.0)),
         F("all", "Constraint axes:", "bool", True, text="All"), F("x", "", "bool", False, text="X"),

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya soft selection as ONE global state (issues #1, #15) and the falloff maths of the colour overlay (#2).
 
-Maya's soft select is one global option (``cmds.softSelect(softSelectEnabled=...)``, factory 0 = off: mayapy,
+Maya's soft select is one global option (``cmds.softSelect(softSelectEnabled=...)``, factory 0 = off,
 docs/steps/step_129_softsel.md 「계획」 0). Blender has two per-scene flags, ``use_proportional_edit_objects`` (object mode)
 and ``use_proportional_edit`` (edit modes, UV), so the kit keeps both flags of every scene equal to ``STATE``:
 kit toggles call ``set_on``; a flag changed by Blender's own UI is pulled in (``pull``: depsgraph handler +

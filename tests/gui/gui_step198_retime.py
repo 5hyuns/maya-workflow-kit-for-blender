@@ -1,6 +1,6 @@
 """Step 198 (#105) in a real UI: the Maya Retime Tool in the Graph Editor (big view switched to the Graph Editor).
-Double-click adds markers (Snap On Frame), dragging a marker's handle 15 -> 20 retimes the keys like GUI Maya
-(1 5 12.5 20 25 35, research/maya/re/graph_editor_193.md §1), dragging the line low moves only the marker, the ✕
+Double-click adds markers (Snap On Frame), dragging a marker's handle 15 -> 20 retimes the keys like Maya
+(1 5 12.5 20 25 35), dragging the line low moves only the marker, the ✕
 deletes it, Esc ends the tool, Ctrl+Z restores the keys."""
 
 import os
