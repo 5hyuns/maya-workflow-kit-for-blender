@@ -156,9 +156,9 @@ def main(argv=None):
         results, log, dt = run_test_file(args.blender, path, env)
         file_failed = False
         for r in results:
-            status = "SKIP" if r.get("skipped") else "PASS" if r["ok"] else "FAIL"
+            status = "SKIP" if "skipped" in r else "PASS" if r["ok"] else "FAIL"
             print(f"{status}  {path.stem}::{r['name']}")
-            if r.get("skipped"):
+            if "skipped" in r:
                 skipped += 1
                 print("      " + r["skipped"])
             elif r["ok"]:

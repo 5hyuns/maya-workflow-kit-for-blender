@@ -4,7 +4,9 @@
 
 Enables the extension unless the test module sets ``AUTO_ENABLE = False``,
 runs each top-level ``test_*`` function in definition order and writes
-``[{"name", "ok", "error"}]`` to the result file.
+``[{"name", "ok", "error"}]`` to the result file; a test that raises
+``kit.Skip`` (Maya reference data not in this clone) is ``{"name", "ok": True,
+"skipped": reason}``.
 """
 
 import importlib.util

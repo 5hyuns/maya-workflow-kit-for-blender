@@ -77,6 +77,7 @@ def test_generated_table_is_current():
     assert "File/Recent Files" not in hotkeys.HOTKEYS
     kit.research("maya", "menus.json")             # the generator reads  (not in a public clone): last
     kit.research("maya", "hotkeys_default.json")
+    kit.research("maya", "re", "maya2026_menus_dump.json")
     spec = importlib.util.spec_from_file_location("gen_menu_hotkeys", ROOT / "tools" / "gen_menu_hotkeys.py")
     gen = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gen)

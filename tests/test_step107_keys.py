@@ -17,7 +17,6 @@ mapping = import_module(kit.MODULE + ".keymap.mapping")
 status_line = import_module(kit.MODULE + ".ui.status_line")
 symmetry = import_module(kit.MODULE + ".operators.symmetry")
 
-ROOT = Path(kit.__file__).resolve().parent.parent
 
 
 def _keymap():
