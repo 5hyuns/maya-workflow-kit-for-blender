@@ -151,3 +151,64 @@ def test_keys_and_menus_point_at_the_kit_repeat():
     assert menu_map.MAP["Edit/Repeat"] == "allset.repeat_last"
     assert menu_map.MAP["Edit/Recent Commands List"] == ("menu", "ALLSET_MT_recent_commands")
     assert menu_sets._dynamic_label("Edit/Repeat", "Repeat").startswith("Repeat")
+
+
+def _edit_cube_with_top_face():
+    """A 1-unit cube in face mode with only its top face selected (fix #184)."""
+    import bmesh
+    _clear()
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    ob = bpy.context.active_object
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+    _select_faces(ob, lambda f: f.normal.z > 0.9)
+    return ob
+
+
+def _select_faces(ob, keep):
+    import bmesh
+    bm = bmesh.from_edit_mesh(ob.data)
+    for f in bm.faces:
+        f.select_set(False)
+    for f in bm.faces:
+        if keep(f):
+            f.select_set(True)
+    bm.select_flush_mode()
+    bmesh.update_edit_mesh(ob.data)
+
+
+def _mesh_stats(ob):
+    import bmesh
+    bm = bmesh.from_edit_mesh(ob.data)
+    return len(bm.verts), len(bm.faces), round(max(v.co.z for v in bm.verts), 6), \
+        round(max(v.co.x for v in bm.verts), 6)
+
+
+def test_g_after_a_dragged_extrude_extrudes_the_new_faces():
+    """#184: Ctrl+E, drag the manipulator (edits polyExtrudeFace1), select another face, G = a new extrusion on
+    that face (Maya 2026 behaviour, checked: G runs the extrude command again, it doesn't edit the old node)."""
+    ex = import_module(kit.MODULE + ".operators.extrude")
+    ob = _edit_cube_with_top_face()
+    assert bpy.ops.allset.extrude('EXEC_DEFAULT', True) == {'FINISHED'}            # Ctrl+E
+    assert ex.set_params(bpy.context, local_translate_z=0.5) == {'FINISHED'}      # manipulator drag
+    assert _mesh_stats(ob) == (12, 10, 1.0, 0.5), _mesh_stats(ob)
+    assert bpy.context.window_manager.operators[-1].bl_idname == "ALLSET_OT_extrude_edit"
+    assert not rep.repeatable("ALLSET_OT_extrude_edit")         # a node edit, not a command G repeats
+    _select_faces(ob, lambda f: f.normal.x > 0.9 and f.calc_center_median().z < 0.5)   # an original side face
+    assert bpy.ops.allset.repeat_last() == {'FINISHED'}
+    verts, faces, top, _right = _mesh_stats(ob)
+    assert (verts, faces) == (16, 14), (verts, faces)            # a second extrusion on the side face
+    assert top == 1.0, top                                       # the first extrusion stayed where it was dragged
+    _o, rec = ex.active(bpy.context)
+    assert rec.name == "polyExtrudeFace2" and rec.params["local_translate_z"] == 0.0, (rec.name, rec.params)
+    # G again on yet another face: a third node
+    _select_faces(ob, lambda f: f.normal.y > 0.9 and f.calc_center_median().z < 0.5)
+    assert bpy.ops.allset.repeat_last() == {'FINISHED'}
+    assert _mesh_stats(ob)[:2] == (20, 18), _mesh_stats(ob)
+    assert ex.active(bpy.context)[1].name == "polyExtrudeFace3"
+
+
+def test_node_edits_are_never_repeated():
+    for idname in ("ALLSET_OT_extrude_edit", "ALLSET_OT_extrude_edge_edit", "ALLSET_OT_extrude_vertex_edit",
+                   "ALLSET_OT_bevel_edit", "ALLSET_OT_uv_automatic_edit"):
+        assert not rep.repeatable(idname), idname
