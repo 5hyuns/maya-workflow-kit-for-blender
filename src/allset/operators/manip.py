@@ -61,7 +61,7 @@ def kind(context):
         return None
     if context.mode == 'EDIT_MESH' and _pref(context, "smart_extrude"):
         if any(_selected_coords(ob) for ob in _edit_meshes(context)):
-            return 'EXTRUDE'      # faces, edges and vertices (Maya 2026 behaviour, measured; #183)
+            return 'EXTRUDE'      # faces, edges and vertices (Maya 2026 behaviour; #183)
     return None
 
 
@@ -77,7 +77,7 @@ def start_duplicate(context):
             "originals": [o.name for o in originals], "active": active.name if active else None}
 
 
-# Maya 2026 (measured, #183): Shift+drag with vertices selected runs polyExtrudeVertex with Width 0.5 and Length 0,
+# Maya 2026 (#183): Shift+drag with vertices selected runs polyExtrudeVertex with Width 0.5 and Length 0,
 # and the drag moves the vertex together with the new base vertices around it
 VERTEX_DRAG = {"width": 0.5, "length": 0.0, "divisions": 1}
 

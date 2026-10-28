@@ -55,7 +55,7 @@ def test_ticks_and_rows():
         normal = ts._rows(name, 32, rows)
         tall = ts._rows(name, 320, rows)
         assert tuple(320 - y for y in tall) == tuple(32 - y for y in normal), name
-    # #190, Maya 2026 (measured): the current frame number stays at the bottom, ticks keep their bottom end and
+    # #190, Maya 2026: the current frame number stays at the bottom, ticks keep their bottom end and
     # grow into half the room under the frame numbers
     assert ts._rows("current_label", 320) == ts._rows("current_label", 32) == (8, 16)
     assert ts._rows("tick", 40) == (4, 4 + 15), "a little taller: the normal tick"

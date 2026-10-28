@@ -1,5 +1,5 @@
 """#194 in a real UI: an open Attribute Editor section draws its controls indented in their own content area under
-the section header (Maya 2026 behaviour, measured: the expanded frame's content sits inset in a box of its own shade).
+the section header (Maya 2026 behaviour: the expanded frame's content sits inset in a box of its own shade).
 
 The first section header ("Mesh Component Display" of pCubeShape1) is clicked open; then the screenshot row through
 its first control must show the content area: a shade change between the dock's left edge and the control."""

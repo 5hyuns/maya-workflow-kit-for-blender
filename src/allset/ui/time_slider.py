@@ -639,7 +639,7 @@ def ruler_ticks(step, lo, hi):
     return list(_multiples(step, lo - 1, hi + 1))
 
 
-# A taller Time Slider (Maya 2026 behaviour, measured at six heights, #190): the frame numbers stay at the top in
+# A taller Time Slider (Maya 2026 behaviour, #190): the frame numbers stay at the top in
 # their size, the current frame number stays at the bottom, and the ticks keep their bottom end and normal length
 # until half the room between the numbers and that end (less this many px) is longer; then they take that half.
 TICK_HALF_PAD = 2.33
