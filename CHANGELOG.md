@@ -6,6 +6,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ## [Unreleased]
 
 ### Fixed
+- **Maya mode startup**: defer Make Live scene reconciliation until `load_post`
+  when Blender restricts data during addon registration. Saved Maya mode can
+  register fully on restart and show its layout again.
 - **Make Live**: the Status Line magnet makes the selected meshes live; its arrow
   opens surface history. Live references resist viewport selection, use dark green
   `#009954` Outliner labels and wire overlays, and keep snap settings independent.

@@ -323,7 +323,11 @@ def register():
     bpy.types.Scene.allset_live_history = bpy.props.CollectionProperty(type=ALLSET_PG_live_history)
     for name, fn in HANDLERS:
         getattr(bpy.app.handlers, name).append(fn)
-    reload()
+    # Saved Maya mode registers while Blender exposes _RestrictData. The
+    # load_post handler will reconcile the startup scene once it is available.
+    # Switching Maya mode on in an already open file can reconcile immediately.
+    if hasattr(bpy.data, 'scenes'):
+        reload()
 
 
 def unregister():
