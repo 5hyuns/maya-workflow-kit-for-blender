@@ -498,7 +498,15 @@ class ALLSET_OT_hold(bpy.types.Operator):
         if event.type == self._key:
             if event.value == 'RELEASE':
                 return self._finish(context)
-            return {'RUNNING_MODAL'}  # key repeat
+            if event.is_repeat:
+                # Step 265 (Issue #178): the OS repeats a held key (~30 / s). A *handled* key event cancels the
+                # pending LMB CLICK_DRAG (wm_event_system.cc 4.5 :3740-3749 "CLICK_DRAG: canceling (button event
+                # was handled)"), so the manipulator's drag — gizmo_tweak is a CLICK_DRAG item — only started when
+                # the mouse crossed the drag threshold before the next repeat: D + drag "sometimes" grabbed the
+                # pivot. A repeat that nothing handles leaves the drag alone (a repeat never starts one either,
+                # :3683, and kit hold items ignore repeats), so pass it on.
+                return {'PASS_THROUGH'}
+            return {'RUNNING_MODAL'}
         if event.type == 'TIMER' and keystate.is_down(self._key) is False:
             # RELEASE was consumed by another modal (e.g. a transform drag). Wait for that
             # transform to end: it writes its snap state back to the tool settings when it
