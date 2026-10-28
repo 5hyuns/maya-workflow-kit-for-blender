@@ -178,7 +178,7 @@ def _last_op():
 
 def _transform_running(window):
     return any(op.bl_idname.startswith("TRANSFORM_OT_") or op.bl_idname in
-               {'ALLSET_OT_pivot_translate', 'ALLSET_OT_pivot_rotate'} for op in window.modal_operators)
+               {'ALLSET_OT_pivot_translate', 'ALLSET_OT_pivot_rotate', 'ALLSET_OT_component_scale'} for op in window.modal_operators)
 
 
 # --- the active handle (Maya MMB drag anywhere), step 28 -------------------------------
@@ -187,7 +187,7 @@ def _transform_running(window):
 # ...AfterToolSwitch true). Session only; a re-tap of the tool key resets.
 HANDLES = {}
 OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTATE',
-            "TRANSFORM_OT_resize": 'RESIZE'}
+            "TRANSFORM_OT_resize": 'RESIZE', "ALLSET_OT_component_scale": 'RESIZE'}
 
 
 def handle_from_op(bl_idname, props):
@@ -208,6 +208,9 @@ def handle_from_op(bl_idname, props):
                       "orient_axis": props.orient_axis}
     if not any(axes):
         return kind, None
+    if bl_idname == 'ALLSET_OT_component_scale':
+        return kind, {"constraint_axis": axes, "orient_type": 'GLOBAL',
+                      "orient_matrix_type": 'GLOBAL', "orient_matrix": props.orient_matrix.copy()}
     return kind, {"constraint_axis": axes, "orient_type": props.orient_type}
 
 
@@ -330,7 +333,11 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
             kwargs.update(handle)
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[self.mode])
         try:
-            res = op('INVOKE_DEFAULT', **kwargs)
+            if self.mode == 'RESIZE':
+                from . import component_scale
+                res = component_scale.start(context, kwargs, 'MIDDLEMOUSE')
+            else:
+                res = op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:     # nothing to transform (poll failed)
             return {'PASS_THROUGH'}
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
@@ -460,8 +467,13 @@ class ALLSET_OT_manip_mmb_auto(bpy.types.Operator):
             try:
                 # launched from this MOUSEMOVE: release_confirm can't see the MMB, so the transform is
                 # confirmed by the MMB release below it (checked, )
-                op('INVOKE_DEFAULT', constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
-                   release_confirm=True)
+                kwargs = dict(constraint_axis=tuple(k == i for k in range(3)), orient_type=self._otype,
+                              release_confirm=True)
+                if self.mode == 'RESIZE':
+                    from . import component_scale
+                    component_scale.start(context, kwargs, 'MIDDLEMOUSE')
+                else:
+                    op('INVOKE_DEFAULT', **kwargs)
             except RuntimeError:
                 return {'CANCELLED'}
             return {'FINISHED'}

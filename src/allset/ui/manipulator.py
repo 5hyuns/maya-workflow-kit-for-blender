@@ -555,7 +555,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         self._built_for = (kind, pivot)
         self._ops_for = None
 
-    def _bind_ops(self, kind, otype, frame=None):
+    def _bind_ops(self, kind, otype, frame=None, clamp=False):
         """Point each handle at Blender's transform with its constraint and orientation."""
         op = {'TRANSLATE': "transform.translate", 'RESIZE': "transform.resize"}[kind]
         editing = self._built_for == ('TRANSLATE', True)
@@ -564,7 +564,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         for gz, role, data in self.handles:
             if role == 'AXIS':
                 axes = tuple(a == data for a in 'XYZ')
-                props = gz.target_set_operator(op)
+                props = gz.target_set_operator("allset.component_scale" if clamp and kind == 'RESIZE' else op)
                 props.constraint_axis = axes
                 if not editing:
                     self._orient(props, otype, frame)
@@ -582,7 +582,7 @@ class ALLSET_GGT_xform(GizmoGroup):
             elif role == 'PIVOT_RING':
                 props = gz.target_set_operator("allset.pivot_rotate")
                 props.axis = data
-        self._ops_for = (kind, otype, tuple(v for row in frame for v in row))
+        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp)
 
     @staticmethod
     def _orient(props, otype, frame):
@@ -607,14 +607,21 @@ class ALLSET_GGT_xform(GizmoGroup):
         if pivot and context.active_object is not None:
             from ..operators import pivot as pivot_ops
             frame, otype = pivot_ops.axes_for(context.active_object), pivot_ops.ORIENT_NAME
-        signature = (kind, otype, tuple(v for row in frame for v in row))
+        from ..operators import component_scale
+        scale_drag = component_scale.DRAG if kind == 'RESIZE' else None
+        if scale_drag is not None:
+            frame, otype = scale_drag._frame, 'GLOBAL'
+        clamp = kind == 'RESIZE' and component_scale.enabled(context)
+        signature = (kind, otype, tuple(v for row in frame for v in row), clamp)
         if self._ops_for != signature and not any(gz.is_modal for gz, _role, _data in self.handles):
-            self._bind_ops(kind, otype, frame=frame)
+            self._bind_ops(kind, otype, frame=frame, clamp=clamp)
         if context.mode == 'EDIT_MESH':
             pts, act = _edit_points(context)
         else:
             pts, act = _object_points(context)
         center = center_of(pts, act, scene.tool_settings.transform_pivot_point, scene.cursor.location)
+        if scale_drag is not None:
+            center = scale_drag._centre
         hide = center is None
         view = rv3d.view_rotation.to_matrix() if rv3d is not None else Matrix.Identity(3)
         colours = axis_colours()
@@ -668,6 +675,11 @@ def draw_tool_settings(self, context):
     col = layout.column(align=True)
     col.prop(scene.transform_orientation_slots[SLOT[kind]], "type", text="Axis Orientation")
     col.prop(ts, "transform_pivot_point", text="Pivot")
+    if kind == 'RESIZE':
+        from .. import preferences
+        row = col.row()
+        row.enabled = context.mode == 'EDIT_MESH'
+        row.prop(preferences.get(context), 'prevent_negative_scale')
     row = layout.row(align=True)
     row.label(text="Step Snap")
     mode = snap_align.step_snap_mode(ts, kind)
@@ -679,6 +691,8 @@ def draw_tool_settings(self, context):
         op.kind, op.mode = kind, m
     if kind == 'ROTATE':
         layout.prop(ts, "snap_angle_increment_3d", text="Step")
+    elif kind == 'RESIZE':
+        layout.label(text="Step: 0.1")
     else:
         # Blender's increment is the grid step: 1 Maya unit in the Maya Workflow Kit template (step 25).
         layout.label(text="Step: one grid unit", icon='SNAP_INCREMENT')
