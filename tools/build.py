@@ -29,7 +29,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "allset"
 DIST = ROOT / "dist"
-DEFAULT_BLENDER = r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"
+# Main target since step 272 (user 10-28): Blender 5.2 LTS, the portable 5.2.3 build; 4.5 stays supported and is
+# run with ``--blender`` / ``BLENDER``. Falls back to the installed 4.5 on a machine without the portable build.
+BLENDER_45 = r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"
+BLENDER_52 = os.path.join(os.environ.get("LOCALAPPDATA", ""), "allset_blenders", "blender-5.2.3-windows-x64",
+                          "blender.exe")
+DEFAULT_BLENDER = BLENDER_52 if os.path.isfile(BLENDER_52) else BLENDER_45
 
 # Zip file name stem = the product name (step 125, decision 12). `extension build` would name the file after the
 # manifest id; the output path is passed explicitly.

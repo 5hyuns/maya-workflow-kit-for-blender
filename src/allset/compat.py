@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Blender version differences in one place (step 118, docs/compat_5x.md).
 
-The kit targets Blender 4.5 (decision 4) and runs on 5.0-5.2. Every check of "which Blender is this" lives
-here; feature code calls these helpers and stays the same on every version. Each helper does the 4.5 thing
-first, so 4.5 behaviour is unchanged.
+The kit's main target is Blender 5.2 (step 272); it supports 4.5.0 - 5.2.x. Every check of "which Blender is
+this" lives here; feature code calls these helpers and stays the same on every version. Each helper does the
+5.x thing first and falls back to the 4.5 path; the feature checks themselves are unchanged, so every version
+gets the same result as before.
 """
 
 import bpy
 
 VERSION = tuple(bpy.app.version[:2])
-TARGET = (4, 5)
+TARGET = (5, 2)                         # main target since step 272 (Blender 5.2 LTS); 4.5 stays supported
+STRICT_VERSIONS = ((4, 5), (5, 2))      # keymap patches must all apply to these minors' IC data
 IS_TARGET = VERSION == TARGET
+IS_STRICT = VERSION in STRICT_VERSIONS
 
 
 # Properties tab flags newer than 4.5 (measured, step 118): a 4.5-saved file (the Maya Workflow Kit template) opens in 5.x with
@@ -85,9 +88,9 @@ def id_fcurves(anim_id):
     if ad is None or ad.action is None:
         return []
     slot = getattr(ad, "action_slot", None)
-    if slot is None:
-        return list(getattr(ad.action, "fcurves", ()))
-    return action_fcurves(ad.action, slot)
+    if slot is not None:
+        return action_fcurves(ad.action, slot)
+    return list(getattr(ad.action, "fcurves", ()))
 
 
 def id_fcurve_collection(anim_id):
@@ -96,10 +99,10 @@ def id_fcurve_collection(anim_id):
     if ad is None or ad.action is None:
         return None
     slot = getattr(ad, "action_slot", None)
-    if slot is None:
-        return getattr(ad.action, "fcurves", None)
-    bag = channelbag(ad.action, slot)
-    return bag.fcurves if bag is not None else None
+    if slot is not None:
+        bag = channelbag(ad.action, slot)
+        return bag.fcurves if bag is not None else None
+    return getattr(ad.action, "fcurves", None)
 
 
 # --- Timeline ------------------------------------------------------------------------------
@@ -118,11 +121,11 @@ LEGACY_TIMELINE = _legacy_timeline()
 def timeline_header_classes():
     """(class whose ``draw_header`` draws the timeline buttons, class whose ``draw_collapsible`` draws
     the timeline menus) of this Blender."""
-    if LEGACY_TIMELINE:
-        from bl_ui import space_time
-        return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
-    from bl_ui import space_dopesheet
-    return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
+    if not LEGACY_TIMELINE:
+        from bl_ui import space_dopesheet
+        return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
+    from bl_ui import space_time
+    return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
 
 
 # --- UV select mode -------------------------------------------------------------------------
@@ -228,8 +231,8 @@ def set_bone_hidden(pb, hidden):
 
 
 def timeline_marker_menu():
-    """The Timeline's Marker menu: TIME_MT_marker (4.5), DOPESHEET_MT_marker (5.x, $S52 space_dopesheet.py:573)."""
-    return "TIME_MT_marker" if LEGACY_TIMELINE else "DOPESHEET_MT_marker"
+    """The Timeline's Marker menu: DOPESHEET_MT_marker (5.x, $S52 space_dopesheet.py:573), TIME_MT_marker (4.5)."""
+    return "DOPESHEET_MT_marker" if not LEGACY_TIMELINE else "TIME_MT_marker"
 
 
 def save_dialog_args(op):
@@ -315,7 +318,7 @@ def toolbar_back(theme):
 # Kit textures (shelf icons) hold scene-linear colours. 4.5's builtin 'IMAGE' shader converts them for display;
 # from 5.0 'IMAGE' draws the values as they are and the converting shader is
 # 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB' (5.0 Python API notes, GPU; seen as darker shelf icons, step 119).
-LINEAR_IMAGE_SHADER = 'IMAGE' if VERSION < (5, 0) else 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB'
+LINEAR_IMAGE_SHADER = 'IMAGE_SCENE_LINEAR_TO_REC709_SRGB' if VERSION >= (5, 0) else 'IMAGE'
 
 
 # --- Unified paint settings -----------------------------------------------------------------
@@ -331,16 +334,16 @@ def unified_paint_settings(ts, paint="weight_paint"):
 
 def unprojected_radius(ups):
     """The brush radius in scene units."""
-    if "unprojected_radius" in ups.bl_rna.properties:
-        return ups.unprojected_radius
-    return ups.unprojected_size / 2.0
+    if "unprojected_radius" not in ups.bl_rna.properties:
+        return ups.unprojected_size / 2.0
+    return ups.unprojected_radius
 
 
 def set_unprojected_radius(ups, radius):
-    if "unprojected_radius" in ups.bl_rna.properties:
-        ups.unprojected_radius = radius
-    else:
+    if "unprojected_radius" not in ups.bl_rna.properties:
         ups.unprojected_size = radius * 2.0
+    else:
+        ups.unprojected_radius = radius
 
 
 # --- Brush falloff curve ----------------------------------------------------------------------
@@ -419,7 +422,7 @@ def compare_inputs(node):
 # Option box click model (ui/option_click.py, step 183): top bar region left -> the first Maya menu's pulldown,
 # in widget units. 4.5: 1.48 (step 183 table); 5.0 – 5.2: 1.25 (step 200, gui_step183_option_click at UI 1.0 =
 # 25 px of 20, UI 1.25 = 31 px of 25 on 5.0.1 / 5.1.2 / 5.2.3: the header row starts closer to the region edge).
-MENU_BAR_LEAD_UNITS = 1.48 if VERSION < (5, 0) else 1.25
+MENU_BAR_LEAD_UNITS = 1.25 if VERSION >= (5, 0) else 1.48
 
 
 

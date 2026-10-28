@@ -482,9 +482,10 @@ CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curv
 # research/maya/interaction.md:220-221 (z / Shift+Z / Ctrl+Y), :233-240 (h, Ctrl+H, Alt+H,
 # Shift+H, Ctrl+Shift+H, Ctrl+Alt+H, Ctrl+1), :76 (Ctrl+Shift+I).
 
-# Editor keymaps run before "Screen": their z = zoom/viewer border would hide the undo.
-_Z_BORDERS = (("3D View", "view3d.zoom_border"), ("View2D", "view2d.zoom_border"),
-              ("Image", "image.view_zoom_border"), ("Node Editor", "node.viewer_border"))
+# Editor keymaps run before "Screen": their z = zoom/viewer border would hide the undo. The Node Editor's Z item
+# exists in 4.5's Industry Compatible keymap only (keymap/ic_4_5.py; not in ic_5_*.py): optional (step 272).
+_Z_BORDERS = (("3D View", "view3d.zoom_border", False), ("View2D", "view2d.zoom_border", False),
+              ("Image", "image.view_zoom_border", False), ("Node Editor", "node.viewer_border", True))
 
 VISIBILITY_KEYS = (("H", {}, "TOGGLE"), ("H", {"ctrl": True}, "HIDE"),
                    ("H", {"alt": True}, "HIDE_UNSELECTED"), ("H", {"shift": True}, "SHOW_SELECTED"),
@@ -492,8 +493,8 @@ VISIBILITY_KEYS = (("H", {}, "TOGGLE"), ("H", {"ctrl": True}, "HIDE"),
 
 
 def patch_undo_visibility(kd):
-    for km, idname in _Z_BORDERS:
-        kd.remove(km, idname, type="Z")
+    for km, idname, optional in _Z_BORDERS:
+        kd.remove(km, idname, optional=optional, type="Z")
     _add(kd, "Screen", "ed.undo", make_event("Z"))
     _add(kd, "Screen", "ed.redo", make_event("Z", shift=True))
     _add(kd, "Screen", "ed.redo", make_event("Y", ctrl=True))
