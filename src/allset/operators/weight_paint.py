@@ -158,8 +158,14 @@ class ALLSET_PG_weight_workspace(bpy.types.PropertyGroup):
                                           default=(1.0, 1.0, 1.0))
     number_max_color: FloatVectorProperty(name='Weight 1', subtype='COLOR', size=3, min=0.0, max=1.0,
                                           default=(0.0, 0.0, 0.0))
-    __annotations__.update({key.lower(): PointerProperty(type=cls)
-                            for key, cls in zip(ACTIONS, _SETTING_CLASSES)})
+
+
+# One settings group per Paint Weights action (above). Python 3.14 has no ``__annotations__`` name in a class body to
+# update (PEP 649; Issue #176: "name '__annotations__' is not defined" on CachyOS right after install), so they are
+# merged in after the class body, before registration.
+ALLSET_PG_weight_workspace.__annotations__ = {
+    **compat.own_annotations(ALLSET_PG_weight_workspace),
+    **{key.lower(): PointerProperty(type=cls) for key, cls in zip(ACTIONS, _SETTING_CLASSES)}}
 
 
 def state(context):

@@ -18,6 +18,20 @@ IS_TARGET = VERSION == TARGET
 LATER_PROPERTIES_TABS = frozenset({"show_properties_strip", "show_properties_strip_modifier"})
 
 
+def own_annotations(cls):
+    """The annotations ``cls`` itself declares (not inherited), on every Python Blender runs.
+
+    Python 3.14 (PEP 649 / 749, used by Linux distribution builds of Blender such as CachyOS, Issue #176) evaluates
+    class annotations lazily: a class body no longer has a ``__annotations__`` name to read or update, and
+    ``cls.__dict__`` holds ``__annotate__`` instead of ``__annotations__``. ``annotationlib`` (3.14+) evaluates them;
+    older Pythons keep the dict in the class namespace."""
+    try:
+        import annotationlib
+    except ImportError:
+        return dict(cls.__dict__.get("__annotations__", {}))
+    return dict(annotationlib.get_annotations(cls))
+
+
 def has_op(module, name):
     """Does this Blender have the operator? (``bpy.ops.<mod>.<name>`` returns a wrapper for any name.)"""
     try:
