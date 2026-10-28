@@ -60,7 +60,7 @@ def test_kind_by_mode_and_gizmo():
     with _Gizmo(True):
         assert manip.kind(bpy.context) == 'EXTRUDE'
         bpy.ops.mesh.select_mode(type='VERT')
-        assert manip.kind(bpy.context) is None, "vertex mode: no Smart Extrude"
+        assert manip.kind(bpy.context) == 'EXTRUDE', "vertex mode: Smart Extrude too (Maya 2026, #183)"
         bpy.ops.mesh.select_mode(type='EDGE')
         assert manip.kind(bpy.context) == 'EXTRUDE'
         preferences.get().smart_extrude = False
@@ -106,6 +106,40 @@ def test_extrude_edge_strip():
     ob = _cube('EDGE', faces=(0,))
     manip.cleanup(manip.start_extrude(bpy.context))
     assert _counts(ob) == (10, 15, 7), _counts(ob)     # one edge -> 2 verts, 3 edges, 1 quad
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def _vertices(ob):
+    bm = bmesh.from_edit_mesh(ob.data)
+    return [v.co.copy() for v in bm.verts if v.select]
+
+
+def test_extrude_vertex():
+    """#183, Maya 2026 (checked): Shift+drag with one cube corner selected = polyExtrudeVertex (Width 0.5,
+    Length 0): 8/12/6 -> 11/18/9, and the corner plus its three new base vertices are selected for the drag."""
+    ob = _cube('VERT', faces=(0,))
+    corner = _vertices(ob)[0]
+    state = manip.start_extrude(bpy.context)
+    assert _counts(ob) == (11, 18, 9), _counts(ob)
+    sel = _vertices(ob)
+    assert len(sel) == 4 and any((v - corner).length < 1e-6 for v in sel), sel    # Length 0: the tip stays
+    assert not manip.moved(state)
+    manip.revert(state)
+    assert _counts(ob) == (8, 12, 6), _counts(ob)
+    manip.cleanup(state)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+
+def test_extrude_two_vertices():
+    """Maya 2026 (checked): two corners of one edge -> 14/24/12."""
+    ob = _cube('VERT', faces=(0,))
+    bm = bmesh.from_edit_mesh(ob.data)
+    v0 = next(v for v in bm.verts if v.select)
+    v0.link_edges[0].other_vert(v0).select = True
+    bmesh.update_edit_mesh(ob.data)
+    manip.cleanup(manip.start_extrude(bpy.context))
+    assert _counts(ob) == (14, 24, 12), _counts(ob)
+    assert len(_vertices(ob)) == 8, len(_vertices(ob))
     bpy.ops.object.mode_set(mode='OBJECT')
 
 
