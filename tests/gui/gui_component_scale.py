@@ -1,4 +1,4 @@
-"""Real Scale handles: flatten, recover, J/precision, typing, native bypass, MMB and undo."""
+"""Real Scale handles: flatten, recover, typing, MMB, the option off and undo (Prevent Negative Scale)."""
 import os
 import sys
 from importlib import import_module
@@ -40,7 +40,17 @@ def move(p, **kwargs):
 
 
 def drag():
+    """The typed / scripted guarded scale (``allset.component_scale``) while it runs."""
     return mod('operators.component_scale').DRAG
+
+
+def handle_drag():
+    """The Maya Scale handle drag while it runs (LMB / MMB on an axis handle)."""
+    return any(op.bl_idname == 'ALLSET_OT_manip_scale' for op in win().modal_operators)
+
+
+def factor():
+    return mod('operators.manip_scale').LAST.get('factor')
 
 
 def typed(text):
@@ -118,7 +128,7 @@ def s_cross_zero():
 
 @step
 def s_flatten():
-    check('real X handle starts the guarded scale operator', drag() is not None)
+    check('real X handle starts the Maya scale drag', handle_drag())
     C['end'] = C['start']-Vector((200, 0))
     move(C['end'])
 
@@ -135,44 +145,25 @@ def s_flat_result():
 
 @step
 def s_no_flip():
-    check('further inward drag stays at zero without reversing', drag().value[0] == 0)
-    C['end'].x += 13
+    check('further inward drag stays at zero without reversing', factor() == 0.0
+          and all(abs(v.co.x) < 1e-6 for v in bm().verts))
+    C['end'] = C['start']-Vector((50, 0))      # back between the zero point and the press: a positive scale again
     move(C['end'])
 
 
 @step
 def s_recover():
-    C['free'] = drag().value[0]
-    check('reversing the mouse immediately recovers a positive scale', .01 < C['free'] < .9)
+    C['free'] = factor()
+    check('moving back above zero recovers a positive scale', .01 < C['free'] < .9)
     check('recover uses the original unflattened coordinates',
           same(coords(), [Vector((v.x*C['free'], v.y, v.z)) for v in C['before']]))
-    ev('J', 'PRESS')
-
-
-@step
-def s_snap():
-    check('J pressed mid-scale snaps to 0.1', abs(drag().value[0]*10-round(drag().value[0]*10)) < 1e-5)
-    ev('J', 'RELEASE')
-
-
-@step
-def s_unsnap_precision():
-    check('J release immediately restores the free scale', abs(drag().value[0]-C['free']) < 1e-6)
-    C['end'].x += 10
-    move(C['end'], shift=True)
-
-
-@step
-def s_precision():
-    check('Shift precision changes scale without jumping',
-          abs(drag().value[0]-C['free']-drag()._sensitivity) < 1e-5)
     C['after'] = coords()
     ev('LEFTMOUSE', 'RELEASE', x=round(C['end'].x), y=round(C['end'].y))
 
 
 @step
 def s_commit():
-    check('release ends the modal and retains the recovered result', drag() is None and same(coords(), C['after']))
+    check('release ends the modal and retains the recovered result', not handle_drag() and same(coords(), C['after']))
     check('step snapping preferences are unchanged',
           mod('operators.hold').GROUPS['snap'].capture(bpy.context.tool_settings) == C['snap'])
     with override():
@@ -225,22 +216,22 @@ def s_mmb():
 
 @step
 def s_mmb_move():
-    check('MMB remembered axis uses the same guarded operator', drag() is not None and drag().release_event == 'MIDDLEMOUSE')
-    C['mmb_start'] = drag()._mouse.copy()
+    check('MMB remembered axis uses the Maya scale drag', handle_drag())
     area, region = view3d()
-    C['mmb_end'] = Vector((region.x, region.y))+C['mmb_start']+Vector((-200, 0))
+    press = mod('operators.manip_scale').LAST['press']
+    C['mmb_end'] = Vector((region.x, region.y))+Vector(press)+Vector((-600, 0))
     move(C['mmb_end'])
 
 
 @step
 def s_mmb_release():
-    check('MMB also stops exactly at zero', drag().value[0] == 0)
+    check('MMB also stops exactly at zero', factor() == 0.0)
     ev('MIDDLEMOUSE', 'RELEASE', x=round(C['mmb_end'].x), y=round(C['mmb_end'].y))
 
 
 @step
 def s_mmb_done():
-    check('MMB release confirms and clears the modal', drag() is None)
+    check('MMB release confirms and clears the modal', not handle_drag())
     with override():
         bpy.ops.ed.undo()
         bpy.ops.allset.prevent_negative_scale()
@@ -260,13 +251,12 @@ def s_disabled_press():
 
 @step
 def s_disabled_drag():
-    move(C['start']+Vector((8, 0)))
+    move(C['start']-Vector((200, 0)))
 
 
 @step
 def s_native():
-    check('disabled option binds the original native scale', drag() is None and
-          any(op.bl_idname == 'TRANSFORM_OT_resize' for op in win().modal_operators))
+    check('with the option off the drag goes past zero (flips)', handle_drag() and factor() < 0.0)
     tap('ESC')
     ev('LEFTMOUSE', 'RELEASE')
 

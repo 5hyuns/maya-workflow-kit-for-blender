@@ -387,6 +387,8 @@ def drag_factor(op, mx, my):
         f = uniform_factor(dx, op._wpp, op._radius)
     if op._snap:
         f = quantise(f)
+    if getattr(op, "_clamp", False) and f < 0.0:
+        f = 0.0                     # Prevent Negative Scale: a single-axis component scale stops flat at zero
     return f
 
 
@@ -473,6 +475,8 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
                 self._len *= MMB_SLOWER
         from . import snap_align
         self._snap = snap_align.step_snap_mode(context.scene.tool_settings, 'RESIZE') != 'OFF'
+        from . import component_scale
+        self._clamp = self.mode == 'AXIS' and not self.others and component_scale.enabled(context)
         # the press point: a drag event (gizmo) is handled once the mouse passed the drag threshold
         px, py = event.mouse_x, event.mouse_y
         if event.value == 'CLICK_DRAG':
@@ -492,7 +496,7 @@ class ALLSET_OT_manip_scale(bpy.types.Operator):
 
     def _update(self, context, event):
         f = drag_factor(self, event.mouse_x - self._region_xy[0], event.mouse_y - self._region_xy[1])
-        if f == self._f or skip_factor(f):
+        if f == self._f or (skip_factor(f) and not (self._clamp and f == 0.0)):
             return
         self._f = LAST["factor"] = f
         restore(self._state)
