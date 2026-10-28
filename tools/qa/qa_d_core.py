@@ -60,7 +60,14 @@ EXCLUDE = (
     r"^\('menu'", r"^\('pie'", r"allset\.mm_", r"hotbox", r"popup", r"option_box", r"call_menu", r"call_panel",
     # Blender 4.5 / 5.2 -b crash in initTimeSlide on a scripted transform.transform(mode='TIME_SLIDE') with no
     # Dope Sheet (factory Blender, no kit: tools/qa/repro_c_time_slide.py, step 271) - a GUI has the editor
-    r"TIME_SLIDE",
+    # 5.2 -b crash in stitch_exit on a scripted UV Stitch (factory Blender; 4.5 survives, the GUI menu path is checked
+    # by tests/gui/gui_step271_uv_stitch.py); -b has no tool keymaps, so tool activation raises inside Blender
+    r"Stitch Together", r"uv\.stitch", r"Pencil Curve Tool",
+    r"TIME_SLIDE", r"BONE_ROLL",     # BONE_ROLL from a script in Object Mode: the same crash (applyBoneRoll)
+    # kit editors that open a popover (wm.call_panel inside the operator): 5.2 -b crashes in popover_panel_create
+    # (no region), like call_panel above; a GUI opens them (gui_step179_light_linking, gui_step187_character_sets)
+    r"Light Linking", r"Relationship Editors/Character Sets", r"camera_attribute_editor", r"character_attributes",
+    r"character_editor", r"light_linking_editor", r"cb_channel_drag",
 )
 EXCLUDE_RE = re.compile("|".join(EXCLUDE))
 COMMON = ("object.", "mesh.", "transform.", "anim.", "pose.", "armature.", "wm.context_", "wm.tool_set", "view3d.",

@@ -961,6 +961,9 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
             if ob is None or ob.type != 'MESH':
                 self.report({'ERROR'}, "Select a mesh first")
                 return {'CANCELLED'}
+            if context.mode != 'EDIT_MESH' and not ob.visible_get():
+                self.report({'WARNING'}, f"{ob.name} is hidden: show it first")
+                return {'CANCELLED'}
             if context.mode != 'EDIT_MESH':
                 # its own undo step (step 129): Ctrl+Z after the tool's first edit must stay in edit mode
                 bpy.ops.object.mode_set('EXEC_DEFAULT', True, mode='EDIT')

@@ -874,6 +874,8 @@ def prepare(context):
     ob = context.view_layer.objects.active
     if ob is None or ob.type != 'MESH':
         return False
+    if ob.mode != 'EDIT' and not ob.visible_get():
+        return False            # a hidden mesh can't enter Edit Mode: the UV Editor just opens
     if ob.mode != 'EDIT':
         if not ob.select_get():
             ob.select_set(True)

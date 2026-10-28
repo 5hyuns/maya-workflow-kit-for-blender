@@ -1374,6 +1374,9 @@ class ALLSET_OT_move_skinned_joints(bpy.types.Operator):
         if ob is None or ob.type != 'ARMATURE' or not joint_selection.is_skinned(ob):
             self.report({'WARNING'}, "Select a skinned skeleton or a skinned mesh")   # Maya: "No skinned joints"
             return {'CANCELLED'}
+        if not ob.visible_get():
+            self.report({'WARNING'}, f"{ob.name} is hidden: show the skeleton first")
+            return {'CANCELLED'}
         on = move_skinned_joints(context, ob, not ob.get(joint_selection.MOVE_SKINNED))
         results.result(self, "Move Skinned Joints " + ("on: move the joints, run it again to pose" if on else "off"))
         return {'FINISHED'}
