@@ -48,7 +48,7 @@ before the first drag so changing cap topology cannot move the operation's pivot
   alone is never a reason to merge source faces.
 - A simple panel outline becomes an n-gon. Matching nested convex polygon loops
   use deterministic corner-to-corner bands (four for a rectangular opening),
-  preserving all collinear stitch vertices on the boundaries. Blender cannot
+  preserving the stitch vertices that are real corners on the boundaries. Blender cannot
   represent a single face containing a hole. Complex or non-simple hole outlines
   retain a valid solver partition, with cleanup confined to their own panel.
 - Temporary hole connectors have an explicit edge role plus saved endpoint
@@ -60,8 +60,9 @@ before the first drag so changing cap topology cannot move the operation's pivot
   record reliable edge lineage, so their existing edges are treated as input.
   Loops already deleted by those builds cannot be recovered automatically:
   compare this behavior using the uncut source mesh.
-- Output may contain triangles and n-gons. This is not a quad retopology tool or a
-  copy of Autodesk's proprietary solver. Extreme or self-crossing transforms may
+- Output may contain triangles and n-gons; it is not a quad retopology tool. Points
+  the solver leaves on a straight edge (where a seam crosses it) are removed, as in
+  Maya, unless the input mesh had them. Extreme or self-crossing transforms may
   need smaller steps.
 - Only the last matching Smart Extrude per object stays editable by the handles;
   it is session history, not a modifier stack saved in the blend file.
@@ -100,6 +101,5 @@ starting feature edges, clipped source segments, four corner-matched interior
 frame panels, cap UVs and connector proof across edits/file roundtrips.
 `gui_smart_extrude_cross.py` exercises that reference through the public operator,
 including Undo/Redo, and can export a before/after blend file and wireframe shot.
-Dimensions are reconstructed from the screenshots, not an imported Maya scene;
-the reference tests structural feature retention rather than a proprietary
-solver's exact vertex numbering.
+The reference tests structural feature retention rather than exact vertex
+numbering.

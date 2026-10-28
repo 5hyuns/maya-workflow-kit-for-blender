@@ -242,6 +242,10 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
                 bpy.data.meshes.remove(mesh)
                 mesh = result
             before = after
+        protected = {topology._key(v.co) for v in pre.verts}
+        moved = set()
+        for transform in transforms:
+            moved |= {topology._key(transform(p, i[0]) if separate else transform @ p) for i, p in positions.items()}
         bm = bmesh.new()
         try:
             bm.from_mesh(mesh)
@@ -249,6 +253,9 @@ def sweep(context, pre, face_ids, transforms, materials=(), *, separate=False):
             marker = bm.faces.layers.int.get(CAP)
             if changed:
                 topology.reconstruct(bm)
+                # a moved corner stays only while a surviving cap still uses it (a buried cap leaves none)
+                cap_points = {topology._key(v.co) for f in bm.faces if marker and f[marker] == 1 for v in f.verts}
+                topology.dissolve_seam_points(bm, protected | (moved & cap_points))
             validate(bm)
             caps = [f for f in bm.faces if marker and f[marker] == 1]
             selection = caps or [f for f in bm.faces if marker and f[marker] == 2]

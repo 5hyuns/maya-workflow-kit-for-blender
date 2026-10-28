@@ -272,3 +272,44 @@ def reconstruct(bm):
         edge[flag] = int(edge.index in connectors)
         if edge[flag]:
             edge[a], edge[b] = edge.verts[0].co, edge.verts[1].co
+
+
+def _key(co, eps=1e-5):
+    return tuple(round(c/eps) for c in co)
+
+
+def _uv_straight(v, layers):
+    """Each face's UVs run straight through the corner at ``v`` (or there are no UV layers)."""
+    for lp in v.link_loops:
+        for layer in layers:
+            a, m, b = lp.link_loop_prev[layer].uv, lp[layer].uv, lp.link_loop_next[layer].uv
+            ab = b-a
+            if ab.length < 1e-9 or abs(ab.x*(m-a).y-ab.y*(m-a).x)/ab.length > 1e-6:
+                return False
+    return True
+
+
+def dissolve_seam_points(bm, protected):
+    """Remove the in-between points the solver leaves where a seam crosses a straight edge.
+
+    Maya's result has no corner that sits on a straight line between two edges unless the input mesh had it:
+    a point with exactly two edges in line, two faces of more than three corners, straight UVs on both sides
+    and a position that is neither an input point nor a moved one (``protected`` = rounded coordinates) goes.
+    """
+    layers = list(bm.loops.layers.uv.values())
+    strays = []
+    for v in bm.verts:
+        if len(v.link_edges) != 2 or len(v.link_faces) != 2 or _key(v.co) in protected:
+            continue
+        if any(len(f.verts) <= 3 for f in v.link_faces):
+            continue
+        a, b = (e.other_vert(v).co-v.co for e in v.link_edges)
+        if a.length < 1e-9 or b.length < 1e-9 or a.normalized().dot(b.normalized()) > -1+1e-9:
+            continue
+        if not _uv_straight(v, layers):
+            continue
+        strays.append(v)
+    if strays:
+        bmesh.ops.dissolve_verts(bm, verts=strays)
+    return len(strays)
+
