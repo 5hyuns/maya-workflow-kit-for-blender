@@ -7,6 +7,7 @@ Tool Box (3D View toolbar) and the Maya dock areas / floating panels (maya_dock,
 Blender's Python UI can't replace every C-drawn part; the modules note where they work around it.
 """
 
+from . import draw_safe  # noqa: F401  step 279: menu draws that survive a missing operator
 from . import (attribute_editor, cb_channels, cb_points, workspaces, editor_chrome, file_project, render_settings, script_editor, input_line, graph_editor, graph_units, graph_view, hypershade, light_editor, render_view, channel_box, dock_tabs, layer_editor, maya_grid, maya_outliner, menu_sets, outliner_sets, notices, outliner,
                creation_inputs, in_view, manipulator, mesh_tools, modeling_toolkit, uv_toolkit, paint_weights, weight_numbers, panel_menus, camera_tools, light_link_editor, set_driven_key, shelf, selection_wire, component_colors, status_line, time_slider,
                tool_settings, toolbox, view_furniture, view_message, range_bar, status_icons, kit_icons, panel_toolbar, maya_dock, soft_overlay, save_prompt, scene_carry, armature_mode_pulse)
@@ -30,11 +31,16 @@ _modules = (window_places, status_icons, kit_icons, notices, input_line, cb_poin
             view_message, range_bar, tool_settings, maya_dock, soft_overlay, save_prompt, scene_carry, armature_mode_pulse)
 
 
+# Modules registered so far (step 279, #198 #199): a failed register takes these back and raises; unregister takes
+# back exactly these, carrying on past a module that raises.
+_done = []
+
+
 def register():
-    for mod in _modules:
-        mod.register()
+    from .. import safe_reg
+    safe_reg.register_all(_modules, _done)
 
 
 def unregister():
-    for mod in reversed(_modules):
-        mod.unregister()
+    from .. import safe_reg
+    safe_reg.unregister_all(_done)

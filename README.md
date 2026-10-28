@@ -6,7 +6,7 @@
 
 **The whole Maya workflow in Blender, in one install.**
 
-[![Blender 4.5 – 5.2](https://img.shields.io/badge/Blender-4.5%20LTS%20%E2%80%93%205.2-5285a6)](#requirements)
+[![Blender 5.0 – 5.2](https://img.shields.io/badge/Blender-5.0%20%E2%80%93%205.2-5285a6)](#requirements)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 ![Maya Workflow Kit — for Maya users, in Blender. The whole Maya workflow in Blender, in one install.](docs/distribution/marketing/kit/readme_hero.png)
@@ -212,9 +212,10 @@ Some Maya behaviour needs Blender's C++ code; the kit does not fork Blender, so 
 
 ### Requirements
 
-- **Blender 4.5 LTS through 5.2.x** (`blender_version_min = "4.5.0"`, `blender_version_max = "5.3.0"` exclusive).
-  The full test suites and the clean install → enable → disable → remove round trip were run on 4.5.4, 5.0.1, 5.1.2
-  and 5.2.2 ([]()). Blender 4.2 – 4.4 are not supported.
+- **Blender 5.0 through 5.2.x** (`blender_version_min = "5.0.0"`, `blender_version_max = "5.3.0"` exclusive).
+  The full test suites and the clean install → enable → disable → remove round trip were run on 5.0.1, 5.1.2 and
+  5.2.x ([]()). Blender 4.5 LTS is no longer supported: **0.6.2 is the last version
+  for Blender 4.5** — keep using 0.6.2 there.
 - Pure Python, no compiled code, no network access. On Windows, hold keys read the keyboard state with one read-only
   system call; elsewhere Blender's own key-release event is used. Development and testing so far have been on Windows
   only.
@@ -244,7 +245,7 @@ blender --command extension install-file -r user_default --enable maya-workflow-
 git clone https://github.com/5hyuns/maya-workflow-kit-for-blender.git
 cd maya-workflow-kit-for-blender
 python tools/build.py            # -> dist/maya-workflow-kit-<version>.zip (+ dist/maya-workflow-kit-<version>-legacy.zip)
-python tools/build.py --blender "/path/to/blender"   # if Blender is not at the default Windows 4.5 path
+python tools/build.py --blender "/path/to/blender"   # point it at your Blender 5.x
 ```
 
 The build runs `blender --command extension build` (which also validates the manifest) in a throwaway user config;
@@ -357,7 +358,8 @@ unregistered, and nothing else was changed. See
 Yes — switch to Blender, follow along with Blender's own keys, and switch back to Maya.
 
 **Which Blender versions are supported?**
-Blender 4.5 LTS through 5.2.x. 4.2 – 4.4 are not offered; versions after 5.2 are added once they are tested.
+Blender 5.0 through 5.2.x. 0.6.2 is the last version for Blender 4.5 LTS; versions after 5.2 are added once they
+are tested.
 
 **Does it open Maya `.ma` / `.mb` files?**
 No. Export FBX (or OBJ, Alembic, USD) from Maya; the kit's Import uses Maya presets (cm, Y-up).

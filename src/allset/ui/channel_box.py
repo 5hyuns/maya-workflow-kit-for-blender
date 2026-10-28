@@ -112,15 +112,11 @@ def set_root_translate(pb, t):
 
 
 def bone_selected(pb):
-    sel = getattr(pb, "select", None)   # 4.5: Bone.select; newer versions may keep it on the pose bone
-    return pb.bone.select if sel is None else sel
+    return pb.select                    # 5.x: the selection is on the pose bone (Bone.select is gone)
 
 
 def set_bone_selected(pb, state):
-    if hasattr(pb, "select"):
-        pb.select = state
-    else:
-        pb.bone.select = state
+    pb.select = state
 
 
 def active_object(context=None):

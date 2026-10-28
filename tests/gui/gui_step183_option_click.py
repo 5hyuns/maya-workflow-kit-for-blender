@@ -162,7 +162,7 @@ def geometry_case(label):
             # 5.x: areas beside a menu (the Tool Box column, the outliner) share the menu back colour, so the scan
             # can only read the menu wider than it is, never narrower (step 200: Create left 92 / 104, File right
             # 355 / 345, screenshots show the model's edges); the ❒ cell below is the click check that matters
-            wider_ok = oc().compat.VERSION >= (5, 0)
+            wider_ok = True
             check(f"{label}: menu left model {left:.0f} / screen {ml} (tol 4 px)",
                   abs(ml - left) <= 4 or (wider_ok and ml < left))
             check(f"{label}: menu right model {right:.0f} / screen {mr} (tol 8 px)",

@@ -387,19 +387,10 @@ def _children(parent, panels):
             yield from _children(cls, panels)
 
 
-def _reregister(cls, kids, poll):
-    for kid in reversed(kids):
-        if kid.is_registered:
-            bpy.utils.unregister_class(kid)
-    if cls.is_registered:
-        bpy.utils.unregister_class(cls)
-    if poll is not None:
-        cls.poll = poll
-    elif "poll" in cls.__dict__:
-        del cls.poll
-    bpy.utils.register_class(cls)
-    for kid in kids:
-        bpy.utils.register_class(kid)
+def _reregister(cls, kids, poll, raw=None):
+    """Re-register ``cls`` + ``kids`` with ``poll``; False (``cls`` left with ``raw``) when Blender refuses (step 279)."""
+    from .. import safe_reg
+    return safe_reg.reregister_panel(cls, kids, poll, raw)
 
 
 def wrap_panels():
@@ -408,8 +399,9 @@ def wrap_panels():
         raw = cls.__dict__.get("poll")
         kids = list(_children(cls, everything))
         # RENDER_PT_context = Blender's engine row: the kit's Render Using row replaces it in the window
-        _reregister(cls, kids, _make_poll(getattr(cls, "poll", None), always=cls.__name__ == "RENDER_PT_context"))
-        _wrapped.append((cls, raw, kids))
+        if _reregister(cls, kids, _make_poll(getattr(cls, "poll", None), always=cls.__name__ == "RENDER_PT_context"),
+                       raw):
+            _wrapped.append((cls, raw, kids))
 
 
 def unwrap_panels():
@@ -418,7 +410,7 @@ def unwrap_panels():
     register fail ("already registered")."""
     for cls, raw, kids in _wrapped:     # forward: the registration order again
         if cls.is_registered:
-            _reregister(cls, [k for k in kids if k.is_registered], raw)
+            _reregister(cls, [k for k in kids if k.is_registered], raw, raw)
         elif raw is not None:
             cls.poll = raw
         elif "poll" in cls.__dict__:

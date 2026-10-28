@@ -34,7 +34,7 @@ def test_loop_select_keywords_exist_in_this_blender():
 
 
 def test_loop_pick_passes_no_ring_keyword():
-    # 4.5 still has ``ring`` (default False), so the RNA check above can't catch it coming back there
+    # a source check too: the RNA check above only covers the Blender the test runs on
     src = inspect.getsource(loop_pick.ALLSET_OT_loop_pick.invoke)
     assert "loop_select_args(" in src and "ring=" not in src, src
     assert "ring" not in loop_pick.loop_select_args(False)

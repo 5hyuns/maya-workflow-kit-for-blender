@@ -188,7 +188,7 @@ def test_ae_material_type_labels_and_sections():
     assert lam.name.startswith("lambert") and ae_layout.LAMBERT[0].open
     plain = bpy.data.materials.new("noNodes")
     # Blender 5.x: every new material has a Principled node tree (step 53)
-    assert ae.material_type(plain) == ("standardSurface" if bpy.app.version >= (5, 0, 0) else "material")
+    assert ae.material_type(plain) == "standardSurface"
     principled = bpy.data.materials.new("fromBlender")
     principled.use_nodes = True
     assert ae.material_type(principled) == "standardSurface"

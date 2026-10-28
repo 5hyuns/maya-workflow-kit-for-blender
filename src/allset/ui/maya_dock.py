@@ -655,7 +655,8 @@ def draw_tear_line(layout, idname):
     """Maya's dotted first line of a menu (click = tear off)."""
     if _drawing_torn[0]:
         return
-    layout.operator(ALLSET_OT_menu_tear_off.bl_idname, text=TEAR_LINE, emboss=False).menu = idname
+    from . import draw_safe     # the operator may be missing (a half-registered kit): the menu still draws (#199)
+    draw_safe.op(layout, ALLSET_OT_menu_tear_off.bl_idname, text=TEAR_LINE, emboss=False).menu = idname
 
 
 _drawing_torn = [False]

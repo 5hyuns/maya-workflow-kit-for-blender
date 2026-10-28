@@ -292,7 +292,7 @@ class ALLSET_OT_select_loops(bpy.types.Operator):
         return context.mode == 'EDIT_MESH'
 
     def execute(self, context):
-        # Blender 4.5: mesh.loop_multi_select(ring); 5.x: mesh.select_edge_loop_multi /
+        # Blender 5.0: mesh.loop_multi_select(ring); 5.1+: mesh.select_edge_loop_multi /
         # select_edge_ring_multi (VIEW3D_MT_edit_mesh_select_loops, ).
         from .. import compat
         if compat.has_op(bpy.ops.mesh, "loop_multi_select"):

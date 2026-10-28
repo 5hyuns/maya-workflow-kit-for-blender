@@ -36,7 +36,7 @@ def _crf(quality):
 SETTINGS = ("render.filepath", "render.resolution_percentage", "render.image_settings.file_format",
             "render.image_settings.quality", "render.ffmpeg.format", "render.ffmpeg.codec",
             "render.ffmpeg.constant_rate_factor", "use_preview_range", "frame_preview_start", "frame_preview_end",
-            *(("render.image_settings.media_type",) if compat.MEDIA_TYPE else ()))
+            "render.image_settings.media_type")
 
 
 def _get(scene, path):

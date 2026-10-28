@@ -57,8 +57,8 @@ def test_ctrl_a_text_editors_keep_select_all():
 
 
 def test_ctrl_a_same_in_every_ic_version():
-    # patches are strict only on 4.5: the 5.x IC data must have the same Ctrl+A items, or the 5.x keymap drifts
-    for name in ("ic_4_5", "ic_5_0", "ic_5_1", "ic_5_2"):
+    # patches are strict only on 5.2: the 5.0 / 5.1 IC data must have the same Ctrl+A items, or their keymap drifts
+    for name in ("ic_5_0", "ic_5_1", "ic_5_2"):
         data = import_module(f"{kit.MODULE}.keymap.{name}").DATA
         by = {n: d["items"] for n, _p, d in data}
         for km, idname in maya_patches.CTRL_A_MODES:

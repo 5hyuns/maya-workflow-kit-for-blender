@@ -5,8 +5,8 @@ follows the playback range.
 Maya's Time Slider (8 transport buttons, current time
 field, auto key) and Range Slider (animation start, playback start, [range], playback end,
 animation end). Blender form:
-- ``bl_ui.space_time.TIME_HT_editor_buttons.draw_header`` (a plain class, not in bpy.types)
-  is swapped for ``draw_header`` below and restored on unregister.
+- the timeline header's ``draw_header`` (``DOPESHEET_HT_editor_buttons`` in Timeline mode, a plain class, not in
+  bpy.types) is wrapped to draw ``draw_header`` below and restored on unregister.
 - Maya's animation range = scene frame_start/end; its playback range = the preview range
   (``use_preview_range`` off: playback = animation range, inner fields greyed).
 - Maya's time slider always shows the playback range: after a file load and whenever the
@@ -16,8 +16,8 @@ animation end). Blender form:
   Time Slider menu, MMB = time + a notice (no Maya MMB time drag in Blender).
 - Step 50: the
   header is the Range Slider row in Maya's order; Blender's Playback / Keying / View / Marker menus move
-  into the animation preferences menu at its right end (``TIME_MT_editor_menus.draw_collapsible`` is
-  overridden on the class, deleted on unregister). A timeline with its sidebar shown (the Maya Workflow Kit
+  into the animation preferences menu at its right end (``DOPESHEET_MT_editor_menus.draw_collapsible`` is
+  overridden on the class for Timeline mode, deleted on unregister). A timeline with its sidebar shown (the Maya Workflow Kit
   layout) draws the current frame field and the 8 transport buttons there, at the right end of the
   Time Slider row like Maya (``ALLSET_PT_time_slider``); other timelines keep them in the header.
 """
@@ -28,8 +28,7 @@ from .. import results
 from .. import compat
 from bpy.app.handlers import persistent
 
-# Blender 5.x: the Timeline is a Dope Sheet mode; compat picks the header classes.
-LEGACY_TIMELINE = compat.LEGACY_TIMELINE
+# Blender 5.x: the Timeline is a Dope Sheet mode; compat names the header classes.
 header_classes = compat.timeline_header_classes
 
 
@@ -194,11 +193,6 @@ class ALLSET_PT_time_slider(bpy.types.Panel):
 
     def draw(self, context):
         draw_transport(self.layout.row(align=False), context)
-
-
-def _no_editor_menus(cls, context, layout):
-    """TIME_MT_editor_menus.draw_collapsible while the kit is on: the menus live in
-    ALLSET_MT_anim_preferences (Maya has no menus in the Range Slider)."""
 
 
 # --- Time Slider hand feel ---------------------------------
@@ -921,24 +915,20 @@ def register():
     wm.allset_time_range = bpy.props.IntVectorProperty(name="Time Range", size=2, options={'SKIP_SAVE'})
     _draw_handle.append(bpy.types.SpaceDopeSheetEditor.draw_handler_add(_draw_range, (), 'WINDOW', 'POST_PIXEL'))
     buttons, menus = header_classes()
-    if LEGACY_TIMELINE:
-        menus.draw_collapsible = classmethod(_no_editor_menus)
-        _ORIGINAL["draw_header"] = buttons.draw_header
-        buttons.draw_header = staticmethod(draw_header)
-    else:
-        orig_menus, orig_header = menus.draw_collapsible, buttons.draw_header   # bound class methods
-        _ORIGINAL["draw_header"] = buttons.__dict__["draw_header"]
+    orig_menus, orig_header = menus.draw_collapsible, buttons.draw_header   # bound class methods
+    _ORIGINAL["draw_header"] = buttons.__dict__["draw_header"]
 
-        def _menus_5(cls, context, layout):
-            if not _is_timeline(context):
-                return orig_menus(context, layout)
+    def _menus_5(cls, context, layout):
+        # Timeline mode: the menus live in ALLSET_MT_anim_preferences (Maya has no menus in the Range Slider)
+        if not _is_timeline(context):
+            return orig_menus(context, layout)
 
-        def _header_5(cls, context, layout):
-            if _is_timeline(context):
-                return draw_header(context, layout)
-            return orig_header(context, layout)
-        menus.draw_collapsible = classmethod(_menus_5)
-        buttons.draw_header = classmethod(_header_5)
+    def _header_5(cls, context, layout):
+        if _is_timeline(context):
+            return draw_header(context, layout)
+        return orig_header(context, layout)
+    menus.draw_collapsible = classmethod(_menus_5)
+    buttons.draw_header = classmethod(_header_5)
     _subscribe()
     bpy.app.handlers.load_post.append(_on_load)
 
@@ -958,7 +948,7 @@ def unregister():
     buttons, menus = header_classes()
     if "draw_header" in _ORIGINAL:
         orig = _ORIGINAL.pop("draw_header")
-        buttons.draw_header = orig if not LEGACY_TIMELINE else staticmethod(orig)
+        buttons.draw_header = orig
     if "draw_collapsible" in menus.__dict__:
         del menus.draw_collapsible
     while _draw_handle:

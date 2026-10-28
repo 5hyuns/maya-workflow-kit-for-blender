@@ -248,7 +248,7 @@ def _unified(layout, context, name, label, pressure=None):
     owner = ups if getattr(ups, unified) or brush is None else brush
     prop = name
     if name == 'size' and getattr(owner, 'use_locked_size', 'VIEW') == 'SCENE':
-        prop = 'unprojected_size' if hasattr(owner, 'unprojected_size') else 'unprojected_radius'
+        prop = 'unprojected_size'
     row = layout.row(align=True)
     row.prop(owner, prop, text=label, slider=name != 'size')
     if pressure:

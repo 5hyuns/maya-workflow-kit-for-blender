@@ -46,15 +46,10 @@ def s_check():
     tl = timeline()
     regions = {r.type: r for r in tl.regions}
     ui = regions.get('UI')
-    if bpy.app.version >= (5, 0, 0):
-        # Blender 5.x loads the template's timeline sidebar 1 px wide: the buttons go to the header (step 53)
-        ts = import_module(MODULE + ".ui.time_slider")
-        check(f"5.x: Time Slider buttons in the header instead ({ui and (ui.x, ui.width)})",
-              not ts.has_slider_panel(tl.spaces.active, tl))
-    else:
-        check(f"Time Slider buttons region at the right of the Time Slider row ({ui and (ui.x, ui.width, ui.height)})",
-              ui is not None and ui.width > 200 and ui.x + ui.width >= win().width - 2
-              and abs(ui.y - regions['WINDOW'].y) <= 1)
+    # Blender 5.x loads the template's timeline sidebar 1 px wide: the buttons go to the header (step 53)
+    ts = import_module(MODULE + ".ui.time_slider")
+    check(f"5.x: Time Slider buttons in the header instead ({ui and (ui.x, ui.width)})",
+          not ts.has_slider_panel(tl.spaces.active, tl))
     # the panel draws: frame field + transport buttons are not the region background
     if SHOTS:
         screenshot(os.path.join(SHOTS, "gui_step50_chrome.png"))

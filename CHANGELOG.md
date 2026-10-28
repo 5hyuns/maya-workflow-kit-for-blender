@@ -5,7 +5,15 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Changed
+- **Requires Blender 5.0 or newer (5.0 – 5.2).** 0.6.2 is the last version for Blender 4.5 LTS: keep using 0.6.2
+  there. Blender 5.0, 5.1 and 5.2 are supported as before; versions after 5.2 are added once they are tested.
+
 ### Fixed
+- **Maya menus and switching back on Blender 5.1** (#199, #198): when one part of Maya mode fails to start, the kit now
+  takes back everything it had started and stays in plain Blender, and says why (console, a message and the add-on
+  preferences) instead of leaving a Maya menu bar whose menus don't open. Switching back to Blender always removes the
+  Maya menu bar, the Workspace menu and the Tool Box tools. A menu whose command is missing still draws.
 - **Commands on a hidden object** (#187): component modes (F7 / F9 / F10 / F11), F8, the component marking menu,
   the Status Line selection mode, the Tool Box joint modes and menu / shelf / marking-menu items no longer print
   Blender's "Cannot edit hidden object" or a Python error when the active object is hidden; they warn
@@ -14,7 +22,7 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [0.6.2] — 2026-10-28
 
-Fixes and small additions for the reports after 0.6.1. Blender 4.5 LTS through 5.2.x.
+Fixes and small additions for the reports after 0.6.1. Blender 4.5 LTS through 5.2.x (the last version for Blender 4.5).
 
 ### Fixed
 - **G after an extrude** (#184): dragging the extrude manipulator and then pressing G extrudes the new selection

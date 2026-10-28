@@ -1,5 +1,6 @@
 """Step 118: Blender 5.x compatibility — every version difference goes through src/allset/compat.py
-(). Runs on every Blender the suite runs on; each check holds on 4.5 and on 5.0-5.2."""
+(). Runs on every Blender the suite runs on; each check holds on 5.0-5.2 (4.5 dropped in
+step 279)."""
 
 import re
 from importlib import import_module
@@ -28,7 +29,8 @@ def test_version_checks_only_in_compat():
                 bad.append(f"{path.relative_to(ROOT)}:{n}")
     assert not bad, bad
     assert compat.IS_TARGET == (tuple(bpy.app.version[:2]) == (5, 2))      # main target since step 272
-    assert compat.IS_STRICT == (tuple(bpy.app.version[:2]) in ((4, 5), (5, 2)))
+    assert compat.IS_STRICT == (tuple(bpy.app.version[:2]) == (5, 2))
+    assert compat.STRICT_VERSIONS == ((5, 2),) and compat.VERSION >= (5, 0)
 
 
 def test_action_fcurves_on_layered_actions():
@@ -45,7 +47,7 @@ def test_action_fcurves_on_layered_actions():
 
 
 def test_new_sdk_driver_curve_is_empty_and_constant():
-    """4.5 gives a new driver curve a Generator modifier, 5.x two keys (0,0) (1,1) and LINEAR extrapolation."""
+    """5.x gives a new driver curve two keys (0,0) (1,1) and LINEAR extrapolation; the kit clears them."""
     a = bpy.data.objects.new("a118", None)
     b = bpy.data.objects.new("b118", None)
     for ob in (a, b):
@@ -85,15 +87,14 @@ def test_pointmerge_facedata_and_strips():
 
 
 def test_dock_role_ignores_newer_properties_tabs():
-    """The Maya Workflow Kit template is saved by 4.5: 5.x opens its dock with the newer strip tabs on."""
+    """The Maya Workflow Kit template is still saved by 4.5: 5.x opens its dock with the newer strip tabs on."""
     assert compat.LATER_PROPERTIES_TABS.isdisjoint(set(maya_dock.ROLE_FLAGS.values()) | {"show_properties_tool"})
-    if compat.VERSION < (5, 0):
-        names = {p.identifier for p in bpy.types.SpaceProperties.bl_rna.properties}
-        assert compat.LATER_PROPERTIES_TABS.isdisjoint(names), "4.5 has none of them"
+    names = {p.identifier for p in bpy.types.SpaceProperties.bl_rna.properties}
+    assert compat.LATER_PROPERTIES_TABS <= names
 
 
 def test_uv_selection_reads_without_sync():
-    """4.5 keeps UV selection on the UV layer (BMLoopUV.select), 5.x on the loop (uv_select_vert)."""
+    """5.x keeps the UV selection on the loop (uv_select_vert)."""
     uv_tools = import_module(kit.MODULE + ".operators.uv_tools")
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=1.0)

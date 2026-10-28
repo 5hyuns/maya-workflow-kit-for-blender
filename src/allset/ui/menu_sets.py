@@ -18,7 +18,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 from .. import results
 from .. import compat, undo_steps
-from . import editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices, option_click
+from . import draw_safe, editor_menu_data, menu_data, menu_hotkeys, menu_icons, menu_map, notices, option_click
 
 COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
@@ -108,7 +108,7 @@ def draw_item(layout, path, label, icon_value=0):
         return
     if s is not None and (s[0] == "op" or s[0] in ("v3d", "tool") and (
             notices.notice(path) or not runs_directly(path, s) or _has_saved_options(path))):
-        op = layout.operator(ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value)
+        op = draw_safe.op(layout, ALLSET_OT_menu_item.bl_idname, text=label, icon_value=icon_value)
         op.item, op.clicked = path, True
         return
     draw_spec(layout, label, s, path, icon_value=icon_value)
@@ -155,7 +155,7 @@ def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
     ``path`` (the Maya menu path) in the tooltip. ``icon_value`` (a kit icon) wins over ``icon``."""
     iv = {"icon_value": icon_value} if icon_value else {"icon": icon}
     if s is None:
-        layout.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label, **iv).item = path
+        draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label, **iv).item = path
         return
     kind, target, props = s
     if kind == "prop":
@@ -163,19 +163,19 @@ def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
     elif kind == "menu":
         layout.menu(proxy_menu(target), text=label, **iv)
     elif kind == "pie":
-        layout.operator("wm.call_menu_pie", text=label + " ▸", **iv).name = target
+        draw_safe.op(layout, "wm.call_menu_pie", text=label + " ▸", **iv).name = target
     elif kind == "tool":
-        op = layout.operator(ALLSET_OT_menu_tool.bl_idname, text=label, **iv)
+        op = draw_safe.op(layout, ALLSET_OT_menu_tool.bl_idname, text=label, **iv)
         op.tool = target
         op.edit = props["edit"]
         op.item = path              # Ctrl+Shift+click: to the shelf (step 162)
     elif kind == "v3d":
-        op = layout.operator(ALLSET_OT_menu_run.bl_idname, text=label, **iv)
+        op = draw_safe.op(layout, ALLSET_OT_menu_run.bl_idname, text=label, **iv)
         op.op = target
         op.props = json.dumps(props)
         op.item = path
     else:
-        op = layout.operator(target, text=label, **iv)
+        op = draw_safe.op(layout, target, text=label, **iv)
         for key, value in props.items():
             setattr(op, key, value)
 
@@ -205,7 +205,7 @@ def draw_prop(layout, label, target, props, path=""):
     there in this context (e.g. a Graph Editor setting drawn from another editor)."""
     owner, attr = prop_owner(bpy.context, target)
     if owner is None:
-        layout.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label).item = path
+        draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label).item = path
         return
     if "value" not in props:
         layout.prop(owner, attr, text=label)
@@ -217,8 +217,8 @@ def draw_prop(layout, label, target, props, path=""):
         return
     current = getattr(owner, attr)
     on = abs(current - value) < 1e-6 if isinstance(value, float) else current == value
-    op = layout.operator(ALLSET_OT_menu_set_value.bl_idname, text=label,
-                         icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF')
+    op = draw_safe.op(layout, ALLSET_OT_menu_set_value.bl_idname, text=label,
+                      icon='RADIOBUT_ON' if on else 'RADIOBUT_OFF')
     op.target, op.value = target, repr(value)
 
 
@@ -261,8 +261,8 @@ def _draw_boxed(layout, path, text, icon_value=0):
     if s is None or s[0] in ("menu", "pie"):
         draw_spec(layout, text, s, path, icon_value=icon_value)
         return
-    op = layout.operator_menu_hold(ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value,
-                                   menu=ALLSET_MT_option_box.bl_idname)
+    op = draw_safe.op_hold(layout, ALLSET_OT_menu_item.bl_idname, text=text, icon_value=icon_value,
+                           menu=ALLSET_MT_option_box.bl_idname)
     op.item, op.clicked = path, True
 
 
@@ -828,7 +828,7 @@ class ALLSET_MT_option_box(bpy.types.Menu):
         props = getattr(context, "button_operator", None)
         layout = self.layout
         layout.scale_y = HOLD_ROW_SCALE
-        op = layout.operator(ALLSET_OT_menu_option_box.bl_idname, text="Option Box" + BOX_MARK)
+        op = draw_safe.op(layout, ALLSET_OT_menu_option_box.bl_idname, text="Option Box" + BOX_MARK)
         op.item = getattr(props, "item", "")
         op.from_hold = True
         _point_at_hold_row_later(context)
@@ -990,8 +990,8 @@ class ALLSET_MT_ui_elements(bpy.types.Menu):
         layout.prop(prefs, "maya_panel_menus")
         layout.prop(prefs, "show_status_line")
         from .shelf import strip_area
-        layout.operator("allset.shelf_strip_toggle", text="Shelf",
-                        icon='CHECKBOX_HLT' if strip_area(context.screen) else 'CHECKBOX_DEHLT')
+        draw_safe.op(layout, "allset.shelf_strip_toggle", text="Shelf",
+                     icon='CHECKBOX_HLT' if strip_area(context.screen) else 'CHECKBOX_DEHLT')
         layout.prop(prefs, "show_command_line")
         layout.prop(prefs, "show_help_line")
 

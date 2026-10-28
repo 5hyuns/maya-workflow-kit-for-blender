@@ -370,6 +370,9 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
             row.operator("allset.switch_mode", text="Maya Mode Only").mode = 'MAYA'
         box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. "
                        "Blender's own preferences are never changed.", icon='INFO')
+        from . import switch
+        if switch.last_error[0]:
+            _wrapped(box, switch.last_error[0])
         hint = undo_hint(context)
         emulate = emulate_hint(context)
         if hint or emulate:

@@ -29,13 +29,16 @@ def register():
     for mod in CORE:
         mod.register()
     if switch.is_on():
-        switch.register_mode()
-        switch._registered[0] = True
+        # A failed Maya mode start (rolled back by ``register_mode``) must not take the add-on down with it: CORE
+        # stays, so the user still has the Maya / Blender switch and can disable the kit (step 279, #199).
+        try:
+            switch.register_mode()
+        except Exception as ex:
+            switch.preferences_off()
+            switch._report_failure(ex)
 
 
 def unregister():
-    if switch._registered[0]:
-        switch.unregister_mode()
-        switch._registered[0] = False
+    switch.unregister_mode()      # whatever Maya mode modules are registered (none after a failed start)
     for mod in reversed(CORE):
         mod.unregister()

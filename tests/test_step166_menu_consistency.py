@@ -157,8 +157,7 @@ def test_dope_curve_selection_rule():
     ob = _link(bpy.data.objects.new("pCube1", None))
     ob.keyframe_insert("location", index=0, frame=1)
     ob.keyframe_insert("location", index=1, frame=1)
-    fcs = list(ob.animation_data.action.fcurves) if hasattr(ob.animation_data.action, "fcurves") \
-        else list(kit.fcurves(ob))
+    fcs = list(kit.fcurves(ob))
     for fc in fcs:
         for k in fc.keyframe_points:
             k.select_control_point = False

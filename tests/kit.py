@@ -123,9 +123,6 @@ _PROP_OWNERS = ("Scene", "Object", "WindowManager", "ViewLayer", "Mesh", "Collec
 
 
 def _timeline_classes():
-    from bl_ui import space_time
-    if hasattr(space_time, "TIME_HT_editor_buttons"):
-        return space_time.TIME_HT_editor_buttons, space_time.TIME_MT_editor_menus
     from bl_ui import space_dopesheet   # Blender 5.x: the Timeline is a Dope Sheet mode
     return space_dopesheet.DOPESHEET_HT_editor_buttons, space_dopesheet.DOPESHEET_MT_editor_menus
 

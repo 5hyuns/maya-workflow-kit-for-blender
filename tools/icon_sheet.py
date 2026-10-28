@@ -12,7 +12,10 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BLENDER = os.environ.get("BLENDER", r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe")
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import build  # noqa: E402
+
+BLENDER = os.environ.get("BLENDER", build.DEFAULT_BLENDER)
 FONT = r"C:\Windows\Fonts\segoeui.ttf"
 BG = (0x44 / 255, 0x44 / 255, 0x44 / 255, 1.0)       # Maya shelf / Status Line grey
 CELL_W, CELL_H, COLS = 150, 100, 8

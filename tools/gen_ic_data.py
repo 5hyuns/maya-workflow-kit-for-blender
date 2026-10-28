@@ -1,6 +1,6 @@
 """Generate src/allset/keymap/ic_<major>_<minor>.py: Blender's Industry Compatible keymap data as static Python data.
 
-    python tools/gen_ic_data.py                 # 4.5 + every portable 5.x in allset_blenders (ALLSET_BLENDERS)
+    python tools/gen_ic_data.py                 # the default 5.2 + every portable 5.x in allset_blenders (ALLSET_BLENDERS)
     python tools/gen_ic_data.py --blender EXE   # one Blender only
 
 The kit's Maya keymap = this data + keymap/maya_patches.py. Until step 130 the add-on

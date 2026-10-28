@@ -382,14 +382,58 @@ def _mode_modules():
     return MODE
 
 
+# The Maya mode modules registered right now, in order (step 279, #198 #199). ``unregister_mode`` takes back exactly
+# these, so a half-done register or a module that raises on unregister can't leave Maya menus behind.
+_mode_done = []
+
+
 def register_mode():
-    for mod in _mode_modules():
-        mod.register()
+    """Register the Maya mode modules all or nothing: on an exception the ones already registered are taken back
+    and the exception is raised again (``_registered[0]`` stays False)."""
+    from . import safe_reg
+    if _mode_done:                  # a previous half state: start clean
+        unregister_mode()
+    safe_reg.register_all(_mode_modules(), _mode_done)
+    _registered[0] = True
 
 
 def unregister_mode():
-    for mod in reversed(_mode_modules()):
-        mod.unregister()
+    """Take back every Maya mode module that is registered (whatever ``_registered[0]`` says). Returns the names of
+    modules whose unregister raised (the others still went)."""
+    from . import safe_reg
+    failed = safe_reg.unregister_all(_mode_done)
+    _registered[0] = False
+    return failed
+
+
+def preferences_off():
+    """Maya mode off in the add-on preference (after a failed start, so the switch shows Blender)."""
+    try:
+        prefs = _prefs_addon()
+        if prefs.maya_mode:
+            prefs.maya_mode = False
+    except Exception:
+        pass
+
+
+# Why the last switch to Maya mode failed (None = it didn't): shown in the console, a report and the preferences.
+last_error = [None]
+
+
+def _report_failure(ex):
+    text = f"Maya mode could not start ({type(ex).__name__}: {ex}). Blender stays as it was; see the system console"
+    last_error[0] = text
+    print("Maya Workflow Kit:", text)
+    if bpy.app.background:
+        return
+    try:
+        def draw(menu, _context):
+            menu.layout.label(text="Maya mode could not start: Blender stays as it was.", icon='ERROR')
+            menu.layout.label(text=f"{type(ex).__name__}: {ex}"[:160])
+            menu.layout.label(text="Details: Window > Toggle System Console.")
+        bpy.context.window_manager.popup_menu(draw, title="Maya Workflow Kit", icon='ERROR')
+    except Exception:
+        pass
 
 
 def set_mode(on, layout=True):
@@ -400,10 +444,16 @@ def set_mode(on, layout=True):
     if on == bool(prefs.maya_mode) and (on == _registered[0]):
         return False
     if on:
-        prefs.maya_mode = True
         if not _registered[0]:
-            register_mode()
-            _registered[0] = True
+            try:
+                register_mode()
+            except Exception as ex:      # rolled back already: plain Blender, Maya mode stays off (step 279)
+                preferences_off()
+                _report_failure(ex)
+                _redraw()
+                return False
+        last_error[0] = None
+        prefs.maya_mode = True
         from . import keymap
         keymap.activate()
         if layout and not bpy.app.background:
@@ -424,9 +474,7 @@ def set_mode(on, layout=True):
             for window in _windows():
                 leave_layout(window)
         prefs.maya_mode = False
-        if _registered[0]:
-            unregister_mode()
-            _registered[0] = False
+        unregister_mode()      # whatever is recorded as registered, also after a half-done switch (#198)
     # The mode is this add-on's own setting: marked for Blender's Auto-Save Preferences like a change made in the
     # Preferences editor (no Blender setting is written).
     bpy.context.preferences.is_dirty = True

@@ -4,7 +4,6 @@ header, timeline view following the playback range. """
 from importlib import import_module
 
 import bpy
-from bl_ui import space_time
 
 import kit
 
@@ -36,8 +35,6 @@ def _buttons():
 
 
 def _header_is_kit():
-    if time_slider.LEGACY_TIMELINE:
-        return _buttons().draw_header is time_slider.draw_header
     return _buttons().draw_header.__func__.__name__ == "_header_5"
 
 

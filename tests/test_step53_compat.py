@@ -1,8 +1,8 @@
 """Step 53: Blender version compatibility and a safe install.
 
-Runs on the main target Blender 5.2 and on 4.5 / 5.0 / 5.1 (BLENDER=... python tests/run.py): the keymap patches are
-strict on 5.2 and 4.5 (step 272) and only show the known Industry Compatible drift elsewhere, the manifest declares the tested range, the
-timeline shim matches the Blender. (The theme round trip tests went with the theme, step 130.)"""
+Runs on the main target Blender 5.2 and on 5.0 / 5.1 (BLENDER=... python tests/run.py): the keymap patches are
+strict on 5.2 (step 272) and only show the known Industry Compatible drift elsewhere, the manifest declares the tested
+range (5.0 - 5.2 since step 279), the timeline header wrap is undone on disable. (The theme round trip tests went with the theme, step 130.)"""
 
 import tomllib
 from importlib import import_module
@@ -35,15 +35,15 @@ def test_keymap_patches_strict_on_target_drift_known_elsewhere():
 
 def test_manifest_declares_the_tested_range():
     data = tomllib.loads((ROOT / "src" / "allset" / "blender_manifest.toml").read_text(encoding="utf-8"))
-    assert data["blender_version_min"] == "4.5.0", "4.2.23 fails 25 tests (step 117)"
-    assert data["blender_version_max"] == "5.3.0", "4.5.x-5.2.x: checked in step 118 (); re-measure before raising"
+    assert data["blender_version_min"] == "5.0.0", "0.6.2 is the last version for 4.5 (step 279, user 10-29)"
+    assert data["blender_version_max"] == "5.3.0", "5.0.x-5.2.x: checked in step 118 (); re-measure before raising"
     v = tuple(bpy.app.version)
-    assert (4, 5, 0) <= v < (5, 3, 0), v
+    assert (5, 0, 0) <= v < (5, 3, 0), v
 
 
 def test_timeline_shim_matches_this_blender():
     from bl_ui import space_time
-    assert time_slider.LEGACY_TIMELINE == hasattr(space_time, "TIME_HT_editor_buttons")
+    assert not hasattr(space_time, "TIME_HT_editor_buttons"), "5.x: the Timeline is a Dope Sheet mode"
     buttons, menus = time_slider.header_classes()
     assert "draw_header" in buttons.__dict__ and "draw_collapsible" in menus.__dict__
     kit.disable()

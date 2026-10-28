@@ -88,26 +88,17 @@ def register():
     for cls in sidebar_panels():
         raw = cls.__dict__.get("poll")
         kids = list(_children(cls, everything))
-        _reregister(cls, kids, _make_poll(getattr(cls, "poll", None)))
-        _wrapped.append((cls, raw, kids))
+        # A panel Blender won't re-register (another add-on's) stays as it was instead of stopping the kit (step 279)
+        if _reregister(cls, kids, _make_poll(getattr(cls, "poll", None)), raw):
+            _wrapped.append((cls, raw, kids))
 
 
-def _reregister(cls, kids, poll):
-    for kid in reversed(kids):
-        if kid.is_registered:
-            bpy.utils.unregister_class(kid)
-    if cls.is_registered:
-        bpy.utils.unregister_class(cls)
-    if poll is not None:
-        cls.poll = poll
-    elif "poll" in cls.__dict__:
-        del cls.poll
-    bpy.utils.register_class(cls)
-    for kid in kids:
-        bpy.utils.register_class(kid)
+def _reregister(cls, kids, poll, raw=None):
+    from .. import safe_reg
+    return safe_reg.reregister_panel(cls, kids, poll, raw)
 
 
 def unregister():
     for cls, raw, kids in _wrapped:   # forward: the original order again
-        _reregister(cls, kids, raw)
+        _reregister(cls, kids, raw, raw)   # never raises: one foreign panel can't stop the rest
     _wrapped.clear()

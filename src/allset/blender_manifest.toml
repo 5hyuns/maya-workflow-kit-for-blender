@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 
-# Template: <Blender 4.5>/4.5/scripts/templates_toml/blender_manifest.toml
+# Template: <Blender 5.2>/5.2/scripts/templates_toml/blender_manifest.toml
 id = "allset"
 version = "0.6.2"
 name = "Maya Workflow Kit"
@@ -12,11 +12,10 @@ type = "add-on"
 # No `website` until there is a public page; no `platforms`: pure Python, every OS.
 tags = ["User Interface"]
 
-# 4.5: Blender 4.2.23 fails 25 of 869 headless tests (step 117: the 4.5-saved layout template, 4.3+ brush
-# assets, file I/O options), so 4.2-4.4 are not offered the kit.
-blender_version_min = "4.5.0"
-# Exclusive. Target 4.5 (); 5.0-5.2 checked in step 118 (: headless, GUI and install round
-# trip on 4.5.4, 5.0.1, 5.1.2, 5.2.2; version differences in compat.py). A Blender after 5.2 gets a clear "not
+# 5.0 since 0.7.0 (step 279, user 10-29): 0.6.2 is the last version for Blender 4.5.
+blender_version_min = "5.0.0"
+# Exclusive. Main target 5.2 (step 272); 5.0-5.2 checked in step 118 (: headless, GUI and install
+# round trip on 5.0.1, 5.1.2, 5.2.2; version differences in compat.py). A Blender after 5.2 gets a clear "not
 # compatible" until it is checked the same way.
 blender_version_max = "5.3.0"
 

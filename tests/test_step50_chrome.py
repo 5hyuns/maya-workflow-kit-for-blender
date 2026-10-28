@@ -6,7 +6,6 @@ from importlib import import_module
 from pathlib import Path
 
 import bpy
-from bl_ui import space_time
 
 import kit
 

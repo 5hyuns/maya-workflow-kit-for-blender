@@ -48,8 +48,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--victim", required=True, help="group prefix, e.g. m59_4")
     ap.add_argument("--check", default="", help="text in the failing check name (default [M<victim>])")
-    ap.add_argument("--blender", default=os.environ.get("BLENDER",
-                                                         r"C:\Program Files\Blender Foundation\Blender 4.5\blender.exe"))
+    ap.add_argument("--blender", default=os.environ.get("BLENDER", os.path.join(
+        os.environ.get("LOCALAPPDATA", ""), "allset_blenders", "blender-5.2.3-windows-x64", "blender.exe")))
     ap.add_argument("--max-runs", type=int, default=12)
     args = ap.parse_args()
     check = args.check or "[M" + args.victim[1:].replace("_", "-") + "]"

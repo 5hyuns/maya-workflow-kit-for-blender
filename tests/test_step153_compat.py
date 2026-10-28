@@ -19,15 +19,14 @@ def test_unified_paint_settings_radius_round_trip():
     assert isinstance(ups, bpy.types.UnifiedPaintSettings)
     compat.set_unprojected_radius(ups, 0.35)
     assert abs(compat.unprojected_radius(ups) - 0.35) < 1e-6
-    if "unprojected_size" in ups.bl_rna.properties:          # 5.x stores the diameter
-        assert abs(ups.unprojected_size - 0.7) < 1e-6
+    assert abs(ups.unprojected_size - 0.7) < 1e-6                 # 5.x stores the diameter
     ups.weight = 0.25
     assert abs(compat.unified_paint_settings(ts).weight - 0.25) < 1e-6
 
 
 def test_menus_close_on_leave():
     view = bpy.context.preferences.view
-    want = getattr(view, "menu_close_leave", True)       # absent in 4.5 = menus close when the mouse leaves
+    want = view.menu_close_leave
     assert compat.menus_close_on_leave(bpy.context.preferences) == want
 
 

@@ -125,7 +125,8 @@ def test_disable_in_maya_mode_restores_everything():
 def test_no_runtime_exec_of_keymap_data():
     """The IC data is static (tools/gen_ic_data.py); one file per Blender minor whose data changed."""
     ic = import_module(kit.MODULE + ".keymap.ic_data")
-    assert ic.data_version((4, 5)) == (4, 5) and ic.data_version((5, 3)) == ic.VERSIONS[-1]
+    assert ic.VERSIONS[0] == (5, 0), "no 4.5 data since step 279"
+    assert ic.data_version((5, 0)) == (5, 0) and ic.data_version((5, 3)) == ic.VERSIONS[-1]
     assert ic.data_version((5, 1)) == (5, 1)
     data = ic.generate()
     assert len(data) >= 240 and data is not ic.generate()

@@ -43,6 +43,8 @@ def opt_in(open_layout=True):
     modules, which an operator of theirs must not do while it runs; )."""
     from . import switch
     switch.set_mode(True, layout=False)
+    if not switch._registered[0]:     # Maya mode could not start (reported, rolled back): nothing more to do
+        return
     from . import first_start
     first_start.make(bpy.context, open_layout=False)
     if open_layout:

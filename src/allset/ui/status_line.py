@@ -16,7 +16,7 @@ drawn first in the tool header of the largest 3D View.
 import bpy
 from bpy.props import EnumProperty, StringProperty
 
-from . import input_line, menu_sets, own_draw, status_icons
+from . import draw_safe, input_line, menu_sets, own_draw, status_icons
 
 # --- 3D View helpers ----------------------------------------------------------------
 
@@ -268,8 +268,8 @@ class ALLSET_MT_symmetry(bpy.types.Menu):
         current = symmetry.mode_of(symmetry.state(context.scene))
         layout = self.layout
         for mode, text in symmetry.MODES:
-            layout.operator("allset.symmetry", text=text,
-                            icon='RADIOBUT_ON' if mode == current else 'RADIOBUT_OFF').mode = mode
+            draw_safe.op(layout, "allset.symmetry", text=text,
+                         icon='RADIOBUT_ON' if mode == current else 'RADIOBUT_OFF').mode = mode
 
 
 def draw_symmetry(layout, context):
@@ -281,7 +281,7 @@ def draw_symmetry(layout, context):
     from ..operators import symmetry
     sym = symmetry.state(context.scene)
     row = layout.row(align=True)
-    row.operator("allset.symmetry", text="", icon='MOD_MIRROR', depress=sym.on).mode = "TOGGLE"
+    draw_safe.op(row, "allset.symmetry", text="", icon='MOD_MIRROR', depress=sym.on).mode = "TOGGLE"
     sub = row.row(align=True)
     sub.ui_units_x = 6
     sub.menu(ALLSET_MT_symmetry.bl_idname, text=symmetry.label(sym), icon='DOWNARROW_HLT')
@@ -469,7 +469,7 @@ def _flat(layout, op, name, depress=False, text=""):
     sub.scale_x = sub.scale_y = ICON_SCALE
     if not depress:
         sub.emboss = 'NONE'
-    return sub.operator(op, text=text, icon_value=status_icons.icon(name), depress=depress)
+    return draw_safe.op(sub, op, text=text, icon_value=status_icons.icon(name), depress=depress)
 
 
 def _grey(layout, name, item):
@@ -486,7 +486,7 @@ def _group(layout, group):
         sub = layout.row(align=True)
         sub.ui_units_x = 0.6
         sub.emboss = 'NONE'
-        sub.operator(ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("closed")).group = group
+        draw_safe.op(sub, ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("closed")).group = group
         return False
     return True
 
@@ -495,7 +495,7 @@ def _group_end(layout, group):
     sub = layout.row(align=True)
     sub.ui_units_x = 0.6
     sub.emboss = 'NONE'
-    sub.operator(ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("open")).group = group
+    draw_safe.op(sub, ALLSET_OT_status_group.bl_idname, text="", icon_value=status_icons.icon("open")).group = group
 
 
 def _field(layout, owner, prop, units):
@@ -564,7 +564,7 @@ def draw_status_line(layout, context, compact=False):
         row = layout.row(align=True)
         sub = row.row(align=True)
         sub.emboss = 'NONE'
-        sub.operator("allset.make_live", text="", icon='DOWNARROW_HLT')
+        draw_safe.op(sub, "allset.make_live", text="", icon='DOWNARROW_HLT')
         _field(row, context.scene, "allset_live_text", 5)
         _group_end(layout, "SNAP")
 
@@ -766,7 +766,7 @@ def draw_left(self, context):
         layout.menu(menu_sets.ALLSET_MT_menu_bar.bl_idname, text="", icon='COLLAPSEMENU')
     if context.screen.show_fullscreen:
         layout.separator()
-        layout.operator("screen.back_to_previous", icon='SCREEN_BACK', text="Back to Previous")
+        draw_safe.op(layout, "screen.back_to_previous", icon='SCREEN_BACK', text="Back to Previous")
 
 
 def draw_right(self, context):

@@ -268,7 +268,7 @@ def patch_camera(kd):
     kd.remove("3D View", "view3d.rotate", type="LEFTMOUSE", alt=True)       # IC:674
     _add(kd, "3D View", "allset.tumble", make_event("LEFTMOUSE", alt=True))
     # Alt+RMB dolly reads the drag itself: Blender's zoom axis is a preference the kit no longer sets (#51, step 130)
-    kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433 (ic_4_5)
+    kd.remove("3D View", "view3d.zoom", type="RIGHTMOUSE", alt=True)       # IC:433
     _add(kd, "3D View", "allset.dolly", make_event("RIGHTMOUSE", alt=True),
          shadows=("Image Paint", "Vertex Paint", "Sculpt"))     # their Alt+RMB stencil control stays, as before
     # UV / Image Editor: the same left / right dolly instead of IC image.view_zoom (Zoom Axis preference; step 141 B4).
@@ -461,7 +461,7 @@ def patch_attribute_editor(kd):
         _add(kd, km, "allset.select_none", make_event("D", alt=True))
 
 
-# Keymaps whose Ctrl+A is IC select-all (keymap/ic_4_5.py; same in ic_5_0 – ic_5_2). Text / Console / Font /
+# Keymaps whose Ctrl+A is IC select-all (keymap/ic_5_0.py – ic_5_2.py). Text / Console / Font /
 # File Browser keep their text-style select-all; the 2D animation editors follow since step 150.
 CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curve", "curve.select_all"),
                 ("Armature", "armature.select_all"), ("Metaball", "mball.select_all"),
@@ -482,7 +482,7 @@ CTRL_A_MODES = (("Mesh", "mesh.select_all"), ("Pose", "pose.select_all"), ("Curv
 # Shift+H, Ctrl+Shift+H, Ctrl+Alt+H, Ctrl+1; Ctrl+Shift+I.
 
 # Editor keymaps run before "Screen": their z = zoom/viewer border would hide the undo. The Node Editor's Z item
-# exists in 4.5's Industry Compatible keymap only (keymap/ic_4_5.py; not in ic_5_*.py): optional (step 272).
+# exists in 5.0's Industry Compatible keymap only (keymap/ic_5_0.py; not in ic_5_1 / ic_5_2): optional (step 272).
 _Z_BORDERS = (("3D View", "view3d.zoom_border", False), ("View2D", "view2d.zoom_border", False),
               ("Image", "image.view_zoom_border", False), ("Node Editor", "node.viewer_border", True))
 
@@ -1141,7 +1141,7 @@ def patch_script_editor(kd):
     # (Render > Render Current Frame has no default hotkey; Ctrl+Alt+Enter render animation stays IC's).
     kd.remove("Screen Editing", "render.render", type="RET", ctrl=True, alt=False)
     # Blender 5.x IC adds Alt+F12 / Ctrl+Alt+F12 sequencer-scene renders there too (5.2 IC:299-302, step 118): they
-    # took the UV Editor's Maya Alt+F12 (UV Shell, Maya factory hotkey). Not in 4.5's IC data.
+    # took the UV Editor's Maya Alt+F12 (UV Shell, Maya factory hotkey).
     for ctrl in (False, True):
         if kd.find("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl):
             kd.remove("Screen Editing", "render.render", type="F12", alt=True, ctrl=ctrl)

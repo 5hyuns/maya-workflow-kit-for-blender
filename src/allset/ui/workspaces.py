@@ -204,6 +204,7 @@ class ALLSET_MT_maya_workspaces(bpy.types.Menu):
 
     def draw(self, context):
         from .menu_sets import ALLSET_OT_menu_unavailable
+        from .draw_safe import op as safe_op      # an operator missing (half-registered kit) can't empty the menu
         lay = self.layout
         current = switch.template_of(context.window.workspace) if context.window else None
         for entry in FACTORY:
@@ -212,16 +213,16 @@ class ALLSET_MT_maya_workspaces(bpy.types.Menu):
                 continue
             name, label = entry
             if name in IN_TEMPLATE:
-                op = lay.operator(ALLSET_OT_maya_workspace.bl_idname, text=label,
-                                  icon='RADIOBUT_ON' if name == current else 'RADIOBUT_OFF')
+                op = safe_op(lay, ALLSET_OT_maya_workspace.bl_idname, text=label,
+                             icon='RADIOBUT_ON' if name == current else 'RADIOBUT_OFF')
                 op.name = name
             else:
-                lay.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label, icon='RADIOBUT_OFF').item = PATH + name
+                safe_op(lay, ALLSET_OT_menu_unavailable.bl_idname, text=label, icon='RADIOBUT_OFF').item = PATH + name
         lay.separator()
         ws = context.window.workspace if context.window else None
         lay.operator(ALLSET_OT_reset_workspace.bl_idname, text=reset_label(ws) if ws else "Reset Current Workspace")
         for label in ACTIONS_GREYED:
-            lay.operator(ALLSET_OT_menu_unavailable.bl_idname, text=label).item = PATH + label
+            safe_op(lay, ALLSET_OT_menu_unavailable.bl_idname, text=label).item = PATH + label
 
 
 classes = (ALLSET_OT_maya_workspace, ALLSET_OT_reset_workspace, ALLSET_MT_maya_workspaces)
