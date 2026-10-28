@@ -1087,6 +1087,11 @@ def patch_graph_keys_2(kd):
     kd.remove("Graph Editor", "graph.view_all", type="A")
     _add(kd, "Graph Editor", "allset.graph_frame", make_event("F"), {"mode": 'SELECTED'})
     _add(kd, "Graph Editor", "allset.graph_frame", make_event("A"), {"mode": 'ALL'})
+    # Maya S over the Graph Editor / Dope Sheet = Set Key on the selected objects' keyable channels (a fresh object's
+    # 10 channels appear), not Blender's key on the curves the editor already shows
+    for km, op in (("Graph Editor", "graph.keyframe_insert"), ("Dopesheet", "action.keyframe_insert")):
+        kd.remove(km, op, type="S")
+        _add(kd, km, "allset.set_key", make_event("S"))
     # step 281 (#192): Maya Shift+MMB anywhere / Shift+LMB drag on a selected key = move along time or value only
     # (the first 3 px pick the axis); Blender binds no Shift+MMB here and its Shift+LMB drag is the marquee, which
     # still runs off the selected keys (the operator passes through)

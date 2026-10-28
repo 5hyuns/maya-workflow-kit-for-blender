@@ -85,10 +85,20 @@ def s_setup():
 
 
 @step
+def s_wait_graph():
+    # a remembered window place (an earlier file in the same run) opens the window a few ticks later (#203: the
+    # menu item returns CANCELLED and runs again once the piece is carved)
+    import sim
+    if graph()[1] is None and C.setdefault("waits", 0) < 20:
+        C["waits"] += 1
+        sim._steps.insert(0, s_wait_graph)
+
+
+@step
 def s_graph_open():
     w, a, r = graph()
     check(f"Windows > Animation Editors > Graph Editor: a Graph Editor window (got {C['open']}, {a is not None})",
-          a is not None)
+          a is not None and (C["open"] == {'FINISHED'} or mod(".ui.window_places").deferred() or C.get("waits")))
     with bpy.context.temp_override(window=w, area=a, region=r):
         bpy.ops.graph.select_all(action='SELECT')
         bpy.ops.graph.view_all()

@@ -529,6 +529,14 @@ def object_curves(ob):
     return compat.id_fcurves(ob)
 
 
+def data_curves(ob):
+    """Curves of the object's data-block (Maya shape node attributes: a light's intensity, a camera's focal length):
+    Maya's node row draws its shape's animated channels too (step 281). Shape keys have their own row."""
+    from .. import compat
+    data = getattr(ob, "data", None)
+    return compat.id_fcurves(data) if isinstance(data, bpy.types.ID) else []
+
+
 def shape_key(ob):
     """The object's shape-key datablock (Maya blendShape node) when it is animated, else None."""
     from .. import compat
@@ -617,18 +625,20 @@ def row_id(row):
 
 
 def listed_objects(context, space):
-    """Objects the Maya list shows as rows (animated, also by shape keys): the loaded list, else the selection with
-    Auto Load, else all; plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects (step 203), by name. Driven
+    """Objects the Maya list shows as rows: the loaded list, else the selection with Auto Load (keyed or not, step
+    281), else all animated ones (also by shape keys / data-block curves); plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects (step 203), by name. Driven
     channels count like keyed ones (Maya lists a driven-key / expression
     channel)."""
     ds = space.dopesheet
-    obs = [ob for ob in context.scene.objects
-           if (ob.animation_data and (ob.animation_data.action or ob.animation_data.drivers))
-           or shape_key(ob) is not None]
     base = row_objects(context, space)
     if base is not None:
+        # step 281 (#192): Maya lists every loaded / auto-loaded node, keyed or not (a bare node row until it is keyed)
         base = set(base)
-        obs = [ob for ob in obs if ob in base]
+        obs = [ob for ob in context.scene.objects if ob in base]
+    else:
+        obs = [ob for ob in context.scene.objects
+               if (ob.animation_data and (ob.animation_data.action or ob.animation_data.drivers))
+               or shape_key(ob) is not None or data_curves(ob)]
     if not ds.show_hidden:
         obs = [ob for ob in obs if ob.visible_get()]
     return sorted(obs, key=lambda o: o.name)
@@ -1090,7 +1100,8 @@ def maya_order(curves):
 
 
 def listed_nodes(context, space):
-    """[(kind, node, curves)]: per listed object its own row (when it has curves of its own), its joints (with Only
+    """[(kind, node, curves)]: per listed object its own row (step 281: also without curves, a bare node row like Maya;
+    its curves include its data-block's = Maya shape channels), its joints (with Only
     Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
     then — checked in gui_step150_outliner), its blendShape node. A node's curves are its keyed and its driven
     (driver) channels: Maya lists a driven-key / expression channel too. A checked Show >
@@ -1118,7 +1129,8 @@ def listed_nodes(context, space):
             out.append((kind, node, curves))
     for ob in listed_objects(context, space):
         own, joints = split_object_curves(ob)
-        add("OBJECT", ob, maya_order(own + node_drivers(ob)))
+        start = len(out)
+        add("OBJECT", ob, maya_order(own + node_drivers(ob)) + data_curves(ob))
         for pb, curves in joints:
             if auto and not channel_box.bone_selected(pb) or not _bone_loaded(space, pb):
                 continue
@@ -1126,6 +1138,8 @@ def listed_nodes(context, space):
         key = shape_key(ob)
         if key is not None:
             add("SHAPES", key, object_curves(key) + node_drivers(key))
+        if len(out) == start and not flt and not joints:      # keyed joints: the joints are the Maya nodes
+            out.append(("OBJECT", ob, []))     # step 281: Maya lists the node before it has keys (a bare node row)
     # pinned channels stay listed under their node whatever the list / selection is now, the node below the listed
     # ones (Maya Pin Channel)
     shown = {node_key(n) for _k, n, _c in out}
@@ -1549,8 +1563,12 @@ def sync(context):
     """Every Graph Editor / Dope Sheet: Blender's filters follow its Maya list (graph_view's timer, menu items)."""
     if not enabled(context):
         return
-    spaces = [sp for _w, _a, sp in editor_spaces(context)]
+    found = list(editor_spaces(context))
+    spaces = [sp for _w, _a, sp in found]
     changed = False
+    for window, area, sp in found:
+        if (is_graph(sp) or is_dope(sp)) and setup_toolbar_row(window, area):
+            changed = True
     for sp in spaces:
         changed |= sync_space(context, sp)
     changed |= bool(sync_hidden(context, spaces))
@@ -1585,6 +1603,7 @@ def release_all():
             fc.hide = False
     _kit_hidden.clear()
     _pinned.clear()
+    release_toolbar_rows()
 
 
 class ALLSET_OT_graph_list(bpy.types.Operator):
@@ -1721,13 +1740,21 @@ FLAGS_ON = {"allset_show_upstream", "allset_show_pins"}
 _orig = {}
 
 
+def toolbar_row(area):
+    """True when the editor's footer is shown at the top: it holds Maya's toolbar row under the menu bar."""
+    if area is None or not getattr(area.spaces.active, "show_region_footer", False):
+        return False
+    return any(r.type == 'FOOTER' and r.alignment == 'TOP' for r in area.regions)
+
+
 def _graph_header(self, context):
     if not (enabled(context) and is_graph(context.space_data)):
         return _orig["graph"](self, context)
     layout = self.layout
     layout.template_header()
     draw_menus(layout, context, GE)
-    draw_icons(layout, context, GE)
+    if not toolbar_row(context.area):
+        draw_icons(layout, context, GE)
     layout.separator_spacer()
     layout.popover(panel="GRAPH_PT_filters", text="", icon='FILTER')
 
@@ -1738,9 +1765,74 @@ def _dope_header(self, context):
     layout = self.layout
     layout.template_header()
     draw_menus(layout, context, DS)
-    draw_icons(layout, context, DS)
+    if not toolbar_row(context.area):
+        draw_icons(layout, context, DS)
     layout.separator_spacer()
     layout.popover(panel="DOPESHEET_PT_filters", text="", icon='FILTER')
+
+
+# Step 281 (#192): Maya's Graph Editor / Dope Sheet keep the toolbar on its own row under the menu bar (on one row with
+# the menus the tangent buttons ran past the right edge of a ~750 px editor). Blender gives these editors one header,
+# but their footer (playback controls in 5.x) can sit at the top under it: in a Maya editor the footer is shown, put on
+# top and draws the toolbar. Timeline mode keeps Blender's footer.
+def _graph_footer(self, context):
+    if not (enabled(context) and is_graph(context.space_data)):
+        return _orig["graph_foot"](self, context)
+    draw_icons(self.layout, context, GE)
+
+
+def _dope_footer(self, context):
+    if not (enabled(context) and is_dope(context.space_data)):
+        return _orig["dope_foot"](self, context)
+    draw_icons(self.layout, context, DS)
+
+
+_set_up = set()          # area pointers given the Maya toolbar row this session (a later user choice is kept)
+
+
+def _flip_footer(window, area):
+    region = next((r for r in area.regions if r.type == 'FOOTER'), None)
+    if region is None:
+        return False
+    try:
+        with bpy.context.temp_override(window=window, area=area, region=region):
+            return 'FINISHED' in bpy.ops.screen.region_flip()
+    except (RuntimeError, TypeError, ReferenceError):
+        return False
+
+
+def setup_toolbar_row(window, area):
+    """Maya Graph Editor / Dope Sheet layout of one editor, once per session: toolbar row on top; the Graph Editor
+    draws tangent handles on selected keys only (Maya View > Tangents factory = On Active Keys)."""
+    key = area.as_pointer()
+    if key in _set_up:
+        return False
+    _set_up.add(key)
+    space = area.spaces.active
+    if space.type == 'GRAPH_EDITOR':
+        space.use_only_selected_keyframe_handles = True
+    if toolbar_row(area):
+        return False
+    space.show_region_footer = True
+    if all(r.alignment != 'TOP' for r in area.regions if r.type == 'FOOTER'):
+        _flip_footer(window, area)
+    return True
+
+
+def release_toolbar_rows():
+    """Maya mode off: the footers the kit put on top go back to Blender's place (bottom, hidden)."""
+    try:
+        wins = list(bpy.context.window_manager.windows)
+    except (AttributeError, ReferenceError):
+        return
+    for window in wins:
+        for area in window.screen.areas:
+            sp = area.spaces.active
+            if not (is_graph(sp) or is_dope(sp)) or not toolbar_row(area):
+                continue
+            _flip_footer(window, area)
+            sp.show_region_footer = False
+    _set_up.clear()
 
 
 def draw_uv_header(self, context):
@@ -1764,7 +1856,9 @@ def draw_uv_tool_header(self, context):
     return True
 
 
-HEADERS = (("graph", "GRAPH_HT_header", _graph_header), ("dope", "DOPESHEET_HT_header", _dope_header))
+HEADERS = (("graph", "GRAPH_HT_header", _graph_header), ("dope", "DOPESHEET_HT_header", _dope_header),
+           ("graph_foot", "GRAPH_HT_playback_controls", _graph_footer),
+           ("dope_foot", "DOPESHEET_HT_playback_controls", _dope_footer))
 
 
 def own_draw(cls):
