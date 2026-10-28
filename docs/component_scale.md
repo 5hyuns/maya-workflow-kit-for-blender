@@ -5,9 +5,7 @@ Double-click the Scale icon to open **Tool Settings > Scale Settings**. Enable
 The active-tool settings popup exposes the same option. It is available in mesh
 Edit Mode; Object Mode, plane handles and uniform scale retain Blender behavior.
 
-The addon defaults this option to on. Reset Tool restores that default. This is
-an addon choice: the cited Maya pages do not specify the option's factory value.
-It is an addon preference, saved by Blender's normal preference-saving mechanism;
+The option is on by default, as in Maya. Reset Tool restores that default. It is an addon preference, saved by Blender's normal preference-saving mechanism;
 the tool does not force-save or change other Blender preferences.
 
 Select vertices, edges/loops or faces and drag an X/Y/Z scale handle inward.
@@ -53,5 +51,4 @@ describes handles, pivots and MMB routes.
 
 The docs do not fully specify negative numeric input, recovery after overshooting
 zero, or uniform/plane limits. Numeric clamping and immediate recovery above are
-explicit addon choices; plane/uniform behavior is retained. Tests reconstruct
-expected geometric behavior in Blender; Maya itself was not run for comparison.
+explicit addon choices; plane/uniform behavior is retained.

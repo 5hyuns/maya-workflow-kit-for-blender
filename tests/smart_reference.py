@@ -1,6 +1,5 @@
-"""Deterministic reconstruction of the user's inset + two-axis Maya example.
+"""Reference mesh: a 2-unit cube with a top inset and a front inset, extruded along two axes.
 
-Dimensions are explicit because screenshots do not provide exact scene units.
 The expected boundaries come from the starting mesh and geometric intersections,
 not from the addon output's polygon count.
 """

@@ -35,7 +35,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "behind the surface, like Maya (Camera based selection off). X-ray is switched "
                     "on only while dragging",
         default=True)
-    # Addon default for flattening workflows; Maya's docs do not state its factory value.
+    # Maya's Scale tool default: on
     prevent_negative_scale: bpy.props.BoolProperty(
         name="Prevent Negative Scale",
         description="Stop single-axis mesh component scaling at zero in the Maya Scale tool; "

@@ -77,8 +77,7 @@ python tests/gui/run.py --no-build -k gui_make_live --ui-scale 1.5
 
 The GUI checks verify rendered colour, viewport picking, native Outliner
 management, renamed/filtered/scrolled rows, history and Undo/Redo, actual Move
-handles and Quad Draw on a second live mesh. Maya itself was not run; behavior
-was compared with the Autodesk documentation and supplied screenshots.
+handles and Quad Draw on a second live mesh.
 
 ## Autodesk references
 

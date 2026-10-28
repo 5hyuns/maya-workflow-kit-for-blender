@@ -1,4 +1,4 @@
-"""Preserve the inset loops in the screenshot reference and rebuild the interior hole frames."""
+"""Preserve the inset loops of the reference mesh and rebuild the interior hole frames."""
 import os
 import sys
 
