@@ -330,7 +330,10 @@ def _offset_quat(owner, node, offset):
 
 
 def target_quats(owner, group):
-    cp_inv = parent_frame(owner).inverted()
+    frame = parent_frame(owner)
+    if abs(frame.to_3x3().determinant()) < 1e-12:      # a zero-scaled parent: no rotation to blend in
+        return None
+    cp_inv = frame.inverted()
     qs = []
     for c in rotation_members(owner, group):
         node, offset = _real_target(c)

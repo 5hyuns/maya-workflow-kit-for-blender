@@ -51,3 +51,14 @@ def test_uv_prepare_with_hidden_active_mesh_does_not_raise():
     bpy.context.view_layer.objects.active = ob
     assert uv_tools.prepare(bpy.context) is False
     assert ob.mode == 'OBJECT'
+
+
+def test_interp_with_zero_scaled_parent_frame_skips():
+    from mathutils import Matrix
+    ci = import_module(kit.MODULE + ".operators.constrain_interp")
+    real = ci.parent_frame
+    ci.parent_frame = lambda _owner: Matrix.Diagonal((0.0, 0.0, 0.0))
+    try:
+        assert ci.target_quats(None, "") is None       # no ValueError from inverting a zero frame
+    finally:
+        ci.parent_frame = real

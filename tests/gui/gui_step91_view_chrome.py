@@ -73,6 +73,10 @@ def s_scene():
     bpy.context.view_layer.objects.active = cube()
     ev('MOUSEMOVE', 'NOTHING', x=region.x + region.width // 2, y=region.y + region.height // 2)
     C["place"] = p
+    # step 258: the Maya layout views keep Blender's HUD region off (Maya has no redo panel); this test needs one to
+    # check the marking menu draws over it (set under a window override: without one Blender crashes)
+    with bpy.context.temp_override(window=win(), area=area, region=region):
+        area.spaces.active.show_region_hud = True
     # Alt+W (Blender's Clear Location, REGISTER + UNDO with a visible property) leaves its Adjust Last Operation panel
     # (the HUD). Kit display / visibility keys show none since steps 134 / 147 (#58, Maya has no redo panel; Shift+H
     # was used here before). The cube is put back where it was after the key: a Python edit doesn't close the HUD.
