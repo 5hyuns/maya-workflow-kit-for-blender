@@ -43,6 +43,9 @@ Known differences
 - Dual Quaternion skinning with a scaled joint scales about the bone, Maya about the origin.
 - Pose Space Deformation blends each pose linearly; overlapping poses differ from Maya.
 - Motion path roll on 3D paths can differ from Maya by a few degrees.
+- Set Driven Key with two drivers on a Translate / Rotate channel can show a stale value for one update now and then;
+  the next change fixes it (#186).
+- Importing a skinned rig from Maya's FBX: joints match, the skinned mesh can be up to 0.03 cm off (#189).
 - On Blender 5.1, Cycles renders Maya Ambient and Volume lights too dark; use Blender 4.5, 5.2 or EEVEE for them.
 - Fixes planned for 0.7.0: Time Slider frame numbers grow with a tall timeline (#179); G does not repeat a face
   extrusion on a new selection (#184); switching back to Blender doesn't bring back a custom workspace (#185).
