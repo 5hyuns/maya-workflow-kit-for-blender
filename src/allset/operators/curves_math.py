@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 NURBS curve maths, bpy-free (step 156). Rules and Maya ground truth:  / .json.
+"""Maya 2022 NURBS curve maths, bpy-free (step 156).
 
 A curve here = (cvs, knots, degree[, weights]); ``cvs`` are 3-tuples, ``knots`` are Maya's knot list (no phantom end
 knots: len = len(cvs) + degree - 1). Coordinates are whatever the caller uses (the tests feed Maya's Y-up numbers,
@@ -198,7 +198,7 @@ def _row(U, p, n, u, d):
 
 def interpolate(points, params, knots, degree=3, d0=None, d1=None):
     """CVs of the cubic through ``points`` at ``params`` with ``knots``; end conditions = given first derivatives
-    (d0, d1) or natural (second derivative 0) — Maya's EP Curve Tool (curves_156.md EP)."""
+    (d0, d1) or natural (second derivative 0) — Maya's EP Curve Tool."""
     U = full(knots)
     n = len(points) + 2
     A, B = [], []
@@ -238,7 +238,7 @@ def ep_curve(points, degree=3, uniform=True):
 
 def _arc_curve(centre, start, axis, sweep, radius, sections=8, degree=3):
     """Maya circular arc node output: edit points on the circle at equal angles, clamped uniform knots
-    0 .. sections, end derivatives = tangent x chord (curves_156.md arcs)."""
+    0 .. sections, end derivatives = tangent x chord."""
     sections = max(4, int(sections))
     u = unit(sub(start, centre))
     v = cross(axis, u)
@@ -283,7 +283,7 @@ def arc3(p1, p2, p3, sections=8, degree=3):
 
 def arc2(p1, p2, normal=(0.0, 0.0, 1.0), radius=None, toggle=False, sections=8, degree=3):
     """Maya Two Point Circular Arc: radius (default half the chord) about ``normal``; the centre on the n x d side,
-    the short arc unless ``toggle`` (curves_156.md arcs)."""
+    the short arc unless ``toggle``."""
     d = sub(p2, p1)
     c = norm(d)
     r = c / 2.0 if radius is None else max(radius, c / 2.0)
@@ -357,7 +357,7 @@ def to_bezier(cvs, knots, degree=3):
     return [cvs[i:i + 4] for i in range(0, len(cvs) - 1, 3)]
 
 
-# --- Rebuild (curves_156.md Rebuild: model, Maya's exact algorithm ) --------------------------
+# --- Rebuild (a model of Maya's Rebuild, not its exact algorithm ) --------------------------
 
 def arc_length_points(cvs, knots, degree, count, weights=None, dense=400):
     a, b = knots[0], knots[-1]
@@ -449,7 +449,7 @@ def attach(a, b, degree, method="BLEND", bias=0.5):
     """Maya Attach (factory Blend, bias 0.5): the nearest pair of ends joins (``a`` = the first selected curve, turned so
     its near end is its end; ``b`` turned so its near end is its start); B's knots continue from A's end. Blend: A minus
     its last ceil(d/2) CVs, one CV bias*A_end + (1-bias)*B_start, B minus its first d//2 + 1 (joint knot multiplicity
-    1). Connect: B's first CV = A's last, joint knot full multiplicity (curves_156.md)."""
+    1). Connect: B's first CV = A's last, joint knot full multiplicity."""
     (ca, ka), (cb, kb) = a, b
     pairs = [(norm(sub(ca[-1], cb[0])), False, False), (norm(sub(ca[-1], cb[-1])), False, True),
              (norm(sub(ca[0], cb[0])), True, False), (norm(sub(ca[0], cb[-1])), True, True)]
@@ -465,7 +465,7 @@ def attach(a, b, degree, method="BLEND", bias=0.5):
         cvs[len(ca) - 1] = ca[-1]
         knots = list(ka) + [k + shift for k in kb[degree:]]
         return cvs, knots
-    drop_a, drop_b = (degree + 1) // 2, degree // 2 + 1       # checked: d1 1/1, d2 1/2, d3 2/2
+    drop_a, drop_b = (degree + 1) // 2, degree // 2 + 1       # Maya: d1 1/1, d2 1/2, d3 2/2
     blend = add(mul(ca[-1], bias), mul(cb[0], 1.0 - bias))
     cvs = list(ca[:len(ca) - drop_a]) + [blend] + list(cb[drop_b:])
     knots = list(ka[:len(ka) - (degree - 1)]) + [k2 + shift for k2 in kb[degree:]]
@@ -511,7 +511,7 @@ def fillet_lines(p0, d0, p1, d1, radius):
 
 
 def straighten(cvs, straightness=1.0, preserve_length=True):
-    """Maya Curves > Straighten (): with Preserve length
+    """Maya Curves > Straighten: with Preserve length
     every CV leg keeps its length and turns towards the CV0 -> CV1 direction by ``straightness`` (1 = on that line);
     without it each CV moves by ``straightness`` towards the evenly spaced line CV0 -> last CV. Straightness 0 or fewer
     than 3 CVs (Maya: nothing to do) keep the CVs; with 1 and Preserve length 2 CVs stay as they are too."""
@@ -538,7 +538,7 @@ def straighten(cvs, straightness=1.0, preserve_length=True):
 
 
 def smooth_cvs(cvs, factor=4):
-    """Maya Curves > Smooth (Modify section; options_196_misc.md): ``factor`` + 1 passes,
+    """Maya Curves > Smooth (Modify section): ``factor`` + 1 passes,
     each interior CV <- 0.4 x itself + 0.3 x (its neighbours before this pass); the end CVs stay."""
     pts = [tuple(c) for c in cvs]
     if len(pts) < 3:
@@ -631,7 +631,7 @@ def _closest_params(ca, cb):
 def fillet_curves(ca, cb, radius=1.0):
     """Maya Fillet (factory: circular, radius 1, no trim / join) between two curves (cvs, knots, degree, weights):
     a circle tangent to both curves' tangent lines at their crossing, on each curve's start side (its end side when the
-    curve starts at the crossing) — exact for straight curves (curves_156.md Fillet); a rational cubic."""
+    curve starts at the crossing) — exact for straight curves; a rational cubic."""
     ua, ub = _closest_params(ca, cb)
     out = []
     for (cvs, knots, deg, w), u in ((ca, ua), (cb, ub)):
@@ -657,7 +657,7 @@ def piece_length(cvs, knots, degree, weights=None, n=200):
 def cut_all(curves, last_only=False, keep_longest=False):
     """Maya Cut (factory: keep all pieces): every curve is split at each crossing with the others.
     ``curves`` = list of (cvs, knots, degree, weights) -> list per input of its pieces (cvs, knots).
-    Cut Options (, curves_156.md): ``last_only`` = "Using last curve" (only
+    Cut Options: ``last_only`` = "Using last curve" (only
     the crossings with the last curve; the last curve itself stays whole), ``keep_longest`` = "Longest segments" (one
     piece per curve)."""
     params = [[] for _ in curves]
@@ -687,7 +687,7 @@ def cut_all(curves, last_only=False, keep_longest=False):
 
 
 # --- Curves > Bend / Curl / Scale Curvature (step 207) ------------------------------------------------------
-# Maya's Curves > Bend / Curl / Scale Curvature commands (): the CVs become "deflections" — each CV leg
+# Maya's Curves > Bend / Curl / Scale Curvature commands: the CVs become "deflections" — each CV leg
 # expressed in a frame carried along the curve (start frame from the first leg with the twist axis taken from Maya's
 # Y-up world, each next frame = the previous one turned onto the next leg by half the angle twice). The
 # commands edit deflections (or the points) and rebuild the CVs from them. Points are in Maya's Y-up object space.
@@ -844,7 +844,7 @@ def curl_cvs(points, amount=0.3, frequency=1.0, count=None):
     return out
 
 
-# --- CV Hardness (hardenPointCurve, curves_201.md) ----------------------------------------------------------
+# --- CV Hardness (hardenPointCurve) ----------------------------------------------------------
 
 def harden(knots, degree, cv):
     """Full multiplicity at CV ``cv``: Maya knots cv .. cv + degree - 1 all become knot cv + degree - 1, but only when
@@ -860,7 +860,7 @@ def harden(knots, degree, cv):
     return k
 
 
-# --- Fit B-spline (fitBspline on a degree-1 curve, curves_156.md) ------------------------------------------
+# --- Fit B-spline (fitBspline on a degree-1 curve) ------------------------------------------
 
 def fit_bspline(points):
     """The cubic through the polyline's CVs: chord-length parameters, natural ends, knots scaled to 0 .. n - 1 (the
@@ -877,7 +877,7 @@ def fit_bspline(points):
     return interpolate(pts, params, knots, 3), knots, 3
 
 
-# --- Align (alignCurve, factory position + tangent continuity, curves_201.md) ------------------------------------
+# --- Align (alignCurve, factory position + tangent continuity) ------------------------------------
 
 def align_ends(a, b):
     """Maya Align with the first selected curve ``a`` moving: the closest pair of ends (a start / end, b start / end)
@@ -897,7 +897,7 @@ def align_ends(a, b):
     return a
 
 
-# --- Lock Length (kit rule, curves_201.md, delegated) ----------------------------------------------------------
+# --- Lock Length (kit rule) ----------------------------------------------------------
 
 def keep_leg_lengths(old, new):
     """After CVs of a length-locked curve moved (``old`` -> ``new``), the moved CVs stay and every other CV follows

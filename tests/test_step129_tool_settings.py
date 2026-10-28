@@ -1,6 +1,6 @@
 """Step 129 (Tool Settings lane): Tool Box double-click opens Tool Settings (#3); Maya Tool Settings sections for the
-Tool Box select tools (#29) and the Mesh Tools tools (#28). ; Maya 2022
-checked: , _ts129_insert_edge_loop.json."""
+Tool Box select tools (#29) and the Mesh Tools tools (#28). """
+
 
 from importlib import import_module
 from types import SimpleNamespace

@@ -2,8 +2,8 @@
 """Maya Attribute Editor map button: connect a texture to a material attribute.
 
 Maya: the checker button next to an attribute -> Create Render Node -> File / Ramp / Noise / Checker; a connected
-attribute's button goes to the connected node, RMB > Break Connection unlinks it (,
- A2). Blender: the texture node is added to the material's node tree, left of the Principled BSDF, and linked to
+attribute's button goes to the connected node, RMB > Break Connection unlinks it.
+Blender: the texture node is added to the material's node tree, left of the Principled BSDF, and linked to
 the input; a Normal input goes through a Bump node (Maya's bump2d). Break Connection removes the link and keeps the
 nodes, like Maya. Lambert-family Color = the "Maya Diffuse" node's B input (``material.maya_input``, step 214), so a
 colour texture is multiplied by diffuse like Maya's.
@@ -23,9 +23,9 @@ MAPS = {
     'CHECKER': ("Checker", "Checker Texture"),
 }
 MAP_ITEMS = [(k, v[0], f"Maya {v[0]} texture = Blender {v[1]}") for k, v in MAPS.items()]
-# Maya ramp default: red / green / blue along V ; checker on UVs [K/U: Maya's repeat count not checked].
+# Maya ramp default: red / green / blue along V ; checker on UVs [K/U: Maya's repeat count unknown].
 RAMP_COLOURS = ((0.0, (1.0, 0.0, 0.0, 1.0)), (0.5, (0.0, 1.0, 0.0, 1.0)), (1.0, (0.0, 0.0, 1.0, 1.0)))
-CHECKER_SCALE = 4.0     # 4 x 4 squares over 0-1 UV (Maya checker repeat count not checked) 
+CHECKER_SCALE = 4.0     # 4 x 4 squares over 0-1 UV (Maya checker repeat count unknown) 
 
 
 def principled(mat):

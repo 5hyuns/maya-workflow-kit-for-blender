@@ -5,7 +5,7 @@
     python tools/marketing/fetch_assets.py --record   # fill in missing sha256 / size
     python tools/marketing/fetch_assets.py --active   # skip entries with status "superseded"
 
-Files go to <id>/ (untracked, outside the extension, never redistributed).
+Files go to the local assets folder <id>/ (untracked, outside the extension, never redistributed).
 Each download is checked against its sha256; a file already present with the
 right hash is skipped. Zip archives listed with "extract": true are unpacked
 next to the zip, path-traversal-safe; members already on disk with the same size

@@ -1,4 +1,4 @@
-"""Step 65 in a real UI ( modeling_03 / 04): top face -> Ctrl+E -> extrude
+"""Step 65 in a real UI (Maya modeling workflow): top face -> Ctrl+E -> extrude
 manipulator + In-View Editor (polyExtrudeFace1) -> drag the Thickness row -> 0.5 -> Channel Box INPUTS
 polyExtrudeFace1 Divisions 2 -> 16 vertices -> Ctrl+Z -> Divisions 1 again -> drag the blue arrow -> Local
 Translate Z changes. Screenshots vs shots/modeling_03.png / modeling_04.png."""

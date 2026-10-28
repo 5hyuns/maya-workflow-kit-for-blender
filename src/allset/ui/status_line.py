@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya top bar (menu bar) and Status Line.
 
--4.2 (menu bar, Status Line groups, :170-217);
- #10 (:80-81); $S\\startup\\bl_ui\\space_topbar.py:14-62.
+Maya's menu bar and Status Line groups;
+$S\\startup\\bl_ui\\space_topbar.py:14-62.
 Design:  「계획」 1 and 3.
 
 ``TOPBAR_HT_upper_bar.draw_left`` / ``draw_right`` are swapped for Maya
@@ -41,7 +41,7 @@ def all_view3d_spaces():
                     yield space
 
 
-# --- selection masks (ui_layout.md:201-205) -------------------------------------------
+# --- selection masks -------------------------------------------
 
 # Maya object mask -> Blender SpaceView3D.show_object_select_<type>; None = no equivalent.
 OBJECT_MASKS = (
@@ -92,8 +92,8 @@ class ALLSET_OT_select_mask(bpy.types.Operator):
 
 
 
-# Maya keeps its selection masks across File > New / Open (they are session state: ,
-# checked in Maya 2022, step 93). Blender keeps the object select filters in each file's screens and the mesh
+# Maya keeps its selection masks across File > New / Open (they are session state,
+# step 93). Blender keeps the object select filters in each file's screens and the mesh
 # select mode in its scene, so a load would replace them: remember them before the load and put them back after.
 MASK_FLAGS = tuple(sorted({t for m in OBJECT_MASKS if m[3] for t in m[3]}))
 _carried = {}
@@ -135,7 +135,7 @@ def _masks_before_load(*_args):
 def _masks_after_load(*_args):
     apply_masks(_carried.pop("masks", None))
 
-# --- selection mode (ui_layout.md:200) -----------------------------------------------
+# --- selection mode -----------------------------------------------
 
 class ALLSET_OT_select_mode(bpy.types.Operator):
     """Maya selection mode: Object (object mode) or Component (edit mode)"""
@@ -162,7 +162,7 @@ class ALLSET_OT_select_mode(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# --- snapping (ui_layout.md:207; hold keys share these settings: operators/hold.py) ----
+# --- snapping (hold keys share these settings: operators/hold.py) ----
 
 SNAPS = (
     ("GRID", "Snap to grids (hold X)", 'SNAP_GRID', {'GRID'}),
@@ -200,7 +200,7 @@ class ALLSET_OT_snap_toggle(bpy.types.Operator):
     """Toggle a Maya snap mode"""
     bl_idname = "allset.snap_toggle"
     bl_label = "Snap Toggle"
-    # Maya's snap toggles are not undoable (snapMode pushes no undo step,  B5):
+    # Maya's snap toggles are not undoable (snapMode pushes no undo step):
     # no undo step here, and undo / redo keep the current snap state (``_keep_snap_pre`` / ``_keep_snap_post``)
     bl_options = {'INTERNAL'}
 
@@ -253,7 +253,7 @@ _SNAP_UNDO_HANDLERS = (("undo_pre", _keep_snap_pre), ("redo_pre", _keep_snap_pre
                        ("undo_post", _keep_snap_post), ("redo_post", _keep_snap_post))
 
 
-# --- symmetry (ui_layout.md:207 group 8; operators/symmetry.py, ) ------
+# --- symmetry (207 group 8; operators/symmetry.py, ) ------
 
 class ALLSET_MT_symmetry(bpy.types.Menu):
     """Maya symmetry modes (Status Line ▾ list)"""
@@ -301,7 +301,7 @@ def draw_tool_symmetry(self, context):
     draw_symmetry(layout, context)
 
 
-# --- render (ui_layout.md:210) -----------------------------------------------------------
+# --- render -----------------------------------------------------------
 
 def _properties_area(screen):
     """A Properties editor of ``screen`` that is not the Tool Settings dock (step 106)."""
@@ -328,9 +328,9 @@ class ALLSET_OT_render_settings(bpy.types.Operator):
     bl_label = "Render Settings"
 
     def execute(self, context):
-        # Maya's Render Settings is a window of its own (render_04_win1): a new Properties window on the
+        # Maya's Render Settings is a window of its own: a new Properties window on the
         # Render tab, so a Properties editor used as the Attribute Editor keeps its tab
-        # (, step 67). Without a window (background) switch a
+        # (step 67). Without a window (background) switch a
         # Properties editor of the screen instead.
         # Step 105: the kit's Render Settings window (ui/render_settings.py: Maya menus, Render Layer / Render Using,
         # Common | renderer tabs over a Properties editor on the Render tab).
@@ -363,10 +363,10 @@ def ipr_toggle(space):
         panel_menus.enter_rendered(space)
 
 
-# --- editor toggles (ui_layout.md:213-216) -----------------------------------------------
+# --- editor toggles -----------------------------------------------
 
 EDITORS = (
-    # Maya order: Modeling Toolkit first (, step 63)
+    # Maya order: Modeling Toolkit first (step 63)
     ("MODELING_TOOLKIT", "Show or hide the Modeling Toolkit", 'EDITMODE_HLT'),
     ("ATTRIBUTE", "Show or hide the Attribute Editor", 'PROPERTIES'),
     ("TOOL_SETTINGS", "Show or hide the Tool Settings of the active tool (dock left of the viewport)", 'TOOL_SETTINGS'),
@@ -413,8 +413,8 @@ class ALLSET_OT_editor_toggle(bpy.types.Operator):
 
 # --- drawing --------------------------------------------------------------------
 
-# Maya Status Line groups each start with a collapse handle that hides the group
-# (). Kept for the
+# Maya Status Line groups each start with a collapse handle that hides the group.
+# Kept for the
 # session only (Maya keeps them in setting; delegated).
 GROUPS = (
     ("FILE", "File: New, Open, Save, Undo, Redo"),
@@ -427,7 +427,7 @@ GROUPS = (
     ("INPUT", "Input line: absolute / relative transform, rename, select by name"),
     ("EDITORS", "Editor toggles"),
 )
-# Groups Maya 2022 shows collapsed on a factory Status Line ( only the bar
+# Groups Maya 2022 shows collapsed on a factory Status Line (only the bar
 # and arrow between selection modes and snaps, after symmetry and after render; step 113).
 DEFAULT_COLLAPSED = ("MASKS", "HISTORY", "INPUT")
 _collapsed = set(DEFAULT_COLLAPSED)
@@ -454,7 +454,7 @@ class ALLSET_OT_status_group(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Maya Status Line icons are 20 px on a 23 px pitch ( status); a Blender
+# Maya Status Line icons are 20 px on a 23 px pitch; a Blender
 # header button draws its icon at 16 px x UI scale unless the button is scaled.
 ICON_SCALE = 1.0
 
@@ -502,7 +502,7 @@ def _field(layout, owner, prop, units):
 
 
 def draw_status_line(layout, context, compact=False):
-    """The Maya Status Line, left to right (ui_layout.md:196-217; Maya 2022 grab 
+    """The Maya Status Line, left to right (Maya 2022:
     menu set combo, then groups of bar + buttons + collapse arrow, sidebar toggles at the right end). ``compact``
     (the 3D View tool header of other layouts, which overflows): the input line goes after the editor toggles
     (step 75, delegated)."""
@@ -557,7 +557,7 @@ def draw_status_line(layout, context, compact=False):
                 _grey(row, "snap_" + name, f"Status Line/{desc}")
             else:
                 _flat(row, ALLSET_OT_snap_toggle.bl_idname, "snap_" + name, depress=snap_on(ts, name)).snap = name
-        # Maya's live surface field ( S13, step 59): arrow + text field
+        # Maya's live surface field (step 59): arrow + text field
         row = layout.row(align=True)
         sub = row.row(align=True)
         sub.emboss = 'NONE'
@@ -774,8 +774,8 @@ def draw_right(self, context):
     if not context.screen.show_statusbar:  # as space_topbar.py:46-49
         layout.template_reports_banner()
         layout.template_running_jobs()
-    # Maya: "Workspace:" and a dropdown at the far right of the menu bar (ui_layout.md:217;
-    #  menubar_corner: label 60 px, combo 194 px), not Blender's ID field
+    # Maya: "Workspace:" and a dropdown at the far right of the menu bar
+    # (label 60 px, combo 194 px), not Blender's ID field
     # (screen icon, name, unlink button; step 113).
     row = layout.row(align=True)
     row.label(text="Workspace:")

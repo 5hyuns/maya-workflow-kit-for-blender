@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya 2022 UV Editor Select / Edit commands of step 178 (lane B), checked :
- (rules, tags) and  (ground truth the tests use;
-script ).
+"""Maya 2022 UV Editor Select / Edit commands of step 178 (lane B); the tests compare against Maya's numbers.
 
 Maya's commands work on every component of the hilited meshes of the current component mask
 (UV Editor Select menu).
@@ -12,7 +10,7 @@ Editor shows (uv_display.shown_faces). A "UV" = the loops of one vertex sharing 
 - Back-Facing / Front-Facing: a UV is back (front) when a face with
   negative (positive) UV winding area uses it; faces = faces all of whose UVs are, edges = face sides whose two UVs
   are, vertices = vertices with such a UV. So a clockwise quad between two counter-clockwise ones of its shell is
-  front-facing too (checked: strips 'fold', 'maj_mid', 'maj5').
+  front-facing too (strips 'fold', 'maj_mid', 'maj5').
 - Texture Borders: components on UV shell borders (a face side no other face shares
   across with the same UVs: mesh borders + seams); faces = faces with such a side. UV Shell mask: Maya selects
   nothing (unsupported).
@@ -37,7 +35,7 @@ from . import uv_tools
 from .component import select_only
 
 EPS = uv_tools.EPS
-AREA_TOL = 1e-6          # Maya 2026's Select Unmapped Faces tolerance (checked)
+AREA_TOL = 1e-6          # Maya 2026's Select Unmapped Faces tolerance
 OVERLAP_AREA = 1e-10     # UV area shared by two faces that counts as an overlap
 _TINY = 1e-12
 

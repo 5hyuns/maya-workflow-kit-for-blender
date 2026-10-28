@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Set Driven Key (Key > Set Driven Key > Set... / Go to Previous / Go to Next).
 
-Maya's result is an animCurveUU from the driver attribute to the driven one
-(,-4). Blender equivalent: a driver on the driven
+Maya's result is an animCurveUU from the driver attribute to the driven one.
+Blender equivalent: a driver on the driven
 channel (one variable ``sdk`` reading the driver channel, type AVERAGE = the variable) whose
 F-curve has keys (driver value, driven value) — the same curve shape.
 Values are raw RNA values (radians, metres), so the mapping is the one the user posed.
@@ -12,12 +12,11 @@ so while the Set Driven Key window is open, a Channel Box edit of a channel driv
 driver mutes that driver until Key (which records the pose) or Close (which drops it).
 The window state lives on the WindowManager like a Maya window (not undoable, not saved).
 
-Step 226 (, Maya truth ,
-setup ):
+Step 226 (Maya 2026):
 1. Curve shape = Maya 2026 ``auto`` tangents written by the kit (``maya_auto``): end keys flat, a key between two
    neighbours gets the slope (y[i+1] - y[i-1]) / (x[i+1] - x[i-1]), a local extreme is flat (sdk_three_keys: the
    middle key's slope is 9 = 90 / 10; sdk_four_keys_overshoot: both inner keys flat). Blender's own handles miss
-   (checked on the 29 samples of each case: Auto Clamped + Continuous Acceleration = step 223's choice: 1.2e-5 /
+   (on the 29 samples of each case: Auto Clamped + Continuous Acceleration = step 223's choice: 1.2e-5 /
    2.58 / 4e-6; Auto Clamped + None: 1.68 / 1.31 / 0.90; Auto + Continuous Acceleration: 1.2e-5 / 2.58 / 13.2),
    so the handles are ALIGNED at a third of each segment with that slope (delegated). Pre / post infinity Constant.
 2. A second driver on the same driven channel = Maya ``blendWeighted`` (the inputs are **added**, sdk_two_drivers):
@@ -333,7 +332,7 @@ def input_value(fc):
 def maya_slopes(points):
     """Maya 2026 auto tangent slopes of sorted (x, y) keys (module docstring 1): ends and local extremes flat,
     else the neighbours' chord slope; the slope is limited so a handle never passes a neighbour's value [U: no
-    checked case reaches the limit]."""
+    known case reaches the limit]."""
     n = len(points)
     out = [0.0] * n
     for i in range(1, n - 1):
@@ -633,7 +632,7 @@ def _on_posed(id_name, id_kind, path, index):
         fc.mute = True
 
 
-# Step 238 (#146, audit230/chain4.md:56): msgbus notifies on the next event-loop pass, so a value typed into a blend
+# Step 238 (#146): msgbus notifies on the next event-loop pass, so a value typed into a blend
 # shape / constraint weight and keyed before that pass met a depsgraph update first, and the unmuted driver wrote its
 # result over it (the key became (90, 0)). The driven values seen after each update are kept; an update that finds a
 # value changed since (= typed, not driven) mutes that SDK driver first — depsgraph_update_pre runs before drivers.

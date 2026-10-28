@@ -1,5 +1,5 @@
-"""PR #125 follow-up (0.5.0): Maya checks of the merged PR (C:/Repos/bmk-strategy/PR125_MAYA_CHECK.md,
-PR125_MAYA_LATER.md) — idle Channel Box poll, wheel step, Joint Tool branching, menu data, header extras,
+"""PR #125 follow-up (0.5.0): Maya checks of the merged PR
+— idle Channel Box poll, wheel step, Joint Tool branching, menu data, header extras,
 Select Priority off. GUI parts: tests/gui/gui_pr125_window_close.py, tests/integration/."""
 
 from importlib import import_module
@@ -80,7 +80,7 @@ class _Ops:
 def test_header_extras_off_and_search_under_layouts():
     """No Maya viewport header has a mode picker or a pulse: both are add-on preferences, off by default. The Tool
     Box Search button sits under the layout / Outliner buttons (Maya 2022.1+ Tool Box), and the column
-    keeps Maya's checked width (no +3 px)."""
+    keeps Maya's width (no +3 px)."""
     from types import SimpleNamespace
     prefs = import_module(kit.MODULE + ".preferences").get()
     assert prefs.armature_mode_header is False and prefs.armature_mode_pulse is False

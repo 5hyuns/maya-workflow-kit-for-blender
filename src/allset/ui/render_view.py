@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Render View = Blender's Image Editor showing Render Result.
 
-Maya's Render View toolbar (, shot render_05_win1) has Render, IPR,
+Maya's Render View toolbar has Render, IPR,
 Keep Image and Remove Image: kept images stay in a strip to compare with the next render. Blender's Render
 Result has render slots (J / Alt+J switch between them), and a render goes into the active slot, so:
 

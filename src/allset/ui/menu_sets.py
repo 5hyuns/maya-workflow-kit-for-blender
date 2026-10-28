@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya main menu bar and menu sets (Modeling/Rigging/Animation/FX/Rendering).
 
- (:170-192): the common menus are always shown,
+Maya's menu sets: the common menus are always shown,
 the menu set dropdown swaps the menus after them. Structure from
-``menu_data`` (generated from ), Blender actions from
+``menu_data`` (Maya's menu structure), Blender actions from
 ``menu_map``; unmapped items are drawn greyed out. Design: 
 「계획」 2.
 
@@ -24,7 +24,7 @@ COMMON_SET = "commonMenuSet"
 ALWAYS = "(always visible)"
 DEFAULT_SET = "modelingMenuSet"
 
-# Menu set dropdown items (Maya setting currentMenuBarTab, ui_layout.md:182-183).
+# Menu set dropdown items (Maya setting currentMenuBarTab).
 SET_ITEMS = tuple((sid, label, f"Maya {label} menu set")
                   for sid, label, _menus in menu_data.MENU_SETS if sid != COMMON_SET)
 # Plugin menus (MASH, Bifrost, Boss) are listed in the sets but have no data: skipped.
@@ -245,7 +245,7 @@ class ALLSET_OT_menu_set_value(bpy.types.Operator):
         return set_prop(context, self.target, {"value": ast.literal_eval(self.value)})
 
 
-# Maya's option box ( "optionBox") is a small square at the right end of the item's line.
+# Maya's option box is a small square at the right end of the item's line.
 # A second button on a Blender menu line breaks consecutive lines into a staircase (step 51; checked again in step
 # 103 with row / split / column / grid_flow lines,  「계획」 1), so the item stays one button:
 # its label ends with Maya's box mark, click = the command, press and hold = "Option Box" = the option window
@@ -267,8 +267,8 @@ def _draw_boxed(layout, path, text, icon_value=0):
 
 
 # --- Maya hotkey column -----------------------------------------------------
-# Maya prints an item's hotkey right-aligned ( "Ctrl+N",
-# menu_Modeling_Edit_Mesh.png "Ctrl+B"), the option box after it. Blender takes no such text for a Python button,
+# Maya prints an item's hotkey right-aligned (File > New Scene "Ctrl+N",
+# Edit Mesh > Bevel "Ctrl+B"), the option box after it. Blender takes no such text for a Python button,
 # so the label carries it: label + filler + "Ctrl+N  ❒", the filler checked with the menu font so the tails line
 # up on the right.
 HAIR = "\u200a"          # a hair space: fine filler steps (plain spaces only if the UI font lacks it)
@@ -367,7 +367,7 @@ def _draw_items(layout, items, prefix, submenus):
         if path is None:
             layout.separator()
             if it[1]:
-                # Maya section titles are small (menu_Modeling_File.png); a lower row also keeps File inside a
+                # Maya section titles are small; a lower row also keeps File inside a
                 # 900 px window at 125 % (step 108 「계획」 4)
                 _section_label(layout, it[1])
             continue
@@ -537,7 +537,7 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         if context.mode == 'EDIT_MESH' and self.item in menu_map.EDIT_MODE:     # component mode (step 129)
             return bpy.ops.allset.component_command('EXEC_DEFAULT', True, item=self.item)
         rule = menu_map.OBJECT_MODE.get(self.item) if context.mode == 'OBJECT' else None
-        if isinstance(rule, str):     # Maya warns and does nothing (Maya, )
+        if isinstance(rule, str):     # Maya warns and does nothing
             self.report({'WARNING'}, rule)
             return {'CANCELLED'}
         if rule:
@@ -567,7 +567,7 @@ def _op_description(path):
     return path.rsplit('/', 1)[-1]
 
 
-# Maya's values for commands it runs on a whole object (Maya, ):
+# Maya's values for commands it runs on a whole object:
 # Bevel fraction 0.5, Chamfer Vertices 0.25 (Blender: percent of the adjacent edge).
 WHOLE_MESH_PROPS = {
     "Edit Mesh/Chamfer Vertices": {"offset_type": 'PERCENT', "offset_pct": 25.0, "affect": 'VERTICES'},
@@ -708,7 +708,7 @@ def modifier_held():
 
 
 # --- Ctrl+Shift+click: the item to the current shelf (step 162) -------------------------------------------------
-# Maya: Shift+Ctrl+click on a menu item adds it to the current shelf (); Maya's
+# Maya: Shift+Ctrl+click on a menu item adds it to the current shelf; Maya's
 # Maya appends a shelf button with the item's label / annotation / image (running the item's command)
 # to the shelf tab shown, factory tabs included, and prints nothing. The kit button runs
 # the path like the menu (``shelf.add_menu_item``, ``marking.modal.run_action(("item", path))``).
@@ -976,7 +976,7 @@ class ALLSET_OT_menu_tool(bpy.types.Operator):
 
 
 class ALLSET_MT_ui_elements(bpy.types.Menu):
-    """Maya Windows > UI Elements (ui_layout.md:190-191)"""
+    """Maya Windows > UI Elements"""
     bl_idname = "ALLSET_MT_ui_elements"
     bl_label = "UI Elements"
 
@@ -1003,7 +1003,7 @@ class ALLSET_MT_menu_bar(bpy.types.Menu):
         draw_menu_bar(self.layout, context, collapsed=True)
 
 
-# Maya menu bar items are their text plus ~11 px ( menubar: "File" 30 px,
+# Maya menu bar items are their text plus ~11 px ("File" 30 px,
 # "Mesh Display" 80 px, Segoe UI 11 px); Blender's header pulldowns add about a UI unit, so the Maya bar overflowed a
 # 1600 px window at 125 % (step 113). Each item gets its checked text width plus this padding.
 MENU_PAD_PX = 11

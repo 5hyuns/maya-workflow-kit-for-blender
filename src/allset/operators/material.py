@@ -2,8 +2,8 @@
 """Maya material assignment.
 
 Lighting/Shading > Material Attributes / Assign New / Favorite / Existing Material
-() and the same items at the end of the RMB object
-menu list (). Maya assigns to the selection,
+ and the same items at the end of the RMB object
+menu list. Maya assigns to the selection,
 or to the object the RMB menu was opened on when nothing is selected.
 
 - Object assignment = the whole shape gets the material (Maya: the shape joins the
@@ -11,7 +11,7 @@ or to the object the RMB menu was opened on when nothing is selected.
 - Face assignment (mesh edit mode, face select mode, selected faces) = only those
   faces: the material's slot is found or added and their ``material_index`` set.
   A mesh without slots first gets an empty slot (Blender's default grey, Maya's
-  lambert1) so the other faces keep it ().
+  lambert1) so the other faces keep it.
 """
 
 import contextlib
@@ -25,8 +25,8 @@ from .. import compat
 
 SUPPORTED = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 
-# Maya shader kinds (shelf shader buttons) on Principled BSDF ().
-# Maya factory values checked  (; lambert: ).
+# Maya shader kinds (shelf shader buttons) on Principled BSDF.
+# Maya factory values (lambert: ).
 # Every lambert-family shader: color 0.5 grey, incandescence black (Principled's default Emission Color is white at
 # strength 0: the AE showed white), specularColor 0.5. diffuse 0.8 has no Principled input (its "Weight" socket is
 # disabled), so since step 214 a "Maya Diffuse" Mix node (``ensure_diffuse``) puts color x diffuse into Base Color.
@@ -51,9 +51,9 @@ def cosine_power_roughness(n):
 
 # kind -> (Maya node name, UI label, Principled inputs).
 MATERIALS = {
-    # standardSurface: baseColor 0.8 (= Principled's), specularRoughness 0.4, emissionColor white (checked)
+    # standardSurface: baseColor 0.8 (= Principled's), specularRoughness 0.4, emissionColor white
     'STANDARD_SURFACE': ("standardSurface", "Standard Surface", {"Roughness": 0.4}),
-    # Arnold's default material (Maya with mtoa); same Principled stand-in (render.md, step 67)
+    # Arnold's default material (Maya with mtoa); same Principled stand-in (step 67)
     'AI_STANDARD_SURFACE': ("aiStandardSurface", "aiStandardSurface", {}),
     'LAMBERT': ("lambert", "Lambert", {**_COMMON, "Roughness": 1.0, "Specular IOR Level": 0.0}),
     # blinn: eccentricity 0.3, specularRollOff 0.7 (AE row = Specular IOR Level), specularColor 0.5 (#71)
@@ -63,7 +63,7 @@ MATERIALS = {
     'PHONG': ("phong", "Phong", {**_SPECULAR, "Roughness": cosine_power_roughness(MAYA_COSINE_POWER)}),
     'SURFACE': ("surfaceShader", "Surface Shader", {"Emission Strength": 1.0}),
     # Step 105: the rest of Maya's Hypershade Create > Maya > Surface list that Blender can build (Principled stand-ins
-    # plus a node or two; )
+    # plus a node or two)
     # phongE: roughness 0.5, highlightSize 0.5 (Specular IOR Level), whiteness 0.5 (Specular Tint)
     'PHONG_E': ("phongE", "Phong E", {**_SPECULAR, "Roughness": 0.5, "Specular IOR Level": 0.5}),
     # anisotropic: roughness 0.7, angle 0, specularColor 0.5 (spreadX 13 / spreadY 3: Blender's Anisotropic 0.5 stays)
@@ -80,7 +80,7 @@ KIND_ITEMS = [(k, v[1], f"Maya {v[0]} (Principled BSDF)") for k, v in MATERIALS.
 FAVORITES = ('LAMBERT', 'BLINN', 'PHONG', 'STANDARD_SURFACE')
 # ID property naming the Maya node type of a kit-made material (AE tab label/sections, step 38).
 TYPE_PROP = "allset_type"
-# Maya's default material (step 100, checked ): every new shape joins initialShadingGroup, whose surface
+# Maya's default material (step 100): every new shape joins initialShadingGroup, whose surface
 # shader is lambert1 (lambert, color 0.5, diffuse 0.8); Delete Unused Nodes keeps it, a new Lambert is lambert2.
 DEFAULT_PROP = "allset_default"
 DEFAULT_NAME = "lambert1"
@@ -95,7 +95,7 @@ def new_material(kind):
     from . import naming
     base, _label, values = MATERIALS[kind]
     if _maya_scene():
-        default_material()   # Maya's scene always has lambert1, so a new Lambert is lambert2 (Maya, step 100)
+        default_material()   # Maya's scene always has lambert1, so a new Lambert is lambert2 (step 100)
     n = naming.next_number(base, {m.name for m in bpy.data.materials})
     mat = bpy.data.materials.new(f"{base}{n}")
     mat[TYPE_PROP] = base
@@ -114,7 +114,7 @@ def new_material(kind):
 
 
 # --- Maya diffuse (step 214, #120) ---------------------------------------------------------------------------------
-# Maya's lambert family renders color x diffuse x light ( diffuse 0.8 for
+# Maya's lambert family renders color x diffuse x light (diffuse 0.8 for
 # lambert / blinn / phong / phongE / anisotropic / rampShader, "rendered value = color x diffuse x intensity");
 # a texture connected to color is multiplied by diffuse as well. Principled has no diffuse weight, so a Mix node
 # (RGBA, MIX, factor = diffuse, A = black, B = the Maya colour) feeds Base Color: Base Color = diffuse x colour while

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's wire deformer (Deform > Wire and Deform > Wire >, step 169).
 
-Maya rule (checked, ): for a deformed point p, c = the nearest point of the
+Maya rule (Maya-exact): for a deformed point p, c = the nearest point of the
 *base* wire (a hidden copy of the curve made with the deformer, ``curve1BaseWire``) at parameter u, c' = the wire at
 the same u, T / T' their tangents, d = |p - c|, D = Dropoff Distance (× the dropoff locators' scale at u):
 
@@ -14,7 +14,7 @@ Nodes modifier named like the Maya node (``wire1``) on a shared node group: both
 evaluated points (same count, uniform in parameter), the nearest base edge gives c and u. The weights are the
 vertex group ``wire1`` (factory weight 1), which Deform > Paint Weights > Wire paints.
 
-Dropoff locators (checked,): a locator at parameter a with Percent s scales D; between neighbouring knots
+Dropoff locators: a locator at parameter a with Percent s scales D; between neighbouring knots
 [0, locators sorted by parameter, 1] with scales [1, s..., 1] the scale is s_a + (s_b - s_a) g(t), g(t) = 1 - (1 - t²)²;
 the kit keeps up to ``LOCATOR_SLOTS`` per wire.
 """
@@ -289,7 +289,7 @@ def reset(md):
 
 
 def remove(md):
-    """Maya Remove: the node and its base wire go, the curve stays (checked: curve1 kept, no BaseWire left)."""
+    """Maya Remove: the node and its base wire go, the curve stays (curve1 kept, no BaseWire left)."""
     ob = md.id_data
     curve, base = get(md, "Wire"), get(md, "Base Wire")
     name = md.name

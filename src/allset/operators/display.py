@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 4/5/6/7 viewport display modes.
 
- (runTimeCommands DisplayWireframe, DisplayShaded,
-DisplayShadedAndTextured, DisplayLight). Maya applies them to the panel under
-the pointer (interaction.md:33); bound in the "3D View" keymap, Blender gives
+Maya runTimeCommands DisplayWireframe, DisplayShaded,
+DisplayShadedAndTextured, DisplayLight. Maya applies them to the panel under
+the pointer; bound in the "3D View" keymap, Blender gives
 us that area as ``context.space_data``.
 """
 
@@ -57,7 +57,7 @@ class ALLSET_OT_display_mode(bpy.types.Operator):
 
 
 # --- 1/2/3 smooth mesh preview ------------------------------------------------
-#  1 = no smoothing, 2 = cage + smooth,
+# Maya: 1 = no smoothing, 2 = cage + smooth,
 # 3 = smooth mesh preview; per selected shape, geometry unchanged. Blender form:
 # the kit's own preview Subsurf (never the user's Subsurf, step 15) plus a
 # "Set Shade Smooth" geometry-nodes modifier right before it, so the preview looks
@@ -226,7 +226,7 @@ class ALLSET_OT_smooth_level(bpy.types.Operator):
 
 
 # --- F7/F9/F10/F11 component modes ----------------------------------------------
-#  (F9 vertex, F10 edge, F11 face, F7 multi).
+# Maya: F9 vertex, F10 edge, F11 face, F7 multi.
 
 COMPONENTS = (
     ("VERT", "Vertex", "Maya F9"),
@@ -293,7 +293,7 @@ class ALLSET_OT_component_mask(bpy.types.Operator):
 
     def execute(self, context):
         ts = context.scene.tool_settings
-        # a hidden object: Maya sets the pick mask silently ( B4); Blender can't
+        # a hidden object: Maya sets the pick mask silently; Blender can't
         # enter edit mode on it, so only the mask changes (delegated, step 258)
         if context.mode != 'EDIT_MESH' and context.active_object.visible_get():
             bpy.ops.object.mode_set(mode='EDIT')

@@ -1,5 +1,5 @@
 """Step 171: Visualize > Create Animation Snapshot / Update Snapshot and ghosting (Ghost Selected / Unghost Selected /
-Unghost All / Ghosting Editor). Maya rules and numbers:  (Maya, Maya 2022).
+Unghost All / Ghosting Editor). Maya 2022 rules and numbers.
 
 Maya points are Y-up: Maya (x, y, z) = Blender (x, -z, y); Maya rotateY = Blender rotation Z (same sign)."""
 
@@ -65,7 +65,7 @@ def _key_linear(ob):
 
 
 def _anim_cube(rotate=True, tx_end=9.0):
-    """visualize171_Maya.py anim_cube: translateX 0 -> 9 and rotateY 0 -> 90 over frames 1 -> 10, linear."""
+    """Maya anim_cube: translateX 0 -> 9 and rotateY 0 -> 90 over frames 1 -> 10, linear."""
     ob = _cube()
     for f, x, r in ((1, 0.0, 0.0), (10, tx_end, 90.0)):
         ob.location.x = x
@@ -101,7 +101,7 @@ def test_snapshot_names_count_and_maya_vertices():
     assert [c.name for c in copies] == [f"transform1_{k}" for k in range(1, 11)]
     assert [c.data.name for c in copies] == [f"transform1_Shape{k}" for k in range(1, 11)]
     assert all(c.parent == grp and c.matrix_world == __import__("mathutils").Matrix.Identity(4) for c in copies)
-    # visualize171_Maya.py source_vtx0_by_frame (frames 1, 2, 5, 10), Maya Y-up
+    # Maya: source vertex 0 by frame (frames 1, 2, 5, 10), Maya Y-up
     for frame, p in ((1, (-0.5, -0.5, 0.5)), (2, (0.59442, -0.5, 0.57923)), (5, (3.93837, -0.5, 0.70442)),
                      (10, (9.5, -0.5, 0.5))):
         co = copies[frame - 1].data.vertices[i0].co
@@ -145,7 +145,7 @@ def test_snapshot_time_slider_range_and_two_objects():
     _select(a, b)
     assert bpy.ops.allset.animation_snapshot(time_slider=True) == {'FINISHED'}
     g1, g2 = bpy.data.objects["snapshot1Group"], bpy.data.objects["snapshot2Group"]
-    assert len(g1.children) == len(g2.children) == 4                   # Maya two_objects_ts_range
+    assert len(g1.children) == len(g2.children) == 4                   # Maya: two objects, time slider range
     assert {g1[snap.SOURCE], g2[snap.SOURCE]} == {a, b}
 
 
@@ -165,7 +165,7 @@ def test_snapshot_world_space_of_a_child_in_an_animated_group():
     assert bpy.ops.allset.animation_snapshot() == {'FINISHED'}
     last = snap.copies_of(bpy.data.objects["snapshot1Group"])[-1]
     assert last.parent.parent is None                                   # the group is top level (Maya: world)
-    assert _close(last.data.vertices[i0].co, maya((-0.5, 8.5, 0.5)))    # Maya child_in_group_last_vtx
+    assert _close(last.data.vertices[i0].co, maya((-0.5, 8.5, 0.5)))    # Maya: child in a group, last vertex
     # selecting the group itself snapshots the geometry under it
     _select(grp)
     assert bpy.ops.allset.animation_snapshot() == {'FINISHED'}
@@ -245,7 +245,7 @@ def test_fast_update_follows_key_edits_only():
     bpy.ops.allset.animation_snapshot()
     grp = bpy.data.objects["snapshot1Group"]
     snap._pending.clear()
-    # a key edit: translateZ 0 -> 5 (Maya style_0 after_key = (8.5, -0.5, 5.5))
+    # a key edit: translateZ 0 -> 5 (Maya after the key = (8.5, -0.5, 5.5))
     cube.keyframe_insert("location", index=1, frame=1)
     cube.location.y = -5.0
     cube.keyframe_insert("location", index=1, frame=10)
@@ -276,7 +276,7 @@ def test_fast_update_follows_key_edits_only():
 def test_ghost_frames_match_maya():
     gf = ghosting.ghost_frames
     f = lambda rows: [r[0] for r in rows]      # noqa: E731
-    keys = (1, 4, 8, 12, 20, 30)               # visualize171_Maya3.py
+    keys = (1, 4, 8, 12, 20, 30)               # Maya case keys
     assert f(gf(10, "Pre And Post Frames")) == [9, 8, 7, 11, 12, 13]
     assert sorted(f(gf(1, "Pre And Post Frames"))) == [-2, -1, 0, 2, 3, 4]       # not clipped to the range
     assert sorted(f(gf(5, "Pre Frames"))) == [2, 3, 4] and sorted(f(gf(5, "Post Frames"))) == [6, 7, 8]
@@ -290,7 +290,7 @@ def test_ghost_frames_match_maya():
     assert ghosting.parse_frames("3, 7,15") == [3.0, 7.0, 15.0]
     assert ghosting.preset_steps({"preset": "4s"}) == (3, 3, 4)
     assert ghosting.preset_steps({"preset": "Custom", "custom_pre": 2, "custom_post": 5, "custom_step": 3}) == (2, 5, 3)
-    # opacity: wireframe alpha 127 / 83 / 38 of 255 for the 1st / 2nd / 3rd ghost (GUI capture)
+    # opacity: wireframe alpha 127 / 83 / 38 of 255 for the 1st / 2nd / 3rd ghost (Maya)
     for k, alpha in ((1, 127), (2, 83), (3, 38)):
         assert abs(ghosting.opacity(k, 3) * 255 - alpha) < 1.0, (k, ghosting.opacity(k, 3) * 255)
     # shaded: front + back face = 1 - (1 - a)^2 -> 191 / 139 / 71

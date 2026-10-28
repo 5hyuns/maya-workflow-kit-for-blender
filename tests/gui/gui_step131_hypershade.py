@@ -1,7 +1,7 @@
 """Step 131 (#25) in a real UI: pSphere1 with blinn1 (a checker on its Color) and pCube1 with lambert1 -> Windows >
 Rendering Editors > Hypershade -> a new window in Maya's Hypershade layout: menu strip, Browser top-left, Material
-Viewer top-right, Create bottom-left, Graph centre, Property Editor bottom-right, proportions within 4 % of the Maya
-2022 capture () -> pick blinn1, Input and Output Connections -> screenshot ->
+Viewer top-right, Create bottom-left, Graph centre, Property Editor bottom-right, proportions within 4 % of Maya's
+2022 layout -> pick blinn1, Input and Output Connections -> screenshot ->
 open again from the main window = one Hypershade window (the old one closes)."""
 
 import os
@@ -117,7 +117,7 @@ def s_layout():
     strip = hs.menu_area(w.screen)
     print("strip regions", [(rg.type, rg.x, rg.y, rg.width, rg.height) for rg in strip.regions],
           strip.spaces.active.show_region_header)
-    check(f"panes where Maya puts them, proportions within 4 % of the capture ({diff})",
+    check(f"panes where Maya puts them, proportions within 4 % of Maya's layout ({diff})",
           diff and max(diff.values()) <= 0.04)
     b, v, c, g, p, m = (r[k] for k in ("BROWSER", "VIEWER", "CREATE", "GRAPH", "PROPERTY", "MENU"))
     check("menu strip across the top, one header high", m[1] == 0 and m[2] >= width - 2 and m[3] <= 40)

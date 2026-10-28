@@ -1,7 +1,7 @@
 """Step 139 lane SHAPE in a real UI (#70 M4, #16): component mode, Ctrl+B on an edge -> polyBevel1 exists at once
 (no modal), Esc keeps it -> the In-View Editor's Segments row dragged to 2 -> Ctrl+Z = Segments 1, Ctrl+Z = no bevel
 (one undo step each) -> Ctrl+E on two edges = polyExtrudeEdge1 at once (12/18/8, Maya) -> Ctrl+E on a vertex =
-polyExtrudeVertex1 at once (11/18/9). Maya numbers: """
+polyExtrudeVertex1 at once (11/18/9)."""
 
 import os
 import sys

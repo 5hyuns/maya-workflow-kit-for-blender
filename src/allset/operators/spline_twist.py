@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Spline IK Twist / Roll / Twist Type like Maya (step 249, Issue #166).
 
-Maya 2026 ikSplineSolver (; Maya tmp/m249/sp.py, numbers in
+Maya 2026 ikSplineSolver (numbers in
 tests/test_step249_spline_twist.py): the handle's Twist is spread over the joints between the root and the end joint —
 joint k of n (root 0, end n) turns about its own X by twist * (f(k / (n-1)) - f((k-1) / (n-1))) with the cumulative
 curve f of Twist Type: Linear t, Ease In t^3, Ease Out 1 - (1 - t)^3, Ease In Out 3t^2 - 2t^3; Roll turns the root
 joint about its X; the end joint gets nothing. (6 joints, twist 100: rx 25 / 25.4 / 25.5 / 24.4 on joints 1-4 — the
-spread is per joint, the checked rx differ from it by the bend's Euler mixing, <= 0.7 deg.)
+spread is per joint, Maya's rx differ from it by the bend's Euler mixing, <= 0.7 deg.)
 
 Kit: a Spline IK handle is the ``SPLINE_IK`` constraint plus an ``ikHandleN`` empty at the end joint (Maya's
 selectable handle) holding Twist / Roll / Twist Type as custom properties (Channel Box rows). Blender's Spline IK keeps

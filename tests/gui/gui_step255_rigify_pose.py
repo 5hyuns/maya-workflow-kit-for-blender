@@ -2,7 +2,7 @@
 (ui/toolbox pose_empty_click) tested only bone head-tail lines, so a click on a custom-shape widget away from its bone
 counted as empty space; a near miss went select_object_at -> Object mode; with the Move tool an unkeyed rig went to
 Edit mode. Maya has no selection mode: picking a control never changes the mode, a click on nothing clears the
-selection (), a click on another object selects it.
+selection (Maya UV shell selection rules), a click on another object selects it.
 
 The session: Maya layout, Rigify human rig generated, Pose mode, Select Box tool: wire clicks on torso / hips / head /
 root, a Shift click, a near miss and an empty click, W + a control click, a click on a mesh, Ctrl+Z, save / open."""

@@ -2,7 +2,7 @@
 """Maya keys: S = Set Key on every keyable channel, Set Breakdown Key, and the Time Slider key edits
 (Cut / Copy / Paste / Delete / Snap / Keys / Tangents / Set Range to).
 
- (S keys every keyable attribute), rows 5, 8, 11-13; Maya
+Maya keys (S keys every keyable attribute); Maya
 Time Slider menu (the time slider edits act on the Time Slider's highlighted range: the
 Shift-dragged range, else the current frame), design  「계획」 2, 4.
 
@@ -19,7 +19,7 @@ from .. import results
 from .. import undo_steps
 
 # Maya tangent -> (interpolation, handle type or None); FLAT also levels the handles.
-# (animation.md:14 table; reused by the Graph Editor tangent buttons, step 67)
+# (reused by the Graph Editor tangent buttons, step 67)
 TANGENTS = {
     "SPLINE": ("BEZIER", 'AUTO'),
     "LINEAR": ("LINEAR", None),
@@ -29,7 +29,7 @@ TANGENTS = {
     "PLATEAU": ("BEZIER", 'AUTO_CLAMPED'),
     "AUTO": ("BEZIER", 'AUTO_CLAMPED'),
     # step 70: Fixed keeps the handles where they are; Blender has no
-    # Stepped Next (animation.md): Stepped. BREAK / UNIFY only change the handle type (free / aligned).
+    # Stepped Next: Stepped. BREAK / UNIFY only change the handle type (free / aligned).
     "FIXED": ("BEZIER", 'ALIGNED'),
     "STEPPED_NEXT": ("CONSTANT", None),
     "BREAK": (None, 'FREE'),
@@ -121,7 +121,7 @@ def keyable_channels(node):
     return [k for k in cb._visible_channels(node) if cb.is_keyable(node, k)]
 
 
-# Maya SetKeyTranslate / SetKeyRotate / SetKeyScale (Shift+W / E / R, ):
+# Maya SetKeyTranslate / SetKeyRotate / SetKeyScale (Shift+W / E / R):
 # setKeyframe on the translate / rotate / scale attributes of the selection only. Channel Box keys.
 CHANNEL_SETS = {"TRANSLATE": ("tx", "ty", "tz"), "ROTATE": ("rx", "ry", "rz"), "SCALE": ("sx", "sy", "sz")}
 
@@ -133,7 +133,7 @@ def set_key(context, breakdown=False, channels=""):
     keytype = 'BREAKDOWN' if breakdown else 'KEYFRAME'
     if not channels and not breakdown and scene.keying_sets.active is not None:
         # Maya: with a current character set, S keys that character's attributes (and its subcharacters'),
-        # whatever is selected (step 187,  rule 3)
+        # whatever is selected (step 187, rule 3)
         from . import character_sets
         return character_sets.key_current(context, keytype)
     only = CHANNEL_SETS.get(channels)
@@ -254,9 +254,9 @@ def key_span(context):
 
 # --- Maya Key menu commands with their options (step 140, issue #35) ------------------------------
 # Maya's Key > Delete / Cut / Copy / Paste / Scale / Snap Keys run cutKey / copyKey / pasteKey / scaleKey / snapKey with
-# the option window's values ( Time range All = every key, Time
-# Slider = the playback range, Start/End = the fields). Results checked :
-#  Values (pivots, offsets, multiples) are Maya values: display units for
+# the option window's values (Time range All = every key, Time
+# Slider = the playback range, Start/End = the fields). Results:
+# Values (pivots, offsets, multiples) are Maya values: display units for
 # translations, degrees for rotations.
 
 class KeyScope:
@@ -437,7 +437,7 @@ def _insert(fc, t, value, rec=None):
 def copy_scope(context, scope, method="Keys", pad=0.0):
     """Maya copyKey: the scope's keys onto the animation clipboard. ``method`` Keys / Segments (Segments adds keys
     where the curve crosses the range ends). The clipboard's time origin is the range start, or the first key with
-    Time range All (Maya: a copy of 4..12 pasted at 30 puts the key at 5 on 31; option_boxes_140_edit.md).
+    Time range All (a copy of 4..12 pasted at 30 puts the key at 5 on 31).
     Returns the number of keys copied."""
     _note_kit_copy()
     rng = scope_range(context, scope)
@@ -506,7 +506,7 @@ PASTE_METHODS = ("Insert", "Replace", "Merge")
 
 def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, time_offset=0.0, value_offset=0.0,
                 copies=1, method="Merge", replace_region="Time range"):
-    """Maya pasteKey with the Paste Keys Options values (checked, option_boxes_140_edit.md):
+    """Maya pasteKey with the Paste Keys Options values (Maya-exact):
 
     * time: Current = the current frame (or ``frame``), Start / Start/End = the Start time field, Clipboard = where
       the keys were copied; copy k (0-based) lands at time + offset + k * (clipboard span + offset).
@@ -559,8 +559,8 @@ def paste_scope(context, frame=None, time_range="Current", start=0.0, end=10.0, 
 
 
 def delete_scope(context, scope, method="Keys", adjustment="None", connect=False, clipboard=False):
-    """Maya cutKey / cutKey -clear with the Delete / Cut Keys Options values (checked,
-    option_boxes_140_edit.md): Keys = the keys in the range; Segments = also a key where the curve crosses each
+    """Maya cutKey / cutKey -clear with the Delete / Cut Keys Options values (Maya-exact):
+    Keys = the keys in the range; Segments = also a key where the curve crosses each
     range end; Collapse = keys after the range move left by its length; Segments + Connect = the curve after the range
     joins the start key (later keys move left and by the value difference). ``clipboard`` (Cut) copies first.
     Returns the number of keys removed."""
@@ -612,7 +612,7 @@ def delete_scope(context, scope, method="Keys", adjustment="None", connect=False
 
 def scale_scope(context, scope, method="Scale/Pivot", only_specified=True, time_scale=1.0, time_pivot=0.0,
                 value_scale=1.0, value_pivot=0.0, new_start=1.0, new_end=10.0):
-    """Maya scaleKey with the Scale Keys Options values (checked, option_boxes_140_edit.md): Scale/Pivot
+    """Maya scaleKey with the Scale Keys Options values (Maya-exact): Scale/Pivot
     scales key times about the time pivot and values about the value pivot (Maya units); Start/End maps the range
     (All: first..last key) onto New start / end. With Only scale specified keys off, keys before / after the range
     move with the first / last scaled key. Returns the number of keys scaled."""
@@ -670,7 +670,7 @@ def _snap(x, m):
 
 
 def snap_scope(context, scope, snap="Times", time_multiple=1.0, value_multiple=1.0):
-    """Maya snapKey with the Snap Keys Options values (checked, option_boxes_140_edit.md): key times to
+    """Maya snapKey with the Snap Keys Options values (Maya-exact): key times to
     the nearest multiple of ``time_multiple``, values (Maya units) to multiples of ``value_multiple``. Returns the
     number of keys that moved."""
     rng = scope_range(context, scope)
@@ -751,8 +751,8 @@ class ALLSET_OT_time_keys(bpy.types.Operator):
 
     action: EnumProperty(name="Action", items=ACTIONS, options={'SKIP_SAVE'})
     tangent: EnumProperty(name="Tangent", items=TANGENT_ITEMS, options={'SKIP_SAVE'})
-    # step 140: the Key / Edit > Keys menu items run with Maya's factory option values (Time range All,
-    # ); the Time Slider menu acts on its range / the current frame
+    # step 140: the Key / Edit > Keys menu items run with Maya's factory option values (Time range All);
+    # the Time Slider menu acts on its range / the current frame
     time_range: EnumProperty(name="Time Range", options={'SKIP_SAVE'}, items=(
         ('SLIDER', "Time Slider", "The Shift-dragged Time Slider range, else the current frame"),
         ('ALL', "All", "Every key of the selection (Maya Key menu, factory Time range All)")))

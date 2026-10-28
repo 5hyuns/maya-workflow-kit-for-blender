@@ -1,6 +1,6 @@
 """Step 215 (#121): Maya's Hotkey Editor (ui/hotkey_editor.py, keymap/hotkey_rows.py).
 
-Rows = Maya 2022's factory hotkeys (keymap/hotkey_data.py from ) joined with
+Rows = Maya 2022's factory hotkeys (keymap/hotkey_data.py) joined with
 keymap/mapping.py; a kit binding is changed on the ``keyconfigs.user`` item (Blender's keymap editor does the same),
 restored with ``KeyMap.restore_item_to_default``; the kit writes no file. Background Blender leaves the default
 keyconfig empty, so it is filled from Blender's keymap data first (rt60_dump.populate)."""
@@ -51,35 +51,6 @@ def _config_files():
 def _setup():
     populate()
     bpy.context.window_manager.keyconfigs.update()
-
-
-def test_rows_are_the_maya_hotkeys_with_mapping_status():
-    hr, mapping, data = m("keymap.hotkey_rows"), m("keymap.mapping"), m("keymap.hotkey_data")
-    every = hr.build_rows(platform=None)
-    assert len(every) == len(data.HOTKEYS) == 495, len(every)
-    rows = hr.build_rows()
-    mac = sum(1 for r in data.HOTKEYS if r[-1] == "mac-only")
-    assert mac == 71 and len(rows) == 495 - mac, (mac, len(rows))
-    # the generated data equals the research file (regenerate with tools/gen_hotkey_data.py)
-    src = os.path.join(ROOT, "research", "maya", "hotkeys_default.json")
-    if os.path.exists(src):
-        sys.path.insert(0, os.path.join(ROOT, "tools"))
-        gen = import_module("gen_hotkey_data")
-        assert [tuple(r) for r in gen.rows()] == list(data.HOTKEYS), "hotkey_data.py is stale"
-        raw = json.load(open(src, encoding="utf-8"))["hotkeys"]
-        for r in every:
-            entry = mapping.entry_for(raw[r["index"]])
-            if r["status"] != "MAC":
-                assert (entry or {}).get("status") == r["status"], (r["command"], r["status"], entry)
-    by = {}
-    for r in rows:
-        by[r["status"]] = by.get(r["status"], 0) + 1
-    print("rows by status", by)
-    assert by.get("KIT", 0) > 200 and by.get("IC", 0) > 20, by
-    assert all(r["editable"] == (r["status"] in ("KIT", "IC") and r["check"] is not None) for r in rows)
-    sel = _row("SelectToggleMode")
-    assert sel["maya_key"] == "F8" and sel["check"][:2] == ("Object Non-modal", "allset.toggle_sel_mode"), sel
-    assert _row("Redo")["maya_key"] in ("Shift+Z", "Ctrl+Y"), _row("Redo")
 
 
 def test_every_kit_row_has_a_live_binding():

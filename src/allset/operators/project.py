@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya projects, scene saving and references.
 
-Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's default sub-folders (Project Window,
-) and a marker file; the current project and Recent Projects live in
+Blender has no project system. A Maya Workflow Kit project is a root folder with Maya's default sub-folders
+(Project Window) and a marker file; the current project and Recent Projects live in
 the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 
 - File > Open / Save As (Ctrl+O / Ctrl+S on a new file / Ctrl+Shift+S) and Create Reference start in
@@ -12,8 +12,8 @@ the add-on preferences (like Maya keeps the workspace in its prefs). Effects:
 - opening a ``.blend`` under ``<root>/scenes`` of a marked project makes it the current project.
 
 Create Reference (Ctrl+R) = link the other file's scene contents and make them editable with a library override
-(Maya reference edits), under a ``<namespace>`` collection with ``ns:`` name prefixes (Blender has no namespaces,
-scene.md-3); checked in step 69 「계획」.
+(Maya reference edits), under a ``<namespace>`` collection with ``ns:`` name prefixes (Blender has no namespaces);
+checked in step 69 「계획」.
 """
 
 import json
@@ -26,7 +26,7 @@ from bpy.props import BoolProperty, StringProperty
 from .. import results
 from ..names import PRODUCT
 
-# Maya's default project folders (scene_01_win1.png: Scenes, Templates = assets, Images, Source Images, Render Data,
+# Maya's default project folders (Scenes, Templates = assets, Images, Source Images, Render Data,
 # Clips, Sound, Scripts, Disk Cache = data, Movies, ..., AutoSave); "cache" for Blender's simulation caches.
 FOLDERS = ("scenes", "assets", "images", "sourceimages", "renderData", "clips", "sound", "scripts", "data", "movies",
            "cache", "autosave")
@@ -52,7 +52,7 @@ def _norm(path):
 
 
 # Maya's default project is <Documents>/maya/projects/default, made at first start, so a dialog never starts in a
-# bare Documents folder (step 102 「계획」 2, ). The kit's own default sits next to it
+# bare Documents folder (step 102 「계획」 2). The kit's own default sits next to it
 # under "Maya Workflow Kit/" (the product name, step 125; the user's real Maya folder is never written);
 # ALLSET_PROJECTS_DIR moves it (test sandboxes).
 DEFAULT_NAME = "default"
@@ -464,7 +464,7 @@ class ALLSET_OT_create_reference(bpy.types.Operator):
             return {'CANCELLED'}
         ns = (self.namespace.strip() or os.path.splitext(os.path.basename(path))[0]).replace(":", "_")
         from . import references
-        node = references.new_node_name(ns, context.scene)       # Maya: propRN, then propRN1 (step 209, Maya)
+        node = references.new_node_name(ns, context.scene)       # Maya: propRN, then propRN1 (step 209)
         order = references.next_order(context.scene)
         ns = unique_namespace(ns, context.scene)
         try:

@@ -2,7 +2,7 @@
 
     python tools/marketing/make_marketing.py [--blender PATH] [--no-build] [--no-shots] [--compose-only]
 
-1. tools/marketing/fetch_assets.py checks the licensed models and the Inter font in 
+1. tools/marketing/fetch_assets.py checks the licensed models and the Inter font in the local assets folder
    (downloads what is missing; tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md).
 2. The extension zip is installed and enabled in a clean sandbox (tmp/marketing_env: the user's Blender settings are
    never read or written, ) and a GUI Blender (1920 x 1080 window) runs tools/marketing/shots.py:

@@ -1,5 +1,5 @@
 """Step 209: Reference Editor (Issue #116) — Maya reference commands on Blender links + library overrides
-(operators/references.py, ui/reference_editor.py). Maya rules  (): reload
+(operators/references.py, ui/reference_editor.py). Maya rules: reload
 keeps edits and shows the source's other changes, unload / load keep edits, replace re-applies edits by node name,
 import makes the nodes local with their ns: names, remove takes nodes and namespace, a second reference of a file is
 prop1 / propRN1."""
@@ -101,7 +101,7 @@ def test_reload_keeps_edits_and_shows_source_changes():
     _change_source(A, "bpy.data.objects['pSphere1'].location.y = 7; bpy.data.objects['pCube1'].location.x = 3")
     _cmd("RELOAD", ref)
     assert _loc("prop:pSphere1") == (0, 7, 0), "the source's change is seen"
-    # Maya: the edit (whole translate) stays and hides the source's change of that attribute (Maya: 0 5 0)
+    # Maya: the edit (whole translate) stays and hides the source's change of that attribute (0 5 0)
     assert _loc("prop:pCube1") == (0, 0, 5), _loc("prop:pCube1")
 
 

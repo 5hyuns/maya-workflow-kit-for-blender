@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya FX: nucleus, nParticles emitters, nCloth, colliders, rigid bodies, nCache.
 
-Simulation scale (, PLAN W4): Maya's nucleus (spaceScale 1, gravity 9.8 in a cm scene, checked with
-Maya in step 48) simulates one scene unit as one metre, so a 1 cm cloth moves like a 1 m one. Blender simulates
+Simulation scale (, PLAN W4): Maya's nucleus (spaceScale 1, gravity 9.8 in a cm scene, checked
+in step 48) simulates one scene unit as one metre, so a 1 cm cloth moves like a 1 m one. Blender simulates
 in metres, so the kit scales what it creates by ``g = maya_unit() / Space Scale`` (step 68 「계획」, checked):
 
 - gravity 9.8 x g along Maya's gravity direction (Y-up -> Z-up: X->X, Y->Z, Z->-Y, like operators/joints.py);
@@ -14,7 +14,7 @@ in metres, so the kit scales what it creates by ``g = maya_unit() / Space Scale`
 Blender has no nucleus node: ``Scene.allset_nucleus`` holds Maya's values and ``apply`` writes them to the scene
 gravity, the rigid body world and every cloth; the Attribute Editor shows it as the "nucleus1" tab (ui/ae_layout.py
 NUCLEUS). Kit FX operators create it the first time, like Maya's first nObject creates nucleus1
-(, fx_01 log); before that the scene gravity is left alone.
+(Maya behaviour); before that the scene gravity is left alone.
 """
 
 import bpy
@@ -23,8 +23,8 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProp
 from .. import results
 from . import naming, units
 
-MAYA_GRAVITY = 9.8          # nucleus1.gravity (Maya, step 48)
-MAYA_SUBSTEPS = 3           # nucleus1.subSteps (Maya, step 48)
+MAYA_GRAVITY = 9.8          # nucleus1.gravity (step 48)
+MAYA_SUBSTEPS = 3           # nucleus1.subSteps (step 48)
 CLOTH_QUALITY = 5           # Blender cloth quality default = Maya's 3 substeps
 RIGID_SUBSTEPS = 10         # Blender rigid body world substeps default
 CLOTH_G_PROP = "allset_cloth_g"
@@ -432,7 +432,7 @@ class ALLSET_OT_ncache(bpy.types.Operator):
 
 
 # --- step 109: FX shelf buttons Blender can do ---------------------------
-# Maya 3D Fluid Container with Emitter (Maya, Maya 2022): fluid1 10 x 10 x 10 units, base resolution 10, at the
+# Maya 3D Fluid Container with Emitter (Maya 2022): fluid1 10 x 10 x 10 units, base resolution 10, at the
 # origin, with the omni emitter fluidEmitter1 (max distance 1) at its centre. Blender: a Mantaflow domain of the
 # same size around a radius-1 emitter mesh (Blender flows come from meshes).
 FLUID_SIZE, FLUID_RESOLUTION, FLUID_EMITTER_RADIUS = 10.0, 10, 1.0

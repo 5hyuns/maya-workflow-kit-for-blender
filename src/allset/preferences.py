@@ -28,13 +28,13 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "behind the surface, like Maya (Camera based selection off). X-ray is switched "
                     "on only while dragging",
         default=True)
-    # Maya preSelectHilite true ().
+    # Maya preSelectHilite true.
     preselect_highlight: bpy.props.BoolProperty(
         name="Pre-selection Highlight",
         description="In mesh edit mode (select and Move / Rotate / Scale tools), highlight the vertex, edge or face "
                     "under the mouse before clicking (Maya)",
         default=True)
-    # Maya selectPrefPriorityMode "animation", ignoreSelectionPriority false ().
+    # Maya selectPrefPriorityMode "animation", ignoreSelectionPriority false.
     select_priority: bpy.props.BoolProperty(
         name="Selection Priority",
         description="In object mode, a click picks IK handles, then joints (armatures), then curves before meshes "
@@ -70,7 +70,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="When Blender starts without a file in Maya mode, open a new scene in the Maya layout",
         default=False)
 
-    # Step 138 (#63): Maya's UI doesn't come from the scene file (): opening a file
+    # Step 138 (#63): Maya's UI doesn't come from the scene file: opening a file
     # shows the Maya layout (ui/scene_carry.py).
     maya_layout_on_open: bpy.props.BoolProperty(
         name="Keep Maya Layout When Opening Files",
@@ -83,7 +83,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         description="Alt+LMB does nothing in top/front/side orthographic views (Maya)",
         default=True)
 
-    # Channel Box virtual slider ().
+    # Channel Box virtual slider.
     cb_speed: bpy.props.EnumProperty(
         name="Slider Speed", default='MEDIUM',
         items=(('SLOWEST', "Slowest", "x0.01"), ('SLOW', "Slow", "x0.1"),
@@ -92,16 +92,16 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Hyperbolic", description="Value change accelerates with drag distance")
 
     # Graph Editor View > Snap Time To Selection (Maya setting snapTimeToSelection, default off; Alt+/ toggles it;
-    # , ).
+    # ).
     snap_time_to_selection: bpy.props.BoolProperty(
         name="Snap Time To Selection",
         description="Selecting keys in the Graph Editor moves the current time to the earliest selected key")
     # Graph Editor View > Auto Frame / Auto Frame Time / Curve Name (Maya factory: on / off / Never;
-    # , ui/graph_view.py, step 150).
+    # ui/graph_view.py, step 150).
     graph_auto_frame: bpy.props.BoolProperty(
         name="Auto Frame", default=True,
         description="When the selection changes, the Graph Editor frames the curves it shows (Maya View > Auto Frame)")
-    # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, factory off in the Dope Sheet: _editors104.json; step 166)
+    # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, factory off in the Dope Sheet; step 166)
     dope_auto_frame: bpy.props.BoolProperty(
         name="Dope Sheet Auto Frame",
         description="When the selection changes, the Dope Sheet frames all the keys it shows (Maya Dope Sheet "
@@ -116,7 +116,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         items=(('ALWAYS', "Always", "Name every curve"), ('NEVER', "Never", "No curve names"),
                ('ACTIVE', "Active Only", "Name the selected curves")))
 
-    # Graph Editor depth 2 (step 198, ): View > Show Buffer Curves (factory off),
+    # Graph Editor depth 2 (step 198): View > Show Buffer Curves (factory off),
     # Curves > Default Tangent Weight (factory Non-weighted), Retime Tool Snap On Frame (factory off), Edit > Set Curve
     # Colors... rules (Maya curveRGBColor: attribute name -> colour; JSON list of [attribute, r, g, b]).
     graph_show_buffers: bpy.props.BoolProperty(
@@ -135,8 +135,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Curve Colors", default="",
         description="Colour rules by attribute name (Maya Edit > Set Curve Colors...)")
 
-    # Script Editor History menu (Maya scriptEditorInfo setting; factory states from the Maya 2022 capture
-    #  "checked": Batch Render Messages / Line numbers in errors on,
+    # Script Editor History menu (Maya scriptEditorInfo setting; Maya 2022 factory states:
+    # Batch Render Messages / Line numbers in errors on,
     # the rest off, History Output Show Both). Read by command_line/runner.py (step 216).
     se_batch_render_messages: bpy.props.BoolProperty(
         name="Batch Render Messages", default=True,
@@ -190,7 +190,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="In Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick in tangents")
     graph_select_out: bpy.props.BoolProperty(
         name="Out Tangent", default=True, description="Clicking or dragging in the Graph Editor can pick out tangents")
-    # Tangents > Default In / Out Tangent (Maya keyTangent -global, factory Auto / Auto, ):
+    # Tangents > Default In / Out Tangent (Maya keyTangent -global, factory Auto / Auto):
     # the tangents of the keys the kit sets (S, Shift+W/E/R, Channel Box keys, Auto Key). Blender's own preference
     # is never written (#40).
     default_in_tangent: bpy.props.EnumProperty(
@@ -262,7 +262,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default=True, update=_update_dock_colors)
     maya_view_axis: bpy.props.BoolProperty(
         name="View Axis", description="Maya axis triad in the bottom left of the view", default=True)
-    # Maya in-view messages (inViewMessageEnable 1, ; ).
+    # Maya in-view messages (inViewMessageEnable 1; ).
     in_view_messages: bpy.props.BoolProperty(
         name="In-View Messages", description="Short fading messages in the view when you group, hide, toggle "
                                              "object/component selection (F8), soft select or Make Live, like Maya",
@@ -331,12 +331,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         name="Maya Naming", description="Create menu names objects pCube1 / pCubeShape1 "
                                         "(otherwise Blender names)",
         default=True)
-    # Maya setting manipSmartDuplicate 1 ().
+    # Maya setting manipSmartDuplicate 1.
     smart_duplicate: bpy.props.BoolProperty(
         name="Smart Duplicate", description="Shift+drag a Move/Rotate/Scale manipulator "
                                             "duplicates the selection and transforms the copy",
         default=True)
-    # Maya setting manipSmartExtrude 1 ().
+    # Maya setting manipSmartExtrude 1.
     smart_extrude: bpy.props.BoolProperty(
         name="Smart Extrude", description="Shift+drag a Move/Rotate/Scale manipulator on faces "
                                           "or edges extrudes them and transforms the new ones",
@@ -433,7 +433,7 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
 
 
 # Step 111 (, docs/distribution/naming.md, docs/distribution/extensions_audit.md 「필수 고지문」)
-# Undo depth (step 141, B6): Maya's undo queue is infinite (), Blender keeps 32 steps
+# Undo depth (step 141, B6): Maya's undo queue is infinite, Blender keeps 32 steps
 # by default and the kit may not write Blender's preferences (step 130), so the kit only tells the user (delegated).
 UNDO_RECOMMENDED = 256      # Blender's maximum
 UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Maya-style sessions raise Edit > "

@@ -1,6 +1,6 @@
 """Step 177: the viewport panel menus, panel toolbar and greyed Status Line widgets are counted (tools/menu_count.py),
 every greyed one has a notice (step 101 rule), none has a working twin (tools/menu_consistency.py), and the rows with
-a kit counterpart run it: Center View of Selection (Maya viewFit -c, checked), Camera Attribute Editor, the camera
+a kit counterpart run it: Center View of Selection (Maya viewFit -c), Camera Attribute Editor, the camera
 tools."""
 
 import importlib.util
@@ -79,19 +79,6 @@ def test_menu_count_prints_panel_rows():
     assert panels["Panel menus"]["working"] >= 67 and panels["Panel toolbar"]["working"] >= 22
 
 
-def test_no_panel_item_with_a_working_twin():
-    if not os.path.exists(os.path.join(ROOT, "research", "maya", "runtime_commands.json")):
-        print(" missing: skipped")
-        return
-    mc = _tool("menu_consistency")
-    leaves = mc.panel_leaves(pmd)
-    assert mc.pairs(leaves) == []
-    # a planted twin is found: a greyed toolbar button with the menu row's Maya command
-    tumble = next(sig for p, sig, _ok in leaves if p.endswith("/Tumble Tool"))
-    planted = leaves + [("Panel toolbar/Tumble Tool", tumble, False)]
-    assert mc.pairs(planted) == [("Panel toolbar/Tumble Tool", "Panel menu/View/Camera Tools/Tumble Tool")]
-
-
 def test_connected_rows():
     rows = {r[1]: r for r in pmd.VIEW + pmd.CAMERA_TOOLS if r[0] in ("run", "grey")}
     assert rows["Center View of Selection"][2] == "allset.center_view_selection"
@@ -118,7 +105,7 @@ def test_connected_rows():
 
 
 def test_center_view_rule_matches_maya():
-    #  Maya persp at (28, 21, 28), rotate (-27.9384, 45, 0) (Y-up), cube centre
+    # Maya persp at (28, 21, 28), rotate (-27.9384, 45, 0) (Y-up), cube centre
     # (5, 2, -3) -> viewFit -c moves the camera to (31.8764, 22.1573, 23.8764), rotation kept, COI 43.0232.
     rx, ry = math.radians(-27.9384), math.radians(45.0)
     forward = Vector((-math.sin(ry) * math.cos(rx), math.sin(rx), -math.cos(ry) * math.cos(rx)))

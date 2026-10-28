@@ -2,8 +2,7 @@
 """Step 152 (#101) Maya option windows of the Render menu.
 
 Same spec as operators/option_windows.py (``F`` fields, ``Window`` = one ``allset.opt_<key>`` operator;
-option_windows._extend appends ``WINDOWS``). Read from a running Maya 2022 with factory prefs
-(, grabs ):
+option_windows._extend appends ``WINDOWS``). Maya 2022 with factory prefs:
 
 - Render > Render Sequence ❒ = "Render Sequence (Current Frame)": Render Options (Current Camera persp, All
   Render-Enabled Layers / Cameras, Render Region, Ignore Local Overrides off, Alternate Output File Location empty),
@@ -22,7 +21,7 @@ from bpy.props import EnumProperty, StringProperty
 
 from .option_windows import F, Window
 
-# Maya's warning for an option box its renderer has no window for (render_grid_152.md); {name} = the render engine
+# Maya's warning for an option box its renderer has no window for; {name} = the render engine
 NO_OPTIONS = {"Render/Render Current Frame": 'Renderer "{name}" does not provide render options.',
               "Render/IPR Render Current Frame": 'Renderer "{name}" does not provide IPR options.'}
 ENGINE_NAMES = {'BLENDER_EEVEE_NEXT': "EEVEE", 'BLENDER_EEVEE': "EEVEE", 'CYCLES': "Cycles",

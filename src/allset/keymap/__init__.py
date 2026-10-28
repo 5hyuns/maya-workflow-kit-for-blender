@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya keymap, as add-on keymap items (step 130, ).
 
-The Maya keymap data = Industry Compatible data (static, ``ic_data``) patched by ``maya_patches``
-(). Until step 130 it became a keyconfig "Maya-style" that was made
+The Maya keymap data = Industry Compatible data (static, ``ic_data``) patched by ``maya_patches``. Until step 130 it became a keyconfig "Maya-style" that was made
 the *active* keyconfig — its name was saved in the user preferences and outlived the add-on (GitHub #46, #40). Now
 the active keyconfig and every keymap preference stay as the user has them:
 

@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner as a UIList in the 3D View sidebar (category "Outliner").
 
- (Maya's default Outliner: showShapes 0,
-showDagOnly 1, autoExpand 0),  (transform / shape),
- #3 (Blender's Outliner tree is C; a UIList is the
-way to a custom tree, without drag and drop). Design:  「계획」 2.
+Maya's default Outliner: showShapes 0,
+showDagOnly 1, autoExpand 0; Maya transform / shape nodes;
+Blender's Outliner tree is C: a UIList is the
+way to a custom tree, without drag and drop. Design:  「계획」 2.
 
 Rows (``WindowManager.allset_outliner_rows``) are rebuilt outside drawing
 (ID data can't be written while drawing): from the depsgraph / load handlers
 and from this module's operators, skipped when nothing they show changed.
 
-Joints (step 55): a Maya joint is a bone (), so an
+Joints (step 55): a Maya joint is a bone, so an
 expanded armature lists its bones as JOINT rows in bone hierarchy order; clicking one enters
 pose mode and selects that bone.
 

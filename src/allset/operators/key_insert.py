@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Insert Key (Alt+I, Ctrl+Shift+W/E/R), Nudge Keys (Shift+( / )) and Select Previous / Next Key (Ctrl+Alt+, / .).
 
-; Maya runtime commands ():
+Maya runtime commands:
 InsertKeyTranslate / Rotate / Scale = ``cmds.setKeyframe(insert=True, attribute="translate" / ...)``, InsertKey =
 Insert Key (curves with selected Graph Editor keys, else the Graph Editor's curves, else the selection's),
 Nudge = ``cmds.keyframe(animation="keys", relative=True, option="over", timeChange=±1)``, SelectNext/PreviousKey

@@ -1,6 +1,6 @@
 """Step 168: Modify menu — Smooth Mesh Preview to Polygons applies only the kit preview (skinCluster1 stays),
 Default Object Manipulator / Show Manipulator Tool, Align Tool, Position Along Curve, Geometry to Bounding Box (+ its
-Maya option window), Evaluate Nodes check items, Modify menu >= 60 % working. Maya rules / checked:
+Maya option window), Evaluate Nodes check items, Modify menu >= 60 % working, following Maya's rules.
 """
 
 import importlib.util
@@ -226,7 +226,7 @@ def test_position_along_curve_uses_the_parameter_like_maya():
     obs[1].delta_location = (0.5, 0, 0)       # Maya pivot offset 0.5 (rotatePivot) -> translate 1.75
     _select(*obs, crv, active=crv)
     assert bpy.ops.allset.position_along_curve() == {'FINISHED'}
-    # Maya (modify_168.md): translations 0 / 1.75 / 6, i.e. pivots at the 0 / 50 / 100 % parameter points
+    # Maya: translations 0 / 1.75 / 6, i.e. pivots at the 0 / 50 / 100 % parameter points
     assert [round(ob.location.x, 6) for ob in obs] == [0.0, 1.75, 6.0], [tuple(ob.location) for ob in obs]
     assert all(abs(ob.location.y) < 1e-9 for ob in obs)
     _select(obs[0], crv, active=crv)

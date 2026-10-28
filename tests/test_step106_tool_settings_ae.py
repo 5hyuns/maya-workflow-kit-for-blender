@@ -1,6 +1,6 @@
 """Step 106: Tool Settings dock with Maya sections, Attribute Editor history tabs / menu bar / buttons / Notes, Blender
-explanation sentences moved into tooltips. ; Maya 2022 checked:
-"""
+explanation sentences moved into tooltips. """
+
 
 from importlib import import_module
 from types import SimpleNamespace

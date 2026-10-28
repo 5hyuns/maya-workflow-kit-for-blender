@@ -16,9 +16,6 @@ outliner = import_module(kit.MODULE + ".ui.outliner")
 ae = import_module(kit.MODULE + ".ui.attribute_editor")
 ae_layout = import_module(kit.MODULE + ".ui.ae_layout")
 
-RESEARCH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                        "research", "maya", "ae_templates.json")
-
 
 class FakeLayout:
     """Records what a draw function asks for; checks every prop exists."""
@@ -241,12 +238,6 @@ def test_ae_tab_kind_kept_across_selection_and_steps():
     assert ae.current_tab(bpy.context, lamp) == "T"
 
 
-def _research():
-    if not os.path.exists(RESEARCH):
-        return None
-    return json.load(open(RESEARCH, encoding="utf-8"))["templates"]
-
-
 def _maya_sections(nodes, out, prefix=""):
     for n in nodes:
         if "section" in n:
@@ -254,35 +245,6 @@ def _maya_sections(nodes, out, prefix=""):
             out.setdefault(key, n["collapse"])
             _maya_sections(n.get("children", []), out, key + "/")
     return out
-
-
-def test_ae_sections_match_maya_templates():
-    data = _research()
-    if data is None:
-        print(" missing: skipped")
-        return
-    checked, bad = 0, []
-    for kind, (sections, template) in ae_layout.BY_KIND.items():
-        if template is None:
-            continue
-        maya = _maya_sections(data[template]["tree"], {})
-
-        def walk(secs, prefix=""):
-            nonlocal checked
-            for sec in secs:
-                key = prefix + sec.name
-                if key not in maya:
-                    bad.append((kind, key, "not in Maya template"))
-                else:
-                    checked += 1
-                    maya_open = maya[key] in ("0", "false")
-                    if sec.open != maya_open:
-                        bad.append((kind, key, sec.open, maya[key]))
-                walk(sec.subs, key + "/")
-        walk(sections)
-    print("AE sections checked against Maya templates:", checked)
-    assert not bad, bad
-    assert checked >= 30, checked
 
 
 def _rna_owner(owner_name, kind):

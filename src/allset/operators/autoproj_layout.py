@@ -1,17 +1,17 @@
 """Maya polyAutoProjection "Into square" shell layout (UV > Automatic, factory options), bpy-free.
 
-Behaviour spec: Maya 2026 behaviour, checked  (private notes: ).
+Behaviour: Maya 2026's.
 Checked against Maya 2026 on 15 meshes,
-every shell bbox within 3e-7 (tests/test_step257_uv_layout.py, data tests/maya257_uv_data.py).
+every shell bbox within 3e-7 (tests/test_step257_uv_layout.py).
 
 The factory UV > Automatic runs the packed layout with Layout 2 (Into square), Scale Mode 1 (Uniform), Shell
 stacking 0 (Bounding box = brick rows), sort by size on, back-and-forth rows on, no prescale, rotate mode 1 (a
 shell wider than tall turns 90 degrees) and spacing = Percentage Space / 100. Only each shell's bounding box
 takes part in the packing, so the input is one bbox per shell.
 
-Which plane each face takes and how faces form shells (``assign_planes``, spec) is
+Which plane each face takes and how faces form shells (``assign_planes``) is
 checked against Maya 2026 face by face on 29 meshes with optimize 0 and 1 plus two partial selections
-(tests/test_step257_uv_auto.py, data tests/maya257_uv_faces_data.py).
+(tests/test_step257_uv_auto.py).
 
 Input bbox = the shell's extent in the projection plane in **Maya units** (object space; Blender lengths divided
 by ``units.maya_unit()``). The packer is not scale invariant: the size comparator has an absolute 1e-6 tolerance
@@ -27,7 +27,7 @@ import numpy as np
 F = np.float32
 FLT_MAX = F(3.4028235e+38)
 COLUMNS = 512                 # skyline buffer of 512 columns
-SORT_EPS = F(1e-6)            # size comparator tolerance (checked)
+SORT_EPS = F(1e-6)            # size comparator tolerance
 GAP_STEP = F(1.1)             # 1.1 column gap between shells in a row
 AREA_EPS = F(1.1920929e-07)   # start value of the summed bbox area
 TRIES = 10                    # first width + 10 refinements
@@ -63,7 +63,7 @@ def _rotate(s):
 
 
 def _cmp(a, b):
-    """Shell order (checked): taller first, heights within 1e-6 keep the shell order."""
+    """Shell order: taller first, heights within 1e-6 keep the shell order."""
     ha, hb = a.height, b.height
     if F(hb - SORT_EPS) > ha:
         return 1
@@ -174,7 +174,7 @@ def bbox_of(points):
 def layout(boxes, spacing=0.2):
     """Maya's Into-square layout of UV shells given by their projected bboxes (umin, vmin, umax, vmax).
 
-    ``boxes`` must be in Maya's shell order = ascending lowest face index of each shell (checked on all 15
+    ``boxes`` must be in Maya's shell order = ascending lowest face index of each shell (on all 15
     meshes; the order only decides between shells of equal height). ``spacing`` = Percentage Space (Maya factory
     0.2). Returns a ``Layout``; ``Layout.transform(i, u, v)`` maps a projected point of shell i to its final UV."""
     gap = F(F(spacing) / F(100.0))
@@ -200,9 +200,9 @@ def layout(boxes, spacing=0.2):
     return Layout(shells, scale, (F(F(F(0) / scale) - lo_u), F(F(F(0) / scale) - lo_v)))
 
 
-# --- Plane assignment and shells (, checked ) -------------------
+# --- Plane assignment and shells  -------------------
 
-# The six planes in Maya's order with their projection frame (normal, U, V), Maya axes (Y up): checked 
+# The six planes in Maya's order with their projection frame (normal, U, V), Maya axes (Y up):
 # (corners A, B, D: U = B - A, V = D - A, normal = U x V). Every frame is right
 # handed: U x V = the outward normal.
 PLANES6 = (((-1, 0, 0), (0, 0, 1), (0, 1, 0)),     # X-
@@ -250,7 +250,7 @@ _F32 = struct.Struct("f")
 
 
 def _f(x):
-    """Round a Python float to float32 (Maya's segment test arithmetic, checked)."""
+    """Round a Python float to float32 (Maya's segment test arithmetic)."""
     return _F32.unpack(_F32.pack(x))[0]
 
 
@@ -352,13 +352,13 @@ class _Border:
 
 
 def _mirrored(key, mask, pairs=3):
-    """Mirror test (checked): the masks differ in both planes of at least one opposite pair (X-/X+, Y-/Y+, Z-/Z+)."""
+    """Mirror test: the masks differ in both planes of at least one opposite pair (X-/X+, Y-/Y+, Z-/Z+)."""
     x = key ^ mask
     return any((x >> (2 * j)) & 3 == 3 for j in range(pairs))
 
 
 def assign_planes(points, faces, optimize=True):
-    """Maya polyAutoProjection's projection shells for 6 planes (checked ).
+    """Maya polyAutoProjection's projection shells for 6 planes.
 
     ``points`` = vertex positions in Maya object space and Maya units (Y up); ``faces`` = vertex index lists of the
     faces to project, in Maya face order (only these take part; others block the flood like unselected faces).

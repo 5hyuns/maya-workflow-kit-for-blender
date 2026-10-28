@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Render Settings window.
 
-Maya 2022 (audit-7 pair h03_render_settings_win1; menus and factory values captured in
-): a window with the menu bar Edit / Presets / Help, the rows
+Maya 2022 (menus and factory values): a window with the menu bar Edit / Presets / Help, the rows
 Render Layer and Render Using, then the tabs Common | <renderer>. Common holds the output: Path / File name / Image
 size lines, Color Management, File Output (file name prefix, image format, Frame/Animation ext, frame padding),
 Frame Range, Renderable Cameras, Image Size (presets, HD 540 = 960 x 540 by default).
@@ -22,7 +21,7 @@ from bpy.props import EnumProperty, IntProperty, StringProperty
 _WINDOWS = set()        # window pointers of kit Render Settings windows
 _wrapped = []           # (panel class, its own poll or None, child panels)
 
-# Maya image size presets (Render Settings Presets labels; sizes  Maya presets, HD 540 = 960 x 540 checked as the
+# Maya image size presets (Render Settings Presets labels; sizes  Maya presets, HD 540 = 960 x 540 is the
 # factory default): key -> (label, width, height, pixel aspect)
 SIZES = (
     ("320x240", "320x240", 320, 240, 1.0), ("640x480", "640x480", 640, 480, 1.0),
@@ -40,7 +39,7 @@ SIZE_ITEMS = [("CUSTOM", "Custom", "Width and height of your own")] + [
 # Maya Frame/Animation ext choices Blender can write (render.filepath patterns); the Maya label first
 EXTS = (("SINGLE", "name.ext (Single Frame)", ""), ("DOT", "name.#.ext", "."), ("PLAIN", "name#.ext", ""),
         ("UNDERSCORE", "name_#.ext", "_"))
-# Maya factory values (captured: defaultResolution 960 x 540, imageFormat 32 = PNG, extensionPadding 4, animation off)
+# Maya factory values (defaultResolution 960 x 540, imageFormat 32 = PNG, extensionPadding 4, animation off)
 DEFAULTS = {"size": "HD_540", "file_format": 'PNG', "padding": 4, "ext": "SINGLE"}
 
 

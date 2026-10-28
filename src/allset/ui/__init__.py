@@ -4,7 +4,7 @@ sidebar), menu bar + menu sets, Status Line (top bar), Shelf (strip under it), T
 Slider + Range Slider (Timeline header), viewport panel menus (3D View header), Maya grid, view furniture and selection wire (3D View),
 Tool Box (3D View toolbar) and the Maya dock areas / floating panels (maya_dock, step 116).
 
-See  for what is P/W/C in Blender's Python UI.
+Blender's Python UI can't replace every C-drawn part; the modules note where they work around it.
 """
 
 from . import (attribute_editor, cb_channels, cb_points, workspaces, editor_chrome, file_project, render_settings, script_editor, input_line, graph_editor, graph_units, graph_view, hypershade, light_editor, render_view, channel_box, dock_tabs, layer_editor, maya_grid, maya_outliner, menu_sets, outliner_sets, notices, outliner,

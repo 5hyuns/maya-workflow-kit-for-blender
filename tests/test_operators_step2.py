@@ -131,7 +131,7 @@ def test_group_naming_and_empty_selection():
     bpy.data.objects.remove(first)
     _select([])
     bpy.ops.allset.group()
-    assert bpy.context.view_layer.objects.active.name == "group3"  # Maya: one past the highest (step 208, Maya)
+    assert bpy.context.view_layer.objects.active.name == "group3"  # Maya: one past the highest (step 208)
 
 
 def test_group_is_undoable_operator():

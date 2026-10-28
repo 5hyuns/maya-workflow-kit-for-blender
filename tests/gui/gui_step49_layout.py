@@ -41,7 +41,7 @@ def tools_region():
 
 def tool_y(i):
     """Centre of the i-th Tool Box button: 23 px below the top, 35 px apart at effective scale 1.0
-    (checked in the step 49 look_compare shot)."""
+    (read from a step 49 screenshot)."""
     r = tools_region()
     return round(r.y + r.height - scale() * (23 + 35 * i))
 

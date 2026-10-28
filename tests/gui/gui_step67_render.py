@@ -1,4 +1,4 @@
-"""Step 67 in a real UI ( render_01-05): sphere -> Windows > Rendering Editors >
+"""Step 67 in a real UI (Maya render workflow): sphere -> Windows > Rendering Editors >
 Hypershade -> a window in Maya's Hypershade layout (step 131: panes + Graph) -> Create Standard Surface -> Assign Material To
 Selection -> AE Base Color map button > File -> Render > Render Current Frame -> Keep Image -> render again -> two
 slots used; Windows > Rendering Editors > Light Editor -> a window on its "Light Editor" tab (screenshots)."""

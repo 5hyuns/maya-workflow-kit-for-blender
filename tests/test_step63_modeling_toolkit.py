@@ -105,7 +105,7 @@ def test_separate_maya_group():
     assert grp.type == 'EMPTY' and kids == ["polySurface1", "polySurface2"], (grp.type, kids)
     after = sorted(sum((_world_verts(bpy.data.objects[k]) for k in kids), []))
     assert after == before
-    for k in kids:   # Maya: translate 0, pivot at the world origin (Maya)
+    for k in kids:   # Maya: translate 0, pivot at the world origin
         piece = bpy.data.objects[k]
         assert tuple(piece.location) == (0, 0, 0), (k, tuple(piece.location))
         assert piece.matrix_world.translation.length < 1e-5, (k, piece.matrix_world.translation)
@@ -171,7 +171,7 @@ def test_soft_select_maya_units():
     ts.proportional_size = 1.0
     taphold.maya_soft_radius(bpy.context)
     k = units.maya_unit()
-    assert abs(ts.proportional_size - 5.0 * k) < 1e-9, "factory radius 5 (Maya)"
+    assert abs(ts.proportional_size - 5.0 * k) < 1e-9, "factory radius 5"
     sc = bpy.context.scene
     assert abs(sc.allset_soft_radius - 5.0) < 1e-6
     sc.allset_soft_radius = 2.0

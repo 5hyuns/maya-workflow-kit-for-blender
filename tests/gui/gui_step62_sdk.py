@@ -1,4 +1,4 @@
-"""Step 62 in a real UI, Maya's hand order (, rigging_06):
+"""Step 62 in a real UI, Maya's hand order (rigging):
 locator1 Translate X = driver, pCube1 Rotate Y = driven -> Key -> tx 1 / ry 90 typed in the Channel Box ->
 Key -> tx 0.5 -> ry 45. Clicks the Channel Box rows and the Set Driven Key buttons in the dock; screenshots."""
 

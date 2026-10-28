@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Outliner drag: parent / reorder / unparent the Maya way.
 
-Maya (,  ): MMB-drag an item onto another = parent under it,
+Maya (): MMB-drag an item onto another = parent under it,
 between two items = move there (that row's parent, that place), onto empty space = to the world; the world
-transform is kept and the local values are recomputed (= P, ). The drag does not
+transform is kept and the local values are recomputed (= P). The drag does not
 change the selection.
 
 Blender (checked, ): LMB drag & drop = ``OUTLINER_OT_parent_drop`` (Blender parenting: parent inverse)

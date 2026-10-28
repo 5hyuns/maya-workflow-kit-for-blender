@@ -80,7 +80,7 @@ def test_light_power_scaled_by_maya_unit_squared():
     for setup in SETUPS:
         _fresh()
         k = _units(setup)
-        # step 137: Maya intensity 1 / No Decay, power checked against Maya Software renders (operators/lights.py):
+        # step 137: Maya intensity 1 / No Decay, power matched to Maya Software renders (operators/lights.py):
         # still x maya_unit^2, now 4 pi^2 x 100 (point / spot, matched at 10 units) and pi^2 x 9.87 (area)
         pi2 = math.pi ** 2
         for kind, base in (('POINT_LIGHT', 4 * pi2 * 100), ('SPOT_LIGHT', 4 * pi2 * 100), ('AREA_LIGHT', pi2 * 9.87)):

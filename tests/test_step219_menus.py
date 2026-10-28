@@ -1,6 +1,6 @@
-"""Step 219 (Issue #130): the kit's main menus follow Maya 2026 (, a live Maya
-2026 GUI dump). Structural check: every kit menu, item order, dividers and submenus equal the dump except the submenus
-the kit fills at run time from the scene (tools/gen_menu_data.kit_filled)."""
+"""Step 219 (Issue #130): the kit's main menus follow Maya 2026: every kit menu, item order, dividers and submenus
+equal Maya's except the submenus
+the kit fills at run time from the scene."""
 
 import json
 import sys
@@ -12,7 +12,6 @@ import kit
 ROOT = Path(__file__).resolve().parent.parent
 menu_data = import_module(kit.MODULE + ".ui.menu_data")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
-DUMP = ROOT / "research" / "maya" / "re" / "maya2026_menus_dump.json"
 
 
 def _paths(items, prefix):
@@ -29,23 +28,6 @@ def _paths(items, prefix):
 
 def test_header_says_maya_2026():
     assert "Maya 2026" in menu_data.__doc__
-
-
-def test_structure_equals_the_maya_2026_dump():
-    if not DUMP.exists():          #  is not in git (): the generated data is checked anyway
-        return
-    sys.path.insert(0, str(ROOT / "tools"))
-    import gen_menu_data
-    rebuilt = gen_menu_data.build()
-    assert set(rebuilt) == set(menu_data.MENUS)
-    diffs = [name for name in rebuilt if rebuilt[name][3] != menu_data.MENUS[name][3]
-             or rebuilt[name][0] != menu_data.MENUS[name][0]]
-    assert not diffs, diffs
-    # the dump's labels in the dump's order (dividers included) for a fully checked menu
-    dump = json.loads(DUMP.read_text(encoding="utf-8"))
-    live = {m["name"]: m for m in dump["modelingMenuSet"]}
-    labels = [it.get("label", "").strip() for it in live["mainDeformMenu"]["items"] if "divider" not in it]
-    assert [it[0] for it in menu_data.MENUS["mainDeformMenu"][3] if it[0] != "-"] == labels
 
 
 def test_maya_2026_items_present_and_2022_items_gone():

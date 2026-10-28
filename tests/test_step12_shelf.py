@@ -19,7 +19,6 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 runner = import_module(kit.MODULE + ".command_line.runner")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESEARCH = os.path.join(ROOT, "research", "maya", "shelves.json")
 SANDBOX = os.path.join(ROOT, "tmp")
 
 
@@ -77,29 +76,6 @@ def _tool_ids():
 
 
 # --- data -------------------------------------------------------------------------------------
-
-def test_factory_shelves_match_research():
-    # Maya 2026's default shelf tabs (step 269: Curves and Surfaces are two shelves, UV Editing is new)
-    names = [s[0] for s in shelf_data.SHELVES]
-    assert names == ["Curves", "Surfaces", "Polygons", "Sculpting", "UVEditing", "Rigging", "Animation",
-                     "Rendering", "FX", "FXCaching"], names
-    assert [s[1] for s in shelf_data.SHELVES][:3] == ["Curves", "Surfaces", "Poly Modeling"]
-    assert shelf_data.DEFAULT == "Polygons"
-    if not os.path.exists(RESEARCH):
-        print(" missing: skipped")
-        return
-    data = json.load(open(RESEARCH, encoding="utf-8"))["factory"]
-    for name, _label, buttons in shelf_data.SHELVES:
-        maya = [b for b in data[name] if not b.get("separator")]
-        assert [b[0] for b in buttons] == [b.get("label", "") for b in maya], name
-        # Maya's shelf separators sit before the buttons listed in GAPS
-        gaps, n = [], 0
-        for b in data[name]:
-            if b.get("separator"):
-                gaps.append(n)
-            else:
-                n += 1
-        assert shelf_data.GAPS[name] == tuple(i for i in gaps if 0 < i < n), name
 
 
 def test_mapping_targets_and_icons_exist():

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya's Connection Editor window (step 213, Issue #119;  CN1-CN3).
+"""Maya's Connection Editor window (step 213, Issue #119).
 
-Maya 2022 (): Reload Left / Reload Right, the mode buttons
+Maya 2022: Reload Left / Reload Right, the mode buttons
 Outputs / from -> to / Inputs, two attribute lists (the node, then its attributes; compounds such as translate open
 to translateX / Y / Z), the node names under the lists with < > to swap them, and Clear All / Remove / Break / Make /
 Close. With Auto-connect on (factory) a click on a left attribute then on a right one connects them: the right one

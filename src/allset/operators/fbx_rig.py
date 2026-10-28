@@ -4,7 +4,7 @@
 Blender's FBX writer puts the rest orientation (and the current frame's pose) of every joint into ``Lcl Rotation`` and
 writes the armature object as a ``Null`` (Lcl Rotation -90 X / Lcl Scaling 100 for the kit's Y-up cm preset), joint
 translations in metres under it. Maya writes a joint's orientation as ``PreRotation`` (= jointOrient) with rotate 0
-at rest, translations in cm, no extra node ( L11-2). ``rewrite`` turns the
+at rest, translations in cm, no extra node. ``rewrite`` turns the
 first into the second with Blender's bundled ``io_scene_fbx.parse_fbx`` / ``encode_bin`` (same module 4.5 - 5.2):
 
 1. Fold each armature ``Null`` (rotation R_N, uniform scale s, translation T_N) into its root joints: root

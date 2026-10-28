@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Graph Editor View / Show modes Blender lacks (step 150 lane A, #96).
 
-Maya 2022's Graph Editor View menu (, factory states captured in a
-Maya 2022 GUI) has check / radio items Blender's Graph Editor has no setting for. The kit adds them as add-on
+Maya 2022's Graph Editor View menu (with its factory
+states) has check / radio items Blender's Graph Editor has no setting for. The kit adds them as add-on
 preferences (``preferences.graph_auto_frame`` / ``graph_auto_frame_time`` / ``graph_curve_names``; the kit writes no
 Blender preference, store review #40) mapped in ``editor_menu_map``:
 

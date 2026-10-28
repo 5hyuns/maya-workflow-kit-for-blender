@@ -2,8 +2,8 @@
 """Step 196 (#103): Maya option windows of Create > Polygon Primitives (Disc ... Ultra Shape) and Create > NURBS
 Primitives (same spec as operators/option_windows.py; option_windows._extend appends ``WINDOWS``).
 
-Titles, field labels, ranges and factory values:  (+ .json), read from Maya 2022's
-option windows and confirmed  with a fresh MAYA_APP_DIR ().
+Titles, field labels, ranges and factory values: Maya 2022's
+option windows with factory settings.
 Each window fills the kit's Maya creation node (operators/prim_history.py, prim_shapes*.py, prim_supershape.py) through
 ``create.create(context, kind, overrides)``: values are Maya values, lengths in Maya units (create() scales them).
 Fields Blender / the kit can't follow are listed as ``missing``."""

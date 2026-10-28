@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Marking-menu items that had no Blender action.
 
-- RMB list (RMB_MESH, ): Select Hierarchy (selects the object the menu was opened
+- RMB list (RMB_MESH): Select Hierarchy (selects the object the menu was opened
   on and everything below it), items run on the object the menu was opened on (Make Live, Actions ▸ Template /
   Untemplate / Unparent / Bounding Box), UV Sets ▸ and Color Sets ▸ as Blender menus listing the mesh's UV maps /
   color attributes.
 - Ctrl+RMB (CTRL_CONVERT) "convert, then act" items and Shift+RMB Face Normals ▸ Reverse Propagate
   (SHIFT_FACE: the selected faces' normals reversed, the rest of their shells following): ``allset.mm_poly``; the
-  runTimeCommands are in  (PolyConvertToLoopAndDelete = SelectEdgeLoop;
-  DeleteEdge, …).
+  Maya runTimeCommands: PolyConvertToLoopAndDelete = SelectEdgeLoop;
+  DeleteEdge, ….
 - Select options (OPT_SELECT): Camera-Based Selection = the kit's "marquee selects hidden
   components" preference turned the other way.
 

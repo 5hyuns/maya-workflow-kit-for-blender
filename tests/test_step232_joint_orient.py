@@ -1,6 +1,6 @@
 """Step 232 (Issue #141): Orient Joint runs on a plain click, and the FBX jointOrient equals Maya's.
 
-Maya 2026 truth (Maya, C:/Repos/bmk-strategy/audit230/maya/chain3.py -> chain3.json "chain"): the same three joints
+Maya 2026: the same three joints
 (cm, Maya Y-up), ``joint -e -oj xyz -sao yup -ch -zso`` (Joint Tool finish, then Skeleton > Orient Joint factory),
 then ``mirrorJoint -mirrorYZ -mirrorBehavior``. The kit file is read back with its own FBX reader (PreRotation =
 Maya jointOrient, step 222); audit 0.5.0 ③-15 had the root at (-90, 7, 0) and the end joint at (0, 0, 0).
@@ -54,7 +54,7 @@ def _arm(mirror=True, orient_menu=True):
         parent = joints.add_joint(ob, _bl(MAYA_POS[name], k), parent, up=Vector((0, 0, 1)), length=2 * k)
         names.append(parent)
     assert names == ["joint1", "joint2", "joint3"], names
-    # chain3.json was checked with `joint -e -oj xyz -sao yup -ch -zso` — no -aos (step 244: aos=False here)
+    # Maya's chain was made with `joint -e -oj xyz -sao yup -ch -zso` — no -aos (step 244: aos=False here)
     joints.orient_new(ob, names, aos=False)                       # Joint Tool finish (Y, world +Y)
     joints.finish(bpy.context, ob, names)
     if orient_menu:

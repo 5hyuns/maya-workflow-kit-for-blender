@@ -1,7 +1,7 @@
 """Step 226 L1 (Issue #136, ): NURBS curves as bone Custom Shapes — Maya ``parent -s [-r]``.
 
-Maya truth (Maya 2026,  ``L1_parent_shape_relative`` / ``_absolute``,
-): a circle (r 1, normal Maya Y) with cv0 at (0.7836, 0, -0.7836);
+Maya 2026 (parent shape relative / absolute):
+a circle (r 1, normal Maya Y) with cv0 at (0.7836, 0, -0.7836);
 joint1 at (5, 2, 0) with jointOrient Z 30. ``parent -s -r`` -> cv0 world (5.6786, 2.3918, -0.7836), cv1
 (5, 2, -1.1082), the old transform stays without a shape; ``parent -s`` (circle moved x+1) keeps cv0 world
 (1.7836, 0, -0.7836) and the old transform goes. Maya (x, y, z) = Blender (x, z, -y) / maya_unit."""

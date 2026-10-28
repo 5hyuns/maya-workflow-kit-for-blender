@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya 2022 Preferences window, page by page (step 215, Issue #121) — pure data, no bpy.
 
-Category tree, page titles and control labels / factory values are the Maya capture
-(, data ). The kit never writes
+Category tree, page titles and control labels / factory values are Maya 2022's
+Preferences window. The kit never writes
 Blender's preferences ( decisions 13 / 14), so a page row is one of:
 
   ("pref", attr, label)                      a kit add-on preference (``preferences.get(context).<attr>``)
@@ -253,7 +253,7 @@ PAGES = (
 KEYS = tuple(p[0] for p in PAGES)
 BY_KEY = {p[0]: p for p in PAGES}
 
-# Maya factory values of the scene rows ( Settings / Time Slider pages; units = the
+# Maya factory values of the scene rows (Settings / Time Slider pages; units = the
 # Maya Workflow Kit template's display units, ) — Edit > Restore Default Settings.
 MAYA_FACTORY = {
     "unit_settings.length_unit": 'CENTIMETERS',

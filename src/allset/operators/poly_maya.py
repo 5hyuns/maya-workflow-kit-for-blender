@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Maya Edit Mesh / Mesh Tools commands with Maya-checked results (step 110,  「계획」 1-4;
+"""Maya Edit Mesh / Mesh Tools commands with Maya's results (step 110,  「계획」 1-4;
 step 139 lane EDIT: Connect / Merge / Smooth / Symmetrize, ).
-
- (Circularize), (Connect), (Make Hole);
--4 (Connect, Merge, Smooth, Symmetrize). Pure bmesh.
+Circularize, Connect, Make Hole; Connect, Merge, Smooth, Symmetrize. Pure bmesh.
 """
 
 import math
@@ -13,7 +11,7 @@ import bpy
 
 from .. import results
 
-CONNECT_WARNING = "Can't perform polyConnectComponents1 on selection"   # Maya's warning (menu_honesty.md)
+CONNECT_WARNING = "Can't perform polyConnectComponents1 on selection"   # Maya's warning
 
 
 # --- Circularize -------------------------------------------------------------------------------
@@ -48,8 +46,8 @@ def _ordered_loops(edges):
 
 def circularize_loop(verts, radial_offset=0.0, twist=0.0, even=True, ref=None):
     """Put an ordered vertex loop on a circle: centre = centroid, radius = mean distance (+ ``radial_offset``), evenly
-    spaced keeping the loop's mean angular position (Maya polyCircularize defaults, modeling_rigging_110.md).
-    Step 140 options (Maya, ): ``twist`` (radians) turns the loop
+    spaced keeping the loop's mean angular position (Maya polyCircularize defaults).
+    Step 140 options: ``twist`` (radians) turns the loop
     right-handed about ``ref`` (the faces' normal), ``even`` off keeps each vertex's own angle about the centre.
     Returns the loop's normal (oriented like ``ref``) or None."""
     from mathutils import Vector
@@ -140,7 +138,7 @@ class ALLSET_OT_circularize(bpy.types.Operator):
     bl_label = "Circularize"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # Maya Polygon Circularize Options (), factory values
+    # Maya Polygon Circularize Options, factory values
     normal_offset: bpy.props.FloatProperty(name="Normal Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
                                            options={'SKIP_SAVE'})
     radial_offset: bpy.props.FloatProperty(name="Radial Offset", default=0.0, subtype='DISTANCE', unit='LENGTH',
@@ -172,7 +170,7 @@ class ALLSET_OT_circularize(bpy.types.Operator):
 
 
 # --- Connect -----------------------------------------------------------------------------------
-# polyConnectComponents (step 110, step 139: ). Per face the points to join
+# polyConnectComponents (step 110, step 139). Per face the points to join
 # are its selected vertices and the midpoints of its selected edges; they are joined as a cycle in index order, a
 # chord is skipped when its ends are neighbours on the face border or it crosses a chord already made. A selected
 # edge whose face gets no chord is left alone (one edge -> nothing). Faces: the edges shared by two selected faces are
@@ -226,8 +224,7 @@ def _loop_neighbour(v, e):
 def _flow_point(a, b, t, adjust, pa=None, pb=None):
     """A point at ``t`` from ``a`` to ``b`` (BMVerts); with ``adjust`` (Maya Insert with edge flow) it follows a cubic
     through the loop neighbours: Hermite tangents 0.7 x (next - previous), the deviation from the straight edge times
-    Adjust Edge Flow (fits Maya polyConnectComponents on an 8 x 8 sphere within 1e-4,
-    )."""
+    Adjust Edge Flow (fits Maya's polyConnectComponents on an 8 x 8 sphere within 1e-4)."""
     p1, p2 = a.co.copy(), b.co.copy()
     lin = p1.lerp(p2, t)
     if not adjust:
@@ -364,7 +361,7 @@ class ALLSET_OT_connect(bpy.types.Operator):
     bl_label = "Connect"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # Maya Connect Components Options () and the Mesh Tools > Connect
+    # Maya Connect Components Options  and the Mesh Tools > Connect
     # tool's Slide / Segments (:252-256); factory values
     insert_with_edge_flow: bpy.props.BoolProperty(name="Insert with edge flow", default=False, options={'SKIP_SAVE'})
     adjust_edge_flow: bpy.props.FloatProperty(name="Adjust Edge Flow", default=1.0, soft_min=-1.0, soft_max=2.0,
@@ -397,7 +394,7 @@ MERGE_MODES = ("First", "Middle", "Second", "Project First", "Project Middle", "
 
 
 def _hole_merge(target, stamp, mode):
-    """Maya Make Hole Merge mode (polyMergeFacet -mergeMode, Maya option_boxes_140_edit.md): First / Middle /
+    """Maya Make Hole Merge mode (polyMergeFacet -mergeMode): First / Middle /
     Second move the stamp, both, or the cut face so their centres meet; Project ... moves along the normal only, onto
     the first face's plane, the middle plane, or the stamp's plane; None leaves both."""
     from mathutils import Vector
@@ -463,7 +460,7 @@ class ALLSET_OT_make_hole(bpy.types.Operator):
 
 
 # --- Merge -------------------------------------------------------------------------------------
-# polyMergeVert with the menu's factory options (distance 0.01, alwaysMergeTwoVertices on; edit_mesh_139_edit.md):
+# polyMergeVert with the menu's factory options (distance 0.01, alwaysMergeTwoVertices on):
 # vertices closer than the threshold merge to the mean of their cluster; exactly two selected vertices merge to their
 # midpoint whatever the distance (even across the mesh, then non-manifold). Edge / face selections: the threshold only.
 
@@ -547,7 +544,7 @@ class ALLSET_OT_merge(bpy.types.Operator):
 
 # --- Smooth ------------------------------------------------------------------------------------
 # polySmoothFace with the menu's factory options (divisions 1, continuity 1, keep border / selection border,
-# OpenSubdiv "sharp edges and corners"; edit_mesh_139_edit.md): Catmull-Clark on the chosen faces. A vertex moves
+# OpenSubdiv "sharp edges and corners"): Catmull-Clark on the chosen faces. A vertex moves
 # only when all its faces are smoothed (mesh-border vertices along the border curve, corners stay); edges between two
 # smoothed faces get the Catmull-Clark edge point, other edges their midpoint. Unsmoothed neighbours keep the new
 # midpoints as extra vertices (Maya's n-gons).
@@ -682,10 +679,10 @@ class ALLSET_OT_smooth(bpy.types.Operator):
 
 
 # --- Symmetrize --------------------------------------------------------------------------------
-# Maya 2022 GUI (edit_mesh_139_edit.md): with symmetry off (factory) Edit Mesh > Symmetrize enters "Select Symmetry
+# Maya 2022: with symmetry off (factory) Edit Mesh > Symmetrize enters "Select Symmetry
 # Edge" ("Select a mesh edge for symmetry"), the mesh unchanged; the clicked edge = a topological symmetry seam, then
 # each selected component's counterpart takes the mirrored position (the selected side drives; with both sides
-# selected the side of the lowest-index selected vertex drives, Maya's -X side in the checked cube — delegated
+# selected the side of the lowest-index selected vertex drives, Maya's -X side on a cube — delegated
 # rule). Object mode / nothing selected: "No components selected for Symmetrize."
 
 SYMMETRIZE_NO_COMPONENTS = "No components selected for Symmetrize."

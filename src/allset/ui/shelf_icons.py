@@ -3,7 +3,7 @@
 
 Decision 6: no Maya icons. Maya's shelf shows one 32 px colour pictogram per button; step 131 (#23) gives every
 factory shelf button its own kit drawing that follows the Maya icon's subject, main colour, composition and size
-(clean-room descriptions:  "Maya's shared visual vocabulary" and "Shelf"; plan and
+(clean-room descriptions of Maya's shared visual vocabulary; plan and
 scores: ). Shared Maya vocabulary used here:
 
 - one hue per kind (NURBS blue, poly orange, UV green, rigging lavender, key orange-red, render yellow, FX salmon,
@@ -30,7 +30,7 @@ def _hex(s):
     return tuple(int(s[i:i + 2], 16) / 255 for i in (1, 3, 5))
 
 
-# checked Maya 2022 hues (, colour values only).
+# Maya 2022 icon hues (colour values only).
 BLUE = _hex("#57a4cb")       # Curves / Surfaces, NURBS
 ORANGE = _hex("#da9355")     # Poly Modeling, Sculpting
 GREEN = _hex("#5eac87")      # UV tools
@@ -1874,7 +1874,7 @@ def i_edit_material(cv):
         cv.rect(17, y, 22 + (y % 4), y + 2.5, YELLOW)
 
 
-# Maya's shader balls are grey; the highlight tells the shader (icons131.md:24): Standard Surface dark and glossy
+# Maya's shader balls are grey; the highlight tells the shader: Standard Surface dark and glossy
 # with a hard highlight and a bright rim, Blinn a broad soft highlight, Lambert matte and lighter, Phong a small
 # sharp dot, Phong E darker with a small soft highlight.
 @icon("Rendering/Standard Surface Material")

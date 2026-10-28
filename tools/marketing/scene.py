@@ -1,13 +1,13 @@
 """Scene helpers shared by tools/marketing/shots.py (step 122 stills) and tools/marketing/clips.py (step 123 clips).
 
 Runs inside a GUI Blender started with --enable-event-simulate (tests/gui/sim.py). The scene is built from the
-licensed models in  (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md):
+licensed models in the local assets folder (tools/marketing/assets.json, docs/distribution/marketing/CREDITS.md):
 Blender Studio's Rain, Pack Bot and Security Bot rigs, the Blender 4.5 splash scene DOGWALK, Cube Diorama props and
-the Poly Haven Studio Small 09 HDRI (step 125; ).
+the Poly Haven Studio Small 09 HDRI (step 125; local asset inventory).
 
 Viewport background (step 142, #41; replaces step 125's theme gradient): the kit ships no theme since step 130 (#40),
 so these captures use Blender's factory theme and never write one (``theme_unchanged`` is checked with every capture).
-factory viewport is flat #5c5c5c (), which without a theme is view / scene
+factory viewport is flat #5c5c5c, which without a theme is view / scene
 data: Solid views get the view's own background colour (``View3DShading.background_type = 'VIEWPORT'``, what the
 Maya layout template saves, #45). Material Preview ignores that colour (checked: it draws the theme background), so
 in Maya mode it uses the scene world ``.Allset Marketing World`` = the Studio Small 09 HDRI for lighting and flat
@@ -125,7 +125,7 @@ def look(location, rot, distance):
 
 
 # ------------------------------------------------------------------------------------------------ step 125 assets
-# Blender Studio / blender.org files (tools/marketing/assets.json, ,
+# Blender Studio / blender.org files (tools/marketing/assets.json, local asset inventory,
 # docs/distribution/marketing/CREDITS.md). Collections are appended at scale 1 (the files are metric, the template is
 # metres with cm display); the files' own cameras / lights are not used; widget / helper collections stay hidden.
 # Python auto-exec stays off (factory default): CloudRig's UI scripts don't run, the rigs still pose.

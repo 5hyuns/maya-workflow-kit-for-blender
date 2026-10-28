@@ -5,7 +5,7 @@ starts the tool and leaves the Channel Box as the Channel Box; the tool's settin
 option box or a double-click on the paint tool opens them (Maya `ArtPaintSkinWeightsToolOptions` = `toolPropertyWindow`).
 Q/W/E/R leave painting with the mesh still selected (Maya: the Select / Move / Rotate / Scale tool).
 
-The sections follow Maya 2024+ Tool Settings (PR125_MAYA_LATER.md 6), then two Blender extras:
+The sections follow Maya 2024+ Tool Settings, then two Blender extras:
 
 | Section | Contents |
 |---|---|

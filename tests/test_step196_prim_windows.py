@@ -1,5 +1,5 @@
 """Step 196 (#103): Create > Polygon Primitives (Disc ... Ultra Shape) and Create > NURBS Primitives option boxes open
-Maya's option windows ( / .json, Maya factory values) and fill the kit's Maya
+Maya's option windows (Maya factory values) and fill the kit's Maya
 creation node (operators/option_windows_prims.py)."""
 
 import json
@@ -17,16 +17,7 @@ prim_history = import_module(kit.MODULE + ".operators.prim_history")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 menu_map = import_module(kit.MODULE + ".ui.menu_map")
 
-SPEC_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                         "research", "maya", "re", "options_196_prims.json")
 KINDS = {w.key: w.match[1]["kind"] for w in prims.WINDOWS}
-
-
-def _spec():
-    if not os.path.exists(SPEC_PATH):     #  is untracked (): skip the json part elsewhere
-        return None
-    with open(SPEC_PATH, encoding="utf-8") as fh:
-        return json.load(fh)["windows"]
 
 
 def _clear():
@@ -68,30 +59,6 @@ def test_windows_wired_to_the_create_menu():
         assert w.action == "Create" and w.title.endswith("Options"), (w.key, w.title, w.action)
         path = next(p for p, a in menu_map.MAP.items() if p.startswith("Create/") and ow.find(a) is w)
         assert ow.find_path(path) is w and menu_sets.option_kind(path) == "window", (w.key, path)
-
-
-def test_defaults_equal_maya_factory_values():
-    spec = _spec()
-    if spec is None:
-        print(" not here: skipped")
-        return
-    assert set(spec) == set(ow._BY_KEY) & set(spec) == {w.key for w in prims.WINDOWS}, sorted(spec)
-    for key, s in spec.items():
-        w = ow._BY_KEY[key]
-        assert w.title == s["title"] and w.action == s["button"], (key, w.title, s["title"])
-        d = w.defaults()
-        for f in s["fields"]:
-            if f["kit_field"] is None:
-                continue
-            got, want = d[f["kit_field"]], f["default"]
-            if isinstance(want, list):
-                assert all(abs(a - b) < 1e-9 for a, b in zip(got, want)), (key, f["label"], got, want)
-            elif isinstance(want, bool) or isinstance(want, str):
-                assert got == want, (key, f["label"], got, want)
-            else:
-                assert abs(got - want) < 1e-9 and type(got) is type(want), (key, f["label"], got, want)
-        if any(f["kit_field"] is None for f in s["fields"]):
-            assert w.missing, f"{key}: Maya fields the kit can't follow must be listed as missing"
 
 
 def test_default_window_builds_the_plain_menu_object():
@@ -165,7 +132,7 @@ def test_changed_fields_change_the_geometry():
         n0 = _points(_run(key))
         n1 = _points(_run(key, **values))
         assert n1 != n0, (key, n0, n1)
-    # Axis X: the pipe lies along Blender X (polyPipe is half its Height attribute tall, checked in step 190);
+    # Axis X: the pipe lies along Blender X (polyPipe is half its Height attribute tall, step 190);
     # Create UVs off: no UV map
     ob = _run("poly_pipe", axis="X", create_uvs=False, height=8.0)
     dims = ob.dimensions

@@ -4,8 +4,8 @@
 Keys are ``editor_menu_data`` paths ("Graph Editor/Keys/Insert Key Tool"); values use ``menu_map``'s forms plus
 ``("prop", "<context path>")`` = a Maya check item drawn as Blender's own check box (``{"value": v}`` = one choice
 of a radio collection). ``menu_map`` merges ``MAP`` into its own, so the step 101 rules (every leaf mapped or greyed
-with a notice) cover these menus too. Menu structure:  (Maya 2026
-GUI capture since step 269; Maya 2022 before); Blender counterparts checked in 4.5.
+with a notice) cover these menus too. Menu structure: Maya 2026's editor menus
+(since step 269; Maya 2022 before); Blender counterparts checked in 4.5.
 """
 
 import math
@@ -181,7 +181,7 @@ def _list_show_menus(ed):
         f"{ed}/Show/Objects/Sets": _prop(f"{_WM}.allset_show_sets"),
         f"{ed}/Show/Objects/Characters": _prop(f"{_WM}.allset_show_characters"),
         f"{ed}/Show/Invert Shown": _prop(f"{_DS}.use_filter_invert"),
-        # step 203: Maya's Show All also unchecks every attribute filter ()
+        # step 203: Maya's Show All also unchecks every attribute filter
         f"{ed}/Show/Show All": "allset.graph_attr_clear",
         # step 150: Maya's Clear Below leaves no entry checked = nothing filtered (ui/graph_view.py)
         f"{ed}/Show/Objects/Clear Below": "allset.graph_show_clear",
@@ -241,7 +241,7 @@ GE, DS, UV = "Graph Editor", "Dope Sheet", "UV Editor"
 _SP = "space_data"
 
 MAP = {
-    # --- Graph Editor (captured menus) ---
+    # --- Graph Editor (Maya's menus) ---
     **_edit_menu(GE, True),
     f"{GE}/View/Frame/Frame All": "graph.view_all",
     f"{GE}/View/Frame/Frame Selection": "graph.view_selected",
@@ -275,7 +275,7 @@ MAP = {
     f"{GE}/Select/In Tangent": _prop("addon_prefs.graph_select_in"),
     f"{GE}/Select/Out Tangent": _prop("addon_prefs.graph_select_out"),
     f"{GE}/Select/Snap time to selection": _prop("addon_prefs.snap_time_to_selection"),
-    # step 198 (#105, ): Graph Editor depth 2 (Dope Sheet twins below)
+    # step 198 (#105): Graph Editor depth 2 (Dope Sheet twins below)
     **_depth2(GE),
     f"{GE}/View/Show Buffer Curves": _prop("addon_prefs.graph_show_buffers"),
     f"{GE}/Curves/Buffer Curve/Snapshot": "allset.buffer_snapshot",
@@ -288,7 +288,7 @@ MAP = {
     f"{GE}/Curves/Reorder Rotation...": "allset.reorder_rotation",    # Maya 2026; same command as Modify menu
     **_help_menu(GE, "editors/graph_editor/index.html"),
 
-    # --- Dope Sheet (captured menus; Maya 2026 has no Curves / Tangents menu here, a Channels menu instead) ---
+    # --- Dope Sheet (Maya's menus; Maya 2026 has no Curves / Tangents menu here, a Channels menu instead) ---
     **_edit_menu(DS, False),
     f"{DS}/View/Frame All": "action.view_all",
     f"{DS}/View/Frame Selection": "action.view_selected",
@@ -301,7 +301,7 @@ MAP = {
     f"{DS}/Edit/Select Unsnapped": "allset.select_unsnapped",
     **_help_menu(DS, "editors/dope_sheet/index.html"),
 
-    # --- UV Editor (textureWindow menus, captured); kit UV commands from step 66 ---
+    # --- UV Editor (textureWindow menus); kit UV commands from step 66 ---
     f"{UV}/Edit/Copy": "uv.copy",
     f"{UV}/Edit/Paste": "uv.paste",
     f"{UV}/Edit/Pin Selection": "uv.pin",
@@ -343,7 +343,7 @@ MAP = {
     f"{UV}/Cut/Sew/Cut": "allset.uv_cut",
     f"{UV}/Cut/Sew/Sew": "allset.uv_sew",
     f"{UV}/Cut/Sew/Merge": "allset.uv_merge",     # step 196: Maya polyMergeUV
-    f"{UV}/Cut/Sew/Move and Sew": "allset.uv_move_sew",      # step 155: 
+    f"{UV}/Cut/Sew/Move and Sew": "allset.uv_move_sew",      # step 155
     f"{UV}/Cut/Sew/Create UV Shell": "allset.uv_create_shell",
     f"{UV}/Cut/Sew/Stitch Together": "uv.stitch",
     f"{UV}/Modify/Align": ("uv.align", {"axis": 'ALIGN_AUTO'}),
@@ -374,14 +374,14 @@ MAP = {
     f"{UV}/Modify/Straighten Shell": "uv.follow_active_quads",
     f"{UV}/Modify/Straighten UVs": ("uv.align", {"axis": 'ALIGN_S'}),
     f"{UV}/Modify/Unfold": "allset.uv_unfold",
-    # step 178: Maya-checked UV commands (operators/uv_modify.py, )
+    # step 178: Maya-style UV commands (operators/uv_modify.py)
     f"{UV}/Modify/Map Border": "allset.uv_map_border",
     f"{UV}/Modify/Straighten Border": "allset.uv_straighten_border",
     f"{UV}/Modify/Match Grid": "allset.uv_match_grid",
     f"{UV}/Modify/Layout Along": "allset.uv_layout_along",
     f"{UV}/Modify/Stack Similar Shells": "allset.uv_stack_similar",
     f"{UV}/Modify/Distribute UVs": "allset.uv_distribute_uvs",
-    # step 178: selection / isolate (operators/uv_select_178.py, ui/uv_display.py, )
+    # step 178: selection / isolate (operators/uv_select_178.py, ui/uv_display.py)
     f"{UV}/Select/Unmapped Faces": "allset.uv_select_unmapped",
     f"{UV}/Select/Back-Facing": ("allset.uv_select_facing", {"front": False}),
     f"{UV}/Select/Front-Facing": ("allset.uv_select_facing", {"front": True}),
@@ -421,7 +421,7 @@ MAP = {
     f"{UV}/UV Sets/Copy UVs to UV Set/Copy into New UV Set": "mesh.uv_texture_add",
     f"{UV}/UV Sets/Create Empty UV Set": "mesh.uv_texture_add",
     f"{UV}/UV Sets/Delete Current UV Set": "mesh.uv_texture_remove",
-    # step 206 (; operators/uv_206.py, ui/uv_hud.py)
+    # step 206 (operators/uv_206.py, ui/uv_hud.py)
     f"{UV}/Cut/Sew/Auto Seams": "allset.uv_auto_seams",
     f"{UV}/Cut/Sew/Create Shell (Grid)": "allset.uv_grid_shell",
     f"{UV}/Cut/Sew/Split": "allset.uv_split",
@@ -436,7 +436,7 @@ MAP = {
     "UV Toolkit/Help/Help on UV Toolkit": _url(_MANUAL + "modeling/meshes/uv/index.html"),
 }
 
-# --- step 105: Hypershade, Render Settings, Script Editor () -----
+# --- step 105: Hypershade, Render Settings, Script Editor ---------------------------------------------------------
 HS, RS, SE = "Hypershade", "Render Settings", "Script Editor"
 _HS_MATERIALS = {"Anisotropic": 'ANISOTROPIC', "Blinn": 'BLINN', "Lambert": 'LAMBERT', "Layered Shader": 'LAYERED',
                  "Phong": 'PHONG', "Phong E": 'PHONG_E', "Ramp Shader": 'RAMP', "Standard Surface": 'STANDARD_SURFACE',
@@ -576,7 +576,7 @@ MAP.update({
 })
 
 
-# step 209: the Reference Editor (operators/references.py, ; literal: no bpy imports)
+# step 209: the Reference Editor (operators/references.py; literal: no bpy imports)
 RE = "Reference Editor"
 
 
@@ -609,7 +609,7 @@ MAP.update(_hs_nodes())
 
 
 # step 213: Component / Shape / Connection Editor windows (ui/component_editor.py, shape_editor.py,
-# connection_editor.py; ; literal: no bpy imports)
+# connection_editor.py; literal: no bpy imports)
 CE, SH, CN = "Component Editor", "Shape Editor", "Connection Editor"
 MAP.update({
     f"{SH}/Edit/Deselect All": ("allset.shape_pick", {"key": ""}),
@@ -642,11 +642,11 @@ MAP.update({
     f"{CN}/Options/Channel Names/Short": _prop("window_manager.allset_cn_names", "SHORT"),
     **_help_menu(CN, "animation/drivers/index.html"),
 })
-MAP.pop(f"{SH}/Help/Help on {SH}", None)    # Maya titles it Help on Shape Authoring (capture)
+MAP.pop(f"{SH}/Help/Help on {SH}", None)    # Maya titles it Help on Shape Authoring
 
 
-# step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py,
-# -8); Maya 2026's Dope Sheet has no Curves menu / Select Curve Nodes
+# step 203: Change Rotation Interp / Key Sync / Peak Removal / Select Curve Nodes (operators/graph_curves_203.py);
+# Maya 2026's Dope Sheet has no Curves menu / Select Curve Nodes
 # (literal here: tools/menu_count.py loads the menu maps without bpy)
 _ROT_MODES = {"Independent Euler": "NONE", "Synchronized Euler": "EULER", "Quaternion Slerp": "SLERP",
               "Quaternion Cubic": "SQUAD", "Quaternion Tangent Dependent": "TANGENT"}
@@ -657,7 +657,7 @@ for _ed in (GE,):
     MAP[f"{_ed}/Curves/Peak Removal Filter"] = "allset.peak_removal_filter"
     MAP[f"{_ed}/Edit/Select Curve Nodes"] = "allset.select_curve_nodes"
 
-# Maya greys these while their state forbids them (List > Load / Add Selected Objects while Auto Load is on,
-# graph_editor_201.md): menu_sets.draw_item draws them with Blender's poll instead of the always-enabled
+# Maya greys these while their state forbids them (List > Load / Add Selected Objects while Auto Load is on):
+# menu_sets.draw_item draws them with Blender's poll instead of the always-enabled
 # allset.menu_item route
 GREY_ON_POLL = {f"{ed}/List/{label}" for ed in (GE, DS) for label in ("Load Selected Objects", "Add Selected Objects")}

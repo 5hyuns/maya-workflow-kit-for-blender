@@ -1,6 +1,6 @@
 """Step 211 (audit 16 fix batch, #117): Light Linking submenu, Maya max + 1 names for sets / layers / anim layers /
 characters / bookmarks, Ctrl+V pasted__ names under a group, startup cameras first in the Outliner, AE tab row, nHair
-option boxes = the Curves windows. Maya values:  (Maya + Maya)."""
+option boxes = the Curves windows. Maya values."""
 
 from importlib import import_module
 
@@ -56,7 +56,7 @@ def test_light_linking_submenu_opens_the_kit_editor():
         assert "Windows/Relationship Editors/Light Linking/Object-Centric" in paths
 
 
-# --- (2) names: Maya max + 1 (Maya naming_211.md N1-N5) ---------------------------------------------------
+# --- (2) names: Maya max + 1 ---------------------------------------------------------------------------------
 
 def test_set_names_count_past_the_highest():
     _clear()
@@ -109,7 +109,7 @@ def test_naming_doc_says_no_gap_filling():
     assert "lowest one free" not in doc and "gaps are not filled" in doc
 
 
-# --- (2b) Ctrl+V: pasted__ names under a group (Maya + Maya, naming_211.md P1-P3) -----------------------
+# --- (2b) Ctrl+V: pasted__ names under a group (Maya) ---------------------------------------------------------
 
 def test_paste_names_group_and_selection():
     _clear()

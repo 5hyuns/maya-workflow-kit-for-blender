@@ -1,5 +1,5 @@
 """Audit 128 repro: Ctrl+Shift+click in component mode must ADD only the clicked component (Maya: Shift toggle /
-Ctrl remove / Ctrl+Shift add, ). In the Maya keyconfig the IC "Mesh" keymap's
+Ctrl remove / Ctrl+Shift add). In the Maya keyconfig the IC "Mesh" keymap's
 Ctrl+Shift+LMB mesh.shortest_path_pick runs before the 3D View select item, so it selects the whole path.
 PASSES when fixed."""
 

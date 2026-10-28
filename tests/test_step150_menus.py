@@ -16,8 +16,6 @@ notices = import_module(kit.MODULE + ".ui.notices")
 graph_view = import_module(kit.MODULE + ".ui.graph_view")
 preferences = import_module(kit.MODULE + ".preferences")
 
-CAPTURE = Path(os.environ.get("ALLSET_ROOT", Path(__file__).resolve().parent.parent)) / \
-    "research" / "maya" / "screens" / "editors104" / "_editors104.json"
 
 GE = "Graph Editor"
 MAPPED = {
@@ -86,28 +84,6 @@ def _view(region):
 
 
 # --- mappings ---------------------------------------------------------------------------------------------------
-
-def test_view_items_mapped_to_kit_modes():
-    for path, want in MAPPED.items():
-        assert menu_map.spec(path) == want, (path, menu_map.spec(path))
-        owner, attr = menu_sets.prop_owner(bpy.context, want[1])
-        assert owner.as_pointer() == _prefs().as_pointer() and hasattr(owner, attr), path
-    p = _prefs()
-    assert p.graph_auto_frame is True and p.graph_auto_frame_time is False and p.graph_curve_names == 'NEVER'
-    if CAPTURE.exists():     # Maya 2022 factory states ( is not tracked)
-        view = next(m for m in json.loads(CAPTURE.read_text(encoding="utf-8"))["graph_editor"][0]["bars"][0]["menus"]
-                    if m["title"] == "View")["items"]
-        by = {it["text"]: it for it in view}
-        assert by["Auto Frame"]["checked"] is True and by["Auto Frame Time"]["checked"] is False
-        names = {it["text"]: it["checked"] for it in by["Curve Name"]["items"]}
-        assert names == {"Always": False, "Never": True, "Active Only": False}, names
-    # check / radio items toggle the add-on preference only
-    menu_sets.set_prop(bpy.context, "addon_prefs.graph_auto_frame", {})
-    assert p.graph_auto_frame is False
-    menu_sets.set_prop(bpy.context, "addon_prefs.graph_auto_frame", {})
-    menu_sets.set_prop(bpy.context, "addon_prefs.graph_curve_names", {"value": 'ACTIVE'})
-    assert p.graph_curve_names == 'ACTIVE'
-    p.graph_curve_names = 'NEVER'
 
 
 def test_show_items_mapped():

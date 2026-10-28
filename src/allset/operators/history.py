@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Delete History, Delete Non-Deformer History, Edit > Delete (All) by Type.
 
- Maya history = upstream DG nodes; the closest
+Maya history = upstream DG nodes; the closest
 Blender equivalent is the modifier stack plus shape keys (blendShape). Delete
 History (``cmds.delete(constructionHistory=True)``, Alt+Shift+D) bakes them; Non-Deformer History
 (``BakeNonDefHistory``) bakes the modelling operations and keeps the deformers.
@@ -28,7 +28,7 @@ NONLINEARS = {'SIMPLE_DEFORM', 'WAVE', 'CAST'}
 def is_deformer(md):
     """``md`` plays a Maya deformer: a DEFORMERS modifier, or a kit Geometry Nodes deformer — the wire
     (operators/wire_deformer.py, Maya wire) and the skin's weight sum (operators/skin_tools_199.py, part of the
-    skinCluster). Non-Deformer History keeps both like Maya (, step 202 / #109)."""
+    skinCluster). Non-Deformer History keeps both like Maya (step 202 / #109)."""
     if md.type in DEFORMERS:
         return True
     if md.type != 'NODES':
@@ -68,8 +68,8 @@ def _bake(context, ob, keep):
 def delete_history(context, objects, non_deformer=False, before_only=False):
     """Bake history on mesh ``objects``. Returns (baked, notes).
 
-    ``non_deformer``: Maya Delete Non-Deformer History keeps the deformers. Its option window (step 162, checked
-    , ): "All non-deformer history" (factory, ``bakePartialHistory
+    ``non_deformer``: Maya Delete Non-Deformer History keeps the deformers. Its option window (step 162):
+    "All non-deformer history" (factory, ``bakePartialHistory
     -prePostDeformers``) also removes the non-deformer nodes *after* a deformer — polyCube / extrude / bend / bevel
     keeps only bend — so every non-deformer modifier is baked into the mesh under the deformers;
     ``before_only`` = "History before deformers only" (``-preDeformers``) bakes only the modifiers above the first
@@ -91,7 +91,7 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
             baked += 1
             continue
         # Smooth Mesh Preview (1/2/3) is a display attribute in Maya, not history
-        # (): never baked, always kept (step 15).
+        # (Maya): never baked, always kept (step 15).
         preview = {md.name for md in ob.modifiers if is_preview(md)}
         history = [md for md in ob.modifiers if md.name not in preview]
         if not history and not (ob.type == 'MESH' and ob.data.shape_keys):

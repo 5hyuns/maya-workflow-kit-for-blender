@@ -1,6 +1,6 @@
 """Step 96: Maya object sets — Create > Sets > Set / Quick Select Set, members, select, add / remove, delete, rename,
 save / reload, the sidebar Outliner SET rows, the Outliner overlay helpers, menu mapping. ;
-Maya behaviour: """
+Maya behaviour."""
 
 import os
 import tempfile

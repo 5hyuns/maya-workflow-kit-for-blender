@@ -2,8 +2,8 @@
 """Maya Time Slider + Range Slider in the Timeline header, and a timeline view that
 follows the playback range.
 
-, (:272-282: 8 transport buttons, current time
-field, auto key), (:284-286: animation start, playback start, [range], playback end,
+Maya's Time Slider (8 transport buttons, current time
+field, auto key) and Range Slider (animation start, playback start, [range], playback end,
 animation end). Blender form:
 - ``bl_ui.space_time.TIME_HT_editor_buttons.draw_header`` (a plain class, not in bpy.types)
   is swapped for ``draw_header`` below and restored on unregister.
@@ -44,7 +44,7 @@ _RANGE_PROPS = ("frame_start", "frame_end", "frame_preview_start", "frame_previe
 
 
 def draw_transport(layout, context):
-    """Current frame field + Maya's 8 transport buttons (ui_layout.md:272-276)."""
+    """Current frame field + Maya's 8 transport buttons."""
     scene, screen = context.scene, context.screen
     row = layout.row()
     row.ui_units_x = 4.5    # Maya current time field width 90
@@ -77,7 +77,7 @@ def has_slider_panel(space, area=None):
     return ui is not None and ui.width > 20
 
 
-# Range Slider row, Maya order (ui_layout.md:284-288).
+# Range Slider row, Maya order.
 RANGE_ITEMS = ("start", "playback start", "range", "playback end", "end", "auto key", "No Character Set",
                "No Anim Layer", "fps", "loop", "sound", "animation preferences")
 
@@ -108,7 +108,7 @@ def draw_range_slider(layout, context):
     row.ui_units_x = 4.5
     row.active = scene.use_preview_range
     row.prop(scene, "frame_preview_start", text="")
-    # Maya's range bar (ui_layout.md:285). In the Maya Workflow Kit layout an empty label holds its place and
+    # Maya's range bar. In the Maya Workflow Kit layout an empty label holds its place and
     # ui/range_bar.py draws the draggable bar there. Elsewhere Blender has no such
     # widget: the toggle = use the playback range (off = the whole animation range), the button frames it.
     from . import range_bar
@@ -567,8 +567,8 @@ def _draw_range():
 # --- Maya ruler -----------------------------
 # The Maya Workflow Kit layout's Time Slider is painted over Blender's timeline drawing: Maya's background, one 2 px
 # tick + label per step (Maya picks the smallest step whose spacing fits the labels), the bottom band and the
-# translucent current-time block with its white frame number. checked in a Maya 2022 at UI scale 1.0
-# (*/, 1292 x 32 px widget): rows 1-8 labels #757575, ticks rows 13-27 #7c7c7c, rows 29-31
+# translucent current-time block with its white frame number. Maya 2022 at UI scale 1.0
+# (1292 x 32 px widget): rows 1-8 labels #757575, ticks rows 13-27 #7c7c7c, rows 29-31
 # #373737, background #2b2b2b, current time = white at 18.4 % over the frame's cell (step 195), its number white in
 # rows 16-23.
 # Blender draws its own current-frame box in the region overlay after every Python handler (probe tmp/probe186:
@@ -579,19 +579,18 @@ RULER_BG = (0x2b / 255, 0x2b / 255, 0x2b / 255, 1.0)
 RULER_BAND = (0x37 / 255, 0x37 / 255, 0x37 / 255, 1.0)
 RULER_TICK = (0x7c / 255, 0x7c / 255, 0x7c / 255, 1.0)
 RULER_LABEL = (0x75 / 255, 0x75 / 255, 0x75 / 255, 1.0)
-# step 195: Maya's current-time block checked #525252 over the #2b2b2b ruler (
-# (22, 800)) = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %, not the 25 % estimated in step 186
+# step 195: Maya's current-time block is #525252 over the #2b2b2b ruler = white at (0x52 - 0x2b) / (0xff - 0x2b) = 18.4 %, not the 25 % estimated in step 186
 RULER_CURRENT = (1.0, 1.0, 1.0, (0x52 - 0x2b) / (0xff - 0x2b))
 RULER_CURRENT_LABEL = (1.0, 1.0, 1.0, 1.0)
 # (top row, bottom row) of 32 px widget. With Time Slider bookmarks
-# (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down
-# (): strip #454545 rows 0-8, each bookmark's colour at 80 % over
+# (kit: timeline markers, operators/bookmarks.py) Maya adds a strip on top and moves labels / ticks down:
+# strip #454545 rows 0-8, each bookmark's colour at 80 % over
 # it in rows 0-4 with a solid 1 px left edge over the strip height.
 ROWS = {"label": (1, 8), "tick": (13, 27), "current_label": (16, 23), "band": (29, 31)}
 ROWS_BOOKMARKS = {"label": (11, 18), "tick": (23, 27), "current_label": (19, 26), "band": (29, 31),
                   "strip": (0, 8), "bookmark": (0, 4)}
 BOOKMARK_STRIP = (0x45 / 255, 0x45 / 255, 0x45 / 255, 1.0)
-BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # the bookmark colour checked (Maya picks one per bookmark)
+BOOKMARK_RGB = (204 / 255, 92 / 255, 92 / 255)   # Maya's bookmark colour (Maya picks one per bookmark)
 TICK_PX = 2.0
 # Eight-pixel label row in Maya's standard 32 px ruler, converted to BLF size.
 RULER_FONT_SIZE = 8.0 / 0.72
@@ -600,7 +599,7 @@ NICE_STEPS = tuple(m * 10 ** e for e in range(8) for m in (1, 2, 5))
 
 # Maya cases (widget px, first, last frame) this model doesn't reproduce (tests/test_step186_time_slider.py; 32 of 43
 # match, the default 1-120 and the short ranges exactly): Maya's threshold also moves with the widget width and the
-# step, and uses steps of 4 / 400 / 4000 with wide labels  (). A grid search over
+# step, and uses steps of 4 / 400 / 4000 with wide labels . A grid search over
 # "max(a, b x digits)" thresholds with 1-2-4 steps matched 33 but drew 1-120 every 4 frames: not taken (delegated).
 STEP_MATCHES = 32
 STEP_DEVIATIONS = ((1292, 1, 10000), (692, 1, 120), (1592, 1, 120), (1592, 1, 60), (1292, 1, 215), (1292, 1, 230),
@@ -729,8 +728,7 @@ def playback_range(scene):
 
 # --- key ticks -----------------------------------------------------
 # Maya draws the keys of the selected nodes (setting timeSliderShowKeys "active") as 1 px lines over the
-# whole Time Slider height: displayRGBColor timeSliderKey red, timeSliderBreakdown green
-# (; checked in ).
+# whole Time Slider height: displayRGBColor timeSliderKey red, timeSliderBreakdown green.
 KEY_RGB = (1.0, 0.0, 0.0, 1.0)
 BREAKDOWN_RGB = (0.0, 1.0, 0.0, 1.0)
 
@@ -771,8 +769,8 @@ def playhead_half_width(context, frame):
 
 
 def key_x(region, frame, maya):
-    """Region x of a key tick: Maya draws it on the frame's tick, the left edge of the frame's cell (step 186,
-    ); other timelines keep Blender's frame centre."""
+    """Region x of a key tick: Maya draws it on the frame's tick, the left edge of the frame's cell (step 186);
+    other timelines keep Blender's frame centre."""
     return region.view2d.view_to_region(frame - 0.5 if maya else frame, 0, clip=False)[0]
 
 

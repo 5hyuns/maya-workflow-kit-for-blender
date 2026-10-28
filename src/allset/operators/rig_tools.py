@@ -3,9 +3,9 @@
 
 - Constrain > Parent / Point / Orient / Scale / Aim ...: Maya order (targets, then the constrained node
   last). In pose mode the constraint goes on the active joint (pose bone), the target is the selected
-  control object or joint — not on the armature object (-18,-3).
-- Modify > Add / Edit / Delete Attribute (Maya Modify menu Attributes section,
-  ): custom properties on the selected objects / joints,
+  control object or joint — not on the armature object.
+- Modify > Add / Edit / Delete Attribute (Maya Modify menu Attributes section):
+  custom properties on the selected objects / joints,
   which the Channel Box shows as channels.
 - Deform > Blend Shape: ``object.join_shapes`` (targets selected, base last = Maya's order).
 - Skeleton > Quick Rig: Rigify (bundled with Blender), enabled only after the user confirms.
@@ -32,8 +32,8 @@ CONSTRAINT_TYPES = (
 )
 CONSTRAIN_HINT = "Select the control first, then the joint last (joints in pose mode)"
 # Maya constraint commands that print "Target list was empty or contained no valid targets." with one node selected
-# (Parent:  B4; Point / Orient / Scale / Aim / Geometry: step 258 Maya,
-# research B4 additions). Attach to Motion Path is another command.
+# (Parent, Point / Orient / Scale / Aim / Geometry: step 258).
+# Attach to Motion Path is another command.
 MAYA_TARGET_ERROR = {'CHILD_OF', 'COPY_LOCATION', 'COPY_ROTATION', 'COPY_SCALE', 'TRACK_TO', 'SHRINKWRAP'}
 
 
@@ -81,7 +81,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             ob = context.active_object
             others = [o for o in context.selected_objects if o is not ob]
             if not others and self.type in MAYA_TARGET_ERROR:
-                # Maya with one object selected: an Error ( B4, step 258 Maya)
+                # Maya with one object selected: an Error (step 258)
                 self.report({'ERROR'}, maya_errors.NO_TARGETS)
                 return {'CANCELLED'}
             if not others:
@@ -94,7 +94,7 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             if bpy.ops.object.constraint_add_with_targets.poll():
                 bpy.ops.object.constraint_add_with_targets(type=self.type)
             else:
-                # a hidden object: Maya constrains it like any other (060_messages_ui.md B4, Closest Point), Blender's
+                # a hidden object: Maya constrains it like any other (Closest Point), Blender's
                 # operator refuses it ("Cannot edit hidden object") -> the same constraint through the data API, with
                 # the operator's target (the first other selected object)
                 con = ob.constraints.new(self.type)
@@ -134,12 +134,12 @@ class ALLSET_OT_constrain(bpy.types.Operator):
 
 # --- Aim (Maya aimConstraint) -----------------------------------------------------------------------
 
-# Maya aimConstraint factory values (): aim vector +X, up vector +Y, world up
+# Maya aimConstraint factory values: aim vector +X, up vector +Y, world up
 # type Vector, world up vector (0, 1, 0). Maya is Y-up: an object's Maya X / Y / Z = Blender X / Z / -Y (
 # step 57); a joint's Maya X / Y / Z = the bone's Y / Z / X (the bone's Y points at the child, Maya's primary X).
 AIM_VECTOR, UP_VECTOR, WORLD_UP = (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), "Vector"
 # Maya aimConstraint world up types (enum order of the node's worldUpType: Scene Up / Object Up / Object Rotation Up /
-# Vector / None, command default Vector — step 252,  A11 + "Step 252 checked")
+# Vector / None, command default Vector — step 252)
 WORLD_UP_TYPES = ("Scene up", "Object up", "Object rotation up", "Vector", "None")
 AIM_UP = "allset_aim_up"          # helper empty: name of the aim constraint whose up it carries
 UP_SUFFIX = " up"                 # the Locked Track that turns an Object up aim about its aim axis
@@ -186,11 +186,11 @@ def is_up_companion(con):
 def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP, bone=False, up_object=None,
         world_up_vector=(0.0, 1.0, 0.0)):
     """Make ``con`` (a Track To just added to ``cons``) Maya's aim: the owner's ``aim_vector`` points at the target,
-    its ``up_vector`` towards the world up w projected across the aim (Maya aimConstraint, checked). Blender:
+    its ``up_vector`` towards the world up w projected across the aim (Maya aimConstraint). Blender:
     - Scene up / Vector (0, 1, 0): Track To up = world Z (= Maya Y);
     - Vector w / Object rotation up (w = worldUpVector x the up object's matrix): Track To with ``use_target_z`` on a
       hidden empty at the aim target whose Z axis is w;
-    - Object up (w = up object position - constrained position; no object = the world origin, checked): Damped
+    - Object up (w = up object position - constrained position; no object = the world origin): Damped
       Track + Locked Track (lock = aim axis, track = up axis) at the up object — the same turn about the aim;
     - None = Damped Track (the shortest turn, like Maya).
     Raises RuntimeError for vectors Blender's constraints can't take."""
@@ -260,7 +260,7 @@ def aim(cons, con, aim_vector=AIM_VECTOR, up_vector=UP_VECTOR, world_up=WORLD_UP
 
 # --- Blend Shape ------------------------------------------------------------------------------------
 
-# Maya Blend Shape Options with a Blender meaning (): BlendShape node
+# Maya Blend Shape Options with a Blender meaning: BlendShape node
 # name (= the base's shape key datablock, Maya blendShapeN when empty), Origin Local / World, Check topology, Delete
 # targets. Envelope and In-between have no Blender equivalent (the option window lists them as such).
 BLEND_ORIGINS = (("LOCAL", "Local", "Targets match the base vertex by vertex in object space"),

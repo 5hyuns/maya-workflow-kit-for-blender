@@ -1,6 +1,6 @@
 """Step 175 in the Maya Workflow Kit layout: G repeats the last Maya command, menu items too.
 
-Maya 2022 (): Create > Polygon Primitives > Cube from the menu, then G = the next cube;
+Maya 2022: Create > Polygon Primitives > Cube from the menu, then G = the next cube;
 Edit > Repeat reads 'Repeat "<command>"'. Here: the menu item runs like a click on it (allset.menu_item), then the real
 G key over the viewport; a key command (Ctrl+D) afterwards is what the next G repeats; the Edit menu is opened for a
 shot of its Repeat row."""

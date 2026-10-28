@@ -155,7 +155,7 @@ def s_rmb():
             and r.rect[1] < b.rect[3] and b.rect[1] < r.rect[3]]
     check(f"G2 the list doesn't cover the ring ({over[:3]})", not over)
     # step 193: the ring stays at the press point (marks keep working); a list that doesn't fit under it goes beside
-    # it (Maya lifts the whole menu only at the screen bottom,  — Blender's window is
+    # it (Maya lifts the whole menu only at the screen bottom — Blender's window is
     # smaller than the screen)
     check(f"G2 the ring stays at the press point ({s.center} / {s.press})", s.center == s.press)
     _area, region = main_view()

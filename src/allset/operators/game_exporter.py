@@ -2,7 +2,7 @@
 """Maya File > Game Exporter (step 225, Issue #135; ATTACH_PLAN L24): the Model / Animation export window with
 Maya's Animation Clips list, written with the kit's Maya FBX preset (operators/file_io.py, step 222 rig post-process).
 
-Maya 2026 (Maya, ; the Game Exporter window):
+Maya 2026 (the Game Exporter window):
 
 - settings live on a ``gameFbxExporter`` node; factory values (createNode, ``FACTORY``): Export All, Model tab,
   one file, Bake Animation on, Skinning / Blend Shapes on, Smoothing Groups / Tangents and Binormals on, Triangulate /
@@ -12,7 +12,7 @@ Maya 2026 (Maya, ; the Game Exporter window):
 - clips export as FBX takes (``FBXExportSplitAnimationIntoTakes`` name start end): **one file** = the file name
   (``.fbx`` added) with a take per exported clip; **a file per clip** = file name used as a prefix + clip name +
   ``.fbx``. Maya's files also carry the FBX plug-in's own ``Take 001`` and its
-  per-clip loop never clears the take list, so a later clip file repeats the earlier clips' takes (checked) — the
+  per-clip loop never clears the take list, so a later clip file repeats the earlier clips' takes — the
   kit writes only the clip's own takes (delegated: engines would import those extra clips).
 
 Blender (step 231, Issue #140): each clip is the scene's timeline take written by the kit's Maya FBX preset (the
@@ -37,7 +37,7 @@ FACTORY = {"export_type": 'MODEL', "export_set": 'ALL', "model_file_mode": 'SING
            "include_lights": True}
 # What a user sees: the window applies its default presets the first time it opens
 # — Model tab "Model Default", Animation Clips tab "Anim Default" (step 266 independent
-# check, Maya 2026, both presets applied to a fresh node). The kit keeps the per-tab values.
+# check, both presets applied to a fresh node). The kit keeps the per-tab values.
 PRESET_MODEL = {"embed_media": True, "include_children": True, "input_connections": True}
 PRESET_ANIM = {"file_split": 'PER_CLIP', "embed_media": True, "include_cameras": False, "include_children": False,
                "input_connections": False}
@@ -457,7 +457,7 @@ def draw(layout, context):
         sub = grid.row()
         sub.enabled = name not in {"blendshapes", "move_to_origin"}
         sub.prop(s, tab_prop(s, name))
-    # Maya: the "Up Axis" label, then Y / Z ( B6)
+    # Maya: the "Up Axis" label, then Y / Z
     _row(col, "Up Axis").row().prop(s, "up_axis", expand=True)
     box = layout.box()
     _row(box, "Path").prop(s, "export_path", text="", placeholder="Choose an export directory")

@@ -4,8 +4,8 @@
 The kit tool ``allset.multi_cut_tool`` (ui/mesh_tools.py) runs ``allset.multi_cut``, a modal that places Maya's cut
 points and cuts on completion:
 
-- click an edge = a point on it (``NN%`` from the edge's first vertex, like polySplit's edge fraction, checked:
-  ), a vertex = start there, inside a face = a point on the face; press-drag slides the
+- click an edge = a point on it (``NN%`` from the edge's first vertex, like polySplit's edge fraction),
+  a vertex = start there, inside a face = a point on the face; press-drag slides the
   point along its edge, Shift snaps it to the Snap Step %; a live line runs from the last point to the mouse;
 - Backspace removes the last point, Enter / RMB completes the cut (one undo step) and the tool stays, Esc drops the
   points (with none placed it leaves the tool for Select);

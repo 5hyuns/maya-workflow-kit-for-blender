@@ -2,7 +2,7 @@
 """``maya.cmds`` scene / DAG commands of the kit's look-alike (step 208, Issue #115): delete, rename, objExists,
 listRelatives, parent, group, duplicate, spaceLocator.
 
-checked  (Maya 2022, , cases ): return
+Maya's behaviour: return
 values, names, selection after each command, world positions kept. They go through the kit's own operations —
 ``parenting`` (), ``group``, ``duplicate``, ``dag.delete_hierarchy`` (step 164), ``create`` — so a script
 gives what the menus give.
@@ -165,7 +165,7 @@ def listRelatives(*args, **kwargs):
 
 def parent(*args, **kwargs):
     """``parent child... parent`` / ``parent -w child...``: world positions kept (``-r``: local values kept), the
-    children end up selected; returns their names (Maya)."""
+    children end up selected; returns their names."""
     from ..operators import parenting
     f = _Flags("parent", kwargs)
     world = f.get("world", "w", False)
@@ -212,7 +212,7 @@ def _shape_target(name):
 
 
 def _parent_shape(names, relative):
-    """``parent -s [-r] curveShape... joint|curve`` (step 226, ): the curve
+    """``parent -s [-r] curveShape... joint|curve`` (step 226): the curve
     shapes become the joint's control shape (bone Custom Shape) or join the target curve. Returns the shape names."""
     from ..operators import control_shapes
     if names:
@@ -248,7 +248,7 @@ def _empty(context, kind, name):
 def group(*args, **kwargs):
     """``group`` = Ctrl+G: a new transform at the origin of the common parent (``-w`` world, ``-p`` under a given
     node), the objects under it keeping their world positions; ``-em`` = an empty group ``nullN``. The group is
-    selected; returns its name (Maya)."""
+    selected; returns its name."""
     from ..operators import parenting
     from ..operators.group import common_parent
     f = _Flags("group", kwargs)
@@ -296,7 +296,7 @@ def _preorder(ob):
 def duplicate(*args, **kwargs):
     """``duplicate`` = Ctrl+D: each root with everything under it, without its creation node, Maya names (one past
     the highest number; a shape not named ``<base>Shape<N>`` becomes ``<copy>Shape``). Returns the copies' roots
-    and, without ``-rr``, the transforms under them; they end up selected (Maya). Maya allows the same child name
+    and, without ``-rr``, the transforms under them; they end up selected. Maya allows the same child name
     under two parents, Blender doesn't: copied children get new numbers (pCube1 under rig1 -> pCube2)."""
     from ..operators import duplicate as dup
     import re

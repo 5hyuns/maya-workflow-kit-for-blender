@@ -2,8 +2,8 @@
 """Step 78 keys: Shift+G repeat last at the mouse position, Ctrl+Shift+C camera from
 the view.
 
-- Shift+G = Maya's Repeat Last at the mouse position
-  (): the point on the
+- Shift+G = Maya's Repeat Last at the mouse position:
+  the point on the
   ground plane under the mouse, then the last action again, then the (new) selection moved there.
 - Ctrl+Shift+C = ``MTcreateCameraFromView`` (Maya default hotkey).
 """

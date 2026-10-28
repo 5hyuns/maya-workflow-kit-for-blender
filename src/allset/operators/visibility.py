@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya object visibility keys: h, Ctrl+H, Alt+H, Shift+H, Ctrl+Shift+H.
 
- (Maya default hotkeys): h toggles the visibility of the
+Maya default hotkeys: h toggles the visibility of the
 selection and keeps it selected; Ctrl+H hides the selection, Alt+H the rest;
 Shift+H shows the selected hidden objects; Ctrl+Shift+H shows what was hidden last.
 
@@ -15,7 +15,7 @@ as an ID property on the object (``KEPT``). ``LAST`` marks what the latest hide 
 operator hid.  2.
 
 Step 162: Toggle Show/Hide (h) follows Maya's "Toggle Visibility Options" (setting
-toggleVisibilityAndKeepSelectionBehaviour, checked , ): the toggled set is
+toggleVisibilityAndKeepSelectionBehaviour): the toggled set is
 the selection = the visible selected objects plus the hidden-but-selected ones (``KEPT``). First Selection Independent
 (factory, 1) flips each object; Dependent (2) gives every one the opposite of the first selected object's visibility.
 The saved window value (option_windows.saved("toggle_show_hide")) applies to h and the menu click alike.

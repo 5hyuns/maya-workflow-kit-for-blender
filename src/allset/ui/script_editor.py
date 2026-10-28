@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Script Editor window.
 
-Maya 2022 (audit-7 pair h05_script_editor_win1; menus captured in ):
+Maya 2022:
 menu bar File / Edit / History / Command / Tabs / Help, an icon row, the history pane (echo of commands and results)
 over the input pane with tabs MEL / Python (+). Ctrl+Enter executes and keeps the input; the Execute button / numpad
 Enter executes and clears it (Maya ).

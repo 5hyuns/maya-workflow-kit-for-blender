@@ -1,5 +1,5 @@
 """Step 100: Maya's default material — every new shape joins initialShadingGroup = lambert1 (color 0.5, lambert;
-checked : lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
+Maya: lambert1.color (0.5, 0.5, 0.5), diffuse 0.8, Delete Unused Nodes keeps it, a new Lambert is
 lambert2). """
 
 from importlib import import_module

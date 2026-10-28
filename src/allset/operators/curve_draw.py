@@ -4,7 +4,7 @@
 Window-level modals like the Joint Tool (operators/joints.py, step 57): menus / shelf invoke them from any context and
 each click finds the 3D View WINDOW region under the mouse itself (not the Tool Box column). Maya places curve points on
 the ground grid in a perspective view (Blender z = 0) and on the view plane through the origin in orthographic views
-(; same rule as the Joint Tool, ``joints.click_point``).
+(same rule as the Joint Tool, ``joints.click_point``).
 
 Keys (Maya curve contexts): LMB press = new point, drag = move it, release = place it; Enter = finish (CV: degree + 1
 points, EP: 2 points, else the tool keeps waiting); Backspace / Delete = remove the last point; Esc or a tool key
@@ -92,7 +92,7 @@ class Drawing:
 
 def make(context, kind, points, degree=3, sections=8):
     """Make the Maya curve for the clicked ``points`` through curves_maya; named ``curveN``. Arcs: Maya's Arc
-    Settings degree 1 / 3 and sections (factory 3 / 8, )."""
+    Settings degree 1 / 3 and sections (factory 3 / 8)."""
     pts = [Vector(p) for p in points]
     if kind == CV:
         ob = curves_maya.make_cv_curve(context, pts, degree)

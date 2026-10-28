@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's viewport grid: finite, 12 units each way, a line every unit, thicker every 5, axes thicker.
 
-Maya 2022 factory grid ( metrics.grid {size 12, spacing 5, divisions 5};
-): lines from -12 to +12 every 1 unit, every
+Maya 2022 factory grid (size 12, spacing 5, divisions 5): lines from -12 to +12 every 1 unit, every
 5th line (and the axes through the origin) thicker, all the same grey (displayColor grid / gridAxis /
-gridHighlight = index 2, #404040, a kit colour since step 134: no theme), aliased. checked in
- only the background and #404040 in the view, minor lines 1 px, major lines and axes 2 px
-.
+gridHighlight = index 2, #404040, a kit colour since step 134: no theme), aliased. Maya's view
+shows only the background and #404040, minor lines 1 px, major lines and axes 2 px.
 
 Blender's floor is infinite with unit-system steps of x10 (no 5-unit lines, ), so
 the kit draws its own grid with a POST_VIEW handler in the 3D views that use it: on the ground in perspective and
 user views, ±size.
 
 Step 161: Maya's ortho cameras draw the grid in their own view plane and across the whole panel, not ±size
-( the top, front and side panels are ~31 units across and gridded edge to edge;
+(Maya's four view: the top, front and side panels are ~31 units across and gridded edge to edge;
 the step-45 reading "front / side show no grid" was wrong). Axis ortho views (``is_orthographic_side_view``) get
 lines in their plane over the visible span (``span_segments``), in chunks so panning rebuilds the batch rarely.
 
@@ -36,10 +34,10 @@ import bpy
 SIZE = 12
 SPACING = 5
 DIVISIONS = 5
-# Line widths in px (01_layout_empty.png): minor, major (every SPACING), axes.
+# Line widths in px: minor, major (every SPACING), axes.
 WIDTHS = (1.0, 2.0, 2.0)
-# Line colour: Maya displayColor grid / gridAxis / gridHighlight = index 2 = #404040 (colors.json; every grid pixel
-# of 01_layout_empty.png / 03_cube_unselected.png). A kit colour, not the theme's grid colour: the kit ships no theme
+# Line colour: Maya displayColor grid / gridAxis / gridHighlight = index 2 = #404040.
+# A kit colour, not the theme's grid colour: the kit ships no theme
 # since step 130 and Blender's (#545454) all but vanished on Maya's #5c5c5c (#59, ).
 # The axes are the same grey, only thicker (no darker pixel in the Maya shots).
 LINE_RGB = (64 / 255, 64 / 255, 64 / 255)
@@ -83,7 +81,7 @@ def segments(size=SIZE, spacing=SPACING, divisions=DIVISIONS):
 def styles(opts):
     """What each kind of line is drawn as for Maya Grid Options ``opts`` (``settings()``): {kind: (width px, rgb)}
     for the kinds shown. Axes off = the origin lines are ordinary grid lines; Thicker line for axes off = axes as
-    thin as subdivision lines (step 152, delegated: not checked in Maya)."""
+    thin as subdivision lines (step 152, delegated)."""
     out = {}
     if opts["show_divisions"]:
         out["minor"] = (WIDTHS[0], tuple(opts["division_color"]))
@@ -122,7 +120,7 @@ def plane_points(segs, plane="FLOOR", unit=1.0):
 
 def plane_for_view(perspective, side_view, view_dir):
     """Grid plane of a view: Maya's ground plane, or the view plane of an axis ortho view (Maya's top / front /
-    side cameras grid their own plane, ). ``view_dir`` = the view's looking
+    side cameras grid their own plane). ``view_dir`` = the view's looking
     direction in world space (x, y, z)."""
     if perspective == 'ORTHO' and side_view:
         axis = max(range(3), key=lambda k: abs(view_dir[k]))

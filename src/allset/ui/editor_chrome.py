@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya editor chrome for the Graph Editor, Dope Sheet and UV Editor.
 
-Maya 2022 checked in a GUI session (, ):
+Maya 2022's editors:
 
 - menu bars: Graph Editor Edit / View / Select / Curves / Keys / Tangents / List / Show / Help, Dope Sheet the same
   without Select, UV Editor Edit / Create / Select / Cut/Sew / Modify / Tools / View / Image / Textures / UV Sets /
   Help (structure ``editor_menu_data``, actions ``editor_menu_map``, classes built by ``menu_sets``);
-- icon rows under them (control names in the capture's ``widgets``; order kept, Maya icons not copied);
+- icon rows under them (Maya's control names; order kept, Maya icons not copied);
 - the Graph Editor's outliner lists the object and its attributes "Translate X" (red) / "Translate Y" (green), no
-  Action / group rows (graph_editor_win1.png).
+  Action / group rows.
 
 Blender: ``GRAPH_HT_header.draw`` and ``DOPESHEET_HT_header.draw`` are swapped while the kit is on (restored on
 unregister, ``tests/kit.py`` snapshots them); the UV Editor's header / tool header go through the ``ui/shelf.py``
@@ -99,7 +99,7 @@ def draw_menus(layout, context, editor):
 
 
 # --- icon rows -----------------------------------------------------------------------------------------------------
-# (Maya control name from the capture, Blender icon, action or None, Maya tooltip). An action is a menu_map value
+# (Maya control name, Blender icon, action or None, Maya tooltip). An action is a menu_map value
 # (incl. ("prop", ...)); "|" = separator, "STATS" = the selected key's time / value fields, "IMAGE" / "UVMAP" = the
 # UV Editor's texture field / UV set. Unmapped buttons draw greyed with their notice (NOTICES below).
 
@@ -225,8 +225,7 @@ def _hsg(action):
     return ("allset.hs_graph", {"action": action})
 
 
-# Maya Hypershade graph toolbar (step 131: control names + tooltips from 
-# _hypershade131.json); actions run in the Hypershade's graph (ui/hypershade.py)
+# Maya Hypershade graph toolbar (step 131: Maya's control names + tooltips); actions run in the Hypershade's graph (ui/hypershade.py)
 HS_GRAPH_ICONS = (
     ("showUpstreamButton", 'BACK', _hsg("UPSTREAM"), "Input connections"),
     ("showUpAndDownstreamButton", 'ARROW_LEFTRIGHT', _hsg("BOTH"), "Input and output connections"),
@@ -458,8 +457,7 @@ def _stats_set(field):
 
 
 # --- Graph Editor channel list (Maya outliner pane: node rows, "Translate X" rows) --------------------------------
-# Maya lists DAG nodes with their animated attributes under them (
-# e02_graph_editor_win1.png, ): objects, joints (= pose bones,
+# Maya lists DAG nodes with their animated attributes under them: objects, joints (= pose bones,
 #  step 55; their curves live on the armature object as ``pose.bones["joint1"].location``) and the
 # blendShape node of a mesh (= its shape-key datablock, ``rig_tools`` names it blendShapeN; its curves are the Key
 # ID's ``key_blocks["smile"].value``, one row per target, Maya's attribute = the target name). Step 150, #96.
@@ -470,13 +468,13 @@ MAYA_ATTR = {"location": "Translate", "rotation_euler": "Rotate", "scale": "Scal
 # in Maya, the closest is the shape's render stat Primary Visibility (step 150, delegated).
 MAYA_SCALAR = {"hide_render": "Primary Visibility"}
 AXES = "XYZ"
-# Maya's default attribute name colours in the Graph Editor outliner (graph_editor_win1.png: Translate X red,
+# Maya's default attribute name colours in the Graph Editor outliner (Translate X red,
 # Translate Y green; Z blue by the same rule as the manipulator / theme axis colours), other attributes light grey.
 AXIS_COLOR = ((0.9, 0.25, 0.25, 1.0), (0.25, 0.85, 0.25, 1.0), (0.35, 0.55, 1.0, 1.0))
 TEXT = (0.85, 0.85, 0.85, 1.0)
 BACK = (0.267, 0.267, 0.267, 1.0)        # Maya outliner pane #444444 (colors.json ui_samples)
 SELECT = (0.322, 0.522, 0.651, 1.0)      # Maya selection blue #5285a6 (kit-drawn pane: Maya's colours, any theme)
-THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (e02_graph_editor_win1.png, right of the rows)
+THUMB = (0.36, 0.36, 0.36, 1.0)          # Maya scroll bar thumb (right of the rows)
 _expanded = {}                           # node key -> bool (Maya shows attributes expanded)
 _scroll = {}                             # area pointer -> first row shown
 # Rows the user picked in this outliner (Maya highlights only those, not every attribute of a selected node), valid
@@ -621,8 +619,8 @@ def row_id(row):
 def listed_objects(context, space):
     """Objects the Maya list shows as rows (animated, also by shape keys): the loaded list, else the selection with
     Auto Load, else all; plus Hierarchy Below (Dope Sheet), narrowed by Show > Objects (step 203), by name. Driven
-    channels count like keyed ones (Maya lists a driven-key / expression channel, 
-    graph_editor_201.md-4)."""
+    channels count like keyed ones (Maya lists a driven-key / expression
+    channel)."""
     ds = space.dopesheet
     obs = [ob for ob in context.scene.objects
            if (ob.animation_data and (ob.animation_data.action or ob.animation_data.drivers))
@@ -637,7 +635,7 @@ def listed_objects(context, space):
 
 
 # --- List > Load / Add Selected Objects, Auto Load, Pin Channel, Show filters (step 203, #110) --------------------
-# Maya, checked in Maya 2022 (-5): Auto Load Selected Objects is on by
+# Maya 2022: Auto Load Selected Objects is on by
 # default and the list follows the selection; unchecking it freezes the list shown then; Load / Add Selected Objects
 # are greyed while Auto Load is on (the kit's poll fails) and replace / append the frozen list (nothing selected =
 # empty list), Auto Load stays off. Maya's first Add right after a Load drops the loaded objects — the kit appends
@@ -740,7 +738,7 @@ def sdk_target(fc):
 
 
 def upstream_rows(node, fc):
-    """Maya Show Upstream Curves rows under a driven-key channel (graph_editor_201.md, grab 40): the SDK curve
+    """Maya Show Upstream Curves rows under a driven-key channel: the SDK curve
     labelled by its input ("> pCube1.User A") = the driver curve itself, then the driver attribute's own anim curve
     ("pCube1.User A") when it is keyed. [(kind, fcurve, label)]."""
     tgt = sdk_target(fc)
@@ -765,7 +763,7 @@ def _object_kinds():
 
 def row_objects(context, space):
     """Objects the Maya list is made of (None = every object): loaded, else selected with Auto Load, plus Hierarchy
-    Below (Dope Sheet). A checked Show > Objects item lists only nodes of that type (graph_editor_201.md):
+    Below (Dope Sheet). A checked Show > Objects item lists only nodes of that type:
     IkHandles keeps the IK handles (kit IK handles = IK constraint targets, operators/by_type.py), Sets / Characters
     alone list no objects (their nodes come from ``listed_nodes``)."""
     names = loaded_names(space)
@@ -820,7 +818,7 @@ def _character_members(context):
 def drawn_objects(context, space):
     """Objects Blender must draw for this editor (None = every object): the list's objects plus the owners of
     pinned curves, of upstream curves (Graph Editor) and the members of listed character nodes (a set node has no
-    channels, graph_editor_201.md)."""
+    channels)."""
     obs = row_objects(context, space)
     if obs is None:
         return None
@@ -895,7 +893,7 @@ def sync_space(context, space):
 
 def set_auto_load(context, space, on):
     """Maya Auto Load on: the list follows the selection (a loaded list is dropped); off: the list shown now is
-    frozen (Maya's locked copy, graph_editor_201.md: selecting other objects no longer changes it)."""
+    frozen (Maya's locked copy: selecting other objects no longer changes it)."""
     ds = _ds(space)
     if ds is None:
         return
@@ -1024,7 +1022,7 @@ def _character_routed(node):
 
 
 def curve_kinds(node, fc, driver=None, routed=()):
-    """Maya Show > Attributes kinds of a curve (graph_editor_201.md): a keyed curve is "anim_curve" unless it is
+    """Maya Show > Attributes kinds of a curve: a keyed curve is "anim_curve" unless it is
     a character member (``routed``); a kit SDK driver is "driven_key" and "anim_curve" (its input is the SDK anim
     curve), another scripted driver "expression"."""
     from . import channel_box
@@ -1071,7 +1069,7 @@ def node_drivers(node):
 
 def filter_curves(node, curves, flt=None):
     """The node's curves (keyed and driver curves) the checked attribute filters list: none checked = all, several
-    = their union (Maya, graph_editor_201.md); pinned curves always."""
+    = their union (Maya); pinned curves always."""
     flt = attr_filters() if flt is None else flt
     if not flt:
         return list(curves)
@@ -1095,7 +1093,7 @@ def listed_nodes(context, space):
     """[(kind, node, curves)]: per listed object its own row (when it has curves of its own), its joints (with Only
     Show Selected only the selected ones, in any mode: Blender's Graph Editor draws no curves of unselected bones
     then — checked in gui_step150_outliner), its blendShape node. A node's curves are its keyed and its driven
-    (driver) channels: Maya lists a driven-key / expression channel too (graph_editor_201.md-4). A checked Show >
+    (driver) channels: Maya lists a driven-key / expression channel too. A checked Show >
     Objects > Sets / Characters lists only those nodes (): kit sets as rows without channels (a Maya set row has
     none), character sets (a character is a set) with their member channels; kit sets and characters can't be
     selected like Maya's, so every one is listed (delegated)."""
@@ -1129,7 +1127,7 @@ def listed_nodes(context, space):
         if key is not None:
             add("SHAPES", key, object_curves(key) + node_drivers(key))
     # pinned channels stay listed under their node whatever the list / selection is now, the node below the listed
-    # ones (Maya Pin Channel, graph_editor_201.md)
+    # ones (Maya Pin Channel)
     shown = {node_key(n) for _k, n, _c in out}
     for node in _pinned_nodes():
         if node_key(node) in shown:
@@ -1170,7 +1168,7 @@ _up_label = {}                                   # (row kind, fcurve pointer) ->
 
 def shows_upstream(space, flt=None):
     """Graph Editor List > Show Upstream Curves (Maya factory on): upstream rows show unless an attribute filter
-    other than Driven by Driven Key is checked (Driven by Anim Curve hides them, graph_editor_201.md)."""
+    other than Driven by Driven Key is checked (Driven by Anim Curve hides them)."""
     flt = attr_filters() if flt is None else flt
     return (not _is_dope_space(space) and _wm_flag("allset_show_upstream")
             and (not flt or "driven_key" in flt))
@@ -1287,7 +1285,7 @@ PIN_OFF = (0.55, 0.55, 0.55, 1.0)
 
 
 def _draw_pin(x, y, s, pinned):
-    """Maya's pin icon left of a channel row's name (graph_editor_201.md, grab 22): an upright push-pin on a
+    """Maya's pin icon left of a channel row's name: an upright push-pin on a
     pinned row (head, plate, needle), a grey sideways one on the others."""
     if pinned:
         _rect(x - 2 * s, y + 1 * s, x + 2 * s, y + 6 * s, PIN)
@@ -1602,7 +1600,7 @@ class ALLSET_OT_graph_list(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        # Maya greys Load / Add Selected Objects while Auto Load is on (graph_editor_201.md)
+        # Maya greys Load / Add Selected Objects while Auto Load is on
         space = getattr(context, "space_data", None)
         if _ds(space) is None:
             return False
@@ -1619,7 +1617,7 @@ class ALLSET_OT_graph_list(bpy.types.Operator):
 
 def _target_rows(context, space):
     """[(node, fcurve)] a channel command (Pin / Unpin Channel) acts on: the highlighted outliner rows, a node row =
-    all its channels; nothing highlighted = nothing (Maya, graph_editor_201.md). The highlight is the one drawn:
+    all its channels; nothing highlighted = nothing (Maya). The highlight is the one drawn:
     the rows picked in the list, else the selected nodes' rows."""
     all_rows = rows(context, space)
     picked = picked_ids(context, all_rows)
@@ -1714,7 +1712,7 @@ FLAGS = (
      "them as rows)"),
     ("allset_show_pins", "Show Pins", "Toggle display of pinning buttons in the outliner"),
 )
-# Maya factory: Show Upstream Curves checked (graph_editor_201.md); View > Show Pins checked (Maya 2026 capture)
+# Maya factory: Show Upstream Curves checked; View > Show Pins checked (Maya 2026)
 FLAGS_ON = {"allset_show_upstream", "allset_show_pins"}
 
 

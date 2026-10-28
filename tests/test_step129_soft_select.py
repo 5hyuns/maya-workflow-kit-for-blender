@@ -145,7 +145,7 @@ def test_b_drag_turns_on_both_and_cancel_restores():
 
 
 def test_b_drags_with_lmb_and_mmb():
-    """Maya: B + LMB **or** MMB drag ()."""
+    """Maya: B + LMB **or** MMB drag."""
     assert taphold.get_binding("soft_select").buttons == {'LEFTMOUSE', 'MIDDLEMOUSE'}
     assert taphold.get_binding("select_all").buttons == {'LEFTMOUSE'}
 

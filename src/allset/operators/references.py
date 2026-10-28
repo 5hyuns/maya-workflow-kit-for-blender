@@ -3,7 +3,7 @@
 
 A kit reference (step 69, ``project.reference``) is a collection named after its namespace, marked ``REF`` (the
 source path) and ``NODE`` (Maya's reference node name, propRN / propRN1), holding library overrides of the source
-file's first scene. Maya's rules checked  ():
+file's first scene. Maya's rules:
 
 - Reload keeps the reference edits and shows the source's other changes = ``Library.reload()`` (an edited attribute
   hides the source's change of that attribute in both programs: Maya's edit is a whole-attribute setAttr, Blender's
@@ -27,7 +27,7 @@ from bpy.props import EnumProperty, StringProperty
 from .. import results
 
 REF = "allset_reference"            # on the namespace collection: the source path (step 69)
-NODE = "allset_reference_node"      # Maya's reference node name: propRN, propRN1 (Maya)
+NODE = "allset_reference_node"      # Maya's reference node name: propRN, propRN1
 ORDER = "allset_reference_order"    # creation order (the Reference Editor lists references like Maya)
 REPLACED = "allset_reference_replaced"   # Recently Replaced Files (newest first)
 LOCKED = "allset_reference_locked"
@@ -56,7 +56,7 @@ def node_name(ref):
 
 
 def new_node_name(requested, scene=None):
-    """Maya: the first ``prop`` reference is propRN, the next one (namespace prop1) propRN1 (Maya)."""
+    """Maya: the first ``prop`` reference is propRN, the next one (namespace prop1) propRN1."""
     taken = {node_name(r) for r in references(scene)}
     base = f"{requested}RN"
     if base not in taken:

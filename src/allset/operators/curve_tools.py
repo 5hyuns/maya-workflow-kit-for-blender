@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Curves / Surfaces commands Blender can build (step 109,  「계획」 3).
 
-Results checked in Maya 2022  ( 「계획」, defaults of the commands):
+Results in Maya ( 「계획」, defaults of the commands):
 - Planar on a closed curve -> ``planarTrimmedSurface1``; here a copy of the curve filled in 2D (Blender fills
   closed 2D curves; the curve is flattened onto its local XY plane).
 - Loft / Extrude: real NURBS surfaces since step 181 (operators/surfaces_maya.py).
@@ -20,7 +20,7 @@ import bpy
 
 from . import naming, units
 
-# Maya Bevel Plus defaults (bevelPlus node, Maya): bevel width / depth 0.1, extrude depth 0.25.
+# Maya Bevel Plus defaults (bevelPlus node): bevel width / depth 0.1, extrude depth 0.25.
 BEVEL_WIDTH, BEVEL_DEPTH, EXTRUDE_DEPTH = 0.1, 0.1, 0.25
 
 
@@ -139,7 +139,7 @@ def resample(points, count, closed):
     return out
 
 
-# Loft / Extrude moved to operators/surfaces_maya.py (step 181: real NURBS surfaces, checked).
+# Loft / Extrude moved to operators/surfaces_maya.py (step 181: real NURBS surfaces, Maya-exact).
 
 
 # --- Bevel Plus ---------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ class ALLSET_OT_bevel_plus(bpy.types.Operator):
 
 
 # --- Offset Curve -------------------------------------------------------------------------------
-# Maya offsetCurve (Maya): distance 1, in the plane of the curve normal, towards normal x tangent (a line along
+# Maya offsetCurve: distance 1, in the plane of the curve normal, towards normal x tangent (a line along
 # +X with normal +Y moves to -Z; a radius-2 circle came out radius 1); result offsetNurbsCurve1, curve kept.
 OFFSET_DISTANCE = 1.0
 OFFSET_MIN_POINTS = 32
@@ -241,7 +241,7 @@ class ALLSET_OT_offset_curve(bpy.types.Operator):
 
 
 # --- Sweep Mesh ---------------------------------------------------------------------------------
-# Maya 2022 Sweep Mesh (sweep plug-in, Maya): a mesh sweep1 / sweepShape1 around the curve, default profile an
+# Maya 2022 Sweep Mesh (sweep plug-in): a mesh sweep1 / sweepShape1 around the curve, default profile an
 # 8-sided polygon of scale 1, 6 rings on a 4-CV curve (48 vertices, 40 faces); the curve is kept.
 SWEEP_RADIUS, SWEEP_SIDES = 1.0, 8
 

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 226 L4: Maya multi-target constraints (weighted average).
 
-Maya (, Maya ground truth  from
-): a point / orient / parent / scale constraint with several targets is
+Maya: a point / orient / parent / scale constraint with several targets is
 one node ``<owner>_<type><n>`` with one weight attribute ``<target>W<i>`` per target (factory 1.0), the result is the
 weighted average with the weights normalised w_i / Σw; every weight 0 = the equal-weight average.
 
@@ -13,14 +12,14 @@ The kit (one Blender constraint reads one target):
   (float 1.0 — keyable and drivable, Set Driven Key drives exactly these, step 226 L5).
 - Point / Orient / Parent: influence of member i = driver ``w_i / S_i if S_i > 0 else 1 / (i + 1)`` with
   S_i = w_0 + ... + w_i (Blender mixes the stack in order, so these influences give exactly the weighted average of
-  the positions; all 0 = the equal average and W0 0.5 · W1 0 = target A, both checked). Simple expressions only:
+  the positions; all 0 = the equal average and W0 0.5 · W1 0 = target A, both Maya). Simple expressions only:
   no Python auto-run needed (``driver.is_simple_expression``).
 - Parent with Maintain Offset (Maya default) / Point / Orient / Scale with Maintain Offset: each target gets a hidden
   helper empty holding the owner's offset from that target (point: Copy Location with offset; else Child Of the
   target with the offset as its own channels). The helpers live in the hidden collection ``.AllsetConstraintHelpers``
   (no scene: not in the Outliner, not exported, still evaluated as constraint targets — checked) and go when their
   constraint goes (``cleanup``, from a depsgraph handler through a timer).
-- Scale: Maya's multi-target scale is the weighted geometric mean (checked): member i = Copy Scale with
+- Scale: Maya's multi-target scale is the weighted geometric mean: member i = Copy Scale with
   ``power = w_i / Σw`` (equal split when Σw = 0), the first replaces, the others multiply (``use_offset``) — exact.
 - Rotation: Maya's interpType (orient / parent) — step 252 (#168), operators/constrain_interp.py: Shortest is the
   rotation members' influence w_i / W_total, the other types (factory Average) a kit-computed blend.
@@ -277,7 +276,7 @@ def _joint_from_object():
 # Step 233: an object's Maya axes are its Blender X / Z / -Y (joints.MAYA_WORLD), a joint's are its bone's Y / Z / X
 # (joints.JOINT_AXES), so a bone copying an object's rotation has to copy the object's frame turned by
 # MAYA_WORLD JOINT_AXES^-1 (Maya orientConstraint / parentConstraint without offset: the joint's axes = the target's;
-# Maya 2026 C:/Repos/bmk-strategy/audit230/maya/cons233.json, 90 deg off before). A bone target needs nothing.
+# 90 deg off before). A bone target needs nothing.
 
 
 def needs_joint_axes(owner, target, sub, ctype):

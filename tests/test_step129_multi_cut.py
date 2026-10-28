@@ -1,5 +1,5 @@
 """Step 129: Maya Multi-Cut tool (GitHub #27, #28). ;
-GUI: tests/gui/gui_step129_multi_cut.py. Cut counts checked  polySplit ()."""
+GUI: tests/gui/gui_step129_multi_cut.py. Cut counts = Maya polySplit."""
 
 import math
 from importlib import import_module

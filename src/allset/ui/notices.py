@@ -5,7 +5,7 @@
 One table for every place a Maya item has no Blender equivalent, or a different one: the item's tooltip
 (greyed items: ``allset.menu_unavailable``; items with a substitute: ``allset.menu_item``) and the Help
 Line, which shows the notice while the tooltip is up — Maya's Help Line shows a menu item's annotation the same
-way (). Keys are Maya menu label paths (``ui/menu_sets.iter_items``).
+way. Keys are Maya menu label paths (``ui/menu_sets.iter_items``).
 """
 
 import time
@@ -31,7 +31,7 @@ NOTICES = {
     "Windows/Settings/Preferences/Panel Editor": (
         "Workspaces", "Blender saves panel layouts as workspaces: drag area edges and save the file or "
         "use Windows > Workspaces."),
-    # Pivot / snapping (step 59, )
+    # Pivot / snapping (step 59)
     "Modify/Make Live": (
         "Face snapping", "Blender snaps onto every surface, not only the live one: Make Live turns face "
         "snapping on and names the surface in the Status Line."),
@@ -130,7 +130,7 @@ NOTICES = {
         "(radius 5, smooth), driven by softModNHandle."),
     "Render/IPR Render Current Frame": (
         "Viewport Rendered", "Blender's IPR is the viewport in Rendered shading (Render Region: Ctrl+B)."),
-    # FX (step 68, , )
+    # FX (step 68, )
     **{path: ("one-point mesh emitter", "Blender particles come from a mesh: Maya Workflow Kit makes a one-point mesh emitter1 "
               "with the particles, sized in Maya units.")
        for path in ("nParticles/Create Emitter", "nParticles/Create Emitter#2")},
@@ -140,13 +140,13 @@ NOTICES = {
     **{f"nCache/{item}": (
         "Baked caches", "Blender always plays a baked cache: Delete Cache to simulate again.")
        for item in ("Enable All Caches on Selected", "Disable All Caches on Selected")},
-    # Lights (PLAN W5, ; step 137 operators/lights.py)
+    # Lights (PLAN W5; step 137 operators/lights.py)
     **{f"Create/Lights/{kind} Light": (
         f"{kind} light", "Maya Decay Rate No Decay renders in Cycles; Blender EEVEE and the viewport get darker with the "
         "square of the distance, the power matching Maya intensity 1 at 10 units.") for kind in ("Point", "Spot")},
     "Create/Lights/Area Light": (
         "Area light", "Blender's area light falls off like Maya's; its power matches Maya intensity 1 (2 x 2 units)."),
-    # step 214 (operators/maya_lights.py, -4)
+    # step 214 (operators/maya_lights.py)
     "Create/Lights/Ambient Light": (
         "World + point light", "Blender has no ambient light: the World colour gives the flat part and a point light "
         "the Ambient Shade part; surfaces turned away from the light get more light than in Maya."),
@@ -159,7 +159,7 @@ NOTICES = {
        for path in ("Skeleton/HumanIK", "Skeleton/Quick Rig", "Windows/Animation Editors/HumanIK",
                     "Windows/Animation Editors/Quick Rig")},
     # Scene / files (W3: Reference -> link + library override, Set Project -> relative paths)
-    # Scene management (step 69, operators/project.py, )
+    # Scene management (step 69, operators/project.py)
     "File/Create Reference...": (
         "Link + Library Override", "Blender references are linked .blend files: Maya Workflow Kit makes them editable "
         "(library override) and prefixes the names with the namespace (ns:name)."),
@@ -197,7 +197,7 @@ NOTICES.update({
         "Purge Unused Data", "Blender removes unused materials (and other unused data) with File > Clean Up > Purge."),
     "Modify/Replace Objects": (
         "Link Object Data", "Blender gives the selected objects the active object's mesh (Object > Link/Transfer Data)."),
-    # step 168: Evaluate Nodes items stand for Blender data ()
+    # step 168: Evaluate Nodes items stand for Blender data
     "Modify/Evaluate Nodes/IK Solvers": (
         "IK constraints", "Blender mutes the IK constraints (Maya switches the IK solve off); on again unmutes them."),
     "Modify/Evaluate Nodes/Expressions": (
@@ -423,7 +423,7 @@ CATEGORIES = {
 
 
 def _anim_editor_categories(ed):
-    """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104; menus captured in Maya 2026 since step
+    """Greyed items of the Graph Editor / Dope Sheet menu bars (step 104; Maya 2026's menus since step
     269)."""
     m = {
         f"{ed}/Edit/Transformation Tools": (
@@ -485,8 +485,8 @@ CATEGORIES.update({
     "UV Editor/View/Isolate Select": (
         "Add Selected / Remove Selected", "Blender has no saved quick-select sets to load into the isolate view: "
         "build it with Add Selected / Remove Selected (Ctrl+1 isolates the selection)."),
-    # step 178: Maya's symmetrizeUV only works after the Symmetrize UV brush's own seam pick in Maya (5 GUI
-    # sessions changed no UV, ): no checked rule to copy.
+    # step 178: Maya's symmetrizeUV only works after the Symmetrize UV brush's own seam pick in Maya
+    # (without it no UV changes): no rule to copy.
     "UV Editor/Modify/Symmetrize": (
         "UV > Mirror / Snap", "Blender has no UV symmetrize: mirror the UVs (Modify > Flip) and weld them (Match UVs), "
         "or unwrap with the mesh's symmetry (Mirror modifier with Mirror U)."),
@@ -624,7 +624,7 @@ PANEL_MENU = {
         "Editor > Film Offset)."),
     _PT + "Resolution Gate": (
         "Camera view frame (always on)", "Blender's camera view always draws the render resolution frame (Maya's "
-        "resolution gate; Maya's factory camera has it off, overscan 1.0, checked , step 177): it can't be "
+        "resolution gate; Maya's factory camera has it off, overscan 1.0): it can't be "
         "hidden. Gate Mask dims the outside (Blender passepartout)."),
     _PT + "Field Chart": (
         "Safe Action / Safe Title", "Blender has no field chart: the safe areas (Safe Action / Safe Title) are the "
@@ -763,8 +763,7 @@ NOTICES.update({
     for kind in ("Auto Ease", "Auto Mix", "Auto Custom")})
 
 
-# Step 269: Maya 2026 editor menu items with no Blender command (Maya annotations in
-# )
+# Step 269: Maya 2026 editor menu items with no Blender command (Maya annotations)
 _REMOVE_KEY = {
     "Unsnapped": ("Select Unsnapped", "Blender has no command that deletes unsnapped keys: Edit > Select Unsnapped, "
                   "then Delete."),
@@ -806,8 +805,8 @@ NOTICES.update({
 })
 
 
-# Step 150 (#96): Graph Editor View items Blender can't do, one line each (Maya annotations in
-# ); the mapped ones are in ui/editor_menu_map.py + ui/graph_view.py.
+# Step 150 (#96): Graph Editor View items Blender can't do, one line each (Maya
+# annotations); the mapped ones are in ui/editor_menu_map.py + ui/graph_view.py.
 _GE_VIEW = "Graph Editor/View/"
 NOTICES.update({
     **{_GE_VIEW + item: (
@@ -849,7 +848,7 @@ NOTICES.update({
 })
 
 
-# Greyed items of the Hypershade / Render Settings / Script Editor menu bars (step 105, captured in Maya 2022)
+# Greyed items of the Hypershade / Render Settings / Script Editor menu bars (step 105, Maya 2022)
 CATEGORIES.update({
     "Hypershade/File": (
         "File > Append", "Blender shares shading networks by appending or linking materials from another .blend "

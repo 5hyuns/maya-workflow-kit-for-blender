@@ -2,9 +2,6 @@
 """Maya 2022 Mesh Display colour commands (step 189): Apply Color, Rename / Modify Current Set, Set Keyframe for
 Vertex Color, Prelight (Maya), vertex bake sets (Assign New / Existing, Edit Assigned Set), Select Shared Instances.
 
-Rules:  (Maya ground truth mesh_display_184_colors*.json, scripts
-*_Maya.py).
-
 A Maya colour set = a Blender colour attribute, the current set = the active colour attribute; Maya colours live per
 vertex-face, so new sets are CORNER float colours (unclamped, like Maya). Maya corners can have no colour; Blender's
 can't [delegated: a corner Maya leaves uncoloured is white (1, 1, 1, 1), neutral under the material].
@@ -19,7 +16,7 @@ from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProp
 
 from .. import results, undo_steps
 
-NEW_SET = "colorSet1"          # Apply Color on a mesh without a set (Maya apply_object)
+NEW_SET = "colorSet1"          # Apply Color on a mesh without a set
 UNSET = (1.0, 1.0, 1.0, 1.0)
 APPLY_COLOR = (0.5, 0.5, 0.5)  # Maya Apply Color Options factory value (polyApplyColor<Channel>Value)
 APPLY_ALPHA = 1.0
@@ -28,7 +25,7 @@ OPERATIONS = (('REPLACE', "Replace", "Replace the colour (Maya factory)"), ('ADD
 BAKE_SETS = "allset_bake_sets"   # Scene ID property: {vertexBakeSetN: {Maya attribute: value}}
 BAKE_SET = "allset_bake_set"     # Object ID property: the assigned bake set's name
 BLENDS = ("Overwrite", "Add", "Subtract", "Multiply", "Divide", "Average")   # vertexBakeSet colorBlending 0-5
-# vertexBakeSet factory attributes the kit uses ()
+# vertexBakeSet factory attributes the kit uses
 BAKE_DEFAULTS = {"bakeColor": True, "bakeAlpha": False, "colorBlending": 0, "alphaBlending": 0, "scaleRgba": 1.0,
                  "clampMin": False, "minColor": (0.0, 0.0, 0.0, 0.0), "clampMax": False, "maxColor": (0.0, 0.0, 0.0, 1.0)}
 PRELIGHT_SAMPLES = 16          # Cycles bake samples [delegated: Maya's polyGeoSampler samples the shading network once]
@@ -83,7 +80,7 @@ IDENTITY = [(0.0, 0.0, 1), (1.0, 1.0, 1)]   # polyColorMod factory ramps (linear
 
 def color_mod(rgba, hue=0.0, saturation=1.0, value=1.0, red=IDENTITY, green=IDENTITY, blue=IDENTITY,
               alpha=IDENTITY, intensity=IDENTITY):
-    """Maya polyColorMod on one colour (Maya m2_* cases): clamp to [0, 1]; HSV: hue + degrees, saturation and value
+    """Maya polyColorMod on one colour: clamp to [0, 1]; HSV: hue + degrees, saturation and value
     multiplied (saturation not clamped before HSV -> RGB), clamp; channel ramps map r / g / b / a; the colour is
     multiplied by intensityScale(max(r, g, b)) — so the factory node darkens every colour by its own value."""
     r, g, b, a = (min(1.0, max(0.0, c)) for c in rgba)
@@ -106,7 +103,7 @@ def _hsv_to_rgb(h, s, v):
 
 def rename_error(names, new):
     """Maya Color Set Editor rename: an empty name or one already used fails ("Cannot rename color set to an existing
-    color set name."); spaces, digits first and dashes are accepted (Maya rename_*)."""
+    color set name."); spaces, digits first and dashes are accepted."""
     if not new or new in names:
         return "Cannot rename color set to an existing color set name."
     return None

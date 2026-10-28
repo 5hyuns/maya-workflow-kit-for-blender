@@ -2,7 +2,7 @@
 """Maya Modify > Align: Snap Align Objects, Snap Together Tool, Make Live, Match
 Transformations.
 
-checked in Maya 2022 ():
+Maya 2022:
 
 - S9 Point to Point: the object owning the first point moves (no rotation) so that point
   lands on the last one.
@@ -455,7 +455,7 @@ def step_snap_mode(ts, kind):
 
 
 # Step 263 (Issue #153): Maya keeps Relative / Absolute per tool (Move / Rotate /
-# Scale tool snapRelative,  B5), Blender has one Absolute Grid Snap flag
+# Scale tool snapRelative), Blender has one Absolute Grid Snap flag
 # for every transform. The kit keeps each tool's mode in STEP_PROP and puts it into Blender's flag when a transform
 # of that tool can start: the tool becomes active (tool_keys._watch), an LMB press on the manipulator
 # (manip.ALLSET_OT_manip_press), an MMB drag (manip_mmb), and when the user picks the mode of the active tool.
@@ -463,8 +463,8 @@ TOOL_KINDS = {"builtin.move": 'TRANSLATE', "builtin.rotate": 'ROTATE', "builtin.
 
 
 def absolute_offered(scene, kind):
-    """Maya offers Move's Absolute step snap only while its axis orientation is World (Move Tool Settings,
-    060_messages_ui.md B5); Rotate and Scale always offer it."""
+    """Maya offers Move's Absolute step snap only while its axis orientation is World (Move Tool Settings);
+    Rotate and Scale always offer it."""
     if kind != 'TRANSLATE':
         return True
     from ..ui import manipulator
@@ -556,7 +556,7 @@ def set_step_snap(ts, kind, mode):
             ts.use_snap = False
         return 'OFF'
     # step 263 (#153): the other tools keep their own Step Snap — one never set stays Off instead of following
-    # Blender's shared increment snap (Maya: a tool context's -snap is its own, 060_messages_ui.md B5)
+    # Blender's shared increment snap (Maya: a tool context's -snap is its own)
     was_snapping = ts.use_snap and 'INCREMENT' in ts.snap_elements
     for other, flag in STEP_FLAGS.items():
         if other == kind or rec.get(other) in ('RELATIVE', 'ABSOLUTE', 'OFF'):

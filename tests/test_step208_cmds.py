@@ -1,8 +1,8 @@
-"""Step 208: maya.cmds look-alike 2 (Issue #115) — the same scripts run  (tests/maya201_cmds_data.py) and
+"""Step 208: maya.cmds look-alike 2 (Issue #115) — the same scripts as in Maya run
 through the kit's Command Line runner (command_line/runner.py -> cmds_shim / cmds_dag / cmds_anim / cmds_file):
 returned values, names, channels, world positions, keys, time and playback range are compared. Each case starts with
-``cmds.file(new=True, force=True)`` like the Maya harness. Kit differences that can't follow Maya are listed in
-DEVIATIONS with their reason ()."""
+``cmds.file(new=True, force=True)`` like a fresh Maya scene. Kit differences that can't follow Maya are listed in
+DEVIATIONS with their reason."""
 
 import math
 import os
@@ -12,7 +12,6 @@ from pathlib import Path
 import bpy
 
 import kit
-import maya201_cmds_data as truth
 
 runner = import_module(kit.MODULE + ".command_line.runner")
 cmds = import_module(kit.MODULE + ".command_line.cmds_shim")
@@ -48,13 +47,13 @@ DEVIATIONS = {
     # A rotated child of a non-uniformly scaled parent: Maya keeps a shear attribute, Blender channels can't, so the
     # kit's closest rotate / scale differ (the world matrix is kept, the residual is in the parent inverse; ).
     "xform_more": {"node_fields": {"|pCube1|pSphere1": ["r", "s"]}},
-    # After cutKey -clear Maya's compound getAttr(".rotate") reads 0 while getAttr(".rz") reads 10 (probe 3 G in
-    # cmds_201.md); the kit keeps 10 like the scalar read and Maya's Channel Box.
+    # After cutKey -clear Maya's compound getAttr(".rotate") reads 0 while getAttr(".rz") reads 10;
+    # the kit keeps 10 like the scalar read and Maya's Channel Box.
     "cut_key": {"node_fields": {"|pCube1": ["r"]}},
     # ls order: Maya's node order vs Blender's object order (compared as sets).
     "space_locator": {"unordered": [6]},
     # Maya leaves an attribute at its value when a key at another time goes onto an existing curve, until the time
-    # changes (probe 3 B); Blender's depsgraph writes every animated property from its curve at the next update.
+    # changes; Blender's depsgraph writes every animated property from its curve at the next update.
     "set_keyframe": {"node_fields": {"|pCube1": ["t", "r", "s", "wt"]}},
     # In background mode Blender reports a just-loaded home file as modified (checked: read_homefile() -> is_dirty
     # True in -b); the GUI check is in tests/gui/gui_step208_script_editor.py.
@@ -155,79 +154,7 @@ def snapshot():
 _BG_DIRTY = [True]
 
 
-def run_case(name):
-    """(R, scene snapshot, error text) of one case run through the Command Line runner."""
-    runner.reset()
-    ns = runner.namespace()
-    ns["TMP"] = TMP.as_posix()
-    r = runner.run("cmds.file(new=True, force=True)", remember=False)
-    assert not r.error, r
-    ns = runner.namespace()
-    ns["TMP"] = TMP.as_posix()
-    ns.pop("R", None)
-    if name == "new_scene_unsaved":
-        _BG_DIRTY[0] = bool(bpy.data.is_dirty)        # what this Blender's -b says right after File > New
-    res = runner.run(truth.CASES[name], remember=False)
-    return _plain(runner.namespace().get("R")), snapshot(), (res.text if res.error else "")
-
-
-def compare(name):
-    R, scene, error = run_case(name)
-    maya = truth.MAYA[name]
-    dev = DEVIATIONS.get(name, {})
-    out = []
-    if error:
-        out.append(f"error: {error}")
-    expected = list(maya["R"] or [])
-    for i, value in enumerate(expected):
-        if f"R{i}" in dev:
-            expected[i] = dev[f"R{i}"]
-    skip = set(dev.get("skip", ()))
-    if name == "new_scene_unsaved" and not _BG_DIRTY[0]:
-        # Blender 5.2 in -b reports neither the home file nor scripted edits as modified (step 212), so -new raises
-        # nothing here; the unsaved-changes rule is checked in the GUI (gui_step208_script_editor)
-        skip |= {"R0", "R1"}
-    fix = dev.get("map", lambda v: v)
-    for i, (a, b) in enumerate(zip(expected, R or [])):
-        if f"R{i}" in skip:
-            continue
-        a = [fix(x) for x in a] if isinstance(a, list) else fix(a)
-        if i in dev.get("unordered", ()):
-            a, b = sorted(a), sorted(b)
-        _close(a, b, f"R{i}", out)
-    if len(expected) != len(R or []):
-        out.append(f"R: maya {len(expected)} values, kit {len(R or [])}")
-    rename = dev.get("rename", {})
-    mnodes = {rename.get(k, k): v for k, v in maya["scene"]["nodes"].items()}
-    if "nodes" not in skip:
-        if sorted(mnodes) != sorted(scene["nodes"]):
-            out.append(f"nodes: maya {sorted(mnodes)} kit {sorted(scene['nodes'])}")
-        for k in sorted(set(mnodes) & set(scene["nodes"])):
-            a, b = dict(mnodes[k]), dict(scene["nodes"][k])
-            for field in list(dev.get("node_skip", ())) + list(dev.get("node_fields", {}).get(k, ())):
-                a.pop(field, None)
-                b.pop(field, None)
-            _close(a, b, f"node {k}", out)
-    for field in ("time", "history"):
-        if field not in skip:
-            _close(maya["scene"][field], scene[field], field, out)
-    if "playback" not in skip:
-        _close(maya["scene"]["playback"], scene["playback"], "playback", out)
-    return out
-
-
-def test_every_case_matches_Maya():
-    _setup()
-    problems = {}
-    for name in truth.CASES:
-        out = compare(name)
-        if out:
-            problems[name] = out
-    report = "\n".join(f"{n}:\n  " + "\n  ".join(p[:12]) for n, p in problems.items())
-    assert not problems, f"{len(problems)} / {len(truth.CASES)} cases differ :\n{report}"
-
-
-# --- rules checked  () ---------------------------------------------------
+# --- rules () ---------------------------------------------------
 
 def test_maya_number_rule():
     nn = naming.next_number

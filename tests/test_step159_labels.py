@@ -1,6 +1,6 @@
 """Step 159 lane L: Skeleton > Joint Labelling (labels as bone ID properties, Rename Joints From Labels, Label Based
 on Joint Names, Toggle / Show / Hide labels + viewport drawing), Mirror Skin Weights Label association, Enable /
-Disable Selected IK Handles. Maya facts (checked ): """
+Disable Selected IK Handles, following Maya."""
 
 from importlib import import_module
 
@@ -123,7 +123,7 @@ def test_object_mode_skeleton_means_its_root_joints():
 
 
 # Maya (retargetingLimbLabel "Arm" / "Leg" on the top joint): names + child counts -> types
-def test_limb_labels_match_Maya():
+def test_limb_labels_match_maya():
     chain5 = [("s", 1), ("el", 1), ("wr", 1), ("f1", 1), ("f2", 0)]
     assert labels.limb_labels("ARM", chain5) == [10, 11, 12, 13, 13]
     assert labels.limb_labels("ARM", [("s", 1), ("el", 1), ("wr", 0)]) == [10, 11, 12]
@@ -152,7 +152,7 @@ MAYA_NAMES = {"L_arm": (1, 10), "leftHand": (1, 12), "Hip_R": (0, 2), "spine1": 
               "ring_finger_R": (2, 21), "HIP_L": (0, 0)}
 
 
-def test_label_info_for_name_matches_Maya():
+def test_label_info_for_name_matches_maya():
     for name, (side, typ) in MAYA_NAMES.items():
         t, s = labels.label_info_for_name(name)
         got = (s if s != -1 else 0, t if t != -1 else 0)
@@ -173,7 +173,7 @@ def test_label_from_joint_names_operator():
 
 # --- Rename Joints From Labels ------------------------------------------------------------------------------------
 
-def test_rename_joints_from_labels_matches_Maya():
+def test_rename_joints_from_labels_matches_maya():
     _clear()
     ob, n = _chain(5)
     for name, (side, typ, other) in zip(n, ((0, 1, None), (1, 2, None), (3, 3, None), (1, 18, "Tail"), (2, 19, None))):
@@ -215,7 +215,7 @@ def test_toggle_show_hide_and_drawn_text():
     labels.set_label(ob.data.bones[n[1]], side=3, type=3)
     labels.set_label(ob.data.bones[n[2]], side=2, type=18, other_type="tail")
     texts = sorted(t for _p, t, _s in labels.label_points(bpy.context))
-    assert texts == ["Hip (L)", "Knee (None)", "tail (R)"], texts          # Maya shot
+    assert texts == ["Hip (L)", "Knee (None)", "tail (R)"], texts          # Maya's labels
     assert labels.label_text(ob.data.bones[n[0]]) == "Hip (L)"
     labels.set_label(ob.data.bones[n[0]], side=0, type=6)
     assert labels.label_text(ob.data.bones[n[0]]) == "Spine"

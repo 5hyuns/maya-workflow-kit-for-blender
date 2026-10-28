@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Mesh menu commands with Maya's meaning.
 
-checked in Maya 2022 (Maya, factory prefs, step 63):
+Maya 2022 (factory prefs, step 63):
 - Mesh > Combine = ``cmds.polyUnite(centerPivot=True, name=first)``: a new ``pCube2`` (pCube1 / pSphere1 stay behind as
   empty transforms, so the name skips 1), vertices where they were, pivot at the bounding-box centre, translate 0.
 - Mesh > Separate = ``cmds.polySeparate``: ``polySurface1`` / ``polySurface2`` under the original transform (now a
   group).
-- Mesh > Mirror options (): Cut Geometry on, Mirror Axis Position
+- Mesh > Mirror options: Cut Geometry on, Mirror Axis Position
   World, Offset 0, Mirror Axis X, Direction -, Combine with Original on, Merge border vertices, threshold Automatic.
 The kit applies the result to the mesh (Maya's state after Delete History; no empty transforms are left).
 """
@@ -112,7 +112,7 @@ def separate(context, ob):
         setattr(grp, attr, getattr(ob, attr))
     context.view_layer.update()
     # Maya: the pieces have translate 0 and their pivot at the group's own origin, not at its pivot
-    # (Maya: polySurface1/2 rotatePivot (0, 0, 0) under pCube2, step 63). The group carries the pivot
+    # (polySurface1/2 rotatePivot (0, 0, 0) under pCube2, step 63). The group carries the pivot
     # offset in delta_location, so each piece's pivot moves back by it (freeze.shift_pivot keeps the data).
     lin = Matrix.LocRotScale(None, grp.matrix_basis.to_quaternion(), grp.matrix_basis.to_scale()).to_3x3()
     back = lin.inverted_safe() @ -Vector(grp.delta_location)

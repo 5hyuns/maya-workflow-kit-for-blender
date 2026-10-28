@@ -2,8 +2,7 @@
 """Maya tangents and key edits for the Graph Editor toolbar and the Shift+S marking menu.
 
 Maya's Graph Editor tangent buttons and ``KEY_TANGENT`` act on the selected keys in the Graph Editor
-and on the current-time keys of the selection anywhere else (Maya's Time Slider tangent menu,
- KEY_TANGENT :284-571; ).
+and on the current-time keys of the selection anywhere else (Maya's Time Slider tangent menu).
 In Blender's Graph Editor the selected keys are the selected control points of the editable curves; elsewhere
 ``operators/time_keys`` acts on the Channel Box nodes (Time Slider range, else the current frame).
 
@@ -234,7 +233,7 @@ def in_dope_sheet(context):
 
 class ALLSET_OT_dope_sheet_key(bpy.types.Operator):
     """Maya 2026 Dope Sheet keys: g frames the playback range, t centres the current time, h / j lock / unlock the
-    selected channels (the same as the Graph Editor's keys, checked in Maya 2026)"""
+    selected channels (the same as the Graph Editor's keys in Maya 2026)"""
     bl_idname = "allset.dope_sheet_key"
     bl_label = "Dope Sheet Key"
     bl_options = {'REGISTER'}

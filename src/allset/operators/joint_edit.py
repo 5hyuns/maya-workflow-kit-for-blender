@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Moving a joint keeps every Maya frame (step 243, Issue #160).
 
-Maya 2026 (, Maya ``move_joint_156``): W on a joint changes only its
+Maya 2026: W on a joint changes only its
 translate, its subtree follows, and **no jointOrient changes** — the parent's X stops aiming at the moved child.
 Preserve Children (``cmds.move(preserveChildPosition=True)``) keeps the children's world positions instead. A Blender
 bone always points at its tail, so moving a connected child re-aims the parent bone; the joint's Maya frame is then
@@ -290,7 +290,7 @@ def _ssc_get(self):
 
 def _ssc_set(self, value):
     # Maya segmentScaleCompensate on = Blender inherit_scale NONE, off = FULL (checked in Blender 4.5,
-    # ; ALIGNED is not Maya)
+    # ALIGNED is not Maya)
     self.inherit_scale = 'NONE' if value else 'FULL'
 
 

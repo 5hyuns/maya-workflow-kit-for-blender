@@ -21,7 +21,7 @@ def _cube(name, parent=None):
 
 
 def test_hierarchy_highlight_takes_the_nearest_selected_ancestor_colour():
-    #  group1 selected -> its pCube1 white,
+    # Maya: group1 selected -> its pCube1 white,
     # pCube2 (lead) -> its pCube3 green
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob)

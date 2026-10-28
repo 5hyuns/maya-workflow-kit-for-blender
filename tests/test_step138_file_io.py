@@ -242,7 +242,7 @@ def test_presets():
 
 
 def test_maya_written_files():
-    """tmp/file_io138/maya_cube138.* from  Maya's channels, names and
+    """tmp/file_io138/maya_cube138.*: Maya's channels, names and
     keys in the kit (skipped when Maya hasn't run)."""
     found = 0
     for fmt, ext in EXT.items():

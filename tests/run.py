@@ -13,8 +13,8 @@
    process through tests/_bootstrap.py, which enables the extension (unless
    the test module sets ``AUTO_ENABLE = False``), runs each ``test_*``
    function and writes a JSON result.
-5. Prints PASS/FAIL/SKIP per test and a summary (SKIP = Maya reference data
-   this clone doesn't have, tests/kit.maya_data). Exit code 1 if anything failed.
+5. Prints PASS/FAIL/SKIP per test and a summary (SKIP = a test raised kit.Skip:
+   something this machine or clone lacks). Exit code 1 if anything failed.
 """
 
 import argparse

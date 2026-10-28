@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Light Editor = a kit light list in a 3D View window's sidebar.
 
-Maya (, shot render_03_win1): a floating window with a toolbar (create lights),
+Maya: a floating window with a toolbar (create lights),
 a list (Name / Color / Intensity / Exposure, enable and solo per row) and the Property Editor of the picked light.
 Blender has no Light Editor and Python can't make an editor type, so ``allset.light_editor`` duplicates the main
 3D View into a new window and shows its sidebar's "Light Editor" tab, which polls only in such windows
@@ -23,7 +23,7 @@ from . import ae_layout
 CATEGORY = "Light Editor"
 NOTICE = "Light Editor (kit): Blender has no Light Editor, Maya Workflow Kit lists the scene lights. Exposure is part of Intensity."
 ISOLATE_PROP = "allset_light_isolate"
-# Maya Light Editor toolbar order (render_03_win1): create light buttons
+# Maya Light Editor toolbar order: create light buttons
 CREATE = (("AMBIENT_LIGHT", 'WORLD'), ("DIRECTIONAL_LIGHT", 'LIGHT_SUN'), ("POINT_LIGHT", 'LIGHT_POINT'),
           ("SPOT_LIGHT", 'LIGHT_SPOT'), ("AREA_LIGHT", 'LIGHT_AREA'), ("VOLUME_LIGHT", 'MESH_UVSPHERE'))
 

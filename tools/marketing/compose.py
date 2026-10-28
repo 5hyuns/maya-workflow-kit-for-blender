@@ -5,7 +5,7 @@ GUI shots of tools/marketing/shots.py and the copy in tools/marketing/content.js
 
 Inputs: tmp/marketing/raw/<name>.png + meta.json (1920 x 1080 window shots, rects in top-down window pixels),
 tools/marketing/style.json (tokens, docs/distribution/marketing/style.md), tools/marketing/content.json (copy from
-docs/distribution/marketing/copy.md), the Inter font from  (tools/marketing/
+docs/distribution/marketing/copy.md), the Inter font from the local assets folder (tools/marketing/
 fetch_assets.py). Outputs: docs/distribution/marketing/screens/<n>_<name>.png, key_visual.png, key_visual_square.png,
 icon_256.png. Pure Pillow (no numpy) so it runs with any Python that has Pillow.
 """

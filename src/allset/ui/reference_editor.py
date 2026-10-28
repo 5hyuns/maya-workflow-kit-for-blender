@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's Reference Editor window (step 209, Issue #116;  「계획」).
 
-Maya 2022 (, ``_refs209.json``; workflows/scene.md:30): menu
+Maya 2022: menu
 bar File / Reference / Proxy / View / Help, an icon row, File Particulars (Unresolved name, Resolved name with Reload,
 Namespace, Read Only, Sharing) and the reference list — a load check box and "<reference node> <file>" per row.
 
@@ -19,8 +19,8 @@ from .. import live_refs
 EDITOR = "Reference Editor"
 MARK = ("show_properties_world", "show_properties_physics", "show_properties_constraints")
 
-# (icon, label, operator, props, tip) — Maya's icon row: create, import, export, reload, unload ... (left to right in
-# the capture; the kit's subset)
+# (icon, label, operator, props, tip) — Maya's icon row: create, import, export, reload, unload ... (left to right;
+# the kit's subset)
 ICONS = (('LINK_BLEND', "allset.create_reference", {}, "Create Reference"),
          ('IMPORT', "allset.reference_cmd", {"action": "IMPORT"}, "Import Objects from Reference"),
          ('EXPORT', "allset.reference_offline", {"mode": "EXPORT"}, "Export to Offline File"),

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya light / shadow linking on Blender light linking.
 
-Maya 2022 (Maya,  / .json): every light illuminates and every object casts
+Maya 2022: every light illuminates and every object casts
 shadows from every light by default; Lighting/Shading > Make / Break Light Links link / unlink every
 selected light x selected object, and breaking a group breaks its whole hierarchy; a new object is linked to every
 default light; a light whose Illuminates by Default is off (not in defaultLightSet) lights only the objects made links
@@ -96,8 +96,8 @@ def set_linked(light, ob, kind, on):
 
 def set_illuminates_by_default(light, value):
     """Maya Illuminates by Default (defaultLightSet membership): on = lights every object (light links cleared), off =
-    lights only objects made links with — none right after switching (Maya: directionalLight1 links [] before the
-    first Make, light_links_179.json case not_default)."""
+    lights only objects made links with — none right after switching (directionalLight1 links [] before the
+    first Make, case not_default)."""
     if illuminates_by_default(light) == bool(value):
         return
     light["allset_illuminates_by_default"] = bool(value)

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Create menu: primitives at the origin with Maya's default size and names.
 
- interactive creation is off by default, so a
+Maya: interactive creation is off by default, so a
 primitive appears at the origin at its default size (polyCube 1x1x1, polySphere
-r=1, polyPlane 1x1 with 10x10); names ``pCube1`` / ``pCubeShape1``
-(concepts.md:150-154). Other default values are Maya behaviour knowledge 
+r=1, polyPlane 1x1 with 10x10); names ``pCube1`` / ``pCubeShape1``.
+Other default values are Maya behaviour knowledge 
 and two are unverified .
 
 Size rule (,  「계획」, delegated): a Maya length of 1
@@ -73,12 +73,12 @@ KINDS = {
     'EMPTY_GROUP': ("Empty Group", "null", "object.empty_add",
                     {"type": 'PLAIN_AXES', "radius": 1.0}, None),
     # Step 54, PLAN W5): create paths that used Blender's operators with
-    # metre defaults. A joint = a bone in one armature (W1, ): bone length 1.
+    # metre defaults. A joint = a bone in one armature (W1): bone length 1.
     'JOINT': ("Joint", "skeleton", "object.armature_add", {"radius": 1.0}, None),
     'TEXT': ("Type", "typeMesh", "object.text_add", {"radius": 1.0}, None),
     # Maya's Free Image Plane faces the front camera with no image yet: an image empty, no file browser.
     'IMAGE_PLANE': ("Free Image Plane", "imagePlane", "object.empty_add", {"type": 'IMAGE', "radius": 1.0}, LEVEL),
-    # Fields (,105): Blender force fields are empties, display size 1 Maya unit.
+    # Fields: Blender force fields are empties, display size 1 Maya unit.
     # Blender has no gravity field: a wind blowing down (Maya -Y = Blender -Z); Uniform blows along Maya's +X.
     'FIELD_AIR': ("Air Field", "airField", "object.effector_add", {"type": 'WIND', "radius": 1.0}, None),
     'FIELD_DRAG': ("Drag Field", "dragField", "object.effector_add", {"type": 'DRAG', "radius": 1.0}, None),
@@ -92,18 +92,18 @@ KINDS = {
                       (0.0, HALF_PI, 0.0)),
     'FIELD_VORTEX': ("Vortex Field", "vortexField", "object.effector_add", {"type": 'VORTEX', "radius": 1.0}, None),
 }
-# Maya Fields/Solvers factory magnitudes (Gravity / Newton Options, Maya
-# check in ): Gravity 9.8 along Maya -Y (the Wind above is turned to blow down),
+# Maya Fields/Solvers factory magnitudes (Gravity / Newton Options):
+# Gravity 9.8 along Maya -Y (the Wind above is turned to blow down),
 # Newton 5 pulling in (Blender Force: negative strength attracts). An acceleration in Maya units per second squared,
 # so it is scaled by the step 68 simulation scale g = maya_unit() / Space Scale like the nucleus gravity (#72).
 FIELD_MAGNITUDES = {'FIELD_GRAVITY': 9.8, 'FIELD_NEWTON': -5.0}
 # Kinds whose data keeps Blender's name (Maya has no "...Shape" node for them).
 NO_SHAPE_NAME = {'JOINT', 'TEXT'}
 # A Maya locator (Create > Locator, cmds.spaceLocator): an Empty with this flag; cmds_shim gives it a shape name
-# ``locatorShapeN`` (step 208, )
+# ``locatorShapeN`` (step 208)
 LOCATOR_PROP = "allset_locator"
 # Lights (step 137, operators/lights.py): Maya intensity 1, Decay Rate No Decay. The power follows the Maya unit
-# (x maya_unit()^2, step 54) and is checked so an intensity-1 light lights a surface like Maya's at 10 units;
+# (x maya_unit()^2, step 54) and is set so an intensity-1 light lights a surface like Maya's at 10 units;
 # Cycles renders No Decay / Linear with a Light Falloff node, EEVEE and the viewport keep distance squared.
 FALLOFF_LIGHTS = {'POINT', 'SPOT', 'AREA'}
 LIGHT_NOTICE = ("Maya Decay Rate No Decay renders in Cycles; EEVEE and the viewport get darker with the square of "
@@ -122,12 +122,12 @@ LENGTHS = {"size", "radius", "depth", "radius1", "radius2", "major_radius", "min
 
 
 def _scale_data(ob, k):
-    """Lengths the add operators don't take: camera (Maya clip 0.1 / 10000,
-    defaults.json:45-46), Blender's light sizes, kept in proportion to the Maya unit."""
+    """Lengths the add operators don't take: camera (Maya clip 0.1 / 10000),
+    Blender's light sizes, kept in proportion to the Maya unit."""
     data = ob.data
     if ob.type == 'CAMERA':
-        # Maya camera: focal length 35 on a 1.417 in (36 mm) film back (;
-        # Blender's camera_add gives 50 mm). Camera from View (Ctrl+Shift+C) overrides the lens with the view's.
+        # Maya camera: focal length 35 on a 1.417 in (36 mm) film back
+        # (Blender's camera_add gives 50 mm). Camera from View (Ctrl+Shift+C) overrides the lens with the view's.
         data.lens, data.sensor_width = MAYA_CAMERA_LENS, MAYA_FILM_MM
         data.display_size *= k
         data.clip_start, data.clip_end = units.CLIP["clip_start"] * k, units.CLIP["clip_end"] * k
@@ -225,7 +225,7 @@ class ALLSET_OT_create(bpy.types.Operator):
 
 # Blender's quick smoke (Fluids > 3D Container, Effects > Fire / Smoke) puts a domain around the selection with a
 # margin of (1, 1, 2) BU and 1 BU up ($S\startupl_operators\object_quick_effects.py:482-483): 200 x 200 x 400
-# Maya units in a cm scene (). The margin is redone in Maya units here.
+# Maya units in a cm scene. The margin is redone in Maya units here.
 SMOKE_MARGIN = (1.0, 1.0, 2.0)
 SMOKE_LIFT = 1.0
 

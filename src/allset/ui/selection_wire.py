@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya's wireframe on selected objects over shading (lead light green, other selected white).
 
-Maya draws every edge of a selected object in the selection colour over its shading
-(, 04_wire_selected_lead.png); Blender only outlines it.
+Maya draws every edge of a selected object in the selection colour over its shading;
+Blender only outlines it.
 
 The kit draws the edges itself (POST_VIEW), :
 - Blender's own ``Object.show_wire`` mixes a selected object's colour with the theme's dormant wire colour
@@ -14,9 +14,9 @@ The kit draws the edges itself (POST_VIEW), :
   Nothing is written to the file.
 - Step 134: the colours are kit-fixed Maya values (). Steps 130-133 read the
   user's theme ``object_active`` / ``object_selected``, which is Blender's orange since the kit ships no theme.
-  LEAD / OTHER =  viewport displayColor lead (19) / active (16).
+  LEAD / OTHER = Maya's viewport displayColor lead (19) / active (16).
 - Step 142 (#76): in wireframe shading Maya draws unselected objects in its dormant polymesh wire colour, dark blue
-  #000460 ( dormant_polymesh_wire, 04_wire_selected_lead.png); Blender draws them in the
+  #000460; Blender draws them in the
   theme's wire colour (#181818 here, ΔE00 26). The same pass draws them in DORMANT (the "Selection Wireframe"
   preference covers both).
 - Step 149 (#91): a frame change (playback, scrubbing, ``frame_set``) evaluates the depsgraph without a
@@ -24,11 +24,11 @@ The kit draws the edges itself (POST_VIEW), :
   drops the batches of objects whose evaluated shape can depend on time (``time_dependent``: modifiers, shape keys,
   animated data); static meshes keep their batch.
 - Step 149: a selected lattice is drawn too (Blender's own is the theme's orange). Maya's lattice selected colour is
-  display colour index 16 = white for an active lattice, lead 19 (
-  displayColor_index), the same as meshes. Edges = the lattice grid along U / V / W through the evaluated points
+  display colour index 16 = white for an active lattice, lead 19 (Maya's
+  displayColor index), the same as meshes. Edges = the lattice grid along U / V / W through the evaluated points
   (``co_deform``).
 - Step 161 (G4): Maya highlights the whole hierarchy under a selected object: every descendant shape is drawn in the
-  colour of its nearest selected ancestor ( group1
+  colour of its nearest selected ancestor (Maya: group1
   (selected) -> pCube1 white, pCube2 (lead) -> pCube3 green). Without it a child in front of its selected parent hid
   the parent's wire (step-154 dogfood 09: side view, pCube2 under pCube1 in front of it) — ``highlighted``.
 """
@@ -39,7 +39,7 @@ from bpy.app.handlers import persistent
 TYPES = {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}
 WIRE_TYPES = TYPES | {'LATTICE'}   # selected wire only (the dormant wireframe colour stays mesh / curve types)
 DEPTH_BIAS = 1e-4          # NDC depth; 0 breaks the lines up on a 1 cm cube in the cm template (probe)
-LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active),  displayColor.lead
+LEAD = "#43ffa3"           # Maya lead (last selected = Blender's active), displayColor lead
 OTHER = "#ffffff"          # Maya other selected objects, displayColor.active
 DORMANT = "#000460"        # Maya unselected polymesh wire in wireframe shading, colors.json dormant_polymesh_wire
 # the 3D View's per-type visibility (the Tool Box column hides every type, ui/toolbox.is_toolbox)

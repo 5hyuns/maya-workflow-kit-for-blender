@@ -1,5 +1,5 @@
 {
-  "_doc": "Maya Workflow Kit marketing visual tokens (steps 122, 124, 125; docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys ( ui_palette_qt, src/allset/theme) + Maya logo teal (pixels of the Maya 2022 icon / splash, colour values only) + Autodesk brand Hello Yellow / Black (brand.autodesk.com/brand-system/color). 'palettes' holds the semantic accent sets; 'palette' picks one (env ALLSET_MARKETING_PALETTE overrides).",
+  "_doc": "Maya Workflow Kit marketing visual tokens (steps 122, 124, 125; docs/distribution/marketing/style.md). Primitive -> semantic -> component. Colours: the kit's Maya-like theme greys (src/allset/theme) + Maya logo teal (colour value only) + Autodesk brand Hello Yellow / Black (brand.autodesk.com/brand-system/color). 'palettes' holds the semantic accent sets; 'palette' picks one (env ALLSET_MARKETING_PALETTE overrides).",
   "primitive": {
     "grey-950": "#1e1e1e",
     "grey-900": "#252525",

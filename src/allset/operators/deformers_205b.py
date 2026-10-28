@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Deform > Morph and Deform > Jiggle > Jiggle Deformer (step 205 lane B, issue #112).
 
-Maya rules:  (checked; nodes / names / option windows, Morph, Jiggle).
+Maya rules: nodes / names / option windows, Morph, Jiggle.
 Blender has neither deformer, so each is a Geometry Nodes modifier named like the Maya node (``morph1``,
 ``jiggle1``) on a shared node group, like the kit wire (operators/wire_deformer.py, step 169): it deforms whatever
 reaches it (upstream modifiers / shape keys), its painted weights are the vertex group of the node's name (Maya
@@ -9,7 +9,7 @@ factory weight 1), Deform > Paint Weights > Jiggle paints it, Delete Non-Deforme
 (history.is_deformer: every kit deformer of ``deformers.BASES``), and the Channel Box INPUTS show the Maya
 attributes (``deformers.ATTRS``, rows ``maya:<key>``).
 
-Morph (): w = envelope · weight; Absolute out = input + w (target − input); Relative out = input + w (target −
+Morph: w = envelope · weight; Absolute out = input + w (target − input); Relative out = input + w (target −
 base rest) (Use Original Morph Target: target − target orig); Surface out = input + w F_in F_restᵀ (target − rest)
 with the per-vertex frame F = [n, t, n × t] (n = Σ cross(next − p, prev − p) over the vertex's corners, t = the edge
 to the next corner in its first face, made normal to n); Retarget out = input + w s F_rest F_toᵀ (target − target
@@ -19,7 +19,7 @@ space, World space maps its world position into the deformed object's space. The
 and of the target are hidden objects that share their mesh data (shape keys show the basis only, like Maya's Orig
 under a blendShape), kept on the owner's mesh by a depsgraph handler (Delete History swaps the mesh).
 
-Jiggle (): a Simulation zone steps, per frame in world space, v = x − x_prev, S = goal − x, û = S / |S|,
+Jiggle: a Simulation zone steps, per frame in world space, v = x − x_prev, S = goal − x, û = S / |S|,
 F = (k + d) S − d (v·û) û, F *= fan c + fot (1 − c) with c = |F̂·n̂|, x ← goal + (x + v + F − goal) · jiggleWeight ·
 envelope · weight (the weighted point is the next state). Disable = the input; Ignore Transform = the same in object
 space (the object's motion moves nothing); Enable Only After Object Stops follows the step-205 model (the input while
@@ -46,7 +46,7 @@ MIRROR_DIRECTIONS = ("+X", "-X", "+Y", "-Y", "+Z", "-Z", "Flip X", "Flip Y", "Fl
 JIGGLE_ENABLE = ("Enable", "Disable", "Enable Only After Object Stops")
 
 # Maya mirrorDirection -> (Blender axis, receiving side): Maya Y-up -> Blender Z-up = X -> X, Y -> Z, Z -> -Y
-# (step 57). +X: the vertices with x < 0 receive (deform_205.md); Flip: every vertex (side 0).
+# (step 57). +X: the vertices with x < 0 receive; Flip: every vertex (side 0).
 MIRROR_AXES = ((0, -1), (0, 1), (2, -1), (2, 1), (1, 1), (1, -1), (0, 0), (2, 0), (1, 0))
 
 # (socket name, socket type, default, min, max) — Maya attribute order of the Channel Box / AE
@@ -60,7 +60,7 @@ MORPH_INPUTS = (
     ("Morph Space", 'NodeSocketInt', 0, 0, 1),
     ("Mirror Direction", 'NodeSocketInt', 0, 0, 8),
     ("Use Original Morph Target", 'NodeSocketBool', False, None, None),
-    # Maya attributes the checked modes don't use (Retarget's scaling rules are ): kept for the Channel Box
+    # Maya attributes Maya's modes don't use (Retarget's scaling rules are ): kept for the Channel Box
     ("Scale Envelope", 'NodeSocketFloat', 1.0, None, None),
     ("Uniform Scale Weight", 'NodeSocketFloat', 1.0, None, None),
     ("Normal Scale", 'NodeSocketFloat', 1.0, None, None),
@@ -348,7 +348,7 @@ def build_jiggle():
     F = b.vmath('SCALE', F, scale=fac)                                                # noqa: N806
     sw = b.math('MULTIPLY', b.math('MULTIPLY', I["Jiggle Weight"], I["Envelope"]), I["Weight"])
     x_on = b.lerp(g, b.vmath('ADD', b.vmath('ADD', x, v), F), sw)                     # Enable
-    # Enable Only After Object Stops (deform_205.md, the step-205 model; Maya scales it by ~0.69 )
+    # Enable Only After Object Stops (step-205 model; Maya scales it by ~0.69 )
     moving = b.math('GREATER_THAN', b.vmath('DISTANCE', g, gp, out="Value"), 1e-9)
     F2 = b.vmath('SUBTRACT', b.vmath('SCALE', s, scale=kd), b.vmath('SCALE', v, scale=dmp))   # noqa: N806
     x_still = b.vmath('ADD', b.vmath('ADD', x, v), F2)
@@ -420,7 +420,7 @@ def _input(key, label, kind, socket):
     return deformers.Attr(key, label, kind, g, s)
 
 
-# keyable Maya attributes, in Maya's Channel Box order (deform_205.md)
+# keyable Maya attributes, in Maya's Channel Box order
 ATTRS = {
     "morph": [_input("envelope", "Envelope", "NONE", "Envelope"),
               _input("scaleEnvelope", "Scale Envelope", "NONE", "Scale Envelope"),
@@ -441,7 +441,7 @@ ATTRS = {
                _input("jiggleWeight", "Jiggle Weight", "NONE", "Jiggle Weight"),
                _input("directionBias", "Direction Bias", "NONE", "Direction Bias")],
 }
-# non-keyable Maya attributes the AE shows (deform_205.md) = node inputs
+# non-keyable Maya attributes the AE shows = node inputs
 AE_EXTRA = {"morph": ("Morph Mode", "Morph Space", "Mirror Direction", "Use Original Morph Target",
                       "Use Component Lookup"),
             "jiggle": ()}
@@ -496,7 +496,7 @@ def _counts(ob):
 
 def create_morph(context, mode="Absolute", space="Object", use_original=False):
     """Maya Morph: select the deformed object(s), then the target (Blender: the active object); Mirror mode needs only
-    the deformed object. Returns the modifiers made (deform_205.md /)."""
+    the deformed object. Returns the modifiers made."""
     deformers._object_mode(context)
     active = context.active_object
     sel = [o for o in context.selected_objects if o.type == 'MESH']
@@ -532,7 +532,7 @@ def create_morph(context, mode="Absolute", space="Object", use_original=False):
 
 
 def create_jiggle(context, stiffness=0.5, damping=0.5, weight=1.0, only_when_stops=False, ignore_transform=False):
-    """Maya Jiggle Deformer on the selected meshes / vertices (jiggle1 + jiggle1Cache, deform_205.md)."""
+    """Maya Jiggle Deformer on the selected meshes / vertices (jiggle1 + jiggle1Cache)."""
     items = [(ob, idx) for ob, idx in deformers._deformed(context) if ob.type == 'MESH']
     if not items:
         raise RuntimeError("Select a mesh (or its vertices) to jiggle.")
@@ -683,7 +683,7 @@ def _run_jiggle(context, v):
 
 
 def windows():
-    """Maya's Morph Options / Jiggle Deformer Options / Paint Weights > Jiggle boxes (deform_205.md, factory
+    """Maya's Morph Options / Jiggle Deformer Options / Paint Weights > Jiggle boxes (factory
     values); main adds them to operators/option_windows.WINDOWS."""
     from .option_windows import F, Window
     from .option_windows_deform import ADVANCED, PAINT_FIELDS, PAINT_MISSING, _paint

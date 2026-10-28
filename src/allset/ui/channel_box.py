@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Channel Box in the 3D View sidebar (category "Channel Box / Layer Editor", step 99).
 
-; design:  「계획」.
+Maya's Channel Box; design:  「계획」.
 - Translate/Rotate/Scale/Visibility rows are getter/setter proxies on
   ``Scene.allset_cb``: they read the lead (active) object and write every
-  selected object, like Maya (channel_box.md:52-55).
+  selected object, like Maya.
 - Channel names are buttons that select channels; selected channels drive
-  the MMB virtual slider in the viewport (channel_box.md) and the
+  the MMB virtual slider in the viewport and the
   Channels menu ().
 - Value fields are text (step 38): Maya numbers in display units and relative entry
   (``+=5``, ``*=2``; ui/cb_entry.py), applied to every selected object that has the
@@ -29,24 +29,23 @@ from ..operators import auto_key, display
 from .. import compat
 from . import cb_entry, cb_points, chrome
 
-# Maya's dock is one tab stack with vertical tabs on its right edge (): the
+# Maya's dock is one tab stack with vertical tabs on its right edge: the
 # kit's sidebar categories carry Maya's tab names (step 99)
 CATEGORY = "Channel Box / Layer Editor"
 AE_CATEGORY = "Attribute Editor"
 MTK_CATEGORY = "Modeling Toolkit"
-# Channel Box pane share of the dock, Layer Editor below: default split is 70 % (
-# ui_layout.md:252), but the factory Maya 2022 screen puts the Display / Anim tabs at y 473 of a 132-785 dock
-# () = about half of the kit's sidebar below its header; step 135
-# checked the panes: ChannelBoxForm 299 px / LayerEditorForm 328 px () = 0.48.
-# The split is fixed: a long Channel Box scrolls inside its part (cb135/pass1/c09_long_history.png).
+# Channel Box pane share of the dock, Layer Editor below: default split is 70 %, but the factory
+# Maya 2022 screen puts the Display / Anim tabs at y 473 of a 132-785 dock = about half of the kit's sidebar below its
+# header; Maya's panes are ChannelBoxForm 299 px / LayerEditorForm 328 px = 0.48 (step 135).
+# The split is fixed: a long Channel Box scrolls inside its part.
 CB_SHARE = 0.50
 CB_SHARE_MAX = 0.62      # the Layer Editor keeps its tabs, toolbar and a few rows (step 135, delegated)
 CB_LINES = 14            # a cube's collapsed Channel Box: 10 channels, SHAPES + shape, INPUTS + polyCube1
 
 
 def cb_share(region, u):
-    """Share of the dock height above the Layer Editor: Maya's 0.48 (CB_SHARE, 
-    _cb135.json), more on a short dock so a selected primitive's collapsed Channel Box (CB_LINES) still fits
+    """Share of the dock height above the Layer Editor: Maya's 0.48 (CB_SHARE), more on a short
+    dock so a selected primitive's collapsed Channel Box (CB_LINES) still fits
     without scrolling — fixed for a given dock height, like Maya's split (step 135, delegated)."""
     if region is None or region.height <= 0 or u <= 0:
         return CB_SHARE
@@ -83,7 +82,7 @@ SPEED_FACTOR = {s[0]: s[3] for s in SPEEDS}
 
 
 # --- nodes: objects or pose bones -------------------------
-# A Maya joint is a pose bone (). Pose bones carry the
+# A Maya joint is a pose bone. Pose bones carry the
 # same RNA names as objects (location / rotation_euler / scale / lock_* / rotation_mode / ID
 # properties); only their animation lives on the armature object (``pose.bones["n"].<path>``).
 
@@ -98,7 +97,7 @@ def is_root_joint(node):
 
 def root_translate(pb):
     """Translate X / Y / Z of a root joint = its position (Maya 2026: a root joint at (3, 2, 1) shows Translate
-    3 / 2 / 1,  B7): rest head + pose offset, armature space, in the kit's Z-up axes
+    3 / 2 / 1): rest head + pose offset, armature space, in the kit's Z-up axes
     like every object Translate (, step 239; operators/joint_edit.joint_translate shows the same in Edit
     mode). Blender keeps a pose bone's offset in the bone's rest axes."""
     b = pb.bone
@@ -286,7 +285,7 @@ def channel_path(key):
 
 
 def nice_name(name):
-    """Maya's nice attribute name (Channel Names > Nice, the default; channel_box.md:131):
+    """Maya's nice attribute name (Channel Names > Nice, the default):
     ``fingerCurl`` -> "Finger Curl", ``curl`` -> "Curl", ``ik_blend2`` -> "Ik Blend 2"."""
     import re
     words = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Za-z])(?=[0-9])", " ", name.replace("_", " ")).split()
@@ -483,10 +482,10 @@ def driver(ob, key):
 
 
 def channel_state(ob, key, frame=None):
-    """'DRIVEN', 'MUTED', 'LAYERED', 'KEYED' (key on this frame), 'ANIMATED' or None (channel_box.md:138-139; Maya
+    """'DRIVEN', 'MUTED', 'LAYERED', 'KEYED' (key on this frame), 'ANIMATED' or None (Maya
     muted = brown, step 158: Blender's UI has no brown, the mute icon marks it). Step 194: a channel in an animation
     layer above BaseAnimation is Maya's teal #4db6ac in every layer state, keyed or not
-    (); the other channels of a layered object show their BaseAnimation keys."""
+    (Maya); the other channels of a layered object show their BaseAnimation keys."""
     if driver(ob, key) is not None:
         return 'DRIVEN'
     fc = fcurve(ob, key)
@@ -559,7 +558,7 @@ def channel_range(ob, first, last):
 
 def select_range(ob, first, last, mode="SET", base=None, context=None):
     """Select the rows ``first``..``last``: SET replaces the selection, ADD adds to ``base`` (default: the current
-    selection). Maya: drag over channel names / fields selects a range, Ctrl+drag adds (channel_box.md)."""
+    selection). Maya: drag over channel names / fields selects a range, Ctrl+drag adds."""
     rng = channel_range(ob, first, last)
     if mode == "SET":
         sel = rng
@@ -644,7 +643,7 @@ def entry_kind(ob, key):
 
 
 def entry_keys(key, context=None):
-    """The edited channel, or every selected channel when it is one of them (channel_box.md:136)."""
+    """The edited channel, or every selected channel when it is one of them."""
     sel = selected_channels(context)
     return sel if key in sel else [key]
 
@@ -693,7 +692,7 @@ def _text_set(key):
 
 def _inputs(ob):
     # + the kit deformers a lattice / handle drives: Maya shows ffd1 / bend1 in the INPUTS of ffd1Lattice /
-    # bend1Handle (step 144, )
+    # bend1Handle (step 144)
     from ..operators import deformers, skin_method, skin_tools_199
     return [m for m in getattr(ob, "modifiers", ()) if not display.is_preview(m) and not deformers.is_base(m)
             and not skin_tools_199.is_part(m) and not skin_method.is_part(m)] \
@@ -723,7 +722,7 @@ def input_label(mod, name):
     return rna.name if rna is not None else name
 
 
-# Maya shape attribute labels of SHAPES rows (ffd1LatticeShape: S / T / U Divisions, options_144.md)
+# Maya shape attribute labels of SHAPES rows (ffd1LatticeShape: S / T / U Divisions)
 SHAPE_LABELS = {('LATTICE', "points_u"): "S Divisions", ('LATTICE', "points_w"): "T Divisions",
                 ('LATTICE', "points_v"): "U Divisions"}
 
@@ -740,9 +739,9 @@ def shape_label(ob, prop):
 
 
 # --- INPUTS node expansion (step 135, #55;  「계획」) -----------------------------------------
-# Maya 2022 (): every INPUTS node starts collapsed (polyCube1, polyExtrudeFace1), a click on
+# Maya 2022: every INPUTS node starts collapsed (polyCube1, polyExtrudeFace1), a click on
 # its name shows its attributes under it and a second click hides them; a new lead shows every node collapsed again,
-# also when the earlier lead comes back (d04_first_again.png). This is UI state, not scene data: kept in Python (never
+# also when the earlier lead comes back. This is UI state, not scene data: kept in Python (never
 # Blender's ``Modifier.show_expanded``, which is the Properties editor's panel state, saved and undone), not undone,
 # not saved.
 
@@ -799,7 +798,7 @@ def reset_open():
 
 
 # --- constraints = Maya constraint nodes ------------------------
-#  (pCube1_parentConstraint1, weight locator1W0), :126.
+# Maya names them like pCube1_parentConstraint1, weight locator1W0.
 
 MAYA_CONSTRAINT = {'CHILD_OF': "parentConstraint", 'COPY_TRANSFORMS': "parentConstraint",
                    'COPY_LOCATION': "pointConstraint", 'COPY_ROTATION': "orientConstraint",
@@ -891,7 +890,7 @@ def _axes(con, pattern):
 
 
 def constrained_keys(node):
-    """Channel keys an enabled constraint drives (Maya draws them blue, channel_box.md:138-139)."""
+    """Channel keys an enabled constraint drives (Maya draws them blue)."""
     out = set()
     for con in constraints(node):
         if not constraint_enabled(con):
@@ -1291,11 +1290,11 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         return {'PASS_THROUGH'}
 
     def _on_rmb(self, context, hit, edit=False):
-        """Maya: RMB in the Channel Box = the Channels menu (). Blender's button
+        """Maya: RMB in the Channel Box = the Channels menu. Blender's button
         context menu draws its C items first and a Python menu only after them (step 148, #87: the Channels items
         sat under 15 Blender rows), so the press is taken here, before the region's button handler. A channel
         that isn't selected becomes the selection first (delegated), so Key Selected keys the clicked channel."""
-        if edit:     # Ctrl+RMB = the Edit menu (Maya Channel Box, channel_box.md:35), selection kept
+        if edit:     # Ctrl+RMB = the Edit menu (Maya Channel Box), selection kept
             bpy.ops.wm.call_menu(name=ALLSET_MT_cb_edit.__name__)
             return {'RUNNING_MODAL'}
         if hit is not None:
@@ -1548,7 +1547,7 @@ class ALLSET_OT_cb_show_all(bpy.types.Operator):
 
 class ALLSET_MT_cb_channels(bpy.types.Menu):
     """Maya Channel Box Channels menu (RMB anywhere in the Channel Box;
-    ; step 158 completes it)"""
+    step 158 completes it)"""
     bl_label = "Channels"
 
     def draw(self, context):
@@ -1615,7 +1614,7 @@ def is_cb_button(context):
     return isinstance(ptr, (ALLSET_PG_channel_box, ALLSET_PG_cb_row))
 
 
-# Maya's Channel Box RMB menu = the Channels menu (). RMB on a UI button
+# Maya's Channel Box RMB menu = the Channels menu. RMB on a UI button
 # opens Blender's button context menu from C (not a keymap item), so the Channels items go on top of it.
 RMB_ITEMS = (("allset.cb_key_selected", "Key Selected", {}),
              ("allset.cb_breakdown_selected", "Breakdown Selected", {}),
@@ -1653,7 +1652,7 @@ class ALLSET_MT_cb_settings(bpy.types.Menu):
 
 
 class ALLSET_MT_cb_edit(bpy.types.Menu):
-    """Maya Channel Box Edit menu ()"""
+    """Maya Channel Box Edit menu"""
     bl_label = "Edit"
 
     def draw(self, context):
@@ -1735,7 +1734,7 @@ class ALLSET_OT_cb_rotate_order(bpy.types.Operator):
 
 class ALLSET_MT_cb_object(bpy.types.Menu):
     """Maya Channel Box Object menu: the selected objects (joints in pose mode), picking one makes it
-    the lead ()"""
+    the lead"""
     bl_label = "Object"
 
     def draw(self, context):
@@ -1750,7 +1749,7 @@ class ALLSET_MT_cb_object(bpy.types.Menu):
 
 
 class ALLSET_MT_cb_show(bpy.types.Menu):
-    """Maya Channel Box Show menu ()"""
+    """Maya Channel Box Show menu"""
     bl_label = "Show"
 
     def draw(self, context):
@@ -1761,7 +1760,7 @@ class ALLSET_MT_cb_show(bpy.types.Menu):
             chrome.grey(lay, label)
 
 
-# Maya Channel Box menu bar, left to right (Maya 2022, channel_box.md:27-30).
+# Maya Channel Box menu bar, left to right (Maya 2022).
 MENU_BAR = (("Channels", "ALLSET_MT_cb_channels"), ("Edit", "ALLSET_MT_cb_edit"),
             ("Object", "ALLSET_MT_cb_object"), ("Show", "ALLSET_MT_cb_show"))
 # Maya's empty Channel Box text (compare/01_layout_empty, three centred lines).
@@ -1795,7 +1794,7 @@ def draw_joint_translate(layout, context):
 
 def draw_empty(layout):
     layout.separator(factor=6)
-    chrome.wrapped(layout, EMPTY_TEXT)   # empty state, channel_box.md:22-24
+    chrome.wrapped(layout, EMPTY_TEXT)   # empty state
     layout.separator(factor=6)
 
 
@@ -1810,8 +1809,8 @@ _ALERT_STATES = {'KEYED', 'ANIMATED', 'DRIVEN', 'MUTED'}
 def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     sub = row.row(align=True)
     if sel_owner is not None:
-        # a toggle of the channel's selection: pressed = Maya's blue name cell (
-        # le02_dock.png); the drag watcher reads it from ``context.property`` (step 129 #6)
+        # a toggle of the channel's selection: pressed = Maya's blue name cell; the drag
+        # watcher reads it from ``context.property`` (step 129 #6)
         sub.prop(sel_owner, sel_prop, text=channel_label(key), toggle=True, emboss=selected)
         return
     op = sub.operator("allset.cb_select_channel", text=channel_label(key), depress=selected,
@@ -1830,7 +1829,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
     state = channel_state(ob, key)
     right.enabled = not is_locked(ob, key)
     if constrained:
-        # Maya draws constrained channels blue (channel_box.md:138-139): a pressed button is the user's
+        # Maya draws constrained channels blue: a pressed button is the user's
         # theme selection colour (wcol_tool inner_sel; Blender's factory #4772b3 is blue); UILayout has no other colour.
         text = cb_entry.format_value(get_value(ob, key), entry_kind(ob, key), bpy.context.scene)
         right.operator("allset.cb_select_channel", text=text, depress=True).key = key
@@ -1844,7 +1843,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
 
 
 def _modifier_props(mod, limit=10):
-    """Editable scalar properties of a modifier, Maya INPUTS-style (channel_box.md:46); a kit Maya deformer shows
+    """Editable scalar properties of a modifier, Maya INPUTS-style; a kit Maya deformer shows
     its Maya attributes instead (``maya:<key>`` rows, operators/deformers.ATTRS, step 144)."""
     from ..operators import deformers
     maya = deformers.attrs(mod)
@@ -1868,9 +1867,9 @@ def _modifier_props(mod, limit=10):
 
 SHAPE_PROPS = {
     'CAMERA': ("lens", "clip_start", "clip_end"),
-    # Maya light shapes: Color R / G / B, Intensity first (Maya listAttr -keyable, step 148); Intensity is the
+    # Maya light shapes: Color R / G / B, Intensity first (Maya's keyable list, step 148); Intensity is the
     # Maya value over Blender's Power (operators/lights.py, step 137)
-    # + spot Cone Angle / Penumbra Angle (step 158, Maya spotLight listAttr -keyable)
+    # + spot Cone Angle / Penumbra Angle (step 158, keyable on a Maya spotLight)
     'LIGHT': ("maya:colorR", "maya:colorG", "maya:colorB", "allset_intensity", "maya:coneAngle", "maya:penumbraAngle"),
     'LATTICE': ("points_u", "points_w", "points_v"),     # Maya S / T / U Divisions (Maya Y = Blender Z), step 144
 }
@@ -2048,8 +2047,8 @@ def _draw_text_row(layout, context, ob, owner, prop, kind, mod_type="", nth=0, l
 
 
 # --- lines: the Channel Box below its name row is a fixed pane that scrolls (step 135, #55) ---------------------------
-# Maya keeps the Channel Box / Layer Editor split and scrolls a long Channel Box inside its part (
-# cb135/pass1/c09_long_history.png, d02_clicked.png). Blender can't scroll part of a region, so every Channel Box row
+# Maya keeps the Channel Box / Layer Editor split and scrolls a long Channel Box inside its part.
+# Blender can't scroll part of a region, so every Channel Box row
 # under the lead's name is one equal line (ROW_SCALE) of one aligned column, and the pane draws the lines that fit
 #.
 
@@ -2374,8 +2373,8 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             split.prop(ob.bone, "allset_joint_radius", text="")
             r.label(text="", icon='BLANK1')
 
-    # SHAPES: the shape name is a rename field (Maya, cb135/pass1/c04_shape_clicked.png); camera / light shapes show
-    # their attributes expanded (c11_camera.png, c12_spot_light.png)
+    # SHAPES: the shape name is a rename field (Maya); camera / light shapes show
+    # their attributes expanded
     data = getattr(ob, "data", None)
     if data is not None:
         r = lines.row()
@@ -2383,8 +2382,8 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
             r.label(text="SHAPES")
         r = lines.row()
         if r is not None:
-            # Maya draws the shape row as a darker full-width bar (its rename field, 
-            # cb_shape_row #373737; step 195): an embossed field
+            # Maya draws the shape row as a darker full-width bar (its rename field,
+            # #373737; step 195): an embossed field
             r.separator(factor=1.5)
             r.prop(data, "name", text="")
         for prop in SHAPE_PROPS.get(ob.type, ()):
@@ -2397,7 +2396,7 @@ def _draw_lines(lines, context, ob, cb, sel, blue):
 
 
 def draw_inputs(lines, context, ob):
-    """INPUTS, newest first; every node starts collapsed (cb135/d01_cube.png, pass1/c07_extruded_component.png).
+    """INPUTS, newest first; every node starts collapsed (Maya).
     Smooth Mesh Preview is a shape display attribute in Maya, not an input node (step 15)."""
     inputs = _inputs(ob)
     cons = constraints(ob)
@@ -2436,7 +2435,7 @@ def draw_inputs(lines, context, ob):
             if constrain_multi.is_head(con, ob):
                 _draw_group(lines, context, ob, con, mb)
             continue
-        # Maya constraint node + its target weight (animation.md:42, :126)
+        # Maya constraint node + its target weight
         row, opened = node_row(lines, ob, con_node(ob, con), constraint_node_name(ob, con),
                                active=constraint_enabled(con))
         if row is not None and hasattr(con, "enabled"):
@@ -2474,8 +2473,7 @@ def _draw_group(lines, context, ob, con, mb):
 
 
 def _draw_interp_row(layout, ob, group):
-    """Maya's keyable Interp Type of an orient / parent constraint (enum, factory Average; step 252, #168 —
-     "Step 252 checked")."""
+    """Maya's keyable Interp Type of an orient / parent constraint (enum, factory Average; step 252, #168)."""
     from ..operators import constrain_interp
     mode = constrain_interp.mode_of(ob, group)
     line = layout.row(align=True)
@@ -2550,7 +2548,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         ob = lead(context)
         comp = component_mode(ob)
         if ob is None or (comp and not cb_points.has_selection(ob)):
-            # Maya: component mode with nothing selected = the empty Channel Box too (cb165/cb_vtx_none.png)
+            # Maya: component mode with nothing selected = the empty Channel Box too
             draw_empty(layout)
             return units + 4.2 + len(EMPTY_TEXT)
         units += 1.0
@@ -2559,7 +2557,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         head = layout.row(align=True)
         if comp:
             # Maya component mode: the shape node, then INPUTS — no transform channels, no SHAPES header
-            # ()
+            # (as Maya)
             head.prop(ob.data, "name", text="", emboss=False)
             args = (context, ob)
             draw = _draw_component_lines
@@ -2589,8 +2587,7 @@ class ALLSET_PT_channel_box(bpy.types.Panel):
         if over:
             _scroll[ptr] = first
         col = layout.column(align=True)
-        # Maya channel rows are 16 px with 11 px text ( metrics,
-        # screens/11b_channel_box_crop.png); Blender rows are 20 px at scale 1.0 (step 44).
+        # Maya channel rows are 16 px with 11 px text; Blender rows are 20 px at scale 1.0 (step 44).
         col.scale_y = ROW_SCALE
         lines = Lines(col, first, limit)
         draw(lines, *args)

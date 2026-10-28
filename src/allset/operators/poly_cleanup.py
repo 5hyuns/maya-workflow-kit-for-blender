@@ -4,8 +4,7 @@
 Maya 2022: the item runs ``cmds.polyCleanup`` with the Cleanup Options values
 (factory: Operation 1 "Cleanup matching polygons", Scope selected objects,
 history on, every criterion off, tolerances 1e-5; the meaning of
-each option: the "Fix by Tesselation" boxes triangulate, the "Remove Geometry" boxes delete). Spec:
-
+each option: the "Fix by Tesselation" boxes triangulate, the "Remove Geometry" boxes delete).
 
 The kit finds the same components in bmesh: 4-sided / more-than-4-sided faces, concave faces (a reflex corner),
 non-planar faces (a corner off the face plane by more than ``PLANAR_TOL`` of the face size — Maya's own tolerance is

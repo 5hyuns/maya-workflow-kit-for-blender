@@ -2,8 +2,8 @@
 """Step 205 lane A (issue #112): Maya Deform > Tension, Solidify, Sculpt (+ Paint Weights > Tension, Prune Membership >
 Sculpt).
 
-Maya 2022 facts:  ( nodes / names / selection / Channel Box rows / option windows,
-Tension, Solidify, Sculpt), ground truth tests/maya205_deform_data.py. Blender has none of these deformers, so
+Maya 2022 facts: nodes / names / selection / Channel Box rows / option windows, Tension, Solidify, Sculpt.
+Blender has none of these deformers, so
 each is a Geometry Nodes modifier named like the Maya node (``tension1``) on a shared node group built here (the
 pattern of operators/wire_deformer.py, step 169); it reads its input from the modifiers above it (Maya: the upstream
 deformers) and its weights from the vertex group of its name (factory weight 1 on the deformed points, step 144).
@@ -11,22 +11,22 @@ Maya's ``<shape>Orig`` (the rest shape Tension / Solidify compare with) is the m
 is made, kept in a hidden point attribute ``.allset_rest_<node>`` (component edits made later are Maya tweaks = input,
 not rest); a topology change (Delete Non-Deformer History of a bevel, ...) re-takes it with the partner table.
 
-- **Tension** (, every "O" case within 2.5e-7 in plain Python; the node group repeats Maya's Jacobi passes in a
+- **Tension** (every "O" case within 2.5e-7 in plain Python; the node group repeats Maya's Jacobi passes in a
   Repeat zone): partner table per vertex = edge neighbours (strength 1), face diagonals (Shear Strength), bend partners
   (Bend Strength) as hidden INT point attributes ``.allset_tension_p<k>`` = partner · 8 + flags (1 edge, 2 diagonal,
   4 bend, -1 none), computed from the topology in Python (operators can't build variable lists in Geometry Nodes).
   Vertex normals = Maya's corner rule (cross(f[k+h] - p, f[k-h] - p), h = max(1, m // 2 - 1)), recomputed each pass.
-- **Solidify** ( is ): the checked parts — membership = the vertex group (points selected at creation) picks
+- **Solidify** (): the known parts — membership = the vertex group (points selected at creation) picks
   the solid region; Full on the whole mesh = a rigid transform of the rest region onto the input with translation =
   input centroid; Borders on the whole mesh = nothing moves; a region's border ring stays (falloff on) / moves too
-  (falloff off); envelope blends linearly. Not checked, delegated: the rotation is the least-squares (Kabsch / polar)
+  (falloff off); envelope blends linearly. Unknown, delegated: the rotation is the least-squares (Kabsch / polar)
   fit (Maya differs by ~2.5°), Stabilization Level n divides the angle by 1 + n/2 (Maya: level 2 halves it), the
   border falloff is Blender's Blur Attribute of the inside weights, Scale Mode Edge / Edge Global = uniform scale by
   the region's edge-length ratio (× Scale Envelope), Normal / Tangent Plane Scale scale the normal / tangent part.
-- **Sculpt** (): sculptor = an Empty ``sculptor1`` (display Sphere, radius 1 Maya unit: Maya's implicit sphere;
+- **Sculpt**: sculptor = an Empty ``sculptor1`` (display Sphere, radius 1 Maya unit: Maya's implicit sphere;
   delta scale = maya_unit so the Channel Box shows Maya's Scale 1) and ``sculpt1StretchOrigin`` (plain axes), both at
-  the deformed points' bounding-box centre ("Center within selection"); the rule = 
-  sculpt_model.py ("O": Stretch / Even, Flip / Ring, Project at the sculptor); Stretch with the origin moved off the
+  the deformed points' bounding-box centre ("Center within selection"); the rule =
+  a model ("O": Stretch / Even, Flip / Ring, Project at the sculptor); Stretch with the origin moved off the
   sculptor, Flip / Even, Stretch / Ring, scaled sculptors and dropoff type None are  (the same rule, gaps recorded
   in tests/test_step205_deform_a.py). Maximum Displacement is a length (× maya_unit) in Stretch / Flip and a
   fraction in Project (Maya: the same attribute).
@@ -236,7 +236,7 @@ def _slot(b, I, k):
 
 
 def build_tension():
-    """Maya tension (deform_205.md): ``Smoothing Iterations`` Jacobi passes on the input, then
+    """Maya tension: ``Smoothing Iterations`` Jacobi passes on the input, then
     out = input + envelope · weight · (P - input)."""
     ng, b, I, gout = _new_group(GROUPS["tension"], TENSION_INPUTS)
     g0 = I["Geometry"]
@@ -306,7 +306,7 @@ def build_tension():
 
 
 def build_sculpt():
-    """Maya sculpt (deform_205.md, )."""
+    """Maya sculpt (the step-205 model)."""
     ng, b, I, gout = _new_group(GROUPS["sculpt"], SCULPT_INPUTS)
     info = b.node("GeometryNodeObjectInfo", transform_space='RELATIVE')
     b.link(I["Sculptor"], info.inputs["Object"])
@@ -377,7 +377,7 @@ def build_sculpt():
 
 
 def build_solidify():
-    """Maya solidify (deform_205.md,  rule — see the module doc)."""
+    """Maya solidify ( rule — see the module doc)."""
     ng, b, I, gout = _new_group(GROUPS["solidify"], SOLIDIFY_INPUTS)
     g0 = I["Geometry"]
     mem = b.math('GREATER_THAN', I["Weight"], 0.0)
@@ -511,7 +511,7 @@ def kind_of(md):
 
 def partners(faces, n):
     """[[(partner, flags)]] per vertex: edge neighbours (flag 1), then face diagonals (2) / bend partners (4) — the
-    sets of  (diagonals, bend_partners)."""
+    sets of the step-205 tension model (diagonals, bend_partners)."""
     nb = [set() for _ in range(n)]
     edge_faces = {}
     for fi, f in enumerate(faces):
@@ -618,7 +618,7 @@ def _attr_input(md, name, attribute):
 # --- creation ---------------------------------------------------------------------------------------------------
 
 DEFAULTS = {
-    # Tension Options (Maya factory values, deform_205.md)
+    # Tension Options (Maya factory values)
     'TENSION': {"iterations": 10, "step": 0.5, "pin_border": True, "relative": 0.0, "inward": 0.0, "outward": 0.0,
                 "squash": 1.0, "stretch": 1.0, "shear": 0.0, "bend": 0.0},
     # Solidify Options (Maya factory values)
@@ -879,7 +879,7 @@ def _attrs(rows):
 
 
 BASES = {"tension": ('NODES', "tension"), "solidify": ('NODES', "solidify"), "sculpt": ('NODES', "sculpt")}
-# deform_205.md keyable rows (Channel Box INPUTS), factory order
+# keyable rows (Channel Box INPUTS), factory order
 ATTR_ROWS = {
     "tension": [("envelope", "Envelope", "NONE", "Envelope"),
                 ("smoothingIterations", "Smoothing Iterations", "INT", "Smoothing Iterations"),
@@ -897,7 +897,7 @@ ATTR_ROWS = {
                ("dropoffDistance", "Dropoff Distance", "NONE", "Dropoff Distance")],
 }
 
-# AE "<Type> Attributes": the keyable rows, then the node's other attributes (deform_205.md)
+# AE "<Type> Attributes": the keyable rows, then the node's other attributes
 AE_EXTRA = {"tension": ("Shear Strength", "Bend Strength", "Pin Border Vertices"),
             "solidify": ("Attachment Mode", "Stabilization Level", "Use Border Falloff", "Border Falloff Blur",
                          "Scale Mode"),

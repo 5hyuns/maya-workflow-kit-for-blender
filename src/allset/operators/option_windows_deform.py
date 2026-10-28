@@ -2,9 +2,9 @@
 """Step 144 (#34) Maya option windows of the Deform menu: same spec as operators/option_windows.py (``F`` fields,
 ``Window`` = one ``allset.opt_<key>`` operator; option_windows._extend appends ``WINDOWS``).
 
-Titles, buttons, Basic tab fields in screen order and factory defaults:  "Deform
-option windows" (shots <key>.png). Every Python-built deformer box also has an
-Advanced tab (Deformation order / Exclusive / Partition, options_144.md "Common frame"): Blender's modifier stack
+Titles, buttons, Basic tab fields in screen order and factory defaults: Maya's Deform
+option windows. Every Python-built deformer box also has an
+Advanced tab (Deformation order / Exclusive / Partition): Blender's modifier stack
 has none of them, so they and every Basic field Blender can't honour are listed as ``missing``, never faked.
 The deformers themselves: operators/deformers.py.
 """
@@ -107,7 +107,7 @@ def _paint(kind):
 _BOUNDS_NOTE = "Bounds beyond the object (Blender limits stop at its ends)"
 
 WINDOWS = [
-    # Lattice Options (options_144.md, Lattice row): Divisions 2 5 2, Center around selection on
+    # Lattice Options (Lattice row): Divisions 2 5 2, Center around selection on
     Window("deform_lattice", "Lattice Options", "Create", _match('LATTICE'), [
         FDivisions("divisions", "Divisions:", (2, 5, 2)),
         F("center", "", "bool", True, text="Center around selection"),
@@ -200,7 +200,7 @@ WINDOWS = [
         F("offset", "Offset:", "float", 0.0, lo=-10.0, hi=10.0)], _create('TEXTURE'), paths=("Deform/Texture",),
         missing=("Vector Strength / Vector Offset", "Vector Space Tangent", ENVELOPE,
                  "textureDeformerHandle1 (Handle = the object's up axis)")),
-    # step 169 (): Wire Tool settings (options_144.md "Wire") = a window titled with
+    # step 169: Wire Tool settings = a window titled with
     # the tool name whose button makes the wire (select the objects, then the curve)
     Window("deform_wire", "Wire Tool", "Create", _match('WIRE'), [
         F("envelope", "Envelope:", "float", 1.0, lo=0.0, hi=1.0),
@@ -221,17 +221,17 @@ WINDOWS = [
                F("envelope", "Envelope:", "float", 1.0, lo=0.0, hi=1.0),
                F("percent", "Percent:", "float", 1.0, lo=0.0, hi=10.0)], _dropoff_locator,
            paths=("Deform/Wire#2/Wire Dropoff Locator",), missing=("Existing wire nodes: (type the name)",)),
-    # Point On Curve Options (options_144.md): Keep original off, Point weight 1
+    # Point On Curve Options: Keep original off, Point weight 1
     Window("point_on_curve", "Point On Curve Options", "Create", ("allset.point_on_curve", {}), [
         F("weight", "Point weight:", "float", 1.0, lo=0.0, hi=1.0)], _point_on_curve,
         paths=("Deform/Point On Curve",),
         missing=("Keep original (the curve is always the original)",
                  "Least-squares fit through the point (Blender hooks the selected control point)")),
-    # Paint Weights > <deformer> boxes = the Paint Attributes Tool settings (options_144.md "Paint tool factory
+    # Paint Weights > <deformer> boxes = the Paint Attributes Tool settings ("Paint tool factory
     # brush"; Blend Shape: Paint Blend Shape Weights Tool), the button starts painting with them
     *[Window(f"paint_weights_{(kind or 'membership').lower()}", "Paint Blend Shape Weights Tool" if kind == "blendShape" else
              "Paint Attributes Tool", "Paint", None, PAINT_FIELDS(), _paint(kind),
-             # Maya 2026 moved Paint Weights > Set Membership to Deform > Paint Membership (menus dump, step 219)
+             # Maya 2026 moved Paint Weights > Set Membership to Deform > Paint Membership (step 219)
              paths=("Deform/Paint Membership",) if not kind else (f"Deform/Paint Weights/{label}",),
              missing=PAINT_MISSING)
       for label, kind in (("Blend Shape", "blendShape"), ("Cluster", "cluster"), ("Delta Mush", "deltaMush"),

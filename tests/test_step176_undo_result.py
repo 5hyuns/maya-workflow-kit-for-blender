@@ -1,5 +1,5 @@
-"""Step 176 G2: after Ctrl+Z / Shift+Z the Command Line result field shows Maya's "Undo: <command>" / "Redo: <command>"
-(), not the last command's "Result: group1".
+"""Step 176 G2: after Ctrl+Z / Shift+Z the Command Line result field shows Maya's "Undo: <command>" / "Redo: <command>",
+not the last command's "Result: group1".
 
 ``bpy.ops.ed.undo_push`` makes the undo stack in background (step 147); ``op('EXEC_DEFAULT', True, ...)`` runs an
 operator at undo depth 0 like a key or button, so it pushes its step and Blender registers it."""

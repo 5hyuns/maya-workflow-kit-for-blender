@@ -1,8 +1,8 @@
 """Step 213 (#119) in a real UI: Windows > General Editors > Component Editor (a skinned cylinder with vertices
 selected in edit mode), Windows > Animation Editors > Shape Editor (pCube1 with a blendShape and an added target) and
 Windows > General Editors > Connection Editor (pCube1 / pSphere1 loaded, translate connected) each open a new window
-whose Properties area is the kit editor (Maya menu bar, no Blender header); shots beside
-*_win1.png."""
+whose Properties area is the kit editor (Maya menu bar, no Blender header); shots
+with ``--shots``."""
 
 import os
 import sys

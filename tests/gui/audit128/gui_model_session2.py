@@ -155,7 +155,7 @@ def s_click_check():
     check(f"Ctrl+Shift+click adds ({C['after_cs_b']})", C["after_cs_b"] == sorted([a, b]))
     check(f"Ctrl+click deselects ({after_ctrl})", after_ctrl == [b])
     # (Delete History in component mode was dropped from this audit: Maya shows Maya's `delete -ch` with only
-    # components selected keeps the history too, tmp/audit128_model/maya_probe3.py.)
+    # components selected keeps the history too.)
 
 
 run()

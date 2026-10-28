@@ -2,8 +2,8 @@
 """Maya Shelf: factory shelves as Blender operator buttons, user shelves of Python
 scripts, drawn under the Status Line in a thin "Maya strip" area.
 
- ( behaviour, tab order, buttons);
- #11. Design:  「계획」.
+Maya's shelf behaviour, tab order and buttons.
+Design:  「계획」.
 
 - The strip is an Image Editor area marked by the hidden Mask ``.AllsetStrip``
   (``space.mask``): its header row draws the Status Line, its tool header row the
@@ -26,8 +26,8 @@ scripts, drawn under the Status Line in a thin "Maya strip" area.
 - Step 109: every factory button keeps its Maya slot. Buttons without a
   Blender action are drawn greyed; their tooltip and a click show the notice (``button_notice``) in the
   Help Line, like greyed Maya menu items (step 101).
-- Step 162: Ctrl+Shift+click on a Maya menu item adds a button for it to the shelf shown (as Maya does,
-  ), factory tabs included. A menu button is ``{"label", "icon", "script": "", "menu":
+- Step 162: Ctrl+Shift+click on a Maya menu item adds a button for it to the shelf shown (as Maya does),
+  factory tabs included. A menu button is ``{"label", "icon", "script": "", "menu":
   <Maya menu path>}`` and runs that path like the menu; on a factory tab it is stored in ``shelves.json``
   ``"extra"[<shelf id>]`` and drawn after the factory slots, so every factory button keeps its Maya slot.
 """
@@ -274,7 +274,7 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
         limit = getattr(context.preferences.inputs, "mouse_double_click_time", DOUBLE_CLICK_S * 1000) / 1000.0
         second = last[0] == key and now - last[1] <= limit
         if event.value == 'DOUBLE_CLICK' or second:
-            # Maya doubleClickCommand () = the item's option box; the first click
+            # Maya doubleClickCommand = the item's option box; the first click
             # already ran the command once (step 167: was screen.redo_last, which shows nothing since shelf runs
             # stopped being registered in step 147). The gizmo may see two presses instead of a double click.
             _last_click.clear()
@@ -742,7 +742,7 @@ def draw_shelf(layout, context):
 
 
 def draw_shelf_tabs(layout, context):
-    """Maya shelf tab row (): settings, then one flat tab per shelf,
+    """Maya shelf tab row: settings, then one flat tab per shelf,
     the current one raised."""
     cur = current(context)
     layout.menu(ALLSET_MT_shelf_settings.bl_idname, text="", icon='PREFERENCES')
@@ -813,7 +813,7 @@ class ALLSET_OT_shelf_slot(bpy.types.Operator):
 ICON_PX = 32
 PITCH_PX = 35
 LEFT_PX = 6
-# Step 113 (Maya 2022 grab  shelf): the shelf row is one 64 px block — an
+# Step 113 (Maya 2022's shelf): the shelf row is one 64 px block — an
 # 18 px tab strip at the top (tabs from x 37, Segoe UI 11 px), the shelf menu / editor glyphs in a 16 px column at
 # x 16, icons from x 43 at y 24 under the row's top, 12 px separators between Maya's button groups
 # (``shelf_data.GAPS``). The kit draws that whole block in the shelf row's WINDOW region when the row has no
@@ -851,7 +851,7 @@ def _gaps():
 
 # Step 167: Maya's shelf is a flow of rows one row high — buttons that don't fit wrap to the next row, a 12 px
 # vertical scroll bar with up / down arrows sits at the right, the wheel over the icons moves one row
-# ( shelf167/_shelf167.json, scroll bar page = single row 35 px, wheel = 1 row).
+# (Maya: scroll bar page = single row 35 px, wheel = 1 row).
 SCROLL_PX = 12
 SCROLL_RIGHT_PX = 16     # gap between the scroll bar and the area's right edge
 _row = {}      # shelf id -> first row shown
@@ -1036,7 +1036,7 @@ def _text(x, y, text, colour, size):
 
 
 def _draw_tabs(context, region, base):
-    """Maya's shelf tab strip (): #373737 strip, flat tabs, the current one
+    """Maya's shelf tab strip: #373737 strip, flat tabs, the current one
     in the row colour with light text, the others dim; the shelf menu glyph left of the tabs, the shelf editor gear
     left of the icons."""
     s = context.preferences.system.ui_scale or 1.0
@@ -1149,7 +1149,7 @@ def _triangle(cx, cy, half, up, colour):
 
 
 def _draw_scroll_bar(region, s, base):
-    """Maya's shelf scroll bar (12 px, ▲ / ▼, shelf167/narrow_1000.png) while the shelf has more than one row; an
+    """Maya's shelf scroll bar (12 px, ▲ / ▼) while the shelf has more than one row; an
     arrow is dimmed at its end."""
     rects = scroll_rects(region, s)
     if not rects:
