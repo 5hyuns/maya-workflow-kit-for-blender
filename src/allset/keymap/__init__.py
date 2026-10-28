@@ -47,6 +47,7 @@ _state = {
     "off": [],                   # (km name, space, region, index, idname, type, value) switched off there
     "modal_added": set(),        # pointers of Maya modal items added to that keyconfig
     "modal_made": [],            # (name, space, region) of modal keymaps created there (none in a GUI session)
+    "addon_count": -1,           # add-on keyconfig item count _keep_first last saw (step 265)
 }
 
 
@@ -141,6 +142,7 @@ def _restore_addon():
                 kc.keymaps.remove(km)
     ptrs.clear()
     _state["addon_made"].clear()
+    _state["addon_count"] = -1
 
 
 # --- the active keyconfig (in memory only) --------------------------------------------------------------------
@@ -219,12 +221,56 @@ def _active_changed():
     return km is None or i >= len(km.keymap_items) or km.keymap_items[i].active
 
 
+def _event_sig(kmi):
+    return (kmi.type, kmi.value, kmi.any, kmi.shift, kmi.ctrl, kmi.alt, kmi.oskey, kmi.key_modifier)
+
+
+def _keep_first():
+    """Maya keys first in Maya mode (step 265, Issue #178): Blender merges the add-on keyconfig into the keymaps
+    putting each add-on item at the head in turn, so an item another add-on adds later (a "Draw" add-on's D in Object
+    Mode) runs before the kit's same key and the Maya key never fires. When an active item of another add-on with the
+    same event sits after a kit item in an add-on keymap, the kit's items of that keymap move to its end (= first
+    again). Only runs when the add-on keyconfig's item count changed; Maya mode off removes the kit's items, so the
+    other add-on's key works again. Returns the number of keymaps reordered."""
+    kc = bpy.context.window_manager.keyconfigs.addon
+    ptrs = _state["addon_items"]
+    if kc is None or not ptrs:
+        return 0
+    count = sum(len(km.keymap_items) for km in kc.keymaps)
+    if count == _state["addon_count"]:
+        return 0
+    moved = 0
+    for km in kc.keymaps:
+        if km.is_modal:
+            continue
+        kit_at = {}
+        clash = False
+        for i, kmi in enumerate(km.keymap_items):
+            if kmi.as_pointer() in ptrs:
+                kit_at.setdefault(_event_sig(kmi), i)
+            elif kmi.active and _event_sig(kmi) in kit_at:
+                clash = True
+                break
+        if not clash:
+            continue
+        kit = [k for k in km.keymap_items if k.as_pointer() in ptrs]
+        for old in kit:
+            new = km.keymap_items.new_from_item(old)
+            ptrs.discard(old.as_pointer())
+            ptrs.add(new.as_pointer())
+            km.keymap_items.remove(old)
+        moved += 1
+    _state["addon_count"] = sum(len(km.keymap_items) for km in kc.keymaps)
+    return moved
+
+
 def _watch():
     if not _state["applied"]:
         return None
     if _active_changed():
         _restore_active()
         _apply_active(generate_data())
+    _keep_first()
     return WATCH_INTERVAL
 
 
