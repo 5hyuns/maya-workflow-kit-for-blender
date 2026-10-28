@@ -75,8 +75,11 @@ def _hidden(deferred):
 def no_redo_panel(cls):
     """Class decorator: every property hidden (inherited ones too), so Blender's redo panel has nothing to show; the
     class keeps REGISTER, so Repeat Last (Maya G) still repeats it with the same values."""
+    from . import compat
     merged = {}
     for base in reversed(cls.__mro__):
-        merged.update(base.__dict__.get("__annotations__", {}))
+        if base is object:
+            continue
+        merged.update(compat.own_annotations(base))
     cls.__annotations__ = {k: _hidden(v) for k, v in merged.items()}
     return cls
