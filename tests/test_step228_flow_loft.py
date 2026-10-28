@@ -17,8 +17,7 @@ cmaya = import_module(kit.MODULE + ".operators.curves_maya")
 flowmod = import_module(kit.MODULE + ".operators.flow_path_228")
 units = import_module(kit.MODULE + ".operators.units")
 
-with open(kit.maya_data("maya", "re", "curve_rigs_228.json"), encoding="utf-8") as _fh:
-    D = json.load(_fh)
+D = kit.MayaJson("maya", "re", "curve_rigs_228.json")
 
 
 def k():

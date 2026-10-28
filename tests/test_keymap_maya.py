@@ -8,7 +8,6 @@ import bpy
 
 import kit
 
-ROOT = Path(__file__).resolve().parent.parent
 # Pure-data helpers from the installed extension (imported, not re-registered).
 from importlib import import_module  # noqa: E402
 ic_data = import_module(kit.MODULE + ".keymap.ic_data")

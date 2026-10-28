@@ -14,23 +14,47 @@ class Skip(Exception):
     """Raised by a test (or at import of a test file) that can't run here; tests/_bootstrap.py records SKIP."""
 
 
+def _missing(what, parts):
+    """A clone without ``research/`` (the public repository) skips; where ``research/`` exists (the maintainer's PC)
+    a missing file is still an error, so a typo or a lost file doesn't turn into a quiet pass."""
+    rel = "research/" + "/".join(parts)
+    if os.path.isdir(os.path.join(ROOT, "research")):
+        raise FileNotFoundError(f"{what} missing: {rel}")
+    raise Skip(f"{what} not in this clone: {rel}")
+
+
 def maya_data(*parts):
     """Path of a Maya reference file named relative to ``research/`` (e.g. ``"maya", "re", "x.json"``):
-    ``tests/data/<parts>`` (measured numbers, in git) first, then the maintainer's ``research/<parts>`` (not in git).
-    Raises Skip when neither has it, so a fresh clone skips the comparison instead of failing."""
+    ``tests/data/<parts>`` (measured numbers, in git) first, then the maintainer's ``research/<parts>`` (not in git),
+    else Skip / error (``_missing``)."""
     for base in (os.path.join(ROOT, "tests", "data"), os.path.join(ROOT, "research")):
         path = os.path.join(base, *parts)
         if os.path.exists(path):
             return path
-    raise Skip("Maya reference data not here: research/" + "/".join(parts))
+    _missing("Maya reference data", parts)
 
 
 def research(*parts):
-    """Path of an input the tools/gen_*.py generators read from ``research/`` itself; Skip when it isn't there."""
+    """Path of an input the tools/gen_*.py generators read from ``research/`` itself, else Skip / error."""
     path = os.path.join(ROOT, "research", *parts)
     if not os.path.exists(path):
-        raise Skip("generator input not here: research/" + "/".join(parts))
+        _missing("generator input", parts)
     return path
+
+
+class MayaJson:
+    """A Maya reference JSON (``maya_data``) read on first use, so a test file can name it at import and only the
+    tests that index it skip when it isn't there."""
+
+    def __init__(self, *parts):
+        self._parts, self._data = parts, None
+
+    def __getitem__(self, key):
+        if self._data is None:
+            import json
+            with open(maya_data(*self._parts), encoding="utf-8") as fh:
+                self._data = json.load(fh)
+        return self._data[key]
 
 
 def _raise(ex):
