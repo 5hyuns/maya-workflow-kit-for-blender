@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya Smart Duplicate / Smart Extrude: Shift+drag a Move/Rotate/Scale manipulator
-duplicates the selected objects, or extrudes the selected faces/edges, and the drag
+duplicates the selected objects, or extrudes the selected faces/edges/vertices, and the drag
 transforms the copies / new components (,
 setting ``manipSmartDuplicate 1``, ``manipSmartExtrude 1``).
 
@@ -60,9 +60,8 @@ def kind(context):
             return 'DUPLICATE'
         return None
     if context.mode == 'EDIT_MESH' and _pref(context, "smart_extrude"):
-        _vert, edge, face = context.tool_settings.mesh_select_mode
-        if (edge or face) and any(_selected_coords(ob) for ob in _edit_meshes(context)):
-            return 'EXTRUDE'
+        if any(_selected_coords(ob) for ob in _edit_meshes(context)):
+            return 'EXTRUDE'      # faces, edges and vertices (Maya 2026 behaviour, checked; #183)
     return None
 
 
@@ -78,15 +77,47 @@ def start_duplicate(context):
             "originals": [o.name for o in originals], "active": active.name if active else None}
 
 
+# Maya 2026 (checked, #183): Shift+drag with vertices selected runs polyExtrudeVertex with Width 0.5 and Length 0,
+# and the drag moves the vertex together with the new base vertices around it
+VERTEX_DRAG = {"width": 0.5, "length": 0.0, "divisions": 1}
+
+
+def _vertex_mode(context):
+    vert, edge, face = context.tool_settings.mesh_select_mode
+    return vert and not (edge or face)
+
+
+def _extrude_vertices(context, ob):
+    """Kit polyExtrudeVertex (``VERTEX_DRAG``) on the selected vertices of ``ob``; the vertices and their new base
+    vertices end up selected, so the manipulator drag moves them together."""
+    from . import extrude, units
+    bm = bmesh.from_edit_mesh(ob.data)
+    tips = [v for v in bm.verts if v.select]
+    if not tips:
+        return
+    before = set(bm.verts)
+    extrude.record_new(context, ob, bm, extrude.VERTEX, dict(VERTEX_DRAG), units.maya_unit(context.scene))
+    for v in tips + [v for v in bm.verts if v not in before]:
+        if v.is_valid:
+            v.select_set(True)
+    bm.select_flush_mode()
+    bmesh.update_edit_mesh(ob.data)
+
+
 def start_extrude(context):
     """Extrude in place (Maya polyExtrudeFacet / polyExtrudeEdge, keepFacesTogether on ):
-    edges extrude as a region too, so a connected edge strip stays connected (delegated)."""
+    edges extrude as a region too, so a connected edge strip stays connected (delegated); vertices extrude Maya's
+    polyExtrudeVertex way (``VERTEX_DRAG``)."""
     obs = _edit_meshes(context)
     saved = {}
     for ob in obs:
         ob.update_from_editmode()
         saved[ob.name] = ob.data.copy().name    # mesh before the extrusion (for a cancel)
-    bpy.ops.mesh.extrude_region(use_normal_flip=False)
+    if _vertex_mode(context):
+        for ob in obs:
+            _extrude_vertices(context, ob)
+    else:
+        bpy.ops.mesh.extrude_region(use_normal_flip=False)
     return {"kind": 'EXTRUDE', "saved": saved,
             "coords": {ob.name: _selected_coords(ob) for ob in obs}}
 

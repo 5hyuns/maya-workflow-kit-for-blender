@@ -11,7 +11,8 @@ commands are never registered (``marking/modal.run_action`` calls operators from
 keeps its own record of Maya commands (``record``) next to Blender's operator list: G repeats whichever is newer —
 the kit record unless a repeatable Blender operator was registered after it (key commands such as Ctrl+E,
 Ctrl+D). Selection, transform, view, undo and screen operators never count: Maya's repeatLast doesn't take selection
-clicks or manipulator drags (delegated, ).
+clicks or manipulator drags (delegated, ); a manipulator drag on a kit node (Ctrl+E then drag) is a node edit, so
+G after it extrudes the new selection (Maya 2026 behaviour, checked; #184).
 """
 
 import bpy
@@ -28,9 +29,16 @@ SKIP_PREFIXES = ("TRANSFORM_OT_", "VIEW3D_OT_view", "VIEW3D_OT_zoom", "VIEW3D_OT
 NO_RECORD = {"Edit/Repeat", "Edit/Recent Commands List", "Edit/Undo", "Edit/Redo"}
 
 
+def _node_edits():
+    """bl_idnames of the operators that change a kit history node's values (manipulator, In-View Editor, Channel
+    Box INPUTS). Maya's G runs the command again on the new selection, it never repeats a node edit (#184)."""
+    from . import extrude
+    return {"ALLSET_OT_" + spec.edit_op for spec in extrude.SPECS.values() if spec.edit_op}
+
+
 def repeatable(idname):
     """Would Maya's G repeat this Blender operator (bl_idname 'MESH_OT_extrude' style)?"""
-    return not ("_OT_select" in idname or idname.startswith(SKIP_PREFIXES))
+    return not ("_OT_select" in idname or idname.startswith(SKIP_PREFIXES) or idname in _node_edits())
 
 
 def _mark(context=None):

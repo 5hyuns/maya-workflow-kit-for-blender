@@ -11,10 +11,12 @@ empty ``polySurfaceN`` (``allset.quad_draw_start``) — on the reference surface
 - Shift+click = fill: the polygon of the dots / border vertices around the mouse (4, else 3); Shift+drag = relax brush;
 - Ctrl+click on an edge = edge loop there (new vertices on the surface);
 - Ctrl+Shift+click = delete the dot / vertex / edge / face under the mouse;
-- Tab held + drag from a border edge = extend it by a quad (Extend: Edge / Loop), from empty space = a strip of quads
-  Quad Strip Width pixels wide;
+- Tab held + drag from a border edge = extend it by a quad (Extend: Edge / Loop), from a border vertex with two
+  border edges = the quad of the vertex, its two border neighbours and the mouse point (an inner corner, #180), from
+  empty space = a strip of quads Quad Strip Width pixels wide;
 - hover previews (Shift: the fill, Ctrl: the loop, Ctrl+Shift: what goes, Tab: the border edge).
-Pure parts (``fill_order``, ``fill_face``, ``extend_edges``, ``strip_pairs``, ``relax``, ``delete_at``) are tested headless
+Pure parts (``fill_order``, ``fill_face``, ``extend_edges``, ``corner_quad``, ``strip_pairs``, ``relax``,
+``delete_at``) are tested headless
 (tests/test_step144_poly.py).
 """
 
@@ -188,6 +190,67 @@ def extend_edges(bm, edges, offset):
             pass
     _indices(bm)
     return faces
+
+
+def corner_neighbours(v):
+    """(A, B): the other ends of the two border edges at border vertex ``v`` (in the winding a face appended there
+    needs), or None when ``v`` doesn't have exactly two border edges."""
+    border = [e for e in v.link_edges if e.is_boundary]
+    if len(border) != 2:
+        return None
+    first, second = border
+    start, end = poly_draw.edge_start(first)
+    a = first.other_vert(v)
+    b = second.other_vert(v)
+    # the new face runs along ``first`` as edge_start says: A -> V when it starts at A, else V -> A (then reversed)
+    return (a, b) if start is a else (b, a)
+
+
+def corner_quad(bm, v, co):
+    """Tab+drag from border vertex ``v`` (Maya 2026 Quad Draw, Autodesk's help "Extend edges with Quad Draw": with
+    the Edge extend option a vertex can be dragged to create a polygon): the quad A, V, B, N of ``v``, its two border
+    neighbours and a new vertex at local ``co``. Only where that quad fills the open side of ``v`` (an inner corner):
+    at an outer corner or a straight border it would fold over the faces there, and nothing is made (delegated,
+    ). Returns the face or None."""
+    pair = corner_neighbours(v)
+    if pair is None:
+        return None
+    a, b = pair
+    n = sum((f.normal for f in v.link_faces), Vector())
+    if n.length < 1e-9:
+        return None
+    n.normalize()
+
+    def flat(p):
+        d = p - v.co
+        return d - n * d.dot(n)
+    pa, pb, pn = flat(a.co), flat(b.co), flat(co)
+    # N on the far side of A-B from V, and a convex quad A V B N seen along the normal
+    ab = pb - pa
+    side_v = ab.cross(-pa).dot(n)
+    side_n = ab.cross(pn - pa).dot(n)
+    if side_v * side_n >= 0:
+        return None
+    ring = [Vector(), pa, pn, pb]           # V, A, N, B in order around the quad
+    turns = [(ring[(i + 1) % 4] - ring[i]).cross(ring[(i + 2) % 4] - ring[(i + 1) % 4]).dot(n) for i in range(4)]
+    if not (all(t > 1e-12 for t in turns) or all(t < -1e-12 for t in turns)):
+        return None
+    if any(f.calc_center_median() is not None and _inside_quad(flat(f.calc_center_median()), ring, n)
+           for f in v.link_faces):
+        return None                          # the quad would lie over a face at V
+    nv = bm.verts.new(co)
+    try:
+        face = bm.faces.new((a, v, b, nv))
+    except ValueError:
+        bm.verts.remove(nv)
+        return None
+    _indices(bm)
+    return face
+
+
+def _inside_quad(p, ring, n):
+    signs = [(ring[(i + 1) % 4] - ring[i]).cross(p - ring[i]).dot(n) for i in range(4)]
+    return all(x > 0 for x in signs) or all(x < 0 for x in signs)
 
 
 def strip_pairs(path, width):
@@ -638,12 +701,37 @@ def _component_points(ob, comp):
     return [mw @ v.co for v in bm.faces[i].verts]
 
 
+def corner_vertex_at(context, region, rv3d, mouse, ob):
+    """Index of a border vertex of ``ob`` with two border edges under ``mouse`` (Tab+drag makes a quad there), or
+    None."""
+    comp = component_at(context, region, rv3d, mouse, ob)
+    if comp is None or comp[0] != 'VERT':
+        return None
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.verts.ensure_lookup_table()
+    if comp[1] >= len(bm.verts) or corner_neighbours(bm.verts[comp[1]]) is None:
+        return None
+    return comp[1]
+
+
+def _corner_points(ob, vi):
+    bm = bmesh.from_edit_mesh(ob.data)
+    bm.verts.ensure_lookup_table()
+    v = bm.verts[vi]
+    mw = ob.matrix_world
+    return [(mw @ v.co, mw @ e.other_vert(v).co) for e in v.link_edges if e.is_boundary]
+
+
 def update_hover(context, region, rv3d, mouse, ctrl, shift, tab=False):
     ob = edit_object(context)
     STATE["preview"] = None
     if ob is None:
         return
     if tab:
+        vi = corner_vertex_at(context, region, rv3d, mouse, ob)
+        if vi is not None:
+            STATE["preview"] = ('EXTEND', [p for seg in _corner_points(ob, vi) for p in seg])
+            return
         bm_edge = poly_draw.border_edge_at(context, region, rv3d, mouse, ob)
         if bm_edge is not None:
             STATE["preview"] = ('TAB', _component_points(ob, ('EDGE', bm_edge)))
@@ -1017,8 +1105,8 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
         self._refs = reference_objects(context)
         update_hover(context, context.region, context.region_data, _mouse(event), False, False, tab=True)
         context.window_manager.modal_handler_add(self)
-        context.workspace.status_text_set("Quad Draw: hold Tab and drag a border edge to extend it, "
-                                          "or drag in empty space for a strip of quads")
+        context.workspace.status_text_set("Quad Draw: hold Tab and drag a border edge to extend it, a corner "
+                                          "vertex to fill the corner, or drag in empty space for a strip of quads")
         _redraw(context)
         return {'RUNNING_MODAL'}
 
@@ -1048,6 +1136,12 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
             return {'RUNNING_MODAL'}
         if event.type in {'LEFTMOUSE', 'MIDDLEMOUSE'} and event.value == 'PRESS' and self._drag is None:
             ob = bpy.data.objects[self._ob]
+            vi = corner_vertex_at(context, region, rv3d, mouse, ob) if event.type == 'LEFTMOUSE' else None
+            if vi is not None:
+                # a border vertex: the quad of it, its two border neighbours and the mouse point (#180)
+                self._button = event.type
+                self._drag = ('CORNER', vi)
+                return {'RUNNING_MODAL'}
             ei = poly_draw.border_edge_at(context, region, rv3d, mouse, ob)
             if ei is None and event.type == 'MIDDLEMOUSE':
                 return {'RUNNING_MODAL'}        # Maya Tab+MMB in empty space resizes strips: not in the kit
@@ -1091,7 +1185,23 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
             return inv @ (project_point(context, w, refs) if refs else w)
         return offset
 
+    def _corner_point(self, context, mouse):
+        """World point under the mouse for a corner quad: on the reference surface, else in the view plane through
+        the vertex."""
+        region, rv3d = context.region, context.region_data
+        ob = bpy.data.objects[self._ob]
+        bm = bmesh.from_edit_mesh(ob.data)
+        bm.verts.ensure_lookup_table()
+        at = ob.matrix_world @ bm.verts[self._drag[1]].co
+        hit = place_point(context, region, rv3d, mouse, self._refs) if self._refs else None
+        return hit if hit is not None else view3d_utils.region_2d_to_location_3d(region, rv3d, mouse, at)
+
     def _update_drag(self, context, mouse):
+        if self._drag[0] == 'CORNER':
+            ob = bpy.data.objects[self._ob]
+            p = self._corner_point(context, mouse)
+            STATE["preview"] = ('EXTEND', [q for a, b in _corner_points(ob, self._drag[1]) for q in (b, p)])
+            return
         if self._drag[0] == 'STRIP':
             self._drag[1].append(mouse)
             pairs = strip_pairs(self._drag[1], poly_draw.settings(context).qd_strip_width * _ui_scale(context))
@@ -1126,7 +1236,14 @@ class ALLSET_OT_quad_draw_tab(bpy.types.Operator):
         ob = bpy.data.objects[self._ob]
         bm = bmesh.from_edit_mesh(ob.data)
         inv = ob.matrix_world.inverted_safe()
-        if self._drag[0] == 'EXTEND':
+        if self._drag[0] == 'CORNER':
+            bm.verts.ensure_lookup_table()
+            before = set(bm.verts)
+            face = corner_quad(bm, bm.verts[self._drag[1]], inv @ self._corner_point(context, mouse))
+            faces = [face] if face is not None else []
+            if faces:
+                auto_weld(context, region, rv3d, ob, [vv for vv in face.verts if vv not in before])
+        elif self._drag[0] == 'EXTEND':
             bm.edges.ensure_lookup_table()
             edges = [bm.edges[i] for i in self._drag[1] if i < len(bm.edges)]
             before = set(bm.verts)

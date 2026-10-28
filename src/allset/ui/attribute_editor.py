@@ -472,6 +472,19 @@ def draw_row(layout, context, ob, target, row):
         sub.label(text=f"{label}: {note}")
 
 
+SECTION_INDENT = 1.2     # separator factor in front of an open section's content area (under the header arrow)
+
+
+def section_body(body):
+    """The content of an open Attribute Editor section: Maya draws it inset under the section header, in a content
+    area of its own shade (Maya 2026 behaviour, checked: 2 px in from each side, one step off the editor's grey;
+    #194). The box starts under the section's disclosure arrow, gives the content area its shade and frame; the
+    column is what the rows go into."""
+    row = body.row()
+    row.separator(factor=SECTION_INDENT)
+    return row.box().column()
+
+
 def draw_sections(layout, context, ob, target, sections, layout_id, prefix=""):
     for sec in sections:
         header, body = layout.panel(f"allset_ae_{layout_id}_{prefix}{sec.name}",
@@ -479,7 +492,7 @@ def draw_sections(layout, context, ob, target, sections, layout_id, prefix=""):
         header.label(text=sec.name)
         if body is None:
             continue
-        col = body.column()
+        col = section_body(body)
         for row in sec.rows:
             draw_row(col, context, ob, target, row)
         if sec.subs:
@@ -506,7 +519,7 @@ def draw_history(layout, context, ob, md):
     header, body = layout.panel(f"allset_ae_history_{md.type}", default_closed=False)
     header.label(text=f"{nice_type(modifier_node(ob, md)[1])} History")
     if body is not None:
-        col = body.column()
+        col = section_body(body)
         col.prop(md, "show_viewport", text="Enabled (Node State)")
         from ..operators import deformers_205a, deformers_205b
         # step 205: Tension / Solidify / Sculpt and Morph / Jiggle draw their Maya attributes
@@ -537,7 +550,7 @@ def draw_constraint(layout, context, node, con):
     header, body = layout.panel(f"allset_ae_constraint_{con.type}", default_closed=False)
     header.label(text=f"{channel_box.maya_constraint_type(con, con.type.title())} Attributes")
     if body is not None:
-        col = body.column()
+        col = section_body(body)
         if hasattr(con, "enabled"):
             col.prop(con, "enabled", text="Enabled (Node State)")
         col.prop(con, "influence", text=channel_box.weight_name(con))
@@ -551,6 +564,7 @@ def draw_extra(layout, owner, layout_id):
     header.label(text="Extra Attributes")
     if body is None:
         return
+    body = section_body(body)
     if not keys:
         body.label(text="(none)")
     for k in sorted(keys):
@@ -565,7 +579,7 @@ def draw_extrude_history(layout, context, rec):
     if body is None:
         return
     hist = context.window_manager.allset_history
-    col = body.column(align=True)
+    col = section_body(body).column(align=True)
     for field in rec.spec.fields:
         split = col.split(factor=0.42, align=True)
         split.label(text=attr_label(context, rec.spec.labels[field], field))
@@ -821,6 +835,7 @@ def draw_shading_group(layout, key, mat):
     header.label(text="Shading Group Attributes")
     if box is None:
         return
+    box = section_body(box)
     row = box.row(align=True)
     row.label(text="Surface Material")
     row.operator("allset.ae_tab", text=mat.name, icon='MATERIAL').key = "MAT:" + key.split(":", 1)[1]
