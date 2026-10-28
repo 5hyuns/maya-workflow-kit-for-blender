@@ -267,6 +267,9 @@ class ALLSET_OT_cut_sew_tool_set(bpy.types.Operator):
         return ob is not None and ob.type == 'MESH'
 
     def execute(self, context):
+        from . import maya_errors
+        if context.mode != 'EDIT_MESH' and maya_errors.refuse_hidden(self, context.active_object):     # #187
+            return {'CANCELLED'}
         window, area = _view3d_area(context)
         if area is None:
             self.report({'WARNING'}, "No 3D View to cut and sew in")

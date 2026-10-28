@@ -5,6 +5,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Fixed
+- **Commands on a hidden object** (#187): component modes (F7 / F9 / F10 / F11), F8, the component marking menu,
+  the Status Line selection mode, the Tool Box joint modes and menu / shelf / marking-menu items no longer print
+  Blender's "Cannot edit hidden object" or a Python error when the active object is hidden; they warn
+  "<name> is hidden: show it (Display > Show) first" and change nothing. Thanks to @youngmin2k for the component-mode
+  fix and its tests (#196).
+
 ## [0.6.2] — 2026-10-28
 
 Fixes and small additions for the reports after 0.6.1. Blender 4.5 LTS through 5.2.x.

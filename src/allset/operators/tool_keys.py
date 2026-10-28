@@ -272,10 +272,17 @@ class ALLSET_OT_toggle_sel_mode(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return bpy.ops.object.editmode_toggle.poll()
+        if bpy.ops.object.editmode_toggle.poll():
+            return True
+        from . import maya_errors       # a hidden active object: run, to say why nothing happens (#187)
+        vl = getattr(context, "view_layer", None)
+        return vl is not None and maya_errors.is_hidden(vl.objects.active)
 
     def execute(self, context):
-        ob = context.active_object
+        ob = context.view_layer.objects.active
+        from . import maya_errors
+        if maya_errors.refuse_hidden(self, ob):        # Blender can't edit a hidden object (#187)
+            return {'CANCELLED'}
         # Maya joints are objects. Pose mode is their object-selection state;
         # Edit mode exposes the rest skeleton as components.
         if ob is not None and ob.type == 'ARMATURE':

@@ -790,6 +790,9 @@ class ALLSET_OT_append_polygon_start(bpy.types.Operator):
         if ob is None:
             self.report({'WARNING'}, "Append to Polygon: select a polygon mesh first.")
             return {'CANCELLED'}
+        from . import maya_errors
+        if context.mode != 'EDIT_MESH' and maya_errors.refuse_hidden(self, ob):     # #187
+            return {'CANCELLED'}
         if context.mode != 'EDIT_MESH':
             if context.mode != 'OBJECT':
                 bpy.ops.object.mode_set(mode='OBJECT')

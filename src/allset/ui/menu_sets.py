@@ -653,7 +653,8 @@ class ALLSET_OT_component_command(bpy.types.Operator):
                 elif kind == "owner":
                     _run_on_owners(context, rule[1], self.item)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)
             return {'CANCELLED'}
         return {'FINISHED'}
 
@@ -870,7 +871,8 @@ class ALLSET_OT_menu_option_box(bpy.types.Operator):
         try:
             run_action(context, action, option=True, path=self.item)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)
             return {'CANCELLED'}
         return {'FINISHED'}
 

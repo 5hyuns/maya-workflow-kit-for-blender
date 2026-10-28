@@ -257,6 +257,9 @@ class ALLSET_OT_mm_component(bpy.types.Operator):
         ob = context.view_layer.objects.active
         if self.type == "NONE" or ob is None:
             return {'FINISHED'}
+        from ..operators import maya_errors
+        if maya_errors.refuse_hidden(self, ob):        # #187
+            return {'CANCELLED'}
         if self.type == "CV":
             if ob.type in {'CURVE', 'SURFACE'} and context.mode == 'OBJECT':
                 bpy.ops.object.mode_set(mode='EDIT')
@@ -362,7 +365,11 @@ class SelectComponentBinding(ToolOptionsBinding):
     def _set_tool(self):
         context = bpy.context
         ob = context.active_object
-        if context.mode == 'OBJECT' and ob is not None and ob.type == 'MESH':
+        from ..operators import maya_errors
+        if context.mode == 'OBJECT' and maya_errors.is_hidden(ob):
+            from ..ui import view_message      # #187: stay in object mode, say why
+            view_message.show(context, maya_errors.hidden_text(ob), 'TOP_CENTER')
+        elif context.mode == 'OBJECT' and ob is not None and ob.type == 'MESH':
             bpy.ops.object.mode_set(mode='EDIT')     # selectMode -component
             # a tool is set for the mode the call starts in: set the edit-mode tool once in it (step 97)
             bpy.app.timers.register(lambda: _tool_later(self.tool), first_interval=0.0)

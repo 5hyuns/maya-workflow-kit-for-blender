@@ -707,6 +707,9 @@ class ALLSET_OT_armature_mode(bpy.types.Operator):
             return {'CANCELLED'}
         if obj.mode == self.mode:
             return {'FINISHED'}
+        from ..operators import maya_errors
+        if self.mode != 'OBJECT' and maya_errors.refuse_hidden(self, obj):     # #187
+            return {'CANCELLED'}
         area, region = main_view3d(context.screen)
         try:
             if area is not None and region is not None:

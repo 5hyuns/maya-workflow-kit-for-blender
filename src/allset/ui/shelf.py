@@ -315,7 +315,8 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
                         return option_box(context, self.shelf, label, action, self.double)
                     run_action(context, action, False)
                 except RuntimeError as ex:
-                    self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+                    from ..operators import maya_errors
+                    maya_errors.report_nested(self, ex)
                     return {'CANCELLED'}
                 return {'FINISHED'}
         return {'CANCELLED'}
@@ -340,7 +341,8 @@ class ALLSET_OT_shelf_button(bpy.types.Operator):
             else:
                 run_action(context, ("item", path))
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)
             return {'CANCELLED'}
         return {'FINISHED'}
 

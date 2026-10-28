@@ -1430,6 +1430,9 @@ class ALLSET_OT_quad_draw_start(bpy.types.Operator):
     def execute(self, context):
         from . import material
         ob = pick_target(context)
+        from . import maya_errors
+        if maya_errors.refuse_hidden(self, ob):        # Blender can't edit a hidden mesh (#187)
+            return {'CANCELLED'}
         if ob is None:
             ob = new_target(context)
             material.give_default(ob)

@@ -215,6 +215,8 @@ def _enter_pose(context, ob):
     if not _select(ob):
         return False
     vl.objects.active = ob
+    if not ob.visible_get():           # a hidden skeleton: picked, but Blender can't pose it (#187)
+        return False
     bpy.ops.object.mode_set(mode='POSE')
     return ob.mode == 'POSE'
 

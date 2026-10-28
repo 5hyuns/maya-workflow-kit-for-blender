@@ -30,10 +30,36 @@ class MayaError(RuntimeError):
         self.text = text
 
 
+# Blender can't put a hidden object into Edit / Pose / paint modes; the kit says so the Maya way (#187).
+BLENDER_HIDDEN = "Cannot edit hidden object"
+HIDDEN = "{} is hidden: show it (Display > Show) first"
+
+
+def hidden_text(ob):
+    return HIDDEN.format(ob.name if ob is not None else "The object")
+
+
+def is_hidden(ob):
+    return ob is not None and not ob.visible_get()
+
+
+def refuse_hidden(op, ob):
+    """Warn on ``op`` and return True when ``ob`` is hidden (a mode switch would fail with Blender's error)."""
+    if not is_hidden(ob):
+        return False
+    op.report({'WARNING'}, hidden_text(ob))
+    return True
+
+
 def report_nested(op, ex):
     """Report a RuntimeError of a nested call on ``op``: an Error (an operator's ERROR report, a ``MayaError``) stays
-    an Error with its text, anything else becomes a Warning with its last line (as before step 258)."""
+    an Error with its text, anything else becomes a Warning with its last line (as before step 258). Blender's
+    "Cannot edit hidden object" becomes the kit's warning naming the object."""
     text = str(ex).strip()
+    if BLENDER_HIDDEN in text:
+        import bpy
+        op.report({'WARNING'}, hidden_text(bpy.context.view_layer.objects.active if bpy.context.view_layer else None))
+        return
     if text.startswith("Error: ") and "Traceback" not in text:
         op.report({'ERROR'}, text[len("Error: "):].strip())
         return

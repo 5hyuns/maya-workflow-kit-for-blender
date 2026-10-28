@@ -247,6 +247,9 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
             return {'CANCELLED'}
         try:
             if getattr(self, "_from_object", False) and context.mode == 'OBJECT':
+                from ..operators import maya_errors
+                if maya_errors.refuse_hidden(self, context.view_layer.objects.active):     # #187
+                    return {'FINISHED'}
                 bpy.ops.object.mode_set(mode='EDIT')
                 bpy.ops.mesh.select_all(action='SELECT')
             run_action(context, item.action, option)

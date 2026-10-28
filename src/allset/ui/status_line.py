@@ -158,6 +158,9 @@ class ALLSET_OT_select_mode(bpy.types.Operator):
     def execute(self, context):
         target = 'OBJECT' if self.mode == "OBJECT" else 'EDIT'
         if context.active_object.mode != target:
+            from ..operators import maya_errors
+            if target == 'EDIT' and maya_errors.refuse_hidden(self, context.active_object):     # #187
+                return {'CANCELLED'}
             bpy.ops.object.mode_set(mode=target)
         return {'FINISHED'}
 
