@@ -256,6 +256,9 @@ class ALLSET_OT_quick_smoke(bpy.types.Operator):
         meshes = [ob for ob in context.selected_objects if ob.type == 'MESH']
         lo, hi = _selection_bounds(meshes)
         before = set(bpy.data.objects)
+        if not bpy.ops.object.quick_smoke.poll():
+            self.report({'WARNING'}, "Smoke: switch to Object Mode with the emitting meshes selected first.")
+            return {'CANCELLED'}
         res = bpy.ops.object.quick_smoke(style=self.style)
         if res != {'FINISHED'}:
             return res

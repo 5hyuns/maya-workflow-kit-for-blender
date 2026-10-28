@@ -185,6 +185,8 @@ def _session(root, env, name, *actions):
                     *actions], env)
     if not os.path.isfile(out):
         raise AssertionError(f"session {name} wrote nothing (exit {rc}):\n{log[-3000:]}")
+    # a start in Maya mode registers everything while Blender restricts data access (step 271: bpy.data.collections)
+    assert "Exception in module register" not in log, f"session {name}: register failed:\n{log[-3000:]}"
     with open(out, encoding="utf-8") as fh:
         data = json.load(fh)
     os.remove(out)

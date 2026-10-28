@@ -70,6 +70,8 @@ class ALLSET_OT_pivot_reset(bpy.types.Operator):
         if context.mode == hold.EDIT_MODE:
             hold.COMPONENT.reset(context, self.position, self.orientation)
             return {'FINISHED'}
+        if not bpy.ops.allset.reset_pivot.poll():      # no selected object in Object Mode: no pivot to put back
+            return {'CANCELLED'}
         return bpy.ops.allset.reset_pivot(position=self.position, orientation=self.orientation)
 
 
