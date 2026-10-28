@@ -668,6 +668,33 @@ class Record:
 
 
 RECORDS = {}   # object name -> Record
+# Step 283: Delete History drops an object's record; Maya's undo brings the node back (redo drops it again). Delete
+# History doesn't change the mesh, so the parked record is valid again after the undo (its signature still matches).
+PARKED = {}    # object name -> Record dropped by Delete History
+
+
+def park(name):
+    """Delete History: the object's record leaves the Channel Box but stays for an undo. Returns it (or None)."""
+    rec = RECORDS.pop(name, None)
+    if rec is not None:
+        old = PARKED.pop(name, None)
+        if old is not None and old is not rec:
+            old.free()
+        PARKED[name] = rec
+    return rec
+
+
+@bpy.app.handlers.persistent
+def _on_undo(*_args):
+    for name, rec in PARKED.items():
+        RECORDS.setdefault(name, rec)
+
+
+@bpy.app.handlers.persistent
+def _on_redo(*_args):
+    for name, rec in PARKED.items():
+        if RECORDS.get(name) is rec:
+            del RECORDS[name]
 
 
 def keep(context, ob, rec):
@@ -676,6 +703,9 @@ def keep(context, ob, rec):
     node (Maya's Construction History)."""
     from . import prim_history
     if prim_history.history_on(context):
+        parked = PARKED.pop(ob.name, None)          # a new node: the dropped one can't come back any more
+        if parked is not None and parked is not RECORDS.get(ob.name) and parked is not rec:
+            parked.free()
         RECORDS[ob.name] = rec
         return
     rec.free()
@@ -683,9 +713,10 @@ def keep(context, ob, rec):
 
 
 def clear():
-    for rec in RECORDS.values():
+    for rec in {id(r): r for r in (*RECORDS.values(), *PARKED.values())}.values():
         rec.free()
     RECORDS.clear()
+    PARKED.clear()
 
 
 def signature(bm, cap_verts):
@@ -1076,12 +1107,19 @@ def _on_load(_dummy):
     clear()
 
 
+_HANDLERS = (("load_pre", _on_load), ("undo_post", _on_undo), ("redo_post", _on_redo))
+
+
 def register_handlers():
-    if _on_load not in bpy.app.handlers.load_pre:
-        bpy.app.handlers.load_pre.append(_on_load)
+    for name, fn in _HANDLERS:
+        lst = getattr(bpy.app.handlers, name)
+        if fn not in lst:
+            lst.append(fn)
 
 
 def unregister_handlers():
-    if _on_load in bpy.app.handlers.load_pre:
-        bpy.app.handlers.load_pre.remove(_on_load)
+    for name, fn in _HANDLERS:
+        lst = getattr(bpy.app.handlers, name)
+        if fn in lst:
+            lst.remove(fn)
     clear()

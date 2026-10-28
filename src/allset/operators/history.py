@@ -79,9 +79,8 @@ def delete_history(context, objects, non_deformer=False, before_only=False):
     for ob in objects:
         # Step 239 (#124, first-hour audit F-5): the kit's polyExtrudeFace / polyBevel record is a non-deformer
         # history node too — Maya's Delete History (both kinds) removes it from the Channel Box INPUTS
-        rec = extrude.RECORDS.pop(ob.name, None)
+        rec = extrude.park(ob.name)              # kept for Ctrl+Z (step 283)
         if rec is not None:
-            rec.free()
             if not ob.modifiers and not (ob.type == 'MESH' and ob.data.shape_keys) and prim_history.owner_of(ob) is None:
                 baked += 1
                 continue
