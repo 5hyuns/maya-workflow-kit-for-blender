@@ -1,12 +1,11 @@
-# Release notes 0.6.0 (store text)
+# Release notes 0.6.1 (GitHub release)
 
-Paste into extensions.blender.org → the listing → *Upload new version* → **Release notes** (English, short). Full list:
-`CHANGELOG.md` 「0.6.0」; GitHub release notes are built from the same text. Before uploading, run the maintainer
-checklist in `docs/release_checklist.md`.
+Text for the GitHub release of v0.6.1. Full list: `CHANGELOG.md` 「0.6.1」. 0.6.0 was never published; its changes
+are part of 0.6.1. Before publishing, run the maintainer checklist in `docs/release_checklist.md`.
 
 ---
 
-**0.6.0 — rigging that behaves like Maya 2026** (Blender 4.5 LTS – 5.2)
+**0.6.1 — rigging that behaves like Maya 2026** (Blender 4.5 LTS – 5.2)
 
 Joints, IK, skinning and constraints now follow Maya 2026 (measured with mayapy), and a rig made in the kit reaches
 Maya and game engines the way a Maya rig does.
@@ -32,6 +31,7 @@ Fixed
 - UV Editor freezes and a crash when moving UVs on large meshes.
 - Top menus not responding right after install; install error on Python 3.14 builds of Blender.
 - Rigify controls keep Pose mode; Selection Highlighting can be turned off; the D pivot grabs the manipulator at once.
+- Time Slider frame numbers keep their size in a tall timeline and follow the UI scale (#179, PR #188 by @LSKianhao).
 
 Upgrade
 - Install over 0.5.0 as usual; shelves, hotkeys and scenes are kept. Disabling and re-enabling the extension resets
@@ -47,12 +47,14 @@ Known differences
   the next change fixes it (#186).
 - Importing a skinned rig from Maya's FBX: joints match, the skinned mesh can be up to 0.03 cm off (#189).
 - On Blender 5.1, Cycles renders Maya Ambient and Volume lights too dark; use Blender 4.5, 5.2 or EEVEE for them.
-- Fixes planned for 0.7.0: Time Slider frame numbers grow with a tall timeline (#179); G does not repeat a face
-  extrusion on a new selection (#184); switching back to Blender doesn't bring back a custom workspace (#185).
+- Fixes planned for 0.7.0: G does not repeat a face extrusion on a new selection (#184); switching back to Blender
+  doesn't bring back a custom workspace (#185).
 
-Thanks to everyone who reported problems after 0.5.0: @Egminator (#170), @todd-mrcool (#171), @Rickamykazy1 (#173),
-@esonstyle (#174), @Kevorama (#175), @CommonDirt (#176), @ryankentpaule (#177), @GimpTOOTS (#178), @LSKianhao (#179),
-@Weeliano (#183, #184) and @The-Maize (#185). Please keep reporting what breaks in real work.
+Thanks to @LSKianhao for reporting the Time Slider number size (#179) and fixing it in pull request #188, and to
+everyone who reported problems or suggested changes for 0.6: @Egminator (#170), @todd-mrcool (#171),
+@Rickamykazy1 (#173), @esonstyle (#174), @Kevorama (#175), @CommonDirt (#176), @ryankentpaule (#177),
+@GimpTOOTS (#178), @Weeliano (#183, #184), @The-Maize (#185), @hacker9002 and @cnzim (#156). Please keep reporting
+what breaks in real work; CONTRIBUTING.md lists the ways to help.
 
 Autodesk and Maya are registered trademarks or trademarks of Autodesk, Inc. This extension is not affiliated with or
 endorsed by Autodesk, Inc.

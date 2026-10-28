@@ -5,9 +5,9 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
-## [0.6.0] — 2026-10-28
+## [0.6.1] — 2026-10-28
 
-The rigging release (steps 230–270): joints, IK, skinning and constraints follow Maya 2026 (measured with mayapy), a
+The rigging release (steps 230–271; 0.6.0 was never published, its changes ship here): joints, IK, skinning and constraints follow Maya 2026 (measured with mayapy), a
 rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does, and the reports that came in after
 0.5.0 are fixed. Reference data (hotkeys, shelves, editor menus) now follows Maya 2026. Blender 4.5 LTS through 5.2.x.
 
@@ -91,6 +91,8 @@ rig made in the kit reaches a game engine and Maya 2026 the way a Maya rig does,
   dialog comes back once at the next start when it was closed without turning Maya mode on.
 
 ### Fixed
+- **Time Slider frame numbers** keep their size when the timeline is made taller, and follow the UI scale
+  instead (#179, pull request #188 by @LSKianhao).
 - **Shift+drag on the manipulator** runs Smart Duplicate / Smart Extrude again (it did nothing in 0.5.0) (#175, #183).
 - **Hotbox** (#174): a click on a hotbox menu name opens the menu instead of running the row under the pointer (Edit >
   Cut deleted the selection), and a held Space keeps the hotbox up instead of cycling Four View.
