@@ -341,6 +341,9 @@ def pane_tap(context):
         bpy.ops.screen.screen_full_area()
 
 
+_LAST_HOLD_END = [None]   # monotonic time the last hotbox hold ended (engine.restart_too_soon)
+
+
 class ALLSET_OT_hotbox(bpy.types.Operator):
     """Maya hotbox: hold Space; click a menu name, or click a zone for its marking menu.
     A quick tap toggles the pane"""
@@ -352,10 +355,15 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
         region = context.region
         if event.is_repeat or region is None or region.type != 'WINDOW' or draw.ACTIVE:
             return {'CANCELLED'}
+        now = time.monotonic()
+        if engine.restart_too_soon(_LAST_HOLD_END[0], now):
+            return {'CANCELLED'}      # the PRESS half of a release + press repeat pair (step 260, #174)
         prefs = _prefs(context)
         self._key = event.type
-        self._t0 = time.monotonic()
+        self._t0 = now
+        self._hold = engine.HoldKey(now)
         self._clicked = False
+        self._pressed = None          # (menu key, press point, button) of a press on a menu name
         self._region = region
         center = (event.mouse_region_x, event.mouse_region_y)
         above, sides, below = hotbox_rows(context)
@@ -372,22 +380,47 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
         if self._timer is not None:
             context.window_manager.event_timer_remove(self._timer)
             self._timer = None
+        _LAST_HOLD_END[0] = time.monotonic()
         draw.redraw()
         draw.ACTIVE.clear()
 
     def _release(self, context):
+        end = self._hold.end if self._hold.end is not None else time.monotonic()
         self._cleanup(context)
-        if engine.is_tap(self._t0, time.monotonic(), self._clicked):
+        if engine.is_tap(self._t0, end, self._clicked):
             pane_tap(context)
+        return {'FINISHED'}
+
+    def _open_pressed(self, context):
+        key = self._pressed[0]
+        self._cleanup(context)
+        self._open_label(key)
         return {'FINISHED'}
 
     def modal(self, context, event):
         try:
             x, y = event.mouse_region_x, event.mouse_region_y
+            now = time.monotonic()
             if event.type == self._key:
+                # a RELEASE ends the hold only if no PRESS follows within the grace (repeats sent as pairs, #174)
                 if event.value == 'RELEASE':
-                    return self._release(context)
-                return {'RUNNING_MODAL'}  # key repeat
+                    self._hold.release(now)
+                elif event.value == 'PRESS':
+                    self._hold.press(now)
+                return {'RUNNING_MODAL'}
+            if self._pressed is not None:
+                # Step 260 (#174): a click on a menu name opens the menu on the RELEASE, so the popup never gets that
+                # release (Blender opens a menu with a row under the pointer and a release runs that row); a press that
+                # drags away opens it at once, for a press-drag-release onto a row (the kit's earlier behaviour).
+                if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
+                    if engine.menu_drag(self._pressed[1], (x, y), draw.ui_scale()):
+                        return self._open_pressed(context)
+                    return {'RUNNING_MODAL'}
+                if event.type == self._pressed[2] and event.value == 'RELEASE':
+                    if self._layout.label_at(x, y) == self._pressed[0]:
+                        return self._open_pressed(context)
+                    self._pressed = None          # released elsewhere: nothing
+                    return {'RUNNING_MODAL'}
             if event.type in {'MOUSEMOVE', 'INBETWEEN_MOUSEMOVE'}:
                 hover = self._layout.label_at(x, y)
                 if hover != draw.ACTIVE.get("hover"):
@@ -398,9 +431,8 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
                 self._clicked = True
                 key = self._layout.label_at(x, y)
                 if key is not None:
-                    self._cleanup(context)
-                    self._open_label(key)
-                    return {'FINISHED'}
+                    self._pressed = (key, (x, y), event.type)
+                    return {'RUNNING_MODAL'}
                 zone = self._layout.zone(x, y)
                 if zone is not None:
                     self._cleanup(context)  # the zone's marking menu takes over (delegated)
@@ -410,8 +442,8 @@ class ALLSET_OT_hotbox(bpy.types.Operator):
             if event.type == 'ESC' and event.value == 'PRESS' or event.type == 'WINDOW_DEACTIVATE':
                 self._cleanup(context)
                 return {'CANCELLED'}
-            if event.type == 'TIMER' and keystate.is_down(self._key) is False:
-                return self._release(context)  # the release was eaten elsewhere
+            if event.type == 'TIMER' and self._pressed is None and self._hold.tick(now, keystate.is_down(self._key)):
+                return self._release(context)
             return {'RUNNING_MODAL'}
         except Exception:
             traceback.print_exc()

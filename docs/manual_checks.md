@@ -1504,3 +1504,9 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 
 ## Step 256 — UV Shell selection (#172, real mouse)
 - [ ] Maya mode, a mesh with several UV shells: RMB > UV > UV Shell (or Alt+F12), click a face in the viewport — its whole UV shell is selected; Shift toggles a shell, Ctrl removes, a click on empty space clears; a marquee over part of a shell selects the whole shell; the UV Editor shows the same selection, and a click there picks shells too.
+
+## Step 260 (#174 #177)
+- [ ] Windows, real keyboard: hold Space 5 s over the viewport → the hotbox stays up, no Four View toggle; release → nothing; tap → Four View.
+- [ ] Linux X11 (if available): the same hold → no toggle.
+- [ ] Hotbox: click a menu name → the menu stays open, nothing runs; press a name and drag down onto a row, release → that row runs.
+- [ ] Emulate 3 Button Mouse on: Maya mode preferences / welcome dialog show the Alt+LMB hint.

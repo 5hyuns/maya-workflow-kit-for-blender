@@ -831,3 +831,60 @@ TAP_TIME = 0.4  # HotboxMenus.mel:244 (-noClickDelay 0.4)
 def is_tap(press_t, release_t, clicked):
     """Space released quickly without picking anything = pane toggle (panePopAt)."""
     return not clicked and release_t - press_t < TAP_TIME
+
+
+# Step 260 (#174): a held Space must keep the hotbox up whatever the input path sends while the key is down. Some
+# send auto-repeat as RELEASE + PRESS pairs (X11 without detectable repeat, remote / remapping input; measured with
+# simulated pairs: the hold ended at each RELEASE and a fast pair toggled Four View, docs/steps/step_260_prep.md), and
+# Windows' key state can read "up" for a moment. Delegated (kit design): a RELEASE ends the hold only when no PRESS
+# follows within RELEASE_GRACE; the key-state fallback ends it only after "up" readings span UP_TIME with no key event;
+# a new hotbox doesn't start within RELEASE_GRACE of the last one ending.
+RELEASE_GRACE = 0.12
+UP_TIME = 0.15
+MENU_DRAG = 4.0     # px (x UI scale): a press on a hotbox menu name that moves this far opens the menu to drag into
+
+
+class HoldKey:
+    """The hold of the hotbox key from its first PRESS: ``press(t)`` / ``release(t)`` for its key events,
+    ``tick(t, down)`` with the OS key state (None = unknown) -> True when the hold is over. ``end`` = when it ended
+    (the final release), for ``is_tap``."""
+
+    def __init__(self, t0):
+        self.t0 = t0
+        self.released = None      # time of a RELEASE not yet followed by a PRESS
+        self.last_event = t0
+        self.up_since = None
+        self.end = None
+
+    def press(self, t):
+        self.last_event = t
+        if self.released is not None and t - self.released <= RELEASE_GRACE:
+            self.released = None  # a repeat delivered as release + press: still held
+
+    def release(self, t):
+        self.last_event = t
+        self.released = t
+
+    def tick(self, t, down):
+        if self.released is not None and t - self.released > RELEASE_GRACE:
+            self.end = self.released
+            return True
+        if down is False:
+            if self.up_since is None:
+                self.up_since = t
+            if t - self.up_since >= UP_TIME and t - self.last_event >= UP_TIME:
+                self.end = self.up_since    # the release was eaten elsewhere
+                return True
+        else:
+            self.up_since = None
+        return False
+
+
+def restart_too_soon(last_end, t):
+    """A hotbox key PRESS right after the last hold ended belongs to that hold (a release + press repeat pair)."""
+    return last_end is not None and 0.0 <= t - last_end <= RELEASE_GRACE
+
+
+def menu_drag(press_xy, xy, scale=1.0):
+    """The pointer moved far enough from a press on a menu name to open that menu for a press-drag-release."""
+    return (xy[0] - press_xy[0]) ** 2 + (xy[1] - press_xy[1]) ** 2 >= (MENU_DRAG * scale) ** 2

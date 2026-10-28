@@ -293,6 +293,10 @@ Optional — the kit leaves your theme and preferences to you. Maya users usuall
   Blender keeps only 32 steps by default, so a long modeling session runs out of undo much sooner than in Maya. 256 is
   Blender's maximum; the kit can't set it for you (extensions may not change Blender's preferences) and shows this hint
   in its preferences while Undo Steps is lower.
+- **Emulate 3 Button Mouse off** (*Preferences > Input*). When it is on, Blender turns Alt+left drag into a middle
+  drag before any key map sees it, so Maya's Alt+LMB tumble can't work (the kit shows a hint while it is on).
+- **Linux:** many desktops (GNOME, KDE, Xfce) move windows on Alt+drag before Blender gets the mouse. Set the window
+  manager's move modifier to Super (as for Maya on Linux) to tumble / track / dolly with Alt.
 - **Region Overlap off** (*Preferences > Interface > Editors*), so side panels sit beside the viewport like Maya's.
 - **Only Insert Available** (*Preferences > Animation > Keyframes*) for Maya-like auto key.
 

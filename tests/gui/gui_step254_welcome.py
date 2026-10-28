@@ -33,6 +33,7 @@ def s_setup():
     bpy.context.preferences.view.show_tooltips = False
     p = _prefs()
     p.welcome_done = False
+    p.welcome_shown = 0
     check("Maya mode off (the welcome case)", not p.maya_mode)
 
 
@@ -57,7 +58,7 @@ def s_moves_on_bar():
 
 @step
 def s_check_no_dialog():
-    check("pointer on the menu bar: no dialog (welcome not shown yet)", not _prefs().welcome_done and _waiting())
+    check("pointer on the menu bar: no dialog (welcome not shown yet)", not _prefs().welcome_shown and _waiting())
 
 
 @step
@@ -83,7 +84,7 @@ def s_wait_menu():
 @step
 def s_shot_menu():
     screenshot(os.path.join(SHOTS, "gui_step254_file_menu.png"))
-    check("File clicked with no dialog in the way", not _prefs().welcome_done)
+    check("File clicked with no dialog in the way", not _prefs().welcome_shown)
 
 
 @step
@@ -100,7 +101,8 @@ def s_into_view():
 
 @step
 def s_opened():
-    check("pointer in the viewport: the dialog opens (welcome shown)", _prefs().welcome_done)
+    # step 260: the dialog counts its showings (welcome_done only once confirmed or shown WELCOME_SHOWS times)
+    check("pointer in the viewport: the dialog opens (welcome shown)", _prefs().welcome_shown == 1)
     check("the wait operator ended", not _waiting())
 
 
