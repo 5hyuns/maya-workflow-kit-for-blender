@@ -5,6 +5,29 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+## [0.6.2] — 2026-10-28
+
+Fixes and small additions for the reports after 0.6.1. Blender 4.5 LTS through 5.2.x.
+
+### Fixed
+- **G after an extrude** (#184): dragging the extrude manipulator and then pressing G extrudes the new selection
+  again, like Maya, instead of rebuilding the first extrusion.
+- **Switching back to Blender** (#185): after starting in the Maya layout, switching to Blender brings back the
+  workspaces of your own startup file (read only, nothing is written) and shows the one you had open, without a
+  restart.
+- **Taller Time Slider** (#190): the frame numbers stay at the top in their normal size, the ticks grow only in the
+  lower part and the current frame number stays at the bottom, as in Maya.
+- **Attribute Editor sections** (#194): an open section draws its controls in a framed area that starts under the
+  section arrow, so the hierarchy reads like Maya's Attribute Editor.
+
+### Added
+- **Shift+drag extrudes vertices** (#183): with vertices selected, Shift+drag on the Move / Rotate / Scale
+  manipulator extrudes them like Maya, and the new vertices move with the drag (faces and edges already did).
+- **Quad Draw corner fill** (#180): Tab+drag from a border vertex in an inner corner makes the quad from that vertex,
+  its two border neighbours and the point under the mouse, with a preview while dragging.
+- **Panels > Perspective > New** (#193): makes `persp1`, `persp2` … with the settings and starting place of the
+  scene's persp camera, selects it, looks through it in that panel and lists it in the menu; one undo removes it.
+
 ## [0.6.1] — 2026-10-28
 
 A small update to 0.6.0. Blender 4.5 LTS through 5.2.x.
