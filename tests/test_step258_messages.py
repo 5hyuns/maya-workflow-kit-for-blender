@@ -231,6 +231,17 @@ def test_bind_skin_without_a_joint_is_mayas_error():
     assert _run("Skin/Bind Skin") == "You must select at least one joint."
 
 
+def test_bind_skin_nothing_selected_and_joints_only_are_mayas_errors():
+    # step 266 independent check (mayapy 2026): nothing selected / only the skeleton
+    _clear()
+    arm = _skeleton()
+    _cube()
+    _select()
+    assert _run("Skin/Bind Skin") == "Select objects to bind."
+    _select(arm if arm is not None else bpy.data.objects["joint1"])
+    assert _run("Skin/Bind Skin") == "Bindable objects must be part of the selection."
+
+
 # --- Constrain with one object ----------------------------------------------------------------------------------------
 
 def test_constraints_with_one_object_are_mayas_error():

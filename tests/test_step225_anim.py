@@ -99,12 +99,24 @@ def _takes(path):
 # --- Game Exporter -----------------------------------------------------------------------------------------------
 
 def test_game_exporter_factory_equals_maya_node():
+    # the node's createNode values (FACTORY), then the window's first-open presets (step 266: "Model Default" /
+    # "Anim Default", mayapy 2026 applyAttrPreset) — what the kit's fields start with
     sc = _clear()
-    s = sc.allset_game_exporter
+    s = bpy.data.scenes.new("ge_fresh").allset_game_exporter
     for attr, maya in MAYA_NODE.items():
         name, table = NODE_TO_KIT[attr]
         want = table[maya] if table else maya
-        assert getattr(s, name) == want == ge.FACTORY[name], (attr, getattr(s, name), want)
+        assert want == ge.FACTORY[name], (attr, want)
+        model = ge.PRESET_MODEL.get(name, want)
+        if name == "file_split":
+            model = ge.PRESET_ANIM[name]                          # an Animation Clips tab field
+        assert getattr(s, name) == model, (attr, getattr(s, name), model)
+        if name in ge.TAB_PROPS:
+            assert getattr(s, "anim_" + name) == ge.PRESET_ANIM.get(name, want), (attr, "anim")
+    assert ge.PRESET_MODEL == {"embed_media": True, "include_children": True, "input_connections": True}
+    assert ge.PRESET_ANIM == {"file_split": 'PER_CLIP', "embed_media": True, "include_cameras": False,
+                              "include_children": False, "input_connections": False}
+    bpy.data.scenes.remove(bpy.data.scenes["ge_fresh"])
 
 
 def test_new_clip_is_the_playback_range():

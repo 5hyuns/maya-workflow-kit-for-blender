@@ -1510,3 +1510,11 @@ Blindspots of audit 16 (`docs/steps/step_210_remaining.md` §4) — expected to 
 - [ ] Linux X11 (if available): the same hold → no toggle.
 - [ ] Hotbox: click a menu name → the menu stays open, nothing runs; press a name and drag down onto a row, release → that row runs.
 - [ ] Emulate 3 Button Mouse on: Maya mode preferences / welcome dialog show the Alt+LMB hint.
+
+## Step 265 — #178 D hold with a real keyboard (key repeat)
+
+- [ ] Hold D for a second (the OS repeats the key), then drag a Move arrow / the centre: the pivot moves at once, on
+      the first try (before: only when the drag crossed Blender's threshold between two key repeats). Same with X / C / V
+      held + a manipulator drag (grid / curve / point snap).
+- [ ] With another add-on that binds D in Object Mode (e.g. a draw / annotate add-on): Maya mode on → D = pivot edit;
+      Maya mode off → that add-on's D again.

@@ -35,6 +35,13 @@ FACTORY = {"export_type": 'MODEL', "export_set": 'ALL', "model_file_mode": 'SING
            "tangents": True, "triangulate": False, "move_to_origin": False, "embed_media": False,
            "include_children": False, "input_connections": False, "up_axis": 'Y', "include_cameras": True,
            "include_lights": True}
+# What a user sees: the window applies its default presets the first time it opens (gameExp_CreateDefaultPresets,
+# gameFbxExporterPreset.mel) — Model tab "Model Default", Animation Clips tab "Anim Default" (step 266 independent
+# check, mayapy 2026 applyAttrPreset of both preset files on a fresh node). The kit keeps the per-tab values.
+PRESET_MODEL = {"embed_media": True, "include_children": True, "input_connections": True}
+PRESET_ANIM = {"file_split": 'PER_CLIP', "embed_media": True, "include_cameras": False, "include_children": False,
+               "input_connections": False}
+TAB_PROPS = ("embed_media", "include_children", "input_connections", "include_cameras")
 
 
 class ALLSET_PG_game_clip(bpy.types.PropertyGroup):
@@ -54,7 +61,7 @@ class ALLSET_PG_game_exporter(bpy.types.PropertyGroup):
                                                           ('PER_ROOT', "Multiple Files", "A file per root object")],
                                   default='SINGLE')
     file_split: EnumProperty(name="File Type", items=[('SINGLE', "Multiple Clips to Single File", ""),
-                                                     ('PER_CLIP', "Clips to Multiple Files", "")], default='SINGLE')
+                                                     ('PER_CLIP', "Clips to Multiple Files", "")], default='PER_CLIP')
     clips: CollectionProperty(type=ALLSET_PG_game_clip)
     clip_index: IntProperty(default=0)
     bake_animation: BoolProperty(name="Bake Animation", default=True)
@@ -64,18 +71,32 @@ class ALLSET_PG_game_exporter(bpy.types.PropertyGroup):
     tangents: BoolProperty(name="Tangents and Binormals", default=True)
     triangulate: BoolProperty(name="Triangulate", default=False)
     move_to_origin: BoolProperty(name="Move to Origin", default=False)
-    embed_media: BoolProperty(name="Embed Media", default=False)
-    include_children: BoolProperty(name="Include Children", default=False)
-    input_connections: BoolProperty(name="Input Connections", default=False)
+    embed_media: BoolProperty(name="Embed Media", default=True)
+    include_children: BoolProperty(name="Include Children", default=True)
+    input_connections: BoolProperty(name="Input Connections", default=True)
     up_axis: EnumProperty(name="Up Axis", items=[('Y', "Y", ""), ('Z', "Z", "")], default='Y')
     include_cameras: BoolProperty(name="Cameras", default=True)
     include_lights: BoolProperty(name="Lights", default=True)
+    # the Animation Clips tab's own values (Maya "Anim Default" preset)
+    anim_embed_media: BoolProperty(name="Embed Media", default=True)
+    anim_include_children: BoolProperty(name="Include Children", default=False)
+    anim_input_connections: BoolProperty(name="Input Connections", default=False)
+    anim_include_cameras: BoolProperty(name="Cameras", default=False)
     export_path: StringProperty(name="Path", subtype='DIR_PATH')
     export_filename: StringProperty(name="File Name")
 
 
 def settings(context):
     return context.scene.allset_game_exporter
+
+
+def tab_prop(s, name):
+    """The property holding ``name`` for the tab in use (the Animation Clips tab keeps its own values)."""
+    return "anim_" + name if s.export_type == 'ANIMATION' and name in TAB_PROPS else name
+
+
+def value(s, name):
+    return getattr(s, tab_prop(s, name))
 
 
 # --- clips -------------------------------------------------------------------------------------------------------
@@ -142,14 +163,14 @@ def fbx_args(context, s, selection):
     types = {'MESH', 'EMPTY', 'OTHER'}
     if s.skinning:
         types.add('ARMATURE')
-    if s.include_cameras:
+    if value(s, "include_cameras"):
         types.add('CAMERA')
     if s.include_lights:
         types.add('LIGHT')
     args.update(object_types=types, mesh_smooth_type='FACE' if s.smoothing_groups else 'OFF',
                 use_tspace=s.tangents, use_triangles=s.triangulate,
                 axis_up=s.up_axis, axis_forward='-Z' if s.up_axis == 'Y' else 'Y')
-    if s.embed_media:
+    if value(s, "embed_media"):
         args.update(embed_textures=True, path_mode='COPY')
     return args
 
@@ -334,7 +355,7 @@ def export(context, s):
                         bake_anim_use_all_actions=False, bake_anim_force_startend_keying=True)
             parts = []
             try:
-                with _Scope(context, selection, s.include_children):
+                with _Scope(context, selection, value(s, "include_children")):
                     for i, clip in enumerate(clips):
                         part = path if i == 0 else os.path.splitext(path)[0] + f".clip{i}.tmp.fbx"
                         if i:
@@ -435,7 +456,7 @@ def draw(layout, context):
                  "embed_media", "include_children", "include_cameras", "include_lights"):
         sub = grid.row()
         sub.enabled = name not in {"blendshapes", "move_to_origin"}
-        sub.prop(s, name)
+        sub.prop(s, tab_prop(s, name))
     # Maya: the "Up Axis" label, then Y / Z (gameFbxExporter.mel, research/maya/re/060_messages_ui.md B6)
     _row(col, "Up Axis").row().prop(s, "up_axis", expand=True)
     box = layout.box()
