@@ -41,9 +41,13 @@ before the first drag so changing cap topology cannot move the operation's pivot
   still restores the pre-drag mesh. No temporary operands or user modifiers remain.
 - Original material slots and UV layers pass through the solver. Cap UVs inherit
   their source corners; cut/side UVs may need unwrapping. Coplanar generated edges
-  and Boolean splits within each original face are dissolved, preserving original
-  polygon boundaries and material/UV discontinuities. Planar cut panels become
-  quads/n-gons. A polygon with an enclosed hole still needs support edges because
+  and Boolean splits on affected planar islands are dissolved, including support
+  edges left by an earlier intersecting cut. Unaffected surfaces keep their
+  topology. Explicit seams, creases, material boundaries and source UV seams are
+  protected. Generated tunnel walls may merge across their inherited UV breaks;
+  unwrap these panels after the final cuts. Planar panels become quads/n-gons.
+  Older cut walls with collapsed inherited UVs are recognized as well.
+  A polygon with an enclosed hole still needs support edges because
   Blender cannot store a single face with an inner boundary.
 - Output may contain triangles and n-gons. This is not a quad retopology tool or a
   copy of Autodesk's proprietary solver. Extreme or self-crossing transforms may
@@ -51,9 +55,11 @@ before the first drag so changing cap topology cannot move the operation's pivot
 - Only the last matching Smart Extrude per object stays editable by the handles;
   it is session history, not a modifier stack saved in the blend file.
 
-Previews rebuild from a frozen mesh, are limited to at most ten evaluations per
-second and slow down adaptively when evaluation is expensive. Release commits the
-latest validated preview; Escape restores the exact pre-drag snapshot.
+Previews rebuild from a frozen mesh with a 60 Hz timer and an adaptive evaluation
+interval. Actual mesh refresh depends on Boolean cost. The gizmo follows every
+mouse event even while a mesh evaluation is pending, avoiding an artificial
+stepped feel. Invalid evaluation restores the accepted handle position. Release
+commits the latest validated preview; Escape restores the exact pre-drag snapshot.
 Axis translation uses a fixed mapping at the gesture's start depth to avoid
 perspective vanishing-point jumps during long cuts or near-axial views. The
 manipulator displays the transform of the accepted mesh, including after the
@@ -76,3 +82,6 @@ sandbox Blender window.
 `tests/gui/gui_smart_extrude_cut.py` additionally checks long inward drags across
 the exit plane, near-axial views, precision toggles, clean walls and rejection
 without resetting a valid preview.
+`gui_smart_extrude_smooth.py` verifies that deferring mesh evaluation does not hold
+back mouse/gizmo updates; `gui_smart_extrude_cross.py` exercises two perpendicular
+tunnels and verifies single concave n-gons on their joined interior walls.
