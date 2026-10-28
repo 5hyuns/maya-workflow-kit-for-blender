@@ -72,6 +72,10 @@ def s_setup():
     bpy.context.view_layer.objects.active = ob
     with override():
         bpy.ops.wm.tool_set_by_id(name='builtin.move')
+    # a close view: at a small on-screen size the manipulator handles cover every face of the cube
+    rv3d = view3d()[0].spaces.active.region_3d
+    rv3d.view_location = (0, 0, 0)
+    rv3d.view_distance = 6
     C['world'] = world_vertices()
     tap('D')
 
