@@ -38,7 +38,7 @@ qa = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(qa)
 
 TAG = qa.env_tag()
-VERSION = f"Blender {bpy.app.version_string}, kit {qa.git_head()} (working tree, 0.6.0)"
+VERSION = f"Blender {bpy.app.version_string}, kit {qa.git_head()} (working tree, 0.6.1)"
 BUNDLED = ("rigify", "node_wrangler", "copy_global_transform", "pose_library")
 DUMMY_A, DUMMY_B = "qa_dummy_render", "qa_dummy_keys"
 
