@@ -29,7 +29,8 @@ PASS_THROUGH_FIRST = ("allset.cb_virtual_slider", "allset.cb_hover", "allset.wei
                       "allset.dock_strip_click",
                       "allset.hs_swatch_drag", "allset.shelf_scroll",
                       "allset.select_2d_click", "allset.select_2d_box", "allset.graph_layer_pick",
-                      "allset.uv_shell_pick", "allset.uv_shell_box")
+                      "allset.uv_shell_pick", "allset.uv_shell_box",
+                      "allset.graph_axis_drag", "allset.graph_move_snap")
 
 
 def _add(kd, km_name, idname, event, props=None, shadows=(), first=False):
@@ -1080,6 +1081,22 @@ def patch_graph_keys_2(kd):
     _add(kd, "Graph Editor", "allset.graph_center_time", make_event("T"))
     _add(kd, "Graph Editor", "allset.snap_time_toggle", make_event("SLASH", alt=True))
     _add(kd, "Graph Editor", "allset.insert_key_tool", make_event("I"))
+    # step 281 (#192): Maya F / A frame Maya's rectangle (selected keys with both segments / every curve shown,
+    # 10 % time and 25 % value margins) instead of Blender's View Selected / View All
+    kd.remove("Graph Editor", "graph.view_selected", type="F")
+    kd.remove("Graph Editor", "graph.view_all", type="A")
+    _add(kd, "Graph Editor", "allset.graph_frame", make_event("F"), {"mode": 'SELECTED'})
+    _add(kd, "Graph Editor", "allset.graph_frame", make_event("A"), {"mode": 'ALL'})
+    # step 281 (#192): Maya Shift+MMB anywhere / Shift+LMB drag on a selected key = move along time or value only
+    # (the first 3 px pick the axis); Blender binds no Shift+MMB here and its Shift+LMB drag is the marquee, which
+    # still runs off the selected keys (the operator passes through)
+    _add(kd, "Graph Editor", "allset.graph_axis_drag", make_event("MIDDLEMOUSE", shift=True), {"button": 'MIDDLE'})
+    _add(kd, "Graph Editor", "allset.graph_axis_drag", make_event("LEFTMOUSE", "CLICK_DRAG", shift=True),
+         {"button": 'LEFT'}, first=True, shadows=("Graph Editor",))
+    # Maya time snap: Blender's MMB / LMB key moves land on whole frames (the operator only watches, PASS_THROUGH)
+    for button in ("MIDDLEMOUSE", "LEFTMOUSE"):
+        _add(kd, "Graph Editor", "allset.graph_move_snap", make_event(button, "CLICK_DRAG"), first=True,
+             shadows=("Graph Editor",))
 
 # --- 45. Outliner set rows -------------------------------------------------
 # The kit draws Maya's set rows under Blender's Outliner tree (ui/outliner_sets.py); clicks / RMB on them must win

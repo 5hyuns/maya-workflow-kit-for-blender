@@ -1,7 +1,7 @@
 """Step 150 lane A (#96) in a real UI: Maya Workflow Kit layout, pCube1 Translate X / Y keyed, Graph Editor from
 Windows > Animation Editors. View > Curve Name > Always writes "pCube1.translateX" / "pCube1.translateY" beside the
-last keys in the curve colours (Never: nothing); View > Auto Frame (Maya factory on) reframes the Graph Editor when
-the selection changes to pCube2 (keys at 40 .. 200)."""
+last keys in the curve colours (Never: nothing); View > Auto Frame (Maya factory on) refits the value axis when
+the selection changes to pCube2 (keys at 40 .. 200, values 0 .. 50; the time range stays)."""
 
 import os
 import sys
@@ -160,8 +160,13 @@ def s_wait4():
 def s_auto_frame():
     w, a, r = editor()
     x0, x1 = view_x(r)
-    check(f"Auto Frame: pCube2 selected -> view {x0:.0f} .. {x1:.0f} frames its keys 40 .. 200 "
-          f"(was {C['x'][0]:.0f} .. {C['x'][1]:.0f})", x0 <= 40 and x1 >= 200 and C["x"][1] < 100)
+    v = r.view2d
+    y0, y1 = v.region_to_view(0, 0)[1], v.region_to_view(0, r.height)[1]
+    top = 50 * mod(".operators.units").maya_unit()
+    # step 281: Maya's Auto Frame refits the value axis to the curves shown and keeps the time range
+    check(f"Auto Frame: pCube2 selected -> time kept {x0:.1f} .. {x1:.1f} (was {C['x'][0]:.1f} .. {C['x'][1]:.1f}), "
+          f"values {y0:.3f} .. {y1:.3f} refit to its keys 0 .. {top:.3f}",
+          abs(x0 - C["x"][0]) < 1e-3 and abs(x1 - C["x"][1]) < 1e-3 and y0 < 0 < top < y1 < 2 * top)
     shot("gui_step150_auto_frame.png", w)
     prefs().graph_curve_names = 'NEVER'
 

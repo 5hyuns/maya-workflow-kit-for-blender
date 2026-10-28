@@ -14,6 +14,7 @@ menu_map = import_module(kit.MODULE + ".ui.menu_map")
 menu_sets = import_module(kit.MODULE + ".ui.menu_sets")
 notices = import_module(kit.MODULE + ".ui.notices")
 graph_view = import_module(kit.MODULE + ".ui.graph_view")
+graph_frame = import_module(kit.MODULE + ".operators.graph_frame")
 preferences = import_module(kit.MODULE + ".preferences")
 
 
@@ -110,7 +111,17 @@ def test_show_clear_below_lists_every_object_type():
 
 # --- Auto Frame / Auto Frame Time -------------------------------------------------------------------------------
 
+def _canvas_values(w, area, region):
+    """(v0, v1) shown between Blender's time ruler strip and scroll bar (operators/graph_frame.py)."""
+    with bpy.context.temp_override(window=w, area=area, region=region):
+        bottom, top = graph_frame.pads(bpy.context, area.spaces.active)
+    h = graph_frame.span_px(region)[1]
+    v = region.view2d
+    return v.region_to_view(0.0, bottom)[1], v.region_to_view(0.0, h - top)[1]
+
+
 def test_auto_frame_frames_the_new_selection():
+    """Maya Auto Frame (step 281): the value axis is refit to the curves shown (25 % margins), the time range stays."""
     a, b = _scene()
     w, area, region = _graph()
     p = _prefs()
@@ -119,24 +130,24 @@ def test_auto_frame_frames_the_new_selection():
     _select(a)
     assert graph_view.step(bpy.context, p) == 0, "first poll = baseline"
     assert graph_view.step(bpy.context, p) == 0, "no change, no frame"
-    _select(b)
-    assert graph_view.step(bpy.context, p) == 1
-    x0, y0, x1, y1 = _view(region)
-    assert x0 <= 40 and x1 >= 200 and x1 - x0 < 400, (x0, x1)
-    assert y0 <= 0 and y1 >= 50 and y1 - y0 < 120, (y0, y1)
-    _select(a)
-    assert graph_view.step(bpy.context, p) == 1
-    x0, _y0, x1, y1 = _view(region)
-    assert x0 <= 1 and 24 <= x1 < 100 and 5 <= y1 < 20, (x0, x1, y1)
+    x0, x1, _y0, _y1 = graph_frame.current_view(region)
+    for ob, (v0, v1) in ((b, (-12.5, 62.5)), (a, (-1.25, 6.25))):
+        _select(ob)
+        assert graph_view.step(bpy.context, p) == 1
+        nx0, nx1, _ny0, _ny1 = graph_frame.current_view(region)
+        assert abs(nx0 - x0) < 1e-3 and abs(nx1 - x1) < 1e-3, ("time range kept", (x0, x1), (nx0, nx1))
+        got = _canvas_values(w, area, region)
+        assert abs(got[0] - v0) < 1e-2 and abs(got[1] - v1) < 1e-2, (got, (v0, v1))
     # off: no framing
     p.graph_auto_frame = False
     _select(b)
     assert graph_view.step(bpy.context, p) == 0
-    assert _view(region)[2] < 100
+    assert abs(_canvas_values(w, area, region)[1] - 6.25) < 1e-2
     p.graph_auto_frame = True
 
 
 def test_auto_frame_time_keeps_the_value_axis_and_the_preview_range():
+    """Auto Frame Time alone: the time axis is refit with 10 % margins, the value axis stays."""
     a, b = _scene()
     w, area, region = _graph()
     p = _prefs()
@@ -144,23 +155,18 @@ def test_auto_frame_time_keeps_the_value_axis_and_the_preview_range():
     graph_view._state["sig"] = None
     _select(a)
     graph_view.step(bpy.context, p)
-    _x0, y0, _x1, y1 = _view(region)
+    _x0, _x1, y0, y1 = graph_frame.current_view(region)
     sc = bpy.context.scene
-    for on in (False, True):
+    for on, ob, (t0, t1) in ((False, b, (24.0, 216.0)), (True, a, (-1.3, 26.3))):
         sc.use_preview_range = on
         before = (sc.use_preview_range, sc.frame_preview_start, sc.frame_preview_end)
-        _select(b if not on else a)
+        _select(ob)
         assert graph_view.step(bpy.context, p) == 1
         got = (sc.use_preview_range, sc.frame_preview_start, sc.frame_preview_end)
         assert got == before, (got, before)
-        if not on:
-            x0, ny0, x1, ny1 = _view(region)
-            lo, hi = graph_view.time_span([40, 200])
-            assert abs(x0 - lo) < 0.5 and abs(x1 - hi) < 0.5, (x0, x1, lo, hi)
-            assert abs(ny0 - y0) < 1e-3 and abs(ny1 - y1) < 1e-3, "value axis kept"
-    x0, _y0, x1, _y1 = _view(region)
-    lo, hi = graph_view.time_span([1, 24])
-    assert abs(x0 - lo) < 0.5 and abs(x1 - hi) < 0.5, (x0, x1, lo, hi)
+        x0, x1, ny0, ny1 = graph_frame.current_view(region)
+        assert abs(x0 - t0) < 1e-2 and abs(x1 - t1) < 1e-2, (x0, x1, t0, t1)
+        assert abs(ny0 - y0) < 1e-3 and abs(ny1 - y1) < 1e-3, "value axis kept"
     p.graph_auto_frame, p.graph_auto_frame_time = True, False
 
 

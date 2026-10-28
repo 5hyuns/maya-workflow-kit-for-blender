@@ -243,8 +243,8 @@ _SP = "space_data"
 MAP = {
     # --- Graph Editor (Maya's menus) ---
     **_edit_menu(GE, True),
-    f"{GE}/View/Frame/Frame All": "graph.view_all",
-    f"{GE}/View/Frame/Frame Selection": "graph.view_selected",
+    f"{GE}/View/Frame/Frame All": ("allset.graph_frame", {"mode": 'ALL'}),
+    f"{GE}/View/Frame/Frame Selection": ("allset.graph_frame", {"mode": 'SELECTED'}),
     f"{GE}/View/Frame/Frame Playback Range": "anim.scene_range_frame",
     f"{GE}/View/Center Current Time": "allset.graph_center_time",
     f"{GE}/View/Infinity": _prop(f"{_SP}.show_extrapolation"),

@@ -118,7 +118,7 @@ GRAPH_ICONS = (
     ("regionSelectKeyTool", 'FULLSCREEN_ENTER', "transform.resize", "Region Tool: Scale or move keys"),
     ("retimeKeyTool", 'TIME', "allset.retime_tool", "Retime Tool: scale and ripple keys"),
     "|", "STATS", "|",
-    ("frameAllButton", 'ZOOM_ALL', "graph.view_all", "Frame all"),
+    ("frameAllButton", 'ZOOM_ALL', ("allset.graph_frame", {"mode": 'ALL'}), "Frame all"),
     ("frameRangeButton", 'PREVIEW_RANGE', "anim.scene_range_frame", "Frame playback range"),
     ("centerCurrentTimeButton", 'TIME', "allset.graph_center_time", "Center the view about the current time"),
     "|",

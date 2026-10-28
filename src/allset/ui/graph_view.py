@@ -7,13 +7,11 @@ preferences (``preferences.graph_auto_frame`` / ``graph_auto_frame_time`` / ``gr
 Blender preference, store review #40) mapped in ``editor_menu_map``:
 
 * **Auto Frame** (Maya factory on, "As selection changes, reframe the selected curves"): a timer compares the object
-  / pose-bone selection; when it changes, every Graph Editor in F-Curve mode runs ``graph.view_all`` in its WINDOW
-  region (Blender lists the selected objects' curves with Only Show Selected, so that frames them).
-* **Auto Frame Time** (factory off, "... reframe ... along the time axis"): only the time axis. Python can't set a
-  View2D, and ``view2d.zoom`` divides by the UI scale (NaN headless, checked), so the kit uses Blender's own
-  horizontal-only frame, ``anim.scene_range_frame`` (sets the view's time range to the scene / preview range exactly,
-  value axis kept, checked 4.5): the preview range is set to the curves' key range + 5 % for that one call and put
-  back at once.
+  / pose-bone selection; when it changes, every Graph Editor in F-Curve mode refits its value axis to every curve it
+  draws with Maya's Frame All rule (``operators/graph_frame.py``: 25 % value margins) and keeps its time range
+  (step 281; Blender lists the selected objects' curves with Only Show Selected, so that frames them).
+* **Auto Frame Time** (factory off, "... reframe ... along the time axis"): the time axis too, with 10 % time
+  margins (alone: only the time axis). A normalised view gets Blender's View All.
 * **Curve Name** Always / Never / Active Only (factory Never): a WINDOW POST_PIXEL handler writes each visible
   curve's Maya plug name ("pCube1.translateX") in the curve colour just right of its last key (clamped into the
   view), at the curve's stored value — the view's value axis is the stored value (step 137). Normalized views
@@ -167,34 +165,26 @@ def visible_curves(window, area, region):
         return list(getattr(bpy.context, "visible_fcurves", None) or ())
 
 
-def frame_all(window, area, region):
-    """Maya Auto Frame: Blender's View All in this Graph Editor (its visible curves). True when it framed."""
+def maya_frame(window, area, region, time=False, value=True):
+    """Refit this Graph Editor to Maya's Frame All rectangle (operators/graph_frame.py) along the chosen axes; the
+    other axis keeps its range. A normalised view gets Blender's View All. True when it framed."""
     if not visible_curves(window, area, region):
         return False
+    from ..operators import graph_frame
     with bpy.context.temp_override(window=window, area=area, region=region):
-        return 'FINISHED' in bpy.ops.graph.view_all()
+        if area.spaces.active.use_normalization:
+            return 'FINISHED' in bpy.ops.graph.view_all()
+        return graph_frame.frame(bpy.context, region, 'ALL', time=time, value=value) is not None
 
 
-def frame_time(window, area, region, scene):
-    """Maya Auto Frame Time: frame the visible curves' keys along time only (value axis kept)."""
-    span = time_span(k.co.x for fc in visible_curves(window, area, region) for k in fc.keyframe_points)
-    if span is None:
-        return False
-    saved = (scene.use_preview_range, scene.frame_preview_start, scene.frame_preview_end)
-    try:
-        scene.use_preview_range = True
-        scene.frame_preview_end = span[1]
-        scene.frame_preview_start = span[0]
-        scene.frame_preview_end = span[1]
-        with bpy.context.temp_override(window=window, area=area, region=region):
-            done = 'FINISHED' in bpy.ops.anim.scene_range_frame()
-    finally:
-        on, start, end = saved
-        for _ in range(2):            # Blender pushes the other end of the range along: set both twice
-            scene.frame_preview_start = start
-            scene.frame_preview_end = end
-        scene.use_preview_range = on
-    return done
+def frame_all(window, area, region):
+    """Maya Auto Frame: the value axis refit to every curve shown, the time range kept."""
+    return maya_frame(window, area, region, time=False, value=True)
+
+
+def frame_time(window, area, region, scene=None):
+    """Maya Auto Frame Time: the time axis refit to every curve shown, the value range kept."""
+    return maya_frame(window, area, region, time=True, value=False)
 
 
 def auto_frame(scene, prefs):
@@ -202,10 +192,7 @@ def auto_frame(scene, prefs):
     n = 0
     if prefs.graph_auto_frame or prefs.graph_auto_frame_time:
         for w, a, r in graph_editors():
-            if prefs.graph_auto_frame:
-                n += frame_all(w, a, r)
-            else:
-                n += frame_time(w, a, r, scene)
+            n += maya_frame(w, a, r, time=prefs.graph_auto_frame_time, value=prefs.graph_auto_frame)
     if getattr(prefs, "dope_auto_frame", False):
         for w, a, r in dope_sheets():
             n += frame_dope_sheet(w, a, r)

@@ -291,8 +291,10 @@ ENTRIES = {
     "CoarserSubdivLevel": _e("NO", note="Maya subdiv surface 노드 없음"),
     "CreateSubdivRegion": _e("NO", note="Maya subdiv surface 노드 없음"),
     # --- step 70: Graph Editor, Shift+S keyframe / tangent marking menu (operators/graph_keys.py) ---
-    "graphEditor:GraphEditorFrameAll": _e("IC", ("Graph Editor", "graph.view_all", {})),
-    "graphEditor:GraphEditorFrameSelected": _e("IC", ("Graph Editor", "graph.view_selected", {})),
+    "graphEditor:GraphEditorFrameAll": _e("KIT", ("Graph Editor", "allset.graph_frame", {"mode": 'ALL'}),
+                                          note="보이는 커브 전체 (구간 제어 다각형 포함), 시간 10 % / 값 25 % 여백"),
+    "graphEditor:GraphEditorFrameSelected": _e("KIT", ("Graph Editor", "allset.graph_frame", {"mode": 'SELECTED'}),
+                                               note="선택 키 + 양쪽 구간 (선택 없으면 전체), 시간 10 % / 값 25 % 여백"),
     "graphEditor:GraphEditorFramePlaybackRange": _e("KIT", ("Graph Editor", "anim.scene_range_frame", {}),
                                                     note="재생 범위 (preview 켜져 있으면 그 범위) 로 가로 맞춤"),
     "graphEditor:TangentAuto": _e("KIT", ("Graph Editor", "allset.set_tangent", {"kind": "AUTO"}),

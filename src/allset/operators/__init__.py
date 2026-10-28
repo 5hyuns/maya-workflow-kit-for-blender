@@ -157,6 +157,10 @@ from . import manip_scale  # noqa: E402  step 275 (#200): Maya Scale manipulator
 classes += manip_scale.classes
 from . import dome_light  # noqa: E402  step 276 (#201): Create > Lights > Dome Light = the World environment
 classes += dome_light.classes
+from . import graph_move  # noqa: E402  step 281 (#192): Graph Editor Shift axis lock + time snap to whole frames
+classes += graph_move.classes
+from . import graph_frame  # noqa: E402  step 281: Graph Editor F / A frame Maya's rectangle
+classes += graph_frame.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 
@@ -266,6 +270,7 @@ def unregister():
     repeat_maya.unregister_handlers()
     anim_snapshot.unregister_handlers()
     select_2d.unregister_timers()
+    graph_move.unregister_timers()
     modify_maya.unregister_props()
     dag.unregister_handlers()
     curve_draw.unregister_handlers()

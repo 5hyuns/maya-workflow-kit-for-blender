@@ -100,7 +100,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
     # ui/graph_view.py, step 150).
     graph_auto_frame: bpy.props.BoolProperty(
         name="Auto Frame", default=True,
-        description="When the selection changes, the Graph Editor frames the curves it shows (Maya View > Auto Frame)")
+        description="When the selection changes, the Graph Editor refits its value axis to the curves it shows "
+                    "(Maya View > Auto Frame)")
     # Dope Sheet View > Auto Frame (Maya displayAutoFitItem, factory off in the Dope Sheet; step 166)
     dope_auto_frame: bpy.props.BoolProperty(
         name="Dope Sheet Auto Frame",
@@ -108,8 +109,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
                     "View > Auto Frame)")
     graph_auto_frame_time: bpy.props.BoolProperty(
         name="Auto Frame Time",
-        description="When the selection changes, the Graph Editor frames the keys along the time axis only "
-                    "(Maya View > Auto Frame Time; Auto Frame wins when both are on)")
+        description="When the selection changes, the Graph Editor also refits its time axis to the curves it shows "
+                    "(Maya View > Auto Frame Time)")
     graph_curve_names: bpy.props.EnumProperty(
         name="Curve Name", default='NEVER',
         description="Write each curve's Maya name (pCube1.translateX) beside its last key in the Graph Editor",
