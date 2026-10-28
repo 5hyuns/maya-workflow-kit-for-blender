@@ -51,6 +51,8 @@ def apply_display(context, space, mode):
     space.show_object_viewport_armature = show
     space.show_object_viewport_curve = show
     space.show_object_viewport_mesh = True
+    from ..ui import curve_controls        # step 262: curve-shaped bone controls follow
+    curve_controls.sync(space, scene)
 
 
 class ALLSET_OT_cycle_display(bpy.types.Operator):
