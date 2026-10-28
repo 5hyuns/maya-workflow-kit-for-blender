@@ -178,8 +178,8 @@ def test_partial_through_rejoins_original_skin_as_concave_ngons():
         bm.free()
 
 
-def test_perpendicular_tunnels_join_planar_walls_into_ngons():
-    for textured in (False, True, 'legacy'):
+def test_perpendicular_tunnels_keep_existing_wall_panels():
+    for textured in (False, True, 'roundtrip'):
         bm = cube()
         first = second = None
         try:
@@ -191,24 +191,29 @@ def test_perpendicular_tunnels_join_planar_walls_into_ngons():
                         lp[layer].uv = tuple(lp.vert.co[i] for i in axes)
             top = inset_patch(bm)
             first = run(bm, (0, 0, -3), 6, [top])
-            if textured == 'legacy':
-                first.faces.layers.int.remove(first.faces.layers.int.get(module().SURFACE))
+            if textured == 'roundtrip':
+                mesh = bpy.data.meshes.new('.smart_roundtrip')
+                first.to_mesh(mesh)
+                first.free()
+                first = bmesh.new()
+                first.from_mesh(mesh)
+                bpy.data.meshes.remove(mesh)
             side = max(first.faces, key=lambda f: f.calc_center_median().x)
             bmesh.ops.inset_region(first, faces=[side], thickness=.5, depth=0, use_even_offset=True)
             first.faces.index_update()
             patch = min((f for f in first.faces if f.normal.x > .99 and f.calc_center_median().x > .99),
                         key=lambda f: f.calc_center_median().yz.length)
             second = run(first, (-3, 0, 0), 5, [patch.index])
-            # The two intersecting tunnel walls are crosses with 12 corners,
-            # each representable by one concave ngon instead of many strips.
+            # Preserve the old upper/lower wall pieces and the new cross panel.
+            # Fewer faces is not a correctness criterion: it erases their borders.
             for y in (-.5, .5):
                 walls = [f for f in second.faces if abs(abs(f.normal.y)-1) < 1e-5
                          and all(abs(v.co.y-y) < 1e-5 for v in f.verts)]
-                assert len(walls) == 1 and len(walls[0].verts) >= 12, (textured, y, [len(f.verts) for f in walls])
+                assert len(walls) == 3 and all(len(f.verts) >= 4 for f in walls), (textured, y, [len(f.verts) for f in walls])
             for axis in (0, 2):
                 for sign in (-1, 1):
                     ring = [f for f in second.faces if all(abs(v.co[axis]-sign) < 1e-5 for v in f.verts)]
-                    assert len(ring) <= 2, (textured, axis, sign, len(ring))
+                    assert len(ring) == 4, (textured, axis, sign, len(ring))
             assert not any(len(f.verts) == 3 for f in second.faces)
         finally:
             if second is not None:

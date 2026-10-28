@@ -40,15 +40,26 @@ before the first drag so changing cap topology cannot move the operation's pivot
   releasing after rejection keeps that preview and reports a warning. Escape
   still restores the pre-drag mesh. No temporary operands or user modifiers remain.
 - Original material slots and UV layers pass through the solver. Cap UVs inherit
-  their source corners; cut/side UVs may need unwrapping. Coplanar generated edges
-  and Boolean splits on affected planar islands are dissolved, including support
-  edges left by an earlier intersecting cut. Unaffected surfaces keep their
-  topology. Explicit seams, creases, material boundaries and source UV seams are
-  protected. Generated tunnel walls may merge across their inherited UV breaks;
-  unwrap these panels after the final cuts. Planar panels become quads/n-gons.
-  Older cut walls with collapsed inherited UVs are recognized as well.
-  A polygon with an enclosed hole still needs support edges because
-  Blender cannot store a single face with an inner boundary.
+  their source corners; cut/side UVs may need unwrapping.
+- Topology is reconstructed from explicit source panels: input faces, transformed
+  caps and sweep boundary edges have separate identities. Boolean triangles are
+  discarded only within a proven panel. Existing inset/edge-loop borders survive;
+  surviving portions of intersected input edges are retained. Planar adjacency
+  alone is never a reason to merge source faces.
+- A simple panel outline becomes an n-gon. Matching nested convex polygon loops
+  use deterministic corner-to-corner bands (four for a rectangular opening),
+  preserving all collinear stitch vertices on the boundaries. Blender cannot
+  represent a single face containing a hole. Complex or non-simple hole outlines
+  retain a valid solver partition, with cleanup confined to their own panel.
+- Temporary hole connectors have an explicit edge role plus saved endpoint
+  coordinates. They can be reconstructed on later cuts and survive blend-file
+  roundtrips. New inset edges that inherit custom data are protected when their
+  coordinates no longer match that role. Explicit seams, material/UV boundaries,
+  creases and visibility/shading changes also prevent merging such connectors.
+- No UV-collapse heuristic is used to identify topology. Older builds did not
+  record reliable edge lineage, so their existing edges are treated as input.
+  Loops already deleted by those builds cannot be recovered automatically:
+  compare this behavior using the uncut source mesh.
 - Output may contain triangles and n-gons. This is not a quad retopology tool or a
   copy of Autodesk's proprietary solver. Extreme or self-crossing transforms may
   need smaller steps.
@@ -83,5 +94,12 @@ sandbox Blender window.
 the exit plane, near-axial views, precision toggles, clean walls and rejection
 without resetting a valid preview.
 `gui_smart_extrude_smooth.py` verifies that deferring mesh evaluation does not hold
-back mouse/gizmo updates; `gui_smart_extrude_cross.py` exercises two perpendicular
-tunnels and verifies single concave n-gons on their joined interior walls.
+back mouse/gizmo updates. `smart_reference.py` defines an explicit 2-unit cube,
+top inset of 0.5 and front inset of 0.2. `test_smart_topology.py` verifies all
+starting feature edges, clipped source segments, four corner-matched interior
+frame panels, cap UVs and connector proof across edits/file roundtrips.
+`gui_smart_extrude_cross.py` exercises that reference through the public operator,
+including Undo/Redo, and can export a before/after blend file and wireframe shot.
+Dimensions are reconstructed from the screenshots, not an imported Maya scene;
+the reference tests structural feature retention rather than a proprietary
+solver's exact vertex numbering.
