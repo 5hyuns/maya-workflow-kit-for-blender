@@ -499,10 +499,10 @@ def ensure_multi(handle, arm, bones, con):
     for b in bones:
         rot = next((c for c in b.constraints if is_solver_constraint(c)), None)
         if rot is None:
+            # in no collection (not a Maya node: no Outliner row, not in scene loops), kept by a fake user; a
+            # constraint target outside the scene still evaluates
             helper = bpy.data.objects.new(f"{handle.name}_{b.name}Rot", None)
-            for col in handle.users_collection or (bpy.context.scene.collection,):
-                col.objects.link(helper)
-                break
+            helper.use_fake_user = True
             helper.empty_display_size = 0.1 * _maya_unit()
             helper.hide_viewport = helper.hide_select = helper.hide_render = True
             helper[ROT_OWNER] = f"{handle.name}\t{b.name}"
