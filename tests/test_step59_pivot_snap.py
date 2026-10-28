@@ -258,14 +258,17 @@ def test_make_live():
     _fresh()
     p = _cube("pPlane1")
     _select(p)
-    bpy.ops.allset.make_live()
     ts = bpy.context.scene.tool_settings
+    before = (ts.use_snap, set(ts.snap_elements))
+    bpy.ops.allset.make_live()
     assert bpy.context.scene.allset_live == p
-    assert ts.use_snap and 'FACE_PROJECT' in ts.snap_elements
+    assert p.hide_select and not p.select_get()
+    assert (ts.use_snap, set(ts.snap_elements)) == before
     for o in bpy.data.objects:
         o.select_set(False)
     bpy.ops.allset.make_live()
-    assert bpy.context.scene.allset_live is None and 'FACE_PROJECT' not in ts.snap_elements
+    assert bpy.context.scene.allset_live is None and not p.hide_select
+    assert (ts.use_snap, set(ts.snap_elements)) == before
 
 
 # --- manipulator (M1-M7) ----------------------------------------------------------------------

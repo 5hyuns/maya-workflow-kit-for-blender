@@ -447,8 +447,8 @@ def _t_plane(cv):
 
 
 def _t_live(cv):
-    """Make Live: Maya shows the magnet alone; the kit adds a short grey ground line under it."""
-    cv.line(0.52, 0.94, 0.94, 0.94, 0.08, DIM)
+    """Make Live uses the bare magnet, without a snapping target glyph."""
+    pass
 
 
 def g_history(cv):

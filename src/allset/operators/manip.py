@@ -178,7 +178,7 @@ def _last_op():
 
 def _transform_running(window):
     return any(op.bl_idname.startswith("TRANSFORM_OT_") or op.bl_idname in
-               {'ALLSET_OT_pivot_translate', 'ALLSET_OT_pivot_rotate', 'ALLSET_OT_component_scale'} for op in window.modal_operators)
+               {'ALLSET_OT_pivot_translate', 'ALLSET_OT_pivot_rotate', 'ALLSET_OT_component_scale', 'ALLSET_OT_live_translate'} for op in window.modal_operators)
 
 
 # --- the active handle (Maya MMB drag anywhere), step 28 -------------------------------
@@ -187,7 +187,7 @@ def _transform_running(window):
 # ...AfterToolSwitch true). Session only; a re-tap of the tool key resets.
 HANDLES = {}
 OP_KINDS = {"TRANSFORM_OT_translate": 'TRANSLATE', "TRANSFORM_OT_rotate": 'ROTATE',
-            "TRANSFORM_OT_resize": 'RESIZE', "ALLSET_OT_component_scale": 'RESIZE'}
+            "TRANSFORM_OT_resize": 'RESIZE', "ALLSET_OT_component_scale": 'RESIZE', 'ALLSET_OT_live_translate': 'TRANSLATE'}
 
 
 def handle_from_op(bl_idname, props):
@@ -208,7 +208,7 @@ def handle_from_op(bl_idname, props):
                       "orient_axis": props.orient_axis}
     if not any(axes):
         return kind, None
-    if bl_idname == 'ALLSET_OT_component_scale':
+    if bl_idname in {'ALLSET_OT_component_scale', 'ALLSET_OT_live_translate'}:
         return kind, {"constraint_axis": axes, "orient_type": 'GLOBAL',
                       "orient_matrix_type": 'GLOBAL', "orient_matrix": props.orient_matrix.copy()}
     return kind, {"constraint_axis": axes, "orient_type": props.orient_type}
@@ -336,6 +336,9 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
             if self.mode == 'RESIZE':
                 from . import component_scale
                 res = component_scale.start(context, kwargs, 'MIDDLEMOUSE')
+            elif self.mode == 'TRANSLATE':
+                from . import live_translate
+                res = live_translate.start(context, kwargs, 'MIDDLEMOUSE')
             else:
                 res = op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:     # nothing to transform (poll failed)
@@ -407,7 +410,12 @@ class ALLSET_OT_manip_ctrl(bpy.types.Operator):
         HANDLES[kind] = {"constraint_axis": axes, "orient_type": otype}
         op = getattr(bpy.ops.transform, TRANSFORM_OPS[kind])
         try:
-            op('INVOKE_DEFAULT', constraint_axis=axes, orient_type=otype, release_confirm=True)
+            kwargs = dict(constraint_axis=axes, orient_type=otype, release_confirm=True)
+            if kind == 'TRANSLATE':
+                from . import live_translate
+                live_translate.start(context, kwargs)
+            else:
+                op('INVOKE_DEFAULT', **kwargs)
         except RuntimeError:
             return {'PASS_THROUGH'}
         return {'FINISHED'}

@@ -27,9 +27,12 @@ DY = 3              # px the Blender baseline may sit off the reference's
 SEEN = {}           # region pointer -> [(object name, label drawn)] of the last draw (GUI tests read it)
 
 
-def label(ob):
+def label(ob, live_objects=None):
     """The name the Maya Outliner row of ``ob`` shows instead of the object's: its first root joint, or None."""
     from ..operators import joints
+    from ..operators import live
+    if ob is not None and ob in (live.objects(bpy.context.scene) if live_objects is None else live_objects):
+        return ob.name
     if ob is None or ob.type != 'ARMATURE' or not ob.name.startswith(joints.SKELETON_BASE):
         return None
     tail = ob.name[len(joints.SKELETON_BASE):].split(".")[0]
@@ -93,7 +96,17 @@ def _ref(text, size, height):
 def _ink(lines, bg):
     """Ink mask of pixel lines (numpy int16 (h, w, 4)) against the background colour ``bg``."""
     import numpy as np
-    return np.abs(lines[..., :3] - np.asarray(bg[:3], dtype=np.int16)).max(axis=-1) > INK
+    mask = np.abs(lines[..., :3] - np.asarray(bg[:3], dtype=np.int16)).max(axis=-1) > INK
+    # A selected row's horizontal highlight borders are not glyph strokes.
+    mask[np.count_nonzero(mask, axis=1) > lines.shape[1] * .8] = False
+    return mask
+
+
+def _background(lines):
+    """Row fill, excluding the selected-row border and glyphs by majority colour."""
+    import numpy as np
+    colors, counts = np.unique(lines[len(lines)//2, :, :3], axis=0, return_counts=True)
+    return tuple(int(c) for c in colors[counts.argmax()])
 
 
 def _extent(cols, x0, x1):
@@ -111,12 +124,16 @@ def match(ink, ref, x):
     import numpy as np
     h, w = ref.shape
     best = (0.0, 0, 0)
-    for dx in range(-DX, DX + 1):
+    tolerance_x = max(DX, round(h * .25))
+    tolerance_y = max(DY, round(h * .25))
+    for dx in range(-tolerance_x, tolerance_x + 1):
         x0 = x + dx
         if x0 < 0 or x0 + w > ink.shape[1]:
             continue
         win = ink[:, x0:x0 + w]
-        for dy in range(-DY, DY + 1):
+        # Fractional UI scaling rounds the native text baseline independently
+        # of the row height; a fixed 3px range misses scrolled names at 150%.
+        for dy in range(-tolerance_y, tolerance_y + 1):
             r = np.zeros_like(win)
             if dy > 0:
                 r[dy:, :] = ref[:h - dy, :]
@@ -137,8 +154,9 @@ def find_rows(rows, width, u, lead, names, size):
     whose text is one of ``names``: the same ink as Blender's text of that name (the best of the names: skeleton1
     and skeleton2 differ in one glyph), nothing right after it."""
     found = []
+    tolerance_x = max(DX, round(u * .25))
     for k, lines in rows.items():
-        bg = tuple(int(c) for c in lines[u // 2, width - 2, :3])
+        bg = _background(lines)
         ink = _ink(lines, bg)
         cols = ink.any(axis=0)
         best = None
@@ -151,8 +169,8 @@ def find_rows(rows, width, u, lead, names, size):
                 x = int(lead + (depth + 2.25) * u)
                 if x + w > width:
                     break
-                ext = _extent(cols, x + ref_ext[0] - DX - 1, x + ref_ext[1] + DX + 2)
-                if ext is None or abs(ext[0] - (x + ref_ext[0])) > DX or abs(ext[1] - (x + ref_ext[1])) > DX:
+                ext = _extent(cols, x + ref_ext[0] - tolerance_x - 1, x + ref_ext[1] + tolerance_x + 2)
+                if ext is None or abs(ext[0] - (x + ref_ext[0])) > tolerance_x or abs(ext[1] - (x + ref_ext[1])) > tolerance_x:
                     continue
                 s, dx, dy = match(ink, ref, x)
                 if s < MATCH or (best is not None and s <= best[0]):
@@ -174,10 +192,13 @@ def draw():
     from .maya_outliner import is_maya_outliner
     if not is_maya_outliner(space):
         return
+    SEEN[region.as_pointer()] = []
+    from ..operators import live
+    live_objects = set(live.objects(context.scene))
     named = {}
     for ob in context.view_layer.objects:
-        lab = label(ob) if ob is not None else None
-        if lab is not None and lab != ob.name:
+        lab = label(ob, live_objects) if ob is not None else None
+        if lab is not None:
             named[ob.name] = lab
     if not named:
         return
@@ -211,24 +232,31 @@ def draw():
             x = int(lead + (depth + 2.25) * u)
             if x + w <= width:
                 spans.append((x + ext[0], x + ext[1]))
-    reach = DX + 3
+    reach = max(DX, round(u * .25)) + 3
     rows = {}
     for k in range(k_lo, k_hi + 1):
         y0 = bottom_of(k)
-        if y0 < 0 or y0 + u > region.height:
+        lo, hi = max(0, y0), min(region.height, y0 + u)
+        if hi <= lo or not 0 <= y0 + u // 2 < region.height:
             continue
         try:
             mid = np.array(fb.read_color(0, y0 + u // 2, width, 1, 4, 0, 'UBYTE').to_list(),
                            dtype=np.int16).reshape(1, width, 4)
         except ValueError:
             continue
-        cols = _ink(mid, tuple(int(c) for c in mid[0, width - 2, :3]))[0]
-        text = _extent(cols, int(lead + 2 * u) - reach, width - 2)
+        bg = _background(mid)
+        cols = _ink(mid, bg)[0]
+        text = _extent(cols, int(lead + 2 * u) - reach, width - max(4, round(size/3)))
         if text is None or not any(abs(text[1] - b) <= reach for _a, b in spans):
             continue
         try:
-            rows[k] = np.array(fb.read_color(0, y0, width, u, 4, 0, 'UBYTE').to_list(),
-                               dtype=np.int16).reshape(u, width, 4)
+            # A scrolled row can have a visible name even when its border is
+            # clipped. Pad only its offscreen background for the glyph matcher.
+            lines = np.empty((u, width, 4), dtype=np.int16)
+            lines[:] = (*bg, 255)
+            lines[lo-y0:hi-y0] = np.array(fb.read_color(0, lo, width, hi-lo, 4, 0, 'UBYTE').to_list(),
+                                         dtype=np.int16).reshape(hi-lo, width, 4)
+            rows[k] = lines
         except ValueError:
             continue
     hits = find_rows(rows, width, u, lead, list(named), size)
@@ -238,7 +266,7 @@ def draw():
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     for k, depth, dx, dy, name in hits:
         lines = rows[k]
-        bg = tuple(int(c) for c in lines[u // 2, width - 2, :3])
+        bg = _background(lines)
         w, base, _mask = _ref(name, size, u)
         x = int(lead + (depth + 2.25) * u) + dx
         y0 = bottom_of(k)
@@ -257,7 +285,8 @@ def draw():
         batch.draw(shader)
         gpu.state.blend_set('ALPHA')
         blf.size(0, size)
-        blf.color(0, text_rgb[0] / 255.0, text_rgb[1] / 255.0, text_rgb[2] / 255.0, 1.0)
+        color = live.COLOR if bpy.data.objects.get(name) in live_objects else tuple(c/255 for c in text_rgb)
+        blf.color(0, *color, 1.0)
         blf.position(0, x + 1, y0 + base + dy, 0)
         blf.draw(0, named[name])
     gpu.state.blend_set('NONE')

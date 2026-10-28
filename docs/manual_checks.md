@@ -384,7 +384,7 @@ GUI 자동 테스트(`python tests/gui/run.py`)가 이벤트 순서는 확인한
 - [x] (step 59) X 누른 채 드래그 (시작 0.3 cm) → 정수 cm 만, V 누른 채 가운데 핸들 → 다른 오브젝트 정점에 피벗이 붙음, Status Line 의 스냅 버튼이 키를 누른 동안 눌림. (gui_manual_sweep)
 - [x] (step 59) 여러 오브젝트 선택: 매니퓰레이터가 마지막 선택 (lead) 피벗에, 컴포넌트 선택: 선택의 바운딩 박스 중심에 (편집 모드로 들어가면 Pivot 이 Bounding Box Center 로 바뀜). (gui_manual_sweep)
 - [x] (step 59) Status Line / W 메뉴 「Move Options」 Tool Settings: Move Settings (Axis Orientation, Pivot, Step Snap Off/Relative/Absolute, Retain Component Spacing, Edit Pivot/Reset/Bake). W 메뉴 World/Object/Component 가 Move 축만, E 메뉴가 Rotate 축만 바꾸는지; E 메뉴 Discrete Rotate = 15° 스텝. (gui_manual_sweep)
-- [x] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 면 스냅이 켜지고 Status Line 칸에 이름, 빈 선택으로 다시 = 해제. (gui_manual_sweep)
+- [x] (step 59) Modify > Snap Align Objects: Point to Point (편집 모드에서 두 오브젝트의 정점 — 움직일 쪽 먼저, 목표 오브젝트가 활성), 2/3 Points (방향까지), Align Objects (X 가운데 정렬). Snap Together Tool: 움직일 면 클릭 → 목표 면 클릭 → 면끼리 맞닿음. Make Live: 선택한 참조 메시를 뷰포트에서 선택할 수 없고 Status Line 칸에 이름이 표시됨. 빈 선택으로 다시 = 해제. 일반 스냅 설정은 유지됨. (gui_manual_sweep)
 
 ### Step 60 — Maya ⇄ Blender 스위치 · 완전 되돌리기
 

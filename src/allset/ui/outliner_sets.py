@@ -160,18 +160,15 @@ def draw():
     fb = gpu.state.active_framebuffer_get()
     k_lo, k_hi = max(0, k_at(region.height - 1)), k_at(0)
     empty = first_empty(lambda k: _flat_line(fb, region, (sum(row_y(k)) / 2)), k_lo, k_hi)
-    pinned = empty is None or empty + len(found) - 1 > k_hi
+    # Native object rows must remain visible and clickable even in a short
+    # Outliner / at a large UI scale. Never pin virtual rows over the DAG.
+    if empty is None:
+        REGIONS[key] = []
+        return
     th, text_rgb = _theme()
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     gpu.state.blend_set('ALPHA')
-    if pinned:   # Blender won't scroll past its own rows: keep the sets at the bottom of the region
-        k0 = k_hi - len(found) + 1
-        y_top = row_y(k0)[1]
-        back = tuple(th.outliner.space.back) if hasattr(th.outliner.space, "back") else (0.16, 0.16, 0.16)
-        _rect(shader, 0, 0, region.width, y_top, (*back[:3], 1.0))
-        _rect(shader, 0, y_top - 1, region.width, y_top, (*text_rgb[:3], 0.35))
-    else:
-        k0 = empty
+    k0 = empty
     selected = set(context.selected_objects) if context.mode == 'OBJECT' else set()
     # Blender keeps one unit for its mode column while it is on (any mode); the Maya Outliner has none (step 202), so
     # the drawn rows line up with Blender's object rows one unit further left
@@ -180,6 +177,8 @@ def draw():
     rows = []
     for i, (kind, name, member) in enumerate(found):
         y0, y1 = row_y(k0 + i)
+        if y0 < 0 or y1 > region.height:
+            continue
         cy = (y0 + y1) / 2.0
         indent = u if kind == 'MEMBER' else 0
         if kind in ('CAMERA', 'DEFAULT_SET'):

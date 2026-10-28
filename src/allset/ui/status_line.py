@@ -553,7 +553,10 @@ def draw_status_line(layout, context, compact=False):
     if _group(layout, "SNAP"):
         row = layout.row(align=True)
         for name, desc, _icon, elements in SNAPS:
-            if elements is None:
+            if name == 'LIVE':
+                from ..operators import live
+                _flat(row, 'allset.make_live', 'snap_LIVE', depress=bool(live.objects(context.scene)))
+            elif elements is None:
                 _grey(row, "snap_" + name, f"Status Line/{desc}")
             else:
                 _flat(row, ALLSET_OT_snap_toggle.bl_idname, "snap_" + name, depress=snap_on(ts, name)).snap = name
@@ -561,8 +564,10 @@ def draw_status_line(layout, context, compact=False):
         row = layout.row(align=True)
         sub = row.row(align=True)
         sub.emboss = 'NONE'
-        sub.operator("allset.make_live", text="", icon='DOWNARROW_HLT')
-        _field(row, context.scene, "allset_live_text", 5)
+        sub.operator("allset.live_history", text="", icon='DOWNARROW_HLT')
+        field = row.row(align=True)
+        field.ui_units_x = 6
+        field.operator('allset.live_history', text=live.text(context.scene))
         _group_end(layout, "SNAP")
 
     if _group(layout, "SYMMETRY"):
@@ -613,8 +618,8 @@ def draw_status_line(layout, context, compact=False):
 
 
 def _live_text(self):
-    live = getattr(bpy.context.scene, "allset_live", None)
-    return live.name if live else "No Live Surface"
+    from ..operators import live
+    return live.text(self)
 
 
 def _symmetry_text(self):

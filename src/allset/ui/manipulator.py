@@ -555,7 +555,7 @@ class ALLSET_GGT_xform(GizmoGroup):
         self._built_for = (kind, pivot)
         self._ops_for = None
 
-    def _bind_ops(self, kind, otype, frame=None, clamp=False):
+    def _bind_ops(self, kind, otype, frame=None, clamp=False, live_move=False):
         """Point each handle at Blender's transform with its constraint and orientation."""
         op = {'TRANSLATE': "transform.translate", 'RESIZE': "transform.resize"}[kind]
         editing = self._built_for == ('TRANSLATE', True)
@@ -570,19 +570,19 @@ class ALLSET_GGT_xform(GizmoGroup):
                     self._orient(props, otype, frame)
                     props.release_confirm = True
             elif role == 'PLANE':
-                props = gz.target_set_operator(op)
+                props = gz.target_set_operator('allset.live_translate' if live_move else op)
                 props.constraint_axis = PLANES[data][0]
                 if not editing:
                     self._orient(props, otype, frame)
                     props.release_confirm = True
             elif role == 'CENTER':
-                props = gz.target_set_operator(op)
+                props = gz.target_set_operator('allset.live_translate' if live_move else op)
                 if not editing:
                     props.release_confirm = True
             elif role == 'PIVOT_RING':
                 props = gz.target_set_operator("allset.pivot_rotate")
                 props.axis = data
-        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp)
+        self._ops_for = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move)
 
     @staticmethod
     def _orient(props, otype, frame):
@@ -612,9 +612,11 @@ class ALLSET_GGT_xform(GizmoGroup):
         if scale_drag is not None:
             frame, otype = scale_drag._frame, 'GLOBAL'
         clamp = kind == 'RESIZE' and component_scale.enabled(context)
-        signature = (kind, otype, tuple(v for row in frame for v in row), clamp)
+        from ..operators import live_translate
+        live_move = kind == 'TRANSLATE' and not pivot and live_translate.enabled(context)
+        signature = (kind, otype, tuple(v for row in frame for v in row), clamp, live_move)
         if self._ops_for != signature and not any(gz.is_modal for gz, _role, _data in self.handles):
-            self._bind_ops(kind, otype, frame=frame, clamp=clamp)
+            self._bind_ops(kind, otype, frame=frame, clamp=clamp, live_move=live_move)
         if context.mode == 'EDIT_MESH':
             pts, act = _edit_points(context)
         else:

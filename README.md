@@ -64,6 +64,10 @@ Thanks for giving it a try 🙂
 Modern [Smart Extrude](docs/smart_extrude.md) grows, carves and stitches intersecting
 faces, with a combined Move/Rotate/Scale manipulator and cut-through support.
 
+[Make Live](docs/make_live.md) uses the Status Line magnet and history menu to
+manage reference meshes, with dark green labels/wires, viewport selection
+restrictions and Move/Quad Draw projection onto the live list.
+
 Everything below is in the current version. Maya menu items that Blender cannot do are still shown — greyed, with a
 one-line note saying why and what to use instead.
 
