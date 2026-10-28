@@ -264,8 +264,19 @@ class Step(Toggle):
         out = []
         if u != 'OFF' and not stepping:
             out.append(f"{self.name}: shows {u} but Blender increment snap is not active for it")
-        if u != 'OFF' and t.use_snap_grid_absolute != (u == 'ABSOLUTE'):
-            out.append(f"{self.name}: shows {u} but use_snap_grid_absolute={t.use_snap_grid_absolute}")
+        if u != 'OFF':
+            # step 263 (#153): Relative / Absolute is per tool; Blender's one flag takes this tool's mode when a
+            # transform of the tool starts (snap_align.apply_tool) and the other tools keep showing their own
+            others = {k: snap_align.step_snap_mode(t, k) for k in snap_align.STEP_FLAGS if k != self.kind}
+            saved = t.use_snap_grid_absolute
+            snap_align.apply_tool(t, self.kind)
+            if t.use_snap_grid_absolute != (u == 'ABSOLUTE'):
+                out.append(f"{self.name}: shows {u} but a {self.kind} transform starts with "
+                           f"use_snap_grid_absolute={t.use_snap_grid_absolute}")
+            changed = {k: v for k, v in others.items() if snap_align.step_snap_mode(t, k) != v}
+            if changed:
+                out.append(f"{self.name}: starting a {self.kind} transform changed other tools' Step Snap {changed}")
+            t.use_snap_grid_absolute = saved
         if u == 'OFF' and stepping and not snap_align.other_snaps_on(t):
             out.append(f"{self.name}: shows Off but Blender steps this transform by the increment "
                        f"(use_snap, INCREMENT, {snap_align.STEP_FLAGS[self.kind]} all on)")

@@ -188,7 +188,7 @@ def test_export_errors_like_maya():
     s = _clips(sc)
     s.export_type, s.export_path, s.export_filename = 'ANIMATION', "", "anim"
     for path, name, msg in (("", "anim", "path is empty"), (os.path.join(OUT, "nope"), "anim", "doesn't exist"),
-                            (OUT, "", "file name is empty")):
+                            (OUT, "", "Choose a file name to export")):
         s.export_path, s.export_filename = path, name
         try:
             ge.export(bpy.context, s)

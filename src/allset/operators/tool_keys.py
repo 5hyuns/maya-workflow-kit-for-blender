@@ -88,6 +88,7 @@ SACRED_PREFIXES = ("builtin.select", "builtin.move", "builtin.rotate", "builtin.
                    "builtin.transform")
 _TICK = 0.25
 LAST = {}   # mode -> tool idname
+_active = [None]   # the active tool idname the watch saw last (step 263)
 
 
 def is_sacred(idname):
@@ -106,6 +107,11 @@ def _watch():
         if workspace is not None:
             tool = workspace.tools.from_space_view3d_mode(context.mode, create=False)
             remember(context.mode, tool.idname if tool else None)
+            idname = tool.idname if tool else None
+            if idname != _active[0]:
+                _active[0] = idname
+                from . import snap_align
+                snap_align.apply_active(context)   # step 263: the new tool's Step Snap Relative / Absolute
             if context.mode == _mode[0]:
                 for m in CARRY_MODES:
                     _seen[m] = _tool_of(workspace, m)

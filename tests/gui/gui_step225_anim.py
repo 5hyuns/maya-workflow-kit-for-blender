@@ -88,7 +88,11 @@ def s_wait1():
 def s_game_shot():
     path = shot("game_exporter.png")
     check(f"Game Exporter window shot: {path}", os.path.exists(path))
-    esc()
+    mw = import_module(MODULE + ".ui.marked_window")          # step 263: a kit window, not a popup
+    w = mw.find_window(bpy.context, "GAME_EXPORTER")
+    check("Game Exporter is a window that stays open", w is not None)
+    if w is not None:
+        mw.close_later(w)
 
 
 @step

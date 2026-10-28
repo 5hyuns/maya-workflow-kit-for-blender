@@ -322,9 +322,12 @@ def export(context, s):
     if s.export_type == 'ANIMATION':
         files = clip_files(s, folder)
         if not files:
-            raise ValueError("The file name is empty or no clip is checked for export")
+            raise ValueError("Choose a file name to export" if not s.export_filename
+                             else "The file name is empty or no clip is checked for export")
         names = [c.name for c in s.clips if c.export]
-        if any(not n for n in names) or len(set(names)) != len(names):
+        if any(not n for n in names):
+            raise ValueError("Cannot export a clip without a name.")         # Maya's text (B6)
+        if len(set(names)) != len(names):
             raise ValueError("Every exported clip needs a unique name")
         for path, clips in files:
             args = dict(fbx_args(context, s, selection), bake_anim=True, bake_anim_use_nla_strips=False,
@@ -347,7 +350,7 @@ def export(context, s):
     roots = [o for o in obs if o.parent is None or o.parent not in obs]
     files = model_files(s, folder, roots)
     if not files:
-        raise ValueError("The file name is empty")               # Maya kGameExporterFilenameEmpty
+        raise ValueError("Choose a file name to export")            # Maya's text (B6, kGameExporterFilenameEmpty)
     for path, part in files:
         args = dict(fbx_args(context, s, True), bake_anim=False)
         keep = list(context.selected_objects)
@@ -397,55 +400,89 @@ class ALLSET_OT_game_clip(bpy.types.Operator):
         return {'FINISHED'}
 
 
+KIND = "GAME_EXPORTER"      # ui/marked_window.KINDS (step 263)
+
+
+def _row(layout, label):
+    """A Maya form row: the label left, the field right."""
+    split = layout.split(factor=0.32)
+    split.alignment = 'RIGHT'
+    split.label(text=label)
+    return split
+
+
+def draw(layout, context):
+    """The Game Exporter window (Maya Maya: tabs, export set, settings, Up Axis, Path / file name)."""
+    s = settings(context)
+    layout.row().prop(s, "export_type", expand=True)
+    box = layout.box()
+    box.row().prop(s, "export_set", expand=True)
+    if s.export_type == 'MODEL':
+        box.row().prop(s, "model_file_mode", expand=True)
+    else:
+        box.label(text="Animation Clips")
+        row = box.row()
+        row.template_list("ALLSET_UL_game_clips", "", s, "clips", s, "clip_index", rows=4)
+        col = row.column(align=True)
+        col.operator("allset.game_clip", text="", icon='ADD').action = 'ADD'
+        col.operator("allset.game_clip", text="", icon='REMOVE').action = 'REMOVE'
+        box.row().prop(s, "file_split", expand=True)
+        box.prop(s, "bake_animation")
+    col = layout.box().column(align=True)
+    col.label(text="Export Settings")
+    grid = col.grid_flow(columns=2, align=True)
+    for name in ("skinning", "blendshapes", "smoothing_groups", "tangents", "triangulate", "move_to_origin",
+                 "embed_media", "include_children", "include_cameras", "include_lights"):
+        sub = grid.row()
+        sub.enabled = name not in {"blendshapes", "move_to_origin"}
+        sub.prop(s, name)
+    # Maya: the "Up Axis" label, then Y / Z (Maya,  B6)
+    _row(col, "Up Axis").row().prop(s, "up_axis", expand=True)
+    box = layout.box()
+    _row(box, "Path").prop(s, "export_path", text="", placeholder="Choose an export directory")
+    _row(box, "File Name").prop(s, "export_filename", text="", placeholder=filename_placeholder(s))
+    folder = bpy.path.abspath(s.export_path)
+    files = clip_files(s, folder) if s.export_type == 'ANIMATION' else []
+    for path, clips in files[:4]:
+        box.label(text=os.path.basename(path) + ("   " + ", ".join(c.name for c in clips) if clips else ""),
+                  icon='FILE')
+    layout.separator()
+    layout.operator("allset.game_export", text="Export")
+
+
+def filename_placeholder(s):
+    """Maya's grey hint in the empty file name field (B6): one file vs a prefix for several files."""
+    if s.export_type == 'MODEL':
+        return "Enter a filename" if s.model_file_mode == 'SINGLE' else "Multi File Prefix"
+    return "Enter a filename" if s.file_split == 'SINGLE' else "Clip File Prefix"
+
+
 class ALLSET_OT_game_exporter(bpy.types.Operator):
     """Maya Game Exporter: export models or animation clips (one FBX take per clip) for a game engine"""
     bl_idname = "allset.game_exporter"
     bl_label = "Game Exporter"
-    bl_options = {'UNDO'}
 
-    def invoke(self, context, event):
+    def execute(self, context):
+        # step 263 (Issue #154): Maya's Game Exporter is an ordinary floating window that stays open while you work
+        # (Maya ``window`` + ``showWindow``, B6) — a kit window, no longer a popup a click outside closed
+        from ..ui import marked_window
         s = settings(context)
         if not s.export_path:
             from . import project
             s.export_path = project.ensure_root(context)   # the default project's folders exist (step 240 QA H1-1)
-        return context.window_manager.invoke_props_dialog(self, width=560, title="Game Exporter",
-                                                          confirm_text="Export")
+        if context.window is None:
+            return {'CANCELLED'}
+        if marked_window.open_window(context, KIND) is None:
+            self.report({'ERROR'}, "Could not open the Game Exporter window")
+            return {'CANCELLED'}
+        return {'FINISHED'}
 
-    def draw(self, context):
-        s = settings(context)
-        layout = self.layout
-        layout.row().prop(s, "export_type", expand=True)
-        box = layout.box()
-        box.row().prop(s, "export_set", expand=True)
-        if s.export_type == 'MODEL':
-            box.row().prop(s, "model_file_mode", expand=True)
-        else:
-            box.label(text="Animation Clips")
-            row = box.row()
-            row.template_list("ALLSET_UL_game_clips", "", s, "clips", s, "clip_index", rows=4)
-            col = row.column(align=True)
-            col.operator("allset.game_clip", text="", icon='ADD').action = 'ADD'
-            col.operator("allset.game_clip", text="", icon='REMOVE').action = 'REMOVE'
-            box.row().prop(s, "file_split", expand=True)
-            box.prop(s, "bake_animation")
-        col = layout.box().column(align=True)
-        col.label(text="Export Settings")
-        grid = col.grid_flow(columns=2, align=True)
-        for name in ("skinning", "blendshapes", "smoothing_groups", "tangents", "triangulate", "move_to_origin",
-                     "embed_media", "include_children", "include_cameras", "include_lights"):
-            sub = grid.row()
-            sub.enabled = name not in {"blendshapes", "move_to_origin"}
-            sub.prop(s, name)
-        col.row().prop(s, "up_axis", expand=True)
-        box = layout.box()
-        box.label(text="Path")
-        box.prop(s, "export_path")
-        box.prop(s, "export_filename")
-        folder = bpy.path.abspath(s.export_path)
-        files = clip_files(s, folder) if s.export_type == 'ANIMATION' else []
-        for path, clips in files[:4]:
-            box.label(text=os.path.basename(path) + ("   " + ", ".join(c.name for c in clips) if clips else ""),
-                      icon='FILE')
+
+class ALLSET_OT_game_export(bpy.types.Operator):
+    """Export with the Game Exporter's settings"""
+    bl_idname = "allset.game_export"
+    bl_label = "Export"
+    bl_options = {'UNDO'}
 
     def execute(self, context):
         try:
@@ -457,8 +494,26 @@ class ALLSET_OT_game_exporter(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ALLSET_PT_game_exporter(bpy.types.Panel):
+    bl_idname = "ALLSET_PT_game_exporter"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"            # = drawn by the Properties Tool tab (step 106 mechanism)
+    bl_label = "Game Exporter"
+    bl_options = {'HIDE_HEADER'}
+    bl_order = -300
+
+    @classmethod
+    def poll(cls, context):
+        from ..ui import marked_window
+        return marked_window.context_kind(context) == KIND
+
+    def draw(self, context):
+        draw(self.layout, context)
+
+
 classes = (ALLSET_PG_game_clip, ALLSET_PG_game_exporter, ALLSET_UL_game_clips, ALLSET_OT_game_clip,
-           ALLSET_OT_game_exporter)
+           ALLSET_OT_game_exporter, ALLSET_OT_game_export, ALLSET_PT_game_exporter)
 
 
 def register_props():
