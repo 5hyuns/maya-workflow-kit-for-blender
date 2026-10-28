@@ -33,7 +33,7 @@ def _clear():
     st.driver.object = None
     if bpy.context.active_object is not None and bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
-    for coll in (bpy.data.objects, bpy.data.armatures, bpy.data.meshes):
+    for coll in (bpy.data.objects, bpy.data.armatures, bpy.data.meshes, bpy.data.textures):
         for idb in list(coll):
             coll.remove(idb)
 
@@ -119,6 +119,8 @@ def test_two_drivers_add_like_blend_weighted():
     blend = sdk.sdk_fcurve(tgt, "cp:ty")
     assert sdk.is_blend(blend) and blend.driver.type == 'SUM' and len(blend.driver.variables) == 2
     assert [v.targets[0].data_path for v in blend.driver.variables] == ['["allset_sdk_0"]', '["allset_sdk_1"]']
+    assert all(v.targets[0].id == sdk.helper(create=False) for v in blend.driver.variables), "step 280: own ID"
+    assert not any(k.startswith("allset_sdk_") for k in tgt.keys())
     assert not blend.keyframe_points and not blend.modifiers
     assert cb.custom_keys(tgt) == ["ty"], "hidden inputs are not Channel Box attributes"
     curl = sdk.driver_curve(tgt, "cp:ty", drv, "cp:curl")
@@ -257,7 +259,9 @@ def test_blend_shape_weight_is_a_driven_node():
     _load_driver(drv, "cp:spread")
     bpy.ops.allset.sdk_key()
     blend = sdk.sdk_fcurve(key, "bs:smile")
-    assert sdk.is_blend(blend) and "allset_sdk_0" in key.keys() and "allset_sdk_1" in key.keys()
+    tex = sdk.helper(create=False)
+    assert sdk.is_blend(blend) and all(v.targets[0].id == tex for v in blend.driver.variables)
+    assert not any(k.startswith("allset_sdk_") for k in key.keys())
     cb.set_value(drv, "cp:curl", 5.0)
     assert abs(_read(key, "bs:smile") - 0.5) < TOL
     bpy.ops.allset.sdk_close()
@@ -316,8 +320,9 @@ def test_ik_blend_and_hidden_inputs_on_a_joint():
     _key(drv, "cp:spread", 10, pb, "rz", math.radians(-30))
     blend = sdk.sdk_fcurve(pb, "rz")
     assert sdk.is_blend(blend) and blend.data_path == 'pose.bones["joint2"].rotation_euler'
-    assert blend.driver.variables[0].targets[0].data_path == 'pose.bones["joint2"]["allset_sdk_0"]'
-    assert "allset_sdk_1" in pb.keys() and cb.custom_keys(pb) == []
+    t0 = blend.driver.variables[0].targets[0]
+    assert t0.id == sdk.helper(create=False) and t0.id_type == 'TEXTURE' and t0.data_path.startswith('["allset_sdk_')
+    assert not any(k.startswith("allset_sdk_") for k in pb.keys()) and cb.custom_keys(pb) == []
     drv["curl"] = drv["spread"] = 10.0
     drv.update_tag()
     bpy.context.view_layer.update()

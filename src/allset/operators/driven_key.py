@@ -20,14 +20,20 @@ Step 226 (Maya 2026):
    2.58 / 4e-6; Auto Clamped + None: 1.68 / 1.31 / 0.90; Auto + Continuous Acceleration: 1.2e-5 / 2.58 / 13.2),
    so the handles are ALIGNED at a third of each segment with that slope (delegated). Pre / post infinity Constant.
 2. A second driver on the same driven channel = Maya ``blendWeighted`` (the inputs are **added**, sdk_two_drivers):
-   every driver's curve sits on a hidden float ID property ``allset_sdk_<n>`` of the node that owns the channel (its
-   own kit SDK driver, variable ``sdk``), and the channel's driver becomes a SUM over variables ``sdk``, ``sdk1`` ...
+   every driver's curve sits on a hidden float ID property ``allset_sdk_<n>`` of the file's input helper (step 280;
+   its own kit SDK driver, variable ``sdk``), and the channel's driver becomes a SUM over variables ``sdk``, ``sdk1`` ...
    reading those properties (``is_blend``). Key on a summed channel keys that driver's input so the sum equals the
    posed value (posed - the other inputs' current values; delegated — Maya keys one blendWeighted input).
 3. Driven nodes besides objects / joints (Maya: any keyable attribute): a mesh's blendShape (its shape Key ID, one
    attribute per target = key block ``value``) and constraint nodes (Maya ``<target>W0`` = ``influence``, or the
    owner's ``allset_w_<constraint>`` weight property when a multi-target constraint group keeps one, step 226 L4).
    Their values are not Channel Box channels, so posing them is held through msgbus (``_watch``), not WRITE_HOOKS.
+
+Step 280 (#186): Blender doesn't order a driver that writes an ID property against another driver of the same ID
+that reads it, so a SUM over inputs kept on the driven ID itself read a stale input now and then. The hidden inputs
+live on their own data-block instead (like Maya's blendWeighted node): one hidden Texture per file (``helper``,
+type NONE, fake user, marked ``HELPER``). Older files are moved over on load (``sync``), inputs a copied object
+shares with its original get their own copy, and inputs no channel reads any more are dropped.
 """
 
 import bpy
@@ -41,6 +47,8 @@ INPUT_PROP = "allset_sdk_"     # hidden blendWeighted input properties (channel_
 SHAPE = "bs:"        # a blendShape target weight: key block ``value`` of a shape Key
 WEIGHT = "cw"        # a constraint node's weight (<target>W0)
 WEIGHT_PROP = "allset_w_"      # step 226 L4: the Maya weight of a multi-target constraint group, on the owner
+HELPER = "allset_blend_inputs" # step 280: marks the hidden Texture that holds the blendWeighted inputs
+HELPER_NAME = ".allset_sdk"
 
 
 # --- nodes ---------------------------------------------------------------------------------------
@@ -231,7 +239,9 @@ def _var_path(node, key):
 
 
 def _id_type(id_):
-    return 'KEY' if isinstance(id_, bpy.types.Key) else 'OBJECT'
+    if isinstance(id_, bpy.types.Key):
+        return 'KEY'
+    return 'TEXTURE' if isinstance(id_, bpy.types.Texture) else 'OBJECT'
 
 
 def is_sdk(fc):
@@ -405,15 +415,47 @@ def _sdk_curve(c, d, driver_key):
     return fc
 
 
+def is_helper(id_):
+    return isinstance(id_, bpy.types.Texture) and bool(id_.get(HELPER))
+
+
+def helpers():
+    return [t for t in bpy.data.textures if t.get(HELPER)]
+
+
+def helper(create=True):
+    """The file's input helper: a hidden Texture (no users but its fake one; a NONE texture draws nothing)."""
+    tex = next((t for t in helpers() if t.library is None), None)
+    if tex is None and create:
+        tex = bpy.data.textures.new(HELPER_NAME, 'NONE')
+        tex.use_fake_user = True
+        tex[HELPER] = 1
+    return tex
+
+
 def _new_input(c, value):
-    """A hidden blendWeighted input property on the channel's host, numbered one past the highest (Maya)."""
-    host = c.host
-    taken = [int(k[len(INPUT_PROP):]) for k in host.keys()
+    """A hidden blendWeighted input property on the input helper, numbered one past the highest (Maya)."""
+    tex = helper()
+    taken = [int(k[len(INPUT_PROP):]) for k in tex.keys()
              if k.startswith(INPUT_PROP) and k[len(INPUT_PROP):].isdigit()]
     name = f"{INPUT_PROP}{max(taken) + 1 if taken else 0}"
-    host[name] = float(value)
+    tex[name] = float(value)
     attr = f'["{name}"]'
-    return Chan(host.id_data, _rel_path(host, attr), -1, host, attr, host)
+    return Chan(tex, attr, -1, tex, attr, tex)
+
+
+def _copy_var(src, dst):
+    dst.name = src.name
+    dst.type = src.type
+    for a, b in zip(src.targets, dst.targets):
+        if src.type == 'SINGLE_PROP':
+            b.id_type = a.id_type
+        b.id = a.id
+        b.data_path = a.data_path
+        b.bone_target = a.bone_target
+        b.transform_type = a.transform_type
+        b.transform_space = a.transform_space
+        b.rotation_mode = a.rotation_mode
 
 
 def _copy_curve(src, dst):
@@ -478,6 +520,7 @@ def ensure_driver(driven, key, driver_node, driver_key):
             return fc
         fc = to_blend(c, fc)
     if is_blend(fc):
+        move_inputs(fc)       # an older file's inputs on the driven ID itself (normally done on load)
         for _var, inp in _inputs(fc):
             if is_sdk(inp) and _reads(inp, d):
                 return inp
@@ -519,13 +562,153 @@ def step_to(xs, current, direction):
 
 
 def all_sdk_curves():
-    for idb in (*bpy.data.objects, *bpy.data.shape_keys):
+    for idb in (*bpy.data.objects, *bpy.data.shape_keys, *helpers()):
         ad = idb.animation_data
         if ad is None:
             continue
         for fc in ad.drivers:
             if is_sdk(fc):
                 yield fc
+
+
+# --- input helper upkeep (step 280) ----------------------------------------------------------------
+
+def _split_prop(path):
+    """'pose.bones["j"]["allset_sdk_0"]' -> ('pose.bones["j"]', 'allset_sdk_0'); None when not an input path."""
+    i = path.rfind('["')
+    if i < 0 or not path.endswith('"]'):
+        return None
+    name = path[i + 2:-2]
+    return (path[:i], name) if name.startswith(INPUT_PROP) else None
+
+
+def _editable(id_):
+    return id_ is not None and id_.library is None and getattr(id_, "override_library", None) is None
+
+
+def _move_input(var, remove_old):
+    """Give one blendWeighted input its own property on the file's helper: the value, the input's SDK curve and
+    the summing variable move there. ``remove_old`` drops the old property and curve (a shared input keeps them)."""
+    t = var.targets[0]
+    old_id, path = t.id, t.data_path
+    split = _split_prop(path)
+    if old_id is None or split is None:
+        return False
+    prefix, name = split
+    try:
+        struct = old_id.path_resolve(prefix) if prefix else old_id
+        value = struct[name]
+    except (KeyError, ValueError):
+        return False
+    ad = old_id.animation_data
+    old_fc = ad.drivers.find(path) if ad is not None else None
+    inp = _new_input(None, value)
+    if old_fc is not None:
+        new_fc = _new_curve(inp)
+        _copy_curve(old_fc, new_fc)
+        for v in old_fc.driver.variables:
+            _copy_var(v, new_fc.driver.variables.new())
+        new_fc.mute = old_fc.mute
+    t.id_type = 'TEXTURE'
+    t.id = inp.id
+    t.data_path = inp.var_path
+    if remove_old and _editable(old_id):
+        if old_fc is not None:
+            ad.drivers.remove(old_fc)
+        del struct[name]
+    return True
+
+
+def move_inputs(blend):
+    """Move the inputs of a summed channel that still sit on another ID than the file's helper (an older file, a
+    second helper brought in by append / paste); returns how many moved."""
+    if not _editable(blend.id_data):
+        return 0
+    main = helper(create=False)
+    n = 0
+    for var in blend.driver.variables:
+        t = var.targets[0]
+        if t.id is None or (main is not None and t.id == main):
+            continue
+        n += _move_input(var, remove_old=not is_helper(t.id))
+        main = helper(create=False)
+    if n:
+        blend.driver.is_valid = True
+    return n
+
+
+def _blend_curves():
+    for idb in (*bpy.data.objects, *bpy.data.shape_keys):
+        ad = idb.animation_data
+        if ad is None:
+            continue
+        for fc in ad.drivers:
+            if is_blend(fc):
+                yield fc
+
+
+def sync():
+    """Keep every blendWeighted input on the file's helper, one channel per input (a duplicated object's summed
+    channel gets copies of the inputs it shares with the original), and drop inputs no channel reads.
+    Returns (moved, copied, dropped). Pushes no undo step: it runs on load and after object additions / removals."""
+    moved = copied = dropped = 0
+    blends = list(_blend_curves())
+    for fc in blends:
+        moved += move_inputs(fc)
+    seen = set()
+    for fc in blends:
+        own = _editable(fc.id_data)
+        for var in fc.driver.variables:
+            t = var.targets[0]
+            if t.id is None:
+                continue
+            key = (t.id.as_pointer(), t.data_path)
+            if key in seen and own:
+                copied += _move_input(var, remove_old=False)
+                key = (t.id.as_pointer(), t.data_path)
+            seen.add(key)
+    for tex in helpers():
+        if not _editable(tex):
+            continue
+        ad = tex.animation_data
+        for name in [k for k in tex.keys() if k.startswith(INPUT_PROP)]:
+            path = f'["{name}"]'
+            if (tex.as_pointer(), path) in seen:
+                continue
+            fc = ad.drivers.find(path) if ad is not None else None
+            if fc is not None:
+                ad.drivers.remove(fc)
+            del tex[name]
+            dropped += 1
+        if ad is not None:      # input curves whose property is gone
+            for fc in [f for f in ad.drivers if (tex.as_pointer(), f.data_path) not in seen]:
+                ad.drivers.remove(fc)
+        if not any(k.startswith(INPUT_PROP) for k in tex.keys()):
+            bpy.data.textures.remove(tex)
+    return moved, copied, dropped
+
+
+_COUNTS = [None]
+
+
+def _counts():
+    return len(bpy.data.objects), len(bpy.data.shape_keys), len(bpy.data.textures)
+
+
+def sync_if_changed():
+    """``sync`` when data-blocks were added or removed since the last look (duplicate, delete, append, paste)."""
+    now = _counts()
+    if now == _COUNTS[0]:
+        return None
+    out = sync() if helpers() or any(True for _ in _old_layout()) else (0, 0, 0)
+    _COUNTS[0] = _counts()
+    return out
+
+
+def _old_layout():
+    for fc in _blend_curves():
+        if any(not is_helper(v.targets[0].id) for v in fc.driver.variables):
+            yield fc
 
 
 def release_all():
@@ -674,6 +857,10 @@ def _before_update(_scene, _depsgraph=None):
 
 @bpy.app.handlers.persistent
 def _after_update(_scene, _depsgraph=None):
+    try:
+        sync_if_changed()
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
     try:
         st = state()
     except (AttributeError, ReferenceError):
@@ -875,6 +1062,8 @@ class ALLSET_OT_sdk_close(bpy.types.Operator):
 
 @bpy.app.handlers.persistent
 def _on_load(_dummy):
+    _COUNTS[0] = None
+    sync_if_changed()        # step 280: an older file's inputs move to the helper (no undo step of its own)
     release_all()
     try:
         _watch(state())      # a file load clears msgbus
@@ -892,9 +1081,21 @@ def register_props():
     bpy.app.handlers.load_post.append(_on_load)
     bpy.app.handlers.depsgraph_update_pre.append(_before_update)
     bpy.app.handlers.depsgraph_update_post.append(_after_update)
+    _COUNTS[0] = None
+    bpy.app.timers.register(_first_sync, first_interval=0.0)   # the open file (register can't edit data)
+
+
+def _first_sync():
+    try:
+        sync_if_changed()
+    except (AttributeError, ReferenceError, RuntimeError):
+        pass
+    return None
 
 
 def unregister_props():
+    if bpy.app.timers.is_registered(_first_sync):
+        bpy.app.timers.unregister(_first_sync)
     bpy.msgbus.clear_by_owner(_MSG)
     bpy.app.handlers.load_post.remove(_on_load)
     for lst, fn in ((bpy.app.handlers.depsgraph_update_pre, _before_update),
