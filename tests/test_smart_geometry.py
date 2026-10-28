@@ -135,3 +135,44 @@ def test_cut_through_disconnected_shells():
         run(bm, (0, 0, -6), 12, [selected.index]).free()
     finally:
         bm.free()
+
+
+def test_grid_cut_walls_are_clean_quads_at_and_past_exit():
+    for textured in (False, True):
+        bm = cube()
+        try:
+            bmesh.ops.subdivide_edges(bm, edges=list(bm.edges), cuts=2, use_grid_fill=True)
+            bm.normal_update()
+            bm.faces.index_update()
+            if textured:
+                uv = bm.loops.layers.uv.new('ArtistUV')
+                for f in bm.faces:
+                    axes = [i for i in range(3) if abs(f.normal[i]) < .9]
+                    for lp in f.loops:
+                        lp[uv].uv = tuple(lp.vert.co[i] for i in axes)
+            face = min((f for f in bm.faces if f.normal.z > .9), key=lambda f: f.calc_center_median().xy.length)
+            for depth in (1., 1.99999, 2., 2.00001, 3., 6.):
+                result = run(bm, (0, 0, -depth), 8-(4/9)*min(depth, 2), [face.index])
+                try:
+                    assert not any(len(f.verts) == 3 for f in result.faces), (textured, depth)
+                    assert len(result.faces) <= (58 if depth < 2 else 56), (textured, depth, len(result.faces))
+                finally:
+                    result.free()
+        finally:
+            bm.free()
+
+
+def test_partial_through_rejoins_original_skin_as_concave_ngons():
+    bm = cube()
+    try:
+        face = inset_patch(bm)
+        result = run(bm, (1, 0, -3), 145/24, [face])
+        try:
+            skin = [f for f in result.faces if f.normal.x > .99 and abs(f.calc_center_median().x-1) < 1e-5]
+            assert len(skin) == 1 and len(skin[0].verts) >= 6, [len(f.verts) for f in skin]
+            assert not any(len(f.verts) == 3 for f in skin)
+            assert result.faces.layers.int.get(module().SOURCE) is None
+        finally:
+            result.free()
+    finally:
+        bm.free()

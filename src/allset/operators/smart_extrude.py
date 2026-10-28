@@ -13,7 +13,7 @@ import bmesh
 import bpy
 from bpy_extras import view3d_utils
 from mathutils import Euler, Matrix, Vector
-from mathutils.geometry import intersect_line_line, intersect_line_plane
+from mathutils.geometry import intersect_line_plane
 
 from . import extrude, hold, pivot, smart_geometry, units
 from .. import undo_steps
@@ -339,23 +339,30 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
             session.free()
         return {'FINISHED'}
 
-    def _point(self, context, event, mouse=None):
-        mouse = (event.mouse_region_x, event.mouse_region_y) if mouse is None else mouse
-        origin = view3d_utils.region_2d_to_origin_3d(context.region, context.region_data, mouse)
-        direction = view3d_utils.region_2d_to_vector_3d(context.region, context.region_data, mouse)
+    def _screen_basis(self, context):
+        """Freeze a linear screen-to-axis mapping for the entire gesture.
+
+        A perspective ray/axis closest-point solve has a pole at the axis's
+        vanishing point. Switching to another solve there made a long inward
+        drag jump back towards zero. Use the start depth throughout instead.
+        """
         axis = self._drag_axes.col[max(0, self.axis)]
         centre = self._drag_centre
-        hit = intersect_line_line(origin, origin+direction, centre, centre+axis)
-        if hit is None or abs(direction.dot(axis)) > .999:
-            return None
-        return (hit[1]-centre).dot(axis)
+        region, rv = context.region, context.region_data
+        a = view3d_utils.location_3d_to_region_2d(region, rv, centre)
+        if a is None:
+            raise smart_geometry.GeometryError("Place the Smart Extrude pivot in front of the view")
+        world_pixel = (view3d_utils.region_2d_to_location_3d(region, rv, a+Vector((1, 0)), centre)-centre).length
+        b = view3d_utils.location_3d_to_region_2d(region, rv, centre+axis*world_pixel)
+        projected = b-a if b is not None else Vector((0, 0))
+        self._screen_axis = projected.normalized() if projected.length > 1e-5 else Vector((0, 1))
+        self._world_per_pixel = world_pixel/max(projected.length, .1)
 
     def _value(self, context, event):
         dx = event.mouse_region_x - self._mouse[0]
         dy = event.mouse_region_y - self._mouse[1]
         if self.kind == 'TRANSLATE':
-            point = self._point(context, event)
-            value = (point-self._start_point)/self._session.unit if point is not None and self._start_point is not None else (dx+dy)*.01
+            value = Vector((dx, dy)).dot(self._screen_axis)*self._world_per_pixel/self._session.unit
         elif self.kind == 'ROTATE':
             mouse = (event.mouse_region_x, event.mouse_region_y)
             vector = self._vector(context, event)
@@ -370,8 +377,11 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
         else:
             distance = Vector((dx, dy)).dot(self._screen_axis) if self.axis >= 0 else dx
             value = 1 + distance*.01
-        if event.shift:
-            value = 1+(value-1)*.1 if self.kind == 'SCALE' else value*.1
+        if event.shift != self._precision:
+            self._precision_raw, self._precision_anchor = value, self._precision_value
+            self._precision = event.shift
+        value = self._precision_anchor + (value-self._precision_raw)*(.1 if self._precision else 1.)
+        self._precision_value = value
         if self._step_held or (self._baseline_step != event.ctrl):
             increment = context.tool_settings.snap_angle_increment_3d if self.kind == 'ROTATE' else .1 if self.kind == 'SCALE' else 1.
             if increment > 1e-9:
@@ -420,6 +430,8 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
         start = time.monotonic()
         try:
             self._session.show(context, self.translation, self.rotation, self.scale)
+            self._accepted = {key: tuple(getattr(self, key)) for key in self._start}
+            self._display_params = self._accepted
             self._error = None
         except (smart_geometry.GeometryError, RuntimeError) as ex:
             self._error = str(ex)
@@ -432,9 +444,10 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
         global DRAG
         if not cancel:
             self._preview(context)
-            cancel = self._error is not None
             if self._error:
-                self.report({'WARNING'}, self._error)
+                for key, value in self._accepted.items():
+                    setattr(self, key, value)
+                self.report({'WARNING'}, self._error + "; kept the last valid preview")
             if all(tuple(getattr(self, key)) == tuple(value) for key, value in self._start.items()):
                 cancel = True
         if cancel:
@@ -476,13 +489,18 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
             setattr(self, key, value)
         self._drag_axes = self._session.axes @ Euler(self._start['rotation'], 'XYZ').to_matrix()
         self._drag_centre = self._session.centre + self._session.axes @ (Vector(self._start['translation'])*self._session.unit)
-        a = view3d_utils.location_3d_to_region_2d(context.region, context.region_data, self._drag_centre)
-        b = view3d_utils.location_3d_to_region_2d(context.region, context.region_data,
-                                               self._drag_centre+self._drag_axes.col[max(0, self.axis)]*.01)
-        self._screen_axis = (b-a).normalized() if a is not None and b is not None and (b-a).length > 1e-6 else Vector((1, 0))
-        self._start_point = self._point(context, event)
+        try:
+            self._screen_basis(context)
+        except smart_geometry.GeometryError as ex:
+            self._session.free()
+            self.report({'WARNING'}, str(ex))
+            return {'CANCELLED'}
+        self._accepted = dict(self._start)
+        self._display_params = self._accepted
         self._last_mouse, self._last_vector = self._mouse, self._vector(context, event)
         self._drag_angle = 0.
+        self._precision = event.shift
+        self._precision_raw = self._precision_anchor = self._precision_value = 1. if self.kind == 'SCALE' else 0.
         self._text, self._error = '', None
         self._step_held, self._baseline_step = hold.step_state(context.tool_settings, 'RESIZE' if self.kind == 'SCALE' else self.kind)
         self._last_time, self._interval, self._pending = 0., .1, False
@@ -503,11 +521,15 @@ class ALLSET_OT_smart_extrude_drag(_Props, bpy.types.Operator):
         if event.type == 'J' and event.value in {'PRESS', 'RELEASE'}:
             self._step_held = event.value == 'PRESS'
             self._update(context, event)
+        elif event.type in {'LEFT_SHIFT', 'RIGHT_SHIFT'} and event.value in {'PRESS', 'RELEASE'}:
+            self._update(context, event)
         elif event.type in {'X', 'Y', 'Z'} and event.value == 'PRESS':
             self.axis = 'XYZ'.index(event.type)
-            self._start_point = self._point(context, event, self._mouse)
+            self._screen_basis(context)
             self._last_mouse, self._last_vector = (event.mouse_region_x, event.mouse_region_y), self._vector(context, event)
             self._drag_angle = 0.
+            self._precision = event.shift
+            self._precision_raw = self._precision_anchor = self._precision_value = 1. if self.kind == 'SCALE' else 0.
             self._update(context, event)
         elif event.value == 'PRESS' and (event.type == 'BACK_SPACE' or getattr(event, 'unicode', '') in '0123456789.-' and getattr(event, 'unicode', '')):
             self._text = self._text[:-1] if event.type == 'BACK_SPACE' else self._text+event.unicode

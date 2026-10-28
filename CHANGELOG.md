@@ -5,6 +5,14 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Fixed
+- **Smart Extrude cut drags**: long inward drags use a stable screen-to-axis
+  mapping; toggling Shift precision preserves the current depth. Mesh and handles
+  stay on the last valid preview if a later position cannot be evaluated.
+- **Smart Extrude topology**: remove Boolean diagonals from planar cut walls and
+  fragments of original faces, retaining n-gons and original polygon/UV/material
+  boundaries instead of leaving unnecessary triangles.
+
 ### Added
 - **Modern Smart Extrude**: the menu, Polygons shelf and face marking menu now use
   a separate tool that grows, carves and stitches intersecting geometry within a
