@@ -9,6 +9,7 @@ from importlib import import_module
 import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ["ALLSET_FIT_WARP"] = "1"   # step 258: the fit only runs right after load (toolbox.FIT_WINDOW)
 from sim import MODULE, check, ev, run, scale, step, setup, screenshot, win, load_maya_layout  # noqa: E402
 
 SHOTS = os.environ.get("ALLSET_GUI_SHOTS", "")

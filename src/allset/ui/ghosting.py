@@ -36,6 +36,9 @@ PRESETS = ("1s", "2s", "4s", "5s", "10s", "Custom")
 PRE_COLOR = (0.447, 1.0, 1.0)                              # ghostColorPre factory
 POST_COLOR = (0.878, 0.678, 0.663)                         # ghostColorPost factory
 NEAR, FAR = 0.5, 0.15                                      # ghostNearOpacity / ghostFarOpacity factory
+# Maya's ghosting command error when nothing selected can be ghosted (s_TghostingCmdStrings
+# rGhostingCmdErrNoGhostableObjects,  B7)
+NOTHING_TO_GHOST = "Nothing selected can be ghosted using the current settings."
 FACTORY = {"hierarchy": True, "mode": MODES[0], "preset": "1s", "custom_pre": 3, "custom_post": 3, "custom_step": 1,
            "custom_frames": "", "color_pre": PRE_COLOR, "color_post": POST_COLOR, "near_opacity": NEAR,
            "far_opacity": FAR}
@@ -535,7 +538,13 @@ class ALLSET_OT_ghost(bpy.types.Operator):
         from .. import results
         if self.action == "GHOST":
             obs = ghost(list(context.selected_objects))
+            if not obs:
+                self.report({'ERROR'}, NOTHING_TO_GHOST)
+                return {'CANCELLED'}
             _schedule()
+            _redraw()
+            results.result(self, "")    # Maya prints nothing on success (060_messages_ui.md B7)
+            return {'FINISHED'}
         elif self.action == "UNGHOST":
             obs = unghost(list(context.selected_objects))
         else:

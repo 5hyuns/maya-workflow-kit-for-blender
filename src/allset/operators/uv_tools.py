@@ -981,6 +981,13 @@ class ALLSET_OT_uv_component(bpy.types.Operator):
             target.select_set(True)
             context.view_layer.objects.active = target
         ts = context.scene.tool_settings
+        ob = context.view_layer.objects.active
+        if ob is not None and ob.type == 'MESH' and ob.mode != 'EDIT' and not ob.visible_get():
+            # a hidden object: Maya converts silently ( B4); Blender can't enter
+            # edit mode on it, so only the component type is set (delegated, step 258)
+            if self.mode in ('VERTEX', 'EDGE', 'FACE'):
+                ts.mesh_select_mode = (self.mode == 'VERTEX', self.mode == 'EDGE', self.mode == 'FACE')
+            return {'FINISHED'}
         # coming from a mesh component mode (or object mode): keep its selection for F9 / F10 / F11 (#80)
         remember = self.mode == 'UV' and (context.mode != 'EDIT_MESH' or ts.use_uv_select_sync)
         if self.mode in ('VERTEX', 'EDGE', 'FACE') and context.mode == 'EDIT_MESH':

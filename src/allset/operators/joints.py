@@ -757,7 +757,9 @@ class ALLSET_OT_orient_joint(bpy.types.Operator):
             # Maya ends with this one, naming the first rotated joint up the hierarchy (060_rig_lane.md A1, Maya)
             self.report({'WARNING'}, f"Cannot perform joint orientation. Transform {skipped[0][0]} has non-zero "
                                      "rotations.")
-        results.result(self, f"Oriented {n} joint(s)")
+        # Maya 2026 prints only the command echo (joint -e -oj xyz -sao yup -aos -ch -zso;), no result line
+        # ( B7): the result field is cleared
+        results.result(self, "")
         return {'FINISHED'}
 
 

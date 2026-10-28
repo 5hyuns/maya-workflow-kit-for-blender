@@ -14,7 +14,7 @@ head / tail change) and kit commands that write MAYA_FRAME are left alone; the J
 """
 
 import bpy
-from mathutils import Quaternion
+from mathutils import Matrix, Quaternion
 
 from . import joints
 
@@ -208,10 +208,11 @@ def rebase(context=None):
 # --- Channel Box Translate (Edit mode) -------------------------------------------------------------------------
 
 def joint_translate(eb):
-    """Maya translate of a joint in rest (Blender length, armature space): the head in the parent's Maya frame (a top
-    joint: in Maya world axes)."""
+    """Maya translate of a joint in rest (Blender length, armature space): the head in the parent's Maya frame. A top
+    joint's translate is its position, in the kit's Z-up axes like every object Translate (; step 258: the
+    same numbers as the Pose-mode Channel Box, ``channel_box.root_translate``)."""
     if eb.parent is None:
-        return joints.MAYA_WORLD.transposed() @ eb.head
+        return eb.head.copy()
     return local_frame(eb.parent).transposed() @ (eb.head - eb.parent.head)
 
 
@@ -226,7 +227,7 @@ def set_joint_translate(ob, eb, t, preserve=False):
     Preserve Children: only the joint); every Maya frame stays."""
     from mathutils import Vector
     t = Vector(t)
-    base = joints.MAYA_WORLD if eb.parent is None else local_frame(eb.parent)
+    base = Matrix.Identity(3) if eb.parent is None else local_frame(eb.parent)
     origin = Vector((0.0, 0.0, 0.0)) if eb.parent is None else eb.parent.head
     head = origin + base @ t
     delta = head - eb.head

@@ -626,7 +626,12 @@ class ALLSET_OT_bind_skin(bpy.types.Operator):
                 # step 241: an unskinned skeleton's joints are picked in Edit mode
                 picked = [eb.name for eb in arm.data.edit_bones if eb.select]
         meshes = [o for o in sel if o.type == 'MESH']
-        if arm is None or not meshes:
+        if arm is None:
+            # Maya: no joint in the selection (only an IK handle / a curve ...) is an Error (060_messages_ui.md B4)
+            from .maya_errors import MUST_SELECT_JOINT
+            self.report({'ERROR'}, MUST_SELECT_JOINT)
+            return {'CANCELLED'}
+        if not meshes:
             self.report({'WARNING'}, "Select a skeleton and the meshes to bind")
             return {'CANCELLED'}
         skinned = [m for m in meshes if armature_modifier(m) is not None]

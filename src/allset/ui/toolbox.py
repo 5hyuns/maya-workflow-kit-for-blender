@@ -321,21 +321,29 @@ _running = [False]
 # screen.active_region), so opening the Tool Settings dock at UI scale 1.25 moved the Outliner edge 45 px into it
 # and closing the dock left the viewport 45 px narrower (checked, ); later it also
 # undid the user's own Outliner / shelf row sizes whenever the mouse crossed an area gap.
-_state = {}          # screen name -> [ui scale, area pointers, armed]
+_state = {}          # screen name -> [ui scale, area pointers, armed, monotonic time armed]
+# Step 258 (#155, QA 240 H2-3): a fit that could not run at once (no cursor warp, the mouse over a region) waited
+# and ran at the next area split mid-session — after Four View or a dialog the shelf row, Outliner, Channel Box and
+# Time Slider jumped under the pointer. The fit is a load-time adjustment: it only runs within FIT_WINDOW seconds
+# of the screen being loaded / first seen / the UI scale changing (delegated).
+FIT_WINDOW = 3.0
 
 
 def _armed(screen, scale):
     """True while ``screen`` may still be fitted: same areas as when it was first seen / loaded / the UI scale
-    changed, and not fitted yet. Once its areas change (split, close, dock, tear-off) it stays off for this scale."""
+    changed, not fitted yet and within FIT_WINDOW seconds of that. Once its areas change (split, close, dock,
+    tear-off) it stays off for this scale."""
+    import time
     # step 237: the viewport panels don't count — the four view (ui/four_view.py) splits / joins them without
     # touching the columns
     areas = frozenset(a.as_pointer() for a in screen.areas
                       if not (a.type == 'VIEW_3D' and not is_toolbox(a.spaces.active)))
     state = _state.get(screen.name)
+    now = time.monotonic()
     if state is None or state[0] != scale:
-        _state[screen.name] = [scale, areas, True]
+        _state[screen.name] = [scale, areas, True, now]
         return True
-    if state[2] and state[1] != areas:
+    if state[2] and (state[1] != areas or now - state[3] > FIT_WINDOW):
         state[2] = False
     return state[2]
 

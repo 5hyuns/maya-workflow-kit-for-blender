@@ -331,7 +331,8 @@ class ALLSET_OT_move_ik_to_fk(bpy.types.Operator):
     def execute(self, context):
         found = [(a, p, c) for a, p, c in ik_constraints(context) if c.target is not None]
         if not found:
-            self.report({'ERROR'}, "Select an IK handle.")
+            from .maya_errors import MOVE_IK_TO_FK
+            self.report({'ERROR'}, MOVE_IK_TO_FK)       # Maya 2026 ( B4)
             return {'CANCELLED'}
         for arm, pb, con in found:
             mw = con.target.matrix_world.copy()

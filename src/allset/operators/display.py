@@ -293,7 +293,9 @@ class ALLSET_OT_component_mask(bpy.types.Operator):
 
     def execute(self, context):
         ts = context.scene.tool_settings
-        if context.mode != 'EDIT_MESH':
+        # a hidden object: Maya sets the pick mask silently ( B4); Blender can't
+        # enter edit mode on it, so only the mask changes (delegated, step 258)
+        if context.mode != 'EDIT_MESH' and context.active_object.visible_get():
             bpy.ops.object.mode_set(mode='EDIT')
         ts.mesh_select_mode = toggled_mask(tuple(ts.mesh_select_mode), self.kind)
         return {'FINISHED'}

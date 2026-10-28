@@ -94,6 +94,11 @@ def s_scene():
         o.select_set(o.name == "pCube1")
     bpy.context.view_layer.objects.active = cube()
     centre()
+    # step 258: the Maya layout views keep Blender's HUD region off (Maya has no redo panel); turn it on here so the
+    # check below still proves that kit commands don't ask for Adjust Last Operation
+    area, _r = main_view()
+    with override():
+        area.spaces.active.show_region_hud = True
     # positive control: Alt+W = Blender's object.location_clear (REGISTER + UNDO, a visible property) keeps its panel
     key('W', alt=True)
 

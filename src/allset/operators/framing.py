@@ -122,6 +122,27 @@ def fit(points, rot, win0, dist0, ortho, size, rect, factor=FIT, min_half=MIN_HA
             return float("inf")
         return max((b[2] - b[0]) / (2.0 * hw), (b[3] - b[1]) / (2.0 * hh))
 
+    if not ortho and win0[0][0] > 0.0 and win0[1][1] > 0.0:
+        # Maya viewFit in perspective (step 258, checked  2026 for fitFactor 1.0 / 0.95 / 0.9,
+        #  B7): the camera stands back from the box centre by the box's half depth
+        # along the view plus the distance at which the box's half extents across the view (the axis-aligned box
+        # projected on the view's right / up axes) fill the field of view times the fit factor. The field of view is
+        # the visible rect's (sidebars excluded). Maya aims the camera at the box centre: the centre is put on the
+        # visible rect's middle.
+        fwd = rot @ Vector((0.0, 0.0, -1.0))
+        lo_c, hi_c = corners[0], corners[-1]
+        half = (hi_c - lo_c) / 2.0
+
+        def extent(axis):
+            return abs(axis.x) * half.x + abs(axis.y) * half.y + abs(axis.z) * half.z
+        tan_w = (rect[2] - rect[0]) / max(size[0], 1.0) / win0[0][0]
+        tan_h = (rect[3] - rect[1]) / max(size[1], 1.0) / win0[1][1]
+        d = extent(fwd) + max(extent(right) / tan_w, extent(up) / tan_h) / factor
+        ndc_x = (rect[0] + rect[2]) / max(size[0], 1.0) - 1.0
+        ndc_y = (rect[1] + rect[3]) / max(size[1], 1.0) - 1.0
+        loc = centre - right * (ndc_x * d / win0[0][0]) - up * (ndc_y * d / win0[1][1])
+        return loc, d
+
     # Distance search on the centred box: refitting the distance and panning in turns oscillated for a box much
     # wider than deep in a narrow perspective view (A with a far child: the view ended off by 100+ px, step 112).
     lo, hi = radius * 1e-3, max(dist0, radius * 4.0)

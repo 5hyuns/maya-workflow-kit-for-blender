@@ -342,7 +342,9 @@ class ALLSET_OT_animation_snapshot(bpy.types.Operator):
                          default="animCurve", options={'SKIP_SAVE'})
 
     def execute(self, context):
-        if context.mode != 'OBJECT':
+        # Maya: "the current time and the selection don't change" — only an edited mesh / curve leaves Edit mode so
+        # the copies see its edits; joints keep Pose mode (step 258, #155 H3-4: the snapshot used to drop it)
+        if context.mode.startswith('EDIT'):
             bpy.ops.object.mode_set(mode='OBJECT')
         start, end = self.start, self.end
         if self.time_slider:

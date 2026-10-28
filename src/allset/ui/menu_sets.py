@@ -550,7 +550,8 @@ class ALLSET_OT_menu_item(bpy.types.Operator):
         try:
             run_action(context, action, path=self.item)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)       # a Maya Error stays an Error (step 258, #152)
             return {'CANCELLED'}
         return {'FINISHED'}
 

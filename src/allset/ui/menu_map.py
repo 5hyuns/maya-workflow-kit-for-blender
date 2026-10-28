@@ -1007,7 +1007,7 @@ MAP.update({
     "Fluids/Make Collide": "allset.fluid_collide",
     "nCloth/Display Input Mesh": ("allset.ncloth_display", {"mesh": 'INPUT'}),
     "nCloth/Display Current Mesh": ("allset.ncloth_display", {"mesh": 'CURRENT'}),
-    "nHair/Paint Hair Follicles": ("object.mode_set", {"mode": 'SCULPT_CURVES'}),
+    "nHair/Paint Hair Follicles": "allset.paint_hair_follicles",     # step 258: a mesh selection is valid (#152)
 })
 
 # Step 110: modeling / rigging commands with checked results

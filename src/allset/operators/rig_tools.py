@@ -19,7 +19,7 @@ from mathutils import Vector
 
 from .. import results
 from ..ui import channel_box as cb
-from . import constrain_multi
+from . import constrain_multi, maya_errors
 
 CONSTRAINT_TYPES = (
     ('CHILD_OF', "Parent", "Maya parentConstraint (Child Of; the offset is kept like Maya's Maintain Offset)"),
@@ -31,6 +31,10 @@ CONSTRAINT_TYPES = (
     ('SHRINKWRAP', "Geometry", "Maya geometryConstraint (Shrinkwrap)"),
 )
 CONSTRAIN_HINT = "Select the control first, then the joint last (joints in pose mode)"
+# Maya constraint commands that print "Target list was empty or contained no valid targets." with one node selected
+# (Parent:  B4; Point / Orient / Scale / Aim / Geometry: step 258 Maya,
+# research B4 additions). Attach to Motion Path is another command.
+MAYA_TARGET_ERROR = {'CHILD_OF', 'COPY_LOCATION', 'COPY_ROTATION', 'COPY_SCALE', 'TRACK_TO', 'SHRINKWRAP'}
 
 
 class ALLSET_OT_constrain(bpy.types.Operator):
@@ -58,6 +62,9 @@ class ALLSET_OT_constrain(bpy.types.Operator):
             pb = context.active_pose_bone
             others = [o for o in context.selected_objects if o is not arm]
             bones = [b for b in context.selected_pose_bones or () if b != pb]
+            if pb is not None and not (others or bones) and self.type in MAYA_TARGET_ERROR:
+                self.report({'ERROR'}, maya_errors.NO_TARGETS)       # Maya: one joint selected (step 258)
+                return {'CANCELLED'}
             if pb is None or not (others or bones):
                 self.report({'WARNING'}, CONSTRAIN_HINT)
                 return {'CANCELLED'}
@@ -73,6 +80,10 @@ class ALLSET_OT_constrain(bpy.types.Operator):
         else:
             ob = context.active_object
             others = [o for o in context.selected_objects if o is not ob]
+            if not others and self.type in MAYA_TARGET_ERROR:
+                # Maya with one object selected: an Error ( B4, step 258 Maya)
+                self.report({'ERROR'}, maya_errors.NO_TARGETS)
+                return {'CANCELLED'}
             if not others:
                 self.report({'WARNING'}, CONSTRAIN_HINT)
                 return {'CANCELLED'}
@@ -80,7 +91,15 @@ class ALLSET_OT_constrain(bpy.types.Operator):
                 # Maya target order: Blender keeps no selection order, targets go by name (modify_maya.selection_order)
                 return self._multi(context, ob, [(o, "") for o in sorted(others, key=lambda o: o.name)], label)
             before = len(ob.constraints)
-            bpy.ops.object.constraint_add_with_targets(type=self.type)
+            if bpy.ops.object.constraint_add_with_targets.poll():
+                bpy.ops.object.constraint_add_with_targets(type=self.type)
+            else:
+                # a hidden object: Maya constrains it like any other (060_messages_ui.md B4, Closest Point), Blender's
+                # operator refuses it ("Cannot edit hidden object") -> the same constraint through the data API, with
+                # the operator's target (the first other selected object)
+                con = ob.constraints.new(self.type)
+                if hasattr(con, "target"):
+                    con.target = others[0]
             owner, cons = ob.name, ob.constraints
         if len(cons) == before:
             self.report({'WARNING'}, CONSTRAIN_HINT)

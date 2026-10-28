@@ -311,7 +311,7 @@ def _base_hook(ob, name, driver, group):
         hk.vertex_group = group
     else:
         hk.vertex_indices_set(list(range(len(ob.data.vertices))) if ob.type == 'MESH' else [])
-    hk.center = ob.matrix_world.inverted() @ driver.matrix_world.translation
+    hk.center = ob.matrix_world.inverted_safe() @ driver.matrix_world.translation     # scale 0 (step 258)
     hk.matrix_inverse = driver.matrix_world.inverted() @ ob.matrix_world
     return hk
 
