@@ -138,10 +138,11 @@ def test_channel_box_translate_entry_moves_like_w():
     scene.allset_joint_tx = "+=1"
     assert (rig.joint_world(ob, "j3")[0] - Vector(CASE["move_ws_j2"]["world"]["j3"])).length < 2e-3
     assert (rig.joint_world(ob, "j2")[0] - after["j2"][0]).length > 0.9
-    # a top joint's Translate is its position in Maya world axes
+    # a top joint's Translate is its position, in the kit's Z-up axes like every object Translate (step 258,
+    # decision 2: Translate Z = Maya Y)
     js.select_edit(bpy.context, ob, "j1")
     scene.allset_joint_tz = "-1"
-    assert (rig.joint_world(ob, "j1")[0] - Vector((0, 0, -1))).length < 1e-5
+    assert (rig.joint_world(ob, "j1")[0] - Vector((0, -1, 0))).length < 1e-5
     _reset()
 
 

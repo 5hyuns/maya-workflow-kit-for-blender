@@ -104,8 +104,8 @@ NOTICES = {
     "nCloth/Display Current Mesh": (
         "Cloth modifier on", "Blender shows the simulated mesh with the Cloth modifier on in the viewport."),
     "nHair/Paint Hair Follicles": (
-        "Hair Sculpt mode", "Blender hair is a Curves object groomed in Sculpt mode: select one (Add > Curves > Empty "
-        "Hair) and use the Add brush."),
+        "Hair Sculpt mode", "Blender hair is a Curves object groomed in Sculpt mode: on the selected mesh the kit adds "
+        "an empty hair object (or picks its hair) and switches to it; paint follicles with the Add brush."),
     # step 110: mapped items whose Blender result differs (docs/steps/step_110.md)
     "Mesh Tools/Make Hole": (
         "Bridged loops", "Blender faces can't have holes: the stamp outline is bridged to the face's border with "

@@ -36,6 +36,12 @@ def corners(obs):
     return import_module(MODULE + ".operators.framing").box_corners(pts)
 
 
+def maya_fit(inside, ratio, persp=True):
+    """Step 258: Maya's perspective viewFit leaves more room than 0.95 (measured, tests/test_step258_view.py);
+    orthographic views still fill 0.95."""
+    return inside and (0.5 < ratio < 0.95 if persp else abs(ratio - 0.95) < 0.03)
+
+
 def fit_ratio(area, region, obs):
     """(inside, ratio) of the projected bounding box against the visible rect."""
     rv3d = region.data
@@ -91,7 +97,7 @@ def s_f():
     check(f"sidebar excluded from the visible rect ({rect[2]:.0f} of {region.width} px, sidebar at {ui.x - region.x})",
           region.x + rect[2] <= ui.x + 1)
     inside, ratio = fit_ratio(area, region, [bpy.data.objects["Cube"]])
-    check(f"F: cube inside the visible part, fills 0.95 (ratio {ratio:.3f})", inside and abs(ratio - 0.95) < 0.03)
+    check(f"F: cube inside the visible part with Maya's margin (ratio {ratio:.3f})", maya_fit(inside, ratio))
     shot("step17_f.png")
     ev('F', 'PRESS', ctrl=True, shift=True)
     ev('F', 'RELEASE', ctrl=True, shift=True)
@@ -108,7 +114,7 @@ def s_ctrl_shift_f():
     area, region = view3d()
     obs = [bpy.data.objects["Cube"], bpy.data.objects["far_child"]]
     inside, ratio = fit_ratio(area, region, obs)
-    check(f"Ctrl+Shift+F: cube + child fit (ratio {ratio:.3f})", inside and abs(ratio - 0.95) < 0.03)
+    check(f"Ctrl+Shift+F: cube + child fit (ratio {ratio:.3f})", maya_fit(inside, ratio))
     for o in bpy.context.view_layer.objects:
         o.select_set(False)
     tap('A')
@@ -125,7 +131,7 @@ def s_a():
     area, region = view3d()
     obs = [o for o in bpy.context.view_layer.objects if o.visible_get()]
     inside, ratio = fit_ratio(area, region, obs)
-    check(f"A tap: everything fits (ratio {ratio:.3f})", inside and abs(ratio - 0.95) < 0.03)
+    check(f"A tap: everything fits (ratio {ratio:.3f})", maya_fit(inside, ratio))
     shot("step17_a.png")
     only("Cube")
     tap('SPACE')   # four views
@@ -166,7 +172,8 @@ def s_quad_check():
     regs = [r for _a, r in pairs]
     res = [fit_ratio(a, r, [bpy.data.objects["Cube"]]) for a, r in pairs]
     check(f"Shift+F frames the cube in all {len(regs)} views (ratios {[round(x[1], 3) for x in res]})",
-          len(regs) == 4 and all(i and abs(r - 0.95) < 0.03 for i, r in res))
+          len(regs) == 4 and all(maya_fit(i, r, a.spaces.active.region_3d.is_perspective)
+                                 for (i, r), (a, _r) in zip(res, pairs)))
     shot("step17_quad.png")
     persp = import_module(MODULE + ".ui.four_view").roles(win().screen).get("persp", pairs[0][0])
     r = next(r for r in persp.regions if r.type == 'WINDOW')

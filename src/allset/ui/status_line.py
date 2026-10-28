@@ -200,7 +200,9 @@ class ALLSET_OT_snap_toggle(bpy.types.Operator):
     """Toggle a Maya snap mode"""
     bl_idname = "allset.snap_toggle"
     bl_label = "Snap Toggle"
-    bl_options = {'INTERNAL', 'UNDO'}
+    # Maya's snap toggles are not undoable (snapMode pushes no undo step, research/maya/re/060_messages_ui.md B5):
+    # no undo step here, and undo / redo keep the current snap state (``_keep_snap_pre`` / ``_keep_snap_post``)
+    bl_options = {'INTERNAL'}
 
     snap: EnumProperty(items=[(s[0], s[0].title(), s[1]) for s in SNAPS if s[3]])
 
@@ -211,6 +213,44 @@ class ALLSET_OT_snap_toggle(bpy.types.Operator):
     def execute(self, context):
         toggle_snap(context.scene.tool_settings, self.snap)
         return {'FINISHED'}
+
+
+# Blender's memfile undo restores the scene's tool settings with everything else, so an undo after a snap toggle
+# would switch the snap back (step 258, Issue #155). The state from before the undo / redo is put back from a 0 s
+# timer like the current frame (ui/time_slider.py ``restore_frame``).
+_KEEP_SNAP = {}
+
+
+@bpy.app.handlers.persistent
+def _keep_snap_pre(*_args):
+    scene = bpy.context.scene
+    if scene is not None:
+        ts = scene.tool_settings
+        _KEEP_SNAP["state"] = (scene.name, ts.use_snap, set(ts.snap_elements))
+
+
+@bpy.app.handlers.persistent
+def _keep_snap_post(*_args):
+    if "state" in _KEEP_SNAP and not bpy.app.timers.is_registered(restore_snap):
+        bpy.app.timers.register(restore_snap, first_interval=0.0)
+
+
+def restore_snap():
+    """Put the Status Line snap state from before the undo / redo back (None: timer done)."""
+    name, on, elements = _KEEP_SNAP.pop("state", (None, None, None))
+    scene = bpy.context.scene
+    if scene is None or scene.name != name:
+        return None
+    ts = scene.tool_settings
+    if elements and set(ts.snap_elements) != elements:
+        ts.snap_elements = elements
+    if ts.use_snap != on:
+        ts.use_snap = on
+    return None
+
+
+_SNAP_UNDO_HANDLERS = (("undo_pre", _keep_snap_pre), ("redo_pre", _keep_snap_pre),
+                       ("undo_post", _keep_snap_post), ("redo_post", _keep_snap_post))
 
 
 # --- symmetry (ui_layout.md:207 group 8; operators/symmetry.py, docs/steps/step_36.md) ------
@@ -530,7 +570,11 @@ def draw_status_line(layout, context, compact=False):
         sub = row.row(align=True)
         sub.emboss = 'NONE'
         sub.menu(ALLSET_MT_symmetry.bl_idname, text="", icon='DOWNARROW_HLT')
-        _field(row, context.scene, "allset_symmetry_text", 5)
+        # Maya's symmetry box is a drop-down (statusLine.mel:1909-1925): a click on the text opens the list, it is
+        # never a text field (step 258, Issue #155: the read-only text property took a text cursor)
+        box = row.row(align=True)
+        box.ui_units_x = 5
+        box.menu(ALLSET_MT_symmetry.bl_idname, text=_symmetry_text(None))
         _group_end(layout, "SYMMETRY")
 
     if _group(layout, "HISTORY"):   # Maya statusLine.mel:3017-3032; toggle since step 189 (input_line.draw_history)
@@ -838,9 +882,18 @@ def register():
     bpy.types.VIEW3D_PT_active_tool.append(draw_tool_symmetry)
     bpy.app.handlers.load_pre.append(_masks_before_load)
     bpy.app.handlers.load_post.append(_masks_after_load)
+    for name, fn in _SNAP_UNDO_HANDLERS:
+        getattr(bpy.app.handlers, name).append(fn)
 
 
 def unregister():
+    for name, fn in _SNAP_UNDO_HANDLERS:
+        handlers = getattr(bpy.app.handlers, name)
+        if fn in handlers:
+            handlers.remove(fn)
+    if bpy.app.timers.is_registered(restore_snap):
+        bpy.app.timers.unregister(restore_snap)
+    _KEEP_SNAP.clear()
     for handlers, fn in ((bpy.app.handlers.load_pre, _masks_before_load),
                          (bpy.app.handlers.load_post, _masks_after_load)):
         if fn in handlers:

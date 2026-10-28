@@ -140,6 +140,19 @@ def _run_action(context, action, option, path):
         return bpy.ops.allset.menu_run(op=target, props=json.dumps(props))
     mod, name = target.split(".")
     op = getattr(getattr(bpy.ops, mod), name)
+    if target == "object.modifier_add":
+        # Maya commands run as a modifier: Maya's Error for a selection they don't take (step 258, #152), and no
+        # Python TypeError when Blender has no such modifier for the active object type
+        from ..operators import maya_errors
+        maya_errors.check_modifier(context, props.get("type"))
+        try:
+            return _call(op, option, props)
+        except TypeError:
+            raise RuntimeError(maya_errors.wrong_type_warning(props.get("type"))) from None
+    return _call(op, option, props)
+
+
+def _call(op, option, props):
     if option and "option_box" in op.get_rna_type().properties:
         # the operator has its own Maya options window (invoke_props_dialog, step 63)
         return op('INVOKE_DEFAULT', option_box=True, **props)
@@ -238,7 +251,8 @@ class ALLSET_OT_mm_engine(bpy.types.Operator):
                 bpy.ops.mesh.select_all(action='SELECT')
             run_action(context, item.action, option)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip())
+            from ..operators import maya_errors
+            maya_errors.report_nested(self, ex)       # a Maya Error stays an Error (step 258, #152)
         return {'FINISHED'}
 
     def modal(self, context, event):

@@ -47,10 +47,15 @@ def _proj_bounds(loc, dist, win, rot, pts, size=SIZE):
     return min(p.x for p in pp), min(p.y for p in pp), max(p.x for p in pp), max(p.y for p in pp)
 
 
-def _check_fit(b, rect, factor=framing.FIT):
+def _check_fit(b, rect, factor=framing.FIT, persp=False):
     x0, y0, x1, y1 = rect
     assert b[0] >= x0 - 0.5 and b[2] <= x1 + 0.5 and b[1] >= y0 - 0.5 and b[3] <= y1 + 0.5, (b, rect)
     ratio = max((b[2] - b[0]) / (x1 - x0), (b[3] - b[1]) / (y1 - y0))
+    if persp:
+        # step 258: Maya's perspective viewFit leaves more room than the fit factor (box centre aimed at, its half
+        # extents across the view fill the factor at the near side's depth; tests/test_step258_view.py)
+        assert 0.5 < ratio < factor, ratio
+        return
     assert abs(ratio - factor) < 0.01, ratio
     cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
     assert abs(cx - (x0 + x1) / 2) < 1.0 and abs(cy - (y0 + y1) / 2) < 1.0, (cx, cy)
@@ -66,7 +71,7 @@ def test_perspective_fit_whole_region():
     win, rot, pts = _persp_win(), _rot(), _cube()
     rect = (0, 0, SIZE[0], SIZE[1])
     loc, dist = framing.fit(pts, rot, win, 1.0, False, SIZE, rect)
-    _check_fit(_proj_bounds(loc, dist, win, rot, pts), rect)
+    _check_fit(_proj_bounds(loc, dist, win, rot, pts), rect, persp=True)
     # Blender's own view_selected put this cube at ~1.07 (dogfood): it must be farther now.
     assert dist > 1.5, dist
 
@@ -76,7 +81,7 @@ def test_perspective_fit_excludes_sidebar():
     rect = framing.visible_rect((0, 0, SIZE[0], SIZE[1]), [(SIZE[0] - 350, 0, 350, SIZE[1])])
     assert rect == (0, 0, SIZE[0] - 350, SIZE[1]), rect
     loc, dist = framing.fit(pts, rot, win, 5.0, False, SIZE, rect)
-    _check_fit(_proj_bounds(loc, dist, win, rot, pts), rect)
+    _check_fit(_proj_bounds(loc, dist, win, rot, pts), rect, persp=True)
 
 
 def test_ortho_fit():
@@ -96,7 +101,7 @@ def test_single_point_gets_a_box():
     win, rot, pts = _persp_win(), _rot(), [Vector((3, 0, 0))]
     loc, dist = framing.fit(pts, rot, win, 1.0, False, SIZE, (0, 0, *SIZE))
     assert math.isfinite(dist)
-    _check_fit(_proj_bounds(loc, dist, win, rot, pts), (0, 0, *SIZE))
+    _check_fit(_proj_bounds(loc, dist, win, rot, pts), (0, 0, *SIZE), persp=True)
 
 
 def test_visible_rect_cases():

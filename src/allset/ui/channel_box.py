@@ -91,6 +91,27 @@ def is_bone(node):
     return isinstance(node, bpy.types.PoseBone)
 
 
+def is_root_joint(node):
+    """A joint without a parent joint: a Maya root joint (its parent is the world)."""
+    return is_bone(node) and node.parent is None
+
+
+def root_translate(pb):
+    """Translate X / Y / Z of a root joint = its position (Maya 2026: a root joint at (3, 2, 1) shows Translate
+    3 / 2 / 1, research/maya/re/060_messages_ui.md B7): rest head + pose offset, armature space, in the kit's Z-up axes
+    like every object Translate (decision 2, step 239; operators/joint_edit.joint_translate shows the same in Edit
+    mode). Blender keeps a pose bone's offset in the bone's rest axes."""
+    b = pb.bone
+    return b.head_local + b.matrix_local.to_3x3().normalized() @ pb.location
+
+
+def set_root_translate(pb, t):
+    """Move root joint ``pb`` so ``root_translate`` reads ``t`` (Blender length)."""
+    from mathutils import Vector
+    b = pb.bone
+    pb.location = b.matrix_local.to_3x3().normalized().transposed() @ (Vector(t) - b.head_local)
+
+
 def bone_selected(pb):
     sel = getattr(pb, "select", None)   # 4.5: Bone.select; newer versions may keep it on the pose bone
     return pb.bone.select if sel is None else sel
@@ -306,6 +327,8 @@ def get_value(ob, key):
     if _non_euler_rot(ob, kind):
         from .. import rotation_display
         return rotation_display.shown_euler(ob)[idx]
+    if kind == "LOC" and is_root_joint(ob):
+        return root_translate(ob)[idx]
     return getattr(ob, path)[idx]
 
 
@@ -341,6 +364,10 @@ def set_value(ob, key, value):
     elif _non_euler_rot(ob, kind):
         from .. import rotation_display
         rotation_display.set_component(ob, idx, value)
+    elif kind == "LOC" and is_root_joint(ob):
+        t = root_translate(ob)
+        t[idx] = value
+        set_root_translate(ob, t)
     else:
         getattr(ob, path)[idx] = value
 
@@ -353,6 +380,9 @@ def keyframe(ob, key, keytype='KEYFRAME'):
         # a quaternion is one rotation: Rotate X / Y / Z key all its components (decision 4, step 221)
         from .. import rotation_display
         path, idx = rotation_display.curve_path(ob), -1
+    elif kind == "LOC" and is_root_joint(ob):
+        # a root joint's Translate X / Y / Z mixes the bone's location components (rest axes): key all three (step 258)
+        idx = -1
     if kind == "SHAPE":
         owner = shape_owner(ob, key)
         if owner is None:
@@ -1741,7 +1771,8 @@ EMPTY_TEXT = ("Select objects in the scene to view,", "edit and set keyframes on
 # step 241 (#156): an unskinned skeleton's joints are edited in Edit mode (W / E / R reposition them); their keyable
 # channels are in Pose mode
 PLACING_TEXT = ("Editing joints: W / E / R move them,", "F8 = pose mode (channels and keys)")
-POSE_HINT = "Joint channels: Ctrl+Tab (pose mode)"
+# step 258 (#155 H3-4): short enough for the dock at its default width (the longer text was cut at UI scale 1.25)
+POSE_HINT = "Ctrl+Tab: joint channels"
 
 
 def draw_joint_translate(layout, context):

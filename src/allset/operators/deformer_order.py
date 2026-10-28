@@ -114,6 +114,10 @@ def key_target_weights(context, objects):
     return n
 
 
+# object types with a Maya shape node (mesh, NURBS curve / surface, lattice)
+SHAPE_TYPES = {'MESH', 'CURVE', 'SURFACE', 'LATTICE'}
+
+
 @undo_steps.no_redo_panel
 class ALLSET_OT_key_blend_shape_weights(bpy.types.Operator):
     """Set keys on the blend shape target weights of the selected objects (Maya Key > Set Blend Shape Target Weight
@@ -124,8 +128,10 @@ class ALLSET_OT_key_blend_shape_weights(bpy.types.Operator):
 
     def execute(self, context):
         objects = list(context.selected_objects)
-        if not objects:
-            self.report({'ERROR'}, "No shape was selected.")       # Maya 2026's message (measured)
+        if not any(ob.type in SHAPE_TYPES for ob in objects):
+            # Maya 2026's message for nothing / a plain skeleton (measured, step 258: research/maya/re/
+            # 060_messages_ui.md B4)
+            self.report({'ERROR'}, "No shape was selected.")
             return {'CANCELLED'}
         n = key_target_weights(context, objects)
         if not n:

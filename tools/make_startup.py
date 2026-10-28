@@ -495,6 +495,10 @@ def maya_views():
                 # Maya has no 3D cursor (01_layout_empty.png): hidden; the component pivot edit (D / Insert,
                 # operators/hold.ComponentPivotEdit) shows it while the cursor is the pivot (step 134, #59).
                 space.overlay.show_cursor = False
+                # Maya has no redo panel: no Blender "Move" Adjust Last Operation after a manipulator / tool drag
+                # (step 258, #155 QA 240 H1-9). Kit option boxes of the "redo" kind open F9's popup
+                # (marking/modal._call screen.redo_last), which doesn't need the HUD region.
+                space.show_region_hud = False
                 # Maya's factory viewport is flat #5c5c5c (research/maya/re/background_120.md:33). Without the kit
                 # theme (step 130) that is view data: the view's own background colour, scene linear (#45).
                 space.shading.background_type = 'VIEWPORT'

@@ -455,6 +455,12 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
         return ob is not None and ob.type == 'MESH'
 
     def execute(self, context):
+        ob = context.active_object
+        if context.mode != 'SCULPT' and not ob.visible_get():
+            # Maya switches the tool without a check (setMeshSculptTool.mel, 060_messages_ui.md B4); Blender can't
+            # sculpt a hidden object, so the kit says so and stays in object mode (delegated, step 258)
+            self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to sculpt it.")
+            return {'CANCELLED'}
         if context.mode != 'SCULPT':
             bpy.ops.object.mode_set(mode='SCULPT')
         try:
@@ -470,6 +476,45 @@ class ALLSET_OT_sculpt_tool(bpy.types.Operator):
             # The essentials library loads in the background on the first use in a session (step 109, GUI:
             # the operator cancels with "Asset loading is unfinished"): try again for a few seconds.
             _retry_brush(self.brush)
+        return {'FINISHED'}
+
+
+
+class ALLSET_OT_paint_hair_follicles(bpy.types.Operator):
+    """Paint hair on the selected mesh (Maya nHair > Paint Hair Follicles; Blender: a hair Curves object on that
+    surface, groomed in Sculpt mode)"""
+    bl_idname = "allset.paint_hair_follicles"
+    bl_label = "Paint Hair Follicles"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        # Maya switches to the Paint Hair Follicles tool for any selection, a mesh included (paintHairTool.mel,
+        # research/maya/re/060_messages_ui.md B4). Blender grows hair as a Curves object attached to a surface mesh:
+        # the mesh's hair (its first Curves object) or a new empty one, then Sculpt mode (delegated, step 258).
+        ob = context.active_object
+        if ob is not None and ob.mode != 'OBJECT' and ob.type != 'CURVES':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        if ob is not None and ob.type == 'MESH':
+            hair = next((o for o in context.scene.objects
+                         if o.type == 'CURVES' and getattr(o.data, "surface", None) is ob), None)
+            if hair is None:
+                bpy.ops.object.curves_empty_hair_add(align='WORLD', location=ob.matrix_world.translation)
+                hair = context.view_layer.objects.active
+            else:
+                for o in context.selected_objects:
+                    o.select_set(False)
+                hair.select_set(True)
+                context.view_layer.objects.active = hair
+            ob = hair
+        if ob is None or ob.type != 'CURVES':
+            self.report({'WARNING'}, "Paint Hair Follicles: select a mesh to paint hair on.")
+            return {'CANCELLED'}
+        if not ob.visible_get():
+            self.report({'WARNING'}, f"{ob.name} is hidden: show it (Display > Show) to paint hair.")
+            return {'CANCELLED'}
+        if ob.mode != 'SCULPT_CURVES':
+            bpy.ops.object.mode_set(mode='SCULPT_CURVES')
+        results.result(self, f"Paint Hair Follicles on {ob.name}")
         return {'FINISHED'}
 
 
@@ -715,4 +760,4 @@ class ALLSET_OT_menu_note(bpy.types.Operator):
 classes = (ALLSET_OT_prefix_hierarchy, ALLSET_OT_search_replace_names, ALLSET_OT_soften_harden,
            ALLSET_OT_detach, ALLSET_OT_edge_flow, ALLSET_OT_wedge, ALLSET_OT_nonlinear,
            ALLSET_OT_object_display, ALLSET_OT_sculpt_tool, ALLSET_OT_checker_shader, ALLSET_OT_checker_toggle, ALLSET_OT_import_audio,
-           ALLSET_OT_delete_sounds, ALLSET_OT_stereo_camera, ALLSET_OT_menu_note)
+           ALLSET_OT_delete_sounds, ALLSET_OT_stereo_camera, ALLSET_OT_menu_note, ALLSET_OT_paint_hair_follicles)

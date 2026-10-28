@@ -135,7 +135,8 @@ class ALLSET_OT_repeat_last(bpy.types.Operator):
         try:
             res = repeat(context)
         except RuntimeError as ex:
-            self.report({'WARNING'}, str(ex).strip().splitlines()[-1])
+            from . import maya_errors
+            maya_errors.report_nested(self, ex)       # a Maya Error stays an Error (step 258)
             return {'CANCELLED'}
         if res is None:
             results.result(self, "Nothing to repeat")

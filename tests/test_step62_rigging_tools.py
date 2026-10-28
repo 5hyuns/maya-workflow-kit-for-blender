@@ -197,14 +197,19 @@ def test_constrain_in_pose_mode_goes_on_the_joint():
     assert helper.constraints[0].target == ctrl
     assert bpy.ops.allset.constrain(type='CHILD_OF') == {'FINISHED'}
     assert multi.group_type(arm.pose.bones["joint2"].constraints[-1]) == "parentConstraint"
-    # no target selected -> nothing, with the Maya selection hint
+    # no target selected -> nothing, with Maya's Error (step 258: research/maya/re/060_messages_ui.md B4)
     bpy.ops.object.mode_set(mode='OBJECT')
     _select(arm)
     bpy.ops.object.mode_set(mode='POSE')
     for pb in arm.pose.bones:
         cb.set_bone_selected(pb, pb.name == "joint1")
     arm.data.bones.active = arm.data.bones["joint1"]
-    assert bpy.ops.allset.constrain(type='COPY_LOCATION') == {'CANCELLED'}
+    try:
+        bpy.ops.allset.constrain(type='COPY_LOCATION')
+        raise AssertionError("no Maya error")
+    except RuntimeError as ex:
+        assert "Target list was empty or contained no valid targets." in str(ex), ex
+    assert not arm.pose.bones["joint1"].constraints
     bpy.ops.object.mode_set(mode='OBJECT')
     # object mode: on the active object, target = the other selected
     cube = bpy.data.objects.new("pCube1", None)

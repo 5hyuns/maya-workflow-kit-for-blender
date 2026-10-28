@@ -798,7 +798,8 @@ def _hook(context, ob, base, centre_world, vertex_indices=None):
     context.view_layer.update()
     md = ob.modifiers.new(name, 'HOOK')
     md.object = handle
-    md.center = ob.matrix_world.inverted() @ centre_world
+    # inverted_safe: an object scaled to 0 on an axis still gets its cluster1 in Maya (060_messages_ui.md B4)
+    md.center = ob.matrix_world.inverted_safe() @ centre_world
     md.matrix_inverse = handle.matrix_world.inverted() @ ob.matrix_world
     if ob.type == 'MESH':
         vg = ob.vertex_groups.new(name=name)
