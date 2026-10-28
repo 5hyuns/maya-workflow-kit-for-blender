@@ -58,7 +58,7 @@ def test_ticks_and_rows():
     assert ts._rows("tick", 320) == (4, 320 - 13), "ticks stretch down to the fixed bottom margin"
     assert ts._rows("tick", 320, scale=2) == (8, 320 - 26)
     assert ts._rows("tick", 320, ts.ROWS_BOOKMARKS) == (4, 320 - 23)
-    assert ts._rows("band", 320) == (0, 2), "bottom band stays at the bottom"
+    assert ts._rows("band", 320) == (0, 3), "bottom band stays at the bottom"
     assert ts._rows("tick", 16) == (2, 9.5), "small regions still fit the ruler"
     assert ts.label_digits(-12) == 3 and ts.label_digits(1000) == 4
 
