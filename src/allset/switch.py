@@ -261,21 +261,22 @@ def _users_workspace(window):
     return next((w for w in bpy.data.workspaces if not is_maya_workspace(w)), None)
 
 
-def _append_workspaces(window, path, names):
-    """Append the workspaces ``names`` of ``path`` (marked BLENDER_LAYOUT_KEY); returns {name in path: workspace}."""
+def _append_workspaces(path, names):
+    """Append the workspaces ``names`` of ``path`` as data (marked BLENDER_LAYOUT_KEY); returns {name in path:
+    workspace}. Not ``workspace.append_activate``: in the UI each of those switches the window to the workspace it
+    appended once the event loop runs, after the switch has chosen the one to show (checked, #185)."""
+    before = set(bpy.data.workspaces)
+    try:
+        with bpy.data.libraries.load(path, link=False) as (_src, dst):
+            dst.workspaces = list(names)
+    except (OSError, RuntimeError) as ex:
+        print("Maya Workflow Kit: workspaces not appended:", ex)
+        return {}
     out = {}
-    for name in names:
-        before = set(bpy.data.workspaces)
-        try:
-            with bpy.context.temp_override(**_window_override(window)):
-                bpy.ops.workspace.append_activate(idname=name, filepath=path)
-        except RuntimeError as ex:
-            print("Maya Workflow Kit: workspace not appended:", name, ex)
-            continue
-        new = [w for w in bpy.data.workspaces if w not in before]
-        if new:
-            new[0][BLENDER_LAYOUT_KEY] = True
-            out[name] = new[0]
+    for name, ws in zip(names, dst.workspaces):
+        if ws is not None and ws not in before:
+            ws[BLENDER_LAYOUT_KEY] = True
+            out[name] = ws
     return out
 
 
@@ -291,7 +292,7 @@ def _users_startup_workspaces(window):
     except (OSError, RuntimeError) as ex:
         print("Maya Workflow Kit: startup file not read:", ex)
         return None
-    got = _append_workspaces(window, path, names)
+    got = _append_workspaces(path, names)
     for name in (START_WORKSPACE["name"], "Layout"):
         if name in got:
             return got[name]
