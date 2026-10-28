@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Maya ikRPsolver on a kit IK handle (step 245, Issue #162).
 
-Maya 2026 (research/maya/re/joint_rig_2026_ik.md §2–3, §7; measured with mayapy, private notes research/maya/re/joint_rig_2026_principles.md §1.2–1.5):
+Maya 2026 (research/maya/re/joint_rig_2026_ik.md §2–3, §7; measured with mayapy,
+private notes research/maya/re/joint_rig_2026_principles.md §1.2–1.5):
 - a new RP handle gets a **default pole vector**: with the chain at its preferred angles, the joint whose offset from
   the start joint has the largest |p × d| (d = start -> end; ties keep the first), pv = d × (p × d) normalised (= that
   joint's offset perpendicular to the chain), length 2 × jointDisplayScale, stored in the handle's parent space

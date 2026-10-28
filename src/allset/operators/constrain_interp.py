@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """step 252 (#168): Maya orient / parent constraint Interp Type for the kit's multi-target groups (constrain_multi).
 
-Maya (research/maya/re/060_rig.md §8, 060_rig_lane.md "Step 252 measurements", mayapy 2026 tmp/p252/*.json): every target gives a quaternion
+Maya (research/maya/re/060_rig.md §8, 060_rig_lane.md "Step 252 measurements", mayapy 2026
+tmp/p252/*.json): every target gives a quaternion
 q_i = canon(rotation(targetParent · constraintParent⁻¹)) ⊗ q_Euler(rotate) [⊗ q_Euler(targetOffsetRotate), parent
 constraint with offset, applied first]; the matrix part has w >= 0, the Euler parts keep their sign. Then
 - Average (1, Maya's default): normalize(Σ w_i q_i), no hemisphere alignment;

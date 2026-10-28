@@ -2725,7 +2725,7 @@ JOINT_TOOL = {'jointCtx': {'autoJointOrient': 'xyz',
                             'parent': 'joint3'}},
  'jointDisplayScale': [1.0, 0.5]}
 
-# measured cross-check measured_ik_verify.json (private notes)
+# measured cross-check ik_verify (mayapy, private notes)
 MEASURED_IK_VERIFY = {'pv_length_vs_display_scale': [{'jointDisplayScale': 1.0, 'ikDisplayScale': 1.0, 'pv_len': 2.0},
                                 {'jointDisplayScale': 2.0, 'ikDisplayScale': 1.0, 'pv_len': 4.0},
                                 {'jointDisplayScale': 0.5, 'ikDisplayScale': 1.0, 'pv_len': 1.0}],
@@ -2836,7 +2836,7 @@ MEASURED_IK_VERIFY = {'pv_length_vs_display_scale': [{'jointDisplayScale': 1.0, 
                             {'err_n_vs_R(u,tw)(pv x u)': 0.0, 'sign': 1.0},
                             {'err_n_vs_R(u,tw)(pv x u)': 0.0, 'sign': 1.0}]}
 
-# measured cross-check measured_sc_verify.json (private notes)
+# measured cross-check sc_verify (mayapy, private notes)
 MEASURED_SC_VERIFY = {'sc_twist_invariant': [{'rot': [0, 0, 0],
                          'R^-1*H': -12.3353,
                          'H*R^-1': -12.3353,
@@ -2908,7 +2908,7 @@ MEASURED_SC_VERIFY = {'sc_twist_invariant': [{'rot': [0, 0, 0],
                          'R^-1*H_localaxis': 55.3642,
                          'H*R^-1_localaxis': 4.6121}]}
 
-# measured cross-check measured_sc_verify2.json (private notes)
+# measured cross-check sc_verify2 (mayapy, private notes)
 MEASURED_SC_VERIFY2 = {'sc_model_F': [{'rot': [0, 0, 0],
                  'err_S': 0.255656,
                  'err_S_T(H*Hc^-1)': 0.146495,
@@ -2970,7 +2970,7 @@ MEASURED_SC_VERIFY2 = {'sc_model_F': [{'rot': [0, 0, 0],
                  'err_S_T(Hc^-1*H)': 0.214403,
                  'elbow_err_S': 2.729996}]}
 
-# measured cross-check measured_dq_scale.json (private notes)
+# measured cross-check dq_scale (mayapy, private notes)
 MEASURED_DQ_SCALE = {'dq_scale': {'nonrigid0_dqsScaleNone': {'attr_dqsScale': [1.0, 1.0, 1.0],
                                          'err_rigid_DQ_only': 3.3448875,
                                          'err_DQ_with_blended_prescale': 6e-07,
@@ -3020,7 +3020,7 @@ MEASURED_DQ_SCALE = {'dq_scale': {'nonrigid0_dqsScaleNone': {'attr_dqsScale': [1
                                               'err_N1_DQ_plus_linear_residual': 0.4650794,
                                               'err_DQ_then_blended_postscale': 0.9395042}}}
 
-# measured cross-check oj_verify.json (private notes)
+# measured cross-check oj_verify (mayapy, private notes)
 OJ_VERIFY = {'traditional_no_sao': {'xyz': {'worst_inner': 0.0, 'worst_root_origin_model': 0.0},
                         'yzx': {'worst_inner': 0.0, 'worst_root_origin_model': 0.0},
                         'zxy': {'worst_inner': 0.0, 'worst_root_origin_model': 0.0},

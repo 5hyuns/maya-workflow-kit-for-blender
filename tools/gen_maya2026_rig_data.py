@@ -1,7 +1,7 @@
 """Write tests/maya2026_rig_data.py: the Maya 2026 joint / rig measurements (step 242, Issue #159).
 
 Sources (not tracked, see CLAUDE.md): research/maya/re/joint_rig_2026_<topic>.json for the six topics below and the
-Measured cross-checks: *.json in $ALLSET_RIG_MEASURED_DIR / $ALLSET_RIG_MEASURED_DIR2 (private notes).
+mayapy cross-check files (``*_<check>.json``) in the private folders $ALLSET_RIG_MEASURED_DIR / $ALLSET_RIG_MEASURED2_DIR.
 Only numbers and attribute names are copied: MEL lines and script tracebacks that the capture scripts stored next to
 the numbers are dropped (``DROP``), so the fixture holds no Maya script text.
 
@@ -13,14 +13,16 @@ import pprint
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RE = os.path.join(ROOT, "research", "maya", "re")
-measured = os.environ.get("ALLSET_RIG_MEASURED_DIR", "")
+MEASURED = os.environ.get("ALLSET_RIG_MEASURED_DIR", "")
 OUT = os.path.join(ROOT, "tests", "maya2026_rig_data.py")
 
 TOPICS = ("joint_math", "skeleton_menu", "ik", "skinning", "constraints_sdk", "select_pick")
-MEASURED_FILES = ("measured_ik_verify", "measured_sc_verify", "measured_sc_verify2", "measured_dq_scale")
+# table name -> check name: the private file is <check>.json or *_<check>.json
+MEASURED_FILES = {"MEASURED_IK_VERIFY": "ik_verify", "MEASURED_SC_VERIFY": "sc_verify",
+                  "MEASURED_SC_VERIFY2": "sc_verify2", "MEASURED_DQ_SCALE": "dq_scale"}
 # second measurement pass: orientJoint rule checks (step 244)
 MEASURED2 = os.environ.get("ALLSET_RIG_MEASURED2_DIR", "")
-MEASURED2_FILES = ("oj_verify",)
+MEASURED2_FILES = {"OJ_VERIFY": "oj_verify"}
 # joint_rig_2026_joint_tool.json: only the measured GUI numbers (the file also holds Tool Settings MEL lines)
 JOINT_TOOL_KEYS = ("jointCtx", "front_clicks", "front_chain", "jointDisplayScale")
 # key paths whose values are Maya script text or a capture-script traceback, not measurements
@@ -46,6 +48,13 @@ def _clean(value, path=()):
     return value
 
 
+def _find(folder, check):
+    names = sorted(n for n in os.listdir(folder) if n == f"{check}.json" or n.endswith(f"_{check}.json"))
+    if len(names) != 1:
+        raise SystemExit(f"{folder}: expected one {check}.json, found {names}")
+    return os.path.join(folder, names[0])
+
+
 def _load(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
@@ -67,11 +76,12 @@ def main():
     data = _clean({k: gui[k] for k in JOINT_TOOL_KEYS})
     parts.append("\n# research/maya/re/joint_rig_2026_joint_tool.json gui (measured GUI Joint Tool, step 244)\n"
                  "JOINT_TOOL = " + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
-    for folder, name in [(measured, n) for n in MEASURED_FILES] + [(MEASURED2, n) for n in MEASURED2_FILES]:
-        data = _clean(_load(os.path.join(folder, f"{name}.json")))
-        parts.append(f"\n# measured cross-check {name}.json (research/maya/re/joint_rig_2026_principles.md)\n"
-                     f"{name.upper()} = " + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
-    names = [t.upper() for t in TOPICS] + ["JOINT_TOOL"] + [n.upper() for n in MEASURED_FILES + MEASURED2_FILES]
+    checks = [(MEASURED, t, c) for t, c in MEASURED_FILES.items()] + [(MEASURED2, t, c) for t, c in MEASURED2_FILES.items()]
+    for folder, table, check in checks:
+        data = _clean(_load(_find(folder, check)))
+        parts.append(f"\n# measured cross-check {check} (mayapy, private notes)\n"
+                     f"{table} = " + pprint.pformat(data, width=118, sort_dicts=False) + "\n")
+    names = [t.upper() for t in TOPICS] + ["JOINT_TOOL"] + [t for _f, t, _c in checks]
     parts.append("\nALL = {" + ", ".join(f'"{n}": {n}' for n in names) + "}\n")
     text = "".join(parts)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
