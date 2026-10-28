@@ -62,6 +62,7 @@ PARAGRAPHS = (
     "Tip: Maya's undo is unlimited, Blender keeps 32 steps by default. Raise Edit > Preferences > System > Undo "
     "Steps to 256 if you like Maya's long undo.",
 )
+WELCOME_SHOWS = 2       # starts the welcome dialog opens on until it is confirmed (step 260)
 DIALOG_WIDTH = 640      # unscaled px
 ICON_SCALE = 7.0        # template_icon scale = 20 px units
 ICON_FACTOR = (ICON_SCALE * 20 + 16) / DIALOG_WIDTH     # icon column share of the split
@@ -104,7 +105,13 @@ class ALLSET_OT_welcome(bpy.types.Operator):
     open_layout: bpy.props.BoolProperty(name="Open Maya Layout", default=True, options={'SKIP_SAVE'})
 
     def invoke(self, context, event):
-        preferences.get(context).welcome_done = True    # asked once, never again
+        # Step 260 (#177): a dialog closed without the confirm button (Cancel, Esc and moving away all reach Blender's
+        # popup cancel alike) opens once more at the next start; after WELCOME_SHOWS it stays closed (delegated: a
+        # dismissed dialog left users in Blender mode without knowing, "Alt navigation doesn't work").
+        prefs = preferences.get(context)
+        prefs.welcome_shown += 1
+        if prefs.welcome_shown >= WELCOME_SHOWS:
+            prefs.welcome_done = True
         return context.window_manager.invoke_props_dialog(
             self, width=DIALOG_WIDTH, title="Welcome to Maya Workflow Kit", confirm_text="Make Blender feel like Maya")
 
@@ -120,7 +127,11 @@ class ALLSET_OT_welcome(bpy.types.Operator):
         scale = context.preferences.system.ui_scale or 1.0      # 0 in background
         size = context.preferences.ui_styles[0].widget.points * scale
         width = text_room(bool(icon)) * scale
-        for k, para in enumerate(PARAGRAPHS):
+        paras = PARAGRAPHS
+        emulate = preferences.emulate_hint(context)
+        if emulate:
+            paras = paras + (emulate,)
+        for k, para in enumerate(paras):
             if k:
                 col.separator()
             for line in wrap(para, width, size):

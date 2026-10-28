@@ -62,6 +62,8 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         default=False)
     # First start: welcome dialog shown once.
     welcome_done: bpy.props.BoolProperty(options={'HIDDEN'})
+    # step 260 (#177): how often the welcome dialog opened without "Make Blender feel like Maya" being clicked
+    welcome_shown: bpy.props.IntProperty(options={'HIDDEN'})
 
     start_in_maya_layout: bpy.props.BoolProperty(
         name="Start in Maya Layout",
@@ -369,9 +371,12 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
         box.label(text="Ctrl+Alt+Shift+M or the Maya / Blender switch at the right of the top bar switches at any time. "
                        "Blender's own preferences are never changed.", icon='INFO')
         hint = undo_hint(context)
-        if hint:
+        emulate = emulate_hint(context)
+        if hint or emulate:
             box.label(text="Recommended setup", icon='LOOP_BACK')
-            _wrapped(box, hint)
+        for text in (hint, emulate):
+            if text:
+                _wrapped(box, text)
         if not self.maya_mode:
             return
         box = layout.box()
@@ -433,6 +438,19 @@ class ALLSET_AddonPreferences(bpy.types.AddonPreferences):
 UNDO_RECOMMENDED = 256      # Blender's maximum
 UNDO_HINT = ("Maya's undo is unlimited; Blender keeps {steps} steps. For long Maya-style sessions raise Edit > "
              "Preferences > System > Memory & Limits > Undo Steps to 256 (Blender's maximum).")
+
+
+EMULATE_HINT = ("Emulate 3 Button Mouse is on (Preferences > Input): Blender turns Alt+left drag into a middle drag "
+                "before any key map sees it, so Maya's Alt+LMB tumble can't work. Turn it off for Maya navigation "
+                "(Alt+MMB track and Alt+RMB dolly work either way).")
+
+
+def emulate_hint(context=None):
+    """Step 260 (#177): the Emulate 3 Button Mouse hint while that Blender preference is on, else None (read only:
+    the kit never writes Blender's preferences, step 130). Blender converts Alt+LMB into a plain MMB without Alt
+    (wm_event_system.cc wm_eventemulation, )."""
+    inputs = (context or bpy.context).preferences.inputs
+    return EMULATE_HINT if getattr(inputs, "use_mouse_emulate_3_button", False) else None
 
 
 def undo_hint(context=None):
