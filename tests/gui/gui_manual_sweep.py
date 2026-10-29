@@ -2078,16 +2078,25 @@ def _m77_1_insert_check():
     # the Help Line text is the operator's report ("Pivot edit on", operators/hold.py ALLSET_OT_pivot_toggle):
     # Python can't read reports (RNA looks Operator.report up before the class), so the state stands for it
     check("[M77-1] pivot edit on (its report says 'Pivot edit on')", mod("operators.hold").COMPONENT.on)
-    # the +X side face (camera on +x / -y / +z)
-    C["face_p"] = screen(Vector((0.5 * k(), -0.15 * k(), 0.1 * k())))
+    # the +X side face (camera on +x / -y / +z), clicked at its middle: since #207 a pivot click picks the component
+    # (vertices and edges win near their own screen position, a face gives its centre)
+    # a close view (as in gui_pivot_tap_components): on a small cube the vertex hits cover the face
+    rv3d = view3d()[0].spaces.active.region_3d
+    C["m77_view"] = (rv3d.view_location.copy(), rv3d.view_distance)
+    rv3d.view_location, rv3d.view_distance = (0, 0, 0), 6 * k()
+    C["face_p"] = screen(Vector((0.5 * k(), 0.0, 0.0)))
     click_at(C["face_p"])
 
 
 @named("m77_1_clicked")
 def _m77_1_clicked():
     loc, z = cursor().location.copy(), cursor().matrix.to_3x3().col[2]
-    check(f"[M77-1] a click on a face puts the cursor there ({cm(loc)} cm), its axis on the face (Z {tuple(round(v, 2) for v in z)})",
-          abs(loc.x - 0.5 * k()) < 0.02 * k() and abs(z.x) > 0.99)
+    # a component of that face: its centre, or an edge / vertex of it when one is near the click on screen
+    on_face = abs(loc.x - 0.5 * k()) < 0.02 * k() and abs(loc.y) <= 0.5 * k() + 1e-6 and abs(loc.z) <= 0.5 * k() + 1e-6
+    check(f"[M77-1] a click on a face puts the cursor on a component of it ({cm(loc)} cm), its axis turned to it "
+          f"(Z {tuple(round(v, 2) for v in z)})", on_face and z.x > 0.5)
+    rv3d = view3d()[0].spaces.active.region_3d
+    rv3d.view_location, rv3d.view_distance = C.pop("m77_view")
     C["loc"] = loc
 
 

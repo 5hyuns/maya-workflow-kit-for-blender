@@ -14,8 +14,8 @@ class ALLSET_OT_pivot_translate(bpy.types.Operator):
     bl_label = "Move Custom Pivot"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING'}
 
-    constraint_axis: bpy.props.BoolVectorProperty(size=3, default=(False, False, False), options={'HIDDEN'})
-    value: bpy.props.FloatVectorProperty(name="Offset", size=3, subtype='TRANSLATION', options={'HIDDEN'})
+    constraint_axis: bpy.props.BoolVectorProperty(size=3, default=(False, False, False), options={'HIDDEN', 'SKIP_SAVE'})
+    value: bpy.props.FloatVectorProperty(name="Offset", size=3, subtype='TRANSLATION', options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):

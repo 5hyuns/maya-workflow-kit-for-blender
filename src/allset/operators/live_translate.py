@@ -35,12 +35,12 @@ class ALLSET_OT_live_translate(bpy.types.Operator):
     bl_label = 'Move on Live Surface'
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING'}
 
-    value: bpy.props.FloatVectorProperty(size=3, subtype='TRANSLATION', options={'HIDDEN'})
-    constraint_axis: bpy.props.BoolVectorProperty(size=3, options={'HIDDEN'})
-    orient_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN'})
-    orient_matrix_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN'})
-    orient_matrix: bpy.props.FloatVectorProperty(size=(3, 3), subtype='MATRIX', default=((1, 0, 0), (0, 1, 0), (0, 0, 1)), options={'HIDDEN'})
-    release_confirm: bpy.props.BoolProperty(default=True, options={'HIDDEN'})
+    value: bpy.props.FloatVectorProperty(size=3, subtype='TRANSLATION', options={'HIDDEN', 'SKIP_SAVE'})
+    constraint_axis: bpy.props.BoolVectorProperty(size=3, options={'HIDDEN', 'SKIP_SAVE'})
+    orient_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN', 'SKIP_SAVE'})
+    orient_matrix_type: bpy.props.StringProperty(default='GLOBAL', options={'HIDDEN', 'SKIP_SAVE'})
+    orient_matrix: bpy.props.FloatVectorProperty(size=(3, 3), subtype='MATRIX', default=((1, 0, 0), (0, 1, 0), (0, 0, 1)), options={'HIDDEN', 'SKIP_SAVE'})
+    release_confirm: bpy.props.BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
     release_event: bpy.props.EnumProperty(items=(('LEFTMOUSE', 'Left', ''), ('MIDDLEMOUSE', 'Middle', '')),
                                         default='LEFTMOUSE', options={'HIDDEN', 'SKIP_SAVE'})
 

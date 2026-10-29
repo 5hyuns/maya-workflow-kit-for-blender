@@ -20,8 +20,8 @@ class ALLSET_OT_pivot_rotate(bpy.types.Operator):
     bl_label = "Rotate Custom Pivot"
     bl_options = {'REGISTER', 'UNDO', 'BLOCKING'}
 
-    axis: bpy.props.EnumProperty(items=tuple((a, a, "") for a in 'XYZ'), options={'HIDDEN'})
-    angle: bpy.props.FloatProperty(name="Angle", subtype='ANGLE', options={'HIDDEN'})
+    axis: bpy.props.EnumProperty(items=tuple((a, a, "") for a in 'XYZ'), options={'HIDDEN', 'SKIP_SAVE'})
+    angle: bpy.props.FloatProperty(name="Angle", subtype='ANGLE', options={'HIDDEN', 'SKIP_SAVE'})
 
     @classmethod
     def poll(cls, context):

@@ -184,7 +184,11 @@ def selected(context, outliner=False):
         if region:
             with context.temp_override(area=area, region=region):
                 result.extend(o for o in getattr(bpy.context, 'selected_ids', ()) if isinstance(o, bpy.types.Object))
-    return list(dict.fromkeys(o for o in result if context.scene.objects.get(o.name) == o))
+    # an Outliner row stays highlighted after the viewport selection is cleared: only rows the viewport can't select
+    # (live objects are selection-restricted) count from there, so an empty selection still turns Make Live off
+    picked = set(context.selected_objects)
+    return list(dict.fromkeys(o for o in result if context.scene.objects.get(o.name) == o
+                              and (o in picked or o.hide_select)))
 
 
 class ALLSET_OT_live_history(bpy.types.Operator):

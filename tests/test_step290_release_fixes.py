@@ -56,3 +56,14 @@ def test_fire_with_only_a_container_selected_warns():
     bpy.context.active_object.modifiers[-1].fluid_type = 'DOMAIN'
     res, err = _menu("Effects/Fire")
     assert "Traceback" not in err and "fluid_type" not in err, err
+
+
+def test_pivot_and_live_drags_start_fresh():
+    """A handle that doesn't set the constraint (the pivot / live centre square) must not take the axis of the
+    drag before (D+V after a D+X axis drag moved along X only)."""
+    for idname in ("pivot_translate", "live_translate", "component_scale", "pivot_rotate"):
+        rna = getattr(bpy.ops.allset, idname).get_rna_type()
+        props = [p for p in rna.properties if p.identifier != "rna_type" and p.is_hidden]
+        assert props, idname
+        stale = [p.identifier for p in props if not p.is_skip_save]
+        assert not stale, (idname, stale)
