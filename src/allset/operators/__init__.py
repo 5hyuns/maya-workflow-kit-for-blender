@@ -171,6 +171,8 @@ from . import graph_move  # noqa: E402  step 281 (#192): Graph Editor Shift axis
 classes += graph_move.classes
 from . import graph_frame  # noqa: E402  step 281: Graph Editor F / A frame Maya's rectangle
 classes += graph_frame.classes
+from . import poly_display  # noqa: E402  step 291: Display > Polygons Normals Size / Reset Display
+classes += poly_display.classes
 
 _register_classes, _unregister_classes = bpy.utils.register_classes_factory(classes)
 

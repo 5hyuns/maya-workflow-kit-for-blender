@@ -181,14 +181,18 @@ def draw_spec(layout, label, s, path, icon='NONE', icon_value=0):
 
 def prop_owner(context, target):
     """(owner, attribute) of a ``("prop", target)`` mapping: a path from the context ("space_data.show_handles"),
-    "addon_prefs.<name>" = this add-on's preferences. Blender's own preferences are never a target (store review,
-    #40 / #43): such a path has no owner."""
+    "addon_prefs.<name>" = this add-on's preferences, "view3d.<path>" = the 3D View the Display menu acts on
+    (``status_line.view3d_space``, step 291: the main menu bar is in the top bar, whose space has no overlays).
+    Blender's own preferences are never a target (store review, #40 / #43): such a path has no owner."""
     *parents, attr = target.split(".")
     if parents and parents[0] == "preferences":
         return None, attr
     if parents and parents[0] == "addon_prefs":
         from .. import preferences
         owner, parents = preferences.get(context), parents[1:]
+    elif parents and parents[0] == "view3d":
+        from .status_line import view3d_space
+        owner, parents = view3d_space(context), parents[1:]
     else:
         owner = context
     for name in parents:

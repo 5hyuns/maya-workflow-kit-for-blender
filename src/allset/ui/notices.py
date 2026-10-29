@@ -217,6 +217,46 @@ NOTICES.update({
     **{f"Display/Heads Up Display/{item} Details": (
         "Statistics overlay", "Blender's Statistics overlay shows the object and selection counts.")
        for item in ("Object", "Select")},        # Maya 2026 label "Select Details" (step 219)
+    # Display > Polygons (step 291): Blender draws polygon display as each 3D View's edit-mode overlays
+    "Display/Polygons/Vertex Size...": (
+        "Theme > Vertex Size", "Blender's vertex size is a theme preference: Preferences > Themes > 3D Viewport > "
+        "Vertex Size."),
+    "Display/Polygons/Edge Width...": (
+        "Theme > Edge Width", "Blender's edge width is a theme preference: Preferences > Themes > 3D Viewport > "
+        "Edge Width."),
+    **{f"Display/Polygons/Culling Options/{item}": (
+        "Backface Culling", "Blender's Backface Culling hides back faces in solid shading; in edit mode their wire "
+        "and vertices stay drawn.") for item in ("Keep Wire", "Keep Hard Edges", "Keep Vertices")},
+    **{f"Display/Polygons/{item}": (
+        "Edit mode", "Blender draws vertices only in edit mode, at the theme's Vertex Size.")
+       for item in ("Vertices", "Crease Vertices")},
+    **{f"Display/Polygons/{item}": (
+        "UV Editor", "Blender draws UVs in the UV Editor only (Windows > Modeling Editors > UV Editor).")
+       for item in ("UVs", "Unshared UVs", "UV Size...")},
+    **{f"Display/Polygons/Component IDs/{item}": (
+        "Indices overlay", "Blender's Indices overlay numbers the selected components in edit mode (Overlays > "
+        "Indices, shown with Preferences > Interface > Developer Extras).")
+       for item in ("Vertices", "Edges", "Faces", "UVs")},
+    "Display/Polygons/Tangents": (
+        "Custom normals", "Blender draws no tangents; Overlays > Normals also shows the custom (split) normals."),
+    "Display/Polygons/Hard Edges": (
+        "Sharp edges", "Blender always draws every edge in edit mode: Hard Edges (color) colours the sharp ones."),
+    "Display/Polygons/Border Edges": (
+        "Select > Select Loops", "Blender draws border edges like the others: Select > Select Loops > Select "
+        "Boundary Loop selects them."),
+    "Display/Polygons/Face Triangles": (
+        "Triangulate modifier", "Blender draws no triangulation of n-gons; a Triangulate modifier shows it without "
+        "changing the mesh."),
+    "Display/Polygons/Non-planar Faces": (
+        "Mesh Analysis", "Blender: Overlays > Mesh Analysis, type Distortion, colours the non-planar faces in edit "
+        "mode."),
+    "Display/Polygons/Invisible Faces": (
+        "Hidden faces", "Blender has no invisible faces: hidden faces (H) are not drawn at all."),
+    "Display/Polygons/Metadata/Visualize Metadata": (
+        "Spreadsheet", "Blender shows mesh attributes in the Spreadsheet editor; the Viewer node draws them in the "
+        "3D View."),
+    "Display/Polygons/Limit to Selected": (
+        "Edit mode", "Blender's overlays draw on every mesh in edit mode, not on a selection."),
     "Display/Toggle Show/Hide": (
         "Maya visibility toggle", "Blender: same as h (selected objects shown / hidden)."),
     **{f"Mesh Tools/Sculpting Tools/{maya} Tool": (brush, f"Blender has no {maya} brush: the {brush} sculpt brush "
