@@ -8,12 +8,12 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 ### Changed
 - **Display > Polygons is Maya's submenu** instead of opening Blender's overlay popover. Face Normals, Vertex Normals,
   Backface Culling, Crease Edges, Texture Border Edges (seams), Face Centers and Hard Edges (color) are check boxes
-  that show and change the overlays of the 3D View (the largest one when the menu is in the top bar); Standard
-  Edges / Soft/Hard Edges turn the sharp edge display off / on. Normals Size... is a small window whose slider
+  that show and change the overlays of the 3D View (the largest one when the menu is in the top bar); Standard Edges /
+  Soft/Hard Edges turn the sharp edge display off / on. Normals Size... is a small window whose slider (down to 0.001)
   changes the normal length while you drag and stays open until OK, Reset Display puts these back to Blender's
-  defaults, and Custom Polygon Display opens the full overlay popover. Blender
-  draws normals and edge display on meshes in edit mode. Vertex Size... and Edge Width... open the theme
-  preferences searched for that setting; the other items are greyed with a note on the closest Blender feature.
+  defaults, and Custom Polygon Display opens the full overlay popover. Blender draws normals and edge display on
+  meshes in edit mode. Vertex Size... and Edge Width... open the theme preferences searched for that setting; the
+  other items are greyed with a note on the closest Blender feature.
 
 ## [0.7.0] — 2026-10-29
 

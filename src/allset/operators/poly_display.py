@@ -6,8 +6,10 @@ the meshes in edit mode. Both act on the 3D View the menu reads (``ui/status_lin
 
 - Normals Size...: Maya's small floating window with the normal length slider (polyOptions -sizeNormal), which
   changes the normals while it is dragged and stays open until it is closed. The kit window (``ui/marked_window``,
-  like the Game Exporter) shows the overlay's own Normal Size (``View3DOverlay.normals_length``, Blender units), so
-  the 3D View follows the slider; OK closes it. A popup dialog would close at the first click outside it.
+  like the Game Exporter) shows the overlay's Normal Size (``View3DOverlay.normals_length``, Blender units) through
+  ``WindowManager.allset_normals_size``, so the 3D View follows the slider; OK closes it. A popup dialog would close
+  at the first click outside it. Blender's own slider stops at 0.01 (soft min, 2 decimals); the kit's goes down to
+  0.001 with 3 decimals (user request: small meshes need shorter normals).
 - Reset Display: Maya puts the polygon display options back to their defaults = the overlays this menu sets, back to
   Blender's factory values (measured in Blender 5.2's factory startup).
 - Vertex Size... / Edge Width...: Blender theme preferences (3D Viewport > Vertex Size / Edge Width). The kit opens
@@ -16,7 +18,7 @@ the meshes in edit mode. Both act on the 3D View the menu reads (``ui/status_lin
 """
 
 import bpy
-from bpy.props import StringProperty
+from bpy.props import FloatProperty, StringProperty
 
 from .. import results
 
@@ -79,6 +81,24 @@ class ALLSET_OT_normals_size(bpy.types.Operator):
         return {'FINISHED'}
 
 
+SIZE_PROP = "allset_normals_size"      # WindowManager: the window's slider
+SIZE_SOFT_MIN = 0.001
+SIZE_PRECISION = 3
+
+
+def _get_size(_wm):
+    from ..ui.status_line import view3d_space
+    space = view3d_space(bpy.context)
+    return space.overlay.normals_length if space is not None else 0.1
+
+
+def _set_size(_wm, value):
+    from ..ui.status_line import view3d_space
+    space = view3d_space(bpy.context)
+    if space is not None:
+        space.overlay.normals_length = value
+
+
 def draw(layout, context):
     """The Normals Size window: the slider (live in the 3D View), then OK."""
     from ..ui.status_line import view3d_space
@@ -86,7 +106,7 @@ def draw(layout, context):
     if space is None:
         layout.label(text="No 3D View to display polygons in")
     else:
-        layout.prop(space.overlay, "normals_length", text="Normals Size", slider=True)
+        layout.prop(context.window_manager, SIZE_PROP, text="Normals Size", slider=True)
         layout.label(text="Blender draws normals on meshes in edit mode.")
     layout.operator("allset.marked_window_close", text="OK")
 
@@ -156,3 +176,15 @@ class ALLSET_OT_theme_setting(bpy.types.Operator):
 
 
 classes = (ALLSET_OT_normals_size, ALLSET_PT_normals_size, ALLSET_OT_poly_display_reset, ALLSET_OT_theme_setting)
+
+
+def register_props():
+    bpy.types.WindowManager.allset_normals_size = FloatProperty(
+        name="Normals Size", description="Length of the normals drawn in the 3D View (Blender units)",
+        min=0.00001, max=100000.0, soft_min=SIZE_SOFT_MIN, soft_max=2.0, precision=SIZE_PRECISION, step=1,
+        get=_get_size, set=_set_size)
+
+
+def unregister_props():
+    if hasattr(bpy.types.WindowManager, SIZE_PROP):
+        delattr(bpy.types.WindowManager, SIZE_PROP)

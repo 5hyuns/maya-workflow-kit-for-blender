@@ -163,8 +163,21 @@ def test_normals_size_slider_is_the_overlay_property():
     assert status_line.view3d_space(ctx) == _view()
     lay = _Layout()
     poly_display.draw(lay, ctx)
-    assert ("prop", _view().overlay, "normals_length", "Normals Size") in lay.log, lay.log
+    wm = bpy.context.window_manager
+    assert ("prop", wm, poly_display.SIZE_PROP, "Normals Size") in lay.log, lay.log
     assert [e[1:3] for e in lay.log if e[0] == "op"] == [("allset.marked_window_close", "OK")]
+
+
+def test_normals_size_slider_goes_down_to_0_001():
+    # Blender's own slider stops at 0.01 (soft min, 2 decimals); the kit's slider is the same overlay length
+    rna = bpy.types.WindowManager.bl_rna.properties[poly_display.SIZE_PROP]
+    assert abs(rna.soft_min - 0.001) < 1e-9 and rna.precision == 3
+    wm, overlay = bpy.context.window_manager, _view().overlay
+    setattr(wm, poly_display.SIZE_PROP, 0.001)
+    assert abs(overlay.normals_length - 0.001) < 1e-7
+    overlay.normals_length = 0.25
+    assert abs(getattr(wm, poly_display.SIZE_PROP) - 0.25) < 1e-6
+    overlay.normals_length = 0.1
 
 
 def test_normals_size_opens_small_the_first_time():
