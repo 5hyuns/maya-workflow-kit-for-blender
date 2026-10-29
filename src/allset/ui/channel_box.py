@@ -2010,6 +2010,12 @@ _STATE_ICON = {'KEYED': 'DECORATE_KEYFRAME', 'ANIMATED': 'DECORATE_ANIMATE', 'DR
 _ALERT_STATES = {'KEYED', 'ANIMATED', 'DRIVEN', 'MUTED'}
 
 
+def state_alert(state):
+    """A channel state the value cell draws in the key colour (UILayout ``alert``); the Attribute Editor's
+    Translate / Rotate / Scale fields use it too."""
+    return state in _ALERT_STATES
+
+
 def _row_label(row, key, selected, sel_owner=None, sel_prop=None):
     sub = row.row(align=True)
     if sel_owner is not None:
@@ -2039,7 +2045,7 @@ def draw_channel_row(layout, ob, key, value_owner, value_prop, selected, constra
         right.operator("allset.cb_select_channel", text=text, depress=True).key = key
         row.label(text="", icon='CONSTRAINT')
         return row
-    right.alert = state in _ALERT_STATES
+    right.alert = state_alert(state)
     right.prop(value_owner, value_prop, text="")
     # Proxy fields get no automatic keyframe colouring: show the lead object's state.
     row.label(text="", icon=_STATE_ICON.get(state, 'BLANK1'))

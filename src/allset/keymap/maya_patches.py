@@ -608,7 +608,8 @@ def patch_manip_duplicate(kd):
         # Step 261 (#175): IC's gizmo_tweak CLICK_DRAG allows no Shift (IC:107-110, unlike
         # blender_default.py:500-503 any_except("alt")), and a CLICK_DRAG carries the press's
         # modifiers (wm_event_system.cc 4.5 :3644), so the real Shift+drag matched no gizmo item and
-        # the copy / extrusion was taken back. Shift "any"; Ctrl / Alt stay as IC has them.
+        # the copy / extrusion was taken back. Shift "any". Ctrl "any" too: a drag started with Ctrl held
+        # moves the handle with snapping (else it fell through to box select); Alt stays as IC has it.
         found = kd.find(km, "gizmogroup.gizmo_tweak", type="LEFTMOUSE", value="CLICK_DRAG")
         if not found:
             if not patch.STRICT:
@@ -617,6 +618,7 @@ def patch_manip_duplicate(kd):
             raise LookupError(f"{km}: no item gizmogroup.gizmo_tweak CLICK_DRAG")
         for item in found:
             item[1]["shift"] = -1
+            item[1]["ctrl"] = -1
 
 
 # --- 22. Delete / Backspace on components (step 24) -------------------------------------------
@@ -863,9 +865,9 @@ def patch_time_slider(kd):
         _add(kd, km, "allset.set_key", make_event("S"))
         # Shift+W / E / R (step 151, #100): IC's keyframe_insert_by_name reports "Successfully added ... keying set";
         # the kit keys the Channel Box channels silently like Maya's SetKeyTranslate / Rotate / Scale
-        for key, channels in (("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")):
+        # (one "Screen" item each, patch_global_set_key: they work in every editor)
+        for key in ("W", "E", "R"):
             kd.remove(km, "anim.keyframe_insert_by_name", type=key, shift=True)
-            _add(kd, km, "allset.set_key", make_event(key, shift=True), {"channels": channels})
 
 
 # --- 32. Joints: pose-mode pick-walk, P / Shift+P (step 57) -------------------------------------------
@@ -1036,9 +1038,9 @@ def patch_time_range(kd):
     _add(kd, "Time Scrub", "allset.time_range_drag", make_event("LEFTMOUSE"), first=True, shadows=shadows)
 
 
-# --- 41. Manipulator Ctrl+LMB axis = plane, Shift+MMB = closest axis (step 85) ---------------------------------
-# Ctrl+LMB sits first in the gizmo keymaps (only over a highlighted gizmo; passes through off the kit manipulator's
-# axis / Move centre handles). Shift+MMB goes in the Move / Scale tool keymaps (3D View has no Shift+MMB item; IC
+# --- 41. Manipulator Ctrl+LMB, Shift+MMB = closest axis (step 85) ---------------------------------------------
+# Ctrl+LMB sits first in the gizmo keymaps (only over a highlighted kit manipulator handle): Move handles pass the
+# press on to their own snapped drag (the centre also frees the active handle), a Scale axis scales the other two. Shift+MMB goes in the Move / Scale tool keymaps (3D View has no Shift+MMB item; IC
 # pans with Alt+MMB): a short modal reads the first movement, picks the axis and starts the transform (a CLICK_DRAG
 # item never got the simulated MMB drag, step 85).
 
@@ -1410,7 +1412,21 @@ def patch_weight_paint_exit(kd):
              {'tool': tool}, first=True, shadows=('3D View',))
 
 
-PATCHES += (patch_weight_paint_exit,)
+# --- Shift+W / E / R everywhere (Maya global hotkeys) ---------------------------------------------------------
+# Maya's SetKeyTranslate / Rotate / Scale work in any editor (Graph Editor, Dope Sheet, Outliner, Channel Box /
+# Attribute Editor, Time Slider): one item each in "Screen" ({"global_key": True}: passes through outside object /
+# pose mode, so edit modes keep their own keys). IC's Animation Channels Shift+W (protect toggle) is removed; every
+# other same-event item runs first on purpose (Object Mode / Pose kit items, edit-mode, sculpt and file keys).
+
+def patch_global_set_key(kd):
+    kd.remove("Animation Channels", "anim.channels_setting_toggle", type="W", shift=True)
+    for key, channels in (("W", "TRANSLATE"), ("E", "ROTATE"), ("R", "SCALE")):
+        under = tuple(n for n in kd.keymap_names() if n != "Screen" and kd.find(n, type=key, shift=True))
+        _add(kd, "Screen", "allset.set_key", make_event(key, shift=True), {"channels": channels, "global_key": True},
+             shadows=under)
+
+
+PATCHES += (patch_weight_paint_exit, patch_global_set_key)
 
 
 def apply(data):

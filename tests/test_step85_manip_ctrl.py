@@ -1,4 +1,5 @@
-"""Step 85: Maya manipulator Ctrl+LMB axis = plane, Ctrl+click centre = free, Shift+MMB = closest axis.
+"""Step 85: manipulator Ctrl+LMB (Move: snapped drag of that handle, Scale axis: the other two), Ctrl+click centre =
+free, Shift+MMB = closest axis.
 GUI: tests/gui/gui_step85_manip_ctrl.py."""
 
 from importlib import import_module

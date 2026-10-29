@@ -369,10 +369,11 @@ class ALLSET_OT_manip_mmb(bpy.types.Operator):
         return {'FINISHED'} if res & {'RUNNING_MODAL', 'FINISHED'} else {'CANCELLED'}
 
 
-# --- Ctrl+LMB axis = plane, Shift+MMB = automatic axis (step 85) -------------------------
-# Maya: Ctrl+LMB on an axis handle makes the plane perpendicular to it the active
-# handle (move / scale in the other two), Ctrl+click on the Move centre frees the active handle; Shift+MMB drag moves
-# along the axis closest to the drag direction.
+# --- Ctrl+LMB on a handle, Shift+MMB = automatic axis (step 85) -------------------------
+# Move tool: a drag started with Ctrl held on an axis arrow / plane / the centre moves that handle's way with
+# grid snapping (the same as pressing Ctrl after the drag started), Ctrl+click on the centre frees the active
+# handle; Scale tool: Ctrl+LMB on an axis scales the other two axes; Shift+MMB drag moves along the axis closest
+# to the drag direction.
 
 def plane_of(axis):
     """constraint_axis of the plane perpendicular to ``axis`` ('X' -> (False, True, True))."""
@@ -409,45 +410,67 @@ def _highlighted(context):
 
 
 class ALLSET_OT_manip_ctrl(bpy.types.Operator):
-    """Ctrl+LMB on the manipulator: an axis handle moves / scales in the plane of the other two axes and makes
-    that plane the active handle; the Move centre frees the active handle (Maya)"""
+    """Ctrl+LMB on the manipulator: a Move handle drag moves along that handle with grid snapping, Ctrl+click on
+    the Move centre frees the active handle, a Scale axis handle scales the other two axes"""
     bl_idname = "allset.manip_ctrl"
     bl_label = "Manipulator Ctrl Handle"
     bl_options = {'INTERNAL'}
 
-    def invoke(self, context, _event):
+    def invoke(self, context, event):
         from ..ui import manipulator
+        from . import snap_align
         gz = _highlighted(context)
         kind = manipulator.tool_kind(context)
         if gz is None or kind not in TRANSFORM_OPS:
             return {'PASS_THROUGH'}
         role, axis = getattr(gz, "handle_role", None), getattr(gz, "handle_axis", None)
-        if role == 'CENTER' and kind == 'TRANSLATE':
+        if kind == 'TRANSLATE' and role == 'CENTER':
+            # Ctrl+click frees the active handle; the press is kept here (passed on, a Ctrl+click would
+            # deselect), so a drag past the threshold starts the centre's free move itself
             reset_handle(kind)
             context.area.tag_redraw()
-            return {'FINISHED'}
-        if role != 'AXIS' or axis not in ('X', 'Y', 'Z'):
+            snap_align.apply_active(context)
+            self._editing = getattr(context.gizmo_group, "_built_for", None) == ('TRANSLATE', True)
+            self._press = (event.mouse_x, event.mouse_y)
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
+        if kind == 'TRANSLATE':
+            # The press goes on to the handle's own drag (the Generic Gizmo keymaps allow Ctrl there): the
+            # transform starts with Ctrl held, so it snaps from the start and Ctrl stays its snap toggle.
+            snap_align.apply_active(context)
+            if context.window is not None:
+                watch({"kind": 'PRESS'}, context.window, context.area, context.region)
+            return {'PASS_THROUGH'}
+        if kind != 'RESIZE' or role != 'AXIS' or axis not in ('X', 'Y', 'Z'):
             return {'PASS_THROUGH'}
         otype = manipulator.slot_type(context.scene, kind)
-        axes = plane_of(axis)
-        HANDLES[kind] = {"constraint_axis": axes, "orient_type": otype}
-        if kind == 'RESIZE':
-            # Maya: the other two axes by this handle's own drag factor (step 275, operators/manip_scale.py)
-            try:
-                bpy.ops.allset.manip_scale('INVOKE_DEFAULT', mode='AXIS', axis=axis, others=True, orient_type=otype)
-            except RuntimeError:
-                return {'PASS_THROUGH'}
-            return {'FINISHED'}
-        op = getattr(bpy.ops.transform, TRANSFORM_OPS[kind])
+        HANDLES[kind] = {"constraint_axis": plane_of(axis), "orient_type": otype}
+        # the other two axes by this handle's own drag factor (operators/manip_scale.py)
         try:
-            kwargs = dict(constraint_axis=axes, orient_type=otype, release_confirm=True)
-            if kind == 'TRANSLATE':
-                from . import live_translate
-                live_translate.start(context, kwargs)
-            else:
-                op('INVOKE_DEFAULT', **kwargs)
+            bpy.ops.allset.manip_scale('INVOKE_DEFAULT', mode='AXIS', axis=axis, others=True, orient_type=otype)
         except RuntimeError:
             return {'PASS_THROUGH'}
+        return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            return {'FINISHED'}
+        if event.type in {'ESC', 'RIGHTMOUSE'}:
+            return {'CANCELLED'}
+        if event.type != 'MOUSEMOVE':
+            return {'PASS_THROUGH'}
+        limit = context.preferences.inputs.drag_threshold_mouse * context.preferences.system.ui_scale
+        if max(abs(event.mouse_x - self._press[0]), abs(event.mouse_y - self._press[1])) < limit:
+            return {'RUNNING_MODAL'}
+        # the centre's own drag (ui/manipulator.py _bind_ops), started while Ctrl is held: snapped
+        try:
+            if self._editing:
+                bpy.ops.allset.pivot_translate('INVOKE_DEFAULT')
+            else:
+                from . import live_translate
+                live_translate.start(context, {"release_confirm": True})
+        except RuntimeError:
+            return {'CANCELLED'}
         return {'FINISHED'}
 
 
