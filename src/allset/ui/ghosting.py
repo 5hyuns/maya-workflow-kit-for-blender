@@ -319,8 +319,22 @@ def drop(uids=None):
         _batches.pop(key, None)
 
 
+# step 286 (#191): "does any object of this scene ghost?" per scene pointer, so a frame change doesn't walk every
+# object; dropped when a ghost setting changes, on undo / redo / load and when objects are added or removed
+_any_ghost = {}
+
+
+def _ghosting_in(scene):
+    key = scene.as_pointer()
+    v = _any_ghost.get(key)
+    if v is None:
+        v = _any_ghost[key] = any(ob.allset_ghost.enabled for ob in scene.objects)
+    return v
+
+
 def _changed():
     """A ghost setting changed: redraw, sample what's missing."""
+    _any_ghost.clear()
     _schedule()
     _redraw()
 
@@ -416,6 +430,8 @@ def _draw():
     if rv3d is None or space.shading.type == 'RENDERED' or not space.overlay.show_overlays:
         return
     scene = context.scene
+    if not _ghosting_in(scene):          # step 286 (#191): no walk over every object on each redraw
+        return
     obs = [ob for ob in ghosted(scene) if ob.type in GEOMETRY and ob.visible_get()]
     if not obs:
         return
@@ -479,6 +495,8 @@ def _on_depsgraph(scene, depsgraph):
     """Drop the ghosts of objects that moved / changed shape (and of their ghosted descendants); an Action edit drops
     every ghost (any key change can move any ghost)."""
     from ..operators import anim_snapshot
+    if depsgraph is not None and (depsgraph.id_type_updated('SCENE') or depsgraph.id_type_updated('COLLECTION')):
+        _any_ghost.clear()
     if anim_snapshot._busy or not _geom:
         return
     uids = set()
@@ -503,12 +521,13 @@ def _on_frame(scene, _depsgraph=None):
     from ..operators import anim_snapshot
     if anim_snapshot._busy:
         return
-    if any(ob.allset_ghost.enabled for ob in scene.objects):
+    if _ghosting_in(scene):
         _schedule(0.05)
 
 
 @persistent
 def _on_reload(*_args):
+    _any_ghost.clear()
     drop()
     _schedule(0.2)
 

@@ -364,8 +364,24 @@ def _queue(scene):
         bpy.app.timers.register(_tick, first_interval=0.0)
 
 
+def _in_use(scene):
+    """A kit Maya light exists (its Light data, even unused until a purge) or the scene's World still has the kit's
+    ambient nodes to take away. Reads the few Light datablocks, not every object (step 286, #191)."""
+    if any(kind(light) is not None for light in bpy.data.lights):
+        return True
+    world = scene.world if scene is not None else None
+    if world is None:
+        return False
+    if world.get(W_MADE) or world.get(W_ON):
+        return True
+    tree = world.node_tree
+    return tree is not None and tree.nodes.get(W_BG) is not None
+
+
 @bpy.app.handlers.persistent
 def _on_depsgraph(scene, depsgraph=None):
+    if not _in_use(scene):
+        return
     if depsgraph is not None and not any(
             isinstance(u.id, (bpy.types.Object, bpy.types.Light, bpy.types.Scene, bpy.types.Collection))
             for u in depsgraph.updates):
@@ -399,6 +415,8 @@ def _frame_values(scene):
 
 @bpy.app.handlers.persistent
 def _on_frame(scene, *_a):
+    if not _in_use(scene):
+        return
     if scene is not None and not _busy[0]:
         _busy[0] = True
         try:

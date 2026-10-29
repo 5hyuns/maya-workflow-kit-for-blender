@@ -22,7 +22,7 @@ import bpy
 from bpy.app.handlers import persistent
 from bpy.props import BoolProperty, CollectionProperty, EnumProperty, IntProperty, StringProperty
 
-from .. import compat
+from .. import compat, depsgraph_filter
 
 CATEGORY = "Outliner"
 _state = {"sig": None, "busy": False}
@@ -156,12 +156,34 @@ def rebuild(context=None, force=False):
 
 
 @persistent
-def _on_depsgraph(scene, _depsgraph):
+def _on_depsgraph(scene, depsgraph):
+    # step 286 (#191): the rows are names / parents / membership / bones — a move, a mesh edit or a selection change
+    # can't change them, and building the rows walks the whole scene (1.6 ms per update at 620 objects)
+    if depsgraph_filter.outliner_skip(depsgraph):
+        return
+    _bump()
     rebuild()
 
 
 @persistent
+def _on_undo(_dummy):
+    _bump()
+    rebuild()
+
+
+def _bump():
+    _state["version"] = _state.get("version", 0) + 1
+
+
+def structure_version():
+    """Goes up whenever names, parents, membership or bones may have changed (any update the row check doesn't skip,
+    load, undo, redo): code that derives something from the scene's structure keeps it until this changes."""
+    return _state.get("version", 0)
+
+
+@persistent
 def _on_load(_dummy):
+    _bump()
     _state["sig"] = None
     rebuild(force=True)
 
@@ -448,6 +470,8 @@ def register():
         name="Expanded", description="Joint expanded in the Maya Outliner", options={'HIDDEN'})
     bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
     bpy.app.handlers.load_post.append(_on_load)
+    bpy.app.handlers.undo_post.append(_on_undo)
+    bpy.app.handlers.redo_post.append(_on_undo)
     _state["sig"] = None
     bpy.app.timers.register(_first_rebuild, first_interval=0.0)
 
@@ -455,6 +479,8 @@ def register():
 def unregister():
     if bpy.app.timers.is_registered(_first_rebuild):
         bpy.app.timers.unregister(_first_rebuild)
+    bpy.app.handlers.redo_post.remove(_on_undo)
+    bpy.app.handlers.undo_post.remove(_on_undo)
     bpy.app.handlers.load_post.remove(_on_load)
     bpy.app.handlers.depsgraph_update_post.remove(_on_depsgraph)
     del bpy.types.Bone.allset_expanded

@@ -20,6 +20,8 @@ Blender (checked, same file): a parent's ``hide_viewport`` / ``hide_set`` never 
 import bpy
 from bpy.app.handlers import persistent
 
+from .. import depsgraph_filter
+
 MARK = "allset_hidden_by_parent"
 
 
@@ -87,7 +89,9 @@ _busy = []
 
 @persistent
 def _on_depsgraph(scene, _depsgraph=None):
-    if _busy:
+    # step 286 (#191): visibility only changes with a hide, a parent change or a new / removed node — never with a
+    # move or a mesh edit; sync walks every object's ancestors
+    if _busy or depsgraph_filter.only_motion(_depsgraph):
         return
     _busy.append(True)
     try:

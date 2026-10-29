@@ -187,8 +187,14 @@ def _tick():
         if not rotates_small_lists() or context.window_manager is None or not _maya_outliner_shown(context) \
                 or _blocked(context):
             return INTERVAL
+        # step 286 (#191): the order only changes with the structure; sync walks every object (0.25 s timer)
+        from .outliner import structure_version
+        version = (structure_version(), context.scene.as_pointer())
+        if version == _state.get("synced") or context.mode != 'OBJECT':
+            return INTERVAL
         _state["busy"] = True
         sync(context.scene, context.view_layer, rotate=True)
+        _state["synced"] = version
     except (AttributeError, ReferenceError, RuntimeError):
         pass
     finally:

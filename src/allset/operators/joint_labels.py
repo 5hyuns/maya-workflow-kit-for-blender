@@ -502,11 +502,27 @@ LABEL_SIZE = 11                # font px at UI scale 1.0
 _handles = []
 
 
+_armature_cache = {}
+
+
+def _armatures(view_layer):
+    """The view layer's armature objects, kept until the scene's structure changes (step 286, #191: every 3D View
+    redraw walked every object)."""
+    from ..ui.outliner import structure_version
+    key = (structure_version(), len(view_layer.objects))
+    got = _armature_cache.get(view_layer.as_pointer())
+    if got is None or got[0] != key:
+        got = (key, [ob.name for ob in view_layer.objects if ob is not None and ob.type == 'ARMATURE'])
+        _armature_cache[view_layer.as_pointer()] = got
+    objects = view_layer.objects
+    return [objects[n] for n in got[1] if n in objects]
+
+
 def label_points(context):
     """[(world point, text, side)] for every visible joint with Draw Label on."""
     out = []
-    for ob in context.view_layer.objects:
-        if ob is None or ob.type != 'ARMATURE' or not ob.visible_get():
+    for ob in _armatures(context.view_layer):
+        if ob is None or not ob.visible_get():
             continue
         mw = ob.matrix_world
         if ob.mode == 'EDIT':

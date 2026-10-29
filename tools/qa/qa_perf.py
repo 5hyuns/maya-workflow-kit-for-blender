@@ -10,8 +10,9 @@ Headless test module (tests/_bootstrap.py runs it; it enables the kit itself):
 Scene: a 102k-vertex grid skinned to a 120-bone chain keyed over 250 frames, plus 600 linked cubes. Timed: frame
 changes (playback without drawing), depsgraph updates from a moved object, selection changes, edit mode in / out,
 save + open. The kit's own handlers are wrapped while it is on: cumulative time per handler (top 10).
-Budget (): on / off ratio — frame ≤ 1 / 0.85 (or ≤ +2 ms), update handlers ≤ +5 ms median,
-open ≤ 1.3× (or ≤ +250 ms).
+Budget (; step 286, #191: update / select tightened from +5 ms to +2 ms): on / off ratio —
+frame ≤ 1 / 0.85 (or ≤ +2 ms), update handlers ≤ +2 ms median, selection change ≤ +2 ms median, open ≤ 1.3× (or
+≤ +250 ms).
 """
 
 import ctypes
@@ -229,7 +230,8 @@ def test_off_after_disable():
 
 def test_budget():
     p = RESULT["phases"]
-    off = {k: min(p["off"][k], p["off2"][k]) for k in ("frame_ms_median", "update_ms_median", "open_ms")}
+    off = {k: min(p["off"][k], p["off2"][k]) for k in ("frame_ms_median", "update_ms_median", "select_ms_median",
+                                                       "open_ms")}
     on = p["on"]
     RESULT["ratios"] = {k: round(on[k] / off[k], 2) if off[k] else None for k in off}
     OUT.write_text(json.dumps(RESULT, indent=1), encoding="utf-8")
@@ -238,8 +240,10 @@ def test_budget():
     # ratios of ~2 ms numbers are mostly noise: a budget fails only past an absolute floor too (delegated, step 240)
     if on["frame_ms_median"] > off["frame_ms_median"] / 0.85 and on["frame_ms_median"] - off["frame_ms_median"] > 2:
         problems.append(f"frame {on['frame_ms_median']} ms vs {off['frame_ms_median']} ms off (budget 1/0.85)")
-    if on["update_ms_median"] - off["update_ms_median"] > 5:
-        problems.append(f"update +{on['update_ms_median'] - off['update_ms_median']:.2f} ms (budget 5 ms)")
+    if on["update_ms_median"] - off["update_ms_median"] > 2:
+        problems.append(f"update +{on['update_ms_median'] - off['update_ms_median']:.2f} ms (budget 2 ms)")
+    if on["select_ms_median"] - off["select_ms_median"] > 2:
+        problems.append(f"select +{on['select_ms_median'] - off['select_ms_median']:.2f} ms (budget 2 ms)")
     if on["open_ms"] > 1.3 * off["open_ms"] and on["open_ms"] - off["open_ms"] > 250:
         problems.append(f"open {on['open_ms']} ms vs {off['open_ms']} ms off (budget 1.3x)")
     assert not problems, "; ".join(problems)

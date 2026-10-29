@@ -205,6 +205,27 @@ def find_rows(rows, width, u, lead, names, size):
     return found
 
 
+_named_cache = {}
+
+
+def _named(context, live_objects):
+    """{object name: label} for the rows drawn over; kept per view layer until the structure or the live set changes
+    (step 286, #191: every Outliner redraw walked every object)."""
+    from .outliner import structure_version
+    key = (structure_version(), frozenset(o.name for o in live_objects))
+    vl = context.view_layer.as_pointer()
+    got = _named_cache.get(vl)
+    if got is not None and got[0] == key:
+        return got[1]
+    named = {}
+    for ob in context.view_layer.objects:
+        lab = label(ob, live_objects) if ob is not None else None
+        if lab is not None:
+            named[ob.name] = lab
+    _named_cache[vl] = (key, named)
+    return named
+
+
 def draw():
     context = bpy.context
     space, region = context.space_data, context.region
@@ -216,11 +237,7 @@ def draw():
     SEEN[region.as_pointer()] = []
     from ..operators import live
     live_objects = set(live.objects(context.scene))
-    named = {}
-    for ob in context.view_layer.objects:
-        lab = label(ob, live_objects) if ob is not None else None
-        if lab is not None:
-            named[ob.name] = lab
+    named = _named(context, live_objects)
     if not named:
         _rows.pop(region.as_pointer(), None)
         return

@@ -160,6 +160,15 @@ def pull(sym, ob):
     return True
 
 
+def _editing(scene):
+    """Some object of ``scene`` is in edit mode: Blender keeps the active object in the edit mode it shares."""
+    for vl in scene.view_layers:
+        ob = vl.objects.active
+        if ob is not None and ob.mode == 'EDIT':
+            return True
+    return False
+
+
 def edit_meshes(scene):
     return [ob for ob in scene.objects if ob.type == 'MESH' and ob.mode == 'EDIT']
 
@@ -248,6 +257,9 @@ def _on_depsgraph(scene, _depsgraph):
     try:
         sym = scene.allset_symmetry
     except AttributeError:
+        return
+    # step 286 (#191): meshes are in edit mode only while the active object is — no scene walk otherwise
+    if not _state["edit"] and not _editing(scene):
         return
     edit = edit_meshes(scene)
     names = frozenset(ob.name for ob in edit)
