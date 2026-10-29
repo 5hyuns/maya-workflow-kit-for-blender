@@ -323,15 +323,15 @@ def apply_default(fc, kp):
     if tin == "AUTO" and tout == "AUTO":
         return False
     if tin == tout:
-        time_keys.apply_tangent(kp, tin)
+        time_keys.apply_tangent(kp, tin, fc)
     else:
-        _default_side(kp, tin, "IN")
-        _default_side(kp, tout, "OUT")
+        _default_side(kp, tin, "IN", fc)
+        _default_side(kp, tout, "OUT", fc)
     fc.update()
     return True
 
 
-def _default_side(kp, kind, side):
+def _default_side(kp, kind, side, fc=None):
     """One side of a new key. Blender's interpolation belongs to the segment after a key, so only a Stepped out
     tangent changes it; a Linear side = a Vector handle (points at the neighbour key), the neighbour segment keeps
     its shape (Maya: the other key's own tangent)."""
@@ -345,6 +345,9 @@ def _default_side(kp, kind, side):
     setattr(kp, "handle_left_type" if side == "IN" else "handle_right_type", handle)
     if kind == "FLAT":
         (kp.handle_left if side == "IN" else kp.handle_right).y = kp.co.y
+    if fc is not None:
+        from . import maya_tangents
+        maya_tangents.mark(fc, kp, kind, side)
 
 
 def _new_curve_weights(idd, full, index):
@@ -374,7 +377,7 @@ def after_insert(owner, path, index, frame):
         kp = next((k for k in fc.keyframe_points if abs(k.co.x - frame) <= EPS), None)
         if kp is not None and apply_default(fc, kp):
             n += 1
-        # Maya 2026 auto tangents on the curve's Auto keys (the new key and its neighbours; step 257, #151)
+        # Maya tangent shapes on the curve (the new key and its neighbours; steps 257, 310, #151, #210)
         maya_tangents.apply(fc)
     return n
 

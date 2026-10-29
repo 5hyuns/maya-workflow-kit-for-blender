@@ -41,8 +41,9 @@ TANGENT_LABELS = {"AUTO": "Auto", "SPLINE": "Spline", "CLAMPED": "Clamped", "LIN
                   "BREAK": "Break Tangents", "UNIFY": "Unify Tangents"}
 
 
-def apply_tangent(kp, kind):
-    """One key's Maya tangent (in and out)."""
+def apply_tangent(kp, kind, fc=None):
+    """One key's Maya tangent (in and out); with the key's curve ``fc`` the Maya type is remembered for
+    operators/maya_tangents.py (Clamped / Plateau / Flat share Blender handle types with others)."""
     interp, handle = TANGENTS[kind]
     if interp is not None:
         kp.interpolation = interp
@@ -50,8 +51,13 @@ def apply_tangent(kp, kind):
         kp.handle_left_type = kp.handle_right_type = handle
     if kind == "FLAT":
         kp.handle_left.y = kp.handle_right.y = kp.co.y
+    if fc is not None:
+        from . import maya_tangents
+        maya_tangents.mark(fc, kp, kind)
+
+
 def _maya_auto(fc):
-    """Maya auto tangents after the curve changed (operators/maya_tangents.py, step 257)."""
+    """Maya tangent shapes after the curve changed (operators/maya_tangents.py, steps 257, 310)."""
     from . import maya_tangents
     maya_tangents.apply(fc)
 
@@ -239,7 +245,7 @@ def set_tangent(context, a, b, kind):
     for node in nodes(context):
         for fc, pts in keys_in(node, a, b):
             for kp in pts:
-                apply_tangent(kp, kind)
+                apply_tangent(kp, kind, fc)
                 n += 1
             fc.update()
             _maya_auto(fc)

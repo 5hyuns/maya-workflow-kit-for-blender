@@ -43,10 +43,14 @@ def apply_side(fc, index, kind, side):
     """Maya Tangents > In Tangent / Out Tangent: one side of a key. The handle type is per side; the segment
     shape (Linear / Stepped) belongs to the key before the segment, so an in tangent sets the previous key's."""
     if side == "BOTH":
-        time_keys.apply_tangent(fc.keyframe_points[index], kind)
+        time_keys.apply_tangent(fc.keyframe_points[index], kind, fc)
         return
     interp, handle = time_keys.TANGENTS[kind]
     kp = fc.keyframe_points[index]
+    from . import maya_tangents
+    maya_tangents.mark(fc, kp, kind, side)
+    if kind == "FLAT":
+        handle = 'FREE'     # an aligned flat side would turn to follow the other side
     if handle is not None:
         setattr(kp, "handle_left_type" if side == "IN" else "handle_right_type", handle)
     if kind == "FLAT":

@@ -161,7 +161,7 @@ def test_curve_infinity_and_in_out_tangents():
     graph_keys.apply_side(fx, 1, "FLAT", "IN")
     kps = fx.keyframe_points
     assert kps[1].interpolation == 'LINEAR' and kps[0].interpolation == 'BEZIER'
-    assert kps[1].handle_left_type == 'ALIGNED' and abs(kps[1].handle_left.y - kps[1].co.y) < 1e-6
+    assert kps[1].handle_left_type == 'FREE' and abs(kps[1].handle_left.y - kps[1].co.y) < 1e-6
     graph_keys.apply_side(fx, 1, "STEPPED", "IN")
     assert kps[0].interpolation == 'CONSTANT'
 

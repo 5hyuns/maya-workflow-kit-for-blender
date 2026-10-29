@@ -255,6 +255,8 @@ def _tick():
         watch = getattr(graph_weights, "watch", None)     # step 198: non-weighted / locked tangent lengths
         if watch is not None:
             watch(bpy.context)
+        from ..operators import maya_tangents
+        maya_tangents.watch(bpy.context)                  # step 310: Maya tangent shapes after Blender edits
         from ..operators import graph_menu_198
         graph_menu_198.watch(bpy.context)                 # step 198: Set Curve Colors rules on new curves
     except (KeyError, AttributeError, ReferenceError, RuntimeError):
@@ -265,6 +267,8 @@ def _tick():
 @bpy.app.handlers.persistent
 def _reset(*_args):
     _state["sig"] = None
+    from ..operators import maya_tangents
+    maya_tangents.forget()
 
 
 # --- curve names ----------------------------------------------------------------------------------------------
