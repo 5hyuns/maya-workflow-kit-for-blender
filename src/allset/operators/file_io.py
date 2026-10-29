@@ -371,7 +371,38 @@ def after_import(context, fmt, path, obs, materials, args):
                 bake_conversion(context, rest, conv)
         if not done:
             _file_time_slider(context, path, obs)
+        for ob in obs:
+            normalise_skin_weights(ob)
     maya_names(obs, materials, path)
+
+
+def normalise_skin_weights(ob, eps=1e-6):
+    """Step 284 (#189): Maya's FBX export leaves out skin weights of 0.001 or less without scaling the rest, and
+    Maya's FBX import renormalises each vertex's weights to sum 1 (its skin cluster normalises). Blender's reader
+    keeps the file values, so the Component Editor / Paint Skin Weights / a later export showed up to 0.0016 less.
+    Divide every vertex's joint weights (groups named after a bone of the mesh's Armature modifiers) by their sum;
+    other vertex groups stay. Positions don't change: the Armature modifier divides by the sum while it deforms.
+    Returns the number of vertices changed."""
+    if ob is None or ob.type != 'MESH':
+        return 0
+    bones = set()
+    for md in ob.modifiers:
+        if md.type == 'ARMATURE' and md.object is not None and md.object.type == 'ARMATURE':
+            bones.update(b.name for b in md.object.data.bones)
+    joints = {vg.index for vg in ob.vertex_groups if vg.name in bones}
+    if not joints:
+        return 0
+    changed = 0
+    for v in ob.data.vertices:
+        els = [g for g in v.groups if g.group in joints]
+        s = sum(g.weight for g in els)
+        if s > 0.0 and abs(s - 1.0) > eps:
+            for g in els:
+                g.weight = g.weight / s
+            changed += 1
+    if changed:
+        ob.data.update()
+    return changed
 
 
 def _file_time_slider(context, path, obs):
