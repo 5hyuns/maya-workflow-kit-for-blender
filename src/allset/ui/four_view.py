@@ -15,6 +15,9 @@ without reading rects (areas get their rects one tick after a split).
 
 Space tap / Panels > Layouts > Single Perspective View leave the four view by joining the other three areas into the
 panel under the mouse (or the persp panel) with ``screen.area_join`` (GUI only).
+A panel of the four view may be any editor (Graph Editor, render view, Outliner ...), like a Maya panel: the four view
+is the 2 x 2 block of areas inside the rectangle recorded on the screen (``rect``, window px), whatever their editor
+types, and each role keeps its editor type across four <-> one. Outside that block a Space tap maximizes the pane.
 Each panel's settings (shading, overlays, object types shown, lens / clip, camera) are kept per *role* (top / persp /
 front / side) as JSON in the Screen ID property ``allset_four_view`` — saved with the file, never area pointers
 (#36) — and put back when the four view comes back, like Maya's panels keep theirs. Blender Quad View is not used.
@@ -55,7 +58,7 @@ def _save_state(screen, st):
 
 
 def is_four(screen):
-    return screen is not None and bool(state(screen).get("on")) and len(panes(screen)) == 4
+    return screen is not None and bool(block(screen))
 
 
 def panes(screen):
@@ -64,9 +67,104 @@ def panes(screen):
     return [a for a in screen.areas if a.type == 'VIEW_3D' and not is_toolbox(a.spaces.active)]
 
 
+def _areas(screen):
+    """Every area that can be a panel: any editor but the Tool Box column."""
+    from .toolbox import is_toolbox
+    return [a for a in screen.areas if not (a.type == 'VIEW_3D' and is_toolbox(a.spaces.active))]
+
+
+# --- the block by places (pure: anything with x / y / width / height) ---------------------------------------------
+
+GAP = 6                              # px between neighbouring areas (border + pixel size, up to UI scale 2)
+
+
+def rect(a):
+    """(x0, y0, x1, y1) of an area, window px, y up."""
+    return (a.x, a.y, a.x + a.width, a.y + a.height)
+
+
+def union(rects):
+    rects = list(rects)
+    return (min(r[0] for r in rects), min(r[1] for r in rects), max(r[2] for r in rects), max(r[3] for r in rects))
+
+
+def overlap(r, q):
+    """Area of the intersection of two rects."""
+    w = min(r[2], q[2]) - max(r[0], q[0])
+    h = min(r[3], q[3]) - max(r[1], q[1])
+    return w * h if w > 0 and h > 0 else 0
+
+
+def _size(r):
+    return max(0, r[2] - r[0]) * max(0, r[3] - r[1])
+
+
+def grids(areas, gap=GAP):
+    """Every 2 x 2 group of ``areas`` that fills a rectangle: [{role: area}] (top / persp over front / side; the
+    middle edges of the two rows may differ)."""
+    def near(a, b):
+        return abs(a - b) <= gap
+    out = []
+    for tl in areas:
+        t = rect(tl)
+        for tr in areas:
+            r = rect(tr)
+            if tr is tl or not (near(r[0], t[2]) and near(r[3], t[3])):
+                continue
+            for bl in areas:
+                b = rect(bl)
+                if bl is tl or bl is tr or not (near(b[0], t[0]) and near(b[3], t[1])):
+                    continue
+                for br in areas:
+                    q = rect(br)
+                    if br is tl or br is tr or br is bl:
+                        continue
+                    if near(q[0], b[2]) and near(q[2], r[2]) and near(q[1], b[1]) and near(q[3], r[1]):
+                        out.append({"top": tl, "persp": tr, "front": bl, "side": br})
+    return out
+
+
+def best(candidates, recorded):
+    """The candidate (a {role: area} grid, or one area) covering most of the ``recorded`` rect; None when none covers
+    at least half of it (and, for one area, when less than half of the area lies inside it)."""
+    if not recorded:
+        return None
+    want = _size(recorded)
+    found, most = None, 0
+    for c in candidates:
+        r = union(rect(a) for a in c.values()) if isinstance(c, dict) else rect(c)
+        o = overlap(r, recorded)
+        if o * 2 < want or (not isinstance(c, dict) and o * 2 < _size(r)):
+            continue
+        if o > most:
+            found, most = c, o
+    return found
+
+
+def block(screen):
+    """{role: area} of the four view on ``screen`` (any editor types), {} when it shows no four view."""
+    if screen is None:
+        return {}
+    st = state(screen)
+    if not st.get("on"):
+        return {}
+    if st.get("rect"):
+        return best(grids(_areas(screen)), st["rect"]) or {}
+    return roles(screen, panes(screen))          # a record without a rect: four 3D View panels
+
+
+def single(screen):
+    """The one panel the four view was folded into (by the recorded rect), else None."""
+    st = state(screen) if screen is not None else {}
+    if st.get("on") or not st.get("rect"):
+        return None
+    return best(_areas(screen), st["rect"])
+
+
 def roles(screen, areas=None):
-    """{role: area} of a four view by the panels' places (GUI: rects)."""
-    areas = areas if areas is not None else panes(screen)
+    """{role: area} of a four view: the block on ``screen``, or ``areas`` by their places (GUI: rects)."""
+    if areas is None:
+        return block(screen)
     if len(areas) != 4:
         return {}
     cx = sum(a.x + a.width / 2 for a in areas) / 4
@@ -122,6 +220,14 @@ def capture(space):
             "space": {k: getattr(space, k) for k in _SPACE_PROPS}, "shown": shown, "view": view}
 
 
+def capture_area(area):
+    """One panel's record: its editor type, plus the 3D View settings when it is a 3D View."""
+    out = {"ui_type": area.ui_type}
+    if area.type == 'VIEW_3D':
+        out.update(capture(area.spaces.active))
+    return out
+
+
 def apply(space, data):
     _apply_props(space.shading, data.get("shading", {}))
     _apply_props(space.overlay, data.get("overlay", {}), first=())
@@ -164,22 +270,49 @@ def _split(context, window, area, direction, factor):
     screen = window.screen
     before = {a.as_pointer() for a in screen.areas}
     with context.temp_override(window=window, screen=screen, area=area, region=_window_region(area)):
-        if bpy.ops.screen.area_split(direction=direction, factor=factor) != {'FINISHED'}:
+        try:
+            if bpy.ops.screen.area_split(direction=direction, factor=factor) != {'FINISHED'}:
+                return None
+        except RuntimeError:         # poll failed (a maximized pane, an area too small to split)
             return None
     return next((a for a in screen.areas if a.as_pointer() not in before), None)
 
 
-def _place(context, role, area, saved):
-    space = area.spaces.active
-    if role in saved:
-        apply(space, saved[role])
-    else:
-        default(space, role, context.scene)
+def _place(context, role, area, saved, window=None):
+    """``area`` shows the panel of ``role``: its editor type, and for a 3D View its settings (else Maya's camera)."""
+    data = saved.get(role) or {}
+    want = data.get("ui_type", 'VIEW_3D')
+    if area.ui_type != want:
+        try:
+            area.ui_type = want
+        except (TypeError, ValueError):
+            area.ui_type = 'VIEW_3D'
+    if area.type == 'VIEW_3D':
+        space = area.spaces.active
+        if space.region_3d is None:
+            if window is not None:
+                _place_later(window.as_pointer(), area.as_pointer(), role)   # a new 3D View: region data next tick
+        elif "shading" in data:
+            apply(space, data)
+        else:
+            default(space, role, context.scene)
     area.tag_redraw()
 
 
+def _place_later(win_ptr, area_ptr, role):
+    from .. import live_refs
+
+    def tick():
+        window, area = live_refs.find_area(area_ptr, win_ptr)
+        if window is not None and area is not None and area.type == 'VIEW_3D' \
+                and area.spaces.active.region_3d is not None:
+            _place(bpy.context, role, area, state(window.screen).get("panes", {}))
+        return None
+    bpy.app.timers.register(tick, first_interval=0.0)
+
+
 def enter(context, area, window=None):
-    """``area`` (one 3D View panel) becomes the four view. Returns the roles placed now ({} when it can't split: always
+    """``area`` (one panel, any editor) becomes the four view. Returns the roles placed now ({} when it can't split: always
     in background mode, where a split-off area stays 0 x 0).
 
     Splits: ``area`` top / bottom, then the bottom left / right (front / side). A just-split area has no size until
@@ -192,7 +325,8 @@ def enter(context, area, window=None):
     st = state(screen)
     saved = st.get("panes", {})
     single = st.get("single", "persp")
-    saved[single] = capture(area.spaces.active)
+    saved[single] = {**saved.get(single, {}), **capture_area(area)}
+    whole = list(rect(area))
     top = _split(context, window, area, 'HORIZONTAL', SPLITS[0])
     if top is None:
         return {}
@@ -200,10 +334,10 @@ def enter(context, area, window=None):
     if bottom_left is None:
         return {}
     placed = {"persp": top, "front": bottom_left, "side": area}
-    for role, a in placed.items():
-        _place(context, role, a, saved)
-    st.update(on=True, panes=saved)
+    st.update(on=True, panes=saved, rect=whole)
     _save_state(screen, st)
+    for role, a in placed.items():
+        _place(context, role, a, saved, window)
     _split_top_later(window.as_pointer(), top.as_pointer())
     return placed
 
@@ -222,8 +356,8 @@ def _split_top_later(win_ptr, top_ptr, tries=20):
         left = _split(bpy.context, window, top, 'VERTICAL', SPLITS[1])
         if left is not None:
             saved = state(window.screen).get("panes", {})
-            _place(bpy.context, "top", left, saved)
-            _place(bpy.context, "persp", top, saved)
+            _place(bpy.context, "top", left, saved, window)
+            _place(bpy.context, "persp", top, saved, window)
         return None
     bpy.app.timers.register(tick, first_interval=0.0)
 
@@ -236,8 +370,9 @@ def remember(screen):
     st = state(screen)
     saved = st.get("panes", {})
     for role, a in placed.items():
-        saved[role] = capture(a.spaces.active)
+        saved[role] = {**saved.get(role, {}), **capture_area(a)}     # a Graph Editor keeps its old 3D settings
     st["panes"] = saved
+    st["rect"] = list(union(rect(a) for a in placed.values()))
     _save_state(screen, st)
     return placed
 
@@ -304,16 +439,63 @@ def _join_into(context, window, placed, keep_role):
     _join(context, window, keep_c, other_c)
 
 
+def tap(context, area=None, window=None):
+    """Maya Space tap over ``area``: in the four view the panel under the mouse (any editor) stays alone; the panel
+    the four view was folded into (or any 3D View panel) becomes the four view again. Returns 'single' / 'four' when
+    done, 'failed' when Blender refused the split / join, None when ``area`` is no panel of the layout (the caller
+    maximizes it)."""
+    window = window or context.window
+    area = area or context.area
+    from .toolbox import is_toolbox
+    if window is None or area is None or (area.type == 'VIEW_3D' and is_toolbox(area.spaces.active)):
+        return None
+    screen = window.screen
+    four = block(screen)
+    if four:
+        if area.as_pointer() not in {a.as_pointer() for a in four.values()}:
+            return None
+        if bpy.app.background:
+            return "failed"          # screen.area_join needs the Blender window
+        return "single" if leave(context, keep=area, window=window) is not None else "failed"
+    one = single(screen)
+    if area.type != 'VIEW_3D' and (one is None or one.as_pointer() != area.as_pointer()):
+        return None
+    return "four" if enter(context, area, window) else "failed"
+
+
 def toggle(context, area=None, window=None):
     """Maya Space tap: four view -> the panel under the mouse alone; one panel -> the four view again."""
     window = window or context.window
     area = area or context.area
+    got = tap(context, area, window)
+    if got == "four":
+        return block(window.screen)
+    if got == "single":
+        return area
+    return None
+
+
+def set_layout(context, window, four, area=None):
+    """Panels > Layouts / Tool Box quick layouts: Four View (``four``) or Single Perspective View. A four view is
+    never split again and one panel never joined again. Returns the four view's roles / the single panel, None when
+    nothing could be done."""
     from .toolbox import is_toolbox
-    if window is None or area is None or area.type != 'VIEW_3D' or is_toolbox(area.spaces.active):
-        return None
-    if is_four(window.screen):
-        return leave(context, keep=area, window=window)
-    return enter(context, area, window)
+    screen = window.screen
+    if area is not None and area.type == 'VIEW_3D' and is_toolbox(area.spaces.active):
+        area = None
+    if four:
+        placed = block(screen)
+        if placed:
+            return placed
+        target = single(screen) or area
+        return (enter(context, target, window) or None) if target is not None else None
+    if is_four(screen):
+        kept = leave(context, window=window, role="persp")
+    else:
+        kept = single(screen) or area
+    if kept is not None and kept.type != 'VIEW_3D':
+        kept.ui_type = 'VIEW_3D'          # Maya Single Perspective View = the persp camera's panel
+    return kept
 
 
 def collapse_all(context):
