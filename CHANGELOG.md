@@ -5,6 +5,22 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
 
 ## [Unreleased]
 
+### Fixed
+- **Quad Draw symmetry**: World/Object and bound Topology symmetry cover drawing, extensions, cuts, relaxation,
+  deletion and welding. Seam captures share vertices; Ctrl loop cuts pair source edges before live projection,
+  preventing valid cuts from being cancelled on slightly asymmetric references.
+- **Quad Draw gestures**: complete-loop Ctrl+Shift delete/tweak previews, continuous-border relaxation,
+  Soft Selection influence preview and reversible Shift+MMB relaxation share the Modeling Toolkit settings.
+- **Quad Draw connections**: Shift previews use boundary edges and reject overlapping faces, skipped boundary
+  vertices and non-manifold edges. Auto-weld previews vertex/edge targets while dragging, then welds the same targets
+  on release, including Tab extensions. Escape cancels without merging; tolerance uses actual screen pixels.
+- **Quad Draw drag preview**: dragging a vertex or dot no longer leaves its cyan hover marker at the original position.
+- **Quad Draw**: activating the tool opens its options in the Modeling Toolkit. Retopology has a temporary cyan
+  face tint with editable wire color, opacity and surface offset, without changing materials or the theme.
+  Component drags keep their cursor offset and stay on the live surface when the cursor leaves its silhouette;
+  view projection avoids jumping to hidden sheets during relax and extension. With no live surface, dots use the grid.
+  Relax includes All Vertices, Auto-Lock keeps its choice for the stroke, and Extend distinguishes Loop from Border.
+
 ## [0.7.0] — 2026-10-29
 
 Modeling and animation fixes from your reports, pivot editing / Smart Extrude / Make Live from @youngmin2k, and
