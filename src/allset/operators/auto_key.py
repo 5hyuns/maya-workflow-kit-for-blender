@@ -33,7 +33,8 @@ def _transforming():
     wm = bpy.context.window_manager
     for w in (wm.windows if wm else ()):
         for op in w.modal_operators:
-            if op.bl_idname.startswith("TRANSFORM_OT") or op.bl_idname.startswith("ALLSET_OT_manip"):
+            if (op.bl_idname.startswith("TRANSFORM_OT") or op.bl_idname.startswith("ALLSET_OT_manip")
+                    or op.bl_idname == "ALLSET_OT_cb_field_drag"):
                 return True
     return False
 

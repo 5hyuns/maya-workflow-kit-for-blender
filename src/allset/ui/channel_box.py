@@ -1177,6 +1177,182 @@ class ALLSET_OT_cb_deselect_channels(bpy.types.Operator):
 _hover = {}      # window pointer -> (key, "NAME" / "VALUE") under the mouse, or None
 _watching = set()
 _anchor = {"key": None}
+_field_handoff = {}
+
+
+def start_field_drag(context, event, key, start_x):
+    """Keep the triggering modifiers across bpy.ops' synchronous invoke handoff."""
+    ptr = context.window.as_pointer()
+    _field_handoff[ptr] = dict(type=event.type, value=event.value, mouse_x=event.mouse_x,
+                               ctrl=event.ctrl, shift=event.shift, alt=event.alt)
+    try:
+        return bpy.ops.allset.cb_field_drag('INVOKE_DEFAULT', True, key=key, start_x=start_x)
+    finally:
+        _field_handoff.pop(ptr, None)
+
+
+def _field_is_driven(ob, key):
+    if not is_shape_key(key):
+        kind = MAIN_BY_KEY.get(key, (None, None, None, None, None))[4]
+        # A displayed Euler channel on a quaternion/axis-angle node writes the
+        # entire four-component rotation; a root joint's armature-space translate
+        # writes all three local components. Do not overwrite any driven component.
+        if _non_euler_rot(ob, kind) or (kind == "LOC" and is_root_joint(ob)):
+            ad = ob.id_data.animation_data
+            if ad is None:
+                return False
+            if _non_euler_rot(ob, kind):
+                from .. import rotation_display
+                path, size = rotation_display.curve_path(ob), 4
+            else:
+                path, size = "location", 3
+            path = full_path(ob, path)
+            return bool(path and any(ad.drivers.find(path, index=i) is not None for i in range(size)))
+        return driver(ob, key) is not None
+    owner = shape_owner(ob, key)
+    ad = owner.animation_data if owner is not None else None
+    return bool(ad and any(ad.drivers.find(path, index=max(index, 0)) is not None
+                           for path, index in shape_paths(owner, key)))
+
+
+def field_drag_starts(context, key):
+    """Snapshot editable scalar channels, using the same selection rule as text entry."""
+    starts = {}
+    for k in entry_keys(key, context):
+        for ob in targets(context):
+            if (not has_channel(ob, k) or is_locked(ob, k) or is_hidden(ob, k)
+                    or k in constrained_keys(ob) or _field_is_driven(ob, k)):
+                continue
+            value = get_value(ob, k)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                kind = entry_kind(ob, k)
+                if kind in {'LENGTH', 'ROTATION', 'NONE', 'INT', 'FLOAT'}:
+                    starts[(ob, k)] = (value, kind)
+    return starts
+
+
+class ALLSET_OT_cb_field_drag(bpy.types.Operator):
+    """Drag a numeric Channel Box value horizontally"""
+    bl_idname = "allset.cb_field_drag"
+    bl_label = "Adjust Channel Values"
+    bl_options = {'INTERNAL', 'UNDO', 'BLOCKING'}
+
+    key: StringProperty(options={'SKIP_SAVE'})
+    start_x: bpy.props.IntProperty(options={'SKIP_SAVE'})
+
+    def invoke(self, context, event):
+        from types import SimpleNamespace
+        handoff = _field_handoff.get(context.window.as_pointer()) if context.window is not None else None
+        if handoff is not None:
+            event = SimpleNamespace(**handoff)
+        self._starts = field_drag_starts(context, self.key)
+        if not self._starts:
+            return {'CANCELLED'}
+        self._last_x = self.start_x
+        self._drag_values = {pair: value for pair, (value, _kind) in self._starts.items()}
+        self._mode = None
+        self._window = context.window
+        self._scene = context.scene
+        self._frame = context.scene.frame_current
+        try:
+            if event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+                self._apply(event, 1 if event.type == 'WHEELUPMOUSE' else -1, wheel=True)
+                return self._confirm(context)
+            self._move(event)
+        except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+            self._restore()
+            return {'CANCELLED'}
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def _move(self, event):
+        step = event.mouse_x - self._last_x
+        self._last_x = event.mouse_x
+        self._apply(event, step)
+
+    def _apply(self, event, step, wheel=False):
+        if not step:
+            return
+        mode = (event.ctrl, event.shift, event.alt)
+        if mode != self._mode or wheel:
+            # Begin each sensitivity mode and each wheel notch at the actual value.
+            # Neither a modifier change nor a notch should reveal a hidden fraction.
+            self._drag_values = {pair: get_value(*pair) for pair in self._starts}
+            self._mode = mode
+        precision = (0.1 if event.shift else 1.0) * (0.01 if event.alt else 1.0)
+        for (ob, key), (start, kind) in self._starts.items():
+            display_step = 0.5 if kind == 'ROTATION' and cb_entry._degrees(self._scene) else 0.01
+            if kind == 'INT':
+                display_step = 0.1
+            amount = (step * precision if wheel else
+                      step * display_step * precision * (10.0 if event.ctrl else 1.0))
+            continuous = self._drag_values[(ob, key)] + cb_entry.from_display(amount, kind, self._scene)
+            self._drag_values[(ob, key)] = continuous
+            value = continuous
+            if event.ctrl and not wheel:
+                quantum = precision
+                shown = cb_entry.to_display(value, kind, self._scene) / quantum
+                snapped = math.floor(shown + 0.5) if shown >= 0 else math.ceil(shown - 0.5)
+                value = cb_entry.from_display(snapped * quantum, kind, self._scene)
+            if kind == 'INT':
+                # Symmetric nearest integer, independent of the sign of the starting value.
+                value = math.floor(value + 0.5) if value >= 0 else math.ceil(value - 0.5)
+            if get_value(ob, key) != value:
+                set_value(ob, key, value)
+        try:
+            _redraw(self._window)
+        except ReferenceError:
+            pass
+
+    def _restore(self):
+        for (ob, key), (start, _kind) in self._starts.items():
+            try:
+                if get_value(ob, key) != start:
+                    set_value(ob, key, start)
+            except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+                pass  # A removed or no longer writable object cannot be restored.
+        try:
+            _redraw(self._window)
+        except ReferenceError:
+            pass
+
+    def _confirm(self, context):
+        if context.scene != self._scene or self._scene.frame_current != self._frame:
+            self._restore()
+            return {'CANCELLED'}
+        changed = [(ob, key) for (ob, key), (start, _kind) in self._starts.items()
+                   if get_value(ob, key) != start]
+        if not changed:
+            return {'CANCELLED'}
+        if auto_key.enabled(self._scene):
+            for ob, key in changed:
+                if auto_keys(ob, key, context):
+                    keyframe(ob, key)
+        return {'FINISHED'}
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            try:
+                self._move(event)
+            except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+                self._restore()
+                return {'CANCELLED'}
+        elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            try:
+                return self._confirm(context)
+            except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+                self._restore()
+                return {'CANCELLED'}
+        elif event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
+            try:
+                self._apply(event, 1 if event.type == 'WHEELUPMOUSE' else -1, wheel=True)
+            except (ReferenceError, RuntimeError, AttributeError, TypeError, ValueError):
+                self._restore()
+                return {'CANCELLED'}
+        elif event.type in {'ESC', 'RIGHTMOUSE'} and event.value == 'PRESS':
+            self._restore()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
 
 
 def _round_half_up(x):
@@ -1219,7 +1395,7 @@ class ALLSET_OT_cb_hover(bpy.types.Operator):
         # also over the Channel Box part's empty space / headers: RMB there is Maya's Channels menu (step 158)
         if ((hit is not None or in_channel_part(context, event)) and window.as_pointer() not in _watching
                 and context.region is not None):
-            bpy.ops.allset.cb_channel_drag('INVOKE_DEFAULT')
+            bpy.ops.allset.cb_channel_drag('INVOKE_DEFAULT', True)
         return {'PASS_THROUGH'}
 
 
@@ -1275,7 +1451,11 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
                     return self._on_rmb(context, hit, edit=event.ctrl)
             return {'PASS_THROUGH'}
         if event.type == 'MOUSEMOVE':
-            self._on_move(context, event)
+            if self._on_move(context, event):
+                # The field already applied this move. Passing it through can
+                # start a newer channel watcher that preempts the active drag.
+                self._finish()
+                return {'FINISHED'}
             return {'PASS_THROUGH'}
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             return self._on_release(context, event)
@@ -1310,13 +1490,20 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         key, part = hit
         self._ob = ob
         self._y0 = event.mouse_y
+        self._x0 = event.mouse_x
+        self._field_candidate = part == 'VALUE'
         self._dragging = False
         self._ctrl = event.ctrl
         self._base = selected_channels(context)
         self._anchor = key
         self._part = part
         self._key = key
-        if event.shift and _anchor["key"] is not None:
+        if part == 'VALUE':
+            # Modifier selection remains on names; modifiers over values scrub.
+            if key not in self._base:
+                set_selected_channels([key], context)
+                _anchor["key"] = key
+        elif event.shift and _anchor["key"] is not None:
             select_range(ob, _anchor["key"], key, "SET", context=context)
             self._anchor = _anchor["key"]
         elif event.ctrl:
@@ -1352,6 +1539,14 @@ class ALLSET_OT_cb_channel_drag(bpy.types.Operator):
         _redraw(self._window)
 
     def _on_move(self, context, event):
+        dx = event.mouse_x - self._x0
+        dy = event.mouse_y - self._y0
+        if (self._field_candidate and not self._dragging and abs(dx) >= 6
+                and abs(dx) > abs(dy) and field_drag_starts(context, self._key)):
+            result = start_field_drag(context, event, self._key, self._x0)
+            if 'RUNNING_MODAL' in result:
+                self._press = None
+                return True
         if not self._dragging and abs(event.mouse_y - self._y0) < 0.5 * self._pitch:
             return
         self._extend(context, self._current(event))
@@ -2233,8 +2428,7 @@ class ALLSET_OT_cb_wheel(bpy.types.Operator):
             if _wheel_windows.get(self._window_ptr) == self._generation:
                 _wheel_windows.pop(self._window_ptr, None)
             return {'CANCELLED', 'PASS_THROUGH'}
-        if (event.type not in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'TRACKPADPAN'}
-                or event.ctrl or event.shift or event.alt or event.oskey):
+        if (event.type not in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE', 'TRACKPADPAN'} or event.oskey):
             return {'PASS_THROUGH'}
         # Resolve the current regions each event: panes can resize, change tabs,
         # move to another window, or close while this window watcher is running.
@@ -2253,6 +2447,16 @@ class ALLSET_OT_cb_wheel(bpy.types.Operator):
                         return {'PASS_THROUGH'}
                     from types import SimpleNamespace
                     if not over_pane(ctx, SimpleNamespace(mouse_region_y=y - region.y)):
+                        return {'PASS_THROUGH'}
+                    if event.ctrl or event.shift or event.alt:
+                        hit = _hover.get(self._window_ptr)
+                        if (event.ctrl and event.type in {'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}
+                                and hit is not None and hit[1] == 'VALUE'
+                                and field_drag_starts(ctx, hit[0])):
+                            start_field_drag(ctx, event, hit[0], event.mouse_x)
+                            # The gesture belongs to the field even at a limit or
+                            # on a rounded no-op; don't send it on to the UI too.
+                            return {'RUNNING_MODAL'}
                         return {'PASS_THROUGH'}
                     if event.type == 'TRACKPADPAN':
                         ptr = area.as_pointer()
@@ -2281,7 +2485,7 @@ def _ensure_wheel_watch():
                 continue
             with bpy.context.temp_override(window=window, area=area, region=region):
                 if _is_cb_dock(bpy.context):
-                    bpy.ops.allset.cb_wheel('INVOKE_DEFAULT')
+                    bpy.ops.allset.cb_wheel('INVOKE_DEFAULT', True)
                     break
     return 0.25
 
@@ -2696,7 +2900,7 @@ class ALLSET_PT_dock_modeling_toolkit(bpy.types.Panel):
 
 
 classes = (ALLSET_PG_cb_row, ALLSET_PG_channel_box, ALLSET_OT_cb_virtual_slider, ALLSET_OT_cb_select_channel,
-           ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag,
+           ALLSET_OT_cb_deselect_channels, ALLSET_OT_cb_hover, ALLSET_OT_cb_channel_drag, ALLSET_OT_cb_field_drag,
            ALLSET_PT_cb_field, ALLSET_OT_cb_node_toggle, ALLSET_OT_cb_scroll, ALLSET_OT_cb_wheel, *CHANNEL_OPS,
            ALLSET_OT_cb_show_all,
            ALLSET_MT_cb_channels, ALLSET_MT_cb_freeze, ALLSET_MT_cb_settings, ALLSET_OT_cb_make_lead,
