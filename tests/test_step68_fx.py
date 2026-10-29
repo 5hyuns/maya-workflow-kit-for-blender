@@ -159,7 +159,7 @@ def test_ncloth_on_every_selected_and_nucleus():
     mds = [next(m for m in o.modifiers if m.type == 'CLOTH') for o in (a, b)]
     assert [m.name for m in mds] == ["nCloth1", "nCloth2"]
     for md in mds:
-        # 0.015 x maya_unit, clamped to Blender's hard minimum 0.001 m (= 0.1 unit, Maya's nCloth thickness )
+        # 0.015 x maya_unit, clamped to Blender's hard minimum 0.001 m (= 0.1 unit, Maya's nCloth thickness)
         assert abs(md.collision_settings.distance_min - 0.001) < 1e-7, md.collision_settings.distance_min
         assert abs(md.settings.tension_stiffness - 15 * 0.01) < 1e-6, md.settings.tension_stiffness
         assert md.settings.quality == 5

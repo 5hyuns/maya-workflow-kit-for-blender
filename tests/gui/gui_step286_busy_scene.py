@@ -55,7 +55,7 @@ def _settle():
 
 
 def _wait_icons():
-    """Menu / shelf icons are made once after start (timers): not part of the checked. Wait until the menu icon
+    """Menu / shelf icons are made once after start (timers): not part of the timing. Wait until the menu icon
     timer is done (up to 40 ticks), then a few more redraws for the shelf icons."""
     import sim
     from importlib import import_module

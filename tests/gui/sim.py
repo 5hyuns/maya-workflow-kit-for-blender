@@ -203,11 +203,11 @@ if UI_SCALE:
 
 
 def scale():
-    """Effective UI scale (OS scale x Resolution Scale): pixel sizes checked at 1.25 scale with it."""
+    """Effective UI scale (OS scale x Resolution Scale): pixel sizes taken at 1.25 scale with it."""
     return bpy.context.preferences.system.ui_scale
 
 
-# Pixel offsets in the tests were checked in screenshots at effective scale 1.25 (125 % display,
+# Pixel offsets in the tests were read from screenshots at effective scale 1.25 (125 % display,
 # Resolution Scale 1.0); px() converts one to the running scale (e.g. --ui-scale 0.8, step 44).
 MEASURED_SCALE = 1.25
 

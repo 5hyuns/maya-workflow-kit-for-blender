@@ -664,7 +664,7 @@ class ALLSET_OT_extrude_drag(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def values(self, context, event):
-        """{field: value} for the mouse at ``event`` (the press values while the drag can't be checked)."""
+        """{field: value} for the mouse at ``event`` (the press values while the drag has no reading yet)."""
         start, out = self._start, {}
         if self._role == 'ARROW':
             i = self._idx[0]

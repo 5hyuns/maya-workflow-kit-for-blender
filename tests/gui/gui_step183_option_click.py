@@ -148,7 +148,7 @@ def geometry_case(label):
         if z is not None:
             x0, x1, left, right = z
             model_left = left
-            # checked edges: the menu back colour on rows just under the top bar (median over rows)
+            # edges found from the menu back colour on rows just under the top bar (median over rows)
             ys = range(row_y(1) - 4, row_y(1) - 4 - 8 * unit(), -3)
             back = a[row_y(1) + unit() // 2 - 2, int(left) + 3]
             lefts, rights = [], []

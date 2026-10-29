@@ -83,7 +83,7 @@ def command_under_mouse():
 
 def win32_client(window_count):
     """Client rects (left, top, right, bottom; screen px, y down) of this process's top-level windows (Win32,
-    test-only checked of the Window.x / y convention) + the primary screen height."""
+    test-only reading of the Window.x / y convention) + the primary screen height."""
     try:
         import ctypes
         from ctypes import wintypes

@@ -226,7 +226,7 @@ def check_rect(px, rect, scale=1.0):
 
 
 def check_image(path, rects, window=None):
-    """Check every rect of a capture. ``window`` = (w, h) the rects were checked in (default: the image size).
+    """Check every rect of a capture. ``window`` = (w, h) the rects were read in (default: the image size).
     Returns (ok, [per-rect results]); rects not checked (too small) don't count, at least one must be checked."""
     px = load_rgb(path)
     scale = px.size[0] / window[0] if window else 1.0

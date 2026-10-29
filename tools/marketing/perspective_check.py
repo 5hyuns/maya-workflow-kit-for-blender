@@ -3,7 +3,7 @@
     python tools/marketing/perspective_check.py [OUT_DIR]   (default tmp/marketing)
 
 For each raw shot used turned (key visual, square, kit cards) the screen is turned with compose.tilted at the size its
-layout uses; the alpha mask is checked (near edge height, far edge height, projected width) and compared with the
+layout uses; the alpha mask is read (near edge height, far edge height, projected width) and compared with the
 expected projection of the capture's own W x H rectangle turned TILT_DEG about its near edge (compose.tilt_quad).
 The projected width must stay below the unturned width (= near height x capture aspect). Writes perspective_check.txt
 (numbers, exit 1 on a FAIL) and perspective_check.png (the capture unturned at the same height next to it, to look at).
@@ -43,7 +43,7 @@ def main(argv=None):
         xs = [x for x in range(t.width) if a.getpixel((x, t.height // 2)) > 128]
         hn, hf, u = near[1] - near[0] + 1, far[1] - far[0] + 1, max(xs) - min(xs) + 1
         quad, (uw, uh) = tilt_quad(w, h, width)
-        # expected heights at the checked columns (linear in the projected x)
+        # expected heights at the sampled columns (linear in the projected x)
         k = (quad[2][1] - quad[1][1]) / uh
         e_near = uh * (1 - (1 - k) * 20 / uw)
         e_far = uh * (1 - (1 - k) * (t.width - 21) / uw)
