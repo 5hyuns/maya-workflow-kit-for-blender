@@ -13,7 +13,7 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   changes the normal length while you drag and stays open until OK, Reset Display puts these back to Blender's
   defaults, and Custom Polygon Display opens the full overlay popover. Blender
   draws normals and edge display on meshes in edit mode. Vertex Size... and Edge Width... open the theme
-  preferences; the other items are greyed with a note on the closest Blender feature.
+  preferences searched for that setting; the other items are greyed with a note on the closest Blender feature.
 
 ## [0.7.0] — 2026-10-29
 

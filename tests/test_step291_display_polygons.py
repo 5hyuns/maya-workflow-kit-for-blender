@@ -56,9 +56,12 @@ class _Layout:
 
     def __init__(self):
         self.log = []
+        self.icons = []
 
-    def prop(self, owner, attr, text="", **_kw):
+    def prop(self, owner, attr, text="", icon=None, **_kw):
         self.log.append(("prop", owner, attr, text))
+        if icon is not None:
+            self.icons.append(icon)
 
     def prop_enum(self, owner, attr, value, text=""):
         self.log.append(("prop_enum", owner, attr, text))
@@ -200,8 +203,28 @@ def test_custom_polygon_display_is_the_overlay_popover():
     # vertex size / edge width are theme preferences: the items open them, they don't write them (#43)
     theme = bpy.context.preferences.themes[0].view_3d
     assert hasattr(theme, "vertex_size") and hasattr(theme, "edge_width")
-    assert menu_map.spec(f"{POLYGONS}/Vertex Size...") == ("op", "screen.userpref_show", {"section": 'THEMES'})
-    assert notices.tooltip(f"{POLYGONS}/Vertex Size...", mapped=True)
+    for label, name in (("Vertex Size...", "Vertex Size"), ("Edge Width...", "Edge Width")):
+        assert menu_map.spec(f"{POLYGONS}/{label}") == ("op", "allset.theme_setting", {"name": name})
+        assert notices.tooltip(f"{POLYGONS}/{label}", mapped=True)
+    assert hasattr(bpy.types, "ALLSET_OT_theme_setting")
+    # Blender 5.2 lists the theme sections folded: the Preferences window's search field finds the setting
+    assert "search_filter" in bpy.types.SpacePreferences.bl_rna.properties
+
+
+def test_torn_off_check_items_keep_their_check_mark():
+    # a torn-off menu draws with menu emboss in a panel, where Blender drops the check box: the mark is the icon
+    maya_dock = import_module(kit.MODULE + ".ui.maya_dock")
+    overlay = _view().overlay
+    overlay.show_face_normals = True
+    maya_dock._drawing_torn[0] = True
+    try:
+        lay = _Layout()
+        menu_sets.draw_item(lay, f"{POLYGONS}/Face Normals", "Face Normals")
+    finally:
+        maya_dock._drawing_torn[0] = False
+    assert lay.log[0][:3] == ("prop", overlay, "show_face_normals")
+    assert lay.icons == ['CHECKBOX_HLT'], lay.icons
+    overlay.show_face_normals = False
 
 
 def test_a_place_cut_on_four_sides_still_counts_as_carved():

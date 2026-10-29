@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Display > Polygons, the two items that are not check boxes (step 291).
+"""Display > Polygons, the items that are not check boxes (step 291).
 
 Maya sets polygon display on the selected meshes (polyOptions); Blender keeps it on each 3D View's overlays, drawn on
 the meshes in edit mode. Both act on the 3D View the menu reads (``ui/status_line.view3d_space``).
@@ -10,9 +10,13 @@ the meshes in edit mode. Both act on the 3D View the menu reads (``ui/status_lin
   the 3D View follows the slider; OK closes it. A popup dialog would close at the first click outside it.
 - Reset Display: Maya puts the polygon display options back to their defaults = the overlays this menu sets, back to
   Blender's factory values (measured in Blender 5.2's factory startup).
+- Vertex Size... / Edge Width...: Blender theme preferences (3D Viewport > Vertex Size / Edge Width). The kit opens
+  Preferences > Themes with its search field set to the setting (Blender 5.2 lists the theme sections folded), and
+  never writes the preference itself (#43).
 """
 
 import bpy
+from bpy.props import StringProperty
 
 from .. import results
 
@@ -120,4 +124,35 @@ class ALLSET_OT_poly_display_reset(bpy.types.Operator):
         return {'FINISHED'}
 
 
-classes = (ALLSET_OT_normals_size, ALLSET_PT_normals_size, ALLSET_OT_poly_display_reset)
+def search_preferences(text, tries=20):
+    """Put ``text`` in the search field of the open Preferences window (it opens after the operator returns)."""
+    state = {"n": tries}
+
+    def tick():
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'PREFERENCES':
+                    area.spaces.active.search_filter = text
+                    area.tag_redraw()
+                    return None
+        state["n"] -= 1
+        return 0.05 if state["n"] > 0 else None
+    bpy.app.timers.register(tick, first_interval=0.0)
+
+
+class ALLSET_OT_theme_setting(bpy.types.Operator):
+    """Open Preferences > Themes on one 3D Viewport setting (Maya's Vertex Size / Edge Width are Blender theme
+    preferences)"""
+    bl_idname = "allset.theme_setting"
+    bl_label = "Theme Setting"
+
+    name: StringProperty(name="Setting", options={'SKIP_SAVE'})
+
+    def execute(self, context):
+        bpy.ops.screen.userpref_show('INVOKE_DEFAULT', section='THEMES')
+        if self.name:
+            search_preferences(self.name)
+        return {'FINISHED'}
+
+
+classes = (ALLSET_OT_normals_size, ALLSET_PT_normals_size, ALLSET_OT_poly_display_reset, ALLSET_OT_theme_setting)

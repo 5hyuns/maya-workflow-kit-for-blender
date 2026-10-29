@@ -211,6 +211,13 @@ def draw_prop(layout, label, target, props, path=""):
         draw_safe.op(layout, ALLSET_OT_menu_unavailable.bl_idname, text=label).item = path
         return
     if "value" not in props:
+        from . import maya_dock
+        current = getattr(owner, attr)
+        if maya_dock.drawing_torn() and isinstance(current, bool):
+            # a torn-off menu is a panel with menu emboss, where Blender drops a check box (step 291, measured in
+            # Blender 5.2): the check mark is drawn as the item's icon
+            layout.prop(owner, attr, text=label, icon='CHECKBOX_HLT' if current else 'CHECKBOX_DEHLT')
+            return
         layout.prop(owner, attr, text=label)
         return
     value = props["value"]

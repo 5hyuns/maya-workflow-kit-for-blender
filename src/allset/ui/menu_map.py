@@ -697,9 +697,9 @@ MAP.update({
     "Display/Polygons/Reset Display": "allset.poly_display_reset",
     "Display/Polygons/Custom Polygon Display": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_edit_mesh",
                                                                          "keep_open": True}),
-    # Blender's vertex and edge sizes are theme preferences (#43): open them, don't write them
-    "Display/Polygons/Vertex Size...": ("screen.userpref_show", {"section": 'THEMES'}),
-    "Display/Polygons/Edge Width...": ("screen.userpref_show", {"section": 'THEMES'}),
+    # Blender's vertex and edge sizes are theme preferences (#43): open them, searched for the setting, don't write them
+    "Display/Polygons/Vertex Size...": ("allset.theme_setting", {"name": "Vertex Size"}),
+    "Display/Polygons/Edge Width...": ("allset.theme_setting", {"name": "Edge Width"}),
     "Display/Animation": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_overlay_bones", "keep_open": True}),
     "Display/Animation/Joint Size...": "allset.joint_size",              # step 248: Maya jointDisplayScale
     "Display/Rendering": ("v3d", "wm.call_panel", {"name": "VIEW3D_PT_shading", "keep_open": True}),
