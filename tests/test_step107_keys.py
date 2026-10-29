@@ -122,9 +122,10 @@ def test_background_cycle_follows_maya():
     _one("3D View", 'B', "allset.cycle_background", alt=True)
     sh = bpy.context.scene.display.shading     # a View3DShading like a 3D View's
     sh.background_type = 'THEME'
-    # flat colours only, per view (steps 120, 130: tests/test_step120_background.py)
+    # per view (tests/test_step120_background.py)
     assert kb3.cycle_background(sh) == "LIGHT" and sh.background_type == 'VIEWPORT'
     assert abs(sh.background_color[0] - kb3.srgb_to_linear(0.631)) < 1e-4
+    assert kb3.cycle_background(sh) == "GRADIENT" and kb3.is_gradient(sh)
     assert kb3.cycle_background(sh) == "BLACK" and sh.background_color[0] == 0.0
     assert kb3.cycle_background(sh) == "GREY" and sh.background_type == 'VIEWPORT'
     assert abs(sh.background_color[0] - kb3.srgb_to_linear(0.36)) < 1e-4

@@ -25,7 +25,7 @@ from mathutils import Vector
 
 # --- Maya sizes and colours (step 46) -----------------------------------------------------
 CUBE_PX = 65.0                 # ViewCube box in a 612 px tall Maya view
-CUBE_INSET = (34.0, 24.0)      # leave room for the shared corner arcs and native panel chevron
+CUBE_INSET = (26.0, 27.0)      # from the right, from the top
 MAYA_VIEW_H = 612.0
 SMALL_EXP = 0.42               # 65 px in the 612 px view, 48 px in a four-view panel
 LABEL_BASELINE = 9.0
@@ -36,8 +36,6 @@ TRIAD_INSET = 26.0
 TRIAD_LEN = 13.0
 CUBE_ALPHA = (0.5, 1.0)        # resting, under the mouse
 CUBE_EYE = 3.5526315789473686  # 5% gentler perspective; independent of scene focal length
-# Ink cap heights in each equal-width atlas tile; common face-local letter size.
-CUBE_LABEL_CAP_HEIGHTS = {'FRONT': 61.0, 'BACK': 73.0, 'RIGHT': 67.0, 'LEFT': 83.0, 'TOP': 99.0, 'BOTTOM': 47.0}
 MAYA_PERSP_DIR = Vector((-28.0, 28.0, -21.0)).normalized()   # Maya persp looking direction, Blender axes
 
 # face -> (normal, text u axis, text v axis), Blender axes; names = view3d.view_axis types
@@ -317,94 +315,15 @@ def _cube_here(context):
 # --- drawing --------------------------------------------------------------------------------
 
 _shader = []
-_label_gpu = {}
-
-
-def label_quad(q, name, centre, size):
-    """Face-plane label projected by the same finite eye as the visible face."""
-    n, u, v = (Vector(axis) for axis in FACES[name])
-    positions, weights = [], []
-    # Atlas words have equal widths; normalize their letter heights instead.
-    h = .34 * 61.0 / CUBE_LABEL_CAP_HEIGHTS[name]
-    for a, b in ((-h, -h), (h, -h), (h, h), (-h, h)):
-        p = _to_view(q, n * .5 + u * (a * 1.08) + v * (b * .94))
-        screen, weight = _project_cube_point(p, centre, size * _PX_PER_UNIT)
-        positions.append((screen[0], screen[1], 0.0))
-        weights.append(weight)
-    return positions, weights
-
-
-def _label_atlas_bytes():
-    """Slightly fuller strokes at the same relative weight for all six words."""
-    from . import viewcube_sdf
-    raw = bytearray(viewcube_sdf.atlas_bytes())
-    width, height = viewcube_sdf.ATLAS_SIZE
-    for name, (u0, v0, u1, v1) in viewcube_sdf.ATLAS_UV.items():
-        offset = round(16.0 * CUBE_LABEL_CAP_HEIGHTS[name] / 61.0)
-        table = bytes(min(255, value + offset) for value in range(256))
-        x0, x1 = round(u0 * width), round(u1 * width)
-        for y in range(round(v0 * height), round(v1 * height)):
-            start, end = y * width + x0, y * width + x1
-            raw[start:end] = raw[start:end].translate(table)
-    return bytes(raw)
-
-
-def _font_resources():
-    if _label_gpu:
-        return _label_gpu
-    import gpu
-    from array import array
-    from . import viewcube_sdf
-    interface = gpu.types.GPUStageInterfaceInfo('allset_cube_label_iface')
-    interface.smooth('VEC2', 'uv_interp')
-    info = gpu.types.GPUShaderCreateInfo()
-    info.vertex_in(0, 'VEC3', 'pos')
-    info.vertex_in(1, 'VEC2', 'uv')
-    info.vertex_in(2, 'FLOAT', 'clipW')
-    info.vertex_out(interface)
-    info.push_constant('MAT4', 'ModelViewProjectionMatrix')
-    info.push_constant('VEC4', 'color')
-    info.sampler(0, 'FLOAT_2D', 'sdfAtlas')
-    info.fragment_out(0, 'VEC4', 'fragColor')
-    info.vertex_source('''void main() {
-        gl_Position = (ModelViewProjectionMatrix * vec4(pos, 1.0)) * clipW;
-        uv_interp = uv;
-    }''')
-    info.fragment_source('''void main() {
-        float d = texture(sdfAtlas, uv_interp).r;
-        float width = max(fwidth(d), 1.0 / 255.0);
-        float alpha = smoothstep(0.5 - 0.5 * width, 0.5 + 0.5 * width, d);
-        if (alpha <= 0.001) { discard; }
-        fragColor = vec4(color.rgb, color.a * alpha);
-    }''')
-    shader = gpu.shader.create_from_info(info)
-    raw = _label_atlas_bytes()
-    texture = gpu.types.GPUTexture(viewcube_sdf.ATLAS_SIZE, format='R8',
-        data=gpu.types.Buffer('FLOAT', len(raw), array('f', (v / 255.0 for v in raw))))
-    texture.filter_mode(True)
-    _label_gpu.update(shader=shader, texture=texture)
-    return _label_gpu
-
-
-def _face_text(q, name, centre, size, alpha):
-    import gpu
-    from gpu_extras.batch import batch_for_shader
-    from . import viewcube_sdf
-    resources = _font_resources()
-    positions, weights = label_quad(q, name, centre, size)
-    x0, y0, x1, y1 = viewcube_sdf.ATLAS_UV[name]
-    uv = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
-    indices = (0, 1, 2, 0, 2, 3)
-    sh = resources['shader']
-    batch = batch_for_shader(sh, 'TRIS', {
-        'pos': tuple(positions[i] for i in indices),
-        'uv': tuple(uv[i] for i in indices), 'clipW': tuple(weights[i] for i in indices)})
-    sh.bind()
-    sh.uniform_float('ModelViewProjectionMatrix', gpu.matrix.get_projection_matrix() @ gpu.matrix.get_model_view_matrix())
-    sh.uniform_float('color', (.16, .16, .16, min(1.0, alpha * 1.5)))
-    sh.uniform_sampler('sdfAtlas', resources['texture'])
-    gpu.state.blend_set('ALPHA')
-    batch.draw(sh)
+def _face_label(name, poly, facing, u2, size, alpha):
+    """The face's name in Blender's UI font, centred on the projected face, along its text axis and never
+    upside down."""
+    cx = sum(p[0] for p in poly) / 4
+    cy = sum(p[1] for p in poly) / 4
+    ang = math.atan2(u2[1], u2[0])
+    if math.cos(ang) < 0:
+        ang += math.pi
+    _text(name, cx, cy, max(6, round(size * 0.14 * facing ** 0.5)), (.16, .16, .16, min(1.0, alpha * 1.5)), ang)
 
 
 def _arc_arrow(centre, radius, start, end, length, half_width):
@@ -585,7 +504,7 @@ def draw_cube(context, hover=None, alpha=0.5):
     centre, _label, _triad = layout(_bounds(context), s, size)
     q = _cube_rotation(rv3d)
     faces = faces_2d(q, centre, size)
-    for name, poly, facing, _u2, _v2 in faces:
+    for name, poly, facing, u2, _v2 in faces:
         import gpu
         gpu.state.blend_set('ALPHA')
         if name == hover:
@@ -594,7 +513,7 @@ def draw_cube(context, hover=None, alpha=0.5):
             _fill_cube_face(poly, name, facing, alpha)
         _lines(poly, (0.418, 0.418, 0.418, alpha), 1.95, region, loop=True)
         if facing > 0.28:
-            _face_text(q, name, centre, size, alpha)
+            _face_label(name, poly, facing, u2, size, alpha)
     if hover is not None:
         _draw_controls(context, centre, size, hover)
     return faces
@@ -831,6 +750,7 @@ class ALLSET_GT_view_cube(bpy.types.Gizmo):
 
     def setup(self):
         self.hover = None
+        self.use_tooltip = False          # like the kit's other gizmos: no Blender operator tooltip
         # one view3d.view_axis call per face: test_select returns the face's index as the part
         for i, name in enumerate(FACE_NAMES):
             op = self.target_set_operator("view3d.view_axis", index=i)
@@ -930,4 +850,3 @@ def unregister():
     _shader.clear()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    _label_gpu.clear()

@@ -11,6 +11,13 @@ All notable changes to Maya Workflow Kit (called Allset for Maya Users in steps 
   drag and Ctrl+wheel over a value steps it. Esc or right-click puts the starting values back, one drag is one undo
   step, and Auto Key keys channels that already have keys. Clicking a value still edits it, a drag down the values
   still selects channels, and the middle-mouse virtual slider is unchanged.
+- **Viewport extras** from Tom Pilott (#224) — thank you!
+  - **Alt+B gradient**: the background cycle is now grey, light grey, Maya's blue gradient, black (#216). The kit
+    draws the gradient itself in Solid and Wireframe shading, per view and saved with the file; your Blender theme
+    is never changed.
+  - **ViewCube**: a softer perspective, shaded faces and hover controls — Home, roll arrows on a face-aligned view,
+    small orbit arrows and a menu.
+  - **Selected wire**: a selected object's back edges no longer show through its faces.
 
 ### Fixed
 - **Hiding a group from the Outliner hides its children** (from @Kevorama, #223 — thank you!). Ctrl+H, Shift+H,

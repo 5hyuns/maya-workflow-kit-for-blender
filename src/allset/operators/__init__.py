@@ -204,6 +204,7 @@ def register():
     mesh_tools.register_props()
     poly_draw.register_props()
     edge_loops.register_props()
+    key_batch3.register_handlers()     # Alt+B gradient: first of the kit's 3D View POST_VIEW handlers
     extrude.register_handlers()
     smart_extrude.register_props()
     uv_tools.register_props()
@@ -319,6 +320,7 @@ def unregister():
     uv_shell_select.unregister_props()
     uv_tools.unregister_props()
     extrude.unregister_handlers()
+    key_batch3.unregister_handlers()
     smart_extrude.unregister_props()
     mesh_tools.clear()
     edge_loops.unregister_props()
